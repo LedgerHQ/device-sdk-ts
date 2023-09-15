@@ -1,0 +1,20 @@
+{
+    "compilerOptions": {
+      "experimentalDecorators": true,
+      "emitDecoratorMetadata": true,
+      "allowJs": false,
+      "allowSyntheticDefaultImports": true,
+      "esModuleInterop": true,
+      "forceConsistentCasingInFileNames": true,
+      "isolatedModules": true,
+      "moduleResolution": "node",
+      "pretty": true,
+      "resolveJsonModule": true,
+      "stripInternal": true,
+      "skipLibCheck": true,
+      "sourceMap": true,
+      "strict": true,
+      "target": "ES6"
+    }
+  }
+  
