@@ -1,0 +1,27 @@
+{
+  "name": "@ledgerhq/device-sdk",
+  "version": "1.0.0",
+  "license": "MIT",
+  "scripts": {
+    "build": "turbo build",
+    "core": "turbo --filter @ledgerhq/device-sdk-core",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "devDependencies": {
+    "eslint": "^8.56.0",
+    "eslint-config-dsdk": "workspace:*",
+    "path": "^0.12.7",
+    "turbo": "^1.11.2",
+    "zx": "^7.2.3"
+  },
+  "lint-staged": {
+    "*.ts": [
+      "eslint --fix",
+      "prettier --write"
+    ]
+  },
+  "packageManager": "pnpm@8.8.0",
+  "engines": {
+    "node": ">=18"
+  }
+}
