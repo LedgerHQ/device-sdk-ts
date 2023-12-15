@@ -1,0 +1,11 @@
+{
+  "name": "eslint-config-dsdk",
+  "license": "MIT",
+  "version": "0.0.0",
+  "private": true,
+  "files": ["library.js"],
+  "devDependencies": {
+    "@vercel/style-guide": "^5.1.0",
+    "eslint-config-turbo": "^1.10.12"
+  }
+}
