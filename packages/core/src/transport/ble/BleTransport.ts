@@ -1,9 +1,8 @@
-import { Transport } from "../Transport"
-import { Response } from "../model/Response"
+import { Transport } from "../Transport";
+import { Response } from "../model/Response";
 
-
-export default class BleTransport implements Transport {
-    send(apduHex: String): Response| undefined {
-        return undefined
-    }
+export class BleTransport implements Transport {
+  send(_apduHex: String): Response | undefined {
+    return undefined;
+  }
 }
