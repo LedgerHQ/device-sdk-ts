@@ -1,15 +1,29 @@
 {
   "name": "@ledgerhq/device-sdk",
   "version": "1.0.0",
+  "private": true,
   "license": "MIT",
+  "workspaces": [
+    "packages/*",
+    "apps/*"
+  ],
   "scripts": {
     "build": "turbo build",
+    "dev": "turbo dev",
+    "lint": "turbo run lint",
+    "lint:fix": "turbo run lint:fix",
     "core": "turbo --filter @ledgerhq/device-sdk-core",
+    "signer": "turbo --filter @ledgerhq/device-sdk-signer",
+    "trusted-apps": "turbo --filter @ledgerhq/device-sdk-trusted-apps",
+    "ui": "turbo --filter @ledgerhq/device-sdk-ui",
+    "sample": "turbo --filter @ledgerhq/device-sdk-sample",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "devDependencies": {
+    "@tsconfig/recommended": "^1.0.3",
     "eslint": "^8.56.0",
-    "eslint-config-dsdk": "workspace:*",
+    "@ledgerhq/eslint-config-dsdk": "workspace:*",
+    "lint-staged": "^15.2.0",
     "path": "^0.12.7",
     "turbo": "^1.11.2",
     "zx": "^7.2.3"
