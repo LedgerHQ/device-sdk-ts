@@ -8,34 +8,28 @@ lib-cov
 *.gz
 *.swp
 
-pids
-logs
-results
-tmp
-
-# Build
-public/css/main.css
-
 # Coverage reports
 coverage
 
 # API keys and secrets
 .env
 
-# Dependency directory
+# node
 node_modules
-bower_components
 
-# Editors
+# IDE
 .idea
 *.iml
 
-# OS metadata
+# misc
 .DS_Store
 Thumbs.db
 
-# Ignore built ts files
-dist/**/*
+# build
+lib
 
-# ignore yarn.lock
-yarn.lock
+# turbo
+.turbo
+
+# eslint
+.eslintcache
