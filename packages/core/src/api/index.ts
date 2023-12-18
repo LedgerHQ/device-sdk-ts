@@ -1,4 +1,4 @@
-'use strict'
+"use strict";
 
-export  { LedgerDeviceSdkBuilder as DeviceSdkBuilder } from "./DeviceSdkBuilder"
-export  { DeviceSdk } from "./DeviceSdk"
+export { LedgerDeviceSdkBuilder as DeviceSdkBuilder } from "./DeviceSdkBuilder";
+export { DeviceSdk } from "./DeviceSdk";
