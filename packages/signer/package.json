@@ -8,6 +8,10 @@
     "/lib"
   ],
   "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "lint": "eslint --cache --ext .ts \"src\"",
+    "lint:fix": "eslint --cache --fix --ext .ts \"src\"",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "peerDependencies": {
@@ -19,6 +23,6 @@
     "@types/node": "^20.10.5",
     "eslint": "^8.56.0",
     "typescript": "^5.3.3",
-    "eslint-config-dsdk": "workspace:*"
+    "@ledgerhq/eslint-config-dsdk": "workspace:*"
   }
 }
