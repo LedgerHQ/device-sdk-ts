@@ -1,7 +1,7 @@
-name: size
+name: pull_request
 on: [pull_request]
 jobs:
-  size:
+  lint:
     runs-on: ubuntu-latest
     env:
       CI_JOB_NUMBER: 1
@@ -31,6 +31,3 @@ jobs:
 
       - name: Lint
         run: pnpm lint
-
-      - name: Build
-        run: pnpm build

@@ -1,3 +1,3 @@
 {
-  "extends": ["next/core-web-vitals", "@ledger-hq/dsdk"]
+  "extends": ["next/core-web-vitals", "@ledgerhq/dsdk"]
 }
