@@ -1,6 +1,7 @@
 {
   "name": "@ledgerhq/tsconfig-dsdk",
-  "version": "0.0.2",
+  "version": "1.0.0",
+  "private": true,
   "files": [
     "sdk.json",
     "web.json"

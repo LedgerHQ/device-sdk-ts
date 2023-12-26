@@ -1,1 +1,1 @@
-export { BleTransport } from "./BleTransport"
+export { BleTransport } from "./BleTransport";
