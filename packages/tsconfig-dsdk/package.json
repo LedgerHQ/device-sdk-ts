@@ -1,0 +1,15 @@
+{
+  "name": "@ledgerhq/tsconfig-dsdk",
+  "version": "0.0.2",
+  "files": [
+    "sdk.json",
+    "web.json"
+  ],
+  "devDependencies": {
+    "@tsconfig/recommended": "^1.0.3",
+    "@types/node": "^20",
+    "@types/react": "^18",
+    "@types/eslint": "^8.44.9",
+    "@types/react-dom": "^18"
+  }
+}

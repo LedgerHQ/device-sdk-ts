@@ -11,9 +11,9 @@ importers:
       '@ledgerhq/eslint-config-dsdk':
         specifier: workspace:*
         version: link:packages/eslint-config-dsdk
-      '@tsconfig/recommended':
-        specifier: ^1.0.3
-        version: 1.0.3
+      '@ledgerhq/tsconfig-dsdk':
+        specifier: workspace:*
+        version: link:packages/tsconfig-dsdk
       eslint:
         specifier: ^8.56.0
         version: 8.56.0
@@ -26,6 +26,9 @@ importers:
       turbo:
         specifier: ^1.11.2
         version: 1.11.2
+      typescript:
+        specifier: ^5.3.3
+        version: 5.3.3
       zx:
         specifier: ^7.2.3
         version: 7.2.3
@@ -45,15 +48,9 @@ importers:
       '@ledgerhq/eslint-config-dsdk':
         specifier: workspace:*
         version: link:../../packages/eslint-config-dsdk
-      '@types/node':
-        specifier: ^20
-        version: 20.10.5
-      '@types/react':
-        specifier: ^18
-        version: 18.2.45
-      '@types/react-dom':
-        specifier: ^18
-        version: 18.2.18
+      '@ledgerhq/tsconfig-dsdk':
+        specifier: workspace:*
+        version: link:../../packages/tsconfig-dsdk
       autoprefixer:
         specifier: ^10.0.1
         version: 10.4.16(postcss@8.4.32)
@@ -69,9 +66,6 @@ importers:
       tailwindcss:
         specifier: ^3.3.0
         version: 3.3.6
-      typescript:
-        specifier: ^5
-        version: 5.3.3
 
   packages/core:
     dependencies:
@@ -85,18 +79,9 @@ importers:
       '@ledgerhq/eslint-config-dsdk':
         specifier: workspace:*
         version: link:../eslint-config-dsdk
-      '@types/eslint':
-        specifier: ^8.44.9
-        version: 8.44.9
-      '@types/node':
-        specifier: ^20.10.5
-        version: 20.10.5
-      eslint:
-        specifier: ^8.56.0
-        version: 8.56.0
-      typescript:
-        specifier: ^5.3.3
-        version: 5.3.3
+      '@ledgerhq/tsconfig-dsdk':
+        specifier: workspace:*
+        version: link:../tsconfig-dsdk
 
   packages/eslint-config-dsdk:
     devDependencies:
@@ -134,18 +119,9 @@ importers:
       '@ledgerhq/eslint-config-dsdk':
         specifier: workspace:*
         version: link:../eslint-config-dsdk
-      '@types/eslint':
-        specifier: ^8.44.9
-        version: 8.44.9
-      '@types/node':
-        specifier: ^20.10.5
-        version: 20.10.5
-      eslint:
-        specifier: ^8.56.0
-        version: 8.56.0
-      typescript:
-        specifier: ^5.3.3
-        version: 5.3.3
+      '@ledgerhq/tsconfig-dsdk':
+        specifier: workspace:*
+        version: link:../tsconfig-dsdk
 
   packages/trusted-apps:
     dependencies:
@@ -159,18 +135,27 @@ importers:
       '@ledgerhq/eslint-config-dsdk':
         specifier: workspace:*
         version: link:../eslint-config-dsdk
+      '@ledgerhq/tsconfig-dsdk':
+        specifier: workspace:*
+        version: link:../tsconfig-dsdk
+
+  packages/tsconfig-dsdk:
+    devDependencies:
+      '@tsconfig/recommended':
+        specifier: ^1.0.3
+        version: 1.0.3
       '@types/eslint':
         specifier: ^8.44.9
         version: 8.44.9
       '@types/node':
-        specifier: ^20.10.5
+        specifier: ^20
         version: 20.10.5
-      eslint:
-        specifier: ^8.56.0
-        version: 8.56.0
-      typescript:
-        specifier: ^5.3.3
-        version: 5.3.3
+      '@types/react':
+        specifier: ^18
+        version: 18.2.45
+      '@types/react-dom':
+        specifier: ^18
+        version: 18.2.18
 
   packages/ui:
     dependencies:
@@ -184,18 +169,9 @@ importers:
       '@ledgerhq/eslint-config-dsdk':
         specifier: workspace:*
         version: link:../eslint-config-dsdk
-      '@types/eslint':
-        specifier: ^8.44.9
-        version: 8.44.9
-      '@types/node':
-        specifier: ^20.10.5
-        version: 20.10.5
-      eslint:
-        specifier: ^8.56.0
-        version: 8.56.0
-      typescript:
-        specifier: ^5.3.3
-        version: 5.3.3
+      '@ledgerhq/tsconfig-dsdk':
+        specifier: workspace:*
+        version: link:../tsconfig-dsdk
 
 packages:
 

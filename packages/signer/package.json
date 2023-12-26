@@ -19,10 +19,7 @@
     "tsyringe": "^4.8.0"
   },
   "devDependencies": {
-    "@types/eslint": "^8.44.9",
-    "@types/node": "^20.10.5",
-    "eslint": "^8.56.0",
-    "typescript": "^5.3.3",
+    "@ledgerhq/tsconfig-dsdk": "workspace:*",
     "@ledgerhq/eslint-config-dsdk": "workspace:*"
   }
 }

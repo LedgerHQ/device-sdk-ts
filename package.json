@@ -20,12 +20,13 @@
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "devDependencies": {
-    "@tsconfig/recommended": "^1.0.3",
-    "eslint": "^8.56.0",
     "@ledgerhq/eslint-config-dsdk": "workspace:*",
+    "@ledgerhq/tsconfig-dsdk": "workspace:*",
     "lint-staged": "^15.2.0",
     "path": "^0.12.7",
     "turbo": "^1.11.2",
+    "eslint": "^8.56.0",
+    "typescript": "^5.3.3",
     "zx": "^7.2.3"
   },
   "lint-staged": {
