@@ -10,10 +10,10 @@ importers:
     devDependencies:
       '@ledgerhq/eslint-config-dsdk':
         specifier: workspace:*
-        version: link:packages/eslint-config-dsdk
+        version: link:packages/config/eslint
       '@ledgerhq/tsconfig-dsdk':
         specifier: workspace:*
-        version: link:packages/tsconfig-dsdk
+        version: link:packages/config/typescript
       eslint:
         specifier: ^8.56.0
         version: 8.56.0
@@ -47,10 +47,10 @@ importers:
     devDependencies:
       '@ledgerhq/eslint-config-dsdk':
         specifier: workspace:*
-        version: link:../../packages/eslint-config-dsdk
+        version: link:../../packages/config/eslint
       '@ledgerhq/tsconfig-dsdk':
         specifier: workspace:*
-        version: link:../../packages/tsconfig-dsdk
+        version: link:../../packages/config/typescript
       autoprefixer:
         specifier: ^10.0.1
         version: 10.4.16(postcss@8.4.32)
@@ -67,23 +67,7 @@ importers:
         specifier: ^3.3.0
         version: 3.3.6
 
-  packages/core:
-    dependencies:
-      reflect-metadata:
-        specifier: ^0.2.1
-        version: 0.2.1
-      tsyringe:
-        specifier: ^4.8.0
-        version: 4.8.0
-    devDependencies:
-      '@ledgerhq/eslint-config-dsdk':
-        specifier: workspace:*
-        version: link:../eslint-config-dsdk
-      '@ledgerhq/tsconfig-dsdk':
-        specifier: workspace:*
-        version: link:../tsconfig-dsdk
-
-  packages/eslint-config-dsdk:
+  packages/config/eslint:
     devDependencies:
       '@typescript-eslint/eslint-plugin':
         specifier: ^6.14.0
@@ -107,39 +91,7 @@ importers:
         specifier: ^3.1.1
         version: 3.1.1
 
-  packages/signer:
-    dependencies:
-      reflect-metadata:
-        specifier: ^0.2.1
-        version: 0.2.1
-      tsyringe:
-        specifier: ^4.8.0
-        version: 4.8.0
-    devDependencies:
-      '@ledgerhq/eslint-config-dsdk':
-        specifier: workspace:*
-        version: link:../eslint-config-dsdk
-      '@ledgerhq/tsconfig-dsdk':
-        specifier: workspace:*
-        version: link:../tsconfig-dsdk
-
-  packages/trusted-apps:
-    dependencies:
-      reflect-metadata:
-        specifier: ^0.2.1
-        version: 0.2.1
-      tsyringe:
-        specifier: ^4.8.0
-        version: 4.8.0
-    devDependencies:
-      '@ledgerhq/eslint-config-dsdk':
-        specifier: workspace:*
-        version: link:../eslint-config-dsdk
-      '@ledgerhq/tsconfig-dsdk':
-        specifier: workspace:*
-        version: link:../tsconfig-dsdk
-
-  packages/tsconfig-dsdk:
+  packages/config/typescript:
     devDependencies:
       '@tsconfig/recommended':
         specifier: ^1.0.3
@@ -157,6 +109,54 @@ importers:
         specifier: ^18
         version: 18.2.18
 
+  packages/core:
+    dependencies:
+      reflect-metadata:
+        specifier: ^0.2.1
+        version: 0.2.1
+      tsyringe:
+        specifier: ^4.8.0
+        version: 4.8.0
+    devDependencies:
+      '@ledgerhq/eslint-config-dsdk':
+        specifier: workspace:*
+        version: link:../config/eslint
+      '@ledgerhq/tsconfig-dsdk':
+        specifier: workspace:*
+        version: link:../config/typescript
+
+  packages/signer:
+    dependencies:
+      reflect-metadata:
+        specifier: ^0.2.1
+        version: 0.2.1
+      tsyringe:
+        specifier: ^4.8.0
+        version: 4.8.0
+    devDependencies:
+      '@ledgerhq/eslint-config-dsdk':
+        specifier: workspace:*
+        version: link:../config/eslint
+      '@ledgerhq/tsconfig-dsdk':
+        specifier: workspace:*
+        version: link:../config/typescript
+
+  packages/trusted-apps:
+    dependencies:
+      reflect-metadata:
+        specifier: ^0.2.1
+        version: 0.2.1
+      tsyringe:
+        specifier: ^4.8.0
+        version: 4.8.0
+    devDependencies:
+      '@ledgerhq/eslint-config-dsdk':
+        specifier: workspace:*
+        version: link:../config/eslint
+      '@ledgerhq/tsconfig-dsdk':
+        specifier: workspace:*
+        version: link:../config/typescript
+
   packages/ui:
     dependencies:
       reflect-metadata:
@@ -168,10 +168,10 @@ importers:
     devDependencies:
       '@ledgerhq/eslint-config-dsdk':
         specifier: workspace:*
-        version: link:../eslint-config-dsdk
+        version: link:../config/eslint
       '@ledgerhq/tsconfig-dsdk':
         specifier: workspace:*
-        version: link:../tsconfig-dsdk
+        version: link:../config/typescript
 
 packages:
 
