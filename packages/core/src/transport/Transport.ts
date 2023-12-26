@@ -1,5 +1,5 @@
-import { Response } from "./model/Response";
+import { Response } from "./model";
 
 export interface Transport {
-  send(apduHex: String): Response | undefined;
+  send(apduHex: string): Response | undefined;
 }

@@ -1,12 +1,12 @@
-import {DeviceSdk} from "./DeviceSdk"
+import { DeviceSdk } from "./DeviceSdk";
 
 export class LedgerDeviceSdkBuilder {
+  //props
+  constructor() {
+    console.log("New build");
+  }
 
-    //props
-    constructor() {
-    }
-
-    build(): DeviceSdk {
-        return new DeviceSdk()
-    }
+  build(): DeviceSdk {
+    return new DeviceSdk();
+  }
 }

@@ -1,11 +1,10 @@
 export class DeviceSdk {
+  /** @internal */
+  constructor() {
+    console.log("Hello world");
+  }
 
-    /** @internal */ 
-    constructor(){
-        
-    }
-
-    scan() {
-        
-    }
+  scan() {
+    return;
+  }
 }
