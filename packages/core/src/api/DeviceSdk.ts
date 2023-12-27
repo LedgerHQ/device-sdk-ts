@@ -4,7 +4,11 @@ export class DeviceSdk {
     console.log("Hello world");
   }
 
-  scan() {
+  startScan() {
+    return;
+  }
+
+  stopScan() {
     return;
   }
 }
