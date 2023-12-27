@@ -1,7 +1,7 @@
 name: pull_request
 on: [pull_request]
 jobs:
-  lint:
+  test:
     runs-on: [device-sdk-4xlarge-linux]
     env:
       CI_JOB_NUMBER: 1
@@ -31,5 +31,5 @@ jobs:
       - name: Install dependencies
         run: pnpm install
 
-      - name: Lint
-        run: pnpm lint
+      - name: Test
+        run: pnpm test

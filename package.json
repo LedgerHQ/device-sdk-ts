@@ -8,24 +8,25 @@
     "apps/*"
   ],
   "scripts": {
-    "build": "turbo build",
-    "dev": "turbo dev",
-    "lint": "turbo run lint",
-    "lint:fix": "turbo run lint:fix",
+    "build": "turbo build --log-order=grouped",
+    "dev": "turbo dev --log-order=grouped",
+    "lint": "turbo run lint --log-order=grouped",
+    "lint:fix": "turbo run lint:fix --log-order=grouped",
+    "test": "turbo run test --log-order=grouped",
     "core": "pnpm --filter @ledgerhq/device-sdk-core",
     "signer": "pnpm --filter @ledgerhq/device-sdk-signer",
     "trusted-apps": "pnpm --filter @ledgerhq/device-sdk-trusted-apps",
     "ui": "pnpm --filter @ledgerhq/device-sdk-ui",
-    "sample": "pnpm --filter @ledgerhq/device-sdk-sample",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "sample": "pnpm --filter @ledgerhq/device-sdk-sample"
   },
   "devDependencies": {
-    "@ledgerhq/eslint-config-dsdk": "workspace:*",
-    "@ledgerhq/tsconfig-dsdk": "workspace:*",
+    "@types/jest": "^29.5.11",
+    "@types/node": "^20.10.6",
+    "eslint": "^8.56.0",
+    "jest": "^29.7.0",
     "lint-staged": "^15.2.0",
     "prettier": "^3.1.1",
     "turbo": "^1.11.2",
-    "eslint": "^8.56.0",
     "typescript": "^5.3.3",
     "zx": "^7.2.3"
   },
