@@ -111,12 +111,12 @@ importers:
 
   packages/core:
     dependencies:
+      inversify:
+        specifier: ^6.0.2
+        version: 6.0.2
       reflect-metadata:
         specifier: ^0.2.1
         version: 0.2.1
-      tsyringe:
-        specifier: ^4.8.0
-        version: 4.8.0
     devDependencies:
       '@ledgerhq/eslint-config-dsdk':
         specifier: workspace:*
@@ -127,12 +127,12 @@ importers:
 
   packages/signer:
     dependencies:
+      inversify:
+        specifier: ^6.0.2
+        version: 6.0.2
       reflect-metadata:
         specifier: ^0.2.1
         version: 0.2.1
-      tsyringe:
-        specifier: ^4.8.0
-        version: 4.8.0
     devDependencies:
       '@ledgerhq/eslint-config-dsdk':
         specifier: workspace:*
@@ -143,12 +143,12 @@ importers:
 
   packages/trusted-apps:
     dependencies:
+      inversify:
+        specifier: ^6.0.2
+        version: 6.0.2
       reflect-metadata:
         specifier: ^0.2.1
         version: 0.2.1
-      tsyringe:
-        specifier: ^4.8.0
-        version: 4.8.0
     devDependencies:
       '@ledgerhq/eslint-config-dsdk':
         specifier: workspace:*
@@ -159,12 +159,12 @@ importers:
 
   packages/ui:
     dependencies:
+      inversify:
+        specifier: ^6.0.2
+        version: 6.0.2
       reflect-metadata:
         specifier: ^0.2.1
         version: 0.2.1
-      tsyringe:
-        specifier: ^4.8.0
-        version: 4.8.0
     devDependencies:
       '@ledgerhq/eslint-config-dsdk':
         specifier: workspace:*
@@ -2698,6 +2698,10 @@ packages:
       side-channel: 1.0.4
     dev: true
 
+  /inversify@6.0.2:
+    resolution: {integrity: sha512-i9m8j/7YIv4mDuYXUAcrpKPSaju/CIly9AHK5jvCBeoiM/2KEsuCQTTP+rzSWWpLYWRukdXFSl6ZTk2/uumbiA==}
+    dev: false
+
   /is-array-buffer@3.0.2:
     resolution: {integrity: sha512-y+FyyR/w8vfIRq4eQcM1EYgSTnmHXPqaF+IgzgraytCFq5Xh8lllDVmAZolPJiZttZLeFSINPYMaEJ7/vWUa1w==}
     dependencies:
@@ -4268,6 +4272,7 @@ packages:
 
   /tslib@1.14.1:
     resolution: {integrity: sha512-Xni35NKzjgMrwevysHTCArtLDpPvye8zV/0E4EyYn43P7/7qvQwPh9BGkHewbMulVntbigmcT7rdX3BNo9wRJg==}
+    dev: true
 
   /tslib@2.6.2:
     resolution: {integrity: sha512-AEYxH93jGFPn/a2iVAwW87VuUIkR1FVUKB77NwMF7nBTDkDrrT/Hpt/IrCJ0QXhW27jTBDcf5ZY7w6RiqTMw2Q==}
@@ -4281,13 +4286,6 @@ packages:
       tslib: 1.14.1
       typescript: 5.3.3
     dev: true
-
-  /tsyringe@4.8.0:
-    resolution: {integrity: sha512-YB1FG+axdxADa3ncEtRnQCFq/M0lALGLxSZeVNbTU8NqhOVc51nnv2CISTcvc1kyv6EGPtXVr0v6lWeDxiijOA==}
-    engines: {node: '>= 6.0.0'}
-    dependencies:
-      tslib: 1.14.1
-    dev: false
 
   /turbo-darwin-64@1.11.2:
     resolution: {integrity: sha512-toFmRG/adriZY3hOps7nYCfqHAS+Ci6xqgX3fbo82kkLpC6OBzcXnleSwuPqjHVAaRNhVoB83L5njcE9Qwi2og==}

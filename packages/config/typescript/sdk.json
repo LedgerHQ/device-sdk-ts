@@ -1,7 +1,9 @@
 {
   "extends": "@tsconfig/recommended/tsconfig.json",
   "compilerOptions": {
-    "target": "ES2022",
+    "target": "esnext",
+    "lib": ["esnext", "dom"],
+    "types": ["reflect-metadata"],
     "sourceMap": true,
     "declaration": true,
     "declarationMap": true,
@@ -22,6 +24,7 @@
     "esModuleInterop": true,
     "forceConsistentCasingInFileNames": true,
     "experimentalDecorators": true,
+    "stripInternal": true,
     "emitDecoratorMetadata": true
   },
   "exclude": ["node_modules"]
