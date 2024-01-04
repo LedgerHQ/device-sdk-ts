@@ -1,4 +1,1 @@
-
-export class Response {
-
-}
+export class Response {}

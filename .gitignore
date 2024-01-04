@@ -19,6 +19,7 @@ node_modules
 
 # IDE
 .idea
+.vscode
 *.iml
 
 # misc

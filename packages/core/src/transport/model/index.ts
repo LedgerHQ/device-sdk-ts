@@ -1,1 +1,1 @@
-export { Response } from "./Response";
+export type { Response } from "./Response";

@@ -1,6 +1,5 @@
 #!/usr/bin/env zx
-import { basename } from 'path';
-
+import { basename } from "node:path";
 const features = argv._;
 
 if (!features.length) {
