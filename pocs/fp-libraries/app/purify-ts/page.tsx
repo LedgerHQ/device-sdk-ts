@@ -10,6 +10,7 @@ export default function Page() {
   const inputRef = useRef<HTMLInputElement>(null);
   const [result, setResult] = useState<Move | null>();
   const [pokemon, setPokemon] = useState<string>();
+  const [error, setError] = useState<string | null>();
 
   const onClick = async (
     e: SyntheticEvent<HTMLFormElement | HTMLButtonElement>
@@ -20,14 +21,17 @@ export default function Page() {
     const p = await findStrongestMove(inputRef?.current?.value);
     if (p.isLeft()) {
       console.log("we got an error");
+      const errorExtracted = p.extract();
+      setError(errorExtracted.message);
       setResult(null);
       setPokemon("");
     }
 
     if (p.isRight()) {
-      const extracted = p.extract();
-      setResult(extracted);
+      const valueExtracted = p.extract();
+      setResult(valueExtracted);
       setPokemon(inputRef?.current?.value);
+      setError(null);
     }
   };
 
@@ -42,6 +46,14 @@ export default function Page() {
           Search
         </button>
       </form>
+      {error ? (
+        <section className={`${styles.main} ${styles.sub}`}>
+          <h2>Error</h2>
+          <section className={styles.main}>
+            <p>{error}</p>
+          </section>
+        </section>
+      ) : null}
       {result ? (
         <section className={`${styles.main} ${styles.sub}`}>
           <h2>Result</h2>

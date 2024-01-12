@@ -11,6 +11,7 @@ export default function Page() {
   const inputRef = useRef<HTMLInputElement>(null);
   const [result, setResult] = useState<Move | null>();
   const [pokemon, setPokemon] = useState<string>();
+  const [error, setError] = useState<string | null>();
 
   const onClick = async (
     e: SyntheticEvent<HTMLFormElement | HTMLButtonElement>
@@ -18,16 +19,20 @@ export default function Page() {
     e.preventDefault();
     if (!inputRef?.current?.value) return;
 
-    Effect.runPromise(findStrongestMoveGen(inputRef.current.value))
-      .then((move) => {
-        setResult(move);
-        setPokemon(inputRef?.current?.value);
-      })
-      .catch((reason): void => {
-        console.log(reason);
-        setResult(null);
-        setPokemon("");
-      });
+    Effect.runPromise(
+      findStrongestMoveGen(inputRef.current.value).pipe(
+        Effect.catchAll((err) => {
+          setResult(null);
+          setPokemon("");
+          setError(err.message);
+          return Effect.fail(err);
+        })
+      )
+    ).then((move) => {
+      setResult(move);
+      setPokemon(inputRef?.current?.value);
+      setError(null);
+    });
   };
 
   return (
@@ -41,6 +46,14 @@ export default function Page() {
           Search
         </button>
       </form>
+      {error ? (
+        <section className={`${styles.main} ${styles.sub}`}>
+          <h2>Error</h2>
+          <section className={styles.main}>
+            <p>{error}</p>
+          </section>
+        </section>
+      ) : null}
       {result ? (
         <section className={`${styles.main} ${styles.sub}`}>
           <h2>Result</h2>

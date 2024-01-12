@@ -23,7 +23,7 @@ export const fetchMove = (url: string) =>
       const json = await res.json();
       return json as Move;
     },
-    catch: (err) => new PokeApiError("could not get move"),
+    catch: (err) => new PokeApiError(`could not get move: ${err}`),
   });
 
 export const findStrongest = (moves: Move[]): Move =>

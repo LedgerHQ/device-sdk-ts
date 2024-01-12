@@ -1,6 +1,5 @@
-import { Either } from "purify-ts";
 import { EitherAsync } from "purify-ts/EitherAsync";
-import { Move, MoveMeta, PokeApiError, Pokemon } from "../common/types";
+import { Move, PokeApiError, Pokemon } from "../common/types";
 
 const POKEAPI_BASE = "https://pokeapi.co/api/v2";
 const POKEMON_DOMAIN = "pokemon";
