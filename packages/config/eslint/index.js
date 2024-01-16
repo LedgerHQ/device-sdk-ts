@@ -61,5 +61,13 @@ module.exports = {
         ],
       },
     },
+    {
+      files: ["**/*.mjs"],
+      env: {
+        es6: true,
+        node: true,
+        console: true,
+      },
+    },
   ],
 };
