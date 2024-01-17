@@ -3,7 +3,7 @@
   "compilerOptions": {
     "target": "esnext",
     "lib": ["esnext", "dom"],
-    "types": ["reflect-metadata"],
+    "types": ["reflect-metadata", "jest", "node"],
     "sourceMap": true,
     "declaration": true,
     "declarationMap": true,

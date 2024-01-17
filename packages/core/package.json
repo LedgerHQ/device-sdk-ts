@@ -13,7 +13,7 @@
     "lint": "eslint --cache --ext .ts \"src\"",
     "lint:fix": "eslint --cache --fix --ext .ts \"src\"",
     "feature": "zx scripts/add-feature.mjs",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "jest --passWithNoTests"
   },
   "dependencies": {
     "inversify": "^6.0.2",
@@ -21,6 +21,7 @@
   },
   "devDependencies": {
     "@ledgerhq/eslint-config-dsdk": "workspace:*",
-    "@ledgerhq/tsconfig-dsdk": "workspace:*"
+    "@ledgerhq/tsconfig-dsdk": "workspace:*",
+    "@ledgerhq/jest-config-dsdk": "workspace:*"
   }
 }
