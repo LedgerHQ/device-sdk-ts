@@ -1,0 +1,26 @@
+name: pull_request
+on: [pull_request]
+jobs:
+  lint:
+    runs-on: [device-sdk-4xlarge-linux]
+    env:
+      CI_JOB_NUMBER: 1
+    steps:
+      - uses: actions/checkout@v3
+
+      - uses: ./actions/setup-toolchain-composite
+
+      - name: Lint
+        run: pnpm lint
+
+  test:
+    runs-on: [device-sdk-4xlarge-linux]
+    env:
+      CI_JOB_NUMBER: 1
+    steps:
+      - uses: actions/checkout@v3
+
+      - uses: ./actions/setup-toolchain-composite
+
+      - name: Test
+        run: pnpm test

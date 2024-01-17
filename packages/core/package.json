@@ -1,0 +1,27 @@
+{
+  "name": "@ledgerhq/device-sdk-core",
+  "version": "1.0.0",
+  "license": "MIT",
+  "main": "lib/index.js",
+  "types": "lib/index.d.ts",
+  "files": [
+    "./lib"
+  ],
+  "scripts": {
+    "build": "rm -rf lib && tsc",
+    "dev": "tsc --watch",
+    "lint": "eslint --cache --ext .ts \"src\"",
+    "lint:fix": "eslint --cache --fix --ext .ts \"src\"",
+    "feature": "zx scripts/add-feature.mjs",
+    "test": "jest --passWithNoTests"
+  },
+  "dependencies": {
+    "inversify": "^6.0.2",
+    "reflect-metadata": "^0.2.1"
+  },
+  "devDependencies": {
+    "@ledgerhq/eslint-config-dsdk": "workspace:*",
+    "@ledgerhq/tsconfig-dsdk": "workspace:*",
+    "@ledgerhq/jest-config-dsdk": "workspace:*"
+  }
+}

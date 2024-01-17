@@ -1,0 +1,26 @@
+{
+  "name": "@ledgerhq/device-sdk-trusted-apps",
+  "version": "1.0.0",
+  "license": "MIT",
+  "main": "lib/index.js",
+  "types": "lib/index.d.ts",
+  "files": [
+    "./lib"
+  ],
+  "scripts": {
+    "build": "rm -rf lib && tsc",
+    "lint": "eslint --cache --ext .ts \"src\"",
+    "lint:fix": "eslint --cache --fix --ext .ts \"src\"",
+    "dev": "tsc --watch",
+    "test": "jest --passWithNoTests"
+  },
+  "dependencies": {
+    "inversify": "^6.0.2",
+    "reflect-metadata": "^0.2.1"
+  },
+  "devDependencies": {
+    "@ledgerhq/tsconfig-dsdk": "workspace:*",
+    "@ledgerhq/eslint-config-dsdk": "workspace:*",
+    "@ledgerhq/jest-config-dsdk": "workspace:*"
+  }
+}
