@@ -25,7 +25,8 @@
     "forceConsistentCasingInFileNames": true,
     "experimentalDecorators": true,
     "stripInternal": true,
-    "emitDecoratorMetadata": true
+    "emitDecoratorMetadata": true,
+    "moduleResolution": "NodeNext"
   },
   "exclude": ["node_modules"]
 }
