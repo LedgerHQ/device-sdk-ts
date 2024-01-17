@@ -26,7 +26,8 @@
     "experimentalDecorators": true,
     "stripInternal": true,
     "emitDecoratorMetadata": true,
-    "moduleResolution": "NodeNext"
+    "moduleResolution": "NodeNext",
+    "module": "NodeNext"
   },
   "exclude": ["node_modules"]
 }
