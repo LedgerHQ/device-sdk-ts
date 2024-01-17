@@ -15,13 +15,6 @@ module.exports = {
   env: {
     es6: true,
   },
-  settings: {
-    "import/resolver": {
-      typescript: {
-        project,
-      },
-    },
-  },
   ignorePatterns: [
     // Ignore dotfiles
     ".*.js",
@@ -37,10 +30,6 @@ module.exports = {
         "plugin:@typescript-eslint/stylistic-type-checked",
         "prettier",
       ],
-      parserOptions: {
-        project: [resolve(process.cwd(), "tsconfig.json")],
-        // tsconfigRootDir: __dirname,
-      },
       rules: {
         "import/prefer-default-export": "off",
         "no-void": "off",
@@ -62,7 +51,7 @@ module.exports = {
       },
     },
     {
-      files: ["**/*.mjs"],
+      files: ["**/scripts/*.mjs"],
       env: {
         es6: true,
         node: true,
