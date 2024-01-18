@@ -57,6 +57,9 @@ importers:
       '@ledgerhq/tsconfig-dsdk':
         specifier: workspace:*
         version: link:../../packages/config/typescript
+      '@types/react':
+        specifier: ^18
+        version: 18.2.45
       autoprefixer:
         specifier: ^10.0.1
         version: 10.4.16(postcss@8.4.32)
