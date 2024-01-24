@@ -9,7 +9,7 @@ import { types } from "../di/configTypes";
  * We will have many use cases in our SDK, and each should be contained in its own file.
  */
 @injectable()
-export class GetSDKVersionUseCase {
+export class GetSdkVersionUseCase {
   private _configService: ConfigService;
   constructor(@inject(types.ConfigService) configService: ConfigService) {
     this._configService = configService;

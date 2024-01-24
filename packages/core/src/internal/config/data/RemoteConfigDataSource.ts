@@ -1,7 +1,7 @@
 import { injectable } from "inversify";
 import "reflect-metadata";
 import { RemoteConfigDataSource } from "./ConfigDataSource";
-import { ConfigDTO } from "./DTO";
+import { ConfigDto } from "./Dto";
 import { Config } from "../model/Config";
 
 /**
@@ -12,7 +12,7 @@ import { Config } from "../model/Config";
 export class RestRemoteConfigDataSource implements RemoteConfigDataSource {
   async getConfig() {
     // Fake API call
-    const v = await new Promise<{ json: () => Promise<ConfigDTO> }>(
+    const v = await new Promise<{ json: () => Promise<ConfigDto> }>(
       (resolve) => {
         resolve({
           json: async () =>
@@ -33,7 +33,7 @@ export class RestRemoteConfigDataSource implements RemoteConfigDataSource {
 
   // Parser for the DTO
   // parserResponse: ConfigDTO => Config
-  private _parseResponse(dto: ConfigDTO): Config {
+  private _parseResponse(dto: ConfigDto): Config {
     const { name, version } = dto;
     return { name, version };
   }

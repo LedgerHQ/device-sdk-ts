@@ -1,28 +1,27 @@
 #!/usr/bin/env zx
 import "zx/globals";
 import { basename } from "node:path";
-const features = argv._;
+const modules = argv._;
 
-if (!features.length) {
+if (!modules.length) {
   console.error(`Usage: ${basename(__filename)} <feature1> [<feature2> ...]`);
   process.exit(1);
 }
 
 within(async () => {
   cd("src/internal");
-  for (const feature of features) {
-    const rootFolderName = `${feature}`;
-    const featureUppercased =
-      feature.charAt(0).toUpperCase() + feature.slice(1);
+  for (const mod of modules) {
+    const rootFolderName = `${mod}`;
+    const featureUppercased = mod.charAt(0).toUpperCase() + mod.slice(1);
     await $`mkdir ${rootFolderName}`;
     within(async () => {
       cd(rootFolderName);
       await $`mkdir data di model service usecase`;
       const files = [
         `data/${featureUppercased}DataSource.ts`,
-        `di/${feature}Module.test.ts`,
-        `di/${feature}Module.ts`,
-        `di/${feature}Types.ts`,
+        `di/${mod}Module.test.ts`,
+        `di/${mod}Module.ts`,
+        `di/${mod}Types.ts`,
         `model/.gitkeep`,
         `service/${featureUppercased}Service.ts`,
         `service/Default${featureUppercased}Service.test.ts`,

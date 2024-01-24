@@ -8,16 +8,20 @@ import {
   RestRemoteConfigDataSource,
 } from "../data/RemoteConfigDataSource";
 import { DefaultConfigService } from "../service/DefaultConfigService";
-import { GetSDKVersionUseCase } from "../usecase/GetSdkVersionUseCase";
+import { GetSdkVersionUseCase } from "../usecase/GetSdkVersionUseCase";
 import { types } from "./configTypes";
 
 // This module is used to configure the dependency injection container
 // This is where we will bind our interfaces to their implementations (or mocks...)
-const configModuleFactory = (mock = false) =>
+type FactoryProps = {
+  mock?: boolean;
+};
+
+const configModuleFactory = ({ mock = false }: FactoryProps) =>
   new ContainerModule((bind, _unbind, _isBound, rebind) => {
     bind(types.LocalConfigDataSource).to(FileLocalConfigDataSource);
     bind(types.RemoteConfigDataSource).to(RestRemoteConfigDataSource);
-    bind(types.GetSDKVersionUseCase).to(GetSDKVersionUseCase);
+    bind(types.GetSdkVersionUseCase).to(GetSdkVersionUseCase);
     bind(types.ConfigService).to(DefaultConfigService);
 
     if (mock) {

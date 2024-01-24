@@ -1,8 +1,8 @@
-import { GetSDKVersionUseCase } from "./GetSdkVersionUseCase";
+import { GetSdkVersionUseCase } from "./GetSdkVersionUseCase";
 
 const getSdkVersionMock = jest.fn();
 
-let usecase: GetSDKVersionUseCase;
+let usecase: GetSdkVersionUseCase;
 describe("GetSdkVersionUseCase", () => {
   beforeEach(() => {
     getSdkVersionMock.mockClear();
@@ -10,7 +10,7 @@ describe("GetSdkVersionUseCase", () => {
       getSdkVersion: getSdkVersionMock,
     };
 
-    usecase = new GetSDKVersionUseCase(configService);
+    usecase = new GetSdkVersionUseCase(configService);
   });
 
   it("should return the sdk version", async () => {
