@@ -20,18 +20,3 @@ export class FileLocalConfigDataSource implements LocalConfigDataSource {
     return JSON.parse(version) as Config;
   }
 }
-
-/**
- *
- * class MockLocalConfigDataSource
- *
- */
-@injectable()
-export class MockLocalConfigDataSource implements LocalConfigDataSource {
-  getConfig(): Config {
-    return {
-      name: "DeviceSDK",
-      version: "0.0.0-mock.1",
-    };
-  }
-}

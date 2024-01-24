@@ -30,26 +30,10 @@ export class RestRemoteConfigDataSource implements RemoteConfigDataSource {
     return config;
   }
 
-  // Parser for the DTO
-  // parserResponse: ConfigDTO => Config
+  // Parser for the Dto
+  // parserResponse: ConfigDto => Config
   private _parseResponse(dto: ConfigDto): Config {
     const { name, version } = dto;
     return { name, version };
-  }
-}
-
-/**
- * class RemoteRestConfigDataSource
- * This is a remote data source that reads the config from a remote API (example).
- */
-@injectable()
-export class MockRemoteConfigDataSource implements RemoteConfigDataSource {
-  async getConfig(): Promise<Config> {
-    return new Promise((res) =>
-      res({
-        name: "DeviceSDK",
-        version: "0.0.0-fake.2",
-      })
-    );
   }
 }

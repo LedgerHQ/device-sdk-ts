@@ -5,6 +5,7 @@ import type {
   LocalConfigDataSource,
   RemoteConfigDataSource,
 } from "../data/ConfigDataSource";
+import { Config } from "../model/Config";
 
 @injectable()
 export class DefaultConfigService implements ConfigService {
@@ -18,12 +19,12 @@ export class DefaultConfigService implements ConfigService {
     this._remote = remote;
   }
 
-  async getSdkVersion(): Promise<string> {
+  async getSdkConfig(): Promise<Config> {
     const localConfig = this._local.getConfig();
     if (localConfig?.version) {
-      return this._local.getConfig().version;
+      return this._local.getConfig();
     }
 
-    return this._remote.getConfig().then((config) => config.version);
+    return this._remote.getConfig().then((config) => config);
   }
 }

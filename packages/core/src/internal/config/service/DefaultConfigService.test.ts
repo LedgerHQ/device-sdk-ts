@@ -25,7 +25,10 @@ describe("DefaultConfigService", () => {
         version: "1.0.0-local",
       });
 
-      expect(await service.getSdkVersion()).toBe("1.0.0-local");
+      expect(await service.getSdkConfig()).toStrictEqual({
+        name: "DeviceSDK",
+        version: "1.0.0-local",
+      });
     });
   });
 
@@ -37,7 +40,10 @@ describe("DefaultConfigService", () => {
         version: "1.0.0-remote",
       });
 
-      expect(await service.getSdkVersion()).toBe("1.0.0-remote");
+      expect(await service.getSdkConfig()).toStrictEqual({
+        name: "DeviceSDK",
+        version: "1.0.0-remote",
+      });
     });
   });
 });

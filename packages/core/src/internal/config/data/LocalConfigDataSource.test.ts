@@ -1,9 +1,7 @@
 import fs from "fs";
 import { LocalConfigDataSource } from "./ConfigDataSource";
-import {
-  FileLocalConfigDataSource,
-  MockLocalConfigDataSource,
-} from "./LocalConfigDataSource";
+import { FileLocalConfigDataSource } from "./LocalConfigDataSource";
+import { StubLocalConfigDataSource } from "./LocalConfigDataSource.stub";
 
 const readFileSyncSpy = jest.spyOn(fs, "readFileSync");
 
@@ -26,9 +24,9 @@ describe("LocalConfigDataSource", () => {
     });
   });
 
-  describe("MockLocalConfigDataSource", () => {
+  describe("StubLocalConfigDataSource", () => {
     beforeEach(() => {
-      datasource = new MockLocalConfigDataSource();
+      datasource = new StubLocalConfigDataSource();
     });
 
     it("should return the config", () => {

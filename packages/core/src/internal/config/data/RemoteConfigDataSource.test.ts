@@ -1,8 +1,6 @@
 import { RemoteConfigDataSource } from "./ConfigDataSource";
-import {
-  RestRemoteConfigDataSource,
-  MockRemoteConfigDataSource,
-} from "./RemoteConfigDataSource";
+import { RestRemoteConfigDataSource } from "./RemoteConfigDataSource";
+import { StubRemoteConfigDataSource } from "./RemoteConfigDataSource.stub";
 
 let datasource: RemoteConfigDataSource;
 describe("RemoteRestConfigDataSource", () => {
@@ -20,7 +18,7 @@ describe("RemoteRestConfigDataSource", () => {
   });
   describe("MockRemoteConfigDataSource", () => {
     beforeAll(() => {
-      datasource = new MockRemoteConfigDataSource();
+      datasource = new StubRemoteConfigDataSource();
     });
 
     it("should return the config", async () => {

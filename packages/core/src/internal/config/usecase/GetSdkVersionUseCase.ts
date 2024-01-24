@@ -14,6 +14,6 @@ export class GetSdkVersionUseCase {
     this._configService = configService;
   }
   async getSdkVersion(): Promise<string> {
-    return await this._configService.getSdkVersion();
+    return (await this._configService.getSdkConfig()).version;
   }
 }

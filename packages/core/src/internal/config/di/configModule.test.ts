@@ -1,14 +1,10 @@
 import { Container } from "inversify";
 import configModuleFactory from "./configModule";
 import { types } from "./configTypes";
-import {
-  FileLocalConfigDataSource,
-  MockLocalConfigDataSource,
-} from "../data/LocalConfigDataSource";
-import {
-  MockRemoteConfigDataSource,
-  RestRemoteConfigDataSource,
-} from "../data/RemoteConfigDataSource";
+import { FileLocalConfigDataSource } from "../data/LocalConfigDataSource";
+import { StubLocalConfigDataSource } from "../data/LocalConfigDataSource.stub";
+import { RestRemoteConfigDataSource } from "../data/RemoteConfigDataSource";
+import { StubRemoteConfigDataSource } from "../data/RemoteConfigDataSource.stub";
 
 describe("configModuleFactory", () => {
   describe("Default", () => {
@@ -48,8 +44,8 @@ describe("configModuleFactory", () => {
     it("should return mocked data sources", () => {
       const localDataSource = container.get(types.LocalConfigDataSource);
       const remoteDataSource = container.get(types.RemoteConfigDataSource);
-      expect(localDataSource).toBeInstanceOf(MockLocalConfigDataSource);
-      expect(remoteDataSource).toBeInstanceOf(MockRemoteConfigDataSource);
+      expect(localDataSource).toBeInstanceOf(StubLocalConfigDataSource);
+      expect(remoteDataSource).toBeInstanceOf(StubRemoteConfigDataSource);
     });
   });
 });

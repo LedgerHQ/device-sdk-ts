@@ -1,12 +1,8 @@
 import { ContainerModule } from "inversify";
-import {
-  FileLocalConfigDataSource,
-  MockLocalConfigDataSource,
-} from "../data/LocalConfigDataSource";
-import {
-  MockRemoteConfigDataSource,
-  RestRemoteConfigDataSource,
-} from "../data/RemoteConfigDataSource";
+import { FileLocalConfigDataSource } from "../data/LocalConfigDataSource";
+import { StubLocalConfigDataSource } from "../data/LocalConfigDataSource.stub";
+import { RestRemoteConfigDataSource } from "../data/RemoteConfigDataSource";
+import { StubRemoteConfigDataSource } from "../data/RemoteConfigDataSource.stub";
 import { DefaultConfigService } from "../service/DefaultConfigService";
 import { GetSdkVersionUseCase } from "../usecase/GetSdkVersionUseCase";
 import { types } from "./configTypes";
@@ -26,8 +22,8 @@ const configModuleFactory = ({ mock = false }: Partial<FactoryProps> = {}) =>
 
     if (mock) {
       // We can rebind our interfaces to their mock implementations
-      rebind(types.LocalConfigDataSource).to(MockLocalConfigDataSource);
-      rebind(types.RemoteConfigDataSource).to(MockRemoteConfigDataSource);
+      rebind(types.LocalConfigDataSource).to(StubLocalConfigDataSource);
+      rebind(types.RemoteConfigDataSource).to(StubRemoteConfigDataSource);
     }
   });
 

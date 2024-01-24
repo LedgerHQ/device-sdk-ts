@@ -1,3 +1,5 @@
+import { Config } from "../model/Config";
+
 export interface ConfigService {
-  getSdkVersion(): Promise<string>;
+  getSdkConfig(): Promise<Config>;
 }

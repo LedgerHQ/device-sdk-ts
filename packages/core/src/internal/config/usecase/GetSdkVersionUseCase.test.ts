@@ -1,20 +1,23 @@
 import { GetSdkVersionUseCase } from "./GetSdkVersionUseCase";
 
-const getSdkVersionMock = jest.fn();
+const getSdkConfigMock = jest.fn();
 
 let usecase: GetSdkVersionUseCase;
 describe("GetSdkVersionUseCase", () => {
   beforeEach(() => {
-    getSdkVersionMock.mockClear();
+    getSdkConfigMock.mockClear();
     const configService = {
-      getSdkVersion: getSdkVersionMock,
+      getSdkConfig: getSdkConfigMock,
     };
 
     usecase = new GetSdkVersionUseCase(configService);
   });
 
   it("should return the sdk version", async () => {
-    getSdkVersionMock.mockResolvedValue("1.0.0");
-    expect(await usecase.getSdkVersion()).toBe("1.0.0");
+    getSdkConfigMock.mockResolvedValue({
+      name: "DeviceSDK",
+      version: "1.0.0-mock.1",
+    });
+    expect(await usecase.getSdkVersion()).toBe("1.0.0-mock.1");
   });
 });

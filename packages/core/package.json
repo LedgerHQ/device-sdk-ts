@@ -12,7 +12,7 @@
     "dev": "tsc --watch",
     "lint": "eslint --cache --ext .ts \"src\"",
     "lint:fix": "eslint --cache --fix --ext .ts \"src\"",
-    "test:unit": "jest --coverage --collectCoverageFrom=\"src/internal/**/*.ts\" src",
+    "test:unit": "jest --coverage src",
     "module:init": "zx scripts/add-module.mjs",
     "run:index": "ts-node src/index.ts"
   },
