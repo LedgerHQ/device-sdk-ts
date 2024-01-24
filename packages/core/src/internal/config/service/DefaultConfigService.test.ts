@@ -1,5 +1,7 @@
+import { Either, Left } from "purify-ts";
 import { ConfigService } from "./ConfigService";
 import { DefaultConfigService } from "./DefaultConfigService";
+import { JSONParseError } from "../di/configTypes";
 
 const localDataSource = {
   getConfig: jest.fn(),
@@ -20,10 +22,12 @@ describe("DefaultConfigService", () => {
 
   describe("when the local config is available", () => {
     it("should return the `local` version", async () => {
-      localDataSource.getConfig.mockReturnValue({
-        name: "DeviceSDK",
-        version: "1.0.0-local",
-      });
+      localDataSource.getConfig.mockReturnValue(
+        Either.of({
+          name: "DeviceSDK",
+          version: "1.0.0-local",
+        })
+      );
 
       expect(await service.getSdkConfig()).toStrictEqual({
         name: "DeviceSDK",
@@ -32,17 +36,31 @@ describe("DefaultConfigService", () => {
     });
   });
 
-  describe("when the local config is not available", () => {
+  describe("when the local config is not available, use remote", () => {
     it("should return the `remote` version", async () => {
-      localDataSource.getConfig.mockReturnValue("");
-      remoteDataSource.getConfig.mockResolvedValue({
-        name: "DeviceSDK",
-        version: "1.0.0-remote",
-      });
+      localDataSource.getConfig.mockReturnValue(Left(new JSONParseError()));
+      remoteDataSource.getConfig.mockResolvedValue(
+        Either.of({
+          name: "DeviceSDK",
+          version: "1.0.0-remote",
+        })
+      );
 
       expect(await service.getSdkConfig()).toStrictEqual({
         name: "DeviceSDK",
         version: "1.0.0-remote",
+      });
+    });
+  });
+
+  describe("when the local remote config are not available", () => {
+    it("should return the `default` version", async () => {
+      localDataSource.getConfig.mockReturnValue(Left(new JSONParseError()));
+      remoteDataSource.getConfig.mockResolvedValue(Left(new JSONParseError()));
+
+      expect(await service.getSdkConfig()).toStrictEqual({
+        name: "DeadSdk",
+        version: "0.0.0-dead.1",
       });
     });
   });

@@ -1,30 +1,148 @@
+import { Either, Left } from "purify-ts";
 import { RemoteConfigDataSource } from "./ConfigDataSource";
 import { RestRemoteConfigDataSource } from "./RemoteConfigDataSource";
-import { StubRemoteConfigDataSource } from "./RemoteConfigDataSource.stub";
+import {
+  ApiCallError,
+  JSONParseError,
+  ParseResponseError,
+} from "../di/configTypes";
 
 let datasource: RemoteConfigDataSource;
+const callApiSpy = jest.spyOn(
+  RestRemoteConfigDataSource.prototype as any,
+  "_callApi"
+);
+const parseResponseSpy = jest.spyOn(
+  RestRemoteConfigDataSource.prototype as any,
+  "_parseResponse"
+);
+
 describe("RemoteRestConfigDataSource", () => {
   describe("RestRemoteConfigDataSource", () => {
-    beforeAll(() => {
+    beforeEach(() => {
+      callApiSpy.mockClear();
+      parseResponseSpy.mockClear();
       datasource = new RestRemoteConfigDataSource();
     });
 
-    it("should return the config", async () => {
-      expect(await datasource.getConfig()).toStrictEqual({
-        name: "DeviceSDK",
-        version: "0.0.0-fake.1",
-      });
-    });
-  });
-  describe("MockRemoteConfigDataSource", () => {
-    beforeAll(() => {
-      datasource = new StubRemoteConfigDataSource();
+    it("should return an Either<never, Config>", async () => {
+      callApiSpy.mockResolvedValue(
+        Either.of({
+          ok: true,
+          json: () =>
+            Promise.resolve(
+              Either.of({ name: "DeviceSDK", version: "0.0.0-fake.1" })
+            ),
+        })
+      );
+
+      parseResponseSpy.mockReturnValue(
+        Either.of({
+          name: "DeviceSDK",
+          version: "0.0.0-fake.1",
+        })
+      );
+
+      expect(await datasource.getConfig()).toStrictEqual(
+        Either.of({
+          name: "DeviceSDK",
+          version: "0.0.0-fake.1",
+        })
+      );
     });
 
-    it("should return the config", async () => {
-      expect(await datasource.getConfig()).toStrictEqual({
-        name: "DeviceSDK",
-        version: "0.0.0-fake.2",
+    it("should return an Either<ApiCallError, never> if _callApi throws", async () => {
+      const err = new Error("_callApi error");
+      callApiSpy.mockResolvedValue(Left(err));
+
+      expect(await datasource.getConfig()).toStrictEqual(
+        Left(new ApiCallError(err))
+      );
+    });
+
+    it("should return an Either<ApiCallError, never> if _callApi returns a non-ok response", async () => {
+      callApiSpy.mockResolvedValue(
+        Either.of({
+          ok: false,
+          json: () =>
+            Promise.resolve(
+              Either.of({ name: "DeviceSDK", version: "0.0.0-fake.1" })
+            ),
+        })
+      );
+
+      expect(await datasource.getConfig()).toStrictEqual(
+        Left(new ApiCallError(new Error("response not ok")))
+      );
+    });
+
+    it("should return an Either<JSONParseError, never> if deserializing json fails", async () => {
+      const err = new Error("deserializing json failure");
+      callApiSpy.mockResolvedValue(
+        Either.of({
+          ok: true,
+          json: () => Promise.resolve(Left(err)),
+        })
+      );
+
+      expect(await datasource.getConfig()).toStrictEqual(
+        Left(new JSONParseError())
+      );
+    });
+
+    it("should return an Either<ParseResponseError, never> if _parseResponse throws", async () => {
+      callApiSpy.mockResolvedValue(
+        Either.of({
+          ok: true,
+          json: () =>
+            Promise.resolve(
+              Either.of({ name: "DeviceSDK", version: "0.0.0-fake.1" })
+            ),
+        })
+      );
+
+      parseResponseSpy.mockImplementation(() => {
+        return Left(new ParseResponseError());
+      });
+
+      expect(await datasource.getConfig()).toStrictEqual(
+        Left(new ParseResponseError())
+      );
+    });
+
+    it("should return an Either<ParseResponseError, never> if `name` is missing in Dto", async () => {
+      parseResponseSpy.mockRestore();
+      callApiSpy.mockResolvedValue(
+        Either.of({
+          ok: true,
+          json: () =>
+            Promise.resolve(
+              Either.of({
+                version: "0.0.0-fake.1",
+                yolo: "yolo",
+              })
+            ),
+        })
+      );
+
+      expect(await datasource.getConfig()).toStrictEqual(
+        Left(new ParseResponseError())
+      );
+    });
+
+    describe("without private methods spy", () => {
+      beforeEach(() => {
+        callApiSpy.mockRestore();
+        parseResponseSpy.mockRestore();
+      });
+
+      it("should return an Either<never, Config>", async () => {
+        expect(await datasource.getConfig()).toStrictEqual(
+          Either.of({
+            name: "DeviceSDK",
+            version: "0.0.0-fake.1",
+          })
+        );
       });
     });
   });

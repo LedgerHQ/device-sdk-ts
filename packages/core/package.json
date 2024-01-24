@@ -12,13 +12,16 @@
     "dev": "tsc --watch",
     "lint": "eslint --cache --ext .ts \"src\"",
     "lint:fix": "eslint --cache --fix --ext .ts \"src\"",
-    "test:unit": "jest --coverage src",
+    "test": "jest src",
+    "test:watch": "pnpm test -- --watch",
+    "test:coverage": "pnpm test -- --coverage",
     "module:init": "zx scripts/add-module.mjs",
     "run:index": "ts-node src/index.ts"
   },
   "dependencies": {
     "inversify": "^6.0.2",
     "inversify-logger-middleware": "^3.1.0",
+    "purify-ts": "^2.0.3",
     "reflect-metadata": "^0.2.1"
   },
   "devDependencies": {

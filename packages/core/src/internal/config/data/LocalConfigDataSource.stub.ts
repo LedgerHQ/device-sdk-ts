@@ -1,6 +1,7 @@
 import { injectable } from "inversify";
 import { Config } from "../model/Config";
 import { LocalConfigDataSource } from "./ConfigDataSource";
+import { Either } from "purify-ts";
 
 /**
  *
@@ -10,10 +11,10 @@ import { LocalConfigDataSource } from "./ConfigDataSource";
 
 @injectable()
 export class StubLocalConfigDataSource implements LocalConfigDataSource {
-  getConfig(): Config {
-    return {
+  getConfig(): Either<never, Config> {
+    return Either.of({
       name: "DeviceSDK",
       version: "0.0.0-mock.1",
-    };
+    });
   }
 }

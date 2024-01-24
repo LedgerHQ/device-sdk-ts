@@ -1,6 +1,7 @@
 import { injectable } from "inversify";
 import { RemoteConfigDataSource } from "./ConfigDataSource";
 import { Config } from "../model/Config";
+import { Either } from "purify-ts";
 
 /**
  * class RemoteRestConfigDataSource
@@ -8,12 +9,14 @@ import { Config } from "../model/Config";
  */
 @injectable()
 export class StubRemoteConfigDataSource implements RemoteConfigDataSource {
-  async getConfig(): Promise<Config> {
+  async getConfig(): Promise<Either<never, Config>> {
     return new Promise((res) =>
-      res({
-        name: "DeviceSDK",
-        version: "0.0.0-fake.2",
-      })
+      res(
+        Either.of({
+          name: "DeviceSDK",
+          version: "0.0.0-fake.2",
+        })
+      )
     );
   }
 }
