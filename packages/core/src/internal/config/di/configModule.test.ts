@@ -36,7 +36,7 @@ describe("configModuleFactory", () => {
     let container: Container;
     let mod: ReturnType<typeof configModuleFactory>;
     beforeAll(() => {
-      mod = configModuleFactory(true);
+      mod = configModuleFactory({ mock: true });
       container = new Container();
       container.load(mod);
     });

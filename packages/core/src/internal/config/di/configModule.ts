@@ -14,10 +14,10 @@ import { types } from "./configTypes";
 // This module is used to configure the dependency injection container
 // This is where we will bind our interfaces to their implementations (or mocks...)
 type FactoryProps = {
-  mock?: boolean;
+  mock: boolean;
 };
 
-const configModuleFactory = ({ mock = false }: FactoryProps) =>
+const configModuleFactory = ({ mock = false }: Partial<FactoryProps> = {}) =>
   new ContainerModule((bind, _unbind, _isBound, rebind) => {
     bind(types.LocalConfigDataSource).to(FileLocalConfigDataSource);
     bind(types.RemoteConfigDataSource).to(RestRemoteConfigDataSource);

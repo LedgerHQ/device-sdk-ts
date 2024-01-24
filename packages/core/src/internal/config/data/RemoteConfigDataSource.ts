@@ -1,5 +1,4 @@
 import { injectable } from "inversify";
-import "reflect-metadata";
 import { RemoteConfigDataSource } from "./ConfigDataSource";
 import { ConfigDto } from "./Dto";
 import { Config } from "../model/Config";

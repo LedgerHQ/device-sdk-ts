@@ -1,5 +1,4 @@
 import { inject, injectable } from "inversify";
-import "reflect-metadata";
 import { ConfigService } from "./ConfigService";
 import { types } from "../di/configTypes";
 import type {

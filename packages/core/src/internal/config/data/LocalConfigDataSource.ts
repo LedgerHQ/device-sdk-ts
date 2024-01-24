@@ -1,6 +1,5 @@
 import fs from "fs";
 import { injectable } from "inversify";
-import "reflect-metadata";
 import { Config } from "../model/Config";
 import { LocalConfigDataSource } from "./ConfigDataSource";
 import path from "path";
