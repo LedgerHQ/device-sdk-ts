@@ -8,8 +8,8 @@
     "./lib"
   ],
   "scripts": {
-    "build": "rm -rf lib && tsc",
-    "dev": "tsc --watch",
+    "build": "rm -rf lib && tsc && tsc-alias",
+    "dev": "tsc && (concurrently \"tsc -w\" \"tsc-alias -w\")",
     "lint": "eslint --cache --ext .ts \"src\"",
     "lint:fix": "eslint --cache --fix --ext .ts \"src\"",
     "test": "jest src",
@@ -28,6 +28,8 @@
     "@ledgerhq/eslint-config-dsdk": "workspace:*",
     "@ledgerhq/jest-config-dsdk": "workspace:*",
     "@ledgerhq/tsconfig-dsdk": "workspace:*",
-    "ts-node": "^10.9.2"
+    "concurrently": "^8.2.2",
+    "ts-node": "^10.9.2",
+    "tsc-alias": "^1.8.8"
   }
 }

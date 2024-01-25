@@ -2,9 +2,9 @@
   "extends": "@ledgerhq/tsconfig-dsdk/sdk",
   "compilerOptions": {
     "outDir": "./lib",
-    "baseUrl": "./src",
+    "baseUrl": ".",
     "paths": {
-      "@internal/*": ["internal/*"]
+      "@internal/*": ["src/internal/*"]
     }
   },
   "include": ["src/**/*", "jest.config.ts", "jest.setup.ts"]
