@@ -8,8 +8,8 @@
     "./lib"
   ],
   "scripts": {
-    "build": "rimraf lib && tsc -p tsconfig.prod.json && tsc-alias -p tsconfig.prod.json",
-    "dev": "tsc && (concurrently \"tsc -w -p tsconfig.prod.json\" \"tsc-alias -w -p tsconfig.prod.json\")",
+    "build": "rm -rf lib && rollup -c",
+    "dev": "rollup -c -w",
     "lint": "eslint --cache --ext .ts \"src\"",
     "lint:fix": "eslint --cache --fix --ext .ts \"src\"",
     "test": "jest src",
@@ -27,8 +27,9 @@
     "@ledgerhq/eslint-config-dsdk": "workspace:*",
     "@ledgerhq/jest-config-dsdk": "workspace:*",
     "@ledgerhq/tsconfig-dsdk": "workspace:*",
-    "concurrently": "^8.2.2",
+    "@rollup/plugin-commonjs": "^25.0.7",
+    "@rollup/plugin-typescript": "^11.1.6",
     "ts-node": "^10.9.2",
-    "tsc-alias": "^1.8.8"
+    "tslib": "^2.6.2"
   }
 }
