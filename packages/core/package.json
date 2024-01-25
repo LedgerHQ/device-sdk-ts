@@ -12,16 +12,19 @@
     "dev": "tsc --watch",
     "lint": "eslint --cache --ext .ts \"src\"",
     "lint:fix": "eslint --cache --fix --ext .ts \"src\"",
-    "feature": "zx scripts/add-feature.mjs",
-    "test": "jest --passWithNoTests"
+    "test:unit": "jest --coverage src",
+    "module:init": "zx scripts/add-module.mjs",
+    "run:index": "ts-node src/index.ts"
   },
   "dependencies": {
     "inversify": "^6.0.2",
+    "inversify-logger-middleware": "^3.1.0",
     "reflect-metadata": "^0.2.1"
   },
   "devDependencies": {
     "@ledgerhq/eslint-config-dsdk": "workspace:*",
+    "@ledgerhq/jest-config-dsdk": "workspace:*",
     "@ledgerhq/tsconfig-dsdk": "workspace:*",
-    "@ledgerhq/jest-config-dsdk": "workspace:*"
+    "ts-node": "^10.9.2"
   }
 }

@@ -33,10 +33,7 @@ module.exports = {
       rules: {
         "import/prefer-default-export": "off",
         "no-void": "off",
-        "@typescript-eslint/consistent-type-definitions": [
-          "error",
-          "interface",
-        ],
+        "@typescript-eslint/consistent-type-definitions": "off",
         "@typescript-eslint/ban-ts-comment": "warn",
         "@typescript-eslint/no-unsafe-member-access": "warn",
         "@typescript-eslint/no-shadow": "warn",
