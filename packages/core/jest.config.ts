@@ -9,6 +9,9 @@ const config: JestConfigWithTsJest = {
     "src/internal/**/*.ts",
     "!src/**/*.stub.ts",
   ],
+  moduleNameMapper: {
+    "^@internal/(.*)$": "<rootDir>/src/internal/$1",
+  },
 };
 
 export default config;
