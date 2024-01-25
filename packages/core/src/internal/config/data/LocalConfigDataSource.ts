@@ -6,8 +6,8 @@ import {
   ReadFileError,
   JSONParseError,
   LocalConfigFailure,
-} from "../di/configTypes";
-import { Config } from "../model/Config";
+} from "@internal/config/di/configTypes";
+import { Config } from "@internal/config/model/Config";
 import { LocalConfigDataSource } from "./ConfigDataSource";
 
 /**

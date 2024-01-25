@@ -1,8 +1,8 @@
 import fs from "fs";
+import { Either, Left } from "purify-ts";
+import { JSONParseError, ReadFileError } from "@internal/config/di/configTypes";
 import { LocalConfigDataSource } from "./ConfigDataSource";
 import { FileLocalConfigDataSource } from "./LocalConfigDataSource";
-import { Either, Left } from "purify-ts";
-import { JSONParseError, ReadFileError } from "../di/configTypes";
 
 const readFileSyncSpy = jest.spyOn(fs, "readFileSync");
 const jsonParse = jest.spyOn(JSON, "parse");
@@ -14,6 +14,11 @@ describe("LocalConfigDataSource", () => {
       readFileSyncSpy.mockClear();
       jsonParse.mockClear();
       datasource = new FileLocalConfigDataSource();
+    });
+
+    afterAll(() => {
+      readFileSyncSpy.mockRestore();
+      jsonParse.mockRestore();
     });
 
     it("should return an Either<never, Config>", () => {
@@ -55,10 +60,5 @@ describe("LocalConfigDataSource", () => {
 
       expect(datasource.getConfig()).toEqual(Left(new JSONParseError(err)));
     });
-  });
-
-  afterAll(() => {
-    readFileSyncSpy.mockRestore();
-    jsonParse.mockRestore();
   });
 });

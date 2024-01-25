@@ -1,7 +1,7 @@
 import { injectable } from "inversify";
-import { RemoteConfigDataSource } from "./ConfigDataSource";
-import { Config } from "../model/Config";
 import { Either } from "purify-ts";
+import { Config } from "@internal/config/model/Config";
+import { RemoteConfigDataSource } from "./ConfigDataSource";
 
 /**
  * class RemoteRestConfigDataSource

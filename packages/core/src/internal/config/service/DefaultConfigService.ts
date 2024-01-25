@@ -1,11 +1,11 @@
 import { inject, injectable } from "inversify";
-import { ConfigService } from "./ConfigService";
-import { types } from "../di/configTypes";
+import { types } from "@internal/config/di/configTypes";
 import type {
   LocalConfigDataSource,
   RemoteConfigDataSource,
-} from "../data/ConfigDataSource";
-import { Config } from "../model/Config";
+} from "@internal/config/data/ConfigDataSource";
+import { Config } from "@internal/config/model/Config";
+import { ConfigService } from "./ConfigService";
 
 @injectable()
 export class DefaultConfigService implements ConfigService {

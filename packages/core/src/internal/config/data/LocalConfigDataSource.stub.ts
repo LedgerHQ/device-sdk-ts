@@ -1,7 +1,7 @@
 import { injectable } from "inversify";
-import { Config } from "../model/Config";
-import { LocalConfigDataSource } from "./ConfigDataSource";
 import { Either } from "purify-ts";
+import { Config } from "@internal/config/model/Config";
+import { LocalConfigDataSource } from "./ConfigDataSource";
 
 /**
  *

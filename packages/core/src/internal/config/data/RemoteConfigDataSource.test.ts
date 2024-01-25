@@ -1,13 +1,16 @@
 import { Either, Left } from "purify-ts";
-import { RemoteConfigDataSource } from "./ConfigDataSource";
-import { RestRemoteConfigDataSource } from "./RemoteConfigDataSource";
 import {
   ApiCallError,
   JSONParseError,
   ParseResponseError,
-} from "../di/configTypes";
+} from "@internal/config/di/configTypes";
+import { RemoteConfigDataSource } from "./ConfigDataSource";
+import { RestRemoteConfigDataSource } from "./RemoteConfigDataSource";
 
 let datasource: RemoteConfigDataSource;
+
+// Necesary to use `any` on the prototype to be able to spy on private methods
+/* eslint-disable @typescript-eslint/no-explicit-any */
 const callApiSpy = jest.spyOn(
   RestRemoteConfigDataSource.prototype as any,
   "_callApi"
@@ -16,6 +19,7 @@ const parseResponseSpy = jest.spyOn(
   RestRemoteConfigDataSource.prototype as any,
   "_parseResponse"
 );
+/* eslint-enable @typescript-eslint/no-explicit-any */
 
 describe("RemoteRestConfigDataSource", () => {
   describe("RestRemoteConfigDataSource", () => {
