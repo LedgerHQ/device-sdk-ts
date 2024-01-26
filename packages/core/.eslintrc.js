@@ -5,13 +5,4 @@ module.exports = {
     project: true,
     tsconfigRootDir: __dirname,
   },
-  overrides: [
-    {
-      files: "src/**/*.test.ts",
-      parserOptions: {
-        project: "tsconfig.test.json",
-        tsconfigRootDir: __dirname,
-      },
-    },
-  ],
 };

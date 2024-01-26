@@ -8,15 +8,14 @@
     "./lib"
   ],
   "scripts": {
-    "build": "rm -rf lib && tsc && tsc-alias",
-    "dev": "tsc && (concurrently \"tsc -w\" \"tsc-alias -w\")",
+    "build": "rimraf lib && tsc -p tsconfig.prod.json && tsc-alias -p tsconfig.prod.json",
+    "dev": "tsc && (concurrently \"tsc -w -p tsconfig.prod.json\" \"tsc-alias -w -p tsconfig.prod.json\")",
     "lint": "eslint --cache --ext .ts \"src\"",
     "lint:fix": "eslint --cache --fix --ext .ts \"src\"",
     "test": "jest src",
     "test:watch": "pnpm test -- --watch",
     "test:coverage": "pnpm test -- --coverage",
-    "module:init": "zx scripts/add-module.mjs",
-    "run:index": "ts-node src/index.ts"
+    "module:init": "zx scripts/add-module.mjs"
   },
   "dependencies": {
     "inversify": "^6.0.2",

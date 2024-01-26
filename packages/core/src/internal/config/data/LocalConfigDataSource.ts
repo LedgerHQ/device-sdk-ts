@@ -1,6 +1,4 @@
-import fs from "fs";
 import { injectable } from "inversify";
-import path from "path";
 import { Either } from "purify-ts";
 import {
   ReadFileError,
@@ -9,6 +7,13 @@ import {
 } from "@internal/config/di/configTypes";
 import { Config } from "@internal/config/model/Config";
 import { LocalConfigDataSource } from "./ConfigDataSource";
+
+const version = {
+  name: "DeviceSDK",
+  version: "0.0.0-local.1",
+};
+
+export const stubFsReadFile = () => JSON.stringify(version);
 
 /**
  *
@@ -19,9 +24,7 @@ import { LocalConfigDataSource } from "./ConfigDataSource";
 @injectable()
 export class FileLocalConfigDataSource implements LocalConfigDataSource {
   getConfig(): Either<LocalConfigFailure, Config> {
-    return Either.encase(() =>
-      fs.readFileSync(path.join(__dirname, "version.json"), "utf-8")
-    )
+    return Either.encase(() => stubFsReadFile())
       .mapLeft((error) => {
         console.log("readFileSync error");
         return new ReadFileError(error);

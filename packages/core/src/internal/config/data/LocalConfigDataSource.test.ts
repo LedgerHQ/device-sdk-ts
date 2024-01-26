@@ -1,10 +1,11 @@
-import fs from "fs";
 import { Either, Left } from "purify-ts";
 import { JSONParseError, ReadFileError } from "@internal/config/di/configTypes";
 import { LocalConfigDataSource } from "./ConfigDataSource";
-import { FileLocalConfigDataSource } from "./LocalConfigDataSource";
+import * as LocalConfig from "./LocalConfigDataSource";
 
-const readFileSyncSpy = jest.spyOn(fs, "readFileSync");
+const { FileLocalConfigDataSource } = LocalConfig;
+
+const readFileSyncSpy = jest.spyOn(LocalConfig, "stubFsReadFile");
 const jsonParse = jest.spyOn(JSON, "parse");
 
 let datasource: LocalConfigDataSource;
@@ -59,6 +60,14 @@ describe("LocalConfigDataSource", () => {
       });
 
       expect(datasource.getConfig()).toEqual(Left(new JSONParseError(err)));
+    });
+  });
+
+  describe("stubFsReadFile", () => {
+    it("should return a stringified version of the version object", () => {
+      expect(LocalConfig.stubFsReadFile()).toEqual(
+        JSON.stringify({ name: "DeviceSDK", version: "0.0.0-local.1" })
+      );
     });
   });
 });

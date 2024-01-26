@@ -49,7 +49,7 @@ module.exports = {
       },
     },
     {
-      files: ["**/scripts/*.mjs"],
+      files: ["**/*.mjs"],
       env: {
         es6: true,
         node: true,
