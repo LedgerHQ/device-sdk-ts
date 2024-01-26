@@ -7,6 +7,9 @@ export default {
     dir: "lib",
     format: "esm",
     sourcemap: true,
+    // https://rollupjs.org/guide/en/#outputpreservemodulesroot
+    // Used here to keep the same folder structure and it's file.
+    // Without it, we just generated 1 js file with all the code, `lib/index.js`
     preserveModules: true,
     preserveModulesRoot: "src",
   },
@@ -16,5 +19,5 @@ export default {
     "inversify-logger-middleware",
     "purify-ts",
   ],
-  plugins: [commonJs(), typescript({ tsconfig: "./tsconfig.json" })],
+  plugins: [commonJs(), typescript({ tsconfig: "./tsconfig.prod.json" })],
 };
