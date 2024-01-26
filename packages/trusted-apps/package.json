@@ -8,10 +8,10 @@
     "./lib"
   ],
   "scripts": {
-    "build": "rimraf lib && tsc",
+    "build": "rimraf lib && rollup -c",
+    "dev": "rollup -c -w",
     "lint": "eslint --cache --ext .ts \"src\"",
     "lint:fix": "eslint --cache --fix --ext .ts \"src\"",
-    "dev": "tsc --watch",
     "test": "jest --passWithNoTests"
   },
   "dependencies": {

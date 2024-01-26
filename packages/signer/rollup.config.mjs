@@ -10,11 +10,5 @@ export default {
     preserveModules: true,
     preserveModulesRoot: "src",
   },
-  external: [
-    "reflect-metadata",
-    "inversify",
-    "inversify-logger-middleware",
-    "purify-ts",
-  ],
   plugins: [commonJs(), typescript({ tsconfig: "./tsconfig.json" })],
 };

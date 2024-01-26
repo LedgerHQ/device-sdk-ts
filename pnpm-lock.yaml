@@ -8,6 +8,12 @@ importers:
 
   .:
     devDependencies:
+      '@rollup/plugin-commonjs':
+        specifier: ^25.0.7
+        version: 25.0.7(rollup@4.9.6)
+      '@rollup/plugin-typescript':
+        specifier: ^11.1.6
+        version: 11.1.6(rollup@4.9.6)(tslib@2.6.2)(typescript@5.3.3)
       '@types/jest':
         specifier: ^29.5.11
         version: 29.5.11
@@ -32,6 +38,9 @@ importers:
       rollup:
         specifier: ^4.9.6
         version: 4.9.6
+      tslib:
+        specifier: ^2.6.2
+        version: 2.6.2
       turbo:
         specifier: ^1.11.2
         version: 1.11.2
@@ -142,18 +151,6 @@ importers:
       '@ledgerhq/tsconfig-dsdk':
         specifier: workspace:*
         version: link:../config/typescript
-      '@rollup/plugin-commonjs':
-        specifier: ^25.0.7
-        version: 25.0.7(rollup@4.9.6)
-      '@rollup/plugin-typescript':
-        specifier: ^11.1.6
-        version: 11.1.6(rollup@4.9.6)(tslib@2.6.2)(typescript@5.3.3)
-      ts-node:
-        specifier: ^10.9.2
-        version: 10.9.2(@types/node@20.10.6)(typescript@5.3.3)
-      tslib:
-        specifier: ^2.6.2
-        version: 2.6.2
 
   packages/signer:
     dependencies:
@@ -3438,7 +3435,7 @@ packages:
     dependencies:
       fs.realpath: 1.0.0
       inflight: 1.0.6
-      inherits: 2.0.3
+      inherits: 2.0.4
       minimatch: 3.1.2
       once: 1.4.0
       path-is-absolute: 1.0.1
@@ -3617,10 +3614,6 @@ packages:
     dependencies:
       once: 1.4.0
       wrappy: 1.0.2
-    dev: true
-
-  /inherits@2.0.3:
-    resolution: {integrity: sha512-x00IRNXNy63jwGkJmzPigoySHbaqpNuzKbBOmzK+g2OdZpQ9w+sxCN+VSB3ja7IAge2OP2qpfxTjeNcyjmW1uw==}
     dev: true
 
   /inherits@2.0.4:

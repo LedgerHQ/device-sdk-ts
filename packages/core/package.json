@@ -8,7 +8,7 @@
     "./lib"
   ],
   "scripts": {
-    "build": "rm -rf lib && rollup -c",
+    "build": "rimraf lib && rollup -c",
     "dev": "rollup -c -w",
     "lint": "eslint --cache --ext .ts \"src\"",
     "lint:fix": "eslint --cache --fix --ext .ts \"src\"",
@@ -26,10 +26,6 @@
   "devDependencies": {
     "@ledgerhq/eslint-config-dsdk": "workspace:*",
     "@ledgerhq/jest-config-dsdk": "workspace:*",
-    "@ledgerhq/tsconfig-dsdk": "workspace:*",
-    "@rollup/plugin-commonjs": "^25.0.7",
-    "@rollup/plugin-typescript": "^11.1.6",
-    "ts-node": "^10.9.2",
-    "tslib": "^2.6.2"
+    "@ledgerhq/tsconfig-dsdk": "workspace:*"
   }
 }
