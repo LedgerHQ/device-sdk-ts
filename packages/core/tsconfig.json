@@ -7,6 +7,5 @@
       "@internal/*": ["src/internal/*"]
     }
   },
-  "include": ["src/**/*", "jest.config.ts", "jest.setup.ts"],
-  "exclude": ["src/**/*.test.ts"]
+  "include": ["src", "jest.*.ts"]
 }

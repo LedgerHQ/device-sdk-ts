@@ -8,7 +8,7 @@
     "./lib"
   ],
   "scripts": {
-    "build": "rm -rf lib && tsc",
+    "build": "rimraf lib && tsc",
     "dev": "tsc --watch",
     "lint": "eslint --cache --ext .ts \"src\"",
     "lint:fix": "eslint --cache --fix --ext .ts \"src\"",
