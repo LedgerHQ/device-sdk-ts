@@ -2,10 +2,16 @@
   "extends": "@ledgerhq/tsconfig-dsdk/sdk",
   "compilerOptions": {
     "outDir": "./lib",
-    "baseUrl": "src",
+    "baseUrl": ".",
     "paths": {
-      "@internal/*": ["internal/*"]
-    }
+      "@internal/*": ["src/internal/*"]
+    },
+    "plugins": [
+      {
+        "transform": "@zerollup/ts-transform-paths",
+        "exclude": ["*"]
+      }
+    ]
   },
   "include": ["src/**/*", "jest.*.ts"]
 }

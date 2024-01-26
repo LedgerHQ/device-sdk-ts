@@ -1,7 +1,9 @@
-import typescript from "@rollup/plugin-typescript";
-import commonJs from "@rollup/plugin-commonjs";
+const tsPlugin = require("@rollup/plugin-typescript");
+const alias = require("@rollup/plugin-alias");
+const path = require("node:path");
 
-export default {
+console.log("yolo world");
+module.exports = {
   input: "src/index.ts",
   output: {
     dir: "lib",
@@ -19,5 +21,15 @@ export default {
     "inversify-logger-middleware",
     "purify-ts",
   ],
-  plugins: [commonJs(), typescript({ tsconfig: "./tsconfig.prod.json" })],
+  plugins: [
+    alias({
+      entries: [
+        {
+          find: "@internal",
+          replacement: path.resolve(__dirname, "src/internal"),
+        },
+      ],
+    }),
+    tsPlugin({ tsconfig: "./tsconfig.prod.json" }),
+  ],
 };
