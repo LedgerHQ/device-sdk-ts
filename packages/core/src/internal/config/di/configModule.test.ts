@@ -1,10 +1,10 @@
 import { Container } from "inversify";
+import { FileLocalConfigDataSource } from "@internal/config/data/LocalConfigDataSource";
+import { StubLocalConfigDataSource } from "@internal/config/data/LocalConfigDataSource.stub";
+import { RestRemoteConfigDataSource } from "@internal/config/data/RemoteConfigDataSource";
+import { StubRemoteConfigDataSource } from "@internal/config/data/RemoteConfigDataSource.stub";
 import configModuleFactory from "./configModule";
 import { types } from "./configTypes";
-import { FileLocalConfigDataSource } from "../data/LocalConfigDataSource";
-import { StubLocalConfigDataSource } from "../data/LocalConfigDataSource.stub";
-import { RestRemoteConfigDataSource } from "../data/RemoteConfigDataSource";
-import { StubRemoteConfigDataSource } from "../data/RemoteConfigDataSource.stub";
 
 describe("configModuleFactory", () => {
   describe("Default", () => {
@@ -31,7 +31,7 @@ describe("configModuleFactory", () => {
   describe("Mocked", () => {
     let container: Container;
     let mod: ReturnType<typeof configModuleFactory>;
-    beforeAll(() => {
+    beforeEach(() => {
       mod = configModuleFactory({ mock: true });
       container = new Container();
       container.load(mod);

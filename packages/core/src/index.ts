@@ -1,8 +1,7 @@
 import "reflect-metadata";
-
+import { types } from "@internal/config/di/configTypes";
+import { GetSdkVersionUseCase } from "@internal/config/usecase/GetSdkVersionUseCase";
 import { makeContainer } from "./di";
-import { types } from "./internal/config/di/configTypes";
-import { GetSdkVersionUseCase } from "./internal/config/usecase/GetSdkVersionUseCase";
 
 export * from "./api";
 export * from "./transport";

@@ -12,7 +12,10 @@ export const makeContainer = ({
 }: Partial<MakeContainerProps> = {}) => {
   const container = new Container();
   container.applyMiddleware(logger);
-  container.load(configModuleFactory({ mock }));
+  container.load(
+    configModuleFactory({ mock })
+    // modules go here
+  );
 
   return container;
 };

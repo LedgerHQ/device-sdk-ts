@@ -1,11 +1,11 @@
 import { inject, injectable } from "inversify";
-import { ConfigService } from "./ConfigService";
-import { types } from "../di/configTypes";
+import { types } from "@internal/config/di/configTypes";
 import type {
   LocalConfigDataSource,
   RemoteConfigDataSource,
-} from "../data/ConfigDataSource";
-import { Config } from "../model/Config";
+} from "@internal/config/data/ConfigDataSource";
+import { Config } from "@internal/config/model/Config";
+import { ConfigService } from "./ConfigService";
 
 @injectable()
 export class DefaultConfigService implements ConfigService {
@@ -20,11 +20,25 @@ export class DefaultConfigService implements ConfigService {
   }
 
   async getSdkConfig(): Promise<Config> {
-    const localConfig = this._local.getConfig();
-    if (localConfig?.version) {
-      return this._local.getConfig();
+    // Returns an Either<ReadFileError | JsonParseError, Config>
+    const localConfig = this._local.getConfig().ifLeft((err) => {
+      console.error("Local config not available");
+      console.error(err);
+    });
+
+    if (localConfig.isRight()) {
+      return localConfig.extract();
     }
 
-    return this._remote.getConfig().then((config) => config);
+    return this._remote.getConfig().then((config) => {
+      return config
+        .mapLeft((err) => {
+          // Here we handle the error and return a default value
+          console.error("Remote config not available");
+          console.error(err);
+          return { name: "DeadSdk", version: "0.0.0-dead.1" };
+        })
+        .extract();
+    });
   }
 }

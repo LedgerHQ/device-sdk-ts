@@ -20,6 +20,7 @@ module.exports = {
     ".*.js",
     "node_modules/",
     "dist/",
+    "lib/",
   ],
   overrides: [
     {
@@ -48,7 +49,7 @@ module.exports = {
       },
     },
     {
-      files: ["**/scripts/*.mjs"],
+      files: ["**/*.mjs"],
       env: {
         es6: true,
         node: true,

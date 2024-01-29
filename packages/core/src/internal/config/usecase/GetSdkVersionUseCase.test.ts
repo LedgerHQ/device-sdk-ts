@@ -16,8 +16,8 @@ describe("GetSdkVersionUseCase", () => {
   it("should return the sdk version", async () => {
     getSdkConfigMock.mockResolvedValue({
       name: "DeviceSDK",
-      version: "1.0.0-mock.1",
+      version: "1.0.0",
     });
-    expect(await usecase.getSdkVersion()).toBe("1.0.0-mock.1");
+    expect(await usecase.getSdkVersion()).toBe("1.0.0");
   });
 });

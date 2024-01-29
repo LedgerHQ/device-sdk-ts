@@ -1,8 +1,19 @@
-import fs from "fs";
 import { injectable } from "inversify";
-import { Config } from "../model/Config";
+import { Either } from "purify-ts";
+import {
+  ReadFileError,
+  JSONParseError,
+  LocalConfigFailure,
+} from "@internal/config/di/configTypes";
+import { Config } from "@internal/config/model/Config";
 import { LocalConfigDataSource } from "./ConfigDataSource";
-import path from "path";
+
+const version = {
+  name: "DeviceSDK",
+  version: "0.0.0-local.1",
+};
+
+export const stubFsReadFile = () => JSON.stringify(version);
 
 /**
  *
@@ -12,11 +23,19 @@ import path from "path";
  */
 @injectable()
 export class FileLocalConfigDataSource implements LocalConfigDataSource {
-  getConfig(): Config {
-    const version = fs.readFileSync(
-      path.join(__dirname, "version.json"),
-      "utf-8"
-    );
-    return JSON.parse(version) as Config;
+  getConfig(): Either<LocalConfigFailure, Config> {
+    return Either.encase(() => stubFsReadFile())
+      .mapLeft((error) => {
+        console.log("readFileSync error");
+        return new ReadFileError(error);
+      })
+      .chain((str) => {
+        return Either.encase(() => JSON.parse(str) as Config).mapLeft(
+          (error) => {
+            console.log("JSON.parse error");
+            return new JSONParseError(error);
+          }
+        );
+      });
   }
 }
