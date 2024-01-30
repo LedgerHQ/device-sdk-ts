@@ -1,5 +1,5 @@
 module.exports = {
-  extends: ["next/core-web-vitals", "@ledgerhq/dsdk"],
+  extends: ["next", "@ledgerhq/dsdk"],
   parserOptions: {
     project: true,
     tsconfigRootDir: __dirname,

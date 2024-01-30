@@ -9,16 +9,19 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@ledgerhq/react-ui": "^0.14.13",
+    "next": "14.0.4",
     "react": "^18",
     "react-dom": "^18",
-    "next": "14.0.4"
+    "styled-components": "^5.3.11"
   },
   "devDependencies": {
-    "autoprefixer": "^10.0.1",
-    "postcss": "^8",
-    "tailwindcss": "^3.3.0",
-    "eslint-config-next": "14.0.4",
+    "@ledgerhq/eslint-config-dsdk": "workspace:*",
     "@ledgerhq/tsconfig-dsdk": "workspace:*",
-    "@ledgerhq/eslint-config-dsdk": "workspace:*"
+    "@types/react": "^18",
+    "@types/styled-components": "^5.1.25",
+    "autoprefixer": "^10.0.1",
+    "eslint-config-next": "14.0.4",
+    "postcss": "^8"
   }
 }
