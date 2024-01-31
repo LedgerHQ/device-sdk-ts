@@ -5,6 +5,6 @@ module.exports = [
   {
     type: "input",
     name: "moduleName",
-    message: "What's the name of the module?",
+    message: "What's the name of the module (camelCase)?",
   },
 ];
