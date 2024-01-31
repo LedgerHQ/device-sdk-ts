@@ -3,7 +3,7 @@ import { FileLocalConfigDataSource } from "@internal/config/data/LocalConfigData
 import { StubLocalConfigDataSource } from "@internal/config/data/LocalConfigDataSource.stub";
 import { RestRemoteConfigDataSource } from "@internal/config/data/RemoteConfigDataSource";
 import { StubRemoteConfigDataSource } from "@internal/config/data/RemoteConfigDataSource.stub";
-import configModuleFactory from "./configModule";
+import { configModuleFactory } from "./configModule";
 import { types } from "./configTypes";
 
 describe("configModuleFactory", () => {
@@ -32,7 +32,7 @@ describe("configModuleFactory", () => {
     let container: Container;
     let mod: ReturnType<typeof configModuleFactory>;
     beforeEach(() => {
-      mod = configModuleFactory({ mock: true });
+      mod = configModuleFactory({ stub: true });
       container = new Container();
       container.load(mod);
     });
