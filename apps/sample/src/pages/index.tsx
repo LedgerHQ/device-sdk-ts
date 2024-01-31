@@ -1,18 +1,23 @@
 "use client";
 import React from "react";
-import { Box } from "@ledgerhq/react-ui/index";
+import { Flex } from "@ledgerhq/react-ui";
 import styled, { DefaultTheme } from "styled-components";
+import { Sidebar } from "@/components/Sidebar";
+import { MainView } from "@/components/MainView";
 
-const MainContainer = styled(Box)`
-  width: 100%;
-  height: 100%;
-  background-color: ${({ theme }: { theme: DefaultTheme }) =>
-    theme.colors.background.main};
+const Root = styled(Flex)`
   color: ${({ theme }: { theme: DefaultTheme }) => theme.colors.neutral.c90};
+  flex-direction: row;
+  height: 100%;
 `;
 
 const Home: React.FC = () => {
-  return <MainContainer>Test</MainContainer>;
+  return (
+    <Root>
+      <Sidebar />
+      <MainView />
+    </Root>
+  );
 };
 
 export default Home;
