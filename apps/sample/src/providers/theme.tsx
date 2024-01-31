@@ -1,6 +1,6 @@
 import React, { useMemo } from "react";
 import { defaultTheme, palettes } from "@ledgerhq/react-ui/styles/index";
-import { ThemeProvider } from "styled-components";
+import { DefaultTheme, ThemeProvider } from "styled-components";
 
 interface CustomThemeProviderProps {
   children: React.ReactNode;
@@ -11,7 +11,7 @@ export const CustomThemeProvider: React.FC<CustomThemeProviderProps> = ({
 }) => {
   const selectedPalettes: "dark" | "light" = "dark";
 
-  const theme = useMemo(
+  const theme = useMemo<DefaultTheme>(
     () => ({
       ...defaultTheme,
       theme: selectedPalettes,
