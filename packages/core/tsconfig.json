@@ -7,5 +7,5 @@
       "@internal/*": ["src/internal/*"]
     }
   },
-  "include": ["src", "jest.*.ts"]
+  "include": ["src", "index.ts", "jest.*.ts"]
 }

@@ -44,6 +44,9 @@ importers:
 
   apps/sample:
     dependencies:
+      '@ledgerhq/device-sdk-core':
+        specifier: workspace:*
+        version: link:../../packages/core
       '@ledgerhq/react-ui':
         specifier: ^0.14.13
         version: 0.14.13(@types/react@18.2.45)(react-dom@18.2.0)(react@18.2.0)(styled-components@5.3.11)

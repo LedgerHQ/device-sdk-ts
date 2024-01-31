@@ -1,6 +1,8 @@
 import { Container } from "inversify";
-import { GetSdkVersionUseCase } from "@internal/config/usecase/GetSdkVersionUseCase";
+// import { GetSdkVersionUseCase } from "@internal/config/usecase/GetSdkVersionUseCase";
+import { types as ConfigTypes } from "@internal/config/di/configTypes";
 import { MakeContainerProps, makeContainer } from "../di";
+import { GetSdkVersionUseCase } from "@internal/config/usecase/GetSdkVersionUseCase";
 
 export class DeviceSdk {
   container: Container;
@@ -20,9 +22,9 @@ export class DeviceSdk {
     return;
   }
 
-  getVersion() {
+  getVersion(): Promise<string> {
     return this.container
-      .get<GetSdkVersionUseCase>("GetSdkVersionUseCase")
+      .get<GetSdkVersionUseCase>(ConfigTypes.GetSdkVersionUseCase)
       .getSdkVersion();
   }
 }
