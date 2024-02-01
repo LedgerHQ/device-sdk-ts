@@ -15,7 +15,7 @@
     "test": "jest src",
     "test:watch": "pnpm test -- --watch",
     "test:coverage": "pnpm test -- --coverage",
-    "module:init": "zx scripts/add-module.mjs"
+    "module:create": "pnpm hygen core-module with-prompt"
   },
   "dependencies": {
     "inversify": "^6.0.2",

@@ -85,4 +85,49 @@ This project uses Github CI.
 In order to avoid task repetition, we can add some scripts the corresponding package's script folder, on in a root script folder if it concerns multiple packages.
 A script is a `.mjs` file interpreted by [zx](https://github.com/google/zx).
 
+# Templates
+
+To kickly scaffold part of our code, we use `hygen` to help us kickstart our development process faster.
+Each project can have it's own `_templates` folder, so **generators** are scoped.
+The `_templates` folder contains the basic generators to create new ones.
+
+[Hygen documentation](https://www.hygen.io/docs/quick-start/)
+
+## Process for adding a new generator
+
+The easiest way would be to use `hygen` from the root folder as so:
+
+**Options**:
+  - `new`: creates a generator that take no input during creation (but can still access metadata)
+  - `with-prompt`: creates a generator that can take some input during creation (with access to metadata)
+
+```
+pnpm hygen generator with-prompt|new name
+```
+
+This command will create a new generator folder in the root `_templates` with the given `name`. 
+It's there so that we can modify this new generator. 
+When done, move the new generator to it's correct project `_templates` folder (again, so we can keep scope).
+Finally, we should add a script in the correct `package.json` as a shortcut to trigger the new generator.
+eg:
+
+```
+pnpm core module:create
+```
+
+Under the hood, the script looks like this:
+
+```
+pnpm hygen <name> with-prompt
+```
+
+- `name` is the name given during the creation of the generator.
+- `with-prompt` to call the prompted version of the generator (there can be multiple targets, like `new`)
+
+
+## Available templates
+
+| workspace | script | description |
+| - | - | - |
+| 📦 core | `module:create` | scaffolds a new _src/internal_ module |
 
