@@ -34,6 +34,12 @@ module.exports = {
       rules: {
         "import/prefer-default-export": "off",
         "no-void": "off",
+        "no-restricted-imports": [
+          "error",
+          {
+            patterns: ["../*"],
+          },
+        ],
         "simple-import-sort/imports": "error",
         "simple-import-sort/exports": "error",
         "@typescript-eslint/consistent-type-definitions": "off",
