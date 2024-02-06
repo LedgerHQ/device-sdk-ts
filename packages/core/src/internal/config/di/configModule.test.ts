@@ -4,7 +4,7 @@ import { RestRemoteConfigDataSource } from "@internal/config/data/RemoteConfigDa
 import { StubRemoteConfigDataSource } from "@internal/config/data/RemoteConfigDataSource.stub";
 import { Container } from "inversify";
 
-import configModuleFactory from "./configModule";
+import { configModuleFactory } from "./configModule";
 import { types } from "./configTypes";
 
 describe("configModuleFactory", () => {

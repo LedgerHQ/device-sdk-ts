@@ -14,7 +14,9 @@ type FactoryProps = {
   mock: boolean;
 };
 
-const configModuleFactory = ({ mock = false }: Partial<FactoryProps> = {}) =>
+export const configModuleFactory = ({
+  mock = false,
+}: Partial<FactoryProps> = {}) =>
   new ContainerModule((bind, _unbind, _isBound, rebind) => {
     bind(types.LocalConfigDataSource).to(FileLocalConfigDataSource);
     bind(types.RemoteConfigDataSource).to(RestRemoteConfigDataSource);
@@ -27,5 +29,3 @@ const configModuleFactory = ({ mock = false }: Partial<FactoryProps> = {}) =>
       rebind(types.RemoteConfigDataSource).to(StubRemoteConfigDataSource);
     }
   });
-
-export default configModuleFactory;

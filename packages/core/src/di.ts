@@ -1,7 +1,7 @@
 import { Container } from "inversify";
 import { makeLoggerMiddleware } from "inversify-logger-middleware";
 
-import configModuleFactory from "./internal/config/di/configModule";
+import { configModuleFactory } from "./internal/config/di/configModule";
 
 const logger = makeLoggerMiddleware();
 
