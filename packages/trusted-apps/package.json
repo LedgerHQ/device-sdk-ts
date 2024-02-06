@@ -9,7 +9,7 @@
   ],
   "scripts": {
     "build": "rimraf lib && tsc",
-    "lint": "eslint --cache --ext .ts \"src\"",
+    "lint": "eslint --cache --ext .ts \"src\" --max-warnings=0",
     "lint:fix": "eslint --cache --fix --ext .ts \"src\"",
     "dev": "tsc --watch",
     "test": "jest --passWithNoTests"
