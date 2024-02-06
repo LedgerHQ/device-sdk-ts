@@ -1,8 +1,13 @@
 import React from "react";
 import { Box, Flex, Icons, Text } from "@ledgerhq/react-ui";
 import styled, { DefaultTheme } from "styled-components";
-import { Menu } from "../Menu";
-import { Device } from "../Device";
+import { Menu } from "@/components/Menu";
+import {
+  Device,
+  DeviceModel,
+  DeviceStatus,
+  DeviceType,
+} from "@/components/Device";
 
 const Root = styled(Flex).attrs({ py: 8, px: 6 })`
   flex-direction: column;
@@ -45,7 +50,12 @@ export const Sidebar: React.FC = () => {
       <Title variant={"large"}>Ledger Device SDK</Title>
 
       <Subtitle variant={"tiny"}>Device</Subtitle>
-      <Device />
+      <Device
+        name="Ledger Nano X 9EAB"
+        model={DeviceModel.LNX}
+        status={DeviceStatus.LOCKED}
+        type={DeviceType.BLE}
+      />
 
       <MenuContainer>
         <Subtitle variant={"tiny"}>Menu</Subtitle>
