@@ -4,8 +4,9 @@
     "outDir": "./lib",
     "baseUrl": ".",
     "paths": {
-      "@internal/*": ["src/internal/*"]
-    }
+      "@internal/*": ["src/internal/*"],
+      "@transport/*": ["src/transport/*"],
+    },
   },
-  "include": ["src", "jest.*.ts"]
+  "include": ["src", "jest.*.ts"],
 }
