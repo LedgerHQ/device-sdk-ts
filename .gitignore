@@ -28,6 +28,7 @@ Thumbs.db
 
 # build
 lib
+!apps/sample/src/lib/
 
 # turbo
 .turbo
