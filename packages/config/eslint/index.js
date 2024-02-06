@@ -5,7 +5,7 @@ const project = resolve(process.cwd(), "tsconfig.json");
 /** @type {import("eslint").Linter.Config} */
 module.exports = {
   extends: ["eslint:recommended", "prettier", "turbo"],
-  plugins: ["only-warn"],
+  plugins: ["only-warn", "simple-import-sort"],
   globals: {
     React: true,
     JSX: true,
@@ -34,6 +34,8 @@ module.exports = {
       rules: {
         "import/prefer-default-export": "off",
         "no-void": "off",
+        "simple-import-sort/imports": "error",
+        "simple-import-sort/exports": "error",
         "@typescript-eslint/consistent-type-definitions": "off",
         "@typescript-eslint/ban-ts-comment": "warn",
         "@typescript-eslint/no-unsafe-member-access": "warn",

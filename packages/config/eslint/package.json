@@ -12,6 +12,7 @@
     "@vercel/style-guide": "^5.1.0",
     "eslint-config-prettier": "^9.1.0",
     "eslint-config-turbo": "^1.10.12",
-    "eslint-plugin-only-warn": "^1.1.0"
+    "eslint-plugin-only-warn": "^1.1.0",
+    "eslint-plugin-simple-import-sort": "^10.0.0"
   }
 }
