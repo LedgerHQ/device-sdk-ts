@@ -1,7 +1,8 @@
+import { JSONParseError } from "@internal/config/di/configTypes";
 import { Either, Left } from "purify-ts";
+
 import { ConfigService } from "./ConfigService";
 import { DefaultConfigService } from "./DefaultConfigService";
-import { JSONParseError } from "@internal/config/di/configTypes";
 
 const localDataSource = {
   getConfig: jest.fn(),

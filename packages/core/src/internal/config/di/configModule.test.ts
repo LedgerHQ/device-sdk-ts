@@ -1,8 +1,9 @@
-import { Container } from "inversify";
 import { FileLocalConfigDataSource } from "@internal/config/data/LocalConfigDataSource";
 import { StubLocalConfigDataSource } from "@internal/config/data/LocalConfigDataSource.stub";
 import { RestRemoteConfigDataSource } from "@internal/config/data/RemoteConfigDataSource";
 import { StubRemoteConfigDataSource } from "@internal/config/data/RemoteConfigDataSource.stub";
+import { Container } from "inversify";
+
 import configModuleFactory from "./configModule";
 import { types } from "./configTypes";
 

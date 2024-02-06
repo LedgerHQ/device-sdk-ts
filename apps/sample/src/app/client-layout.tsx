@@ -10,6 +10,7 @@
 "use client";
 
 import { StyleProvider } from "@ledgerhq/react-ui";
+
 import { GlobalStyle } from "@/styles/globalstyles";
 
 type ClientRootLayoutProps = {

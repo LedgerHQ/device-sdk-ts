@@ -1,13 +1,14 @@
-import React from "react";
 import { Box, Flex, Icons, Text } from "@ledgerhq/react-ui";
+import React from "react";
 import styled, { DefaultTheme } from "styled-components";
-import { Menu } from "@/components/Menu";
+
 import {
   Device,
   DeviceModel,
   DeviceStatus,
   DeviceType,
 } from "@/components/Device";
+import { Menu } from "@/components/Menu";
 
 const Root = styled(Flex).attrs({ py: 8, px: 6 })`
   flex-direction: column;

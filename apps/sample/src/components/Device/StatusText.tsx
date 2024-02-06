@@ -1,5 +1,6 @@
 import { Text } from "@ledgerhq/react-ui";
 import styled, { DefaultTheme } from "styled-components";
+
 import { DeviceStatus } from ".";
 
 const getColorFromState = ({

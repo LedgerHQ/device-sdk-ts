@@ -1,6 +1,7 @@
-import React from "react";
 import { Box, Flex, Icons, Text } from "@ledgerhq/react-ui";
+import React from "react";
 import styled, { DefaultTheme } from "styled-components";
+
 import { StatusText } from "./StatusText";
 
 const Root = styled(Flex).attrs({ p: 5, mb: 8, borderRadius: 2 })`

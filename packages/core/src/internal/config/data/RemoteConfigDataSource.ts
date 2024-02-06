@@ -1,12 +1,13 @@
-import { injectable } from "inversify";
-import { Either, Left } from "purify-ts";
-import { Config } from "@internal/config/model/Config";
 import {
   ApiCallError,
   JSONParseError,
   ParseResponseError,
   RemoteConfigFailure,
 } from "@internal/config/di/configTypes";
+import { Config } from "@internal/config/model/Config";
+import { injectable } from "inversify";
+import { Either, Left } from "purify-ts";
+
 import { RemoteConfigDataSource } from "./ConfigDataSource";
 import { ConfigDto } from "./Dto";
 

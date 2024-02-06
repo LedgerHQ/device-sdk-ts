@@ -1,7 +1,7 @@
-import React from "react";
 import { Button, Flex, Icons, Text } from "@ledgerhq/react-ui";
-import styled, { DefaultTheme } from "styled-components";
 import Image from "next/image";
+import React from "react";
+import styled, { DefaultTheme } from "styled-components";
 
 const Root = styled(Flex)`
   flex-direction: column;

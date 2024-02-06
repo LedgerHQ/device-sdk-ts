@@ -7,6 +7,7 @@
  * for rendering the application.
  */
 import { StyledComponentsRegistry } from "@/lib/registry";
+
 import ClientRootLayout from "./client-layout";
 
 export const metadata = {

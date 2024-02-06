@@ -1,6 +1,6 @@
-import { inject, injectable } from "inversify";
-import type { ConfigService } from "@internal/config/service/ConfigService";
 import { types } from "@internal/config/di/configTypes";
+import type { ConfigService } from "@internal/config/service/ConfigService";
+import { inject, injectable } from "inversify";
 
 /**
  * class GetSDKVersionUseCase

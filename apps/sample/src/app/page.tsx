@@ -1,9 +1,10 @@
 "use client";
-import React from "react";
 import { Flex } from "@ledgerhq/react-ui";
+import React from "react";
 import styled, { DefaultTheme } from "styled-components";
-import { Sidebar } from "@/components/Sidebar";
+
 import { MainView } from "@/components/MainView";
+import { Sidebar } from "@/components/Sidebar";
 
 const Root = styled(Flex)`
   color: ${({ theme }: { theme: DefaultTheme }) => theme.colors.neutral.c90};
