@@ -1,9 +1,11 @@
 import { Either, Left } from "purify-ts";
+
 import {
   ApiCallError,
   JSONParseError,
   ParseResponseError,
 } from "@internal/config/di/configTypes";
+
 import { RemoteConfigDataSource } from "./ConfigDataSource";
 import { RestRemoteConfigDataSource } from "./RemoteConfigDataSource";
 

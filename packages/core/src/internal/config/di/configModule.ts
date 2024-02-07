@@ -1,10 +1,12 @@
 import { ContainerModule } from "inversify";
+
 import { FileLocalConfigDataSource } from "@internal/config/data/LocalConfigDataSource";
 import { StubLocalConfigDataSource } from "@internal/config/data/LocalConfigDataSource.stub";
 import { RestRemoteConfigDataSource } from "@internal/config/data/RemoteConfigDataSource";
 import { StubRemoteConfigDataSource } from "@internal/config/data/RemoteConfigDataSource.stub";
 import { DefaultConfigService } from "@internal/config/service/DefaultConfigService";
 import { GetSdkVersionUseCase } from "@internal/config/usecase/GetSdkVersionUseCase";
+
 import { types } from "./configTypes";
 
 // This module is used to configure the dependency injection container
