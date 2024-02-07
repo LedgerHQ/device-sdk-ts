@@ -1,19 +1,19 @@
 import { Container } from "inversify";
 import { makeLoggerMiddleware } from "inversify-logger-middleware";
-import configModuleFactory from "./internal/config/di/configModule";
+import { configModuleFactory } from "@internal/config/di/configModule";
 
 const logger = makeLoggerMiddleware();
 
-type MakeContainerProps = {
-  mock: boolean;
+export type MakeContainerProps = {
+  stub: boolean;
 };
 export const makeContainer = ({
-  mock = false,
+  stub = false,
 }: Partial<MakeContainerProps> = {}) => {
   const container = new Container();
   container.applyMiddleware(logger);
   container.load(
-    configModuleFactory({ mock })
+    configModuleFactory({ stub })
     // modules go here
   );
 

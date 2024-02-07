@@ -11,6 +11,7 @@
 
 import { StyleProvider } from "@ledgerhq/react-ui";
 import { GlobalStyle } from "@/styles/globalstyles";
+import { SdkProvider } from "@/providers/DeviceSdkProvider";
 
 type ClientRootLayoutProps = {
   children: React.ReactNode;
@@ -19,10 +20,12 @@ type ClientRootLayoutProps = {
 const ClientRootLayout: React.FC<ClientRootLayoutProps> = ({ children }) => {
   return (
     <html lang="en">
-      <StyleProvider selectedPalette="dark" fontsPath="/fonts">
-        <GlobalStyle />
-        <body>{children}</body>
-      </StyleProvider>
+      <SdkProvider>
+        <StyleProvider selectedPalette="dark" fontsPath="/fonts">
+          <GlobalStyle />
+          <body>{children}</body>
+        </StyleProvider>
+      </SdkProvider>
     </html>
   );
 };

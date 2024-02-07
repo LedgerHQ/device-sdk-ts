@@ -7,10 +7,11 @@ import {
 } from "@internal/config/di/configTypes";
 import { Config } from "@internal/config/model/Config";
 import { LocalConfigDataSource } from "./ConfigDataSource";
+import pkg from "@root/package.json";
 
 const version = {
-  name: "DeviceSDK",
-  version: "0.0.0-local.1",
+  name: pkg.name,
+  version: pkg.version,
 };
 
 export const stubFsReadFile = () => JSON.stringify(version);

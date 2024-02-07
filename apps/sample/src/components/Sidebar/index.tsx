@@ -1,6 +1,7 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { Box, Flex, Icons, Text } from "@ledgerhq/react-ui";
 import styled, { DefaultTheme } from "styled-components";
+import { useSdk } from "@/providers/DeviceSdkProvider";
 import { Menu } from "@/components/Menu";
 import {
   Device,
@@ -45,9 +46,26 @@ const VersionText = styled(Text)`
 `;
 
 export const Sidebar: React.FC = () => {
+  const [version, setVersion] = useState("");
+  const sdk = useSdk();
+
+  useEffect(() => {
+    sdk
+      .getVersion()
+      .then((v) => setVersion(v))
+      .catch((error: unknown) => {
+        console.error(error as Error);
+        setVersion("");
+      });
+  }, [sdk]);
+
   return (
     <Root>
       <Title variant={"large"}>Ledger Device SDK</Title>
+
+      {version ? (
+        <Subtitle variant={"small"}>SDK Version: {version}</Subtitle>
+      ) : null}
 
       <Subtitle variant={"tiny"}>Device</Subtitle>
       <Device
