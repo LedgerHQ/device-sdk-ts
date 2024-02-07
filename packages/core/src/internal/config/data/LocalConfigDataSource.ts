@@ -7,7 +7,7 @@ import {
 } from "@internal/config/di/configTypes";
 import { Config } from "@internal/config/model/Config";
 import { LocalConfigDataSource } from "./ConfigDataSource";
-import pkg from "../../../../package.json";
+import pkg from "@root/package.json";
 
 const version = {
   name: pkg.name,
