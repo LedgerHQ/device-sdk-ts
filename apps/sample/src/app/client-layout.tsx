@@ -10,8 +10,9 @@
 "use client";
 
 import { StyleProvider } from "@ledgerhq/react-ui";
-import { GlobalStyle } from "@/styles/globalstyles";
+
 import { SdkProvider } from "@/providers/DeviceSdkProvider";
+import { GlobalStyle } from "@/styles/globalstyles";
 
 type ClientRootLayoutProps = {
   children: React.ReactNode;
@@ -30,4 +31,5 @@ const ClientRootLayout: React.FC<ClientRootLayoutProps> = ({ children }) => {
   );
 };
 
+// eslint-disable-next-line no-restricted-syntax
 export default ClientRootLayout;

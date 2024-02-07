@@ -7,6 +7,7 @@
  * for rendering the application.
  */
 import { StyledComponentsRegistry } from "@/lib/registry";
+
 import ClientRootLayout from "./client-layout";
 
 export const metadata = {
@@ -26,4 +27,5 @@ const RootLayout: React.FC<RootLayoutProps> = ({ children }) => {
   );
 };
 
+// eslint-disable-next-line no-restricted-syntax
 export default RootLayout;

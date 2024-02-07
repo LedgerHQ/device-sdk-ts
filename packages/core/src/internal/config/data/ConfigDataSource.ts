@@ -1,4 +1,5 @@
 import { Either } from "purify-ts";
+
 import {
   LocalConfigFailure,
   RemoteConfigFailure,

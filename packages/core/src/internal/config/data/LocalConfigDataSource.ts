@@ -1,13 +1,15 @@
 import { injectable } from "inversify";
 import { Either } from "purify-ts";
+
 import {
-  ReadFileError,
   JSONParseError,
   LocalConfigFailure,
+  ReadFileError,
 } from "@internal/config/di/configTypes";
 import { Config } from "@internal/config/model/Config";
-import { LocalConfigDataSource } from "./ConfigDataSource";
 import pkg from "@root/package.json";
+
+import { LocalConfigDataSource } from "./ConfigDataSource";
 
 const version = {
   name: pkg.name,

@@ -1,7 +1,8 @@
 import { Container } from "inversify";
+
 import { types as ConfigTypes } from "@internal/config/di/configTypes";
-import { MakeContainerProps, makeContainer } from "../di";
 import { GetSdkVersionUseCase } from "@internal/config/usecase/GetSdkVersionUseCase";
+import { makeContainer, MakeContainerProps } from "@root/src/di";
 
 export class DeviceSdk {
   container: Container;
