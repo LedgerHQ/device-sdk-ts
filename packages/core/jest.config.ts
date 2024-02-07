@@ -11,6 +11,7 @@ const config: JestConfigWithTsJest = {
   ],
   moduleNameMapper: {
     "^@internal/(.*)$": "<rootDir>/src/internal/$1",
+    "^@root/(.*)$": "<rootDir>/$1",
   },
 };
 
