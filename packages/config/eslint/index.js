@@ -5,7 +5,7 @@ const project = resolve(process.cwd(), "tsconfig.json");
 /** @type {import("eslint").Linter.Config} */
 module.exports = {
   extends: ["eslint:recommended", "prettier", "turbo"],
-  plugins: ["only-warn"],
+  plugins: ["only-warn", "simple-import-sort"],
   globals: {
     React: true,
     JSX: true,
@@ -34,6 +34,26 @@ module.exports = {
       rules: {
         "import/prefer-default-export": "off",
         "no-void": "off",
+        "simple-import-sort/imports": [
+          "error",
+          {
+            groups: [
+              // Side effect imports.
+              ["^\\u0000"],
+              // Node.js builtins prefixed with `node:`.
+              ["^node:"],
+              // Packages. `react` related packages come first.
+              ["^react", "^@?\\w"],
+              // Internal packages.
+              ["^(@|@internal|@root)(/.*|$)"],
+              // Other relative imports. Put same-folder imports and `.` last.
+              ["^\\./(?=.*/)(?!/?$)", "^\\.(?!/?$)", "^\\./?$"],
+              // Style imports.
+              ["^.+\\.s?css$"],
+            ],
+          },
+        ],
+        "simple-import-sort/exports": "error",
         "@typescript-eslint/consistent-type-definitions": "off",
         "@typescript-eslint/ban-ts-comment": "warn",
         "@typescript-eslint/no-unsafe-member-access": "warn",
