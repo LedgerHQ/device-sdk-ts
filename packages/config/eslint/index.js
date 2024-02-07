@@ -33,6 +33,13 @@ module.exports = {
       ],
       rules: {
         "import/prefer-default-export": "off",
+        "no-restricted-syntax": [
+          "error",
+          {
+            selector: "ExportDefaultDeclaration",
+            message: "Prefer named exports",
+          },
+        ],
         "no-void": "off",
         "no-restricted-imports": [
           "error",
