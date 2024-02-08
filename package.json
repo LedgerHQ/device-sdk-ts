@@ -12,6 +12,8 @@
     "dev": "turbo dev --log-order=grouped",
     "lint": "turbo run lint --log-order=grouped",
     "lint:fix": "turbo run lint:fix --log-order=grouped",
+    "prettier": "turbo run prettier --log-order=grouped",
+    "prettier:fix": "turbo run prettier:fix --log-order=grouped",
     "test": "turbo run test --log-order=grouped",
     "core": "pnpm --filter @ledgerhq/device-sdk-core",
     "signer": "pnpm --filter @ledgerhq/device-sdk-signer",

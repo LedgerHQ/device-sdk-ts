@@ -69,6 +69,9 @@ importers:
       '@ledgerhq/eslint-config-dsdk':
         specifier: workspace:*
         version: link:../../packages/config/eslint
+      '@ledgerhq/prettier-config-dsdk':
+        specifier: workspace:*
+        version: link:../../packages/config/prettier
       '@ledgerhq/tsconfig-dsdk':
         specifier: workspace:*
         version: link:../../packages/config/typescript
@@ -121,6 +124,12 @@ importers:
         specifier: ^10.9.2
         version: 10.9.2(@types/node@20.10.6)(typescript@5.3.3)
 
+  packages/config/prettier:
+    devDependencies:
+      prettier:
+        specifier: ^3.1.1
+        version: 3.1.1
+
   packages/config/typescript:
     devDependencies:
       '@tsconfig/recommended':
@@ -157,6 +166,9 @@ importers:
       '@ledgerhq/jest-config-dsdk':
         specifier: workspace:*
         version: link:../config/jest
+      '@ledgerhq/prettier-config-dsdk':
+        specifier: workspace:*
+        version: link:../config/prettier
       '@ledgerhq/tsconfig-dsdk':
         specifier: workspace:*
         version: link:../config/typescript
@@ -185,6 +197,9 @@ importers:
       '@ledgerhq/jest-config-dsdk':
         specifier: workspace:*
         version: link:../config/jest
+      '@ledgerhq/prettier-config-dsdk':
+        specifier: workspace:*
+        version: link:../config/prettier
       '@ledgerhq/tsconfig-dsdk':
         specifier: workspace:*
         version: link:../config/typescript
@@ -204,6 +219,9 @@ importers:
       '@ledgerhq/jest-config-dsdk':
         specifier: workspace:*
         version: link:../config/jest
+      '@ledgerhq/prettier-config-dsdk':
+        specifier: workspace:*
+        version: link:../config/prettier
       '@ledgerhq/tsconfig-dsdk':
         specifier: workspace:*
         version: link:../config/typescript
@@ -223,6 +241,9 @@ importers:
       '@ledgerhq/jest-config-dsdk':
         specifier: workspace:*
         version: link:../config/jest
+      '@ledgerhq/prettier-config-dsdk':
+        specifier: workspace:*
+        version: link:../config/prettier
       '@ledgerhq/tsconfig-dsdk':
         specifier: workspace:*
         version: link:../config/typescript
