@@ -72,10 +72,10 @@ export class RestRemoteConfigDataSource implements RemoteConfigDataSource {
                   name: "DeviceSDK",
                   version: "0.0.0-fake.1",
                   yolo: "yolo",
-                })
+                }),
               );
             }),
-        })
+        }),
       );
     });
   }

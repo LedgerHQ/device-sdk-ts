@@ -26,7 +26,7 @@ describe("LocalConfigDataSource", () => {
 
     it("should return an Either<never, Config>", () => {
       readFileSyncSpy.mockReturnValue(
-        JSON.stringify({ name: "DeviceSDK", version: "0.0.0-spied.1" })
+        JSON.stringify({ name: "DeviceSDK", version: "0.0.0-spied.1" }),
       );
 
       jsonParse.mockReturnValue({
@@ -38,7 +38,7 @@ describe("LocalConfigDataSource", () => {
         Either.of({
           name: "DeviceSDK",
           version: "0.0.0-spied.1",
-        })
+        }),
       );
     });
 
@@ -54,7 +54,7 @@ describe("LocalConfigDataSource", () => {
     it("should return an Either<JSONParseError, never> if JSON.parse throws", () => {
       const err = new Error("JSON.parse error");
       readFileSyncSpy.mockReturnValue(
-        JSON.stringify({ name: "DeviceSDK", version: "0.0.0-spied.1" })
+        JSON.stringify({ name: "DeviceSDK", version: "0.0.0-spied.1" }),
       );
 
       jsonParse.mockImplementation(() => {
@@ -71,7 +71,7 @@ describe("LocalConfigDataSource", () => {
         JSON.stringify({
           name: "@ledgerhq/device-sdk-core",
           version: "0.0.1",
-        })
+        }),
       );
     });
   });

@@ -15,11 +15,11 @@ let datasource: RemoteConfigDataSource;
 /* eslint-disable @typescript-eslint/no-explicit-any */
 const callApiSpy = jest.spyOn(
   RestRemoteConfigDataSource.prototype as any,
-  "_callApi"
+  "_callApi",
 );
 const parseResponseSpy = jest.spyOn(
   RestRemoteConfigDataSource.prototype as any,
-  "_parseResponse"
+  "_parseResponse",
 );
 /* eslint-enable @typescript-eslint/no-explicit-any */
 
@@ -37,23 +37,23 @@ describe("RemoteRestConfigDataSource", () => {
           ok: true,
           json: () =>
             Promise.resolve(
-              Either.of({ name: "DeviceSDK", version: "0.0.0-fake.1" })
+              Either.of({ name: "DeviceSDK", version: "0.0.0-fake.1" }),
             ),
-        })
+        }),
       );
 
       parseResponseSpy.mockReturnValue(
         Either.of({
           name: "DeviceSDK",
           version: "0.0.0-fake.1",
-        })
+        }),
       );
 
       expect(await datasource.getConfig()).toStrictEqual(
         Either.of({
           name: "DeviceSDK",
           version: "0.0.0-fake.1",
-        })
+        }),
       );
     });
 
@@ -62,7 +62,7 @@ describe("RemoteRestConfigDataSource", () => {
       callApiSpy.mockResolvedValue(Left(err));
 
       expect(await datasource.getConfig()).toStrictEqual(
-        Left(new ApiCallError(err))
+        Left(new ApiCallError(err)),
       );
     });
 
@@ -72,13 +72,13 @@ describe("RemoteRestConfigDataSource", () => {
           ok: false,
           json: () =>
             Promise.resolve(
-              Either.of({ name: "DeviceSDK", version: "0.0.0-fake.1" })
+              Either.of({ name: "DeviceSDK", version: "0.0.0-fake.1" }),
             ),
-        })
+        }),
       );
 
       expect(await datasource.getConfig()).toStrictEqual(
-        Left(new ApiCallError(new Error("response not ok")))
+        Left(new ApiCallError(new Error("response not ok"))),
       );
     });
 
@@ -88,11 +88,11 @@ describe("RemoteRestConfigDataSource", () => {
         Either.of({
           ok: true,
           json: () => Promise.resolve(Left(err)),
-        })
+        }),
       );
 
       expect(await datasource.getConfig()).toStrictEqual(
-        Left(new JSONParseError())
+        Left(new JSONParseError()),
       );
     });
 
@@ -102,9 +102,9 @@ describe("RemoteRestConfigDataSource", () => {
           ok: true,
           json: () =>
             Promise.resolve(
-              Either.of({ name: "DeviceSDK", version: "0.0.0-fake.1" })
+              Either.of({ name: "DeviceSDK", version: "0.0.0-fake.1" }),
             ),
-        })
+        }),
       );
 
       parseResponseSpy.mockImplementation(() => {
@@ -112,7 +112,7 @@ describe("RemoteRestConfigDataSource", () => {
       });
 
       expect(await datasource.getConfig()).toStrictEqual(
-        Left(new ParseResponseError())
+        Left(new ParseResponseError()),
       );
     });
 
@@ -126,13 +126,13 @@ describe("RemoteRestConfigDataSource", () => {
               Either.of({
                 version: "0.0.0-fake.1",
                 yolo: "yolo",
-              })
+              }),
             ),
-        })
+        }),
       );
 
       expect(await datasource.getConfig()).toStrictEqual(
-        Left(new ParseResponseError())
+        Left(new ParseResponseError()),
       );
     });
 
@@ -147,7 +147,7 @@ describe("RemoteRestConfigDataSource", () => {
           Either.of({
             name: "DeviceSDK",
             version: "0.0.0-fake.1",
-          })
+          }),
         );
       });
     });

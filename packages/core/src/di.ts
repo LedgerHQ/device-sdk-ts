@@ -14,7 +14,7 @@ export const makeContainer = ({
   const container = new Container();
   container.applyMiddleware(logger);
   container.load(
-    configModuleFactory({ stub })
+    configModuleFactory({ stub }),
     // modules go here
   );
 
