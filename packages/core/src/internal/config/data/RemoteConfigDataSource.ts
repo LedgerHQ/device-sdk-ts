@@ -21,18 +21,15 @@ export class RestRemoteConfigDataSource implements RemoteConfigDataSource {
   async getConfig(): Promise<Either<RemoteConfigFailure, Config>> {
     const call = await this._callApi();
     if (call.isLeft()) {
-      console.error("ApiCallError");
       return Left(new ApiCallError(call.extract()));
     }
 
     if (!call.extract().ok) {
-      console.error("ApiCallError");
       return Left(new ApiCallError(new Error("response not ok")));
     }
 
     const json = await call.extract().json();
     if (json.isLeft()) {
-      console.error("JSONParseError");
       return Left(new JSONParseError());
     }
 
@@ -46,7 +43,6 @@ export class RestRemoteConfigDataSource implements RemoteConfigDataSource {
   private _parseResponse(dto: ConfigDto): Either<ParseResponseError, Config> {
     const { name, version } = dto;
     if (!name || !version) {
-      console.log("missing stuff");
       return Left(new ParseResponseError());
     }
     return Either.of({ name, version });

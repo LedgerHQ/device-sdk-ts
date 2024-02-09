@@ -1,3 +1,4 @@
+/* eslint no-restricted-syntax: 0 */
 import type { JestConfigWithTsJest } from "@ledgerhq/jest-config-dsdk";
 
 const config: JestConfigWithTsJest = {
@@ -6,7 +7,7 @@ const config: JestConfigWithTsJest = {
   testPathIgnorePatterns: ["<rootDir>/lib/"],
   collectCoverageFrom: [
     // TODO: remove internal when the rest of the files are setup
-    "src/internal/**/*.ts",
+    "src/**/*.ts",
     "!src/**/*.stub.ts",
   ],
   moduleNameMapper: {

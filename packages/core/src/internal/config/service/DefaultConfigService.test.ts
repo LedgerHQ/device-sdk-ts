@@ -14,12 +14,30 @@ const remoteDataSource = {
   parseResponse: jest.fn(),
 };
 
+const loggerService = {
+  subscribers: [],
+  info: jest.fn(),
+  debug: jest.fn(),
+  warn: jest.fn(),
+  error: jest.fn(),
+};
+
 let service: ConfigService;
 describe("DefaultConfigService", () => {
   beforeEach(() => {
     remoteDataSource.getConfig.mockClear();
     localDataSource.getConfig.mockClear();
-    service = new DefaultConfigService(localDataSource, remoteDataSource);
+    loggerService.debug.mockClear();
+    loggerService.error.mockClear();
+    loggerService.info.mockClear();
+    loggerService.warn.mockClear();
+    loggerService.subscribers = [];
+
+    service = new DefaultConfigService(
+      localDataSource,
+      remoteDataSource,
+      loggerService
+    );
   });
 
   describe("when the local config is available", () => {
