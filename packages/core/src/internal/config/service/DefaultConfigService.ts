@@ -20,7 +20,7 @@ export class DefaultConfigService implements ConfigService {
   constructor(
     @inject(configTypes.LocalConfigDataSource) local: LocalConfigDataSource,
     @inject(configTypes.RemoteConfigDataSource) remote: RemoteConfigDataSource,
-    @inject(loggerTypes.LoggerService) logger: LoggerService
+    @inject(loggerTypes.LoggerService) logger: LoggerService,
   ) {
     this._local = local;
     this._remote = remote;

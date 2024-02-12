@@ -2,4 +2,11 @@
 
 export { DeviceSdk } from "./DeviceSdk";
 export { LedgerDeviceSdkBuilder as DeviceSdkBuilder } from "./DeviceSdkBuilder";
-export { ConsoleLogger } from "./Logger";
+export type {
+  LogContext,
+  LogData,
+  LoggerSubscriber,
+  LogLevel,
+  LogMessages,
+} from "./Logger";
+export { ConsoleLogger, Log } from "./Logger";

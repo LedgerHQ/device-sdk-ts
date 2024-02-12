@@ -6,9 +6,10 @@ const config: JestConfigWithTsJest = {
   setupFiles: ["<rootDir>/jest.setup.ts"],
   testPathIgnorePatterns: ["<rootDir>/lib/"],
   collectCoverageFrom: [
-    // TODO: remove internal when the rest of the files are setup
     "src/**/*.ts",
     "!src/**/*.stub.ts",
+    "!src/index.ts",
+    "!src/api/index.ts",
   ],
   moduleNameMapper: {
     "^@internal/(.*)$": "<rootDir>/src/internal/$1",

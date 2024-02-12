@@ -27,7 +27,7 @@ describe("LoggerService", () => {
       const log = LogBuilder.build(
         { type: "test" },
         { key: "value" },
-        "message"
+        "message",
       );
 
       service.info(log);
@@ -43,7 +43,7 @@ describe("LoggerService", () => {
       const log = LogBuilder.build(
         { type: "test" },
         { key: "value" },
-        "message"
+        "message",
       );
 
       service.debug(log);
@@ -59,7 +59,7 @@ describe("LoggerService", () => {
       const log = LogBuilder.build(
         { type: "test" },
         { key: "value" },
-        "message"
+        "message",
       );
 
       service.warn(log);
@@ -75,7 +75,7 @@ describe("LoggerService", () => {
       const log = LogBuilder.buildFromError(
         new Error("test"),
         { type: "test" },
-        { key: "value" }
+        { key: "value" },
       );
 
       service.error(log);

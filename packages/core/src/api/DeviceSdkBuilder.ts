@@ -5,15 +5,12 @@ import { DeviceSdk } from "./DeviceSdk";
 export class LedgerDeviceSdkBuilder {
   stub = false;
   loggers: LoggerSubscriber[] = [];
-  constructor() {
-    console.log("New build");
-  }
 
   build(): DeviceSdk {
     return new DeviceSdk({ stub: this.stub, loggers: this.loggers });
   }
 
-  setStub(stubbed = true): LedgerDeviceSdkBuilder {
+  setStub(stubbed: boolean): LedgerDeviceSdkBuilder {
     this.stub = stubbed;
     return this;
   }

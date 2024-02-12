@@ -17,7 +17,7 @@ export type MakeContainerProps = {
 export const makeContainer = ({
   stub = false,
   loggers = [],
-}: Partial<MakeContainerProps> = {}) => {
+}: Partial<MakeContainerProps>) => {
   const container = new Container();
 
   // Uncomment this line to enable the logger middleware
@@ -25,7 +25,7 @@ export const makeContainer = ({
 
   container.load(
     configModuleFactory({ stub }),
-    loggerModuleFactory({ subscribers: loggers })
+    loggerModuleFactory({ subscribers: loggers }),
     // modules go here
   );
 

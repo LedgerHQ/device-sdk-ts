@@ -14,7 +14,7 @@ export class LogBuilder {
   static buildFromError(
     error: SdkError | Error,
     context: LogContext = { type: "error" },
-    data: LogData = {}
+    data: LogData = {},
   ) {
     const isSdkError = "_tag" in error;
 

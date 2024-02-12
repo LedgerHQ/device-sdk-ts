@@ -4,6 +4,7 @@ export { Log, LogLevel };
 export type {
   LogContext,
   LogData,
+  LoggerSubscriber,
   LogMessages,
 } from "@internal/logger/service/Log";
 

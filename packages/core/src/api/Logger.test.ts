@@ -11,20 +11,31 @@ const log = jest.spyOn(console, "log").mockImplementation(jest.fn());
 let logger: ConsoleLogger;
 let logObject: Log;
 describe("ConsoleLogger", () => {
-  beforeEach(() => {
-    logger = new ConsoleLogger();
-    logObject = LogBuilder.build({}, {}, "test");
-  });
-
-  afterAll(() => {
-    warn.mockRestore();
-    info.mockRestore();
-    debug.mockRestore();
-    error.mockRestore();
-    log.mockRestore();
+  describe("exports", () => {
+    it("Log", () => {
+      const lgg = new Log({
+        messages: [],
+        data: {},
+        context: {},
+      });
+      expect(lgg).toBeInstanceOf(Log);
+    });
   });
 
   describe("log", () => {
+    beforeEach(() => {
+      logger = new ConsoleLogger();
+      logObject = LogBuilder.build({}, {}, "test");
+    });
+
+    afterAll(() => {
+      warn.mockRestore();
+      info.mockRestore();
+      debug.mockRestore();
+      error.mockRestore();
+      log.mockRestore();
+    });
+
     it("should log Info level", () => {
       logObject.setLevel(LogLevel.Info);
       logger.log(logObject);

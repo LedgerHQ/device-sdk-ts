@@ -20,6 +20,7 @@ const loggerService = {
   debug: jest.fn(),
   warn: jest.fn(),
   error: jest.fn(),
+  fatal: jest.fn(),
 };
 
 let service: ConfigService;
@@ -36,7 +37,7 @@ describe("DefaultConfigService", () => {
     service = new DefaultConfigService(
       localDataSource,
       remoteDataSource,
-      loggerService
+      loggerService,
     );
   });
 
