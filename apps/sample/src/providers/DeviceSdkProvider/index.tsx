@@ -1,5 +1,5 @@
 import { createContext, useContext } from "react";
-import { DeviceSdk,DeviceSdkBuilder } from "@ledgerhq/device-sdk-core";
+import { DeviceSdk, DeviceSdkBuilder } from "@ledgerhq/device-sdk-core";
 
 export const sdk = new DeviceSdkBuilder().build();
 

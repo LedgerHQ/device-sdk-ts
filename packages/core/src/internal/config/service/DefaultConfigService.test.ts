@@ -28,7 +28,7 @@ describe("DefaultConfigService", () => {
         Either.of({
           name: "DeviceSDK",
           version: "1.0.0-local",
-        })
+        }),
       );
 
       expect(await service.getSdkConfig()).toStrictEqual({
@@ -45,7 +45,7 @@ describe("DefaultConfigService", () => {
         Either.of({
           name: "DeviceSDK",
           version: "1.0.0-remote",
-        })
+        }),
       );
 
       expect(await service.getSdkConfig()).toStrictEqual({

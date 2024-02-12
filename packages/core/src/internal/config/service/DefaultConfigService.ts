@@ -15,7 +15,7 @@ export class DefaultConfigService implements ConfigService {
   private _remote: RemoteConfigDataSource;
   constructor(
     @inject(types.LocalConfigDataSource) local: LocalConfigDataSource,
-    @inject(types.RemoteConfigDataSource) remote: RemoteConfigDataSource
+    @inject(types.RemoteConfigDataSource) remote: RemoteConfigDataSource,
   ) {
     this._local = local;
     this._remote = remote;

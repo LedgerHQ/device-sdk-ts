@@ -7,7 +7,9 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint --max-warnings=0",
-    "lint:fix": "next lint --fix"
+    "lint:fix": "next lint --fix",
+    "prettier": "prettier . --check",
+    "prettier:fix": "prettier . --write"
   },
   "dependencies": {
     "@ledgerhq/device-sdk-core": "workspace:*",
@@ -19,6 +21,7 @@
   },
   "devDependencies": {
     "@ledgerhq/eslint-config-dsdk": "workspace:*",
+    "@ledgerhq/prettier-config-dsdk": "workspace:*",
     "@ledgerhq/tsconfig-dsdk": "workspace:*",
     "@types/react": "^18",
     "@types/styled-components": "^5.1.25",

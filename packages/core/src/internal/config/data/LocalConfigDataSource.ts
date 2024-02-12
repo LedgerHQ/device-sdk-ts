@@ -37,7 +37,7 @@ export class FileLocalConfigDataSource implements LocalConfigDataSource {
           (error) => {
             console.log("JSON.parse error");
             return new JSONParseError(error);
-          }
+          },
         );
       });
   }

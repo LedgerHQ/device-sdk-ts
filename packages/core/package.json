@@ -12,6 +12,8 @@
     "dev": "tsc && (concurrently \"tsc -w -p tsconfig.prod.json\" \"tsc-alias -w -p tsconfig.prod.json\")",
     "lint": "eslint --cache --ext .ts \"src\" --max-warnings=0",
     "lint:fix": "eslint --cache --fix --ext .ts \"src\"",
+    "prettier": "prettier . --check",
+    "prettier:fix": "prettier . --write",
     "test": "jest src",
     "test:watch": "pnpm test -- --watch",
     "test:coverage": "pnpm test -- --coverage",
@@ -27,6 +29,7 @@
     "@ledgerhq/eslint-config-dsdk": "workspace:*",
     "@ledgerhq/jest-config-dsdk": "workspace:*",
     "@ledgerhq/tsconfig-dsdk": "workspace:*",
+    "@ledgerhq/prettier-config-dsdk": "workspace:*",
     "concurrently": "^8.2.2",
     "ts-node": "^10.9.2",
     "tsc-alias": "^1.8.8"

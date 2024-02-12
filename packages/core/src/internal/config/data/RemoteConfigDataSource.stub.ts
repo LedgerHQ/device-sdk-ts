@@ -17,8 +17,8 @@ export class StubRemoteConfigDataSource implements RemoteConfigDataSource {
         Either.of({
           name: "DeviceSDK",
           version: "0.0.0-fake.2",
-        })
-      )
+        }),
+      ),
     );
   }
 }
