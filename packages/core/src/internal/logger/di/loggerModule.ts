@@ -10,7 +10,7 @@ type FactoryProps = {
 };
 
 export const loggerModuleFactory = (
-  { subscribers }: FactoryProps = { subscribers: [] }
+  { subscribers }: FactoryProps = { subscribers: [] },
 ) =>
   new ContainerModule(
     (
@@ -20,10 +20,10 @@ export const loggerModuleFactory = (
       _rebind,
       _unbindAsync,
       _onActivation,
-      _onDeactivation
+      _onDeactivation,
     ) => {
       bind(types.LoggerService).toConstantValue(
-        new DefaultLoggerService(subscribers)
+        new DefaultLoggerService(subscribers),
       );
-    }
+    },
   );

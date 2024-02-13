@@ -23,7 +23,7 @@ describe("LogBuilder", () => {
           key: "value",
         },
         "test",
-        "test2"
+        "test2",
       );
 
       expect(log).toBeInstanceOf(Log);
@@ -61,7 +61,7 @@ describe("LogBuilder", () => {
         log = LogBuilder.buildFromError(
           err,
           { type: "error" },
-          { key: "value" }
+          { key: "value" },
         );
         expect(log).toBeInstanceOf(Log);
         expect(log.messages).toEqual(["test"]);

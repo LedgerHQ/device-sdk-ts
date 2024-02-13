@@ -31,7 +31,7 @@ export class FileLocalConfigDataSource implements LocalConfigDataSource {
       .mapLeft((error) => new ReadFileError(error))
       .chain((str) => {
         return Either.encase(() => JSON.parse(str) as Config).mapLeft(
-          (error) => new JSONParseError(error)
+          (error) => new JSONParseError(error),
         );
       });
   }
