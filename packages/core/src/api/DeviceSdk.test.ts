@@ -1,4 +1,8 @@
 /* eslint-disable no-restricted-imports */
+import { LocalConfigDataSource } from "@internal/config/data/ConfigDataSource";
+import { StubLocalConfigDataSource } from "@internal/config/data/LocalConfigDataSource.stub";
+import { types as ConfigTypes } from "@internal/config/di/configTypes";
+
 import pkg from "../../package.json";
 import { DeviceSdk } from "./DeviceSdk";
 
@@ -38,6 +42,11 @@ describe("DeviceSdk", () => {
     it("should create a stubbed version", () => {
       expect(sdk).toBeDefined();
       expect(sdk).toBeInstanceOf(DeviceSdk);
+      expect(
+        sdk.container.get<LocalConfigDataSource>(
+          ConfigTypes.LocalConfigDataSource,
+        ),
+      ).toBeInstanceOf(StubLocalConfigDataSource);
     });
 
     it("should return a stubbed `version`", async () => {

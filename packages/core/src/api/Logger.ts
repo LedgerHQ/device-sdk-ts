@@ -27,8 +27,8 @@ export class ConsoleLogger implements LoggerSubscriber {
         if (type === "error" && tag) {
           const { error } = log.data as { error: SdkError };
           const { originalError } = error;
-          console.error("[LOGGER]", ...log.messages);
-          console.error(originalError);
+          console.warn("[LOGGER]", ...log.messages);
+          console.error(originalError ?? error);
           break;
         }
 
@@ -39,7 +39,7 @@ export class ConsoleLogger implements LoggerSubscriber {
           break;
         }
 
-        console.error("[LOGGER]", ...log.messages);
+        console.warn("[LOGGER]", "[type !== 'error']", ...log.messages);
         break;
       }
       default:

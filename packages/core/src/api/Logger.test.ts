@@ -8,6 +8,14 @@ const debug = jest.spyOn(console, "debug").mockImplementation(jest.fn());
 const error = jest.spyOn(console, "error").mockImplementation(jest.fn());
 const log = jest.spyOn(console, "log").mockImplementation(jest.fn());
 
+class CustomError {
+  _tag = "CustomError";
+  originalError?: Error;
+  constructor(originalError?: Error) {
+    this.originalError = originalError;
+  }
+}
+
 let logger: ConsoleLogger;
 let logObject: Log;
 describe("ConsoleLogger", () => {
@@ -24,6 +32,11 @@ describe("ConsoleLogger", () => {
 
   describe("log", () => {
     beforeEach(() => {
+      warn.mockClear();
+      info.mockClear();
+      debug.mockClear();
+      error.mockClear();
+      log.mockClear();
       logger = new ConsoleLogger();
       logObject = LogBuilder.build({}, {}, "test");
     });
@@ -48,13 +61,6 @@ describe("ConsoleLogger", () => {
       expect(warn).toHaveBeenCalledWith("[LOGGER]", "test");
     });
 
-    it("should log Error level", () => {
-      logObject.setLevel(LogLevel.Error);
-      logObject.addMessage("error");
-      logger.log(logObject);
-      expect(error).toHaveBeenCalledWith("[LOGGER]", "test", "error");
-    });
-
     it("should log Debug level", () => {
       logObject.setLevel(LogLevel.Debug);
       logger.log(logObject);
@@ -66,6 +72,46 @@ describe("ConsoleLogger", () => {
       logObject.setLevel(undefined);
       logger.log(logObject);
       expect(log).toHaveBeenCalledWith("[LOGGER]", "test");
+    });
+
+    describe("error", () => {
+      it("should log Error level", () => {
+        const err = new Error("test");
+        logObject = LogBuilder.buildFromError(err);
+        logger.log(logObject);
+        expect(warn).toHaveBeenCalledWith("[LOGGER]", "test");
+        expect(error).toHaveBeenCalledWith(err);
+      });
+
+      it("should log Error level with custom error and original error", () => {
+        const originalError = new Error("test error");
+        const err = new CustomError(originalError);
+        logObject = LogBuilder.buildFromError(err);
+        logger.log(logObject);
+        expect(logObject.context.tag).toBe("CustomError");
+        expect(warn).toHaveBeenCalledWith("[LOGGER]", "test error");
+        expect(error).toHaveBeenCalledWith(originalError);
+      });
+
+      it("should log Error level with custom error and no original error", () => {
+        const err = new CustomError();
+        logObject = LogBuilder.buildFromError(err);
+        logger.log(logObject);
+        expect(logObject.context.tag).toBe("CustomError");
+        expect(warn).toHaveBeenCalledWith("[LOGGER]", "CustomError");
+        expect(error).toHaveBeenCalledWith(err);
+      });
+
+      it("should log Warn level if no error type in context", () => {
+        logObject = LogBuilder.build({ type: "test" }, {}, "test");
+        logObject.setLevel(LogLevel.Error);
+        logger.log(logObject);
+        expect(warn).toHaveBeenCalledWith(
+          "[LOGGER]",
+          "[type !== 'error']",
+          "test",
+        );
+      });
     });
   });
 });
