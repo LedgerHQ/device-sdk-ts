@@ -52,7 +52,10 @@ describe("LogBuilder", () => {
       it("with no originalError should create a Log", () => {
         log = LogBuilder.buildFromError(new CustomError(), { type: "error" });
         expect(log).toBeInstanceOf(Log);
-        expect(log.context).toEqual({ type: "CustomError" });
+        expect(log.context).toStrictEqual({
+          type: "error",
+          tag: "CustomError",
+        });
         expect(log.messages).toEqual(["CustomError"]);
       });
 

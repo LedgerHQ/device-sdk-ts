@@ -1,5 +1,7 @@
 import { Log, LoggerSubscriber, LogLevel } from "@internal/logger/service/Log";
 
+import { SdkError } from "./Error";
+
 export { Log, LogLevel };
 export type {
   LogContext,
@@ -20,9 +22,26 @@ export class ConsoleLogger implements LoggerSubscriber {
       case LogLevel.Debug:
         console.debug("[LOGGER]", ...log.messages);
         break;
-      case LogLevel.Error:
+      case LogLevel.Error: {
+        const { type, tag } = log.context;
+        if (type === "error" && tag) {
+          const { error } = log.data as { error: SdkError };
+          const { originalError } = error;
+          console.error("[LOGGER]", ...log.messages);
+          console.error(originalError);
+          break;
+        }
+
+        if (type === "error" && !tag) {
+          const { error } = log.data as { error: Error };
+          console.warn("[LOGGER]", ...log.messages);
+          console.error(error);
+          break;
+        }
+
         console.error("[LOGGER]", ...log.messages);
         break;
+      }
       default:
         console.log("[LOGGER]", ...log.messages);
     }

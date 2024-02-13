@@ -1,13 +1,14 @@
 export enum LogLevel {
-  Fatal = -1,
-  Error = 0,
-  Warning = 1,
-  Info = 2,
-  Debug = 3,
+  Fatal,
+  Error,
+  Warning,
+  Info,
+  Debug,
 }
 
 export type LogContext = Partial<{
   type: string;
+  tag: string;
   [key: string]: unknown;
 }>;
 

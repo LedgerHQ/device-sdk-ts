@@ -1,4 +1,4 @@
-import { Log } from "./Log";
+import { Log, LogLevel } from "./Log";
 
 describe("Log", () => {
   it("should create a Log instance", () => {
@@ -11,11 +11,11 @@ describe("Log", () => {
       messages: ["test"],
       data: {},
       context: {},
-      level: 1,
+      level: LogLevel.Info,
     });
-    expect(log.level).toBe(1);
-    log.setLevel(2);
-    expect(log.level).toBe(2);
+    expect(log.level).toBe(LogLevel.Info);
+    log.setLevel(LogLevel.Debug);
+    expect(log.level).toBe(LogLevel.Debug);
   });
 
   it("should add a message", () => {

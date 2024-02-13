@@ -22,13 +22,12 @@ export class LogBuilder {
       level: LogLevel.Error,
       context: {
         ...context,
-        type: isSdkError ? error._tag : "error",
+        type: "error",
+        tag: isSdkError ? error._tag : undefined,
       },
       data: {
         ...data,
-        error: {
-          ...error,
-        },
+        error,
       },
       messages: isSdkError
         ? error.originalError
