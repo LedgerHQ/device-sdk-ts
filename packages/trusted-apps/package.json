@@ -13,6 +13,7 @@
     "lint:fix": "eslint --cache --fix --ext .ts \"src\"",
     "prettier": "prettier . --check",
     "prettier:fix": "prettier . --write",
+    "typecheck": "tsc --noEmit",
     "dev": "tsc --watch",
     "test": "jest --passWithNoTests"
   },

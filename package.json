@@ -15,6 +15,7 @@
     "prettier": "turbo run prettier --log-order=grouped",
     "prettier:fix": "turbo run prettier:fix --log-order=grouped",
     "test": "turbo run test --log-order=grouped",
+    "typecheck": "turbo run typecheck --log-order=grouped",
     "core": "pnpm --filter @ledgerhq/device-sdk-core",
     "signer": "pnpm --filter @ledgerhq/device-sdk-signer",
     "trusted-apps": "pnpm --filter @ledgerhq/device-sdk-trusted-apps",
