@@ -1,0 +1,16 @@
+{
+  "branches": [
+    {
+      "name": "main"
+    },
+    {
+      "name": "feature/dsdk-66-changelog",
+      "channel": "wip",
+      "prerelease": true
+    }
+  ],
+  "extends": [
+    "semantic-release-monorepo",
+    "semantic-release-config-gitmoji"
+  ]
+}

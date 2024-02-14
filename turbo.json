@@ -30,6 +30,9 @@
     },
     "typecheck": {
       "dependsOn": ["build", "^typecheck"]
+    },
+    "release": {
+      "dependsOn": ["^release"]
     }
   }
 }

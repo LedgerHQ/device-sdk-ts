@@ -22,7 +22,8 @@
     "ui": "pnpm --filter @ledgerhq/device-sdk-ui",
     "sample": "pnpm --filter @ledgerhq/device-sdk-sample",
     "prepare": "husky",
-    "commit": "gitmoji -c"
+    "commit": "gitmoji -c",
+    "release": "pnpm turbo run release --log-order=grouped"
   },
   "devDependencies": {
     "@types/jest": "^29.5.11",
@@ -35,6 +36,9 @@
     "lint-staged": "^15.2.0",
     "prettier": "^3.1.1",
     "rimraf": "^5.0.5",
+    "semantic-release": "^23.0.2",
+    "semantic-release-config-gitmoji": "^1.5.3",
+    "semantic-release-monorepo": "^8.0.2",
     "turbo": "^1.12.3",
     "typescript": "^5.3.3",
     "zx": "^7.2.3"
