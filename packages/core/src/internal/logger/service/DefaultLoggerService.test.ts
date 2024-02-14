@@ -1,9 +1,8 @@
 import { DefaultLoggerService } from "./DefaultLoggerService";
 import { LogLevel } from "./Log";
 import { LogBuilder } from "./LogBuilder";
-import { LoggerService } from "./LoggerService";
 
-let service: LoggerService;
+let service: DefaultLoggerService;
 
 const subscriber = {
   log: jest.fn(),
@@ -16,12 +15,11 @@ describe("LoggerService", () => {
     const log = LogBuilder.build({ type: "test" }, { key: "value" }, "message");
 
     service.info(log);
-
-    expect(subscriber.log).toHaveBeenCalledWith(log);
+    expect(subscriber.log).toHaveBeenCalledWith(LogLevel.Info, log);
   });
 
   describe("info", () => {
-    it("should have the correct LogLevel", () => {
+    it("should call _log with the correct LogLevel", () => {
       subscriber.log.mockClear();
       service = new DefaultLoggerService([subscriber]);
       const log = LogBuilder.build(
@@ -30,9 +28,11 @@ describe("LoggerService", () => {
         "message",
       );
 
-      service.info(log);
+      const spy = jest.spyOn(service, "_log").mockImplementation(jest.fn());
 
-      expect(log.level).toBe(LogLevel.Info);
+      service.info(log);
+      expect(spy).toHaveBeenCalledWith(LogLevel.Info, log);
+      spy.mockRestore();
     });
   });
 
@@ -46,9 +46,11 @@ describe("LoggerService", () => {
         "message",
       );
 
-      service.debug(log);
+      const spy = jest.spyOn(service, "_log").mockImplementation(jest.fn());
 
-      expect(log.level).toBe(LogLevel.Debug);
+      service.debug(log);
+      expect(spy).toHaveBeenCalledWith(LogLevel.Debug, log);
+      spy.mockRestore();
     });
   });
 
@@ -62,9 +64,11 @@ describe("LoggerService", () => {
         "message",
       );
 
-      service.warn(log);
+      const spy = jest.spyOn(service, "_log").mockImplementation(jest.fn());
 
-      expect(log.level).toBe(LogLevel.Warning);
+      service.warn(log);
+      expect(spy).toHaveBeenCalledWith(LogLevel.Warning, log);
+      spy.mockRestore();
     });
   });
 
@@ -78,9 +82,11 @@ describe("LoggerService", () => {
         { key: "value" },
       );
 
-      service.error(log);
+      const spy = jest.spyOn(service, "_log").mockImplementation(jest.fn());
 
-      expect(log.level).toBe(LogLevel.Error);
+      service.error(log);
+      expect(spy).toHaveBeenCalledWith(LogLevel.Error, log);
+      spy.mockRestore();
     });
   });
 });

@@ -11,8 +11,8 @@ export type {
 } from "@internal/logger/service/Log";
 
 export class ConsoleLogger implements LoggerSubscriber {
-  log(log: Log): void {
-    switch (log.level) {
+  log(level: LogLevel, log: Log): void {
+    switch (level) {
       case LogLevel.Info:
         console.info("[LOGGER]", ...log.messages);
         break;

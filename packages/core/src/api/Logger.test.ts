@@ -50,27 +50,23 @@ describe("ConsoleLogger", () => {
     });
 
     it("should log Info level", () => {
-      logObject.setLevel(LogLevel.Info);
-      logger.log(logObject);
+      logger.log(LogLevel.Info, logObject);
       expect(info).toHaveBeenCalledWith("[LOGGER]", "test");
     });
 
     it("should log Warn level", () => {
-      logObject.setLevel(LogLevel.Warning);
-      logger.log(logObject);
+      logger.log(LogLevel.Warning, logObject);
       expect(warn).toHaveBeenCalledWith("[LOGGER]", "test");
     });
 
     it("should log Debug level", () => {
-      logObject.setLevel(LogLevel.Debug);
-      logger.log(logObject);
+      logger.log(LogLevel.Debug, logObject);
       expect(debug).toHaveBeenCalledWith("[LOGGER]", "test");
     });
 
     it("should default to Log level if none present", () => {
       // @ts-expect-error disable for tests
-      logObject.setLevel(undefined);
-      logger.log(logObject);
+      logger.log(null, logObject);
       expect(log).toHaveBeenCalledWith("[LOGGER]", "test");
     });
 
@@ -78,7 +74,7 @@ describe("ConsoleLogger", () => {
       it("should log Error level", () => {
         const err = new Error("test");
         logObject = LogBuilder.buildFromError(err);
-        logger.log(logObject);
+        logger.log(LogLevel.Error, logObject);
         expect(warn).toHaveBeenCalledWith("[LOGGER]", "test");
         expect(error).toHaveBeenCalledWith(err);
       });
@@ -87,7 +83,7 @@ describe("ConsoleLogger", () => {
         const originalError = new Error("test error");
         const err = new CustomError(originalError);
         logObject = LogBuilder.buildFromError(err);
-        logger.log(logObject);
+        logger.log(LogLevel.Error, logObject);
         expect(logObject.context.tag).toBe("CustomError");
         expect(warn).toHaveBeenCalledWith("[LOGGER]", "test error");
         expect(error).toHaveBeenCalledWith(originalError);
@@ -96,7 +92,7 @@ describe("ConsoleLogger", () => {
       it("should log Error level with custom error and no original error", () => {
         const err = new CustomError();
         logObject = LogBuilder.buildFromError(err);
-        logger.log(logObject);
+        logger.log(LogLevel.Error, logObject);
         expect(logObject.context.tag).toBe("CustomError");
         expect(warn).toHaveBeenCalledWith("[LOGGER]", "CustomError");
         expect(error).toHaveBeenCalledWith(err);
@@ -104,8 +100,7 @@ describe("ConsoleLogger", () => {
 
       it("should log Warn level if no error type in context", () => {
         logObject = LogBuilder.build({ type: "test" }, {}, "test");
-        logObject.setLevel(LogLevel.Error);
-        logger.log(logObject);
+        logger.log(LogLevel.Error, logObject);
         expect(warn).toHaveBeenCalledWith(
           "[LOGGER]",
           "[type !== 'error']",

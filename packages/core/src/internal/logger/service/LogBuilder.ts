@@ -1,6 +1,6 @@
 import { SdkError } from "@root/src/api/Error";
 
-import { Log, LogContext, LogData, LogLevel, LogMessages } from "./Log";
+import { Log, LogContext, LogData, LogMessages } from "./Log";
 
 export class LogBuilder {
   static build(
@@ -19,7 +19,6 @@ export class LogBuilder {
     const isSdkError = "_tag" in error;
 
     return new Log({
-      level: LogLevel.Error,
       context: {
         ...context,
         type: "error",

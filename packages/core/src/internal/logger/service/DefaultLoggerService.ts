@@ -10,29 +10,25 @@ export class DefaultLoggerService implements LoggerService {
     this.subscribers = subscribers;
   }
 
-  _log(log: Log): void {
+  _log(level: LogLevel, log: Log): void {
     this.subscribers.forEach((subscriber) => {
-      subscriber.log(log);
+      subscriber.log(level, log);
     });
   }
 
   info(log: Log): void {
-    log.setLevel(LogLevel.Info);
-    this._log(log);
+    this._log(LogLevel.Info, log);
   }
 
   warn(log: Log): void {
-    log.setLevel(LogLevel.Warning);
-    this._log(log);
+    this._log(LogLevel.Warning, log);
   }
 
   debug(log: Log): void {
-    log.setLevel(LogLevel.Debug);
-    this._log(log);
+    this._log(LogLevel.Debug, log);
   }
 
   error(log: Log): void {
-    log.setLevel(LogLevel.Error);
-    this._log(log);
+    this._log(LogLevel.Error, log);
   }
 }
