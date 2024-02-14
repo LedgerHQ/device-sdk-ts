@@ -11,8 +11,13 @@ class CustomError {
 }
 
 let log: Log;
+const d = jest.spyOn(Date, "now").mockReturnValue(12345);
 
 describe("LogBuilder", () => {
+  beforeEach(() => {
+    d.mockClear();
+  });
+
   describe("build", () => {
     it("should create a Log instance with context and data", () => {
       log = LogBuilder.build(
@@ -34,6 +39,30 @@ describe("LogBuilder", () => {
 
     it("should create a Log instance with an empty context and data", () => {
       log = LogBuilder.build(undefined, undefined, "test");
+      expect(log.context).toEqual({});
+      expect(log.data).toEqual({});
+      expect(log.messages).toEqual(["test"]);
+    });
+  });
+
+  describe("buildWithTimestamp", () => {
+    it("should create a Log instance with a timestamp", () => {
+      log = LogBuilder.buildWithTimestamp(
+        { type: "test" },
+        { key: "value" },
+        12345,
+        "test",
+      );
+
+      expect(log).toBeInstanceOf(Log);
+      expect(log.timestamp).toBe(12345);
+      expect(log.context).toEqual({ type: "test" });
+      expect(log.data).toEqual({ key: "value" });
+      expect(log.messages).toEqual(["test"]);
+    });
+
+    it("should create a Log instance with a timestamp and no context or data", () => {
+      log = LogBuilder.buildWithTimestamp(undefined, undefined, 12345, "test");
       expect(log.context).toEqual({});
       expect(log.data).toEqual({});
       expect(log.messages).toEqual(["test"]);

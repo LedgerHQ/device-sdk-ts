@@ -1,6 +1,6 @@
 import { LogBuilder } from "@internal/logger/service/LogBuilder";
 
-import { ConsoleLogger, Log, LogLevel } from "./Logger";
+import { ConsoleLogger, Log, LogLevel } from "./ConsoleLogger";
 
 const warn = jest.spyOn(console, "warn").mockImplementation(jest.fn());
 const info = jest.spyOn(console, "info").mockImplementation(jest.fn());

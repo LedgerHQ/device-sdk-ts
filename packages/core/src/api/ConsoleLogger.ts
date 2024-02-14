@@ -7,7 +7,7 @@ export type {
   LogContext,
   LogData,
   LoggerSubscriber,
-  LogMessages,
+  LogMessage,
 } from "@internal/logger/service/Log";
 
 export class ConsoleLogger implements LoggerSubscriber {

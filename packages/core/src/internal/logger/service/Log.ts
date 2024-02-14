@@ -14,12 +14,13 @@ export type LogContext = Partial<{
 
 export type LogData = Record<string, unknown>;
 
-export type LogMessages = string[];
+export type LogMessage = string;
 
 export type LogContructorArgs = {
-  messages: LogMessages;
+  messages: LogMessage[];
   data: LogData;
   context: LogContext;
+  timestamp?: number;
 };
 
 export interface LoggerSubscriber {
@@ -27,14 +28,16 @@ export interface LoggerSubscriber {
 }
 
 export class Log {
-  messages: string[];
+  messages: LogMessage[];
   data: Record<string, unknown> = {}; // use Maybe type for null/undefined ?
   context: LogContext = {}; // use Maybe type for null/undefined ?
+  timestamp: number = Date.now();
 
-  constructor({ messages, data, context }: LogContructorArgs) {
+  constructor({ messages, data, context, timestamp }: LogContructorArgs) {
     this.messages = messages;
     this.data = data;
     this.context = context;
+    this.timestamp = timestamp ?? this.timestamp;
   }
 
   addMessage(message: string) {
