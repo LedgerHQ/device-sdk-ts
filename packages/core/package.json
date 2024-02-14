@@ -17,6 +17,7 @@
     "test": "jest src",
     "test:watch": "pnpm test -- --watch",
     "test:coverage": "pnpm test -- --coverage",
+    "typecheck": "tsc --noEmit",
     "module:create": "pnpm hygen core-module with-prompt"
   },
   "dependencies": {
