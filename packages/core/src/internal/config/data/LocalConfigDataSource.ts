@@ -28,16 +28,10 @@ export const stubFsReadFile = () => JSON.stringify(version);
 export class FileLocalConfigDataSource implements LocalConfigDataSource {
   getConfig(): Either<LocalConfigFailure, Config> {
     return Either.encase(() => stubFsReadFile())
-      .mapLeft((error) => {
-        console.log("readFileSync error");
-        return new ReadFileError(error);
-      })
+      .mapLeft((error) => new ReadFileError(error))
       .chain((str) => {
         return Either.encase(() => JSON.parse(str) as Config).mapLeft(
-          (error) => {
-            console.log("JSON.parse error");
-            return new JSONParseError(error);
-          },
+          (error) => new JSONParseError(error),
         );
       });
   }

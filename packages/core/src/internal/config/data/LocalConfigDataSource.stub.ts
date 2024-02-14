@@ -16,7 +16,7 @@ export class StubLocalConfigDataSource implements LocalConfigDataSource {
   getConfig(): Either<never, Config> {
     return Either.of({
       name: "DeviceSDK",
-      version: "0.0.0-mock.1",
+      version: "0.0.0-stub.1",
     });
   }
 }

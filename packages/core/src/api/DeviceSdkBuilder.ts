@@ -1,17 +1,22 @@
+import { LoggerSubscriber } from "@internal/logger/service/Log";
+
 import { DeviceSdk } from "./DeviceSdk";
 
 export class LedgerDeviceSdkBuilder {
   stub = false;
-  constructor() {
-    console.log("New build");
-  }
+  loggers: LoggerSubscriber[] = [];
 
   build(): DeviceSdk {
-    return new DeviceSdk({ stub: this.stub });
+    return new DeviceSdk({ stub: this.stub, loggers: this.loggers });
   }
 
-  setStub(stubbed = true): LedgerDeviceSdkBuilder {
+  setStub(stubbed: boolean): LedgerDeviceSdkBuilder {
     this.stub = stubbed;
+    return this;
+  }
+
+  addLogger(logger: LoggerSubscriber): LedgerDeviceSdkBuilder {
+    this.loggers.push(logger);
     return this;
   }
 }
