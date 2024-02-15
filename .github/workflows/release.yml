@@ -1,0 +1,21 @@
+name: "release"
+on:
+  push:
+    branches:
+      - feature/dsdk-66-changelog
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./actions/setup-toolchain-composite
+      - name: setup
+        run: |
+          pnpm i
+          pnpm build
+      - name: release
+        run: pnpm release
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          # NPM_TOKEN: ${{ secrets.NPMJS_TOKEN }}

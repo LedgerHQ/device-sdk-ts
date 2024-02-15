@@ -32,7 +32,7 @@
       "dependsOn": ["build", "^typecheck"]
     },
     "release": {
-      "dependsOn": ["^release"]
+      "dependsOn": ["build", "^release"]
     }
   }
 }

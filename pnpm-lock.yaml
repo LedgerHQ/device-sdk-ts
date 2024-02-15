@@ -8,6 +8,9 @@ importers:
 
   .:
     devDependencies:
+      '@semantic-release/npm':
+        specifier: ^11.0.2
+        version: 11.0.2(semantic-release@23.0.2)
       '@types/jest':
         specifier: ^29.5.11
         version: 29.5.11
