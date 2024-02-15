@@ -15,8 +15,7 @@
     "prettier": "prettier . --check",
     "prettier:fix": "prettier . --write",
     "typecheck": "tsc --noEmit",
-    "test": "jest --passWithNoTests",
-    "release": "semantic-release"
+    "test": "jest --passWithNoTests"
   },
   "dependencies": {
     "inversify": "^6.0.2",

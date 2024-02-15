@@ -1,0 +1,22 @@
+name: create release pull request
+on:
+  push:
+    branches:
+      # - develop
+      - feature/dsdk-66-changelog
+
+env:
+  FORCE_COLOR: "1"
+
+jobs:
+  version:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./actions/setup-toolchain-composite
+      - name: install dependencies
+        run: pnpm install
+      - name: create release pull request
+        uses: changesets/action@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
