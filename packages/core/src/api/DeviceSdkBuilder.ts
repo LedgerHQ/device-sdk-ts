@@ -7,6 +7,7 @@ export class LedgerDeviceSdkBuilder {
   loggers: LoggerSubscriber[] = [];
 
   build(): DeviceSdk {
+    console.log("Building DeviceSdk");
     return new DeviceSdk({ stub: this.stub, loggers: this.loggers });
   }
 
