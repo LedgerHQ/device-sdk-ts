@@ -32,21 +32,13 @@ describe("ConsoleLogger", () => {
 
   describe("log", () => {
     beforeEach(() => {
-      warn.mockClear();
-      info.mockClear();
-      debug.mockClear();
-      error.mockClear();
-      log.mockClear();
+      jest.clearAllMocks();
       logger = new ConsoleLogger();
       logObject = LogBuilder.build({}, {}, "test");
     });
 
     afterAll(() => {
-      warn.mockRestore();
-      info.mockRestore();
-      debug.mockRestore();
-      error.mockRestore();
-      log.mockRestore();
+      jest.restoreAllMocks();
     });
 
     it("should log Info level", () => {
