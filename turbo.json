@@ -28,6 +28,11 @@
       "outputs": [],
       "inputs": ["src/**/*.ts", "tests/**/*.ts"]
     },
+    "test:coverage": {
+      "dependsOn": ["build", "lint"],
+      "outputs": [],
+      "inputs": ["src/**/*.ts", "tests/**/*.ts"]
+    },
     "typecheck": {
       "dependsOn": ["build", "^typecheck"]
     }
