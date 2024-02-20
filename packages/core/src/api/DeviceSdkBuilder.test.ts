@@ -1,10 +1,11 @@
+import { ConsoleLogger } from "./ConsoleLogger";
 import { DeviceSdk } from "./DeviceSdk";
 import { LedgerDeviceSdkBuilder } from "./DeviceSdkBuilder";
 
+jest.mock("./ConsoleLogger");
+
 let builder: LedgerDeviceSdkBuilder;
-const logger = {
-  log: jest.fn(),
-};
+let logger: ConsoleLogger;
 
 describe("LedgerDeviceSdkBuilder", () => {
   beforeEach(() => {
@@ -22,6 +23,7 @@ describe("LedgerDeviceSdkBuilder", () => {
   });
 
   it("should add a logger", () => {
+    logger = new ConsoleLogger();
     builder.addLogger(logger);
     expect(builder.loggers).toContain(logger);
   });

@@ -4,15 +4,17 @@ import { StubLocalConfigDataSource } from "@internal/config/data/LocalConfigData
 import { types as ConfigTypes } from "@internal/config/di/configTypes";
 
 import pkg from "../../package.json";
+import { ConsoleLogger } from "./ConsoleLogger";
 import { DeviceSdk } from "./DeviceSdk";
 
+jest.mock("./ConsoleLogger");
+
 let sdk: DeviceSdk;
-const logger = {
-  log: jest.fn(),
-};
+let logger: ConsoleLogger;
 describe("DeviceSdk", () => {
   describe("clean", () => {
     beforeEach(() => {
+      logger = new ConsoleLogger();
       sdk = new DeviceSdk({ stub: false, loggers: [logger] });
     });
 

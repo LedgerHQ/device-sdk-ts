@@ -2,37 +2,31 @@ import { Either, Left } from "purify-ts";
 
 import { JSONParseError } from "@internal/config/di/configTypes";
 
+import { DefaultLoggerService } from "../../logger/service/DefaultLoggerService";
+import { FileLocalConfigDataSource } from "../data/LocalConfigDataSource";
+import { RestRemoteConfigDataSource } from "../data/RemoteConfigDataSource";
 import { ConfigService } from "./ConfigService";
 import { DefaultConfigService } from "./DefaultConfigService";
 
-const localDataSource = {
-  getConfig: jest.fn(),
-};
+jest.mock("../data/LocalConfigDataSource");
+jest.mock("../data/RemoteConfigDataSource");
 
-const remoteDataSource = {
-  getConfig: jest.fn(),
-  parseResponse: jest.fn(),
-};
-
-const loggerService = {
-  subscribers: [],
-  info: jest.fn(),
-  debug: jest.fn(),
-  warn: jest.fn(),
-  error: jest.fn(),
-  fatal: jest.fn(),
-};
+let localDataSource: jest.Mocked<FileLocalConfigDataSource>;
+let remoteDataSource: jest.Mocked<RestRemoteConfigDataSource>;
+let loggerService: jest.Mocked<DefaultLoggerService>;
 
 let service: ConfigService;
 describe("DefaultConfigService", () => {
   beforeEach(() => {
-    remoteDataSource.getConfig.mockClear();
-    localDataSource.getConfig.mockClear();
-    loggerService.debug.mockClear();
-    loggerService.error.mockClear();
-    loggerService.info.mockClear();
-    loggerService.warn.mockClear();
-    loggerService.subscribers = [];
+    jest.clearAllMocks();
+    localDataSource =
+      new FileLocalConfigDataSource() as jest.Mocked<FileLocalConfigDataSource>;
+    remoteDataSource =
+      new RestRemoteConfigDataSource() as jest.Mocked<RestRemoteConfigDataSource>;
+
+    loggerService = new DefaultLoggerService(
+      [],
+    ) as jest.Mocked<DefaultLoggerService>;
 
     service = new DefaultConfigService(
       localDataSource,

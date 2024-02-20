@@ -10,7 +10,6 @@ import { LocalConfigDataSource } from "./ConfigDataSource";
  * class StubLocalConfigDataSource
  *
  */
-
 @injectable()
 export class StubLocalConfigDataSource implements LocalConfigDataSource {
   getConfig(): Either<never, Config> {
