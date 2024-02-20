@@ -44,6 +44,7 @@
     "rimraf": "^5.0.5",
     "turbo": "^1.12.3",
     "typescript": "^5.3.3",
+    "ts-jest": "^29.1.1",
     "zx": "^7.2.3"
   },
   "lint-staged": {
