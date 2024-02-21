@@ -7,10 +7,12 @@
       "inputs": ["src/**/*.ts"]
     },
     "lint": {
-      "dependsOn": ["^lint"]
+      "dependsOn": ["^lint"],
+      "cache": false
     },
     "lint:fix": {
-      "dependsOn": ["^lint:fix"]
+      "dependsOn": ["^lint:fix"],
+      "cache": false
     },
     "prettier": {
       "dependsOn": ["^prettier"]
