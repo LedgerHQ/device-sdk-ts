@@ -1,7 +1,16 @@
 import { Container } from "inversify";
+import { Observable } from "rxjs";
 
 import { types as ConfigTypes } from "@internal/config/di/configTypes";
 import { GetSdkVersionUseCase } from "@internal/config/usecase/GetSdkVersionUseCase";
+import { discoveryDiTypes } from "@internal/discovery/di/discoveryDiTypes";
+import {
+  ConnectUseCase,
+  ConnectUseCaseArgs,
+} from "@internal/discovery/use-case/ConnectUseCase";
+import type { StartDiscoveringUseCase } from "@internal/discovery/use-case/StartDiscoveringUseCase";
+import type { StopDiscoveringUseCase } from "@internal/discovery/use-case/StopDiscoveringUseCase";
+import { DiscoveredDevice } from "@internal/usb/model/DiscoveredDevice";
 import { makeContainer, MakeContainerProps } from "@root/src/di";
 
 export class DeviceSdk {
@@ -26,5 +35,23 @@ export class DeviceSdk {
     return this.container
       .get<GetSdkVersionUseCase>(ConfigTypes.GetSdkVersionUseCase)
       .getSdkVersion();
+  }
+
+  startDiscovering(): Observable<DiscoveredDevice> {
+    return this.container
+      .get<StartDiscoveringUseCase>(discoveryDiTypes.StartDiscoveringUseCase)
+      .execute();
+  }
+
+  stopDiscovering() {
+    return this.container
+      .get<StopDiscoveringUseCase>(discoveryDiTypes.StopDiscoveringUseCase)
+      .execute();
+  }
+
+  connect(args: ConnectUseCaseArgs) {
+    return this.container
+      .get<ConnectUseCase>(discoveryDiTypes.ConnectUseCase)
+      .execute(args);
   }
 }

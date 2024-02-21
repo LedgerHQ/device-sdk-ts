@@ -1,7 +1,10 @@
-import React from "react";
+import React, { useCallback, useEffect, useState } from "react";
+import type { DiscoveredDevice } from "@ledgerhq/device-sdk-core";
 import { Button, Flex, Icons, Text } from "@ledgerhq/react-ui";
 import Image from "next/image";
 import styled, { DefaultTheme } from "styled-components";
+
+import { useSdk } from "@/providers/DeviceSdkProvider";
 
 const Root = styled(Flex)`
   flex-direction: column;
@@ -41,6 +44,45 @@ const NanoLogo = styled(Image).attrs({ mb: 8 })`
 `;
 
 export const MainView: React.FC = () => {
+  const sdk = useSdk();
+  const [discoveredDevice, setDiscoveredDevice] =
+    useState<null | DiscoveredDevice>(null);
+
+  // Example starting the discovery on a user action
+  const onSelectDeviceClicked = useCallback(() => {
+    sdk.startDiscovering().subscribe({
+      next: (device) => {
+        console.log(`🦖 Discovered device: `, device);
+        setDiscoveredDevice(device);
+      },
+      error: (error) => {
+        console.error(error);
+      },
+    });
+  }, [sdk]);
+
+  useEffect(() => {
+    return () => {
+      // Example cleaning up the discovery
+      sdk.stopDiscovering();
+    };
+  }, [sdk]);
+
+  useEffect(() => {
+    if (discoveredDevice) {
+      sdk.connect({ deviceId: discoveredDevice.id }).subscribe({
+        next: (connectedDevice) => {
+          console.log(
+            `🦖 Response from connect: ${JSON.stringify(connectedDevice)} 🎉`,
+          );
+        },
+        error: (error) => {
+          console.error(`Error from connection or get-version`, error);
+        },
+      });
+    }
+  }, [sdk, discoveredDevice]);
+
   return (
     <Root>
       <Header>
@@ -72,7 +114,12 @@ export const MainView: React.FC = () => {
           Use this application to test Ledger hardware device features.
         </Description>
 
-        <Button variant="main" backgroundColor="main" size="large">
+        <Button
+          onClick={onSelectDeviceClicked}
+          variant="main"
+          backgroundColor="main"
+          size="large"
+        >
           Select a device
         </Button>
       </Container>

@@ -7,7 +7,7 @@
       "inputs": ["src/**/*.ts"]
     },
     "lint": {
-      "dependsOn": ["^lint"]
+      "dependsOn": ["build", "^lint"]
     },
     "lint:fix": {
       "dependsOn": ["^lint:fix"]
