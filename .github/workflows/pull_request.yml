@@ -26,4 +26,9 @@ jobs:
         run: pnpm typecheck
 
       - name: Test
-        run: pnpm test
+        run: pnpm test:coverage
+
+      - uses: sonarsource/sonarqube-scan-action@master
+        env:
+          SONAR_TOKEN: ${{ secrets.GREEN_SONAR_TOKEN }}
+          SONAR_HOST_URL: ${{ secrets.GREEN_SONAR_HOST_URL }}
