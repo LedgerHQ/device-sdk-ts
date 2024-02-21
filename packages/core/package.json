@@ -14,7 +14,7 @@
     "lint:fix": "eslint --cache --fix --ext .ts \"src\"",
     "prettier": "prettier . --check",
     "prettier:fix": "prettier . --write",
-    "test": "jest src",
+    "test": "jest",
     "test:watch": "pnpm test -- --watch",
     "test:coverage": "pnpm test -- --coverage",
     "typecheck": "tsc --noEmit",
