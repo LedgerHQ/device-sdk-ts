@@ -9,7 +9,23 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  danger:
+    runs-on: [device-sdk-4xlarge-linux]
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: ./actions/setup-toolchain-composite
+
+      - name: Danger
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # Workaround when using custom runners
+          # https://github.com/danger/danger-js/issues/1374
+          DANGER_GITHUB_API_BASE_URL: "https://api.github.com"
+        run: pnpm danger ci --dangerfile danger/dangerfile.ts --failOnErrors
+
   health-check:
+    needs: [danger]
     runs-on: [device-sdk-4xlarge-linux]
     steps:
       - uses: actions/checkout@v4
