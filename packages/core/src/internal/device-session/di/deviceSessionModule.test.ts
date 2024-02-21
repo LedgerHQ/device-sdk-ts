@@ -1,7 +1,6 @@
 import { Container } from "inversify";
 
-import deviceSessionModuleFactory from "./deviceSessionModule";
-import { types } from "./deviceSessionTypes";
+import { deviceSessionModuleFactory } from "./deviceSessionModule";
 
 describe("deviceSessionModuleFactory", () => {
   describe("Default", () => {

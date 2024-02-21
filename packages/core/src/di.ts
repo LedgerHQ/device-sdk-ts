@@ -4,6 +4,7 @@ import { Container } from "inversify";
 // import { makeLoggerMiddleware } from "inversify-logger-middleware";
 import { configModuleFactory } from "@internal/config/di/configModule";
 import { deviceModelModuleFactory } from "@internal/device-model/di/deviceModelModule";
+import { deviceSessionModuleFactory } from "@internal/device-session/di/deviceSessionModule";
 import { discoveryModuleFactory } from "@internal/discovery/di/discoveryModule";
 import { loggerModuleFactory } from "@internal/logger/di/loggerModule";
 import { LoggerSubscriber } from "@internal/logger/service/Log";
@@ -32,6 +33,7 @@ export const makeContainer = ({
     usbModuleFactory({ stub }),
     discoveryModuleFactory({ stub }),
     loggerModuleFactory({ subscribers: loggers }),
+    deviceSessionModuleFactory(),
     // modules go here
   );
 

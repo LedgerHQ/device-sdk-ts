@@ -1,13 +1,20 @@
 import { ContainerModule } from "inversify";
 
-import { DefaultDeviceSessionService } from "../service/DefaultDeviceSessionService";
+import { DefaultFramerService } from "@internal/device-session/service/DefaultFramerService";
+
 import { types } from "./deviceSessionTypes";
 
-type FactoryProps = {};
-
-const deviceSessionModuleFactory = ({}: Partial<FactoryProps> = {}) =>
-  new ContainerModule((bind, _unbind, _isBound, _rebind, _unbindAsync, _onActivation, _onDeactivation) => {
-    bind(types.DeviceSessionService).to(DefaultDeviceSessionService);
-  });
-
-export default deviceSessionModuleFactory;
+export const deviceSessionModuleFactory = () =>
+  new ContainerModule(
+    (
+      bind,
+      _unbind,
+      _isBound,
+      _rebind,
+      _unbindAsync,
+      _onActivation,
+      _onDeactivation,
+    ) => {
+      bind(types.DeviceSessionService).to(DefaultFramerService);
+    },
+  );
