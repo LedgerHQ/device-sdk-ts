@@ -4,6 +4,7 @@
     "outDir": "./lib",
     "baseUrl": ".",
     "paths": {
+      "@api/*": ["src/api/*"],
       "@internal/*": ["src/internal/*"],
       "@root/*": ["./*"]
     }

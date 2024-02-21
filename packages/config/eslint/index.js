@@ -58,7 +58,7 @@ module.exports = {
               // Packages. `react` related packages come first.
               ["^react", "^@?\\w"],
               // Internal packages.
-              ["^(@|@internal|@root)(/.*|$)"],
+              ["^(@|@api|@internal|@root)(/.*|$)"],
               // Other relative imports. Put same-folder imports and `.` last.
               ["^\\./(?=.*/)(?!/?$)", "^\\.(?!/?$)", "^\\./?$"],
               // Style imports.
