@@ -26,27 +26,33 @@ describe("ConsoleLogger", () => {
 
     it("should log Info level", () => {
       logger.log(LogLevel.Info, message, options);
-      expect(info).toHaveBeenCalledWith("[LOGGER]", message);
+      expect(info).toHaveBeenCalledWith("[logger]", message);
+    });
+
+    it("should log Info level with a custom tag", () => {
+      const tag = "custom-tag";
+      logger.log(LogLevel.Info, message, { ...options, tag });
+      expect(info).toHaveBeenCalledWith(`[${tag}]`, message);
     });
 
     it("should log Warn level", () => {
       logger.log(LogLevel.Warning, message, options);
-      expect(warn).toHaveBeenCalledWith("[LOGGER]", message);
+      expect(warn).toHaveBeenCalledWith("[logger]", message);
     });
 
     it("should log Debug level", () => {
       logger.log(LogLevel.Debug, message, options);
-      expect(debug).toHaveBeenCalledWith("[LOGGER]", message);
+      expect(debug).toHaveBeenCalledWith("[logger]", message);
     });
 
     it("should default to Log level if none present", () => {
       logger.log(LogLevel.Fatal, message, options);
-      expect(log).toHaveBeenCalledWith("[LOGGER]", message);
+      expect(log).toHaveBeenCalledWith("[logger]", message);
     });
 
     it("should log Error level", () => {
       logger.log(LogLevel.Error, message, options);
-      expect(error).toHaveBeenCalledWith("[LOGGER]", message);
+      expect(error).toHaveBeenCalledWith("[logger]", message);
     });
   });
 });

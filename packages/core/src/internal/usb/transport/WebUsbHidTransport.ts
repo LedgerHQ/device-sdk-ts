@@ -41,12 +41,12 @@ export class WebUsbHidTransport implements UsbHidTransport {
   constructor(
     @inject(deviceModelDiTypes.DeviceModelDataSource)
     private deviceModelDataSource: DeviceModelDataSource,
-
-    @inject(loggerTypes.LoggerService) logger: LoggerService,
+    @inject(loggerTypes.LoggerServiceFactory)
+    loggerServiceFactory: (tag: string) => LoggerService,
   ) {
     this.internalDevicesById = new Map();
     this.connectionListenersAbortController = new AbortController();
-    this.logger = logger;
+    this.logger = loggerServiceFactory("WebUsbHidTransport");
   }
 
   /**

@@ -17,10 +17,14 @@ describe("StartDiscoveringUseCase", () => {
     id: "",
     deviceModel: {} as DeviceModel,
   };
+  const tag = "logger-tag";
 
   beforeEach(() => {
-    logger = new DefaultLoggerService([]);
-    transport = new WebUsbHidTransport({} as DeviceModelDataSource, logger);
+    logger = new DefaultLoggerService([], tag);
+    transport = new WebUsbHidTransport(
+      {} as DeviceModelDataSource,
+      () => logger,
+    );
   });
 
   afterEach(() => {

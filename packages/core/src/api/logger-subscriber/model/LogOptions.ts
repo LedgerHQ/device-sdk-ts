@@ -7,6 +7,7 @@ export type LogContext = Partial<{
 export type LogData = Record<string, unknown>;
 
 export type LogOptions = {
+  tag?: string;
   data?: LogData;
   context?: LogContext;
   timestamp?: number;

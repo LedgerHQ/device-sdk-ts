@@ -1,7 +1,8 @@
-import { ContainerModule } from "inversify";
+import { ContainerModule, interfaces } from "inversify";
 
 import { LoggerSubscriber } from "@api/logger-subscriber/service/LoggerSubscriber";
 import { DefaultLoggerService } from "@internal/logger/service/DefaultLoggerService";
+import { LoggerService } from "@internal/logger/service/LoggerService";
 
 import { types } from "./loggerTypes";
 
@@ -22,8 +23,10 @@ export const loggerModuleFactory = (
       _onActivation,
       _onDeactivation,
     ) => {
-      bind(types.LoggerService).toConstantValue(
-        new DefaultLoggerService(subscribers),
-      );
+      bind<interfaces.Factory<LoggerService>>(
+        types.LoggerServiceFactory,
+      ).toFactory((_context) => {
+        return (tag: string) => new DefaultLoggerService(subscribers, tag);
+      });
     },
   );

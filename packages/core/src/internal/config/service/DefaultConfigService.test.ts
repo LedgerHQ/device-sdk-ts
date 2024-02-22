@@ -26,12 +26,13 @@ describe("DefaultConfigService", () => {
 
     loggerService = new DefaultLoggerService(
       [],
+      "config",
     ) as jest.Mocked<DefaultLoggerService>;
 
     service = new DefaultConfigService(
       localDataSource,
       remoteDataSource,
-      loggerService,
+      () => loggerService,
     );
   });
 

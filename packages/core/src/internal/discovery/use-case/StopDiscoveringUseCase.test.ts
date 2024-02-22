@@ -7,11 +7,15 @@ import { StopDiscoveringUseCase } from "./StopDiscoveringUseCase";
 
 let transport: WebUsbHidTransport;
 let logger: LoggerService;
+const tag = "logger-tag";
 
 describe("StopDiscoveringUseCase", () => {
   beforeEach(() => {
-    logger = new DefaultLoggerService([]);
-    transport = new WebUsbHidTransport({} as DeviceModelDataSource, logger);
+    logger = new DefaultLoggerService([], tag);
+    transport = new WebUsbHidTransport(
+      {} as DeviceModelDataSource,
+      () => logger,
+    );
   });
 
   afterEach(() => {

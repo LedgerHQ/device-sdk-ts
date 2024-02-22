@@ -19,11 +19,12 @@ export class DefaultConfigService implements ConfigService {
   constructor(
     @inject(configTypes.LocalConfigDataSource) local: LocalConfigDataSource,
     @inject(configTypes.RemoteConfigDataSource) remote: RemoteConfigDataSource,
-    @inject(loggerTypes.LoggerService) logger: LoggerService,
+    @inject(loggerTypes.LoggerServiceFactory)
+    loggerServiceFactory: (tag: string) => LoggerService,
   ) {
     this._local = local;
     this._remote = remote;
-    this._logger = logger;
+    this._logger = loggerServiceFactory("config");
   }
 
   async getSdkConfig(): Promise<Config> {

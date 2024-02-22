@@ -9,13 +9,16 @@ import { LoggerService } from "./LoggerService";
 @injectable()
 export class DefaultLoggerService implements LoggerService {
   subscribers: LoggerSubscriber[];
-  constructor(subscribers: LoggerSubscriber[]) {
+  tag: string;
+
+  constructor(subscribers: LoggerSubscriber[], tag: string) {
     this.subscribers = subscribers;
+    this.tag = tag;
   }
 
   _log(level: LogLevel, message: string, options?: LogOptions): void {
     this.subscribers.forEach((subscriber) => {
-      subscriber.log(level, message, options);
+      subscriber.log(level, message, { tag: this.tag, ...options });
     });
   }
 
