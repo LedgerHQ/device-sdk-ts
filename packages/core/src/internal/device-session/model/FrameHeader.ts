@@ -10,12 +10,12 @@ type FrameHeaderConstructorArgs = {
 };
 
 export class FrameHeader {
-  uuid: string;
-  channel: Maybe<Uint8Array>;
-  headTag: Uint8Array;
-  index: Uint8Array;
-  length: number;
-  dataSize: Maybe<Uint8Array>;
+  protected _uuid: string;
+  protected _channel: Maybe<Uint8Array>;
+  protected _headTag: Uint8Array;
+  protected _index: Uint8Array;
+  protected _length: number;
+  protected _dataSize: Maybe<Uint8Array>;
   constructor({
     uuid,
     dataSize,
@@ -24,21 +24,42 @@ export class FrameHeader {
     length,
     channel,
   }: FrameHeaderConstructorArgs) {
-    this.uuid = uuid;
-    this.dataSize = dataSize;
-    this.index = index;
-    this.headTag = headTag;
-    this.length = length;
-    this.channel = channel;
+    this._uuid = uuid;
+    this._dataSize = dataSize;
+    this._index = index;
+    this._headTag = headTag;
+    this._length = length;
+    this._channel = channel;
+  }
+  setDataSize(dataSize: Maybe<Uint8Array>): FrameHeader {
+    this._dataSize = dataSize;
+    return this;
+  }
+  getLength(): number {
+    return this._length;
   }
   toString(): string {
     return JSON.stringify({
-      uuid: this.uuid.toString(),
-      dataSize: this.dataSize.extract()?.toString(),
-      index: this.index.toString(),
-      headTag: this.headTag.toString(),
-      length: this.length.toString(),
-      channel: this.channel.extract()?.toString(),
+      uuid: this._uuid.toString(),
+      dataSize: this._dataSize.extract()?.toString(),
+      index: this._index.toString(),
+      headTag: this._headTag.toString(),
+      length: this._length.toString(),
+      channel: this._channel.extract()?.toString(),
     });
+  }
+  getRawData(): Uint8Array {
+    return new Uint8Array([
+      ...this._channel.caseOf({
+        Just: (channel) => [...channel],
+        Nothing: () => [],
+      }),
+      ...this._headTag,
+      ...this._index,
+      ...this._dataSize.caseOf({
+        Just: (dataSize) => [...dataSize],
+        Nothing: () => [],
+      }),
+    ]);
   }
 }
