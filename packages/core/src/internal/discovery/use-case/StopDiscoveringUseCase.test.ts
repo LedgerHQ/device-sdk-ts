@@ -1,13 +1,17 @@
 import { DeviceModelDataSource } from "@internal/device-model/data/DeviceModelDataSource";
+import { DefaultLoggerService } from "@internal/logger/service/DefaultLoggerService";
+import { LoggerService } from "@internal/logger/service/LoggerService";
 import { WebUsbHidTransport } from "@internal/usb/transport/WebUsbHidTransport";
 
 import { StopDiscoveringUseCase } from "./StopDiscoveringUseCase";
 
 let transport: WebUsbHidTransport;
+let logger: LoggerService;
 
 describe("StopDiscoveringUseCase", () => {
   beforeEach(() => {
-    transport = new WebUsbHidTransport({} as DeviceModelDataSource);
+    logger = new DefaultLoggerService([]);
+    transport = new WebUsbHidTransport({} as DeviceModelDataSource, logger);
   });
 
   afterEach(() => {

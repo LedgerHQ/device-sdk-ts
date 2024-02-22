@@ -1,6 +1,7 @@
 import { Container } from "inversify";
 
 import { deviceModelModuleFactory } from "@internal/device-model/di/deviceModelModule";
+import { loggerModuleFactory } from "@internal/logger/di/loggerModule";
 import { WebUsbHidTransport } from "@internal/usb/transport/WebUsbHidTransport";
 
 import { usbDiTypes } from "./usbDiTypes";
@@ -12,6 +13,7 @@ describe("usbModuleFactory", () => {
   beforeEach(() => {
     mod = usbModuleFactory();
     container = new Container();
+    container.load(loggerModuleFactory());
     container.load(mod, deviceModelModuleFactory());
   });
 

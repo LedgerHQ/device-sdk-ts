@@ -2,12 +2,15 @@ import { of } from "rxjs";
 
 import { DeviceModelDataSource } from "@internal/device-model/data/DeviceModelDataSource";
 import { DeviceModel } from "@internal/device-model/model/DeviceModel";
+import { DefaultLoggerService } from "@internal/logger/service/DefaultLoggerService";
+import { LoggerService } from "@internal/logger/service/LoggerService";
 import { WebUsbHidTransport } from "@internal/usb/transport/WebUsbHidTransport";
 import { DiscoveredDevice } from "@root/src";
 
 import { StartDiscoveringUseCase } from "./StartDiscoveringUseCase";
 
 let transport: WebUsbHidTransport;
+let logger: LoggerService;
 
 describe("StartDiscoveringUseCase", () => {
   const stubDiscoveredDevice: DiscoveredDevice = {
@@ -16,7 +19,8 @@ describe("StartDiscoveringUseCase", () => {
   };
 
   beforeEach(() => {
-    transport = new WebUsbHidTransport({} as DeviceModelDataSource);
+    logger = new DefaultLoggerService([]);
+    transport = new WebUsbHidTransport({} as DeviceModelDataSource, logger);
   });
 
   afterEach(() => {
