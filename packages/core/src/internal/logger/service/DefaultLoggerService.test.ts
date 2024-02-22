@@ -4,13 +4,14 @@ import { ConsoleLogger } from "@api/logger-subscriber/service/ConsoleLogger";
 import { DefaultLoggerService } from "./DefaultLoggerService";
 
 jest.mock("../../../api/logger-subscriber/service/ConsoleLogger");
+jest.useFakeTimers().setSystemTime(new Date("2024-01-01"));
 
 let service: DefaultLoggerService;
 let subscriber: jest.Mocked<ConsoleLogger>;
 const message = "message";
 const tag = "logger-tag";
 const options = { data: { key: "value" } };
-const generatedOptions = { tag, ...options };
+const generatedOptions = { tag, timestamp: Date.now(), ...options };
 
 describe("LoggerService", () => {
   beforeEach(() => {
@@ -34,6 +35,15 @@ describe("LoggerService", () => {
     expect(subscriber.log).toHaveBeenCalledWith(LogLevel.Info, message, {
       ...generatedOptions,
       tag: newTag,
+    });
+  });
+
+  it("should call subscriber.log with the correct log object when a timestamp is provided", () => {
+    const newTimestamp = 1;
+    service.info(message, { ...options, timestamp: newTimestamp });
+    expect(subscriber.log).toHaveBeenCalledWith(LogLevel.Info, message, {
+      ...generatedOptions,
+      timestamp: newTimestamp,
     });
   });
 

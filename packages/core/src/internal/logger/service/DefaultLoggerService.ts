@@ -18,7 +18,11 @@ export class DefaultLoggerService implements LoggerService {
 
   _log(level: LogLevel, message: string, options?: LogOptions): void {
     this.subscribers.forEach((subscriber) => {
-      subscriber.log(level, message, { tag: this.tag, ...options });
+      subscriber.log(level, message, {
+        timestamp: Date.now(),
+        tag: this.tag,
+        ...options,
+      });
     });
   }
 
