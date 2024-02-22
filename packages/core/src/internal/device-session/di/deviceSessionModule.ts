@@ -15,6 +15,6 @@ export const deviceSessionModuleFactory = () =>
       _onActivation,
       _onDeactivation,
     ) => {
-      bind(types.DeviceSessionService).to(DefaultFramerService);
+      bind(types.FramerService).to(DefaultFramerService);
     },
   );

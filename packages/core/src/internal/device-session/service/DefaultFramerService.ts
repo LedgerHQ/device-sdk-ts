@@ -1,8 +1,9 @@
-import { Either, Left, Right } from "purify-ts";
+import { Maybe } from "purify-ts";
 import { v4 } from "uuid";
 
 import {
   APDU_DATA_SIZE,
+  CHANNEL_SIZE,
   HEAD_TAG,
   HEAD_TAG_SIZE,
   INDEX_SIZE,
@@ -12,23 +13,23 @@ import { FrameHeader } from "@internal/device-session/model/FrameHeader";
 
 import { FramerService } from "./FramerService";
 
-export type ApduFramerServiceConstructorArgs = {
-  packetSize: number;
-  channel?: Uint8Array;
+export type DefaultFramerServiceConstructorArgs = {
+  frameSize: number;
+  channel?: Maybe<Uint8Array>;
   padding?: boolean;
 };
 
 export class DefaultFramerService implements FramerService {
-  protected packetSize: number;
-  protected channel: Uint8Array;
+  protected frameSize: number;
+  protected channel: Maybe<Uint8Array>;
   protected padding: boolean;
 
   constructor({
-    packetSize,
-    channel = new Uint8Array([]),
+    frameSize,
+    channel = Maybe.zero(),
     padding = false,
-  }: ApduFramerServiceConstructorArgs) {
-    this.packetSize = packetSize;
+  }: DefaultFramerServiceConstructorArgs) {
+    this.frameSize = frameSize;
     this.channel = channel;
     this.padding = padding;
   }
@@ -40,7 +41,10 @@ export class DefaultFramerService implements FramerService {
    */
   private getFrameHeaderSizeFromIndex(frameIndex: number): number {
     return (
-      this.channel.length +
+      this.channel.caseOf({
+        Just: () => CHANNEL_SIZE,
+        Nothing: () => 0,
+      }) +
       INDEX_SIZE +
       HEAD_TAG_SIZE +
       (frameIndex === 0 ? APDU_DATA_SIZE : 0)
@@ -77,10 +81,10 @@ export class DefaultFramerService implements FramerService {
       headTag: new Uint8Array([HEAD_TAG]),
       index: new Uint8Array([Math.floor(frameIndex / 0xff), frameIndex & 0xff]),
       length: this.getFrameHeaderSizeFromIndex(frameIndex),
-      dataSize: Left(undefined),
+      dataSize: Maybe.zero(),
     });
     if (frameIndex === 0) {
-      header.dataSize = Right(
+      header.dataSize = Maybe.of(
         new Uint8Array([Math.floor(apduSize / 0xff), apduSize & 0xff]),
       );
     }
@@ -88,49 +92,42 @@ export class DefaultFramerService implements FramerService {
   }
 
   /**
-   * Get next apdu frame
-   * Split every {{PACKET_SIZE}} bytes of data
+   * Get apdu frame at index
+   * Split every {{PACKET_SIZE - HEADER_SIZE}} bytes of apdu
    * @param apdu
    * @param frameIndex
    * @private
    */
-  private getFrameAtIndex(
-    apdu: Uint8Array,
-    frameIndex: number,
-  ): Either<null, Frame> {
+  private getFrameAtIndex(apdu: Uint8Array, frameIndex: number): Maybe<Frame> {
     const header = this.getFrameHeader(frameIndex, apdu.length);
     const frameOffset =
-      frameIndex * this.packetSize - this.getHeaderSizeSumFrom(frameIndex);
+      frameIndex * this.frameSize - this.getHeaderSizeSumFrom(frameIndex);
 
     if (frameOffset > apdu.length) {
-      return Left(null);
+      return Maybe.zero();
     }
-    if (header.length > this.packetSize) {
-      return Left(null);
+    if (header.length > this.frameSize) {
+      return Maybe.zero();
     }
-    const frameDataMaxSize = this.packetSize - header.length;
+    const dataMaxSize = this.frameSize - header.length;
+    const data = apdu.slice(
+      frameIndex === 0 ? 0 : frameOffset,
+      frameIndex === 0
+        ? dataMaxSize
+        : frameOffset + this.frameSize - header.length,
+    );
     const frame = new Frame({
       header,
       data: this.padding
-        ? new Uint8Array(frameDataMaxSize).fill(0)
-        : new Uint8Array(
-            apdu.length < frameDataMaxSize ? apdu.length : frameDataMaxSize,
-          ),
+        ? new Uint8Array(dataMaxSize).fill(0)
+        : new Uint8Array(data.length < dataMaxSize ? data.length : dataMaxSize),
     });
-    frame.data.set(
-      apdu.slice(
-        frameIndex === 0 ? 0 : frameOffset,
-        frameIndex === 0
-          ? frameDataMaxSize
-          : frameOffset + this.packetSize - header.length,
-      ),
-      0,
-    );
-    return Right(frame);
+    frame.data.set(data, 0);
+    return Maybe.of(frame);
   }
 
   /**
-   * Get frames from apdu and data (optional)
+   * Get frames from apdu
    *
    * @param apdu
    */
@@ -138,7 +135,7 @@ export class DefaultFramerService implements FramerService {
     const frames: Frame[] = [];
     let count = 0;
     let frame = this.getFrameAtIndex(apdu, count);
-    while (frame.isRight()) {
+    while (frame.isJust()) {
       frames.push(frame.extract());
       count += 1;
       frame = this.getFrameAtIndex(apdu, count);

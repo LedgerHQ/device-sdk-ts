@@ -14,7 +14,10 @@ export class Frame {
   }
   toString(): string {
     return JSON.stringify(
-      { header: this.header.toString(), data: this.data.toString() },
+      {
+        header: this.header.toString(),
+        data: this.data.toString(),
+      },
       null,
       2,
     );

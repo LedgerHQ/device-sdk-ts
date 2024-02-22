@@ -1,28 +1,28 @@
-import { Either } from "purify-ts";
+import { Maybe } from "purify-ts";
 
 type FrameHeaderConstructorArgs = {
   uuid: string;
-  channel?: Uint8Array;
+  channel: Maybe<Uint8Array>;
   headTag: Uint8Array;
   index: Uint8Array;
   length: number;
-  dataSize: Either<undefined, Uint8Array>;
+  dataSize: Maybe<Uint8Array>;
 };
 
 export class FrameHeader {
   uuid: string;
-  channel: Uint8Array;
+  channel: Maybe<Uint8Array>;
   headTag: Uint8Array;
   index: Uint8Array;
   length: number;
-  dataSize: Either<undefined, Uint8Array>;
+  dataSize: Maybe<Uint8Array>;
   constructor({
     uuid,
     dataSize,
     index,
     headTag,
     length,
-    channel = new Uint8Array([]),
+    channel,
   }: FrameHeaderConstructorArgs) {
     this.uuid = uuid;
     this.dataSize = dataSize;
@@ -34,11 +34,11 @@ export class FrameHeader {
   toString(): string {
     return JSON.stringify({
       uuid: this.uuid.toString(),
-      dataSize: this.dataSize?.toString() ?? "",
+      dataSize: this.dataSize.extract()?.toString(),
       index: this.index.toString(),
       headTag: this.headTag.toString(),
       length: this.length.toString(),
-      channel: this.channel.toString(),
+      channel: this.channel.extract()?.toString(),
     });
   }
 }
