@@ -1,6 +1,6 @@
 import { injectable } from "inversify";
 
-import { Log, LoggerSubscriber, LogLevel } from "./Log";
+import { LoggerSubscriber, LogLevel,LogOptions } from "./Log";
 import { LoggerService } from "./LoggerService";
 
 @injectable()
@@ -10,25 +10,25 @@ export class DefaultLoggerService implements LoggerService {
     this.subscribers = subscribers;
   }
 
-  _log(level: LogLevel, log: Log): void {
+  _log(level: LogLevel, message: string, options?: LogOptions): void {
     this.subscribers.forEach((subscriber) => {
-      subscriber.log(level, log);
+      subscriber.log(level, message, options);
     });
   }
 
-  info(log: Log): void {
-    this._log(LogLevel.Info, log);
+  info(message: string, options?: LogOptions): void {
+    this._log(LogLevel.Info, message, options);
   }
 
-  warn(log: Log): void {
-    this._log(LogLevel.Warning, log);
+  warn(message: string, options?: LogOptions): void {
+    this._log(LogLevel.Warning, message, options);
   }
 
-  debug(log: Log): void {
-    this._log(LogLevel.Debug, log);
+  debug(message: string, options?: LogOptions): void {
+    this._log(LogLevel.Debug, message, options);
   }
 
-  error(log: Log): void {
-    this._log(LogLevel.Error, log);
+  error(message: string, options?: LogOptions): void {
+    this._log(LogLevel.Error, message, options);
   }
 }

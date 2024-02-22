@@ -1,10 +1,10 @@
-import { Log, LoggerSubscriber } from "./Log";
+import { LoggerSubscriber,LogOptions } from "./Log";
 
 export interface LoggerService {
   subscribers: LoggerSubscriber[];
 
-  error(log: Log): void;
-  warn(log: Log): void;
-  info(log: Log): void;
-  debug(log: Log): void;
+  error(message: string, options?: LogOptions): void;
+  warn(message: string, options?: LogOptions): void;
+  info(message: string, options?: LogOptions): void;
+  debug(message: string, options?: LogOptions): void;
 }
