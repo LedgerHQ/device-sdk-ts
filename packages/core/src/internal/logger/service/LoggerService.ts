@@ -1,4 +1,5 @@
-import { LoggerSubscriber,LogOptions } from "./Log";
+import { LogOptions } from "@api/logger-subscriber/model/LogOptions";
+import { LoggerSubscriber } from "@api/logger-subscriber/service/LoggerSubscriber";
 
 export interface LoggerService {
   subscribers: LoggerSubscriber[];

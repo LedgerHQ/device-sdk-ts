@@ -1,7 +1,7 @@
 import { ContainerModule } from "inversify";
 
+import { LoggerSubscriber } from "@api/logger-subscriber/service/LoggerSubscriber";
 import { DefaultLoggerService } from "@internal/logger/service/DefaultLoggerService";
-import { LoggerSubscriber } from "@internal/logger/service/Log";
 
 import { types } from "./loggerTypes";
 

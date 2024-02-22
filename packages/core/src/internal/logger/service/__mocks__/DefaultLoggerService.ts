@@ -1,5 +1,5 @@
-import { LoggerSubscriber } from "@internal/logger/service/Log";
-import { LoggerService } from "@internal/logger/service/LoggerService";
+import { LoggerSubscriber } from "@api/logger-subscriber/service/LoggerSubscriber";
+import type { LoggerService } from "@internal/logger/service/LoggerService";
 
 export class DefaultLoggerService implements LoggerService {
   subscribers: LoggerSubscriber[] = [];

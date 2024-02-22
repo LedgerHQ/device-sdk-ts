@@ -1,8 +1,6 @@
-import {
-  LoggerSubscriber,
-  LogLevel,
-  LogOptions,
-} from "@internal/logger/service/Log";
+import { LogLevel } from "@api/logger-subscriber/model/LogLevel";
+import { LogOptions } from "@api/logger-subscriber/model/LogOptions";
+import { LoggerSubscriber } from "@api/logger-subscriber/service/LoggerSubscriber";
 
 export class ConsoleLogger implements LoggerSubscriber {
   log(level: LogLevel, message: string, _options: LogOptions): void {

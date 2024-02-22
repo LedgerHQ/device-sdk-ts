@@ -3,11 +3,11 @@ import { LocalConfigDataSource } from "@internal/config/data/ConfigDataSource";
 import { StubLocalConfigDataSource } from "@internal/config/data/LocalConfigDataSource.stub";
 import { types as ConfigTypes } from "@internal/config/di/configTypes";
 
+import { ConsoleLogger } from "./logger-subscriber/service/ConsoleLogger";
 import pkg from "../../package.json";
-import { ConsoleLogger } from "./ConsoleLogger";
 import { DeviceSdk } from "./DeviceSdk";
 
-jest.mock("./ConsoleLogger");
+jest.mock("./logger-subscriber/service/ConsoleLogger");
 
 let sdk: DeviceSdk;
 let logger: ConsoleLogger;

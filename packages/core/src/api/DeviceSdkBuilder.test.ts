@@ -1,8 +1,8 @@
-import { ConsoleLogger } from "./ConsoleLogger";
+import { ConsoleLogger } from "./logger-subscriber/service/ConsoleLogger";
 import { DeviceSdk } from "./DeviceSdk";
 import { LedgerDeviceSdkBuilder } from "./DeviceSdkBuilder";
 
-jest.mock("./ConsoleLogger");
+jest.mock("./logger-subscriber/service/ConsoleLogger");
 
 let builder: LedgerDeviceSdkBuilder;
 let logger: ConsoleLogger;

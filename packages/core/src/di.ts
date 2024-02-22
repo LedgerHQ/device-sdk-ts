@@ -1,5 +1,6 @@
 import { Container } from "inversify";
 
+import { LoggerSubscriber } from "@api/logger-subscriber/service/LoggerSubscriber";
 // Uncomment this line to enable the logger middleware
 // import { makeLoggerMiddleware } from "inversify-logger-middleware";
 import { configModuleFactory } from "@internal/config/di/configModule";
@@ -7,7 +8,6 @@ import { deviceModelModuleFactory } from "@internal/device-model/di/deviceModelM
 import { deviceSessionModuleFactory } from "@internal/device-session/di/deviceSessionModule";
 import { discoveryModuleFactory } from "@internal/discovery/di/discoveryModule";
 import { loggerModuleFactory } from "@internal/logger/di/loggerModule";
-import { LoggerSubscriber } from "@internal/logger/service/Log";
 import { usbModuleFactory } from "@internal/usb/di/usbModule";
 
 // Uncomment this line to enable the logger middleware

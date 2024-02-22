@@ -1,5 +1,4 @@
-import { LoggerSubscriber } from "@internal/logger/service/Log";
-
+import { LoggerSubscriber } from "./logger-subscriber/service/LoggerSubscriber";
 import { DeviceSdk } from "./DeviceSdk";
 
 export class LedgerDeviceSdkBuilder {

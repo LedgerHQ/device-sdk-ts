@@ -1,8 +1,9 @@
-import { ConsoleLogger } from "../../../api/ConsoleLogger";
-import { DefaultLoggerService } from "./DefaultLoggerService";
-import { LogLevel } from "./Log";
+import { LogLevel } from "@api/index";
+import { ConsoleLogger } from "@api/logger-subscriber/service/ConsoleLogger";
 
-jest.mock("../../../api/ConsoleLogger");
+import { DefaultLoggerService } from "./DefaultLoggerService";
+
+jest.mock("../../../api/logger-subscriber/service/ConsoleLogger");
 
 let service: DefaultLoggerService;
 let subscriber: jest.Mocked<ConsoleLogger>;

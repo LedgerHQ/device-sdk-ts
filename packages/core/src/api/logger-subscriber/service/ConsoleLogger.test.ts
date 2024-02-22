@@ -1,4 +1,5 @@
-import { LogLevel, LogOptions } from "@internal/logger/service/Log";
+import { LogLevel } from "@api/logger-subscriber/model/LogLevel";
+import { LogOptions } from "@api/logger-subscriber/model/LogOptions";
 
 import { ConsoleLogger } from "./ConsoleLogger";
 

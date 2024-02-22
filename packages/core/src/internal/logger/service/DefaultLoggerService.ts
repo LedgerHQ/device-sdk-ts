@@ -1,6 +1,9 @@
 import { injectable } from "inversify";
 
-import { LoggerSubscriber, LogLevel,LogOptions } from "./Log";
+import { LogLevel } from "@api/logger-subscriber/model/LogLevel";
+import { LogOptions } from "@api/logger-subscriber/model/LogOptions";
+import { LoggerSubscriber } from "@api/logger-subscriber/service/LoggerSubscriber";
+
 import { LoggerService } from "./LoggerService";
 
 @injectable()
