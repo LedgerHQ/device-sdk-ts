@@ -1,10 +1,9 @@
-/* eslint-disable no-restricted-imports */
 import { LocalConfigDataSource } from "@internal/config/data/ConfigDataSource";
 import { StubLocalConfigDataSource } from "@internal/config/data/LocalConfigDataSource.stub";
 import { types as ConfigTypes } from "@internal/config/di/configTypes";
+import pkg from "@root/package.json";
 
 import { ConsoleLogger } from "./logger-subscriber/service/ConsoleLogger";
-import pkg from "../../package.json";
 import { DeviceSdk } from "./DeviceSdk";
 
 jest.mock("./logger-subscriber/service/ConsoleLogger");

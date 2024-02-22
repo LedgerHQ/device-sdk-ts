@@ -1,9 +1,10 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-/* eslint-disable @typescript-eslint/no-unsafe-assignment */
 import { Left } from "purify-ts";
 
 import { StaticDeviceModelDataSource } from "@internal/device-model/data/StaticDeviceModelDataSource";
-import { DeviceModelId } from "@internal/device-model/model/DeviceModel";
+import {
+  DeviceModel,
+  DeviceModelId,
+} from "@internal/device-model/model/DeviceModel";
 import { DefaultLoggerService } from "@internal/logger/service/DefaultLoggerService";
 import {
   DeviceNotRecognizedError,
@@ -70,12 +71,12 @@ describe("WebUsbHidTransport", () => {
           requestDevice: mockedRequestDevice,
           addEventListener: jest.fn(),
         },
-      } as any;
+      } as unknown as Navigator;
     });
 
     afterAll(() => {
       jest.restoreAllMocks();
-      global.navigator = undefined as any;
+      global.navigator = undefined as unknown as Navigator;
     });
 
     it("isSupported should return true", () => {
@@ -95,7 +96,7 @@ describe("WebUsbHidTransport", () => {
                     id: DeviceModelId.NANO_X,
                     productName: "Ledger Nano X",
                     usbProductId: 0x40,
-                  }),
+                  }) as DeviceModel,
                 }),
               );
 
@@ -134,7 +135,7 @@ describe("WebUsbHidTransport", () => {
                         id: DeviceModelId.NANO_X,
                         productName: "Ledger Nano X",
                         usbProductId: 0x40,
-                      }),
+                      }) as DeviceModel,
                     }),
                   );
                   break;
@@ -145,7 +146,7 @@ describe("WebUsbHidTransport", () => {
                         id: DeviceModelId.NANO_SP,
                         productName: "Ledger Nano S Plus",
                         usbProductId: 0x50,
-                      }),
+                      }) as DeviceModel,
                     }),
                   );
 
