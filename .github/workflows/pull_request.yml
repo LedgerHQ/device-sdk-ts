@@ -10,6 +10,7 @@ concurrency:
 
 jobs:
   danger:
+    name: Pass Danger check
     runs-on: [device-sdk-4xlarge-linux]
     steps:
       - uses: actions/checkout@v4
