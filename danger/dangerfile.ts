@@ -7,7 +7,7 @@ if (danger.github.pr.assignee === null) {
 }
 
 const branchRegex =
-  /^(feature|bugfix|support|chore|doc)\/(DSDK-[0-9]+|NO-ISSUE)\-.*/;
+  /^(feature|bugfix|support|chore|doc)\/((DSDK|dsdk)-[0-9]+|NO-ISSUE|no-issue)\-.*/;
 if (!branchRegex.test(danger.github.pr.head.ref)) {
   fail("Please fix the PR branch name to match the convention");
 }
