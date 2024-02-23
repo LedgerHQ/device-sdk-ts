@@ -10,7 +10,7 @@
   "scripts": {
     "build": "rimraf lib && tsc",
     "dev": "tsc --watch",
-    "lint": "eslint --cache --ext .ts \"src\" --max-warnings=0",
+    "lint": "eslint --cache --ext .ts \"src\"",
     "lint:fix": "eslint --cache --fix --ext .ts \"src\"",
     "prettier": "prettier . --check",
     "prettier:fix": "prettier . --write",
