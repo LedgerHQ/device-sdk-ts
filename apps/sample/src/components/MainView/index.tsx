@@ -70,16 +70,16 @@ export const MainView: React.FC = () => {
 
   useEffect(() => {
     if (discoveredDevice) {
-      sdk.connect({ deviceId: discoveredDevice.id }).subscribe({
-        next: (connectedDevice) => {
+      sdk
+        .connect({ deviceId: discoveredDevice.id })
+        .then((connectedDevice) => {
           console.log(
             `🦖 Response from connect: ${JSON.stringify(connectedDevice)} 🎉`,
           );
-        },
-        error: (error) => {
+        })
+        .catch((error) => {
           console.error(`Error from connection or get-version`, error);
-        },
-      });
+        });
     }
   }, [sdk, discoveredDevice]);
 
