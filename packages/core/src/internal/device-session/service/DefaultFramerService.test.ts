@@ -5,11 +5,11 @@ import { Maybe } from "purify-ts";
 
 import { Frame } from "@internal/device-session/model/Frame";
 import { FrameHeader } from "@internal/device-session/model/FrameHeader";
-import { DefaultLoggerService } from "@internal/logger/service/DefaultLoggerService";
+import { DefaultLoggerPublisherService } from "@internal/logger-publisher/service/DefaultLoggerPublisherService";
 
 import { DefaultFramerService } from "./DefaultFramerService";
 
-const loggerService = new DefaultLoggerService([console]);
+const loggerService = new DefaultLoggerPublisherService([], "frame");
 
 describe("DefaultFramerService", () => {
   beforeAll(() => {
@@ -26,7 +26,7 @@ describe("DefaultFramerService", () => {
           padding: true,
           channel,
         },
-        loggerService,
+        () => loggerService,
       );
       // getVersion APDU
       const apdu = new Uint8Array([0xe0, 0x01, 0x00, 0x00, 0x00]);
@@ -76,7 +76,7 @@ describe("DefaultFramerService", () => {
           padding: true,
           channel,
         },
-        loggerService,
+        () => loggerService,
       );
       const apdu = new Uint8Array([
         // editDeviceName APDU
@@ -160,7 +160,7 @@ describe("DefaultFramerService", () => {
         {
           frameSize: 123,
         },
-        loggerService,
+        () => loggerService,
       );
       const command = new Uint8Array([0xe0, 0x01, 0x00, 0x00, 0x00]);
 
@@ -194,7 +194,7 @@ describe("DefaultFramerService", () => {
         {
           frameSize: 10,
         },
-        loggerService,
+        () => loggerService,
       );
       const command = new Uint8Array([
         0x01, 0x05, 0x4f, 0x4c, 0x4f, 0x53, 0x00, 0x07, 0x2e, 0x32, 0x2e, 0x34,
@@ -262,7 +262,7 @@ describe("DefaultFramerService", () => {
             new Uint8Array([0x123434, 0x34444, 0x56454, 0x7844, 0x90444]),
           ),
         },
-        loggerService,
+        () => loggerService,
       );
       const command = new Uint8Array([0xe0, 0x01, 0x00, 0x00, 0x00]);
 
@@ -297,7 +297,7 @@ describe("DefaultFramerService", () => {
           frameSize: Math.random() & 4,
           channel: Maybe.of(new Uint8Array([0x12, 0x34])),
         },
-        loggerService,
+        () => loggerService,
       );
       const command = new Uint8Array([0xe0, 0x01, 0x00, 0x00, 0x00]);
 
@@ -318,7 +318,7 @@ describe("DefaultFramerService", () => {
           padding: Math.random() > 0.5,
           channel: Maybe.of(new Uint8Array([0x12, 0x34])),
         },
-        loggerService,
+        () => loggerService,
       );
       const command = new Uint8Array([]);
 
