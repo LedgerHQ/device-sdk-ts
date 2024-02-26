@@ -13,11 +13,13 @@ concurrency:
 jobs:
   danger:
     name: Pass Danger check
-    runs-on: [device-sdk-4xlarge-linux]
+    runs-on: [ubuntu-latest]
     steps:
       - uses: actions/checkout@v4
 
       - uses: ./actions/setup-toolchain-composite
+
+      - uses: toshimaru/auto-author-assign@v2.1.0
 
       - name: Danger
         env:
