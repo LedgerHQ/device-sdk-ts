@@ -1,13 +1,13 @@
 import { ContainerModule, interfaces } from "inversify";
 
-import { LoggerSubscriber } from "@api/logger-subscriber/service/LoggerSubscriber";
+import { LoggerSubscriberService } from "@api/logger-subscriber/service/LoggerSubscriberService";
 import { DefaultLoggerPublisherService } from "@internal/logger-publisher/service/DefaultLoggerPublisherService";
 import { LoggerPublisherService } from "@internal/logger-publisher/service/LoggerPublisherService";
 
 import { types } from "./loggerTypes";
 
 type FactoryProps = {
-  subscribers: LoggerSubscriber[];
+  subscribers: LoggerSubscriberService[];
 };
 
 export const loggerModuleFactory = (

@@ -1,6 +1,6 @@
 import { Container } from "inversify";
 
-import { LoggerSubscriber } from "@api/logger-subscriber/service/LoggerSubscriber";
+import { LoggerSubscriberService } from "@api/logger-subscriber/service/LoggerSubscriberService";
 // Uncomment this line to enable the logger middleware
 // import { makeLoggerMiddleware } from "inversify-logger-middleware";
 import { configModuleFactory } from "@internal/config/di/configModule";
@@ -15,7 +15,7 @@ import { usbModuleFactory } from "@internal/usb/di/usbModule";
 
 export type MakeContainerProps = {
   stub: boolean;
-  loggers: LoggerSubscriber[];
+  loggers: LoggerSubscriberService[];
 };
 
 export const makeContainer = ({

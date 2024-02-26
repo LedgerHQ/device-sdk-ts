@@ -1,8 +1,8 @@
-import { LoggerSubscriber } from "@api/logger-subscriber/service/LoggerSubscriber";
+import { LoggerSubscriberService } from "@api/logger-subscriber/service/LoggerSubscriberService";
 import type { LoggerPublisherService } from "@internal/logger-publisher/service/LoggerPublisherService";
 
 export class DefaultLoggerPublisherService implements LoggerPublisherService {
-  subscribers: LoggerSubscriber[] = [];
+  subscribers: LoggerSubscriberService[] = [];
 
   _log = jest.fn();
   info = jest.fn();

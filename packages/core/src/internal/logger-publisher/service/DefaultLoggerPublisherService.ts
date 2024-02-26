@@ -2,17 +2,17 @@ import { injectable } from "inversify";
 
 import { LogLevel } from "@api/logger-subscriber/model/LogLevel";
 import { LogSubscriberOptions } from "@api/logger-subscriber/model/LogSubscriberOptions";
-import { LoggerSubscriber } from "@api/logger-subscriber/service/LoggerSubscriber";
+import { LoggerSubscriberService } from "@api/logger-subscriber/service/LoggerSubscriberService";
 import { LogPublisherOptions } from "@internal/logger-publisher/model/LogPublisherOptions";
 
 import { LoggerPublisherService } from "./LoggerPublisherService";
 
 @injectable()
 export class DefaultLoggerPublisherService implements LoggerPublisherService {
-  subscribers: LoggerSubscriber[];
+  subscribers: LoggerSubscriberService[];
   tag: string;
 
-  constructor(subscribers: LoggerSubscriber[], tag: string) {
+  constructor(subscribers: LoggerSubscriberService[], tag: string) {
     this.subscribers = subscribers;
     this.tag = tag;
   }

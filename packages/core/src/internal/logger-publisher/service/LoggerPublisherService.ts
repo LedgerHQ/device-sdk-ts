@@ -1,8 +1,8 @@
-import { LoggerSubscriber } from "@api/logger-subscriber/service/LoggerSubscriber";
+import { LoggerSubscriberService } from "@api/logger-subscriber/service/LoggerSubscriberService";
 import { LogPublisherOptions } from "@internal/logger-publisher/model/LogPublisherOptions";
 
 export interface LoggerPublisherService {
-  subscribers: LoggerSubscriber[];
+  subscribers: LoggerSubscriberService[];
 
   error(message: string, options?: LogPublisherOptions): void;
   warn(message: string, options?: LogPublisherOptions): void;
