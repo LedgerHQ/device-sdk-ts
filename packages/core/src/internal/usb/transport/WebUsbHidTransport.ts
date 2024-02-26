@@ -6,8 +6,8 @@ import { v4 as uuid } from "uuid";
 import type { DeviceModelDataSource } from "@internal/device-model/data/DeviceModelDataSource";
 import { deviceModelDiTypes } from "@internal/device-model/di/deviceModelDiTypes";
 import { DeviceId } from "@internal/device-model/model/DeviceModel";
-import { types as loggerTypes } from "@internal/logger/di/loggerTypes";
-import type { LoggerService } from "@internal/logger/service/LoggerService";
+import { types as loggerTypes } from "@internal/logger-publisher/di/loggerTypes";
+import type { LoggerPublisherService } from "@internal/logger-publisher/service/LoggerPublisherService";
 import { ledgerVendorId } from "@internal/usb/data/UsbHidConfig";
 import { ConnectedDevice } from "@internal/usb/model/ConnectedDevice";
 import { DiscoveredDevice } from "@internal/usb/model/DiscoveredDevice";
@@ -36,13 +36,13 @@ export class WebUsbHidTransport implements UsbHidTransport {
   // Maps uncoupled DiscoveredDevice and WebHID's HIDDevice WebHID
   private internalDevicesById: Map<DeviceId, WebHidInternalDevice>;
   private connectionListenersAbortController: AbortController;
-  private logger: LoggerService;
+  private logger: LoggerPublisherService;
 
   constructor(
     @inject(deviceModelDiTypes.DeviceModelDataSource)
     private deviceModelDataSource: DeviceModelDataSource,
-    @inject(loggerTypes.LoggerServiceFactory)
-    loggerServiceFactory: (tag: string) => LoggerService,
+    @inject(loggerTypes.LoggerPublisherServiceFactory)
+    loggerServiceFactory: (tag: string) => LoggerPublisherService,
   ) {
     this.internalDevicesById = new Map();
     this.connectionListenersAbortController = new AbortController();

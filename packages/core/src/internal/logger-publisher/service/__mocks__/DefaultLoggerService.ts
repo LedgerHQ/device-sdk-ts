@@ -1,7 +1,7 @@
 import { LoggerSubscriber } from "@api/logger-subscriber/service/LoggerSubscriber";
-import type { LoggerService } from "@internal/logger/service/LoggerService";
+import type { LoggerPublisherService } from "@internal/logger-publisher/service/LoggerPublisherService";
 
-export class DefaultLoggerService implements LoggerService {
+export class DefaultLoggerPublisherService implements LoggerPublisherService {
   subscribers: LoggerSubscriber[] = [];
 
   _log = jest.fn();

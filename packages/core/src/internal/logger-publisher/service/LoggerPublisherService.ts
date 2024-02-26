@@ -1,7 +1,7 @@
 import { LogOptions } from "@api/logger-subscriber/model/LogOptions";
 import { LoggerSubscriber } from "@api/logger-subscriber/service/LoggerSubscriber";
 
-export interface LoggerService {
+export interface LoggerPublisherService {
   subscribers: LoggerSubscriber[];
 
   error(message: string, options?: LogOptions): void;

@@ -2,8 +2,8 @@ import { Left, Right } from "purify-ts";
 
 import { DeviceModelDataSource } from "@internal/device-model/data/DeviceModelDataSource";
 import { DeviceModel } from "@internal/device-model/model/DeviceModel";
-import { DefaultLoggerService } from "@internal/logger/service/DefaultLoggerService";
-import { LoggerService } from "@internal/logger/service/LoggerService";
+import { DefaultLoggerPublisherService } from "@internal/logger-publisher/service/DefaultLoggerPublisherService";
+import { LoggerPublisherService } from "@internal/logger-publisher/service/LoggerPublisherService";
 import { ConnectedDevice } from "@internal/usb/model/ConnectedDevice";
 import { UnknownDeviceError } from "@internal/usb/model/Errors";
 import { WebUsbHidTransport } from "@internal/usb/transport/WebUsbHidTransport";
@@ -11,7 +11,7 @@ import { WebUsbHidTransport } from "@internal/usb/transport/WebUsbHidTransport";
 import { ConnectUseCase } from "./ConnectUseCase";
 
 let transport: WebUsbHidTransport;
-let logger: LoggerService;
+let logger: LoggerPublisherService;
 
 describe("ConnectUseCase", () => {
   const stubConnectedDevice: ConnectedDevice = {
@@ -21,7 +21,7 @@ describe("ConnectUseCase", () => {
   const tag = "logger-tag";
 
   beforeAll(() => {
-    logger = new DefaultLoggerService([], tag);
+    logger = new DefaultLoggerPublisherService([], tag);
     transport = new WebUsbHidTransport(
       {} as DeviceModelDataSource,
       () => logger,

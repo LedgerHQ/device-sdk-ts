@@ -1,7 +1,7 @@
 import { Container } from "inversify";
 
 import { deviceModelModuleFactory } from "@internal/device-model/di/deviceModelModule";
-import { loggerModuleFactory } from "@internal/logger/di/loggerModule";
+import { loggerModuleFactory } from "@internal/logger-publisher/di/loggerModule";
 import { WebUsbHidTransport } from "@internal/usb/transport/WebUsbHidTransport";
 
 import { usbDiTypes } from "./usbDiTypes";

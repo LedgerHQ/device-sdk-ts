@@ -2,7 +2,7 @@ import { Either, Left } from "purify-ts";
 
 import { JSONParseError } from "@internal/config/di/configTypes";
 
-import { DefaultLoggerService } from "../../logger/service/DefaultLoggerService";
+import { DefaultLoggerPublisherService } from "../../logger-publisher/service/DefaultLoggerPublisherService";
 import { FileLocalConfigDataSource } from "../data/LocalConfigDataSource";
 import { RestRemoteConfigDataSource } from "../data/RemoteConfigDataSource";
 import { ConfigService } from "./ConfigService";
@@ -13,7 +13,7 @@ jest.mock("../data/RemoteConfigDataSource");
 
 let localDataSource: jest.Mocked<FileLocalConfigDataSource>;
 let remoteDataSource: jest.Mocked<RestRemoteConfigDataSource>;
-let loggerService: jest.Mocked<DefaultLoggerService>;
+let loggerService: jest.Mocked<DefaultLoggerPublisherService>;
 
 let service: ConfigService;
 describe("DefaultConfigService", () => {
@@ -24,10 +24,10 @@ describe("DefaultConfigService", () => {
     remoteDataSource =
       new RestRemoteConfigDataSource() as jest.Mocked<RestRemoteConfigDataSource>;
 
-    loggerService = new DefaultLoggerService(
+    loggerService = new DefaultLoggerPublisherService(
       [],
       "config",
-    ) as jest.Mocked<DefaultLoggerService>;
+    ) as jest.Mocked<DefaultLoggerPublisherService>;
 
     service = new DefaultConfigService(
       localDataSource,

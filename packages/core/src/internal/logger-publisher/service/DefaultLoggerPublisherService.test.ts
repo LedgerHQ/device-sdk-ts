@@ -1,23 +1,23 @@
 import { LogLevel } from "@api/index";
 import { ConsoleLogger } from "@api/logger-subscriber/service/ConsoleLogger";
 
-import { DefaultLoggerService } from "./DefaultLoggerService";
+import { DefaultLoggerPublisherService } from "./DefaultLoggerPublisherService";
 
 jest.mock("../../../api/logger-subscriber/service/ConsoleLogger");
 jest.useFakeTimers().setSystemTime(new Date("2024-01-01"));
 
-let service: DefaultLoggerService;
+let service: DefaultLoggerPublisherService;
 let subscriber: jest.Mocked<ConsoleLogger>;
 const message = "message";
 const tag = "logger-tag";
 const options = { data: { key: "value" } };
 const generatedOptions = { tag, timestamp: Date.now(), ...options };
 
-describe("LoggerService", () => {
+describe("LoggerPublisherService", () => {
   beforeEach(() => {
     jest.clearAllMocks();
     subscriber = new ConsoleLogger() as jest.Mocked<ConsoleLogger>;
-    service = new DefaultLoggerService([subscriber], tag);
+    service = new DefaultLoggerPublisherService([subscriber], tag);
   });
 
   it("should call subscriber.log with the correct log object", () => {

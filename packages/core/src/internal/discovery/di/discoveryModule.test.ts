@@ -4,7 +4,7 @@ import { deviceModelModuleFactory } from "@internal/device-model/di/deviceModelM
 import { ConnectUseCase } from "@internal/discovery/use-case/ConnectUseCase";
 import { StartDiscoveringUseCase } from "@internal/discovery/use-case/StartDiscoveringUseCase";
 import { StopDiscoveringUseCase } from "@internal/discovery/use-case/StopDiscoveringUseCase";
-import { loggerModuleFactory } from "@internal/logger/di/loggerModule";
+import { loggerModuleFactory } from "@internal/logger-publisher/di/loggerModule";
 import { usbModuleFactory } from "@internal/usb/di/usbModule";
 
 import { discoveryDiTypes } from "./discoveryDiTypes";

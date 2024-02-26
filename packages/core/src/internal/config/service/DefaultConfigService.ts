@@ -6,8 +6,8 @@ import type {
 } from "@internal/config/data/ConfigDataSource";
 import { types as configTypes } from "@internal/config/di/configTypes";
 import { Config } from "@internal/config/model/Config";
-import { types as loggerTypes } from "@internal/logger/di/loggerTypes";
-import type { LoggerService } from "@internal/logger/service/LoggerService";
+import { types as loggerTypes } from "@internal/logger-publisher/di/loggerTypes";
+import type { LoggerPublisherService } from "@internal/logger-publisher/service/LoggerPublisherService";
 
 import { ConfigService } from "./ConfigService";
 
@@ -15,12 +15,12 @@ import { ConfigService } from "./ConfigService";
 export class DefaultConfigService implements ConfigService {
   private _local: LocalConfigDataSource;
   private _remote: RemoteConfigDataSource;
-  private _logger: LoggerService;
+  private _logger: LoggerPublisherService;
   constructor(
     @inject(configTypes.LocalConfigDataSource) local: LocalConfigDataSource,
     @inject(configTypes.RemoteConfigDataSource) remote: RemoteConfigDataSource,
-    @inject(loggerTypes.LoggerServiceFactory)
-    loggerServiceFactory: (tag: string) => LoggerService,
+    @inject(loggerTypes.LoggerPublisherServiceFactory)
+    loggerServiceFactory: (tag: string) => LoggerPublisherService,
   ) {
     this._local = local;
     this._remote = remote;

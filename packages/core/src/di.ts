@@ -7,7 +7,7 @@ import { configModuleFactory } from "@internal/config/di/configModule";
 import { deviceModelModuleFactory } from "@internal/device-model/di/deviceModelModule";
 import { deviceSessionModuleFactory } from "@internal/device-session/di/deviceSessionModule";
 import { discoveryModuleFactory } from "@internal/discovery/di/discoveryModule";
-import { loggerModuleFactory } from "@internal/logger/di/loggerModule";
+import { loggerModuleFactory } from "@internal/logger-publisher/di/loggerModule";
 import { usbModuleFactory } from "@internal/usb/di/usbModule";
 
 // Uncomment this line to enable the logger middleware

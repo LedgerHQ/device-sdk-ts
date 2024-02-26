@@ -5,7 +5,7 @@ import {
   DeviceModel,
   DeviceModelId,
 } from "@internal/device-model/model/DeviceModel";
-import { DefaultLoggerService } from "@internal/logger/service/DefaultLoggerService";
+import { DefaultLoggerPublisherService } from "@internal/logger-publisher/service/DefaultLoggerPublisherService";
 import {
   DeviceNotRecognizedError,
   NoAccessibleDeviceError,
@@ -16,11 +16,11 @@ import {
 
 import { WebUsbHidTransport } from "./WebUsbHidTransport";
 
-jest.mock("../../../internal/logger/service/LoggerService");
+jest.mock("../../../internal/logger-publisher/service/LoggerPublisherService");
 
 // Our StaticDeviceModelDataSource can directly be used in our unit tests
 const usbDeviceModelDataSource = new StaticDeviceModelDataSource();
-const logger = new DefaultLoggerService([], "web-usb-hid");
+const logger = new DefaultLoggerPublisherService([], "web-usb-hid");
 
 const stubDevice = {
   opened: false,

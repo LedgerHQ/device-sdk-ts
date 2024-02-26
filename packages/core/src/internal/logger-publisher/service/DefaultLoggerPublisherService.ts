@@ -4,10 +4,10 @@ import { LogLevel } from "@api/logger-subscriber/model/LogLevel";
 import { LogOptions } from "@api/logger-subscriber/model/LogOptions";
 import { LoggerSubscriber } from "@api/logger-subscriber/service/LoggerSubscriber";
 
-import { LoggerService } from "./LoggerService";
+import { LoggerPublisherService } from "./LoggerPublisherService";
 
 @injectable()
-export class DefaultLoggerService implements LoggerService {
+export class DefaultLoggerPublisherService implements LoggerPublisherService {
   subscribers: LoggerSubscriber[];
   tag: string;
 
