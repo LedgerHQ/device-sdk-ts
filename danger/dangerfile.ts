@@ -1,11 +1,5 @@
 import { danger, fail } from "danger";
 
-if (danger.github.pr.assignee === null) {
-  fail(
-    "Please assign someone to merge this PR, and optionally include people who should review."
-  );
-}
-
 const branchRegex =
   /^(feature|bugfix|support|chore|doc)\/((DSDK|dsdk)-[0-9]+|NO-ISSUE|no-issue)\-.*/;
 if (!branchRegex.test(danger.github.pr.head.ref)) {
