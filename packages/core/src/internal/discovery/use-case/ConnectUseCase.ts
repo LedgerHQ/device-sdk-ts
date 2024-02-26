@@ -1,5 +1,4 @@
 import { inject, injectable } from "inversify";
-import { from, Observable, of, switchMap } from "rxjs";
 
 import { DeviceId } from "@internal/device-model/model/DeviceModel";
 import { usbDiTypes } from "@internal/usb/di/usbDiTypes";
@@ -21,18 +20,13 @@ export class ConnectUseCase {
     // Later: @inject(usbDiTypes.BleTransport) private bleTransport: BleTransport,
   ) {}
 
-  execute({ deviceId }: ConnectUseCaseArgs): Observable<ConnectedDevice> {
-    return from(this.usbHidTransport.connect({ deviceId })).pipe(
-      switchMap((either) => {
-        return either.caseOf({
-          Left: (error) => {
-            throw error;
-          },
-          Right: (connectedDevice) => {
-            return of(connectedDevice);
-          },
-        });
-      }),
-    );
+  async execute({ deviceId }: ConnectUseCaseArgs): Promise<ConnectedDevice> {
+    const either = await this.usbHidTransport.connect({ deviceId });
+    return either.caseOf({
+      Left: (error) => {
+        throw error;
+      },
+      Right: (connectedDevice) => connectedDevice,
+    });
   }
 }
