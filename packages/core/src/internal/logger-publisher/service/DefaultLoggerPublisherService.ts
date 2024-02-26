@@ -1,8 +1,9 @@
 import { injectable } from "inversify";
 
 import { LogLevel } from "@api/logger-subscriber/model/LogLevel";
-import { LogOptions } from "@api/logger-subscriber/model/LogOptions";
+import { LogSubscriberOptions } from "@api/logger-subscriber/model/LogSubscriberOptions";
 import { LoggerSubscriber } from "@api/logger-subscriber/service/LoggerSubscriber";
+import { LogPublisherOptions } from "@internal/logger-publisher/model/LogPublisherOptions";
 
 import { LoggerPublisherService } from "./LoggerPublisherService";
 
@@ -16,29 +17,30 @@ export class DefaultLoggerPublisherService implements LoggerPublisherService {
     this.tag = tag;
   }
 
-  _log(level: LogLevel, message: string, options?: LogOptions): void {
+  _log(level: LogLevel, message: string, options?: LogPublisherOptions): void {
     this.subscribers.forEach((subscriber) => {
-      subscriber.log(level, message, {
+      const subscriberOptions: LogSubscriberOptions = {
         timestamp: Date.now(),
         tag: this.tag,
         ...options,
-      });
+      };
+      subscriber.log(level, message, subscriberOptions);
     });
   }
 
-  info(message: string, options?: LogOptions): void {
+  info(message: string, options?: LogPublisherOptions): void {
     this._log(LogLevel.Info, message, options);
   }
 
-  warn(message: string, options?: LogOptions): void {
+  warn(message: string, options?: LogPublisherOptions): void {
     this._log(LogLevel.Warning, message, options);
   }
 
-  debug(message: string, options?: LogOptions): void {
+  debug(message: string, options?: LogPublisherOptions): void {
     this._log(LogLevel.Debug, message, options);
   }
 
-  error(message: string, options?: LogOptions): void {
+  error(message: string, options?: LogPublisherOptions): void {
     this._log(LogLevel.Error, message, options);
   }
 }

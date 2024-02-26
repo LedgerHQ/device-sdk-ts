@@ -1,6 +1,6 @@
 import { LogLevel } from "@api/logger-subscriber/model/LogLevel";
-import { LogOptions } from "@api/logger-subscriber/model/LogOptions";
+import { LogSubscriberOptions } from "@api/logger-subscriber/model/LogSubscriberOptions";
 
 export interface LoggerSubscriber {
-  log(level: LogLevel, message: string, options?: LogOptions): void;
+  log(level: LogLevel, message: string, options: LogSubscriberOptions): void;
 }

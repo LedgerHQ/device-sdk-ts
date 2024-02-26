@@ -1,10 +1,10 @@
 import { LogLevel } from "@api/logger-subscriber/model/LogLevel";
-import { LogOptions } from "@api/logger-subscriber/model/LogOptions";
+import { LogSubscriberOptions } from "@api/logger-subscriber/model/LogSubscriberOptions";
 import { LoggerSubscriber } from "@api/logger-subscriber/service/LoggerSubscriber";
 
 export class ConsoleLogger implements LoggerSubscriber {
-  log(level: LogLevel, message: string, options: LogOptions): void {
-    const tag = `[${options.tag ?? "logger"}]`;
+  log(level: LogLevel, message: string, options: LogSubscriberOptions): void {
+    const tag = `[${options.tag}]`;
 
     switch (level) {
       case LogLevel.Info:
