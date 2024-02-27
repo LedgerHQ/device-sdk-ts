@@ -3,7 +3,7 @@ import { Maybe } from "purify-ts";
 
 import { DeviceSessionNotFound } from "@internal/device-session/model/Errors";
 import { Session } from "@internal/device-session/model/Session";
-import { types as loggerTypes } from "@internal/logger-publisher/di/loggerTypes";
+import { loggerTypes } from "@internal/logger-publisher/di/loggerTypes";
 import { LoggerPublisherService } from "@internal/logger-publisher/service/LoggerPublisherService";
 
 @injectable()

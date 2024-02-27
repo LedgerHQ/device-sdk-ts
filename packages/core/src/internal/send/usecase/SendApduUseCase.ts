@@ -1,6 +1,6 @@
 import { inject, injectable } from "inversify";
 
-import { types as deviceSessionTypes } from "@internal/device-session/di/deviceSessionTypes";
+import { deviceSessionTypes } from "@internal/device-session/di/deviceSessionTypes";
 import { SessionId } from "@internal/device-session/model/Session";
 import { DefaultSessionService } from "@internal/device-session/service/DefaultSessionService";
 

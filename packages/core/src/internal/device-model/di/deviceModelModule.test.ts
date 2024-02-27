@@ -2,8 +2,8 @@ import { Container } from "inversify";
 
 import { StaticDeviceModelDataSource } from "@internal/device-model/data/StaticDeviceModelDataSource";
 
-import { deviceModelDiTypes } from "./deviceModelDiTypes";
 import { deviceModelModuleFactory } from "./deviceModelModule";
+import { deviceModelTypes } from "./deviceModelTypes";
 
 describe("deviceModelModuleFactory", () => {
   let container: Container;
@@ -20,7 +20,7 @@ describe("deviceModelModuleFactory", () => {
 
   it("should return none mocked services and data sources", () => {
     const deviceModelDataSource = container.get(
-      deviceModelDiTypes.DeviceModelDataSource,
+      deviceModelTypes.DeviceModelDataSource,
     );
     expect(deviceModelDataSource).toBeInstanceOf(StaticDeviceModelDataSource);
   });

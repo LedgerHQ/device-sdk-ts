@@ -4,9 +4,9 @@ import type {
   LocalConfigDataSource,
   RemoteConfigDataSource,
 } from "@internal/config/data/ConfigDataSource";
-import { types as configTypes } from "@internal/config/di/configTypes";
+import { configTypes } from "@internal/config/di/configTypes";
 import { Config } from "@internal/config/model/Config";
-import { types as loggerTypes } from "@internal/logger-publisher/di/loggerTypes";
+import { loggerTypes } from "@internal/logger-publisher/di/loggerTypes";
 import type { LoggerPublisherService } from "@internal/logger-publisher/service/LoggerPublisherService";
 
 import { ConfigService } from "./ConfigService";

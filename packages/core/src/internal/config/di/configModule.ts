@@ -7,7 +7,7 @@ import { StubRemoteConfigDataSource } from "@internal/config/data/RemoteConfigDa
 import { DefaultConfigService } from "@internal/config/service/DefaultConfigService";
 import { GetSdkVersionUseCase } from "@internal/config/usecase/GetSdkVersionUseCase";
 
-import { types } from "./configTypes";
+import { configTypes } from "./configTypes";
 
 // This module is used to configure the dependency injection container
 // This is where we will bind our interfaces to their implementations (or mocks...)
@@ -19,14 +19,14 @@ export const configModuleFactory = ({
   stub = false,
 }: Partial<FactoryProps> = {}) =>
   new ContainerModule((bind, _unbind, _isBound, rebind) => {
-    bind(types.LocalConfigDataSource).to(FileLocalConfigDataSource);
-    bind(types.RemoteConfigDataSource).to(RestRemoteConfigDataSource);
-    bind(types.GetSdkVersionUseCase).to(GetSdkVersionUseCase);
-    bind(types.ConfigService).to(DefaultConfigService);
+    bind(configTypes.LocalConfigDataSource).to(FileLocalConfigDataSource);
+    bind(configTypes.RemoteConfigDataSource).to(RestRemoteConfigDataSource);
+    bind(configTypes.GetSdkVersionUseCase).to(GetSdkVersionUseCase);
+    bind(configTypes.ConfigService).to(DefaultConfigService);
 
     if (stub) {
       // We can rebind our interfaces to their mock implementations
-      rebind(types.LocalConfigDataSource).to(StubLocalConfigDataSource);
-      rebind(types.RemoteConfigDataSource).to(StubRemoteConfigDataSource);
+      rebind(configTypes.LocalConfigDataSource).to(StubLocalConfigDataSource);
+      rebind(configTypes.RemoteConfigDataSource).to(StubRemoteConfigDataSource);
     }
   });

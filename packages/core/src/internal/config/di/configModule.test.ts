@@ -6,7 +6,7 @@ import { RestRemoteConfigDataSource } from "@internal/config/data/RemoteConfigDa
 import { StubRemoteConfigDataSource } from "@internal/config/data/RemoteConfigDataSource.stub";
 
 import { configModuleFactory } from "./configModule";
-import { types } from "./configTypes";
+import { configTypes } from "./configTypes";
 
 describe("configModuleFactory", () => {
   describe("Default", () => {
@@ -23,8 +23,10 @@ describe("configModuleFactory", () => {
     });
 
     it("should return none mocked data sources", () => {
-      const localDataSource = container.get(types.LocalConfigDataSource);
-      const remoteDataSource = container.get(types.RemoteConfigDataSource);
+      const localDataSource = container.get(configTypes.LocalConfigDataSource);
+      const remoteDataSource = container.get(
+        configTypes.RemoteConfigDataSource,
+      );
       expect(localDataSource).toBeInstanceOf(FileLocalConfigDataSource);
       expect(remoteDataSource).toBeInstanceOf(RestRemoteConfigDataSource);
     });
@@ -44,8 +46,10 @@ describe("configModuleFactory", () => {
     });
 
     it("should return mocked data sources", () => {
-      const localDataSource = container.get(types.LocalConfigDataSource);
-      const remoteDataSource = container.get(types.RemoteConfigDataSource);
+      const localDataSource = container.get(configTypes.LocalConfigDataSource);
+      const remoteDataSource = container.get(
+        configTypes.RemoteConfigDataSource,
+      );
       expect(localDataSource).toBeInstanceOf(StubLocalConfigDataSource);
       expect(remoteDataSource).toBeInstanceOf(StubRemoteConfigDataSource);
     });

@@ -4,7 +4,7 @@ import { LoggerSubscriberService } from "@api/logger-subscriber/service/LoggerSu
 import { DefaultLoggerPublisherService } from "@internal/logger-publisher/service/DefaultLoggerPublisherService";
 import { LoggerPublisherService } from "@internal/logger-publisher/service/LoggerPublisherService";
 
-import { types } from "./loggerTypes";
+import { loggerTypes } from "./loggerTypes";
 
 type FactoryProps = {
   subscribers: LoggerSubscriberService[];
@@ -24,7 +24,7 @@ export const loggerModuleFactory = (
       _onDeactivation,
     ) => {
       bind<interfaces.Factory<LoggerPublisherService>>(
-        types.LoggerPublisherServiceFactory,
+        loggerTypes.LoggerPublisherServiceFactory,
       ).toFactory((_context) => {
         return (tag: string) =>
           new DefaultLoggerPublisherService(subscribers, tag);
