@@ -5,7 +5,7 @@ import { StubLocalConfigDataSource } from "@internal/config/data/LocalConfigData
 import { RestRemoteConfigDataSource } from "@internal/config/data/RemoteConfigDataSource";
 import { StubRemoteConfigDataSource } from "@internal/config/data/RemoteConfigDataSource.stub";
 import { DefaultConfigService } from "@internal/config/service/DefaultConfigService";
-import { GetSdkVersionUseCase } from "@internal/config/usecase/GetSdkVersionUseCase";
+import { GetSdkVersionUseCase } from "@internal/config/use-case/GetSdkVersionUseCase";
 
 import { configTypes } from "./configTypes";
 

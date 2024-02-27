@@ -2,7 +2,7 @@ import { Container } from "inversify";
 import { Observable } from "rxjs";
 
 import { configTypes } from "@internal/config/di/configTypes";
-import { GetSdkVersionUseCase } from "@internal/config/usecase/GetSdkVersionUseCase";
+import { GetSdkVersionUseCase } from "@internal/config/use-case/GetSdkVersionUseCase";
 import { discoveryTypes } from "@internal/discovery/di/discoveryTypes";
 import {
   ConnectUseCase,
