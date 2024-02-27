@@ -4,7 +4,7 @@ import {
   ApiCallError,
   JSONParseError,
   ParseResponseError,
-} from "@internal/config/di/configTypes";
+} from "@internal/config/model/Errors";
 
 import { RemoteConfigDataSource } from "./ConfigDataSource";
 import { RestRemoteConfigDataSource } from "./RemoteConfigDataSource";

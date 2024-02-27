@@ -1,6 +1,6 @@
 import { Either, Left } from "purify-ts";
 
-import { JSONParseError, ReadFileError } from "@internal/config/di/configTypes";
+import { JSONParseError, ReadFileError } from "@internal/config/model/Errors";
 
 import { LocalConfigDataSource } from "./ConfigDataSource";
 import * as LocalConfig from "./LocalConfigDataSource";

@@ -1,12 +1,12 @@
 import { injectable } from "inversify";
 import { Either } from "purify-ts";
 
+import { Config } from "@internal/config/model/Config";
 import {
   JSONParseError,
   LocalConfigFailure,
   ReadFileError,
-} from "@internal/config/di/configTypes";
-import { Config } from "@internal/config/model/Config";
+} from "@internal/config/model/Errors";
 import pkg from "@root/package.json";
 
 import { LocalConfigDataSource } from "./ConfigDataSource";

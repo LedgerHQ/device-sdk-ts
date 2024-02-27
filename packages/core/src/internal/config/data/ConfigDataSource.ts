@@ -1,10 +1,10 @@
 import { Either } from "purify-ts";
 
+import { Config } from "@internal/config/model/Config";
 import {
   LocalConfigFailure,
   RemoteConfigFailure,
-} from "@internal/config/di/configTypes";
-import { Config } from "@internal/config/model/Config";
+} from "@internal/config/model/Errors";
 
 // Describe the different data sources interfaces our application could have
 

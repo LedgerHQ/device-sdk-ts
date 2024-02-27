@@ -2,7 +2,7 @@ import { Either, Left } from "purify-ts";
 
 import { FileLocalConfigDataSource } from "@internal/config/data/LocalConfigDataSource";
 import { RestRemoteConfigDataSource } from "@internal/config/data/RemoteConfigDataSource";
-import { JSONParseError } from "@internal/config/di/configTypes";
+import { JSONParseError } from "@internal/config/model/Errors";
 import { DefaultLoggerPublisherService } from "@internal/logger-publisher/service/DefaultLoggerPublisherService";
 
 import { ConfigService } from "./ConfigService";
