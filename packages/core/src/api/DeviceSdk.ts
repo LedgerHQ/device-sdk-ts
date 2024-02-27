@@ -10,6 +10,11 @@ import {
 } from "@internal/discovery/use-case/ConnectUseCase";
 import type { StartDiscoveringUseCase } from "@internal/discovery/use-case/StartDiscoveringUseCase";
 import type { StopDiscoveringUseCase } from "@internal/discovery/use-case/StopDiscoveringUseCase";
+import { sendTypes } from "@internal/send/di/sendTypes";
+import {
+  SendApduUseCase,
+  SendApduUseCaseArgs,
+} from "@internal/send/usecase/SendApduUseCase";
 import { DiscoveredDevice } from "@internal/usb/model/DiscoveredDevice";
 import { makeContainer, MakeContainerProps } from "@root/src/di";
 
@@ -52,6 +57,12 @@ export class DeviceSdk {
   connect(args: ConnectUseCaseArgs) {
     return this.container
       .get<ConnectUseCase>(discoveryDiTypes.ConnectUseCase)
+      .execute(args);
+  }
+
+  sendApdu(args: SendApduUseCaseArgs) {
+    return this.container
+      .get<SendApduUseCase>(sendTypes.SendService)
       .execute(args);
   }
 }

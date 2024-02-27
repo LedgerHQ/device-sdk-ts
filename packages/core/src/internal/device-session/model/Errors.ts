@@ -18,3 +18,12 @@ export class FramerApduError implements SdkError {
     this.originalError = new Error("Frame offset is greater than apdu length");
   }
 }
+
+export class DeviceSessionNotFound implements SdkError {
+  readonly _tag = "DeviceSessionNotFound";
+  originalError?: Error;
+
+  constructor(originalError?: Error) {
+    this.originalError = originalError ?? new Error("Device session not found");
+  }
+}
