@@ -16,9 +16,8 @@ import {
 import { Frame } from "@internal/device-session/model/Frame";
 import { FrameHeader } from "@internal/device-session/model/FrameHeader";
 import { FramerUtils } from "@internal/device-session/utils/FramerUtils";
-import { types as loggerTypes } from "@internal/logger/di/loggerTypes";
-import { LogBuilder } from "@internal/logger/service/LogBuilder";
-import type { LoggerService } from "@internal/logger/service/LoggerService";
+import { types as loggerTypes } from "@internal/logger-publisher/di/loggerTypes";
+import { LoggerPublisherService } from "@internal/logger-publisher/service/LoggerPublisherService";
 import { SdkError } from "@root/src/api/Error";
 
 import type { FramerService } from "./FramerService";
@@ -34,7 +33,7 @@ export class DefaultFramerService implements FramerService {
   protected _frameSize: number;
   protected _channel: Maybe<Uint8Array>;
   protected _padding: boolean;
-  private _logger: LoggerService;
+  private _logger: LoggerPublisherService;
 
   constructor(
     {
@@ -42,12 +41,14 @@ export class DefaultFramerService implements FramerService {
       channel = Maybe.zero(),
       padding = false,
     }: DefaultFramerServiceConstructorArgs,
-    @inject(loggerTypes.LoggerService) logger: LoggerService,
+
+    @inject(loggerTypes.LoggerPublisherServiceFactory)
+    loggerServiceFactory: (tag: string) => LoggerPublisherService,
   ) {
     this._frameSize = frameSize;
     this._channel = channel;
     this._padding = padding;
-    this._logger = logger;
+    this._logger = loggerServiceFactory("framer");
   }
 
   /**
@@ -65,11 +66,9 @@ export class DefaultFramerService implements FramerService {
       count += 1;
       frame = this.getFrameAtIndex(apdu, count).mapLeft((error) => {
         if (error instanceof FramerOverflowError) {
-          this._logger.debug(
-            LogBuilder.build({ type: "framer" }, { count }, `Frames parsed.`),
-          );
+          this._logger.debug("Frames parsed", { data: { count } });
         } else {
-          this._logger.error(LogBuilder.buildFromError(error));
+          this._logger.error("Error while parsing frame", { data: { error } });
         }
         return error;
       });

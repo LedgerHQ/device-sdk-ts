@@ -6,6 +6,8 @@ import { v4 as uuid } from "uuid";
 import type { DeviceModelDataSource } from "@internal/device-model/data/DeviceModelDataSource";
 import { deviceModelDiTypes } from "@internal/device-model/di/deviceModelDiTypes";
 import { DeviceId } from "@internal/device-model/model/DeviceModel";
+import { types as loggerTypes } from "@internal/logger-publisher/di/loggerTypes";
+import type { LoggerPublisherService } from "@internal/logger-publisher/service/LoggerPublisherService";
 import { ledgerVendorId } from "@internal/usb/data/UsbHidConfig";
 import { ConnectedDevice } from "@internal/usb/model/ConnectedDevice";
 import { DiscoveredDevice } from "@internal/usb/model/DiscoveredDevice";
@@ -33,15 +35,18 @@ type WebHidInternalDevice = {
 export class WebUsbHidTransport implements UsbHidTransport {
   // Maps uncoupled DiscoveredDevice and WebHID's HIDDevice WebHID
   private internalDevicesById: Map<DeviceId, WebHidInternalDevice>;
-
   private connectionListenersAbortController: AbortController;
+  private logger: LoggerPublisherService;
 
   constructor(
     @inject(deviceModelDiTypes.DeviceModelDataSource)
     private deviceModelDataSource: DeviceModelDataSource,
+    @inject(loggerTypes.LoggerPublisherServiceFactory)
+    loggerServiceFactory: (tag: string) => LoggerPublisherService,
   ) {
     this.internalDevicesById = new Map();
     this.connectionListenersAbortController = new AbortController();
+    this.logger = loggerServiceFactory("WebUsbHidTransport");
   }
 
   /**
@@ -60,10 +65,10 @@ export class WebUsbHidTransport implements UsbHidTransport {
   isSupported(): boolean {
     try {
       const result = !!navigator?.hid;
-      console.log(`isSupported: ${result}`);
+      this.logger.debug(`isSupported: ${result}`);
       return result;
     } catch (error) {
-      console.error(`isSupported: error`, error);
+      this.logger.error(`isSupported: error`, { data: { error } });
       return false;
     }
   }
@@ -89,15 +94,19 @@ export class WebUsbHidTransport implements UsbHidTransport {
             filters: [{ vendorId: ledgerVendorId }],
           });
         } catch (error) {
-          console.error(`promptDeviceAccess: error requesting device`, error);
+          this.logger.error(`promptDeviceAccess: error requesting device`, {
+            data: { error },
+          });
           throw new NoAccessibleDeviceError(error as Error);
         }
 
-        console.log("promptDeviceAccess: hidDevices len", hidDevices.length);
+        this.logger.debug(
+          `promptDeviceAccess: hidDevices len ${hidDevices.length}`,
+        );
 
         // Granted access to 0 device (by clicking on cancel for ex) results in an error
         if (hidDevices.length === 0) {
-          console.warn("No device was selected");
+          this.logger.warn("No device was selected");
           throw new NoAccessibleDeviceError(new Error("No selected device"));
         }
 
@@ -106,7 +115,9 @@ export class WebUsbHidTransport implements UsbHidTransport {
         for (const hidDevice of hidDevices) {
           discoveredHidDevices.push(hidDevice);
 
-          console.log(`promptDeviceAccess: selected device`, hidDevice);
+          this.logger.debug(`promptDeviceAccess: selected device`, {
+            data: { hidDevice },
+          });
         }
 
         return discoveredHidDevices;
@@ -134,7 +145,7 @@ export class WebUsbHidTransport implements UsbHidTransport {
    * So the consumer can directly select this device.
    */
   startDiscovering(): Observable<DiscoveredDevice> {
-    console.log("startDiscovering");
+    this.logger.debug("startDiscovering");
 
     // Logs the connection and disconnection events
     this.startListeningToConnectionEvents();
@@ -147,11 +158,13 @@ export class WebUsbHidTransport implements UsbHidTransport {
       switchMap((either) => {
         return either.caseOf({
           Left: (error) => {
-            console.error("Error while getting accessible device", error);
+            this.logger.error("Error while getting accessible device", {
+              data: { error },
+            });
             throw error;
           },
           Right: (hidDevices) => {
-            console.log(`Got access to ${hidDevices.length} HID devices:`);
+            this.logger.info(`Got access to ${hidDevices.length} HID devices`);
 
             const discoveredDevices = hidDevices.map((hidDevice) => {
               const usbProductId = this.getHidUsbProductId(hidDevice.productId);
@@ -172,7 +185,7 @@ export class WebUsbHidTransport implements UsbHidTransport {
                   discoveredDevice,
                 };
 
-                console.log(
+                this.logger.debug(
                   `Discovered device ${id} ${discoveredDevice.deviceModel.productName}`,
                 );
                 this.internalDevicesById.set(id, internalDevice);
@@ -180,7 +193,7 @@ export class WebUsbHidTransport implements UsbHidTransport {
                 return discoveredDevice;
               } else {
                 // [ASK] Or we just ignore the not recognized device ? And log them
-                console.warn(
+                this.logger.warn(
                   `Device not recognized: 0x${usbProductId.toString(16)}`,
                 );
                 throw new DeviceNotRecognizedError(
@@ -198,7 +211,7 @@ export class WebUsbHidTransport implements UsbHidTransport {
   }
 
   stopDiscovering(): void {
-    console.log("stopDiscovering");
+    this.logger.debug("stopDiscovering");
 
     this.stopListeningToConnectionEvents();
   }
@@ -207,13 +220,13 @@ export class WebUsbHidTransport implements UsbHidTransport {
    * Logs `connect` and `disconnect` events for already accessible devices
    */
   private startListeningToConnectionEvents(): void {
-    console.log("startListeningToConnectionEvents");
+    this.logger.debug("startListeningToConnectionEvents");
 
     this.hidApi().map((hidApi) => {
       hidApi.addEventListener(
         "connect",
         (event) => {
-          console.log("connection event", event);
+          this.logger.debug("connection event", { data: { event } });
         },
         { signal: this.connectionListenersAbortController.signal },
       );
@@ -221,7 +234,7 @@ export class WebUsbHidTransport implements UsbHidTransport {
       hidApi.addEventListener(
         "disconnect",
         (event) => {
-          console.log("disconnect event", event);
+          this.logger.debug("disconnect event", { data: { event } });
         },
         { signal: this.connectionListenersAbortController.signal },
       );
@@ -229,7 +242,7 @@ export class WebUsbHidTransport implements UsbHidTransport {
   }
 
   private stopListeningToConnectionEvents(): void {
-    console.log("stopListeningToConnectionEvents");
+    this.logger.debug("stopListeningToConnectionEvents");
     this.connectionListenersAbortController.abort();
   }
 
@@ -241,12 +254,12 @@ export class WebUsbHidTransport implements UsbHidTransport {
   }: {
     deviceId: DeviceId;
   }): Promise<Either<ConnectError, ConnectedDevice>> {
-    console.log("connect", { deviceId });
+    this.logger.debug("connect", { data: { deviceId } });
 
     const internalDevice = this.internalDevicesById.get(deviceId);
 
     if (!internalDevice) {
-      console.error(`Unknown device ${deviceId}`);
+      this.logger.error(`Unknown device ${deviceId}`);
       return Left(
         new UnknownDeviceError(new Error(`Unknown device ${deviceId}`)),
       );
@@ -256,9 +269,11 @@ export class WebUsbHidTransport implements UsbHidTransport {
       await internalDevice.hidDevice.open();
     } catch (error) {
       if (error instanceof DOMException && error.name === "InvalidStateError") {
-        console.info(`Device ${deviceId} is already opened`);
+        this.logger.debug(`Device ${deviceId} is already opened`);
       } else {
-        console.error(`Error while opening device: ${deviceId}`, error);
+        this.logger.debug(`Error while opening device: ${deviceId}`, {
+          data: { error },
+        });
         return Left(new OpeningConnectionError(error as Error));
       }
     }

@@ -1,9 +1,11 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-/* eslint-disable @typescript-eslint/no-unsafe-assignment */
 import { Left } from "purify-ts";
 
 import { StaticDeviceModelDataSource } from "@internal/device-model/data/StaticDeviceModelDataSource";
-import { DeviceModelId } from "@internal/device-model/model/DeviceModel";
+import {
+  DeviceModel,
+  DeviceModelId,
+} from "@internal/device-model/model/DeviceModel";
+import { DefaultLoggerPublisherService } from "@internal/logger-publisher/service/DefaultLoggerPublisherService";
 import {
   DeviceNotRecognizedError,
   NoAccessibleDeviceError,
@@ -14,8 +16,12 @@ import {
 
 import { WebUsbHidTransport } from "./WebUsbHidTransport";
 
+jest.mock("../../../internal/logger-publisher/service/LoggerPublisherService");
+
 // Our StaticDeviceModelDataSource can directly be used in our unit tests
 const usbDeviceModelDataSource = new StaticDeviceModelDataSource();
+const logger = new DefaultLoggerPublisherService([], "web-usb-hid");
+
 const stubDevice = {
   opened: false,
   productId: 0x4011,
@@ -26,14 +32,22 @@ const stubDevice = {
 };
 
 describe("WebUsbHidTransport", () => {
+  let transport: WebUsbHidTransport;
+
+  beforeEach(() => {
+    transport = new WebUsbHidTransport(usbDeviceModelDataSource, () => logger);
+  });
+
+  afterEach(() => {
+    jest.restoreAllMocks();
+  });
+
   describe("When WebHID API is not supported", () => {
     test("isSupported should return false", () => {
-      const transport = new WebUsbHidTransport(usbDeviceModelDataSource);
       expect(transport.isSupported()).toBe(false);
     });
 
     test("startDiscovering should emit an error", (done) => {
-      const transport = new WebUsbHidTransport(usbDeviceModelDataSource);
       transport.startDiscovering().subscribe({
         next: () => {
           done("Should not emit any value");
@@ -57,16 +71,15 @@ describe("WebUsbHidTransport", () => {
           requestDevice: mockedRequestDevice,
           addEventListener: jest.fn(),
         },
-      } as any;
+      } as unknown as Navigator;
     });
 
     afterAll(() => {
       jest.restoreAllMocks();
-      global.navigator = undefined as any;
+      global.navigator = undefined as unknown as Navigator;
     });
 
     it("isSupported should return true", () => {
-      const transport = new WebUsbHidTransport(usbDeviceModelDataSource);
       expect(transport.isSupported()).toBe(true);
     });
 
@@ -74,7 +87,6 @@ describe("WebUsbHidTransport", () => {
       test("If the user grant us access to a device, we should emit it", (done) => {
         mockedRequestDevice.mockResolvedValueOnce([stubDevice]);
 
-        const transport = new WebUsbHidTransport(usbDeviceModelDataSource);
         transport.startDiscovering().subscribe({
           next: (discoveredDevice) => {
             try {
@@ -84,7 +96,7 @@ describe("WebUsbHidTransport", () => {
                     id: DeviceModelId.NANO_X,
                     productName: "Ledger Nano X",
                     usbProductId: 0x40,
-                  }),
+                  }) as DeviceModel,
                 }),
               );
 
@@ -111,12 +123,9 @@ describe("WebUsbHidTransport", () => {
           },
         ]);
 
-        const transport = new WebUsbHidTransport(usbDeviceModelDataSource);
-
         let count = 0;
         transport.startDiscovering().subscribe({
           next: (discoveredDevice) => {
-            console.log("🦄 discoveredDevice", discoveredDevice);
             try {
               switch (count) {
                 case 0:
@@ -126,7 +135,7 @@ describe("WebUsbHidTransport", () => {
                         id: DeviceModelId.NANO_X,
                         productName: "Ledger Nano X",
                         usbProductId: 0x40,
-                      }),
+                      }) as DeviceModel,
                     }),
                   );
                   break;
@@ -137,7 +146,7 @@ describe("WebUsbHidTransport", () => {
                         id: DeviceModelId.NANO_SP,
                         productName: "Ledger Nano S Plus",
                         usbProductId: 0x50,
-                      }),
+                      }) as DeviceModel,
                     }),
                   );
 
@@ -164,7 +173,6 @@ describe("WebUsbHidTransport", () => {
           },
         ]);
 
-        const transport = new WebUsbHidTransport(usbDeviceModelDataSource);
         transport.startDiscovering().subscribe({
           next: () => {
             done("should not return a device");
@@ -182,7 +190,6 @@ describe("WebUsbHidTransport", () => {
           throw new Error(message);
         });
 
-        const transport = new WebUsbHidTransport(usbDeviceModelDataSource);
         transport.startDiscovering().subscribe({
           next: () => {
             done("should not return a device");
@@ -202,7 +209,6 @@ describe("WebUsbHidTransport", () => {
         // When the user does not select any device, the `requestDevice` will return an empty array
         mockedRequestDevice.mockResolvedValueOnce([]);
 
-        const transport = new WebUsbHidTransport(usbDeviceModelDataSource);
         transport.startDiscovering().subscribe({
           next: (discoveredDevice) => {
             done(
@@ -226,7 +232,6 @@ describe("WebUsbHidTransport", () => {
     describe("stopDiscovering", () => {
       test("If the discovery process is halted, we should stop monitoring connections.", () => {
         const abortSpy = jest.spyOn(AbortController.prototype, "abort");
-        const transport = new WebUsbHidTransport(usbDeviceModelDataSource);
 
         transport.stopDiscovering();
 
@@ -238,7 +243,6 @@ describe("WebUsbHidTransport", () => {
     // eslint-disable-next-line @typescript-eslint/no-empty-function
     describe("connect", () => {
       test("If no internal device, should throw UnknownDeviceError", async () => {
-        const transport = new WebUsbHidTransport(usbDeviceModelDataSource);
         const device = { deviceId: "fake" };
 
         const connect = await transport.connect(device);
@@ -249,7 +253,6 @@ describe("WebUsbHidTransport", () => {
       });
 
       test("If the device is already opened, should throw OpeningConnectionError", async () => {
-        const transport = new WebUsbHidTransport(usbDeviceModelDataSource);
         const device = { deviceId: "fake" };
 
         const connect = await transport.connect(device);
@@ -270,7 +273,6 @@ describe("WebUsbHidTransport", () => {
           },
         ]);
 
-        const transport = new WebUsbHidTransport(usbDeviceModelDataSource);
         transport.startDiscovering().subscribe({
           next: (discoveredDevice) => {
             transport
@@ -302,8 +304,6 @@ describe("WebUsbHidTransport", () => {
           },
         ]);
 
-        const transport = new WebUsbHidTransport(usbDeviceModelDataSource);
-
         transport.startDiscovering().subscribe({
           next: (discoveredDevice) => {
             transport
@@ -332,8 +332,6 @@ describe("WebUsbHidTransport", () => {
 
       test("If the device is available, return it", (done) => {
         mockedRequestDevice.mockResolvedValueOnce([stubDevice]);
-
-        const transport = new WebUsbHidTransport(usbDeviceModelDataSource);
 
         transport.startDiscovering().subscribe({
           next: (discoveredDevice) => {
