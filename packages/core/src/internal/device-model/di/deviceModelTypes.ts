@@ -1,3 +1,3 @@
-export const deviceModelDiTypes = {
+export const deviceModelTypes = {
   DeviceModelDataSource: Symbol.for("DeviceModelDataSource"),
 };

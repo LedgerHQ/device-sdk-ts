@@ -16,7 +16,7 @@ import {
 import { Frame } from "@internal/device-session/model/Frame";
 import { FrameHeader } from "@internal/device-session/model/FrameHeader";
 import { FramerUtils } from "@internal/device-session/utils/FramerUtils";
-import { types as loggerTypes } from "@internal/logger-publisher/di/loggerTypes";
+import { loggerTypes } from "@internal/logger-publisher/di/loggerTypes";
 import { LoggerPublisherService } from "@internal/logger-publisher/service/LoggerPublisherService";
 import { SdkError } from "@root/src/api/Error";
 

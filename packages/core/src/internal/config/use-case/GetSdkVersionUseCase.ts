@@ -1,6 +1,6 @@
 import { inject, injectable } from "inversify";
 
-import { types } from "@internal/config/di/configTypes";
+import { configTypes } from "@internal/config/di/configTypes";
 import type { ConfigService } from "@internal/config/service/ConfigService";
 
 /**
@@ -11,7 +11,7 @@ import type { ConfigService } from "@internal/config/service/ConfigService";
 @injectable()
 export class GetSdkVersionUseCase {
   private _configService: ConfigService;
-  constructor(@inject(types.ConfigService) configService: ConfigService) {
+  constructor(@inject(configTypes.ConfigService) configService: ConfigService) {
     this._configService = configService;
   }
   async getSdkVersion(): Promise<string> {

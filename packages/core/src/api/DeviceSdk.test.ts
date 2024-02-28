@@ -1,6 +1,6 @@
 import { LocalConfigDataSource } from "@internal/config/data/ConfigDataSource";
 import { StubLocalConfigDataSource } from "@internal/config/data/LocalConfigDataSource.stub";
-import { types as ConfigTypes } from "@internal/config/di/configTypes";
+import { configTypes } from "@internal/config/di/configTypes";
 import pkg from "@root/package.json";
 
 import { ConsoleLogger } from "./logger-subscriber/service/ConsoleLogger";
@@ -45,7 +45,7 @@ describe("DeviceSdk", () => {
       expect(sdk).toBeInstanceOf(DeviceSdk);
       expect(
         sdk.container.get<LocalConfigDataSource>(
-          ConfigTypes.LocalConfigDataSource,
+          configTypes.LocalConfigDataSource,
         ),
       ).toBeInstanceOf(StubLocalConfigDataSource);
     });

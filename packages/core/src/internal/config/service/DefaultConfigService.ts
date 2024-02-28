@@ -4,9 +4,13 @@ import type {
   LocalConfigDataSource,
   RemoteConfigDataSource,
 } from "@internal/config/data/ConfigDataSource";
-import { types as configTypes } from "@internal/config/di/configTypes";
+import { configTypes } from "@internal/config/di/configTypes";
 import { Config } from "@internal/config/model/Config";
-import { types as loggerTypes } from "@internal/logger-publisher/di/loggerTypes";
+import {
+  LocalConfigFailure,
+  RemoteConfigFailure,
+} from "@internal/config/model/Errors";
+import { loggerTypes } from "@internal/logger-publisher/di/loggerTypes";
 import type { LoggerPublisherService } from "@internal/logger-publisher/service/LoggerPublisherService";
 
 import { ConfigService } from "./ConfigService";
@@ -29,9 +33,13 @@ export class DefaultConfigService implements ConfigService {
 
   async getSdkConfig(): Promise<Config> {
     // Returns an Either<ReadFileError | JsonParseError, Config>
-    const localConfig = this._local.getConfig().ifLeft((error) => {
-      this._logger.error("Local config not available", { data: { error } });
-    });
+    const localConfig = this._local
+      .getConfig()
+      .ifLeft((error: LocalConfigFailure) => {
+        this._logger.error("Local config not available", {
+          data: { error },
+        });
+      });
 
     if (localConfig.isRight()) {
       const val = localConfig.extract();
@@ -41,7 +49,7 @@ export class DefaultConfigService implements ConfigService {
 
     return this._remote.getConfig().then((config) => {
       return config
-        .mapLeft((error) => {
+        .mapLeft((error: RemoteConfigFailure) => {
           // Here we handle the error and return a default value
           this._logger.error("Local config available", { data: { error } });
           return { name: "DeadSdk", version: "0.0.0-dead.1" };

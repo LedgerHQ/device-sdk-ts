@@ -7,8 +7,8 @@ import { StopDiscoveringUseCase } from "@internal/discovery/use-case/StopDiscove
 import { loggerModuleFactory } from "@internal/logger-publisher/di/loggerModule";
 import { usbModuleFactory } from "@internal/usb/di/usbModule";
 
-import { discoveryDiTypes } from "./discoveryDiTypes";
 import { discoveryModuleFactory } from "./discoveryModule";
+import { discoveryTypes } from "./discoveryTypes";
 
 describe("discoveryModuleFactory", () => {
   let container: Container;
@@ -31,16 +31,16 @@ describe("discoveryModuleFactory", () => {
 
   it("should return none mocked use cases", () => {
     const startDiscoveringUseCase = container.get(
-      discoveryDiTypes.StartDiscoveringUseCase,
+      discoveryTypes.StartDiscoveringUseCase,
     );
     expect(startDiscoveringUseCase).toBeInstanceOf(StartDiscoveringUseCase);
 
     const stopDiscoveringUseCase = container.get(
-      discoveryDiTypes.StopDiscoveringUseCase,
+      discoveryTypes.StopDiscoveringUseCase,
     );
     expect(stopDiscoveringUseCase).toBeInstanceOf(StopDiscoveringUseCase);
 
-    const connectUseCase = container.get(discoveryDiTypes.ConnectUseCase);
+    const connectUseCase = container.get(discoveryTypes.ConnectUseCase);
     expect(connectUseCase).toBeInstanceOf(ConnectUseCase);
   });
 });

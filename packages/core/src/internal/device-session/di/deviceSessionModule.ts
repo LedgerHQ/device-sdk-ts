@@ -4,7 +4,7 @@ import { Session } from "@internal/device-session/model/Session";
 import { DefaultFramerService } from "@internal/device-session/service/DefaultFramerService";
 import { DefaultSessionService } from "@internal/device-session/service/DefaultSessionService";
 
-import { types } from "./deviceSessionTypes";
+import { deviceSessionTypes } from "./deviceSessionTypes";
 
 export type DeviceSessionModuleArgs = Partial<{
   stub: boolean;
@@ -22,7 +22,7 @@ export const deviceSessionModuleFactory = () =>
       _onActivation,
       _onDeactivation,
     ) => {
-      bind(types.FramerService).to(DefaultFramerService);
-      bind(types.SessionService).to(DefaultSessionService);
+      bind(deviceSessionTypes.FramerService).to(DefaultFramerService);
+      bind(deviceSessionTypes.SessionService).to(DefaultSessionService);
     },
   );

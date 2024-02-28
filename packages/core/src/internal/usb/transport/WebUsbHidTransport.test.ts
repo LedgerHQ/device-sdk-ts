@@ -16,7 +16,7 @@ import {
 
 import { WebUsbHidTransport } from "./WebUsbHidTransport";
 
-jest.mock("../../../internal/logger-publisher/service/LoggerPublisherService");
+jest.mock("@internal/logger-publisher/service/LoggerPublisherService");
 
 // Our StaticDeviceModelDataSource can directly be used in our unit tests
 const usbDeviceModelDataSource = new StaticDeviceModelDataSource();

@@ -4,9 +4,9 @@ import { from, Observable, switchMap } from "rxjs";
 import { v4 as uuid } from "uuid";
 
 import type { DeviceModelDataSource } from "@internal/device-model/data/DeviceModelDataSource";
-import { deviceModelDiTypes } from "@internal/device-model/di/deviceModelDiTypes";
+import { deviceModelTypes } from "@internal/device-model/di/deviceModelTypes";
 import { DeviceId } from "@internal/device-model/model/DeviceModel";
-import { types as loggerTypes } from "@internal/logger-publisher/di/loggerTypes";
+import { loggerTypes } from "@internal/logger-publisher/di/loggerTypes";
 import type { LoggerPublisherService } from "@internal/logger-publisher/service/LoggerPublisherService";
 import { ledgerVendorId } from "@internal/usb/data/UsbHidConfig";
 import { ConnectedDevice } from "@internal/usb/model/ConnectedDevice";
@@ -39,7 +39,7 @@ export class WebUsbHidTransport implements UsbHidTransport {
   private logger: LoggerPublisherService;
 
   constructor(
-    @inject(deviceModelDiTypes.DeviceModelDataSource)
+    @inject(deviceModelTypes.DeviceModelDataSource)
     private deviceModelDataSource: DeviceModelDataSource,
     @inject(loggerTypes.LoggerPublisherServiceFactory)
     loggerServiceFactory: (tag: string) => LoggerPublisherService,

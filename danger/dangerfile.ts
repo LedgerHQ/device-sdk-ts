@@ -1,7 +1,7 @@
 import { danger, fail } from "danger";
 
 const branchRegex =
-  /^(feature|bugfix|support|chore|doc)\/((DSDK|dsdk)-[0-9]+|NO-ISSUE|no-issue)\-.*/;
+  /^(feature|bugfix|support|chore|doc|refacto)\/((DSDK|dsdk)-[0-9]+|NO-ISSUE|no-issue)\-.*/;
 if (!branchRegex.test(danger.github.pr.head.ref)) {
   fail(
     "Please fix the PR branch name to match the convention, see [this documentation](https://ledgerhq.atlassian.net/wiki/spaces/WXP/pages/4527358147/DSDK+TS+Git+-+Github+conventions)"

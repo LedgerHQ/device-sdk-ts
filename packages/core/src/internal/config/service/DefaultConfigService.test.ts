@@ -1,15 +1,15 @@
 import { Either, Left } from "purify-ts";
 
-import { JSONParseError } from "@internal/config/di/configTypes";
+import { FileLocalConfigDataSource } from "@internal/config/data/LocalConfigDataSource";
+import { RestRemoteConfigDataSource } from "@internal/config/data/RemoteConfigDataSource";
+import { JSONParseError } from "@internal/config/model/Errors";
+import { DefaultLoggerPublisherService } from "@internal/logger-publisher/service/DefaultLoggerPublisherService";
 
-import { DefaultLoggerPublisherService } from "../../logger-publisher/service/DefaultLoggerPublisherService";
-import { FileLocalConfigDataSource } from "../data/LocalConfigDataSource";
-import { RestRemoteConfigDataSource } from "../data/RemoteConfigDataSource";
 import { ConfigService } from "./ConfigService";
 import { DefaultConfigService } from "./DefaultConfigService";
 
-jest.mock("../data/LocalConfigDataSource");
-jest.mock("../data/RemoteConfigDataSource");
+jest.mock("@internal/config/data/LocalConfigDataSource");
+jest.mock("@internal/config/data/RemoteConfigDataSource");
 
 let localDataSource: jest.Mocked<FileLocalConfigDataSource>;
 let remoteDataSource: jest.Mocked<RestRemoteConfigDataSource>;

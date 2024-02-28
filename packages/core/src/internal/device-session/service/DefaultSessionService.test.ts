@@ -1,11 +1,12 @@
 import { Either, Left } from "purify-ts";
 
-import { DefaultLoggerPublisherService } from "../../logger-publisher/service/DefaultLoggerPublisherService";
-import { DeviceSessionNotFound } from "../model/Errors";
-import { Session } from "../model/Session";
+import { DeviceSessionNotFound } from "@internal/device-session/model/Errors";
+import { Session } from "@internal/device-session/model/Session";
+import { DefaultLoggerPublisherService } from "@internal/logger-publisher/service/DefaultLoggerPublisherService";
+
 import { DefaultSessionService } from "./DefaultSessionService";
 
-jest.mock("../../logger-publisher/service/DefaultLoggerPublisherService");
+jest.mock("@internal/logger-publisher/service/DefaultLoggerPublisherService");
 
 let sessionService: DefaultSessionService;
 let loggerService: DefaultLoggerPublisherService;

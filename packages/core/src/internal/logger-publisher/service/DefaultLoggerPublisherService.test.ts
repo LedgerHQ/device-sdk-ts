@@ -3,7 +3,7 @@ import { ConsoleLogger } from "@api/logger-subscriber/service/ConsoleLogger";
 
 import { DefaultLoggerPublisherService } from "./DefaultLoggerPublisherService";
 
-jest.mock("../../../api/logger-subscriber/service/ConsoleLogger");
+jest.mock("@api/logger-subscriber/service/ConsoleLogger");
 jest.useFakeTimers().setSystemTime(new Date("2024-01-01"));
 
 let service: DefaultLoggerPublisherService;

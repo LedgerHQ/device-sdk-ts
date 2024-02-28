@@ -2,7 +2,7 @@ import { ContainerModule } from "inversify";
 
 import { StaticDeviceModelDataSource } from "@internal/device-model/data/StaticDeviceModelDataSource";
 
-import { deviceModelDiTypes } from "./deviceModelDiTypes";
+import { deviceModelTypes } from "./deviceModelTypes";
 
 type FactoryProps = {
   stub: boolean;
@@ -12,7 +12,7 @@ export const deviceModelModuleFactory = ({
   stub = false,
 }: Partial<FactoryProps> = {}) =>
   new ContainerModule((bind, _unbind, _isBound, _rebind) => {
-    bind(deviceModelDiTypes.DeviceModelDataSource).to(
+    bind(deviceModelTypes.DeviceModelDataSource).to(
       StaticDeviceModelDataSource,
     );
 
