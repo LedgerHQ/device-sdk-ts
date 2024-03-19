@@ -31,6 +31,7 @@ export class SendApduUseCase {
 
     if (deviceSession.isRight()) {
       const res = await deviceSession.extract().sendApdu(uint8Array);
+      console.log("SendAPDU", res);
       return res;
     }
 

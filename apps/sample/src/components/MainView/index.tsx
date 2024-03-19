@@ -47,6 +47,7 @@ export const MainView: React.FC = () => {
   const sdk = useSdk();
   const [discoveredDevice, setDiscoveredDevice] =
     useState<null | DiscoveredDevice>(null);
+  const [connectedDevice, setConnectedDevice] = useState<null | HIDDevice>();
 
   // Example starting the discovery on a user action
   const onSelectDeviceClicked = useCallback(() => {
@@ -61,6 +62,47 @@ export const MainView: React.FC = () => {
     });
   }, [sdk]);
 
+  const onDisconnect = useCallback(() => {
+    setDiscoveredDevice(null);
+  }, []);
+
+  const getDevices = useCallback(async () => {
+    if ("hid" in navigator) {
+      const [d] = await navigator.hid.getDevices();
+      console.log(d);
+      setConnectedDevice(d);
+    }
+  }, []);
+
+  const getEthAddress = useCallback(async () => {
+    if (!connectedDevice) return;
+    const ethAddressApdu = new Uint8Array([
+      0xe0, 0x02, 0x00, 0x00, 0x1d, 0x05, 0x80, 0x00, 0x00, 0x2c, 0x80, 0x00,
+      0x00, 0x3c, 0x80, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+      0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01,
+    ]);
+
+    const header = new Uint8Array([
+      0xaa,
+      0xaa,
+      0x05,
+      0x00,
+      0x00,
+      0x00,
+      ethAddressApdu.length,
+    ]);
+
+    const getversionapdu = new Uint8Array([
+      0xaa, 0xaa, 0x05, 0x00, 0x00, 0x00, 0x05, 0xe0, 0x01, 0x00, 0x00, 0x00,
+    ]);
+
+    const fullAPDU = new Uint8Array(header.length + ethAddressApdu.length);
+    fullAPDU.set(header, 0);
+    fullAPDU.set(ethAddressApdu, header.length);
+
+    await connectedDevice.sendReport(0, fullAPDU);
+  }, [connectedDevice]);
+
   useEffect(() => {
     return () => {
       // Example cleaning up the discovery
@@ -72,16 +114,33 @@ export const MainView: React.FC = () => {
     if (discoveredDevice) {
       sdk
         .connect({ deviceId: discoveredDevice.id })
-        .then((connectedDevice) => {
+        .then((connectedDevice: DiscoveredDevice) => {
           console.log(
             `🦖 Response from connect: ${JSON.stringify(connectedDevice)} 🎉`,
           );
         })
-        .catch((error) => {
+        .catch((error: unknown) => {
           console.error(`Error from connection or get-version`, error);
         });
     }
-  }, [sdk, discoveredDevice]);
+
+    if (connectedDevice) {
+      connectedDevice.addEventListener("inputreport", (event) => {
+        const { data, reportId } = event;
+        const response = new Uint8Array(data.buffer);
+        const toHexString = (bytes: Uint8Array) =>
+          bytes.reduce(
+            (str, byte) => str + byte.toString(16).padStart(2, "0"),
+            "",
+          );
+        console.log(toHexString(response));
+
+        // .map((x) => x.toString(16))
+        // .join(" ");
+        // console.log(`Received an input report on ${reportId}: ${response}`);
+      });
+    }
+  }, [sdk, discoveredDevice, connectedDevice]);
 
   return (
     <Root>
@@ -114,14 +173,45 @@ export const MainView: React.FC = () => {
           Use this application to test Ledger hardware device features.
         </Description>
 
-        <Button
-          onClick={onSelectDeviceClicked}
-          variant="main"
-          backgroundColor="main"
-          size="large"
-        >
-          Select a device
-        </Button>
+        {discoveredDevice ? (
+          <>
+            <Button
+              onClick={getEthAddress}
+              variant="main"
+              backgroundColor="main"
+              size="large"
+            >
+              Get Eth Address
+            </Button>
+            <br />
+            <Button
+              onClick={getDevices}
+              variant="main"
+              backgroundColor="main"
+              size="large"
+            >
+              Get Devices
+            </Button>
+            <br />
+            <Button
+              onClick={onDisconnect}
+              variant="main"
+              backgroundColor="main"
+              size="large"
+            >
+              Disconnect
+            </Button>
+          </>
+        ) : (
+          <Button
+            onClick={onSelectDeviceClicked}
+            variant="main"
+            backgroundColor="main"
+            size="large"
+          >
+            Select a device
+          </Button>
+        )}
       </Container>
     </Root>
   );
