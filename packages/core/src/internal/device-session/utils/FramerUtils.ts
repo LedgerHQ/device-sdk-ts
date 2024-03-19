@@ -1,3 +1,5 @@
+import { Frame } from "../model/Frame";
+
 export const FramerUtils = {
   /*
    * Get last bytes of Uint8Array

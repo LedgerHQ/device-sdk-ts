@@ -62,4 +62,7 @@ export class FrameHeader {
       }),
     ]);
   }
+  getIndex(): Uint8Array {
+    return this._index;
+  }
 }
