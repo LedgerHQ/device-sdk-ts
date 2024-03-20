@@ -7,6 +7,7 @@ import { configModuleFactory } from "@internal/config/di/configModule";
 import { deviceModelModuleFactory } from "@internal/device-model/di/deviceModelModule";
 import { deviceSessionModuleFactory } from "@internal/device-session/di/deviceSessionModule";
 import { discoveryModuleFactory } from "@internal/discovery/di/discoveryModule";
+import { hackModuleFactory } from "@internal/hackathon/hackModule";
 import { loggerModuleFactory } from "@internal/logger-publisher/di/loggerModule";
 import { sendModuleFactory } from "@internal/send/di/sendModule";
 import { usbModuleFactory } from "@internal/usb/di/usbModule";
@@ -36,6 +37,7 @@ export const makeContainer = ({
     loggerModuleFactory({ subscribers: loggers }),
     deviceSessionModuleFactory(),
     sendModuleFactory(),
+    hackModuleFactory(),
     // modules go here
   );
 

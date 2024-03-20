@@ -43,6 +43,57 @@ const NanoLogo = styled(Image).attrs({ mb: 8 })`
   transform: rotate(23deg);
 `;
 
+const concatTypedArray = (a: Uint8Array, b: Uint8Array) => {
+  const c = new Uint8Array(a.length + b.length);
+  c.set(a, 0);
+  c.set(b, a.length);
+  return c;
+};
+
+const initialAcc = {
+  data: new Uint8Array(0),
+  dataLength: 0,
+  sequence: 0,
+};
+
+const toHexString = (bytes: Uint8Array) =>
+  bytes.reduce((str, byte) => str + byte.toString(16).padStart(2, "0"), "");
+
+type ResponseAcc = typeof initialAcc;
+
+const getReducedResult = (acc?: ResponseAcc): Uint8Array | undefined => {
+  if (acc && acc.dataLength === acc.data.length) {
+    return acc.data;
+  }
+};
+
+const reduceResponse = (acc: ResponseAcc, chunk: Uint8Array): ResponseAcc => {
+  console.log("chunk", toHexString(chunk));
+  let { data, dataLength, sequence } = acc || initialAcc;
+
+  // Gets the total length of the response from the 1st frame
+  if (!acc) {
+    const sliced = toHexString(chunk.slice(5, 7));
+    dataLength = Number("0x" + sliced);
+  }
+
+  sequence++;
+  // The total length on the 1st frame takes 2 more bytes
+  const chunkData = chunk.slice(acc ? 5 : 7);
+  data = concatTypedArray(data, chunkData);
+
+  // // Removes any 0 padding
+  if (data.length > dataLength) {
+    data = data.slice(0, dataLength);
+  }
+
+  return {
+    data,
+    dataLength,
+    sequence,
+  };
+};
+
 export const MainView: React.FC = () => {
   const sdk = useSdk();
   const [discoveredDevice, setDiscoveredDevice] =
@@ -52,9 +103,15 @@ export const MainView: React.FC = () => {
   // Example starting the discovery on a user action
   const onSelectDeviceClicked = useCallback(() => {
     sdk.startDiscovering().subscribe({
-      next: (device) => {
+      next: async (device) => {
         console.log(`🦖 Discovered device: `, device);
         setDiscoveredDevice(device);
+
+        if ("hid" in navigator) {
+          const [d] = await navigator.hid.getDevices();
+          console.log(d);
+          setConnectedDevice(d);
+        }
       },
       error: (error) => {
         console.error(error);
@@ -64,14 +121,6 @@ export const MainView: React.FC = () => {
 
   const onDisconnect = useCallback(() => {
     setDiscoveredDevice(null);
-  }, []);
-
-  const getDevices = useCallback(async () => {
-    if ("hid" in navigator) {
-      const [d] = await navigator.hid.getDevices();
-      console.log(d);
-      setConnectedDevice(d);
-    }
   }, []);
 
   const getEthAddress = useCallback(async () => {
@@ -92,10 +141,6 @@ export const MainView: React.FC = () => {
       ethAddressApdu.length,
     ]);
 
-    const getversionapdu = new Uint8Array([
-      0xaa, 0xaa, 0x05, 0x00, 0x00, 0x00, 0x05, 0xe0, 0x01, 0x00, 0x00, 0x00,
-    ]);
-
     const fullAPDU = new Uint8Array(header.length + ethAddressApdu.length);
     fullAPDU.set(header, 0);
     fullAPDU.set(ethAddressApdu, header.length);
@@ -114,9 +159,9 @@ export const MainView: React.FC = () => {
     if (discoveredDevice) {
       sdk
         .connect({ deviceId: discoveredDevice.id })
-        .then((connectedDevice: DiscoveredDevice) => {
+        .then((connected: DiscoveredDevice) => {
           console.log(
-            `🦖 Response from connect: ${JSON.stringify(connectedDevice)} 🎉`,
+            `🦖 Response from connect: ${JSON.stringify(connected)} 🎉`,
           );
         })
         .catch((error: unknown) => {
@@ -125,19 +170,46 @@ export const MainView: React.FC = () => {
     }
 
     if (connectedDevice) {
+      let acc: ResponseAcc;
+      let result;
       connectedDevice.addEventListener("inputreport", (event) => {
-        const { data, reportId } = event;
+        const { data } = event;
         const response = new Uint8Array(data.buffer);
-        const toHexString = (bytes: Uint8Array) =>
-          bytes.reduce(
-            (str, byte) => str + byte.toString(16).padStart(2, "0"),
-            "",
-          );
-        console.log(toHexString(response));
+        acc = reduceResponse(acc, response);
+        result = getReducedResult(acc);
 
-        // .map((x) => x.toString(16))
-        // .join(" ");
-        // console.log(`Received an input report on ${reportId}: ${response}`);
+        if (!result) return;
+
+        // const statusWord = result.slice(-2);
+        // const d = result.slice(0, -2);
+
+        const sliced = toHexString(result.slice(0, 1));
+        const pubKeyLength = Number("0x" + sliced);
+
+        const pubKeySliced = result.slice(1, 1 + pubKeyLength);
+        const pubKey = toHexString(pubKeySliced);
+
+        const slicedAdressLength = result.slice(
+          pubKeyLength + 1,
+          pubKeyLength + 2,
+        );
+        const addressLength = Number("0x" + toHexString(slicedAdressLength));
+        const address = result.slice(
+          pubKeyLength + 2,
+          pubKeyLength + 2 + addressLength,
+        );
+
+        const asciiString = new TextDecoder().decode(address);
+
+        console.log(`🦖 Public key length: ${pubKeyLength} 🎉`);
+        console.log(`🦖 Public key: ${pubKey} 🎉`);
+        console.log(`🦖 Address length: ${addressLength}`);
+        console.log(`🦖 Address: 0x${asciiString}`);
+
+        // const r = {
+        //   pubKey,
+        //   ethAddress: `0x${asciiString}`,
+        // };
       });
     }
   }, [sdk, discoveredDevice, connectedDevice]);
@@ -182,15 +254,6 @@ export const MainView: React.FC = () => {
               size="large"
             >
               Get Eth Address
-            </Button>
-            <br />
-            <Button
-              onClick={getDevices}
-              variant="main"
-              backgroundColor="main"
-              size="large"
-            >
-              Get Devices
             </Button>
             <br />
             <Button
