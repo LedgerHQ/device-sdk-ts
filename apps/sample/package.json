@@ -15,6 +15,7 @@
   "dependencies": {
     "@ledgerhq/device-sdk-core": "workspace:*",
     "@ledgerhq/react-ui": "^0.14.13",
+    "@sentry/nextjs": "^7.105.0",
     "next": "14.0.4",
     "react": "^18",
     "react-dom": "^18",
