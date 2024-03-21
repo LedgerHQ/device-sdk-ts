@@ -24,7 +24,7 @@
     "sample": "pnpm --filter @ledgerhq/device-sdk-sample",
     "prepare": "husky",
     "bump": "changeset version",
-    "release": "changeset publish",
+    "release": "pnpm build && changeset publish",
     "changelog": "changeset add",
     "commit": "gitmoji -c",
     "commitcl": "pnpm changelog && pnpm commit"
