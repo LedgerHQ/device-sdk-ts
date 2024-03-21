@@ -1,6 +1,6 @@
 {
   "name": "@ledgerhq/device-sdk-sample",
-  "version": "0.1.1-wc-hackathon.2",
+  "version": "0.1.1-wc-hackathon.3",
   "private": true,
   "scripts": {
     "dev": "next dev",
