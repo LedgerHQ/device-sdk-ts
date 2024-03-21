@@ -10,6 +10,8 @@ import {
 } from "@internal/discovery/use-case/ConnectUseCase";
 import type { StartDiscoveringUseCase } from "@internal/discovery/use-case/StartDiscoveringUseCase";
 import type { StopDiscoveringUseCase } from "@internal/discovery/use-case/StopDiscoveringUseCase";
+import { HackathonService } from "@internal/hackathon/HackathonService";
+import { hackTypes } from "@internal/hackathon/hackTypes";
 import { sendTypes } from "@internal/send/di/sendTypes";
 import {
   SendApduUseCase,
@@ -64,5 +66,22 @@ export class DeviceSdk {
     return this.container
       .get<SendApduUseCase>(sendTypes.SendService)
       .execute(args);
+  }
+
+  // HACKATHON STUFF
+  hackConnectAndDiscover() {
+    this.container.get<HackathonService>(hackTypes.HackathonService).discover();
+  }
+
+  hackDisconnect() {
+    return this.container
+      .get<HackathonService>(hackTypes.HackathonService)
+      .disconnect();
+  }
+
+  async hackGetEthAddress() {
+    return this.container
+      .get<HackathonService>(hackTypes.HackathonService)
+      .getEthAddress();
   }
 }

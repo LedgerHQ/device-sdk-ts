@@ -6,5 +6,5 @@ import { hackTypes } from "./hackTypes";
 
 export const hackModuleFactory = () =>
   new ContainerModule((bind, _unbind, _isBound, _rebind) => {
-    bind(hackTypes.HackathonService).to(HackathonService);
+    bind(hackTypes.HackathonService).to(HackathonService).inSingletonScope();
   });

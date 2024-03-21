@@ -1,4 +1,4 @@
-import { Frame } from "../model/Frame";
+// import { Frame } from "@internal/device-session/model/Frame";
 
 export const FramerUtils = {
   /*

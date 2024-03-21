@@ -1,6 +1,7 @@
 import { inject, injectable } from "inversify";
-import { switchMap } from "rxjs";
 
+// import { switchMap, tap } from "rxjs";
+import { DiscoveredDevice } from "@api/index";
 import { discoveryTypes } from "@internal/discovery/di/discoveryTypes";
 import { StartDiscoveringUseCase } from "@internal/discovery/use-case/StartDiscoveringUseCase";
 import { StopDiscoveringUseCase } from "@internal/discovery/use-case/StopDiscoveringUseCase";
@@ -15,14 +16,28 @@ type ResponseAcc = typeof initialAcc;
 @injectable()
 export class HackathonService {
   connectedDevice: HIDDevice | undefined;
+  discoveredDevice: DiscoveredDevice | undefined;
   acc: ResponseAcc | undefined;
   result: Uint8Array | undefined;
+  resolver: ((value: unknown) => void) | undefined;
   constructor(
     @inject(discoveryTypes.StartDiscoveringUseCase)
     private startDiscoveringUseCase: StartDiscoveringUseCase,
     @inject(discoveryTypes.StopDiscoveringUseCase)
     private stopDiscoveringUseCase: StopDiscoveringUseCase,
-  ) {}
+  ) {
+    if ("hid" in navigator) {
+      navigator.hid.addEventListener("connect", (event) => {
+        const { device } = event;
+        console.log(`📡 Received a connect event on ${device.productName}`);
+      });
+
+      navigator.hid.addEventListener("disconnect", (event) => {
+        const { device } = event;
+        console.log(`📡 Received a disconnect event on ${device.productName}`);
+      });
+    }
+  }
 
   static getReducedResult = (acc?: ResponseAcc): Uint8Array | undefined => {
     if (acc && acc.dataLength === acc.data.length) {
@@ -46,7 +61,6 @@ export class HackathonService {
     acc: ResponseAcc | undefined,
     chunk: Uint8Array,
   ): ResponseAcc => {
-    console.log("chunk", HackathonService.toHexString(chunk));
     let { data, dataLength, sequence } = acc ?? initialAcc;
 
     // Gets the total length of the response from the 1st frame
@@ -78,32 +92,33 @@ export class HackathonService {
     this.acc = HackathonService.reduceResponse(this.acc, response);
     this.result = HackathonService.getReducedResult(this.acc);
 
-    if (!this.result) return;
+    if (this.result) {
+      const sliced = HackathonService.toHexString(this.result.slice(0, 1));
+      const pubKeyLength = Number("0x" + sliced);
 
-    const sliced = HackathonService.toHexString(this.result.slice(0, 1));
-    const pubKeyLength = Number("0x" + sliced);
+      const pubKeySliced = this.result.slice(1, 1 + pubKeyLength);
+      const pubKey = HackathonService.toHexString(pubKeySliced);
 
-    const pubKeySliced = this.result.slice(1, 1 + pubKeyLength);
-    const pubKey = HackathonService.toHexString(pubKeySliced);
+      const slicedAdressLength = this.result.slice(
+        pubKeyLength + 1,
+        pubKeyLength + 2,
+      );
+      const addressLength = Number(
+        "0x" + HackathonService.toHexString(slicedAdressLength),
+      );
+      const address = this.result.slice(
+        pubKeyLength + 2,
+        pubKeyLength + 2 + addressLength,
+      );
 
-    const slicedAdressLength = this.result.slice(
-      pubKeyLength + 1,
-      pubKeyLength + 2,
-    );
-    const addressLength = Number(
-      "0x" + HackathonService.toHexString(slicedAdressLength),
-    );
-    const address = this.result.slice(
-      pubKeyLength + 2,
-      pubKeyLength + 2 + addressLength,
-    );
+      const asciiString = new TextDecoder().decode(address);
+      if (!this.resolver) return;
 
-    const asciiString = new TextDecoder().decode(address);
-
-    return {
-      pubKey,
-      ethAddress: `0x${asciiString}`,
-    };
+      this.resolver({
+        pubKey,
+        ethAddress: `0x${asciiString}`,
+      });
+    }
   };
 
   addListener() {
@@ -116,36 +131,39 @@ export class HackathonService {
     this.connectedDevice.removeEventListener("inputreport", this.listener);
   }
 
-  discoverAndConnect() {
-    this.startDiscoveringUseCase
-      .execute()
-      .pipe(
-        switchMap(async (_device) => {
-          if (navigator && "hid" in navigator) {
-            const [d] = await navigator.hid.getDevices();
-            return d;
-          }
+  discover() {
+    return this.startDiscoveringUseCase.execute().subscribe({
+      next: (device) => {
+        this.discoveredDevice = device;
+        this.connect().catch((err) => console.log(err));
+      },
+      complete: () => {
+        this.stopDiscoveringUseCase.execute();
+      },
+      error: (error) => {
+        console.error(error);
+      },
+    });
+  }
 
-          throw new Error(
-            "No HID devices found or navigator.hid not available.",
-          );
-        }),
-      )
-      .subscribe({
-        next: (device) => {
-          this.connectedDevice = device;
-        },
-        complete: () => {
-          this.stopDiscoveringUseCase.execute();
-        },
-        error: (error) => {
-          console.error(error);
-        },
-      });
+  async connect() {
+    if (navigator && "hid" in navigator) {
+      const [d] = await navigator.hid.getDevices();
+      if (!d) return;
+      this.connectedDevice = d;
+      this.addListener();
+    }
   }
 
   async getEthAddress() {
     if (!this.connectedDevice) return;
+
+    if (!this.connectedDevice.opened) {
+      await this.connectedDevice.open();
+    }
+
+    this.acc = undefined;
+    this.result = undefined;
 
     const ethAddressApdu = new Uint8Array([
       0xe0, 0x02, 0x00, 0x00, 0x1d, 0x05, 0x80, 0x00, 0x00, 0x2c, 0x80, 0x00,
@@ -166,7 +184,15 @@ export class HackathonService {
     const fullAPDU = new Uint8Array(header.length + ethAddressApdu.length);
     fullAPDU.set(header, 0);
     fullAPDU.set(ethAddressApdu, header.length);
-
     await this.connectedDevice.sendReport(0, fullAPDU);
+    return new Promise((resolver) => {
+      this.resolver = resolver;
+    });
+  }
+
+  disconnect() {
+    this.connectedDevice = undefined;
+    this.acc = undefined;
+    this.result = undefined;
   }
 }
