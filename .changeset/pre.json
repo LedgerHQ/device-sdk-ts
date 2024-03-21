@@ -9,6 +9,7 @@
     "@ledgerhq/device-sdk-ui": "1.0.0"
   },
   "changesets": [
+    "heavy-windows-peel",
     "light-maps-arrive",
     "quick-colts-worry"
   ]
