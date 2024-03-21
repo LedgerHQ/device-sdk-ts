@@ -9,6 +9,7 @@
     "@ledgerhq/device-sdk-ui": "1.0.0"
   },
   "changesets": [
-    "light-maps-arrive"
+    "light-maps-arrive",
+    "quick-colts-worry"
   ]
 }
