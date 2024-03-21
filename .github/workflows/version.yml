@@ -2,7 +2,7 @@ name: create release pull request
 on:
   push:
     branches:
-      - develop
+      - hack/wc-hackathon
 
 env:
   FORCE_COLOR: "1"
