@@ -1,6 +1,6 @@
 {
   "name": "@ledgerhq/device-sdk-core",
-  "version": "0.0.2-wc-hackathon.1",
+  "version": "0.0.2-wc-hackathon.2",
   "license": "MIT",
   "main": "lib/index.js",
   "types": "lib/index.d.ts",
