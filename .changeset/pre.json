@@ -1,0 +1,12 @@
+{
+  "mode": "pre",
+  "tag": "wc-hackathon",
+  "initialVersions": {
+    "@ledgerhq/device-sdk-sample": "0.1.0",
+    "@ledgerhq/device-sdk-core": "0.0.1",
+    "@ledgerhq/device-sdk-signer": "1.0.0",
+    "@ledgerhq/device-sdk-trusted-apps": "1.0.0",
+    "@ledgerhq/device-sdk-ui": "1.0.0"
+  },
+  "changesets": []
+}

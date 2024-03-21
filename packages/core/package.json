@@ -20,7 +20,7 @@
     "typecheck": "tsc --noEmit",
     "module:create": "pnpm hygen core-module with-prompt",
     "prebundle": "pnpm build",
-    "bundle": "esbuild index.ts --bundle --outfile=lib/index.min.js"
+    "bundle": "esbuild index.ts --bundle --sourcemap --outfile=lib/index.min.js"
   },
   "dependencies": {
     "inversify": "^6.0.2",
