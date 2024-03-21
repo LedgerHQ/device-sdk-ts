@@ -19,6 +19,7 @@ jobs:
         uses: changesets/action@v1
         with:
           version: pnpm bump
+          publish: pnpm release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           NPM_TOKEN: ${{ secrets.NPMJS_TOKEN }}
