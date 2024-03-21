@@ -8,5 +8,7 @@
     "@ledgerhq/device-sdk-trusted-apps": "1.0.0",
     "@ledgerhq/device-sdk-ui": "1.0.0"
   },
-  "changesets": []
+  "changesets": [
+    "light-maps-arrive"
+  ]
 }
