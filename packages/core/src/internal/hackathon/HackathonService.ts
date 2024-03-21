@@ -131,18 +131,25 @@ export class HackathonService {
     this.connectedDevice.removeEventListener("inputreport", this.listener);
   }
 
-  discover() {
-    return this.startDiscoveringUseCase.execute().subscribe({
-      next: (device) => {
-        this.discoveredDevice = device;
-        this.connect().catch((err) => console.log(err));
-      },
-      complete: () => {
-        this.stopDiscoveringUseCase.execute();
-      },
-      error: (error) => {
-        console.error(error);
-      },
+  async discover() {
+    return new Promise((res, rej) => {
+      this.startDiscoveringUseCase.execute().subscribe({
+        next: (device) => {
+          this.discoveredDevice = device;
+          this.connect()
+            .then(() => {
+              res(undefined);
+            })
+            .catch((err) => console.log(err));
+        },
+        complete: () => {
+          this.stopDiscoveringUseCase.execute();
+        },
+        error: (error) => {
+          rej(error);
+          console.error(error);
+        },
+      });
     });
   }
 

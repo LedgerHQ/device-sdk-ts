@@ -69,8 +69,10 @@ export class DeviceSdk {
   }
 
   // HACKATHON STUFF
-  hackConnectAndDiscover() {
-    this.container.get<HackathonService>(hackTypes.HackathonService).discover();
+  async hackConnectAndDiscover() {
+    await this.container
+      .get<HackathonService>(hackTypes.HackathonService)
+      .discover();
   }
 
   hackDisconnect() {
