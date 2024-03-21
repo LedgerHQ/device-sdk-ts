@@ -1,5 +1,11 @@
 # @ledgerhq/device-sdk-core
 
+## 0.0.2-wc-hackathon.3
+
+### Patch Changes
+
+- [#42](https://github.com/LedgerHQ/device-sdk-ts/pull/42) [`130b004`](https://github.com/LedgerHQ/device-sdk-ts/commit/130b004f7b2c0a6d58471781b3f416d627cfc12e) Thanks [@valpinkman](https://github.com/valpinkman)! - this time for real
+
 ## 0.0.2-wc-hackathon.2
 
 ### Patch Changes

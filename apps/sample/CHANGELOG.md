@@ -1,5 +1,12 @@
 # @ledgerhq/device-sdk-sample
 
+## 0.1.1-wc-hackathon.3
+
+### Patch Changes
+
+- Updated dependencies [[`130b004`](https://github.com/LedgerHQ/device-sdk-ts/commit/130b004f7b2c0a6d58471781b3f416d627cfc12e)]:
+  - @ledgerhq/device-sdk-core@0.0.2-wc-hackathon.3
+
 ## 0.1.1-wc-hackathon.2
 
 ### Patch Changes
