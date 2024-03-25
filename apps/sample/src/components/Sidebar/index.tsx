@@ -1,5 +1,7 @@
+"use client";
 import React, { useEffect, useState } from "react";
-import { Box, Flex, Icons, Text } from "@ledgerhq/react-ui";
+import { Box, Flex, Icons, Link, Text } from "@ledgerhq/react-ui";
+import { useRouter } from "next/navigation";
 import styled, { DefaultTheme } from "styled-components";
 
 import {
@@ -16,10 +18,6 @@ const Root = styled(Flex).attrs({ py: 8, px: 6 })`
   width: 280px;
   background-color: ${({ theme }: { theme: DefaultTheme }) =>
     theme.colors.background.main};
-`;
-
-const Title = styled(Text).attrs({ mb: 8 })`
-  opacity: 0.5;
 `;
 
 const Subtitle = styled(Text).attrs({ mb: 5 })``;
@@ -60,13 +58,22 @@ export const Sidebar: React.FC = () => {
       });
   }, [sdk]);
 
+  const router = useRouter();
   return (
     <Root>
-      <Title variant={"large"}>Ledger Device SDK</Title>
-
-      {version ? (
-        <Subtitle variant={"small"}>SDK Version: {version}</Subtitle>
-      ) : null}
+      <Link
+        onClick={() => router.push("/")}
+        mb={8}
+        textProps={{
+          textAlign: "left",
+          variant: "large",
+        }}
+      >
+        Ledger Device SDK
+      </Link>
+      <Subtitle variant={"small"}>
+        SDK Version: {version ? version : "Loading..."}
+      </Subtitle>
 
       <Subtitle variant={"tiny"}>Device</Subtitle>
       <Device
