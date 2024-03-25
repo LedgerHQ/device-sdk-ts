@@ -1,5 +1,5 @@
 import { inject, injectable } from "inversify";
-import { Just, Maybe, Nothing } from "purify-ts";
+import { Either, Just, Left, Maybe, Nothing, Right } from "purify-ts";
 import { v4 } from "uuid";
 
 import { APDU_RESPONSE_STATUS_CODE_SIZE } from "@internal/device-session/data/ApduResponseConst";
@@ -10,6 +10,7 @@ import {
   INDEX_SIZE,
 } from "@internal/device-session/data/FramerConst";
 import { ApduResponse } from "@internal/device-session/model/ApduResponse";
+import { ReceiverApduError } from "@internal/device-session/model/Errors";
 import { Frame } from "@internal/device-session/model/Frame";
 import { FrameHeader } from "@internal/device-session/model/FrameHeader";
 import { FramerUtils } from "@internal/device-session/utils/FramerUtils";
@@ -38,25 +39,21 @@ export class DefaultReceiverService implements ReceiverService {
     this._pendingFrames = [];
   }
 
-  public handleFrame(apdu: Uint8Array): Maybe<ApduResponse> {
+  public handleFrame(
+    apdu: Uint8Array,
+  ): Either<ReceiverApduError, Maybe<ApduResponse>> {
     const frame = this.parseApdu(apdu);
     this._logger.debug("handle frame", { data: { frame } });
     this._pendingFrames.push(frame);
 
-    const dataSize = this._pendingFrames[0]!.getHeader()
-      .getDataSize()
-      .caseOf({
-        Just: (value) => value,
-        Nothing: () => {
-          this._logger.error("unable to get size");
-          throw new Error();
-        },
-      });
+    const dataSize = this._pendingFrames[0]!.getHeader().getDataSize();
 
-    if (this.isComplete(dataSize)) {
+    if (dataSize.isNothing()) return Left(new ReceiverApduError());
+
+    if (dataSize.isJust() && this.isComplete(dataSize.extract())) {
       const concatenatedFramesData = FramerUtils.getFirstBytesFrom(
         this.concatFrames(this._pendingFrames),
-        dataSize,
+        dataSize.extract(),
       );
       const data = FramerUtils.getFirstBytesFrom(
         concatenatedFramesData,
@@ -69,16 +66,18 @@ export class DefaultReceiverService implements ReceiverService {
 
       this._pendingFrames = [];
 
-      return Just(
-        new ApduResponse({
-          data: data,
-          statusCode,
-        }),
+      return Right(
+        Just(
+          new ApduResponse({
+            data: data,
+            statusCode,
+          }),
+        ),
       );
     }
 
     this._logger.debug("frame is not complete, waiting for more");
-    return Maybe.empty();
+    return Right(Nothing);
   }
 
   private parseApdu(apdu: Uint8Array): Frame {

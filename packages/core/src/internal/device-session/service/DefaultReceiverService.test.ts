@@ -1,9 +1,10 @@
 import * as uuid from "uuid";
 jest.mock("uuid");
 
-import { Just, Nothing } from "purify-ts";
+import { Just, Left, Nothing, Right } from "purify-ts";
 
 import { ApduResponse } from "@internal/device-session/model/ApduResponse";
+import { ReceiverApduError } from "@internal/device-session/model/Errors";
 import { DefaultLoggerPublisherService } from "@internal/logger-publisher/service/DefaultLoggerPublisherService";
 
 import { DefaultReceiverService } from "./DefaultReceiverService";
@@ -61,6 +62,26 @@ describe("DefaultReceiverService", () => {
     jest.spyOn(uuid, "v4").mockReturnValue("42");
   });
 
+  describe("without dataSize", () => {
+    beforeEach(() => {
+      service = new DefaultReceiverService(
+        { channel: Just(new Uint8Array([0xaa, 0xaa])) },
+        () => loggerService,
+      );
+    });
+
+    it("should return a left error when the first frame has no dataSize", () => {
+      //given
+      const frame = RESPONSE_LIST_APPS[1]!;
+
+      //when
+      const apdu = service.handleFrame(frame);
+
+      //then
+      expect(apdu).toEqual(Left(new ReceiverApduError()));
+    });
+  });
+
   describe("[USB] With padding and channel", () => {
     beforeEach(() => {
       service = new DefaultReceiverService(
@@ -77,12 +98,15 @@ describe("DefaultReceiverService", () => {
       const apdu = service.handleFrame(frame);
 
       // then
-      expect(apdu.isNothing()).toBeFalsy();
-      expect(apdu.extract()).toEqual(
-        new ApduResponse({
-          data: RESPONSE_GET_VERSION.slice(7, 38),
-          statusCode: new Uint8Array([0x90, 0x00]),
-        }),
+      expect(apdu).toEqual(
+        Right(
+          Just(
+            new ApduResponse({
+              data: RESPONSE_GET_VERSION.slice(7, 38),
+              statusCode: new Uint8Array([0x90, 0x00]),
+            }),
+          ),
+        ),
       );
     });
 
@@ -98,17 +122,22 @@ describe("DefaultReceiverService", () => {
       const thirdResponse = service.handleFrame(thirdFrame);
 
       // then
-      expect(firstResponse.isNothing()).toBeTruthy();
-      expect(secondResponse.isNothing()).toBeTruthy();
-      expect(thirdResponse.isNothing()).toBeFalsy();
-      expect(thirdResponse.extract()?.getStatusCode()).toEqual(
-        new Uint8Array([0x90, 0x00]),
+      expect(firstResponse).toEqual(Right(Nothing));
+      expect(secondResponse).toEqual(Right(Nothing));
+      expect(thirdResponse).toEqual(
+        Right(
+          Just(
+            new ApduResponse({
+              data: new Uint8Array([
+                ...Array.from(RESPONSE_LIST_APPS[0]!.slice(7)),
+                ...Array.from(RESPONSE_LIST_APPS[1]!.slice(5)),
+                ...Array.from(RESPONSE_LIST_APPS[2]!).slice(5, 45),
+              ]),
+              statusCode: new Uint8Array([0x90, 0x00]),
+            }),
+          ),
+        ),
       );
-      expect(Array.from(thirdResponse.extract()?.getData() ?? [])).toEqual([
-        ...Array.from(RESPONSE_LIST_APPS[0]!.slice(7)),
-        ...Array.from(RESPONSE_LIST_APPS[1]!.slice(5)),
-        ...Array.from(RESPONSE_LIST_APPS[2]!).slice(5, 45),
-      ]);
     });
 
     it("should return two response directly when each frame is complete", () => {
@@ -121,20 +150,25 @@ describe("DefaultReceiverService", () => {
       const secondResponse = service.handleFrame(secondFrame);
 
       // then
-      expect(firstResponse.isNothing()).toBeFalsy();
-      expect(secondResponse.isNothing()).toBeFalsy();
-
-      expect(firstResponse.extract()).toEqual(
-        new ApduResponse({
-          data: new Uint8Array([]),
-          statusCode: new Uint8Array([0x55, 0x15]),
-        }),
+      expect(firstResponse).toEqual(
+        Right(
+          Just(
+            new ApduResponse({
+              data: new Uint8Array([]),
+              statusCode: new Uint8Array([0x55, 0x15]),
+            }),
+          ),
+        ),
       );
-      expect(secondResponse.extract()).toEqual(
-        new ApduResponse({
-          data: RESPONSE_GET_VERSION.slice(7, 38),
-          statusCode: new Uint8Array([0x90, 0x00]),
-        }),
+      expect(secondResponse).toEqual(
+        Right(
+          Just(
+            new ApduResponse({
+              data: RESPONSE_GET_VERSION.slice(7, 38),
+              statusCode: new Uint8Array([0x90, 0x00]),
+            }),
+          ),
+        ),
       );
     });
   });
@@ -142,9 +176,6 @@ describe("DefaultReceiverService", () => {
   describe("[BLE] Without padding nor channel", () => {
     beforeEach(() => {
       service = new DefaultReceiverService({}, () => loggerService);
-        { channel: Nothing },
-        () => loggerService,
-      );
     });
 
     it("should return a response directly when a frame is complete", () => {
@@ -155,12 +186,15 @@ describe("DefaultReceiverService", () => {
       const apdu = service.handleFrame(frame);
 
       // then
-      expect(apdu.isNothing()).toBeFalsy();
-      expect(apdu.extract()).toEqual(
-        new ApduResponse({
-          data: RESPONSE_GET_VERSION.slice(7, 38),
-          statusCode: new Uint8Array([0x90, 0x00]),
-        }),
+      expect(apdu).toEqual(
+        Right(
+          Just(
+            new ApduResponse({
+              data: RESPONSE_GET_VERSION.slice(7, 38),
+              statusCode: new Uint8Array([0x90, 0x00]),
+            }),
+          ),
+        ),
       );
     });
 
@@ -176,17 +210,22 @@ describe("DefaultReceiverService", () => {
       const thirdResponse = service.handleFrame(thirdFrame);
 
       // then
-      expect(firstResponse.isNothing()).toBeTruthy();
-      expect(secondResponse.isNothing()).toBeTruthy();
-      expect(thirdResponse.isNothing()).toBeFalsy();
-      expect(thirdResponse.extract()?.getStatusCode()).toEqual(
-        new Uint8Array([0x90, 0x00]),
+      expect(firstResponse).toEqual(Right(Nothing));
+      expect(secondResponse).toEqual(Right(Nothing));
+      expect(thirdResponse).toEqual(
+        Right(
+          Just(
+            new ApduResponse({
+              data: new Uint8Array([
+                ...Array.from(RESPONSE_LIST_APPS[0]!.slice(7)),
+                ...Array.from(RESPONSE_LIST_APPS[1]!.slice(5)),
+                ...Array.from(RESPONSE_LIST_APPS[2]!).slice(5, 45),
+              ]),
+              statusCode: new Uint8Array([0x90, 0x00]),
+            }),
+          ),
+        ),
       );
-      expect(Array.from(thirdResponse.extract()?.getData() ?? [])).toEqual([
-        ...Array.from(RESPONSE_LIST_APPS[0]!.slice(7)),
-        ...Array.from(RESPONSE_LIST_APPS[1]!.slice(5)),
-        ...Array.from(RESPONSE_LIST_APPS[2]!).slice(5, 45),
-      ]);
     });
 
     it("should return two response directly when each frame is complete", () => {
@@ -199,20 +238,25 @@ describe("DefaultReceiverService", () => {
       const secondResponse = service.handleFrame(secondFrame);
 
       // then
-      expect(firstResponse.isNothing()).toBeFalsy();
-      expect(secondResponse.isNothing()).toBeFalsy();
-
-      expect(firstResponse.extract()).toEqual(
-        new ApduResponse({
-          data: new Uint8Array([]),
-          statusCode: new Uint8Array([0x55, 0x15]),
-        }),
+      expect(firstResponse).toEqual(
+        Right(
+          Just(
+            new ApduResponse({
+              data: new Uint8Array([]),
+              statusCode: new Uint8Array([0x55, 0x15]),
+            }),
+          ),
+        ),
       );
-      expect(secondResponse.extract()).toEqual(
-        new ApduResponse({
-          data: RESPONSE_GET_VERSION.slice(7, 38),
-          statusCode: new Uint8Array([0x90, 0x00]),
-        }),
+      expect(secondResponse).toEqual(
+        Right(
+          Just(
+            new ApduResponse({
+              data: RESPONSE_GET_VERSION.slice(7, 38),
+              statusCode: new Uint8Array([0x90, 0x00]),
+            }),
+          ),
+        ),
       );
     });
   });
