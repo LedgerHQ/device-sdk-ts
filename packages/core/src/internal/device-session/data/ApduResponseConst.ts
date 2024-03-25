@@ -1,0 +1,1 @@
+export const APDU_RESPONSE_STATUS_CODE_SIZE = 2;
