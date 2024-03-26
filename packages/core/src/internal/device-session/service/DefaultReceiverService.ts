@@ -43,8 +43,11 @@ export class DefaultReceiverService implements ReceiverService {
     apdu: Uint8Array,
   ): Either<ReceiverApduError, Maybe<ApduResponse>> {
     const frame = this.parseApdu(apdu);
+
+    if (frame.isLeft()) return frame;
+
     this._logger.debug("handle frame", { data: { frame } });
-    this._pendingFrames.push(frame);
+    this._pendingFrames.push(frame.extract() as Frame);
 
     const dataSize = this._pendingFrames[0]!.getHeader().getDataSize();
 
@@ -80,7 +83,7 @@ export class DefaultReceiverService implements ReceiverService {
     return Right(Nothing);
   }
 
-  private parseApdu(apdu: Uint8Array): Frame {
+  private parseApdu(apdu: Uint8Array): Either<ReceiverApduError, Frame> {
     const channelSize = this._channel.caseOf({
       Just: () => CHANNEL_SIZE,
       Nothing: () => 0,
@@ -95,6 +98,14 @@ export class DefaultReceiverService implements ReceiverService {
     const isFirstIndex = index.reduce((curr, val) => curr + val, 0) === 0;
     const dataSizeIndex = channelSize + HEAD_TAG_SIZE + INDEX_SIZE;
     const dataSizeLength = isFirstIndex ? APDU_DATA_SIZE : 0;
+
+    if (
+      apdu.length <
+      channelSize + HEAD_TAG_SIZE + INDEX_SIZE + dataSizeLength
+    ) {
+      return Left(new ReceiverApduError());
+    }
+
     const dataSize = isFirstIndex
       ? Just(apdu.slice(dataSizeIndex, dataSizeIndex + dataSizeLength))
       : Nothing;
@@ -114,7 +125,7 @@ export class DefaultReceiverService implements ReceiverService {
       data,
     });
 
-    return frame;
+    return Right(frame);
   }
 
   private isComplete(dataSize: number): boolean {
