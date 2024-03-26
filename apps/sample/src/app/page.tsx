@@ -23,3 +23,5 @@ const Home: React.FC = () => {
 
 // eslint-disable-next-line no-restricted-syntax
 export default Home;
+
+console.log("yes");
