@@ -1,3 +1,4 @@
+import * as Sentry from "@sentry/minimal";
 import { inject, injectable } from "inversify";
 import { Either, EitherAsync, Left, Right } from "purify-ts";
 import { from, Observable, switchMap } from "rxjs";
@@ -94,10 +95,12 @@ export class WebUsbHidTransport implements UsbHidTransport {
             filters: [{ vendorId: ledgerVendorId }],
           });
         } catch (error) {
+          const deviceError = new NoAccessibleDeviceError(error as Error);
           this.logger.error(`promptDeviceAccess: error requesting device`, {
             data: { error },
           });
-          throw new NoAccessibleDeviceError(error as Error);
+          Sentry.captureException(deviceError);
+          throw deviceError;
         }
 
         this.logger.debug(
@@ -161,6 +164,7 @@ export class WebUsbHidTransport implements UsbHidTransport {
             this.logger.error("Error while getting accessible device", {
               data: { error },
             });
+            Sentry.captureException(error);
             throw error;
           },
           Right: (hidDevices) => {
@@ -271,10 +275,12 @@ export class WebUsbHidTransport implements UsbHidTransport {
       if (error instanceof DOMException && error.name === "InvalidStateError") {
         this.logger.debug(`Device ${deviceId} is already opened`);
       } else {
+        const connectionError = new OpeningConnectionError(error as Error);
         this.logger.debug(`Error while opening device: ${deviceId}`, {
           data: { error },
         });
-        return Left(new OpeningConnectionError(error as Error));
+        Sentry.captureException(connectionError);
+        return Left(connectionError);
       }
     }
 
