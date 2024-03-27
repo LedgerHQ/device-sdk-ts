@@ -1,7 +1,7 @@
 import * as uuid from "uuid";
 jest.mock("uuid");
 
-import { Just, Left, Nothing, Right } from "purify-ts";
+import { Just, Left, Maybe, Nothing, Right } from "purify-ts";
 
 import { ApduResponse } from "@internal/device-session/model/ApduResponse";
 import { ReceiverApduError } from "@internal/device-session/model/Errors";
@@ -111,33 +111,37 @@ describe("DefaultReceiverService", () => {
     });
 
     it("should return a response on a third frame when the two first are not complete", () => {
-      // given
-      const firstFrame = RESPONSE_LIST_APPS[0]!;
-      const secondFrame = RESPONSE_LIST_APPS[1]!;
-      const thirdFrame = RESPONSE_LIST_APPS[2]!;
+      //given
+      const apdus = [...RESPONSE_LIST_APPS];
 
-      // when
-      const firstResponse = service.handleFrame(firstFrame);
-      const secondResponse = service.handleFrame(secondFrame);
-      const thirdResponse = service.handleFrame(thirdFrame);
+      //when
+      let response: Maybe<ApduResponse> = Nothing;
+      const responses: Maybe<ApduResponse>[] = [];
+      while (response.isNothing()) {
+        const apdu = apdus.shift()!;
+        const either = service.handleFrame(apdu);
 
-      // then
-      expect(firstResponse).toEqual(Right(Nothing));
-      expect(secondResponse).toEqual(Right(Nothing));
-      expect(thirdResponse).toEqual(
-        Right(
-          Just(
-            new ApduResponse({
-              data: new Uint8Array([
-                ...Array.from(RESPONSE_LIST_APPS[0]!.slice(7)),
-                ...Array.from(RESPONSE_LIST_APPS[1]!.slice(5)),
-                ...Array.from(RESPONSE_LIST_APPS[2]!).slice(5, 45),
-              ]),
-              statusCode: new Uint8Array([0x90, 0x00]),
-            }),
-          ),
+        either.map((value) => {
+          response = value;
+          responses.push(response);
+        });
+      }
+
+      //then
+      expect(responses).toEqual([
+        Nothing,
+        Nothing,
+        Just(
+          new ApduResponse({
+            data: new Uint8Array([
+              ...Array.from(RESPONSE_LIST_APPS[0]!.slice(7)),
+              ...Array.from(RESPONSE_LIST_APPS[1]!.slice(5)),
+              ...Array.from(RESPONSE_LIST_APPS[2]!).slice(5, 45),
+            ]),
+            statusCode: new Uint8Array([0x90, 0x00]),
+          }),
         ),
-      );
+      ]);
     });
 
     it("should return two response directly when each frame is complete", () => {
@@ -227,33 +231,41 @@ describe("DefaultReceiverService", () => {
     });
 
     it("should return a response on a third frame when the two first are not complete", () => {
-      // given
-      const firstFrame = RESPONSE_LIST_APPS[0]!.slice(2);
-      const secondFrame = RESPONSE_LIST_APPS[1]!.slice(2);
-      const thirdFrame = RESPONSE_LIST_APPS[2]!.slice(2, 47);
+      //given
+      const apdus = [
+        RESPONSE_LIST_APPS[0]!.slice(2),
+        RESPONSE_LIST_APPS[1]!.slice(2),
+        RESPONSE_LIST_APPS[2]!.slice(2, 47),
+      ];
 
-      // when
-      const firstResponse = service.handleFrame(firstFrame);
-      const secondResponse = service.handleFrame(secondFrame);
-      const thirdResponse = service.handleFrame(thirdFrame);
+      //when
+      let response: Maybe<ApduResponse> = Nothing;
+      const responses: Maybe<ApduResponse>[] = [];
+      while (response.isNothing()) {
+        const apdu = apdus.shift()!;
+        const either = service.handleFrame(apdu);
 
-      // then
-      expect(firstResponse).toEqual(Right(Nothing));
-      expect(secondResponse).toEqual(Right(Nothing));
-      expect(thirdResponse).toEqual(
-        Right(
-          Just(
-            new ApduResponse({
-              data: new Uint8Array([
-                ...Array.from(RESPONSE_LIST_APPS[0]!.slice(7)),
-                ...Array.from(RESPONSE_LIST_APPS[1]!.slice(5)),
-                ...Array.from(RESPONSE_LIST_APPS[2]!).slice(5, 45),
-              ]),
-              statusCode: new Uint8Array([0x90, 0x00]),
-            }),
-          ),
+        either.map((value) => {
+          response = value;
+          responses.push(response);
+        });
+      }
+
+      //then
+      expect(responses).toEqual([
+        Nothing,
+        Nothing,
+        Just(
+          new ApduResponse({
+            data: new Uint8Array([
+              ...Array.from(RESPONSE_LIST_APPS[0]!.slice(7)),
+              ...Array.from(RESPONSE_LIST_APPS[1]!.slice(5)),
+              ...Array.from(RESPONSE_LIST_APPS[2]!).slice(5, 45),
+            ]),
+            statusCode: new Uint8Array([0x90, 0x00]),
+          }),
         ),
-      );
+      ]);
     });
 
     it("should return two response directly when each frame is complete", () => {
