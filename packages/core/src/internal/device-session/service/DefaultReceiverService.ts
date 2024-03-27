@@ -103,7 +103,7 @@ export class DefaultReceiverService implements ReceiverService {
       apdu.length <
       channelSize + HEAD_TAG_SIZE + INDEX_SIZE + dataSizeLength
     ) {
-      return Left(new ReceiverApduError());
+      return Left(new ReceiverApduError("Unable to parse header from apdu"));
     }
 
     const dataSize = isFirstIndex

@@ -172,7 +172,7 @@ describe("DefaultReceiverService", () => {
       );
     });
 
-    it("should return an error if the frame is not complete", () => {
+    it("should return an error if the frame is without index", () => {
       //given
       //frame with channelId, headTag, and partial Index only
       const frame = RESPONSE_LIST_APPS[0]!.slice(0, 4);
@@ -181,20 +181,23 @@ describe("DefaultReceiverService", () => {
       const apdu = service.handleFrame(frame);
 
       //then
-      expect(apdu).toEqual(Left(new ReceiverApduError()));
+      expect(apdu).toEqual(
+        Left(new ReceiverApduError("Unable to parse header from apdu")),
+      );
     });
 
-    it("should return an error if the frame is not complete", () => {
+    it("should return an error if the frame is without datasize", () => {
       //given
       //frame with channelId, headTag, and Index and partial dataSize only
       const frame = RESPONSE_LIST_APPS[0]!.slice(0, 6);
-      console.log(frame);
 
       //when
       const apdu = service.handleFrame(frame);
 
       //then
-      expect(apdu).toEqual(Left(new ReceiverApduError()));
+      expect(apdu).toEqual(
+        Left(new ReceiverApduError("Unable to parse header from apdu")),
+      );
     });
   });
 
@@ -285,7 +288,7 @@ describe("DefaultReceiverService", () => {
       );
     });
 
-    it("should return an error if the frame is not complete", () => {
+    it("should return an error if the frame is without index", () => {
       //given
       //frame with channelId, headTag, and partial Index only
       const frame = RESPONSE_LIST_APPS[0]!.slice(2, 4);
@@ -294,20 +297,23 @@ describe("DefaultReceiverService", () => {
       const apdu = service.handleFrame(frame);
 
       //then
-      expect(apdu).toEqual(Left(new ReceiverApduError()));
+      expect(apdu).toEqual(
+        Left(new ReceiverApduError("Unable to parse header from apdu")),
+      );
     });
 
-    it("should return an error if the frame is not complete", () => {
+    it("should return an error if the frame is without datasize", () => {
       //given
       //frame with channelId, headTag, and Index and partial dataSize only
       const frame = RESPONSE_LIST_APPS[0]!.slice(2, 6);
-      console.log(frame);
 
       //when
       const apdu = service.handleFrame(frame);
 
       //then
-      expect(apdu).toEqual(Left(new ReceiverApduError()));
+      expect(apdu).toEqual(
+        Left(new ReceiverApduError("Unable to parse header from apdu")),
+      );
     });
   });
 });

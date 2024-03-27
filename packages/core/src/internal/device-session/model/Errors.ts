@@ -21,10 +21,10 @@ export class FramerApduError implements SdkError {
 
 export class ReceiverApduError implements SdkError {
   readonly _tag = "ReceiverApduError";
-  originalError?: Error;
+  originalError: Error;
 
-  constructor() {
-    this.originalError = new Error("Unable to parse apdu");
+  constructor(message?: string) {
+    this.originalError = new Error(message ?? "Unable to parse apdu");
   }
 }
 
