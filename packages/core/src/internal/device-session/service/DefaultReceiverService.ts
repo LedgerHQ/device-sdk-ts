@@ -42,7 +42,7 @@ export class DefaultReceiverService implements ReceiverService {
   public handleFrame(
     apdu: Uint8Array,
   ): Either<ReceiverApduError, Maybe<ApduResponse>> {
-    const frame = this.parseApdu(apdu);
+    const frame = this.apduToFrame(apdu);
 
     if (frame.isLeft()) return frame;
 
@@ -83,7 +83,7 @@ export class DefaultReceiverService implements ReceiverService {
     return Right(Nothing);
   }
 
-  private parseApdu(apdu: Uint8Array): Either<ReceiverApduError, Frame> {
+  private apduToFrame(apdu: Uint8Array): Either<ReceiverApduError, Frame> {
     const channelSize = this._channel.caseOf({
       Just: () => CHANNEL_SIZE,
       Nothing: () => 0,
