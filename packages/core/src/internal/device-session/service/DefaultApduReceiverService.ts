@@ -17,14 +17,14 @@ import { FramerUtils } from "@internal/device-session/utils/FramerUtils";
 import { loggerTypes } from "@internal/logger-publisher/di/loggerTypes";
 import { LoggerPublisherService } from "@internal/logger-publisher/service/LoggerPublisherService";
 
-import { ReceiverService } from "./ReceiverService";
+import { ApduReceiverService } from "./ApduReceiverService";
 
 type DefaultReceiverConstructorArgs = {
   channel?: Maybe<Uint8Array>;
 };
 
 @injectable()
-export class DefaultReceiverService implements ReceiverService {
+export class DefaultApduReceiverService implements ApduReceiverService {
   private _channel: Maybe<Uint8Array>;
   private _logger: LoggerPublisherService;
   private _pendingFrames: Frame[];

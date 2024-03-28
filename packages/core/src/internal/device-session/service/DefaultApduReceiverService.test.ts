@@ -7,8 +7,8 @@ import { ApduResponse } from "@internal/device-session/model/ApduResponse";
 import { ReceiverApduError } from "@internal/device-session/model/Errors";
 import { DefaultLoggerPublisherService } from "@internal/logger-publisher/service/DefaultLoggerPublisherService";
 
-import { DefaultReceiverService } from "./DefaultReceiverService";
-import { ReceiverService } from "./ReceiverService";
+import { ApduReceiverService } from "./ApduReceiverService";
+import { DefaultApduReceiverService } from "./DefaultApduReceiverService";
 
 const loggerService = new DefaultLoggerPublisherService([], "frame");
 
@@ -55,8 +55,8 @@ const RESPONSE_LIST_APPS = [
   ]),
 ];
 
-describe("DefaultReceiverService", () => {
-  let service: ReceiverService;
+describe("DefaultApduReceiverService", () => {
+  let service: ApduReceiverService;
 
   beforeAll(() => {
     jest.spyOn(uuid, "v4").mockReturnValue("42");
@@ -64,7 +64,7 @@ describe("DefaultReceiverService", () => {
 
   describe("without dataSize", () => {
     beforeEach(() => {
-      service = new DefaultReceiverService(
+      service = new DefaultApduReceiverService(
         { channel: Just(new Uint8Array([0xaa, 0xaa])) },
         () => loggerService,
       );
@@ -84,7 +84,7 @@ describe("DefaultReceiverService", () => {
 
   describe("[USB] With padding and channel", () => {
     beforeEach(() => {
-      service = new DefaultReceiverService(
+      service = new DefaultApduReceiverService(
         { channel: Just(new Uint8Array([0xaa, 0xaa])) },
         () => loggerService,
       );
@@ -207,7 +207,7 @@ describe("DefaultReceiverService", () => {
 
   describe("[BLE] Without padding nor channel", () => {
     beforeEach(() => {
-      service = new DefaultReceiverService({}, () => loggerService);
+      service = new DefaultApduReceiverService({}, () => loggerService);
     });
 
     it("should return a response directly when a frame is complete", () => {
