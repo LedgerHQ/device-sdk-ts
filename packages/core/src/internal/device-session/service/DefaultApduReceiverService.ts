@@ -99,6 +99,12 @@ export class DefaultApduReceiverService implements ApduReceiverService {
     });
   }
 
+  /*
+   * Parse an Uint8Array to a Frame
+   * Return an error if the frame is not formatted correctly
+   *
+   * @param Uint8Array
+   */
   private apduToFrame(apdu: Uint8Array): Either<ReceiverApduError, Frame> {
     const channelSize = this._channel.caseOf({
       Just: () => CHANNEL_LENGTH,
@@ -149,6 +155,11 @@ export class DefaultApduReceiverService implements ApduReceiverService {
     return Right(frame);
   }
 
+  /*
+   * Return true if all the datas has been received
+   *
+   * @param number
+   */
   private isComplete(dataSize: number): boolean {
     const totalReceiveLength = this._pendingFrames.reduce(
       (prev: number, curr: Frame) => prev + curr.getData().length,
