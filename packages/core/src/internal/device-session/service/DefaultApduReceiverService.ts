@@ -2,12 +2,12 @@ import { inject, injectable } from "inversify";
 import { Either, Just, Left, Maybe, Nothing, Right } from "purify-ts";
 import { v4 } from "uuid";
 
-import { APDU_RESPONSE_STATUS_CODE_SIZE } from "@internal/device-session/data/ApduResponseConst";
+import { APDU_RESPONSE_STATUS_CODE_LENGTH } from "@internal/device-session/data/ApduResponseConst";
 import {
-  APDU_DATA_SIZE,
-  CHANNEL_SIZE,
-  HEAD_TAG_SIZE,
-  INDEX_SIZE,
+  APDU_DATA_LENGTH_LENGTH,
+  CHANNEL_LENGTH,
+  HEAD_TAG_LENGTH,
+  INDEX_LENGTH,
 } from "@internal/device-session/data/FramerConst";
 import { ApduResponse } from "@internal/device-session/model/ApduResponse";
 import { ReceiverApduError } from "@internal/device-session/model/Errors";
@@ -56,7 +56,7 @@ export class DefaultApduReceiverService implements ApduReceiverService {
       this._logger.debug("handle frame", { data: { frame } });
       this._pendingFrames.push(value);
 
-      const dataSize = this._pendingFrames[0]!.getHeader().getDataSize();
+      const dataSize = this._pendingFrames[0]!.getHeader().getDataLength();
       return this.getCompleteFrame(dataSize);
     });
   }
@@ -81,11 +81,11 @@ export class DefaultApduReceiverService implements ApduReceiverService {
       );
       const data = FramerUtils.getFirstBytesFrom(
         concatenatedFramesData,
-        concatenatedFramesData.length - APDU_RESPONSE_STATUS_CODE_SIZE,
+        concatenatedFramesData.length - APDU_RESPONSE_STATUS_CODE_LENGTH,
       );
       const statusCode = FramerUtils.getLastBytesFrom(
         concatenatedFramesData,
-        APDU_RESPONSE_STATUS_CODE_SIZE,
+        APDU_RESPONSE_STATUS_CODE_LENGTH,
       );
 
       this._pendingFrames = [];
@@ -101,14 +101,14 @@ export class DefaultApduReceiverService implements ApduReceiverService {
 
   private apduToFrame(apdu: Uint8Array): Either<ReceiverApduError, Frame> {
     const channelSize = this._channel.caseOf({
-      Just: () => CHANNEL_SIZE,
+      Just: () => CHANNEL_LENGTH,
       Nothing: () => 0,
     });
 
-    const headTag = apdu.slice(channelSize, channelSize + HEAD_TAG_SIZE);
+    const headTag = apdu.slice(channelSize, channelSize + HEAD_TAG_LENGTH);
     const index = apdu.slice(
-      channelSize + HEAD_TAG_SIZE,
-      channelSize + HEAD_TAG_SIZE + INDEX_SIZE,
+      channelSize + HEAD_TAG_LENGTH,
+      channelSize + HEAD_TAG_LENGTH + INDEX_LENGTH,
     );
 
     const isFirstIndex = index.reduce((curr, val) => curr + val, 0) === 0;
@@ -117,12 +117,12 @@ export class DefaultApduReceiverService implements ApduReceiverService {
       return Left(new ReceiverApduError());
     }
 
-    const dataSizeIndex = channelSize + HEAD_TAG_SIZE + INDEX_SIZE;
-    const dataSizeLength = isFirstIndex ? APDU_DATA_SIZE : 0;
+    const dataSizeIndex = channelSize + HEAD_TAG_LENGTH + INDEX_LENGTH;
+    const dataSizeLength = isFirstIndex ? APDU_DATA_LENGTH_LENGTH : 0;
 
     if (
       apdu.length <
-      channelSize + HEAD_TAG_SIZE + INDEX_SIZE + dataSizeLength
+      channelSize + HEAD_TAG_LENGTH + INDEX_LENGTH + dataSizeLength
     ) {
       return Left(new ReceiverApduError("Unable to parse header from apdu"));
     }
@@ -141,7 +141,7 @@ export class DefaultApduReceiverService implements ApduReceiverService {
         dataSize,
         headTag,
         index,
-        length: channelSize + HEAD_TAG_SIZE + INDEX_SIZE + dataSizeLength,
+        length: channelSize + HEAD_TAG_LENGTH + INDEX_LENGTH + dataSizeLength,
       }),
       data,
     });

@@ -15,7 +15,7 @@ export class FrameHeader {
   protected _headTag: Uint8Array;
   protected _index: Uint8Array;
   protected _length: number;
-  protected _dataSize: Maybe<Uint8Array>;
+  protected _dataLength: Maybe<Uint8Array>;
   constructor({
     uuid,
     dataSize,
@@ -25,14 +25,14 @@ export class FrameHeader {
     channel,
   }: FrameHeaderConstructorArgs) {
     this._uuid = uuid;
-    this._dataSize = dataSize;
+    this._dataLength = dataSize;
     this._index = index;
     this._headTag = headTag;
     this._length = length;
     this._channel = channel;
   }
-  getDataSize(): Maybe<number> {
-    return this._dataSize.caseOf({
+  getDataLength(): Maybe<number> {
+    return this._dataLength.caseOf({
       Just: (value) =>
         Maybe.of(
           value.reduce(
@@ -45,7 +45,7 @@ export class FrameHeader {
     });
   }
   setDataSize(dataSize: Maybe<Uint8Array>): FrameHeader {
-    this._dataSize = dataSize;
+    this._dataLength = dataSize;
     return this;
   }
   getLength(): number {
@@ -54,7 +54,7 @@ export class FrameHeader {
   toString(): string {
     return JSON.stringify({
       uuid: this._uuid.toString(),
-      dataSize: this._dataSize.extract()?.toString(),
+      dataSize: this._dataLength.extract()?.toString(),
       index: this._index.toString(),
       headTag: this._headTag.toString(),
       length: this._length.toString(),
@@ -69,7 +69,7 @@ export class FrameHeader {
       }),
       ...this._headTag,
       ...this._index,
-      ...this._dataSize.caseOf({
+      ...this._dataLength.caseOf({
         Just: (dataSize) => [...dataSize],
         Nothing: () => [],
       }),
