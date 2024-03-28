@@ -39,24 +39,45 @@ export class DefaultReceiverService implements ReceiverService {
     this._pendingFrames = [];
   }
 
+  /*
+   * Return
+   * - A complete ApduResponse
+   * - Or a Nothing if not all the data has been received
+   * - Or a ReceiverApduError if the apdu is not formatted correctly
+   *
+   * @param Uint8Array
+   */
   public handleFrame(
     apdu: Uint8Array,
   ): Either<ReceiverApduError, Maybe<ApduResponse>> {
     const frame = this.apduToFrame(apdu);
 
-    if (frame.isLeft()) return frame;
+    return frame.map((value) => {
+      this._logger.debug("handle frame", { data: { frame } });
+      this._pendingFrames.push(value);
 
-    this._logger.debug("handle frame", { data: { frame } });
-    this._pendingFrames.push(frame.extract() as Frame);
+      const dataSize = this._pendingFrames[0]!.getHeader().getDataSize();
+      return this.getCompleteFrame(dataSize);
+    });
+  }
 
-    const dataSize = this._pendingFrames[0]!.getHeader().getDataSize();
+  /*
+   * Return
+   * - A complete ApduResponse
+   * - Or a Nothing if not all the data has been received
+   *
+   * @param Maybe<number>
+   */
+  private getCompleteFrame(dataSize: Maybe<number>): Maybe<ApduResponse> {
+    return dataSize.chain((value) => {
+      if (!this.isComplete(value)) {
+        this._logger.debug("frame is not complete, waiting for more");
+        return Nothing;
+      }
 
-    if (dataSize.isNothing()) return Left(new ReceiverApduError());
-
-    if (dataSize.isJust() && this.isComplete(dataSize.extract())) {
       const concatenatedFramesData = FramerUtils.getFirstBytesFrom(
         this.concatFrames(this._pendingFrames),
-        dataSize.extract(),
+        value,
       );
       const data = FramerUtils.getFirstBytesFrom(
         concatenatedFramesData,
@@ -69,18 +90,13 @@ export class DefaultReceiverService implements ReceiverService {
 
       this._pendingFrames = [];
 
-      return Right(
-        Just(
-          new ApduResponse({
-            data: data,
-            statusCode,
-          }),
-        ),
+      return Just(
+        new ApduResponse({
+          data: data,
+          statusCode,
+        }),
       );
-    }
-
-    this._logger.debug("frame is not complete, waiting for more");
-    return Right(Nothing);
+    });
   }
 
   private apduToFrame(apdu: Uint8Array): Either<ReceiverApduError, Frame> {
@@ -96,6 +112,11 @@ export class DefaultReceiverService implements ReceiverService {
     );
 
     const isFirstIndex = index.reduce((curr, val) => curr + val, 0) === 0;
+
+    if (!isFirstIndex && this._pendingFrames.length === 0) {
+      return Left(new ReceiverApduError());
+    }
+
     const dataSizeIndex = channelSize + HEAD_TAG_SIZE + INDEX_SIZE;
     const dataSizeLength = isFirstIndex ? APDU_DATA_SIZE : 0;
 
