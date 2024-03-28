@@ -60,4 +60,23 @@ describe("FramerUtils", () => {
       expect(result).toEqual(new Uint8Array([]));
     });
   });
+
+  describe("bytesToNumber", () => {
+    it("should return a correct number", () => {
+      // Arrange
+      const array = new Uint8Array([0x67, 0x89]);
+      // Act
+      const result = FramerUtils.bytesToNumber(array);
+      // Assert
+      expect(result).toEqual(26505);
+    });
+    it("should return 0 when array is empty", () => {
+      // Arrange
+      const array = new Uint8Array([]);
+      // Act
+      const result = FramerUtils.bytesToNumber(array);
+      // Assert
+      expect(result).toEqual(0);
+    });
+  });
 });

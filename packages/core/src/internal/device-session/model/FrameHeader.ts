@@ -1,4 +1,6 @@
-import { Maybe, Nothing } from "purify-ts";
+import { Maybe } from "purify-ts";
+
+import { FramerUtils } from "@internal/device-session/utils/FramerUtils";
 
 type FrameHeaderConstructorArgs = {
   uuid: string;
@@ -32,17 +34,7 @@ export class FrameHeader {
     this._channel = channel;
   }
   getDataLength(): Maybe<number> {
-    return this._dataLength.caseOf({
-      Just: (value) =>
-        Maybe.of(
-          value.reduce(
-            (acc, val, index) =>
-              acc + val * Math.pow(0x100, value.length - 1 - index),
-            0,
-          ),
-        ),
-      Nothing: () => Nothing,
-    });
+    return this._dataLength.map((value) => FramerUtils.bytesToNumber(value));
   }
   setDataSize(dataSize: Maybe<Uint8Array>): FrameHeader {
     this._dataLength = dataSize;
