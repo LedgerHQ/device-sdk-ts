@@ -19,6 +19,15 @@ export class FramerApduError implements SdkError {
   }
 }
 
+export class ReceiverApduError implements SdkError {
+  readonly _tag = "ReceiverApduError";
+  originalError: Error;
+
+  constructor(message?: string) {
+    this.originalError = new Error(message ?? "Unable to parse apdu");
+  }
+}
+
 export class DeviceSessionNotFound implements SdkError {
   readonly _tag = "DeviceSessionNotFound";
   originalError?: Error;

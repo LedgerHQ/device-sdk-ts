@@ -3,11 +3,11 @@ import { Either, Left, Maybe, Right } from "purify-ts";
 import { v4 } from "uuid";
 
 import {
-  APDU_DATA_SIZE,
-  CHANNEL_SIZE,
+  APDU_DATA_LENGTH_LENGTH,
+  CHANNEL_LENGTH,
   HEAD_TAG,
-  HEAD_TAG_SIZE,
-  INDEX_SIZE,
+  HEAD_TAG_LENGTH,
+  INDEX_LENGTH,
 } from "@internal/device-session/data/FramerConst";
 import {
   FramerApduError,
@@ -128,7 +128,7 @@ export class DefaultFramerService implements FramerService {
     const header = new FrameHeader({
       uuid: v4(),
       channel: this._channel.map((channel) =>
-        FramerUtils.getLastBytesFrom(channel, CHANNEL_SIZE),
+        FramerUtils.getLastBytesFrom(channel, CHANNEL_LENGTH),
       ),
       headTag: new Uint8Array([HEAD_TAG]),
       index: new Uint8Array([Math.floor(frameIndex / 0xff), frameIndex & 0xff]),
@@ -170,12 +170,12 @@ export class DefaultFramerService implements FramerService {
   private getFrameHeaderSizeFromIndex(frameIndex: number): number {
     return (
       this._channel.caseOf({
-        Just: () => CHANNEL_SIZE,
+        Just: () => CHANNEL_LENGTH,
         Nothing: () => 0,
       }) +
-      INDEX_SIZE +
-      HEAD_TAG_SIZE +
-      (frameIndex === 0 ? APDU_DATA_SIZE : 0)
+      INDEX_LENGTH +
+      HEAD_TAG_LENGTH +
+      (frameIndex === 0 ? APDU_DATA_LENGTH_LENGTH : 0)
     );
   }
 }
