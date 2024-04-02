@@ -7,11 +7,11 @@ import { Frame } from "@internal/device-session/model/Frame";
 import { FrameHeader } from "@internal/device-session/model/FrameHeader";
 import { DefaultLoggerPublisherService } from "@internal/logger-publisher/service/DefaultLoggerPublisherService";
 
-import { DefaultFramerService } from "./DefaultFramerService";
+import { DefaultApduSenderService } from "./DefaultApduSenderService";
 
 const loggerService = new DefaultLoggerPublisherService([], "frame");
 
-describe("DefaultFramerService", () => {
+describe("DefaultApduSenderService", () => {
   beforeAll(() => {
     jest.spyOn(uuid, "v4").mockReturnValue("42");
   });
@@ -20,7 +20,7 @@ describe("DefaultFramerService", () => {
     it("should return 1 frame", () => {
       // given
       const channel = Maybe.of(new Uint8Array([0x12, 0x34]));
-      const framerService = new DefaultFramerService(
+      const apduSenderService = new DefaultApduSenderService(
         {
           frameSize: 64,
           padding: true,
@@ -32,7 +32,7 @@ describe("DefaultFramerService", () => {
       const apdu = new Uint8Array([0xe0, 0x01, 0x00, 0x00, 0x00]);
 
       // when
-      const frames = framerService.getFrames(apdu);
+      const frames = apduSenderService.getFrames(apdu);
 
       // then
       expect(frames).toEqual([
@@ -70,7 +70,7 @@ describe("DefaultFramerService", () => {
     it("should return 2 frames", () => {
       // given
       const channel = Maybe.of(new Uint8Array([0x12, 0x34]));
-      const framerService = new DefaultFramerService(
+      const apduSenderService = new DefaultApduSenderService(
         {
           frameSize: 64,
           padding: true,
@@ -91,7 +91,7 @@ describe("DefaultFramerService", () => {
       ]);
 
       // when
-      const frames = framerService.getFrames(apdu);
+      const frames = apduSenderService.getFrames(apdu);
 
       // then
       expect(frames).toEqual([
@@ -156,7 +156,7 @@ describe("DefaultFramerService", () => {
   describe("[BLE] Without padding nor channel", () => {
     it("should return 1 frame", () => {
       // given
-      const framerService = new DefaultFramerService(
+      const apduSenderService = new DefaultApduSenderService(
         {
           frameSize: 123,
         },
@@ -165,7 +165,7 @@ describe("DefaultFramerService", () => {
       const command = new Uint8Array([0xe0, 0x01, 0x00, 0x00, 0x00]);
 
       // when
-      const frames = framerService.getFrames(command);
+      const frames = apduSenderService.getFrames(command);
 
       // then
       expect(frames).toEqual([
@@ -190,7 +190,7 @@ describe("DefaultFramerService", () => {
 
     it("should return 3 frames", () => {
       // given
-      const framerService = new DefaultFramerService(
+      const apduSenderService = new DefaultApduSenderService(
         {
           frameSize: 10,
         },
@@ -202,7 +202,7 @@ describe("DefaultFramerService", () => {
       ]);
 
       // when
-      const frames = framerService.getFrames(command);
+      const frames = apduSenderService.getFrames(command);
 
       // then
       expect(frames).toEqual([
@@ -255,7 +255,7 @@ describe("DefaultFramerService", () => {
   describe("Errors", () => {
     it("should return a well formatted header with very big channel", () => {
       // given
-      const framerService = new DefaultFramerService(
+      const apduSenderService = new DefaultApduSenderService(
         {
           frameSize: 64,
           channel: Maybe.of(
@@ -267,7 +267,7 @@ describe("DefaultFramerService", () => {
       const command = new Uint8Array([0xe0, 0x01, 0x00, 0x00, 0x00]);
 
       // when
-      const frames = framerService.getFrames(command);
+      const frames = apduSenderService.getFrames(command);
 
       // then
       expect(frames).toEqual([
@@ -292,7 +292,7 @@ describe("DefaultFramerService", () => {
     });
     it("should return empty if packet size smaller than header size", () => {
       // given
-      const framerService = new DefaultFramerService(
+      const apduSenderService = new DefaultApduSenderService(
         {
           frameSize: Math.random() & 4,
           channel: Maybe.of(new Uint8Array([0x12, 0x34])),
@@ -302,7 +302,7 @@ describe("DefaultFramerService", () => {
       const command = new Uint8Array([0xe0, 0x01, 0x00, 0x00, 0x00]);
 
       // when
-      const frames = framerService.getFrames(command);
+      const frames = apduSenderService.getFrames(command);
 
       // then
       expect(frames.length).toEqual(0);
@@ -310,7 +310,7 @@ describe("DefaultFramerService", () => {
 
     it("should return empty if no apdu length", () => {
       // given
-      const framerService = new DefaultFramerService(
+      const apduSenderService = new DefaultApduSenderService(
         {
           // random frameSize < 0xff
           frameSize: Math.random() & 0xff,
@@ -323,7 +323,7 @@ describe("DefaultFramerService", () => {
       const command = new Uint8Array([]);
 
       // when
-      const frames = framerService.getFrames(command);
+      const frames = apduSenderService.getFrames(command);
 
       // then
       expect(frames.length).toEqual(0);

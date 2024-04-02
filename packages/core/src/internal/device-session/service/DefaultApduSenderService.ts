@@ -20,16 +20,16 @@ import { loggerTypes } from "@internal/logger-publisher/di/loggerTypes";
 import { LoggerPublisherService } from "@internal/logger-publisher/service/LoggerPublisherService";
 import { SdkError } from "@root/src/api/Error";
 
-import type { FramerService } from "./FramerService";
+import type { ApduSenderService } from "./ApduSenderService";
 
-export type DefaultFramerServiceConstructorArgs = {
+export type DefaultApduSenderServiceConstructorArgs = {
   frameSize: number;
   channel?: Maybe<Uint8Array>;
   padding?: boolean;
 };
 
 @injectable()
-export class DefaultFramerService implements FramerService {
+export class DefaultApduSenderService implements ApduSenderService {
   protected _frameSize: number;
   protected _channel: Maybe<Uint8Array>;
   protected _padding: boolean;
@@ -40,7 +40,7 @@ export class DefaultFramerService implements FramerService {
       frameSize,
       channel = Maybe.zero(),
       padding = false,
-    }: DefaultFramerServiceConstructorArgs,
+    }: DefaultApduSenderServiceConstructorArgs,
 
     @inject(loggerTypes.LoggerPublisherServiceFactory)
     loggerServiceFactory: (tag: string) => LoggerPublisherService,

@@ -22,7 +22,7 @@ export const FramerUtils = {
    *
    * @param Uint8Array
    */
-  bytesToNumber(array: Uint8Array) {
+  bytesToNumber(array: Uint8Array): number {
     return array.reduce(
       (acc, val, index) =>
         acc + val * Math.pow(0x100, array.length - 1 - index),
