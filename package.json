@@ -17,6 +17,7 @@
     "test": "turbo run test --log-order=grouped",
     "test:coverage": "turbo run test:coverage --log-order=grouped",
     "typecheck": "turbo run typecheck --log-order=grouped",
+    "health-check": "turbo run health-check --log-order=grouped --output-logs=errors-only --continue",
     "core": "pnpm --filter @ledgerhq/device-sdk-core",
     "signer": "pnpm --filter @ledgerhq/device-sdk-signer",
     "trusted-apps": "pnpm --filter @ledgerhq/device-sdk-trusted-apps",
