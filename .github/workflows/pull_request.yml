@@ -41,6 +41,15 @@ jobs:
       - name: health check
         run: pnpm health-check
 
+  unit-tests:
+    name: Launch unit tests
+    needs: [danger]
+    runs-on: [device-sdk-4xlarge-linux]
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: ./.github/actions/setup-toolchain-composite
+
       - name: Test
         run: pnpm test:coverage -- --max-warnings=0
 
