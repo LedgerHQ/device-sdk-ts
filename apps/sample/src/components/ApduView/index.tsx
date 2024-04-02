@@ -2,6 +2,8 @@ import { Button, Divider, Flex, Grid, Input, Text } from "@ledgerhq/react-ui";
 import styled, { DefaultTheme } from "styled-components";
 
 import { useApduForm } from "@/hooks/useApduForm";
+import { useSdk } from "@/providers/DeviceSdkProvider";
+import { useSessionContext } from "@/reducers/sessions";
 
 const Root = styled(Flex).attrs({ mx: 15, mt: 10, mb: 5 })`
   flex-direction: column;
@@ -55,6 +57,10 @@ const inputContainerProps = { style: { borderRadius: 4 } };
 
 export const ApduView: React.FC = () => {
   const { apduFormValues, setApduFormValue, apdu } = useApduForm();
+  const sdk = useSdk();
+  const {
+    state: { selected: selectedSessionId },
+  } = useSessionContext();
   return (
     <Root>
       <FormContainer>
@@ -138,7 +144,15 @@ export const ApduView: React.FC = () => {
         </Form>
         <Divider my={4} />
         <FormFooter my={8}>
-          <FormFooterButton onClick={() => console.log(apdu)}>
+          <FormFooterButton
+            onClick={async () => {
+              const response = await sdk.sendApdu({
+                sessionId: selectedSessionId as string,
+                apdu,
+              });
+              console.log(response);
+            }}
+          >
             <Text color="neutral.c00">Send APDU</Text>
           </FormFooterButton>
         </FormFooter>

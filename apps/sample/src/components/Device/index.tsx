@@ -1,4 +1,5 @@
 import React from "react";
+import { ConnectionType, DeviceModelId } from "@ledgerhq/device-sdk-core";
 import { Box, Flex, Icons, Text } from "@ledgerhq/react-ui";
 import styled, { DefaultTheme } from "styled-components";
 
@@ -25,38 +26,24 @@ export enum DeviceStatus {
   NOT_CONNECTED = "Not Connected",
 }
 
-export enum DeviceType {
-  USB = "USB",
-  BLE = "BLE",
-}
-
-export enum DeviceModel {
-  STAX = "Stax",
-  LNX = "LNX",
-}
-
 // These props are subject to change.
 type DeviceProps = {
   name: string;
-  type: DeviceType;
-  model: DeviceModel;
+  type: ConnectionType;
+  model: DeviceModelId;
   status?: DeviceStatus;
 };
 
 export const Device: React.FC<DeviceProps> = ({
   name,
-  status,
+  status = DeviceStatus.AVAILABLE,
   type,
   model,
 }) => {
   return (
     <Root>
       <IconContainer>
-        {model === DeviceModel.STAX ? (
-          <Icons.Stax size="S" />
-        ) : (
-          <Icons.Nano size="S" />
-        )}
+        {model === "stax" ? <Icons.Stax size="S" /> : <Icons.Nano size="S" />}
       </IconContainer>
       <Box flex={1}>
         <Text variant="body">{name}</Text>

@@ -3,6 +3,8 @@ import { Observable } from "rxjs";
 
 import { configTypes } from "@internal/config/di/configTypes";
 import { GetSdkVersionUseCase } from "@internal/config/use-case/GetSdkVersionUseCase";
+import { ApduResponse } from "@internal/device-session/model/ApduResponse";
+import { SessionId } from "@internal/device-session/model/Session";
 import { discoveryTypes } from "@internal/discovery/di/discoveryTypes";
 import {
   ConnectUseCase,
@@ -14,8 +16,14 @@ import { sendTypes } from "@internal/send/di/sendTypes";
 import {
   SendApduUseCase,
   SendApduUseCaseArgs,
-} from "@internal/send/usecase/SendApduUseCase";
+} from "@internal/send/use-case/SendApduUseCase";
+import { usbDiTypes } from "@internal/usb/di/usbDiTypes";
+import { ConnectedDevice } from "@internal/usb/model/ConnectedDevice";
 import { DiscoveredDevice } from "@internal/usb/model/DiscoveredDevice";
+import {
+  GetConnectedDeviceUseCase,
+  GetConnectedDeviceUseCaseArgs,
+} from "@internal/usb/use-case/GetConnectedDeviceUseCase";
 import { makeContainer, MakeContainerProps } from "@root/src/di";
 
 export class DeviceSdk {
@@ -54,15 +62,21 @@ export class DeviceSdk {
       .execute();
   }
 
-  connect(args: ConnectUseCaseArgs) {
+  connect(args: ConnectUseCaseArgs): Promise<SessionId> {
     return this.container
       .get<ConnectUseCase>(discoveryTypes.ConnectUseCase)
       .execute(args);
   }
 
-  sendApdu(args: SendApduUseCaseArgs) {
+  sendApdu(args: SendApduUseCaseArgs): Promise<ApduResponse> {
     return this.container
-      .get<SendApduUseCase>(sendTypes.SendService)
+      .get<SendApduUseCase>(sendTypes.SendApduUseCase)
+      .execute(args);
+  }
+
+  getConnectedDevice(args: GetConnectedDeviceUseCaseArgs): ConnectedDevice {
+    return this.container
+      .get<GetConnectedDeviceUseCase>(usbDiTypes.GetConnectedDeviceUseCase)
       .execute(args);
   }
 }
