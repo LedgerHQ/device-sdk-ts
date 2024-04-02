@@ -2,11 +2,55 @@ import {
   DeviceId,
   DeviceModel,
 } from "@internal/device-model/model/DeviceModel";
+import { SendApduFnType } from "@internal/usb/transport/UsbHidDeviceConnection";
+
+export type ConnectionType = "USB" | "BLE" | "MOCK";
 
 /**
  * Represents a connected device.
  */
-export type ConnectedDevice = {
-  id: DeviceId; // UUID to map with the associated transport device
+export type ConnectedDeviceConstructorArgs = {
+  id: DeviceId;
   deviceModel: DeviceModel;
+  type: ConnectionType;
+  sendApdu: SendApduFnType;
 };
+
+export class ConnectedDevice {
+  private readonly _id: DeviceId;
+  private readonly _deviceModel: DeviceModel;
+  private readonly _sendApdu: SendApduFnType;
+  private readonly _type: ConnectionType;
+
+  constructor({
+    id,
+    deviceModel,
+    sendApdu,
+    type,
+  }: ConnectedDeviceConstructorArgs) {
+    this._id = id;
+    this._deviceModel = deviceModel;
+    this._sendApdu = sendApdu;
+    this._type = type;
+  }
+
+  public get id(): DeviceId {
+    return this._id;
+  }
+
+  public get deviceModel(): DeviceModel {
+    return this._deviceModel;
+  }
+
+  public get deviceName(): string {
+    return this._deviceModel.productName;
+  }
+
+  public get type(): ConnectionType {
+    return this._type;
+  }
+
+  public get sendApdu(): SendApduFnType {
+    return this._sendApdu;
+  }
+}

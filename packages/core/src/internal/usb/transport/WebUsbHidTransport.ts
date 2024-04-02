@@ -9,7 +9,8 @@ import { deviceModelTypes } from "@internal/device-model/di/deviceModelTypes";
 import { DeviceId } from "@internal/device-model/model/DeviceModel";
 import { loggerTypes } from "@internal/logger-publisher/di/loggerTypes";
 import type { LoggerPublisherService } from "@internal/logger-publisher/service/LoggerPublisherService";
-import { ledgerVendorId } from "@internal/usb/data/UsbHidConfig";
+import { LEDGER_VENDOR_ID } from "@internal/usb/data/UsbHidConfig";
+import { usbDiTypes } from "@internal/usb/di/usbDiTypes";
 import { ConnectedDevice } from "@internal/usb/model/ConnectedDevice";
 import { DiscoveredDevice } from "@internal/usb/model/DiscoveredDevice";
 import {
@@ -21,6 +22,7 @@ import {
   UnknownDeviceError,
   UsbHidTransportNotSupportedError,
 } from "@internal/usb/model/Errors";
+import { UsbHidDeviceConnection } from "@internal/usb/transport/UsbHidDeviceConnection";
 
 import { UsbHidTransport } from "./UsbHidTransport";
 
@@ -29,7 +31,6 @@ type WebHidInternalDevice = {
   id: DeviceId;
   hidDevice: HIDDevice;
   discoveredDevice: DiscoveredDevice;
-  connectedDevice?: ConnectedDevice;
 };
 
 @injectable()
@@ -38,16 +39,26 @@ export class WebUsbHidTransport implements UsbHidTransport {
   private internalDevicesById: Map<DeviceId, WebHidInternalDevice>;
   private connectionListenersAbortController: AbortController;
   private logger: LoggerPublisherService;
+  private _usbHidDeviceConnectionFactory: (
+    device: HIDDevice,
+  ) => UsbHidDeviceConnection;
+  private usbHidDeviceConnections: Map<DeviceId, UsbHidDeviceConnection>;
 
   constructor(
     @inject(deviceModelTypes.DeviceModelDataSource)
     private deviceModelDataSource: DeviceModelDataSource,
     @inject(loggerTypes.LoggerPublisherServiceFactory)
     loggerServiceFactory: (tag: string) => LoggerPublisherService,
+    @inject(usbDiTypes.UsbHidDeviceConnectionFactory)
+    usbHidDeviceConnectionFactory: (
+      device: HIDDevice,
+    ) => UsbHidDeviceConnection,
   ) {
     this.internalDevicesById = new Map();
     this.connectionListenersAbortController = new AbortController();
     this.logger = loggerServiceFactory("WebUsbHidTransport");
+    this.usbHidDeviceConnections = new Map();
+    this._usbHidDeviceConnectionFactory = usbHidDeviceConnectionFactory;
   }
 
   /**
@@ -92,7 +103,7 @@ export class WebUsbHidTransport implements UsbHidTransport {
 
         try {
           hidDevices = await hidApi.requestDevice({
-            filters: [{ vendorId: ledgerVendorId }],
+            filters: [{ vendorId: LEDGER_VENDOR_ID }],
           });
         } catch (error) {
           const deviceError = new NoAccessibleDeviceError(error as Error);
@@ -284,13 +295,22 @@ export class WebUsbHidTransport implements UsbHidTransport {
       }
     }
 
-    internalDevice.connectedDevice = {
-      id: deviceId,
-      deviceModel: internalDevice.discoveredDevice.deviceModel,
-    };
+    const {
+      discoveredDevice: { deviceModel },
+    } = internalDevice;
 
-    // TODO: return a device session USB
-    return Right(internalDevice.connectedDevice);
+    const deviceConnection = this._usbHidDeviceConnectionFactory(
+      internalDevice.hidDevice,
+    );
+    const connectedDevice = new ConnectedDevice({
+      sendApdu: deviceConnection.sendApdu,
+      deviceModel,
+      id: deviceId,
+      type: "USB",
+    });
+
+    this.usbHidDeviceConnections.set(deviceId, deviceConnection);
+    return Right(connectedDevice);
   }
 
   /**
