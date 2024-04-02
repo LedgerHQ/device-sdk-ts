@@ -3,20 +3,20 @@ import { Maybe } from "purify-ts";
 
 import { DeviceSessionNotFound } from "@internal/device-session/model/Errors";
 import { Session } from "@internal/device-session/model/Session";
+import { SessionService } from "@internal/device-session/service/SessionService";
 import { loggerTypes } from "@internal/logger-publisher/di/loggerTypes";
 import { LoggerPublisherService } from "@internal/logger-publisher/service/LoggerPublisherService";
 
 @injectable()
-export class DefaultSessionService {
-  private _sessions: Session[] = [];
+export class DefaultSessionService implements SessionService {
+  private _sessions: Session[];
   private _logger: LoggerPublisherService;
 
   constructor(
     @inject(loggerTypes.LoggerPublisherServiceFactory)
     loggerModuleFactory: (tag: string) => LoggerPublisherService,
-    sessions: Session[],
   ) {
-    this._sessions = sessions;
+    this._sessions = [];
     this._logger = loggerModuleFactory("session");
   }
 

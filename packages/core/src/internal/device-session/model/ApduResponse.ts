@@ -1,4 +1,4 @@
-type ApduResponseConstructorArgs = {
+export type ApduResponseConstructorArgs = {
   statusCode: Uint8Array;
   data: Uint8Array;
 };

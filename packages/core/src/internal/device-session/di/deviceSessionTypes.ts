@@ -1,4 +1,5 @@
 export const deviceSessionTypes = {
-  FramerService: Symbol.for("FramerService"),
+  ApduSenderServiceFactory: Symbol.for("ApduSenderServiceFactory"),
+  ApduReceiverServiceFactory: Symbol.for("ApduReceiverServiceFactory"),
   SessionService: Symbol.for("SessionService"),
 };
