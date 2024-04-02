@@ -5,6 +5,7 @@ import Image from "next/image";
 import styled, { DefaultTheme } from "styled-components";
 
 import { useSdk } from "@/providers/DeviceSdkProvider";
+import { useSessionContext } from "@/reducers/sessions";
 
 const Root = styled(Flex)`
   flex: 1;
@@ -23,6 +24,7 @@ const NanoLogo = styled(Image).attrs({ mb: 8 })`
 
 export const MainView: React.FC = () => {
   const sdk = useSdk();
+  const { dispatch } = useSessionContext();
   const [discoveredDevice, setDiscoveredDevice] =
     useState<null | DiscoveredDevice>(null);
 
@@ -50,10 +52,17 @@ export const MainView: React.FC = () => {
     if (discoveredDevice) {
       sdk
         .connect({ deviceId: discoveredDevice.id })
-        .then((connectedDevice) => {
+        .then((sessionId) => {
           console.log(
-            `🦖 Response from connect: ${JSON.stringify(connectedDevice)} 🎉`,
+            `🦖 Response from connect: ${JSON.stringify(sessionId)} 🎉`,
           );
+          dispatch({
+            type: "add_session",
+            payload: {
+              sessionId,
+              connectedDevice: sdk.getConnectedDevice({ sessionId }),
+            },
+          });
         })
         .catch((error) => {
           console.error(`Error from connection or get-version`, error);

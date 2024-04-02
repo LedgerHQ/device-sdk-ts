@@ -4,14 +4,10 @@ import { Box, Flex, Icons, Link, Text } from "@ledgerhq/react-ui";
 import { useRouter } from "next/navigation";
 import styled, { DefaultTheme } from "styled-components";
 
-import {
-  Device,
-  DeviceModel,
-  DeviceStatus,
-  DeviceType,
-} from "@/components/Device";
+import { Device } from "@/components/Device";
 import { Menu } from "@/components/Menu";
 import { useSdk } from "@/providers/DeviceSdkProvider";
+import { useSessionContext } from "@/reducers/sessions";
 
 const Root = styled(Flex).attrs({ py: 8, px: 6 })`
   flex-direction: column;
@@ -47,6 +43,9 @@ const VersionText = styled(Text)`
 export const Sidebar: React.FC = () => {
   const [version, setVersion] = useState("");
   const sdk = useSdk();
+  const {
+    state: { devicesMap },
+  } = useSessionContext();
 
   useEffect(() => {
     sdk
@@ -76,12 +75,15 @@ export const Sidebar: React.FC = () => {
       </Subtitle>
 
       <Subtitle variant={"tiny"}>Device</Subtitle>
-      <Device
-        name="Ledger Nano X 9EAB"
-        model={DeviceModel.LNX}
-        status={DeviceStatus.LOCKED}
-        type={DeviceType.BLE}
-      />
+
+      {Object.entries(devicesMap).map(([sessionId, device]) => (
+        <Device
+          key={sessionId}
+          name={device.deviceName}
+          model={device.deviceModel.id}
+          type={device.type}
+        />
+      ))}
 
       <MenuContainer>
         <Subtitle variant={"tiny"}>Menu</Subtitle>

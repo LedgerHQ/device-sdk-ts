@@ -19,6 +19,6 @@ export const SdkProvider: React.FC<Props> = ({ children }) => {
   return <SdkContext.Provider value={sdk}>{children}</SdkContext.Provider>;
 };
 
-export const useSdk = () => {
+export const useSdk = (): DeviceSdk => {
   return useContext(SdkContext);
 };

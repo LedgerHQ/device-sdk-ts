@@ -16,6 +16,7 @@ import styled, { DefaultTheme } from "styled-components";
 import { Header } from "@/components/Header";
 import { Sidebar } from "@/components/Sidebar";
 import { SdkProvider } from "@/providers/DeviceSdkProvider";
+import { SessionProvider } from "@/reducers/sessions";
 import { GlobalStyle } from "@/styles/globalstyles";
 
 type ClientRootLayoutProps = {
@@ -44,11 +45,13 @@ const ClientRootLayout: React.FC<ClientRootLayoutProps> = ({ children }) => {
           <GlobalStyle />
           <body>
             <Root>
-              <Sidebar />
-              <PageContainer>
-                <Header />
-                {children}
-              </PageContainer>
+              <SessionProvider>
+                <Sidebar />
+                <PageContainer>
+                  <Header />
+                  {children}
+                </PageContainer>
+              </SessionProvider>
             </Root>
           </body>
         </StyleProvider>
