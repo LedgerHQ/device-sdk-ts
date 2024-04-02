@@ -2,6 +2,7 @@ import { inject, injectable } from "inversify";
 import { Either, Just, Left, Maybe, Nothing, Right } from "purify-ts";
 import { v4 } from "uuid";
 
+import { SdkError } from "@api/Error";
 import { APDU_RESPONSE_STATUS_CODE_LENGTH } from "@internal/device-session/data/ApduResponseConst";
 import {
   APDU_DATA_LENGTH_LENGTH,
@@ -19,18 +20,18 @@ import { LoggerPublisherService } from "@internal/logger-publisher/service/Logge
 
 import { ApduReceiverService } from "./ApduReceiverService";
 
-type DefaultReceiverConstructorArgs = {
+export type DefaultApduReceiverConstructorArgs = {
   channel?: Maybe<Uint8Array>;
 };
 
 @injectable()
 export class DefaultApduReceiverService implements ApduReceiverService {
-  private _channel: Maybe<Uint8Array>;
-  private _logger: LoggerPublisherService;
+  private readonly _channel: Maybe<Uint8Array>;
+  private readonly _logger: LoggerPublisherService;
   private _pendingFrames: Frame[];
 
   constructor(
-    { channel = Maybe.zero() }: DefaultReceiverConstructorArgs,
+    { channel = Maybe.zero() }: DefaultApduReceiverConstructorArgs,
     @inject(loggerTypes.LoggerPublisherServiceFactory)
     loggerModuleFactory: (tag: string) => LoggerPublisherService,
   ) {
@@ -47,16 +48,14 @@ export class DefaultApduReceiverService implements ApduReceiverService {
    *
    * @param Uint8Array
    */
-  public handleFrame(
-    apdu: Uint8Array,
-  ): Either<ReceiverApduError, Maybe<ApduResponse>> {
+  public handleFrame(apdu: Uint8Array): Either<SdkError, Maybe<ApduResponse>> {
     const frame = this.apduToFrame(apdu);
 
     return frame.map((value) => {
       this._logger.debug("handle frame", { data: { frame } });
       this._pendingFrames.push(value);
 
-      const dataSize = this._pendingFrames[0]!.getHeader().getDataLength();
+      const dataSize = this._pendingFrames.at(0)!.getHeader().getDataLength();
       return this.getCompleteFrame(dataSize);
     });
   }
@@ -105,7 +104,7 @@ export class DefaultApduReceiverService implements ApduReceiverService {
    *
    * @param Uint8Array
    */
-  private apduToFrame(apdu: Uint8Array): Either<ReceiverApduError, Frame> {
+  private apduToFrame(apdu: Uint8Array): Either<SdkError, Frame> {
     const channelSize = this._channel.caseOf({
       Just: () => CHANNEL_LENGTH,
       Nothing: () => 0,
