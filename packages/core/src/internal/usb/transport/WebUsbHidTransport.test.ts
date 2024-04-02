@@ -5,6 +5,7 @@ import {
   DeviceModel,
   DeviceModelId,
 } from "@internal/device-model/model/DeviceModel";
+import { defaultApduSenderServiceStubBuilder } from "@internal/device-session/service/DefaultApduSenderService.stub";
 import { DefaultLoggerPublisherService } from "@internal/logger-publisher/service/DefaultLoggerPublisherService";
 import {
   DeviceNotRecognizedError,
@@ -13,6 +14,8 @@ import {
   UnknownDeviceError,
   UsbHidTransportNotSupportedError,
 } from "@internal/usb/model/Errors";
+import { hidDeviceStubBuilder } from "@internal/usb/model/HIDDevice.stub";
+import { UsbHidDeviceConnection } from "@internal/usb/model/UsbHidDeviceConnection";
 
 import { WebUsbHidTransport } from "./WebUsbHidTransport";
 
@@ -21,21 +24,23 @@ jest.mock("@internal/logger-publisher/service/LoggerPublisherService");
 // Our StaticDeviceModelDataSource can directly be used in our unit tests
 const usbDeviceModelDataSource = new StaticDeviceModelDataSource();
 const logger = new DefaultLoggerPublisherService([], "web-usb-hid");
+const usbHideDeviceConnectionFactory = () =>
+  new UsbHidDeviceConnection({
+    device: hidDeviceStubBuilder(),
+    senderFramer: defaultApduSenderServiceStubBuilder({}, () => logger),
+  });
 
-const stubDevice = {
-  opened: false,
-  productId: 0x4011,
-  vendorId: 0x2c97,
-  productName: "Ledger Nano X",
-  collections: [],
-  open: jest.fn(),
-};
+const stubDevice: HIDDevice = hidDeviceStubBuilder();
 
 describe("WebUsbHidTransport", () => {
   let transport: WebUsbHidTransport;
 
   beforeEach(() => {
-    transport = new WebUsbHidTransport(usbDeviceModelDataSource, () => logger);
+    transport = new WebUsbHidTransport(
+      usbDeviceModelDataSource,
+      () => logger,
+      usbHideDeviceConnectionFactory,
+    );
   });
 
   afterEach(() => {
