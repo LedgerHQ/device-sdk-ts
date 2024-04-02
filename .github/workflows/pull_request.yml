@@ -11,6 +11,12 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  auto-assign:
+    name: Auto assign
+    runs-on: [ubuntu-latest]
+    steps:
+      - uses: toshimaru/auto-author-assign@v2.1.0
+
   danger:
     name: Pass Danger check
     runs-on: [ubuntu-latest]
@@ -18,8 +24,6 @@ jobs:
       - uses: actions/checkout@v4
 
       - uses: ./.github/actions/setup-toolchain-composite
-
-      - uses: toshimaru/auto-author-assign@v2.1.0
 
       - name: Danger
         env:
