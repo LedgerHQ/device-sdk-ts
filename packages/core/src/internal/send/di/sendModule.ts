@@ -1,6 +1,6 @@
 import { ContainerModule } from "inversify";
 
-import { SendApduUseCase } from "@internal/send/usecase/SendApduUseCase";
+import { SendApduUseCase } from "@internal/send/use-case/SendApduUseCase";
 
 import { sendTypes } from "./sendTypes";
 
@@ -19,6 +19,6 @@ export const sendModuleFactory = (_args: Partial<FactoryProps> = {}) =>
       _onActivation,
       _onDeactivation,
     ) => {
-      bind(sendTypes.SendService).to(SendApduUseCase);
+      bind(sendTypes.SendApduUseCase).to(SendApduUseCase);
     },
   );
