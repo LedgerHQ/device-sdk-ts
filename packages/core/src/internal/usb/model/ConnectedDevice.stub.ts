@@ -1,4 +1,4 @@
-import { EitherAsync, Right } from "purify-ts";
+import { Right } from "purify-ts";
 
 import { deviceModelStubBuilder } from "@internal/device-model/model/DeviceModel.stub";
 import { defaultApduResponseStubBuilder } from "@internal/device-session/model/ApduResponse.stub";
@@ -13,9 +13,7 @@ export function connectedDeviceBuilder(
     deviceModel,
     id,
     type,
-    sendApdu: () =>
-      EitherAsync.fromPromise(async () =>
-        Promise.resolve(Right(defaultApduResponseStubBuilder())),
-      ),
+    sendApdu: async () =>
+      Promise.resolve(Right(defaultApduResponseStubBuilder())),
   });
 }

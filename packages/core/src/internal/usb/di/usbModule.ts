@@ -1,15 +1,6 @@
-import { ContainerModule, interfaces } from "inversify";
-import { Maybe } from "purify-ts";
+import { ContainerModule } from "inversify";
 
-import { deviceSessionTypes } from "@internal/device-session/di/deviceSessionTypes";
-import { ApduReceiverService } from "@internal/device-session/service/ApduReceiverService";
-import { ApduSenderService } from "@internal/device-session/service/ApduSenderService";
-import { DefaultApduReceiverConstructorArgs } from "@internal/device-session/service/DefaultApduReceiverService";
-import { DefaultApduSenderServiceConstructorArgs } from "@internal/device-session/service/DefaultApduSenderService";
-import { loggerTypes } from "@internal/logger-publisher/di/loggerTypes";
-import { LoggerPublisherService } from "@internal/logger-publisher/service/LoggerPublisherService";
-import { FRAME_SIZE } from "@internal/usb/data/UsbHidConfig";
-import { UsbHidDeviceConnection } from "@internal/usb/transport/UsbHidDeviceConnection";
+import { UsbHidDeviceConnectionFactory } from "@internal/usb/service/UsbHidDeviceConnectionFactory";
 import { WebUsbHidTransport } from "@internal/usb/transport/WebUsbHidTransport";
 import { GetConnectedDeviceUseCase } from "@internal/usb/use-case/GetConnectedDeviceUseCase";
 
@@ -27,37 +18,9 @@ export const usbModuleFactory = ({
     bind(usbDiTypes.UsbHidTransport).to(WebUsbHidTransport).inSingletonScope();
 
     // UsbHidDeviceConnectionFactory
-    bind<interfaces.Factory<UsbHidDeviceConnection>>(
-      usbDiTypes.UsbHidDeviceConnectionFactory,
-    ).toFactory((context) => {
-      const apduSenderFactory = context.container.get<
-        (args: DefaultApduSenderServiceConstructorArgs) => ApduSenderService
-      >(deviceSessionTypes.ApduSenderServiceFactory);
-      const apduReceiverFactory = context.container.get<
-        (args: DefaultApduReceiverConstructorArgs) => ApduReceiverService
-      >(deviceSessionTypes.ApduReceiverServiceFactory);
-      const loggerFactory = context.container.get<
-        (name: string) => LoggerPublisherService
-      >(loggerTypes.LoggerPublisherServiceFactory);
-
-      return (device: HIDDevice) => {
-        const channel = Maybe.of(
-          new Uint8Array([Math.random() % 0xff, Math.random() % 0xff]),
-        );
-        return new UsbHidDeviceConnection(
-          {
-            device,
-            apduSender: apduSenderFactory({
-              frameSize: FRAME_SIZE,
-              channel,
-              padding: true,
-            }),
-            apduReceiver: apduReceiverFactory({ channel }),
-          },
-          loggerFactory,
-        );
-      };
-    });
+    bind(usbDiTypes.UsbHidDeviceConnectionFactory).to(
+      UsbHidDeviceConnectionFactory,
+    );
 
     // GetConnectedDeviceUseCase
     bind(usbDiTypes.GetConnectedDeviceUseCase).to(GetConnectedDeviceUseCase);
