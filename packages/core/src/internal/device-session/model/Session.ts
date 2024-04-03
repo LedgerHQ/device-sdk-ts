@@ -1,8 +1,5 @@
-import { EitherAsync } from "purify-ts";
 import { v4 as uuidv4 } from "uuid";
 
-import { SdkError } from "@api/Error";
-import { ApduResponse } from "@internal/device-session/model/ApduResponse";
 import { ConnectedDevice } from "@internal/usb/model/ConnectedDevice";
 
 export type SessionId = ReturnType<typeof uuidv4>;
@@ -19,15 +16,15 @@ export class Session {
     this._connectedDevice = connectedDevice;
   }
 
-  public get id(): SessionId {
+  public get id() {
     return this._id;
   }
 
-  public get connectedDevice(): ConnectedDevice {
+  public get connectedDevice() {
     return this._connectedDevice;
   }
 
-  sendApdu(_args: Uint8Array): EitherAsync<SdkError, ApduResponse> {
+  sendApdu(_args: Uint8Array) {
     return this._connectedDevice.sendApdu(_args);
   }
 }

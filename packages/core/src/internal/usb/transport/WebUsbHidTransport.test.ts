@@ -5,6 +5,7 @@ import {
   DeviceModel,
   DeviceModelId,
 } from "@internal/device-model/model/DeviceModel";
+import { defaultApduReceiverServiceStubBuilder } from "@internal/device-session/service/DefaultApduReceiverService.stub";
 import { defaultApduSenderServiceStubBuilder } from "@internal/device-session/service/DefaultApduSenderService.stub";
 import { DefaultLoggerPublisherService } from "@internal/logger-publisher/service/DefaultLoggerPublisherService";
 import {
@@ -15,7 +16,7 @@ import {
   UsbHidTransportNotSupportedError,
 } from "@internal/usb/model/Errors";
 import { hidDeviceStubBuilder } from "@internal/usb/model/HIDDevice.stub";
-import { UsbHidDeviceConnection } from "@internal/usb/model/UsbHidDeviceConnection";
+import { UsbHidDeviceConnectionFactory } from "@internal/usb/service/UsbHidDeviceConnectionFactory";
 
 import { WebUsbHidTransport } from "./WebUsbHidTransport";
 
@@ -24,11 +25,17 @@ jest.mock("@internal/logger-publisher/service/LoggerPublisherService");
 // Our StaticDeviceModelDataSource can directly be used in our unit tests
 const usbDeviceModelDataSource = new StaticDeviceModelDataSource();
 const logger = new DefaultLoggerPublisherService([], "web-usb-hid");
-const usbHideDeviceConnectionFactory = () =>
-  new UsbHidDeviceConnection({
-    device: hidDeviceStubBuilder(),
-    senderFramer: defaultApduSenderServiceStubBuilder({}, () => logger),
-  });
+const apduSenderFactory = jest.fn(() =>
+  defaultApduSenderServiceStubBuilder({}, () => logger),
+);
+const apduReceiverFactory = jest.fn(() =>
+  defaultApduReceiverServiceStubBuilder({}, () => logger),
+);
+const usbHidDeviceConnectionFactory = new UsbHidDeviceConnectionFactory(
+  apduSenderFactory,
+  apduReceiverFactory,
+  () => logger,
+);
 
 const stubDevice: HIDDevice = hidDeviceStubBuilder();
 
@@ -39,7 +46,7 @@ describe("WebUsbHidTransport", () => {
     transport = new WebUsbHidTransport(
       usbDeviceModelDataSource,
       () => logger,
-      usbHideDeviceConnectionFactory,
+      usbHidDeviceConnectionFactory,
     );
   });
 

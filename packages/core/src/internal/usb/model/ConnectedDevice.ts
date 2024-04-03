@@ -34,23 +34,23 @@ export class ConnectedDevice {
     this._type = type;
   }
 
-  public get id(): DeviceId {
+  public get id() {
     return this._id;
   }
 
-  public get deviceModel(): DeviceModel {
+  public get deviceModel() {
     return this._deviceModel;
   }
 
-  public get deviceName(): string {
+  public get deviceName() {
     return this._deviceModel.productName;
   }
 
-  public get type(): ConnectionType {
+  public get type() {
     return this._type;
   }
 
-  public get sendApdu(): SendApduFnType {
+  public get sendApdu() {
     return this._sendApdu;
   }
 }

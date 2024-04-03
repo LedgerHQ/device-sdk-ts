@@ -22,7 +22,7 @@ import {
   UnknownDeviceError,
   UsbHidTransportNotSupportedError,
 } from "@internal/usb/model/Errors";
-import { UsbHidDeviceConnection } from "@internal/usb/transport/UsbHidDeviceConnection";
+import { UsbHidDeviceConnectionFactory } from "@internal/usb/service/UsbHidDeviceConnectionFactory";
 
 import { UsbHidTransport } from "./UsbHidTransport";
 
@@ -39,10 +39,7 @@ export class WebUsbHidTransport implements UsbHidTransport {
   private internalDevicesById: Map<DeviceId, WebHidInternalDevice>;
   private connectionListenersAbortController: AbortController;
   private logger: LoggerPublisherService;
-  private _usbHidDeviceConnectionFactory: (
-    device: HIDDevice,
-  ) => UsbHidDeviceConnection;
-  private usbHidDeviceConnections: Map<DeviceId, UsbHidDeviceConnection>;
+  private _usbHidDeviceConnectionFactory: UsbHidDeviceConnectionFactory;
 
   constructor(
     @inject(deviceModelTypes.DeviceModelDataSource)
@@ -50,14 +47,11 @@ export class WebUsbHidTransport implements UsbHidTransport {
     @inject(loggerTypes.LoggerPublisherServiceFactory)
     loggerServiceFactory: (tag: string) => LoggerPublisherService,
     @inject(usbDiTypes.UsbHidDeviceConnectionFactory)
-    usbHidDeviceConnectionFactory: (
-      device: HIDDevice,
-    ) => UsbHidDeviceConnection,
+    usbHidDeviceConnectionFactory: UsbHidDeviceConnectionFactory,
   ) {
     this.internalDevicesById = new Map();
     this.connectionListenersAbortController = new AbortController();
     this.logger = loggerServiceFactory("WebUsbHidTransport");
-    this.usbHidDeviceConnections = new Map();
     this._usbHidDeviceConnectionFactory = usbHidDeviceConnectionFactory;
   }
 
@@ -74,7 +68,7 @@ export class WebUsbHidTransport implements UsbHidTransport {
     );
   };
 
-  isSupported(): boolean {
+  isSupported() {
     try {
       const result = !!navigator?.hid;
       this.logger.debug(`isSupported: ${result}`);
@@ -299,7 +293,7 @@ export class WebUsbHidTransport implements UsbHidTransport {
       discoveredDevice: { deviceModel },
     } = internalDevice;
 
-    const deviceConnection = this._usbHidDeviceConnectionFactory(
+    const deviceConnection = this._usbHidDeviceConnectionFactory.create(
       internalDevice.hidDevice,
     );
     const connectedDevice = new ConnectedDevice({
@@ -309,7 +303,6 @@ export class WebUsbHidTransport implements UsbHidTransport {
       type: "USB",
     });
 
-    this.usbHidDeviceConnections.set(deviceId, deviceConnection);
     return Right(connectedDevice);
   }
 

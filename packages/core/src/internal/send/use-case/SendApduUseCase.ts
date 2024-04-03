@@ -52,11 +52,11 @@ export class SendApduUseCase {
           },
         });
       },
-      Left: () => {
+      Left: (error) => {
         this._logger.error("Error getting session", {
-          data: { error: deviceSession.extract() },
+          data: { error },
         });
-        throw deviceSession.extract();
+        throw error;
       },
     });
   }

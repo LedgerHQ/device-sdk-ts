@@ -1,5 +1,5 @@
 import { inject } from "inversify";
-import { EitherAsync, Left, Right } from "purify-ts";
+import { Either, Left, Right } from "purify-ts";
 import { Subject } from "rxjs";
 
 import { SdkError } from "@api/Error";
@@ -15,7 +15,9 @@ type UsbHidDeviceConnectionConstructorArgs = {
   apduReceiver: ApduReceiverService;
 };
 
-export type SendApduFnType = typeof UsbHidDeviceConnection.prototype.sendApdu;
+export type SendApduFnType = (
+  apdu: Uint8Array,
+) => Promise<Either<SdkError, ApduResponse>>;
 
 export class UsbHidDeviceConnection {
   private readonly _device: HIDDevice;
@@ -33,57 +35,50 @@ export class UsbHidDeviceConnection {
     this._apduSender = apduSender;
     this._apduReceiver = apduReceiver;
     this._sendApduSubject = new Subject();
-    this._device.addEventListener("inputreport", this.receiveApdu.bind(this));
+    this._device.addEventListener("inputreport", this.receiveApdu);
     this._logger = loggerServiceFactory("UsbHidDeviceConnection");
   }
 
-  public get device(): HIDDevice {
+  public get device() {
     return this._device;
   }
 
-  private receiveApdu(event: HIDInputReportEvent) {
+  private receiveApdu = (event: HIDInputReportEvent) => {
     const data = new Uint8Array(event.data.buffer);
     const response = this._apduReceiver.handleFrame(data);
     response.caseOf({
       Right: (maybeApduResponse) => {
-        if (maybeApduResponse.isJust()) {
+        maybeApduResponse.map((apduResponse) => {
           this._logger.info("Received APDU Response", {
-            data: { response: maybeApduResponse.extract() },
+            data: { response: apduResponse },
           });
-          this._sendApduSubject.next(maybeApduResponse.extract());
+          this._sendApduSubject.next(apduResponse);
           this._sendApduSubject.complete();
-        }
+        });
       },
       Left: (err: SdkError) => {
         this._sendApduSubject.error(err);
       },
     });
-  }
+  };
 
-  public sendApdu = (apdu: Uint8Array): EitherAsync<SdkError, ApduResponse> => {
+  public sendApdu: SendApduFnType = async (apdu) => {
     this._sendApduSubject = new Subject();
 
-    return EitherAsync.fromPromise(async () => {
-      this._logger.info("Sending APDU", { data: { apdu } });
-      const frames = this._apduSender.getFrames(apdu);
-      for (const frame of frames) {
-        await this._device.sendReport(0, frame.getRawData());
-      }
-      try {
-        const ret = await new Promise<ApduResponse>((resolve, reject) => {
-          this._sendApduSubject.subscribe({
-            next: (r) => {
-              resolve(r);
-            },
-            error: (err) => {
-              reject(err);
-            },
-          });
-        });
-        return Right(ret);
-      } catch (err) {
-        return Left(err as SdkError);
-      }
+    this._logger.info("Sending APDU", { data: { apdu } });
+    const frames = this._apduSender.getFrames(apdu);
+    for (const frame of frames) {
+      await this._device.sendReport(0, frame.getRawData());
+    }
+    return new Promise((resolve) => {
+      this._sendApduSubject.subscribe({
+        next: (r) => {
+          resolve(Right(r));
+        },
+        error: (err) => {
+          resolve(Left(err));
+        },
+      });
     });
   };
 }
