@@ -1,13 +1,14 @@
 {
   "extends": "@ledgerhq/tsconfig-dsdk/sdk",
   "compilerOptions": {
-    "outDir": "./lib",
     "baseUrl": ".",
     "paths": {
       "@api/*": ["src/api/*"],
       "@internal/*": ["src/internal/*"],
       "@root/*": ["./*"]
-    }
+    },
+    "experimentalDecorators": true,
+    "resolveJsonModule": true
   },
   "include": ["src", "index.ts", "jest.*.ts"]
 }
