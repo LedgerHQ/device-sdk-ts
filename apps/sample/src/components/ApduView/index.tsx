@@ -1,3 +1,4 @@
+import { useCallback, useState } from "react";
 import { Button, Divider, Flex, Grid, Input, Text } from "@ledgerhq/react-ui";
 import styled, { DefaultTheme } from "styled-components";
 
@@ -57,10 +58,19 @@ const inputContainerProps = { style: { borderRadius: 4 } };
 
 export const ApduView: React.FC = () => {
   const { apduFormValues, setApduFormValue, apdu } = useApduForm();
+  const [loading, setLoading] = useState(false);
   const sdk = useSdk();
   const {
     state: { selected: selectedSessionId },
   } = useSessionContext();
+  const onSubmit = useCallback(async () => {
+    setLoading(true);
+    await sdk.sendApdu({
+      sessionId: selectedSessionId!,
+      apdu,
+    });
+    setLoading(false);
+  }, [apdu, sdk, selectedSessionId]);
   return (
     <Root>
       <FormContainer>
@@ -124,6 +134,7 @@ export const ApduView: React.FC = () => {
               </Text>
               <Input
                 name="data"
+                placeholder="<NO DATA>"
                 containerProps={inputContainerProps}
                 value={apduFormValues.data}
                 onChange={(value) => setApduFormValue("data", value)}
@@ -135,6 +146,7 @@ export const ApduView: React.FC = () => {
               </Text>
               <Input
                 name="dataLength"
+                disabled
                 containerProps={inputContainerProps}
                 value={apduFormValues.dataLength}
                 onChange={(value) => setApduFormValue("dataLength", value)}
@@ -144,15 +156,7 @@ export const ApduView: React.FC = () => {
         </Form>
         <Divider my={4} />
         <FormFooter my={8}>
-          <FormFooterButton
-            onClick={async () => {
-              const response = await sdk.sendApdu({
-                sessionId: selectedSessionId as string,
-                apdu,
-              });
-              console.log(response);
-            }}
-          >
+          <FormFooterButton onClick={onSubmit} disabled={loading}>
             <Text color="neutral.c00">Send APDU</Text>
           </FormFooterButton>
         </FormFooter>

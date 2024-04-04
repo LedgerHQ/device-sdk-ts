@@ -11,17 +11,21 @@ type ApduFormValues = {
 
 export function useApduForm() {
   const [values, setValues] = useState<ApduFormValues>({
-    classInstruction: "",
-    instructionMethod: "",
-    firstParameter: "",
-    secondParameter: "",
+    classInstruction: "e0",
+    instructionMethod: "01",
+    firstParameter: "00",
+    secondParameter: "00",
+    dataLength: "00",
     data: "",
-    dataLength: "",
   });
   const [apdu, setApdu] = useState<Uint8Array>(Uint8Array.from([]));
 
   const setValue = useCallback((field: keyof ApduFormValues, value: string) => {
-    setValues((prev) => ({ ...prev, [field]: value }));
+    const newValues = { [field]: value };
+    if (field === "data") {
+      newValues.dataLength = value.length.toString(16);
+    }
+    setValues((prev) => ({ ...prev, ...newValues }));
   }, []);
 
   useEffect(() => {
