@@ -1,6 +1,5 @@
 import { inject } from "inversify";
 import { Either, Left, Right } from "purify-ts";
-import { Subject } from "rxjs";
 
 import { SdkError } from "@api/Error";
 import { ApduResponse } from "@internal/device-session/model/ApduResponse";
@@ -23,8 +22,8 @@ export class UsbHidDeviceConnection {
   private readonly _device: HIDDevice;
   private readonly _apduSender: ApduSenderService;
   private readonly _apduReceiver: ApduReceiverService;
-  private _sendApduSubject: Subject<ApduResponse>;
   private readonly _logger: LoggerPublisherService;
+  private _resolve: (value: Either<SdkError, ApduResponse>) => void;
 
   constructor(
     { device, apduSender, apduReceiver }: UsbHidDeviceConnectionConstructorArgs,
@@ -34,7 +33,6 @@ export class UsbHidDeviceConnection {
     this._device = device;
     this._apduSender = apduSender;
     this._apduReceiver = apduReceiver;
-    this._sendApduSubject = new Subject();
     this._device.addEventListener("inputreport", this.receiveApdu);
     this._logger = loggerServiceFactory("UsbHidDeviceConnection");
   }
@@ -52,33 +50,26 @@ export class UsbHidDeviceConnection {
           this._logger.info("Received APDU Response", {
             data: { response: apduResponse },
           });
-          this._sendApduSubject.next(apduResponse);
-          this._sendApduSubject.complete();
+          this._resolve(Right(apduResponse));
         });
       },
       Left: (err: SdkError) => {
-        this._sendApduSubject.error(err);
+        this._resolve(Left(err));
       },
     });
   };
 
   public sendApdu: SendApduFnType = async (apdu) => {
-    this._sendApduSubject = new Subject();
+    const promise = new Promise<Either<SdkError, ApduResponse>>((res) => {
+      this._resolve = res;
+    });
 
     this._logger.info("Sending APDU", { data: { apdu } });
     const frames = this._apduSender.getFrames(apdu);
     for (const frame of frames) {
       await this._device.sendReport(0, frame.getRawData());
     }
-    return new Promise((resolve) => {
-      this._sendApduSubject.subscribe({
-        next: (r) => {
-          resolve(Right(r));
-        },
-        error: (err) => {
-          resolve(Left(err));
-        },
-      });
-    });
+
+    return await promise;
   };
 }
