@@ -13,6 +13,8 @@ import { UsbHidDeviceConnection } from "@internal/usb/transport/UsbHidDeviceConn
 
 @injectable()
 export class UsbHidDeviceConnectionFactory {
+  randomChannel = Math.random() * 0x1000;
+
   constructor(
     @inject(deviceSessionTypes.ApduSenderServiceFactory)
     private readonly apduSenderFactory: (
@@ -29,7 +31,7 @@ export class UsbHidDeviceConnectionFactory {
   public create(
     device: HIDDevice,
     channel = Maybe.of(
-      new Uint8Array([Math.random() % 0xff, Math.random() % 0xff]),
+      new Uint8Array([this.randomChannel / 0xff, this.randomChannel & 0xff]),
     ),
   ): UsbHidDeviceConnection {
     return new UsbHidDeviceConnection(

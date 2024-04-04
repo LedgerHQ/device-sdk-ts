@@ -2,7 +2,7 @@ import {
   DeviceId,
   DeviceModel,
 } from "@internal/device-model/model/DeviceModel";
-import { SendApduFnType } from "@internal/usb/transport/UsbHidDeviceConnection";
+import type { SendApduFnType } from "@internal/usb/transport/DeviceConnection";
 
 export type ConnectionType = "USB" | "BLE" | "MOCK";
 

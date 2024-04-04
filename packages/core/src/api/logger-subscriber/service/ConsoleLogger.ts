@@ -8,20 +8,20 @@ export class ConsoleLogger implements LoggerSubscriberService {
 
     switch (level) {
       case LogLevel.Info:
-        console.info(tag, message);
+        console.info(tag, message, options.data);
         break;
       case LogLevel.Warning:
-        console.warn(tag, message);
+        console.warn(tag, message, options.data);
         break;
       case LogLevel.Debug:
-        console.debug(tag, message);
+        console.debug(tag, message, options.data);
         break;
       case LogLevel.Error: {
-        console.error(tag, message);
+        console.error(tag, message, options.data);
         break;
       }
       default:
-        console.log(tag, message);
+        console.log(tag, message, options.data);
     }
   }
 }

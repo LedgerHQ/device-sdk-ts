@@ -1,6 +1,7 @@
 import { Container } from "inversify";
 
 import { deviceModelModuleFactory } from "@internal/device-model/di/deviceModelModule";
+import { deviceSessionModuleFactory } from "@internal/device-session/di/deviceSessionModule";
 import { loggerModuleFactory } from "@internal/logger-publisher/di/loggerModule";
 import { WebUsbHidTransport } from "@internal/usb/transport/WebUsbHidTransport";
 
@@ -14,7 +15,11 @@ describe("usbModuleFactory", () => {
     mod = usbModuleFactory();
     container = new Container();
     container.load(loggerModuleFactory());
-    container.load(mod, deviceModelModuleFactory());
+    container.load(
+      mod,
+      deviceModelModuleFactory(),
+      deviceSessionModuleFactory(),
+    );
   });
 
   it("should return the usb module", () => {

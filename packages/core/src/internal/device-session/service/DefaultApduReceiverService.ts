@@ -36,7 +36,7 @@ export class DefaultApduReceiverService implements ApduReceiverService {
     loggerModuleFactory: (tag: string) => LoggerPublisherService,
   ) {
     this._channel = channel;
-    this._logger = loggerModuleFactory("receiver");
+    this._logger = loggerModuleFactory("ApduReceiverService");
     this._pendingFrames = [];
   }
 
@@ -52,7 +52,9 @@ export class DefaultApduReceiverService implements ApduReceiverService {
     const frame = this.apduToFrame(apdu);
 
     return frame.map((value) => {
-      this._logger.debug("handle frame", { data: { frame } });
+      this._logger.info("handle frame", {
+        data: { frame: value.getRawData() },
+      });
       this._pendingFrames.push(value);
 
       const dataSize = this._pendingFrames.at(0)!.getHeader().getDataLength();
@@ -104,7 +106,7 @@ export class DefaultApduReceiverService implements ApduReceiverService {
    *
    * @param Uint8Array
    */
-  private apduToFrame(apdu: Uint8Array): Either<SdkError, Frame> {
+  private apduToFrame(apdu: Uint8Array): Either<ReceiverApduError, Frame> {
     const channelSize = this._channel.caseOf({
       Just: () => CHANNEL_LENGTH,
       Nothing: () => 0,
@@ -161,7 +163,7 @@ export class DefaultApduReceiverService implements ApduReceiverService {
    */
   private isComplete(dataSize: number): boolean {
     const totalReceiveLength = this._pendingFrames.reduce(
-      (prev: number, curr: Frame) => prev + curr.getData().length,
+      (prev, curr) => prev + curr.getData().length,
       0,
     );
 

@@ -1,13 +1,14 @@
 import { inject } from "inversify";
-import { Either, Left, Right } from "purify-ts";
+import { Left, Right } from "purify-ts";
 import { Subject } from "rxjs";
 
-import { SdkError } from "@api/Error";
 import { ApduResponse } from "@internal/device-session/model/ApduResponse";
 import { ApduReceiverService } from "@internal/device-session/service/ApduReceiverService";
 import { ApduSenderService } from "@internal/device-session/service/ApduSenderService";
 import { loggerTypes } from "@internal/logger-publisher/di/loggerTypes";
 import type { LoggerPublisherService } from "@internal/logger-publisher/service/LoggerPublisherService";
+
+import { DeviceConnection, SendApduFnType } from "./DeviceConnection";
 
 type UsbHidDeviceConnectionConstructorArgs = {
   device: HIDDevice;
@@ -15,11 +16,7 @@ type UsbHidDeviceConnectionConstructorArgs = {
   apduReceiver: ApduReceiverService;
 };
 
-export type SendApduFnType = (
-  apdu: Uint8Array,
-) => Promise<Either<SdkError, ApduResponse>>;
-
-export class UsbHidDeviceConnection {
+export class UsbHidDeviceConnection implements DeviceConnection {
   private readonly _device: HIDDevice;
   private readonly _apduSender: ApduSenderService;
   private readonly _apduReceiver: ApduReceiverService;
@@ -35,7 +32,7 @@ export class UsbHidDeviceConnection {
     this._apduSender = apduSender;
     this._apduReceiver = apduReceiver;
     this._sendApduSubject = new Subject();
-    this._device.addEventListener("inputreport", this.receiveApdu);
+    this._device.oninputreport = this.receiveHidInputReport;
     this._logger = loggerServiceFactory("UsbHidDeviceConnection");
   }
 
@@ -43,8 +40,33 @@ export class UsbHidDeviceConnection {
     return this._device;
   }
 
-  private receiveApdu = (event: HIDInputReportEvent) => {
+  sendApdu: SendApduFnType = async (apdu) => {
+    this._sendApduSubject = new Subject();
+
+    this._logger.info("Sending APDU", { data: { apdu } });
+    const frames = this._apduSender.getFrames(apdu);
+    for (const frame of frames) {
+      this._logger.info("Sending Frame", {
+        data: { frame: frame.getRawData() },
+      });
+      await this._device.sendReport(0, frame.getRawData());
+    }
+
+    return new Promise((resolve) => {
+      this._sendApduSubject.subscribe({
+        next: (r) => {
+          resolve(Right(r));
+        },
+        error: (err) => {
+          resolve(Left(err));
+        },
+      });
+    });
+  };
+
+  private receiveHidInputReport = (event: HIDInputReportEvent) => {
     const data = new Uint8Array(event.data.buffer);
+    this._logger.info("Received Frame", { data: { frame: data } });
     const response = this._apduReceiver.handleFrame(data);
     response.caseOf({
       Right: (maybeApduResponse) => {
@@ -56,29 +78,9 @@ export class UsbHidDeviceConnection {
           this._sendApduSubject.complete();
         });
       },
-      Left: (err: SdkError) => {
+      Left: (err) => {
         this._sendApduSubject.error(err);
       },
-    });
-  };
-
-  public sendApdu: SendApduFnType = async (apdu) => {
-    this._sendApduSubject = new Subject();
-
-    this._logger.info("Sending APDU", { data: { apdu } });
-    const frames = this._apduSender.getFrames(apdu);
-    for (const frame of frames) {
-      await this._device.sendReport(0, frame.getRawData());
-    }
-    return new Promise((resolve) => {
-      this._sendApduSubject.subscribe({
-        next: (r) => {
-          resolve(Right(r));
-        },
-        error: (err) => {
-          resolve(Left(err));
-        },
-      });
     });
   };
 }

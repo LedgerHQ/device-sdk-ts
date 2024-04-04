@@ -3,6 +3,7 @@ import { Either, Left } from "purify-ts";
 import { DeviceSessionNotFound } from "@internal/device-session/model/Errors";
 import { Session } from "@internal/device-session/model/Session";
 import { DefaultLoggerPublisherService } from "@internal/logger-publisher/service/DefaultLoggerPublisherService";
+import { connectedDeviceStubBuilder } from "@internal/usb/model/ConnectedDevice.stub";
 
 import { DefaultSessionService } from "./DefaultSessionService";
 
@@ -14,12 +15,9 @@ let session: Session;
 describe("DefaultSessionService", () => {
   beforeEach(() => {
     jest.restoreAllMocks();
-    session = {
-      id: "123",
-      sendApdu: jest.fn(),
-    };
+    session = new Session({ connectedDevice: connectedDeviceStubBuilder() });
     loggerService = new DefaultLoggerPublisherService([], "session");
-    sessionService = new DefaultSessionService(() => loggerService, []);
+    sessionService = new DefaultSessionService(() => loggerService);
   });
 
   it("should have an empty sessions list", () => {

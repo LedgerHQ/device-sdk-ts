@@ -1,6 +1,7 @@
 import { DeviceModelDataSource } from "@internal/device-model/data/DeviceModelDataSource";
 import { DefaultLoggerPublisherService } from "@internal/logger-publisher/service/DefaultLoggerPublisherService";
 import { LoggerPublisherService } from "@internal/logger-publisher/service/LoggerPublisherService";
+import { usbHidDeviceConnectionFactoryStubBuilder } from "@internal/usb/service/UsbHidDeviceConnectionFactory.stub";
 import { WebUsbHidTransport } from "@internal/usb/transport/WebUsbHidTransport";
 
 import { StopDiscoveringUseCase } from "./StopDiscoveringUseCase";
@@ -15,6 +16,7 @@ describe("StopDiscoveringUseCase", () => {
     transport = new WebUsbHidTransport(
       {} as DeviceModelDataSource,
       () => logger,
+      usbHidDeviceConnectionFactoryStubBuilder(),
     );
   });
 

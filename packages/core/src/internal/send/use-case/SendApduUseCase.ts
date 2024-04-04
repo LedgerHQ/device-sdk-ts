@@ -3,7 +3,7 @@ import { inject, injectable } from "inversify";
 import { deviceSessionTypes } from "@internal/device-session/di/deviceSessionTypes";
 import { ApduResponse } from "@internal/device-session/model/ApduResponse";
 import { SessionId } from "@internal/device-session/model/Session";
-import { DefaultSessionService } from "@internal/device-session/service/DefaultSessionService";
+import type { SessionService } from "@internal/device-session/service/SessionService";
 import { loggerTypes } from "@internal/logger-publisher/di/loggerTypes";
 import { LoggerPublisherService } from "@internal/logger-publisher/service/LoggerPublisherService";
 
@@ -17,12 +17,12 @@ export type SendApduUseCaseArgs = {
  */
 @injectable()
 export class SendApduUseCase {
-  private readonly _sessionService: DefaultSessionService;
+  private readonly _sessionService: SessionService;
   private readonly _logger: LoggerPublisherService;
 
   constructor(
     @inject(deviceSessionTypes.SessionService)
-    sessionService: DefaultSessionService,
+    sessionService: SessionService,
     @inject(loggerTypes.LoggerPublisherServiceFactory)
     loggerFactory: (tag: string) => LoggerPublisherService,
   ) {

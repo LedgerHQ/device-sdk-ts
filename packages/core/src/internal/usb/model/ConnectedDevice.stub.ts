@@ -4,7 +4,7 @@ import { deviceModelStubBuilder } from "@internal/device-model/model/DeviceModel
 import { defaultApduResponseStubBuilder } from "@internal/device-session/model/ApduResponse.stub";
 import { ConnectedDevice } from "@internal/usb/model/ConnectedDevice";
 
-export function connectedDeviceBuilder(
+export function connectedDeviceStubBuilder(
   id = "42",
   type: "USB" | "BLE" | "MOCK" = "USB",
 ): ConnectedDevice {
@@ -13,7 +13,8 @@ export function connectedDeviceBuilder(
     deviceModel,
     id,
     type,
-    sendApdu: async () =>
+    sendApdu: jest.fn(async () =>
       Promise.resolve(Right(defaultApduResponseStubBuilder())),
+    ),
   });
 }
