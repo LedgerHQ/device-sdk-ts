@@ -12,9 +12,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: ./actions/setup-toolchain-composite
+
+      - uses: ./.github/actions/setup-toolchain-composite
+
       - name: install dependencies
         run: pnpm install
+
       - name: create release pull request
         uses: changesets/action@v1
         with:

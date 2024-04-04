@@ -11,15 +11,19 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  auto-assign:
+    name: Auto assign
+    runs-on: [ubuntu-latest]
+    steps:
+      - uses: toshimaru/auto-author-assign@v2.1.0
+
   danger:
     name: Pass Danger check
     runs-on: [ubuntu-latest]
     steps:
       - uses: actions/checkout@v4
 
-      - uses: ./actions/setup-toolchain-composite
-
-      - uses: toshimaru/auto-author-assign@v2.1.0
+      - uses: ./.github/actions/setup-toolchain-composite
 
       - name: Danger
         env:
@@ -27,24 +31,28 @@ jobs:
           # Workaround when using custom runners
           # https://github.com/danger/danger-js/issues/1374
           DANGER_GITHUB_API_BASE_URL: "https://api.github.com"
-        run: pnpm danger ci --dangerfile danger/dangerfile.ts --failOnErrors
+        run: ./.github/actions/danger-check.sh
 
   health-check:
+    name: Pass health check
     needs: [danger]
     runs-on: [device-sdk-4xlarge-linux]
     steps:
       - uses: actions/checkout@v4
 
-      - uses: ./actions/setup-toolchain-composite
+      - uses: ./.github/actions/setup-toolchain-composite
 
-      - name: Lint
-        run: pnpm lint
+      - name: health check
+        run: pnpm health-check
 
-      - name: Prettier
-        run: pnpm prettier
+  unit-tests:
+    name: Launch unit tests
+    needs: [danger]
+    runs-on: [device-sdk-4xlarge-linux]
+    steps:
+      - uses: actions/checkout@v4
 
-      - name: Typecheck
-        run: pnpm typecheck
+      - uses: ./.github/actions/setup-toolchain-composite
 
       - name: Test
         run: pnpm test:coverage -- --max-warnings=0
