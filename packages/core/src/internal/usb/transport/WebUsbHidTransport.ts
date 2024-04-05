@@ -56,8 +56,8 @@ export class WebUsbHidTransport implements UsbHidTransport {
   }
 
   /**
-   import type { SendApduFnType } from "@internal/usb/transport/DeviceConnection";
-   * @returns `Either` an error if the WebHID API is not supported, or the WebHID API itself
+   * Get the WebHID API if supported or error
+   * @returns `Either<UsbHidTransportNotSupportedError, HID>`
    */
   private get hidApi(): Either<UsbHidTransportNotSupportedError, HID> {
     if (this.isSupported()) {

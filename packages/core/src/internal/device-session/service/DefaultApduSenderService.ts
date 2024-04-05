@@ -28,6 +28,11 @@ export type DefaultApduSenderServiceConstructorArgs = {
   padding?: boolean;
 };
 
+/**
+ * Default implementation of ApduSenderService
+ *
+ * Split APDU in an array of frames readies to send to a ConnectedDevice
+ */
 @injectable()
 export class DefaultApduSenderService implements ApduSenderService {
   protected _frameSize: number;
@@ -35,6 +40,14 @@ export class DefaultApduSenderService implements ApduSenderService {
   protected _padding: boolean;
   private _logger: LoggerPublisherService;
 
+  /**
+   * Constructor
+   *
+   * @param frameSize
+   * @param channel
+   * @param padding
+   * @param loggerServiceFactory
+   */
   constructor(
     {
       frameSize,
