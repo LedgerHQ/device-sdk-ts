@@ -48,8 +48,10 @@ export class DefaultApduReceiverService implements ApduReceiverService {
    *
    * @param Uint8Array
    */
-  public handleFrame(apdu: Uint8Array): Either<SdkError, Maybe<ApduResponse>> {
-    const frame = this.apduToFrame(apdu);
+  public handleFrame(
+    frameBytes: Uint8Array,
+  ): Either<SdkError, Maybe<ApduResponse>> {
+    const frame = this.getFrameFrom(frameBytes);
 
     return frame.map((value) => {
       this._logger.info("handle frame", {
@@ -106,14 +108,14 @@ export class DefaultApduReceiverService implements ApduReceiverService {
    *
    * @param Uint8Array
    */
-  private apduToFrame(apdu: Uint8Array): Either<ReceiverApduError, Frame> {
+  private getFrameFrom(rawApdu: Uint8Array): Either<ReceiverApduError, Frame> {
     const channelSize = this._channel.caseOf({
       Just: () => CHANNEL_LENGTH,
       Nothing: () => 0,
     });
 
-    const headTag = apdu.slice(channelSize, channelSize + HEAD_TAG_LENGTH);
-    const index = apdu.slice(
+    const headTag = rawApdu.slice(channelSize, channelSize + HEAD_TAG_LENGTH);
+    const index = rawApdu.slice(
       channelSize + HEAD_TAG_LENGTH,
       channelSize + HEAD_TAG_LENGTH + INDEX_LENGTH,
     );
@@ -128,18 +130,18 @@ export class DefaultApduReceiverService implements ApduReceiverService {
     const dataSizeLength = isFirstIndex ? APDU_DATA_LENGTH_LENGTH : 0;
 
     if (
-      apdu.length <
+      rawApdu.length <
       channelSize + HEAD_TAG_LENGTH + INDEX_LENGTH + dataSizeLength
     ) {
       return Left(new ReceiverApduError("Unable to parse header from apdu"));
     }
 
     const dataSize = isFirstIndex
-      ? Just(apdu.slice(dataSizeIndex, dataSizeIndex + dataSizeLength))
+      ? Just(rawApdu.slice(dataSizeIndex, dataSizeIndex + dataSizeLength))
       : Nothing;
 
     const dataIndex = dataSizeIndex + dataSizeLength;
-    const data = apdu.slice(dataIndex);
+    const data = rawApdu.slice(dataIndex);
 
     const frame = new Frame({
       header: new FrameHeader({
