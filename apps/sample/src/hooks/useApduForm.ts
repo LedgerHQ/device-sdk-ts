@@ -1,7 +1,7 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useState } from "react";
 
 type ApduFormValues = {
-  classInstruction: string;
+  instructionClass: string;
   instructionMethod: string;
   firstParameter: string;
   secondParameter: string;
@@ -11,40 +11,42 @@ type ApduFormValues = {
 
 export function useApduForm() {
   const [values, setValues] = useState<ApduFormValues>({
-    classInstruction: "e0",
+    instructionClass: "e0",
     instructionMethod: "01",
     firstParameter: "00",
     secondParameter: "00",
     dataLength: "00",
     data: "",
   });
-  const [apdu, setApdu] = useState<Uint8Array>(Uint8Array.from([]));
 
   const setValue = useCallback((field: keyof ApduFormValues, value: string) => {
     const newValues = { [field]: value };
     if (field === "data") {
-      newValues.dataLength = value.length.toString(16);
+      newValues.dataLength = Math.floor(value.length / 2).toString(16);
     }
     setValues((prev) => ({ ...prev, ...newValues }));
   }, []);
 
-  useEffect(() => {
-    const newApdu = Object.values(values).reduce(
-      (acc, curr) => [
-        ...acc,
-        ...chunkString(curr.replace(/\s/g, ""))
-          .map((char) => Number(`0x${char}`))
-          .filter((nbr) => !Number.isNaN(nbr)),
-      ],
-      [] as number[],
-    );
-    setApdu(Uint8Array.from(newApdu));
-  }, [values]);
+  const getRawApdu = useCallback(
+    (formValues: ApduFormValues): Uint8Array =>
+      new Uint8Array(
+        Object.values(formValues).reduce(
+          (acc, curr) => [
+            ...acc,
+            ...chunkString(curr.replace(/\s/g, ""))
+              .map((char) => Number(`0x${char}`))
+              .filter((nbr) => !Number.isNaN(nbr)),
+          ],
+          [] as number[],
+        ),
+      ),
+    [],
+  );
 
   return {
     apduFormValues: values,
     setApduFormValue: setValue,
-    apdu,
+    getRawApdu,
   };
 }
 

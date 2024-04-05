@@ -57,20 +57,27 @@ const InputContainer = styled(Flex).attrs({ mx: 8, mb: 4 })`
 const inputContainerProps = { style: { borderRadius: 4 } };
 
 export const ApduView: React.FC = () => {
-  const { apduFormValues, setApduFormValue, apdu } = useApduForm();
+  const { apduFormValues, setApduFormValue, getRawApdu } = useApduForm();
   const [loading, setLoading] = useState(false);
   const sdk = useSdk();
   const {
-    state: { selected: selectedSessionId },
+    state: { selectedId: selectedSessionId },
   } = useSessionContext();
-  const onSubmit = useCallback(async () => {
-    setLoading(true);
-    await sdk.sendApdu({
-      sessionId: selectedSessionId!,
-      apdu,
-    });
-    setLoading(false);
-  }, [apdu, sdk, selectedSessionId]);
+  const onSubmit = useCallback(
+    async (values: typeof apduFormValues) => {
+      setLoading(true);
+      try {
+        await sdk.sendApdu({
+          sessionId: selectedSessionId!,
+          apdu: getRawApdu(values),
+        });
+        setLoading(false);
+      } catch (error) {
+        setLoading(false);
+      }
+    },
+    [getRawApdu, sdk, selectedSessionId],
+  );
   return (
     <Root>
       <FormContainer>
@@ -85,11 +92,11 @@ export const ApduView: React.FC = () => {
                 Class instruction
               </Text>
               <Input
-                name="instruction"
+                name="instructionClass"
                 containerProps={inputContainerProps}
-                value={apduFormValues.classInstruction}
+                value={apduFormValues.instructionClass}
                 onChange={(value) =>
-                  setApduFormValue("classInstruction", value)
+                  setApduFormValue("instructionClass", value)
                 }
               />
             </InputContainer>
@@ -156,7 +163,10 @@ export const ApduView: React.FC = () => {
         </Form>
         <Divider my={4} />
         <FormFooter my={8}>
-          <FormFooterButton onClick={onSubmit} disabled={loading}>
+          <FormFooterButton
+            onClick={() => onSubmit(apduFormValues)}
+            disabled={loading}
+          >
             <Text color="neutral.c00">Send APDU</Text>
           </FormFooterButton>
         </FormFooter>
