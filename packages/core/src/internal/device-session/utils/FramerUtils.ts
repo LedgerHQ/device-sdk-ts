@@ -5,7 +5,7 @@ export const FramerUtils = {
    * @param Uint8Array
    */
   getLastBytesFrom(array: Uint8Array, size: number): Uint8Array {
-    return new Uint8Array(array.slice(-size));
+    return array.slice(-size);
   },
 
   /*
@@ -14,7 +14,7 @@ export const FramerUtils = {
    * @param Uint8Array
    */
   getFirstBytesFrom(array: Uint8Array, size: number): Uint8Array {
-    return new Uint8Array(array.slice(0, size));
+    return array.slice(0, size);
   },
 
   /*
@@ -28,5 +28,17 @@ export const FramerUtils = {
         acc + val * Math.pow(0x100, array.length - 1 - index),
       0,
     );
+  },
+
+  /*
+   *  Get bytes Uint8Array from number
+   *
+   * @param number
+   * @param size
+   */
+  numberToByteArray(number: number, size: number): Uint8Array {
+    return new Uint8Array(size).map((_el, index) => {
+      return (number >> (8 * (size - 1 - index))) & 0xff;
+    });
   },
 };

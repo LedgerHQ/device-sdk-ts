@@ -131,14 +131,14 @@ export class DefaultApduSenderService implements ApduSenderService {
         FramerUtils.getLastBytesFrom(channel, CHANNEL_LENGTH),
       ),
       headTag: new Uint8Array([HEAD_TAG]),
-      index: new Uint8Array([Math.floor(frameIndex / 0xff), frameIndex & 0xff]),
+      index: FramerUtils.numberToByteArray(frameIndex, INDEX_LENGTH),
       length: this.getFrameHeaderSizeFromIndex(frameIndex),
       dataSize: Maybe.zero(),
     });
     if (frameIndex === 0) {
       header.setDataSize(
         Maybe.of(
-          new Uint8Array([Math.floor(apduSize / 0xff), apduSize & 0xff]),
+          FramerUtils.numberToByteArray(apduSize, APDU_DATA_LENGTH_LENGTH),
         ),
       );
     }

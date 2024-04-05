@@ -1,11 +1,13 @@
 import { inject, injectable } from "inversify";
 import { Maybe } from "purify-ts";
 
+import { CHANNEL_LENGTH } from "@internal/device-session/data/FramerConst";
 import { deviceSessionTypes } from "@internal/device-session/di/deviceSessionTypes";
 import { ApduReceiverService } from "@internal/device-session/service/ApduReceiverService";
 import { ApduSenderService } from "@internal/device-session/service/ApduSenderService";
 import { DefaultApduReceiverConstructorArgs } from "@internal/device-session/service/DefaultApduReceiverService";
 import { DefaultApduSenderServiceConstructorArgs } from "@internal/device-session/service/DefaultApduSenderService";
+import { FramerUtils } from "@internal/device-session/utils/FramerUtils";
 import { loggerTypes } from "@internal/logger-publisher/di/loggerTypes";
 import { LoggerPublisherService } from "@internal/logger-publisher/service/LoggerPublisherService";
 import { FRAME_SIZE } from "@internal/usb/data/UsbHidConfig";
@@ -13,7 +15,7 @@ import { UsbHidDeviceConnection } from "@internal/usb/transport/UsbHidDeviceConn
 
 @injectable()
 export class UsbHidDeviceConnectionFactory {
-  randomChannel = Math.random() * 0x1000;
+  randomChannel = Math.floor(Math.random() * 0xffff);
 
   constructor(
     @inject(deviceSessionTypes.ApduSenderServiceFactory)
@@ -31,7 +33,7 @@ export class UsbHidDeviceConnectionFactory {
   public create(
     device: HIDDevice,
     channel = Maybe.of(
-      new Uint8Array([this.randomChannel / 0xff, this.randomChannel & 0xff]),
+      FramerUtils.numberToByteArray(this.randomChannel, CHANNEL_LENGTH),
     ),
   ): UsbHidDeviceConnection {
     return new UsbHidDeviceConnection(

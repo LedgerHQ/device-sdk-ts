@@ -79,4 +79,34 @@ describe("FramerUtils", () => {
       expect(result).toEqual(0);
     });
   });
+
+  describe("numberToByteArray", () => {
+    it("should return a correct Uint8Array", () => {
+      // Arrange
+      const number = 26505;
+      const size = 2;
+      // Act
+      const result = FramerUtils.numberToByteArray(number, size);
+      // Assert
+      expect(result).toEqual(new Uint8Array([0x67, 0x89]));
+    });
+    it("should return a filled Uint8Array when number is 0 and size is 2", () => {
+      // Arrange
+      const number = 0;
+      const size = 2;
+      // Act
+      const result = FramerUtils.numberToByteArray(number, size);
+      // Assert
+      expect(result).toEqual(new Uint8Array([0, 0]));
+    });
+    it("should return an empty Uint8Array when number is 42 and size is 0", () => {
+      // Arrange
+      const number = 42;
+      const size = 0;
+      // Act
+      const result = FramerUtils.numberToByteArray(number, size);
+      // Assert
+      expect(result).toEqual(new Uint8Array([]));
+    });
+  });
 });
