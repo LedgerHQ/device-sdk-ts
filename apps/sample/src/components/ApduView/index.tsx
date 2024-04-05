@@ -1,10 +1,10 @@
-import { useCallback, useState } from "react";
+import React, { useCallback, useState } from "react";
 import { Button, Divider, Flex, Grid, Input, Text } from "@ledgerhq/react-ui";
 import styled, { DefaultTheme } from "styled-components";
 
 import { useApduForm } from "@/hooks/useApduForm";
 import { useSdk } from "@/providers/DeviceSdkProvider";
-import { useSessionContext } from "@/reducers/sessions";
+import { useSessionContext } from "@/providers/SessionsProvider";
 
 const Root = styled(Flex).attrs({ mx: 15, mt: 10, mb: 5 })`
   flex-direction: column;

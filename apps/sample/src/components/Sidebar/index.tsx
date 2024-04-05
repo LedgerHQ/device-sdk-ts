@@ -7,7 +7,7 @@ import styled, { DefaultTheme } from "styled-components";
 import { Device } from "@/components/Device";
 import { Menu } from "@/components/Menu";
 import { useSdk } from "@/providers/DeviceSdkProvider";
-import { useSessionContext } from "@/reducers/sessions";
+import { useSessionContext } from "@/providers/SessionsProvider";
 
 const Root = styled(Flex).attrs({ py: 8, px: 6 })`
   flex-direction: column;
@@ -44,7 +44,7 @@ export const Sidebar: React.FC = () => {
   const [version, setVersion] = useState("");
   const sdk = useSdk();
   const {
-    state: { devicesMap },
+    state: { deviceById },
   } = useSessionContext();
 
   useEffect(() => {
@@ -76,7 +76,7 @@ export const Sidebar: React.FC = () => {
 
       <Subtitle variant={"tiny"}>Device</Subtitle>
 
-      {Object.entries(devicesMap).map(([sessionId, device]) => (
+      {Object.entries(deviceById).map(([sessionId, device]) => (
         <Device
           key={sessionId}
           name={device.deviceName}

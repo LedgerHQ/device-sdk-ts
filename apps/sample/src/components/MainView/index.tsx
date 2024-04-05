@@ -5,7 +5,7 @@ import Image from "next/image";
 import styled, { DefaultTheme } from "styled-components";
 
 import { useSdk } from "@/providers/DeviceSdkProvider";
-import { useSessionContext } from "@/reducers/sessions";
+import { useSessionContext } from "@/providers/SessionsProvider";
 
 const Root = styled(Flex)`
   flex: 1;

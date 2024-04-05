@@ -10,13 +10,13 @@
 "use client";
 
 import React from "react";
-import { Flex, Icons, StyleProvider } from "@ledgerhq/react-ui";
+import { Flex, StyleProvider } from "@ledgerhq/react-ui";
 import styled, { DefaultTheme } from "styled-components";
 
 import { Header } from "@/components/Header";
 import { Sidebar } from "@/components/Sidebar";
 import { SdkProvider } from "@/providers/DeviceSdkProvider";
-import { SessionProvider } from "@/reducers/sessions";
+import { SessionProvider } from "@/providers/SessionsProvider";
 import { GlobalStyle } from "@/styles/globalstyles";
 
 type ClientRootLayoutProps = {
