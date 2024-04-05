@@ -1,5 +1,14 @@
 const path = require("path");
 
+/**
+ * Alias Plugin for Esbuild (copied from Ledger Live)
+ *
+ * Replace a string by another string in the import path, should match the same
+ * config as the tsconfig.json paths.
+ * @param {*} mappings
+ * @example { "@root": path.join(__dirname, "..") } will replace root by the specicified path
+ * @returns void
+ */
 module.exports = (mappings) => ({
   name: "Alias",
   setup(build) {
