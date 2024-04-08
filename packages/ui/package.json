@@ -2,13 +2,20 @@
   "name": "@ledgerhq/device-sdk-ui",
   "version": "1.0.0",
   "license": "MIT",
-  "main": "lib/index.js",
-  "types": "lib/index.d.ts",
+  "main": "lib/cjs/index.js",
+  "types": "lib/cjs/index.d.ts",
+  "private": true,
+  "exports": {
+    ".": {
+      "require": "./lib/cjs/index.js",
+      "import": "./lib/esm/index.js"
+    }
+  },
   "files": [
     "./lib"
   ],
   "scripts": {
-    "build": "rimraf lib && tsc",
+    "build": "rimraf lib && zx scripts/build.mjs",
     "dev": "tsc --watch",
     "lint": "eslint --cache --ext .ts \"src\"",
     "lint:fix": "eslint --cache --fix --ext .ts \"src\"",
@@ -23,6 +30,7 @@
     "reflect-metadata": "^0.2.1"
   },
   "devDependencies": {
+    "@ledgerhq/esbuild-tools": "workspace:*",
     "@ledgerhq/tsconfig-dsdk": "workspace:*",
     "@ledgerhq/eslint-config-dsdk": "workspace:*",
     "@ledgerhq/jest-config-dsdk": "workspace:*",

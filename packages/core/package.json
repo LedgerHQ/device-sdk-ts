@@ -2,13 +2,17 @@
   "name": "@ledgerhq/device-sdk-core",
   "version": "0.0.1",
   "license": "MIT",
-  "main": "lib/index.js",
-  "types": "lib/index.d.ts",
+  "exports": {
+    ".": {
+      "require": "./lib/cjs/index.js",
+      "import": "./lib/esm/index.js"
+    }
+  },
   "files": [
     "./lib"
   ],
   "scripts": {
-    "build": "rimraf lib && tsc -p tsconfig.prod.json && tsc-alias -p tsconfig.prod.json",
+    "build": "rimraf lib && zx scripts/build.mjs",
     "dev": "tsc && (concurrently \"tsc -w -p tsconfig.prod.json\" \"tsc-alias -w -p tsconfig.prod.json\")",
     "lint": "eslint --cache --ext .ts \"src\"",
     "lint:fix": "eslint --cache --fix --ext .ts \"src\"",
@@ -31,6 +35,7 @@
     "uuid": "^9.0.1"
   },
   "devDependencies": {
+    "@ledgerhq/esbuild-tools": "workspace:*",
     "@ledgerhq/eslint-config-dsdk": "workspace:*",
     "@ledgerhq/jest-config-dsdk": "workspace:*",
     "@ledgerhq/prettier-config-dsdk": "workspace:*",
@@ -38,8 +43,6 @@
     "@types/semver": "^7.5.6",
     "@types/uuid": "^9.0.8",
     "@types/w3c-web-hid": "^1.0.6",
-    "concurrently": "^8.2.2",
-    "ts-node": "^10.9.2",
-    "tsc-alias": "^1.8.8"
+    "ts-node": "^10.9.2"
   }
 }
