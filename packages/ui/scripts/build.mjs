@@ -2,15 +2,13 @@
 import { build } from "esbuild";
 import { /* alias, */ buildConfig } from "@ledgerhq/esbuild-tools";
 import dtsPlugin from "esbuild-plugin-d.ts";
+import pkg from "../package.json" assert { type: "json" };
 
 const root = path.join(__dirname, "..");
 const srcRoot = path.join(root, "src");
 const outdir = path.join(root, "lib");
 const tsconfigEsm = path.join(root, "tsconfig.esm.json");
 const tsconfigCjs = path.join(root, "tsconfig.cjs.json");
-
-const pkg = fs.readFileSync(path.join(root, "package.json"), "utf-8");
-const packageJson = JSON.parse(pkg);
 
 const conf = {
   entryPoints: [path.join(srcRoot, "index.ts")],
@@ -24,7 +22,7 @@ const conf = {
   ],
 };
 
-const common = buildConfig(conf, packageJson);
+const common = buildConfig(conf, pkg);
 
 const buildEsm = async () => {
   const config = {
