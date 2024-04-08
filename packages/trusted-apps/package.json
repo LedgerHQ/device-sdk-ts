@@ -17,7 +17,7 @@
   "scripts": {
     "build": "rimraf lib && zx scripts/build.mjs",
     "lint": "eslint --cache --ext .ts \"src\"",
-    "lint:fix": "eslint --cache --fix --ext .ts \"src\"",
+    "lint:fix": "pnpm lint --fix",
     "prettier": "prettier . --check",
     "prettier:fix": "prettier . --write",
     "typecheck": "tsc --noEmit",
@@ -27,13 +27,13 @@
   },
   "dependencies": {
     "inversify": "^6.0.2",
-    "reflect-metadata": "^0.2.1"
+    "reflect-metadata": "^0.2.2"
   },
   "devDependencies": {
     "@ledgerhq/esbuild-tools": "workspace:*",
-    "@ledgerhq/tsconfig-dsdk": "workspace:*",
     "@ledgerhq/eslint-config-dsdk": "workspace:*",
     "@ledgerhq/jest-config-dsdk": "workspace:*",
-    "@ledgerhq/prettier-config-dsdk": "workspace:*"
+    "@ledgerhq/prettier-config-dsdk": "workspace:*",
+    "@ledgerhq/tsconfig-dsdk": "workspace:*"
   }
 }

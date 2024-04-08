@@ -7,5 +7,4 @@ const Home: React.FC = () => {
   return <MainView />;
 };
 
-// eslint-disable-next-line no-restricted-syntax
 export default Home;

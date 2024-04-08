@@ -14,8 +14,8 @@
   },
   "dependencies": {
     "@ledgerhq/device-sdk-core": "workspace:*",
-    "@ledgerhq/react-ui": "^0.14.13",
-    "@sentry/nextjs": "^7.105.0",
+    "@ledgerhq/react-ui": "^0.14.16",
+    "@sentry/nextjs": "^7.109.0",
     "next": "14.0.4",
     "react": "^18",
     "react-dom": "^18",
@@ -25,10 +25,10 @@
     "@ledgerhq/eslint-config-dsdk": "workspace:*",
     "@ledgerhq/prettier-config-dsdk": "workspace:*",
     "@ledgerhq/tsconfig-dsdk": "workspace:*",
-    "@types/react": "^18",
+    "@types/react": "^18.2.74",
     "@types/styled-components": "^5.1.25",
-    "autoprefixer": "^10.0.1",
+    "autoprefixer": "^10.4.19",
     "eslint-config-next": "14.0.4",
-    "postcss": "^8"
+    "postcss": "^8.4.38"
   }
 }
