@@ -4,6 +4,7 @@
   "license": "MIT",
   "main": "lib/cjs/index.js",
   "types": "lib/cjs/index.d.ts",
+  "private": true,
   "exports": {
     ".": {
       "require": "./lib/cjs/index.js",
