@@ -1,5 +1,0 @@
-{
-  "name": "@ledgerhq/esbuild-tools",
-  "main": "index.js",
-  "private": true
-}
