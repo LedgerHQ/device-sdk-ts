@@ -11,7 +11,6 @@ import { loggerTypes } from "@internal/logger-publisher/di/loggerTypes";
 import type { LoggerPublisherService } from "@internal/logger-publisher/service/LoggerPublisherService";
 import { LEDGER_VENDOR_ID } from "@internal/usb/data/UsbHidConfig";
 import { usbDiTypes } from "@internal/usb/di/usbDiTypes";
-import { ConnectedDevice } from "@internal/usb/model/ConnectedDevice";
 import { DiscoveredDevice } from "@internal/usb/model/DiscoveredDevice";
 import {
   ConnectError,
@@ -22,6 +21,7 @@ import {
   UnknownDeviceError,
   UsbHidTransportNotSupportedError,
 } from "@internal/usb/model/Errors";
+import { InternalConnectedDevice } from "@internal/usb/model/InternalConnectedDevice";
 import { UsbHidDeviceConnectionFactory } from "@internal/usb/service/UsbHidDeviceConnectionFactory";
 
 import { UsbHidTransport } from "./UsbHidTransport";
@@ -263,7 +263,7 @@ export class WebUsbHidTransport implements UsbHidTransport {
     deviceId,
   }: {
     deviceId: DeviceId;
-  }): Promise<Either<ConnectError, ConnectedDevice>> {
+  }): Promise<Either<ConnectError, InternalConnectedDevice>> {
     this._logger.debug("connect", { data: { deviceId } });
 
     const internalDevice = this._internalDevicesById.get(deviceId);
@@ -297,7 +297,7 @@ export class WebUsbHidTransport implements UsbHidTransport {
     const deviceConnection = this._usbHidDeviceConnectionFactory.create(
       internalDevice.hidDevice,
     );
-    const connectedDevice = new ConnectedDevice({
+    const connectedDevice = new InternalConnectedDevice({
       sendApdu: deviceConnection.sendApdu,
       deviceModel,
       id: deviceId,

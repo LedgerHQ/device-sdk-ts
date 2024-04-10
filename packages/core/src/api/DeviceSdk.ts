@@ -1,6 +1,7 @@
 import { Container } from "inversify";
 import { Observable } from "rxjs";
 
+import { ConnectedDevice } from "@api/usb/model/ConnectedDevice";
 import { configTypes } from "@internal/config/di/configTypes";
 import { GetSdkVersionUseCase } from "@internal/config/use-case/GetSdkVersionUseCase";
 import { ApduResponse } from "@internal/device-session/model/ApduResponse";
@@ -18,7 +19,6 @@ import {
   SendApduUseCaseArgs,
 } from "@internal/send/use-case/SendApduUseCase";
 import { usbDiTypes } from "@internal/usb/di/usbDiTypes";
-import { ConnectedDevice } from "@internal/usb/model/ConnectedDevice";
 import { DiscoveredDevice } from "@internal/usb/model/DiscoveredDevice";
 import {
   GetConnectedDeviceUseCase,

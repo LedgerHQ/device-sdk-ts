@@ -34,16 +34,16 @@ export class SendApduUseCase {
     sessionId,
     apdu,
   }: SendApduUseCaseArgs): Promise<ApduResponse> {
-    const deviceSession = this._sessionService.getSession(sessionId);
+    const deviceSession = this._sessionService.getSessionById(sessionId);
 
     return deviceSession.caseOf({
+      // Case device session found
       Right: async (session) => {
         const response = await session.sendApdu(apdu);
         return response.caseOf({
-          Right: (data) => {
-            this._logger.info("APDU sent", { data: { sessionId, apdu } });
-            return data;
-          },
+          // Case APDU sent and response received successfully
+          Right: (data) => data,
+          // Case error sending or receiving APDU
           Left: (error) => {
             this._logger.error("Error sending APDU", {
               data: { sessionId, apdu, error },
@@ -52,6 +52,7 @@ export class SendApduUseCase {
           },
         });
       },
+      // Case device session not found
       Left: (error) => {
         this._logger.error("Error getting session", {
           data: { error },

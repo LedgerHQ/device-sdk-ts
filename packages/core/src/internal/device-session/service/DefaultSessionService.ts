@@ -44,7 +44,7 @@ export class DefaultSessionService implements SessionService {
     return this;
   }
 
-  getSession(sessionId: string) {
+  getSessionById(sessionId: string) {
     const session = Maybe.fromNullable(
       this._sessions.find((s) => s.id === sessionId),
     );

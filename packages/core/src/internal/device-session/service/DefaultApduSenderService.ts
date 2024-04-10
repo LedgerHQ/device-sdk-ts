@@ -31,7 +31,7 @@ export type DefaultApduSenderServiceConstructorArgs = {
 /**
  * Default implementation of ApduSenderService
  *
- * Split APDU in an array of frames readies to send to a ConnectedDevice
+ * Split APDU in an array of frames readies to send to a InternalConnectedDevice
  */
 @injectable()
 export class DefaultApduSenderService implements ApduSenderService {

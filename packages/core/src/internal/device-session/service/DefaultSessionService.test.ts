@@ -3,7 +3,7 @@ import { Either, Left } from "purify-ts";
 import { DeviceSessionNotFound } from "@internal/device-session/model/Errors";
 import { Session } from "@internal/device-session/model/Session";
 import { DefaultLoggerPublisherService } from "@internal/logger-publisher/service/DefaultLoggerPublisherService";
-import { connectedDeviceStubBuilder } from "@internal/usb/model/ConnectedDevice.stub";
+import { connectedDeviceStubBuilder } from "@internal/usb/model/InternalConnectedDevice.stub";
 
 import { DefaultSessionService } from "./DefaultSessionService";
 
@@ -48,11 +48,13 @@ describe("DefaultSessionService", () => {
 
   it("should get a session", () => {
     sessionService.addSession(session);
-    expect(sessionService.getSession(session.id)).toEqual(Either.of(session));
+    expect(sessionService.getSessionById(session.id)).toEqual(
+      Either.of(session),
+    );
   });
 
   it("should not get a session if it does not exist", () => {
-    expect(sessionService.getSession(session.id)).toEqual(
+    expect(sessionService.getSessionById(session.id)).toEqual(
       Left(new DeviceSessionNotFound()),
     );
   });

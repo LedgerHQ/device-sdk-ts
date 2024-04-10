@@ -2,7 +2,6 @@ import { inject, injectable } from "inversify";
 import { Either, Just, Left, Maybe, Nothing, Right } from "purify-ts";
 import { v4 } from "uuid";
 
-import { SdkError } from "@api/Error";
 import { APDU_RESPONSE_STATUS_CODE_LENGTH } from "@internal/device-session/data/ApduResponseConst";
 import {
   APDU_DATA_LENGTH_LENGTH,
@@ -50,8 +49,8 @@ export class DefaultApduReceiverService implements ApduReceiverService {
    */
   public handleFrame(
     frameBytes: Uint8Array,
-  ): Either<SdkError, Maybe<ApduResponse>> {
-    const frame = this.getFrameFrom(frameBytes);
+  ): Either<ReceiverApduError, Maybe<ApduResponse>> {
+    const frame = this.getFrameFromBytes(frameBytes);
 
     return frame.map((value) => {
       this._logger.info("handle frame", {
@@ -108,14 +107,16 @@ export class DefaultApduReceiverService implements ApduReceiverService {
    *
    * @param Uint8Array
    */
-  private getFrameFrom(rawApdu: Uint8Array): Either<ReceiverApduError, Frame> {
+  private getFrameFromBytes(
+    rawFrame: Uint8Array,
+  ): Either<ReceiverApduError, Frame> {
     const channelSize = this._channel.caseOf({
       Just: () => CHANNEL_LENGTH,
       Nothing: () => 0,
     });
 
-    const headTag = rawApdu.slice(channelSize, channelSize + HEAD_TAG_LENGTH);
-    const index = rawApdu.slice(
+    const headTag = rawFrame.slice(channelSize, channelSize + HEAD_TAG_LENGTH);
+    const index = rawFrame.slice(
       channelSize + HEAD_TAG_LENGTH,
       channelSize + HEAD_TAG_LENGTH + INDEX_LENGTH,
     );
@@ -130,18 +131,18 @@ export class DefaultApduReceiverService implements ApduReceiverService {
     const dataSizeLength = isFirstIndex ? APDU_DATA_LENGTH_LENGTH : 0;
 
     if (
-      rawApdu.length <
+      rawFrame.length <
       channelSize + HEAD_TAG_LENGTH + INDEX_LENGTH + dataSizeLength
     ) {
       return Left(new ReceiverApduError("Unable to parse header from apdu"));
     }
 
     const dataSize = isFirstIndex
-      ? Just(rawApdu.slice(dataSizeIndex, dataSizeIndex + dataSizeLength))
+      ? Just(rawFrame.slice(dataSizeIndex, dataSizeIndex + dataSizeLength))
       : Nothing;
 
     const dataIndex = dataSizeIndex + dataSizeLength;
-    const data = rawApdu.slice(dataIndex);
+    const data = rawFrame.slice(dataIndex);
 
     const frame = new Frame({
       header: new FrameHeader({

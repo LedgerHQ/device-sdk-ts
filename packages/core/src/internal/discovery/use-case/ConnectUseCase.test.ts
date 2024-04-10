@@ -7,8 +7,8 @@ import { DefaultSessionService } from "@internal/device-session/service/DefaultS
 import { SessionService } from "@internal/device-session/service/SessionService";
 import { DefaultLoggerPublisherService } from "@internal/logger-publisher/service/DefaultLoggerPublisherService";
 import { LoggerPublisherService } from "@internal/logger-publisher/service/LoggerPublisherService";
-import { connectedDeviceStubBuilder } from "@internal/usb/model/ConnectedDevice.stub";
 import { UnknownDeviceError } from "@internal/usb/model/Errors";
+import { connectedDeviceStubBuilder } from "@internal/usb/model/InternalConnectedDevice.stub";
 import { usbHidDeviceConnectionFactoryStubBuilder } from "@internal/usb/service/UsbHidDeviceConnectionFactory.stub";
 import { WebUsbHidTransport } from "@internal/usb/transport/WebUsbHidTransport";
 
@@ -17,10 +17,10 @@ import { ConnectUseCase } from "./ConnectUseCase";
 let transport: WebUsbHidTransport;
 let logger: LoggerPublisherService;
 let sessionService: SessionService;
-const fakeSessionId = "42";
+const fakeSessionId = "fakeSessionId";
 
 describe("ConnectUseCase", () => {
-  const stubConnectedDevice = connectedDeviceStubBuilder("1");
+  const stubConnectedDevice = connectedDeviceStubBuilder({ id: "1" });
   const tag = "logger-tag";
 
   beforeAll(() => {
@@ -57,7 +57,7 @@ describe("ConnectUseCase", () => {
 
     const usecase = new ConnectUseCase(transport, sessionService, () => logger);
 
-    const connectedDevice = await usecase.execute({ deviceId: "" });
-    expect(connectedDevice).toBe(fakeSessionId);
+    const sessionId = await usecase.execute({ deviceId: "" });
+    expect(sessionId).toBe(fakeSessionId);
   });
 });
