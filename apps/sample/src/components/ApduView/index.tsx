@@ -1,7 +1,10 @@
+import React, { useCallback, useState } from "react";
 import { Button, Divider, Flex, Grid, Input, Text } from "@ledgerhq/react-ui";
 import styled, { DefaultTheme } from "styled-components";
 
 import { useApduForm } from "@/hooks/useApduForm";
+import { useSdk } from "@/providers/DeviceSdkProvider";
+import { useSessionContext } from "@/providers/SessionsProvider";
 
 const Root = styled(Flex).attrs({ mx: 15, mt: 10, mb: 5 })`
   flex-direction: column;
@@ -54,7 +57,27 @@ const InputContainer = styled(Flex).attrs({ mx: 8, mb: 4 })`
 const inputContainerProps = { style: { borderRadius: 4 } };
 
 export const ApduView: React.FC = () => {
-  const { apduFormValues, setApduFormValue, apdu } = useApduForm();
+  const { apduFormValues, setApduFormValue, getRawApdu } = useApduForm();
+  const [loading, setLoading] = useState(false);
+  const sdk = useSdk();
+  const {
+    state: { selectedId: selectedSessionId },
+  } = useSessionContext();
+  const onSubmit = useCallback(
+    async (values: typeof apduFormValues) => {
+      setLoading(true);
+      try {
+        await sdk.sendApdu({
+          sessionId: selectedSessionId!,
+          apdu: getRawApdu(values),
+        });
+        setLoading(false);
+      } catch (error) {
+        setLoading(false);
+      }
+    },
+    [getRawApdu, sdk, selectedSessionId],
+  );
   return (
     <Root>
       <FormContainer>
@@ -69,11 +92,11 @@ export const ApduView: React.FC = () => {
                 Class instruction
               </Text>
               <Input
-                name="instruction"
+                name="instructionClass"
                 containerProps={inputContainerProps}
-                value={apduFormValues.classInstruction}
+                value={apduFormValues.instructionClass}
                 onChange={(value) =>
-                  setApduFormValue("classInstruction", value)
+                  setApduFormValue("instructionClass", value)
                 }
               />
             </InputContainer>
@@ -118,6 +141,7 @@ export const ApduView: React.FC = () => {
               </Text>
               <Input
                 name="data"
+                placeholder="<NO DATA>"
                 containerProps={inputContainerProps}
                 value={apduFormValues.data}
                 onChange={(value) => setApduFormValue("data", value)}
@@ -129,6 +153,7 @@ export const ApduView: React.FC = () => {
               </Text>
               <Input
                 name="dataLength"
+                disabled
                 containerProps={inputContainerProps}
                 value={apduFormValues.dataLength}
                 onChange={(value) => setApduFormValue("dataLength", value)}
@@ -138,7 +163,10 @@ export const ApduView: React.FC = () => {
         </Form>
         <Divider my={4} />
         <FormFooter my={8}>
-          <FormFooterButton onClick={() => console.log(apdu)}>
+          <FormFooterButton
+            onClick={() => onSubmit(apduFormValues)}
+            disabled={loading}
+          >
             <Text color="neutral.c00">Send APDU</Text>
           </FormFooterButton>
         </FormFooter>

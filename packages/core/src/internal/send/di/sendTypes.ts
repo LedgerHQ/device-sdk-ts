@@ -1,3 +1,3 @@
 export const sendTypes = {
-  SendService: Symbol.for("SendService"),
+  SendApduUseCase: Symbol.for("SendApduUseCase"),
 };

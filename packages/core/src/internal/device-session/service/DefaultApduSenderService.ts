@@ -20,27 +20,40 @@ import { loggerTypes } from "@internal/logger-publisher/di/loggerTypes";
 import { LoggerPublisherService } from "@internal/logger-publisher/service/LoggerPublisherService";
 import { SdkError } from "@root/src/api/Error";
 
-import type { FramerService } from "./FramerService";
+import type { ApduSenderService } from "./ApduSenderService";
 
-export type DefaultFramerServiceConstructorArgs = {
+export type DefaultApduSenderServiceConstructorArgs = {
   frameSize: number;
   channel?: Maybe<Uint8Array>;
   padding?: boolean;
 };
 
+/**
+ * Default implementation of ApduSenderService
+ *
+ * Split APDU in an array of frames readies to send to a InternalConnectedDevice
+ */
 @injectable()
-export class DefaultFramerService implements FramerService {
+export class DefaultApduSenderService implements ApduSenderService {
   protected _frameSize: number;
   protected _channel: Maybe<Uint8Array>;
   protected _padding: boolean;
   private _logger: LoggerPublisherService;
 
+  /**
+   * Constructor
+   *
+   * @param frameSize
+   * @param channel
+   * @param padding
+   * @param loggerServiceFactory
+   */
   constructor(
     {
       frameSize,
       channel = Maybe.zero(),
       padding = false,
-    }: DefaultFramerServiceConstructorArgs,
+    }: DefaultApduSenderServiceConstructorArgs,
 
     @inject(loggerTypes.LoggerPublisherServiceFactory)
     loggerServiceFactory: (tag: string) => LoggerPublisherService,
@@ -66,7 +79,7 @@ export class DefaultFramerService implements FramerService {
       count += 1;
       frame = this.getFrameAtIndex(apdu, count).mapLeft((error) => {
         if (error instanceof FramerOverflowError) {
-          this._logger.debug("Frames parsed", { data: { count } });
+          this._logger.info("Frames parsed", { data: { count } });
         } else {
           this._logger.error("Error while parsing frame", { data: { error } });
         }
@@ -131,14 +144,14 @@ export class DefaultFramerService implements FramerService {
         FramerUtils.getLastBytesFrom(channel, CHANNEL_LENGTH),
       ),
       headTag: new Uint8Array([HEAD_TAG]),
-      index: new Uint8Array([Math.floor(frameIndex / 0xff), frameIndex & 0xff]),
+      index: FramerUtils.numberToByteArray(frameIndex, INDEX_LENGTH),
       length: this.getFrameHeaderSizeFromIndex(frameIndex),
       dataSize: Maybe.zero(),
     });
     if (frameIndex === 0) {
       header.setDataSize(
         Maybe.of(
-          new Uint8Array([Math.floor(apduSize / 0xff), apduSize & 0xff]),
+          FramerUtils.numberToByteArray(apduSize, APDU_DATA_LENGTH_LENGTH),
         ),
       );
     }

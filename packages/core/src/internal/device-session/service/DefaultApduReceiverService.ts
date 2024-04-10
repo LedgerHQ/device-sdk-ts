@@ -19,23 +19,23 @@ import { LoggerPublisherService } from "@internal/logger-publisher/service/Logge
 
 import { ApduReceiverService } from "./ApduReceiverService";
 
-type DefaultReceiverConstructorArgs = {
+export type DefaultApduReceiverConstructorArgs = {
   channel?: Maybe<Uint8Array>;
 };
 
 @injectable()
 export class DefaultApduReceiverService implements ApduReceiverService {
-  private _channel: Maybe<Uint8Array>;
-  private _logger: LoggerPublisherService;
+  private readonly _channel: Maybe<Uint8Array>;
+  private readonly _logger: LoggerPublisherService;
   private _pendingFrames: Frame[];
 
   constructor(
-    { channel = Maybe.zero() }: DefaultReceiverConstructorArgs,
+    { channel = Maybe.zero() }: DefaultApduReceiverConstructorArgs,
     @inject(loggerTypes.LoggerPublisherServiceFactory)
     loggerModuleFactory: (tag: string) => LoggerPublisherService,
   ) {
     this._channel = channel;
-    this._logger = loggerModuleFactory("receiver");
+    this._logger = loggerModuleFactory("ApduReceiverService");
     this._pendingFrames = [];
   }
 
@@ -48,15 +48,17 @@ export class DefaultApduReceiverService implements ApduReceiverService {
    * @param Uint8Array
    */
   public handleFrame(
-    apdu: Uint8Array,
+    frameBytes: Uint8Array,
   ): Either<ReceiverApduError, Maybe<ApduResponse>> {
-    const frame = this.apduToFrame(apdu);
+    const frame = this.getFrameFromBytes(frameBytes);
 
     return frame.map((value) => {
-      this._logger.debug("handle frame", { data: { frame } });
+      this._logger.info("handle frame", {
+        data: { frame: value.getRawData() },
+      });
       this._pendingFrames.push(value);
 
-      const dataSize = this._pendingFrames[0]!.getHeader().getDataLength();
+      const dataSize = this._pendingFrames.at(0)!.getHeader().getDataLength();
       return this.getCompleteFrame(dataSize);
     });
   }
@@ -105,14 +107,16 @@ export class DefaultApduReceiverService implements ApduReceiverService {
    *
    * @param Uint8Array
    */
-  private apduToFrame(apdu: Uint8Array): Either<ReceiverApduError, Frame> {
+  private getFrameFromBytes(
+    rawFrame: Uint8Array,
+  ): Either<ReceiverApduError, Frame> {
     const channelSize = this._channel.caseOf({
       Just: () => CHANNEL_LENGTH,
       Nothing: () => 0,
     });
 
-    const headTag = apdu.slice(channelSize, channelSize + HEAD_TAG_LENGTH);
-    const index = apdu.slice(
+    const headTag = rawFrame.slice(channelSize, channelSize + HEAD_TAG_LENGTH);
+    const index = rawFrame.slice(
       channelSize + HEAD_TAG_LENGTH,
       channelSize + HEAD_TAG_LENGTH + INDEX_LENGTH,
     );
@@ -127,18 +131,18 @@ export class DefaultApduReceiverService implements ApduReceiverService {
     const dataSizeLength = isFirstIndex ? APDU_DATA_LENGTH_LENGTH : 0;
 
     if (
-      apdu.length <
+      rawFrame.length <
       channelSize + HEAD_TAG_LENGTH + INDEX_LENGTH + dataSizeLength
     ) {
       return Left(new ReceiverApduError("Unable to parse header from apdu"));
     }
 
     const dataSize = isFirstIndex
-      ? Just(apdu.slice(dataSizeIndex, dataSizeIndex + dataSizeLength))
+      ? Just(rawFrame.slice(dataSizeIndex, dataSizeIndex + dataSizeLength))
       : Nothing;
 
     const dataIndex = dataSizeIndex + dataSizeLength;
-    const data = apdu.slice(dataIndex);
+    const data = rawFrame.slice(dataIndex);
 
     const frame = new Frame({
       header: new FrameHeader({
@@ -162,7 +166,7 @@ export class DefaultApduReceiverService implements ApduReceiverService {
    */
   private isComplete(dataSize: number): boolean {
     const totalReceiveLength = this._pendingFrames.reduce(
-      (prev: number, curr: Frame) => prev + curr.getData().length,
+      (prev, curr) => prev + curr.getData().length,
       0,
     );
 

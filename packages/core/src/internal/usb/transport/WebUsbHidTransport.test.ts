@@ -13,6 +13,8 @@ import {
   UnknownDeviceError,
   UsbHidTransportNotSupportedError,
 } from "@internal/usb/model/Errors";
+import { hidDeviceStubBuilder } from "@internal/usb/model/HIDDevice.stub";
+import { usbHidDeviceConnectionFactoryStubBuilder } from "@internal/usb/service/UsbHidDeviceConnectionFactory.stub";
 
 import { WebUsbHidTransport } from "./WebUsbHidTransport";
 
@@ -22,20 +24,17 @@ jest.mock("@internal/logger-publisher/service/LoggerPublisherService");
 const usbDeviceModelDataSource = new StaticDeviceModelDataSource();
 const logger = new DefaultLoggerPublisherService([], "web-usb-hid");
 
-const stubDevice = {
-  opened: false,
-  productId: 0x4011,
-  vendorId: 0x2c97,
-  productName: "Ledger Nano X",
-  collections: [],
-  open: jest.fn(),
-};
+const stubDevice: HIDDevice = hidDeviceStubBuilder();
 
 describe("WebUsbHidTransport", () => {
   let transport: WebUsbHidTransport;
 
   beforeEach(() => {
-    transport = new WebUsbHidTransport(usbDeviceModelDataSource, () => logger);
+    transport = new WebUsbHidTransport(
+      usbDeviceModelDataSource,
+      () => logger,
+      usbHidDeviceConnectionFactoryStubBuilder(),
+    );
   });
 
   afterEach(() => {

@@ -1,8 +1,12 @@
 import { inject, injectable } from "inversify";
 
 import { DeviceId } from "@internal/device-model/model/DeviceModel";
+import { deviceSessionTypes } from "@internal/device-session/di/deviceSessionTypes";
+import { Session, SessionId } from "@internal/device-session/model/Session";
+import type { SessionService } from "@internal/device-session/service/SessionService";
+import { loggerTypes } from "@internal/logger-publisher/di/loggerTypes";
+import { LoggerPublisherService } from "@internal/logger-publisher/service/LoggerPublisherService";
 import { usbDiTypes } from "@internal/usb/di/usbDiTypes";
-import { ConnectedDevice } from "@internal/usb/model/ConnectedDevice";
 import type { UsbHidTransport } from "@internal/usb/transport/UsbHidTransport";
 
 export type ConnectUseCaseArgs = {
@@ -14,19 +18,38 @@ export type ConnectUseCaseArgs = {
  */
 @injectable()
 export class ConnectUseCase {
+  private readonly _usbHidTransport: UsbHidTransport;
+  private readonly _sessionService: SessionService;
+  private readonly _logger: LoggerPublisherService;
+
   constructor(
     @inject(usbDiTypes.UsbHidTransport)
-    private usbHidTransport: UsbHidTransport,
-    // Later: @inject(usbDiTypes.BleTransport) private bleTransport: BleTransport,
-  ) {}
+    usbHidTransport: UsbHidTransport,
+    @inject(deviceSessionTypes.SessionService)
+    sessionService: SessionService,
+    @inject(loggerTypes.LoggerPublisherServiceFactory)
+    loggerFactory: (tag: string) => LoggerPublisherService,
+  ) {
+    this._sessionService = sessionService;
+    this._usbHidTransport = usbHidTransport;
+    this._logger = loggerFactory("ConnectUseCase");
+  }
 
-  async execute({ deviceId }: ConnectUseCaseArgs): Promise<ConnectedDevice> {
-    const either = await this.usbHidTransport.connect({ deviceId });
+  async execute({ deviceId }: ConnectUseCaseArgs): Promise<SessionId> | never {
+    const either = await this._usbHidTransport.connect({ deviceId });
+
     return either.caseOf({
       Left: (error) => {
+        this._logger.error("Error connecting to device", {
+          data: { deviceId, error },
+        });
         throw error;
       },
-      Right: (connectedDevice) => connectedDevice,
+      Right: (connectedDevice) => {
+        const session = new Session({ connectedDevice });
+        this._sessionService.addSession(session);
+        return session.id;
+      },
     });
   }
 }

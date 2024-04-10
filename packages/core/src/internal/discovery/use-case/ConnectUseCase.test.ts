@@ -1,31 +1,37 @@
 import { Left, Right } from "purify-ts";
+import * as uuid from "uuid";
+jest.mock("uuid");
 
 import { DeviceModelDataSource } from "@internal/device-model/data/DeviceModelDataSource";
-import { DeviceModel } from "@internal/device-model/model/DeviceModel";
+import { DefaultSessionService } from "@internal/device-session/service/DefaultSessionService";
+import { SessionService } from "@internal/device-session/service/SessionService";
 import { DefaultLoggerPublisherService } from "@internal/logger-publisher/service/DefaultLoggerPublisherService";
 import { LoggerPublisherService } from "@internal/logger-publisher/service/LoggerPublisherService";
-import { ConnectedDevice } from "@internal/usb/model/ConnectedDevice";
 import { UnknownDeviceError } from "@internal/usb/model/Errors";
+import { connectedDeviceStubBuilder } from "@internal/usb/model/InternalConnectedDevice.stub";
+import { usbHidDeviceConnectionFactoryStubBuilder } from "@internal/usb/service/UsbHidDeviceConnectionFactory.stub";
 import { WebUsbHidTransport } from "@internal/usb/transport/WebUsbHidTransport";
 
 import { ConnectUseCase } from "./ConnectUseCase";
 
 let transport: WebUsbHidTransport;
 let logger: LoggerPublisherService;
+let sessionService: SessionService;
+const fakeSessionId = "fakeSessionId";
 
 describe("ConnectUseCase", () => {
-  const stubConnectedDevice: ConnectedDevice = {
-    id: "",
-    deviceModel: {} as DeviceModel,
-  };
+  const stubConnectedDevice = connectedDeviceStubBuilder({ id: "1" });
   const tag = "logger-tag";
 
   beforeAll(() => {
     logger = new DefaultLoggerPublisherService([], tag);
+    jest.spyOn(uuid, "v4").mockReturnValue(fakeSessionId);
     transport = new WebUsbHidTransport(
       {} as DeviceModelDataSource,
       () => logger,
+      usbHidDeviceConnectionFactoryStubBuilder(),
     );
+    sessionService = new DefaultSessionService(() => logger);
   });
 
   afterAll(() => {
@@ -37,21 +43,21 @@ describe("ConnectUseCase", () => {
       .spyOn(transport, "connect")
       .mockResolvedValue(Left(new UnknownDeviceError()));
 
-    const usecase = new ConnectUseCase(transport);
+    const usecase = new ConnectUseCase(transport, sessionService, () => logger);
 
     await expect(usecase.execute({ deviceId: "" })).rejects.toBeInstanceOf(
       UnknownDeviceError,
     );
   });
 
-  test("If connect is in success, return an observable connected device object", async () => {
+  test("If connect is in success, return a session id", async () => {
     jest
       .spyOn(transport, "connect")
       .mockResolvedValue(Promise.resolve(Right(stubConnectedDevice)));
 
-    const usecase = new ConnectUseCase(transport);
+    const usecase = new ConnectUseCase(transport, sessionService, () => logger);
 
-    const connectedDevice = await usecase.execute({ deviceId: "" });
-    expect(connectedDevice).toBe(stubConnectedDevice);
+    const sessionId = await usecase.execute({ deviceId: "" });
+    expect(sessionId).toBe(fakeSessionId);
   });
 });
