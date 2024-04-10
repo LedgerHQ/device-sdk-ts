@@ -44,7 +44,6 @@
     "reflect-metadata": "^0.2.2"
   },
   "devDependencies": {
-    "@ledgerhq/esbuild-tools": "workspace:*",
     "@ledgerhq/eslint-config-dsdk": "workspace:*",
     "@ledgerhq/jest-config-dsdk": "workspace:*",
     "@ledgerhq/prettier-config-dsdk": "workspace:*",
