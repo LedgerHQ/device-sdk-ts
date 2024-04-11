@@ -2,7 +2,7 @@ import { v4 as uuidv4 } from "uuid";
 
 import { InternalConnectedDevice } from "@internal/usb/model/InternalConnectedDevice";
 
-export type SessionId = ReturnType<typeof uuidv4>;
+export type SessionId = string;
 
 export type SessionConstructorArgs = {
   connectedDevice: InternalConnectedDevice;

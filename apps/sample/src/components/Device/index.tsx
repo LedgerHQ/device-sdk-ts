@@ -43,7 +43,11 @@ export const Device: React.FC<DeviceProps> = ({
   return (
     <Root>
       <IconContainer>
-        {model === "stax" ? <Icons.Stax size="S" /> : <Icons.Nano size="S" />}
+        {model === DeviceModelId.STAX ? (
+          <Icons.Stax size="S" />
+        ) : (
+          <Icons.Nano size="S" />
+        )}
       </IconContainer>
       <Box flex={1}>
         <Text variant="body">{name}</Text>
