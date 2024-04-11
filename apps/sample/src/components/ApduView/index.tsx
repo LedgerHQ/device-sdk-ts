@@ -1,4 +1,5 @@
 import React, { useCallback, useState } from "react";
+import { ApduResponse } from "@ledgerhq/device-sdk-core";
 import { Button, Divider, Flex, Grid, Input, Text } from "@ledgerhq/react-ui";
 import styled, { DefaultTheme } from "styled-components";
 
@@ -56,9 +57,16 @@ const InputContainer = styled(Flex).attrs({ mx: 8, mb: 4 })`
 
 const inputContainerProps = { style: { borderRadius: 4 } };
 
+const ResultDescText = styled(Text).attrs({ variant: "body", mt: 4, px: 8 })`
+  min-width: 150px;
+  display: inline-block;
+`;
+
 export const ApduView: React.FC = () => {
-  const { apduFormValues, setApduFormValue, getRawApdu } = useApduForm();
+  const { apduFormValues, setApduFormValue, getRawApdu, getHexString } =
+    useApduForm();
   const [loading, setLoading] = useState(false);
+  const [apduResponse, setApduResponse] = useState<ApduResponse>();
   const sdk = useSdk();
   const {
     state: { selectedId: selectedSessionId },
@@ -66,11 +74,14 @@ export const ApduView: React.FC = () => {
   const onSubmit = useCallback(
     async (values: typeof apduFormValues) => {
       setLoading(true);
+      let rawApduResponse;
       try {
-        await sdk.sendApdu({
+        rawApduResponse = await sdk.sendApdu({
+          // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
           sessionId: selectedSessionId!,
           apdu: getRawApdu(values),
         });
+        setApduResponse(rawApduResponse);
         setLoading(false);
       } catch (error) {
         setLoading(false);
@@ -161,7 +172,24 @@ export const ApduView: React.FC = () => {
             </InputContainer>
           </Grid>
         </Form>
-        <Divider my={4} />
+        <Divider mt={4} />
+        {apduResponse && (
+          <>
+            <span>
+              <ResultDescText>Raw APDU:</ResultDescText>
+              <Text>{getHexString(getRawApdu(apduFormValues))}</Text>
+            </span>
+            <span>
+              <ResultDescText>Response status:</ResultDescText>
+              <Text>{getHexString(apduResponse.statusCode)}</Text>
+            </span>
+            <span>
+              <ResultDescText>Response raw data:</ResultDescText>
+              <Text>{getHexString(apduResponse.data)}</Text>
+            </span>
+            <Divider my={4} />
+          </>
+        )}
         <FormFooter my={8}>
           <FormFooterButton
             onClick={() => onSubmit(apduFormValues)}

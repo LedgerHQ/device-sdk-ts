@@ -15,7 +15,7 @@ type SessionContextType = {
 const SessionContext: Context<SessionContextType> =
   createContext<SessionContextType>({
     state: SessionsInitialState,
-    dispatch: (_value: AddSessionAction) => {},
+    dispatch: (_value: AddSessionAction) => null,
   });
 
 export const SessionProvider: React.FC<React.PropsWithChildren> = ({

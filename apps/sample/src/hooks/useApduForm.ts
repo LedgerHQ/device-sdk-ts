@@ -43,10 +43,17 @@ export function useApduForm() {
     [],
   );
 
+  const getHexString = useCallback((raw: Uint8Array): string => {
+    return raw
+      .reduce((acc, curr) => acc + " " + curr.toString(16).padStart(2, "0"), "")
+      .toUpperCase();
+  }, []);
+
   return {
     apduFormValues: values,
     setApduFormValue: setValue,
     getRawApdu,
+    getHexString,
   };
 }
 

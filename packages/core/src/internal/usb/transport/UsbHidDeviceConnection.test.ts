@@ -45,7 +45,7 @@ describe("UsbHidDeviceConnection", () => {
       logger,
     );
     // when
-    connection.sendApdu(new Uint8Array(0));
+    await connection.sendApdu(new Uint8Array(0));
     // then
     expect(device.sendReport).toHaveBeenCalled();
   });
@@ -65,6 +65,6 @@ describe("UsbHidDeviceConnection", () => {
     // when
     const response = connection.sendApdu(Uint8Array.from([]));
     // then
-    expect(response).resolves.toBe(RESPONSE_LOCKED_DEVICE);
+    await expect(response).resolves.toBe(RESPONSE_LOCKED_DEVICE);
   });
 });
