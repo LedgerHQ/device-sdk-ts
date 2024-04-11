@@ -5,12 +5,15 @@ const project = resolve(process.cwd(), "tsconfig.json");
 /** @type {import("eslint").Linter.Config} */
 module.exports = {
   extends: ["eslint:recommended", "prettier", "turbo"],
-  plugins: ["only-warn", "simple-import-sort"],
+  plugins: ["simple-import-sort"],
   globals: {
     React: true,
     JSX: true,
     node: true,
     console: true,
+  },
+  parserOptions: {
+    ecmaVersion: "latest",
   },
   env: {
     es6: true,
