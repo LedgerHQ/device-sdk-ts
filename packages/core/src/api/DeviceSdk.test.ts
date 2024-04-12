@@ -1,7 +1,11 @@
 import { LocalConfigDataSource } from "@internal/config/data/ConfigDataSource";
 import { StubLocalConfigDataSource } from "@internal/config/data/LocalConfigDataSource.stub";
 import { configTypes } from "@internal/config/di/configTypes";
+import { discoveryTypes } from "@internal/discovery/di/discoveryTypes";
+import { sendTypes } from "@internal/send/di/sendTypes";
+import { usbDiTypes } from "@internal/usb/di/usbDiTypes";
 import pkg from "@root/package.json";
+import { StubUseCase } from "@root/src/di.stub";
 
 import { ConsoleLogger } from "./logger-subscriber/service/ConsoleLogger";
 import { DeviceSdk } from "./DeviceSdk";
@@ -26,12 +30,24 @@ describe("DeviceSdk", () => {
       expect(await sdk.getVersion()).toBe(pkg.version);
     });
 
-    it("startScan should ....", () => {
-      expect(sdk.startScan()).toBeFalsy();
+    it("should have startDiscovery method", () => {
+      expect(sdk.startDiscovering).toBeDefined();
     });
 
-    it("stopScan should ....", () => {
-      expect(sdk.stopScan()).toBeFalsy();
+    it("should have stopDiscovery method", () => {
+      expect(sdk.stopDiscovering).toBeDefined();
+    });
+
+    it("should have connect method", () => {
+      expect(sdk.connect).toBeDefined();
+    });
+
+    it("should have sendApdu method", () => {
+      expect(sdk.sendApdu).toBeDefined();
+    });
+
+    it("should have getConnectedDevice method", () => {
+      expect(sdk.getConnectedDevice).toBeDefined();
     });
   });
 
@@ -40,9 +56,12 @@ describe("DeviceSdk", () => {
       sdk = new DeviceSdk({ stub: true, loggers: [] });
     });
 
-    it("should create a stubbed version", () => {
+    it("should create a stubbed sdk", () => {
       expect(sdk).toBeDefined();
       expect(sdk).toBeInstanceOf(DeviceSdk);
+    });
+
+    it("should return a stubbed config", () => {
       expect(
         sdk.container.get<LocalConfigDataSource>(
           configTypes.LocalConfigDataSource,
@@ -50,8 +69,20 @@ describe("DeviceSdk", () => {
       ).toBeInstanceOf(StubLocalConfigDataSource);
     });
 
-    it("should return a stubbed `version`", async () => {
+    it("should return a stubbed version", async () => {
       expect(await sdk.getVersion()).toBe("0.0.0-stub.1");
+    });
+
+    it.each([
+      [discoveryTypes.StartDiscoveringUseCase],
+      [discoveryTypes.StopDiscoveringUseCase],
+      [discoveryTypes.ConnectUseCase],
+      [sendTypes.SendApduUseCase],
+      [usbDiTypes.GetConnectedDeviceUseCase],
+    ])("should have %p use case", (diSymbol) => {
+      const uc = sdk.container.get<StubUseCase>(diSymbol);
+      expect(uc).toBeInstanceOf(StubUseCase);
+      expect(uc.execute()).toBe("stub");
     });
   });
 

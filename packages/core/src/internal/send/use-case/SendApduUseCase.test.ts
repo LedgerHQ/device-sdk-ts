@@ -1,4 +1,9 @@
-import { DeviceSessionNotFound } from "@internal/device-session/model/Errors";
+import { Left } from "purify-ts";
+
+import {
+  DeviceSessionNotFound,
+  ReceiverApduError,
+} from "@internal/device-session/model/Errors";
 import { sessionStubBuilder } from "@internal/device-session/model/Session.stub";
 import { DefaultSessionService } from "@internal/device-session/service/DefaultSessionService";
 import { SessionService } from "@internal/device-session/service/SessionService";
@@ -48,12 +53,12 @@ describe("SendApduUseCase", () => {
     await expect(response).rejects.toBeInstanceOf(DeviceSessionNotFound);
   });
 
-  it("should throw an error if the apdu receiver failed", () => {
+  it("should throw an error if the apdu receiver failed", async () => {
     // given
     const connectedDevice = connectedDeviceStubBuilder({
-      sendApdu: jest.fn(async () => {
-        throw new Error("apdu receiver failed");
-      }),
+      sendApdu: jest.fn(async () =>
+        Promise.resolve(Left(new ReceiverApduError())),
+      ),
     });
     const session = sessionStubBuilder({ connectedDevice });
     sessionService.addSession(session);
@@ -66,6 +71,6 @@ describe("SendApduUseCase", () => {
     });
 
     // then
-    expect(response).rejects.toThrow("apdu receiver failed");
+    await expect(response).rejects.toBeInstanceOf(ReceiverApduError);
   });
 });

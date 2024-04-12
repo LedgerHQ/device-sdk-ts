@@ -4,11 +4,11 @@ export type ApduResponseConstructorArgs = {
 };
 
 export class ApduResponse {
-  protected _statusCode: Uint8Array;
-  protected _data: Uint8Array;
+  public statusCode: Uint8Array;
+  public data: Uint8Array;
 
   constructor({ statusCode, data }: ApduResponseConstructorArgs) {
-    this._statusCode = statusCode;
-    this._data = data;
+    this.statusCode = statusCode;
+    this.data = data;
   }
 }

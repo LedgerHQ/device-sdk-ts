@@ -6,3 +6,4 @@ export { LogLevel } from "./logger-subscriber/model/LogLevel";
 export { ConsoleLogger } from "./logger-subscriber/service/ConsoleLogger";
 export * from "./types";
 export { ConnectedDevice } from "./usb/model/ConnectedDevice";
+export { ApduResponse } from "@internal/device-session/model/ApduResponse";

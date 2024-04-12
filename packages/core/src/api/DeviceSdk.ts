@@ -36,14 +36,6 @@ export class DeviceSdk {
     this.container = makeContainer({ stub, loggers });
   }
 
-  startScan() {
-    return;
-  }
-
-  stopScan() {
-    return;
-  }
-
   getVersion(): Promise<string> {
     return this.container
       .get<GetSdkVersionUseCase>(configTypes.GetSdkVersionUseCase)
