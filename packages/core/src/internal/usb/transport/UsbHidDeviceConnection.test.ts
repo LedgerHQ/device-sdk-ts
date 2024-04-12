@@ -20,7 +20,7 @@ describe("UsbHidDeviceConnection", () => {
   let apduReceiver: ApduReceiverService;
   const logger = (tag: string) => new DefaultLoggerPublisherService([], tag);
 
-  beforeEach(async () => {
+  beforeEach(() => {
     device = hidDeviceStubBuilder();
     apduSender = defaultApduSenderServiceStubBuilder(undefined, logger);
     apduReceiver = defaultApduReceiverServiceStubBuilder(undefined, logger);
@@ -45,19 +45,21 @@ describe("UsbHidDeviceConnection", () => {
       logger,
     );
     // when
-    await connection.sendApdu(new Uint8Array(0));
+    void connection.sendApdu(new Uint8Array(0));
     // then
     expect(device.sendReport).toHaveBeenCalled();
   });
 
   it("should receive APDU through hid report", async () => {
     // given
-    device.sendReport = jest.fn(async () => {
-      device.oninputreport!({
-        type: "inputreport",
-        data: new DataView(Uint8Array.from(RESPONSE_LOCKED_DEVICE).buffer),
-      } as HIDInputReportEvent);
-    });
+    device.sendReport = jest.fn(() =>
+      Promise.resolve(
+        device.oninputreport!({
+          type: "inputreport",
+          data: new DataView(Uint8Array.from(RESPONSE_LOCKED_DEVICE).buffer),
+        } as HIDInputReportEvent),
+      ),
+    );
     const connection = new UsbHidDeviceConnection(
       { device, apduSender, apduReceiver },
       logger,
@@ -65,6 +67,6 @@ describe("UsbHidDeviceConnection", () => {
     // when
     const response = connection.sendApdu(Uint8Array.from([]));
     // then
-    await expect(response).resolves.toBe(RESPONSE_LOCKED_DEVICE);
+    void expect(response).resolves.toBe(RESPONSE_LOCKED_DEVICE);
   });
 });

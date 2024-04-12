@@ -35,7 +35,7 @@ export const makeContainer = ({
     discoveryModuleFactory({ stub }),
     loggerModuleFactory({ subscribers: loggers }),
     deviceSessionModuleFactory(),
-    sendModuleFactory(),
+    sendModuleFactory({ stub }),
     // modules go here
   );
 
