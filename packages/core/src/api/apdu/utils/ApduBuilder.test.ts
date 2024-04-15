@@ -1,4 +1,10 @@
 import { APDU_MAX_PAYLOAD, ApduBuilder } from "./ApduBuilder";
+import {
+  DataOverflowError,
+  HexaStringEncodeError,
+  InvalidValueError,
+  ValueOverflowError,
+} from "./AppBuilderError";
 
 const COMMAND_NO_BODY = new Uint8Array([0xe0, 0x01, 0x00, 0x00, 0x00]);
 
@@ -78,60 +84,60 @@ describe("ApduBuilder", () => {
     });
 
     it("should serialize with an single byte body", () => {
-      const status = builder.addByteToData(0x01);
-      expect(status).toBe(true);
+      builder.addByteToData(0x01);
       expect(builder.build().getRawApdu()).toEqual(COMMAND_BODY_SINGLE);
+      expect(builder.getErrors()).toEqual([]);
     });
 
     it("should serialize with an 2 byte body", () => {
-      const status = builder.addShortToData(0x3302);
-      expect(status).toBe(true);
+      builder.addShortToData(0x3302);
       expect(builder.build().getRawApdu()).toEqual(COMMAND_BODY_TWO);
+      expect(builder.getErrors()).toEqual([]);
     });
 
     it("should serialize with an 5 byte body from an hexastring", () => {
-      const status: boolean = builder.addHexaStringToData("0x8081828384");
-      expect(status).toBe(true);
+      builder.addHexaStringToData("0x8081828384");
       expect(builder.build().getRawApdu()).toEqual(COMMAND_BODY_HEXA1);
+      expect(builder.getErrors()).toEqual([]);
     });
 
     it("should serialize with an 4 byte body from an hexastring without '0x'", () => {
-      const status: boolean = builder.addHexaStringToData("85868788");
-      expect(status).toBe(true);
+      builder.addHexaStringToData("85868788");
       expect(builder.build().getRawApdu()).toEqual(COMMAND_BODY_HEXA2);
+      expect(builder.getErrors()).toEqual([]);
     });
 
     it("should serialize with an 4 byte body LV encoded from an hexastring", () => {
-      const status: boolean = builder.encodeInLVFromHexa("0xA1A2A3");
-      expect(status).toBe(true);
+      builder.encodeInLVFromHexa("0xA1A2A3");
       expect(builder.build().getRawApdu()).toEqual(COMMAND_BODY_LV_HEXA);
+      expect(builder.getErrors()).toEqual([]);
     });
 
     it("should serialize with an 4 byte body LV encoded from an ascci string", () => {
-      const status: boolean = builder.encodeInLVFromAscii("maman");
-      expect(status).toBe(true);
+      builder.encodeInLVFromAscii("maman");
       expect(builder.build().getRawApdu()).toEqual(COMMAND_BODY_LV_ASCII);
+      expect(builder.getErrors()).toEqual([]);
     });
 
     it("should serialize with an 4 byte body LV encoded from a buffer", () => {
       const myarray = new Uint8Array([0xf0, 0xf1]);
-      const status: boolean = builder.encodeInLVFromBuffer(myarray);
-      expect(status).toBe(true);
+      builder.encodeInLVFromBuffer(myarray);
       expect(builder.build().getRawApdu()).toEqual(COMMAND_BODY_LV_ARRAY);
+      expect(builder.getErrors()).toEqual([]);
     });
 
     it("should serialize with an 4 byte body LV encoded from a buffer", () => {
       const myarray = new Uint8Array([0xf0, 0xf1]);
-      const status: boolean = builder.encodeInLVFromBuffer(myarray);
-      expect(status).toBe(true);
+      builder.encodeInLVFromBuffer(myarray);
       expect(builder.build().getRawApdu()).toEqual(COMMAND_BODY_LV_ARRAY);
+      expect(builder.getErrors()).toEqual([]);
     });
 
     it("should serialize with an complete body of 0xAA", () => {
       const myarray = new Uint8Array(255).fill(0xaa, 0, 255);
-      const status = builder.addBufferToData(myarray);
-      expect(status).toBe(true);
+      builder.addBufferToData(myarray);
       expect(builder.build().getRawApdu()).toEqual(COMMAND_BODY_MAX);
+      expect(builder.getErrors()).toEqual([]);
     });
   });
 
@@ -142,39 +148,32 @@ describe("ApduBuilder", () => {
 
     it("should serialize with all previous field", () => {
       let available = APDU_MAX_PAYLOAD;
-      let status: boolean = builder.addByteToData(0x01);
-      expect(status).toBe(true);
+      builder.addByteToData(0x01);
       available--;
       expect(builder.getAvailablePayloadLength()).toBe(available);
 
-      status = builder.addShortToData(0x3302);
-      expect(status).toBe(true);
+      builder.addShortToData(0x3302);
       available -= 2;
       expect(builder.getAvailablePayloadLength()).toBe(available);
 
-      status = builder.addHexaStringToData("0x8081828384");
-      expect(status).toBe(true);
+      builder.addHexaStringToData("0x8081828384");
       available -= 5;
       expect(builder.getAvailablePayloadLength()).toBe(available);
 
-      status = builder.addHexaStringToData("85868788");
-      expect(status).toBe(true);
+      builder.addHexaStringToData("85868788");
       available -= 4;
       expect(builder.getAvailablePayloadLength()).toBe(available);
 
-      status = builder.encodeInLVFromHexa("0xA1A2A3");
-      expect(status).toBe(true);
+      builder.encodeInLVFromHexa("0xA1A2A3");
       available -= 4;
       expect(builder.getAvailablePayloadLength()).toBe(available);
 
-      status = builder.encodeInLVFromAscii("maman");
-      expect(status).toBe(true);
+      builder.encodeInLVFromAscii("maman");
       available -= 6;
       expect(builder.getAvailablePayloadLength()).toBe(available);
 
       const myarray = new Uint8Array([0xf0, 0xf1]);
-      status = builder.encodeInLVFromBuffer(myarray);
-      expect(status).toBe(true);
+      builder.encodeInLVFromBuffer(myarray);
       available -= 3;
       expect(builder.getAvailablePayloadLength()).toBe(available);
 
@@ -188,45 +187,55 @@ describe("ApduBuilder", () => {
     });
 
     it("error to undefined value", () => {
-      const status: boolean = builder.addByteToData(undefined);
-      expect(status).toBe(false);
+      builder.addByteToData(undefined);
       expect(builder.build().getRawApdu()).toEqual(COMMAND_NO_BODY);
       expect(builder.getAvailablePayloadLength()).toBe(APDU_MAX_PAYLOAD);
+      expect(builder.getErrors()).toEqual([new InvalidValueError("byte")]);
     });
 
     it("error due value greater than 8-bit integer", () => {
-      const status: boolean = builder.addByteToData(0x100);
-      expect(status).toBe(false);
+      builder.addByteToData(0x100);
       expect(builder.build().getRawApdu()).toEqual(COMMAND_NO_BODY);
       expect(builder.getAvailablePayloadLength()).toBe(APDU_MAX_PAYLOAD);
+      expect(builder.getErrors()).toEqual([
+        new ValueOverflowError((0x100).toString(), 255),
+      ]);
     });
 
     it("error due value greater than 16-bit integer", () => {
-      const status: boolean = builder.addShortToData(0x10000);
-      expect(status).toBe(false);
+      builder.addShortToData(0x10000);
       expect(builder.build().getRawApdu()).toEqual(COMMAND_NO_BODY);
       expect(builder.getAvailablePayloadLength()).toBe(APDU_MAX_PAYLOAD);
+      expect(builder.getErrors()).toEqual([
+        new ValueOverflowError((0x10000).toString(), 65535),
+      ]);
     });
 
     it("error due to a string not well coded", () => {
-      let status = builder.addHexaStringToData(":08081828384");
-      expect(status).toBe(false);
-      status = builder.addHexaStringToData("081828384");
-      expect(status).toBe(false);
-      status = builder.addHexaStringToData("80818n8384");
-      expect(status).toBe(false);
-      status = builder.addHexaStringToData("808182838z");
-      expect(status).toBe(false);
+      builder
+        .addHexaStringToData(":08081828384")
+        .addHexaStringToData("081828384")
+        .addHexaStringToData("80818n8384")
+        .addHexaStringToData("808182838z");
+
       expect(builder.build().getRawApdu()).toEqual(COMMAND_NO_BODY);
       expect(builder.getAvailablePayloadLength()).toBe(APDU_MAX_PAYLOAD);
+      expect(builder.getErrors()).toEqual([
+        new HexaStringEncodeError(":08081828384"),
+        new HexaStringEncodeError("081828384"),
+        new HexaStringEncodeError("80818n8384"),
+        new HexaStringEncodeError("808182838z"),
+      ]);
     });
 
     it("error due direct overflow", () => {
       const myarray = new Uint8Array(256).fill(0xaa, 0, 256);
-      const status: boolean = builder.addBufferToData(myarray);
-      expect(status).toBe(false);
+      builder.addBufferToData(myarray);
       expect(builder.build().getRawApdu()).toEqual(COMMAND_NO_BODY);
       expect(builder.getAvailablePayloadLength()).toBe(APDU_MAX_PAYLOAD);
+      expect(builder.getErrors()).toEqual([
+        new DataOverflowError(myarray.toString()),
+      ]);
     });
 
     it("error due to subsequent overflow with one byte", () => {
@@ -235,14 +244,13 @@ describe("ApduBuilder", () => {
         0,
         APDU_MAX_PAYLOAD,
       );
-      let status: boolean = builder.addBufferToData(myarray);
-      expect(status).toBe(true);
+      builder.addBufferToData(myarray);
       expect(builder.build().getRawApdu()).toEqual(COMMAND_BODY_MAX);
       expect(builder.getAvailablePayloadLength()).toBe(0);
 
-      status = builder.addByteToData(0);
-      expect(status).toBe(false);
+      builder.addByteToData(0);
       expect(builder.build().getRawApdu()).toEqual(COMMAND_BODY_MAX);
+      expect(builder.getErrors()).toEqual([new DataOverflowError("0")]);
     });
 
     it("error due to subsequent overflow with 2 bytes", () => {
@@ -251,15 +259,14 @@ describe("ApduBuilder", () => {
         0,
         APDU_MAX_PAYLOAD,
       );
-      let status: boolean = builder.addBufferToData(myarray);
-      expect(status).toBe(true);
+      builder.addBufferToData(myarray);
       expect(builder.build().getRawApdu()).toEqual(COMMAND_BODY_MAX);
       expect(builder.getAvailablePayloadLength()).toBe(0);
 
-      status = builder.addShortToData(0);
-      expect(status).toBe(false);
+      builder.addShortToData(0);
       expect(builder.build().getRawApdu()).toEqual(COMMAND_BODY_MAX);
       expect(builder.getAvailablePayloadLength()).toBe(0);
+      expect(builder.getErrors()).toEqual([new DataOverflowError("0")]);
     });
 
     it("error due to subsequent overflow with 1-byte array", () => {
@@ -268,18 +275,19 @@ describe("ApduBuilder", () => {
         0,
         APDU_MAX_PAYLOAD,
       );
-      let status = builder.addBufferToData(myarray);
-      expect(status).toBe(true);
+      builder.addBufferToData(myarray);
       expect(builder.build().getRawApdu()).toEqual(COMMAND_BODY_MAX);
       expect(builder.getAvailablePayloadLength()).toBe(0);
 
       const mybuffer = new Uint8Array(1);
-      mybuffer[1] = 0xff;
+      mybuffer.set([0xff], 0);
 
-      status = builder.addBufferToData(mybuffer);
-      expect(status).toBe(false);
+      builder.addBufferToData(mybuffer);
       expect(builder.build().getRawApdu()).toEqual(COMMAND_BODY_MAX);
       expect(builder.getAvailablePayloadLength()).toBe(0);
+      expect(builder.getErrors()).toEqual([
+        new DataOverflowError(mybuffer.toString()),
+      ]);
     });
 
     it("error due to subsequent overflow with 1-char ascii", () => {
@@ -288,17 +296,16 @@ describe("ApduBuilder", () => {
         0,
         APDU_MAX_PAYLOAD,
       );
-      let status: boolean = builder.addBufferToData(myarray);
-      expect(status).toBe(true);
+      builder.addBufferToData(myarray);
       expect(builder.build().getRawApdu()).toEqual(COMMAND_BODY_MAX);
       expect(builder.getAvailablePayloadLength()).toBe(0);
 
       const mystring = "a";
 
-      status = builder.addAsciiStringToData(mystring);
-      expect(status).toBe(false);
+      builder.addAsciiStringToData(mystring);
       expect(builder.build().getRawApdu()).toEqual(COMMAND_BODY_MAX);
       expect(builder.getAvailablePayloadLength()).toBe(0);
+      expect(builder.getErrors()).toEqual([new DataOverflowError(mystring)]);
     });
 
     it("error due to subsequent overflow with 1-char hexastring", () => {
@@ -307,38 +314,36 @@ describe("ApduBuilder", () => {
         0,
         APDU_MAX_PAYLOAD,
       );
-      let status = builder.addBufferToData(myarray);
-      expect(status).toBe(true);
+      builder.addBufferToData(myarray);
       expect(builder.build().getRawApdu()).toEqual(COMMAND_BODY_MAX);
       expect(builder.getAvailablePayloadLength()).toBe(0);
 
-      let mystring = "0xB4";
+      const firstString = "0xB4";
+      const secondString = "e1";
 
-      status = builder.addHexaStringToData(mystring);
-      expect(status).toBe(false);
+      builder
+        .addHexaStringToData(firstString)
+        .addHexaStringToData(secondString);
+
       expect(builder.build().getRawApdu()).toEqual(COMMAND_BODY_MAX);
       expect(builder.getAvailablePayloadLength()).toBe(0);
-
-      mystring = "e1";
-
-      status = builder.addHexaStringToData(mystring);
-      expect(status).toBe(false);
-      expect(builder.build().getRawApdu()).toEqual(COMMAND_BODY_MAX);
-      expect(builder.getAvailablePayloadLength()).toBe(0);
+      expect(builder.getErrors()).toEqual([
+        new DataOverflowError(builder.getHexaString(firstString).toString()),
+        new DataOverflowError(builder.getHexaString(secondString).toString()),
+      ]);
     });
 
     it("error due to empty values", () => {
       const mystring = "";
 
-      let status: boolean = builder.addHexaStringToData(mystring);
-      expect(status).toBe(false);
-      expect(builder.build().getRawApdu()).toEqual(COMMAND_NO_BODY);
-      expect(builder.getAvailablePayloadLength()).toBe(APDU_MAX_PAYLOAD);
+      builder.addHexaStringToData(mystring).encodeInLVFromHexa(mystring);
 
-      status = builder.encodeInLVFromHexa(mystring);
-      expect(status).toBe(false);
       expect(builder.build().getRawApdu()).toEqual(COMMAND_NO_BODY);
       expect(builder.getAvailablePayloadLength()).toBe(APDU_MAX_PAYLOAD);
+      expect(builder.getErrors()).toEqual([
+        new HexaStringEncodeError(mystring),
+        new HexaStringEncodeError(mystring),
+      ]);
     });
 
     it("error due to subsequent overflow with 1-char LV", () => {
@@ -347,32 +352,27 @@ describe("ApduBuilder", () => {
         0,
         APDU_MAX_PAYLOAD - 1,
       );
-      let status = builder.addBufferToData(myarray);
-      expect(status).toBe(true);
+      builder.addBufferToData(myarray);
       expect(builder.build().getRawApdu()).toEqual(COMMAND_BODY_NEARLY);
       expect(builder.getAvailablePayloadLength()).toBe(1);
 
-      let mystring = "n";
-
-      status = builder.encodeInLVFromAscii(mystring);
-      expect(status).toBe(false);
-      expect(builder.build().getRawApdu()).toEqual(COMMAND_BODY_NEARLY);
-      expect(builder.getAvailablePayloadLength()).toBe(1);
-
-      mystring = "e1";
-
-      status = builder.encodeInLVFromHexa(mystring);
-      expect(status).toBe(false);
-      expect(builder.build().getRawApdu()).toEqual(COMMAND_BODY_NEARLY);
-      expect(builder.getAvailablePayloadLength()).toBe(1);
-
+      const firstString = "n";
+      const secondString = "e1";
       const mybuffer = new Uint8Array(1);
-      mybuffer[1] = 0xff;
+      mybuffer.set([0xff], 0);
 
-      status = builder.encodeInLVFromBuffer(mybuffer);
-      expect(status).toBe(false);
+      builder
+        .encodeInLVFromAscii(firstString)
+        .encodeInLVFromHexa(secondString)
+        .encodeInLVFromBuffer(mybuffer);
+
       expect(builder.build().getRawApdu()).toEqual(COMMAND_BODY_NEARLY);
       expect(builder.getAvailablePayloadLength()).toBe(1);
+      expect(builder.getErrors()).toEqual([
+        new DataOverflowError(firstString),
+        new DataOverflowError(secondString),
+        new DataOverflowError(mybuffer.toString()),
+      ]);
     });
   });
 });
