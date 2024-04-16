@@ -234,7 +234,7 @@ describe("ApduParser", () => {
       expect(parser.getUnparsedRemainingLength()).toBe(length);
       expect(parser.testMinimalLength(25)).toBe(true);
 
-      let array = parser.extractFieldDirect(4);
+      let array = parser.extractFieldByLength(4);
       expect(parser.encodeToHexaString(array)).toBe(DEVICE_TYPE);
       index += 4;
       length -= 4;
@@ -306,30 +306,30 @@ describe("ApduParser", () => {
 
       expect(parser.testMinimalLength(1)).toBe(false);
 
-      expect(parser.extract8BitUint()).toBe(undefined);
+      expect(parser.extract8BitUint()).toBeUndefined();
       expect(parser.getCurrentIndex()).toBe(index);
       expect(parser.getUnparsedRemainingLength()).toBe(length);
 
-      expect(parser.extract16BitUInt()).toBe(undefined);
+      expect(parser.extract16BitUInt()).toBeUndefined();
       expect(parser.getCurrentIndex()).toBe(index);
       expect(parser.getUnparsedRemainingLength()).toBe(length);
 
-      expect(parser.extract32BitUInt()).toBe(undefined);
+      expect(parser.extract32BitUInt()).toBeUndefined();
       expect(parser.getCurrentIndex()).toBe(index);
       expect(parser.getUnparsedRemainingLength()).toBe(length);
 
-      let array = parser.extractFieldDirect(2);
-      expect(array).toBe(undefined);
+      let array = parser.extractFieldByLength(2);
+      expect(array).toBeUndefined();
       expect(parser.getCurrentIndex()).toBe(index);
       expect(parser.getUnparsedRemainingLength()).toBe(length);
 
       array = parser.extractFieldLVEncoded();
-      expect(array).toBe(undefined);
+      expect(array).toBeUndefined();
       expect(parser.getCurrentIndex()).toBe(index);
       expect(parser.getUnparsedRemainingLength()).toBe(length);
 
       const field = parser.extractFieldTLVEncoded();
-      expect(field).toBe(undefined);
+      expect(field).toBeUndefined();
       expect(parser.getCurrentIndex()).toBe(index);
       expect(parser.getUnparsedRemainingLength()).toBe(length);
     });
@@ -347,26 +347,26 @@ describe("ApduParser", () => {
       expect(parser.getCurrentIndex()).toBe(index);
       expect(parser.getUnparsedRemainingLength()).toBe(length);
 
-      expect(parser.extract16BitUInt()).toBe(undefined);
+      expect(parser.extract16BitUInt()).toBeUndefined();
       expect(parser.getCurrentIndex()).toBe(index);
       expect(parser.getUnparsedRemainingLength()).toBe(length);
 
-      expect(parser.extract32BitUInt()).toBe(undefined);
+      expect(parser.extract32BitUInt()).toBeUndefined();
       expect(parser.getCurrentIndex()).toBe(index);
       expect(parser.getUnparsedRemainingLength()).toBe(length);
 
-      let array = parser.extractFieldDirect(2);
-      expect(array).toBe(undefined);
+      let array = parser.extractFieldByLength(2);
+      expect(array).toBeUndefined();
       expect(parser.getCurrentIndex()).toBe(index);
       expect(parser.getUnparsedRemainingLength()).toBe(length);
 
       array = parser.extractFieldLVEncoded();
-      expect(array).toBe(undefined);
+      expect(array).toBeUndefined();
       expect(parser.getCurrentIndex()).toBe(index);
       expect(parser.getUnparsedRemainingLength()).toBe(length);
 
       let field = parser.extractFieldTLVEncoded();
-      expect(field).toBe(undefined);
+      expect(field).toBeUndefined();
       expect(parser.getCurrentIndex()).toBe(index);
       expect(parser.getUnparsedRemainingLength()).toBe(length);
 
@@ -377,7 +377,7 @@ describe("ApduParser", () => {
       parser = new ApduParser(response);
 
       field = parser.extractFieldTLVEncoded();
-      expect(field).toBe(undefined);
+      expect(field).toBeUndefined();
       expect(parser.getCurrentIndex()).toBe(index);
       expect(parser.getUnparsedRemainingLength()).toBe(
         RESPONSE_TWO_BYTES.length,
@@ -406,7 +406,7 @@ describe("ApduParser", () => {
 
       parser.resetIndex();
 
-      let array = parser.extractFieldDirect(0);
+      let array = parser.extractFieldByLength(0);
       expect(array).toStrictEqual(zero);
       expect(parser.encodeToString(array)).toBe("");
       expect(parser.getCurrentIndex()).toBe(index);

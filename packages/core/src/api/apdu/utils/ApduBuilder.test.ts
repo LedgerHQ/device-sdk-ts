@@ -84,13 +84,13 @@ describe("ApduBuilder", () => {
     });
 
     it("should serialize with an single byte body", () => {
-      builder.addByteToData(0x01);
+      builder.add8BitUintToData(0x01);
       expect(builder.build().getRawApdu()).toEqual(COMMAND_BODY_SINGLE);
       expect(builder.getErrors()).toEqual([]);
     });
 
     it("should serialize with an 2 byte body", () => {
-      builder.addShortToData(0x3302);
+      builder.add16BitUintToData(0x3302);
       expect(builder.build().getRawApdu()).toEqual(COMMAND_BODY_TWO);
       expect(builder.getErrors()).toEqual([]);
     });
@@ -148,11 +148,11 @@ describe("ApduBuilder", () => {
 
     it("should serialize with all previous field", () => {
       let available = APDU_MAX_PAYLOAD;
-      builder.addByteToData(0x01);
+      builder.add8BitUintToData(0x01);
       available--;
       expect(builder.getAvailablePayloadLength()).toBe(available);
 
-      builder.addShortToData(0x3302);
+      builder.add16BitUintToData(0x3302);
       available -= 2;
       expect(builder.getAvailablePayloadLength()).toBe(available);
 
@@ -187,14 +187,14 @@ describe("ApduBuilder", () => {
     });
 
     it("error to undefined value", () => {
-      builder.addByteToData(undefined);
+      builder.add8BitUintToData(undefined);
       expect(builder.build().getRawApdu()).toEqual(COMMAND_NO_BODY);
       expect(builder.getAvailablePayloadLength()).toBe(APDU_MAX_PAYLOAD);
       expect(builder.getErrors()).toEqual([new InvalidValueError("byte")]);
     });
 
     it("error due value greater than 8-bit integer", () => {
-      builder.addByteToData(0x100);
+      builder.add8BitUintToData(0x100);
       expect(builder.build().getRawApdu()).toEqual(COMMAND_NO_BODY);
       expect(builder.getAvailablePayloadLength()).toBe(APDU_MAX_PAYLOAD);
       expect(builder.getErrors()).toEqual([
@@ -203,7 +203,7 @@ describe("ApduBuilder", () => {
     });
 
     it("error due value greater than 16-bit integer", () => {
-      builder.addShortToData(0x10000);
+      builder.add16BitUintToData(0x10000);
       expect(builder.build().getRawApdu()).toEqual(COMMAND_NO_BODY);
       expect(builder.getAvailablePayloadLength()).toBe(APDU_MAX_PAYLOAD);
       expect(builder.getErrors()).toEqual([
@@ -248,7 +248,7 @@ describe("ApduBuilder", () => {
       expect(builder.build().getRawApdu()).toEqual(COMMAND_BODY_MAX);
       expect(builder.getAvailablePayloadLength()).toBe(0);
 
-      builder.addByteToData(0);
+      builder.add8BitUintToData(0);
       expect(builder.build().getRawApdu()).toEqual(COMMAND_BODY_MAX);
       expect(builder.getErrors()).toEqual([new DataOverflowError("0")]);
     });
@@ -263,7 +263,7 @@ describe("ApduBuilder", () => {
       expect(builder.build().getRawApdu()).toEqual(COMMAND_BODY_MAX);
       expect(builder.getAvailablePayloadLength()).toBe(0);
 
-      builder.addShortToData(0);
+      builder.add16BitUintToData(0);
       expect(builder.build().getRawApdu()).toEqual(COMMAND_BODY_MAX);
       expect(builder.getAvailablePayloadLength()).toBe(0);
       expect(builder.getErrors()).toEqual([new DataOverflowError("0")]);
