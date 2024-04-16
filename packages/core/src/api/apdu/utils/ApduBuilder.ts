@@ -12,7 +12,7 @@ export const HEADER_LENGTH = 5;
 export const APDU_MAX_PAYLOAD = 255;
 export const APDU_MAX_SIZE = APDU_MAX_PAYLOAD + 5;
 
-type ApduBuilderArgs = {
+export type ApduBuilderArgs = {
   ins: number;
   cla: number;
   p1: number;
@@ -20,6 +20,11 @@ type ApduBuilderArgs = {
   offset?: number;
 };
 
+/**
+ * ApduBuilder is a utility class to help build APDU commands
+ * It allows to easily add data to the data field of the APDU command
+ * and to encode data in different formats
+ */
 export class ApduBuilder {
   private _ins: number;
   private _cla: number;
@@ -35,11 +40,22 @@ export class ApduBuilder {
     this.p2 = p2 & 0xff;
   }
 
+  // ==========
   // Public API
+  // ==========
 
+  /**
+   * Build a new Apdu instance with the current state of the builder
+   * @returns {Apdu} - Returns a new Apdu instance
+   */
   build = () => new Apdu(this._cla, this._ins, this._p1, this.p2, this.data);
 
-  addByteToData = (value?: number) => {
+  /**
+   * Add a 8-bit unsigned integer to the data field (max value 0xff = 255)
+   * @param value?: number - The value to add to the data
+   * @returns {ApduBuilder} - Returns the current instance of ApduBuilder
+   */
+  add8BitUintToData = (value?: number) => {
     if (typeof value === "undefined" || isNaN(value)) {
       this.errors?.push(new InvalidValueError("byte", value?.toString()));
       return this;
@@ -61,7 +77,12 @@ export class ApduBuilder {
     return this;
   };
 
-  addShortToData = (value: number) => {
+  /**
+   * Add a 16-bit unsigned integer to the data field (max value 0xffff = 65535)
+   * @param value: number - The value to add to the data
+   * @returns {ApduBuilder} - Returns the current instance of ApduBuilder
+   */
+  add16BitUintToData = (value: number) => {
     if (value > 0xffff) {
       this.errors?.push(new ValueOverflowError(value.toString(), 65535));
       return this;
@@ -72,11 +93,16 @@ export class ApduBuilder {
       return this;
     }
 
-    this.addByteToData((value >>> 8) & 0xff);
-    this.addByteToData(value & 0xff);
+    this.add8BitUintToData((value >>> 8) & 0xff);
+    this.add8BitUintToData(value & 0xff);
     return this;
   };
 
+  /**
+   * Add a Uint8Array to the data field if it has enough remaining space
+   * @param value: Uint8Array - The value to add to the data
+   * @returns {ApduBuilder} - Returns the current instance of ApduBuilder
+   */
   addBufferToData = (value: Uint8Array) => {
     if (!this.hasEnoughLengthRemaining(value)) {
       this.errors?.push(new DataOverflowError(value.toString()));
@@ -84,11 +110,17 @@ export class ApduBuilder {
     }
 
     for (const byte of value) {
-      this.addByteToData(byte);
+      this.add8BitUintToData(byte);
     }
     return this;
   };
 
+  /**
+   * Add a string to the data field if it has enough remaining space
+   * and it can be formatted as a hexadecimal string
+   * @param value: string - The value to add to the data
+   * @returns {ApduBuilder} - Returns the current instance of ApduBuilder
+   */
   addHexaStringToData = (value: string) => {
     const result = this.getHexaString(value);
     if (!result.length) {
@@ -99,6 +131,11 @@ export class ApduBuilder {
     return this;
   };
 
+  /**
+   * Add an ascii string to the data field if it has enough remaining space
+   * @param value: string - The value to add to the data
+   * @returns {ApduBuilder} - Returns the current instance of ApduBuilder
+   */
   addAsciiStringToData = (value: string) => {
     let hexa = 0;
 
@@ -109,12 +146,19 @@ export class ApduBuilder {
 
     for (const char of value) {
       hexa = char.charCodeAt(0);
-      this.addByteToData(hexa);
+      this.add8BitUintToData(hexa);
     }
 
     return this;
   };
 
+  /**
+   * Add a Length-Value encoded hexadecimal string to the data field if it has enough remaining space
+   * Length-Value encoding is a way to encode data in a binary format with the first byte
+   * being the length of the data and the following bytes being the data itself
+   * @param value: string - The value to add to the data
+   * @returns {ApduBuilder} - Returns the current instance of ApduBuilder
+   */
   encodeInLVFromHexa = (value: string) => {
     const result: number[] = this.getHexaString(value);
 
@@ -129,39 +173,60 @@ export class ApduBuilder {
     }
     // values are always being well formatted at this point
     // therefore no status test is needed
-    this.addByteToData(result.length);
+    this.add8BitUintToData(result.length);
     this.addNumbers(result);
     return this;
   };
 
+  /**
+   * Add a Length-Value encoded buffer to the data field if it has enough remaining space
+   * Length-Value encoding is a way to encode data in a binary format with the first byte
+   * being the length of the data and the following bytes being the data itself
+   * @param value: Uint8Array - The value to add to the data
+   * @returns {ApduBuilder} - Returns the current instance of ApduBuilder
+   */
   encodeInLVFromBuffer = (value: Uint8Array) => {
     if (!this.hasEnoughLengthRemaining(value, true)) {
       this.errors?.push(new DataOverflowError(value.toString()));
       return this;
     }
-    // values are always being well formatted at this point
-    // therefore no status test is needed
-    this.addByteToData(value.length);
+
+    this.add8BitUintToData(value.length);
     this.addBufferToData(value);
     return this;
   };
 
+  /**
+   * Add a Length-Value encoded ascii string to the data field if it has enough remaining space
+   * Length-Value encoding is a way to encode data in a binary format with the first byte
+   * being the length of the data and the following bytes being the data itself
+   * @param value: string - The value to add to the data
+   * @returns {ApduBuilder} - Returns the current instance of ApduBuilder
+   */
   encodeInLVFromAscii = (value: string) => {
     if (!this.hasEnoughLengthRemaining(value, true)) {
       this.errors?.push(new DataOverflowError(value));
       return this;
     }
-    // values are always being well formatted at this point
-    // therefore no status test is needed
-    this.addByteToData(value.length);
+
+    this.add8BitUintToData(value.length);
     this.addAsciiStringToData(value);
     return this;
   };
 
+  /**
+   * Returns the remaining payload length
+   * @returns {number}
+   */
   getAvailablePayloadLength = () => {
     return APDU_MAX_SIZE - (HEADER_LENGTH + (this.data?.length ?? 0));
   };
 
+  /**
+   * Returns the hexadecimal representation of a string
+   * @param value: string - The value to convert to hexadecimal
+   * @returns {number[]} - Returns an array of numbers representing the hexadecimal value
+   */
   getHexaString = (value: string) => {
     const table: number[] = [];
 
@@ -196,10 +261,22 @@ export class ApduBuilder {
     return table;
   };
 
+  /**
+   * Returns the current errors
+   * @returns {AppBuilderError[]} - Returns an array of errors
+   */
   getErrors = () => this.errors;
 
+  // ===========
   // Private API
+  // ===========
 
+  /**
+   * Check if there is enough space to add a value to the data field
+   * @param value {string | Uint8Array | number[]} - Value to add to the data
+   * @param hasLv {boolean} - Length-Value encoding flag
+   * @returns {boolean} - Returns true if there is enough space to add the value
+   */
   private hasEnoughLengthRemaining = (
     value: string | Uint8Array | number[],
     hasLv = false,
@@ -213,6 +290,11 @@ export class ApduBuilder {
     );
   };
 
+  /**
+   * Add an array of numbers to the data field if it has enough remaining space
+   * @param value: number[] - The value to add to the data
+   * @returns {ApduBuilder} - Returns the current instance of ApduBuilder
+   */
   private addNumbers = (value: number[]) => {
     if (!this.hasEnoughLengthRemaining(value)) {
       this.errors?.push(new DataOverflowError(value.toString()));
@@ -220,7 +302,7 @@ export class ApduBuilder {
     }
 
     for (const byte of value) {
-      this.addByteToData(byte);
+      this.add8BitUintToData(byte);
     }
 
     return this;
