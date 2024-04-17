@@ -1,13 +1,10 @@
 import { v4 as uuidv4 } from "uuid";
 
 import { Command } from "@api/command/Command";
+import { DeviceModelId } from "@api/types";
 import { InternalConnectedDevice } from "@internal/usb/model/InternalConnectedDevice";
 
 export type SessionId = string;
-
-export type ExecuteCommandFn<Params, T> = (
-  command: Command<Params, T>,
-) => (params?: Params) => Promise<T>;
 
 export type SessionConstructorArgs = {
   connectedDevice: InternalConnectedDevice;
@@ -34,12 +31,12 @@ export class Session {
     return this._connectedDevice;
   }
 
-  sendApdu(apdu: Uint8Array) {
-    return this._connectedDevice.sendApdu(apdu);
+  sendApdu(rawApdu: Uint8Array) {
+    return this._connectedDevice.sendApdu(rawApdu);
   }
 
   getCommand<Params, T>(command: Command<Params, T>) {
-    return async (params?: Params): Promise<T> => {
+    return async (deviceModel: DeviceModelId, params?: Params): Promise<T> => {
       const apdu = command.getApdu(params);
       const response = await this.sendApdu(apdu.getRawApdu());
 
@@ -47,7 +44,7 @@ export class Session {
         Left: (err) => {
           throw err;
         },
-        Right: (r) => command.parseResponse(r),
+        Right: (r) => command.parseResponse(r, deviceModel),
       });
     };
   }

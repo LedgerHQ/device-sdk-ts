@@ -38,8 +38,9 @@ export class SendCommandUseCase {
     return deviceSession.caseOf({
       // Case device session found
       Right: async (session) => {
+        const deviceModelId = session.connectedDevice.deviceModel.id;
         const action = session.getCommand(command);
-        const response = await action(params);
+        const response = await action(deviceModelId, params);
         return response;
       },
       // Case device session not found
