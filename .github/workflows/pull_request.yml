@@ -1,4 +1,4 @@
-name: pull_request
+name: Pull Request
 on:
   pull_request:
     types: [opened, synchronize, reopened, edited]
@@ -18,7 +18,8 @@ jobs:
       - uses: toshimaru/auto-author-assign@v2.1.0
 
   danger:
-    name: Pass Danger check
+    name: Run Danger check
+    if: ${{ !contains(github.ref_name, 'dependabot') }}
     runs-on: [ubuntu-latest]
     steps:
       - uses: actions/checkout@v4
@@ -34,7 +35,7 @@ jobs:
         run: ./.github/actions/danger-check.sh
 
   health-check:
-    name: Pass health check
+    name: Run health check
     needs: [danger]
     runs-on: [device-sdk-4xlarge-linux]
     steps:
@@ -46,7 +47,7 @@ jobs:
         run: pnpm health-check
 
   unit-tests:
-    name: Launch unit tests
+    name: Run unit tests
     needs: [danger]
     runs-on: [device-sdk-4xlarge-linux]
     steps:
