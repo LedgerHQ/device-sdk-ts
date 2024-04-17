@@ -1,6 +1,11 @@
 import { Container } from "inversify";
 import { Observable } from "rxjs";
 
+import { commandTypes } from "@api/command/di/commandTypes";
+import {
+  SendCommandUseCase,
+  SendCommandUseCaseArgs,
+} from "@api/command/use-case/SendCommandUseCase";
 import { ConnectedDevice } from "@api/usb/model/ConnectedDevice";
 import { configTypes } from "@internal/config/di/configTypes";
 import { GetSdkVersionUseCase } from "@internal/config/use-case/GetSdkVersionUseCase";
@@ -63,6 +68,12 @@ export class DeviceSdk {
   sendApdu(args: SendApduUseCaseArgs): Promise<ApduResponse> {
     return this.container
       .get<SendApduUseCase>(sendTypes.SendApduUseCase)
+      .execute(args);
+  }
+
+  sendCommand<Params, T>(args: SendCommandUseCaseArgs<Params, T>): Promise<T> {
+    return this.container
+      .get<SendCommandUseCase>(commandTypes.SendCommandUseCase)
       .execute(args);
   }
 

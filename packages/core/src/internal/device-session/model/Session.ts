@@ -5,6 +5,10 @@ import { InternalConnectedDevice } from "@internal/usb/model/InternalConnectedDe
 
 export type SessionId = string;
 
+export type ExecuteCommandFn<Params, T> = (
+  command: Command<Params, T>,
+) => (params?: Params) => Promise<T>;
+
 export type SessionConstructorArgs = {
   connectedDevice: InternalConnectedDevice;
   id?: SessionId;
@@ -30,18 +34,21 @@ export class Session {
     return this._connectedDevice;
   }
 
-  sendApdu(_args: Uint8Array) {
-    return this._connectedDevice.sendApdu(_args);
+  sendApdu(apdu: Uint8Array) {
+    return this._connectedDevice.sendApdu(apdu);
   }
 
-  executeCommand<Params, T>(
-    _params: Params,
-    _command: Command<Params, T>,
-  ): Promise<T> {
-    // const apdu = command.getApdu(params);
-    // do some magic with apdu
-    // const response = command.parseResponse();
-    // return response;
-    throw new Error("Method not implemented.");
+  getCommand<Params, T>(command: Command<Params, T>) {
+    return async (params?: Params): Promise<T> => {
+      const apdu = command.getApdu(params);
+      const response = await this.sendApdu(apdu.getRawApdu());
+
+      return response.caseOf({
+        Left: (err) => {
+          throw err;
+        },
+        Right: (r) => command.parseResponse(r),
+      });
+    };
   }
 }
