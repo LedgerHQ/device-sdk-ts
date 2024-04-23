@@ -48,7 +48,6 @@
     "typescript": "^5.4.4",
     "zx": "^8.0.1"
   },
-  "packageManager": "pnpm@8.15.6",
   "engines": {
     "node": ">=18"
   }

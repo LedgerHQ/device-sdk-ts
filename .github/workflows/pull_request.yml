@@ -13,7 +13,7 @@ concurrency:
 jobs:
   auto-assign:
     name: Auto assign
-    runs-on: [ubuntu-latest]
+    runs-on: ubuntu-latest
     steps:
       - uses: toshimaru/auto-author-assign@v2.1.0
 
@@ -37,7 +37,7 @@ jobs:
   health-check:
     name: Run health check
     needs: [danger]
-    runs-on: [device-sdk-4xlarge-linux]
+    runs-on: device-sdk-4xlarge-linux
     steps:
       - uses: actions/checkout@v4
 
@@ -49,7 +49,7 @@ jobs:
   unit-tests:
     name: Run unit tests
     needs: [danger]
-    runs-on: [device-sdk-4xlarge-linux]
+    runs-on: device-sdk-4xlarge-linux
     steps:
       - uses: actions/checkout@v4
 
