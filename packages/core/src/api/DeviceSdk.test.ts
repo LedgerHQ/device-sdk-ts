@@ -7,6 +7,7 @@ import { usbDiTypes } from "@internal/usb/di/usbDiTypes";
 import pkg from "@root/package.json";
 import { StubUseCase } from "@root/src/di.stub";
 
+import { commandTypes } from "./command/di/commandTypes";
 import { ConsoleLogger } from "./logger-subscriber/service/ConsoleLogger";
 import { DeviceSdk } from "./DeviceSdk";
 
@@ -49,6 +50,10 @@ describe("DeviceSdk", () => {
     it("should have getConnectedDevice method", () => {
       expect(sdk.getConnectedDevice).toBeDefined();
     });
+
+    it("should have sendCommand method", () => {
+      expect(sdk.sendCommand).toBeDefined();
+    });
   });
 
   describe("stubbed", () => {
@@ -78,6 +83,7 @@ describe("DeviceSdk", () => {
       [discoveryTypes.StopDiscoveringUseCase],
       [discoveryTypes.ConnectUseCase],
       [sendTypes.SendApduUseCase],
+      [commandTypes.SendCommandUseCase],
       [usbDiTypes.GetConnectedDeviceUseCase],
     ])("should have %p use case", (diSymbol) => {
       const uc = sdk.container.get<StubUseCase>(diSymbol);

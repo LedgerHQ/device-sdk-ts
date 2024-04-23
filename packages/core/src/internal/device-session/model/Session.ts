@@ -1,6 +1,7 @@
 import { v4 as uuidv4 } from "uuid";
 
 import { Command } from "@api/command/Command";
+import { DeviceModelId } from "@api/types";
 import { InternalConnectedDevice } from "@internal/usb/model/InternalConnectedDevice";
 
 export type SessionId = string;
@@ -30,18 +31,21 @@ export class Session {
     return this._connectedDevice;
   }
 
-  sendApdu(_args: Uint8Array) {
-    return this._connectedDevice.sendApdu(_args);
+  sendApdu(rawApdu: Uint8Array) {
+    return this._connectedDevice.sendApdu(rawApdu);
   }
 
-  executeCommand<Params, T>(
-    _params: Params,
-    _command: Command<Params, T>,
-  ): Promise<T> {
-    // const apdu = command.getApdu(params);
-    // do some magic with apdu
-    // const response = command.parseResponse();
-    // return response;
-    throw new Error("Method not implemented.");
+  getCommand<Params, T>(command: Command<Params, T>) {
+    return async (deviceModel: DeviceModelId, params?: Params): Promise<T> => {
+      const apdu = command.getApdu(params);
+      const response = await this.sendApdu(apdu.getRawApdu());
+
+      return response.caseOf({
+        Left: (err) => {
+          throw err;
+        },
+        Right: (r) => command.parseResponse(r, deviceModel),
+      });
+    };
   }
 }
