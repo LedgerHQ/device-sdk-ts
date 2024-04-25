@@ -1,4 +1,4 @@
-import { Left } from "purify-ts";
+import { Left, Right } from "purify-ts";
 
 import { StaticDeviceModelDataSource } from "@internal/device-model/data/StaticDeviceModelDataSource";
 import {
@@ -14,6 +14,7 @@ import {
   UsbHidTransportNotSupportedError,
 } from "@internal/usb/model/Errors";
 import { hidDeviceStubBuilder } from "@internal/usb/model/HIDDevice.stub";
+import { connectedDeviceStubBuilder } from "@internal/usb/model/InternalConnectedDevice.stub";
 import { usbHidDeviceConnectionFactoryStubBuilder } from "@internal/usb/service/UsbHidDeviceConnectionFactory.stub";
 
 import { WebUsbHidTransport } from "./WebUsbHidTransport";
@@ -42,11 +43,11 @@ describe("WebUsbHidTransport", () => {
   });
 
   describe("When WebHID API is not supported", () => {
-    test("isSupported should return false", () => {
+    it("should not support the transport", () => {
       expect(transport.isSupported()).toBe(false);
     });
 
-    test("startDiscovering should emit an error", (done) => {
+    it("should emit a startDiscovering error", (done) => {
       transport.startDiscovering().subscribe({
         next: () => {
           done("Should not emit any value");
@@ -78,12 +79,12 @@ describe("WebUsbHidTransport", () => {
       global.navigator = undefined as unknown as Navigator;
     });
 
-    it("isSupported should return true", () => {
+    it("should support the transport", () => {
       expect(transport.isSupported()).toBe(true);
     });
 
     describe("startDiscovering", () => {
-      test("If the user grant us access to a device, we should emit it", (done) => {
+      it("should emit device if one new grant access", (done) => {
         mockedRequestDevice.mockResolvedValueOnce([stubDevice]);
 
         transport.startDiscovering().subscribe({
@@ -112,7 +113,7 @@ describe("WebUsbHidTransport", () => {
 
       // It does not seem possible for a user to select several devices on the browser popup.
       // But if it was possible, we should emit them
-      test("If the user grant us access to several devices, we should emit them", (done) => {
+      it("should emit devices if new grant accesses", (done) => {
         mockedRequestDevice.mockResolvedValueOnce([
           stubDevice,
           {
@@ -164,7 +165,7 @@ describe("WebUsbHidTransport", () => {
         });
       });
 
-      test("If the device is not recognized, we should throw a DeviceNotRecognizedError", (done) => {
+      it("should throw DeviceNotRecognizedError if the device is not recognized", (done) => {
         mockedRequestDevice.mockResolvedValueOnce([
           {
             ...stubDevice,
@@ -183,7 +184,7 @@ describe("WebUsbHidTransport", () => {
         });
       });
 
-      test("If the request device is in error, we should return it", (done) => {
+      it("should emit an error if the request device is in error", (done) => {
         const message = "request device error";
         mockedRequestDevice.mockImplementationOnce(() => {
           throw new Error(message);
@@ -204,7 +205,7 @@ describe("WebUsbHidTransport", () => {
       });
 
       // [ASK] Is this the behavior we want when the user does not select any device ?
-      test("If the user did not grant us access to a device (clicking on cancel on the browser popup for ex), we should emit an error", (done) => {
+      it("should emit an error if the user did not grant us access to a device (clicking on cancel on the browser popup for ex)", (done) => {
         // When the user does not select any device, the `requestDevice` will return an empty array
         mockedRequestDevice.mockResolvedValueOnce([]);
 
@@ -229,7 +230,7 @@ describe("WebUsbHidTransport", () => {
     });
 
     describe("stopDiscovering", () => {
-      test("If the discovery process is halted, we should stop monitoring connections.", () => {
+      it("should stop monitoring connections if the discovery process is halted", () => {
         const abortSpy = jest.spyOn(AbortController.prototype, "abort");
 
         transport.stopDiscovering();
@@ -238,10 +239,8 @@ describe("WebUsbHidTransport", () => {
       });
     });
 
-    // [SHOULD] Unit tests connect
-    // eslint-disable-next-line @typescript-eslint/no-empty-function
     describe("connect", () => {
-      test("If no internal device, should throw UnknownDeviceError", async () => {
+      it("should throw UnknownDeviceError if no internal device", async () => {
         const device = { deviceId: "fake" };
 
         const connect = await transport.connect(device);
@@ -251,7 +250,7 @@ describe("WebUsbHidTransport", () => {
         );
       });
 
-      test("If the device is already opened, should throw OpeningConnectionError", async () => {
+      it("should throw OpeningConnectionError if the device is already opened", async () => {
         const device = { deviceId: "fake" };
 
         const connect = await transport.connect(device);
@@ -261,7 +260,7 @@ describe("WebUsbHidTransport", () => {
         );
       });
 
-      test("If the device cannot be opened, should throw OpeningConnexionError", (done) => {
+      it("should throw OpeningConnectionError if the device cannot be opened", (done) => {
         const message = "cannot be opened";
         mockedRequestDevice.mockResolvedValueOnce([
           {
@@ -292,7 +291,7 @@ describe("WebUsbHidTransport", () => {
         });
       });
 
-      test("If the device is already opened, return it", (done) => {
+      it("should return the opened device", (done) => {
         mockedRequestDevice.mockResolvedValueOnce([
           {
             ...stubDevice,
@@ -329,7 +328,7 @@ describe("WebUsbHidTransport", () => {
         });
       });
 
-      test("If the device is available, return it", (done) => {
+      it("should return a device if available", (done) => {
         mockedRequestDevice.mockResolvedValueOnce([stubDevice]);
 
         transport.startDiscovering().subscribe({
@@ -343,6 +342,60 @@ describe("WebUsbHidTransport", () => {
                       expect.objectContaining({ id: discoveredDevice.id }),
                     );
                     done();
+                  })
+                  .ifLeft(() => {
+                    done(connectedDevice);
+                  });
+              })
+              .catch((error) => {
+                done(error);
+              });
+          },
+          error: (error) => {
+            done(error);
+          },
+        });
+      });
+    });
+
+    describe("disconnect", () => {
+      it("should throw an error if the device is not connected", async () => {
+        // given
+        const connectedDevice = connectedDeviceStubBuilder();
+
+        // when
+        const disconnect = await transport.disconnect({
+          connectedDevice,
+        });
+
+        expect(disconnect).toStrictEqual(
+          Left(
+            new UnknownDeviceError(
+              new Error(`Unknown device ${connectedDevice.id}`),
+            ),
+          ),
+        );
+      });
+
+      it("should disconnect if the device is connected", (done) => {
+        mockedRequestDevice.mockResolvedValueOnce([stubDevice]);
+
+        transport.startDiscovering().subscribe({
+          next: (discoveredDevice) => {
+            transport
+              .connect({ deviceId: discoveredDevice.id })
+              .then((connectedDevice) => {
+                connectedDevice
+                  .ifRight((device) => {
+                    transport
+                      .disconnect({ connectedDevice: device })
+                      .then((value) => {
+                        expect(value).toStrictEqual(Right(void 0));
+                        done();
+                      })
+                      .catch((error) => {
+                        done(error);
+                      });
                   })
                   .ifLeft(() => {
                     done(connectedDevice);
