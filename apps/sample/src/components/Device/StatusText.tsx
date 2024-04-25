@@ -11,7 +11,7 @@ const getColorFromState = ({
   theme: DefaultTheme;
 }) => {
   switch (status) {
-    case DeviceStatus.CONNNECTED:
+    case DeviceStatus.CONNECTED:
       return theme.colors.success.c50;
     case DeviceStatus.AVAILABLE:
       return theme.colors.primary.c80;

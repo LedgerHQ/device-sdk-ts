@@ -1,5 +1,5 @@
 "use client";
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { Box, Flex, Icons, Link, Text } from "@ledgerhq/react-ui";
 import { useRouter } from "next/navigation";
 import styled, { DefaultTheme } from "styled-components";
@@ -13,7 +13,7 @@ const Root = styled(Flex).attrs({ py: 8, px: 6 })`
   flex-direction: column;
   width: 280px;
   background-color: ${({ theme }: { theme: DefaultTheme }) =>
-    theme.colors.background.main};
+    theme.colors.background.drawer};
 `;
 
 const Subtitle = styled(Text).attrs({ mb: 5 })``;
@@ -45,6 +45,7 @@ export const Sidebar: React.FC = () => {
   const sdk = useSdk();
   const {
     state: { deviceById },
+    dispatch,
   } = useSessionContext();
 
   useEffect(() => {
@@ -56,6 +57,17 @@ export const Sidebar: React.FC = () => {
         setVersion("");
       });
   }, [sdk]);
+  const onDeviceDisconnect = useCallback(
+    async (sessionId: string) => {
+      try {
+        await sdk.disconnect({ sessionId });
+        dispatch({ type: "remove_session", payload: { sessionId } });
+      } catch (e) {
+        console.error(e);
+      }
+    },
+    [dispatch, sdk],
+  );
 
   const router = useRouter();
   return (
@@ -82,6 +94,7 @@ export const Sidebar: React.FC = () => {
           name={device.name}
           model={device.modelId}
           type={device.type}
+          onDisconnect={async () => onDeviceDisconnect(sessionId)}
         />
       ))}
 

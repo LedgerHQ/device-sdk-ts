@@ -1,6 +1,6 @@
 import React from "react";
 import { ConnectionType, DeviceModelId } from "@ledgerhq/device-sdk-core";
-import { Box, Flex, Icons, Text } from "@ledgerhq/react-ui";
+import { Box, DropdownGeneric, Flex, Icons, Text } from "@ledgerhq/react-ui";
 import styled, { DefaultTheme } from "styled-components";
 
 import { StatusText } from "./StatusText";
@@ -18,9 +18,19 @@ const IconContainer = styled(Flex).attrs({ p: 4, mr: 3, borderRadius: 100 })`
   align-items: center;
 `;
 
+const ActionRow = styled(Flex).attrs({ py: 4, px: 2 })`
+  position: relative;
+  cursor: pointer;
+  flex-direction: row;
+  flex: 1;
+  min-width: 120px;
+  align-items: center;
+  justify-content: space-between;
+`;
+
 export enum DeviceStatus {
   AVAILABLE = "Available",
-  CONNNECTED = "Connected",
+  CONNECTED = "Connected",
   BUSY = "Busy",
   LOCKED = "Locked",
   NOT_CONNECTED = "Not Connected",
@@ -32,6 +42,7 @@ type DeviceProps = {
   type: ConnectionType;
   model: DeviceModelId;
   status?: DeviceStatus;
+  onDisconnect: () => Promise<void>;
 };
 
 export const Device: React.FC<DeviceProps> = ({
@@ -39,6 +50,7 @@ export const Device: React.FC<DeviceProps> = ({
   status = DeviceStatus.AVAILABLE,
   type,
   model,
+  onDisconnect,
 }) => {
   return (
     <Root>
@@ -54,9 +66,7 @@ export const Device: React.FC<DeviceProps> = ({
         <Flex>
           {status && (
             <>
-              <StatusText variant="paragraph" status={status}>
-                {status}
-              </StatusText>
+              <StatusText status={status}>{status}</StatusText>
               <Text mx={3} color="neutral.c50">
                 •
               </Text>
@@ -67,7 +77,14 @@ export const Device: React.FC<DeviceProps> = ({
           </Text>
         </Flex>
       </Box>
-      {!status ? <Icons.ChevronRight /> : <Icons.MoreVertical />}
+      <DropdownGeneric closeOnClickOutside label="" placement="bottom">
+        <ActionRow onClick={onDisconnect}>
+          <Text variant="paragraph" color="neutral.c80">
+            Disconnect
+          </Text>
+          <Icons.ChevronRight size="S" />
+        </ActionRow>
+      </DropdownGeneric>
     </Root>
   );
 };
