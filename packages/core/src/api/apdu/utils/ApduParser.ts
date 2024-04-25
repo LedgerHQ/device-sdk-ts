@@ -83,8 +83,8 @@ export class ApduParser {
    */
   extractFieldLVEncoded(): Uint8Array | undefined {
     // extract Length field
-    const length = this.extract8BitUint();
-    if (length === undefined) return;
+    const length = this.extract8BitUint() ?? -1;
+    if (length === -1) return;
     if (length === 0) return new Uint8Array();
     const field = this.extractFieldByLength(length);
     // if the field is inconsistent then roll back to the initial point
