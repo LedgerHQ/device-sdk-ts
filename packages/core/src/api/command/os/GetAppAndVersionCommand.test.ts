@@ -1,8 +1,9 @@
+import { Command } from "@api/command/Command";
 import { ApduResponse } from "@internal/device-session/model/ApduResponse";
-import { Command } from "../Command";
+
 import {
-  GetAppAndVersionResponse,
   GetAppAndVersionCommand,
+  GetAppAndVersionResponse,
 } from "./GetAppAndVersionCommand";
 
 const GET_APP_AND_VERSION_APDU = Uint8Array.from([

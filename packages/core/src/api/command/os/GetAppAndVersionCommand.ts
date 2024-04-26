@@ -2,8 +2,8 @@ import { Apdu } from "@api/apdu/model/Apdu";
 import { ApduBuilder, ApduBuilderArgs } from "@api/apdu/utils/ApduBuilder";
 import { ApduParser } from "@api/apdu/utils/ApduParser";
 import { Command } from "@api/command/Command";
-import { ApduResponse } from "@internal/device-session/model/ApduResponse";
 import { CommandUtils } from "@api/command/utils/CommandUtils";
+import { ApduResponse } from "@internal/device-session/model/ApduResponse";
 
 export type GetAppAndVersionResponse = {
   name: string;
