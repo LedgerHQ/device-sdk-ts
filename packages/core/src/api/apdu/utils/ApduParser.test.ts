@@ -1,3 +1,5 @@
+import { Just, Nothing } from "purify-ts";
+
 import { ApduResponse } from "@internal/device-session/model/ApduResponse";
 
 import { ApduParser } from "./ApduParser";
@@ -69,7 +71,7 @@ describe("ApduParser", () => {
 
     it("Extract a single byte", () => {
       parser = new ApduParser(response);
-      expect(parser.extract8BitUint()).toBe(0x01);
+      expect(parser.extract8BitUint()).toStrictEqual(Just(0x01));
       expect(parser.getCurrentIndex()).toBe(1);
       expect(parser.getUnparsedRemainingLength()).toBe(0);
     });
@@ -89,26 +91,26 @@ describe("ApduParser", () => {
       index++;
       length--;
 
-      expect(parser.extract8BitUint()).toBe(0x01);
+      expect(parser.extract8BitUint()).toStrictEqual(Just(0x01));
       expect(parser.getCurrentIndex()).toBe(index);
       expect(parser.getUnparsedRemainingLength()).toBe(length);
       index++;
       length--;
 
-      expect(parser.extract8BitUint()).toBe(0x02);
+      expect(parser.extract8BitUint()).toStrictEqual(Just(0x02));
       expect(parser.getCurrentIndex()).toBe(index);
       expect(parser.getUnparsedRemainingLength()).toBe(length);
       index++;
       length--;
 
-      expect(parser.extract8BitUint()).toBe(0x03);
+      expect(parser.extract8BitUint()).toStrictEqual(Just(0x03));
       expect(parser.getCurrentIndex()).toBe(index);
       expect(parser.getUnparsedRemainingLength()).toBe(length);
       index++;
       length--;
 
       while (length != 0) {
-        expect(parser.extract8BitUint()).toBe(0xaa);
+        expect(parser.extract8BitUint()).toStrictEqual(Just(0xaa));
         expect(parser.getCurrentIndex()).toBe(index);
         expect(parser.getUnparsedRemainingLength()).toBe(length);
         index++;
@@ -129,13 +131,13 @@ describe("ApduParser", () => {
       expect(parser.getCurrentIndex()).toBe(index);
       expect(parser.getUnparsedRemainingLength()).toBe(length);
 
-      expect(parser.extract16BitUInt()).toBe(0x0102);
+      expect(parser.extract16BitUInt()).toStrictEqual(Just(0x0102));
       index += 2;
       length -= 2;
       expect(parser.getCurrentIndex()).toBe(index);
       expect(parser.getUnparsedRemainingLength()).toBe(length);
 
-      expect(parser.extract16BitUInt()).toBe(0x03aa);
+      expect(parser.extract16BitUInt()).toStrictEqual(Just(0x03aa));
       index += 2;
       length -= 2;
       expect(parser.getCurrentIndex()).toBe(index);
@@ -145,13 +147,13 @@ describe("ApduParser", () => {
       index = 0;
       length = RESPONSE_ALL_BYTES.length;
 
-      expect(parser.extract32BitUInt()).toBe(0x010203aa);
+      expect(parser.extract32BitUInt()).toStrictEqual(Just(0x010203aa));
       index += 4;
       length -= 4;
       expect(parser.getCurrentIndex()).toBe(index);
       expect(parser.getUnparsedRemainingLength()).toBe(length);
 
-      expect(parser.extract32BitUInt()).toBe(0xaaaaaaaa);
+      expect(parser.extract32BitUInt()).toStrictEqual(Just(0xaaaaaaaa));
       index += 4;
       length -= 4;
       expect(parser.getCurrentIndex()).toBe(index);
@@ -176,12 +178,12 @@ describe("ApduParser", () => {
       const value = parser.extract8BitUint();
       index++;
       length--;
-      expect(value).toBe(1);
+      expect(value).toStrictEqual(Just(1));
       expect(parser.getCurrentIndex()).toBe(index);
       expect(parser.getUnparsedRemainingLength()).toBe(length);
 
       let array = parser.extractFieldLVEncoded();
-      expect(array).toStrictEqual(DASHBOARD_HEX);
+      expect(array).toStrictEqual(Just(DASHBOARD_HEX));
       expect(parser.encodeToString(array)).toBe(DASHBOARD_NAME);
       index += 6;
       length -= 6;
@@ -203,10 +205,14 @@ describe("ApduParser", () => {
       expect(parser.getCurrentIndex()).toBe(index);
       expect(parser.getUnparsedRemainingLength()).toBe(length);
 
-      const field = parser.extractFieldTLVEncoded();
-      expect(field?.tag).toBe(0x01);
-      expect(field?.value).toStrictEqual(DASHBOARD_HEX);
-      expect(parser.encodeToString(field?.value)).toBe(DASHBOARD_NAME);
+      const maybeField = parser.extractFieldTLVEncoded();
+      const field = maybeField.orDefault({
+        tag: 0x00,
+        value: new Uint8Array(),
+      });
+      expect(field.tag).toBe(0x01);
+      expect(field.value).toStrictEqual(DASHBOARD_HEX);
+      expect(parser.encodeToString(Just(field.value))).toBe(DASHBOARD_NAME);
       index += 7;
       length -= 7;
       expect(parser.getCurrentIndex()).toBe(index);
@@ -272,21 +278,24 @@ describe("ApduParser", () => {
       expect(parser.getUnparsedRemainingLength()).toBe(length);
 
       array = parser.extractFieldLVEncoded();
-      expect(array?.at(0)).toBe(HARDWARE_REV);
+      const hwRevOrDefault = array.orDefault(new Uint8Array());
+      expect(hwRevOrDefault.at(0)).toBe(HARDWARE_REV);
       index += 2;
       length -= 2;
       expect(parser.getCurrentIndex()).toBe(index);
       expect(parser.getUnparsedRemainingLength()).toBe(length);
 
       array = parser.extractFieldLVEncoded();
-      expect(array?.at(0)).toBe(LANGUAGE_PACK);
+      const langPackOrDefault = array.orDefault(new Uint8Array());
+      expect(langPackOrDefault.at(0)).toBe(LANGUAGE_PACK);
       index += 2;
       length -= 2;
       expect(parser.getCurrentIndex()).toBe(index);
       expect(parser.getUnparsedRemainingLength()).toBe(length);
 
       array = parser.extractFieldLVEncoded();
-      expect(array?.at(0)).toBe(RECOVER_STATE);
+      const recoverStateOrDefault = array.orDefault(new Uint8Array());
+      expect(recoverStateOrDefault.at(0)).toBe(RECOVER_STATE);
       index += 2;
       length -= 2;
       expect(parser.getCurrentIndex()).toBe(index);
@@ -306,30 +315,30 @@ describe("ApduParser", () => {
 
       expect(parser.testMinimalLength(1)).toBe(false);
 
-      expect(parser.extract8BitUint()).toBeUndefined();
+      expect(parser.extract8BitUint()).toStrictEqual(Nothing);
       expect(parser.getCurrentIndex()).toBe(index);
       expect(parser.getUnparsedRemainingLength()).toBe(length);
 
-      expect(parser.extract16BitUInt()).toBeUndefined();
+      expect(parser.extract16BitUInt()).toStrictEqual(Nothing);
       expect(parser.getCurrentIndex()).toBe(index);
       expect(parser.getUnparsedRemainingLength()).toBe(length);
 
-      expect(parser.extract32BitUInt()).toBeUndefined();
+      expect(parser.extract32BitUInt()).toStrictEqual(Nothing);
       expect(parser.getCurrentIndex()).toBe(index);
       expect(parser.getUnparsedRemainingLength()).toBe(length);
 
       let array = parser.extractFieldByLength(2);
-      expect(array).toBeUndefined();
+      expect(array).toStrictEqual(Nothing);
       expect(parser.getCurrentIndex()).toBe(index);
       expect(parser.getUnparsedRemainingLength()).toBe(length);
 
       array = parser.extractFieldLVEncoded();
-      expect(array).toBeUndefined();
+      expect(array).toStrictEqual(Nothing);
       expect(parser.getCurrentIndex()).toBe(index);
       expect(parser.getUnparsedRemainingLength()).toBe(length);
 
       const field = parser.extractFieldTLVEncoded();
-      expect(field).toBeUndefined();
+      expect(field).toStrictEqual(Nothing);
       expect(parser.getCurrentIndex()).toBe(index);
       expect(parser.getUnparsedRemainingLength()).toBe(length);
     });
@@ -347,26 +356,26 @@ describe("ApduParser", () => {
       expect(parser.getCurrentIndex()).toBe(index);
       expect(parser.getUnparsedRemainingLength()).toBe(length);
 
-      expect(parser.extract16BitUInt()).toBeUndefined();
+      expect(parser.extract16BitUInt()).toStrictEqual(Nothing);
       expect(parser.getCurrentIndex()).toBe(index);
       expect(parser.getUnparsedRemainingLength()).toBe(length);
 
-      expect(parser.extract32BitUInt()).toBeUndefined();
+      expect(parser.extract32BitUInt()).toStrictEqual(Nothing);
       expect(parser.getCurrentIndex()).toBe(index);
       expect(parser.getUnparsedRemainingLength()).toBe(length);
 
       let array = parser.extractFieldByLength(2);
-      expect(array).toBeUndefined();
+      expect(array).toStrictEqual(Nothing);
       expect(parser.getCurrentIndex()).toBe(index);
       expect(parser.getUnparsedRemainingLength()).toBe(length);
 
       array = parser.extractFieldLVEncoded();
-      expect(array).toBeUndefined();
+      expect(array).toStrictEqual(Nothing);
       expect(parser.getCurrentIndex()).toBe(index);
       expect(parser.getUnparsedRemainingLength()).toBe(length);
 
       let field = parser.extractFieldTLVEncoded();
-      expect(field).toBeUndefined();
+      expect(field).toStrictEqual(Nothing);
       expect(parser.getCurrentIndex()).toBe(index);
       expect(parser.getUnparsedRemainingLength()).toBe(length);
 
@@ -377,7 +386,7 @@ describe("ApduParser", () => {
       parser = new ApduParser(response);
 
       field = parser.extractFieldTLVEncoded();
-      expect(field).toBeUndefined();
+      expect(field).toStrictEqual(Nothing);
       expect(parser.getCurrentIndex()).toBe(index);
       expect(parser.getUnparsedRemainingLength()).toBe(
         RESPONSE_TWO_BYTES.length,
@@ -400,14 +409,14 @@ describe("ApduParser", () => {
       expect(parser.getUnparsedRemainingLength()).toBe(length);
 
       const value = parser.extract8BitUint();
-      expect(value).toBe(0);
+      expect(value).toStrictEqual(Just(0));
       expect(parser.getCurrentIndex()).toBe(1);
       expect(parser.getUnparsedRemainingLength()).toBe(0);
 
       parser.resetIndex();
 
       let array = parser.extractFieldByLength(0);
-      expect(array).toStrictEqual(zero);
+      expect(array).toStrictEqual(Just(zero));
       expect(parser.encodeToString(array)).toBe("");
       expect(parser.getCurrentIndex()).toBe(index);
       expect(parser.getUnparsedRemainingLength()).toBe(length);
@@ -415,7 +424,7 @@ describe("ApduParser", () => {
       array = parser.extractFieldLVEncoded();
       expect(parser.getCurrentIndex()).toBe(1);
       expect(parser.getUnparsedRemainingLength()).toBe(0);
-      expect(array).toStrictEqual(zero);
+      expect(array).toStrictEqual(Just(zero));
       expect(parser.encodeToString(array)).toBe("");
 
       response = new ApduResponse({
@@ -424,20 +433,22 @@ describe("ApduParser", () => {
       });
       parser = new ApduParser(response);
       length = RESPONSE_TLV_ZERO.length;
-
       expect(length).toBe(2);
       expect(parser.getCurrentIndex()).toBe(index);
       expect(parser.getUnparsedRemainingLength()).toBe(length);
-
       const field = parser.extractFieldTLVEncoded();
-      expect(field?.tag).toBe(0xab);
-      expect(field?.value).toStrictEqual(zero);
-      expect(parser.encodeToString(field?.value)).toBe("");
+      const fieldOrDefault = field.orDefault({
+        tag: 0x00,
+        value: new Uint8Array(),
+      });
+      expect(fieldOrDefault.tag).toBe(0xab);
+      expect(fieldOrDefault.value).toStrictEqual(zero);
+      expect(parser.encodeToString(Just(fieldOrDefault.value))).toBe("");
       expect(parser.getCurrentIndex()).toBe(2);
       expect(parser.getUnparsedRemainingLength()).toBe(0);
 
-      expect(parser.encodeToHexaString()).toBe("");
-      expect(parser.encodeToString()).toBe("");
+      expect(parser.encodeToHexaString(Nothing)).toBe("");
+      expect(parser.encodeToString(Nothing)).toBe("");
     });
   });
 });

@@ -1,3 +1,5 @@
+import { Just } from "purify-ts";
+
 import { Apdu } from "@api/apdu/model/Apdu";
 import { ApduBuilder } from "@api/apdu/utils/ApduBuilder";
 import { ApduParser } from "@api/apdu/utils/ApduParser";
@@ -33,7 +35,7 @@ export class GetOsVersionCommand
     if (!CommandUtils.isSuccessResponse(responseApdu)) {
       // [ASK] How de we handle unsuccessful responses?
       throw new Error(
-        `Unexpected status word: ${parser.encodeToHexaString(responseApdu.statusCode)}`,
+        `Unexpected status word: ${parser.encodeToHexaString(Just(responseApdu.statusCode))}`,
       );
     }
 
