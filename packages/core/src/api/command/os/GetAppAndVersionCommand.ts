@@ -26,7 +26,7 @@ export class GetAppAndVersionCommand
 
   parseResponse(apduResponse: ApduResponse): GetAppAndVersionResponse {
     const parser = new ApduParser(apduResponse);
-    // TODO: Check and handle unsuccessful response
+    // [SHOULD] Implement new error treatment logic
     if (!CommandUtils.isSuccessResponse(apduResponse)) {
       throw new Error(
         `Unexpected status word: ${parser.encodeToHexaString(
