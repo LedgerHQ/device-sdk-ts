@@ -17,9 +17,7 @@ export type GetOsVersionResponse = {
   recoverState: string;
 };
 
-export class GetOsVersionCommand
-  implements Command<void, GetOsVersionResponse>
-{
+export class GetOsVersionCommand implements Command<GetOsVersionResponse> {
   getApdu = (): Apdu =>
     new ApduBuilder({
       cla: 0xe0,

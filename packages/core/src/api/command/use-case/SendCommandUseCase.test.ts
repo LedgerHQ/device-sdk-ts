@@ -15,7 +15,7 @@ import {
 let logger: LoggerPublisherService;
 let sessionService: SessionService;
 const fakeSessionId = "fakeSessionId";
-let command: Command<void, { status: string }>;
+let command: Command<{ status: string }>;
 
 describe("SendCommandUseCase", () => {
   beforeEach(() => {
@@ -40,9 +40,10 @@ describe("SendCommandUseCase", () => {
       .spyOn(session, "getCommand")
       .mockReturnValue(async () => Promise.resolve({ status: "success" }));
 
-    const response = await useCase.execute<void, { status: string }>({
+    const response = await useCase.execute<{ status: string }>({
       sessionId: fakeSessionId,
       command,
+      params: undefined,
     });
 
     expect(response).toStrictEqual({ status: "success" });
@@ -54,9 +55,10 @@ describe("SendCommandUseCase", () => {
       .spyOn(sessionService, "getSessionById")
       .mockReturnValue(Left({ _tag: "DeviceSessionNotFound" }));
 
-    const res = useCase.execute<void, { status: string }>({
+    const res = useCase.execute<{ status: string }>({
       sessionId: fakeSessionId,
       command,
+      params: undefined,
     });
 
     await expect(res).rejects.toMatchObject({ _tag: "DeviceSessionNotFound" });

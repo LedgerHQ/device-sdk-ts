@@ -84,7 +84,7 @@ export class DeviceSdk {
       .execute(args);
   }
 
-  sendCommand<Params, T>(args: SendCommandUseCaseArgs<Params, T>): Promise<T> {
+  sendCommand<T, U>(args: SendCommandUseCaseArgs<T, U>): Promise<T> {
     return this.container
       .get<SendCommandUseCase>(commandTypes.SendCommandUseCase)
       .execute(args);

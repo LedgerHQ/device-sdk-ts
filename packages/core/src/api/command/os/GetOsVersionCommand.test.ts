@@ -40,7 +40,7 @@ const STAX_RESPONSE_GOOD = new ApduResponse({
 });
 
 describe("GetOsVersionCommand", () => {
-  let command: Command<void, GetOsVersionResponse>;
+  let command: Command<GetOsVersionResponse>;
 
   beforeEach(() => {
     command = new GetOsVersionCommand();

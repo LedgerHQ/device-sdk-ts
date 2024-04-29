@@ -43,9 +43,9 @@ export class ApduParser {
   extract16BitUInt(): number | undefined {
     if (this._outOfRange(2)) return;
     let msb = this.extract8BitUint();
-    if (!msb) return;
+    if (msb === undefined) return;
     const lsb = this.extract8BitUint();
-    if (!lsb) return;
+    if (lsb === undefined) return;
     msb *= 0x100;
     return msb + lsb;
   }
@@ -57,9 +57,9 @@ export class ApduParser {
   extract32BitUInt(): number | undefined {
     if (this._outOfRange(4)) return;
     let msw = this.extract16BitUInt();
-    if (!msw) return;
+    if (msw === undefined) return;
     const lsw = this.extract16BitUInt();
-    if (!lsw) return;
+    if (lsw === undefined) return;
     msw *= 0x10000;
     return msw + lsw;
   }
