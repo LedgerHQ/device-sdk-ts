@@ -1,15 +1,15 @@
-import {
-  DeviceModel,
-  DeviceModelId,
-} from "@internal/device-model/model/DeviceModel";
+import { DeviceModelId } from "@api/device/DeviceModel";
+import { InternalDeviceModel } from "@internal/device-model/model/DeviceModel";
 
 /**
  * Source of truth for the device models
  */
 export interface DeviceModelDataSource {
-  getAllDeviceModels(): DeviceModel[];
+  getAllDeviceModels(): InternalDeviceModel[];
 
-  getDeviceModel(params: { id: DeviceModelId }): DeviceModel;
+  getDeviceModel(params: { id: DeviceModelId }): InternalDeviceModel;
 
-  filterDeviceModels(params: Partial<DeviceModel>): DeviceModel[];
+  filterDeviceModels(
+    params: Partial<InternalDeviceModel>,
+  ): InternalDeviceModel[];
 }

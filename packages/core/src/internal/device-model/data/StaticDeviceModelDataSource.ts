@@ -1,9 +1,7 @@
 import { injectable } from "inversify";
 
-import {
-  DeviceModel,
-  DeviceModelId,
-} from "@internal/device-model/model/DeviceModel";
+import { DeviceModelId } from "@api/device/DeviceModel";
+import { InternalDeviceModel } from "@internal/device-model/model/DeviceModel";
 
 import { DeviceModelDataSource } from "./DeviceModelDataSource";
 
@@ -12,8 +10,10 @@ import { DeviceModelDataSource } from "./DeviceModelDataSource";
  */
 @injectable()
 export class StaticDeviceModelDataSource implements DeviceModelDataSource {
-  private static deviceModelByIds: { [key in DeviceModelId]: DeviceModel } = {
-    [DeviceModelId.NANO_S]: new DeviceModel({
+  private static deviceModelByIds: {
+    [key in DeviceModelId]: InternalDeviceModel;
+  } = {
+    [DeviceModelId.NANO_S]: new InternalDeviceModel({
       id: DeviceModelId.NANO_S,
       productName: "Ledger Nano S",
       usbProductId: 0x10,
@@ -22,7 +22,7 @@ export class StaticDeviceModelDataSource implements DeviceModelDataSource {
       memorySize: 320 * 1024,
       masks: [0x31100000],
     }),
-    [DeviceModelId.NANO_SP]: new DeviceModel({
+    [DeviceModelId.NANO_SP]: new InternalDeviceModel({
       id: DeviceModelId.NANO_SP,
       productName: "Ledger Nano S Plus",
       usbProductId: 0x50,
@@ -31,7 +31,7 @@ export class StaticDeviceModelDataSource implements DeviceModelDataSource {
       memorySize: 1533 * 1024,
       masks: [0x33100000],
     }),
-    [DeviceModelId.NANO_X]: new DeviceModel({
+    [DeviceModelId.NANO_X]: new InternalDeviceModel({
       id: DeviceModelId.NANO_X,
       productName: "Ledger Nano X",
       usbProductId: 0x40,
@@ -48,7 +48,7 @@ export class StaticDeviceModelDataSource implements DeviceModelDataSource {
         },
       ],
     }),
-    [DeviceModelId.STAX]: new DeviceModel({
+    [DeviceModelId.STAX]: new InternalDeviceModel({
       id: DeviceModelId.STAX,
       productName: "Ledger Stax",
       usbProductId: 0x60,
@@ -67,21 +67,23 @@ export class StaticDeviceModelDataSource implements DeviceModelDataSource {
     }),
   };
 
-  getAllDeviceModels(): DeviceModel[] {
+  getAllDeviceModels(): InternalDeviceModel[] {
     return Object.values(StaticDeviceModelDataSource.deviceModelByIds);
   }
 
-  getDeviceModel(params: { id: DeviceModelId }): DeviceModel {
+  getDeviceModel(params: { id: DeviceModelId }): InternalDeviceModel {
     return StaticDeviceModelDataSource.deviceModelByIds[params.id];
   }
 
   /**
    * Returns the list of device models that match all the given parameters
    */
-  filterDeviceModels(params: Partial<DeviceModel>): DeviceModel[] {
+  filterDeviceModels(
+    params: Partial<InternalDeviceModel>,
+  ): InternalDeviceModel[] {
     return this.getAllDeviceModels().filter((deviceModel) => {
       return Object.entries(params).every(([key, value]) => {
-        return deviceModel[key as keyof DeviceModel] === value;
+        return deviceModel[key as keyof InternalDeviceModel] === value;
       });
     });
   }

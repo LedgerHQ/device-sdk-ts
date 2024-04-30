@@ -1,8 +1,8 @@
 import { inject, injectable } from "inversify";
 
+import { SessionId } from "@api/session/types";
 import { deviceSessionTypes } from "@internal/device-session/di/deviceSessionTypes";
 import { ApduResponse } from "@internal/device-session/model/ApduResponse";
-import { SessionId } from "@internal/device-session/model/Session";
 import type { SessionService } from "@internal/device-session/service/SessionService";
 import { loggerTypes } from "@internal/logger-publisher/di/loggerTypes";
 import { LoggerPublisherService } from "@internal/logger-publisher/service/LoggerPublisherService";

@@ -1,5 +1,5 @@
 import { Command } from "@api/command/Command";
-import { DeviceModelId } from "@api/types";
+import { DeviceModelId } from "@api/device/DeviceModel";
 import { ApduResponse } from "@internal/device-session/model/ApduResponse";
 
 import {

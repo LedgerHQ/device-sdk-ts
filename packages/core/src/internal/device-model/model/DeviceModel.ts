@@ -1,18 +1,11 @@
 import semver from "semver";
 
-export type DeviceId = string;
-
-export enum DeviceModelId {
-  NANO_S = "nanoS",
-  NANO_SP = "nanoSP",
-  NANO_X = "nanoX",
-  STAX = "stax",
-}
+import { DeviceModelId } from "@api/device/DeviceModel";
 
 /**
  * Represents the info of a device model
  */
-export class DeviceModel {
+export class InternalDeviceModel {
   id: DeviceModelId;
   productName: string;
   usbProductId: number;
