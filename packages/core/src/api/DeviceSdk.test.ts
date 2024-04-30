@@ -1,6 +1,7 @@
 import { LocalConfigDataSource } from "@internal/config/data/ConfigDataSource";
 import { StubLocalConfigDataSource } from "@internal/config/data/LocalConfigDataSource.stub";
 import { configTypes } from "@internal/config/di/configTypes";
+import { deviceSessionTypes } from "@internal/device-session/di/deviceSessionTypes";
 import { discoveryTypes } from "@internal/discovery/di/discoveryTypes";
 import { sendTypes } from "@internal/send/di/sendTypes";
 import { usbDiTypes } from "@internal/usb/di/usbDiTypes";
@@ -86,6 +87,7 @@ describe("DeviceSdk", () => {
       [commandTypes.SendCommandUseCase],
       [usbDiTypes.GetConnectedDeviceUseCase],
       [discoveryTypes.DisconnectUseCase],
+      [deviceSessionTypes.GetSessionDeviceStateUseCase],
     ])("should have %p use case", (diSymbol) => {
       const uc = sdk.container.get<StubUseCase>(diSymbol);
       expect(uc).toBeInstanceOf(StubUseCase);
