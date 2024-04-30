@@ -11,15 +11,20 @@ export type AddSessionAction = {
   payload: { sessionId: SessionId; connectedDevice: ConnectedDevice };
 };
 
+export type RemoveSessionAction = {
+  type: "remove_session";
+  payload: { sessionId: SessionId };
+};
+
 export const SessionsInitialState: SessionsState = {
   selectedId: null,
   deviceById: {},
 };
 
-export const sessionsReducer: Reducer<SessionsState, AddSessionAction> = (
-  state,
-  action,
-) => {
+export const sessionsReducer: Reducer<
+  SessionsState,
+  AddSessionAction | RemoveSessionAction
+> = (state, action) => {
   switch (action.type) {
     case "add_session":
       return {
@@ -29,6 +34,13 @@ export const sessionsReducer: Reducer<SessionsState, AddSessionAction> = (
           ...state.deviceById,
           [action.payload.sessionId]: action.payload.connectedDevice,
         },
+      };
+    case "remove_session":
+      delete state.deviceById[action.payload.sessionId];
+
+      return {
+        ...state,
+        selectedId: null,
       };
     default:
       return state;

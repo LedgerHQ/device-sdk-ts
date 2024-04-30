@@ -35,6 +35,7 @@ export class DefaultSessionService implements SessionService {
   removeSession(sessionId: string) {
     const found = this._sessions.find((s) => s.id === sessionId);
     if (found) {
+      found.close();
       this._sessions = this._sessions.filter((s) => s.id !== sessionId);
       this._logger.info("Session removed", { data: { sessionId } });
       return this;

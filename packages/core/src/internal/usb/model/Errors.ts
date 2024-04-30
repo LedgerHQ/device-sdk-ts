@@ -53,3 +53,12 @@ export class SendApduConcurrencyError implements SdkError {
     this.originalError = err;
   }
 }
+
+export class DisconnectError implements SdkError {
+  readonly _tag = "DisconnectError";
+  originalError?: Error;
+
+  constructor(readonly err?: Error) {
+    this.originalError = err;
+  }
+}

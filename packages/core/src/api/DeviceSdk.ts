@@ -16,6 +16,10 @@ import {
   ConnectUseCase,
   ConnectUseCaseArgs,
 } from "@internal/discovery/use-case/ConnectUseCase";
+import {
+  DisconnectUseCase,
+  DisconnectUseCaseArgs,
+} from "@internal/discovery/use-case/DisconnectUseCase";
 import type { StartDiscoveringUseCase } from "@internal/discovery/use-case/StartDiscoveringUseCase";
 import type { StopDiscoveringUseCase } from "@internal/discovery/use-case/StopDiscoveringUseCase";
 import { sendTypes } from "@internal/send/di/sendTypes";
@@ -62,6 +66,12 @@ export class DeviceSdk {
   connect(args: ConnectUseCaseArgs): Promise<SessionId> {
     return this.container
       .get<ConnectUseCase>(discoveryTypes.ConnectUseCase)
+      .execute(args);
+  }
+
+  disconnect(args: DisconnectUseCaseArgs): Promise<void> {
+    return this.container
+      .get<DisconnectUseCase>(discoveryTypes.DisconnectUseCase)
       .execute(args);
   }
 

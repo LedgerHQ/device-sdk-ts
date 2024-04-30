@@ -48,4 +48,9 @@ export class Session {
       });
     };
   }
+
+  close() {
+    // @todo: Implement session close
+    return;
+  }
 }

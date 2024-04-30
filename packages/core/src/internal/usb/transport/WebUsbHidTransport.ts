@@ -1,9 +1,10 @@
 import * as Sentry from "@sentry/minimal";
 import { inject, injectable } from "inversify";
-import { Either, EitherAsync, Left, Right } from "purify-ts";
+import { Either, EitherAsync, Left, Maybe, Right } from "purify-ts";
 import { from, Observable, switchMap } from "rxjs";
 import { v4 as uuid } from "uuid";
 
+import { SdkError } from "@api/Error";
 import type { DeviceModelDataSource } from "@internal/device-model/data/DeviceModelDataSource";
 import { deviceModelTypes } from "@internal/device-model/di/deviceModelTypes";
 import { DeviceId } from "@internal/device-model/model/DeviceModel";
@@ -15,6 +16,7 @@ import { DiscoveredDevice } from "@internal/usb/model/DiscoveredDevice";
 import {
   ConnectError,
   DeviceNotRecognizedError,
+  DisconnectError,
   NoAccessibleDeviceError,
   OpeningConnectionError,
   type PromptDeviceAccessError,
@@ -53,6 +55,10 @@ export class WebUsbHidTransport implements UsbHidTransport {
     this._connectionListenersAbortController = new AbortController();
     this._logger = loggerServiceFactory("WebUsbHidTransport");
     this._usbHidDeviceConnectionFactory = usbHidDeviceConnectionFactory;
+
+    this.hidApi.map((hidApi) => {
+      hidApi.ondisconnect = this.handleDeviceDisconnectionEvent;
+    });
   }
 
   /**
@@ -313,4 +319,51 @@ export class WebUsbHidTransport implements UsbHidTransport {
   private getHidUsbProductId(productId: number): number {
     return productId >> 8;
   }
+
+  async disconnect(params: {
+    connectedDevice: InternalConnectedDevice;
+  }): Promise<Either<SdkError, void>> {
+    this._logger.debug("disconnect", { data: { connectedDevice: params } });
+    const internalDevice = this._internalDevicesById.get(
+      params.connectedDevice.id,
+    );
+
+    if (!internalDevice) {
+      this._logger.error(`Unknown device ${params.connectedDevice.id}`);
+      return Left(
+        new UnknownDeviceError(
+          new Error(`Unknown device ${params.connectedDevice.id}`),
+        ),
+      );
+    }
+
+    try {
+      await internalDevice.hidDevice.close();
+      this._internalDevicesById.delete(internalDevice.id);
+      return Right(void 0);
+    } catch (error) {
+      return Left(new DisconnectError(error as Error));
+    }
+  }
+
+  private handleDeviceDisconnectionEvent = (event: Event) => {
+    this._logger.info("handleDeviceDisconnectionEvent", { data: { event } });
+    const hidDevice = (event as HIDConnectionEvent).device;
+    const maybeInternalDevice = Maybe.fromFalsy(
+      Array.from(this._internalDevicesById.values()).find(
+        (iDevice) => iDevice.hidDevice.productId === hidDevice.productId,
+      ),
+    );
+
+    maybeInternalDevice.map(async (internalDevice) => {
+      try {
+        await internalDevice.hidDevice.close();
+        this._internalDevicesById.delete(internalDevice.id);
+      } catch (error) {
+        this._logger.error("Error while closing device from event", {
+          data: { error },
+        });
+      }
+    });
+  };
 }

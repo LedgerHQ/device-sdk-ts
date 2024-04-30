@@ -2,6 +2,7 @@ import { Context, createContext, useContext, useReducer } from "react";
 
 import {
   AddSessionAction,
+  RemoveSessionAction,
   SessionsInitialState,
   sessionsReducer,
   SessionsState,
@@ -9,13 +10,13 @@ import {
 
 type SessionContextType = {
   state: SessionsState;
-  dispatch: (value: AddSessionAction) => void;
+  dispatch: (value: AddSessionAction | RemoveSessionAction) => void;
 };
 
 const SessionContext: Context<SessionContextType> =
   createContext<SessionContextType>({
     state: SessionsInitialState,
-    dispatch: (_value: AddSessionAction) => null,
+    dispatch: () => null,
   });
 
 export const SessionProvider: React.FC<React.PropsWithChildren> = ({

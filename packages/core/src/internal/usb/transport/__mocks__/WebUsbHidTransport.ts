@@ -5,6 +5,8 @@ export class WebUsbHidTransport implements UsbHidTransport {
   connect = jest.fn();
   startDiscovering = jest.fn();
   stopDiscovering = jest.fn();
+
+  disconnect = jest.fn();
 }
 
 export function usbHidTransportMockBuilder(
@@ -15,6 +17,7 @@ export function usbHidTransportMockBuilder(
     startDiscovering: jest.fn(),
     stopDiscovering: jest.fn(),
     connect: jest.fn(),
+    disconnect: jest.fn(),
     ...props,
   };
 }
