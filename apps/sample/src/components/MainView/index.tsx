@@ -1,5 +1,4 @@
-import React, { useCallback, useEffect, useState } from "react";
-import type { DiscoveredDevice } from "@ledgerhq/device-sdk-core";
+import React, { useCallback, useEffect } from "react";
 import { Button, Flex, Text } from "@ledgerhq/react-ui";
 import Image from "next/image";
 import styled, { DefaultTheme } from "styled-components";
@@ -25,15 +24,28 @@ const NanoLogo = styled(Image).attrs({ mb: 8 })`
 export const MainView: React.FC = () => {
   const sdk = useSdk();
   const { dispatch } = useSessionContext();
-  const [discoveredDevice, setDiscoveredDevice] =
-    useState<null | DiscoveredDevice>(null);
 
   // Example starting the discovery on a user action
   const onSelectDeviceClicked = useCallback(() => {
     sdk.startDiscovering().subscribe({
       next: (device) => {
-        console.log(`🦖 Discovered device: `, device);
-        setDiscoveredDevice(device);
+        sdk
+          .connect({ deviceId: device.id })
+          .then((sessionId) => {
+            console.log(
+              `🦖 Response from connect: ${JSON.stringify(sessionId)} 🎉`,
+            );
+            dispatch({
+              type: "add_session",
+              payload: {
+                sessionId,
+                connectedDevice: sdk.getConnectedDevice({ sessionId }),
+              },
+            });
+          })
+          .catch((error) => {
+            console.error(`Error from connection or get-version`, error);
+          });
       },
       error: (error) => {
         console.error(error);
@@ -47,28 +59,6 @@ export const MainView: React.FC = () => {
       sdk.stopDiscovering();
     };
   }, [sdk]);
-
-  useEffect(() => {
-    if (discoveredDevice) {
-      sdk
-        .connect({ deviceId: discoveredDevice.id })
-        .then((sessionId) => {
-          console.log(
-            `🦖 Response from connect: ${JSON.stringify(sessionId)} 🎉`,
-          );
-          dispatch({
-            type: "add_session",
-            payload: {
-              sessionId,
-              connectedDevice: sdk.getConnectedDevice({ sessionId }),
-            },
-          });
-        })
-        .catch((error) => {
-          console.error(`Error from connection or get-version`, error);
-        });
-    }
-  }, [sdk, discoveredDevice]);
 
   return (
     <Root>
