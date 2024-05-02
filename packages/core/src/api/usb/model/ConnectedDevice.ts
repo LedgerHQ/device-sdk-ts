@@ -1,8 +1,5 @@
-import {
-  DeviceId,
-  DeviceModelId,
-} from "@internal/device-model/model/DeviceModel";
-import { ConnectionType } from "@internal/discovery/model/ConnectionType";
+import { DeviceId, DeviceModelId } from "@api/device/DeviceModel";
+import { ConnectionType } from "@api/discovery/ConnectionType";
 import { InternalConnectedDevice } from "@internal/usb/model/InternalConnectedDevice";
 
 type ConnectedDeviceConstructorArgs = {

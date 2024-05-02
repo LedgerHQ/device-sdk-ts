@@ -1,7 +1,13 @@
 import React from "react";
-import { ConnectionType, DeviceModelId } from "@ledgerhq/device-sdk-core";
+import {
+  ConnectionType,
+  DeviceModelId,
+  SessionId,
+} from "@ledgerhq/device-sdk-core";
 import { Box, DropdownGeneric, Flex, Icons, Text } from "@ledgerhq/react-ui";
 import styled, { DefaultTheme } from "styled-components";
+
+import { useSessionState } from "@/hooks/useSessionState";
 
 import { StatusText } from "./StatusText";
 
@@ -28,30 +34,23 @@ const ActionRow = styled(Flex).attrs({ py: 4, px: 2 })`
   justify-content: space-between;
 `;
 
-export enum DeviceStatus {
-  AVAILABLE = "Available",
-  CONNECTED = "Connected",
-  BUSY = "Busy",
-  LOCKED = "Locked",
-  NOT_CONNECTED = "Not Connected",
-}
-
 // These props are subject to change.
 type DeviceProps = {
   name: string;
   type: ConnectionType;
+  sessionId: SessionId;
   model: DeviceModelId;
-  status?: DeviceStatus;
   onDisconnect: () => Promise<void>;
 };
 
 export const Device: React.FC<DeviceProps> = ({
   name,
-  status = DeviceStatus.AVAILABLE,
   type,
   model,
   onDisconnect,
+  sessionId,
 }) => {
+  const sessionState = useSessionState(sessionId);
   return (
     <Root>
       <IconContainer>
@@ -64,9 +63,11 @@ export const Device: React.FC<DeviceProps> = ({
       <Box flex={1}>
         <Text variant="body">{name}</Text>
         <Flex>
-          {status && (
+          {sessionState && (
             <>
-              <StatusText status={status}>{status}</StatusText>
+              <StatusText state={sessionState.deviceStatus}>
+                {sessionState.deviceStatus}
+              </StatusText>
               <Text mx={3} color="neutral.c50">
                 •
               </Text>

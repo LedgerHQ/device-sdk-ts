@@ -1,12 +1,12 @@
 import { inject, injectable } from "inversify";
 
+import { SessionId } from "@api/session/types";
 import { deviceSessionTypes } from "@internal/device-session/di/deviceSessionTypes";
 import type { SessionService } from "@internal/device-session/service/SessionService";
 import { loggerTypes } from "@internal/logger-publisher/di/loggerTypes";
 import { LoggerPublisherService } from "@internal/logger-publisher/service/LoggerPublisherService";
 import { usbDiTypes } from "@internal/usb/di/usbDiTypes";
 import type { UsbHidTransport } from "@internal/usb/transport/UsbHidTransport";
-import { SessionId } from "@root/src";
 
 export type DisconnectUseCaseArgs = {
   sessionId: SessionId;

@@ -1,8 +1,6 @@
-import {
-  DeviceId,
-  DeviceModel,
-} from "@internal/device-model/model/DeviceModel";
-import { ConnectionType } from "@internal/discovery/model/ConnectionType";
+import { DeviceId } from "@api/device/DeviceModel";
+import { ConnectionType } from "@api/discovery/ConnectionType";
+import { InternalDeviceModel } from "@internal/device-model/model/DeviceModel";
 import { SendApduFnType } from "@internal/usb/transport/DeviceConnection";
 
 /**
@@ -10,14 +8,14 @@ import { SendApduFnType } from "@internal/usb/transport/DeviceConnection";
  */
 export type ConnectedDeviceConstructorArgs = {
   id: DeviceId;
-  deviceModel: DeviceModel;
+  deviceModel: InternalDeviceModel;
   type: ConnectionType;
   sendApdu: SendApduFnType;
 };
 
 export class InternalConnectedDevice {
   public readonly id: DeviceId;
-  public readonly deviceModel: DeviceModel;
+  public readonly deviceModel: InternalDeviceModel;
   public readonly sendApdu: SendApduFnType;
   public readonly type: ConnectionType;
 

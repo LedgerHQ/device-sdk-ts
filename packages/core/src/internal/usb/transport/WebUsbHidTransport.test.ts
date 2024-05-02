@@ -1,10 +1,7 @@
 import { Left, Right } from "purify-ts";
 
+import { DeviceModel, DeviceModelId } from "@api/device/DeviceModel";
 import { StaticDeviceModelDataSource } from "@internal/device-model/data/StaticDeviceModelDataSource";
-import {
-  DeviceModel,
-  DeviceModelId,
-} from "@internal/device-model/model/DeviceModel";
 import { DefaultLoggerPublisherService } from "@internal/logger-publisher/service/DefaultLoggerPublisherService";
 import {
   DeviceNotRecognizedError,

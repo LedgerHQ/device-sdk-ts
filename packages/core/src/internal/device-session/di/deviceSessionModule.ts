@@ -1,6 +1,5 @@
 import { ContainerModule, interfaces } from "inversify";
 
-import { Session } from "@internal/device-session/model/Session";
 import { ApduReceiverService } from "@internal/device-session/service/ApduReceiverService";
 import { ApduSenderService } from "@internal/device-session/service/ApduSenderService";
 import {
@@ -12,23 +11,26 @@ import {
   DefaultApduSenderServiceConstructorArgs,
 } from "@internal/device-session/service/DefaultApduSenderService";
 import { DefaultSessionService } from "@internal/device-session/service/DefaultSessionService";
+import { GetSessionDeviceStateUseCase } from "@internal/device-session/use-case/GetSessionDeviceStateUseCase";
 import { loggerTypes } from "@internal/logger-publisher/di/loggerTypes";
 import { LoggerPublisherService } from "@internal/logger-publisher/service/LoggerPublisherService";
+import { StubUseCase } from "@root/src/di.stub";
 
 import { deviceSessionTypes } from "./deviceSessionTypes";
 
 export type DeviceSessionModuleArgs = Partial<{
   stub: boolean;
-  sessions: Session[];
 }>;
 
-export const deviceSessionModuleFactory = () =>
+export const deviceSessionModuleFactory = (
+  { stub }: DeviceSessionModuleArgs = { stub: false },
+) =>
   new ContainerModule(
     (
       bind,
       _unbind,
       _isBound,
-      _rebind,
+      rebind,
       _unbindAsync,
       _onActivation,
       _onDeactivation,
@@ -60,5 +62,13 @@ export const deviceSessionModuleFactory = () =>
       bind(deviceSessionTypes.SessionService)
         .to(DefaultSessionService)
         .inSingletonScope();
+
+      bind(deviceSessionTypes.GetSessionDeviceStateUseCase).to(
+        GetSessionDeviceStateUseCase,
+      );
+
+      if (stub) {
+        rebind(deviceSessionTypes.GetSessionDeviceStateUseCase).to(StubUseCase);
+      }
     },
   );

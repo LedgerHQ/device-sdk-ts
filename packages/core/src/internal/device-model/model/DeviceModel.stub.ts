@@ -1,8 +1,9 @@
-import { DeviceModel, DeviceModelId } from "./DeviceModel";
+import { DeviceModelId } from "@api/device/DeviceModel";
+import { InternalDeviceModel } from "@internal/device-model/model/DeviceModel";
 
 export function deviceModelStubBuilder(
-  props: Partial<DeviceModel> = {},
-): DeviceModel {
+  props: Partial<InternalDeviceModel> = {},
+): InternalDeviceModel {
   return {
     id: DeviceModelId.NANO_X,
     productName: "Ledger Nano X",

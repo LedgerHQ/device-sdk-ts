@@ -3,7 +3,7 @@ import { ApduBuilder } from "@api/apdu/utils/ApduBuilder";
 import { ApduParser } from "@api/apdu/utils/ApduParser";
 import { Command } from "@api/command/Command";
 import { CommandUtils } from "@api/command/utils/CommandUtils";
-import { DeviceModelId } from "@api/types";
+import { DeviceModelId } from "@api/device/DeviceModel";
 import { ApduResponse } from "@internal/device-session/model/ApduResponse";
 
 export type GetOsVersionResponse = {

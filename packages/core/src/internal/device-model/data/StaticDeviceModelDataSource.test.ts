@@ -1,4 +1,4 @@
-import { DeviceModelId } from "@internal/device-model/model/DeviceModel";
+import { DeviceModelId } from "@api/device/DeviceModel";
 
 import { StaticDeviceModelDataSource } from "./StaticDeviceModelDataSource";
 

@@ -91,6 +91,7 @@ export const Sidebar: React.FC = () => {
       {Object.entries(deviceById).map(([sessionId, device]) => (
         <Device
           key={sessionId}
+          sessionId={sessionId}
           name={device.name}
           model={device.modelId}
           type={device.type}

@@ -1,12 +1,12 @@
 import { of } from "rxjs";
 
 import { DeviceModelDataSource } from "@internal/device-model/data/DeviceModelDataSource";
-import { DeviceModel } from "@internal/device-model/model/DeviceModel";
+import { InternalDeviceModel } from "@internal/device-model/model/DeviceModel";
 import { DefaultLoggerPublisherService } from "@internal/logger-publisher/service/DefaultLoggerPublisherService";
 import { LoggerPublisherService } from "@internal/logger-publisher/service/LoggerPublisherService";
+import { DiscoveredDevice } from "@internal/usb/model/DiscoveredDevice";
 import { usbHidDeviceConnectionFactoryStubBuilder } from "@internal/usb/service/UsbHidDeviceConnectionFactory.stub";
 import { WebUsbHidTransport } from "@internal/usb/transport/WebUsbHidTransport";
-import { DiscoveredDevice } from "@root/src";
 
 import { StartDiscoveringUseCase } from "./StartDiscoveringUseCase";
 
@@ -16,7 +16,7 @@ let logger: LoggerPublisherService;
 describe("StartDiscoveringUseCase", () => {
   const stubDiscoveredDevice: DiscoveredDevice = {
     id: "",
-    deviceModel: {} as DeviceModel,
+    deviceModel: {} as InternalDeviceModel,
   };
   const tag = "logger-tag";
 
