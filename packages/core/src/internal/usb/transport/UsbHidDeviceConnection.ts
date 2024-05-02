@@ -2,7 +2,7 @@ import { inject } from "inversify";
 import { Left, Right } from "purify-ts";
 import { Subject } from "rxjs";
 
-import { ApduResponse } from "@internal/device-session/model/ApduResponse";
+import { ApduResponse } from "@api/device-session/ApduResponse";
 import { ApduReceiverService } from "@internal/device-session/service/ApduReceiverService";
 import { ApduSenderService } from "@internal/device-session/service/ApduSenderService";
 import { loggerTypes } from "@internal/logger-publisher/di/loggerTypes";

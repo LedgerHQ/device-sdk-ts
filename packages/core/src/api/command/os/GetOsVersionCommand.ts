@@ -5,7 +5,7 @@ import { Command } from "@api/command/Command";
 import { InvalidStatusWordError } from "@api/command/Errors";
 import { CommandUtils } from "@api/command/utils/CommandUtils";
 import { DeviceModelId } from "@api/device/DeviceModel";
-import { ApduResponse } from "@internal/device-session/model/ApduResponse";
+import { ApduResponse } from "@api/device-session/ApduResponse";
 
 export type GetOsVersionResponse = {
   targetId: string;
