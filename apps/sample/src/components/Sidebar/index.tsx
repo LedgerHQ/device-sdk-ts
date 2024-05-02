@@ -7,7 +7,7 @@ import styled, { DefaultTheme } from "styled-components";
 import { Device } from "@/components/Device";
 import { Menu } from "@/components/Menu";
 import { useSdk } from "@/providers/DeviceSdkProvider";
-import { useSessionContext } from "@/providers/SessionsProvider";
+import { useDeviceSessionsContext } from "@/providers/DeviceSessionsProvider";
 
 const Root = styled(Flex).attrs({ py: 8, px: 6 })`
   flex-direction: column;
@@ -46,7 +46,7 @@ export const Sidebar: React.FC = () => {
   const {
     state: { deviceById },
     dispatch,
-  } = useSessionContext();
+  } = useDeviceSessionsContext();
 
   useEffect(() => {
     sdk
