@@ -3,8 +3,8 @@ import * as uuid from "uuid";
 jest.mock("uuid");
 
 import { DeviceModelDataSource } from "@internal/device-model/data/DeviceModelDataSource";
-import { DefaultSessionService } from "@internal/device-session/service/DefaultSessionService";
-import { SessionService } from "@internal/device-session/service/SessionService";
+import { DefaultDeviceSessionService } from "@internal/device-session/service/DefaultDeviceSessionService";
+import { DeviceSessionService } from "@internal/device-session/service/DeviceSessionService";
 import { DefaultLoggerPublisherService } from "@internal/logger-publisher/service/DefaultLoggerPublisherService";
 import { LoggerPublisherService } from "@internal/logger-publisher/service/LoggerPublisherService";
 import { UnknownDeviceError } from "@internal/usb/model/Errors";
@@ -16,7 +16,7 @@ import { ConnectUseCase } from "./ConnectUseCase";
 
 let transport: WebUsbHidTransport;
 let logger: LoggerPublisherService;
-let sessionService: SessionService;
+let sessionService: DeviceSessionService;
 const fakeSessionId = "fakeSessionId";
 
 describe("ConnectUseCase", () => {
@@ -31,7 +31,7 @@ describe("ConnectUseCase", () => {
       () => logger,
       usbHidDeviceConnectionFactoryStubBuilder(),
     );
-    sessionService = new DefaultSessionService(() => logger);
+    sessionService = new DefaultDeviceSessionService(() => logger);
   });
 
   afterAll(() => {
@@ -50,7 +50,7 @@ describe("ConnectUseCase", () => {
     );
   });
 
-  test("If connect is in success, return a session id", async () => {
+  test("If connect is in success, return a deviceSession id", async () => {
     jest
       .spyOn(transport, "connect")
       .mockResolvedValue(Promise.resolve(Right(stubConnectedDevice)));

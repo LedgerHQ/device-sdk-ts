@@ -1,13 +1,13 @@
 import { DeviceStatus } from "@api/device/DeviceStatus";
-import { SessionId } from "@api/session/types";
+import { DeviceSessionId } from "@api/device-session/types";
 
 export type SessionStateConstructorArgs = {
-  sessionId: SessionId;
+  sessionId: DeviceSessionId;
   deviceStatus: DeviceStatus;
 };
 
-export class SessionDeviceState {
-  public readonly sessionId: SessionId;
+export class DeviceSessionState {
+  public readonly sessionId: DeviceSessionId;
   public readonly deviceStatus: DeviceStatus;
 
   constructor({ sessionId, deviceStatus }: SessionStateConstructorArgs) {

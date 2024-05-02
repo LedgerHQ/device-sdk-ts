@@ -1,15 +1,15 @@
 import { inject, injectable } from "inversify";
 
-import { SessionId } from "@api/session/types";
+import { DeviceSessionId } from "@api/device-session/types";
 import { deviceSessionTypes } from "@internal/device-session/di/deviceSessionTypes";
-import type { SessionService } from "@internal/device-session/service/SessionService";
+import type { DeviceSessionService } from "@internal/device-session/service/DeviceSessionService";
 import { loggerTypes } from "@internal/logger-publisher/di/loggerTypes";
 import { LoggerPublisherService } from "@internal/logger-publisher/service/LoggerPublisherService";
 import { usbDiTypes } from "@internal/usb/di/usbDiTypes";
 import type { UsbHidTransport } from "@internal/usb/transport/UsbHidTransport";
 
 export type DisconnectUseCaseArgs = {
-  sessionId: SessionId;
+  sessionId: DeviceSessionId;
 };
 
 /**
@@ -18,14 +18,14 @@ export type DisconnectUseCaseArgs = {
 @injectable()
 export class DisconnectUseCase {
   private readonly _usbHidTransport: UsbHidTransport;
-  private readonly _sessionService: SessionService;
+  private readonly _sessionService: DeviceSessionService;
   private readonly _logger: LoggerPublisherService;
 
   constructor(
     @inject(usbDiTypes.UsbHidTransport)
     usbHidTransport: UsbHidTransport,
-    @inject(deviceSessionTypes.SessionService)
-    sessionService: SessionService,
+    @inject(deviceSessionTypes.DeviceSessionService)
+    sessionService: DeviceSessionService,
     @inject(loggerTypes.LoggerPublisherServiceFactory)
     loggerFactory: (tag: string) => LoggerPublisherService,
   ) {
@@ -35,7 +35,7 @@ export class DisconnectUseCase {
   }
 
   async execute({ sessionId }: DisconnectUseCaseArgs): Promise<void> {
-    const errorOrSession = this._sessionService.getSessionById(sessionId);
+    const errorOrSession = this._sessionService.getDeviceSessionById(sessionId);
 
     return errorOrSession.caseOf({
       Left: (error) => {
@@ -44,14 +44,14 @@ export class DisconnectUseCase {
         });
         throw error;
       },
-      Right: async (session) => {
-        session.close();
+      Right: async (deviceSession) => {
+        deviceSession.close();
 
-        this._sessionService.removeSession(sessionId);
+        this._sessionService.removeDeviceSession(sessionId);
 
         await this._usbHidTransport
           .disconnect({
-            connectedDevice: session.connectedDevice,
+            connectedDevice: deviceSession.connectedDevice,
           })
           .then((errorOrDisconnected) =>
             errorOrDisconnected.mapLeft((error) => {

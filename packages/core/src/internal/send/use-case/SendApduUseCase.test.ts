@@ -1,31 +1,31 @@
 import { Left } from "purify-ts";
 
+import { deviceSessionStubBuilder } from "@internal/device-session/model/DeviceSession.stub";
 import {
   DeviceSessionNotFound,
   ReceiverApduError,
 } from "@internal/device-session/model/Errors";
-import { sessionStubBuilder } from "@internal/device-session/model/Session.stub";
-import { DefaultSessionService } from "@internal/device-session/service/DefaultSessionService";
-import { SessionService } from "@internal/device-session/service/SessionService";
+import { DefaultDeviceSessionService } from "@internal/device-session/service/DefaultDeviceSessionService";
+import { DeviceSessionService } from "@internal/device-session/service/DeviceSessionService";
 import { DefaultLoggerPublisherService } from "@internal/logger-publisher/service/DefaultLoggerPublisherService";
 import { LoggerPublisherService } from "@internal/logger-publisher/service/LoggerPublisherService";
 import { SendApduUseCase } from "@internal/send/use-case/SendApduUseCase";
 import { connectedDeviceStubBuilder } from "@internal/usb/model/InternalConnectedDevice.stub";
 
 let logger: LoggerPublisherService;
-let sessionService: SessionService;
+let sessionService: DeviceSessionService;
 const fakeSessionId = "fakeSessionId";
 
 describe("SendApduUseCase", () => {
   beforeEach(() => {
     logger = new DefaultLoggerPublisherService([], "send-apdu-use-case");
-    sessionService = new DefaultSessionService(() => logger);
+    sessionService = new DefaultDeviceSessionService(() => logger);
   });
 
   it("should send an APDU to a connected device", async () => {
     // given
-    const session = sessionStubBuilder();
-    sessionService.addSession(session);
+    const deviceSession = deviceSessionStubBuilder();
+    sessionService.addDeviceSession(deviceSession);
     const useCase = new SendApduUseCase(sessionService, () => logger);
 
     // when
@@ -35,11 +35,11 @@ describe("SendApduUseCase", () => {
     });
 
     // then
-    expect(session.connectedDevice.sendApdu).toHaveBeenCalledTimes(1);
+    expect(deviceSession.connectedDevice.sendApdu).toHaveBeenCalledTimes(1);
     expect(response).toBeDefined();
   });
 
-  it("should throw an error if the session is not found", async () => {
+  it("should throw an error if the deviceSession is not found", async () => {
     // given
     const useCase = new SendApduUseCase(sessionService, () => logger);
 
@@ -60,8 +60,8 @@ describe("SendApduUseCase", () => {
         Promise.resolve(Left(new ReceiverApduError())),
       ),
     });
-    const session = sessionStubBuilder({ connectedDevice });
-    sessionService.addSession(session);
+    const deviceSession = deviceSessionStubBuilder({ connectedDevice });
+    sessionService.addDeviceSession(deviceSession);
     const useCase = new SendApduUseCase(sessionService, () => logger);
 
     // when

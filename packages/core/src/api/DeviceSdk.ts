@@ -6,14 +6,14 @@ import {
   SendCommandUseCase,
   SendCommandUseCaseArgs,
 } from "@api/command/use-case/SendCommandUseCase";
-import { SessionDeviceState } from "@api/session/SessionDeviceState";
-import { SessionId } from "@api/session/types";
+import { DeviceSessionState } from "@api/device-session/DeviceSessionState";
+import { DeviceSessionId } from "@api/device-session/types";
 import { ConnectedDevice } from "@api/usb/model/ConnectedDevice";
 import { configTypes } from "@internal/config/di/configTypes";
 import { GetSdkVersionUseCase } from "@internal/config/use-case/GetSdkVersionUseCase";
 import { deviceSessionTypes } from "@internal/device-session/di/deviceSessionTypes";
 import { ApduResponse } from "@internal/device-session/model/ApduResponse";
-import { GetSessionDeviceStateUseCase } from "@internal/device-session/use-case/GetSessionDeviceStateUseCase";
+import { GetDeviceSessionStateUseCase } from "@internal/device-session/use-case/GetDeviceSessionStateUseCase";
 import { discoveryTypes } from "@internal/discovery/di/discoveryTypes";
 import {
   ConnectUseCase,
@@ -66,7 +66,7 @@ export class DeviceSdk {
       .execute();
   }
 
-  connect(args: ConnectUseCaseArgs): Promise<SessionId> {
+  connect(args: ConnectUseCaseArgs): Promise<DeviceSessionId> {
     return this.container
       .get<ConnectUseCase>(discoveryTypes.ConnectUseCase)
       .execute(args);
@@ -96,12 +96,12 @@ export class DeviceSdk {
       .execute(args);
   }
 
-  getSessionDeviceState(args: {
-    sessionId: SessionId;
-  }): Observable<SessionDeviceState> {
+  getDeviceSessionState(args: {
+    sessionId: DeviceSessionId;
+  }): Observable<DeviceSessionState> {
     return this.container
-      .get<GetSessionDeviceStateUseCase>(
-        deviceSessionTypes.GetSessionDeviceStateUseCase,
+      .get<GetDeviceSessionStateUseCase>(
+        deviceSessionTypes.GetDeviceSessionStateUseCase,
       )
       .execute(args);
   }

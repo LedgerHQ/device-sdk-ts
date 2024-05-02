@@ -87,7 +87,7 @@ describe("DeviceSdk", () => {
       [commandTypes.SendCommandUseCase],
       [usbDiTypes.GetConnectedDeviceUseCase],
       [discoveryTypes.DisconnectUseCase],
-      [deviceSessionTypes.GetSessionDeviceStateUseCase],
+      [deviceSessionTypes.GetDeviceSessionStateUseCase],
     ])("should have %p use case", (diSymbol) => {
       const uc = sdk.container.get<StubUseCase>(diSymbol);
       expect(uc).toBeInstanceOf(StubUseCase);

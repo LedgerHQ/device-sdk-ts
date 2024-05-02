@@ -1,10 +1,10 @@
 import { inject, injectable } from "inversify";
 
 import { DeviceId } from "@api/device/DeviceModel";
-import { SessionId } from "@api/session/types";
+import { DeviceSessionId } from "@api/device-session/types";
 import { deviceSessionTypes } from "@internal/device-session/di/deviceSessionTypes";
-import { Session } from "@internal/device-session/model/Session";
-import type { SessionService } from "@internal/device-session/service/SessionService";
+import { DeviceSession } from "@internal/device-session/model/DeviceSession";
+import type { DeviceSessionService } from "@internal/device-session/service/DeviceSessionService";
 import { loggerTypes } from "@internal/logger-publisher/di/loggerTypes";
 import { LoggerPublisherService } from "@internal/logger-publisher/service/LoggerPublisherService";
 import { usbDiTypes } from "@internal/usb/di/usbDiTypes";
@@ -20,14 +20,14 @@ export type ConnectUseCaseArgs = {
 @injectable()
 export class ConnectUseCase {
   private readonly _usbHidTransport: UsbHidTransport;
-  private readonly _sessionService: SessionService;
+  private readonly _sessionService: DeviceSessionService;
   private readonly _logger: LoggerPublisherService;
 
   constructor(
     @inject(usbDiTypes.UsbHidTransport)
     usbHidTransport: UsbHidTransport,
-    @inject(deviceSessionTypes.SessionService)
-    sessionService: SessionService,
+    @inject(deviceSessionTypes.DeviceSessionService)
+    sessionService: DeviceSessionService,
     @inject(loggerTypes.LoggerPublisherServiceFactory)
     loggerFactory: (tag: string) => LoggerPublisherService,
   ) {
@@ -36,7 +36,7 @@ export class ConnectUseCase {
     this._logger = loggerFactory("ConnectUseCase");
   }
 
-  async execute({ deviceId }: ConnectUseCaseArgs): Promise<SessionId> {
+  async execute({ deviceId }: ConnectUseCaseArgs): Promise<DeviceSessionId> {
     const either = await this._usbHidTransport.connect({ deviceId });
 
     return either.caseOf({
@@ -47,9 +47,9 @@ export class ConnectUseCase {
         throw error;
       },
       Right: (connectedDevice) => {
-        const session = new Session({ connectedDevice });
-        this._sessionService.addSession(session);
-        return session.id;
+        const deviceSession = new DeviceSession({ connectedDevice });
+        this._sessionService.addDeviceSession(deviceSession);
+        return deviceSession.id;
       },
     });
   }

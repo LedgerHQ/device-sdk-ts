@@ -1,33 +1,35 @@
 import { inject, injectable } from "inversify";
 
-import { SessionId } from "@api/session/types";
+import { DeviceSessionId } from "@api/device-session/types";
 import { deviceSessionTypes } from "@internal/device-session/di/deviceSessionTypes";
-import type { SessionService } from "@internal/device-session/service/SessionService";
+import type { DeviceSessionService } from "@internal/device-session/service/DeviceSessionService";
 import { loggerTypes } from "@internal/logger-publisher/di/loggerTypes";
 import { LoggerPublisherService } from "@internal/logger-publisher/service/LoggerPublisherService";
 
 export type GetSessionDeviceStateUseCaseArgs = {
-  sessionId: SessionId;
+  sessionId: DeviceSessionId;
 };
 
 /**
- * Get session state from its id.
+ * Get deviceSession state from its id.
  */
 @injectable()
-export class GetSessionDeviceStateUseCase {
-  private readonly _sessionService: SessionService;
+export class GetDeviceSessionStateUseCase {
+  private readonly _sessionService: DeviceSessionService;
   private readonly _logger: LoggerPublisherService;
   constructor(
-    @inject(deviceSessionTypes.SessionService) sessionService: SessionService,
+    @inject(deviceSessionTypes.DeviceSessionService)
+    sessionService: DeviceSessionService,
     @inject(loggerTypes.LoggerPublisherServiceFactory)
     loggerFactory: (tag: string) => LoggerPublisherService,
   ) {
     this._sessionService = sessionService;
-    this._logger = loggerFactory("GetSessionDeviceStateUseCase");
+    this._logger = loggerFactory("GetDeviceSessionStateUseCase");
   }
 
   execute({ sessionId }: GetSessionDeviceStateUseCaseArgs) {
-    const errorOrDeviceSession = this._sessionService.getSessionById(sessionId);
+    const errorOrDeviceSession =
+      this._sessionService.getDeviceSessionById(sessionId);
 
     return errorOrDeviceSession.caseOf({
       Left: (error) => {

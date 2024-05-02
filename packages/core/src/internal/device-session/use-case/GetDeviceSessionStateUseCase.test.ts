@@ -3,28 +3,30 @@ import { DefaultDeviceSessionService } from "@internal/device-session/service/De
 import { DeviceSessionService } from "@internal/device-session/service/DeviceSessionService";
 import { DefaultLoggerPublisherService } from "@internal/logger-publisher/service/DefaultLoggerPublisherService";
 import { LoggerPublisherService } from "@internal/logger-publisher/service/LoggerPublisherService";
-import { GetConnectedDeviceUseCase } from "@internal/usb/use-case/GetConnectedDeviceUseCase";
-import { ConnectedDevice } from "@root/src";
+
+import { GetDeviceSessionStateUseCase } from "./GetDeviceSessionStateUseCase";
 
 let logger: LoggerPublisherService;
 let sessionService: DeviceSessionService;
 
 const fakeSessionId = "fakeSessionId";
 
-describe("GetConnectedDevice", () => {
+describe("GetDeviceSessionStateUseCase", () => {
   beforeEach(() => {
     logger = new DefaultLoggerPublisherService(
       [],
-      "get-connected-device-use-case",
+      "get-connected-device-use-case-test",
     );
     sessionService = new DefaultDeviceSessionService(() => logger);
   });
-
-  it("should retrieve an instance of ConnectedDevice", () => {
+  it("should retrieve deviceSession device state", () => {
     // given
     const deviceSession = deviceSessionStubBuilder({ id: fakeSessionId });
     sessionService.addDeviceSession(deviceSession);
-    const useCase = new GetConnectedDeviceUseCase(sessionService, () => logger);
+    const useCase = new GetDeviceSessionStateUseCase(
+      sessionService,
+      () => logger,
+    );
 
     // when
     const response = useCase.execute({
@@ -32,25 +34,23 @@ describe("GetConnectedDevice", () => {
     });
 
     // then
-    expect(response).toBeInstanceOf(ConnectedDevice);
+    expect(response).toStrictEqual(deviceSession.state);
   });
 
-  it("should retrieve correct device from session", () => {
+  it("should throw error when deviceSession is not found", () => {
     // given
-    const deviceSession = deviceSessionStubBuilder({ id: fakeSessionId });
-    sessionService.addDeviceSession(deviceSession);
-    const useCase = new GetConnectedDeviceUseCase(sessionService, () => logger);
+    const useCase = new GetDeviceSessionStateUseCase(
+      sessionService,
+      () => logger,
+    );
 
     // when
-    const response = useCase.execute({
-      sessionId: fakeSessionId,
-    });
+    const execute = () =>
+      useCase.execute({
+        sessionId: fakeSessionId,
+      });
 
     // then
-    expect(response).toStrictEqual(
-      new ConnectedDevice({
-        internalConnectedDevice: deviceSession.connectedDevice,
-      }),
-    );
+    expect(execute).toThrowError();
   });
 });
