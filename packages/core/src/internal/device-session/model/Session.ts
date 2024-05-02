@@ -45,33 +45,27 @@ export class Session {
     return this._deviceState.asObservable();
   }
 
-  async sendApdu(rawApdu: Uint8Array) {
+  private updateDeviceStatus(deviceStatus: DeviceStatus) {
     const sessionState = this._deviceState.getValue();
     this._deviceState.next(
       new SessionDeviceState({
         ...sessionState,
-        deviceStatus: DeviceStatus.BUSY,
+        deviceStatus,
       }),
     );
+  }
+
+  async sendApdu(rawApdu: Uint8Array) {
+    this.updateDeviceStatus(DeviceStatus.BUSY);
 
     const errorOrResponse = await this._connectedDevice.sendApdu(rawApdu);
 
     return errorOrResponse.map((response) => {
-      if (CommandUtils.isLockedDeviceResponse(response)) {
-        this._deviceState.next(
-          new SessionDeviceState({
-            ...sessionState,
-            deviceStatus: DeviceStatus.LOCKED,
-          }),
-        );
-      } else {
-        this._deviceState.next(
-          new SessionDeviceState({
-            ...sessionState,
-            deviceStatus: DeviceStatus.CONNECTED,
-          }),
-        );
-      }
+      this.updateDeviceStatus(
+        CommandUtils.isLockedDeviceResponse(response)
+          ? DeviceStatus.LOCKED
+          : DeviceStatus.CONNECTED,
+      );
       return response;
     });
   }
