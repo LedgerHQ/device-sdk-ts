@@ -126,7 +126,7 @@ export class ApduParser {
     if (prefix) result += "0x";
 
     while (index <= value.length) {
-      const item = value.at(index)?.toString(16);
+      const item = value[index]?.toString(16);
       if (item) result += item.length < 2 ? "0" + item : item;
       index++;
     }
@@ -145,7 +145,7 @@ export class ApduParser {
     if (!value) return result;
 
     while (index <= value.length) {
-      const item = value.at(index);
+      const item = value[index];
       if (item) result += String.fromCharCode(item);
       index++;
     }
