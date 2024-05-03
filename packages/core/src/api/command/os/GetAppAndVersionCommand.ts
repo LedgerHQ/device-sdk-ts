@@ -2,6 +2,10 @@ import { Apdu } from "@api/apdu/model/Apdu";
 import { ApduBuilder, ApduBuilderArgs } from "@api/apdu/utils/ApduBuilder";
 import { ApduParser } from "@api/apdu/utils/ApduParser";
 import { Command } from "@api/command/Command";
+import {
+  InvalidResponseFormatError,
+  InvalidStatusWordError,
+} from "@api/command/Errors";
 import { CommandUtils } from "@api/command/utils/CommandUtils";
 import { ApduResponse } from "@internal/device-session/model/ApduResponse";
 
@@ -26,9 +30,8 @@ export class GetAppAndVersionCommand
 
   parseResponse(apduResponse: ApduResponse): GetAppAndVersionResponse {
     const parser = new ApduParser(apduResponse);
-    // [SHOULD] Implement new error treatment logic
     if (!CommandUtils.isSuccessResponse(apduResponse)) {
-      throw new Error(
+      throw new InvalidStatusWordError(
         `Unexpected status word: ${parser.encodeToHexaString(
           apduResponse.statusCode,
         )}`,
@@ -36,8 +39,9 @@ export class GetAppAndVersionCommand
     }
 
     if (parser.extract8BitUint() !== 1) {
-      // TODO: Make dedicated error object
-      throw new Error("getAppAndVersion: format not supported");
+      throw new InvalidResponseFormatError(
+        "getAppAndVersion: format not supported",
+      );
     }
 
     const name = parser.encodeToString(parser.extractFieldLVEncoded());
