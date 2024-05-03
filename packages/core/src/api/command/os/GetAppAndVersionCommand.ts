@@ -12,7 +12,7 @@ export type GetAppAndVersionResponse = {
 };
 
 export class GetAppAndVersionCommand
-  implements Command<void, GetAppAndVersionResponse>
+  implements Command<GetAppAndVersionResponse>
 {
   getApdu(): Apdu {
     const getAppAndVersionApduArgs: ApduBuilderArgs = {
