@@ -6,10 +6,10 @@ import type { SessionService } from "@internal/device-session/service/SessionSer
 import { loggerTypes } from "@internal/logger-publisher/di/loggerTypes";
 import { LoggerPublisherService } from "@internal/logger-publisher/service/LoggerPublisherService";
 
-export type SendCommandUseCaseArgs<Params, T> = {
+export type SendCommandUseCaseArgs<T, U = void> = {
   sessionId: string;
-  command: Command<Params, T>;
-  params?: Params;
+  command: Command<T, U>;
+  params: U;
 };
 
 /**
@@ -28,18 +28,18 @@ export class SendCommandUseCase {
     this._logger = loggerFactory("SendCommandUseCase");
   }
 
-  async execute<Params, T>({
+  async execute<T, U = void>({
     sessionId,
     command,
     params,
-  }: SendCommandUseCaseArgs<Params, T>): Promise<T> {
+  }: SendCommandUseCaseArgs<T, U>): Promise<T> {
     const deviceSession = this._sessionService.getSessionById(sessionId);
 
     return deviceSession.caseOf({
       // Case device session found
       Right: async (session) => {
         const deviceModelId = session.connectedDevice.deviceModel.id;
-        const action = session.getCommand(command);
+        const action = session.getCommand<T, U>(command);
         const response = await action(deviceModelId, params);
         return response;
       },

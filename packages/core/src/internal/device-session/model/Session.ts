@@ -70,16 +70,16 @@ export class Session {
     });
   }
 
-  getCommand<Params, T>(command: Command<Params, T>) {
-    return async (deviceModel: DeviceModelId, params?: Params): Promise<T> => {
-      const apdu = command.getApdu(params);
+  getCommand<T, U>(command: Command<T, U>) {
+    return async (deviceModelId: DeviceModelId, getApduArgs: U): Promise<T> => {
+      const apdu = command.getApdu(getApduArgs);
       const response = await this.sendApdu(apdu.getRawApdu());
 
       return response.caseOf({
         Left: (err) => {
           throw err;
         },
-        Right: (r) => command.parseResponse(r, deviceModel),
+        Right: (r) => command.parseResponse(r, deviceModelId),
       });
     };
   }
