@@ -7,6 +7,7 @@ import { DeviceModelId } from "@api/device/DeviceModel";
 import { DeviceStatus } from "@api/device/DeviceStatus";
 import { DeviceSessionState } from "@api/device-session/DeviceSessionState";
 import { DeviceSessionId } from "@api/device-session/types";
+import { SeesionRefresher } from "@internal/device-session/model/SessionRefresher";
 import { InternalConnectedDevice } from "@internal/usb/model/InternalConnectedDevice";
 
 export type SessionConstructorArgs = {
@@ -21,6 +22,7 @@ export class DeviceSession {
   private readonly _id: DeviceSessionId;
   private readonly _connectedDevice: InternalConnectedDevice;
   private readonly _deviceState: BehaviorSubject<DeviceSessionState>;
+  private readonly _refresher: SeesionRefresher;
 
   constructor({ connectedDevice, id = uuidv4() }: SessionConstructorArgs) {
     this._id = id;
@@ -31,6 +33,8 @@ export class DeviceSession {
         deviceStatus: DeviceStatus.CONNECTED,
       }),
     );
+    this._refresher = new SeesionRefresher(this, 1000);
+    this._refresher.start();
   }
 
   public get id() {
@@ -43,6 +47,10 @@ export class DeviceSession {
 
   public get state() {
     return this._deviceState.asObservable();
+  }
+
+  public setState(state: DeviceSessionState) {
+    this._deviceState.next(state);
   }
 
   private updateDeviceStatus(deviceStatus: DeviceStatus) {
