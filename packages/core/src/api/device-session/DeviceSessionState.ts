@@ -9,6 +9,11 @@ export type SessionStateConstructorArgs = {
 export type ConnectedStateConstructorArgs = Pick<
   SessionStateConstructorArgs,
   "sessionId"
+>; // & {};
+
+export type ReadyWithoutSecureChannelStateConstructorArgs = Pick<
+  ConnectedStateConstructorArgs,
+  "sessionId"
 > & {
   batteryStatus?: BatteryStatus;
   firmwareVersion?: FirmwareVersion;
@@ -37,6 +42,9 @@ export class DeviceSessionState {
 
 export class ConnectedState extends DeviceSessionState {
   // private readonly _deviceName: string; // GetDeviceNameResponse
+  constructor({ sessionId }: ConnectedStateConstructorArgs) {
+    super({ sessionId, deviceStatus: DeviceStatus.CONNECTED });
+  }
 }
 
 export class ReadyWithoutSecureChannelState extends ConnectedState {
@@ -50,8 +58,8 @@ export class ReadyWithoutSecureChannelState extends ConnectedState {
     currentApp,
     batteryStatus,
     firmwareVersion,
-  }: ConnectedStateConstructorArgs) {
-    super({ sessionId, deviceStatus: DeviceStatus.CONNECTED });
+  }: ReadyWithoutSecureChannelStateConstructorArgs) {
+    super({ sessionId });
     this._currentApp = currentApp ? currentApp : null;
     this._batteryStatus = batteryStatus ? batteryStatus : null;
     this._firmwareVersion = firmwareVersion ? firmwareVersion : null;

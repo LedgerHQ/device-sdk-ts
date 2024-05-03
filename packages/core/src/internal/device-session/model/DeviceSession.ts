@@ -1,3 +1,4 @@
+import { Left, Right } from "purify-ts";
 import { BehaviorSubject } from "rxjs";
 import { v4 as uuidv4 } from "uuid";
 
@@ -68,13 +69,14 @@ export class DeviceSession {
 
     const errorOrResponse = await this._connectedDevice.sendApdu(rawApdu);
 
-    return errorOrResponse.map((response) => {
-      this.updateDeviceStatus(
-        CommandUtils.isLockedDeviceResponse(response)
-          ? DeviceStatus.LOCKED
-          : DeviceStatus.CONNECTED,
-      );
-      return response;
+    return errorOrResponse.chain((response) => {
+      if (CommandUtils.isLockedDeviceResponse(response)) {
+        this.updateDeviceStatus(DeviceStatus.LOCKED);
+        return Left(new Error("Device is locked"));
+      } else {
+        this.updateDeviceStatus(DeviceStatus.CONNECTED);
+        return Right(response);
+      }
     });
   }
 

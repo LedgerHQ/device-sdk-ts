@@ -1,4 +1,4 @@
-import { audit, interval, Subscription, switchMap, takeWhile } from "rxjs";
+import { audit, interval, skipWhile, Subscription, switchMap } from "rxjs";
 
 import {
   GetAppAndVersionCommand,
@@ -26,29 +26,33 @@ export class SeesionRefresher {
     this._subscription = this.session.state
       .pipe(
         audit(() => interval(this.refreshInterval)),
-        takeWhile((state) => state.deviceStatus === DeviceStatus.CONNECTED),
+        skipWhile((state) => state.deviceStatus === DeviceStatus.BUSY),
         switchMap(() => {
           const rawApdu = this.command.getApdu().getRawApdu();
-          return this.session.connectedDevice.sendApdu(rawApdu);
+          return this.session.sendApdu(rawApdu);
         }),
       )
       .subscribe({
         next: (response) => {
           response
             .ifRight((data) => {
-              const { name }: GetAppAndVersionResponse =
-                this.command.parseResponse(data);
-              if (name === DEVICE_OS_NAME) {
-                // await this.session.connectedDevice.sendApdu(
-                //   new GetOsVersionCommand().getApdu().getRawApdu(),
-                // );
-              } else {
-                this.session.setState(
-                  new ReadyWithoutSecureChannelState({
-                    sessionId: this.session.id,
-                    currentApp: name,
-                  }),
-                );
+              try {
+                const { name }: GetAppAndVersionResponse =
+                  this.command.parseResponse(data);
+                if (name === DEVICE_OS_NAME) {
+                  // await this.session.connectedDevice.sendApdu(
+                  //   new GetOsVersionCommand().getApdu().getRawApdu(),
+                  // );
+                } else {
+                  this.session.setState(
+                    new ReadyWithoutSecureChannelState({
+                      sessionId: this.session.id,
+                      currentApp: name,
+                    }),
+                  );
+                }
+              } catch (error) {
+                console.error("Error in response", error);
               }
             })
             .ifLeft(() => {
