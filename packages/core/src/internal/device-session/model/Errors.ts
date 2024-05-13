@@ -36,3 +36,13 @@ export class DeviceSessionNotFound implements SdkError {
     this.originalError = originalError ?? new Error("Device session not found");
   }
 }
+
+export class DeviceSessionRefresherError implements SdkError {
+  readonly _tag = "DeviceSessionRefresherError";
+  originalError?: Error;
+
+  constructor(originalError?: Error) {
+    this.originalError =
+      originalError ?? new Error("Device session refresher error");
+  }
+}

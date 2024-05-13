@@ -15,11 +15,14 @@ let deviceSession: DeviceSession;
 describe("DefaultDeviceSessionService", () => {
   beforeEach(() => {
     jest.restoreAllMocks();
-    deviceSession = new DeviceSession({
-      connectedDevice: connectedDeviceStubBuilder(),
-    });
     loggerService = new DefaultLoggerPublisherService([], "deviceSession");
     sessionService = new DefaultDeviceSessionService(() => loggerService);
+    deviceSession = new DeviceSession(
+      {
+        connectedDevice: connectedDeviceStubBuilder(),
+      },
+      () => loggerService,
+    );
   });
 
   it("should have an empty sessions list", () => {

@@ -3,7 +3,7 @@ import semver from "semver";
 import { DeviceModelId } from "@api/device/DeviceModel";
 
 /**
- * Represents the info of a device model
+ * The info of a device model
  */
 export class InternalDeviceModel {
   id: DeviceModelId;

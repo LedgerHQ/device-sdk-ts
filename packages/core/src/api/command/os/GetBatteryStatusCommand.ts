@@ -53,7 +53,7 @@ enum FlagMasks {
   ISSUE_TEMPERATURE = 0x00000020,
 }
 
-type BatteryStatusFlags = {
+export type BatteryStatusFlags = {
   charging: ChargingMode;
   issueCharging: boolean;
   issueTemperature: boolean;

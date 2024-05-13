@@ -35,10 +35,13 @@ describe("DisconnectUseCase", () => {
   it("should disconnect from a device", async () => {
     // Given
     const connectedDevice = connectedDeviceStubBuilder();
-    const deviceSession = deviceSessionStubBuilder({
-      id: sessionId,
-      connectedDevice,
-    });
+    const deviceSession = deviceSessionStubBuilder(
+      {
+        id: sessionId,
+        connectedDevice,
+      },
+      loggerFactory,
+    );
     jest
       .spyOn(sessionService, "getDeviceSessionById")
       .mockImplementation(() => Right(deviceSession));
@@ -84,7 +87,7 @@ describe("DisconnectUseCase", () => {
     jest
       .spyOn(sessionService, "getDeviceSessionById")
       .mockImplementation(() =>
-        Right(deviceSessionStubBuilder({ id: sessionId })),
+        Right(deviceSessionStubBuilder({ id: sessionId }, loggerFactory)),
       );
     jest
       .spyOn(usbHidTransport, "disconnect")

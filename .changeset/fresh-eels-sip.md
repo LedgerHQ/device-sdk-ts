@@ -2,4 +2,4 @@
 "@ledgerhq/device-sdk-core": minor
 ---
 
-Polling on conncected device to get device status.
+Polling on connected device to get device status.

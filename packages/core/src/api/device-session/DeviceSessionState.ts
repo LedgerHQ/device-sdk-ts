@@ -1,81 +1,115 @@
+import { BatteryStatusFlags } from "@api/command/os/GetBatteryStatusCommand";
 import { DeviceStatus } from "@api/device/DeviceStatus";
-import { DeviceSessionId } from "@api/device-session/types";
 
-export type SessionStateConstructorArgs = {
-  sessionId: DeviceSessionId;
-  deviceStatus: DeviceStatus;
-};
-
-export type ConnectedStateConstructorArgs = Pick<
-  SessionStateConstructorArgs,
-  "sessionId"
->; // & {};
-
-export type ReadyWithoutSecureChannelStateConstructorArgs = Pick<
-  ConnectedStateConstructorArgs,
-  "sessionId"
-> & {
-  batteryStatus?: BatteryStatus;
-  firmwareVersion?: FirmwareVersion;
-  currentApp?: string;
-};
-
+/**
+ * The battery status of a device.
+ */
 export type BatteryStatus = {
   level: number;
+  voltage: number;
+  temperature: number;
+  current: number;
+  status: BatteryStatusFlags;
 };
 
+/**
+ * The firmware version of a device.
+ */
 export type FirmwareVersion = {
-  mcu: string; // Microcontroller Unit version
-  bootloader: string; // Bootloader version
-  os: string; // Operating System version
+  /**
+   * Microcontroller Unit version
+   */
+  mcu: string;
+
+  /**
+   * Bootloader version
+   */
+  bootloader: string;
+
+  /**
+   * Operating System version
+   */
+  os: string;
 };
 
-export class DeviceSessionState {
-  public readonly sessionId: DeviceSessionId;
-  public readonly deviceStatus: DeviceStatus;
-
-  constructor({ sessionId, deviceStatus }: SessionStateConstructorArgs) {
-    this.sessionId = sessionId;
-    this.deviceStatus = deviceStatus;
-  }
+/**
+ * The state types of a device session.
+ */
+export enum DeviceSessionStateType {
+  Connected,
+  ReadyWithoutSecureChannel,
+  ReadyWithSecureChannel,
 }
 
-export class ConnectedState extends DeviceSessionState {
-  // private readonly _deviceName: string; // GetDeviceNameResponse
-  constructor({ sessionId }: ConnectedStateConstructorArgs) {
-    super({ sessionId, deviceStatus: DeviceStatus.CONNECTED });
-  }
-}
+type DeviceSessionBaseState = {
+  readonly sessionStateType: DeviceSessionStateType;
 
-export class ReadyWithoutSecureChannelState extends ConnectedState {
-  private readonly _batteryStatus: BatteryStatus | null = null; // GetBatteryStatusResponse
-  private readonly _firmwareVersion: FirmwareVersion | null = null; // GetOsVersionResponse
-  private readonly _currentApp: string | null = null; // GetAppVersionResponse
-  // private readonly _deviceName: string; // GetDeviceNameResponse
+  /**
+   * The status of the device.
+   */
+  deviceStatus: DeviceStatus;
 
-  constructor({
-    sessionId,
-    currentApp,
-    batteryStatus,
-    firmwareVersion,
-  }: ReadyWithoutSecureChannelStateConstructorArgs) {
-    super({ sessionId });
-    this._currentApp = currentApp ? currentApp : null;
-    this._batteryStatus = batteryStatus ? batteryStatus : null;
-    this._firmwareVersion = firmwareVersion ? firmwareVersion : null;
-  }
+  /**
+   * The name of the device.
+   */
+  deviceName?: string;
+};
 
-  public get batteryStatus() {
-    return this._batteryStatus;
-  }
+type DeviceSessionReadyState = {
+  /**
+   * The battery status of the device.
+   * TODO: This should not be optional, but it is not in the current implementation.
+   */
+  batteryStatus?: BatteryStatus;
 
-  public get firmwareVersion() {
-    return this._firmwareVersion;
-  }
+  /**
+   * The firmware version of the device.
+   * TODO: This should not be optional, but it is not in the current implementation.
+   */
+  firmwareVersion?: FirmwareVersion;
 
-  public get currentApp() {
-    return this._currentApp;
-  }
-}
+  /**
+   * The current application running on the device.
+   */
+  currentApp: string;
+};
 
-export class ReadyWithSecureChannelState extends ReadyWithoutSecureChannelState {}
+/**
+ * The state of a connected device session.
+ */
+export type ConnectedState = DeviceSessionBaseState & {
+  /**
+   * The type of the device session state.
+   */
+  readonly sessionStateType: DeviceSessionStateType.Connected;
+};
+
+/**
+ * The state of a device session when it is ready without a secure channel.
+ */
+export type ReadyWithoutSecureChannelState = DeviceSessionBaseState &
+  DeviceSessionReadyState & {
+    /**
+     * The type of the device session state.
+     */
+    readonly sessionStateType: DeviceSessionStateType.ReadyWithoutSecureChannel;
+  };
+
+/**
+ * The state of a device session when it is ready with a secure channel.
+ */
+export type ReadyWithSecureChannelState = DeviceSessionBaseState &
+  DeviceSessionReadyState & {
+    /**
+     * The type of the device session state.
+     */
+    readonly sessionStateType: DeviceSessionStateType.ReadyWithSecureChannel;
+  };
+
+/**
+ * The state of a device session.
+ */
+export type DeviceSessionState =
+  | ConnectedState
+  | ReadyWithoutSecureChannelState
+  | ReadyWithSecureChannelState;
