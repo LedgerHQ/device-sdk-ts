@@ -1,4 +1,8 @@
 import { Command } from "@api/command/Command";
+import {
+  InvalidResponseFormatError,
+  InvalidStatusWordError,
+} from "@api/command/Errors";
 import { ApduResponse } from "@internal/device-session/model/ApduResponse";
 
 import {
@@ -71,7 +75,7 @@ describe("GetAppAndVersionCommand", () => {
       });
 
       expect(() => command.parseResponse(FAILED_RESPONSE)).toThrow(
-        "Unexpected status word: 6700",
+        InvalidStatusWordError,
       );
     });
     it("should throw an error if the response returned unsupported format", () => {
@@ -81,7 +85,7 @@ describe("GetAppAndVersionCommand", () => {
       });
 
       expect(() => command.parseResponse(ERROR_RESPONSE)).toThrow(
-        "getAppAndVersion: format not supported",
+        InvalidResponseFormatError,
       );
     });
   });

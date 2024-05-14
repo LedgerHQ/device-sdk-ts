@@ -1,4 +1,8 @@
 import { Command } from "@api/command/Command";
+import {
+  InvalidBatteryStatusTypeError,
+  InvalidStatusWordError,
+} from "@api/command/Errors";
 import { ApduResponse } from "@internal/device-session/model/ApduResponse";
 
 import {
@@ -106,7 +110,7 @@ describe("GetBatteryStatus", () => {
         data: PERCENTAGE_RESPONSE_HEX.slice(0, -2),
       });
       expect(() => command.parseResponse(PERCENTAGE_RESPONSE)).toThrow(
-        "Call getApdu to initialise battery status type.",
+        InvalidBatteryStatusTypeError,
       );
     });
     it("should throw an error if the response returned unsupported format", () => {
@@ -116,7 +120,7 @@ describe("GetBatteryStatus", () => {
       });
       command.getApdu(BatteryStatusType.BATTERY_PERCENTAGE);
       expect(() => command.parseResponse(FAILED_RESPONSE)).toThrow(
-        "Unexpected status word: 6700",
+        InvalidStatusWordError,
       );
     });
   });

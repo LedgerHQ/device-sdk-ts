@@ -1,4 +1,5 @@
 import { Command } from "@api/command/Command";
+import { InvalidStatusWordError } from "@api/command/Errors";
 import { DeviceModelId } from "@api/device/DeviceModel";
 import { ApduResponse } from "@internal/device-session/model/ApduResponse";
 
@@ -129,7 +130,7 @@ describe("GetOsVersionCommand", () => {
 
         expect(() =>
           command.parseResponse(response, DeviceModelId.NANO_X),
-        ).toThrow("Unexpected status word: 6e80");
+        ).toThrow(InvalidStatusWordError);
       });
     });
   });

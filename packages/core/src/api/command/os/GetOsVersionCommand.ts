@@ -2,6 +2,7 @@ import { Apdu } from "@api/apdu/model/Apdu";
 import { ApduBuilder } from "@api/apdu/utils/ApduBuilder";
 import { ApduParser } from "@api/apdu/utils/ApduParser";
 import { Command } from "@api/command/Command";
+import { InvalidStatusWordError } from "@api/command/Errors";
 import { CommandUtils } from "@api/command/utils/CommandUtils";
 import { DeviceModelId } from "@api/device/DeviceModel";
 import { ApduResponse } from "@internal/device-session/model/ApduResponse";
@@ -30,7 +31,7 @@ export class GetOsVersionCommand implements Command<GetOsVersionResponse> {
     const parser = new ApduParser(responseApdu);
     if (!CommandUtils.isSuccessResponse(responseApdu)) {
       // [ASK] How de we handle unsuccessful responses?
-      throw new Error(
+      throw new InvalidStatusWordError(
         `Unexpected status word: ${parser.encodeToHexaString(responseApdu.statusCode)}`,
       );
     }
