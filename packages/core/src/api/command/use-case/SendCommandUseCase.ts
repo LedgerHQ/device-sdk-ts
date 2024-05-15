@@ -2,7 +2,7 @@ import { inject, injectable } from "inversify";
 
 import { Command } from "@api/command/Command";
 import { deviceSessionTypes } from "@internal/device-session/di/deviceSessionTypes";
-import type { SessionService } from "@internal/device-session/service/SessionService";
+import type { DeviceSessionService } from "@internal/device-session/service/DeviceSessionService";
 import { loggerTypes } from "@internal/logger-publisher/di/loggerTypes";
 import { LoggerPublisherService } from "@internal/logger-publisher/service/LoggerPublisherService";
 
@@ -17,10 +17,11 @@ export type SendCommandUseCaseArgs<T, U = void> = {
  */
 @injectable()
 export class SendCommandUseCase {
-  private readonly _sessionService: SessionService;
+  private readonly _sessionService: DeviceSessionService;
   private readonly _logger: LoggerPublisherService;
   constructor(
-    @inject(deviceSessionTypes.SessionService) sessionService: SessionService,
+    @inject(deviceSessionTypes.DeviceSessionService)
+    sessionService: DeviceSessionService,
     @inject(loggerTypes.LoggerPublisherServiceFactory)
     loggerFactory: (tag: string) => LoggerPublisherService,
   ) {
@@ -33,15 +34,15 @@ export class SendCommandUseCase {
     command,
     params,
   }: SendCommandUseCaseArgs<T, U>): Promise<T> {
-    const deviceSession = this._sessionService.getSessionById(sessionId);
+    const deviceSessionOrError =
+      this._sessionService.getDeviceSessionById(sessionId);
 
-    return deviceSession.caseOf({
+    return deviceSessionOrError.caseOf({
       // Case device session found
-      Right: async (session) => {
-        const deviceModelId = session.connectedDevice.deviceModel.id;
-        const action = session.getCommand<T, U>(command);
-        const response = await action(deviceModelId, params);
-        return response;
+      Right: async (deviceSession) => {
+        const deviceModelId = deviceSession.connectedDevice.deviceModel.id;
+        const action = deviceSession.getCommand<T, U>(command);
+        return await action(deviceModelId, params);
       },
       // Case device session not found
       Left: (error) => {

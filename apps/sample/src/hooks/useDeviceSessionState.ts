@@ -1,21 +1,22 @@
 import { useEffect, useState } from "react";
-import { SessionDeviceState, SessionId } from "@ledgerhq/device-sdk-core";
+import { DeviceSessionId, DeviceSessionState } from "@ledgerhq/device-sdk-core";
 
 import { useSdk } from "@/providers/DeviceSdkProvider";
 
-export function useSessionState(sessionId: SessionId) {
+export function useDeviceSessionState(sessionId: DeviceSessionId) {
   const sdk = useSdk();
-  const [sessionState, setSessionState] = useState<SessionDeviceState>();
+  const [deviceSessionState, setDeviceSessionState] =
+    useState<DeviceSessionState>();
 
   useEffect(() => {
     if (sessionId) {
       const subscription = sdk
-        .getSessionDeviceState({
+        .getDeviceSessionState({
           sessionId,
         })
         .subscribe((state) => {
           // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
-          setSessionState(state);
+          setDeviceSessionState(state);
         });
 
       return () => {
@@ -24,5 +25,5 @@ export function useSessionState(sessionId: SessionId) {
     }
   }, [sessionId, sdk]);
 
-  return sessionState;
+  return deviceSessionState;
 }

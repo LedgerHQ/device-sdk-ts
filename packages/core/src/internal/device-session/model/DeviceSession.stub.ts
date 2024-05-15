@@ -1,13 +1,13 @@
 import {
-  Session,
+  DeviceSession,
   SessionConstructorArgs,
-} from "@internal/device-session/model/Session";
+} from "@internal/device-session/model/DeviceSession";
 import { connectedDeviceStubBuilder } from "@internal/usb/model/InternalConnectedDevice.stub";
 
-export const sessionStubBuilder = (
+export const deviceSessionStubBuilder = (
   props: Partial<SessionConstructorArgs> = {},
 ) =>
-  new Session({
+  new DeviceSession({
     connectedDevice: connectedDeviceStubBuilder(),
     id: "fakeSessionId",
     ...props,

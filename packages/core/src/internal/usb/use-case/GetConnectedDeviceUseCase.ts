@@ -1,27 +1,27 @@
 import { inject, injectable } from "inversify";
 
-import { SessionId } from "@api/session/types";
+import { DeviceSessionId } from "@api/device-session/types";
 import { ConnectedDevice } from "@api/usb/model/ConnectedDevice";
 import { deviceSessionTypes } from "@internal/device-session/di/deviceSessionTypes";
-import type { SessionService } from "@internal/device-session/service/SessionService";
+import type { DeviceSessionService } from "@internal/device-session/service/DeviceSessionService";
 import { loggerTypes } from "@internal/logger-publisher/di/loggerTypes";
 import { LoggerPublisherService } from "@internal/logger-publisher/service/LoggerPublisherService";
 
 export type GetConnectedDeviceUseCaseArgs = {
-  sessionId: SessionId;
+  sessionId: DeviceSessionId;
 };
 
 /**
- * Get a connected device from session id.
+ * Get a connected device from deviceSession id.
  */
 @injectable()
 export class GetConnectedDeviceUseCase {
-  private readonly _sessionService: SessionService;
+  private readonly _sessionService: DeviceSessionService;
   private readonly _logger: LoggerPublisherService;
 
   constructor(
-    @inject(deviceSessionTypes.SessionService)
-    sessionService: SessionService,
+    @inject(deviceSessionTypes.DeviceSessionService)
+    sessionService: DeviceSessionService,
     @inject(loggerTypes.LoggerPublisherServiceFactory)
     loggerFactory: (tag: string) => LoggerPublisherService,
   ) {
@@ -30,12 +30,13 @@ export class GetConnectedDeviceUseCase {
   }
 
   execute({ sessionId }: GetConnectedDeviceUseCaseArgs): ConnectedDevice {
-    const deviceSession = this._sessionService.getSessionById(sessionId);
+    const deviceSessionOrError =
+      this._sessionService.getDeviceSessionById(sessionId);
 
-    return deviceSession.caseOf({
-      Right: (session) =>
+    return deviceSessionOrError.caseOf({
+      Right: (deviceSession) =>
         new ConnectedDevice({
-          internalConnectedDevice: session.connectedDevice,
+          internalConnectedDevice: deviceSession.connectedDevice,
         }),
       Left: (error) => {
         this._logger.error("Error getting session", {

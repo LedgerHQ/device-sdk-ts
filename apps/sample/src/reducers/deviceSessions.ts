@@ -1,28 +1,28 @@
 import { Reducer } from "react";
-import { ConnectedDevice, SessionId } from "@ledgerhq/device-sdk-core";
+import { ConnectedDevice, DeviceSessionId } from "@ledgerhq/device-sdk-core";
 
-export type SessionsState = {
-  selectedId: SessionId | null;
-  deviceById: Record<SessionId, ConnectedDevice>;
+export type DeviceSessionsState = {
+  selectedId: DeviceSessionId | null;
+  deviceById: Record<DeviceSessionId, ConnectedDevice>;
 };
 
 export type AddSessionAction = {
   type: "add_session";
-  payload: { sessionId: SessionId; connectedDevice: ConnectedDevice };
+  payload: { sessionId: DeviceSessionId; connectedDevice: ConnectedDevice };
 };
 
 export type RemoveSessionAction = {
   type: "remove_session";
-  payload: { sessionId: SessionId };
+  payload: { sessionId: DeviceSessionId };
 };
 
-export const SessionsInitialState: SessionsState = {
+export const DeviceSessionsInitialState: DeviceSessionsState = {
   selectedId: null,
   deviceById: {},
 };
 
-export const sessionsReducer: Reducer<
-  SessionsState,
+export const deviceSessionsReducer: Reducer<
+  DeviceSessionsState,
   AddSessionAction | RemoveSessionAction
 > = (state, action) => {
   switch (action.type) {

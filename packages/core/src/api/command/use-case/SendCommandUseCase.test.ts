@@ -1,9 +1,9 @@
 import { Left } from "purify-ts";
 
 import { Command } from "@api/command/Command";
-import { sessionStubBuilder } from "@internal/device-session/model/Session.stub";
-import { DefaultSessionService } from "@internal/device-session/service/DefaultSessionService";
-import { SessionService } from "@internal/device-session/service/SessionService";
+import { deviceSessionStubBuilder } from "@internal/device-session/model/DeviceSession.stub";
+import { DefaultDeviceSessionService } from "@internal/device-session/service/DefaultDeviceSessionService";
+import { DeviceSessionService } from "@internal/device-session/service/DeviceSessionService";
 import { DefaultLoggerPublisherService } from "@internal/logger-publisher/service/DefaultLoggerPublisherService";
 import { LoggerPublisherService } from "@internal/logger-publisher/service/LoggerPublisherService";
 
@@ -13,14 +13,14 @@ import {
 } from "./SendCommandUseCase";
 
 let logger: LoggerPublisherService;
-let sessionService: SessionService;
+let sessionService: DeviceSessionService;
 const fakeSessionId = "fakeSessionId";
 let command: Command<{ status: string }>;
 
 describe("SendCommandUseCase", () => {
   beforeEach(() => {
     logger = new DefaultLoggerPublisherService([], "send-command-use-case");
-    sessionService = new DefaultSessionService(() => logger);
+    sessionService = new DefaultDeviceSessionService(() => logger);
     command = {
       getApdu: jest.fn(),
       parseResponse: jest.fn(),
@@ -32,12 +32,12 @@ describe("SendCommandUseCase", () => {
   });
 
   it("should send a command to a connected device", async () => {
-    const session = sessionStubBuilder();
-    sessionService.addSession(session);
+    const deviceSession = deviceSessionStubBuilder();
+    sessionService.addDeviceSession(deviceSession);
     const useCase = new SendCommandUseCase(sessionService, () => logger);
 
     jest
-      .spyOn(session, "getCommand")
+      .spyOn(deviceSession, "getCommand")
       .mockReturnValue(async () => Promise.resolve({ status: "success" }));
 
     const response = await useCase.execute<{ status: string }>({
@@ -52,7 +52,7 @@ describe("SendCommandUseCase", () => {
   it("should throw an error if the session is not found", async () => {
     const useCase = new SendCommandUseCase(sessionService, () => logger);
     jest
-      .spyOn(sessionService, "getSessionById")
+      .spyOn(sessionService, "getDeviceSessionById")
       .mockReturnValue(Left({ _tag: "DeviceSessionNotFound" }));
 
     const res = useCase.execute<{ status: string }>({

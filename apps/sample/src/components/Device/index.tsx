@@ -2,12 +2,12 @@ import React from "react";
 import {
   ConnectionType,
   DeviceModelId,
-  SessionId,
+  DeviceSessionId,
 } from "@ledgerhq/device-sdk-core";
 import { Box, DropdownGeneric, Flex, Icons, Text } from "@ledgerhq/react-ui";
 import styled, { DefaultTheme } from "styled-components";
 
-import { useSessionState } from "@/hooks/useSessionState";
+import { useDeviceSessionState } from "@/hooks/useDeviceSessionState";
 
 import { StatusText } from "./StatusText";
 
@@ -38,7 +38,7 @@ const ActionRow = styled(Flex).attrs({ py: 4, px: 2 })`
 type DeviceProps = {
   name: string;
   type: ConnectionType;
-  sessionId: SessionId;
+  sessionId: DeviceSessionId;
   model: DeviceModelId;
   onDisconnect: () => Promise<void>;
 };
@@ -50,7 +50,7 @@ export const Device: React.FC<DeviceProps> = ({
   onDisconnect,
   sessionId,
 }) => {
-  const sessionState = useSessionState(sessionId);
+  const sessionState = useDeviceSessionState(sessionId);
   return (
     <Root>
       <IconContainer>

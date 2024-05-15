@@ -4,29 +4,29 @@ import { v4 as uuidv4 } from "uuid";
 import { Command } from "@api/command/Command";
 import { CommandUtils } from "@api/command/utils/CommandUtils";
 import { DeviceModelId } from "@api/device/DeviceModel";
-import { SessionDeviceState } from "@api/session/SessionDeviceState";
-import { SessionId } from "@api/session/types";
+import { DeviceStatus } from "@api/device/DeviceStatus";
+import { DeviceSessionState } from "@api/device-session/DeviceSessionState";
+import { DeviceSessionId } from "@api/device-session/types";
 import { InternalConnectedDevice } from "@internal/usb/model/InternalConnectedDevice";
-import { DeviceStatus } from "@root/src";
 
 export type SessionConstructorArgs = {
   connectedDevice: InternalConnectedDevice;
-  id?: SessionId;
+  id?: DeviceSessionId;
 };
 
 /**
  * Represents a session with a device.
  */
-export class Session {
-  private readonly _id: SessionId;
+export class DeviceSession {
+  private readonly _id: DeviceSessionId;
   private readonly _connectedDevice: InternalConnectedDevice;
-  private readonly _deviceState: BehaviorSubject<SessionDeviceState>;
+  private readonly _deviceState: BehaviorSubject<DeviceSessionState>;
 
   constructor({ connectedDevice, id = uuidv4() }: SessionConstructorArgs) {
     this._id = id;
     this._connectedDevice = connectedDevice;
-    this._deviceState = new BehaviorSubject<SessionDeviceState>(
-      new SessionDeviceState({
+    this._deviceState = new BehaviorSubject<DeviceSessionState>(
+      new DeviceSessionState({
         sessionId: this._id,
         deviceStatus: DeviceStatus.CONNECTED,
       }),
@@ -48,7 +48,7 @@ export class Session {
   private updateDeviceStatus(deviceStatus: DeviceStatus) {
     const sessionState = this._deviceState.getValue();
     this._deviceState.next(
-      new SessionDeviceState({
+      new DeviceSessionState({
         ...sessionState,
         deviceStatus,
       }),

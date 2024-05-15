@@ -10,8 +10,8 @@ import {
   DefaultApduSenderService,
   DefaultApduSenderServiceConstructorArgs,
 } from "@internal/device-session/service/DefaultApduSenderService";
-import { DefaultSessionService } from "@internal/device-session/service/DefaultSessionService";
-import { GetSessionDeviceStateUseCase } from "@internal/device-session/use-case/GetSessionDeviceStateUseCase";
+import { DefaultDeviceSessionService } from "@internal/device-session/service/DefaultDeviceSessionService";
+import { GetDeviceSessionStateUseCase } from "@internal/device-session/use-case/GetDeviceSessionStateUseCase";
 import { loggerTypes } from "@internal/logger-publisher/di/loggerTypes";
 import { LoggerPublisherService } from "@internal/logger-publisher/service/LoggerPublisherService";
 import { StubUseCase } from "@root/src/di.stub";
@@ -59,16 +59,16 @@ export const deviceSessionModuleFactory = (
         };
       });
 
-      bind(deviceSessionTypes.SessionService)
-        .to(DefaultSessionService)
+      bind(deviceSessionTypes.DeviceSessionService)
+        .to(DefaultDeviceSessionService)
         .inSingletonScope();
 
-      bind(deviceSessionTypes.GetSessionDeviceStateUseCase).to(
-        GetSessionDeviceStateUseCase,
+      bind(deviceSessionTypes.GetDeviceSessionStateUseCase).to(
+        GetDeviceSessionStateUseCase,
       );
 
       if (stub) {
-        rebind(deviceSessionTypes.GetSessionDeviceStateUseCase).to(StubUseCase);
+        rebind(deviceSessionTypes.GetDeviceSessionStateUseCase).to(StubUseCase);
       }
     },
   );

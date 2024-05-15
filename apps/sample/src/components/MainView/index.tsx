@@ -4,7 +4,7 @@ import Image from "next/image";
 import styled, { DefaultTheme } from "styled-components";
 
 import { useSdk } from "@/providers/DeviceSdkProvider";
-import { useSessionContext } from "@/providers/SessionsProvider";
+import { useDeviceSessionsContext } from "@/providers/DeviceSessionsProvider";
 
 const Root = styled(Flex)`
   flex: 1;
@@ -23,7 +23,7 @@ const NanoLogo = styled(Image).attrs({ mb: 8 })`
 
 export const MainView: React.FC = () => {
   const sdk = useSdk();
-  const { dispatch } = useSessionContext();
+  const { dispatch } = useDeviceSessionsContext();
 
   // Example starting the discovery on a user action
   const onSelectDeviceClicked = useCallback(() => {
