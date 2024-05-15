@@ -1,8 +1,31 @@
+/**
+ * Represents an APDU command that can be sent to a device.
+ * DO NOT USE THIS CLASS DIRECTLY, use ApduBuilder instead.
+ */
 export class Apdu {
+  /**
+   * Instruction class (1 byte)
+   */
   readonly cla: number;
+
+  /**
+   * Instruction code (1 byte)
+   */
   readonly ins: number;
+
+  /**
+   * Instruction parameter 1 (2 bytes)
+   */
   readonly p1: number;
+
+  /**
+   * Instruction parameter 2 (2 bytes)
+   */
   readonly p2: number;
+
+  /**
+   * Bytes of data
+   */
   data?: Uint8Array;
 
   constructor(
@@ -19,6 +42,10 @@ export class Apdu {
     this.data = data;
   }
 
+  /**
+   * Get the raw binary data of the APDU command
+   * @returns {Uint8Array} - The raw APDU command
+   */
   getRawApdu(): Uint8Array {
     const header = Uint8Array.from([
       this.cla,

@@ -10,11 +10,21 @@ import { CommandUtils } from "@api/command/utils/CommandUtils";
 import { ApduResponse } from "@api/device-session/ApduResponse";
 
 export type GetAppAndVersionResponse = {
+  /**
+   * The name of the application currently running on the device.
+   */
   name: string;
+  /**
+   * The version of the application currently running on the device.
+   */
   version: string;
   flags?: number | Uint8Array;
 };
 
+/**
+ * Command to get information about the application currently running on the
+ * device.
+ */
 export class GetAppAndVersionCommand
   implements Command<GetAppAndVersionResponse>
 {

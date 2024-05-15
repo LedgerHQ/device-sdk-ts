@@ -11,11 +11,29 @@ import {
 import { CommandUtils } from "@api/command/utils/CommandUtils";
 import { ApduResponse } from "@api/device-session/ApduResponse";
 
+/**
+ * The type of battery information to retrieve.
+ */
 export enum BatteryStatusType {
+  /**
+   * The command response will be the battery percentage.
+   */
   BATTERY_PERCENTAGE = 0x00,
+  /**
+   * The command response will be the battery voltage in mV.
+   */
   BATTERY_VOLTAGE = 0x01,
+  /**
+   * The command response will be the battery temperature in degree celsius
+   */
   BATTERY_TEMPERATURE = 0x02,
+  /**
+   * The command response will be the battery current in mA.
+   */
   BATTERY_CURRENT = 0x03,
+  /**
+   * The command response will be the battery status (cf. `BatteryStatusFlags`)
+   */
   BATTERY_FLAGS = 0x04,
 }
 
@@ -42,8 +60,20 @@ type BatteryStatusFlags = {
   issueBattery: boolean;
 };
 
+/**
+ * The response type depends on the `statusType` parameter sent with the command,
+ * cf. `BatteryStatusType`.
+ */
 export type GetBatteryStatusResponse = number | BatteryStatusFlags;
 
+/**
+ * Command to get the battery status of the device.
+ * The parameter statusType defines the type of information to retrieve, cf.
+ * `BatteryStatusType`.
+ *
+ * WARNING: this command should not be sent within a logic of polling as it is
+ * going to decrease the overall performance of the communication with the device.
+ */
 export class GetBatteryStatusCommand
   implements Command<GetBatteryStatusResponse, BatteryStatusType>
 {

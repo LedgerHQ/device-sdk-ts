@@ -45,6 +45,9 @@ export class HexaStringEncodeError implements SdkAppBuilderError {
   }
 }
 
+/**
+ * Type for all possible errors that can be thrown by the AppBuilder.
+ */
 export type AppBuilderError =
   | InvalidValueError
   | ValueOverflowError

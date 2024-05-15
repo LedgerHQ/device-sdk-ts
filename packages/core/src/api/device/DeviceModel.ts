@@ -5,6 +5,14 @@ export enum DeviceModelId {
   STAX = "stax",
 }
 
+/**
+ * Unique identifier for a device.
+ *
+ * NB: This identifier is generated at runtime and is not persisted. It cannot
+ * be used to identify a device across sessions.
+ * There is in fact no way to identify a device across sessions, which is a
+ * privacy feature of Ledger devices.
+ */
 export type DeviceId = string;
 
 export class DeviceModel {

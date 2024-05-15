@@ -5,6 +5,18 @@ export type TaggedField = {
   value: Uint8Array;
 };
 
+/**
+ * ApduParser is a utility class to help parse APDU responses.
+ *
+ * It provides methods to extract fields of different types from the response.
+ *
+ * @example
+ * ```
+ * const parser = new ApduParser(apduResponse);
+ * const targetId = parser.encodeToHexaString(parser.extractFieldByLength(4));
+ * const seVersion = parser.encodeToString(parser.extractFieldLVEncoded());
+ * ```
+ */
 export class ApduParser {
   private _index: number;
   private _response: Uint8Array;

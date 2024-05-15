@@ -8,7 +8,13 @@ import { loggerTypes } from "@internal/logger-publisher/di/loggerTypes";
 import { LoggerPublisherService } from "@internal/logger-publisher/service/LoggerPublisherService";
 
 export type SendApduUseCaseArgs = {
+  /**
+   * Device session identifier obtained through `DeviceSdk.connect`
+   */
   sessionId: DeviceSessionId;
+  /**
+   * APDU to send to the device
+   */
   apdu: Uint8Array;
 };
 

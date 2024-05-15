@@ -7,8 +7,17 @@ import { loggerTypes } from "@internal/logger-publisher/di/loggerTypes";
 import { LoggerPublisherService } from "@internal/logger-publisher/service/LoggerPublisherService";
 
 export type SendCommandUseCaseArgs<T, U = void> = {
+  /**
+   * The device session id.
+   */
   sessionId: string;
+  /**
+   * The command to send.
+   */
   command: Command<T, U>;
+  /**
+   * The parameters of the command.
+   */
   params: U;
 };
 
@@ -29,6 +38,14 @@ export class SendCommandUseCase {
     this._logger = loggerFactory("SendCommandUseCase");
   }
 
+  /**
+   * Sends a command to a device through a device session.
+   *
+   * @param sessionId - The device session id.
+   * @param command - The command to send.
+   * @param params - The parameters of the command.
+   * @returns The response from the command.
+   */
   async execute<T, U = void>({
     sessionId,
     command,
