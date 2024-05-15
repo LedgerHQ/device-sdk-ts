@@ -44,7 +44,7 @@ describe("GetBatteryStatus", () => {
   });
 
   describe("getApdu", () => {
-    it("should return the GetBatteryStatus APUD", () => {
+    it("should return the GetBatteryStatus APDU", () => {
       expect(
         command.getApdu(BatteryStatusType.BATTERY_PERCENTAGE).getRawApdu(),
       ).toStrictEqual(GET_BATTERY_STATUS_APDU_PERCENTAGE);
