@@ -11,6 +11,9 @@ import { usbDiTypes } from "@internal/usb/di/usbDiTypes";
 import type { UsbHidTransport } from "@internal/usb/transport/UsbHidTransport";
 
 export type ConnectUseCaseArgs = {
+  /**
+   * UUID of the device obtained through device discovery `StartDiscoveringUseCase`
+   */
   deviceId: DeviceId;
 };
 

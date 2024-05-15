@@ -21,9 +21,21 @@ export type ApduBuilderArgs = {
 };
 
 /**
- * ApduBuilder is a utility class to help build APDU commands
+ * ApduBuilder is a utility class to help build APDU commands.
  * It allows to easily add data to the data field of the APDU command
- * and to encode data in different formats
+ * and to encode this data in different formats.
+ *
+ * @example
+ * ```
+ * const apduBuilder = new ApduBuilder({ ins: 0x01, cla: 0x02, p1: 0x03, p2: 0x04 })
+ *  .add8BitUintToData(0x05)
+ *  .add16BitUintToData(0x0607)
+ *  .addHexaStringToData("0x0809")
+ *  .addAsciiStringToData("hello")
+ *
+ * const apdu = apduBuilder.build();
+ * const builderErrors = apduBuilder.getErrors();
+ * ```
  */
 export class ApduBuilder {
   private _ins: number;
