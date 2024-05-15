@@ -1,5 +1,5 @@
+import { defaultApduResponseStubBuilder } from "@api/device-session/ApduResponse.stub";
 import { deviceModelStubBuilder } from "@internal/device-model/model/DeviceModel.stub";
-import { defaultApduResponseStubBuilder } from "@internal/device-session/model/ApduResponse.stub";
 import { InternalConnectedDevice } from "@internal/usb/model/InternalConnectedDevice";
 import { connectedDeviceStubBuilder } from "@internal/usb/model/InternalConnectedDevice.stub";
 

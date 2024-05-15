@@ -3,7 +3,7 @@ import {
   InvalidResponseFormatError,
   InvalidStatusWordError,
 } from "@api/command/Errors";
-import { ApduResponse } from "@internal/device-session/model/ApduResponse";
+import { ApduResponse } from "@api/device-session/ApduResponse";
 
 import {
   GetAppAndVersionCommand,

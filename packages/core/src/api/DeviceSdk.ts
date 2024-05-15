@@ -6,13 +6,13 @@ import {
   SendCommandUseCase,
   SendCommandUseCaseArgs,
 } from "@api/command/use-case/SendCommandUseCase";
+import { ApduResponse } from "@api/device-session/ApduResponse";
 import { DeviceSessionState } from "@api/device-session/DeviceSessionState";
 import { DeviceSessionId } from "@api/device-session/types";
 import { ConnectedDevice } from "@api/usb/model/ConnectedDevice";
 import { configTypes } from "@internal/config/di/configTypes";
 import { GetSdkVersionUseCase } from "@internal/config/use-case/GetSdkVersionUseCase";
 import { deviceSessionTypes } from "@internal/device-session/di/deviceSessionTypes";
-import { ApduResponse } from "@internal/device-session/model/ApduResponse";
 import { GetDeviceSessionStateUseCase } from "@internal/device-session/use-case/GetDeviceSessionStateUseCase";
 import { discoveryTypes } from "@internal/discovery/di/discoveryTypes";
 import {

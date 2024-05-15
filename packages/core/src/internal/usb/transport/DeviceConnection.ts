@@ -1,7 +1,7 @@
 import { Either } from "purify-ts";
 
+import { ApduResponse } from "@api/device-session/ApduResponse";
 import { SdkError } from "@api/Error";
-import { ApduResponse } from "@internal/device-session/model/ApduResponse";
 
 export type SendApduFnType = (
   apdu: Uint8Array,

@@ -2,6 +2,7 @@ import { inject, injectable } from "inversify";
 import { Either, Just, Left, Maybe, Nothing, Right } from "purify-ts";
 import { v4 } from "uuid";
 
+import { ApduResponse } from "@api/device-session/ApduResponse";
 import { APDU_RESPONSE_STATUS_CODE_LENGTH } from "@internal/device-session/data/ApduResponseConst";
 import {
   APDU_DATA_LENGTH_LENGTH,
@@ -9,7 +10,6 @@ import {
   HEAD_TAG_LENGTH,
   INDEX_LENGTH,
 } from "@internal/device-session/data/FramerConst";
-import { ApduResponse } from "@internal/device-session/model/ApduResponse";
 import { ReceiverApduError } from "@internal/device-session/model/Errors";
 import { Frame } from "@internal/device-session/model/Frame";
 import { FrameHeader } from "@internal/device-session/model/FrameHeader";

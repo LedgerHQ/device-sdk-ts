@@ -3,7 +3,7 @@ jest.mock("uuid");
 
 import { Just, Left, Maybe, Nothing, Right } from "purify-ts";
 
-import { ApduResponse } from "@internal/device-session/model/ApduResponse";
+import { ApduResponse } from "@api/device-session/ApduResponse";
 import { ReceiverApduError } from "@internal/device-session/model/Errors";
 import { DefaultLoggerPublisherService } from "@internal/logger-publisher/service/DefaultLoggerPublisherService";
 

@@ -7,7 +7,7 @@ import {
   InvalidStatusWordError,
 } from "@api/command/Errors";
 import { CommandUtils } from "@api/command/utils/CommandUtils";
-import { ApduResponse } from "@internal/device-session/model/ApduResponse";
+import { ApduResponse } from "@api/device-session/ApduResponse";
 
 export type GetAppAndVersionResponse = {
   name: string;
