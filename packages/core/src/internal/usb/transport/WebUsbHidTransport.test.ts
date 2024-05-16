@@ -67,6 +67,7 @@ describe("WebUsbHidTransport", () => {
           getDevices: mockedGetDevices,
           requestDevice: mockedRequestDevice,
           addEventListener: jest.fn(),
+          ondisconnect: jest.fn(),
         },
       } as unknown as Navigator;
     });
@@ -238,9 +239,9 @@ describe("WebUsbHidTransport", () => {
 
     describe("connect", () => {
       it("should throw UnknownDeviceError if no internal device", async () => {
-        const device = { deviceId: "fake" };
+        const connectParams = { deviceId: "fake", onDisconnect: jest.fn() };
 
-        const connect = await transport.connect(device);
+        const connect = await transport.connect(connectParams);
 
         expect(connect).toStrictEqual(
           Left(new UnknownDeviceError(new Error("Unknown device fake"))),
@@ -248,7 +249,7 @@ describe("WebUsbHidTransport", () => {
       });
 
       it("should throw OpeningConnectionError if the device is already opened", async () => {
-        const device = { deviceId: "fake" };
+        const device = { deviceId: "fake", onDisconnect: jest.fn() };
 
         const connect = await transport.connect(device);
 
@@ -271,7 +272,10 @@ describe("WebUsbHidTransport", () => {
         transport.startDiscovering().subscribe({
           next: (discoveredDevice) => {
             transport
-              .connect({ deviceId: discoveredDevice.id })
+              .connect({
+                deviceId: discoveredDevice.id,
+                onDisconnect: jest.fn(),
+              })
               .then((value) => {
                 expect(value).toStrictEqual(
                   Left(new OpeningConnectionError(new Error(message))),
@@ -302,7 +306,10 @@ describe("WebUsbHidTransport", () => {
         transport.startDiscovering().subscribe({
           next: (discoveredDevice) => {
             transport
-              .connect({ deviceId: discoveredDevice.id })
+              .connect({
+                deviceId: discoveredDevice.id,
+                onDisconnect: jest.fn(),
+              })
               .then((connectedDevice) => {
                 connectedDevice
                   .ifRight((device) => {
@@ -331,7 +338,10 @@ describe("WebUsbHidTransport", () => {
         transport.startDiscovering().subscribe({
           next: (discoveredDevice) => {
             transport
-              .connect({ deviceId: discoveredDevice.id })
+              .connect({
+                deviceId: discoveredDevice.id,
+                onDisconnect: jest.fn(),
+              })
               .then((connectedDevice) => {
                 connectedDevice
                   .ifRight((device) => {
@@ -380,7 +390,10 @@ describe("WebUsbHidTransport", () => {
         transport.startDiscovering().subscribe({
           next: (discoveredDevice) => {
             transport
-              .connect({ deviceId: discoveredDevice.id })
+              .connect({
+                deviceId: discoveredDevice.id,
+                onDisconnect: jest.fn(),
+              })
               .then((connectedDevice) => {
                 connectedDevice
                   .ifRight((device) => {
@@ -404,6 +417,36 @@ describe("WebUsbHidTransport", () => {
           },
           error: (error) => {
             done(error);
+          },
+        });
+      });
+
+      it("should call disconnect handler if a connected device is unplugged", (done) => {
+        // given
+        const onDisconnect = jest.fn();
+        mockedRequestDevice.mockResolvedValueOnce([stubDevice]);
+
+        // when
+        transport.startDiscovering().subscribe({
+          next: (discoveredDevice) => {
+            transport
+              .connect({
+                deviceId: discoveredDevice.id,
+                onDisconnect,
+              })
+              .then(() => {
+                // @ts-expect-error
+                transport.handleDeviceDisconnectionEvent({
+                  device: { productId: stubDevice.productId },
+                } as Event);
+
+                // then
+                expect(onDisconnect).toHaveBeenCalled();
+                done();
+              })
+              .catch((error) => {
+                done(error);
+              });
           },
         });
       });

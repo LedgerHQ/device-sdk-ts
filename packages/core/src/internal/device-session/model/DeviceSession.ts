@@ -85,6 +85,7 @@ export class DeviceSession {
   }
 
   close() {
+    this.updateDeviceStatus(DeviceStatus.NOT_CONNECTED);
     this._deviceState.complete();
   }
 }
