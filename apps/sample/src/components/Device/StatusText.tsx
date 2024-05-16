@@ -15,6 +15,8 @@ const getColorFromState = ({
     case DeviceStatus.BUSY:
     case DeviceStatus.LOCKED:
       return theme.colors.warning.c60;
+    case DeviceStatus.NOT_CONNECTED:
+      return theme.colors.error.c60;
   }
 };
 
