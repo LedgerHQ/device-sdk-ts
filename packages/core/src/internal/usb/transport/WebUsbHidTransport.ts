@@ -35,10 +35,13 @@ type WebHidInternalDevice = {
   discoveredDevice: DiscoveredDevice;
 };
 
+export type DisconnectHandler = (deviceId: DeviceId) => void;
+
 @injectable()
 export class WebUsbHidTransport implements UsbHidTransport {
   // Maps uncoupled DiscoveredDevice and WebHID's HIDDevice WebHID
   private _internalDevicesById: Map<DeviceId, WebHidInternalDevice>;
+  private _internalDisconnectionHandlersByHidId: Map<string, () => void>;
   private _connectionListenersAbortController: AbortController;
   private _logger: LoggerPublisherService;
   private _usbHidDeviceConnectionFactory: UsbHidDeviceConnectionFactory;
@@ -52,6 +55,7 @@ export class WebUsbHidTransport implements UsbHidTransport {
     usbHidDeviceConnectionFactory: UsbHidDeviceConnectionFactory,
   ) {
     this._internalDevicesById = new Map();
+    this._internalDisconnectionHandlersByHidId = new Map();
     this._connectionListenersAbortController = new AbortController();
     this._logger = loggerServiceFactory("WebUsbHidTransport");
     this._usbHidDeviceConnectionFactory = usbHidDeviceConnectionFactory;
@@ -267,8 +271,10 @@ export class WebUsbHidTransport implements UsbHidTransport {
    */
   async connect({
     deviceId,
+    onDisconnect,
   }: {
     deviceId: DeviceId;
+    onDisconnect: DisconnectHandler;
   }): Promise<Either<ConnectError, InternalConnectedDevice>> {
     this._logger.debug("connect", { data: { deviceId } });
 
@@ -309,6 +315,10 @@ export class WebUsbHidTransport implements UsbHidTransport {
       id: deviceId,
       type: "USB",
     });
+    this._internalDisconnectionHandlersByHidId.set(
+      internalDevice.hidDevice.productId.toString(),
+      () => onDisconnect(deviceId),
+    );
 
     return Right(connectedDevice);
   }
@@ -364,6 +374,17 @@ export class WebUsbHidTransport implements UsbHidTransport {
           data: { error },
         });
       }
+    });
+    const maybeDisconnectHandler = Maybe.fromNullable(
+      this._internalDisconnectionHandlersByHidId.get(
+        hidDevice.productId.toString(),
+      ),
+    );
+    maybeDisconnectHandler.map((handler) => {
+      handler();
+      this._internalDisconnectionHandlersByHidId.delete(
+        hidDevice.productId.toString(),
+      );
     });
   };
 }

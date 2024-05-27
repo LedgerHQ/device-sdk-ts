@@ -55,6 +55,14 @@ export class DefaultDeviceSessionService implements DeviceSessionService {
     return deviceSession.toEither(new DeviceSessionNotFound());
   }
 
+  getDeviceSessionByDeviceId(deviceId: string) {
+    const deviceSession = Maybe.fromNullable(
+      this._sessions.find((s) => s.connectedDevice.id === deviceId),
+    );
+
+    return deviceSession.toEither(new DeviceSessionNotFound());
+  }
+
   getDeviceSessions() {
     return this._sessions;
   }
