@@ -19,7 +19,7 @@ jobs:
 
   danger:
     name: Run Danger check
-    if: ${{ !contains(github.ref_name, 'dependabot') }}
+    if: ${{ !contains(github.ref_name, 'dependencies') }}
     runs-on: [ubuntu-latest]
     steps:
       - uses: actions/checkout@v4
