@@ -25,6 +25,7 @@ export type ConnectUseCaseArgs = {
 export class ConnectUseCase {
   private readonly _usbHidTransport: UsbHidTransport;
   private readonly _sessionService: DeviceSessionService;
+  private readonly _loggerFactory: (tag: string) => LoggerPublisherService;
   private readonly _logger: LoggerPublisherService;
 
   constructor(
@@ -37,6 +38,7 @@ export class ConnectUseCase {
   ) {
     this._sessionService = sessionService;
     this._usbHidTransport = usbHidTransport;
+    this._loggerFactory = loggerFactory;
     this._logger = loggerFactory("ConnectUseCase");
   }
 
@@ -62,7 +64,10 @@ export class ConnectUseCase {
         throw error;
       },
       Right: (connectedDevice) => {
-        const deviceSession = new DeviceSession({ connectedDevice });
+        const deviceSession = new DeviceSession(
+          { connectedDevice },
+          this._loggerFactory,
+        );
         this._sessionService.addDeviceSession(deviceSession);
         return deviceSession.id;
       },

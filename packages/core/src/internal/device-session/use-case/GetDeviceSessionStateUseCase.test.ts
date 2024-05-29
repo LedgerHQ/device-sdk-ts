@@ -19,9 +19,13 @@ describe("GetDeviceSessionStateUseCase", () => {
     );
     sessionService = new DefaultDeviceSessionService(() => logger);
   });
+
   it("should retrieve deviceSession device state", () => {
     // given
-    const deviceSession = deviceSessionStubBuilder({ id: fakeSessionId });
+    const deviceSession = deviceSessionStubBuilder(
+      { id: fakeSessionId },
+      () => logger,
+    );
     sessionService.addDeviceSession(deviceSession);
     const useCase = new GetDeviceSessionStateUseCase(
       sessionService,

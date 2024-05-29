@@ -9,4 +9,4 @@ export { LogLevel } from "./logger-subscriber/model/LogLevel";
 export { ConsoleLogger } from "./logger-subscriber/service/ConsoleLogger";
 export * from "./types";
 export { ConnectedDevice } from "./usb/model/ConnectedDevice";
-export { DeviceSessionState } from "@api/device-session/DeviceSessionState";
+export { type DeviceSessionState } from "@api/device-session/DeviceSessionState";

@@ -1,3 +1,4 @@
+import { inject } from "inversify";
 import { BehaviorSubject } from "rxjs";
 import { v4 as uuidv4 } from "uuid";
 
@@ -5,9 +6,16 @@ import { Command } from "@api/command/Command";
 import { CommandUtils } from "@api/command/utils/CommandUtils";
 import { DeviceModelId } from "@api/device/DeviceModel";
 import { DeviceStatus } from "@api/device/DeviceStatus";
-import { DeviceSessionState } from "@api/device-session/DeviceSessionState";
+import {
+  DeviceSessionState,
+  DeviceSessionStateType,
+} from "@api/device-session/DeviceSessionState";
 import { DeviceSessionId } from "@api/device-session/types";
+import { loggerTypes } from "@internal/logger-publisher/di/loggerTypes";
+import { LoggerPublisherService } from "@internal/logger-publisher/service/LoggerPublisherService";
 import { InternalConnectedDevice } from "@internal/usb/model/InternalConnectedDevice";
+
+import { DeviceSessionRefresher } from "./DeviceSessionRefresher";
 
 export type SessionConstructorArgs = {
   connectedDevice: InternalConnectedDevice;
@@ -21,15 +29,28 @@ export class DeviceSession {
   private readonly _id: DeviceSessionId;
   private readonly _connectedDevice: InternalConnectedDevice;
   private readonly _deviceState: BehaviorSubject<DeviceSessionState>;
+  private readonly _refresher: DeviceSessionRefresher;
 
-  constructor({ connectedDevice, id = uuidv4() }: SessionConstructorArgs) {
+  constructor(
+    { connectedDevice, id = uuidv4() }: SessionConstructorArgs,
+    @inject(loggerTypes.LoggerPublisherServiceFactory)
+    loggerModuleFactory: (tag: string) => LoggerPublisherService,
+  ) {
     this._id = id;
     this._connectedDevice = connectedDevice;
-    this._deviceState = new BehaviorSubject<DeviceSessionState>(
-      new DeviceSessionState({
-        sessionId: this._id,
+    this._deviceState = new BehaviorSubject<DeviceSessionState>({
+      sessionStateType: DeviceSessionStateType.Connected,
+      deviceStatus: DeviceStatus.CONNECTED,
+    });
+    this._refresher = new DeviceSessionRefresher(
+      {
+        refreshInterval: 1000,
         deviceStatus: DeviceStatus.CONNECTED,
-      }),
+        sendApduFn: (rawApdu: Uint8Array) => this.sendApdu(rawApdu),
+        updateStateFn: (state: DeviceSessionState) =>
+          this.setDeviceSessionState(state),
+      },
+      loggerModuleFactory("device-session-refresher"),
     );
   }
 
@@ -45,14 +66,17 @@ export class DeviceSession {
     return this._deviceState.asObservable();
   }
 
+  public setDeviceSessionState(state: DeviceSessionState) {
+    this._deviceState.next(state);
+  }
+
   private updateDeviceStatus(deviceStatus: DeviceStatus) {
     const sessionState = this._deviceState.getValue();
-    this._deviceState.next(
-      new DeviceSessionState({
-        ...sessionState,
-        deviceStatus,
-      }),
-    );
+    this._refresher.setDeviceStatus(deviceStatus);
+    this._deviceState.next({
+      ...sessionState,
+      deviceStatus,
+    });
   }
 
   async sendApdu(rawApdu: Uint8Array) {
@@ -60,13 +84,12 @@ export class DeviceSession {
 
     const errorOrResponse = await this._connectedDevice.sendApdu(rawApdu);
 
-    return errorOrResponse.map((response) => {
-      this.updateDeviceStatus(
-        CommandUtils.isLockedDeviceResponse(response)
-          ? DeviceStatus.LOCKED
-          : DeviceStatus.CONNECTED,
-      );
-      return response;
+    return errorOrResponse.ifRight((response) => {
+      if (CommandUtils.isLockedDeviceResponse(response)) {
+        this.updateDeviceStatus(DeviceStatus.LOCKED);
+      } else {
+        this.updateDeviceStatus(DeviceStatus.CONNECTED);
+      }
     });
   }
 

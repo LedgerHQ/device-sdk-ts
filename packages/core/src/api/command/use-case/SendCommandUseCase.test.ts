@@ -7,10 +7,7 @@ import { DeviceSessionService } from "@internal/device-session/service/DeviceSes
 import { DefaultLoggerPublisherService } from "@internal/logger-publisher/service/DefaultLoggerPublisherService";
 import { LoggerPublisherService } from "@internal/logger-publisher/service/LoggerPublisherService";
 
-import {
-  SendCommandUseCase,
-  // SendCommandUseCaseArgs,
-} from "./SendCommandUseCase";
+import { SendCommandUseCase } from "./SendCommandUseCase";
 
 let logger: LoggerPublisherService;
 let sessionService: DeviceSessionService;
@@ -32,7 +29,7 @@ describe("SendCommandUseCase", () => {
   });
 
   it("should send a command to a connected device", async () => {
-    const deviceSession = deviceSessionStubBuilder();
+    const deviceSession = deviceSessionStubBuilder({}, () => logger);
     sessionService.addDeviceSession(deviceSession);
     const useCase = new SendCommandUseCase(sessionService, () => logger);
 

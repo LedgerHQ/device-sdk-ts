@@ -1,5 +1,5 @@
 import { Apdu } from "@api/apdu/model/Apdu";
-import { ApduBuilder } from "@api/apdu/utils/ApduBuilder";
+import { ApduBuilder, ApduBuilderArgs } from "@api/apdu/utils/ApduBuilder";
 import { ApduParser } from "@api/apdu/utils/ApduParser";
 import { Command } from "@api/command/Command";
 import { InvalidStatusWordError } from "@api/command/Errors";
@@ -64,13 +64,15 @@ export type GetOsVersionResponse = {
  * Command to get information about the device firmware.
  */
 export class GetOsVersionCommand implements Command<GetOsVersionResponse> {
-  getApdu = (): Apdu =>
-    new ApduBuilder({
+  getApdu(): Apdu {
+    const getOsVersionApduArgs: ApduBuilderArgs = {
       cla: 0xe0,
       ins: 0x01,
       p1: 0x00,
       p2: 0x00,
-    }).build();
+    } as const;
+    return new ApduBuilder(getOsVersionApduArgs).build();
+  }
 
   parseResponse(responseApdu: ApduResponse, deviceModelId: DeviceModelId) {
     const parser = new ApduParser(responseApdu);

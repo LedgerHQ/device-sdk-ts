@@ -24,7 +24,7 @@ describe("SendApduUseCase", () => {
 
   it("should send an APDU to a connected device", async () => {
     // given
-    const deviceSession = deviceSessionStubBuilder();
+    const deviceSession = deviceSessionStubBuilder({}, () => logger);
     sessionService.addDeviceSession(deviceSession);
     const useCase = new SendApduUseCase(sessionService, () => logger);
 
@@ -60,7 +60,10 @@ describe("SendApduUseCase", () => {
         Promise.resolve(Left(new ReceiverApduError())),
       ),
     });
-    const deviceSession = deviceSessionStubBuilder({ connectedDevice });
+    const deviceSession = deviceSessionStubBuilder(
+      { connectedDevice },
+      () => logger,
+    );
     sessionService.addDeviceSession(deviceSession);
     const useCase = new SendApduUseCase(sessionService, () => logger);
 

@@ -22,7 +22,10 @@ describe("GetConnectedDevice", () => {
 
   it("should retrieve an instance of ConnectedDevice", () => {
     // given
-    const deviceSession = deviceSessionStubBuilder({ id: fakeSessionId });
+    const deviceSession = deviceSessionStubBuilder(
+      { id: fakeSessionId },
+      () => logger,
+    );
     sessionService.addDeviceSession(deviceSession);
     const useCase = new GetConnectedDeviceUseCase(sessionService, () => logger);
 
@@ -37,7 +40,10 @@ describe("GetConnectedDevice", () => {
 
   it("should retrieve correct device from session", () => {
     // given
-    const deviceSession = deviceSessionStubBuilder({ id: fakeSessionId });
+    const deviceSession = deviceSessionStubBuilder(
+      { id: fakeSessionId },
+      () => logger,
+    );
     sessionService.addDeviceSession(deviceSession);
     const useCase = new GetConnectedDeviceUseCase(sessionService, () => logger);
 

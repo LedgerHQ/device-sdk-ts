@@ -54,7 +54,6 @@ export class DefaultApduSenderService implements ApduSenderService {
       channel = Maybe.zero(),
       padding = false,
     }: DefaultApduSenderServiceConstructorArgs,
-
     @inject(loggerTypes.LoggerPublisherServiceFactory)
     loggerServiceFactory: (tag: string) => LoggerPublisherService,
   ) {
