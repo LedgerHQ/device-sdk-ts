@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, memo } from "react";
+import { memo } from "react";
 import makeOpenAppMachine from "./openAppStateMachine";
 import { createActor } from "xstate";
 import { createBrowserInspector } from "@statelyai/inspect";
@@ -10,7 +10,7 @@ const openAppMachine = makeOpenAppMachine();
 
 function Machine() {
   const startMachine = () => {
-    console.log("machine: Hello, world!");
+    console.log("Creating machine actor");
     const openAppMachineActor = createActor(openAppMachine, {
       inspect: inspector.inspect,
       input: {
