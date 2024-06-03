@@ -17,6 +17,7 @@
     "core": "pnpm --filter @ledgerhq/device-sdk-core",
     "context-module": "pnpm --filter @ledgerhq/context-module",
     "keyring-eth": "pnpm --filter @ledgerhq/keyring-eth",
+    "transport-mock": "pnpm --filter @ledgerhq/device-sdk-transport-mock",
     "trusted-apps": "pnpm --filter @ledgerhq/device-sdk-trusted-apps",
     "ui": "pnpm --filter @ledgerhq/device-sdk-ui",
     "sample": "pnpm --filter @ledgerhq/device-sdk-sample",

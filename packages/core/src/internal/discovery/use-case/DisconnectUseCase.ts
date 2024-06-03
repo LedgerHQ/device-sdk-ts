@@ -1,12 +1,13 @@
-import { inject, injectable } from "inversify";
+import { inject, injectable, multiInject } from "inversify";
 
 import type { DeviceSessionId } from "@api/types";
+import type { Transport } from "@api/transport/model/Transport";
 import { deviceSessionTypes } from "@internal/device-session/di/deviceSessionTypes";
 import type { DeviceSessionService } from "@internal/device-session/service/DeviceSessionService";
 import { loggerTypes } from "@internal/logger-publisher/di/loggerTypes";
 import { LoggerPublisherService } from "@internal/logger-publisher/service/LoggerPublisherService";
-import { usbDiTypes } from "@internal/usb/di/usbDiTypes";
-import type { UsbHidTransport } from "@internal/usb/transport/UsbHidTransport";
+import { transportDiTypes } from "@internal/transport/di/transportDiTypes";
+import { TransportNotSupportedError } from "@internal/transport/model/Errors";
 
 /**
  * The arguments for the DisconnectUseCase.
@@ -19,24 +20,24 @@ export type DisconnectUseCaseArgs = {
 };
 
 /**
- * Disconnects to a discovered device via USB HID (and later BLE).
+ * Disconnects to a discovered device.
  */
 @injectable()
 export class DisconnectUseCase {
-  private readonly _usbHidTransport: UsbHidTransport;
+  private readonly _transports: Transport[];
   private readonly _sessionService: DeviceSessionService;
   private readonly _logger: LoggerPublisherService;
 
   constructor(
-    @inject(usbDiTypes.UsbHidTransport)
-    usbHidTransport: UsbHidTransport,
+    @multiInject(transportDiTypes.Transport)
+    transports: Transport[],
     @inject(deviceSessionTypes.DeviceSessionService)
     sessionService: DeviceSessionService,
     @inject(loggerTypes.LoggerPublisherServiceFactory)
     loggerFactory: (tag: string) => LoggerPublisherService,
   ) {
     this._sessionService = sessionService;
-    this._usbHidTransport = usbHidTransport;
+    this._transports = transports;
     this._logger = loggerFactory("DisconnectUseCase");
   }
 
@@ -51,11 +52,17 @@ export class DisconnectUseCase {
         throw error;
       },
       Right: async (deviceSession) => {
+        const transportIdentifier = deviceSession.connectedDevice.transport;
+        const transport = this._transports.find(
+          (t) => t.getIdentifier() === transportIdentifier,
+        );
+        if (!transport) {
+          throw new TransportNotSupportedError(new Error("Unknown transport"));
+        }
+
         deviceSession.close();
-
         this._sessionService.removeDeviceSession(sessionId);
-
-        await this._usbHidTransport
+        await transport
           .disconnect({
             connectedDevice: deviceSession.connectedDevice,
           })
