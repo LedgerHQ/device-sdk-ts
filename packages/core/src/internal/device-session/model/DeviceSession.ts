@@ -6,6 +6,7 @@ import { CommandResult } from "@api/command/model/CommandResult";
 import { ListAppsResponse } from "@api/command/os/ListAppsCommand";
 import { CommandUtils } from "@api/command/utils/CommandUtils";
 import { DeviceStatus } from "@api/device/DeviceStatus";
+import { ApduResponse } from "@api/device-session/ApduResponse";
 import {
   DeviceAction,
   DeviceActionIntermediateValue,
@@ -107,7 +108,7 @@ export class DeviceSession {
       options.triggersDisconnection,
     );
 
-    return errorOrResponse.ifRight((response) => {
+    return errorOrResponse.ifRight((response: ApduResponse) => {
       if (CommandUtils.isLockedDeviceResponse(response)) {
         this.updateDeviceStatus(DeviceStatus.LOCKED);
       } else {
@@ -126,10 +127,10 @@ export class DeviceSession {
     });
 
     return response.caseOf({
-      Left: (err) => {
+      Left: (err: SdkError) => {
         throw err;
       },
-      Right: (r) =>
+      Right: (r: ApduResponse) =>
         command.parseResponse(r, this._connectedDevice.deviceModel.id),
     });
   }

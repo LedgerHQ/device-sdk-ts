@@ -14,13 +14,15 @@ import {
 import { ApduResponse } from "@api/device-session/ApduResponse";
 import { DeviceSessionState } from "@api/device-session/DeviceSessionState";
 import { DeviceSessionId } from "@api/device-session/types";
+import { ConnectedDevice } from "@api/transport/model/ConnectedDevice";
 import {
   ConnectUseCaseArgs,
   DisconnectUseCaseArgs,
   DiscoveredDevice,
+  GetConnectedDeviceUseCaseArgs,
   SendApduUseCaseArgs,
+  StartDiscoveringUseCaseArgs,
 } from "@api/types";
-import { ConnectedDevice } from "@api/usb/model/ConnectedDevice";
 import { configTypes } from "@internal/config/di/configTypes";
 import { GetSdkVersionUseCase } from "@internal/config/use-case/GetSdkVersionUseCase";
 import { deviceSessionTypes } from "@internal/device-session/di/deviceSessionTypes";
@@ -30,15 +32,11 @@ import { ListDeviceSessionsUseCase } from "@internal/device-session/use-case/Lis
 import { discoveryTypes } from "@internal/discovery/di/discoveryTypes";
 import { ConnectUseCase } from "@internal/discovery/use-case/ConnectUseCase";
 import { DisconnectUseCase } from "@internal/discovery/use-case/DisconnectUseCase";
+import { GetConnectedDeviceUseCase } from "@internal/discovery/use-case/GetConnectedDeviceUseCase";
 import type { StartDiscoveringUseCase } from "@internal/discovery/use-case/StartDiscoveringUseCase";
 import type { StopDiscoveringUseCase } from "@internal/discovery/use-case/StopDiscoveringUseCase";
 import { sendTypes } from "@internal/send/di/sendTypes";
 import { SendApduUseCase } from "@internal/send/use-case/SendApduUseCase";
-import { usbDiTypes } from "@internal/usb/di/usbDiTypes";
-import {
-  GetConnectedDeviceUseCase,
-  GetConnectedDeviceUseCaseArgs,
-} from "@internal/usb/use-case/GetConnectedDeviceUseCase";
 import { makeContainer, MakeContainerProps } from "@root/src/di";
 
 import {
@@ -56,11 +54,23 @@ import { SdkError } from "./Error";
 export class DeviceSdk {
   readonly container: Container;
   /** @internal */
-  constructor({ stub, loggers, config }: MakeContainerProps) {
+  constructor({
+    stub,
+    transports,
+    customTransports,
+    loggers,
+    config,
+  }: Partial<MakeContainerProps> = {}) {
     // NOTE: MakeContainerProps might not be the exact type here
     // For the init of the project this is sufficient, but we might need to
     // update the constructor arguments as we go (we might have more than just the container config)
-    this.container = makeContainer({ stub, loggers, config });
+    this.container = makeContainer({
+      stub,
+      transports,
+      customTransports,
+      loggers,
+      config,
+    });
   }
 
   /**
@@ -73,21 +83,24 @@ export class DeviceSdk {
   }
 
   /**
-   * Starts discovering devices connected via USB HID (BLE not implemented yet).
+   * Starts discovering devices connected.
    *
    * For the WeHID implementation, this use-case needs to be called as a result
    * of an user interaction (button "click" event for ex).
    *
+   * @param {StartDiscoveringUseCaseArgs} args - The transport to use for discover, or undefined to discover from all transports.
    * @returns {Observable<DiscoveredDevice>} An observable of discovered devices.
    */
-  startDiscovering(): Observable<DiscoveredDevice> {
+  startDiscovering(
+    args: StartDiscoveringUseCaseArgs,
+  ): Observable<DiscoveredDevice> {
     return this.container
       .get<StartDiscoveringUseCase>(discoveryTypes.StartDiscoveringUseCase)
-      .execute();
+      .execute(args);
   }
 
   /**
-   * Stops discovering devices connected via USB HID (and later BLE).
+   * Stops discovering devices connected.
    */
   stopDiscovering() {
     return this.container
@@ -113,7 +126,7 @@ export class DeviceSdk {
   }
 
   /**
-   * Disconnects to a discovered device via USB HID (and later BLE).
+   * Disconnects to a discovered device.
    *
    * @param {DisconnectUseCaseArgs} args - The session ID to disconnect.
    */
@@ -176,7 +189,7 @@ export class DeviceSdk {
    */
   getConnectedDevice(args: GetConnectedDeviceUseCaseArgs): ConnectedDevice {
     return this.container
-      .get<GetConnectedDeviceUseCase>(usbDiTypes.GetConnectedDeviceUseCase)
+      .get<GetConnectedDeviceUseCase>(discoveryTypes.GetConnectedDeviceUseCase)
       .execute(args);
   }
 

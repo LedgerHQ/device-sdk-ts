@@ -1,0 +1,28 @@
+{
+  "name": "@ledgerhq/device-sdk-transport-mock",
+  "version": "1.0.0",
+  "license": "MIT",
+  "main": "lib/index.js",
+  "types": "lib/index.d.ts",
+  "files": [
+    "./lib"
+  ],
+  "scripts": {
+    "build": "rimraf lib && tsc",
+    "dev": "tsc --watch",
+    "lint": "eslint --cache --ext .ts \"src\"",
+    "lint:fix": "eslint --cache --fix --ext .ts \"src\"",
+    "prettier": "prettier . --check",
+    "prettier:fix": "prettier . --write",
+    "typecheck": "tsc --noEmit",
+    "test": "jest --passWithNoTests",
+    "test:coverage": "pnpm test -- --coverage"
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "@ledgerhq/tsconfig-dsdk": "workspace:*",
+    "@ledgerhq/eslint-config-dsdk": "workspace:*",
+    "@ledgerhq/jest-config-dsdk": "workspace:*",
+    "@ledgerhq/prettier-config-dsdk": "workspace:*"
+  }
+}

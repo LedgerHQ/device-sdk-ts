@@ -19,6 +19,7 @@
     "context-module": "pnpm --filter @ledgerhq/context-module",
     "keyring-btc": "pnpm --filter @ledgerhq/keyring-btc",
     "keyring-eth": "pnpm --filter @ledgerhq/device-signer-kit-ethereum",
+    "transport-mock": "pnpm --filter @ledgerhq/device-sdk-transport-mock",
     "trusted-apps": "pnpm --filter @ledgerhq/device-sdk-trusted-apps",
     "ui": "pnpm --filter @ledgerhq/device-sdk-ui",
     "sample": "pnpm --filter @ledgerhq/device-sdk-sample",

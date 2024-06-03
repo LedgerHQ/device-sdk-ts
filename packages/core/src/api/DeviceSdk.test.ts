@@ -1,10 +1,11 @@
+import { interfaces } from "inversify";
+
 import { LocalConfigDataSource } from "@internal/config/data/ConfigDataSource";
 import { StubLocalConfigDataSource } from "@internal/config/data/LocalConfigDataSource.stub";
 import { configTypes } from "@internal/config/di/configTypes";
 import { deviceSessionTypes } from "@internal/device-session/di/deviceSessionTypes";
 import { discoveryTypes } from "@internal/discovery/di/discoveryTypes";
 import { sendTypes } from "@internal/send/di/sendTypes";
-import { usbDiTypes } from "@internal/usb/di/usbDiTypes";
 import pkg from "@root/package.json";
 import { StubUseCase } from "@root/src/di.stub";
 
@@ -101,14 +102,17 @@ describe("DeviceSdk", () => {
       [discoveryTypes.ConnectUseCase],
       [sendTypes.SendApduUseCase],
       [commandTypes.SendCommandUseCase],
-      [usbDiTypes.GetConnectedDeviceUseCase],
+      [discoveryTypes.GetConnectedDeviceUseCase],
       [discoveryTypes.DisconnectUseCase],
       [deviceSessionTypes.GetDeviceSessionStateUseCase],
       [deviceSessionTypes.ListDeviceSessionsUseCase],
-    ])("should have %p use case", (diSymbol) => {
-      const uc = sdk.container.get<StubUseCase>(diSymbol);
-      expect(uc).toBeInstanceOf(StubUseCase);
-      expect(uc.execute()).toBe("stub");
-    });
+    ])(
+      "should have %p use case",
+      (diSymbol: interfaces.ServiceIdentifier<StubUseCase>) => {
+        const uc = sdk.container.get<StubUseCase>(diSymbol);
+        expect(uc).toBeInstanceOf(StubUseCase);
+        expect(uc.execute()).toBe("stub");
+      },
+    );
   });
 });

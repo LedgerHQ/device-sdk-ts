@@ -1,6 +1,7 @@
 import React, { useCallback } from "react";
 import { createContext, PropsWithChildren, useContext } from "react";
 import {
+  BuiltinTransports,
   ConsoleLogger,
   DeviceSdk,
   DeviceSdkBuilder,
@@ -12,6 +13,7 @@ const webLogsExporterLogger = new WebLogsExporterLogger();
 export const sdk = new DeviceSdkBuilder()
   .addLogger(new ConsoleLogger())
   .addLogger(webLogsExporterLogger)
+  .addTransport(BuiltinTransports.USB)
   .build();
 
 const SdkContext = createContext<DeviceSdk>(sdk);
