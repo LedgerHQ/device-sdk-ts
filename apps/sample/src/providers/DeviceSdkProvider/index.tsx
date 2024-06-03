@@ -1,5 +1,6 @@
 import { createContext, useContext } from "react";
 import {
+  BuiltinTransports,
   ConsoleLogger,
   DeviceSdk,
   DeviceSdkBuilder,
@@ -7,6 +8,7 @@ import {
 
 export const sdk = new DeviceSdkBuilder()
   .addLogger(new ConsoleLogger())
+  .addTransport(BuiltinTransports.USB)
   .build();
 
 const SdkContext = createContext<DeviceSdk>(sdk);

@@ -1,20 +1,21 @@
-import { inject, injectable } from "inversify";
+import { injectable, multiInject } from "inversify";
 
-import { usbDiTypes } from "@internal/usb/di/usbDiTypes";
-import type { UsbHidTransport } from "@internal/usb/transport/UsbHidTransport";
+import type { Transport } from "@api/transport/model/Transport";
+import { transportDiTypes } from "@internal/transport/di/transportDiTypes";
 
 /**
- * Stops discovering devices connected via USB HID (and later BLE).
+ * Stops discovering devices connected.
  */
 @injectable()
 export class StopDiscoveringUseCase {
   constructor(
-    @inject(usbDiTypes.UsbHidTransport)
-    private usbHidTransport: UsbHidTransport,
-    // Later: @inject(usbDiTypes.BleTransport) private bleTransport: BleTransport,
+    @multiInject(transportDiTypes.Transport)
+    private transports: Transport[],
   ) {}
 
   execute(): void {
-    return this.usbHidTransport.stopDiscovering();
+    for (const transport of this.transports) {
+      transport.stopDiscovering();
+    }
   }
 }

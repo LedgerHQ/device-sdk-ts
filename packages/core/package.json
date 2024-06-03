@@ -41,6 +41,7 @@
     "module:create": "pnpm hygen core-module with-prompt"
   },
   "dependencies": {
+    "@ledgerhq/device-sdk-transport-mock": "workspace:*",
     "@sentry/minimal": "^6.19.7",
     "axios": "^1.7.2",
     "inversify": "^6.0.2",
