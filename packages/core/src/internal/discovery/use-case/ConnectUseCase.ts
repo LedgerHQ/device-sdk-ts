@@ -1,16 +1,18 @@
-import { inject, injectable } from "inversify";
+import { inject, injectable, multiInject } from "inversify";
 
 import { DeviceSessionId } from "@api/device-session/types";
+import { DiscoveredDevice } from "@api/transport/model/DiscoveredDevice";
+import type { Transport } from "@api/transport/model/Transport";
 import { DeviceId } from "@api/types";
 import { deviceSessionTypes } from "@internal/device-session/di/deviceSessionTypes";
 import { DeviceSession } from "@internal/device-session/model/DeviceSession";
 import type { DeviceSessionService } from "@internal/device-session/service/DeviceSessionService";
 import { loggerTypes } from "@internal/logger-publisher/di/loggerTypes";
 import { LoggerPublisherService } from "@internal/logger-publisher/service/LoggerPublisherService";
+import { transportDiTypes } from "@internal/transport/di/transportDiTypes";
+import { TransportNotSupportedError } from "@internal/transport/model/Errors";
 import { managerApiTypes } from "@internal/manager-api/di/managerApiTypes";
 import type { ManagerApiService } from "@internal/manager-api/service/ManagerApiService";
-import { usbDiTypes } from "@internal/usb/di/usbDiTypes";
-import type { UsbHidTransport } from "@internal/usb/transport/UsbHidTransport";
 
 /**
  * The arguments for the ConnectUseCase.
@@ -19,23 +21,23 @@ export type ConnectUseCaseArgs = {
   /**
    * UUID of the device got from device discovery `StartDiscoveringUseCase`
    */
-  deviceId: DeviceId;
+  device: DiscoveredDevice;
 };
 
 /**
- * Connects to a discovered device via USB HID (and later BLE).
+ * Connects to a discovered device.
  */
 @injectable()
 export class ConnectUseCase {
-  private readonly _usbHidTransport: UsbHidTransport;
+  private readonly _transports: Transport[];
   private readonly _sessionService: DeviceSessionService;
   private readonly _loggerFactory: (tag: string) => LoggerPublisherService;
   private readonly _managerApi: ManagerApiService;
   private readonly _logger: LoggerPublisherService;
 
   constructor(
-    @inject(usbDiTypes.UsbHidTransport)
-    usbHidTransport: UsbHidTransport,
+    @multiInject(transportDiTypes.Transport)
+    transports: Transport[],
     @inject(deviceSessionTypes.DeviceSessionService)
     sessionService: DeviceSessionService,
     @inject(loggerTypes.LoggerPublisherServiceFactory)
@@ -44,7 +46,7 @@ export class ConnectUseCase {
     managerApi: ManagerApiService,
   ) {
     this._sessionService = sessionService;
-    this._usbHidTransport = usbHidTransport;
+    this._transports = transports;
     this._loggerFactory = loggerFactory;
     this._logger = loggerFactory("ConnectUseCase");
     this._managerApi = managerApi;
@@ -58,16 +60,22 @@ export class ConnectUseCase {
     });
   }
 
-  async execute({ deviceId }: ConnectUseCaseArgs): Promise<DeviceSessionId> {
-    const either = await this._usbHidTransport.connect({
-      deviceId,
+  async execute({ device }: ConnectUseCaseArgs): Promise<DeviceSessionId> {
+    const transport = this._transports.find(
+      (t) => t.getIdentifier() === device.transport,
+    );
+    if (!transport) {
+      throw new TransportNotSupportedError(new Error("Unknown transport"));
+    }
+    const either = await transport.connect({
+      deviceId: device.id,
       onDisconnect: (dId) => this.handleDeviceDisconnect(dId),
     });
 
     return either.caseOf({
       Left: (error) => {
         this._logger.error("Error connecting to device", {
-          data: { deviceId, error },
+          data: { deviceId: device.id, error },
         });
         throw error;
       },

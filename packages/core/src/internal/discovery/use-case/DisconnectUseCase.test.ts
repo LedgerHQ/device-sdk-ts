@@ -9,15 +9,16 @@ import { AxiosManagerApiDataSource } from "@internal/manager-api/data/AxiosManag
 import { ManagerApiDataSource } from "@internal/manager-api/data/ManagerApiDataSource";
 import { DefaultManagerApiService } from "@internal/manager-api/service/DefaultManagerApiService";
 import { ManagerApiService } from "@internal/manager-api/service/ManagerApiService";
+import { WebUsbHidTransport } from "@internal/transport/usb/transport/WebUsbHidTransport";
 import { DisconnectError } from "@internal/usb/model/Errors";
 import { connectedDeviceStubBuilder } from "@internal/usb/model/InternalConnectedDevice.stub";
 import { usbHidDeviceConnectionFactoryStubBuilder } from "@internal/usb/service/UsbHidDeviceConnectionFactory.stub";
-import { WebUsbHidTransport } from "@internal/usb/transport/WebUsbHidTransport";
 
 import { DisconnectUseCase } from "./DisconnectUseCase";
 
 let sessionService: DefaultDeviceSessionService;
-let usbHidTransport: WebUsbHidTransport;
+// TODO test several transports
+let transports: WebUsbHidTransport[] = [];
 const loggerFactory = jest
   .fn()
   .mockReturnValue(
@@ -31,11 +32,13 @@ const sessionId = "sessionId";
 
 describe("DisconnectUseCase", () => {
   beforeAll(() => {
-    usbHidTransport = new WebUsbHidTransport(
-      {} as DeviceModelDataSource,
-      loggerFactory,
-      usbHidDeviceConnectionFactoryStubBuilder(),
-    );
+    transports = [
+      new WebUsbHidTransport(
+        {} as DeviceModelDataSource,
+        loggerFactory,
+        usbHidDeviceConnectionFactoryStubBuilder(),
+      ),
+    ];
     sessionService = new DefaultDeviceSessionService(loggerFactory);
   });
 
@@ -60,10 +63,10 @@ describe("DisconnectUseCase", () => {
     jest.spyOn(deviceSession, "close");
     jest.spyOn(sessionService, "removeDeviceSession");
     jest
-      .spyOn(usbHidTransport, "disconnect")
+      .spyOn(transports[0]!, "disconnect")
       .mockImplementation(() => Promise.resolve(Right(void 0)));
     const disconnectUseCase = new DisconnectUseCase(
-      usbHidTransport,
+      transports,
       sessionService,
       loggerFactory,
     );
@@ -73,7 +76,7 @@ describe("DisconnectUseCase", () => {
     // Then
     expect(deviceSession.close).toHaveBeenCalled();
     expect(sessionService.removeDeviceSession).toHaveBeenCalledWith(sessionId);
-    expect(usbHidTransport.disconnect).toHaveBeenCalledWith({
+    expect(transports[0]!.disconnect).toHaveBeenCalledWith({
       connectedDevice,
     });
   });
@@ -81,7 +84,7 @@ describe("DisconnectUseCase", () => {
   it("should throw an error when deviceSession not found", async () => {
     // Given
     const disconnectUseCase = new DisconnectUseCase(
-      usbHidTransport,
+      transports,
       sessionService,
       loggerFactory,
     );
@@ -108,10 +111,10 @@ describe("DisconnectUseCase", () => {
         ),
       );
     jest
-      .spyOn(usbHidTransport, "disconnect")
+      .spyOn(transports[0]!, "disconnect")
       .mockResolvedValue(Promise.resolve(Left(new DisconnectError())));
     const disconnectUseCase = new DisconnectUseCase(
-      usbHidTransport,
+      transports,
       sessionService,
       loggerFactory,
     );

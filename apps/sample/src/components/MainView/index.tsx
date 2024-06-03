@@ -27,10 +27,10 @@ export const MainView: React.FC = () => {
 
   // Example starting the discovery on a user action
   const onSelectDeviceClicked = useCallback(() => {
-    sdk.startDiscovering().subscribe({
+    sdk.startDiscovering({}).subscribe({
       next: (device) => {
         sdk
-          .connect({ deviceId: device.id })
+          .connect({ device })
           .then((sessionId) => {
             console.log(
               `🦖 Response from connect: ${JSON.stringify(sessionId)} 🎉`,
