@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, memo } from "react";
-import makeOpenAppMachine from "./stateMachine";
+import makeOpenAppMachine from "./openAppStateMachine";
 import { createActor } from "xstate";
 import { createBrowserInspector } from "@statelyai/inspect";
 
