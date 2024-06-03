@@ -21,7 +21,7 @@ export const APP_NOT_FOUND_ERROR = "App not installed";
 export const OPEN_REJECTED_ERROR = "Open app rejected";
 export const DEVICE_NOT_ONBOARDED_ERROR = "Device not onboarded";
 
-async function mockedGetAppAndVersion(): Promise<{ app: string, version: string }> {
+async function getAppAndVersionStub(): Promise<{ app: string, version: string }> {
   console.log("getAppAndVersion");
   await new Promise((resolve) => setTimeout(resolve, 1000));
   const random = Math.random();
@@ -31,13 +31,13 @@ async function mockedGetAppAndVersion(): Promise<{ app: string, version: string 
   throw new Error(LOCKED_DEVICE_ERROR); // 30% chance of locked device
 }
 
-async function mockedCloseApp() {
+async function closeAppStub() {
   console.log("closeApp")
   await new Promise((resolve) => setTimeout(resolve, 1000));
   return;
 }
 
-async function mockedOpenApp(appName: string) {
+async function openAppStub(appName: string) {
   console.log("openApp")
   if (!appName) throw new Error("No app name provided");
   await new Promise((resolve) => setTimeout(resolve, 1000));
@@ -52,9 +52,9 @@ function makeOpenAppMachine(params: {
   closeApp: () => Promise<void>,
   openApp: (appName: string) => Promise<void>,
 } = {
-  getAppAndVersion: mockedGetAppAndVersion,
-  closeApp: mockedCloseApp,
-  openApp: mockedOpenApp,
+  getAppAndVersion: getAppAndVersionStub,
+  closeApp: closeAppStub,
+  openApp: openAppStub,
 }) {
   return setup({
     types: {
