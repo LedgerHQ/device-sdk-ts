@@ -1,6 +1,6 @@
 "use client";
 import { memo } from "react";
-import makeOpenAppMachine from "./openAppStateMachine";
+import makeOpenAppMachine, { Context } from "./openAppStateMachine";
 import { createActor } from "xstate";
 import { createBrowserInspector } from "@statelyai/inspect";
 
@@ -22,8 +22,22 @@ function Machine() {
       },
     });
 
+    let previousUserActionNeeded: Context["userActionNeeded"] = null;
+    let previousStateValue: string | null = null;
+
     openAppMachineActor.start();
     openAppMachineActor.subscribe((state) => {
+      if (state.value !== previousStateValue) {
+        console.log("machine: new state", state.value);
+        previousStateValue = state.value;
+      }
+      if (state.context.userActionNeeded !== previousUserActionNeeded) {
+        console.log(
+          "machine: user action needed",
+          state.context.userActionNeeded
+        );
+        previousUserActionNeeded = state.context.userActionNeeded;
+      }
       if (state.status === "done") {
         console.log("machine: done", state);
         console.log("machine output:", state.output);
