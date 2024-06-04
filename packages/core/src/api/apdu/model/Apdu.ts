@@ -1,5 +1,5 @@
 /**
- * Represents an APDU command that can be sent to a device.
+ * An APDU command that can be sent to a device.
  * DO NOT USE THIS CLASS DIRECTLY, use ApduBuilder instead.
  */
 export class Apdu {

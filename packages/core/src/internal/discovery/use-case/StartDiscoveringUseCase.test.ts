@@ -1,10 +1,10 @@
 import { of } from "rxjs";
 
+import { DiscoveredDevice } from "@api/types";
 import { DeviceModelDataSource } from "@internal/device-model/data/DeviceModelDataSource";
 import { InternalDeviceModel } from "@internal/device-model/model/DeviceModel";
 import { DefaultLoggerPublisherService } from "@internal/logger-publisher/service/DefaultLoggerPublisherService";
 import { LoggerPublisherService } from "@internal/logger-publisher/service/LoggerPublisherService";
-import { DiscoveredDevice } from "@internal/usb/model/DiscoveredDevice";
 import { usbHidDeviceConnectionFactoryStubBuilder } from "@internal/usb/service/UsbHidDeviceConnectionFactory.stub";
 import { WebUsbHidTransport } from "@internal/usb/transport/WebUsbHidTransport";
 

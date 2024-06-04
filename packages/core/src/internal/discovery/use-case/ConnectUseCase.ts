@@ -1,7 +1,7 @@
 import { inject, injectable } from "inversify";
 
-import { DeviceId } from "@api/device/DeviceModel";
 import { DeviceSessionId } from "@api/device-session/types";
+import type { ConnectUseCaseArgs } from "@api/types";
 import { deviceSessionTypes } from "@internal/device-session/di/deviceSessionTypes";
 import { DeviceSession } from "@internal/device-session/model/DeviceSession";
 import type { DeviceSessionService } from "@internal/device-session/service/DeviceSessionService";
@@ -10,13 +10,6 @@ import { LoggerPublisherService } from "@internal/logger-publisher/service/Logge
 import { usbDiTypes } from "@internal/usb/di/usbDiTypes";
 import type { UsbHidTransport } from "@internal/usb/transport/UsbHidTransport";
 import type { DisconnectHandler } from "@internal/usb/transport/WebUsbHidTransport";
-
-export type ConnectUseCaseArgs = {
-  /**
-   * UUID of the device obtained through device discovery `StartDiscoveringUseCase`
-   */
-  deviceId: DeviceId;
-};
 
 /**
  * Connects to a discovered device via USB HID (and later BLE).

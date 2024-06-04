@@ -6,13 +6,13 @@ import { v4 as uuid } from "uuid";
 
 import { DeviceId } from "@api/device/DeviceModel";
 import { SdkError } from "@api/Error";
+import { DiscoveredDevice } from "@api/types";
 import type { DeviceModelDataSource } from "@internal/device-model/data/DeviceModelDataSource";
 import { deviceModelTypes } from "@internal/device-model/di/deviceModelTypes";
 import { loggerTypes } from "@internal/logger-publisher/di/loggerTypes";
 import type { LoggerPublisherService } from "@internal/logger-publisher/service/LoggerPublisherService";
 import { LEDGER_VENDOR_ID } from "@internal/usb/data/UsbHidConfig";
 import { usbDiTypes } from "@internal/usb/di/usbDiTypes";
-import { DiscoveredDevice } from "@internal/usb/model/DiscoveredDevice";
 import {
   ConnectError,
   DeviceNotRecognizedError,

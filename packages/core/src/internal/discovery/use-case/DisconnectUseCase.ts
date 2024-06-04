@@ -1,16 +1,12 @@
 import { inject, injectable } from "inversify";
 
-import { DeviceSessionId } from "@api/device-session/types";
+import type { DisconnectUseCaseArgs } from "@api/types";
 import { deviceSessionTypes } from "@internal/device-session/di/deviceSessionTypes";
 import type { DeviceSessionService } from "@internal/device-session/service/DeviceSessionService";
 import { loggerTypes } from "@internal/logger-publisher/di/loggerTypes";
 import { LoggerPublisherService } from "@internal/logger-publisher/service/LoggerPublisherService";
 import { usbDiTypes } from "@internal/usb/di/usbDiTypes";
 import type { UsbHidTransport } from "@internal/usb/transport/UsbHidTransport";
-
-export type DisconnectUseCaseArgs = {
-  sessionId: DeviceSessionId;
-};
 
 /**
  * Disconnects to a discovered device via USB HID (and later BLE).
