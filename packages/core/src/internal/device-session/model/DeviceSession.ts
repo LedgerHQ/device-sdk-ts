@@ -97,8 +97,11 @@ export class DeviceSession {
     });
   }
 
-  getCommand<T, U>(command: Command<T, U>) {
-    return async (deviceModelId: DeviceModelId, getApduArgs: U): Promise<T> => {
+  sendCommand<Response, Args>(command: Command<Response, Args>) {
+    return async (
+      deviceModelId: DeviceModelId,
+      getApduArgs: Args,
+    ): Promise<Response> => {
       const apdu = command.getApdu(getApduArgs);
       const response = await this.sendApdu(apdu.getRawApdu());
 

@@ -6,7 +6,7 @@ import type { DeviceSessionService } from "@internal/device-session/service/Devi
 import { loggerTypes } from "@internal/logger-publisher/di/loggerTypes";
 import { LoggerPublisherService } from "@internal/logger-publisher/service/LoggerPublisherService";
 
-export type SendCommandUseCaseArgs<T, U = void> = {
+export type SendCommandUseCaseArgs<Response, Args = void> = {
   /**
    * The device session id.
    */
@@ -14,11 +14,11 @@ export type SendCommandUseCaseArgs<T, U = void> = {
   /**
    * The command to send.
    */
-  command: Command<T, U>;
+  command: Command<Response, Args>;
   /**
    * The parameters of the command.
    */
-  params: U;
+  params: Args;
 };
 
 /**
@@ -46,11 +46,11 @@ export class SendCommandUseCase {
    * @param params - The parameters of the command.
    * @returns The response from the command.
    */
-  async execute<T, U = void>({
+  async execute<Response, Args = void>({
     sessionId,
     command,
     params,
-  }: SendCommandUseCaseArgs<T, U>): Promise<T> {
+  }: SendCommandUseCaseArgs<Response, Args>): Promise<Response> {
     const deviceSessionOrError =
       this._sessionService.getDeviceSessionById(sessionId);
 
@@ -58,7 +58,7 @@ export class SendCommandUseCase {
       // Case device session found
       Right: async (deviceSession) => {
         const deviceModelId = deviceSession.connectedDevice.deviceModel.id;
-        const action = deviceSession.getCommand<T, U>(command);
+        const action = deviceSession.sendCommand<Response, Args>(command);
         return await action(deviceModelId, params);
       },
       // Case device session not found
