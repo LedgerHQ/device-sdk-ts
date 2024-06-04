@@ -46,7 +46,8 @@ export class DeviceSession {
       {
         refreshInterval: 1000,
         deviceStatus: DeviceStatus.CONNECTED,
-        sendApduFn: (rawApdu: Uint8Array) => this.sendApdu(rawApdu),
+        sendApduFn: (rawApdu: Uint8Array) =>
+          this.sendApdu(rawApdu, { isPolling: true }),
         updateStateFn: (state: DeviceSessionState) =>
           this.setDeviceSessionState(state),
       },
@@ -79,8 +80,11 @@ export class DeviceSession {
     });
   }
 
-  async sendApdu(rawApdu: Uint8Array) {
-    this.updateDeviceStatus(DeviceStatus.BUSY);
+  async sendApdu(
+    rawApdu: Uint8Array,
+    options: { isPolling: boolean } = { isPolling: false },
+  ) {
+    if (!options.isPolling) this.updateDeviceStatus(DeviceStatus.BUSY);
 
     const errorOrResponse = await this._connectedDevice.sendApdu(rawApdu);
 
