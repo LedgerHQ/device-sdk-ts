@@ -83,6 +83,7 @@ export class StaticDeviceModelDataSource implements DeviceModelDataSource {
   ): InternalDeviceModel[] {
     return this.getAllDeviceModels().filter((deviceModel) => {
       return Object.entries(params).every(([key, value]) => {
+        // eslint-disable-next-line no-type-assertion/no-type-assertion
         return deviceModel[key as keyof InternalDeviceModel] === value;
       });
     });

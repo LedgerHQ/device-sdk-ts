@@ -53,7 +53,7 @@ export const Sidebar: React.FC = () => {
       .getVersion()
       .then((v) => setVersion(v))
       .catch((error: unknown) => {
-        console.error(error as Error);
+        console.error(new Error(String(error)));
         setVersion("");
       });
   }, [sdk]);

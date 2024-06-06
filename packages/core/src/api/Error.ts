@@ -1,5 +1,5 @@
 export interface SdkError {
   readonly _tag: string;
-  originalError?: Error;
+  originalError?: unknown;
   // [could] message?: string;
 }

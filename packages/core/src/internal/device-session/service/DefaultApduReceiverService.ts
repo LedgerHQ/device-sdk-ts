@@ -57,8 +57,10 @@ export class DefaultApduReceiverService implements ApduReceiverService {
         data: { frame: value.getRawData() },
       });
       this._pendingFrames.push(value);
-
-      const dataSize = this._pendingFrames[0]!.getHeader().getDataLength();
+      if (!this._pendingFrames[0]) {
+        return Nothing;
+      }
+      const dataSize = this._pendingFrames[0].getHeader().getDataLength();
       return this.getCompleteFrame(dataSize);
     });
   }

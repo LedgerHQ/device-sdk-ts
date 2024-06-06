@@ -38,7 +38,7 @@ describe("UsbHidDeviceConnection", () => {
     expect(cDevice).toStrictEqual(device);
   });
 
-  it("should send APDU through hid report", async () => {
+  it("should send APDU through hid report", () => {
     // given
     const connection = new UsbHidDeviceConnection(
       { device, apduSender, apduReceiver },
@@ -50,7 +50,7 @@ describe("UsbHidDeviceConnection", () => {
     expect(device.sendReport).toHaveBeenCalled();
   });
 
-  it("should receive APDU through hid report", async () => {
+  it("should receive APDU through hid report", () => {
     // given
     device.sendReport = jest.fn(() =>
       Promise.resolve(

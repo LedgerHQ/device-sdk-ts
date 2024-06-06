@@ -5,7 +5,7 @@ const project = resolve(process.cwd(), "tsconfig.json");
 /** @type {import("eslint").Linter.Config} */
 module.exports = {
   extends: ["eslint:recommended", "prettier", "turbo"],
-  plugins: ["simple-import-sort"],
+  plugins: ["no-type-assertion", "simple-import-sort"],
   globals: {
     React: true,
     JSX: true,
@@ -82,6 +82,13 @@ module.exports = {
           "error",
           { argsIgnorePattern: "^_" },
         ],
+        "no-type-assertion/no-type-assertion": "error",
+      },
+    },
+    {
+      files: ["**/*.test.ts", "**/*.stub.ts"],
+      rules: {
+        "no-type-assertion/no-type-assertion": "off",
       },
     },
   ],

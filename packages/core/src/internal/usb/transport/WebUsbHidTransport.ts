@@ -74,9 +74,7 @@ export class WebUsbHidTransport implements UsbHidTransport {
       return Right(navigator.hid);
     }
 
-    return Left(
-      new UsbHidTransportNotSupportedError(new Error("WebHID not supported")),
-    );
+    return Left(new UsbHidTransportNotSupportedError("WebHID not supported"));
   }
 
   isSupported() {
@@ -111,7 +109,7 @@ export class WebUsbHidTransport implements UsbHidTransport {
             filters: [{ vendorId: LEDGER_VENDOR_ID }],
           });
         } catch (error) {
-          const deviceError = new NoAccessibleDeviceError(error as Error);
+          const deviceError = new NoAccessibleDeviceError(error);
           this._logger.error(`promptDeviceAccess: error requesting device`, {
             data: { error },
           });
@@ -126,7 +124,7 @@ export class WebUsbHidTransport implements UsbHidTransport {
         // Granted access to 0 device (by clicking on cancel for ex) results in an error
         if (hidDevices.length === 0) {
           this._logger.warn("No device was selected");
-          throw new NoAccessibleDeviceError(new Error("No selected device"));
+          throw new NoAccessibleDeviceError("No selected device");
         }
 
         const discoveredHidDevices: HIDDevice[] = [];
@@ -217,9 +215,7 @@ export class WebUsbHidTransport implements UsbHidTransport {
                   `Device not recognized: 0x${usbProductId.toString(16)}`,
                 );
                 throw new DeviceNotRecognizedError(
-                  new Error(
-                    `Device not recognized: 0x${usbProductId.toString(16)}`,
-                  ),
+                  `Device not recognized: 0x${usbProductId.toString(16)}`,
                 );
               }
             });
@@ -282,9 +278,7 @@ export class WebUsbHidTransport implements UsbHidTransport {
 
     if (!internalDevice) {
       this._logger.error(`Unknown device ${deviceId}`);
-      return Left(
-        new UnknownDeviceError(new Error(`Unknown device ${deviceId}`)),
-      );
+      return Left(new UnknownDeviceError(`Unknown device ${deviceId}`));
     }
 
     try {
@@ -293,7 +287,7 @@ export class WebUsbHidTransport implements UsbHidTransport {
       if (error instanceof DOMException && error.name === "InvalidStateError") {
         this._logger.debug(`Device ${deviceId} is already opened`);
       } else {
-        const connectionError = new OpeningConnectionError(error as Error);
+        const connectionError = new OpeningConnectionError(error);
         this._logger.debug(`Error while opening device: ${deviceId}`, {
           data: { error },
         });
@@ -341,9 +335,7 @@ export class WebUsbHidTransport implements UsbHidTransport {
     if (!internalDevice) {
       this._logger.error(`Unknown device ${params.connectedDevice.id}`);
       return Left(
-        new UnknownDeviceError(
-          new Error(`Unknown device ${params.connectedDevice.id}`),
-        ),
+        new UnknownDeviceError(`Unknown device ${params.connectedDevice.id}`),
       );
     }
 
@@ -352,13 +344,30 @@ export class WebUsbHidTransport implements UsbHidTransport {
       this._internalDevicesById.delete(internalDevice.id);
       return Right(void 0);
     } catch (error) {
-      return Left(new DisconnectError(error as Error));
+      return Left(new DisconnectError(error));
     }
   }
 
   private handleDeviceDisconnectionEvent = (event: Event) => {
+    if (
+      !(
+        "device" in event &&
+        typeof event.device === "object" &&
+        event.device !== null &&
+        "productId" in event.device &&
+        typeof event.device.productId === "number"
+      )
+    ) {
+      this._logger.error("Invalid event", { data: { event } });
+      return;
+    }
+
     this._logger.info("handleDeviceDisconnectionEvent", { data: { event } });
-    const hidDevice = (event as HIDConnectionEvent).device;
+
+    const hidDevice = event.device;
+    // This is temporary, it should be correctly inferred after updating TypeScript
+    const productId = event.device.productId;
+
     const maybeInternalDevice = Maybe.fromFalsy(
       Array.from(this._internalDevicesById.values()).find(
         (iDevice) => iDevice.hidDevice.productId === hidDevice.productId,
@@ -376,15 +385,11 @@ export class WebUsbHidTransport implements UsbHidTransport {
       }
     });
     const maybeDisconnectHandler = Maybe.fromNullable(
-      this._internalDisconnectionHandlersByHidId.get(
-        hidDevice.productId.toString(),
-      ),
+      this._internalDisconnectionHandlersByHidId.get(productId.toString()),
     );
     maybeDisconnectHandler.map((handler) => {
       handler();
-      this._internalDisconnectionHandlersByHidId.delete(
-        hidDevice.productId.toString(),
-      );
+      this._internalDisconnectionHandlersByHidId.delete(productId.toString());
     });
   };
 }

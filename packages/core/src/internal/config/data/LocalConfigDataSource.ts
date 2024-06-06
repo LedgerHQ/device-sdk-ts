@@ -1,7 +1,7 @@
 import { injectable } from "inversify";
 import { Either } from "purify-ts";
 
-import { Config } from "@internal/config/model/Config";
+import { Config, isConfig } from "@internal/config/model/Config";
 import {
   JSONParseError,
   LocalConfigFailure,
@@ -18,21 +18,26 @@ const version = {
 
 export const stubFsReadFile = () => JSON.stringify(version);
 
-/**
- *
- * class FileLocalConfigDataSource
- * This is a local data source that reads the config from a local file.
- *
- */
 @injectable()
+/**
+ * The data source for retrieving local configuration.
+ */
 export class FileLocalConfigDataSource implements LocalConfigDataSource {
+  /**
+   * Retrieves the local configuration.
+   * @returns An `Either` containing either a `LocalConfigFailure` or a `Config` object.
+   */
   getConfig(): Either<LocalConfigFailure, Config> {
     return Either.encase(() => stubFsReadFile())
       .mapLeft((error) => new ReadFileError(error))
       .chain((str) => {
-        return Either.encase(() => JSON.parse(str) as Config).mapLeft(
-          (error) => new JSONParseError(error),
-        );
+        return Either.encase(() => {
+          const config: unknown = JSON.parse(str);
+          if (isConfig(config)) {
+            return config;
+          }
+          throw new Error("Invalid config file");
+        }).mapLeft((error) => new JSONParseError(error));
       });
   }
 }

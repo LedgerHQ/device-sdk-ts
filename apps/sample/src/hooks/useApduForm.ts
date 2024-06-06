@@ -37,7 +37,7 @@ export function useApduForm() {
               .map((char) => Number(`0x${char}`))
               .filter((nbr) => !Number.isNaN(nbr)),
           ],
-          [] as number[],
+          Array<number>(),
         ),
       ),
     [],

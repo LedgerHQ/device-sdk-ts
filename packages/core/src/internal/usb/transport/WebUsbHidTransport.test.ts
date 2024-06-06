@@ -244,7 +244,7 @@ describe("WebUsbHidTransport", () => {
         const connect = await transport.connect(connectParams);
 
         expect(connect).toStrictEqual(
-          Left(new UnknownDeviceError(new Error("Unknown device fake"))),
+          Left(new UnknownDeviceError("Unknown device fake")),
         );
       });
 
@@ -254,7 +254,7 @@ describe("WebUsbHidTransport", () => {
         const connect = await transport.connect(device);
 
         expect(connect).toStrictEqual(
-          Left(new UnknownDeviceError(new Error("Unknown device fake"))),
+          Left(new UnknownDeviceError("Unknown device fake")),
         );
       });
 
@@ -376,11 +376,7 @@ describe("WebUsbHidTransport", () => {
         });
 
         expect(disconnect).toStrictEqual(
-          Left(
-            new UnknownDeviceError(
-              new Error(`Unknown device ${connectedDevice.id}`),
-            ),
-          ),
+          Left(new UnknownDeviceError(`Unknown device ${connectedDevice.id}`)),
         );
       });
 
