@@ -14,8 +14,6 @@ import { SdkError } from "@api/Error";
 import { ApduResponse, DeviceStatus } from "@api/index";
 import { type LoggerPublisherService } from "@internal/logger-publisher/service/LoggerPublisherService";
 
-import { DeviceSessionRefresherError } from "./Errors";
-
 /**
  * The arguments for the DeviceSessionRefresher.
  */
@@ -82,29 +80,29 @@ export class DeviceSessionRefresher {
               this._logger.error("Error in sending APDU when polling", {
                 data: { error },
               });
-              throw error;
+              return null;
             },
             Right: (data: ApduResponse) => {
-              return this._getAppAndVersionCommand.parseResponse(data);
+              try {
+                return this._getAppAndVersionCommand.parseResponse(data);
+              } catch (error) {
+                this._logger.error("Error in parsing APDU response", {
+                  data: { error },
+                });
+                return null;
+              }
             },
           }),
         ),
+        filter((parsedResponse) => parsedResponse !== null),
       )
-      .subscribe({
-        next: (parsedResponse: GetAppAndVersionResponse) => {
-          // batteryStatus and firmwareVersion are not available in the polling response.
-          updateStateFn({
-            sessionStateType: DeviceSessionStateType.ReadyWithoutSecureChannel,
-            deviceStatus: this._deviceStatus,
-            currentApp: parsedResponse.name,
-          });
-        },
-        error: (error: Error) => {
-          const pollingError = new DeviceSessionRefresherError(error);
-          this._logger.error("Error in updating state when polling", {
-            data: { error: pollingError },
-          });
-        },
+      .subscribe((parsedResponse: GetAppAndVersionResponse | null) => {
+        // batteryStatus and firmwareVersion are not available in the polling response.
+        updateStateFn({
+          sessionStateType: DeviceSessionStateType.ReadyWithoutSecureChannel,
+          deviceStatus: this._deviceStatus,
+          currentApp: parsedResponse!.name,
+        });
       });
   }
 
