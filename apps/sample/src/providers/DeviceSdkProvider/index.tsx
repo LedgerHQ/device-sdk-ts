@@ -12,8 +12,8 @@ const webLogsExporterLogger = new WebLogsExporterLogger();
 
 export const sdk = new DeviceSdkBuilder()
   .addLogger(new ConsoleLogger())
+  .addTransport(BuiltinTransports.MOCK_SERVER)
   .addLogger(webLogsExporterLogger)
-  .addTransport(BuiltinTransports.USB)
   .build();
 
 const SdkContext = createContext<DeviceSdk>(sdk);
