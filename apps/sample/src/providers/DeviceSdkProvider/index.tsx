@@ -8,7 +8,7 @@ import {
 
 export const sdk = new DeviceSdkBuilder()
   .addLogger(new ConsoleLogger())
-  .addTransport(BuiltinTransports.USB)
+  .addTransport(BuiltinTransports.MOCK_SERVER)
   .build();
 
 const SdkContext = createContext<DeviceSdk>(sdk);
