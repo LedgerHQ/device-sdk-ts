@@ -24,4 +24,8 @@ export class ConnectivityService {
         });
     });
   }
+
+  async getConnected(): Promise<Session[]> {
+    return this.client.get<Session[]>("get-connected");
+  }
 }
