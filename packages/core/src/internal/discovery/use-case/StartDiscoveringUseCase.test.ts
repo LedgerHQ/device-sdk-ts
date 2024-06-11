@@ -1,10 +1,12 @@
 import { of } from "rxjs";
 
+import { DeviceModel } from "@api/index";
+import { DeviceModelId, DiscoveredDevice } from "@api/types";
 import { DeviceModelDataSource } from "@internal/device-model/data/DeviceModelDataSource";
 import { InternalDeviceModel } from "@internal/device-model/model/DeviceModel";
 import { DefaultLoggerPublisherService } from "@internal/logger-publisher/service/DefaultLoggerPublisherService";
 import { LoggerPublisherService } from "@internal/logger-publisher/service/LoggerPublisherService";
-import { DiscoveredDevice } from "@internal/usb/model/DiscoveredDevice";
+import { InternalDiscoveredDevice } from "@internal/usb/model/InternalDiscoveredDevice";
 import { usbHidDeviceConnectionFactoryStubBuilder } from "@internal/usb/service/UsbHidDeviceConnectionFactory.stub";
 import { WebUsbHidTransport } from "@internal/usb/transport/WebUsbHidTransport";
 
@@ -14,9 +16,12 @@ let transport: WebUsbHidTransport;
 let logger: LoggerPublisherService;
 
 describe("StartDiscoveringUseCase", () => {
-  const stubDiscoveredDevice: DiscoveredDevice = {
-    id: "",
-    deviceModel: {} as InternalDeviceModel,
+  const stubDiscoveredDevice: InternalDiscoveredDevice = {
+    id: "internal-discovered-device-id",
+    deviceModel: {
+      id: "nanoSP" as DeviceModelId,
+      productName: "productName",
+    } as InternalDeviceModel,
   };
   const tag = "logger-tag";
 
@@ -47,7 +52,14 @@ describe("StartDiscoveringUseCase", () => {
     expect(mockedStartDiscovering).toHaveBeenCalled();
     discover.subscribe({
       next: (discoveredDevice) => {
-        expect(discoveredDevice).toBe(stubDiscoveredDevice);
+        expect(discoveredDevice).toStrictEqual({
+          id: "internal-discovered-device-id",
+          deviceModel: new DeviceModel({
+            id: "internal-discovered-device-id",
+            model: "nanoSP" as DeviceModelId,
+            name: "productName",
+          }),
+        } as DiscoveredDevice);
         done();
       },
       error: (error) => {

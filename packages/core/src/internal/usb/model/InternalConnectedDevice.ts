@@ -4,7 +4,7 @@ import { InternalDeviceModel } from "@internal/device-model/model/DeviceModel";
 import { SendApduFnType } from "@internal/usb/transport/DeviceConnection";
 
 /**
- * Represents an internal connected device.
+ * The internal connected device.
  */
 export type ConnectedDeviceConstructorArgs = {
   id: DeviceId;

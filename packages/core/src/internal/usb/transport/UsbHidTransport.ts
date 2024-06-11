@@ -3,9 +3,9 @@ import { Observable } from "rxjs";
 
 import { DeviceId } from "@api/device/DeviceModel";
 import { SdkError } from "@api/Error";
-import { DiscoveredDevice } from "@internal/usb/model/DiscoveredDevice";
 import { ConnectError } from "@internal/usb/model/Errors";
 import { InternalConnectedDevice } from "@internal/usb/model/InternalConnectedDevice";
+import { InternalDiscoveredDevice } from "@internal/usb/model/InternalDiscoveredDevice";
 import type { DisconnectHandler } from "@internal/usb/transport/WebUsbHidTransport";
 
 /**
@@ -14,7 +14,7 @@ import type { DisconnectHandler } from "@internal/usb/transport/WebUsbHidTranspo
 export interface UsbHidTransport {
   isSupported(): boolean;
 
-  startDiscovering(): Observable<DiscoveredDevice>;
+  startDiscovering(): Observable<InternalDiscoveredDevice>;
 
   stopDiscovering(): void;
 

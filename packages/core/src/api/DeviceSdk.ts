@@ -9,29 +9,25 @@ import {
 import { ApduResponse } from "@api/device-session/ApduResponse";
 import { DeviceSessionState } from "@api/device-session/DeviceSessionState";
 import { DeviceSessionId } from "@api/device-session/types";
+import {
+  ConnectUseCaseArgs,
+  DisconnectUseCaseArgs,
+  DiscoveredDevice,
+  SendApduUseCaseArgs,
+} from "@api/types";
 import { ConnectedDevice } from "@api/usb/model/ConnectedDevice";
 import { configTypes } from "@internal/config/di/configTypes";
 import { GetSdkVersionUseCase } from "@internal/config/use-case/GetSdkVersionUseCase";
 import { deviceSessionTypes } from "@internal/device-session/di/deviceSessionTypes";
 import { GetDeviceSessionStateUseCase } from "@internal/device-session/use-case/GetDeviceSessionStateUseCase";
 import { discoveryTypes } from "@internal/discovery/di/discoveryTypes";
-import {
-  ConnectUseCase,
-  ConnectUseCaseArgs,
-} from "@internal/discovery/use-case/ConnectUseCase";
-import {
-  DisconnectUseCase,
-  DisconnectUseCaseArgs,
-} from "@internal/discovery/use-case/DisconnectUseCase";
+import { ConnectUseCase } from "@internal/discovery/use-case/ConnectUseCase";
+import { DisconnectUseCase } from "@internal/discovery/use-case/DisconnectUseCase";
 import type { StartDiscoveringUseCase } from "@internal/discovery/use-case/StartDiscoveringUseCase";
 import type { StopDiscoveringUseCase } from "@internal/discovery/use-case/StopDiscoveringUseCase";
 import { sendTypes } from "@internal/send/di/sendTypes";
-import {
-  SendApduUseCase,
-  SendApduUseCaseArgs,
-} from "@internal/send/use-case/SendApduUseCase";
+import { SendApduUseCase } from "@internal/send/use-case/SendApduUseCase";
 import { usbDiTypes } from "@internal/usb/di/usbDiTypes";
-import { DiscoveredDevice } from "@internal/usb/model/DiscoveredDevice";
 import {
   GetConnectedDeviceUseCase,
   GetConnectedDeviceUseCaseArgs,
@@ -127,10 +123,12 @@ export class DeviceSdk {
   /**
    * Sends a command to a device through a device session.
    *
-   * @param {SendCommandUseCaseArgs<T, U>} - The device session ID, command and command parameters to send.
+   * @param {SendCommandUseCaseArgs<Response, Args>} args - The device session ID, command and command parameters to send.
    * @returns A promise resolving with the response from the command.
    */
-  sendCommand<T, U>(args: SendCommandUseCaseArgs<T, U>): Promise<T> {
+  sendCommand<Response, Args>(
+    args: SendCommandUseCaseArgs<Response, Args>,
+  ): Promise<Response> {
     return this.container
       .get<SendCommandUseCase>(commandTypes.SendCommandUseCase)
       .execute(args);

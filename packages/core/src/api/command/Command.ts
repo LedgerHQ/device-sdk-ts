@@ -5,17 +5,17 @@ import { ApduResponse } from "@api/device-session/ApduResponse";
 /**
  * A command that can be sent to a device.
  *
- * @template T - The type of the response returned by the device.
- * @template U - The type of the arguments passed to the command (optional).
+ * @template Response - The type of the response returned by the device.
+ * @template Args - The type of the arguments passed to the command (optional).
  */
-export interface Command<T, U = void> {
+export interface Command<Response, Args = void> {
   /**
    * Gets the APDU (Application Protocol Data Unit) for the command.
    *
    * @param args - The arguments passed to the command (optional).
    * @returns The APDU for the command.
    */
-  getApdu(args?: U): Apdu;
+  getApdu(args?: Args): Apdu;
 
   /**
    * Parses the response received from the device.
@@ -27,5 +27,5 @@ export interface Command<T, U = void> {
   parseResponse(
     apduResponse: ApduResponse,
     deviceModelId: DeviceModelId | void,
-  ): T;
+  ): Response;
 }

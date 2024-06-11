@@ -34,7 +34,7 @@ describe("SendCommandUseCase", () => {
     const useCase = new SendCommandUseCase(sessionService, () => logger);
 
     jest
-      .spyOn(deviceSession, "getCommand")
+      .spyOn(deviceSession, "sendCommand")
       .mockReturnValue(async () => Promise.resolve({ status: "success" }));
 
     const response = await useCase.execute<{ status: string }>({

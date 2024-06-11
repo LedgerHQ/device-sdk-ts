@@ -12,7 +12,6 @@ import { loggerTypes } from "@internal/logger-publisher/di/loggerTypes";
 import type { LoggerPublisherService } from "@internal/logger-publisher/service/LoggerPublisherService";
 import { LEDGER_VENDOR_ID } from "@internal/usb/data/UsbHidConfig";
 import { usbDiTypes } from "@internal/usb/di/usbDiTypes";
-import { DiscoveredDevice } from "@internal/usb/model/DiscoveredDevice";
 import {
   ConnectError,
   DeviceNotRecognizedError,
@@ -24,6 +23,7 @@ import {
   UsbHidTransportNotSupportedError,
 } from "@internal/usb/model/Errors";
 import { InternalConnectedDevice } from "@internal/usb/model/InternalConnectedDevice";
+import { InternalDiscoveredDevice } from "@internal/usb/model/InternalDiscoveredDevice";
 import { UsbHidDeviceConnectionFactory } from "@internal/usb/service/UsbHidDeviceConnectionFactory";
 
 import { UsbHidTransport } from "./UsbHidTransport";
@@ -32,7 +32,7 @@ import { UsbHidTransport } from "./UsbHidTransport";
 type WebHidInternalDevice = {
   id: DeviceId;
   hidDevice: HIDDevice;
-  discoveredDevice: DiscoveredDevice;
+  discoveredDevice: InternalDiscoveredDevice;
 };
 
 export type DisconnectHandler = (deviceId: DeviceId) => void;
@@ -163,7 +163,7 @@ export class WebUsbHidTransport implements UsbHidTransport {
    * [ASK] For the 2nd option: the DiscoveredDevice could have a `isSelected` property ?
    * So the consumer can directly select this device.
    */
-  startDiscovering(): Observable<DiscoveredDevice> {
+  startDiscovering(): Observable<InternalDiscoveredDevice> {
     this._logger.debug("startDiscovering");
 
     // Logs the connection and disconnection events
