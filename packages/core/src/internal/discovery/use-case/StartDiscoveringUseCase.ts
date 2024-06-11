@@ -1,8 +1,10 @@
 import { inject, injectable } from "inversify";
-import { Observable } from "rxjs";
+import { map, Observable } from "rxjs";
 
+import { DeviceModel } from "@api/index";
 import { DiscoveredDevice } from "@api/types";
 import { usbDiTypes } from "@internal/usb/di/usbDiTypes";
+import { InternalDiscoveredDevice } from "@internal/usb/model/InternalDiscoveredDevice";
 import type { UsbHidTransport } from "@internal/usb/transport/UsbHidTransport";
 
 /**
@@ -19,6 +21,18 @@ export class StartDiscoveringUseCase {
   ) {}
 
   execute(): Observable<DiscoveredDevice> {
-    return this.usbHidTransport.startDiscovering();
+    return this.usbHidTransport.startDiscovering().pipe(
+      map((data: InternalDiscoveredDevice) => {
+        const deviceModel = new DeviceModel({
+          id: data.id,
+          model: data.deviceModel.id,
+          name: data.deviceModel.productName,
+        });
+        return {
+          id: data.id,
+          deviceModel,
+        };
+      }),
+    );
   }
 }
