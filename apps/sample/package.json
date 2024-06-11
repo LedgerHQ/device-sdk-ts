@@ -6,8 +6,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint",
-    "lint:fix": "next lint --fix",
+    "lint": "eslint",
+    "lint:fix": "eslint --fix",
     "prettier": "prettier . --check",
     "prettier:fix": "prettier . --write",
     "typecheck": "tsc --noEmit"
@@ -16,19 +16,19 @@
     "@ledgerhq/device-sdk-core": "workspace:*",
     "@ledgerhq/react-ui": "^0.14.16",
     "@sentry/nextjs": "^7.109.0",
-    "next": "14.1.4",
-    "react": "^18",
-    "react-dom": "^18",
+    "next": "14.2.3",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
     "styled-components": "^5.3.11"
   },
   "devDependencies": {
     "@ledgerhq/eslint-config-dsdk": "workspace:*",
     "@ledgerhq/prettier-config-dsdk": "workspace:*",
     "@ledgerhq/tsconfig-dsdk": "workspace:*",
-    "@types/react": "^18.2.75",
+    "@types/react": "^18.3.3",
     "@types/styled-components": "^5.1.25",
     "autoprefixer": "^10.4.19",
-    "eslint-config-next": "14.1.4",
+    "globals": "15.4.0",
     "postcss": "^8.4.38"
   }
 }

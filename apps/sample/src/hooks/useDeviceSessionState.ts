@@ -15,7 +15,6 @@ export function useDeviceSessionState(sessionId: DeviceSessionId) {
           sessionId,
         })
         .subscribe((state) => {
-          // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
           setDeviceSessionState(state);
         });
 

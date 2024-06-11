@@ -10,7 +10,7 @@ export const hidDeviceStubBuilder = (
   open: jest.fn(),
   oninputreport,
   close: jest.fn(),
-  sendReport: jest.fn().mockImplementation(() => oninputreport()),
+  sendReport: jest.fn().mockResolvedValue(oninputreport()),
   sendFeatureReport: jest.fn(),
   forget: jest.fn(),
   receiveFeatureReport: jest.fn(),

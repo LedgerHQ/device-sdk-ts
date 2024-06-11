@@ -77,7 +77,6 @@ export const ApduView: React.FC = () => {
       let rawApduResponse;
       try {
         rawApduResponse = await sdk.sendApdu({
-          // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
           sessionId: selectedSessionId ?? "",
           apdu: getRawApdu(values),
         });

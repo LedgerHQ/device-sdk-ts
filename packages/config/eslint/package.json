@@ -3,16 +3,17 @@
   "license": "MIT",
   "version": "0.0.1",
   "private": true,
+  "description": "Base ESLint configuration for LedgerHQ DSDK projects",
+  "main": "index.js",
   "files": [
     "index.js"
   ],
+  "type": "module",
   "devDependencies": {
-    "@typescript-eslint/eslint-plugin": "^7.6.0",
-    "@typescript-eslint/parser": "^7.6.0",
-    "@vercel/style-guide": "^6.0.0",
-    "eslint-config-prettier": "^9.1.0",
-    "eslint-config-turbo": "^1.13.2",
-    "eslint-plugin-no-type-assertion": "^1.3.0",
-    "eslint-plugin-simple-import-sort": "^12.0.0"
+    "@eslint/js": "9.4.0",
+    "eslint-plugin-prettier": "^5.1.3",
+    "eslint-plugin-simple-import-sort": "12.1.0",
+    "globals": "15.4.0",
+    "typescript-eslint": "7.13.0"
   }
 }
