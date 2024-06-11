@@ -1,5 +1,12 @@
 "use strict";
 
+export { ApduBuilder } from "./apdu/utils/ApduBuilder";
+export { ApduParser } from "./apdu/utils/ApduParser";
+export { CloseAppCommand } from "./command/os/CloseAppCommand";
+export { GetAppAndVersionCommand } from "./command/os/GetAppAndVersionCommand";
+export { GetOsVersionCommand } from "./command/os/GetOsVersionCommand";
+export { OpenAppCommand } from "./command/os/OpenAppCommand";
+export { CommandUtils } from "./command/utils/CommandUtils";
 export { DeviceModel, DeviceModelId } from "./device/DeviceModel";
 export { DeviceStatus } from "./device/DeviceStatus";
 export { ApduResponse } from "./device-session/ApduResponse";
