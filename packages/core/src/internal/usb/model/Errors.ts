@@ -6,59 +6,63 @@ export type PromptDeviceAccessError =
 
 export type ConnectError = UnknownDeviceError | OpeningConnectionError;
 
-export class DeviceNotRecognizedError implements SdkError {
-  readonly _tag = "DeviceNotRecognizedError";
-  originalError?: Error;
-  constructor(readonly err?: Error) {
-    this.originalError = err;
+class GeneralSdkError implements SdkError {
+  _tag = "GeneralSdkError";
+  originalError?: unknown;
+  constructor(err?: unknown) {
+    if (err instanceof Error) {
+      this.originalError = err;
+    } else {
+      this.originalError = new Error(String(err));
+    }
   }
 }
 
-export class NoAccessibleDeviceError implements SdkError {
-  readonly _tag = "NoAccessibleDeviceError";
-  originalError?: Error;
-  constructor(readonly err?: Error) {
-    this.originalError = err;
+export class DeviceNotRecognizedError extends GeneralSdkError {
+  override readonly _tag = "DeviceNotRecognizedError";
+  constructor(readonly err?: unknown) {
+    super(err);
   }
 }
 
-export class OpeningConnectionError implements SdkError {
-  readonly _tag = "ConnectionOpeningError";
-  originalError?: Error;
-  constructor(readonly err?: Error) {
-    this.originalError = err;
+export class NoAccessibleDeviceError extends GeneralSdkError {
+  override readonly _tag = "NoAccessibleDeviceError";
+  constructor(readonly err?: unknown) {
+    super(err);
   }
 }
 
-export class UnknownDeviceError implements SdkError {
-  readonly _tag = "UnknownDeviceError";
-  originalError?: Error;
-  constructor(readonly err?: Error) {
-    this.originalError = err;
+export class OpeningConnectionError extends GeneralSdkError {
+  override readonly _tag = "ConnectionOpeningError";
+  constructor(readonly err?: unknown) {
+    super(err);
   }
 }
 
-export class UsbHidTransportNotSupportedError implements SdkError {
-  readonly _tag = "UsbHidTransportNotSupportedError";
-  originalError?: Error;
-  constructor(readonly err?: Error) {
-    this.originalError = err;
+export class UnknownDeviceError extends GeneralSdkError {
+  override readonly _tag = "UnknownDeviceError";
+  constructor(readonly err?: unknown) {
+    super(err);
   }
 }
 
-export class SendApduConcurrencyError implements SdkError {
-  readonly _tag = "SendApduConcurrencyError";
-  originalError?: Error;
-  constructor(readonly err?: Error) {
-    this.originalError = err;
+export class UsbHidTransportNotSupportedError extends GeneralSdkError {
+  override readonly _tag = "UsbHidTransportNotSupportedError";
+  constructor(readonly err?: unknown) {
+    super(err);
   }
 }
 
-export class DisconnectError implements SdkError {
-  readonly _tag = "DisconnectError";
-  originalError?: Error;
+export class SendApduConcurrencyError extends GeneralSdkError {
+  override readonly _tag = "SendApduConcurrencyError";
+  constructor(readonly err?: unknown) {
+    super(err);
+  }
+}
 
-  constructor(readonly err?: Error) {
-    this.originalError = err;
+export class DisconnectError extends GeneralSdkError {
+  override readonly _tag = "DisconnectError";
+  constructor(readonly err?: unknown) {
+    super(err);
   }
 }

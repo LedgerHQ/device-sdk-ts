@@ -111,16 +111,14 @@ export class ApduParser {
   extractFieldTLVEncoded(): TaggedField | undefined {
     if (this._outOfRange(2)) return;
 
-    // extract the tag field
     const tag = this.extract8BitUint();
     const value = this.extractFieldLVEncoded();
 
-    // if the field is inconsistent then roll back to the initial point
-    if (!value) {
+    if (!tag || !value) {
       this._index--;
       return;
     }
-    return { tag, value } as TaggedField;
+    return { tag, value };
   }
 
   /**

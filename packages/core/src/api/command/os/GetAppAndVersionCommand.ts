@@ -58,10 +58,10 @@ export class GetAppAndVersionCommand
     const version = parser.encodeToString(parser.extractFieldLVEncoded());
 
     if (parser.getUnparsedRemainingLength() === 0) {
-      return { name, version } as GetAppAndVersionResponse;
+      return { name, version };
     }
 
     const flags = parser.extractFieldLVEncoded();
-    return { name, version, flags } as GetAppAndVersionResponse;
+    return { name, version, flags };
   }
 }

@@ -97,11 +97,15 @@ export class DeviceSessionRefresher {
         filter((parsedResponse) => parsedResponse !== null),
       )
       .subscribe((parsedResponse: GetAppAndVersionResponse | null) => {
-        // batteryStatus and firmwareVersion are not available in the polling response.
+        // This should never happen and it should be abled to handle in next version of TypeScript.
+        if (parsedResponse === null) {
+          return;
+        }
+        // `batteryStatus` and `firmwareVersion` are not available in the polling response.
         updateStateFn({
           sessionStateType: DeviceSessionStateType.ReadyWithoutSecureChannel,
           deviceStatus: this._deviceStatus,
-          currentApp: parsedResponse!.name,
+          currentApp: parsedResponse.name,
         });
       });
   }

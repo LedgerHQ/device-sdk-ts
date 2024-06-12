@@ -1,4 +1,4 @@
-const oninputreport = jest.fn();
+const oninputreport = jest.fn().mockResolvedValue(void 0);
 export const hidDeviceStubBuilder = (
   props: Partial<HIDDevice> = {},
 ): HIDDevice => ({
@@ -10,7 +10,7 @@ export const hidDeviceStubBuilder = (
   open: jest.fn(),
   oninputreport,
   close: jest.fn(),
-  sendReport: jest.fn(async () => oninputreport()),
+  sendReport: jest.fn().mockImplementation(() => oninputreport()),
   sendFeatureReport: jest.fn(),
   forget: jest.fn(),
   receiveFeatureReport: jest.fn(),
