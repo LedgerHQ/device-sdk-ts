@@ -4,7 +4,6 @@ import { v4 as uuidv4 } from "uuid";
 
 import { Command } from "@api/command/Command";
 import { CommandUtils } from "@api/command/utils/CommandUtils";
-import { DeviceModelId } from "@api/device/DeviceModel";
 import { DeviceStatus } from "@api/device/DeviceStatus";
 import {
   DeviceSessionState,
@@ -97,18 +96,19 @@ export class DeviceSession {
     });
   }
 
-  sendCommand<Response, Args>(command: Command<Response, Args>) {
-    return async (deviceModelId: DeviceModelId): Promise<Response> => {
-      const apdu = command.getApdu();
-      const response = await this.sendApdu(apdu.getRawApdu());
+  async sendCommand<Response, Args>(
+    command: Command<Response, Args>,
+  ): Promise<Response> {
+    const apdu = command.getApdu();
+    const response = await this.sendApdu(apdu.getRawApdu());
 
-      return response.caseOf({
-        Left: (err) => {
-          throw err;
-        },
-        Right: (r) => command.parseResponse(r, deviceModelId),
-      });
-    };
+    return response.caseOf({
+      Left: (err) => {
+        throw err;
+      },
+      Right: (r) =>
+        command.parseResponse(r, this._connectedDevice.deviceModel.id),
+    });
   }
 
   close() {
