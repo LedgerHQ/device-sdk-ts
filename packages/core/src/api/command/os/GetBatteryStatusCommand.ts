@@ -66,6 +66,10 @@ export type BatteryStatusFlags = {
  */
 export type GetBatteryStatusResponse = number | BatteryStatusFlags;
 
+type Arguments = {
+  statusType: BatteryStatusType;
+};
+
 /**
  * Command to get the battery status of the device.
  * The parameter statusType defines the type of information to retrieve, cf.
@@ -75,28 +79,25 @@ export type GetBatteryStatusResponse = number | BatteryStatusFlags;
  * going to decrease the overall performance of the communication with the device.
  */
 export class GetBatteryStatusCommand
-  implements Command<GetBatteryStatusResponse, BatteryStatusType>
+  implements Command<GetBatteryStatusResponse, Arguments>
 {
-  private _statusType: BatteryStatusType | undefined = undefined;
+  args: Arguments;
 
-  getApdu(statusType: BatteryStatusType): Apdu {
-    this._statusType = statusType;
+  constructor(args: Arguments) {
+    this.args = args;
+  }
+
+  getApdu(): Apdu {
     const getBatteryStatusArgs: ApduBuilderArgs = {
       cla: 0xe0,
       ins: 0x10,
       p1: 0x00,
-      p2: statusType,
+      p2: this.args.statusType,
     } as const;
     return new ApduBuilder(getBatteryStatusArgs).build();
   }
 
   parseResponse(apduResponse: ApduResponse): GetBatteryStatusResponse {
-    if (this._statusType === undefined) {
-      throw new InvalidBatteryStatusTypeError(
-        "Call getApdu to initialise battery status type.",
-      );
-    }
-
     const parser = new ApduParser(apduResponse);
     if (!CommandUtils.isSuccessResponse(apduResponse)) {
       throw new InvalidStatusWordError(
@@ -106,7 +107,7 @@ export class GetBatteryStatusCommand
       );
     }
 
-    switch (this._statusType) {
+    switch (this.args.statusType) {
       case BatteryStatusType.BATTERY_PERCENTAGE: {
         const percentage = parser.extract8BitUint();
         if (!percentage) {
@@ -148,7 +149,7 @@ export class GetBatteryStatusCommand
         };
       }
       default:
-        this._exhaustiveMatchingGuard(this._statusType);
+        this._exhaustiveMatchingGuard(this.args.statusType);
     }
   }
 

@@ -98,11 +98,8 @@ export class DeviceSession {
   }
 
   sendCommand<Response, Args>(command: Command<Response, Args>) {
-    return async (
-      deviceModelId: DeviceModelId,
-      getApduArgs: Args,
-    ): Promise<Response> => {
-      const apdu = command.getApdu(getApduArgs);
+    return async (deviceModelId: DeviceModelId): Promise<Response> => {
+      const apdu = command.getApdu();
       const response = await this.sendApdu(apdu.getRawApdu());
 
       return response.caseOf({

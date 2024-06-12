@@ -1,15 +1,10 @@
-import { Command } from "@api/command/Command";
-import {
-  InvalidBatteryStatusTypeError,
-  InvalidStatusWordError,
-} from "@api/command/Errors";
+import { InvalidStatusWordError } from "@api/command/Errors";
 import { ApduResponse } from "@api/device-session/ApduResponse";
 
 import {
   BatteryStatusType,
   ChargingMode,
   GetBatteryStatusCommand,
-  GetBatteryStatusResponse,
 } from "./GetBatteryStatusCommand";
 
 const GET_BATTERY_STATUS_APDU_PERCENTAGE = Uint8Array.from([
@@ -37,28 +32,42 @@ const FLAGS_RESPONSE_HEX = Uint8Array.from([
 const FAILED_RESPONSE_HEX = Uint8Array.from([0x67, 0x00]);
 
 describe("GetBatteryStatus", () => {
-  let command: Command<GetBatteryStatusResponse, BatteryStatusType>;
-
-  beforeEach(() => {
-    command = new GetBatteryStatusCommand();
-  });
-
   describe("getApdu", () => {
     it("should return the GetBatteryStatus APDU", () => {
       expect(
-        command.getApdu(BatteryStatusType.BATTERY_PERCENTAGE).getRawApdu(),
+        new GetBatteryStatusCommand({
+          statusType: BatteryStatusType.BATTERY_PERCENTAGE,
+        })
+          .getApdu()
+          .getRawApdu(),
       ).toStrictEqual(GET_BATTERY_STATUS_APDU_PERCENTAGE);
       expect(
-        command.getApdu(BatteryStatusType.BATTERY_VOLTAGE).getRawApdu(),
+        new GetBatteryStatusCommand({
+          statusType: BatteryStatusType.BATTERY_VOLTAGE,
+        })
+          .getApdu()
+          .getRawApdu(),
       ).toStrictEqual(GET_BATTERY_STATUS_APDU_VOLTAGE);
       expect(
-        command.getApdu(BatteryStatusType.BATTERY_TEMPERATURE).getRawApdu(),
+        new GetBatteryStatusCommand({
+          statusType: BatteryStatusType.BATTERY_TEMPERATURE,
+        })
+          .getApdu()
+          .getRawApdu(),
       ).toStrictEqual(GET_BATTERY_STATUS_APDU_TEMPERATURE);
       expect(
-        command.getApdu(BatteryStatusType.BATTERY_CURRENT).getRawApdu(),
+        new GetBatteryStatusCommand({
+          statusType: BatteryStatusType.BATTERY_CURRENT,
+        })
+          .getApdu()
+          .getRawApdu(),
       ).toStrictEqual(GET_BATTERY_STATUS_APDU_CURRENT);
       expect(
-        command.getApdu(BatteryStatusType.BATTERY_FLAGS).getRawApdu(),
+        new GetBatteryStatusCommand({
+          statusType: BatteryStatusType.BATTERY_FLAGS,
+        })
+          .getApdu()
+          .getRawApdu(),
       ).toStrictEqual(GET_BATTERY_STATUS_APDU_FLAGS);
     });
   });
@@ -68,7 +77,10 @@ describe("GetBatteryStatus", () => {
         statusCode: PERCENTAGE_RESPONSE_HEX.slice(-2),
         data: PERCENTAGE_RESPONSE_HEX.slice(0, -2),
       });
-      command.getApdu(BatteryStatusType.BATTERY_PERCENTAGE);
+      const command = new GetBatteryStatusCommand({
+        statusType: BatteryStatusType.BATTERY_PERCENTAGE,
+      });
+      command.getApdu();
       const parsed = command.parseResponse(PERCENTAGE_RESPONSE);
       expect(parsed).toStrictEqual(55);
     });
@@ -77,7 +89,10 @@ describe("GetBatteryStatus", () => {
         statusCode: VOLTAGE_RESPONSE_HEX.slice(-2),
         data: VOLTAGE_RESPONSE_HEX.slice(0, -2),
       });
-      command.getApdu(BatteryStatusType.BATTERY_VOLTAGE);
+      const command = new GetBatteryStatusCommand({
+        statusType: BatteryStatusType.BATTERY_VOLTAGE,
+      });
+      command.getApdu();
       const parsed = command.parseResponse(VOLTAGE_RESPONSE);
       expect(parsed).toStrictEqual(4095);
     });
@@ -86,7 +101,10 @@ describe("GetBatteryStatus", () => {
         statusCode: TEMPERATURE_RESPONSE_HEX.slice(-2),
         data: TEMPERATURE_RESPONSE_HEX.slice(0, -2),
       });
-      command.getApdu(BatteryStatusType.BATTERY_TEMPERATURE);
+      const command = new GetBatteryStatusCommand({
+        statusType: BatteryStatusType.BATTERY_TEMPERATURE,
+      });
+      command.getApdu();
       const parsed = command.parseResponse(TEMPERATURE_RESPONSE);
       expect(parsed).toStrictEqual(16);
     });
@@ -95,7 +113,10 @@ describe("GetBatteryStatus", () => {
         statusCode: FLAGS_RESPONSE_HEX.slice(-2),
         data: FLAGS_RESPONSE_HEX.slice(0, -2),
       });
-      command.getApdu(BatteryStatusType.BATTERY_FLAGS);
+      const command = new GetBatteryStatusCommand({
+        statusType: BatteryStatusType.BATTERY_FLAGS,
+      });
+      command.getApdu();
       const parsed = command.parseResponse(FLAGS_RESPONSE);
       expect(parsed).toStrictEqual({
         charging: ChargingMode.USB,
@@ -104,21 +125,15 @@ describe("GetBatteryStatus", () => {
         issueBattery: false,
       });
     });
-    it("should not parse the response when getApdu not called", () => {
-      const PERCENTAGE_RESPONSE = new ApduResponse({
-        statusCode: PERCENTAGE_RESPONSE_HEX.slice(-2),
-        data: PERCENTAGE_RESPONSE_HEX.slice(0, -2),
-      });
-      expect(() => command.parseResponse(PERCENTAGE_RESPONSE)).toThrow(
-        InvalidBatteryStatusTypeError,
-      );
-    });
     it("should throw an error if the response returned unsupported format", () => {
       const FAILED_RESPONSE = new ApduResponse({
         statusCode: FAILED_RESPONSE_HEX.slice(-2),
         data: FAILED_RESPONSE_HEX.slice(0, -2),
       });
-      command.getApdu(BatteryStatusType.BATTERY_PERCENTAGE);
+      const command = new GetBatteryStatusCommand({
+        statusType: BatteryStatusType.BATTERY_PERCENTAGE,
+      });
+      command.getApdu();
       expect(() => command.parseResponse(FAILED_RESPONSE)).toThrow(
         InvalidStatusWordError,
       );
