@@ -29,7 +29,7 @@ const FAILED_RESPONSE_HEX = Uint8Array.from([0x67, 0x00]);
 const ERROR_RESPONSE_HEX = Uint8Array.from([0x04, 0x90, 0x00]);
 
 describe("GetAppAndVersionCommand", () => {
-  let command: Command<void, GetAppAndVersionResponse>;
+  let command: Command<GetAppAndVersionResponse>;
 
   beforeEach(() => {
     command = new GetAppAndVersionCommand();

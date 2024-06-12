@@ -6,11 +6,21 @@ import { InvalidStatusWordError } from "@api/command/Errors";
 import { CommandUtils } from "@api/command/utils/CommandUtils";
 import { ApduResponse } from "@api/device-session/ApduResponse";
 
+type Arguments = {
+  appName: string;
+};
+
 /**
  * The command to open an application on the device.
  */
-export class OpenAppCommand implements Command<void, string> {
-  getApdu(appName: string): Apdu {
+export class OpenAppCommand implements Command<void, Arguments> {
+  args: Arguments;
+
+  constructor(args: Arguments) {
+    this.args = args;
+  }
+
+  getApdu(): Apdu {
     const openAppApduArgs: ApduBuilderArgs = {
       cla: 0xe0,
       ins: 0xd8,
@@ -18,7 +28,7 @@ export class OpenAppCommand implements Command<void, string> {
       p2: 0x00,
     } as const;
     return new ApduBuilder(openAppApduArgs)
-      .addAsciiStringToData(appName)
+      .addAsciiStringToData(this.args.appName)
       .build();
   }
 

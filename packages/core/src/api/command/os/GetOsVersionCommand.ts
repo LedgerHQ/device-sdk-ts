@@ -64,6 +64,8 @@ export type GetOsVersionResponse = {
  * Command to get information about the device firmware.
  */
 export class GetOsVersionCommand implements Command<GetOsVersionResponse> {
+  args = undefined;
+
   getApdu(): Apdu {
     const getOsVersionApduArgs: ApduBuilderArgs = {
       cla: 0xe0,

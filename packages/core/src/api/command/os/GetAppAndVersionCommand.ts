@@ -28,6 +28,8 @@ export type GetAppAndVersionResponse = {
 export class GetAppAndVersionCommand
   implements Command<GetAppAndVersionResponse>
 {
+  args = undefined;
+
   getApdu(): Apdu {
     const getAppAndVersionApduArgs: ApduBuilderArgs = {
       cla: 0xb0,

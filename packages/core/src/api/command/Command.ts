@@ -9,13 +9,14 @@ import { ApduResponse } from "@api/device-session/ApduResponse";
  * @template Args - The type of the arguments passed to the command (optional).
  */
 export interface Command<Response, Args = void> {
+  args: Args;
+
   /**
    * Gets the APDU (Application Protocol Data Unit) for the command.
    *
-   * @param args - The arguments passed to the command (optional).
    * @returns The APDU for the command.
    */
-  getApdu(args?: Args): Apdu;
+  getApdu(): Apdu;
 
   /**
    * Parses the response received from the device.

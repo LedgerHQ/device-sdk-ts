@@ -43,13 +43,11 @@ export class SendCommandUseCase {
    *
    * @param sessionId - The device session id.
    * @param command - The command to send.
-   * @param params - The parameters of the command.
    * @returns The response from the command.
    */
   async execute<Response, Args = void>({
     sessionId,
     command,
-    params,
   }: SendCommandUseCaseArgs<Response, Args>): Promise<Response> {
     const deviceSessionOrError =
       this._sessionService.getDeviceSessionById(sessionId);
@@ -59,7 +57,7 @@ export class SendCommandUseCase {
       Right: async (deviceSession) => {
         const deviceModelId = deviceSession.connectedDevice.deviceModel.id;
         const action = deviceSession.sendCommand<Response, Args>(command);
-        return await action(deviceModelId, params);
+        return await action(deviceModelId);
       },
       // Case device session not found
       Left: (error) => {
