@@ -60,5 +60,4 @@ const ClientRootLayout: React.FC<ClientRootLayoutProps> = ({ children }) => {
   );
 };
 
-// eslint-disable-next-line no-restricted-syntax
 export default ClientRootLayout;

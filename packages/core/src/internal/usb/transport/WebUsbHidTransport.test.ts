@@ -431,7 +431,7 @@ describe("WebUsbHidTransport", () => {
                 onDisconnect,
               })
               .then(() => {
-                // @ts-expect-error
+                // @ts-expect-error trying to access private member
                 transport.handleDeviceDisconnectionEvent({
                   device: { productId: stubDevice.productId },
                 } as Event);

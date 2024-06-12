@@ -27,5 +27,4 @@ const RootLayout: React.FC<RootLayoutProps> = ({ children }) => {
   );
 };
 
-// eslint-disable-next-line no-restricted-syntax
 export default RootLayout;
