@@ -15,10 +15,6 @@ export type SendCommandUseCaseArgs<Response, Args = void> = {
    * The command to send.
    */
   command: Command<Response, Args>;
-  /**
-   * The parameters of the command.
-   */
-  params: Args;
 };
 
 /**
