@@ -1,0 +1,31 @@
+name: publish npm packages
+on:
+  push:
+    branches:
+      - main
+
+env:
+  FORCE_COLOR: "1"
+
+jobs:
+  publish:
+    environment: Production
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: ./.github/actions/setup-toolchain-composite
+
+      - name: install dependencies
+        run: pnpm install
+
+      - name: build libraries
+        run: pnpm build
+
+      - name: publish
+        uses: changesets/action@v1
+        with:
+          publish: pnpm release
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          NPM_TOKEN: ${{ secrets.NPMJS_TOKEN }}

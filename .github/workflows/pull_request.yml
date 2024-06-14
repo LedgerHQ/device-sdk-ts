@@ -1,0 +1,64 @@
+name: Pull Request
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, edited]
+
+env:
+  FORCE_COLOR: "1"
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref_name != 'develop' && github.ref || github.run_id }}
+  cancel-in-progress: true
+
+jobs:
+  auto-assign:
+    name: Auto assign
+    runs-on: ubuntu-latest
+    steps:
+      - uses: toshimaru/auto-author-assign@v2.1.0
+
+  danger:
+    name: Run Danger check
+    if: ${{ github.actor != 'dependabot[bot]' }}
+    runs-on: [ubuntu-latest]
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: ./.github/actions/setup-toolchain-composite
+
+      - name: Danger
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # Workaround when using custom runners
+          # https://github.com/danger/danger-js/issues/1374
+          DANGER_GITHUB_API_BASE_URL: "https://api.github.com"
+        run: ./.github/actions/danger-check.sh
+
+  health-check:
+    name: Run health check
+    needs: [danger]
+    runs-on: device-sdk-4xlarge-linux
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: ./.github/actions/setup-toolchain-composite
+
+      - name: health check
+        run: pnpm health-check
+
+  unit-tests:
+    name: Run unit tests
+    needs: [danger]
+    runs-on: device-sdk-4xlarge-linux
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: ./.github/actions/setup-toolchain-composite
+
+      - name: Test
+        run: pnpm test:coverage -- --max-warnings=0
+
+      - uses: sonarsource/sonarqube-scan-action@master
+        env:
+          SONAR_TOKEN: ${{ secrets.GREEN_SONAR_TOKEN }}
+          SONAR_HOST_URL: ${{ secrets.GREEN_SONAR_HOST_URL }}

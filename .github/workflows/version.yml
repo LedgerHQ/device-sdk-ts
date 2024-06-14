@@ -1,0 +1,31 @@
+name: create release pull request
+on:
+  push:
+    branches:
+      - release
+
+env:
+  FORCE_COLOR: "1"
+
+jobs:
+  version:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: ./.github/actions/setup-toolchain-composite
+
+      - name: install dependencies
+        run: pnpm install
+
+      - name: build libraries
+        run: pnpm build
+
+      - name: create release pull request or publish
+        uses: changesets/action@v1
+        with:
+          version: pnpm bump
+          commit: "🔖 (release): versioning packages"
+          title: "🔖 (release) [NO-ISSUE]: versioning packages"
+        env:
+          GITHUB_TOKEN: ${{ github.token }}

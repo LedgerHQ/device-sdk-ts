@@ -1,0 +1,15 @@
+{
+  "extends": "./tsconfig.json",
+  "exclude": [
+    "src/**/*.test.ts",
+    "src/**/*.stub.ts",
+    "src/**/__mocks__",
+    "jest.*.ts"
+  ],
+  "compilerOptions": {
+    "module": "commonjs",
+    "moduleResolution": "node",
+    "outDir": "./lib/cjs",
+    "declarationDir": "./lib/cjs"
+  }
+}

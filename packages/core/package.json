@@ -1,0 +1,61 @@
+{
+  "name": "@ledgerhq/device-sdk-core",
+  "version": "0.3.0",
+  "license": "MIT",
+  "exports": {
+    ".": {
+      "import": "./lib/esm/index.js",
+      "require": "./lib/cjs/index.js",
+      "default": "./index.ts",
+      "types": "./lib/esm/index.d.ts"
+    },
+    "./*.js": {
+      "import": "./lib/esm/*.js",
+      "require": "./lib/cjs/*.js",
+      "default": "./*.js",
+      "types": "./lib/esm/*.d.ts"
+    },
+    "./*": {
+      "import": "./lib/esm/*",
+      "require": "./lib/cjs/*",
+      "default": "./*",
+      "types": "./lib/esm/*"
+    }
+  },
+  "files": [
+    "./lib"
+  ],
+  "scripts": {
+    "build": "rimraf lib && zx scripts/build.mjs",
+    "dev": "tsc && (concurrently \"tsc -w -p tsconfig.json\" \"tsc-alias -w -p tsconfig.json\")",
+    "lint": "eslint",
+    "lint:fix": "pnpm lint --fix",
+    "prettier": "prettier . --check",
+    "prettier:fix": "prettier . --write",
+    "test": "jest",
+    "test:watch": "pnpm test -- --watch",
+    "test:coverage": "pnpm test -- --coverage",
+    "typecheck": "tsc --noEmit",
+    "module:create": "pnpm hygen core-module with-prompt"
+  },
+  "dependencies": {
+    "@sentry/minimal": "^6.19.7",
+    "inversify": "^6.0.2",
+    "inversify-logger-middleware": "^3.1.0",
+    "purify-ts": "^2.0.3",
+    "reflect-metadata": "^0.2.2",
+    "rxjs": "^7.8.1",
+    "semver": "^7.6.2",
+    "uuid": "^9.0.1"
+  },
+  "devDependencies": {
+    "@ledgerhq/eslint-config-dsdk": "workspace:*",
+    "@ledgerhq/jest-config-dsdk": "workspace:*",
+    "@ledgerhq/prettier-config-dsdk": "workspace:*",
+    "@ledgerhq/tsconfig-dsdk": "workspace:*",
+    "@types/semver": "^7.5.8",
+    "@types/uuid": "^9.0.8",
+    "@types/w3c-web-hid": "^1.0.6",
+    "ts-node": "^10.9.2"
+  }
+}
