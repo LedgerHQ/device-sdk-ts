@@ -2,7 +2,7 @@ name: publish npm packages
 on:
   push:
     branches:
-      - develop
+      - main
 
 env:
   FORCE_COLOR: "1"

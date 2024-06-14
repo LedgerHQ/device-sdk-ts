@@ -2,7 +2,7 @@ name: create release pull request
 on:
   push:
     branches:
-      - develop
+      - release
 
 env:
   FORCE_COLOR: "1"
