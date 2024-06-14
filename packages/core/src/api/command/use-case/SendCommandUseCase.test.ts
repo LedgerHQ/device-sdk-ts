@@ -41,7 +41,6 @@ describe("SendCommandUseCase", () => {
     const response = await useCase.execute<{ status: string }>({
       sessionId: fakeSessionId,
       command,
-      params: undefined,
     });
 
     expect(response).toStrictEqual({ status: "success" });
@@ -56,7 +55,6 @@ describe("SendCommandUseCase", () => {
     const res = useCase.execute<{ status: string }>({
       sessionId: fakeSessionId,
       command,
-      params: undefined,
     });
 
     await expect(res).rejects.toMatchObject({ _tag: "DeviceSessionNotFound" });

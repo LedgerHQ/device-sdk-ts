@@ -6,12 +6,12 @@ const tsconfigEsm = path.join(root, "tsconfig.esm.json");
 const tsconfigCjs = path.join(root, "tsconfig.cjs.json");
 
 const buildEsm = async () => {
-  await $`tsc --project ${tsconfigEsm}`;
+  await $`tsc --project ${tsconfigEsm} --incremental`;
   await $`tsc-alias --project ${tsconfigEsm}`;
 };
 
 const builCjs = async () => {
-  await $`tsc --project ${tsconfigCjs}`;
+  await $`tsc --project ${tsconfigCjs} --incremental`;
   await $`tsc-alias --project ${tsconfigCjs}`;
 };
 
