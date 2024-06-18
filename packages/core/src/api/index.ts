@@ -1,6 +1,6 @@
 "use strict";
 
-export { ApduBuilder } from "./apdu/utils/ApduBuilder";
+export { ApduBuilder, type ApduBuilderArgs } from "./apdu/utils/ApduBuilder";
 export { ApduParser } from "./apdu/utils/ApduParser";
 export { CloseAppCommand } from "./command/os/CloseAppCommand";
 export { GetAppAndVersionCommand } from "./command/os/GetAppAndVersionCommand";
@@ -16,4 +16,6 @@ export { LogLevel } from "./logger-subscriber/model/LogLevel";
 export { ConsoleLogger } from "./logger-subscriber/service/ConsoleLogger";
 export * from "./types";
 export { ConnectedDevice } from "./usb/model/ConnectedDevice";
+export { Apdu } from "@api/apdu/model/Apdu";
+export { type Command } from "@api/command/Command";
 export { type DeviceSessionState } from "@api/device-session/DeviceSessionState";

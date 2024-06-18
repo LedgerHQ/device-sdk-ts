@@ -47,6 +47,7 @@
     "@ledgerhq/eslint-config-dsdk": "workspace:*",
     "@ledgerhq/jest-config-dsdk": "workspace:*",
     "@ledgerhq/prettier-config-dsdk": "workspace:*",
-    "@ledgerhq/tsconfig-dsdk": "workspace:*"
+    "@ledgerhq/tsconfig-dsdk": "workspace:*",
+    "@ledgerhq/device-sdk-core": "workspace:*"
   }
 }

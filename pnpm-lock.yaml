@@ -212,6 +212,9 @@ importers:
         specifier: ^0.2.2
         version: 0.2.2
     devDependencies:
+      '@ledgerhq/device-sdk-core':
+        specifier: workspace:*
+        version: link:../core
       '@ledgerhq/eslint-config-dsdk':
         specifier: workspace:*
         version: link:../config/eslint
