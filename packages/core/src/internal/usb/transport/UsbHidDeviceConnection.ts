@@ -43,10 +43,13 @@ export class UsbHidDeviceConnection implements DeviceConnection {
   sendApdu: SendApduFnType = async (apdu) => {
     this._sendApduSubject = new Subject();
 
-    this._logger.info("Sending APDU", { data: { apdu } });
+    this._logger.debug("Sending APDU", {
+      data: { apdu },
+      tag: "apdu-sender",
+    });
     const frames = this._apduSender.getFrames(apdu);
     for (const frame of frames) {
-      this._logger.info("Sending Frame", {
+      this._logger.debug("Sending Frame", {
         data: { frame: frame.getRawData() },
       });
       await this._device.sendReport(0, frame.getRawData());
@@ -66,12 +69,15 @@ export class UsbHidDeviceConnection implements DeviceConnection {
 
   private receiveHidInputReport = (event: HIDInputReportEvent) => {
     const data = new Uint8Array(event.data.buffer);
-    this._logger.info("Received Frame", { data: { frame: data } });
+    this._logger.debug("Received Frame", {
+      data: { frame: data },
+      tag: "apdu-receiver",
+    });
     const response = this._apduReceiver.handleFrame(data);
     response.caseOf({
       Right: (maybeApduResponse) => {
         maybeApduResponse.map((apduResponse) => {
-          this._logger.info("Received APDU Response", {
+          this._logger.debug("Received APDU Response", {
             data: { response: apduResponse },
           });
           this._sendApduSubject.next(apduResponse);

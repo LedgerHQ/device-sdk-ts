@@ -70,7 +70,7 @@ describe("LocalConfigDataSource", () => {
       expect(LocalConfig.stubFsReadFile()).toEqual(
         JSON.stringify({
           name: "@ledgerhq/device-sdk-core",
-          version: "0.0.1",
+          version: "0.3.0",
         }),
       );
     });

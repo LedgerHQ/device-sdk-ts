@@ -53,7 +53,7 @@ export class DefaultApduReceiverService implements ApduReceiverService {
     const frame = this.getFrameFromBytes(frameBytes);
 
     return frame.map((value) => {
-      this._logger.info("handle frame", {
+      this._logger.debug("handle frame", {
         data: { frame: value.getRawData() },
       });
       this._pendingFrames.push(value);

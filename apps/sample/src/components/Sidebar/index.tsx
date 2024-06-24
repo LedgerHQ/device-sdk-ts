@@ -20,11 +20,11 @@ const Subtitle = styled(Text).attrs({ mb: 5 })``;
 
 const MenuContainer = styled(Box)`
   flex: 1;
-  opacity: 0.2;
+  opacity: ${({ active }: { active: boolean }) => (active ? 1 : 0.5)};
 `;
 
 const BottomContainer = styled(Flex)`
-  opacity: 0.2;
+  opacity: 0.5;
   flex-direction: column;
   align-items: center;
 `;
@@ -44,7 +44,7 @@ export const Sidebar: React.FC = () => {
   const [version, setVersion] = useState("");
   const sdk = useSdk();
   const {
-    state: { deviceById },
+    state: { deviceById, selectedId },
     dispatch,
   } = useDeviceSessionsContext();
 
@@ -99,7 +99,7 @@ export const Sidebar: React.FC = () => {
         />
       ))}
 
-      <MenuContainer>
+      <MenuContainer active={!!selectedId}>
         <Subtitle variant={"tiny"}>Menu</Subtitle>
         <Menu />
       </MenuContainer>
@@ -110,7 +110,7 @@ export const Sidebar: React.FC = () => {
           <LogsText variant={"paragraph"}>Share logs</LogsText>
         </LogsContainer>
         <VersionText variant={"body"}>
-          Ledger device SDK version 0.0.1
+          Ledger device SDK version {version}
         </VersionText>
         <VersionText variant={"body"}>App version 0.1</VersionText>
       </BottomContainer>

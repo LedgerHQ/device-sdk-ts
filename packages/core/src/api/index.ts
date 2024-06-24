@@ -3,9 +3,25 @@
 export { ApduBuilder } from "./apdu/utils/ApduBuilder";
 export { ApduParser } from "./apdu/utils/ApduParser";
 export { CloseAppCommand } from "./command/os/CloseAppCommand";
-export { GetAppAndVersionCommand } from "./command/os/GetAppAndVersionCommand";
-export { GetOsVersionCommand } from "./command/os/GetOsVersionCommand";
-export { OpenAppCommand } from "./command/os/OpenAppCommand";
+export {
+  GetAppAndVersionCommand,
+  type GetAppAndVersionResponse,
+} from "./command/os/GetAppAndVersionCommand";
+export {
+  type GetBatteryStatusArgs,
+  GetBatteryStatusCommand,
+  type GetBatteryStatusResponse,
+} from "./command/os/GetBatteryStatusCommand";
+export {
+  GetOsVersionCommand,
+  type GetOsVersionResponse,
+} from "./command/os/GetOsVersionCommand";
+export {
+  type ListAppsArgs,
+  ListAppsCommand,
+  type ListAppsResponse,
+} from "./command/os/ListAppsCommand";
+export { type OpenAppArgs, OpenAppCommand } from "./command/os/OpenAppCommand";
 export { CommandUtils } from "./command/utils/CommandUtils";
 export { DeviceModel, DeviceModelId } from "./device/DeviceModel";
 export { DeviceStatus } from "./device/DeviceStatus";

@@ -14,11 +14,16 @@ const MenuTitle = styled(Link).attrs({
 
 export const Menu: React.FC = () => {
   const router = useRouter();
+
   return (
     <>
       <MenuItem>
         <Icons.PlusCircle />
         <MenuTitle>App session</MenuTitle>
+      </MenuItem>
+      <MenuItem>
+        <Icons.LedgerDevices />
+        <MenuTitle onClick={() => router.push("/commands")}>Commands</MenuTitle>
       </MenuItem>
       <MenuItem>
         <Icons.LedgerDevices />

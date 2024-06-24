@@ -19,7 +19,6 @@ describe("SendCommandUseCase", () => {
     logger = new DefaultLoggerPublisherService([], "send-command-use-case");
     sessionService = new DefaultDeviceSessionService(() => logger);
     command = {
-      args: undefined,
       getApdu: jest.fn(),
       parseResponse: jest.fn(),
     };
