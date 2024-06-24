@@ -56,7 +56,7 @@
     "@ledgerhq/prettier-config-dsdk": "workspace:*",
     "@ledgerhq/tsconfig-dsdk": "workspace:*",
     "@types/semver": "^7.5.8",
-    "@types/uuid": "^9.0.8",
+    "@types/uuid": "^10.0.0",
     "@types/w3c-web-hid": "^1.0.6",
     "ts-node": "^10.9.2"
   }
