@@ -1,4 +1,6 @@
-import { useCallback, useState } from "react";
+import { useCallback } from "react";
+
+import { useForm } from "./useForm";
 
 type ApduFormValues = {
   instructionClass: string;
@@ -10,7 +12,7 @@ type ApduFormValues = {
 };
 
 export function useApduForm() {
-  const [values, setValues] = useState<ApduFormValues>({
+  const { formValues, setFormValue } = useForm<ApduFormValues>({
     instructionClass: "e0",
     instructionMethod: "01",
     firstParameter: "00",
@@ -20,17 +22,16 @@ export function useApduForm() {
   });
 
   const setValue = useCallback((field: keyof ApduFormValues, value: string) => {
-    const newValues = { [field]: value };
+    setFormValue(field, value);
     if (field === "data") {
-      newValues.dataLength = Math.floor(value.length / 2).toString(16);
+      setFormValue("dataLength", Math.floor(value.length / 2).toString(16));
     }
-    setValues((prev) => ({ ...prev, ...newValues }));
   }, []);
 
   const getRawApdu = useCallback(
-    (formValues: ApduFormValues): Uint8Array =>
+    (apduFormValue: ApduFormValues): Uint8Array =>
       new Uint8Array(
-        Object.values(formValues).reduce(
+        Object.values(apduFormValue).reduce(
           (acc, curr) => [
             ...acc,
             ...chunkString(curr.replace(/\s/g, ""))
@@ -50,7 +51,7 @@ export function useApduForm() {
   }, []);
 
   return {
-    apduFormValues: values,
+    apduFormValues: formValues,
     setApduFormValue: setValue,
     getRawApdu,
     getHexString,

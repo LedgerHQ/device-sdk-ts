@@ -18,7 +18,7 @@ export class CloseAppCommand implements Command<void> {
       ins: 0xa7,
       p1: 0x00,
       p2: 0x00,
-    } as const;
+    };
     return new ApduBuilder(closeAppApduArgs).build();
   }
 

@@ -36,7 +36,7 @@ export class GetAppAndVersionCommand
       ins: 0x01,
       p1: 0x00,
       p2: 0x00,
-    } as const;
+    };
     return new ApduBuilder(getAppAndVersionApduArgs).build();
   }
 

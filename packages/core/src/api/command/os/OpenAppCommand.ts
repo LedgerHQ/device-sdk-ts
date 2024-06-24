@@ -6,17 +6,17 @@ import { InvalidStatusWordError } from "@api/command/Errors";
 import { CommandUtils } from "@api/command/utils/CommandUtils";
 import { ApduResponse } from "@api/device-session/ApduResponse";
 
-type Arguments = {
+export type OpenAppArgs = {
   appName: string;
 };
 
 /**
  * The command to open an application on the device.
  */
-export class OpenAppCommand implements Command<void, Arguments> {
-  args: Arguments;
+export class OpenAppCommand implements Command<void, OpenAppArgs> {
+  args: OpenAppArgs;
 
-  constructor(args: Arguments) {
+  constructor(args: OpenAppArgs) {
     this.args = args;
   }
 
@@ -26,7 +26,7 @@ export class OpenAppCommand implements Command<void, Arguments> {
       ins: 0xd8,
       p1: 0x00,
       p2: 0x00,
-    } as const;
+    };
     return new ApduBuilder(openAppApduArgs)
       .addAsciiStringToData(this.args.appName)
       .build();

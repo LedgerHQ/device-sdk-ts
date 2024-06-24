@@ -66,7 +66,7 @@ export type BatteryStatusFlags = {
  */
 export type GetBatteryStatusResponse = number | BatteryStatusFlags;
 
-type Arguments = {
+export type GetBatteryStatusArgs = {
   statusType: BatteryStatusType;
 };
 
@@ -79,11 +79,11 @@ type Arguments = {
  * going to decrease the overall performance of the communication with the device.
  */
 export class GetBatteryStatusCommand
-  implements Command<GetBatteryStatusResponse, Arguments>
+  implements Command<GetBatteryStatusResponse, GetBatteryStatusArgs>
 {
-  args: Arguments;
+  args: GetBatteryStatusArgs;
 
-  constructor(args: Arguments) {
+  constructor(args: GetBatteryStatusArgs) {
     this.args = args;
   }
 
@@ -93,7 +93,7 @@ export class GetBatteryStatusCommand
       ins: 0x10,
       p1: 0x00,
       p2: this.args.statusType,
-    } as const;
+    };
     return new ApduBuilder(getBatteryStatusArgs).build();
   }
 

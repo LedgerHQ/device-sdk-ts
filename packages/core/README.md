@@ -3,7 +3,6 @@
 > [!CAUTION]
 > This is still under development and we are free to make new interfaces which may lead to Device SDK breaking changes.
 
-
 - [Device SDK Core Library Documentation](#device-sdk-core-library-documentation)
   - [Description](#description)
   - [Installation](#installation)
@@ -57,7 +56,7 @@ Some of the APIs exposed return objects of type `Observable` from RxJS. Ensure y
   - Get battery status
 
 > [!NOTE]  
-> At the moment we do not provide the possibility to distinguish two devices of the same model, via USB and to avoid connection to the same device twice. 
+> At the moment we do not provide the possibility to distinguish two devices of the same model, via USB and to avoid connection to the same device twice.
 
 ### Setting up the SDK
 
