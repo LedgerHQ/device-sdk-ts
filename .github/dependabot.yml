@@ -7,10 +7,11 @@ updates:
       interval: "weekly"
       day: "monday"
     labels:
-      - "github-actions"
       - "dependencies"
     reviewers:
       - "LedgerHQ/live-devices"
+    commit-message:
+      prefix: "⬆️ (ci) [NO-ISSUE]: "
   # Maintain dependencies for pnpm
   - package-ecosystem: "npm"
     directory: "/"
@@ -18,7 +19,8 @@ updates:
       interval: "weekly"
       day: "sunday"
     labels:
-      - "pnpm"
       - "dependencies"
     reviewers:
       - "LedgerHQ/live-devices"
+    commit-message:
+      prefix: "⬆️ (repo) [NO-ISSUE]: "
