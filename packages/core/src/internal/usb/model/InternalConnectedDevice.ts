@@ -16,7 +16,7 @@ export type ConnectedDeviceConstructorArgs = {
 export class InternalConnectedDevice {
   public readonly id: DeviceId;
   public readonly deviceModel: InternalDeviceModel;
-  public readonly sendApdu: SendApduFnType;
+  public sendApdu: SendApduFnType;
   public readonly type: ConnectionType;
 
   constructor({

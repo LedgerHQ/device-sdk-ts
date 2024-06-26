@@ -1,7 +1,7 @@
 import * as Sentry from "@sentry/minimal";
 import { inject, injectable } from "inversify";
 import { Either, EitherAsync, Left, Maybe, Right } from "purify-ts";
-import { from, Observable, switchMap } from "rxjs";
+import { from, Observable, Subscription, switchMap, timer } from "rxjs";
 import { v4 as uuid } from "uuid";
 
 import { DeviceId } from "@api/device/DeviceModel";
@@ -10,7 +10,10 @@ import type { DeviceModelDataSource } from "@internal/device-model/data/DeviceMo
 import { deviceModelTypes } from "@internal/device-model/di/deviceModelTypes";
 import { loggerTypes } from "@internal/logger-publisher/di/loggerTypes";
 import type { LoggerPublisherService } from "@internal/logger-publisher/service/LoggerPublisherService";
-import { LEDGER_VENDOR_ID } from "@internal/usb/data/UsbHidConfig";
+import {
+  LEDGER_VENDOR_ID,
+  RECONNECT_DEVICE_TIMEOUT,
+} from "@internal/usb/data/UsbHidConfig";
 import { usbDiTypes } from "@internal/usb/di/usbDiTypes";
 import {
   ConnectError,
@@ -25,6 +28,7 @@ import {
 import { InternalConnectedDevice } from "@internal/usb/model/InternalConnectedDevice";
 import { InternalDiscoveredDevice } from "@internal/usb/model/InternalDiscoveredDevice";
 import { UsbHidDeviceConnectionFactory } from "@internal/usb/service/UsbHidDeviceConnectionFactory";
+import { DeviceConnection } from "@internal/usb/transport/DeviceConnection";
 
 import { UsbHidTransport } from "./UsbHidTransport";
 
@@ -37,14 +41,27 @@ type WebHidInternalDevice = {
 
 export type DisconnectHandler = (deviceId: DeviceId) => void;
 
+export type ReconnectHandler = (
+  deviceId: DeviceId,
+  deviceConnection: DeviceConnection,
+) => void;
+
 @injectable()
 export class WebUsbHidTransport implements UsbHidTransport {
   // Maps uncoupled DiscoveredDevice and WebHID's HIDDevice WebHID
   private _internalDevicesById: Map<DeviceId, WebHidInternalDevice>;
-  private _internalDisconnectionHandlersByHidId: Map<string, () => void>;
+  private _internalDisconnectionHandlersByHidId: Map<
+    string,
+    {
+      disconnect: () => void;
+      reconnect: (deviceConnection: DeviceConnection) => void;
+    }
+  >;
   private _connectionListenersAbortController: AbortController;
   private _logger: LoggerPublisherService;
   private _usbHidDeviceConnectionFactory: UsbHidDeviceConnectionFactory;
+  private _cancelDeviceDisconnectionTimerSubscription: Maybe<Subscription> =
+    Maybe.zero();
 
   constructor(
     @inject(deviceModelTypes.DeviceModelDataSource)
@@ -62,6 +79,7 @@ export class WebUsbHidTransport implements UsbHidTransport {
 
     this.hidApi.map((hidApi) => {
       hidApi.ondisconnect = this.handleDeviceDisconnectionEvent;
+      hidApi.onconnect = this.handleDeviceConnectionEvent;
     });
   }
 
@@ -268,9 +286,11 @@ export class WebUsbHidTransport implements UsbHidTransport {
   async connect({
     deviceId,
     onDisconnect,
+    onReconnect,
   }: {
     deviceId: DeviceId;
     onDisconnect: DisconnectHandler;
+    onReconnect: ReconnectHandler;
   }): Promise<Either<ConnectError, InternalConnectedDevice>> {
     this._logger.debug("connect", { data: { deviceId } });
 
@@ -310,8 +330,14 @@ export class WebUsbHidTransport implements UsbHidTransport {
       type: "USB",
     });
     this._internalDisconnectionHandlersByHidId.set(
-      internalDevice.hidDevice.productId.toString(),
-      () => onDisconnect(deviceId),
+      this.getHidUsbProductId(internalDevice.hidDevice.productId).toString(),
+      {
+        disconnect: () =>
+          this.disconnect({ connectedDevice }).then(() =>
+            onDisconnect(deviceId),
+          ),
+        reconnect: (device) => onReconnect(deviceId, device),
+      },
     );
 
     return Right(connectedDevice);
@@ -324,6 +350,9 @@ export class WebUsbHidTransport implements UsbHidTransport {
     return productId >> 8;
   }
 
+  /**
+   * Disconnect from a HID USB device and delete its handlers
+   */
   async disconnect(params: {
     connectedDevice: InternalConnectedDevice;
   }): Promise<Either<SdkError, void>> {
@@ -340,56 +369,96 @@ export class WebUsbHidTransport implements UsbHidTransport {
     }
 
     try {
-      await internalDevice.hidDevice.close();
       this._internalDevicesById.delete(internalDevice.id);
+      this._internalDisconnectionHandlersByHidId.delete(
+        this.getHidUsbProductId(internalDevice.hidDevice.productId).toString(),
+      );
+      await internalDevice.hidDevice.close();
       return Right(void 0);
     } catch (error) {
       return Left(new DisconnectError(error));
     }
   }
 
+  /**
+   * Type guard to check if the event is a HID connection event
+   * @param event
+   * @private
+   */
+  private isHIDConnectionEvent(event: Event): event is HIDConnectionEvent {
+    return (
+      "device" in event &&
+      typeof event.device === "object" &&
+      event.device !== null &&
+      "productId" in event.device &&
+      typeof event.device.productId === "number"
+    );
+  }
+
+  /**
+   * Handle the disconnection event of a HID device
+   * @param event
+   */
   private handleDeviceDisconnectionEvent = (event: Event) => {
-    if (
-      !(
-        "device" in event &&
-        typeof event.device === "object" &&
-        event.device !== null &&
-        "productId" in event.device &&
-        typeof event.device.productId === "number"
-      )
-    ) {
+    if (!this.isHIDConnectionEvent(event)) {
       this._logger.error("Invalid event", { data: { event } });
       return;
     }
+    const {
+      device: { productId },
+    } = event;
 
-    this._logger.info("handleDeviceDisconnectionEvent", { data: { event } });
+    // If the device is disconnected, we start a timer to reconnect it
+    this._logger.debug(`Start delay of ${RECONNECT_DEVICE_TIMEOUT}ms`);
+    this._cancelDeviceDisconnectionTimerSubscription = Maybe.of(
+      timer(RECONNECT_DEVICE_TIMEOUT).subscribe(() => {
+        this._logger.debug("Disconnecting device");
 
-    const hidDevice = event.device;
-    // This is temporary, it should be correctly inferred after updating TypeScript
-    const productId = event.device.productId;
+        const maybeDisconnectHandler = Maybe.fromNullable(
+          this._internalDisconnectionHandlersByHidId.get(
+            this.getHidUsbProductId(productId).toString(),
+          ),
+        );
 
-    const maybeInternalDevice = Maybe.fromFalsy(
-      Array.from(this._internalDevicesById.values()).find(
-        (iDevice) => iDevice.hidDevice.productId === hidDevice.productId,
+        maybeDisconnectHandler.map((handler) => {
+          handler.disconnect();
+        });
+        this._cancelDeviceDisconnectionTimerSubscription = Maybe.zero();
+      }),
+    );
+  };
+
+  /**
+   * Handle the connection event of a HID device
+   * @param event
+   */
+  private handleDeviceConnectionEvent = async (event: Event) => {
+    if (!this.isHIDConnectionEvent(event)) {
+      this._logger.error("Invalid event", { data: { event } });
+      return;
+    }
+    const maybeDisconnectHandler = Maybe.fromNullable(
+      this._internalDisconnectionHandlersByHidId.get(
+        this.getHidUsbProductId(event.device.productId).toString(),
       ),
     );
 
-    maybeInternalDevice.map(async (internalDevice) => {
-      try {
-        await internalDevice.hidDevice.close();
-        this._internalDevicesById.delete(internalDevice.id);
-      } catch (error) {
-        this._logger.error("Error while closing device from event", {
-          data: { error },
-        });
-      }
-    });
-    const maybeDisconnectHandler = Maybe.fromNullable(
-      this._internalDisconnectionHandlersByHidId.get(productId.toString()),
-    );
-    maybeDisconnectHandler.map((handler) => {
-      handler();
-      this._internalDisconnectionHandlersByHidId.delete(productId.toString());
-    });
+    // If the device has a disconnection handler, we cancel the disconnection timer and reconnect
+    try {
+      await event.device.open();
+      maybeDisconnectHandler.map((handler) => {
+        this._cancelDeviceDisconnectionTimerSubscription.map((subscription) =>
+          subscription.unsubscribe(),
+        );
+        // New device connection to handle product id change
+        handler.reconnect(
+          this._usbHidDeviceConnectionFactory.create(event.device),
+        );
+      });
+    } catch (error) {
+      this._logger.error("Error while reconnecting to device", {
+        data: { event, error },
+      });
+    }
   };
 }

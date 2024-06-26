@@ -6,7 +6,10 @@ import { SdkError } from "@api/Error";
 import { ConnectError } from "@internal/usb/model/Errors";
 import { InternalConnectedDevice } from "@internal/usb/model/InternalConnectedDevice";
 import { InternalDiscoveredDevice } from "@internal/usb/model/InternalDiscoveredDevice";
-import type { DisconnectHandler } from "@internal/usb/transport/WebUsbHidTransport";
+import type {
+  DisconnectHandler,
+  ReconnectHandler,
+} from "@internal/usb/transport/WebUsbHidTransport";
 
 /**
  * Transport interface representing a USB HID communication
@@ -27,6 +30,7 @@ export interface UsbHidTransport {
   connect(params: {
     deviceId: DeviceId;
     onDisconnect: DisconnectHandler;
+    onReconnect: ReconnectHandler;
   }): Promise<Either<ConnectError, InternalConnectedDevice>>;
 
   disconnect(params: {

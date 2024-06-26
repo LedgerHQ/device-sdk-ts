@@ -52,7 +52,11 @@ export class UsbHidDeviceConnection implements DeviceConnection {
       this._logger.debug("Sending Frame", {
         data: { frame: frame.getRawData() },
       });
-      await this._device.sendReport(0, frame.getRawData());
+      try {
+        await this._device.sendReport(0, frame.getRawData());
+      } catch (error) {
+        this._logger.error("Error sending frame", { data: { error } });
+      }
     }
 
     return new Promise((resolve) => {

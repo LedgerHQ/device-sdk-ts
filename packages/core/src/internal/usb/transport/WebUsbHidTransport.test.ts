@@ -3,6 +3,7 @@ import { Left, Right } from "purify-ts";
 import { DeviceModel, DeviceModelId } from "@api/device/DeviceModel";
 import { StaticDeviceModelDataSource } from "@internal/device-model/data/StaticDeviceModelDataSource";
 import { DefaultLoggerPublisherService } from "@internal/logger-publisher/service/DefaultLoggerPublisherService";
+import { RECONNECT_DEVICE_TIMEOUT } from "@internal/usb/data/UsbHidConfig";
 import {
   DeviceNotRecognizedError,
   NoAccessibleDeviceError,
@@ -239,7 +240,11 @@ describe("WebUsbHidTransport", () => {
 
     describe("connect", () => {
       it("should throw UnknownDeviceError if no internal device", async () => {
-        const connectParams = { deviceId: "fake", onDisconnect: jest.fn() };
+        const connectParams = {
+          deviceId: "fake",
+          onDisconnect: jest.fn(),
+          onReconnect: jest.fn(),
+        };
 
         const connect = await transport.connect(connectParams);
 
@@ -249,7 +254,11 @@ describe("WebUsbHidTransport", () => {
       });
 
       it("should throw OpeningConnectionError if the device is already opened", async () => {
-        const device = { deviceId: "fake", onDisconnect: jest.fn() };
+        const device = {
+          deviceId: "fake",
+          onDisconnect: jest.fn(),
+          onReconnect: jest.fn(),
+        };
 
         const connect = await transport.connect(device);
 
@@ -275,6 +284,7 @@ describe("WebUsbHidTransport", () => {
               .connect({
                 deviceId: discoveredDevice.id,
                 onDisconnect: jest.fn(),
+                onReconnect: jest.fn(),
               })
               .then((value) => {
                 expect(value).toStrictEqual(
@@ -309,6 +319,7 @@ describe("WebUsbHidTransport", () => {
               .connect({
                 deviceId: discoveredDevice.id,
                 onDisconnect: jest.fn(),
+                onReconnect: jest.fn(),
               })
               .then((connectedDevice) => {
                 connectedDevice
@@ -341,6 +352,7 @@ describe("WebUsbHidTransport", () => {
               .connect({
                 deviceId: discoveredDevice.id,
                 onDisconnect: jest.fn(),
+                onReconnect: jest.fn(),
               })
               .then((connectedDevice) => {
                 connectedDevice
@@ -366,6 +378,9 @@ describe("WebUsbHidTransport", () => {
     });
 
     describe("disconnect", () => {
+      beforeAll(() => {
+        jest.useFakeTimers();
+      });
       it("should throw an error if the device is not connected", async () => {
         // given
         const connectedDevice = connectedDeviceStubBuilder();
@@ -389,6 +404,7 @@ describe("WebUsbHidTransport", () => {
               .connect({
                 deviceId: discoveredDevice.id,
                 onDisconnect: jest.fn(),
+                onReconnect: jest.fn(),
               })
               .then((connectedDevice) => {
                 connectedDevice
@@ -420,6 +436,8 @@ describe("WebUsbHidTransport", () => {
       it("should call disconnect handler if a connected device is unplugged", (done) => {
         // given
         const onDisconnect = jest.fn();
+        const onReconnect = jest.fn();
+        const disconnectSpy = jest.spyOn(transport, "disconnect");
         mockedRequestDevice.mockResolvedValueOnce([stubDevice]);
 
         // when
@@ -429,6 +447,7 @@ describe("WebUsbHidTransport", () => {
               .connect({
                 deviceId: discoveredDevice.id,
                 onDisconnect,
+                onReconnect,
               })
               .then(() => {
                 // @ts-expect-error trying to access private member
@@ -436,8 +455,9 @@ describe("WebUsbHidTransport", () => {
                   device: { productId: stubDevice.productId },
                 } as Event);
 
+                jest.advanceTimersByTime(RECONNECT_DEVICE_TIMEOUT);
                 // then
-                expect(onDisconnect).toHaveBeenCalled();
+                expect(disconnectSpy).toHaveBeenCalled();
                 done();
               })
               .catch((error) => {
