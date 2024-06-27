@@ -92,6 +92,24 @@ describe("HttpExternalPuginDataSource", () => {
     expect(result).toEqual(undefined);
   });
 
+  it("should return undefined when no selectors", async () => {
+    // GIVEN
+    const response = axiosResponseBuilder([
+      { abis: exampleAbis, b2c_signatures: exampleB2cSignatures },
+    ]);
+    jest.spyOn(axios, "request").mockResolvedValue(response);
+
+    // WHEN
+    const result = await datasource.getDappInfos({
+      chainId: 1,
+      address: "0x0",
+      selector: "0x01",
+    });
+
+    // THEN
+    expect(result).toEqual(undefined);
+  });
+
   it("should return undefined when no abis data", async () => {
     // GIVEN
     const response = axiosResponseBuilder([
