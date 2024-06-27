@@ -1,0 +1,13 @@
+{
+  "extends": "@ledgerhq/tsconfig-dsdk/sdk",
+  "compilerOptions": {
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["src/*"],
+      "@root/*": ["./*"]
+    },
+    "experimentalDecorators": true,
+    "resolveJsonModule": true
+  },
+  "include": ["src", "index.ts"]
+}
