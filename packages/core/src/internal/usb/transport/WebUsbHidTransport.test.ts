@@ -13,6 +13,7 @@ import {
 } from "@internal/usb/model/Errors";
 import { hidDeviceStubBuilder } from "@internal/usb/model/HIDDevice.stub";
 import { connectedDeviceStubBuilder } from "@internal/usb/model/InternalConnectedDevice.stub";
+import { InternalDiscoveredDevice } from "@internal/usb/model/InternalDiscoveredDevice";
 import { usbHidDeviceConnectionFactoryStubBuilder } from "@internal/usb/service/UsbHidDeviceConnectionFactory.stub";
 
 import { WebUsbHidTransport } from "./WebUsbHidTransport";
@@ -34,11 +35,22 @@ describe("WebUsbHidTransport", () => {
       () => logger,
       usbHidDeviceConnectionFactoryStubBuilder(),
     );
+    jest.useFakeTimers();
   });
 
   afterEach(() => {
     jest.restoreAllMocks();
   });
+
+  const discoverDevice = (
+    onSuccess: (discoveredDevice: InternalDiscoveredDevice) => void,
+    onError?: (error: unknown) => void,
+  ) => {
+    transport.startDiscovering().subscribe({
+      next: onSuccess,
+      error: onError,
+    });
+  };
 
   describe("When WebHID API is not supported", () => {
     it("should not support the transport", () => {
@@ -46,15 +58,15 @@ describe("WebUsbHidTransport", () => {
     });
 
     it("should emit a startDiscovering error", (done) => {
-      transport.startDiscovering().subscribe({
-        next: () => {
+      discoverDevice(
+        () => {
           done("Should not emit any value");
         },
-        error: (error) => {
+        (error) => {
           expect(error).toBeInstanceOf(UsbHidTransportNotSupportedError);
           done();
         },
-      });
+      );
     });
   });
 
@@ -86,8 +98,8 @@ describe("WebUsbHidTransport", () => {
       it("should emit device if one new grant access", (done) => {
         mockedRequestDevice.mockResolvedValueOnce([stubDevice]);
 
-        transport.startDiscovering().subscribe({
-          next: (discoveredDevice) => {
+        discoverDevice(
+          (discoveredDevice) => {
             try {
               expect(discoveredDevice).toEqual(
                 expect.objectContaining({
@@ -104,10 +116,10 @@ describe("WebUsbHidTransport", () => {
               done(expectError);
             }
           },
-          error: (error) => {
+          (error) => {
             done(error);
           },
-        });
+        );
       });
 
       // It does not seem possible for a user to select several devices on the browser popup.
@@ -123,8 +135,8 @@ describe("WebUsbHidTransport", () => {
         ]);
 
         let count = 0;
-        transport.startDiscovering().subscribe({
-          next: (discoveredDevice) => {
+        discoverDevice(
+          (discoveredDevice) => {
             try {
               switch (count) {
                 case 0:
@@ -158,10 +170,10 @@ describe("WebUsbHidTransport", () => {
               done(expectError);
             }
           },
-          error: (error) => {
+          (error) => {
             done(error);
           },
-        });
+        );
       });
 
       it("should throw DeviceNotRecognizedError if the device is not recognized", (done) => {
@@ -172,15 +184,15 @@ describe("WebUsbHidTransport", () => {
           },
         ]);
 
-        transport.startDiscovering().subscribe({
-          next: () => {
+        discoverDevice(
+          () => {
             done("should not return a device");
           },
-          error: (error) => {
+          (error) => {
             expect(error).toBeInstanceOf(DeviceNotRecognizedError);
             done();
           },
-        });
+        );
       });
 
       it("should emit an error if the request device is in error", (done) => {
@@ -189,18 +201,18 @@ describe("WebUsbHidTransport", () => {
           throw new Error(message);
         });
 
-        transport.startDiscovering().subscribe({
-          next: () => {
+        discoverDevice(
+          () => {
             done("should not return a device");
           },
-          error: (error) => {
+          (error) => {
             expect(error).toBeInstanceOf(NoAccessibleDeviceError);
             expect(error).toStrictEqual(
               new NoAccessibleDeviceError(new Error(message)),
             );
             done();
           },
-        });
+        );
       });
 
       // [ASK] Is this the behavior we want when the user does not select any device ?
@@ -208,15 +220,15 @@ describe("WebUsbHidTransport", () => {
         // When the user does not select any device, the `requestDevice` will return an empty array
         mockedRequestDevice.mockResolvedValueOnce([]);
 
-        transport.startDiscovering().subscribe({
-          next: (discoveredDevice) => {
+        discoverDevice(
+          (discoveredDevice) => {
             done(
               `Should not emit any value, but emitted ${JSON.stringify(
                 discoveredDevice,
               )}`,
             );
           },
-          error: (error) => {
+          (error) => {
             try {
               expect(error).toBeInstanceOf(NoAccessibleDeviceError);
               done();
@@ -224,7 +236,7 @@ describe("WebUsbHidTransport", () => {
               done(expectError);
             }
           },
-        });
+        );
       });
     });
 
@@ -243,7 +255,6 @@ describe("WebUsbHidTransport", () => {
         const connectParams = {
           deviceId: "fake",
           onDisconnect: jest.fn(),
-          onReconnect: jest.fn(),
         };
 
         const connect = await transport.connect(connectParams);
@@ -257,7 +268,6 @@ describe("WebUsbHidTransport", () => {
         const device = {
           deviceId: "fake",
           onDisconnect: jest.fn(),
-          onReconnect: jest.fn(),
         };
 
         const connect = await transport.connect(device);
@@ -278,13 +288,12 @@ describe("WebUsbHidTransport", () => {
           },
         ]);
 
-        transport.startDiscovering().subscribe({
-          next: (discoveredDevice) => {
+        discoverDevice(
+          (discoveredDevice) => {
             transport
               .connect({
                 deviceId: discoveredDevice.id,
                 onDisconnect: jest.fn(),
-                onReconnect: jest.fn(),
               })
               .then((value) => {
                 expect(value).toStrictEqual(
@@ -296,10 +305,10 @@ describe("WebUsbHidTransport", () => {
                 done(error);
               });
           },
-          error: (error) => {
+          (error) => {
             done(error);
           },
-        });
+        );
       });
 
       it("should return the opened device", (done) => {
@@ -313,13 +322,12 @@ describe("WebUsbHidTransport", () => {
           },
         ]);
 
-        transport.startDiscovering().subscribe({
-          next: (discoveredDevice) => {
+        discoverDevice(
+          (discoveredDevice) => {
             transport
               .connect({
                 deviceId: discoveredDevice.id,
                 onDisconnect: jest.fn(),
-                onReconnect: jest.fn(),
               })
               .then((connectedDevice) => {
                 connectedDevice
@@ -337,22 +345,21 @@ describe("WebUsbHidTransport", () => {
                 done(error);
               });
           },
-          error: (error) => {
+          (error) => {
             done(error);
           },
-        });
+        );
       });
 
       it("should return a device if available", (done) => {
         mockedRequestDevice.mockResolvedValueOnce([stubDevice]);
 
-        transport.startDiscovering().subscribe({
-          next: (discoveredDevice) => {
+        discoverDevice(
+          (discoveredDevice) => {
             transport
               .connect({
                 deviceId: discoveredDevice.id,
                 onDisconnect: jest.fn(),
-                onReconnect: jest.fn(),
               })
               .then((connectedDevice) => {
                 connectedDevice
@@ -370,17 +377,14 @@ describe("WebUsbHidTransport", () => {
                 done(error);
               });
           },
-          error: (error) => {
+          (error) => {
             done(error);
           },
-        });
+        );
       });
     });
 
     describe("disconnect", () => {
-      beforeAll(() => {
-        jest.useFakeTimers();
-      });
       it("should throw an error if the device is not connected", async () => {
         // given
         const connectedDevice = connectedDeviceStubBuilder();
@@ -398,13 +402,12 @@ describe("WebUsbHidTransport", () => {
       it("should disconnect if the device is connected", (done) => {
         mockedRequestDevice.mockResolvedValueOnce([stubDevice]);
 
-        transport.startDiscovering().subscribe({
-          next: (discoveredDevice) => {
+        discoverDevice(
+          (discoveredDevice) => {
             transport
               .connect({
                 deviceId: discoveredDevice.id,
                 onDisconnect: jest.fn(),
-                onReconnect: jest.fn(),
               })
               .then((connectedDevice) => {
                 connectedDevice
@@ -427,16 +430,15 @@ describe("WebUsbHidTransport", () => {
                 done(error);
               });
           },
-          error: (error) => {
+          (error) => {
             done(error);
           },
-        });
+        );
       });
 
       it("should call disconnect handler if a connected device is unplugged", (done) => {
         // given
         const onDisconnect = jest.fn();
-        const onReconnect = jest.fn();
         const disconnectSpy = jest.spyOn(transport, "disconnect");
         mockedRequestDevice.mockResolvedValueOnce([stubDevice]);
 
@@ -447,13 +449,12 @@ describe("WebUsbHidTransport", () => {
               .connect({
                 deviceId: discoveredDevice.id,
                 onDisconnect,
-                onReconnect,
               })
               .then(() => {
                 // @ts-expect-error trying to access private member
                 transport.handleDeviceDisconnectionEvent({
-                  device: { productId: stubDevice.productId },
-                } as Event);
+                  device: stubDevice,
+                } as HIDConnectionEvent);
 
                 jest.advanceTimersByTime(RECONNECT_DEVICE_TIMEOUT);
                 // then
@@ -465,6 +466,65 @@ describe("WebUsbHidTransport", () => {
               });
           },
         });
+      });
+    });
+
+    describe("reconnect", () => {
+      it("should stop disconnection if reconnection happen", (done) => {
+        // given
+        const onDisconnect = jest.fn();
+        const disconnectSpy = jest.spyOn(transport, "disconnect");
+        mockedRequestDevice.mockResolvedValueOnce([stubDevice]);
+
+        // when
+        discoverDevice((discoveredDevice) => {
+          transport
+            .connect({
+              deviceId: discoveredDevice.id,
+              onDisconnect,
+            })
+            .then(() => {
+              // @ts-expect-error trying to access private member
+              transport.handleDeviceDisconnectionEvent({
+                device: stubDevice,
+              } as HIDConnectionEvent);
+              jest.advanceTimersByTime(RECONNECT_DEVICE_TIMEOUT / 3);
+              // @ts-expect-error trying to access private member
+              transport.handleDeviceDisconnectionEvent({
+                device: stubDevice,
+              } as HIDConnectionEvent);
+
+              // then
+              expect(disconnectSpy).toHaveBeenCalledTimes(0);
+              expect(stubDevice.open).toHaveBeenCalled();
+              done();
+            })
+            .catch((error) => {
+              done(error);
+            });
+        });
+      });
+    });
+    describe("Connection event typeguard", () => {
+      it("should validate type of an HIDConnectionEvent", () => {
+        // given
+        const event = {
+          device: stubDevice,
+        } as HIDConnectionEvent;
+        // when
+        // @ts-expect-error trying to access private member
+        const result = transport.isHIDConnectionEvent(event);
+        // then
+        expect(result).toBe(true);
+      });
+      it("should not validate type of another event", () => {
+        // given
+        const event = new Event("disconnect", {});
+        // when
+        // @ts-expect-error trying to access private member
+        const result = transport.isHIDConnectionEvent(event);
+        // then
+        expect(result).toBe(false);
       });
     });
   });
