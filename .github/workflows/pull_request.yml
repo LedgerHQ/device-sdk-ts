@@ -37,7 +37,7 @@ jobs:
   health-check:
     name: Run health check
     needs: [danger]
-    runs-on: device-sdk-4xlarge-linux
+    runs-on: ledgerhq-device-sdk
     steps:
       - uses: actions/checkout@v4
 
@@ -49,7 +49,7 @@ jobs:
   unit-tests:
     name: Run unit tests
     needs: [danger]
-    runs-on: device-sdk-4xlarge-linux
+    runs-on: ledgerhq-device-sdk
     steps:
       - uses: actions/checkout@v4
 
