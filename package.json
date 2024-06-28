@@ -19,7 +19,7 @@
     "typecheck": "turbo run typecheck",
     "health-check": "turbo run health-check --output-logs=errors-only --continue",
     "core": "pnpm --filter @ledgerhq/device-sdk-core",
-    "signer": "pnpm --filter @ledgerhq/device-sdk-signer",
+    "context-module": "pnpm --filter @ledgerhq/context-module",
     "trusted-apps": "pnpm --filter @ledgerhq/device-sdk-trusted-apps",
     "ui": "pnpm --filter @ledgerhq/device-sdk-ui",
     "sample": "pnpm --filter @ledgerhq/device-sdk-sample",
