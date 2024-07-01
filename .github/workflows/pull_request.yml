@@ -38,7 +38,7 @@ jobs:
     name: Run health check
     needs: [danger]
     if: ${{ !failure() && !cancelled() }}
-    runs-on: device-sdk-4xlarge-linux
+    runs-on: ledgerhq-device-sdk
     steps:
       - uses: actions/checkout@v4
 
@@ -51,7 +51,7 @@ jobs:
     name: Run unit tests
     needs: [danger]
     if: ${{ !failure() && !cancelled() }}
-    runs-on: device-sdk-4xlarge-linux
+    runs-on: ledgerhq-device-sdk
     steps:
       - uses: actions/checkout@v4
 
