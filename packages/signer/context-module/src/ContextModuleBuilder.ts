@@ -1,36 +1,33 @@
-import { HttpExternalPluginDataSource } from "./external-plugin/data/HttpExternalPluginDataSource";
+import { externalPluginTypes } from "@/external-plugin/di/externalPluginTypes";
+import { forwardDomainTypes } from "@/forward-domain/di/forwardDomainTypes";
+import { nftTypes } from "@/nft/di/nftTypes";
+import { tokenTypes } from "@/token/di/tokenTypes";
+
 import { ExternalPluginContextLoader } from "./external-plugin/domain/ExternalPluginContextLoader";
-import { HttpForwardDomainDataSource } from "./forward-domain/data/HttpForwardDomainDataSource";
 import { ForwardDomainContextLoader } from "./forward-domain/domain/ForwardDomainContextLoader";
-import { HttpNftDataSource } from "./nft/data/HttpNftDataSource";
 import { NftContextLoader } from "./nft/domain/NftContextLoader";
 import { ContextLoader } from "./shared/domain/ContextLoader";
-import { HttpTokenDataSource } from "./token/data/HttpTokenDataSource";
 import { TokenContextLoader } from "./token/domain/TokenContextLoader";
 import { ContextModule } from "./ContextModule";
 import { DefaultContextModule } from "./DefaultContextModule";
+import { makeContainer } from "./di";
 
 export class ContextModuleBuilder {
   private customLoaders: ContextLoader[] = [];
   private defaultLoaders: ContextLoader[] = [];
 
   constructor() {
-    const tokenDataSource = new HttpTokenDataSource();
-    const tokenLoader = new TokenContextLoader(tokenDataSource);
-    const nftLoader = new NftContextLoader(new HttpNftDataSource());
-    const forwardDomainLoader = new ForwardDomainContextLoader(
-      new HttpForwardDomainDataSource(),
-    );
-    const externalPluginLoader = new ExternalPluginContextLoader(
-      new HttpExternalPluginDataSource(),
-      tokenDataSource,
-    );
+    const container = makeContainer();
 
     this.defaultLoaders = [
-      tokenLoader,
-      nftLoader,
-      forwardDomainLoader,
-      externalPluginLoader,
+      container.get<ExternalPluginContextLoader>(
+        externalPluginTypes.ExternalPluginDataSource,
+      ),
+      container.get<ForwardDomainContextLoader>(
+        forwardDomainTypes.ForwardDomainDataSource,
+      ),
+      container.get<NftContextLoader>(nftTypes.NftDataSource),
+      container.get<TokenContextLoader>(tokenTypes.TokenDataSource),
     ];
   }
 

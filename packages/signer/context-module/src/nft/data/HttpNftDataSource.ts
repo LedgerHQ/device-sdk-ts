@@ -1,4 +1,5 @@
 import axios from "axios";
+import { injectable } from "inversify";
 
 import {
   GetNftInformationsParams,
@@ -7,6 +8,7 @@ import {
 } from "@/nft/data/NftDataSource";
 import PACKAGE from "@root/package.json";
 
+@injectable()
 export class HttpNftDataSource implements NftDataSource {
   public async getSetPluginPayload({
     chainId,

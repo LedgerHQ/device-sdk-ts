@@ -1,4 +1,5 @@
 import axios from "axios";
+import { injectable } from "inversify";
 
 import {
   ForwardDomainDataSource,
@@ -6,6 +7,7 @@ import {
 } from "@/forward-domain/data/ForwardDomainDataSource";
 import PACKAGE from "@root/package.json";
 
+@injectable()
 export class HttpForwardDomainDataSource implements ForwardDomainDataSource {
   public async getDomainNamePayload({
     domain,

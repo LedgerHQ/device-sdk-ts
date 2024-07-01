@@ -1,4 +1,5 @@
 import axios from "axios";
+import { injectable } from "inversify";
 
 import { DAppDto } from "@/external-plugin/data/DAppDto";
 import {
@@ -9,6 +10,7 @@ import { DappInfos } from "@/external-plugin/model/DappInfos";
 import { SelectorDetails } from "@/external-plugin/model/SelectorDetails";
 import PACKAGE from "@root/package.json";
 
+@injectable()
 export class HttpExternalPluginDataSource implements ExternalPluginDataSource {
   constructor() {}
 

@@ -1,7 +1,10 @@
+import { inject } from "inversify";
+
 import { ContextLoader } from "@/shared/domain/ContextLoader";
 import { ClearSignContext } from "@/shared/model/ClearSignContext";
 import { TransactionContext } from "@/shared/model/TransactionContext";
-import { TokenDataSource } from "@/token/data/TokenDataSource";
+import type { TokenDataSource } from "@/token/data/TokenDataSource";
+import { tokenTypes } from "@/token/di/tokenTypes";
 
 export enum ERC20_SUPPORTED_SELECTORS {
   Approve = "0x095ea7b3",
@@ -15,7 +18,7 @@ const SUPPORTED_SELECTORS: `0x${string}`[] = Object.values(
 export class TokenContextLoader implements ContextLoader {
   private _dataSource: TokenDataSource;
 
-  constructor(dataSource: TokenDataSource) {
+  constructor(@inject(tokenTypes.TokenDataSource) dataSource: TokenDataSource) {
     this._dataSource = dataSource;
   }
 

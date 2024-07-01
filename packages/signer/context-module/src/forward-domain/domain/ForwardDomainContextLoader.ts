@@ -1,4 +1,6 @@
-import { ForwardDomainDataSource } from "@/forward-domain/data/ForwardDomainDataSource";
+import { inject } from "inversify";
+
+import type { ForwardDomainDataSource } from "@/forward-domain/data/ForwardDomainDataSource";
 import { ContextLoader } from "@/shared/domain/ContextLoader";
 import { ClearSignContext } from "@/shared/model/ClearSignContext";
 import { TransactionContext } from "@/shared/model/TransactionContext";
@@ -6,7 +8,9 @@ import { TransactionContext } from "@/shared/model/TransactionContext";
 export class ForwardDomainContextLoader implements ContextLoader {
   private _dataSource: ForwardDomainDataSource;
 
-  constructor(dataSource: ForwardDomainDataSource) {
+  constructor(
+    @inject("ForwardDomainDataSource") dataSource: ForwardDomainDataSource,
+  ) {
     this._dataSource = dataSource;
   }
 

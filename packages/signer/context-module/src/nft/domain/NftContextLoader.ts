@@ -1,4 +1,6 @@
-import { NftDataSource } from "@/nft/data/NftDataSource";
+import { inject } from "inversify";
+
+import type { NftDataSource } from "@/nft/data/NftDataSource";
 import { ContextLoader } from "@/shared/domain/ContextLoader";
 import { ClearSignContext } from "@/shared/model/ClearSignContext";
 import { TransactionContext } from "@/shared/model/TransactionContext";
@@ -25,7 +27,7 @@ const SUPPORTED_SELECTORS: `0x${string}`[] = [
 export class NftContextLoader implements ContextLoader {
   private _dataSource: NftDataSource;
 
-  constructor(dataSource: NftDataSource) {
+  constructor(@inject("NftDataSource") dataSource: NftDataSource) {
     this._dataSource = dataSource;
   }
 

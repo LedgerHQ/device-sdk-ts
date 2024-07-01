@@ -1,10 +1,12 @@
 import axios from "axios";
+import { injectable } from "inversify";
 
 import PACKAGE from "@root/package.json";
 
 import { GetTokenInfosParams, TokenDataSource } from "./TokenDataSource";
 import { TokenDto } from "./TokenDto";
 
+@injectable()
 export class HttpTokenDataSource implements TokenDataSource {
   public async getTokenInfosPayload({
     chainId,
