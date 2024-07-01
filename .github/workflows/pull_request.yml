@@ -37,6 +37,7 @@ jobs:
   health-check:
     name: Run health check
     needs: [danger]
+    if: ${{ !failure() && !cancelled() }}
     runs-on: device-sdk-4xlarge-linux
     steps:
       - uses: actions/checkout@v4
@@ -49,6 +50,7 @@ jobs:
   unit-tests:
     name: Run unit tests
     needs: [danger]
+    if: ${{ !failure() && !cancelled() }}
     runs-on: device-sdk-4xlarge-linux
     steps:
       - uses: actions/checkout@v4
