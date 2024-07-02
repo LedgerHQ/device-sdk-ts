@@ -214,6 +214,9 @@ importers:
       inversify:
         specifier: ^6.0.2
         version: 6.0.2
+      purify-ts:
+        specifier: ^2.0.3
+        version: 2.0.3
       reflect-metadata:
         specifier: ^0.2.2
         version: 0.2.2

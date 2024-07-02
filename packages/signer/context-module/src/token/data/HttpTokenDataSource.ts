@@ -1,5 +1,6 @@
 import axios from "axios";
 import { injectable } from "inversify";
+import { Either, Left, Right } from "purify-ts";
 
 import PACKAGE from "@root/package.json";
 
@@ -11,7 +12,7 @@ export class HttpTokenDataSource implements TokenDataSource {
   public async getTokenInfosPayload({
     chainId,
     address,
-  }: GetTokenInfosParams): Promise<string | undefined> {
+  }: GetTokenInfosParams): Promise<Either<Error, string | undefined>> {
     try {
       const response = await axios.request<TokenDto[]>({
         method: "GET",
@@ -33,7 +34,7 @@ export class HttpTokenDataSource implements TokenDataSource {
         !tokenInfos.ticker ||
         !tokenInfos.decimals
       ) {
-        return;
+        return Right(undefined);
       }
 
       // 1 byte for the length of the ticker
@@ -57,16 +58,18 @@ export class HttpTokenDataSource implements TokenDataSource {
       // bufferized live signature
       const liveSignatureBuff = Buffer.from(tokenInfos.live_signature, "hex");
 
-      return Buffer.concat([
-        tickerLengthBuff,
-        tickerBuff,
-        addressBuff,
-        decimalsBuff,
-        chainIdBuff,
-        liveSignatureBuff,
-      ]).toString("hex");
+      return Right(
+        Buffer.concat([
+          tickerLengthBuff,
+          tickerBuff,
+          addressBuff,
+          decimalsBuff,
+          chainIdBuff,
+          liveSignatureBuff,
+        ]).toString("hex"),
+      );
     } catch (error) {
-      return;
+      return Left(new Error("Failed to fetch token informations"));
     }
   }
 }

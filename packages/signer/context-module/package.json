@@ -50,6 +50,7 @@
     "axios": "^1.7.2",
     "ethers": "^5.7.2",
     "inversify": "^6.0.2",
+    "purify-ts": "^2.0.3",
     "reflect-metadata": "^0.2.2"
   }
 }

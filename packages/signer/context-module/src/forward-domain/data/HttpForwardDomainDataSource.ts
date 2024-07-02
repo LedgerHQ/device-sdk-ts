@@ -1,5 +1,6 @@
 import axios from "axios";
 import { injectable } from "inversify";
+import { Either, Left, Right } from "purify-ts";
 
 import {
   ForwardDomainDataSource,
@@ -12,7 +13,7 @@ export class HttpForwardDomainDataSource implements ForwardDomainDataSource {
   public async getDomainNamePayload({
     domain,
     challenge,
-  }: GetForwardDomainInfosParams): Promise<string | undefined> {
+  }: GetForwardDomainInfosParams): Promise<Either<Error, string | undefined>> {
     try {
       const response = await axios.request<{ payload: string }>({
         method: "GET",
@@ -22,9 +23,9 @@ export class HttpForwardDomainDataSource implements ForwardDomainDataSource {
         },
       });
 
-      return response.data.payload;
+      return Right(response.data.payload);
     } catch (error) {
-      return;
+      return Left(new Error("Failed to fetch domain name"));
     }
   }
 }

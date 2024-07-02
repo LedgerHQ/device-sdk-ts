@@ -1,5 +1,6 @@
 import axios from "axios";
 import { injectable } from "inversify";
+import { Either, Left, Right } from "purify-ts";
 
 import {
   GetNftInformationsParams,
@@ -14,7 +15,7 @@ export class HttpNftDataSource implements NftDataSource {
     chainId,
     address,
     selector,
-  }: GetSetPluginPayloadParams): Promise<string | undefined> {
+  }: GetSetPluginPayloadParams): Promise<Either<Error, string | undefined>> {
     try {
       const response = await axios.request<{ payload: string }>({
         method: "GET",
@@ -24,16 +25,16 @@ export class HttpNftDataSource implements NftDataSource {
         },
       });
 
-      return response.data.payload;
+      return Right(response.data.payload);
     } catch (error) {
-      return;
+      return Left(new Error("Failed to fetch set plugin payload"));
     }
   }
 
   public async getNftInfosPayload({
     chainId,
     address,
-  }: GetNftInformationsParams) {
+  }: GetNftInformationsParams): Promise<Either<Error, string | undefined>> {
     try {
       const response = await axios.request<{ payload: string }>({
         method: "GET",
@@ -43,9 +44,9 @@ export class HttpNftDataSource implements NftDataSource {
         },
       });
 
-      return response.data.payload;
+      return Right(response.data.payload);
     } catch (error) {
-      return;
+      return Left(new Error("Failed to fetch nft informations"));
     }
   }
 }

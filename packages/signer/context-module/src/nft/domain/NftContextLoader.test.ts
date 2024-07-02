@@ -1,3 +1,5 @@
+import { Left, Right } from "purify-ts";
+
 import { NftDataSource } from "@/nft/data/NftDataSource";
 import { NftContextLoader } from "@/nft/domain/NftContextLoader";
 import { TransactionContext } from "@/shared/model/TransactionContext";
@@ -63,8 +65,8 @@ describe("NftContextLoader", () => {
       const transaction = {
         to: "0xdAC17F958D2ee523a2206206994597C13D831ec7",
         data: "0x095ea7b30000000000000",
-      } as unknown as TransactionContext;
-      spyGetPluginPayload.mockResolvedValueOnce(undefined);
+      } as TransactionContext;
+      spyGetPluginPayload.mockResolvedValueOnce(Right(undefined));
 
       const result = await loader.load(transaction);
 
@@ -83,8 +85,8 @@ describe("NftContextLoader", () => {
         to: "0xdAC17F958D2ee523a2206206994597C13D831ec7",
         data: "0x095ea7b30000000000000",
       } as unknown as TransactionContext;
-      spyGetPluginPayload.mockResolvedValueOnce("payload1");
-      spyGetNftInfosPayload.mockResolvedValueOnce(undefined);
+      spyGetPluginPayload.mockResolvedValueOnce(Right("payload1"));
+      spyGetNftInfosPayload.mockResolvedValueOnce(Right(undefined));
 
       const result = await loader.load(transaction);
 
@@ -112,13 +114,48 @@ describe("NftContextLoader", () => {
       ]);
     });
 
+    it("should return an error when datasource get plugin payload return a Left", async () => {
+      const transaction = {
+        to: "0xdAC17F958D2ee523a2206206994597C13D831ec7",
+        data: "0x095ea7b30000000000000",
+      } as TransactionContext;
+      spyGetPluginPayload.mockResolvedValueOnce(Left(new Error("error")));
+
+      const result = await loader.load(transaction);
+
+      expect(result).toEqual([
+        {
+          type: "error",
+          error: new Error("error"),
+        },
+      ]);
+    });
+
+    it("should return an error when datasource get nft infos payload return a Left", async () => {
+      const transaction = {
+        to: "0xdAC17F958D2ee523a2206206994597C13D831ec7",
+        data: "0x095ea7b30000000000000",
+      } as TransactionContext;
+      spyGetPluginPayload.mockResolvedValueOnce(Right("payload1"));
+      spyGetNftInfosPayload.mockResolvedValueOnce(Left(new Error("error")));
+
+      const result = await loader.load(transaction);
+
+      expect(result).toEqual([
+        {
+          type: "error",
+          error: new Error("error"),
+        },
+      ]);
+    });
+
     it("should return a response", async () => {
       const transaction = {
         to: "0xdAC17F958D2ee523a2206206994597C13D831ec7",
         data: "0x095ea7b30000000000000",
-      } as unknown as TransactionContext;
-      spyGetPluginPayload.mockResolvedValueOnce("payload1");
-      spyGetNftInfosPayload.mockResolvedValueOnce("payload2");
+      } as TransactionContext;
+      spyGetPluginPayload.mockResolvedValueOnce(Right("payload1"));
+      spyGetNftInfosPayload.mockResolvedValueOnce(Right("payload2"));
 
       const result = await loader.load(transaction);
 

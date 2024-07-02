@@ -1,4 +1,5 @@
 import { Interface } from "ethers/lib/utils";
+import { Left, Right } from "purify-ts";
 
 import ABI from "@/external-plugin/__tests__/abi.json";
 import { ExternalPluginDataSource } from "@/external-plugin/data/ExternalPluginDataSource";
@@ -54,11 +55,11 @@ describe("ExternalPluginContextLoader", () => {
   );
 
   beforeEach(() => {
-    jest.restoreAllMocks();
+    jest.clearAllMocks();
     jest
       .spyOn(mockTokenDataSource, "getTokenInfosPayload")
       .mockImplementation(({ address }) =>
-        Promise.resolve(`payload-${address}`),
+        Promise.resolve(Right(`payload-${address}`)),
       );
   });
 
@@ -103,7 +104,7 @@ describe("ExternalPluginContextLoader", () => {
       ]);
       jest
         .spyOn(mockExternalPluginDataSource, "getDappInfos")
-        .mockResolvedValue(undefined);
+        .mockResolvedValue(Right(undefined));
 
       // WHEN
       const result = await loader.load(transaction);
@@ -112,23 +113,32 @@ describe("ExternalPluginContextLoader", () => {
       expect(result).toEqual([]);
     });
 
-    it("should return an empty array if no erc20OfInterest is provided", async () => {
+    it("should return e setPlugin if no erc20OfInterest is provided", async () => {
       // GIVEN
       const dappInfos = dappInfosBuilder({
-        selectorDetails: { erc20OfInterest: [], method: "singleParam" },
+        abi: ABI,
+        selectorDetails: {
+          erc20OfInterest: [],
+          method: "singleParam",
+        },
       });
       const transaction = transactionBuilder(ABI, "singleParam", [
         "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48",
       ]);
       jest
         .spyOn(mockExternalPluginDataSource, "getDappInfos")
-        .mockResolvedValue(dappInfos);
+        .mockResolvedValue(Right(dappInfos));
 
       // WHEN
       const result = await loader.load(transaction);
 
       // THEN
-      expect(result).toEqual([]);
+      expect(result).toEqual([
+        {
+          type: "setExternalPlugin",
+          payload: "1234567890",
+        },
+      ]);
     });
 
     it("should return a list of context responses when one erc20OfInterest is provided for a single parameter", async () => {
@@ -145,7 +155,7 @@ describe("ExternalPluginContextLoader", () => {
       ]);
       jest
         .spyOn(mockExternalPluginDataSource, "getDappInfos")
-        .mockResolvedValue(dappInfos);
+        .mockResolvedValue(Right(dappInfos));
 
       // WHEN
       const result = await loader.load(transaction);
@@ -179,10 +189,10 @@ describe("ExternalPluginContextLoader", () => {
       ]);
       jest
         .spyOn(mockExternalPluginDataSource, "getDappInfos")
-        .mockResolvedValue(dappInfos);
+        .mockResolvedValue(Right(dappInfos));
       jest
         .spyOn(mockTokenDataSource, "getTokenInfosPayload")
-        .mockResolvedValue(undefined);
+        .mockResolvedValue(Right(undefined));
 
       // WHEN
       const result = await loader.load(transaction);
@@ -217,7 +227,7 @@ describe("ExternalPluginContextLoader", () => {
       ]);
       jest
         .spyOn(mockExternalPluginDataSource, "getDappInfos")
-        .mockResolvedValue(dappInfos);
+        .mockResolvedValue(Right(dappInfos));
 
       // WHEN
       const result = await loader.load(transaction);
@@ -264,7 +274,7 @@ describe("ExternalPluginContextLoader", () => {
       ]);
       jest
         .spyOn(mockExternalPluginDataSource, "getDappInfos")
-        .mockResolvedValue(dappInfos);
+        .mockResolvedValue(Right(dappInfos));
 
       // WHEN
       const result = await loader.load(transaction);
@@ -296,6 +306,41 @@ describe("ExternalPluginContextLoader", () => {
       ]);
     });
 
+    it("should return an error when a token datasource returns an error", async () => {
+      // GIVEN
+      const dappInfos = dappInfosBuilder({
+        abi: ABI,
+        selectorDetails: {
+          erc20OfInterest: ["fromToken"],
+          method: "singleParam",
+        },
+      });
+      const transaction = transactionBuilder(ABI, "singleParam", [
+        "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48",
+      ]);
+      jest
+        .spyOn(mockExternalPluginDataSource, "getDappInfos")
+        .mockResolvedValue(Right(dappInfos));
+      jest
+        .spyOn(mockTokenDataSource, "getTokenInfosPayload")
+        .mockResolvedValue(Left(new Error("error")));
+
+      // WHEN
+      const result = await loader.load(transaction);
+
+      // THEN
+      expect(result).toEqual([
+        {
+          type: "error",
+          error: new Error("error"),
+        },
+        {
+          type: "setExternalPlugin",
+          payload: "1234567890",
+        },
+      ]);
+    });
+
     it("should throw an error when the abi is not conform", () => {
       // GIVEN
       const dappInfos = dappInfosBuilder({
@@ -310,7 +355,7 @@ describe("ExternalPluginContextLoader", () => {
       ]);
       jest
         .spyOn(mockExternalPluginDataSource, "getDappInfos")
-        .mockResolvedValue(dappInfos);
+        .mockResolvedValue(Right(dappInfos));
 
       // WHEN
       const promise = loader.load(transaction);
@@ -337,7 +382,7 @@ describe("ExternalPluginContextLoader", () => {
       ]);
       jest
         .spyOn(mockExternalPluginDataSource, "getDappInfos")
-        .mockResolvedValue(dappInfos);
+        .mockResolvedValue(Right(dappInfos));
 
       // WHEN
       const promise = loader.load(transaction);
@@ -368,7 +413,7 @@ describe("ExternalPluginContextLoader", () => {
       ]);
       jest
         .spyOn(mockExternalPluginDataSource, "getDappInfos")
-        .mockResolvedValue(dappInfos);
+        .mockResolvedValue(Right(dappInfos));
 
       // WHEN
       const promise = loader.load(transaction);
@@ -421,7 +466,7 @@ describe("ExternalPluginContextLoader", () => {
       ]);
       jest
         .spyOn(mockExternalPluginDataSource, "getDappInfos")
-        .mockResolvedValue(dappInfos);
+        .mockResolvedValue(Right(dappInfos));
 
       // WHEN
       const result = await loader.load(transaction);
@@ -455,6 +500,27 @@ describe("ExternalPluginContextLoader", () => {
         {
           type: "setExternalPlugin",
           payload: "1234567890",
+        },
+      ]);
+    });
+
+    it("should return an error when datasource return a Left", async () => {
+      // GIVEN
+      const transaction = transactionBuilder(ABI, "singleParam", [
+        "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48",
+      ]);
+      jest
+        .spyOn(mockExternalPluginDataSource, "getDappInfos")
+        .mockResolvedValue(Left(new Error("error")));
+
+      // WHEN
+      const result = await loader.load(transaction);
+
+      // THEN
+      expect(result).toEqual([
+        {
+          type: "error",
+          error: new Error("error"),
         },
       ]);
     });

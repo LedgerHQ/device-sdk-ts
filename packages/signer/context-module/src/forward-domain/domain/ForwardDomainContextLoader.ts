@@ -39,18 +39,30 @@ export class ForwardDomainContextLoader implements ContextLoader {
       challenge: challenge,
     });
 
-    if (!payload) {
-      return [
-        {
-          type: "error",
-          error: new Error(
-            "[ContextModule] ForwardDomainLoader: error getting domain payload",
-          ),
-        },
-      ];
-    }
+    return payload.caseOf({
+      Left: (error): ClearSignContext[] => {
+        return [
+          {
+            type: "error",
+            error: error,
+          },
+        ];
+      },
+      Right: (value): ClearSignContext[] => {
+        if (!value) {
+          return [
+            {
+              type: "error",
+              error: new Error(
+                "[ContextModule] ForwardDomainLoader: error getting domain payload",
+              ),
+            },
+          ];
+        }
 
-    return [{ type: "provideDomainName", payload }];
+        return [{ type: "provideDomainName", payload: value }];
+      },
+    });
   }
 
   // NOTE: duplicata of libs/domain-service/src/utils/index.ts

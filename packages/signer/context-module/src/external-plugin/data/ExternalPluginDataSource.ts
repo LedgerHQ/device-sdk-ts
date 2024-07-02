@@ -1,3 +1,5 @@
+import { Either } from "purify-ts";
+
 import { DappInfos } from "@/external-plugin/model/DappInfos";
 import { HexString } from "@/shared/model/HexString";
 
@@ -8,5 +10,7 @@ export type GetDappInfos = {
 };
 
 export interface ExternalPluginDataSource {
-  getDappInfos(params: GetDappInfos): Promise<DappInfos | undefined>;
+  getDappInfos(
+    params: GetDappInfos,
+  ): Promise<Either<Error, DappInfos | undefined>>;
 }

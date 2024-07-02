@@ -23,8 +23,6 @@ export class ExternalPluginContextLoader implements ContextLoader {
   }
 
   async load(transaction: TransactionContext) {
-    const response: ClearSignContext[] = [];
-
     if (!transaction.to || !transaction.data || transaction.data === "0x") {
       return [];
     }
@@ -41,53 +39,67 @@ export class ExternalPluginContextLoader implements ContextLoader {
       selector,
     });
 
-    if (!dappInfos || dappInfos.selectorDetails.erc20OfInterest.length === 0) {
-      return [];
-    }
+    return await dappInfos.caseOf({
+      Left: (error): Promise<ClearSignContext[]> =>
+        Promise.resolve([{ type: "error" as const, error }]),
+      Right: async (value): Promise<ClearSignContext[]> => {
+        const response: ClearSignContext[] = [];
 
-    const decodedCallData = this.getDecodedCallData(
-      dappInfos.abi,
-      dappInfos.selectorDetails.method,
-      transaction.data,
-    );
+        if (!value) {
+          return response;
+        }
 
-    const addresses: string[] = [];
-    for (const erc20Path of dappInfos.selectorDetails.erc20OfInterest) {
-      const address = this.getAddressFromPath(erc20Path, decodedCallData);
-      addresses.push(address);
-    }
+        const decodedCallData = this.getDecodedCallData(
+          value.abi,
+          value.selectorDetails.method,
+          transaction.data ?? "", // FIXME: transaction.data is never undefined
+        );
 
-    for (const address of addresses) {
-      const tokenPayload = await this._tokenDataSource.getTokenInfosPayload({
-        address,
-        chainId: transaction.chainId,
-      });
+        for (const erc20Path of value.selectorDetails.erc20OfInterest) {
+          const address = this.getAddressFromPath(erc20Path, decodedCallData);
 
-      if (tokenPayload) {
-        response.push({
-          type: "provideERC20TokenInformation",
-          payload: tokenPayload,
-        });
-      } else {
-        response.push({
-          type: "error",
-          error: new Error(
-            "[ContextModule] ExternalPluginContextLoader: Unable to get payload for token " +
+          const tokenPayload = await this._tokenDataSource.getTokenInfosPayload(
+            {
               address,
-          ),
+              chainId: transaction.chainId,
+            },
+          );
+
+          tokenPayload.mapLeft((error) => {
+            response.push({
+              type: "error",
+              error,
+            });
+          });
+
+          tokenPayload.map((payload) => {
+            if (!payload) {
+              response.push({
+                type: "error",
+                error: new Error(
+                  `[ContextModule] ExternalPluginContextLoader: Unable to get payload for token ${address}`,
+                ),
+              });
+            } else {
+              response.push({
+                type: "provideERC20TokenInformation",
+                payload,
+              });
+            }
+          });
+        }
+
+        response.push({
+          type: "setExternalPlugin",
+          payload: Buffer.concat([
+            Buffer.from(value.selectorDetails.serializedData, "hex"),
+            Buffer.from(value.selectorDetails.signature, "hex"),
+          ]).toString("hex"),
         });
-      }
-    }
 
-    response.push({
-      type: "setExternalPlugin",
-      payload: Buffer.concat([
-        Buffer.from(dappInfos.selectorDetails.serializedData, "hex"),
-        Buffer.from(dappInfos.selectorDetails.signature, "hex"),
-      ]).toString("hex"),
+        return response;
+      },
     });
-
-    return response;
   }
 
   private getDecodedCallData(abi: object[], method: string, data: string) {

@@ -1,3 +1,5 @@
+import { Left, Right } from "purify-ts";
+
 import { ForwardDomainDataSource } from "@/forward-domain/data/ForwardDomainDataSource";
 import { ForwardDomainContextLoader } from "@/forward-domain/domain/ForwardDomainContextLoader";
 import { TransactionContext } from "@/shared/model/TransactionContext";
@@ -11,7 +13,7 @@ describe("ForwardDomainContextLoader", () => {
     jest.restoreAllMocks();
     jest
       .spyOn(mockForwardDomainDataSource, "getDomainNamePayload")
-      .mockResolvedValue("payload");
+      .mockResolvedValue(Right("payload"));
   });
 
   describe("load function", () => {
@@ -91,7 +93,7 @@ describe("ForwardDomainContextLoader", () => {
       } as TransactionContext;
       jest
         .spyOn(mockForwardDomainDataSource, "getDomainNamePayload")
-        .mockResolvedValue(undefined);
+        .mockResolvedValue(Right(undefined));
 
       const loader = new ForwardDomainContextLoader(
         mockForwardDomainDataSource,
@@ -106,6 +108,26 @@ describe("ForwardDomainContextLoader", () => {
           ),
         },
       ]);
+    });
+
+    it("should return an error when unable to fetch the datasource", async () => {
+      // GIVEN
+      const transaction = {
+        domain: "hello.eth",
+        challenge: "challenge",
+      } as TransactionContext;
+
+      // WHEN
+      jest
+        .spyOn(mockForwardDomainDataSource, "getDomainNamePayload")
+        .mockResolvedValue(Left(new Error("error")));
+      const loader = new ForwardDomainContextLoader(
+        mockForwardDomainDataSource,
+      );
+      const result = await loader.load(transaction);
+
+      // THEN
+      expect(result).toEqual([{ type: "error", error: new Error("error") }]);
     });
   });
 });

@@ -1,4 +1,5 @@
 import axios from "axios";
+import { Left } from "purify-ts";
 
 import { HttpTokenDataSource } from "@/token/data/HttpTokenDataSource";
 import { TokenDataSource } from "@/token/data/TokenDataSource";
@@ -48,7 +49,7 @@ describe("HttpTokenDataSource", () => {
     });
 
     // THEN
-    expect(result).toEqual("0455534443000000000800000001");
+    expect(result.extract()).toEqual("0455534443000000000800000001");
   });
 
   it("should return undefined when data is empty", async () => {
@@ -62,7 +63,7 @@ describe("HttpTokenDataSource", () => {
     });
 
     // THEN
-    expect(result).toEqual(undefined);
+    expect(result.extract()).toEqual(undefined);
   });
 
   it("should return undefined when no signature", async () => {
@@ -76,7 +77,7 @@ describe("HttpTokenDataSource", () => {
     });
 
     // THEN
-    expect(result).toEqual(undefined);
+    expect(result.extract()).toEqual(undefined);
   });
 
   it("should return undefined when no ticker", async () => {
@@ -92,7 +93,7 @@ describe("HttpTokenDataSource", () => {
     });
 
     // THEN
-    expect(result).toEqual(undefined);
+    expect(result.extract()).toEqual(undefined);
   });
 
   it("should return undefined when no decimals", async () => {
@@ -108,10 +109,10 @@ describe("HttpTokenDataSource", () => {
     });
 
     // THEN
-    expect(result).toEqual(undefined);
+    expect(result.extract()).toEqual(undefined);
   });
 
-  it("should return undefined when axios throws an error", async () => {
+  it("should return an error when axios throws an error", async () => {
     // GIVEN
     jest.spyOn(axios, "request").mockRejectedValue(new Error());
 
@@ -122,6 +123,8 @@ describe("HttpTokenDataSource", () => {
     });
 
     // THEN
-    expect(result).toEqual(undefined);
+    expect(result).toEqual(
+      Left(new Error("Failed to fetch token informations")),
+    );
   });
 });

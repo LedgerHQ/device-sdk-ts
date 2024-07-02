@@ -1,3 +1,5 @@
+import { Either } from "purify-ts/Either";
+
 export type GetForwardDomainInfosParams = {
   domain: string;
   challenge: string;
@@ -6,5 +8,5 @@ export type GetForwardDomainInfosParams = {
 export interface ForwardDomainDataSource {
   getDomainNamePayload(
     params: GetForwardDomainInfosParams,
-  ): Promise<string | undefined>;
+  ): Promise<Either<Error, string | undefined>>;
 }

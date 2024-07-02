@@ -43,16 +43,21 @@ export class TokenContextLoader implements ContextLoader {
       chainId: transaction.chainId,
     });
 
-    if (!payload) {
-      return [];
-    }
+    return payload.caseOf({
+      Left: (error): ClearSignContext[] => [
+        {
+          type: "error",
+          error,
+        },
+      ],
+      Right: (value): ClearSignContext[] => {
+        if (!value) {
+          return [];
+        }
 
-    return [
-      {
-        type: "provideERC20TokenInformation",
-        payload,
+        return [{ type: "provideERC20TokenInformation", payload: value }];
       },
-    ];
+    });
   }
 
   private isSelectorSupported(selector: HexString) {

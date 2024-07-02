@@ -1,5 +1,6 @@
 import axios from "axios";
 import { injectable } from "inversify";
+import { Either, Left, Right } from "purify-ts";
 
 import { DAppDto } from "@/external-plugin/data/DAppDto";
 import {
@@ -18,7 +19,7 @@ export class HttpExternalPluginDataSource implements ExternalPluginDataSource {
     chainId,
     address,
     selector,
-  }: GetDappInfos): Promise<DappInfos | undefined> {
+  }: GetDappInfos): Promise<Either<Error, DappInfos | undefined>> {
     try {
       const dappInfos = await axios.request<DAppDto[]>({
         method: "GET",
@@ -34,7 +35,7 @@ export class HttpExternalPluginDataSource implements ExternalPluginDataSource {
       });
 
       if (!dappInfos.data[0]) {
-        return;
+        return Right(undefined);
       }
 
       const { erc20OfInterest, method, plugin } =
@@ -49,13 +50,13 @@ export class HttpExternalPluginDataSource implements ExternalPluginDataSource {
         !signature ||
         !serializedData
       ) {
-        return;
+        return Right(undefined);
       }
 
       const abi = dappInfos.data[0].abis?.[address];
 
       if (!abi) {
-        return;
+        return Right(undefined);
       }
 
       const selectorDetails: SelectorDetails = {
@@ -66,9 +67,9 @@ export class HttpExternalPluginDataSource implements ExternalPluginDataSource {
         serializedData,
       };
 
-      return { selectorDetails, abi };
+      return Right({ selectorDetails, abi });
     } catch (error) {
-      return;
+      return Left(new Error("Error fetching dapp infos"));
     }
   }
 }

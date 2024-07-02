@@ -57,37 +57,58 @@ export class NftContextLoader implements ContextLoader {
       selector,
     });
 
-    if (!setPluginPayload) {
-      return [
-        {
-          type: "error",
-          error: new Error(
-            "[ContextModule] NftLoader: unexpected empty response",
-          ),
-        },
-      ];
+    const payload = setPluginPayload.caseOf({
+      Left: (error): ClearSignContext => ({
+        type: "error",
+        error,
+      }),
+      Right: (value): ClearSignContext => {
+        if (!value) {
+          return {
+            type: "error",
+            error: new Error(
+              "[ContextModule] NftLoader: unexpected empty response",
+            ),
+          };
+        }
+
+        return { type: "setPlugin", payload: value };
+      },
+    });
+
+    if (payload.type === "error") {
+      return [payload];
     }
 
-    responses.push({ type: "setPlugin", payload: setPluginPayload });
+    responses.push(payload);
 
     const nftInformationsPayload = await this._dataSource.getNftInfosPayload({
       chainId: transaction.chainId,
       address: transaction.to,
     });
 
-    if (!nftInformationsPayload) {
-      return [
-        {
-          type: "error",
-          error: new Error("[ContextModule] NftLoader: no nft metadata"),
-        },
-      ];
+    const secondPayload = nftInformationsPayload.caseOf({
+      Left: (error): ClearSignContext => ({
+        type: "error",
+        error,
+      }),
+      Right: (value): ClearSignContext => {
+        if (!value) {
+          return {
+            type: "error",
+            error: new Error("[ContextModule] NftLoader: no nft metadata"),
+          };
+        }
+
+        return { type: "provideNFTInformation", payload: value };
+      },
+    });
+
+    if (secondPayload.type === "error") {
+      return [secondPayload];
     }
 
-    responses.push({
-      type: "provideNFTInformation",
-      payload: nftInformationsPayload,
-    });
+    responses.push(secondPayload);
 
     return responses;
   }

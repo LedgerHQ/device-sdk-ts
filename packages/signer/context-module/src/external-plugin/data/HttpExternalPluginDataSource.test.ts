@@ -89,7 +89,7 @@ describe("HttpExternalPuginDataSource", () => {
     });
 
     // THEN
-    expect(result).toEqual(undefined);
+    expect(result.extract()).toEqual(undefined);
   });
 
   it("should return undefined when no selectors", async () => {
@@ -107,7 +107,7 @@ describe("HttpExternalPuginDataSource", () => {
     });
 
     // THEN
-    expect(result).toEqual(undefined);
+    expect(result.extract()).toEqual(undefined);
   });
 
   it("should return undefined when no abis data", async () => {
@@ -125,7 +125,7 @@ describe("HttpExternalPuginDataSource", () => {
     });
 
     // THEN
-    expect(result).toEqual(undefined);
+    expect(result.extract()).toEqual(undefined);
   });
 
   it("should return undefined when no abis data", async () => {
@@ -143,7 +143,7 @@ describe("HttpExternalPuginDataSource", () => {
     });
 
     // THEN
-    expect(result).toEqual(undefined);
+    expect(result.extract()).toEqual(undefined);
   });
 
   it("should return undefined when no abis data for the contract address", async () => {
@@ -162,7 +162,7 @@ describe("HttpExternalPuginDataSource", () => {
     });
 
     // THEN
-    expect(result).toEqual(undefined);
+    expect(result.extract()).toEqual(undefined);
   });
 
   it("should return undefined when no b2c signature", async () => {
@@ -180,7 +180,7 @@ describe("HttpExternalPuginDataSource", () => {
     });
 
     // THEN
-    expect(result).toEqual(undefined);
+    expect(result.extract()).toEqual(undefined);
   });
 
   it("should return undefined when no ecc20OfInterest", async () => {
@@ -212,7 +212,7 @@ describe("HttpExternalPuginDataSource", () => {
     });
 
     // THEN
-    expect(result).toEqual(undefined);
+    expect(result.extract()).toEqual(undefined);
   });
 
   it("should return undefined when no method", async () => {
@@ -244,7 +244,7 @@ describe("HttpExternalPuginDataSource", () => {
     });
 
     // THEN
-    expect(result).toEqual(undefined);
+    expect(result.extract()).toEqual(undefined);
   });
 
   it("should return undefined when no plugin", async () => {
@@ -276,7 +276,7 @@ describe("HttpExternalPuginDataSource", () => {
     });
 
     // THEN
-    expect(result).toEqual(undefined);
+    expect(result.extract()).toEqual(undefined);
   });
 
   it("should return undefined when no method", async () => {
@@ -308,7 +308,7 @@ describe("HttpExternalPuginDataSource", () => {
     });
 
     // THEN
-    expect(result).toEqual(undefined);
+    expect(result.extract()).toEqual(undefined);
   });
 
   it("should return undefined when no signature", async () => {
@@ -331,7 +331,7 @@ describe("HttpExternalPuginDataSource", () => {
     });
 
     // THEN
-    expect(result).toEqual(undefined);
+    expect(result.extract()).toEqual(undefined);
   });
 
   it("should return undefined when no serialized data", async () => {
@@ -354,7 +354,7 @@ describe("HttpExternalPuginDataSource", () => {
     });
 
     // THEN
-    expect(result).toEqual(undefined);
+    expect(result.extract()).toEqual(undefined);
   });
 
   it("should return a correct response", async () => {
@@ -376,7 +376,7 @@ describe("HttpExternalPuginDataSource", () => {
     });
 
     // THEN
-    expect(result).toEqual({
+    expect(result.extract()).toEqual({
       abi: ABI,
       selectorDetails: {
         erc20OfInterest: ["fromToken"],
@@ -388,7 +388,7 @@ describe("HttpExternalPuginDataSource", () => {
     });
   });
 
-  it("should return undefined when axios throws an error", async () => {
+  it("should return an error when axios throws an error", async () => {
     // GIVEN
     jest.spyOn(axios, "request").mockRejectedValue(new Error("error"));
 
@@ -400,6 +400,6 @@ describe("HttpExternalPuginDataSource", () => {
     });
 
     // THEN
-    expect(result).toEqual(undefined);
+    expect(result.extract()).toEqual(new Error("Error fetching dapp infos"));
   });
 });

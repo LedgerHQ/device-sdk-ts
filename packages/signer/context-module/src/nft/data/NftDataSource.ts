@@ -1,3 +1,5 @@
+import { Either } from "purify-ts";
+
 export type GetSetPluginPayloadParams = {
   chainId: number;
   address: string;
@@ -12,8 +14,8 @@ export type GetNftInformationsParams = {
 export interface NftDataSource {
   getNftInfosPayload(
     params: GetNftInformationsParams,
-  ): Promise<string | undefined>;
+  ): Promise<Either<Error, string | undefined>>;
   getSetPluginPayload(
     params: GetSetPluginPayloadParams,
-  ): Promise<string | undefined>;
+  ): Promise<Either<Error, string | undefined>>;
 }

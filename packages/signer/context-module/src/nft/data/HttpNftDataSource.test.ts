@@ -45,7 +45,7 @@ describe("HttpNftDataSource", () => {
   });
 
   describe("getNftInfosPayload", () => {
-    it("should return undefined when axios throws an error", async () => {
+    it("should return an error when axios throws an error", async () => {
       // GIVEN
       jest.spyOn(axios, "request").mockRejectedValue(new Error("error"));
 
@@ -56,12 +56,29 @@ describe("HttpNftDataSource", () => {
       });
 
       // THEN
-      expect(result).toBeUndefined();
+      expect(result.extract()).toEqual(
+        new Error("Failed to fetch nft informations"),
+      );
+    });
+
+    it("should return the payload", async () => {
+      // GIVEN
+      const response = { data: { payload: "payload" } };
+      jest.spyOn(axios, "request").mockResolvedValue(response);
+
+      // WHEN
+      const result = await datasource.getNftInfosPayload({
+        address: "0x00",
+        chainId: 1,
+      });
+
+      // THEN
+      expect(result.extract()).toEqual("payload");
     });
   });
 
   describe("getSetPluginPayload", () => {
-    it("should return undefined when axios throws an error", async () => {
+    it("should return an error when axios throws an error", async () => {
       // GIVEN
       jest.spyOn(axios, "request").mockRejectedValue(new Error("error"));
 
@@ -73,7 +90,25 @@ describe("HttpNftDataSource", () => {
       });
 
       // THEN
-      expect(result).toBeUndefined();
+      expect(result.extract()).toEqual(
+        new Error("Failed to fetch set plugin payload"),
+      );
+    });
+
+    it("should return the payload", async () => {
+      // GIVEN
+      const response = { data: { payload: "payload" } };
+      jest.spyOn(axios, "request").mockResolvedValue(response);
+
+      // WHEN
+      const result = await datasource.getSetPluginPayload({
+        address: "0x00",
+        chainId: 1,
+        selector: "0x00",
+      });
+
+      // THEN
+      expect(result.extract()).toEqual("payload");
     });
   });
 });

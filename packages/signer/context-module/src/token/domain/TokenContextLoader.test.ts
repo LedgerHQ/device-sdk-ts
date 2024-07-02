@@ -1,3 +1,5 @@
+import { Left, Right } from "purify-ts";
+
 import { TransactionContext } from "@/shared/model/TransactionContext";
 import { TokenDataSource } from "@/token/data/TokenDataSource";
 import { TokenContextLoader } from "@/token/domain/TokenContextLoader";
@@ -13,7 +15,7 @@ describe("TokenContextLoader", () => {
     jest
       .spyOn(mockTokenDataSource, "getTokenInfosPayload")
       .mockImplementation(({ address }) =>
-        Promise.resolve(`payload-${address}`),
+        Promise.resolve(Right(`payload-${address}`)),
       );
   });
 
@@ -34,7 +36,7 @@ describe("TokenContextLoader", () => {
       const transaction = {
         to: "0xdAC17F958D2ee523a2206206994597C13D831ec7",
         data: undefined,
-      } as unknown as TransactionContext;
+      } as TransactionContext;
 
       // WHEN
       const result = await loader.load(transaction);
@@ -80,7 +82,7 @@ describe("TokenContextLoader", () => {
       } as TransactionContext;
       jest
         .spyOn(mockTokenDataSource, "getTokenInfosPayload")
-        .mockResolvedValue(undefined);
+        .mockResolvedValue(Right(undefined));
 
       // WHEN
       const result = await loader.load(transaction);
@@ -103,6 +105,24 @@ describe("TokenContextLoader", () => {
       expect(result).toEqual([
         { type: "error", error: new Error("Invalid selector") },
       ]);
+    });
+
+    it("should return an error when datasource returns an error", async () => {
+      // GIVEN
+      const transaction = {
+        to: "0xdAC17F958D2ee523a2206206994597C13D831ec7",
+        data: "0x095ea7b30000000000",
+        chainId: 1,
+      } as TransactionContext;
+      jest
+        .spyOn(mockTokenDataSource, "getTokenInfosPayload")
+        .mockResolvedValue(Left(new Error("error")));
+
+      // WHEN
+      const result = await loader.load(transaction);
+
+      // THEN
+      expect(result).toEqual([{ type: "error", error: new Error("error") }]);
     });
 
     it("should return a correct response", async () => {

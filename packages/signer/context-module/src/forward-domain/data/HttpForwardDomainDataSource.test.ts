@@ -1,4 +1,5 @@
 import axios from "axios";
+import { Left, Right } from "purify-ts";
 
 import { ForwardDomainDataSource } from "@/forward-domain/data/ForwardDomainDataSource";
 import { HttpForwardDomainDataSource } from "@/forward-domain/data/HttpForwardDomainDataSource";
@@ -48,10 +49,10 @@ describe("HttpForwardDomainDataSource", () => {
     });
 
     // THEN
-    expect(result).toEqual(undefined);
+    expect(result).toEqual(Right(undefined));
   });
 
-  it("should return undefined when axios throws an error", async () => {
+  it("should throw an error when axios throws an error", async () => {
     // GIVEN
     jest.spyOn(axios, "request").mockRejectedValue(new Error());
 
@@ -62,6 +63,6 @@ describe("HttpForwardDomainDataSource", () => {
     });
 
     // THEN
-    expect(result).toEqual(undefined);
+    expect(result).toEqual(Left(new Error("Failed to fetch domain name")));
   });
 });
