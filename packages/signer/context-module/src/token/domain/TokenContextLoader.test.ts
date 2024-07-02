@@ -89,6 +89,22 @@ describe("TokenContextLoader", () => {
       expect(result).toEqual([]);
     });
 
+    it("should return an error when transaction data is not a valid hex string", async () => {
+      // GIVEN
+      const transaction = {
+        to: "0xdAC17F958D2ee523a2206206994597C13D831ec7",
+        data: "notahexstring",
+      } as unknown as TransactionContext;
+
+      // WHEN
+      const result = await loader.load(transaction);
+
+      // THEN
+      expect(result).toEqual([
+        { type: "error", error: new Error("Invalid selector") },
+      ]);
+    });
+
     it("should return a correct response", async () => {
       // GIVEN
       const transaction = {

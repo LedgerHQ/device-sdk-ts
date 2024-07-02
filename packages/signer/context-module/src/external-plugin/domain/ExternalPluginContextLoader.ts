@@ -5,6 +5,7 @@ import { inject } from "inversify";
 import type { ExternalPluginDataSource } from "@/external-plugin/data/ExternalPluginDataSource";
 import { ContextLoader } from "@/shared/domain/ContextLoader";
 import { ClearSignContext } from "@/shared/model/ClearSignContext";
+import { HexString, isHexString } from "@/shared/model/HexString";
 import { TransactionContext } from "@/shared/model/TransactionContext";
 import type { TokenDataSource } from "@/token/data/TokenDataSource";
 
@@ -28,7 +29,11 @@ export class ExternalPluginContextLoader implements ContextLoader {
       return [];
     }
 
-    const selector = transaction.data.slice(0, 10) as `0x${string}`;
+    const selector = transaction.data.slice(0, 10);
+
+    if (!isHexString(selector)) {
+      return [{ type: "error" as const, error: new Error("Invalid selector") }];
+    }
 
     const dappInfos = await this._externalPluginDataSource.getDappInfos({
       address: transaction.to,
@@ -99,7 +104,7 @@ export class ExternalPluginContextLoader implements ContextLoader {
   private getAddressFromPath(
     path: string,
     decodedCallData: ethers.utils.Result,
-  ): `0x${string}` {
+  ): HexString {
     // ethers.utils.Result is a record string, any
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     let value: any = decodedCallData;
@@ -115,12 +120,12 @@ export class ExternalPluginContextLoader implements ContextLoader {
       }
     }
 
-    if (typeof value !== "string" || !value.startsWith("0x")) {
+    if (!isHexString(value)) {
       throw new Error(
         "[ContextModule] ExternalPluginContextLoader: Unable to get address",
       );
     }
 
-    return value as `0x${string}`;
+    return value;
   }
 }

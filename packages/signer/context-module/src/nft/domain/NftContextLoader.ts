@@ -3,6 +3,7 @@ import { inject } from "inversify";
 import type { NftDataSource } from "@/nft/data/NftDataSource";
 import { ContextLoader } from "@/shared/domain/ContextLoader";
 import { ClearSignContext } from "@/shared/model/ClearSignContext";
+import { HexString, isHexString } from "@/shared/model/HexString";
 import { TransactionContext } from "@/shared/model/TransactionContext";
 
 enum ERC721_SUPPORTED_SELECTOR {
@@ -19,7 +20,7 @@ enum ERC1155_SUPPORTED_SELECTOR {
   SafeBatchTransferFrom = "0x2eb2c2d6",
 }
 
-const SUPPORTED_SELECTORS: `0x${string}`[] = [
+const SUPPORTED_SELECTORS: HexString[] = [
   ...Object.values(ERC721_SUPPORTED_SELECTOR),
   ...Object.values(ERC1155_SUPPORTED_SELECTOR),
 ];
@@ -38,7 +39,11 @@ export class NftContextLoader implements ContextLoader {
       return [];
     }
 
-    const selector = transaction.data.slice(0, 10) as `0x${string}`;
+    const selector = transaction.data.slice(0, 10);
+
+    if (!isHexString(selector)) {
+      return [{ type: "error", error: new Error("Invalid selector") }];
+    }
 
     if (!this.isSelectorSupported(selector)) {
       return [];
@@ -87,7 +92,7 @@ export class NftContextLoader implements ContextLoader {
     return responses;
   }
 
-  private isSelectorSupported(selector: `0x${string}`) {
+  private isSelectorSupported(selector: HexString) {
     return Object.values(SUPPORTED_SELECTORS).includes(selector);
   }
 }

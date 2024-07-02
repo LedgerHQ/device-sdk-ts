@@ -458,5 +458,24 @@ describe("ExternalPluginContextLoader", () => {
         },
       ]);
     });
+
+    it("should return an error when transaction data is not a valid hex string", async () => {
+      // GIVEN
+      const transaction = {
+        to: "0x0",
+        data: "notAHexString",
+      } as TransactionContext;
+
+      // WHEN
+      const result = await loader.load(transaction);
+
+      // THEN
+      expect(result).toEqual([
+        {
+          type: "error",
+          error: new Error("Invalid selector"),
+        },
+      ]);
+    });
   });
 });

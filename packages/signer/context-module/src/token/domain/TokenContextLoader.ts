@@ -2,6 +2,7 @@ import { inject } from "inversify";
 
 import { ContextLoader } from "@/shared/domain/ContextLoader";
 import { ClearSignContext } from "@/shared/model/ClearSignContext";
+import { HexString, isHexString } from "@/shared/model/HexString";
 import { TransactionContext } from "@/shared/model/TransactionContext";
 import type { TokenDataSource } from "@/token/data/TokenDataSource";
 import { tokenTypes } from "@/token/di/tokenTypes";
@@ -11,7 +12,7 @@ export enum ERC20_SUPPORTED_SELECTORS {
   Transfer = "0xa9059cbb",
 }
 
-const SUPPORTED_SELECTORS: `0x${string}`[] = Object.values(
+const SUPPORTED_SELECTORS: HexString[] = Object.values(
   ERC20_SUPPORTED_SELECTORS,
 );
 
@@ -27,7 +28,11 @@ export class TokenContextLoader implements ContextLoader {
       return [];
     }
 
-    const selector = transaction.data.slice(0, 10) as `0x${string}`;
+    const selector = transaction.data.slice(0, 10);
+
+    if (!isHexString(selector)) {
+      return [{ type: "error", error: new Error("Invalid selector") }];
+    }
 
     if (!this.isSelectorSupported(selector)) {
       return [];
@@ -50,7 +55,7 @@ export class TokenContextLoader implements ContextLoader {
     ];
   }
 
-  private isSelectorSupported(selector: `0x${string}`) {
+  private isSelectorSupported(selector: HexString) {
     return Object.values(SUPPORTED_SELECTORS).includes(selector);
   }
 }

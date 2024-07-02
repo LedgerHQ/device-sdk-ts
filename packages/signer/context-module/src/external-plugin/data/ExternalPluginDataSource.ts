@@ -1,8 +1,9 @@
 import { DappInfos } from "@/external-plugin/model/DappInfos";
+import { HexString } from "@/shared/model/HexString";
 
 export type GetDappInfos = {
   address: string;
-  selector: `0x${string}`;
+  selector: HexString;
   chainId: number;
 };
 
