@@ -5,8 +5,6 @@ import { ForwardDomainDataSource } from "@/forward-domain/data/ForwardDomainData
 import { HttpForwardDomainDataSource } from "@/forward-domain/data/HttpForwardDomainDataSource";
 import PACKAGE from "@root/package.json";
 
-import {} from "./ForwardDomainDataSource";
-
 jest.mock("axios");
 
 describe("HttpForwardDomainDataSource", () => {
