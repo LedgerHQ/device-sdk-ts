@@ -55,7 +55,7 @@ export class NftContextLoader implements ContextLoader {
     if (!setPluginPayload) {
       return [
         {
-          type: "error" as const,
+          type: "error",
           error: new Error(
             "[ContextModule] NftLoader: unexpected empty response",
           ),
@@ -73,7 +73,7 @@ export class NftContextLoader implements ContextLoader {
     if (!nftInformationsPayload) {
       return [
         {
-          type: "error" as const,
+          type: "error",
           error: new Error("[ContextModule] NftLoader: no nft metadata"),
         },
       ];

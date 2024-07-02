@@ -60,7 +60,7 @@ export class ExternalPluginContextLoader implements ContextLoader {
 
       if (tokenPayload) {
         response.push({
-          type: "provideERC20TokenInformation" as const,
+          type: "provideERC20TokenInformation",
           payload: tokenPayload,
         });
       } else {
@@ -75,7 +75,7 @@ export class ExternalPluginContextLoader implements ContextLoader {
     }
 
     response.push({
-      type: "setExternalPlugin" as const,
+      type: "setExternalPlugin",
       payload: Buffer.concat([
         Buffer.from(dappInfos.selectorDetails.serializedData, "hex"),
         Buffer.from(dappInfos.selectorDetails.signature, "hex"),

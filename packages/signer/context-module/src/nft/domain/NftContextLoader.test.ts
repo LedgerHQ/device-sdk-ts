@@ -70,7 +70,7 @@ describe("NftContextLoader", () => {
 
       expect(result).toEqual([
         expect.objectContaining({
-          type: "error" as const,
+          type: "error",
           error: new Error(
             "[ContextModule] NftLoader: unexpected empty response",
           ),
@@ -90,7 +90,7 @@ describe("NftContextLoader", () => {
 
       expect(result).toEqual([
         expect.objectContaining({
-          type: "error" as const,
+          type: "error",
           error: new Error("[ContextModule] NftLoader: no nft metadata"),
         }),
       ]);
@@ -108,11 +108,11 @@ describe("NftContextLoader", () => {
 
       expect(result).toEqual([
         {
-          type: "setPlugin" as const,
+          type: "setPlugin",
           payload: "payload1",
         },
         {
-          type: "provideNFTInformation" as const,
+          type: "provideNFTInformation",
           payload: "payload2",
         },
       ]);

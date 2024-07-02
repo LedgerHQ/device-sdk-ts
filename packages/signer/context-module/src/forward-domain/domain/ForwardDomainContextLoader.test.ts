@@ -37,7 +37,7 @@ describe("ForwardDomainContextLoader", () => {
 
       expect(result).toEqual([
         {
-          type: "error" as const,
+          type: "error",
           error: new Error(
             "[ContextModule] ForwardDomainLoader: invalid domain",
           ),
@@ -57,7 +57,7 @@ describe("ForwardDomainContextLoader", () => {
 
       expect(result).toEqual([
         {
-          type: "error" as const,
+          type: "error",
           error: new Error(
             "[ContextModule] ForwardDomainLoader: invalid domain",
           ),
@@ -78,7 +78,7 @@ describe("ForwardDomainContextLoader", () => {
 
       expect(result).toEqual([
         {
-          type: "provideDomainName" as const,
+          type: "provideDomainName",
           payload: "payload",
         },
       ]);
@@ -100,7 +100,7 @@ describe("ForwardDomainContextLoader", () => {
 
       expect(result).toEqual([
         {
-          type: "error" as const,
+          type: "error",
           error: new Error(
             "[ContextModule] ForwardDomainLoader: error getting domain payload",
           ),

@@ -26,7 +26,7 @@ export class ForwardDomainContextLoader implements ContextLoader {
     if (!this.isDomainValid(domain as string)) {
       return [
         {
-          type: "error" as const,
+          type: "error",
           error: new Error(
             "[ContextModule] ForwardDomainLoader: invalid domain",
           ),
@@ -42,7 +42,7 @@ export class ForwardDomainContextLoader implements ContextLoader {
     if (!payload) {
       return [
         {
-          type: "error" as const,
+          type: "error",
           error: new Error(
             "[ContextModule] ForwardDomainLoader: error getting domain payload",
           ),
@@ -50,7 +50,7 @@ export class ForwardDomainContextLoader implements ContextLoader {
       ];
     }
 
-    return [{ type: "provideDomainName" as const, payload }];
+    return [{ type: "provideDomainName", payload }];
   }
 
   // NOTE: duplicata of libs/domain-service/src/utils/index.ts
