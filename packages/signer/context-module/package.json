@@ -2,6 +2,7 @@
   "name": "@ledgerhq/context-module",
   "version": "0.1.0",
   "license": "MIT",
+  "private": true,
   "exports": {
     ".": {
       "import": "./lib/esm/index.js",
