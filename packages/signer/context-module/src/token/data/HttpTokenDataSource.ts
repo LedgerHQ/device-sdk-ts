@@ -2,6 +2,7 @@ import axios from "axios";
 import { injectable } from "inversify";
 import { Either, Left, Right } from "purify-ts";
 
+import { HexStringUtils } from "@/shared/utils/HexStringUtils";
 import PACKAGE from "@root/package.json";
 
 import { GetTokenInfosParams, TokenDataSource } from "./TokenDataSource";
@@ -38,35 +39,31 @@ export class HttpTokenDataSource implements TokenDataSource {
       }
 
       // 1 byte for the length of the ticker
-      const tickerLengthBuff = Buffer.alloc(1);
-      tickerLengthBuff.writeUintBE(tokenInfos.ticker.length, 0, 1);
+      const tickerLengthBuff = tokenInfos.ticker.length
+        .toString(16)
+        .padStart(2, "0");
 
       // ticker ascii
-      const tickerBuff = Buffer.from(tokenInfos.ticker);
+      const tickerBuff = HexStringUtils.stringToHex(tokenInfos.ticker);
 
       // bufferized address
-      const addressBuff = Buffer.from(address.slice(2), "hex");
+      const addressBuff = address.slice(2);
 
       // 4 bytes for the decimals
-      const decimalsBuff = Buffer.alloc(4);
-      decimalsBuff.writeUintBE(tokenInfos.decimals, 0, 4);
+      const decimalsBuff = tokenInfos.decimals.toString(16).padStart(8, "0");
 
       // 4 bytes for the chainId
-      const chainIdBuff = Buffer.alloc(4);
-      chainIdBuff.writeUintBE(chainId, 0, 4);
-
-      // bufferized live signature
-      const liveSignatureBuff = Buffer.from(tokenInfos.live_signature, "hex");
+      const chainIdBuff = chainId.toString(16).padStart(8, "0");
 
       return Right(
-        Buffer.concat([
+        [
           tickerLengthBuff,
           tickerBuff,
           addressBuff,
           decimalsBuff,
           chainIdBuff,
-          liveSignatureBuff,
-        ]).toString("hex"),
+          tokenInfos.live_signature,
+        ].join(""),
       );
     } catch (error) {
       return Left(new Error("Failed to fetch token informations"));

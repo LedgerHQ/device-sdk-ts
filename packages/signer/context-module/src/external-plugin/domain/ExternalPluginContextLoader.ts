@@ -91,10 +91,9 @@ export class ExternalPluginContextLoader implements ContextLoader {
 
         response.push({
           type: "setExternalPlugin",
-          payload: Buffer.concat([
-            Buffer.from(value.selectorDetails.serializedData, "hex"),
-            Buffer.from(value.selectorDetails.signature, "hex"),
-          ]).toString("hex"),
+          payload: value.selectorDetails.serializedData.concat(
+            value.selectorDetails.signature,
+          ),
         });
 
         return response;

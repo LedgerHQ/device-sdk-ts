@@ -36,7 +36,7 @@ describe("HttpTokenDataSource", () => {
   it("should return a string when axios response is correct", async () => {
     // GIVEN
     const tokenDTO: TokenDto = {
-      live_signature: "0x0",
+      live_signature: "0123",
       decimals: 8,
       ticker: "USDC",
     };
@@ -49,7 +49,7 @@ describe("HttpTokenDataSource", () => {
     });
 
     // THEN
-    expect(result.extract()).toEqual("0455534443000000000800000001");
+    expect(result.extract()).toEqual("04555344430000000008000000010123");
   });
 
   it("should return undefined when data is empty", async () => {
