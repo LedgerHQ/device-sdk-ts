@@ -51,64 +51,47 @@ export class NftContextLoader implements ContextLoader {
 
     // EXAMPLE:
     // https://nft.api.live.ledger.com/v1/ethereum/1/contracts/0xBC4CA0EdA7647A8aB7C2061c2E118A18a936f13D/plugin-selector/0x095ea7b3
-    const pluginPayload = await this._dataSource.getSetPluginPayload({
-      chainId: transaction.chainId,
-      address: transaction.to,
-      selector,
-    });
+    const getPluginPayloadResponse = await this._dataSource.getSetPluginPayload(
+      {
+        chainId: transaction.chainId,
+        address: transaction.to,
+        selector,
+      },
+    );
 
-    const payload = pluginPayload.caseOf({
+    const pluginPayload = getPluginPayloadResponse.caseOf({
       Left: (error): ClearSignContext => ({
         type: "error",
         error,
       }),
-      Right: (value): ClearSignContext => {
-        if (!value) {
-          return {
-            type: "error",
-            error: new Error(
-              "[ContextModule] NftLoader: unexpected empty response",
-            ),
-          };
-        }
-
-        return { type: "plugin", payload: value };
-      },
+      Right: (value): ClearSignContext => ({ type: "plugin", payload: value }),
     });
 
-    if (payload.type === "error") {
-      return [payload];
+    if (pluginPayload.type === "error") {
+      return [pluginPayload];
     }
 
-    responses.push(payload);
+    responses.push(pluginPayload);
 
-    const nftInformationsPayload = await this._dataSource.getNftInfosPayload({
-      chainId: transaction.chainId,
-      address: transaction.to,
-    });
+    const getNftInfosPayloadResponse =
+      await this._dataSource.getNftInfosPayload({
+        chainId: transaction.chainId,
+        address: transaction.to,
+      });
 
-    const secondPayload = nftInformationsPayload.caseOf({
+    const nftInfosPayload = getNftInfosPayloadResponse.caseOf({
       Left: (error): ClearSignContext => ({
         type: "error",
         error,
       }),
-      Right: (value): ClearSignContext => {
-        if (!value) {
-          return {
-            type: "error",
-            error: new Error("[ContextModule] NftLoader: no nft metadata"),
-          };
-        }
-
-        return { type: "nft", payload: value };
-      },
+      Right: (value): ClearSignContext => ({ type: "nft", payload: value }),
     });
 
-    if (secondPayload.type === "error") {
-      return [secondPayload];
+    if (nftInfosPayload.type === "error") {
+      return [nftInfosPayload];
     }
 
-    responses.push(secondPayload);
+    responses.push(nftInfosPayload);
 
     return responses;
   }

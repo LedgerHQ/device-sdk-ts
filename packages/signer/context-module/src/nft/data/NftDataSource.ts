@@ -14,8 +14,8 @@ export type GetNftInformationsParams = {
 export interface NftDataSource {
   getNftInfosPayload(
     params: GetNftInformationsParams,
-  ): Promise<Either<Error, string | undefined>>;
+  ): Promise<Either<Error, string>>;
   getSetPluginPayload(
     params: GetSetPluginPayloadParams,
-  ): Promise<Either<Error, string | undefined>>;
+  ): Promise<Either<Error, string>>;
 }

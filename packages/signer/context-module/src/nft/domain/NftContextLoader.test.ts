@@ -61,43 +61,6 @@ describe("NftContextLoader", () => {
       expect(result).toEqual([]);
     });
 
-    it("should return an error when no plugin response", async () => {
-      const transaction = {
-        to: "0xdAC17F958D2ee523a2206206994597C13D831ec7",
-        data: "0x095ea7b30000000000000",
-      } as TransactionContext;
-      spyGetPluginPayload.mockResolvedValueOnce(Right(undefined));
-
-      const result = await loader.load(transaction);
-
-      expect(result).toEqual([
-        expect.objectContaining({
-          type: "error",
-          error: new Error(
-            "[ContextModule] NftLoader: unexpected empty response",
-          ),
-        }),
-      ]);
-    });
-
-    it("should return an error when no nft data response", async () => {
-      const transaction = {
-        to: "0xdAC17F958D2ee523a2206206994597C13D831ec7",
-        data: "0x095ea7b30000000000000",
-      } as unknown as TransactionContext;
-      spyGetPluginPayload.mockResolvedValueOnce(Right("payload1"));
-      spyGetNftInfosPayload.mockResolvedValueOnce(Right(undefined));
-
-      const result = await loader.load(transaction);
-
-      expect(result).toEqual([
-        expect.objectContaining({
-          type: "error",
-          error: new Error("[ContextModule] NftLoader: no nft metadata"),
-        }),
-      ]);
-    });
-
     it("should return an error when transaction data is not a valid hex string", async () => {
       const transaction = {
         to: "0xdAC17F958D2ee523a2206206994597C13D831ec7",

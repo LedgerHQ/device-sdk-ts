@@ -63,6 +63,23 @@ describe("HttpNftDataSource", () => {
       );
     });
 
+    it("should return an error when the response is empty", async () => {
+      // GIVEN
+      const response = { data: {} };
+      jest.spyOn(axios, "request").mockResolvedValue(response);
+
+      // WHEN
+      const result = await datasource.getNftInfosPayload({
+        address: "0x00",
+        chainId: 1,
+      });
+
+      // THEN
+      expect(result.extract()).toEqual(
+        new Error("[ContextModule] HttpNftDataSource: no nft metadata"),
+      );
+    });
+
     it("should return the payload", async () => {
       // GIVEN
       const response = { data: { payload: "payload" } };
@@ -95,6 +112,26 @@ describe("HttpNftDataSource", () => {
       expect(result.extract()).toEqual(
         new Error(
           "[ContextModule] HttpNftDataSource: Failed to fetch set plugin payload",
+        ),
+      );
+    });
+
+    it("should return an error when the response is empty", async () => {
+      // GIVEN
+      const response = { data: {} };
+      jest.spyOn(axios, "request").mockResolvedValue(response);
+
+      // WHEN
+      const result = await datasource.getSetPluginPayload({
+        address: "0x00",
+        chainId: 1,
+        selector: "0x00",
+      });
+
+      // THEN
+      expect(result.extract()).toEqual(
+        new Error(
+          "[ContextModule] HttpNftDataSource: unexpected empty response",
         ),
       );
     });

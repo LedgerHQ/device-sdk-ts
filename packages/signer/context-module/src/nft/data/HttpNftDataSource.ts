@@ -15,7 +15,7 @@ export class HttpNftDataSource implements NftDataSource {
     chainId,
     address,
     selector,
-  }: GetSetPluginPayloadParams): Promise<Either<Error, string | undefined>> {
+  }: GetSetPluginPayloadParams): Promise<Either<Error, string>> {
     try {
       const response = await axios.request<{ payload: string }>({
         method: "GET",
@@ -25,7 +25,13 @@ export class HttpNftDataSource implements NftDataSource {
         },
       });
 
-      return Right(response.data.payload);
+      return response.data.payload
+        ? Right(response.data.payload)
+        : Left(
+            new Error(
+              "[ContextModule] HttpNftDataSource: unexpected empty response",
+            ),
+          );
     } catch (error) {
       return Left(
         new Error(
@@ -38,7 +44,7 @@ export class HttpNftDataSource implements NftDataSource {
   public async getNftInfosPayload({
     chainId,
     address,
-  }: GetNftInformationsParams): Promise<Either<Error, string | undefined>> {
+  }: GetNftInformationsParams): Promise<Either<Error, string>> {
     try {
       const response = await axios.request<{ payload: string }>({
         method: "GET",
@@ -48,7 +54,9 @@ export class HttpNftDataSource implements NftDataSource {
         },
       });
 
-      return Right(response.data.payload);
+      return response.data.payload
+        ? Right(response.data.payload)
+        : Left(new Error("[ContextModule] HttpNftDataSource: no nft metadata"));
     } catch (error) {
       return Left(
         new Error(
