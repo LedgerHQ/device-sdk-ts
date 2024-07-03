@@ -13,7 +13,7 @@ export class HttpTokenDataSource implements TokenDataSource {
   public async getTokenInfosPayload({
     chainId,
     address,
-  }: GetTokenInfosParams): Promise<Either<Error, string | undefined>> {
+  }: GetTokenInfosParams): Promise<Either<Error, string>> {
     try {
       const response = await axios.request<TokenDto[]>({
         method: "GET",
@@ -35,7 +35,11 @@ export class HttpTokenDataSource implements TokenDataSource {
         !tokenInfos.ticker ||
         !tokenInfos.decimals
       ) {
-        return Right(undefined);
+        return Left(
+          new Error(
+            `[ContextModule] HttpTokenDataSource: no token metadata for address ${address} on chain ${chainId}`,
+          ),
+        );
       }
 
       // 1 byte for the length of the ticker

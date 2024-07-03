@@ -43,21 +43,15 @@ export class TokenContextLoader implements ContextLoader {
       chainId: transaction.chainId,
     });
 
-    return payload.caseOf({
-      Left: (error): ClearSignContext[] => [
-        {
+    return [
+      payload.caseOf({
+        Left: (error): ClearSignContext => ({
           type: "error",
           error,
-        },
-      ],
-      Right: (value): ClearSignContext[] => {
-        if (!value) {
-          return [];
-        }
-
-        return [{ type: "token", payload: value }];
-      },
-    });
+        }),
+        Right: (value): ClearSignContext => ({ type: "token", payload: value }),
+      }),
+    ];
   }
 
   private isSelectorSupported(selector: HexString) {

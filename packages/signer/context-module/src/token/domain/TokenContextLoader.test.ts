@@ -73,24 +73,6 @@ describe("TokenContextLoader", () => {
       expect(result).toEqual([]);
     });
 
-    it("should return undefined if the token is not supported by the CAL service", async () => {
-      // GIVEN
-      const transaction = {
-        to: "0xdAC17F958D2ee523a2206206994597C13D831ec7",
-        data: "0x095ea7b30000000000",
-        chainId: 1,
-      } as TransactionContext;
-      jest
-        .spyOn(mockTokenDataSource, "getTokenInfosPayload")
-        .mockResolvedValue(Right(undefined));
-
-      // WHEN
-      const result = await loader.load(transaction);
-
-      // THEN
-      expect(result).toEqual([]);
-    });
-
     it("should return an error when transaction data is not a valid hex string", async () => {
       // GIVEN
       const transaction = {

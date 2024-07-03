@@ -192,7 +192,7 @@ describe("ExternalPluginContextLoader", () => {
         .mockResolvedValue(Right(dappInfos));
       jest
         .spyOn(mockTokenDataSource, "getTokenInfosPayload")
-        .mockResolvedValue(Right(undefined));
+        .mockResolvedValue(Left(Error("error")));
 
       // WHEN
       const result = await loader.load(transaction);
@@ -201,9 +201,7 @@ describe("ExternalPluginContextLoader", () => {
       expect(result).toEqual([
         {
           type: "error",
-          error: new Error(
-            "[ContextModule] ExternalPluginContextLoader: Unable to get payload for token 0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48",
-          ),
+          error: new Error("error"),
         },
         {
           type: "externalPlugin",

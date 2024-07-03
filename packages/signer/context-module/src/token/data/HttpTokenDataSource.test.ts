@@ -52,7 +52,7 @@ describe("HttpTokenDataSource", () => {
     expect(result.extract()).toEqual("04555344430000000008000000010123");
   });
 
-  it("should return undefined when data is empty", async () => {
+  it("should return an error when data is empty", async () => {
     // GIVEN
     jest.spyOn(axios, "request").mockResolvedValue({ data: undefined });
 
@@ -63,7 +63,13 @@ describe("HttpTokenDataSource", () => {
     });
 
     // THEN
-    expect(result.extract()).toEqual(undefined);
+    expect(result).toEqual(
+      Left(
+        new Error(
+          "[ContextModule] HttpTokenDataSource: no token metadata for address 0x00 on chain 1",
+        ),
+      ),
+    );
   });
 
   it("should return undefined when no signature", async () => {
@@ -77,7 +83,13 @@ describe("HttpTokenDataSource", () => {
     });
 
     // THEN
-    expect(result.extract()).toEqual(undefined);
+    expect(result).toEqual(
+      Left(
+        new Error(
+          "[ContextModule] HttpTokenDataSource: no token metadata for address 0x00 on chain 1",
+        ),
+      ),
+    );
   });
 
   it("should return undefined when no ticker", async () => {
@@ -93,7 +105,13 @@ describe("HttpTokenDataSource", () => {
     });
 
     // THEN
-    expect(result.extract()).toEqual(undefined);
+    expect(result).toEqual(
+      Left(
+        new Error(
+          "[ContextModule] HttpTokenDataSource: no token metadata for address 0x00 on chain 1",
+        ),
+      ),
+    );
   });
 
   it("should return undefined when no decimals", async () => {
@@ -109,7 +127,13 @@ describe("HttpTokenDataSource", () => {
     });
 
     // THEN
-    expect(result.extract()).toEqual(undefined);
+    expect(result).toEqual(
+      Left(
+        new Error(
+          "[ContextModule] HttpTokenDataSource: no token metadata for address 0x00 on chain 1",
+        ),
+      ),
+    );
   });
 
   it("should return an error when axios throws an error", async () => {

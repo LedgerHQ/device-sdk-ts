@@ -8,5 +8,5 @@ export type GetTokenInfosParams = {
 export interface TokenDataSource {
   getTokenInfosPayload(
     params: GetTokenInfosParams,
-  ): Promise<Either<Error, string | undefined>>;
+  ): Promise<Either<Error, string>>;
 }

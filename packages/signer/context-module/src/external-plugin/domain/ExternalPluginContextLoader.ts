@@ -73,19 +73,10 @@ export class ExternalPluginContextLoader implements ContextLoader {
           });
 
           tokenPayload.map((payload) => {
-            if (!payload) {
-              response.push({
-                type: "error",
-                error: new Error(
-                  `[ContextModule] ExternalPluginContextLoader: Unable to get payload for token ${address}`,
-                ),
-              });
-            } else {
-              response.push({
-                type: "token",
-                payload,
-              });
-            }
+            response.push({
+              type: "token",
+              payload,
+            });
           });
         }
 
