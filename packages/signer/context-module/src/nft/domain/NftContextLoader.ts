@@ -51,13 +51,13 @@ export class NftContextLoader implements ContextLoader {
 
     // EXAMPLE:
     // https://nft.api.live.ledger.com/v1/ethereum/1/contracts/0xBC4CA0EdA7647A8aB7C2061c2E118A18a936f13D/plugin-selector/0x095ea7b3
-    const setPluginPayload = await this._dataSource.getSetPluginPayload({
+    const pluginPayload = await this._dataSource.getSetPluginPayload({
       chainId: transaction.chainId,
       address: transaction.to,
       selector,
     });
 
-    const payload = setPluginPayload.caseOf({
+    const payload = pluginPayload.caseOf({
       Left: (error): ClearSignContext => ({
         type: "error",
         error,
@@ -72,7 +72,7 @@ export class NftContextLoader implements ContextLoader {
           };
         }
 
-        return { type: "setPlugin", payload: value };
+        return { type: "plugin", payload: value };
       },
     });
 
@@ -100,7 +100,7 @@ export class NftContextLoader implements ContextLoader {
           };
         }
 
-        return { type: "provideNFTInformation", payload: value };
+        return { type: "nft", payload: value };
       },
     });
 

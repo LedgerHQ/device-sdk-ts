@@ -139,7 +139,7 @@ describe("TokenContextLoader", () => {
       // THEN
       expect(result).toEqual([
         {
-          type: "provideERC20TokenInformation",
+          type: "token",
           payload: "payload-0xdAC17F958D2ee523a2206206994597C13D831ec7",
         },
       ]);

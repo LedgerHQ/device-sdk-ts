@@ -161,11 +161,11 @@ describe("NftContextLoader", () => {
 
       expect(result).toEqual([
         {
-          type: "setPlugin",
+          type: "plugin",
           payload: "payload1",
         },
         {
-          type: "provideNFTInformation",
+          type: "nft",
           payload: "payload2",
         },
       ]);

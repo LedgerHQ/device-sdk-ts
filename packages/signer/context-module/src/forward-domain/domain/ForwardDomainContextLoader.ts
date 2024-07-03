@@ -60,7 +60,7 @@ export class ForwardDomainContextLoader implements ContextLoader {
           ];
         }
 
-        return [{ type: "provideDomainName", payload: value }];
+        return [{ type: "domainName", payload: value }];
       },
     });
   }

@@ -82,7 +82,7 @@ export class ExternalPluginContextLoader implements ContextLoader {
               });
             } else {
               response.push({
-                type: "provideERC20TokenInformation",
+                type: "token",
                 payload,
               });
             }
@@ -90,7 +90,7 @@ export class ExternalPluginContextLoader implements ContextLoader {
         }
 
         response.push({
-          type: "setExternalPlugin",
+          type: "externalPlugin",
           payload: value.selectorDetails.serializedData.concat(
             value.selectorDetails.signature,
           ),

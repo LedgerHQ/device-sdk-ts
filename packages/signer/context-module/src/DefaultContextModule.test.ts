@@ -43,7 +43,7 @@ describe("DefaultContextModule", () => {
       [{ type: "provideERC20Info", payload: "payload1" }],
       [
         { type: "provideERC20Info", payload: "payload2" },
-        { type: "setPlugin", payload: "payload3" },
+        { type: "plugin", payload: "payload3" },
       ],
     ];
     jest

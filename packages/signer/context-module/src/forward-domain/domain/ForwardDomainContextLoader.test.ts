@@ -80,7 +80,7 @@ describe("ForwardDomainContextLoader", () => {
 
       expect(result).toEqual([
         {
-          type: "provideDomainName",
+          type: "domainName",
           payload: "payload",
         },
       ]);

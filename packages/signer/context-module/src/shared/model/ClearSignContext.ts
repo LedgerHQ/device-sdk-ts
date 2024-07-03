@@ -1,10 +1,5 @@
 type ClearSignContextSuccess = {
-  type:
-    | "provideERC20TokenInformation"
-    | "provideNFTInformation"
-    | "provideDomainName"
-    | "setPlugin"
-    | "setExternalPlugin";
+  type: "token" | "nft" | "domainName" | "plugin" | "externalPlugin";
   payload: string;
 };
 

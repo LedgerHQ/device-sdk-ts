@@ -55,7 +55,7 @@ export class TokenContextLoader implements ContextLoader {
           return [];
         }
 
-        return [{ type: "provideERC20TokenInformation", payload: value }];
+        return [{ type: "token", payload: value }];
       },
     });
   }
