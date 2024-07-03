@@ -55,30 +55,33 @@ export class ExternalPluginContextLoader implements ContextLoader {
           transaction.data ?? "", // FIXME: transaction.data is never undefined
         );
 
-        for (const erc20Path of value.selectorDetails.erc20OfInterest) {
-          const address = this.getAddressFromPath(erc20Path, decodedCallData);
+        const promises = value.selectorDetails.erc20OfInterest.map(
+          async (erc20Path) => {
+            const address = this.getAddressFromPath(erc20Path, decodedCallData);
 
-          const tokenPayload = await this._tokenDataSource.getTokenInfosPayload(
-            {
-              address,
-              chainId: transaction.chainId,
-            },
-          );
+            const tokenPayload =
+              await this._tokenDataSource.getTokenInfosPayload({
+                address,
+                chainId: transaction.chainId,
+              });
 
-          tokenPayload.mapLeft((error) => {
-            response.push({
-              type: "error",
-              error,
+            tokenPayload.mapLeft((error) => {
+              response.push({
+                type: "error",
+                error,
+              });
             });
-          });
 
-          tokenPayload.map((payload) => {
-            response.push({
-              type: "token",
-              payload,
+            tokenPayload.map((payload) => {
+              response.push({
+                type: "token",
+                payload,
+              });
             });
-          });
-        }
+          },
+        );
+
+        await Promise.all(promises);
 
         response.push({
           type: "externalPlugin",
