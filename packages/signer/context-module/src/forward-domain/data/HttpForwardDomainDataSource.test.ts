@@ -35,7 +35,7 @@ describe("HttpForwardDomainDataSource", () => {
     );
   });
 
-  it("should return undefined when no payload is returned", async () => {
+  it("should return an error when no payload is returned", async () => {
     // GIVEN
     const response = { data: { test: "" } };
     jest.spyOn(axios, "request").mockResolvedValue(response);
@@ -47,7 +47,13 @@ describe("HttpForwardDomainDataSource", () => {
     });
 
     // THEN
-    expect(result).toEqual(Right(undefined));
+    expect(result).toEqual(
+      Left(
+        new Error(
+          "[ContextModule] HttpForwardDomainDataSource: error getting domain payload",
+        ),
+      ),
+    );
   });
 
   it("should throw an error when axios throws an error", async () => {
@@ -68,5 +74,20 @@ describe("HttpForwardDomainDataSource", () => {
         ),
       ),
     );
+  });
+
+  it("should return a payload", async () => {
+    // GIVEN
+    const response = { data: { payload: "payload" } };
+    jest.spyOn(axios, "request").mockResolvedValue(response);
+
+    // WHEN
+    const result = await datasource.getDomainNamePayload({
+      challenge: "challenge",
+      domain: "hello.eth",
+    });
+
+    // THEN
+    expect(result).toEqual(Right("payload"));
   });
 });

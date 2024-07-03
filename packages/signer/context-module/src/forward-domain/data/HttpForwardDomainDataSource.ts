@@ -13,7 +13,7 @@ export class HttpForwardDomainDataSource implements ForwardDomainDataSource {
   public async getDomainNamePayload({
     domain,
     challenge,
-  }: GetForwardDomainInfosParams): Promise<Either<Error, string | undefined>> {
+  }: GetForwardDomainInfosParams): Promise<Either<Error, string>> {
     try {
       const response = await axios.request<{ payload: string }>({
         method: "GET",
@@ -23,7 +23,13 @@ export class HttpForwardDomainDataSource implements ForwardDomainDataSource {
         },
       });
 
-      return Right(response.data.payload);
+      return response.data.payload
+        ? Right(response.data.payload)
+        : Left(
+            new Error(
+              "[ContextModule] HttpForwardDomainDataSource: error getting domain payload",
+            ),
+          );
     } catch (error) {
       return Left(
         new Error(

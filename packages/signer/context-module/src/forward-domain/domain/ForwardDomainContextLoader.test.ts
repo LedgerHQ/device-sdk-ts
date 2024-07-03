@@ -86,30 +86,6 @@ describe("ForwardDomainContextLoader", () => {
       ]);
     });
 
-    it("should return an error when no payload", async () => {
-      const transaction = {
-        domain: "hello.eth",
-        challenge: "challenge",
-      } as TransactionContext;
-      jest
-        .spyOn(mockForwardDomainDataSource, "getDomainNamePayload")
-        .mockResolvedValue(Right(undefined));
-
-      const loader = new ForwardDomainContextLoader(
-        mockForwardDomainDataSource,
-      );
-      const result = await loader.load(transaction);
-
-      expect(result).toEqual([
-        {
-          type: "error",
-          error: new Error(
-            "[ContextModule] ForwardDomainLoader: error getting domain payload",
-          ),
-        },
-      ]);
-    });
-
     it("should return an error when unable to fetch the datasource", async () => {
       // GIVEN
       const transaction = {

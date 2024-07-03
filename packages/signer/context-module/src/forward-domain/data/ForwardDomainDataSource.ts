@@ -8,5 +8,5 @@ export type GetForwardDomainInfosParams = {
 export interface ForwardDomainDataSource {
   getDomainNamePayload(
     params: GetForwardDomainInfosParams,
-  ): Promise<Either<Error, string | undefined>>;
+  ): Promise<Either<Error, string>>;
 }
