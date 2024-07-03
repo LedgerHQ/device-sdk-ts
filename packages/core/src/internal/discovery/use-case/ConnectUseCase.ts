@@ -9,7 +9,6 @@ import { loggerTypes } from "@internal/logger-publisher/di/loggerTypes";
 import { LoggerPublisherService } from "@internal/logger-publisher/service/LoggerPublisherService";
 import { usbDiTypes } from "@internal/usb/di/usbDiTypes";
 import type { UsbHidTransport } from "@internal/usb/transport/UsbHidTransport";
-import type { DisconnectHandler } from "@internal/usb/transport/WebUsbHidTransport";
 
 /**
  * The arguments for the ConnectUseCase.
@@ -45,18 +44,18 @@ export class ConnectUseCase {
     this._logger = loggerFactory("ConnectUseCase");
   }
 
-  private handleHardwareDisconnect: DisconnectHandler = (deviceId) => {
+  private handleDeviceDisconnect(deviceId: DeviceId) {
     const deviceSessionOrError =
       this._sessionService.getDeviceSessionByDeviceId(deviceId);
     deviceSessionOrError.map((deviceSession) => {
       this._sessionService.removeDeviceSession(deviceSession.id);
     });
-  };
+  }
 
   async execute({ deviceId }: ConnectUseCaseArgs): Promise<DeviceSessionId> {
     const either = await this._usbHidTransport.connect({
       deviceId,
-      onDisconnect: this.handleHardwareDisconnect,
+      onDisconnect: (dId) => this.handleDeviceDisconnect(dId),
     });
 
     return either.caseOf({
