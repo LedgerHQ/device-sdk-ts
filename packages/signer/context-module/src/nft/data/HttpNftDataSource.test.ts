@@ -57,7 +57,9 @@ describe("HttpNftDataSource", () => {
 
       // THEN
       expect(result.extract()).toEqual(
-        new Error("Failed to fetch nft informations"),
+        new Error(
+          "[ContextModule] HttpNftDataSource: Failed to fetch nft informations",
+        ),
       );
     });
 
@@ -91,7 +93,9 @@ describe("HttpNftDataSource", () => {
 
       // THEN
       expect(result.extract()).toEqual(
-        new Error("Failed to fetch set plugin payload"),
+        new Error(
+          "[ContextModule] HttpNftDataSource: Failed to fetch set plugin payload",
+        ),
       );
     });
 

@@ -25,7 +25,11 @@ export class HttpForwardDomainDataSource implements ForwardDomainDataSource {
 
       return Right(response.data.payload);
     } catch (error) {
-      return Left(new Error("Failed to fetch domain name"));
+      return Left(
+        new Error(
+          "[ContextModule] HttpForwardDomainDataSource: Failed to fetch domain name",
+        ),
+      );
     }
   }
 }

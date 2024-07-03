@@ -61,6 +61,12 @@ describe("HttpForwardDomainDataSource", () => {
     });
 
     // THEN
-    expect(result).toEqual(Left(new Error("Failed to fetch domain name")));
+    expect(result).toEqual(
+      Left(
+        new Error(
+          "[ContextModule] HttpForwardDomainDataSource: Failed to fetch domain name",
+        ),
+      ),
+    );
   });
 });

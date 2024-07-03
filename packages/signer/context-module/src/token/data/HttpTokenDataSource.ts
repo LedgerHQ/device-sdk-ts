@@ -66,7 +66,11 @@ export class HttpTokenDataSource implements TokenDataSource {
         ].join(""),
       );
     } catch (error) {
-      return Left(new Error("Failed to fetch token informations"));
+      return Left(
+        new Error(
+          "[ContextModule] HttpTokenDataSource: Failed to fetch token informations",
+        ),
+      );
     }
   }
 }

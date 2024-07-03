@@ -124,7 +124,11 @@ describe("HttpTokenDataSource", () => {
 
     // THEN
     expect(result).toEqual(
-      Left(new Error("Failed to fetch token informations")),
+      Left(
+        new Error(
+          "[ContextModule] HttpTokenDataSource: Failed to fetch token informations",
+        ),
+      ),
     );
   });
 });

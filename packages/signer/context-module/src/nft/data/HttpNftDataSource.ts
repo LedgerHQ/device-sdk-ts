@@ -27,7 +27,11 @@ export class HttpNftDataSource implements NftDataSource {
 
       return Right(response.data.payload);
     } catch (error) {
-      return Left(new Error("Failed to fetch set plugin payload"));
+      return Left(
+        new Error(
+          "[ContextModule] HttpNftDataSource: Failed to fetch set plugin payload",
+        ),
+      );
     }
   }
 
@@ -46,7 +50,11 @@ export class HttpNftDataSource implements NftDataSource {
 
       return Right(response.data.payload);
     } catch (error) {
-      return Left(new Error("Failed to fetch nft informations"));
+      return Left(
+        new Error(
+          "[ContextModule] HttpNftDataSource: Failed to fetch nft informations",
+        ),
+      );
     }
   }
 }

@@ -400,6 +400,10 @@ describe("HttpExternalPuginDataSource", () => {
     });
 
     // THEN
-    expect(result.extract()).toEqual(new Error("Error fetching dapp infos"));
+    expect(result.extract()).toEqual(
+      new Error(
+        "[ContextModule] HttpExternalPluginDataSource: Error fetching dapp infos",
+      ),
+    );
   });
 });
