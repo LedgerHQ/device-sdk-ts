@@ -1,1 +1,1 @@
-export const Hello = "World";
+export * from "@api/index";

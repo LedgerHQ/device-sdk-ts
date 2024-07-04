@@ -41,15 +41,22 @@
     "test": "jest --passWithNoTests",
     "test:coverage": "pnpm test -- --coverage"
   },
-  "dependencies": {},
+  "dependencies": {
+    "inversify": "^6.0.2",
+    "inversify-logger-middleware": "^3.1.0",
+    "reflect-metadata": "^0.2.2"
+  },
   "devDependencies": {
+    "@ledgerhq/context-module": "workspace:*",
     "@ledgerhq/device-sdk-core": "^0.3.0",
     "@ledgerhq/eslint-config-dsdk": "workspace:*",
     "@ledgerhq/jest-config-dsdk": "workspace:*",
     "@ledgerhq/prettier-config-dsdk": "workspace:*",
-    "@ledgerhq/tsconfig-dsdk": "workspace:*"
+    "@ledgerhq/tsconfig-dsdk": "workspace:*",
+    "ts-node": "^10.9.2"
   },
   "peerDependencies": {
+    "@ledgerhq/context-module": "workspace:*",
     "@ledgerhq/device-sdk-core": "^0.3.0"
   }
 }

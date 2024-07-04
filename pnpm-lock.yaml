@@ -247,7 +247,20 @@ importers:
         version: 10.9.2(@types/node@20.14.10)(typescript@5.5.3)
 
   packages/signer/keyring-eth:
+    dependencies:
+      inversify:
+        specifier: ^6.0.2
+        version: 6.0.2
+      inversify-logger-middleware:
+        specifier: ^3.1.0
+        version: 3.1.0
+      reflect-metadata:
+        specifier: ^0.2.2
+        version: 0.2.2
     devDependencies:
+      '@ledgerhq/context-module':
+        specifier: workspace:*
+        version: link:../context-module
       '@ledgerhq/device-sdk-core':
         specifier: ^0.3.0
         version: 0.3.0
