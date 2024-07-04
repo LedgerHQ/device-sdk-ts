@@ -26,7 +26,7 @@ export class ForwardDomainContextLoader implements ContextLoader {
       return [];
     }
 
-    if (!this.isDomainValid(domain as string)) {
+    if (!this.isDomainValid(domain)) {
       return [
         {
           type: "error",
@@ -38,7 +38,7 @@ export class ForwardDomainContextLoader implements ContextLoader {
     }
 
     const payload = await this._dataSource.getDomainNamePayload({
-      domain: domain!,
+      domain: domain,
       challenge: challenge,
     });
 
@@ -56,7 +56,6 @@ export class ForwardDomainContextLoader implements ContextLoader {
     ];
   }
 
-  // NOTE: duplicata of libs/domain-service/src/utils/index.ts
   private isDomainValid(domain: string) {
     const lengthIsValid = domain.length > 0 && Number(domain.length) < 30;
     const containsOnlyValidChars = new RegExp("^[a-zA-Z0-9\\-\\_\\.]+$").test(

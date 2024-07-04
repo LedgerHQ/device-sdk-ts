@@ -38,13 +38,13 @@ export class ExternalPluginContextLoader implements ContextLoader {
       return [{ type: "error" as const, error: new Error("Invalid selector") }];
     }
 
-    const dappInfos = await this._externalPluginDataSource.getDappInfos({
+    const either = await this._externalPluginDataSource.getDappInfos({
       address: transaction.to,
       chainId: transaction.chainId,
       selector,
     });
 
-    return this.processDappInfos(dappInfos, transaction);
+    return this.processDappInfos(either, transaction);
   }
 
   /**
@@ -88,14 +88,14 @@ export class ExternalPluginContextLoader implements ContextLoader {
       return [];
     }
 
-    const eitherDecodedCallData = this.getDecodedCallData(
+    const either = this.getDecodedCallData(
       dappInfos.abi,
       dappInfos.selectorDetails.method,
       transaction.data ?? "",
     );
 
     const tokensPayload = await this.processDecodedCallData(
-      eitherDecodedCallData,
+      either,
       dappInfos,
       transaction,
     );
@@ -103,7 +103,7 @@ export class ExternalPluginContextLoader implements ContextLoader {
     return [
       ...tokensPayload,
       {
-        type: "externalPlugin" as const,
+        type: "externalPlugin",
         payload: dappInfos.selectorDetails.serializedData.concat(
           dappInfos.selectorDetails.signature,
         ),
@@ -172,12 +172,12 @@ export class ExternalPluginContextLoader implements ContextLoader {
   ): Promise<ClearSignContext> {
     const address = this.getAddressFromPath(erc20Path, decodedCallData);
 
-    const tokenPayload = await this._tokenDataSource.getTokenInfosPayload({
+    const either = await this._tokenDataSource.getTokenInfosPayload({
       address,
       chainId: transaction.chainId,
     });
 
-    return tokenPayload.caseOf({
+    return either.caseOf({
       Left: (error): ClearSignContext => ({ type: "error" as const, error }),
       Right: (payload): ClearSignContext => ({
         type: "token" as const,
