@@ -21,13 +21,13 @@ export class ContextModuleBuilder {
 
     this.defaultLoaders = [
       container.get<ExternalPluginContextLoader>(
-        externalPluginTypes.ExternalPluginDataSource,
+        externalPluginTypes.ExternalPluginContextLoader,
       ),
       container.get<ForwardDomainContextLoader>(
-        forwardDomainTypes.ForwardDomainDataSource,
+        forwardDomainTypes.ForwardDomainContextLoader,
       ),
-      container.get<NftContextLoader>(nftTypes.NftDataSource),
-      container.get<TokenContextLoader>(tokenTypes.TokenDataSource),
+      container.get<NftContextLoader>(nftTypes.NftContextLoader),
+      container.get<TokenContextLoader>(tokenTypes.TokenContextLoader),
     ];
   }
 

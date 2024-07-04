@@ -1,4 +1,4 @@
-import { inject } from "inversify";
+import { inject, injectable } from "inversify";
 
 import { ContextLoader } from "@/shared/domain/ContextLoader";
 import { ClearSignContext } from "@/shared/model/ClearSignContext";
@@ -16,6 +16,7 @@ const SUPPORTED_SELECTORS: HexString[] = Object.values(
   ERC20_SUPPORTED_SELECTORS,
 );
 
+@injectable()
 export class TokenContextLoader implements ContextLoader {
   private _dataSource: TokenDataSource;
 

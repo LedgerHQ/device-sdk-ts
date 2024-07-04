@@ -1,22 +1,25 @@
 import { ethers } from "ethers";
 import { Interface } from "ethers/lib/utils";
-import { inject } from "inversify";
+import { inject, injectable } from "inversify";
 
 import type { ExternalPluginDataSource } from "@/external-plugin/data/ExternalPluginDataSource";
+import { externalPluginTypes } from "@/external-plugin/di/externalPluginTypes";
 import { ContextLoader } from "@/shared/domain/ContextLoader";
 import { ClearSignContext } from "@/shared/model/ClearSignContext";
 import { HexString, isHexString } from "@/shared/model/HexString";
 import { TransactionContext } from "@/shared/model/TransactionContext";
 import type { TokenDataSource } from "@/token/data/TokenDataSource";
+import { tokenTypes } from "@/token/di/tokenTypes";
 
+@injectable()
 export class ExternalPluginContextLoader implements ContextLoader {
   private _externalPluginDataSource: ExternalPluginDataSource;
   private _tokenDataSource: TokenDataSource;
 
   constructor(
-    @inject("ExternalPluginDataSource")
+    @inject(externalPluginTypes.ExternalPluginDataSource)
     externalPluginDataSource: ExternalPluginDataSource,
-    @inject("TokenDataSource") tokenDataSource: TokenDataSource,
+    @inject(tokenTypes.TokenDataSource) tokenDataSource: TokenDataSource,
   ) {
     this._externalPluginDataSource = externalPluginDataSource;
     this._tokenDataSource = tokenDataSource;

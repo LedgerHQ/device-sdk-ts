@@ -1,6 +1,7 @@
-import { inject } from "inversify";
+import { inject, injectable } from "inversify";
 
 import type { NftDataSource } from "@/nft/data/NftDataSource";
+import { nftTypes } from "@/nft/di/nftTypes";
 import { ContextLoader } from "@/shared/domain/ContextLoader";
 import { ClearSignContext } from "@/shared/model/ClearSignContext";
 import { HexString, isHexString } from "@/shared/model/HexString";
@@ -25,10 +26,11 @@ const SUPPORTED_SELECTORS: HexString[] = [
   ...Object.values(ERC1155_SUPPORTED_SELECTOR),
 ];
 
+@injectable()
 export class NftContextLoader implements ContextLoader {
   private _dataSource: NftDataSource;
 
-  constructor(@inject("NftDataSource") dataSource: NftDataSource) {
+  constructor(@inject(nftTypes.NftDataSource) dataSource: NftDataSource) {
     this._dataSource = dataSource;
   }
 
