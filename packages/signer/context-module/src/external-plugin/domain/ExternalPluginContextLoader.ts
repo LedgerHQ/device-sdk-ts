@@ -1,7 +1,9 @@
 import { ethers } from "ethers";
 import { Interface } from "ethers/lib/utils";
 import { inject, injectable } from "inversify";
+import { Either, Left, Right } from "purify-ts";
 
+import { DappInfos } from "@/external-plugin//model/DappInfos";
 import type { ExternalPluginDataSource } from "@/external-plugin/data/ExternalPluginDataSource";
 import { externalPluginTypes } from "@/external-plugin/di/externalPluginTypes";
 import { ContextLoader } from "@/shared/domain/ContextLoader";
@@ -42,69 +44,161 @@ export class ExternalPluginContextLoader implements ContextLoader {
       selector,
     });
 
-    return await dappInfos.caseOf({
+    return this.processDappInfos(dappInfos, transaction);
+  }
+
+  /**
+   * Process the DappInfos and return the ClearSignContext array with
+   * the tokens and external plugin data
+   *
+   * if there is an error, return it as a ClearSignContext
+   *
+   * @param either
+   * @param transaction
+   * @returns Promise<ClearSignContext[]>
+   */
+  private processDappInfos(
+    either: Either<Error, DappInfos | undefined>,
+    transaction: TransactionContext,
+  ): Promise<ClearSignContext[]> {
+    return either.caseOf({
       Left: (error): Promise<ClearSignContext[]> =>
         Promise.resolve([{ type: "error" as const, error }]),
       Right: async (value): Promise<ClearSignContext[]> => {
-        const response: ClearSignContext[] = [];
-
-        if (!value) {
-          return response;
-        }
-
-        const decodedCallData = this.getDecodedCallData(
-          value.abi,
-          value.selectorDetails.method,
-          transaction.data ?? "", // FIXME: transaction.data is never undefined
-        );
-
-        const promises = value.selectorDetails.erc20OfInterest.map(
-          async (erc20Path) => {
-            const address = this.getAddressFromPath(erc20Path, decodedCallData);
-
-            const tokenPayload =
-              await this._tokenDataSource.getTokenInfosPayload({
-                address,
-                chainId: transaction.chainId,
-              });
-
-            tokenPayload.mapLeft((error) => {
-              response.push({
-                type: "error",
-                error,
-              });
-            });
-
-            tokenPayload.map((payload) => {
-              response.push({
-                type: "token",
-                payload,
-              });
-            });
-          },
-        );
-
-        await Promise.all(promises);
-
-        response.push({
-          type: "externalPlugin",
-          payload: value.selectorDetails.serializedData.concat(
-            value.selectorDetails.signature,
-          ),
-        });
-
-        return response;
+        return await this.handleDappInfos(value, transaction);
       },
     });
   }
 
-  private getDecodedCallData(abi: object[], method: string, data: string) {
+  /**
+   * Handle the DappInfos and return the ClearSignContext array with
+   * the tokens and external plugin data
+   *
+   * If dappInfos is undefined, return an empty array
+   *
+   * @param dappInfos
+   * @param transaction
+   * @returns Promise<ClearSignContext[]>
+   */
+  private async handleDappInfos(
+    dappInfos: DappInfos | undefined,
+    transaction: TransactionContext,
+  ): Promise<ClearSignContext[]> {
+    if (!dappInfos) {
+      return [];
+    }
+
+    const eitherDecodedCallData = this.getDecodedCallData(
+      dappInfos.abi,
+      dappInfos.selectorDetails.method,
+      transaction.data ?? "",
+    );
+
+    const tokensPayload = await this.processDecodedCallData(
+      eitherDecodedCallData,
+      dappInfos,
+      transaction,
+    );
+
+    return [
+      ...tokensPayload,
+      {
+        type: "externalPlugin" as const,
+        payload: dappInfos.selectorDetails.serializedData.concat(
+          dappInfos.selectorDetails.signature,
+        ),
+      },
+    ];
+  }
+
+  /**
+   * Process the decoded call data and return the ClearSignContext array with
+   * the tokens and external plugin data
+   *
+   * If there is an error, return it as a ClearSignContext
+   *
+   * @param either
+   * @param dappInfos
+   * @param transaction
+   * @returns Promise<ClearSignContext[]>
+   */
+  private processDecodedCallData(
+    either: Either<Error, ethers.utils.Result>,
+    dappInfos: DappInfos,
+    transaction: TransactionContext,
+  ): Promise<ClearSignContext[]> {
+    return either.caseOf({
+      Left: (error): Promise<ClearSignContext[]> => {
+        return Promise.resolve([{ type: "error" as const, error }]);
+      },
+      Right: async (decodedCallData): Promise<ClearSignContext[]> => {
+        return await this.handleDecodedCallData(
+          decodedCallData,
+          dappInfos,
+          transaction,
+        );
+      },
+    });
+  }
+
+  /**
+   * Handle the decoded call data and return the ClearSignContext array with
+   * the tokens and external plugin data
+   *
+   * @param decodedCallData
+   * @param dappInfos
+   * @param transaction
+   * @returns Promise<ClearSignContext[]>
+   */
+  private async handleDecodedCallData(
+    decodedCallData: ethers.utils.Result,
+    dappInfos: DappInfos,
+    transaction: TransactionContext,
+  ): Promise<ClearSignContext[]> {
+    const promises = dappInfos.selectorDetails.erc20OfInterest.map(
+      async (erc20Path) =>
+        this.getTokenPayload(transaction, erc20Path, decodedCallData),
+    );
+
+    const tokensPayload = await Promise.all(promises);
+
+    return tokensPayload;
+  }
+
+  private async getTokenPayload(
+    transaction: TransactionContext,
+    erc20Path: string,
+    decodedCallData: ethers.utils.Result,
+  ): Promise<ClearSignContext> {
+    const address = this.getAddressFromPath(erc20Path, decodedCallData);
+
+    const tokenPayload = await this._tokenDataSource.getTokenInfosPayload({
+      address,
+      chainId: transaction.chainId,
+    });
+
+    return tokenPayload.caseOf({
+      Left: (error): ClearSignContext => ({ type: "error" as const, error }),
+      Right: (payload): ClearSignContext => ({
+        type: "token" as const,
+        payload,
+      }),
+    });
+  }
+
+  private getDecodedCallData(
+    abi: object[],
+    method: string,
+    data: string,
+  ): Either<Error, ethers.utils.Result> {
     try {
       const contractInterface = new Interface(abi);
-      return contractInterface.decodeFunctionData(method, data);
+      return Right(contractInterface.decodeFunctionData(method, data));
     } catch (e) {
-      throw new Error(
-        "[ContextModule] ExternalPluginContextLoader: Unable to parse abi",
+      return Left(
+        new Error(
+          "[ContextModule] ExternalPluginContextLoader: Unable to parse abi",
+        ),
       );
     }
   }

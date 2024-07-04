@@ -339,7 +339,7 @@ describe("ExternalPluginContextLoader", () => {
       ]);
     });
 
-    it("should throw an error when the abi is not conform", () => {
+    it("should return an error when the abi is not conform", async () => {
       // GIVEN
       const dappInfos = dappInfosBuilder({
         abi: [{ fakeabi: "notworking" }],
@@ -356,14 +356,21 @@ describe("ExternalPluginContextLoader", () => {
         .mockResolvedValue(Right(dappInfos));
 
       // WHEN
-      const promise = loader.load(transaction);
+      const result = await loader.load(transaction);
 
       // THEN
-      expect(promise).rejects.toEqual(
-        new Error(
-          "[ContextModule] ExternalPluginContextLoader: Unable to parse abi",
-        ),
-      );
+      expect(result).toEqual([
+        {
+          type: "error",
+          error: new Error(
+            "[ContextModule] ExternalPluginContextLoader: Unable to parse abi",
+          ),
+        },
+        {
+          type: "externalPlugin",
+          payload: "1234567890",
+        },
+      ]);
     });
 
     it("should throw an error when the erc20OfInterest doest not exist in the transaction", () => {
