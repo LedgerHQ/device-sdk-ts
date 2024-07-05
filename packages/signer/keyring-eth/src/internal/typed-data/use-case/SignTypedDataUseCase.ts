@@ -1,18 +1,15 @@
-import { DeviceSdk } from "@ledgerhq/device-sdk-core";
 import { inject, injectable } from "inversify";
 
 import { Signature, TypedData } from "@api/index";
-import { externalTypes } from "@internal/externalTypes";
+import { AppBindingEth } from "@internal/app-binding/AppBindingEth";
+import { appBindingTypes } from "@internal/app-binding/di/appBindingTypes";
 
 @injectable()
 export class SignTypedDataUseCase {
-  private _sdk: DeviceSdk;
+  private _appBinding: AppBindingEth;
 
-  constructor(
-    @inject(externalTypes.Sdk)
-    sdk: DeviceSdk,
-  ) {
-    this._sdk = sdk;
+  constructor(@inject(appBindingTypes.AppBinding) appBinding: AppBindingEth) {
+    this._appBinding = appBinding;
   }
 
   async execute(
@@ -21,7 +18,7 @@ export class SignTypedDataUseCase {
   ): Promise<Signature> {
     // 1- Sign the transaction using the app binding
 
-    this._sdk;
+    this._appBinding;
 
     return Promise.resolve({} as Signature);
   }

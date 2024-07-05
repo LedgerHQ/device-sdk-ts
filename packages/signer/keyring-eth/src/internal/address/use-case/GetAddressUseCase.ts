@@ -1,18 +1,15 @@
-import { DeviceSdk } from "@ledgerhq/device-sdk-core";
 import { inject, injectable } from "inversify";
 
 import { Address, AddressOptions } from "@api/index";
-import { externalTypes } from "@internal/externalTypes";
+import { AppBindingEth } from "@internal/app-binding/AppBindingEth";
+import { appBindingTypes } from "@internal/app-binding/di/appBindingTypes";
 
 @injectable()
 export class GetAddressUseCase {
-  private _sdk: DeviceSdk;
+  private _appBinding: AppBindingEth;
 
-  constructor(
-    @inject(externalTypes.Sdk)
-    sdk: DeviceSdk,
-  ) {
-    this._sdk = sdk;
+  constructor(@inject(appBindingTypes.AppBinding) appBinding: AppBindingEth) {
+    this._appBinding = appBinding;
   }
 
   async execute(
@@ -21,7 +18,7 @@ export class GetAddressUseCase {
   ): Promise<Address> {
     // 1- Get the address using the app binding
 
-    this._sdk;
+    this._appBinding;
 
     return Promise.resolve({} as Address);
   }
