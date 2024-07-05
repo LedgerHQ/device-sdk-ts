@@ -373,7 +373,7 @@ describe("ExternalPluginContextLoader", () => {
       ]);
     });
 
-    it("should throw an error when the erc20OfInterest doest not exist in the transaction", () => {
+    it("should throw an error when the erc20OfInterest doest not exist in the transaction", async () => {
       // GIVEN
       const dappInfos = dappInfosBuilder({
         abi: ABI,
@@ -390,17 +390,20 @@ describe("ExternalPluginContextLoader", () => {
         .mockResolvedValue(Right(dappInfos));
 
       // WHEN
-      const promise = loader.load(transaction);
+      const result = await loader.load(transaction);
 
       // THEN
-      expect(promise).rejects.toEqual(
-        new Error(
-          "[ContextModule] ExternalPluginContextLoader: Unable to get address",
-        ),
-      );
+      expect(result).toEqual([
+        {
+          type: "error",
+          error: new Error(
+            "[ContextModule] ExternalPluginContextLoader: Unable to get address",
+          ),
+        },
+      ]);
     });
 
-    it("should throw an error when an out-of-bounds element is present in erc20OfInterest", () => {
+    it("should throw an error when an out-of-bounds element is present in erc20OfInterest", async () => {
       // GIVEN
       const dappInfos = dappInfosBuilder({
         abi: ABI,
@@ -421,14 +424,17 @@ describe("ExternalPluginContextLoader", () => {
         .mockResolvedValue(Right(dappInfos));
 
       // WHEN
-      const promise = loader.load(transaction);
+      const result = await loader.load(transaction);
 
       // THEN
-      expect(promise).rejects.toEqual(
-        new Error(
-          "[ContextModule] ExternalPluginContextLoader: Unable to get address",
-        ),
-      );
+      expect(result).toEqual([
+        {
+          type: "error",
+          error: new Error(
+            "[ContextModule] ExternalPluginContextLoader: Unable to get address",
+          ),
+        },
+      ]);
     });
 
     it("should return a list of context responses when one erc20OfInterest is a complex struct", async () => {

@@ -1,9 +1,8 @@
 import { ethers } from "ethers";
 import { Interface } from "ethers/lib/utils";
 import { inject, injectable } from "inversify";
-import { Either, Left, Right } from "purify-ts";
+import { Either, EitherAsync, Left, Right } from "purify-ts";
 
-import { DappInfos } from "@/external-plugin//model/DappInfos";
 import type { ExternalPluginDataSource } from "@/external-plugin/data/ExternalPluginDataSource";
 import { externalPluginTypes } from "@/external-plugin/di/externalPluginTypes";
 import { ContextLoader } from "@/shared/domain/ContextLoader";
@@ -38,152 +37,91 @@ export class ExternalPluginContextLoader implements ContextLoader {
       return [{ type: "error" as const, error: new Error("Invalid selector") }];
     }
 
-    const either = await this._externalPluginDataSource.getDappInfos({
+    const eitherDappInfos = await this._externalPluginDataSource.getDappInfos({
       address: transaction.to,
       chainId: transaction.chainId,
       selector,
     });
 
-    return this.processDappInfos(either, transaction);
-  }
+    return EitherAsync<Error, ClearSignContext[]>(async ({ liftEither }) => {
+      const dappInfos = await liftEither(eitherDappInfos);
 
-  /**
-   * Process the DappInfos and return the ClearSignContext array with
-   * the tokens and external plugin data
-   *
-   * if there is an error, return it as a ClearSignContext
-   *
-   * @param either
-   * @param transaction
-   * @returns Promise<ClearSignContext[]>
-   */
-  private processDappInfos(
-    either: Either<Error, DappInfos | undefined>,
-    transaction: TransactionContext,
-  ): Promise<ClearSignContext[]> {
-    return either.caseOf({
-      Left: (error): Promise<ClearSignContext[]> =>
-        Promise.resolve([{ type: "error" as const, error }]),
-      Right: async (value): Promise<ClearSignContext[]> => {
-        return await this.handleDappInfos(value, transaction);
-      },
-    });
-  }
+      // if the dappInfos is null, return an empty array
+      // this means that the selector is not a known selector
+      if (!dappInfos) {
+        return [];
+      }
 
-  /**
-   * Handle the DappInfos and return the ClearSignContext array with
-   * the tokens and external plugin data
-   *
-   * If dappInfos is undefined, return an empty array
-   *
-   * @param dappInfos
-   * @param transaction
-   * @returns Promise<ClearSignContext[]>
-   */
-  private async handleDappInfos(
-    dappInfos: DappInfos | undefined,
-    transaction: TransactionContext,
-  ): Promise<ClearSignContext[]> {
-    if (!dappInfos) {
-      return [];
-    }
-
-    const either = this.getDecodedCallData(
-      dappInfos.abi,
-      dappInfos.selectorDetails.method,
-      transaction.data ?? "",
-    );
-
-    const tokensPayload = await this.processDecodedCallData(
-      either,
-      dappInfos,
-      transaction,
-    );
-
-    return [
-      ...tokensPayload,
-      {
+      const externalPluginContext: ClearSignContext = {
         type: "externalPlugin",
         payload: dappInfos.selectorDetails.serializedData.concat(
           dappInfos.selectorDetails.signature,
         ),
-      },
-    ];
-  }
+      };
 
-  /**
-   * Process the decoded call data and return the ClearSignContext array with
-   * the tokens and external plugin data
-   *
-   * If there is an error, return it as a ClearSignContext
-   *
-   * @param either
-   * @param dappInfos
-   * @param transaction
-   * @returns Promise<ClearSignContext[]>
-   */
-  private processDecodedCallData(
-    either: Either<Error, ethers.utils.Result>,
-    dappInfos: DappInfos,
-    transaction: TransactionContext,
-  ): Promise<ClearSignContext[]> {
-    return either.caseOf({
-      Left: (error): Promise<ClearSignContext[]> => {
-        return Promise.resolve([{ type: "error" as const, error }]);
-      },
-      Right: async (decodedCallData): Promise<ClearSignContext[]> => {
-        return await this.handleDecodedCallData(
-          decodedCallData,
-          dappInfos,
-          transaction,
-        );
-      },
+      const decodedCallData = this.getDecodedCallData(
+        dappInfos.abi,
+        dappInfos.selectorDetails.method,
+        transaction.data!, // trasaction.data is not null and not infered correctly
+      );
+
+      // if the call data cannot be decoded, return the error
+      // but also the externalPluginContext because it is still valid
+      if (decodedCallData.isLeft()) {
+        return [
+          { type: "error", error: decodedCallData.extract() },
+          externalPluginContext,
+        ];
+      }
+
+      // decodedCallData is a Right so we can extract it safely
+      const extractedDecodedCallData =
+        decodedCallData.extract() as ethers.utils.Result;
+
+      // get the token payload for each erc20OfInterest
+      // and return the payload or the error
+      const promises = dappInfos.selectorDetails.erc20OfInterest.map(
+        async (erc20Path) =>
+          this.getTokenPayload(
+            transaction,
+            erc20Path,
+            extractedDecodedCallData,
+          ),
+      );
+
+      const tokensPayload = await Promise.all(promises);
+
+      // map the payload or the error to a ClearSignContext
+      const contexts: ClearSignContext[] = tokensPayload.map((eitherToken) =>
+        eitherToken.caseOf<ClearSignContext>({
+          Left: (error) => ({ type: "error", error }),
+          Right: (payload) => ({ type: "token", payload }),
+        }),
+      );
+
+      return [...contexts, externalPluginContext];
+    }).caseOf<ClearSignContext[]>({
+      // parse all errors into ClearSignContext
+      Left: (error) => [{ type: "error", error }],
+      Right: (contexts) => contexts,
     });
   }
 
-  /**
-   * Handle the decoded call data and return the ClearSignContext array with
-   * the tokens and external plugin data
-   *
-   * @param decodedCallData
-   * @param dappInfos
-   * @param transaction
-   * @returns Promise<ClearSignContext[]>
-   */
-  private async handleDecodedCallData(
-    decodedCallData: ethers.utils.Result,
-    dappInfos: DappInfos,
-    transaction: TransactionContext,
-  ): Promise<ClearSignContext[]> {
-    const promises = dappInfos.selectorDetails.erc20OfInterest.map(
-      async (erc20Path) =>
-        this.getTokenPayload(transaction, erc20Path, decodedCallData),
-    );
-
-    const tokensPayload = await Promise.all(promises);
-
-    return tokensPayload;
-  }
-
-  private async getTokenPayload(
+  private getTokenPayload(
     transaction: TransactionContext,
     erc20Path: string,
     decodedCallData: ethers.utils.Result,
-  ): Promise<ClearSignContext> {
+  ) {
     const address = this.getAddressFromPath(erc20Path, decodedCallData);
 
-    const either = await this._tokenDataSource.getTokenInfosPayload({
-      address,
-      chainId: transaction.chainId,
-    });
-
-    return either.caseOf({
-      Left: (error): ClearSignContext => ({ type: "error" as const, error }),
-      Right: (payload): ClearSignContext => ({
-        type: "token" as const,
-        payload,
-      }),
-    });
+    return EitherAsync<Error, string>(({ fromPromise }) =>
+      fromPromise(
+        this._tokenDataSource.getTokenInfosPayload({
+          address,
+          chainId: transaction.chainId,
+        }),
+      ),
+    );
   }
 
   private getDecodedCallData(
