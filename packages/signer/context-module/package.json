@@ -1,9 +1,7 @@
 {
-  "name": "@ledgerhq/device-sdk-signer",
-  "version": "1.0.0",
+  "name": "@ledgerhq/context-module",
+  "version": "0.1.0",
   "license": "MIT",
-  "main": "lib/cjs/index.js",
-  "types": "lib/cjs/index.d.ts",
   "private": true,
   "exports": {
     ".": {
@@ -37,18 +35,23 @@
     "lint:fix": "pnpm lint --fix",
     "prettier": "prettier . --check",
     "prettier:fix": "prettier . --write",
-    "typecheck": "tsc --noEmit",
-    "test": "jest --passWithNoTests",
-    "test:coverage": "pnpm test -- --coverage"
-  },
-  "dependencies": {
-    "inversify": "^6.0.2",
-    "reflect-metadata": "^0.2.2"
+    "test": "jest",
+    "test:watch": "pnpm test -- --watch",
+    "test:coverage": "pnpm test -- --coverage",
+    "typecheck": "tsc --noEmit"
   },
   "devDependencies": {
     "@ledgerhq/eslint-config-dsdk": "workspace:*",
     "@ledgerhq/jest-config-dsdk": "workspace:*",
     "@ledgerhq/prettier-config-dsdk": "workspace:*",
-    "@ledgerhq/tsconfig-dsdk": "workspace:*"
+    "@ledgerhq/tsconfig-dsdk": "workspace:*",
+    "ts-node": "^10.9.2"
+  },
+  "dependencies": {
+    "axios": "^1.7.2",
+    "ethers": "^5.7.2",
+    "inversify": "^6.0.2",
+    "purify-ts": "^2.0.3",
+    "reflect-metadata": "^0.2.2"
   }
 }
