@@ -2,10 +2,10 @@ import { InvalidStatusWordError } from "@api/command/Errors";
 import { testDeviceActionStates } from "@api/device-action/__test-utils__/testDeviceActionStates";
 import { DeviceActionStatus } from "@api/device-action/model/DeviceActionState";
 import { UserInteractionRequired } from "@api/device-action/model/UserInteractionRequired";
+import { DeviceLockedError } from "@api/device-action/os/errors";
 import { DeviceSessionStateType } from "@api/device-session/DeviceSessionState";
 import { DeviceStatus } from "@api/index";
 
-import { DeviceLockedError } from "./errors";
 import { OpenAppDeviceAction } from "./OpenAppDeviceAction";
 import { OpenAppDAState } from "./types";
 

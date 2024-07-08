@@ -3,6 +3,10 @@ import { assign, fromPromise, setup } from "xstate";
 
 import { InternalApi } from "@api/device-action/DeviceAction";
 import { UserInteractionRequired } from "@api/device-action/model/UserInteractionRequired";
+import {
+  DeviceLockedError,
+  DeviceNotOnboardedError,
+} from "@api/device-action/os/errors";
 import { StateMachineTypes } from "@api/device-action/xstate-utils/StateMachineTypes";
 import { XStateDeviceAction } from "@api/device-action/xstate-utils/XStateDeviceAction";
 import {
@@ -16,7 +20,6 @@ import {
 } from "@api/index";
 import { DeviceStatus } from "@api/index";
 
-import { DeviceLockedError, DeviceNotOnboardedError } from "./errors";
 import {
   OpenAppDAError,
   OpenAppDAInput,

@@ -4,7 +4,7 @@ List of device actions state flows.
 
 ## OS Level Device Actions
 
-### GetCurrentApp
+### Get Device Status
 
 Check for device availability and returns CurrentApp
 
@@ -18,7 +18,7 @@ Check for device availability and returns CurrentApp
 
 ```mermaid
 stateDiagram-v2
-state GetCurrentAppDeviceAction {
+state GetDeviceStatusDeviceAction {
   [*] --> DeviceReady
   DeviceReady --> OnboardingCheck
   OnboardingCheck --> isDeviceUnlocked: Onboarded

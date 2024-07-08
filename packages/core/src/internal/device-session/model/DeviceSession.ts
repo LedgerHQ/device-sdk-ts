@@ -141,6 +141,11 @@ export class DeviceSession {
       sendCommand: async <Response, Args>(command: Command<Response, Args>) =>
         this.sendCommand(command),
       getDeviceSessionState: () => this._deviceState.getValue(),
+      getDeviceSessionStateObservable: () => this.state,
+      setDeviceSessionState: (state: DeviceSessionState) => {
+        this.setDeviceSessionState(state);
+        return this._deviceState.getValue();
+      },
     });
 
     return {

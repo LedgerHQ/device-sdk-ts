@@ -7,29 +7,27 @@ import {
 } from "@api/device-action/os/errors";
 import { SdkError } from "@api/Error";
 
-export type OpenAppDAOutput = void;
-
-export type OpenAppDAInput = {
-  appName: string;
+export type GetDeviceStatusDAOutput = {
+  currentApp: string | null;
 };
+export type GetDeviceStatusDAInput = null;
 
-export type OpenAppDAError =
+export type GetDeviceStatusDAError =
   | DeviceNotOnboardedError
   | DeviceLockedError
   | UnknownDAError
   | SdkError; /// TODO: remove, we should have an exhaustive list of errors
 
-type OpenAppDARequiredInteraction =
+type GetDeviceStatusDARequiredInteraction =
   | UserInteractionRequired.None
-  | UserInteractionRequired.UnlockDevice
-  | UserInteractionRequired.ConfirmOpenApp;
+  | UserInteractionRequired.UnlockDevice;
 
-export type OpenAppDAIntermediateValue = {
-  requiredUserInteraction: OpenAppDARequiredInteraction;
+export type GetDeviceStatusDAIntermediateValue = {
+  requiredUserInteraction: GetDeviceStatusDARequiredInteraction;
 };
 
-export type OpenAppDAState = DeviceActionState<
-  OpenAppDAOutput,
-  OpenAppDAError,
-  OpenAppDAIntermediateValue
+export type GetDeviceStatusDAState = DeviceActionState<
+  GetDeviceStatusDAOutput,
+  GetDeviceStatusDAError,
+  GetDeviceStatusDAIntermediateValue
 >;
