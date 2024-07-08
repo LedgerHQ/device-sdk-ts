@@ -108,6 +108,9 @@ importers:
       postcss:
         specifier: ^8.4.38
         version: 8.4.38
+      typescript:
+        specifier: 5.4.5
+        version: 5.4.5
 
   packages/config/eslint:
     devDependencies:
@@ -6373,6 +6376,11 @@ packages:
     peerDependenciesMeta:
       typescript:
         optional: true
+
+  typescript@5.4.5:
+    resolution: {integrity: sha512-vcI4UpRgg81oIRUFwR0WSIHKt11nJ7SAVlYNIu+QpqeyXP+gpQJy/Z4+F0aGxSE4MqwjyXvW/TzgkLAx2AGHwQ==}
+    engines: {node: '>=14.17'}
+    hasBin: true
 
   typescript@5.5.3:
     resolution: {integrity: sha512-/hreyEujaB0w76zKo6717l3L0o/qEUtRgdvUBvlkhoWeOVMjMuHNHk0BRBzikzuGDqNmPQbg5ifMEqsHLiIUcQ==}
@@ -14626,6 +14634,8 @@ snapshots:
       typescript: 5.5.3
     transitivePeerDependencies:
       - supports-color
+
+  typescript@5.4.5: {}
 
   typescript@5.5.3: {}
 
