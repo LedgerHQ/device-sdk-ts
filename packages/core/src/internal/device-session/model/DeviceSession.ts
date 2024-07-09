@@ -52,7 +52,10 @@ export class DeviceSession {
         refreshInterval: 1000,
         deviceStatus: DeviceStatus.CONNECTED,
         sendApduFn: (rawApdu: Uint8Array) =>
-          this.sendApdu(rawApdu, { isPolling: true }),
+          this.sendApdu(rawApdu, {
+            isPolling: true,
+            triggersDisconnection: false,
+          }),
         updateStateFn: (state: DeviceSessionState) =>
           this.setDeviceSessionState(state),
       },
@@ -87,11 +90,17 @@ export class DeviceSession {
 
   async sendApdu(
     rawApdu: Uint8Array,
-    options: { isPolling: boolean } = { isPolling: false },
+    options: { isPolling: boolean; triggersDisconnection: boolean } = {
+      isPolling: false,
+      triggersDisconnection: false,
+    },
   ) {
     if (!options.isPolling) this.updateDeviceStatus(DeviceStatus.BUSY);
 
-    const errorOrResponse = await this._connectedDevice.sendApdu(rawApdu);
+    const errorOrResponse = await this._connectedDevice.sendApdu(
+      rawApdu,
+      options.triggersDisconnection,
+    );
 
     return errorOrResponse.ifRight((response) => {
       if (CommandUtils.isLockedDeviceResponse(response)) {
@@ -106,7 +115,10 @@ export class DeviceSession {
     command: Command<Response, Args>,
   ): Promise<Response> {
     const apdu = command.getApdu();
-    const response = await this.sendApdu(apdu.getRawApdu());
+    const response = await this.sendApdu(apdu.getRawApdu(), {
+      isPolling: false,
+      triggersDisconnection: command.triggersDisconnection ?? false,
+    });
 
     return response.caseOf({
       Left: (err) => {

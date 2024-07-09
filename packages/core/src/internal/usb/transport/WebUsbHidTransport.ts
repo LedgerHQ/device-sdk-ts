@@ -316,15 +316,17 @@ export class WebUsbHidTransport implements UsbHidTransport {
       deviceConnection,
     );
     const connectedDevice = new InternalConnectedDevice({
-      sendApdu: (apdu) => deviceConnection.sendApdu(apdu),
+      sendApdu: (apdu, triggersDisconnection) =>
+        deviceConnection.sendApdu(apdu, triggersDisconnection),
       deviceModel,
       id: deviceId,
       type: "USB",
     });
     this._disconnectionHandlersByHidId.set(
       this.getHidUsbProductId(internalDevice.hidDevice.productId),
-      () =>
-        this.disconnect({ connectedDevice }).then(() => onDisconnect(deviceId)),
+      () => {
+        this.disconnect({ connectedDevice }).then(() => onDisconnect(deviceId));
+      },
     );
     return Right(connectedDevice);
   }
@@ -353,6 +355,12 @@ export class WebUsbHidTransport implements UsbHidTransport {
         new UnknownDeviceError(`Unknown device ${params.connectedDevice.id}`),
       );
     }
+
+    const deviceConnection = this._deviceConnectionByHidId.get(
+      this.getHidUsbProductId(internalDevice.hidDevice.productId),
+    );
+
+    deviceConnection?.disconnect();
 
     try {
       const usbProductId = this.getHidUsbProductId(
