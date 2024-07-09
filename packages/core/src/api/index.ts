@@ -32,4 +32,23 @@ export { LogLevel } from "./logger-subscriber/model/LogLevel";
 export { ConsoleLogger } from "./logger-subscriber/service/ConsoleLogger";
 export * from "./types";
 export { ConnectedDevice } from "./usb/model/ConnectedDevice";
+export {
+  type DeviceAction,
+  type DeviceActionIntermediateValue,
+  type ExecuteDeviceActionReturnType,
+} from "@api/device-action/DeviceAction";
+export {
+  type DeviceActionState,
+  DeviceActionStatus,
+} from "@api/device-action/model/DeviceActionState";
+export { UserInteractionRequired } from "@api/device-action/model/UserInteractionRequired";
+export { OpenAppDeviceAction } from "@api/device-action/os/OpenAppDeviceAction/OpenAppDeviceAction";
+export {
+  type OpenAppDAError,
+  type OpenAppDAInput,
+  type OpenAppDAIntermediateValue,
+  type OpenAppDAOutput,
+  type OpenAppDAState,
+} from "@api/device-action/os/OpenAppDeviceAction/types";
 export { type DeviceSessionState } from "@api/device-session/DeviceSessionState";
+export { type SdkError } from "@api/Error";

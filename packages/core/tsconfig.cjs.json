@@ -4,6 +4,7 @@
     "src/**/*.test.ts",
     "src/**/*.stub.ts",
     "src/**/__mocks__",
+    "src/**/__test-utils__",
     "jest.*.ts"
   ],
   "compilerOptions": {

@@ -6,6 +6,10 @@ import {
   SendCommandUseCase,
   SendCommandUseCaseArgs,
 } from "@api/command/use-case/SendCommandUseCase";
+import {
+  ExecuteDeviceActionUseCase,
+  ExecuteDeviceActionUseCaseArgs,
+} from "@api/device-action/use-case/ExecuteDeviceActionUseCase";
 import { ApduResponse } from "@api/device-session/ApduResponse";
 import { DeviceSessionState } from "@api/device-session/DeviceSessionState";
 import { DeviceSessionId } from "@api/device-session/types";
@@ -33,6 +37,13 @@ import {
   GetConnectedDeviceUseCaseArgs,
 } from "@internal/usb/use-case/GetConnectedDeviceUseCase";
 import { makeContainer, MakeContainerProps } from "@root/src/di";
+
+import {
+  DeviceActionIntermediateValue,
+  ExecuteDeviceActionReturnType,
+} from "./device-action/DeviceAction";
+import { deviceActionTypes } from "./device-action/di/deviceActionTypes";
+import { SdkError } from "./Error";
 
 /**
  * The main class to interact with the SDK.
@@ -131,6 +142,26 @@ export class DeviceSdk {
   ): Promise<Response> {
     return this.container
       .get<SendCommandUseCase>(commandTypes.SendCommandUseCase)
+      .execute(args);
+  }
+
+  executeDeviceAction<
+    Output,
+    Input,
+    Error extends SdkError,
+    IntermediateValue extends DeviceActionIntermediateValue,
+  >(
+    args: ExecuteDeviceActionUseCaseArgs<
+      Output,
+      Input,
+      Error,
+      IntermediateValue
+    >,
+  ): ExecuteDeviceActionReturnType<Output, Error, IntermediateValue> {
+    return this.container
+      .get<ExecuteDeviceActionUseCase>(
+        deviceActionTypes.ExecuteDeviceActionUseCase,
+      )
       .execute(args);
   }
 

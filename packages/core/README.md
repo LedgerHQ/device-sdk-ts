@@ -19,6 +19,8 @@
       - [Get OS Version](#get-os-version)
       - [Get App and Version](#get-app-and-version)
     - [Building a Custom Command](#building-a-custom-command)
+    - [Executing a device action](#executing-a-device-action)
+      - [Open App Device Action](#open-app-device-action)
     - [Example in React](#example-in-react)
 
 ## Description
@@ -242,6 +244,75 @@ Then you can use the `sendCommand` method to send it to a connected device.
 This is strongly recommended over direct usage of `sendApdu`.
 
 Check the existing commands for a variety of examples.
+
+### Executing a device action
+
+Device actions define a succession of commands to be sent to the device.
+
+They are useful for actions that require user interaction, like opening an app,
+or approving a transaction.
+
+The result of a device action execution is an observable that will emit different states of the action execution. These states contain information about the current status of the action, some intermediate values like the user action required, and the final result.
+
+#### Open App Device Action
+
+```ts
+import { OpenAppDeviceAction, OpenAppDAState } from "@ledgerhq/device-sdk-core";
+
+const openAppDeviceAction = new OpenAppDeviceAction({ appName: "Bitcoin" });
+
+const { observable, cancel } = await sdk.executeDeviceAction({
+  deviceAction: openAppDeviceAction,
+  command,
+});
+
+observable.subscribe({
+  next: (state: OpenAppDAState) => {
+    switch (state.status) {
+      case DeviceActionStatus.NotStarted:
+        console.log("Action not started yet");
+        break;
+      case DeviceActionStatus.Pending:
+        const {
+          intermediateValue: { userActionRequired },
+        } = state;
+        switch (userActionRequired) {
+          case UserActionRequiredType.None:
+            console.log("No user action required");
+            break;
+          case UserActionRequiredType.ConfirmOpenApp:
+            console.log(
+              "The user should confirm the app opening on the device",
+            );
+            break;
+          case UserActionRequiredType.UnlockDevice:
+            console.log("The user should unlock the device");
+            break;
+          default:
+            /**
+             * you should make sure that you handle all the possible user action
+             * required types by displaying them to the user.
+             */
+            throw new Exception("Unhandled user action required");
+            break;
+        }
+        console.log("Action is pending");
+        break;
+      case DeviceActionStatus.Stopped:
+        console.log("Action has been stopped");
+        break;
+      case DeviceActionStatus.Completed:
+        const { output } = state;
+        console.log("Action has been completed", output);
+        break;
+      case DeviceActionStatus.Error:
+        const { error } = state;
+        console.log("An error occurred during the action", error);
+        break;
+    }
+  },
+});
+```
 
 ### Example in React
 

@@ -1,6 +1,7 @@
 import { Container } from "inversify";
 
 import { commandModuleFactory } from "@api/command/di/commandModule";
+import { deviceActionModuleFactory } from "@api/device-action/di/deviceActionModule";
 import { LoggerSubscriberService } from "@api/logger-subscriber/service/LoggerSubscriberService";
 // Uncomment this line to enable the logger middleware
 // import { makeLoggerMiddleware } from "inversify-logger-middleware";
@@ -38,6 +39,7 @@ export const makeContainer = ({
     deviceSessionModuleFactory({ stub }),
     sendModuleFactory({ stub }),
     commandModuleFactory({ stub }),
+    deviceActionModuleFactory({ stub }),
     // modules go here
   );
 
