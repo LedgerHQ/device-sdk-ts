@@ -1,6 +1,5 @@
 import React, { useMemo } from "react";
-import { Divider, Flex, Grid, Text } from "@ledgerhq/react-ui";
-import styled from "styled-components";
+import { Grid } from "@ledgerhq/react-ui";
 
 import { useDeviceSessionsContext } from "@/providers/DeviceSessionsProvider";
 import Command, { CommandProps } from "./Command";
@@ -23,28 +22,7 @@ import {
 import { useRouter } from "next/navigation";
 import { BatteryStatusType } from "@ledgerhq/device-sdk-core/src/api/command/os/GetBatteryStatusCommand.js";
 import { getValueSelectorFromEnum } from "./CommandForm";
-
-const Root = styled(Flex).attrs({ mx: 15, mt: 10, mb: 5 })`
-  flex-direction: column;
-  flex: 1;
-  justify-content: center;
-  align-items: center;
-`;
-
-const Container = styled(Flex)`
-  height: 100%;
-  width: 100%;
-  flex-direction: column;
-  border-radius: 12px;
-`;
-
-const Header = styled(Flex).attrs({ py: 6 })``;
-
-const Title = styled(Text).attrs({
-  variant: "h5Inter",
-  fontWeight: "semiBold",
-  fontSize: 18,
-})``;
+import { PageWithHeader } from "../PageWithHeader";
 
 export const CommandsView: React.FC = () => {
   const {
@@ -150,25 +128,15 @@ export const CommandsView: React.FC = () => {
   }
 
   return (
-    <Root overflow="hidden">
-      <Container>
-        <Header>
-          <Title>Commands</Title>
-        </Header>
-        <Divider my={4} />
-        <Grid columns={1} rowGap={6} overflowY="scroll">
-          {commands.map((command) => (
-            <Command
-              key={`${command.title}_${command.description}`} // if this is not unique we have another problem
-              title={command.title}
-              description={command.description}
-              sendCommand={command.sendCommand}
-              initialValues={command.initialValues}
-              valueSelector={command.valueSelector}
-            />
-          ))}
-        </Grid>
-      </Container>
-    </Root>
+    <PageWithHeader title="Commands">
+      <Grid columns={1} rowGap={6} overflowY="scroll">
+        {commands.map((command) => (
+          <Command
+            key={`${command.title}_${command.description}`} // if this is not unique we have another problem
+            {...command}
+          />
+        ))}
+      </Grid>
+    </PageWithHeader>
   );
 };

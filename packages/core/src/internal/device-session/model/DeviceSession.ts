@@ -6,10 +6,16 @@ import { Command } from "@api/command/Command";
 import { CommandUtils } from "@api/command/utils/CommandUtils";
 import { DeviceStatus } from "@api/device/DeviceStatus";
 import {
+  DeviceAction,
+  DeviceActionIntermediateValue,
+  ExecuteDeviceActionReturnType,
+} from "@api/device-action/DeviceAction";
+import {
   DeviceSessionState,
   DeviceSessionStateType,
 } from "@api/device-session/DeviceSessionState";
 import { DeviceSessionId } from "@api/device-session/types";
+import { SdkError } from "@api/Error";
 import { loggerTypes } from "@internal/logger-publisher/di/loggerTypes";
 import { LoggerPublisherService } from "@internal/logger-publisher/service/LoggerPublisherService";
 import { InternalConnectedDevice } from "@internal/usb/model/InternalConnectedDevice";
@@ -46,7 +52,10 @@ export class DeviceSession {
         refreshInterval: 1000,
         deviceStatus: DeviceStatus.CONNECTED,
         sendApduFn: (rawApdu: Uint8Array) =>
-          this.sendApdu(rawApdu, { isPolling: true }),
+          this.sendApdu(rawApdu, {
+            isPolling: true,
+            triggersDisconnection: false,
+          }),
         updateStateFn: (state: DeviceSessionState) =>
           this.setDeviceSessionState(state),
       },
@@ -81,11 +90,17 @@ export class DeviceSession {
 
   async sendApdu(
     rawApdu: Uint8Array,
-    options: { isPolling: boolean } = { isPolling: false },
+    options: { isPolling: boolean; triggersDisconnection: boolean } = {
+      isPolling: false,
+      triggersDisconnection: false,
+    },
   ) {
     if (!options.isPolling) this.updateDeviceStatus(DeviceStatus.BUSY);
 
-    const errorOrResponse = await this._connectedDevice.sendApdu(rawApdu);
+    const errorOrResponse = await this._connectedDevice.sendApdu(
+      rawApdu,
+      options.triggersDisconnection,
+    );
 
     return errorOrResponse.ifRight((response) => {
       if (CommandUtils.isLockedDeviceResponse(response)) {
@@ -100,7 +115,10 @@ export class DeviceSession {
     command: Command<Response, Args>,
   ): Promise<Response> {
     const apdu = command.getApdu();
-    const response = await this.sendApdu(apdu.getRawApdu());
+    const response = await this.sendApdu(apdu.getRawApdu(), {
+      isPolling: false,
+      triggersDisconnection: command.triggersDisconnection ?? false,
+    });
 
     return response.caseOf({
       Left: (err) => {
@@ -109,6 +127,26 @@ export class DeviceSession {
       Right: (r) =>
         command.parseResponse(r, this._connectedDevice.deviceModel.id),
     });
+  }
+
+  executeDeviceAction<
+    Output,
+    Input,
+    Error extends SdkError,
+    IntermediateValue extends DeviceActionIntermediateValue,
+  >(
+    deviceAction: DeviceAction<Output, Input, Error, IntermediateValue>,
+  ): ExecuteDeviceActionReturnType<Output, Error, IntermediateValue> {
+    const { observable, cancel } = deviceAction._execute({
+      sendCommand: async <Response, Args>(command: Command<Response, Args>) =>
+        this.sendCommand(command),
+      getDeviceSessionState: () => this._deviceState.getValue(),
+    });
+
+    return {
+      observable,
+      cancel,
+    };
   }
 
   close() {

@@ -12,6 +12,8 @@ import { ApduResponse } from "@api/device-session/ApduResponse";
 export class CloseAppCommand implements Command<void> {
   args = undefined;
 
+  readonly triggersDisconnection = true;
+
   getApdu(): Apdu {
     const closeAppApduArgs: ApduBuilderArgs = {
       cla: 0xb0,

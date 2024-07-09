@@ -25,10 +25,12 @@ export function CommandForm<Args extends Record<string, FieldType>>({
   initialValues,
   onChange,
   valueSelector,
+  disabled,
 }: {
   initialValues: Args;
   onChange: (values: Args) => void;
   valueSelector?: ValueSelector<FieldType>;
+  disabled?: boolean;
 }) {
   const { formValues, setFormValue } = useForm(initialValues);
 
@@ -54,6 +56,7 @@ export function CommandForm<Args extends Record<string, FieldType>>({
           {valueSelector?.[key] ? (
             <Flex flexDirection="row" flexWrap="wrap" rowGap={2} columnGap={2}>
               <SelectInput
+                isDisabled={disabled}
                 placeholder={key}
                 value={valueSelector[key].find((val) => val.value === value)}
                 isMulti={false}
@@ -67,6 +70,7 @@ export function CommandForm<Args extends Record<string, FieldType>>({
               name="key"
               checked={value}
               onChange={() => setFormValue(key, !value)}
+              disabled={disabled}
             />
           ) : typeof value === "string" ? (
             <Input
@@ -74,6 +78,7 @@ export function CommandForm<Args extends Record<string, FieldType>>({
               value={value}
               placeholder={key}
               onChange={(newVal) => setFormValue(key, newVal)}
+              disabled={disabled}
             />
           ) : (
             <Input
@@ -82,6 +87,7 @@ export function CommandForm<Args extends Record<string, FieldType>>({
               placeholder={key}
               onChange={(newVal) => setFormValue(key, newVal ?? 0)}
               type="number"
+              disabled={disabled}
             />
           )}
         </Flex>

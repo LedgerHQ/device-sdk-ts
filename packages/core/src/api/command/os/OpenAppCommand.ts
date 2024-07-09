@@ -16,6 +16,8 @@ export type OpenAppArgs = {
 export class OpenAppCommand implements Command<void, OpenAppArgs> {
   args: OpenAppArgs;
 
+  readonly triggersDisconnection = true;
+
   constructor(args: OpenAppArgs) {
     this.args = args;
   }

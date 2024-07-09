@@ -1,35 +1,12 @@
 import React, { useCallback, useEffect, useState } from "react";
 
-import {
-  Flex,
-  Text,
-  Icons,
-  Drawer,
-  Button,
-  InfiniteLoader,
-} from "@ledgerhq/react-ui";
-import styled from "styled-components";
+import { Flex, Icons, Button, InfiniteLoader } from "@ledgerhq/react-ui";
 import { CommandForm, ValueSelector } from "./CommandForm";
 import { FieldType } from "@/hooks/useForm";
 import { CommandResponse, CommandResponseProps } from "./CommandResponse";
-
-const Wrapper = styled(Flex)`
-  opacity: 0.8;
-
-  &:hover {
-    opacity: 1;
-  }
-
-  cursor: pointer;
-`;
-
-const Container = styled(Flex).attrs({
-  flexDirection: "column",
-  backgroundColor: "opacityDefault.c05",
-  p: 5,
-  borderRadius: 2,
-  rowGap: 4,
-})``;
+import { Block } from "../Block";
+import { ClickableListItem } from "../ClickableListItem";
+import { StyledDrawer } from "../StyledDrawer";
 
 export type CommandProps<
   CommandArgs extends Record<string, FieldType> | void,
@@ -51,7 +28,7 @@ export function Command<
 
   const [values, setValues] = useState<CommandArgs>(initialValues);
 
-  const [isOpen, setIsOpen] = React.useState(false);
+  const [isOpen, setIsOpen] = useState(false);
 
   const [responses, setResponses] = useState<CommandResponseProps<Response>[]>(
     [],
@@ -105,81 +82,66 @@ export function Command<
   }, [responses]);
 
   return (
-    <Wrapper
-      flexDirection="row"
-      alignItems="center"
-      p={6}
-      backgroundColor={"opacityDefault.c05"}
-      borderRadius={2}
-      onClick={openDrawer}
-    >
-      <Flex flex={1} flexDirection="column" rowGap={4}>
-        <Text variant="large" fontWeight="semiBold">
-          {title}
-        </Text>
-        <Text variant="body" fontWeight="regular" color="opacityDefault.c60">
-          {description}
-        </Text>
-      </Flex>
-      <Icons.ChevronRight size="M" color="opacityDefault.c50" />
-      <Drawer isOpen={isOpen} onClose={closeDrawer} big title={title}>
-        <Flex flexDirection="column" rowGap={4} flex={1} overflowY="hidden">
-          <Text
-            variant="body"
-            fontWeight="regular"
-            color="opacityDefault.c60"
-            mb={5}
+    <>
+      <ClickableListItem
+        title={title}
+        description={description}
+        onClick={openDrawer}
+      />
+      <StyledDrawer
+        isOpen={isOpen}
+        onClose={closeDrawer}
+        big
+        title={title}
+        description={description}
+      >
+        <Block>
+          <CommandForm
+            initialValues={values}
+            onChange={setValues}
+            valueSelector={valueSelector}
+          />
+          <Button
+            variant="main"
+            onClick={handleClickSend}
+            disabled={loading}
+            Icon={() =>
+              loading ? <InfiniteLoader size={20} /> : <Icons.ArrowRight />
+            }
           >
-            {description}
-          </Text>
-          <Container>
-            <CommandForm
-              initialValues={values}
-              onChange={setValues}
-              valueSelector={valueSelector}
-            />
-            <Button
-              variant="main"
-              onClick={handleClickSend}
-              disabled={loading}
-              Icon={() =>
-                loading ? <InfiniteLoader size={20} /> : <Icons.ArrowRight />
-              }
-            >
-              Send
-            </Button>
-          </Container>
-          <Container flex={1} overflowY="hidden">
-            <Flex
-              ref={responseBoxRef}
-              flexDirection="column"
-              rowGap={4}
-              flex={1}
-              overflowY="scroll"
-            >
-              {responses.map(({ args, date, response, loading }, index) => (
-                <CommandResponse
-                  args={args}
-                  key={date.toISOString()}
-                  date={date}
-                  response={response}
-                  loading={loading}
-                  isLatest={index === responses.length - 1}
-                />
-              ))}
-            </Flex>
-            <Button
-              variant="main"
-              outline
-              onClick={handleClickClear}
-              disabled={responses.length === 0}
-            >
-              Clear responses
-            </Button>
-          </Container>
-        </Flex>
-      </Drawer>
-    </Wrapper>
+            Send
+          </Button>
+        </Block>
+        <Block flex={1} overflowY="hidden">
+          <Flex
+            ref={responseBoxRef}
+            flexDirection="column"
+            rowGap={4}
+            flex={1}
+            overflowY="scroll"
+          >
+            {responses.map(({ args, date, response, loading }, index) => (
+              <CommandResponse
+                args={args}
+                key={date.toISOString()}
+                date={date}
+                response={response}
+                loading={loading}
+                isLatest={index === responses.length - 1}
+              />
+            ))}
+          </Flex>
+          <Button
+            variant="main"
+            outline
+            onClick={handleClickClear}
+            disabled={responses.length === 0}
+          >
+            Clear responses
+          </Button>
+        </Block>
+      </StyledDrawer>
+    </>
   );
 }
 
