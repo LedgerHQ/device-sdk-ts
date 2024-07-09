@@ -27,7 +27,9 @@ export const Menu: React.FC = () => {
       </MenuItem>
       <MenuItem>
         <Icons.LedgerDevices />
-        <MenuTitle>Device action</MenuTitle>
+        <MenuTitle onClick={() => router.push("device-actions")}>
+          Device actions
+        </MenuTitle>
       </MenuItem>
       <MenuItem>
         <Icons.WirelessCharging />
