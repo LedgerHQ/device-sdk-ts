@@ -33,11 +33,11 @@ state GetDeviceStatusDeviceAction {
   SaveAppState --> Error: Error Saving in session
   Complete --> [*]
   Error --> [*]
-  
+
   state Complete {
     [*] --> Success
   }
-  
+
   state Error {
     [*] --> Stop
   }
@@ -51,7 +51,6 @@ Sanity check or action to return to the Dashboard for OS level commands / action
 ### Inputs
 
 - Device session
-
 
 ### Outputs
 
@@ -72,11 +71,11 @@ state GoToDashboardDeviceAction  {
   SaveAppState --> Error: Error saving app in session
   Complete --> [*]
   Error --> [*]
-  
+
   state Complete {
     [*] --> Success
   }
-  
+
   state Error {
     [*] --> Stop
   }
@@ -103,7 +102,7 @@ state ListAppsDeviceAction {
   GoToDashboardDeviceAction --> Error: Failure
   Error --> [*]
   Success --> [*]
-  
+
   state ListAllApps {
     [*] --> UserActionApproval
     UserActionApproval --> ListAppsCommand: user approved
@@ -119,7 +118,7 @@ state ListAppsDeviceAction {
     ListAppsContinueCommand --> ListAppsContinueCommand: two applications
     ListAppsContinueCommand --> Error: ListAppsContinueCommand error
   }
-  
+
   state FetchAppsMetaData {
     [*] --> FetchMetadata
     FetchMetadata --> SetInstalledApps: Got apps metadata
@@ -127,11 +126,11 @@ state ListAppsDeviceAction {
     SetInstalledApps --> Success: Set apps metadata in device session
     SetInstalledApps --> Error: Error setting apps metadata
   }
-  
+
   state Error {
     [*] --> Stop
   }
-  
+
   state Success {
     [*] --> Done
   }
@@ -147,7 +146,6 @@ Checks for an installed app on the device an opens it
 - AppName
 - Device session
 
-
 ### Outputs
 
 - Opened application
@@ -157,11 +155,11 @@ stateDiagram-v2
 state OpenAppDeviceAction {
   [*] --> GetCurrentApp
   GetCurrentApp --> OpenApp: Requested app not opened
-  GetCurrentApp --> Success: Requested app already opened 
+  GetCurrentApp --> Success: Requested app already opened
   GetCurrentApp --> Error: Device action error
   Error --> [*]
   Success --> [*]
-  
+
   state OpenApp {
     [*] --> DashboardCheck
     DashboardCheck --> CloseAppCommand: App is not dashboard
@@ -174,12 +172,12 @@ state OpenAppDeviceAction {
     SaveAppState --> Success: Saved application state
     SaveAppState --> Error: Saved state error
   }
-  
+
 
   state Error {
     [*] --> Stop
   }
-  
+
   state Success {
     [*] --> Done
   }

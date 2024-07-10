@@ -19,7 +19,7 @@ export class DeviceLockedError implements SdkError {
 }
 
 export class UnknownDAError implements SdkError {
-  readonly _tag = "UnknownOpenAppDAError";
+  readonly _tag = "UnknownDAError";
   originalError?: Error;
 
   constructor(message?: string) {

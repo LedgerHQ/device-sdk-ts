@@ -8,9 +8,12 @@ import {
 import { SdkError } from "@api/Error";
 
 export type GetDeviceStatusDAOutput = {
-  currentApp: string | null;
+  currentApp: string;
+  currentAppVersion: string | null;
 };
-export type GetDeviceStatusDAInput = null;
+export type GetDeviceStatusDAInput = {
+  unlockTimeout: number;
+};
 
 export type GetDeviceStatusDAError =
   | DeviceNotOnboardedError
@@ -18,7 +21,7 @@ export type GetDeviceStatusDAError =
   | UnknownDAError
   | SdkError; /// TODO: remove, we should have an exhaustive list of errors
 
-type GetDeviceStatusDARequiredInteraction =
+export type GetDeviceStatusDARequiredInteraction =
   | UserInteractionRequired.None
   | UserInteractionRequired.UnlockDevice;
 

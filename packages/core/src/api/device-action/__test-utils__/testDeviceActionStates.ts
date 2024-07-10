@@ -20,13 +20,14 @@ export function testDeviceActionStates<
 >(
   deviceAction: DeviceAction<Output, Input, Error, IntermediateValue>,
   expectedStates: Array<DeviceActionState<Output, Error, IntermediateValue>>,
+  internalApi: InternalApi,
   done: jest.DoneCallback,
 ) {
   const observedStates: Array<
     DeviceActionState<Output, Error, IntermediateValue>
   > = [];
 
-  const { observable, cancel } = deviceAction._execute({} as InternalApi);
+  const { observable, cancel } = deviceAction._execute(internalApi);
   observable.subscribe({
     next: (state) => {
       observedStates.push(state);

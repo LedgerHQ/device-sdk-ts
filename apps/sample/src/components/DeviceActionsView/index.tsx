@@ -11,7 +11,12 @@ import {
   OpenAppDAInput,
   OpenAppDAIntermediateValue,
   OpenAppDAOutput,
+  GetDeviceStatusDeviceAction,
+  GetDeviceStatusDAInput,
+  GetDeviceStatusDAError,
+  GetDeviceStatusDAIntermediateValue,
 } from "@ledgerhq/device-sdk-core";
+import { GetDeviceStatusDAOutput } from "@ledgerhq/device-sdk-core/lib/cjs/index.js";
 
 export const DeviceActionsView: React.FC = () => {
   const {
@@ -46,6 +51,27 @@ export const DeviceActionsView: React.FC = () => {
               OpenAppDAInput,
               OpenAppDAError,
               OpenAppDAIntermediateValue
+            >,
+            {
+              title: "Get device status",
+              description:
+                "Perform various checks on the device to determine its status",
+              executeDeviceAction: (_, inspect) => {
+                const deviceAction = new GetDeviceStatusDeviceAction({
+                  input: { unlockTimeout: 15000 },
+                  inspect,
+                });
+                return sdk.executeDeviceAction({
+                  sessionId: selectedSessionId,
+                  deviceAction,
+                });
+              },
+              initialValues: { unlockTimeout: 15000 },
+            } satisfies DeviceActionProps<
+              GetDeviceStatusDAOutput,
+              GetDeviceStatusDAInput,
+              GetDeviceStatusDAError,
+              GetDeviceStatusDAIntermediateValue
             >,
           ],
     [],

@@ -2,8 +2,8 @@ import { Left, Right } from "purify-ts";
 import { Observable } from "rxjs";
 import { tap, timeout } from "rxjs/operators";
 import {
+  AnyEventObject,
   assign,
-  type EventObject,
   fromCallback,
   fromObservable,
   fromPromise,
@@ -45,6 +45,7 @@ export type MachineDependencies = {
   getDeviceSessionState: () => DeviceSessionState;
   getDeviceSessionStateObservable: () => Observable<DeviceSessionState>;
   saveSessionState: (state: DeviceSessionState) => DeviceSessionState;
+  isDeviceOnboarded: () => boolean;
 };
 
 export type ExtractMachineDependencies = (
@@ -72,52 +73,66 @@ export class GetDeviceStatusDeviceAction extends XStateDeviceAction<
       getDeviceSessionState,
       saveSessionState,
       getDeviceSessionStateObservable,
+      isDeviceOnboarded,
     } = this.extractDependencies(internalApi);
 
     return setup({
       types: {
-        input: null as types["input"],
+        input: {
+          unlockTimeout: 15000,
+        } as types["input"],
         context: {} as types["context"],
         output: {} as types["output"],
       },
       actors: {
         getAppAndVersion: fromPromise(getAppAndVersion),
         checkDeviceUnlocked: fromObservable(
-          () =>
-            new Observable((subscriber) => {
+          ({ input }: { input: { unlockTimeout: number } }) =>
+            new Observable<void>((subscriber) => {
               const inner = getDeviceSessionStateObservable()
                 .pipe(
                   tap((state) => {
-                    subscriber.next(state);
                     if (state.deviceStatus === DeviceStatus.CONNECTED) {
                       subscriber.complete();
                       inner.unsubscribe();
                     }
                   }),
-                  timeout(15000),
                 )
                 .subscribe();
-            }),
+
+              return () => {
+                inner.unsubscribe();
+              };
+            }).pipe(timeout(input.unlockTimeout)),
         ),
-        saveSessionState: fromCallback<
-          EventObject,
-          { currentApp: string | null; currentAppVersion: string | null }
-        >((_) => {
-          const { currentApp, currentAppVersion } = _.input;
-          if (!currentApp || !currentAppVersion) {
-            return;
-          }
-          const sessionState = getDeviceSessionState();
-          const updatedState = {
-            ...sessionState,
-            currentApp,
-            currentAppVersion,
-          };
-          saveSessionState(updatedState);
-        }),
+        saveSessionState: fromCallback(
+          ({
+            input,
+            sendBack,
+          }: {
+            sendBack: (event: AnyEventObject) => void;
+            input: {
+              currentApp: string | null;
+              currentAppVersion: string | null;
+            };
+          }) => {
+            const { currentApp, currentAppVersion } = input;
+            if (!currentApp) {
+              return sendBack({ type: "error" });
+            }
+            const sessionState = getDeviceSessionState();
+            const updatedState = {
+              ...sessionState,
+              currentApp,
+              currentAppVersion,
+            };
+            saveSessionState(updatedState);
+            sendBack({ type: "done" });
+          },
+        ),
       },
       guards: {
-        isDeviceOnboarded: () => true, // TODO: we don't have this info for now, this can be derived from the "flags" obtained in the getVersion command
+        isDeviceOnboarded: () => isDeviceOnboarded(), // TODO: we don't have this info for now, this can be derived from the "flags" obtained in the getVersion command
         isDeviceUnlocked: () =>
           getDeviceSessionState().deviceStatus !== DeviceStatus.LOCKED,
       },
@@ -137,6 +152,12 @@ export class GetDeviceStatusDeviceAction extends XStateDeviceAction<
             requiredUserInteraction: UserInteractionRequired.UnlockDevice,
           },
         }),
+        assignErrorSaveAppState: assign({
+          _internalState: (_) => ({
+            ..._.context._internalState,
+            error: new UnknownDAError("SaveAppStateError"),
+          }),
+        }),
         assignNoUserActionNeeded: assign({
           intermediateValue: (_) =>
             ({
@@ -144,16 +165,25 @@ export class GetDeviceStatusDeviceAction extends XStateDeviceAction<
               requiredUserInteraction: UserInteractionRequired.None,
             }) satisfies types["context"]["intermediateValue"],
         }),
+        assignUserActionUnlockNeeded: assign({
+          intermediateValue: (_) =>
+            ({
+              ..._.context.intermediateValue,
+              requiredUserInteraction: UserInteractionRequired.UnlockDevice,
+            }) satisfies types["context"]["intermediateValue"],
+        }),
       },
     }).createMachine({
-      /** @xstate-layout N4IgpgJg5mDOIC5QHEwBcAiYBuBLAxmAMpoCGaArrFnoQIL5q4D2AdgHQ0FgBKYpEAJ4BiANoAGALqJQAB2axcTNjJAAPRAEYAnOPYAOAGwB2AEzjN4gCz7jmzcYA0IQYgCsxq+xvbDbzTYAzPoehgC+Yc6omDjcJORUXPSMLBwA8qwARsykAE4QuKxQAMIAFmD4ANZiUqryisqsqhoIVnYGbtqBVqbmhn5uhs6uCG5u+uwm2sb6vtpGxsaBEVHoScRklNSxyY3sGdl5BUVlFdWimtJIIPVKqc2IbZodXT19A0MuiIHappM6+kChhshlMRk0KxA0XW8S26wYewAMswqoUSuUqjUrnIFHcVNcWro9OJQVYejMlppTG5ho9euwLIFxNZfINDMFIdCdhsEttaGAEal2MjUScMedLnVcY0HggiQzSeTbIEqTSvghNIE-oDutp-JpOotwpEoWtubDEtzBWx2ABVWBgXLW1i21gAGxRlXWwggbDA7EK2GYlX99sdztdHqq6wk2Ju0vuBK0bnEgXYHnEpl+xnZmc0+lpCFMnnYKuZPSsv0rnSsnLN-ItfO4zrtDqdKTYkc93sduWYuXYsjd5AAZv2ALat8Mdl3u7vc2NShqJ0AtA2p9PGTPZ3OmfOFqwG9hblVWNxZqwmWZ1mINzaW-ktuiyWR0VgQABqjsUbFOmN9rD+oGwb+lyd68vCM7sM+r7vl+uQ-qwf6VAgwH4OQqSxou1y3DKSZFhYzxMmegTjPoVjBBYhb2MYDLMlS3SWCmhgGjeML3k2uxCjBb6ft+qTIcIvb9oOw5oGOuSTmBcQcZBew8XB-G-uKqGsEG6GNFhtQ4Qm+Krog5j2KW1huKR+jkZRmiFsWaZtCY4jaAajmgsaqy3jJEFWlBRCkNgAovrCYA+n6AZqSB7DSYQjZyUKPl+TBgWqepGFsFpca4Su6gGXZ7BUpW+gOT0LGmJ8IyAselbTECVjiLM57aGx5qyV5exxf5siBUJuR9gOQ6jhOEX1h5cItbFvntYlaEpawaVLniTT4aYOV5fMhUlVSpVaCq7DUsygT7Y5pn7REJqsMwEBwKokU8iNj4znNeH6QgAC0m0vYYdHMl933Mh4jXgbdzZQesfACCMOLLnpWWtKYhYeLZsx2D09j2NM-3DQ+QN7AcOT5GiyEPZlLRgm47B6iqS2puZKoFuq8PeIjAR7ijaMmtd0WjTaIqVPj4qE1DLSeH8wTFluMxLcEb2Hmm5HskCgJLDmbjo1FzV3XsYbto0XbRty-MLU99jiLRGbUj8YL6CVgSFsEtFW9YG3Vd0rmmu5queer3Evrx8GIQTOmQwb0MOMCZPaOHoK9CSbRWNZHjHqmTmmKRWbsirN2Y1xNptQlmxgPrsq9KRm7GL4+j5oVQLUUedn9PMNg6F0pjpxznvZxQ+CELA8AB-Nhdbl4wIkr84zJ046rl+mX2kcEvx6pmLdq1jQoAKLdf2BeLQPkw1YYI+W4E48jBRzyW9MpcUVbh7KydQA */
+      /** @xstate-layout N4IgpgJg5mDOIC5QHEwBcAiYBuBLAxmAMpoCGaArrFnoQIL5q4D2AdgHQ0FgBKYpEAJ4BiANoAGALqJQAB2axcTNjJAAPRAEYAnOPYAOAGwB2AEymALOMPb9pgMymANCEGIArMe3tNj7RcMLC01gkwBfMJdUTBxuEnIqLnpGFg4AeVYAI2ZSACcIXFYoAGEACzB8AGsxKVV5RWVWVQ0EC2NNA3d-X1NxLs19FzcEd0N7dkd7cQD7fT6LbVMIqPQk4jJKaljkxvYM7LyCorKK6tFNaSQQeqVU5sQ2jv0u4Mc+7QGhxH0Ohe1bYz6ezaYzWf7LEDRNbxTZrBi7AAyzCqhRK5SqNUucgUtxUVxauj01lM7gs7jsOm09mMXxGNnYxmBoMBnmm4nsEKh23WCS2tDA8NS7CRKOO6LOFzqOMa9wQhPYxNJ5NMlOptOCFnYAUMpiBVPMhh0Fk5q25MMS3MFbHYAFVYGBclbWDbWAAbZGVNbCCBsMDsQrYZiVP12h1Ol3uqprCRY67Su74rTudnsVnU2ziMymQyGdWaQwGBzTF66YwWfTGE0xfnmvncJ22+2OlJsCMer0O3LMXLsWSu8gAM27AFtG2GW863e3uTGpQ0E6AWppk+M0145lmc7TzKZ2CDDJ57AfjAfrO4q9CNhb+Q26LJZHRWBAAGoOxRsE4Yn2sP0BoN+rkayvOsdiFO8HyfV9cnfVhP0qBA-3wchUhjWcrhuGVEwQXpNA6KYFmmY93AcCxaVGfQfFGXVxHEFUjBCC8zWAuEJ3YcDHxfN9Ujg4RO27Xt+zQIdclHQC4mYy1WPYyCuI-cUENYQMkMaVDanQ+M8UXRAcLw6ZdACTxiPsUjXEQI93HYXp7HzSx7HcdwBkrSJIVNIDeRY3YiFIbABXvGEwG9X00OxedNPUbS2gLTQSWiw1TGMByD1pQwU30Ox9H8IFARSpZnLEwhaw8oUvJ88D-N43Iu1yYK41CposMsE8fBi7NooS-N3DIzMtVMEF5gsSxs3iiJnNYZgIDgVR8p5WFJMwkLcXqrSEAAWlzUzVoLGjtp2nbAkYtzZpvVi1j4ARhgW+bwtaZwNs8Cien8PoVVGQEDvE9y5qFfYcnyVE4LnRbZV1CztHcazqS8HNDAysjAR8PwrGI5cTH0d6Cok47EQ9f7xUBq6WjLXdZhBqj-H+Mj9E1UltBSyk5nJNG8tcj6jvrVjQ2bRo2yjbl8YXa7cO61krDGKxoqMWk7PGdodXad5CWNZnq1Z692d2aTOOg7i8fUurZU0E8LO2+Kc2BbMkru4iJjsKlqV1cxM3Rma1dA60St82R-P5sKWnMOzU0BKYBgPazNDInN2DGXUgXzQFjAS53Cq+92KHwQhYHgPWgYa9pNWmUEBhCCx02SlNHp+IJjyVlYVYxz6saFABRSrux9pbrvikIFTacQi6CUuNtmPDerNh2+hzEawiAA */
       id: "GetDeviceStatusDeviceAction",
       initial: "DeviceReady",
-      context: () => {
+      context: (_) => {
         const sessionState = getDeviceSessionState();
         const { sessionStateType } = sessionState;
         return {
-          input: null,
+          input: {
+            unlockTimeout: _.input.unlockTimeout,
+          },
           intermediateValue: {
             requiredUserInteraction: UserInteractionRequired.None,
           },
@@ -179,13 +209,9 @@ export class GetDeviceStatusDeviceAction extends XStateDeviceAction<
         OnboardingCheck: {
           always: [
             {
-              target: "Error",
               guard: {
                 type: "isDeviceOnboarded",
               },
-              actions: "assignErrorDeviceNotOnboarded",
-            },
-            {
               target: "LockingCheck",
               actions: assign({
                 _internalState: (_) => ({
@@ -194,18 +220,19 @@ export class GetDeviceStatusDeviceAction extends XStateDeviceAction<
                 }),
               }),
             },
+            {
+              target: "Error",
+              actions: "assignErrorDeviceNotOnboarded",
+            },
           ],
         },
         LockingCheck: {
           always: [
             {
-              target: "UserActionUnlockDevice",
+              target: "AppAndVersionCheck",
               guard: {
                 type: "isDeviceUnlocked",
               },
-            },
-            {
-              target: "AppAndVersionCheck",
               actions: assign({
                 _internalState: (_) => ({
                   ..._.context._internalState,
@@ -213,12 +240,20 @@ export class GetDeviceStatusDeviceAction extends XStateDeviceAction<
                 }),
               }),
             },
+            {
+              target: "UserActionUnlockDevice",
+            },
           ],
         },
         UserActionUnlockDevice: {
+          entry: "assignUserActionUnlockNeeded",
+          exit: "assignNoUserActionNeeded",
           invoke: {
             id: "UserActionUnlockDevice",
             src: "checkDeviceUnlocked",
+            input: (_) => ({
+              unlockTimeout: _.context.input.unlockTimeout,
+            }),
             onDone: {
               target: "AppAndVersionCheck",
               actions: assign({
@@ -265,17 +300,14 @@ export class GetDeviceStatusDeviceAction extends XStateDeviceAction<
               currentApp: _.context._internalState.currentApp,
               currentAppVersion: _.context._internalState.currentAppVersion,
             }),
-            onDone: {
+          },
+          on: {
+            done: {
               target: "Success",
             },
-            onError: {
+            error: {
               target: "Error",
-              actions: assign({
-                _internalState: (_) => ({
-                  ..._.context._internalState,
-                  error: new UnknownDAError("SaveAppStateError"),
-                }),
-              }),
+              actions: "assignErrorSaveAppState",
             },
           },
         },
@@ -289,18 +321,19 @@ export class GetDeviceStatusDeviceAction extends XStateDeviceAction<
       output: (args) => {
         // TODO: instead we should rely on the current state ("Success" or "Error")
         const { context } = args;
-        const { error, currentApp } = context._internalState;
+        const { error, currentApp, currentAppVersion } = context._internalState;
         if (error) {
           return Left(error);
         }
         return Right({
-          currentApp,
+          currentApp: currentApp!,
+          currentAppVersion,
         });
       },
     });
   }
 
-  private extractDependencies(internalApi: InternalApi): MachineDependencies {
+  extractDependencies(internalApi: InternalApi): MachineDependencies {
     const getAppAndVersion = () =>
       internalApi.sendCommand(new GetAppAndVersionCommand()).then((res) => ({
         app: res.name,
@@ -314,6 +347,7 @@ export class GetDeviceStatusDeviceAction extends XStateDeviceAction<
         internalApi.getDeviceSessionStateObservable(),
       saveSessionState: (state: DeviceSessionState) =>
         internalApi.setDeviceSessionState(state),
+      isDeviceOnboarded: () => true, // TODO: we don't have this info for now
     };
   }
 }

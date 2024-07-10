@@ -37,6 +37,7 @@ export type MachineDependencies = {
   closeApp: () => Promise<void>;
   openApp: (arg0: { input: { appName: string } }) => Promise<void>;
   getDeviceSessionState: () => DeviceSessionState;
+  isDeviceOnboarded: () => boolean;
 };
 
 export type ExtractMachineDependencies = (
@@ -59,8 +60,13 @@ export class OpenAppDeviceAction extends XStateDeviceAction<
       OpenAppStateMachineInternalState
     >;
 
-    const { getAppAndVersion, closeApp, openApp, getDeviceSessionState } =
-      this.extractDependencies(internalApi);
+    const {
+      getAppAndVersion,
+      closeApp,
+      openApp,
+      getDeviceSessionState,
+      isDeviceOnboarded,
+    } = this.extractDependencies(internalApi);
 
     return setup({
       types: {
@@ -74,7 +80,7 @@ export class OpenAppDeviceAction extends XStateDeviceAction<
         openApp: fromPromise(openApp),
       },
       guards: {
-        isDeviceOnboarded: () => true, // TODO: we don't have this info for now, this can be derived from the "flags" obtained in the getVersion command
+        isDeviceOnboarded: () => isDeviceOnboarded(), // TODO: we don't have this info for now, this can be derived from the "flags" obtained in the getVersion command
         isDeviceUnlocked: () =>
           getDeviceSessionState().deviceStatus !== DeviceStatus.LOCKED,
         isRequestedAppOpen: ({ context }: { context: types["context"] }) => {
@@ -294,7 +300,7 @@ export class OpenAppDeviceAction extends XStateDeviceAction<
     });
   }
 
-  private extractDependencies(internalApi: InternalApi): MachineDependencies {
+  extractDependencies(internalApi: InternalApi): MachineDependencies {
     const getAppAndVersion = async () =>
       internalApi
         .sendCommand(new GetAppAndVersionCommand())
@@ -310,13 +316,7 @@ export class OpenAppDeviceAction extends XStateDeviceAction<
       closeApp,
       openApp,
       getDeviceSessionState: () => internalApi.getDeviceSessionState(),
+      isDeviceOnboarded: () => true, // TODO: we don't have this info for now, this can be derived from the "flags" obtained in the getVersion command
     };
-  }
-
-  /** This is to allow injecting dependencies for testing purposes */
-  _unsafeSetExtractDependencies(
-    extractDependencies: ExtractMachineDependencies,
-  ) {
-    this.extractDependencies = extractDependencies;
   }
 }

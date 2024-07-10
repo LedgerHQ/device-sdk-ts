@@ -44,6 +44,14 @@ export {
   DeviceActionStatus,
 } from "@api/device-action/model/DeviceActionState";
 export { UserInteractionRequired } from "@api/device-action/model/UserInteractionRequired";
+export { GetDeviceStatusDeviceAction } from "@api/device-action/os/GetDeviceStatus/GetDeviceStatusDeviceAction";
+export {
+  type GetDeviceStatusDAError,
+  type GetDeviceStatusDAInput,
+  type GetDeviceStatusDAIntermediateValue,
+  type GetDeviceStatusDAOutput,
+  type GetDeviceStatusDAState,
+} from "@api/device-action/os/GetDeviceStatus/types";
 export { OpenAppDeviceAction } from "@api/device-action/os/OpenAppDeviceAction/OpenAppDeviceAction";
 export {
   type OpenAppDAError,
