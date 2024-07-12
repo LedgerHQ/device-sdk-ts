@@ -8,7 +8,7 @@ import { appBindingModuleFactory } from "@internal/app-binding/di/appBindingModu
 import { externalTypes } from "@internal/externalTypes";
 import { messageModuleFactory } from "@internal/message/di/messageModule";
 import { transactionModuleFactory } from "@internal/transaction/di/transactionModule";
-import { typedDataModuleFactory } from "@internal/typed-data/di/messageModule";
+import { typedDataModuleFactory } from "@internal/typed-data/di/typedDataModule";
 
 // Uncomment this line to enable the logger middleware
 const logger = makeLoggerMiddleware();
