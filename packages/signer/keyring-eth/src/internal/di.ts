@@ -4,7 +4,7 @@ import { Container } from "inversify";
 import { makeLoggerMiddleware } from "inversify-logger-middleware";
 
 import { addressModuleFactory } from "@internal/address/di/addressModule";
-import { appBindingModuleFactory } from "@internal/app-binding/di/appBindingModule";
+import { appBindingModuleFactory } from "@internal/app-binder/di/appBinderModule";
 import { externalTypes } from "@internal/externalTypes";
 import { messageModuleFactory } from "@internal/message/di/messageModule";
 import { transactionModuleFactory } from "@internal/transaction/di/transactionModule";

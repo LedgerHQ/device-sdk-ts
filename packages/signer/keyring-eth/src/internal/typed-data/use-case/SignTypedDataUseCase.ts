@@ -1,18 +1,18 @@
 import { inject, injectable } from "inversify";
 
 import { Signature, TypedData } from "@api/index";
-import { AppBindingEth } from "@internal/app-binding/AppBindingEth";
-import { appBindingTypes } from "@internal/app-binding/di/appBindingTypes";
+import { appBinderTypes } from "@internal/app-binder/di/appBinderTypes";
+import { EthAppBinder } from "@internal/app-binder/EthAppBinder";
 import { typedDataTypes } from "@internal/typed-data/di/typedDataTypes";
 import { TypedDataParserService } from "@internal/typed-data/service/TypedDataParserService";
 
 @injectable()
 export class SignTypedDataUseCase {
-  private _appBinding: AppBindingEth;
+  private _appBinding: EthAppBinder;
   private _parser: TypedDataParserService;
 
   constructor(
-    @inject(appBindingTypes.AppBinding) appBinding: AppBindingEth,
+    @inject(appBinderTypes.AppBinding) appBinding: EthAppBinder,
     @inject(typedDataTypes.TypedDataParserService)
     typedDataParserService: TypedDataParserService,
   ) {

@@ -2,8 +2,8 @@ import type { ContextModule } from "@ledgerhq/context-module";
 import { inject, injectable } from "inversify";
 
 import { Signature, Transaction, TransactionOptions } from "@api/index";
-import { AppBindingEth } from "@internal/app-binding/AppBindingEth";
-import { appBindingTypes } from "@internal/app-binding/di/appBindingTypes";
+import { appBinderTypes } from "@internal/app-binder/di/appBinderTypes";
+import { EthAppBinder } from "@internal/app-binder/EthAppBinder";
 import { externalTypes } from "@internal/externalTypes";
 import { transactionTypes } from "@internal/transaction/di/transactionTypes";
 import { TransactionMapperService } from "@internal/transaction/service/TransactionMapperService";
@@ -11,12 +11,12 @@ import { TransactionMapperService } from "@internal/transaction/service/Transact
 @injectable()
 export class SignTransactionUseCase {
   private _contextModule: ContextModule;
-  private _appBinding: AppBindingEth;
+  private _appBinding: EthAppBinder;
   private _mapper: TransactionMapperService;
 
   constructor(
-    @inject(appBindingTypes.AppBinding)
-    appBinding: AppBindingEth,
+    @inject(appBinderTypes.AppBinding)
+    appBinding: EthAppBinder,
     @inject(externalTypes.ContextModule)
     contextModule: ContextModule,
     @inject(transactionTypes.TransactionMapperService)

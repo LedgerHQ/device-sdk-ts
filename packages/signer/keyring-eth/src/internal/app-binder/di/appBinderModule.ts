@@ -1,7 +1,7 @@
 import { ContainerModule } from "inversify";
 
-import { AppBindingEth } from "@internal/app-binding/AppBindingEth";
-import { appBindingTypes } from "@internal/app-binding/di/appBindingTypes";
+import { appBinderTypes } from "@internal/app-binder/di/appBinderTypes";
+import { EthAppBinder } from "@internal/app-binder/EthAppBinder";
 
 export const appBindingModuleFactory = () =>
   new ContainerModule(
@@ -14,6 +14,6 @@ export const appBindingModuleFactory = () =>
       _onActivation,
       _onDeactivation,
     ) => {
-      bind(appBindingTypes.AppBinding).to(AppBindingEth);
+      bind(appBinderTypes.AppBinding).to(EthAppBinder);
     },
   );

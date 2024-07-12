@@ -1,24 +1,24 @@
 import { inject, injectable } from "inversify";
 
 import { Address, AddressOptions } from "@api/index";
-import { AppBindingEth } from "@internal/app-binding/AppBindingEth";
-import { appBindingTypes } from "@internal/app-binding/di/appBindingTypes";
+import { appBinderTypes } from "@internal/app-binder/di/appBinderTypes";
+import { EthAppBinder } from "@internal/app-binder/EthAppBinder";
 
 @injectable()
 export class GetAddressUseCase {
-  private _appBinding: AppBindingEth;
+  private _appBinder: EthAppBinder;
 
-  constructor(@inject(appBindingTypes.AppBinding) appBinding: AppBindingEth) {
-    this._appBinding = appBinding;
+  constructor(@inject(appBinderTypes.AppBinding) appBinder: EthAppBinder) {
+    this._appBinder = appBinder;
   }
 
   async execute(
     _derivationPath: string,
     _options?: AddressOptions,
   ): Promise<Address> {
-    // 1- Get the address using the app binding
+    // 1- Get the address using the app binder
 
-    this._appBinding;
+    this._appBinder;
 
     return Promise.resolve({} as Address);
   }

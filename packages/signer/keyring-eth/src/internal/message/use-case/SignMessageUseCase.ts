@@ -1,16 +1,16 @@
 import { inject, injectable } from "inversify";
 
 import { Signature } from "@api/index";
-import { AppBindingEth } from "@internal/app-binding/AppBindingEth";
-import { appBindingTypes } from "@internal/app-binding/di/appBindingTypes";
+import { appBinderTypes } from "@internal/app-binder/di/appBinderTypes";
+import { EthAppBinder } from "@internal/app-binder/EthAppBinder";
 
 @injectable()
 export class SignMessageUseCase {
-  private _appBinding: AppBindingEth;
+  private _appBinding: EthAppBinder;
 
   constructor(
-    @inject(appBindingTypes.AppBinding)
-    appBinding: AppBindingEth,
+    @inject(appBinderTypes.AppBinding)
+    appBinding: EthAppBinder,
   ) {
     this._appBinding = appBinding;
   }

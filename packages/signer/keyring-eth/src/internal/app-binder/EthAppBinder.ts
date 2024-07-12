@@ -4,7 +4,7 @@ import { inject, injectable } from "inversify";
 import { externalTypes } from "@internal/externalTypes";
 
 @injectable()
-export class AppBindingEth {
+export class EthAppBinder {
   private _sdk: DeviceSdk;
 
   constructor(@inject(externalTypes.Sdk) sdk: DeviceSdk) {
