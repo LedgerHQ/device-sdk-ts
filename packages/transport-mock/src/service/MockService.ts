@@ -12,8 +12,16 @@ export class MockService {
     return this.client.get<Mock[]>("mock", { session_id: sessionId });
   }
 
-  async add(sessionId: string, prefix: string, response: string): Promise<boolean> {
-    return this.client.post<boolean>("mock", { prefix, response }, { session_id: sessionId });
+  async add(
+    sessionId: string,
+    prefix: string,
+    response: string,
+  ): Promise<boolean> {
+    return this.client.post<boolean>(
+      "mock",
+      { prefix, response },
+      { session_id: sessionId },
+    );
   }
 
   async delete(sessionId: string): Promise<boolean> {

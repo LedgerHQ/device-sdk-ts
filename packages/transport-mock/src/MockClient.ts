@@ -51,7 +51,11 @@ export class MockClient {
     return this.discoveryService.scanDevices(nbDevices);
   }
 
-  async addMock(sessionId: string, prefix: string, response: string): Promise<boolean> {
+  async addMock(
+    sessionId: string,
+    prefix: string,
+    response: string,
+  ): Promise<boolean> {
     return this.mockService.add(sessionId, prefix, response);
   }
 
@@ -69,6 +73,9 @@ export class MockClient {
   }
 
   fromHexString(hexString: string): Uint8Array {
+    if (!hexString) {
+      return Uint8Array.from([]);
+    }
     return new Uint8Array(
       hexString.match(/.{1,2}/g)!.map((byte) => parseInt(byte, 16)),
     );
