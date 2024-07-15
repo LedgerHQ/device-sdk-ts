@@ -278,7 +278,7 @@ importers:
         version: link:../../config/typescript
       ts-node:
         specifier: ^10.9.2
-        version: 10.9.2(@types/node@20.14.2)(typescript@5.4.5)
+        version: 10.9.2(@types/node@20.14.10)(typescript@5.5.3)
 
   packages/trusted-apps:
     dependencies:
@@ -8430,7 +8430,7 @@ snapshots:
       '@sentry/minimal': 6.19.7
       inversify: 6.0.2
       inversify-logger-middleware: 3.1.0
-      purify-ts: 2.0.3
+      purify-ts: 2.1.0
       reflect-metadata: 0.2.2
       rxjs: 7.8.1
       semver: 7.6.2
