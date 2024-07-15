@@ -43,8 +43,8 @@ export class MockClient {
     return this.sendService.send(sessionId, command);
   }
 
-  async scan(): Promise<Device[]> {
-    return this.discoveryService.scanDevices();
+  async scan(nbDevices?: number): Promise<Device[]> {
+    return this.discoveryService.scanDevices(nbDevices);
   }
 
   async addMock(sessionId: string, prefix: string, response: string): Promise<boolean> {
