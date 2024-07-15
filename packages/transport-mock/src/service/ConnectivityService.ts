@@ -25,6 +25,19 @@ export class ConnectivityService {
     });
   }
 
+  async disconnectAll(): Promise<boolean> {
+    return new Promise<boolean>((resolve, reject) => {
+      this.client
+        .get<undefined>("clear")
+        .then((_) => {
+          resolve(true);
+        })
+        .catch((error) => {
+          reject(error);
+        });
+    });
+  }
+
   async getConnected(): Promise<Session[]> {
     return this.client.get<Session[]>("get-connected");
   }
