@@ -8,7 +8,9 @@ export class DiscoveryService {
     this.client = client;
   }
 
-  async scanDevices(): Promise<Device[]> {
-    return this.client.get<Device[]>("scan");
+  async scanDevices(nbDevices?: number): Promise<Device[]> {
+    return this.client.get<Device[]>(
+      "scan?" + new URLSearchParams({ "nb_devices": nbDevices?.toString() || "1" })
+    );
   }
 }
