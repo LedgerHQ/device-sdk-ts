@@ -65,6 +65,9 @@ importers:
       '@ledgerhq/device-sdk-core':
         specifier: workspace:*
         version: link:../../packages/core
+      '@ledgerhq/device-sdk-transport-mock':
+        specifier: workspace:*
+        version: link:../../packages/transport-mock
       '@ledgerhq/keyring-eth':
         specifier: workspace:*
         version: link:../../packages/signer/keyring-eth
@@ -159,6 +162,9 @@ importers:
 
   packages/core:
     dependencies:
+      '@ledgerhq/device-sdk-transport-mock':
+        specifier: workspace:*
+        version: link:../transport-mock
       '@sentry/minimal':
         specifier: ^6.19.7
         version: 6.19.7
@@ -309,6 +315,21 @@ importers:
       ts-node:
         specifier: ^10.9.2
         version: 10.9.2(@types/node@22.4.0)(typescript@5.5.3)
+
+  packages/transport-mock:
+    devDependencies:
+      '@ledgerhq/eslint-config-dsdk':
+        specifier: workspace:*
+        version: link:../config/eslint
+      '@ledgerhq/jest-config-dsdk':
+        specifier: workspace:*
+        version: link:../config/jest
+      '@ledgerhq/prettier-config-dsdk':
+        specifier: workspace:*
+        version: link:../config/prettier
+      '@ledgerhq/tsconfig-dsdk':
+        specifier: workspace:*
+        version: link:../config/typescript
 
   packages/trusted-apps:
     dependencies:
