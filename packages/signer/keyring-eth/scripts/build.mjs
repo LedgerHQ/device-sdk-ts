@@ -15,7 +15,7 @@ const builCjs = async () => {
   await $`tsc-alias --project ${tsconfigCjs}`;
 };
 
-const run = async () => await Promise.all([buildEsm(), builCjs()]);
+const run = async () => Promise.all([buildEsm(), builCjs()]);
 
 run().catch((e) => {
   console.error(e);
