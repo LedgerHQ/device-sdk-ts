@@ -1,5 +1,5 @@
 import { ContextModule } from "@ledgerhq/context-module";
-import { DeviceSdk } from "@ledgerhq/device-sdk-core";
+import { DeviceSdk, DeviceSessionId } from "@ledgerhq/device-sdk-core";
 import { Container } from "inversify";
 
 import { addressTypes } from "./address/di/addressTypes";
@@ -33,8 +33,9 @@ describe("DefaultKeyringEth", () => {
     jest.clearAllMocks();
 
     const sdk = {} as DeviceSdk;
+    const sessionId = "" as DeviceSessionId;
     const contextModule = {} as ContextModule;
-    keyring = new DefaultKeyringEth({ sdk, contextModule });
+    keyring = new DefaultKeyringEth({ sdk, sessionId, contextModule });
     keyring["_container"] = mock as unknown as Container;
   });
 

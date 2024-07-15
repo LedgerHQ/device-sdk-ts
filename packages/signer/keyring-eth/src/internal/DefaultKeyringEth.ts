@@ -1,5 +1,5 @@
 import { ContextModule } from "@ledgerhq/context-module";
-import { DeviceSdk } from "@ledgerhq/device-sdk-core";
+import { DeviceSdk, DeviceSessionId } from "@ledgerhq/device-sdk-core";
 import { Container } from "inversify";
 
 import {
@@ -23,14 +23,19 @@ import { SignTypedDataUseCase } from "@internal/typed-data/use-case/SignTypedDat
 
 type DefaultKeyringConstructorArgs = {
   sdk: DeviceSdk;
+  sessionId: DeviceSessionId;
   contextModule: ContextModule;
 };
 
 export class DefaultKeyringEth implements KeyringEth {
   private _container: Container;
 
-  constructor({ sdk, contextModule }: DefaultKeyringConstructorArgs) {
-    this._container = makeContainer({ sdk, contextModule });
+  constructor({
+    sdk,
+    sessionId,
+    contextModule,
+  }: DefaultKeyringConstructorArgs) {
+    this._container = makeContainer({ sdk, sessionId, contextModule });
   }
 
   async signTransaction(

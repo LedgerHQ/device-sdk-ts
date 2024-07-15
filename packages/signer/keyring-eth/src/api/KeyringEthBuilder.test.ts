@@ -9,7 +9,7 @@ describe("KeyringEthBuilder", () => {
 
   test("should be an instance of KeyringEth", () => {
     // GIVEN
-    const builder = new KeyringEthBuilder(sdk);
+    const builder = new KeyringEthBuilder({ sdk, sessionId: "" });
 
     // WHEN
     builder.build();
@@ -20,7 +20,7 @@ describe("KeyringEthBuilder", () => {
 
   test("should instanciate with default context module", () => {
     // GIVEN
-    const builder = new KeyringEthBuilder(sdk);
+    const builder = new KeyringEthBuilder({ sdk, sessionId: "" });
 
     // WHEN
     builder.build();
@@ -35,7 +35,7 @@ describe("KeyringEthBuilder", () => {
 
   test("should instanciate with custom context module", () => {
     // GIVEN
-    const builder = new KeyringEthBuilder(sdk);
+    const builder = new KeyringEthBuilder({ sdk, sessionId: "" });
     const contextModule = {} as ContextModule;
 
     // WHEN

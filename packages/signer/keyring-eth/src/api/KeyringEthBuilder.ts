@@ -2,6 +2,12 @@ import { ContextModule, ContextModuleBuilder } from "@ledgerhq/context-module";
 import { DeviceSdk } from "@ledgerhq/device-sdk-core";
 
 import { DefaultKeyringEth } from "@internal/DefaultKeyringEth";
+import { DeviceSessionId } from "@ledgerhq/device-sdk-core/lib/cjs/index.js";
+
+type KeyringEthBuilderConstructorArgs = {
+  sdk: DeviceSdk;
+  sessionId: DeviceSessionId;
+};
 
 /**
  * Builder for the `KeyringEth` class.
@@ -14,10 +20,12 @@ import { DefaultKeyringEth } from "@internal/DefaultKeyringEth";
  */
 export class KeyringEthBuilder {
   private _sdk: DeviceSdk;
+  private _sessionId: DeviceSessionId;
   private _contextModule: ContextModule;
 
-  constructor(sdk: DeviceSdk) {
+  constructor({ sdk, sessionId }: KeyringEthBuilderConstructorArgs) {
     this._sdk = sdk;
+    this._sessionId = sessionId;
     // default context module for ETH
     this._contextModule = new ContextModuleBuilder().build();
   }
@@ -41,6 +49,7 @@ export class KeyringEthBuilder {
   public build() {
     return new DefaultKeyringEth({
       sdk: this._sdk,
+      sessionId: this._sessionId,
       contextModule: this._contextModule,
     });
   }
