@@ -71,6 +71,9 @@ importers:
       '@ledgerhq/device-signer-kit-ethereum':
         specifier: workspace:*
         version: link:../../packages/signer/keyring-eth
+      '@ledgerhq/device-sdk-transport-mock':
+        specifier: workspace:*
+        version: link:../../packages/transport-mock
       '@ledgerhq/react-ui':
         specifier: ^0.16.0
         version: 0.16.0(@emotion/is-prop-valid@1.2.1)(@types/react@18.3.11)(react-dom@18.3.1(react@18.3.1))(react-native-svg@15.3.0(react-native@0.74.3(@babel/core@7.24.7)(@babel/preset-env@7.24.7(@babel/core@7.24.7))(@types/react@18.3.11)(react@18.3.1))(react@18.3.1))(react@18.3.1)(styled-components@5.3.11(@babel/core@7.24.7)(react-dom@18.3.1(react@18.3.1))(react-is@18.3.1)(react@18.3.1))
@@ -379,6 +382,21 @@ importers:
       ts-node:
         specifier: ^10.9.2
         version: 10.9.2(@types/node@22.7.5)(typescript@5.6.2)
+
+  packages/transport-mock:
+    devDependencies:
+      '@ledgerhq/eslint-config-dsdk':
+        specifier: workspace:*
+        version: link:../config/eslint
+      '@ledgerhq/jest-config-dsdk':
+        specifier: workspace:*
+        version: link:../config/jest
+      '@ledgerhq/prettier-config-dsdk':
+        specifier: workspace:*
+        version: link:../config/prettier
+      '@ledgerhq/tsconfig-dsdk':
+        specifier: workspace:*
+        version: link:../config/typescript
 
   packages/transport-mock:
     devDependencies:
