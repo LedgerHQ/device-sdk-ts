@@ -72,8 +72,8 @@ export const MockView: React.FC = () => {
   const [mocks, setMocks] = useState<Mock[]>([]);
 
   const [currentSession, setCurrentSession] = useState<Session | null>(null);
-  const [currentPrefix, setCurrentPrefix] = useState<string>("e001");
-  const [currentResponse, setCurrentResponse] = useState<string>("123456789");
+  const [currentPrefix, setCurrentPrefix] = useState<string>("b001");
+  const [currentResponse, setCurrentResponse] = useState<string>("6700");
 
   const client = useMockClient();
 
@@ -81,6 +81,7 @@ export const MockView: React.FC = () => {
     try {
       const response = await client.getConnected();
       setSessions(response);
+      setCurrentSession(null);
     } catch (error) {
       console.error(error);
     }
@@ -136,6 +137,19 @@ export const MockView: React.FC = () => {
     }
   };
 
+  const handleRemoveDevicesClick = async () => {
+    try {
+      const response = await client.disconnectAll();
+      if (!response) {
+        console.log("Failed to disconnect all devices");
+      } else {
+        fetchSessions().catch(console.error);
+      }
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
   useEffect(() => { fetchSessions().catch(console.error); }, []);
 
   const inputContainerProps = { style: { borderRadius: 4 } };
@@ -158,6 +172,11 @@ export const MockView: React.FC = () => {
                 {session.device.name}
               </SessionEntry>
             ))}
+            {currentSession && <SessionEntry>
+              <MockButton onClick={() => handleRemoveDevicesClick()}>
+                <Text color="neutral.c00">Remove devices</Text>
+              </MockButton>
+            </SessionEntry>}
           </SessionsContainer>
           <MocksContainer>
             <Header>
