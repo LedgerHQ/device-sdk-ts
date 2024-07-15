@@ -20,6 +20,7 @@
     "health-check": "turbo run health-check --output-logs=errors-only --continue",
     "core": "pnpm --filter @ledgerhq/device-sdk-core",
     "context-module": "pnpm --filter @ledgerhq/context-module",
+    "keyring-eth": "pnpm --filter @ledgerhq/keyring-eth",
     "trusted-apps": "pnpm --filter @ledgerhq/device-sdk-trusted-apps",
     "ui": "pnpm --filter @ledgerhq/device-sdk-ui",
     "sample": "pnpm --filter @ledgerhq/device-sdk-sample",
