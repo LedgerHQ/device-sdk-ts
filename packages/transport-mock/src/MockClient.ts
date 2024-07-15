@@ -31,6 +31,10 @@ export class MockClient {
     return this.connectivityService.disconnect(sessionId);
   }
 
+  async disconnectAll(): Promise<boolean> {
+    return this.connectivityService.disconnectAll();
+  }
+
   async getConnected(): Promise<Session[]> {
     return this.connectivityService.getConnected();
   }
