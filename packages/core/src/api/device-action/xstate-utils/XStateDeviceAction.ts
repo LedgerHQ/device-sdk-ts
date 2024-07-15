@@ -60,7 +60,6 @@ type DeviceActionStateMachine<
   >["output"],
   /* eslint-disable @typescript-eslint/no-explicit-any */
   any,
-  any,
   any
   /* eslint-enable @typescript-eslint/no-explicit-any */
 >;
