@@ -18,6 +18,7 @@ import { Sidebar } from "@/components/Sidebar";
 import { SdkProvider } from "@/providers/DeviceSdkProvider";
 import { DeviceSessionsProvider } from "@/providers/DeviceSessionsProvider";
 import { GlobalStyle } from "@/styles/globalstyles";
+import { MockServerProvider } from "@/providers/MockServerProvider";
 
 const Root = styled(Flex)`
   flex-direction: row;
@@ -36,22 +37,24 @@ const PageContainer = styled(Flex)`
 const ClientRootLayout: React.FC<PropsWithChildren> = ({ children }) => {
   return (
     <html lang="en">
-      <SdkProvider>
-        <StyleProvider selectedPalette="dark" fontsPath="/fonts">
-          <GlobalStyle />
-          <body>
-            <Root>
-              <DeviceSessionsProvider>
-                <Sidebar />
-                <PageContainer>
-                  <Header />
-                  {children}
-                </PageContainer>
-              </DeviceSessionsProvider>
-            </Root>
-          </body>
-        </StyleProvider>
-      </SdkProvider>
+      <MockServerProvider>
+        <SdkProvider>
+          <StyleProvider selectedPalette="dark" fontsPath="/fonts">
+            <GlobalStyle />
+            <body>
+              <Root>
+                <DeviceSessionsProvider>
+                  <Sidebar />
+                  <PageContainer>
+                    <Header />
+                    {children}
+                  </PageContainer>
+                </DeviceSessionsProvider>
+              </Root>
+            </body>
+          </StyleProvider>
+        </SdkProvider>
+      </MockServerProvider>
     </html>
   );
 };

@@ -2,6 +2,7 @@ import React from "react";
 import { Flex, Icons, Link } from "@ledgerhq/react-ui";
 import { useRouter } from "next/navigation";
 import styled from "styled-components";
+import { useMockServerContext } from "@/providers/MockServerProvider";
 
 const MenuItem = styled(Flex).attrs({ p: 3, pl: 5 })`
   align-items: center;
@@ -15,6 +16,9 @@ const MenuTitle = styled(Link).attrs({
 
 export const Menu: React.FC = () => {
   const router = useRouter();
+  const {
+    state: { enabled: mockServerEnabled },
+  } = useMockServerContext();
 
   return (
     <>
@@ -48,6 +52,14 @@ export const Menu: React.FC = () => {
         <Icons.SettingsAlt2 />
         <MenuTitle onClick={() => router.push("/cal")}>Crypto Assets</MenuTitle>
       </MenuItem>
+      {mockServerEnabled && (
+        <MenuItem>
+          <Icons.Settings />
+          <MenuTitle onClick={() => router.push("/mock")}>
+            Mock Settings
+          </MenuTitle>
+        </MenuItem>
+      )}
     </>
   );
 };
