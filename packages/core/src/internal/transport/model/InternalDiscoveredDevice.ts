@@ -1,6 +1,6 @@
 import { DeviceId } from "@api/device/DeviceModel";
-import { BuiltinTransport } from "@api/transport/model/BuiltinTransport";
 import { InternalDeviceModel } from "@internal/device-model/model/DeviceModel";
+import { TransportIdentifier } from "@api/transport/model/TransportIdentifier";
 
 /**
  * A discovered / scanned (not yet connected to) device.
@@ -17,5 +17,5 @@ export type InternalDiscoveredDevice = {
    */
   id: DeviceId;
   deviceModel: InternalDeviceModel;
-  transport: BuiltinTransport;
+  transport: TransportIdentifier;
 };

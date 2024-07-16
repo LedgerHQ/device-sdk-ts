@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useState } from "react";
 import { createContext, PropsWithChildren, useContext } from "react";
 import {
-  BuiltinTransport,
+  BuiltinTransports,
   ConsoleLogger,
   DeviceSdk,
   DeviceSdkBuilder,
@@ -13,7 +13,7 @@ const webLogsExporterLogger = new WebLogsExporterLogger();
 
 const defaultSdk = new DeviceSdkBuilder()
   .addLogger(new ConsoleLogger())
-  .addTransport(BuiltinTransport.USB)
+  .addTransport(BuiltinTransports.USB)
   .addLogger(webLogsExporterLogger)
   .build();
 
@@ -29,7 +29,7 @@ export const SdkProvider: React.FC<PropsWithChildren> = ({ children }) => {
       setSdk(
         new DeviceSdkBuilder()
           .addLogger(new ConsoleLogger())
-          .addTransport(BuiltinTransport.MOCK_SERVER)
+          .addTransport(BuiltinTransports.MOCK_SERVER)
           .build(),
       );
     } else {
