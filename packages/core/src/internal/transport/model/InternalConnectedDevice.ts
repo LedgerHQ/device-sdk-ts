@@ -1,6 +1,6 @@
 import { DeviceId } from "@api/device/DeviceModel";
 import { ConnectionType } from "@api/discovery/ConnectionType";
-import { TransportIdentifier } from "@api/transport/model/TransportIdentifier";
+import { BuiltinTransport } from "@api/transport/model/BuiltinTransport";
 import { InternalDeviceModel } from "@internal/device-model/model/DeviceModel";
 import { SendApduFnType } from "@internal/transport/model/DeviceConnection";
 
@@ -11,7 +11,7 @@ export type ConnectedDeviceConstructorArgs = {
   id: DeviceId;
   deviceModel: InternalDeviceModel;
   type: ConnectionType;
-  transport: TransportIdentifier;
+  transport: BuiltinTransport;
   sendApdu: SendApduFnType;
 };
 
@@ -20,7 +20,7 @@ export class InternalConnectedDevice {
   public readonly deviceModel: InternalDeviceModel;
   public readonly sendApdu: SendApduFnType;
   public readonly type: ConnectionType;
-  public readonly transport: TransportIdentifier;
+  public readonly transport: BuiltinTransport;
 
   constructor({
     id,

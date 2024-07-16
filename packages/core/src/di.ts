@@ -5,8 +5,8 @@ import { Container } from "inversify";
 import { commandModuleFactory } from "@api/command/di/commandModule";
 import { deviceActionModuleFactory } from "@api/device-action/di/deviceActionModule";
 import { LoggerSubscriberService } from "@api/logger-subscriber/service/LoggerSubscriberService";
+import { BuiltinTransport } from "@api/transport/model/BuiltinTransport";
 import { Transport } from "@api/transport/model/Transport";
-import { BuiltinTransports } from "@api/transport/model/TransportIdentifier";
 // Uncomment this line to enable the logger middleware
 // import { makeLoggerMiddleware } from "inversify-logger-middleware";
 import { SdkConfig } from "@api/SdkConfig";
@@ -26,7 +26,7 @@ import { usbModuleFactory } from "@internal/transport/usb/di/usbModule";
 
 export type MakeContainerProps = {
   stub: boolean;
-  transports: BuiltinTransports[];
+  transports: BuiltinTransport[];
   customTransports: Transport[];
   loggers: LoggerSubscriberService[];
   config: SdkConfig;

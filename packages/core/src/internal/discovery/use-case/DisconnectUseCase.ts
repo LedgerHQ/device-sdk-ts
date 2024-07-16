@@ -1,7 +1,7 @@
 import { inject, injectable, multiInject } from "inversify";
 
-import type { DeviceSessionId } from "@api/types";
 import type { Transport } from "@api/transport/model/Transport";
+import type { DeviceSessionId } from "@api/types";
 import { deviceSessionTypes } from "@internal/device-session/di/deviceSessionTypes";
 import type { DeviceSessionService } from "@internal/device-session/service/DeviceSessionService";
 import { loggerTypes } from "@internal/logger-publisher/di/loggerTypes";
@@ -52,9 +52,9 @@ export class DisconnectUseCase {
         throw error;
       },
       Right: async (deviceSession) => {
-        const transportIdentifier = deviceSession.connectedDevice.transport;
+        const BuiltinTransport = deviceSession.connectedDevice.transport;
         const transport = this._transports.find(
-          (t) => t.getIdentifier() === transportIdentifier,
+          (t) => t.getIdentifier() === BuiltinTransport,
         );
         if (!transport) {
           throw new TransportNotSupportedError(new Error("Unknown transport"));

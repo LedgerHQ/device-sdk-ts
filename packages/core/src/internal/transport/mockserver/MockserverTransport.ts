@@ -9,14 +9,11 @@ import { from, mergeMap, Observable } from "rxjs";
 import { DeviceId } from "@api/device/DeviceModel";
 import { ApduResponse } from "@api/device-session/ApduResponse";
 import { SdkError } from "@api/Error";
+import { BuiltinTransport } from "@api/transport/model/BuiltinTransport";
 import { Transport } from "@api/transport/model/Transport";
-import {
-  BuiltinTransports,
-  TransportIdentifier,
-} from "@api/transport/model/TransportIdentifier";
 import { loggerTypes } from "@internal/logger-publisher/di/loggerTypes";
 import { LoggerPublisherService } from "@internal/logger-publisher/service/LoggerPublisherService";
-import { InternalDiscoveredDevice } from "@internal/transport/model/InternalDiscoveredDevice";
+import { DisconnectHandler } from "@internal/transport/model/DeviceConnection";
 import {
   ConnectError,
   DisconnectError,
@@ -24,14 +21,13 @@ import {
   OpeningConnectionError,
 } from "@internal/transport/model/Errors";
 import { InternalConnectedDevice } from "@internal/transport/model/InternalConnectedDevice";
-import { DisconnectHandler } from "@internal/transport/model/DeviceConnection";
+import { InternalDiscoveredDevice } from "@internal/transport/model/InternalDiscoveredDevice";
 
 @injectable()
 export class MockTransport implements Transport {
   private logger: LoggerPublisherService;
   private mockClient: MockClient;
-  private readonly identifier: TransportIdentifier =
-    BuiltinTransports.MOCK_SERVER;
+  private readonly identifier: BuiltinTransport = BuiltinTransport.MOCK_SERVER;
 
   constructor(
     @inject(loggerTypes.LoggerPublisherServiceFactory)
@@ -45,7 +41,7 @@ export class MockTransport implements Transport {
     return true;
   }
 
-  getIdentifier(): TransportIdentifier {
+  getIdentifier(): BuiltinTransport {
     return this.identifier;
   }
 
@@ -137,7 +133,6 @@ export class MockTransport implements Transport {
     onDisconnect: DisconnectHandler,
     apdu: Uint8Array,
   ): Promise<Either<SdkError, ApduResponse>> {
-    this.logger.debug("send");
     try {
       const response: CommandResponse = await this.mockClient.send(
         sessionId,
@@ -155,6 +150,7 @@ export class MockTransport implements Transport {
         ),
       } as ApduResponse);
     } catch (error) {
+      this.logger.error("Send APDU error", { data: { error } });
       onDisconnect(deviceId);
       return Left(new NoAccessibleDeviceError(error as Error));
     }
