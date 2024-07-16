@@ -2,9 +2,9 @@ import { injectable, multiInject } from "inversify";
 import { map, mergeMap, Observable, of } from "rxjs";
 
 import { DeviceModel } from "@api/device/DeviceModel";
+import { BuiltinTransport } from "@api/transport/model/BuiltinTransport";
 import { DiscoveredDevice } from "@api/transport/model/DiscoveredDevice";
 import type { Transport } from "@api/transport/model/Transport";
-import { TransportIdentifier } from "@api/transport/model/TransportIdentifier";
 import { transportDiTypes } from "@internal/transport/di/transportDiTypes";
 import { TransportNotSupportedError } from "@internal/transport/model/Errors";
 import { InternalDiscoveredDevice } from "@internal/transport/model/InternalDiscoveredDevice";
@@ -14,7 +14,7 @@ export type StartDiscoveringUseCaseArgs = {
    * Identifier of the transport to start discovering devices.
    * Can be undefined to discover all available transports in parralel.
    */
-  transport?: TransportIdentifier;
+  transport?: BuiltinTransport;
 };
 
 /**
