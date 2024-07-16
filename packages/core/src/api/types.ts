@@ -5,9 +5,9 @@ export type { ConnectionType } from "./discovery/ConnectionType";
 export type { CommandErrorArgs } from "./Error";
 export type { LogSubscriberOptions } from "./logger-subscriber/model/LogSubscriberOptions";
 export type { LoggerSubscriberService } from "./logger-subscriber/service/LoggerSubscriberService";
+export type { BuiltinTransport } from "./transport/model/BuiltinTransport";
+export type { DiscoveredDevice } from "./transport/model/DiscoveredDevice";
 export type { Transport } from "./transport/model/Transport";
-export type { TransportIdentifier } from "./transport/model/TransportIdentifier";
-export type { DiscoveredDevice } from "./usb/model/DiscoveredDevice";
 export type { ApduBuilderArgs } from "@api/apdu/utils/ApduBuilder";
 export type { Command } from "@api/command/Command";
 export type {
