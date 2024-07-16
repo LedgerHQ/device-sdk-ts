@@ -11,7 +11,7 @@ import { transactionModuleFactory } from "@internal/transaction/di/transactionMo
 import { typedDataModuleFactory } from "@internal/typed-data/di/typedDataModule";
 
 // Uncomment this line to enable the logger middleware
-const logger = makeLoggerMiddleware();
+// const logger = makeLoggerMiddleware();
 
 export type MakeContainerProps = {
   sdk: DeviceSdk;
@@ -27,7 +27,7 @@ export const makeContainer = ({
   const container = new Container();
 
   // Uncomment this line to enable the logger middleware
-  container.applyMiddleware(logger);
+  // container.applyMiddleware(logger);
 
   container.bind<DeviceSdk>(externalTypes.Sdk).toConstantValue(sdk);
   container
