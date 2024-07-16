@@ -21,21 +21,24 @@ const SdkContext = createContext<DeviceSdk>(defaultSdk);
 
 export const SdkProvider: React.FC<PropsWithChildren> = ({ children }) => {
   const {
-    state: { enabled: mockServerEnabled },
+    state: { enabled: mockServerEnabled, url },
   } = useMockServerContext();
   const [sdk, setSdk] = useState<DeviceSdk>(defaultSdk);
   useEffect(() => {
     if (mockServerEnabled) {
+      sdk.close();
       setSdk(
         new DeviceSdkBuilder()
           .addLogger(new ConsoleLogger())
           .addTransport(BuiltinTransports.MOCK_SERVER)
+          .addConfig({ mockUrl: url })
           .build(),
       );
     } else {
+      sdk.close();
       setSdk(defaultSdk);
     }
-  }, [mockServerEnabled]);
+  }, [mockServerEnabled, url]);
 
   return <SdkContext.Provider value={sdk}>{children}</SdkContext.Provider>;
 };

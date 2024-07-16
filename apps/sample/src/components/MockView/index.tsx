@@ -4,6 +4,7 @@ import { Session } from "@ledgerhq/device-sdk-transport-mock/src/model/Session";
 import { Button, Divider, Flex, Input, Link, Text } from "@ledgerhq/react-ui";
 import styled, { DefaultTheme } from "styled-components";
 import { useMockClient } from "@/hooks/useMockClient";
+import { useMockServerContext } from "@/providers/MockServerProvider";
 
 const Root = styled(Flex).attrs({ mx: 15, mt: 10, mb: 5 })`
   flex-direction: column;
@@ -77,7 +78,11 @@ export const MockView: React.FC = () => {
   const [currentPrefix, setCurrentPrefix] = useState<string>("b001");
   const [currentResponse, setCurrentResponse] = useState<string>("6700");
 
-  const client = useMockClient();
+  const {
+    state: { url },
+  } = useMockServerContext();
+
+  const client = useMockClient(url);
 
   const fetchSessions = async () => {
     try {
@@ -174,7 +179,6 @@ export const MockView: React.FC = () => {
             <Header>
               <Title>Devices:</Title>
             </Header>
-            <Divider my={4} />
             {sessions.map((session, index) => (
               <SessionEntry
                 key={index}

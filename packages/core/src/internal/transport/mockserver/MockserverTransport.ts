@@ -16,7 +16,7 @@ import {
 } from "@api/transport/model/TransportIdentifier";
 import { loggerTypes } from "@internal/logger-publisher/di/loggerTypes";
 import { LoggerPublisherService } from "@internal/logger-publisher/service/LoggerPublisherService";
-import { InternalDiscoveredDevice } from "@internal/transport/model/InternalDiscoveredDevice";
+import { DisconnectHandler } from "@internal/transport/model/DeviceConnection";
 import {
   ConnectError,
   DisconnectError,
@@ -24,7 +24,7 @@ import {
   OpeningConnectionError,
 } from "@internal/transport/model/Errors";
 import { InternalConnectedDevice } from "@internal/transport/model/InternalConnectedDevice";
-import { DisconnectHandler } from "@internal/transport/model/DeviceConnection";
+import { InternalDiscoveredDevice } from "@internal/transport/model/InternalDiscoveredDevice";
 
 @injectable()
 export class MockTransport implements Transport {
