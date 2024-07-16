@@ -1,24 +1,45 @@
-import { createContext, useContext } from "react";
+import { createContext, useContext, useEffect, useState } from "react";
 import {
-  BuiltinTransports,
+  BuiltinTransport,
   ConsoleLogger,
   DeviceSdk,
   DeviceSdkBuilder,
 } from "@ledgerhq/device-sdk-core";
+import { useMockServerContext } from "@/providers/MockServerProvider";
 
-export const sdk = new DeviceSdkBuilder()
+const defaultSdk = new DeviceSdkBuilder()
   .addLogger(new ConsoleLogger())
-  .addTransport(BuiltinTransports.MOCK_SERVER)
+  .addTransport(BuiltinTransport.USB)
   .build();
 
-const SdkContext = createContext<DeviceSdk>(sdk);
+const SdkContext = createContext<DeviceSdk>(defaultSdk);
 
 type Props = {
   children: React.ReactNode;
 };
 
 export const SdkProvider: React.FC<Props> = ({ children }) => {
-  return <SdkContext.Provider value={sdk}>{children}</SdkContext.Provider>;
+  const {
+    state: { enabled: mockServerEnabled },
+  } = useMockServerContext();
+  const [sdk, setSdk] = useState<DeviceSdk>(defaultSdk);
+  useEffect(() => {
+    if (mockServerEnabled) {
+      setSdk(
+        new DeviceSdkBuilder()
+          .addLogger(new ConsoleLogger())
+          .addTransport(BuiltinTransport.MOCK_SERVER)
+          .build(),
+      );
+    } else {
+      setSdk(defaultSdk);
+    }
+  }, [mockServerEnabled]);
+
+  if (sdk) {
+    return <SdkContext.Provider value={sdk}>{children}</SdkContext.Provider>;
+  }
+  return null;
 };
 
 export const useSdk = (): DeviceSdk => {
