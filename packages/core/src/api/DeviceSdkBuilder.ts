@@ -1,8 +1,8 @@
 import { DEFAULT_MANAGER_API_BASE_URL } from "@internal/manager-api/model/Const";
 
 import { LoggerSubscriberService } from "./logger-subscriber/service/LoggerSubscriberService";
-import { BuiltinTransport } from "./transport/model/BuiltinTransport";
 import { Transport } from "./transport/model/Transport";
+import { BuiltinTransports } from "./transport/model/TransportIdentifier";
 import { DeviceSdk } from "./DeviceSdk";
 import { SdkConfig } from "./SdkConfig";
 
@@ -13,7 +13,7 @@ import { SdkConfig } from "./SdkConfig";
  * ```
  * const sdk = new LedgerDeviceSdkBuilder()
  *  .setStub(false)
- *  .addTransport(BuiltinTransport.USB)
+ *  .addTransport(BuiltinTransports.USB)
  *  .addCustomTransport(new MyTransport())
  *  .addLogger(myLogger)
  *  .build();
@@ -22,7 +22,7 @@ import { SdkConfig } from "./SdkConfig";
 export class LedgerDeviceSdkBuilder {
   private stub = false;
   private readonly loggers: LoggerSubscriberService[] = [];
-  private readonly transports: BuiltinTransport[] = [];
+  private readonly transports: BuiltinTransports[] = [];
   private readonly customTransports: Transport[] = [];
   private config: SdkConfig = {
     managerApiUrl: DEFAULT_MANAGER_API_BASE_URL,
@@ -43,7 +43,7 @@ export class LedgerDeviceSdkBuilder {
     return this;
   }
 
-  addTransport(transport: BuiltinTransport): LedgerDeviceSdkBuilder {
+  addTransport(transport: BuiltinTransports): LedgerDeviceSdkBuilder {
     this.transports.push(transport);
     return this;
   }

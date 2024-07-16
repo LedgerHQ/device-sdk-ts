@@ -1,5 +1,5 @@
 import { DeviceId, DeviceModel } from "@api/device/DeviceModel";
-import { BuiltinTransport } from "@api/transport/model/BuiltinTransport";
+import { TransportIdentifier } from "@api/transport/model/TransportIdentifier";
 
 /**
  * A discovered device.
@@ -7,5 +7,5 @@ import { BuiltinTransport } from "@api/transport/model/BuiltinTransport";
 export type DiscoveredDevice = {
   readonly id: DeviceId;
   readonly deviceModel: DeviceModel;
-  readonly transport: BuiltinTransport;
+  readonly transport: TransportIdentifier;
 };

@@ -1,14 +1,14 @@
 import { ContainerModule } from "inversify";
 
-import { BuiltinTransport } from "@api/transport/model/BuiltinTransport";
 import { Transport } from "@api/transport/model/Transport";
+import { BuiltinTransports } from "@api/transport/model/TransportIdentifier";
 import { TransportDataSource } from "@internal/transport/data/TransportDataSource";
 
 import { transportDiTypes } from "./transportDiTypes";
 
 type FactoryProps = {
   stub: boolean;
-  transports: BuiltinTransport[];
+  transports: BuiltinTransports[];
   customTransports: Transport[];
 };
 

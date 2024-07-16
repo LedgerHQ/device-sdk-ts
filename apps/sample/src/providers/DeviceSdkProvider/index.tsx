@@ -1,6 +1,6 @@
 import { createContext, useContext, useEffect, useState } from "react";
 import {
-  BuiltinTransport,
+  BuiltinTransports,
   ConsoleLogger,
   DeviceSdk,
   DeviceSdkBuilder,
@@ -9,7 +9,7 @@ import { useMockServerContext } from "@/providers/MockServerProvider";
 
 const defaultSdk = new DeviceSdkBuilder()
   .addLogger(new ConsoleLogger())
-  .addTransport(BuiltinTransport.USB)
+  .addTransport(BuiltinTransports.USB)
   .build();
 
 const SdkContext = createContext<DeviceSdk>(defaultSdk);
@@ -28,7 +28,7 @@ export const SdkProvider: React.FC<Props> = ({ children }) => {
       setSdk(
         new DeviceSdkBuilder()
           .addLogger(new ConsoleLogger())
-          .addTransport(BuiltinTransport.MOCK_SERVER)
+          .addTransport(BuiltinTransports.MOCK_SERVER)
           .build(),
       );
     } else {
