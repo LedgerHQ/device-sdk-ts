@@ -2,9 +2,9 @@ import { injectable, multiInject } from "inversify";
 import { map, mergeMap, Observable, of } from "rxjs";
 
 import { DeviceModel } from "@api/device/DeviceModel";
-import { BuiltinTransport } from "@api/transport/model/BuiltinTransport";
 import { DiscoveredDevice } from "@api/transport/model/DiscoveredDevice";
 import type { Transport } from "@api/transport/model/Transport";
+import { TransportIdentifier } from "@api/transport/model/TransportIdentifier";
 import { transportDiTypes } from "@internal/transport/di/transportDiTypes";
 import { TransportNotSupportedError } from "@internal/transport/model/Errors";
 import { InternalDiscoveredDevice } from "@internal/transport/model/InternalDiscoveredDevice";
@@ -14,7 +14,7 @@ export type StartDiscoveringUseCaseArgs = {
    * Identifier of the transport to start discovering devices.
    * Can be undefined to discover all available transports in parralel.
    */
-  transport?: BuiltinTransport;
+  transport?: TransportIdentifier;
 };
 
 /**
@@ -29,9 +29,7 @@ export class StartDiscoveringUseCase {
     private transports: Transport[],
   ) {}
 
-  private mapDiscoveredDevice(
-    device: InternalDiscoveredDevice,
-  ): DiscoveredDevice {
+  private mapDiscoveredDevice(device: InternalDiscoveredDevice): DiscoveredDevice {
     const deviceModel = new DeviceModel({
       id: device.id,
       model: device.deviceModel.id,
@@ -54,17 +52,15 @@ export class StartDiscoveringUseCase {
       if (!instance) {
         throw new TransportNotSupportedError(new Error("Unknown transport"));
       }
-      return instance
-        .startDiscovering()
-        .pipe(map((device) => this.mapDiscoveredDevice(device)));
+      return instance.startDiscovering().pipe(
+        map((device) => this.mapDiscoveredDevice(device)),
+      );
     } else {
       // Discover from all transports in parallel
       return of(...this.transports).pipe(
-        mergeMap((instance) =>
-          instance
-            .startDiscovering()
-            .pipe(map((device) => this.mapDiscoveredDevice(device))),
-        ),
+        mergeMap((instance) => instance.startDiscovering().pipe(
+          map((device) => this.mapDiscoveredDevice(device)),
+        )),
       );
     }
   }

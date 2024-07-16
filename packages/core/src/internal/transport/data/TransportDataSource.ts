@@ -1,19 +1,19 @@
 import { interfaces } from "inversify";
 
-import { BuiltinTransport } from "@api/transport/model/BuiltinTransport";
 import { Transport } from "@api/transport/model/Transport";
+import { BuiltinTransports } from "@api/transport/model/TransportIdentifier";
 import { MockTransport } from "@internal/transport/mockserver/MockserverTransport";
 import { WebUsbHidTransport } from "@internal/transport/usb/transport/WebUsbHidTransport";
 
 export class TransportDataSource {
   private static transports: {
-    [transport in BuiltinTransport]: interfaces.Newable<Transport>;
+    [transport in BuiltinTransports]: interfaces.Newable<Transport>;
   } = {
-    [BuiltinTransport.USB]: WebUsbHidTransport,
-    [BuiltinTransport.MOCK_SERVER]: MockTransport,
+    [BuiltinTransports.USB]: WebUsbHidTransport,
+    [BuiltinTransports.MOCK_SERVER]: MockTransport,
   };
 
-  static get(transport: BuiltinTransport): interfaces.Newable<Transport> {
+  static get(transport: BuiltinTransports): interfaces.Newable<Transport> {
     return TransportDataSource.transports[transport];
   }
 }
