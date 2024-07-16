@@ -3,8 +3,7 @@ import { Mock } from "@ledgerhq/device-sdk-transport-mock/src/model/Mock";
 import { Session } from "@ledgerhq/device-sdk-transport-mock/src/model/Session";
 import { Button, Divider, Flex, Input, Link, Text } from "@ledgerhq/react-ui";
 import styled, { DefaultTheme } from "styled-components";
-
-import { useMockClient } from "@/providers/MockClientProvider";
+import { useMockClient } from "@/hooks/useMockClient";
 
 const Root = styled(Flex).attrs({ mx: 15, mt: 10, mb: 5 })`
   flex-direction: column;
@@ -28,7 +27,9 @@ const FormContainer = styled(Flex)`
   border-radius: 12px;
 `;
 
-const Header = styled(Flex).attrs({ px: 8, py: 6 })``;
+const Header = styled(Flex).attrs({ px: 8, py: 6 })`
+  align-items: center;
+`;
 
 const Form = styled(Flex).attrs({ my: 6, px: 10 })`
   flex: 1;
@@ -59,6 +60,7 @@ const MocksContainer = styled(Flex)`
 const MockEntry = styled(Flex)`
   width: 100%;
   flex-direction: row;
+  align-items: center;
 `;
 
 const MockButton = styled(Button).attrs({
@@ -110,7 +112,11 @@ export const MockView: React.FC = () => {
       return;
     }
     try {
-      const response = await client.addMock(currentSession.id, currentPrefix, currentResponse);
+      const response = await client.addMock(
+        currentSession.id,
+        currentPrefix,
+        currentResponse,
+      );
       if (!response) {
         console.log("Failed to add the mock");
       } else {
@@ -150,7 +156,9 @@ export const MockView: React.FC = () => {
     }
   };
 
-  useEffect(() => { fetchSessions().catch(console.error); }, []);
+  useEffect(() => {
+    fetchSessions().catch(console.error);
+  }, []);
 
   const inputContainerProps = { style: { borderRadius: 4 } };
 
@@ -168,49 +176,60 @@ export const MockView: React.FC = () => {
             </Header>
             <Divider my={4} />
             {sessions.map((session, index) => (
-              <SessionEntry key={index} onClick={() => handleSessionClick(session)}>
+              <SessionEntry
+                key={index}
+                onClick={() => handleSessionClick(session)}
+              >
                 {session.device.name}
               </SessionEntry>
             ))}
-            {currentSession && <SessionEntry>
-              <MockButton onClick={() => handleRemoveDevicesClick()}>
-                <Text color="neutral.c00">Remove devices</Text>
-              </MockButton>
-            </SessionEntry>}
+            {currentSession && (
+              <SessionEntry>
+                <MockButton onClick={() => handleRemoveDevicesClick()}>
+                  <Text color="neutral.c00">Remove devices</Text>
+                </MockButton>
+              </SessionEntry>
+            )}
           </SessionsContainer>
           <MocksContainer>
             <Header>
               <Title>Installed mocks:</Title>
             </Header>
-            <Divider my={4} />
+            {mocks.length > 0 && <Divider my={4} />}
             {mocks.map((mock, index) => (
-              <MockEntry key={index}>
-                <Text variant="body">{mock.prefix} = {mock.response}</Text>
+              <MockEntry key={`${index}`}>
+                <Text variant="body">
+                  {mock.prefix} = {mock.response}
+                </Text>
               </MockEntry>
             ))}
             {currentSession && <Divider my={4} />}
-            {currentSession && <MockEntry>
-              <Input
-                name="APDU Prefix"
-                containerProps={inputContainerProps}
-                value={currentPrefix}
-                onChange={(value) => setCurrentPrefix(value)}
-              />
-              <Input
-                name="Mock response"
-                containerProps={inputContainerProps}
-                value={currentResponse}
-                onChange={(value) => setCurrentResponse(value)}
-              />
-              <MockButton onClick={() => handleAddMockClick()}>
-                <Text color="neutral.c00">Add</Text>
-              </MockButton>
-            </MockEntry>}
-            {currentSession && <MockEntry>
-              <MockButton onClick={() => handleRemoveMocksClick()}>
-                <Text color="neutral.c00">Remove all mocks</Text>
-              </MockButton>
-            </MockEntry>}
+            {currentSession && (
+              <MockEntry>
+                <Input
+                  name="APDU Prefix"
+                  containerProps={inputContainerProps}
+                  value={currentPrefix}
+                  onChange={(value) => setCurrentPrefix(value)}
+                />
+                <Input
+                  name="Mock response"
+                  containerProps={inputContainerProps}
+                  value={currentResponse}
+                  onChange={(value) => setCurrentResponse(value)}
+                />
+                <MockButton mx={5} onClick={() => handleAddMockClick()}>
+                  <Text color="neutral.c00">Add</Text>
+                </MockButton>
+              </MockEntry>
+            )}
+            {currentSession && (
+              <MockEntry>
+                <MockButton onClick={() => handleRemoveMocksClick()}>
+                  <Text color="neutral.c00">Remove all mocks</Text>
+                </MockButton>
+              </MockEntry>
+            )}
           </MocksContainer>
         </Form>
       </FormContainer>

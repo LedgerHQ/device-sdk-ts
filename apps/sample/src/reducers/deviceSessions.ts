@@ -6,13 +6,23 @@ export type DeviceSessionsState = {
   deviceById: Record<DeviceSessionId, ConnectedDevice>;
 };
 
-export type AddSessionAction = {
+type AddSessionAction = {
   type: "add_session";
   payload: { sessionId: DeviceSessionId; connectedDevice: ConnectedDevice };
 };
 
-export type RemoveSessionAction = {
+type RemoveSessionAction = {
   type: "remove_session";
+  payload: { sessionId: DeviceSessionId };
+};
+
+export type DeviseSessionsAction =
+  | AddSessionAction
+  | RemoveSessionAction
+  | SelectSessionAction;
+
+export type SelectSessionAction = {
+  type: "select_session";
   payload: { sessionId: DeviceSessionId };
 };
 
@@ -23,8 +33,10 @@ export const DeviceSessionsInitialState: DeviceSessionsState = {
 
 export const deviceSessionsReducer: Reducer<
   DeviceSessionsState,
-  AddSessionAction | RemoveSessionAction
+  DeviseSessionsAction
 > = (state, action) => {
+  const sessionsCount = Object.keys(state.deviceById).length;
+
   switch (action.type) {
     case "add_session":
       return {
@@ -40,7 +52,15 @@ export const deviceSessionsReducer: Reducer<
 
       return {
         ...state,
-        selectedId: undefined,
+        selectedId:
+          sessionsCount > 0
+            ? Object.keys(state.deviceById)[sessionsCount - 1]
+            : undefined,
+      };
+    case "select_session":
+      return {
+        ...state,
+        selectedId: action.payload.sessionId,
       };
     default:
       return state;
