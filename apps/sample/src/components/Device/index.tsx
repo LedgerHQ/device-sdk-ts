@@ -10,6 +10,7 @@ import styled, { DefaultTheme } from "styled-components";
 import { useDeviceSessionState } from "@/hooks/useDeviceSessionState";
 
 import { StatusText } from "./StatusText";
+import { useDeviceSessionsContext } from "@/providers/DeviceSessionsProvider";
 
 const Root = styled(Flex).attrs({ p: 5, mb: 8, borderRadius: 2 })`
   background: ${({ theme }: { theme: DefaultTheme }) =>
@@ -62,6 +63,10 @@ export const Device: React.FC<DeviceProps> = ({
   sessionId,
 }) => {
   const sessionState = useDeviceSessionState(sessionId);
+  const {
+    state: { deviceById, selectedId },
+    dispatch,
+  } = useDeviceSessionsContext();
   const IconComponent = getIconComponent(model);
   return (
     <Root>
@@ -87,6 +92,17 @@ export const Device: React.FC<DeviceProps> = ({
         </Flex>
       </Box>
       <DropdownGeneric closeOnClickOutside label="" placement="bottom">
+        {Object.values(deviceById).length > 1 && selectedId !== sessionId && (
+          <ActionRow
+            onClick={() =>
+              dispatch({ type: "select_session", payload: { sessionId } })
+            }
+          >
+            <Text variant="paragraph" color="neutral.c80">
+              Select
+            </Text>
+          </ActionRow>
+        )}
         <ActionRow onClick={onDisconnect}>
           <Text variant="paragraph" color="neutral.c80">
             Disconnect
