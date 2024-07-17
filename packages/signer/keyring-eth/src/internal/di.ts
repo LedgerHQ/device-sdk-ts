@@ -1,8 +1,8 @@
 import { ContextModule } from "@ledgerhq/context-module";
 import { DeviceSdk, DeviceSessionId } from "@ledgerhq/device-sdk-core";
 import { Container } from "inversify";
-import { makeLoggerMiddleware } from "inversify-logger-middleware";
 
+// import { makeLoggerMiddleware } from "inversify-logger-middleware";
 import { addressModuleFactory } from "@internal/address/di/addressModule";
 import { appBindingModuleFactory } from "@internal/app-binder/di/appBinderModule";
 import { externalTypes } from "@internal/externalTypes";

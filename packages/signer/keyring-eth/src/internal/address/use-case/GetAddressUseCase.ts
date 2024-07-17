@@ -13,13 +13,13 @@ export class GetAddressUseCase {
   }
 
   async execute(
-    _derivationPath: string,
-    _options?: AddressOptions,
+    derivationPath: string,
+    options?: AddressOptions,
   ): Promise<Address> {
-    // 1- Get the address using the app binder
-
-    this._appBinder;
-
-    return Promise.resolve({} as Address);
+    return this._appBinder.getAddress({
+      derivationPath,
+      checkOnDevice: options?.checkOnDevice,
+      returnChainCode: options?.returnChainCode,
+    });
   }
 }

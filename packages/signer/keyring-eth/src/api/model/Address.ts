@@ -1,4 +1,5 @@
 export type Address = {
-  publicKey: string;
   address: `0x${string}`;
+  publicKey: string;
+  chainCode?: string;
 };
