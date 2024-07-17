@@ -13,10 +13,15 @@ import {
   OpenAppDAOutput,
   GetDeviceStatusDeviceAction,
   GetDeviceStatusDAInput,
+  GetDeviceStatusDAOutput,
   GetDeviceStatusDAError,
   GetDeviceStatusDAIntermediateValue,
+  GoToDashboardDeviceAction,
+  GoToDashboardDAInput,
+  GoToDashboardDAOutput,
+  GoToDashboardDAError,
+  GoToDashboardDAIntermediateValue,
 } from "@ledgerhq/device-sdk-core";
-import { GetDeviceStatusDAOutput } from "@ledgerhq/device-sdk-core/lib/cjs/index.js";
 
 export const DeviceActionsView: React.FC = () => {
   const {
@@ -72,6 +77,26 @@ export const DeviceActionsView: React.FC = () => {
               GetDeviceStatusDAInput,
               GetDeviceStatusDAError,
               GetDeviceStatusDAIntermediateValue
+            >,
+            {
+              title: "Go to dashboard",
+              description: "Navigate to the dashboard",
+              executeDeviceAction: (_, inspect) => {
+                const deviceAction = new GoToDashboardDeviceAction({
+                  input: { unlockTimeout: 15000 },
+                  inspect,
+                });
+                return sdk.executeDeviceAction({
+                  sessionId: selectedSessionId,
+                  deviceAction,
+                });
+              },
+              initialValues: { unlockTimeout: 15000 },
+            } satisfies DeviceActionProps<
+              GoToDashboardDAOutput,
+              GoToDashboardDAInput,
+              GoToDashboardDAError,
+              GoToDashboardDAIntermediateValue
             >,
           ],
     [],

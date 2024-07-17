@@ -52,6 +52,14 @@ export {
   type GetDeviceStatusDAOutput,
   type GetDeviceStatusDAState,
 } from "@api/device-action/os/GetDeviceStatus/types";
+export { GoToDashboardDeviceAction } from "@api/device-action/os/GoToDashboard/GoToDashboardDeviceAction";
+export {
+  type GoToDashboardDAError,
+  type GoToDashboardDAInput,
+  type GoToDashboardDAIntermediateValue,
+  type GoToDashboardDAOutput,
+  type GoToDashboardDAState,
+} from "@api/device-action/os/GoToDashboard/types";
 export { OpenAppDeviceAction } from "@api/device-action/os/OpenAppDeviceAction/OpenAppDeviceAction";
 export {
   type OpenAppDAError,

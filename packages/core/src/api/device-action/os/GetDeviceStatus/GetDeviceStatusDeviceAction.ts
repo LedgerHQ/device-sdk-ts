@@ -189,7 +189,7 @@ export class GetDeviceStatusDeviceAction extends XStateDeviceAction<
           },
           _internalState: {
             onboarded: false, // we don't know how to check yet
-            locked: true,
+            locked: sessionState.deviceStatus === DeviceStatus.LOCKED,
             currentApp:
               sessionStateType ===
               DeviceSessionStateType.ReadyWithoutSecureChannel

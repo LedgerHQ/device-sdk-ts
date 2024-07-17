@@ -112,7 +112,7 @@ describe("GetDeviceStatusDeviceAction", () => {
       apiGetDeviceSessionStateObservableMock.mockImplementation(
         () =>
           new Observable((o) => {
-            const inner = interval(100).subscribe({
+            const inner = interval(50).subscribe({
               next: (i) => {
                 if (i > 2) {
                   o.next({
@@ -247,7 +247,7 @@ describe("GetDeviceStatusDeviceAction", () => {
       getDeviceSessionStateObservableMock.mockImplementation(
         () =>
           new Observable((o) => {
-            const inner = interval(100).subscribe({
+            const inner = interval(50).subscribe({
               next: (i) => {
                 if (i > 2) {
                   o.next({
@@ -421,7 +421,7 @@ describe("GetDeviceStatusDeviceAction", () => {
       getDeviceSessionStateObservableMock.mockImplementation(
         () =>
           new Observable((o) => {
-            const inner = interval(100).subscribe({
+            const inner = interval(50).subscribe({
               next: (i) => {
                 if (i > 2) {
                   o.next({
@@ -498,7 +498,7 @@ describe("GetDeviceStatusDeviceAction", () => {
       getDeviceSessionStateObservableMock.mockImplementation(
         () =>
           new Observable((o) => {
-            const inner = interval(100).subscribe({
+            const inner = interval(50).subscribe({
               next: (i) => {
                 if (i > 2) {
                   o.next({
