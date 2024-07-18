@@ -36,6 +36,15 @@ export class OpenAppRejectedError implements SdkError {
   }
 }
 
+export class ListAppsRejectedError implements SdkError {
+  readonly _tag = "ListAppsRejectedError";
+  originalError?: Error;
+
+  constructor(message?: string) {
+    this.originalError = new Error(message ?? "List apps rejected.");
+  }
+}
+
 // TODO: open app rejected error (also we should already have a similar error in the open app command parsing)
 
 // TODO: app not installed error (same as above)

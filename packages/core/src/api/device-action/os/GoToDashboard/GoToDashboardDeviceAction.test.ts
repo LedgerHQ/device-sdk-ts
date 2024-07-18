@@ -23,7 +23,7 @@ const setupGetDeviceStatusMock = (
   (GetDeviceStatusDeviceAction as jest.Mock).mockImplementation(() => ({
     makeStateMachine: jest.fn().mockImplementation(() =>
       createMachine({
-        id: "MockergoToDashboardDeviceAction",
+        id: "MockGetDeviceStatusDeviceAction",
         initial: "ready",
         states: {
           ready: {

@@ -158,6 +158,7 @@ export class GoToDashboardDeviceAction extends XStateDeviceAction<
           },
         },
         GetDeviceStatus: {
+          // We run the GetDeviceStatus flow to get information about the device state
           invoke: {
             id: "deviceStatus",
             src: "getDeviceStatus",
@@ -199,6 +200,7 @@ export class GoToDashboardDeviceAction extends XStateDeviceAction<
           },
         },
         CheckDeviceStatus: {
+          // We check the device status to see if we can have an error
           always: [
             {
               target: "Error",
@@ -210,6 +212,7 @@ export class GoToDashboardDeviceAction extends XStateDeviceAction<
           ],
         },
         DashboardCheck: {
+          // We check if the dashboard is open
           always: [
             {
               target: "SaveSessionState",

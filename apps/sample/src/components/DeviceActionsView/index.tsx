@@ -21,6 +21,11 @@ import {
   GoToDashboardDAOutput,
   GoToDashboardDAError,
   GoToDashboardDAIntermediateValue,
+  ListAppsDeviceAction,
+  ListAppsDAInput,
+  ListAppsDAOutput,
+  ListAppsDAError,
+  ListAppsDAIntermediateValue,
 } from "@ledgerhq/device-sdk-core";
 
 export const DeviceActionsView: React.FC = () => {
@@ -97,6 +102,26 @@ export const DeviceActionsView: React.FC = () => {
               GoToDashboardDAInput,
               GoToDashboardDAError,
               GoToDashboardDAIntermediateValue
+            >,
+            {
+              title: "List apps",
+              description: "List all applications installed on the device",
+              executeDeviceAction: (_, inspect) => {
+                const deviceAction = new ListAppsDeviceAction({
+                  input: { unlockTimeout: 15000 },
+                  inspect,
+                });
+                return sdk.executeDeviceAction({
+                  sessionId: selectedSessionId,
+                  deviceAction,
+                });
+              },
+              initialValues: { unlockTimeout: 15000 },
+            } satisfies DeviceActionProps<
+              ListAppsDAOutput,
+              ListAppsDAInput,
+              ListAppsDAError,
+              ListAppsDAIntermediateValue
             >,
           ],
     [],

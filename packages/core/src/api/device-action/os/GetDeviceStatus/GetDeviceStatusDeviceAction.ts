@@ -207,6 +207,7 @@ export class GetDeviceStatusDeviceAction extends XStateDeviceAction<
           },
         },
         OnboardingCheck: {
+          // TODO: we don't have this info for now
           always: [
             {
               guard: {
@@ -227,6 +228,7 @@ export class GetDeviceStatusDeviceAction extends XStateDeviceAction<
           ],
         },
         LockingCheck: {
+          // We check if the device is locked in the session state
           always: [
             {
               target: "AppAndVersionCheck",
@@ -246,6 +248,7 @@ export class GetDeviceStatusDeviceAction extends XStateDeviceAction<
           ],
         },
         UserActionUnlockDevice: {
+          // we wait for the device to be unlocked (default timeout is 15s)
           entry: "assignUserActionUnlockNeeded",
           exit: "assignNoUserActionNeeded",
           invoke: {
@@ -270,6 +273,7 @@ export class GetDeviceStatusDeviceAction extends XStateDeviceAction<
           },
         },
         AppAndVersionCheck: {
+          // We check the current app and version using the getAppAndVersion command
           invoke: {
             src: "getAppAndVersion",
             onDone: {
@@ -294,6 +298,7 @@ export class GetDeviceStatusDeviceAction extends XStateDeviceAction<
           },
         },
         SaveAppState: {
+          // We save the current app and version in the session state
           invoke: {
             src: "saveSessionState",
             input: (_) => ({

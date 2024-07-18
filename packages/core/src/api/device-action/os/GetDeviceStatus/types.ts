@@ -23,7 +23,8 @@ export type GetDeviceStatusDAError =
 
 export type GetDeviceStatusDARequiredInteraction =
   | UserInteractionRequired.None
-  | UserInteractionRequired.UnlockDevice;
+  | UserInteractionRequired.UnlockDevice
+  | UserInteractionRequired.AllowSecureConnection;
 
 export type GetDeviceStatusDAIntermediateValue = {
   requiredUserInteraction: GetDeviceStatusDARequiredInteraction;

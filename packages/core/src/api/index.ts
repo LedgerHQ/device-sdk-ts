@@ -60,6 +60,14 @@ export {
   type GoToDashboardDAOutput,
   type GoToDashboardDAState,
 } from "@api/device-action/os/GoToDashboard/types";
+export { ListAppsDeviceAction } from "@api/device-action/os/ListApps/ListAppsDeviceAction";
+export {
+  type ListAppsDAError,
+  type ListAppsDAInput,
+  type ListAppsDAIntermediateValue,
+  type ListAppsDAOutput,
+  type ListAppsDAState,
+} from "@api/device-action/os/ListApps/types";
 export { OpenAppDeviceAction } from "@api/device-action/os/OpenAppDeviceAction/OpenAppDeviceAction";
 export {
   type OpenAppDAError,
