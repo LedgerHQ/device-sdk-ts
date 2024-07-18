@@ -56,7 +56,7 @@
     "@ledgerhq/jest-config-dsdk": "workspace:*",
     "@ledgerhq/prettier-config-dsdk": "workspace:*",
     "@ledgerhq/tsconfig-dsdk": "workspace:*",
-    "@statelyai/inspect": "^0.3.1",
+    "@statelyai/inspect": "^0.4.0",
     "@types/semver": "^7.5.8",
     "@types/uuid": "^10.0.0",
     "@types/w3c-web-hid": "^1.0.6",

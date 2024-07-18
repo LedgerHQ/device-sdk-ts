@@ -197,8 +197,8 @@ importers:
         specifier: workspace:*
         version: link:../config/typescript
       '@statelyai/inspect':
-        specifier: ^0.3.1
-        version: 0.3.1(ws@7.5.10)(xstate@5.15.0)
+        specifier: ^0.4.0
+        version: 0.4.0(ws@7.5.10)(xstate@5.15.0)
       '@types/semver':
         specifier: ^7.5.8
         version: 7.5.8
@@ -2209,8 +2209,8 @@ packages:
   '@sinonjs/fake-timers@10.3.0':
     resolution: {integrity: sha512-V4BG07kuYSUkTCSBHG8G8TNhM+F19jXFWnQtzj+we8DrkpSBCee9Z3Ms8yiGer/dlmhe35/Xdgyo3/0rQKg7YA==}
 
-  '@statelyai/inspect@0.3.1':
-    resolution: {integrity: sha512-KW3owf5UbPs1+/xOGJoSV4D69hP5xTX7PCzARr2R1senwfUIwyGP8yEsB8dvkMvekYvgFS0qa6lmg1eszYr2tw==}
+  '@statelyai/inspect@0.4.0':
+    resolution: {integrity: sha512-VxQldRlKYcu6rzLY83RSXVwMYexkH6hNx85B89YWYyXYWtNGaWHFCwV7a/Kz8FFPeUz8EKVAnyMOg2kNpn07wQ==}
     peerDependencies:
       xstate: ^5.5.1
 
@@ -9421,7 +9421,7 @@ snapshots:
     dependencies:
       '@sinonjs/commons': 3.0.0
 
-  '@statelyai/inspect@0.3.1(ws@7.5.10)(xstate@5.15.0)':
+  '@statelyai/inspect@0.4.0(ws@7.5.10)(xstate@5.15.0)':
     dependencies:
       fast-safe-stringify: 2.1.1
       isomorphic-ws: 5.0.0(ws@7.5.10)
