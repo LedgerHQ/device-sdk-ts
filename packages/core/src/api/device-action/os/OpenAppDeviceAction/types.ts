@@ -4,7 +4,7 @@ import {
   DeviceLockedError,
   DeviceNotOnboardedError,
   UnknownDAError,
-} from "@api/device-action/os/errors";
+} from "@api/device-action/os/Errors";
 import { SdkError } from "@api/Error";
 
 export type OpenAppDAOutput = void;

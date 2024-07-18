@@ -7,7 +7,7 @@ import { UserInteractionRequired } from "@api/device-action/model/UserInteractio
 import {
   ListAppsRejectedError,
   UnknownDAError,
-} from "@api/device-action/os/errors";
+} from "@api/device-action/os/Errors";
 import { GoToDashboardDeviceAction } from "@api/device-action/os/GoToDashboard/GoToDashboardDeviceAction";
 import { DeviceActionStatus } from "@api/index";
 
@@ -118,7 +118,7 @@ describe("ListAppsDeviceAction", () => {
     it("should run the device action with no apps installed", (done) => {
       setupGoToDashboardMock();
       const listAppsDeviceAction = new ListAppsDeviceAction({
-        input: { unlockTimeout: 500 },
+        input: {},
       });
 
       sendCommandMock.mockResolvedValue([]);

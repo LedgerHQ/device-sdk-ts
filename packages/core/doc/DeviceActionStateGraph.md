@@ -2,15 +2,15 @@
 
 List of device actions state flows.
 
-## OS Level Device Actions
+# OS Level Device Actions
 
-### Get Device Status
+## Get Device Status
 
 Check for device availability and returns CurrentApp
 
 ### Inputs
 
-- Device session
+- unlockTimeout \[number\] _(optional)_
 
 ### Outputs
 
@@ -44,17 +44,17 @@ state GetDeviceStatusDeviceAction {
 }
 ```
 
-### GoToDashboardDeviceAction
+## GoToDashboardDeviceAction
 
 Sanity check or action to return to the Dashboard for OS level commands / actions
 
 ### Inputs
 
-- Device session
+- unlockTimeout \[number\] _(optional)_
 
 ### Outputs
 
-- Currently opened app (BOLOS)
+none
 
 ```mermaid
 stateDiagram-v2
@@ -82,17 +82,17 @@ state GoToDashboardDeviceAction  {
 }
 ```
 
-### ListAppsDeviceAction
+## ListAppsDeviceAction
 
-Returns a list of installed applications on the device and their metadata
+Returns a list of installed applications on the device
 
 ### Inputs
 
-- Device session
+- unlockTimeout \[number\] _(optional)_
 
 ### Outputs
 
-- Applications + Metadata
+- Applications
 
 ```mermaid
 stateDiagram-v2
@@ -109,15 +109,45 @@ state ListAppsDeviceAction {
     UserActionApproval --> ListAppsCommand: super approval already granted (genuine check)
     UserActionApproval --> Error: user denied
     UserActionApproval --> Error: unexpected error
-    ListAppsCommand --> FetchAppsMetaData: no application installed
-    ListAppsCommand --> FetchAppsMetaData: only one application
+    ListAppsCommand --> Success: no application installed
+    ListAppsCommand --> Success: only one application
     ListAppsCommand --> ListAppsContinueCommand: two applications
     ListAppsCommand --> Error: ListAppsCommand error
-    ListAppsContinueCommand --> FetchAppsMetaData: no application
-    ListAppsContinueCommand --> FetchAppsMetaData: only one application
+    ListAppsContinueCommand --> Success: no application
+    ListAppsContinueCommand --> Success: only one application
     ListAppsContinueCommand --> ListAppsContinueCommand: two applications
     ListAppsContinueCommand --> Error: ListAppsContinueCommand error
   }
+
+  state Error {
+    [*] --> Stop
+  }
+
+  state Success {
+    [*] --> Done
+  }
+}
+```
+
+## ListAppsWithMetadata
+
+Returns a list of installed application on the device and their metadata
+
+### Inputs
+
+- unlockTimeout \[number\] _(optional)_
+
+### Outputs
+
+- Applications installed and their metadata
+
+```mermaid
+stateDiagram-v2
+state ListAppsWithMetadata {
+  [*] --> ListApps
+  ListApps --> FetchAppsMetaData: Got a list of apps
+  ListApps --> Success: Not apps installed on the device
+  ListApps --> Error: Error getting ListApps response
 
   state FetchAppsMetaData {
     [*] --> FetchMetadata
@@ -137,7 +167,7 @@ state ListAppsDeviceAction {
 }
 ```
 
-### OpenAppDeviceAction
+## OpenAppDeviceAction
 
 Checks for an installed app on the device an opens it
 

@@ -6,7 +6,7 @@ import { UserInteractionRequired } from "@api/device-action/model/UserInteractio
 import {
   DeviceLockedError,
   DeviceNotOnboardedError,
-} from "@api/device-action/os/errors";
+} from "@api/device-action/os/Errors";
 import { StateMachineTypes } from "@api/device-action/xstate-utils/StateMachineTypes";
 import { XStateDeviceAction } from "@api/device-action/xstate-utils/XStateDeviceAction";
 import {

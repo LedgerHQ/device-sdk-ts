@@ -4,7 +4,7 @@ import { assign, createMachine } from "xstate";
 import { testDeviceActionStates } from "@api/device-action/__test-utils__/testDeviceActionStates";
 import { InternalApi } from "@api/device-action/DeviceAction";
 import { UserInteractionRequired } from "@api/device-action/model/UserInteractionRequired";
-import { UnknownDAError } from "@api/device-action/os/errors";
+import { UnknownDAError } from "@api/device-action/os/Errors";
 import { GetDeviceStatusDeviceAction } from "@api/device-action/os/GetDeviceStatus/GetDeviceStatusDeviceAction";
 import { DeviceSessionStateType } from "@api/device-session/DeviceSessionState";
 import { DeviceActionStatus, DeviceStatus, SdkError } from "@api/index";
@@ -265,7 +265,6 @@ describe("GoToDashboardDeviceAction", () => {
       getDeviceSessionStateMock.mockReturnValue({
         sessionStateType: DeviceSessionStateType.Connected,
         deviceStatus: DeviceStatus.CONNECTED,
-        currentApp: "Bitcoin",
       });
 
       closeAppMock.mockResolvedValue(undefined);
@@ -357,7 +356,7 @@ describe("GoToDashboardDeviceAction", () => {
         });
 
         const goToDashboardDeviceAction = new GoToDashboardDeviceAction({
-          input: { unlockTimeout: 500 },
+          input: {},
         });
 
         jest

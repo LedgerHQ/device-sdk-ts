@@ -4,7 +4,7 @@ import {
   DeviceLockedError,
   DeviceNotOnboardedError,
   UnknownDAError,
-} from "@api/device-action/os/errors";
+} from "@api/device-action/os/Errors";
 import { SdkError } from "@api/Error";
 
 export type GetDeviceStatusDAOutput = {
@@ -12,7 +12,7 @@ export type GetDeviceStatusDAOutput = {
   currentAppVersion: string | null;
 };
 export type GetDeviceStatusDAInput = {
-  unlockTimeout: number;
+  unlockTimeout?: number;
 };
 
 export type GetDeviceStatusDAError =

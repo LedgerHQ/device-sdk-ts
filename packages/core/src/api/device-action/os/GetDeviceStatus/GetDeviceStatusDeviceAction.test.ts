@@ -8,7 +8,7 @@ import {
   DeviceLockedError,
   DeviceNotOnboardedError,
   UnknownDAError,
-} from "@api/device-action/os/errors";
+} from "@api/device-action/os/Errors";
 import { DeviceSessionStateType } from "@api/device-session/DeviceSessionState";
 import { DeviceStatus } from "@api/index";
 
@@ -18,7 +18,7 @@ import { GetDeviceStatusDAState } from "./types";
 describe("GetDeviceStatusDeviceAction", () => {
   const getAppAndVersionMock = jest.fn();
   const getDeviceSessionStateMock = jest.fn();
-  const getDeviceSessionStateObservableMock = jest.fn();
+  const waitForDeviceUnlockMock = jest.fn();
   const saveSessionStateMock = jest.fn();
   const isDeviceOnboardedMock = jest.fn();
 
@@ -26,7 +26,7 @@ describe("GetDeviceStatusDeviceAction", () => {
     return {
       getAppAndVersion: getAppAndVersionMock,
       getDeviceSessionState: getDeviceSessionStateMock,
-      getDeviceSessionStateObservable: getDeviceSessionStateObservableMock,
+      waitForDeviceUnlock: waitForDeviceUnlockMock,
       saveSessionState: saveSessionStateMock,
       isDeviceOnboarded: isDeviceOnboardedMock,
     };
@@ -195,7 +195,7 @@ describe("GetDeviceStatusDeviceAction", () => {
       });
 
       const getDeviceStateDeviceAction = new GetDeviceStatusDeviceAction({
-        input: { unlockTimeout: 500 },
+        input: { unlockTimeout: undefined },
       });
 
       jest
@@ -244,7 +244,7 @@ describe("GetDeviceStatusDeviceAction", () => {
         version: "1.0.0",
       });
 
-      getDeviceSessionStateObservableMock.mockImplementation(
+      waitForDeviceUnlockMock.mockImplementation(
         () =>
           new Observable((o) => {
             const inner = interval(50).subscribe({
@@ -358,7 +358,7 @@ describe("GetDeviceStatusDeviceAction", () => {
         currentApp: "mockedCurrentApp",
       });
 
-      getDeviceSessionStateObservableMock.mockImplementation(
+      apiGetDeviceSessionStateObservableMock.mockImplementation(
         () =>
           new Observable((o) => {
             const inner = interval(200).subscribe({
@@ -418,7 +418,7 @@ describe("GetDeviceStatusDeviceAction", () => {
         new Error("GetAppAndVersion error"),
       );
 
-      getDeviceSessionStateObservableMock.mockImplementation(
+      waitForDeviceUnlockMock.mockImplementation(
         () =>
           new Observable((o) => {
             const inner = interval(50).subscribe({
@@ -495,7 +495,7 @@ describe("GetDeviceStatusDeviceAction", () => {
         version: null,
       });
 
-      getDeviceSessionStateObservableMock.mockImplementation(
+      waitForDeviceUnlockMock.mockImplementation(
         () =>
           new Observable((o) => {
             const inner = interval(50).subscribe({

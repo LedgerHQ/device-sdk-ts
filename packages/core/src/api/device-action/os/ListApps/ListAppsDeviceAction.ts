@@ -2,7 +2,8 @@ import { Left, Right } from "purify-ts";
 import { assign, fromPromise, setup } from "xstate";
 
 import { InternalApi } from "@api/device-action/DeviceAction";
-import { ListAppsRejectedError } from "@api/device-action/os/errors";
+import { DEFAULT_UNLOCK_TIMEOUT_MS } from "@api/device-action/os/Const";
+import { ListAppsRejectedError } from "@api/device-action/os/Errors";
 import { GoToDashboardDeviceAction } from "@api/device-action/os/GoToDashboard/GoToDashboardDeviceAction";
 import { StateMachineTypes } from "@api/device-action/xstate-utils/StateMachineTypes";
 import { XStateDeviceAction } from "@api/device-action/xstate-utils/XStateDeviceAction";
@@ -51,13 +52,19 @@ export class ListAppsDeviceAction extends XStateDeviceAction<
 
     const { listApps } = this.extractDependencies(internalApi);
 
+    const unlockTimeout = this.input.unlockTimeout ?? DEFAULT_UNLOCK_TIMEOUT_MS;
+
     const goToDashboardMachine = new GoToDashboardDeviceAction({
-      input: { unlockTimeout: 15000 },
+      input: {
+        unlockTimeout,
+      },
     }).makeStateMachine(internalApi);
 
     return setup({
       types: {
-        input: {} as types["input"],
+        input: {
+          unlockTimeout,
+        } as types["input"],
         context: {} as types["context"],
         output: {} as types["output"],
       },
@@ -75,7 +82,6 @@ export class ListAppsDeviceAction extends XStateDeviceAction<
         assignAllowListApps: assign({
           intermediateValue: (_) =>
             ({
-              ..._.context.intermediateValue,
               requiredUserInteraction: UserInteractionRequired.AllowListApps,
             }) satisfies types["context"]["intermediateValue"],
         }),
@@ -120,10 +126,8 @@ export class ListAppsDeviceAction extends XStateDeviceAction<
             }),
             onSnapshot: {
               actions: assign({
-                intermediateValue: (_) => ({
-                  ..._.context.intermediateValue,
-                  ..._.event.snapshot.context.intermediateValue,
-                }),
+                intermediateValue: (_) =>
+                  _.event.snapshot.context.intermediateValue,
               }),
             },
             onDone: {

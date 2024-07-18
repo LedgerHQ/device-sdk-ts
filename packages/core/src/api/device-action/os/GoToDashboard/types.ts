@@ -1,10 +1,10 @@
 import { DeviceActionState } from "@api/device-action/model/DeviceActionState";
 import { UserInteractionRequired } from "@api/device-action/model/UserInteractionRequired";
-import { UnknownDAError } from "@api/device-action/os/errors";
+import { UnknownDAError } from "@api/device-action/os/Errors";
 import {
   GetDeviceStatusDAError,
   GetDeviceStatusDAInput,
-  GetDeviceStatusDARequiredInteraction,
+  GetDeviceStatusDAIntermediateValue,
 } from "@api/device-action/os/GetDeviceStatus/types";
 import { SdkError } from "@api/Error";
 
@@ -16,13 +16,13 @@ export type GoToDashboardDAError =
   | UnknownDAError
   | SdkError; /// TODO: remove, we should have an exhaustive list of errors
 
-export type GoToDashboardDARequiredInteraction =
-  | GetDeviceStatusDARequiredInteraction
-  | UserInteractionRequired.UnlockDevice;
+export type GoToDashboardDARequiredInteraction = UserInteractionRequired.None;
 
-export type GoToDashboardDAIntermediateValue = {
-  requiredUserInteraction: GoToDashboardDARequiredInteraction;
-};
+export type GoToDashboardDAIntermediateValue =
+  | GetDeviceStatusDAIntermediateValue
+  | {
+      requiredUserInteraction: GoToDashboardDARequiredInteraction;
+    };
 
 export type GoToDashboardDAState = DeviceActionState<
   GoToDashboardDAOutput,

@@ -8,7 +8,8 @@ import {
 } from "xstate";
 
 import { InternalApi } from "@api/device-action/DeviceAction";
-import { UnknownDAError } from "@api/device-action/os/errors";
+import { DEFAULT_UNLOCK_TIMEOUT_MS } from "@api/device-action/os/Const";
+import { UnknownDAError } from "@api/device-action/os/Errors";
 import { GetDeviceStatusDeviceAction } from "@api/device-action/os/GetDeviceStatus/GetDeviceStatusDeviceAction";
 import { StateMachineTypes } from "@api/device-action/xstate-utils/StateMachineTypes";
 import { XStateDeviceAction } from "@api/device-action/xstate-utils/XStateDeviceAction";
@@ -65,13 +66,19 @@ export class GoToDashboardDeviceAction extends XStateDeviceAction<
       getAppAndVersion,
     } = this.extractDependencies(internalApi);
 
+    const unlockTimeout = this.input.unlockTimeout ?? DEFAULT_UNLOCK_TIMEOUT_MS;
+
     const getDeviceStatusMachine = new GetDeviceStatusDeviceAction({
-      input: { unlockTimeout: 15000 },
+      input: {
+        unlockTimeout,
+      },
     }).makeStateMachine(internalApi);
 
     return setup({
       types: {
-        input: {} as types["input"],
+        input: {
+          unlockTimeout,
+        } as types["input"],
         context: {} as types["context"],
         output: {} as types["output"],
       },
@@ -167,10 +174,8 @@ export class GoToDashboardDeviceAction extends XStateDeviceAction<
             }),
             onSnapshot: {
               actions: assign({
-                intermediateValue: (_) => ({
-                  ..._.context.intermediateValue,
-                  ..._.event.snapshot.context.intermediateValue,
-                }),
+                intermediateValue: (_) =>
+                  _.event.snapshot.context.intermediateValue,
               }),
             },
             onDone: {

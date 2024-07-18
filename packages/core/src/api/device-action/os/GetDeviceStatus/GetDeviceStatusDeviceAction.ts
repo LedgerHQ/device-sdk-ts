@@ -12,11 +12,12 @@ import {
 
 import { InternalApi } from "@api/device-action/DeviceAction";
 import { UserInteractionRequired } from "@api/device-action/model/UserInteractionRequired";
+import { DEFAULT_UNLOCK_TIMEOUT_MS } from "@api/device-action/os/Const";
 import {
   DeviceLockedError,
   DeviceNotOnboardedError,
   UnknownDAError,
-} from "@api/device-action/os/errors";
+} from "@api/device-action/os/Errors";
 import { StateMachineTypes } from "@api/device-action/xstate-utils/StateMachineTypes";
 import { XStateDeviceAction } from "@api/device-action/xstate-utils/XStateDeviceAction";
 import {
@@ -43,7 +44,9 @@ type GetDeviceStatusMachineInternalState = {
 export type MachineDependencies = {
   getAppAndVersion: () => Promise<{ app: string; version: string }>;
   getDeviceSessionState: () => DeviceSessionState;
-  getDeviceSessionStateObservable: () => Observable<DeviceSessionState>;
+  waitForDeviceUnlock: (args: {
+    input: { unlockTimeout: number };
+  }) => Observable<void>;
   saveSessionState: (state: DeviceSessionState) => DeviceSessionState;
   isDeviceOnboarded: () => boolean;
 };
@@ -72,39 +75,23 @@ export class GetDeviceStatusDeviceAction extends XStateDeviceAction<
       getAppAndVersion,
       getDeviceSessionState,
       saveSessionState,
-      getDeviceSessionStateObservable,
+      waitForDeviceUnlock,
       isDeviceOnboarded,
     } = this.extractDependencies(internalApi);
+
+    const unlockTimeout = this.input.unlockTimeout ?? DEFAULT_UNLOCK_TIMEOUT_MS;
 
     return setup({
       types: {
         input: {
-          unlockTimeout: 15000,
+          unlockTimeout,
         } as types["input"],
         context: {} as types["context"],
         output: {} as types["output"],
       },
       actors: {
         getAppAndVersion: fromPromise(getAppAndVersion),
-        checkDeviceUnlocked: fromObservable(
-          ({ input }: { input: { unlockTimeout: number } }) =>
-            new Observable<void>((subscriber) => {
-              const inner = getDeviceSessionStateObservable()
-                .pipe(
-                  tap((state) => {
-                    if (state.deviceStatus === DeviceStatus.CONNECTED) {
-                      subscriber.complete();
-                      inner.unsubscribe();
-                    }
-                  }),
-                )
-                .subscribe();
-
-              return () => {
-                inner.unsubscribe();
-              };
-            }).pipe(timeout(input.unlockTimeout)),
-        ),
+        waitForDeviceUnlock: fromObservable(waitForDeviceUnlock),
         saveSessionState: fromCallback(
           ({
             input,
@@ -174,7 +161,7 @@ export class GetDeviceStatusDeviceAction extends XStateDeviceAction<
         }),
       },
     }).createMachine({
-      /** @xstate-layout N4IgpgJg5mDOIC5QHEwBcAiYBuBLAxmAMpoCGaArrFnoQIL5q4D2AdgHQ0FgBKYpEAJ4BiANoAGALqJQAB2axcTNjJAAPRAEYAnOPYAOAGwB2AEymALOMPb9pgMymANCEGIArMe3tNj7RcMLC01gkwBfMJdUTBxuEnIqLnpGFg4AeVYAI2ZSACcIXFYoAGEACzB8AGsxKVV5RWVWVQ0EC2NNA3d-X1NxLs19FzcEd0N7dkd7cQD7fT6LbVMIqPQk4jJKaljkxvYM7LyCorKK6tFNaSQQeqVU5sQ2jv0u4Mc+7QGhxH0Ohe1bYz6ezaYzWf7LEDRNbxTZrBi7AAyzCqhRK5SqNUucgUtxUVxauj01lM7gs7jsOm09mMXxGNnYxmBoMBnmm4nsEKh23WCS2tDA8NS7CRKOO6LOFzqOMa9wQhPYxNJ5NMlOptOCFnYAUMpiBVPMhh0Fk5q25MMS3MFbHYAFVYGBclbWDbWAAbZGVNbCCBsMDsQrYZiVP12h1Ol3uqprCRY67Su74rTudnsVnU2ziMymQyGdWaQwGBzTF66YwWfTGE0xfnmvncJ22+2OlJsCMer0O3LMXLsWSu8gAM27AFtG2GW863e3uTGpQ0E6AWppk+M0145lmc7TzKZ2CDDJ57AfjAfrO4q9CNhb+Q26LJZHRWBAAGoOxRsE4Yn2sP0BoN+rkayvOsdiFO8HyfV9cnfVhP0qBA-3wchUhjWcrhuGVEwQXpNA6KYFmmY93AcCxaVGfQfFGXVxHEFUjBCC8zWAuEJ3YcDHxfN9Ujg4RO27Xt+zQIdclHQC4mYy1WPYyCuI-cUENYQMkMaVDanQ+M8UXRAcLw6ZdACTxiPsUjXEQI93HYXp7HzSx7HcdwBkrSJIVNIDeRY3YiFIbABXvGEwG9X00OxedNPUbS2gLTQSWiw1TGMByD1pQwU30Ox9H8IFARSpZnLEwhaw8oUvJ88D-N43Iu1yYK41CposMsE8fBi7NooS-N3DIzMtVMEF5gsSxs3iiJnNYZgIDgVR8p5WFJMwkLcXqrSEAAWlzUzVoLGjtp2nbAkYtzZpvVi1j4ARhgW+bwtaZwNs8Cien8PoVVGQEDvE9y5qFfYcnyVE4LnRbZV1CztHcazqS8HNDAysjAR8PwrGI5cTH0d6Cok47EQ9f7xUBq6WjLXdZhBqj-H+Mj9E1UltBSyk5nJNG8tcj6jvrVjQ2bRo2yjbl8YXa7cO61krDGKxoqMWk7PGdodXad5CWNZnq1Z692d2aTOOg7i8fUurZU0E8LO2+Kc2BbMkru4iJjsKlqV1cxM3Rma1dA60St82R-P5sKWnMOzU0BKYBgPazNDInN2DGXUgXzQFjAS53Cq+92KHwQhYHgPWgYa9pNWmUEBhCCx02SlNHp+IJjyVlYVYxz6saFABRSrux9pbrvikIFTacQi6CUuNtmPDerNh2+hzEawiAA */
+      /** @xstate-layout N4IgpgJg5mDOIC5QHEwBcAiYBuBLAxmAMpoCGaArrFnoQIL5q4D2AdgHQ0FgBKYpEAJ4BiANoAGALqJQAB2axcTNjJAAPRAEYAnOPYAOAGwB2TfoDMh8QBZz4gEyGANCEGIArMe3tN5+-vFte3dzbWt7awBfSJdUTBxuEnIqLnpGFg4AeVYAI2ZSACcIXFYoAGEACzB8AGsxKVV5RWVWVQ0Ea1MDd21zfWD3d2txcXcXNwR3Q3N2P3tdf3tNUfNjaNj0VOIySmoEtJb2bLzC4tLK6rrRTWkkECalDLbETs1u3v7BoZGx10R9N7uEbiTSdTzGcxDTTrEBxLZJXZbBiHAAyzFqJXKVVq9VucgUjxUd3auj04kMwXs5O0+gBIPGHkM3gh2kGEQB-nc+hhcP222Se1oYGRGXYaIx52xVxujQJLWeCFJ7HJlOptOWmgZHVB7GshkMy3CrO0mnmURisM2fIRKT5IrY7AAqrAwAV7axHawADbompbYQQNhgdglbDMGrB52u92en21LYSPH3OVPYlaIEzTzicyaYymVmBTV-bWGAz2ebZrnTV7mjbxIU2wXcd1Ol1u9JsWO+-2ugrMArsWRe8gAM37AFtW9GOx7vd2+YnZc1U6B2poM+wszm8zogSateX7OxtMZDENrFybEs-DyrQ2drahS26LJZHRWBAAGquxRsC44wNWGDUNw2DXl7wFJEZ3YF83w-b8Cl-Vh-xqBAQPwcgMkTRc7geeU0wQKlNDeOxrFpaxdE0ExnGLKZ9B8KZ7Bzdxyz6Exb3rRIHybA5RVg98vx-DIUOEXt+0HYc0DHApJ3ArjILtaD+PgoS-ylNDWDDDCWmwhpcJTIlV0QIiSJscjKOorVLHcdgqRzU0QQvMxOg4+FuKgw4iFIbBhVfBEwADIMcPxZdDPUYzOlLU1vmGLx9G0EwtSsGZaXsU8yJ0cRjHmVzrXcxTPO83zZH80SCj7ApguTULWgIiJTx8YJhlimkEuMLUgWMXV5hMMIyINKZogtVhmAgOBVDkwhGw8ldqsJWqjIQABaGiJiWmztE2rbtq2yxcogxECtFLY+AECYQvmhVwg64x6N8fwLBpIwpnMfb5MOp9oOOfIikxFCl0uur9A2kJiKYuxdEhawbruvxaVCWkz2mN6pvyz7UV9P6pQB-DFuMcJZn6YHjBYsIEuh2j9GsTcKJCSwyNpYGUf5D7m2gqN2xaLt4z5HHZrXZYuq3BHSbCKyQnYUwDTIjKmX6NYLUmlnHzZw5lMExDhOx-SaoVXMz2VEYqLzYYmVPDqWMJ-xyXMaxbGy5npqOh0vJ82D-L5sL2lYmzPCpqYyK8O3fgmKZS2mNKhncYjBj1R20dV0UiAofBCFgeAdcBxa0p1GwIXCL4aSLCZkp8OGzFPYwHAVus3IU9HRQAUXK-tPYW8LCNMam89tgYegBKyAVmHqmqsa3tCGyIgA */
       id: "GetDeviceStatusDeviceAction",
       initial: "DeviceReady",
       context: (_) => {
@@ -253,9 +240,9 @@ export class GetDeviceStatusDeviceAction extends XStateDeviceAction<
           exit: "assignNoUserActionNeeded",
           invoke: {
             id: "UserActionUnlockDevice",
-            src: "checkDeviceUnlocked",
+            src: "waitForDeviceUnlock",
             input: (_) => ({
-              unlockTimeout: _.context.input.unlockTimeout,
+              unlockTimeout,
             }),
             onDone: {
               target: "AppAndVersionCheck",
@@ -345,11 +332,33 @@ export class GetDeviceStatusDeviceAction extends XStateDeviceAction<
         version: res.version,
       }));
 
+    const waitForDeviceUnlock = ({
+      input,
+    }: {
+      input: { unlockTimeout: number };
+    }) =>
+      new Observable<void>((subscriber) => {
+        const inner = internalApi
+          .getDeviceSessionStateObservable()
+          .pipe(
+            tap((state) => {
+              if (state.deviceStatus === DeviceStatus.CONNECTED) {
+                subscriber.complete();
+                inner.unsubscribe();
+              }
+            }),
+          )
+          .subscribe();
+
+        return () => {
+          inner.unsubscribe();
+        };
+      }).pipe(timeout(input.unlockTimeout));
+
     return {
       getAppAndVersion,
+      waitForDeviceUnlock,
       getDeviceSessionState: () => internalApi.getDeviceSessionState(),
-      getDeviceSessionStateObservable: () =>
-        internalApi.getDeviceSessionStateObservable(),
       saveSessionState: (state: DeviceSessionState) =>
         internalApi.setDeviceSessionState(state),
       isDeviceOnboarded: () => true, // TODO: we don't have this info for now

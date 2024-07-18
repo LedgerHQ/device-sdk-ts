@@ -28,6 +28,8 @@ import {
   ListAppsDAIntermediateValue,
 } from "@ledgerhq/device-sdk-core";
 
+const UNLOCK_TIMEOUT = 60 * 1000; // 1 minute
+
 export const DeviceActionsView: React.FC = () => {
   const {
     state: { selectedId: selectedSessionId },
@@ -66,9 +68,9 @@ export const DeviceActionsView: React.FC = () => {
               title: "Get device status",
               description:
                 "Perform various checks on the device to determine its status",
-              executeDeviceAction: (_, inspect) => {
+              executeDeviceAction: ({ unlockTimeout }, inspect) => {
                 const deviceAction = new GetDeviceStatusDeviceAction({
-                  input: { unlockTimeout: 15000 },
+                  input: { unlockTimeout },
                   inspect,
                 });
                 return sdk.executeDeviceAction({
@@ -76,7 +78,7 @@ export const DeviceActionsView: React.FC = () => {
                   deviceAction,
                 });
               },
-              initialValues: { unlockTimeout: 15000 },
+              initialValues: { unlockTimeout: UNLOCK_TIMEOUT },
             } satisfies DeviceActionProps<
               GetDeviceStatusDAOutput,
               GetDeviceStatusDAInput,
@@ -88,7 +90,7 @@ export const DeviceActionsView: React.FC = () => {
               description: "Navigate to the dashboard",
               executeDeviceAction: (_, inspect) => {
                 const deviceAction = new GoToDashboardDeviceAction({
-                  input: { unlockTimeout: 15000 },
+                  input: { unlockTimeout: UNLOCK_TIMEOUT },
                   inspect,
                 });
                 return sdk.executeDeviceAction({
@@ -96,7 +98,7 @@ export const DeviceActionsView: React.FC = () => {
                   deviceAction,
                 });
               },
-              initialValues: { unlockTimeout: 15000 },
+              initialValues: { unlockTimeout: UNLOCK_TIMEOUT },
             } satisfies DeviceActionProps<
               GoToDashboardDAOutput,
               GoToDashboardDAInput,
@@ -108,7 +110,7 @@ export const DeviceActionsView: React.FC = () => {
               description: "List all applications installed on the device",
               executeDeviceAction: (_, inspect) => {
                 const deviceAction = new ListAppsDeviceAction({
-                  input: { unlockTimeout: 15000 },
+                  input: { unlockTimeout: UNLOCK_TIMEOUT },
                   inspect,
                 });
                 return sdk.executeDeviceAction({
@@ -116,7 +118,7 @@ export const DeviceActionsView: React.FC = () => {
                   deviceAction,
                 });
               },
-              initialValues: { unlockTimeout: 15000 },
+              initialValues: { unlockTimeout: UNLOCK_TIMEOUT },
             } satisfies DeviceActionProps<
               ListAppsDAOutput,
               ListAppsDAInput,

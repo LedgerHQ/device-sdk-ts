@@ -6,7 +6,7 @@ import { UserInteractionRequired } from "@api/device-action/model/UserInteractio
 import {
   DeviceLockedError,
   DeviceNotOnboardedError,
-} from "@api/device-action/os/errors";
+} from "@api/device-action/os/Errors";
 import { DeviceSessionStateType } from "@api/device-session/DeviceSessionState";
 import { DeviceStatus } from "@api/index";
 
