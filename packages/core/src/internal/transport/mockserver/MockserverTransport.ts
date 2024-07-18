@@ -9,6 +9,7 @@ import { from, mergeMap, Observable } from "rxjs";
 import { DeviceId } from "@api/device/DeviceModel";
 import { ApduResponse } from "@api/device-session/ApduResponse";
 import { SdkError } from "@api/Error";
+import type { SdkConfig } from "@api/SdkConfig";
 import { Transport } from "@api/transport/model/Transport";
 import {
   BuiltinTransports,
@@ -16,6 +17,7 @@ import {
 } from "@api/transport/model/TransportIdentifier";
 import { loggerTypes } from "@internal/logger-publisher/di/loggerTypes";
 import { LoggerPublisherService } from "@internal/logger-publisher/service/LoggerPublisherService";
+import { transportDiTypes } from "@internal/transport/di/transportDiTypes";
 import { DisconnectHandler } from "@internal/transport/model/DeviceConnection";
 import {
   ConnectError,
@@ -36,9 +38,10 @@ export class MockTransport implements Transport {
   constructor(
     @inject(loggerTypes.LoggerPublisherServiceFactory)
     loggerServiceFactory: (tag: string) => LoggerPublisherService,
+    @inject(transportDiTypes.SdkConfig) config: SdkConfig,
   ) {
     this.logger = loggerServiceFactory("MockTransport");
-    this.mockClient = new MockClient("http://127.0.0.1:8080/");
+    this.mockClient = new MockClient(config.mockUrl);
   }
 
   isSupported(): boolean {

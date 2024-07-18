@@ -26,6 +26,7 @@ export class LedgerDeviceSdkBuilder {
   private readonly customTransports: Transport[] = [];
   private config: SdkConfig = {
     managerApiUrl: DEFAULT_MANAGER_API_BASE_URL,
+    mockUrl: "http://localhost:8080"
   };
 
   build(): DeviceSdk {

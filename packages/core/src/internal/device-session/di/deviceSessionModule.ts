@@ -11,6 +11,7 @@ import {
   DefaultApduSenderServiceConstructorArgs,
 } from "@internal/device-session/service/DefaultApduSenderService";
 import { DefaultDeviceSessionService } from "@internal/device-session/service/DefaultDeviceSessionService";
+import { CloseSessionsUseCase } from "@internal/device-session/use-case/CloseSessionsUseCase";
 import { GetDeviceSessionStateUseCase } from "@internal/device-session/use-case/GetDeviceSessionStateUseCase";
 import { loggerTypes } from "@internal/logger-publisher/di/loggerTypes";
 import { LoggerPublisherService } from "@internal/logger-publisher/service/LoggerPublisherService";
@@ -66,6 +67,7 @@ export const deviceSessionModuleFactory = (
       bind(deviceSessionTypes.GetDeviceSessionStateUseCase).to(
         GetDeviceSessionStateUseCase,
       );
+      bind(deviceSessionTypes.CloseSessionsUseCase).to(CloseSessionsUseCase);
 
       if (stub) {
         rebind(deviceSessionTypes.GetDeviceSessionStateUseCase).to(StubUseCase);
