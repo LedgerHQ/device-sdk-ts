@@ -3,4 +3,5 @@ export const deviceSessionTypes = {
   ApduReceiverServiceFactory: Symbol.for("ApduReceiverServiceFactory"),
   DeviceSessionService: Symbol.for("DeviceSessionService"),
   GetDeviceSessionStateUseCase: Symbol.for("GetDeviceSessionStateUseCase"),
+  CloseSessionsUseCase: Symbol.for("CloseSessionsUseCase"),
 };
