@@ -47,7 +47,7 @@ export const makeContainer = ({
   container.load(
     configModuleFactory({ stub }),
     deviceModelModuleFactory({ stub }),
-    transportModuleFactory({ stub, transports, customTransports }),
+    transportModuleFactory({ stub, transports, customTransports, config }),
     usbModuleFactory({ stub }),
     managerApiModuleFactory({ stub, config }),
     discoveryModuleFactory({ stub }),
