@@ -3,6 +3,7 @@ export type { ConnectionType } from "./discovery/ConnectionType";
 export type { LogSubscriberOptions } from "./logger-subscriber/model/LogSubscriberOptions";
 export type { LoggerSubscriberService } from "./logger-subscriber/service/LoggerSubscriberService";
 export type { DiscoveredDevice } from "./usb/model/DiscoveredDevice";
+export type { ApduBuilderArgs } from "@api/apdu/utils/ApduBuilder";
 export type { Command } from "@api/command/Command";
 export type { SendCommandUseCaseArgs } from "@api/command/use-case/SendCommandUseCase";
 export type { DeviceModelId } from "@api/device/DeviceModel";

@@ -1,5 +1,6 @@
 "use strict";
 
+export { Apdu } from "./apdu/model/Apdu";
 export { ApduBuilder } from "./apdu/utils/ApduBuilder";
 export { ApduParser } from "./apdu/utils/ApduParser";
 export { CloseAppCommand } from "./command/os/CloseAppCommand";
@@ -32,6 +33,7 @@ export { LogLevel } from "./logger-subscriber/model/LogLevel";
 export { ConsoleLogger } from "./logger-subscriber/service/ConsoleLogger";
 export * from "./types";
 export { ConnectedDevice } from "./usb/model/ConnectedDevice";
+export { InvalidStatusWordError } from "@api/command/Errors";
 export {
   type DeviceAction,
   type DeviceActionIntermediateValue,
