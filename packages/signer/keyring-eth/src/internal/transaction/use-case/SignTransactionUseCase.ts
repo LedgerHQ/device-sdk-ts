@@ -29,15 +29,18 @@ export class SignTransactionUseCase {
 
   async execute(
     _derivationPath: string,
-    _transaction: Transaction,
+    transaction: Transaction,
     _options?: TransactionOptions,
   ): Promise<Signature> {
-    // TODO: 1- map the transaction to TransactionContext from a Mapper module
-    // 2- fetch ClearSignContext[] from the context module
-    // 3- app binding for each ClearSignContext
-    // 4- then sign the transaction and return the signature
+    // TODO: 1- map the transaction to TransactionSubset from a Mapper module
+    // 2- fetch the challenge from the app binder
+    // 3- fetch ClearSignContext[] from the context module
+    // 4- call app binding provides for each ClearSignContext
+    // 5- then sign the transaction and return the signature
 
-    this._mapper;
+    const _subset = this._mapper.mapTransactionToSubset(transaction);
+
+    _subset;
     this._contextModule;
     this._appBinding;
 

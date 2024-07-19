@@ -42,8 +42,11 @@
     "test:coverage": "pnpm test -- --coverage"
   },
   "dependencies": {
+    "ethers-v5": "npm:ethers@v5",
+    "ethers-v6": "npm:ethers@v6",
     "inversify": "^6.0.2",
     "inversify-logger-middleware": "^3.1.0",
+    "purify-ts": "^2.1.0",
     "reflect-metadata": "^0.2.2"
   },
   "devDependencies": {
