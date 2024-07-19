@@ -65,6 +65,9 @@ importers:
       '@ledgerhq/device-sdk-core':
         specifier: workspace:*
         version: link:../../packages/core
+      '@ledgerhq/keyring-eth':
+        specifier: workspace:*
+        version: link:../../packages/signer/keyring-eth
       '@ledgerhq/react-ui':
         specifier: ^0.15.1
         version: 0.15.1(@types/react@18.3.3)(react-dom@18.3.1(react@18.3.1))(react-native-svg@15.3.0(react-native@0.74.3(@babel/core@7.24.7)(@babel/preset-env@7.24.7(@babel/core@7.24.7))(@types/react@18.3.3)(react@18.3.1))(react@18.3.1))(react@18.3.1)(styled-components@5.3.11(@babel/core@7.24.7)(react-dom@18.3.1(react@18.3.1))(react-is@18.3.1)(react@18.3.1))
