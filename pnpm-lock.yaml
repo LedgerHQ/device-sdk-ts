@@ -65,6 +65,9 @@ importers:
       '@ledgerhq/device-sdk-core':
         specifier: workspace:*
         version: link:../../packages/core
+      '@ledgerhq/keyring-eth':
+        specifier: workspace:*
+        version: link:../../packages/signer/keyring-eth
       '@ledgerhq/react-ui':
         specifier: ^0.15.1
         version: 0.15.1(@types/react@18.3.3)(react-dom@18.3.1(react@18.3.1))(react-native-svg@15.3.0(react-native@0.74.3(@babel/core@7.24.7)(@babel/preset-env@7.24.7(@babel/core@7.24.7))(@types/react@18.3.3)(react@18.3.1))(react@18.3.1))(react@18.3.1)(styled-components@5.3.11(@babel/core@7.24.7)(react-dom@18.3.1(react@18.3.1))(react-is@18.3.1)(react@18.3.1))
@@ -262,8 +265,8 @@ importers:
         specifier: workspace:*
         version: link:../context-module
       '@ledgerhq/device-sdk-core':
-        specifier: ^0.3.0
-        version: 0.3.0
+        specifier: workspace:*
+        version: link:../../core
       '@ledgerhq/eslint-config-dsdk':
         specifier: workspace:*
         version: link:../../config/eslint
@@ -1594,9 +1597,6 @@ packages:
     peerDependenciesMeta:
       '@types/react':
         optional: true
-
-  '@ledgerhq/device-sdk-core@0.3.0':
-    resolution: {integrity: sha512-8QrD+r64Y+k2VH6uMe6qZQ1XOTEL+xNvs0JT9jC5q8tEScGMtIoEt5Sjuy/Ujzjr/ODDuKWC1/PQbgaBHbjtYw==}
 
   '@ledgerhq/icons-ui@0.7.0':
     resolution: {integrity: sha512-4Jn1sAuCKGG2CLmPm2W9hn/xcBoZS8Hzw4c/cJAzUq8QfRjCSEmPyk73PPCgHIQjc2AkO2qEw1zFdEfWeXocFw==}
@@ -8444,17 +8444,6 @@ snapshots:
       styled-system: 5.1.5
     optionalDependencies:
       '@types/react': 18.3.3
-
-  '@ledgerhq/device-sdk-core@0.3.0':
-    dependencies:
-      '@sentry/minimal': 6.19.7
-      inversify: 6.0.2
-      inversify-logger-middleware: 3.1.0
-      purify-ts: 2.1.0
-      reflect-metadata: 0.2.2
-      rxjs: 7.8.1
-      semver: 7.6.2
-      uuid: 9.0.1
 
   '@ledgerhq/icons-ui@0.7.0(@types/react@18.3.3)(react-native-svg@15.3.0(react-native@0.74.3(@babel/core@7.24.7)(@babel/preset-env@7.24.7(@babel/core@7.24.7))(@types/react@18.3.3)(react@18.3.1))(react@18.3.1))(react@18.3.1)(styled-components@5.3.11(@babel/core@7.24.7)(react-dom@18.3.1(react@18.3.1))(react-is@18.3.1)(react@18.3.1))(styled-system@5.1.5)':
     dependencies:

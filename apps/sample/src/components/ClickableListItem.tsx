@@ -16,7 +16,8 @@ export const ClickableListItem: React.FC<{
   title: string;
   description: string;
   onClick(): void;
-}> = ({ title, description, onClick }) => {
+  icon?: React.ReactNode;
+}> = ({ title, description, onClick, icon }) => {
   return (
     <ListItemWrapper
       flexDirection="row"
@@ -26,6 +27,7 @@ export const ClickableListItem: React.FC<{
       borderRadius={2}
       onClick={onClick}
     >
+      {icon}
       <Flex flex={1} flexDirection="column" rowGap={4}>
         <Text variant="large" fontWeight="semiBold">
           {title}

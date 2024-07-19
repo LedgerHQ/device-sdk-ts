@@ -11,6 +11,9 @@ import {
 export const HEADER_LENGTH = 5;
 export const APDU_MAX_PAYLOAD = 255;
 export const APDU_MAX_SIZE = APDU_MAX_PAYLOAD + 5;
+const MAX_8_BIT_UINT = 0xff;
+const MAX_16_BIT_UINT = 0xffff;
+const MAX_32_BIT_UINT = 0xffffffff;
 
 export type ApduBuilderArgs = {
   ins: number;
@@ -73,9 +76,9 @@ export class ApduBuilder {
       return this;
     }
 
-    if (value > 0xff) {
+    if (value > MAX_8_BIT_UINT) {
       this.errors?.push(
-        new ValueOverflowError(value.toString(), 255 /* 0xff */),
+        new ValueOverflowError(value.toString(), MAX_8_BIT_UINT),
       );
       return this;
     }
@@ -95,8 +98,10 @@ export class ApduBuilder {
    * @returns {ApduBuilder} - Returns the current instance of ApduBuilder
    */
   add16BitUintToData = (value: number) => {
-    if (value > 0xffff) {
-      this.errors?.push(new ValueOverflowError(value.toString(), 65535));
+    if (value > MAX_16_BIT_UINT) {
+      this.errors?.push(
+        new ValueOverflowError(value.toString(), MAX_16_BIT_UINT),
+      );
       return this;
     }
 
@@ -105,6 +110,31 @@ export class ApduBuilder {
       return this;
     }
 
+    this.add8BitUintToData((value >>> 8) & 0xff);
+    this.add8BitUintToData(value & 0xff);
+    return this;
+  };
+
+  /**
+   * Add a 32-bit unsigned integer to the data field (max value 0xffffffff = 4294967295)
+   * @param value: number - The value to add to the data
+   * @returns {ApduBuilder} - Returns the current instance of ApduBuilder
+   */
+  add32BitUintToData = (value: number) => {
+    if (value > MAX_32_BIT_UINT) {
+      this.errors?.push(
+        new ValueOverflowError(value.toString(), MAX_32_BIT_UINT),
+      );
+      return this;
+    }
+
+    if (this.getAvailablePayloadLength() < 8) {
+      this.errors?.push(new DataOverflowError(value.toString()));
+      return this;
+    }
+
+    this.add8BitUintToData((value >>> 24) & 0xff);
+    this.add8BitUintToData((value >>> 16) & 0xff);
     this.add8BitUintToData((value >>> 8) & 0xff);
     this.add8BitUintToData(value & 0xff);
     return this;

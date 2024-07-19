@@ -16,6 +16,10 @@ const COMMAND_BODY_TWO = new Uint8Array([
   0xe0, 0x01, 0x00, 0x00, 0x02, 0x33, 0x02,
 ]);
 
+const COMMAND_BODY_EIGHT = new Uint8Array([
+  0xe0, 0x01, 0x00, 0x00, 0x04, 0x01, 0x23, 0x45, 0x67,
+]);
+
 const COMMAND_BODY_HEXA1 = new Uint8Array([
   0xe0, 0x01, 0x00, 0x00, 0x05, 0x80, 0x81, 0x82, 0x83, 0x84,
 ]);
@@ -37,9 +41,9 @@ const COMMAND_BODY_LV_ARRAY = new Uint8Array([
 ]);
 
 const COMMAND_BODY_COMBINED = new Uint8Array([
-  0xe0, 0x01, 0x00, 0x00, 0x19, 0x01, 0x33, 0x02, 0x80, 0x81, 0x82, 0x83, 0x84,
-  0x85, 0x86, 0x87, 0x88, 0x03, 0xa1, 0xa2, 0xa3, 0x05, 0x6d, 0x61, 0x6d, 0x61,
-  0x6e, 0x02, 0xf0, 0xf1,
+  0xe0, 0x01, 0x00, 0x00, 0x1d, 0x01, 0x33, 0x02, 0x01, 0x23, 0x45, 0x67, 0x80,
+  0x81, 0x82, 0x83, 0x84, 0x85, 0x86, 0x87, 0x88, 0x03, 0xa1, 0xa2, 0xa3, 0x05,
+  0x6d, 0x61, 0x6d, 0x61, 0x6e, 0x02, 0xf0, 0xf1,
 ]);
 
 const COMMAND_BODY_MAX = new Uint8Array([
@@ -92,6 +96,12 @@ describe("ApduBuilder", () => {
     it("should serialize with an 2 byte body", () => {
       builder.add16BitUintToData(0x3302);
       expect(builder.build().getRawApdu()).toEqual(COMMAND_BODY_TWO);
+      expect(builder.getErrors()).toEqual([]);
+    });
+
+    it("should serialize with an 8 byte body from an hexastring", () => {
+      builder.add32BitUintToData(0x01234567);
+      expect(builder.build().getRawApdu()).toEqual(COMMAND_BODY_EIGHT);
       expect(builder.getErrors()).toEqual([]);
     });
 
@@ -156,6 +166,10 @@ describe("ApduBuilder", () => {
       available -= 2;
       expect(builder.getAvailablePayloadLength()).toBe(available);
 
+      builder.add32BitUintToData(0x01234567);
+      available -= 4;
+      expect(builder.getAvailablePayloadLength()).toBe(available);
+
       builder.addHexaStringToData("0x8081828384");
       available -= 5;
       expect(builder.getAvailablePayloadLength()).toBe(available);
@@ -208,6 +222,15 @@ describe("ApduBuilder", () => {
       expect(builder.getAvailablePayloadLength()).toBe(APDU_MAX_PAYLOAD);
       expect(builder.getErrors()).toEqual([
         new ValueOverflowError((0x10000).toString(), 65535),
+      ]);
+    });
+
+    it("error due value greater than 32-bit integer", () => {
+      builder.add32BitUintToData(0x100000000);
+      expect(builder.build().getRawApdu()).toEqual(COMMAND_NO_BODY);
+      expect(builder.getAvailablePayloadLength()).toBe(APDU_MAX_PAYLOAD);
+      expect(builder.getErrors()).toEqual([
+        new ValueOverflowError((0x100000000).toString(), 4294967295),
       ]);
     });
 
@@ -264,6 +287,22 @@ describe("ApduBuilder", () => {
       expect(builder.getAvailablePayloadLength()).toBe(0);
 
       builder.add16BitUintToData(0);
+      expect(builder.build().getRawApdu()).toEqual(COMMAND_BODY_MAX);
+      expect(builder.getAvailablePayloadLength()).toBe(0);
+      expect(builder.getErrors()).toEqual([new DataOverflowError("0")]);
+    });
+
+    it("error due to subsequent overflow with 4 bytes", () => {
+      const myarray = new Uint8Array(APDU_MAX_PAYLOAD).fill(
+        0xaa,
+        0,
+        APDU_MAX_PAYLOAD,
+      );
+      builder.addBufferToData(myarray);
+      expect(builder.build().getRawApdu()).toEqual(COMMAND_BODY_MAX);
+      expect(builder.getAvailablePayloadLength()).toBe(0);
+
+      builder.add32BitUintToData(0);
       expect(builder.build().getRawApdu()).toEqual(COMMAND_BODY_MAX);
       expect(builder.getAvailablePayloadLength()).toBe(0);
       expect(builder.getErrors()).toEqual([new DataOverflowError("0")]);

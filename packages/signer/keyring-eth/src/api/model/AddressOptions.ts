@@ -1,4 +1,4 @@
 export type AddressOptions = {
-  displayOnDevice?: boolean;
-  chainId?: number;
+  checkOnDevice?: boolean;
+  returnChainCode?: boolean;
 };

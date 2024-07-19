@@ -39,6 +39,10 @@ export const Menu: React.FC = () => {
         <Icons.Apps />
         <MenuTitle>Install app</MenuTitle>
       </MenuItem>
+      <MenuItem>
+        <Icons.Signature />
+        <MenuTitle onClick={() => router.push("/keyring")}>Keyrings</MenuTitle>
+      </MenuItem>
     </>
   );
 };
