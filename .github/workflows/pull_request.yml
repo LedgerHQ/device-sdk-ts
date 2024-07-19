@@ -19,7 +19,6 @@ jobs:
 
   danger:
     name: Run Danger check
-    if: ${{ github.actor != 'dependabot[bot]' }}
     runs-on: [ubuntu-latest]
     steps:
       - uses: actions/checkout@v4
@@ -37,7 +36,6 @@ jobs:
   health-check:
     name: Run health check
     needs: [danger]
-    if: ${{ !failure() && !cancelled() }}
     runs-on: ledgerhq-device-sdk
     steps:
       - uses: actions/checkout@v4
@@ -50,7 +48,6 @@ jobs:
   unit-tests:
     name: Run unit tests
     needs: [danger]
-    if: ${{ !failure() && !cancelled() }}
     runs-on: ledgerhq-device-sdk
     steps:
       - uses: actions/checkout@v4
