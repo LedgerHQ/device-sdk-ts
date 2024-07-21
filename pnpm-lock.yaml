@@ -30,8 +30,8 @@ importers:
         specifier: 9.4.0
         version: 9.4.0
       gitmoji-cli:
-        specifier: ^9.3.0
-        version: 9.3.0
+        specifier: ^9.4.0
+        version: 9.4.0
       hygen:
         specifier: ^6.2.11
         version: 6.2.11
@@ -3827,8 +3827,8 @@ packages:
     resolution: {integrity: sha512-KcJ2dlrrP5DbBnYIZ2nlikALfRhKzNSX0stvv3ImJ+fvC4hXKoV+U+74SV0upg+jlQZbrtQzc0bu6/Zh+7aQbg==}
     engines: {node: '>=0.10.0'}
 
-  gitmoji-cli@9.3.0:
-    resolution: {integrity: sha512-2xcKjlH2rVRwx17RrX0mwOqQRqIrFHKv+0JFKat74r3y6TRrdMoSwH3yzz+ho23fc0kPryAbt3JE5op3v/fYrA==}
+  gitmoji-cli@9.4.0:
+    resolution: {integrity: sha512-yqiYRSN0PEI8v9EJXn/euL+9keVpcvlCo87yc+M1m3zhP666oQ5/Ee0SdrexqAVmF5b/ZLsIaAntxB85Dt6H7g==}
     engines: {node: '>=18'}
     hasBin: true
 
@@ -11338,7 +11338,7 @@ snapshots:
       fs-exists-sync: 0.1.0
       homedir-polyfill: 1.0.3
 
-  gitmoji-cli@9.3.0:
+  gitmoji-cli@9.4.0:
     dependencies:
       chalk: 5.3.0
       conf: 12.0.0
