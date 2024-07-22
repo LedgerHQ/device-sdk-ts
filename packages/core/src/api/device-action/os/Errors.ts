@@ -18,8 +18,8 @@ export class DeviceLockedError implements SdkError {
   }
 }
 
-export class UnknownOpenAppDAError implements SdkError {
-  readonly _tag = "UnknownOpenAppDAError";
+export class UnknownDAError implements SdkError {
+  readonly _tag = "UnknownDAError";
   originalError?: Error;
 
   constructor(message?: string) {
@@ -33,6 +33,15 @@ export class OpenAppRejectedError implements SdkError {
 
   constructor(message?: string) {
     this.originalError = new Error(message ?? "Open app rejected.");
+  }
+}
+
+export class ListAppsRejectedError implements SdkError {
+  readonly _tag = "ListAppsRejectedError";
+  originalError?: Error;
+
+  constructor(message?: string) {
+    this.originalError = new Error(message ?? "List apps rejected.");
   }
 }
 

@@ -1,12 +1,11 @@
 import { DeviceActionState } from "@api/device-action/model/DeviceActionState";
 import { UserInteractionRequired } from "@api/device-action/model/UserInteractionRequired";
-import { SdkError } from "@api/Error";
-
 import {
   DeviceLockedError,
   DeviceNotOnboardedError,
-  UnknownOpenAppDAError,
-} from "./errors";
+  UnknownDAError,
+} from "@api/device-action/os/Errors";
+import { SdkError } from "@api/Error";
 
 export type OpenAppDAOutput = void;
 
@@ -17,7 +16,7 @@ export type OpenAppDAInput = {
 export type OpenAppDAError =
   | DeviceNotOnboardedError
   | DeviceLockedError
-  | UnknownOpenAppDAError
+  | UnknownDAError
   | SdkError; /// TODO: remove, we should have an exhaustive list of errors
 
 type OpenAppDARequiredInteraction =

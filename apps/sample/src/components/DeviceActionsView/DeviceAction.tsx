@@ -24,7 +24,7 @@ import {
 
 export type DeviceActionProps<
   Output,
-  Input extends Record<string, FieldType>,
+  Input extends Record<string, FieldType> | void,
   Error extends SdkError,
   IntermediateValue extends DeviceActionIntermediateValue,
 > = {

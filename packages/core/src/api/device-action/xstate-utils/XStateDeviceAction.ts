@@ -134,16 +134,16 @@ export abstract class XStateDeviceAction<
           break;
         case "done":
           output.caseOf({
-            Left: (output) => {
+            Left: (err) => {
               subject.next({
                 status: DeviceActionStatus.Error,
-                error: output,
+                error: err,
               });
             },
-            Right: (output) => {
+            Right: (result) => {
               subject.next({
                 status: DeviceActionStatus.Completed,
-                output,
+                output: result,
               });
             },
           });

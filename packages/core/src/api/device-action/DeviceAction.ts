@@ -11,6 +11,8 @@ export type InternalApi = {
     command: Command<Response, Args>,
   ) => Promise<Response>;
   getDeviceSessionState: () => DeviceSessionState;
+  getDeviceSessionStateObservable: () => Observable<DeviceSessionState>;
+  setDeviceSessionState: (state: DeviceSessionState) => DeviceSessionState;
 };
 
 export type DeviceActionIntermediateValue = {

@@ -8,4 +8,5 @@ export enum UserInteractionRequired {
   AllowSecureConnection = "allow-secure-connection",
   ConfirmOpenApp = "confirm-open-app",
   SignTransaction = "sign-transaction",
+  AllowListApps = "allow-list-apps",
 }

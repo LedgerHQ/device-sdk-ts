@@ -11,7 +11,24 @@ import {
   OpenAppDAInput,
   OpenAppDAIntermediateValue,
   OpenAppDAOutput,
+  GetDeviceStatusDeviceAction,
+  GetDeviceStatusDAInput,
+  GetDeviceStatusDAOutput,
+  GetDeviceStatusDAError,
+  GetDeviceStatusDAIntermediateValue,
+  GoToDashboardDeviceAction,
+  GoToDashboardDAInput,
+  GoToDashboardDAOutput,
+  GoToDashboardDAError,
+  GoToDashboardDAIntermediateValue,
+  ListAppsDeviceAction,
+  ListAppsDAInput,
+  ListAppsDAOutput,
+  ListAppsDAError,
+  ListAppsDAIntermediateValue,
 } from "@ledgerhq/device-sdk-core";
+
+const UNLOCK_TIMEOUT = 60 * 1000; // 1 minute
 
 export const DeviceActionsView: React.FC = () => {
   const {
@@ -46,6 +63,67 @@ export const DeviceActionsView: React.FC = () => {
               OpenAppDAInput,
               OpenAppDAError,
               OpenAppDAIntermediateValue
+            >,
+            {
+              title: "Get device status",
+              description:
+                "Perform various checks on the device to determine its status",
+              executeDeviceAction: ({ unlockTimeout }, inspect) => {
+                const deviceAction = new GetDeviceStatusDeviceAction({
+                  input: { unlockTimeout },
+                  inspect,
+                });
+                return sdk.executeDeviceAction({
+                  sessionId: selectedSessionId,
+                  deviceAction,
+                });
+              },
+              initialValues: { unlockTimeout: UNLOCK_TIMEOUT },
+            } satisfies DeviceActionProps<
+              GetDeviceStatusDAOutput,
+              GetDeviceStatusDAInput,
+              GetDeviceStatusDAError,
+              GetDeviceStatusDAIntermediateValue
+            >,
+            {
+              title: "Go to dashboard",
+              description: "Navigate to the dashboard",
+              executeDeviceAction: (_, inspect) => {
+                const deviceAction = new GoToDashboardDeviceAction({
+                  input: { unlockTimeout: UNLOCK_TIMEOUT },
+                  inspect,
+                });
+                return sdk.executeDeviceAction({
+                  sessionId: selectedSessionId,
+                  deviceAction,
+                });
+              },
+              initialValues: { unlockTimeout: UNLOCK_TIMEOUT },
+            } satisfies DeviceActionProps<
+              GoToDashboardDAOutput,
+              GoToDashboardDAInput,
+              GoToDashboardDAError,
+              GoToDashboardDAIntermediateValue
+            >,
+            {
+              title: "List apps",
+              description: "List all applications installed on the device",
+              executeDeviceAction: (_, inspect) => {
+                const deviceAction = new ListAppsDeviceAction({
+                  input: { unlockTimeout: UNLOCK_TIMEOUT },
+                  inspect,
+                });
+                return sdk.executeDeviceAction({
+                  sessionId: selectedSessionId,
+                  deviceAction,
+                });
+              },
+              initialValues: { unlockTimeout: UNLOCK_TIMEOUT },
+            } satisfies DeviceActionProps<
+              ListAppsDAOutput,
+              ListAppsDAInput,
+              ListAppsDAError,
+              ListAppsDAIntermediateValue
             >,
           ],
     [],

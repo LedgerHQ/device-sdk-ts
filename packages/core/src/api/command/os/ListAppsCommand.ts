@@ -29,13 +29,15 @@ export class PinNotValidated implements DeviceExchangeError {
   }
 }
 
-export type ListAppsResponse = {
+export type AppResponse = {
   appEntryLength: number;
   appSizeInBlocks: number;
   appCodeHash: string;
   appFullHash: string;
   appName: string;
-}[];
+};
+
+export type ListAppsResponse = AppResponse[];
 
 export type ListAppsArgs = {
   isContinue: boolean;

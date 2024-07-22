@@ -44,6 +44,30 @@ export {
   DeviceActionStatus,
 } from "@api/device-action/model/DeviceActionState";
 export { UserInteractionRequired } from "@api/device-action/model/UserInteractionRequired";
+export { GetDeviceStatusDeviceAction } from "@api/device-action/os/GetDeviceStatus/GetDeviceStatusDeviceAction";
+export {
+  type GetDeviceStatusDAError,
+  type GetDeviceStatusDAInput,
+  type GetDeviceStatusDAIntermediateValue,
+  type GetDeviceStatusDAOutput,
+  type GetDeviceStatusDAState,
+} from "@api/device-action/os/GetDeviceStatus/types";
+export { GoToDashboardDeviceAction } from "@api/device-action/os/GoToDashboard/GoToDashboardDeviceAction";
+export {
+  type GoToDashboardDAError,
+  type GoToDashboardDAInput,
+  type GoToDashboardDAIntermediateValue,
+  type GoToDashboardDAOutput,
+  type GoToDashboardDAState,
+} from "@api/device-action/os/GoToDashboard/types";
+export { ListAppsDeviceAction } from "@api/device-action/os/ListApps/ListAppsDeviceAction";
+export {
+  type ListAppsDAError,
+  type ListAppsDAInput,
+  type ListAppsDAIntermediateValue,
+  type ListAppsDAOutput,
+  type ListAppsDAState,
+} from "@api/device-action/os/ListApps/types";
 export { OpenAppDeviceAction } from "@api/device-action/os/OpenAppDeviceAction/OpenAppDeviceAction";
 export {
   type OpenAppDAError,
