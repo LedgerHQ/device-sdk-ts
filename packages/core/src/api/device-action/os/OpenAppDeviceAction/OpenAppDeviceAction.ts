@@ -42,6 +42,24 @@ export type ExtractMachineDependencies = (
   internalApi: InternalApi,
 ) => MachineDependencies;
 
+/**
+ * Opens a given app on the device.
+ *
+ * It checks if the device is onboarded, unlocked, and which app is currently open.
+ * If the current app is the dashboard, it will directly open the requested app.
+ * If another app is opened, it will close the current app and open the requested app.
+ *
+ * Example of usage:
+ *
+ * ```ts
+ * const deviceAction = new OpenAppDeviceAction({
+ *    input: {
+ *      appName: "MyApp",
+ *    },
+ *  });
+ * sdk.executeDeviceAction({ sessionId: "mySessionId", deviceAction });
+ * ```
+ */
 export class OpenAppDeviceAction extends XStateDeviceAction<
   OpenAppDAOutput,
   OpenAppDAInput,
