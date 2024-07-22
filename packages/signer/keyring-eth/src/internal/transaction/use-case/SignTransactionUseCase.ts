@@ -6,7 +6,7 @@ import { appBinderTypes } from "@internal/app-binder/di/appBinderTypes";
 import { EthAppBinder } from "@internal/app-binder/EthAppBinder";
 import { externalTypes } from "@internal/externalTypes";
 import { transactionTypes } from "@internal/transaction/di/transactionTypes";
-import { TransactionMapperService } from "@internal/transaction/service/TransactionMapperService";
+import { TransactionMapperService } from "@internal/transaction/service/mapper/TransactionMapperService";
 
 @injectable()
 export class SignTransactionUseCase {
