@@ -2,9 +2,10 @@
 import React from "react";
 
 import { CommandsView } from "@/components/CommandsView";
+import { SessionIdWrapper } from "@/components/SessionIdWrapper";
 
-const DeviceActions: React.FC = () => {
-  return <CommandsView />;
+const Commands: React.FC = () => {
+  return <SessionIdWrapper ChildComponent={CommandsView} />;
 };
 
-export default DeviceActions;
+export default Commands;

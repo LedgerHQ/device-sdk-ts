@@ -50,9 +50,11 @@ export function CommandForm<Args extends Record<string, FieldType>>({
           rowGap={3}
           columnGap={3}
         >
-          <Text variant="paragraph" fontWeight="medium">
-            {key}
-          </Text>
+          {typeof value === "boolean" ? null : (
+            <Text variant="paragraph" fontWeight="medium">
+              {key}
+            </Text>
+          )}
           {valueSelector?.[key] ? (
             <Flex flexDirection="row" flexWrap="wrap" rowGap={2} columnGap={2}>
               <SelectInput
@@ -71,6 +73,7 @@ export function CommandForm<Args extends Record<string, FieldType>>({
               checked={value}
               onChange={() => setFormValue(key, !value)}
               disabled={disabled}
+              label={key}
             />
           ) : typeof value === "string" ? (
             <Input
