@@ -1,7 +1,9 @@
 import type { ContextModule } from "@ledgerhq/context-module";
 import { inject, injectable } from "inversify";
 
-import { Signature, Transaction, TransactionOptions } from "@api/index";
+import { Signature } from "@api/model/Signature";
+import { Transaction } from "@api/model/Transaction";
+import { TransactionOptions } from "@api/model/TransactionOptions";
 import { appBinderTypes } from "@internal/app-binder/di/appBinderTypes";
 import { EthAppBinder } from "@internal/app-binder/EthAppBinder";
 import { externalTypes } from "@internal/externalTypes";

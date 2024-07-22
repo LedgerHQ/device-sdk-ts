@@ -1,6 +1,7 @@
 import { inject, injectable } from "inversify";
 
-import { Address, AddressOptions } from "@api/index";
+import { Address } from "@api/model/Address";
+import { AddressOptions } from "@api/model/AddressOptions";
 import { appBinderTypes } from "@internal/app-binder/di/appBinderTypes";
 import { EthAppBinder } from "@internal/app-binder/EthAppBinder";
 

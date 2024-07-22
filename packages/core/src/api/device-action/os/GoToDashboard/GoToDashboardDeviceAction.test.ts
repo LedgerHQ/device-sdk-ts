@@ -1,13 +1,15 @@
 import { Left, Right } from "purify-ts";
 import { assign, createMachine } from "xstate";
 
+import { DeviceStatus } from "@api/device/DeviceStatus";
 import { testDeviceActionStates } from "@api/device-action/__test-utils__/testDeviceActionStates";
 import { InternalApi } from "@api/device-action/DeviceAction";
+import { DeviceActionStatus } from "@api/device-action/model/DeviceActionState";
 import { UserInteractionRequired } from "@api/device-action/model/UserInteractionRequired";
 import { UnknownDAError } from "@api/device-action/os/Errors";
 import { GetDeviceStatusDeviceAction } from "@api/device-action/os/GetDeviceStatus/GetDeviceStatusDeviceAction";
 import { DeviceSessionStateType } from "@api/device-session/DeviceSessionState";
-import { DeviceActionStatus, DeviceStatus, SdkError } from "@api/index";
+import { SdkError } from "@api/Error";
 
 import { GoToDashboardDeviceAction } from "./GoToDashboardDeviceAction";
 import { GoToDashboardDAState } from "./types";

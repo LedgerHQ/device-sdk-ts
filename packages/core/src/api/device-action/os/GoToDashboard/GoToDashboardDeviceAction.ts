@@ -7,18 +7,16 @@ import {
   setup,
 } from "xstate";
 
+import { CloseAppCommand } from "@api/command/os/CloseAppCommand";
+import { GetAppAndVersionCommand } from "@api/command/os/GetAppAndVersionCommand";
 import { InternalApi } from "@api/device-action/DeviceAction";
+import { UserInteractionRequired } from "@api/device-action/model/UserInteractionRequired";
 import { DEFAULT_UNLOCK_TIMEOUT_MS } from "@api/device-action/os/Const";
 import { UnknownDAError } from "@api/device-action/os/Errors";
 import { GetDeviceStatusDeviceAction } from "@api/device-action/os/GetDeviceStatus/GetDeviceStatusDeviceAction";
 import { StateMachineTypes } from "@api/device-action/xstate-utils/StateMachineTypes";
 import { XStateDeviceAction } from "@api/device-action/xstate-utils/XStateDeviceAction";
 import { DeviceSessionState } from "@api/device-session/DeviceSessionState";
-import {
-  CloseAppCommand,
-  GetAppAndVersionCommand,
-  UserInteractionRequired,
-} from "@api/index";
 
 import {
   GoToDashboardDAError,

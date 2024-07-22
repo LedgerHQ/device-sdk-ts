@@ -1,17 +1,17 @@
 import { Left, Right } from "purify-ts";
 import { assign, fromPromise, setup } from "xstate";
 
+import {
+  ListAppsCommand,
+  ListAppsResponse,
+} from "@api/command/os/ListAppsCommand";
 import { InternalApi } from "@api/device-action/DeviceAction";
+import { UserInteractionRequired } from "@api/device-action/model/UserInteractionRequired";
 import { DEFAULT_UNLOCK_TIMEOUT_MS } from "@api/device-action/os/Const";
 import { ListAppsRejectedError } from "@api/device-action/os/Errors";
 import { GoToDashboardDeviceAction } from "@api/device-action/os/GoToDashboard/GoToDashboardDeviceAction";
 import { StateMachineTypes } from "@api/device-action/xstate-utils/StateMachineTypes";
 import { XStateDeviceAction } from "@api/device-action/xstate-utils/XStateDeviceAction";
-import {
-  ListAppsCommand,
-  ListAppsResponse,
-  UserInteractionRequired,
-} from "@api/index";
 
 import {
   ListAppsDAError,

@@ -2,9 +2,9 @@ import { inject } from "inversify";
 import { Either, Left, Maybe, Right } from "purify-ts";
 import { Subject } from "rxjs";
 
+import { CommandUtils } from "@api/command/utils/CommandUtils";
 import { ApduResponse } from "@api/device-session/ApduResponse";
 import { SdkError } from "@api/Error";
-import { CommandUtils } from "@api/index";
 import { ApduReceiverService } from "@internal/device-session/service/ApduReceiverService";
 import { ApduSenderService } from "@internal/device-session/service/ApduSenderService";
 import { loggerTypes } from "@internal/logger-publisher/di/loggerTypes";

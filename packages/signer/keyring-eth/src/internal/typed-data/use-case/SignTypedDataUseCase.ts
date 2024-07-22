@@ -1,6 +1,7 @@
 import { inject, injectable } from "inversify";
 
-import { Signature, TypedData } from "@api/index";
+import { Signature } from "@api/model/Signature";
+import { TypedData } from "@api/model/TypedData";
 import { appBinderTypes } from "@internal/app-binder/di/appBinderTypes";
 import { EthAppBinder } from "@internal/app-binder/EthAppBinder";
 import { typedDataTypes } from "@internal/typed-data/di/typedDataTypes";

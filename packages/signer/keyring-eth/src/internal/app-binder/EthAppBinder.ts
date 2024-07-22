@@ -1,7 +1,7 @@
 import { DeviceSdk, type DeviceSessionId } from "@ledgerhq/device-sdk-core";
 import { inject, injectable } from "inversify";
 
-import { Address } from "@api/index";
+import { Address } from "@api/model/Address";
 import { externalTypes } from "@internal/externalTypes";
 
 import {
