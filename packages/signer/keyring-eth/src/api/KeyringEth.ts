@@ -1,4 +1,4 @@
-import { Address } from "@api/model/Address";
+import { GetAddressDAReturnType } from "@api/app-binder/GetAddressDeviceActionTypes";
 import { AddressOptions } from "@api/model/AddressOptions";
 import { Signature } from "@api/model/Signature";
 import { Transaction } from "@api/model/Transaction";
@@ -19,5 +19,5 @@ export interface KeyringEth {
   getAddress: (
     derivationPath: string,
     options?: AddressOptions,
-  ) => Promise<Address>;
+  ) => GetAddressDAReturnType;
 }

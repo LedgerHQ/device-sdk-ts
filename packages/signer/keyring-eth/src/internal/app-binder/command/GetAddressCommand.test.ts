@@ -4,10 +4,9 @@ import {
   InvalidStatusWordError,
 } from "@ledgerhq/device-sdk-core";
 
-import {
-  GetAddressCommand,
-  GetAddressCommandResponse,
-} from "./GetAddressCommand";
+import { GetAddressCommandResponse } from "@api/app-binder/GetAddressCommandTypes";
+
+import { GetAddressCommand } from "./GetAddressCommand";
 
 const GET_ADDRESS_APDU = Uint8Array.from([
   0xe0, 0x02, 0x00, 0x00, 0x1d, 0x05, 0x80, 0x00, 0x00, 0x2c, 0x80, 0x00, 0x00,

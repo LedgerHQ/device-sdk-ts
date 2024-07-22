@@ -9,19 +9,12 @@ import {
   InvalidStatusWordError,
 } from "@ledgerhq/device-sdk-core";
 
+import {
+  GetAddressCommandArgs,
+  GetAddressCommandResponse,
+} from "@api/app-binder/GetAddressCommandTypes";
+
 const CHAIN_CODE_LENGTH = 32;
-
-export type GetAddressCommandResponse = {
-  publicKey: string;
-  address: `0x${string}`;
-  chainCode?: string;
-};
-
-type GetAddressCommandArgs = {
-  derivationPath: string;
-  checkOnDevice?: boolean;
-  returnChainCode?: boolean;
-};
 
 export class GetAddressCommand
   implements Command<GetAddressCommandResponse, GetAddressCommandArgs>

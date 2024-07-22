@@ -56,7 +56,8 @@
     "@ledgerhq/jest-config-dsdk": "workspace:*",
     "@ledgerhq/prettier-config-dsdk": "workspace:*",
     "@ledgerhq/tsconfig-dsdk": "workspace:*",
-    "ts-node": "^10.9.2"
+    "ts-node": "^10.9.2",
+    "rxjs": "^7.8.1"
   },
   "peerDependencies": {
     "@ledgerhq/context-module": "workspace:*",

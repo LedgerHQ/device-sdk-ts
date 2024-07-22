@@ -1,3 +1,4 @@
+export * from "@api/app-binder/GetAddressDeviceActionTypes";
 export * from "@api/KeyringEth";
 export * from "@api/KeyringEthBuilder";
 export * from "@api/model/Address";
