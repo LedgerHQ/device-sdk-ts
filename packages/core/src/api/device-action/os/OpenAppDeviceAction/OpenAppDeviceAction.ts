@@ -1,6 +1,10 @@
 import { Left, Right } from "purify-ts";
 import { assign, fromPromise, setup } from "xstate";
 
+import { CloseAppCommand } from "@api/command/os/CloseAppCommand";
+import { GetAppAndVersionCommand } from "@api/command/os/GetAppAndVersionCommand";
+import { OpenAppCommand } from "@api/command/os/OpenAppCommand";
+import { DeviceStatus } from "@api/device/DeviceStatus";
 import { InternalApi } from "@api/device-action/DeviceAction";
 import { UserInteractionRequired } from "@api/device-action/model/UserInteractionRequired";
 import {
@@ -13,12 +17,6 @@ import {
   DeviceSessionState,
   DeviceSessionStateType,
 } from "@api/device-session/DeviceSessionState";
-import {
-  CloseAppCommand,
-  GetAppAndVersionCommand,
-  OpenAppCommand,
-} from "@api/index";
-import { DeviceStatus } from "@api/index";
 
 import {
   OpenAppDAError,

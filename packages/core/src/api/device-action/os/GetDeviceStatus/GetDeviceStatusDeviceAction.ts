@@ -10,6 +10,8 @@ import {
   setup,
 } from "xstate";
 
+import { GetAppAndVersionCommand } from "@api/command/os/GetAppAndVersionCommand";
+import { DeviceStatus } from "@api/device/DeviceStatus";
 import { InternalApi } from "@api/device-action/DeviceAction";
 import { UserInteractionRequired } from "@api/device-action/model/UserInteractionRequired";
 import { DEFAULT_UNLOCK_TIMEOUT_MS } from "@api/device-action/os/Const";
@@ -24,7 +26,6 @@ import {
   DeviceSessionState,
   DeviceSessionStateType,
 } from "@api/device-session/DeviceSessionState";
-import { DeviceStatus, GetAppAndVersionCommand } from "@api/index";
 
 import {
   GetDeviceStatusDAError,

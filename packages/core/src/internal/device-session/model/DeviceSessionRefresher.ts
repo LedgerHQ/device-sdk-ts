@@ -6,12 +6,13 @@ import {
   GetAppAndVersionCommand,
   GetAppAndVersionResponse,
 } from "@api/command/os/GetAppAndVersionCommand";
+import { DeviceStatus } from "@api/device/DeviceStatus";
+import { ApduResponse } from "@api/device-session/ApduResponse";
 import {
   DeviceSessionState,
   DeviceSessionStateType,
 } from "@api/device-session/DeviceSessionState";
 import { SdkError } from "@api/Error";
-import { ApduResponse, DeviceStatus } from "@api/index";
 import { type LoggerPublisherService } from "@internal/logger-publisher/service/LoggerPublisherService";
 
 /**

@@ -1,5 +1,6 @@
 import { interval, Observable } from "rxjs";
 
+import { DeviceStatus } from "@api/device/DeviceStatus";
 import { testDeviceActionStates } from "@api/device-action/__test-utils__/testDeviceActionStates";
 import { InternalApi } from "@api/device-action/DeviceAction";
 import { DeviceActionStatus } from "@api/device-action/model/DeviceActionState";
@@ -10,7 +11,6 @@ import {
   UnknownDAError,
 } from "@api/device-action/os/Errors";
 import { DeviceSessionStateType } from "@api/device-session/DeviceSessionState";
-import { DeviceStatus } from "@api/index";
 
 import { GetDeviceStatusDeviceAction } from "./GetDeviceStatusDeviceAction";
 import { GetDeviceStatusDAState } from "./types";

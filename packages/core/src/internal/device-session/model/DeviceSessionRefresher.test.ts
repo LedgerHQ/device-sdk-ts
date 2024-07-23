@@ -4,7 +4,8 @@ import {
   GetAppAndVersionCommand,
   GetAppAndVersionResponse,
 } from "@api/command/os/GetAppAndVersionCommand";
-import { ApduResponse, DeviceStatus } from "@api/index";
+import { DeviceStatus } from "@api/device/DeviceStatus";
+import { ApduResponse } from "@api/device-session/ApduResponse";
 import { DefaultLoggerPublisherService } from "@internal/logger-publisher/service/DefaultLoggerPublisherService";
 import { LoggerPublisherService } from "@internal/logger-publisher/service/LoggerPublisherService";
 

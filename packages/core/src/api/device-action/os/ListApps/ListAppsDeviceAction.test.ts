@@ -3,13 +3,13 @@ import { assign, createMachine } from "xstate";
 
 import { testDeviceActionStates } from "@api/device-action/__test-utils__/testDeviceActionStates";
 import { InternalApi } from "@api/device-action/DeviceAction";
+import { DeviceActionStatus } from "@api/device-action/model/DeviceActionState";
 import { UserInteractionRequired } from "@api/device-action/model/UserInteractionRequired";
 import {
   ListAppsRejectedError,
   UnknownDAError,
 } from "@api/device-action/os/Errors";
 import { GoToDashboardDeviceAction } from "@api/device-action/os/GoToDashboard/GoToDashboardDeviceAction";
-import { DeviceActionStatus } from "@api/index";
 
 import { ListAppsDeviceAction } from "./ListAppsDeviceAction";
 import { ListAppsDAState } from "./types";

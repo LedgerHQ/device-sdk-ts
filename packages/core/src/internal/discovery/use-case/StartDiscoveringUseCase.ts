@@ -1,7 +1,7 @@
 import { inject, injectable } from "inversify";
 import { map, Observable } from "rxjs";
 
-import { DeviceModel } from "@api/index";
+import { DeviceModel } from "@api/device/DeviceModel";
 import { DiscoveredDevice } from "@api/types";
 import { usbDiTypes } from "@internal/usb/di/usbDiTypes";
 import { InternalDiscoveredDevice } from "@internal/usb/model/InternalDiscoveredDevice";

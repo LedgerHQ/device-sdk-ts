@@ -2,15 +2,13 @@ import { ContextModule } from "@ledgerhq/context-module";
 import { DeviceSdk, DeviceSessionId } from "@ledgerhq/device-sdk-core";
 import { Container } from "inversify";
 
-import {
-  Address,
-  AddressOptions,
-  Signature,
-  Transaction,
-  TransactionOptions,
-  TypedData,
-} from "@api/index";
 import { KeyringEth } from "@api/KeyringEth";
+import { Address } from "@api/model/Address";
+import { AddressOptions } from "@api/model/AddressOptions";
+import { Signature } from "@api/model/Signature";
+import { Transaction } from "@api/model/Transaction";
+import { TransactionOptions } from "@api/model/TransactionOptions";
+import { TypedData } from "@api/model/TypedData";
 import { addressTypes } from "@internal/address/di/addressTypes";
 import { GetAddressUseCase } from "@internal/address/use-case/GetAddressUseCase";
 import { makeContainer } from "@internal/di";
