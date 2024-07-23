@@ -4,10 +4,27 @@ console.log("PR Actor:", danger.github.pr.user);
 
 let successful = true;
 
+const BRANCH_PREFIX = [
+  "feature",
+  "feat",
+  "bugfix",
+  "bug",
+  "hotfix",
+  "fix",
+  "support",
+  "chore",
+  "core",
+  "doc",
+  "refacto",
+  "refactor",
+];
+
 // Check if user is not a Bot
 if (danger.github.pr.user.type !== "Bot") {
-  const branchRegex =
-    /^(feature|feat|bugfix|bug|hotfix|fix|support|chore|core|doc|refacto|refactor)\/((dsdk)-[0-9]+|no-issue)\-.*/i;
+  const branchRegex = new RegExp(
+    `^(${BRANCH_PREFIX.join("|")})\/((dsdk)-[0-9]+|no-issue)\-.+`,
+    "i"
+  );
   if (!branchRegex.test(danger.github.pr.head.ref)) {
     successful = false;
     fail(`\
