@@ -1,16 +1,47 @@
 import { danger, fail } from "danger";
+import { execSync } from "child_process";
+import { exit } from "process";
 
-console.log("PR Actor:", danger.github.pr.user);
+console.log("PR Actor:", danger.github?.pr.user ?? "local run");
 
-// Check if user is not a Bot
-if (danger.github.pr.user.type !== "Bot") {
-  const branchRegex =
-    /^(feature|feat|bugfix|bug|hotfix|fix|support|chore|core|doc|refacto|refactor)\/((dsdk)-[0-9]+|no-issue)\-.*/i;
-  if (!branchRegex.test(danger.github.pr.head.ref)) {
-    fail(`\
+const branchPrefix = [
+  "feature",
+  "feat",
+  "bugfix",
+  "bug",
+  "hotfix",
+  "fix",
+  "support",
+  "chore",
+  "core",
+  "doc",
+  "refacto",
+  "refactor",
+];
+
+const currentBranch = execSync("git rev-parse --abbrev-ref HEAD")
+  .toString()
+  .trim();
+const branchCommits = execSync(
+  `git log origin/develop..HEAD --pretty=format:%s`
+)
+  .toString()
+  .split("\n");
+
+console.log("Current branch:", currentBranch);
+console.log("Branch commits:", branchCommits);
+
+if (danger.github?.pr.user.type === "Bot") exit(0);
+
+const branchRegex = new RegExp(
+  `^(${branchPrefix.join("|")})\/((dsdk)-[0-9]+|no-issue)\-.+`,
+  "i"
+);
+if (!branchRegex.test(currentBranch)) {
+  fail(`\
 Please fix the PR branch name to match the convention, see [this documentation](https://ledgerhq.atlassian.net/wiki/spaces/WXP/pages/4527358147/DSDK+TS+Git+-+Github+conventions).
 
-**Wrong branch name**: \`${danger.github.pr.head.ref}\`
+**Wrong branch name**: \`${currentBranch}\`
 
 ℹ️ Regex to match: \`${branchRegex}\`
 
@@ -23,16 +54,16 @@ Please fix the PR branch name to match the convention, see [this documentation](
 
 ℹ️ Example: \`feat/dsdk-1234-my-feature\`\
 `);
-  }
+}
 
-  const titleRegex =
-    /^.+ \(([a-z]+\-?){1,}\) \[(DSDK-[0-9]+|NO-ISSUE)\]: [A-Z].*/;
+const titleRegex =
+  /^.+ \(([a-z]+\-?){1,}\) \[(DSDK-[0-9]+|NO-ISSUE)\]: [A-Z].*/;
 
-  if (!titleRegex.test(danger.github.pr.title)) {
-    fail(`\
+if (danger.github?.pr && !titleRegex.test(danger.github?.pr.title)) {
+  fail(`\
 Please fix the PR title to match the convention, see [this documentation](https://ledgerhq.atlassian.net/wiki/spaces/WXP/pages/4527358147/DSDK+TS+Git+-+Github+conventions).
 
-**Wrong PR title**: \`${danger.github.pr.title}\`
+**Wrong PR title**: \`${danger.github?.pr.title}\`
 
 ℹ️ Regex to match: \`${titleRegex}\`
 - Rules:
@@ -46,19 +77,19 @@ Please fix the PR title to match the convention, see [this documentation](https:
 
 Example: \`💚 (scope) [DSDK-1234]: My feature\`\
 `);
-  }
+}
 
-  const commitRegex = /^.+\(([a-z]+\-?){1,}\): [A-Z].*/;
-  const wrongCommits = danger.github.commits.filter(
-    ({ commit }) => !commitRegex.test(commit.message)
-  );
-  for (let { commit } of danger.github.commits) {
-    if (!commitRegex.test(commit.message)) {
-      fail(`\
+const commitRegex = /^.+\(([a-z]+\-?){1,}\): [A-Z].*/;
+const wrongCommits = branchCommits.filter(
+  (commit) => !commitRegex.test(commit)
+);
+for (let commit of branchCommits) {
+  if (!commitRegex.test(commit)) {
+    fail(`\
 One or more commit message does not match the convention, see [this documentation](https://ledgerhq.atlassian.net/wiki/spaces/WXP/pages/4527358147/DSDK+TS+Git+-+Github+conventions).
 
 **Wrong commit messages**:
-${wrongCommits.map(({ commit }) => `• \`${commit.message}\``).join("\n")}
+${wrongCommits.map((commit) => `• \`${commit}\``).join("\n")}
 
 ℹ️ Regex to match: \`${commitRegex}\`
 
@@ -71,7 +102,6 @@ ${wrongCommits.map(({ commit }) => `• \`${commit.message}\``).join("\n")}
 
 Example: \`💚 (scope): My feature\`\
 `);
-      break;
-    }
+    break;
   }
 }

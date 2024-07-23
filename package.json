@@ -24,7 +24,8 @@
     "release": "changeset publish",
     "changelog": "changeset add",
     "commit": "gitmoji -c",
-    "commitcl": "pnpm changelog && git add .changeset && pnpm commit"
+    "commitcl": "pnpm changelog && git add .changeset && pnpm commit",
+    "danger:local": "pnpm danger local --dangerfile danger/dangerfile.ts --base develop"
   },
   "devDependencies": {
     "@changesets/changelog-github": "^0.5.0",
