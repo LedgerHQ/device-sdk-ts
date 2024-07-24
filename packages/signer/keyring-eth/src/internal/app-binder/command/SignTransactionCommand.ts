@@ -14,6 +14,8 @@ import { Just } from "purify-ts";
 import { Nothing } from "purify-ts";
 import { Maybe } from "purify-ts";
 
+import { DerivationPathUtils } from "@internal/shared/utils/DerivationPathUtils";
+
 const MAX_CHUNK_SIZE = 150;
 const PATH_SIZE = 4;
 const R_LENGTH = 32;
@@ -62,7 +64,7 @@ export class SignTransactionCommand
       p2: 0x00,
     };
     const builder = new ApduBuilder(signEthTransactionArgs);
-    const path = this.splitPath(derivationPath);
+    const path = DerivationPathUtils.splitPath(derivationPath);
     const dataFirstChunkIndex = MAX_CHUNK_SIZE - path.length * PATH_SIZE - 1;
 
     if (index === 0) {
@@ -126,21 +128,5 @@ export class SignTransactionCommand
       r,
       s,
     });
-  }
-
-  private splitPath(path: string): number[] {
-    const result: number[] = [];
-    const components = path.split("/");
-    components.forEach((element) => {
-      let number = parseInt(element, 10);
-      if (isNaN(number)) {
-        return; // FIXME: shouldn't it throws instead?
-      }
-      if (element.length > 1 && element[element.length - 1] === "'") {
-        number += 0x80000000;
-      }
-      result.push(number);
-    });
-    return result;
   }
 }

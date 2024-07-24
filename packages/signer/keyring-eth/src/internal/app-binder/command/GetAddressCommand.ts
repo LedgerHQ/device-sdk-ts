@@ -14,6 +14,7 @@ import {
   GetAddressCommandArgs,
   GetAddressCommandResponse,
 } from "@api/app-binder/GetAddressCommandTypes";
+import { DerivationPathUtils } from "@internal/shared/utils/DerivationPathUtils";
 
 const CHAIN_CODE_LENGTH = 32;
 
@@ -36,7 +37,7 @@ export class GetAddressCommand
     const builder = new ApduBuilder(getEthAddressArgs);
     const derivationPath = this.args.derivationPath;
 
-    const path = this.splitPath(derivationPath);
+    const path = DerivationPathUtils.splitPath(derivationPath);
     builder.add8BitUIntToData(path.length);
     path.forEach((element) => {
       builder.add32BitUIntToData(element);
@@ -109,21 +110,5 @@ export class GetAddressCommand
       address,
       chainCode,
     };
-  }
-
-  private splitPath(path: string): number[] {
-    const result: number[] = [];
-    const components = path.split("/");
-    components.forEach((element) => {
-      let number = parseInt(element, 10);
-      if (isNaN(number)) {
-        return; // FIXME: shouldn't it throws instead?
-      }
-      if (element.length > 1 && element[element.length - 1] === "'") {
-        number += 0x80000000;
-      }
-      result.push(number);
-    });
-    return result;
   }
 }
