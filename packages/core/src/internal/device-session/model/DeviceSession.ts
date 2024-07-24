@@ -57,8 +57,12 @@ export class DeviceSession {
             isPolling: true,
             triggersDisconnection: false,
           }),
-        updateStateFn: (state: DeviceSessionState) =>
-          this.setDeviceSessionState(state),
+        updateStateFn: (fn) => {
+          const state = this._deviceState.getValue();
+          this.setDeviceSessionState(fn(state));
+        },
+        // updateStateFn: (state: DeviceSessionState) =>
+        //   this.setDeviceSessionState(state),
       },
       loggerModuleFactory("device-session-refresher"),
     );

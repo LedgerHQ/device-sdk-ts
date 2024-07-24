@@ -39,7 +39,7 @@ export type DeviceSessionRefresherArgs = {
    * polling response.
    * @param state - The new state to update to.
    */
-  updateStateFn(state: DeviceSessionState): void;
+  updateStateFn(fn: (state: DeviceSessionState) => DeviceSessionState): void;
 };
 
 /**
@@ -103,11 +103,13 @@ export class DeviceSessionRefresher {
           return;
         }
         // `batteryStatus` and `firmwareVersion` are not available in the polling response.
-        updateStateFn({
+        updateStateFn((state) => ({
+          ...state,
           sessionStateType: DeviceSessionStateType.ReadyWithoutSecureChannel,
           deviceStatus: this._deviceStatus,
           currentApp: parsedResponse.name,
-        });
+          installedApps: "installedApps" in state ? state.installedApps : [],
+        }));
       });
   }
 

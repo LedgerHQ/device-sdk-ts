@@ -10,12 +10,14 @@ describe("DefaultManagerApiDataSource", () => {
 
     // appFullHash from the ListApps/ListAppsContinue command's response
     const hashes = [
-      "81e73bd232ef9b26c00a152cb291388fb3ded1a2db6b44f53b3119d91d2879bb",
+      "c7507c742ce3f8ec446b1ebda18159a5d432241a7199c3fc2401e72adfa9ab38",
     ];
 
     const apps = await api.getAppsByHash(hashes);
-    // console.log(apps);
+    console.log(apps);
 
     expect(apps).toHaveLength(1);
   });
+
+  // TODO: finish testing
 });

@@ -86,6 +86,7 @@ describe("GoToDashboardDeviceAction", () => {
         sessionStateType: DeviceSessionStateType.ReadyWithoutSecureChannel,
         deviceStatus: DeviceStatus.CONNECTED,
         currentApp: "BOLOS",
+        installedApps: [],
       });
 
       const expectedStates: Array<GoToDashboardDAState> = [
@@ -135,6 +136,7 @@ describe("GoToDashboardDeviceAction", () => {
         sessionStateType: DeviceSessionStateType.ReadyWithoutSecureChannel,
         deviceStatus: DeviceStatus.CONNECTED,
         currentApp: "Bitcoin",
+        installedApps: [],
       });
 
       sendCommandMock.mockResolvedValueOnce(undefined).mockResolvedValueOnce({
@@ -312,6 +314,7 @@ describe("GoToDashboardDeviceAction", () => {
         sessionStateType: DeviceSessionStateType.ReadyWithoutSecureChannel,
         deviceStatus: DeviceStatus.CONNECTED,
         currentApp: "BOLOS",
+        installedApps: [],
       });
 
       const expectedStates: Array<GoToDashboardDAState> = [

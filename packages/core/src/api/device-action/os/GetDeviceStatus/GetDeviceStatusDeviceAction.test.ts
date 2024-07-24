@@ -52,6 +52,7 @@ describe("GetDeviceStatusDeviceAction", () => {
         sessionStateType: DeviceSessionStateType.ReadyWithoutSecureChannel,
         deviceStatus: DeviceStatus.CONNECTED,
         currentApp: "mockedCurrentApp",
+        installedApps: [],
       });
 
       sendCommandMock.mockResolvedValue({
@@ -98,6 +99,7 @@ describe("GetDeviceStatusDeviceAction", () => {
         sessionStateType: DeviceSessionStateType.ReadyWithoutSecureChannel,
         deviceStatus: DeviceStatus.LOCKED,
         currentApp: "mockedCurrentApp",
+        installedApps: [],
       });
 
       apiGetDeviceSessionStateObservableMock.mockImplementation(
@@ -111,6 +113,7 @@ describe("GetDeviceStatusDeviceAction", () => {
                       DeviceSessionStateType.ReadyWithoutSecureChannel,
                     deviceStatus: DeviceStatus.CONNECTED,
                     currentApp: "mockedCurrentApp",
+                    installedApps: [],
                   });
                   o.complete();
                 } else {
@@ -119,6 +122,7 @@ describe("GetDeviceStatusDeviceAction", () => {
                       DeviceSessionStateType.ReadyWithoutSecureChannel,
                     deviceStatus: DeviceStatus.LOCKED,
                     currentApp: "mockedCurrentApp",
+                    installedApps: [],
                   });
                 }
               },
@@ -359,6 +363,7 @@ describe("GetDeviceStatusDeviceAction", () => {
                     DeviceSessionStateType.ReadyWithoutSecureChannel,
                   deviceStatus: DeviceStatus.LOCKED,
                   currentApp: "mockedCurrentApp",
+                  installedApps: [],
                 });
               },
             });
@@ -563,6 +568,7 @@ describe("GetDeviceStatusDeviceAction", () => {
       sessionStateType: DeviceSessionStateType.ReadyWithoutSecureChannel,
       deviceStatus: DeviceStatus.CONNECTED,
       currentApp: "mockedCurrentApp",
+      installedApps: [],
     });
 
     sendCommandMock.mockResolvedValue({
