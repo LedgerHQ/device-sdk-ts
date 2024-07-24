@@ -19,6 +19,9 @@ describe("EthersV6TransactionMapper", () => {
       transaction.chainId = 1n;
       transaction.nonce = 0;
       transaction.data = "0x";
+      const serialized = new Uint8Array([
+        2, 201, 1, 128, 128, 128, 128, 128, 128, 128, 192,
+      ]);
 
       // WHEN
       const result = mapper.map(transaction);
@@ -26,9 +29,12 @@ describe("EthersV6TransactionMapper", () => {
       // THEN
       expect(result).toEqual(
         Just({
-          chainId: 1,
-          to: undefined,
-          data: "0x",
+          subset: {
+            chainId: 1,
+            to: undefined,
+            data: "0x",
+          },
+          serialized,
         }),
       );
     });
@@ -40,6 +46,11 @@ describe("EthersV6TransactionMapper", () => {
       transaction.nonce = 0;
       transaction.data = "0x";
       transaction.to = "0x0123456789abcdef0123456789abcdef01234567";
+      const serialized = new Uint8Array([
+        0x02, 0xdd, 0x01, 0x80, 0x80, 0x80, 0x80, 0x94, 0x01, 0x23, 0x45, 0x67,
+        0x89, 0xab, 0xcd, 0xef, 0x01, 0x23, 0x45, 0x67, 0x89, 0xab, 0xcd, 0xef,
+        0x01, 0x23, 0x45, 0x67, 0x80, 0x80, 0xc0,
+      ]);
 
       // WHEN
       const result = mapper.map(transaction);
@@ -47,9 +58,12 @@ describe("EthersV6TransactionMapper", () => {
       // THEN
       expect(result).toEqual(
         Just({
-          chainId: 1,
-          to: "0x0123456789abcDEF0123456789abCDef01234567",
-          data: "0x",
+          subset: {
+            chainId: 1,
+            to: "0x0123456789abcDEF0123456789abCDef01234567",
+            data: "0x",
+          },
+          serialized,
         }),
       );
     });
@@ -63,13 +77,13 @@ describe("EthersV6TransactionMapper", () => {
       transaction.nonce = 0;
       transaction.gasLimit = 0n;
       transaction.gasPrice = 0n;
-      transaction.maxPriorityFeePerGas = 0n;
-      transaction.maxFeePerGas = 0n;
       transaction.value = 0n;
       transaction.chainId = 1n;
-      transaction.accessList = [];
-      transaction.maxFeePerBlobGas = 0n;
-      transaction.blobs = [];
+      const serialized = new Uint8Array([
+        0xdd, 0x80, 0x80, 0x80, 0x94, 0x01, 0x23, 0x45, 0x67, 0x89, 0xab, 0xcd,
+        0xef, 0x01, 0x23, 0x45, 0x67, 0x89, 0xab, 0xcd, 0xef, 0x01, 0x23, 0x45,
+        0x67, 0x80, 0x80, 0x01, 0x80, 0x80,
+      ]);
 
       // WHEN
       const result = mapper.map(transaction);
@@ -77,9 +91,12 @@ describe("EthersV6TransactionMapper", () => {
       // THEN
       expect(result).toEqual(
         Just({
-          chainId: 1,
-          to: "0x0123456789abcDEF0123456789abCDef01234567",
-          data: "0x",
+          subset: {
+            chainId: 1,
+            to: "0x0123456789abcDEF0123456789abCDef01234567",
+            data: "0x",
+          },
+          serialized,
         }),
       );
     });
