@@ -3,11 +3,19 @@ import { DefaultDeviceSessionService } from "@internal/device-session/service/De
 import { DeviceSessionService } from "@internal/device-session/service/DeviceSessionService";
 import { DefaultLoggerPublisherService } from "@internal/logger-publisher/service/DefaultLoggerPublisherService";
 import { LoggerPublisherService } from "@internal/logger-publisher/service/LoggerPublisherService";
+import { DefaultManagerApiDataSource } from "@internal/manager-api/data/DefaultManagerApiDataSource";
+import { ManagerApiDataSource } from "@internal/manager-api/data/ManagerApiDataSource";
+import { DefaultManagerApiService } from "@internal/manager-api/service/DefaultManagerApiService";
+import { ManagerApiService } from "@internal/manager-api/service/ManagerApiService";
 import { GetConnectedDeviceUseCase } from "@internal/usb/use-case/GetConnectedDeviceUseCase";
 import { ConnectedDevice } from "@root/src";
 
+jest.mock("@internal/manager-api/data/DefaultManagerApiDataSource");
+
 let logger: LoggerPublisherService;
 let sessionService: DeviceSessionService;
+let managerApiDataSource: ManagerApiDataSource;
+let managerApi: ManagerApiService;
 
 const fakeSessionId = "fakeSessionId";
 
@@ -17,6 +25,10 @@ describe("GetConnectedDevice", () => {
       [],
       "get-connected-device-use-case",
     );
+    managerApiDataSource = new DefaultManagerApiDataSource({
+      managerApiUrl: "http://fake.url",
+    });
+    managerApi = new DefaultManagerApiService(managerApiDataSource);
     sessionService = new DefaultDeviceSessionService(() => logger);
   });
 
@@ -25,6 +37,7 @@ describe("GetConnectedDevice", () => {
     const deviceSession = deviceSessionStubBuilder(
       { id: fakeSessionId },
       () => logger,
+      managerApi,
     );
     sessionService.addDeviceSession(deviceSession);
     const useCase = new GetConnectedDeviceUseCase(sessionService, () => logger);
@@ -43,6 +56,7 @@ describe("GetConnectedDevice", () => {
     const deviceSession = deviceSessionStubBuilder(
       { id: fakeSessionId },
       () => logger,
+      managerApi,
     );
     sessionService.addDeviceSession(deviceSession);
     const useCase = new GetConnectedDeviceUseCase(sessionService, () => logger);

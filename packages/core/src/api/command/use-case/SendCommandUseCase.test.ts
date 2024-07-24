@@ -6,11 +6,17 @@ import { DefaultDeviceSessionService } from "@internal/device-session/service/De
 import { DeviceSessionService } from "@internal/device-session/service/DeviceSessionService";
 import { DefaultLoggerPublisherService } from "@internal/logger-publisher/service/DefaultLoggerPublisherService";
 import { LoggerPublisherService } from "@internal/logger-publisher/service/LoggerPublisherService";
+import { DefaultManagerApiDataSource } from "@internal/manager-api/data/DefaultManagerApiDataSource";
+import { ManagerApiDataSource } from "@internal/manager-api/data/ManagerApiDataSource";
+import { DefaultManagerApiService } from "@internal/manager-api/service/DefaultManagerApiService";
+import { ManagerApiService } from "@internal/manager-api/service/ManagerApiService";
 
 import { SendCommandUseCase } from "./SendCommandUseCase";
 
 let logger: LoggerPublisherService;
 let sessionService: DeviceSessionService;
+let managerApi: ManagerApiService;
+let managerApiDataSource: ManagerApiDataSource;
 const fakeSessionId = "fakeSessionId";
 let command: Command<{ status: string }>;
 
@@ -18,6 +24,10 @@ describe("SendCommandUseCase", () => {
   beforeEach(() => {
     logger = new DefaultLoggerPublisherService([], "send-command-use-case");
     sessionService = new DefaultDeviceSessionService(() => logger);
+    managerApiDataSource = new DefaultManagerApiDataSource({
+      managerApiUrl: "http://fake.url",
+    });
+    managerApi = new DefaultManagerApiService(managerApiDataSource);
     command = {
       getApdu: jest.fn(),
       parseResponse: jest.fn(),
@@ -29,7 +39,11 @@ describe("SendCommandUseCase", () => {
   });
 
   it("should send a command to a connected device", async () => {
-    const deviceSession = deviceSessionStubBuilder({}, () => logger);
+    const deviceSession = deviceSessionStubBuilder(
+      {},
+      () => logger,
+      managerApi,
+    );
     sessionService.addDeviceSession(deviceSession);
     const useCase = new SendCommandUseCase(sessionService, () => logger);
 

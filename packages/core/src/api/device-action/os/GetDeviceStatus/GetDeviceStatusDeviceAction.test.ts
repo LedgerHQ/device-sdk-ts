@@ -1,8 +1,8 @@
 import { interval, Observable } from "rxjs";
 
 import { DeviceStatus } from "@api/device/DeviceStatus";
+import { makeInternalApiMock } from "@api/device-action/__test-utils__/makeInternalApi";
 import { testDeviceActionStates } from "@api/device-action/__test-utils__/testDeviceActionStates";
-import { InternalApi } from "@api/device-action/DeviceAction";
 import { DeviceActionStatus } from "@api/device-action/model/DeviceActionState";
 import { UserInteractionRequired } from "@api/device-action/model/UserInteractionRequired";
 import {
@@ -32,20 +32,11 @@ describe("GetDeviceStatusDeviceAction", () => {
     };
   }
 
-  const sendCommandMock = jest.fn();
-  const apiGetDeviceSessionStateMock = jest.fn();
-  const apiGetDeviceSessionStateObservableMock = jest.fn();
-  const setDeviceSessionStateMock = jest.fn();
-
-  function internalApiMock(): InternalApi {
-    return {
-      sendCommand: sendCommandMock,
-      getDeviceSessionState: apiGetDeviceSessionStateMock,
-      getDeviceSessionStateObservable: apiGetDeviceSessionStateObservableMock,
-      setDeviceSessionState: setDeviceSessionStateMock,
-    };
-  }
-
+  const {
+    sendCommand: sendCommandMock,
+    getDeviceSessionState: apiGetDeviceSessionStateMock,
+    getDeviceSessionStateObservable: apiGetDeviceSessionStateObservableMock,
+  } = makeInternalApiMock();
   beforeEach(() => {
     jest.resetAllMocks();
     isDeviceOnboardedMock.mockReturnValue(true);
@@ -58,7 +49,7 @@ describe("GetDeviceStatusDeviceAction", () => {
       });
 
       apiGetDeviceSessionStateMock.mockReturnValue({
-        sessionStateType: DeviceSessionStateType.Connected,
+        sessionStateType: DeviceSessionStateType.ReadyWithoutSecureChannel,
         deviceStatus: DeviceStatus.CONNECTED,
         currentApp: "mockedCurrentApp",
       });
@@ -93,7 +84,7 @@ describe("GetDeviceStatusDeviceAction", () => {
       testDeviceActionStates(
         getDeviceStateDeviceAction,
         expectedStates,
-        internalApiMock(),
+        makeInternalApiMock(),
         done,
       );
     });
@@ -175,7 +166,7 @@ describe("GetDeviceStatusDeviceAction", () => {
       testDeviceActionStates(
         getDeviceStateDeviceAction,
         expectedStates,
-        internalApiMock(),
+        makeInternalApiMock(),
         done,
       );
     });
@@ -227,7 +218,7 @@ describe("GetDeviceStatusDeviceAction", () => {
       testDeviceActionStates(
         getDeviceStateDeviceAction,
         expectedStates,
-        internalApiMock(),
+        makeInternalApiMock(),
         done,
       );
     });
@@ -313,7 +304,7 @@ describe("GetDeviceStatusDeviceAction", () => {
       testDeviceActionStates(
         getDeviceStateDeviceAction,
         expectedStates,
-        internalApiMock(),
+        makeInternalApiMock(),
         done,
       );
     });
@@ -346,7 +337,7 @@ describe("GetDeviceStatusDeviceAction", () => {
       testDeviceActionStates(
         getDeviceStateDeviceAction,
         expectedStates,
-        internalApiMock(),
+        makeInternalApiMock(),
         done,
       );
     });
@@ -402,7 +393,7 @@ describe("GetDeviceStatusDeviceAction", () => {
       testDeviceActionStates(
         getDeviceStateDeviceAction,
         expectedStates,
-        internalApiMock(),
+        makeInternalApiMock(),
         done,
       );
     });
@@ -478,7 +469,7 @@ describe("GetDeviceStatusDeviceAction", () => {
       testDeviceActionStates(
         getDeviceStateDeviceAction,
         expectedStates,
-        internalApiMock(),
+        makeInternalApiMock(),
         done,
       );
     });
@@ -561,7 +552,7 @@ describe("GetDeviceStatusDeviceAction", () => {
       testDeviceActionStates(
         getDeviceStateDeviceAction,
         expectedStates,
-        internalApiMock(),
+        makeInternalApiMock(),
         done,
       );
     });
@@ -569,7 +560,7 @@ describe("GetDeviceStatusDeviceAction", () => {
 
   it("should emit a stopped state if the action is cancelled", (done) => {
     apiGetDeviceSessionStateMock.mockReturnValue({
-      sessionStateType: DeviceSessionStateType.Connected,
+      sessionStateType: DeviceSessionStateType.ReadyWithoutSecureChannel,
       deviceStatus: DeviceStatus.CONNECTED,
       currentApp: "mockedCurrentApp",
     });
@@ -598,7 +589,7 @@ describe("GetDeviceStatusDeviceAction", () => {
     const { cancel } = testDeviceActionStates(
       getDeviceStateDeviceAction,
       expectedStates,
-      internalApiMock(),
+      makeInternalApiMock(),
       done,
     );
     cancel();

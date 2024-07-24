@@ -162,6 +162,9 @@ importers:
       '@sentry/minimal':
         specifier: ^6.19.7
         version: 6.19.7
+      axios:
+        specifier: ^1.7.2
+        version: 1.7.2
       inversify:
         specifier: ^6.0.2
         version: 6.0.2

@@ -1,4 +1,4 @@
-import { inject } from "inversify";
+// import { inject } from "inversify";
 import { BehaviorSubject } from "rxjs";
 import { v4 as uuidv4 } from "uuid";
 
@@ -16,8 +16,8 @@ import {
 } from "@api/device-session/DeviceSessionState";
 import { DeviceSessionId } from "@api/device-session/types";
 import { SdkError } from "@api/Error";
-import { loggerTypes } from "@internal/logger-publisher/di/loggerTypes";
 import { LoggerPublisherService } from "@internal/logger-publisher/service/LoggerPublisherService";
+import { type ManagerApiService } from "@internal/manager-api/service/ManagerApiService";
 import { InternalConnectedDevice } from "@internal/usb/model/InternalConnectedDevice";
 
 import { DeviceSessionRefresher } from "./DeviceSessionRefresher";
@@ -35,11 +35,12 @@ export class DeviceSession {
   private readonly _connectedDevice: InternalConnectedDevice;
   private readonly _deviceState: BehaviorSubject<DeviceSessionState>;
   private readonly _refresher: DeviceSessionRefresher;
+  private readonly _managerApiService: ManagerApiService;
 
   constructor(
     { connectedDevice, id = uuidv4() }: SessionConstructorArgs,
-    @inject(loggerTypes.LoggerPublisherServiceFactory)
     loggerModuleFactory: (tag: string) => LoggerPublisherService,
+    managerApiService: ManagerApiService,
   ) {
     this._id = id;
     this._connectedDevice = connectedDevice;
@@ -61,6 +62,7 @@ export class DeviceSession {
       },
       loggerModuleFactory("device-session-refresher"),
     );
+    this._managerApiService = managerApiService;
   }
 
   public get id() {
@@ -146,6 +148,7 @@ export class DeviceSession {
         this.setDeviceSessionState(state);
         return this._deviceState.getValue();
       },
+      managerApiService: this._managerApiService,
     });
 
     return {

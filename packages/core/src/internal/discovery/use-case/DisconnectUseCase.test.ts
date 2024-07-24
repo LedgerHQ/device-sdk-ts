@@ -5,6 +5,10 @@ import { deviceSessionStubBuilder } from "@internal/device-session/model/DeviceS
 import { DeviceSessionNotFound } from "@internal/device-session/model/Errors";
 import { DefaultDeviceSessionService } from "@internal/device-session/service/DefaultDeviceSessionService";
 import { DefaultLoggerPublisherService } from "@internal/logger-publisher/service/DefaultLoggerPublisherService";
+import { DefaultManagerApiDataSource } from "@internal/manager-api/data/DefaultManagerApiDataSource";
+import { ManagerApiDataSource } from "@internal/manager-api/data/ManagerApiDataSource";
+import { DefaultManagerApiService } from "@internal/manager-api/service/DefaultManagerApiService";
+import { ManagerApiService } from "@internal/manager-api/service/ManagerApiService";
 import { DisconnectError } from "@internal/usb/model/Errors";
 import { connectedDeviceStubBuilder } from "@internal/usb/model/InternalConnectedDevice.stub";
 import { usbHidDeviceConnectionFactoryStubBuilder } from "@internal/usb/service/UsbHidDeviceConnectionFactory.stub";
@@ -19,6 +23,9 @@ const loggerFactory = jest
   .mockReturnValue(
     new DefaultLoggerPublisherService([], "DisconnectUseCaseTest"),
   );
+
+let managerApi: ManagerApiService;
+let managerApiDataSource: ManagerApiDataSource;
 
 const sessionId = "sessionId";
 
@@ -35,12 +42,17 @@ describe("DisconnectUseCase", () => {
   it("should disconnect from a device", async () => {
     // Given
     const connectedDevice = connectedDeviceStubBuilder();
+    managerApiDataSource = new DefaultManagerApiDataSource({
+      managerApiUrl: "http://fake.url",
+    });
+    managerApi = new DefaultManagerApiService(managerApiDataSource);
     const deviceSession = deviceSessionStubBuilder(
       {
         id: sessionId,
         connectedDevice,
       },
       loggerFactory,
+      managerApi,
     );
     jest
       .spyOn(sessionService, "getDeviceSessionById")
@@ -87,7 +99,13 @@ describe("DisconnectUseCase", () => {
     jest
       .spyOn(sessionService, "getDeviceSessionById")
       .mockImplementation(() =>
-        Right(deviceSessionStubBuilder({ id: sessionId }, loggerFactory)),
+        Right(
+          deviceSessionStubBuilder(
+            { id: sessionId },
+            loggerFactory,
+            managerApi,
+          ),
+        ),
       );
     jest
       .spyOn(usbHidTransport, "disconnect")

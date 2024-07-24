@@ -1,5 +1,8 @@
+import { MANAGER_API_BASE_URL } from "@internal/manager-api/model/Const";
+
 import { LoggerSubscriberService } from "./logger-subscriber/service/LoggerSubscriberService";
 import { DeviceSdk } from "./DeviceSdk";
+import { SdkConfig } from "./SdkConfig";
 
 /**
  * Builder for the `DeviceSdk` class.
@@ -15,9 +18,16 @@ import { DeviceSdk } from "./DeviceSdk";
 export class LedgerDeviceSdkBuilder {
   private stub = false;
   private readonly loggers: LoggerSubscriberService[] = [];
+  private config: SdkConfig = {
+    managerApiUrl: MANAGER_API_BASE_URL,
+  };
 
   build(): DeviceSdk {
-    return new DeviceSdk({ stub: this.stub, loggers: this.loggers });
+    return new DeviceSdk({
+      stub: this.stub,
+      loggers: this.loggers,
+      config: this.config,
+    });
   }
 
   setStub(stubbed: boolean): LedgerDeviceSdkBuilder {
@@ -30,6 +40,14 @@ export class LedgerDeviceSdkBuilder {
    */
   addLogger(logger: LoggerSubscriberService): LedgerDeviceSdkBuilder {
     this.loggers.push(logger);
+    return this;
+  }
+
+  addConfig(config: SdkConfig): LedgerDeviceSdkBuilder {
+    this.config = {
+      ...this.config,
+      ...config,
+    };
     return this;
   }
 }
