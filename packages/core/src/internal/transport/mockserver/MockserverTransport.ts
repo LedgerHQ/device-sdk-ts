@@ -1,7 +1,9 @@
-import { MockClient } from "@ledgerhq/device-sdk-transport-mock";
-import { CommandResponse } from "@ledgerhq/device-sdk-transport-mock/src/model/CommandResponse";
-import { Device } from "@ledgerhq/device-sdk-transport-mock/src/model/Device";
-import { Session } from "@ledgerhq/device-sdk-transport-mock/src/model/Session";
+import {
+  CommandResponse,
+  Device,
+  MockClient,
+  Session,
+} from "@ledgerhq/device-sdk-transport-mock";
 import { inject, injectable } from "inversify";
 import { Either, Left, Right } from "purify-ts";
 import { from, mergeMap, Observable } from "rxjs";
