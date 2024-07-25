@@ -19,12 +19,14 @@ describe("LedgerDeviceSdkBuilder", () => {
 
   it("should set the stub flag", () => {
     builder.setStub(true);
+    // @ts-expect-error Access private field stub
     expect(builder.stub).toBe(true);
   });
 
   it("should add a logger", () => {
     logger = new ConsoleLogger();
     builder.addLogger(logger);
+    // @ts-expect-error Access private field loggers
     expect(builder.loggers).toContain(logger);
   });
 });

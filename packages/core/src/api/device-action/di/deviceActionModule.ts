@@ -6,7 +6,7 @@ import { StubUseCase } from "@root/src/di.stub";
 import { deviceActionTypes } from "./deviceActionTypes";
 
 type DeviceActionModuleArgs = Partial<{
-  stub: boolean;
+  readonly stub: boolean;
 }>;
 
 export const deviceActionModuleFactory = ({

@@ -51,7 +51,7 @@ import { SdkError } from "./Error";
  * NB: do not instantiate this class directly, instead, use `DeviceSdkBuilder`.
  */
 export class DeviceSdk {
-  container: Container;
+  readonly container: Container;
   /** @internal */
   constructor({ stub, loggers }: Partial<MakeContainerProps> = {}) {
     // NOTE: MakeContainerProps might not be the exact type here

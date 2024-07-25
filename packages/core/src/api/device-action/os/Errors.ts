@@ -2,7 +2,7 @@ import { SdkError } from "@api/Error";
 
 export class DeviceNotOnboardedError implements SdkError {
   readonly _tag = "DeviceNotOnboardedError";
-  originalError?: Error;
+  readonly originalError?: Error;
 
   constructor(message?: string) {
     this.originalError = new Error(message ?? "Device not onboarded.");
@@ -11,7 +11,7 @@ export class DeviceNotOnboardedError implements SdkError {
 
 export class DeviceLockedError implements SdkError {
   readonly _tag = "DeviceLockedError";
-  originalError?: Error;
+  readonly originalError?: Error;
 
   constructor(message?: string) {
     this.originalError = new Error(message ?? "Device locked.");
@@ -20,7 +20,7 @@ export class DeviceLockedError implements SdkError {
 
 export class UnknownDAError implements SdkError {
   readonly _tag = "UnknownDAError";
-  originalError?: Error;
+  readonly originalError?: Error;
 
   constructor(message?: string) {
     this.originalError = new Error(message ?? "Unknown error.");
@@ -29,7 +29,7 @@ export class UnknownDAError implements SdkError {
 
 export class OpenAppRejectedError implements SdkError {
   readonly _tag = "OpenAppRejectedError";
-  originalError?: Error;
+  readonly originalError?: Error;
 
   constructor(message?: string) {
     this.originalError = new Error(message ?? "Open app rejected.");
@@ -38,7 +38,7 @@ export class OpenAppRejectedError implements SdkError {
 
 export class ListAppsRejectedError implements SdkError {
   readonly _tag = "ListAppsRejectedError";
-  originalError?: Error;
+  readonly originalError?: Error;
 
   constructor(message?: string) {
     this.originalError = new Error(message ?? "List apps rejected.");

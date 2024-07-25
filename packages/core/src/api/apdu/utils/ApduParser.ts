@@ -1,8 +1,8 @@
 import { ApduResponse } from "@api/device-session/ApduResponse";
 
 export type TaggedField = {
-  tag: number;
-  value: Uint8Array;
+  readonly tag: number;
+  readonly value: Uint8Array;
 };
 
 /**
@@ -19,7 +19,7 @@ export type TaggedField = {
  */
 export class ApduParser {
   private _index: number;
-  private _response: Uint8Array;
+  private readonly _response: Uint8Array;
 
   constructor(response: ApduResponse) {
     this._index = 0;

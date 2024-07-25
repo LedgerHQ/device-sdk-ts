@@ -3,7 +3,7 @@ import { ConnectionType } from "@api/discovery/ConnectionType";
 import { InternalConnectedDevice } from "@internal/usb/model/InternalConnectedDevice";
 
 type ConnectedDeviceConstructorArgs = {
-  internalConnectedDevice: InternalConnectedDevice;
+  readonly internalConnectedDevice: InternalConnectedDevice;
 };
 
 export class ConnectedDevice {

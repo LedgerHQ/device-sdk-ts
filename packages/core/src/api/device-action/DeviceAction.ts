@@ -7,20 +7,24 @@ import { SdkError } from "@api/Error";
 import { DeviceActionState } from "./model/DeviceActionState";
 
 export type InternalApi = {
-  sendCommand: <Response, Args>(
+  readonly sendCommand: <Response, Args>(
     command: Command<Response, Args>,
   ) => Promise<Response>;
-  getDeviceSessionState: () => DeviceSessionState;
-  getDeviceSessionStateObservable: () => Observable<DeviceSessionState>;
-  setDeviceSessionState: (state: DeviceSessionState) => DeviceSessionState;
+  readonly getDeviceSessionState: () => DeviceSessionState;
+  readonly getDeviceSessionStateObservable: () => Observable<DeviceSessionState>;
+  readonly setDeviceSessionState: (
+    state: DeviceSessionState,
+  ) => DeviceSessionState;
 };
 
 export type DeviceActionIntermediateValue = {
-  requiredUserInteraction: string;
+  readonly requiredUserInteraction: string;
 };
 
 export type ExecuteDeviceActionReturnType<Output, Error, IntermediateValue> = {
-  observable: Observable<DeviceActionState<Output, Error, IntermediateValue>>;
+  readonly observable: Observable<
+    DeviceActionState<Output, Error, IntermediateValue>
+  >;
   cancel(): void;
 };
 

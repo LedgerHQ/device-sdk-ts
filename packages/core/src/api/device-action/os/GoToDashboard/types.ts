@@ -21,7 +21,7 @@ export type GoToDashboardDARequiredInteraction = UserInteractionRequired.None;
 export type GoToDashboardDAIntermediateValue =
   | GetDeviceStatusDAIntermediateValue
   | {
-      requiredUserInteraction: GoToDashboardDARequiredInteraction;
+      readonly requiredUserInteraction: GoToDashboardDARequiredInteraction;
     };
 
 export type GoToDashboardDAState = DeviceActionState<

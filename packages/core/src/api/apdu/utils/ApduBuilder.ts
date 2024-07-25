@@ -16,11 +16,11 @@ const MAX_16_BIT_UINT = 0xffff;
 const MAX_32_BIT_UINT = 0xffffffff;
 
 export type ApduBuilderArgs = {
-  ins: number;
-  cla: number;
-  p1: number;
-  p2: number;
-  offset?: number;
+  readonly ins: number;
+  readonly cla: number;
+  readonly p1: number;
+  readonly p2: number;
+  readonly offset?: number;
 };
 
 /**
@@ -41,12 +41,12 @@ export type ApduBuilderArgs = {
  * ```
  */
 export class ApduBuilder {
-  private _ins: number;
-  private _cla: number;
-  private _p1: number;
-  private p2: number;
+  private readonly _ins: number;
+  private readonly _cla: number;
+  private readonly _p1: number;
+  private readonly p2: number;
   private data?: Uint8Array;
-  private errors: AppBuilderError[] = []; // Custom Error
+  private readonly errors: AppBuilderError[] = []; // Custom Error
 
   constructor({ ins, cla, p1, p2 }: ApduBuilderArgs) {
     this._cla = cla & 0xff;

@@ -21,13 +21,17 @@ import {
 } from "./types";
 
 type ListAppsMachineInternalState = {
-  error: ListAppsDAError | null;
-  apps: ListAppsResponse;
-  shouldContinue: boolean;
+  readonly error: ListAppsDAError | null;
+  readonly apps: ListAppsResponse;
+  readonly shouldContinue: boolean;
 };
 
 export type MachineDependencies = {
-  listApps: ({ input }: { input: boolean }) => Promise<ListAppsResponse>;
+  readonly listApps: ({
+    input,
+  }: {
+    input: boolean;
+  }) => Promise<ListAppsResponse>;
 };
 
 export type ExtractMachineDependencies = (

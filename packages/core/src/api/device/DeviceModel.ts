@@ -16,15 +16,15 @@ export enum DeviceModelId {
 export type DeviceId = string;
 
 export type DeviceModelArgs = {
-  id: DeviceId;
-  model: DeviceModelId;
-  name: string;
+  readonly id: DeviceId;
+  readonly model: DeviceModelId;
+  readonly name: string;
 };
 
 export class DeviceModel {
-  public id: DeviceId;
-  public model: DeviceModelId;
-  public name: string;
+  public readonly id: DeviceId;
+  public readonly model: DeviceModelId;
+  public readonly name: string;
 
   constructor({ id, model, name }: DeviceModelArgs) {
     this.id = id;

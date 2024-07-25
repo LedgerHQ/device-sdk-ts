@@ -10,7 +10,7 @@ import { SdkError } from "@api/Error";
 export type OpenAppDAOutput = void;
 
 export type OpenAppDAInput = {
-  appName: string;
+  readonly appName: string;
 };
 
 export type OpenAppDAError =

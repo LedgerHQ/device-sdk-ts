@@ -3,7 +3,7 @@ import { LogSubscriberOptions } from "@api/logger-subscriber/model/LogSubscriber
 import { LoggerSubscriberService } from "@api/logger-subscriber/service/LoggerSubscriberService";
 
 export class ConsoleLogger implements LoggerSubscriberService {
-  private maxLevel: LogLevel;
+  private readonly maxLevel: LogLevel;
 
   constructor(level: LogLevel = LogLevel.Debug) {
     this.maxLevel = level;

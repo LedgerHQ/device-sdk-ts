@@ -20,11 +20,11 @@ export type ExecuteDeviceActionUseCaseArgs<
   /**
    * The device session id.
    */
-  sessionId: string;
+  readonly sessionId: string;
   /**
    * The device action to execute.
    */
-  deviceAction: DeviceAction<Output, Input, Error, IntermediateValue>;
+  readonly deviceAction: DeviceAction<Output, Input, Error, IntermediateValue>;
 };
 
 /**

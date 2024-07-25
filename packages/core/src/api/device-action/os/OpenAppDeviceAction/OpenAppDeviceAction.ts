@@ -26,16 +26,16 @@ import {
 } from "./types";
 
 type OpenAppStateMachineInternalState = {
-  currentlyRunningApp: string | null;
-  error: OpenAppDAError | null;
+  readonly currentlyRunningApp: string | null;
+  readonly error: OpenAppDAError | null;
 };
 
 export type MachineDependencies = {
-  getAppAndVersion: () => Promise<{ app: string; version: string }>;
-  closeApp: () => Promise<void>;
-  openApp: (arg0: { input: { appName: string } }) => Promise<void>;
-  getDeviceSessionState: () => DeviceSessionState;
-  isDeviceOnboarded: () => boolean;
+  readonly getAppAndVersion: () => Promise<{ app: string; version: string }>;
+  readonly closeApp: () => Promise<void>;
+  readonly openApp: (arg0: { input: { appName: string } }) => Promise<void>;
+  readonly getDeviceSessionState: () => DeviceSessionState;
+  readonly isDeviceOnboarded: () => boolean;
 };
 
 export type ExtractMachineDependencies = (

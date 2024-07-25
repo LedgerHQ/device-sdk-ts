@@ -10,11 +10,11 @@ export type SendCommandUseCaseArgs<Response, Args = void> = {
   /**
    * The device session id.
    */
-  sessionId: string;
+  readonly sessionId: string;
   /**
    * The command to send.
    */
-  command: Command<Response, Args>;
+  readonly command: Command<Response, Args>;
 };
 
 /**

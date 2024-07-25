@@ -26,15 +26,15 @@ import {
 } from "./types";
 
 type GoToDashboardMachineInternalState = {
-  currentApp: string | null;
-  error: GoToDashboardDAError | null;
+  readonly currentApp: string | null;
+  readonly error: GoToDashboardDAError | null;
 };
 
 export type MachineDependencies = {
-  getAppAndVersion: () => Promise<{ app: string; version: string }>;
-  closeApp: () => Promise<void>;
-  getDeviceSessionState: () => DeviceSessionState;
-  saveSessionState: (state: DeviceSessionState) => DeviceSessionState;
+  readonly getAppAndVersion: () => Promise<{ app: string; version: string }>;
+  readonly closeApp: () => Promise<void>;
+  readonly getDeviceSessionState: () => DeviceSessionState;
+  readonly saveSessionState: (state: DeviceSessionState) => DeviceSessionState;
 };
 
 export type ExtractMachineDependencies = (

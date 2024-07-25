@@ -13,12 +13,12 @@ export type GetAppAndVersionResponse = {
   /**
    * The name of the application currently running on the device.
    */
-  name: string;
+  readonly name: string;
   /**
    * The version of the application currently running on the device.
    */
-  version: string;
-  flags?: number | Uint8Array;
+  readonly version: string;
+  readonly flags?: number | Uint8Array;
 };
 
 /**
@@ -28,7 +28,7 @@ export type GetAppAndVersionResponse = {
 export class GetAppAndVersionCommand
   implements Command<GetAppAndVersionResponse>
 {
-  args = undefined;
+  readonly args = undefined;
 
   getApdu(): Apdu {
     const getAppAndVersionApduArgs: ApduBuilderArgs = {
