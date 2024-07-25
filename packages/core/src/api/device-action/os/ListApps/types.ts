@@ -21,7 +21,7 @@ export type ListAppsDARequiredInteraction =
 export type ListAppsDAIntermediateValue =
   | GoToDashboardDAIntermediateValue
   | {
-      requiredUserInteraction: ListAppsDARequiredInteraction;
+      readonly requiredUserInteraction: ListAppsDARequiredInteraction;
     };
 
 export type ListAppsDAState = DeviceActionState<

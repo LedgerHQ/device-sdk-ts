@@ -26,7 +26,7 @@ export class Apdu {
   /**
    * Bytes of data
    */
-  data?: Uint8Array;
+  readonly data?: Uint8Array;
 
   constructor(
     cla: number,

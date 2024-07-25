@@ -54,10 +54,10 @@ enum FlagMasks {
 }
 
 export type BatteryStatusFlags = {
-  charging: ChargingMode;
-  issueCharging: boolean;
-  issueTemperature: boolean;
-  issueBattery: boolean;
+  readonly charging: ChargingMode;
+  readonly issueCharging: boolean;
+  readonly issueTemperature: boolean;
+  readonly issueBattery: boolean;
 };
 
 /**
@@ -67,7 +67,7 @@ export type BatteryStatusFlags = {
 export type GetBatteryStatusResponse = number | BatteryStatusFlags;
 
 export type GetBatteryStatusArgs = {
-  statusType: BatteryStatusType;
+  readonly statusType: BatteryStatusType;
 };
 
 /**
@@ -81,7 +81,7 @@ export type GetBatteryStatusArgs = {
 export class GetBatteryStatusCommand
   implements Command<GetBatteryStatusResponse, GetBatteryStatusArgs>
 {
-  args: GetBatteryStatusArgs;
+  readonly args: GetBatteryStatusArgs;
 
   constructor(args: GetBatteryStatusArgs) {
     this.args = args;

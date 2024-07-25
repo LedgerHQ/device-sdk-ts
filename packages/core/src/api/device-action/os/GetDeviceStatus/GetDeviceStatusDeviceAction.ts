@@ -35,21 +35,21 @@ import {
 } from "./types";
 
 type GetDeviceStatusMachineInternalState = {
-  onboarded: boolean;
-  locked: boolean;
-  currentApp: string | null;
-  currentAppVersion: string | null;
-  error: GetDeviceStatusDAError | null;
+  readonly onboarded: boolean;
+  readonly locked: boolean;
+  readonly currentApp: string | null;
+  readonly currentAppVersion: string | null;
+  readonly error: GetDeviceStatusDAError | null;
 };
 
 export type MachineDependencies = {
-  getAppAndVersion: () => Promise<{ app: string; version: string }>;
-  getDeviceSessionState: () => DeviceSessionState;
-  waitForDeviceUnlock: (args: {
+  readonly getAppAndVersion: () => Promise<{ app: string; version: string }>;
+  readonly getDeviceSessionState: () => DeviceSessionState;
+  readonly waitForDeviceUnlock: (args: {
     input: { unlockTimeout: number };
   }) => Observable<void>;
-  saveSessionState: (state: DeviceSessionState) => DeviceSessionState;
-  isDeviceOnboarded: () => boolean;
+  readonly saveSessionState: (state: DeviceSessionState) => DeviceSessionState;
+  readonly isDeviceOnboarded: () => boolean;
 };
 
 export type ExtractMachineDependencies = (

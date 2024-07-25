@@ -8,11 +8,11 @@ import {
 import { SdkError } from "@api/Error";
 
 export type GetDeviceStatusDAOutput = {
-  currentApp: string;
-  currentAppVersion: string | null;
+  readonly currentApp: string;
+  readonly currentAppVersion: string | null;
 };
 export type GetDeviceStatusDAInput = {
-  unlockTimeout?: number;
+  readonly unlockTimeout?: number;
 };
 
 export type GetDeviceStatusDAError =

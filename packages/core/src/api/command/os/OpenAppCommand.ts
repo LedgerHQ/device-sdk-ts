@@ -7,14 +7,14 @@ import { CommandUtils } from "@api/command/utils/CommandUtils";
 import { ApduResponse } from "@api/device-session/ApduResponse";
 
 export type OpenAppArgs = {
-  appName: string;
+  readonly appName: string;
 };
 
 /**
  * The command to open an application on the device.
  */
 export class OpenAppCommand implements Command<void, OpenAppArgs> {
-  args: OpenAppArgs;
+  readonly args: OpenAppArgs;
 
   readonly triggersDisconnection = true;
 

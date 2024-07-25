@@ -14,36 +14,36 @@ export type GetOsVersionResponse = {
   /**
    * Target identifier.
    */
-  targetId: string;
+  readonly targetId: string;
 
   /**
    * Version of BOLOS on the secure element (SE).
    * {@link https://developers.ledger.com/docs/device-app/architecture/bolos/hardware-architecture | Hardware Architecture}
    */
-  seVersion: string;
+  readonly seVersion: string;
 
   /**
    * Secure element flags.
    * Used to represent the current state of the secure element.
    */
-  seFlags: number;
+  readonly seFlags: number;
 
   /**
    * Version of the microcontroller unit (MCU) SEPH, which is the SE-MCU link protocol.
    * {@link https://developers.ledger.com/docs/device-app/architecture/bolos/hardware-architecture | Hardware Architecture}
    */
-  mcuSephVersion: string;
+  readonly mcuSephVersion: string;
 
   /**
    * Version of the MCU bootloader.
    */
-  mcuBootloaderVersion: string;
+  readonly mcuBootloaderVersion: string;
 
   /**
    * Hardware revision version.
    * Only available for Ledger Nano X in which case it's "00" or "01".
    */
-  hwVersion: string;
+  readonly hwVersion: string;
 
   /**
    * Identifier of the installed language pack.
@@ -52,19 +52,19 @@ export type GetOsVersionResponse = {
    * - "01": French
    * - "02": Spanish
    */
-  langId: string; // [SHOULD] be an enum
+  readonly langId: string; // [SHOULD] be an enum
 
   /**
    * State for Ledger Recover. // [SHOULD] Add more information about this field
    */
-  recoverState: string;
+  readonly recoverState: string;
 };
 
 /**
  * Command to get information about the device firmware.
  */
 export class GetOsVersionCommand implements Command<GetOsVersionResponse> {
-  args = undefined;
+  readonly args = undefined;
 
   getApdu(): Apdu {
     const getOsVersionApduArgs: ApduBuilderArgs = {

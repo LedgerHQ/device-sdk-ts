@@ -11,8 +11,8 @@ import { DeviceExchangeError } from "@api/Error";
 // also might be worth to have other errors we could extends, eg: DeviceResponseError which could contain the error code
 export class ConsentFailedError implements DeviceExchangeError {
   readonly _tag = "ConsentFailedError";
-  originalError?: Error;
-  errorCode: number = 0x5501;
+  readonly originalError?: Error;
+  readonly errorCode: number = 0x5501;
 
   constructor() {
     this.originalError = new Error("Consent failed");
@@ -21,8 +21,8 @@ export class ConsentFailedError implements DeviceExchangeError {
 
 export class PinNotValidated implements DeviceExchangeError {
   readonly _tag = "PinNotValidated";
-  originalError?: Error;
-  errorCode: number = 0x5502;
+  readonly originalError?: Error;
+  readonly errorCode: number = 0x5502;
 
   constructor() {
     this.originalError = new Error("Pin not validated");
@@ -30,23 +30,23 @@ export class PinNotValidated implements DeviceExchangeError {
 }
 
 export type AppResponse = {
-  appEntryLength: number;
-  appSizeInBlocks: number;
-  appCodeHash: string;
-  appFullHash: string;
-  appName: string;
+  readonly appEntryLength: number;
+  readonly appSizeInBlocks: number;
+  readonly appCodeHash: string;
+  readonly appFullHash: string;
+  readonly appName: string;
 };
 
 export type ListAppsResponse = AppResponse[];
 
 export type ListAppsArgs = {
-  isContinue: boolean;
+  readonly isContinue: boolean;
 };
 
 export class ListAppsCommand
   implements Command<ListAppsResponse, ListAppsArgs>
 {
-  args: ListAppsArgs;
+  readonly args: ListAppsArgs;
 
   constructor(args = { isContinue: false }) {
     this.args = args;

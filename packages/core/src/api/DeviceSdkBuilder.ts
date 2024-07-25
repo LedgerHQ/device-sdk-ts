@@ -13,8 +13,8 @@ import { DeviceSdk } from "./DeviceSdk";
  * ```
  */
 export class LedgerDeviceSdkBuilder {
-  stub = false;
-  loggers: LoggerSubscriberService[] = [];
+  private stub = false;
+  private readonly loggers: LoggerSubscriberService[] = [];
 
   build(): DeviceSdk {
     return new DeviceSdk({ stub: this.stub, loggers: this.loggers });

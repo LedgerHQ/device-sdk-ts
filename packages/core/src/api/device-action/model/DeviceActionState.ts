@@ -10,8 +10,11 @@ export enum DeviceActionStatus {
 }
 
 export type DeviceActionState<Output, Error, IntermediateValue> =
-  | { status: DeviceActionStatus.NotStarted }
-  | { status: DeviceActionStatus.Pending; intermediateValue: IntermediateValue }
-  | { status: DeviceActionStatus.Stopped }
-  | { status: DeviceActionStatus.Completed; output: Output }
-  | { status: DeviceActionStatus.Error; error: Error };
+  | { readonly status: DeviceActionStatus.NotStarted }
+  | {
+      readonly status: DeviceActionStatus.Pending;
+      readonly intermediateValue: IntermediateValue;
+    }
+  | { readonly status: DeviceActionStatus.Stopped }
+  | { readonly status: DeviceActionStatus.Completed; readonly output: Output }
+  | { readonly status: DeviceActionStatus.Error; readonly error: Error };

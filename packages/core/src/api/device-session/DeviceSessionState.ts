@@ -5,11 +5,11 @@ import { DeviceStatus } from "@api/device/DeviceStatus";
  * The battery status of a device.
  */
 export type BatteryStatus = {
-  level: number;
-  voltage: number;
-  temperature: number;
-  current: number;
-  status: BatteryStatusFlags;
+  readonly level: number;
+  readonly voltage: number;
+  readonly temperature: number;
+  readonly current: number;
+  readonly status: BatteryStatusFlags;
 };
 
 /**
@@ -19,17 +19,17 @@ export type FirmwareVersion = {
   /**
    * Microcontroller Unit version
    */
-  mcu: string;
+  readonly mcu: string;
 
   /**
    * Bootloader version
    */
-  bootloader: string;
+  readonly bootloader: string;
 
   /**
    * Operating System version
    */
-  os: string;
+  readonly os: string;
 };
 
 /**
@@ -47,12 +47,12 @@ type DeviceSessionBaseState = {
   /**
    * The status of the device.
    */
-  deviceStatus: DeviceStatus;
+  readonly deviceStatus: DeviceStatus;
 
   /**
    * The name of the device.
    */
-  deviceName?: string;
+  readonly deviceName?: string;
 };
 
 type DeviceSessionReadyState = {
@@ -60,18 +60,18 @@ type DeviceSessionReadyState = {
    * The battery status of the device.
    * TODO: This should not be optional, but it is not in the current implementation.
    */
-  batteryStatus?: BatteryStatus;
+  readonly batteryStatus?: BatteryStatus;
 
   /**
    * The firmware version of the device.
    * TODO: This should not be optional, but it is not in the current implementation.
    */
-  firmwareVersion?: FirmwareVersion;
+  readonly firmwareVersion?: FirmwareVersion;
 
   /**
    * The current application running on the device.
    */
-  currentApp: string;
+  readonly currentApp: string;
 };
 
 /**

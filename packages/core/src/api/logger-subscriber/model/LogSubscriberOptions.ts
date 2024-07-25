@@ -1,7 +1,7 @@
 export type LogSubscriberData = Record<string, unknown>;
 
 export type LogSubscriberOptions = {
-  tag: string;
-  timestamp: number;
-  data?: LogSubscriberData;
+  readonly tag: string;
+  readonly timestamp: number;
+  readonly data?: LogSubscriberData;
 };

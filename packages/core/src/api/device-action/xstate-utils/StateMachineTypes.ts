@@ -12,11 +12,11 @@ export type StateMachineTypes<
   IntermediateValue,
   InternalState,
 > = {
-  output: Either<Error, Output>;
-  input: Input;
-  context: {
-    input: Input;
-    intermediateValue: IntermediateValue;
-    _internalState: InternalState;
+  readonly output: Either<Error, Output>;
+  readonly input: Input;
+  readonly context: {
+    readonly input: Input;
+    readonly intermediateValue: IntermediateValue;
+    readonly _internalState: InternalState;
   };
 };

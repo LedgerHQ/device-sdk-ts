@@ -6,7 +6,7 @@ import { StubUseCase } from "@root/src/di.stub";
 import { commandTypes } from "./commandTypes";
 
 type CommandModuleArgs = Partial<{
-  stub: boolean;
+  readonly stub: boolean;
 }>;
 
 export const commandModuleFactory = ({

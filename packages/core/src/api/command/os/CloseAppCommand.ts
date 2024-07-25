@@ -10,7 +10,7 @@ import { ApduResponse } from "@api/device-session/ApduResponse";
  * The command to close a runnint application on the device.
  */
 export class CloseAppCommand implements Command<void> {
-  args = undefined;
+  readonly args = undefined;
 
   readonly triggersDisconnection = true;
 
