@@ -31,8 +31,8 @@ export type ApduBuilderArgs = {
  * @example
  * ```
  * const apduBuilder = new ApduBuilder({ ins: 0x01, cla: 0x02, p1: 0x03, p2: 0x04 })
- *  .add8BitUintToData(0x05)
- *  .add16BitUintToData(0x0607)
+ *  .add8BitUIntToData(0x05)
+ *  .add16BitUIntToData(0x0607)
  *  .addHexaStringToData("0x0809")
  *  .addAsciiStringToData("hello")
  *
@@ -70,7 +70,7 @@ export class ApduBuilder {
    * @param value?: number - The value to add to the data
    * @returns {ApduBuilder} - Returns the current instance of ApduBuilder
    */
-  add8BitUintToData = (value?: number) => {
+  add8BitUIntToData = (value?: number) => {
     if (typeof value === "undefined" || isNaN(value)) {
       this.errors?.push(new InvalidValueError("byte", value?.toString()));
       return this;
@@ -97,7 +97,7 @@ export class ApduBuilder {
    * @param value: number - The value to add to the data
    * @returns {ApduBuilder} - Returns the current instance of ApduBuilder
    */
-  add16BitUintToData = (value: number) => {
+  add16BitUIntToData = (value: number) => {
     if (value > MAX_16_BIT_UINT) {
       this.errors?.push(
         new ValueOverflowError(value.toString(), MAX_16_BIT_UINT),
@@ -110,8 +110,8 @@ export class ApduBuilder {
       return this;
     }
 
-    this.add8BitUintToData((value >>> 8) & 0xff);
-    this.add8BitUintToData(value & 0xff);
+    this.add8BitUIntToData((value >>> 8) & 0xff);
+    this.add8BitUIntToData(value & 0xff);
     return this;
   };
 
@@ -120,7 +120,7 @@ export class ApduBuilder {
    * @param value: number - The value to add to the data
    * @returns {ApduBuilder} - Returns the current instance of ApduBuilder
    */
-  add32BitUintToData = (value: number) => {
+  add32BitUIntToData = (value: number) => {
     if (value > MAX_32_BIT_UINT) {
       this.errors?.push(
         new ValueOverflowError(value.toString(), MAX_32_BIT_UINT),
@@ -133,10 +133,10 @@ export class ApduBuilder {
       return this;
     }
 
-    this.add8BitUintToData((value >>> 24) & 0xff);
-    this.add8BitUintToData((value >>> 16) & 0xff);
-    this.add8BitUintToData((value >>> 8) & 0xff);
-    this.add8BitUintToData(value & 0xff);
+    this.add8BitUIntToData((value >>> 24) & 0xff);
+    this.add8BitUIntToData((value >>> 16) & 0xff);
+    this.add8BitUIntToData((value >>> 8) & 0xff);
+    this.add8BitUIntToData(value & 0xff);
     return this;
   };
 
@@ -152,7 +152,7 @@ export class ApduBuilder {
     }
 
     for (const byte of value) {
-      this.add8BitUintToData(byte);
+      this.add8BitUIntToData(byte);
     }
     return this;
   };
@@ -188,7 +188,7 @@ export class ApduBuilder {
 
     for (const char of value) {
       hexa = char.charCodeAt(0);
-      this.add8BitUintToData(hexa);
+      this.add8BitUIntToData(hexa);
     }
 
     return this;
@@ -215,7 +215,7 @@ export class ApduBuilder {
     }
     // values are always being well formatted at this point
     // therefore no status test is needed
-    this.add8BitUintToData(result.length);
+    this.add8BitUIntToData(result.length);
     this.addNumbers(result);
     return this;
   };
@@ -233,7 +233,7 @@ export class ApduBuilder {
       return this;
     }
 
-    this.add8BitUintToData(value.length);
+    this.add8BitUIntToData(value.length);
     this.addBufferToData(value);
     return this;
   };
@@ -251,7 +251,7 @@ export class ApduBuilder {
       return this;
     }
 
-    this.add8BitUintToData(value.length);
+    this.add8BitUIntToData(value.length);
     this.addAsciiStringToData(value);
     return this;
   };
@@ -344,7 +344,7 @@ export class ApduBuilder {
     }
 
     for (const byte of value) {
-      this.add8BitUintToData(byte);
+      this.add8BitUIntToData(byte);
     }
 
     return this;

@@ -94,10 +94,10 @@ export class ListAppsCommand
     }
 
     // [NOTE] version of parsing, not used for now, skipping 1 byte
-    parser.extract8BitUint()!;
+    parser.extract8BitUInt()!;
 
     while (parser.getUnparsedRemainingLength() > 0) {
-      const appEntryLength = parser.extract8BitUint()!;
+      const appEntryLength = parser.extract8BitUInt()!;
       const appSizeInBlocks = parser.extract16BitUInt()!;
       parser.extract16BitUInt()!; // Skip 2 bytes (flags, missing in doc for now)
       const appCodeHash = parser.encodeToHexaString(

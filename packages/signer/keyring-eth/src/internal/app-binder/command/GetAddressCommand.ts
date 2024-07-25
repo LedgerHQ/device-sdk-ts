@@ -43,14 +43,14 @@ export class GetAddressCommand
     const derivationPath = this.args.derivationPath;
 
     const path = this.splitPath(derivationPath);
-    builder.add8BitUintToData(path.length);
+    builder.add8BitUIntToData(path.length);
     path.forEach((element) => {
-      builder.add32BitUintToData(element);
+      builder.add32BitUIntToData(element);
     });
 
     // TODO: replace by 64
-    builder.add32BitUintToData(0);
-    builder.add32BitUintToData(1);
+    builder.add32BitUIntToData(0);
+    builder.add32BitUIntToData(1);
 
     return builder.build();
   }
@@ -67,7 +67,7 @@ export class GetAddressCommand
       );
     }
 
-    const publicKeyLength = parser.extract8BitUint();
+    const publicKeyLength = parser.extract8BitUInt();
     if (publicKeyLength === undefined) {
       throw new InvalidStatusWordError("Public key length is missing");
     }
@@ -80,7 +80,7 @@ export class GetAddressCommand
       parser.extractFieldByLength(publicKeyLength),
     );
 
-    const addressLength = parser.extract8BitUint();
+    const addressLength = parser.extract8BitUInt();
     if (addressLength === undefined) {
       throw new InvalidStatusWordError("Ethereum address length is missing");
     }
