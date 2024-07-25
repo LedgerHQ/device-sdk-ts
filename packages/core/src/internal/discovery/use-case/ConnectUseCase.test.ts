@@ -2,13 +2,13 @@ import { Left, Right } from "purify-ts";
 import * as uuid from "uuid";
 jest.mock("uuid");
 
+import { DeviceModel } from "@api/device/DeviceModel";
+import { DiscoveredDevice } from "@api/transport/model/DiscoveredDevice";
 import { DeviceModelDataSource } from "@internal/device-model/data/DeviceModelDataSource";
-import { InternalDeviceModel } from "@internal/device-model/model/DeviceModel";
 import { DefaultDeviceSessionService } from "@internal/device-session/service/DefaultDeviceSessionService";
 import { DeviceSessionService } from "@internal/device-session/service/DeviceSessionService";
 import { DefaultLoggerPublisherService } from "@internal/logger-publisher/service/DefaultLoggerPublisherService";
 import { LoggerPublisherService } from "@internal/logger-publisher/service/LoggerPublisherService";
-import { DiscoveredDevice } from "@internal/transport/model/DiscoveredDevice";
 import { UnknownDeviceError } from "@internal/transport/model/Errors";
 import { connectedDeviceStubBuilder } from "@internal/transport/model/InternalConnectedDevice.stub";
 import { usbHidDeviceConnectionFactoryStubBuilder } from "@internal/transport/usb/service/UsbHidDeviceConnectionFactory.stub";
@@ -37,7 +37,7 @@ const fakeSessionId = "fakeSessionId";
 describe("ConnectUseCase", () => {
   const stubDiscoveredDevice: DiscoveredDevice = {
     id: "",
-    deviceModel: {} as InternalDeviceModel,
+    deviceModel: {} as DeviceModel,
     transport: "USB",
   };
   const stubConnectedDevice = connectedDeviceStubBuilder({ id: "1" });
