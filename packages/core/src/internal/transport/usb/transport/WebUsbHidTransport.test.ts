@@ -3,18 +3,18 @@ import { Left, Right } from "purify-ts";
 import { DeviceModel, DeviceModelId } from "@api/device/DeviceModel";
 import { StaticDeviceModelDataSource } from "@internal/device-model/data/StaticDeviceModelDataSource";
 import { DefaultLoggerPublisherService } from "@internal/logger-publisher/service/DefaultLoggerPublisherService";
-import { RECONNECT_DEVICE_TIMEOUT } from "@internal/usb/data/UsbHidConfig";
 import {
   DeviceNotRecognizedError,
   NoAccessibleDeviceError,
   OpeningConnectionError,
   UnknownDeviceError,
   UsbHidTransportNotSupportedError,
-} from "@internal/usb/model/Errors";
-import { hidDeviceStubBuilder } from "@internal/usb/model/HIDDevice.stub";
-import { connectedDeviceStubBuilder } from "@internal/usb/model/InternalConnectedDevice.stub";
-import { InternalDiscoveredDevice } from "@internal/usb/model/InternalDiscoveredDevice";
-import { usbHidDeviceConnectionFactoryStubBuilder } from "@internal/usb/service/UsbHidDeviceConnectionFactory.stub";
+} from "@internal/transport/model/Errors";
+import { connectedDeviceStubBuilder } from "@internal/transport/model/InternalConnectedDevice.stub";
+import { InternalDiscoveredDevice } from "@internal/transport/model/InternalDiscoveredDevice";
+import { RECONNECT_DEVICE_TIMEOUT } from "@internal/transport/usb/data/UsbHidConfig";
+import { hidDeviceStubBuilder } from "@internal/transport/usb/model/HIDDevice.stub";
+import { usbHidDeviceConnectionFactoryStubBuilder } from "@internal/transport/usb/service/UsbHidDeviceConnectionFactory.stub";
 
 import { WebUsbHidTransport } from "./WebUsbHidTransport";
 

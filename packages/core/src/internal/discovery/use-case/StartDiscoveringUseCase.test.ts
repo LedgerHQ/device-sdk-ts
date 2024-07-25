@@ -6,9 +6,9 @@ import { DeviceModelDataSource } from "@internal/device-model/data/DeviceModelDa
 import { InternalDeviceModel } from "@internal/device-model/model/DeviceModel";
 import { DefaultLoggerPublisherService } from "@internal/logger-publisher/service/DefaultLoggerPublisherService";
 import { LoggerPublisherService } from "@internal/logger-publisher/service/LoggerPublisherService";
-import { InternalDiscoveredDevice } from "@internal/usb/model/InternalDiscoveredDevice";
-import { usbHidDeviceConnectionFactoryStubBuilder } from "@internal/usb/service/UsbHidDeviceConnectionFactory.stub";
-import { WebUsbHidTransport } from "@internal/usb/transport/WebUsbHidTransport";
+import { InternalDiscoveredDevice } from "@internal/transport/model/InternalDiscoveredDevice";
+import { usbHidDeviceConnectionFactoryStubBuilder } from "@internal/transport/usb/service/UsbHidDeviceConnectionFactory.stub";
+import { WebUsbHidTransport } from "@internal/transport/usb/transport/WebUsbHidTransport";
 
 import { StartDiscoveringUseCase } from "./StartDiscoveringUseCase";
 
@@ -22,6 +22,7 @@ describe("StartDiscoveringUseCase", () => {
       id: "nanoSP" as DeviceModelId,
       productName: "productName",
     } as InternalDeviceModel,
+    transport: "USB",
   };
   const tag = "logger-tag";
 
@@ -45,9 +46,9 @@ describe("StartDiscoveringUseCase", () => {
     jest
       .spyOn(transport, "startDiscovering")
       .mockImplementation(mockedStartDiscovering);
-    const usecase = new StartDiscoveringUseCase(transport);
+    const usecase = new StartDiscoveringUseCase([transport]);
 
-    const discover = usecase.execute();
+    const discover = usecase.execute({ transport: "MOCK" });
 
     expect(mockedStartDiscovering).toHaveBeenCalled();
     discover.subscribe({
