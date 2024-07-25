@@ -43,7 +43,7 @@ export class ApduParser {
    * Extract a single byte from the response
    * @returns {number | undefined} - Returns the byte extracted from the response
    */
-  extract8BitUint(): number | undefined {
+  extract8BitUInt(): number | undefined {
     if (this._outOfRange(1)) return;
     return this._response[this._index++];
   }
@@ -54,9 +54,9 @@ export class ApduParser {
    */
   extract16BitUInt(): number | undefined {
     if (this._outOfRange(2)) return;
-    let msb = this.extract8BitUint();
+    let msb = this.extract8BitUInt();
     if (msb === undefined) return;
-    const lsb = this.extract8BitUint();
+    const lsb = this.extract8BitUInt();
     if (lsb === undefined) return;
     msb *= 0x100;
     return msb + lsb;
@@ -95,7 +95,7 @@ export class ApduParser {
    */
   extractFieldLVEncoded(): Uint8Array | undefined {
     // extract Length field
-    const length = this.extract8BitUint() ?? -1;
+    const length = this.extract8BitUInt() ?? -1;
     if (length === -1) return;
     if (length === 0) return new Uint8Array();
     const field = this.extractFieldByLength(length);
@@ -111,7 +111,7 @@ export class ApduParser {
   extractFieldTLVEncoded(): TaggedField | undefined {
     if (this._outOfRange(2)) return;
 
-    const tag = this.extract8BitUint();
+    const tag = this.extract8BitUInt();
     const value = this.extractFieldLVEncoded();
 
     if (!tag || !value) {

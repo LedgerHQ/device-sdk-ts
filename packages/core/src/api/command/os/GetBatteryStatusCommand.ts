@@ -109,7 +109,7 @@ export class GetBatteryStatusCommand
 
     switch (this.args.statusType) {
       case BatteryStatusType.BATTERY_PERCENTAGE: {
-        const percentage = parser.extract8BitUint();
+        const percentage = parser.extract8BitUInt();
         if (percentage === undefined) {
           throw new InvalidBatteryDataError("Cannot parse APDU response");
         }
@@ -124,7 +124,7 @@ export class GetBatteryStatusCommand
       }
       case BatteryStatusType.BATTERY_TEMPERATURE:
       case BatteryStatusType.BATTERY_CURRENT: {
-        const data = parser.extract8BitUint();
+        const data = parser.extract8BitUInt();
         if (data === undefined) {
           throw new InvalidBatteryDataError("Cannot parse APDU response");
         }

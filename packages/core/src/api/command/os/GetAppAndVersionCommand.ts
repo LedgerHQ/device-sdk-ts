@@ -50,7 +50,7 @@ export class GetAppAndVersionCommand
       );
     }
 
-    if (parser.extract8BitUint() !== 1) {
+    if (parser.extract8BitUInt() !== 1) {
       throw new InvalidResponseFormatError(
         "getAppAndVersion: format not supported",
       );

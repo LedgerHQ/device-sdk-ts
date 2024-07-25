@@ -69,7 +69,7 @@ describe("ApduParser", () => {
 
     it("Extract a single byte", () => {
       parser = new ApduParser(response);
-      expect(parser.extract8BitUint()).toBe(0x01);
+      expect(parser.extract8BitUInt()).toBe(0x01);
       expect(parser.getCurrentIndex()).toBe(1);
       expect(parser.getUnparsedRemainingLength()).toBe(0);
     });
@@ -89,26 +89,26 @@ describe("ApduParser", () => {
       index++;
       length--;
 
-      expect(parser.extract8BitUint()).toBe(0x01);
+      expect(parser.extract8BitUInt()).toBe(0x01);
       expect(parser.getCurrentIndex()).toBe(index);
       expect(parser.getUnparsedRemainingLength()).toBe(length);
       index++;
       length--;
 
-      expect(parser.extract8BitUint()).toBe(0x02);
+      expect(parser.extract8BitUInt()).toBe(0x02);
       expect(parser.getCurrentIndex()).toBe(index);
       expect(parser.getUnparsedRemainingLength()).toBe(length);
       index++;
       length--;
 
-      expect(parser.extract8BitUint()).toBe(0x03);
+      expect(parser.extract8BitUInt()).toBe(0x03);
       expect(parser.getCurrentIndex()).toBe(index);
       expect(parser.getUnparsedRemainingLength()).toBe(length);
       index++;
       length--;
 
       while (length != 0) {
-        expect(parser.extract8BitUint()).toBe(0xaa);
+        expect(parser.extract8BitUInt()).toBe(0xaa);
         expect(parser.getCurrentIndex()).toBe(index);
         expect(parser.getUnparsedRemainingLength()).toBe(length);
         index++;
@@ -173,7 +173,7 @@ describe("ApduParser", () => {
       expect(parser.getCurrentIndex()).toBe(index);
       expect(parser.getUnparsedRemainingLength()).toBe(length);
 
-      const value = parser.extract8BitUint();
+      const value = parser.extract8BitUInt();
       index++;
       length--;
       expect(value).toBe(1);
@@ -306,7 +306,7 @@ describe("ApduParser", () => {
 
       expect(parser.testMinimalLength(1)).toBe(false);
 
-      expect(parser.extract8BitUint()).toBeUndefined();
+      expect(parser.extract8BitUInt()).toBeUndefined();
       expect(parser.getCurrentIndex()).toBe(index);
       expect(parser.getUnparsedRemainingLength()).toBe(length);
 
@@ -399,7 +399,7 @@ describe("ApduParser", () => {
       expect(parser.getCurrentIndex()).toBe(index);
       expect(parser.getUnparsedRemainingLength()).toBe(length);
 
-      const value = parser.extract8BitUint();
+      const value = parser.extract8BitUInt();
       expect(value).toBe(0);
       expect(parser.getCurrentIndex()).toBe(1);
       expect(parser.getUnparsedRemainingLength()).toBe(0);
