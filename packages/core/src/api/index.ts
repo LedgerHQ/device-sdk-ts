@@ -39,6 +39,7 @@ export {
   type DeviceActionIntermediateValue,
   type ExecuteDeviceActionReturnType,
 } from "@api/device-action/DeviceAction";
+export { type InternalApi } from "@api/device-action/DeviceAction";
 export {
   type DeviceActionState,
   DeviceActionStatus,
@@ -76,5 +77,14 @@ export {
   type OpenAppDAOutput,
   type OpenAppDAState,
 } from "@api/device-action/os/OpenAppDeviceAction/types";
+export { SendCommandInAppDeviceAction } from "@api/device-action/os/SendCommandInAppDeviceAction/SendCommandInAppDeviceAction";
+export {
+  type SendCommandInAppDAError,
+  type SendCommandInAppDAInput,
+  type SendCommandInAppDAIntermediateValue,
+  type SendCommandInAppDAOutput,
+} from "@api/device-action/os/SendCommandInAppDeviceAction/SendCommandInAppDeviceActionTypes";
+export { type StateMachineTypes } from "@api/device-action/xstate-utils/StateMachineTypes";
+export { XStateDeviceAction } from "@api/device-action/xstate-utils/XStateDeviceAction";
 export { type DeviceSessionState } from "@api/device-session/DeviceSessionState";
 export { type SdkError } from "@api/Error";

@@ -1,62 +1,68 @@
+import { Grid } from "@ledgerhq/react-ui";
+import React, { useMemo } from "react";
+
 import { useSdk } from "@/providers/DeviceSdkProvider";
-import { useDeviceSessionsContext } from "@/providers/DeviceSessionsProvider";
-import { Grid } from "@ledgerhq/react-ui/index";
-import { PageWithHeader } from "../PageWithHeader";
-import { useMemo } from "react";
-import Command, { CommandProps } from "../CommandsView/Command";
-import { useRouter } from "next/navigation";
-import { GetAddressCommand } from "@ledgerhq/keyring-eth/internal/app-binder/command/GetAddressCommand.js";
+import {
+  GetAddressDAError,
+  GetAddressDAIntermediateValue,
+  GetAddressDAOutput,
+  KeyringEthBuilder,
+} from "@ledgerhq/keyring-eth";
+import {
+  DeviceAction,
+  DeviceActionProps,
+} from "@/components/DeviceActionsView/DeviceAction";
+import { PageWithHeader } from "@/components/PageWithHeader";
 
-export const KeyringEthView = () => {
+export const KeyringEthView: React.FC<{ sessionId: string }> = ({
+  sessionId,
+}) => {
   const sdk = useSdk();
-  const router = useRouter();
-
-  const {
-    state: { selectedId: selectedSessionId },
-  } = useDeviceSessionsContext();
-
-  // TODO: replace command with keyring,
-  // Commands are internal to the keyring-eth package
-  // and users should use the keyring instead
+  const keyring = new KeyringEthBuilder({ sdk, sessionId }).build();
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const commands: CommandProps<any, any>[] = useMemo(
-    () =>
-      !selectedSessionId
-        ? []
-        : [
-            {
-              title: "Get address",
-              description: "Get ETH address from the device",
-              sendCommand: (args) => {
-                const command = new GetAddressCommand(args);
-                return sdk.sendCommand({
-                  sessionId: selectedSessionId,
-                  command,
-                });
-              },
-              initialValues: {
-                checkOnDevice: false,
-                returnChainCode: false,
-                derivationPath: "44'/60'/0'/0/0",
-              },
-            },
-          ],
+  const deviceActions: DeviceActionProps<any, any, any, any>[] = useMemo(
+    () => [
+      {
+        title: "Get address",
+        description:
+          "Perform all the actions necessary to get an ethereum address from the device",
+        executeDeviceAction: ({
+          derivationPath,
+          checkOnDevice,
+          returnChainCode,
+        }) => {
+          return keyring.getAddress(derivationPath, {
+            checkOnDevice,
+            returnChainCode,
+          });
+        },
+        initialValues: {
+          derivationPath: "44'/60'/0'/0/0",
+          checkOnDevice: false,
+          returnChainCode: false,
+        },
+      } satisfies DeviceActionProps<
+        GetAddressDAOutput,
+        {
+          derivationPath: string;
+          checkOnDevice?: boolean;
+          returnChainCode?: boolean;
+        },
+        GetAddressDAError,
+        GetAddressDAIntermediateValue
+      >,
+    ],
     [],
   );
 
-  if (!selectedSessionId) {
-    router.replace("/");
-    return null;
-  }
-
   return (
-    <PageWithHeader title="Keyrings">
+    <PageWithHeader title="Device Actions">
       <Grid columns={1} rowGap={6} overflowY="scroll">
-        {commands.map((command) => (
-          <Command
-            key={`${command.title}_${command.description}`} // if this is not unique we have another problem
-            {...command}
+        {deviceActions.map((deviceAction) => (
+          <DeviceAction
+            key={`${deviceAction.title}_${deviceAction.description}`}
+            {...deviceAction}
           />
         ))}
       </Grid>

@@ -2,8 +2,8 @@ import { ContextModule } from "@ledgerhq/context-module";
 import { DeviceSdk, DeviceSessionId } from "@ledgerhq/device-sdk-core";
 import { Container } from "inversify";
 
+import { GetAddressDAReturnType } from "@api/app-binder/GetAddressDeviceActionTypes";
 import { KeyringEth } from "@api/KeyringEth";
-import { Address } from "@api/model/Address";
 import { AddressOptions } from "@api/model/AddressOptions";
 import { Signature } from "@api/model/Signature";
 import { Transaction } from "@api/model/Transaction";
@@ -64,10 +64,10 @@ export class DefaultKeyringEth implements KeyringEth {
       .execute(_derivationPath, _typedData);
   }
 
-  async getAddress(
+  getAddress(
     _derivationPath: string,
     _options?: AddressOptions,
-  ): Promise<Address> {
+  ): GetAddressDAReturnType {
     return this._container
       .get<GetAddressUseCase>(addressTypes.GetAddressUseCase)
       .execute(_derivationPath, _options);

@@ -141,6 +141,7 @@ export function DeviceActionDrawer<
             valueSelector={valueSelector}
             disabled={loading}
           />
+          <Divider />
           <Switch
             checked={inspect}
             disabled={loading}

@@ -1,6 +1,6 @@
 import { inject, injectable } from "inversify";
 
-import { Address } from "@api/model/Address";
+import { GetAddressDAReturnType } from "@api/app-binder/GetAddressDeviceActionTypes";
 import { AddressOptions } from "@api/model/AddressOptions";
 import { appBinderTypes } from "@internal/app-binder/di/appBinderTypes";
 import { EthAppBinder } from "@internal/app-binder/EthAppBinder";
@@ -13,10 +13,10 @@ export class GetAddressUseCase {
     this._appBinder = appBinder;
   }
 
-  async execute(
+  execute(
     derivationPath: string,
     options?: AddressOptions,
-  ): Promise<Address> {
+  ): GetAddressDAReturnType {
     return this._appBinder.getAddress({
       derivationPath,
       checkOnDevice: options?.checkOnDevice,

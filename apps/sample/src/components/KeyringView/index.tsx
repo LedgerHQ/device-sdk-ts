@@ -21,7 +21,7 @@ export const KeyringView = () => {
 
   return (
     <PageWithHeader title="Keyrings">
-      <Grid columns={3} rowGap={6} columnGap={6} overflowY="scroll">
+      <Grid columns={2} rowGap={6} columnGap={6} overflowY="scroll">
         {SUPPORTED_KEYRINGS.map(({ title, description, icon }) => (
           <ClickableListItem
             key={`keyring-${title}`}

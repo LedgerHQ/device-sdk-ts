@@ -36,8 +36,12 @@ export function testDeviceActionStates<
       done(error);
     },
     complete: () => {
-      expect(observedStates).toEqual(expectedStates);
-      done();
+      try {
+        expect(observedStates).toEqual(expectedStates);
+        done();
+      } catch (e) {
+        done(e);
+      }
     },
   });
   return { observable, cancel };

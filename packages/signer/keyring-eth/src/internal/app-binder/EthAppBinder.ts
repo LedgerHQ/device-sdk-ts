@@ -1,13 +1,12 @@
 import { DeviceSdk, type DeviceSessionId } from "@ledgerhq/device-sdk-core";
+import { SendCommandInAppDeviceAction } from "@ledgerhq/device-sdk-core";
+import { UserInteractionRequired } from "@ledgerhq/device-sdk-core";
 import { inject, injectable } from "inversify";
 
-import { Address } from "@api/model/Address";
+import { GetAddressDAReturnType } from "@api/app-binder/GetAddressDeviceActionTypes";
 import { externalTypes } from "@internal/externalTypes";
 
-import {
-  GetAddressCommand,
-  GetAddressCommandResponse,
-} from "./command/GetAddressCommand";
+import { GetAddressCommand } from "./command/GetAddressCommand";
 
 @injectable()
 export class EthAppBinder {
@@ -22,23 +21,22 @@ export class EthAppBinder {
     this._sessionId = sessionId;
   }
 
-  async getAddress(args: {
+  getAddress(args: {
     derivationPath: string;
     checkOnDevice?: boolean;
     returnChainCode?: boolean;
-  }): Promise<Address> {
-    // TODO: replace with a DeviceAction
-    const command = new GetAddressCommand(args);
-
-    const response: GetAddressCommandResponse = await this._sdk.sendCommand({
+  }): GetAddressDAReturnType {
+    return this._sdk.executeDeviceAction({
       sessionId: this._sessionId,
-      command,
+      deviceAction: new SendCommandInAppDeviceAction({
+        input: {
+          command: new GetAddressCommand(args),
+          appName: "Ethereum",
+          requiredUserInteraction: args.checkOnDevice
+            ? UserInteractionRequired.VerifyAddress
+            : UserInteractionRequired.None,
+        },
+      }),
     });
-
-    return {
-      address: response.address,
-      publicKey: response.publicKey,
-      chainCode: response.chainCode,
-    };
   }
 }
