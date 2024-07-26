@@ -10,14 +10,10 @@ import { ApduReceiverService } from "@internal/device-session/service/ApduReceiv
 import { ApduSenderService } from "@internal/device-session/service/ApduSenderService";
 import { loggerTypes } from "@internal/logger-publisher/di/loggerTypes";
 import type { LoggerPublisherService } from "@internal/logger-publisher/service/LoggerPublisherService";
-import { RECONNECT_DEVICE_TIMEOUT } from "@internal/transport/usb/data/UsbHidConfig";
-import {
-  HidSendReportError,
-  ReconnectionFailedError,
-} from "@internal/usb/model/Errors";
+import { DeviceConnection } from "@internal/transport/model/DeviceConnection";
 import { ReconnectionFailedError } from "@internal/transport/model/Errors";
-
-import { DeviceConnection } from "./DeviceConnection";
+import { HidSendReportError } from "@internal/transport/model/Errors";
+import { RECONNECT_DEVICE_TIMEOUT } from "@internal/transport/usb/data/UsbHidConfig";
 
 type UsbHidDeviceConnectionConstructorArgs = {
   device: HIDDevice;

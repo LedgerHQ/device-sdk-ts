@@ -17,8 +17,6 @@ import { deviceModelTypes } from "@internal/device-model/di/deviceModelTypes";
 import { InternalDeviceModel } from "@internal/device-model/model/DeviceModel";
 import { loggerTypes } from "@internal/logger-publisher/di/loggerTypes";
 import type { LoggerPublisherService } from "@internal/logger-publisher/service/LoggerPublisherService";
-import { LEDGER_VENDOR_ID } from "@internal/transport/usb/data/UsbHidConfig";
-import { usbDiTypes } from "@internal/transport/usb/di/usbDiTypes";
 import { DisconnectHandler } from "@internal/transport/model/DeviceConnection";
 import {
   ConnectError,
@@ -32,9 +30,10 @@ import {
 } from "@internal/transport/model/Errors";
 import { InternalConnectedDevice } from "@internal/transport/model/InternalConnectedDevice";
 import { InternalDiscoveredDevice } from "@internal/transport/model/InternalDiscoveredDevice";
+import { LEDGER_VENDOR_ID } from "@internal/transport/usb/data/UsbHidConfig";
+import { usbDiTypes } from "@internal/transport/usb/di/usbDiTypes";
 import { UsbHidDeviceConnectionFactory } from "@internal/transport/usb/service/UsbHidDeviceConnectionFactory";
 import { UsbHidDeviceConnection } from "@internal/transport/usb/transport/UsbHidDeviceConnection";
-import { DisconnectHandler } from "@internal/transport/model/DeviceConnection";
 
 // An attempt to manage the state of several devices with one transport. Not final.
 type WebHidInternalDevice = {
@@ -59,8 +58,6 @@ export class WebUsbHidTransport implements Transport {
   private _connectionListenersAbortController: AbortController;
   private _logger: LoggerPublisherService;
   private _usbHidDeviceConnectionFactory: UsbHidDeviceConnectionFactory;
-  private _deviceDisconnectionTimerSubscription: Maybe<Subscription> =
-    Maybe.zero();
   private readonly connectionType: ConnectionType = "USB";
   private readonly identifier: TransportIdentifier = BuiltinTransports.USB;
 
