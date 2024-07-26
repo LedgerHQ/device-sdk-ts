@@ -1,7 +1,7 @@
 import { inject, injectable, multiInject } from "inversify";
 
-import type { DeviceSessionId } from "@api/types";
 import type { Transport } from "@api/transport/model/Transport";
+import type { DeviceSessionId } from "@api/types";
 import { deviceSessionTypes } from "@internal/device-session/di/deviceSessionTypes";
 import type { DeviceSessionService } from "@internal/device-session/service/DeviceSessionService";
 import { loggerTypes } from "@internal/logger-publisher/di/loggerTypes";

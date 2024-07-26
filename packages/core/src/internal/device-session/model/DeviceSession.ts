@@ -6,12 +6,12 @@ import { CommandResult } from "@api/command/model/CommandResult";
 import { ListAppsResponse } from "@api/command/os/ListAppsCommand";
 import { CommandUtils } from "@api/command/utils/CommandUtils";
 import { DeviceStatus } from "@api/device/DeviceStatus";
-import { ApduResponse } from "@api/device-session/ApduResponse";
 import {
   DeviceAction,
   DeviceActionIntermediateValue,
   ExecuteDeviceActionReturnType,
 } from "@api/device-action/DeviceAction";
+import { ApduResponse } from "@api/device-session/ApduResponse";
 import {
   DeviceSessionState,
   DeviceSessionStateType,
