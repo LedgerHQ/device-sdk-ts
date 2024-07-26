@@ -9,9 +9,8 @@ import { ApduReceiverService } from "@internal/device-session/service/ApduReceiv
 import { ApduSenderService } from "@internal/device-session/service/ApduSenderService";
 import { loggerTypes } from "@internal/logger-publisher/di/loggerTypes";
 import type { LoggerPublisherService } from "@internal/logger-publisher/service/LoggerPublisherService";
-import { ReconnectionFailedError } from "@internal/transport/model/Errors";
-
 import { DeviceConnection } from "@internal/transport/model/DeviceConnection";
+import { ReconnectionFailedError } from "@internal/transport/model/Errors";
 
 type UsbHidDeviceConnectionConstructorArgs = {
   device: HIDDevice;
