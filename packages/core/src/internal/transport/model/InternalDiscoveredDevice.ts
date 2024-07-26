@@ -1,6 +1,6 @@
 import { DeviceId } from "@api/device/DeviceModel";
-import { InternalDeviceModel } from "@internal/device-model/model/DeviceModel";
 import { TransportIdentifier } from "@api/transport/model/TransportIdentifier";
+import { InternalDeviceModel } from "@internal/device-model/model/DeviceModel";
 
 /**
  * A discovered / scanned (not yet connected to) device.

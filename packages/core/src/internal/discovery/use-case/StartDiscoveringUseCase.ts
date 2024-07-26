@@ -29,7 +29,9 @@ export class StartDiscoveringUseCase {
     private transports: Transport[],
   ) {}
 
-  private mapDiscoveredDevice(device: InternalDiscoveredDevice): DiscoveredDevice {
+  private mapDiscoveredDevice(
+    device: InternalDiscoveredDevice,
+  ): DiscoveredDevice {
     const deviceModel = new DeviceModel({
       id: device.id,
       model: device.deviceModel.id,
@@ -52,15 +54,17 @@ export class StartDiscoveringUseCase {
       if (!instance) {
         throw new TransportNotSupportedError(new Error("Unknown transport"));
       }
-      return instance.startDiscovering().pipe(
-        map((device) => this.mapDiscoveredDevice(device)),
-      );
+      return instance
+        .startDiscovering()
+        .pipe(map((device) => this.mapDiscoveredDevice(device)));
     } else {
       // Discover from all transports in parallel
       return of(...this.transports).pipe(
-        mergeMap((instance) => instance.startDiscovering().pipe(
-          map((device) => this.mapDiscoveredDevice(device)),
-        )),
+        mergeMap((instance) =>
+          instance
+            .startDiscovering()
+            .pipe(map((device) => this.mapDiscoveredDevice(device))),
+        ),
       );
     }
   }
