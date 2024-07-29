@@ -1,8 +1,8 @@
+import { HexaString, isHexaString } from "@ledgerhq/device-sdk-core";
 import { inject, injectable } from "inversify";
 
 import { ContextLoader } from "@/shared/domain/ContextLoader";
 import { ClearSignContext } from "@/shared/model/ClearSignContext";
-import { HexString, isHexString } from "@/shared/model/HexString";
 import { TransactionContext } from "@/shared/model/TransactionContext";
 import type { TokenDataSource } from "@/token/data/TokenDataSource";
 import { tokenTypes } from "@/token/di/tokenTypes";
@@ -12,7 +12,7 @@ export enum ERC20_SUPPORTED_SELECTORS {
   Transfer = "0xa9059cbb",
 }
 
-const SUPPORTED_SELECTORS: HexString[] = Object.values(
+const SUPPORTED_SELECTORS: HexaString[] = Object.values(
   ERC20_SUPPORTED_SELECTORS,
 );
 
@@ -31,7 +31,7 @@ export class TokenContextLoader implements ContextLoader {
 
     const selector = transaction.data.slice(0, 10);
 
-    if (!isHexString(selector)) {
+    if (!isHexaString(selector)) {
       return [{ type: "error", error: new Error("Invalid selector") }];
     }
 
@@ -55,7 +55,7 @@ export class TokenContextLoader implements ContextLoader {
     ];
   }
 
-  private isSelectorSupported(selector: HexString) {
+  private isSelectorSupported(selector: HexaString) {
     return Object.values(SUPPORTED_SELECTORS).includes(selector);
   }
 }

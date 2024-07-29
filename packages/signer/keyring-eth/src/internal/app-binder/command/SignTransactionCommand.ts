@@ -7,6 +7,7 @@ import {
   ApduResponse,
   type Command,
   CommandUtils,
+  HexaString,
   InvalidStatusWordError,
 } from "@ledgerhq/device-sdk-core";
 import { Just } from "purify-ts";
@@ -20,8 +21,8 @@ const S_LENGTH = 32;
 
 export type SignTransactionCommandResponse = Maybe<{
   v: number;
-  r: `0x${string}`;
-  s: `0x${string}`;
+  r: HexaString;
+  s: HexaString;
 }>;
 
 export type SignTransactionCommandArgs = {
@@ -104,20 +105,26 @@ export class SignTransactionCommand
       return Nothing;
     }
 
-    const r = parser.encodeToHexaString(parser.extractFieldByLength(R_LENGTH));
+    const r = parser.encodeToHexaString(
+      parser.extractFieldByLength(R_LENGTH),
+      true,
+    );
     if (!r) {
       throw new InvalidStatusWordError("R is missing");
     }
 
-    const s = parser.encodeToHexaString(parser.extractFieldByLength(S_LENGTH));
+    const s = parser.encodeToHexaString(
+      parser.extractFieldByLength(S_LENGTH),
+      true,
+    );
     if (!s) {
       throw new InvalidStatusWordError("S is missing");
     }
 
     return Just({
       v,
-      r: `0x${r}`,
-      s: `0x${s}`,
+      r,
+      s,
     });
   }
 

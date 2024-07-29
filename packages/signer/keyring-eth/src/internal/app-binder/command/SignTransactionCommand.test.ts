@@ -2,8 +2,9 @@ import {
   ApduResponse,
   InvalidStatusWordError,
 } from "@ledgerhq/device-sdk-core";
-import { SignTransactionCommand } from "./SignTransactionCommand";
 import { Just, Nothing } from "purify-ts";
+
+import { SignTransactionCommand } from "./SignTransactionCommand";
 
 const SIGN_TRANSACTION_APDU_WITHOUT_DATA_FIRST = new Uint8Array([
   0xe0, 0x04, 0x00, 0x00, 0x15, 0x05, 0x80, 0x00, 0x00, 0x2c, 0x80, 0x00, 0x00,

@@ -1,13 +1,13 @@
-import { isHexString } from "./HexString";
+import { isHexaString } from "./HexaString";
 
-describe("HexString", () => {
-  describe("isHexString function", () => {
+describe("HexaString", () => {
+  describe("isHexaString function", () => {
     it("should return true if the value is a valid hex string", () => {
       // GIVEN
       const value = "0x1234abc";
 
       // WHEN
-      const result = isHexString(value);
+      const result = isHexaString(value);
 
       // THEN
       expect(result).toBeTruthy();
@@ -18,7 +18,7 @@ describe("HexString", () => {
       const value = "0x";
 
       // WHEN
-      const result = isHexString(value);
+      const result = isHexaString(value);
 
       // THEN
       expect(result).toBeTruthy();
@@ -29,7 +29,7 @@ describe("HexString", () => {
       const value = "0x1234z";
 
       // WHEN
-      const result = isHexString(value);
+      const result = isHexaString(value);
 
       // THEN
       expect(result).toBeFalsy();
@@ -40,7 +40,7 @@ describe("HexString", () => {
       const value = "1234abc";
 
       // WHEN
-      const result = isHexString(value);
+      const result = isHexaString(value);
 
       // THEN
       expect(result).toBeFalsy();
@@ -51,7 +51,7 @@ describe("HexString", () => {
       const value = "";
 
       // WHEN
-      const result = isHexString(value);
+      const result = isHexaString(value);
 
       // THEN
       expect(result).toBeFalsy();

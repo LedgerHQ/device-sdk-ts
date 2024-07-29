@@ -7,6 +7,7 @@ import {
   type Command,
   CommandUtils,
   InvalidStatusWordError,
+  isHexaString,
 } from "@ledgerhq/device-sdk-core";
 
 import {
@@ -82,9 +83,15 @@ export class GetAddressCommand
       throw new InvalidStatusWordError("Ethereum address is missing");
     }
 
-    const address = parser.encodeToString(
+    const result = parser.encodeToString(
       parser.extractFieldByLength(addressLength),
     );
+
+    const address = `0x${result}`;
+
+    if (isHexaString(address) === false) {
+      throw new InvalidStatusWordError("Invalid Ethereum address");
+    }
 
     let chainCode = undefined;
     if (this.args.returnChainCode) {
@@ -99,7 +106,7 @@ export class GetAddressCommand
 
     return {
       publicKey,
-      address: `0x${address}`,
+      address,
       chainCode,
     };
   }

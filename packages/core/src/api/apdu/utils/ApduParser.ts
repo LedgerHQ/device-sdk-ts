@@ -1,4 +1,5 @@
 import { ApduResponse } from "@api/device-session/ApduResponse";
+import { HexaString } from "@api/utils/HexaString";
 
 export type TaggedField = {
   readonly tag: number;
@@ -127,20 +128,23 @@ export class ApduParser {
    * @param prefix {boolean} - Whether to add a prefix to the encoded value
    * @returns {string} - The encoded value as a hexadecimal string
    */
-  encodeToHexaString(value?: Uint8Array, prefix?: boolean): string {
+  encodeToHexaString(value?: Uint8Array, prefix?: false): string;
+  encodeToHexaString(value?: Uint8Array, prefix?: true): HexaString;
+  encodeToHexaString(
+    value?: Uint8Array,
+    prefix: boolean = false,
+  ): HexaString | string {
     let result = "";
     let index = 0;
 
     if (!value) return result;
-
-    if (prefix) result += "0x";
 
     while (index <= value.length) {
       const item = value[index]?.toString(16);
       if (item) result += item.length < 2 ? "0" + item : item;
       index++;
     }
-    return result;
+    return prefix ? `0x${result}` : result;
   }
 
   /**

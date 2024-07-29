@@ -1,11 +1,11 @@
+import { HexaString } from "@ledgerhq/device-sdk-core";
 import { Either } from "purify-ts";
 
 import { DappInfos } from "@/external-plugin/model/DappInfos";
-import { HexString } from "@/shared/model/HexString";
 
 export type GetDappInfos = {
   address: string;
-  selector: HexString;
+  selector: HexaString;
   chainId: number;
 };
 

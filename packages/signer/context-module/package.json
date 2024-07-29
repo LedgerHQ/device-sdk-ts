@@ -41,6 +41,7 @@
     "typecheck": "tsc --noEmit"
   },
   "devDependencies": {
+    "@ledgerhq/device-sdk-core": "workspace:*",
     "@ledgerhq/eslint-config-dsdk": "workspace:*",
     "@ledgerhq/jest-config-dsdk": "workspace:*",
     "@ledgerhq/prettier-config-dsdk": "workspace:*",
@@ -53,5 +54,8 @@
     "inversify": "^6.0.2",
     "purify-ts": "^2.1.0",
     "reflect-metadata": "^0.2.2"
+  },
+  "peerDependencies": {
+    "@ledgerhq/device-sdk-core": "workspace:*"
   }
 }
