@@ -26,6 +26,9 @@ describe("EthersV5TransactionMapper", () => {
         value: EthersV5BigNumber.from(0),
         data: "0x",
       };
+      const serialized = new Uint8Array([
+        0xc9, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x01, 0x80, 0x80,
+      ]);
 
       // WHEN
       const result = mapper.map(transaction);
@@ -33,9 +36,12 @@ describe("EthersV5TransactionMapper", () => {
       // THEN
       expect(result).toEqual(
         Just({
-          chainId: 1,
-          to: undefined,
-          data: "0x",
+          subset: {
+            chainId: 1,
+            to: undefined,
+            data: "0x",
+          },
+          serialized,
         }),
       );
     });
@@ -50,6 +56,9 @@ describe("EthersV5TransactionMapper", () => {
         data: "0x",
         to: "0x",
       };
+      const serialized = new Uint8Array([
+        0xc9, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x01, 0x80, 0x80,
+      ]);
 
       // WHEN
       const result = mapper.map(transaction);
@@ -57,9 +66,12 @@ describe("EthersV5TransactionMapper", () => {
       // THEN
       expect(result).toEqual(
         Just({
-          chainId: 1,
-          to: "0x",
-          data: "0x",
+          subset: {
+            chainId: 1,
+            to: "0x",
+            data: "0x",
+          },
+          serialized,
         }),
       );
     });
@@ -81,6 +93,9 @@ describe("EthersV5TransactionMapper", () => {
         maxFeePerGas: EthersV5BigNumber.from(0),
         maxPriorityFeePerGas: EthersV5BigNumber.from(0),
       };
+      const serialized = new Uint8Array([
+        0xc9, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x01, 0x80, 0x80,
+      ]);
 
       // WHEN
       const result = mapper.map(transaction);
@@ -88,9 +103,12 @@ describe("EthersV5TransactionMapper", () => {
       // THEN
       expect(result).toEqual(
         Just({
-          chainId: 1,
-          to: undefined,
-          data: "0x",
+          subset: {
+            chainId: 1,
+            to: undefined,
+            data: "0x",
+          },
+          serialized,
         }),
       );
     });

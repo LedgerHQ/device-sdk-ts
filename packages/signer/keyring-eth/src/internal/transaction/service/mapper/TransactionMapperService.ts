@@ -1,10 +1,10 @@
-import { TransactionSubset } from "@ledgerhq/context-module";
 import { injectable, multiInject } from "inversify";
 import { Either, Left, Right } from "purify-ts";
 
 import { Transaction } from "@api/index";
 import { transactionTypes } from "@internal/transaction/di/transactionTypes";
 
+import { TransactionMapperResult } from "./model/TransactionMapperResult";
 import { TransactionMapper } from "./TransactionMapper";
 
 @injectable()
@@ -20,7 +20,7 @@ export class TransactionMapperService {
 
   mapTransactionToSubset(
     transaction: Transaction,
-  ): Either<Error, TransactionSubset> {
+  ): Either<Error, TransactionMapperResult> {
     for (const mapper of this._mappers) {
       const result = mapper.map(transaction);
       if (result.isJust()) {

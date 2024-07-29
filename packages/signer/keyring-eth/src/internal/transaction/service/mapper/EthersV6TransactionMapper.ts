@@ -1,20 +1,24 @@
-import { TransactionSubset } from "@ledgerhq/context-module";
-import { Transaction as EthersV6Transaction } from "ethers-v6";
+import { getBytes, Transaction as EthersV6Transaction } from "ethers-v6";
 import { injectable } from "inversify";
 import { Just, Maybe, Nothing } from "purify-ts";
 
 import { Transaction } from "@api/index";
 
+import { TransactionMapperResult } from "./model/TransactionMapperResult";
 import { TransactionMapper } from "./TransactionMapper";
 
 @injectable()
 export class EthersV6TransactionMapper implements TransactionMapper {
-  map(transaction: Transaction): Maybe<TransactionSubset> {
+  map(transaction: Transaction): Maybe<TransactionMapperResult> {
     if (this.isEthersV6Transaction(transaction)) {
+      const serialized = getBytes(transaction.unsignedSerialized);
       return Just({
-        chainId: Number(transaction.chainId.toString()),
-        to: transaction.to ?? undefined,
-        data: transaction.data,
+        subset: {
+          chainId: Number(transaction.chainId.toString()),
+          to: transaction.to ?? undefined,
+          data: transaction.data,
+        },
+        serialized,
       });
     }
 
