@@ -1,3 +1,4 @@
+import { HexaString, isHexaString } from "@ledgerhq/device-sdk-core";
 import { ethers } from "ethers";
 import { Interface } from "ethers/lib/utils";
 import { inject, injectable } from "inversify";
@@ -7,7 +8,6 @@ import type { ExternalPluginDataSource } from "@/external-plugin/data/ExternalPl
 import { externalPluginTypes } from "@/external-plugin/di/externalPluginTypes";
 import { ContextLoader } from "@/shared/domain/ContextLoader";
 import { ClearSignContext } from "@/shared/model/ClearSignContext";
-import { HexString, isHexString } from "@/shared/model/HexString";
 import { TransactionContext } from "@/shared/model/TransactionContext";
 import type { TokenDataSource } from "@/token/data/TokenDataSource";
 import { tokenTypes } from "@/token/di/tokenTypes";
@@ -33,7 +33,7 @@ export class ExternalPluginContextLoader implements ContextLoader {
 
     const selector = transaction.data.slice(0, 10);
 
-    if (!isHexString(selector)) {
+    if (!isHexaString(selector)) {
       return [{ type: "error" as const, error: new Error("Invalid selector") }];
     }
 
@@ -144,7 +144,7 @@ export class ExternalPluginContextLoader implements ContextLoader {
   private getAddressFromPath(
     path: string,
     decodedCallData: ethers.utils.Result,
-  ): HexString {
+  ): HexaString {
     // ethers.utils.Result is a record string, any
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     let value: any = decodedCallData;
@@ -160,7 +160,7 @@ export class ExternalPluginContextLoader implements ContextLoader {
       }
     }
 
-    if (!isHexString(value)) {
+    if (!isHexaString(value)) {
       throw new Error(
         "[ContextModule] ExternalPluginContextLoader: Unable to get address",
       );

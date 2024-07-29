@@ -88,3 +88,4 @@ export { type StateMachineTypes } from "@api/device-action/xstate-utils/StateMac
 export { XStateDeviceAction } from "@api/device-action/xstate-utils/XStateDeviceAction";
 export { type DeviceSessionState } from "@api/device-session/DeviceSessionState";
 export { type SdkError } from "@api/Error";
+export { isHexaString } from "@api/utils/HexaString";

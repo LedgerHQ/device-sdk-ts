@@ -1,1 +1,3 @@
-export type Signature = { r: `0x${string}`; s: `0x${string}`; v: number };
+import { HexaString } from "@ledgerhq/device-sdk-core";
+
+export type Signature = { r: HexaString; s: HexaString; v: number };

@@ -1,5 +1,7 @@
+import { HexaString } from "@ledgerhq/device-sdk-core";
+
 export type Address = {
-  address: `0x${string}`;
+  address: HexaString;
   publicKey: string;
   chainCode?: string;
 };
