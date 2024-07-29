@@ -1,145 +1,27 @@
 import { Left, Right } from "purify-ts";
-import { assign, createMachine } from "xstate";
 
+import { DeviceStatus } from "@api/device/DeviceStatus";
+import {
+  BTC_APP,
+  BTC_APP_METADATA,
+  CUSTOM_LOCK_SCREEN_APP,
+  CUSTOM_LOCK_SCREEN_APP_METADATA,
+  ETH_APP,
+  ETH_APP_METADATA,
+} from "@api/device-action/__test-utils__/data";
 import { makeInternalApiMock } from "@api/device-action/__test-utils__/makeInternalApi";
+import { setupListAppsMock } from "@api/device-action/__test-utils__/setupTestMachine";
 import { testDeviceActionStates } from "@api/device-action/__test-utils__/testDeviceActionStates";
 import { DeviceActionStatus } from "@api/device-action/model/DeviceActionState";
 import { UserInteractionRequired } from "@api/device-action/model/UserInteractionRequired";
 import { UnknownDAError } from "@api/device-action/os/Errors";
-import { ListAppsDeviceAction } from "@api/device-action/os/ListApps/ListAppsDeviceAction";
-import { AppType } from "@internal/manager-api/model/ManagerApiResponses";
+import { DeviceSessionStateType } from "@api/device-session/DeviceSessionState";
+import { FetchError } from "@internal/manager-api/model/Errors";
 
 import { ListAppsWithMetadataDeviceAction } from "./ListAppsWithMetadataDeviceAction";
 import { ListAppsWithMetadataDAState } from "./types";
 
 jest.mock("@api/device-action/os/ListApps/ListAppsDeviceAction");
-
-const BTC_APP = {
-  appEntryLength: 77,
-  appSizeInBlocks: 3227,
-  appCodeHash:
-    "924b5ba590971b3e98537cf8241f0aa51b1e6f26c37915dd38b83255168255d5",
-  appFullHash:
-    "81e73bd232ef9b26c00a152cb291388fb3ded1a2db6b44f53b3119d91d2879bb",
-  appName: "Bitcoin",
-};
-
-const BTC_APP_METADATA = {
-  versionId: 36248,
-  versionName: "Bitcoin",
-  versionDisplayName: "Bitcoin",
-  version: "2.2.2",
-  currencyId: "bitcoin",
-  description: "",
-  applicationType: AppType.currency,
-  dateModified: "2024-04-08T11:31:34.847313Z",
-  icon: "bitcoin",
-  authorName: " Ledger",
-  supportURL:
-    "https://support.ledger.com/hc/en-us/articles/115005195945-Bitcoin-BTC-",
-  contactURL: "mailto:https://support.ledger.com/hc/en-us/requests/new",
-  sourceURL: "https://github.com/LedgerHQ/app-bitcoin-new",
-  compatibleWallets:
-    '[         {           "name": "Electrum",           "url": "https://electrum.org/#home"         }       ]',
-  hash: "81e73bd232ef9b26c00a152cb291388fb3ded1a2db6b44f53b3119d91d2879bb",
-  perso: "perso_11",
-  firmware: "stax/1.4.0-rc2/bitcoin/app_2.2.2",
-  firmwareKey: "stax/1.4.0-rc2/bitcoin/app_2.2.2_key",
-  delete: "stax/1.4.0-rc2/bitcoin/app_2.2.2_del",
-  deleteKey: "stax/1.4.0-rc2/bitcoin/app_2.2.2_del_key",
-  bytes: 103264,
-  warning: null,
-  isDevTools: false,
-  category: 1,
-  parent: null,
-  parentName: null,
-};
-
-// const CUSTOM_LOCK_SCREEN_APP = {
-//   appEntryLength: 70,
-//   appSizeInBlocks: 1093,
-//   appCodeHash:
-//     "0000000000000000000000000000000000000000000000000000000000000000",
-//   appFullHash:
-//     "5602b3d3fdde77fc02eb451a8beec4155bcf8b83ced794d7b3c63afaed5ff8c6",
-//   appName: "",
-// };
-
-// const CUSTOM_LOCK_SCREEN_APP_METADATA = null;
-
-// const ETH_APP = {
-//   appEntryLength: 78,
-//   appSizeInBlocks: 4120,
-//   appCodeHash:
-//     "4fdb751c0444f3a982c2ae9dcfde6ebe6dab03613d496f5e53cf91bce8ca46b5",
-//   appFullHash:
-//     "c7507c742ce3f8ec446b1ebda18159a5d432241a7199c3fc2401e72adfa9ab38",
-//   appName: "Ethereum",
-// };
-
-// const ETH_APP_METADATA = {
-//   versionId: 36185,
-//   versionName: "Ethereum",
-//   versionDisplayName: "Ethereum",
-//   version: "1.10.4",
-//   currencyId: "ethereum",
-//   description: "",
-//   applicationType: AppType.currency,
-//   dateModified: "2024-04-09T12:28:55.783551Z",
-//   icon: "ethereum",
-//   authorName: " Ledger",
-//   supportURL:
-//     "https://support.ledger.com/hc/en-us/articles/360009576554-Ethereum-ETH-",
-//   contactURL: "mailto:https://support.ledger.com/hc/en-us/requests/new",
-//   sourceURL: "https://github.com/LedgerHQ/app-ethereum",
-//   compatibleWallets:
-//     '[  {           "name": "Metamask",           "url": "https://metamask.io/"         },    {           "name": "Phantom",           "url": "https://phantom.app/"         }, {           "name": "Rabby",           "url": "https://rabby.io/"         }, {           "name": "Rainbow",           "url": "https://rainbow.me/"         },   {           "name": "MyCrypto",           "url": "https://www.ledger.com/mycrypto/"         },         {           "name": "MyEtherWallet",           "url": "https://www.ledger.com/myetherwallet/"         }       ]',
-//   hash: "c7507c742ce3f8ec446b1ebda18159a5d432241a7199c3fc2401e72adfa9ab38",
-//   perso: "perso_11",
-//   firmware: "stax/1.4.0-rc3/ethereum/app_1.10.4",
-//   firmwareKey: "stax/1.4.0-rc3/ethereum/app_1.10.4_key",
-//   delete: "stax/1.4.0-rc3/ethereum/app_1.10.4_del",
-//   deleteKey: "stax/1.4.0-rc3/ethereum/app_1.10.4_del_key",
-//   bytes: 131852,
-//   warning: "",
-//   isDevTools: false,
-//   category: 1,
-//   parent: null,
-//   parentName: null,
-// };
-
-type App = typeof BTC_APP;
-
-const setupListAppsMock = (apps: App[], error = false) => {
-  (ListAppsDeviceAction as jest.Mock).mockImplementation(() => ({
-    makeStateMachine: jest.fn().mockImplementation(() =>
-      createMachine({
-        id: "MockListAppsDeviceAction",
-        initial: "ready",
-        states: {
-          ready: {
-            after: {
-              0: "done",
-            },
-            entry: assign({
-              intermediateValue: () => ({
-                requiredUserInteraction: UserInteractionRequired.AllowListApps,
-              }),
-            }),
-          },
-          done: {
-            type: "final",
-          },
-        },
-        output: () => {
-          return error
-            ? Left(new UnknownDAError("ListApps failed"))
-            : Right(apps);
-        },
-      }),
-    ),
-  }));
-};
 
 describe("ListAppsWithMetadataDeviceAction", () => {
   const {
@@ -147,6 +29,18 @@ describe("ListAppsWithMetadataDeviceAction", () => {
     // getDeviceSessionState: apiGetDeviceSessionStateMock,
     // setDeviceSessionState: apiSetDeviceSessionStateMock,
   } = makeInternalApiMock();
+
+  const saveSessionStateMock = jest.fn();
+  const getDeviceSessionStateMock = jest.fn();
+  const getAppsByHashMock = jest.fn();
+
+  function extractDependenciesMock() {
+    return {
+      getAppsByHash: getAppsByHashMock,
+      getDeviceSessionState: getDeviceSessionStateMock,
+      saveSessionState: saveSessionStateMock,
+    };
+  }
 
   beforeEach(() => {
     jest.resetAllMocks();
@@ -160,7 +54,9 @@ describe("ListAppsWithMetadataDeviceAction", () => {
           input: {},
         });
 
-      jest.spyOn(managerApiServiceMock, "getAppsByHash").mockResolvedValue([]);
+      jest
+        .spyOn(managerApiServiceMock, "getAppsByHash")
+        .mockResolvedValue(Right([]));
 
       const expectedStates: Array<ListAppsWithMetadataDAState> = [
         {
@@ -198,7 +94,7 @@ describe("ListAppsWithMetadataDeviceAction", () => {
 
       jest
         .spyOn(managerApiServiceMock, "getAppsByHash")
-        .mockResolvedValue([BTC_APP_METADATA]);
+        .mockResolvedValue(Right([BTC_APP_METADATA]));
 
       const expectedStates: Array<ListAppsWithMetadataDAState> = [
         {
@@ -217,13 +113,13 @@ describe("ListAppsWithMetadataDeviceAction", () => {
           intermediateValue: {
             requiredUserInteraction: UserInteractionRequired.None,
           },
-          status: DeviceActionStatus.Pending, // ListAppsChecks
+          status: DeviceActionStatus.Pending, // FetchMetadata
         },
         {
           intermediateValue: {
             requiredUserInteraction: UserInteractionRequired.None,
           },
-          status: DeviceActionStatus.Pending, // Success
+          status: DeviceActionStatus.Pending, // SaveSession
         },
         {
           status: DeviceActionStatus.Completed,
@@ -238,7 +134,298 @@ describe("ListAppsWithMetadataDeviceAction", () => {
         done,
       );
     });
+
+    it("should run the device actions with 2 apps installed", (done) => {
+      setupListAppsMock([BTC_APP, ETH_APP]);
+      const listAppsWithMetadataDeviceAction =
+        new ListAppsWithMetadataDeviceAction({
+          input: {},
+        });
+
+      jest
+        .spyOn(managerApiServiceMock, "getAppsByHash")
+        .mockResolvedValue(Right([BTC_APP_METADATA, ETH_APP_METADATA]));
+
+      const expectedStates: Array<ListAppsWithMetadataDAState> = [
+        {
+          intermediateValue: {
+            requiredUserInteraction: UserInteractionRequired.None,
+          },
+          status: DeviceActionStatus.Pending, // Ready
+        },
+        {
+          intermediateValue: {
+            requiredUserInteraction: UserInteractionRequired.AllowListApps,
+          },
+          status: DeviceActionStatus.Pending, // ListAppsDeviceAction
+        },
+        {
+          intermediateValue: {
+            requiredUserInteraction: UserInteractionRequired.None,
+          },
+          status: DeviceActionStatus.Pending, // FetchMetadata
+        },
+        {
+          intermediateValue: {
+            requiredUserInteraction: UserInteractionRequired.None,
+          },
+          status: DeviceActionStatus.Pending, // SaveSession
+        },
+        {
+          status: DeviceActionStatus.Completed,
+          output: [BTC_APP_METADATA, ETH_APP_METADATA],
+        },
+      ];
+
+      testDeviceActionStates(
+        listAppsWithMetadataDeviceAction,
+        expectedStates,
+        makeInternalApiMock(),
+        done,
+      );
+    });
+
+    it("should run the device actions with 1 app installed and a custom lock screen", (done) => {
+      setupListAppsMock([BTC_APP, CUSTOM_LOCK_SCREEN_APP]);
+      const listAppsWithMetadataDeviceAction =
+        new ListAppsWithMetadataDeviceAction({
+          input: {},
+        });
+
+      jest
+        .spyOn(managerApiServiceMock, "getAppsByHash")
+        .mockResolvedValue(
+          Right([BTC_APP_METADATA, CUSTOM_LOCK_SCREEN_APP_METADATA]),
+        );
+
+      const expectedStates: Array<ListAppsWithMetadataDAState> = [
+        {
+          intermediateValue: {
+            requiredUserInteraction: UserInteractionRequired.None,
+          },
+          status: DeviceActionStatus.Pending, // Ready
+        },
+        {
+          intermediateValue: {
+            requiredUserInteraction: UserInteractionRequired.AllowListApps,
+          },
+          status: DeviceActionStatus.Pending, // ListAppsDeviceAction
+        },
+        {
+          intermediateValue: {
+            requiredUserInteraction: UserInteractionRequired.None,
+          },
+          status: DeviceActionStatus.Pending, // FetchMetadata
+        },
+        {
+          intermediateValue: {
+            requiredUserInteraction: UserInteractionRequired.None,
+          },
+          status: DeviceActionStatus.Pending, // SaveSession
+        },
+        {
+          status: DeviceActionStatus.Completed,
+          output: [BTC_APP_METADATA, CUSTOM_LOCK_SCREEN_APP_METADATA],
+        },
+      ];
+
+      testDeviceActionStates(
+        listAppsWithMetadataDeviceAction,
+        expectedStates,
+        makeInternalApiMock(),
+        done,
+      );
+    });
   });
 
-  // TODO: finish testing
+  describe("error case", () => {
+    it("should error when ListApps fails", (done) => {
+      setupListAppsMock([], true);
+      const listAppsWithMetadataDeviceAction =
+        new ListAppsWithMetadataDeviceAction({
+          input: {},
+        });
+
+      const expectedStates: Array<ListAppsWithMetadataDAState> = [
+        {
+          intermediateValue: {
+            requiredUserInteraction: UserInteractionRequired.None,
+          },
+          status: DeviceActionStatus.Pending, // Ready
+        },
+        {
+          intermediateValue: {
+            requiredUserInteraction: UserInteractionRequired.AllowListApps,
+          },
+          status: DeviceActionStatus.Pending, // ListAppsDeviceAction
+        },
+        {
+          status: DeviceActionStatus.Error,
+          error: new UnknownDAError("ListApps failed"),
+        },
+      ];
+
+      testDeviceActionStates(
+        listAppsWithMetadataDeviceAction,
+        expectedStates,
+        makeInternalApiMock(),
+        done,
+      );
+    });
+
+    it("should error when getAppsByHash rejects", (done) => {
+      setupListAppsMock([BTC_APP]);
+      const listAppsWithMetadataDeviceAction =
+        new ListAppsWithMetadataDeviceAction({
+          input: {},
+        });
+
+      jest
+        .spyOn(managerApiServiceMock, "getAppsByHash")
+        .mockRejectedValue(new UnknownDAError("getAppsByHash failed"));
+
+      const expectedStates: Array<ListAppsWithMetadataDAState> = [
+        {
+          intermediateValue: {
+            requiredUserInteraction: UserInteractionRequired.None,
+          },
+          status: DeviceActionStatus.Pending, // Ready
+        },
+        {
+          intermediateValue: {
+            requiredUserInteraction: UserInteractionRequired.AllowListApps,
+          },
+          status: DeviceActionStatus.Pending, // ListAppsDeviceAction
+        },
+        {
+          intermediateValue: {
+            requiredUserInteraction: UserInteractionRequired.None,
+          },
+          status: DeviceActionStatus.Pending, // FetchMetadata
+        },
+        {
+          status: DeviceActionStatus.Error,
+          error: new UnknownDAError("getAppsByHash failed"),
+        },
+      ];
+
+      testDeviceActionStates(
+        listAppsWithMetadataDeviceAction,
+        expectedStates,
+        makeInternalApiMock(),
+        done,
+      );
+    });
+
+    it("should error when getAppsByHash fails but error is known", (done) => {
+      setupListAppsMock([BTC_APP]);
+      const listAppsWithMetadataDeviceAction =
+        new ListAppsWithMetadataDeviceAction({
+          input: {},
+        });
+
+      const error = new FetchError(new Error("Failed to fetch data"));
+
+      jest
+        .spyOn(managerApiServiceMock, "getAppsByHash")
+        .mockResolvedValue(Left(error));
+
+      const expectedStates: Array<ListAppsWithMetadataDAState> = [
+        {
+          intermediateValue: {
+            requiredUserInteraction: UserInteractionRequired.None,
+          },
+          status: DeviceActionStatus.Pending, // Ready
+        },
+        {
+          intermediateValue: {
+            requiredUserInteraction: UserInteractionRequired.AllowListApps,
+          },
+          status: DeviceActionStatus.Pending, // ListAppsDeviceAction
+        },
+        {
+          intermediateValue: {
+            requiredUserInteraction: UserInteractionRequired.None,
+          },
+          status: DeviceActionStatus.Pending, // FetchMetadata
+        },
+        {
+          status: DeviceActionStatus.Error,
+          error,
+        },
+      ];
+
+      testDeviceActionStates(
+        listAppsWithMetadataDeviceAction,
+        expectedStates,
+        makeInternalApiMock(),
+        done,
+      );
+    });
+
+    it("should error when SaveSession fails", (done) => {
+      setupListAppsMock([BTC_APP]);
+      const listAppsWithMetadataDeviceAction =
+        new ListAppsWithMetadataDeviceAction({
+          input: {},
+        });
+
+      getAppsByHashMock.mockImplementation(async () =>
+        Promise.resolve(Right([BTC_APP_METADATA])),
+      );
+
+      jest
+        .spyOn(listAppsWithMetadataDeviceAction, "extractDependencies")
+        .mockReturnValue(extractDependenciesMock());
+
+      getDeviceSessionStateMock.mockReturnValue({
+        sessionStateType: DeviceSessionStateType.ReadyWithoutSecureChannel,
+        deviceStatus: DeviceStatus.CONNECTED,
+        currentApp: "BOLOS",
+        installedApps: [],
+      });
+
+      saveSessionStateMock.mockImplementation(() => {
+        throw new UnknownDAError("SaveSession failed");
+      });
+
+      const expectedStates: Array<ListAppsWithMetadataDAState> = [
+        {
+          intermediateValue: {
+            requiredUserInteraction: UserInteractionRequired.None,
+          },
+          status: DeviceActionStatus.Pending, // Ready
+        },
+        {
+          intermediateValue: {
+            requiredUserInteraction: UserInteractionRequired.AllowListApps,
+          },
+          status: DeviceActionStatus.Pending, // ListAppsDeviceAction
+        },
+        {
+          intermediateValue: {
+            requiredUserInteraction: UserInteractionRequired.None,
+          },
+          status: DeviceActionStatus.Pending, // FetchMetadata
+        },
+        {
+          intermediateValue: {
+            requiredUserInteraction: UserInteractionRequired.None,
+          },
+          status: DeviceActionStatus.Pending, // SaveSession
+        },
+        {
+          status: DeviceActionStatus.Error,
+          error: new UnknownDAError("SaveSession failed"),
+        },
+      ];
+
+      testDeviceActionStates(
+        listAppsWithMetadataDeviceAction,
+        expectedStates,
+        makeInternalApiMock(),
+        done,
+      );
+    });
+  });
 });

@@ -9,7 +9,7 @@ import {
 import { SdkError } from "@api/Error";
 import { ApplicationEntity } from "@internal/manager-api/model/ManagerApiResponses";
 
-export type ListAppsWithMetadataDAOutput = ApplicationEntity[];
+export type ListAppsWithMetadataDAOutput = Array<ApplicationEntity | null>;
 export type ListAppsWithMetadataDAInput = ListAppsDAInput;
 
 export type ListAppsWithMetadataDAError =

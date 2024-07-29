@@ -1,54 +1,16 @@
-import { Left, Right } from "purify-ts";
-import { assign, createMachine } from "xstate";
-
 import { DeviceStatus } from "@api/device/DeviceStatus";
 import { makeInternalApiMock } from "@api/device-action/__test-utils__/makeInternalApi";
+import { setupGetDeviceStatusMock } from "@api/device-action/__test-utils__/setupTestMachine";
 import { testDeviceActionStates } from "@api/device-action/__test-utils__/testDeviceActionStates";
 import { DeviceActionStatus } from "@api/device-action/model/DeviceActionState";
 import { UserInteractionRequired } from "@api/device-action/model/UserInteractionRequired";
 import { UnknownDAError } from "@api/device-action/os/Errors";
-import { GetDeviceStatusDeviceAction } from "@api/device-action/os/GetDeviceStatus/GetDeviceStatusDeviceAction";
 import { DeviceSessionStateType } from "@api/device-session/DeviceSessionState";
-import { SdkError } from "@api/Error";
 
 import { GoToDashboardDeviceAction } from "./GoToDashboardDeviceAction";
 import { GoToDashboardDAState } from "./types";
 
 jest.mock("@api/device-action/os/GetDeviceStatus/GetDeviceStatusDeviceAction");
-
-const setupGetDeviceStatusMock = (
-  output: { currentApp: string; currentAppVersion: string } | SdkError = {
-    currentApp: "BOLOS",
-    currentAppVersion: "1.0.0",
-  },
-) => {
-  (GetDeviceStatusDeviceAction as jest.Mock).mockImplementation(() => ({
-    makeStateMachine: jest.fn().mockImplementation(() =>
-      createMachine({
-        id: "MockGetDeviceStatusDeviceAction",
-        initial: "ready",
-        states: {
-          ready: {
-            after: {
-              0: "done",
-            },
-            entry: assign({
-              intermediateValue: () => ({
-                requiredUserInteraction: UserInteractionRequired.None,
-              }),
-            }),
-          },
-          done: {
-            type: "final",
-          },
-        },
-        output: () => {
-          return "currentApp" in output ? Right(output) : Left(output);
-        },
-      }),
-    ),
-  }));
-};
 
 describe("GoToDashboardDeviceAction", () => {
   const closeAppMock = jest.fn();

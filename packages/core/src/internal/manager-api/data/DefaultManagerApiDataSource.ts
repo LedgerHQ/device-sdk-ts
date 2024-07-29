@@ -1,8 +1,10 @@
 import axios from "axios";
 import { inject, injectable } from "inversify";
+import { EitherAsync } from "purify-ts";
 
 import { type SdkConfig } from "@api/SdkConfig";
 import { managerApiTypes } from "@internal/manager-api/di/managerApiTypes";
+import { FetchError } from "@internal/manager-api/model/Errors";
 import { ApplicationEntity } from "@internal/manager-api/model/ManagerApiResponses";
 
 import { ManagerApiDataSource } from "./ManagerApiDataSource";
@@ -14,9 +16,16 @@ export class DefaultManagerApiDataSource implements ManagerApiDataSource {
     this.baseUrl = config.managerApiUrl;
   }
 
-  getAppsByHash(hashes: string[]) {
-    return axios
-      .post<ApplicationEntity[]>(`${this.baseUrl}/v2/apps/hash`, hashes)
-      .then((res) => res.data);
+  getAppsByHash(
+    hashes: string[],
+  ): EitherAsync<FetchError, Array<ApplicationEntity | null>> {
+    return EitherAsync(() =>
+      axios.post<Array<ApplicationEntity | null>>(
+        `${this.baseUrl}/v2/apps/hash`,
+        hashes,
+      ),
+    )
+      .map((res) => res.data)
+      .mapLeft((error) => new FetchError(error));
   }
 }

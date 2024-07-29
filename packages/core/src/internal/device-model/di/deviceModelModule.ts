@@ -8,9 +8,7 @@ type FactoryProps = {
   stub: boolean;
 };
 
-export const deviceModelModuleFactory = ({
-  stub = false,
-}: Partial<FactoryProps> = {}) =>
+export const deviceModelModuleFactory = ({ stub }: FactoryProps) =>
   new ContainerModule((bind, _unbind, _isBound, _rebind) => {
     bind(deviceModelTypes.DeviceModelDataSource).to(
       StaticDeviceModelDataSource,

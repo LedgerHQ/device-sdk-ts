@@ -2,6 +2,7 @@ import { Container } from "inversify";
 
 import { DefaultManagerApiDataSource } from "@internal/manager-api/data/DefaultManagerApiDataSource";
 import { DefaultManagerApiService } from "@internal/manager-api/service/DefaultManagerApiService";
+import { StubUseCase } from "@root/src/di.stub";
 
 import { managerApiModuleFactory } from "./managerApiModule";
 import { managerApiTypes } from "./managerApiTypes";
@@ -13,6 +14,7 @@ describe("managerApiModuleFactory", () => {
     let mod: ReturnType<typeof managerApiModuleFactory>;
     beforeEach(() => {
       mod = managerApiModuleFactory({
+        stub: false,
         config: { managerApiUrl: "http://fake.url" },
       });
       container = new Container();
@@ -23,7 +25,7 @@ describe("managerApiModuleFactory", () => {
       expect(mod).toBeDefined();
     });
 
-    it("should return none mocked use cases", () => {
+    it("should return none stubbed use cases", () => {
       const managerApiDataSource = container.get(
         managerApiTypes.ManagerApiDataSource,
       );
@@ -33,6 +35,38 @@ describe("managerApiModuleFactory", () => {
         managerApiTypes.ManagerApiService,
       );
       expect(managerApiService).toBeInstanceOf(DefaultManagerApiService);
+
+      const config = container.get(managerApiTypes.SdkConfig);
+      expect(config).toEqual({ managerApiUrl: "http://fake.url" });
+    });
+  });
+
+  describe("Stubbed", () => {
+    let container: Container;
+    let mod: ReturnType<typeof managerApiModuleFactory>;
+    beforeEach(() => {
+      mod = managerApiModuleFactory({
+        stub: true,
+        config: { managerApiUrl: "http://fake.url" },
+      });
+      container = new Container();
+      container.load(mod);
+    });
+
+    it("should return the config module", () => {
+      expect(mod).toBeDefined();
+    });
+
+    it("should return stubbed use cases", () => {
+      const managerApiDataSource = container.get(
+        managerApiTypes.ManagerApiDataSource,
+      );
+      expect(managerApiDataSource).toBeInstanceOf(StubUseCase);
+
+      const managerApiService = container.get(
+        managerApiTypes.ManagerApiService,
+      );
+      expect(managerApiService).toBeInstanceOf(StubUseCase);
 
       const config = container.get(managerApiTypes.SdkConfig);
       expect(config).toEqual({ managerApiUrl: "http://fake.url" });

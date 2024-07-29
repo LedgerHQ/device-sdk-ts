@@ -1,23 +1,92 @@
+import axios from "axios";
+import { Left, Right } from "purify-ts";
+
+import {
+  BTC_APP,
+  BTC_APP_METADATA,
+  CUSTOM_LOCK_SCREEN_APP,
+  CUSTOM_LOCK_SCREEN_APP_METADATA,
+} from "@api/device-action/__test-utils__/data";
 import { MANAGER_API_BASE_URL } from "@internal/manager-api//model/Const";
+import { FetchError } from "@internal/manager-api/model/Errors";
 
 import { DefaultManagerApiDataSource } from "./DefaultManagerApiDataSource";
 
+jest.mock("axios");
+
 describe("DefaultManagerApiDataSource", () => {
-  it("fetch data", async () => {
-    const api = new DefaultManagerApiDataSource({
-      managerApiUrl: MANAGER_API_BASE_URL,
+  describe("getAppsByHash", () => {
+    describe("success cases", () => {
+      it("with BTC app, should return the metadata", async () => {
+        const api = new DefaultManagerApiDataSource({
+          managerApiUrl: MANAGER_API_BASE_URL,
+        });
+
+        jest.spyOn(axios, "post").mockResolvedValue({
+          data: [BTC_APP_METADATA],
+        });
+
+        const hashes = [BTC_APP.appFullHash];
+
+        const apps = await api.getAppsByHash(hashes);
+
+        expect(apps).toEqual(Right([BTC_APP_METADATA]));
+      });
+
+      it("with no apps, should return an empty list", async () => {
+        const api = new DefaultManagerApiDataSource({
+          managerApiUrl: MANAGER_API_BASE_URL,
+        });
+
+        jest.spyOn(axios, "post").mockResolvedValue({
+          data: [],
+        });
+
+        const hashes: string[] = [];
+
+        const apps = await api.getAppsByHash(hashes);
+
+        expect(apps).toEqual(Right([]));
+      });
+
+      it("with BTC app and custom lock screen, should return the metadata", async () => {
+        const api = new DefaultManagerApiDataSource({
+          managerApiUrl: MANAGER_API_BASE_URL,
+        });
+
+        jest.spyOn(axios, "post").mockResolvedValue({
+          data: [BTC_APP_METADATA, CUSTOM_LOCK_SCREEN_APP_METADATA],
+        });
+
+        const hashes = [
+          BTC_APP.appFullHash,
+          CUSTOM_LOCK_SCREEN_APP.appFullHash,
+        ];
+
+        const apps = await api.getAppsByHash(hashes);
+
+        expect(apps).toEqual(
+          Right([BTC_APP_METADATA, CUSTOM_LOCK_SCREEN_APP_METADATA]),
+        );
+      });
     });
 
-    // appFullHash from the ListApps/ListAppsContinue command's response
-    const hashes = [
-      "c7507c742ce3f8ec446b1ebda18159a5d432241a7199c3fc2401e72adfa9ab38",
-    ];
+    describe("error cases", () => {
+      it("should throw an error if the request fails", async () => {
+        const api = new DefaultManagerApiDataSource({
+          managerApiUrl: MANAGER_API_BASE_URL,
+        });
+        const err = new Error("fetch error");
+        jest.spyOn(axios, "post").mockRejectedValue(err);
 
-    const apps = await api.getAppsByHash(hashes);
-    console.log(apps);
+        const hashes = [BTC_APP.appFullHash];
 
-    expect(apps).toHaveLength(1);
+        try {
+          await api.getAppsByHash(hashes);
+        } catch (error) {
+          expect(error).toEqual(Left(new FetchError(err)));
+        }
+      });
+    });
   });
-
-  // TODO: finish testing
 });

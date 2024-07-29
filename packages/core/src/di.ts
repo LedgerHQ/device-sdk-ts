@@ -12,6 +12,7 @@ import { deviceSessionModuleFactory } from "@internal/device-session/di/deviceSe
 import { discoveryModuleFactory } from "@internal/discovery/di/discoveryModule";
 import { loggerModuleFactory } from "@internal/logger-publisher/di/loggerModule";
 import { managerApiModuleFactory } from "@internal/manager-api/di/managerApiModule";
+import { MANAGER_API_BASE_URL } from "@internal/manager-api/model/Const";
 import { sendModuleFactory } from "@internal/send/di/sendModule";
 import { usbModuleFactory } from "@internal/usb/di/usbModule";
 
@@ -19,16 +20,16 @@ import { usbModuleFactory } from "@internal/usb/di/usbModule";
 // const logger = makeLoggerMiddleware();
 
 export type MakeContainerProps = {
-  stub: boolean;
-  loggers: LoggerSubscriberService[];
+  stub?: boolean;
+  loggers?: LoggerSubscriberService[];
   config: SdkConfig;
 };
 
 export const makeContainer = ({
   stub = false,
   loggers = [],
-  config,
-}: Partial<MakeContainerProps>) => {
+  config = { managerApiUrl: MANAGER_API_BASE_URL },
+}: MakeContainerProps) => {
   const container = new Container();
 
   // Uncomment this line to enable the logger middleware

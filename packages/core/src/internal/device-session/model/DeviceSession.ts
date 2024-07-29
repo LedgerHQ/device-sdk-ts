@@ -1,4 +1,3 @@
-// import { inject } from "inversify";
 import { BehaviorSubject } from "rxjs";
 import { v4 as uuidv4 } from "uuid";
 
@@ -57,12 +56,10 @@ export class DeviceSession {
             isPolling: true,
             triggersDisconnection: false,
           }),
-        updateStateFn: (fn) => {
+        updateStateFn: (callback) => {
           const state = this._deviceState.getValue();
-          this.setDeviceSessionState(fn(state));
+          this.setDeviceSessionState(callback(state));
         },
-        // updateStateFn: (state: DeviceSessionState) =>
-        //   this.setDeviceSessionState(state),
       },
       loggerModuleFactory("device-session-refresher"),
     );

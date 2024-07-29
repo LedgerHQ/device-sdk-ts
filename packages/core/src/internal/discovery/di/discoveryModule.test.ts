@@ -17,14 +17,14 @@ describe("discoveryModuleFactory", () => {
   let container: Container;
   let mod: ReturnType<typeof discoveryModuleFactory>;
   beforeEach(() => {
-    mod = discoveryModuleFactory();
+    mod = discoveryModuleFactory({ stub: false });
     container = new Container();
     container.load(
       mod,
       // The following modules are injected into discovery module
       loggerModuleFactory(),
-      usbModuleFactory(),
-      deviceModelModuleFactory(),
+      usbModuleFactory({ stub: false }),
+      deviceModelModuleFactory({ stub: false }),
       deviceSessionModuleFactory(),
       managerApiModuleFactory({
         config: { managerApiUrl: "http://fake.url" },

@@ -15,9 +15,7 @@ type FactoryProps = {
   stub: boolean;
 };
 
-export const configModuleFactory = ({
-  stub = false,
-}: Partial<FactoryProps> = {}) =>
+export const configModuleFactory = ({ stub }: FactoryProps) =>
   new ContainerModule((bind, _unbind, _isBound, rebind) => {
     bind(configTypes.LocalConfigDataSource).to(FileLocalConfigDataSource);
     bind(configTypes.RemoteConfigDataSource).to(RestRemoteConfigDataSource);

@@ -13,7 +13,7 @@ describe("configModuleFactory", () => {
     let container: Container;
     let mod: ReturnType<typeof configModuleFactory>;
     beforeEach(() => {
-      mod = configModuleFactory();
+      mod = configModuleFactory({ stub: false });
       container = new Container();
       container.load(mod);
     });

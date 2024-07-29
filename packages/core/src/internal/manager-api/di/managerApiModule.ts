@@ -8,14 +8,11 @@ import { StubUseCase } from "@root/src/di.stub";
 import { managerApiTypes } from "./managerApiTypes";
 
 type FactoryProps = {
-  stub: boolean;
+  stub?: boolean;
   config: SdkConfig;
 };
 
-export const managerApiModuleFactory = ({
-  stub = false,
-  config,
-}: Partial<FactoryProps> = {}) =>
+export const managerApiModuleFactory = ({ stub, config }: FactoryProps) =>
   new ContainerModule((bind, _unbind, _isBound, rebind) => {
     bind(managerApiTypes.SdkConfig).toConstantValue(config);
 

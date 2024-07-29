@@ -49,10 +49,8 @@ describe("GetDeviceStatusDeviceAction", () => {
       });
 
       apiGetDeviceSessionStateMock.mockReturnValue({
-        sessionStateType: DeviceSessionStateType.ReadyWithoutSecureChannel,
+        sessionStateType: DeviceSessionStateType.Connected,
         deviceStatus: DeviceStatus.CONNECTED,
-        currentApp: "mockedCurrentApp",
-        installedApps: [],
       });
 
       sendCommandMock.mockResolvedValue({

@@ -3,8 +3,8 @@ import { assign, createMachine } from "xstate";
 
 import { Apdu } from "@api/apdu/model/Apdu";
 import { ApduBuilder } from "@api/apdu/utils/ApduBuilder";
+import { makeInternalApiMock } from "@api/device-action/__test-utils__/makeInternalApi";
 import { testDeviceActionStates } from "@api/device-action/__test-utils__/testDeviceActionStates";
-import { InternalApi } from "@api/device-action/DeviceAction";
 import {
   DeviceActionState,
   DeviceActionStatus,
@@ -67,15 +67,7 @@ describe("SendCommandInAppDeviceAction", () => {
     sendCommand: sendMyCommand,
   });
 
-  const apiSendCommandMock = jest.fn();
-  const apiGetDeviceSessionStateMock = jest.fn();
-
-  const internalApiMock = (): InternalApi => ({
-    sendCommand: apiSendCommandMock,
-    getDeviceSessionState: apiGetDeviceSessionStateMock,
-    getDeviceSessionStateObservable: jest.fn(),
-    setDeviceSessionState: jest.fn(),
-  });
+  const { sendCommand: apiSendCommandMock } = makeInternalApiMock();
 
   const commandParams = {
     paramString: "aParameter",
@@ -102,7 +94,7 @@ describe("SendCommandInAppDeviceAction", () => {
         },
       });
       await new Promise<void>((resolve, reject) => {
-        deviceAction._execute(internalApiMock()).observable.subscribe({
+        deviceAction._execute(makeInternalApiMock()).observable.subscribe({
           error: () => reject(),
           complete: () => resolve(),
           next: () => {},
@@ -147,7 +139,7 @@ describe("SendCommandInAppDeviceAction", () => {
           },
         }),
         expectedStates,
-        internalApiMock(),
+        makeInternalApiMock(),
         done,
       );
     });
@@ -197,7 +189,7 @@ describe("SendCommandInAppDeviceAction", () => {
       testDeviceActionStates(
         deviceAction,
         expectedStates,
-        internalApiMock(),
+        makeInternalApiMock(),
         done,
       );
     });
@@ -249,7 +241,7 @@ describe("SendCommandInAppDeviceAction", () => {
       testDeviceActionStates(
         deviceAction,
         expectedStates,
-        internalApiMock(),
+        makeInternalApiMock(),
         done,
       );
     });

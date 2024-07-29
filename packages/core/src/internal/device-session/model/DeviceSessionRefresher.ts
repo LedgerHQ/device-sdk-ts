@@ -37,9 +37,12 @@ export type DeviceSessionRefresherArgs = {
   /**
    * Callback that updates the state of the device session with
    * polling response.
-   * @param state - The new state to update to.
+   * @param callback - A function that will take the previous state and return the new state.
+   * @returns void
    */
-  updateStateFn(fn: (state: DeviceSessionState) => DeviceSessionState): void;
+  updateStateFn(
+    callback: (state: DeviceSessionState) => DeviceSessionState,
+  ): void;
 };
 
 /**
