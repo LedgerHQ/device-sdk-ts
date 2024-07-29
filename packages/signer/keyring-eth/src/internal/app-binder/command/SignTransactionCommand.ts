@@ -69,9 +69,9 @@ export class SignTransactionCommand
 
     if (index === 0) {
       // add derivation path to the first packet
-      builder.add8BitUintToData(path.length);
+      builder.add8BitUIntToData(path.length);
       path.forEach((element) => {
-        builder.add32BitUintToData(element);
+        builder.add32BitUIntToData(element);
       });
 
       // add 150 bytes of data minus the path length and the path
@@ -102,7 +102,7 @@ export class SignTransactionCommand
     }
 
     // The data is returned only for the last chunk
-    const v = parser.extract8BitUint();
+    const v = parser.extract8BitUInt();
     if (!v) {
       return Nothing;
     }
