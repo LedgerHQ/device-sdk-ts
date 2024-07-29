@@ -69,6 +69,14 @@ export {
   type ListAppsDAOutput,
   type ListAppsDAState,
 } from "@api/device-action/os/ListApps/types";
+export { ListAppsWithMetadataDeviceAction } from "@api/device-action/os/ListAppsWithMetadata/ListAppsWithMetadataDeviceAction";
+export {
+  type ListAppsWithMetadataDAError,
+  type ListAppsWithMetadataDAInput,
+  type ListAppsWithMetadataDAIntermediateValue,
+  type ListAppsWithMetadataDAOutput,
+  type ListAppsWithMetadataDAState,
+} from "@api/device-action/os/ListAppsWithMetadata/types";
 export { OpenAppDeviceAction } from "@api/device-action/os/OpenAppDeviceAction/OpenAppDeviceAction";
 export {
   type OpenAppDAError,
