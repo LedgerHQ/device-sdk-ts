@@ -9,7 +9,7 @@ describe("StaticDeviceModelDataSource", () => {
       const deviceModels = dataSource.getAllDeviceModels();
 
       // Currently supporting 4 device models
-      expect(deviceModels.length).toEqual(4);
+      expect(deviceModels.length).toEqual(5);
       expect(deviceModels).toContainEqual(
         expect.objectContaining({ id: DeviceModelId.NANO_S }),
       );
@@ -21,6 +21,9 @@ describe("StaticDeviceModelDataSource", () => {
       );
       expect(deviceModels).toContainEqual(
         expect.objectContaining({ id: DeviceModelId.STAX }),
+      );
+      expect(deviceModels).toContainEqual(
+        expect.objectContaining({ id: DeviceModelId.FLEX }),
       );
     });
   });
@@ -55,6 +58,13 @@ describe("StaticDeviceModelDataSource", () => {
       });
       expect(deviceModel4).toEqual(
         expect.objectContaining({ id: DeviceModelId.STAX }),
+      );
+
+      const deviceModel5 = dataSource.getDeviceModel({
+        id: DeviceModelId.FLEX,
+      });
+      expect(deviceModel5).toEqual(
+        expect.objectContaining({ id: DeviceModelId.FLEX }),
       );
     });
   });

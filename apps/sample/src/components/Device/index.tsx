@@ -43,6 +43,17 @@ type DeviceProps = {
   onDisconnect: () => Promise<void>;
 };
 
+function getIconComponent(model: DeviceModelId) {
+  switch (model) {
+    case DeviceModelId.STAX:
+      return Icons.Stax;
+    case DeviceModelId.FLEX:
+      return Icons.Flex;
+    default:
+      return Icons.Nano;
+  }
+}
+
 export const Device: React.FC<DeviceProps> = ({
   name,
   type,
@@ -51,14 +62,11 @@ export const Device: React.FC<DeviceProps> = ({
   sessionId,
 }) => {
   const sessionState = useDeviceSessionState(sessionId);
+  const IconComponent = getIconComponent(model);
   return (
     <Root>
       <IconContainer>
-        {model === DeviceModelId.STAX ? (
-          <Icons.Stax size="S" />
-        ) : (
-          <Icons.Nano size="S" />
-        )}
+        <IconComponent size="S" />
       </IconContainer>
       <Box flex={1}>
         <Text variant="body">{name}</Text>

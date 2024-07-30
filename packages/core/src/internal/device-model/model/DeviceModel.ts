@@ -52,11 +52,11 @@ export class InternalDeviceModel {
         return semver.lt(semver.coerce(firmwareVersion) ?? "", "2.0.0")
           ? 4 * 1024
           : 2 * 1024;
-      case DeviceModelId.NANO_SP:
-        return 32;
       case DeviceModelId.NANO_X:
         return 4 * 1024;
+      case DeviceModelId.NANO_SP:
       case DeviceModelId.STAX:
+      case DeviceModelId.FLEX:
         return 32;
     }
   }
