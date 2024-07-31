@@ -2,6 +2,7 @@ import { BehaviorSubject } from "rxjs";
 import { v4 as uuidv4 } from "uuid";
 
 import { Command } from "@api/command/Command";
+import { ListAppsResponse } from "@api/command/os/ListAppsCommand";
 import { CommandUtils } from "@api/command/utils/CommandUtils";
 import { DeviceStatus } from "@api/device/DeviceStatus";
 import {
@@ -149,7 +150,8 @@ export class DeviceSession {
         this.setDeviceSessionState(state);
         return this._deviceState.getValue();
       },
-      managerApiService: this._managerApiService,
+      getMetadataForAppHashes: (apps: ListAppsResponse) =>
+        this._managerApiService.getAppsByHash(apps),
     });
 
     return {

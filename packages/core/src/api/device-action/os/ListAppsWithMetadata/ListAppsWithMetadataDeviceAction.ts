@@ -16,8 +16,8 @@ import { ListAppsDAOutput } from "@api/device-action/os/ListApps/types";
 import { StateMachineTypes } from "@api/device-action/xstate-utils/StateMachineTypes";
 import { XStateDeviceAction } from "@api/device-action/xstate-utils/XStateDeviceAction";
 import { DeviceSessionState } from "@api/device-session/DeviceSessionState";
-import { FetchError } from "@internal/manager-api/model/Errors";
-import { ApplicationEntity } from "@internal/manager-api/model/ManagerApiResponses";
+import { HttpFetchApiError } from "@internal/manager-api/model/Errors";
+import { Application } from "@internal/manager-api/model/ManagerApiType";
 
 import {
   ListAppsWithMetadataDAError,
@@ -37,7 +37,7 @@ export type MachineDependencies = {
     input,
   }: {
     input: ListAppsDAOutput;
-  }) => EitherAsync<FetchError, Array<ApplicationEntity | null>>;
+  }) => EitherAsync<HttpFetchApiError, Array<Application | null>>;
   getDeviceSessionState: () => DeviceSessionState;
   saveSessionState: (state: DeviceSessionState) => DeviceSessionState;
 };
@@ -87,7 +87,7 @@ export class ListAppsWithMetadataDeviceAction extends XStateDeviceAction<
           }: {
             sendBack: (event: AnyEventObject) => void;
             input: {
-              appsWithMetadata: Array<ApplicationEntity | null>;
+              appsWithMetadata: Array<Application | null>;
             };
           }) => {
             const { appsWithMetadata } = input;
@@ -283,8 +283,7 @@ export class ListAppsWithMetadataDeviceAction extends XStateDeviceAction<
 
   extractDependencies(internalApi: InternalApi): MachineDependencies {
     return {
-      getAppsByHash: ({ input }) =>
-        internalApi.managerApiService.getAppsByHash(input),
+      getAppsByHash: ({ input }) => internalApi.getMetadataForAppHashes(input),
       getDeviceSessionState: () => internalApi.getDeviceSessionState(),
       saveSessionState: (state: DeviceSessionState) =>
         internalApi.setDeviceSessionState(state),

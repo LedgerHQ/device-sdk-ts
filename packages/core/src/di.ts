@@ -12,7 +12,7 @@ import { deviceSessionModuleFactory } from "@internal/device-session/di/deviceSe
 import { discoveryModuleFactory } from "@internal/discovery/di/discoveryModule";
 import { loggerModuleFactory } from "@internal/logger-publisher/di/loggerModule";
 import { managerApiModuleFactory } from "@internal/manager-api/di/managerApiModule";
-import { MANAGER_API_BASE_URL } from "@internal/manager-api/model/Const";
+import { DEFAULT_MANAGER_API_BASE_URL } from "@internal/manager-api/model/Const";
 import { sendModuleFactory } from "@internal/send/di/sendModule";
 import { usbModuleFactory } from "@internal/usb/di/usbModule";
 
@@ -28,7 +28,7 @@ export type MakeContainerProps = {
 export const makeContainer = ({
   stub = false,
   loggers = [],
-  config = { managerApiUrl: MANAGER_API_BASE_URL },
+  config = { managerApiUrl: DEFAULT_MANAGER_API_BASE_URL },
 }: MakeContainerProps) => {
   const container = new Container();
 

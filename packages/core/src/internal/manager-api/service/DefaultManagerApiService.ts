@@ -4,8 +4,8 @@ import { EitherAsync } from "purify-ts";
 import { ListAppsResponse } from "@api/command/os/ListAppsCommand";
 import { type ManagerApiDataSource } from "@internal/manager-api/data/ManagerApiDataSource";
 import { managerApiTypes } from "@internal/manager-api/di/managerApiTypes";
-import { FetchError } from "@internal/manager-api/model/Errors";
-import { ApplicationEntity } from "@internal/manager-api/model/ManagerApiResponses";
+import { HttpFetchApiError } from "@internal/manager-api/model/Errors";
+import { Application } from "@internal/manager-api/model/ManagerApiType";
 
 import { ManagerApiService } from "./ManagerApiService";
 
@@ -27,7 +27,7 @@ export class DefaultManagerApiService implements ManagerApiService {
       return acc;
     }, []);
 
-    return EitherAsync<FetchError, Array<ApplicationEntity | null>>(
+    return EitherAsync<HttpFetchApiError, Array<Application | null>>(
       async ({ fromPromise, throwE }) => {
         if (hashes.length === 0) {
           return [];
@@ -38,11 +38,11 @@ export class DefaultManagerApiService implements ManagerApiService {
           );
           return response;
         } catch (error) {
-          if (error instanceof FetchError) {
+          if (error instanceof HttpFetchApiError) {
             return throwE(error);
           }
 
-          return throwE(new FetchError(error));
+          return throwE(new HttpFetchApiError(error));
         }
       },
     );

@@ -1,4 +1,4 @@
-import { AppType } from "@internal/manager-api/model/ManagerApiResponses";
+import { AppType } from "@internal/manager-api/model/ManagerApiType";
 
 export const BTC_APP = {
   appEntryLength: 77,
@@ -9,6 +9,7 @@ export const BTC_APP = {
     "81e73bd232ef9b26c00a152cb291388fb3ded1a2db6b44f53b3119d91d2879bb",
   appName: "Bitcoin",
 };
+
 export const BTC_APP_METADATA = {
   versionId: 36248,
   versionName: "Bitcoin",
@@ -39,6 +40,7 @@ export const BTC_APP_METADATA = {
   parent: null,
   parentName: null,
 };
+
 export const CUSTOM_LOCK_SCREEN_APP = {
   appEntryLength: 70,
   appSizeInBlocks: 1093,

@@ -1,4 +1,4 @@
-import { MANAGER_API_BASE_URL } from "@internal/manager-api/model/Const";
+import { DEFAULT_MANAGER_API_BASE_URL } from "@internal/manager-api/model/Const";
 
 import { LoggerSubscriberService } from "./logger-subscriber/service/LoggerSubscriberService";
 import { DeviceSdk } from "./DeviceSdk";
@@ -19,7 +19,7 @@ export class LedgerDeviceSdkBuilder {
   private stub = false;
   private readonly loggers: LoggerSubscriberService[] = [];
   private config: SdkConfig = {
-    managerApiUrl: MANAGER_API_BASE_URL,
+    managerApiUrl: DEFAULT_MANAGER_API_BASE_URL,
   };
 
   build(): DeviceSdk {

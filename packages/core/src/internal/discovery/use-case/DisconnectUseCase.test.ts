@@ -5,7 +5,7 @@ import { deviceSessionStubBuilder } from "@internal/device-session/model/DeviceS
 import { DeviceSessionNotFound } from "@internal/device-session/model/Errors";
 import { DefaultDeviceSessionService } from "@internal/device-session/service/DefaultDeviceSessionService";
 import { DefaultLoggerPublisherService } from "@internal/logger-publisher/service/DefaultLoggerPublisherService";
-import { DefaultManagerApiDataSource } from "@internal/manager-api/data/DefaultManagerApiDataSource";
+import { AxiosManagerApiDataSource } from "@internal/manager-api/data/AxiosManagerApiDataSource";
 import { ManagerApiDataSource } from "@internal/manager-api/data/ManagerApiDataSource";
 import { DefaultManagerApiService } from "@internal/manager-api/service/DefaultManagerApiService";
 import { ManagerApiService } from "@internal/manager-api/service/ManagerApiService";
@@ -42,7 +42,7 @@ describe("DisconnectUseCase", () => {
   it("should disconnect from a device", async () => {
     // Given
     const connectedDevice = connectedDeviceStubBuilder();
-    managerApiDataSource = new DefaultManagerApiDataSource({
+    managerApiDataSource = new AxiosManagerApiDataSource({
       managerApiUrl: "http://fake.url",
     });
     managerApi = new DefaultManagerApiService(managerApiDataSource);

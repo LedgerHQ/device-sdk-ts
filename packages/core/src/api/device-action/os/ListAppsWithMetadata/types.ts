@@ -7,9 +7,9 @@ import {
   ListAppsDAIntermediateValue,
 } from "@api/device-action/os/ListApps/types";
 import { SdkError } from "@api/Error";
-import { ApplicationEntity } from "@internal/manager-api/model/ManagerApiResponses";
+import { Application } from "@internal/manager-api/model/ManagerApiType";
 
-export type ListAppsWithMetadataDAOutput = Array<ApplicationEntity | null>;
+export type ListAppsWithMetadataDAOutput = Array<Application | null>;
 export type ListAppsWithMetadataDAInput = ListAppsDAInput;
 
 export type ListAppsWithMetadataDAError =

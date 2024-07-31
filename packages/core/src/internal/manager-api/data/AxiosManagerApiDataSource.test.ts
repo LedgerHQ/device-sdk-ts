@@ -7,19 +7,19 @@ import {
   CUSTOM_LOCK_SCREEN_APP,
   CUSTOM_LOCK_SCREEN_APP_METADATA,
 } from "@api/device-action/__test-utils__/data";
-import { MANAGER_API_BASE_URL } from "@internal/manager-api//model/Const";
-import { FetchError } from "@internal/manager-api/model/Errors";
+import { DEFAULT_MANAGER_API_BASE_URL } from "@internal/manager-api//model/Const";
+import { HttpFetchApiError } from "@internal/manager-api/model/Errors";
 
-import { DefaultManagerApiDataSource } from "./DefaultManagerApiDataSource";
+import { AxiosManagerApiDataSource } from "./AxiosManagerApiDataSource";
 
 jest.mock("axios");
 
-describe("DefaultManagerApiDataSource", () => {
+describe("AxiosManagerApiDataSource", () => {
   describe("getAppsByHash", () => {
     describe("success cases", () => {
       it("with BTC app, should return the metadata", async () => {
-        const api = new DefaultManagerApiDataSource({
-          managerApiUrl: MANAGER_API_BASE_URL,
+        const api = new AxiosManagerApiDataSource({
+          managerApiUrl: DEFAULT_MANAGER_API_BASE_URL,
         });
 
         jest.spyOn(axios, "post").mockResolvedValue({
@@ -34,8 +34,8 @@ describe("DefaultManagerApiDataSource", () => {
       });
 
       it("with no apps, should return an empty list", async () => {
-        const api = new DefaultManagerApiDataSource({
-          managerApiUrl: MANAGER_API_BASE_URL,
+        const api = new AxiosManagerApiDataSource({
+          managerApiUrl: DEFAULT_MANAGER_API_BASE_URL,
         });
 
         jest.spyOn(axios, "post").mockResolvedValue({
@@ -50,8 +50,8 @@ describe("DefaultManagerApiDataSource", () => {
       });
 
       it("with BTC app and custom lock screen, should return the metadata", async () => {
-        const api = new DefaultManagerApiDataSource({
-          managerApiUrl: MANAGER_API_BASE_URL,
+        const api = new AxiosManagerApiDataSource({
+          managerApiUrl: DEFAULT_MANAGER_API_BASE_URL,
         });
 
         jest.spyOn(axios, "post").mockResolvedValue({
@@ -73,8 +73,8 @@ describe("DefaultManagerApiDataSource", () => {
 
     describe("error cases", () => {
       it("should throw an error if the request fails", async () => {
-        const api = new DefaultManagerApiDataSource({
-          managerApiUrl: MANAGER_API_BASE_URL,
+        const api = new AxiosManagerApiDataSource({
+          managerApiUrl: DEFAULT_MANAGER_API_BASE_URL,
         });
         const err = new Error("fetch error");
         jest.spyOn(axios, "post").mockRejectedValue(err);
@@ -84,7 +84,7 @@ describe("DefaultManagerApiDataSource", () => {
         try {
           await api.getAppsByHash(hashes);
         } catch (error) {
-          expect(error).toEqual(Left(new FetchError(err)));
+          expect(error).toEqual(Left(new HttpFetchApiError(err)));
         }
       });
     });

@@ -1,10 +1,10 @@
 import { EitherAsync } from "purify-ts";
 
-import { FetchError } from "@internal/manager-api/model/Errors";
-import { ApplicationEntity } from "@internal/manager-api/model/ManagerApiResponses";
+import { HttpFetchApiError } from "@internal/manager-api/model/Errors";
+import { Application } from "@internal/manager-api/model/ManagerApiType";
 
 export interface ManagerApiDataSource {
   getAppsByHash(
     hashes: string[],
-  ): EitherAsync<FetchError, Array<ApplicationEntity | null>>;
+  ): EitherAsync<HttpFetchApiError, Array<Application | null>>;
 }

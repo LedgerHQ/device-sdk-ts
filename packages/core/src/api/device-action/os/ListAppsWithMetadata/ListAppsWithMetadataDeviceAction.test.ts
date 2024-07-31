@@ -9,14 +9,14 @@ import {
   ETH_APP,
   ETH_APP_METADATA,
 } from "@api/device-action/__test-utils__/data";
-import { makeInternalApiMock } from "@api/device-action/__test-utils__/makeInternalApi";
+import { makeDeviceActionInternalApiMock } from "@api/device-action/__test-utils__/makeInternalApi";
 import { setupListAppsMock } from "@api/device-action/__test-utils__/setupTestMachine";
 import { testDeviceActionStates } from "@api/device-action/__test-utils__/testDeviceActionStates";
 import { DeviceActionStatus } from "@api/device-action/model/DeviceActionState";
 import { UserInteractionRequired } from "@api/device-action/model/UserInteractionRequired";
 import { UnknownDAError } from "@api/device-action/os/Errors";
 import { DeviceSessionStateType } from "@api/device-session/DeviceSessionState";
-import { FetchError } from "@internal/manager-api/model/Errors";
+import { HttpFetchApiError } from "@internal/manager-api/model/Errors";
 
 import { ListAppsWithMetadataDeviceAction } from "./ListAppsWithMetadataDeviceAction";
 import { ListAppsWithMetadataDAState } from "./types";
@@ -25,10 +25,10 @@ jest.mock("@api/device-action/os/ListApps/ListAppsDeviceAction");
 
 describe("ListAppsWithMetadataDeviceAction", () => {
   const {
-    managerApiService: managerApiServiceMock,
+    getMetadataForAppHashes: getMetadataForAppHashesMock,
     // getDeviceSessionState: apiGetDeviceSessionStateMock,
     // setDeviceSessionState: apiSetDeviceSessionStateMock,
-  } = makeInternalApiMock();
+  } = makeDeviceActionInternalApiMock();
 
   const saveSessionStateMock = jest.fn();
   const getDeviceSessionStateMock = jest.fn();
@@ -54,9 +54,7 @@ describe("ListAppsWithMetadataDeviceAction", () => {
           input: {},
         });
 
-      jest
-        .spyOn(managerApiServiceMock, "getAppsByHash")
-        .mockResolvedValue(Right([]));
+      getMetadataForAppHashesMock.mockResolvedValue(Right([]));
 
       const expectedStates: Array<ListAppsWithMetadataDAState> = [
         {
@@ -80,7 +78,7 @@ describe("ListAppsWithMetadataDeviceAction", () => {
       testDeviceActionStates(
         listAppsWithMetadataDeviceAction,
         expectedStates,
-        makeInternalApiMock(),
+        makeDeviceActionInternalApiMock(),
         done,
       );
     });
@@ -92,9 +90,7 @@ describe("ListAppsWithMetadataDeviceAction", () => {
           input: {},
         });
 
-      jest
-        .spyOn(managerApiServiceMock, "getAppsByHash")
-        .mockResolvedValue(Right([BTC_APP_METADATA]));
+      getMetadataForAppHashesMock.mockResolvedValue(Right([BTC_APP_METADATA]));
 
       const expectedStates: Array<ListAppsWithMetadataDAState> = [
         {
@@ -130,7 +126,7 @@ describe("ListAppsWithMetadataDeviceAction", () => {
       testDeviceActionStates(
         listAppsWithMetadataDeviceAction,
         expectedStates,
-        makeInternalApiMock(),
+        makeDeviceActionInternalApiMock(),
         done,
       );
     });
@@ -142,9 +138,9 @@ describe("ListAppsWithMetadataDeviceAction", () => {
           input: {},
         });
 
-      jest
-        .spyOn(managerApiServiceMock, "getAppsByHash")
-        .mockResolvedValue(Right([BTC_APP_METADATA, ETH_APP_METADATA]));
+      getMetadataForAppHashesMock.mockResolvedValue(
+        Right([BTC_APP_METADATA, ETH_APP_METADATA]),
+      );
 
       const expectedStates: Array<ListAppsWithMetadataDAState> = [
         {
@@ -180,7 +176,7 @@ describe("ListAppsWithMetadataDeviceAction", () => {
       testDeviceActionStates(
         listAppsWithMetadataDeviceAction,
         expectedStates,
-        makeInternalApiMock(),
+        makeDeviceActionInternalApiMock(),
         done,
       );
     });
@@ -192,11 +188,9 @@ describe("ListAppsWithMetadataDeviceAction", () => {
           input: {},
         });
 
-      jest
-        .spyOn(managerApiServiceMock, "getAppsByHash")
-        .mockResolvedValue(
-          Right([BTC_APP_METADATA, CUSTOM_LOCK_SCREEN_APP_METADATA]),
-        );
+      getMetadataForAppHashesMock.mockResolvedValue(
+        Right([BTC_APP_METADATA, CUSTOM_LOCK_SCREEN_APP_METADATA]),
+      );
 
       const expectedStates: Array<ListAppsWithMetadataDAState> = [
         {
@@ -232,7 +226,7 @@ describe("ListAppsWithMetadataDeviceAction", () => {
       testDeviceActionStates(
         listAppsWithMetadataDeviceAction,
         expectedStates,
-        makeInternalApiMock(),
+        makeDeviceActionInternalApiMock(),
         done,
       );
     });
@@ -268,7 +262,7 @@ describe("ListAppsWithMetadataDeviceAction", () => {
       testDeviceActionStates(
         listAppsWithMetadataDeviceAction,
         expectedStates,
-        makeInternalApiMock(),
+        makeDeviceActionInternalApiMock(),
         done,
       );
     });
@@ -280,9 +274,9 @@ describe("ListAppsWithMetadataDeviceAction", () => {
           input: {},
         });
 
-      jest
-        .spyOn(managerApiServiceMock, "getAppsByHash")
-        .mockRejectedValue(new UnknownDAError("getAppsByHash failed"));
+      getMetadataForAppHashesMock.mockRejectedValue(
+        new UnknownDAError("getAppsByHash failed"),
+      );
 
       const expectedStates: Array<ListAppsWithMetadataDAState> = [
         {
@@ -312,7 +306,7 @@ describe("ListAppsWithMetadataDeviceAction", () => {
       testDeviceActionStates(
         listAppsWithMetadataDeviceAction,
         expectedStates,
-        makeInternalApiMock(),
+        makeDeviceActionInternalApiMock(),
         done,
       );
     });
@@ -324,11 +318,9 @@ describe("ListAppsWithMetadataDeviceAction", () => {
           input: {},
         });
 
-      const error = new FetchError(new Error("Failed to fetch data"));
+      const error = new HttpFetchApiError(new Error("Failed to fetch data"));
 
-      jest
-        .spyOn(managerApiServiceMock, "getAppsByHash")
-        .mockResolvedValue(Left(error));
+      getMetadataForAppHashesMock.mockResolvedValue(Left(error));
 
       const expectedStates: Array<ListAppsWithMetadataDAState> = [
         {
@@ -358,7 +350,7 @@ describe("ListAppsWithMetadataDeviceAction", () => {
       testDeviceActionStates(
         listAppsWithMetadataDeviceAction,
         expectedStates,
-        makeInternalApiMock(),
+        makeDeviceActionInternalApiMock(),
         done,
       );
     });
@@ -423,7 +415,7 @@ describe("ListAppsWithMetadataDeviceAction", () => {
       testDeviceActionStates(
         listAppsWithMetadataDeviceAction,
         expectedStates,
-        makeInternalApiMock(),
+        makeDeviceActionInternalApiMock(),
         done,
       );
     });

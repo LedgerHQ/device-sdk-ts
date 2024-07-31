@@ -6,7 +6,7 @@ import { DefaultDeviceSessionService } from "@internal/device-session/service/De
 import { DeviceSessionService } from "@internal/device-session/service/DeviceSessionService";
 import { DefaultLoggerPublisherService } from "@internal/logger-publisher/service/DefaultLoggerPublisherService";
 import { LoggerPublisherService } from "@internal/logger-publisher/service/LoggerPublisherService";
-import { DefaultManagerApiDataSource } from "@internal/manager-api/data/DefaultManagerApiDataSource";
+import { AxiosManagerApiDataSource } from "@internal/manager-api/data/AxiosManagerApiDataSource";
 import { ManagerApiDataSource } from "@internal/manager-api/data/ManagerApiDataSource";
 import { DefaultManagerApiService } from "@internal/manager-api/service/DefaultManagerApiService";
 import { ManagerApiService } from "@internal/manager-api/service/ManagerApiService";
@@ -24,7 +24,7 @@ describe("SendCommandUseCase", () => {
   beforeEach(() => {
     logger = new DefaultLoggerPublisherService([], "send-command-use-case");
     sessionService = new DefaultDeviceSessionService(() => logger);
-    managerApiDataSource = new DefaultManagerApiDataSource({
+    managerApiDataSource = new AxiosManagerApiDataSource({
       managerApiUrl: "http://fake.url",
     });
     managerApi = new DefaultManagerApiService(managerApiDataSource);

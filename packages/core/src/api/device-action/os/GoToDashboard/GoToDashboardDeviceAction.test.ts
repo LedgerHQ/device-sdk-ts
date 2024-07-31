@@ -1,5 +1,5 @@
 import { DeviceStatus } from "@api/device/DeviceStatus";
-import { makeInternalApiMock } from "@api/device-action/__test-utils__/makeInternalApi";
+import { makeDeviceActionInternalApiMock } from "@api/device-action/__test-utils__/makeInternalApi";
 import { setupGetDeviceStatusMock } from "@api/device-action/__test-utils__/setupTestMachine";
 import { testDeviceActionStates } from "@api/device-action/__test-utils__/testDeviceActionStates";
 import { DeviceActionStatus } from "@api/device-action/model/DeviceActionState";
@@ -30,7 +30,7 @@ describe("GoToDashboardDeviceAction", () => {
   const {
     sendCommand: sendCommandMock,
     getDeviceSessionState: apiGetDeviceSessionStateMock,
-  } = makeInternalApiMock();
+  } = makeDeviceActionInternalApiMock();
 
   beforeEach(() => {
     jest.resetAllMocks();
@@ -79,7 +79,7 @@ describe("GoToDashboardDeviceAction", () => {
       testDeviceActionStates(
         goToDashboardDeviceAction,
         expectedStates,
-        makeInternalApiMock(),
+        makeDeviceActionInternalApiMock(),
         done,
       );
     });
@@ -146,7 +146,7 @@ describe("GoToDashboardDeviceAction", () => {
       testDeviceActionStates(
         goToDashboardDeviceAction,
         expectedStates,
-        makeInternalApiMock(),
+        makeDeviceActionInternalApiMock(),
         done,
       );
     });
@@ -203,7 +203,7 @@ describe("GoToDashboardDeviceAction", () => {
       testDeviceActionStates(
         goToDashboardDeviceAction,
         expectedStates,
-        makeInternalApiMock(),
+        makeDeviceActionInternalApiMock(),
         done,
       );
     });
@@ -258,7 +258,7 @@ describe("GoToDashboardDeviceAction", () => {
       testDeviceActionStates(
         goToDashboardDeviceAction,
         expectedStates,
-        makeInternalApiMock(),
+        makeDeviceActionInternalApiMock(),
         done,
       );
     });
@@ -301,7 +301,7 @@ describe("GoToDashboardDeviceAction", () => {
       testDeviceActionStates(
         goToDashboardDeviceAction,
         expectedStates,
-        makeInternalApiMock(),
+        makeDeviceActionInternalApiMock(),
         done,
       );
     });
@@ -357,7 +357,7 @@ describe("GoToDashboardDeviceAction", () => {
         testDeviceActionStates(
           goToDashboardDeviceAction,
           expectedStates,
-          makeInternalApiMock(),
+          makeDeviceActionInternalApiMock(),
           done,
         );
       });
@@ -421,7 +421,7 @@ describe("GoToDashboardDeviceAction", () => {
         testDeviceActionStates(
           goToDashboardDeviceAction,
           expectedStates,
-          makeInternalApiMock(),
+          makeDeviceActionInternalApiMock(),
           done,
         );
       });
@@ -486,7 +486,7 @@ describe("GoToDashboardDeviceAction", () => {
         testDeviceActionStates(
           goToDashboardDeviceAction,
           expectedStates,
-          makeInternalApiMock(),
+          makeDeviceActionInternalApiMock(),
           done,
         );
       });
@@ -561,7 +561,7 @@ describe("GoToDashboardDeviceAction", () => {
         testDeviceActionStates(
           goToDashboardDeviceAction,
           expectedStates,
-          makeInternalApiMock(),
+          makeDeviceActionInternalApiMock(),
           done,
         );
       });

@@ -6,21 +6,21 @@ import {
   ETH_APP,
   ETH_APP_METADATA,
 } from "@api/device-action/__test-utils__/data";
-import { MANAGER_API_BASE_URL } from "@internal/manager-api//model/Const";
-import { DefaultManagerApiDataSource } from "@internal/manager-api/data/DefaultManagerApiDataSource";
-import { FetchError } from "@internal/manager-api/model/Errors";
+import { DEFAULT_MANAGER_API_BASE_URL } from "@internal/manager-api//model/Const";
+import { AxiosManagerApiDataSource } from "@internal/manager-api/data/AxiosManagerApiDataSource";
+import { HttpFetchApiError } from "@internal/manager-api/model/Errors";
 
 import { DefaultManagerApiService } from "./DefaultManagerApiService";
 import { ManagerApiService } from "./ManagerApiService";
 
-jest.mock("@internal/manager-api/data/DefaultManagerApiDataSource");
-let dataSource: jest.Mocked<DefaultManagerApiDataSource>;
+jest.mock("@internal/manager-api/data/AxiosManagerApiDataSource");
+let dataSource: jest.Mocked<AxiosManagerApiDataSource>;
 let service: ManagerApiService;
 describe("ManagerApiService", () => {
   beforeEach(() => {
-    dataSource = new DefaultManagerApiDataSource({
-      managerApiUrl: MANAGER_API_BASE_URL,
-    }) as jest.Mocked<DefaultManagerApiDataSource>;
+    dataSource = new AxiosManagerApiDataSource({
+      managerApiUrl: DEFAULT_MANAGER_API_BASE_URL,
+    }) as jest.Mocked<AxiosManagerApiDataSource>;
     service = new DefaultManagerApiService(dataSource);
   });
 
@@ -58,7 +58,7 @@ describe("ManagerApiService", () => {
 
     describe("error cases", () => {
       it("should return an error when the data source fails with a known error", async () => {
-        const error = new FetchError(new Error("Failed to fetch data"));
+        const error = new HttpFetchApiError(new Error("Failed to fetch data"));
         dataSource.getAppsByHash.mockRejectedValue(error);
         expect(await service.getAppsByHash([BTC_APP])).toEqual(Left(error));
       });
@@ -67,7 +67,7 @@ describe("ManagerApiService", () => {
         const error = new Error("unkown error");
         dataSource.getAppsByHash.mockRejectedValue(error);
         expect(await service.getAppsByHash([BTC_APP])).toEqual(
-          Left(new FetchError(error)),
+          Left(new HttpFetchApiError(error)),
         );
       });
     });

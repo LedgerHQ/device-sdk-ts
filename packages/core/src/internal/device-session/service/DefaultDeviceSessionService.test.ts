@@ -3,7 +3,7 @@ import { Either, Left } from "purify-ts";
 import { DeviceSession } from "@internal/device-session/model/DeviceSession";
 import { DeviceSessionNotFound } from "@internal/device-session/model/Errors";
 import { DefaultLoggerPublisherService } from "@internal/logger-publisher/service/DefaultLoggerPublisherService";
-import { DefaultManagerApiDataSource } from "@internal/manager-api/data/DefaultManagerApiDataSource";
+import { AxiosManagerApiDataSource } from "@internal/manager-api/data/AxiosManagerApiDataSource";
 import { ManagerApiDataSource } from "@internal/manager-api/data/ManagerApiDataSource";
 import { DefaultManagerApiService } from "@internal/manager-api/service/DefaultManagerApiService";
 import type { ManagerApiService } from "@internal/manager-api/service/ManagerApiService";
@@ -12,7 +12,7 @@ import { connectedDeviceStubBuilder } from "@internal/usb/model/InternalConnecte
 import { DefaultDeviceSessionService } from "./DefaultDeviceSessionService";
 
 jest.mock("@internal/logger-publisher/service/DefaultLoggerPublisherService");
-jest.mock("@internal/manager-api/data/DefaultManagerApiDataSource");
+jest.mock("@internal/manager-api/data/AxiosManagerApiDataSource");
 
 let sessionService: DefaultDeviceSessionService;
 let loggerService: DefaultLoggerPublisherService;
@@ -24,7 +24,7 @@ describe("DefaultDeviceSessionService", () => {
     jest.restoreAllMocks();
     loggerService = new DefaultLoggerPublisherService([], "deviceSession");
     sessionService = new DefaultDeviceSessionService(() => loggerService);
-    managerApiDataSource = new DefaultManagerApiDataSource({
+    managerApiDataSource = new AxiosManagerApiDataSource({
       managerApiUrl: "http://fake.url",
     });
     managerApi = new DefaultManagerApiService(managerApiDataSource);

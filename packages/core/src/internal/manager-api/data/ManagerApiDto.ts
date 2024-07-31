@@ -1,20 +1,20 @@
 export type Id = number;
 
-export enum AppType {
+export enum AppTypeDto {
   currency = "currency",
   plugin = "plugin",
   tool = "tool",
   swap = "swap",
 }
 
-export type ApplicationEntity = {
+export type ApplicationDto = {
   versionId: Id;
   versionName: string;
   versionDisplayName: string;
   version: string;
   currencyId: string;
   description: string;
-  applicationType: AppType;
+  applicationType: AppTypeDto;
   dateModified: string;
   icon: string;
   authorName: string;
