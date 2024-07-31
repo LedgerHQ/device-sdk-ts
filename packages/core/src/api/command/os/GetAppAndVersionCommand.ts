@@ -3,11 +3,17 @@ import { ApduBuilder, ApduBuilderArgs } from "@api/apdu/utils/ApduBuilder";
 import { ApduParser } from "@api/apdu/utils/ApduParser";
 import { Command } from "@api/command/Command";
 import {
+  GlobalErrorHandler,
   InvalidResponseFormatError,
-  InvalidStatusWordError,
 } from "@api/command/Errors";
+import {
+  CommandResult,
+  CommandResultFactory,
+  CommandResultStatus,
+} from "@api/command/model/CommandResult";
 import { CommandUtils } from "@api/command/utils/CommandUtils";
 import { ApduResponse } from "@api/device-session/ApduResponse";
+import { GlobalCommandErrorStatusCode } from "@api/Error";
 
 export type GetAppAndVersionResponse = {
   /**
@@ -40,15 +46,16 @@ export class GetAppAndVersionCommand
     return new ApduBuilder(getAppAndVersionApduArgs).build();
   }
 
-  parseResponse(apduResponse: ApduResponse): GetAppAndVersionResponse {
-    const parser = new ApduParser(apduResponse);
+  parseResponse(
+    apduResponse: ApduResponse,
+  ): CommandResult<GetAppAndVersionResponse, GlobalCommandErrorStatusCode> {
     if (!CommandUtils.isSuccessResponse(apduResponse)) {
-      throw new InvalidStatusWordError(
-        `Unexpected status word: ${parser.encodeToHexaString(
-          apduResponse.statusCode,
-        )}`,
-      );
+      return CommandResultFactory({
+        status: CommandResultStatus.Error,
+        error: GlobalErrorHandler.handle(apduResponse),
+      });
     }
+    const parser = new ApduParser(apduResponse);
 
     if (parser.extract8BitUInt() !== 1) {
       throw new InvalidResponseFormatError(
@@ -60,10 +67,16 @@ export class GetAppAndVersionCommand
     const version = parser.encodeToString(parser.extractFieldLVEncoded());
 
     if (parser.getUnparsedRemainingLength() === 0) {
-      return { name, version };
+      return CommandResultFactory({
+        data: { name, version },
+        status: CommandResultStatus.Success,
+      });
     }
 
     const flags = parser.extractFieldLVEncoded();
-    return { name, version, flags };
+    return CommandResultFactory({
+      data: { name, version, flags },
+      status: CommandResultStatus.Success,
+    });
   }
 }

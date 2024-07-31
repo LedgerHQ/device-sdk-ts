@@ -1,6 +1,7 @@
 import { Observable } from "rxjs";
 
 import { Command } from "@api/command/Command";
+import { CommandResult } from "@api/command/model/CommandResult";
 import { DeviceSessionState } from "@api/device-session/DeviceSessionState";
 import { SdkError } from "@api/Error";
 import { ManagerApiService } from "@internal/manager-api/service/ManagerApiService";
@@ -8,9 +9,9 @@ import { ManagerApiService } from "@internal/manager-api/service/ManagerApiServi
 import { DeviceActionState } from "./model/DeviceActionState";
 
 export type InternalApi = {
-  readonly sendCommand: <Response, Args>(
-    command: Command<Response, Args>,
-  ) => Promise<Response>;
+  readonly sendCommand: <Response, Args, ErrorStatusCodes>(
+    command: Command<Response, Args, ErrorStatusCodes>,
+  ) => Promise<CommandResult<Response, ErrorStatusCodes>>;
   readonly getDeviceSessionState: () => DeviceSessionState;
   readonly getDeviceSessionStateObservable: () => Observable<DeviceSessionState>;
   readonly setDeviceSessionState: (
