@@ -2,32 +2,37 @@ import { Apdu } from "@api/apdu/model/Apdu";
 import { ApduBuilder, ApduBuilderArgs } from "@api/apdu/utils/ApduBuilder";
 import { ApduParser } from "@api/apdu/utils/ApduParser";
 import { Command } from "@api/command/Command";
-import { InvalidStatusWordError } from "@api/command/Errors";
+import { GlobalErrorHandler } from "@api/command/Errors";
+import {
+  CommandResult,
+  CommandResultFactory,
+  CommandResultStatus,
+} from "@api/command/model/CommandResult";
 import { CommandUtils } from "@api/command/utils/CommandUtils";
 import { ApduResponse } from "@api/device-session/ApduResponse";
-import { DeviceExchangeError } from "@api/Error";
+import { GlobalCommandErrorStatusCode } from "@api/Error";
 
 // [SHOULD]: Device Error Response, maybe we want to group them together somewhere
 // also might be worth to have other errors we could extends, eg: DeviceResponseError which could contain the error code
-export class ConsentFailedError implements DeviceExchangeError {
-  readonly _tag = "ConsentFailedError";
-  readonly originalError?: Error;
-  readonly errorCode: number = 0x5501;
-
-  constructor() {
-    this.originalError = new Error("Consent failed");
-  }
-}
-
-export class PinNotValidated implements DeviceExchangeError {
-  readonly _tag = "PinNotValidated";
-  readonly originalError?: Error;
-  readonly errorCode: number = 0x5502;
-
-  constructor() {
-    this.originalError = new Error("Pin not validated");
-  }
-}
+// export class ConsentFailedError implements DeviceExchangeError {
+//   readonly _tag = "ConsentFailedError";
+//   readonly originalError?: Error;
+//   readonly errorCode: number = 0x5501;
+//
+//   constructor() {
+//     this.originalError = new Error("Consent failed");
+//   }
+// }
+//
+// export class PinNotValidated implements DeviceExchangeError {
+//   readonly _tag = "PinNotValidated";
+//   readonly originalError?: Error;
+//   readonly errorCode: number = 0x5502;
+//
+//   constructor() {
+//     this.originalError = new Error("Pin not validated");
+//   }
+// }
 
 export type AppResponse = {
   readonly appEntryLength: number;
@@ -62,35 +67,23 @@ export class ListAppsCommand
     return new ApduBuilder(listAppApduArgs).build();
   }
 
-  parseResponse(apduResponse: ApduResponse): ListAppsResponse {
+  parseResponse(
+    apduResponse: ApduResponse,
+  ): CommandResult<ListAppsResponse, GlobalCommandErrorStatusCode> {
     const res: ListAppsResponse = [];
+    if (!CommandUtils.isSuccessResponse(apduResponse)) {
+      return CommandResultFactory({
+        status: CommandResultStatus.Error,
+        error: GlobalErrorHandler.handle(apduResponse),
+      });
+    }
     const parser = new ApduParser(apduResponse);
 
-    if (!CommandUtils.isSuccessResponse(apduResponse)) {
-      const statusCode = apduResponse.statusCode;
-
-      // [SHOULD] Move this logic to common code error handling
-      if (statusCode[0] === 0x55) {
-        if (statusCode[1] === 0x01) {
-          throw new ConsentFailedError();
-        } else if (statusCode[1] === 0x02) {
-          throw new PinNotValidated();
-        }
-
-        // [ASK] How de we handle unsuccessful responses?
-        throw new InvalidStatusWordError(
-          `Unexpected status word: ${parser.encodeToHexaString(apduResponse.statusCode)}`,
-        );
-      }
-
-      // [ASK] How de we handle unsuccessful responses?
-      throw new InvalidStatusWordError(
-        `Unexpected status word: ${parser.encodeToHexaString(apduResponse.statusCode)}`,
-      );
-    }
-
     if (apduResponse.data.length <= 0) {
-      return [];
+      return CommandResultFactory({
+        data: [],
+        status: CommandResultStatus.Success,
+      });
     }
 
     // [NOTE] version of parsing, not used for now, skipping 1 byte
@@ -118,6 +111,9 @@ export class ListAppsCommand
       });
     }
 
-    return res;
+    return CommandResultFactory({
+      data: res,
+      status: CommandResultStatus.Success,
+    });
   }
 }

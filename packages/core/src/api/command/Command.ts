@@ -1,4 +1,5 @@
 import { Apdu } from "@api/apdu/model/Apdu";
+import { CommandResult } from "@api/command/model/CommandResult";
 import { DeviceModelId } from "@api/device/DeviceModel";
 import { ApduResponse } from "@api/device-session/ApduResponse";
 
@@ -8,7 +9,7 @@ import { ApduResponse } from "@api/device-session/ApduResponse";
  * @template Response - The type of the response returned by the device.
  * @template Args - The type of the arguments passed to the command (optional).
  */
-export interface Command<Response, Args = void> {
+export interface Command<Response, Args = void, SpecificErrorCodes = string> {
   /**
    * Indicates whether the command triggers a disconnection from the device when
    * it succeeds.
@@ -32,5 +33,5 @@ export interface Command<Response, Args = void> {
   parseResponse(
     apduResponse: ApduResponse,
     deviceModelId: DeviceModelId | void,
-  ): Response;
+  ): CommandResult<Response, SpecificErrorCodes>;
 }
