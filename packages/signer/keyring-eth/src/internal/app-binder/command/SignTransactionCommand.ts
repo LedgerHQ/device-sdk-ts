@@ -10,9 +10,7 @@ import {
   HexaString,
   InvalidStatusWordError,
 } from "@ledgerhq/device-sdk-core";
-import { Just } from "purify-ts";
-import { Nothing } from "purify-ts";
-import { Maybe } from "purify-ts";
+import { Just, Maybe, Nothing } from "purify-ts";
 
 import { DerivationPathUtils } from "@internal/shared/utils/DerivationPathUtils";
 
