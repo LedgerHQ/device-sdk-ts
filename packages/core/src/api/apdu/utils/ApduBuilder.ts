@@ -63,14 +63,15 @@ export class ApduBuilder {
    * Build a new Apdu instance with the current state of the builder
    * @returns {Apdu} - Returns a new Apdu instance
    */
-  build = () => new Apdu(this._cla, this._ins, this._p1, this.p2, this.data);
+  build = (): Apdu =>
+    new Apdu(this._cla, this._ins, this._p1, this.p2, this.data);
 
   /**
    * Add a 8-bit unsigned integer to the data field (max value 0xff = 255)
    * @param value?: number - The value to add to the data
    * @returns {ApduBuilder} - Returns the current instance of ApduBuilder
    */
-  add8BitUIntToData = (value?: number) => {
+  add8BitUIntToData = (value?: number): ApduBuilder => {
     if (typeof value === "undefined" || isNaN(value)) {
       this.errors?.push(new InvalidValueError("byte", value?.toString()));
       return this;
@@ -97,7 +98,7 @@ export class ApduBuilder {
    * @param value: number - The value to add to the data
    * @returns {ApduBuilder} - Returns the current instance of ApduBuilder
    */
-  add16BitUIntToData = (value: number) => {
+  add16BitUIntToData = (value: number): ApduBuilder => {
     if (value > MAX_16_BIT_UINT) {
       this.errors?.push(
         new ValueOverflowError(value.toString(), MAX_16_BIT_UINT),
@@ -120,7 +121,7 @@ export class ApduBuilder {
    * @param value: number - The value to add to the data
    * @returns {ApduBuilder} - Returns the current instance of ApduBuilder
    */
-  add32BitUIntToData = (value: number) => {
+  add32BitUIntToData = (value: number): ApduBuilder => {
     if (value > MAX_32_BIT_UINT) {
       this.errors?.push(
         new ValueOverflowError(value.toString(), MAX_32_BIT_UINT),
@@ -145,7 +146,7 @@ export class ApduBuilder {
    * @param value: Uint8Array - The value to add to the data
    * @returns {ApduBuilder} - Returns the current instance of ApduBuilder
    */
-  addBufferToData = (value: Uint8Array) => {
+  addBufferToData = (value: Uint8Array): ApduBuilder => {
     if (!this.hasEnoughLengthRemaining(value)) {
       this.errors?.push(new DataOverflowError(value.toString()));
       return this;
@@ -163,7 +164,7 @@ export class ApduBuilder {
    * @param value: string - The value to add to the data
    * @returns {ApduBuilder} - Returns the current instance of ApduBuilder
    */
-  addHexaStringToData = (value: string) => {
+  addHexaStringToData = (value: string): ApduBuilder => {
     const result = this.getHexaString(value);
     if (!result.length) {
       this.errors?.push(new HexaStringEncodeError(value));
@@ -178,7 +179,7 @@ export class ApduBuilder {
    * @param value: string - The value to add to the data
    * @returns {ApduBuilder} - Returns the current instance of ApduBuilder
    */
-  addAsciiStringToData = (value: string) => {
+  addAsciiStringToData = (value: string): ApduBuilder => {
     let hexa = 0;
 
     if (!this.hasEnoughLengthRemaining(value)) {
@@ -201,7 +202,7 @@ export class ApduBuilder {
    * @param value: string - The value to add to the data
    * @returns {ApduBuilder} - Returns the current instance of ApduBuilder
    */
-  encodeInLVFromHexa = (value: string) => {
+  encodeInLVFromHexa = (value: string): ApduBuilder => {
     const result: number[] = this.getHexaString(value);
 
     if (!result.length) {
@@ -227,7 +228,7 @@ export class ApduBuilder {
    * @param value: Uint8Array - The value to add to the data
    * @returns {ApduBuilder} - Returns the current instance of ApduBuilder
    */
-  encodeInLVFromBuffer = (value: Uint8Array) => {
+  encodeInLVFromBuffer = (value: Uint8Array): ApduBuilder => {
     if (!this.hasEnoughLengthRemaining(value, true)) {
       this.errors?.push(new DataOverflowError(value.toString()));
       return this;
@@ -245,7 +246,7 @@ export class ApduBuilder {
    * @param value: string - The value to add to the data
    * @returns {ApduBuilder} - Returns the current instance of ApduBuilder
    */
-  encodeInLVFromAscii = (value: string) => {
+  encodeInLVFromAscii = (value: string): ApduBuilder => {
     if (!this.hasEnoughLengthRemaining(value, true)) {
       this.errors?.push(new DataOverflowError(value));
       return this;
@@ -260,7 +261,7 @@ export class ApduBuilder {
    * Returns the remaining payload length
    * @returns {number}
    */
-  getAvailablePayloadLength = () => {
+  getAvailablePayloadLength = (): number => {
     return APDU_MAX_SIZE - (HEADER_LENGTH + (this.data?.length ?? 0));
   };
 
@@ -269,7 +270,7 @@ export class ApduBuilder {
    * @param value: string - The value to convert to hexadecimal
    * @returns {number[]} - Returns an array of numbers representing the hexadecimal value
    */
-  getHexaString = (value: string) => {
+  getHexaString = (value: string): number[] => {
     const table: number[] = [];
 
     if (!value.length) return [];
@@ -307,7 +308,7 @@ export class ApduBuilder {
    * Returns the current errors
    * @returns {AppBuilderError[]} - Returns an array of errors
    */
-  getErrors = () => this.errors;
+  getErrors = (): AppBuilderError[] => this.errors;
 
   // ===========
   // Private API
@@ -321,8 +322,8 @@ export class ApduBuilder {
    */
   private hasEnoughLengthRemaining = (
     value: string | Uint8Array | number[],
-    hasLv = false,
-  ) => {
+    hasLv: boolean = false,
+  ): boolean => {
     return (
       HEADER_LENGTH +
         (this.data?.length ?? 0) +
@@ -337,7 +338,7 @@ export class ApduBuilder {
    * @param value: number[] - The value to add to the data
    * @returns {ApduBuilder} - Returns the current instance of ApduBuilder
    */
-  private addNumbers = (value: number[]) => {
+  private addNumbers = (value: number[]): ApduBuilder => {
     if (!this.hasEnoughLengthRemaining(value)) {
       this.errors?.push(new DataOverflowError(value.toString()));
       return this;
