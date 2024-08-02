@@ -31,7 +31,7 @@
     "@changesets/changelog-github": "^0.5.0",
     "@changesets/cli": "^2.27.7",
     "@types/jest": "^29.5.12",
-    "@types/node": "^20.14.11",
+    "@types/node": "^22.0.2",
     "concurrently": "^8.2.2",
     "danger": "^12.3.3",
     "eslint": "9.8.0",
