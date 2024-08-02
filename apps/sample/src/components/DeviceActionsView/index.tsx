@@ -24,6 +24,11 @@ import {
   ListAppsDAOutput,
   ListAppsDAError,
   ListAppsDAIntermediateValue,
+  ListAppsWithMetadataDeviceAction,
+  ListAppsWithMetadataDAError,
+  ListAppsWithMetadataDAInput,
+  ListAppsWithMetadataDAIntermediateValue,
+  ListAppsWithMetadataDAOutput,
 } from "@ledgerhq/device-sdk-core";
 
 const UNLOCK_TIMEOUT = 60 * 1000; // 1 minute
@@ -117,6 +122,27 @@ export const DeviceActionsView: React.FC<{ sessionId: string }> = ({
         ListAppsDAInput,
         ListAppsDAError,
         ListAppsDAIntermediateValue
+      >,
+      {
+        title: "List apps with metadata",
+        description:
+          "List all applications installed on the device with additional metadata",
+        executeDeviceAction: (_, inspect) => {
+          const deviceAction = new ListAppsWithMetadataDeviceAction({
+            input: { unlockTimeout: UNLOCK_TIMEOUT },
+            inspect,
+          });
+          return sdk.executeDeviceAction({
+            sessionId: selectedSessionId,
+            deviceAction,
+          });
+        },
+        initialValues: { unlockTimeout: UNLOCK_TIMEOUT },
+      } satisfies DeviceActionProps<
+        ListAppsWithMetadataDAOutput,
+        ListAppsWithMetadataDAInput,
+        ListAppsWithMetadataDAError,
+        ListAppsWithMetadataDAIntermediateValue
       >,
     ],
     [],

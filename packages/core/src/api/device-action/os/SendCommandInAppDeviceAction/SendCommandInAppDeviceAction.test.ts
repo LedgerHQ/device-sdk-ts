@@ -3,8 +3,8 @@ import { assign, createMachine } from "xstate";
 
 import { Apdu } from "@api/apdu/model/Apdu";
 import { ApduBuilder } from "@api/apdu/utils/ApduBuilder";
+import { makeDeviceActionInternalApiMock } from "@api/device-action/__test-utils__/makeInternalApi";
 import { testDeviceActionStates } from "@api/device-action/__test-utils__/testDeviceActionStates";
-import { InternalApi } from "@api/device-action/DeviceAction";
 import {
   DeviceActionState,
   DeviceActionStatus,
@@ -67,15 +67,7 @@ describe("SendCommandInAppDeviceAction", () => {
     sendCommand: sendMyCommand,
   });
 
-  const apiSendCommandMock = jest.fn();
-  const apiGetDeviceSessionStateMock = jest.fn();
-
-  const internalApiMock = (): InternalApi => ({
-    sendCommand: apiSendCommandMock,
-    getDeviceSessionState: apiGetDeviceSessionStateMock,
-    getDeviceSessionStateObservable: jest.fn(),
-    setDeviceSessionState: jest.fn(),
-  });
+  const { sendCommand: apiSendCommandMock } = makeDeviceActionInternalApiMock();
 
   const commandParams = {
     paramString: "aParameter",
@@ -102,11 +94,13 @@ describe("SendCommandInAppDeviceAction", () => {
         },
       });
       await new Promise<void>((resolve, reject) => {
-        deviceAction._execute(internalApiMock()).observable.subscribe({
-          error: () => reject(),
-          complete: () => resolve(),
-          next: () => {},
-        });
+        deviceAction
+          ._execute(makeDeviceActionInternalApiMock())
+          .observable.subscribe({
+            error: () => reject(),
+            complete: () => resolve(),
+            next: () => {},
+          });
       });
 
       expect(apiSendCommandMock).toHaveBeenCalledWith(
@@ -147,7 +141,7 @@ describe("SendCommandInAppDeviceAction", () => {
           },
         }),
         expectedStates,
-        internalApiMock(),
+        makeDeviceActionInternalApiMock(),
         done,
       );
     });
@@ -197,7 +191,7 @@ describe("SendCommandInAppDeviceAction", () => {
       testDeviceActionStates(
         deviceAction,
         expectedStates,
-        internalApiMock(),
+        makeDeviceActionInternalApiMock(),
         done,
       );
     });
@@ -249,7 +243,7 @@ describe("SendCommandInAppDeviceAction", () => {
       testDeviceActionStates(
         deviceAction,
         expectedStates,
-        internalApiMock(),
+        makeDeviceActionInternalApiMock(),
         done,
       );
     });

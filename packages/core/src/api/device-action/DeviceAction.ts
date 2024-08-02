@@ -3,6 +3,7 @@ import { Observable } from "rxjs";
 import { Command } from "@api/command/Command";
 import { DeviceSessionState } from "@api/device-session/DeviceSessionState";
 import { SdkError } from "@api/Error";
+import { ManagerApiService } from "@internal/manager-api/service/ManagerApiService";
 
 import { DeviceActionState } from "./model/DeviceActionState";
 
@@ -15,6 +16,7 @@ export type InternalApi = {
   readonly setDeviceSessionState: (
     state: DeviceSessionState,
   ) => DeviceSessionState;
+  getMetadataForAppHashes: ManagerApiService["getAppsByHash"];
 };
 
 export type DeviceActionIntermediateValue = {

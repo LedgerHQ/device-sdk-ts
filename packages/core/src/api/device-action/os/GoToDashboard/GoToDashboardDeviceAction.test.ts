@@ -1,54 +1,16 @@
-import { Left, Right } from "purify-ts";
-import { assign, createMachine } from "xstate";
-
 import { DeviceStatus } from "@api/device/DeviceStatus";
+import { makeDeviceActionInternalApiMock } from "@api/device-action/__test-utils__/makeInternalApi";
+import { setupGetDeviceStatusMock } from "@api/device-action/__test-utils__/setupTestMachine";
 import { testDeviceActionStates } from "@api/device-action/__test-utils__/testDeviceActionStates";
-import { InternalApi } from "@api/device-action/DeviceAction";
 import { DeviceActionStatus } from "@api/device-action/model/DeviceActionState";
 import { UserInteractionRequired } from "@api/device-action/model/UserInteractionRequired";
 import { UnknownDAError } from "@api/device-action/os/Errors";
-import { GetDeviceStatusDeviceAction } from "@api/device-action/os/GetDeviceStatus/GetDeviceStatusDeviceAction";
 import { DeviceSessionStateType } from "@api/device-session/DeviceSessionState";
-import { SdkError } from "@api/Error";
 
 import { GoToDashboardDeviceAction } from "./GoToDashboardDeviceAction";
 import { GoToDashboardDAState } from "./types";
 
 jest.mock("@api/device-action/os/GetDeviceStatus/GetDeviceStatusDeviceAction");
-
-const setupGetDeviceStatusMock = (
-  output: { currentApp: string; currentAppVersion: string } | SdkError = {
-    currentApp: "BOLOS",
-    currentAppVersion: "1.0.0",
-  },
-) => {
-  (GetDeviceStatusDeviceAction as jest.Mock).mockImplementation(() => ({
-    makeStateMachine: jest.fn().mockImplementation(() =>
-      createMachine({
-        id: "MockGetDeviceStatusDeviceAction",
-        initial: "ready",
-        states: {
-          ready: {
-            after: {
-              0: "done",
-            },
-            entry: assign({
-              intermediateValue: () => ({
-                requiredUserInteraction: UserInteractionRequired.None,
-              }),
-            }),
-          },
-          done: {
-            type: "final",
-          },
-        },
-        output: () => {
-          return "currentApp" in output ? Right(output) : Left(output);
-        },
-      }),
-    ),
-  }));
-};
 
 describe("GoToDashboardDeviceAction", () => {
   const closeAppMock = jest.fn();
@@ -65,19 +27,10 @@ describe("GoToDashboardDeviceAction", () => {
     };
   }
 
-  const sendCommandMock = jest.fn();
-  const apiGetDeviceSessionStateMock = jest.fn();
-  const apiGetDeviceSessionStateObservableMock = jest.fn();
-  const setDeviceSessionStateMock = jest.fn();
-
-  function internalApiMock(): InternalApi {
-    return {
-      sendCommand: sendCommandMock,
-      getDeviceSessionState: apiGetDeviceSessionStateMock,
-      getDeviceSessionStateObservable: apiGetDeviceSessionStateObservableMock,
-      setDeviceSessionState: setDeviceSessionStateMock,
-    };
-  }
+  const {
+    sendCommand: sendCommandMock,
+    getDeviceSessionState: apiGetDeviceSessionStateMock,
+  } = makeDeviceActionInternalApiMock();
 
   beforeEach(() => {
     jest.resetAllMocks();
@@ -92,9 +45,10 @@ describe("GoToDashboardDeviceAction", () => {
       });
 
       apiGetDeviceSessionStateMock.mockReturnValue({
-        sessionStateType: DeviceSessionStateType.Connected,
+        sessionStateType: DeviceSessionStateType.ReadyWithoutSecureChannel,
         deviceStatus: DeviceStatus.CONNECTED,
         currentApp: "BOLOS",
+        installedApps: [],
       });
 
       const expectedStates: Array<GoToDashboardDAState> = [
@@ -125,7 +79,7 @@ describe("GoToDashboardDeviceAction", () => {
       testDeviceActionStates(
         goToDashboardDeviceAction,
         expectedStates,
-        internalApiMock(),
+        makeDeviceActionInternalApiMock(),
         done,
       );
     });
@@ -141,9 +95,10 @@ describe("GoToDashboardDeviceAction", () => {
       });
 
       apiGetDeviceSessionStateMock.mockReturnValue({
-        sessionStateType: DeviceSessionStateType.Connected,
+        sessionStateType: DeviceSessionStateType.ReadyWithoutSecureChannel,
         deviceStatus: DeviceStatus.CONNECTED,
         currentApp: "Bitcoin",
+        installedApps: [],
       });
 
       sendCommandMock.mockResolvedValueOnce(undefined).mockResolvedValueOnce({
@@ -191,7 +146,7 @@ describe("GoToDashboardDeviceAction", () => {
       testDeviceActionStates(
         goToDashboardDeviceAction,
         expectedStates,
-        internalApiMock(),
+        makeDeviceActionInternalApiMock(),
         done,
       );
     });
@@ -248,7 +203,7 @@ describe("GoToDashboardDeviceAction", () => {
       testDeviceActionStates(
         goToDashboardDeviceAction,
         expectedStates,
-        internalApiMock(),
+        makeDeviceActionInternalApiMock(),
         done,
       );
     });
@@ -303,7 +258,7 @@ describe("GoToDashboardDeviceAction", () => {
       testDeviceActionStates(
         goToDashboardDeviceAction,
         expectedStates,
-        internalApiMock(),
+        makeDeviceActionInternalApiMock(),
         done,
       );
     });
@@ -318,9 +273,10 @@ describe("GoToDashboardDeviceAction", () => {
       });
 
       apiGetDeviceSessionStateMock.mockReturnValue({
-        sessionStateType: DeviceSessionStateType.Connected,
+        sessionStateType: DeviceSessionStateType.ReadyWithoutSecureChannel,
         deviceStatus: DeviceStatus.CONNECTED,
         currentApp: "BOLOS",
+        installedApps: [],
       });
 
       const expectedStates: Array<GoToDashboardDAState> = [
@@ -345,7 +301,7 @@ describe("GoToDashboardDeviceAction", () => {
       testDeviceActionStates(
         goToDashboardDeviceAction,
         expectedStates,
-        internalApiMock(),
+        makeDeviceActionInternalApiMock(),
         done,
       );
     });
@@ -401,7 +357,7 @@ describe("GoToDashboardDeviceAction", () => {
         testDeviceActionStates(
           goToDashboardDeviceAction,
           expectedStates,
-          internalApiMock(),
+          makeDeviceActionInternalApiMock(),
           done,
         );
       });
@@ -465,7 +421,7 @@ describe("GoToDashboardDeviceAction", () => {
         testDeviceActionStates(
           goToDashboardDeviceAction,
           expectedStates,
-          internalApiMock(),
+          makeDeviceActionInternalApiMock(),
           done,
         );
       });
@@ -530,7 +486,7 @@ describe("GoToDashboardDeviceAction", () => {
         testDeviceActionStates(
           goToDashboardDeviceAction,
           expectedStates,
-          internalApiMock(),
+          makeDeviceActionInternalApiMock(),
           done,
         );
       });
@@ -605,7 +561,7 @@ describe("GoToDashboardDeviceAction", () => {
         testDeviceActionStates(
           goToDashboardDeviceAction,
           expectedStates,
-          internalApiMock(),
+          makeDeviceActionInternalApiMock(),
           done,
         );
       });

@@ -1,5 +1,11 @@
 /* eslint no-restricted-syntax: 0 */
-import type { JestConfigWithTsJest } from "ts-jest";
+import { JestConfigWithTsJest, pathsToModuleNameMapper } from "ts-jest";
+
+import { compilerOptions } from "./tsconfig.json";
+
+const paths = pathsToModuleNameMapper(compilerOptions.paths, {
+  prefix: "<rootDir>/",
+});
 
 const config: JestConfigWithTsJest = {
   preset: "@ledgerhq/jest-config-dsdk",
@@ -12,8 +18,7 @@ const config: JestConfigWithTsJest = {
     "!src/api/index.ts",
   ],
   moduleNameMapper: {
-    "^@/(.*)$": "<rootDir>/src/$1",
-    "^@root/(.*)$": "<rootDir>/$1",
+    ...paths,
   },
 };
 

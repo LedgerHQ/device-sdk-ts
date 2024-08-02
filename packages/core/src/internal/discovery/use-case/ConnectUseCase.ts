@@ -7,6 +7,8 @@ import { DeviceSession } from "@internal/device-session/model/DeviceSession";
 import type { DeviceSessionService } from "@internal/device-session/service/DeviceSessionService";
 import { loggerTypes } from "@internal/logger-publisher/di/loggerTypes";
 import { LoggerPublisherService } from "@internal/logger-publisher/service/LoggerPublisherService";
+import { managerApiTypes } from "@internal/manager-api/di/managerApiTypes";
+import type { ManagerApiService } from "@internal/manager-api/service/ManagerApiService";
 import { usbDiTypes } from "@internal/usb/di/usbDiTypes";
 import type { UsbHidTransport } from "@internal/usb/transport/UsbHidTransport";
 
@@ -28,6 +30,7 @@ export class ConnectUseCase {
   private readonly _usbHidTransport: UsbHidTransport;
   private readonly _sessionService: DeviceSessionService;
   private readonly _loggerFactory: (tag: string) => LoggerPublisherService;
+  private readonly _managerApi: ManagerApiService;
   private readonly _logger: LoggerPublisherService;
 
   constructor(
@@ -37,11 +40,14 @@ export class ConnectUseCase {
     sessionService: DeviceSessionService,
     @inject(loggerTypes.LoggerPublisherServiceFactory)
     loggerFactory: (tag: string) => LoggerPublisherService,
+    @inject(managerApiTypes.ManagerApiService)
+    managerApi: ManagerApiService,
   ) {
     this._sessionService = sessionService;
     this._usbHidTransport = usbHidTransport;
     this._loggerFactory = loggerFactory;
     this._logger = loggerFactory("ConnectUseCase");
+    this._managerApi = managerApi;
   }
 
   private handleDeviceDisconnect(deviceId: DeviceId) {
@@ -69,6 +75,7 @@ export class ConnectUseCase {
         const deviceSession = new DeviceSession(
           { connectedDevice },
           this._loggerFactory,
+          this._managerApi,
         );
         this._sessionService.addDeviceSession(deviceSession);
         return deviceSession.id;

@@ -12,14 +12,12 @@ type FactoryProps = {
   stub: boolean;
 };
 
-export const discoveryModuleFactory = ({
-  stub = false,
-}: Partial<FactoryProps> = {}) =>
+export const discoveryModuleFactory = ({ stub = false }: FactoryProps) =>
   new ContainerModule((bind, _unbind, _isBound, rebind) => {
-    bind(discoveryTypes.StartDiscoveringUseCase).to(StartDiscoveringUseCase);
-    bind(discoveryTypes.StopDiscoveringUseCase).to(StopDiscoveringUseCase);
     bind(discoveryTypes.ConnectUseCase).to(ConnectUseCase);
     bind(discoveryTypes.DisconnectUseCase).to(DisconnectUseCase);
+    bind(discoveryTypes.StartDiscoveringUseCase).to(StartDiscoveringUseCase);
+    bind(discoveryTypes.StopDiscoveringUseCase).to(StopDiscoveringUseCase);
 
     if (stub) {
       rebind(discoveryTypes.StartDiscoveringUseCase).to(StubUseCase);

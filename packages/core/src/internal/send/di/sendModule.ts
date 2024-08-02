@@ -9,9 +9,7 @@ type FactoryProps = {
   stub: boolean;
 };
 
-export const sendModuleFactory = ({
-  stub = false,
-}: Partial<FactoryProps> = {}) =>
+export const sendModuleFactory = ({ stub = false }: FactoryProps) =>
   new ContainerModule(
     (
       bind,

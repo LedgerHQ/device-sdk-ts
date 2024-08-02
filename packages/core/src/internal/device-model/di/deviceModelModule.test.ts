@@ -9,7 +9,7 @@ describe("deviceModelModuleFactory", () => {
   let container: Container;
   let mod: ReturnType<typeof deviceModelModuleFactory>;
   beforeEach(() => {
-    mod = deviceModelModuleFactory();
+    mod = deviceModelModuleFactory({ stub: false });
     container = new Container();
     container.load(mod);
   });

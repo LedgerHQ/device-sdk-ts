@@ -7,7 +7,7 @@ describe("sendModuleFactory", () => {
     let container: Container;
     let mod: ReturnType<typeof sendModuleFactory>;
     beforeEach(() => {
-      mod = sendModuleFactory();
+      mod = sendModuleFactory({ stub: false });
       container = new Container();
       container.load(mod);
     });

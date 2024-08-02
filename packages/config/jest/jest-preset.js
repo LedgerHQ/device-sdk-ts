@@ -1,6 +1,6 @@
 /** @type {import('jest').Config} */
 const config = {
-  preset: "ts-jest",
+  preset: "ts-jest/presets/js-with-ts",
   transform: {
     "^.+\\.ts$": "ts-jest",
   },
