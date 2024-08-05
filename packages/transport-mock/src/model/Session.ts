@@ -1,20 +1,22 @@
 import { Device } from "./Device";
 
-export class Session {
-  id: string;
-  device: Device;
-  current_app: string;
-  created_at: number;
+export type SessionArgs = {
+  readonly id: string;
+  readonly device: Device;
+  readonly current_app: string;
+  readonly created_at: number;
+};
 
-  constructor(
-    id: string,
-    device: Device,
-    currentApp: string,
-    createdAt: number,
-  ) {
+export class Session {
+  readonly id: string;
+  readonly device: Device;
+  readonly currentApp: string;
+  readonly createdAt: number;
+
+  constructor({ id, device, current_app, created_at }: SessionArgs) {
     this.id = id;
     this.device = device;
-    this.current_app = currentApp;
-    this.created_at = createdAt;
+    this.currentApp = current_app;
+    this.createdAt = created_at;
   }
 }
