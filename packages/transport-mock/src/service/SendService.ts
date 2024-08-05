@@ -1,10 +1,11 @@
+import { DefaultHttpClient } from "../DefaultHttpClient";
 import { HttpClient } from "../HttpClient";
 import { CommandResponse } from "../model/CommandResponse";
 
 export class SendService {
   private client: HttpClient;
 
-  constructor(client: HttpClient) {
+  constructor(client: DefaultHttpClient) {
     this.client = client;
   }
 
