@@ -20,7 +20,7 @@ import { DeviceSessionId } from "@api/device-session/types";
 import { SdkError } from "@api/Error";
 import { LoggerPublisherService } from "@internal/logger-publisher/service/LoggerPublisherService";
 import { type ManagerApiService } from "@internal/manager-api/service/ManagerApiService";
-import { InternalConnectedDevice } from "@internal/usb/model/InternalConnectedDevice";
+import { InternalConnectedDevice } from "@internal/transport/model/InternalConnectedDevice";
 
 import { DeviceSessionRefresher } from "./DeviceSessionRefresher";
 

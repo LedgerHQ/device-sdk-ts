@@ -62,7 +62,7 @@ export class MockTransport implements Transport {
           return {
             id: device.id,
             deviceModel: {
-              id: device.device_type,
+              id: device.deviceType,
               productName: device.name,
               usbProductId: 0x10,
               legacyUsbProductId: 0x0001,
@@ -100,7 +100,7 @@ export class MockTransport implements Transport {
           );
         },
         deviceModel: {
-          id: session.device.device_type,
+          id: session.device.deviceType,
           productName: session.device.name,
           usbProductId: 0x10,
           legacyUsbProductId: 0x0001,
@@ -109,7 +109,7 @@ export class MockTransport implements Transport {
           masks: [0x31100000],
         },
         id: params.deviceId,
-        type: session.device.connectivity_type,
+        type: session.device.connectivityType,
         transport: this.identifier,
       } as InternalConnectedDevice;
       return Right(connectedDevice);
