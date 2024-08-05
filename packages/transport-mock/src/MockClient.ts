@@ -6,7 +6,7 @@ import { ConnectivityService } from "./service/ConnectivityService";
 import { DiscoveryService } from "./service/DiscoveryService";
 import { MockService } from "./service/MockService";
 import { SendService } from "./service/SendService";
-import { HttpClient } from "./HttpClient";
+import { DefaultHttpClient } from "./DefaultHttpClient";
 
 export class MockClient {
   // Services
@@ -16,10 +16,10 @@ export class MockClient {
   mockService: MockService;
 
   constructor(baseUrl: string) {
-    const client = new HttpClient(baseUrl + "/");
-    this.connectivityService = new ConnectivityService(client);
+    const client = new DefaultHttpClient({ baseUrl: baseUrl + "/" });
+    this.connectivityService = new ConnectivityService({ client });
     this.sendService = new SendService(client);
-    this.discoveryService = new DiscoveryService(client);
+    this.discoveryService = new DiscoveryService({ client });
     this.mockService = new MockService(client);
   }
 

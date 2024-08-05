@@ -1,8 +1,7 @@
 {
   "extends": "@ledgerhq/tsconfig-dsdk/sdk",
   "compilerOptions": {
-    "outDir": "./lib",
-    "baseUrl": "."
+    "baseUrl": ".",
   },
   "include": ["src", "index.ts", "jest.*.ts"]
 }

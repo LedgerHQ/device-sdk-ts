@@ -1,10 +1,14 @@
 import { HttpClient } from "../HttpClient";
 import { Session } from "../model/Session";
 
+type ConnectivityServiceArgs = {
+  client: HttpClient;
+};
+
 export class ConnectivityService {
   private client: HttpClient;
 
-  constructor(client: HttpClient) {
+  constructor({ client }: ConnectivityServiceArgs) {
     this.client = client;
   }
 
