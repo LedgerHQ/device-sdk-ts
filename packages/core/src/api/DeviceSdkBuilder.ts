@@ -1,4 +1,7 @@
-import { DEFAULT_MANAGER_API_BASE_URL } from "@internal/manager-api/model/Const";
+import {
+  DEFAULT_MANAGER_API_BASE_URL,
+  DEFAULT_MOCK_SERVER_BASE_URL,
+} from "@internal/manager-api/model/Const";
 
 import { LoggerSubscriberService } from "./logger-subscriber/service/LoggerSubscriberService";
 import { Transport } from "./transport/model/Transport";
@@ -26,7 +29,7 @@ export class LedgerDeviceSdkBuilder {
   private readonly customTransports: Transport[] = [];
   private config: SdkConfig = {
     managerApiUrl: DEFAULT_MANAGER_API_BASE_URL,
-    mockUrl: "http://localhost:8080"
+    mockUrl: DEFAULT_MOCK_SERVER_BASE_URL,
   };
 
   build(): DeviceSdk {
@@ -62,7 +65,7 @@ export class LedgerDeviceSdkBuilder {
     return this;
   }
 
-  addConfig(config: SdkConfig): LedgerDeviceSdkBuilder {
+  addConfig(config: Partial<SdkConfig>): LedgerDeviceSdkBuilder {
     this.config = {
       ...this.config,
       ...config,
