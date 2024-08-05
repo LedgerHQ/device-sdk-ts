@@ -4,11 +4,28 @@
   "license": "MIT",
   "main": "lib/index.js",
   "types": "lib/index.d.ts",
-  "files": [
-    "./lib"
-  ],
+  "exports": {
+    ".": {
+      "import": "./lib/esm/index.js",
+      "require": "./lib/cjs/index.js",
+      "default": "./index.ts",
+      "types": "./lib/esm/index.d.ts"
+    },
+    "./*.js": {
+      "import": "./lib/esm/*.js",
+      "require": "./lib/cjs/*.js",
+      "default": "./*.js",
+      "types": "./lib/esm/*.d.ts"
+    },
+    "./*": {
+      "import": "./lib/esm/*",
+      "require": "./lib/cjs/*",
+      "default": "./*",
+      "types": "./lib/esm/*"
+    }
+  },
   "scripts": {
-    "build": "rimraf lib && tsc",
+    "build": "zx scripts/build.mjs",
     "dev": "tsc --watch",
     "lint": "eslint",
     "lint:fix": "pnpm lint --fix",

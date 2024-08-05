@@ -1,6 +1,5 @@
-import { CommandResponse } from "./model/CommandResponse";
-import { Device } from "./model/Device";
-import { Session } from "./model/Session";
-import { MockClient } from "./MockClient";
-
-export { CommandResponse, Device, MockClient, Session };
+export { MockClient } from "./MockClient";
+export { CommandResponse } from "./model/CommandResponse";
+export { Device } from "./model/Device";
+export { Mock } from "./model/Mock";
+export { Session } from "./model/Session";

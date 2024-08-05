@@ -1,10 +1,14 @@
 import { HttpClient } from "../HttpClient";
 import { Device } from "../model/Device";
 
+export type DiscoveryServiceArgs = {
+  client: HttpClient;
+};
+
 export class DiscoveryService {
   private client: HttpClient;
 
-  constructor(client: HttpClient) {
+  constructor({ client }: DiscoveryServiceArgs) {
     this.client = client;
   }
 

@@ -1,10 +1,11 @@
+import { DefaultHttpClient } from "../DefaultHttpClient";
 import { HttpClient } from "../HttpClient";
 import { Mock } from "../model/Mock";
 
 export class MockService {
   private client: HttpClient;
 
-  constructor(client: HttpClient) {
+  constructor(client: DefaultHttpClient) {
     this.client = client;
   }
 

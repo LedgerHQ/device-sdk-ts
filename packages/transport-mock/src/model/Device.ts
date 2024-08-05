@@ -1,18 +1,20 @@
-export class Device {
-  id: string;
-  name: string;
-  device_type: string;
-  connectivity_type: string;
+export type DeviceArgs = {
+  readonly id: string;
+  readonly name: string;
+  readonly device_type: string;
+  readonly connectivity_type: string;
+};
 
-  constructor(
-    id: string,
-    name: string,
-    device_type: string,
-    connectivity_type: string,
-  ) {
+export class Device {
+  readonly id: string;
+  readonly name: string;
+  readonly deviceType: string;
+  readonly connectivityType: string;
+
+  constructor({ id, name, device_type, connectivity_type }: DeviceArgs) {
     this.id = id;
     this.name = name;
-    this.device_type = device_type;
-    this.connectivity_type = connectivity_type;
+    this.deviceType = device_type;
+    this.connectivityType = connectivity_type;
   }
 }

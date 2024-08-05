@@ -1,7 +1,11 @@
-export class CommandResponse {
-  response: string;
+export type CommandResponseArgs = {
+  readonly response: string;
+};
 
-  constructor(response: string) {
+export class CommandResponse {
+  readonly response: string;
+
+  constructor({ response }: CommandResponseArgs) {
     this.response = response;
   }
 }
