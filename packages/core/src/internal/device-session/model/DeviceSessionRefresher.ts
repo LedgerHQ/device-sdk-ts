@@ -1,11 +1,15 @@
-import { injectable } from "inversify";
+/* eslint @typescript-eslint/no-unsafe-declaration-merging: 0 */
 import { Either } from "purify-ts";
-import { filter, interval, map, Subscription, switchMap } from "rxjs";
-
 import {
-  GetAppAndVersionCommand,
-  GetAppAndVersionResponse,
-} from "@api/command/os/GetAppAndVersionCommand";
+  BehaviorSubject,
+  filter,
+  interval,
+  map,
+  Subscription,
+  switchMap,
+} from "rxjs";
+
+import { GetAppAndVersionCommand } from "@api/command/os/GetAppAndVersionCommand";
 import { DeviceStatus } from "@api/device/DeviceStatus";
 import { ApduResponse } from "@api/device-session/ApduResponse";
 import {
@@ -15,9 +19,6 @@ import {
 import { SdkError } from "@api/Error";
 import { type LoggerPublisherService } from "@internal/logger-publisher/service/LoggerPublisherService";
 
-/**
- * The arguments for the DeviceSessionRefresher.
- */
 export type DeviceSessionRefresherArgs = {
   /**
    * The refresh interval in milliseconds.
@@ -25,53 +26,47 @@ export type DeviceSessionRefresherArgs = {
   refreshInterval: number;
 
   /**
-   * The current device status when the refresher is created.
+   * The current state of the device session.
    */
-  deviceStatus: Exclude<DeviceStatus, DeviceStatus.NOT_CONNECTED>;
+  deviceState: BehaviorSubject<DeviceSessionState>;
 
   /**
    * The function used to send APDU commands to the device.
+   * @param rawApdu Uint8Array The raw APDU command.
    */
   sendApduFn: (rawApdu: Uint8Array) => Promise<Either<SdkError, ApduResponse>>;
 
   /**
-   * Callback that updates the state of the device session with
-   * polling response.
-   * @param callback - A function that will take the previous state and return the new state.
-   * @returns void
+   * The function to update the session state.
+   * @param sessionState Partial<DeviceSessionState> The new session state.
    */
-  updateStateFn(
-    callback: (state: DeviceSessionState) => DeviceSessionState,
-  ): void;
+  updateDeviceSessionState(sessionState: Partial<DeviceSessionState>): void;
 };
 
 /**
  * The session refresher that periodically sends a command to refresh the session.
  */
-@injectable()
 export class DeviceSessionRefresher {
   private readonly _logger: LoggerPublisherService;
   private readonly _getAppAndVersionCommand = new GetAppAndVersionCommand();
-  private _deviceStatus: DeviceStatus;
   private _subscription: Subscription;
 
   constructor(
     {
       refreshInterval,
-      deviceStatus,
+      deviceState,
       sendApduFn,
-      updateStateFn,
+      updateDeviceSessionState,
     }: DeviceSessionRefresherArgs,
     logger: LoggerPublisherService,
   ) {
-    this._deviceStatus = deviceStatus;
     this._logger = logger;
     this._subscription = interval(refreshInterval)
       .pipe(
         filter(
           () =>
             ![DeviceStatus.BUSY, DeviceStatus.NOT_CONNECTED].includes(
-              this._deviceStatus,
+              deviceState.getValue().deviceStatus,
             ),
         ),
         switchMap(() => {
@@ -100,32 +95,13 @@ export class DeviceSessionRefresher {
         ),
         filter((parsedResponse) => parsedResponse !== null),
       )
-      .subscribe((parsedResponse: GetAppAndVersionResponse | null) => {
-        // This should never happen and it should be abled to handle in next version of TypeScript.
-        if (parsedResponse === null) {
-          return;
-        }
-        // `batteryStatus` and `firmwareVersion` are not available in the polling response.
-        updateStateFn((state) => ({
-          ...state,
+      .subscribe((parsedResponse) => {
+        updateDeviceSessionState({
           sessionStateType: DeviceSessionStateType.ReadyWithoutSecureChannel,
-          deviceStatus: this._deviceStatus,
+          deviceStatus: deviceState.getValue().deviceStatus,
           currentApp: parsedResponse.name,
-          installedApps: "installedApps" in state ? state.installedApps : [],
-        }));
+        });
       });
-  }
-
-  /**
-   * Maintain a device status to prevent sending APDU when the device is busy.
-   *
-   * @param {DeviceStatus} deviceStatus - The new device status.
-   */
-  setDeviceStatus(deviceStatus: DeviceStatus) {
-    if (deviceStatus === DeviceStatus.NOT_CONNECTED) {
-      this.stop();
-    }
-    this._deviceStatus = deviceStatus;
   }
 
   /**

@@ -16,6 +16,7 @@ import {
 } from "@api/device-session/DeviceSessionState";
 import { DeviceSessionId } from "@api/device-session/types";
 import { SdkError } from "@api/Error";
+import { EventBus } from "@internal/device-session/utils/Events";
 import { LoggerPublisherService } from "@internal/logger-publisher/service/LoggerPublisherService";
 import { type ManagerApiService } from "@internal/manager-api/service/ManagerApiService";
 import { InternalConnectedDevice } from "@internal/usb/model/InternalConnectedDevice";
@@ -27,6 +28,25 @@ export type SessionConstructorArgs = {
   id?: DeviceSessionId;
 };
 
+type UpdateDeviceStatusEvent = CustomEvent<{ deviceStatus: DeviceStatus }>;
+type UpdateSessionStateEvent = CustomEvent<{
+  sessionState: Partial<DeviceSessionState>;
+}>;
+
+type RefresherEvents = UpdateDeviceStatusEvent | UpdateSessionStateEvent;
+
+class EventManager<T extends RefresherEvents> extends EventBus<T> {
+  updateDeviceStatus(deviceStatus: DeviceStatus) {
+    this.dispatchCustomEvent("updateDeviceStatus", { deviceStatus });
+  }
+
+  updateSessionState(sessionState: Partial<DeviceSessionState>) {
+    this.dispatchCustomEvent("updateSessionState", {
+      sessionState,
+    });
+  }
+}
+
 /**
  * Represents a session with a device.
  */
@@ -36,6 +56,7 @@ export class DeviceSession {
   private readonly _deviceState: BehaviorSubject<DeviceSessionState>;
   private readonly _refresher: DeviceSessionRefresher;
   private readonly _managerApiService: ManagerApiService;
+  readonly eventManager: EventManager<RefresherEvents>;
 
   constructor(
     { connectedDevice, id = uuidv4() }: SessionConstructorArgs,
@@ -48,23 +69,51 @@ export class DeviceSession {
       sessionStateType: DeviceSessionStateType.Connected,
       deviceStatus: DeviceStatus.CONNECTED,
     });
+
     this._refresher = new DeviceSessionRefresher(
       {
         refreshInterval: 1000,
-        deviceStatus: DeviceStatus.CONNECTED,
+        deviceState: this._deviceState,
         sendApduFn: (rawApdu: Uint8Array) =>
           this.sendApdu(rawApdu, {
             isPolling: true,
             triggersDisconnection: false,
           }),
-        updateStateFn: (callback) => {
-          const state = this._deviceState.getValue();
-          this.setDeviceSessionState(callback(state));
+        updateDeviceSessionState: (state: Partial<DeviceSessionState>) => {
+          this.eventManager.updateSessionState(state);
         },
       },
       loggerModuleFactory("device-session-refresher"),
     );
     this._managerApiService = managerApiService;
+    this.eventManager = new EventManager();
+
+    // WIP: EVENT SYSTEM
+    this.eventManager.addCustomEventListener<UpdateDeviceStatusEvent>(
+      "updateDeviceStatus",
+      (event) => {
+        const state = this._deviceState.getValue();
+        this.updateDeviceSessionState({
+          ...state,
+          deviceStatus: event.detail.deviceStatus,
+        });
+      },
+    );
+
+    this.eventManager.addCustomEventListener<UpdateSessionStateEvent>(
+      "updateSessionState",
+      (event) => {
+        const state = this._deviceState.getValue();
+        const newState = {
+          ...state,
+          ...event.detail.sessionState,
+          // I know I don't like it either but it seems that
+          // spreading a Partial<DeviceSessionState> after a full state
+          // creates an error in the type system
+        } as DeviceSessionState;
+        this.updateDeviceSessionState(newState);
+      },
+    );
   }
 
   public get id() {
@@ -79,17 +128,8 @@ export class DeviceSession {
     return this._deviceState.asObservable();
   }
 
-  public setDeviceSessionState(state: DeviceSessionState) {
+  public updateDeviceSessionState(state: DeviceSessionState) {
     this._deviceState.next(state);
-  }
-
-  private updateDeviceStatus(deviceStatus: DeviceStatus) {
-    const sessionState = this._deviceState.getValue();
-    this._refresher.setDeviceStatus(deviceStatus);
-    this._deviceState.next({
-      ...sessionState,
-      deviceStatus,
-    });
   }
 
   async sendApdu(
@@ -99,7 +139,11 @@ export class DeviceSession {
       triggersDisconnection: false,
     },
   ) {
-    if (!options.isPolling) this.updateDeviceStatus(DeviceStatus.BUSY);
+    if (!options.isPolling) {
+      this.eventManager.dispatchCustomEvent("updateDeviceStatus", {
+        deviceStatus: DeviceStatus.BUSY,
+      });
+    }
 
     const errorOrResponse = await this._connectedDevice.sendApdu(
       rawApdu,
@@ -108,9 +152,13 @@ export class DeviceSession {
 
     return errorOrResponse.ifRight((response) => {
       if (CommandUtils.isLockedDeviceResponse(response)) {
-        this.updateDeviceStatus(DeviceStatus.LOCKED);
+        this.eventManager.dispatchCustomEvent("updateDeviceStatus", {
+          deviceStatus: DeviceStatus.LOCKED,
+        });
       } else {
-        this.updateDeviceStatus(DeviceStatus.CONNECTED);
+        this.eventManager.dispatchCustomEvent("updateDeviceStatus", {
+          deviceStatus: DeviceStatus.CONNECTED,
+        });
       }
     });
   }
@@ -147,7 +195,7 @@ export class DeviceSession {
       getDeviceSessionState: () => this._deviceState.getValue(),
       getDeviceSessionStateObservable: () => this.state,
       setDeviceSessionState: (state: DeviceSessionState) => {
-        this.setDeviceSessionState(state);
+        this.updateDeviceSessionState(state);
         return this._deviceState.getValue();
       },
       getMetadataForAppHashes: (apps: ListAppsResponse) =>
@@ -161,7 +209,11 @@ export class DeviceSession {
   }
 
   close() {
-    this.updateDeviceStatus(DeviceStatus.NOT_CONNECTED);
+    // this.updateDeviceStatus(DeviceStatus.NOT_CONNECTED);
+    this.eventManager.updateDeviceStatus(DeviceStatus.NOT_CONNECTED);
     this._deviceState.complete();
+    this._refresher.stop();
+    this.eventManager.removeEventListener("updateDeviceStatus", null);
+    this.eventManager.removeEventListener("updateDeviceSessionState", null);
   }
 }
