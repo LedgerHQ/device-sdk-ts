@@ -10,6 +10,7 @@ import { SdkError } from "@api/Error";
  * Test that the states emitted by a device action match the expected states.
  * @param deviceAction The device action to test.
  * @param expectedStates The expected states.
+ * @param internalApi
  * @param done The Jest done callback.
  */
 export function testDeviceActionStates<

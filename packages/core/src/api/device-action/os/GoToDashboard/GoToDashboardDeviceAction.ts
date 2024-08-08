@@ -7,6 +7,7 @@ import {
   setup,
 } from "xstate";
 
+import { isSuccessCommandResult } from "@api/command/model/CommandResult";
 import { CloseAppCommand } from "@api/command/os/CloseAppCommand";
 import { GetAppAndVersionCommand } from "@api/command/os/GetAppAndVersionCommand";
 import { InternalApi } from "@api/device-action/DeviceAction";
@@ -304,11 +305,20 @@ export class GoToDashboardDeviceAction extends XStateDeviceAction<
   }
 
   extractDependencies(internalApi: InternalApi): MachineDependencies {
-    const closeApp = async () => internalApi.sendCommand(new CloseAppCommand());
+    const closeApp = async () => {
+      const res = await internalApi.sendCommand(new CloseAppCommand());
+      if (isSuccessCommandResult(res)) {
+        return res.data;
+      }
+      throw res.error;
+    };
     const getAppAndVersion = async () =>
-      internalApi
-        .sendCommand(new GetAppAndVersionCommand())
-        .then((res) => ({ app: res.name, version: res.version }));
+      internalApi.sendCommand(new GetAppAndVersionCommand()).then((res) => {
+        if (isSuccessCommandResult(res)) {
+          return { app: res.data.name, version: res.data.version };
+        }
+        throw res.error;
+      });
 
     return {
       closeApp,

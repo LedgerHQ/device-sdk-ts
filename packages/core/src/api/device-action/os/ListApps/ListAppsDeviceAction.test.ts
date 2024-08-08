@@ -1,3 +1,4 @@
+import { CommandResultFactory } from "@api/command/model/CommandResult";
 import { ListAppsResponse } from "@api/command/os/ListAppsCommand";
 import {
   BTC_APP,
@@ -35,7 +36,7 @@ describe("ListAppsDeviceAction", () => {
         input: {},
       });
 
-      sendCommandMock.mockResolvedValue([]);
+      sendCommandMock.mockResolvedValue(CommandResultFactory({ data: [] }));
 
       const expectedStates: Array<ListAppsDAState> = [
         {
@@ -76,7 +77,9 @@ describe("ListAppsDeviceAction", () => {
         input: { unlockTimeout: 500 },
       });
 
-      sendCommandMock.mockResolvedValue([BTC_APP]);
+      sendCommandMock.mockResolvedValue(
+        CommandResultFactory({ data: [BTC_APP] }),
+      );
 
       const expectedStates: Array<ListAppsDAState> = [
         {
@@ -118,8 +121,10 @@ describe("ListAppsDeviceAction", () => {
       });
 
       sendCommandMock
-        .mockResolvedValueOnce([BTC_APP, CUSTOM_LOCK_SCREEN_APP])
-        .mockResolvedValueOnce([]);
+        .mockResolvedValueOnce(
+          CommandResultFactory({ data: [BTC_APP, CUSTOM_LOCK_SCREEN_APP] }),
+        )
+        .mockResolvedValueOnce(CommandResultFactory({ data: [] }));
 
       const expectedStates: Array<ListAppsDAState> = [
         {
@@ -167,8 +172,10 @@ describe("ListAppsDeviceAction", () => {
       });
 
       sendCommandMock
-        .mockResolvedValueOnce([BTC_APP, CUSTOM_LOCK_SCREEN_APP])
-        .mockResolvedValueOnce([ETH_APP]);
+        .mockResolvedValueOnce(
+          CommandResultFactory({ data: [BTC_APP, CUSTOM_LOCK_SCREEN_APP] }),
+        )
+        .mockResolvedValueOnce(CommandResultFactory({ data: [ETH_APP] }));
 
       const expectedStates: Array<ListAppsDAState> = [
         {
@@ -216,9 +223,13 @@ describe("ListAppsDeviceAction", () => {
       });
 
       sendCommandMock
-        .mockResolvedValueOnce([BTC_APP, CUSTOM_LOCK_SCREEN_APP])
-        .mockResolvedValueOnce([ETH_APP, SOLANA_APP])
-        .mockResolvedValueOnce([]);
+        .mockResolvedValueOnce(
+          CommandResultFactory({ data: [BTC_APP, CUSTOM_LOCK_SCREEN_APP] }),
+        )
+        .mockResolvedValueOnce(
+          CommandResultFactory({ data: [ETH_APP, SOLANA_APP] }),
+        )
+        .mockResolvedValueOnce(CommandResultFactory({ data: [] }));
 
       const expectedStates: Array<ListAppsDAState> = [
         {
@@ -272,9 +283,13 @@ describe("ListAppsDeviceAction", () => {
       });
 
       sendCommandMock
-        .mockResolvedValueOnce([BTC_APP, CUSTOM_LOCK_SCREEN_APP])
-        .mockResolvedValueOnce([ETH_APP, SOLANA_APP])
-        .mockResolvedValueOnce([DOGECOIN_APP]);
+        .mockResolvedValueOnce(
+          CommandResultFactory({ data: [BTC_APP, CUSTOM_LOCK_SCREEN_APP] }),
+        )
+        .mockResolvedValueOnce(
+          CommandResultFactory({ data: [ETH_APP, SOLANA_APP] }),
+        )
+        .mockResolvedValueOnce(CommandResultFactory({ data: [DOGECOIN_APP] }));
       const expectedStates: Array<ListAppsDAState> = [
         {
           intermediateValue: {
@@ -334,7 +349,7 @@ describe("ListAppsDeviceAction", () => {
         input: { unlockTimeout: 500 },
       });
 
-      sendCommandMock.mockResolvedValue([]);
+      sendCommandMock.mockResolvedValue(CommandResultFactory({ data: [] }));
 
       const expectedStates: Array<ListAppsDAState> = [
         {
@@ -369,7 +384,7 @@ describe("ListAppsDeviceAction", () => {
         input: { unlockTimeout: 500 },
       });
 
-      sendCommandMock.mockResolvedValue([]);
+      sendCommandMock.mockResolvedValue(CommandResultFactory({ data: [] }));
 
       const expectedStates: Array<ListAppsDAState> = [
         {
@@ -446,7 +461,9 @@ describe("ListAppsDeviceAction", () => {
       });
 
       sendCommandMock
-        .mockResolvedValueOnce([BTC_APP, CUSTOM_LOCK_SCREEN_APP])
+        .mockResolvedValueOnce(
+          CommandResultFactory({ data: [BTC_APP, CUSTOM_LOCK_SCREEN_APP] }),
+        )
         .mockRejectedValueOnce(new UnknownDAError("mocked error"));
 
       const expectedStates: Array<ListAppsDAState> = [

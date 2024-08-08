@@ -2,17 +2,12 @@ import { inject, injectable } from "inversify";
 
 import { Command } from "@api/command/Command";
 import { CommandResult } from "@api/command/model/CommandResult";
-import { GlobalCommandErrorStatusCode } from "@api/Error";
 import { deviceSessionTypes } from "@internal/device-session/di/deviceSessionTypes";
 import type { DeviceSessionService } from "@internal/device-session/service/DeviceSessionService";
 import { loggerTypes } from "@internal/logger-publisher/di/loggerTypes";
 import { LoggerPublisherService } from "@internal/logger-publisher/service/LoggerPublisherService";
 
-export type SendCommandUseCaseArgs<
-  Response,
-  Args = void,
-  ErrorStatusCodes = GlobalCommandErrorStatusCode,
-> = {
+export type SendCommandUseCaseArgs<Response, ErrorStatusCodes, Args = void> = {
   /**
    * The device session id.
    */
@@ -20,7 +15,7 @@ export type SendCommandUseCaseArgs<
   /**
    * The command to send.
    */
-  readonly command: Command<Response, Args, ErrorStatusCodes>;
+  readonly command: Command<Response, ErrorStatusCodes, Args>;
 };
 
 /**
@@ -47,14 +42,10 @@ export class SendCommandUseCase {
    * @param command - The command to send.
    * @returns The response from the command.
    */
-  async execute<
-    Response,
-    Args = void,
-    ErrorStatusCodes = GlobalCommandErrorStatusCode,
-  >({
+  async execute<Response, ErrorStatusCodes, Args = void>({
     sessionId,
     command,
-  }: SendCommandUseCaseArgs<Response, Args>): Promise<
+  }: SendCommandUseCaseArgs<Response, ErrorStatusCodes, Args>): Promise<
     CommandResult<Response, ErrorStatusCodes>
   > {
     const deviceSessionOrError =
@@ -63,7 +54,7 @@ export class SendCommandUseCase {
     return deviceSessionOrError.caseOf({
       // Case device session found
       Right: async (deviceSession) =>
-        await deviceSession.sendCommand<Response, Args, ErrorStatusCodes>(
+        await deviceSession.sendCommand<Response, ErrorStatusCodes, Args>(
           command,
         ),
       // Case device session not found

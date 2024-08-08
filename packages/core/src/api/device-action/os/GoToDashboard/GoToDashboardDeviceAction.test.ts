@@ -1,3 +1,4 @@
+import { CommandResultFactory } from "@api/command/model/CommandResult";
 import { DeviceStatus } from "@api/device/DeviceStatus";
 import { makeDeviceActionInternalApiMock } from "@api/device-action/__test-utils__/makeInternalApi";
 import { setupGetDeviceStatusMock } from "@api/device-action/__test-utils__/setupTestMachine";
@@ -101,10 +102,16 @@ describe("GoToDashboardDeviceAction", () => {
         installedApps: [],
       });
 
-      sendCommandMock.mockResolvedValueOnce(undefined).mockResolvedValueOnce({
-        name: "BOLOS",
-        version: "1.0.0",
-      });
+      sendCommandMock
+        .mockResolvedValueOnce(CommandResultFactory({ data: undefined }))
+        .mockResolvedValueOnce(
+          CommandResultFactory({
+            data: {
+              name: "BOLOS",
+              version: "1.0.0",
+            },
+          }),
+        );
 
       const expectedStates: Array<GoToDashboardDAState> = [
         {

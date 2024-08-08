@@ -1,6 +1,8 @@
 import { Left } from "purify-ts";
 
 import { Command } from "@api/command/Command";
+import { CommandResultStatus } from "@api/command/model/CommandResult";
+import { GlobalCommandErrorStatusCode } from "@api/command/utils/GlobalCommandError";
 import { deviceSessionStubBuilder } from "@internal/device-session/model/DeviceSession.stub";
 import { DefaultDeviceSessionService } from "@internal/device-session/service/DefaultDeviceSessionService";
 import { DeviceSessionService } from "@internal/device-session/service/DeviceSessionService";
@@ -18,7 +20,7 @@ let sessionService: DeviceSessionService;
 let managerApi: ManagerApiService;
 let managerApiDataSource: ManagerApiDataSource;
 const fakeSessionId = "fakeSessionId";
-let command: Command<{ status: string }>;
+let command: Command<{ status: string }, GlobalCommandErrorStatusCode>;
 
 describe("SendCommandUseCase", () => {
   beforeEach(() => {
@@ -47,16 +49,23 @@ describe("SendCommandUseCase", () => {
     sessionService.addDeviceSession(deviceSession);
     const useCase = new SendCommandUseCase(sessionService, () => logger);
 
-    jest
-      .spyOn(deviceSession, "sendCommand")
-      .mockResolvedValue({ status: "success" });
+    jest.spyOn(deviceSession, "sendCommand").mockResolvedValue({
+      status: CommandResultStatus.Success,
+      data: undefined,
+    });
 
-    const response = await useCase.execute<{ status: string }>({
+    const response = await useCase.execute<
+      { status: string },
+      GlobalCommandErrorStatusCode
+    >({
       sessionId: fakeSessionId,
       command,
     });
 
-    expect(response).toStrictEqual({ status: "success" });
+    expect(response).toStrictEqual({
+      status: CommandResultStatus.Success,
+      data: undefined,
+    });
   });
 
   it("should throw an error if the session is not found", async () => {
@@ -65,7 +74,10 @@ describe("SendCommandUseCase", () => {
       .spyOn(sessionService, "getDeviceSessionById")
       .mockReturnValue(Left({ _tag: "DeviceSessionNotFound" }));
 
-    const res = useCase.execute<{ status: string }>({
+    const res = useCase.execute<
+      { status: string },
+      GlobalCommandErrorStatusCode
+    >({
       sessionId: fakeSessionId,
       command,
     });

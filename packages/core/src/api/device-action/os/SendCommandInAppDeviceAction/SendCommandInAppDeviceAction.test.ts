@@ -3,6 +3,11 @@ import { assign, createMachine } from "xstate";
 
 import { Apdu } from "@api/apdu/model/Apdu";
 import { ApduBuilder } from "@api/apdu/utils/ApduBuilder";
+import {
+  CommandResult,
+  CommandResultFactory,
+} from "@api/command/model/CommandResult";
+import { GlobalCommandErrorStatusCode } from "@api/command/utils/GlobalCommandError";
 import { makeDeviceActionInternalApiMock } from "@api/device-action/__test-utils__/makeInternalApi";
 import { testDeviceActionStates } from "@api/device-action/__test-utils__/testDeviceActionStates";
 import {
@@ -73,10 +78,12 @@ describe("SendCommandInAppDeviceAction", () => {
     paramString: "aParameter",
     paramNumber: 1234,
   };
-  const mockedCommandResponse = {
-    aNumber: 5678,
-    aString: "mockedResponseString",
-  };
+  const mockedCommandResponse = CommandResultFactory({
+    data: {
+      aNumber: 5678,
+      aString: "mockedResponseString",
+    },
+  });
 
   beforeEach(() => {
     jest.resetAllMocks();
@@ -260,7 +267,10 @@ type MyCommandParams = {
   paramNumber: number;
 };
 
-class TestCommand implements Command<MyCommandResponse, MyCommandParams> {
+class TestCommand
+  implements
+    Command<MyCommandResponse, GlobalCommandErrorStatusCode, MyCommandParams>
+{
   params: MyCommandParams;
   constructor(params: MyCommandParams) {
     this.params = params;
@@ -272,12 +282,14 @@ class TestCommand implements Command<MyCommandResponse, MyCommandParams> {
       .build();
   }
   parseResponse() {
-    return { aNumber: 1, aString: "aString" };
+    return CommandResultFactory({ data: { aNumber: 1, aString: "aString" } });
   }
 }
 
 type MyCommandSendCommandDAState = DeviceActionState<
-  SendCommandInAppDAOutput<MyCommandResponse>,
+  SendCommandInAppDAOutput<
+    CommandResult<MyCommandResponse, GlobalCommandErrorStatusCode>
+  >,
   SendCommandInAppDAError<UnknownDAError>,
   SendCommandInAppDAIntermediateValue<
     UserInteractionRequired.None | UserInteractionRequired.VerifyAddress

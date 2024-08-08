@@ -1,6 +1,7 @@
 import { Left, Right } from "purify-ts";
 import { assign, fromPromise, setup } from "xstate";
 
+import { isSuccessCommandResult } from "@api/command/model/CommandResult";
 import {
   ListAppsCommand,
   ListAppsResponse,
@@ -261,7 +262,11 @@ export class ListAppsDeviceAction extends XStateDeviceAction<
   extractDependencies(internalApi: InternalApi): MachineDependencies {
     const listApps = async ({ input }: { input: boolean }) => {
       const command = new ListAppsCommand({ isContinue: input });
-      return internalApi.sendCommand(command);
+      const res = await internalApi.sendCommand(command);
+      if (isSuccessCommandResult(res)) {
+        return res.data;
+      }
+      throw res.error;
     };
 
     return {
