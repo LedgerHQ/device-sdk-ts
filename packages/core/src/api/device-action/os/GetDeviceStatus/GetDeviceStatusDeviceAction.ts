@@ -10,6 +10,7 @@ import {
   setup,
 } from "xstate";
 
+import { isSuccessCommandResult } from "@api/command/model/CommandResult";
 import { GetAppAndVersionCommand } from "@api/command/os/GetAppAndVersionCommand";
 import { DeviceStatus } from "@api/device/DeviceStatus";
 import { InternalApi } from "@api/device-action/DeviceAction";
@@ -327,11 +328,19 @@ export class GetDeviceStatusDeviceAction extends XStateDeviceAction<
   }
 
   extractDependencies(internalApi: InternalApi): MachineDependencies {
-    const getAppAndVersion = () =>
-      internalApi.sendCommand(new GetAppAndVersionCommand()).then((res) => ({
-        app: res.name,
-        version: res.version,
-      }));
+    const getAppAndVersion = () => {
+      return internalApi
+        .sendCommand(new GetAppAndVersionCommand())
+        .then((res) => {
+          if (isSuccessCommandResult(res)) {
+            return {
+              app: res.data.name,
+              version: res.data.version,
+            };
+          }
+          throw res.error;
+        });
+    };
 
     const waitForDeviceUnlock = ({
       input,

@@ -2,40 +2,33 @@ import { Apdu } from "@api/apdu/model/Apdu";
 import { ApduBuilder, ApduBuilderArgs } from "@api/apdu/utils/ApduBuilder";
 import { ApduParser } from "@api/apdu/utils/ApduParser";
 import { Command } from "@api/command/Command";
-import { GlobalErrorHandler } from "@api/command/Errors";
 import {
   CommandResult,
-  CommandResultStatus,
+  CommandResultFactory,
 } from "@api/command/model/CommandResult";
 import { CommandUtils } from "@api/command/utils/CommandUtils";
-import { ApduResponse } from "@api/device-session/ApduResponse";
 import {
   CommandErrors,
-  DeviceExchangeError,
+  GlobalCommandErrorHandler,
   GlobalCommandErrorStatusCode,
   isCommandErrorCode,
-} from "@api/Error";
+} from "@api/command/utils/GlobalCommandError";
+import { ApduResponse } from "@api/device-session/ApduResponse";
+import { CommandErrorArgs, DeviceExchangeError } from "@api/Error";
 
 export type OpenAppArgs = {
   readonly appName: string;
 };
 
-type OpenAppErrorCodes = "670A" | "6807";
+export type OpenAppErrorCodes = "670a" | "6807";
 
 const OPEN_APP_ERRORS: CommandErrors<OpenAppErrorCodes> = {
-  "670A": { message: "No app name provided" },
+  "670a": { message: "No app name provided" },
   "6807": { message: "Unknown application name" },
 };
 
-class OpenAppCommandError extends DeviceExchangeError<OpenAppErrorCodes> {
-  override readonly _tag = "OpenAppCommandError";
-  constructor({
-    message,
-    errorCode,
-  }: {
-    message: string;
-    errorCode: OpenAppErrorCodes;
-  }) {
+export class OpenAppCommandError extends DeviceExchangeError<OpenAppErrorCodes> {
+  constructor({ message, errorCode }: CommandErrorArgs<OpenAppErrorCodes>) {
     super({ tag: "OpenAppCommandError", message, errorCode });
   }
 }
@@ -47,8 +40,8 @@ export class OpenAppCommand
   implements
     Command<
       void,
-      OpenAppArgs,
-      OpenAppErrorCodes | GlobalCommandErrorStatusCode
+      OpenAppErrorCodes | GlobalCommandErrorStatusCode,
+      OpenAppArgs
     >
 {
   readonly args: OpenAppArgs;
@@ -75,25 +68,22 @@ export class OpenAppCommand
     apduResponse: ApduResponse,
   ): CommandResult<void, OpenAppErrorCodes | GlobalCommandErrorStatusCode> {
     if (CommandUtils.isSuccessResponse(apduResponse)) {
-      return {
-        status: CommandResultStatus.Success,
-        data: void 0,
-      };
+      return CommandResultFactory({
+        data: undefined,
+      });
     }
     const parser = new ApduParser(apduResponse);
     const errorCode = parser.encodeToHexaString(apduResponse.statusCode);
     if (isCommandErrorCode(errorCode, OPEN_APP_ERRORS)) {
-      return {
-        status: CommandResultStatus.Error,
+      return CommandResultFactory({
         error: new OpenAppCommandError({
           ...OPEN_APP_ERRORS[errorCode],
           errorCode,
         }),
-      };
+      });
     }
-    return {
-      status: CommandResultStatus.Error,
-      error: GlobalErrorHandler.handle(apduResponse),
-    };
+    return CommandResultFactory({
+      error: GlobalCommandErrorHandler.handle(apduResponse),
+    });
   }
 }

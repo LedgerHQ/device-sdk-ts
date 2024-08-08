@@ -2,16 +2,17 @@ import { Apdu } from "@api/apdu/model/Apdu";
 import { ApduBuilder, ApduBuilderArgs } from "@api/apdu/utils/ApduBuilder";
 import { ApduParser } from "@api/apdu/utils/ApduParser";
 import { Command } from "@api/command/Command";
-import { GlobalErrorHandler } from "@api/command/Errors";
 import {
   CommandResult,
   CommandResultFactory,
-  CommandResultStatus,
 } from "@api/command/model/CommandResult";
 import { CommandUtils } from "@api/command/utils/CommandUtils";
+import {
+  GlobalCommandErrorHandler,
+  GlobalCommandErrorStatusCode,
+} from "@api/command/utils/GlobalCommandError";
 import { DeviceModelId } from "@api/device/DeviceModel";
 import { ApduResponse } from "@api/device-session/ApduResponse";
-import { GlobalCommandErrorStatusCode } from "@api/Error";
 
 /**
  * Response of the GetOsVersionCommand.
@@ -69,7 +70,9 @@ export type GetOsVersionResponse = {
 /**
  * Command to get information about the device firmware.
  */
-export class GetOsVersionCommand implements Command<GetOsVersionResponse> {
+export class GetOsVersionCommand
+  implements Command<GetOsVersionResponse, GlobalCommandErrorStatusCode>
+{
   readonly args = undefined;
 
   getApdu(): Apdu {
@@ -88,8 +91,7 @@ export class GetOsVersionCommand implements Command<GetOsVersionResponse> {
   ): CommandResult<GetOsVersionResponse, GlobalCommandErrorStatusCode> {
     if (!CommandUtils.isSuccessResponse(apduResponse)) {
       return CommandResultFactory({
-        status: CommandResultStatus.Error,
-        error: GlobalErrorHandler.handle(apduResponse),
+        error: GlobalCommandErrorHandler.handle(apduResponse),
       });
     }
     const parser = new ApduParser(apduResponse);
@@ -118,7 +120,6 @@ export class GetOsVersionCommand implements Command<GetOsVersionResponse> {
     );
 
     return CommandResultFactory({
-      status: CommandResultStatus.Success,
       data: {
         targetId,
         seVersion,

@@ -1,12 +1,16 @@
 import { Command } from "@api/command/Command";
-import { InvalidStatusWordError } from "@api/command/Errors";
+import {
+  CommandResultFactory,
+  ErrorResult,
+  isSuccessCommandResult,
+} from "@api/command/model/CommandResult";
 import { ApduResponse } from "@api/device-session/ApduResponse";
 
 import {
-  ConsentFailedError,
   ListAppsCommand,
+  ListAppsCommandError,
+  ListAppsCommandErrorCodes,
   ListAppsResponse,
-  PinNotValidated,
 } from "./ListAppsCommand";
 
 // [NOTE] EXAMPLES CREATED USING A NANO X
@@ -151,7 +155,9 @@ describe("ListAppCommand", () => {
           data: new Uint8Array(),
         });
 
-        expect(command.parseResponse(response)).toStrictEqual([]);
+        expect(command.parseResponse(response)).toStrictEqual(
+          CommandResultFactory({ data: [] }),
+        );
       });
 
       it("should parse the response with 1 app", () => {
@@ -161,7 +167,7 @@ describe("ListAppCommand", () => {
         });
 
         expect(command.parseResponse(response)).toStrictEqual(
-          LIST_APP_RESPONSE_1_APP_EXPECTED,
+          CommandResultFactory({ data: LIST_APP_RESPONSE_1_APP_EXPECTED }),
         );
       });
 
@@ -172,52 +178,32 @@ describe("ListAppCommand", () => {
         });
 
         expect(command.parseResponse(response)).toStrictEqual(
-          LIST_APP_RESPONSE_2_APPS_EXPECTED,
+          CommandResultFactory({ data: LIST_APP_RESPONSE_2_APPS_EXPECTED }),
         );
       });
     });
 
     describe("errors", () => {
-      it("should throw an InvalidStatusWordError if the response status code is not success", () => {
+      it("should return error command result if the response status code is not success", () => {
         const response = new ApduResponse({
           statusCode: Uint8Array.from([0x6a, 0x82]),
           data: new Uint8Array(),
         });
+        const result = command.parseResponse(response);
 
-        expect(() => command.parseResponse(response)).toThrow(
-          InvalidStatusWordError,
-        );
+        expect(isSuccessCommandResult(result)).toBe(false);
       });
 
-      it("should throw a ConsentFailedError", () => {
+      it("should return an error", () => {
         const response = new ApduResponse({
           statusCode: Uint8Array.from([0x55, 0x01]),
           data: new Uint8Array(),
         });
 
-        expect(() => command.parseResponse(response)).toThrow(
-          ConsentFailedError,
-        );
-      });
+        // when
+        const result = command.parseResponse(response);
 
-      it("should throw a PinNotValidated", () => {
-        const response = new ApduResponse({
-          statusCode: Uint8Array.from([0x55, 0x02]),
-          data: new Uint8Array(),
-        });
-
-        expect(() => command.parseResponse(response)).toThrow(PinNotValidated);
-      });
-
-      it("should throw a InvalidStatusWordError (second case)", () => {
-        const response = new ApduResponse({
-          statusCode: Uint8Array.from([0x55, 0x03]),
-          data: new Uint8Array(),
-        });
-
-        expect(() => command.parseResponse(response)).toThrow(
-          InvalidStatusWordError,
-        );
+        expect(isSuccessCommandResult(result)).toBe(false);
       });
     });
   });
@@ -242,7 +228,9 @@ describe("ListAppCommand", () => {
         });
 
         expect(command.parseResponse(response)).toStrictEqual(
-          LIST_APP_RESPONSE_CONTINUE_1_APP_EXPECTED,
+          CommandResultFactory({
+            data: LIST_APP_RESPONSE_CONTINUE_1_APP_EXPECTED,
+          }),
         );
       });
 
@@ -253,7 +241,9 @@ describe("ListAppCommand", () => {
         });
 
         expect(command.parseResponse(response)).toStrictEqual(
-          LIST_APP_RESPONSE_CONTINUE_2_APPS_EXPECTED,
+          CommandResultFactory({
+            data: LIST_APP_RESPONSE_CONTINUE_2_APPS_EXPECTED,
+          }),
         );
       });
 
@@ -263,7 +253,9 @@ describe("ListAppCommand", () => {
           data: new Uint8Array(),
         });
 
-        expect(command.parseResponse(response)).toStrictEqual([]);
+        expect(command.parseResponse(response)).toStrictEqual(
+          CommandResultFactory({ data: [] }),
+        );
       });
     });
 
@@ -273,10 +265,12 @@ describe("ListAppCommand", () => {
           statusCode: Uint8Array.from([0x66, 0x24]),
           data: new Uint8Array(),
         });
+        const result = command.parseResponse(
+          response,
+        ) as ErrorResult<ListAppsCommandErrorCodes>;
 
-        expect(() => command.parseResponse(response)).toThrow(
-          InvalidStatusWordError,
-        );
+        expect(isSuccessCommandResult(result)).toBe(false);
+        expect(result.error).toBeInstanceOf(ListAppsCommandError);
       });
     });
   });

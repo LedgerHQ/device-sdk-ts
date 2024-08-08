@@ -1,6 +1,12 @@
+import { ErrorResult } from "@api/command/model/CommandResult";
 import { ApduResponse } from "@api/device-session/ApduResponse";
+import { isSuccessCommandResult } from "@root/src";
 
-import { OpenAppCommand } from "./OpenAppCommand";
+import {
+  OpenAppCommand,
+  OpenAppCommandError,
+  OpenAppErrorCodes,
+} from "./OpenAppCommand";
 
 describe("OpenAppCommand", () => {
   const appName = "MyApp";
@@ -22,13 +28,28 @@ describe("OpenAppCommand", () => {
     ).not.toThrow();
   });
 
-  it("should throw error when command is unsuccessful", () => {
-    const apduResponse: ApduResponse = new ApduResponse({
-      statusCode: new Uint8Array([0x6a, 0x81]),
-      data: new Uint8Array([]),
+  describe("errors", () => {
+    it("should return a handled open app error if no name provided", () => {
+      const apduResponse: ApduResponse = new ApduResponse({
+        statusCode: new Uint8Array([0x67, 0x0a]),
+        data: new Uint8Array([]),
+      });
+      const result = new OpenAppCommand({ appName }).parseResponse(
+        apduResponse,
+      ) as ErrorResult<OpenAppErrorCodes>;
+      expect(isSuccessCommandResult(result)).toBe(false);
+      expect(result.error).toBeInstanceOf(OpenAppCommandError);
     });
-    expect(() =>
-      new OpenAppCommand({ appName }).parseResponse(apduResponse),
-    ).toThrow();
+    it("should return a handled open app error if unknown application name", () => {
+      const apduResponse: ApduResponse = new ApduResponse({
+        statusCode: new Uint8Array([0x68, 0x07]),
+        data: new Uint8Array([]),
+      });
+      const result = new OpenAppCommand({ appName }).parseResponse(
+        apduResponse,
+      ) as ErrorResult<OpenAppErrorCodes>;
+      expect(isSuccessCommandResult(result)).toBe(false);
+      expect(result.error).toBeInstanceOf(OpenAppCommandError);
+    });
   });
 });
