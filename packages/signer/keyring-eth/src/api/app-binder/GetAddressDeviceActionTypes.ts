@@ -1,5 +1,7 @@
 import {
+  CommandResult,
   type ExecuteDeviceActionReturnType,
+  GlobalCommandErrorStatusCode,
   type SendCommandInAppDAError,
   type SendCommandInAppDAInput,
   type SendCommandInAppDAIntermediateValue,
@@ -19,10 +21,12 @@ type GetAddressDAUserInteractionRequired =
 export type GetAddressDAInput = SendCommandInAppDAInput<
   GetAddressCommandResponse,
   GetAddressCommandArgs,
-  GetAddressDAUserInteractionRequired
+  GetAddressDAUserInteractionRequired,
+  GlobalCommandErrorStatusCode
 >;
-export type GetAddressDAOutput =
-  SendCommandInAppDAOutput<GetAddressCommandResponse>;
+export type GetAddressDAOutput = SendCommandInAppDAOutput<
+  CommandResult<GetAddressCommandResponse, GlobalCommandErrorStatusCode>
+>;
 export type GetAddressDAError = SendCommandInAppDAError<never>; // TODO: add specific command errors when error handling for commands is properly implemented
 export type GetAddressDAIntermediateValue =
   SendCommandInAppDAIntermediateValue<GetAddressDAUserInteractionRequired>;

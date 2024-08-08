@@ -1,9 +1,9 @@
-import { Command, InvalidStatusWordError } from "@ledgerhq/device-sdk-core";
-
 import {
-  ProvideTokenInformationCommand,
-  ProvideTokenInformationCommandArgs,
-} from "./ProvideTokenInformationCommand";
+  CommandResultFactory,
+  isSuccessCommandResult,
+} from "@ledgerhq/device-sdk-core";
+
+import { ProvideTokenInformationCommand } from "./ProvideTokenInformationCommand";
 
 const PAYLOAD_USDT =
   "0455534454dac17f958d2ee523a2206206994597c13d831ec700000006000000013044022078c66ccea3e4dedb15a24ec3c783d7b582cd260daf62fd36afe9a8212a344aed0220160ba8c1c4b6a8aa6565bed20632a091aeeeb7bfdac67fc6589a6031acbf511c";
@@ -36,7 +36,7 @@ const PROVIDE_TOKEN_INFORMATION_APDU_USDC = Uint8Array.from([
 ]);
 
 describe("ProvideTokenInformationCommand", () => {
-  let command: Command<void, ProvideTokenInformationCommandArgs>;
+  let command: ProvideTokenInformationCommand;
 
   describe("getApdu", () => {
     it("should return the apdu for usdt payload", () => {
@@ -78,7 +78,9 @@ describe("ProvideTokenInformationCommand", () => {
       const parsedResponse = command.parseResponse(response);
 
       // THEN
-      expect(parsedResponse).toStrictEqual({ tokenIndex: 1 });
+      expect(parsedResponse).toStrictEqual(
+        CommandResultFactory({ data: undefined }),
+      );
     });
 
     it("should throw an error if the response is invalid", () => {
@@ -97,7 +99,7 @@ describe("ProvideTokenInformationCommand", () => {
       }).toThrow(InvalidStatusWordError);
     });
 
-    it("should throw an error if the response is not successful", () => {
+    it("should return an error if the response is not successful", () => {
       // GIVEN
       const response = {
         statusCode: Uint8Array.from([0x55, 0x15]),
@@ -105,12 +107,10 @@ describe("ProvideTokenInformationCommand", () => {
       };
 
       // WHEN
-      const promise = () => command.parseResponse(response);
+      const result = command.parseResponse(response);
 
       // THEN
-      expect(() => {
-        promise();
-      }).toThrow(InvalidStatusWordError);
+      expect(isSuccessCommandResult(result)).toBe(false);
     });
   });
 });

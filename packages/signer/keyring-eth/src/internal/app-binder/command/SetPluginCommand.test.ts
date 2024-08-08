@@ -1,9 +1,13 @@
 import {
   ApduResponse,
-  InvalidStatusWordError,
+  isSuccessCommandResult,
 } from "@ledgerhq/device-sdk-core";
 
-import { SetPluginCommand, SetPluginCommandArgs } from "./SetPluginCommand";
+import {
+  SetPluginCommand,
+  SetPluginCommandArgs,
+  SetPluginCommandError,
+} from "./SetPluginCommand";
 
 const SET_PLUGIN_COMMAND_PAYLOAD =
   "010106455243373231c5b07a55501014f36ec5d39d950a321439f6dd7642842e0e0000000000000001020147304502206d9f515916283e08fa6cdab205668c0739c558dcd6691a69ce74cd89fbc2cc6e022100c28c17b058e6d453570a58d69ff62042037dc61149af2f5161d5c36fdc5dc301";
@@ -36,28 +40,31 @@ describe("SetPluginCommand", () => {
     });
   });
   describe("parseResponse", () => {
-    it("should throw an error if the response status code is invalid", () => {
-      // GIVEN
-      const invalidStatusCodes = [
-        [0x6a, 0x80],
-        [0x69, 0x84],
-        [0x6d, 0x00],
-      ];
-      for (const statusCode of invalidStatusCodes) {
-        const response: ApduResponse = {
-          data: Buffer.from([]),
-          statusCode: Buffer.from(statusCode), // Invalid status code
-        };
-        // WHEN
+    it.each`
+      apduResponseCode                 | errorCode
+      ${Uint8Array.from([0x69, 0x84])} | ${"6984"}
+      ${Uint8Array.from([0x6d, 0x00])} | ${"6d00"}
+    `(
+      "should return an error for the response status code $errorCode",
+      ({ apduResponseCode, errorCode }) => {
+        // GIVEN
+        const response = new ApduResponse({
+          data: Uint8Array.from([]),
+          statusCode: apduResponseCode,
+        });
         const command = new SetPluginCommand({ data: "" });
+        // WHEN
+        const result = command.parseResponse(response);
         // THEN
-        expect(() => command.parseResponse(response)).toThrow(
-          InvalidStatusWordError,
-        );
-      }
-    });
+        expect(isSuccessCommandResult(result)).toBe(false);
+        // @ts-ignore
+        expect(result.error).toBeInstanceOf(SetPluginCommandError);
+        // @ts-ignore
+        expect(result.error.errorCode).toStrictEqual(errorCode);
+      },
+    );
 
-    it("should not throw if the response status code is correct", () => {
+    it("should return success if the response status code is correct", () => {
       // GIVEN
       const response: ApduResponse = {
         data: Buffer.from([]),
@@ -65,8 +72,9 @@ describe("SetPluginCommand", () => {
       };
       // WHEN
       const command = new SetPluginCommand({ data: "" });
+      const result = command.parseResponse(response);
       // THEN
-      expect(() => command.parseResponse(response)).not.toThrow();
+      expect(isSuccessCommandResult(result)).toBe(true);
     });
   });
 });

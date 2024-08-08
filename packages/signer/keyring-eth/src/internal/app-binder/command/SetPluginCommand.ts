@@ -6,9 +6,23 @@ import {
   ApduParser,
   ApduResponse,
   type Command,
+  CommandErrorArgs,
+  CommandErrors,
+  CommandResult,
+  CommandResultFactory,
   CommandUtils,
-  InvalidStatusWordError,
+  DeviceExchangeError,
+  GlobalCommandErrorHandler,
+  GlobalCommandErrorStatusCode,
+  isCommandErrorCode,
 } from "@ledgerhq/device-sdk-core";
+
+type SetPluginCommandErrorCodes = "6984" | "6d00";
+
+const SET_PLUGIN_ERRORS: CommandErrors<SetPluginCommandErrorCodes> = {
+  "6984": { message: "The requested plugin is not installed on the device" },
+  "6d00": { message: "ETH app is not up to date" },
+};
 
 export type SetPluginCommandArgs = {
   /**
@@ -17,7 +31,20 @@ export type SetPluginCommandArgs = {
   data: string;
 };
 
-export class SetPluginCommand implements Command<void, SetPluginCommandArgs> {
+export class SetPluginCommandError extends DeviceExchangeError<SetPluginCommandErrorCodes> {
+  constructor(args: CommandErrorArgs<SetPluginCommandErrorCodes>) {
+    super({ ...args, tag: "SetPluginCommandError" });
+  }
+}
+
+export class SetPluginCommand
+  implements
+    Command<
+      void,
+      SetPluginCommandErrorCodes | GlobalCommandErrorStatusCode,
+      SetPluginCommandArgs
+    >
+{
   constructor(private args: SetPluginCommandArgs) {}
 
   getApdu(): Apdu {
@@ -33,34 +60,28 @@ export class SetPluginCommand implements Command<void, SetPluginCommandArgs> {
       .build();
   }
 
-  parseResponse(response: ApduResponse): void {
-    const parser = new ApduParser(response);
-
-    // TODO: handle the error correctly using a generic error handler. These error status codes come from the LL implementation, just for backup for now.
-    if (!CommandUtils.isSuccessResponse(response)) {
-      if (response.statusCode[0] === 0x6a && response.statusCode[1] === 0x80) {
-        throw new InvalidStatusWordError(
-          "The plugin name is too short or too long",
-        );
-      } else if (
-        response.statusCode[0] === 0x69 &&
-        response.statusCode[1] === 0x84
-      ) {
-        throw new InvalidStatusWordError(
-          "the requested plugin is not installed on the device",
-        );
-      } else if (
-        response.statusCode[0] === 0x6d &&
-        response.statusCode[1] === 0x00
-      ) {
-        throw new InvalidStatusWordError("ETH app is not up to date");
-      } else {
-        throw new InvalidStatusWordError(
-          `Unexpected status word: ${parser.encodeToHexaString(
-            response.statusCode,
-          )}`,
-        );
-      }
+  parseResponse(
+    response: ApduResponse,
+  ): CommandResult<
+    void,
+    SetPluginCommandErrorCodes | GlobalCommandErrorStatusCode
+  > {
+    if (CommandUtils.isSuccessResponse(response)) {
+      return CommandResultFactory({ data: undefined });
     }
+    const parser = new ApduParser(response);
+    const errorCode = parser.encodeToHexaString(response.statusCode);
+
+    if (isCommandErrorCode(errorCode, SET_PLUGIN_ERRORS)) {
+      return CommandResultFactory({
+        error: new SetPluginCommandError({
+          ...SET_PLUGIN_ERRORS[errorCode],
+          errorCode,
+        }),
+      });
+    }
+    return CommandResultFactory({
+      error: GlobalCommandErrorHandler.handle(response),
+    });
   }
 }

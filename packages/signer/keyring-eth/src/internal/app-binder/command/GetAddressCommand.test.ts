@@ -1,10 +1,8 @@
 import {
   ApduResponse,
-  Command,
-  InvalidStatusWordError,
+  CommandResultFactory,
+  isSuccessCommandResult,
 } from "@ledgerhq/device-sdk-core";
-
-import { GetAddressCommandResponse } from "@api/app-binder/GetAddressCommandTypes";
 
 import { GetAddressCommand } from "./GetAddressCommand";
 
@@ -76,7 +74,7 @@ const LNX_RESPONSE_GOOD_WITH_CHAIN_CODE = new ApduResponse({
 });
 
 describe("GetAddressCommand", () => {
-  let command: Command<GetAddressCommandResponse>;
+  let command: GetAddressCommand;
   const defaultArgs = {
     derivationPath: "44'/60'/0'/0/0",
     checkOnDevice: false,
@@ -140,49 +138,59 @@ describe("GetAddressCommand", () => {
   describe("parseResponse", () => {
     it("should parse the response", () => {
       const parsed = command.parseResponse(LNX_RESPONSE_GOOD);
-      expect(parsed).toStrictEqual({
-        publicKey:
-          "04e3785ca6a5aa748c625e3dddd6d97b59b26fd8152fb52eb29d24404f010be4f725c3725e78bed953f074778d717974de21f3470b735736eb3d56747ab6d073a7",
-        address: "0xF7C69BedB292Dd3fC2cA4103989B5BD705164c43",
-        chainCode: undefined,
-      });
+      expect(parsed).toStrictEqual(
+        CommandResultFactory({
+          data: {
+            publicKey:
+              "04e3785ca6a5aa748c625e3dddd6d97b59b26fd8152fb52eb29d24404f010be4f725c3725e78bed953f074778d717974de21f3470b735736eb3d56747ab6d073a7",
+            address: "0xF7C69BedB292Dd3fC2cA4103989B5BD705164c43",
+            chainCode: undefined,
+          },
+        }),
+      );
     });
 
     it("should parse the response with chainCode", () => {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access
       (command as any)["args"].returnChainCode = true;
       const parsed = command.parseResponse(LNX_RESPONSE_GOOD_WITH_CHAIN_CODE);
-      expect(parsed).toStrictEqual({
-        publicKey:
-          "04e3785ca6a5aa748c625e3dddd6d97b59b26fd8152fb52eb29d24404f010be4f725c3725e78bed953f074778d717974de21f3470b735736eb3d56747ab6d073a7",
-        address: "0xF7C69BedB292Dd3fC2cA4103989B5BD705164c43",
-        chainCode:
-          "423e651f2b16b4186d5eac167cc49aade4a97eb3b137de36334799684d0c714a",
-      });
+      expect(parsed).toStrictEqual(
+        CommandResultFactory({
+          data: {
+            publicKey:
+              "04e3785ca6a5aa748c625e3dddd6d97b59b26fd8152fb52eb29d24404f010be4f725c3725e78bed953f074778d717974de21f3470b735736eb3d56747ab6d073a7",
+            address: "0xF7C69BedB292Dd3fC2cA4103989B5BD705164c43",
+            chainCode:
+              "423e651f2b16b4186d5eac167cc49aade4a97eb3b137de36334799684d0c714a",
+          },
+        }),
+      );
     });
 
     it("should not return chainCode if it is not requested", () => {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access
       (command as any)["args"].returnChainCode = false;
       const parsed = command.parseResponse(LNX_RESPONSE_GOOD_WITH_CHAIN_CODE);
-      expect(parsed).toStrictEqual({
-        publicKey:
-          "04e3785ca6a5aa748c625e3dddd6d97b59b26fd8152fb52eb29d24404f010be4f725c3725e78bed953f074778d717974de21f3470b735736eb3d56747ab6d073a7",
-        address: "0xF7C69BedB292Dd3fC2cA4103989B5BD705164c43",
-        chainCode: undefined,
-      });
+      expect(parsed).toStrictEqual(
+        CommandResultFactory({
+          data: {
+            publicKey:
+              "04e3785ca6a5aa748c625e3dddd6d97b59b26fd8152fb52eb29d24404f010be4f725c3725e78bed953f074778d717974de21f3470b735736eb3d56747ab6d073a7",
+            address: "0xF7C69BedB292Dd3fC2cA4103989B5BD705164c43",
+            chainCode: undefined,
+          },
+        }),
+      );
     });
 
     describe("error handling", () => {
-      // TODO: add all the cases when the error handling is implemented
-      it("should throw an error if the response is not successfull", () => {
+      it("should return an error if the response is not successfull", () => {
         const response = new ApduResponse({
           statusCode: Uint8Array.from([0x6d, 0x00]),
           data: new Uint8Array(0),
         });
-        expect(() => command.parseResponse(response)).toThrow(
-          InvalidStatusWordError,
-        );
+        const result = command.parseResponse(response);
+        expect(isSuccessCommandResult(result)).toBe(false);
       });
     });
   });

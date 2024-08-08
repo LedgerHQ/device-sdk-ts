@@ -6,8 +6,15 @@ import {
   ApduParser,
   ApduResponse,
   type Command,
+  CommandErrorArgs,
+  CommandErrors,
+  CommandResult,
+  CommandResultFactory,
   CommandUtils,
-  InvalidStatusWordError,
+  DeviceExchangeError,
+  GlobalCommandErrorHandler,
+  GlobalCommandErrorStatusCode,
+  isCommandErrorCode,
 } from "@ledgerhq/device-sdk-core";
 
 export type ProvideNFTInformationCommandArgs = {
@@ -17,8 +24,26 @@ export type ProvideNFTInformationCommandArgs = {
   data: string;
 };
 
+export type ProvideNFTInformationCommandErrorCodes = "6d00";
+
+const PROVIDE_NFT_INFO_ERRORS: CommandErrors<ProvideNFTInformationCommandErrorCodes> =
+  {
+    "6d00": { message: "ETH app is not up to date" },
+  };
+
+class ProvideNFTInformationCommandError extends DeviceExchangeError<ProvideNFTInformationCommandErrorCodes> {
+  constructor(args: CommandErrorArgs<ProvideNFTInformationCommandErrorCodes>) {
+    super({ ...args, tag: "ProvideNFTInformationCommandError" });
+  }
+}
+
 export class ProvideNFTInformationCommand
-  implements Command<void, ProvideNFTInformationCommandArgs>
+  implements
+    Command<
+      void,
+      ProvideNFTInformationCommandErrorCodes | GlobalCommandErrorStatusCode,
+      ProvideNFTInformationCommandArgs
+    >
 {
   constructor(private args: ProvideNFTInformationCommandArgs) {}
 
@@ -35,21 +60,26 @@ export class ProvideNFTInformationCommand
       .build();
   }
 
-  parseResponse(response: ApduResponse): void {
+  parseResponse(
+    response: ApduResponse,
+  ): CommandResult<void, ProvideNFTInformationCommandErrorCodes> {
+    if (CommandUtils.isSuccessResponse(response)) {
+      return CommandResultFactory({ data: undefined });
+    }
     const parser = new ApduParser(response);
+    const errorCode = parser.encodeToHexaString(response.statusCode);
 
-    if (response.statusCode[0] === 0x6d && response.statusCode[1] === 0x00) {
-      // This is temporary, a new error class should be created to handle this case later.
-      throw new InvalidStatusWordError("ETH app is not up to date");
+    if (isCommandErrorCode(errorCode, PROVIDE_NFT_INFO_ERRORS)) {
+      return CommandResultFactory({
+        error: new ProvideNFTInformationCommandError({
+          ...PROVIDE_NFT_INFO_ERRORS[errorCode],
+          errorCode,
+        }),
+      });
     }
 
-    if (!CommandUtils.isSuccessResponse(response)) {
-      // TODO: handle the error correctly using a generic error handler
-      throw new InvalidStatusWordError(
-        `Unexpected status word: ${parser.encodeToHexaString(
-          response.statusCode,
-        )}`,
-      );
-    }
+    return CommandResultFactory({
+      error: GlobalCommandErrorHandler.handle(response),
+    });
   }
 }
