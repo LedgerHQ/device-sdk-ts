@@ -30,11 +30,18 @@ export {
 } from "./command/os/ListAppsCommand";
 export { type OpenAppArgs, OpenAppCommand } from "./command/os/OpenAppCommand";
 export { CommandUtils } from "./command/utils/CommandUtils";
+export {
+  GlobalCommandError,
+  GlobalCommandErrorHandler,
+  type GlobalCommandErrorStatusCode,
+  isCommandErrorCode,
+} from "./command/utils/GlobalCommandError";
 export { DeviceModel, DeviceModelId } from "./device/DeviceModel";
 export { DeviceStatus } from "./device/DeviceStatus";
 export { ApduResponse } from "./device-session/ApduResponse";
 export { DeviceSdk } from "./DeviceSdk";
 export { LedgerDeviceSdkBuilder as DeviceSdkBuilder } from "./DeviceSdkBuilder";
+export { DeviceExchangeError, UnknownDeviceExchangeError } from "./Error";
 export { LogLevel } from "./logger-subscriber/model/LogLevel";
 export { ConsoleLogger } from "./logger-subscriber/service/ConsoleLogger";
 export * from "./types";

@@ -6,7 +6,11 @@ import {
   ApduParser,
   ApduResponse,
   Command,
+  CommandResult,
+  CommandResultFactory,
   CommandUtils,
+  GlobalCommandErrorHandler,
+  GlobalCommandErrorStatusCode,
   InvalidStatusWordError,
 } from "@ledgerhq/device-sdk-core";
 import { Just, Maybe, Nothing } from "purify-ts";
@@ -89,21 +93,22 @@ export class SignPersonalMessageCommand
 
   parseResponse(
     apduResponse: ApduResponse,
-  ): SignPersonalMessageCommandResponse {
+  ): CommandResult<
+    SignPersonalMessageCommandResponse,
+    GlobalCommandErrorStatusCode
+  > {
     const parser = new ApduParser(apduResponse);
 
     if (!CommandUtils.isSuccessResponse(apduResponse)) {
-      throw new InvalidStatusWordError(
-        `Unexpected status word: ${parser.encodeToHexaString(
-          apduResponse.statusCode,
-        )}`,
-      );
+      return CommandResultFactory({
+        error: GlobalCommandErrorHandler.handle(apduResponse),
+      });
     }
 
     // The data is returned only for the last chunk
     const v = parser.extract8BitUInt();
     if (!v) {
-      return Nothing;
+      return CommandResultFactory({ data: Nothing });
     }
 
     const r = parser.encodeToHexaString(
@@ -111,7 +116,9 @@ export class SignPersonalMessageCommand
       true,
     );
     if (!r) {
-      throw new InvalidStatusWordError("R is missing");
+      return CommandResultFactory({
+        error: new InvalidStatusWordError("R is missing"),
+      });
     }
 
     const s = parser.encodeToHexaString(
@@ -119,13 +126,17 @@ export class SignPersonalMessageCommand
       true,
     );
     if (!s) {
-      throw new InvalidStatusWordError("S is missing");
+      return CommandResultFactory({
+        error: new InvalidStatusWordError("S is missing"),
+      });
     }
 
-    return Just({
-      r,
-      s,
-      v,
+    return CommandResultFactory({
+      data: Just({
+        r,
+        s,
+        v,
+      }),
     });
   }
 }

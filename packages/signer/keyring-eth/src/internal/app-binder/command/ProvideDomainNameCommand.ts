@@ -3,11 +3,13 @@ import {
   Apdu,
   ApduBuilder,
   type ApduBuilderArgs,
-  ApduParser,
   ApduResponse,
   type Command,
+  CommandResult,
+  CommandResultFactory,
   CommandUtils,
-  InvalidStatusWordError,
+  GlobalCommandErrorHandler,
+  GlobalCommandErrorStatusCode,
 } from "@ledgerhq/device-sdk-core";
 
 export type ProvideDomainNameCommandArgs = {
@@ -27,7 +29,8 @@ export type ProvideDomainNameCommandArgs = {
  * The command that provides a chunk of the domain name to the device.
  */
 export class ProvideDomainNameCommand
-  implements Command<void, ProvideDomainNameCommandArgs>
+  implements
+    Command<void, GlobalCommandErrorStatusCode, ProvideDomainNameCommandArgs>
 {
   constructor(private args: ProvideDomainNameCommandArgs) {}
 
@@ -45,16 +48,16 @@ export class ProvideDomainNameCommand
       .build();
   }
 
-  parseResponse(response: ApduResponse): void {
-    const parser = new ApduParser(response);
-
-    // TODO: handle the error correctly using a generic error handler
+  parseResponse(
+    response: ApduResponse,
+  ): CommandResult<void, GlobalCommandErrorStatusCode> {
     if (!CommandUtils.isSuccessResponse(response)) {
-      throw new InvalidStatusWordError(
-        `Unexpected status word: ${parser.encodeToHexaString(
-          response.statusCode,
-        )}`,
-      );
+      return CommandResultFactory({
+        error: GlobalCommandErrorHandler.handle(response),
+      });
     }
+    return CommandResultFactory({
+      data: undefined,
+    });
   }
 }
