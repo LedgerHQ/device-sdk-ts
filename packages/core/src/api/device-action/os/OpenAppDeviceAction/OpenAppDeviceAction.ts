@@ -1,6 +1,7 @@
 import { Left, Right } from "purify-ts";
 import { assign, fromPromise, setup } from "xstate";
 
+import { isSuccessCommandResult } from "@api/command/model/CommandResult";
 import { CloseAppCommand } from "@api/command/os/CloseAppCommand";
 import { GetAppAndVersionCommand } from "@api/command/os/GetAppAndVersionCommand";
 import { OpenAppCommand } from "@api/command/os/OpenAppCommand";
@@ -318,14 +319,28 @@ export class OpenAppDeviceAction extends XStateDeviceAction<
 
   extractDependencies(internalApi: InternalApi): MachineDependencies {
     const getAppAndVersion = async () =>
-      internalApi
-        .sendCommand(new GetAppAndVersionCommand())
-        .then((res) => ({ app: res.name, version: res.version }));
-    const closeApp = async () => internalApi.sendCommand(new CloseAppCommand());
-    const openApp = async (arg0: { input: { appName: string } }) =>
-      internalApi.sendCommand(
+      internalApi.sendCommand(new GetAppAndVersionCommand()).then((res) => {
+        if (isSuccessCommandResult(res)) {
+          return { app: res.data.name, version: res.data.version };
+        }
+        throw res.error;
+      });
+    const closeApp = async () => {
+      const res = await internalApi.sendCommand(new CloseAppCommand());
+      if (isSuccessCommandResult(res)) {
+        return res.data;
+      }
+      throw res.error;
+    };
+    const openApp = async (arg0: { input: { appName: string } }) => {
+      const res = await internalApi.sendCommand(
         new OpenAppCommand({ appName: arg0.input.appName }),
       );
+      if (isSuccessCommandResult(res)) {
+        return res.data;
+      }
+      throw res.error;
+    };
 
     return {
       getAppAndVersion,

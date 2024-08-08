@@ -1,4 +1,5 @@
 import { InvalidStatusWordError } from "@api/command/Errors";
+import { CommandResultFactory } from "@api/command/model/CommandResult";
 import { DeviceStatus } from "@api/device/DeviceStatus";
 import { makeDeviceActionInternalApiMock } from "@api/device-action/__test-utils__/makeInternalApi";
 import { testDeviceActionStates } from "@api/device-action/__test-utils__/testDeviceActionStates";
@@ -49,10 +50,14 @@ describe("OpenAppDeviceAction", () => {
         installedApps: [],
       });
 
-      sendCommandMock.mockResolvedValueOnce({
-        name: "Bitcoin",
-        version: "0.0.0",
-      });
+      sendCommandMock.mockResolvedValueOnce(
+        CommandResultFactory({
+          data: {
+            name: "Bitcoin",
+            version: "0.0.0",
+          },
+        }),
+      );
 
       const openAppDeviceAction = new OpenAppDeviceAction({
         input: { appName: "Bitcoin" },

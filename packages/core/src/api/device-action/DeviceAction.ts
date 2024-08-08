@@ -9,8 +9,8 @@ import { ManagerApiService } from "@internal/manager-api/service/ManagerApiServi
 import { DeviceActionState } from "./model/DeviceActionState";
 
 export type InternalApi = {
-  readonly sendCommand: <Response, Args, ErrorStatusCodes>(
-    command: Command<Response, Args, ErrorStatusCodes>,
+  readonly sendCommand: <Response, ErrorStatusCodes, Args>(
+    command: Command<Response, ErrorStatusCodes, Args>,
   ) => Promise<CommandResult<Response, ErrorStatusCodes>>;
   readonly getDeviceSessionState: () => DeviceSessionState;
   readonly getDeviceSessionStateObservable: () => Observable<DeviceSessionState>;
