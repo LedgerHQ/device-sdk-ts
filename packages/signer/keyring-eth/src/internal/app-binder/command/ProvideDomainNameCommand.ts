@@ -2,6 +2,7 @@
 import {
   Apdu,
   ApduBuilder,
+  type ApduBuilderArgs,
   ApduParser,
   ApduResponse,
   type Command,
@@ -11,8 +12,9 @@ import {
 
 export type ProvideDomainNameCommandArgs = {
   /**
-   * The stringified hexa representation of the domain name.
-   * @example "4C6564676572" (hexa for "Ledger")
+   * The chunk of the stringified hexa representation of the domain name prefixed by its length in two bytes.
+   * If the index equals 0, the first two bytes are the length of the domain name, else all the bytes are the chunk data.
+   * @example "00064C6564676572" (hexa for "Ledger", first chunk and only chunk)
    */
   data: string;
   /**
@@ -24,14 +26,17 @@ export type ProvideDomainNameCommandArgs = {
 /**
  * The command that provides a chunk of the domain name to the device.
  */
-export class ProvideDomainNameCommand implements Command<void, void> {
+export class ProvideDomainNameCommand
+  implements Command<void, ProvideDomainNameCommandArgs>
+{
   constructor(private args: ProvideDomainNameCommandArgs) {}
 
   getApdu(): Apdu {
-    const apduBuilderArgs = {
+    const isFirstChunk = this.args.index === 0;
+    const apduBuilderArgs: ApduBuilderArgs = {
       cla: 0xe0,
       ins: 0x22,
-      p1: this.args.index === 0 ? 0x01 : 0x00,
+      p1: isFirstChunk ? 0x01 : 0x00,
       p2: 0x00,
     };
 
