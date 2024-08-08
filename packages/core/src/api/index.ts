@@ -3,6 +3,11 @@
 export { Apdu } from "./apdu/model/Apdu";
 export { APDU_MAX_PAYLOAD, ApduBuilder } from "./apdu/utils/ApduBuilder";
 export { ApduParser } from "./apdu/utils/ApduParser";
+export {
+  CommandResultFactory,
+  CommandResultStatus,
+  isSuccessCommandResult,
+} from "./command/model/CommandResult";
 export { ByteArrayBuilder } from "./apdu/utils/ByteArrayBuilder";
 export { CloseAppCommand } from "./command/os/CloseAppCommand";
 export {

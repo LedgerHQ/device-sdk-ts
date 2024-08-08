@@ -4,7 +4,7 @@ export interface SdkError {
   // [could] message?: string;
 }
 
-type DeviceExchangeErrorArgs<SpecificErrorCodes> = {
+export type DeviceExchangeErrorArgs<SpecificErrorCodes> = {
   tag: string;
   originalError?: unknown;
   errorCode: SpecificErrorCodes;
@@ -32,29 +32,6 @@ export abstract class DeviceExchangeError<SpecificErrorCodes> {
     this.originalError = originalError;
     this.errorCode = errorCode;
     this.message = message;
-  }
-}
-
-export type GlobalCommandErrorStatusCode = "5515" | "5501" | "5502";
-
-export type CommandErrors<SpecificErrorCodes extends string> = Record<
-  SpecificErrorCodes,
-  Pick<CommandErrorArgs<SpecificErrorCodes>, "message">
->;
-
-export const isCommandErrorCode = <SpecificErrorCodes extends string>(
-  errorCode: string,
-  errors: CommandErrors<SpecificErrorCodes>,
-): errorCode is SpecificErrorCodes => errorCode in Object.keys(errors);
-
-export class GlobalCommandError extends DeviceExchangeError<GlobalCommandErrorStatusCode> {
-  override readonly _tag = "GlobalError";
-  constructor({
-    message,
-    errorCode,
-    originalError,
-  }: CommandErrorArgs<GlobalCommandErrorStatusCode>) {
-    super({ message, errorCode, tag: "GlobalCommandError", originalError });
   }
 }
 
