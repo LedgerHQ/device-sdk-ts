@@ -2,6 +2,7 @@ import { BehaviorSubject } from "rxjs";
 import { v4 as uuidv4 } from "uuid";
 
 import { Command } from "@api/command/Command";
+import { CommandResult } from "@api/command/model/CommandResult";
 import { ListAppsResponse } from "@api/command/os/ListAppsCommand";
 import { CommandUtils } from "@api/command/utils/CommandUtils";
 import { DeviceStatus } from "@api/device/DeviceStatus";
@@ -115,9 +116,9 @@ export class DeviceSession {
     });
   }
 
-  async sendCommand<Response, Args>(
-    command: Command<Response, Args>,
-  ): Promise<Response> {
+  async sendCommand<Response, ErrorStatusCodes, Args>(
+    command: Command<Response, ErrorStatusCodes, Args>,
+  ): Promise<CommandResult<Response, ErrorStatusCodes>> {
     const apdu = command.getApdu();
     const response = await this.sendApdu(apdu.getRawApdu(), {
       isPolling: false,
@@ -142,8 +143,9 @@ export class DeviceSession {
     deviceAction: DeviceAction<Output, Input, Error, IntermediateValue>,
   ): ExecuteDeviceActionReturnType<Output, Error, IntermediateValue> {
     const { observable, cancel } = deviceAction._execute({
-      sendCommand: async <Response, Args>(command: Command<Response, Args>) =>
-        this.sendCommand(command),
+      sendCommand: async <Response, ErrorStatusCodes, Args>(
+        command: Command<Response, ErrorStatusCodes, Args>,
+      ) => this.sendCommand(command),
       getDeviceSessionState: () => this._deviceState.getValue(),
       getDeviceSessionStateObservable: () => this.state,
       setDeviceSessionState: (state: DeviceSessionState) => {

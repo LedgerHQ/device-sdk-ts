@@ -1,4 +1,4 @@
-import { DeviceExchangeError, UnknownDeviceExchangeError } from "@api/Error";
+import { DeviceExchangeError, SdkError } from "@api/Error";
 
 export enum CommandResultStatus {
   Error = "ERROR",
@@ -9,17 +9,36 @@ export type SuccessResult<Data> = {
   data: Data;
 };
 export type ErrorResult<SpecificErrorCodes> = {
-  error: DeviceExchangeError<SpecificErrorCodes> | UnknownDeviceExchangeError;
+  error: DeviceExchangeError<SpecificErrorCodes> | SdkError;
   status: CommandResultStatus.Error;
 };
+/**
+ * @type CommandResult
+ *
+ */
 export type CommandResult<Data, SpecificErrorCodes> =
   | SuccessResult<Data>
   | ErrorResult<SpecificErrorCodes>;
 
-export const CommandResultFactory = <Data, SpecificErrorCodes>(
-  result: CommandResult<Data, SpecificErrorCodes>,
-): CommandResult<Data, SpecificErrorCodes> => {
-  return result;
+export const CommandResultFactory = <Data, SpecificErrorCodes>({
+  data,
+  error,
+}:
+  | { data: Data; error?: undefined }
+  | {
+      data?: undefined;
+      error: DeviceExchangeError<SpecificErrorCodes> | SdkError;
+    }): CommandResult<Data, SpecificErrorCodes> => {
+  if (error) {
+    return {
+      status: CommandResultStatus.Error,
+      error,
+    };
+  }
+  return {
+    status: CommandResultStatus.Success,
+    data,
+  };
 };
 
 export const isSuccessCommandResult = <Data, StatusCode>(
