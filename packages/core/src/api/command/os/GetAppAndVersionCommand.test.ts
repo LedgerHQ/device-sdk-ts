@@ -1,14 +1,10 @@
-import { Command } from "@api/command/Command";
 import {
-  InvalidResponseFormatError,
-  InvalidStatusWordError,
-} from "@api/command/Errors";
+  CommandResultFactory,
+  isSuccessCommandResult,
+} from "@api/command/model/CommandResult";
 import { ApduResponse } from "@api/device-session/ApduResponse";
 
-import {
-  GetAppAndVersionCommand,
-  GetAppAndVersionResponse,
-} from "./GetAppAndVersionCommand";
+import { GetAppAndVersionCommand } from "./GetAppAndVersionCommand";
 
 const GET_APP_AND_VERSION_APDU = Uint8Array.from([
   0xb0, 0x01, 0x00, 0x00, 0x00,
@@ -29,7 +25,7 @@ const FAILED_RESPONSE_HEX = Uint8Array.from([0x67, 0x00]);
 const ERROR_RESPONSE_HEX = Uint8Array.from([0x04, 0x90, 0x00]);
 
 describe("GetAppAndVersionCommand", () => {
-  let command: Command<GetAppAndVersionResponse>;
+  let command: GetAppAndVersionCommand;
 
   beforeEach(() => {
     command = new GetAppAndVersionCommand();
@@ -49,10 +45,12 @@ describe("GetAppAndVersionCommand", () => {
         data: OS_RESPONSE_HEX.slice(0, -2),
       });
       const parsed = command.parseResponse(OS_RESPONSE);
-      const expected = {
-        name: "BOLOS",
-        version: "1.4.0-rc2",
-      };
+      const expected = CommandResultFactory({
+        data: {
+          name: "BOLOS",
+          version: "1.4.0-rc2",
+        },
+      });
       expect(parsed).toStrictEqual(expected);
     });
     it("should parse the response when launching App", () => {
@@ -61,32 +59,38 @@ describe("GetAppAndVersionCommand", () => {
         data: APP_RESPONSE_HEX.slice(0, -2),
       });
       const parsed = command.parseResponse(APP_RESPONSE);
-      const expected = {
-        name: "Bitcoin",
-        version: "2.1.5-alpha",
-        flags: Uint8Array.from([2]),
-      };
+      const expected = CommandResultFactory({
+        data: {
+          name: "Bitcoin",
+          version: "2.1.5-alpha",
+          flags: Uint8Array.from([2]),
+        },
+      });
       expect(parsed).toStrictEqual(expected);
     });
     it("should throw an error if the command failed", () => {
+      // given
       const FAILED_RESPONSE = new ApduResponse({
         statusCode: FAILED_RESPONSE_HEX.slice(-2),
         data: FAILED_RESPONSE_HEX.slice(0, -2),
       });
+      // when
+      const result = command.parseResponse(FAILED_RESPONSE);
 
-      expect(() => command.parseResponse(FAILED_RESPONSE)).toThrow(
-        InvalidStatusWordError,
-      );
+      // then
+      expect(isSuccessCommandResult(result)).toBeFalsy();
     });
-    it("should throw an error if the response returned unsupported format", () => {
+    it("should return an error if the response returned unsupported format", () => {
+      // given
       const ERROR_RESPONSE = new ApduResponse({
         statusCode: ERROR_RESPONSE_HEX.slice(-2),
         data: ERROR_RESPONSE_HEX.slice(0, -2),
       });
+      // when
+      const response = command.parseResponse(ERROR_RESPONSE);
 
-      expect(() => command.parseResponse(ERROR_RESPONSE)).toThrow(
-        InvalidResponseFormatError,
-      );
+      // then
+      expect(isSuccessCommandResult(response)).toBeFalsy();
     });
   });
 });

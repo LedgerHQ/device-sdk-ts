@@ -1,5 +1,6 @@
 import { interval, Observable } from "rxjs";
 
+import { CommandResultFactory } from "@api/command/model/CommandResult";
 import { DeviceStatus } from "@api/device/DeviceStatus";
 import { makeDeviceActionInternalApiMock } from "@api/device-action/__test-utils__/makeInternalApi";
 import { testDeviceActionStates } from "@api/device-action/__test-utils__/testDeviceActionStates";
@@ -53,10 +54,14 @@ describe("GetDeviceStatusDeviceAction", () => {
         deviceStatus: DeviceStatus.CONNECTED,
       });
 
-      sendCommandMock.mockResolvedValue({
-        name: "BOLOS",
-        version: "1.0.0",
-      });
+      sendCommandMock.mockResolvedValue(
+        CommandResultFactory({
+          data: {
+            name: "BOLOS",
+            version: "1.0.0",
+          },
+        }),
+      );
 
       const expectedStates: Array<GetDeviceStatusDAState> = [
         {
@@ -132,10 +137,14 @@ describe("GetDeviceStatusDeviceAction", () => {
           }),
       );
 
-      sendCommandMock.mockResolvedValue({
-        name: "BOLOS",
-        version: "1.0.0",
-      });
+      sendCommandMock.mockResolvedValue(
+        CommandResultFactory({
+          data: {
+            name: "BOLOS",
+            version: "1.0.0",
+          },
+        }),
+      );
 
       const expectedStates: Array<GetDeviceStatusDAState> = [
         {
@@ -569,10 +578,14 @@ describe("GetDeviceStatusDeviceAction", () => {
       installedApps: [],
     });
 
-    sendCommandMock.mockResolvedValue({
-      name: "BOLOS",
-      version: "1.0.0",
-    });
+    sendCommandMock.mockResolvedValue(
+      CommandResultFactory({
+        data: {
+          name: "BOLOS",
+          version: "1.0.0",
+        },
+      }),
+    );
 
     const getDeviceStateDeviceAction = new GetDeviceStatusDeviceAction({
       input: { unlockTimeout: 500 },

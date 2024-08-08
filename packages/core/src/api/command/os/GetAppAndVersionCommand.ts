@@ -2,18 +2,17 @@ import { Apdu } from "@api/apdu/model/Apdu";
 import { ApduBuilder, ApduBuilderArgs } from "@api/apdu/utils/ApduBuilder";
 import { ApduParser } from "@api/apdu/utils/ApduParser";
 import { Command } from "@api/command/Command";
-import {
-  GlobalErrorHandler,
-  InvalidResponseFormatError,
-} from "@api/command/Errors";
+import { InvalidResponseFormatError } from "@api/command/Errors";
 import {
   CommandResult,
   CommandResultFactory,
-  CommandResultStatus,
 } from "@api/command/model/CommandResult";
 import { CommandUtils } from "@api/command/utils/CommandUtils";
+import {
+  GlobalCommandErrorHandler,
+  GlobalCommandErrorStatusCode,
+} from "@api/command/utils/GlobalCommandError";
 import { ApduResponse } from "@api/device-session/ApduResponse";
-import { GlobalCommandErrorStatusCode } from "@api/Error";
 
 export type GetAppAndVersionResponse = {
   /**
@@ -32,7 +31,7 @@ export type GetAppAndVersionResponse = {
  * device.
  */
 export class GetAppAndVersionCommand
-  implements Command<GetAppAndVersionResponse>
+  implements Command<GetAppAndVersionResponse, GlobalCommandErrorStatusCode>
 {
   readonly args = undefined;
 
@@ -51,16 +50,17 @@ export class GetAppAndVersionCommand
   ): CommandResult<GetAppAndVersionResponse, GlobalCommandErrorStatusCode> {
     if (!CommandUtils.isSuccessResponse(apduResponse)) {
       return CommandResultFactory({
-        status: CommandResultStatus.Error,
-        error: GlobalErrorHandler.handle(apduResponse),
+        error: GlobalCommandErrorHandler.handle(apduResponse),
       });
     }
     const parser = new ApduParser(apduResponse);
 
     if (parser.extract8BitUInt() !== 1) {
-      throw new InvalidResponseFormatError(
-        "getAppAndVersion: format not supported",
-      );
+      return CommandResultFactory({
+        error: new InvalidResponseFormatError(
+          "getAppAndVersion: format not supported",
+        ),
+      });
     }
 
     const name = parser.encodeToString(parser.extractFieldLVEncoded());
@@ -69,14 +69,12 @@ export class GetAppAndVersionCommand
     if (parser.getUnparsedRemainingLength() === 0) {
       return CommandResultFactory({
         data: { name, version },
-        status: CommandResultStatus.Success,
       });
     }
 
     const flags = parser.extractFieldLVEncoded();
     return CommandResultFactory({
       data: { name, version, flags },
-      status: CommandResultStatus.Success,
     });
   }
 }

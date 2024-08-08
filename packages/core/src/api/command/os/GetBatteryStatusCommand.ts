@@ -4,15 +4,14 @@ import { ApduParser } from "@api/apdu/utils/ApduParser";
 import { Command } from "@api/command/Command";
 import {
   InvalidBatteryDataError,
-  InvalidBatteryFlagsError,
   InvalidBatteryStatusTypeError,
 } from "@api/command/Errors";
 import {
   CommandResult,
-  CommandResultStatus,
+  CommandResultFactory,
 } from "@api/command/model/CommandResult";
+import { GlobalCommandErrorStatusCode } from "@api/command/utils/GlobalCommandError";
 import { ApduResponse } from "@api/device-session/ApduResponse";
-import { GlobalCommandErrorStatusCode } from "@api/Error";
 
 /**
  * The type of battery information to retrieve.
@@ -82,7 +81,12 @@ export type GetBatteryStatusArgs = {
  * going to decrease the overall performance of the communication with the device.
  */
 export class GetBatteryStatusCommand
-  implements Command<GetBatteryStatusResponse, GetBatteryStatusArgs>
+  implements
+    Command<
+      GetBatteryStatusResponse,
+      GlobalCommandErrorStatusCode,
+      GetBatteryStatusArgs
+    >
 {
   readonly args: GetBatteryStatusArgs;
 
@@ -109,43 +113,47 @@ export class GetBatteryStatusCommand
       case BatteryStatusType.BATTERY_PERCENTAGE: {
         const percentage = parser.extract8BitUInt();
         if (percentage === undefined) {
-          throw new InvalidBatteryDataError("Cannot parse APDU response");
+          return CommandResultFactory({
+            error: new InvalidBatteryDataError("Cannot parse APDU response"),
+          });
         }
-        return {
-          status: CommandResultStatus.Success,
+        return CommandResultFactory({
           data: percentage > 100 ? -1 : percentage,
-        };
+        });
       }
       case BatteryStatusType.BATTERY_VOLTAGE: {
         const data = parser.extract16BitUInt();
         if (data === undefined) {
-          throw new InvalidBatteryDataError("Cannot parse APDU response");
+          return CommandResultFactory({
+            error: new InvalidBatteryDataError("Cannot parse APDU response"),
+          });
         }
-        return {
+        return CommandResultFactory({
           data,
-          status: CommandResultStatus.Success,
-        };
+        });
       }
       case BatteryStatusType.BATTERY_TEMPERATURE:
       case BatteryStatusType.BATTERY_CURRENT: {
         const data = parser.extract8BitUInt();
         if (data === undefined) {
-          throw new InvalidBatteryDataError("Cannot parse APDU response");
+          return CommandResultFactory({
+            error: new InvalidBatteryDataError("Cannot parse APDU response"),
+          });
         }
-        return {
-          status: CommandResultStatus.Success,
+        return CommandResultFactory({
           data: (data << 24) >> 24,
-        };
+        });
       }
       case BatteryStatusType.BATTERY_FLAGS: {
         const flags = parser.extract32BitUInt();
         if (flags === undefined) {
-          throw new InvalidBatteryFlagsError("Cannot parse APDU response");
+          return CommandResultFactory({
+            error: new InvalidBatteryDataError("Cannot parse APDU response"),
+          });
         }
         const chargingUSB = !!(flags & FlagMasks.USB_POWERED);
         const chargingQi = !chargingUSB && !!(flags & FlagMasks.CHARGING);
-        return {
-          status: CommandResultStatus.Success,
+        return CommandResultFactory({
           data: {
             charging: chargingQi
               ? ChargingMode.QI
@@ -156,14 +164,14 @@ export class GetBatteryStatusCommand
             issueTemperature: !!(flags & FlagMasks.ISSUE_TEMPERATURE),
             issueBattery: !!(flags & FlagMasks.ISSUE_BATTERY),
           },
-        };
+        });
       }
       default:
-        this._exhaustiveMatchingGuard(this.args.statusType);
+        return CommandResultFactory({
+          error: new InvalidBatteryStatusTypeError(
+            "One or some case(s) not covered",
+          ),
+        });
     }
-  }
-
-  private _exhaustiveMatchingGuard(_: never): never {
-    throw new InvalidBatteryStatusTypeError("One or some case(s) not covered");
   }
 }
