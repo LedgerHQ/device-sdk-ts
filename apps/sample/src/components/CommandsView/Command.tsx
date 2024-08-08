@@ -7,14 +7,21 @@ import { CommandResponse, CommandResponseProps } from "./CommandResponse";
 import { Block } from "../Block";
 import { ClickableListItem } from "../ClickableListItem";
 import { StyledDrawer } from "../StyledDrawer";
+import {
+  CommandResult,
+  isSuccessCommandResult,
+} from "@ledgerhq/device-sdk-core";
 
 export type CommandProps<
   CommandArgs extends Record<string, FieldType> | void,
   Response,
+  ErrorCodes,
 > = {
   title: string;
   description: string;
-  sendCommand: (args: CommandArgs) => Promise<Response>;
+  sendCommand: (
+    args: CommandArgs,
+  ) => Promise<CommandResult<Response, ErrorCodes>>;
   initialValues: CommandArgs;
   valueSelector?: ValueSelector<FieldType>;
 };
@@ -22,7 +29,8 @@ export type CommandProps<
 export function Command<
   CommandArgs extends Record<string, FieldType>,
   Response,
->(props: CommandProps<CommandArgs, Response>) {
+  ErrorCodes,
+>(props: CommandProps<CommandArgs, Response, ErrorCodes>) {
   const { title, description, initialValues, sendCommand, valueSelector } =
     props;
 
@@ -30,9 +38,9 @@ export function Command<
 
   const [isOpen, setIsOpen] = useState(false);
 
-  const [responses, setResponses] = useState<CommandResponseProps<Response>[]>(
-    [],
-  );
+  const [responses, setResponses] = useState<
+    CommandResponseProps<Response, ErrorCodes>[]
+  >([]);
 
   const [loading, setLoading] = useState(false);
 
@@ -52,16 +60,23 @@ export function Command<
     ]);
     sendCommand(values)
       .then((response) => {
-        setResponses((prev) => [
-          ...prev.slice(0, -1),
-          { args: values, date: new Date(), response, loading: false },
-        ]);
-      })
-      .catch((error) => {
-        setResponses((prev) => [
-          ...prev.slice(0, -1),
-          { args: values, date: new Date(), response: error, loading: false },
-        ]);
+        setResponses((prev) => {
+          if (!isSuccessCommandResult(response)) {
+            return [
+              ...prev.slice(0, -1),
+              {
+                args: values,
+                date: new Date(),
+                response: response,
+                loading: false,
+              },
+            ];
+          }
+          return [
+            ...prev.slice(0, -1),
+            { args: values, date: new Date(), response, loading: false },
+          ];
+        });
       })
       .finally(() => {
         setLoading(false);

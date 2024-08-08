@@ -17,6 +17,8 @@ import {
   GetBatteryStatusCommand,
   GetBatteryStatusArgs,
   GetBatteryStatusResponse,
+  GlobalCommandErrorStatusCode,
+  OpenAppErrorCodes,
 } from "@ledgerhq/device-sdk-core";
 import { BatteryStatusType } from "@ledgerhq/device-sdk-core/src/api/command/os/GetBatteryStatusCommand.js";
 import { getValueSelectorFromEnum } from "./CommandForm";
@@ -28,7 +30,7 @@ export const CommandsView: React.FC<{ sessionId: string }> = ({
   const sdk = useSdk();
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const commands: CommandProps<any, any>[] = useMemo(
+  const commands: CommandProps<any, any, any>[] = useMemo(
     () => [
       {
         title: "List Apps",
@@ -41,7 +43,11 @@ export const CommandsView: React.FC<{ sessionId: string }> = ({
           });
         },
         initialValues: { isContinue: false },
-      } satisfies CommandProps<ListAppsArgs, ListAppsResponse>,
+      } satisfies CommandProps<
+        ListAppsArgs,
+        ListAppsResponse,
+        GlobalCommandErrorStatusCode
+      >,
       {
         title: "Open app",
         description: "Launch an app on the device",
@@ -53,7 +59,11 @@ export const CommandsView: React.FC<{ sessionId: string }> = ({
           });
         },
         initialValues: { appName: "" },
-      } satisfies CommandProps<OpenAppArgs, void>,
+      } satisfies CommandProps<
+        OpenAppArgs,
+        void,
+        OpenAppErrorCodes | GlobalCommandErrorStatusCode
+      >,
       // Close app command
       {
         title: "Close app",
@@ -66,7 +76,7 @@ export const CommandsView: React.FC<{ sessionId: string }> = ({
           });
         },
         initialValues: undefined,
-      } satisfies CommandProps<void, void>,
+      } satisfies CommandProps<void, void, GlobalCommandErrorStatusCode>,
       {
         title: "Get app and version",
         description: "Get the currently open app and its version",
@@ -78,7 +88,11 @@ export const CommandsView: React.FC<{ sessionId: string }> = ({
           });
         },
         initialValues: undefined,
-      } satisfies CommandProps<void, GetAppAndVersionResponse>,
+      } satisfies CommandProps<
+        void,
+        GetAppAndVersionResponse,
+        GlobalCommandErrorStatusCode
+      >,
       {
         title: "Get OS version",
         description: "Get the OS version of the device",
@@ -90,7 +104,11 @@ export const CommandsView: React.FC<{ sessionId: string }> = ({
           });
         },
         initialValues: undefined,
-      } satisfies CommandProps<void, GetOsVersionResponse>,
+      } satisfies CommandProps<
+        void,
+        GetOsVersionResponse,
+        GlobalCommandErrorStatusCode
+      >,
       {
         title: "Get battery status",
         description: "Get the battery status of the device",
@@ -107,7 +125,11 @@ export const CommandsView: React.FC<{ sessionId: string }> = ({
         initialValues: {
           statusType: BatteryStatusType.BATTERY_CURRENT,
         },
-      } satisfies CommandProps<GetBatteryStatusArgs, GetBatteryStatusResponse>,
+      } satisfies CommandProps<
+        GetBatteryStatusArgs,
+        GetBatteryStatusResponse,
+        GlobalCommandErrorStatusCode
+      >,
     ],
     [selectedSessionId, sdk],
   );

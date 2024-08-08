@@ -1,21 +1,24 @@
 import React from "react";
 import { Flex, InfiniteLoader, Text, Tooltip } from "@ledgerhq/react-ui";
-import { SdkError } from "@ledgerhq/device-sdk-core/src/api/Error.js";
 import { FieldType } from "@/hooks/useForm";
+import {
+  CommandResult,
+  isSuccessCommandResult,
+} from "@ledgerhq/device-sdk-core";
 
-export type CommandResponseProps<Response> = {
+export type CommandResponseProps<Response, ErrorCodes> = {
   args: Record<string, FieldType>;
   date: Date;
   loading: boolean;
-  response: Response | null;
+  response: CommandResult<Response, ErrorCodes> | null;
 };
 
-export function CommandResponse<Response>(
-  props: CommandResponseProps<Response> & { isLatest: boolean },
+export function CommandResponse<Response, ErrorCodes>(
+  props: CommandResponseProps<Response, ErrorCodes> & { isLatest: boolean },
 ) {
   const { args, date, loading, response, isLatest } = props;
   const responseString = JSON.stringify(response, null, 2);
-  const isError = response instanceof Error || (response as SdkError)?._tag;
+  const isError = response !== null && !isSuccessCommandResult(response);
   return (
     <Flex flexDirection="column" alignItems="flex-start">
       <Tooltip
