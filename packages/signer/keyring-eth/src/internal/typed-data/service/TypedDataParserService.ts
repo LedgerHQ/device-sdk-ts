@@ -1,7 +1,8 @@
-import { injectable } from "inversify";
+import { Either } from "purify-ts";
 
-@injectable()
-export class TypedDataParserService {
-  // Parse a typed data object into APDU commands
-  constructor() {}
+import { TypedData } from "@api/model/TypedData";
+import { TypedDataValue } from "@internal/typed-data/model/Types";
+
+export interface TypedDataParserService {
+  parse(message: TypedData): Either<Error, Array<TypedDataValue>>;
 }

@@ -5,7 +5,7 @@ import { TypedData } from "@api/model/TypedData";
 import { appBinderTypes } from "@internal/app-binder/di/appBinderTypes";
 import { EthAppBinder } from "@internal/app-binder/EthAppBinder";
 import { typedDataTypes } from "@internal/typed-data/di/typedDataTypes";
-import { TypedDataParserService } from "@internal/typed-data/service/TypedDataParserService";
+import { type TypedDataParserService } from "@internal/typed-data/service/TypedDataParserService";
 
 @injectable()
 export class SignTypedDataUseCase {
