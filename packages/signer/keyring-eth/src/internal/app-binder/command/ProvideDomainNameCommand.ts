@@ -9,7 +9,6 @@ import {
   CommandResultFactory,
   CommandUtils,
   GlobalCommandErrorHandler,
-  GlobalCommandErrorStatusCode,
 } from "@ledgerhq/device-sdk-core";
 
 export type ProvideDomainNameCommandArgs = {
@@ -29,8 +28,7 @@ export type ProvideDomainNameCommandArgs = {
  * The command that provides a chunk of the domain name to the device.
  */
 export class ProvideDomainNameCommand
-  implements
-    Command<void, GlobalCommandErrorStatusCode, ProvideDomainNameCommandArgs>
+  implements Command<void, void, ProvideDomainNameCommandArgs>
 {
   constructor(private args: ProvideDomainNameCommandArgs) {}
 
@@ -48,9 +46,7 @@ export class ProvideDomainNameCommand
       .build();
   }
 
-  parseResponse(
-    response: ApduResponse,
-  ): CommandResult<void, GlobalCommandErrorStatusCode> {
+  parseResponse(response: ApduResponse): CommandResult<void> {
     if (!CommandUtils.isSuccessResponse(response)) {
       return CommandResultFactory({
         error: GlobalCommandErrorHandler.handle(response),

@@ -13,7 +13,6 @@ import {
   CommandUtils,
   DeviceExchangeError,
   GlobalCommandErrorHandler,
-  GlobalCommandErrorStatusCode,
   isCommandErrorCode,
 } from "@ledgerhq/device-sdk-core";
 
@@ -38,12 +37,7 @@ export class SetPluginCommandError extends DeviceExchangeError<SetPluginCommandE
 }
 
 export class SetPluginCommand
-  implements
-    Command<
-      void,
-      SetPluginCommandErrorCodes | GlobalCommandErrorStatusCode,
-      SetPluginCommandArgs
-    >
+  implements Command<void, SetPluginCommandErrorCodes, SetPluginCommandArgs>
 {
   constructor(private args: SetPluginCommandArgs) {}
 
@@ -62,10 +56,7 @@ export class SetPluginCommand
 
   parseResponse(
     response: ApduResponse,
-  ): CommandResult<
-    void,
-    SetPluginCommandErrorCodes | GlobalCommandErrorStatusCode
-  > {
+  ): CommandResult<void, SetPluginCommandErrorCodes> {
     if (CommandUtils.isSuccessResponse(response)) {
       return CommandResultFactory({ data: undefined });
     }

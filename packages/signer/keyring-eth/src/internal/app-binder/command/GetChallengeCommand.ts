@@ -10,7 +10,6 @@ import {
   CommandResultFactory,
   CommandUtils,
   GlobalCommandErrorHandler,
-  GlobalCommandErrorStatusCode,
   InvalidStatusWordError,
 } from "@ledgerhq/device-sdk-core";
 
@@ -21,7 +20,7 @@ export type GetChallengeCommandResponse = {
 };
 
 export class GetChallengeCommand
-  implements Command<GetChallengeCommandResponse, GlobalCommandErrorStatusCode>
+  implements Command<GetChallengeCommandResponse>
 {
   constructor() {}
 
@@ -37,7 +36,7 @@ export class GetChallengeCommand
 
   parseResponse(
     response: ApduResponse,
-  ): CommandResult<GetChallengeCommandResponse, GlobalCommandErrorStatusCode> {
+  ): CommandResult<GetChallengeCommandResponse> {
     if (!CommandUtils.isSuccessResponse(response)) {
       return CommandResultFactory({
         error: GlobalCommandErrorHandler.handle(response),

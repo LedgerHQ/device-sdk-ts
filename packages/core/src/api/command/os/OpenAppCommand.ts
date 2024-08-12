@@ -36,7 +36,7 @@ export class OpenAppCommandError extends DeviceExchangeError<OpenAppErrorCodes> 
  * The command to open an application on the device.
  */
 export class OpenAppCommand
-  implements Command<void, OpenAppErrorCodes, OpenAppArgs>
+  implements Command<void, OpenAppArgs, OpenAppErrorCodes>
 {
   readonly args: OpenAppArgs;
 

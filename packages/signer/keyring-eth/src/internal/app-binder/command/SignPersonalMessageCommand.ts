@@ -10,7 +10,6 @@ import {
   CommandResultFactory,
   CommandUtils,
   GlobalCommandErrorHandler,
-  GlobalCommandErrorStatusCode,
   InvalidStatusWordError,
 } from "@ledgerhq/device-sdk-core";
 import { Just, Maybe, Nothing } from "purify-ts";
@@ -93,10 +92,7 @@ export class SignPersonalMessageCommand
 
   parseResponse(
     apduResponse: ApduResponse,
-  ): CommandResult<
-    SignPersonalMessageCommandResponse,
-    GlobalCommandErrorStatusCode
-  > {
+  ): CommandResult<SignPersonalMessageCommandResponse> {
     const parser = new ApduParser(apduResponse);
 
     if (!CommandUtils.isSuccessResponse(apduResponse)) {

@@ -9,7 +9,6 @@ import {
   CommandResultFactory,
   CommandUtils,
   GlobalCommandErrorHandler,
-  GlobalCommandErrorStatusCode,
 } from "@ledgerhq/device-sdk-core";
 
 export type ProvideTokenInformationCommandArgs = {
@@ -45,9 +44,7 @@ export class ProvideTokenInformationCommand
     return builder.build();
   }
 
-  parseResponse(
-    response: ApduResponse,
-  ): CommandResult<void, GlobalCommandErrorStatusCode> {
+  parseResponse(response: ApduResponse): CommandResult<void> {
     const parser = new ApduParser(response);
 
     if (!CommandUtils.isSuccessResponse(response)) {
