@@ -4,6 +4,7 @@ import { externalPluginModuleFactory } from "@/external-plugin/di/externalPlugin
 import { forwardDomainModuleFactory } from "@/forward-domain/di/forwardDomainModuleFactory";
 import { nftModuleFactory } from "@/nft/di/nftModuleFactory";
 import { tokenModuleFactory } from "@/token/di/tokenModuleFactory";
+import { typedDataModuleFactory } from "@/typed-data/di/typedDataModuleFactory";
 
 export const makeContainer = () => {
   const container = new Container();
@@ -13,6 +14,7 @@ export const makeContainer = () => {
     forwardDomainModuleFactory(),
     nftModuleFactory(),
     tokenModuleFactory(),
+    typedDataModuleFactory(),
   );
 
   return container;

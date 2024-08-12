@@ -46,10 +46,12 @@
     "@ledgerhq/jest-config-dsdk": "workspace:*",
     "@ledgerhq/prettier-config-dsdk": "workspace:*",
     "@ledgerhq/tsconfig-dsdk": "workspace:*",
+    "@types/crypto-js": "^4.2.2",
     "ts-node": "^10.9.2"
   },
   "dependencies": {
     "axios": "^1.7.2",
+    "crypto-js": "^4.2.0",
     "ethers": "^6.13.2",
     "inversify": "^6.0.2",
     "purify-ts": "^2.1.0",
