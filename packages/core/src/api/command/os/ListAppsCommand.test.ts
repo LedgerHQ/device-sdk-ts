@@ -1,7 +1,7 @@
 import { Command } from "@api/command/Command";
 import {
+  CommandErrorResult,
   CommandResultFactory,
-  ErrorResult,
   isSuccessCommandResult,
 } from "@api/command/model/CommandResult";
 import { ApduResponse } from "@api/device-session/ApduResponse";
@@ -267,7 +267,7 @@ describe("ListAppCommand", () => {
         });
         const result = command.parseResponse(
           response,
-        ) as ErrorResult<ListAppsCommandErrorCodes>;
+        ) as CommandErrorResult<ListAppsCommandErrorCodes>;
 
         expect(isSuccessCommandResult(result)).toBe(false);
         expect(result.error).toBeInstanceOf(ListAppsCommandError);

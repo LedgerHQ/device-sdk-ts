@@ -1,4 +1,4 @@
-import { ErrorResult } from "@api/command/model/CommandResult";
+import { CommandErrorResult } from "@api/command/model/CommandResult";
 import { ApduResponse } from "@api/device-session/ApduResponse";
 import { isSuccessCommandResult } from "@root/src";
 
@@ -36,7 +36,7 @@ describe("OpenAppCommand", () => {
       });
       const result = new OpenAppCommand({ appName }).parseResponse(
         apduResponse,
-      ) as ErrorResult<OpenAppErrorCodes>;
+      ) as CommandErrorResult<OpenAppErrorCodes>;
       expect(isSuccessCommandResult(result)).toBe(false);
       expect(result.error).toBeInstanceOf(OpenAppCommandError);
     });
@@ -47,7 +47,7 @@ describe("OpenAppCommand", () => {
       });
       const result = new OpenAppCommand({ appName }).parseResponse(
         apduResponse,
-      ) as ErrorResult<OpenAppErrorCodes>;
+      ) as CommandErrorResult<OpenAppErrorCodes>;
       expect(isSuccessCommandResult(result)).toBe(false);
       expect(result.error).toBeInstanceOf(OpenAppCommandError);
     });

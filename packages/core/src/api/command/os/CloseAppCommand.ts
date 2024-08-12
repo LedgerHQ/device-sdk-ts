@@ -6,18 +6,13 @@ import {
   CommandResultFactory,
 } from "@api/command/model/CommandResult";
 import { CommandUtils } from "@api/command/utils/CommandUtils";
-import {
-  GlobalCommandErrorHandler,
-  GlobalCommandErrorStatusCode,
-} from "@api/command/utils/GlobalCommandError";
+import { GlobalCommandErrorHandler } from "@api/command/utils/GlobalCommandError";
 import { ApduResponse } from "@api/device-session/ApduResponse";
 
 /**
  * The command to close a runnint application on the device.
  */
-export class CloseAppCommand
-  implements Command<void, GlobalCommandErrorStatusCode>
-{
+export class CloseAppCommand implements Command<void> {
   readonly args = undefined;
 
   readonly triggersDisconnection = true;
@@ -32,9 +27,7 @@ export class CloseAppCommand
     return new ApduBuilder(closeAppApduArgs).build();
   }
 
-  parseResponse(
-    apduResponse: ApduResponse,
-  ): CommandResult<void, GlobalCommandErrorStatusCode> {
+  parseResponse(apduResponse: ApduResponse): CommandResult<void> {
     if (CommandUtils.isSuccessResponse(apduResponse)) {
       return CommandResultFactory({
         data: undefined,

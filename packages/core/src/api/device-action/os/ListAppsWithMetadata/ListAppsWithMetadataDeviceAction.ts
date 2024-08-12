@@ -217,16 +217,16 @@ export class ListAppsWithMetadataDeviceAction extends XStateDeviceAction<
               target: "FetchMetadataCheck",
               actions: assign({
                 _internalState: (_) => {
-                  return _.event.output.caseOf({
-                    Right: (appsWithMetadata) => ({
+                  return _.event.output
+                    .map((appsWithMetadata) => ({
                       ..._.context._internalState,
                       appsWithMetadata,
-                    }),
-                    Left: (error) => ({
+                    }))
+                    .mapLeft((error) => ({
                       ..._.context._internalState,
                       error,
-                    }),
-                  });
+                    }))
+                    .extract();
                 },
               }),
             },

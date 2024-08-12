@@ -10,7 +10,7 @@ import { ApduResponse } from "@api/device-session/ApduResponse";
  * @template ErrorCodes - The union of error codes for this command.
  * @template Args - The type of the arguments passed to the command (optional).
  */
-export interface Command<Response, ErrorCodes, Args = void> {
+export interface Command<Response, ErrorCodes = void, Args = void> {
   /**
    * Indicates whether the command triggers a disconnection from the device when
    * it succeeds.

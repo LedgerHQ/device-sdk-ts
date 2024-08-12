@@ -6,13 +6,12 @@ import {
   CommandResult,
   CommandResultFactory,
 } from "@api/command/model/CommandResult";
-import { CommandUtils } from "@api/command/utils/CommandUtils";
 import {
   CommandErrors,
-  GlobalCommandErrorHandler,
-  GlobalCommandErrorStatusCode,
   isCommandErrorCode,
-} from "@api/command/utils/GlobalCommandError";
+} from "@api/command/utils/CommandErrors";
+import { CommandUtils } from "@api/command/utils/CommandUtils";
+import { GlobalCommandErrorHandler } from "@api/command/utils/GlobalCommandError";
 import { ApduResponse } from "@api/device-session/ApduResponse";
 import { CommandErrorArgs, DeviceExchangeError } from "@api/Error";
 
@@ -46,12 +45,7 @@ export class ListAppsCommandError extends DeviceExchangeError<ListAppsCommandErr
 }
 
 export class ListAppsCommand
-  implements
-    Command<
-      ListAppsResponse,
-      ListAppsCommandErrorCodes | GlobalCommandErrorStatusCode,
-      ListAppsArgs
-    >
+  implements Command<ListAppsResponse, ListAppsCommandErrorCodes, ListAppsArgs>
 {
   readonly args: ListAppsArgs;
 
@@ -71,10 +65,7 @@ export class ListAppsCommand
 
   parseResponse(
     apduResponse: ApduResponse,
-  ): CommandResult<
-    ListAppsResponse,
-    ListAppsCommandErrorCodes | GlobalCommandErrorStatusCode
-  > {
+  ): CommandResult<ListAppsResponse, ListAppsCommandErrorCodes> {
     const res: ListAppsResponse = [];
     const parser = new ApduParser(apduResponse);
 
