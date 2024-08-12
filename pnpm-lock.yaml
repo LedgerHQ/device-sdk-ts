@@ -187,8 +187,8 @@ importers:
         specifier: ^10.0.0
         version: 10.0.0
       xstate:
-        specifier: ^5.15.0
-        version: 5.15.0
+        specifier: ^5.17.1
+        version: 5.17.1
     devDependencies:
       '@ledgerhq/eslint-config-dsdk':
         specifier: workspace:*
@@ -204,7 +204,7 @@ importers:
         version: link:../config/typescript
       '@statelyai/inspect':
         specifier: ^0.4.0
-        version: 0.4.0(ws@8.17.1)(xstate@5.15.0)
+        version: 0.4.0(ws@8.17.1)(xstate@5.17.1)
       '@types/semver':
         specifier: ^7.5.8
         version: 7.5.8
@@ -6352,8 +6352,8 @@ packages:
     resolution: {integrity: sha512-GCPAHLvrIH13+c0SuacwvRYj2SxJXQ4kaVTT5xgL3kPrz56XxkF21IGhjSE1+W0aw7gpBWRGXLCPnPby6lSpmQ==}
     engines: {node: '>=12'}
 
-  xstate@5.15.0:
-    resolution: {integrity: sha512-0DGArbj+ych7PcCqHzhEvXH1qVG41lhenwdbEPBRJyxQP9TLooUsR7oiR4YWYHblLOVWvz/esiw8HUtHXp/kZA==}
+  xstate@5.17.1:
+    resolution: {integrity: sha512-RNwcXdth+kboWZg+Zhf6f6iNP6CtAAiS4z4qwyTd/fWBH9PHXRqko6OdW3xOTwP62f0mVD+jsPOSqY4Ar8nZKQ==}
 
   xtend@4.0.2:
     resolution: {integrity: sha512-LKYU1iAXJXUgAXn9URjiu+MWhyUXHsvfp7mcuYm9dSUKK0/CjtrUwFAxD82/mCWbtLsGjFIad0wIsod4zrTAEQ==}
@@ -9357,7 +9357,7 @@ snapshots:
     dependencies:
       '@sinonjs/commons': 3.0.0
 
-  '@statelyai/inspect@0.4.0(ws@8.17.1)(xstate@5.15.0)':
+  '@statelyai/inspect@0.4.0(ws@8.17.1)(xstate@5.17.1)':
     dependencies:
       fast-safe-stringify: 2.1.1
       isomorphic-ws: 5.0.0(ws@8.17.1)
@@ -9365,7 +9365,7 @@ snapshots:
       safe-stable-stringify: 2.4.3
       superjson: 1.13.3
       uuid: 9.0.1
-      xstate: 5.15.0
+      xstate: 5.17.1
     transitivePeerDependencies:
       - ws
 
@@ -14023,7 +14023,7 @@ snapshots:
 
   xdg-basedir@5.1.0: {}
 
-  xstate@5.15.0: {}
+  xstate@5.17.1: {}
 
   xtend@4.0.2: {}
 
