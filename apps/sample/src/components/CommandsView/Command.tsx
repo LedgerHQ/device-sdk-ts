@@ -15,7 +15,7 @@ import {
 export type CommandProps<
   CommandArgs extends Record<string, FieldType> | void,
   Response,
-  ErrorCodes,
+  ErrorCodes = void,
 > = {
   title: string;
   description: string;
