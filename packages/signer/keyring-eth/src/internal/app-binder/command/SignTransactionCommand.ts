@@ -10,7 +10,6 @@ import {
   CommandResultFactory,
   CommandUtils,
   GlobalCommandErrorHandler,
-  GlobalCommandErrorStatusCode,
   HexaString,
   InvalidStatusWordError,
 } from "@ledgerhq/device-sdk-core";
@@ -48,11 +47,7 @@ export type SignTransactionCommandArgs = {
 
 export class SignTransactionCommand
   implements
-    Command<
-      SignTransactionCommandResponse,
-      GlobalCommandErrorStatusCode,
-      SignTransactionCommandArgs
-    >
+    Command<SignTransactionCommandResponse, SignTransactionCommandArgs>
 {
   args: SignTransactionCommandArgs;
 
@@ -97,10 +92,7 @@ export class SignTransactionCommand
 
   parseResponse(
     response: ApduResponse,
-  ): CommandResult<
-    SignTransactionCommandResponse,
-    GlobalCommandErrorStatusCode
-  > {
+  ): CommandResult<SignTransactionCommandResponse> {
     const parser = new ApduParser(response);
 
     if (!CommandUtils.isSuccessResponse(response)) {

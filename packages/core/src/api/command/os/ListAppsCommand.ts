@@ -45,7 +45,7 @@ export class ListAppsCommandError extends DeviceExchangeError<ListAppsCommandErr
 }
 
 export class ListAppsCommand
-  implements Command<ListAppsResponse, ListAppsCommandErrorCodes, ListAppsArgs>
+  implements Command<ListAppsResponse, ListAppsArgs, ListAppsCommandErrorCodes>
 {
   readonly args: ListAppsArgs;
 

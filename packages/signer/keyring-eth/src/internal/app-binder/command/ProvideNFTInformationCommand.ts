@@ -13,7 +13,6 @@ import {
   CommandUtils,
   DeviceExchangeError,
   GlobalCommandErrorHandler,
-  GlobalCommandErrorStatusCode,
   isCommandErrorCode,
 } from "@ledgerhq/device-sdk-core";
 
@@ -41,7 +40,7 @@ export class ProvideNFTInformationCommand
   implements
     Command<
       void,
-      ProvideNFTInformationCommandErrorCodes | GlobalCommandErrorStatusCode,
+      ProvideNFTInformationCommandErrorCodes,
       ProvideNFTInformationCommandArgs
     >
 {

@@ -80,7 +80,7 @@ export type GetBatteryStatusArgs = {
  * going to decrease the overall performance of the communication with the device.
  */
 export class GetBatteryStatusCommand
-  implements Command<GetBatteryStatusResponse, void, GetBatteryStatusArgs>
+  implements Command<GetBatteryStatusResponse, GetBatteryStatusArgs>
 {
   readonly args: GetBatteryStatusArgs;
 

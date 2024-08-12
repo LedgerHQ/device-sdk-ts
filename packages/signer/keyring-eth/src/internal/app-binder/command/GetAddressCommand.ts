@@ -12,7 +12,6 @@ import {
   InvalidStatusWordError,
   isHexaString,
 } from "@ledgerhq/device-sdk-core";
-import { GlobalCommandErrorStatusCode } from "@ledgerhq/device-sdk-core";
 
 import {
   GetAddressCommandArgs,
@@ -23,12 +22,7 @@ import { DerivationPathUtils } from "@internal/shared/utils/DerivationPathUtils"
 const CHAIN_CODE_LENGTH = 32;
 
 export class GetAddressCommand
-  implements
-    Command<
-      GetAddressCommandResponse,
-      GlobalCommandErrorStatusCode,
-      GetAddressCommandArgs
-    >
+  implements Command<GetAddressCommandResponse, void, GetAddressCommandArgs>
 {
   args: GetAddressCommandArgs;
 
@@ -61,7 +55,7 @@ export class GetAddressCommand
 
   parseResponse(
     response: ApduResponse,
-  ): CommandResult<GetAddressCommandResponse, GlobalCommandErrorStatusCode> {
+  ): CommandResult<GetAddressCommandResponse> {
     const parser = new ApduParser(response);
 
     // TODO: handle the error correctly using a generic error handler
