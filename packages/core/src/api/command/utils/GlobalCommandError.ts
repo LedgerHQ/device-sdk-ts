@@ -3,9 +3,10 @@ import { ApduResponse } from "@api/device-session/ApduResponse";
 import {
   CommandErrorArgs,
   DeviceExchangeError,
-  DeviceExchangeErrorArgs,
   UnknownDeviceExchangeError,
 } from "@api/Error";
+
+import { CommandErrors, isCommandErrorCode } from "./CommandErrors";
 
 /**
  * Status word list of global errors that any command could result
@@ -22,15 +23,6 @@ export class GlobalCommandError extends DeviceExchangeError<GlobalCommandErrorSt
 }
 
 /**
- * CommandErrors dictionary utility type
- */
-export type CommandErrors<SpecificErrorCodes extends string> = Record<
-  SpecificErrorCodes,
-  Pick<DeviceExchangeErrorArgs<SpecificErrorCodes>, "message"> &
-    Partial<Pick<DeviceExchangeErrorArgs<SpecificErrorCodes>, "tag">>
->;
-
-/**
  * Global errors dictionary that links a global status code to an error message
  */
 const GLOBAL_ERRORS: CommandErrors<GlobalCommandErrorStatusCode> = {
@@ -39,17 +31,6 @@ const GLOBAL_ERRORS: CommandErrors<GlobalCommandErrorStatusCode> = {
   "5502": { message: "Pin is not set", tag: "PinNotSetError" },
   "5223": { message: "Device internal error", tag: "DeviceInternalError" },
 };
-
-/**
- * Typeguard to check if an error status code is handled
- *
- * @param errorCode
- * @param errors
- */
-export const isCommandErrorCode = <SpecificErrorCodes extends string>(
-  errorCode: string,
-  errors: CommandErrors<SpecificErrorCodes>,
-): errorCode is SpecificErrorCodes => Object.keys(errors).includes(errorCode);
 
 /**
  * Global error handler utility class

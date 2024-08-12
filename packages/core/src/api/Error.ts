@@ -1,7 +1,7 @@
 export interface SdkError {
   readonly _tag: string;
   readonly originalError?: unknown;
-  // [could] message?: string;
+  message?: string;
 }
 
 export type DeviceExchangeErrorArgs<SpecificErrorCodes> = {
@@ -38,8 +38,10 @@ export abstract class DeviceExchangeError<SpecificErrorCodes> {
 export class UnknownDeviceExchangeError implements SdkError {
   readonly _tag = "UnknownDeviceExchangeError";
   readonly originalError?: unknown;
+  readonly message: string;
 
   constructor(originalError?: unknown) {
     this.originalError = originalError;
+    this.message = "Unexpected device exchange error happened.";
   }
 }

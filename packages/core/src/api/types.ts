@@ -1,5 +1,5 @@
 export type { OpenAppErrorCodes } from "./command/os/OpenAppCommand";
-export type { CommandErrors } from "./command/utils/GlobalCommandError";
+export type { CommandErrors } from "./command/utils/CommandErrors";
 export type { DeviceId } from "./device/DeviceModel";
 export type { ConnectionType } from "./discovery/ConnectionType";
 export type { CommandErrorArgs } from "./Error";

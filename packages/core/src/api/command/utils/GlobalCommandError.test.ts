@@ -1,9 +1,10 @@
 import {
   GlobalCommandError,
   GlobalCommandErrorHandler,
-  isCommandErrorCode,
 } from "@api/command/utils/GlobalCommandError";
 import { ApduResponse } from "@api/device-session/ApduResponse";
+
+import { isCommandErrorCode } from "./CommandErrors";
 
 // [statusCode, errorTag, testLabel]
 const GLOBAL_ERRORS_LIST: [Uint8Array, string, string][] = [

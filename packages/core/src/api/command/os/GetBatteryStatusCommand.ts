@@ -10,7 +10,6 @@ import {
   CommandResult,
   CommandResultFactory,
 } from "@api/command/model/CommandResult";
-import { GlobalCommandErrorStatusCode } from "@api/command/utils/GlobalCommandError";
 import { ApduResponse } from "@api/device-session/ApduResponse";
 
 /**
@@ -81,12 +80,7 @@ export type GetBatteryStatusArgs = {
  * going to decrease the overall performance of the communication with the device.
  */
 export class GetBatteryStatusCommand
-  implements
-    Command<
-      GetBatteryStatusResponse,
-      GlobalCommandErrorStatusCode,
-      GetBatteryStatusArgs
-    >
+  implements Command<GetBatteryStatusResponse, void, GetBatteryStatusArgs>
 {
   readonly args: GetBatteryStatusArgs;
 
@@ -106,7 +100,7 @@ export class GetBatteryStatusCommand
 
   parseResponse(
     apduResponse: ApduResponse,
-  ): CommandResult<GetBatteryStatusResponse, GlobalCommandErrorStatusCode> {
+  ): CommandResult<GetBatteryStatusResponse> {
     const parser = new ApduParser(apduResponse);
 
     switch (this.args.statusType) {

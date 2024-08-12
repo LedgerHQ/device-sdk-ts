@@ -7,10 +7,7 @@ import {
   CommandResultFactory,
 } from "@api/command/model/CommandResult";
 import { CommandUtils } from "@api/command/utils/CommandUtils";
-import {
-  GlobalCommandErrorHandler,
-  GlobalCommandErrorStatusCode,
-} from "@api/command/utils/GlobalCommandError";
+import { GlobalCommandErrorHandler } from "@api/command/utils/GlobalCommandError";
 import { DeviceModelId } from "@api/device/DeviceModel";
 import { ApduResponse } from "@api/device-session/ApduResponse";
 
@@ -70,9 +67,7 @@ export type GetOsVersionResponse = {
 /**
  * Command to get information about the device firmware.
  */
-export class GetOsVersionCommand
-  implements Command<GetOsVersionResponse, GlobalCommandErrorStatusCode>
-{
+export class GetOsVersionCommand implements Command<GetOsVersionResponse> {
   readonly args = undefined;
 
   getApdu(): Apdu {
@@ -88,7 +83,7 @@ export class GetOsVersionCommand
   parseResponse(
     apduResponse: ApduResponse,
     deviceModelId: DeviceModelId,
-  ): CommandResult<GetOsVersionResponse, GlobalCommandErrorStatusCode> {
+  ): CommandResult<GetOsVersionResponse> {
     if (!CommandUtils.isSuccessResponse(apduResponse)) {
       return CommandResultFactory({
         error: GlobalCommandErrorHandler.handle(apduResponse),

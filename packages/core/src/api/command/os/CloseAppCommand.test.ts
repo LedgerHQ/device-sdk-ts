@@ -1,6 +1,6 @@
+import { isSuccessCommandResult } from "@api/command/model/CommandResult";
 import { CloseAppCommand } from "@api/command/os/CloseAppCommand";
 import { ApduResponse } from "@api/device-session/ApduResponse";
-import { isSuccessCommandResult } from "@root/src";
 
 const CLOSE_APP_APDU = new Uint8Array([0xb0, 0xa7, 0x00, 0x00, 0x00]);
 

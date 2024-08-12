@@ -6,13 +6,12 @@ import {
   CommandResult,
   CommandResultFactory,
 } from "@api/command/model/CommandResult";
-import { CommandUtils } from "@api/command/utils/CommandUtils";
 import {
   CommandErrors,
-  GlobalCommandErrorHandler,
-  GlobalCommandErrorStatusCode,
   isCommandErrorCode,
-} from "@api/command/utils/GlobalCommandError";
+} from "@api/command/utils/CommandErrors";
+import { CommandUtils } from "@api/command/utils/CommandUtils";
+import { GlobalCommandErrorHandler } from "@api/command/utils/GlobalCommandError";
 import { ApduResponse } from "@api/device-session/ApduResponse";
 import { CommandErrorArgs, DeviceExchangeError } from "@api/Error";
 
@@ -37,12 +36,7 @@ export class OpenAppCommandError extends DeviceExchangeError<OpenAppErrorCodes> 
  * The command to open an application on the device.
  */
 export class OpenAppCommand
-  implements
-    Command<
-      void,
-      OpenAppErrorCodes | GlobalCommandErrorStatusCode,
-      OpenAppArgs
-    >
+  implements Command<void, OpenAppErrorCodes, OpenAppArgs>
 {
   readonly args: OpenAppArgs;
 
@@ -66,7 +60,7 @@ export class OpenAppCommand
 
   parseResponse(
     apduResponse: ApduResponse,
-  ): CommandResult<void, OpenAppErrorCodes | GlobalCommandErrorStatusCode> {
+  ): CommandResult<void, OpenAppErrorCodes> {
     if (CommandUtils.isSuccessResponse(apduResponse)) {
       return CommandResultFactory({
         data: undefined,

@@ -8,10 +8,7 @@ import {
   CommandResultFactory,
 } from "@api/command/model/CommandResult";
 import { CommandUtils } from "@api/command/utils/CommandUtils";
-import {
-  GlobalCommandErrorHandler,
-  GlobalCommandErrorStatusCode,
-} from "@api/command/utils/GlobalCommandError";
+import { GlobalCommandErrorHandler } from "@api/command/utils/GlobalCommandError";
 import { ApduResponse } from "@api/device-session/ApduResponse";
 
 export type GetAppAndVersionResponse = {
@@ -31,7 +28,7 @@ export type GetAppAndVersionResponse = {
  * device.
  */
 export class GetAppAndVersionCommand
-  implements Command<GetAppAndVersionResponse, GlobalCommandErrorStatusCode>
+  implements Command<GetAppAndVersionResponse>
 {
   readonly args = undefined;
 
@@ -47,7 +44,7 @@ export class GetAppAndVersionCommand
 
   parseResponse(
     apduResponse: ApduResponse,
-  ): CommandResult<GetAppAndVersionResponse, GlobalCommandErrorStatusCode> {
+  ): CommandResult<GetAppAndVersionResponse> {
     if (!CommandUtils.isSuccessResponse(apduResponse)) {
       return CommandResultFactory({
         error: GlobalCommandErrorHandler.handle(apduResponse),

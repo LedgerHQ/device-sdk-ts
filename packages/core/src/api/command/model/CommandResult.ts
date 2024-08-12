@@ -1,34 +1,35 @@
+import { GlobalCommandErrorStatusCode } from "@api/command/utils/GlobalCommandError";
 import { DeviceExchangeError, SdkError } from "@api/Error";
 
 export enum CommandResultStatus {
   Error = "ERROR",
   Success = "SUCCESS",
 }
-export type SuccessResult<Data> = {
+type CommandSuccessResult<Data> = {
   status: CommandResultStatus.Success;
   data: Data;
 };
-export type ErrorResult<SpecificErrorCodes> = {
-  error: DeviceExchangeError<SpecificErrorCodes> | SdkError;
+export type CommandErrorResult<SpecificErrorCodes = void> = {
+  error:
+    | DeviceExchangeError<SpecificErrorCodes | GlobalCommandErrorStatusCode>
+    | SdkError;
   status: CommandResultStatus.Error;
 };
-/**
- * @type CommandResult
- *
- */
-export type CommandResult<Data, SpecificErrorCodes> =
-  | SuccessResult<Data>
-  | ErrorResult<SpecificErrorCodes>;
+export type CommandResult<Data, SpecificErrorCodes = void> =
+  | CommandSuccessResult<Data>
+  | CommandErrorResult<SpecificErrorCodes>;
 
-export const CommandResultFactory = <Data, SpecificErrorCodes>({
+export function CommandResultFactory<Data, SpecificErrorCodes>({
   data,
   error,
 }:
   | { data: Data; error?: undefined }
   | {
       data?: undefined;
-      error: DeviceExchangeError<SpecificErrorCodes> | SdkError;
-    }): CommandResult<Data, SpecificErrorCodes> => {
+      error:
+        | DeviceExchangeError<SpecificErrorCodes | GlobalCommandErrorStatusCode>
+        | SdkError;
+    }): CommandResult<Data, SpecificErrorCodes> {
   if (error) {
     return {
       status: CommandResultStatus.Error,
@@ -39,9 +40,10 @@ export const CommandResultFactory = <Data, SpecificErrorCodes>({
     status: CommandResultStatus.Success,
     data,
   };
-};
+}
 
-export const isSuccessCommandResult = <Data, StatusCode>(
+export function isSuccessCommandResult<Data, StatusCode>(
   result: CommandResult<Data, StatusCode>,
-): result is SuccessResult<Data> =>
-  result.status === CommandResultStatus.Success;
+): result is CommandSuccessResult<Data> {
+  return result.status === CommandResultStatus.Success;
+}
