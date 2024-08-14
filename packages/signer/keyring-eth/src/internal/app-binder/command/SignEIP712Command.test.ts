@@ -1,6 +1,7 @@
 import {
   type Command,
-  InvalidStatusWordError,
+  CommandResultFactory,
+  isSuccessCommandResult,
 } from "@ledgerhq/device-sdk-core";
 import { Just, Nothing } from "purify-ts";
 
@@ -69,23 +70,25 @@ describe("SignEIP712Command", () => {
   describe("parseResponse", () => {
     it("should parse the response", () => {
       const parsedResponse = command.parseResponse(LNX_RESPONSE_GOOD);
-      expect(parsedResponse).toStrictEqual({
-        v: 0x1c,
-        r: "0x8a540510e13b0f2b11a451275716d29e08caad07e89a1c84964782fb5e1ad788",
-        s: "0x64a0de235b270fbe81e8e40688f4a9f9ad9d283d690552c9331d7773ceafa513",
-      });
+      expect(parsedResponse).toStrictEqual(
+        CommandResultFactory({
+          data: {
+            v: 0x1c,
+            r: "0x8a540510e13b0f2b11a451275716d29e08caad07e89a1c84964782fb5e1ad788",
+            s: "0x64a0de235b270fbe81e8e40688f4a9f9ad9d283d690552c9331d7773ceafa513",
+          },
+        }),
+      );
     });
 
-    it("should throw an error if the response is not successful", () => {
-      expect(() => {
-        command.parseResponse(LNX_RESPONSE_LOCKED);
-      }).toThrow(InvalidStatusWordError);
+    it("should return an error if the response is not successful", () => {
+      const response = command.parseResponse(LNX_RESPONSE_LOCKED);
+      expect(isSuccessCommandResult(response)).toBe(false);
     });
 
-    it("should throw an error if the response is too short", () => {
-      expect(() => {
-        command.parseResponse(LNX_RESPONSE_TOO_SHORT);
-      }).toThrow(InvalidStatusWordError);
+    it("should return an error if the response is too short", () => {
+      const response = command.parseResponse(LNX_RESPONSE_TOO_SHORT);
+      expect(isSuccessCommandResult(response)).toBe(false);
     });
   });
 });
