@@ -1,9 +1,14 @@
 import {
   ApduResponse,
-  InvalidStatusWordError,
+  CommandResultFactory,
+  GlobalCommandError,
+  isSuccessCommandResult,
 } from "@ledgerhq/device-sdk-core";
 
-import { SetExternalPluginCommand } from "@internal/app-binder/command/SetExternalPluginCommand";
+import {
+  SetExternalPluginCommand,
+  SetExternalPluginCommandError,
+} from "@internal/app-binder/command/SetExternalPluginCommand";
 
 /** Test payload contains:
  * Length of plugin name : 08
@@ -51,7 +56,34 @@ describe("Set External plugin", () => {
     });
   });
   describe("parseResponse", () => {
-    it("should throw an error if status is invalid", () => {
+    it.each`
+      apduResponseCode                 | errorCode
+      ${Uint8Array.from([0x6a, 0x80])} | ${"6a80"}
+      ${Uint8Array.from([0x69, 0x84])} | ${"6984"}
+      ${Uint8Array.from([0x6d, 0x00])} | ${"6d00"}
+    `(
+      "should return an error for the response status code $errorCode",
+      ({ apduResponseCode, errorCode }) => {
+        // GIVEN
+        const response = new ApduResponse({
+          data: Uint8Array.from([]),
+          statusCode: apduResponseCode,
+        });
+        const command = new SetExternalPluginCommand({
+          payload: Uint8Array.from([]),
+          signature: Uint8Array.from([]),
+        });
+        // WHEN
+        const result = command.parseResponse(response);
+        // THEN
+        expect(isSuccessCommandResult(result)).toBe(false);
+        // @ts-ignore
+        expect(result.error).toBeInstanceOf(SetExternalPluginCommandError);
+        // @ts-ignore
+        expect(result.error.errorCode).toStrictEqual(errorCode);
+      },
+    );
+    it("should return a global error", () => {
       // given
       const command = new SetExternalPluginCommand({
         payload: Uint8Array.from([]),
@@ -59,13 +91,16 @@ describe("Set External plugin", () => {
       });
       // when
       const apduResponse = new ApduResponse({
-        statusCode: Uint8Array.from([0x6a, 0x80]),
+        statusCode: Uint8Array.from([0x55, 0x15]),
         data: Uint8Array.from([]),
       });
       // then
-      expect(() => command.parseResponse(apduResponse)).toThrowError(
-        InvalidStatusWordError,
-      );
+      const result = command.parseResponse(apduResponse);
+      expect(isSuccessCommandResult(result)).toBe(false);
+      // @ts-ignore
+      expect(result.error).toBeInstanceOf(GlobalCommandError);
+      // @ts-ignore
+      expect(result.error.errorCode).toStrictEqual("5515");
     });
     it("should return void if status is success", () => {
       // given
@@ -79,7 +114,9 @@ describe("Set External plugin", () => {
         data: Uint8Array.from([]),
       });
       // then
-      expect(command.parseResponse(apduResponse)).toBe(void 0);
+      expect(command.parseResponse(apduResponse)).toStrictEqual(
+        CommandResultFactory({ data: undefined }),
+      );
     });
   });
 });

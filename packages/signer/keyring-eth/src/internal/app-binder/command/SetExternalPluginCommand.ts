@@ -7,14 +7,38 @@ import {
   ApduParser,
   ApduResponse,
   Command,
+  CommandErrorArgs,
+  CommandErrors,
+  CommandResult,
+  CommandResultFactory,
   CommandUtils,
-  InvalidStatusWordError,
+  DeviceExchangeError,
+  GlobalCommandErrorHandler,
+  isCommandErrorCode,
 } from "@ledgerhq/device-sdk-core";
 
 type SetExternalPluginCommandArgs = {
   payload: Uint8Array;
   signature: Uint8Array;
 };
+
+type SetExternalPluginCommandErrorCodes = "6a80" | "6984" | "6d00";
+
+const SET_EXTERNAL_PLUGIN_ERRORS: CommandErrors<SetExternalPluginCommandErrorCodes> =
+  {
+    "6a80": { message: "Invalid plugin name size" },
+    "6984": { message: "Plugin not installed on device" },
+    "6d00": { message: "Version of Eth app not supported" },
+  };
+
+export class SetExternalPluginCommandError extends DeviceExchangeError<SetExternalPluginCommandErrorCodes> {
+  constructor({
+    message,
+    errorCode,
+  }: CommandErrorArgs<SetExternalPluginCommandErrorCodes>) {
+    super({ tag: "SetExternalPluginCommandError", message, errorCode });
+  }
+}
 
 export class SetExternalPluginCommand
   implements Command<void, SetExternalPluginCommandArgs>
@@ -36,27 +60,24 @@ export class SetExternalPluginCommand
     return builder.build();
   }
 
-  parseResponse(apduResponse: ApduResponse): void {
+  parseResponse(apduResponse: ApduResponse): CommandResult<void> {
     if (CommandUtils.isSuccessResponse(apduResponse)) {
-      return;
+      return CommandResultFactory({ data: undefined });
     }
 
     const parser = new ApduParser(apduResponse);
     const statusCodeHex = parser.encodeToHexaString(apduResponse.statusCode);
 
-    switch (statusCodeHex) {
-      case "6a80":
-        throw new InvalidStatusWordError("Invalid plugin name size");
-      case "6984":
-        throw new InvalidStatusWordError("Plugin not installed on device");
-      case "6d00":
-        throw new InvalidStatusWordError("Version of Eth app not supported");
-      default:
-        throw new InvalidStatusWordError(
-          `Unexpected status word: ${parser.encodeToHexaString(
-            apduResponse.statusCode,
-          )}`,
-        );
+    if (isCommandErrorCode(statusCodeHex, SET_EXTERNAL_PLUGIN_ERRORS)) {
+      return CommandResultFactory({
+        error: new SetExternalPluginCommandError({
+          ...SET_EXTERNAL_PLUGIN_ERRORS[statusCodeHex],
+          errorCode: statusCodeHex,
+        }),
+      });
     }
+    return CommandResultFactory({
+      error: GlobalCommandErrorHandler.handle(apduResponse),
+    });
   }
 }

@@ -3,11 +3,12 @@ import {
   Apdu,
   ApduBuilder,
   type ApduBuilderArgs,
-  ApduParser,
   ApduResponse,
   type Command,
+  CommandResult,
+  CommandResultFactory,
   CommandUtils,
-  InvalidStatusWordError,
+  GlobalCommandErrorHandler,
 } from "@ledgerhq/device-sdk-core";
 
 export enum StructImplemType {
@@ -66,16 +67,12 @@ export class SendEIP712StructImplemCommand implements Command<void> {
     }
   }
 
-  parseResponse(response: ApduResponse): void {
-    const parser = new ApduParser(response);
-
-    // TODO: handle the error correctly using a generic error handler
+  parseResponse(response: ApduResponse): CommandResult<void> {
     if (!CommandUtils.isSuccessResponse(response)) {
-      throw new InvalidStatusWordError(
-        `Unexpected status word: ${parser.encodeToHexaString(
-          response.statusCode,
-        )}`,
-      );
+      return CommandResultFactory({
+        error: GlobalCommandErrorHandler.handle(response),
+      });
     }
+    return CommandResultFactory({ data: undefined });
   }
 }
