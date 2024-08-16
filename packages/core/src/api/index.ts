@@ -1,8 +1,9 @@
 "use strict";
 
 export { Apdu } from "./apdu/model/Apdu";
-export { ApduBuilder } from "./apdu/utils/ApduBuilder";
+export { APDU_MAX_PAYLOAD, ApduBuilder } from "./apdu/utils/ApduBuilder";
 export { ApduParser } from "./apdu/utils/ApduParser";
+export { ByteArrayBuilder } from "./apdu/utils/ByteArrayBuilder";
 export { CloseAppCommand } from "./command/os/CloseAppCommand";
 export {
   GetAppAndVersionCommand,
@@ -94,6 +95,9 @@ export {
 } from "@api/device-action/os/SendCommandInAppDeviceAction/SendCommandInAppDeviceActionTypes";
 export { type StateMachineTypes } from "@api/device-action/xstate-utils/StateMachineTypes";
 export { XStateDeviceAction } from "@api/device-action/xstate-utils/XStateDeviceAction";
-export { type DeviceSessionState } from "@api/device-session/DeviceSessionState";
+export {
+  type DeviceSessionState,
+  DeviceSessionStateType,
+} from "@api/device-session/DeviceSessionState";
 export { type SdkError } from "@api/Error";
 export { hexaStringToBuffer, isHexaString } from "@api/utils/HexaString";

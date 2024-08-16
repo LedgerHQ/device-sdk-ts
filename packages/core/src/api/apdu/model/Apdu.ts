@@ -26,7 +26,7 @@ export class Apdu {
   /**
    * Bytes of data
    */
-  readonly data?: Uint8Array;
+  readonly data: Uint8Array;
 
   constructor(
     cla: number,
@@ -39,7 +39,7 @@ export class Apdu {
     this.ins = ins;
     this.p1 = p1;
     this.p2 = p2;
-    this.data = data;
+    this.data = data ?? new Uint8Array();
   }
 
   /**
@@ -52,13 +52,13 @@ export class Apdu {
       this.ins,
       this.p1,
       this.p2,
-      this.data?.length ?? 0,
+      this.data.length,
     ]);
 
-    const apdu = new Uint8Array(header.length + (this.data?.length ?? 0));
+    const apdu = new Uint8Array(header.length + this.data.length);
     apdu.set(header, 0);
 
-    if (this.data) {
+    if (this.data.length > 0) {
       apdu.set(this.data, header.length);
     }
 

@@ -71,14 +71,30 @@ describe("ProvideTokenInformationCommand", () => {
       // GIVEN
       const response = {
         statusCode: Uint8Array.from([0x90, 0x00]),
-        data: new Uint8Array(),
+        data: Uint8Array.from([0x01]),
       };
 
       // WHEN
       const parsedResponse = command.parseResponse(response);
 
       // THEN
-      expect(parsedResponse).toBeUndefined();
+      expect(parsedResponse).toStrictEqual({ tokenIndex: 1 });
+    });
+
+    it("should throw an error if the response is invalid", () => {
+      // GIVEN
+      const response = {
+        statusCode: Uint8Array.from([0x90, 0x00]),
+        data: new Uint8Array(),
+      };
+
+      // WHEN
+      const promise = () => command.parseResponse(response);
+
+      // THEN
+      expect(() => {
+        promise();
+      }).toThrow(InvalidStatusWordError);
     });
 
     it("should throw an error if the response is not successful", () => {

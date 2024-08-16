@@ -14,8 +14,16 @@ export type ProvideTokenInformationCommandArgs = {
   payload: string;
 };
 
+export type ProvideTokenInformationCommandResponse = {
+  tokenIndex: number;
+};
+
 export class ProvideTokenInformationCommand
-  implements Command<void, ProvideTokenInformationCommandArgs>
+  implements
+    Command<
+      ProvideTokenInformationCommandResponse,
+      ProvideTokenInformationCommandArgs
+    >
 {
   args: ProvideTokenInformationCommandArgs;
 
@@ -35,7 +43,9 @@ export class ProvideTokenInformationCommand
     return builder.build();
   }
 
-  parseResponse(response: ApduResponse): void {
+  parseResponse(
+    response: ApduResponse,
+  ): ProvideTokenInformationCommandResponse {
     const parser = new ApduParser(response);
 
     // TODO: handle the error correctly using a generic error handler
@@ -46,5 +56,12 @@ export class ProvideTokenInformationCommand
         )}`,
       );
     }
+
+    const tokenIndex = parser.extract8BitUInt();
+    if (tokenIndex === undefined) {
+      throw new InvalidStatusWordError("tokenIndex is missing");
+    }
+
+    return { tokenIndex };
   }
 }
