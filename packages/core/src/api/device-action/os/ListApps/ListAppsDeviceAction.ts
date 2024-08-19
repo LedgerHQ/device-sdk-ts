@@ -3,13 +3,13 @@ import { assign, fromPromise, setup } from "xstate";
 
 import { isSuccessCommandResult } from "@api/command/model/CommandResult";
 import {
+  AppResponse,
   ListAppsCommand,
-  ListAppsResponse,
+  ListAppsCommandResult,
 } from "@api/command/os/ListAppsCommand";
 import { InternalApi } from "@api/device-action/DeviceAction";
 import { UserInteractionRequired } from "@api/device-action/model/UserInteractionRequired";
 import { DEFAULT_UNLOCK_TIMEOUT_MS } from "@api/device-action/os/Const";
-import { ListAppsRejectedError } from "@api/device-action/os/Errors";
 import { GoToDashboardDeviceAction } from "@api/device-action/os/GoToDashboard/GoToDashboardDeviceAction";
 import { StateMachineTypes } from "@api/device-action/xstate-utils/StateMachineTypes";
 import { XStateDeviceAction } from "@api/device-action/xstate-utils/XStateDeviceAction";
@@ -23,7 +23,7 @@ import {
 
 type ListAppsMachineInternalState = {
   readonly error: ListAppsDAError | null;
-  readonly apps: ListAppsResponse;
+  readonly apps: AppResponse[];
   readonly shouldContinue: boolean;
 };
 
@@ -32,7 +32,7 @@ export type MachineDependencies = {
     input,
   }: {
     input: boolean;
-  }) => Promise<ListAppsResponse>;
+  }) => Promise<ListAppsCommandResult>;
 };
 
 export type ExtractMachineDependencies = (
@@ -74,7 +74,7 @@ export class ListAppsDeviceAction extends XStateDeviceAction<
         output: {} as types["output"],
       },
       actors: {
-        listApps: fromPromise<ListAppsResponse, boolean>(listApps),
+        listApps: fromPromise<ListAppsCommandResult, boolean>(listApps),
         goToDashboard: goToDashboardMachine,
       },
       guards: {
@@ -186,10 +186,18 @@ export class ListAppsDeviceAction extends XStateDeviceAction<
               target: "Continue",
               actions: assign({
                 _internalState: (_) => {
+                  if (isSuccessCommandResult(_.event.output)) {
+                    return {
+                      ..._.context._internalState,
+                      apps: _.context._internalState.apps.concat(
+                        _.event.output.data,
+                      ),
+                      shouldContinue: _.event.output.data.length === 2,
+                    };
+                  }
                   return {
                     ..._.context._internalState,
-                    apps: _.context._internalState.apps.concat(_.event.output),
-                    shouldContinue: _.event.output.length === 2,
+                    error: _.event.output.error,
                   };
                 },
                 intermediateValue: (_) => ({
@@ -198,16 +206,16 @@ export class ListAppsDeviceAction extends XStateDeviceAction<
                 }),
               }),
             },
-            onError: {
-              target: "Error",
-              actions: assign({
-                _internalState: (_) => ({
-                  ..._.context._internalState,
-                  error: new ListAppsRejectedError("User refused on device"),
-                }),
-              }),
-            },
           },
+        },
+        ListAppsCheck: {
+          always: [
+            {
+              target: "Error",
+              guard: "hasError",
+            },
+            "ListAppsContinue",
+          ],
         },
         ListAppsContinue: {
           invoke: {
@@ -217,10 +225,18 @@ export class ListAppsDeviceAction extends XStateDeviceAction<
               target: "Continue",
               actions: assign({
                 _internalState: (_) => {
+                  if (isSuccessCommandResult(_.event.output)) {
+                    return {
+                      ..._.context._internalState,
+                      apps: _.context._internalState.apps.concat(
+                        _.event.output.data,
+                      ),
+                      shouldContinue: _.event.output.data.length === 2,
+                    };
+                  }
                   return {
                     ..._.context._internalState,
-                    apps: _.context._internalState.apps.concat(_.event.output),
-                    shouldContinue: _.event.output.length === 2,
+                    error: _.event.output.error,
                   };
                 },
               }),
@@ -262,11 +278,7 @@ export class ListAppsDeviceAction extends XStateDeviceAction<
   extractDependencies(internalApi: InternalApi): MachineDependencies {
     const listApps = async ({ input }: { input: boolean }) => {
       const command = new ListAppsCommand({ isContinue: input });
-      const res = await internalApi.sendCommand(command);
-      if (isSuccessCommandResult(res)) {
-        return res.data;
-      }
-      throw res.error;
+      return internalApi.sendCommand(command);
     };
 
     return {

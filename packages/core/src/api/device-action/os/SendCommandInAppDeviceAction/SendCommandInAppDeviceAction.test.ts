@@ -7,7 +7,6 @@ import {
   CommandResult,
   CommandResultFactory,
 } from "@api/command/model/CommandResult";
-import { GlobalCommandErrorStatusCode } from "@api/command/utils/GlobalCommandError";
 import { makeDeviceActionInternalApiMock } from "@api/device-action/__test-utils__/makeInternalApi";
 import { testDeviceActionStates } from "@api/device-action/__test-utils__/testDeviceActionStates";
 import {
@@ -267,10 +266,7 @@ type MyCommandParams = {
   paramNumber: number;
 };
 
-class TestCommand
-  implements
-    Command<MyCommandResponse, GlobalCommandErrorStatusCode, MyCommandParams>
-{
+class TestCommand implements Command<MyCommandResponse, void, MyCommandParams> {
   params: MyCommandParams;
   constructor(params: MyCommandParams) {
     this.params = params;
@@ -287,9 +283,7 @@ class TestCommand
 }
 
 type MyCommandSendCommandDAState = DeviceActionState<
-  SendCommandInAppDAOutput<
-    CommandResult<MyCommandResponse, GlobalCommandErrorStatusCode>
-  >,
+  SendCommandInAppDAOutput<CommandResult<MyCommandResponse>>,
   SendCommandInAppDAError<UnknownDAError>,
   SendCommandInAppDAIntermediateValue<
     UserInteractionRequired.None | UserInteractionRequired.VerifyAddress

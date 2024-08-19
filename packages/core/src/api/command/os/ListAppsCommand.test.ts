@@ -1,4 +1,3 @@
-import { Command } from "@api/command/Command";
 import {
   CommandErrorResult,
   CommandResultFactory,
@@ -10,7 +9,6 @@ import {
   ListAppsCommand,
   ListAppsCommandError,
   ListAppsCommandErrorCodes,
-  ListAppsResponse,
 } from "./ListAppsCommand";
 
 // [NOTE] EXAMPLES CREATED USING A NANO X
@@ -134,7 +132,7 @@ const LIST_APP_RESPONSE_CONTINUE_2_APPS_EXPECTED = [
 ];
 
 describe("ListAppCommand", () => {
-  let command: Command<ListAppsResponse, { isContinue: boolean }>;
+  let command: ListAppsCommand;
 
   describe("first list app command", () => {
     beforeEach(() => {

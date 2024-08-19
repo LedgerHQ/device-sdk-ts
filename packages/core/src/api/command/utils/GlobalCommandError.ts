@@ -25,7 +25,7 @@ export class GlobalCommandError extends DeviceExchangeError<GlobalCommandErrorSt
 /**
  * Global errors dictionary that links a global status code to an error message
  */
-const GLOBAL_ERRORS: CommandErrors<GlobalCommandErrorStatusCode> = {
+export const GLOBAL_ERRORS: CommandErrors<GlobalCommandErrorStatusCode> = {
   "5515": { message: "Device is locked.", tag: "DeviceLockedError" },
   "5501": { message: "Action refused on device.", tag: "ActionRefusedError" },
   "5502": { message: "Pin is not set", tag: "PinNotSetError" },
