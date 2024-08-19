@@ -258,7 +258,7 @@ importers:
   packages/signer/keyring-eth:
     dependencies:
       ethers-v5:
-        specifier: npm:ethers@v5
+        specifier: npm:ethers@^5.7.2
         version: ethers@5.7.2
       ethers-v6:
         specifier: npm:ethers@^6.13.2
