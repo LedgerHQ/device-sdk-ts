@@ -1,3 +1,4 @@
+import { CommandErrorResult } from "@api/command/model/CommandResult";
 import { DeviceActionState } from "@api/device-action/model/DeviceActionState";
 import { UserInteractionRequired } from "@api/device-action/model/UserInteractionRequired";
 import {
@@ -5,7 +6,6 @@ import {
   DeviceNotOnboardedError,
   UnknownDAError,
 } from "@api/device-action/os/Errors";
-import { SdkError } from "@api/Error";
 
 export type GetDeviceStatusDAOutput = {
   readonly currentApp: string;
@@ -19,7 +19,7 @@ export type GetDeviceStatusDAError =
   | DeviceNotOnboardedError
   | DeviceLockedError
   | UnknownDAError
-  | SdkError; /// TODO: remove, we should have an exhaustive list of errors
+  | CommandErrorResult["error"];
 
 export type GetDeviceStatusDARequiredInteraction =
   | UserInteractionRequired.None

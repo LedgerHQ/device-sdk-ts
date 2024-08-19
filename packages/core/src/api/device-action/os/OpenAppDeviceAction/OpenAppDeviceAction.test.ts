@@ -92,10 +92,14 @@ describe("OpenAppDeviceAction", () => {
         deviceStatus: DeviceStatus.CONNECTED,
         currentApp: "Bitcoin",
       });
-      getAppAndVersionMock.mockResolvedValue({
-        app: "Bitcoin",
-        version: "0.0.0",
-      });
+      getAppAndVersionMock.mockResolvedValue(
+        CommandResultFactory({
+          data: {
+            name: "Bitcoin",
+            version: "0.0.0",
+          },
+        }),
+      );
 
       const openAppDeviceAction = new OpenAppDeviceAction({
         input: { appName: "Bitcoin" },
@@ -131,11 +135,15 @@ describe("OpenAppDeviceAction", () => {
         deviceStatus: DeviceStatus.CONNECTED,
         currentApp: "BOLOS",
       });
-      getAppAndVersionMock.mockResolvedValue({
-        app: "BOLOS",
-        version: "0.0.0",
-      });
-      openAppMock.mockResolvedValue(undefined);
+      getAppAndVersionMock.mockResolvedValue(
+        CommandResultFactory({
+          data: {
+            name: "BOLOS",
+            version: "0.0.0",
+          },
+        }),
+      );
+      openAppMock.mockResolvedValue(CommandResultFactory({ data: undefined }));
 
       const openAppDeviceAction = new OpenAppDeviceAction({
         input: { appName: "Bitcoin" },
@@ -176,12 +184,16 @@ describe("OpenAppDeviceAction", () => {
         deviceStatus: DeviceStatus.CONNECTED,
         currentApp: "AnotherApp",
       });
-      getAppAndVersionMock.mockResolvedValue({
-        app: "AnotherApp",
-        version: "0.0.0",
-      });
-      closeAppMock.mockResolvedValue(undefined);
-      openAppMock.mockResolvedValue(undefined);
+      getAppAndVersionMock.mockResolvedValue(
+        CommandResultFactory({
+          data: {
+            name: "AnotherApp",
+            version: "0.0.0",
+          },
+        }),
+      );
+      closeAppMock.mockResolvedValue(CommandResultFactory({ data: undefined }));
+      openAppMock.mockResolvedValue(CommandResultFactory({ data: undefined }));
 
       const openAppDeviceAction = new OpenAppDeviceAction({
         input: { appName: "Bitcoin" },
@@ -293,8 +305,10 @@ describe("OpenAppDeviceAction", () => {
         currentApp: "mockedCurrentApp",
       });
 
-      getAppAndVersionMock.mockRejectedValue(
-        new InvalidStatusWordError("mocked error"),
+      getAppAndVersionMock.mockReturnValue(
+        CommandResultFactory({
+          error: new InvalidStatusWordError("mocked error"),
+        }),
       );
 
       const openAppDeviceAction = new OpenAppDeviceAction({
@@ -326,16 +340,28 @@ describe("OpenAppDeviceAction", () => {
       );
     });
     it("should end in an error if the dashboard is open and open app throws an error", (done) => {
-      getDeviceSessionStateMock.mockReturnValue({
-        sessionStateType: DeviceSessionStateType.ReadyWithoutSecureChannel,
-        deviceStatus: DeviceStatus.CONNECTED,
-        currentApp: "BOLOS",
-      });
-      getAppAndVersionMock.mockResolvedValue({
-        app: "BOLOS",
-        version: "0.0.0",
-      });
-      openAppMock.mockRejectedValue(new InvalidStatusWordError("mocked error"));
+      getDeviceSessionStateMock.mockReturnValue(
+        CommandResultFactory({
+          data: {
+            sessionStateType: DeviceSessionStateType.ReadyWithoutSecureChannel,
+            deviceStatus: DeviceStatus.CONNECTED,
+            currentApp: "BOLOS",
+          },
+        }),
+      );
+      getAppAndVersionMock.mockResolvedValue(
+        CommandResultFactory({
+          data: {
+            name: "BOLOS",
+            version: "0.0.0",
+          },
+        }),
+      );
+      openAppMock.mockResolvedValue(
+        CommandResultFactory({
+          error: new InvalidStatusWordError("mocked error"),
+        }),
+      );
 
       const openAppDeviceAction = new OpenAppDeviceAction({
         input: { appName: "Bitcoin" },
@@ -377,12 +403,18 @@ describe("OpenAppDeviceAction", () => {
         deviceStatus: DeviceStatus.CONNECTED,
         currentApp: "AnotherApp",
       });
-      getAppAndVersionMock.mockResolvedValue({
-        app: "AnotherApp",
-        version: "0.0.0",
-      });
-      closeAppMock.mockRejectedValue(
-        new InvalidStatusWordError("mocked error"),
+      getAppAndVersionMock.mockResolvedValue(
+        CommandResultFactory({
+          data: {
+            name: "AnotherApp",
+            version: "0.0.0",
+          },
+        }),
+      );
+      closeAppMock.mockResolvedValue(
+        CommandResultFactory({
+          error: new InvalidStatusWordError("mocked error"),
+        }),
       );
 
       const openAppDeviceAction = new OpenAppDeviceAction({
@@ -425,12 +457,20 @@ describe("OpenAppDeviceAction", () => {
         deviceStatus: DeviceStatus.CONNECTED,
         currentApp: "AnotherApp",
       });
-      getAppAndVersionMock.mockResolvedValue({
-        app: "AnotherApp",
-        version: "0.0.0",
-      });
-      closeAppMock.mockResolvedValue(undefined);
-      openAppMock.mockRejectedValue(new InvalidStatusWordError("mocked error"));
+      getAppAndVersionMock.mockResolvedValue(
+        CommandResultFactory({
+          data: {
+            name: "AnotherApp",
+            version: "0.0.0",
+          },
+        }),
+      );
+      closeAppMock.mockResolvedValue(CommandResultFactory({ data: undefined }));
+      openAppMock.mockResolvedValue(
+        CommandResultFactory({
+          error: new InvalidStatusWordError("mocked error"),
+        }),
+      );
 
       const openAppDeviceAction = new OpenAppDeviceAction({
         input: { appName: "Bitcoin" },
@@ -479,10 +519,14 @@ describe("OpenAppDeviceAction", () => {
       deviceStatus: DeviceStatus.CONNECTED,
       currentApp: "AnotherApp",
     });
-    getAppAndVersionMock.mockResolvedValue({
-      app: "AnotherApp",
-      version: "0.0.0",
-    });
+    getAppAndVersionMock.mockResolvedValue(
+      CommandResultFactory({
+        data: {
+          name: "AnotherApp",
+          version: "0.0.0",
+        },
+      }),
+    );
 
     const openAppDeviceAction = new OpenAppDeviceAction({
       input: { appName: "Bitcoin" },

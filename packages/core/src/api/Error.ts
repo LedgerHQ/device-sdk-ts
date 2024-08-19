@@ -16,7 +16,7 @@ export type CommandErrorArgs<SpecificErrorCodes> = Omit<
   "tag"
 >;
 
-export abstract class DeviceExchangeError<SpecificErrorCodes> {
+export abstract class DeviceExchangeError<SpecificErrorCodes = void> {
   readonly _tag: string;
   readonly originalError?: unknown;
   readonly errorCode: SpecificErrorCodes;
