@@ -1,5 +1,15 @@
+import {
+  InvalidBatteryDataError,
+  InvalidBatteryStatusTypeError,
+  InvalidResponseFormatError,
+  InvalidStatusWordError,
+} from "@api/command/Errors";
 import { GlobalCommandErrorStatusCode } from "@api/command/utils/GlobalCommandError";
-import { DeviceExchangeError, SdkError } from "@api/Error";
+import {
+  DeviceExchangeError,
+  SdkError,
+  UnknownDeviceExchangeError,
+} from "@api/Error";
 
 export enum CommandResultStatus {
   Error = "ERROR",
@@ -27,8 +37,12 @@ export function CommandResultFactory<Data, SpecificErrorCodes>({
   | {
       data?: undefined;
       error:
-        | DeviceExchangeError<SpecificErrorCodes | GlobalCommandErrorStatusCode>
-        | SdkError;
+        | DeviceExchangeError<SpecificErrorCodes>
+        | InvalidBatteryDataError
+        | InvalidBatteryStatusTypeError
+        | InvalidResponseFormatError
+        | InvalidStatusWordError
+        | UnknownDeviceExchangeError;
     }): CommandResult<Data, SpecificErrorCodes> {
   if (error) {
     return {
