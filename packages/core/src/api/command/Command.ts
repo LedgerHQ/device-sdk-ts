@@ -7,8 +7,8 @@ import { ApduResponse } from "@api/device-session/ApduResponse";
  * A command that can be sent to a device.
  *
  * @template Response - The type of the response returned by the device.
- * @template ErrorCodes - The union of error codes for this command.
  * @template Args - The type of the arguments passed to the command (optional).
+ * @template ErrorCodes - The union of error codes for this command (optional).
  */
 export interface Command<Response, Args = void, ErrorCodes = void> {
   /**
