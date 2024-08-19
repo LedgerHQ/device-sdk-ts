@@ -261,8 +261,8 @@ importers:
         specifier: npm:ethers@v5
         version: ethers@5.7.2
       ethers-v6:
-        specifier: npm:ethers@v6
-        version: ethers@6.13.1
+        specifier: npm:ethers@^6.13.2
+        version: ethers@6.13.2
       inversify:
         specifier: ^6.0.2
         version: 6.0.2
@@ -3532,10 +3532,6 @@ packages:
 
   ethers@5.7.2:
     resolution: {integrity: sha512-wswUsmWo1aOK8rR7DIKiWSw9DbLWe6x98Jrn8wcTflTVvaXhAMaB5zGAXy0GYQEQp9iO1iSHWVyARQm11zUtyg==}
-
-  ethers@6.13.1:
-    resolution: {integrity: sha512-hdJ2HOxg/xx97Lm9HdCWk949BfYqYWpyw4//78SiwOLgASyfrNszfMUNB2joKjvGUdwhHfaiMMFFwacVVoLR9A==}
-    engines: {node: '>=14.0.0'}
 
   ethers@6.13.2:
     resolution: {integrity: sha512-9VkriTTed+/27BGuY1s0hf441kqwHJ1wtN2edksEtiRvXx+soxRX3iSXTfFqq2+YwrOqbDoTHjIhQnjJRlzKmg==}
@@ -10900,19 +10896,6 @@ snapshots:
       '@ethersproject/wallet': 5.7.0
       '@ethersproject/web': 5.7.1
       '@ethersproject/wordlists': 5.7.0
-    transitivePeerDependencies:
-      - bufferutil
-      - utf-8-validate
-
-  ethers@6.13.1:
-    dependencies:
-      '@adraffy/ens-normalize': 1.10.1
-      '@noble/curves': 1.2.0
-      '@noble/hashes': 1.3.2
-      '@types/node': 18.15.13
-      aes-js: 4.0.0-beta.5
-      tslib: 2.4.0
-      ws: 8.17.1
     transitivePeerDependencies:
       - bufferutil
       - utf-8-validate

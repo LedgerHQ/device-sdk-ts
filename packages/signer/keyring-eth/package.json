@@ -43,7 +43,7 @@
   },
   "dependencies": {
     "ethers-v5": "npm:ethers@v5",
-    "ethers-v6": "npm:ethers@v6",
+    "ethers-v6": "npm:ethers@^6.13.2",
     "inversify": "^6.0.2",
     "inversify-logger-middleware": "^3.1.0",
     "purify-ts": "^2.1.0",
@@ -56,8 +56,8 @@
     "@ledgerhq/jest-config-dsdk": "workspace:*",
     "@ledgerhq/prettier-config-dsdk": "workspace:*",
     "@ledgerhq/tsconfig-dsdk": "workspace:*",
-    "ts-node": "^10.9.2",
-    "rxjs": "^7.8.1"
+    "rxjs": "^7.8.1",
+    "ts-node": "^10.9.2"
   },
   "peerDependencies": {
     "@ledgerhq/context-module": "workspace:*",
