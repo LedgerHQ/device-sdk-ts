@@ -19,7 +19,7 @@ export type OpenAppDAError =
   | UnknownDAError
   | SdkError; /// TODO: remove, we should have an exhaustive list of errors
 
-type OpenAppDARequiredInteraction =
+export type OpenAppDARequiredInteraction =
   | UserInteractionRequired.None
   | UserInteractionRequired.UnlockDevice
   | UserInteractionRequired.ConfirmOpenApp;

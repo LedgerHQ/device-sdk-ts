@@ -84,6 +84,7 @@ export {
   type OpenAppDAInput,
   type OpenAppDAIntermediateValue,
   type OpenAppDAOutput,
+  type OpenAppDARequiredInteraction,
   type OpenAppDAState,
 } from "@api/device-action/os/OpenAppDeviceAction/types";
 export { SendCommandInAppDeviceAction } from "@api/device-action/os/SendCommandInAppDeviceAction/SendCommandInAppDeviceAction";

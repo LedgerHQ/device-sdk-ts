@@ -3,6 +3,7 @@ import { DeviceSdk, DeviceSessionId } from "@ledgerhq/device-sdk-core";
 import { Container } from "inversify";
 
 import { GetAddressDAReturnType } from "@api/app-binder/GetAddressDeviceActionTypes";
+import { SignTypedDataDAReturnType } from "@api/app-binder/SignTypedDataDeviceActionTypes";
 import { KeyringEth } from "@api/KeyringEth";
 import { AddressOptions } from "@api/model/AddressOptions";
 import { Signature } from "@api/model/Signature";
@@ -55,10 +56,10 @@ export class DefaultKeyringEth implements KeyringEth {
       .execute(_derivationPath, _message);
   }
 
-  async signTypedData(
+  signTypedData(
     _derivationPath: string,
     _typedData: TypedData,
-  ): Promise<Signature> {
+  ): SignTypedDataDAReturnType {
     return this._container
       .get<SignTypedDataUseCase>(typedDataTypes.SignTypedDataUseCase)
       .execute(_derivationPath, _typedData);

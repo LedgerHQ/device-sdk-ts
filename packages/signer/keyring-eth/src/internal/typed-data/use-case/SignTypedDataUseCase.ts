@@ -1,7 +1,7 @@
 import { inject, injectable } from "inversify";
 
-import { Signature } from "@api/model/Signature";
-import { TypedData } from "@api/model/TypedData";
+import { SignTypedDataDAReturnType } from "@api/app-binder/SignTypedDataDeviceActionTypes";
+import { type TypedData } from "@api/model/TypedData";
 import { appBinderTypes } from "@internal/app-binder/di/appBinderTypes";
 import { EthAppBinder } from "@internal/app-binder/EthAppBinder";
 import { typedDataTypes } from "@internal/typed-data/di/typedDataTypes";
@@ -21,17 +21,14 @@ export class SignTypedDataUseCase {
     this._parser = typedDataParserService;
   }
 
-  async execute(
-    _derivationPath: string,
-    _typedData: TypedData,
-  ): Promise<Signature> {
-    // 1- Parse the typed data and map it to a TypedDataContext
-    // 2- Send the TypedDataContext to the app binding for signing
-    // 2- Sign the transaction
-
-    this._parser;
-    this._appBinding;
-
-    return Promise.resolve({} as Signature);
+  execute(
+    derivationPath: string,
+    typedData: TypedData,
+  ): SignTypedDataDAReturnType {
+    return this._appBinding.signTypedData({
+      derivationPath,
+      parser: this._parser,
+      data: typedData,
+    });
   }
 }

@@ -218,7 +218,7 @@ describe("TypedDataParser - types parsing", () => {
 describe("TypedDataParser - message parsing", () => {
   const MESSAGE: TypedData = {
     domain: {
-      chainId: 5,
+      chainId: 0,
       name: "Ether Mail",
       verifyingContract: "0xCcCCccccCCCCcCCCCCCcCcCccCcCCCcCcccccccC",
       version: "1",
@@ -370,7 +370,7 @@ describe("TypedDataParser - message parsing", () => {
       {
         path: "chainId",
         type: "uint256",
-        value: new TypedDataValueField(Uint8Array.from([5])),
+        value: new TypedDataValueField(Uint8Array.from([0])),
       },
       {
         path: "verifyingContract",
