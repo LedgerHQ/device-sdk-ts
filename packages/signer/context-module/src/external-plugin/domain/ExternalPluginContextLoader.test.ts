@@ -1,4 +1,4 @@
-import { Interface } from "ethers/lib/utils";
+import { Interface } from "ethers";
 import { Left, Right } from "purify-ts";
 
 import ABI from "@/external-plugin/__tests__/abi.json";
@@ -430,9 +430,7 @@ describe("ExternalPluginContextLoader", () => {
       expect(result).toEqual([
         {
           type: "error",
-          error: new Error(
-            "[ContextModule] ExternalPluginContextLoader: Unable to get address",
-          ),
+          error: new RangeError("out of result range"),
         },
       ]);
     });
