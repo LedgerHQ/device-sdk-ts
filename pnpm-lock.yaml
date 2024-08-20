@@ -224,8 +224,8 @@ importers:
         specifier: ^1.7.2
         version: 1.7.2
       ethers:
-        specifier: ^5.7.2
-        version: 5.7.2
+        specifier: ^6.13.2
+        version: 6.13.2
       inversify:
         specifier: ^6.0.2
         version: 6.0.2
@@ -258,11 +258,11 @@ importers:
   packages/signer/keyring-eth:
     dependencies:
       ethers-v5:
-        specifier: npm:ethers@v5
+        specifier: npm:ethers@^5.7.2
         version: ethers@5.7.2
       ethers-v6:
-        specifier: npm:ethers@v6
-        version: ethers@6.13.1
+        specifier: npm:ethers@^6.13.2
+        version: ethers@6.13.2
       inversify:
         specifier: ^6.0.2
         version: 6.0.2
@@ -3533,8 +3533,8 @@ packages:
   ethers@5.7.2:
     resolution: {integrity: sha512-wswUsmWo1aOK8rR7DIKiWSw9DbLWe6x98Jrn8wcTflTVvaXhAMaB5zGAXy0GYQEQp9iO1iSHWVyARQm11zUtyg==}
 
-  ethers@6.13.1:
-    resolution: {integrity: sha512-hdJ2HOxg/xx97Lm9HdCWk949BfYqYWpyw4//78SiwOLgASyfrNszfMUNB2joKjvGUdwhHfaiMMFFwacVVoLR9A==}
+  ethers@6.13.2:
+    resolution: {integrity: sha512-9VkriTTed+/27BGuY1s0hf441kqwHJ1wtN2edksEtiRvXx+soxRX3iSXTfFqq2+YwrOqbDoTHjIhQnjJRlzKmg==}
     engines: {node: '>=14.0.0'}
 
   event-target-shim@5.0.1:
@@ -10900,7 +10900,7 @@ snapshots:
       - bufferutil
       - utf-8-validate
 
-  ethers@6.13.1:
+  ethers@6.13.2:
     dependencies:
       '@adraffy/ens-normalize': 1.10.1
       '@noble/curves': 1.2.0

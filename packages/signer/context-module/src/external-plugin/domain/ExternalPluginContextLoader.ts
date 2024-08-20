@@ -1,6 +1,5 @@
 import { HexaString, isHexaString } from "@ledgerhq/device-sdk-core";
-import { ethers } from "ethers";
-import { Interface } from "ethers/lib/utils";
+import { ethers, Interface } from "ethers";
 import { inject, injectable } from "inversify";
 import { Either, EitherAsync, Left, Right } from "purify-ts";
 
@@ -76,7 +75,7 @@ export class ExternalPluginContextLoader implements ContextLoader {
 
       // decodedCallData is a Right so we can extract it safely
       const extractedDecodedCallData =
-        decodedCallData.extract() as ethers.utils.Result;
+        decodedCallData.extract() as ethers.Result;
 
       // get the token payload for each erc20OfInterest
       // and return the payload or the error
@@ -110,7 +109,7 @@ export class ExternalPluginContextLoader implements ContextLoader {
   private getTokenPayload(
     transaction: TransactionContext,
     erc20Path: string,
-    decodedCallData: ethers.utils.Result,
+    decodedCallData: ethers.Result,
   ) {
     const address = this.getAddressFromPath(erc20Path, decodedCallData);
 
@@ -128,7 +127,7 @@ export class ExternalPluginContextLoader implements ContextLoader {
     abi: object[],
     method: string,
     data: string,
-  ): Either<Error, ethers.utils.Result> {
+  ): Either<Error, ethers.Result> {
     try {
       const contractInterface = new Interface(abi);
       return Right(contractInterface.decodeFunctionData(method, data));
@@ -143,9 +142,9 @@ export class ExternalPluginContextLoader implements ContextLoader {
 
   private getAddressFromPath(
     path: string,
-    decodedCallData: ethers.utils.Result,
+    decodedCallData: ethers.Result,
   ): HexaString {
-    // ethers.utils.Result is a record string, any
+    // ethers.Result is a record string, any
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     let value: any = decodedCallData;
     for (const key of path.split(".")) {
@@ -155,6 +154,8 @@ export class ExternalPluginContextLoader implements ContextLoader {
         // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
         value = value[value.length - 1];
       } else {
+        // This access can throw a RangeError error in case of an invalid key
+        // but is correctly caught by the liftEither above
         // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
         value = value[key];
       }
