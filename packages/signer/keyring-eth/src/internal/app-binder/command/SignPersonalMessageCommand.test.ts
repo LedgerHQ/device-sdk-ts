@@ -1,6 +1,7 @@
 import {
   ApduResponse,
   CommandResultFactory,
+  InvalidStatusWordError,
   isSuccessCommandResult,
 } from "@ledgerhq/device-sdk-core";
 import { Just, Nothing } from "purify-ts";
@@ -185,6 +186,44 @@ describe("SignPersonalMessageCommand", (): void => {
             s: "0x0ff01a855718d7975c1c54abcf7d32ff96307c0bda8d695d14290d4bc54d278b",
             v: 27,
           }),
+        }),
+      );
+    });
+
+    it("should return an error if r is missing", () => {
+      // given
+      const command = new SignPersonalMessageCommand({
+        ...defaultArgs,
+      });
+      const apduResponse = new ApduResponse({
+        statusCode: new Uint8Array([0x90, 0x00]),
+        data: SIGN_PERSONAL_LONG_MESSAGE_SUCCESS_RESPONSE.slice(0, 32),
+      });
+      // when
+      const response = command.parseResponse(apduResponse);
+      // then
+      expect(response).toStrictEqual(
+        CommandResultFactory({
+          error: new InvalidStatusWordError("R is missing"),
+        }),
+      );
+    });
+
+    it("should return an error if s is missing", () => {
+      // given
+      const command = new SignPersonalMessageCommand({
+        ...defaultArgs,
+      });
+      const apduResponse = new ApduResponse({
+        statusCode: new Uint8Array([0x90, 0x00]),
+        data: SIGN_PERSONAL_LONG_MESSAGE_SUCCESS_RESPONSE.slice(0, 64),
+      });
+      // when
+      const result = command.parseResponse(apduResponse);
+      // then
+      expect(result).toStrictEqual(
+        CommandResultFactory({
+          error: new InvalidStatusWordError("S is missing"),
         }),
       );
     });
