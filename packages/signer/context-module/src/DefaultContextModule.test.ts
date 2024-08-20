@@ -1,4 +1,5 @@
 import { TransactionContext } from "./shared/model/TransactionContext";
+import type { TypedDataContextLoader } from "./typed-data/domain/TypedDataContextLoader";
 import { DefaultContextModule } from "./DefaultContextModule";
 
 const contextLoaderStubBuilder = () => {
@@ -6,12 +7,17 @@ const contextLoaderStubBuilder = () => {
 };
 
 describe("DefaultContextModule", () => {
+  const typedDataLoader: TypedDataContextLoader = { load: jest.fn() };
+
   beforeEach(() => {
     jest.restoreAllMocks();
   });
 
   it("should initialize the context module with all the default loaders", async () => {
-    const contextModule = new DefaultContextModule({ loaders: [] });
+    const contextModule = new DefaultContextModule({
+      loaders: [],
+      typedDataLoader,
+    });
 
     const res = await contextModule.getContexts({} as TransactionContext);
 
@@ -19,7 +25,10 @@ describe("DefaultContextModule", () => {
   });
 
   it("should return an empty array when no loaders", async () => {
-    const contextModule = new DefaultContextModule({ loaders: [] });
+    const contextModule = new DefaultContextModule({
+      loaders: [],
+      typedDataLoader,
+    });
 
     const res = await contextModule.getContexts({} as TransactionContext);
 
@@ -30,6 +39,7 @@ describe("DefaultContextModule", () => {
     const loader = contextLoaderStubBuilder();
     const contextModule = new DefaultContextModule({
       loaders: [loader, loader],
+      typedDataLoader,
     });
 
     await contextModule.getContexts({} as TransactionContext);
@@ -52,6 +62,7 @@ describe("DefaultContextModule", () => {
       .mockResolvedValueOnce(responses[1]);
     const contextModule = new DefaultContextModule({
       loaders: [loader, loader],
+      typedDataLoader,
     });
 
     const res = await contextModule.getContexts({} as TransactionContext);
