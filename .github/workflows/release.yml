@@ -9,8 +9,12 @@ env:
 
 jobs:
   publish:
-    environment: Production
-    runs-on: ubuntu-latest
+    # environment: Production
+    runs-on: ledgerhq-shared-medium
+    permissions:
+      id-token: write
+      contents: write
+      pull-requests: write
     steps:
       - uses: actions/checkout@v4
 
@@ -21,11 +25,26 @@ jobs:
 
       - name: build libraries
         run: pnpm build
-
-      - name: publish
+      
+      - name: Create Release Pull Request or Publish to npm
+        id: changesets
         uses: changesets/action@v1
-        with:
-          publish: pnpm release
         env:
-          GITHUB_TOKEN: ${{ github.token }}
-          NPM_TOKEN: ${{ secrets.NPMJS_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.CI_BOT_TOKEN }}
+      
+      - name: Login to JFrog Ledger
+        if: steps.changesets.outputs.hasChangesets == 'false'
+        id: jfrog-login
+        uses: LedgerHQ/actions-security/actions/jfrog-login@actions/jfrog-login-1
+
+      - name: Publish to JFrog Ledger
+        if: steps.changesets.outputs.hasChangesets == 'false'
+        env: 
+          NPM_REGISTRY: jfrog.ledgerlabs.net/artifactory/api/npm/ldk-npm-prod-public
+          NPM_REGISTRY_TOKEN: ${{ steps.jfrog-login.outputs.oidc-token }}
+        run: |
+          cat << EOF | tee .npmrc
+          registry=https://${NPM_REGISTRY}/
+          //${NPM_REGISTRY}/:_authToken=${NPM_REGISTRY_TOKEN}
+          EOF
+          pnpm publish
