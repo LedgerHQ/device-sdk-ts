@@ -3,8 +3,14 @@ import {
   type TypedDataTokenIndex,
   VERIFYING_CONTRACT_TOKEN_INDEX,
 } from "@ledgerhq/context-module";
-import { InternalApi } from "@ledgerhq/device-sdk-core";
-import { Maybe } from "purify-ts";
+import {
+  CommandErrorResult,
+  CommandResult,
+  CommandResultFactory,
+  InternalApi,
+  isSuccessCommandResult,
+} from "@ledgerhq/device-sdk-core";
+import { Maybe, Nothing } from "purify-ts";
 
 import { ProvideTokenInformationCommand } from "@internal/app-binder/command/ProvideTokenInformationCommand";
 import {
@@ -39,7 +45,8 @@ export class ProvideEIP712ContextTask {
     private args: ProvideEIP712ContextTaskArgs,
   ) {}
 
-  async run(): Promise<void> {
+  async run(): Promise<CommandResult<void>> {
+    let result = CommandResultFactory<void, void>({ data: undefined });
     // Provide the structure definitions.
     // Should be sent before struct implementations, as described here:
     // https://github.com/LedgerHQ/app-ethereum/blob/develop/doc/ethapp.adoc#eip712-send-struct-definition
@@ -50,29 +57,38 @@ export class ProvideEIP712ContextTask {
       aKey.localeCompare(bKey),
     );
     for (const [structName, fields] of types) {
-      await this.api.sendCommand(
+      result = await this.api.sendCommand(
         new SendEIP712StructDefinitionCommand({
           command: StructDefinitionCommand.Name,
           name: structName,
         }),
       );
+      if (!isSuccessCommandResult(result)) {
+        return result;
+      }
       for (const [fieldName, fieldType] of Object.entries(fields)) {
-        await this.api.sendCommand(
+        result = await this.api.sendCommand(
           new SendEIP712StructDefinitionCommand({
             command: StructDefinitionCommand.Field,
             name: fieldName,
             type: fieldType,
           }),
         );
+        if (!isSuccessCommandResult(result)) {
+          return result;
+        }
       }
     }
 
     if (this.args.clearSignContext.isJust()) {
       // Activate the filtering, before sending domain and message implementations, as described here:
       // https://github.com/LedgerHQ/app-ethereum/blob/develop/doc/ethapp.adoc#activation
-      await this.api.sendCommand(
+      result = await this.api.sendCommand(
         new SendEIP712FilteringCommand({ type: Eip712FilterType.Activation }),
       );
+      if (!isSuccessCommandResult(result)) {
+        return result;
+      }
     }
 
     // Send domain implementation values.
@@ -84,7 +100,7 @@ export class ProvideEIP712ContextTask {
       // Send MessageInformation filter.
       // Should be sent between Domain and Message implementations, as described here:
       // https://github.com/LedgerHQ/app-ethereum/blob/develop/doc/ethapp.adoc#message-info
-      await this.api.sendCommand(
+      result = await this.api.sendCommand(
         new SendEIP712FilteringCommand({
           type: Eip712FilterType.MessageInfo,
           displayName:
@@ -94,6 +110,9 @@ export class ProvideEIP712ContextTask {
           signature: this.args.clearSignContext.extract().messageInfo.signature,
         }),
       );
+      if (!isSuccessCommandResult(result)) {
+        return result;
+      }
     }
 
     // Send message implementation values
@@ -101,13 +120,29 @@ export class ProvideEIP712ContextTask {
     for (const value of this.args.message) {
       // Provide the descriptors of tokens referenced by the message, if any.
       // Keep a map of all device indexes for those provided tokens.
-      await this.provideTokenInformation(value, tokensIndexes);
+      const maybeError = await this.provideTokenInformation(
+        value,
+        tokensIndexes,
+      );
+      if (maybeError.isJust()) {
+        return maybeError.extract();
+      }
       // If there is a filter, it should be sent just before the corresponding implementation:
       // https://github.com/LedgerHQ/app-ethereum/blob/develop/doc/ethapp.adoc#amount-join-token
-      await this.provideFiltering(value, tokensIndexes);
+      const maybeResult = await this.provideFiltering(value, tokensIndexes);
+      if (
+        maybeResult.isJust() &&
+        !isSuccessCommandResult(maybeResult.extract())
+      ) {
+        return maybeResult.extract();
+      }
       // Provide message value implementation
-      await this.getImplementationTask(value).run();
+      result = await this.getImplementationTask(value).run();
+      if (!isSuccessCommandResult(result)) {
+        return result;
+      }
     }
+    return result;
   }
 
   getImplementationTask(value: TypedDataValue): SendEIP712StructImplemTask {
@@ -132,7 +167,7 @@ export class ProvideEIP712ContextTask {
   async provideTokenInformation(
     value: TypedDataValue,
     tokensIndexes: Record<TypedDataTokenIndex, number>,
-  ): Promise<void> {
+  ): Promise<Maybe<CommandErrorResult>> {
     if (this.args.clearSignContext.isJust()) {
       const filter = this.args.clearSignContext.extract().filters[value.path];
       // Tokens descriptors only needed when a tokenIndex is available in filter.
@@ -146,12 +181,16 @@ export class ProvideEIP712ContextTask {
         const tokens = this.args.clearSignContext.extract().tokens;
         const token = tokens[descriptorIndex];
         if (token === undefined) {
-          return;
+          return Nothing;
         }
 
-        let { tokenIndex: deviceIndex } = await this.api.sendCommand(
+        const provideTokenInfoResult = await this.api.sendCommand(
           new ProvideTokenInformationCommand({ payload: token }),
         );
+        if (!isSuccessCommandResult(provideTokenInfoResult)) {
+          return Maybe.of(provideTokenInfoResult);
+        }
+        let { tokenIndex: deviceIndex } = provideTokenInfoResult.data;
         // The token corresponding to the Verifying Contract of message domain has a special index value, as described here:
         // https://github.com/LedgerHQ/app-ethereum/blob/develop/doc/ethapp.adoc#amount-join-value
         if (Number(descriptorIndex) === VERIFYING_CONTRACT_TOKEN_INDEX) {
@@ -161,12 +200,13 @@ export class ProvideEIP712ContextTask {
         tokensIndexes[Number(descriptorIndex)] = deviceIndex;
       }
     }
+    return Nothing;
   }
 
   async provideFiltering(
     value: TypedDataValue,
     tokensIndexes: Record<TypedDataTokenIndex, number>,
-  ): Promise<void> {
+  ): Promise<Maybe<CommandResult<void>>> {
     if (this.args.clearSignContext.isJust()) {
       const filter = this.args.clearSignContext.extract().filters[value.path];
       if (
@@ -174,47 +214,52 @@ export class ProvideEIP712ContextTask {
         ((filter.type === "amount" || filter.type === "token") &&
           tokensIndexes[filter.tokenIndex] === undefined)
       ) {
-        return;
+        return Nothing;
       }
       switch (filter.type) {
         case "datetime":
-          await this.api.sendCommand(
-            new SendEIP712FilteringCommand({
-              type: Eip712FilterType.Datetime,
-              displayName: filter.displayName,
-              signature: filter.signature,
-            }),
+          return Maybe.of(
+            await this.api.sendCommand(
+              new SendEIP712FilteringCommand({
+                type: Eip712FilterType.Datetime,
+                displayName: filter.displayName,
+                signature: filter.signature,
+              }),
+            ),
           );
-          break;
         case "raw":
-          await this.api.sendCommand(
-            new SendEIP712FilteringCommand({
-              type: Eip712FilterType.Raw,
-              displayName: filter.displayName,
-              signature: filter.signature,
-            }),
+          return Maybe.of(
+            await this.api.sendCommand(
+              new SendEIP712FilteringCommand({
+                type: Eip712FilterType.Raw,
+                displayName: filter.displayName,
+                signature: filter.signature,
+              }),
+            ),
           );
-          break;
         case "token":
-          await this.api.sendCommand(
-            new SendEIP712FilteringCommand({
-              type: Eip712FilterType.Token,
-              tokenIndex: tokensIndexes[filter.tokenIndex]!,
-              signature: filter.signature,
-            }),
+          return Maybe.of(
+            await this.api.sendCommand(
+              new SendEIP712FilteringCommand({
+                type: Eip712FilterType.Token,
+                tokenIndex: tokensIndexes[filter.tokenIndex]!,
+                signature: filter.signature,
+              }),
+            ),
           );
-          break;
         case "amount":
-          await this.api.sendCommand(
-            new SendEIP712FilteringCommand({
-              type: Eip712FilterType.Amount,
-              displayName: filter.displayName,
-              tokenIndex: tokensIndexes[filter.tokenIndex]!,
-              signature: filter.signature,
-            }),
+          return Maybe.of(
+            await this.api.sendCommand(
+              new SendEIP712FilteringCommand({
+                type: Eip712FilterType.Amount,
+                displayName: filter.displayName,
+                tokenIndex: tokensIndexes[filter.tokenIndex]!,
+                signature: filter.signature,
+              }),
+            ),
           );
-          break;
       }
     }
+    return Nothing;
   }
 }

@@ -1,6 +1,8 @@
 import { ContextModule } from "@ledgerhq/context-module";
 import {
+  CommandResult,
   InternalApi,
+  isSuccessCommandResult,
   OpenAppDeviceAction,
   StateMachineTypes,
   UserInteractionRequired,
@@ -39,12 +41,12 @@ export type MachineDependencies = {
     input: {
       taskArgs: ProvideEIP712ContextTaskArgs;
     };
-  }) => Promise<void>;
+  }) => Promise<CommandResult<void>>;
   readonly signTypedData: (arg0: {
     input: {
       derivationPath: string;
     };
-  }) => Promise<Signature>;
+  }) => Promise<CommandResult<Signature>>;
 };
 
 export type ExtractMachineDependencies = (
@@ -186,7 +188,18 @@ export class SignTypedDataDeviceAction extends XStateDeviceAction<
               taskArgs: context._internalState.typedDataContext!,
             }),
             onDone: {
-              target: "SignTypedData",
+              actions: assign({
+                _internalState: (_) => {
+                  if (isSuccessCommandResult(_.event.output)) {
+                    return _.context._internalState;
+                  }
+                  return {
+                    ..._.context._internalState,
+                    error: _.event.output.error,
+                  };
+                },
+              }),
+              target: "ProvideContextResultCheck",
             },
             onError: {
               target: "Error",
@@ -200,6 +213,17 @@ export class SignTypedDataDeviceAction extends XStateDeviceAction<
               }),
             },
           },
+        },
+        ProvideContextResultCheck: {
+          always: [
+            {
+              target: "SignTypedData",
+              guard: "noInternalError",
+            },
+            {
+              target: "Error",
+            },
+          ],
         },
         SignTypedData: {
           entry: assign({
@@ -219,31 +243,31 @@ export class SignTypedDataDeviceAction extends XStateDeviceAction<
               derivationPath: context.input.derivationPath,
             }),
             onDone: {
-              target: "Success",
-              actions: [
-                // TODO: when we have proper error handling, we should handle the error here
-                assign({
-                  _internalState: ({ event, context }) => ({
-                    ...context._internalState,
-                    signature: event.output,
-                  }),
-                }),
-              ],
-            },
-            onError: {
-              target: "Error",
+              target: "SignTypedDataResultCheck",
               actions: [
                 assign({
-                  _internalState: (_) => ({
-                    ..._.context._internalState,
-                    error: new SignTypedDataError(
-                      "Error while signing the typed data",
-                    ),
-                  }),
+                  _internalState: ({ event, context }) => {
+                    if (isSuccessCommandResult(event.output)) {
+                      return {
+                        ...context._internalState,
+                        signature: event.output.data,
+                      };
+                    }
+                    return {
+                      ...context._internalState,
+                      error: event.output.error,
+                    };
+                  },
                 }),
               ],
             },
           },
+        },
+        SignTypedDataResultCheck: {
+          always: [
+            { guard: "noInternalError", target: "Success" },
+            { target: "Error" },
+          ],
         },
         Success: {
           type: "final",

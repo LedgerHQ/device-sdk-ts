@@ -3,12 +3,14 @@ import {
   Apdu,
   ApduBuilder,
   ApduBuilderArgs,
+  ApduParser,
   ApduResponse,
   Command,
   CommandResult,
   CommandResultFactory,
   CommandUtils,
   GlobalCommandErrorHandler,
+  InvalidStatusWordError,
 } from "@ledgerhq/device-sdk-core";
 
 export type ProvideTokenInformationCommandArgs = {
@@ -44,7 +46,9 @@ export class ProvideTokenInformationCommand
     return builder.build();
   }
 
-  parseResponse(response: ApduResponse): CommandResult<void> {
+  parseResponse(
+    response: ApduResponse,
+  ): CommandResult<ProvideTokenInformationCommandResponse> {
     const parser = new ApduParser(response);
 
     if (!CommandUtils.isSuccessResponse(response)) {
@@ -54,8 +58,10 @@ export class ProvideTokenInformationCommand
     }
     const tokenIndex = parser.extract8BitUInt();
     if (tokenIndex === undefined) {
-      throw new InvalidStatusWordError("tokenIndex is missing");
+      return CommandResultFactory({
+        error: new InvalidStatusWordError("tokenIndex is missing"),
+      });
     }
-    return CommandResultFactory({ data: tokenIndex });
+    return CommandResultFactory({ data: { tokenIndex } });
   }
 }

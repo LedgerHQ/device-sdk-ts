@@ -1,7 +1,10 @@
 import {
   APDU_MAX_PAYLOAD,
   ByteArrayBuilder,
+  CommandResult,
+  CommandResultFactory,
   InternalApi,
+  isSuccessCommandResult,
 } from "@ledgerhq/device-sdk-core";
 
 import {
@@ -29,14 +32,17 @@ export class SendEIP712StructImplemTask {
     private args: SendEIP712StructImplemTaskArgs,
   ) {}
 
-  async run(): Promise<void> {
+  async run(): Promise<CommandResult<void>> {
     // No particular operation to perform on root and array implementations.
     if (this.args.type !== StructImplemType.FIELD) {
-      return this.api.sendCommand(new SendEIP712StructImplemCommand(this.args));
+      return await this.api.sendCommand(
+        new SendEIP712StructImplemCommand(this.args),
+      );
     }
 
     // If the value is a field, we should prepend its size, and chunk it if necessary.
 
+    let result = CommandResultFactory<void, void>({ data: undefined });
     // Prepend the length to the array, in uint16 big endian encoding
     const buffer = new ByteArrayBuilder(this.args.value.length + 2)
       .add16BitUIntToData(this.args.value.length)
@@ -45,7 +51,7 @@ export class SendEIP712StructImplemTask {
 
     // Split the buffer into chunks if necessary
     for (let i = 0; i < buffer.length; i += APDU_MAX_PAYLOAD) {
-      await this.api.sendCommand(
+      result = await this.api.sendCommand(
         new SendEIP712StructImplemCommand({
           type: StructImplemType.FIELD,
           value: {
@@ -54,6 +60,10 @@ export class SendEIP712StructImplemTask {
           },
         }),
       );
+      if (!isSuccessCommandResult(result)) {
+        return result;
+      }
     }
+    return result;
   }
 }
