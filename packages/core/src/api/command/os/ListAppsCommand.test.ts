@@ -8,7 +8,7 @@ import { ApduResponse } from "@api/device-session/ApduResponse";
 import {
   ListAppsCommand,
   ListAppsCommandError,
-  ListAppsCommandErrorCodes,
+  ListAppsErrorCodes,
 } from "./ListAppsCommand";
 
 // [NOTE] EXAMPLES CREATED USING A NANO X
@@ -265,7 +265,7 @@ describe("ListAppCommand", () => {
         });
         const result = command.parseResponse(
           response,
-        ) as CommandErrorResult<ListAppsCommandErrorCodes>;
+        ) as CommandErrorResult<ListAppsErrorCodes>;
 
         expect(isSuccessCommandResult(result)).toBe(false);
         expect(result.error).toBeInstanceOf(ListAppsCommandError);

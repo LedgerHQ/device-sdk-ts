@@ -1,5 +1,5 @@
 import { CommandErrorResult } from "@api/command/model/CommandResult";
-import { ListAppsCommandErrorCodes } from "@api/command/os/ListAppsCommand";
+import { ListAppsErrorCodes } from "@api/command/os/ListAppsCommand";
 import { DeviceActionState } from "@api/device-action/model/DeviceActionState";
 import { UserInteractionRequired } from "@api/device-action/model/UserInteractionRequired";
 import { UnknownDAError } from "@api/device-action/os/Errors";
@@ -18,7 +18,7 @@ export type ListAppsWithMetadataDAError =
   | ListAppsDAError
   | UnknownDAError
   | HttpFetchApiError
-  | CommandErrorResult<ListAppsCommandErrorCodes>["error"];
+  | CommandErrorResult<ListAppsErrorCodes>["error"];
 
 export type ListAppsWithMetadataDARequiredInteraction =
   UserInteractionRequired.None;
