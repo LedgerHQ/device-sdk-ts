@@ -135,11 +135,11 @@ export class DeviceSdk {
   /**
    * Sends a command to a device through a device session.
    *
-   * @param {SendCommandUseCaseArgs<Response, ErrorCodes, Args>} args - The device session ID, command, command error codes and command parameters to send.
+   * @param {SendCommandUseCaseArgs<Response, Args, ErrorCodes>} args - The device session ID, command, command error codes and command parameters to send.
    * @returns A promise resolving with the response from the command.
    */
-  sendCommand<Response, ErrorCodes, Args>(
-    args: SendCommandUseCaseArgs<Response, ErrorCodes, Args>,
+  sendCommand<Response, Args, ErrorCodes>(
+    args: SendCommandUseCaseArgs<Response, Args, ErrorCodes>,
   ): Promise<CommandResult<Response, ErrorCodes>> {
     return this.container
       .get<SendCommandUseCase>(commandTypes.SendCommandUseCase)
