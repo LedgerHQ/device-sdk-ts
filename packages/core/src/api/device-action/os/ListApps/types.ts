@@ -1,6 +1,6 @@
 import { CommandErrorResult } from "@api/command/model/CommandResult";
 import {
-  ListAppsCommandErrorCodes,
+  ListAppsErrorCodes,
   ListAppsResponse,
 } from "@api/command/os/ListAppsCommand";
 import { DeviceActionState } from "@api/device-action/model/DeviceActionState";
@@ -18,7 +18,7 @@ export type ListAppsDAInput = GoToDashboardDAInput;
 export type ListAppsDAError =
   | GoToDashboardDAError
   | UnknownDAError
-  | CommandErrorResult<ListAppsCommandErrorCodes>["error"];
+  | CommandErrorResult<ListAppsErrorCodes>["error"];
 
 export type ListAppsDARequiredInteraction =
   | UserInteractionRequired.None

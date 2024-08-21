@@ -26,6 +26,7 @@ export {
 export {
   type ListAppsArgs,
   ListAppsCommand,
+  type ListAppsErrorCodes,
   type ListAppsResponse,
 } from "./command/os/ListAppsCommand";
 export { type OpenAppArgs, OpenAppCommand } from "./command/os/OpenAppCommand";
