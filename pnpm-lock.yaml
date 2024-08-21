@@ -281,6 +281,9 @@ importers:
       reflect-metadata:
         specifier: ^0.2.2
         version: 0.2.2
+      xstate:
+        specifier: ^5.15.0
+        version: 5.15.0
     devDependencies:
       '@ledgerhq/context-module':
         specifier: workspace:*

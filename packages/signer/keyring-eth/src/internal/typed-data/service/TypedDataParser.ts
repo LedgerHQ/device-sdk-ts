@@ -252,12 +252,12 @@ export class TypedDataParser {
     callback: (parsedValue: TypedDataValue) => void,
   ): boolean {
     const structType = this.structs[type];
-    if (!structType || !this.isRecord(value)) {
+    if (structType === undefined || !this.isRecord(value)) {
       return false;
     }
     for (const [fieldName, fieldType] of Object.entries(structType)) {
       const fieldValue = value[fieldName];
-      if (!fieldType || !fieldValue) {
+      if (fieldValue === undefined) {
         return false;
       }
       const nextPath = path.length ? `${path}.${fieldName}` : fieldName;

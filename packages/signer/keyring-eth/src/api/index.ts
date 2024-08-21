@@ -1,4 +1,11 @@
 export * from "@api/app-binder/GetAddressDeviceActionTypes";
+export {
+  type SignTypedDataDAError,
+  type SignTypedDataDAInput,
+  type SignTypedDataDAIntermediateValue,
+  type SignTypedDataDAOutput,
+  type SignTypedDataDAState,
+} from "@api/app-binder/SignTypedDataDeviceActionTypes";
 export * from "@api/KeyringEth";
 export * from "@api/KeyringEthBuilder";
 export * from "@api/model/Address";
