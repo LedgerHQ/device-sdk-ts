@@ -5,6 +5,7 @@ import {
   isSuccessCommandResult,
   OpenAppDeviceAction,
   StateMachineTypes,
+  UnknownDAError,
   UserInteractionRequired,
   XStateDeviceAction,
 } from "@ledgerhq/device-sdk-core";
@@ -17,7 +18,6 @@ import {
   SignTypedDataDAIntermediateValue,
   SignTypedDataDAInternalState,
   SignTypedDataDAOutput,
-  SignTypedDataError,
 } from "@api/app-binder/SignTypedDataDeviceActionTypes";
 import { Signature } from "@api/model/Signature";
 import { TypedData } from "@api/model/TypedData";
@@ -172,7 +172,7 @@ export class SignTypedDataDeviceAction extends XStateDeviceAction<
               actions: assign({
                 _internalState: (_) => ({
                   ..._.context._internalState,
-                  error: new SignTypedDataError(
+                  error: new UnknownDAError(
                     "Error while building the clear signing context",
                   ),
                 }),
@@ -206,7 +206,7 @@ export class SignTypedDataDeviceAction extends XStateDeviceAction<
               actions: assign({
                 _internalState: (_) => ({
                   ..._.context._internalState,
-                  error: new SignTypedDataError(
+                  error: new UnknownDAError(
                     "Error while providing the clear signing context",
                   ),
                 }),
@@ -281,7 +281,7 @@ export class SignTypedDataDeviceAction extends XStateDeviceAction<
           ? Right(context._internalState.signature)
           : Left(
               context._internalState.error ||
-                new SignTypedDataError("No error in final state"),
+                new UnknownDAError("No error in final state"),
             ),
     });
   }

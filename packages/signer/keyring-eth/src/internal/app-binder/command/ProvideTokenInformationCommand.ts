@@ -3,6 +3,7 @@ import {
   Apdu,
   ApduBuilder,
   ApduBuilderArgs,
+  ApduParser,
   ApduResponse,
   Command,
   CommandResult,
