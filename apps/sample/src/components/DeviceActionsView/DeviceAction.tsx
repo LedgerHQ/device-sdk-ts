@@ -35,6 +35,7 @@ export type DeviceActionProps<
     debug?: boolean,
   ) => ExecuteDeviceActionReturnType<Output, Error, IntermediateValue>;
   initialValues: Input;
+  validateValues?: (args: Input) => boolean;
   valueSelector?: ValueSelector<FieldType>;
 };
 
@@ -44,11 +45,13 @@ export function DeviceActionDrawer<
   Error extends SdkError,
   IntermediateValue extends DeviceActionIntermediateValue,
 >(props: DeviceActionProps<Output, Input, Error, IntermediateValue>) {
-  const { initialValues, executeDeviceAction, valueSelector } = props;
+  const { initialValues, executeDeviceAction, valueSelector, validateValues } =
+    props;
 
   const nonce = useRef(-1);
 
   const [values, setValues] = useState<Input>(initialValues);
+  const [valuesInvalid, setValuesInvalid] = useState<boolean>(false);
   const [inspect, setInspect] = useState(false);
 
   const [responses, setResponses] = useState<
@@ -126,6 +129,12 @@ export function DeviceActionDrawer<
     () => cancelDeviceActionRef.current();
   }, []);
 
+  useEffect(() => {
+    if (validateValues) {
+      setValuesInvalid(!validateValues(values));
+    }
+  }, [validateValues, values]);
+
   return (
     <>
       <Block>
@@ -154,7 +163,7 @@ export function DeviceActionDrawer<
           <Button
             variant="main"
             onClick={handleClickExecute}
-            disabled={loading}
+            disabled={loading || valuesInvalid}
             Icon={() =>
               loading ? <InfiniteLoader size={20} /> : <Icons.ArrowRight />
             }

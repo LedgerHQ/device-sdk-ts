@@ -187,7 +187,7 @@ describe("SignTypedDataDeviceAction", () => {
         },
         {
           intermediateValue: {
-            requiredUserInteraction: UserInteractionRequired.None,
+            requiredUserInteraction: UserInteractionRequired.SignTypedData,
           },
           status: DeviceActionStatus.Pending,
         },
@@ -376,7 +376,7 @@ describe("SignTypedDataDeviceAction", () => {
         },
         {
           intermediateValue: {
-            requiredUserInteraction: UserInteractionRequired.None,
+            requiredUserInteraction: UserInteractionRequired.SignTypedData,
           },
           status: DeviceActionStatus.Pending,
         },
@@ -443,7 +443,7 @@ describe("SignTypedDataDeviceAction", () => {
         },
         {
           intermediateValue: {
-            requiredUserInteraction: UserInteractionRequired.None,
+            requiredUserInteraction: UserInteractionRequired.SignTypedData,
           },
           status: DeviceActionStatus.Pending,
         },
