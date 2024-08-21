@@ -58,6 +58,7 @@ export {
   DeviceActionStatus,
 } from "@api/device-action/model/DeviceActionState";
 export { UserInteractionRequired } from "@api/device-action/model/UserInteractionRequired";
+export { UnknownDAError } from "@api/device-action/os/Errors";
 export { GetDeviceStatusDeviceAction } from "@api/device-action/os/GetDeviceStatus/GetDeviceStatusDeviceAction";
 export {
   type GetDeviceStatusDAError,

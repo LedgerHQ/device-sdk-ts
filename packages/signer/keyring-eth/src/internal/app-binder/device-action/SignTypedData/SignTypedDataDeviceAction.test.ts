@@ -3,16 +3,14 @@ import {
   CommandResultFactory,
   DeviceActionStatus,
   OpenAppDeviceAction,
+  UnknownDAError,
   UnknownDeviceExchangeError,
   UserInteractionRequired,
 } from "@ledgerhq/device-sdk-core";
 import { Just, Left, Nothing, Right } from "purify-ts";
 import { assign, createMachine } from "xstate";
 
-import {
-  SignTypedDataDAState,
-  SignTypedDataError,
-} from "@api/app-binder/SignTypedDataDeviceActionTypes";
+import { SignTypedDataDAState } from "@api/app-binder/SignTypedDataDeviceActionTypes";
 import { makeDeviceActionInternalApiMock } from "@internal/app-binder/device-action/__test-utils__/makeInternalApi";
 import { testDeviceActionStates } from "@internal/app-binder/device-action/__test-utils__/testDeviceActionStates";
 import { type ProvideEIP712ContextTaskArgs } from "@internal/app-binder/task/ProvideEIP712ContextTask";
@@ -249,7 +247,7 @@ describe("SignTypedDataDeviceAction", () => {
 
   describe("error cases", () => {
     it("Error if the open app fails", (done) => {
-      setupOpenAppDAMock(new SignTypedDataError("Mocked error"));
+      setupOpenAppDAMock(new UnknownDAError("Mocked error"));
 
       const expectedStates: Array<SignTypedDataDAState> = [
         {
@@ -266,7 +264,7 @@ describe("SignTypedDataDeviceAction", () => {
         },
         {
           status: DeviceActionStatus.Error,
-          error: new SignTypedDataError("Mocked error"),
+          error: new UnknownDAError("Mocked error"),
         },
       ];
 
@@ -325,7 +323,7 @@ describe("SignTypedDataDeviceAction", () => {
           status: DeviceActionStatus.Pending,
         },
         {
-          error: new SignTypedDataError(
+          error: new UnknownDAError(
             "Error while building the clear signing context",
           ),
           status: DeviceActionStatus.Error,
@@ -385,7 +383,7 @@ describe("SignTypedDataDeviceAction", () => {
           status: DeviceActionStatus.Pending,
         },
         {
-          error: new SignTypedDataError(
+          error: new UnknownDAError(
             "Error while providing the clear signing context",
           ),
           status: DeviceActionStatus.Error,
