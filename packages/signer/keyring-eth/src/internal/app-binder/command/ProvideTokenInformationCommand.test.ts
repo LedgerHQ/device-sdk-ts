@@ -79,11 +79,11 @@ describe("ProvideTokenInformationCommand", () => {
 
       // THEN
       expect(parsedResponse).toStrictEqual(
-        CommandResultFactory({ data: undefined }),
+        CommandResultFactory({ data: { tokenIndex: 0x01 } }),
       );
     });
 
-    it("should throw an error if the response is invalid", () => {
+    it("should return an error if the response is invalid", () => {
       // GIVEN
       const response = {
         statusCode: Uint8Array.from([0x90, 0x00]),
@@ -91,12 +91,10 @@ describe("ProvideTokenInformationCommand", () => {
       };
 
       // WHEN
-      const promise = () => command.parseResponse(response);
+      const result = command.parseResponse(response);
 
       // THEN
-      expect(() => {
-        promise();
-      }).toThrow(InvalidStatusWordError);
+      expect(isSuccessCommandResult(result)).toBe(false);
     });
 
     it("should return an error if the response is not successful", () => {

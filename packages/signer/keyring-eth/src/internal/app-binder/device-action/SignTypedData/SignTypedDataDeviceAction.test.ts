@@ -1,7 +1,9 @@
 import { type ContextModule } from "@ledgerhq/context-module";
 import {
+  CommandResultFactory,
   DeviceActionStatus,
   OpenAppDeviceAction,
+  UnknownDeviceExchangeError,
   UserInteractionRequired,
 } from "@ledgerhq/device-sdk-core";
 import { Just, Left, Nothing, Right } from "purify-ts";
@@ -151,11 +153,18 @@ describe("SignTypedDataDeviceAction", () => {
         .spyOn(deviceAction, "extractDependencies")
         .mockReturnValue(extractDependenciesMock());
       buildContextMock.mockResolvedValueOnce(TEST_BUILT_CONTEXT);
-      signTypedDataMock.mockResolvedValueOnce({
-        v: 0x1c,
-        r: "0x8a540510e13b0f2b11a451275716d29e08caad07e89a1c84964782fb5e1ad788",
-        s: "0x64a0de235b270fbe81e8e40688f4a9f9ad9d283d690552c9331d7773ceafa513",
-      });
+      provideContextMock.mockResolvedValueOnce(
+        CommandResultFactory({ data: undefined }),
+      );
+      signTypedDataMock.mockResolvedValueOnce(
+        CommandResultFactory({
+          data: {
+            v: 0x1c,
+            r: "0x8a540510e13b0f2b11a451275716d29e08caad07e89a1c84964782fb5e1ad788",
+            s: "0x64a0de235b270fbe81e8e40688f4a9f9ad9d283d690552c9331d7773ceafa513",
+          },
+        }),
+      );
 
       // Expected intermediate values for the following state sequence:
       //   Initial -> OpenApp -> BuildContext -> ProvideContext -> SignTypedData
@@ -210,33 +219,29 @@ describe("SignTypedDataDeviceAction", () => {
       // Verify mocks calls parameters
       observable.subscribe({
         complete: () => {
-          try {
-            expect(buildContextMock).toHaveBeenCalledWith(
-              expect.objectContaining({
-                input: {
-                  contextModule: mockContextModule,
-                  parser: mockParser,
-                  data: TEST_MESSAGE,
-                },
-              }),
-            );
-            expect(provideContextMock).toHaveBeenCalledWith(
-              expect.objectContaining({
-                input: {
-                  taskArgs: TEST_BUILT_CONTEXT,
-                },
-              }),
-            );
-            expect(signTypedDataMock).toHaveBeenCalledWith(
-              expect.objectContaining({
-                input: {
-                  derivationPath: "44'/60'/0'/0/0",
-                },
-              }),
-            );
-          } catch (e) {
-            done(e);
-          }
+          expect(buildContextMock).toHaveBeenCalledWith(
+            expect.objectContaining({
+              input: {
+                contextModule: mockContextModule,
+                parser: mockParser,
+                data: TEST_MESSAGE,
+              },
+            }),
+          );
+          expect(provideContextMock).toHaveBeenCalledWith(
+            expect.objectContaining({
+              input: {
+                taskArgs: TEST_BUILT_CONTEXT,
+              },
+            }),
+          );
+          expect(signTypedDataMock).toHaveBeenCalledWith(
+            expect.objectContaining({
+              input: {
+                derivationPath: "44'/60'/0'/0/0",
+              },
+            }),
+          );
         },
       });
     });
@@ -412,7 +417,16 @@ describe("SignTypedDataDeviceAction", () => {
         .spyOn(deviceAction, "extractDependencies")
         .mockReturnValue(extractDependenciesMock());
       buildContextMock.mockResolvedValueOnce(TEST_BUILT_CONTEXT);
-      signTypedDataMock.mockRejectedValueOnce(new Error("Error"));
+      provideContextMock.mockResolvedValueOnce(
+        CommandResultFactory({ data: undefined }),
+      );
+      signTypedDataMock.mockResolvedValueOnce(
+        CommandResultFactory({
+          error: new UnknownDeviceExchangeError(
+            "Error while signing the typed data",
+          ),
+        }),
+      );
 
       const expectedStates: Array<SignTypedDataDAState> = [
         {
@@ -446,7 +460,9 @@ describe("SignTypedDataDeviceAction", () => {
           status: DeviceActionStatus.Pending,
         },
         {
-          error: new SignTypedDataError("Error while signing the typed data"),
+          error: new UnknownDeviceExchangeError(
+            "Error while signing the typed data",
+          ),
           status: DeviceActionStatus.Error,
         },
       ];

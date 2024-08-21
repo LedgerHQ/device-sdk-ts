@@ -8,7 +8,10 @@ export type { LoggerSubscriberService } from "./logger-subscriber/service/Logger
 export type { DiscoveredDevice } from "./usb/model/DiscoveredDevice";
 export type { ApduBuilderArgs } from "@api/apdu/utils/ApduBuilder";
 export type { Command } from "@api/command/Command";
-export type { CommandResult } from "@api/command/model/CommandResult";
+export type {
+  CommandErrorResult,
+  CommandResult,
+} from "@api/command/model/CommandResult";
 export type { SendCommandUseCaseArgs } from "@api/command/use-case/SendCommandUseCase";
 export type { DeviceModelId } from "@api/device/DeviceModel";
 export type { ExecuteDeviceActionUseCaseArgs } from "@api/device-action/use-case/ExecuteDeviceActionUseCase";
