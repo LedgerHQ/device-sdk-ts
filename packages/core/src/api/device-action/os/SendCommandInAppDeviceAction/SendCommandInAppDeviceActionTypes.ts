@@ -1,9 +1,9 @@
-import { CommandResult } from "@api/command/model/CommandResult";
+import { CommandErrorResult } from "@api/command/model/CommandResult";
+import { UnknownDAError } from "@api/device-action/os/Errors";
 import {
   OpenAppDAError,
   OpenAppDAIntermediateValue,
 } from "@api/device-action/os/OpenAppDeviceAction/types";
-import { SdkError } from "@api/Error";
 import { Command } from "@api/types";
 
 export type SendCommandInAppDAOutput<CommandResponse> = CommandResponse;
@@ -11,17 +11,17 @@ export type SendCommandInAppDAOutput<CommandResponse> = CommandResponse;
 export type SendCommandInAppDAInput<
   CommandResponse,
   CommandArgs,
-  UserInteraction,
   CommandErrorCodes,
+  UserInteraction,
 > = {
-  readonly command: Command<CommandResponse, CommandErrorCodes, CommandArgs>;
+  readonly command: Command<CommandResponse, CommandArgs, CommandErrorCodes>;
   readonly appName: string;
   readonly requiredUserInteraction: UserInteraction;
 };
 
-export type SendCommandInAppDAError<CommandError extends SdkError> =
+export type SendCommandInAppDAError<CommandErrorCodes = void> =
   | OpenAppDAError
-  | CommandError;
+  | CommandErrorResult<CommandErrorCodes>["error"];
 
 export type SendCommandInAppDAIntermediateValue<UserInteraction> =
   | { readonly requiredUserInteraction: UserInteraction }
@@ -30,11 +30,11 @@ export type SendCommandInAppDAIntermediateValue<UserInteraction> =
 export type SendCommandInAppDAInternalState<
   CommandResponse,
   CommandErrorCodes,
-  CommandError,
 > = {
-  readonly commandResponse: CommandResult<
-    CommandResponse,
-    CommandErrorCodes
-  > | null;
-  readonly error: OpenAppDAError | CommandError | null;
+  readonly commandResponse: CommandResponse | null;
+  readonly error:
+    | OpenAppDAError
+    | UnknownDAError
+    | CommandErrorResult<CommandErrorCodes>["error"]
+    | null;
 };
