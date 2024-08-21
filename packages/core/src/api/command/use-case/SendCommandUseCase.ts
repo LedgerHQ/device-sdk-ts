@@ -42,10 +42,10 @@ export class SendCommandUseCase {
    * @param command - The command to send.
    * @returns The response from the command.
    */
-  async execute<Response, ErrorStatusCodes, Args = void>({
+  async execute<Response, Args, ErrorStatusCodes>({
     sessionId,
     command,
-  }: SendCommandUseCaseArgs<Response, ErrorStatusCodes, Args>): Promise<
+  }: SendCommandUseCaseArgs<Response, Args, ErrorStatusCodes>): Promise<
     CommandResult<Response, ErrorStatusCodes>
   > {
     const deviceSessionOrError =
@@ -54,7 +54,7 @@ export class SendCommandUseCase {
     return deviceSessionOrError.caseOf({
       // Case device session found
       Right: async (deviceSession) =>
-        await deviceSession.sendCommand<Response, ErrorStatusCodes, Args>(
+        await deviceSession.sendCommand<Response, Args, ErrorStatusCodes>(
           command,
         ),
       // Case device session not found
