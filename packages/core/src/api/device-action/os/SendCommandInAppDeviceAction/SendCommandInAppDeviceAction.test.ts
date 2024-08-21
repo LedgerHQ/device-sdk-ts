@@ -3,10 +3,7 @@ import { assign, createMachine } from "xstate";
 
 import { Apdu } from "@api/apdu/model/Apdu";
 import { ApduBuilder } from "@api/apdu/utils/ApduBuilder";
-import {
-  CommandResult,
-  CommandResultFactory,
-} from "@api/command/model/CommandResult";
+import { CommandResultFactory } from "@api/command/model/CommandResult";
 import { makeDeviceActionInternalApiMock } from "@api/device-action/__test-utils__/makeInternalApi";
 import { testDeviceActionStates } from "@api/device-action/__test-utils__/testDeviceActionStates";
 import {
@@ -77,13 +74,10 @@ describe("SendCommandInAppDeviceAction", () => {
     paramString: "aParameter",
     paramNumber: 1234,
   };
-  const mockedCommandResponse = CommandResultFactory({
-    data: {
-      aNumber: 5678,
-      aString: "mockedResponseString",
-    },
-  });
-
+  const mockedCommandResponse = {
+    aNumber: 5678,
+    aString: "mockedResponseString",
+  };
   beforeEach(() => {
     jest.resetAllMocks();
   });
@@ -91,6 +85,9 @@ describe("SendCommandInAppDeviceAction", () => {
   describe("without mocking extractDependencies", () => {
     it("should call sendCommand on internalApi with the correct parameters", async () => {
       setupOpenAppDAMock();
+      apiSendCommandMock.mockResolvedValue(
+        CommandResultFactory({ data: undefined }),
+      );
 
       const deviceAction = new SendCommandInAppDeviceAction({
         input: {
@@ -155,7 +152,9 @@ describe("SendCommandInAppDeviceAction", () => {
     it("should error and output an error if the send command fails", (done) => {
       setupOpenAppDAMock();
 
-      sendMyCommand.mockRejectedValue(new Error("Mocked error"));
+      sendMyCommand.mockResolvedValue(
+        CommandResultFactory({ error: new UnknownDAError("Mocked error") }),
+      );
 
       const deviceAction = new SendCommandInAppDeviceAction({
         input: {
@@ -190,7 +189,7 @@ describe("SendCommandInAppDeviceAction", () => {
         },
         {
           status: DeviceActionStatus.Error,
-          error: new UnknownDAError("Error while sending the custom command"),
+          error: new UnknownDAError("Mocked error"),
         },
       ];
 
@@ -207,7 +206,9 @@ describe("SendCommandInAppDeviceAction", () => {
     it("should succeed and output the command result if the send command succeeds", (done) => {
       setupOpenAppDAMock();
 
-      sendMyCommand.mockResolvedValue(mockedCommandResponse);
+      sendMyCommand.mockResolvedValue(
+        CommandResultFactory({ data: mockedCommandResponse }),
+      );
 
       const deviceAction = new SendCommandInAppDeviceAction({
         input: {
@@ -266,7 +267,7 @@ type MyCommandParams = {
   paramNumber: number;
 };
 
-class TestCommand implements Command<MyCommandResponse, void, MyCommandParams> {
+class TestCommand implements Command<MyCommandResponse, MyCommandParams> {
   params: MyCommandParams;
   constructor(params: MyCommandParams) {
     this.params = params;
@@ -283,7 +284,7 @@ class TestCommand implements Command<MyCommandResponse, void, MyCommandParams> {
 }
 
 type MyCommandSendCommandDAState = DeviceActionState<
-  SendCommandInAppDAOutput<CommandResult<MyCommandResponse>>,
+  SendCommandInAppDAOutput<MyCommandResponse>,
   SendCommandInAppDAError<UnknownDAError>,
   SendCommandInAppDAIntermediateValue<
     UserInteractionRequired.None | UserInteractionRequired.VerifyAddress

@@ -1,14 +1,16 @@
 import { Left, Right } from "purify-ts";
 import { assign, fromPromise, setup } from "xstate";
 
-import { CommandResult } from "@api/command/model/CommandResult";
+import {
+  CommandResult,
+  isSuccessCommandResult,
+} from "@api/command/model/CommandResult";
 import { InternalApi } from "@api/device-action/DeviceAction";
 import { UserInteractionRequired } from "@api/device-action/model/UserInteractionRequired";
 import { UnknownDAError } from "@api/device-action/os/Errors";
 import { OpenAppDeviceAction } from "@api/device-action/os/OpenAppDeviceAction/OpenAppDeviceAction";
 import { StateMachineTypes } from "@api/device-action/xstate-utils/StateMachineTypes";
 import { XStateDeviceAction } from "@api/device-action/xstate-utils/XStateDeviceAction";
-import { SdkError } from "@api/Error";
 import { Command } from "@api/types";
 
 import {
@@ -46,45 +48,34 @@ import {
  * ```
  */
 export class SendCommandInAppDeviceAction<
-  CommandArgs,
   CommandResponse,
-  CommandError extends SdkError,
-  UserInteraction extends UserInteractionRequired,
+  CommandArgs,
   CommandErrorCodes,
+  UserInteraction extends UserInteractionRequired,
 > extends XStateDeviceAction<
-  SendCommandInAppDAOutput<CommandResult<CommandResponse, CommandErrorCodes>>,
+  SendCommandInAppDAOutput<CommandResponse>,
   SendCommandInAppDAInput<
     CommandResponse,
     CommandArgs,
-    UserInteraction,
-    CommandErrorCodes
-  >,
-  SendCommandInAppDAError<CommandError>,
-  SendCommandInAppDAIntermediateValue<UserInteraction>,
-  SendCommandInAppDAInternalState<
-    CommandResponse,
     CommandErrorCodes,
-    CommandError
-  >
+    UserInteraction
+  >,
+  SendCommandInAppDAError<CommandErrorCodes>,
+  SendCommandInAppDAIntermediateValue<UserInteraction>,
+  SendCommandInAppDAInternalState<CommandResponse, CommandErrorCodes>
 > {
   makeStateMachine(internalAPI: InternalApi) {
     type types = StateMachineTypes<
-      SendCommandInAppDAOutput<
-        CommandResult<CommandResponse, CommandErrorCodes>
-      >,
+      SendCommandInAppDAOutput<CommandResponse>,
       SendCommandInAppDAInput<
         CommandResponse,
         CommandArgs,
-        UserInteraction,
-        CommandErrorCodes
-      >,
-      SendCommandInAppDAError<CommandError>,
-      SendCommandInAppDAIntermediateValue<UserInteraction>,
-      SendCommandInAppDAInternalState<
-        CommandResponse,
         CommandErrorCodes,
-        CommandError
-      >
+        UserInteraction
+      >,
+      SendCommandInAppDAError<CommandErrorCodes>,
+      SendCommandInAppDAIntermediateValue<UserInteraction>,
+      SendCommandInAppDAInternalState<CommandResponse, CommandErrorCodes>
     >;
 
     const { sendCommand } = this.extractDependencies(internalAPI);
@@ -138,8 +129,7 @@ export class SendCommandInAppDeviceAction<
                   return _.event.output.caseOf<
                     SendCommandInAppDAInternalState<
                       CommandResponse,
-                      CommandErrorCodes,
-                      CommandError
+                      CommandErrorCodes
                     >
                   >({
                     Right: () => _.context._internalState,
@@ -179,14 +169,21 @@ export class SendCommandInAppDeviceAction<
             src: "sendCommand",
             input: ({ context }) => context.input.command,
             onDone: {
-              target: "Success",
+              target: "SendCommandResultCheck",
               actions: [
-                // TODO: when we have proper error handling, we should handle the error here
                 assign({
-                  _internalState: ({ event, context }) => ({
-                    ...context._internalState,
-                    commandResponse: event.output,
-                  }),
+                  _internalState: ({ event, context }) => {
+                    if (isSuccessCommandResult(event.output)) {
+                      return {
+                        ...context._internalState,
+                        commandResponse: event.output.data,
+                      };
+                    }
+                    return {
+                      ...context._internalState,
+                      error: event.output.error,
+                    };
+                  },
                 }),
               ],
             },
@@ -204,6 +201,15 @@ export class SendCommandInAppDeviceAction<
               ],
             },
           },
+        },
+        SendCommandResultCheck: {
+          always: [
+            {
+              target: "Success",
+              guard: "noInternalError",
+            },
+            "Error",
+          ],
         },
         Success: {
           type: "final",
@@ -225,7 +231,7 @@ export class SendCommandInAppDeviceAction<
   extractDependencies(internalApi: InternalApi) {
     return {
       sendCommand: (_: {
-        input: Command<CommandResponse, CommandErrorCodes, CommandArgs>;
+        input: Command<CommandResponse, CommandArgs, CommandErrorCodes>;
       }): Promise<CommandResult<CommandResponse, CommandErrorCodes>> =>
         internalApi.sendCommand(_.input),
     };
