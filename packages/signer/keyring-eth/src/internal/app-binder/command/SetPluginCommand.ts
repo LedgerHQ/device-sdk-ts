@@ -37,7 +37,7 @@ export class SetPluginCommandError extends DeviceExchangeError<SetPluginCommandE
 }
 
 export class SetPluginCommand
-  implements Command<void, SetPluginCommandErrorCodes, SetPluginCommandArgs>
+  implements Command<void, SetPluginCommandArgs, SetPluginCommandErrorCodes>
 {
   constructor(private args: SetPluginCommandArgs) {}
 
