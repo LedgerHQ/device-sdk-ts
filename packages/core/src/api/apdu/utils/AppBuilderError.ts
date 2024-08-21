@@ -6,15 +6,6 @@ interface SdkAppBuilderError extends SdkError {
   readonly message: string;
 }
 
-export class InvalidValueError implements SdkAppBuilderError {
-  readonly _tag = "InvalidValue";
-  readonly originalError?: Error;
-  readonly message: string;
-  constructor(valueType: string, value?: string) {
-    this.message = `Invalid value for ${valueType}: ${value}`;
-  }
-}
-
 export class ValueOverflowError implements SdkAppBuilderError {
   readonly _tag = "ValueOverflow";
   readonly originalError?: Error;
@@ -49,7 +40,6 @@ export class HexaStringEncodeError implements SdkAppBuilderError {
  * Type for all possible errors that can be thrown by the AppBuilder.
  */
 export type AppBuilderError =
-  | InvalidValueError
   | ValueOverflowError
   | DataOverflowError
   | HexaStringEncodeError;

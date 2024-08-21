@@ -59,9 +59,20 @@ describe("HexaString", () => {
   });
 
   describe("hexaStringToBuffer function", () => {
-    it("should fail on empty input", () => {
+    it("should convert empty input to empty buffer", () => {
       // GIVEN
       const value = "";
+
+      // WHEN
+      const result = hexaStringToBuffer(value);
+
+      // THEN
+      expect(result).toStrictEqual(new Uint8Array());
+    });
+
+    it("should fail on invalid string", () => {
+      // GIVEN
+      const value = "bonjour";
 
       // WHEN
       const result = hexaStringToBuffer(value);
@@ -70,9 +81,9 @@ describe("HexaString", () => {
       expect(result).toStrictEqual(null);
     });
 
-    it("should fail on invalid string", () => {
+    it("should fail on invalid string with valid numbers", () => {
       // GIVEN
-      const value = "bonjour";
+      const value = "0x012n34";
 
       // WHEN
       const result = hexaStringToBuffer(value);
