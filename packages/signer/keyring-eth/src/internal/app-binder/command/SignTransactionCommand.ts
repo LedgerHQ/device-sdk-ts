@@ -15,10 +15,6 @@ import {
 } from "@ledgerhq/device-sdk-core";
 import { Just, Maybe, Nothing } from "purify-ts";
 
-import { DerivationPathUtils } from "@internal/shared/utils/DerivationPathUtils";
-
-const MAX_CHUNK_SIZE = 150;
-const PATH_SIZE = 4;
 const R_LENGTH = 32;
 const S_LENGTH = 32;
 
@@ -30,19 +26,13 @@ export type SignTransactionCommandResponse = Maybe<{
 
 export type SignTransactionCommandArgs = {
   /**
-   * The derivation path to use to sign the transaction.
+   * The transaction to sign in max 150 bytes chunks
    */
-  derivationPath: string;
-
+  readonly transaction: Uint8Array;
   /**
-   * The complete serialized transaction data.
+   * If this is the first chunk of the message
    */
-  data: Uint8Array;
-
-  /**
-   * The index of the chunk to sign.
-   */
-  index: number;
+  readonly isFirstChunk: boolean;
 };
 
 export class SignTransactionCommand
@@ -56,38 +46,16 @@ export class SignTransactionCommand
   }
 
   getApdu(): Apdu {
-    const { data, derivationPath, index } = this.args;
+    const { transaction, isFirstChunk } = this.args;
 
     const signEthTransactionArgs: ApduBuilderArgs = {
       cla: 0xe0,
       ins: 0x04,
-      p1: index === 0 ? 0x00 : 0x80,
+      p1: isFirstChunk ? 0x00 : 0x80,
       p2: 0x00,
     };
     const builder = new ApduBuilder(signEthTransactionArgs);
-    const path = DerivationPathUtils.splitPath(derivationPath);
-    const dataFirstChunkIndex = MAX_CHUNK_SIZE - path.length * PATH_SIZE - 1;
-
-    if (index === 0) {
-      // add derivation path to the first packet
-      builder.add8BitUIntToData(path.length);
-      path.forEach((element) => {
-        builder.add32BitUIntToData(element);
-      });
-
-      // add 150 bytes of data minus the path length and the path
-      builder.addBufferToData(data.slice(0, dataFirstChunkIndex));
-    } else {
-      // add 150 bytes of data starting from the second packet
-      builder.addBufferToData(
-        data.slice(
-          dataFirstChunkIndex + (index - 1) * MAX_CHUNK_SIZE,
-          dataFirstChunkIndex + index * MAX_CHUNK_SIZE,
-        ),
-      );
-    }
-
-    return builder.build();
+    return builder.addBufferToData(transaction).build();
   }
 
   parseResponse(
