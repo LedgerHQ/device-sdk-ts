@@ -4,7 +4,10 @@ import { inject, injectable } from "inversify";
 import type { NftDataSource } from "@/nft/data/NftDataSource";
 import { nftTypes } from "@/nft/di/nftTypes";
 import { ContextLoader } from "@/shared/domain/ContextLoader";
-import { ClearSignContext } from "@/shared/model/ClearSignContext";
+import {
+  ClearSignContext,
+  ClearSignContextType,
+} from "@/shared/model/ClearSignContext";
 import { TransactionContext } from "@/shared/model/TransactionContext";
 
 enum ERC721_SUPPORTED_SELECTOR {
@@ -44,7 +47,12 @@ export class NftContextLoader implements ContextLoader {
     const selector = transaction.data.slice(0, 10);
 
     if (!isHexaString(selector)) {
-      return [{ type: "error", error: new Error("Invalid selector") }];
+      return [
+        {
+          type: ClearSignContextType.ERROR,
+          error: new Error("Invalid selector"),
+        },
+      ];
     }
 
     if (!this.isSelectorSupported(selector)) {
@@ -63,13 +71,16 @@ export class NftContextLoader implements ContextLoader {
 
     const pluginPayload = getPluginPayloadResponse.caseOf({
       Left: (error): ClearSignContext => ({
-        type: "error",
+        type: ClearSignContextType.ERROR,
         error,
       }),
-      Right: (value): ClearSignContext => ({ type: "plugin", payload: value }),
+      Right: (value): ClearSignContext => ({
+        type: ClearSignContextType.PLUGIN,
+        payload: value,
+      }),
     });
 
-    if (pluginPayload.type === "error") {
+    if (pluginPayload.type === ClearSignContextType.ERROR) {
       return [pluginPayload];
     }
 
@@ -83,13 +94,16 @@ export class NftContextLoader implements ContextLoader {
 
     const nftInfosPayload = getNftInfosPayloadResponse.caseOf({
       Left: (error): ClearSignContext => ({
-        type: "error",
+        type: ClearSignContextType.ERROR,
         error,
       }),
-      Right: (value): ClearSignContext => ({ type: "nft", payload: value }),
+      Right: (value): ClearSignContext => ({
+        type: ClearSignContextType.NFT,
+        payload: value,
+      }),
     });
 
-    if (nftInfosPayload.type === "error") {
+    if (nftInfosPayload.type === ClearSignContextType.ERROR) {
       return [nftInfosPayload];
     }
 

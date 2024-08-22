@@ -30,7 +30,7 @@ describe("SetPluginCommand", () => {
     it("returns the correct APDU", () => {
       // GIVEN
       const args: SetPluginCommandArgs = {
-        data: SET_PLUGIN_COMMAND_PAYLOAD,
+        payload: SET_PLUGIN_COMMAND_PAYLOAD,
       };
       // WHEN
       const command = new SetPluginCommand(args);
@@ -52,7 +52,7 @@ describe("SetPluginCommand", () => {
           data: Uint8Array.from([]),
           statusCode: apduResponseCode,
         });
-        const command = new SetPluginCommand({ data: "" });
+        const command = new SetPluginCommand({ payload: "" });
         // WHEN
         const result = command.parseResponse(response);
         // THEN
@@ -71,7 +71,7 @@ describe("SetPluginCommand", () => {
         statusCode: Buffer.from([0x90, 0x00]), // Success status code
       };
       // WHEN
-      const command = new SetPluginCommand({ data: "" });
+      const command = new SetPluginCommand({ payload: "" });
       const result = command.parseResponse(response);
       // THEN
       expect(isSuccessCommandResult(result)).toBe(true);

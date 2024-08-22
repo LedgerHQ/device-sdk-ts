@@ -1,9 +1,8 @@
 // https://github.com/LedgerHQ/app-ethereum/blob/develop/doc/ethapp.adoc#set-external-plugin
-
 import {
   Apdu,
   ApduBuilder,
-  ApduBuilderArgs,
+  type ApduBuilderArgs,
   ApduParser,
   ApduResponse,
   Command,
@@ -18,8 +17,8 @@ import {
 } from "@ledgerhq/device-sdk-core";
 
 type SetExternalPluginCommandArgs = {
-  payload: Uint8Array;
-  signature: Uint8Array;
+  payload: string;
+  signature?: string;
 };
 
 type SetExternalPluginCommandErrorCodes = "6a80" | "6984" | "6d00";
@@ -51,18 +50,21 @@ export class SetExternalPluginCommand
   constructor(private readonly args: SetExternalPluginCommandArgs) {}
 
   getApdu(): Apdu {
-    const { payload, signature } = this.args;
     const setExternalPluginBuilderArgs: ApduBuilderArgs = {
       cla: 0xe0,
       ins: 0x12,
       p1: 0x00,
       p2: 0x00,
     };
-    const builder = new ApduBuilder(setExternalPluginBuilderArgs);
-    builder.addBufferToData(payload);
-    builder.addBufferToData(signature);
-
-    return builder.build();
+    return (
+      new ApduBuilder(setExternalPluginBuilderArgs)
+        .addHexaStringToData(this.args.payload)
+        /**
+         * The signature is normally integrated in the payload, but keeping this step for safety reasons and will be removed in the future.
+         */
+        .addHexaStringToData(this.args.signature ?? "")
+        .build()
+    );
   }
 
   parseResponse(

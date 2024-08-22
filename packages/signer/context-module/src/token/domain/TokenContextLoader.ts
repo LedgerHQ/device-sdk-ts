@@ -2,7 +2,10 @@ import { HexaString, isHexaString } from "@ledgerhq/device-sdk-core";
 import { inject, injectable } from "inversify";
 
 import { ContextLoader } from "@/shared/domain/ContextLoader";
-import { ClearSignContext } from "@/shared/model/ClearSignContext";
+import {
+  ClearSignContext,
+  ClearSignContextType,
+} from "@/shared/model/ClearSignContext";
 import { TransactionContext } from "@/shared/model/TransactionContext";
 import type { TokenDataSource } from "@/token/data/TokenDataSource";
 import { tokenTypes } from "@/token/di/tokenTypes";
@@ -32,7 +35,12 @@ export class TokenContextLoader implements ContextLoader {
     const selector = transaction.data.slice(0, 10);
 
     if (!isHexaString(selector)) {
-      return [{ type: "error", error: new Error("Invalid selector") }];
+      return [
+        {
+          type: ClearSignContextType.ERROR,
+          error: new Error("Invalid selector"),
+        },
+      ];
     }
 
     if (!this.isSelectorSupported(selector)) {
@@ -47,10 +55,13 @@ export class TokenContextLoader implements ContextLoader {
     return [
       payload.caseOf({
         Left: (error): ClearSignContext => ({
-          type: "error",
+          type: ClearSignContextType.ERROR,
           error,
         }),
-        Right: (value): ClearSignContext => ({ type: "token", payload: value }),
+        Right: (value): ClearSignContext => ({
+          type: ClearSignContextType.TOKEN,
+          payload: value,
+        }),
       }),
     ];
   }

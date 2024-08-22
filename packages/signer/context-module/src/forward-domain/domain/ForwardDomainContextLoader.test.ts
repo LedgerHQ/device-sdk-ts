@@ -2,6 +2,7 @@ import { Left, Right } from "purify-ts";
 
 import { ForwardDomainDataSource } from "@/forward-domain/data/ForwardDomainDataSource";
 import { ForwardDomainContextLoader } from "@/forward-domain/domain/ForwardDomainContextLoader";
+import { ClearSignContextType } from "@/shared/model/ClearSignContext";
 import { TransactionContext } from "@/shared/model/TransactionContext";
 
 describe("ForwardDomainContextLoader", () => {
@@ -39,7 +40,7 @@ describe("ForwardDomainContextLoader", () => {
 
       expect(result).toEqual([
         {
-          type: "error",
+          type: ClearSignContextType.ERROR,
           error: new Error(
             "[ContextModule] ForwardDomainLoader: invalid domain",
           ),
@@ -59,7 +60,7 @@ describe("ForwardDomainContextLoader", () => {
 
       expect(result).toEqual([
         {
-          type: "error",
+          type: ClearSignContextType.ERROR,
           error: new Error(
             "[ContextModule] ForwardDomainLoader: invalid domain",
           ),
@@ -80,7 +81,7 @@ describe("ForwardDomainContextLoader", () => {
 
       expect(result).toEqual([
         {
-          type: "domainName",
+          type: ClearSignContextType.DOMAIN_NAME,
           payload: "payload",
         },
       ]);
@@ -103,7 +104,9 @@ describe("ForwardDomainContextLoader", () => {
       const result = await loader.load(transaction);
 
       // THEN
-      expect(result).toEqual([{ type: "error", error: new Error("error") }]);
+      expect(result).toEqual([
+        { type: ClearSignContextType.ERROR, error: new Error("error") },
+      ]);
     });
   });
 });

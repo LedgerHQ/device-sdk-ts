@@ -17,8 +17,8 @@ describe("ProvideDomainNameCommand", () => {
     it("should return the raw APDU", () => {
       // GIVEN
       const args: ProvideDomainNameCommandArgs = {
-        data: "00064C6564676572",
-        index: 0,
+        data: FIRST_CHUNK_APDU.slice(5),
+        isFirstChunk: true,
       };
       // WHEN
       const command = new ProvideDomainNameCommand(args);
@@ -36,7 +36,10 @@ describe("ProvideDomainNameCommand", () => {
         statusCode: Buffer.from([0x6a, 0x80]), // Invalid status code
       };
       // WHEN
-      const command = new ProvideDomainNameCommand({ data: "", index: 0 });
+      const command = new ProvideDomainNameCommand({
+        data: Uint8Array.from([]),
+        isFirstChunk: true,
+      });
       const result = command.parseResponse(response);
       // THEN
       expect(isSuccessCommandResult(result)).toBe(false);
@@ -49,8 +52,12 @@ describe("ProvideDomainNameCommand", () => {
         statusCode: Buffer.from([0x90, 0x00]), // Success status code
       };
       // WHEN
-      const command = new ProvideDomainNameCommand({ data: "", index: 0 });
+      const command = new ProvideDomainNameCommand({
+        data: Uint8Array.from([]),
+        isFirstChunk: true,
+      });
       const result = command.parseResponse(response);
+      // THEN
       expect(isSuccessCommandResult(result)).toBe(true);
     });
   });

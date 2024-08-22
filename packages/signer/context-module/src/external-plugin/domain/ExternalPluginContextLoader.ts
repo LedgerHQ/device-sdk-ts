@@ -6,7 +6,10 @@ import { Either, EitherAsync, Left, Right } from "purify-ts";
 import type { ExternalPluginDataSource } from "@/external-plugin/data/ExternalPluginDataSource";
 import { externalPluginTypes } from "@/external-plugin/di/externalPluginTypes";
 import { ContextLoader } from "@/shared/domain/ContextLoader";
-import { ClearSignContext } from "@/shared/model/ClearSignContext";
+import {
+  ClearSignContext,
+  ClearSignContextType,
+} from "@/shared/model/ClearSignContext";
 import { TransactionContext } from "@/shared/model/TransactionContext";
 import type { TokenDataSource } from "@/token/data/TokenDataSource";
 import { tokenTypes } from "@/token/di/tokenTypes";
@@ -25,7 +28,7 @@ export class ExternalPluginContextLoader implements ContextLoader {
     this._tokenDataSource = tokenDataSource;
   }
 
-  async load(transaction: TransactionContext) {
+  async load(transaction: TransactionContext): Promise<ClearSignContext[]> {
     if (!transaction.to || !transaction.data || transaction.data === "0x") {
       return [];
     }
@@ -33,7 +36,12 @@ export class ExternalPluginContextLoader implements ContextLoader {
     const selector = transaction.data.slice(0, 10);
 
     if (!isHexaString(selector)) {
-      return [{ type: "error" as const, error: new Error("Invalid selector") }];
+      return [
+        {
+          type: ClearSignContextType.ERROR,
+          error: new Error("Invalid selector"),
+        },
+      ];
     }
 
     const eitherDappInfos = await this._externalPluginDataSource.getDappInfos({
@@ -52,7 +60,7 @@ export class ExternalPluginContextLoader implements ContextLoader {
       }
 
       const externalPluginContext: ClearSignContext = {
-        type: "externalPlugin",
+        type: ClearSignContextType.EXTERNAL_PLUGIN,
         payload: dappInfos.selectorDetails.serializedData.concat(
           dappInfos.selectorDetails.signature,
         ),
@@ -68,7 +76,10 @@ export class ExternalPluginContextLoader implements ContextLoader {
       // but also the externalPluginContext because it is still valid
       if (decodedCallData.isLeft()) {
         return [
-          { type: "error", error: decodedCallData.extract() },
+          {
+            type: ClearSignContextType.ERROR,
+            error: decodedCallData.extract(),
+          },
           externalPluginContext,
         ];
       }
@@ -93,15 +104,15 @@ export class ExternalPluginContextLoader implements ContextLoader {
       // map the payload or the error to a ClearSignContext
       const contexts: ClearSignContext[] = tokensPayload.map((eitherToken) =>
         eitherToken.caseOf<ClearSignContext>({
-          Left: (error) => ({ type: "error", error }),
-          Right: (payload) => ({ type: "token", payload }),
+          Left: (error) => ({ type: ClearSignContextType.ERROR, error }),
+          Right: (payload) => ({ type: ClearSignContextType.TOKEN, payload }),
         }),
       );
 
       return [...contexts, externalPluginContext];
     }).caseOf<ClearSignContext[]>({
       // parse all errors into ClearSignContext
-      Left: (error) => [{ type: "error", error }],
+      Left: (error) => [{ type: ClearSignContextType.ERROR, error }],
       Right: (contexts) => contexts,
     });
   }

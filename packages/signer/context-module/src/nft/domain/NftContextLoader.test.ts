@@ -2,6 +2,7 @@ import { Left, Right } from "purify-ts";
 
 import { NftDataSource } from "@/nft/data/NftDataSource";
 import { NftContextLoader } from "@/nft/domain/NftContextLoader";
+import { ClearSignContextType } from "@/shared/model/ClearSignContext";
 import { TransactionContext } from "@/shared/model/TransactionContext";
 
 describe("NftContextLoader", () => {
@@ -71,7 +72,7 @@ describe("NftContextLoader", () => {
 
       expect(result).toEqual([
         {
-          type: "error",
+          type: ClearSignContextType.ERROR,
           error: new Error("Invalid selector"),
         },
       ]);
@@ -88,7 +89,7 @@ describe("NftContextLoader", () => {
 
       expect(result).toEqual([
         {
-          type: "error",
+          type: ClearSignContextType.ERROR,
           error: new Error("error"),
         },
       ]);
@@ -106,7 +107,7 @@ describe("NftContextLoader", () => {
 
       expect(result).toEqual([
         {
-          type: "error",
+          type: ClearSignContextType.ERROR,
           error: new Error("error"),
         },
       ]);
@@ -124,11 +125,11 @@ describe("NftContextLoader", () => {
 
       expect(result).toEqual([
         {
-          type: "plugin",
+          type: ClearSignContextType.PLUGIN,
           payload: "payload1",
         },
         {
-          type: "nft",
+          type: ClearSignContextType.NFT,
           payload: "payload2",
         },
       ]);

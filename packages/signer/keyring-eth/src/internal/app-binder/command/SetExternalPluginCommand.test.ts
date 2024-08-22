@@ -44,8 +44,12 @@ describe("Set External plugin", () => {
     it("should retrieve correct apdu", () => {
       // given
       const command = new SetExternalPluginCommand({
-        payload: Uint8Array.from(SET_EXTERNAL_PLUGIN_PAYLOAD),
-        signature: Uint8Array.from(SET_EXTERNAL_PLUGIN_SIGNATURE),
+        payload: SET_EXTERNAL_PLUGIN_PAYLOAD.map((x) =>
+          x.toString(16).padStart(2, "0"),
+        ).join(""),
+        signature: SET_EXTERNAL_PLUGIN_SIGNATURE.map((x) =>
+          x.toString(16).padStart(2, "0"),
+        ).join(""),
       });
       // when
       const apdu = command.getApdu();
@@ -86,8 +90,8 @@ describe("Set External plugin", () => {
     it("should return a global error", () => {
       // given
       const command = new SetExternalPluginCommand({
-        payload: Uint8Array.from([]),
-        signature: Uint8Array.from([]),
+        payload: "",
+        signature: "",
       });
       // when
       const apduResponse = new ApduResponse({
@@ -105,8 +109,8 @@ describe("Set External plugin", () => {
     it("should return void if status is success", () => {
       // given
       const command = new SetExternalPluginCommand({
-        payload: Uint8Array.from([]),
-        signature: Uint8Array.from([]),
+        payload: "",
+        signature: "",
       });
       // when
       const apduResponse = new ApduResponse({

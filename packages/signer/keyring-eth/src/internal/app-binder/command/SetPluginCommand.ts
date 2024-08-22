@@ -27,7 +27,7 @@ export type SetPluginCommandArgs = {
   /**
    * The stringified hexa representation of the plugin signature.
    */
-  data: string;
+  payload: string;
 };
 
 export class SetPluginCommandError extends DeviceExchangeError<SetPluginCommandErrorCodes> {
@@ -39,7 +39,7 @@ export class SetPluginCommandError extends DeviceExchangeError<SetPluginCommandE
 export class SetPluginCommand
   implements Command<void, SetPluginCommandArgs, SetPluginCommandErrorCodes>
 {
-  constructor(private args: SetPluginCommandArgs) {}
+  constructor(private readonly args: SetPluginCommandArgs) {}
 
   getApdu(): Apdu {
     const apduBuilderArgs: ApduBuilderArgs = {
@@ -48,9 +48,8 @@ export class SetPluginCommand
       p1: 0x00,
       p2: 0x00,
     };
-
     return new ApduBuilder(apduBuilderArgs)
-      .addHexaStringToData(this.args.data)
+      .addHexaStringToData(this.args.payload)
       .build();
   }
 

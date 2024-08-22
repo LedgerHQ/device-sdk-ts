@@ -31,7 +31,7 @@ export type SendEIP712StructImplemCommandArgs =
       value: {
         /**
          * The chunk of the data that is ready to send, that is to say, prefixed by its length in two bytes.
-         * Eg. 01020304 => [0x00, 0x04, 0x01, 0x02, 0x03, 0x04] where 0x00, 0x04 are the length of the data.
+         * Eg. 01020304 => [0x00, 0x04, 0x01, 0x02, 0x03, 0x04] where [0x00, 0x04] are the length of the data.
          */
         data: Uint8Array;
         isLastChunk: boolean;

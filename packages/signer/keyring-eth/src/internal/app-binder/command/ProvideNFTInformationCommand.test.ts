@@ -29,7 +29,7 @@ describe("ProvideNFTInformationCommand", () => {
     it("should return the raw APDU", () => {
       // GIVEN
       const args: ProvideNFTInformationCommandArgs = {
-        data: NFT_INFORMATION_PAYLOAD,
+        payload: NFT_INFORMATION_PAYLOAD,
       };
       // WHEN
       const command = new ProvideNFTInformationCommand(args);
@@ -47,7 +47,7 @@ describe("ProvideNFTInformationCommand", () => {
         statusCode: Buffer.from([0x6d, 0x00]), // Invalid status code
       };
       // WHEN
-      const command = new ProvideNFTInformationCommand({ data: "" });
+      const command = new ProvideNFTInformationCommand({ payload: "" });
       const result = command.parseResponse(response);
       // THEN
       expect(isSuccessCommandResult(result)).toBe(false);
@@ -60,7 +60,7 @@ describe("ProvideNFTInformationCommand", () => {
         statusCode: Buffer.from([0x90, 0x00]), // Success status code
       };
       // WHEN
-      const command = new ProvideNFTInformationCommand({ data: "" });
+      const command = new ProvideNFTInformationCommand({ payload: "" });
       const result = command.parseResponse(response);
       // THEN
       expect(isSuccessCommandResult(result)).toBe(true);
