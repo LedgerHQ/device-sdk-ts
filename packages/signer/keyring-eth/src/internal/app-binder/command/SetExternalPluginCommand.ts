@@ -41,7 +41,12 @@ export class SetExternalPluginCommandError extends DeviceExchangeError<SetExtern
 }
 
 export class SetExternalPluginCommand
-  implements Command<void, SetExternalPluginCommandArgs>
+  implements
+    Command<
+      void,
+      SetExternalPluginCommandArgs,
+      SetExternalPluginCommandErrorCodes
+    >
 {
   constructor(private readonly args: SetExternalPluginCommandArgs) {}
 
@@ -60,7 +65,9 @@ export class SetExternalPluginCommand
     return builder.build();
   }
 
-  parseResponse(apduResponse: ApduResponse): CommandResult<void> {
+  parseResponse(
+    apduResponse: ApduResponse,
+  ): CommandResult<void, SetExternalPluginCommandErrorCodes> {
     if (CommandUtils.isSuccessResponse(apduResponse)) {
       return CommandResultFactory({ data: undefined });
     }

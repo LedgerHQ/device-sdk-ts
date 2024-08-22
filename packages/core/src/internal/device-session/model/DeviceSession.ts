@@ -116,8 +116,8 @@ export class DeviceSession {
     });
   }
 
-  async sendCommand<Response, ErrorStatusCodes, Args>(
-    command: Command<Response, ErrorStatusCodes, Args>,
+  async sendCommand<Response, Args, ErrorStatusCodes>(
+    command: Command<Response, Args, ErrorStatusCodes>,
   ): Promise<CommandResult<Response, ErrorStatusCodes>> {
     const apdu = command.getApdu();
     const response = await this.sendApdu(apdu.getRawApdu(), {

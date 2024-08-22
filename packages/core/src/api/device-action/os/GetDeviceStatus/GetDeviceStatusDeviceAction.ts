@@ -11,7 +11,10 @@ import {
 } from "xstate";
 
 import { isSuccessCommandResult } from "@api/command/model/CommandResult";
-import { GetAppAndVersionCommand } from "@api/command/os/GetAppAndVersionCommand";
+import {
+  GetAppAndVersionCommand,
+  GetAppAndVersionCommandResult,
+} from "@api/command/os/GetAppAndVersionCommand";
 import { DeviceStatus } from "@api/device/DeviceStatus";
 import { InternalApi } from "@api/device-action/DeviceAction";
 import { UserInteractionRequired } from "@api/device-action/model/UserInteractionRequired";
@@ -44,7 +47,7 @@ type GetDeviceStatusMachineInternalState = {
 };
 
 export type MachineDependencies = {
-  readonly getAppAndVersion: () => Promise<{ app: string; version: string }>;
+  readonly getAppAndVersion: () => Promise<GetAppAndVersionCommandResult>;
   readonly getDeviceSessionState: () => DeviceSessionState;
   readonly waitForDeviceUnlock: (args: {
     input: { unlockTimeout: number };
@@ -124,6 +127,7 @@ export class GetDeviceStatusDeviceAction extends XStateDeviceAction<
         isDeviceOnboarded: () => isDeviceOnboarded(), // TODO: we don't have this info for now, this can be derived from the "flags" obtained in the getVersion command
         isDeviceUnlocked: () =>
           getDeviceSessionState().deviceStatus !== DeviceStatus.LOCKED,
+        hasError: ({ context }) => context._internalState.error !== null,
       },
       actions: {
         assignErrorDeviceNotOnboarded: assign({
@@ -266,25 +270,35 @@ export class GetDeviceStatusDeviceAction extends XStateDeviceAction<
           invoke: {
             src: "getAppAndVersion",
             onDone: {
-              target: "SaveAppState",
+              target: "ApplicationAvailableResultCheck",
               actions: assign({
-                _internalState: (_) => ({
-                  ..._.context._internalState,
-                  currentApp: _.event.output.app,
-                  currentAppVersion: _.event.output.version,
-                }),
-              }),
-            },
-            onError: {
-              target: "Error",
-              actions: assign({
-                _internalState: (_) => ({
-                  ..._.context._internalState,
-                  error: new UnknownDAError("GetAppAndVersionError"),
-                }),
+                _internalState: (_) => {
+                  if (isSuccessCommandResult(_.event.output)) {
+                    return {
+                      ..._.context._internalState,
+                      currentApp: _.event.output.data.name,
+                      currentAppVersion: _.event.output.data.version,
+                    };
+                  }
+                  return {
+                    ..._.context._internalState,
+                    error: _.event.output.error,
+                  };
+                },
               }),
             },
           },
+        },
+        ApplicationAvailableResultCheck: {
+          always: [
+            {
+              guard: "hasError",
+              target: "Error",
+            },
+            {
+              target: "SaveAppState",
+            },
+          ],
         },
         SaveAppState: {
           // We save the current app and version in the session state
@@ -329,17 +343,7 @@ export class GetDeviceStatusDeviceAction extends XStateDeviceAction<
 
   extractDependencies(internalApi: InternalApi): MachineDependencies {
     const getAppAndVersion = () => {
-      return internalApi
-        .sendCommand(new GetAppAndVersionCommand())
-        .then((res) => {
-          if (isSuccessCommandResult(res)) {
-            return {
-              app: res.data.name,
-              version: res.data.version,
-            };
-          }
-          throw res.error;
-        });
+      return internalApi.sendCommand(new GetAppAndVersionCommand());
     };
 
     const waitForDeviceUnlock = ({

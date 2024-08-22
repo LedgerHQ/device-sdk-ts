@@ -1,5 +1,12 @@
+import {
+  InvalidBatteryDataError,
+  InvalidBatteryStatusTypeError,
+  InvalidResponseFormatError,
+  InvalidStatusWordError,
+} from "@api/command/Errors";
 import { GlobalCommandErrorStatusCode } from "@api/command/utils/GlobalCommandError";
-import { DeviceExchangeError, SdkError } from "@api/Error";
+import { UnknownDAError } from "@api/device-action/os/Errors";
+import { DeviceExchangeError, UnknownDeviceExchangeError } from "@api/Error";
 
 export enum CommandResultStatus {
   Error = "ERROR",
@@ -12,14 +19,19 @@ type CommandSuccessResult<Data> = {
 export type CommandErrorResult<SpecificErrorCodes = void> = {
   error:
     | DeviceExchangeError<SpecificErrorCodes | GlobalCommandErrorStatusCode>
-    | SdkError;
+    | InvalidBatteryDataError
+    | InvalidBatteryStatusTypeError
+    | InvalidResponseFormatError
+    | InvalidStatusWordError
+    | UnknownDAError
+    | UnknownDeviceExchangeError;
   status: CommandResultStatus.Error;
 };
 export type CommandResult<Data, SpecificErrorCodes = void> =
   | CommandSuccessResult<Data>
   | CommandErrorResult<SpecificErrorCodes>;
 
-export function CommandResultFactory<Data, SpecificErrorCodes>({
+export function CommandResultFactory<Data, SpecificErrorCodes = void>({
   data,
   error,
 }:
@@ -27,8 +39,13 @@ export function CommandResultFactory<Data, SpecificErrorCodes>({
   | {
       data?: undefined;
       error:
-        | DeviceExchangeError<SpecificErrorCodes | GlobalCommandErrorStatusCode>
-        | SdkError;
+        | DeviceExchangeError<SpecificErrorCodes>
+        | InvalidBatteryDataError
+        | InvalidBatteryStatusTypeError
+        | InvalidResponseFormatError
+        | InvalidStatusWordError
+        | UnknownDAError
+        | UnknownDeviceExchangeError;
     }): CommandResult<Data, SpecificErrorCodes> {
   if (error) {
     return {

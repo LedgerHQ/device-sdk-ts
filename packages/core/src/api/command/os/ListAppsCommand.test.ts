@@ -1,4 +1,3 @@
-import { Command } from "@api/command/Command";
 import {
   CommandErrorResult,
   CommandResultFactory,
@@ -9,8 +8,7 @@ import { ApduResponse } from "@api/device-session/ApduResponse";
 import {
   ListAppsCommand,
   ListAppsCommandError,
-  ListAppsCommandErrorCodes,
-  ListAppsResponse,
+  ListAppsErrorCodes,
 } from "./ListAppsCommand";
 
 // [NOTE] EXAMPLES CREATED USING A NANO X
@@ -134,7 +132,7 @@ const LIST_APP_RESPONSE_CONTINUE_2_APPS_EXPECTED = [
 ];
 
 describe("ListAppCommand", () => {
-  let command: Command<ListAppsResponse, { isContinue: boolean }>;
+  let command: ListAppsCommand;
 
   describe("first list app command", () => {
     beforeEach(() => {
@@ -267,7 +265,7 @@ describe("ListAppCommand", () => {
         });
         const result = command.parseResponse(
           response,
-        ) as CommandErrorResult<ListAppsCommandErrorCodes>;
+        ) as CommandErrorResult<ListAppsErrorCodes>;
 
         expect(isSuccessCommandResult(result)).toBe(false);
         expect(result.error).toBeInstanceOf(ListAppsCommandError);

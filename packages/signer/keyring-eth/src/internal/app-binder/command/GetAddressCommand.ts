@@ -22,7 +22,7 @@ import { DerivationPathUtils } from "@internal/shared/utils/DerivationPathUtils"
 const CHAIN_CODE_LENGTH = 32;
 
 export class GetAddressCommand
-  implements Command<GetAddressCommandResponse, void, GetAddressCommandArgs>
+  implements Command<GetAddressCommandResponse, GetAddressCommandArgs>
 {
   args: GetAddressCommandArgs;
 

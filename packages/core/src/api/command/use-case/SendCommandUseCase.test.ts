@@ -2,7 +2,6 @@ import { Left } from "purify-ts";
 
 import { Command } from "@api/command/Command";
 import { CommandResultStatus } from "@api/command/model/CommandResult";
-import { GlobalCommandErrorStatusCode } from "@api/command/utils/GlobalCommandError";
 import { deviceSessionStubBuilder } from "@internal/device-session/model/DeviceSession.stub";
 import { DefaultDeviceSessionService } from "@internal/device-session/service/DefaultDeviceSessionService";
 import { DeviceSessionService } from "@internal/device-session/service/DeviceSessionService";
@@ -20,7 +19,7 @@ let sessionService: DeviceSessionService;
 let managerApi: ManagerApiService;
 let managerApiDataSource: ManagerApiDataSource;
 const fakeSessionId = "fakeSessionId";
-let command: Command<{ status: string }, GlobalCommandErrorStatusCode>;
+let command: Command<{ status: string }>;
 
 describe("SendCommandUseCase", () => {
   beforeEach(() => {
@@ -54,10 +53,7 @@ describe("SendCommandUseCase", () => {
       data: undefined,
     });
 
-    const response = await useCase.execute<
-      { status: string },
-      GlobalCommandErrorStatusCode
-    >({
+    const response = await useCase.execute<{ status: string }, void, void>({
       sessionId: fakeSessionId,
       command,
     });
@@ -74,10 +70,7 @@ describe("SendCommandUseCase", () => {
       .spyOn(sessionService, "getDeviceSessionById")
       .mockReturnValue(Left({ _tag: "DeviceSessionNotFound" }));
 
-    const res = useCase.execute<
-      { status: string },
-      GlobalCommandErrorStatusCode
-    >({
+    const res = useCase.execute<{ status: string }, void, void>({
       sessionId: fakeSessionId,
       command,
     });

@@ -40,8 +40,8 @@ export class ProvideNFTInformationCommand
   implements
     Command<
       void,
-      ProvideNFTInformationCommandErrorCodes,
-      ProvideNFTInformationCommandArgs
+      ProvideNFTInformationCommandArgs,
+      ProvideNFTInformationCommandErrorCodes
     >
 {
   constructor(private args: ProvideNFTInformationCommandArgs) {}

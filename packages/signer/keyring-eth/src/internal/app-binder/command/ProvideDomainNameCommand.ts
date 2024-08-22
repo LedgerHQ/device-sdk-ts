@@ -28,7 +28,7 @@ export type ProvideDomainNameCommandArgs = {
  * The command that provides a chunk of the domain name to the device.
  */
 export class ProvideDomainNameCommand
-  implements Command<void, void, ProvideDomainNameCommandArgs>
+  implements Command<void, ProvideDomainNameCommandArgs>
 {
   constructor(private args: ProvideDomainNameCommandArgs) {}
 

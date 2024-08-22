@@ -1,5 +1,6 @@
 import { ContextModule } from "@ledgerhq/context-module";
 import {
+  CommandErrorResult,
   DeviceActionState,
   ExecuteDeviceActionReturnType,
   OpenAppDAError,
@@ -31,7 +32,7 @@ export class SignTypedDataError implements SdkError {
   }
 }
 
-export type SignTypedDataDAError = OpenAppDAError | SdkError; /// TODO: remove, we should have an exhaustive list of errors
+export type SignTypedDataDAError = OpenAppDAError | CommandErrorResult["error"]; /// TODO: remove, we should have an exhaustive list of errors
 
 type SignTypedDataDARequiredInteraction =
   | OpenAppDARequiredInteraction

@@ -8,8 +8,14 @@ import {
 } from "xstate";
 
 import { isSuccessCommandResult } from "@api/command/model/CommandResult";
-import { CloseAppCommand } from "@api/command/os/CloseAppCommand";
-import { GetAppAndVersionCommand } from "@api/command/os/GetAppAndVersionCommand";
+import {
+  CloseAppCommand,
+  CloseAppCommandResult,
+} from "@api/command/os/CloseAppCommand";
+import {
+  GetAppAndVersionCommand,
+  GetAppAndVersionCommandResult,
+} from "@api/command/os/GetAppAndVersionCommand";
 import { InternalApi } from "@api/device-action/DeviceAction";
 import { UserInteractionRequired } from "@api/device-action/model/UserInteractionRequired";
 import { DEFAULT_UNLOCK_TIMEOUT_MS } from "@api/device-action/os/Const";
@@ -32,8 +38,8 @@ type GoToDashboardMachineInternalState = {
 };
 
 export type MachineDependencies = {
-  readonly getAppAndVersion: () => Promise<{ app: string; version: string }>;
-  readonly closeApp: () => Promise<void>;
+  readonly getAppAndVersion: () => Promise<GetAppAndVersionCommandResult>;
+  readonly closeApp: () => Promise<CloseAppCommandResult>;
   readonly getDeviceSessionState: () => DeviceSessionState;
   readonly saveSessionState: (state: DeviceSessionState) => DeviceSessionState;
 };
@@ -111,11 +117,11 @@ export class GoToDashboardDeviceAction extends XStateDeviceAction<
         ),
       },
       guards: {
-        isDashboardOpen: ({ context }: { context: types["context"] }) =>
-          context._internalState.currentApp === "BOLOS",
-        isDeviceStatusError: ({ context }: { context: types["context"] }) => {
+        hasError: ({ context }: { context: types["context"] }) => {
           return context._internalState.error !== null;
         },
+        isDashboardOpen: ({ context }: { context: types["context"] }) =>
+          context._internalState.currentApp === "BOLOS",
       },
       actions: {
         // assignGetDeviceStatusUnknownError: assign({
@@ -208,7 +214,7 @@ export class GoToDashboardDeviceAction extends XStateDeviceAction<
           always: [
             {
               target: "Error",
-              guard: "isDeviceStatusError",
+              guard: "hasError",
             },
             {
               target: "DashboardCheck",
@@ -221,6 +227,10 @@ export class GoToDashboardDeviceAction extends XStateDeviceAction<
             {
               target: "SaveSessionState",
               guard: "isDashboardOpen",
+            },
+            {
+              target: "Error",
+              guard: "hasError",
             },
             {
               target: "Error",
@@ -243,13 +253,31 @@ export class GoToDashboardDeviceAction extends XStateDeviceAction<
           invoke: {
             src: "closeApp",
             onDone: {
-              target: "GetAppAndVersion",
-            },
-            onError: {
-              target: "Error",
-              actions: "assignErrorFromEvent",
+              target: "CloseAppCheck",
+              actions: assign({
+                _internalState: (_) => {
+                  if (isSuccessCommandResult(_.event.output)) {
+                    return _.context._internalState;
+                  }
+                  return {
+                    ..._.context._internalState,
+                    error: _.event.output.error,
+                  };
+                },
+              }),
             },
           },
+        },
+        CloseAppCheck: {
+          always: [
+            {
+              target: "Error",
+              guard: "hasError",
+            },
+            {
+              target: "GetAppAndVersion",
+            },
+          ],
         },
         GetAppAndVersion: {
           invoke: {
@@ -257,15 +285,19 @@ export class GoToDashboardDeviceAction extends XStateDeviceAction<
             onDone: {
               target: "DashboardCheck",
               actions: assign({
-                _internalState: (_) => ({
-                  ..._.context._internalState,
-                  currentApp: _.event.output.app,
-                }),
+                _internalState: (_) => {
+                  if (isSuccessCommandResult(_.event.output)) {
+                    return {
+                      ..._.context._internalState,
+                      currentApp: _.event.output.data.name,
+                    };
+                  }
+                  return {
+                    ..._.context._internalState,
+                    error: _.event.output.error,
+                  };
+                },
               }),
-            },
-            onError: {
-              target: "Error",
-              actions: "assignErrorFromEvent",
             },
           },
         },
@@ -305,20 +337,9 @@ export class GoToDashboardDeviceAction extends XStateDeviceAction<
   }
 
   extractDependencies(internalApi: InternalApi): MachineDependencies {
-    const closeApp = async () => {
-      const res = await internalApi.sendCommand(new CloseAppCommand());
-      if (isSuccessCommandResult(res)) {
-        return res.data;
-      }
-      throw res.error;
-    };
+    const closeApp = async () => internalApi.sendCommand(new CloseAppCommand());
     const getAppAndVersion = async () =>
-      internalApi.sendCommand(new GetAppAndVersionCommand()).then((res) => {
-        if (isSuccessCommandResult(res)) {
-          return { app: res.data.name, version: res.data.version };
-        }
-        throw res.error;
-      });
+      internalApi.sendCommand(new GetAppAndVersionCommand());
 
     return {
       closeApp,

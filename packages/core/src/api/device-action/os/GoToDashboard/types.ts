@@ -1,3 +1,4 @@
+import { CommandErrorResult } from "@api/command/model/CommandResult";
 import { DeviceActionState } from "@api/device-action/model/DeviceActionState";
 import { UserInteractionRequired } from "@api/device-action/model/UserInteractionRequired";
 import { UnknownDAError } from "@api/device-action/os/Errors";
@@ -6,7 +7,6 @@ import {
   GetDeviceStatusDAInput,
   GetDeviceStatusDAIntermediateValue,
 } from "@api/device-action/os/GetDeviceStatus/types";
-import { SdkError } from "@api/Error";
 
 export type GoToDashboardDAOutput = void;
 export type GoToDashboardDAInput = GetDeviceStatusDAInput;
@@ -14,7 +14,7 @@ export type GoToDashboardDAInput = GetDeviceStatusDAInput;
 export type GoToDashboardDAError =
   | GetDeviceStatusDAError
   | UnknownDAError
-  | SdkError; /// TODO: remove, we should have an exhaustive list of errors
+  | CommandErrorResult["error"];
 
 export type GoToDashboardDARequiredInteraction = UserInteractionRequired.None;
 

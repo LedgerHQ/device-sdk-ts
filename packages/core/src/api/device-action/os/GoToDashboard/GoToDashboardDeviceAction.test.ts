@@ -1,4 +1,8 @@
 import { CommandResultFactory } from "@api/command/model/CommandResult";
+import {
+  GLOBAL_ERRORS,
+  GlobalCommandError,
+} from "@api/command/utils/GlobalCommandError";
 import { DeviceStatus } from "@api/device/DeviceStatus";
 import { makeDeviceActionInternalApiMock } from "@api/device-action/__test-utils__/makeInternalApi";
 import { setupGetDeviceStatusMock } from "@api/device-action/__test-utils__/setupTestMachine";
@@ -231,11 +235,15 @@ describe("GoToDashboardDeviceAction", () => {
         deviceStatus: DeviceStatus.CONNECTED,
       });
 
-      closeAppMock.mockResolvedValue(undefined);
-      getAppAndVersionMock.mockReturnValue({
-        app: "BOLOS",
-        version: "1.0.0",
-      });
+      closeAppMock.mockResolvedValue(CommandResultFactory({ data: undefined }));
+      getAppAndVersionMock.mockReturnValue(
+        CommandResultFactory({
+          data: {
+            name: "BOLOS",
+            version: "1.0.0",
+          },
+        }),
+      );
 
       const expectedStates: Array<GoToDashboardDAState> = [
         {
@@ -334,7 +342,11 @@ describe("GoToDashboardDeviceAction", () => {
           currentApp: "Bitcoin",
         });
 
-        closeAppMock.mockRejectedValue(new UnknownDAError("Close app failed"));
+        closeAppMock.mockReturnValue(
+          CommandResultFactory({
+            error: new UnknownDAError("Close app failed"),
+          }),
+        );
 
         const expectedStates: Array<GoToDashboardDAState> = [
           {
@@ -378,6 +390,10 @@ describe("GoToDashboardDeviceAction", () => {
         const goToDashboardDeviceAction = new GoToDashboardDeviceAction({
           input: { unlockTimeout: 500 },
         });
+        const error = new GlobalCommandError({
+          ...GLOBAL_ERRORS["5501"],
+          errorCode: "5501",
+        });
 
         jest
           .spyOn(goToDashboardDeviceAction, "extractDependencies")
@@ -389,9 +405,13 @@ describe("GoToDashboardDeviceAction", () => {
           currentApp: "Bitcoin",
         });
 
-        closeAppMock.mockResolvedValue(undefined);
-        getAppAndVersionMock.mockRejectedValue(
-          new UnknownDAError("Get app and version failed"),
+        closeAppMock.mockResolvedValue(
+          CommandResultFactory({ data: undefined }),
+        );
+        getAppAndVersionMock.mockResolvedValue(
+          CommandResultFactory({
+            error,
+          }),
         );
 
         const expectedStates: Array<GoToDashboardDAState> = [
@@ -421,7 +441,7 @@ describe("GoToDashboardDeviceAction", () => {
           },
           {
             status: DeviceActionStatus.Error,
-            error: new UnknownDAError("Get app and version failed"),
+            error,
           },
         ];
 
@@ -453,11 +473,17 @@ describe("GoToDashboardDeviceAction", () => {
           currentApp: "Bitcoin",
         });
 
-        closeAppMock.mockResolvedValue(undefined);
-        getAppAndVersionMock.mockResolvedValue({
-          app: null,
-          version: "1.0.0",
-        });
+        closeAppMock.mockResolvedValue(
+          CommandResultFactory({ data: undefined }),
+        );
+        getAppAndVersionMock.mockResolvedValue(
+          CommandResultFactory({
+            data: {
+              name: null,
+              version: "1.0.0",
+            },
+          }),
+        );
 
         const expectedStates: Array<GoToDashboardDAState> = [
           {
@@ -518,11 +544,17 @@ describe("GoToDashboardDeviceAction", () => {
           currentApp: "Bitcoin",
         });
 
-        closeAppMock.mockResolvedValue(undefined);
-        getAppAndVersionMock.mockResolvedValue({
-          app: "BOLOS",
-          version: "1.0.0",
-        });
+        closeAppMock.mockResolvedValue(
+          CommandResultFactory({ data: undefined }),
+        );
+        getAppAndVersionMock.mockResolvedValue(
+          CommandResultFactory({
+            data: {
+              name: "BOLOS",
+              version: "1.0.0",
+            },
+          }),
+        );
 
         saveSessionStateMock.mockImplementation(() => {
           throw new Error("Save session state failed");

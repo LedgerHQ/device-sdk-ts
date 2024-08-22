@@ -1,6 +1,10 @@
 import { interval, Observable } from "rxjs";
 
 import { CommandResultFactory } from "@api/command/model/CommandResult";
+import {
+  GLOBAL_ERRORS,
+  GlobalCommandError,
+} from "@api/command/utils/GlobalCommandError";
 import { DeviceStatus } from "@api/device/DeviceStatus";
 import { makeDeviceActionInternalApiMock } from "@api/device-action/__test-utils__/makeInternalApi";
 import { testDeviceActionStates } from "@api/device-action/__test-utils__/testDeviceActionStates";
@@ -191,10 +195,14 @@ describe("GetDeviceStatusDeviceAction", () => {
         currentApp: "mockedCurrentApp",
       });
 
-      getAppAndVersionMock.mockResolvedValue({
-        app: "BOLOS",
-        version: "1.0.0",
-      });
+      getAppAndVersionMock.mockResolvedValue(
+        CommandResultFactory({
+          data: {
+            name: "BOLOS",
+            version: "1.0.0",
+          },
+        }),
+      );
 
       const getDeviceStateDeviceAction = new GetDeviceStatusDeviceAction({
         input: { unlockTimeout: undefined },
@@ -241,10 +249,14 @@ describe("GetDeviceStatusDeviceAction", () => {
         currentApp: "mockedCurrentApp",
       });
 
-      getAppAndVersionMock.mockResolvedValue({
-        app: "BOLOS",
-        version: "1.0.0",
-      });
+      getAppAndVersionMock.mockResolvedValue(
+        CommandResultFactory({
+          data: {
+            name: "BOLOS",
+            version: "1.0.0",
+          },
+        }),
+      );
 
       waitForDeviceUnlockMock.mockImplementation(
         () =>
@@ -417,9 +429,12 @@ describe("GetDeviceStatusDeviceAction", () => {
         currentApp: "mockedCurrentApp",
       });
 
-      getAppAndVersionMock.mockRejectedValue(
-        new Error("GetAppAndVersion error"),
-      );
+      const error = new GlobalCommandError({
+        ...GLOBAL_ERRORS["5501"],
+        errorCode: "5501",
+      });
+
+      getAppAndVersionMock.mockResolvedValue(CommandResultFactory({ error }));
 
       waitForDeviceUnlockMock.mockImplementation(
         () =>
@@ -473,7 +488,7 @@ describe("GetDeviceStatusDeviceAction", () => {
           status: DeviceActionStatus.Pending,
         },
         {
-          error: new UnknownDAError("GetAppAndVersionError"),
+          error,
           status: DeviceActionStatus.Error,
         },
       ];
@@ -493,10 +508,14 @@ describe("GetDeviceStatusDeviceAction", () => {
         currentApp: "mockedCurrentApp",
       });
 
-      getAppAndVersionMock.mockResolvedValue({
-        app: null,
-        version: null,
-      });
+      getAppAndVersionMock.mockResolvedValue(
+        CommandResultFactory({
+          data: {
+            app: null,
+            version: null,
+          },
+        }),
+      );
 
       waitForDeviceUnlockMock.mockImplementation(
         () =>

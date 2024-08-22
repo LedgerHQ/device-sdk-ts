@@ -32,6 +32,8 @@ export class OpenAppCommandError extends DeviceExchangeError<OpenAppErrorCodes> 
   }
 }
 
+export type OpenAppCommandResult = CommandResult<void, OpenAppErrorCodes>;
+
 /**
  * The command to open an application on the device.
  */

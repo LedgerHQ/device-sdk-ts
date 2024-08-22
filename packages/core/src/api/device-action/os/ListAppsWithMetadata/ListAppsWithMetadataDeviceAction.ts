@@ -179,10 +179,6 @@ export class ListAppsWithMetadataDeviceAction extends XStateDeviceAction<
                 },
               }),
             },
-            onError: {
-              target: "Error",
-              entry: "assignErrorFromEvent",
-            },
           },
         },
         ListAppsCheck: {
