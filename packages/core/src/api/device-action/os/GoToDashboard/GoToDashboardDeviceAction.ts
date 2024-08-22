@@ -139,7 +139,7 @@ export class GoToDashboardDeviceAction extends XStateDeviceAction<
         assignErrorFromEvent: assign({
           _internalState: (_) => ({
             ..._.context._internalState,
-            error: _.event["error"], // FIXME: add a typeguard
+            error: _.event["error"], // NOTE: it should never happen, the error is not typed anymore here
           }),
         }),
       },
@@ -265,6 +265,10 @@ export class GoToDashboardDeviceAction extends XStateDeviceAction<
                   };
                 },
               }),
+            },
+            onError: {
+              target: "Error",
+              actions: "assignErrorFromEvent",
             },
           },
         },

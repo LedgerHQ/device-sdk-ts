@@ -151,6 +151,12 @@ export class GetDeviceStatusDeviceAction extends XStateDeviceAction<
             error: new UnknownDAError("SaveAppStateError"),
           }),
         }),
+        assignErrorFromEvent: assign({
+          _internalState: (_) => ({
+            ..._.context._internalState,
+            error: _.event["error"], // NOTE: it should never happen, the error is not typed anymore here
+          }),
+        }),
         assignNoUserActionNeeded: assign({
           intermediateValue: (_) =>
             ({
@@ -286,6 +292,10 @@ export class GetDeviceStatusDeviceAction extends XStateDeviceAction<
                   };
                 },
               }),
+            },
+            onError: {
+              target: "Error",
+              actions: "assignErrorFromEvent",
             },
           },
         },

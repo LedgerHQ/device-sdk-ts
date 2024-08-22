@@ -14,6 +14,7 @@ import { UserInteractionRequired } from "@api/device-action/model/UserInteractio
 import { UnknownDAError } from "@api/device-action/os/Errors";
 import { OpenAppDeviceAction } from "@api/device-action/os/OpenAppDeviceAction/OpenAppDeviceAction";
 import { Command } from "@api/types";
+import { UnknownDeviceExchangeError } from "@root/src";
 
 import { SendCommandInAppDeviceAction } from "./SendCommandInAppDeviceAction";
 import {
@@ -153,7 +154,9 @@ describe("SendCommandInAppDeviceAction", () => {
       setupOpenAppDAMock();
 
       sendMyCommand.mockResolvedValue(
-        CommandResultFactory({ error: new UnknownDAError("Mocked error") }),
+        CommandResultFactory({
+          error: new UnknownDeviceExchangeError("Mocked error"),
+        }),
       );
 
       const deviceAction = new SendCommandInAppDeviceAction({
@@ -189,7 +192,7 @@ describe("SendCommandInAppDeviceAction", () => {
         },
         {
           status: DeviceActionStatus.Error,
-          error: new UnknownDAError("Mocked error"),
+          error: new UnknownDeviceExchangeError("Mocked error"),
         },
       ];
 

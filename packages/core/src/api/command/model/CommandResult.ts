@@ -5,7 +5,6 @@ import {
   InvalidStatusWordError,
 } from "@api/command/Errors";
 import { GlobalCommandErrorStatusCode } from "@api/command/utils/GlobalCommandError";
-import { UnknownDAError } from "@api/device-action/os/Errors";
 import { DeviceExchangeError, UnknownDeviceExchangeError } from "@api/Error";
 
 export enum CommandResultStatus {
@@ -23,7 +22,6 @@ export type CommandErrorResult<SpecificErrorCodes = void> = {
     | InvalidBatteryStatusTypeError
     | InvalidResponseFormatError
     | InvalidStatusWordError
-    | UnknownDAError
     | UnknownDeviceExchangeError;
   status: CommandResultStatus.Error;
 };
@@ -44,7 +42,6 @@ export function CommandResultFactory<Data, SpecificErrorCodes = void>({
         | InvalidBatteryStatusTypeError
         | InvalidResponseFormatError
         | InvalidStatusWordError
-        | UnknownDAError
         | UnknownDeviceExchangeError;
     }): CommandResult<Data, SpecificErrorCodes> {
   if (error) {

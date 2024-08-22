@@ -11,6 +11,7 @@ import { DeviceActionStatus } from "@api/device-action/model/DeviceActionState";
 import { UserInteractionRequired } from "@api/device-action/model/UserInteractionRequired";
 import { UnknownDAError } from "@api/device-action/os/Errors";
 import { DeviceSessionStateType } from "@api/device-session/DeviceSessionState";
+import { UnknownDeviceExchangeError } from "@root/src";
 
 import { GoToDashboardDeviceAction } from "./GoToDashboardDeviceAction";
 import { GoToDashboardDAState } from "./types";
@@ -344,7 +345,7 @@ describe("GoToDashboardDeviceAction", () => {
 
         closeAppMock.mockReturnValue(
           CommandResultFactory({
-            error: new UnknownDAError("Close app failed"),
+            error: new UnknownDeviceExchangeError("Close app failed"),
           }),
         );
 
@@ -369,7 +370,7 @@ describe("GoToDashboardDeviceAction", () => {
           },
           {
             status: DeviceActionStatus.Error,
-            error: new UnknownDAError("Close app failed"),
+            error: new UnknownDeviceExchangeError("Close app failed"),
           },
         ];
 

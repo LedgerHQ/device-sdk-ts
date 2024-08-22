@@ -1,5 +1,4 @@
 import { CommandErrorResult } from "@api/command/model/CommandResult";
-import { UnknownDAError } from "@api/device-action/os/Errors";
 import {
   OpenAppDAError,
   OpenAppDAIntermediateValue,
@@ -32,9 +31,5 @@ export type SendCommandInAppDAInternalState<
   CommandErrorCodes,
 > = {
   readonly commandResponse: CommandResponse | null;
-  readonly error:
-    | OpenAppDAError
-    | UnknownDAError
-    | CommandErrorResult<CommandErrorCodes>["error"]
-    | null;
+  readonly error: SendCommandInAppDAError<CommandErrorCodes> | null;
 };

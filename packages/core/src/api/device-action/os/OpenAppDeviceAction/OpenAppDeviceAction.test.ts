@@ -8,6 +8,7 @@ import { UserInteractionRequired } from "@api/device-action/model/UserInteractio
 import {
   DeviceLockedError,
   DeviceNotOnboardedError,
+  UnknownDAError,
 } from "@api/device-action/os/Errors";
 import { DeviceSessionStateType } from "@api/device-session/DeviceSessionState";
 
@@ -298,7 +299,7 @@ describe("OpenAppDeviceAction", () => {
       );
     });
 
-    it("should end in an error if getAppAndVersion throws an error", (done) => {
+    it("should end in an error if getAppAndVersion returns an error", (done) => {
       getDeviceSessionStateMock.mockReturnValue({
         sessionStateType: DeviceSessionStateType.ReadyWithoutSecureChannel,
         deviceStatus: DeviceStatus.CONNECTED,
@@ -339,7 +340,8 @@ describe("OpenAppDeviceAction", () => {
         done,
       );
     });
-    it("should end in an error if the dashboard is open and open app throws an error", (done) => {
+
+    it("should end in an error if the dashboard is open and open app returns an error", (done) => {
       getDeviceSessionStateMock.mockReturnValue(
         CommandResultFactory({
           data: {
@@ -397,7 +399,7 @@ describe("OpenAppDeviceAction", () => {
       );
     });
 
-    it("should end in an error if another app is open, and close app throws", (done) => {
+    it("should end in an error if another app is open, and close app returns an error", (done) => {
       getDeviceSessionStateMock.mockReturnValue({
         sessionStateType: DeviceSessionStateType.ReadyWithoutSecureChannel,
         deviceStatus: DeviceStatus.CONNECTED,
@@ -451,7 +453,7 @@ describe("OpenAppDeviceAction", () => {
       );
     });
 
-    it("should end in an error if another app is open, close app succeeds but open app throws", (done) => {
+    it("should end in an error if another app is open, close app succeeds but open app returns an error", (done) => {
       getDeviceSessionStateMock.mockReturnValue({
         sessionStateType: DeviceSessionStateType.ReadyWithoutSecureChannel,
         deviceStatus: DeviceStatus.CONNECTED,
@@ -501,6 +503,158 @@ describe("OpenAppDeviceAction", () => {
         {
           status: DeviceActionStatus.Error,
           error: new InvalidStatusWordError("mocked error"),
+        },
+      ];
+
+      testDeviceActionStates(
+        openAppDeviceAction,
+        expectedStates,
+        makeDeviceActionInternalApiMock(),
+        done,
+      );
+    });
+
+    it("should end in an error if getAppAndVersion actor throws an error", (done) => {
+      getDeviceSessionStateMock.mockReturnValue({
+        sessionStateType: DeviceSessionStateType.ReadyWithoutSecureChannel,
+        deviceStatus: DeviceStatus.CONNECTED,
+        currentApp: "mockedCurrentApp",
+      });
+
+      getAppAndVersionMock.mockImplementation(() => {
+        throw new UnknownDAError("Unknow error");
+      });
+
+      const openAppDeviceAction = new OpenAppDeviceAction({
+        input: { appName: "Bitcoin" },
+      });
+
+      jest
+        .spyOn(openAppDeviceAction, "extractDependencies")
+        .mockReturnValue(extractDependenciesMock());
+
+      const expectedStates: Array<OpenAppDAState> = [
+        {
+          status: DeviceActionStatus.Pending, // get app and version
+          intermediateValue: {
+            requiredUserInteraction: UserInteractionRequired.None,
+          },
+        },
+        {
+          status: DeviceActionStatus.Error,
+          error: new UnknownDAError("Unknow error"),
+        },
+      ];
+
+      testDeviceActionStates(
+        openAppDeviceAction,
+        expectedStates,
+        makeDeviceActionInternalApiMock(),
+        done,
+      );
+    });
+
+    it("should end in an error if openApp actor throws an error", (done) => {
+      getDeviceSessionStateMock.mockReturnValue(
+        CommandResultFactory({
+          data: {
+            sessionStateType: DeviceSessionStateType.ReadyWithoutSecureChannel,
+            deviceStatus: DeviceStatus.CONNECTED,
+            currentApp: "BOLOS",
+          },
+        }),
+      );
+      getAppAndVersionMock.mockResolvedValue(
+        CommandResultFactory({
+          data: {
+            name: "BOLOS",
+            version: "0.0.0",
+          },
+        }),
+      );
+      openAppMock.mockImplementation(() => {
+        throw new UnknownDAError("Unknown error");
+      });
+
+      const openAppDeviceAction = new OpenAppDeviceAction({
+        input: { appName: "Bitcoin" },
+      });
+      jest
+        .spyOn(openAppDeviceAction, "extractDependencies")
+        .mockReturnValue(extractDependenciesMock());
+
+      const expectedStates: Array<OpenAppDAState> = [
+        {
+          status: DeviceActionStatus.Pending, // get app and version
+          intermediateValue: {
+            requiredUserInteraction: UserInteractionRequired.None,
+          },
+        },
+        {
+          status: DeviceActionStatus.Pending, // open app
+          intermediateValue: {
+            requiredUserInteraction: UserInteractionRequired.ConfirmOpenApp,
+          },
+        },
+        {
+          status: DeviceActionStatus.Error,
+          error: new UnknownDAError("Unknown error"),
+        },
+      ];
+
+      testDeviceActionStates(
+        openAppDeviceAction,
+        expectedStates,
+        makeDeviceActionInternalApiMock(),
+        done,
+      );
+    });
+
+    it("should end in an error if closeApp actor throws an error", (done) => {
+      getDeviceSessionStateMock.mockReturnValue(
+        CommandResultFactory({
+          data: {
+            sessionStateType: DeviceSessionStateType.ReadyWithoutSecureChannel,
+            deviceStatus: DeviceStatus.CONNECTED,
+            currentApp: "BOLOS",
+          },
+        }),
+      );
+      getAppAndVersionMock.mockResolvedValue(
+        CommandResultFactory({
+          data: {
+            name: "anApp",
+            version: "0.0.0",
+          },
+        }),
+      );
+      closeAppMock.mockImplementation(() => {
+        throw new UnknownDAError("Unknown error");
+      });
+
+      const openAppDeviceAction = new OpenAppDeviceAction({
+        input: { appName: "Bitcoin" },
+      });
+      jest
+        .spyOn(openAppDeviceAction, "extractDependencies")
+        .mockReturnValue(extractDependenciesMock());
+
+      const expectedStates: Array<OpenAppDAState> = [
+        {
+          status: DeviceActionStatus.Pending, // get app and version
+          intermediateValue: {
+            requiredUserInteraction: UserInteractionRequired.None,
+          },
+        },
+        {
+          status: DeviceActionStatus.Pending, // close app
+          intermediateValue: {
+            requiredUserInteraction: UserInteractionRequired.None,
+          },
+        },
+        {
+          status: DeviceActionStatus.Error,
+          error: new UnknownDAError("Unknown error"),
         },
       ];
 

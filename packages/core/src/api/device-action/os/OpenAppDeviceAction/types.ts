@@ -5,6 +5,7 @@ import { UserInteractionRequired } from "@api/device-action/model/UserInteractio
 import {
   DeviceLockedError,
   DeviceNotOnboardedError,
+  UnknownDAError,
 } from "@api/device-action/os/Errors";
 
 export type OpenAppDAOutput = void;
@@ -16,6 +17,7 @@ export type OpenAppDAInput = {
 export type OpenAppDAError =
   | DeviceNotOnboardedError
   | DeviceLockedError
+  | UnknownDAError
   | CommandErrorResult<OpenAppErrorCodes | void>["error"];
 
 export type OpenAppDARequiredInteraction =

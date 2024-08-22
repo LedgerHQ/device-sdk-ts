@@ -5,7 +5,6 @@ import {
   ExecuteDeviceActionReturnType,
   OpenAppDAError,
   OpenAppDARequiredInteraction,
-  SdkError,
   UserInteractionRequired,
 } from "@ledgerhq/device-sdk-core";
 
@@ -23,16 +22,7 @@ export type SignTypedDataDAInput = {
   readonly contextModule: ContextModule;
 };
 
-export class SignTypedDataError implements SdkError {
-  readonly _tag = "SignTypedDataError";
-  readonly originalError?: Error;
-
-  constructor(message?: string) {
-    this.originalError = new Error(message ?? "Sign typed data error.");
-  }
-}
-
-export type SignTypedDataDAError = OpenAppDAError | CommandErrorResult["error"]; /// TODO: remove, we should have an exhaustive list of errors
+export type SignTypedDataDAError = OpenAppDAError | CommandErrorResult["error"];
 
 type SignTypedDataDARequiredInteraction =
   | OpenAppDARequiredInteraction

@@ -515,14 +515,20 @@ describe("ProvideEIP712ContextTask", () => {
       message: TEST_MESSAGE_VALUES,
       clearSignContext: Just(TEST_CLEAR_SIGN_CONTEXT),
     };
-    apiMock.sendCommand
-      .mockResolvedValueOnce(CommandResultFactory({ data: { tokenIndex: 4 } }))
-      .mockRejectedValueOnce(new Error("error"));
+    apiMock.sendCommand.mockResolvedValueOnce(
+      CommandResultFactory({
+        error: new UnknownDeviceExchangeError("error"),
+      }),
+    );
     // WHEN
     const promise = new ProvideEIP712ContextTask(apiMock, args).run();
 
     // THEN
-    await expect(promise).rejects.toStrictEqual(new Error("error"));
+    await expect(promise).resolves.toStrictEqual(
+      CommandResultFactory({
+        error: new UnknownDeviceExchangeError("error"),
+      }),
+    );
   });
 
   it("Error when sending struct definitions", async () => {

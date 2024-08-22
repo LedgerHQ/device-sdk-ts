@@ -501,6 +501,59 @@ describe("GetDeviceStatusDeviceAction", () => {
       );
     });
 
+    it("should end in an error if getAppAndVersion actor throws an error", (done) => {
+      getDeviceSessionStateMock.mockReturnValue({
+        sessionStateType: DeviceSessionStateType.ReadyWithoutSecureChannel,
+        deviceStatus: DeviceStatus.LOCKED,
+        currentApp: "mockedCurrentApp",
+      });
+
+      getAppAndVersionMock.mockImplementation(() => {
+        throw new UnknownDAError("error");
+      });
+
+      waitForDeviceUnlockMock.mockImplementation(
+        () =>
+          new Observable((o) => {
+            o.complete();
+          }),
+      );
+
+      const getDeviceStateDeviceAction = new GetDeviceStatusDeviceAction({
+        input: { unlockTimeout: 500 },
+      });
+
+      jest
+        .spyOn(getDeviceStateDeviceAction, "extractDependencies")
+        .mockReturnValue(extractDependenciesMock());
+
+      const expectedStates: Array<GetDeviceStatusDAState> = [
+        {
+          intermediateValue: {
+            requiredUserInteraction: UserInteractionRequired.UnlockDevice,
+          },
+          status: DeviceActionStatus.Pending,
+        },
+        {
+          intermediateValue: {
+            requiredUserInteraction: UserInteractionRequired.None,
+          },
+          status: DeviceActionStatus.Pending,
+        },
+        {
+          error: new UnknownDAError("error"),
+          status: DeviceActionStatus.Error,
+        },
+      ];
+
+      testDeviceActionStates(
+        getDeviceStateDeviceAction,
+        expectedStates,
+        makeDeviceActionInternalApiMock(),
+        done,
+      );
+    });
+
     it("should end in an error if saveSessionState fails", (done) => {
       getDeviceSessionStateMock.mockReturnValue({
         sessionStateType: DeviceSessionStateType.ReadyWithoutSecureChannel,

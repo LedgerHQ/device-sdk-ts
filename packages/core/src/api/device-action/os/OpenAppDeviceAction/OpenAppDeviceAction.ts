@@ -250,6 +250,10 @@ export class OpenAppDeviceAction extends XStateDeviceAction<
                 },
               }),
             },
+            onError: {
+              target: "Error",
+              actions: "assignErrorFromEvent",
+            },
           },
         },
 

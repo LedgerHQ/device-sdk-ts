@@ -301,7 +301,7 @@ describe("SignTypedDataDeviceAction", () => {
       jest
         .spyOn(deviceAction, "extractDependencies")
         .mockReturnValue(extractDependenciesMock());
-      buildContextMock.mockRejectedValueOnce(new Error("Error"));
+      buildContextMock.mockRejectedValueOnce(new UnknownDAError("Error"));
 
       const expectedStates: Array<SignTypedDataDAState> = [
         {
@@ -323,9 +323,7 @@ describe("SignTypedDataDeviceAction", () => {
           status: DeviceActionStatus.Pending,
         },
         {
-          error: new UnknownDAError(
-            "Error while building the clear signing context",
-          ),
+          error: new UnknownDAError("Error"),
           status: DeviceActionStatus.Error,
         },
       ];
@@ -338,7 +336,7 @@ describe("SignTypedDataDeviceAction", () => {
       );
     });
 
-    it("Error while providing context", (done) => {
+    it("Error thrown while providing context", (done) => {
       setupOpenAppDAMock();
 
       const deviceAction = new SignTypedDataDeviceAction({
@@ -355,7 +353,7 @@ describe("SignTypedDataDeviceAction", () => {
         .spyOn(deviceAction, "extractDependencies")
         .mockReturnValue(extractDependenciesMock());
       buildContextMock.mockResolvedValueOnce(TEST_BUILT_CONTEXT);
-      provideContextMock.mockRejectedValueOnce(new Error("Error"));
+      provideContextMock.mockRejectedValueOnce(new UnknownDAError("Error"));
 
       const expectedStates: Array<SignTypedDataDAState> = [
         {
@@ -383,9 +381,7 @@ describe("SignTypedDataDeviceAction", () => {
           status: DeviceActionStatus.Pending,
         },
         {
-          error: new UnknownDAError(
-            "Error while providing the clear signing context",
-          ),
+          error: new UnknownDAError("Error"),
           status: DeviceActionStatus.Error,
         },
       ];

@@ -49,10 +49,6 @@ export type MachineDependencies = {
   }) => Promise<CommandResult<Signature>>;
 };
 
-export type ExtractMachineDependencies = (
-  internalApi: InternalApi,
-) => MachineDependencies;
-
 export class SignTypedDataDeviceAction extends XStateDeviceAction<
   SignTypedDataDAOutput,
   SignTypedDataDAInput,
@@ -88,6 +84,14 @@ export class SignTypedDataDeviceAction extends XStateDeviceAction<
       },
       guards: {
         noInternalError: ({ context }) => context._internalState.error === null,
+      },
+      actions: {
+        assignErrorFromEvent: assign({
+          _internalState: (_) => ({
+            ..._.context._internalState,
+            error: _.event["error"], // NOTE: it should never happen, the error is not typed anymore here
+          }),
+        }),
       },
     }).createMachine({
       id: "SignTypedDataDeviceAction",
@@ -169,14 +173,7 @@ export class SignTypedDataDeviceAction extends XStateDeviceAction<
             },
             onError: {
               target: "Error",
-              actions: assign({
-                _internalState: (_) => ({
-                  ..._.context._internalState,
-                  error: new UnknownDAError(
-                    "Error while building the clear signing context",
-                  ),
-                }),
-              }),
+              actions: "assignErrorFromEvent",
             },
           },
         },
@@ -203,14 +200,7 @@ export class SignTypedDataDeviceAction extends XStateDeviceAction<
             },
             onError: {
               target: "Error",
-              actions: assign({
-                _internalState: (_) => ({
-                  ..._.context._internalState,
-                  error: new UnknownDAError(
-                    "Error while providing the clear signing context",
-                  ),
-                }),
-              }),
+              actions: "assignErrorFromEvent",
             },
           },
         },
@@ -260,6 +250,10 @@ export class SignTypedDataDeviceAction extends XStateDeviceAction<
                   },
                 }),
               ],
+            },
+            onError: {
+              target: "Error",
+              actions: "assignErrorFromEvent",
             },
           },
         },
