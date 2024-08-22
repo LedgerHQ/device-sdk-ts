@@ -11,4 +11,5 @@ export enum UserInteractionRequired {
   SignTypedData = "sign-typed-data",
   AllowListApps = "allow-list-apps",
   VerifyAddress = "verify-address",
+  SignPersonalMessage = "sign-personal-message",
 }
