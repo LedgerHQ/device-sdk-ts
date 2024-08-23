@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Mock } from "@ledgerhq/device-sdk-transport-mock/src/model/Mock";
-import { Session } from "@ledgerhq/device-sdk-transport-mock/src/model/Session";
+import { Mock, Session } from "@ledgerhq/device-sdk-transport-mock";
 import { Button, Divider, Flex, Input, Link, Text } from "@ledgerhq/react-ui";
 import styled, { DefaultTheme } from "styled-components";
 import { useMockClient } from "@/hooks/useMockClient";
