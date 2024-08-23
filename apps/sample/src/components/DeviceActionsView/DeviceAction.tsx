@@ -126,7 +126,7 @@ export function DeviceActionDrawer<
   }, [responses]);
 
   useEffect(() => {
-    () => cancelDeviceActionRef.current();
+    return () => cancelDeviceActionRef.current();
   }, []);
 
   useEffect(() => {

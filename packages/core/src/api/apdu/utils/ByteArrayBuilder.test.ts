@@ -60,21 +60,21 @@ describe("ByteArrayBuilder", () => {
     });
 
     it("should serialize with an single byte body", () => {
-      const builder = new ByteArrayBuilder(1);
+      builder = new ByteArrayBuilder(1);
       builder.add8BitUIntToData(0x01);
       expect(builder.build()).toEqual(COMMAND_BODY_SINGLE);
       expect(builder.getErrors()).toEqual([]);
     });
 
     it("should serialize with an 2 byte body", () => {
-      const builder = new ByteArrayBuilder(2);
+      builder = new ByteArrayBuilder(2);
       builder.add16BitUIntToData(0x3302);
       expect(builder.build()).toEqual(COMMAND_BODY_TWO);
       expect(builder.getErrors()).toEqual([]);
     });
 
     it("should serialize with an 4 byte body from an hexastring", () => {
-      const builder = new ByteArrayBuilder(4);
+      builder = new ByteArrayBuilder(4);
       builder.add32BitUIntToData(0x01234567);
       expect(builder.build()).toEqual(COMMAND_BODY_EIGHT);
       expect(builder.getErrors()).toEqual([]);

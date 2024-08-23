@@ -68,7 +68,7 @@ export class HttpExternalPluginDataSource implements ExternalPluginDataSource {
       };
 
       return Right({ selectorDetails, abi });
-    } catch (error) {
+    } catch (_error) {
       return Left(
         new Error(
           "[ContextModule] HttpExternalPluginDataSource: Error fetching dapp infos",

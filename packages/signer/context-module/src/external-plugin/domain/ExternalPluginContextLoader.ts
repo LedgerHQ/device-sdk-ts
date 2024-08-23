@@ -131,7 +131,7 @@ export class ExternalPluginContextLoader implements ContextLoader {
     try {
       const contractInterface = new Interface(abi);
       return Right(contractInterface.decodeFunctionData(method, data));
-    } catch (e) {
+    } catch (_error) {
       return Left(
         new Error(
           "[ContextModule] ExternalPluginContextLoader: Unable to parse abi",

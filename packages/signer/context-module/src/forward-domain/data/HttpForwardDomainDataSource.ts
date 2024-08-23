@@ -30,7 +30,7 @@ export class HttpForwardDomainDataSource implements ForwardDomainDataSource {
               "[ContextModule] HttpForwardDomainDataSource: error getting domain payload",
             ),
           );
-    } catch (error) {
+    } catch (_error) {
       return Left(
         new Error(
           "[ContextModule] HttpForwardDomainDataSource: Failed to fetch domain name",

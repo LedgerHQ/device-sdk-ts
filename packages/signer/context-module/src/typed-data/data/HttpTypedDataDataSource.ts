@@ -116,7 +116,7 @@ export class HttpTypedDataDataSource implements TypedDataDataSource {
       }
 
       return Right({ messageInfo, filters });
-    } catch (error) {
+    } catch (_error) {
       return Left(
         new Error(
           "[ContextModule] HttpTypedDataDataSource: Failed to fetch typed data informations",
