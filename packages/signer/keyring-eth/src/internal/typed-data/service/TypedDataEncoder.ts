@@ -80,7 +80,7 @@ function encodeTypedDataNumber(
       }
       try {
         bigintValue = BigInt(value);
-      } catch (e: unknown) {
+      } catch (_error: unknown) {
         return Nothing;
       }
       break;

@@ -32,7 +32,7 @@ export class HttpNftDataSource implements NftDataSource {
               "[ContextModule] HttpNftDataSource: unexpected empty response",
             ),
           );
-    } catch (error) {
+    } catch (_error) {
       return Left(
         new Error(
           "[ContextModule] HttpNftDataSource: Failed to fetch set plugin payload",
@@ -57,7 +57,7 @@ export class HttpNftDataSource implements NftDataSource {
       return response.data.payload
         ? Right(response.data.payload)
         : Left(new Error("[ContextModule] HttpNftDataSource: no nft metadata"));
-    } catch (error) {
+    } catch (_error) {
       return Left(
         new Error(
           "[ContextModule] HttpNftDataSource: Failed to fetch nft informations",

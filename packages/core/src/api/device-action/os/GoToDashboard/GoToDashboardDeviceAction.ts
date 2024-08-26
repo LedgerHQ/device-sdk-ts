@@ -110,7 +110,7 @@ export class GoToDashboardDeviceAction extends XStateDeviceAction<
             try {
               saveSessionState(updatedState);
               sendBack({ type: "done" });
-            } catch (error) {
+            } catch (_: unknown) {
               sendBack({ type: "error" });
             }
           },

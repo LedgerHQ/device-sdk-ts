@@ -12,7 +12,9 @@ import { TransactionMapperService } from "@internal/transaction/service/mapper/T
 
 @injectable()
 export class SignTransactionUseCase {
+  // @ts-expect-error temporary ignore
   private _contextModule: ContextModule;
+  // @ts-expect-error temporary ignore
   private _appBinding: EthAppBinder;
   private _mapper: TransactionMapperService;
 
@@ -40,11 +42,14 @@ export class SignTransactionUseCase {
     // 4- call app binding provides for each ClearSignContext
     // 5- then sign the transaction and return the signature
 
+    // @ts-expect-error temporary ignore
     const _subset = this._mapper.mapTransactionToSubset(transaction);
 
+    /**
     _subset;
     this._contextModule;
     this._appBinding;
+    */
 
     return Promise.resolve({} as Signature);
   }

@@ -69,7 +69,7 @@ export class HttpTokenDataSource implements TokenDataSource {
           tokenInfos.live_signature,
         ].join(""),
       );
-    } catch (error) {
+    } catch (_error) {
       return Left(
         new Error(
           "[ContextModule] HttpTokenDataSource: Failed to fetch token informations",

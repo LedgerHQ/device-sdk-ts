@@ -82,6 +82,7 @@ export const ApduView: React.FC = () => {
         });
         setApduResponse(rawApduResponse);
         setLoading(false);
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
       } catch (error) {
         setLoading(false);
       }
