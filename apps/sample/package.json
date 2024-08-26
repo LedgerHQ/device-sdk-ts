@@ -30,7 +30,7 @@
     "@types/styled-components": "^5.1.25",
     "autoprefixer": "^10.4.20",
     "globals": "15.8.0",
-    "postcss": "^8.4.38",
+    "postcss": "^8.4.41",
     "typescript": "5.4.5"
   }
 }
