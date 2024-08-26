@@ -178,6 +178,16 @@ export class SignTypedDataDeviceAction extends XStateDeviceAction<
           },
         },
         ProvideContext: {
+          entry: assign({
+            intermediateValue: {
+              requiredUserInteraction: UserInteractionRequired.SignTypedData,
+            },
+          }),
+          exit: assign({
+            intermediateValue: {
+              requiredUserInteraction: UserInteractionRequired.None,
+            },
+          }),
           invoke: {
             id: "provideContext",
             src: "provideContext",
