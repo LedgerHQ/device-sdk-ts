@@ -3,11 +3,12 @@ import {
   Apdu,
   ApduBuilder,
   type ApduBuilderArgs,
-  ApduParser,
   ApduResponse,
   type Command,
+  CommandResult,
+  CommandResultFactory,
   CommandUtils,
-  InvalidStatusWordError,
+  GlobalCommandErrorHandler,
 } from "@ledgerhq/device-sdk-core";
 
 export enum Eip712FilterType {
@@ -87,15 +88,12 @@ export class SendEIP712FilteringCommand
     return builder.build();
   }
 
-  parseResponse(apduResponse: ApduResponse): void {
-    const parser = new ApduParser(apduResponse);
-
+  parseResponse(apduResponse: ApduResponse): CommandResult<void> {
     if (!CommandUtils.isSuccessResponse(apduResponse)) {
-      throw new InvalidStatusWordError(
-        `Unexpected status word: ${parser.encodeToHexaString(
-          apduResponse.statusCode,
-        )}`,
-      );
+      return CommandResultFactory({
+        error: GlobalCommandErrorHandler.handle(apduResponse),
+      });
     }
+    return CommandResultFactory({ data: undefined });
   }
 }

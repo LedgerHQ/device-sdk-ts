@@ -1,4 +1,9 @@
-import { Command, InvalidStatusWordError } from "@ledgerhq/device-sdk-core";
+import {
+  Command,
+  CommandResultFactory,
+  InvalidStatusWordError,
+  isSuccessCommandResult,
+} from "@ledgerhq/device-sdk-core";
 
 import {
   GetChallengeCommand,
@@ -43,21 +48,26 @@ describe("GetChallengeCommand", () => {
   describe("parseResponse", () => {
     it("should parse the response", () => {
       const parsedResponse = command.parseResponse(LNX_RESPONSE_GOOD);
-      expect(parsedResponse).toStrictEqual({
-        challenge: "01020304",
-      });
+      expect(parsedResponse).toStrictEqual(
+        CommandResultFactory({
+          data: {
+            challenge: "01020304",
+          },
+        }),
+      );
     });
 
-    it("should throw an error if the response is not successful", () => {
-      expect(() => {
-        command.parseResponse(LNX_RESPONSE_LOCKED);
-      }).toThrow(InvalidStatusWordError);
+    it("should return an error if the response is not successful", () => {
+      const result = command.parseResponse(LNX_RESPONSE_LOCKED);
+      expect(isSuccessCommandResult(result)).toBe(false);
     });
 
-    it("should throw an error if the response is too short", () => {
-      expect(() => {
-        command.parseResponse(LNX_RESPONSE_TOO_SHORT);
-      }).toThrow(InvalidStatusWordError);
+    it("should return an error if the response is too short", () => {
+      const result = command.parseResponse(LNX_RESPONSE_TOO_SHORT);
+
+      expect(isSuccessCommandResult(result)).toBe(false);
+      // @ts-ignore
+      expect(result.error).toBeInstanceOf(InvalidStatusWordError);
     });
   });
 });

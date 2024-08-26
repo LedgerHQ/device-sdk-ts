@@ -1,4 +1,8 @@
-import { Command, InvalidStatusWordError } from "@ledgerhq/device-sdk-core";
+import {
+  Command,
+  CommandResultFactory,
+  isSuccessCommandResult,
+} from "@ledgerhq/device-sdk-core";
 import { Just, Nothing } from "purify-ts";
 
 import {
@@ -352,7 +356,9 @@ describe("SendEIP712StructDefinitionCommand", () => {
       const parsedResponse = command.parseResponse(response);
 
       // THEN
-      expect(parsedResponse).toBeUndefined();
+      expect(parsedResponse).toStrictEqual(
+        CommandResultFactory({ data: undefined }),
+      );
     });
 
     it("should throw an error if the response is not successful", () => {
@@ -363,12 +369,10 @@ describe("SendEIP712StructDefinitionCommand", () => {
       };
 
       // WHEN
-      const promise = () => command.parseResponse(response);
+      const result = command.parseResponse(response);
 
       // THEN
-      expect(() => {
-        promise();
-      }).toThrow(InvalidStatusWordError);
+      expect(isSuccessCommandResult(result)).toBe(false);
     });
   });
 });

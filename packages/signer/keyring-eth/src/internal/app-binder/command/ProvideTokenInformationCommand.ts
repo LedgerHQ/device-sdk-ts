@@ -6,7 +6,10 @@ import {
   ApduParser,
   ApduResponse,
   Command,
+  CommandResult,
+  CommandResultFactory,
   CommandUtils,
+  GlobalCommandErrorHandler,
   InvalidStatusWordError,
 } from "@ledgerhq/device-sdk-core";
 
@@ -45,23 +48,20 @@ export class ProvideTokenInformationCommand
 
   parseResponse(
     response: ApduResponse,
-  ): ProvideTokenInformationCommandResponse {
+  ): CommandResult<ProvideTokenInformationCommandResponse> {
     const parser = new ApduParser(response);
 
-    // TODO: handle the error correctly using a generic error handler
     if (!CommandUtils.isSuccessResponse(response)) {
-      throw new InvalidStatusWordError(
-        `Unexpected status word: ${parser.encodeToHexaString(
-          response.statusCode,
-        )}`,
-      );
+      return CommandResultFactory({
+        error: GlobalCommandErrorHandler.handle(response),
+      });
     }
-
     const tokenIndex = parser.extract8BitUInt();
     if (tokenIndex === undefined) {
-      throw new InvalidStatusWordError("tokenIndex is missing");
+      return CommandResultFactory({
+        error: new InvalidStatusWordError("tokenIndex is missing"),
+      });
     }
-
-    return { tokenIndex };
+    return CommandResultFactory({ data: { tokenIndex } });
   }
 }

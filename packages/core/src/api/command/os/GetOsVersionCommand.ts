@@ -2,8 +2,12 @@ import { Apdu } from "@api/apdu/model/Apdu";
 import { ApduBuilder, ApduBuilderArgs } from "@api/apdu/utils/ApduBuilder";
 import { ApduParser } from "@api/apdu/utils/ApduParser";
 import { Command } from "@api/command/Command";
-import { InvalidStatusWordError } from "@api/command/Errors";
+import {
+  CommandResult,
+  CommandResultFactory,
+} from "@api/command/model/CommandResult";
 import { CommandUtils } from "@api/command/utils/CommandUtils";
+import { GlobalCommandErrorHandler } from "@api/command/utils/GlobalCommandError";
 import { DeviceModelId } from "@api/device/DeviceModel";
 import { ApduResponse } from "@api/device-session/ApduResponse";
 
@@ -76,14 +80,16 @@ export class GetOsVersionCommand implements Command<GetOsVersionResponse> {
     return new ApduBuilder(getOsVersionApduArgs).build();
   }
 
-  parseResponse(responseApdu: ApduResponse, deviceModelId: DeviceModelId) {
-    const parser = new ApduParser(responseApdu);
-    if (!CommandUtils.isSuccessResponse(responseApdu)) {
-      // [ASK] How de we handle unsuccessful responses?
-      throw new InvalidStatusWordError(
-        `Unexpected status word: ${parser.encodeToHexaString(responseApdu.statusCode)}`,
-      );
+  parseResponse(
+    apduResponse: ApduResponse,
+    deviceModelId: DeviceModelId,
+  ): CommandResult<GetOsVersionResponse> {
+    if (!CommandUtils.isSuccessResponse(apduResponse)) {
+      return CommandResultFactory({
+        error: GlobalCommandErrorHandler.handle(apduResponse),
+      });
     }
+    const parser = new ApduParser(apduResponse);
 
     const targetId = parser.encodeToHexaString(parser.extractFieldByLength(4));
     const seVersion = parser.encodeToString(parser.extractFieldLVEncoded());
@@ -108,15 +114,17 @@ export class GetOsVersionCommand implements Command<GetOsVersionResponse> {
       parser.extractFieldLVEncoded(),
     );
 
-    return {
-      targetId,
-      seVersion,
-      seFlags,
-      mcuSephVersion,
-      mcuBootloaderVersion,
-      hwVersion,
-      langId,
-      recoverState: recoverState ? recoverState : "0",
-    };
+    return CommandResultFactory({
+      data: {
+        targetId,
+        seVersion,
+        seFlags,
+        mcuSephVersion,
+        mcuBootloaderVersion,
+        hwVersion,
+        langId,
+        recoverState: recoverState ? recoverState : "0",
+      },
+    });
   }
 }

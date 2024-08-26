@@ -1,6 +1,6 @@
 import { inject, injectable } from "inversify";
 
-import { Signature } from "@api/model/Signature";
+import { SignPersonalMessageDAReturnType } from "@api/app-binder/SignPersonalMessageDeviceActionTypes";
 import { appBinderTypes } from "@internal/app-binder/di/appBinderTypes";
 import { EthAppBinder } from "@internal/app-binder/EthAppBinder";
 
@@ -15,11 +15,14 @@ export class SignMessageUseCase {
     this._appBinding = appBinding;
   }
 
-  async execute(_derivationPath: string, _message: string): Promise<Signature> {
+  execute(
+    derivationPath: string,
+    message: string,
+  ): SignPersonalMessageDAReturnType {
     // 1- Sign the transaction using the app binding
-
-    this._appBinding;
-
-    return Promise.resolve({} as Signature);
+    return this._appBinding.signPersonalMessage({
+      derivationPath,
+      message,
+    });
   }
 }

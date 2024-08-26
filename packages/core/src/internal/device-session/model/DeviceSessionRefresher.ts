@@ -2,10 +2,8 @@ import { injectable } from "inversify";
 import { Either } from "purify-ts";
 import { filter, interval, map, Subscription, switchMap } from "rxjs";
 
-import {
-  GetAppAndVersionCommand,
-  GetAppAndVersionResponse,
-} from "@api/command/os/GetAppAndVersionCommand";
+import { isSuccessCommandResult } from "@api/command/model/CommandResult";
+import { GetAppAndVersionCommand } from "@api/command/os/GetAppAndVersionCommand";
 import { DeviceStatus } from "@api/device/DeviceStatus";
 import { ApduResponse } from "@api/device-session/ApduResponse";
 import {
@@ -100,9 +98,8 @@ export class DeviceSessionRefresher {
         ),
         filter((parsedResponse) => parsedResponse !== null),
       )
-      .subscribe((parsedResponse: GetAppAndVersionResponse | null) => {
-        // This should never happen and it should be abled to handle in next version of TypeScript.
-        if (parsedResponse === null) {
+      .subscribe((parsedResponse) => {
+        if (!isSuccessCommandResult(parsedResponse)) {
           return;
         }
         // `batteryStatus` and `firmwareVersion` are not available in the polling response.
@@ -110,7 +107,7 @@ export class DeviceSessionRefresher {
           ...state,
           sessionStateType: DeviceSessionStateType.ReadyWithoutSecureChannel,
           deviceStatus: this._deviceStatus,
-          currentApp: parsedResponse.name,
+          currentApp: parsedResponse.data.name,
           installedApps: "installedApps" in state ? state.installedApps : [],
         }));
       });

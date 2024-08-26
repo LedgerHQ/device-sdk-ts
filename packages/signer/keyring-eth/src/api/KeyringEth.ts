@@ -6,13 +6,18 @@ import { Transaction } from "@api/model/Transaction";
 import { TransactionOptions } from "@api/model/TransactionOptions";
 import { TypedData } from "@api/model/TypedData";
 
+import { SignPersonalMessageDAReturnType } from "./app-binder/SignPersonalMessageDeviceActionTypes";
+
 export interface KeyringEth {
   signTransaction: (
     derivationPath: string,
     transaction: Transaction,
     options?: TransactionOptions,
   ) => Promise<Signature>;
-  signMessage: (derivationPath: string, message: string) => Promise<Signature>;
+  signMessage: (
+    derivationPath: string,
+    message: string,
+  ) => SignPersonalMessageDAReturnType;
   signTypedData: (
     derivationPath: string,
     typedData: TypedData,

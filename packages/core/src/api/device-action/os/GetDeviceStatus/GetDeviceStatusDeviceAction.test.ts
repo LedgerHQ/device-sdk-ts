@@ -1,5 +1,10 @@
 import { interval, Observable } from "rxjs";
 
+import { CommandResultFactory } from "@api/command/model/CommandResult";
+import {
+  GLOBAL_ERRORS,
+  GlobalCommandError,
+} from "@api/command/utils/GlobalCommandError";
 import { DeviceStatus } from "@api/device/DeviceStatus";
 import { makeDeviceActionInternalApiMock } from "@api/device-action/__test-utils__/makeInternalApi";
 import { testDeviceActionStates } from "@api/device-action/__test-utils__/testDeviceActionStates";
@@ -53,10 +58,14 @@ describe("GetDeviceStatusDeviceAction", () => {
         deviceStatus: DeviceStatus.CONNECTED,
       });
 
-      sendCommandMock.mockResolvedValue({
-        name: "BOLOS",
-        version: "1.0.0",
-      });
+      sendCommandMock.mockResolvedValue(
+        CommandResultFactory({
+          data: {
+            name: "BOLOS",
+            version: "1.0.0",
+          },
+        }),
+      );
 
       const expectedStates: Array<GetDeviceStatusDAState> = [
         {
@@ -132,10 +141,14 @@ describe("GetDeviceStatusDeviceAction", () => {
           }),
       );
 
-      sendCommandMock.mockResolvedValue({
-        name: "BOLOS",
-        version: "1.0.0",
-      });
+      sendCommandMock.mockResolvedValue(
+        CommandResultFactory({
+          data: {
+            name: "BOLOS",
+            version: "1.0.0",
+          },
+        }),
+      );
 
       const expectedStates: Array<GetDeviceStatusDAState> = [
         {
@@ -182,10 +195,14 @@ describe("GetDeviceStatusDeviceAction", () => {
         currentApp: "mockedCurrentApp",
       });
 
-      getAppAndVersionMock.mockResolvedValue({
-        app: "BOLOS",
-        version: "1.0.0",
-      });
+      getAppAndVersionMock.mockResolvedValue(
+        CommandResultFactory({
+          data: {
+            name: "BOLOS",
+            version: "1.0.0",
+          },
+        }),
+      );
 
       const getDeviceStateDeviceAction = new GetDeviceStatusDeviceAction({
         input: { unlockTimeout: undefined },
@@ -232,10 +249,14 @@ describe("GetDeviceStatusDeviceAction", () => {
         currentApp: "mockedCurrentApp",
       });
 
-      getAppAndVersionMock.mockResolvedValue({
-        app: "BOLOS",
-        version: "1.0.0",
-      });
+      getAppAndVersionMock.mockResolvedValue(
+        CommandResultFactory({
+          data: {
+            name: "BOLOS",
+            version: "1.0.0",
+          },
+        }),
+      );
 
       waitForDeviceUnlockMock.mockImplementation(
         () =>
@@ -408,9 +429,12 @@ describe("GetDeviceStatusDeviceAction", () => {
         currentApp: "mockedCurrentApp",
       });
 
-      getAppAndVersionMock.mockRejectedValue(
-        new Error("GetAppAndVersion error"),
-      );
+      const error = new GlobalCommandError({
+        ...GLOBAL_ERRORS["5501"],
+        errorCode: "5501",
+      });
+
+      getAppAndVersionMock.mockResolvedValue(CommandResultFactory({ error }));
 
       waitForDeviceUnlockMock.mockImplementation(
         () =>
@@ -464,7 +488,60 @@ describe("GetDeviceStatusDeviceAction", () => {
           status: DeviceActionStatus.Pending,
         },
         {
-          error: new UnknownDAError("GetAppAndVersionError"),
+          error,
+          status: DeviceActionStatus.Error,
+        },
+      ];
+
+      testDeviceActionStates(
+        getDeviceStateDeviceAction,
+        expectedStates,
+        makeDeviceActionInternalApiMock(),
+        done,
+      );
+    });
+
+    it("should end in an error if getAppAndVersion actor throws an error", (done) => {
+      getDeviceSessionStateMock.mockReturnValue({
+        sessionStateType: DeviceSessionStateType.ReadyWithoutSecureChannel,
+        deviceStatus: DeviceStatus.LOCKED,
+        currentApp: "mockedCurrentApp",
+      });
+
+      getAppAndVersionMock.mockImplementation(() => {
+        throw new UnknownDAError("error");
+      });
+
+      waitForDeviceUnlockMock.mockImplementation(
+        () =>
+          new Observable((o) => {
+            o.complete();
+          }),
+      );
+
+      const getDeviceStateDeviceAction = new GetDeviceStatusDeviceAction({
+        input: { unlockTimeout: 500 },
+      });
+
+      jest
+        .spyOn(getDeviceStateDeviceAction, "extractDependencies")
+        .mockReturnValue(extractDependenciesMock());
+
+      const expectedStates: Array<GetDeviceStatusDAState> = [
+        {
+          intermediateValue: {
+            requiredUserInteraction: UserInteractionRequired.UnlockDevice,
+          },
+          status: DeviceActionStatus.Pending,
+        },
+        {
+          intermediateValue: {
+            requiredUserInteraction: UserInteractionRequired.None,
+          },
+          status: DeviceActionStatus.Pending,
+        },
+        {
+          error: new UnknownDAError("error"),
           status: DeviceActionStatus.Error,
         },
       ];
@@ -484,10 +561,14 @@ describe("GetDeviceStatusDeviceAction", () => {
         currentApp: "mockedCurrentApp",
       });
 
-      getAppAndVersionMock.mockResolvedValue({
-        app: null,
-        version: null,
-      });
+      getAppAndVersionMock.mockResolvedValue(
+        CommandResultFactory({
+          data: {
+            app: null,
+            version: null,
+          },
+        }),
+      );
 
       waitForDeviceUnlockMock.mockImplementation(
         () =>
@@ -569,10 +650,14 @@ describe("GetDeviceStatusDeviceAction", () => {
       installedApps: [],
     });
 
-    sendCommandMock.mockResolvedValue({
-      name: "BOLOS",
-      version: "1.0.0",
-    });
+    sendCommandMock.mockResolvedValue(
+      CommandResultFactory({
+        data: {
+          name: "BOLOS",
+          version: "1.0.0",
+        },
+      }),
+    );
 
     const getDeviceStateDeviceAction = new GetDeviceStatusDeviceAction({
       input: { unlockTimeout: 500 },

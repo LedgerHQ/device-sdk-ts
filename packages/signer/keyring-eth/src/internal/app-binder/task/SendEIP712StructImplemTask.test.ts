@@ -1,4 +1,9 @@
 import {
+  CommandResultFactory,
+  UnknownDeviceExchangeError,
+} from "@ledgerhq/device-sdk-core";
+
+import {
   SendEIP712StructImplemCommand,
   StructImplemType,
 } from "@internal/app-binder/command/SendEIP712StructImplemCommand";
@@ -62,6 +67,9 @@ describe("SendEIP712StructImplemTask", () => {
       ]),
     };
     // WHEN
+    apiMock.sendCommand.mockResolvedValue(
+      CommandResultFactory({ data: undefined }),
+    );
     await new SendEIP712StructImplemTask(apiMock, args).run();
     // THEN
     expect(apiMock.sendCommand.mock.calls).toHaveLength(1);
@@ -109,6 +117,9 @@ describe("SendEIP712StructImplemTask", () => {
       ]),
     };
     // WHEN
+    apiMock.sendCommand.mockResolvedValue(
+      CommandResultFactory({ data: undefined }),
+    );
     await new SendEIP712StructImplemTask(apiMock, args).run();
     // THEN
     expect(apiMock.sendCommand.mock.calls).toHaveLength(2);
@@ -201,12 +212,16 @@ describe("SendEIP712StructImplemTask", () => {
       ]),
     };
     // WHEN
-    apiMock.sendCommand
-      .mockResolvedValueOnce(undefined)
-      .mockRejectedValueOnce(new Error("error"));
+    apiMock.sendCommand.mockResolvedValue(
+      CommandResultFactory({
+        error: new UnknownDeviceExchangeError("error"),
+      }),
+    );
     // THEN
     await expect(
       new SendEIP712StructImplemTask(apiMock, args).run(),
-    ).rejects.toStrictEqual(new Error("error"));
+    ).resolves.toStrictEqual(
+      CommandResultFactory({ error: new UnknownDeviceExchangeError("error") }),
+    );
   });
 });

@@ -2,32 +2,18 @@ import { Apdu } from "@api/apdu/model/Apdu";
 import { ApduBuilder, ApduBuilderArgs } from "@api/apdu/utils/ApduBuilder";
 import { ApduParser } from "@api/apdu/utils/ApduParser";
 import { Command } from "@api/command/Command";
-import { InvalidStatusWordError } from "@api/command/Errors";
+import {
+  CommandResult,
+  CommandResultFactory,
+} from "@api/command/model/CommandResult";
+import {
+  CommandErrors,
+  isCommandErrorCode,
+} from "@api/command/utils/CommandErrors";
 import { CommandUtils } from "@api/command/utils/CommandUtils";
+import { GlobalCommandErrorHandler } from "@api/command/utils/GlobalCommandError";
 import { ApduResponse } from "@api/device-session/ApduResponse";
-import { DeviceExchangeError } from "@api/Error";
-
-// [SHOULD]: Device Error Response, maybe we want to group them together somewhere
-// also might be worth to have other errors we could extends, eg: DeviceResponseError which could contain the error code
-export class ConsentFailedError implements DeviceExchangeError {
-  readonly _tag = "ConsentFailedError";
-  readonly originalError?: Error;
-  readonly errorCode: number = 0x5501;
-
-  constructor() {
-    this.originalError = new Error("Consent failed");
-  }
-}
-
-export class PinNotValidated implements DeviceExchangeError {
-  readonly _tag = "PinNotValidated";
-  readonly originalError?: Error;
-  readonly errorCode: number = 0x5502;
-
-  constructor() {
-    this.originalError = new Error("Pin not validated");
-  }
-}
+import { CommandErrorArgs, DeviceExchangeError } from "@api/Error";
 
 export type AppResponse = {
   readonly appEntryLength: number;
@@ -43,8 +29,25 @@ export type ListAppsArgs = {
   readonly isContinue: boolean;
 };
 
+export type ListAppsErrorCodes = "6624";
+
+const LIST_APP_ERRORS: CommandErrors<ListAppsErrorCodes> = {
+  "6624": { message: "Invalid state (List applications command must be sent)" },
+};
+
+export type ListAppsCommandResult = CommandResult<
+  ListAppsResponse,
+  ListAppsErrorCodes
+>;
+
+export class ListAppsCommandError extends DeviceExchangeError<ListAppsErrorCodes> {
+  constructor({ message, errorCode }: CommandErrorArgs<ListAppsErrorCodes>) {
+    super({ message, errorCode, tag: "ListAppsCommandError" });
+  }
+}
+
 export class ListAppsCommand
-  implements Command<ListAppsResponse, ListAppsArgs>
+  implements Command<ListAppsResponse, ListAppsArgs, ListAppsErrorCodes>
 {
   readonly args: ListAppsArgs;
 
@@ -62,35 +65,29 @@ export class ListAppsCommand
     return new ApduBuilder(listAppApduArgs).build();
   }
 
-  parseResponse(apduResponse: ApduResponse): ListAppsResponse {
-    const res: ListAppsResponse = [];
+  parseResponse(apduResponse: ApduResponse): ListAppsCommandResult {
+    const res = [];
     const parser = new ApduParser(apduResponse);
 
     if (!CommandUtils.isSuccessResponse(apduResponse)) {
-      const statusCode = apduResponse.statusCode;
-
-      // [SHOULD] Move this logic to common code error handling
-      if (statusCode[0] === 0x55) {
-        if (statusCode[1] === 0x01) {
-          throw new ConsentFailedError();
-        } else if (statusCode[1] === 0x02) {
-          throw new PinNotValidated();
-        }
-
-        // [ASK] How de we handle unsuccessful responses?
-        throw new InvalidStatusWordError(
-          `Unexpected status word: ${parser.encodeToHexaString(apduResponse.statusCode)}`,
-        );
+      const errorCode = parser.encodeToHexaString(apduResponse.statusCode);
+      if (isCommandErrorCode(errorCode, LIST_APP_ERRORS)) {
+        return CommandResultFactory({
+          error: new ListAppsCommandError({
+            ...LIST_APP_ERRORS[errorCode],
+            errorCode,
+          }),
+        });
       }
-
-      // [ASK] How de we handle unsuccessful responses?
-      throw new InvalidStatusWordError(
-        `Unexpected status word: ${parser.encodeToHexaString(apduResponse.statusCode)}`,
-      );
+      return CommandResultFactory({
+        error: GlobalCommandErrorHandler.handle(apduResponse),
+      });
     }
 
     if (apduResponse.data.length <= 0) {
-      return [];
+      return CommandResultFactory({
+        data: [],
+      });
     }
 
     // [NOTE] version of parsing, not used for now, skipping 1 byte
@@ -118,6 +115,8 @@ export class ListAppsCommand
       });
     }
 
-    return res;
+    return CommandResultFactory({
+      data: res,
+    });
   }
 }

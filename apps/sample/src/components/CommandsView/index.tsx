@@ -17,6 +17,8 @@ import {
   GetBatteryStatusCommand,
   GetBatteryStatusArgs,
   GetBatteryStatusResponse,
+  OpenAppErrorCodes,
+  ListAppsErrorCodes,
 } from "@ledgerhq/device-sdk-core";
 import { BatteryStatusType } from "@ledgerhq/device-sdk-core/src/api/command/os/GetBatteryStatusCommand.js";
 import { getValueSelectorFromEnum } from "./CommandForm";
@@ -28,7 +30,7 @@ export const CommandsView: React.FC<{ sessionId: string }> = ({
   const sdk = useSdk();
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const commands: CommandProps<any, any>[] = useMemo(
+  const commands: CommandProps<any, any, any>[] = useMemo(
     () => [
       {
         title: "List Apps",
@@ -41,7 +43,11 @@ export const CommandsView: React.FC<{ sessionId: string }> = ({
           });
         },
         initialValues: { isContinue: false },
-      } satisfies CommandProps<ListAppsArgs, ListAppsResponse>,
+      } satisfies CommandProps<
+        ListAppsArgs,
+        ListAppsResponse,
+        ListAppsErrorCodes
+      >,
       {
         title: "Open app",
         description: "Launch an app on the device",
@@ -53,7 +59,7 @@ export const CommandsView: React.FC<{ sessionId: string }> = ({
           });
         },
         initialValues: { appName: "" },
-      } satisfies CommandProps<OpenAppArgs, void>,
+      } satisfies CommandProps<OpenAppArgs, void, OpenAppErrorCodes>,
       // Close app command
       {
         title: "Close app",

@@ -1,4 +1,9 @@
 import {
+  CommandResultFactory,
+  isSuccessCommandResult,
+} from "@ledgerhq/device-sdk-core";
+
+import {
   SendEIP712StructImplemCommand,
   type SendEIP712StructImplemCommandArgs,
   StructImplemType,
@@ -76,7 +81,7 @@ describe("SendEIP712StructImplemCommand", () => {
     });
   });
   describe("parseResponse", () => {
-    it("should throw an error if the response status code is not success", () => {
+    it("should return an error if the response status code is not success", () => {
       // GIVEN
       const response = {
         data: new Uint8Array(),
@@ -88,9 +93,10 @@ describe("SendEIP712StructImplemCommand", () => {
         value: "ledger",
       });
       // THEN
-      expect(() => command.parseResponse(response)).toThrow();
+      const result = command.parseResponse(response);
+      expect(isSuccessCommandResult(result)).toBe(false);
     });
-    it("should not throw an error if the response status code is success", () => {
+    it("should not return an error if the response status code is success", () => {
       // GIVEN
       const response = {
         data: new Uint8Array(),
@@ -102,7 +108,9 @@ describe("SendEIP712StructImplemCommand", () => {
         value: "ledger",
       });
       // THEN
-      expect(() => command.parseResponse(response)).not.toThrow();
+      expect(command.parseResponse(response)).toStrictEqual(
+        CommandResultFactory({ data: undefined }),
+      );
     });
   });
 });

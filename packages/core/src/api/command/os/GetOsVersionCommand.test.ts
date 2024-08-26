@@ -1,12 +1,11 @@
-import { Command } from "@api/command/Command";
-import { InvalidStatusWordError } from "@api/command/Errors";
+import {
+  CommandResultFactory,
+  isSuccessCommandResult,
+} from "@api/command/model/CommandResult";
 import { DeviceModelId } from "@api/device/DeviceModel";
 import { ApduResponse } from "@api/device-session/ApduResponse";
 
-import {
-  GetOsVersionCommand,
-  GetOsVersionResponse,
-} from "./GetOsVersionCommand";
+import { GetOsVersionCommand } from "./GetOsVersionCommand";
 
 const GET_OS_VERSION_APDU = Uint8Array.from([0xe0, 0x01, 0x00, 0x00, 0x00]);
 
@@ -41,7 +40,7 @@ const STAX_RESPONSE_GOOD = new ApduResponse({
 });
 
 describe("GetOsVersionCommand", () => {
-  let command: Command<GetOsVersionResponse>;
+  let command: GetOsVersionCommand;
 
   beforeEach(() => {
     command = new GetOsVersionCommand();
@@ -62,16 +61,18 @@ describe("GetOsVersionCommand", () => {
           DeviceModelId.NANO_X,
         );
 
-        const expected = {
-          targetId: "33000004",
-          seVersion: "2.2.3",
-          seFlags: 3858759680,
-          mcuSephVersion: "2.30",
-          mcuBootloaderVersion: "1.16",
-          hwVersion: "00",
-          langId: "00",
-          recoverState: "00",
-        };
+        const expected = CommandResultFactory({
+          data: {
+            targetId: "33000004",
+            seVersion: "2.2.3",
+            seFlags: 3858759680,
+            mcuSephVersion: "2.30",
+            mcuBootloaderVersion: "1.16",
+            hwVersion: "00",
+            langId: "00",
+            recoverState: "00",
+          },
+        });
 
         expect(parsed).toStrictEqual(expected);
       });
@@ -84,16 +85,18 @@ describe("GetOsVersionCommand", () => {
           DeviceModelId.NANO_SP,
         );
 
-        const expected = {
-          targetId: "33100004",
-          seVersion: "1.1.1",
-          seFlags: 3858759680,
-          mcuSephVersion: "4.03",
-          mcuBootloaderVersion: "3.12",
-          hwVersion: "00",
-          langId: "00",
-          recoverState: "00",
-        };
+        const expected = CommandResultFactory({
+          data: {
+            targetId: "33100004",
+            seVersion: "1.1.1",
+            seFlags: 3858759680,
+            mcuSephVersion: "4.03",
+            mcuBootloaderVersion: "3.12",
+            hwVersion: "00",
+            langId: "00",
+            recoverState: "00",
+          },
+        });
 
         expect(parsed).toStrictEqual(expected);
       });
@@ -106,31 +109,32 @@ describe("GetOsVersionCommand", () => {
           DeviceModelId.STAX,
         );
 
-        const expected = {
-          targetId: "33200004",
-          seVersion: "1.3.0",
-          seFlags: 3858759680,
-          mcuSephVersion: "5.24",
-          mcuBootloaderVersion: "0.48",
-          hwVersion: "00",
-          langId: "00",
-          recoverState: "00",
-        };
+        const expected = CommandResultFactory({
+          data: {
+            targetId: "33200004",
+            seVersion: "1.3.0",
+            seFlags: 3858759680,
+            mcuSephVersion: "5.24",
+            mcuBootloaderVersion: "0.48",
+            hwVersion: "00",
+            langId: "00",
+            recoverState: "00",
+          },
+        });
 
         expect(parsed).toStrictEqual(expected);
       });
     });
 
     describe("Error handling", () => {
-      it("should throw an error if the response is not successful", () => {
+      it("should return an error if the response is not successful", () => {
         const response = new ApduResponse({
           statusCode: Uint8Array.from([0x6e, 0x80]),
           data: Uint8Array.from([]),
         });
+        const result = command.parseResponse(response, DeviceModelId.NANO_S);
 
-        expect(() =>
-          command.parseResponse(response, DeviceModelId.NANO_X),
-        ).toThrow(InvalidStatusWordError);
+        expect(isSuccessCommandResult(result)).toBeFalsy();
       });
     });
   });

@@ -1,5 +1,9 @@
 import { TypedDataClearSignContextSuccess } from "@ledgerhq/context-module";
-import { hexaStringToBuffer } from "@ledgerhq/device-sdk-core";
+import {
+  CommandResultFactory,
+  hexaStringToBuffer,
+  UnknownDeviceExchangeError,
+} from "@ledgerhq/device-sdk-core";
 import { Just, Nothing } from "purify-ts";
 
 import { ProvideTokenInformationCommand } from "@internal/app-binder/command/ProvideTokenInformationCommand";
@@ -210,6 +214,9 @@ describe("ProvideEIP712ContextTask", () => {
       clearSignContext: Nothing,
     };
     // WHEN
+    apiMock.sendCommand.mockResolvedValue(
+      CommandResultFactory({ data: undefined }),
+    );
     await new ProvideEIP712ContextTask(apiMock, args).run();
 
     // THEN
@@ -317,31 +324,34 @@ describe("ProvideEIP712ContextTask", () => {
       clearSignContext: Just(TEST_CLEAR_SIGN_CONTEXT),
     };
     apiMock.sendCommand
-      .mockResolvedValueOnce(undefined)
-      .mockResolvedValueOnce(undefined)
-      .mockResolvedValueOnce(undefined)
-      .mockResolvedValueOnce(undefined)
-      .mockResolvedValueOnce(undefined)
-      .mockResolvedValueOnce(undefined)
-      .mockResolvedValueOnce(undefined)
-      .mockResolvedValueOnce(undefined)
-      .mockResolvedValueOnce(undefined)
-      .mockResolvedValueOnce(undefined)
-      .mockResolvedValueOnce(undefined)
-      .mockResolvedValueOnce(undefined)
-      .mockResolvedValueOnce(undefined)
-      .mockResolvedValueOnce(undefined)
-      .mockResolvedValueOnce(undefined)
-      .mockResolvedValueOnce(undefined)
-      .mockResolvedValueOnce(undefined)
-      .mockResolvedValueOnce(undefined)
-      .mockResolvedValueOnce(undefined)
-      .mockResolvedValueOnce(undefined)
-      .mockResolvedValueOnce({ tokenIndex: 4 }) // First token provided
-      .mockResolvedValueOnce(undefined)
-      .mockResolvedValueOnce(undefined)
-      .mockResolvedValueOnce({ tokenIndex: 5 }); // Second token provided
+      .mockResolvedValueOnce(CommandResultFactory({ data: undefined }))
+      .mockResolvedValueOnce(CommandResultFactory({ data: undefined }))
+      .mockResolvedValueOnce(CommandResultFactory({ data: undefined }))
+      .mockResolvedValueOnce(CommandResultFactory({ data: undefined }))
+      .mockResolvedValueOnce(CommandResultFactory({ data: undefined }))
+      .mockResolvedValueOnce(CommandResultFactory({ data: undefined }))
+      .mockResolvedValueOnce(CommandResultFactory({ data: undefined }))
+      .mockResolvedValueOnce(CommandResultFactory({ data: undefined }))
+      .mockResolvedValueOnce(CommandResultFactory({ data: undefined }))
+      .mockResolvedValueOnce(CommandResultFactory({ data: undefined }))
+      .mockResolvedValueOnce(CommandResultFactory({ data: undefined }))
+      .mockResolvedValueOnce(CommandResultFactory({ data: undefined }))
+      .mockResolvedValueOnce(CommandResultFactory({ data: undefined }))
+      .mockResolvedValueOnce(CommandResultFactory({ data: undefined }))
+      .mockResolvedValueOnce(CommandResultFactory({ data: undefined }))
+      .mockResolvedValueOnce(CommandResultFactory({ data: undefined }))
+      .mockResolvedValueOnce(CommandResultFactory({ data: undefined }))
+      .mockResolvedValueOnce(CommandResultFactory({ data: undefined }))
+      .mockResolvedValueOnce(CommandResultFactory({ data: undefined }))
+      .mockResolvedValueOnce(CommandResultFactory({ data: undefined }))
+      .mockResolvedValueOnce(CommandResultFactory({ data: { tokenIndex: 4 } })) // First token provided
+      .mockResolvedValueOnce(CommandResultFactory({ data: undefined }))
+      .mockResolvedValueOnce(CommandResultFactory({ data: undefined }))
+      .mockResolvedValueOnce(CommandResultFactory({ data: { tokenIndex: 5 } })); // Second token provided
     // WHEN
+    apiMock.sendCommand.mockResolvedValue(
+      CommandResultFactory({ data: undefined }),
+    );
     await new ProvideEIP712ContextTask(apiMock, args).run();
 
     // THEN
@@ -505,14 +515,20 @@ describe("ProvideEIP712ContextTask", () => {
       message: TEST_MESSAGE_VALUES,
       clearSignContext: Just(TEST_CLEAR_SIGN_CONTEXT),
     };
-    apiMock.sendCommand
-      .mockResolvedValueOnce({ tokenIndex: 4 })
-      .mockRejectedValueOnce(new Error("error"));
+    apiMock.sendCommand.mockResolvedValueOnce(
+      CommandResultFactory({
+        error: new UnknownDeviceExchangeError("error"),
+      }),
+    );
     // WHEN
     const promise = new ProvideEIP712ContextTask(apiMock, args).run();
 
     // THEN
-    await expect(promise).rejects.toStrictEqual(new Error("error"));
+    await expect(promise).resolves.toStrictEqual(
+      CommandResultFactory({
+        error: new UnknownDeviceExchangeError("error"),
+      }),
+    );
   });
 
   it("Error when sending struct definitions", async () => {
@@ -524,14 +540,20 @@ describe("ProvideEIP712ContextTask", () => {
       clearSignContext: Just(TEST_CLEAR_SIGN_CONTEXT),
     };
     apiMock.sendCommand
-      .mockResolvedValueOnce({ tokenIndex: 4 })
-      .mockResolvedValueOnce({ tokenIndex: 5 })
-      .mockResolvedValueOnce(undefined)
-      .mockRejectedValueOnce(new Error("error"));
+      .mockResolvedValueOnce(CommandResultFactory({ data: { tokenIndex: 4 } }))
+      .mockResolvedValueOnce(CommandResultFactory({ data: { tokenIndex: 5 } }))
+      .mockResolvedValueOnce(CommandResultFactory({ data: undefined }))
+      .mockResolvedValueOnce(
+        CommandResultFactory({
+          error: new UnknownDeviceExchangeError("error"),
+        }),
+      );
     // WHEN
     const promise = new ProvideEIP712ContextTask(apiMock, args).run();
 
     // THEN
-    await expect(promise).rejects.toStrictEqual(new Error("error"));
+    await expect(promise).resolves.toStrictEqual(
+      CommandResultFactory({ error: new UnknownDeviceExchangeError("error") }),
+    );
   });
 });

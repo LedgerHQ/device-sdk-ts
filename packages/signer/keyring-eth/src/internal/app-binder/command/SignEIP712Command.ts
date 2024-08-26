@@ -6,7 +6,10 @@ import {
   ApduParser,
   ApduResponse,
   type Command,
+  CommandResult,
+  CommandResultFactory,
   CommandUtils,
+  GlobalCommandErrorHandler,
   InvalidStatusWordError,
 } from "@ledgerhq/device-sdk-core";
 import { Maybe } from "purify-ts";
@@ -64,20 +67,22 @@ export class SignEIP712Command
     return builder.build();
   }
 
-  parseResponse(apduResponse: ApduResponse): SignEIP712CommandResponse {
+  parseResponse(
+    apduResponse: ApduResponse,
+  ): CommandResult<SignEIP712CommandResponse> {
     const parser = new ApduParser(apduResponse);
 
     if (!CommandUtils.isSuccessResponse(apduResponse)) {
-      throw new InvalidStatusWordError(
-        `Unexpected status word: ${parser.encodeToHexaString(
-          apduResponse.statusCode,
-        )}`,
-      );
+      return CommandResultFactory({
+        error: GlobalCommandErrorHandler.handle(apduResponse),
+      });
     }
 
     const v = parser.extract8BitUInt();
     if (!v) {
-      throw new InvalidStatusWordError("V is missing");
+      return CommandResultFactory({
+        error: new InvalidStatusWordError("V is missing"),
+      });
     }
 
     const r = parser.encodeToHexaString(
@@ -85,7 +90,9 @@ export class SignEIP712Command
       true,
     );
     if (!r) {
-      throw new InvalidStatusWordError("R is missing");
+      return CommandResultFactory({
+        error: new InvalidStatusWordError("R is missing"),
+      });
     }
 
     const s = parser.encodeToHexaString(
@@ -93,13 +100,17 @@ export class SignEIP712Command
       true,
     );
     if (!s) {
-      throw new InvalidStatusWordError("S is missing");
+      return CommandResultFactory({
+        error: new InvalidStatusWordError("S is missing"),
+      });
     }
 
-    return {
-      r,
-      s,
-      v,
-    };
+    return CommandResultFactory({
+      data: {
+        r,
+        s,
+        v,
+      },
+    });
   }
 }

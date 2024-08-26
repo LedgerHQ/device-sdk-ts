@@ -1,3 +1,5 @@
+import { CommandErrorResult } from "@api/command/model/CommandResult";
+import { OpenAppErrorCodes } from "@api/command/os/OpenAppCommand";
 import { DeviceActionState } from "@api/device-action/model/DeviceActionState";
 import { UserInteractionRequired } from "@api/device-action/model/UserInteractionRequired";
 import {
@@ -5,7 +7,6 @@ import {
   DeviceNotOnboardedError,
   UnknownDAError,
 } from "@api/device-action/os/Errors";
-import { SdkError } from "@api/Error";
 
 export type OpenAppDAOutput = void;
 
@@ -17,7 +18,7 @@ export type OpenAppDAError =
   | DeviceNotOnboardedError
   | DeviceLockedError
   | UnknownDAError
-  | SdkError; /// TODO: remove, we should have an exhaustive list of errors
+  | CommandErrorResult<OpenAppErrorCodes | void>["error"];
 
 export type OpenAppDARequiredInteraction =
   | UserInteractionRequired.None
