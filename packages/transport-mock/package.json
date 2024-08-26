@@ -26,7 +26,9 @@
   },
   "scripts": {
     "build": "zx scripts/build.mjs",
-    "dev": "tsc --watch",
+    "dev": "concurrently \"pnpm dev:esm\" \"pnpm dev:cjs\"",
+    "dev:esm": "concurrently \"tsc --watch -p tsconfig.esm.json\" \"tsc-alias --watch -p tsconfig.esm.json\"",
+    "dev:cjs": "concurrently \"tsc --watch -p tsconfig.cjs.json\" \"tsc-alias --watch -p tsconfig.cjs.json\"",
     "lint": "eslint",
     "lint:fix": "pnpm lint --fix",
     "prettier": "prettier . --check",

@@ -17,5 +17,5 @@ const run = async () => await Promise.all([buildEsm(), builCjs()]);
 
 run().catch((e) => {
   console.error(e);
-  process.exit(e.errorCode)
+  process.exit(e.errorCode);
 });
