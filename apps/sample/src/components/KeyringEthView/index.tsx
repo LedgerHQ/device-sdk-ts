@@ -6,6 +6,9 @@ import {
   GetAddressDAError,
   GetAddressDAIntermediateValue,
   GetAddressDAOutput,
+  SignPersonalMessageDAError,
+  SignPersonalMessageDAIntermediateValue,
+  SignPersonalMessageDAOutput,
   SignTypedDataDAError,
   SignTypedDataDAIntermediateValue,
   SignTypedDataDAOutput,
@@ -55,6 +58,26 @@ export const KeyringEthView: React.FC<{ sessionId: string }> = ({
         },
         GetAddressDAError,
         GetAddressDAIntermediateValue
+      >,
+      {
+        title: "Sign Message",
+        description:
+          "Perform all the actions necessary to sign a message with the device",
+        executeDeviceAction: ({ derivationPath, message }) => {
+          return keyring.signMessage(derivationPath, message);
+        },
+        initialValues: {
+          derivationPath: "44'/60'/0'/0/0",
+          message: "Hello World",
+        },
+      } satisfies DeviceActionProps<
+        SignPersonalMessageDAOutput,
+        {
+          derivationPath: string;
+          message: string;
+        },
+        SignPersonalMessageDAError,
+        SignPersonalMessageDAIntermediateValue
       >,
       {
         title: "Sign typed message",

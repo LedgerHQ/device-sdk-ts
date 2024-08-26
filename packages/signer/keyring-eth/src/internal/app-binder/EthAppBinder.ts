@@ -5,6 +5,7 @@ import { UserInteractionRequired } from "@ledgerhq/device-sdk-core";
 import { inject, injectable } from "inversify";
 
 import { GetAddressDAReturnType } from "@api/app-binder/GetAddressDeviceActionTypes";
+import { SignPersonalMessageDAReturnType } from "@api/app-binder/SignPersonalMessageDeviceActionTypes";
 import { SignTypedDataDAReturnType } from "@api/app-binder/SignTypedDataDeviceActionTypes";
 import { TypedData } from "@api/model/TypedData";
 import { SignTypedDataDeviceAction } from "@internal/app-binder/device-action/SignTypedData/SignTypedDataDeviceAction";
@@ -12,6 +13,7 @@ import { externalTypes } from "@internal/externalTypes";
 import { TypedDataParserService } from "@internal/typed-data/service/TypedDataParserService";
 
 import { GetAddressCommand } from "./command/GetAddressCommand";
+import { SignPersonalMessageDeviceAction } from "./device-action/SignPersonalMessage/SignPersonalMessageDeviceAction";
 
 @injectable()
 export class EthAppBinder {
@@ -43,6 +45,21 @@ export class EthAppBinder {
           requiredUserInteraction: args.checkOnDevice
             ? UserInteractionRequired.VerifyAddress
             : UserInteractionRequired.None,
+        },
+      }),
+    });
+  }
+
+  signPersonalMessage(args: {
+    derivationPath: string;
+    message: string;
+  }): SignPersonalMessageDAReturnType {
+    return this._sdk.executeDeviceAction({
+      sessionId: this._sessionId,
+      deviceAction: new SignPersonalMessageDeviceAction({
+        input: {
+          derivationPath: args.derivationPath,
+          message: args.message,
         },
       }),
     });

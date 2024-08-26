@@ -1,4 +1,11 @@
 export * from "@api/app-binder/GetAddressDeviceActionTypes";
+export type {
+  SignPersonalMessageDAError,
+  SignPersonalMessageDAInput,
+  SignPersonalMessageDAIntermediateValue,
+  SignPersonalMessageDAOutput,
+  SignPersonalMessageDAState,
+} from "@api/app-binder/SignPersonalMessageDeviceActionTypes";
 export {
   type SignTypedDataDAError,
   type SignTypedDataDAInput,

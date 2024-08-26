@@ -15,28 +15,19 @@ import {
 import { Just, Maybe, Nothing } from "purify-ts";
 
 import { Signature } from "@api/model/Signature";
-import { DerivationPathUtils } from "@internal/shared/utils/DerivationPathUtils";
 
-const MAX_CHUNK_SIZE = 150;
-const PATH_SIZE = 4;
-const MESSAGE_LENGTH_SIZE = 4;
-const DERIVATIONS_COUNT_SIZE = 1;
 const R_LENGTH = 32;
 const S_LENGTH = 32;
 
 export type SignPersonalMessageCommandArgs = {
   /**
-   * The derivation path to use to sign the transaction.
+   * The data to sign in max 150 bytes chunks
    */
-  readonly derivationPath: string;
+  readonly data: Uint8Array;
   /**
-   * The complete serialized transaction data.
+   * If this is the first chunk of the message
    */
-  readonly message: string;
-  /**
-   * The index of the chunk to sign.
-   */
-  readonly index: number;
+  readonly isFirstChunk: boolean;
 };
 
 export type SignPersonalMessageCommandResponse = Maybe<Signature>;
@@ -52,42 +43,17 @@ export class SignPersonalMessageCommand
   }
 
   getApdu(): Apdu {
-    const { derivationPath, message, index } = this.args;
+    const { data, isFirstChunk } = this.args;
     const signPersonalMessageArgs: ApduBuilderArgs = {
       cla: 0xe0,
       ins: 0x08,
-      p1: index === 0 ? 0x00 : 0x80,
+      p1: isFirstChunk ? 0x00 : 0x80,
       p2: 0x00,
     };
-    const paths = DerivationPathUtils.splitPath(derivationPath);
-    const builder = new ApduBuilder(signPersonalMessageArgs);
-    const messageFirstChunkIndex =
-      MAX_CHUNK_SIZE -
-      paths.length * PATH_SIZE -
-      DERIVATIONS_COUNT_SIZE -
-      MESSAGE_LENGTH_SIZE;
 
-    if (index === 0) {
-      // add derivation paths count to the first packet
-      builder.add8BitUIntToData(paths.length);
-      // add every derivation path
-      paths.forEach((path) => {
-        builder.add32BitUIntToData(path);
-      });
-      // add message length
-      builder.add32BitUIntToData(message.length);
-      // add 150 bytes of data minus the count of derivation, the path size and the message length
-      builder.addAsciiStringToData(message.slice(0, messageFirstChunkIndex));
-    } else {
-      // add 150 bytes of data starting from the second packet
-      builder.addAsciiStringToData(
-        message.slice(
-          messageFirstChunkIndex + (index - 1) * MAX_CHUNK_SIZE,
-          messageFirstChunkIndex + index * MAX_CHUNK_SIZE,
-        ),
-      );
-    }
-    return builder.build();
+    return new ApduBuilder(signPersonalMessageArgs)
+      .addBufferToData(data)
+      .build();
   }
 
   parseResponse(
