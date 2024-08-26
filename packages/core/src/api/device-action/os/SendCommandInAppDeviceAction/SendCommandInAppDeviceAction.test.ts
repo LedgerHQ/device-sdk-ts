@@ -3,6 +3,7 @@ import { assign, createMachine } from "xstate";
 
 import { Apdu } from "@api/apdu/model/Apdu";
 import { ApduBuilder } from "@api/apdu/utils/ApduBuilder";
+import { CommandResultFactory } from "@api/command/model/CommandResult";
 import { makeDeviceActionInternalApiMock } from "@api/device-action/__test-utils__/makeInternalApi";
 import { testDeviceActionStates } from "@api/device-action/__test-utils__/testDeviceActionStates";
 import {
@@ -13,6 +14,7 @@ import { UserInteractionRequired } from "@api/device-action/model/UserInteractio
 import { UnknownDAError } from "@api/device-action/os/Errors";
 import { OpenAppDeviceAction } from "@api/device-action/os/OpenAppDeviceAction/OpenAppDeviceAction";
 import { Command } from "@api/types";
+import { UnknownDeviceExchangeError } from "@root/src";
 
 import { SendCommandInAppDeviceAction } from "./SendCommandInAppDeviceAction";
 import {
@@ -77,7 +79,6 @@ describe("SendCommandInAppDeviceAction", () => {
     aNumber: 5678,
     aString: "mockedResponseString",
   };
-
   beforeEach(() => {
     jest.resetAllMocks();
   });
@@ -85,6 +86,9 @@ describe("SendCommandInAppDeviceAction", () => {
   describe("without mocking extractDependencies", () => {
     it("should call sendCommand on internalApi with the correct parameters", async () => {
       setupOpenAppDAMock();
+      apiSendCommandMock.mockResolvedValue(
+        CommandResultFactory({ data: undefined }),
+      );
 
       const deviceAction = new SendCommandInAppDeviceAction({
         input: {
@@ -149,7 +153,11 @@ describe("SendCommandInAppDeviceAction", () => {
     it("should error and output an error if the send command fails", (done) => {
       setupOpenAppDAMock();
 
-      sendMyCommand.mockRejectedValue(new Error("Mocked error"));
+      sendMyCommand.mockResolvedValue(
+        CommandResultFactory({
+          error: new UnknownDeviceExchangeError("Mocked error"),
+        }),
+      );
 
       const deviceAction = new SendCommandInAppDeviceAction({
         input: {
@@ -184,7 +192,7 @@ describe("SendCommandInAppDeviceAction", () => {
         },
         {
           status: DeviceActionStatus.Error,
-          error: new UnknownDAError("Error while sending the custom command"),
+          error: new UnknownDeviceExchangeError("Mocked error"),
         },
       ];
 
@@ -201,7 +209,9 @@ describe("SendCommandInAppDeviceAction", () => {
     it("should succeed and output the command result if the send command succeeds", (done) => {
       setupOpenAppDAMock();
 
-      sendMyCommand.mockResolvedValue(mockedCommandResponse);
+      sendMyCommand.mockResolvedValue(
+        CommandResultFactory({ data: mockedCommandResponse }),
+      );
 
       const deviceAction = new SendCommandInAppDeviceAction({
         input: {
@@ -272,7 +282,7 @@ class TestCommand implements Command<MyCommandResponse, MyCommandParams> {
       .build();
   }
   parseResponse() {
-    return { aNumber: 1, aString: "aString" };
+    return CommandResultFactory({ data: { aNumber: 1, aString: "aString" } });
   }
 }
 

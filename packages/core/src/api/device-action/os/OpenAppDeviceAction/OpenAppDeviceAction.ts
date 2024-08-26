@@ -1,9 +1,19 @@
 import { Left, Right } from "purify-ts";
 import { assign, fromPromise, setup } from "xstate";
 
-import { CloseAppCommand } from "@api/command/os/CloseAppCommand";
-import { GetAppAndVersionCommand } from "@api/command/os/GetAppAndVersionCommand";
-import { OpenAppCommand } from "@api/command/os/OpenAppCommand";
+import { isSuccessCommandResult } from "@api/command/model/CommandResult";
+import {
+  CloseAppCommand,
+  CloseAppCommandResult,
+} from "@api/command/os/CloseAppCommand";
+import {
+  GetAppAndVersionCommand,
+  GetAppAndVersionCommandResult,
+} from "@api/command/os/GetAppAndVersionCommand";
+import {
+  OpenAppCommand,
+  OpenAppCommandResult,
+} from "@api/command/os/OpenAppCommand";
 import { DeviceStatus } from "@api/device/DeviceStatus";
 import { InternalApi } from "@api/device-action/DeviceAction";
 import { UserInteractionRequired } from "@api/device-action/model/UserInteractionRequired";
@@ -31,9 +41,11 @@ type OpenAppStateMachineInternalState = {
 };
 
 export type MachineDependencies = {
-  readonly getAppAndVersion: () => Promise<{ app: string; version: string }>;
-  readonly closeApp: () => Promise<void>;
-  readonly openApp: (arg0: { input: { appName: string } }) => Promise<void>;
+  readonly getAppAndVersion: () => Promise<GetAppAndVersionCommandResult>;
+  readonly closeApp: () => Promise<CloseAppCommandResult>;
+  readonly openApp: (arg0: {
+    input: { appName: string };
+  }) => Promise<OpenAppCommandResult>;
   readonly getDeviceSessionState: () => DeviceSessionState;
   readonly isDeviceOnboarded: () => boolean;
 };
@@ -111,6 +123,7 @@ export class OpenAppDeviceAction extends XStateDeviceAction<
             throw new Error("context.currentlyRunningApp === null");
           return context._internalState.currentlyRunningApp === "BOLOS";
         },
+        hasError: ({ context }) => context._internalState.error !== null,
       },
       actions: {
         assignErrorDeviceNotOnboarded: assign({
@@ -156,7 +169,7 @@ export class OpenAppDeviceAction extends XStateDeviceAction<
         }),
       },
     }).createMachine({
-      /** @xstate-layout N4IgpgJg5mDOIC5QHkAOYB2BBVqAiYAbgJYDGYWpALsQPYYB0BJ5ASmAIYQCeAxANoAGALqJQqWrGI16YkAA9EAdgCMDFQE4ALIMEBmLQDZj+gKwaANCG6IVADi3q7xoyq0qPG0wF9vVtJg4+ERkFNR0jMgYAEa0HABOEMQYUADCABZgpADWAiJyElIyGHKKCBoMShqqgloATG56pnoGVjYIeoJKDHamdnrOqu5KTT5+IAHYuMyhlMUMUbEJSSkZWbn8KqJIIIXSEaWIdYZ1DDp6hn3GnUpavW1Hveotel51pkrmGnW+-uhTwRYYXmABlaDlkmlMjk8ttxJJ9rIdmU3AwNF5TJo9FUTipaloHgh6oYGIJTOTarcRloNIZfhN-kEZuQ5hEGGCIatoRstgUEcVDghjqctK47EolIJqvVaYTzgwWmS3HUNOLnL16ZMmSEWeF6AwggAbMgcYpYQgcYiGjjRQ1gXgQehgBjJQi0bLOrXTHXAtlGk1mi1Wm12hCu8GmiJCYTRvlFA7I5SkhrOQwaFRNZwaMmEy7dcxdXQ6D7NPSaxneoGs-X+0iR+jmy3W232sDxeK0eIMVDWqgAM07AFsFhXAbM9Yxa-XsEHm6Hw3XitHYzs9gLE0LLqSWloDHY6nYvKNCc1TOpjtpDLo6voGuXApXx-Mp8U1jCV-D40jQGU9GipQMnxKO8FyGCohiEr0f7gYIdiCGm9SmEYSj3gCzK+jWuDGouERvjycK7PyCY-kcIyVO4gjgaYLgqhB1iIFB6hXs4WIqKo4GodqVYTkwHCwOkSyJHhsJxoiJQbu8ah6CBej2AeIzvISeLwQwlxsRoBjwVe5icY+urzHgfECXEQncgIvKrkR34KIgphkqShj9PYGmfHBlj0QgykkmpIwOGxoqwbpY76WyqSGpIFBYQGEQOk6LoYG6Hojg+wUYYwYURS+ERhglEZLiIH6EV+4kkUSdh2Aq3zgX5FzOaYSnOZUKiYroqgDIYu5Beh1bpeFsCRT20X0LwbYdl2PamgO8TDl6qU9QwGX9Vl9A5W6OH0Mu+SWcVgrARV1Fweq9j6PYSnwWoqiluKXiGJ8ZbjLN3U8bN2HTrFGDOuGSWPT680vUNGCrXlUYFVtn5iYKdTAQw5jAR8rFQ3USlaEhCradRHjtbJXW-c9o6vcUI3tp23a9lNM2jk98z-etgMLtOm0EWuxE2QgYGOLB9S9F0aaHnYSmyacdQqrU2nVCcWg49xz5RbT7BcHwhXM9ZZSqKplFIcBAy9DiSlXt07wSu4TToh193jBgtAQHAcg-dLLPKyVrMALSo5K0mwS4lFkkjHkXD0XifFewtuLddIPZTuMGT68s8KJ66le4MPfKKkoSniN4qEpdR-qqXhSmSpi0X0UtPmyiwmSsULrPHLNlDnpJKLdGluFUWZaEohJ1B3MN4ioB6yZKcH3X8KVU2yHLZJCeG1yriDYk4YH7sYxg3qohIXGedkSgecnaAYpchZhg2042wYtrPTtlM7JLuzeqY6HimL8x5zSnA45XwTnEqdCPDJj1HP0stpwz22hDCSjhvhuQHk3bE2Z6oeSUHBHoghjgZglJROwbFD5pV4vxQSEBQHgwTqzYUqkLyqG7s5fchJtAXSaB3C4LRzDNBwfNRaA0CYOyslfRAdw-wjBxLSFGXRhadw8niaGzhhYNB3FKd4bC8YpS4dZR2kM+i93JMYKoUpsxZwkSqaC-ddBdDgq1FCEcAH22PiojAsd2jELrkcLeOcUb2HqLuJC8ElIUjRB8To4pYES0UfMAAygAV1IOQWA8AwEkLKDoVSHV4Jc1TOYAkEiXAMBzoBNiN4bxjFHmhQB+oACixN4iX0FN8XO1QmgjBaI5C4esOrZJaOKPJqDKS+F8EAA */
+      /** @xstate-layout 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 */
       id: "OpenAppDeviceAction",
       initial: "DeviceReady",
       context: ({ input }) => {
@@ -220,12 +233,21 @@ export class OpenAppDeviceAction extends XStateDeviceAction<
           invoke: {
             src: "getAppAndVersion",
             onDone: {
-              target: "ApplicationCheck",
+              target: "ApplicationAvailableResultCheck",
               actions: assign({
-                _internalState: (_) => ({
-                  ..._.context._internalState,
-                  currentlyRunningApp: _.event.output.app,
-                }),
+                _internalState: (_) => {
+                  if (isSuccessCommandResult(_.event.output)) {
+                    return {
+                      ..._.context._internalState,
+                      currentlyRunningApp: _.event.output.data.name,
+                    };
+                  } else {
+                    return {
+                      ..._.context._internalState,
+                      error: _.event.output.error,
+                    };
+                  }
+                },
               }),
             },
             onError: {
@@ -233,6 +255,18 @@ export class OpenAppDeviceAction extends XStateDeviceAction<
               actions: "assignErrorFromEvent",
             },
           },
+        },
+
+        ApplicationAvailableResultCheck: {
+          always: [
+            {
+              target: "Error",
+              guard: "hasError",
+            },
+            {
+              target: "ApplicationCheck",
+            },
+          ],
         },
 
         ApplicationCheck: {
@@ -261,13 +295,37 @@ export class OpenAppDeviceAction extends XStateDeviceAction<
           invoke: {
             src: "closeApp",
             onDone: {
-              target: "OpenApplication",
+              target: "CloseApplicationResultCheck",
+              actions: assign({
+                _internalState: (_) => {
+                  if (isSuccessCommandResult(_.event.output)) {
+                    return {
+                      ..._.context._internalState,
+                      currentlyRunningApp: "BOLOS",
+                    };
+                  } else {
+                    return {
+                      ..._.context._internalState,
+                      error: _.event.output.error,
+                    };
+                  }
+                },
+              }),
             },
             onError: {
               target: "Error",
               actions: "assignErrorFromEvent",
             },
           },
+        },
+        CloseApplicationResultCheck: {
+          always: [
+            {
+              target: "Error",
+              guard: "hasError",
+            },
+            "OpenApplication",
+          ],
         },
 
         OpenApplication: {
@@ -278,12 +336,21 @@ export class OpenAppDeviceAction extends XStateDeviceAction<
             src: "openApp",
             input: ({ context }) => ({ appName: context.input.appName }),
             onDone: {
-              target: "ApplicationReady",
+              target: "OpenApplicationResultCheck",
               actions: assign({
-                _internalState: (_) => ({
-                  ..._.context._internalState,
-                  currentlyRunningApp: _.context.input.appName,
-                }),
+                _internalState: (_) => {
+                  if (isSuccessCommandResult(_.event.output)) {
+                    return {
+                      ..._.context._internalState,
+                      currentlyRunningApp: _.context.input.appName,
+                    };
+                  } else {
+                    return {
+                      ..._.context._internalState,
+                      error: _.event.output.error,
+                    };
+                  }
+                },
               }),
             },
             onError: {
@@ -291,6 +358,15 @@ export class OpenAppDeviceAction extends XStateDeviceAction<
               actions: "assignErrorFromEvent",
             },
           },
+        },
+        OpenApplicationResultCheck: {
+          always: [
+            {
+              target: "Error",
+              guard: "hasError",
+            },
+            "ApplicationReady",
+          ],
         },
 
         ApplicationReady: {
@@ -318,9 +394,7 @@ export class OpenAppDeviceAction extends XStateDeviceAction<
 
   extractDependencies(internalApi: InternalApi): MachineDependencies {
     const getAppAndVersion = async () =>
-      internalApi
-        .sendCommand(new GetAppAndVersionCommand())
-        .then((res) => ({ app: res.name, version: res.version }));
+      internalApi.sendCommand(new GetAppAndVersionCommand());
     const closeApp = async () => internalApi.sendCommand(new CloseAppCommand());
     const openApp = async (arg0: { input: { appName: string } }) =>
       internalApi.sendCommand(

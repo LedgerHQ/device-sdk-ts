@@ -1,6 +1,7 @@
 import { Left } from "purify-ts";
 
 import { Command } from "@api/command/Command";
+import { CommandResultStatus } from "@api/command/model/CommandResult";
 import { deviceSessionStubBuilder } from "@internal/device-session/model/DeviceSession.stub";
 import { DefaultDeviceSessionService } from "@internal/device-session/service/DefaultDeviceSessionService";
 import { DeviceSessionService } from "@internal/device-session/service/DeviceSessionService";
@@ -47,16 +48,20 @@ describe("SendCommandUseCase", () => {
     sessionService.addDeviceSession(deviceSession);
     const useCase = new SendCommandUseCase(sessionService, () => logger);
 
-    jest
-      .spyOn(deviceSession, "sendCommand")
-      .mockResolvedValue({ status: "success" });
+    jest.spyOn(deviceSession, "sendCommand").mockResolvedValue({
+      status: CommandResultStatus.Success,
+      data: undefined,
+    });
 
-    const response = await useCase.execute<{ status: string }>({
+    const response = await useCase.execute<{ status: string }, void, void>({
       sessionId: fakeSessionId,
       command,
     });
 
-    expect(response).toStrictEqual({ status: "success" });
+    expect(response).toStrictEqual({
+      status: CommandResultStatus.Success,
+      data: undefined,
+    });
   });
 
   it("should throw an error if the session is not found", async () => {
@@ -65,7 +70,7 @@ describe("SendCommandUseCase", () => {
       .spyOn(sessionService, "getDeviceSessionById")
       .mockReturnValue(Left({ _tag: "DeviceSessionNotFound" }));
 
-    const res = useCase.execute<{ status: string }>({
+    const res = useCase.execute<{ status: string }, void, void>({
       sessionId: fakeSessionId,
       command,
     });

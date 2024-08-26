@@ -1,6 +1,6 @@
 import {
   ApduResponse,
-  InvalidStatusWordError,
+  isSuccessCommandResult,
 } from "@ledgerhq/device-sdk-core";
 
 import {
@@ -29,36 +29,29 @@ describe("ProvideDomainNameCommand", () => {
   });
 
   describe("parseResponse", () => {
-    it("should throw an error if the response status code is invalid", () => {
+    it("should return an error if the response status code is invalid", () => {
       // GIVEN
       const response: ApduResponse = {
         data: Buffer.from([]),
         statusCode: Buffer.from([0x6a, 0x80]), // Invalid status code
       };
       // WHEN
-      const command = new ProvideDomainNameCommand({
-        data: "",
-        index: 0,
-      });
+      const command = new ProvideDomainNameCommand({ data: "", index: 0 });
+      const result = command.parseResponse(response);
       // THEN
-      expect(() => command.parseResponse(response)).toThrow(
-        InvalidStatusWordError,
-      );
+      expect(isSuccessCommandResult(result)).toBe(false);
     });
 
-    it("should not throw if the response status code is correct", () => {
+    it("should return success if the response status code is correct", () => {
       // GIVEN
       const response: ApduResponse = {
         data: Buffer.from([]),
         statusCode: Buffer.from([0x90, 0x00]), // Success status code
       };
       // WHEN
-      const command = new ProvideDomainNameCommand({
-        data: "",
-        index: 0,
-      });
-      // THEN
-      expect(() => command.parseResponse(response)).not.toThrow();
+      const command = new ProvideDomainNameCommand({ data: "", index: 0 });
+      const result = command.parseResponse(response);
+      expect(isSuccessCommandResult(result)).toBe(true);
     });
   });
 });

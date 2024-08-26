@@ -6,7 +6,10 @@ import {
   ApduParser,
   ApduResponse,
   type Command,
+  CommandResult,
+  CommandResultFactory,
   CommandUtils,
+  GlobalCommandErrorHandler,
   InvalidStatusWordError,
 } from "@ledgerhq/device-sdk-core";
 
@@ -17,7 +20,7 @@ export type GetChallengeCommandResponse = {
 };
 
 export class GetChallengeCommand
-  implements Command<GetChallengeCommandResponse, void>
+  implements Command<GetChallengeCommandResponse>
 {
   constructor() {}
 
@@ -31,28 +34,31 @@ export class GetChallengeCommand
     return new ApduBuilder(getChallengeArgs).build();
   }
 
-  parseResponse(response: ApduResponse): GetChallengeCommandResponse {
-    const parser = new ApduParser(response);
-
-    // TODO: handle the error correctly using a generic error handler
+  parseResponse(
+    response: ApduResponse,
+  ): CommandResult<GetChallengeCommandResponse> {
     if (!CommandUtils.isSuccessResponse(response)) {
-      throw new InvalidStatusWordError(
-        `Unexpected status word: ${parser.encodeToHexaString(
-          response.statusCode,
-        )}`,
-      );
+      return CommandResultFactory({
+        error: GlobalCommandErrorHandler.handle(response),
+      });
     }
 
+    const parser = new ApduParser(response);
+
     if (parser.testMinimalLength(CHALLENGE_LENGTH) === false) {
-      throw new InvalidStatusWordError("Challenge key is missing");
+      return CommandResultFactory({
+        error: new InvalidStatusWordError("Challenge key is missing"),
+      });
     }
 
     const challenge = parser.encodeToHexaString(
       parser.extractFieldByLength(CHALLENGE_LENGTH),
     );
 
-    return {
-      challenge,
-    };
+    return CommandResultFactory({
+      data: {
+        challenge,
+      },
+    });
   }
 }

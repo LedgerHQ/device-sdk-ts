@@ -1,6 +1,7 @@
 import {
   ApduResponse,
-  InvalidStatusWordError,
+  CommandResultFactory,
+  isSuccessCommandResult,
 } from "@ledgerhq/device-sdk-core";
 import { Just, Nothing } from "purify-ts";
 
@@ -179,27 +180,29 @@ describe("SignPersonalMessageCommand", (): void => {
       const response = command.parseResponse(apduResponse);
       // then
       expect(response).toStrictEqual(
-        Just({
-          r: "0x97a4ca8f694633592601f5a23e0bcc553c9d0a90d3a3422d575508a92898b96e",
-          s: "0x6950d02e74e9c102c164a225533082cabdd890efc463f67f60cefe8c3f87cfce",
-          v: 27,
+        CommandResultFactory({
+          data: Just({
+            r: "0x97a4ca8f694633592601f5a23e0bcc553c9d0a90d3a3422d575508a92898b96e",
+            s: "0x6950d02e74e9c102c164a225533082cabdd890efc463f67f60cefe8c3f87cfce",
+            v: 27,
+          }),
         }),
       );
     });
-    it("should throw an error if user refused on device", () => {
+    it("should return an error if user refused on device", () => {
       const command = new SignPersonalMessageCommand({
         message: SIGN_PERSONAL_SHORT_MESSAGE,
         derivationPath: DERIVATION_PATH,
         index: 0,
       });
       const apduResponse = new ApduResponse({
-        statusCode: new Uint8Array([0x69, 0x85]),
+        statusCode: new Uint8Array([0x55, 0x15]),
         data: new Uint8Array([]),
       });
       // when
-      const response = () => command.parseResponse(apduResponse);
+      const response = command.parseResponse(apduResponse);
       // then
-      expect(response).toThrow(InvalidStatusWordError);
+      expect(isSuccessCommandResult(response)).toBe(false);
     });
     it("should return nothing if not last index of a long message", () => {
       // given
@@ -216,7 +219,7 @@ describe("SignPersonalMessageCommand", (): void => {
         }),
       );
       // then
-      expect(response).toStrictEqual(Nothing);
+      expect(response).toStrictEqual(CommandResultFactory({ data: Nothing }));
     });
     it("should return correct response of a long message", () => {
       // given
@@ -233,10 +236,12 @@ describe("SignPersonalMessageCommand", (): void => {
       const response = command.parseResponse(apduResponse);
       // then
       expect(response).toStrictEqual(
-        Just({
-          r: "0x19100e5338bc6c7720bb47cf39237b4f27316cb2e4e2ff004618b763c86c8a06",
-          s: "0x0ff01a855718d7975c1c54abcf7d32ff96307c0bda8d695d14290d4bc54d278b",
-          v: 27,
+        CommandResultFactory({
+          data: Just({
+            r: "0x19100e5338bc6c7720bb47cf39237b4f27316cb2e4e2ff004618b763c86c8a06",
+            s: "0x0ff01a855718d7975c1c54abcf7d32ff96307c0bda8d695d14290d4bc54d278b",
+            v: 27,
+          }),
         }),
       );
     });

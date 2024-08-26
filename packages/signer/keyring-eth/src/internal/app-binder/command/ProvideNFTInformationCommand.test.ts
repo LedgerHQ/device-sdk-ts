@@ -1,6 +1,6 @@
 import {
   ApduResponse,
-  InvalidStatusWordError,
+  isSuccessCommandResult,
 } from "@ledgerhq/device-sdk-core";
 
 import {
@@ -40,7 +40,7 @@ describe("ProvideNFTInformationCommand", () => {
   });
 
   describe("parseResponse", () => {
-    it("should throw an error if the response status code is invalid", () => {
+    it("should return an error if the response status code is invalid", () => {
       // GIVEN
       const response: ApduResponse = {
         data: Buffer.from([]),
@@ -48,10 +48,9 @@ describe("ProvideNFTInformationCommand", () => {
       };
       // WHEN
       const command = new ProvideNFTInformationCommand({ data: "" });
+      const result = command.parseResponse(response);
       // THEN
-      expect(() => command.parseResponse(response)).toThrow(
-        InvalidStatusWordError,
-      );
+      expect(isSuccessCommandResult(result)).toBe(false);
     });
 
     it("should not throw if the response status code is correct", () => {
@@ -62,8 +61,9 @@ describe("ProvideNFTInformationCommand", () => {
       };
       // WHEN
       const command = new ProvideNFTInformationCommand({ data: "" });
+      const result = command.parseResponse(response);
       // THEN
-      expect(() => command.parseResponse(response)).not.toThrow();
+      expect(isSuccessCommandResult(result)).toBe(true);
     });
   });
 });

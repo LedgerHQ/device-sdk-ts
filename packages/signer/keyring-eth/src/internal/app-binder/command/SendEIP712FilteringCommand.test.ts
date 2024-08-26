@@ -1,6 +1,7 @@
 import {
   ApduResponse,
-  InvalidStatusWordError,
+  CommandResultFactory,
+  isSuccessCommandResult,
 } from "@ledgerhq/device-sdk-core";
 
 import {
@@ -150,7 +151,7 @@ describe("SendEIP712FilteringCommand", () => {
   });
 
   describe("parseResponse", () => {
-    it("should throw an error if the response status code is invalid", () => {
+    it("should return an error if the response status code is invalid", () => {
       // GIVEN
       const response: ApduResponse = {
         statusCode: Buffer.from([0x6a, 0x80]), // Invalid status code
@@ -161,9 +162,8 @@ describe("SendEIP712FilteringCommand", () => {
         type: Eip712FilterType.Activation,
       });
       // THEN
-      expect(() => command.parseResponse(response)).toThrow(
-        InvalidStatusWordError,
-      );
+      const result = command.parseResponse(response);
+      expect(isSuccessCommandResult(result)).toBe(false);
     });
 
     it("should parse the response", () => {
@@ -177,7 +177,9 @@ describe("SendEIP712FilteringCommand", () => {
         type: Eip712FilterType.Activation,
       });
       // THEN
-      expect(() => command.parseResponse(response)).not.toThrow();
+      expect(command.parseResponse(response)).toStrictEqual(
+        CommandResultFactory({ data: undefined }),
+      );
     });
   });
 });

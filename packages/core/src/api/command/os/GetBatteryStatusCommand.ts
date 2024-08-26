@@ -4,11 +4,12 @@ import { ApduParser } from "@api/apdu/utils/ApduParser";
 import { Command } from "@api/command/Command";
 import {
   InvalidBatteryDataError,
-  InvalidBatteryFlagsError,
   InvalidBatteryStatusTypeError,
-  InvalidStatusWordError,
 } from "@api/command/Errors";
-import { CommandUtils } from "@api/command/utils/CommandUtils";
+import {
+  CommandResult,
+  CommandResultFactory,
+} from "@api/command/model/CommandResult";
 import { ApduResponse } from "@api/device-session/ApduResponse";
 
 /**
@@ -97,63 +98,74 @@ export class GetBatteryStatusCommand
     return new ApduBuilder(getBatteryStatusArgs).build();
   }
 
-  parseResponse(apduResponse: ApduResponse): GetBatteryStatusResponse {
+  parseResponse(
+    apduResponse: ApduResponse,
+  ): CommandResult<GetBatteryStatusResponse> {
     const parser = new ApduParser(apduResponse);
-    if (!CommandUtils.isSuccessResponse(apduResponse)) {
-      throw new InvalidStatusWordError(
-        `Unexpected status word: ${parser.encodeToHexaString(
-          apduResponse.statusCode,
-        )}`,
-      );
-    }
 
     switch (this.args.statusType) {
       case BatteryStatusType.BATTERY_PERCENTAGE: {
         const percentage = parser.extract8BitUInt();
         if (percentage === undefined) {
-          throw new InvalidBatteryDataError("Cannot parse APDU response");
+          return CommandResultFactory({
+            error: new InvalidBatteryDataError("Cannot parse APDU response"),
+          });
         }
-        return percentage > 100 ? -1 : percentage;
+        return CommandResultFactory({
+          data: percentage > 100 ? -1 : percentage,
+        });
       }
       case BatteryStatusType.BATTERY_VOLTAGE: {
         const data = parser.extract16BitUInt();
         if (data === undefined) {
-          throw new InvalidBatteryDataError("Cannot parse APDU response");
+          return CommandResultFactory({
+            error: new InvalidBatteryDataError("Cannot parse APDU response"),
+          });
         }
-        return data;
+        return CommandResultFactory({
+          data,
+        });
       }
       case BatteryStatusType.BATTERY_TEMPERATURE:
       case BatteryStatusType.BATTERY_CURRENT: {
         const data = parser.extract8BitUInt();
         if (data === undefined) {
-          throw new InvalidBatteryDataError("Cannot parse APDU response");
+          return CommandResultFactory({
+            error: new InvalidBatteryDataError("Cannot parse APDU response"),
+          });
         }
-        return (data << 24) >> 24;
+        return CommandResultFactory({
+          data: (data << 24) >> 24,
+        });
       }
       case BatteryStatusType.BATTERY_FLAGS: {
         const flags = parser.extract32BitUInt();
         if (flags === undefined) {
-          throw new InvalidBatteryFlagsError("Cannot parse APDU response");
+          return CommandResultFactory({
+            error: new InvalidBatteryDataError("Cannot parse APDU response"),
+          });
         }
         const chargingUSB = !!(flags & FlagMasks.USB_POWERED);
         const chargingQi = !chargingUSB && !!(flags & FlagMasks.CHARGING);
-        return {
-          charging: chargingQi
-            ? ChargingMode.QI
-            : chargingUSB
-              ? ChargingMode.USB
-              : ChargingMode.NONE,
-          issueCharging: !!(flags & FlagMasks.ISSUE_CHARGING),
-          issueTemperature: !!(flags & FlagMasks.ISSUE_TEMPERATURE),
-          issueBattery: !!(flags & FlagMasks.ISSUE_BATTERY),
-        };
+        return CommandResultFactory({
+          data: {
+            charging: chargingQi
+              ? ChargingMode.QI
+              : chargingUSB
+                ? ChargingMode.USB
+                : ChargingMode.NONE,
+            issueCharging: !!(flags & FlagMasks.ISSUE_CHARGING),
+            issueTemperature: !!(flags & FlagMasks.ISSUE_TEMPERATURE),
+            issueBattery: !!(flags & FlagMasks.ISSUE_BATTERY),
+          },
+        });
       }
       default:
-        this._exhaustiveMatchingGuard(this.args.statusType);
+        return CommandResultFactory({
+          error: new InvalidBatteryStatusTypeError(
+            "One or some case(s) not covered",
+          ),
+        });
     }
-  }
-
-  private _exhaustiveMatchingGuard(_: never): never {
-    throw new InvalidBatteryStatusTypeError("One or some case(s) not covered");
   }
 }

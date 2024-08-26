@@ -1,6 +1,9 @@
 import {
   ApduResponse,
+  CommandResultFactory,
   InvalidStatusWordError,
+  isSuccessCommandResult,
+  UnknownDeviceExchangeError,
 } from "@ledgerhq/device-sdk-core";
 import { Just, Nothing } from "purify-ts";
 
@@ -386,7 +389,7 @@ describe("SignTransactionCommand", () => {
       const response = command.parseResponse(LNX_RESPONSE_GOOD);
 
       // THEN
-      expect(response).toStrictEqual(Nothing);
+      expect(response).toStrictEqual(CommandResultFactory({ data: Nothing }));
     });
 
     it("should return Just the response data when the response data is not empty", () => {
@@ -400,69 +403,72 @@ describe("SignTransactionCommand", () => {
 
       // THEN
       expect(response).toStrictEqual(
-        Just({
-          r: "0x8d27444711bbed442b9bfc7705c07316b7e41150c5331272e4d209d422f9fa39",
-          s: "0x00cc3f0c1938c0f1ffc62df037225a1336fba1f9fefa11f5afc5bcb97eb1b3d1",
-          v: 38,
+        CommandResultFactory({
+          data: Just({
+            r: "0x8d27444711bbed442b9bfc7705c07316b7e41150c5331272e4d209d422f9fa39",
+            s: "0x00cc3f0c1938c0f1ffc62df037225a1336fba1f9fefa11f5afc5bcb97eb1b3d1",
+            v: 38,
+          }),
         }),
       );
     });
 
-    it("should throw an error when the response status code is not 0x9000", () => {
+    it("should return a UnknownDeviceExchangeError when the response status code is not 0x9000", () => {
       // GIVEN
       const command = new SignTransactionCommand({
         ...defaultArgs,
       });
 
       // WHEN
-      const response = () =>
-        command.parseResponse(
-          new ApduResponse({
-            statusCode: Uint8Array.from([0x51, 0x55]),
-            data: new Uint8Array(),
-          }),
-        );
+      const response = command.parseResponse(
+        new ApduResponse({
+          statusCode: Uint8Array.from([0x51, 0x55]),
+          data: new Uint8Array(),
+        }),
+      );
 
       // THEN
-      expect(response).toThrow(InvalidStatusWordError);
+      expect(isSuccessCommandResult(response)).toBe(false);
+      // @ts-ignore
+      expect(response.error).toBeInstanceOf(UnknownDeviceExchangeError);
     });
 
-    it("should throw an error when the response data r is not valid", () => {
+    it("should return an InvalidStatusWord error when the response data r is not valid", () => {
       // GIVEN
       const command = new SignTransactionCommand({
         ...defaultArgs,
       });
 
       // WHEN
-      const response = () =>
-        command.parseResponse(
-          new ApduResponse({
-            statusCode: Uint8Array.from([0x90, 0x00]),
-            data: LNX_RESPONSE_DATA.slice(0, 1),
-          }),
-        );
+      const response = command.parseResponse(
+        new ApduResponse({
+          statusCode: Uint8Array.from([0x90, 0x00]),
+          data: LNX_RESPONSE_DATA.slice(0, 1),
+        }),
+      );
 
       // THEN
-      expect(response).toThrow(InvalidStatusWordError);
+      expect(isSuccessCommandResult(response)).toBe(false);
+      // @ts-ignore
+      expect(response.error).toBeInstanceOf(InvalidStatusWordError);
     });
 
-    it("should throw an error when the response data s is not valid", () => {
+    it("should return an error when the response data s is not valid", () => {
       // GIVEN
       const command = new SignTransactionCommand({
         ...defaultArgs,
       });
 
       // WHEN
-      const response = () =>
-        command.parseResponse(
-          new ApduResponse({
-            statusCode: Uint8Array.from([0x90, 0x00]),
-            data: LNX_RESPONSE_DATA.slice(0, 33),
-          }),
-        );
+      const response = command.parseResponse(
+        new ApduResponse({
+          statusCode: Uint8Array.from([0x90, 0x00]),
+          data: LNX_RESPONSE_DATA.slice(0, 33),
+        }),
+      );
 
       // THEN
-      expect(response).toThrow(InvalidStatusWordError);
+      expect(isSuccessCommandResult(response)).toBe(false);
     });
   });
 });
