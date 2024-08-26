@@ -5,10 +5,10 @@ import {
   type ApduBuilderArgs,
   ApduParser,
   ApduResponse,
-  Command,
-  CommandErrorArgs,
-  CommandErrors,
-  CommandResult,
+  type Command,
+  type CommandErrorArgs,
+  type CommandErrors,
+  type CommandResult,
   CommandResultFactory,
   CommandUtils,
   DeviceExchangeError,
@@ -21,7 +21,7 @@ type SetExternalPluginCommandArgs = {
   signature?: string;
 };
 
-type SetExternalPluginCommandErrorCodes = "6a80" | "6984" | "6d00";
+export type SetExternalPluginCommandErrorCodes = "6a80" | "6984" | "6d00";
 
 const SET_EXTERNAL_PLUGIN_ERRORS: CommandErrors<SetExternalPluginCommandErrorCodes> =
   {

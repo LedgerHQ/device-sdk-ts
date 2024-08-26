@@ -5,7 +5,7 @@ import {
   type ApduBuilderArgs,
   ApduResponse,
   type Command,
-  CommandResult,
+  type CommandResult,
   CommandResultFactory,
   CommandUtils,
   GlobalCommandErrorHandler,

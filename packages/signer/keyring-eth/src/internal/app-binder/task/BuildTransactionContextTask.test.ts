@@ -1,4 +1,7 @@
-import { ClearSignContext } from "@ledgerhq/context-module";
+import {
+  ClearSignContext,
+  ClearSignContextType,
+} from "@ledgerhq/context-module";
 import { Transaction } from "ethers-v6";
 import { Left, Right } from "purify-ts";
 
@@ -61,11 +64,11 @@ describe("BuildTransactionContextTask", () => {
     const serializedTransaction = new Uint8Array([0x01, 0x02, 0x03]);
     const clearSignContexts: ClearSignContext[] = [
       {
-        type: "token",
+        type: ClearSignContextType.TOKEN,
         payload: "payload-1",
       },
       {
-        type: "nft",
+        type: ClearSignContextType.NFT,
         payload: "payload-2",
       },
     ];
@@ -169,19 +172,19 @@ describe("BuildTransactionContextTask", () => {
     const serializedTransaction = new Uint8Array([0x01, 0x02, 0x03]);
     const clearSignContexts: ClearSignContext[] = [
       {
-        type: "error",
+        type: ClearSignContextType.ERROR,
         error: new Error("error"),
       },
       {
-        type: "token",
+        type: ClearSignContextType.TOKEN,
         payload: "payload-1",
       },
       {
-        type: "error",
+        type: ClearSignContextType.ERROR,
         error: new Error("error"),
       },
       {
-        type: "nft",
+        type: ClearSignContextType.NFT,
         payload: "payload-2",
       },
     ];

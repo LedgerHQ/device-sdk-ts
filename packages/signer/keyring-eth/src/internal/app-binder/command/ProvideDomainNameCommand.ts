@@ -5,24 +5,21 @@ import {
   type ApduBuilderArgs,
   ApduResponse,
   type Command,
-  CommandResult,
+  type CommandResult,
   CommandResultFactory,
   CommandUtils,
   GlobalCommandErrorHandler,
 } from "@ledgerhq/device-sdk-core";
 
 export type ProvideDomainNameCommandArgs = {
-  /**
-   * The chunk of the stringified hexa representation of the domain name prefixed by its length in two bytes.
-   * If the index equals 0, the first two bytes are the length of the domain name, else all the bytes are the chunk data.
-   * @example "00064C6564676572" (hexa for "Ledger", first chunk and only chunk)
-   */
   data: Uint8Array;
-  /**
-   * The index of the chunk.
-   */
   isFirstChunk: boolean;
 };
+
+/**
+ * The length of the payload will take 2 bytes in the APDU.
+ */
+export const PAYLOAD_LENGTH_BYTES = 2;
 
 /**
  * The command that provides a chunk of the domain name to the device.

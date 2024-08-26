@@ -6,9 +6,9 @@ import {
   ApduParser,
   ApduResponse,
   type Command,
-  CommandErrorArgs,
-  CommandErrors,
-  CommandResult,
+  type CommandErrorArgs,
+  type CommandErrors,
+  type CommandResult,
   CommandResultFactory,
   CommandUtils,
   DeviceExchangeError,
@@ -16,7 +16,7 @@ import {
   isCommandErrorCode,
 } from "@ledgerhq/device-sdk-core";
 
-type SetPluginCommandErrorCodes = "6984" | "6d00";
+export type SetPluginCommandErrorCodes = "6984" | "6d00";
 
 const SET_PLUGIN_ERRORS: CommandErrors<SetPluginCommandErrorCodes> = {
   "6984": { message: "The requested plugin is not installed on the device" },

@@ -5,7 +5,7 @@ import {
 
 import {
   SetPluginCommand,
-  SetPluginCommandArgs,
+  type SetPluginCommandArgs,
   SetPluginCommandError,
 } from "./SetPluginCommand";
 
@@ -46,7 +46,10 @@ describe("SetPluginCommand", () => {
       ${Uint8Array.from([0x6d, 0x00])} | ${"6d00"}
     `(
       "should return an error for the response status code $errorCode",
-      ({ apduResponseCode, errorCode }) => {
+      ({
+        apduResponseCode,
+        errorCode,
+      }: Record<"apduResponseCode" | "errorCode", Uint8Array>) => {
         // GIVEN
         const response = new ApduResponse({
           data: Uint8Array.from([]),
@@ -57,10 +60,11 @@ describe("SetPluginCommand", () => {
         const result = command.parseResponse(response);
         // THEN
         expect(isSuccessCommandResult(result)).toBe(false);
-        // @ts-ignore
-        expect(result.error).toBeInstanceOf(SetPluginCommandError);
-        // @ts-ignore
-        expect(result.error.errorCode).toStrictEqual(errorCode);
+        if (!isSuccessCommandResult(result)) {
+          expect(result.error).toBeInstanceOf(SetPluginCommandError);
+          if (result.error instanceof SetPluginCommandError)
+            expect(result.error.errorCode).toStrictEqual(errorCode);
+        }
       },
     );
 

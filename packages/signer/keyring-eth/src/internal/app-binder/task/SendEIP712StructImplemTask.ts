@@ -1,9 +1,9 @@
 import {
   APDU_MAX_PAYLOAD,
   ByteArrayBuilder,
-  CommandResult,
+  type CommandResult,
   CommandResultFactory,
-  InternalApi,
+  type InternalApi,
   isSuccessCommandResult,
 } from "@ledgerhq/device-sdk-core";
 
