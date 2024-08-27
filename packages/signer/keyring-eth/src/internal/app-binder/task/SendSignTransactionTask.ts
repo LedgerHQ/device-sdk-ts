@@ -20,7 +20,7 @@ const PATH_SIZE = 4;
 
 type SendSignTransactionTaskArgs = {
   derivationPath: string;
-  transaction: Uint8Array;
+  serializedTransaction: Uint8Array;
 };
 
 export class SendSignTransactionTask {
@@ -30,11 +30,11 @@ export class SendSignTransactionTask {
   ) {}
 
   async run(): Promise<CommandResult<Signature, void>> {
-    const { derivationPath, transaction } = this.args;
+    const { derivationPath, serializedTransaction } = this.args;
     const paths = DerivationPathUtils.splitPath(derivationPath);
 
     const builder = new ByteArrayBuilder(
-      transaction.length + 1 + paths.length * PATH_SIZE,
+      serializedTransaction.length + 1 + paths.length * PATH_SIZE,
     );
     // add the derivation paths length
     builder.add8BitUIntToData(paths.length);
@@ -43,7 +43,7 @@ export class SendSignTransactionTask {
       builder.add32BitUIntToData(path);
     });
     // add the transaction
-    builder.addBufferToData(transaction);
+    builder.addBufferToData(serializedTransaction);
 
     const buffer = builder.build();
 
@@ -55,7 +55,7 @@ export class SendSignTransactionTask {
     for (let i = 0; i < buffer.length; i += APDU_MAX_PAYLOAD) {
       result = await this.api.sendCommand(
         new SignTransactionCommand({
-          transaction: buffer.slice(i, i + APDU_MAX_PAYLOAD),
+          serializedTransaction: buffer.slice(i, i + APDU_MAX_PAYLOAD),
           isFirstChunk: i === 0,
         }),
       );

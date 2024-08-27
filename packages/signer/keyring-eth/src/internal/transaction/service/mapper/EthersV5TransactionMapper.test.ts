@@ -26,7 +26,7 @@ describe("EthersV5TransactionMapper", () => {
         value: EthersV5BigNumber.from(0),
         data: "0x",
       };
-      const serialized = new Uint8Array([
+      const serializedTransaction = new Uint8Array([
         0xc9, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x01, 0x80, 0x80,
       ]);
 
@@ -41,7 +41,7 @@ describe("EthersV5TransactionMapper", () => {
             to: undefined,
             data: "0x",
           },
-          serialized,
+          serializedTransaction,
         }),
       );
     });
@@ -56,7 +56,7 @@ describe("EthersV5TransactionMapper", () => {
         data: "0x",
         to: "0x",
       };
-      const serialized = new Uint8Array([
+      const serializedTransaction = new Uint8Array([
         0xc9, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x01, 0x80, 0x80,
       ]);
 
@@ -71,7 +71,7 @@ describe("EthersV5TransactionMapper", () => {
             to: "0x",
             data: "0x",
           },
-          serialized,
+          serializedTransaction,
         }),
       );
     });
@@ -93,7 +93,7 @@ describe("EthersV5TransactionMapper", () => {
         maxFeePerGas: EthersV5BigNumber.from(0),
         maxPriorityFeePerGas: EthersV5BigNumber.from(0),
       };
-      const serialized = new Uint8Array([
+      const serializedTransaction = new Uint8Array([
         0xc9, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x01, 0x80, 0x80,
       ]);
 
@@ -108,7 +108,7 @@ describe("EthersV5TransactionMapper", () => {
             to: undefined,
             data: "0x",
           },
-          serialized,
+          serializedTransaction,
         }),
       );
     });
