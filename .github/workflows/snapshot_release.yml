@@ -1,0 +1,47 @@
+name: publish snapshot version of npm packages
+on:
+  schedule:
+    - cron: "0 0 * * *"
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: The base branch to publish a snapshot release from
+        required: true
+        default: "develop"
+      tag:
+        description: Snapshot version name
+        required: false
+        default: ""
+
+env:
+  FORCE_COLOR: "1"
+  # if no inputs it's considered as a cron job
+  REF: ${{ inputs.ref || 'develop' }}
+  TAG: ${{ inputs.tag || 'develop' }}
+
+jobs:
+  version:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ env.REF }}
+
+      - uses: ./.github/actions/setup-toolchain-composite
+
+      - name: install dependencies
+        run: pnpm install
+
+      - name: build libraries
+        run: pnpm build
+
+      - name: create release pull request or publish
+        uses: changesets/action@v1
+        with:
+          version: pnpm bump --snapshot ${{ env.TAG }}
+          publish: pnpm release --no-git-tag
+          commit: "🔖 (snapshot-release): versioning packages"
+          title: "🔖 (snapshot-release) [NO-ISSUE]: versioning packages"
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          NPM_TOKEN: ${{ secrets.NPMJS_TOKEN }}
