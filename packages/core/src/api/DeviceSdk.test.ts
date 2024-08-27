@@ -26,6 +26,7 @@ describe("DeviceSdk", () => {
         loggers: [logger],
         config: {
           managerApiUrl: "http://fake.url",
+          mockUrl: "http://fake-mock.url",
         },
       });
     });
@@ -75,6 +76,7 @@ describe("DeviceSdk", () => {
         loggers: [],
         config: {
           managerApiUrl: "http://fake.url",
+          mockUrl: "http://fake-mock.url",
         },
       });
     });
