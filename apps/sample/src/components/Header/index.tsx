@@ -6,7 +6,6 @@ import {
   Icons,
   Input,
   Switch,
-  Toggle,
 } from "@ledgerhq/react-ui";
 import styled, { DefaultTheme } from "styled-components";
 import { useMockServerContext } from "@/providers/MockServerProvider";
