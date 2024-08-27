@@ -9,10 +9,10 @@ import { DeviceSession } from "@internal/device-session/model/DeviceSession";
 import type { DeviceSessionService } from "@internal/device-session/service/DeviceSessionService";
 import { loggerTypes } from "@internal/logger-publisher/di/loggerTypes";
 import { LoggerPublisherService } from "@internal/logger-publisher/service/LoggerPublisherService";
-import { transportDiTypes } from "@internal/transport/di/transportDiTypes";
-import { TransportNotSupportedError } from "@internal/transport/model/Errors";
 import { managerApiTypes } from "@internal/manager-api/di/managerApiTypes";
 import type { ManagerApiService } from "@internal/manager-api/service/ManagerApiService";
+import { transportDiTypes } from "@internal/transport/di/transportDiTypes";
+import { TransportNotSupportedError } from "@internal/transport/model/Errors";
 
 /**
  * The arguments for the ConnectUseCase.

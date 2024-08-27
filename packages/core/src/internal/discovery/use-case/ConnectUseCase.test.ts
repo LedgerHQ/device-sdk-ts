@@ -9,18 +9,14 @@ import { DefaultDeviceSessionService } from "@internal/device-session/service/De
 import { DeviceSessionService } from "@internal/device-session/service/DeviceSessionService";
 import { DefaultLoggerPublisherService } from "@internal/logger-publisher/service/DefaultLoggerPublisherService";
 import { LoggerPublisherService } from "@internal/logger-publisher/service/LoggerPublisherService";
-import { UnknownDeviceError } from "@internal/transport/model/Errors";
-import { connectedDeviceStubBuilder } from "@internal/transport/model/InternalConnectedDevice.stub";
-import { usbHidDeviceConnectionFactoryStubBuilder } from "@internal/transport/usb/service/UsbHidDeviceConnectionFactory.stub";
-import { WebUsbHidTransport } from "@internal/transport/usb/transport/WebUsbHidTransport";
 import { AxiosManagerApiDataSource } from "@internal/manager-api/data/AxiosManagerApiDataSource";
 import { ManagerApiDataSource } from "@internal/manager-api/data/ManagerApiDataSource";
 import { DefaultManagerApiService } from "@internal/manager-api/service/DefaultManagerApiService";
 import { ManagerApiService } from "@internal/manager-api/service/ManagerApiService";
-import { UnknownDeviceError } from "@internal/usb/model/Errors";
-import { connectedDeviceStubBuilder } from "@internal/usb/model/InternalConnectedDevice.stub";
-import { usbHidDeviceConnectionFactoryStubBuilder } from "@internal/usb/service/UsbHidDeviceConnectionFactory.stub";
-import { WebUsbHidTransport } from "@internal/usb/transport/WebUsbHidTransport";
+import { UnknownDeviceError } from "@internal/transport/model/Errors";
+import { connectedDeviceStubBuilder } from "@internal/transport/model/InternalConnectedDevice.stub";
+import { usbHidDeviceConnectionFactoryStubBuilder } from "@internal/transport/usb/service/UsbHidDeviceConnectionFactory.stub";
+import { WebUsbHidTransport } from "@internal/transport/usb/transport/WebUsbHidTransport";
 
 import { ConnectUseCase } from "./ConnectUseCase";
 
@@ -56,6 +52,7 @@ describe("ConnectUseCase", () => {
     sessionService = new DefaultDeviceSessionService(() => logger);
     managerApiDataSource = new AxiosManagerApiDataSource({
       managerApiUrl: "http://fake.url",
+      mockUrl: "http://fake-mock.url",
     });
     managerApi = new DefaultManagerApiService(managerApiDataSource);
   });

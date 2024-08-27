@@ -8,7 +8,9 @@ import { StartDiscoveringUseCase } from "@internal/discovery/use-case/StartDisco
 import { StopDiscoveringUseCase } from "@internal/discovery/use-case/StopDiscoveringUseCase";
 import { loggerModuleFactory } from "@internal/logger-publisher/di/loggerModule";
 import { managerApiModuleFactory } from "@internal/manager-api/di/managerApiModule";
-import { usbModuleFactory } from "@internal/usb/di/usbModule";
+import { transportModuleFactory } from "@internal/transport/di/transportModule";
+import { usbModuleFactory } from "@internal/transport/usb/di/usbModule";
+import { BuiltinTransports } from "@root/src";
 
 import { discoveryModuleFactory } from "./discoveryModule";
 import { discoveryTypes } from "./discoveryTypes";
@@ -26,8 +28,12 @@ describe("discoveryModuleFactory", () => {
       usbModuleFactory({ stub: false }),
       deviceModelModuleFactory({ stub: false }),
       deviceSessionModuleFactory(),
+      transportModuleFactory({ transports: [BuiltinTransports.USB] }),
       managerApiModuleFactory({
-        config: { managerApiUrl: "http://fake.url" },
+        config: {
+          managerApiUrl: "http://fake.url",
+          mockUrl: "http://fake-mock.url",
+        },
       }),
     );
   });

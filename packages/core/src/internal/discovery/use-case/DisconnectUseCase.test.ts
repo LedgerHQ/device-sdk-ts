@@ -9,10 +9,10 @@ import { AxiosManagerApiDataSource } from "@internal/manager-api/data/AxiosManag
 import { ManagerApiDataSource } from "@internal/manager-api/data/ManagerApiDataSource";
 import { DefaultManagerApiService } from "@internal/manager-api/service/DefaultManagerApiService";
 import { ManagerApiService } from "@internal/manager-api/service/ManagerApiService";
+import { DisconnectError } from "@internal/transport/model/Errors";
+import { connectedDeviceStubBuilder } from "@internal/transport/model/InternalConnectedDevice.stub";
+import { usbHidDeviceConnectionFactoryStubBuilder } from "@internal/transport/usb/service/UsbHidDeviceConnectionFactory.stub";
 import { WebUsbHidTransport } from "@internal/transport/usb/transport/WebUsbHidTransport";
-import { DisconnectError } from "@internal/usb/model/Errors";
-import { connectedDeviceStubBuilder } from "@internal/usb/model/InternalConnectedDevice.stub";
-import { usbHidDeviceConnectionFactoryStubBuilder } from "@internal/usb/service/UsbHidDeviceConnectionFactory.stub";
 
 import { DisconnectUseCase } from "./DisconnectUseCase";
 
@@ -47,6 +47,7 @@ describe("DisconnectUseCase", () => {
     const connectedDevice = connectedDeviceStubBuilder();
     managerApiDataSource = new AxiosManagerApiDataSource({
       managerApiUrl: "http://fake.url",
+      mockUrl: "http://fake-mock.url",
     });
     managerApi = new DefaultManagerApiService(managerApiDataSource);
     const deviceSession = deviceSessionStubBuilder(

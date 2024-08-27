@@ -15,7 +15,10 @@ describe("managerApiModuleFactory", () => {
     beforeEach(() => {
       mod = managerApiModuleFactory({
         stub: false,
-        config: { managerApiUrl: "http://fake.url" },
+        config: {
+          managerApiUrl: "http://fake.url",
+          mockUrl: "http://fake-mock.url",
+        },
       });
       container = new Container();
       container.load(mod);
@@ -37,7 +40,10 @@ describe("managerApiModuleFactory", () => {
       expect(managerApiService).toBeInstanceOf(DefaultManagerApiService);
 
       const config = container.get(managerApiTypes.SdkConfig);
-      expect(config).toEqual({ managerApiUrl: "http://fake.url" });
+      expect(config).toEqual({
+        managerApiUrl: "http://fake.url",
+        mockUrl: "http://fake-mock.url",
+      });
     });
   });
 
@@ -47,7 +53,10 @@ describe("managerApiModuleFactory", () => {
     beforeEach(() => {
       mod = managerApiModuleFactory({
         stub: true,
-        config: { managerApiUrl: "http://fake.url" },
+        config: {
+          managerApiUrl: "http://fake.url",
+          mockUrl: "http://fake-mock.url",
+        },
       });
       container = new Container();
       container.load(mod);
@@ -69,7 +78,10 @@ describe("managerApiModuleFactory", () => {
       expect(managerApiService).toBeInstanceOf(StubUseCase);
 
       const config = container.get(managerApiTypes.SdkConfig);
-      expect(config).toEqual({ managerApiUrl: "http://fake.url" });
+      expect(config).toEqual({
+        managerApiUrl: "http://fake.url",
+        mockUrl: "http://fake-mock.url",
+      });
     });
   });
 });
