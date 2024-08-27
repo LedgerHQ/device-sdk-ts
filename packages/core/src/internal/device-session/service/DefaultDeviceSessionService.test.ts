@@ -7,7 +7,7 @@ import { AxiosManagerApiDataSource } from "@internal/manager-api/data/AxiosManag
 import { ManagerApiDataSource } from "@internal/manager-api/data/ManagerApiDataSource";
 import { DefaultManagerApiService } from "@internal/manager-api/service/DefaultManagerApiService";
 import type { ManagerApiService } from "@internal/manager-api/service/ManagerApiService";
-import { connectedDeviceStubBuilder } from "@internal/usb/model/InternalConnectedDevice.stub";
+import { connectedDeviceStubBuilder } from "@internal/transport/model/InternalConnectedDevice.stub";
 
 import { DefaultDeviceSessionService } from "./DefaultDeviceSessionService";
 
@@ -26,6 +26,7 @@ describe("DefaultDeviceSessionService", () => {
     sessionService = new DefaultDeviceSessionService(() => loggerService);
     managerApiDataSource = new AxiosManagerApiDataSource({
       managerApiUrl: "http://fake.url",
+      mockUrl: "http://fake-mock.url",
     });
     managerApi = new DefaultManagerApiService(managerApiDataSource);
 

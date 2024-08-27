@@ -48,13 +48,14 @@ describe("StartDiscoveringUseCase", () => {
       .mockImplementation(mockedStartDiscovering);
     const usecase = new StartDiscoveringUseCase([transport]);
 
-    const discover = usecase.execute({ transport: "MOCK" });
+    const discover = usecase.execute({ transport: "USB" });
 
     expect(mockedStartDiscovering).toHaveBeenCalled();
     discover.subscribe({
       next: (discoveredDevice) => {
         expect(discoveredDevice).toStrictEqual({
           id: "internal-discovered-device-id",
+          transport: "USB",
           deviceModel: new DeviceModel({
             id: "internal-discovered-device-id",
             model: "nanoSP" as DeviceModelId,

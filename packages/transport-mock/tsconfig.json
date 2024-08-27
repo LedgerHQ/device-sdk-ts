@@ -2,6 +2,8 @@
   "extends": "@ledgerhq/tsconfig-dsdk/sdk",
   "compilerOptions": {
     "baseUrl": ".",
+    "experimentalDecorators": true,
+    "resolveJsonModule": true
   },
   "include": ["src", "index.ts", "jest.*.ts"]
 }
