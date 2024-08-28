@@ -18,9 +18,10 @@ env:
   # if no inputs it's considered as a cron job
   REF: ${{ inputs.ref || 'develop' }}
   TAG: ${{ inputs.tag || 'develop' }}
+  NPM_TOKEN: ${{ secrets.NPMJS_TOKEN }}
 
 jobs:
-  version:
+  snapshot:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -35,13 +36,12 @@ jobs:
       - name: build libraries
         run: pnpm build
 
-      - name: create release pull request or publish
-        uses: changesets/action@v1
-        with:
-          version: pnpm bump --snapshot ${{ env.TAG }}
-          publish: pnpm release --no-git-tag
-          commit: "🔖 (snapshot-release): versioning packages"
-          title: "🔖 (snapshot-release) [NO-ISSUE]: versioning packages"
+      - name: create .npmrc
+        run: echo "//registry.npmjs.org/:_authToken=${NPM_TOKEN}" >> .npmrc
+
+      - name: create and publish snapshot release version
+        run: |
+          pnpm bump --snapshot ${{ env.TAG }}
+          pnpm release --snapshot --no-git-tag --tag ${{ env.TAG }}
         env:
           GITHUB_TOKEN: ${{ github.token }}
-          NPM_TOKEN: ${{ secrets.NPMJS_TOKEN }}
