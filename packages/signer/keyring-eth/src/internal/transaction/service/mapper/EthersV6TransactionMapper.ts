@@ -11,14 +11,14 @@ import { TransactionMapper } from "./TransactionMapper";
 export class EthersV6TransactionMapper implements TransactionMapper {
   map(transaction: Transaction): Maybe<TransactionMapperResult> {
     if (this.isEthersV6Transaction(transaction)) {
-      const serialized = getBytes(transaction.unsignedSerialized);
+      const serializedTransaction = getBytes(transaction.unsignedSerialized);
       return Just({
         subset: {
           chainId: Number(transaction.chainId.toString()),
           to: transaction.to ?? undefined,
           data: transaction.data,
         },
-        serialized,
+        serializedTransaction,
       });
     }
 

@@ -83,7 +83,7 @@ describe("SendSignTransactionTask", () => {
       // GIVEN
       const args = {
         derivationPath: "44'/60'/0'/0/0",
-        transaction: SIMPLE_TRANSACTION,
+        serializedTransaction: SIMPLE_TRANSACTION,
       };
       apiMock.sendCommand.mockResolvedValueOnce(resultOk);
 
@@ -94,7 +94,10 @@ describe("SendSignTransactionTask", () => {
       expect(apiMock.sendCommand.mock.calls).toHaveLength(1);
       expect(apiMock.sendCommand.mock.calls[0]![0]).toStrictEqual(
         new SignTransactionCommand({
-          transaction: new Uint8Array([...PATH, ...SIMPLE_TRANSACTION]),
+          serializedTransaction: new Uint8Array([
+            ...PATH,
+            ...SIMPLE_TRANSACTION,
+          ]),
           isFirstChunk: true,
         }),
       );
@@ -106,7 +109,7 @@ describe("SendSignTransactionTask", () => {
       // GIVEN
       const args = {
         derivationPath: "44'/60'/0'/0/0",
-        transaction: BIG_TRANSACTION,
+        serializedTransaction: BIG_TRANSACTION,
       };
       apiMock.sendCommand.mockResolvedValueOnce(resultNothing);
       apiMock.sendCommand.mockResolvedValueOnce(resultOk);
@@ -118,19 +121,19 @@ describe("SendSignTransactionTask", () => {
       expect(apiMock.sendCommand.mock.calls).toHaveLength(2);
       expect(apiMock.sendCommand.mock.calls[0]![0]).toStrictEqual(
         new SignTransactionCommand({
-          transaction: new Uint8Array([...PATH, ...BIG_TRANSACTION]).slice(
-            0,
-            APDU_MAX_PAYLOAD,
-          ),
+          serializedTransaction: new Uint8Array([
+            ...PATH,
+            ...BIG_TRANSACTION,
+          ]).slice(0, APDU_MAX_PAYLOAD),
           isFirstChunk: true,
         }),
       );
       expect(apiMock.sendCommand.mock.calls[1]![0]).toStrictEqual(
         new SignTransactionCommand({
-          transaction: new Uint8Array([...PATH, ...BIG_TRANSACTION]).slice(
-            APDU_MAX_PAYLOAD,
-            APDU_MAX_PAYLOAD * 2,
-          ),
+          serializedTransaction: new Uint8Array([
+            ...PATH,
+            ...BIG_TRANSACTION,
+          ]).slice(APDU_MAX_PAYLOAD, APDU_MAX_PAYLOAD * 2),
           isFirstChunk: false,
         }),
       );
@@ -142,7 +145,7 @@ describe("SendSignTransactionTask", () => {
       // GIVEN
       const args = {
         derivationPath: "44'/60'/0'/0/0",
-        transaction: SIMPLE_TRANSACTION,
+        serializedTransaction: SIMPLE_TRANSACTION,
       };
       apiMock.sendCommand.mockResolvedValueOnce(resultNothing);
 
@@ -153,7 +156,10 @@ describe("SendSignTransactionTask", () => {
       expect(apiMock.sendCommand.mock.calls).toHaveLength(1);
       expect(apiMock.sendCommand.mock.calls[0]![0]).toStrictEqual(
         new SignTransactionCommand({
-          transaction: new Uint8Array([...PATH, ...SIMPLE_TRANSACTION]),
+          serializedTransaction: new Uint8Array([
+            ...PATH,
+            ...SIMPLE_TRANSACTION,
+          ]),
           isFirstChunk: true,
         }),
       );
@@ -167,7 +173,7 @@ describe("SendSignTransactionTask", () => {
       // GIVEN
       const args = {
         derivationPath: "44'/60'/0'/0/0",
-        transaction: BIG_TRANSACTION,
+        serializedTransaction: BIG_TRANSACTION,
       };
       apiMock.sendCommand.mockResolvedValueOnce(resultNothing);
       apiMock.sendCommand.mockResolvedValueOnce(
@@ -183,19 +189,19 @@ describe("SendSignTransactionTask", () => {
       expect(apiMock.sendCommand.mock.calls).toHaveLength(2);
       expect(apiMock.sendCommand.mock.calls[0]![0]).toStrictEqual(
         new SignTransactionCommand({
-          transaction: new Uint8Array([...PATH, ...BIG_TRANSACTION]).slice(
-            0,
-            APDU_MAX_PAYLOAD,
-          ),
+          serializedTransaction: new Uint8Array([
+            ...PATH,
+            ...BIG_TRANSACTION,
+          ]).slice(0, APDU_MAX_PAYLOAD),
           isFirstChunk: true,
         }),
       );
       expect(apiMock.sendCommand.mock.calls[1]![0]).toStrictEqual(
         new SignTransactionCommand({
-          transaction: new Uint8Array([...PATH, ...BIG_TRANSACTION]).slice(
-            APDU_MAX_PAYLOAD,
-            APDU_MAX_PAYLOAD * 2,
-          ),
+          serializedTransaction: new Uint8Array([
+            ...PATH,
+            ...BIG_TRANSACTION,
+          ]).slice(APDU_MAX_PAYLOAD, APDU_MAX_PAYLOAD * 2),
           isFirstChunk: false,
         }),
       );

@@ -28,7 +28,7 @@ export type SignTransactionCommandArgs = {
   /**
    * The transaction to sign in max 150 bytes chunks
    */
-  readonly transaction: Uint8Array;
+  readonly serializedTransaction: Uint8Array;
   /**
    * If this is the first chunk of the message
    */
@@ -46,7 +46,7 @@ export class SignTransactionCommand
   }
 
   getApdu(): Apdu {
-    const { transaction, isFirstChunk } = this.args;
+    const { serializedTransaction, isFirstChunk } = this.args;
 
     const signEthTransactionArgs: ApduBuilderArgs = {
       cla: 0xe0,
@@ -55,7 +55,7 @@ export class SignTransactionCommand
       p2: 0x00,
     };
     const builder = new ApduBuilder(signEthTransactionArgs);
-    return builder.addBufferToData(transaction).build();
+    return builder.addBufferToData(serializedTransaction).build();
   }
 
   parseResponse(

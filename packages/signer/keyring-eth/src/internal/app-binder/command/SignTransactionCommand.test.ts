@@ -33,7 +33,7 @@ const LNX_RESPONSE_DATA_GOOD = new ApduResponse({
 
 describe("SignTransactionCommand", () => {
   const defaultArgs: SignTransactionCommandArgs = {
-    transaction: new Uint8Array(),
+    serializedTransaction: new Uint8Array(),
     isFirstChunk: true,
   };
 
@@ -59,7 +59,7 @@ describe("SignTransactionCommand", () => {
       // GIVEN
       const command = new SignTransactionCommand({
         ...defaultArgs,
-        transaction: new Uint8Array([0x01, 0x02, 0x03]),
+        serializedTransaction: new Uint8Array([0x01, 0x02, 0x03]),
       });
 
       // WHEN

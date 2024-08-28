@@ -27,7 +27,7 @@ export class EthersV5TransactionMapper implements TransactionMapper {
         value: transaction.value,
         chainId: transaction.chainId,
       };
-      const serialized = ethers.utils.arrayify(
+      const serializedTransaction = ethers.utils.arrayify(
         ethers.utils.serializeTransaction(txUnsigned),
       );
 
@@ -37,7 +37,7 @@ export class EthersV5TransactionMapper implements TransactionMapper {
           to: transaction.to,
           data: transaction.data,
         },
-        serialized,
+        serializedTransaction,
       });
     }
 

@@ -7,7 +7,7 @@ export type TransactionMapperResult = {
   subset: TransactionSubset;
 
   /**
-   * serialized transaction in Uint8Array format
+   * serializedTransaction transaction in Uint8Array format
    */
-  serialized: Uint8Array;
+  serializedTransaction: Uint8Array;
 };
