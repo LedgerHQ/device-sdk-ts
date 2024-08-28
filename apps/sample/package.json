@@ -1,6 +1,6 @@
 {
   "name": "@ledgerhq/device-sdk-sample",
-  "version": "0.1.1",
+  "version": "0.0.0-develop-20240828000939",
   "private": true,
   "scripts": {
     "dev": "next dev",

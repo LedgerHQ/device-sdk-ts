@@ -1,6 +1,6 @@
 {
   "name": "@ledgerhq/device-sdk-core",
-  "version": "0.3.0",
+  "version": "0.0.0-develop-20240828000939",
   "license": "MIT",
   "exports": {
     ".": {

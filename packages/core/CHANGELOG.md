@@ -1,5 +1,37 @@
 # @ledgerhq/device-sdk-core
 
+## 0.0.0-develop-20240828000939
+
+### Minor Changes
+
+- [#124](https://github.com/LedgerHQ/device-sdk-ts/pull/124) [`c6822ba`](https://github.com/LedgerHQ/device-sdk-ts/commit/c6822ba275946200333a8e64f240bf52c62e649c) Thanks [@valpinkman](https://github.com/valpinkman)! - Add new device actions to core: ListApps, GoToDashboard, GetDeviceStatus
+
+- [#161](https://github.com/LedgerHQ/device-sdk-ts/pull/161) [`0ef0626`](https://github.com/LedgerHQ/device-sdk-ts/commit/0ef06260b4cf87c3cb41fe2819e8efd849b2f336) Thanks [@valpinkman](https://github.com/valpinkman)! - Add ManagerApi service to core
+
+- [#111](https://github.com/LedgerHQ/device-sdk-ts/pull/111) [`f708627`](https://github.com/LedgerHQ/device-sdk-ts/commit/f708627965617b40951016448b8f90d71c19a2f8) Thanks [@valpinkman](https://github.com/valpinkman)! - Add new ListApps command to SDK core
+
+- [#161](https://github.com/LedgerHQ/device-sdk-ts/pull/161) [`73825aa`](https://github.com/LedgerHQ/device-sdk-ts/commit/73825aaa5869c9026bd1a5a1b142a74a9484662f) Thanks [@valpinkman](https://github.com/valpinkman)! - Add ListAppsWithMetadata device action
+
+- [#172](https://github.com/LedgerHQ/device-sdk-ts/pull/172) [`8cba13a`](https://github.com/LedgerHQ/device-sdk-ts/commit/8cba13a3fb720ecd15b2464c45be30fc9851bd0a) Thanks [@jdabbech-ledger](https://github.com/jdabbech-ledger)! - Use of CommandResult return type in commands
+
+### Patch Changes
+
+- [#174](https://github.com/LedgerHQ/device-sdk-ts/pull/174) [`899d151`](https://github.com/LedgerHQ/device-sdk-ts/commit/899d15152c2cf67b19cb6ca83dc1fbbd0e79ae27) Thanks [@jiyuzhuang](https://github.com/jiyuzhuang)! - Improve code visibility
+
+- [#169](https://github.com/LedgerHQ/device-sdk-ts/pull/169) [`d9e0164`](https://github.com/LedgerHQ/device-sdk-ts/commit/d9e0164d69bede69269d0989c24a8631b9a0875d) Thanks [@ofreyssinet-ledger](https://github.com/ofreyssinet-ledger)! - Add support of Ledger Flex
+
+- [#121](https://github.com/LedgerHQ/device-sdk-ts/pull/121) [`3b59289`](https://github.com/LedgerHQ/device-sdk-ts/commit/3b592899168ecedfa3698041b77e09764c1cf4d7) Thanks [@jdabbech-ledger](https://github.com/jdabbech-ledger)! - Device reconnection on app change
+
+- [#156](https://github.com/LedgerHQ/device-sdk-ts/pull/156) [`a25f529`](https://github.com/LedgerHQ/device-sdk-ts/commit/a25f529ed08206d38d00026a3589bbbaa21075bc) Thanks [@ofreyssinet-ledger](https://github.com/ofreyssinet-ledger)! - Added a new "generic" DeviceAction `SendCommandInAppDeviceAction`
+
+- [#209](https://github.com/LedgerHQ/device-sdk-ts/pull/209) [`c5b5cc1`](https://github.com/LedgerHQ/device-sdk-ts/commit/c5b5cc11d0b0dfec4e1e76ecd98d4ad09a6c9d89) Thanks [@aussedatlo](https://github.com/aussedatlo)! - Add sign-personal-message user interaction
+
+- [#186](https://github.com/LedgerHQ/device-sdk-ts/pull/186) [`5018129`](https://github.com/LedgerHQ/device-sdk-ts/commit/501812904cbb7eb519651b4c8dbb613198e1e89c) Thanks [@paoun-ledger](https://github.com/paoun-ledger)! - DSDK-420 Implement the EIP712 TypedData parser service
+
+- [#147](https://github.com/LedgerHQ/device-sdk-ts/pull/147) [`2893f92`](https://github.com/LedgerHQ/device-sdk-ts/commit/2893f92e023741ef33e72dd5bc40e18b42052ca8) Thanks [@aussedatlo](https://github.com/aussedatlo)! - Add exports from api, add add32BitUintToData for ApduBuilder
+
+- [#159](https://github.com/LedgerHQ/device-sdk-ts/pull/159) [`861f9c5`](https://github.com/LedgerHQ/device-sdk-ts/commit/861f9c56b7b10034df156e369400dfd614b545f1) Thanks [@aussedatlo](https://github.com/aussedatlo)! - add HexaString to handle `0x${string}` type
+
 ## 0.3.0
 
 ### Minor Changes
