@@ -99,18 +99,18 @@ export const Sidebar: React.FC = () => {
       </Subtitle>
 
       <Subtitle variant={"tiny"}>Device</Subtitle>
-
-      {Object.entries(deviceById).map(([sessionId, device]) => (
-        <Device
-          key={sessionId}
-          sessionId={sessionId}
-          name={device.name}
-          model={device.modelId}
-          type={device.type}
-          onDisconnect={async () => onDeviceDisconnect(sessionId)}
-        />
-      ))}
-
+      <div data-testid="container_devices">
+        {Object.entries(deviceById).map(([sessionId, device]) => (
+          <Device
+            key={sessionId}
+            sessionId={sessionId}
+            name={device.name}
+            model={device.modelId}
+            type={device.type}
+            onDisconnect={async () => onDeviceDisconnect(sessionId)}
+          />
+        ))}
+      </div>
       <MenuContainer active={!!selectedId}>
         <Subtitle variant={"tiny"}>Menu</Subtitle>
         <Menu />

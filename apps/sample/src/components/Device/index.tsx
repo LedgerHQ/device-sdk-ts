@@ -74,11 +74,16 @@ export const Device: React.FC<DeviceProps> = ({
         <IconComponent size="S" />
       </IconContainer>
       <Box flex={1}>
-        <Text variant="body">{name}</Text>
+        <Text data-testid="text_device-name" variant="body">
+          {name}
+        </Text>
         <Flex>
           {sessionState && (
             <>
-              <StatusText state={sessionState.deviceStatus}>
+              <StatusText
+                data-testid="text_device-connection-status"
+                state={sessionState.deviceStatus}
+              >
                 {sessionState.deviceStatus}
               </StatusText>
               <Text mx={3} color="neutral.c50">
@@ -91,25 +96,27 @@ export const Device: React.FC<DeviceProps> = ({
           </Text>
         </Flex>
       </Box>
-      <DropdownGeneric closeOnClickOutside label="" placement="bottom">
-        {Object.values(deviceById).length > 1 && selectedId !== sessionId && (
-          <ActionRow
-            onClick={() =>
-              dispatch({ type: "select_session", payload: { sessionId } })
-            }
-          >
+      <div data-testid="dropdown_device-option">
+        <DropdownGeneric closeOnClickOutside label="" placement="bottom">
+          {Object.values(deviceById).length > 1 && selectedId !== sessionId && (
+            <ActionRow
+              onClick={() =>
+                dispatch({ type: "select_session", payload: { sessionId } })
+              }
+            >
+              <Text variant="paragraph" color="neutral.c80">
+                Select
+              </Text>
+            </ActionRow>
+          )}
+          <ActionRow data-testid="CTA_disconnect-device" onClick={onDisconnect}>
             <Text variant="paragraph" color="neutral.c80">
-              Select
+              Disconnect
             </Text>
+            <Icons.ChevronRight size="S" />
           </ActionRow>
-        )}
-        <ActionRow onClick={onDisconnect}>
-          <Text variant="paragraph" color="neutral.c80">
-            Disconnect
-          </Text>
-          <Icons.ChevronRight size="S" />
-        </ActionRow>
-      </DropdownGeneric>
+        </DropdownGeneric>
+      </div>
     </Root>
   );
 };

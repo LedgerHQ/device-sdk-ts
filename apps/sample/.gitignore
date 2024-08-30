@@ -37,3 +37,6 @@ next-env.d.ts
 
 # Sentry Config File
 .sentryclirc
+
+# Ignore Playwright test results folder
+test-results/

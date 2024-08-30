@@ -74,12 +74,12 @@ export const MainView: React.FC = () => {
       <Description variant={"body"}>
         Use this application to test Ledger hardware device features.
       </Description>
-
       <Button
         onClick={onSelectDeviceClicked}
         variant="main"
         backgroundColor="main"
         size="large"
+        data-testid="CTA_select-device"
       >
         Select a device
       </Button>

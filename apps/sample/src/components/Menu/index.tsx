@@ -27,11 +27,19 @@ export const Menu: React.FC = () => {
       </MenuItem>
       <MenuItem>
         <Icons.LedgerDevices />
-        <MenuTitle onClick={() => router.push("/commands")}>Commands</MenuTitle>
+        <MenuTitle
+          data-testid="CTA_route-to-/commands"
+          onClick={() => router.push("/commands")}
+        >
+          Commands
+        </MenuTitle>
       </MenuItem>
       <MenuItem>
         <Icons.LedgerDevices />
-        <MenuTitle onClick={() => router.push("device-actions")}>
+        <MenuTitle
+          data-testid="CTA_route-to-/device-action"
+          onClick={() => router.push("device-actions")}
+        >
           Device actions
         </MenuTitle>
       </MenuItem>
