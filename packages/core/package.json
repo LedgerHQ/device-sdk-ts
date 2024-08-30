@@ -55,6 +55,7 @@
     "@types/semver": "^7.5.8",
     "@types/uuid": "^10.0.0",
     "@types/w3c-web-hid": "^1.0.6",
+    "@types/web-bluetooth": "^0.0.20",
     "ts-node": "^10.9.2"
   }
 }
