@@ -6,9 +6,9 @@ import {
   ApduParser,
   ApduResponse,
   type Command,
-  CommandErrorArgs,
-  CommandErrors,
-  CommandResult,
+  type CommandErrorArgs,
+  type CommandErrors,
+  type CommandResult,
   CommandResultFactory,
   CommandUtils,
   DeviceExchangeError,
@@ -20,7 +20,7 @@ export type ProvideNFTInformationCommandArgs = {
   /**
    * The stringified hexa representation of the NFT data.
    */
-  data: string;
+  payload: string;
 };
 
 export type ProvideNFTInformationCommandErrorCodes = "6d00";
@@ -44,7 +44,7 @@ export class ProvideNFTInformationCommand
       ProvideNFTInformationCommandErrorCodes
     >
 {
-  constructor(private args: ProvideNFTInformationCommandArgs) {}
+  constructor(private readonly args: ProvideNFTInformationCommandArgs) {}
 
   getApdu(): Apdu {
     const apduBuilderArgs: ApduBuilderArgs = {
@@ -53,9 +53,8 @@ export class ProvideNFTInformationCommand
       p1: 0x00,
       p2: 0x00,
     };
-
     return new ApduBuilder(apduBuilderArgs)
-      .addHexaStringToData(this.args.data)
+      .addHexaStringToData(this.args.payload)
       .build();
   }
 

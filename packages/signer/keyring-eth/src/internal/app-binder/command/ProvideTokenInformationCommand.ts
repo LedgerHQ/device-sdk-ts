@@ -2,11 +2,11 @@
 import {
   Apdu,
   ApduBuilder,
-  ApduBuilderArgs,
+  type ApduBuilderArgs,
   ApduParser,
   ApduResponse,
-  Command,
-  CommandResult,
+  type Command,
+  type CommandResult,
   CommandResultFactory,
   CommandUtils,
   GlobalCommandErrorHandler,
@@ -28,11 +28,7 @@ export class ProvideTokenInformationCommand
       ProvideTokenInformationCommandArgs
     >
 {
-  args: ProvideTokenInformationCommandArgs;
-
-  constructor(args: ProvideTokenInformationCommandArgs) {
-    this.args = args;
-  }
+  constructor(private readonly args: ProvideTokenInformationCommandArgs) {}
 
   getApdu(): Apdu {
     const getEthAddressArgs: ApduBuilderArgs = {
@@ -41,9 +37,9 @@ export class ProvideTokenInformationCommand
       p1: 0x00,
       p2: 0x00,
     };
-    const builder = new ApduBuilder(getEthAddressArgs);
-    builder.addHexaStringToData(this.args.payload);
-    return builder.build();
+    return new ApduBuilder(getEthAddressArgs)
+      .addHexaStringToData(this.args.payload)
+      .build();
   }
 
   parseResponse(

@@ -3,7 +3,10 @@ import { inject, injectable } from "inversify";
 import type { ForwardDomainDataSource } from "@/forward-domain/data/ForwardDomainDataSource";
 import { forwardDomainTypes } from "@/forward-domain/di/forwardDomainTypes";
 import { ContextLoader } from "@/shared/domain/ContextLoader";
-import { ClearSignContext } from "@/shared/model/ClearSignContext";
+import {
+  ClearSignContext,
+  ClearSignContextType,
+} from "@/shared/model/ClearSignContext";
 import { TransactionContext } from "@/shared/model/TransactionContext";
 
 @injectable()
@@ -29,7 +32,7 @@ export class ForwardDomainContextLoader implements ContextLoader {
     if (!this.isDomainValid(domain)) {
       return [
         {
-          type: "error",
+          type: ClearSignContextType.ERROR,
           error: new Error(
             "[ContextModule] ForwardDomainLoader: invalid domain",
           ),
@@ -45,11 +48,11 @@ export class ForwardDomainContextLoader implements ContextLoader {
     return [
       payload.caseOf({
         Left: (error): ClearSignContext => ({
-          type: "error",
+          type: ClearSignContextType.ERROR,
           error: error,
         }),
         Right: (value): ClearSignContext => ({
-          type: "domainName",
+          type: ClearSignContextType.DOMAIN_NAME,
           payload: value,
         }),
       }),

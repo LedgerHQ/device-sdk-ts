@@ -5,24 +5,21 @@ import {
   type ApduBuilderArgs,
   ApduResponse,
   type Command,
-  CommandResult,
+  type CommandResult,
   CommandResultFactory,
   CommandUtils,
   GlobalCommandErrorHandler,
 } from "@ledgerhq/device-sdk-core";
 
 export type ProvideDomainNameCommandArgs = {
-  /**
-   * The chunk of the stringified hexa representation of the domain name prefixed by its length in two bytes.
-   * If the index equals 0, the first two bytes are the length of the domain name, else all the bytes are the chunk data.
-   * @example "00064C6564676572" (hexa for "Ledger", first chunk and only chunk)
-   */
-  data: string;
-  /**
-   * The index of the chunk.
-   */
-  index: number;
+  data: Uint8Array;
+  isFirstChunk: boolean;
 };
+
+/**
+ * The length of the payload will take 2 bytes in the APDU.
+ */
+export const PAYLOAD_LENGTH_BYTES = 2;
 
 /**
  * The command that provides a chunk of the domain name to the device.
@@ -30,19 +27,18 @@ export type ProvideDomainNameCommandArgs = {
 export class ProvideDomainNameCommand
   implements Command<void, ProvideDomainNameCommandArgs>
 {
-  constructor(private args: ProvideDomainNameCommandArgs) {}
+  constructor(private readonly args: ProvideDomainNameCommandArgs) {}
 
   getApdu(): Apdu {
-    const isFirstChunk = this.args.index === 0;
     const apduBuilderArgs: ApduBuilderArgs = {
       cla: 0xe0,
       ins: 0x22,
-      p1: isFirstChunk ? 0x01 : 0x00,
+      p1: this.args.isFirstChunk ? 0x01 : 0x00,
       p2: 0x00,
     };
 
     return new ApduBuilder(apduBuilderArgs)
-      .addHexaStringToData(this.args.data)
+      .addBufferToData(this.args.data)
       .build();
   }
 

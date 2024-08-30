@@ -10,12 +10,13 @@ import {
   SetExternalPluginCommandError,
 } from "@internal/app-binder/command/SetExternalPluginCommand";
 
-/** Test payload contains:
+/**
+ * Test payload contains:
  * Length of plugin name : 08
  * Plugin Name : Paraswap
  * contract address: 0xdef171fe48cf0115b1d80b88dc8eab59176fee57
  * method selector: 0xa9059cbb
- * **/
+ */
 const SET_EXTERNAL_PLUGIN_PAYLOAD = [
   0x08, 0x50, 0x61, 0x72, 0x61, 0x73, 0x77, 0x61, 0x70, 0xde, 0xf1, 0x71, 0xfe,
   0x48, 0xcf, 0x01, 0x15, 0xb1, 0xd8, 0x0b, 0x88, 0xdc, 0x8e, 0xab, 0x59, 0x17,
@@ -44,8 +45,12 @@ describe("Set External plugin", () => {
     it("should retrieve correct apdu", () => {
       // given
       const command = new SetExternalPluginCommand({
-        payload: Uint8Array.from(SET_EXTERNAL_PLUGIN_PAYLOAD),
-        signature: Uint8Array.from(SET_EXTERNAL_PLUGIN_SIGNATURE),
+        payload: SET_EXTERNAL_PLUGIN_PAYLOAD.map((x) =>
+          x.toString(16).padStart(2, "0"),
+        ).join(""),
+        signature: SET_EXTERNAL_PLUGIN_SIGNATURE.map((x) =>
+          x.toString(16).padStart(2, "0"),
+        ).join(""),
       });
       // when
       const apdu = command.getApdu();
@@ -63,31 +68,35 @@ describe("Set External plugin", () => {
       ${Uint8Array.from([0x6d, 0x00])} | ${"6d00"}
     `(
       "should return an error for the response status code $errorCode",
-      ({ apduResponseCode, errorCode }) => {
+      ({
+        apduResponseCode,
+        errorCode,
+      }: Record<"apduResponseCode" | "errorCode", Uint8Array>) => {
         // GIVEN
         const response = new ApduResponse({
           data: Uint8Array.from([]),
           statusCode: apduResponseCode,
         });
         const command = new SetExternalPluginCommand({
-          payload: Uint8Array.from([]),
-          signature: Uint8Array.from([]),
+          payload: "",
+          signature: "",
         });
         // WHEN
         const result = command.parseResponse(response);
         // THEN
         expect(isSuccessCommandResult(result)).toBe(false);
-        // @ts-ignore
-        expect(result.error).toBeInstanceOf(SetExternalPluginCommandError);
-        // @ts-ignore
-        expect(result.error.errorCode).toStrictEqual(errorCode);
+        if (!isSuccessCommandResult(result)) {
+          expect(result.error).toBeInstanceOf(SetExternalPluginCommandError);
+          if (result.error instanceof SetExternalPluginCommandError)
+            expect(result.error.errorCode).toStrictEqual(errorCode);
+        }
       },
     );
     it("should return a global error", () => {
       // given
       const command = new SetExternalPluginCommand({
-        payload: Uint8Array.from([]),
-        signature: Uint8Array.from([]),
+        payload: "",
+        signature: "",
       });
       // when
       const apduResponse = new ApduResponse({
@@ -97,16 +106,17 @@ describe("Set External plugin", () => {
       // then
       const result = command.parseResponse(apduResponse);
       expect(isSuccessCommandResult(result)).toBe(false);
-      // @ts-ignore
-      expect(result.error).toBeInstanceOf(GlobalCommandError);
-      // @ts-ignore
-      expect(result.error.errorCode).toStrictEqual("5515");
+      if (!isSuccessCommandResult(result)) {
+        expect(result.error).toBeInstanceOf(GlobalCommandError);
+        if (result.error instanceof GlobalCommandError)
+          expect(result.error.errorCode).toStrictEqual("5515");
+      }
     });
     it("should return void if status is success", () => {
       // given
       const command = new SetExternalPluginCommand({
-        payload: Uint8Array.from([]),
-        signature: Uint8Array.from([]),
+        payload: "",
+        signature: "",
       });
       // when
       const apduResponse = new ApduResponse({

@@ -1,5 +1,6 @@
 import { Left, Right } from "purify-ts";
 
+import { ClearSignContextType } from "@/shared/model/ClearSignContext";
 import { TransactionContext } from "@/shared/model/TransactionContext";
 import { TokenDataSource } from "@/token/data/TokenDataSource";
 import { TokenContextLoader } from "@/token/domain/TokenContextLoader";
@@ -85,7 +86,10 @@ describe("TokenContextLoader", () => {
 
       // THEN
       expect(result).toEqual([
-        { type: "error", error: new Error("Invalid selector") },
+        {
+          type: ClearSignContextType.ERROR,
+          error: new Error("Invalid selector"),
+        },
       ]);
     });
 
@@ -104,7 +108,9 @@ describe("TokenContextLoader", () => {
       const result = await loader.load(transaction);
 
       // THEN
-      expect(result).toEqual([{ type: "error", error: new Error("error") }]);
+      expect(result).toEqual([
+        { type: ClearSignContextType.ERROR, error: new Error("error") },
+      ]);
     });
 
     it("should return a correct response", async () => {
@@ -121,7 +127,7 @@ describe("TokenContextLoader", () => {
       // THEN
       expect(result).toEqual([
         {
-          type: "token",
+          type: ClearSignContextType.TOKEN,
           payload: "payload-0xdAC17F958D2ee523a2206206994597C13D831ec7",
         },
       ]);
