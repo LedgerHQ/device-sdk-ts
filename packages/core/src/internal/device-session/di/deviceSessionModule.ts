@@ -56,7 +56,7 @@ export const deviceSessionModuleFactory = (
           (name: string) => LoggerPublisherService
         >(loggerTypes.LoggerPublisherServiceFactory);
 
-        return (args: DefaultApduReceiverConstructorArgs) => {
+        return (args: DefaultApduReceiverConstructorArgs = {}) => {
           return new DefaultApduReceiverService(args, logger);
         };
       });

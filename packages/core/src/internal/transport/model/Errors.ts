@@ -2,6 +2,7 @@ import { SdkError } from "@api/Error";
 
 export type PromptDeviceAccessError =
   | UsbHidTransportNotSupportedError
+  | BleTransportNotSupportedError
   | NoAccessibleDeviceError;
 
 export type ConnectError = UnknownDeviceError | OpeningConnectionError;
@@ -53,6 +54,13 @@ export class TransportNotSupportedError extends GeneralSdkError {
   }
 }
 
+export class BleTransportNotSupportedError extends GeneralSdkError {
+  override readonly _tag = "BleTransportNotSupportedError";
+  constructor(readonly err?: unknown) {
+    super(err);
+  }
+}
+
 export class UsbHidTransportNotSupportedError extends GeneralSdkError {
   override readonly _tag = "UsbHidTransportNotSupportedError";
   constructor(readonly err?: unknown) {
@@ -83,6 +91,20 @@ export class ReconnectionFailedError extends GeneralSdkError {
 
 export class HidSendReportError extends GeneralSdkError {
   override readonly _tag = "HidSendReportError";
+  constructor(readonly err?: unknown) {
+    super(err);
+  }
+}
+
+export class DeviceNotInitializedError extends GeneralSdkError {
+  override readonly _tag = "DeviceNotInitializedError";
+  constructor(readonly err?: unknown) {
+    super(err);
+  }
+}
+
+export class BleDeviceGattServerError extends GeneralSdkError {
+  override readonly _tag = "BleDeviceGattServerError";
   constructor(readonly err?: unknown) {
     super(err);
   }
