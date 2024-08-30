@@ -4,10 +4,10 @@ import { Container } from "inversify";
 
 import { GetAddressDAReturnType } from "@api/app-binder/GetAddressDeviceActionTypes";
 import { SignPersonalMessageDAReturnType } from "@api/app-binder/SignPersonalMessageDeviceActionTypes";
+import { SignTransactionDAReturnType } from "@api/app-binder/SignTransactionDeviceActionTypes";
 import { SignTypedDataDAReturnType } from "@api/app-binder/SignTypedDataDeviceActionTypes";
 import { KeyringEth } from "@api/KeyringEth";
 import { AddressOptions } from "@api/model/AddressOptions";
-import { Signature } from "@api/model/Signature";
 import { Transaction } from "@api/model/Transaction";
 import { TransactionOptions } from "@api/model/TransactionOptions";
 import { TypedData } from "@api/model/TypedData";
@@ -38,11 +38,11 @@ export class DefaultKeyringEth implements KeyringEth {
     this._container = makeContainer({ sdk, sessionId, contextModule });
   }
 
-  async signTransaction(
+  signTransaction(
     derivationPath: string,
     transaction: Transaction,
     options?: TransactionOptions,
-  ): Promise<Signature> {
+  ): SignTransactionDAReturnType {
     return this._container
       .get<SignTransactionUseCase>(transactionTypes.SignTransactionUseCase)
       .execute(derivationPath, transaction, options);
