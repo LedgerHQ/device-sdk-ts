@@ -10,7 +10,8 @@
     "lint:fix": "eslint --fix",
     "prettier": "prettier . --check",
     "prettier:fix": "prettier . --write",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "test:playwright": "npx playwright test"
   },
   "dependencies": {
     "@ledgerhq/device-sdk-core": "workspace:*",
@@ -27,6 +28,7 @@
     "@ledgerhq/eslint-config-dsdk": "workspace:*",
     "@ledgerhq/prettier-config-dsdk": "workspace:*",
     "@ledgerhq/tsconfig-dsdk": "workspace:*",
+    "@playwright/test": "^1.46.1",
     "@types/react": "^18.3.3",
     "@types/styled-components": "^5.1.25",
     "autoprefixer": "^10.4.20",

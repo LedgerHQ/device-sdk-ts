@@ -82,6 +82,7 @@ export function CommandForm<Args extends Record<string, FieldType>>({
               placeholder={key}
               onChange={(newVal) => setFormValue(key, newVal)}
               disabled={disabled}
+              data-testid={`input_${key}`}
             />
           ) : (
             <Input

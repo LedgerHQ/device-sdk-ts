@@ -153,6 +153,7 @@ export const DeviceActionsView: React.FC<{ sessionId: string }> = ({
       <Grid columns={1} rowGap={6} overflowY="scroll">
         {deviceActions.map((deviceAction) => (
           <DeviceAction
+            data-testid={`CTA_command-${deviceAction.title}`}
             key={`${deviceAction.title}_${deviceAction.description}`}
             {...deviceAction}
           />

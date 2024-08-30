@@ -137,7 +137,7 @@ export function DeviceActionDrawer<
 
   return (
     <>
-      <Block>
+      <Block data-testid="form_device-action">
         <Flex
           flexDirection="column"
           opacity={loading ? 0.5 : 1}
@@ -167,6 +167,7 @@ export function DeviceActionDrawer<
             Icon={() =>
               loading ? <InfiniteLoader size={20} /> : <Icons.ArrowRight />
             }
+            data-testid="CTA_send-device-action"
           >
             Execute
           </Button>
@@ -186,6 +187,7 @@ export function DeviceActionDrawer<
           rowGap={4}
           flex={1}
           overflowY="scroll"
+          data-testid="box_device-commands-responses"
         >
           {responses.map((response, index, arr) => {
             const isLatest = index === arr.length - 1;
