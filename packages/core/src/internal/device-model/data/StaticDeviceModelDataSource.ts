@@ -2,6 +2,7 @@ import { injectable } from "inversify";
 
 import { DeviceModelId } from "@api/device/DeviceModel";
 import { InternalDeviceModel } from "@internal/device-model/model/DeviceModel";
+import { BleDeviceInfos } from "@internal/transport/ble/model/BleDeviceInfos";
 
 import { DeviceModelDataSource } from "./DeviceModelDataSource";
 
@@ -103,5 +104,42 @@ export class StaticDeviceModelDataSource implements DeviceModelDataSource {
         return deviceModel[key as keyof InternalDeviceModel] === value;
       });
     });
+  }
+
+  getBluetoothServicesInfos(): Record<string, BleDeviceInfos> {
+    return Object.values(StaticDeviceModelDataSource.deviceModelByIds).reduce<
+      Record<string, BleDeviceInfos>
+    >((acc, deviceModel) => {
+      const { bluetoothSpec } = deviceModel;
+      if (bluetoothSpec) {
+        return {
+          ...acc,
+          ...bluetoothSpec.reduce<Record<string, BleDeviceInfos>>(
+            (serviceToModel, bleSpec) => ({
+              ...serviceToModel,
+              [bleSpec.serviceUuid]: {
+                deviceModel,
+                ...bleSpec,
+              },
+            }),
+            {},
+          ),
+        };
+      }
+      return acc;
+    }, {});
+  }
+
+  getBluetoothServices(): string[] {
+    return Object.values(StaticDeviceModelDataSource.deviceModelByIds).reduce<
+      string[]
+    >((acc, deviceModel) => {
+      const { bluetoothSpec } = deviceModel;
+
+      if (bluetoothSpec) {
+        return acc.concat(bluetoothSpec.map((spec) => spec.serviceUuid));
+      }
+      return acc;
+    }, []);
   }
 }
