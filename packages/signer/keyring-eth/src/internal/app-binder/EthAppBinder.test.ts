@@ -12,6 +12,11 @@ import {
   GetAddressDAOutput,
 } from "@api/app-binder/GetAddressDeviceActionTypes";
 import {
+  SignPersonalMessageDAError,
+  SignPersonalMessageDAIntermediateValue,
+  SignPersonalMessageDAOutput,
+} from "@api/app-binder/SignPersonalMessageDeviceActionTypes";
+import {
   SignTransactionDAError,
   SignTransactionDAIntermediateValue,
   SignTransactionDAOutput,
@@ -287,6 +292,72 @@ describe("EthAppBinder", () => {
         SignTransactionDAOutput,
         SignTransactionDAError,
         SignTransactionDAIntermediateValue
+      >[] = [];
+      observable.subscribe({
+        next: (state) => {
+          states.push(state);
+        },
+        error: (err) => {
+          done(err);
+        },
+        complete: () => {
+          try {
+            expect(states).toEqual([
+              {
+                status: DeviceActionStatus.Completed,
+                output: signature,
+              },
+            ]);
+            done();
+          } catch (err) {
+            done(err);
+          }
+        },
+      });
+    });
+  });
+
+  describe("signMessage", () => {
+    it("should return the signature", (done) => {
+      // GIVEN
+      const signature: Signature = {
+        r: `0xDEAD`,
+        s: `0xBEEF`,
+        v: 0,
+      };
+      const message = "Hello, World!";
+
+      jest.spyOn(mockedSdk, "executeDeviceAction").mockReturnValue({
+        observable: from([
+          {
+            status: DeviceActionStatus.Completed,
+            output: signature,
+          } as DeviceActionState<
+            SignPersonalMessageDAOutput,
+            SignPersonalMessageDAError,
+            SignPersonalMessageDAIntermediateValue
+          >,
+        ]),
+        cancel: jest.fn(),
+      });
+
+      // WHEN
+      const appBinder = new EthAppBinder(
+        mockedSdk,
+        mockedContextModule,
+        mockedMapper,
+        "sessionId",
+      );
+      const { observable } = appBinder.signPersonalMessage({
+        derivationPath: "44'/60'/3'/2/1",
+        message,
+      });
+
+      // THEN
+      const states: DeviceActionState<
+        SignPersonalMessageDAOutput,
+        SignPersonalMessageDAError,
+        SignPersonalMessageDAIntermediateValue
       >[] = [];
       observable.subscribe({
         next: (state) => {
