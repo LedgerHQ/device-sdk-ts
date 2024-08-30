@@ -1,6 +1,6 @@
 import { expect, test } from "@playwright/test";
 
-test("device connection", async ({ page }) => {
+test("device disconnection", async ({ page }) => {
   // Navigate to the app
   await page.goto("http://localhost:3000/");
 
@@ -18,6 +18,11 @@ test("device connection", async ({ page }) => {
     .locator("> *")
     .first();
 
+  // Get the device name using `getByTestId`
+  const deviceName = await firstChild
+    .getByTestId("text_device-name")
+    .textContent();
+
   // Assert that the device is connected and visible using `getByTestId`
   await expect(
     firstChild.getByTestId("text_device-connection-status"),
@@ -25,4 +30,13 @@ test("device connection", async ({ page }) => {
   await expect(
     firstChild.getByTestId("text_device-connection-status"),
   ).toBeVisible();
+
+  // Disconnect the device using `getByTestId`
+  await firstChild.getByTestId("dropdown_device-option").click();
+  await firstChild.getByTestId("CTA_disconnect-device").click();
+
+  // Verify the device is no longer visible using `getByTestId`
+  await expect(
+    page.getByTestId("text_device-name").locator(`:has-text("${deviceName}")`),
+  ).not.toBeVisible();
 });
