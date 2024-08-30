@@ -22,6 +22,7 @@ import {
 } from "@internal/manager-api/model/Const";
 import { sendModuleFactory } from "@internal/send/di/sendModule";
 import { transportModuleFactory } from "@internal/transport//di/transportModule";
+import { bleModuleFactory } from "@internal/transport/ble/di/bleModule";
 import { usbModuleFactory } from "@internal/transport/usb/di/usbModule";
 
 // Uncomment this line to enable the logger middleware
@@ -62,6 +63,7 @@ export const makeContainer = ({
     sendModuleFactory({ stub }),
     commandModuleFactory({ stub }),
     deviceActionModuleFactory({ stub }),
+    bleModuleFactory(),
     // modules go here
   );
 
