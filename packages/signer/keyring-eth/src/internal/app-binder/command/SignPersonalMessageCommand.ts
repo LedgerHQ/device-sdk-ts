@@ -69,7 +69,7 @@ export class SignPersonalMessageCommand
 
     // The data is returned only for the last chunk
     const v = parser.extract8BitUInt();
-    if (!v) {
+    if (v === undefined) {
       return CommandResultFactory({ data: Nothing });
     }
 

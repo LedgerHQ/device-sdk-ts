@@ -12,17 +12,23 @@ import { SetPluginCommand } from "@internal/app-binder/command/SetPluginCommand"
 import { makeDeviceActionInternalApiMock } from "@internal/app-binder/device-action/__test-utils__/makeInternalApi";
 
 import {
-  type ErrorCodes,
   ProvideTransactionContextTask,
   type ProvideTransactionContextTaskArgs,
+  type ProvideTransactionContextTaskErrorCodes,
 } from "./ProvideTransactionContextTask";
 
 describe("ProvideTransactionContextTask", () => {
   const api = makeDeviceActionInternalApiMock();
-  const successResult = CommandResultFactory<void, ErrorCodes>({
+  const successResult = CommandResultFactory<
+    void,
+    ProvideTransactionContextTaskErrorCodes
+  >({
     data: undefined,
   });
-  const errorResult = CommandResultFactory<void, ErrorCodes>({
+  const errorResult = CommandResultFactory<
+    void,
+    ProvideTransactionContextTaskErrorCodes
+  >({
     data: undefined,
     error: {} as UnknownDeviceExchangeError,
   });
