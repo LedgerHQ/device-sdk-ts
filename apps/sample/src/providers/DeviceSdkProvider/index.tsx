@@ -3,10 +3,11 @@ import {
   ConsoleLogger,
   DeviceSdk,
   DeviceSdkBuilder,
+  LogLevel,
 } from "@ledgerhq/device-sdk-core";
 
 export const sdk = new DeviceSdkBuilder()
-  .addLogger(new ConsoleLogger())
+  .addLogger(new ConsoleLogger(LogLevel.Info))
   .build();
 
 const SdkContext = createContext<DeviceSdk>(sdk);

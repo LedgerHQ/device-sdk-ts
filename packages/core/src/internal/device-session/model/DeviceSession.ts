@@ -1,4 +1,3 @@
-import { BehaviorSubject } from "rxjs";
 import { v4 as uuidv4 } from "uuid";
 
 import { Command } from "@api/command/Command";
@@ -17,6 +16,8 @@ import {
 } from "@api/device-session/DeviceSessionState";
 import { DeviceSessionId } from "@api/device-session/types";
 import { SdkError } from "@api/Error";
+import { DefaultEventDispatcher } from "@internal/event-dispatcher/service/DefaultEventDispatcher";
+import { EventDispatcher } from "@internal/event-dispatcher/service/EventDispatcher";
 import { LoggerPublisherService } from "@internal/logger-publisher/service/LoggerPublisherService";
 import { type ManagerApiService } from "@internal/manager-api/service/ManagerApiService";
 import { InternalConnectedDevice } from "@internal/usb/model/InternalConnectedDevice";
@@ -34,9 +35,9 @@ export type SessionConstructorArgs = {
 export class DeviceSession {
   private readonly _id: DeviceSessionId;
   private readonly _connectedDevice: InternalConnectedDevice;
-  private readonly _deviceState: BehaviorSubject<DeviceSessionState>;
   private readonly _refresher: DeviceSessionRefresher;
   private readonly _managerApiService: ManagerApiService;
+  private readonly _deviceState: EventDispatcher<DeviceSessionState>;
 
   constructor(
     { connectedDevice, id = uuidv4() }: SessionConstructorArgs,
@@ -45,26 +46,25 @@ export class DeviceSession {
   ) {
     this._id = id;
     this._connectedDevice = connectedDevice;
-    this._deviceState = new BehaviorSubject<DeviceSessionState>({
+
+    this._deviceState = new DefaultEventDispatcher<DeviceSessionState>({
       sessionStateType: DeviceSessionStateType.Connected,
       deviceStatus: DeviceStatus.CONNECTED,
     });
+
     this._refresher = new DeviceSessionRefresher(
       {
         refreshInterval: 1000,
-        deviceStatus: DeviceStatus.CONNECTED,
+        deviceState: this._deviceState,
         sendApduFn: (rawApdu: Uint8Array) =>
           this.sendApdu(rawApdu, {
             isPolling: true,
             triggersDisconnection: false,
           }),
-        updateStateFn: (callback) => {
-          const state = this._deviceState.getValue();
-          this.setDeviceSessionState(callback(state));
-        },
       },
       loggerModuleFactory("device-session-refresher"),
     );
+
     this._managerApiService = managerApiService;
   }
 
@@ -77,20 +77,11 @@ export class DeviceSession {
   }
 
   public get state() {
-    return this._deviceState.asObservable();
+    return this._deviceState.listen();
   }
 
   public setDeviceSessionState(state: DeviceSessionState) {
-    this._deviceState.next(state);
-  }
-
-  private updateDeviceStatus(deviceStatus: DeviceStatus) {
-    const sessionState = this._deviceState.getValue();
-    this._refresher.setDeviceStatus(deviceStatus);
-    this._deviceState.next({
-      ...sessionState,
-      deviceStatus,
-    });
+    this._deviceState.dispatch(state);
   }
 
   async sendApdu(
@@ -100,7 +91,11 @@ export class DeviceSession {
       triggersDisconnection: false,
     },
   ) {
-    if (!options.isPolling) this.updateDeviceStatus(DeviceStatus.BUSY);
+    if (!options.isPolling) {
+      this._deviceState.dispatch({
+        deviceStatus: DeviceStatus.BUSY,
+      });
+    }
 
     const errorOrResponse = await this._connectedDevice.sendApdu(
       rawApdu,
@@ -109,9 +104,13 @@ export class DeviceSession {
 
     return errorOrResponse.ifRight((response) => {
       if (CommandUtils.isLockedDeviceResponse(response)) {
-        this.updateDeviceStatus(DeviceStatus.LOCKED);
+        this._deviceState.dispatch({
+          deviceStatus: DeviceStatus.LOCKED,
+        });
       } else {
-        this.updateDeviceStatus(DeviceStatus.CONNECTED);
+        this._deviceState.dispatch({
+          deviceStatus: DeviceStatus.CONNECTED,
+        });
       }
     });
   }
@@ -146,11 +145,11 @@ export class DeviceSession {
       sendCommand: async <Response, ErrorStatusCodes, Args>(
         command: Command<Response, ErrorStatusCodes, Args>,
       ) => this.sendCommand(command),
-      getDeviceSessionState: () => this._deviceState.getValue(),
+      getDeviceSessionState: () => this._deviceState.get(),
       getDeviceSessionStateObservable: () => this.state,
       setDeviceSessionState: (state: DeviceSessionState) => {
         this.setDeviceSessionState(state);
-        return this._deviceState.getValue();
+        return this._deviceState.get();
       },
       getMetadataForAppHashes: (apps: ListAppsResponse) =>
         this._managerApiService.getAppsByHash(apps),
@@ -163,7 +162,11 @@ export class DeviceSession {
   }
 
   close() {
-    this.updateDeviceStatus(DeviceStatus.NOT_CONNECTED);
-    this._deviceState.complete();
+    this._deviceState.dispatch({
+      deviceStatus: DeviceStatus.NOT_CONNECTED,
+    });
+
+    this._refresher.stop();
+    this._deviceState.close();
   }
 }

@@ -1,6 +1,5 @@
 import { BatteryStatusFlags } from "@api/command/os/GetBatteryStatusCommand";
 import { DeviceStatus } from "@api/device/DeviceStatus";
-import { Application } from "@internal/manager-api/model/ManagerApiType";
 
 /**
  * The battery status of a device.
@@ -77,7 +76,7 @@ type DeviceSessionReadyState = {
   /**
    * The current applications installed on the device.
    */
-  readonly installedApps: Application[];
+  // readonly installedApps: Application[];
 };
 
 /**

@@ -48,7 +48,6 @@ describe("OpenAppDeviceAction", () => {
         sessionStateType: DeviceSessionStateType.ReadyWithoutSecureChannel,
         deviceStatus: DeviceStatus.CONNECTED,
         currentApp: "Bitcoin",
-        installedApps: [],
       });
 
       sendCommandMock.mockResolvedValueOnce(
