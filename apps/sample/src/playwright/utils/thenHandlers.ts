@@ -21,7 +21,7 @@ export const thenDeviceIsDisconnected = async (page: Page): Promise<void> => {
       .getByTestId("text_device-name")
       .allTextContents();
     await Promise.all(
-      Object.entries(deviceNames).map(async ([index, deviceName]) => {
+      Object.entries(deviceNames).map(async ([_, deviceName]) => {
         await expect(
           page
             .getByTestId("text_device-name")
