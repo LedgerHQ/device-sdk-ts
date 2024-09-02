@@ -2,16 +2,15 @@ import { type ContextModule } from "@ledgerhq/context-module";
 import {
   CommandResultFactory,
   DeviceActionStatus,
-  OpenAppDeviceAction,
   UnknownDAError,
   UnknownDeviceExchangeError,
   UserInteractionRequired,
 } from "@ledgerhq/device-sdk-core";
-import { Just, Left, Nothing, Right } from "purify-ts";
-import { assign, createMachine } from "xstate";
+import { Just, Nothing } from "purify-ts";
 
 import { SignTypedDataDAState } from "@api/app-binder/SignTypedDataDeviceActionTypes";
 import { makeDeviceActionInternalApiMock } from "@internal/app-binder/device-action/__test-utils__/makeInternalApi";
+import { setupOpenAppDAMock } from "@internal/app-binder/device-action/__test-utils__/setupOpenAppDAMock";
 import { testDeviceActionStates } from "@internal/app-binder/device-action/__test-utils__/testDeviceActionStates";
 import { type ProvideEIP712ContextTaskArgs } from "@internal/app-binder/task/ProvideEIP712ContextTask";
 import {
@@ -33,32 +32,6 @@ jest.mock(
     })),
   }),
 );
-
-const setupOpenAppDAMock = (error?: unknown) => {
-  (OpenAppDeviceAction as jest.Mock).mockImplementation(() => ({
-    makeStateMachine: jest.fn().mockImplementation(() =>
-      createMachine({
-        initial: "pending",
-        states: {
-          pending: {
-            entry: assign({
-              intermediateValue: {
-                requiredUserInteraction: UserInteractionRequired.ConfirmOpenApp,
-              },
-            }),
-            after: {
-              0: "done",
-            },
-          },
-          done: {
-            type: "final",
-          },
-        },
-        output: () => (error ? Left(error) : Right(undefined)),
-      }),
-    ),
-  }));
-};
 
 describe("SignTypedDataDeviceAction", () => {
   const TEST_MESSAGE = {

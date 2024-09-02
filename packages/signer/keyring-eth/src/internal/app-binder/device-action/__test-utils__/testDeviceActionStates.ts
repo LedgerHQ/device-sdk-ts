@@ -21,7 +21,7 @@ export function testDeviceActionStates<
   deviceAction: DeviceAction<Output, Input, Error, IntermediateValue>,
   expectedStates: Array<DeviceActionState<Output, Error, IntermediateValue>>,
   internalApi: InternalApi,
-  done: jest.DoneCallback,
+  done?: jest.DoneCallback,
 ) {
   const observedStates: Array<
     DeviceActionState<Output, Error, IntermediateValue>
@@ -33,14 +33,14 @@ export function testDeviceActionStates<
       observedStates.push(state);
     },
     error: (error) => {
-      done(error);
+      if (done) done(error);
     },
     complete: () => {
       try {
         expect(observedStates).toEqual(expectedStates);
-        done();
+        if (done) done();
       } catch (e) {
-        done(e);
+        if (done) done(e);
       }
     },
   });
