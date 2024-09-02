@@ -8,7 +8,10 @@ import { Left, Right } from "purify-ts";
 import { TransactionMapperResult } from "@internal/transaction/service/mapper/model/TransactionMapperResult";
 import { TransactionMapperService } from "@internal/transaction/service/mapper/TransactionMapperService";
 
-import { BuildTransactionContextTask } from "./BuildTransactionContextTask";
+import {
+  BuildTransactionContextTask,
+  BuildTransactionContextTaskArgs,
+} from "./BuildTransactionContextTask";
 
 describe("BuildTransactionContextTask", () => {
   const contextModuleMock = {
@@ -22,6 +25,7 @@ describe("BuildTransactionContextTask", () => {
     domain: "domain-name.eth",
   };
   let defaultTransaction: Transaction;
+  let defaultArgs: BuildTransactionContextTaskArgs;
 
   beforeEach(() => {
     jest.clearAllMocks();
@@ -30,6 +34,14 @@ describe("BuildTransactionContextTask", () => {
     defaultTransaction.chainId = 1n;
     defaultTransaction.nonce = 0;
     defaultTransaction.data = "0x";
+
+    defaultArgs = {
+      contextModule: contextModuleMock,
+      mapper: mapperMock as unknown as TransactionMapperService,
+      transaction: defaultTransaction,
+      options: defaultOptions,
+      challenge: "challenge",
+    };
   });
 
   it("should build the transaction context without clear sign contexts", async () => {
@@ -44,13 +56,7 @@ describe("BuildTransactionContextTask", () => {
     contextModuleMock.getContexts.mockResolvedValueOnce(clearSignContexts);
 
     // WHEN
-    const result = await new BuildTransactionContextTask(
-      contextModuleMock,
-      mapperMock as unknown as TransactionMapperService,
-      defaultTransaction,
-      defaultOptions,
-      "challenge",
-    ).run();
+    const result = await new BuildTransactionContextTask(defaultArgs).run();
 
     // THEN
     expect(result).toEqual({
@@ -80,13 +86,7 @@ describe("BuildTransactionContextTask", () => {
     contextModuleMock.getContexts.mockResolvedValueOnce(clearSignContexts);
 
     // WHEN
-    const result = await new BuildTransactionContextTask(
-      contextModuleMock,
-      mapperMock as unknown as TransactionMapperService,
-      defaultTransaction,
-      defaultOptions,
-      "challenge",
-    ).run();
+    const result = await new BuildTransactionContextTask(defaultArgs).run();
 
     // THEN
     expect(result).toEqual({
@@ -107,13 +107,7 @@ describe("BuildTransactionContextTask", () => {
     contextModuleMock.getContexts.mockResolvedValueOnce(clearSignContexts);
 
     // WHEN
-    await new BuildTransactionContextTask(
-      contextModuleMock,
-      mapperMock as unknown as TransactionMapperService,
-      defaultTransaction,
-      defaultOptions,
-      "challenge",
-    ).run();
+    await new BuildTransactionContextTask(defaultArgs).run();
 
     // THEN
     expect(mapperMock.mapTransactionToSubset).toHaveBeenCalledWith(
@@ -133,13 +127,7 @@ describe("BuildTransactionContextTask", () => {
     contextModuleMock.getContexts.mockResolvedValueOnce(clearSignContexts);
 
     // WHEN
-    await new BuildTransactionContextTask(
-      contextModuleMock,
-      mapperMock as unknown as TransactionMapperService,
-      defaultTransaction,
-      defaultOptions,
-      "challenge",
-    ).run();
+    await new BuildTransactionContextTask(defaultArgs).run();
 
     // THEN
     expect(contextModuleMock.getContexts).toHaveBeenCalledWith({
@@ -155,13 +143,7 @@ describe("BuildTransactionContextTask", () => {
     mapperMock.mapTransactionToSubset.mockReturnValueOnce(Left(error));
 
     // WHEN
-    const task = new BuildTransactionContextTask(
-      contextModuleMock,
-      mapperMock as unknown as TransactionMapperService,
-      defaultTransaction,
-      defaultOptions,
-      "challenge",
-    );
+    const task = new BuildTransactionContextTask(defaultArgs);
 
     // THEN
     await expect(task.run()).rejects.toThrow(error);
@@ -196,13 +178,7 @@ describe("BuildTransactionContextTask", () => {
     contextModuleMock.getContexts.mockResolvedValueOnce(clearSignContexts);
 
     // WHEN
-    const result = await new BuildTransactionContextTask(
-      contextModuleMock,
-      mapperMock as unknown as TransactionMapperService,
-      defaultTransaction,
-      defaultOptions,
-      "challenge",
-    ).run();
+    const result = await new BuildTransactionContextTask(defaultArgs).run();
 
     // THEN
     expect(result).toEqual({

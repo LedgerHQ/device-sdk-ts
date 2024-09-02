@@ -12,25 +12,29 @@ export type BuildTransactionTaskResult = {
   readonly serializedTransaction: Uint8Array;
 };
 
+export type BuildTransactionContextTaskArgs = {
+  readonly contextModule: ContextModule;
+  readonly mapper: TransactionMapperService;
+  readonly transaction: Transaction;
+  readonly options: TransactionOptions;
+  readonly challenge: string;
+};
+
 export class BuildTransactionContextTask {
-  constructor(
-    private contextModule: ContextModule,
-    private mapper: TransactionMapperService,
-    private transaction: Transaction,
-    private options: TransactionOptions,
-    private challenge: string,
-  ) {}
+  constructor(private readonly args: BuildTransactionContextTaskArgs) {}
 
   async run(): Promise<BuildTransactionTaskResult> {
-    const parsed = this.mapper.mapTransactionToSubset(this.transaction);
+    const { contextModule, mapper, transaction, options, challenge } =
+      this.args;
+    const parsed = mapper.mapTransactionToSubset(transaction);
     parsed.ifLeft((err) => {
       throw err;
     });
     const { subset, serializedTransaction } = parsed.unsafeCoerce();
 
-    const clearSignContexts = await this.contextModule.getContexts({
-      challenge: this.challenge,
-      domain: this.options.domain,
+    const clearSignContexts = await contextModule.getContexts({
+      challenge,
+      domain: options.domain,
       ...subset,
     });
 
