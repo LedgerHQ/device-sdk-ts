@@ -58,10 +58,7 @@ export class ProvideTransactionContextTaskError implements SdkError {
   }
 }
 
-/**
- * The exported type here is just for testing purposes, use the concret command error codes instead for the real implementation.
- */
-export type ErrorCodes =
+export type ProvideTransactionContextTaskErrorCodes =
   | void
   | SetExternalPluginCommandErrorCodes
   | SetPluginCommandErrorCodes
@@ -84,7 +81,9 @@ export class ProvideTransactionContextTask {
     private args: ProvideTransactionContextTaskArgs,
   ) {}
 
-  async run(): Promise<Maybe<CommandErrorResult<ErrorCodes>>> {
+  async run(): Promise<
+    Maybe<CommandErrorResult<ProvideTransactionContextTaskErrorCodes>>
+  > {
     for (const context of this.args.clearSignContexts) {
       const res = await this.provideContext(context);
       if (!isSuccessCommandResult(res)) {
@@ -105,7 +104,10 @@ export class ProvideTransactionContextTask {
     type,
     payload,
   }: ClearSignContextSuccess): Promise<
-    CommandResult<void | ProvideTokenInformationCommandResponse, ErrorCodes>
+    CommandResult<
+      void | ProvideTokenInformationCommandResponse,
+      ProvideTransactionContextTaskErrorCodes
+    >
   > {
     switch (type) {
       case ClearSignContextType.PLUGIN: {
