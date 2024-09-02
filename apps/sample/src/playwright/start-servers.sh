@@ -11,7 +11,7 @@ done
 echo "mock server is up!"
 
 echo "Starting sample app..."
-(cd .. && pnpm sample dev) &
+(cd .. && pnpm sample dev:default-mock) &
 SAMPLE_APP_PID=$!
 
 while ! nc -z localhost 3000; do   

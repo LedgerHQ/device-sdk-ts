@@ -110,7 +110,7 @@ export function Command<
         title={title}
         description={description}
       >
-        <Block data-testid="form_device-commands">
+        <Block data-testid="form_device-command">
           <CommandForm
             initialValues={values}
             onChange={setValues}
@@ -123,7 +123,7 @@ export function Command<
             Icon={() =>
               loading ? <InfiniteLoader size={20} /> : <Icons.ArrowRight />
             }
-            data-testid="CTA_send-command"
+            data-testid="CTA_send-device-command"
           >
             Send
           </Button>
