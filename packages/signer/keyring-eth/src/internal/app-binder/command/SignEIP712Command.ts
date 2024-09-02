@@ -79,7 +79,7 @@ export class SignEIP712Command
     }
 
     const v = parser.extract8BitUInt();
-    if (!v) {
+    if (v === undefined) {
       return CommandResultFactory({
         error: new InvalidStatusWordError("V is missing"),
       });
