@@ -83,20 +83,6 @@ describe("ProvideTokenInformationCommand", () => {
       );
     });
 
-    it("should return an error if the response is invalid", () => {
-      // GIVEN
-      const response = {
-        statusCode: Uint8Array.from([0x90, 0x00]),
-        data: new Uint8Array(),
-      };
-
-      // WHEN
-      const result = command.parseResponse(response);
-
-      // THEN
-      expect(isSuccessCommandResult(result)).toBe(false);
-    });
-
     it("should return an error if the response is not successful", () => {
       // GIVEN
       const response = {

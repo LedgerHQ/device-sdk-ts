@@ -10,7 +10,6 @@ import {
   CommandResultFactory,
   CommandUtils,
   GlobalCommandErrorHandler,
-  InvalidStatusWordError,
 } from "@ledgerhq/device-sdk-core";
 
 export type ProvideTokenInformationCommandArgs = {
@@ -52,12 +51,7 @@ export class ProvideTokenInformationCommand
         error: GlobalCommandErrorHandler.handle(response),
       });
     }
-    const tokenIndex = parser.extract8BitUInt();
-    if (tokenIndex === undefined) {
-      return CommandResultFactory({
-        error: new InvalidStatusWordError("tokenIndex is missing"),
-      });
-    }
+    const tokenIndex = parser.extract8BitUInt() ?? 0;
     return CommandResultFactory({ data: { tokenIndex } });
   }
 }
