@@ -4,19 +4,19 @@ export const thenDeviceIsConnected = async (
   page: Page,
   deviceIndex: number = 0,
 ): Promise<void> => {
-  const secondChild = page
+  const targetChild = page
     .getByTestId("container_devices")
     .locator("> *")
     .nth(deviceIndex);
   await expect(
-    secondChild.getByTestId("text_device-connection-status"),
+    targetChild.getByTestId("text_device-connection-status"),
   ).toContainText("CONNECTED");
   await expect(
-    secondChild.getByTestId("text_device-connection-status"),
+    targetChild.getByTestId("text_device-connection-status"),
   ).toBeVisible();
 };
 
-export const thenDeviceIsDisconnected = async (page: Page): Promise<void> => {
+export const thenNoDeviceIsConnected = async (page: Page): Promise<void> => {
   try {
     const deviceNames = await page
       .getByTestId("container_devices")
