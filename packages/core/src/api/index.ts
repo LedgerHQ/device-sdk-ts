@@ -118,4 +118,8 @@ export {
   DeviceSessionStateType,
 } from "@api/device-session/DeviceSessionState";
 export { type SdkError } from "@api/Error";
-export { hexaStringToBuffer, isHexaString } from "@api/utils/HexaString";
+export {
+  bufferToHexaString,
+  hexaStringToBuffer,
+  isHexaString,
+} from "@api/utils/HexaString";

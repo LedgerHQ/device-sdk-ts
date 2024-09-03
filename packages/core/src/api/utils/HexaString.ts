@@ -23,3 +23,9 @@ export const hexaStringToBuffer = (value: string): Uint8Array | null => {
   }
   return new Uint8Array(bytes);
 };
+
+export const bufferToHexaString = (value: Uint8Array): HexaString => {
+  return `0x${Array.from(value, (byte) =>
+    byte.toString(16).padStart(2, "0"),
+  ).join("")}`;
+};

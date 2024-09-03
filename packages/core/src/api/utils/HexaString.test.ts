@@ -1,4 +1,8 @@
-import { hexaStringToBuffer, isHexaString } from "./HexaString";
+import {
+  bufferToHexaString,
+  hexaStringToBuffer,
+  isHexaString,
+} from "./HexaString";
 
 describe("HexaString", () => {
   describe("isHexaString function", () => {
@@ -136,6 +140,19 @@ describe("HexaString", () => {
 
       // THEN
       expect(result).toStrictEqual(new Uint8Array([0x0a, 0x35]));
+    });
+  });
+
+  describe("bufferToHexaString function", () => {
+    it("should convert a buffer into a hexa string", () => {
+      // GIVEN
+      const value = Uint8Array.from([0, 1, 2, 0xff, 0xfe]);
+
+      // WHEN
+      const result = bufferToHexaString(value);
+
+      // THEN
+      expect(result).toStrictEqual("0x000102fffe");
     });
   });
 });
