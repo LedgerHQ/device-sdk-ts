@@ -6,6 +6,13 @@ export type {
   SignPersonalMessageDAOutput,
   SignPersonalMessageDAState,
 } from "@api/app-binder/SignPersonalMessageDeviceActionTypes";
+export type {
+  SignTransactionDAError,
+  SignTransactionDAInput,
+  SignTransactionDAIntermediateValue,
+  SignTransactionDAOutput,
+  SignTransactionDAState,
+} from "@api/app-binder/SignTransactionDeviceActionTypes";
 export {
   type SignTypedDataDAError,
   type SignTypedDataDAInput,

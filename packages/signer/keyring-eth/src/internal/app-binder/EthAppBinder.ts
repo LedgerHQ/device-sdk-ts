@@ -4,40 +4,40 @@ import { SendCommandInAppDeviceAction } from "@ledgerhq/device-sdk-core";
 import { UserInteractionRequired } from "@ledgerhq/device-sdk-core";
 import { inject, injectable } from "inversify";
 
-import { GetAddressDAReturnType } from "@api/app-binder/GetAddressDeviceActionTypes";
-import { SignPersonalMessageDAReturnType } from "@api/app-binder/SignPersonalMessageDeviceActionTypes";
-import { SignTypedDataDAReturnType } from "@api/app-binder/SignTypedDataDeviceActionTypes";
-import { TypedData } from "@api/model/TypedData";
+import { type GetAddressDAReturnType } from "@api/app-binder/GetAddressDeviceActionTypes";
+import { type SignPersonalMessageDAReturnType } from "@api/app-binder/SignPersonalMessageDeviceActionTypes";
+import { type SignTransactionDAReturnType } from "@api/app-binder/SignTransactionDeviceActionTypes";
+import { type SignTypedDataDAReturnType } from "@api/app-binder/SignTypedDataDeviceActionTypes";
+import { type Transaction } from "@api/model/Transaction";
+import { type TransactionOptions } from "@api/model/TransactionOptions";
+import { type TypedData } from "@api/model/TypedData";
 import { SignTypedDataDeviceAction } from "@internal/app-binder/device-action/SignTypedData/SignTypedDataDeviceAction";
 import { externalTypes } from "@internal/externalTypes";
-import { TypedDataParserService } from "@internal/typed-data/service/TypedDataParserService";
+import { transactionTypes } from "@internal/transaction/di/transactionTypes";
+import { TransactionMapperService } from "@internal/transaction/service/mapper/TransactionMapperService";
+import { type TypedDataParserService } from "@internal/typed-data/service/TypedDataParserService";
 
 import { GetAddressCommand } from "./command/GetAddressCommand";
 import { SignPersonalMessageDeviceAction } from "./device-action/SignPersonalMessage/SignPersonalMessageDeviceAction";
+import { SignTransactionDeviceAction } from "./device-action/SignTransaction/SignTransactionDeviceAction";
 
 @injectable()
 export class EthAppBinder {
-  private _sdk: DeviceSdk;
-  private _contextModule: ContextModule;
-  private _sessionId: DeviceSessionId;
-
   constructor(
-    @inject(externalTypes.Sdk) sdk: DeviceSdk,
-    @inject(externalTypes.ContextModule) contextModule: ContextModule,
-    @inject(externalTypes.SessionId) sessionId: DeviceSessionId,
-  ) {
-    this._sdk = sdk;
-    this._contextModule = contextModule;
-    this._sessionId = sessionId;
-  }
+    @inject(externalTypes.Sdk) private sdk: DeviceSdk,
+    @inject(externalTypes.ContextModule) private contextModule: ContextModule,
+    @inject(transactionTypes.TransactionMapperService)
+    private mapper: TransactionMapperService,
+    @inject(externalTypes.SessionId) private sessionId: DeviceSessionId,
+  ) {}
 
   getAddress(args: {
     derivationPath: string;
     checkOnDevice?: boolean;
     returnChainCode?: boolean;
   }): GetAddressDAReturnType {
-    return this._sdk.executeDeviceAction({
-      sessionId: this._sessionId,
+    return this.sdk.executeDeviceAction({
+      sessionId: this.sessionId,
       deviceAction: new SendCommandInAppDeviceAction({
         input: {
           command: new GetAddressCommand(args),
@@ -54,12 +54,31 @@ export class EthAppBinder {
     derivationPath: string;
     message: string;
   }): SignPersonalMessageDAReturnType {
-    return this._sdk.executeDeviceAction({
-      sessionId: this._sessionId,
+    return this.sdk.executeDeviceAction({
+      sessionId: this.sessionId,
       deviceAction: new SignPersonalMessageDeviceAction({
         input: {
           derivationPath: args.derivationPath,
           message: args.message,
+        },
+      }),
+    });
+  }
+
+  signTransaction(args: {
+    derivationPath: string;
+    transaction: Transaction;
+    options?: TransactionOptions;
+  }): SignTransactionDAReturnType {
+    return this.sdk.executeDeviceAction({
+      sessionId: this.sessionId,
+      deviceAction: new SignTransactionDeviceAction({
+        input: {
+          derivationPath: args.derivationPath,
+          transaction: args.transaction,
+          mapper: this.mapper,
+          contextModule: this.contextModule,
+          options: args.options ?? {},
         },
       }),
     });
@@ -70,14 +89,14 @@ export class EthAppBinder {
     parser: TypedDataParserService;
     data: TypedData;
   }): SignTypedDataDAReturnType {
-    return this._sdk.executeDeviceAction({
-      sessionId: this._sessionId,
+    return this.sdk.executeDeviceAction({
+      sessionId: this.sessionId,
       deviceAction: new SignTypedDataDeviceAction({
         input: {
           derivationPath: args.derivationPath,
           data: args.data,
           parser: args.parser,
-          contextModule: this._contextModule,
+          contextModule: this.contextModule,
         },
       }),
     });

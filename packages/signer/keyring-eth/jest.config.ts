@@ -16,6 +16,7 @@ const config: JestConfigWithTsJest = {
     "!src/**/*.stub.ts",
     "!src/index.ts",
     "!src/api/index.ts",
+    "!src/**/__test-utils__/*",
   ],
   moduleNameMapper: {
     ...paths,
