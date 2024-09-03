@@ -4,18 +4,18 @@ import { SendCommandInAppDeviceAction } from "@ledgerhq/device-sdk-core";
 import { UserInteractionRequired } from "@ledgerhq/device-sdk-core";
 import { inject, injectable } from "inversify";
 
-import { GetAddressDAReturnType } from "@api/app-binder/GetAddressDeviceActionTypes";
-import { SignPersonalMessageDAReturnType } from "@api/app-binder/SignPersonalMessageDeviceActionTypes";
-import { SignTransactionDAReturnType } from "@api/app-binder/SignTransactionDeviceActionTypes";
-import { SignTypedDataDAReturnType } from "@api/app-binder/SignTypedDataDeviceActionTypes";
-import { Transaction } from "@api/model/Transaction";
-import { TransactionOptions } from "@api/model/TransactionOptions";
-import { TypedData } from "@api/model/TypedData";
+import { type GetAddressDAReturnType } from "@api/app-binder/GetAddressDeviceActionTypes";
+import { type SignPersonalMessageDAReturnType } from "@api/app-binder/SignPersonalMessageDeviceActionTypes";
+import { type SignTransactionDAReturnType } from "@api/app-binder/SignTransactionDeviceActionTypes";
+import { type SignTypedDataDAReturnType } from "@api/app-binder/SignTypedDataDeviceActionTypes";
+import { type Transaction } from "@api/model/Transaction";
+import { type TransactionOptions } from "@api/model/TransactionOptions";
+import { type TypedData } from "@api/model/TypedData";
 import { SignTypedDataDeviceAction } from "@internal/app-binder/device-action/SignTypedData/SignTypedDataDeviceAction";
 import { externalTypes } from "@internal/externalTypes";
 import { transactionTypes } from "@internal/transaction/di/transactionTypes";
 import { TransactionMapperService } from "@internal/transaction/service/mapper/TransactionMapperService";
-import { TypedDataParserService } from "@internal/typed-data/service/TypedDataParserService";
+import { type TypedDataParserService } from "@internal/typed-data/service/TypedDataParserService";
 
 import { GetAddressCommand } from "./command/GetAddressCommand";
 import { SignPersonalMessageDeviceAction } from "./device-action/SignPersonalMessage/SignPersonalMessageDeviceAction";
