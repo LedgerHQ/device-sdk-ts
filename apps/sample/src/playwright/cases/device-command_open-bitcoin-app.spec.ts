@@ -1,11 +1,11 @@
 import { test } from "@playwright/test";
 
-import { givenDeviceIsConnected } from "@/playwright/utils/givenHandlers";
 import {
   thenDeviceIsConnected,
   thenVerifyResponseContains,
 } from "@/playwright/utils/thenHandlers";
 import {
+  whenConnectingDevice,
   whenExecuteDeviceCommand,
   whenNavigateTo,
 } from "@/playwright/utils/whenHandlers";
@@ -18,15 +18,15 @@ test.describe("device command: open bitcoin app", () => {
   test("device should open bitcoin app via device command", async ({
     page,
   }) => {
-    await test.step("Connect device", async () => {
-      // Given the device is connected
-      await givenDeviceIsConnected(page);
+    await test.step("Given first device is connected", async () => {
+      // When we connect the device
+      await whenConnectingDevice(page);
 
       // Then verify the device is connected
       await thenDeviceIsConnected(page);
     });
 
-    await test.step("execute open app via device command", async () => {
+    await test.step("Then execute open app via device command", async () => {
       // When we navigate to device commands
       await whenNavigateTo(page, "/commands");
 

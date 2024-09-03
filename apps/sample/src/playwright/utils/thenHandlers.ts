@@ -1,15 +1,18 @@
 import { expect, Page } from "@playwright/test";
 
-export const thenDeviceIsConnected = async (page: Page): Promise<void> => {
-  const firstChild = page
+export const thenDeviceIsConnected = async (
+  page: Page,
+  deviceIndex: number = 0,
+): Promise<void> => {
+  const secondChild = page
     .getByTestId("container_devices")
     .locator("> *")
-    .first();
+    .nth(deviceIndex);
   await expect(
-    firstChild.getByTestId("text_device-connection-status"),
+    secondChild.getByTestId("text_device-connection-status"),
   ).toContainText("CONNECTED");
   await expect(
-    firstChild.getByTestId("text_device-connection-status"),
+    secondChild.getByTestId("text_device-connection-status"),
   ).toBeVisible();
 };
 

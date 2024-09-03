@@ -5,6 +5,11 @@ type DeviceCommandParams = {
   inputValue?: string;
 };
 
+// When: Connecting device
+export const whenConnectingDevice = async (page: Page): Promise<void> => {
+  await page.getByTestId("CTA_select-device").click();
+};
+
 // When: Navigate to device actions or commands page
 export const whenNavigateTo = async (
   page: Page,

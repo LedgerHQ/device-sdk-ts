@@ -1,7 +1,7 @@
 import { test } from "@playwright/test";
 
-import { givenDeviceIsConnected } from "@/playwright/utils/givenHandlers";
 import { thenDeviceIsConnected } from "@/playwright/utils/thenHandlers";
+import { whenConnectingDevice } from "@/playwright/utils/whenHandlers";
 
 test.describe("device connection", () => {
   test.beforeEach(async ({ page }) => {
@@ -9,12 +9,29 @@ test.describe("device connection", () => {
   });
 
   test("first device should connect", async ({ page }) => {
-    await test.step("Connect device", async () => {
-      // Given the device is connected
-      await givenDeviceIsConnected(page);
+    await test.step("Given first device is connected", async () => {
+      await whenConnectingDevice(page);
 
       // Then verify the device is connected
-      await thenDeviceIsConnected(page);
+      await thenDeviceIsConnected(page, 0);
+    });
+  });
+
+  test("second device should connect", async ({ page }) => {
+    await test.step("Given first device is connected", async () => {
+      // When we connect the device
+      await whenConnectingDevice(page);
+
+      // Then verify the device is connected
+      await thenDeviceIsConnected(page, 0);
+    });
+
+    await test.step("Given second device is connected", async () => {
+      // When we connect the device
+      await whenConnectingDevice(page);
+
+      // Then verify the device is connected
+      await thenDeviceIsConnected(page, 1);
     });
   });
 });

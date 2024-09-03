@@ -1,12 +1,12 @@
 import { test } from "@playwright/test";
 
-import { givenDeviceIsConnected } from "@/playwright/utils/givenHandlers";
 import {
   thenDeviceIsConnected,
   thenVerifyResponseContains,
 } from "@/playwright/utils/thenHandlers";
 import {
   whenCloseDrawer,
+  whenConnectingDevice,
   whenExecuteDeviceCommand,
   whenNavigateTo,
 } from "@/playwright/utils/whenHandlers";
@@ -19,15 +19,15 @@ test.describe("device command: get app and version", () => {
   test("device should get app and version via device command", async ({
     page,
   }) => {
-    await test.step("Connect device", async () => {
-      // Given the device is connected
-      await givenDeviceIsConnected(page);
+    await test.step("Given first device is connected", async () => {
+      // When we connect the device
+      await whenConnectingDevice(page);
 
       // Then verify the device is connected
       await thenDeviceIsConnected(page);
     });
 
-    await test.step("execute open app via device command", async () => {
+    await test.step("Then execute open app via device command", async () => {
       // When we navigate to device commands
       await whenNavigateTo(page, "/commands");
 
@@ -41,7 +41,7 @@ test.describe("device command: get app and version", () => {
       await thenVerifyResponseContains(page, '"status": "SUCCESS"');
     });
 
-    await test.step("execute get app and version via device command", async () => {
+    await test.step("Then execute get app and version via device command", async () => {
       // When we close the drawer (app interface)
       await whenCloseDrawer(page);
 
