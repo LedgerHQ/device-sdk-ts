@@ -190,7 +190,9 @@ export function DeviceActionDrawer<
           {responses.map((response, index, arr) => {
             const isLatest = index === arr.length - 1;
             return (
-              <React.Fragment key={response.date.toISOString()}>
+              <React.Fragment
+                key={`${response.date.toISOString()}-index-${index}`}
+              >
                 <DeviceActionResponse {...response} isLatest={isLatest} />
                 <div hidden={isLatest}>
                   {/** if I just unmount it, all dividers are glitching out */}

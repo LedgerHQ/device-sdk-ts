@@ -14,12 +14,16 @@ import {
   SignTypedDataDAOutput,
   KeyringEthBuilder,
   TypedData,
+  SignTransactionDAOutput,
+  SignTransactionDAError,
+  SignTransactionDAIntermediateValue,
 } from "@ledgerhq/keyring-eth";
 import {
   DeviceAction,
   DeviceActionProps,
 } from "@/components/DeviceActionsView/DeviceAction";
 import { PageWithHeader } from "@/components/PageWithHeader";
+import { ethers } from "ethers";
 
 export const KeyringEthView: React.FC<{ sessionId: string }> = ({
   sessionId,
@@ -60,7 +64,7 @@ export const KeyringEthView: React.FC<{ sessionId: string }> = ({
         GetAddressDAIntermediateValue
       >,
       {
-        title: "Sign Message",
+        title: "Sign message",
         description:
           "Perform all the actions necessary to sign a message with the device",
         executeDeviceAction: ({ derivationPath, message }) => {
@@ -78,6 +82,36 @@ export const KeyringEthView: React.FC<{ sessionId: string }> = ({
         },
         SignPersonalMessageDAError,
         SignPersonalMessageDAIntermediateValue
+      >,
+      {
+        title: "Sign transaction",
+        description:
+          "Perform all the actions necessary to sign a transaction with the device",
+        executeDeviceAction: ({
+          derivationPath,
+          transaction,
+          recipientDomain,
+        }) => {
+          return keyring.signTransaction(
+            derivationPath,
+            ethers.Transaction.from(transaction),
+            { domain: recipientDomain },
+          );
+        },
+        initialValues: {
+          derivationPath: "44'/60'/0'/0/0",
+          transaction: "",
+          recipientDomain: "",
+        },
+      } satisfies DeviceActionProps<
+        SignTransactionDAOutput,
+        {
+          derivationPath: string;
+          transaction: string;
+          recipientDomain: string;
+        },
+        SignTransactionDAError,
+        SignTransactionDAIntermediateValue
       >,
       {
         title: "Sign typed message",
