@@ -23,31 +23,21 @@ import { SignTransactionDeviceAction } from "./device-action/SignTransaction/Sig
 
 @injectable()
 export class EthAppBinder {
-  private _sdk: DeviceSdk;
-  private _contextModule: ContextModule;
-  private _mapper: TransactionMapperService;
-  private _sessionId: DeviceSessionId;
-
   constructor(
-    @inject(externalTypes.Sdk) sdk: DeviceSdk,
-    @inject(externalTypes.ContextModule) contextModule: ContextModule,
+    @inject(externalTypes.Sdk) private sdk: DeviceSdk,
+    @inject(externalTypes.ContextModule) private contextModule: ContextModule,
     @inject(transactionTypes.TransactionMapperService)
-    mapper: TransactionMapperService,
-    @inject(externalTypes.SessionId) sessionId: DeviceSessionId,
-  ) {
-    this._sdk = sdk;
-    this._contextModule = contextModule;
-    this._mapper = mapper;
-    this._sessionId = sessionId;
-  }
+    private mapper: TransactionMapperService,
+    @inject(externalTypes.SessionId) private sessionId: DeviceSessionId,
+  ) {}
 
   getAddress(args: {
     derivationPath: string;
     checkOnDevice?: boolean;
     returnChainCode?: boolean;
   }): GetAddressDAReturnType {
-    return this._sdk.executeDeviceAction({
-      sessionId: this._sessionId,
+    return this.sdk.executeDeviceAction({
+      sessionId: this.sessionId,
       deviceAction: new SendCommandInAppDeviceAction({
         input: {
           command: new GetAddressCommand(args),
@@ -64,8 +54,8 @@ export class EthAppBinder {
     derivationPath: string;
     message: string;
   }): SignPersonalMessageDAReturnType {
-    return this._sdk.executeDeviceAction({
-      sessionId: this._sessionId,
+    return this.sdk.executeDeviceAction({
+      sessionId: this.sessionId,
       deviceAction: new SignPersonalMessageDeviceAction({
         input: {
           derivationPath: args.derivationPath,
@@ -80,14 +70,14 @@ export class EthAppBinder {
     transaction: Transaction;
     options?: TransactionOptions;
   }): SignTransactionDAReturnType {
-    return this._sdk.executeDeviceAction({
-      sessionId: this._sessionId,
+    return this.sdk.executeDeviceAction({
+      sessionId: this.sessionId,
       deviceAction: new SignTransactionDeviceAction({
         input: {
           derivationPath: args.derivationPath,
           transaction: args.transaction,
-          mapper: this._mapper,
-          contextModule: this._contextModule,
+          mapper: this.mapper,
+          contextModule: this.contextModule,
           options: args.options ?? {},
         },
       }),
@@ -99,14 +89,14 @@ export class EthAppBinder {
     parser: TypedDataParserService;
     data: TypedData;
   }): SignTypedDataDAReturnType {
-    return this._sdk.executeDeviceAction({
-      sessionId: this._sessionId,
+    return this.sdk.executeDeviceAction({
+      sessionId: this.sessionId,
       deviceAction: new SignTypedDataDeviceAction({
         input: {
           derivationPath: args.derivationPath,
           data: args.data,
           parser: args.parser,
-          contextModule: this._contextModule,
+          contextModule: this.contextModule,
         },
       }),
     });
