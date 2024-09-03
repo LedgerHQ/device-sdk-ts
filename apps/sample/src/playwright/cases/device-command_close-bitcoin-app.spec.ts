@@ -11,31 +11,45 @@ import {
   whenNavigateTo,
 } from "@/playwright/utils/whenHandlers";
 
-test("device command: close bitcoin app", async ({ page }) => {
-  // Given the device is connected
-  await givenDeviceIsConnected(page);
-
-  // Then verify the device is connected
-  await thenDeviceIsConnected(page);
-
-  // When we navigate to device commands
-  await whenNavigateTo(page, "/commands");
-
-  // And execute the "Open app" command with app name "Bitcoin"
-  await whenExecuteDeviceCommand(page, "Open app", {
-    inputField: "input_appName",
-    inputValue: "Bitcoin",
+test.describe("device command: close bitcoin app", () => {
+  test.beforeEach(async ({ page }) => {
+    await page.goto("http://localhost:3000/");
   });
 
-  // Then we verify the response contains "SUCCESS" for opening the app
-  await thenVerifyResponseContains(page, '"status": "SUCCESS"');
+  test("device should open and close bitcoin app via device command", async ({
+    page,
+  }) => {
+    await test.step("Connect device", async () => {
+      // Given the device is connected
+      await givenDeviceIsConnected(page);
 
-  // When we close the drawer (app interface)
-  await whenCloseDrawer(page);
+      // Then verify the device is connected
+      await thenDeviceIsConnected(page);
+    });
 
-  // And execute the "Close app" command
-  await whenExecuteDeviceCommand(page, "Close app");
+    await test.step("execute open app via device command", async () => {
+      // When we navigate to device commands
+      await whenNavigateTo(page, "/commands");
 
-  // Then we verify the response contains "SUCCESS" for closing the app
-  await thenVerifyResponseContains(page, '"status": "SUCCESS"');
+      // And execute the "Open app" command with app name "Bitcoin"
+      await whenExecuteDeviceCommand(page, "Open app", {
+        inputField: "input_appName",
+        inputValue: "Bitcoin",
+      });
+
+      // Then we verify the response contains "SUCCESS" for opening the app
+      await thenVerifyResponseContains(page, '"status": "SUCCESS"');
+    });
+
+    await test.step("execute close app via device command", async () => {
+      // When we close the drawer (app interface)
+      await whenCloseDrawer(page);
+
+      // And execute the "Close app" command
+      await whenExecuteDeviceCommand(page, "Close app");
+
+      // Then we verify the response contains "SUCCESS" for closing the app
+      await thenVerifyResponseContains(page, '"status": "SUCCESS"');
+    });
+  });
 });

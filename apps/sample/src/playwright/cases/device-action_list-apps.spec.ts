@@ -10,19 +10,29 @@ import {
   whenNavigateTo,
 } from "@/playwright/utils/whenHandlers";
 
-test("device action: list apps", async ({ page }) => {
-  // Given the device is connected
-  await givenDeviceIsConnected(page);
+test.describe("device action: list apps", () => {
+  test.beforeEach(async ({ page }) => {
+    await page.goto("http://localhost:3000/");
+  });
 
-  // Then verify the device is connected
-  await thenDeviceIsConnected(page);
+  test("device should list apps via device action", async ({ page }) => {
+    await test.step("Connect device", async () => {
+      // Given the device is connected
+      await givenDeviceIsConnected(page);
 
-  // When we navigate to device actions
-  await whenNavigateTo(page, "/device-action");
+      // Then verify the device is connected
+      await thenDeviceIsConnected(page);
+    });
 
-  // And execute the "List apps" command
-  await whenExecuteDeviceAction(page, "List apps");
+    await test.step("execute list apps via device action", async () => {
+      // When we navigate to device actions
+      await whenNavigateTo(page, "/device-action");
 
-  // Then we verify the response contains "completed"
-  await thenVerifyResponseContains(page, '"status": "completed"');
+      // And execute the "List apps" command
+      await whenExecuteDeviceAction(page, "List apps");
+
+      // Then we verify the response contains "completed"
+      await thenVerifyResponseContains(page, '"status": "completed"');
+    });
+  });
 });

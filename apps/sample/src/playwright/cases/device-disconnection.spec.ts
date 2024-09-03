@@ -7,16 +7,26 @@ import {
 } from "@/playwright/utils/thenHandlers";
 import { whenDisconnectDevice } from "@/playwright/utils/whenHandlers";
 
-test("device disconnection", async ({ page }) => {
-  // Given the device is connected
-  await givenDeviceIsConnected(page);
+test.describe("device disconnection", () => {
+  test.beforeEach(async ({ page }) => {
+    await page.goto("http://localhost:3000/");
+  });
 
-  // Then verify the device is connected
-  await thenDeviceIsConnected(page);
+  test("first device should disconnect", async ({ page }) => {
+    await test.step("Connect device", async () => {
+      // Given the device is connected
+      await givenDeviceIsConnected(page);
 
-  // When we disconnect the device
-  await whenDisconnectDevice(page);
+      // Then verify the device is connected
+      await thenDeviceIsConnected(page);
+    });
 
-  // Then the device should be disconnected
-  await thenDeviceIsDisconnected(page);
+    await test.step("Disconnect device", async () => {
+      // When we disconnect the device
+      await whenDisconnectDevice(page);
+
+      // Then the device should be disconnected
+      await thenDeviceIsDisconnected(page);
+    });
+  });
 });
