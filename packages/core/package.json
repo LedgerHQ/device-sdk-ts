@@ -50,7 +50,7 @@
     "rxjs": "^7.8.1",
     "semver": "^7.6.3",
     "uuid": "^10.0.0",
-    "xstate": "^5.15.0"
+    "xstate": "^5.18.0"
   },
   "devDependencies": {
     "@ledgerhq/eslint-config-dsdk": "workspace:*",
