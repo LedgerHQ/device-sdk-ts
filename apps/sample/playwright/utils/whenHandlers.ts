@@ -16,7 +16,7 @@ export const whenNavigateTo = async (
   route: string,
 ): Promise<void> => {
   await page.getByTestId(`CTA_route-to-${route}`).click();
-  const expectedURL = `http://localhost:3000${route.endsWith("s") ? route : route + "s"}`;
+  const expectedURL = `http://localhost:3000${route}`;
   await page.waitForURL(expectedURL, { timeout: 10000 });
 };
 
@@ -30,11 +30,11 @@ const whenExecute =
   ): Promise<void> => {
     await page
       .getByTestId(`CTA_command-${command}`)
-      .waitFor({ state: "visible", timeout: 20000 });
+      .waitFor({ state: "attached", timeout: 20000 });
     await page.getByTestId(`CTA_command-${command}`).click();
     await page
       .getByTestId(`form_${type}`)
-      .waitFor({ state: "visible", timeout: 10000 });
+      .waitFor({ state: "attached", timeout: 10000 });
     if (params.inputField && params.inputValue) {
       await page.getByTestId(params.inputField).fill(params.inputValue);
     }

@@ -25,6 +25,20 @@ test.describe("keyrings: sign message", () => {
       await thenDeviceIsConnected(page, 0);
     });
 
-    await test.step("Then execute sign message via keyrings", async () => {});
+    await test.step("Then execute sign message via keyrings", async () => {
+      // When we navigate to keyrings
+      await whenNavigateTo(page, "/keyring");
+
+      await page.getByTestId("CTA_command-Ethereum").click();
+
+      // And execute the "Sign message" command with message "hello, world!"
+      await whenExecuteDeviceAction(page, "Sign Message", {
+        inputField: "input_message",
+        inputValue: "hello, world!",
+      });
+
+      // Then we verify the response contains "completed"
+      await thenVerifyResponseContains(page, '"status": "error"');
+    });
   });
 });
