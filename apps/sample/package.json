@@ -12,7 +12,7 @@
     "prettier": "prettier . --check",
     "prettier:fix": "prettier . --write",
     "typecheck": "tsc --noEmit",
-    "test:playwright": "npx playwright test"
+    "test:playwright": "pnpm exec playwright test"
   },
   "dependencies": {
     "@ledgerhq/device-sdk-core": "workspace:*",

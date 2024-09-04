@@ -1,7 +1,8 @@
+/* eslint-disable no-restricted-imports */
 import { test } from "@playwright/test";
 
-import { thenDeviceIsConnected } from "@/playwright/utils/thenHandlers";
-import { whenConnectingDevice } from "@/playwright/utils/whenHandlers";
+import { thenDeviceIsConnected } from "../utils/thenHandlers";
+import { whenConnectingDevice } from "../utils/whenHandlers";
 
 test.describe("device connection", () => {
   test.beforeEach(async ({ page }) => {

@@ -1,13 +1,14 @@
+/* eslint-disable no-restricted-imports */
 import { test } from "@playwright/test";
 
 import {
   thenDeviceIsConnected,
   thenNoDeviceIsConnected,
-} from "@/playwright/utils/thenHandlers";
+} from "../utils/thenHandlers";
 import {
   whenConnectingDevice,
   whenDisconnectDevice,
-} from "@/playwright/utils/whenHandlers";
+} from "../utils/whenHandlers";
 
 test.describe("device disconnection", () => {
   test.beforeEach(async ({ page }) => {

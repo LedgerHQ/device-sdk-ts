@@ -1,7 +1,7 @@
 #!/bin/bash
 
 echo "Starting mock server..."
-(cd ../../../device-sdk-mock-webserver && ./gradlew run) &
+(cd ../../../ && cd device-sdk-mock-webserver && ./gradlew run) &
 MOCK_SERVER_PID=$!
 
 while ! nc -z localhost 8080; do   

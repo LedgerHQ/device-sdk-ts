@@ -1,22 +1,23 @@
+/* eslint-disable no-restricted-imports */
 import { test } from "@playwright/test";
 
 import {
   thenDeviceIsConnected,
   thenVerifyResponseContains,
-} from "@/playwright/utils/thenHandlers";
+} from "../utils/thenHandlers";
 import {
   whenCloseDrawer,
   whenConnectingDevice,
   whenExecuteDeviceCommand,
   whenNavigateTo,
-} from "@/playwright/utils/whenHandlers";
+} from "../utils/whenHandlers";
 
-test.describe("device command: get app and version", () => {
+test.describe("device command: close bitcoin app", () => {
   test.beforeEach(async ({ page }) => {
     await page.goto("http://localhost:3000/");
   });
 
-  test("device should get app and version via device command", async ({
+  test("device should open and close bitcoin app via device command", async ({
     page,
   }) => {
     await test.step("Given first device is connected", async () => {
@@ -41,16 +42,15 @@ test.describe("device command: get app and version", () => {
       await thenVerifyResponseContains(page, '"status": "SUCCESS"');
     });
 
-    await test.step("Then execute get app and version via device command", async () => {
+    await test.step("Then execute close app via device command", async () => {
       // When we close the drawer (app interface)
       await whenCloseDrawer(page);
 
-      // And execute the "Get app and version" command
-      await whenExecuteDeviceCommand(page, "Get app and version");
+      // And execute the "Close app" command
+      await whenExecuteDeviceCommand(page, "Close app");
 
-      // Then we verify the response contains "SUCCESS" and the app name "Bitcoin"
+      // Then we verify the response contains "SUCCESS" for closing the app
       await thenVerifyResponseContains(page, '"status": "SUCCESS"');
-      await thenVerifyResponseContains(page, "Bitcoin");
     });
   });
 });

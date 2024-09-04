@@ -2,7 +2,7 @@ import { defineConfig, PlaywrightTestConfig } from "@playwright/test";
 import path from "path";
 
 export const config: PlaywrightTestConfig = {
-  testDir: "./src/playwright/cases",
+  testDir: "./playwright/cases",
   retries: 2,
   use: {
     headless: true,
@@ -12,7 +12,7 @@ export const config: PlaywrightTestConfig = {
   },
   reporter: [["list"]],
   webServer: {
-    command: `sh ${path.join(__dirname, "/src/playwright/start-servers.sh")}`,
+    command: `sh ${path.join(__dirname, "playwright/start-servers.sh")}`,
     port: 3000,
     timeout: 120 * 1000,
     reuseExistingServer: !process.env.CI,

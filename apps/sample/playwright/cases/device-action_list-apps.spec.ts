@@ -1,14 +1,15 @@
+/* eslint-disable no-restricted-imports */
 import { test } from "@playwright/test";
 
 import {
   thenDeviceIsConnected,
   thenVerifyResponseContains,
-} from "@/playwright/utils/thenHandlers";
+} from "../utils/thenHandlers";
 import {
   whenConnectingDevice,
   whenExecuteDeviceAction,
   whenNavigateTo,
-} from "@/playwright/utils/whenHandlers";
+} from "../utils/whenHandlers";
 
 test.describe("device action: list apps", () => {
   test.beforeEach(async ({ page }) => {
