@@ -30,7 +30,7 @@ const whenExecute =
   ): Promise<void> => {
     await page
       .getByTestId(`CTA_command-${command}`)
-      .waitFor({ state: "attached", timeout: 20000 });
+      .waitFor({ state: "attached", timeout: 10000 });
     await page.getByTestId(`CTA_command-${command}`).click();
     await page
       .getByTestId(`form_${type}`)

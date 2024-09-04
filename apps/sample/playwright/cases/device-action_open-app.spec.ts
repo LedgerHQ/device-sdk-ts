@@ -27,7 +27,7 @@ test.describe("device action: open bitcoin app", () => {
 
     await test.step("Then execute open app via device action", async () => {
       // When we navigate to device actions
-      await whenNavigateTo(page, "/device-action");
+      await whenNavigateTo(page, "/device-actions");
 
       // And execute the "Open app" command with app name "Bitcoin"
       await whenExecuteDeviceAction(page, "Open app", {

@@ -37,7 +37,7 @@ export const Menu: React.FC = () => {
       <MenuItem>
         <Icons.LedgerDevices />
         <MenuTitle
-          data-testid="CTA_route-to-/device-action"
+          data-testid="CTA_route-to-/device-actions"
           onClick={() => router.push("device-actions")}
         >
           Device actions

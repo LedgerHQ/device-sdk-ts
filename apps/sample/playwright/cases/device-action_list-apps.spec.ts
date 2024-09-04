@@ -27,7 +27,7 @@ test.describe("device action: list apps", () => {
 
     await test.step("Then execute list apps via device action", async () => {
       // When we navigate to device actions
-      await whenNavigateTo(page, "/device-action");
+      await whenNavigateTo(page, "/device-actions");
 
       // And execute the "List apps" command
       await whenExecuteDeviceAction(page, "List apps");
