@@ -10,7 +10,7 @@
   "fixed": [],
   "linked": [],
   "access": "public",
-  "baseBranch": "develop",
+  "baseBranch": "INFRAPRJ-6604",
   "updateInternalDependencies": "patch",
   "ignore": []
 }
