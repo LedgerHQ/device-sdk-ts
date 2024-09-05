@@ -4,6 +4,7 @@ export { Apdu } from "./apdu/model/Apdu";
 export { APDU_MAX_PAYLOAD, ApduBuilder } from "./apdu/utils/ApduBuilder";
 export { ApduParser } from "./apdu/utils/ApduParser";
 export { ByteArrayBuilder } from "./apdu/utils/ByteArrayBuilder";
+export { ByteArrayParser } from "./apdu/utils/ByteArrayParser";
 export {
   CommandResultFactory,
   CommandResultStatus,
