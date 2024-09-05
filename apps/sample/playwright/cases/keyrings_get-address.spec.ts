@@ -35,7 +35,7 @@ test.describe("keyrings: get address", () => {
       await whenExecuteDeviceAction(page, "Get address");
 
       // Then we verify the response contains "completed"
-      await thenVerifyResponseContains(page, '"status": "error"');
+      await thenVerifyResponseContains(page, '"status": "completed"');
     });
   });
 });
