@@ -1,18 +1,15 @@
 name: publish npm packages
-# on:
-#   push:
-#     branches:
-#       - main
-
 on:
-  pull_request:
+  push:
+    branches:
+      - main
 
 env:
   FORCE_COLOR: "1"
 
 jobs:
   publish:
-    # environment: Production
+    environment: Production
     runs-on: ledgerhq-shared-medium
     permissions:
       id-token: write
@@ -29,14 +26,13 @@ jobs:
       - name: build libraries
         run: pnpm build
       
-      - name: Login to JFrog Ledger
+      - name: Login to internal JFrog registry
         id: jfrog-login
         uses: LedgerHQ/actions-security/actions/jfrog-login@actions/jfrog-login-1
 
-      - name: Setup npm config
+      - name: Setup npm config for JFrog
         env:
-          # Change to prod when test done
-          NPM_REGISTRY: jfrog.ledgerlabs.net/artifactory/api/npm/ldk-npm-sandbox-green
+          NPM_REGISTRY: jfrog.ledgerlabs.net/artifactory/api/npm/ldk-npm-prod-public
           NPM_REGISTRY_TOKEN: ${{ steps.jfrog-login.outputs.oidc-token }}
         run: |
           cat << EOF | tee .npmrc
@@ -44,11 +40,10 @@ jobs:
           //${NPM_REGISTRY}/:_authToken=${NPM_REGISTRY_TOKEN}
           EOF
 
-      - name: Create Release Pull Request or Publish to npm
+      - name: Publish
         id: changesets
         uses: changesets/action@v1
-        with: 
+        with:
           publish: pnpm release
-          branch: feat/no-issue-integrate-jfrog
         env:
           GITHUB_TOKEN: ${{ secrets.CI_BOT_TOKEN }}
