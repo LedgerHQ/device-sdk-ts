@@ -1,6 +1,7 @@
 {
   "name": "@ledgerhq/device-sdk",
   "version": "1.0.0",
+  "private": true,
   "license": "MIT",
   "scripts": {
     "build": "turbo run build",
