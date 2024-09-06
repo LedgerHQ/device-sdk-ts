@@ -45,31 +45,61 @@ export class ByteArrayParser {
   }
 
   /**
-   * Extract a 16-bit unsigned integer (Big Endian coding) from the response
+   * Extract a 16-bit unsigned integer from the response
+   * @param bigEndian: boolean - True to decode in big endian, false for little endian
    * @returns {number | undefined} - Returns the 16-bit unsigned integer extracted from the response
    */
-  extract16BitUInt(): number | undefined {
-    if (this.outOfRange(2)) return;
-    let msb = this.extract8BitUInt();
-    if (msb === undefined) return;
-    const lsb = this.extract8BitUInt();
-    if (lsb === undefined) return;
-    msb *= 0x100;
-    return msb + lsb;
+  extract16BitUInt(bigEndian: boolean = true): number | undefined {
+    const value = this.extractNumber(16n, false, bigEndian);
+    return value === undefined ? undefined : Number(value);
   }
 
   /**
-   * Extract a 32-bit unsigned integer (Big Endian coding) from the response
+   * Extract a 16-bit signed integer from the response
+   * @param bigEndian: boolean - True to decode in big endian, false for little endian
+   * @returns {number | undefined} - Returns the 16-bit signed integer extracted from the response
+   */
+  extract16BitInt(bigEndian: boolean = true): number | undefined {
+    const value = this.extractNumber(16n, true, bigEndian);
+    return value === undefined ? undefined : Number(value);
+  }
+
+  /**
+   * Extract a 32-bit unsigned integer from the response
+   * @param bigEndian: boolean - True to decode in big endian, false for little endian
    * @returns {number | undefined} - Returns the 32-bit unsigned integer extracted from the response
    */
-  extract32BitUInt(): number | undefined {
-    if (this.outOfRange(4)) return;
-    let msw = this.extract16BitUInt();
-    if (msw === undefined) return;
-    const lsw = this.extract16BitUInt();
-    if (lsw === undefined) return;
-    msw *= 0x10000;
-    return msw + lsw;
+  extract32BitUInt(bigEndian: boolean = true): number | undefined {
+    const value = this.extractNumber(32n, false, bigEndian);
+    return value === undefined ? undefined : Number(value);
+  }
+
+  /**
+   * Extract a 32-bit signed integer from the response
+   * @param bigEndian: boolean - True to decode in big endian, false for little endian
+   * @returns {number | undefined} - Returns the 32-bit signed integer extracted from the response
+   */
+  extract32BitInt(bigEndian: boolean = true): number | undefined {
+    const value = this.extractNumber(32n, true, bigEndian);
+    return value === undefined ? undefined : Number(value);
+  }
+
+  /**
+   * Extract a 64-bit unsigned integer from the response
+   * @param bigEndian: boolean - True to decode in big endian, false for little endian
+   * @returns {number | undefined} - Returns the 64-bit unsigned integer extracted from the response
+   */
+  extract64BitUInt(bigEndian: boolean = true): bigint | undefined {
+    return this.extractNumber(64n, false, bigEndian);
+  }
+
+  /**
+   * Extract a 64-bit signed integer from the response
+   * @param bigEndian: boolean - True to decode in big endian, false for little endian
+   * @returns {number | undefined} - Returns the 64-bit signed integer extracted from the response
+   */
+  extract64BitInt(bigEndian: boolean = true): bigint | undefined {
+    return this.extractNumber(64n, true, bigEndian);
   }
 
   /**
@@ -188,5 +218,46 @@ export class ByteArrayParser {
    */
   private outOfRange(length: number): boolean {
     return this.index + length > this.buffer.length;
+  }
+
+  /**
+   * Extract a number from the buffer
+   * @param sizeInBits: bigint - The number size in bits, for example 16 for a uint16
+   * @param signed: boolean - True is the number can be signed and converted to two's compliment
+   * @param bigEndian: boolean - True to decode in big endian, false for little endian
+   * @returns {bigint | undefined} - Returns the number extracted from the buffer
+   */
+  private extractNumber(
+    sizeInBits: bigint,
+    signed: boolean,
+    bigEndian: boolean,
+  ): bigint | undefined {
+    // Check the range
+    const sizeInBytes: number = Number(sizeInBits) / 8;
+    if (this.outOfRange(sizeInBytes)) return;
+
+    // Compute the number
+    let value: bigint = 0n;
+    if (bigEndian) {
+      for (let i = 0; i < sizeInBytes; i++) {
+        value = (value << 8n) | BigInt(this.buffer[i + this.index]!);
+      }
+    } else {
+      for (let i = sizeInBytes - 1; i >= 0; i--) {
+        value = (value << 8n) | BigInt(this.buffer[i + this.index]!);
+      }
+    }
+
+    // Convert the value to two's complement if it is negative
+    // https://en.wikipedia.org/wiki/Two%27s_complement
+    if (signed) {
+      const limit = 1n << (sizeInBits - 1n);
+      if (value & limit) {
+        value -= limit << 1n;
+      }
+    }
+
+    this.index += sizeInBytes;
+    return value;
   }
 }

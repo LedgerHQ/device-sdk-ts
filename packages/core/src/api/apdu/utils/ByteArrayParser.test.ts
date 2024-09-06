@@ -1,3 +1,5 @@
+import { hexaStringToBuffer } from "@api/utils/HexaString";
+
 import { ByteArrayParser } from "./ByteArrayParser";
 
 const RESPONSE_ONE_BYTE = new Uint8Array([0x01]);
@@ -54,6 +56,33 @@ let parser: ByteArrayParser;
 let response = RESPONSE_ONE_BYTE;
 
 describe("ByteArrayParser", () => {
+  const parserExtractNumber = (
+    bigEndian: boolean,
+    sizeInBits: number,
+    signed: boolean,
+  ): bigint | number | undefined => {
+    if (signed) {
+      switch (sizeInBits) {
+        case 2:
+          return parser.extract16BitInt(bigEndian);
+        case 4:
+          return parser.extract32BitInt(bigEndian);
+        case 8:
+          return parser.extract64BitInt(bigEndian);
+      }
+    } else {
+      switch (sizeInBits) {
+        case 2:
+          return parser.extract16BitUInt(bigEndian);
+        case 4:
+          return parser.extract32BitUInt(bigEndian);
+        case 8:
+          return parser.extract64BitUInt(bigEndian);
+      }
+    }
+    return undefined;
+  };
+
   describe("clean", () => {
     beforeEach(() => {
       jest.resetAllMocks();
@@ -110,6 +139,53 @@ describe("ByteArrayParser", () => {
         length--;
       }
     });
+
+    it.each([
+      [2, false, true, "ffff", 0xffff],
+      [2, true, true, "7fff", 0x7fff],
+      [2, true, true, "8000", -0x8000],
+      [4, false, true, "ffffffff", 0xffffffff],
+      [4, true, true, "7fffffff", 0x7fffffff],
+      [4, true, true, "80000000", -0x80000000],
+      [8, false, true, "ffffffffffffffff", 0xffffffffffffffffn],
+      [8, true, true, "7fffffffffffffff", 0x7fffffffffffffffn],
+      [8, true, true, "8000000000000000", -0x8000000000000000n],
+    ])(
+      "Extract a number to the limit: size %i, signed %s, bigEndian %s, buffer %s, expected %i",
+      (sizeInBits, signed, bigEndian, input, output) => {
+        parser = new ByteArrayParser(hexaStringToBuffer(input)!);
+        const result = parserExtractNumber(bigEndian, sizeInBits, signed);
+        expect(result).toStrictEqual(output);
+      },
+    );
+
+    it.each([
+      [2, false, true, "3302", 0x3302],
+      [2, false, false, "0233", 0x3302],
+      [2, true, true, "1068", 4200],
+      [2, true, true, "ef98", -4200],
+      [2, true, false, "6810", 4200],
+      [2, true, false, "98ef", -4200],
+      [4, false, true, "01234567", 0x01234567],
+      [4, false, false, "67452301", 0x01234567],
+      [4, true, true, "075bcd15", 123456789],
+      [4, true, true, "f8a432eb", -123456789],
+      [4, true, false, "15cd5b07", 123456789],
+      [4, true, false, "eb32a4f8", -123456789],
+      [8, false, true, "0032435442584447", 14147778004927559n],
+      [8, false, false, "4744584254433200", 14147778004927559n],
+      [8, true, true, "0032435442584447", 14147778004927559n],
+      [8, true, true, "ffcdbcabbda7bbb9", -14147778004927559n],
+      [8, true, false, "4744584254433200", 14147778004927559n],
+      [8, true, false, "b9bba7bdabbccdff", -14147778004927559n],
+    ])(
+      "Extract the following number: size %i, signed %s, bigEndian %s, buffer %s, expected %i",
+      (sizeInBits, signed, bigEndian, input, output) => {
+        parser = new ByteArrayParser(hexaStringToBuffer(input)!);
+        const result = parserExtractNumber(bigEndian, sizeInBits, signed);
+        expect(result).toStrictEqual(output);
+      },
+    );
 
     it("Extract 16-bit & 32-bit number", () => {
       response = RESPONSE_ALL_BYTES;

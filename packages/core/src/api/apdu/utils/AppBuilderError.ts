@@ -10,7 +10,7 @@ export class ValueOverflowError implements SdkAppBuilderError {
   readonly _tag = "ValueOverflow";
   readonly originalError?: Error;
   readonly message: string;
-  constructor(value: string, max: number = APDU_MAX_PAYLOAD) {
+  constructor(value: string, max: number | bigint = APDU_MAX_PAYLOAD) {
     this.message = `Value overflow for ${value}, max is ${max}`;
   }
 }

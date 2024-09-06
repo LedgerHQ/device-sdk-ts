@@ -1,18 +1,12 @@
+import { hexaStringToBuffer } from "@api/utils/HexaString";
+
 import { APDU_MAX_PAYLOAD } from "./ApduBuilder";
-import {
-  DataOverflowError,
-  HexaStringEncodeError,
-  ValueOverflowError,
-} from "./AppBuilderError";
+import { DataOverflowError, HexaStringEncodeError } from "./AppBuilderError";
 import { ByteArrayBuilder } from "./ByteArrayBuilder";
 
 const COMMAND_NO_BODY = new Uint8Array([]);
 
 const COMMAND_BODY_SINGLE = new Uint8Array([0x01]);
-
-const COMMAND_BODY_TWO = new Uint8Array([0x33, 0x02]);
-
-const COMMAND_BODY_EIGHT = new Uint8Array([0x01, 0x23, 0x45, 0x67]);
 
 const COMMAND_BODY_HEXA1 = new Uint8Array([0x80, 0x81, 0x82, 0x83, 0x84]);
 
@@ -39,6 +33,39 @@ const COMMAND_BODY_NEARLY = new Uint8Array([...Array<number>(254).fill(0xaa)]);
 let builder: ByteArrayBuilder;
 
 describe("ByteArrayBuilder", () => {
+  const builderAddNumber = (
+    num: number | bigint,
+    bigEndian: boolean,
+    sizeInBits: number,
+    signed: boolean,
+  ) => {
+    if (signed) {
+      switch (sizeInBits) {
+        case 2:
+          builder.add16BitIntToData(num, bigEndian);
+          break;
+        case 4:
+          builder.add32BitIntToData(num, bigEndian);
+          break;
+        case 8:
+          builder.add64BitIntToData(num, bigEndian);
+          break;
+      }
+    } else {
+      switch (sizeInBits) {
+        case 2:
+          builder.add16BitUIntToData(num, bigEndian);
+          break;
+        case 4:
+          builder.add32BitUIntToData(num, bigEndian);
+          break;
+        case 8:
+          builder.add64BitUIntToData(num, bigEndian);
+          break;
+      }
+    }
+  };
+
   describe("clean", () => {
     beforeEach(() => {
       builder = new ByteArrayBuilder(APDU_MAX_PAYLOAD);
@@ -66,18 +93,66 @@ describe("ByteArrayBuilder", () => {
       expect(builder.getErrors()).toEqual([]);
     });
 
-    it("should serialize with an 2 byte body", () => {
-      builder = new ByteArrayBuilder(2);
-      builder.add16BitUIntToData(0x3302);
-      expect(builder.build()).toEqual(COMMAND_BODY_TWO);
-      expect(builder.getErrors()).toEqual([]);
-    });
+    it.each([
+      [2, false, true, 0x3302, "3302"],
+      [2, false, false, 0x3302n, "0233"],
+      [2, true, true, 4200n, "1068"],
+      [2, true, true, -4200n, "ef98"],
+      [2, true, false, 4200, "6810"],
+      [2, true, false, -4200, "98ef"],
+      [4, false, true, 0x01234567n, "01234567"],
+      [4, false, false, 0x01234567n, "67452301"],
+      [4, true, true, 123456789, "075bcd15"],
+      [4, true, true, -123456789, "f8a432eb"],
+      [4, true, false, 123456789, "15cd5b07"],
+      [4, true, false, -123456789, "eb32a4f8"],
+      [8, false, true, 14147778004927559n, "0032435442584447"],
+      [8, false, false, 14147778004927559n, "4744584254433200"],
+      [8, true, true, 14147778004927559n, "0032435442584447"],
+      [8, true, true, -14147778004927559n, "ffcdbcabbda7bbb9"],
+      [8, true, false, 14147778004927559n, "4744584254433200"],
+      [8, true, false, -14147778004927559n, "b9bba7bdabbccdff"],
+    ])(
+      "serialize the following number: size %i, signed %s, bigEndian %s, value %i, expected %s",
+      (sizeInBits, signed, bigEndian, input, output) => {
+        builder = new ByteArrayBuilder(sizeInBits);
+        builderAddNumber(input, bigEndian, sizeInBits, signed);
+        expect(builder.build()).toEqual(hexaStringToBuffer(output));
+        expect(builder.getErrors()).toEqual([]);
 
-    it("should serialize with an 4 byte body from an hexastring", () => {
+        // Retry with a buffer too small
+        builder = new ByteArrayBuilder(sizeInBits - 1);
+        builderAddNumber(input, bigEndian, sizeInBits, signed);
+        expect(builder.getErrors().length).toEqual(1);
+        expect(builder.build()).toEqual(Uint8Array.from([]));
+      },
+    );
+
+    it.each([
+      [2, false, true, 0xffffn, "ffff"],
+      [2, true, true, 0x7fffn, "7fff"],
+      [2, true, true, -0x8000n, "8000"],
+      [4, false, true, 0xffffffffn, "ffffffff"],
+      [4, true, true, 0x7fffffffn, "7fffffff"],
+      [4, true, true, -0x80000000n, "80000000"],
+      [8, false, true, 0xffffffffffffffffn, "ffffffffffffffff"],
+      [8, true, true, 0x7fffffffffffffffn, "7fffffffffffffff"],
+      [8, true, true, -0x8000000000000000n, "8000000000000000"],
+    ])(
+      "serialize the number to the limit: size %i, signed %s, bigEndian %s, value %i, expected %s",
+      (sizeInBits, signed, bigEndian, input, output) => {
+        builder = new ByteArrayBuilder(sizeInBits);
+        builderAddNumber(input, bigEndian, sizeInBits, signed);
+        expect(builder.build()).toEqual(hexaStringToBuffer(output));
+        expect(builder.getErrors()).toEqual([]);
+      },
+    );
+
+    it("Serialize from float to bigint", () => {
       builder = new ByteArrayBuilder(4);
-      builder.add32BitUIntToData(0x01234567);
-      expect(builder.build()).toEqual(COMMAND_BODY_EIGHT);
-      expect(builder.getErrors()).toEqual([]);
+      builder.add32BitIntToData(123456789.3, false);
+      expect(builder.getErrors().length).toEqual(1);
+      expect(builder.build()).toEqual(Uint8Array.from([]));
     });
 
     it("should serialize with an 5 byte body from an hexastring", () => {
@@ -175,32 +250,25 @@ describe("ByteArrayBuilder", () => {
       builder = new ByteArrayBuilder(APDU_MAX_PAYLOAD);
     });
 
-    it("error due value greater than 8-bit integer", () => {
-      builder.add8BitUIntToData(0x100);
-      expect(builder.build()).toEqual(COMMAND_NO_BODY);
-      expect(builder.getAvailablePayloadLength()).toBe(APDU_MAX_PAYLOAD);
-      expect(builder.getErrors()).toEqual([
-        new ValueOverflowError((0x100).toString(), 255),
-      ]);
-    });
-
-    it("error due value greater than 16-bit integer", () => {
-      builder.add16BitUIntToData(0x10000);
-      expect(builder.build()).toEqual(COMMAND_NO_BODY);
-      expect(builder.getAvailablePayloadLength()).toBe(APDU_MAX_PAYLOAD);
-      expect(builder.getErrors()).toEqual([
-        new ValueOverflowError((0x10000).toString(), 65535),
-      ]);
-    });
-
-    it("error due value greater than 32-bit integer", () => {
-      builder.add32BitUIntToData(0x100000000);
-      expect(builder.build()).toEqual(COMMAND_NO_BODY);
-      expect(builder.getAvailablePayloadLength()).toBe(APDU_MAX_PAYLOAD);
-      expect(builder.getErrors()).toEqual([
-        new ValueOverflowError((0x100000000).toString(), 4294967295),
-      ]);
-    });
+    it.each([
+      [2, false, true, 0x10000n],
+      [2, true, true, 0x8000n],
+      [2, true, true, -0x8001n],
+      [4, false, true, 0x100000000n],
+      [4, true, true, 0x80000000n],
+      [4, true, true, -0x80000001n],
+      [8, false, true, 0x10000000000000000n],
+      [8, true, true, 0x8000000000000000n],
+      [8, true, true, -0x8000000000000001n],
+    ])(
+      "serialize the number overflowed: size %i, signed %s, bigEndian %s, value %i",
+      (sizeInBits, signed, bigEndian, input) => {
+        builder = new ByteArrayBuilder(sizeInBits);
+        builderAddNumber(input, bigEndian, sizeInBits, signed);
+        expect(builder.getErrors().length).toEqual(1);
+        expect(builder.build()).toEqual(Uint8Array.from([]));
+      },
+    );
 
     it("error due to a string not well coded", () => {
       builder
@@ -225,53 +293,6 @@ describe("ByteArrayBuilder", () => {
       expect(builder.getErrors()).toEqual([
         new DataOverflowError(myarray.toString()),
       ]);
-    });
-
-    it("error due to subsequent overflow with one byte", () => {
-      const myarray = new Uint8Array(APDU_MAX_PAYLOAD).fill(
-        0xaa,
-        0,
-        APDU_MAX_PAYLOAD,
-      );
-      builder.addBufferToData(myarray);
-      expect(builder.build()).toEqual(COMMAND_BODY_MAX);
-      expect(builder.getAvailablePayloadLength()).toBe(0);
-
-      builder.add8BitUIntToData(0);
-      expect(builder.build()).toEqual(COMMAND_BODY_MAX);
-      expect(builder.getErrors()).toEqual([new DataOverflowError("0")]);
-    });
-
-    it("error due to subsequent overflow with 2 bytes", () => {
-      const myarray = new Uint8Array(APDU_MAX_PAYLOAD).fill(
-        0xaa,
-        0,
-        APDU_MAX_PAYLOAD,
-      );
-      builder.addBufferToData(myarray);
-      expect(builder.build()).toEqual(COMMAND_BODY_MAX);
-      expect(builder.getAvailablePayloadLength()).toBe(0);
-
-      builder.add16BitUIntToData(0);
-      expect(builder.build()).toEqual(COMMAND_BODY_MAX);
-      expect(builder.getAvailablePayloadLength()).toBe(0);
-      expect(builder.getErrors()).toEqual([new DataOverflowError("0")]);
-    });
-
-    it("error due to subsequent overflow with 4 bytes", () => {
-      const myarray = new Uint8Array(APDU_MAX_PAYLOAD).fill(
-        0xaa,
-        0,
-        APDU_MAX_PAYLOAD,
-      );
-      builder.addBufferToData(myarray);
-      expect(builder.build()).toEqual(COMMAND_BODY_MAX);
-      expect(builder.getAvailablePayloadLength()).toBe(0);
-
-      builder.add32BitUIntToData(0);
-      expect(builder.build()).toEqual(COMMAND_BODY_MAX);
-      expect(builder.getAvailablePayloadLength()).toBe(0);
-      expect(builder.getErrors()).toEqual([new DataOverflowError("0")]);
     });
 
     it("error due to subsequent overflow with 1-byte array", () => {
