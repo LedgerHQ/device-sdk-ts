@@ -32,6 +32,6 @@
     "autoprefixer": "^10.4.20",
     "globals": "15.9.0",
     "postcss": "^8.4.41",
-    "typescript": "5.4.5"
+    "typescript": "5.5.4"
   }
 }
