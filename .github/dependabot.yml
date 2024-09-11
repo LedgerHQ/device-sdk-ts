@@ -19,7 +19,8 @@ updates:
 
   # Sample App dependencies for pnpm
   - package-ecosystem: "npm"
-    directory: "/apps/sample"
+    directories:
+      - "/apps/sample"
     schedule:
       interval: "weekly"
       day: "sunday"
