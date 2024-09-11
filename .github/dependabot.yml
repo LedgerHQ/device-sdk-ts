@@ -4,23 +4,71 @@ updates:
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
-      interval: "weekly"
-      day: "monday"
+      interval: "daily"
+      timezone: "Europe/Paris"
     labels:
       - "dependencies"
     reviewers:
       - "LedgerHQ/live-devices"
     commit-message:
       prefix: "⬆️ (ci) [NO-ISSUE]: "
+    groups:
+      actions:
+        patterns:
+         - "*"
+
+  # Sample App dependencies for pnpm
+  - package-ecosystem: "npm"
+    directory: "/apps/sample"
+    schedule:
+      interval: "weekly"
+      day: "sunday"
+      timezone: "Europe/Paris"
+    labels:
+      - "dependencies"
+    reviewers:
+      - "LedgerHQ/live-devices"
+    commit-message:
+      prefix: "⬆️ (sample) [NO-ISSUE]: "
+    ignore:
+      - dependency-name: "typescript"
+
   # Maintain dependencies for pnpm
   - package-ecosystem: "npm"
     directory: "/"
     schedule:
       interval: "weekly"
       day: "sunday"
+      timezone: "Europe/Paris"
     labels:
       - "dependencies"
     reviewers:
       - "LedgerHQ/live-devices"
     commit-message:
       prefix: "⬆️ (repo) [NO-ISSUE]: "
+    groups:
+      critical:
+        patterns:
+         - "xstate*"
+         - "rxjs*"
+         - "inversify*"
+         - "purify-ts*"
+      eslint:
+        patterns:
+         - "eslint*"
+         - "@eslint*"
+         - "typescript-eslint*"
+      changesets:
+        patterns:
+         - "@changesets*"
+      jest:
+        patterns:
+         - "jest*"
+         - "@jest*"
+      typescript:
+        patterns:
+         - "typescript*"
+         - "@types*"
+        exclude-patterns:
+          - "typescript-eslint"
+
