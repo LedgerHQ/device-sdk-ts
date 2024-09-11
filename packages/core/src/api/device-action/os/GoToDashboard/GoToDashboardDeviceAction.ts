@@ -22,7 +22,10 @@ import { DEFAULT_UNLOCK_TIMEOUT_MS } from "@api/device-action/os/Const";
 import { UnknownDAError } from "@api/device-action/os/Errors";
 import { GetDeviceStatusDeviceAction } from "@api/device-action/os/GetDeviceStatus/GetDeviceStatusDeviceAction";
 import { StateMachineTypes } from "@api/device-action/xstate-utils/StateMachineTypes";
-import { XStateDeviceAction } from "@api/device-action/xstate-utils/XStateDeviceAction";
+import {
+  DeviceActionStateMachine,
+  XStateDeviceAction,
+} from "@api/device-action/xstate-utils/XStateDeviceAction";
 import { DeviceSessionState } from "@api/device-session/DeviceSessionState";
 
 import {
@@ -55,7 +58,15 @@ export class GoToDashboardDeviceAction extends XStateDeviceAction<
   GoToDashboardDAIntermediateValue,
   GoToDashboardMachineInternalState
 > {
-  makeStateMachine(internalApi: InternalApi) {
+  makeStateMachine(
+    internalApi: InternalApi,
+  ): DeviceActionStateMachine<
+    GoToDashboardDAOutput,
+    GoToDashboardDAInput,
+    GoToDashboardDAError,
+    GoToDashboardDAIntermediateValue,
+    GoToDashboardMachineInternalState
+  > {
     type types = StateMachineTypes<
       GoToDashboardDAOutput,
       GoToDashboardDAInput,

@@ -22,7 +22,10 @@ import {
   DeviceNotOnboardedError,
 } from "@api/device-action/os/Errors";
 import { StateMachineTypes } from "@api/device-action/xstate-utils/StateMachineTypes";
-import { XStateDeviceAction } from "@api/device-action/xstate-utils/XStateDeviceAction";
+import {
+  DeviceActionStateMachine,
+  XStateDeviceAction,
+} from "@api/device-action/xstate-utils/XStateDeviceAction";
 import {
   DeviceSessionState,
   DeviceSessionStateType,
@@ -79,7 +82,15 @@ export class OpenAppDeviceAction extends XStateDeviceAction<
   OpenAppDAIntermediateValue,
   OpenAppStateMachineInternalState
 > {
-  makeStateMachine(internalApi: InternalApi) {
+  makeStateMachine(
+    internalApi: InternalApi,
+  ): DeviceActionStateMachine<
+    OpenAppDAOutput,
+    OpenAppDAInput,
+    OpenAppDAError,
+    OpenAppDAIntermediateValue,
+    OpenAppStateMachineInternalState
+  > {
     type types = StateMachineTypes<
       OpenAppDAOutput,
       OpenAppDAInput,

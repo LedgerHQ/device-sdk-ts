@@ -1,6 +1,7 @@
 import { ContextModule } from "@ledgerhq/context-module";
 import {
   CommandResult,
+  type DeviceActionStateMachine,
   InternalApi,
   isSuccessCommandResult,
   OpenAppDeviceAction,
@@ -56,7 +57,15 @@ export class SignTypedDataDeviceAction extends XStateDeviceAction<
   SignTypedDataDAIntermediateValue,
   SignTypedDataDAInternalState
 > {
-  makeStateMachine(internalApi: InternalApi) {
+  makeStateMachine(
+    internalApi: InternalApi,
+  ): DeviceActionStateMachine<
+    SignTypedDataDAOutput,
+    SignTypedDataDAInput,
+    SignTypedDataDAError,
+    SignTypedDataDAIntermediateValue,
+    SignTypedDataDAInternalState
+  > {
     type types = StateMachineTypes<
       SignTypedDataDAOutput,
       SignTypedDataDAInput,

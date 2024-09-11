@@ -25,7 +25,10 @@ import {
   UnknownDAError,
 } from "@api/device-action/os/Errors";
 import { StateMachineTypes } from "@api/device-action/xstate-utils/StateMachineTypes";
-import { XStateDeviceAction } from "@api/device-action/xstate-utils/XStateDeviceAction";
+import {
+  DeviceActionStateMachine,
+  XStateDeviceAction,
+} from "@api/device-action/xstate-utils/XStateDeviceAction";
 import {
   DeviceSessionState,
   DeviceSessionStateType,
@@ -67,7 +70,15 @@ export class GetDeviceStatusDeviceAction extends XStateDeviceAction<
   GetDeviceStatusDAIntermediateValue,
   GetDeviceStatusMachineInternalState
 > {
-  makeStateMachine(internalApi: InternalApi) {
+  makeStateMachine(
+    internalApi: InternalApi,
+  ): DeviceActionStateMachine<
+    GetDeviceStatusDAOutput,
+    GetDeviceStatusDAInput,
+    GetDeviceStatusDAError,
+    GetDeviceStatusDAIntermediateValue,
+    GetDeviceStatusMachineInternalState
+  > {
     type types = StateMachineTypes<
       GetDeviceStatusDAOutput,
       GetDeviceStatusDAInput,

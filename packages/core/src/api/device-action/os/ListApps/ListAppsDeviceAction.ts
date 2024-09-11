@@ -12,7 +12,10 @@ import { UserInteractionRequired } from "@api/device-action/model/UserInteractio
 import { DEFAULT_UNLOCK_TIMEOUT_MS } from "@api/device-action/os/Const";
 import { GoToDashboardDeviceAction } from "@api/device-action/os/GoToDashboard/GoToDashboardDeviceAction";
 import { StateMachineTypes } from "@api/device-action/xstate-utils/StateMachineTypes";
-import { XStateDeviceAction } from "@api/device-action/xstate-utils/XStateDeviceAction";
+import {
+  DeviceActionStateMachine,
+  XStateDeviceAction,
+} from "@api/device-action/xstate-utils/XStateDeviceAction";
 
 import {
   ListAppsDAError,
@@ -46,7 +49,15 @@ export class ListAppsDeviceAction extends XStateDeviceAction<
   ListAppsDAIntermediateValue,
   ListAppsMachineInternalState
 > {
-  makeStateMachine(internalApi: InternalApi) {
+  makeStateMachine(
+    internalApi: InternalApi,
+  ): DeviceActionStateMachine<
+    ListAppsDAOutput,
+    ListAppsDAInput,
+    ListAppsDAError,
+    ListAppsDAIntermediateValue,
+    ListAppsMachineInternalState
+  > {
     type types = StateMachineTypes<
       ListAppsDAOutput,
       ListAppsDAInput,
