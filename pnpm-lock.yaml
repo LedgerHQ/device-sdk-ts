@@ -115,8 +115,8 @@ importers:
         specifier: ^8.4.41
         version: 8.4.41
       typescript:
-        specifier: 5.6.2
-        version: 5.6.2
+        specifier: 5.4.5
+        version: 5.4.5
 
   packages/config/eslint:
     devDependencies:
@@ -6113,6 +6113,11 @@ packages:
     peerDependenciesMeta:
       typescript:
         optional: true
+
+  typescript@5.4.5:
+    resolution: {integrity: sha512-vcI4UpRgg81oIRUFwR0WSIHKt11nJ7SAVlYNIu+QpqeyXP+gpQJy/Z4+F0aGxSE4MqwjyXvW/TzgkLAx2AGHwQ==}
+    engines: {node: '>=14.17'}
+    hasBin: true
 
   typescript@5.6.2:
     resolution: {integrity: sha512-NW8ByodCSNCwZeghjN3o+JX5OFH0Ojg6sadjEKY4huZ52TqbJTJnDo5+Tw98lSy63NZvi4n+ez5m2u5d4PkZyw==}
@@ -13826,6 +13831,8 @@ snapshots:
     transitivePeerDependencies:
       - eslint
       - supports-color
+
+  typescript@5.4.5: {}
 
   typescript@5.6.2: {}
 
