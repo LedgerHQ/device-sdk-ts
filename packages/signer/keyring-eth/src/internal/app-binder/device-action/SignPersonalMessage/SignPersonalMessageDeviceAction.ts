@@ -1,5 +1,6 @@
 import {
   CommandResult,
+  type DeviceActionStateMachine,
   InternalApi,
   isSuccessCommandResult,
   OpenAppDeviceAction,
@@ -41,7 +42,15 @@ export class SignPersonalMessageDeviceAction extends XStateDeviceAction<
   SignPersonalMessageDAIntermediateValue,
   SignPersonalMessageDAInternalState
 > {
-  makeStateMachine(internalApi: InternalApi) {
+  makeStateMachine(
+    internalApi: InternalApi,
+  ): DeviceActionStateMachine<
+    SignPersonalMessageDAOutput,
+    SignPersonalMessageDAInput,
+    SignPersonalMessageDAError,
+    SignPersonalMessageDAIntermediateValue,
+    SignPersonalMessageDAInternalState
+  > {
     type types = StateMachineTypes<
       SignPersonalMessageDAOutput,
       SignPersonalMessageDAInput,

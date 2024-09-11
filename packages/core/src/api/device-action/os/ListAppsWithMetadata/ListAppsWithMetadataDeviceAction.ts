@@ -14,7 +14,10 @@ import { DEFAULT_UNLOCK_TIMEOUT_MS } from "@api/device-action/os/Const";
 import { ListAppsDeviceAction } from "@api/device-action/os/ListApps/ListAppsDeviceAction";
 import { ListAppsDAOutput } from "@api/device-action/os/ListApps/types";
 import { StateMachineTypes } from "@api/device-action/xstate-utils/StateMachineTypes";
-import { XStateDeviceAction } from "@api/device-action/xstate-utils/XStateDeviceAction";
+import {
+  DeviceActionStateMachine,
+  XStateDeviceAction,
+} from "@api/device-action/xstate-utils/XStateDeviceAction";
 import { DeviceSessionState } from "@api/device-session/DeviceSessionState";
 import { HttpFetchApiError } from "@internal/manager-api/model/Errors";
 import { Application } from "@internal/manager-api/model/ManagerApiType";
@@ -49,7 +52,15 @@ export class ListAppsWithMetadataDeviceAction extends XStateDeviceAction<
   ListAppsWithMetadataDAIntermediateValue,
   ListAppsWithMetadataMachineInternalState
 > {
-  makeStateMachine(internalAPI: InternalApi) {
+  makeStateMachine(
+    internalAPI: InternalApi,
+  ): DeviceActionStateMachine<
+    ListAppsWithMetadataDAOutput,
+    ListAppsWithMetadataDAInput,
+    ListAppsWithMetadataDAError,
+    ListAppsWithMetadataDAIntermediateValue,
+    ListAppsWithMetadataMachineInternalState
+  > {
     type types = StateMachineTypes<
       ListAppsWithMetadataDAOutput,
       ListAppsWithMetadataDAInput,

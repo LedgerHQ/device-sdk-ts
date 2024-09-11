@@ -5,6 +5,7 @@ import {
 import {
   CommandErrorResult,
   CommandResult,
+  type DeviceActionStateMachine,
   InternalApi,
   isSuccessCommandResult,
   OpenAppDeviceAction,
@@ -75,7 +76,15 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
   SignTransactionDAIntermediateValue,
   SignTransactionDAInternalState
 > {
-  makeStateMachine(internalApi: InternalApi) {
+  makeStateMachine(
+    internalApi: InternalApi,
+  ): DeviceActionStateMachine<
+    SignTransactionDAOutput,
+    SignTransactionDAInput,
+    SignTransactionDAError,
+    SignTransactionDAIntermediateValue,
+    SignTransactionDAInternalState
+  > {
     type types = StateMachineTypes<
       SignTransactionDAOutput,
       SignTransactionDAInput,

@@ -108,7 +108,10 @@ export {
   type SendCommandInAppDAOutput,
 } from "@api/device-action/os/SendCommandInAppDeviceAction/SendCommandInAppDeviceActionTypes";
 export { type StateMachineTypes } from "@api/device-action/xstate-utils/StateMachineTypes";
-export { XStateDeviceAction } from "@api/device-action/xstate-utils/XStateDeviceAction";
+export {
+  type DeviceActionStateMachine,
+  XStateDeviceAction,
+} from "@api/device-action/xstate-utils/XStateDeviceAction";
 export {
   type DeviceSessionState,
   DeviceSessionStateType,

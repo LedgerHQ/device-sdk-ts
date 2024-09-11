@@ -10,7 +10,10 @@ import { UserInteractionRequired } from "@api/device-action/model/UserInteractio
 import { UnknownDAError } from "@api/device-action/os/Errors";
 import { OpenAppDeviceAction } from "@api/device-action/os/OpenAppDeviceAction/OpenAppDeviceAction";
 import { StateMachineTypes } from "@api/device-action/xstate-utils/StateMachineTypes";
-import { XStateDeviceAction } from "@api/device-action/xstate-utils/XStateDeviceAction";
+import {
+  DeviceActionStateMachine,
+  XStateDeviceAction,
+} from "@api/device-action/xstate-utils/XStateDeviceAction";
 import { Command } from "@api/types";
 
 import {
@@ -64,7 +67,20 @@ export class SendCommandInAppDeviceAction<
   SendCommandInAppDAIntermediateValue<UserInteraction>,
   SendCommandInAppDAInternalState<CommandResponse, CommandErrorCodes>
 > {
-  makeStateMachine(internalAPI: InternalApi) {
+  makeStateMachine(
+    internalAPI: InternalApi,
+  ): DeviceActionStateMachine<
+    SendCommandInAppDAOutput<CommandResponse>,
+    SendCommandInAppDAInput<
+      CommandResponse,
+      CommandArgs,
+      CommandErrorCodes,
+      UserInteraction
+    >,
+    SendCommandInAppDAError<CommandErrorCodes>,
+    SendCommandInAppDAIntermediateValue<UserInteraction>,
+    SendCommandInAppDAInternalState<CommandResponse, CommandErrorCodes>
+  > {
     type types = StateMachineTypes<
       SendCommandInAppDAOutput<CommandResponse>,
       SendCommandInAppDAInput<

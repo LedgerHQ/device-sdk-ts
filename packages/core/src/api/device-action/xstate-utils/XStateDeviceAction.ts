@@ -1,6 +1,6 @@
 import { createBrowserInspector } from "@statelyai/inspect";
 import { Observable, ReplaySubject, share } from "rxjs";
-import { createActor, SnapshotFrom, StateMachine } from "xstate";
+import { createActor, SnapshotFrom, StateMachine, StateSchema } from "xstate";
 
 import {
   DeviceAction,
@@ -16,7 +16,7 @@ import { SdkError } from "@api/Error";
 
 import { StateMachineTypes } from "./StateMachineTypes";
 
-type DeviceActionStateMachine<
+export type DeviceActionStateMachine<
   Output,
   Input,
   Error extends SdkError,
@@ -60,8 +60,9 @@ type DeviceActionStateMachine<
   >["output"],
   /* eslint-disable @typescript-eslint/no-explicit-any */
   any,
-  any
+  any,
   /* eslint-enable @typescript-eslint/no-explicit-any */
+  StateSchema
 >;
 
 /**
