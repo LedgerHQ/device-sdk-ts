@@ -5,6 +5,7 @@ import {
   mockServerReducer,
   MockServerState,
 } from "@/reducers/mockServer";
+import { IsDefaultMockEnabled } from "@/utils/constants";
 
 type MockServerContextType = {
   state: MockServerState;
@@ -12,7 +13,9 @@ type MockServerContextType = {
 };
 
 const MockServerContext = createContext<MockServerContextType>({
-  state: MockServerInitialState,
+  state: MockServerInitialState(
+    process.env.MOCK_SERVER_DEFAULT_ENABLED as IsDefaultMockEnabled,
+  ),
   dispatch: () => null,
 });
 
@@ -21,7 +24,9 @@ export const MockServerProvider: React.FC<React.PropsWithChildren> = ({
 }) => {
   const [state, dispatch] = useReducer(
     mockServerReducer,
-    MockServerInitialState,
+    MockServerInitialState(
+      process.env.MOCK_SERVER_DEFAULT_ENABLED as IsDefaultMockEnabled,
+    ),
   );
 
   return (

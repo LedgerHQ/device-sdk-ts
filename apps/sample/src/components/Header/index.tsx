@@ -60,29 +60,33 @@ export const Header = () => {
           <Icons.Settings size={"M"} />
         </IconBox>
       </Actions>
-      <DropdownGeneric closeOnClickOutside label="" placement="bottom">
-        <Flex my={5} py={6} px={5} width={280}>
-          <Switch
-            onChange={onToggleMockServer}
-            checked={enabled}
-            name="switch-mock-server"
-            label="Enable Mock server"
-          />
-        </Flex>
-        {enabled && (
-          <UrlInput
-            value={mockServerStateUrl}
-            onChange={(url: string) => setMockServerStateUrl(url)}
-            renderRight={() => (
-              <Flex alignItems="center" justifyContent="stretch">
-                <Button iconButton onClick={validateServerUrl}>
-                  <Icons.CheckmarkCircleFill size="S" />
-                </Button>
-              </Flex>
-            )}
-          />
-        )}
-      </DropdownGeneric>
+      <div data-testid="dropdown_mock-server-switch">
+        <DropdownGeneric closeOnClickOutside label="" placement="bottom">
+          <Flex my={5} py={6} px={5} width={280}>
+            <div data-testid="switch_mock-server">
+              <Switch
+                onChange={onToggleMockServer}
+                checked={enabled}
+                name="switch-mock-server"
+                label="Enable Mock server"
+              />
+            </div>
+          </Flex>
+          {enabled && (
+            <UrlInput
+              value={mockServerStateUrl}
+              onChange={(url: string) => setMockServerStateUrl(url)}
+              renderRight={() => (
+                <Flex alignItems="center" justifyContent="stretch">
+                  <Button iconButton onClick={validateServerUrl}>
+                    <Icons.CheckmarkCircleFill size="S" />
+                  </Button>
+                </Flex>
+              )}
+            />
+          )}
+        </DropdownGeneric>
+      </div>
     </Root>
   );
 };

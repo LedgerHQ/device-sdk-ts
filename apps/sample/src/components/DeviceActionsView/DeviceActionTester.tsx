@@ -196,7 +196,7 @@ export function DeviceActionTester<
 
   return (
     <Flex flexDirection="column" rowGap={3} overflow="hidden" flex={1}>
-      <Block>
+      <Block data-testid="form_device-action">
         <BoxHeader hint={hintInput}>Device Action input</BoxHeader>
         <Flex
           flexDirection="column"
@@ -243,6 +243,7 @@ export function DeviceActionTester<
               Icon={() =>
                 loading ? <InfiniteLoader size={20} /> : <Icons.ArrowRight />
               }
+              data-testid="CTA_send-device-action"
             >
               Execute
             </Button>
@@ -264,6 +265,7 @@ export function DeviceActionTester<
             overflowY="scroll"
             height="100%"
             flex={1}
+            data-testid="box_device-commands-responses"
           >
             {responses.map((response, index, arr) => {
               const isLatest = index === arr.length - 1;
@@ -272,8 +274,11 @@ export function DeviceActionTester<
                   flexDirection="column"
                   key={`${response.date.toISOString()}-index-${index}`}
                 >
-                  <DeviceActionResponse {...response} isLatest={isLatest} />
-                  {isLatest ? null : <Divider my={2} />}
+                  <DeviceActionResponse {...response} isLatest={isLatest}/>
+                  <div hidden={isLatest}>
+                    {/** if I just unmount it, all dividers are glitching out */}
+                    <Divider my={2}/>
+                  </div>
                 </Flex>
               );
             })}
