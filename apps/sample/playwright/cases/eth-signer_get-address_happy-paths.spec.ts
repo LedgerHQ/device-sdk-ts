@@ -58,8 +58,10 @@ test.describe("ETH Signer: get address, happy paths", () => {
       )) as GetAddressResponse;
 
       expect(response.status).toBe("completed");
-      expect(isValidEthereumAddress(response.output.address)).toBe(true);
-      expect(isValidPublicKey(response.output.publicKey)).toBe(true);
+      expect(isValidEthereumAddress(response?.output?.address || "")).toBe(
+        true,
+      );
+      expect(isValidPublicKey(response?.output?.publicKey || "")).toBe(true);
     });
   });
 

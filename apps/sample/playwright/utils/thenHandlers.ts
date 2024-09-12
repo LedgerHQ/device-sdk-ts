@@ -1,52 +1,70 @@
-import { expect, Page } from "@playwright/test";
+import { expect, Page, Locator } from "@playwright/test";
+import { asyncPipe } from "@/utils/pipes";
 
-export const thenDeviceIsConnected = async (
-  page: Page,
-  deviceIndex: number = 0,
-): Promise<void> => {
-  const targetChild = page
-    .getByTestId("container_devices")
-    .locator("> *")
-    .nth(deviceIndex);
-  await expect(
-    targetChild.getByTestId("text_device-connection-status"),
-  ).toContainText("CONNECTED");
-  await expect(
-    targetChild.getByTestId("text_device-connection-status"),
-  ).toBeVisible();
-};
-
-export const thenNoDeviceIsConnected = async (page: Page): Promise<void> => {
-  try {
-    const deviceNames = await page
+const getDeviceLocator =
+  (deviceIndex: number = 0) =>
+  async (page: Page): Promise<Page> => {
+    const targetChild = page
       .getByTestId("container_devices")
       .locator("> *")
-      .getByTestId("text_device-name")
-      .allTextContents();
+      .nth(deviceIndex);
+    return targetChild as unknown as Page;
+  };
+
+const verifyDeviceConnectedStatus = async (
+  locator: Locator,
+): Promise<Locator> => {
+  await expect(
+    locator.getByTestId("text_device-connection-status"),
+  ).toContainText("CONNECTED");
+  await expect(
+    locator.getByTestId("text_device-connection-status"),
+  ).toBeVisible();
+  return locator;
+};
+
+export const thenDeviceIsConnected = (
+  page: Page,
+  deviceIndex: number = 0,
+): Promise<void> =>
+  asyncPipe(getDeviceLocator(deviceIndex), verifyDeviceConnectedStatus)(page);
+
+const getAllDeviceNames = async (page: Page): Promise<string[]> => {
+  return page
+    .getByTestId("container_devices")
+    .locator("> *")
+    .getByTestId("text_device-name")
+    .allTextContents();
+};
+
+const verifyDevicesNotVisible =
+  (deviceNames: string[]) =>
+  async (page: Page): Promise<Page> => {
     await Promise.all(
-      Object.entries(deviceNames).map(async ([_, deviceName]) => {
+      deviceNames.map(async (deviceName) => {
         await expect(
           page
             .getByTestId("text_device-name")
             .locator(`:has-text("${deviceName}")`),
-          `Expected the device named '${deviceName}' to be disconnected and not visible, but it was found on the page.`,
         ).not.toBeVisible();
       }),
     );
-  } catch (error) {
-    console.error(
-      "Verification failed: Some devices are still visible after attempting disconnection. Error:",
-      error,
-    );
-    throw error;
-  }
-};
+    return page;
+  };
 
-export const thenVerifyResponseContains = async (
+export const thenNoDeviceIsConnected = (page: Page): Promise<void> =>
+  asyncPipe(getAllDeviceNames, verifyDevicesNotVisible)(page);
+
+const verifyResponseContains =
+  (expectedText: string) =>
+  async (page: Page): Promise<Page> => {
+    await expect(
+      page.getByTestId("box_device-commands-responses"),
+    ).toContainText(expectedText);
+    return page;
+  };
+
+export const thenVerifyResponseContains = (
   page: Page,
   expectedText: string,
-): Promise<void> => {
-  await expect(page.getByTestId("box_device-commands-responses")).toContainText(
-    expectedText,
-  );
-};
+): Promise<void> => asyncPipe(verifyResponseContains(expectedText))(page);
