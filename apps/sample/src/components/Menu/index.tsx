@@ -27,17 +27,30 @@ export const Menu: React.FC = () => {
       </MenuItem>
       <MenuItem>
         <Icons.LedgerDevices />
-        <MenuTitle onClick={() => router.push("/commands")}>Commands</MenuTitle>
+        <MenuTitle
+          data-testid="CTA_route-to-/commands"
+          onClick={() => router.push("/commands")}
+        >
+          Commands
+        </MenuTitle>
       </MenuItem>
       <MenuItem>
         <Icons.LedgerDevices />
-        <MenuTitle onClick={() => router.push("device-actions")}>
+        <MenuTitle
+          data-testid="CTA_route-to-/device-actions"
+          onClick={() => router.push("device-actions")}
+        >
           Device actions
         </MenuTitle>
       </MenuItem>
       <MenuItem>
         <Icons.WirelessCharging />
-        <MenuTitle onClick={() => router.push("/apdu")}>APDU</MenuTitle>
+        <MenuTitle
+          data-testid="CTA_route-to-/apdu"
+          onClick={() => router.push("/apdu")}
+        >
+          APDU
+        </MenuTitle>
       </MenuItem>
       <MenuItem>
         <Icons.Apps />
@@ -45,12 +58,20 @@ export const Menu: React.FC = () => {
       </MenuItem>
       <MenuItem>
         <Icons.Signature />
-        <MenuTitle onClick={() => router.push("/keyring")}>Keyrings</MenuTitle>
+        <MenuTitle
+          data-testid="CTA_route-to-/keyring"
+          onClick={() => router.push("/keyring")}
+        >
+          Keyrings
+        </MenuTitle>
       </MenuItem>
       {mockServerEnabled && (
         <MenuItem>
           <Icons.Settings />
-          <MenuTitle onClick={() => router.push("/mock")}>
+          <MenuTitle
+            data-testid="CTA_route-to-/mock-settings"
+            onClick={() => router.push("/mock")}
+          >
             Mock Settings
           </MenuTitle>
         </MenuItem>

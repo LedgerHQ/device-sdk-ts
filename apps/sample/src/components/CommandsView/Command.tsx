@@ -110,7 +110,7 @@ export function Command<
         title={title}
         description={description}
       >
-        <Block>
+        <Block data-testid="form_device-command">
           <CommandForm
             initialValues={values}
             onChange={setValues}
@@ -123,6 +123,7 @@ export function Command<
             Icon={() =>
               loading ? <InfiniteLoader size={20} /> : <Icons.ArrowRight />
             }
+            data-testid="CTA_send-device-command"
           >
             Send
           </Button>
@@ -134,6 +135,7 @@ export function Command<
             rowGap={4}
             flex={1}
             overflowY="scroll"
+            data-testid="box_device-commands-responses"
           >
             {responses.map(({ args, date, response, loading }, index) => (
               <CommandResponse

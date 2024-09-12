@@ -80,6 +80,7 @@ export const MainView: React.FC = () => {
         variant="main"
         backgroundColor="main"
         size="large"
+        data-testid="CTA_select-device"
       >
         Select a device
       </Button>

@@ -1,5 +1,7 @@
 import { Reducer } from "react";
 
+import { IsDefaultMockEnabled } from "@/utils/constants";
+
 export type MockServerState = {
   enabled: boolean;
   url: string;
@@ -25,10 +27,12 @@ export type MockServerAction =
   | DisableMockServerAction
   | SetMockServerUrlAction;
 
-export const MockServerInitialState = {
+export const MockServerInitialState = (
+  isDefaultMockEnabled: IsDefaultMockEnabled,
+): MockServerState => ({
   url: "http://127.0.0.1:8080/",
-  enabled: false,
-};
+  enabled: isDefaultMockEnabled === IsDefaultMockEnabled.TRUE,
+});
 
 export const mockServerReducer: Reducer<MockServerState, MockServerAction> = (
   state,
