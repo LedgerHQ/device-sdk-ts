@@ -42,7 +42,6 @@ export const thenNoDeviceIsConnected = async (page: Page): Promise<void> => {
   }
 };
 
-// Then: Verify the response contains specific text
 export const thenVerifyResponseContains = async (
   page: Page,
   expectedText: string,

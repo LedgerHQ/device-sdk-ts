@@ -29,17 +29,16 @@ test.describe("keyrings: sign message", () => {
       // When we navigate to keyrings
       await whenNavigateTo(page, "/keyring");
 
-      // When we navigate to keyrings
       await page.getByTestId("CTA_command-Ethereum").click();
 
       // And execute the "Sign message" command with message "hello, world!"
-      await whenExecuteDeviceAction(page, "Sign Message", {
+      await whenExecuteDeviceAction(page, "Sign message", {
         inputField: "input_message",
         inputValue: "hello, world!",
       });
 
       // Then we verify the response contains "completed"
-      await thenVerifyResponseContains(page, '"status": "error"');
+      await thenVerifyResponseContains(page, '"status": "completed"');
     });
   });
 });
