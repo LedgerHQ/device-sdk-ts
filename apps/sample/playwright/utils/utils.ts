@@ -85,3 +85,6 @@ export const isValidEthereumAddress = (address: string): boolean =>
 
 export const isValidPublicKey = (publicKey: string): boolean =>
   /^04[a-fA-F0-9]{128}$/.test(publicKey);
+
+export const isValid256BitHex = (value: string): boolean =>
+  /^0x[a-fA-F0-9]{64}$/.test(value) || /^[a-fA-F0-9]{64}$/.test(value);
