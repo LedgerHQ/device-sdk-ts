@@ -97,9 +97,8 @@ test.describe("ETH Signer: sign message, happy paths", () => {
     await test.step("Then verify the response with different address index is successful and contains a different signed message", async () => {
       await page.waitForTimeout(4000);
 
-      const responseWithDefaultMessage = (await getLastDeviceResponseContent(
-        page,
-      )) as SignMessageResponse;
+      const responseWithDefaultDerivationPath =
+        (await getLastDeviceResponseContent(page)) as SignMessageResponse;
 
       await whenExecute("device-action")(page, "Sign message", [
         {
@@ -114,20 +113,19 @@ test.describe("ETH Signer: sign message, happy paths", () => {
 
       await page.waitForTimeout(4000);
 
-      const responseWithSecondMessage = (await getLastDeviceResponseContent(
-        page,
-      )) as SignMessageResponse;
+      const responseWithSecondDerivationPath =
+        (await getLastDeviceResponseContent(page)) as SignMessageResponse;
 
-      expect(responseWithDefaultMessage?.output?.r).toBeDefined();
-      expect(responseWithDefaultMessage?.output?.s).toBeDefined();
-      expect(responseWithSecondMessage?.output?.r).toBeDefined();
-      expect(responseWithSecondMessage?.output?.s).toBeDefined();
+      expect(responseWithDefaultDerivationPath?.output?.r).toBeDefined();
+      expect(responseWithDefaultDerivationPath?.output?.s).toBeDefined();
+      expect(responseWithSecondDerivationPath?.output?.r).toBeDefined();
+      expect(responseWithSecondDerivationPath?.output?.s).toBeDefined();
 
-      expect(responseWithDefaultMessage?.output?.r).not.toBe(
-        responseWithSecondMessage?.output?.r,
+      expect(responseWithDefaultDerivationPath?.output?.r).not.toBe(
+        responseWithSecondDerivationPath?.output?.r,
       );
-      expect(responseWithDefaultMessage?.output?.s).not.toBe(
-        responseWithSecondMessage?.output?.s,
+      expect(responseWithDefaultDerivationPath?.output?.s).not.toBe(
+        responseWithSecondDerivationPath?.output?.s,
       );
     });
   });
@@ -158,7 +156,7 @@ test.describe("ETH Signer: sign message, happy paths", () => {
       ]);
     });
 
-    await test.step("Then verify the response with different address index is successful and contains a different signed message", async () => {
+    await test.step("Then verify the response with different message is successful and contains a different signed message", async () => {
       await page.waitForTimeout(4000);
 
       const responseWithDefaultMessage = (await getLastDeviceResponseContent(
