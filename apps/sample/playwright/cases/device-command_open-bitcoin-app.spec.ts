@@ -1,15 +1,19 @@
 /* eslint-disable no-restricted-imports */
-import { test } from "@playwright/test";
+import { test, expect } from "@playwright/test";
 
-import {
-  thenDeviceIsConnected,
-  thenVerifyResponseContains,
-} from "../utils/thenHandlers";
+import { thenDeviceIsConnected } from "../utils/thenHandlers";
 import {
   whenConnectingDevice,
   whenExecuteDeviceCommand,
   whenNavigateTo,
 } from "../utils/whenHandlers";
+import { getLastDeviceResponseContent } from "../utils/utils";
+
+interface commandOpenAppResponse {
+  status: string;
+  error?: object;
+  pending?: object;
+}
 
 test.describe("device command: open bitcoin app", () => {
   test.beforeEach(async ({ page }) => {
@@ -38,7 +42,11 @@ test.describe("device command: open bitcoin app", () => {
       });
 
       // Then we verify the response contains "SUCCESS" for opening the app
-      await thenVerifyResponseContains(page, '"status": "SUCCESS"');
+      const response = (await getLastDeviceResponseContent(
+        page,
+      )) as commandOpenAppResponse;
+
+      expect(response.status).toBe("SUCCESS");
     });
   });
 });

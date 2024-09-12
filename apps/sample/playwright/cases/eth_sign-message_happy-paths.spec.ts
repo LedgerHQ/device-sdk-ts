@@ -1,10 +1,7 @@
 /* eslint-disable no-restricted-imports */
 import { expect, test } from "@playwright/test";
 
-import {
-  thenDeviceIsConnected,
-  thenVerifyResponseContains,
-} from "../utils/thenHandlers";
+import { thenDeviceIsConnected } from "../utils/thenHandlers";
 import {
   whenClicking,
   whenConnectingDevice,
@@ -22,7 +19,7 @@ interface SignMessageResponse {
     v: string;
   };
   error?: object;
-  intermediateValue?: object;
+  pending?: object;
 }
 
 test.describe("ETH Signer: sign message, happy paths", () => {

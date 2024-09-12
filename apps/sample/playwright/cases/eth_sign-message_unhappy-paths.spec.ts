@@ -19,7 +19,7 @@ interface SignMessageResponse {
     v: string;
   };
   error?: object;
-  intermediateValue?: object;
+  pending?: object;
 }
 
 test.describe("ETH Signer: sign message, unhappy paths", () => {
@@ -54,7 +54,7 @@ test.describe("ETH Signer: sign message, unhappy paths", () => {
         },
       ]);
 
-      await page.waitForTimeout(1000);
+      await page.waitForTimeout(4000);
 
       //then verify it errors
       expect(
@@ -73,7 +73,7 @@ test.describe("ETH Signer: sign message, unhappy paths", () => {
         },
       ]);
 
-      await page.waitForTimeout(1000);
+      await page.waitForTimeout(4000);
 
       //then verify it errors
       expect(
@@ -92,7 +92,7 @@ test.describe("ETH Signer: sign message, unhappy paths", () => {
         },
       ]);
 
-      await page.waitForTimeout(1000);
+      await page.waitForTimeout(4000);
 
       //then verify it errors
       expect(
@@ -111,7 +111,7 @@ test.describe("ETH Signer: sign message, unhappy paths", () => {
         },
       ]);
 
-      await page.waitForTimeout(1000);
+      await page.waitForTimeout(4000);
 
       //then verify it errors
       expect(
@@ -130,7 +130,7 @@ test.describe("ETH Signer: sign message, unhappy paths", () => {
         },
       ]);
 
-      await page.waitForTimeout(1000);
+      await page.waitForTimeout(4000);
 
       //then verify it errors
       expect(
