@@ -46,7 +46,7 @@ test.describe("ETH Signer: sign message, unhappy paths", () => {
       await whenExecuteDeviceAction(page, "Sign message", [
         {
           inputField: "input-text_derivationPath",
-          inputValue: "aa/60'/0'/0/0",
+          inputValue: "aa'/60'/0'/0/0",
         },
         {
           inputField: "input-text_message",
