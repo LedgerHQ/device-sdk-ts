@@ -8,7 +8,7 @@ import {
   isValidPublicKey,
 } from "../utils/utils";
 import {
-  whenClickingCTACommand,
+  whenClicking,
   whenConnectingDevice,
   whenExecute,
   whenExecuteDeviceAction,
@@ -17,11 +17,12 @@ import {
 
 interface GetAddressResponse {
   status: string;
-  output: {
+  output?: {
     publicKey: string;
     address: string;
   };
   error?: object;
+  intermediateValue?: object;
 }
 
 test.describe("ETH Signer: get address, happy paths", () => {
@@ -41,10 +42,10 @@ test.describe("ETH Signer: get address, happy paths", () => {
     await test.step("When execute ETH: get address", async () => {
       await whenNavigateTo(page, "/keyring");
 
-      await whenClickingCTACommand(page, "Ethereum");
+      await whenClicking(page, "CTA_command-Ethereum");
 
       await whenExecuteDeviceAction(page, "Get address", {
-        inputField: "input_derivationPath",
+        inputField: "input-text_derivationPath",
         inputValue: "44'/60'/0'/0/0",
       });
     });
@@ -62,6 +63,56 @@ test.describe("ETH Signer: get address, happy paths", () => {
     });
   });
 
+  test("device should return ETH pubKey and address when fed default derivation path and wait to checked on device", async ({
+    page,
+  }) => {
+    await test.step("Given first device is connected", async () => {
+      await whenConnectingDevice(page);
+
+      await thenDeviceIsConnected(page, 0);
+    });
+
+    await test.step("When execute ETH: get address with checkOnDevice on", async () => {
+      await whenNavigateTo(page, "/keyring");
+
+      await whenClicking(page, "CTA_command-Ethereum");
+
+      await whenClicking(page, "CTA_command-Get address");
+
+      await whenClicking(page, "input-switch_checkOnDevice");
+
+      await whenExecute("device-action")(page, "Get address", {
+        inputField: "input-text_derivationPath",
+        inputValue: "44'/60'/0'/0/0",
+      });
+    });
+
+    await test.step("Then verify that response is successful and it contains an address and pKey after timeout", async () => {
+      await page.waitForTimeout(1000);
+      expect(
+        ((await getLastDeviceResponseContent(page)) as GetAddressResponse)
+          .status,
+      ).toBe("pending");
+
+      await page.waitForTimeout(1000);
+      expect(
+        ((await getLastDeviceResponseContent(page)) as GetAddressResponse)
+          .status,
+      ).toBe("pending");
+
+      await page.waitForTimeout(2000);
+      const response = (await getLastDeviceResponseContent(
+        page,
+      )) as GetAddressResponse;
+
+      expect(response.status).toBe("completed");
+      expect(isValidEthereumAddress(response?.output?.address || "")).toBe(
+        true,
+      );
+      expect(isValidPublicKey(response?.output?.publicKey || "")).toBe(true);
+    });
+  });
+
   test("device should return a different ETH pubKey and address when fed a different derivation path", async ({
     page,
   }) => {
@@ -76,10 +127,10 @@ test.describe("ETH Signer: get address, happy paths", () => {
     await test.step("Then execute ETH: get address", async () => {
       await whenNavigateTo(page, "/keyring");
 
-      await whenClickingCTACommand(page, "Ethereum");
+      await whenClicking(page, "CTA_command-Ethereum");
 
       await whenExecuteDeviceAction(page, "Get address", {
-        inputField: "input_derivationPath",
+        inputField: "input-text_derivationPath",
         inputValue: "44'/60'/0'/0/0",
       });
     });
@@ -89,10 +140,10 @@ test.describe("ETH Signer: get address, happy paths", () => {
 
       const addressWithFirstAddressIndex = (
         (await getLastDeviceResponseContent(page)) as GetAddressResponse
-      ).output.address;
+      )?.output?.address;
 
       await whenExecute("device-action")(page, "Get address", {
-        inputField: "input_derivationPath",
+        inputField: "input-text_derivationPath",
         inputValue: "44'/60'/0'/0/1",
       });
 
@@ -100,7 +151,7 @@ test.describe("ETH Signer: get address, happy paths", () => {
 
       const addressWithSecondAddressIndex = (
         (await getLastDeviceResponseContent(page)) as GetAddressResponse
-      ).output.address;
+      )?.output?.address;
 
       expect(addressWithFirstAddressIndex).not.toBe(
         addressWithSecondAddressIndex,

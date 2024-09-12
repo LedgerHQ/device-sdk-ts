@@ -69,13 +69,15 @@ export function CommandForm<Args extends Record<string, FieldType>>({
               />
             </Flex>
           ) : typeof value === "boolean" ? (
-            <Switch
-              name="key"
-              checked={value}
-              onChange={() => setFormValue(key, !value)}
-              disabled={disabled}
-              label={key}
-            />
+            <div data-testid={`input-switch_${key}`}>
+              <Switch
+                name="key"
+                checked={value}
+                onChange={() => setFormValue(key, !value)}
+                disabled={disabled}
+                label={key}
+              />
+            </div>
           ) : typeof value === "string" ? (
             <Input
               id={key}
@@ -83,7 +85,7 @@ export function CommandForm<Args extends Record<string, FieldType>>({
               placeholder={key}
               onChange={(newVal) => setFormValue(key, newVal)}
               disabled={disabled}
-              data-testid={`input_${key}`}
+              data-testid={`input-text_${key}`}
             />
           ) : (
             <Input

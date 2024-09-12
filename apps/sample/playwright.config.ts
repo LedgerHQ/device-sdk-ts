@@ -11,6 +11,10 @@ export const config: PlaywrightTestConfig = {
     trace: "on",
   },
   reporter: [["list"]],
+  reportSlowTests: {
+    max: 0,
+    threshold: 60_000,
+  },
   webServer: {
     command: `sh ${path.join(__dirname, "playwright/start-servers.sh")}`,
     port: 3000,

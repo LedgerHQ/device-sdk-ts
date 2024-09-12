@@ -34,7 +34,7 @@ test.describe("device command: get app and version", () => {
 
       // And execute the "Open app" command with app name "Bitcoin"
       await whenExecuteDeviceCommand(page, "Open app", {
-        inputField: "input_appName",
+        inputField: "input-text_appName",
         inputValue: "Bitcoin",
       });
 
