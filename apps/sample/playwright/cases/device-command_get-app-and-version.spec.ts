@@ -1,16 +1,31 @@
 /* eslint-disable no-restricted-imports */
-import { test } from "@playwright/test";
+import { test, expect } from "@playwright/test";
 
-import {
-  thenDeviceIsConnected,
-  thenVerifyResponseContains,
-} from "../utils/thenHandlers";
+import { thenDeviceIsConnected } from "../utils/thenHandlers";
 import {
   whenCloseDrawer,
   whenConnectingDevice,
   whenExecuteDeviceCommand,
   whenNavigateTo,
 } from "../utils/whenHandlers";
+import { getLastDeviceResponseContent } from "../utils/utils";
+
+interface getAppAndVersionResponse {
+  status: string;
+  data?: {
+    name: string;
+    version: string;
+    flags: Object;
+  };
+  error?: object;
+  pending?: object;
+}
+
+interface openAppResponse {
+  status: string;
+  error?: object;
+  pending?: object;
+}
 
 test.describe("device command: get app and version", () => {
   test.beforeEach(async ({ page }) => {
@@ -39,7 +54,11 @@ test.describe("device command: get app and version", () => {
       });
 
       // Then we verify the response contains "SUCCESS" for opening the app
-      await thenVerifyResponseContains(page, '"status": "SUCCESS"');
+      const response = (await getLastDeviceResponseContent(
+        page,
+      )) as openAppResponse;
+
+      expect(response.status).toBe("SUCCESS");
     });
 
     await test.step("Then execute get app and version via device command", async () => {
@@ -50,8 +69,12 @@ test.describe("device command: get app and version", () => {
       await whenExecuteDeviceCommand(page, "Get app and version");
 
       // Then we verify the response contains "SUCCESS" and the app name "Bitcoin"
-      await thenVerifyResponseContains(page, '"status": "SUCCESS"');
-      await thenVerifyResponseContains(page, "Bitcoin");
+      const response = (await getLastDeviceResponseContent(
+        page,
+      )) as getAppAndVersionResponse;
+
+      expect(response.status).toBe("SUCCESS");
+      expect(response?.data?.name).toBe("Bitcoin");
     });
   });
 });

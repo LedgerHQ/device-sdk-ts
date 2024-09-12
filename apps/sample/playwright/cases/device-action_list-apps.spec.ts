@@ -1,15 +1,20 @@
 /* eslint-disable no-restricted-imports */
-import { test } from "@playwright/test";
+import { test, expect } from "@playwright/test";
 
-import {
-  thenDeviceIsConnected,
-  thenVerifyResponseContains,
-} from "../utils/thenHandlers";
+import { thenDeviceIsConnected } from "../utils/thenHandlers";
 import {
   whenConnectingDevice,
   whenExecuteDeviceAction,
   whenNavigateTo,
 } from "../utils/whenHandlers";
+import { getLastDeviceResponseContent } from "../utils/utils";
+
+interface ListAppsResponse {
+  status: string;
+  output?: Object[];
+  error?: object;
+  pending?: object;
+}
 
 test.describe("device action: list apps", () => {
   test.beforeEach(async ({ page }) => {
@@ -32,8 +37,15 @@ test.describe("device action: list apps", () => {
       // And execute the "List apps" command
       await whenExecuteDeviceAction(page, "List apps");
 
+      await page.waitForTimeout(1000);
+
       // Then we verify the response contains "completed"
-      await thenVerifyResponseContains(page, '"status": "completed"');
+      const response = (await getLastDeviceResponseContent(
+        page,
+      )) as ListAppsResponse;
+
+      expect(response.status).toBe("completed");
+      expect(response.output).toBeInstanceOf(Array);
     });
   });
 });

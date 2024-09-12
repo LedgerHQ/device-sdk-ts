@@ -13,11 +13,12 @@ import {
 
 interface GetAddressResponse {
   status: string;
-  output: {
+  output?: {
     publicKey: string;
     address: string;
   };
   error?: object;
+  pending?: object;
 }
 
 test.describe("ETH Signer: get address, unhappy paths", () => {

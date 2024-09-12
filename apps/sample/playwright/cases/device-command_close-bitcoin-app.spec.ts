@@ -1,16 +1,20 @@
 /* eslint-disable no-restricted-imports */
-import { test } from "@playwright/test";
+import { test, expect } from "@playwright/test";
 
-import {
-  thenDeviceIsConnected,
-  thenVerifyResponseContains,
-} from "../utils/thenHandlers";
+import { thenDeviceIsConnected } from "../utils/thenHandlers";
 import {
   whenCloseDrawer,
   whenConnectingDevice,
   whenExecuteDeviceCommand,
   whenNavigateTo,
 } from "../utils/whenHandlers";
+import { getLastDeviceResponseContent } from "../utils/utils";
+
+interface CloseAppResponse {
+  status: string;
+  error?: object;
+  pending?: object;
+}
 
 test.describe("device command: close bitcoin app", () => {
   test.beforeEach(async ({ page }) => {
@@ -39,7 +43,11 @@ test.describe("device command: close bitcoin app", () => {
       });
 
       // Then we verify the response contains "SUCCESS" for opening the app
-      await thenVerifyResponseContains(page, '"status": "SUCCESS"');
+      const response = (await getLastDeviceResponseContent(
+        page,
+      )) as CloseAppResponse;
+
+      expect(response.status).toBe("SUCCESS");
     });
 
     await test.step("Then execute close app via device command", async () => {
@@ -50,7 +58,11 @@ test.describe("device command: close bitcoin app", () => {
       await whenExecuteDeviceCommand(page, "Close app");
 
       // Then we verify the response contains "SUCCESS" for closing the app
-      await thenVerifyResponseContains(page, '"status": "SUCCESS"');
+      const response = (await getLastDeviceResponseContent(
+        page,
+      )) as CloseAppResponse;
+
+      expect(response.status).toBe("SUCCESS");
     });
   });
 });

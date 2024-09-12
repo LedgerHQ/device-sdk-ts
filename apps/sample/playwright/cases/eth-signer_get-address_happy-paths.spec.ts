@@ -22,7 +22,7 @@ interface GetAddressResponse {
     address: string;
   };
   error?: object;
-  intermediateValue?: object;
+  pending?: object;
 }
 
 test.describe("ETH Signer: get address, happy paths", () => {

@@ -54,17 +54,3 @@ const verifyDevicesNotVisible =
 
 export const thenNoDeviceIsConnected = (page: Page): Promise<void> =>
   asyncPipe(getAllDeviceNames, verifyDevicesNotVisible)(page);
-
-const verifyResponseContains =
-  (expectedText: string) =>
-  async (page: Page): Promise<Page> => {
-    await expect(
-      page.getByTestId("box_device-commands-responses"),
-    ).toContainText(expectedText);
-    return page;
-  };
-
-export const thenVerifyResponseContains = (
-  page: Page,
-  expectedText: string,
-): Promise<void> => asyncPipe(verifyResponseContains(expectedText))(page);

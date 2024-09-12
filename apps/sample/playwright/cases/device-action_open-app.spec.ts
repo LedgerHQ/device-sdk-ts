@@ -1,15 +1,19 @@
 /* eslint-disable no-restricted-imports */
-import { test } from "@playwright/test";
+import { test, expect } from "@playwright/test";
 
-import {
-  thenDeviceIsConnected,
-  thenVerifyResponseContains,
-} from "../utils/thenHandlers";
+import { thenDeviceIsConnected } from "../utils/thenHandlers";
 import {
   whenConnectingDevice,
   whenExecuteDeviceAction,
   whenNavigateTo,
 } from "../utils/whenHandlers";
+import { getLastDeviceResponseContent } from "../utils/utils";
+
+interface OpenAppResponse {
+  status: string;
+  error?: object;
+  pending?: object;
+}
 
 test.describe("device action: open bitcoin app", () => {
   test.beforeEach(async ({ page }) => {
@@ -36,7 +40,11 @@ test.describe("device action: open bitcoin app", () => {
       });
 
       // Then we verify the response contains "completed"
-      await thenVerifyResponseContains(page, '"status": "completed"');
+      const response = (await getLastDeviceResponseContent(
+        page,
+      )) as OpenAppResponse;
+
+      expect(response.status).toBe("completed");
     });
   });
 });
