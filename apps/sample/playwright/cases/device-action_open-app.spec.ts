@@ -31,7 +31,7 @@ test.describe("device action: open bitcoin app", () => {
 
       // And execute the "Open app" command with app name "Bitcoin"
       await whenExecuteDeviceAction(page, "Open app", {
-        inputField: "input_appName",
+        inputField: "input-text_appName",
         inputValue: "Bitcoin",
       });
 

@@ -36,7 +36,7 @@
 
 //       // And execute the "Sign transaction" command with the raw transaction hex
 //       await whenExecuteDeviceAction(page, "Sign transaction", {
-//         inputField: "input_transaction",
+//         inputField: "input-text_transaction",
 //         inputValue: rawTransactionHex,
 //       });
 

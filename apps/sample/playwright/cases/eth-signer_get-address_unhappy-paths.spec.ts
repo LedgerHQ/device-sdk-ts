@@ -4,7 +4,7 @@ import { expect, test } from "@playwright/test";
 import { thenDeviceIsConnected } from "../utils/thenHandlers";
 import { getLastDeviceResponseContent } from "../utils/utils";
 import {
-  whenClickingCTACommand,
+  whenClicking,
   whenConnectingDevice,
   whenExecute,
   whenExecuteDeviceAction,
@@ -39,10 +39,10 @@ test.describe("ETH Signer: get address, unhappy paths", () => {
     await test.step("Then execute ETH: get address with malformed derivation paths", async () => {
       await whenNavigateTo(page, "/keyring");
 
-      await whenClickingCTACommand(page, "Ethereum");
+      await whenClicking(page, "CTA_command-Ethereum");
 
       await whenExecuteDeviceAction(page, "Get address", {
-        inputField: "input_derivationPath",
+        inputField: "input-text_derivationPath",
         inputValue: "aa'/60'/0'/0/0",
       });
 
@@ -55,7 +55,7 @@ test.describe("ETH Signer: get address, unhappy paths", () => {
       ).toBe("error");
 
       await whenExecute("device-action")(page, "Get address", {
-        inputField: "input_derivationPath",
+        inputField: "input-text_derivationPath",
         inputValue: "44'/aa'/0'/0/0",
       });
 
@@ -68,7 +68,7 @@ test.describe("ETH Signer: get address, unhappy paths", () => {
       ).toBe("error");
 
       await whenExecute("device-action")(page, "Get address", {
-        inputField: "input_derivationPath",
+        inputField: "input-text_derivationPath",
         inputValue: "44'/60'/aa'/0/0",
       });
 
@@ -81,7 +81,7 @@ test.describe("ETH Signer: get address, unhappy paths", () => {
       ).toBe("error");
 
       await whenExecute("device-action")(page, "Get address", {
-        inputField: "input_derivationPath",
+        inputField: "input-text_derivationPath",
         inputValue: "44'/60'/0'/aa/0",
       });
 
@@ -94,7 +94,7 @@ test.describe("ETH Signer: get address, unhappy paths", () => {
       ).toBe("error");
 
       await whenExecute("device-action")(page, "Get address", {
-        inputField: "input_derivationPath",
+        inputField: "input-text_derivationPath",
         inputValue: "44'/60'/0'/0/aa",
       });
 

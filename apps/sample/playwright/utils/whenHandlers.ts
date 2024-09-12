@@ -11,11 +11,11 @@ export const whenConnectingDevice = async (page: Page): Promise<void> => {
 };
 
 // When: Selecting a CTA
-export const whenClickingCTACommand = async (
+export const whenClicking = async (
   page: Page,
   ctaSelector: string,
 ): Promise<void> => {
-  await page.getByTestId(`CTA_command-${ctaSelector}`).click();
+  await page.getByTestId(ctaSelector).click();
 };
 
 // When: Navigate to device actions or commands page

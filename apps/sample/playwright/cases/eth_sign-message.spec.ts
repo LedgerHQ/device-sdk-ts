@@ -33,7 +33,7 @@ test.describe("keyrings: sign message", () => {
 
       // And execute the "Sign message" command with message "hello, world!"
       await whenExecuteDeviceAction(page, "Sign message", {
-        inputField: "input_message",
+        inputField: "input-text_message",
         inputValue: "hello, world!",
       });
 
