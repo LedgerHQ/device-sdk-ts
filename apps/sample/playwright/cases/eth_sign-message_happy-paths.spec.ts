@@ -2,6 +2,7 @@
 import { expect, test } from "@playwright/test";
 
 import { thenDeviceIsConnected } from "../utils/thenHandlers";
+import { getLastDeviceResponseContent, isValid256BitHex } from "../utils/utils";
 import {
   whenClicking,
   whenConnectingDevice,
@@ -9,7 +10,6 @@ import {
   whenExecuteDeviceAction,
   whenNavigateTo,
 } from "../utils/whenHandlers";
-import { getLastDeviceResponseContent, isValid256BitHex } from "../utils/utils";
 
 interface SignMessageResponse {
   status: string;
