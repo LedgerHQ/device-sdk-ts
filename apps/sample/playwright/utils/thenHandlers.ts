@@ -1,9 +1,10 @@
-import { expect, Page, Locator } from "@playwright/test";
+import { expect, Locator, Page } from "@playwright/test";
+
 import { asyncPipe } from "@/utils/pipes";
 
 const getDeviceLocator =
   (deviceIndex: number = 0) =>
-  async (page: Page): Promise<Page> => {
+  (page: Page): Page => {
     const targetChild = page
       .getByTestId("container_devices")
       .locator("> *")

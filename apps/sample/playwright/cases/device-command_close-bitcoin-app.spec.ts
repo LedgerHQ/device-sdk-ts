@@ -1,14 +1,14 @@
 /* eslint-disable no-restricted-imports */
-import { test, expect } from "@playwright/test";
+import { expect, test } from "@playwright/test";
 
 import { thenDeviceIsConnected } from "../utils/thenHandlers";
+import { getLastDeviceResponseContent } from "../utils/utils";
 import {
   whenCloseDrawer,
   whenConnectingDevice,
   whenExecuteDeviceCommand,
   whenNavigateTo,
 } from "../utils/whenHandlers";
-import { getLastDeviceResponseContent } from "../utils/utils";
 
 interface CloseAppResponse {
   status: string;

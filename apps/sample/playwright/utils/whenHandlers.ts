@@ -1,5 +1,6 @@
+import { Locator, Page } from "@playwright/test";
+
 import { asyncPipe } from "@/utils/pipes";
-import { Page, Locator } from "@playwright/test";
 
 type DeviceCommandParams = {
   inputField?: string;
@@ -92,7 +93,7 @@ export const whenExecuteDeviceAction = whenExecute("device-action", true);
 export const whenExecuteDeviceCommand = whenExecute("device-command", true);
 
 // Device disconnect functions
-const getFirstDevice = async (page: Page): Promise<Locator> => {
+const getFirstDevice = (page: Page): Locator => {
   const firstChild = page
     .getByTestId("container_devices")
     .locator("> *")

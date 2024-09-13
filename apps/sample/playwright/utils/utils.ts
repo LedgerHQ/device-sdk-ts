@@ -1,5 +1,6 @@
-import { asyncPipe } from "@/utils/pipes";
 import { Locator, Page } from "@playwright/test";
+
+import { asyncPipe } from "@/utils/pipes";
 
 export const getScreenshot = async (
   page: Page,
@@ -32,9 +33,7 @@ const filterNonHiddenElements = async (
   return results.filter((child) => child !== null) as Locator[];
 };
 
-const getLastNonHiddenResponse = async (
-  responses: Locator[],
-): Promise<Locator | null> => {
+const getLastNonHiddenResponse = (responses: Locator[]): Locator | null => {
   return responses.length > 0 ? responses[responses.length - 1] : null;
 };
 
@@ -68,10 +67,10 @@ const parseJSONContent = async <T>(
   }
 };
 
-export const getLastDeviceResponseContent = async <T>(
+export const getLastDeviceResponseContent = async (
   page: Page,
-): Promise<T | null> => {
-  return asyncPipe(
+): Promise<object | null> => {
+  return await asyncPipe(
     getResponses,
     filterNonHiddenElements,
     getLastNonHiddenResponse,
