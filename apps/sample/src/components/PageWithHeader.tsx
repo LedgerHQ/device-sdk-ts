@@ -1,9 +1,11 @@
-import { Divider, Flex, Text } from "@ledgerhq/react-ui";
+import { Divider, Flex, Breadcrumb } from "@ledgerhq/react-ui";
+import { Props as BreadCrumbProps } from "@ledgerhq/react-ui/components/navigation/Breadcrumb/index";
+
 import styled from "styled-components";
 
 import React from "react";
 
-const Root = styled(Flex).attrs({ mx: 15, mt: 10, mb: 5 })`
+const Root = styled(Flex).attrs({ mx: 15, mb: 5 })`
   flex-direction: column;
   flex: 1;
   justify-content: center;
@@ -11,30 +13,34 @@ const Root = styled(Flex).attrs({ mx: 15, mt: 10, mb: 5 })`
 `;
 
 const Container = styled(Flex)`
-  height: 100%;
-  width: 100%;
   flex-direction: column;
   border-radius: 12px;
+  overflow: hidden;
+  height: 100%;
+  width: 100%;
 `;
 
 const Header = styled(Flex).attrs({ py: 6 })``;
 
-const Title = styled(Text).attrs({
-  variant: "h5Inter",
-  fontWeight: "semiBold",
-  fontSize: 18,
-})``;
-
-export const PageWithHeader: React.FC<{
-  title: string;
-  children: React.ReactNode;
-}> = ({ title, children }) => {
+export const PageWithHeader: React.FC<
+  {
+    children: React.ReactNode;
+  } & ({ title: string } | BreadCrumbProps)
+> = (props) => {
+  const { children } = props;
+  const headerContent =
+    "title" in props ? (
+      <Breadcrumb
+        segments={[{ label: props.title, value: props.title }]}
+        onChange={() => {}}
+      />
+    ) : (
+      <Breadcrumb {...props} />
+    );
   return (
     <Root overflow="hidden">
       <Container>
-        <Header>
-          <Title>{title}</Title>
-        </Header>
+        <Header>{headerContent}</Header>
         <Divider my={4} />
         {children}
       </Container>

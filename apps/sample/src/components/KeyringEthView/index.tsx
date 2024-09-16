@@ -1,4 +1,3 @@
-import { Grid } from "@ledgerhq/react-ui";
 import React, { useMemo } from "react";
 
 import { useSdk } from "@/providers/DeviceSdkProvider";
@@ -18,18 +17,19 @@ import {
   SignTransactionDAError,
   SignTransactionDAIntermediateValue,
 } from "@ledgerhq/keyring-eth";
-import {
-  DeviceAction,
-  DeviceActionProps,
-} from "@/components/DeviceActionsView/DeviceAction";
-import { PageWithHeader } from "@/components/PageWithHeader";
+import { DeviceActionProps } from "@/components/DeviceActionsView/DeviceActionTester";
 import { ethers } from "ethers";
+import { DeviceActionsList } from "@/components/DeviceActionsView/DeviceActionsList";
 
 export const KeyringEthView: React.FC<{ sessionId: string }> = ({
   sessionId,
 }) => {
   const sdk = useSdk();
   const keyring = new KeyringEthBuilder({ sdk, sessionId }).build();
+
+  const deviceModelId = sdk.getConnectedDevice({
+    sessionId,
+  }).modelId;
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const deviceActions: DeviceActionProps<any, any, any, any>[] = useMemo(
@@ -53,6 +53,7 @@ export const KeyringEthView: React.FC<{ sessionId: string }> = ({
           checkOnDevice: false,
           returnChainCode: false,
         },
+        deviceModelId,
       } satisfies DeviceActionProps<
         GetAddressDAOutput,
         {
@@ -74,6 +75,7 @@ export const KeyringEthView: React.FC<{ sessionId: string }> = ({
           derivationPath: "44'/60'/0'/0/0",
           message: "Hello World",
         },
+        deviceModelId,
       } satisfies DeviceActionProps<
         SignPersonalMessageDAOutput,
         {
@@ -103,6 +105,7 @@ export const KeyringEthView: React.FC<{ sessionId: string }> = ({
           transaction: "",
           recipientDomain: "",
         },
+        deviceModelId,
       } satisfies DeviceActionProps<
         SignTransactionDAOutput,
         {
@@ -146,6 +149,7 @@ export const KeyringEthView: React.FC<{ sessionId: string }> = ({
           }
           return true;
         },
+        deviceModelId,
       } satisfies DeviceActionProps<
         SignTypedDataDAOutput,
         {
@@ -160,15 +164,6 @@ export const KeyringEthView: React.FC<{ sessionId: string }> = ({
   );
 
   return (
-    <PageWithHeader title="Device Actions">
-      <Grid columns={1} rowGap={6} overflowY="scroll">
-        {deviceActions.map((deviceAction) => (
-          <DeviceAction
-            key={`${deviceAction.title}_${deviceAction.description}`}
-            {...deviceAction}
-          />
-        ))}
-      </Grid>
-    </PageWithHeader>
+    <DeviceActionsList title="Keyring Ethereum" deviceActions={deviceActions} />
   );
 };
