@@ -27,7 +27,7 @@ const verifyDeviceConnectedStatus = async (
 export const thenDeviceIsConnected = (
   page: Page,
   deviceIndex: number = 0,
-): Promise<void> =>
+): Promise<Locator> =>
   asyncPipe(getDeviceLocator(deviceIndex), verifyDeviceConnectedStatus)(page);
 
 const getAllDeviceNames = async (page: Page): Promise<string[]> => {
@@ -53,5 +53,5 @@ const verifyDevicesNotVisible =
     return page;
   };
 
-export const thenNoDeviceIsConnected = (page: Page): Promise<void> =>
+export const thenNoDeviceIsConnected = (page: Page): Promise<Page> =>
   asyncPipe(getAllDeviceNames, verifyDevicesNotVisible)(page);

@@ -38,7 +38,6 @@ test.describe("ETH Signer: sign EIP712 message, happy paths", () => {
 
     await test.step("When execute ETH: sign EIP712 message", async () => {
       await whenNavigateTo(page, "/keyring");
-
       await whenClicking(page, "CTA_command-Ethereum");
 
       await whenExecuteDeviceAction(page, "Sign typed message", [
@@ -55,7 +54,7 @@ test.describe("ETH Signer: sign EIP712 message, happy paths", () => {
     });
 
     await test.step("Then verify the response is successful and contains signed message", async () => {
-      await page.waitForTimeout(4000);
+      await page.waitForTimeout(1000);
 
       const response = (await getLastDeviceResponseContent(
         page,
@@ -67,7 +66,7 @@ test.describe("ETH Signer: sign EIP712 message, happy paths", () => {
     });
   });
 
-  test("device should output a different signature when fed a different derivation path", async ({
+  test("device should output a different result when fed a different derivation path", async ({
     page,
   }) => {
     await test.step("Given first device is connected", async () => {
@@ -78,7 +77,6 @@ test.describe("ETH Signer: sign EIP712 message, happy paths", () => {
 
     await test.step("When execute ETH: sign EIP712 message", async () => {
       await whenNavigateTo(page, "/keyring");
-
       await whenClicking(page, "CTA_command-Ethereum");
 
       await whenExecuteDeviceAction(page, "Sign typed message", [
@@ -95,7 +93,7 @@ test.describe("ETH Signer: sign EIP712 message, happy paths", () => {
     });
 
     await test.step("Then verify the response with different address index is successful and contains a different signed message", async () => {
-      await page.waitForTimeout(4000);
+      await page.waitForTimeout(1000);
 
       const responseWithDefaultDerivationPath =
         (await getLastDeviceResponseContent(page)) as SignEIP712MessageResponse;
@@ -112,7 +110,7 @@ test.describe("ETH Signer: sign EIP712 message, happy paths", () => {
         },
       ]);
 
-      await page.waitForTimeout(4000);
+      await page.waitForTimeout(1000);
 
       const responseWithSecondDerivationPath =
         (await getLastDeviceResponseContent(page)) as SignEIP712MessageResponse;
@@ -131,7 +129,7 @@ test.describe("ETH Signer: sign EIP712 message, happy paths", () => {
     });
   });
 
-  test("device should output a different signature when fed a different EIP712 message", async ({
+  test("device should output a different result when fed a different EIP712 message", async ({
     page,
   }) => {
     await test.step("Given first device is connected", async () => {
@@ -159,7 +157,7 @@ test.describe("ETH Signer: sign EIP712 message, happy paths", () => {
     });
 
     await test.step("Then verify the response with different EIP712 message is successful and contains a different signed message", async () => {
-      await page.waitForTimeout(4000);
+      await page.waitForTimeout(1000);
 
       const responseWithDefaultMessage = (await getLastDeviceResponseContent(
         page,
@@ -177,7 +175,7 @@ test.describe("ETH Signer: sign EIP712 message, happy paths", () => {
         },
       ]);
 
-      await page.waitForTimeout(4000);
+      await page.waitForTimeout(1000);
 
       const responseWithSecondMessage = (await getLastDeviceResponseContent(
         page,

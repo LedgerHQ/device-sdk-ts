@@ -31,16 +31,13 @@ test.describe("ETH Signer: sign message, happy paths", () => {
     page,
   }) => {
     await test.step("Given first device is connected", async () => {
-      // When we connect the device
       await whenConnectingDevice(page);
 
-      // Then verify the device is connected
       await thenDeviceIsConnected(page, 0);
     });
 
     await test.step("When execute ETH: sign message", async () => {
       await whenNavigateTo(page, "/keyring");
-
       await whenClicking(page, "CTA_command-Ethereum");
 
       await whenExecuteDeviceAction(page, "Sign message", [
@@ -56,7 +53,7 @@ test.describe("ETH Signer: sign message, happy paths", () => {
     });
 
     await test.step("Then verify the response is successful and contains signed message", async () => {
-      await page.waitForTimeout(4000);
+      await page.waitForTimeout(1000);
 
       const response = (await getLastDeviceResponseContent(
         page,
@@ -68,7 +65,7 @@ test.describe("ETH Signer: sign message, happy paths", () => {
     });
   });
 
-  test("device should output a different signature when fed a different derivation path", async ({
+  test("device should output a different result when fed a different derivation path", async ({
     page,
   }) => {
     await test.step("Given first device is connected", async () => {
@@ -95,7 +92,7 @@ test.describe("ETH Signer: sign message, happy paths", () => {
     });
 
     await test.step("Then verify the response with different address index is successful and contains a different signed message", async () => {
-      await page.waitForTimeout(4000);
+      await page.waitForTimeout(1000);
 
       const responseWithDefaultDerivationPath =
         (await getLastDeviceResponseContent(page)) as SignMessageResponse;
@@ -111,7 +108,7 @@ test.describe("ETH Signer: sign message, happy paths", () => {
         },
       ]);
 
-      await page.waitForTimeout(4000);
+      await page.waitForTimeout(1000);
 
       const responseWithSecondDerivationPath =
         (await getLastDeviceResponseContent(page)) as SignMessageResponse;
@@ -130,7 +127,7 @@ test.describe("ETH Signer: sign message, happy paths", () => {
     });
   });
 
-  test("device should output a different signature when fed a different message", async ({
+  test("device should output a different result when fed a different message", async ({
     page,
   }) => {
     await test.step("Given first device is connected", async () => {
@@ -157,7 +154,7 @@ test.describe("ETH Signer: sign message, happy paths", () => {
     });
 
     await test.step("Then verify the response with different message is successful and contains a different signed message", async () => {
-      await page.waitForTimeout(4000);
+      await page.waitForTimeout(1000);
 
       const responseWithDefaultMessage = (await getLastDeviceResponseContent(
         page,
@@ -174,7 +171,7 @@ test.describe("ETH Signer: sign message, happy paths", () => {
         },
       ]);
 
-      await page.waitForTimeout(4000);
+      await page.waitForTimeout(1000);
 
       const responseWithSecondMessage = (await getLastDeviceResponseContent(
         page,
