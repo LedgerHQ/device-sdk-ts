@@ -23,23 +23,18 @@ test.describe("device action: list apps", () => {
 
   test("device should list apps via device action", async ({ page }) => {
     await test.step("Given first device is connected", async () => {
-      // When we connect the device
       await whenConnectingDevice(page);
 
-      // Then verify the device is connected
       await thenDeviceIsConnected(page, 0);
     });
 
     await test.step("Then execute list apps via device action", async () => {
-      // When we navigate to device actions
       await whenNavigateTo(page, "/device-actions");
 
-      // And execute the "List apps" command
       await whenExecuteDeviceAction(page, "List apps");
 
       await page.waitForTimeout(1000);
 
-      // Then we verify the response contains "completed"
       const response = (await getLastDeviceResponseContent(
         page,
       )) as ListAppsResponse;

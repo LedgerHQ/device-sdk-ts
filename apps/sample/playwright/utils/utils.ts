@@ -7,7 +7,7 @@ export const getScreenshot = async (
   title: string = "screenshot",
 ): Promise<void> => {
   await page.screenshot({
-    path: `./src/playwright/${title}.png`,
+    path: `./playwright/${title}.png`,
     fullPage: true,
   });
 };
@@ -33,7 +33,7 @@ const filterNonHiddenElements = async (
   return results.filter((child) => child !== null) as Locator[];
 };
 
-const getLastNonHiddenResponse = (responses: Locator[]): Locator | null => {
+const getLastResponse = (responses: Locator[]): Locator | null => {
   return responses.length > 0 ? responses[responses.length - 1] : null;
 };
 
@@ -69,15 +69,14 @@ const parseJSONContent = async <T>(
 
 export const getLastDeviceResponseContent = async (
   page: Page,
-): Promise<object | null> => {
-  return await asyncPipe(
+): Promise<object | null> =>
+  await asyncPipe(
     getResponses,
     filterNonHiddenElements,
-    getLastNonHiddenResponse,
+    getLastResponse,
     getLastChildOfElementByTag("span"),
     parseJSONContent,
   )(page);
-};
 
 export const isValidEthereumAddress = (address: string): boolean =>
   /^0x[a-fA-F0-9]{40}$/.test(address);
