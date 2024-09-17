@@ -30,7 +30,7 @@ npm install @ledgerhq/keyring-eth
 To initialise an Ethereum keyring instance, you need a Ledger device SDK instance and the ID of the session of the connected device. Use the `KeyringEthBuilder` along with the [Context Module](https://github.com/LedgerHQ/device-sdk-ts/tree/develop/packages/signer/context-module) by default developed by Ledger:
 
 ```typescript
-// Initialie an Ethereum keyring instance using default context module
+// Initialsie an Ethereum keyring instance using default context module
 const keyringEth = new KeyringEthBuilder({ sdk, sessionId }).build();
 ```
 
