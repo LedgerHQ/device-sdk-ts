@@ -114,6 +114,15 @@ Example: \`💚 (scope) [DSDK-1234]: My feature\`\
   }
 }
 
+// return a warning if no changeset file in .changeset is provided
+const changesetFiles = danger.git.fileMatch("**/.changeset/*.md");
+if (changesetFiles.edited === false) {
+  successful = false;
+  message(`\ No changeset file found in the PR. Please add a changeset file.`, {
+    icon: "⚠️",
+  });
+}
+
 if (successful) {
   message("Danger: All checks passed successfully! 🎉", { icon: "✅" });
 }
