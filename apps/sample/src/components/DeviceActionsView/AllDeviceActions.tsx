@@ -1,42 +1,43 @@
 import { useSdk } from "@/providers/DeviceSdkProvider";
-import { useMemo } from "react";
-import { PageWithHeader } from "@/components/PageWithHeader";
-import { Grid } from "@ledgerhq/react-ui";
-import { DeviceAction, DeviceActionProps } from "./DeviceAction";
 import {
   OpenAppDeviceAction,
-  OpenAppDAError,
-  OpenAppDAInput,
-  OpenAppDAIntermediateValue,
   OpenAppDAOutput,
+  OpenAppDAInput,
+  OpenAppDAError,
+  OpenAppDAIntermediateValue,
   GetDeviceStatusDeviceAction,
-  GetDeviceStatusDAInput,
   GetDeviceStatusDAOutput,
+  GetDeviceStatusDAInput,
   GetDeviceStatusDAError,
   GetDeviceStatusDAIntermediateValue,
   GoToDashboardDeviceAction,
-  GoToDashboardDAInput,
   GoToDashboardDAOutput,
+  GoToDashboardDAInput,
   GoToDashboardDAError,
   GoToDashboardDAIntermediateValue,
   ListAppsDeviceAction,
-  ListAppsDAInput,
   ListAppsDAOutput,
+  ListAppsDAInput,
   ListAppsDAError,
   ListAppsDAIntermediateValue,
   ListAppsWithMetadataDeviceAction,
-  ListAppsWithMetadataDAError,
-  ListAppsWithMetadataDAInput,
-  ListAppsWithMetadataDAIntermediateValue,
   ListAppsWithMetadataDAOutput,
+  ListAppsWithMetadataDAInput,
+  ListAppsWithMetadataDAError,
+  ListAppsWithMetadataDAIntermediateValue,
 } from "@ledgerhq/device-sdk-core";
+import { useMemo } from "react";
+import { DeviceActionProps } from "./DeviceActionTester";
+import { UNLOCK_TIMEOUT, DeviceActionsList } from "./DeviceActionsList";
 
-const UNLOCK_TIMEOUT = 60 * 1000; // 1 minute
-
-export const DeviceActionsView: React.FC<{ sessionId: string }> = ({
-  sessionId: selectedSessionId,
+export const AllDeviceActions: React.FC<{ sessionId: string }> = ({
+  sessionId,
 }) => {
   const sdk = useSdk();
+
+  const deviceModelId = sdk.getConnectedDevice({
+    sessionId,
+  }).modelId;
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const deviceActions: DeviceActionProps<any, any, any, any>[] = useMemo(
@@ -51,11 +52,12 @@ export const DeviceActionsView: React.FC<{ sessionId: string }> = ({
             inspect,
           });
           return sdk.executeDeviceAction({
-            sessionId: selectedSessionId,
+            sessionId,
             deviceAction,
           });
         },
         initialValues: { appName: "" },
+        deviceModelId,
       } satisfies DeviceActionProps<
         OpenAppDAOutput,
         OpenAppDAInput,
@@ -72,11 +74,12 @@ export const DeviceActionsView: React.FC<{ sessionId: string }> = ({
             inspect,
           });
           return sdk.executeDeviceAction({
-            sessionId: selectedSessionId,
+            sessionId,
             deviceAction,
           });
         },
         initialValues: { unlockTimeout: UNLOCK_TIMEOUT },
+        deviceModelId,
       } satisfies DeviceActionProps<
         GetDeviceStatusDAOutput,
         GetDeviceStatusDAInput,
@@ -92,11 +95,12 @@ export const DeviceActionsView: React.FC<{ sessionId: string }> = ({
             inspect,
           });
           return sdk.executeDeviceAction({
-            sessionId: selectedSessionId,
+            sessionId,
             deviceAction,
           });
         },
         initialValues: { unlockTimeout: UNLOCK_TIMEOUT },
+        deviceModelId,
       } satisfies DeviceActionProps<
         GoToDashboardDAOutput,
         GoToDashboardDAInput,
@@ -112,11 +116,12 @@ export const DeviceActionsView: React.FC<{ sessionId: string }> = ({
             inspect,
           });
           return sdk.executeDeviceAction({
-            sessionId: selectedSessionId,
+            sessionId,
             deviceAction,
           });
         },
         initialValues: { unlockTimeout: UNLOCK_TIMEOUT },
+        deviceModelId,
       } satisfies DeviceActionProps<
         ListAppsDAOutput,
         ListAppsDAInput,
@@ -133,11 +138,12 @@ export const DeviceActionsView: React.FC<{ sessionId: string }> = ({
             inspect,
           });
           return sdk.executeDeviceAction({
-            sessionId: selectedSessionId,
+            sessionId,
             deviceAction,
           });
         },
         initialValues: { unlockTimeout: UNLOCK_TIMEOUT },
+        deviceModelId,
       } satisfies DeviceActionProps<
         ListAppsWithMetadataDAOutput,
         ListAppsWithMetadataDAInput,
@@ -149,15 +155,6 @@ export const DeviceActionsView: React.FC<{ sessionId: string }> = ({
   );
 
   return (
-    <PageWithHeader title="Device Actions">
-      <Grid columns={1} rowGap={6} overflowY="scroll">
-        {deviceActions.map((deviceAction) => (
-          <DeviceAction
-            key={`${deviceAction.title}_${deviceAction.description}`}
-            {...deviceAction}
-          />
-        ))}
-      </Grid>
-    </PageWithHeader>
+    <DeviceActionsList title="Device actions" deviceActions={deviceActions} />
   );
 };

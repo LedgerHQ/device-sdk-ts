@@ -21,6 +21,7 @@
     "next": "14.2.11",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
+    "react-lottie": "^1.2.4",
     "styled-components": "^5.3.11"
   },
   "devDependencies": {
@@ -28,6 +29,7 @@
     "@ledgerhq/prettier-config-dsdk": "workspace:*",
     "@ledgerhq/tsconfig-dsdk": "workspace:*",
     "@types/react": "^18.3.5",
+    "@types/react-lottie": "^1.2.10",
     "@types/styled-components": "^5.1.25",
     "autoprefixer": "^10.4.20",
     "globals": "15.9.0",

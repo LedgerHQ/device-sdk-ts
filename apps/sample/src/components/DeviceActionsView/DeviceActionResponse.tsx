@@ -21,6 +21,17 @@ export type DeviceActionResponseProps<Output, Error, IntermediateValue> = {
   | { error: unknown }
 );
 
+export const deviceActionStatusToColor: Record<DeviceActionStatus, string> = {
+  [DeviceActionStatus.NotStarted]: "primary.c100",
+  [DeviceActionStatus.Pending]: "primary.c90",
+  [DeviceActionStatus.Stopped]: "warning.c80",
+  [DeviceActionStatus.Completed]: "success.c80",
+  [DeviceActionStatus.Error]: "error.c80",
+};
+
+/**
+ * Component to display an event emitted by a device action.
+ */
 export function DeviceActionResponse<
   Output,
   Error,
@@ -41,6 +52,8 @@ export function DeviceActionResponse<
       bg={isLatest ? "neutral.c40" : "transparent"}
       p={3}
       borderRadius={2}
+      flex={1}
+      overflow="scroll"
     >
       <Tooltip
         placement="top"
@@ -58,27 +71,22 @@ export function DeviceActionResponse<
           flexGrow={0}
           mb={2}
         >
-          (id: {id}) {date.toLocaleTimeString()} {isError ? "Error" : ""}
+          (execution ID: {id}) {date.toLocaleTimeString()}{" "}
+          {isError ? "Error" : ""}
         </Text>
       </Tooltip>
       <Text
         variant="body"
         fontWeight="regular"
         color={
-          isError || props.deviceActionState.status === DeviceActionStatus.Error
-            ? "error.c80"
-            : props.deviceActionState.status === DeviceActionStatus.Pending
-              ? "primary.c90"
-              : props.deviceActionState.status === DeviceActionStatus.Stopped
-                ? "warning.c80"
-                : props.deviceActionState.status ===
-                    DeviceActionStatus.Completed
-                  ? "success.c80"
-                  : "neutral.c100"
+          deviceActionStatusToColor[
+            isError ? DeviceActionStatus.Error : props.deviceActionState.status
+          ]
         }
         style={{
           fontStyle: "normal",
           whiteSpace: "pre-wrap",
+          wordBreak: "break-word",
         }}
       >
         {JSON.stringify(
