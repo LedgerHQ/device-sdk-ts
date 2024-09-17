@@ -11,7 +11,7 @@ This module provides the implementation of the Ledger Ethereum keyring of the De
 
 ### How it works
 
-The Ledger Ethereum Keyring utilizes the advanced capabilities of the Ledger device to provide secure operations for end users. It takes advantage of the interface provided by the Device SDK to establish communication with the Ledger device and execute various operations, including signing transactions. The communication with the Ledger device is performed using [APDU](https://en.wikipedia.org/wiki/Smart_card_application_protocol_data_unit)s (Application Protocol Data Units), which are encapsulated within the `Command` object. These commands are then organized into tasks, allowing for the execution of complex operations with one or more APDUs. The tasks are further encapsulated within `DeviceAction` objects to handle different real-world scenarios. Finally, the Keyring exposes dedicated and independent use cases that can be directly utilized by end users.
+The Ledger Ethereum Keyring utilises the advanced capabilities of the Ledger device to provide secure operations for end users. It takes advantage of the interface provided by the Device SDK to establish communication with the Ledger device and execute various operations, including signing transactions. The communication with the Ledger device is performed using [APDU](https://en.wikipedia.org/wiki/Smart_card_application_protocol_data_unit)s (Application Protocol Data Units), which are encapsulated within the `Command` object. These commands are then organised into tasks, allowing for the execution of complex operations with one or more APDUs. The tasks are further encapsulated within `DeviceAction` objects to handle different real-world scenarios. Finally, the Keyring exposes dedicated and independent use cases that can be directly utilised by end users.
 
 ### Installation
 
@@ -27,17 +27,17 @@ npm install @ledgerhq/keyring-eth
 
 ### Setting up
 
-To initialize an Ethereum keyring instance, you need a Ledger device SDK instance and the ID of the session of the connected device. Use the `KeyringEthBuilder` along with the [Context Module](https://github.com/LedgerHQ/device-sdk-ts/tree/develop/packages/signer/context-module) by default developed by Ledger:
+To initialise an Ethereum keyring instance, you need a Ledger device SDK instance and the ID of the session of the connected device. Use the `KeyringEthBuilder` along with the [Context Module](https://github.com/LedgerHQ/device-sdk-ts/tree/develop/packages/signer/context-module) by default developed by Ledger:
 
 ```typescript
-// Initialize an Ethereum keyring instance using default context module
+// Initialie an Ethereum keyring instance using default context module
 const keyringEth = new KeyringEthBuilder({ sdk, sessionId }).build();
 ```
 
 You can also configure the context module yourself:
 
 ```typescript
-// Initialize an Ethereum keyring instance using customized context module
+// Initialise an Ethereum keyring instance using customised context module
 const keyringEth = new KeyringEthBuilder({ sdk, sessionId })
   .withContextModule(customContextModule)
   .build();
