@@ -16,7 +16,7 @@ import {
   SignTransactionDAOutput,
   SignTransactionDAError,
   SignTransactionDAIntermediateValue,
-} from "@ledgerhq/keyring-eth";
+} from "@ledgerhq/device-signer-kit-ethereum";
 import { DeviceActionProps } from "@/components/DeviceActionsView/DeviceActionTester";
 import { ethers } from "ethers";
 import { DeviceActionsList } from "@/components/DeviceActionsView/DeviceActionsList";

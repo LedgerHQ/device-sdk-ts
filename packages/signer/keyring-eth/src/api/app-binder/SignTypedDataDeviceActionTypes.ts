@@ -6,7 +6,7 @@ import {
   OpenAppDAError,
   OpenAppDARequiredInteraction,
   UserInteractionRequired,
-} from "@ledgerhq/device-sdk-core";
+} from "@ledgerhq/device-management-kit";
 
 import { Signature } from "@api/model/Signature";
 import { TypedData } from "@api/model/TypedData";

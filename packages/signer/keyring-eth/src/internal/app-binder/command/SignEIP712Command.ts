@@ -11,7 +11,7 @@ import {
   CommandUtils,
   GlobalCommandErrorHandler,
   InvalidStatusWordError,
-} from "@ledgerhq/device-sdk-core";
+} from "@ledgerhq/device-management-kit";
 import { Maybe } from "purify-ts";
 
 import { type Signature } from "@api/model/Signature";

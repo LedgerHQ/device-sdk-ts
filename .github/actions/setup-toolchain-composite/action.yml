@@ -1,5 +1,5 @@
-name: "Setup Device SDK toolchain"
-description: "Composite job to setup the CI tools for Device SDK"
+name: "Setup Device Management Kit toolchain"
+description: "Composite job to setup the CI tools for the Device Management Kit"
 
 runs:
   using: "composite"

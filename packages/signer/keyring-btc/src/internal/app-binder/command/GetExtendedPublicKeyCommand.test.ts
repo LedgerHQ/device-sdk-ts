@@ -4,7 +4,7 @@ import {
   InvalidStatusWordError,
   isSuccessCommandResult,
   UnknownDeviceExchangeError,
-} from "@ledgerhq/device-sdk-core";
+} from "@ledgerhq/device-management-kit";
 
 import {
   GetExtendedPublicKeyCommand,

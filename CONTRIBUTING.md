@@ -11,7 +11,7 @@ While you explore these projects, here are some key points to keep in mind:
 
 - Follow the git workflow, prefix your branches and do not create unnecessary merge commits.
 - Be mindful when creating Pull Requests, clearly specify the purpose of your changes and include tests where applicable.
-- Device SDKs are mostly accepting bugfix contributions. Feature contributions are subject to review; they may be declined if they don't align with our roadmap or our long-term objectives.
+- Device Management Kit is mostly accepting bugfix contributions. Feature contributions are subject to review; they may be declined if they don't align with our roadmap or our long-term objectives.
 
 ## Guidelines
 
@@ -32,7 +32,7 @@ While you explore these projects, here are some key points to keep in mind:
 
 ### Git Conventions
 
-We use the following git conventions for the `Device SDK` monorepo.
+We use the following git conventions for the `Device Management Kit` monorepo.
 
 #### Branch naming
 
@@ -41,13 +41,13 @@ Depending on the purpose every git branch should be prefixed.
 - `feat/` Add a new feature to the application or library
 - `bugfix/` Fixing an existing bug
 - `support/` for any other changes (tests, improvements, CI…)
-_For Ledger Employees:_
+  _For Ledger Employees:_
 - `chore/` Cleaning purpose
 - `doc/` Add or modify documentation
 - `refacto/` Modify the code organisation
 
 Then add to the prefix no-issue
-_For Ledger Employees:_ Add the Jira ticket number `DSDK-<number>` 
+_For Ledger Employees:_ Add the Jira ticket number `DSDK-<number>`
 
 And finally add a small description.
 

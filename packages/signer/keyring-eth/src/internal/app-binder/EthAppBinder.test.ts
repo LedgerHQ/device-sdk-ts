@@ -1,8 +1,8 @@
 import { type ContextModule } from "@ledgerhq/context-module";
-import { DeviceActionState, DeviceSdk } from "@ledgerhq/device-sdk-core";
-import { DeviceActionStatus } from "@ledgerhq/device-sdk-core";
-import { SendCommandInAppDeviceAction } from "@ledgerhq/device-sdk-core";
-import { UserInteractionRequired } from "@ledgerhq/device-sdk-core";
+import { DeviceActionState, DeviceSdk } from "@ledgerhq/device-management-kit";
+import { DeviceActionStatus } from "@ledgerhq/device-management-kit";
+import { SendCommandInAppDeviceAction } from "@ledgerhq/device-management-kit";
+import { UserInteractionRequired } from "@ledgerhq/device-management-kit";
 import { Transaction } from "ethers-v6";
 import { from } from "rxjs";
 

@@ -3,7 +3,7 @@ import {
   DeviceSessionId,
   DeviceSessionState,
   DeviceStatus,
-} from "@ledgerhq/device-sdk-core";
+} from "@ledgerhq/device-management-kit";
 
 import { useSdk } from "@/providers/DeviceSdkProvider";
 import { useDeviceSessionsContext } from "@/providers/DeviceSessionsProvider";

@@ -1,5 +1,5 @@
 ---
-"@ledgerhq/device-sdk-core": minor
+"@ledgerhq/device-management-kit": minor
 ---
 
 Add ListAppsWithMetadata device action

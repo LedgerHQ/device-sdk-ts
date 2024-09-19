@@ -10,8 +10,8 @@ import {
   CommandResultFactory,
   CommandUtils,
   GlobalCommandErrorHandler,
-} from "@ledgerhq/device-sdk-core";
-import { InvalidStatusWordError } from "@ledgerhq/device-sdk-core";
+  InvalidStatusWordError,
+} from "@ledgerhq/device-management-kit";
 
 import { DerivationPathUtils } from "@internal/shared/utils/DerivationPathUtils";
 

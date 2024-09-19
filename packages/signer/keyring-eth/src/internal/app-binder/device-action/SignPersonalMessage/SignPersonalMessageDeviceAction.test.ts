@@ -3,9 +3,9 @@ import {
   DeviceActionStatus,
   UnknownDeviceExchangeError,
   UserInteractionRequired,
-} from "@ledgerhq/device-sdk-core";
-import { UnknownDAError } from "@ledgerhq/device-sdk-core";
-import { InvalidStatusWordError } from "@ledgerhq/device-sdk-core";
+} from "@ledgerhq/device-management-kit";
+import { UnknownDAError } from "@ledgerhq/device-management-kit";
+import { InvalidStatusWordError } from "@ledgerhq/device-management-kit";
 
 import { SignPersonalMessageDAState } from "@api/index";
 import { makeDeviceActionInternalApiMock } from "@internal/app-binder/device-action/__test-utils__/makeInternalApi";
@@ -15,10 +15,10 @@ import { testDeviceActionStates } from "@internal/app-binder/device-action/__tes
 import { SignPersonalMessageDeviceAction } from "./SignPersonalMessageDeviceAction";
 
 jest.mock(
-  "@ledgerhq/device-sdk-core",
+  "@ledgerhq/device-management-kit",
   // eslint-disable-next-line @typescript-eslint/no-unsafe-return
   () => ({
-    ...jest.requireActual("@ledgerhq/device-sdk-core"),
+    ...jest.requireActual("@ledgerhq/device-management-kit"),
     OpenAppDeviceAction: jest.fn(() => ({
       makeStateMachine: jest.fn(),
     })),

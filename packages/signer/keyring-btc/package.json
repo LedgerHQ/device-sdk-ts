@@ -50,7 +50,7 @@
     "xstate": "^5.18.1"
   },
   "devDependencies": {
-    "@ledgerhq/device-sdk-core": "workspace:*",
+    "@ledgerhq/device-management-kit": "workspace:*",
     "@ledgerhq/eslint-config-dsdk": "workspace:*",
     "@ledgerhq/jest-config-dsdk": "workspace:*",
     "@ledgerhq/prettier-config-dsdk": "workspace:*",
@@ -58,6 +58,6 @@
     "ts-node": "^10.9.2"
   },
   "peerDependencies": {
-    "@ledgerhq/device-sdk-core": "workspace:*"
+    "@ledgerhq/device-management-kit": "workspace:*"
   }
 }

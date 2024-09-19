@@ -15,19 +15,19 @@ The Ledger Ethereum Keyring utilizes the advanced capabilities of the Ledger dev
 
 ### Installation
 
-> **Note:** This module is not standalone; it depends on the [@ledgerhq/device-sdk-core](https://github.com/LedgerHQ/device-sdk-ts/tree/develop/packages/core) package, so you need to install it first.
+> **Note:** This module is not standalone; it depends on the [@ledgerhq/device-management-kit](https://github.com/LedgerHQ/device-sdk-ts/tree/develop/packages/core) package, so you need to install it first.
 
-To install the `keyring-eth` package, run the following command:
+To install the `device-signer-kit-ethereum` package, run the following command:
 
 ```sh
-npm install @ledgerhq/keyring-eth
+npm install @ledgerhq/device-signer-kit-ethereum
 ```
 
 ## Usage
 
 ### Setting up
 
-To initialize an Ethereum keyring instance, you need a Ledger device SDK instance and the ID of the session of the connected device. Use the `KeyringEthBuilder` along with the [Context Module](https://github.com/LedgerHQ/device-sdk-ts/tree/develop/packages/signer/context-module) by default developed by Ledger:
+To initialize an Ethereum keyring instance, you need a Ledger Device Management Kit instance and the ID of the session of the connected device. Use the `KeyringEthBuilder` along with the [Context Module](https://github.com/LedgerHQ/device-sdk-ts/tree/develop/packages/signer/context-module) by default developed by Ledger:
 
 ```typescript
 // Initialize an Ethereum keyring instance using default context module

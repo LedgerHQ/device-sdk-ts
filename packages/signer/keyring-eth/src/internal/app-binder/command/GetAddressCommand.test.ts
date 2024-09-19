@@ -2,7 +2,7 @@ import {
   ApduResponse,
   CommandResultFactory,
   isSuccessCommandResult,
-} from "@ledgerhq/device-sdk-core";
+} from "@ledgerhq/device-management-kit";
 
 import { GetAddressCommand } from "./GetAddressCommand";
 

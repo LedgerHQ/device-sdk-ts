@@ -1,5 +1,5 @@
 ---
-"@ledgerhq/keyring-eth": minor
+"@ledgerhq/device-signer-kit-ethereum": minor
 ---
 
 Implement SignTransactionUseCase

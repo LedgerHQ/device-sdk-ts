@@ -62,10 +62,10 @@ importers:
 
   apps/sample:
     dependencies:
-      '@ledgerhq/device-sdk-core':
+      '@ledgerhq/device-management-kit':
         specifier: workspace:*
         version: link:../../packages/core
-      '@ledgerhq/keyring-eth':
+      '@ledgerhq/device-signer-kit-ethereum':
         specifier: workspace:*
         version: link:../../packages/signer/keyring-eth
       '@ledgerhq/react-ui':
@@ -248,7 +248,7 @@ importers:
         specifier: ^0.2.2
         version: 0.2.2
     devDependencies:
-      '@ledgerhq/device-sdk-core':
+      '@ledgerhq/device-management-kit':
         specifier: workspace:*
         version: link:../../core
       '@ledgerhq/eslint-config-dsdk':
@@ -291,7 +291,7 @@ importers:
         specifier: ^5.18.1
         version: 5.18.1
     devDependencies:
-      '@ledgerhq/device-sdk-core':
+      '@ledgerhq/device-management-kit':
         specifier: workspace:*
         version: link:../../core
       '@ledgerhq/eslint-config-dsdk':
@@ -337,7 +337,7 @@ importers:
       '@ledgerhq/context-module':
         specifier: workspace:*
         version: link:../context-module
-      '@ledgerhq/device-sdk-core':
+      '@ledgerhq/device-management-kit':
         specifier: workspace:*
         version: link:../../core
       '@ledgerhq/eslint-config-dsdk':
@@ -7657,7 +7657,7 @@ snapshots:
 
   '@babel/template@7.24.0':
     dependencies:
-      '@babel/code-frame': 7.24.2
+      '@babel/code-frame': 7.24.7
       '@babel/parser': 7.24.4
       '@babel/types': 7.24.0
 

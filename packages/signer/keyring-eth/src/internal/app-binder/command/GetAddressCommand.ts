@@ -11,7 +11,7 @@ import {
   GlobalCommandErrorHandler,
   InvalidStatusWordError,
   isHexaString,
-} from "@ledgerhq/device-sdk-core";
+} from "@ledgerhq/device-management-kit";
 
 import {
   GetAddressCommandArgs,

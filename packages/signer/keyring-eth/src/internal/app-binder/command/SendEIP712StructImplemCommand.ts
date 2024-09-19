@@ -9,7 +9,7 @@ import {
   CommandResultFactory,
   CommandUtils,
   GlobalCommandErrorHandler,
-} from "@ledgerhq/device-sdk-core";
+} from "@ledgerhq/device-management-kit";
 
 export enum StructImplemType {
   ROOT = 0x00,

@@ -1,7 +1,9 @@
 import {
   type DeviceActionIntermediateValue,
   DeviceActionStatus,
-} from "@ledgerhq/device-sdk-core";
+  DeviceModelId,
+  UserInteractionRequired,
+} from "@ledgerhq/device-management-kit";
 import {
   Flex,
   InfiniteLoader,
@@ -37,11 +39,6 @@ import * as ContinueOnLedgerNanoXDark from "./lotties/nanox/03_NANO_X_DARK_CONTI
 
 import * as PinNanoSDark from "./lotties/nanosp/01_NANO_S_DARK_PIN.json";
 import * as ContinueOnLedgerNanoSDark from "./lotties/nanosp/02_NANO_S_DARK_CONTINUE_ON_YOUR_LEDGER.json";
-
-import {
-  DeviceModelId,
-  UserInteractionRequired,
-} from "@ledgerhq/device-sdk-core";
 
 type DeviceAnimationProps = {
   userInteractionRequired: UserInteractionRequired | string;

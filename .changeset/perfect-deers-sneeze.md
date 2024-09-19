@@ -1,7 +1,9 @@
 ---
 "@ledgerhq/context-module": patch
+"@ledgerhq/keyring-btc": patch
 "@ledgerhq/device-signer-kit-ethereum": patch
 "@ledgerhq/device-management-kit": patch
+"@ledgerhq/device-sdk-sample": patch
 ---
 
-add HexaString to handle `0x${string}` type
+Rename packages

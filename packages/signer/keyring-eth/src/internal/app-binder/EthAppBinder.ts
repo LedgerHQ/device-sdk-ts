@@ -1,7 +1,10 @@
 import { type ContextModule } from "@ledgerhq/context-module";
-import { DeviceSdk, type DeviceSessionId } from "@ledgerhq/device-sdk-core";
-import { SendCommandInAppDeviceAction } from "@ledgerhq/device-sdk-core";
-import { UserInteractionRequired } from "@ledgerhq/device-sdk-core";
+import {
+  DeviceSdk,
+  type DeviceSessionId,
+} from "@ledgerhq/device-management-kit";
+import { SendCommandInAppDeviceAction } from "@ledgerhq/device-management-kit";
+import { UserInteractionRequired } from "@ledgerhq/device-management-kit";
 import { inject, injectable } from "inversify";
 
 import { type GetAddressDAReturnType } from "@api/app-binder/GetAddressDeviceActionTypes";

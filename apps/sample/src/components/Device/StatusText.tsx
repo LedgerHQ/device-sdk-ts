@@ -1,4 +1,4 @@
-import { DeviceStatus } from "@ledgerhq/device-sdk-core";
+import { DeviceStatus } from "@ledgerhq/device-management-kit";
 import { Text } from "@ledgerhq/react-ui";
 import styled, { DefaultTheme } from "styled-components";
 

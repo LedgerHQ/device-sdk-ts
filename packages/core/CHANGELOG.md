@@ -1,4 +1,4 @@
-# @ledgerhq/device-sdk-core
+# @ledgerhq/device-management-kit
 
 ## 0.3.0
 
