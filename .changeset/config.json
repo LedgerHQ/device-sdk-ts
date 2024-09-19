@@ -10,7 +10,7 @@
   "fixed": [],
   "linked": [],
   "access": "public",
-  "baseBranch": "develop",
+  "baseBranch": "feat/no-issue-jfrog-attest-sign-package",
   "updateInternalDependencies": "patch",
   "ignore": []
 }
