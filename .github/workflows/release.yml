@@ -7,6 +7,8 @@ on:
 
 env:
   FORCE_COLOR: "1"
+  # NPM_REGISTRY: jfrog.ledgerlabs.net/artifactory/api/npm/ldk-npm-prod-public
+  NPM_REGISTRY: jfrog.ledgerlabs.net/artifactory/api/npm/ldk-npm-sandbox-green
 
 permissions:
   id-token: write
@@ -34,8 +36,6 @@ jobs:
 
       - name: Setup npm config for JFrog
         env:
-          # NPM_REGISTRY: jfrog.ledgerlabs.net/artifactory/api/npm/ldk-npm-prod-public
-          NPM_REGISTRY: jfrog.ledgerlabs.net/artifactory/api/npm/ldk-npm-sandbox-green
           NPM_REGISTRY_TOKEN: ${{ steps.jfrog-login.outputs.oidc-token }}
         run: |
           cat << EOF | tee .npmrc
@@ -51,18 +51,27 @@ jobs:
           publish: pnpm release
           # to remove
           branch: feat/no-issue-jfrog-attest-sign-package
+          createGithubReleases: false
         env:
           GITHUB_TOKEN: ${{ secrets.CI_BOT_TOKEN }}
       
       - name: Download published packages to attest and sign
-        # if: steps.changesets.outputs.published == 'true'
+        if: steps.changesets.outputs.published == 'true'
         run: |
           # Extract package name
-          PACKAGE_NAME=${{ steps.changesets.outputs.publishedPackages }}
+          # output will be in the form of
+          # [{name:@ledgerhq/device-sdk-core,version:0.4.0}]
+          PACKAGE_NAME=$(echo ${{ steps.changesets.outputs.publishedPackages }} | jq -r '.[0].name')
+          PACKAGE_VERSION=$(echo ${{ steps.changesets.outputs.publishedPackages }} | jq -r '.[0].version')
           
-          echo $PACKAGE_NAME
-
+          echo "PACKAGE_NAME: $PACKAGE_NAME"
+          echo "PACKAGE_VERSION: $PACKAGE_VERSION"
+          # Create dist directory
           mkdir dist
+          curl --output dist/${PACKAGE_NAME}-{VERSION}.tgz https://${NPM_REGISTRY}/${PACKAGE_NAME}/-/${PACKAGE_NAME}-{VERSION}.tgz
+
+          ls -al
+          ls -al dist
 
       # - name: Attest tarball
       #   if: steps.changesets.outputs.published == 'true'
