@@ -1,7 +1,7 @@
 # Ledger Context Module Implementation
 
 > [!CAUTION]
-> This is still under development and we are free to make new interfaces which may lead to Device SDK breaking changes.
+> This is still under development and we are free to make new interfaces which may lead to Device Management Kit breaking changes.
 
 ## Introduction
 

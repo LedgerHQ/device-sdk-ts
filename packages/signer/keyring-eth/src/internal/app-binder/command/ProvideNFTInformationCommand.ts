@@ -14,7 +14,7 @@ import {
   DeviceExchangeError,
   GlobalCommandErrorHandler,
   isCommandErrorCode,
-} from "@ledgerhq/device-sdk-core";
+} from "@ledgerhq/device-management-kit";
 
 export type ProvideNFTInformationCommandArgs = {
   /**

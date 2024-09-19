@@ -3,7 +3,7 @@ import {
   ConsoleLogger,
   DeviceSdk,
   DeviceSdkBuilder,
-} from "@ledgerhq/device-sdk-core";
+} from "@ledgerhq/device-management-kit";
 
 export const sdk = new DeviceSdkBuilder()
   .addLogger(new ConsoleLogger())

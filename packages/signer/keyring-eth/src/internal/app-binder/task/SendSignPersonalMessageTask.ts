@@ -6,7 +6,7 @@ import {
   InternalApi,
   InvalidStatusWordError,
   isSuccessCommandResult,
-} from "@ledgerhq/device-sdk-core";
+} from "@ledgerhq/device-management-kit";
 import { Nothing } from "purify-ts";
 
 import { Signature } from "@api/model/Signature";

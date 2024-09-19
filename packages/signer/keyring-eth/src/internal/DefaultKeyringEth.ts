@@ -1,5 +1,5 @@
 import { ContextModule } from "@ledgerhq/context-module";
-import { DeviceSdk, DeviceSessionId } from "@ledgerhq/device-sdk-core";
+import { DeviceSdk, DeviceSessionId } from "@ledgerhq/device-management-kit";
 import { Container } from "inversify";
 
 import { GetAddressDAReturnType } from "@api/app-binder/GetAddressDeviceActionTypes";

@@ -1,4 +1,4 @@
-import { InternalApi } from "@ledgerhq/device-sdk-core";
+import { InternalApi } from "@ledgerhq/device-management-kit";
 
 const sendCommandMock = jest.fn();
 const apiGetDeviceSessionStateMock = jest.fn();

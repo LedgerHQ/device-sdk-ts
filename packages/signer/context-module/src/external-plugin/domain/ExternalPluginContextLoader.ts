@@ -1,4 +1,4 @@
-import { HexaString, isHexaString } from "@ledgerhq/device-sdk-core";
+import { HexaString, isHexaString } from "@ledgerhq/device-management-kit";
 import { ethers, Interface } from "ethers";
 import { inject, injectable } from "inversify";
 import { Either, EitherAsync, Left, Right } from "purify-ts";

@@ -10,7 +10,7 @@ import { StyledDrawer } from "../StyledDrawer";
 import {
   CommandResult,
   isSuccessCommandResult,
-} from "@ledgerhq/device-sdk-core";
+} from "@ledgerhq/device-management-kit";
 
 export type CommandProps<
   CommandArgs extends Record<string, FieldType> | void,

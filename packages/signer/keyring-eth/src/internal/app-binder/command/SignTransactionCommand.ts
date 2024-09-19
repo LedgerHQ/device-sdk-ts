@@ -12,7 +12,7 @@ import {
   GlobalCommandErrorHandler,
   HexaString,
   InvalidStatusWordError,
-} from "@ledgerhq/device-sdk-core";
+} from "@ledgerhq/device-management-kit";
 import { Just, Maybe, Nothing } from "purify-ts";
 
 const R_LENGTH = 32;

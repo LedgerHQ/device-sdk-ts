@@ -3,7 +3,7 @@ import {
   ConnectionType,
   DeviceModelId,
   DeviceSessionId,
-} from "@ledgerhq/device-sdk-core";
+} from "@ledgerhq/device-management-kit";
 import { Box, DropdownGeneric, Flex, Icons, Text } from "@ledgerhq/react-ui";
 import styled, { DefaultTheme } from "styled-components";
 

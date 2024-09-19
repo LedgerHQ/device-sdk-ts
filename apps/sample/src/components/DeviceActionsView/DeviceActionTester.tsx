@@ -1,11 +1,11 @@
 import { Block } from "@/components/Block";
 import { ClickableListItem } from "@/components/ClickableListItem";
 import { FieldType } from "@/hooks/useForm";
-import {
-  type DeviceActionIntermediateValue,
-  type ExecuteDeviceActionReturnType,
-  type SdkError,
-} from "@ledgerhq/device-sdk-core";
+import type {
+  DeviceActionIntermediateValue,
+  ExecuteDeviceActionReturnType,
+  SdkError,
+} from "@ledgerhq/device-management-kit";
 import {
   Button,
   Divider,
@@ -23,7 +23,7 @@ import {
   DeviceActionResponseProps,
 } from "./DeviceActionResponse";
 
-import { DeviceModelId } from "@ledgerhq/device-sdk-core";
+import { DeviceModelId } from "@ledgerhq/device-management-kit";
 import styled from "styled-components";
 import DeviceActionUI from "./DeviceActionUI";
 

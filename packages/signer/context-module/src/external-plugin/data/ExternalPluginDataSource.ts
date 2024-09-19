@@ -1,4 +1,4 @@
-import { HexaString } from "@ledgerhq/device-sdk-core";
+import { HexaString } from "@ledgerhq/device-management-kit";
 import { Either } from "purify-ts";
 
 import { DappInfos } from "@/external-plugin/model/DappInfos";

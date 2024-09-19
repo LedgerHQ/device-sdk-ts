@@ -1,5 +1,5 @@
 {
-  "name": "@ledgerhq/device-sdk-core",
+  "name": "@ledgerhq/device-management-kit",
   "version": "0.3.0",
   "license": "MIT",
   "exports": {

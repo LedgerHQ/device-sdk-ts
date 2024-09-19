@@ -19,8 +19,8 @@ import {
   GetBatteryStatusResponse,
   OpenAppErrorCodes,
   ListAppsErrorCodes,
-} from "@ledgerhq/device-sdk-core";
-import { BatteryStatusType } from "@ledgerhq/device-sdk-core/src/api/command/os/GetBatteryStatusCommand.js";
+} from "@ledgerhq/device-management-kit";
+import { BatteryStatusType } from "@ledgerhq/device-management-kit/src/api/command/os/GetBatteryStatusCommand.js";
 import { getValueSelectorFromEnum } from "./CommandForm";
 import { PageWithHeader } from "../PageWithHeader";
 

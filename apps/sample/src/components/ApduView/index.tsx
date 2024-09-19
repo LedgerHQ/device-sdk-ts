@@ -1,5 +1,5 @@
 import React, { useCallback, useState } from "react";
-import { ApduResponse } from "@ledgerhq/device-sdk-core";
+import { ApduResponse } from "@ledgerhq/device-management-kit";
 import { Button, Divider, Flex, Grid, Input, Text } from "@ledgerhq/react-ui";
 import styled, { DefaultTheme } from "styled-components";
 

@@ -4,7 +4,7 @@ import { FieldType } from "@/hooks/useForm";
 import {
   CommandResult,
   isSuccessCommandResult,
-} from "@ledgerhq/device-sdk-core";
+} from "@ledgerhq/device-management-kit";
 
 export type CommandResponseProps<Response, ErrorCodes> = {
   args: Record<string, FieldType>;

@@ -2,7 +2,7 @@ import {
   Command,
   CommandResultFactory,
   isSuccessCommandResult,
-} from "@ledgerhq/device-sdk-core";
+} from "@ledgerhq/device-management-kit";
 import { Just, Nothing } from "purify-ts";
 
 import {

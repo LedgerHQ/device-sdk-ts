@@ -9,7 +9,7 @@ import {
   CommandResultFactory,
   InternalApi,
   isSuccessCommandResult,
-} from "@ledgerhq/device-sdk-core";
+} from "@ledgerhq/device-management-kit";
 import { Maybe, Nothing } from "purify-ts";
 
 import { ProvideTokenInformationCommand } from "@internal/app-binder/command/ProvideTokenInformationCommand";

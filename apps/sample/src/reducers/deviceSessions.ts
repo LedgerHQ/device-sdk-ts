@@ -1,5 +1,8 @@
 import { Reducer } from "react";
-import { ConnectedDevice, DeviceSessionId } from "@ledgerhq/device-sdk-core";
+import {
+  ConnectedDevice,
+  DeviceSessionId,
+} from "@ledgerhq/device-management-kit";
 
 export type DeviceSessionsState = {
   selectedId?: DeviceSessionId;

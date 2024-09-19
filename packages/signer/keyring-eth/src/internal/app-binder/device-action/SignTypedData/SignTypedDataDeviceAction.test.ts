@@ -5,7 +5,7 @@ import {
   UnknownDAError,
   UnknownDeviceExchangeError,
   UserInteractionRequired,
-} from "@ledgerhq/device-sdk-core";
+} from "@ledgerhq/device-management-kit";
 import { Just, Nothing } from "purify-ts";
 
 import { SignTypedDataDAState } from "@api/app-binder/SignTypedDataDeviceActionTypes";
@@ -23,10 +23,10 @@ import { TypedDataParserService } from "@internal/typed-data/service/TypedDataPa
 import { SignTypedDataDeviceAction } from "./SignTypedDataDeviceAction";
 
 jest.mock(
-  "@ledgerhq/device-sdk-core",
+  "@ledgerhq/device-management-kit",
   // eslint-disable-next-line @typescript-eslint/no-unsafe-return
   () => ({
-    ...jest.requireActual("@ledgerhq/device-sdk-core"),
+    ...jest.requireActual("@ledgerhq/device-management-kit"),
     OpenAppDeviceAction: jest.fn(() => ({
       makeStateMachine: jest.fn(),
     })),

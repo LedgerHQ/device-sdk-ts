@@ -1,4 +1,4 @@
-import type { HexaString } from "@ledgerhq/device-sdk-core";
+import type { HexaString } from "@ledgerhq/device-management-kit";
 import { inject, injectable } from "inversify";
 
 import type {
