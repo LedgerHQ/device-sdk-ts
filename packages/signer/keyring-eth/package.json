@@ -1,6 +1,6 @@
 {
   "name": "@ledgerhq/keyring-eth",
-  "version": "0.0.1",
+  "version": "1.0.0",
   "license": "MIT",
   "main": "lib/cjs/index.js",
   "types": "lib/cjs/index.d.ts",
