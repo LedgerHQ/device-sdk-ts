@@ -7,11 +7,15 @@ on:
 
 env:
   FORCE_COLOR: "1"
+  # NPM_REGISTRY: jfrog.ledgerlabs.net/artifactory/api/npm/ldk-npm-prod-public
+  NPM_REGISTRY: jfrog.ledgerlabs.net/artifactory/api/npm/ldk-npm-sandbox-green
 
 permissions:
   id-token: write
   contents: write
   pull-requests: write
+  # Need to attest artifacts
+  attestations: write
 
 jobs:
   publish:
@@ -34,8 +38,6 @@ jobs:
 
       - name: Setup npm config for JFrog
         env:
-          # NPM_REGISTRY: jfrog.ledgerlabs.net/artifactory/api/npm/ldk-npm-prod-public
-          NPM_REGISTRY: jfrog.ledgerlabs.net/artifactory/api/npm/ldk-npm-sandbox-green
           NPM_REGISTRY_TOKEN: ${{ steps.jfrog-login.outputs.oidc-token }}
         run: |
           cat << EOF | tee .npmrc
@@ -46,33 +48,52 @@ jobs:
       - name: Publish
         id: changesets
         uses: changesets/action@v1
-        # to remove
         with:
           publish: pnpm release
           # to remove
+          title: "⚙️ (release) [NO-ISSUE]: Version packages"
+          commit: "⚙️ (release): Version packages"
           branch: feat/no-issue-jfrog-attest-sign-package
+          createGithubReleases: false
         env:
           GITHUB_TOKEN: ${{ secrets.CI_BOT_TOKEN }}
       
       - name: Download published packages to attest and sign
-        # if: steps.changesets.outputs.published == 'true'
+        if: steps.changesets.outputs.published == 'true'
+        env:
+          PUBLISHED_PACKAGE_JSON: published-packages.json
         run: |
-          # Extract package name
-          PACKAGE_NAME=${{ steps.changesets.outputs.publishedPackages }}
-          
-          echo $PACKAGE_NAME
+          # Extract packages name
+          # output will be in the form of: [{"name":"@ledgerhq/package-name","version":"X.X.X"}]
+          cat << EOF | tee $PUBLISHED_PACKAGE_JSON
+          ${{ steps.changesets.outputs.publishedPackages }}
+          EOF
 
-          mkdir dist
+          # Create dist directory
+          mkdir -p dist
 
-      # - name: Attest tarball
-      #   if: steps.changesets.outputs.published == 'true'
-      #   uses: LedgerHQ/actions-security/actions/attest@actions/attest-1
-      #   with:
-      #     subject-path: ./dist
-      #     push-to-registry: true
+          # Loop over package names and download the tarball into dist directory
+          for row in $(cat $PUBLISHED_PACKAGE_JSON | jq -r '.[] | @text'); do
+            PACKAGE_NAME=$(echo $row| jq -r '.name')
+            PACKAGE_VERSION=$(echo $row | jq -r '.version')
+            PACKAGE_NAME_BASENAME=$(basename ${PACKAGE_NAME})
 
-      # - name: Sign tarball
-      #   if: steps.changesets.outputs.published == 'true'
-      #   uses: LedgerHQ/actions-security/actions/sign-blob@actions/sign-blob-1
-      #   with:
-      #     path: ./dist
+            echo -e "\033[0;32mDownload artifact from\033[0m https://${NPM_REGISTRY}/${PACKAGE_NAME}/-/${PACKAGE_NAME}-${PACKAGE_VERSION}.tgz"
+            curl -H "Authorization: Bearer ${{ steps.jfrog-login.outputs.oidc-token }}" \
+              -o dist/${PACKAGE_NAME_BASENAME}-${PACKAGE_VERSION}.tgz \
+              https://${NPM_REGISTRY}/${PACKAGE_NAME}/-/${PACKAGE_NAME}-${PACKAGE_VERSION}.tgz
+          done
+
+      - name: Attest tarball
+        if: steps.changesets.outputs.published == 'true'
+        uses: actions/attest-build-provenance@v1
+        with:
+          subject-path: ./dist
+          push-to-registry: true
+      
+      # The action currently doesn't support pushing the blob to the registry
+      - name: Sign tarball
+        if: steps.changesets.outputs.published == 'true'
+        uses: LedgerHQ/actions-security/actions/sign-blob@actions/sign-blob-1
+        with:
+          path: ./dist
