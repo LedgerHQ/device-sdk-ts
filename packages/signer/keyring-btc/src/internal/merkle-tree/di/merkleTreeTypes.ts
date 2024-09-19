@@ -1,4 +1,5 @@
 export const merkleTreeTypes = {
-  MerkleTreeService: Symbol.for("MerkleTreeService"),
-  MerkleMapService: Symbol.for("MerkleMapService"),
+  HasherService: Symbol.for("HasherService"),
+  MerkleTreeBuilder: Symbol.for("MerkleTreeBuilder"),
+  MerkleMapBuilder: Symbol.for("MerkleMapBuilder"),
 };

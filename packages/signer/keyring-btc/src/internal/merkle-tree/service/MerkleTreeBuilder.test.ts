@@ -1,9 +1,8 @@
 import { hexaStringToBuffer } from "@ledgerhq/device-sdk-core";
 import { Just, Nothing } from "purify-ts";
 
-import { Sha256Hasher } from "@internal/merkle-tree/model/Hasher";
-
-import { DefaultMerkleTree } from "./DefaultMerkleTree";
+import { MerkleTreeBuilder } from "./MerkleTreeBuilder";
+import { Sha256HasherService } from "./Sha256HasherService";
 
 const EMPTY_TREE = {
   data: [],
@@ -194,9 +193,16 @@ const BIG_TREE = {
   )!,
 };
 
-describe("DefaultMerkleTree", () => {
+describe("MerkleTreeBuilder", () => {
+  let builder: MerkleTreeBuilder;
+
+  beforeEach(() => {
+    jest.resetAllMocks();
+    builder = new MerkleTreeBuilder(new Sha256HasherService());
+  });
+
   it("Get small tree root and leaves", () => {
-    const tree = new DefaultMerkleTree(SMALL_TREE.data, Sha256Hasher);
+    const tree = builder.build(SMALL_TREE.data);
     expect(tree.getRoot()).toStrictEqual(SMALL_TREE.root);
     expect(tree.size()).toStrictEqual(SMALL_TREE.leaves.length);
     expect(tree.getLeaves().map((l) => l.value)).toStrictEqual(
@@ -215,7 +221,7 @@ describe("DefaultMerkleTree", () => {
   });
 
   it("Get big tree root and leaves", () => {
-    const tree = new DefaultMerkleTree(BIG_TREE.data, Sha256Hasher);
+    const tree = builder.build(BIG_TREE.data);
     expect(tree.getRoot()).toStrictEqual(BIG_TREE.root);
     expect(tree.size()).toStrictEqual(BIG_TREE.leaves.length);
     expect(tree.getLeaves().map((l) => l.value)).toStrictEqual(BIG_TREE.leaves);
@@ -230,7 +236,7 @@ describe("DefaultMerkleTree", () => {
   });
 
   it("Get small tree merkle proof", () => {
-    const tree = new DefaultMerkleTree(SMALL_TREE.data, Sha256Hasher);
+    const tree = builder.build(SMALL_TREE.data);
     const maybeProof = tree.getProof(2);
     expect(maybeProof.isJust()).toStrictEqual(true);
     const proof = maybeProof.unsafeCoerce();
@@ -242,7 +248,7 @@ describe("DefaultMerkleTree", () => {
   });
 
   it("Get big tree merkle proof", () => {
-    const tree = new DefaultMerkleTree(BIG_TREE.data, Sha256Hasher);
+    const tree = builder.build(BIG_TREE.data);
     const maybeProof = tree.getProof(2);
     expect(maybeProof.isJust()).toStrictEqual(true);
     const proof = maybeProof.unsafeCoerce();
@@ -256,7 +262,7 @@ describe("DefaultMerkleTree", () => {
   });
 
   it("Get out-of-bound merkle proof", () => {
-    const tree = new DefaultMerkleTree(SMALL_TREE.data, Sha256Hasher);
+    const tree = builder.build(SMALL_TREE.data);
     let maybeProof = tree.getProof(-1);
     expect(maybeProof.isJust()).toStrictEqual(false);
     maybeProof = tree.getProof(5);
@@ -264,14 +270,14 @@ describe("DefaultMerkleTree", () => {
   });
 
   it("Empty tree", () => {
-    const tree = new DefaultMerkleTree(EMPTY_TREE.data, Sha256Hasher);
+    const tree = builder.build(EMPTY_TREE.data);
     expect(tree.getRoot()).toStrictEqual(EMPTY_TREE.root);
     const proof = tree.getProof(0);
     expect(proof.isJust()).toStrictEqual(false);
   });
 
   it("One-leaf tree", () => {
-    const tree = new DefaultMerkleTree(ONE_LEAF_TREE.data, Sha256Hasher);
+    const tree = builder.build(ONE_LEAF_TREE.data);
     expect(tree.getRoot()).toStrictEqual(ONE_LEAF_TREE.root);
     const proof = tree.getProof(0);
     expect(proof.isJust()).toStrictEqual(true);
@@ -279,7 +285,7 @@ describe("DefaultMerkleTree", () => {
   });
 
   it("Tiny tree", () => {
-    const tree = new DefaultMerkleTree(TINY_TREE.data, Sha256Hasher);
+    const tree = builder.build(TINY_TREE.data);
     expect(tree.getRoot()).toStrictEqual(TINY_TREE.root);
     const proof = tree.getProof(0);
     expect(proof.isJust()).toStrictEqual(true);

@@ -1,13 +1,12 @@
 import { Maybe, Nothing } from "purify-ts";
 
-import { Leaf } from "./Leaf";
+import { Node } from "@internal/merkle-tree/model/Node";
 
-export class Node {
+export class Leaf {
   public parent: Maybe<Node> = Nothing;
 
   constructor(
-    public leftChild: Node | Leaf,
-    public rightChild: Node | Leaf,
+    public value: Uint8Array,
     public hash: Uint8Array,
   ) {}
 }
