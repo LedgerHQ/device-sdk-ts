@@ -7,6 +7,8 @@ on:
 
 env:
   FORCE_COLOR: "1"
+  # NPM_REGISTRY: jfrog.ledgerlabs.net/artifactory/api/npm/ldk-npm-prod-public
+  NPM_REGISTRY: jfrog.ledgerlabs.net/artifactory/api/npm/ldk-npm-sandbox-green
 
 permissions:
   id-token: write
@@ -34,8 +36,6 @@ jobs:
 
       - name: Setup npm config for JFrog
         env:
-          # NPM_REGISTRY: jfrog.ledgerlabs.net/artifactory/api/npm/ldk-npm-prod-public
-          NPM_REGISTRY: jfrog.ledgerlabs.net/artifactory/api/npm/ldk-npm-sandbox-green
           NPM_REGISTRY_TOKEN: ${{ steps.jfrog-login.outputs.oidc-token }}
         run: |
           cat << EOF | tee .npmrc
@@ -50,29 +50,44 @@ jobs:
         with:
           publish: pnpm release
           # to remove
+          title: "⚙️ (release) [NO-ISSUE]: Version packages"
+          commit: "⚙️ (release): Version packages"
           branch: feat/no-issue-jfrog-attest-sign-package
+          createGithubReleases: false
         env:
           GITHUB_TOKEN: ${{ secrets.CI_BOT_TOKEN }}
       
       - name: Download published packages to attest and sign
-        # if: steps.changesets.outputs.published == 'true'
+        if: steps.changesets.outputs.published == 'true'
         run: |
           # Extract package name
-          PACKAGE_NAME=${{ steps.changesets.outputs.publishedPackages }}
+          # output will be in the form of
+          # [{"name":"@ledgerhq/device-sdk-core","version":"0.4.0"}]
+          cat << EOF | tee published-packages.json
+          ${{ steps.changesets.outputs.publishedPackages }}
+          EOF
+          PACKAGE_NAME=$(cat published-packages.json | jq -r '.[0].name')
+          PACKAGE_VERSION=$(cat published-packages.json | jq -r '.[0].version')
+
+          # Create dist directory
+          mkdir -p dist
+          ls -al
+          echo -e "\033[0;32mDownload artifact from\033[0m https://${NPM_REGISTRY}/${PACKAGE_NAME}/-/${PACKAGE_NAME}-${PACKAGE_VERSION}.tgz"
+          # curl -sL -H "Authorization: Bearer ${{ steps.jfrog-login.outputs.oidc-token }}" --output dist/${PACKAGE_NAME}-{PACKAGE_VERSION}.tgz https://${NPM_REGISTRY}/${PACKAGE_NAME}/-/${PACKAGE_NAME}-${PACKAGE_VERSION}.tgz
+          curl -sL -H "Authorization: Bearer ${{ steps.jfrog-login.outputs.oidc-token }}" https://${NPM_REGISTRY}/${PACKAGE_NAME}/-/${PACKAGE_NAME}-${PACKAGE_VERSION}.tgz
           
-          echo $PACKAGE_NAME
+          ls -al dist
 
-          mkdir dist
-
-      # - name: Attest tarball
-      #   if: steps.changesets.outputs.published == 'true'
-      #   uses: LedgerHQ/actions-security/actions/attest@actions/attest-1
-      #   with:
-      #     subject-path: ./dist
-      #     push-to-registry: true
-
-      # - name: Sign tarball
-      #   if: steps.changesets.outputs.published == 'true'
-      #   uses: LedgerHQ/actions-security/actions/sign-blob@actions/sign-blob-1
-      #   with:
-      #     path: ./dist
+      - name: Attest tarball
+        if: steps.changesets.outputs.published == 'true'
+        uses: LedgerHQ/actions-security/actions/attest@actions/attest-1
+        with:
+          subject-path: ./dist
+          push-to-registry: true
+      
+      # The action currently doesn't support pushing the blob to the registry
+      - name: Sign tarball
+        if: steps.changesets.outputs.published == 'true'
+        uses: LedgerHQ/actions-security/actions/sign-blob@actions/sign-blob-1
+        with:
+          path: ./dist
