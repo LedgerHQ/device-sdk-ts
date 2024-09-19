@@ -1,15 +1,16 @@
 name: publish npm packages
 on:
-  push:
-    branches:
-      - main
+  pull_request:
+  # push:
+  #   branches:
+  #     - main
 
 env:
   FORCE_COLOR: "1"
 
 jobs:
   publish:
-    environment: Production
+    # environment: Production
     runs-on: ledgerhq-shared-medium
     permissions:
       id-token: write
@@ -32,7 +33,8 @@ jobs:
 
       - name: Setup npm config for JFrog
         env:
-          NPM_REGISTRY: jfrog.ledgerlabs.net/artifactory/api/npm/ldk-npm-prod-public
+          # NPM_REGISTRY: jfrog.ledgerlabs.net/artifactory/api/npm/ldk-npm-prod-public
+          NPM_REGISTRY: jfrog.ledgerlabs.net/artifactory/api/npm/ldk-npm-sandbox-green
           NPM_REGISTRY_TOKEN: ${{ steps.jfrog-login.outputs.oidc-token }}
         run: |
           cat << EOF | tee .npmrc
@@ -45,5 +47,30 @@ jobs:
         uses: changesets/action@v1
         with:
           publish: pnpm release
+          # to remove
+          branch: feat/no-issue-jfrog-attest-sign-package
         env:
           GITHUB_TOKEN: ${{ secrets.CI_BOT_TOKEN }}
+      
+      - name: Download published packages to attest and sign
+        if: steps.changesets.outputs.published == 'true'
+        run: |
+          # Extract package name
+          PACKAGE_NAME=${{ steps.changesets.outputs.publishedPackages }}
+          
+          echo $PACKAGE_NAME
+
+          mkdir dist
+
+      # - name: Attest tarball
+      #   if: steps.changesets.outputs.published == 'true'
+      #   uses: LedgerHQ/actions-security/actions/attest@actions/attest-1
+      #   with:
+      #     subject-path: ./dist
+      #     push-to-registry: true
+
+      # - name: Sign tarball
+      #   if: steps.changesets.outputs.published == 'true'
+      #   uses: LedgerHQ/actions-security/actions/sign-blob@actions/sign-blob-1
+      #   with:
+      #     path: ./dist
