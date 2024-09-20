@@ -12,6 +12,7 @@ import {
 } from "@internal/device-session/service/DefaultApduSenderService";
 import { DefaultDeviceSessionService } from "@internal/device-session/service/DefaultDeviceSessionService";
 import { GetDeviceSessionStateUseCase } from "@internal/device-session/use-case/GetDeviceSessionStateUseCase";
+import { ListDeviceSessionsUseCase } from "@internal/device-session/use-case/ListDeviceSessionsUseCase";
 import { loggerTypes } from "@internal/logger-publisher/di/loggerTypes";
 import { LoggerPublisherService } from "@internal/logger-publisher/service/LoggerPublisherService";
 import { StubUseCase } from "@root/src/di.stub";
@@ -67,8 +68,13 @@ export const deviceSessionModuleFactory = (
         GetDeviceSessionStateUseCase,
       );
 
+      bind(deviceSessionTypes.ListDeviceSessionsUseCase).to(
+        ListDeviceSessionsUseCase,
+      );
+
       if (stub) {
         rebind(deviceSessionTypes.GetDeviceSessionStateUseCase).to(StubUseCase);
+        rebind(deviceSessionTypes.ListDeviceSessionsUseCase).to(StubUseCase);
       }
     },
   );
