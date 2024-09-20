@@ -61,6 +61,10 @@ describe("DeviceSdk", () => {
     it("should have sendCommand method", () => {
       expect(sdk.sendCommand).toBeDefined();
     });
+
+    it("should have listDeviceSessions method", () => {
+      expect(sdk.listDeviceSessions).toBeDefined();
+    });
   });
 
   describe("stubbed", () => {
@@ -100,6 +104,7 @@ describe("DeviceSdk", () => {
       [usbDiTypes.GetConnectedDeviceUseCase],
       [discoveryTypes.DisconnectUseCase],
       [deviceSessionTypes.GetDeviceSessionStateUseCase],
+      [deviceSessionTypes.ListDeviceSessionsUseCase],
     ])("should have %p use case", (diSymbol) => {
       const uc = sdk.container.get<StubUseCase>(diSymbol);
       expect(uc).toBeInstanceOf(StubUseCase);
