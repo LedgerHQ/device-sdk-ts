@@ -1,20 +1,24 @@
 name: publish npm packages
 on:
-  push:
-    branches:
-      - main
+  pull_request:
+  # push:
+  #   branches:
+  #     - main
 
 env:
   FORCE_COLOR: "1"
+  # NPM_REGISTRY: jfrog.ledgerlabs.net/artifactory/api/npm/ldk-npm-prod-public
+  NPM_REGISTRY: jfrog.ledgerlabs.net/artifactory/api/npm/ldk-npm-sandbox-green
+
+permissions:
+  id-token: write
+  contents: write
+  pull-requests: write
 
 jobs:
   publish:
-    environment: Production
+    # environment: Production
     runs-on: ledgerhq-shared-medium
-    permissions:
-      id-token: write
-      contents: write
-      pull-requests: write
     steps:
       - uses: actions/checkout@v4
 
@@ -32,7 +36,6 @@ jobs:
 
       - name: Setup npm config for JFrog
         env:
-          NPM_REGISTRY: jfrog.ledgerlabs.net/artifactory/api/npm/ldk-npm-prod-public
           NPM_REGISTRY_TOKEN: ${{ steps.jfrog-login.outputs.oidc-token }}
         run: |
           cat << EOF | tee .npmrc
@@ -43,7 +46,46 @@ jobs:
       - name: Publish
         id: changesets
         uses: changesets/action@v1
+        # to remove
         with:
           publish: pnpm release
+          # to remove
+          title: "⚙️ (release) [NO-ISSUE]: Version packages"
+          commit: "⚙️ (release): Version packages"
+          branch: feat/no-issue-jfrog-attest-sign-package
+          createGithubReleases: false
         env:
           GITHUB_TOKEN: ${{ secrets.CI_BOT_TOKEN }}
+      
+      - name: Download published packages to attest and sign
+        if: steps.changesets.outputs.published == 'true'
+        run: |
+          # Extract package name
+          # output will be in the form of
+          # [{"name":"@ledgerhq/device-sdk-core","version":"0.4.0"}]
+          cat << EOF | tee published-packages.json
+          ${{ steps.changesets.outputs.publishedPackages }}
+          EOF
+          PACKAGE_NAME=$(cat published-packages.json | jq -r '.[0].name')
+          PACKAGE_VERSION=$(cat published-packages.json | jq -r '.[0].version')
+          
+          ls -al
+          # Create dist directory
+          mkdir -p dist
+          echo "https://${NPM_REGISTRY}/${PACKAGE_NAME}/-/${PACKAGE_NAME}-{PACKAGE_VERSION}.tgz"
+          curl -s --output dist/${PACKAGE_NAME}-{PACKAGE_VERSION}.tgz https://${NPM_REGISTRY}/${PACKAGE_NAME}/-/${PACKAGE_NAME}-{PACKAGE_VERSION}.tgz
+          
+          ls -al dist
+
+      - name: Attest tarball
+        if: steps.changesets.outputs.published == 'true'
+        uses: LedgerHQ/actions-security/actions/attest@actions/attest-1
+        with:
+          subject-path: ./dist
+          push-to-registry: true
+
+      # - name: Sign tarball
+      #   if: steps.changesets.outputs.published == 'true'
+      #   uses: LedgerHQ/actions-security/actions/sign-blob@actions/sign-blob-1
+      #   with:
+      #     path: ./dist
