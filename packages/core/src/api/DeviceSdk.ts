@@ -24,7 +24,9 @@ import { ConnectedDevice } from "@api/usb/model/ConnectedDevice";
 import { configTypes } from "@internal/config/di/configTypes";
 import { GetSdkVersionUseCase } from "@internal/config/use-case/GetSdkVersionUseCase";
 import { deviceSessionTypes } from "@internal/device-session/di/deviceSessionTypes";
+import { DeviceSession } from "@internal/device-session/model/DeviceSession";
 import { GetDeviceSessionStateUseCase } from "@internal/device-session/use-case/GetDeviceSessionStateUseCase";
+import { ListDeviceSessionsUseCase } from "@internal/device-session/use-case/ListDeviceSessionsUseCase";
 import { discoveryTypes } from "@internal/discovery/di/discoveryTypes";
 import { ConnectUseCase } from "@internal/discovery/use-case/ConnectUseCase";
 import { DisconnectUseCase } from "@internal/discovery/use-case/DisconnectUseCase";
@@ -192,5 +194,18 @@ export class DeviceSdk {
         deviceSessionTypes.GetDeviceSessionStateUseCase,
       )
       .execute(args);
+  }
+
+  /**
+   * Lists all device sessions.
+   *
+   * @returns {DeviceSession[]} The list of device sessions.
+   */
+  listDeviceSessions(): DeviceSession[] {
+    return this.container
+      .get<ListDeviceSessionsUseCase>(
+        deviceSessionTypes.ListDeviceSessionsUseCase,
+      )
+      .execute();
   }
 }
