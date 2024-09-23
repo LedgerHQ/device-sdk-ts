@@ -57,7 +57,6 @@ export const DeviceActionsList: React.FC<Props> = ({
     <PageWithHeader
       segments={breadcrumbsSegments}
       onChange={onChangeBreadcrumb}
-      data-testid="box_device-commands-responses"
     >
       {selectedDeviceAction ? (
         <>

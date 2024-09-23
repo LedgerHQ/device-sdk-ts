@@ -40,6 +40,7 @@ test.describe("device command: close bitcoin app", () => {
 
       const response = (await getLastDeviceResponseContent(
         page,
+        "span",
       )) as CloseAppResponse;
 
       expect(response.status).toBe("SUCCESS");
@@ -52,6 +53,7 @@ test.describe("device command: close bitcoin app", () => {
 
       const response = (await getLastDeviceResponseContent(
         page,
+        "span",
       )) as CloseAppResponse;
 
       expect(response.status).toBe("SUCCESS");

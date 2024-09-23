@@ -62,7 +62,7 @@ export class MockTransport implements Transport {
           return {
             id: device.id,
             deviceModel: {
-              id: device.deviceType,
+              id: device.device_type,
               productName: device.name,
               usbProductId: 0x10,
               legacyUsbProductId: 0x0001,
@@ -90,6 +90,9 @@ export class MockTransport implements Transport {
     const sessionId: string = params.deviceId;
     try {
       const session: Session = await this.mockClient.connect(sessionId);
+      this.logger.debug("connected device model id::", {
+        data: { session, sessionId },
+      });
       const connectedDevice = {
         sendApdu: (apdu) => {
           return this.sendApdu(
@@ -100,7 +103,7 @@ export class MockTransport implements Transport {
           );
         },
         deviceModel: {
-          id: session.device.deviceType,
+          id: session.device.device_type,
           productName: session.device.name,
           usbProductId: 0x10,
           legacyUsbProductId: 0x0001,
@@ -109,7 +112,7 @@ export class MockTransport implements Transport {
           masks: [0x31100000],
         },
         id: params.deviceId,
-        type: session.device.connectivityType,
+        type: session.device.connectivity_type,
         transport: this.identifier,
       } as InternalConnectedDevice;
       return Right(connectedDevice);

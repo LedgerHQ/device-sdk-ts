@@ -51,6 +51,7 @@ test.describe("device command: get app and version", () => {
 
       const response = (await getLastDeviceResponseContent(
         page,
+        "span",
       )) as openAppResponse;
 
       expect(response.status).toBe("SUCCESS");
@@ -63,6 +64,7 @@ test.describe("device command: get app and version", () => {
 
       const response = (await getLastDeviceResponseContent(
         page,
+        "span",
       )) as getAppAndVersionResponse;
 
       expect(response.status).toBe("SUCCESS");

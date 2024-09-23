@@ -274,10 +274,10 @@ export function DeviceActionTester<
                   flexDirection="column"
                   key={`${response.date.toISOString()}-index-${index}`}
                 >
-                  <DeviceActionResponse {...response} isLatest={isLatest}/>
+                  <DeviceActionResponse {...response} isLatest={isLatest} />
                   <div hidden={isLatest}>
                     {/** if I just unmount it, all dividers are glitching out */}
-                    <Divider my={2}/>
+                    <Divider my={2} />
                   </div>
                 </Flex>
               );

@@ -69,12 +69,13 @@ const parseJSONContent = async <T>(
 
 export const getLastDeviceResponseContent = async (
   page: Page,
+  tagType: string = "div > span",
 ): Promise<object | null> =>
   await asyncPipe(
     getResponses,
     filterNonHiddenElements,
     getLastResponse,
-    getLastChildOfElementByTag("span"),
+    getLastChildOfElementByTag(tagType),
     parseJSONContent,
   )(page);
 

@@ -86,7 +86,8 @@ export const Sidebar: React.FC = () => {
           variant: "large",
         }}
       >
-        Ledger Device Management Kit{mockServerEnabled && <span> (MOCKED)</span>}
+        Ledger Device Management Kit
+        {mockServerEnabled && <span> (MOCKED)</span>}
       </Link>
       <Subtitle variant={"small"}>
         SDK Version: {version ? version : "Loading..."}

@@ -41,6 +41,10 @@ export const AllDeviceActions: React.FC<{ sessionId: string }> = ({
   const deviceModelId = sdk.getConnectedDevice({
     sessionId,
   }).modelId;
+  console.log(
+    "sdk get connected device::",
+    sdk.getConnectedDevice({ sessionId }),
+  );
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const deviceActions: DeviceActionProps<any, any, any, any>[] = useMemo(

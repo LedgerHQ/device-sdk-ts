@@ -39,6 +39,7 @@ test.describe("device command: open bitcoin app", () => {
 
       const response = (await getLastDeviceResponseContent(
         page,
+        "span",
       )) as commandOpenAppResponse;
 
       expect(response.status).toBe("SUCCESS");
