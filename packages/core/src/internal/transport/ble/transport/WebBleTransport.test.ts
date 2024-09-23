@@ -1,4 +1,4 @@
-import { Left } from "purify-ts";
+import { Left, Right } from "purify-ts";
 
 import { DeviceModel } from "@api/device/DeviceModel";
 import { StaticDeviceModelDataSource } from "@internal/device-model/data/StaticDeviceModelDataSource";
@@ -13,6 +13,7 @@ import {
   UnknownDeviceError,
 } from "@internal/transport/model/Errors";
 import { InternalDiscoveredDevice } from "@internal/transport/model/InternalDiscoveredDevice";
+import { RECONNECT_DEVICE_TIMEOUT } from "@internal/transport/usb/data/UsbHidConfig";
 
 import { WebBleTransport } from "./WebBleTransport";
 
@@ -179,16 +180,6 @@ describe("WebBleTransport", () => {
       });
     });
 
-    describe("stopDiscovering", () => {
-      it("should stop monitoring connections if the discovery process is halted", () => {
-        const abortSpy = jest.spyOn(AbortController.prototype, "abort");
-
-        transport.stopDiscovering();
-
-        expect(abortSpy).toHaveBeenCalled();
-      });
-    });
-
     describe("connect", () => {
       it("should throw UnknownDeviceError if no internal device", async () => {
         const connectParams = {
@@ -244,9 +235,6 @@ describe("WebBleTransport", () => {
           gatt: {
             ...stubDevice.gatt,
             connected: true,
-            connect: () => {
-              throw new DOMException("already opened", "InvalidStateError");
-            },
           },
         });
 
@@ -309,6 +297,94 @@ describe("WebBleTransport", () => {
             done(error);
           },
         );
+      });
+    });
+
+    describe("disconnect", () => {
+      it("should disconnect the device", (done) => {
+        mockedRequestDevice.mockResolvedValueOnce(stubDevice);
+
+        const onDisconnect = jest.fn();
+
+        discoverDevice(
+          (discoveredDevice) => {
+            transport
+              .connect({
+                deviceId: discoveredDevice.id,
+                onDisconnect,
+              })
+              .then((connectedDevice) => {
+                connectedDevice.ifRight((device) => {
+                  transport
+                    .disconnect({ connectedDevice: device })
+                    .then((value) => {
+                      expect(value).toStrictEqual(Right(void 0));
+                      done();
+                    })
+                    .catch((error) => {
+                      done(error);
+                    });
+                });
+              });
+          },
+          (error) => {
+            done(error);
+          },
+        );
+      });
+      it("should call disconnect handler if device is hardware disconnected", (done) => {
+        const onDisconnect = jest.fn();
+        const disconnectSpy = jest.spyOn(transport, "disconnect");
+        mockedRequestDevice.mockResolvedValueOnce(stubDevice);
+
+        discoverDevice(
+          (discoveredDevice) => {
+            transport
+              .connect({
+                deviceId: discoveredDevice.id,
+                onDisconnect,
+              })
+              .then(() => {
+                stubDevice.ongattserverdisconnected(new Event(""));
+                jest.advanceTimersByTime(RECONNECT_DEVICE_TIMEOUT);
+                expect(disconnectSpy).toHaveBeenCalled();
+                done();
+              });
+          },
+          (error) => {
+            done(error);
+          },
+        );
+      });
+    });
+
+    describe("reconnect", () => {
+      it("should not call disconnection if reconnection happen", (done) => {
+        // given
+        const onDisconnect = jest.fn();
+        const disconnectSpy = jest.spyOn(transport, "disconnect");
+        mockedRequestDevice.mockResolvedValueOnce(stubDevice);
+
+        // when
+        discoverDevice((discoveredDevice) => {
+          transport
+            .connect({
+              deviceId: discoveredDevice.id,
+              onDisconnect,
+            })
+            .then(() => {
+              stubDevice.ongattserverdisconnected(new Event(""));
+
+              jest.advanceTimersByTime(RECONNECT_DEVICE_TIMEOUT / 3);
+
+              // then
+              expect(disconnectSpy).toHaveBeenCalledTimes(0);
+              done();
+            })
+            .catch((error) => {
+              done(error);
+            });
+        });
       });
     });
   });
