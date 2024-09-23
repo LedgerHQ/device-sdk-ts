@@ -79,6 +79,13 @@ export function Command<
           ];
         });
       })
+      .catch((error) => {
+        setLoading(false);
+        setResponses((prev) => [
+          ...prev.slice(0, -1),
+          { args: values, date: new Date(), loading: false, response: error },
+        ]);
+      })
       .finally(() => {
         setLoading(false);
       });

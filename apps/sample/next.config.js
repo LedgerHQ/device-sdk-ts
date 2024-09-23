@@ -9,8 +9,10 @@ const nextConfig = {
     styledComponents: true,
   },
   env: {
-    MOCK_SERVER_DEFAULT_ENABLED:
-      process.env.npm_lifecycle_event === "dev:default-mock" ? "true" : "false",
+    SDK_CONFIG_TRANSPORT:
+      process.env.npm_lifecycle_event === "dev:default-mock"
+        ? "MOCK_SERVER"
+        : "",
   },
 };
 
