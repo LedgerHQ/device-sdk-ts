@@ -7,19 +7,24 @@ import {
 } from "@api/command/os/GetAppAndVersionCommand";
 import { DeviceStatus } from "@api/device/DeviceStatus";
 import { ApduResponse } from "@api/device-session/ApduResponse";
+import { DeviceSessionState } from "@api/device-session/DeviceSessionState";
+import { DefaultEventDispatcher } from "@internal/event-dispatcher/service/DefaultEventDispatcher";
 import { DefaultLoggerPublisherService } from "@internal/logger-publisher/service/DefaultLoggerPublisherService";
 import { LoggerPublisherService } from "@internal/logger-publisher/service/LoggerPublisherService";
 
 import { DeviceSessionRefresher } from "./DeviceSessionRefresher";
 
-const mockSendApduFn = jest.fn().mockResolvedValue(Right({} as ApduResponse));
-const mockUpdateStateFn = jest.fn().mockImplementation(() => undefined);
-
+jest.mock<DefaultEventDispatcher<DeviceSessionState>>(
+  "@internal/event-dispatcher/service/DefaultEventDispatcher",
+);
 jest.useFakeTimers();
+
+const mockSendApduFn = jest.fn().mockResolvedValue(Right({} as ApduResponse));
 
 describe("DeviceSessionRefresher", () => {
   let deviceSessionRefresher: DeviceSessionRefresher;
   let logger: LoggerPublisherService;
+  let deviceState: DefaultEventDispatcher<DeviceSessionState>;
 
   beforeEach(() => {
     jest
@@ -31,16 +36,25 @@ describe("DeviceSessionRefresher", () => {
           } as GetAppAndVersionResponse,
         }),
       );
+
     logger = new DefaultLoggerPublisherService(
       [],
       "DeviceSessionRefresherTest",
     );
+
+    deviceState = new DefaultEventDispatcher<DeviceSessionState>({
+      deviceStatus: DeviceStatus.CONNECTED,
+    } as DeviceSessionState);
+
+    jest.spyOn(deviceState, "get").mockReturnValue({
+      deviceStatus: DeviceStatus.CONNECTED,
+    } as DeviceSessionState);
+
     deviceSessionRefresher = new DeviceSessionRefresher(
       {
         refreshInterval: 1000,
-        deviceStatus: DeviceStatus.CONNECTED,
+        deviceState,
         sendApduFn: mockSendApduFn,
-        updateStateFn: mockUpdateStateFn,
       },
       logger,
     );
@@ -60,7 +74,9 @@ describe("DeviceSessionRefresher", () => {
   });
 
   it("should not poll when device is busy", () => {
-    deviceSessionRefresher.setDeviceStatus(DeviceStatus.BUSY);
+    jest.spyOn(deviceState, "get").mockReturnValue({
+      deviceStatus: DeviceStatus.BUSY,
+    } as DeviceSessionState);
 
     jest.advanceTimersByTime(1000);
 
@@ -68,7 +84,9 @@ describe("DeviceSessionRefresher", () => {
   });
 
   it("should not poll when device is disconnected", () => {
-    deviceSessionRefresher.setDeviceStatus(DeviceStatus.NOT_CONNECTED);
+    jest.spyOn(deviceState, "get").mockReturnValue({
+      deviceStatus: DeviceStatus.NOT_CONNECTED,
+    } as DeviceSessionState);
 
     jest.advanceTimersByTime(1000);
 
@@ -79,7 +97,7 @@ describe("DeviceSessionRefresher", () => {
     jest.advanceTimersByTime(1000);
 
     expect(await mockSendApduFn()).toEqual(Right({}));
-    expect(mockUpdateStateFn).toHaveBeenCalled();
+    expect(deviceState.dispatch).toHaveBeenCalled();
   });
 
   it("should not update device session state with failed polling response", async () => {
@@ -89,14 +107,8 @@ describe("DeviceSessionRefresher", () => {
     jest.advanceTimersByTime(1000);
     await mockSendApduFn();
 
-    expect(mockUpdateStateFn).not.toHaveBeenCalled();
+    expect(deviceState.dispatch).not.toHaveBeenCalled();
     expect(spy).toHaveBeenCalled();
-  });
-
-  it("should stop the refresher when device is disconnected", () => {
-    const spy = jest.spyOn(deviceSessionRefresher, "stop");
-    deviceSessionRefresher.setDeviceStatus(DeviceStatus.NOT_CONNECTED);
-    expect(spy).toHaveBeenCalledTimes(1);
   });
 
   it("should not throw error if stop is called on a stopped refresher", () => {

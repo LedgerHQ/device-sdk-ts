@@ -11,6 +11,7 @@ import {
   DeviceSessionStateType,
 } from "@api/device-session/DeviceSessionState";
 import { SdkError } from "@api/Error";
+import { EventDispatcher } from "@internal/event-dispatcher/service/EventDispatcher";
 import { type LoggerPublisherService } from "@internal/logger-publisher/service/LoggerPublisherService";
 
 /**
@@ -23,24 +24,14 @@ export type DeviceSessionRefresherArgs = {
   refreshInterval: number;
 
   /**
-   * The current device status when the refresher is created.
+   * The device state EventDispatcher.
    */
-  deviceStatus: Exclude<DeviceStatus, DeviceStatus.NOT_CONNECTED>;
+  deviceState: EventDispatcher<DeviceSessionState>;
 
   /**
    * The function used to send APDU commands to the device.
    */
   sendApduFn: (rawApdu: Uint8Array) => Promise<Either<SdkError, ApduResponse>>;
-
-  /**
-   * Callback that updates the state of the device session with
-   * polling response.
-   * @param callback - A function that will take the previous state and return the new state.
-   * @returns void
-   */
-  updateStateFn(
-    callback: (state: DeviceSessionState) => DeviceSessionState,
-  ): void;
 };
 
 /**
@@ -50,26 +41,20 @@ export type DeviceSessionRefresherArgs = {
 export class DeviceSessionRefresher {
   private readonly _logger: LoggerPublisherService;
   private readonly _getAppAndVersionCommand = new GetAppAndVersionCommand();
-  private _deviceStatus: DeviceStatus;
   private _subscription: Subscription;
-
+  private _deviceState: EventDispatcher<DeviceSessionState>;
   constructor(
-    {
-      refreshInterval,
-      deviceStatus,
-      sendApduFn,
-      updateStateFn,
-    }: DeviceSessionRefresherArgs,
+    { refreshInterval, deviceState, sendApduFn }: DeviceSessionRefresherArgs,
     logger: LoggerPublisherService,
   ) {
-    this._deviceStatus = deviceStatus;
+    this._deviceState = deviceState;
     this._logger = logger;
     this._subscription = interval(refreshInterval)
       .pipe(
         filter(
           () =>
             ![DeviceStatus.BUSY, DeviceStatus.NOT_CONNECTED].includes(
-              this._deviceStatus,
+              this._deviceState.get().deviceStatus,
             ),
         ),
         switchMap(() => {
@@ -102,27 +87,13 @@ export class DeviceSessionRefresher {
         if (!isSuccessCommandResult(parsedResponse)) {
           return;
         }
-        // `batteryStatus` and `firmwareVersion` are not available in the polling response.
-        updateStateFn((state) => ({
-          ...state,
-          sessionStateType: DeviceSessionStateType.ReadyWithoutSecureChannel,
-          deviceStatus: this._deviceStatus,
-          currentApp: parsedResponse.data.name,
-          installedApps: "installedApps" in state ? state.installedApps : [],
-        }));
-      });
-  }
 
-  /**
-   * Maintain a device status to prevent sending APDU when the device is busy.
-   *
-   * @param {DeviceStatus} deviceStatus - The new device status.
-   */
-  setDeviceStatus(deviceStatus: DeviceStatus) {
-    if (deviceStatus === DeviceStatus.NOT_CONNECTED) {
-      this.stop();
-    }
-    this._deviceStatus = deviceStatus;
+        this._deviceState.dispatch({
+          sessionStateType: DeviceSessionStateType.ReadyWithoutSecureChannel,
+          deviceStatus: this._deviceState.get().deviceStatus,
+          currentApp: parsedResponse.data.name,
+        });
+      });
   }
 
   /**

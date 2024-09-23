@@ -54,7 +54,6 @@ describe("GoToDashboardDeviceAction", () => {
         sessionStateType: DeviceSessionStateType.ReadyWithoutSecureChannel,
         deviceStatus: DeviceStatus.CONNECTED,
         currentApp: "BOLOS",
-        installedApps: [],
       });
 
       const expectedStates: Array<GoToDashboardDAState> = [
@@ -104,7 +103,6 @@ describe("GoToDashboardDeviceAction", () => {
         sessionStateType: DeviceSessionStateType.ReadyWithoutSecureChannel,
         deviceStatus: DeviceStatus.CONNECTED,
         currentApp: "Bitcoin",
-        installedApps: [],
       });
 
       sendCommandMock
@@ -292,7 +290,6 @@ describe("GoToDashboardDeviceAction", () => {
         sessionStateType: DeviceSessionStateType.ReadyWithoutSecureChannel,
         deviceStatus: DeviceStatus.CONNECTED,
         currentApp: "BOLOS",
-        installedApps: [],
       });
 
       const expectedStates: Array<GoToDashboardDAState> = [

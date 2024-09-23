@@ -139,7 +139,6 @@ describe("BuildEIP712ContextTask", () => {
     apiMock.getDeviceSessionState.mockReturnValueOnce({
       sessionStateType: DeviceSessionStateType.ReadyWithoutSecureChannel,
       deviceStatus: DeviceStatus.CONNECTED,
-      installedApps: [],
       currentApp: "Bitcoin",
     });
     // WHEN
@@ -171,7 +170,6 @@ describe("BuildEIP712ContextTask", () => {
     apiMock.getDeviceSessionState.mockReturnValueOnce({
       sessionStateType: DeviceSessionStateType.ReadyWithoutSecureChannel,
       deviceStatus: DeviceStatus.CONNECTED,
-      installedApps: [],
       currentApp: "Ethereum",
     });
     contextMouleMock.getTypedDataFilters.mockResolvedValueOnce({
@@ -207,7 +205,6 @@ describe("BuildEIP712ContextTask", () => {
     apiMock.getDeviceSessionState.mockReturnValueOnce({
       sessionStateType: DeviceSessionStateType.ReadyWithoutSecureChannel,
       deviceStatus: DeviceStatus.CONNECTED,
-      installedApps: [],
       currentApp: "Ethereum",
     });
     contextMouleMock.getTypedDataFilters.mockResolvedValueOnce(
