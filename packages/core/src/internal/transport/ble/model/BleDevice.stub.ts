@@ -40,6 +40,7 @@ export const bleCharacteristicStubBuilder = (
   ({
     ...props,
     addEventListener: jest.fn(),
+    removeEventListener: jest.fn(),
     startNotifications: jest.fn(),
     writeValueWithResponse: jest.fn(),
   }) as BluetoothRemoteGATTCharacteristic;

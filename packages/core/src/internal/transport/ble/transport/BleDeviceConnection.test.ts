@@ -69,7 +69,7 @@ describe("BleDeviceConnection", () => {
       );
       // then
       expect(errorOrApduResponse).toStrictEqual(
-        Left(new DeviceNotInitializedError()),
+        Left(new DeviceNotInitializedError("Unknown MTU")),
       );
     });
 

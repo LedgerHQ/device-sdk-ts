@@ -1,6 +1,7 @@
 import { Either, Left, Maybe, Nothing, Right } from "purify-ts";
 import { Subject } from "rxjs";
 
+import { CommandUtils } from "@api/command/utils/CommandUtils";
 import { ApduResponse } from "@api/device-session/ApduResponse";
 import { SdkError } from "@api/Error";
 import { ApduReceiverService } from "@internal/device-session/service/ApduReceiverService";
@@ -8,7 +9,10 @@ import { ApduSenderService } from "@internal/device-session/service/ApduSenderSe
 import { DefaultApduSenderServiceConstructorArgs } from "@internal/device-session/service/DefaultApduSenderService";
 import type { LoggerPublisherService } from "@internal/logger-publisher/service/LoggerPublisherService";
 import { DeviceConnection } from "@internal/transport/model/DeviceConnection";
-import { DeviceNotInitializedError } from "@internal/transport/model/Errors";
+import {
+  DeviceNotInitializedError,
+  ReconnectionFailedError,
+} from "@internal/transport/model/Errors";
 
 type BleDeviceConnectionConstructorArgs = {
   writeCharacteristic: BluetoothRemoteGATTCharacteristic;
@@ -26,8 +30,8 @@ export type DataViewEvent = Event & {
 };
 
 export class BleDeviceConnection implements DeviceConnection {
-  private readonly _writeCharacteristic: BluetoothRemoteGATTCharacteristic;
-  private readonly _notifyCharacteristic: BluetoothRemoteGATTCharacteristic;
+  private _writeCharacteristic: BluetoothRemoteGATTCharacteristic;
+  private _notifyCharacteristic: BluetoothRemoteGATTCharacteristic;
   private readonly _logger: LoggerPublisherService;
   private _apduSender: Maybe<ApduSenderService>;
   private readonly _apduSenderFactory: (
@@ -36,6 +40,10 @@ export class BleDeviceConnection implements DeviceConnection {
   private readonly _apduReceiver: ApduReceiverService;
   private _isDeviceReady: boolean;
   private _sendApduSubject: Subject<ApduResponse>;
+  private _settleReconnectionPromise: Maybe<{
+    resolve(): void;
+    reject(err: SdkError): void;
+  }> = Maybe.zero();
 
   constructor(
     {
@@ -52,12 +60,28 @@ export class BleDeviceConnection implements DeviceConnection {
     this._logger = loggerServiceFactory("BleDeviceConnection");
     this._writeCharacteristic = writeCharacteristic;
     this._notifyCharacteristic = notifyCharacteristic;
-    this._isDeviceReady = false;
     this._notifyCharacteristic.addEventListener(
       "characteristicvaluechanged",
       this.onNotifyCharacteristicValueChanged,
     );
+    this._isDeviceReady = false;
     this._sendApduSubject = new Subject();
+  }
+
+  public set notifyCharacteristic(
+    notifyCharacteristic: BluetoothRemoteGATTCharacteristic,
+  ) {
+    this._notifyCharacteristic = notifyCharacteristic;
+    this._notifyCharacteristic.addEventListener(
+      "characteristicvaluechanged",
+      this.onNotifyCharacteristicValueChanged,
+    );
+  }
+
+  public set writeCharacteristic(
+    writeCharacteristic: BluetoothRemoteGATTCharacteristic,
+  ) {
+    this._writeCharacteristic = writeCharacteristic;
   }
 
   /**
@@ -71,10 +95,11 @@ export class BleDeviceConnection implements DeviceConnection {
     const [frameSize] = mtuResponse.slice(5);
     if (frameSize) {
       this._apduSender = Maybe.of(this._apduSenderFactory({ frameSize }));
-      this._isDeviceReady = true;
-      this._logger.debug("new frame size value change", {
-        data: { frameSize },
+      this._settleReconnectionPromise.ifJust((promise) => {
+        promise.resolve();
+        this._settleReconnectionPromise = Maybe.zero();
       });
+      this._isDeviceReady = true;
     }
   }
 
@@ -94,9 +119,10 @@ export class BleDeviceConnection implements DeviceConnection {
       },
     } = event;
     if (!this._isDeviceReady) {
-      return this.onReceiveSetupApduResponse(buffer);
+      this.onReceiveSetupApduResponse(buffer);
+    } else {
+      this.receiveApdu(buffer);
     }
-    return this.receiveApdu(buffer);
   };
 
   /**
@@ -117,15 +143,12 @@ export class BleDeviceConnection implements DeviceConnection {
    * Complete sendApdu subject once the framer receives all the frames of the response
    * @param data
    */
-  async receiveApdu(data: ArrayBuffer) {
+  receiveApdu(data: ArrayBuffer) {
     const response = this._apduReceiver.handleFrame(new Uint8Array(data));
 
     response.caseOf({
       Right: (maybeApduResponse) => {
         maybeApduResponse.map((apduResponse) => {
-          this._logger.debug("Received APDU Response", {
-            data: { response: apduResponse },
-          });
           this._sendApduSubject.next(apduResponse);
           this._sendApduSubject.complete();
         });
@@ -141,17 +164,34 @@ export class BleDeviceConnection implements DeviceConnection {
    * Subscribe to a Subject that would be complete once the response had been received
    * @param apdu
    */
-  async sendApdu(apdu: Uint8Array): Promise<Either<SdkError, ApduResponse>> {
-    if (!this._isDeviceReady) {
-      return Left(new DeviceNotInitializedError());
-    }
+  async sendApdu(
+    apdu: Uint8Array,
+    triggersDisconnection?: boolean,
+  ): Promise<Either<SdkError, ApduResponse>> {
     this._sendApduSubject = new Subject();
 
+    if (!this._isDeviceReady) {
+      return Promise.resolve(
+        Left(new DeviceNotInitializedError("Unknown MTU")),
+      );
+    }
+    // Create a promise that would be resolved once the response had been received
     const resultPromise = new Promise<Either<SdkError, ApduResponse>>(
       (resolve) => {
         this._sendApduSubject.subscribe({
           next: async (response) => {
-            resolve(Right(response));
+            if (
+              triggersDisconnection &&
+              CommandUtils.isSuccessResponse(response)
+            ) {
+              const reconnectionRes = await this.setupWaitForReconnection();
+              reconnectionRes.caseOf({
+                Left: (err) => resolve(Left(err)),
+                Right: () => resolve(Right(response)),
+              });
+            } else {
+              resolve(Right(response));
+            }
           },
           error: (err) => resolve(Left(err)),
         });
@@ -192,5 +232,54 @@ export class BleDeviceConnection implements DeviceConnection {
       "byteLength" in event.target.value.buffer &&
       typeof event.target.value.buffer.byteLength === "number"
     );
+  }
+
+  /**
+   * Setup a promise that would be resolved once the device is reconnected
+   *
+   * @private
+   */
+  private setupWaitForReconnection(): Promise<Either<SdkError, void>> {
+    return new Promise<Either<SdkError, void>>((resolve) => {
+      this._settleReconnectionPromise = Maybe.of({
+        resolve: () => resolve(Right(undefined)),
+        reject: (error: SdkError) => resolve(Left(error)),
+      });
+    });
+  }
+
+  /**
+   * Reconnect to the device by resetting new ble characteristics
+   * @param writeCharacteristic
+   * @param notifyCharacteristic
+   */
+  public async reconnect(
+    writeCharacteristic: BluetoothRemoteGATTCharacteristic,
+    notifyCharacteristic: BluetoothRemoteGATTCharacteristic,
+  ) {
+    this._notifyCharacteristic.removeEventListener(
+      "characteristicvaluechanged",
+      this.onNotifyCharacteristicValueChanged,
+    );
+    this._isDeviceReady = false;
+    this.notifyCharacteristic = notifyCharacteristic;
+    this.writeCharacteristic = writeCharacteristic;
+    await this.setup();
+  }
+
+  /**
+   * Disconnect from the device
+   */
+  public async disconnect() {
+    // if a reconnection promise is pending, reject it
+    this._settleReconnectionPromise.ifJust((promise) => {
+      promise.reject(new ReconnectionFailedError());
+      this._settleReconnectionPromise = Maybe.zero();
+    });
+    this._notifyCharacteristic.removeEventListener(
+      "characteristicvaluechanged",
+      this.onNotifyCharacteristicValueChanged,
+    );
+    this._isDeviceReady = false;
   }
 }
