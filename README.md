@@ -80,16 +80,16 @@ This project uses [turbo monorepo](https://turbo.build/repo/docs) to build and r
 
 A brief description of this project packages:
 
-| Name                              | Path                       | Description                                                                                                                     |
-| --------------------------------- | -------------------------- | ------------------------------------------------------------------------------------------------------------------------------- |
-| @ledgerhq/device-sdk-sample       | apps/sample                | React Next web app used to test & demonstrate the Web Device Management Kit                                                     |
-| @ledgerhq/eslint-config-dsdk      | packages/config/eslint     | internal package which contains eslint shared config. Used by `extends: ["@ledgerhq/dsdk"]` in `.eslintrc`.                     |
-| @ledgerhq/jest-config-dsdk        | packages/config/jest       | internal package which contains jest shared config. Used by `preset: "@ledgerhq/jest-config-dsdk"` in `jest.config.ts`          |
-| @ledgerhq/tsconfig-dsdk           | packages/config/typescript | internal package which contains typescript shared config. Used by `"extends": "@ledgerhq/tsconfig-dsdk/sdk"` in `tsconfig.json` |
-| @ledgerhq/device-management-kit   | packages/core              | external package that contains the core of the Web SDK                                                                          |
-| @ledgerhq/device-sdk-signer       | packages/signer            | external package that contains device coin application dedicated handlers                                                       |
-| @ledgerhq/device-sdk-trusted-apps | packages/trusted-apps      | external package that contains device trusted application dedicated handlers                                                    |
-| @ledgerhq/device-sdk-ui           | packages/ui                | external package                                                                                                                |
+| Name                              | Path                       | Description                                                                                                                              |
+| --------------------------------- | -------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
+| @ledgerhq/device-sdk-sample       | apps/sample                | React Next web app used to test & demonstrate the Web Device Management Kit                                                              |
+| @ledgerhq/eslint-config-dsdk      | packages/config/eslint     | internal package which contains eslint shared config. Used by `extends: ["@ledgerhq/dsdk"]` in `.eslintrc`.                              |
+| @ledgerhq/jest-config-dsdk        | packages/config/jest       | internal package which contains jest shared config. Used by `preset: "@ledgerhq/jest-config-dsdk"` in `jest.config.ts`                   |
+| @ledgerhq/tsconfig-dsdk           | packages/config/typescript | internal package which contains typescript shared config. Used by `"extends": "@ledgerhq/tsconfig-dsdk/tsconfig.sdk"` in `tsconfig.json` |
+| @ledgerhq/device-management-kit   | packages/core              | external package that contains the core of the Web SDK                                                                                   |
+| @ledgerhq/device-sdk-signer       | packages/signer            | external package that contains device coin application dedicated handlers                                                                |
+| @ledgerhq/device-sdk-trusted-apps | packages/trusted-apps      | external package that contains device trusted application dedicated handlers                                                             |
+| @ledgerhq/device-sdk-ui           | packages/ui                | external package                                                                                                                         |
 
 # Getting started
 

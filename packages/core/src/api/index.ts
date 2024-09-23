@@ -16,6 +16,7 @@ export {
   type GetAppAndVersionResponse,
 } from "./command/os/GetAppAndVersionCommand";
 export {
+  BatteryStatusType,
   type GetBatteryStatusArgs,
   GetBatteryStatusCommand,
   type GetBatteryStatusResponse,
@@ -50,6 +51,13 @@ export { ConnectedDevice } from "./transport/model/ConnectedDevice";
 export { BuiltinTransports } from "./transport/model/TransportIdentifier";
 export * from "./types";
 export * from "./types";
+<<<<<<< HEAD
+||||||| parent of 7bbdd07 (👷 (repo): Use esbuild to produce builds)
+export { ConnectedDevice } from "./usb/model/ConnectedDevice";
+=======
+export { ConnectedDevice } from "./usb/model/ConnectedDevice";
+export * from "@api/apdu/utils/AppBuilderError";
+>>>>>>> 7bbdd07 (👷 (repo): Use esbuild to produce builds)
 export { InvalidStatusWordError } from "@api/command/Errors";
 export {
   type DeviceAction,

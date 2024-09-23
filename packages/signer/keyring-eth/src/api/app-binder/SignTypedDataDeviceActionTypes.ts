@@ -1,10 +1,10 @@
-import { ContextModule } from "@ledgerhq/context-module";
+import { type ContextModule } from "@ledgerhq/context-module";
 import {
-  CommandErrorResult,
-  DeviceActionState,
-  ExecuteDeviceActionReturnType,
-  OpenAppDAError,
-  OpenAppDARequiredInteraction,
+  type CommandErrorResult,
+  type DeviceActionState,
+  type ExecuteDeviceActionReturnType,
+  type OpenAppDAError,
+  type OpenAppDARequiredInteraction,
   UserInteractionRequired,
 } from "@ledgerhq/device-management-kit";
 
