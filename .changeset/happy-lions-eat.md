@@ -1,5 +1,5 @@
 ---
-"@ledgerhq/device-sdk-core": patch
+"@ledgerhq/device-management-kit": patch
 ---
 
 Improve code visibility

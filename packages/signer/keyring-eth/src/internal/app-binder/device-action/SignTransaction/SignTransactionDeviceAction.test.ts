@@ -4,8 +4,8 @@ import {
   DeviceActionStatus,
   UnknownDAError,
   UserInteractionRequired,
-} from "@ledgerhq/device-sdk-core";
-import { InvalidStatusWordError } from "@ledgerhq/device-sdk-core";
+} from "@ledgerhq/device-management-kit";
+import { InvalidStatusWordError } from "@ledgerhq/device-management-kit";
 import { Transaction } from "ethers-v6/transaction";
 import { Just, Nothing } from "purify-ts";
 
@@ -18,10 +18,10 @@ import { TransactionMapperService } from "@internal/transaction/service/mapper/T
 import { SignTransactionDeviceAction } from "./SignTransactionDeviceAction";
 
 jest.mock(
-  "@ledgerhq/device-sdk-core",
+  "@ledgerhq/device-management-kit",
   // eslint-disable-next-line @typescript-eslint/no-unsafe-return
   () => ({
-    ...jest.requireActual("@ledgerhq/device-sdk-core"),
+    ...jest.requireActual("@ledgerhq/device-management-kit"),
     OpenAppDeviceAction: jest.fn(() => ({
       makeStateMachine: jest.fn(),
     })),

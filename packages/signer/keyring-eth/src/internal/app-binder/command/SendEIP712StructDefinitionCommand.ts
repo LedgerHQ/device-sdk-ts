@@ -9,7 +9,7 @@ import {
   CommandResultFactory,
   CommandUtils,
   GlobalCommandErrorHandler,
-} from "@ledgerhq/device-sdk-core";
+} from "@ledgerhq/device-management-kit";
 import { Just, Maybe, Nothing } from "purify-ts";
 
 import {

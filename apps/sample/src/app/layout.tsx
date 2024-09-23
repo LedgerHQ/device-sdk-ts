@@ -11,8 +11,8 @@ import { StyledComponentsRegistry } from "@/lib/registry";
 import ClientRootLayout from "./client-layout";
 
 export const metadata = {
-  title: "Ledger Device SDK",
-  description: "Ledger Device SDK Sample App",
+  title: "Ledger Device Management Kit",
+  description: "Ledger Device Management Kit Sample App",
 };
 
 type RootLayoutProps = {

@@ -25,7 +25,7 @@ import {
   ListAppsWithMetadataDAInput,
   ListAppsWithMetadataDAError,
   ListAppsWithMetadataDAIntermediateValue,
-} from "@ledgerhq/device-sdk-core";
+} from "@ledgerhq/device-management-kit";
 import { useMemo } from "react";
 import { DeviceActionProps } from "./DeviceActionTester";
 import { UNLOCK_TIMEOUT, DeviceActionsList } from "./DeviceActionsList";

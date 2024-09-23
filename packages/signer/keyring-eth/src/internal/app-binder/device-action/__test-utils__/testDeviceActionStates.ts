@@ -4,7 +4,7 @@ import {
   DeviceActionState,
   InternalApi,
   SdkError,
-} from "@ledgerhq/device-sdk-core";
+} from "@ledgerhq/device-management-kit";
 
 /**
  * Test that the states emitted by a device action match the expected states.

@@ -2,7 +2,7 @@ import { TypedDataClearSignContextSuccess } from "@ledgerhq/context-module";
 import {
   DeviceSessionStateType,
   DeviceStatus,
-} from "@ledgerhq/device-sdk-core";
+} from "@ledgerhq/device-management-kit";
 import { Just, Nothing, Right } from "purify-ts";
 
 import { makeDeviceActionInternalApiMock } from "@internal/app-binder/device-action/__test-utils__/makeInternalApi";

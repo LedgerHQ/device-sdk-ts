@@ -1,4 +1,4 @@
-import { HexaString, isHexaString } from "@ledgerhq/device-sdk-core";
+import { HexaString, isHexaString } from "@ledgerhq/device-management-kit";
 import { inject, injectable } from "inversify";
 
 import { ContextLoader } from "@/shared/domain/ContextLoader";

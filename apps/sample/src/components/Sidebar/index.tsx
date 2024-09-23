@@ -80,7 +80,7 @@ export const Sidebar: React.FC = () => {
           variant: "large",
         }}
       >
-        Ledger Device SDK
+        Ledger Device Management Kit
       </Link>
       <Subtitle variant={"small"}>
         SDK Version: {version ? version : "Loading..."}
@@ -110,7 +110,7 @@ export const Sidebar: React.FC = () => {
           <LogsText variant={"paragraph"}>Share logs</LogsText>
         </LogsContainer>
         <VersionText variant={"body"}>
-          Ledger device SDK version {version}
+          Ledger Device Management Kit version {version}
         </VersionText>
         <VersionText variant={"body"}>App version 0.1</VersionText>
       </BottomContainer>

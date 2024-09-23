@@ -69,7 +69,7 @@ export const MainView: React.FC = () => {
         height={250}
       />
       <Text variant={"h2Inter"} fontWeight={"semiBold"} textTransform={"none"}>
-        Ledger Device SDK
+        Ledger Device Management Kit
       </Text>
       <Description variant={"body"}>
         Use this application to test Ledger hardware device features.

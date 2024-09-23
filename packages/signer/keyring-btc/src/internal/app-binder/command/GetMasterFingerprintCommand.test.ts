@@ -2,8 +2,8 @@ import {
   ApduResponse,
   CommandResultFactory,
   isSuccessCommandResult,
-} from "@ledgerhq/device-sdk-core";
-import { InvalidStatusWordError } from "@ledgerhq/device-sdk-core";
+} from "@ledgerhq/device-management-kit";
+import { InvalidStatusWordError } from "@ledgerhq/device-management-kit";
 
 import { GetMasterFingerprintCommand } from "./GetMasterFingerprintCommand";
 

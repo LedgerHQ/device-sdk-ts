@@ -1,5 +1,5 @@
 ---
-"@ledgerhq/keyring-eth": patch
+"@ledgerhq/device-signer-kit-ethereum": patch
 ---
 
-Add README for keyring-eth module
+Add README for device-signer-kit-ethereum module

@@ -2,7 +2,7 @@ import {
   APDU_MAX_PAYLOAD,
   CommandResultFactory,
   InvalidStatusWordError,
-} from "@ledgerhq/device-sdk-core";
+} from "@ledgerhq/device-management-kit";
 import { Just, Nothing } from "purify-ts";
 
 import { SignTransactionCommand } from "@internal/app-binder/command/SignTransactionCommand";

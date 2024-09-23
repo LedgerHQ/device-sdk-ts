@@ -4,7 +4,7 @@ import {
   type SendCommandInAppDAIntermediateValue,
   type SendCommandInAppDAOutput,
   UserInteractionRequired,
-} from "@ledgerhq/device-sdk-core";
+} from "@ledgerhq/device-management-kit";
 
 import { type GetAddressCommandResponse } from "@api/app-binder/GetAddressCommandTypes";
 

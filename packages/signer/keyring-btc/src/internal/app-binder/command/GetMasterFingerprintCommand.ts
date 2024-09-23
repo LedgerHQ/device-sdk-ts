@@ -11,7 +11,7 @@ import {
   CommandUtils,
   GlobalCommandErrorHandler,
   InvalidStatusWordError,
-} from "@ledgerhq/device-sdk-core";
+} from "@ledgerhq/device-management-kit";
 
 const MASTER_FINGERPRINT_LENGTH = 4;
 

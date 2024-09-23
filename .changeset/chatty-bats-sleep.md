@@ -1,5 +1,5 @@
 ---
-"@ledgerhq/keyring-eth": patch
+"@ledgerhq/device-signer-kit-ethereum": patch
 ---
 
 Implement ProvideTokenInformationCommand

@@ -1,5 +1,5 @@
-import { CommandResultFactory } from "@ledgerhq/device-sdk-core";
-import { InvalidStatusWordError } from "@ledgerhq/device-sdk-core";
+import { CommandResultFactory } from "@ledgerhq/device-management-kit";
+import { InvalidStatusWordError } from "@ledgerhq/device-management-kit";
 import { Just, Nothing } from "purify-ts";
 
 import { SignPersonalMessageCommand } from "@internal/app-binder/command/SignPersonalMessageCommand";

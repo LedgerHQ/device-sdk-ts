@@ -1,7 +1,7 @@
 import {
   OpenAppDeviceAction,
   UserInteractionRequired,
-} from "@ledgerhq/device-sdk-core";
+} from "@ledgerhq/device-management-kit";
 import { Left, Right } from "purify-ts";
 import { assign, createMachine } from "xstate";
 

@@ -5,7 +5,7 @@ import {
 import {
   DeviceSessionStateType,
   type InternalApi,
-} from "@ledgerhq/device-sdk-core";
+} from "@ledgerhq/device-management-kit";
 import { Just, Maybe, Nothing } from "purify-ts";
 
 import { type TypedData } from "@api/model/TypedData";
