@@ -3,8 +3,8 @@
   "version": "1.0.0",
   "private": true,
   "files": [
-    "sdk.json",
-    "web.json"
+    "tsconfig.sdk.json",
+    "tsconfig.web.json"
   ],
   "devDependencies": {
     "@tsconfig/recommended": "^1.0.7",

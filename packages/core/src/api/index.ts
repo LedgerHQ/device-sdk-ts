@@ -15,6 +15,7 @@ export {
   type GetAppAndVersionResponse,
 } from "./command/os/GetAppAndVersionCommand";
 export {
+  BatteryStatusType,
   type GetBatteryStatusArgs,
   GetBatteryStatusCommand,
   type GetBatteryStatusResponse,
@@ -46,6 +47,7 @@ export { LogLevel } from "./logger-subscriber/model/LogLevel";
 export { ConsoleLogger } from "./logger-subscriber/service/ConsoleLogger";
 export * from "./types";
 export { ConnectedDevice } from "./usb/model/ConnectedDevice";
+export * from "@api/apdu/utils/AppBuilderError";
 export { InvalidStatusWordError } from "@api/command/Errors";
 export {
   type DeviceAction,

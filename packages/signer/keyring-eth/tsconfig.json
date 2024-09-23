@@ -1,12 +1,18 @@
 {
-  "extends": "@ledgerhq/tsconfig-dsdk/sdk",
+  "extends": "@ledgerhq/tsconfig-dsdk/tsconfig.sdk",
   "compilerOptions": {
     "baseUrl": ".",
+    "outDir": "./lib/types",
+    "module": "esnext",
+    "target": "esnext",
+    "moduleResolution": "bundler",
+    "emitDeclarationOnly": true,
     "paths": {
-      "@api/*": ["src/api/*"],
-      "@internal/*": ["src/internal/*"],
+      "@api/*": ["./src/api/*"],
+      "@internal/*": ["./src/internal/*"],
       "@root/*": ["./*"]
-    }
+    },
+    "resolveJsonModule": true
   },
-  "include": ["src", "jest.*.ts"]
+  "include": ["src", "scripts", "jest.*.ts", "eslint.config.mjs"]
 }

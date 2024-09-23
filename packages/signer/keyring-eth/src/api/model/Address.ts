@@ -1,4 +1,4 @@
-import { HexaString } from "@ledgerhq/device-sdk-core";
+import { type HexaString } from "@ledgerhq/device-sdk-core";
 
 export type Address = {
   address: HexaString;

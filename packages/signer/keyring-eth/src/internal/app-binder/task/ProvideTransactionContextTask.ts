@@ -8,12 +8,12 @@ import {
   type CommandErrorResult,
   CommandResult,
   CommandResultFactory,
+  HexaStringEncodeError,
   hexaStringToBuffer,
   type InternalApi,
   isSuccessCommandResult,
   type SdkError,
 } from "@ledgerhq/device-sdk-core";
-import { HexaStringEncodeError } from "@ledgerhq/device-sdk-core/src/api/apdu/utils/AppBuilderError.js";
 import { Just, Maybe, Nothing } from "purify-ts";
 
 import {

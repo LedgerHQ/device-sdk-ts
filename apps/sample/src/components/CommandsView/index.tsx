@@ -4,6 +4,7 @@ import { Grid } from "@ledgerhq/react-ui";
 import Command, { CommandProps } from "./Command";
 import { useSdk } from "@/providers/DeviceSdkProvider";
 import {
+  BatteryStatusType,
   ListAppsCommand,
   ListAppsArgs,
   ListAppsResponse,
@@ -20,7 +21,6 @@ import {
   OpenAppErrorCodes,
   ListAppsErrorCodes,
 } from "@ledgerhq/device-sdk-core";
-import { BatteryStatusType } from "@ledgerhq/device-sdk-core/src/api/command/os/GetBatteryStatusCommand.js";
 import { getValueSelectorFromEnum } from "./CommandForm";
 import { PageWithHeader } from "../PageWithHeader";
 

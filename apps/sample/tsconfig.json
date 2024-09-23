@@ -1,5 +1,5 @@
 {
-  "extends": "@ledgerhq/tsconfig-dsdk/web",
+  "extends": "@ledgerhq/tsconfig-dsdk/tsconfig.web",
   "compilerOptions": {
     "plugins": [
       {

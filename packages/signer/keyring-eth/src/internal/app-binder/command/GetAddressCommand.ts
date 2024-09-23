@@ -1,7 +1,7 @@
 import {
   Apdu,
   ApduBuilder,
-  ApduBuilderArgs,
+  type ApduBuilderArgs,
   ApduParser,
   ApduResponse,
   type Command,
