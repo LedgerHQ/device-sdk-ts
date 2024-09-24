@@ -26,11 +26,11 @@ jobs:
 
       - uses: ./.github/actions/setup-toolchain-composite
 
-      # - name: install dependencies
-      #   run: pnpm install
+      - name: install dependencies
+        run: pnpm install
 
-      # - name: build libraries
-      #   run: pnpm build
+      - name: build libraries
+        run: pnpm build
       
       - name: Login to internal JFrog registry
         id: jfrog-login
@@ -44,6 +44,9 @@ jobs:
           registry=https://${NPM_REGISTRY}/
           //${NPM_REGISTRY}/:_authToken=${NPM_REGISTRY_TOKEN}
           EOF
+      
+      - name: Create dist directory to store tarball
+        run: mkdir -p dist
 
       - name: Publish
         id: changesets
