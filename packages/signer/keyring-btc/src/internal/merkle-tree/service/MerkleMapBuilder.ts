@@ -1,4 +1,4 @@
-import { bufferToHexaString } from "@ledgerhq/device-sdk-core";
+import { bufferToHexaString } from "@ledgerhq/device-management-kit";
 import { inject, injectable } from "inversify";
 import { Either, Left, Right } from "purify-ts";
 

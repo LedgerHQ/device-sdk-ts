@@ -1,4 +1,4 @@
-import { hexaStringToBuffer } from "@ledgerhq/device-sdk-core";
+import { hexaStringToBuffer } from "@ledgerhq/device-management-kit";
 import { Just, Nothing } from "purify-ts";
 
 import { MerkleTreeBuilder } from "./MerkleTreeBuilder";

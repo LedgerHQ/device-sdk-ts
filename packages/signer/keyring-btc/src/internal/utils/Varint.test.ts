@@ -1,4 +1,7 @@
-import { ByteArrayParser, hexaStringToBuffer } from "@ledgerhq/device-sdk-core";
+import {
+  ByteArrayParser,
+  hexaStringToBuffer,
+} from "@ledgerhq/device-management-kit";
 
 import { encodeVarint, extractVarint } from "./Varint";
 

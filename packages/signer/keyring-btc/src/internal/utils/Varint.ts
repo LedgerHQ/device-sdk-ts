@@ -1,4 +1,7 @@
-import { ByteArrayBuilder, ByteArrayParser } from "@ledgerhq/device-sdk-core";
+import {
+  ByteArrayBuilder,
+  ByteArrayParser,
+} from "@ledgerhq/device-management-kit";
 import { Just, Maybe, Nothing } from "purify-ts";
 
 /**

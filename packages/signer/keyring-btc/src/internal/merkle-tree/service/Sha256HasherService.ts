@@ -1,4 +1,4 @@
-import { hexaStringToBuffer } from "@ledgerhq/device-sdk-core";
+import { hexaStringToBuffer } from "@ledgerhq/device-management-kit";
 import { lib, SHA256 } from "crypto-js";
 
 import { HasherService } from "./HasherService";
