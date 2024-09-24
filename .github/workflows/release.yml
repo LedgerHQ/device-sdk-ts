@@ -44,6 +44,9 @@ jobs:
           registry=https://${NPM_REGISTRY}/
           //${NPM_REGISTRY}/:_authToken=${NPM_REGISTRY_TOKEN}
           EOF
+      
+      - name: Create dist directory to store tarball
+        run: mkdir -p dist
 
       - name: Publish
         id: changesets
@@ -54,6 +57,15 @@ jobs:
           createGithubReleases: false
         env:
           GITHUB_TOKEN: ${{ secrets.CI_BOT_TOKEN }}
+      
+      - name: Check dist directory to store tarball
+        if: steps.changesets.outputs.published == 'true'
+        run: |
+          echo "Checking directory"
+          ls -al 
+
+          echo "Checking dist directory"
+          ls -al dist
       
       - name: Attest tarball
         if: steps.changesets.outputs.published == 'true'
