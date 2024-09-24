@@ -9,5 +9,5 @@
     "emitDeclarationOnly": true,
     "resolveJsonModule": true
   },
-  "include": ["src", "scripts", "jest.*.ts", "eslint.config.mjs"]
+  "include": ["src", "jest.*.ts"]
 }

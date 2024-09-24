@@ -3,77 +3,41 @@
   "ui": "tui",
   "tasks": {
     "build": {
-      "dependsOn": [
-        "^build"
-      ],
-      "outputs": [
-        "lib/**",
-        ".next/**"
-      ],
-      "inputs": [
-        "src/**/*.ts",
-        "index.ts"
-      ]
+      "dependsOn": ["^build"],
+      "outputs": ["lib/**", ".next/**"],
+      "inputs": ["src/**/*.ts", "index.ts"]
     },
     "lint": {
-      "dependsOn": [
-        "^build"
-      ]
+      "dependsOn": ["^build"]
     },
     "lint:fix": {
-      "dependsOn": [
-        "^build"
-      ]
+      "dependsOn": ["^build"]
     },
     "prettier": {
-      "dependsOn": [
-        "^prettier"
-      ]
+      "dependsOn": ["^prettier"]
     },
     "prettier:fix": {
-      "dependsOn": [
-        "^prettier:fix"
-      ]
+      "dependsOn": ["^prettier:fix"]
     },
     "dev": {
       "cache": false,
       "persistent": true
     },
     "test": {
-      "dependsOn": [
-        "^build"
-      ],
-      "outputs": [
-        "coverage/**"
-      ],
-      "inputs": [
-        "src/**/*.ts",
-        "tests/**/*.ts"
-      ]
+      "dependsOn": ["^build"],
+      "outputs": ["coverage/**"],
+      "inputs": ["src/**/*.ts", "tests/**/*.ts"]
     },
     "test:coverage": {
-      "dependsOn": [
-        "^build"
-      ],
+      "dependsOn": ["^build"],
       "outputs": [],
-      "inputs": [
-        "src/**/*.ts",
-        "tests/**/*.ts"
-      ]
+      "inputs": ["src/**/*.ts", "tests/**/*.ts"]
     },
     "typecheck": {
-      "dependsOn": [
-        "^build",
-        "^typecheck"
-      ]
+      "dependsOn": ["^build", "^typecheck"]
     },
     "health-check": {
-      "dependsOn": [
-        "build",
-        "prettier",
-        "lint",
-        "typecheck"
-      ]
+      "dependsOn": ["build", "prettier", "lint", "typecheck"]
     }
   }
 }

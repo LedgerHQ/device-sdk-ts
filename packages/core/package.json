@@ -16,9 +16,10 @@
     "./lib"
   ],
   "scripts": {
-    "build": "rimraf lib && zx scripts/esbuild.mjs",
+    "prebuild": "rimraf lib",
+    "build": "pnpm lmdk-build --entryPoints index.ts --tsconfig tsconfig.prod.json",
     "dev": "concurrently \"pnpm watch:builds\" \"pnpm watch:types\"",
-    "watch:builds": "zx scripts/watch.mjs",
+    "watch:builds": "pnpm lmdk-watch --entryPoints index.ts --tsconfig tsconfig.prod.json",
     "watch:types": "concurrently \"tsc --watch -p tsconfig.prod.json\" \"tsc-alias --watch -p tsconfig.prod.json\"",
     "lint": "eslint",
     "lint:fix": "pnpm lint --fix",
@@ -46,6 +47,7 @@
     "xstate": "^5.18.2"
   },
   "devDependencies": {
+    "@ledgerhq/esbuild-tools": "workspace:*",
     "@ledgerhq/eslint-config-dsdk": "workspace:*",
     "@ledgerhq/jest-config-dsdk": "workspace:*",
     "@ledgerhq/prettier-config-dsdk": "workspace:*",

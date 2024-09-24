@@ -1,5 +1,4 @@
-import { ContextModule } from "@ledgerhq/context-module";
-import { ContextLoader } from "@ledgerhq/context-module/src/shared/domain/ContextLoader.js";
+import { ContextLoader, ContextModule } from "@ledgerhq/context-module";
 import { DeviceSdk } from "@ledgerhq/device-management-kit";
 
 import { KeyringEthBuilder } from "@api/KeyringEthBuilder";

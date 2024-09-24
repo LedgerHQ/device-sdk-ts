@@ -1,5 +1,3 @@
-// @ts-check
-
 import globals from "globals";
 import js from "@eslint/js";
 import tseslint from "typescript-eslint";
@@ -13,6 +11,7 @@ export default [
   {
     ignores: [
       ".*.js",
+      ".*.mjs",
       "coverage/*",
       "_templates/*",
       "lib/*",

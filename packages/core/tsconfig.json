@@ -1,6 +1,6 @@
 {
   "extends": "@ledgerhq/tsconfig-dsdk/tsconfig.sdk",
-  "include": ["src", "index.ts", "jest.*.ts", "scripts", "eslint.config.mjs"],
+  "include": ["src", "index.ts", "jest.*.ts"],
   "compilerOptions": {
     "baseUrl": ".",
     "outDir": "./lib/types",

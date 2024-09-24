@@ -13,5 +13,5 @@
     },
     "resolveJsonModule": true
   },
-  "include": ["index.ts", "src", "scripts", "jest.*.ts", "eslint.config.mjs"]
+  "include": ["index.ts", "src", "jest.*.ts"]
 }
