@@ -272,9 +272,15 @@ importers:
 
   packages/signer/keyring-btc:
     dependencies:
+      '@types/crypto-js':
+        specifier: ^4.2.2
+        version: 4.2.2
       bitcoinjs-lib:
         specifier: ^6.1.6
         version: 6.1.6
+      crypto-js:
+        specifier: ^4.2.0
+        version: 4.2.0
       inversify:
         specifier: ^6.0.2
         version: 6.0.2

@@ -7,8 +7,6 @@ import {
   ValueOverflowError,
 } from "./AppBuilderError";
 
-const MAX_8_BIT_UINT = 0xff;
-const MAX_16_BIT_UINT = 0xffff;
 const MAX_32_BIT_UINT = 0xffffffff;
 
 /**
@@ -32,7 +30,7 @@ export class ByteArrayBuilder {
   private data: Uint8Array = new Uint8Array();
   private readonly errors: AppBuilderError[] = []; // Custom Error
 
-  constructor(private maxPayloadSize: number) {}
+  constructor(private maxPayloadSize: number = MAX_32_BIT_UINT) {}
 
   // ==========
   // Public API
@@ -45,73 +43,99 @@ export class ByteArrayBuilder {
   build = (): Uint8Array => this.data;
 
   /**
+   * Try to build a new payload instance with the current state of the builder
+   * if the builder don't contain any error.
+   * @returns {payload | undefined} - Returns a new payload instance or undefined
+   */
+  tryBuild = (): Uint8Array | undefined => {
+    return this.hasErrors() ? undefined : this.data;
+  };
+
+  /**
    * Add a 8-bit unsigned integer to the payload (max value 0xff = 255)
-   * @param value: number - The value to add to the data
+   * @param value: number | bigint - The value to add to the data
    * @returns {ByteArrayBuilder} - Returns the current instance of ByteArrayBuilder
    */
-  add8BitUIntToData = (value: number): ByteArrayBuilder => {
-    if (value > MAX_8_BIT_UINT) {
-      this.errors.push(
-        new ValueOverflowError(value.toString(), MAX_8_BIT_UINT),
-      );
-      return this;
-    }
-
-    if (this.data.length >= this.maxPayloadSize) {
-      this.errors.push(new DataOverflowError(value.toString()));
-      return this;
-    }
-
-    this.data = Uint8Array.from([...this.data, value & 0xff]);
-    return this;
+  add8BitUIntToData = (value: number | bigint): ByteArrayBuilder => {
+    return this.addNumberToData(value, 8n, false, false);
   };
 
   /**
    * Add a 16-bit unsigned integer to the payload (max value 0xffff = 65535)
-   * @param value: number - The value to add to the data
+   * @param value: number | bigint - The value to add to the data
+   * @param bigEndian: boolean - True to encode in big endian, false for little endian
    * @returns {ByteArrayBuilder} - Returns the current instance of ByteArrayBuilder
    */
-  add16BitUIntToData = (value: number): ByteArrayBuilder => {
-    if (value > MAX_16_BIT_UINT) {
-      this.errors.push(
-        new ValueOverflowError(value.toString(), MAX_16_BIT_UINT),
-      );
-      return this;
-    }
-
-    if (this.getAvailablePayloadLength() < 2) {
-      this.errors.push(new DataOverflowError(value.toString()));
-      return this;
-    }
-
-    this.add8BitUIntToData((value >>> 8) & 0xff);
-    this.add8BitUIntToData(value & 0xff);
-    return this;
+  add16BitUIntToData = (
+    value: number | bigint,
+    bigEndian: boolean = true,
+  ): ByteArrayBuilder => {
+    return this.addNumberToData(value, 16n, false, bigEndian);
   };
 
   /**
    * Add a 32-bit unsigned integer to the payload (max value 0xffffffff = 4294967295)
-   * @param value: number - The value to add to the data
+   * @param value: number | bigint - The value to add to the data
+   * @param bigEndian: boolean - True to encode in big endian, false for little endian
    * @returns {ByteArrayBuilder} - Returns the current instance of ByteArrayBuilder
    */
-  add32BitUIntToData = (value: number): ByteArrayBuilder => {
-    if (value > MAX_32_BIT_UINT) {
-      this.errors.push(
-        new ValueOverflowError(value.toString(), MAX_32_BIT_UINT),
-      );
-      return this;
-    }
+  add32BitUIntToData = (
+    value: number | bigint,
+    bigEndian: boolean = true,
+  ): ByteArrayBuilder => {
+    return this.addNumberToData(value, 32n, false, bigEndian);
+  };
 
-    if (this.getAvailablePayloadLength() < 4) {
-      this.errors.push(new DataOverflowError(value.toString()));
-      return this;
-    }
+  /**
+   * Add a 64-bit unsigned integer to the payload (max value 0xffffffffffffffff = 18446744073709551615)
+   * @param value: number | bigint - The value to add to the data
+   * @param bigEndian: boolean - True to encode in big endian, false for little endian
+   * @returns {ByteArrayBuilder} - Returns the current instance of ByteArrayBuilder
+   */
+  add64BitUIntToData = (
+    value: number | bigint,
+    bigEndian: boolean = true,
+  ): ByteArrayBuilder => {
+    return this.addNumberToData(value, 64n, false, bigEndian);
+  };
 
-    this.add8BitUIntToData((value >>> 24) & 0xff);
-    this.add8BitUIntToData((value >>> 16) & 0xff);
-    this.add8BitUIntToData((value >>> 8) & 0xff);
-    this.add8BitUIntToData(value & 0xff);
-    return this;
+  /**
+   * Add a 16-bit signed integer to the payload (value between -0x8000 to 0x7fff)
+   * @param value: number | bigint - The value to add to the data
+   * @param bigEndian: boolean - True to encode in big endian, false for little endian
+   * @returns {ByteArrayBuilder} - Returns the current instance of ByteArrayBuilder
+   */
+  add16BitIntToData = (
+    value: number | bigint,
+    bigEndian: boolean = true,
+  ): ByteArrayBuilder => {
+    return this.addNumberToData(value, 16n, true, bigEndian);
+  };
+
+  /**
+   * Add a 32-bit signed integer to the payload (value between -0x80000000 to 0x7fffffff)
+   * @param value: number | bigint - The value to add to the data
+   * @param bigEndian: boolean - True to encode in big endian, false for little endian
+   * @returns {ByteArrayBuilder} - Returns the current instance of ByteArrayBuilder
+   */
+  add32BitIntToData = (
+    value: number | bigint,
+    bigEndian: boolean = true,
+  ): ByteArrayBuilder => {
+    return this.addNumberToData(value, 32n, true, bigEndian);
+  };
+
+  /**
+   * Add a 64-bit signed integer to the payload (value between -0x8000000000000000 to 0x7fffffffffffffff)
+   * @param value: number | bigint - The value to add to the data
+   * @param bigEndian: boolean - True to encode in big endian, false for little endian
+   * @returns {ByteArrayBuilder} - Returns the current instance of ByteArrayBuilder
+   */
+  add64BitIntToData = (
+    value: number | bigint,
+    bigEndian: boolean = true,
+  ): ByteArrayBuilder => {
+    return this.addNumberToData(value, 64n, true, bigEndian);
   };
 
   /**
@@ -231,6 +255,12 @@ export class ByteArrayBuilder {
    */
   getErrors = (): AppBuilderError[] => this.errors;
 
+  /**
+   * Verifies if the builder contains errors
+   * @returns {boolean} - Returns wether the builder contains errors or not
+   */
+  hasErrors = (): boolean => this.errors.length !== 0;
+
   // ===========
   // Private API
   // ===========
@@ -249,4 +279,88 @@ export class ByteArrayBuilder {
       this.data.length + value.length + (hasLv ? 1 : 0) <= this.maxPayloadSize
     );
   };
+
+  /**
+   * Add a number to the payload
+   * @param value: number | bigint - The value to add to the data
+   * @param sizeInBits: bigint - The number size in bits, for example 16 for a uint16
+   * @param signed: boolean - Whether the value is signed or unsigned.
+   * @param bigEndian: boolean - True to encode in big endian, false for little endian
+   * @returns {ByteArrayBuilder} - Returns the current instance of ByteArrayBuilder
+   */
+  private addNumberToData(
+    value: number | bigint,
+    sizeInBits: bigint,
+    signed: boolean,
+    bigEndian: boolean,
+  ): ByteArrayBuilder {
+    // Convert the number to two's complement and check its bounds
+    let converted = this.checkBoundsAndConvert(value, sizeInBits, signed);
+    if (converted === undefined) {
+      return this;
+    }
+
+    // Compute the buffer
+    const sizeInBytes = Number(sizeInBits) / 8;
+    const buffer = new Uint8Array(sizeInBytes);
+    if (bigEndian) {
+      for (let i = sizeInBytes - 1; i >= 0; i--) {
+        buffer[i] = Number(converted & 0xffn);
+        converted >>= 8n;
+      }
+    } else {
+      for (let i = 0; i < sizeInBytes; i++) {
+        buffer[i] = Number(converted & 0xffn);
+        converted >>= 8n;
+      }
+    }
+    return this.addBufferToData(buffer);
+  }
+
+  /**
+   * Checks the bounds of a signed or unsigned integer value and converts it to two's complement if it is signed and negative.
+   * @param value The value to check and convert.
+   * @param sizeInBits The size of the value in bits.
+   * @param signed Whether the value is signed or unsigned.
+   * @returns The converted value, or null if the value is out of bounds.
+   */
+  private checkBoundsAndConvert(
+    value: number | bigint,
+    sizeInBits: bigint,
+    signed: boolean,
+  ): bigint | undefined {
+    // Normalize the value to a bigint
+    if (typeof value === "number") {
+      if (!Number.isInteger(value) || value > Number.MAX_SAFE_INTEGER) {
+        this.errors.push(new ValueOverflowError(value.toString()));
+        return;
+      }
+      value = BigInt(value);
+    }
+
+    if (!signed) {
+      // Check if the value is within the bounds of an unsigned integer
+      const limit = 1n << sizeInBits;
+      if (value < 0 || value >= limit) {
+        this.errors.push(new ValueOverflowError(value.toString(), limit - 1n));
+        return;
+      }
+    } else {
+      // Check if the value is within the bounds of a signed integer
+      const limit = 1n << (sizeInBits - 1n);
+      if (value >= limit || value < -limit) {
+        this.errors.push(new ValueOverflowError(value.toString(), limit - 1n));
+        return;
+      }
+
+      // Convert the value to two's complement if it is negative
+      // https://en.wikipedia.org/wiki/Two%27s_complement
+      if (value < 0n) {
+        const mask = (1n << sizeInBits) - 1n;
+        value = -value;
+        value = (~value & mask) + 1n;
+      }
+    }
+    return value;
+  }
 }

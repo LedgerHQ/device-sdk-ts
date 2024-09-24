@@ -4,6 +4,7 @@ export { Apdu } from "./apdu/model/Apdu";
 export { APDU_MAX_PAYLOAD, ApduBuilder } from "./apdu/utils/ApduBuilder";
 export { ApduParser } from "./apdu/utils/ApduParser";
 export { ByteArrayBuilder } from "./apdu/utils/ByteArrayBuilder";
+export { ByteArrayParser } from "./apdu/utils/ByteArrayParser";
 export {
   CommandResultFactory,
   CommandResultStatus,
@@ -117,4 +118,8 @@ export {
   DeviceSessionStateType,
 } from "@api/device-session/DeviceSessionState";
 export { type SdkError } from "@api/Error";
-export { hexaStringToBuffer, isHexaString } from "@api/utils/HexaString";
+export {
+  bufferToHexaString,
+  hexaStringToBuffer,
+  isHexaString,
+} from "@api/utils/HexaString";
