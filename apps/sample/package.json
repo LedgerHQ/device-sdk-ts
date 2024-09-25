@@ -15,7 +15,7 @@
   "dependencies": {
     "@ledgerhq/device-management-kit": "workspace:*",
     "@ledgerhq/device-signer-kit-ethereum": "workspace:*",
-    "@ledgerhq/react-ui": "^0.15.4",
+    "@ledgerhq/react-ui": "^0.16.0",
     "@sentry/nextjs": "^8.30.0",
     "ethers": "^6.13.2",
     "next": "14.2.11",
