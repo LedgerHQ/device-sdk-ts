@@ -11,7 +11,7 @@ import { deviceModelTypes } from "@internal/device-model/di/deviceModelTypes";
 import { loggerTypes } from "@internal/logger-publisher/di/loggerTypes";
 import type { LoggerPublisherService } from "@internal/logger-publisher/service/LoggerPublisherService";
 import {
-  LEDGER_VENDOR_ID,
+  // LEDGER_VENDOR_ID,
   RECONNECT_DEVICE_TIMEOUT,
 } from "@internal/usb/data/UsbHidConfig";
 import { usbDiTypes } from "@internal/usb/di/usbDiTypes";
@@ -113,9 +113,10 @@ export class WebUsbHidTransport implements UsbHidTransport {
         let hidDevices: HIDDevice[] = [];
 
         try {
-          hidDevices = await hidApi.requestDevice({
-            filters: [{ vendorId: LEDGER_VENDOR_ID }],
-          });
+          // hidDevices = await hidApi.requestDevice({
+          //   filters: [{ vendorId: LEDGER_VENDOR_ID }],
+          // });
+          hidDevices = await hidApi.getDevices();
         } catch (error) {
           const deviceError = new NoAccessibleDeviceError(error);
           this._logger.error(`promptDeviceAccess: error requesting device`, {
@@ -194,8 +195,16 @@ export class WebUsbHidTransport implements UsbHidTransport {
 
             const discoveredDevices = hidDevices.map((hidDevice) => {
               const usbProductId = this.getHidUsbProductId(hidDevice.productId);
-              const deviceModels =
-                this.deviceModelDataSource.filterDeviceModels({ usbProductId });
+
+              let deviceModels = this.deviceModelDataSource.filterDeviceModels({
+                usbProductId,
+              });
+
+              if (deviceModels.length === 0) {
+                deviceModels = this.deviceModelDataSource.filterDeviceModels({
+                  legacyUsbProductId: usbProductId,
+                });
+              }
 
               if (deviceModels.length === 1 && deviceModels[0]) {
                 const id = uuid();
@@ -335,6 +344,13 @@ export class WebUsbHidTransport implements UsbHidTransport {
    * The USB/HID product id is represented by only the 2nd byte
    */
   private getHidUsbProductId(productId: number): number {
+    const matchingLegacyDeviceModel =
+      this.deviceModelDataSource.filterDeviceModels({
+        legacyUsbProductId: productId,
+      })[0];
+    if (matchingLegacyDeviceModel) {
+      return productId;
+    }
     return productId >> 8;
   }
 
@@ -369,6 +385,9 @@ export class WebUsbHidTransport implements UsbHidTransport {
       this._internalDevicesById.delete(internalDevice.id);
       this._disconnectionHandlersByHidId.delete(usbProductId);
       this._deviceConnectionByHidId.delete(usbProductId);
+      this._logger.debug("Closing device", {
+        data: { device: internalDevice },
+      });
       await internalDevice.hidDevice.close();
       return Right(void 0);
     } catch (error) {
@@ -391,10 +410,15 @@ export class WebUsbHidTransport implements UsbHidTransport {
     );
   }
 
-  private _handleDisconnection(
+  private async _handleDisconnection(
     device: HIDDevice,
     callback: (handler: () => void) => void,
   ) {
+    if (device.opened) {
+      await device.close();
+    }
+
+    this._logger.debug("_handleDisconnection", { data: { device } });
     const usbProductId = this.getHidUsbProductId(device.productId);
     const maybeDisconnectHandler = Maybe.fromNullable(
       this._disconnectionHandlersByHidId.get(usbProductId),
@@ -408,6 +432,7 @@ export class WebUsbHidTransport implements UsbHidTransport {
    * @param event
    */
   private handleDeviceDisconnectionEvent(event: Event) {
+    this._logger.debug("handleDeviceDisconnectionEvent", { data: { event } });
     if (!this.isHIDConnectionEvent(event)) {
       this._logger.error("Invalid event", { data: { event } });
       return;
@@ -432,6 +457,7 @@ export class WebUsbHidTransport implements UsbHidTransport {
    * @param event
    */
   private handleDeviceConnectionEvent(event: Event) {
+    this._logger.debug("handleDeviceConnectionEvent", { data: { event } });
     if (!this.isHIDConnectionEvent(event)) {
       this._logger.error("Invalid event", { data: { event } });
       return;

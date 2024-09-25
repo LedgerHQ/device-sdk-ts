@@ -21,6 +21,7 @@ type UsbHidDeviceConnectionConstructorArgs = {
 
 export class UsbHidDeviceConnection implements DeviceConnection {
   private _device: HIDDevice;
+  private _finished: boolean = false;
   private readonly _apduSender: ApduSenderService;
   private readonly _apduReceiver: ApduReceiverService;
   private _sendApduSubject: Subject<ApduResponse>;
@@ -94,6 +95,19 @@ export class UsbHidDeviceConnection implements DeviceConnection {
         data: { frame: frame.getRawData() },
       });
       try {
+        this._logger.debug("Device", {
+          data: { device: this._device, isOpen: this._device.opened },
+        });
+
+        while (!this._device.opened && !this._finished) {
+          this._logger.debug("Device not opened, waiting...");
+          await new Promise((resolve) => setTimeout(resolve, 100));
+        }
+
+        if (this._finished) {
+          return Promise.resolve(Left(new ReconnectionFailedError()));
+        }
+
         await this._device.sendReport(0, frame.getRawData());
       } catch (error) {
         this._logger.error("Error sending frame", { data: { error } });
@@ -136,6 +150,7 @@ export class UsbHidDeviceConnection implements DeviceConnection {
   }
 
   private reconnected() {
+    this._logger.debug("Reconnected");
     this._settleReconnectionPromise.ifJust((promise) => {
       promise.resolve();
       this._settleReconnectionPromise = Maybe.zero();
@@ -143,6 +158,8 @@ export class UsbHidDeviceConnection implements DeviceConnection {
   }
 
   public disconnect() {
+    this._logger.debug("Disconnected");
+    this._finished = true;
     this._settleReconnectionPromise.ifJust((promise) => {
       promise.reject(new ReconnectionFailedError());
       this._settleReconnectionPromise = Maybe.zero();
