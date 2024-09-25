@@ -4,7 +4,6 @@
   "license": "MIT",
   "main": "lib/cjs/index.js",
   "types": "lib/cjs/index.d.ts",
-  "private": true,
   "exports": {
     ".": {
       "import": "./lib/esm/index.js",
