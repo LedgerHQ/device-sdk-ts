@@ -69,8 +69,8 @@ importers:
         specifier: workspace:*
         version: link:../../packages/signer/keyring-eth
       '@ledgerhq/react-ui':
-        specifier: ^0.15.4
-        version: 0.15.4(@types/react@18.3.8)(react-dom@18.3.1(react@18.3.1))(react-native-svg@15.3.0(react-native@0.74.3(@babel/core@7.24.7)(@babel/preset-env@7.24.7(@babel/core@7.24.7))(@types/react@18.3.8)(react@18.3.1))(react@18.3.1))(react@18.3.1)(styled-components@5.3.11(@babel/core@7.24.7)(react-dom@18.3.1(react@18.3.1))(react-is@18.3.1)(react@18.3.1))
+        specifier: ^0.16.0
+        version: 0.16.0(@emotion/is-prop-valid@1.2.1)(@types/react@18.3.8)(react-dom@18.3.1(react@18.3.1))(react-native-svg@15.3.0(react-native@0.74.3(@babel/core@7.24.7)(@babel/preset-env@7.24.7(@babel/core@7.24.7))(@types/react@18.3.8)(react@18.3.1))(react@18.3.1))(react@18.3.1)(styled-components@5.3.11(@babel/core@7.24.7)(react-dom@18.3.1(react@18.3.1))(react-is@18.3.1)(react@18.3.1))
       '@sentry/nextjs':
         specifier: ^8.30.0
         version: 8.30.0(@opentelemetry/api@1.9.0)(@opentelemetry/core@1.26.0(@opentelemetry/api@1.9.0))(@opentelemetry/instrumentation@0.53.0(@opentelemetry/api@1.9.0))(@opentelemetry/sdk-trace-base@1.26.0(@opentelemetry/api@1.9.0))(next@14.2.11(@babel/core@7.24.7)(@opentelemetry/api@1.9.0)(babel-plugin-macros@3.1.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(react@18.3.1)(webpack@5.92.1)
@@ -1647,8 +1647,8 @@ packages:
   '@jridgewell/trace-mapping@0.3.9':
     resolution: {integrity: sha512-3Belt6tdc8bPgAtbcmdtNJlirVoTmEb5e2gC94PnkwEW9jI6CAHUeoG85tjWP5WquqfavoMtMwiG4P926ZKKuQ==}
 
-  '@ledgerhq/crypto-icons-ui@1.4.0':
-    resolution: {integrity: sha512-iv/Svoeyxm1DiPZJvDLlWqONycgZGeebBp9S/EleDJOg2qhs9KCZcT8xAB8kxAjUsSElNwSah4QpK37lbV0WFA==}
+  '@ledgerhq/crypto-icons-ui@1.4.1':
+    resolution: {integrity: sha512-9C8YghzXSzs0jgZjTHQ+AgA9kvbFfBRA4mc9ZAxpdmuSapTd8s/cnzYYNSebD8T6geo7qY/u0CChiqJbFWU7Ow==}
     peerDependencies:
       '@types/react': '*'
       react: '*'
@@ -1659,8 +1659,8 @@ packages:
       '@types/react':
         optional: true
 
-  '@ledgerhq/icons-ui@0.7.2':
-    resolution: {integrity: sha512-QApI15+uXbzJhnUU9rPsmKNnalKOZ2JLfA4gOlNGKYIQHe//npLupTNLGB2s48av7uAtY2yip9yJHpTFdff7bw==}
+  '@ledgerhq/icons-ui@0.7.3':
+    resolution: {integrity: sha512-/OIw+jH0UHz6q11chlN5KqCqjTwquBAsyrldz7N/O/vYoO9Rr6CVNV0BWJluTDnBezmoDelqXN6bcEHfSqMNUw==}
     peerDependencies:
       '@types/react': '*'
       react: '*'
@@ -1671,8 +1671,8 @@ packages:
       '@types/react':
         optional: true
 
-  '@ledgerhq/react-ui@0.15.4':
-    resolution: {integrity: sha512-Rq4O3iry25Sc1VeOlufXzkVVkC8FIz08i4OWrPke79gO5BCJEFuv7shZb7nbqJDIb5NQuPSSGeHH6dDhiuJ0Dw==}
+  '@ledgerhq/react-ui@0.16.0':
+    resolution: {integrity: sha512-O12mJZ6Hp58GHM+/ytLNj4h57HyieTQv4jl0UHPfSpiQkLrRj7b0FWy5oJPzHG0ZgNBjT1y1p2IXkDkAOZ7tRQ==}
     peerDependencies:
       '@types/react': '*'
       react: '>=17.0.2'
@@ -3849,6 +3849,20 @@ packages:
 
   fraction.js@4.3.7:
     resolution: {integrity: sha512-ZsDfxO51wGAXREY55a7la9LScWpwv9RxIrYABrlvOFBlH/ShPnrtsXeuUIfXKKOVicNxQ+o8JTbJvjS4M89yew==}
+
+  framer-motion@11.7.0:
+    resolution: {integrity: sha512-m+1E3mMzDIQ5DsVghMvXyC+jSkZSm5RHBLA2gHa/LczcXwW6JbQK4Uz48LsuCTGV8bZFVUezcauHj3M33tY/5w==}
+    peerDependencies:
+      '@emotion/is-prop-valid': '*'
+      react: ^18.0.0
+      react-dom: ^18.0.0
+    peerDependenciesMeta:
+      '@emotion/is-prop-valid':
+        optional: true
+      react:
+        optional: true
+      react-dom:
+        optional: true
 
   fresh@0.5.2:
     resolution: {integrity: sha512-zJ2mQYM18rEFOudeV4GShTGIQ7RbzA7ozbU9I/XBpm7kqgMywgmylMwXHxZJmkVoYkna9d2pVXVXPdYTP9ej8Q==}
@@ -8520,7 +8534,7 @@ snapshots:
       '@jridgewell/resolve-uri': 3.1.2
       '@jridgewell/sourcemap-codec': 1.4.15
 
-  '@ledgerhq/crypto-icons-ui@1.4.0(@types/react@18.3.8)(react-native-svg@15.3.0(react-native@0.74.3(@babel/core@7.24.7)(@babel/preset-env@7.24.7(@babel/core@7.24.7))(@types/react@18.3.8)(react@18.3.1))(react@18.3.1))(react@18.3.1)(styled-components@5.3.11(@babel/core@7.24.7)(react-dom@18.3.1(react@18.3.1))(react-is@18.3.1)(react@18.3.1))(styled-system@5.1.5)':
+  '@ledgerhq/crypto-icons-ui@1.4.1(@types/react@18.3.8)(react-native-svg@15.3.0(react-native@0.74.3(@babel/core@7.24.7)(@babel/preset-env@7.24.7(@babel/core@7.24.7))(@types/react@18.3.8)(react@18.3.1))(react@18.3.1))(react@18.3.1)(styled-components@5.3.11(@babel/core@7.24.7)(react-dom@18.3.1(react@18.3.1))(react-is@18.3.1)(react@18.3.1))(styled-system@5.1.5)':
     dependencies:
       react: 18.3.1
       react-native-svg: 15.3.0(react-native@0.74.3(@babel/core@7.24.7)(@babel/preset-env@7.24.7(@babel/core@7.24.7))(@types/react@18.3.8)(react@18.3.1))(react@18.3.1)
@@ -8529,7 +8543,7 @@ snapshots:
     optionalDependencies:
       '@types/react': 18.3.8
 
-  '@ledgerhq/icons-ui@0.7.2(@types/react@18.3.8)(react-native-svg@15.3.0(react-native@0.74.3(@babel/core@7.24.7)(@babel/preset-env@7.24.7(@babel/core@7.24.7))(@types/react@18.3.8)(react@18.3.1))(react@18.3.1))(react@18.3.1)(styled-components@5.3.11(@babel/core@7.24.7)(react-dom@18.3.1(react@18.3.1))(react-is@18.3.1)(react@18.3.1))(styled-system@5.1.5)':
+  '@ledgerhq/icons-ui@0.7.3(@types/react@18.3.8)(react-native-svg@15.3.0(react-native@0.74.3(@babel/core@7.24.7)(@babel/preset-env@7.24.7(@babel/core@7.24.7))(@types/react@18.3.8)(react@18.3.1))(react@18.3.1))(react@18.3.1)(styled-components@5.3.11(@babel/core@7.24.7)(react-dom@18.3.1(react@18.3.1))(react-is@18.3.1)(react@18.3.1))(styled-system@5.1.5)':
     dependencies:
       react: 18.3.1
       react-native-svg: 15.3.0(react-native@0.74.3(@babel/core@7.24.7)(@babel/preset-env@7.24.7(@babel/core@7.24.7))(@types/react@18.3.8)(react@18.3.1))(react@18.3.1)
@@ -8538,15 +8552,16 @@ snapshots:
     optionalDependencies:
       '@types/react': 18.3.8
 
-  '@ledgerhq/react-ui@0.15.4(@types/react@18.3.8)(react-dom@18.3.1(react@18.3.1))(react-native-svg@15.3.0(react-native@0.74.3(@babel/core@7.24.7)(@babel/preset-env@7.24.7(@babel/core@7.24.7))(@types/react@18.3.8)(react@18.3.1))(react@18.3.1))(react@18.3.1)(styled-components@5.3.11(@babel/core@7.24.7)(react-dom@18.3.1(react@18.3.1))(react-is@18.3.1)(react@18.3.1))':
+  '@ledgerhq/react-ui@0.16.0(@emotion/is-prop-valid@1.2.1)(@types/react@18.3.8)(react-dom@18.3.1(react@18.3.1))(react-native-svg@15.3.0(react-native@0.74.3(@babel/core@7.24.7)(@babel/preset-env@7.24.7(@babel/core@7.24.7))(@types/react@18.3.8)(react@18.3.1))(react@18.3.1))(react@18.3.1)(styled-components@5.3.11(@babel/core@7.24.7)(react-dom@18.3.1(react@18.3.1))(react-is@18.3.1)(react@18.3.1))':
     dependencies:
       '@floating-ui/react-dom': 0.4.3(@types/react@18.3.8)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
-      '@ledgerhq/crypto-icons-ui': 1.4.0(@types/react@18.3.8)(react-native-svg@15.3.0(react-native@0.74.3(@babel/core@7.24.7)(@babel/preset-env@7.24.7(@babel/core@7.24.7))(@types/react@18.3.8)(react@18.3.1))(react@18.3.1))(react@18.3.1)(styled-components@5.3.11(@babel/core@7.24.7)(react-dom@18.3.1(react@18.3.1))(react-is@18.3.1)(react@18.3.1))(styled-system@5.1.5)
-      '@ledgerhq/icons-ui': 0.7.2(@types/react@18.3.8)(react-native-svg@15.3.0(react-native@0.74.3(@babel/core@7.24.7)(@babel/preset-env@7.24.7(@babel/core@7.24.7))(@types/react@18.3.8)(react@18.3.1))(react@18.3.1))(react@18.3.1)(styled-components@5.3.11(@babel/core@7.24.7)(react-dom@18.3.1(react@18.3.1))(react-is@18.3.1)(react@18.3.1))(styled-system@5.1.5)
+      '@ledgerhq/crypto-icons-ui': 1.4.1(@types/react@18.3.8)(react-native-svg@15.3.0(react-native@0.74.3(@babel/core@7.24.7)(@babel/preset-env@7.24.7(@babel/core@7.24.7))(@types/react@18.3.8)(react@18.3.1))(react@18.3.1))(react@18.3.1)(styled-components@5.3.11(@babel/core@7.24.7)(react-dom@18.3.1(react@18.3.1))(react-is@18.3.1)(react@18.3.1))(styled-system@5.1.5)
+      '@ledgerhq/icons-ui': 0.7.3(@types/react@18.3.8)(react-native-svg@15.3.0(react-native@0.74.3(@babel/core@7.24.7)(@babel/preset-env@7.24.7(@babel/core@7.24.7))(@types/react@18.3.8)(react@18.3.1))(react@18.3.1))(react@18.3.1)(styled-components@5.3.11(@babel/core@7.24.7)(react-dom@18.3.1(react@18.3.1))(react-is@18.3.1)(react@18.3.1))(styled-system@5.1.5)
       '@ledgerhq/ui-shared': 0.2.1
       '@tippyjs/react': 4.2.6(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       color: 4.2.3
       embla-carousel-react: 8.0.0-rc17(react@18.3.1)
+      framer-motion: 11.7.0(@emotion/is-prop-valid@1.2.1)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       react: 18.3.1
       react-dom: 18.3.1(react@18.3.1)
       react-is: 17.0.2
@@ -8559,6 +8574,7 @@ snapshots:
     optionalDependencies:
       '@types/react': 18.3.8
     transitivePeerDependencies:
+      - '@emotion/is-prop-valid'
       - react-native-svg
       - supports-color
 
@@ -11318,6 +11334,14 @@ snapshots:
       fetch-blob: 3.2.0
 
   fraction.js@4.3.7: {}
+
+  framer-motion@11.7.0(@emotion/is-prop-valid@1.2.1)(react-dom@18.3.1(react@18.3.1))(react@18.3.1):
+    dependencies:
+      tslib: 2.7.0
+    optionalDependencies:
+      '@emotion/is-prop-valid': 1.2.1
+      react: 18.3.1
+      react-dom: 18.3.1(react@18.3.1)
 
   fresh@0.5.2: {}
 
