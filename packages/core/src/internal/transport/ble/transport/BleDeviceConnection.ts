@@ -68,7 +68,7 @@ export class BleDeviceConnection implements DeviceConnection {
     this._sendApduSubject = new Subject();
   }
 
-  public set notifyCharacteristic(
+  private set notifyCharacteristic(
     notifyCharacteristic: BluetoothRemoteGATTCharacteristic,
   ) {
     this._notifyCharacteristic = notifyCharacteristic;
@@ -78,7 +78,7 @@ export class BleDeviceConnection implements DeviceConnection {
     );
   }
 
-  public set writeCharacteristic(
+  private set writeCharacteristic(
     writeCharacteristic: BluetoothRemoteGATTCharacteristic,
   ) {
     this._writeCharacteristic = writeCharacteristic;

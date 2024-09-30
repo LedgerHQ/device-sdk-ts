@@ -1,9 +1,11 @@
 import { InternalDeviceModel } from "@internal/device-model/model/DeviceModel";
 
-export interface BleDeviceInfos {
-  deviceModel: InternalDeviceModel;
-  serviceUuid: string;
-  writeUuid: string;
-  writeCmdUuid: string;
-  notifyUuid: string;
+export class BleDeviceInfos {
+  constructor(
+    public deviceModel: InternalDeviceModel,
+    public serviceUuid: string,
+    public writeUuid: string,
+    public writeCmdUuid: string,
+    public notifyUuid: string,
+  ) {}
 }
