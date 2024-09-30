@@ -1,0 +1,6 @@
+{
+  "type": "js",
+  "profile": "license-compliance",
+  "output": "sbom.json",
+  "print": true
+}

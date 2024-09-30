@@ -27,11 +27,13 @@
     "changelog": "changeset add",
     "commit": "gitmoji -c",
     "commitcl": "pnpm changelog && git add .changeset && pnpm commit",
-    "danger:local": "pnpm danger local --dangerfile danger/dangerfile.ts --base origin/develop"
+    "danger:local": "pnpm danger local --dangerfile danger/dangerfile.ts --base origin/develop",
+    "sbom": "FETCH_LICENSE=1 cdxgen --required-only"
   },
   "devDependencies": {
     "@changesets/changelog-github": "^0.5.0",
     "@changesets/cli": "^2.27.8",
+    "@cyclonedx/cdxgen": "^10.10.1",
     "@types/jest": "^29.5.13",
     "@types/node": "^22.7.4",
     "concurrently": "^9.0.1",
