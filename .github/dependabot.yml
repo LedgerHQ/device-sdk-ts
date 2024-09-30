@@ -17,23 +17,6 @@ updates:
         patterns:
          - "*"
 
-  # Sample App dependencies for pnpm
-  - package-ecosystem: "npm"
-    directories:
-      - "/apps/sample"
-    schedule:
-      interval: "weekly"
-      day: "sunday"
-      timezone: "Europe/Paris"
-    labels:
-      - "dependencies"
-    reviewers:
-      - "LedgerHQ/live-devices"
-    commit-message:
-      prefix: "⬆️ (sample) [NO-ISSUE]: "
-    ignore:
-      - dependency-name: "typescript"
-
   # Maintain dependencies for pnpm
   - package-ecosystem: "npm"
     directory: "/"
@@ -73,3 +56,18 @@ updates:
         exclude-patterns:
           - "typescript-eslint"
 
+  # Sample App dependencies for pnpm
+  - package-ecosystem: "npm"
+    directory: "/apps/sample"
+    schedule:
+      interval: "weekly"
+      day: "sunday"
+      timezone: "Europe/Paris"
+    labels:
+      - "dependencies"
+    reviewers:
+      - "LedgerHQ/live-devices"
+    commit-message:
+      prefix: "⬆️ (sample) [NO-ISSUE]: "
+    ignore:
+      - dependency-name: "typescript"
