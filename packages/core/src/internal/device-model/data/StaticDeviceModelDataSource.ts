@@ -117,10 +117,13 @@ export class StaticDeviceModelDataSource implements DeviceModelDataSource {
           ...bluetoothSpec.reduce<Record<string, BleDeviceInfos>>(
             (serviceToModel, bleSpec) => ({
               ...serviceToModel,
-              [bleSpec.serviceUuid]: {
+              [bleSpec.serviceUuid]: new BleDeviceInfos(
                 deviceModel,
-                ...bleSpec,
-              },
+                bleSpec.serviceUuid,
+                bleSpec.writeUuid,
+                bleSpec.writeCmdUuid,
+                bleSpec.notifyUuid,
+              ),
             }),
             {},
           ),

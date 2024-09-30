@@ -318,23 +318,31 @@ export class WebBleTransport implements Transport {
     return Right(connectedDevice);
   }
 
+  /**
+   * Get the device disconnected handler
+   * @param internalDevice WebBleInternalDevice
+   * @param deviceConnection BleDeviceConnection
+   * @returns async () => void
+   * @private
+   */
   private _getDeviceDisconnectedHandler(
     internalDevice: WebBleInternalDevice,
     deviceConnection: BleDeviceConnection,
   ) {
     return async () => {
+      // start a timer to disconnect the device if it does not reconnect
       const disconnectObserver = timer(RECONNECT_DEVICE_TIMEOUT).subscribe(
         () => {
+          // retrieve the disconnect handler and call it
           const disconnectHandler = Maybe.fromNullable(
             this._disconnectionHandlersById.get(internalDevice.id),
           );
-          disconnectHandler.map((handler) => {
-            this._logger.info("timer over, disconnect device");
-            handler();
-          });
+          disconnectHandler.map((handler) => handler());
         },
       );
+      // connect to the navigator device
       await internalDevice.bleDevice.gatt?.connect();
+      // retrieve new ble characteristics
       const service = await this.getBleGattService(internalDevice.bleDevice);
       if (service.isRight()) {
         const [writeC, notifyC] = await Promise.all([
@@ -345,7 +353,9 @@ export class WebBleTransport implements Transport {
             .extract()
             .getCharacteristic(internalDevice.bleDeviceInfos.notifyUuid),
         ]);
+        // reconnect device connection
         await deviceConnection.reconnect(writeC, notifyC);
+        // cancel disconnection timeout
         disconnectObserver.unsubscribe();
       }
     };
@@ -354,11 +364,12 @@ export class WebBleTransport implements Transport {
   /**
    * Disconnect from a BLE device and delete its handlers
    *
-   * @param connectedDevice InternalConnectedDevice
+   * @param params { connectedDevice: InternalConnectedDevice }
    */
   async disconnect(params: {
     connectedDevice: InternalConnectedDevice;
   }): Promise<Either<SdkError, void>> {
+    // retrieve internal device from connected device
     const maybeInternalDevice = Maybe.fromNullable(
       this._internalDevicesById.get(params.connectedDevice.id),
     );
@@ -371,6 +382,7 @@ export class WebBleTransport implements Transport {
     }
     maybeInternalDevice.map((device) => {
       const { bleDevice } = device;
+      // retrieve device connection and disconnect it
       const maybeDeviceConnection = Maybe.fromNullable(
         this._deviceConnectionById.get(device.id),
       );
