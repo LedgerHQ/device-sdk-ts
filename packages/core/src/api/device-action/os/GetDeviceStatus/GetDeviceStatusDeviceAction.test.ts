@@ -24,7 +24,7 @@ describe("GetDeviceStatusDeviceAction", () => {
   const getAppAndVersionMock = jest.fn();
   const getDeviceSessionStateMock = jest.fn();
   const waitForDeviceUnlockMock = jest.fn();
-  const saveSessionStateMock = jest.fn();
+  const setDeviceSessionState = jest.fn();
   const isDeviceOnboardedMock = jest.fn();
 
   function extractDependenciesMock() {
@@ -32,7 +32,7 @@ describe("GetDeviceStatusDeviceAction", () => {
       getAppAndVersion: getAppAndVersionMock,
       getDeviceSessionState: getDeviceSessionStateMock,
       waitForDeviceUnlock: waitForDeviceUnlockMock,
-      saveSessionState: saveSessionStateMock,
+      setDeviceSessionState: setDeviceSessionState,
       isDeviceOnboarded: isDeviceOnboardedMock,
     };
   }
@@ -75,12 +75,6 @@ describe("GetDeviceStatusDeviceAction", () => {
           status: DeviceActionStatus.Pending,
         },
         {
-          intermediateValue: {
-            requiredUserInteraction: UserInteractionRequired.None,
-          },
-          status: DeviceActionStatus.Pending,
-        },
-        {
           output: {
             currentApp: "BOLOS",
             currentAppVersion: "1.0.0",
@@ -105,7 +99,7 @@ describe("GetDeviceStatusDeviceAction", () => {
       apiGetDeviceSessionStateMock.mockReturnValue({
         sessionStateType: DeviceSessionStateType.ReadyWithoutSecureChannel,
         deviceStatus: DeviceStatus.LOCKED,
-        currentApp: "mockedCurrentApp",
+        currentApp: { name: "mockedCurrentApp", version: "1.0.0" },
         installedApps: [],
       });
 
@@ -119,7 +113,7 @@ describe("GetDeviceStatusDeviceAction", () => {
                     sessionStateType:
                       DeviceSessionStateType.ReadyWithoutSecureChannel,
                     deviceStatus: DeviceStatus.CONNECTED,
-                    currentApp: "mockedCurrentApp",
+                    currentApp: { name: "mockedCurrentApp", version: "1.0.0" },
                     installedApps: [],
                   });
                   o.complete();
@@ -128,7 +122,7 @@ describe("GetDeviceStatusDeviceAction", () => {
                     sessionStateType:
                       DeviceSessionStateType.ReadyWithoutSecureChannel,
                     deviceStatus: DeviceStatus.LOCKED,
-                    currentApp: "mockedCurrentApp",
+                    currentApp: { name: "mockedCurrentApp", version: "1.0.0" },
                     installedApps: [],
                   });
                 }
@@ -164,12 +158,6 @@ describe("GetDeviceStatusDeviceAction", () => {
           status: DeviceActionStatus.Pending,
         },
         {
-          intermediateValue: {
-            requiredUserInteraction: UserInteractionRequired.None,
-          },
-          status: DeviceActionStatus.Pending,
-        },
-        {
           output: {
             currentApp: "BOLOS",
             currentAppVersion: "1.0.0",
@@ -192,7 +180,7 @@ describe("GetDeviceStatusDeviceAction", () => {
       getDeviceSessionStateMock.mockReturnValue({
         sessionStateType: DeviceSessionStateType.ReadyWithoutSecureChannel,
         deviceStatus: DeviceStatus.CONNECTED,
-        currentApp: "mockedCurrentApp",
+        currentApp: { name: "mockedCurrentApp", version: "1.0.0" },
       });
 
       getAppAndVersionMock.mockResolvedValue(
@@ -220,12 +208,6 @@ describe("GetDeviceStatusDeviceAction", () => {
           status: DeviceActionStatus.Pending,
         },
         {
-          intermediateValue: {
-            requiredUserInteraction: UserInteractionRequired.None,
-          },
-          status: DeviceActionStatus.Pending,
-        },
-        {
           status: DeviceActionStatus.Completed,
           output: {
             currentApp: "BOLOS",
@@ -246,7 +228,7 @@ describe("GetDeviceStatusDeviceAction", () => {
       getDeviceSessionStateMock.mockReturnValue({
         sessionStateType: DeviceSessionStateType.ReadyWithoutSecureChannel,
         deviceStatus: DeviceStatus.LOCKED,
-        currentApp: "mockedCurrentApp",
+        currentApp: { name: "mockedCurrentApp", version: "1.0.0" },
       });
 
       getAppAndVersionMock.mockResolvedValue(
@@ -268,7 +250,7 @@ describe("GetDeviceStatusDeviceAction", () => {
                     sessionStateType:
                       DeviceSessionStateType.ReadyWithoutSecureChannel,
                     deviceStatus: DeviceStatus.CONNECTED,
-                    currentApp: "mockedCurrentApp",
+                    currentApp: { name: "mockedCurrentApp", version: "1.0.0" },
                   });
                   o.complete();
                 } else {
@@ -276,7 +258,7 @@ describe("GetDeviceStatusDeviceAction", () => {
                     sessionStateType:
                       DeviceSessionStateType.ReadyWithoutSecureChannel,
                     deviceStatus: DeviceStatus.LOCKED,
-                    currentApp: "mockedCurrentApp",
+                    currentApp: { name: "mockedCurrentApp", version: "1.0.0" },
                   });
                 }
               },
@@ -310,12 +292,6 @@ describe("GetDeviceStatusDeviceAction", () => {
           status: DeviceActionStatus.Pending,
         },
         {
-          intermediateValue: {
-            requiredUserInteraction: UserInteractionRequired.None,
-          },
-          status: DeviceActionStatus.Pending,
-        },
-        {
           status: DeviceActionStatus.Completed,
           output: {
             currentApp: "BOLOS",
@@ -338,7 +314,7 @@ describe("GetDeviceStatusDeviceAction", () => {
       getDeviceSessionStateMock.mockReturnValue({
         sessionStateType: DeviceSessionStateType.ReadyWithoutSecureChannel,
         deviceStatus: DeviceStatus.LOCKED,
-        currentApp: "mockedCurrentApp",
+        currentApp: { name: "mockedCurrentApp", version: "1.0.0" },
       });
       isDeviceOnboardedMock.mockReturnValue(false);
 
@@ -369,7 +345,7 @@ describe("GetDeviceStatusDeviceAction", () => {
       getDeviceSessionStateMock.mockReturnValue({
         sessionStateType: DeviceSessionStateType.ReadyWithoutSecureChannel,
         deviceStatus: DeviceStatus.LOCKED,
-        currentApp: "mockedCurrentApp",
+        currentApp: { name: "mockedCurrentApp", version: "1.0.0" },
       });
 
       apiGetDeviceSessionStateObservableMock.mockImplementation(
@@ -381,7 +357,7 @@ describe("GetDeviceStatusDeviceAction", () => {
                   sessionStateType:
                     DeviceSessionStateType.ReadyWithoutSecureChannel,
                   deviceStatus: DeviceStatus.LOCKED,
-                  currentApp: "mockedCurrentApp",
+                  currentApp: { name: "mockedCurrentApp", version: "1.0.0" },
                   installedApps: [],
                 });
               },
@@ -426,7 +402,7 @@ describe("GetDeviceStatusDeviceAction", () => {
       getDeviceSessionStateMock.mockReturnValue({
         sessionStateType: DeviceSessionStateType.ReadyWithoutSecureChannel,
         deviceStatus: DeviceStatus.LOCKED,
-        currentApp: "mockedCurrentApp",
+        currentApp: { name: "mockedCurrentApp", version: "1.0.0" },
       });
 
       const error = new GlobalCommandError({
@@ -446,7 +422,7 @@ describe("GetDeviceStatusDeviceAction", () => {
                     sessionStateType:
                       DeviceSessionStateType.ReadyWithoutSecureChannel,
                     deviceStatus: DeviceStatus.CONNECTED,
-                    currentApp: "mockedCurrentApp",
+                    currentApp: { name: "mockedCurrentApp", version: "1.0.0" },
                   });
                   o.complete();
                 } else {
@@ -454,7 +430,7 @@ describe("GetDeviceStatusDeviceAction", () => {
                     sessionStateType:
                       DeviceSessionStateType.ReadyWithoutSecureChannel,
                     deviceStatus: DeviceStatus.LOCKED,
-                    currentApp: "mockedCurrentApp",
+                    currentApp: { name: "mockedCurrentApp", version: "1.0.0" },
                   });
                 }
               },
@@ -505,7 +481,7 @@ describe("GetDeviceStatusDeviceAction", () => {
       getDeviceSessionStateMock.mockReturnValue({
         sessionStateType: DeviceSessionStateType.ReadyWithoutSecureChannel,
         deviceStatus: DeviceStatus.LOCKED,
-        currentApp: "mockedCurrentApp",
+        currentApp: { name: "mockedCurrentApp", version: "1.0.0" },
       });
 
       getAppAndVersionMock.mockImplementation(() => {
@@ -553,100 +529,13 @@ describe("GetDeviceStatusDeviceAction", () => {
         done,
       );
     });
-
-    it("should end in an error if saveSessionState fails", (done) => {
-      getDeviceSessionStateMock.mockReturnValue({
-        sessionStateType: DeviceSessionStateType.ReadyWithoutSecureChannel,
-        deviceStatus: DeviceStatus.LOCKED,
-        currentApp: "mockedCurrentApp",
-      });
-
-      getAppAndVersionMock.mockResolvedValue(
-        CommandResultFactory({
-          data: {
-            app: null,
-            version: null,
-          },
-        }),
-      );
-
-      waitForDeviceUnlockMock.mockImplementation(
-        () =>
-          new Observable((o) => {
-            const inner = interval(50).subscribe({
-              next: (i) => {
-                if (i > 2) {
-                  o.next({
-                    sessionStateType:
-                      DeviceSessionStateType.ReadyWithoutSecureChannel,
-                    deviceStatus: DeviceStatus.CONNECTED,
-                    currentApp: "mockedCurrentApp",
-                  });
-                  o.complete();
-                } else {
-                  o.next({
-                    sessionStateType:
-                      DeviceSessionStateType.ReadyWithoutSecureChannel,
-                    deviceStatus: DeviceStatus.LOCKED,
-                    currentApp: "mockedCurrentApp",
-                  });
-                }
-              },
-            });
-
-            return () => {
-              inner.unsubscribe();
-            };
-          }),
-      );
-
-      const getDeviceStateDeviceAction = new GetDeviceStatusDeviceAction({
-        input: { unlockTimeout: 500 },
-      });
-
-      jest
-        .spyOn(getDeviceStateDeviceAction, "extractDependencies")
-        .mockReturnValue(extractDependenciesMock());
-
-      const expectedStates: Array<GetDeviceStatusDAState> = [
-        {
-          intermediateValue: {
-            requiredUserInteraction: UserInteractionRequired.UnlockDevice,
-          },
-          status: DeviceActionStatus.Pending,
-        },
-        {
-          intermediateValue: {
-            requiredUserInteraction: UserInteractionRequired.None,
-          },
-          status: DeviceActionStatus.Pending,
-        },
-        {
-          intermediateValue: {
-            requiredUserInteraction: UserInteractionRequired.None,
-          },
-          status: DeviceActionStatus.Pending,
-        },
-        {
-          error: new UnknownDAError("SaveAppStateError"),
-          status: DeviceActionStatus.Error,
-        },
-      ];
-
-      testDeviceActionStates(
-        getDeviceStateDeviceAction,
-        expectedStates,
-        makeDeviceActionInternalApiMock(),
-        done,
-      );
-    });
   });
 
   it("should emit a stopped state if the action is cancelled", (done) => {
     apiGetDeviceSessionStateMock.mockReturnValue({
       sessionStateType: DeviceSessionStateType.ReadyWithoutSecureChannel,
       deviceStatus: DeviceStatus.CONNECTED,
-      currentApp: "mockedCurrentApp",
+      currentApp: { name: "mockedCurrentApp", version: "1.0.0" },
       installedApps: [],
     });
 

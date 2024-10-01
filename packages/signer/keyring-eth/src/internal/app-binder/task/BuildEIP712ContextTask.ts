@@ -71,7 +71,7 @@ export class BuildEIP712ContextTask {
     if (deviceState.sessionStateType === DeviceSessionStateType.Connected) {
       return Nothing;
     }
-    if (deviceState.currentApp !== "Ethereum") {
+    if (deviceState.currentApp.name !== "Ethereum") {
       return Nothing;
     }
     // TODO add currentAppVersion to session state

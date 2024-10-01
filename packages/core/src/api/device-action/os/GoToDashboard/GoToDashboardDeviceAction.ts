@@ -1,11 +1,5 @@
 import { Left, Right } from "purify-ts";
-import {
-  AnyEventObject,
-  assign,
-  fromCallback,
-  fromPromise,
-  setup,
-} from "xstate";
+import { assign, fromPromise, setup } from "xstate";
 
 import { isSuccessCommandResult } from "@api/command/model/CommandResult";
 import {
@@ -26,9 +20,12 @@ import {
   DeviceActionStateMachine,
   XStateDeviceAction,
 } from "@api/device-action/xstate-utils/XStateDeviceAction";
-import { DeviceSessionState } from "@api/device-session/DeviceSessionState";
-
 import {
+  DeviceSessionState,
+  DeviceSessionStateType,
+} from "@api/device-session/DeviceSessionState";
+
+import type {
   GoToDashboardDAError,
   GoToDashboardDAInput,
   GoToDashboardDAIntermediateValue,
@@ -44,7 +41,9 @@ export type MachineDependencies = {
   readonly getAppAndVersion: () => Promise<GetAppAndVersionCommandResult>;
   readonly closeApp: () => Promise<CloseAppCommandResult>;
   readonly getDeviceSessionState: () => DeviceSessionState;
-  readonly saveSessionState: (state: DeviceSessionState) => DeviceSessionState;
+  readonly setDeviceSessionState: (
+    state: DeviceSessionState,
+  ) => DeviceSessionState;
 };
 
 export type ExtractMachineDependencies = (
@@ -77,7 +76,7 @@ export class GoToDashboardDeviceAction extends XStateDeviceAction<
 
     const {
       getDeviceSessionState,
-      saveSessionState,
+      setDeviceSessionState,
       closeApp,
       getAppAndVersion,
     } = this.extractDependencies(internalApi);
@@ -89,7 +88,6 @@ export class GoToDashboardDeviceAction extends XStateDeviceAction<
         unlockTimeout,
       },
     }).makeStateMachine(internalApi);
-
     return setup({
       types: {
         input: {
@@ -102,30 +100,6 @@ export class GoToDashboardDeviceAction extends XStateDeviceAction<
         getAppAndVersion: fromPromise(getAppAndVersion),
         closeApp: fromPromise(closeApp),
         getDeviceStatus: getDeviceStatusMachine,
-        saveSessionState: fromCallback(
-          ({
-            input,
-            sendBack,
-          }: {
-            sendBack: (event: AnyEventObject) => void;
-            input: {
-              currentApp: string;
-            };
-          }) => {
-            const { currentApp } = input;
-            const sessionState = getDeviceSessionState();
-            const updatedState = {
-              ...sessionState,
-              currentApp,
-            };
-            try {
-              saveSessionState(updatedState);
-              sendBack({ type: "done" });
-            } catch (_: unknown) {
-              sendBack({ type: "error" });
-            }
-          },
-        ),
       },
       guards: {
         hasError: ({ context }: { context: types["context"] }) => {
@@ -141,12 +115,6 @@ export class GoToDashboardDeviceAction extends XStateDeviceAction<
         //     error: new UnknownDAError("GetDeviceUnknownStatusError"),
         //   }),
         // }),
-        assignErrorSaveAppState: assign({
-          _internalState: (_) => ({
-            ..._.context._internalState,
-            error: new UnknownDAError("SaveAppStateError"),
-          }),
-        }),
         assignErrorFromEvent: assign({
           _internalState: (_) => ({
             ..._.context._internalState,
@@ -155,7 +123,7 @@ export class GoToDashboardDeviceAction extends XStateDeviceAction<
         }),
       },
     }).createMachine({
-      /** @xstate-layout N4IgpgJg5mDOIC5QHED2AVVARAhrAFgEao4BOEWYAbgJYDGYAgnQC42oB2AdJbQwEpgcEAJ4BiANoAGALqJQAB1SwabTvJAAPRAEYAnFK4AOAGwB2HUYAsAZik2TOqwCYANCBG7LXM85MBWG39ne38pHRsAX0j3NExcAmIyCmp6JlZ2bmQwFl40gGUWHBYAV1gxCE4wLhoOKlQAa2qIVIZC4rLpOSQQJRU1Dg1tBEdnLh0TKykzez1-eb09d08EEJMuKwnzfxMbGyM9ZyMjaNiMbDwiEnI8hmYBrmzc1rB20vKwUlJUUi4FABtigAzH4AWy4LT4ryK7y6Gj6qkyQ0Qo3Gk2ms3m-kWy0QRh0XDCUmJTnsNh0OmczlOIDiF0S1xSUPumS4AGF8GA6A1btCOuU4T0EQNkQgKVJ1lYTFIDOFjsSrFZcatnDYfH5-C4STYrP4dDS6QkrsleSzOOzOdzeW8ypIdN1FMpEeoesNxZLpbLLEYFUqPIgbIdCWYfVY5pT5o4TAbzkakjcXmbuHHGRyuQ1JLJ4U6Ra7dMFDBNNjpiTMdno-St9gSZnZ-EZnGZ5mGdP4Y-FLvGmWkkzxO6nLRmJPbs-0kXmxcE9MGm3r-DMTJNldLDHppc5KQEQiHqTFabH+ybExlzSnkmnuZJnA7ejnx6A3YECfOzFGDJYTM5-MrfOtVY3rD2UJDnbeljQTZkT24Nl-mUJgFAUCoqhqOpGmqQ1DwgnsoPZWDYHghQEFqeo6GKTIukFR0xxdB9dDXIwuH2ACtSsJsJWXA4uHMNcgijKx8V3M4OwZI9IIeGC4MYBCxE+b5fgBYEwUeA8RKwu4cIk-CpMI4jUFIgYKKzIU7xorQ6JMBimJDFi2JMH8bDMcYzDXTYfVrV9QLPNT0geJ5tMYDgIAANU+FROCQjhql0pplOE8Du3U3ycn8wKQtIMKOCI1D9PI2RKNvajBgnfRfC4ewKQsvQzAcjcjGVQJHJCckpHmb0dhOPcMNUhKfNZPyEIC4LQsyGSvh+P5ARYEFSHBLr4tNHD+oUQa0oyrKSLIzhDJvYV7zM1ZFTGT09h9KlqqCerAnGfQLMcClXzMKxPMwnre3yHAqFeOAMreMAIrAfLdtMt16MYhtrJCViwjs-0EH49Za1JecpAbY5nu6haHnez78m+zJftGuTAZMoraLFUGrOsSHbOVHUxipAJm2mL9NSiGkOFQFp4B6Oau0xvagdJ-aAFoYZWYX-C4RZFjMZzZ18cJ5nR+bjweXlBGEFYqOdIXhhcZV7vVRn62cVjGeVvnVb6nJrRhMpRx10UjkluZyVVetA03MXEArLgGc1CsJTNtmhLAy2xNZC8eReG1ue13MyYMacjkpEtnLCfRlSpSy9BsVUHPnPRKSbC3GX508Xqjh2E-2iIv0JKUdxCGUHJsWmDGMI4UakRVFWCJXOpUlWI-NTSCOrva3VfQwZhaqdKQrZdnI2ZwXLuyqJVL0TsKSlgUqG9KBZJp2bsYnuF30KlVUu58eJCb0LOsLfvLej6vtgH6YTACfgd0XxHKMEEA4Rh6xFx2JWAMOwNiBBRgBMBn4zDP1ejhfIJQ6AMA-j-XWiBV5HClrnfEWIZi92VPxSWuo7BNn2FML8SDy7cAAKJjVIFgp22wG4WScE+HY35YYOCsNA8kJYZS2CqlVaI0QgA */
+      /** @xstate-layout N4IgpgJg5mDOIC5QHED2AVVARAhrAFgEao4BOEWYAbgJYDGYAgnQC42oB2AdJbQwEpgcEAJ4BiANoAGALqJQAB1SwabTvJAAPRAHYAjFwDMATikA2MwA5DOnQBYArGeOGANCBGI9VrlcvmpRyknQwcAXzD3NExcAmIyCmp6JlZ2bmQwFl5kgGUWHBYAV1gxCE4wLhoOKlQAawqIJIY8guLpOSQQJRU1Dg1tBAAmOy49QYcpHQdBvR0pMcszO3dPBEM7My4HYz1pqWNLPRsdJYiojGw8IhJybIZmXq4AYXwwOlq7sBaikvaNbtUaX6iDsgy2g3Wdksjn8JlBDhWiAchk2OkMgysB2RzlBZxA0UucRuiT4KUeLzeHyaX3yP0keg6imUgPUnQGgxmo3hdkcemMwwcG0RCGxXDRGMsWJRxlxkXxF1i1wSnweaR4V3i5Ap70ksn+zN6wIQfMsYsG0LMg2MZlm60mwucDi4HMli0GgX0zjxBMVmpJyVVnHVRIS2tq9MZXQNQLZII5XEcoQx5kO3mWHkQjud5oOlo93mM3oVGuJKtSQd9xLDkkGkYBhtjCEtxi41h5fJs+ysOgdOjBE2Gw1sUmC5qLMRLyupge4ldDrx1EkMdejrNAA2sTu8jsO0Lsej5wr7prsoTGs2CJz748JStu0-L3CeABtlEwFApSuVKtU6hUfZO96kjOzyvrA74KAgVQ1HQBRpO0fydPWMbrl4kwGFMzizMYcyCsK-gjE4OiWBC-jGDK+g3nOQEBo+oFvowH5iGApCkKgpBcAoz4FAAZuxAC2XAASGNH3HRL4MR+UG-rBvQIXqSGrn0jaHGCNocoYko2BiUzCvymyadsdg6Dh+zTFRgH+mJ5JgRB1aIUyPQoVoaHEWKegjsYDgOGi9hjMKHmGAYdg7KCVhLOagoWSJVlkmqEngYxCj2Qy+pOWuLnGuMUhcNagoHMZgqhMYAVSEFCahRKEWWFFcrCXesUgRkLBJYwHAQAAaixKicF+HAVNBf5CcWMVlo8zWte1XWkD1HDSTBcGcPJK7pcpqEIARCZQsMqZSDM+7Cg4limjaXnbHMlhzIYERyhwqCNPAnT1X6Y3OchGUDAAtDKvj6NYgQohYljCsMRjzIYASTN2NjXXVI0Na9FbUoIwirI5LJrZloJcCOI52GVZihD5goIhmxoHq24OQycl02NFCMPuNmSfN8xRpRjRqfRsv16P9p4WFYIOGIYCYjgex1mD5oLrPTL2M-FC5UqSrOPejDbrbMraniZ+4nGV6J6OmqwbJsl3jPY2wQ2YaKy6W8sVpZYbs+rmUzDl4y84T7rBDyZgOvsWvqd4EI67bU7AeJtlJc7zkbnyYrBORxGaVCDh6PhhtGAcJjjPye3EWHolxUGCV2YrMcfWhFi5TyjgUYb9h+2TFG+GMIUhRyUy7IXjV0RNH5tZ13VvUpRpjOYYpBWZCxzOnZNHQZGweSR7qhDLcMTqN9vcDkhR0AwsCq1Gq1GhyIxWvsSYWMZ-I9mTJGEbXsx7Av4Qb7ecsR48ACirHsRXmMBjIi2JaRwEIDzeWtsDMmgUdCthwjadSaJFiWBumEIAA */
       id: "GoToDashboardDeviceAction",
       initial: "DeviceReady",
       context: (_) => {
@@ -169,7 +137,9 @@ export class GoToDashboardDeviceAction extends XStateDeviceAction<
           },
           _internalState: {
             currentApp:
-              "currentApp" in sessionState ? sessionState.currentApp : null,
+              "currentApp" in sessionState
+                ? sessionState.currentApp.name
+                : null,
             error: null,
           },
         };
@@ -236,7 +206,7 @@ export class GoToDashboardDeviceAction extends XStateDeviceAction<
           // We check if the dashboard is open
           always: [
             {
-              target: "SaveSessionState",
+              target: "Success",
               guard: "isDashboardOpen",
             },
             {
@@ -291,6 +261,7 @@ export class GoToDashboardDeviceAction extends XStateDeviceAction<
             },
             {
               target: "GetAppAndVersion",
+              reenter: true,
             },
           ],
         },
@@ -302,6 +273,17 @@ export class GoToDashboardDeviceAction extends XStateDeviceAction<
               actions: assign({
                 _internalState: (_) => {
                   if (isSuccessCommandResult(_.event.output)) {
+                    const state: DeviceSessionState = getDeviceSessionState();
+                    // Narrow the type to ReadyWithoutSecureChannelState or ReadyWithSecureChannelState
+                    if (
+                      state.sessionStateType !==
+                      DeviceSessionStateType.Connected
+                    ) {
+                      setDeviceSessionState({
+                        ...state,
+                        currentApp: _.event.output.data,
+                      });
+                    }
                     return {
                       ..._.context._internalState,
                       currentApp: _.event.output.data.name,
@@ -313,24 +295,6 @@ export class GoToDashboardDeviceAction extends XStateDeviceAction<
                   };
                 },
               }),
-            },
-          },
-        },
-        SaveSessionState: {
-          invoke: {
-            src: "saveSessionState",
-            input: (_) => ({
-              // NOTE: DashboardCheck will error if currentApp is null so we can safely assume it's not null here
-              currentApp: _.context._internalState.currentApp!,
-            }),
-          },
-          on: {
-            done: {
-              target: "Success",
-            },
-            error: {
-              target: "Error",
-              actions: "assignErrorSaveAppState",
             },
           },
         },
@@ -360,7 +324,7 @@ export class GoToDashboardDeviceAction extends XStateDeviceAction<
       closeApp,
       getAppAndVersion,
       getDeviceSessionState: () => internalApi.getDeviceSessionState(),
-      saveSessionState: (state: DeviceSessionState) =>
+      setDeviceSessionState: (state: DeviceSessionState) =>
         internalApi.setDeviceSessionState(state),
     };
   }

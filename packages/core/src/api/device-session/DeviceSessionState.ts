@@ -1,3 +1,4 @@
+import { GetAppAndVersionResponse } from "@api/command/os/GetAppAndVersionCommand";
 import { BatteryStatusFlags } from "@api/command/os/GetBatteryStatusCommand";
 import { DeviceStatus } from "@api/device/DeviceStatus";
 import { Application } from "@internal/manager-api/model/ManagerApiType";
@@ -32,6 +33,11 @@ export type FirmwareVersion = {
    */
   readonly os: string;
 };
+
+/**
+ * The current application running on a device. Alias of GetAppAndVersionResponse.
+ */
+export type RunningApp = GetAppAndVersionResponse;
 
 /**
  * The state types of a device session.
@@ -72,7 +78,7 @@ type DeviceSessionReadyState = {
   /**
    * The current application running on the device.
    */
-  readonly currentApp: string;
+  readonly currentApp: RunningApp;
 
   /**
    * The current applications installed on the device.
