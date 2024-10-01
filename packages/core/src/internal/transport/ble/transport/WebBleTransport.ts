@@ -45,9 +45,10 @@ type WebBleInternalDevice = {
 
 @injectable()
 export class WebBleTransport implements Transport {
+  private _connectedDevices: Array<BluetoothDevice>;
   private _internalDevicesById: Map<DeviceId, WebBleInternalDevice>;
-  private _deviceConnectionById: Map<string, BleDeviceConnection>;
-  private _disconnectionHandlersById: Map<string, () => void>;
+  private _deviceConnectionById: Map<DeviceId, BleDeviceConnection>;
+  private _disconnectionHandlersById: Map<DeviceId, () => void>;
   private _logger: LoggerPublisherService;
   private readonly connectionType: ConnectionType = "BLE";
   private readonly identifier: TransportIdentifier = BuiltinTransports.BLE;
@@ -60,6 +61,7 @@ export class WebBleTransport implements Transport {
     @inject(bleDiTypes.BleDeviceConnectionFactory)
     private _bleDeviceConnectionFactory: BleDeviceConnectionFactory,
   ) {
+    this._connectedDevices = [];
     this._internalDevicesById = new Map();
     this._deviceConnectionById = new Map();
     this._disconnectionHandlersById = new Map();
@@ -181,10 +183,14 @@ export class WebBleTransport implements Transport {
     bleDevice: BluetoothDevice,
     bleGattService: BluetoothRemoteGATTService,
     bleDeviceInfos: BleDeviceInfos,
-  ) {
+  ): InternalDiscoveredDevice {
+    if (this._connectedDevices.includes(bleDevice)) {
+      this._logger.debug("Device already discovered");
+      throw new Error("Device already discovered");
+    }
     const id = uuid();
 
-    const discoveredDevice = {
+    const discoveredDevice: InternalDiscoveredDevice = {
       id,
       deviceModel: bleDeviceInfos.deviceModel,
       transport: this.identifier,
@@ -202,7 +208,6 @@ export class WebBleTransport implements Transport {
       `Discovered device ${id} ${discoveredDevice.deviceModel.productName}`,
     );
     this._internalDevicesById.set(id, internalDevice);
-
     return discoveredDevice;
   }
 
@@ -287,35 +292,42 @@ export class WebBleTransport implements Transport {
       discoveredDevice: { deviceModel },
     } = internalDevice;
 
-    const [writeCharacteristic, notifyCharacteristic] = await Promise.all([
-      internalDevice.bleGattService.getCharacteristic(
-        internalDevice.bleDeviceInfos.writeUuid,
-      ),
-      internalDevice.bleGattService.getCharacteristic(
-        internalDevice.bleDeviceInfos.notifyUuid,
-      ),
-    ]);
-
-    const deviceConnection = this._bleDeviceConnectionFactory.create(
-      writeCharacteristic,
-      notifyCharacteristic,
-    );
-    await deviceConnection.setup();
-    this._deviceConnectionById.set(internalDevice.id, deviceConnection);
-    const connectedDevice = new InternalConnectedDevice({
-      sendApdu: (apdu, triggersDisconnection) =>
-        deviceConnection.sendApdu(apdu, triggersDisconnection),
-      deviceModel,
-      id: deviceId,
-      type: this.connectionType,
-      transport: this.identifier,
-    });
-    internalDevice.bleDevice.ongattserverdisconnected =
-      this._getDeviceDisconnectedHandler(internalDevice, deviceConnection);
-    this._disconnectionHandlersById.set(internalDevice.id, () => {
-      this.disconnect({ connectedDevice }).then(() => onDisconnect(deviceId));
-    });
-    return Right(connectedDevice);
+    try {
+      const [writeCharacteristic, notifyCharacteristic] = await Promise.all([
+        internalDevice.bleGattService.getCharacteristic(
+          internalDevice.bleDeviceInfos.writeUuid,
+        ),
+        internalDevice.bleGattService.getCharacteristic(
+          internalDevice.bleDeviceInfos.notifyUuid,
+        ),
+      ]);
+      const deviceConnection = this._bleDeviceConnectionFactory.create(
+        writeCharacteristic,
+        notifyCharacteristic,
+      );
+      this._deviceConnectionById.set(internalDevice.id, deviceConnection);
+      await deviceConnection.setup();
+      const connectedDevice = new InternalConnectedDevice({
+        sendApdu: (apdu, triggersDisconnection) =>
+          deviceConnection.sendApdu(apdu, triggersDisconnection),
+        deviceModel,
+        id: deviceId,
+        type: this.connectionType,
+        transport: this.identifier,
+      });
+      internalDevice.bleDevice.ongattserverdisconnected =
+        this._getDeviceDisconnectedHandler(internalDevice, deviceConnection);
+      this._disconnectionHandlersById.set(internalDevice.id, () => {
+        this.disconnect({ connectedDevice }).then(() => onDisconnect(deviceId));
+      });
+      this._connectedDevices.push(internalDevice.bleDevice);
+      return Right(connectedDevice);
+    } catch (error) {
+      this._logger.error("Error while getting characteristics", {
+        data: { error },
+      });
+      return Left(new OpeningConnectionError(error));
+    }
   }
 
   /**
