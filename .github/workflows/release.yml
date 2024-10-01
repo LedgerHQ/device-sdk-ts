@@ -1,4 +1,4 @@
-name: publish npm packages
+name: Publish npm packages
 on:
   push:
     branches:

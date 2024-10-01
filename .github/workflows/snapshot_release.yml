@@ -1,4 +1,4 @@
-name: publish snapshot version of npm packages
+name: Publish snapshot version of npm packages
 on:
   schedule:
     - cron: "0 0 * * *"
