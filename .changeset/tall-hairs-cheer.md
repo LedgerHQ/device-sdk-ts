@@ -1,5 +1,5 @@
 ---
-"@ledgerhq/keyring-btc": patch
+"@ledgerhq/keyring-btc": minor
 ---
 
 Create keyring-btc package

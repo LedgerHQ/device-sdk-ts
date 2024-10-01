@@ -1,6 +1,5 @@
 ---
-"@ledgerhq/keyring-btc": patch
-"@ledgerhq/device-management-kit": patch
+"@ledgerhq/keyring-btc": minor
 ---
 
 Implement MerkleTree and MerkleMap services
