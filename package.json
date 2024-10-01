@@ -5,6 +5,7 @@
   "license": "MIT",
   "scripts": {
     "build": "turbo run build",
+    "build:libs": "turbo run build --filter=./packages/**",
     "dev": "turbo run dev",
     "lint": "turbo run lint",
     "lint:fix": "turbo run lint:fix",
