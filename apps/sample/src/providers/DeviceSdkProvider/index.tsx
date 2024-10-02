@@ -8,11 +8,13 @@ import {
   WebLogsExporterLogger,
 } from "@ledgerhq/device-management-kit";
 import { useSdkConfigContext } from "../SdkConfig";
+import { usePrevious } from "@/hooks/usePrevious";
 
 const webLogsExporterLogger = new WebLogsExporterLogger();
 
 const defaultSdk = new DeviceSdkBuilder()
   .addLogger(new ConsoleLogger())
+  .addTransport(BuiltinTransports.BLE)
   .addTransport(BuiltinTransports.USB)
   .addLogger(webLogsExporterLogger)
   .build();
@@ -23,6 +25,7 @@ export const SdkProvider: React.FC<PropsWithChildren> = ({ children }) => {
   const {
     state: { transport, mockServerUrl },
   } = useSdkConfigContext();
+  const previousTransport = usePrevious(transport);
   const [sdk, setSdk] = useState<DeviceSdk>(defaultSdk);
   useEffect(() => {
     if (transport === BuiltinTransports.MOCK_SERVER) {
@@ -34,16 +37,17 @@ export const SdkProvider: React.FC<PropsWithChildren> = ({ children }) => {
           .addConfig({ mockUrl: mockServerUrl })
           .build(),
       );
-    } else {
+    } else if (previousTransport === BuiltinTransports.MOCK_SERVER) {
       sdk.close();
       setSdk(
         new DeviceSdkBuilder()
           .addLogger(new ConsoleLogger())
-          .addTransport(transport)
+          .addTransport(BuiltinTransports.BLE)
+          .addTransport(BuiltinTransports.USB)
           .build(),
       );
     }
-  }, [transport, mockServerUrl]);
+  }, [transport, mockServerUrl, previousTransport]);
 
   return <SdkContext.Provider value={sdk}>{children}</SdkContext.Provider>;
 };
