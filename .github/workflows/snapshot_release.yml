@@ -28,7 +28,7 @@ jobs:
         with:
           ref: ${{ env.REF }}
 
-      - uses: ./.github/actions/setup-toolchain-composite
+      - uses: LedgerHQ/device-sdk-ts/.github/actions/setup-toolchain-composite@develop
 
       - name: install dependencies
         run: pnpm install
