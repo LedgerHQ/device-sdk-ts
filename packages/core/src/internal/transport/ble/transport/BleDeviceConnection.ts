@@ -60,10 +60,8 @@ export class BleDeviceConnection implements DeviceConnection {
     this._logger = loggerServiceFactory("BleDeviceConnection");
     this._writeCharacteristic = writeCharacteristic;
     this._notifyCharacteristic = notifyCharacteristic;
-    this._notifyCharacteristic.addEventListener(
-      "characteristicvaluechanged",
-      this.onNotifyCharacteristicValueChanged,
-    );
+    this._notifyCharacteristic.oncharacteristicvaluechanged = (event) =>
+      this.onNotifyCharacteristicValueChanged(event);
     this._isDeviceReady = false;
     this._sendApduSubject = new Subject();
   }
@@ -72,10 +70,8 @@ export class BleDeviceConnection implements DeviceConnection {
     notifyCharacteristic: BluetoothRemoteGATTCharacteristic,
   ) {
     this._notifyCharacteristic = notifyCharacteristic;
-    this._notifyCharacteristic.addEventListener(
-      "characteristicvaluechanged",
-      this.onNotifyCharacteristicValueChanged,
-    );
+    this._notifyCharacteristic.oncharacteristicvaluechanged = (event) =>
+      this.onNotifyCharacteristicValueChanged(event);
   }
 
   private set writeCharacteristic(
@@ -109,7 +105,7 @@ export class BleDeviceConnection implements DeviceConnection {
    * Call receiveApdu otherwise
    * @param event
    */
-  private onNotifyCharacteristicValueChanged = (event: Event) => {
+  private onNotifyCharacteristicValueChanged(event: Event) {
     if (!this.isDataViewEvent(event)) {
       return;
     }
@@ -123,7 +119,7 @@ export class BleDeviceConnection implements DeviceConnection {
     } else {
       this.receiveApdu(buffer);
     }
-  };
+  }
 
   /**
    * Setup BleDeviceConnection
@@ -150,6 +146,9 @@ export class BleDeviceConnection implements DeviceConnection {
       Right: (maybeApduResponse) => {
         maybeApduResponse.map((apduResponse) => {
           this._sendApduSubject.next(apduResponse);
+          this._logger.debug("Received APDU Response", {
+            data: { response: apduResponse },
+          });
           this._sendApduSubject.complete();
         });
       },
@@ -203,6 +202,9 @@ export class BleDeviceConnection implements DeviceConnection {
     });
     for (const frame of frames) {
       try {
+        this._logger.debug("Sending Frame", {
+          data: { frame: frame.getRawData() },
+        });
         await this._writeCharacteristic.writeValueWithResponse(
           frame.getRawData(),
         );
@@ -257,10 +259,6 @@ export class BleDeviceConnection implements DeviceConnection {
     writeCharacteristic: BluetoothRemoteGATTCharacteristic,
     notifyCharacteristic: BluetoothRemoteGATTCharacteristic,
   ) {
-    this._notifyCharacteristic.removeEventListener(
-      "characteristicvaluechanged",
-      this.onNotifyCharacteristicValueChanged,
-    );
     this._isDeviceReady = false;
     this.notifyCharacteristic = notifyCharacteristic;
     this.writeCharacteristic = writeCharacteristic;
@@ -276,10 +274,6 @@ export class BleDeviceConnection implements DeviceConnection {
       promise.reject(new ReconnectionFailedError());
       this._settleReconnectionPromise = Maybe.zero();
     });
-    this._notifyCharacteristic.removeEventListener(
-      "characteristicvaluechanged",
-      this.onNotifyCharacteristicValueChanged,
-    );
     this._isDeviceReady = false;
   }
 }

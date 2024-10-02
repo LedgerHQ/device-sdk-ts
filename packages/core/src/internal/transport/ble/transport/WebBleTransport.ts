@@ -24,6 +24,7 @@ import {
   BleDeviceGattServerError,
   BleTransportNotSupportedError,
   ConnectError,
+  DeviceAlreadyConnectedError,
   DeviceNotRecognizedError,
   NoAccessibleDeviceError,
   OpeningConnectionError,
@@ -163,8 +164,7 @@ export class WebBleTransport implements Transport {
               })),
           });
         } catch (error) {
-          const deviceError = new NoAccessibleDeviceError(error);
-          throw deviceError;
+          throw new NoAccessibleDeviceError(error);
         }
 
         return bleDevice;
@@ -174,30 +174,35 @@ export class WebBleTransport implements Transport {
 
   /**
    * Generate a discovered device from BluetoothDevice, BleGATT primary service and BLE device infos
-   * @param bleDevice
-   * @param bleGattService
    * @param bleDeviceInfos
    * @private
    */
   private getDiscoveredDeviceFrom(
-    bleDevice: BluetoothDevice,
-    bleGattService: BluetoothRemoteGATTService,
     bleDeviceInfos: BleDeviceInfos,
   ): InternalDiscoveredDevice {
-    if (this._connectedDevices.includes(bleDevice)) {
-      this._logger.debug("Device already discovered");
-      throw new Error("Device already discovered");
-    }
-    const id = uuid();
-
-    const discoveredDevice: InternalDiscoveredDevice = {
-      id,
+    return {
+      id: uuid(),
       deviceModel: bleDeviceInfos.deviceModel,
       transport: this.identifier,
     };
+  }
 
+  /**
+   * Generate an InternalDevice from a unique id, a BluetoothDevice, BleGATT primary service and BLE device infos
+   * @param discoveredDevice
+   * @param bleDevice
+   * @param bleDeviceInfos
+   * @param bleGattService
+   * @private
+   */
+  private setInternalDeviceFrom(
+    discoveredDevice: InternalDiscoveredDevice,
+    bleDevice: BluetoothDevice,
+    bleDeviceInfos: BleDeviceInfos,
+    bleGattService: BluetoothRemoteGATTService,
+  ) {
     const internalDevice: WebBleInternalDevice = {
-      id,
+      id: discoveredDevice.id,
       bleDevice,
       bleGattService,
       bleDeviceInfos,
@@ -205,10 +210,9 @@ export class WebBleTransport implements Transport {
     };
 
     this._logger.debug(
-      `Discovered device ${id} ${discoveredDevice.deviceModel.productName}`,
+      `Discovered device ${internalDevice.id} ${discoveredDevice.deviceModel.productName}`,
     );
-    this._internalDevicesById.set(id, internalDevice);
-    return discoveredDevice;
+    this._internalDevicesById.set(internalDevice.id, internalDevice);
   }
 
   /**
@@ -217,8 +221,6 @@ export class WebBleTransport implements Transport {
    */
   startDiscovering(): Observable<InternalDiscoveredDevice> {
     this._logger.debug("startDiscovering");
-
-    this._internalDevicesById.clear();
 
     return from(this.promptDeviceAccess()).pipe(
       switchMap(async (errorOrBleDevice) =>
@@ -239,18 +241,26 @@ export class WebBleTransport implements Transport {
                 const errorOrBleDeviceInfos =
                   this.getBleDeviceInfos(bleGattService);
                 return errorOrBleDeviceInfos.caseOf({
-                  Right: (bleDeviceInfos) =>
-                    this.getDiscoveredDeviceFrom(
+                  Right: (bleDeviceInfos) => {
+                    const discoveredDevice =
+                      this.getDiscoveredDeviceFrom(bleDeviceInfos);
+                    this.setInternalDeviceFrom(
+                      discoveredDevice,
                       bleDevice,
-                      bleGattService,
                       bleDeviceInfos,
-                    ),
+                      bleGattService,
+                    );
+                    return discoveredDevice;
+                  },
+
                   Left: (error) => {
+                    bleDevice.gatt?.disconnect();
                     throw error;
                   },
                 });
               },
               Left: (error) => {
+                bleDevice.gatt?.disconnect();
                 throw error;
               },
             });
@@ -284,8 +294,17 @@ export class WebBleTransport implements Transport {
     const internalDevice = this._internalDevicesById.get(deviceId);
 
     if (!internalDevice) {
-      this._logger.error(`Unknown device ${deviceId}`);
+      this._logger.error(`Unknown device ${deviceId}`, {
+        data: { internalDevices: this._internalDevicesById },
+      });
+      this._logger.debug("Available devices", {
+        data: { devices: this._internalDevicesById },
+      });
       return Left(new UnknownDeviceError(`Unknown device ${deviceId}`));
+    }
+    if (this._connectedDevices.includes(internalDevice.bleDevice)) {
+      this._internalDevicesById.delete(deviceId);
+      return Left(new DeviceAlreadyConnectedError("Device already connected"));
     }
 
     const {
@@ -305,7 +324,6 @@ export class WebBleTransport implements Transport {
         writeCharacteristic,
         notifyCharacteristic,
       );
-      this._deviceConnectionById.set(internalDevice.id, deviceConnection);
       await deviceConnection.setup();
       const connectedDevice = new InternalConnectedDevice({
         sendApdu: (apdu, triggersDisconnection) =>
@@ -317,12 +335,14 @@ export class WebBleTransport implements Transport {
       });
       internalDevice.bleDevice.ongattserverdisconnected =
         this._getDeviceDisconnectedHandler(internalDevice, deviceConnection);
+      this._deviceConnectionById.set(internalDevice.id, deviceConnection);
       this._disconnectionHandlersById.set(internalDevice.id, () => {
         this.disconnect({ connectedDevice }).then(() => onDisconnect(deviceId));
       });
       this._connectedDevices.push(internalDevice.bleDevice);
       return Right(connectedDevice);
     } catch (error) {
+      this._internalDevicesById.delete(deviceId);
       this._logger.error("Error while getting characteristics", {
         data: { error },
       });
@@ -345,6 +365,7 @@ export class WebBleTransport implements Transport {
       // start a timer to disconnect the device if it does not reconnect
       const disconnectObserver = timer(RECONNECT_DEVICE_TIMEOUT).subscribe(
         () => {
+          this._logger.debug("disconnection timer over");
           // retrieve the disconnect handler and call it
           const disconnectHandler = Maybe.fromNullable(
             this._disconnectionHandlersById.get(internalDevice.id),
@@ -354,6 +375,8 @@ export class WebBleTransport implements Transport {
       );
       // connect to the navigator device
       await internalDevice.bleDevice.gatt?.connect();
+      // cancel disconnection timeout
+      disconnectObserver.unsubscribe();
       // retrieve new ble characteristics
       const service = await this.getBleGattService(internalDevice.bleDevice);
       if (service.isRight()) {
@@ -367,8 +390,6 @@ export class WebBleTransport implements Transport {
         ]);
         // reconnect device connection
         await deviceConnection.reconnect(writeC, notifyC);
-        // cancel disconnection timeout
-        disconnectObserver.unsubscribe();
       }
     };
   }
@@ -381,10 +402,13 @@ export class WebBleTransport implements Transport {
   async disconnect(params: {
     connectedDevice: InternalConnectedDevice;
   }): Promise<Either<SdkError, void>> {
-    // retrieve internal device from connected device
+    // retrieve internal device
     const maybeInternalDevice = Maybe.fromNullable(
       this._internalDevicesById.get(params.connectedDevice.id),
     );
+    this._logger.debug("disconnect device", {
+      data: { connectedDevice: params.connectedDevice },
+    });
 
     if (maybeInternalDevice.isNothing()) {
       this._logger.error(`Unknown device ${params.connectedDevice.id}`);
@@ -399,10 +423,13 @@ export class WebBleTransport implements Transport {
         this._deviceConnectionById.get(device.id),
       );
       maybeDeviceConnection.map((dConnection) => dConnection.disconnect());
+      // disconnect device gatt server
       bleDevice.gatt?.disconnect();
+      // clean up objects
       this._internalDevicesById.delete(device.id);
       this._deviceConnectionById.delete(device.id);
       this._disconnectionHandlersById.delete(device.id);
+      delete this._connectedDevices[this._connectedDevices.indexOf(bleDevice)];
     });
 
     return Right(void 0);
