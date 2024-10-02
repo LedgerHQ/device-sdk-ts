@@ -103,7 +103,10 @@ export const Sidebar: React.FC = () => {
             name={device.name}
             model={device.modelId}
             type={device.type}
-            onDisconnect={async () => onDeviceDisconnect(sessionId)}
+            onSelect={() =>
+              dispatch({ type: "select_session", payload: { sessionId } })
+            }
+            onDisconnect={() => onDeviceDisconnect(sessionId)}
           />
         ))}
       </div>
