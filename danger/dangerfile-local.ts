@@ -9,13 +9,15 @@ import {
 const author = getAuthor(danger);
 console.log("PR Actor:", author);
 
-let successful = true;
+const results: boolean[] = [];
 
-successful = checkBranches(danger, fail);
+results.push(checkBranches(danger, fail));
 
-successful = checkCommits(danger, fail);
+results.push(checkCommits(danger, fail));
 
-successful = checkChangesets(danger, message);
+results.push(checkChangesets(danger, message));
+
+const successful = results.every((result) => result === true);
 
 if (successful) {
   message("Danger: All checks passed successfully! 🎉", { icon: "✅" });

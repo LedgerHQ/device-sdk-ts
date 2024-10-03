@@ -14,16 +14,19 @@ console.log("PR Actor:", author);
 
 checkIfBot(danger.github.pr.user);
 
-let successful = true;
+const results: boolean[] = [];
+
 let fork = isFork(danger.github.pr);
 
-successful = checkBranches(danger, fail, fork);
+results.push(checkBranches(danger, fail, fork));
 
-successful = checkCommits(danger, fail, fork);
+results.push(checkCommits(danger, fail, fork));
 
-successful = checkTitle(danger, fail, fork);
+results.push(checkTitle(danger, fail, fork));
 
-successful = checkChangesets(danger, message);
+results.push(checkChangesets(danger, message));
+
+const successful = results.every((result) => result === true);
 
 if (successful) {
   message("Danger: All checks passed successfully! 🎉", { icon: "✅" });
