@@ -1,0 +1,36 @@
+name: "Download SBOM from Github"
+description: "Download the SBOM from Github API"
+author: "valpinkman"
+inputs:
+  owner:
+    default: "LedgerHQ"
+    description: "The owner of the repository"
+    required: true
+  repo:
+    default: "device-sdk-ts"
+    description: "The repository name"
+    required: true
+  token:
+    default: ${{ github.token }}
+    description: "The Github token to use to download the SBOM"
+    required: true
+
+runs:
+  using: "composite"
+  steps:
+
+    - name: Download SBOM
+      shell: bash
+      env:
+        GH_TOKEN: ${{ inputs.token }}
+      run: |
+        gh api \
+          -H "Accept: application/vnd.github+json" \
+          -H "X-GitHub-Api-Version: 2022-11-28" \
+          /repos/${{ inputs.owner }}/${{ inputs.repo }}/dependency-graph/sbom > sbom.json
+
+    - name: Upload SBOM
+      uses: actions/upload-artifact@v4
+      with:
+        name: sbom
+        path: sbom.json
