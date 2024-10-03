@@ -32,6 +32,7 @@ export class UsbHidDeviceConnectionFactory {
 
   public create(
     device: HIDDevice,
+    params: { onConnectionTerminated: () => void },
     channel = Maybe.of(
       FramerUtils.numberToByteArray(this.randomChannel, CHANNEL_LENGTH),
     ),
@@ -45,6 +46,7 @@ export class UsbHidDeviceConnectionFactory {
           padding: true,
         }),
         apduReceiver: this.apduReceiverFactory({ channel }),
+        onConnectionTerminated: params.onConnectionTerminated,
       },
       this.loggerFactory,
     );

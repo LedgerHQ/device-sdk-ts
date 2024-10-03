@@ -439,7 +439,6 @@ describe("WebUsbHidTransport", () => {
       it("should call disconnect handler if a connected device is unplugged", (done) => {
         // given
         const onDisconnect = jest.fn();
-        const disconnectSpy = jest.spyOn(transport, "disconnect");
         mockedRequestDevice.mockResolvedValueOnce([stubDevice]);
 
         // when
@@ -456,9 +455,10 @@ describe("WebUsbHidTransport", () => {
                   device: stubDevice,
                 } as HIDConnectionEvent);
 
+                expect(onDisconnect).not.toHaveBeenCalled();
                 jest.advanceTimersByTime(RECONNECT_DEVICE_TIMEOUT);
                 // then
-                expect(disconnectSpy).toHaveBeenCalled();
+                expect(onDisconnect).toHaveBeenCalled();
                 done();
               })
               .catch((error) => {
@@ -473,8 +473,11 @@ describe("WebUsbHidTransport", () => {
       it("should stop disconnection if reconnection happen", (done) => {
         // given
         const onDisconnect = jest.fn();
-        const disconnectSpy = jest.spyOn(transport, "disconnect");
-        mockedRequestDevice.mockResolvedValueOnce([stubDevice]);
+
+        const hidDevice1 = hidDeviceStubBuilder();
+        const hidDevice2 = hidDeviceStubBuilder();
+
+        mockedRequestDevice.mockResolvedValueOnce([hidDevice1]);
 
         // when
         discoverDevice((discoveredDevice) => {
@@ -486,17 +489,18 @@ describe("WebUsbHidTransport", () => {
             .then(() => {
               // @ts-expect-error trying to access private member
               transport.handleDeviceDisconnectionEvent({
-                device: stubDevice,
+                device: hidDevice1,
               } as HIDConnectionEvent);
               jest.advanceTimersByTime(RECONNECT_DEVICE_TIMEOUT / 3);
               // @ts-expect-error trying to access private member
-              transport.handleDeviceDisconnectionEvent({
-                device: stubDevice,
+              transport.handleDeviceConnectionEvent({
+                device: hidDevice2,
               } as HIDConnectionEvent);
 
               // then
-              expect(disconnectSpy).toHaveBeenCalledTimes(0);
-              expect(stubDevice.open).toHaveBeenCalled();
+              expect(hidDevice2.open).toHaveBeenCalled();
+              jest.advanceTimersByTime(RECONNECT_DEVICE_TIMEOUT);
+              expect(onDisconnect).not.toHaveBeenCalled();
               done();
             })
             .catch((error) => {
