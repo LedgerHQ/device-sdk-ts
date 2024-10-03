@@ -24,11 +24,8 @@ jobs:
 
       - uses: LedgerHQ/device-sdk-ts/.github/actions/setup-toolchain-composite@develop
 
-      - name: install dependencies
-        run: pnpm install
-
       - name: build libraries
-        run: pnpm build
+        run: pnpm build:libs
 
       - name: Login to internal JFrog registry
         id: jfrog-login
