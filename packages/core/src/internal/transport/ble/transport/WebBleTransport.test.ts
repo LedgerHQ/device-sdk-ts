@@ -158,7 +158,7 @@ describe("WebBleTransport", () => {
       });
 
       it("should emit an error if the user did not grant us access to a device (clicking on cancel on the browser popup for ex)", (done) => {
-        mockedRequestDevice.mockResolvedValueOnce({});
+        mockedRequestDevice.mockResolvedValueOnce({ forget: jest.fn() });
 
         discoverDevice(
           (discoveredDevice) => {
