@@ -23,7 +23,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - uses: ./.github/actions/setup-toolchain-composite
+      - uses: LedgerHQ/device-sdk-ts/.github/actions/setup-toolchain-composite@develop
 
       - name: Danger
         env:
@@ -31,34 +31,28 @@ jobs:
           # Workaround when using custom runners
           # https://github.com/danger/danger-js/issues/1374
           DANGER_GITHUB_API_BASE_URL: "https://api.github.com"
-        run: ./.github/actions/danger-check.sh
+        run: pnpm danger:ci
 
-  health-check:
-    name: Run health check
+  checks:
+    name: Run health check and unit tests
     needs: [danger]
-    runs-on: ledgerhq-device-sdk
+    runs-on: ${{ github.event.pull_request.head.repo.fork == 'true' && 'ubuntu-latest' || 'ledgerhq-device-sdk' }}
     steps:
       - uses: actions/checkout@v4
 
-      - uses: ./.github/actions/setup-toolchain-composite
+      - uses: LedgerHQ/device-sdk-ts/.github/actions/setup-toolchain-composite@develop
 
-      - name: health check
+      - name: Health check
+        id: health-check
         run: pnpm health-check
 
-  unit-tests:
-    name: Run unit tests
-    needs: [danger]
-    runs-on: ledgerhq-device-sdk
-    steps:
-      - uses: actions/checkout@v4
-
-      - uses: ./.github/actions/setup-toolchain-composite
-
-      - name: Test
+      - name: Tests
+        id: unit-tests
+        if: ${{ steps.health-check.conclusion == 'success' }}
         run: pnpm test:coverage -- --max-warnings=0
 
       - uses: sonarsource/sonarqube-scan-action@master
-        if: ${{ github.actor != 'dependabot[bot]' }}
+        if: ${{ steps.unit-tests.conclusion == 'success' && github.actor != 'dependabot[bot]' && github.event.pull_request.head.repo.fork == 'false' }}
         env:
           SONAR_TOKEN: ${{ secrets.GREEN_SONAR_TOKEN }}
           SONAR_HOST_URL: ${{ secrets.GREEN_SONAR_HOST_URL }}
