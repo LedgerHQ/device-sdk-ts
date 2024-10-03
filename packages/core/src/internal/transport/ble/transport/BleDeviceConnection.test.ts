@@ -44,9 +44,7 @@ describe("BleDeviceConnection", () => {
     // @ts-expect-error private function call to mock web ble response
     connection.onNotifyCharacteristicValueChanged({
       target: {
-        value: {
-          buffer,
-        },
+        value: new DataView(buffer.buffer),
       },
     } as DataViewEvent);
   }

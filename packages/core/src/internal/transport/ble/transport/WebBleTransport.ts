@@ -81,7 +81,7 @@ export class WebBleTransport implements Transport {
     return Left(new BleTransportNotSupportedError("WebBle not supported"));
   }
 
-  isSupported() {
+  isSupported(): boolean {
     try {
       const result = !!navigator?.bluetooth;
       return result;
@@ -254,13 +254,13 @@ export class WebBleTransport implements Transport {
                   },
 
                   Left: (error) => {
-                    bleDevice.gatt?.disconnect();
+                    bleDevice.forget();
                     throw error;
                   },
                 });
               },
               Left: (error) => {
-                bleDevice.gatt?.disconnect();
+                bleDevice.forget();
                 throw error;
               },
             });
@@ -302,6 +302,7 @@ export class WebBleTransport implements Transport {
       });
       return Left(new UnknownDeviceError(`Unknown device ${deviceId}`));
     }
+    // if device already connected, remove device id from internal state and remove error
     if (this._connectedDevices.includes(internalDevice.bleDevice)) {
       this._internalDevicesById.delete(deviceId);
       return Left(new DeviceAlreadyConnectedError("Device already connected"));
@@ -342,6 +343,7 @@ export class WebBleTransport implements Transport {
       this._connectedDevices.push(internalDevice.bleDevice);
       return Right(connectedDevice);
     } catch (error) {
+      await internalDevice.bleDevice.forget();
       this._internalDevicesById.delete(deviceId);
       this._logger.error("Error while getting characteristics", {
         data: { error },
@@ -424,12 +426,18 @@ export class WebBleTransport implements Transport {
       );
       maybeDeviceConnection.map((dConnection) => dConnection.disconnect());
       // disconnect device gatt server
-      bleDevice.gatt?.disconnect();
+      if (bleDevice.gatt?.connected) {
+        bleDevice.gatt.disconnect();
+      }
       // clean up objects
       this._internalDevicesById.delete(device.id);
       this._deviceConnectionById.delete(device.id);
       this._disconnectionHandlersById.delete(device.id);
-      delete this._connectedDevices[this._connectedDevices.indexOf(bleDevice)];
+      if (this._connectedDevices.includes(bleDevice)) {
+        delete this._connectedDevices[
+          this._connectedDevices.indexOf(bleDevice)
+        ];
+      }
     });
 
     return Right(void 0);
