@@ -21,4 +21,16 @@ describe("ContextModuleBuilder", () => {
 
     expect(res).toBeInstanceOf(DefaultContextModule);
   });
+
+  it("should return a custom context module with a custom typed data loader", () => {
+    const contextModuleBuilder = new ContextModuleBuilder();
+    const customLoader = { load: jest.fn() };
+
+    const res = contextModuleBuilder
+      .withoutDefaultLoaders()
+      .withTypedDataLoader(customLoader)
+      .build();
+
+    expect(res).toBeInstanceOf(DefaultContextModule);
+  });
 });
