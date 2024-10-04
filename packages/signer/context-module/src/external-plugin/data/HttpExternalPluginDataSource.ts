@@ -1,7 +1,9 @@
 import axios from "axios";
-import { injectable } from "inversify";
+import { inject, injectable } from "inversify";
 import { Either, Left, Right } from "purify-ts";
 
+import { configTypes } from "@/config/di/configTypes";
+import type { ContextModuleConfig } from "@/config/model/ContextModuleConfig";
 import { DAppDto } from "@/external-plugin/data/DAppDto";
 import {
   ExternalPluginDataSource,
@@ -13,7 +15,9 @@ import PACKAGE from "@root/package.json";
 
 @injectable()
 export class HttpExternalPluginDataSource implements ExternalPluginDataSource {
-  constructor() {}
+  constructor(
+    @inject(configTypes.Config) private readonly config: ContextModuleConfig,
+  ) {}
 
   async getDappInfos({
     chainId,
@@ -23,7 +27,7 @@ export class HttpExternalPluginDataSource implements ExternalPluginDataSource {
     try {
       const dappInfos = await axios.request<DAppDto[]>({
         method: "GET",
-        url: "https://crypto-assets-service.api.ledger.com/v1/dapps",
+        url: `${this.config.cal.url}/dapps`,
         params: {
           output: "b2c,b2c_signatures,abis",
           chain_id: chainId,

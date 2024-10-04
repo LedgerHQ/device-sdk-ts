@@ -59,6 +59,15 @@ The context-module package exposes a builder `ContextModuleBuilder` which will b
 const contextModule = new ContextModuleBuilder().build();
 ```
 
+You can use a custom configuration for your context module.
+
+```ts
+const config: ContextModuleConfig = {
+  // config to use
+};
+const contextModule = new ContextModuleBuilder().withConfig(config).build();
+```
+
 It is also possible to instantiate the context module without the default loaders.
 
 ```ts

@@ -1,4 +1,5 @@
 import { TransactionContext } from "./shared/model/TransactionContext";
+import { TypedDataContext } from "./shared/model/TypedDataContext";
 import type { TypedDataContextLoader } from "./typed-data/domain/TypedDataContextLoader";
 import { DefaultContextModule } from "./DefaultContextModule";
 
@@ -69,5 +70,16 @@ describe("DefaultContextModule", () => {
 
     expect(loader.load).toHaveBeenCalledTimes(2);
     expect(res).toEqual(responses.flat());
+  });
+
+  it("should call the typed data loader", async () => {
+    const contextModule = new DefaultContextModule({
+      loaders: [],
+      typedDataLoader,
+    });
+
+    await contextModule.getTypedDataFilters({} as TypedDataContext);
+
+    expect(typedDataLoader.load).toHaveBeenCalledTimes(1);
   });
 });
