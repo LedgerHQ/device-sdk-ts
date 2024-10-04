@@ -1,40 +1,59 @@
+export type FilterFieldSignatures = {
+  prod: string;
+  test: string;
+};
+
 export type FilterFieldV1 = {
-  label: string;
-  path: string;
-  signature: string;
+  display_name: string;
+  field_mappers_count?: never;
+  field_path: string;
+  signatures: FilterFieldSignatures;
   format?: never;
 };
 
 export type FilterFieldV2 = {
-  label: string;
-  path: string;
-  signature: string;
+  display_name: string;
+  field_mappers_count?: never;
+  field_path: string;
+  descriptor: string;
+  signatures: FilterFieldSignatures;
   format: "raw" | "datetime";
   coin_ref?: never;
+  type: string;
 };
 
 export type FilterFieldV2WithCoinRef = {
-  label: string;
-  path: string;
-  signature: string;
+  display_name: string;
+  field_mappers_count?: never;
   format: "token" | "amount";
+  field_path: string;
   coin_ref: number;
+  descriptor: string;
+  signatures: FilterFieldSignatures;
+  type: string;
+};
+
+export type FilterFieldWithContractInfo = {
+  display_name: string;
+  field_mappers_count: number;
+  field_path?: never;
+  descriptor: string;
+  signatures: FilterFieldSignatures;
+  type: "message";
 };
 
 export type FilterField =
   | FilterFieldV1
   | FilterFieldV2
-  | FilterFieldV2WithCoinRef;
+  | FilterFieldV2WithCoinRef
+  | FilterFieldWithContractInfo;
 
 export type FiltersDto = {
-  eip712_signatures: {
+  descriptors_eip712: {
     [contractAddress: string]: {
       [schemaHash: string]: {
-        contractName: {
-          label: string;
-          signature: string;
-        };
-        fields: Array<FilterField>;
+        schema: Record<string, { name: string; type: string }[]>;
+        instructions: FilterField[];
       };
     };
   };

@@ -6,7 +6,151 @@ import { HttpTypedDataDataSource } from "@/typed-data/data/HttpTypedDataDataSour
 import { type TypedDataDataSource } from "@/typed-data/data/TypedDataDataSource";
 import PACKAGE from "@root/package.json";
 
+import { FilterField, FiltersDto } from "./FiltersDto";
+
 jest.mock("axios");
+
+export const buildDescriptor = (instructions: FilterField[]): FiltersDto[] => [
+  {
+    descriptors_eip712: {
+      "0x000000000022d473030f116ddee9f6b43ac78ba3": {
+        "4d593149e876e739220f3b5ede1b38a0213d76c4705b1547c4323df3": {
+          schema: {
+            DutchOutput: [
+              {
+                name: "token",
+                type: "address",
+              },
+              {
+                name: "startAmount",
+                type: "uint256",
+              },
+              {
+                name: "endAmount",
+                type: "uint256",
+              },
+              {
+                name: "recipient",
+                type: "address",
+              },
+            ],
+            EIP712Domain: [
+              {
+                name: "name",
+                type: "string",
+              },
+              {
+                name: "chainId",
+                type: "uint256",
+              },
+              {
+                name: "verifyingContract",
+                type: "address",
+              },
+            ],
+            ExclusiveDutchOrder: [
+              {
+                name: "info",
+                type: "OrderInfo",
+              },
+              {
+                name: "decayStartTime",
+                type: "uint256",
+              },
+              {
+                name: "decayEndTime",
+                type: "uint256",
+              },
+              {
+                name: "exclusiveFiller",
+                type: "address",
+              },
+              {
+                name: "exclusivityOverrideBps",
+                type: "uint256",
+              },
+              {
+                name: "inputToken",
+                type: "address",
+              },
+              {
+                name: "inputStartAmount",
+                type: "uint256",
+              },
+              {
+                name: "inputEndAmount",
+                type: "uint256",
+              },
+              {
+                name: "outputs",
+                type: "DutchOutput[]",
+              },
+            ],
+            OrderInfo: [
+              {
+                name: "reactor",
+                type: "address",
+              },
+              {
+                name: "swapper",
+                type: "address",
+              },
+              {
+                name: "nonce",
+                type: "uint256",
+              },
+              {
+                name: "deadline",
+                type: "uint256",
+              },
+              {
+                name: "additionalValidationContract",
+                type: "address",
+              },
+              {
+                name: "additionalValidationData",
+                type: "bytes",
+              },
+            ],
+            PermitWitnessTransferFrom: [
+              {
+                name: "permitted",
+                type: "TokenPermissions",
+              },
+              {
+                name: "spender",
+                type: "address",
+              },
+              {
+                name: "nonce",
+                type: "uint256",
+              },
+              {
+                name: "deadline",
+                type: "uint256",
+              },
+              {
+                name: "witness",
+                type: "ExclusiveDutchOrder",
+              },
+            ],
+            TokenPermissions: [
+              {
+                name: "token",
+                type: "address",
+              },
+              {
+                name: "amount",
+                type: "uint256",
+              },
+            ],
+          },
+          instructions,
+        },
+      },
+    },
+  },
+];
 
 describe("HttpTypedDataDataSource", () => {
   let datasource: TypedDataDataSource;
@@ -94,53 +238,69 @@ describe("HttpTypedDataDataSource", () => {
 
   it("should return V2 filters when axios response is correct", async () => {
     // GIVEN
-    const filtersDTO = [
+    const filtersDTO = buildDescriptor([
       {
-        eip712_signatures: {
-          "0x000000000022d473030f116ddee9f6b43ac78ba3": {
-            "4d593149e876e739220f3b5ede1b38a0213d76c4705b1547c4323df3": {
-              contractName: {
-                label: "Permit2",
-                signature:
-                  "3045022100e3c597d13d28a87a88b0239404c668373cf5063362f2a81d09eed4582941dfe802207669aabb504fd5b95b2734057f6b8bbf51f14a69a5f9bdf658a5952cefbf44d3",
-              },
-              fields: [
-                {
-                  coin_ref: 0,
-                  format: "token",
-                  label: "Amount allowance",
-                  path: "details.token",
-                  signature:
-                    "3044022075103b38995e031d1ebbfe38ac6603bec32854b5146a664e49b4cc4f460c1da6022029f4b0fd1f3b7995ffff1627d4b57f27888a2dcc9b3a4e85c37c67571092c733",
-                },
-                {
-                  coin_ref: 0,
-                  format: "amount",
-                  label: "Amount allowance",
-                  path: "details.amount",
-                  signature:
-                    "304402201a46e6b4ef89eaf9fcf4945d053bfc5616a826400fd758312fbbe976bafc07ec022025a9b408722baf983ee053f90179c75b0c55bb0668f437d55493e36069bbd5a3",
-                },
-                {
-                  format: "raw",
-                  label: "Approve to spender",
-                  path: "spender",
-                  signature:
-                    "3044022033e5713d9cb9bc375b56a9fb53b736c81ea3c4ac5cfb2d3ca7f8b8f0558fe2430220543ca4fef6d6f725f29e343f167fe9dd582aa856ecb5797259050eb990a1befb",
-                },
-                {
-                  format: "datetime",
-                  label: "Approval expire",
-                  path: "details.expiration",
-                  signature:
-                    "3044022056b3381e4540629ad73bc434ec49d80523234b82f62340fbb77157fb0eb21a680220459fe9cf6ca309f9c7dfc6d4711fea1848dba661563c57f77b3c2dc480b3a63b",
-                },
-              ],
-            },
-          },
+        display_name: "Permit2",
+        field_mappers_count: 4,
+        descriptor:
+          "b7000000000000a4b1000000000022d473030f116ddee9f6b43ac78ba34d593149e876e739220f3b5ede1b38a0213d76c4705b1547c4323df3045065726d697432",
+        signatures: {
+          prod: "304402201675b7d8507b40de5136c386815afdad8012cb8e3f0e0a126c758d6fbb3f6b0f0220595cbfeeab7591d0eebe40f0e4ea8ea53beeaf89ee50b7faf97f97bdf36abbce",
+          test: "304402201675b7d8507b40de5136c386815afdad8012cb8e3f0e0a126c758d6fbb3f6b0f0220595cbfeeab7591d0eebe40f0e4ea8ea53beeaf89ee50b7faf97f97bdf36abbce",
         },
+        type: "message",
       },
-    ];
+      {
+        display_name: "Amount allowance",
+        format: "token",
+        field_path: "details.token",
+        coin_ref: 0,
+        descriptor:
+          "48000000000000a4b1000000000022d473030f116ddee9f6b43ac78ba34d593149e876e739220f3b5ede1b38a0213d76c4705b1547c4323df364657461696c732e746f6b656e416d6f756e7420616c6c6f77616e6365",
+        signatures: {
+          prod: "30440220238723d4ddd47baf829d547802a2017476bf68e03d0b920fd46aa543de81d5b902206123218eae82c5f898454c45262e5b0b839dc9d84b2b0926fe14e8218b5b0d53",
+          test: "30440220238723d4ddd47baf829d547802a2017476bf68e03d0b920fd46aa543de81d5b902206123218eae82c5f898454c45262e5b0b839dc9d84b2b0926fe14e8218b5b0d53",
+        },
+        type: "field",
+      },
+      {
+        display_name: "Amount allowance",
+        format: "amount",
+        field_path: "details.amount",
+        coin_ref: 0,
+        descriptor:
+          "48000000000000a4b1000000000022d473030f116ddee9f6b43ac78ba34d593149e876e739220f3b5ede1b38a0213d76c4705b1547c4323df364657461696c732e616d6f756e74416d6f756e7420616c6c6f77616e6365",
+        signatures: {
+          prod: "30450221008f9e2f33b35872e63b2024a6d4938525c6e72364604da2d5e21b3d7fa44cac8a02207d4fe42c9d3994a322dae99adc2c56157435c177c51831103fdaf3cef12bb19f",
+          test: "30450221008f9e2f33b35872e63b2024a6d4938525c6e72364604da2d5e21b3d7fa44cac8a02207d4fe42c9d3994a322dae99adc2c56157435c177c51831103fdaf3cef12bb19f",
+        },
+        type: "field",
+      },
+      {
+        display_name: "Approve to spender",
+        format: "raw",
+        field_path: "spender",
+        descriptor:
+          "48000000000000a4b1000000000022d473030f116ddee9f6b43ac78ba34d593149e876e739220f3b5ede1b38a0213d76c4705b1547c4323df37370656e646572417070726f766520746f207370656e646572",
+        signatures: {
+          prod: "3045022100dddb92141e3b3f21dafb60c8d5093e28b25a8dc4f926ed501b6d2021203f68bc02201abca405540e72b5b70120a428967b776edb8a88ebd9b1d7aa320c3df602027f",
+          test: "3045022100dddb92141e3b3f21dafb60c8d5093e28b25a8dc4f926ed501b6d2021203f68bc02201abca405540e72b5b70120a428967b776edb8a88ebd9b1d7aa320c3df602027f",
+        },
+        type: "field",
+      },
+      {
+        display_name: "Approval expire",
+        format: "datetime",
+        field_path: "details.expiration",
+        descriptor:
+          "48000000000000a4b1000000000022d473030f116ddee9f6b43ac78ba34d593149e876e739220f3b5ede1b38a0213d76c4705b1547c4323df364657461696c732e65787069726174696f6e417070726f76616c20657870697265",
+        signatures: {
+          prod: "3044022060a11c1b15d07e7172e2e68a4e4aa5cbd3b5af900907634b1bce58000eab9fb502201e40963d9e2b00948ce16d3817756329e11a81e8b14b762adff68db4b3a4b8ff",
+          test: "3044022060a11c1b15d07e7172e2e68a4e4aa5cbd3b5af900907634b1bce58000eab9fb502201e40963d9e2b00948ce16d3817756329e11a81e8b14b762adff68db4b3a4b8ff",
+        },
+        type: "field",
+      },
+    ]);
     jest.spyOn(axios, "request").mockResolvedValue({ data: filtersDTO });
 
     // WHEN
@@ -158,7 +318,7 @@ describe("HttpTypedDataDataSource", () => {
           displayName: "Permit2",
           filtersCount: 4,
           signature:
-            "3045022100e3c597d13d28a87a88b0239404c668373cf5063362f2a81d09eed4582941dfe802207669aabb504fd5b95b2734057f6b8bbf51f14a69a5f9bdf658a5952cefbf44d3",
+            "304402201675b7d8507b40de5136c386815afdad8012cb8e3f0e0a126c758d6fbb3f6b0f0220595cbfeeab7591d0eebe40f0e4ea8ea53beeaf89ee50b7faf97f97bdf36abbce",
         },
         filters: [
           {
@@ -167,7 +327,7 @@ describe("HttpTypedDataDataSource", () => {
             path: "details.token",
             tokenIndex: 0,
             signature:
-              "3044022075103b38995e031d1ebbfe38ac6603bec32854b5146a664e49b4cc4f460c1da6022029f4b0fd1f3b7995ffff1627d4b57f27888a2dcc9b3a4e85c37c67571092c733",
+              "30440220238723d4ddd47baf829d547802a2017476bf68e03d0b920fd46aa543de81d5b902206123218eae82c5f898454c45262e5b0b839dc9d84b2b0926fe14e8218b5b0d53",
           },
           {
             type: "amount",
@@ -175,21 +335,21 @@ describe("HttpTypedDataDataSource", () => {
             path: "details.amount",
             tokenIndex: 0,
             signature:
-              "304402201a46e6b4ef89eaf9fcf4945d053bfc5616a826400fd758312fbbe976bafc07ec022025a9b408722baf983ee053f90179c75b0c55bb0668f437d55493e36069bbd5a3",
+              "30450221008f9e2f33b35872e63b2024a6d4938525c6e72364604da2d5e21b3d7fa44cac8a02207d4fe42c9d3994a322dae99adc2c56157435c177c51831103fdaf3cef12bb19f",
           },
           {
             type: "raw",
             displayName: "Approve to spender",
             path: "spender",
             signature:
-              "3044022033e5713d9cb9bc375b56a9fb53b736c81ea3c4ac5cfb2d3ca7f8b8f0558fe2430220543ca4fef6d6f725f29e343f167fe9dd582aa856ecb5797259050eb990a1befb",
+              "3045022100dddb92141e3b3f21dafb60c8d5093e28b25a8dc4f926ed501b6d2021203f68bc02201abca405540e72b5b70120a428967b776edb8a88ebd9b1d7aa320c3df602027f",
           },
           {
             type: "datetime",
             displayName: "Approval expire",
             path: "details.expiration",
             signature:
-              "3044022056b3381e4540629ad73bc434ec49d80523234b82f62340fbb77157fb0eb21a680220459fe9cf6ca309f9c7dfc6d4711fea1848dba661563c57f77b3c2dc480b3a63b",
+              "3044022060a11c1b15d07e7172e2e68a4e4aa5cbd3b5af900907634b1bce58000eab9fb502201e40963d9e2b00948ce16d3817756329e11a81e8b14b762adff68db4b3a4b8ff",
           },
         ],
       }),
@@ -198,47 +358,69 @@ describe("HttpTypedDataDataSource", () => {
 
   it("should return V1 filters when axios response is correct", async () => {
     // GIVEN
-    const filtersDTO = [
+    const filtersDTO = buildDescriptor([
       {
-        eip712_signatures: {
-          "0x000000000022d473030f116ddee9f6b43ac78ba3": {
-            "4d593149e876e739220f3b5ede1b38a0213d76c4705b1547c4323df3": {
-              contractName: {
-                label: "Permit2",
-                signature:
-                  "3045022100e3c597d13d28a87a88b0239404c668373cf5063362f2a81d09eed4582941dfe802207669aabb504fd5b95b2734057f6b8bbf51f14a69a5f9bdf658a5952cefbf44d3",
-              },
-              fields: [
-                {
-                  label: "Amount allowance",
-                  path: "details.token",
-                  signature:
-                    "3045022100c98bae217208d9ba8e3649163d8ee9ed2f69518b4ab7204dba15eda4b3ff32aa02205f03f9a6fac8ae4eceb6b61703bfd7f27f58a83bf21b2f815aec2ad766ba7009",
-                },
-                {
-                  label: "Amount allowance",
-                  path: "details.amount",
-                  signature:
-                    "3045022100bb9bb0c71678a39ba8ed764a67bae0998b992850b7dd1dfefc2fbb7cf6036b170220041568fbd2f58b4cca4012a48ab3b4ddab54fbbc5280fe854ec92ca92dcd9ded",
-                },
-                {
-                  label: "Approve to spender",
-                  path: "spender",
-                  signature:
-                    "3044022033e5713d9cb9bc375b56a9fb53b736c81ea3c4ac5cfb2d3ca7f8b8f0558fe2430220543ca4fef6d6f725f29e343f167fe9dd582aa856ecb5797259050eb990a1befb",
-                },
-                {
-                  label: "Approval expire",
-                  path: "details.expiration",
-                  signature:
-                    "304502210094deb9cc390f9a507ace0c3b32a33c1a3388960f673e8f4fe019b203c3c4918902206363885ee3b37fe441b50a47de18ae2a4feddf001454dbb93a3800565cc11fa9",
-                },
-              ],
-            },
-          },
+        display_name: "Permit2",
+        field_mappers_count: 4,
+        descriptor:
+          "b7000000000000a4b1000000000022d473030f116ddee9f6b43ac78ba34d593149e876e739220f3b5ede1b38a0213d76c4705b1547c4323df3045065726d697432",
+        signatures: {
+          prod: "304402201675b7d8507b40de5136c386815afdad8012cb8e3f0e0a126c758d6fbb3f6b0f0220595cbfeeab7591d0eebe40f0e4ea8ea53beeaf89ee50b7faf97f97bdf36abbce",
+          test: "304402201675b7d8507b40de5136c386815afdad8012cb8e3f0e0a126c758d6fbb3f6b0f0220595cbfeeab7591d0eebe40f0e4ea8ea53beeaf89ee50b7faf97f97bdf36abbce",
         },
+        type: "message",
       },
-    ];
+      {
+        display_name: "Amount allowance",
+        format: "token",
+        field_path: "details.token",
+        coin_ref: 0,
+        descriptor:
+          "48000000000000a4b1000000000022d473030f116ddee9f6b43ac78ba34d593149e876e739220f3b5ede1b38a0213d76c4705b1547c4323df364657461696c732e746f6b656e416d6f756e7420616c6c6f77616e6365",
+        signatures: {
+          prod: "30440220238723d4ddd47baf829d547802a2017476bf68e03d0b920fd46aa543de81d5b902206123218eae82c5f898454c45262e5b0b839dc9d84b2b0926fe14e8218b5b0d53",
+          test: "30440220238723d4ddd47baf829d547802a2017476bf68e03d0b920fd46aa543de81d5b902206123218eae82c5f898454c45262e5b0b839dc9d84b2b0926fe14e8218b5b0d53",
+        },
+        type: "field",
+      },
+      {
+        display_name: "Amount allowance",
+        format: "amount",
+        field_path: "details.amount",
+        coin_ref: 0,
+        descriptor:
+          "48000000000000a4b1000000000022d473030f116ddee9f6b43ac78ba34d593149e876e739220f3b5ede1b38a0213d76c4705b1547c4323df364657461696c732e616d6f756e74416d6f756e7420616c6c6f77616e6365",
+        signatures: {
+          prod: "30450221008f9e2f33b35872e63b2024a6d4938525c6e72364604da2d5e21b3d7fa44cac8a02207d4fe42c9d3994a322dae99adc2c56157435c177c51831103fdaf3cef12bb19f",
+          test: "30450221008f9e2f33b35872e63b2024a6d4938525c6e72364604da2d5e21b3d7fa44cac8a02207d4fe42c9d3994a322dae99adc2c56157435c177c51831103fdaf3cef12bb19f",
+        },
+        type: "field",
+      },
+      {
+        display_name: "Approve to spender",
+        format: "raw",
+        field_path: "spender",
+        descriptor:
+          "48000000000000a4b1000000000022d473030f116ddee9f6b43ac78ba34d593149e876e739220f3b5ede1b38a0213d76c4705b1547c4323df37370656e646572417070726f766520746f207370656e646572",
+        signatures: {
+          prod: "3045022100dddb92141e3b3f21dafb60c8d5093e28b25a8dc4f926ed501b6d2021203f68bc02201abca405540e72b5b70120a428967b776edb8a88ebd9b1d7aa320c3df602027f",
+          test: "3045022100dddb92141e3b3f21dafb60c8d5093e28b25a8dc4f926ed501b6d2021203f68bc02201abca405540e72b5b70120a428967b776edb8a88ebd9b1d7aa320c3df602027f",
+        },
+        type: "field",
+      },
+      {
+        display_name: "Approval expire",
+        format: "datetime",
+        field_path: "details.expiration",
+        descriptor:
+          "48000000000000a4b1000000000022d473030f116ddee9f6b43ac78ba34d593149e876e739220f3b5ede1b38a0213d76c4705b1547c4323df364657461696c732e65787069726174696f6e417070726f76616c20657870697265",
+        signatures: {
+          prod: "3044022060a11c1b15d07e7172e2e68a4e4aa5cbd3b5af900907634b1bce58000eab9fb502201e40963d9e2b00948ce16d3817756329e11a81e8b14b762adff68db4b3a4b8ff",
+          test: "3044022060a11c1b15d07e7172e2e68a4e4aa5cbd3b5af900907634b1bce58000eab9fb502201e40963d9e2b00948ce16d3817756329e11a81e8b14b762adff68db4b3a4b8ff",
+        },
+        type: "field",
+      },
+    ]);
     jest.spyOn(axios, "request").mockResolvedValue({ data: filtersDTO });
 
     // WHEN
@@ -256,7 +438,7 @@ describe("HttpTypedDataDataSource", () => {
           displayName: "Permit2",
           filtersCount: 4,
           signature:
-            "3045022100e3c597d13d28a87a88b0239404c668373cf5063362f2a81d09eed4582941dfe802207669aabb504fd5b95b2734057f6b8bbf51f14a69a5f9bdf658a5952cefbf44d3",
+            "304402201675b7d8507b40de5136c386815afdad8012cb8e3f0e0a126c758d6fbb3f6b0f0220595cbfeeab7591d0eebe40f0e4ea8ea53beeaf89ee50b7faf97f97bdf36abbce",
         },
         filters: [
           {
@@ -264,28 +446,28 @@ describe("HttpTypedDataDataSource", () => {
             displayName: "Amount allowance",
             path: "details.token",
             signature:
-              "3045022100c98bae217208d9ba8e3649163d8ee9ed2f69518b4ab7204dba15eda4b3ff32aa02205f03f9a6fac8ae4eceb6b61703bfd7f27f58a83bf21b2f815aec2ad766ba7009",
+              "30440220238723d4ddd47baf829d547802a2017476bf68e03d0b920fd46aa543de81d5b902206123218eae82c5f898454c45262e5b0b839dc9d84b2b0926fe14e8218b5b0d53",
           },
           {
             type: "raw",
             displayName: "Amount allowance",
             path: "details.amount",
             signature:
-              "3045022100bb9bb0c71678a39ba8ed764a67bae0998b992850b7dd1dfefc2fbb7cf6036b170220041568fbd2f58b4cca4012a48ab3b4ddab54fbbc5280fe854ec92ca92dcd9ded",
+              "30450221008f9e2f33b35872e63b2024a6d4938525c6e72364604da2d5e21b3d7fa44cac8a02207d4fe42c9d3994a322dae99adc2c56157435c177c51831103fdaf3cef12bb19f",
           },
           {
             type: "raw",
             displayName: "Approve to spender",
             path: "spender",
             signature:
-              "3044022033e5713d9cb9bc375b56a9fb53b736c81ea3c4ac5cfb2d3ca7f8b8f0558fe2430220543ca4fef6d6f725f29e343f167fe9dd582aa856ecb5797259050eb990a1befb",
+              "3045022100dddb92141e3b3f21dafb60c8d5093e28b25a8dc4f926ed501b6d2021203f68bc02201abca405540e72b5b70120a428967b776edb8a88ebd9b1d7aa320c3df602027f",
           },
           {
             type: "raw",
             displayName: "Approval expire",
             path: "details.expiration",
             signature:
-              "304502210094deb9cc390f9a507ace0c3b32a33c1a3388960f673e8f4fe019b203c3c4918902206363885ee3b37fe441b50a47de18ae2a4feddf001454dbb93a3800565cc11fa9",
+              "3044022060a11c1b15d07e7172e2e68a4e4aa5cbd3b5af900907634b1bce58000eab9fb502201e40963d9e2b00948ce16d3817756329e11a81e8b14b762adff68db4b3a4b8ff",
           },
         ],
       }),
@@ -306,25 +488,15 @@ describe("HttpTypedDataDataSource", () => {
 
     // THEN
     expect(result.isLeft()).toEqual(true);
+    expect(result.extract()).toEqual(
+      new Error(
+        `[ContextModule] HttpTypedDataDataSource: no typed data filters for address 0x000000000022d473030f116ddee9f6b43ac78ba3 on chain 1 for schema 4d593149e876e739220f3b5ede1b38a0213d76c4705b1547c4323df3`,
+      ),
+    );
   });
 
   it("should return an error when schema is not found", async () => {
-    const filtersDTO = [
-      {
-        eip712_signatures: {
-          "0x000000000022d473030f116ddee9f6b43ac78ba3": {
-            "4d593149e876e739220f3b5ede1b38a0213d76c4705b1547c4323df4": {
-              contractName: {
-                label: "Permit2",
-                signature:
-                  "3045022100e3c597d13d28a87a88b0239404c668373cf5063362f2a81d09eed4582941dfe802207669aabb504fd5b95b2734057f6b8bbf51f14a69a5f9bdf658a5952cefbf44d3",
-              },
-              fields: [],
-            },
-          },
-        },
-      },
-    ];
+    const filtersDTO = buildDescriptor([]);
     // GIVEN
     jest.spyOn(axios, "request").mockResolvedValue({ data: filtersDTO });
 
@@ -338,25 +510,15 @@ describe("HttpTypedDataDataSource", () => {
 
     // THEN
     expect(result.isLeft()).toEqual(true);
+    expect(result.extract()).toEqual(
+      new Error(
+        `[ContextModule] HttpTypedDataDataSource: no message info for address 0x000000000022d473030f116ddee9f6b43ac78ba3 on chain 1 for schema 4d593149e876e739220f3b5ede1b38a0213d76c4705b1547c4323df3`,
+      ),
+    );
   });
 
-  it("should return an error if message info is invalid", async () => {
-    const filtersDTO = [
-      {
-        eip712_signatures: {
-          "0x000000000022d473030f116ddee9f6b43ac78ba3": {
-            "4d593149e876e739220f3b5ede1b38a0213d76c4705b1547c4323df3": {
-              contractName: {
-                label: "Permit2",
-                signature:
-                  "3045022100e3c597d13d28a87a88b0239404c668373cf5063362f2a81d09eed4582941dfe802207669aabb504fd5b95b2734057f6b8bbf51f14a69a5f9bdf658a5952cefbf44d3",
-              },
-              fields: "should be an array",
-            },
-          },
-        },
-      },
-    ];
+  it("should return an error when schema is undefined", async () => {
+    const filtersDTO = buildDescriptor(undefined as unknown as FilterField[]);
     // GIVEN
     jest.spyOn(axios, "request").mockResolvedValue({ data: filtersDTO });
 
@@ -370,25 +532,29 @@ describe("HttpTypedDataDataSource", () => {
 
     // THEN
     expect(result.isLeft()).toEqual(true);
+    expect(result.extract()).toEqual(
+      new Error(
+        `[ContextModule] HttpTypedDataDataSource: no message info for address 0x000000000022d473030f116ddee9f6b43ac78ba3 on chain 1 for schema 4d593149e876e739220f3b5ede1b38a0213d76c4705b1547c4323df3`,
+      ),
+    );
   });
 
-  it("should return an error if field is invalid", async () => {
-    const filtersDTO = [
+  it("should return an error if no message info is found", async () => {
+    const filtersDTO = buildDescriptor([
       {
-        eip712_signatures: {
-          "0x000000000022d473030f116ddee9f6b43ac78ba3": {
-            "4d593149e876e739220f3b5ede1b38a0213d76c4705b1547c4323df3": {
-              contractName: {
-                label: "Permit2",
-                signature:
-                  "3045022100e3c597d13d28a87a88b0239404c668373cf5063362f2a81d09eed4582941dfe802207669aabb504fd5b95b2734057f6b8bbf51f14a69a5f9bdf658a5952cefbf44d3",
-              },
-              fields: ["should be an object"],
-            },
-          },
+        display_name: "Amount allowance",
+        format: "token",
+        field_path: "details.token",
+        coin_ref: 0,
+        descriptor:
+          "48000000000000a4b1000000000022d473030f116ddee9f6b43ac78ba34d593149e876e739220f3b5ede1b38a0213d76c4705b1547c4323df364657461696c732e746f6b656e416d6f756e7420616c6c6f77616e6365",
+        signatures: {
+          prod: "30440220238723d4ddd47baf829d547802a2017476bf68e03d0b920fd46aa543de81d5b902206123218eae82c5f898454c45262e5b0b839dc9d84b2b0926fe14e8218b5b0d53",
+          test: "30440220238723d4ddd47baf829d547802a2017476bf68e03d0b920fd46aa543de81d5b902206123218eae82c5f898454c45262e5b0b839dc9d84b2b0926fe14e8218b5b0d53",
         },
+        type: "field",
       },
-    ];
+    ]);
     // GIVEN
     jest.spyOn(axios, "request").mockResolvedValue({ data: filtersDTO });
 
@@ -402,32 +568,63 @@ describe("HttpTypedDataDataSource", () => {
 
     // THEN
     expect(result.isLeft()).toEqual(true);
+    expect(result.extract()).toEqual(
+      new Error(
+        `[ContextModule] HttpTypedDataDataSource: no message info for address 0x000000000022d473030f116ddee9f6b43ac78ba3 on chain 1 for schema 4d593149e876e739220f3b5ede1b38a0213d76c4705b1547c4323df3`,
+      ),
+    );
+  });
+
+  it("should return an error if message info display name is missing", async () => {
+    const filtersDTO = buildDescriptor([
+      {
+        // display_name: "Permit2",
+        field_mappers_count: 4,
+        descriptor:
+          "b7000000000000a4b1000000000022d473030f116ddee9f6b43ac78ba34d593149e876e739220f3b5ede1b38a0213d76c4705b1547c4323df3045065726d697432",
+        signatures: {
+          prod: "304402201675b7d8507b40de5136c386815afdad8012cb8e3f0e0a126c758d6fbb3f6b0f0220595cbfeeab7591d0eebe40f0e4ea8ea53beeaf89ee50b7faf97f97bdf36abbce",
+          test: "304402201675b7d8507b40de5136c386815afdad8012cb8e3f0e0a126c758d6fbb3f6b0f0220595cbfeeab7591d0eebe40f0e4ea8ea53beeaf89ee50b7faf97f97bdf36abbce",
+        },
+        type: "message",
+      } as FilterField,
+    ]);
+    // GIVEN
+    jest.spyOn(axios, "request").mockResolvedValue({ data: filtersDTO });
+
+    // WHEN
+    const result = await datasource.getTypedDataFilters({
+      chainId: 1,
+      address: "0x000000000022d473030f116ddee9f6b43ac78ba3",
+      version: "v1",
+      schema: TEST_TYPES,
+    });
+
+    // THEN
+    expect(result.isLeft()).toEqual(true);
+    expect(result.extract()).toEqual(
+      new Error(
+        `[ContextModule] HttpTypedDataDataSource: invalid typed data field for address 0x000000000022d473030f116ddee9f6b43ac78ba3 on chain 1 for schema 4d593149e876e739220f3b5ede1b38a0213d76c4705b1547c4323df3`,
+      ),
+    );
   });
 
   it("should return an error if field path is invalid", async () => {
-    const filtersDTO = [
+    const filtersDTO = buildDescriptor([
       {
-        eip712_signatures: {
-          "0x000000000022d473030f116ddee9f6b43ac78ba3": {
-            "4d593149e876e739220f3b5ede1b38a0213d76c4705b1547c4323df3": {
-              contractName: {
-                label: "Permit2",
-                signature:
-                  "3045022100e3c597d13d28a87a88b0239404c668373cf5063362f2a81d09eed4582941dfe802207669aabb504fd5b95b2734057f6b8bbf51f14a69a5f9bdf658a5952cefbf44d3",
-              },
-              fields: [
-                {
-                  label: "Amount allowance",
-                  path: 2,
-                  signature:
-                    "3045022100c98bae217208d9ba8e3649163d8ee9ed2f69518b4ab7204dba15eda4b3ff32aa02205f03f9a6fac8ae4eceb6b61703bfd7f27f58a83bf21b2f815aec2ad766ba7009",
-                },
-              ],
-            },
-          },
+        display_name: "Amount allowance",
+        format: "token",
+        // field_path: "details.token",
+        coin_ref: 0,
+        descriptor:
+          "48000000000000a4b1000000000022d473030f116ddee9f6b43ac78ba34d593149e876e739220f3b5ede1b38a0213d76c4705b1547c4323df364657461696c732e746f6b656e416d6f756e7420616c6c6f77616e6365",
+        signatures: {
+          prod: "30440220238723d4ddd47baf829d547802a2017476bf68e03d0b920fd46aa543de81d5b902206123218eae82c5f898454c45262e5b0b839dc9d84b2b0926fe14e8218b5b0d53",
+          test: "30440220238723d4ddd47baf829d547802a2017476bf68e03d0b920fd46aa543de81d5b902206123218eae82c5f898454c45262e5b0b839dc9d84b2b0926fe14e8218b5b0d53",
         },
-      },
-    ];
+        type: "field",
+      } as FilterField,
+    ]);
     // GIVEN
     jest.spyOn(axios, "request").mockResolvedValue({ data: filtersDTO });
 
@@ -441,32 +638,29 @@ describe("HttpTypedDataDataSource", () => {
 
     // THEN
     expect(result.isLeft()).toEqual(true);
+    expect(result.extract()).toEqual(
+      new Error(
+        `[ContextModule] HttpTypedDataDataSource: invalid typed data field for address 0x000000000022d473030f116ddee9f6b43ac78ba3 on chain 1 for schema 4d593149e876e739220f3b5ede1b38a0213d76c4705b1547c4323df3`,
+      ),
+    );
   });
 
-  it("should return an error if field label is invalid", async () => {
-    const filtersDTO = [
+  it("should return an error if field display_name is invalid", async () => {
+    const filtersDTO = buildDescriptor([
       {
-        eip712_signatures: {
-          "0x000000000022d473030f116ddee9f6b43ac78ba3": {
-            "4d593149e876e739220f3b5ede1b38a0213d76c4705b1547c4323df3": {
-              contractName: {
-                label: "Permit2",
-                signature:
-                  "3045022100e3c597d13d28a87a88b0239404c668373cf5063362f2a81d09eed4582941dfe802207669aabb504fd5b95b2734057f6b8bbf51f14a69a5f9bdf658a5952cefbf44d3",
-              },
-              fields: [
-                {
-                  label: 2,
-                  path: "details.token",
-                  signature:
-                    "3045022100c98bae217208d9ba8e3649163d8ee9ed2f69518b4ab7204dba15eda4b3ff32aa02205f03f9a6fac8ae4eceb6b61703bfd7f27f58a83bf21b2f815aec2ad766ba7009",
-                },
-              ],
-            },
-          },
+        // display_name: "Amount allowance",
+        format: "token",
+        field_path: "details.token",
+        coin_ref: 0,
+        descriptor:
+          "48000000000000a4b1000000000022d473030f116ddee9f6b43ac78ba34d593149e876e739220f3b5ede1b38a0213d76c4705b1547c4323df364657461696c732e746f6b656e416d6f756e7420616c6c6f77616e6365",
+        signatures: {
+          prod: "30440220238723d4ddd47baf829d547802a2017476bf68e03d0b920fd46aa543de81d5b902206123218eae82c5f898454c45262e5b0b839dc9d84b2b0926fe14e8218b5b0d53",
+          test: "30440220238723d4ddd47baf829d547802a2017476bf68e03d0b920fd46aa543de81d5b902206123218eae82c5f898454c45262e5b0b839dc9d84b2b0926fe14e8218b5b0d53",
         },
-      },
-    ];
+        type: "field",
+      } as FilterField,
+    ]);
     // GIVEN
     jest.spyOn(axios, "request").mockResolvedValue({ data: filtersDTO });
 
@@ -480,31 +674,29 @@ describe("HttpTypedDataDataSource", () => {
 
     // THEN
     expect(result.isLeft()).toEqual(true);
+    expect(result.extract()).toEqual(
+      new Error(
+        `[ContextModule] HttpTypedDataDataSource: invalid typed data field for address 0x000000000022d473030f116ddee9f6b43ac78ba3 on chain 1 for schema 4d593149e876e739220f3b5ede1b38a0213d76c4705b1547c4323df3`,
+      ),
+    );
   });
 
-  it("should return an error if field signature is invalid", async () => {
-    const filtersDTO = [
+  it("should return an error if field signatures.prod is missing", async () => {
+    const filtersDTO = buildDescriptor([
       {
-        eip712_signatures: {
-          "0x000000000022d473030f116ddee9f6b43ac78ba3": {
-            "4d593149e876e739220f3b5ede1b38a0213d76c4705b1547c4323df3": {
-              contractName: {
-                label: "Permit2",
-                signature:
-                  "3045022100e3c597d13d28a87a88b0239404c668373cf5063362f2a81d09eed4582941dfe802207669aabb504fd5b95b2734057f6b8bbf51f14a69a5f9bdf658a5952cefbf44d3",
-              },
-              fields: [
-                {
-                  label: "Amount allowance",
-                  path: "details.token",
-                  signature: 2,
-                },
-              ],
-            },
-          },
-        },
-      },
-    ];
+        display_name: "Amount allowance",
+        format: "token",
+        field_path: "details.token",
+        coin_ref: 0,
+        descriptor:
+          "48000000000000a4b1000000000022d473030f116ddee9f6b43ac78ba34d593149e876e739220f3b5ede1b38a0213d76c4705b1547c4323df364657461696c732e746f6b656e416d6f756e7420616c6c6f77616e6365",
+        // signatures: {
+        //   prod: "30440220238723d4ddd47baf829d547802a2017476bf68e03d0b920fd46aa543de81d5b902206123218eae82c5f898454c45262e5b0b839dc9d84b2b0926fe14e8218b5b0d53",
+        //   test: "30440220238723d4ddd47baf829d547802a2017476bf68e03d0b920fd46aa543de81d5b902206123218eae82c5f898454c45262e5b0b839dc9d84b2b0926fe14e8218b5b0d53",
+        // },
+        type: "field",
+      } as FilterField,
+    ]);
     // GIVEN
     jest.spyOn(axios, "request").mockResolvedValue({ data: filtersDTO });
 
@@ -518,34 +710,29 @@ describe("HttpTypedDataDataSource", () => {
 
     // THEN
     expect(result.isLeft()).toEqual(true);
+    expect(result.extract()).toEqual(
+      new Error(
+        `[ContextModule] HttpTypedDataDataSource: invalid typed data field for address 0x000000000022d473030f116ddee9f6b43ac78ba3 on chain 1 for schema 4d593149e876e739220f3b5ede1b38a0213d76c4705b1547c4323df3`,
+      ),
+    );
   });
 
-  it("should return an error on raw fields with coin ref", async () => {
-    const filtersDTO = [
+  it("should return an error on token fileds with coin ref to null", async () => {
+    const filtersDTO = buildDescriptor([
       {
-        eip712_signatures: {
-          "0x000000000022d473030f116ddee9f6b43ac78ba3": {
-            "4d593149e876e739220f3b5ede1b38a0213d76c4705b1547c4323df3": {
-              contractName: {
-                label: "Permit2",
-                signature:
-                  "3045022100e3c597d13d28a87a88b0239404c668373cf5063362f2a81d09eed4582941dfe802207669aabb504fd5b95b2734057f6b8bbf51f14a69a5f9bdf658a5952cefbf44d3",
-              },
-              fields: [
-                {
-                  format: "raw",
-                  label: "Amount allowance",
-                  path: "details.token",
-                  coin_ref: 0,
-                  signature:
-                    "3045022100c98bae217208d9ba8e3649163d8ee9ed2f69518b4ab7204dba15eda4b3ff32aa02205f03f9a6fac8ae4eceb6b61703bfd7f27f58a83bf21b2f815aec2ad766ba7009",
-                },
-              ],
-            },
-          },
+        display_name: "Amount allowance",
+        format: "token",
+        field_path: "details.token",
+        coin_ref: null,
+        descriptor:
+          "48000000000000a4b1000000000022d473030f116ddee9f6b43ac78ba34d593149e876e739220f3b5ede1b38a0213d76c4705b1547c4323df364657461696c732e746f6b656e416d6f756e7420616c6c6f77616e6365",
+        signatures: {
+          prod: "30440220238723d4ddd47baf829d547802a2017476bf68e03d0b920fd46aa543de81d5b902206123218eae82c5f898454c45262e5b0b839dc9d84b2b0926fe14e8218b5b0d53",
+          test: "30440220238723d4ddd47baf829d547802a2017476bf68e03d0b920fd46aa543de81d5b902206123218eae82c5f898454c45262e5b0b839dc9d84b2b0926fe14e8218b5b0d53",
         },
-      },
-    ];
+        type: "field",
+      } as unknown as FilterField,
+    ]);
     // GIVEN
     jest.spyOn(axios, "request").mockResolvedValue({ data: filtersDTO });
 
@@ -553,57 +740,22 @@ describe("HttpTypedDataDataSource", () => {
     const result = await datasource.getTypedDataFilters({
       chainId: 1,
       address: "0x000000000022d473030f116ddee9f6b43ac78ba3",
-      version: "v1",
+      version: "v2",
       schema: TEST_TYPES,
     });
 
     // THEN
     expect(result.isLeft()).toEqual(true);
-  });
-
-  it("should return an error on token fields without coin ref", async () => {
-    const filtersDTO = [
-      {
-        eip712_signatures: {
-          "0x000000000022d473030f116ddee9f6b43ac78ba3": {
-            "4d593149e876e739220f3b5ede1b38a0213d76c4705b1547c4323df3": {
-              contractName: {
-                label: "Permit2",
-                signature:
-                  "3045022100e3c597d13d28a87a88b0239404c668373cf5063362f2a81d09eed4582941dfe802207669aabb504fd5b95b2734057f6b8bbf51f14a69a5f9bdf658a5952cefbf44d3",
-              },
-              fields: [
-                {
-                  format: "token",
-                  label: "Amount allowance",
-                  path: "details.token",
-                  signature:
-                    "3045022100c98bae217208d9ba8e3649163d8ee9ed2f69518b4ab7204dba15eda4b3ff32aa02205f03f9a6fac8ae4eceb6b61703bfd7f27f58a83bf21b2f815aec2ad766ba7009",
-                },
-              ],
-            },
-          },
-        },
-      },
-    ];
-    // GIVEN
-    jest.spyOn(axios, "request").mockResolvedValue({ data: filtersDTO });
-
-    // WHEN
-    const result = await datasource.getTypedDataFilters({
-      chainId: 1,
-      address: "0x000000000022d473030f116ddee9f6b43ac78ba3",
-      version: "v1",
-      schema: TEST_TYPES,
-    });
-
-    // THEN
-    expect(result.isLeft()).toEqual(true);
+    expect(result.extract()).toEqual(
+      new Error(
+        `[ContextModule] HttpTypedDataDataSource: invalid typed data field for address 0x000000000022d473030f116ddee9f6b43ac78ba3 on chain 1 for schema 4d593149e876e739220f3b5ede1b38a0213d76c4705b1547c4323df3`,
+      ),
+    );
   });
 
   it("should return an error when axios throws an error", async () => {
     // GIVEN
-    jest.spyOn(axios, "request").mockRejectedValue(new Error());
+    jest.spyOn(axios, "request").mockRejectedValue(new Error("error"));
 
     // WHEN
     const result = await datasource.getTypedDataFilters({
