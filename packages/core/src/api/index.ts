@@ -118,6 +118,7 @@ export {
   DeviceSessionStateType,
 } from "@api/device-session/DeviceSessionState";
 export { type SdkError } from "@api/Error";
+export { base64StringToBuffer, isBase64String } from "@api/utils/Base64String";
 export {
   bufferToHexaString,
   hexaStringToBuffer,
