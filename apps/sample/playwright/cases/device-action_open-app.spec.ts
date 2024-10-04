@@ -24,7 +24,7 @@ test.describe("device action: open bitcoin app", () => {
     await test.step("Given first device is connected", async () => {
       await whenConnectingDevice(page);
 
-      await thenDeviceIsConnected(page, 0);
+      await thenDeviceIsConnected(page);
     });
 
     await test.step("Then execute open app via device action", async () => {

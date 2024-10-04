@@ -44,8 +44,20 @@ const fillInputFields =
     return page;
   };
 
-export const whenConnectingDevice = (page: Page): Promise<Page> =>
-  clickByTestId("CTA_select-device")(page);
+export const whenOpenSelectDeviceDrawer = async (page: Page): Promise<Page> =>
+  await clickByTestId("CTA_open-select-device-drawer")(page);
+
+export const whenConnectingDevice = async (
+  page: Page,
+  closeDrawer: boolean = true,
+): Promise<Page> => {
+  await whenOpenSelectDeviceDrawer(page);
+  const newPage = await clickByTestId("CTA_select-device")(page);
+  if (closeDrawer) {
+    return whenCloseDrawer(page);
+  }
+  return newPage;
+};
 
 export const whenClicking = (page: Page, ctaSelector: string): Promise<Page> =>
   clickByTestId(ctaSelector)(page);
@@ -88,6 +100,9 @@ export const whenExecute =
 export const whenExecuteDeviceAction = whenExecute("device-action", true);
 export const whenExecuteDeviceCommand = whenExecute("device-command", true);
 
+const getMainDevice = (page: Page): Locator =>
+  page.getByTestId("container_main-device").locator("> *").first();
+
 const getFirstDevice = (page: Page): Locator =>
   page.getByTestId("container_devices").locator("> *").first();
 
@@ -98,6 +113,9 @@ const clickDeviceOptionAndDisconnect = async (page: Page): Promise<Page> => {
 };
 
 export const whenDisconnectDevice = (page: Page): Promise<Page> =>
+  asyncPipe(getMainDevice, clickDeviceOptionAndDisconnect)(page);
+
+export const whenDisconnectListedDevice = (page: Page): Promise<Page> =>
   asyncPipe(getFirstDevice, clickDeviceOptionAndDisconnect)(page);
 
 const drawerCloseButtonSelector =

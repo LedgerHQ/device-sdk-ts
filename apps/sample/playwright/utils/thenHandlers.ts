@@ -2,8 +2,13 @@ import { expect, Locator, Page } from "@playwright/test";
 
 import { asyncPipe } from "@/utils/pipes";
 
-const getDeviceLocator =
-  (deviceIndex: number = 0) =>
+const getDeviceLocator = (page: Page): Page => {
+  const targetChild = page.getByTestId("container_main-device").locator("> *");
+  return targetChild as unknown as Page;
+};
+
+const getListedDeviceLocator =
+  (deviceIndex: number) =>
   (page: Page): Page => {
     const targetChild = page
       .getByTestId("container_devices")
@@ -24,11 +29,14 @@ const verifyDeviceConnectedStatus = async (
   return locator;
 };
 
-export const thenDeviceIsConnected = (
+export const thenDeviceIsConnected = (page: Page): Promise<Locator> =>
+  asyncPipe(getDeviceLocator, verifyDeviceConnectedStatus)(page);
+
+export const thenDeviceIsListedAndConnected = (
   page: Page,
-  deviceIndex: number = 0,
+  index: number,
 ): Promise<Locator> =>
-  asyncPipe(getDeviceLocator(deviceIndex), verifyDeviceConnectedStatus)(page);
+  asyncPipe(getListedDeviceLocator(index), verifyDeviceConnectedStatus)(page);
 
 const getAllDeviceNames = async (page: Page): Promise<string[]> => {
   return page

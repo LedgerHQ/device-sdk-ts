@@ -25,7 +25,7 @@ test.describe("device action: list apps", () => {
     await test.step("Given first device is connected", async () => {
       await whenConnectingDevice(page);
 
-      await thenDeviceIsConnected(page, 0);
+      await thenDeviceIsConnected(page);
     });
 
     await test.step("Then execute list apps via device action", async () => {

@@ -36,7 +36,7 @@ test.describe("ETH Signer: get address, happy paths", () => {
     await test.step("Given first device is connected", async () => {
       await whenConnectingDevice(page);
 
-      await thenDeviceIsConnected(page, 0);
+      await thenDeviceIsConnected(page);
     });
 
     await test.step("When execute ETH: get address", async () => {
@@ -71,7 +71,7 @@ test.describe("ETH Signer: get address, happy paths", () => {
     await test.step("Given first device is connected", async () => {
       await whenConnectingDevice(page);
 
-      await thenDeviceIsConnected(page, 0);
+      await thenDeviceIsConnected(page);
     });
 
     await test.step("When execute ETH: get address with checkOnDevice on", async () => {
@@ -121,7 +121,7 @@ test.describe("ETH Signer: get address, happy paths", () => {
     await test.step("Given first device is connected", async () => {
       await whenConnectingDevice(page);
 
-      await thenDeviceIsConnected(page, 0);
+      await thenDeviceIsConnected(page);
     });
 
     await test.step("Then execute ETH: get address", async () => {

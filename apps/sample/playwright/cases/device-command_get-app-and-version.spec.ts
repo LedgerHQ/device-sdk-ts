@@ -38,7 +38,7 @@ test.describe("device command: get app and version", () => {
     await test.step("Given first device is connected", async () => {
       await whenConnectingDevice(page);
 
-      await thenDeviceIsConnected(page, 0);
+      await thenDeviceIsConnected(page);
     });
 
     await test.step("Then execute open app via device command", async () => {

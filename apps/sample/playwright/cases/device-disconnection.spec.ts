@@ -3,11 +3,15 @@ import { test } from "@playwright/test";
 
 import {
   thenDeviceIsConnected,
+  thenDeviceIsListedAndConnected,
   thenNoDeviceIsConnected,
 } from "../utils/thenHandlers";
 import {
+  whenCloseDrawer,
   whenConnectingDevice,
   whenDisconnectDevice,
+  whenDisconnectListedDevice,
+  whenOpenSelectDeviceDrawer,
 } from "../utils/whenHandlers";
 
 test.describe("device disconnection", () => {
@@ -19,7 +23,7 @@ test.describe("device disconnection", () => {
     await test.step("Given first device is connected", async () => {
       await whenConnectingDevice(page);
 
-      await thenDeviceIsConnected(page, 0);
+      await thenDeviceIsConnected(page);
     });
 
     await test.step("Then disconnect device", async () => {
@@ -33,19 +37,25 @@ test.describe("device disconnection", () => {
     await test.step("Given first device is connected", async () => {
       await whenConnectingDevice(page);
 
-      await thenDeviceIsConnected(page, 0);
+      await thenDeviceIsConnected(page);
     });
 
     await test.step("Given second device is connected", async () => {
-      await whenConnectingDevice(page);
+      await whenConnectingDevice(page, false);
 
-      await thenDeviceIsConnected(page, 1);
+      await thenDeviceIsListedAndConnected(page, 1);
+
+      await whenCloseDrawer(page);
     });
 
     await test.step("Then disconnect device", async () => {
-      await whenDisconnectDevice(page);
+      await whenOpenSelectDeviceDrawer(page);
 
-      await whenDisconnectDevice(page);
+      await whenDisconnectListedDevice(page);
+
+      await whenDisconnectListedDevice(page);
+
+      await whenCloseDrawer(page);
 
       await thenNoDeviceIsConnected(page);
     });

@@ -1,8 +1,11 @@
 /* eslint-disable no-restricted-imports */
 import { test } from "@playwright/test";
 
-import { thenDeviceIsConnected } from "../utils/thenHandlers";
-import { whenConnectingDevice } from "../utils/whenHandlers";
+import {
+  thenDeviceIsConnected,
+  thenDeviceIsListedAndConnected,
+} from "../utils/thenHandlers";
+import { whenCloseDrawer, whenConnectingDevice } from "../utils/whenHandlers";
 
 test.describe("device connection", () => {
   test.beforeEach(async ({ page }) => {
@@ -13,7 +16,7 @@ test.describe("device connection", () => {
     await test.step("Given first device is connected", async () => {
       await whenConnectingDevice(page);
 
-      await thenDeviceIsConnected(page, 0);
+      await thenDeviceIsConnected(page);
     });
   });
 
@@ -21,13 +24,14 @@ test.describe("device connection", () => {
     await test.step("Given first device is connected", async () => {
       await whenConnectingDevice(page);
 
-      await thenDeviceIsConnected(page, 0);
+      await thenDeviceIsConnected(page);
     });
 
     await test.step("Given second device is connected", async () => {
-      await whenConnectingDevice(page);
+      await whenConnectingDevice(page, false);
 
-      await thenDeviceIsConnected(page, 1);
+      await thenDeviceIsListedAndConnected(page, 1);
+      await whenCloseDrawer(page);
     });
   });
 });
