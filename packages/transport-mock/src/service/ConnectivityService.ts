@@ -17,29 +17,13 @@ export class ConnectivityService {
   }
 
   async disconnect(sessionId: string): Promise<boolean> {
-    return new Promise<boolean>((resolve, reject) => {
-      this.client
-        .post<undefined>("disconnect", {}, { session_id: sessionId })
-        .then((_) => {
-          resolve(true);
-        })
-        .catch((error) => {
-          reject(error);
-        });
-    });
+    await this.client.post("disconnect", {}, { session_id: sessionId });
+    return true;
   }
 
   async disconnectAll(): Promise<boolean> {
-    return new Promise<boolean>((resolve, reject) => {
-      this.client
-        .get<undefined>("clear")
-        .then((_) => {
-          resolve(true);
-        })
-        .catch((error) => {
-          reject(error);
-        });
-    });
+    await this.client.get("clear");
+    return true;
   }
 
   async getConnected(): Promise<Session[]> {

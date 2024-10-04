@@ -1,7 +1,6 @@
 import { inject, injectable } from "inversify";
 
 import { ApduResponse } from "@api/device-session/ApduResponse";
-import { SdkError } from "@api/Error";
 import { DeviceSessionId } from "@api/types";
 import { deviceSessionTypes } from "@internal/device-session/di/deviceSessionTypes";
 import type { DeviceSessionService } from "@internal/device-session/service/DeviceSessionService";
@@ -53,9 +52,9 @@ export class SendApduUseCase {
         const response = await deviceSession.sendApdu(apdu);
         return response.caseOf({
           // Case APDU sent and response received successfully
-          Right: (data: ApduResponse) => data,
+          Right: (data) => data,
           // Case error sending or receiving APDU
-          Left: (error: SdkError) => {
+          Left: (error) => {
             this._logger.error("Error sending APDU", {
               data: { sessionId, apdu, error },
             });

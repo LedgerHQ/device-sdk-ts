@@ -127,10 +127,10 @@ export class DeviceSession {
     });
 
     return response.caseOf({
-      Left: (err: SdkError) => {
+      Left: (err) => {
         throw err;
       },
-      Right: (r: ApduResponse) =>
+      Right: (r) =>
         command.parseResponse(r, this._connectedDevice.deviceModel.id),
     });
   }
