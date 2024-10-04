@@ -208,6 +208,7 @@ describe("HttpTypedDataDataSource", () => {
     const config = {
       cal: {
         url: "https://crypto-assets-service.api.ledger.com/v1",
+        mode: "prod",
       },
     } as ContextModuleConfig;
     datasource = new HttpTypedDataDataSource(config);

@@ -87,7 +87,7 @@ export class HttpTypedDataDataSource implements TypedDataDataSource {
         if (this.isFieldFilterWithContractInfo(field)) {
           messageInfo = {
             displayName: field.display_name,
-            signature: field.signatures.prod,
+            signature: field.signatures[this.config.cal.mode],
             filtersCount: field.field_mappers_count,
           };
         } else if (version === "v1" && this.isFieldFilterV1(field)) {
@@ -95,21 +95,21 @@ export class HttpTypedDataDataSource implements TypedDataDataSource {
             type: "raw",
             displayName: field.display_name,
             path: field.field_path,
-            signature: field.signatures.prod,
+            signature: field.signatures[this.config.cal.mode],
           });
         } else if (this.isFieldFilterV2(field)) {
           filters.push({
             type: field.format,
             displayName: field.display_name,
             path: field.field_path,
-            signature: field.signatures.prod,
+            signature: field.signatures[this.config.cal.mode],
           });
         } else if (this.isFieldFilterV2WithCoinRef(field)) {
           filters.push({
             type: field.format,
             displayName: field.display_name,
             path: field.field_path,
-            signature: field.signatures.prod,
+            signature: field.signatures[this.config.cal.mode],
             tokenIndex: field.coin_ref,
           });
         } else {
