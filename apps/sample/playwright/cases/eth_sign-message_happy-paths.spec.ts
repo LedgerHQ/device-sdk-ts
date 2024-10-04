@@ -33,7 +33,7 @@ test.describe("ETH Signer: sign message, happy paths", () => {
     await test.step("Given first device is connected", async () => {
       await whenConnectingDevice(page);
 
-      await thenDeviceIsConnected(page, 0);
+      await thenDeviceIsConnected(page);
     });
 
     await test.step("When execute ETH: sign message", async () => {
@@ -71,7 +71,7 @@ test.describe("ETH Signer: sign message, happy paths", () => {
     await test.step("Given first device is connected", async () => {
       await whenConnectingDevice(page);
 
-      await thenDeviceIsConnected(page, 0);
+      await thenDeviceIsConnected(page);
     });
 
     await test.step("When execute ETH: sign message", async () => {
@@ -133,7 +133,7 @@ test.describe("ETH Signer: sign message, happy paths", () => {
     await test.step("Given first device is connected", async () => {
       await whenConnectingDevice(page);
 
-      await thenDeviceIsConnected(page, 0);
+      await thenDeviceIsConnected(page);
     });
 
     await test.step("When execute ETH: sign message", async () => {

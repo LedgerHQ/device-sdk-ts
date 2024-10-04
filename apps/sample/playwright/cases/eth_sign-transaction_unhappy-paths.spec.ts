@@ -33,7 +33,7 @@ test.describe("ETH Signer: sign transaction, unhappy paths", () => {
     await test.step("Given first device is connected", async () => {
       await whenConnectingDevice(page);
 
-      await thenDeviceIsConnected(page, 0);
+      await thenDeviceIsConnected(page);
     });
 
     await test.step("When execute ETH: sign transaction with malformed derivation paths", async () => {

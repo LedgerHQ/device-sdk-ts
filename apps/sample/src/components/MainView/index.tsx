@@ -1,21 +1,16 @@
 import React, { useEffect, useState } from "react";
-import { Badge, Flex, Icon, Text, Notification } from "@ledgerhq/react-ui";
+import { Flex, Text, Button } from "@ledgerhq/react-ui";
 import Image from "next/image";
 import styled, { DefaultTheme } from "styled-components";
 
 import { SdkError } from "@ledgerhq/device-management-kit";
-import { ConnectDeviceActions } from "./ConnectDeviceActions";
+import { useDeviceSelectionContext } from "@/providers/DeviceSelectionProvider";
 
 const Root = styled(Flex)`
   flex: 1;
   justify-content: center;
   align-items: center;
   flex-direction: column;
-`;
-const ErrorNotification = styled(Notification)`
-  position: absolute;
-  bottom: 10px;
-  width: 70%;
 `;
 
 const Description = styled(Text).attrs({ my: 6 })`
@@ -28,6 +23,8 @@ const NanoLogo = styled(Image).attrs({ mb: 8 })`
 
 export const MainView: React.FC = () => {
   const [connectionError, setConnectionError] = useState<SdkError | null>(null);
+  const { setVisibility: setDeviceSelectionVisibility } =
+    useDeviceSelectionContext();
 
   useEffect(() => {
     let timeoutId: NodeJS.Timeout;
@@ -57,25 +54,16 @@ export const MainView: React.FC = () => {
       <Description variant={"body"}>
         Use this application to test Ledger hardware device features.
       </Description>
-
-      <ConnectDeviceActions onError={setConnectionError} />
-      {connectionError && (
-        <ErrorNotification
-          badge={
-            <Badge
-              backgroundColor="error.c10"
-              color="error.c50"
-              icon={<Icon name="Warning" size={24} />}
-            />
-          }
-          hasBackground
-          title="Error"
-          description={
-            connectionError.message ||
-            (connectionError.originalError as Error | undefined)?.message
-          }
-        />
-      )}
+      <Button
+        mx={3}
+        variant="main"
+        backgroundColor="main"
+        size="large"
+        data-testid="CTA_open-select-device-drawer"
+        onClick={() => setDeviceSelectionVisibility(true)}
+      >
+        Select a device
+      </Button>
     </Root>
   );
 };

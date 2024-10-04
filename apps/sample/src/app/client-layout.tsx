@@ -18,7 +18,8 @@ import { Sidebar } from "@/components/Sidebar";
 import { SdkProvider } from "@/providers/DeviceSdkProvider";
 import { DeviceSessionsProvider } from "@/providers/DeviceSessionsProvider";
 import { GlobalStyle } from "@/styles/globalstyles";
-import { SdkConfigProvider } from "../providers/SdkConfig";
+import { SdkConfigProvider } from "@/providers/SdkConfig";
+import { DeviceSelectionProvider } from "@/providers/DeviceSelectionProvider";
 
 type ClientRootLayoutProps = {
   children: React.ReactNode;
@@ -48,11 +49,13 @@ const ClientRootLayout: React.FC<ClientRootLayoutProps> = ({ children }) => {
             <body>
               <Root>
                 <DeviceSessionsProvider>
-                  <Sidebar />
-                  <PageContainer>
-                    <Header />
-                    {children}
-                  </PageContainer>
+                  <DeviceSelectionProvider>
+                    <Sidebar />
+                    <PageContainer>
+                      <Header />
+                      {children}
+                    </PageContainer>
+                  </DeviceSelectionProvider>
                 </DeviceSessionsProvider>
               </Root>
             </body>

@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useCallback } from "react";
 import {
   ConnectionType,
   DeviceModelId,
@@ -11,13 +11,15 @@ import { useDeviceSessionState } from "@/hooks/useDeviceSessionState";
 
 import { StatusText } from "./StatusText";
 import { useDeviceSessionsContext } from "@/providers/DeviceSessionsProvider";
+import { useSdk } from "@/providers/DeviceSdkProvider";
+import { useDeviceSelectionContext } from "@/providers/DeviceSelectionProvider";
 
 const Root = styled(Flex).attrs({ p: 5, mb: 8, borderRadius: 2 })`
   background: ${({ theme }: { theme: DefaultTheme }) =>
     theme.colors.neutral.c30};
   align-items: center;
   border: ${({ active, theme }: { theme: DefaultTheme; active: boolean }) =>
-    `1px solid ${active ? theme.colors.success.c40 : "transparent"}`};
+    `1px solid ${active ? theme.colors.opacityDefault.c40 : "transparent"}`};
   cursor: ${({ active }: { active: boolean }) =>
     active ? "normal" : "pointer"};
 `;
@@ -45,8 +47,8 @@ type DeviceProps = {
   type: ConnectionType;
   sessionId: DeviceSessionId;
   model: DeviceModelId;
-  onDisconnect: () => Promise<void>;
-  onSelect: () => void;
+  showActiveIndicator?: boolean;
+  showSelectDeviceAction?: boolean;
 };
 
 function getIconComponent(model: DeviceModelId) {
@@ -64,20 +66,42 @@ export const Device: React.FC<DeviceProps> = ({
   name,
   type,
   model,
-  onDisconnect,
-  onSelect,
   sessionId,
+  showActiveIndicator,
+  showSelectDeviceAction,
 }) => {
   const sessionState = useDeviceSessionState(sessionId);
   const {
     state: { selectedId },
+    dispatch,
   } = useDeviceSessionsContext();
+  const { setVisibility: setDeviceSelectionVisibility } =
+    useDeviceSelectionContext();
+  const sdk = useSdk();
+  const onDisconnect = useCallback(async () => {
+    try {
+      await sdk.disconnect({ sessionId });
+      dispatch({ type: "remove_session", payload: { sessionId } });
+    } catch (e) {
+      console.error(e);
+    }
+  }, [dispatch, sdk, sessionId]);
+  const onSelect = useCallback(() => {
+    dispatch({
+      type: "select_session",
+      payload: { sessionId },
+    });
+  }, [sessionId]);
   const IconComponent = getIconComponent(model);
   const isActive = selectedId === sessionId;
+
   return (
-    <Root active={isActive} onClick={isActive ? undefined : onSelect}>
+    <Root
+      active={showActiveIndicator && isActive}
+      onClick={isActive ? undefined : onSelect}
+    >
       <IconContainer>
-        <IconComponent size="S" />
+        <IconComponent size="S" color="neutral.c100" />
       </IconContainer>
       <Box flex={1}>
         <Text data-testid="text_device-name" variant="body">
@@ -104,6 +128,17 @@ export const Device: React.FC<DeviceProps> = ({
       </Box>
       <div data-testid="dropdown_device-option">
         <DropdownGeneric closeOnClickOutside label="" placement="bottom">
+          {showSelectDeviceAction && (
+            <ActionRow
+              data-testid="CTA_change-device"
+              onClick={() => setDeviceSelectionVisibility(true)}
+            >
+              <Text variant="paragraph" color="neutral.c80">
+                Change device
+              </Text>
+              <Icons.ChevronRight size="S" />
+            </ActionRow>
+          )}
           <ActionRow data-testid="CTA_disconnect-device" onClick={onDisconnect}>
             <Text variant="paragraph" color="neutral.c80">
               Disconnect
