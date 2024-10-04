@@ -37,11 +37,10 @@ describe("UsbHidDeviceConnection", () => {
   let device: HIDDevice;
   let apduSender: ApduSenderService;
   let apduReceiver: ApduReceiverService;
-  const onConnectionTerminated = () => {};
   const logger = (tag: string) => new DefaultLoggerPublisherService([], tag);
 
   beforeEach(() => {
-    device = hidDeviceStubBuilder({ opened: true });
+    device = hidDeviceStubBuilder();
     apduSender = defaultApduSenderServiceStubBuilder(undefined, logger);
     apduReceiver = defaultApduReceiverServiceStubBuilder(undefined, logger);
   });
@@ -49,7 +48,7 @@ describe("UsbHidDeviceConnection", () => {
   it("should get device", () => {
     // given
     const connection = new UsbHidDeviceConnection(
-      { device, apduSender, apduReceiver, onConnectionTerminated },
+      { device, apduSender, apduReceiver },
       logger,
     );
     // when
@@ -61,7 +60,7 @@ describe("UsbHidDeviceConnection", () => {
   it("should send APDU through hid report", () => {
     // given
     const connection = new UsbHidDeviceConnection(
-      { device, apduSender, apduReceiver, onConnectionTerminated },
+      { device, apduSender, apduReceiver },
       logger,
     );
     // when
@@ -81,7 +80,7 @@ describe("UsbHidDeviceConnection", () => {
       ),
     );
     const connection = new UsbHidDeviceConnection(
-      { device, apduSender, apduReceiver, onConnectionTerminated },
+      { device, apduSender, apduReceiver },
       logger,
     );
     // when
@@ -106,7 +105,7 @@ describe("UsbHidDeviceConnection", () => {
       ),
     );
     const connection = new UsbHidDeviceConnection(
-      { device, apduSender, apduReceiver, onConnectionTerminated },
+      { device, apduSender, apduReceiver },
       logger,
     );
 
@@ -148,7 +147,7 @@ describe("UsbHidDeviceConnection", () => {
       ),
     );
     const connection = new UsbHidDeviceConnection(
-      { device, apduSender, apduReceiver, onConnectionTerminated },
+      { device, apduSender, apduReceiver },
       logger,
     );
 
@@ -175,7 +174,7 @@ describe("UsbHidDeviceConnection", () => {
       ),
     );
     const connection = new UsbHidDeviceConnection(
-      { device, apduSender, apduReceiver, onConnectionTerminated },
+      { device, apduSender, apduReceiver },
       logger,
     );
 
