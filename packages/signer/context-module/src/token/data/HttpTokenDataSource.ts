@@ -1,7 +1,9 @@
 import axios from "axios";
-import { injectable } from "inversify";
+import { inject, injectable } from "inversify";
 import { Either, Left, Right } from "purify-ts";
 
+import { configTypes } from "@/config/di/configTypes";
+import type { ContextModuleConfig } from "@/config/model/ContextModuleConfig";
 import { HexStringUtils } from "@/shared/utils/HexStringUtils";
 import PACKAGE from "@root/package.json";
 
@@ -10,6 +12,9 @@ import { TokenDto } from "./TokenDto";
 
 @injectable()
 export class HttpTokenDataSource implements TokenDataSource {
+  constructor(
+    @inject(configTypes.Config) private readonly config: ContextModuleConfig,
+  ) {}
   public async getTokenInfosPayload({
     chainId,
     address,
@@ -17,7 +22,7 @@ export class HttpTokenDataSource implements TokenDataSource {
     try {
       const response = await axios.request<TokenDto[]>({
         method: "GET",
-        url: `https://crypto-assets-service.api.ledger.com/v1/tokens`,
+        url: `${this.config.cal.url}/tokens`,
         params: {
           contract_address: address,
           chain_id: chainId,

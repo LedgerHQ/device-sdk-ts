@@ -4,6 +4,7 @@ import { nftTypes } from "@/nft/di/nftTypes";
 import { tokenTypes } from "@/token/di/tokenTypes";
 import { typedDataTypes } from "@/typed-data/di/typedDataTypes";
 
+import { ContextModuleConfig } from "./config/model/ContextModuleConfig";
 import { ExternalPluginContextLoader } from "./external-plugin/domain/ExternalPluginContextLoader";
 import { ForwardDomainContextLoader } from "./forward-domain/domain/ForwardDomainContextLoader";
 import { NftContextLoader } from "./nft/domain/NftContextLoader";
@@ -14,28 +15,22 @@ import { ContextModule } from "./ContextModule";
 import { DefaultContextModule } from "./DefaultContextModule";
 import { makeContainer } from "./di";
 
+const DEFAULT_CAL_URL = "https://crypto-assets-service.api.ledger.com/v1";
+
+export const DEFAULT_CONFIG: ContextModuleConfig = {
+  cal: {
+    url: DEFAULT_CAL_URL,
+    mode: "prod",
+  },
+};
+
 export class ContextModuleBuilder {
+  private config: Partial<ContextModuleConfig> = {};
   private customLoaders: ContextLoader[] = [];
   private defaultLoaders: ContextLoader[] = [];
-  private typedDataLoader: TypedDataContextLoader;
+  private customTypedDataLoader?: TypedDataContextLoader;
 
-  constructor() {
-    const container = makeContainer();
-
-    this.defaultLoaders = [
-      container.get<ExternalPluginContextLoader>(
-        externalPluginTypes.ExternalPluginContextLoader,
-      ),
-      container.get<ForwardDomainContextLoader>(
-        forwardDomainTypes.ForwardDomainContextLoader,
-      ),
-      container.get<NftContextLoader>(nftTypes.NftContextLoader),
-      container.get<TokenContextLoader>(tokenTypes.TokenContextLoader),
-    ];
-    this.typedDataLoader = container.get<TypedDataContextLoader>(
-      typedDataTypes.TypedDataContextLoader,
-    );
-  }
+  constructor() {}
 
   /**
    * Remove default loaders from the list of loaders
@@ -64,7 +59,18 @@ export class ContextModuleBuilder {
    * @returns this
    */
   withTypedDataLoader(loader: TypedDataContextLoader) {
-    this.typedDataLoader = loader;
+    this.customTypedDataLoader = loader;
+    return this;
+  }
+
+  /**
+   * Set the configuration for the context module
+   *
+   * @param config configuration for the context module
+   * @returns this
+   */
+  withConfig(config: Partial<ContextModuleConfig>) {
+    this.config = config;
     return this;
   }
 
@@ -74,10 +80,28 @@ export class ContextModuleBuilder {
    * @returns the context module
    */
   build(): ContextModule {
+    const container = makeContainer({
+      config: { ...DEFAULT_CONFIG, ...this.config },
+    });
+
+    this.defaultLoaders = [
+      container.get<ExternalPluginContextLoader>(
+        externalPluginTypes.ExternalPluginContextLoader,
+      ),
+      container.get<ForwardDomainContextLoader>(
+        forwardDomainTypes.ForwardDomainContextLoader,
+      ),
+      container.get<NftContextLoader>(nftTypes.NftContextLoader),
+      container.get<TokenContextLoader>(tokenTypes.TokenContextLoader),
+    ];
+    const defaultTypedDataLoader = container.get<TypedDataContextLoader>(
+      typedDataTypes.TypedDataContextLoader,
+    );
+
     const loaders = [...this.defaultLoaders, ...this.customLoaders];
     return new DefaultContextModule({
       loaders,
-      typedDataLoader: this.typedDataLoader,
+      typedDataLoader: this.customTypedDataLoader ?? defaultTypedDataLoader,
     });
   }
 }

@@ -1,3 +1,4 @@
+import { ContextModuleConfig } from "./config/model/ContextModuleConfig";
 import { ContextModuleBuilder } from "./ContextModuleBuilder";
 import { DefaultContextModule } from "./DefaultContextModule";
 
@@ -30,6 +31,17 @@ describe("ContextModuleBuilder", () => {
       .withoutDefaultLoaders()
       .withTypedDataLoader(customLoader)
       .build();
+
+    expect(res).toBeInstanceOf(DefaultContextModule);
+  });
+
+  it("should return a custom context module with a custom config", () => {
+    const contextModuleBuilder = new ContextModuleBuilder();
+    const customConfig: ContextModuleConfig = {
+      cal: { url: "https://locahost:3000", mode: "test" },
+    };
+
+    const res = contextModuleBuilder.withConfig(customConfig).build();
 
     expect(res).toBeInstanceOf(DefaultContextModule);
   });

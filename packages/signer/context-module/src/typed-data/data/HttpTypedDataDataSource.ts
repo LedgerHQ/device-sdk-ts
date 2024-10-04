@@ -1,8 +1,10 @@
 import axios from "axios";
 import SHA224 from "crypto-js/sha224";
-import { injectable } from "inversify";
+import { inject, injectable } from "inversify";
 import { Either, Left, Right } from "purify-ts";
 
+import { configTypes } from "@/config/di/configTypes";
+import type { ContextModuleConfig } from "@/config/model/ContextModuleConfig";
 import type {
   TypedDataFilter,
   TypedDataMessageInfo,
@@ -25,6 +27,10 @@ import {
 
 @injectable()
 export class HttpTypedDataDataSource implements TypedDataDataSource {
+  constructor(
+    @inject(configTypes.Config) private readonly config: ContextModuleConfig,
+  ) {}
+
   public async getTypedDataFilters({
     chainId,
     address,
@@ -36,7 +42,7 @@ export class HttpTypedDataDataSource implements TypedDataDataSource {
     try {
       const response = await axios.request<FiltersDto[]>({
         method: "GET",
-        url: `https://crypto-assets-service.api.ledger.com/v1/dapps`,
+        url: `${this.config.cal.url}/dapps`,
         params: {
           contracts: address,
           chain_id: chainId,

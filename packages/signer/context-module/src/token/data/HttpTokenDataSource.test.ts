@@ -1,6 +1,7 @@
 import axios from "axios";
 import { Left } from "purify-ts";
 
+import { ContextModuleConfig } from "@/config/model/ContextModuleConfig";
 import { HttpTokenDataSource } from "@/token/data/HttpTokenDataSource";
 import { TokenDataSource } from "@/token/data/TokenDataSource";
 import { TokenDto } from "@/token/data/TokenDto";
@@ -12,7 +13,12 @@ describe("HttpTokenDataSource", () => {
   let datasource: TokenDataSource;
 
   beforeAll(() => {
-    datasource = new HttpTokenDataSource();
+    const config = {
+      cal: {
+        url: "https://crypto-assets-service.api.ledger.com/v1",
+      },
+    } as ContextModuleConfig;
+    datasource = new HttpTokenDataSource(config);
     jest.clearAllMocks();
   });
 

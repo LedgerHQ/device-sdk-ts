@@ -1,5 +1,6 @@
 import axios from "axios";
 
+import { ContextModuleConfig } from "@/config/model/ContextModuleConfig";
 import ABI from "@/external-plugin/__tests__/abi.json";
 import {
   Abis,
@@ -49,7 +50,12 @@ describe("HttpExternalPuginDataSource", () => {
   };
 
   beforeAll(() => {
-    datasource = new HttpExternalPluginDataSource();
+    const config = {
+      cal: {
+        url: "https://crypto-assets-service.api.ledger.com/v1",
+      },
+    } as ContextModuleConfig;
+    datasource = new HttpExternalPluginDataSource(config);
     jest.clearAllMocks();
   });
 
