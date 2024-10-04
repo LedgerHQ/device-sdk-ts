@@ -12,16 +12,19 @@ const DescriptionText = styled(Text).attrs({
 
 export const StyledDrawer: React.FC<{
   title: string;
-  description: string;
   big: boolean;
   isOpen: boolean;
   onClose(): void;
   children: React.ReactNode;
+  description?: string;
 }> = ({ title, description, big, isOpen, onClose, children }) => {
   return (
     <Drawer isOpen={isOpen} onClose={onClose} big={big} title={title}>
       <Flex flexDirection="column" rowGap={4} flex={1} overflowY="hidden">
-        <DescriptionText>{description}</DescriptionText>
+        {description && (
+          <DescriptionText>{description}</DescriptionText>
+
+        )}
         {children}
       </Flex>
     </Drawer>
