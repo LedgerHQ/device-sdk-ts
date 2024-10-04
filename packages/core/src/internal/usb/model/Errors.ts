@@ -73,10 +73,3 @@ export class ReconnectionFailedError extends GeneralSdkError {
     super(err);
   }
 }
-
-export class HidSendReportError extends GeneralSdkError {
-  override readonly _tag = "HidSendReportError";
-  constructor(readonly err?: unknown) {
-    super(err);
-  }
-}
