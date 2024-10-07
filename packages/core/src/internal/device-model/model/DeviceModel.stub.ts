@@ -8,7 +8,7 @@ export function deviceModelStubBuilder(
     id: DeviceModelId.NANO_X,
     productName: "Ledger Nano X",
     usbProductId: 0x40,
-    legacyUsbProductId: 0x0004,
+    bootloaderUsbProductId: 0x0004,
     usbOnly: false,
     memorySize: 2 * 1024 * 1024,
     masks: [0x33000000],

@@ -1,40 +1,60 @@
-export type FilterFieldV1 = {
-  label: string;
-  path: string;
-  signature: string;
+export type InstructionSignatures = {
+  prod: string;
+  test: string;
+};
+
+export type InstructionFieldV1 = {
+  display_name: string;
+  field_mappers_count?: never;
+  field_path: string;
+  signatures: InstructionSignatures;
+  type: "field" | "message";
   format?: never;
 };
 
-export type FilterFieldV2 = {
-  label: string;
-  path: string;
-  signature: string;
+export type InstructionFieldV2 = {
+  display_name: string;
+  field_mappers_count?: never;
+  field_path: string;
+  descriptor: string;
+  signatures: InstructionSignatures;
   format: "raw" | "datetime";
   coin_ref?: never;
+  type: "field" | "message";
 };
 
-export type FilterFieldV2WithCoinRef = {
-  label: string;
-  path: string;
-  signature: string;
+export type InstructionFieldV2WithCoinRef = {
+  display_name: string;
+  field_mappers_count?: never;
   format: "token" | "amount";
+  field_path: string;
   coin_ref: number;
+  descriptor: string;
+  signatures: InstructionSignatures;
+  type: "field";
 };
 
-export type FilterField =
-  | FilterFieldV1
-  | FilterFieldV2
-  | FilterFieldV2WithCoinRef;
+export type InstructionContractInfo = {
+  display_name: string;
+  field_mappers_count: number;
+  field_path?: never;
+  descriptor: string;
+  signatures: InstructionSignatures;
+  type: "message";
+};
+
+export type InstructionField =
+  | InstructionFieldV1
+  | InstructionFieldV2
+  | InstructionFieldV2WithCoinRef
+  | InstructionContractInfo;
 
 export type FiltersDto = {
-  eip712_signatures: {
+  descriptors_eip712: {
     [contractAddress: string]: {
       [schemaHash: string]: {
-        contractName: {
-          label: string;
-          signature: string;
-        };
-        fields: Array<FilterField>;
+        schema: Record<string, { name: string; type: string }[]>;
+        instructions: InstructionField[];
       };
     };
   };
