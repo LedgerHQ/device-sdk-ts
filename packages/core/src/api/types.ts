@@ -4,7 +4,10 @@ export type { DeviceId } from "./device/DeviceModel";
 export type { ConnectionType } from "./discovery/ConnectionType";
 export type { CommandErrorArgs } from "./Error";
 export type { LogSubscriberOptions } from "./logger-subscriber/model/LogSubscriberOptions";
-export type { LoggerSubscriberService } from "./logger-subscriber/service/LoggerSubscriberService";
+export type {
+  LoggerSubscriberService,
+  LogParams,
+} from "./logger-subscriber/service/LoggerSubscriberService";
 export type { DiscoveredDevice } from "./transport/model/DiscoveredDevice";
 export type { Transport } from "./transport/model/Transport";
 export type { TransportIdentifier } from "./transport/model/TransportIdentifier";
