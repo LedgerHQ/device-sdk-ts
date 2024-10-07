@@ -9,7 +9,7 @@ export class InternalDeviceModel {
   id: DeviceModelId;
   productName: string;
   usbProductId: number;
-  legacyUsbProductId: number;
+  bootloaderUsbProductId: number;
   usbOnly: boolean;
   memorySize: number;
   masks: number[];
@@ -24,7 +24,7 @@ export class InternalDeviceModel {
     id: DeviceModelId;
     productName: string;
     usbProductId: number;
-    legacyUsbProductId: number;
+    bootloaderUsbProductId: number;
     usbOnly: boolean;
     memorySize: number;
     masks: number[];
@@ -39,7 +39,7 @@ export class InternalDeviceModel {
     this.id = props.id;
     this.productName = props.productName;
     this.usbProductId = props.usbProductId;
-    this.legacyUsbProductId = props.legacyUsbProductId;
+    this.bootloaderUsbProductId = props.bootloaderUsbProductId;
     this.usbOnly = props.usbOnly;
     this.memorySize = props.memorySize;
     this.masks = props.masks;

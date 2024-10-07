@@ -95,31 +95,51 @@ describe("WebUsbHidTransport", () => {
     });
 
     describe("startDiscovering", () => {
-      it("should emit device if one new grant access", (done) => {
-        mockedRequestDevice.mockResolvedValueOnce([stubDevice]);
+      const testCases = usbDeviceModelDataSource
+        .getAllDeviceModels()
+        .flatMap((deviceModel) => {
+          return [
+            {
+              testTitle: `should emit device if user grants access through hid.requestDevice (${deviceModel.productName})`,
+              hidDevice: hidDeviceStubBuilder({
+                productId: deviceModel.usbProductId << 8,
+                productName: deviceModel.productName,
+              }),
+              expectedDeviceModel: deviceModel,
+            },
+            {
+              testTitle: `should emit device if user grants access through hid.requestDevice (${deviceModel.productName}, bootloader)`,
+              hidDevice: hidDeviceStubBuilder({
+                productId: deviceModel.bootloaderUsbProductId,
+                productName: deviceModel.productName,
+              }),
+              expectedDeviceModel: deviceModel,
+            },
+          ];
+        });
+      testCases.forEach((testCase) => {
+        it(testCase.testTitle, (done) => {
+          mockedRequestDevice.mockResolvedValueOnce([testCase.hidDevice]);
 
-        discoverDevice(
-          (discoveredDevice) => {
-            try {
-              expect(discoveredDevice).toEqual(
-                expect.objectContaining({
-                  deviceModel: expect.objectContaining({
-                    id: DeviceModelId.NANO_X,
-                    productName: "Ledger Nano X",
-                    usbProductId: 0x40,
-                  }) as DeviceModel,
-                }),
-              );
+          discoverDevice(
+            (discoveredDevice) => {
+              try {
+                expect(discoveredDevice).toEqual(
+                  expect.objectContaining({
+                    deviceModel: testCase.expectedDeviceModel,
+                  }),
+                );
 
-              done();
-            } catch (expectError) {
-              done(expectError);
-            }
-          },
-          (error) => {
-            done(error);
-          },
-        );
+                done();
+              } catch (expectError) {
+                done(expectError);
+              }
+            },
+            (error) => {
+              done(error);
+            },
+          );
+        });
       });
 
       // It does not seem possible for a user to select several devices on the browser popup.
