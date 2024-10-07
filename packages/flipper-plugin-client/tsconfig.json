@@ -1,0 +1,7 @@
+{
+  "extends": "@ledgerhq/tsconfig-dsdk/sdk",
+  "compilerOptions": {
+    "baseUrl": "."
+  },
+  "include": ["src/**/*", "jest.config.ts"]
+}

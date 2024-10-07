@@ -21,6 +21,7 @@
     "keyring-eth": "pnpm --filter @ledgerhq/device-signer-kit-ethereum",
     "trusted-apps": "pnpm --filter @ledgerhq/device-sdk-trusted-apps",
     "ui": "pnpm --filter @ledgerhq/device-sdk-ui",
+    "flipper": "pnpm --filter @ledgerhq/device-management-kit-flipper-plugin-client",
     "sample": "pnpm --filter @ledgerhq/device-sdk-sample",
     "bump": "changeset version",
     "prerelease": "pnpm recursive exec -- pnpm pack",
