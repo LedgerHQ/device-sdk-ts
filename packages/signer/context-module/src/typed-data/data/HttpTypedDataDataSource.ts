@@ -13,12 +13,12 @@ import type { TypedDataSchema } from "@/shared/model/TypedDataContext";
 import PACKAGE from "@root/package.json";
 
 import type {
-  FilterField,
-  FilterFieldV1,
-  FilterFieldV2,
-  FilterFieldV2WithCoinRef,
-  FilterFieldWithContractInfo,
   FiltersDto,
+  InstructionContractInfo,
+  InstructionField,
+  InstructionFieldV1,
+  InstructionFieldV2,
+  InstructionFieldV2WithCoinRef,
 } from "./FiltersDto";
 import {
   GetTypedDataFiltersParams,
@@ -84,27 +84,27 @@ export class HttpTypedDataDataSource implements TypedDataDataSource {
       // Parse all the filters
       const filters: TypedDataFilter[] = [];
       for (const field of filtersJson.instructions) {
-        if (this.isFieldFilterWithContractInfo(field)) {
+        if (this.isInstructionContractInfo(field)) {
           messageInfo = {
             displayName: field.display_name,
             signature: field.signatures[this.config.cal.mode],
             filtersCount: field.field_mappers_count,
           };
-        } else if (version === "v1" && this.isFieldFilterV1(field)) {
+        } else if (version === "v1" && this.isInstructionFieldV1(field)) {
           filters.push({
             type: "raw",
             displayName: field.display_name,
             path: field.field_path,
             signature: field.signatures[this.config.cal.mode],
           });
-        } else if (this.isFieldFilterV2(field)) {
+        } else if (this.isInstructionFieldV2(field)) {
           filters.push({
             type: field.format,
             displayName: field.display_name,
             path: field.field_path,
             signature: field.signatures[this.config.cal.mode],
           });
-        } else if (this.isFieldFilterV2WithCoinRef(field)) {
+        } else if (this.isInstructionFieldV2WithCoinRef(field)) {
           filters.push({
             type: field.format,
             displayName: field.display_name,
@@ -139,7 +139,9 @@ export class HttpTypedDataDataSource implements TypedDataDataSource {
     }
   }
 
-  private isFieldFilterV1(data: FilterField): data is FilterFieldV1 {
+  private isInstructionFieldV1(
+    data: InstructionField,
+  ): data is InstructionFieldV1 {
     // NOTE: Currently the backend return the same structure for V1 and V2,
     // so we can't distinguish them here, but we can still check the required fields
     return (
@@ -152,7 +154,9 @@ export class HttpTypedDataDataSource implements TypedDataDataSource {
     );
   }
 
-  private isFieldFilterV2(data: FilterField): data is FilterFieldV2 {
+  private isInstructionFieldV2(
+    data: InstructionField,
+  ): data is InstructionFieldV2 {
     return (
       typeof data === "object" &&
       typeof data.display_name === "string" &&
@@ -166,9 +170,9 @@ export class HttpTypedDataDataSource implements TypedDataDataSource {
     );
   }
 
-  private isFieldFilterV2WithCoinRef(
-    data: FilterField,
-  ): data is FilterFieldV2WithCoinRef {
+  private isInstructionFieldV2WithCoinRef(
+    data: InstructionField,
+  ): data is InstructionFieldV2WithCoinRef {
     return (
       typeof data === "object" &&
       typeof data.display_name === "string" &&
@@ -182,9 +186,9 @@ export class HttpTypedDataDataSource implements TypedDataDataSource {
     );
   }
 
-  private isFieldFilterWithContractInfo(
-    data: FilterField,
-  ): data is FilterFieldWithContractInfo {
+  private isInstructionContractInfo(
+    data: InstructionField,
+  ): data is InstructionContractInfo {
     return (
       typeof data === "object" &&
       typeof data.display_name === "string" &&

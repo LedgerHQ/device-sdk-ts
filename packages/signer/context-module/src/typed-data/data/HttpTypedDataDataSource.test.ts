@@ -6,11 +6,13 @@ import { HttpTypedDataDataSource } from "@/typed-data/data/HttpTypedDataDataSour
 import { type TypedDataDataSource } from "@/typed-data/data/TypedDataDataSource";
 import PACKAGE from "@root/package.json";
 
-import { FilterField, FiltersDto } from "./FiltersDto";
+import { FiltersDto, InstructionField } from "./FiltersDto";
 
 jest.mock("axios");
 
-export const buildDescriptor = (instructions: FilterField[]): FiltersDto[] => [
+export const buildDescriptor = (
+  instructions: InstructionField[],
+): FiltersDto[] => [
   {
     descriptors_eip712: {
       "0x000000000022d473030f116ddee9f6b43ac78ba3": {
@@ -519,7 +521,9 @@ describe("HttpTypedDataDataSource", () => {
   });
 
   it("should return an error when schema is undefined", async () => {
-    const filtersDTO = buildDescriptor(undefined as unknown as FilterField[]);
+    const filtersDTO = buildDescriptor(
+      undefined as unknown as InstructionField[],
+    );
     // GIVEN
     jest.spyOn(axios, "request").mockResolvedValue({ data: filtersDTO });
 
@@ -588,7 +592,7 @@ describe("HttpTypedDataDataSource", () => {
           test: "304402201675b7d8507b40de5136c386815afdad8012cb8e3f0e0a126c758d6fbb3f6b0f0220595cbfeeab7591d0eebe40f0e4ea8ea53beeaf89ee50b7faf97f97bdf36abbce",
         },
         type: "message",
-      } as FilterField,
+      } as InstructionField,
     ]);
     // GIVEN
     jest.spyOn(axios, "request").mockResolvedValue({ data: filtersDTO });
@@ -624,7 +628,7 @@ describe("HttpTypedDataDataSource", () => {
           test: "30440220238723d4ddd47baf829d547802a2017476bf68e03d0b920fd46aa543de81d5b902206123218eae82c5f898454c45262e5b0b839dc9d84b2b0926fe14e8218b5b0d53",
         },
         type: "field",
-      } as FilterField,
+      } as InstructionField,
     ]);
     // GIVEN
     jest.spyOn(axios, "request").mockResolvedValue({ data: filtersDTO });
@@ -660,7 +664,7 @@ describe("HttpTypedDataDataSource", () => {
           test: "30440220238723d4ddd47baf829d547802a2017476bf68e03d0b920fd46aa543de81d5b902206123218eae82c5f898454c45262e5b0b839dc9d84b2b0926fe14e8218b5b0d53",
         },
         type: "field",
-      } as FilterField,
+      } as InstructionField,
     ]);
     // GIVEN
     jest.spyOn(axios, "request").mockResolvedValue({ data: filtersDTO });
@@ -696,7 +700,7 @@ describe("HttpTypedDataDataSource", () => {
         //   test: "30440220238723d4ddd47baf829d547802a2017476bf68e03d0b920fd46aa543de81d5b902206123218eae82c5f898454c45262e5b0b839dc9d84b2b0926fe14e8218b5b0d53",
         // },
         type: "field",
-      } as FilterField,
+      } as InstructionField,
     ]);
     // GIVEN
     jest.spyOn(axios, "request").mockResolvedValue({ data: filtersDTO });
@@ -732,7 +736,7 @@ describe("HttpTypedDataDataSource", () => {
           test: "30440220238723d4ddd47baf829d547802a2017476bf68e03d0b920fd46aa543de81d5b902206123218eae82c5f898454c45262e5b0b839dc9d84b2b0926fe14e8218b5b0d53",
         },
         type: "field",
-      } as unknown as FilterField,
+      } as unknown as InstructionField,
     ]);
     // GIVEN
     jest.spyOn(axios, "request").mockResolvedValue({ data: filtersDTO });

@@ -1,60 +1,60 @@
-export type FilterFieldSignatures = {
+export type InstructionSignatures = {
   prod: string;
   test: string;
 };
 
-export type FilterFieldV1 = {
+export type InstructionFieldV1 = {
   display_name: string;
   field_mappers_count?: never;
   field_path: string;
-  signatures: FilterFieldSignatures;
+  signatures: InstructionSignatures;
   type: "field" | "message";
   format?: never;
 };
 
-export type FilterFieldV2 = {
+export type InstructionFieldV2 = {
   display_name: string;
   field_mappers_count?: never;
   field_path: string;
   descriptor: string;
-  signatures: FilterFieldSignatures;
+  signatures: InstructionSignatures;
   format: "raw" | "datetime";
   coin_ref?: never;
   type: "field" | "message";
 };
 
-export type FilterFieldV2WithCoinRef = {
+export type InstructionFieldV2WithCoinRef = {
   display_name: string;
   field_mappers_count?: never;
   format: "token" | "amount";
   field_path: string;
   coin_ref: number;
   descriptor: string;
-  signatures: FilterFieldSignatures;
+  signatures: InstructionSignatures;
   type: "field";
 };
 
-export type FilterFieldWithContractInfo = {
+export type InstructionContractInfo = {
   display_name: string;
   field_mappers_count: number;
   field_path?: never;
   descriptor: string;
-  signatures: FilterFieldSignatures;
+  signatures: InstructionSignatures;
   type: "message";
 };
 
-export type FilterField =
-  | FilterFieldV1
-  | FilterFieldV2
-  | FilterFieldV2WithCoinRef
-  | FilterFieldWithContractInfo;
+export type InstructionField =
+  | InstructionFieldV1
+  | InstructionFieldV2
+  | InstructionFieldV2WithCoinRef
+  | InstructionContractInfo;
 
 export type FiltersDto = {
   descriptors_eip712: {
     [contractAddress: string]: {
       [schemaHash: string]: {
         schema: Record<string, { name: string; type: string }[]>;
-        instructions: FilterField[];
+        instructions: InstructionField[];
       };
     };
   };
