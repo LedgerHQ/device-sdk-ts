@@ -6,7 +6,7 @@ import {
   UserInteractionRequired,
 } from "@ledgerhq/device-management-kit";
 import { InvalidStatusWordError } from "@ledgerhq/device-management-kit";
-import { Transaction } from "ethers-v6/transaction";
+import { Transaction } from "ethers-v6";
 import { Just, Nothing } from "purify-ts";
 
 import { SignTransactionDAState } from "@api/app-binder/SignTransactionDeviceActionTypes";
