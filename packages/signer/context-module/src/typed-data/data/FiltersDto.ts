@@ -8,6 +8,7 @@ export type FilterFieldV1 = {
   field_mappers_count?: never;
   field_path: string;
   signatures: FilterFieldSignatures;
+  type: "field" | "message";
   format?: never;
 };
 
@@ -19,7 +20,7 @@ export type FilterFieldV2 = {
   signatures: FilterFieldSignatures;
   format: "raw" | "datetime";
   coin_ref?: never;
-  type: string;
+  type: "field" | "message";
 };
 
 export type FilterFieldV2WithCoinRef = {
@@ -30,7 +31,7 @@ export type FilterFieldV2WithCoinRef = {
   coin_ref: number;
   descriptor: string;
   signatures: FilterFieldSignatures;
-  type: string;
+  type: "field";
 };
 
 export type FilterFieldWithContractInfo = {
