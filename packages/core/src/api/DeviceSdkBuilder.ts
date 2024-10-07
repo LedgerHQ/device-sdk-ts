@@ -1,3 +1,4 @@
+import { DMKFlipperPlugin } from "@api/flipper-plugin/FlipperPluginTypes";
 import { DEFAULT_MANAGER_API_BASE_URL } from "@internal/manager-api/model/Const";
 
 import { LoggerSubscriberService } from "./logger-subscriber/service/LoggerSubscriberService";
@@ -48,6 +49,16 @@ export class LedgerDeviceSdkBuilder {
       ...this.config,
       ...config,
     };
+    return this;
+  }
+
+  setupFlipperPlugin(flipperPlugin: DMKFlipperPlugin): LedgerDeviceSdkBuilder {
+    /**
+     * NOTE: for now the flipper plugin only adds a logger, but later on it will
+     * support more features, such as listening to device sessions state or
+     * interacting directly with the Device Management Kit.
+     * */
+    this.addLogger(flipperPlugin.loggerSubscriberService);
     return this;
   }
 }

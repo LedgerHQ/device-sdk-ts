@@ -7,6 +7,12 @@ import { LogSubscriberOptions } from "@api/logger-subscriber/model/LogSubscriber
  * Implement this interface and use `LedgerDeviceSdkBuilder.addLogger` to
  * receive logs from the SDK.
  */
+export type LogParams = [
+  level: LogLevel,
+  message: string,
+  options: LogSubscriberOptions,
+];
+
 export interface LoggerSubscriberService {
-  log(level: LogLevel, message: string, options: LogSubscriberOptions): void;
+  log(...logParams: LogParams): void;
 }

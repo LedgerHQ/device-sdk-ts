@@ -4,9 +4,11 @@ import {
   DeviceSdk,
   DeviceSdkBuilder,
 } from "@ledgerhq/device-management-kit";
+import { initialiseFlipperPlugin } from "@ledgerhq/device-management-kit-flipper-plugin-client";
 
 export const sdk = new DeviceSdkBuilder()
   .addLogger(new ConsoleLogger())
+  .setupFlipperPlugin(initialiseFlipperPlugin())
   .build();
 
 const SdkContext = createContext<DeviceSdk>(sdk);

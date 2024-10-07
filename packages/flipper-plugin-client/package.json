@@ -1,0 +1,60 @@
+{
+  "name": "@ledgerhq/device-management-kit-flipper-plugin-client",
+  "version": "1.0.0",
+  "license": "MIT",
+  "main": "lib/cjs/index.js",
+  "types": "lib/cjs/index.d.ts",
+  "private": true,
+  "exports": {
+    ".": {
+      "import": "./lib/esm/index.js",
+      "require": "./lib/cjs/index.js",
+      "default": "./index.ts",
+      "types": "./lib/esm/index.d.ts"
+    },
+    "./*.js": {
+      "import": "./lib/esm/*.js",
+      "require": "./lib/cjs/*.js",
+      "default": "./*.js",
+      "types": "./lib/esm/*.d.ts"
+    },
+    "./*": {
+      "import": "./lib/esm/*",
+      "require": "./lib/cjs/*",
+      "default": "./*",
+      "types": "./lib/esm/*"
+    }
+  },
+  "files": [
+    "./lib"
+  ],
+  "scripts": {
+    "build": "rimraf lib && zx scripts/build.mjs",
+    "dev": "concurrently \"pnpm dev:esm\" \"pnpm dev:cjs\"",
+    "dev:esm": "concurrently \"tsc --watch -p tsconfig.esm.json\" \"tsc-alias --watch -p tsconfig.esm.json\"",
+    "dev:cjs": "concurrently \"tsc --watch -p tsconfig.cjs.json\" \"tsc-alias --watch -p tsconfig.cjs.json\"",
+    "lint": "eslint",
+    "lint:fix": "pnpm lint --fix",
+    "prettier": "prettier . --check",
+    "prettier:fix": "prettier . --write",
+    "typecheck": "tsc --noEmit",
+    "test": "jest --passWithNoTests",
+    "test:coverage": "pnpm test -- --coverage"
+  },
+  "dependencies": {
+    "inversify": "^6.0.2",
+    "reflect-metadata": "^0.2.2",
+    "js-flipper": "^0.268.0",
+    "rxjs": "^7.8.1"
+  },
+  "devDependencies": {
+    "@ledgerhq/device-management-kit": "workspace:*",
+    "@ledgerhq/eslint-config-dsdk": "workspace:*",
+    "@ledgerhq/jest-config-dsdk": "workspace:*",
+    "@ledgerhq/prettier-config-dsdk": "workspace:*",
+    "@ledgerhq/tsconfig-dsdk": "workspace:*"
+  },
+  "peerDependencies": {
+    "@ledgerhq/device-management-kit": "workspace:*"
+  }
+}

@@ -65,6 +65,9 @@ importers:
       '@ledgerhq/device-management-kit':
         specifier: workspace:*
         version: link:../../packages/core
+      '@ledgerhq/device-management-kit-flipper-plugin-client':
+        specifier: workspace:*
+        version: link:../../packages/flipper-plugin-client
       '@ledgerhq/device-signer-kit-ethereum':
         specifier: workspace:*
         version: link:../../packages/signer/keyring-eth
@@ -226,6 +229,37 @@ importers:
       ts-node:
         specifier: ^10.9.2
         version: 10.9.2(@types/node@22.7.4)(typescript@5.6.2)
+
+  packages/flipper-plugin-client:
+    dependencies:
+      inversify:
+        specifier: ^6.0.2
+        version: 6.0.2
+      js-flipper:
+        specifier: ^0.268.0
+        version: 0.268.0
+      reflect-metadata:
+        specifier: ^0.2.2
+        version: 0.2.2
+      rxjs:
+        specifier: ^7.8.1
+        version: 7.8.1
+    devDependencies:
+      '@ledgerhq/device-management-kit':
+        specifier: workspace:*
+        version: link:../core
+      '@ledgerhq/eslint-config-dsdk':
+        specifier: workspace:*
+        version: link:../config/eslint
+      '@ledgerhq/jest-config-dsdk':
+        specifier: workspace:*
+        version: link:../config/jest
+      '@ledgerhq/prettier-config-dsdk':
+        specifier: workspace:*
+        version: link:../config/prettier
+      '@ledgerhq/tsconfig-dsdk':
+        specifier: workspace:*
+        version: link:../config/typescript
 
   packages/signer/context-module:
     dependencies:
@@ -4537,6 +4571,9 @@ packages:
 
   joi@17.13.3:
     resolution: {integrity: sha512-otDA4ldcIx+ZXsKHWmp0YizCweVRZG96J10b0FevjfuncLO1oX59THoAmHkNubYJ+9gWsYsp5k8v4ib6oDv1fA==}
+
+  js-flipper@0.268.0:
+    resolution: {integrity: sha512-0bLLLkb5Ovwp5uXS1iRgZ0sowjOj7rsm24Q7ky/OgOoEUm/SfqEzuHdhW4jM6a0Z3Y/7qSQ/WhkONRABw6pIgg==}
 
   js-sha3@0.8.0:
     resolution: {integrity: sha512-gF1cRrHhIzNfToc802P800N8PpXS+evLLXfsVpowqmAFR9uwbi89WvXg2QspOmXL8QL86J4T1EpFu+yUkwJY3Q==}
@@ -12245,6 +12282,8 @@ snapshots:
       '@sideway/address': 4.1.5
       '@sideway/formula': 3.0.1
       '@sideway/pinpoint': 2.0.0
+
+  js-flipper@0.268.0: {}
 
   js-sha3@0.8.0: {}
 
