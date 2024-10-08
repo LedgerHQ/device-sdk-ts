@@ -39,6 +39,7 @@ import * as ContinueOnLedgerNanoXDark from "./lotties/nanox/03_NANO_X_DARK_CONTI
 
 import * as PinNanoSDark from "./lotties/nanosp/01_NANO_S_DARK_PIN.json";
 import * as ContinueOnLedgerNanoSDark from "./lotties/nanosp/02_NANO_S_DARK_CONTINUE_ON_YOUR_LEDGER.json";
+import styled from "styled-components";
 
 type DeviceAnimationProps = {
   userInteractionRequired: UserInteractionRequired | string;
@@ -120,6 +121,7 @@ const DeviceAnimation: React.FC<DeviceAnimationProps> = ({
   const animationData = animationKey
     ? animationDataMap[deviceModelId][animationKey]
     : null;
+  const WarningText = styled(Text).attrs({ mb: 4 })``;
   return (
     <>
       {animationData ? (
@@ -133,7 +135,7 @@ const DeviceAnimation: React.FC<DeviceAnimationProps> = ({
       )}
       {userInteractionRequired !== UserInteractionRequired.None ? (
         <>
-          <Text mb={4}>User action required: </Text>
+          <WarningText>User action required: </WarningText>
           <Tag active type="opacity">
             {userInteractionRequired}
           </Tag>

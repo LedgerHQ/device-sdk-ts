@@ -48,6 +48,7 @@ export type DeviceActionProps<
 const BoxTitle = styled(Text).attrs({
   variant: "h5Inter",
   color: "neutral.c70",
+  mr: 2,
 })``;
 
 const BoxHeader: React.FC<{ children: string; hint: string }> = ({
@@ -62,7 +63,7 @@ const BoxHeader: React.FC<{ children: string; hint: string }> = ({
         alignItems="center"
         flexGrow={0}
       >
-        <BoxTitle mr={2}>{children}</BoxTitle>
+        <BoxTitle>{children}</BoxTitle>
         <Icons.Information size="XS" color="neutral.c70" />
       </Flex>
     </Tooltip>
@@ -230,7 +231,7 @@ export function DeviceActionTester<
           </Flex>
           <Flex flexDirection="row" columnGap={3}>
             <Button
-              flex={1}
+              style={{ flex: 1 }}
               variant="main"
               onClick={handleClickExecute}
               disabled={loading || valuesInvalid}

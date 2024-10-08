@@ -1,5 +1,6 @@
 import React from "react";
 import { Flex, Text, Drawer } from "@ledgerhq/react-ui";
+import styled from "styled-components";
 
 export const StyledDrawer: React.FC<{
   title: string;
@@ -9,17 +10,17 @@ export const StyledDrawer: React.FC<{
   onClose(): void;
   children: React.ReactNode;
 }> = ({ title, description, big, isOpen, onClose, children }) => {
+  const DescriptionText = styled(Text).attrs({
+    mb: 5,
+    variant: "body",
+    color: "opacityDefault.c60",
+  })`
+    font-weight: regular;
+  `;
   return (
     <Drawer isOpen={isOpen} onClose={onClose} big={big} title={title}>
       <Flex flexDirection="column" rowGap={4} flex={1} overflowY="hidden">
-        <Text
-          variant="body"
-          fontWeight="regular"
-          color="opacityDefault.c60"
-          mb={5}
-        >
-          {description}
-        </Text>
+        <DescriptionText>{description}</DescriptionText>
         {children}
       </Flex>
     </Drawer>
