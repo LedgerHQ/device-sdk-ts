@@ -9,7 +9,7 @@ const testLogs: LogParams[] = [
     {
       timestamp: 0,
       tag: "test",
-      data: { key: "value" },
+      data: { apdu: new Uint8Array([0xb0, 0x01, 0x00, 0x00]) },
     },
   ],
   [
@@ -62,7 +62,8 @@ const expectedFlipperLogs: FlipperObjLog[] = [
     tag: "test",
     verbosity: "debug",
     message: "Test info log",
-    payloadJSON: '{"key":"value"}',
+    payloadJSON:
+      '{"apdu":{"hex":"0xb0010000", "readableHex":"b0 01 00 00", "value":[176,1,0,0]}',
   },
   {
     timestamp: "1970-01-01T00:00:00.001Z",

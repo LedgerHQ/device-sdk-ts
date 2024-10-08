@@ -14,6 +14,23 @@ export type FlipperObjLog = {
   payloadJSON: string; // extra data, can be an empty string
 };
 
+/**
+ * Custom JSON.stringify formatter for Uint8Array objects.
+ */
+function stringifyUint8ArrayFormatter(_: string, value: unknown) {
+  if (value instanceof Uint8Array) {
+    const bytesHex = Array.from(value).map((x) =>
+      x.toString(16).padStart(2, "0"),
+    );
+    return {
+      hex: "0x" + bytesHex.join(""),
+      readableHex: bytesHex.join(" "),
+      value: Array.from(value),
+    };
+  }
+  return value;
+}
+
 function mapSdkLogToFlipperObjLog(sdkLog: LogParams): FlipperObjLog {
   const [level, message, options] = sdkLog;
 
@@ -27,7 +44,10 @@ function mapSdkLogToFlipperObjLog(sdkLog: LogParams): FlipperObjLog {
 
   let payloadJSON = "";
   try {
-    payloadJSON = JSON.stringify(options.data || {});
+    payloadJSON = JSON.stringify(
+      options.data || {},
+      stringifyUint8ArrayFormatter,
+    );
   } catch (e) {
     console.error("Failed to stringify log data", e);
   }
