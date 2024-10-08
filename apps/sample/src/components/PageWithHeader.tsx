@@ -1,9 +1,7 @@
-import { Divider, Flex, Breadcrumb } from "@ledgerhq/react-ui";
-import { Props as BreadCrumbProps } from "@ledgerhq/react-ui/components/navigation/Breadcrumb/index";
-
-import styled from "styled-components";
-
 import React from "react";
+import { Breadcrumb, Divider, Flex } from "@ledgerhq/react-ui";
+import { Props as BreadCrumbProps } from "@ledgerhq/react-ui/components/navigation/Breadcrumb/index";
+import styled from "styled-components";
 
 const Root = styled(Flex).attrs({ mx: 15, mb: 5 })`
   flex-direction: column;

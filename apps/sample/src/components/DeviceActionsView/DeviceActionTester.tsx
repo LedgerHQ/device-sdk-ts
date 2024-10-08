@@ -1,11 +1,10 @@
-import { Block } from "@/components/Block";
-import { ClickableListItem } from "@/components/ClickableListItem";
-import { FieldType } from "@/hooks/useForm";
+import { useCallback, useEffect, useRef, useState } from "react";
 import type {
   DeviceActionIntermediateValue,
   ExecuteDeviceActionReturnType,
   SdkError,
 } from "@ledgerhq/device-management-kit";
+import { DeviceModelId } from "@ledgerhq/device-management-kit";
 import {
   Button,
   Divider,
@@ -16,15 +15,17 @@ import {
   Text,
   Tooltip,
 } from "@ledgerhq/react-ui";
-import { useCallback, useEffect, useRef, useState } from "react";
+import styled from "styled-components";
+
+import { Block } from "@/components/Block";
+import { ClickableListItem } from "@/components/ClickableListItem";
+import { FieldType } from "@/hooks/useForm";
+
 import { CommandForm, ValueSelector } from "../CommandsView/CommandForm";
 import {
   DeviceActionResponse,
   DeviceActionResponseProps,
 } from "./DeviceActionResponse";
-
-import { DeviceModelId } from "@ledgerhq/device-management-kit";
-import styled from "styled-components";
 import DeviceActionUI from "./DeviceActionUI";
 
 export type DeviceActionProps<

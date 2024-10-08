@@ -1,5 +1,5 @@
 import React from "react";
-import { Flex, Text, Drawer } from "@ledgerhq/react-ui";
+import { Drawer, Flex, Text } from "@ledgerhq/react-ui";
 import styled from "styled-components";
 
 export const StyledDrawer: React.FC<{

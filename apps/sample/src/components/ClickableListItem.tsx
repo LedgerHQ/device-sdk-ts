@@ -1,5 +1,5 @@
 import React from "react";
-import { Flex, Text, Icons } from "@ledgerhq/react-ui";
+import { Flex, Icons, Text } from "@ledgerhq/react-ui";
 import styled from "styled-components";
 
 const ListItemWrapper = styled(Flex)`

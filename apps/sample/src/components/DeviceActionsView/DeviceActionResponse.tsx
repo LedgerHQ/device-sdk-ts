@@ -1,13 +1,14 @@
+import React from "react";
 import {
   type DeviceActionIntermediateValue,
   type DeviceActionState,
   DeviceActionStatus,
   UserInteractionRequired,
 } from "@ledgerhq/device-management-kit";
-import { FieldType } from "@/hooks/useForm";
-import React from "react";
 import { Flex, Icons, Tag, Text, Tooltip } from "@ledgerhq/react-ui";
 import styled from "styled-components";
+
+import { FieldType } from "@/hooks/useForm";
 
 export type DeviceActionResponseProps<Output, Error, IntermediateValue> = {
   args: Record<string, FieldType>;

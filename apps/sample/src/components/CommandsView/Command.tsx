@@ -1,16 +1,17 @@
 import React, { useCallback, useEffect, useState } from "react";
-
-import { Flex, Icons, Button, InfiniteLoader } from "@ledgerhq/react-ui";
-import { CommandForm, ValueSelector } from "./CommandForm";
-import { FieldType } from "@/hooks/useForm";
-import { CommandResponse, CommandResponseProps } from "./CommandResponse";
-import { Block } from "../Block";
-import { ClickableListItem } from "../ClickableListItem";
-import { StyledDrawer } from "../StyledDrawer";
 import {
   CommandResult,
   isSuccessCommandResult,
 } from "@ledgerhq/device-management-kit";
+import { Button, Flex, Icons, InfiniteLoader } from "@ledgerhq/react-ui";
+
+import { FieldType } from "@/hooks/useForm";
+
+import { Block } from "../Block";
+import { ClickableListItem } from "../ClickableListItem";
+import { StyledDrawer } from "../StyledDrawer";
+import { CommandForm, ValueSelector } from "./CommandForm";
+import { CommandResponse, CommandResponseProps } from "./CommandResponse";
 
 export type CommandProps<
   CommandArgs extends Record<string, FieldType> | void,

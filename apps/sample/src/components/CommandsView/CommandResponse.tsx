@@ -1,10 +1,11 @@
 import React from "react";
-import { Flex, InfiniteLoader, Text, Tooltip } from "@ledgerhq/react-ui";
-import { FieldType } from "@/hooks/useForm";
 import {
   CommandResult,
   isSuccessCommandResult,
 } from "@ledgerhq/device-management-kit";
+import { Flex, InfiniteLoader, Text, Tooltip } from "@ledgerhq/react-ui";
+
+import { FieldType } from "@/hooks/useForm";
 
 export type CommandResponseProps<Response, ErrorCodes> = {
   args: Record<string, FieldType>;

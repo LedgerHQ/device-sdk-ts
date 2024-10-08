@@ -1,7 +1,8 @@
 import React from "react";
-import { useDeviceSessionsContext } from "@/providers/DeviceSessionsProvider";
-import { useRouter } from "next/navigation";
 import { Button, Flex, Icons, Text } from "@ledgerhq/react-ui";
+import { useRouter } from "next/navigation";
+
+import { useDeviceSessionsContext } from "@/providers/DeviceSessionsProvider";
 
 /**
  * Component that wraps the child component and passes it the selected sessionId.
