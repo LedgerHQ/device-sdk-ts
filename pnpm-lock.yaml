@@ -62,6 +62,9 @@ importers:
 
   apps/sample:
     dependencies:
+      '@ledgerhq/context-module':
+        specifier: workspace:*
+        version: link:../../packages/signer/context-module
       '@ledgerhq/device-management-kit':
         specifier: workspace:*
         version: link:../../packages/core
