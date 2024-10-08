@@ -1,34 +1,37 @@
-import { useSdk } from "@/providers/DeviceSdkProvider";
-import {
-  OpenAppDeviceAction,
-  OpenAppDAOutput,
-  OpenAppDAInput,
-  OpenAppDAError,
-  OpenAppDAIntermediateValue,
-  GetDeviceStatusDeviceAction,
-  GetDeviceStatusDAOutput,
-  GetDeviceStatusDAInput,
-  GetDeviceStatusDAError,
-  GetDeviceStatusDAIntermediateValue,
-  GoToDashboardDeviceAction,
-  GoToDashboardDAOutput,
-  GoToDashboardDAInput,
-  GoToDashboardDAError,
-  GoToDashboardDAIntermediateValue,
-  ListAppsDeviceAction,
-  ListAppsDAOutput,
-  ListAppsDAInput,
-  ListAppsDAError,
-  ListAppsDAIntermediateValue,
-  ListAppsWithMetadataDeviceAction,
-  ListAppsWithMetadataDAOutput,
-  ListAppsWithMetadataDAInput,
-  ListAppsWithMetadataDAError,
-  ListAppsWithMetadataDAIntermediateValue,
-} from "@ledgerhq/device-management-kit";
+import React from "react";
 import { useMemo } from "react";
+import {
+  GetDeviceStatusDAError,
+  GetDeviceStatusDAInput,
+  GetDeviceStatusDAIntermediateValue,
+  GetDeviceStatusDAOutput,
+  GetDeviceStatusDeviceAction,
+  GoToDashboardDAError,
+  GoToDashboardDAInput,
+  GoToDashboardDAIntermediateValue,
+  GoToDashboardDAOutput,
+  GoToDashboardDeviceAction,
+  ListAppsDAError,
+  ListAppsDAInput,
+  ListAppsDAIntermediateValue,
+  ListAppsDAOutput,
+  ListAppsDeviceAction,
+  ListAppsWithMetadataDAError,
+  ListAppsWithMetadataDAInput,
+  ListAppsWithMetadataDAIntermediateValue,
+  ListAppsWithMetadataDAOutput,
+  ListAppsWithMetadataDeviceAction,
+  OpenAppDAError,
+  OpenAppDAInput,
+  OpenAppDAIntermediateValue,
+  OpenAppDAOutput,
+  OpenAppDeviceAction,
+} from "@ledgerhq/device-management-kit";
+
+import { useSdk } from "@/providers/DeviceSdkProvider";
+
+import { DeviceActionsList, UNLOCK_TIMEOUT } from "./DeviceActionsList";
 import { DeviceActionProps } from "./DeviceActionTester";
-import { UNLOCK_TIMEOUT, DeviceActionsList } from "./DeviceActionsList";
 
 export const AllDeviceActions: React.FC<{ sessionId: string }> = ({
   sessionId,
@@ -151,7 +154,7 @@ export const AllDeviceActions: React.FC<{ sessionId: string }> = ({
         ListAppsWithMetadataDAIntermediateValue
       >,
     ],
-    [],
+    [deviceModelId, sdk, sessionId],
   );
 
   return (

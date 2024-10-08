@@ -1,6 +1,7 @@
 import React, { useEffect } from "react";
-import { Input, Flex, Switch, Text, SelectInput } from "@ledgerhq/react-ui";
-import { useForm, FieldType } from "@/hooks/useForm";
+import { Flex, Input, SelectInput, Switch, Text } from "@ledgerhq/react-ui";
+
+import { FieldType, useForm } from "@/hooks/useForm";
 
 export type ValueSelector<T extends FieldType> = Record<
   string,

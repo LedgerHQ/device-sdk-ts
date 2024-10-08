@@ -1,16 +1,17 @@
 import React, { useCallback, useEffect, useState } from "react";
-
-import { Flex, Icons, Button, InfiniteLoader } from "@ledgerhq/react-ui";
-import { CommandForm, ValueSelector } from "./CommandForm";
-import { FieldType } from "@/hooks/useForm";
-import { CommandResponse, CommandResponseProps } from "./CommandResponse";
-import { Block } from "../Block";
-import { ClickableListItem } from "../ClickableListItem";
-import { StyledDrawer } from "../StyledDrawer";
 import {
   CommandResult,
   isSuccessCommandResult,
 } from "@ledgerhq/device-management-kit";
+import { Button, Flex, Icons, InfiniteLoader } from "@ledgerhq/react-ui";
+
+import { Block } from "@/components/Block";
+import { ClickableListItem } from "@/components/ClickableListItem";
+import { StyledDrawer } from "@/components/StyledDrawer";
+import { FieldType } from "@/hooks/useForm";
+
+import { CommandForm, ValueSelector } from "./CommandForm";
+import { CommandResponse, CommandResponseProps } from "./CommandResponse";
 
 export type CommandProps<
   CommandArgs extends Record<string, FieldType> | void,
@@ -81,7 +82,7 @@ export function Command<
       .finally(() => {
         setLoading(false);
       });
-  }, [values]);
+  }, [values, sendCommand]);
 
   const handleClickClear = useCallback(() => {
     setResponses([]);
@@ -159,5 +160,3 @@ export function Command<
     </>
   );
 }
-
-export default Command;

@@ -1,12 +1,15 @@
+import React from "react";
 import { useCallback, useMemo, useState } from "react";
-import { PageWithHeader } from "@/components/PageWithHeader";
 import { Grid, Text } from "@ledgerhq/react-ui";
+import styled from "styled-components";
+
+import { PageWithHeader } from "@/components/PageWithHeader";
+
 import {
+  DeviceActionProps,
   DeviceActionRow,
   DeviceActionTester,
-  DeviceActionProps,
 } from "./DeviceActionTester";
-import styled from "styled-components";
 
 export const UNLOCK_TIMEOUT = 60 * 1000; // 1 minute
 
@@ -39,7 +42,7 @@ export const DeviceActionsList: React.FC<Props> = ({
           ]
         : []),
     ],
-    [selectedDeviceAction],
+    [selectedDeviceAction, title],
   );
 
   const onChangeBreadcrumb = useCallback((breadcrumbs: string[]) => {

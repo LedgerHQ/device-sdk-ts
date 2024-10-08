@@ -9,7 +9,7 @@
  */
 "use client";
 
-import React from "react";
+import React, { PropsWithChildren } from "react";
 import { Flex, StyleProvider } from "@ledgerhq/react-ui";
 import styled, { DefaultTheme } from "styled-components";
 
@@ -18,10 +18,6 @@ import { Sidebar } from "@/components/Sidebar";
 import { SdkProvider } from "@/providers/DeviceSdkProvider";
 import { DeviceSessionsProvider } from "@/providers/DeviceSessionsProvider";
 import { GlobalStyle } from "@/styles/globalstyles";
-
-type ClientRootLayoutProps = {
-  children: React.ReactNode;
-};
 
 const Root = styled(Flex)`
   flex-direction: row;
@@ -37,7 +33,7 @@ const PageContainer = styled(Flex)`
   flex: 1;
 `;
 
-const ClientRootLayout: React.FC<ClientRootLayoutProps> = ({ children }) => {
+const ClientRootLayout: React.FC<PropsWithChildren> = ({ children }) => {
   return (
     <html lang="en">
       <SdkProvider>

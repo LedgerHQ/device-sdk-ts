@@ -1,26 +1,26 @@
 import React, { useCallback, useMemo } from "react";
-
-import { useSdk } from "@/providers/DeviceSdkProvider";
+import { ContextModuleBuilder } from "@ledgerhq/context-module";
 import {
   GetAddressDAError,
   GetAddressDAIntermediateValue,
   GetAddressDAOutput,
+  KeyringEthBuilder,
   SignPersonalMessageDAError,
   SignPersonalMessageDAIntermediateValue,
   SignPersonalMessageDAOutput,
+  SignTransactionDAError,
+  SignTransactionDAIntermediateValue,
+  SignTransactionDAOutput,
   SignTypedDataDAError,
   SignTypedDataDAIntermediateValue,
   SignTypedDataDAOutput,
-  KeyringEthBuilder,
   TypedData,
-  SignTransactionDAOutput,
-  SignTransactionDAError,
-  SignTransactionDAIntermediateValue,
 } from "@ledgerhq/device-signer-kit-ethereum";
-import { DeviceActionProps } from "@/components/DeviceActionsView/DeviceActionTester";
 import { ethers } from "ethers";
+
 import { DeviceActionsList } from "@/components/DeviceActionsView/DeviceActionsList";
-import { ContextModuleBuilder } from "@ledgerhq/context-module";
+import { DeviceActionProps } from "@/components/DeviceActionsView/DeviceActionTester";
+import { useSdk } from "@/providers/DeviceSdkProvider";
 
 export const KeyringEthView: React.FC<{ sessionId: string }> = ({
   sessionId,
@@ -189,7 +189,7 @@ export const KeyringEthView: React.FC<{ sessionId: string }> = ({
         SignTypedDataDAIntermediateValue
       >,
     ],
-    [],
+    [deviceModelId, getKeyringEth],
   );
 
   return (

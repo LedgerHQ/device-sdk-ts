@@ -1,4 +1,5 @@
-import { createContext, useContext } from "react";
+import React from "react";
+import { createContext, PropsWithChildren, useContext } from "react";
 import {
   ConsoleLogger,
   DeviceSdk,
@@ -11,11 +12,7 @@ export const sdk = new DeviceSdkBuilder()
 
 const SdkContext = createContext<DeviceSdk>(sdk);
 
-type Props = {
-  children: React.ReactNode;
-};
-
-export const SdkProvider: React.FC<Props> = ({ children }) => {
+export const SdkProvider: React.FC<PropsWithChildren> = ({ children }) => {
   return <SdkContext.Provider value={sdk}>{children}</SdkContext.Provider>;
 };
 

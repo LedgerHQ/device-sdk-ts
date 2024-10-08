@@ -1,3 +1,5 @@
+import React from "react";
+import Lottie from "react-lottie";
 import {
   type DeviceActionIntermediateValue,
   DeviceActionStatus,
@@ -12,19 +14,7 @@ import {
   Text,
   Tooltip,
 } from "@ledgerhq/react-ui";
-import React from "react";
-import Lottie from "react-lottie";
-import {
-  DeviceActionResponseProps,
-  deviceActionStatusToColor,
-} from "./DeviceActionResponse";
-
-import * as PinStaxDark from "./lotties/stax/01_STAX_DARK_PIN.json";
-import * as PairingStaxDark from "./lotties/stax/02_STAX_DARK_PAIRING.json";
-import * as PairedSuccessStaxDark from "./lotties/stax/03_STAX_DARK_PAIRED_SUCCESS.json";
-import * as ContinueOnLedgerStaxDark from "./lotties/stax/04_STAX_DARK_CONTINUE_ON_LEDGER.json";
-import * as SignTransactionStaxDark from "./lotties/stax/05_STAX_DARK_SIGN_TRANSACTION.json";
-import * as FrontViewStaxDark from "./lotties/stax/06_STAX_DARK_FRONT_VIEW.json";
+import styled from "styled-components";
 
 import * as PinFlexDark from "./lotties/flex/01_EUROPA_DARK_PIN.json";
 import * as PairingFlexDark from "./lotties/flex/02_EUROPA_DARK_PAIRING.json";
@@ -32,14 +22,21 @@ import * as PairedSuccessFlexDark from "./lotties/flex/03_EUROPA_DARK_PAIRED_SUC
 import * as ContinueOnLedgerFlexDark from "./lotties/flex/04_EUROPA_DARK_CONTINUE_ON_LEDGER.json";
 import * as SignTransactionFlexDark from "./lotties/flex/05_EUROPA_DARK_SIGN_TRANSACTION.json";
 import * as FrontViewFlexDark from "./lotties/flex/06_STAX_DARK_FRONT_VIEW.json";
-
+import * as PinNanoSDark from "./lotties/nanosp/01_NANO_S_DARK_PIN.json";
+import * as ContinueOnLedgerNanoSDark from "./lotties/nanosp/02_NANO_S_DARK_CONTINUE_ON_YOUR_LEDGER.json";
 import * as PinNanoXDark from "./lotties/nanox/01_NANO_X_DARK_PIN.json";
 import * as PairingNanoXDark from "./lotties/nanox/02_NANO_X_DARK_PAIRING.json";
 import * as ContinueOnLedgerNanoXDark from "./lotties/nanox/03_NANO_X_DARK_CONTINUE_ON_YOUR_LEDGER.json";
-
-import * as PinNanoSDark from "./lotties/nanosp/01_NANO_S_DARK_PIN.json";
-import * as ContinueOnLedgerNanoSDark from "./lotties/nanosp/02_NANO_S_DARK_CONTINUE_ON_YOUR_LEDGER.json";
-import styled from "styled-components";
+import * as PinStaxDark from "./lotties/stax/01_STAX_DARK_PIN.json";
+import * as PairingStaxDark from "./lotties/stax/02_STAX_DARK_PAIRING.json";
+import * as PairedSuccessStaxDark from "./lotties/stax/03_STAX_DARK_PAIRED_SUCCESS.json";
+import * as ContinueOnLedgerStaxDark from "./lotties/stax/04_STAX_DARK_CONTINUE_ON_LEDGER.json";
+import * as SignTransactionStaxDark from "./lotties/stax/05_STAX_DARK_SIGN_TRANSACTION.json";
+import * as FrontViewStaxDark from "./lotties/stax/06_STAX_DARK_FRONT_VIEW.json";
+import {
+  DeviceActionResponseProps,
+  deviceActionStatusToColor,
+} from "./DeviceActionResponse";
 
 type DeviceAnimationProps = {
   userInteractionRequired: UserInteractionRequired | string;
@@ -183,7 +180,7 @@ const JSONTextPopin: React.FC<{
   );
 };
 
-export default function DeviceActionUI<
+export function DeviceActionUI<
   Output,
   Error,
   IntermediateValue extends DeviceActionIntermediateValue,

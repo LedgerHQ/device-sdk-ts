@@ -1,28 +1,29 @@
 import React, { useMemo } from "react";
-import { Grid } from "@ledgerhq/react-ui";
-
-import Command, { CommandProps } from "./Command";
-import { useSdk } from "@/providers/DeviceSdkProvider";
 import {
-  ListAppsCommand,
-  ListAppsArgs,
-  ListAppsResponse,
-  OpenAppCommand,
-  OpenAppArgs,
   CloseAppCommand,
   GetAppAndVersionCommand,
   GetAppAndVersionResponse,
+  GetBatteryStatusArgs,
+  GetBatteryStatusCommand,
+  GetBatteryStatusResponse,
   GetOsVersionCommand,
   GetOsVersionResponse,
-  GetBatteryStatusCommand,
-  GetBatteryStatusArgs,
-  GetBatteryStatusResponse,
-  OpenAppErrorCodes,
+  ListAppsArgs,
+  ListAppsCommand,
   ListAppsErrorCodes,
+  ListAppsResponse,
+  OpenAppArgs,
+  OpenAppCommand,
+  OpenAppErrorCodes,
 } from "@ledgerhq/device-management-kit";
 import { BatteryStatusType } from "@ledgerhq/device-management-kit/src/api/command/os/GetBatteryStatusCommand.js";
+import { Grid } from "@ledgerhq/react-ui";
+
+import { PageWithHeader } from "@/components/PageWithHeader";
+import { useSdk } from "@/providers/DeviceSdkProvider";
+
+import { Command, CommandProps } from "./Command";
 import { getValueSelectorFromEnum } from "./CommandForm";
-import { PageWithHeader } from "../PageWithHeader";
 
 export const CommandsView: React.FC<{ sessionId: string }> = ({
   sessionId: selectedSessionId,

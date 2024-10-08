@@ -1,7 +1,9 @@
+import React from "react";
 import { CryptoIcons, Grid } from "@ledgerhq/react-ui/index";
-import { PageWithHeader } from "../PageWithHeader";
-import { ClickableListItem } from "../ClickableListItem";
 import { useRouter } from "next/navigation";
+
+import { PageWithHeader } from "@/components//PageWithHeader";
+import { ClickableListItem } from "@/components/ClickableListItem";
 
 const SUPPORTED_KEYRINGS = [
   {
