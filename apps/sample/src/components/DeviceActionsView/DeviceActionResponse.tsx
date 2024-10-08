@@ -7,6 +7,7 @@ import {
 import { FieldType } from "@/hooks/useForm";
 import React from "react";
 import { Flex, Icons, Tag, Text, Tooltip } from "@ledgerhq/react-ui";
+import styled from "styled-components";
 
 export type DeviceActionResponseProps<Output, Error, IntermediateValue> = {
   args: Record<string, FieldType>;
@@ -43,6 +44,14 @@ export function DeviceActionResponse<
 
   const isError = "error" in props;
 
+  const TooltipTitle = styled(Text).attrs({
+    mb: 2,
+    variant: "small",
+    color: "neutral.c60",
+  })`
+    flex-grow: 0;
+  `;
+
   return (
     <Flex
       flexDirection="column"
@@ -62,16 +71,10 @@ export function DeviceActionResponse<
           </Text>
         }
       >
-        <Text
-          variant="small"
-          color="neutral.c60"
-          fontWeight={isLatest ? "medium" : "regular"}
-          flexGrow={0}
-          mb={2}
-        >
+        <TooltipTitle fontWeight={isLatest ? "medium" : "regular"}>
           (execution ID: {id}) {date.toLocaleTimeString()}{" "}
           {isError ? "Error" : ""}
-        </Text>
+        </TooltipTitle>
       </Tooltip>
       <Text
         variant="body"

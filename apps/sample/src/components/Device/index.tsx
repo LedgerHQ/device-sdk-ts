@@ -63,6 +63,7 @@ export const Device: React.FC<DeviceProps> = ({
 }) => {
   const sessionState = useDeviceSessionState(sessionId);
   const IconComponent = getIconComponent(model);
+  const DotText = styled(Text).attrs({ mx: 3, color: "neutral.c50" })``;
   return (
     <Root>
       <IconContainer>
@@ -76,9 +77,7 @@ export const Device: React.FC<DeviceProps> = ({
               <StatusText state={sessionState.deviceStatus}>
                 {sessionState.deviceStatus}
               </StatusText>
-              <Text mx={3} color="neutral.c50">
-                •
-              </Text>
+              <DotText>•</DotText>
             </>
           )}
           <Text variant="paragraph" color="neutral.c80">
