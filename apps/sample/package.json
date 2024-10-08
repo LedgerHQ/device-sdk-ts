@@ -13,6 +13,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@ledgerhq/context-module": "workspace:*",
     "@ledgerhq/device-management-kit": "workspace:*",
     "@ledgerhq/device-signer-kit-ethereum": "workspace:*",
     "@ledgerhq/react-ui": "^0.16.0",
