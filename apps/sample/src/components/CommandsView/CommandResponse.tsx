@@ -34,7 +34,7 @@ export function CommandResponse<Response, ErrorCodes>(
           variant="small"
           color="neutral.c60"
           fontWeight={isLatest ? "medium" : "regular"}
-          flexGrow={0}
+          style={{ flexGrow: 0 }}
         >
           {date.toLocaleTimeString()}
         </Text>

@@ -6,6 +6,7 @@ import {
   DeviceActionTester,
   DeviceActionProps,
 } from "./DeviceActionTester";
+import styled from "styled-components";
 
 export const UNLOCK_TIMEOUT = 60 * 1000; // 1 minute
 
@@ -47,6 +48,8 @@ export const DeviceActionsList: React.FC<Props> = ({
     }
   }, []);
 
+  const DescriptionText = styled(Text).attrs({ mb: 3, variant: "body" })``;
+
   return (
     <PageWithHeader
       segments={breadcrumbsSegments}
@@ -54,13 +57,11 @@ export const DeviceActionsList: React.FC<Props> = ({
     >
       {selectedDeviceAction ? (
         <>
-          <Text mb={3} variant="body">
-            {selectedDeviceAction.description}
-          </Text>
+          <DescriptionText>{selectedDeviceAction.description}</DescriptionText>
           <DeviceActionTester {...selectedDeviceAction} />
         </>
       ) : (
-        <Grid columns={1} rowGap={6} overflowY="scroll">
+        <Grid columns={1} style={{ rowGap: 6, overflowY: "scroll" }}>
           {deviceActions.map((deviceAction) => (
             <DeviceActionRow
               key={`${deviceAction.title}_${deviceAction.description}`}

@@ -120,7 +120,7 @@ export const CommandsView: React.FC<{ sessionId: string }> = ({
 
   return (
     <PageWithHeader title="Commands">
-      <Grid columns={1} rowGap={6} overflowY="scroll">
+      <Grid columns={1} style={{ rowGap: 6, overflowY: "scroll" }}>
         {commands.map((command) => (
           <Command
             key={`${command.title}_${command.description}`} // if this is not unique we have another problem
