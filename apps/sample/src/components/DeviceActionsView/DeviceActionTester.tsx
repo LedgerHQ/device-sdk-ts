@@ -1,3 +1,4 @@
+import React from "react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import type {
   DeviceActionIntermediateValue,
@@ -19,14 +20,17 @@ import styled from "styled-components";
 
 import { Block } from "@/components/Block";
 import { ClickableListItem } from "@/components/ClickableListItem";
+import {
+  CommandForm,
+  ValueSelector,
+} from "@/components/CommandsView/CommandForm";
 import { FieldType } from "@/hooks/useForm";
 
-import { CommandForm, ValueSelector } from "../CommandsView/CommandForm";
 import {
   DeviceActionResponse,
   DeviceActionResponseProps,
 } from "./DeviceActionResponse";
-import DeviceActionUI from "./DeviceActionUI";
+import { DeviceActionUI } from "./DeviceActionUI";
 
 export type DeviceActionProps<
   Output,

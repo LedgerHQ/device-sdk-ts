@@ -1,3 +1,4 @@
+import React from "react";
 import { Flex, Icons, Link } from "@ledgerhq/react-ui";
 import { useRouter } from "next/navigation";
 import styled from "styled-components";

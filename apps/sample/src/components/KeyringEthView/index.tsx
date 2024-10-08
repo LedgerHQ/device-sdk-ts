@@ -46,7 +46,7 @@ export const KeyringEthView: React.FC<{ sessionId: string }> = ({
         .withContextModule(contextModule)
         .build();
     },
-    [sdk],
+    [sdk, sessionId],
   );
 
   const deviceModelId = sdk.getConnectedDevice({
@@ -189,7 +189,7 @@ export const KeyringEthView: React.FC<{ sessionId: string }> = ({
         SignTypedDataDAIntermediateValue
       >,
     ],
-    [],
+    [deviceModelId, getKeyringEth],
   );
 
   return (

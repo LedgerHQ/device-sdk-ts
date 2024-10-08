@@ -180,7 +180,7 @@ const JSONTextPopin: React.FC<{
   );
 };
 
-export default function DeviceActionUI<
+export function DeviceActionUI<
   Output,
   Error,
   IntermediateValue extends DeviceActionIntermediateValue,

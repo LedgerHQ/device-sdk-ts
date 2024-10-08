@@ -19,10 +19,10 @@ import {
 import { BatteryStatusType } from "@ledgerhq/device-management-kit/src/api/command/os/GetBatteryStatusCommand.js";
 import { Grid } from "@ledgerhq/react-ui";
 
+import { PageWithHeader } from "@/components/PageWithHeader";
 import { useSdk } from "@/providers/DeviceSdkProvider";
 
-import { PageWithHeader } from "../PageWithHeader";
-import Command, { CommandProps } from "./Command";
+import { Command, CommandProps } from "./Command";
 import { getValueSelectorFromEnum } from "./CommandForm";
 
 export const CommandsView: React.FC<{ sessionId: string }> = ({

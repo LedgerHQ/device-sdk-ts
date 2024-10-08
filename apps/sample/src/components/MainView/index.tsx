@@ -51,7 +51,7 @@ export const MainView: React.FC = () => {
         console.error(error);
       },
     });
-  }, [sdk]);
+  }, [sdk, dispatch]);
 
   useEffect(() => {
     return () => {

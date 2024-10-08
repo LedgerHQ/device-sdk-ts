@@ -1,3 +1,4 @@
+import React from "react";
 import { useMemo } from "react";
 import {
   GetDeviceStatusDAError,
@@ -153,7 +154,7 @@ export const AllDeviceActions: React.FC<{ sessionId: string }> = ({
         ListAppsWithMetadataDAIntermediateValue
       >,
     ],
-    [],
+    [deviceModelId, sdk, sessionId],
   );
 
   return (

@@ -1,3 +1,4 @@
+import React from "react";
 import { useCallback, useMemo, useState } from "react";
 import { Grid, Text } from "@ledgerhq/react-ui";
 import styled from "styled-components";
@@ -41,7 +42,7 @@ export const DeviceActionsList: React.FC<Props> = ({
           ]
         : []),
     ],
-    [selectedDeviceAction],
+    [selectedDeviceAction, title],
   );
 
   const onChangeBreadcrumb = useCallback((breadcrumbs: string[]) => {
