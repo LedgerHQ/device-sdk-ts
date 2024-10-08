@@ -5,6 +5,9 @@ import js from "@eslint/js";
 import tseslint from "typescript-eslint";
 import simpleImportSort from "eslint-plugin-simple-import-sort";
 import eslintPluginPrettierRecommended from "eslint-plugin-prettier/recommended";
+import eslintPluginReact from "eslint-plugin-react";
+import eslintPluginReactHooks from "eslint-plugin-react-hooks";
+import { fixupPluginRules } from "@eslint/compat";
 
 export default [
   {
@@ -62,7 +65,24 @@ export default [
   },
 
   {
-    files: ["**/*.ts"],
+    files: ["**/*.tsx"],
+    plugins: {
+      react: eslintPluginReact,
+      "react-hooks": fixupPluginRules(eslintPluginReactHooks),
+    },
+    rules: {
+      ...eslintPluginReact.configs.flat.recommended.rules,
+      ...eslintPluginReactHooks.configs.recommended.rules,
+    },
+    settings: {
+      react: {
+        version: "detect",
+      },
+    },
+  },
+
+  {
+    files: ["**/*.ts", "**/*.tsx"],
     plugins: {
       "simple-import-sort": simpleImportSort,
     },
@@ -113,15 +133,15 @@ export default [
       "@typescript-eslint/no-unused-vars": [
         "error",
         {
-          "args": "all",
-          "argsIgnorePattern": "^_",
-          "caughtErrors": "all",
-          "caughtErrorsIgnorePattern": "^_",
-          "destructuredArrayIgnorePattern": "^_",
-          "varsIgnorePattern": "^_",
-          "ignoreRestSiblings": true
-        }
-      ]
+          args: "all",
+          argsIgnorePattern: "^_",
+          caughtErrors: "all",
+          caughtErrorsIgnorePattern: "^_",
+          destructuredArrayIgnorePattern: "^_",
+          varsIgnorePattern: "^_",
+          ignoreRestSiblings: true,
+        },
+      ],
     },
   },
 ];
