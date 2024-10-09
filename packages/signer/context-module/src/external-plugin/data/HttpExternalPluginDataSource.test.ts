@@ -25,6 +25,17 @@ describe("HttpExternalPuginDataSource", () => {
     chainId: 1,
     contracts: [
       {
+        address: "0x1ef",
+        contractName: "otherName",
+        selectors: {
+          "0x01ee": {
+            erc20OfInterest: ["fromToken"],
+            method: "swap",
+            plugin: "plugin",
+          },
+        },
+      },
+      {
         address: "0x0abc",
         contractName: "name",
         selectors: {
@@ -38,8 +49,15 @@ describe("HttpExternalPuginDataSource", () => {
     ],
     name: "test",
   };
-  const exampleAbis: Abis = { "0x0abc": ABI };
+  const exampleAbis: Abis = { "0x1ef": ABI, "0x0abc": ABI };
   const exampleB2cSignatures: B2cSignatures = {
+    "0x1ef": {
+      "0x01ee": {
+        plugin: "plugin",
+        serialized_data: "0x001",
+        signature: "0x002",
+      },
+    },
     "0x0abc": {
       "0x01ff": {
         plugin: "plugin",
