@@ -62,6 +62,7 @@ export class HttpTypedDataDataSource implements TypedDataDataSource {
       const schemaHash = SHA224(
         JSON.stringify(this.sortTypes(schema)).replace(" ", ""),
       ).toString();
+      address = address.toLowerCase();
       const filtersJson =
         response.data?.[0]?.descriptors_eip712?.[address]?.[schemaHash];
       if (!filtersJson) {

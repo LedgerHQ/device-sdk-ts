@@ -42,6 +42,10 @@ export class HttpExternalPluginDataSource implements ExternalPluginDataSource {
         return Right(undefined);
       }
 
+      // Normalize the address and selector
+      address = address.toLowerCase();
+      selector = `0x${selector.slice(2).toLowerCase()}`;
+
       const { erc20OfInterest, method, plugin } =
         dappInfos.data[0].b2c?.contracts?.[0]?.selectors?.[selector] || {};
       const { signature, serialized_data: serializedData } =

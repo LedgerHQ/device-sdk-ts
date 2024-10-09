@@ -25,10 +25,10 @@ describe("HttpExternalPuginDataSource", () => {
     chainId: 1,
     contracts: [
       {
-        address: "0x0",
+        address: "0x0abc",
         contractName: "name",
         selectors: {
-          "0x01": {
+          "0x01ff": {
             erc20OfInterest: ["fromToken"],
             method: "swap",
             plugin: "plugin",
@@ -38,10 +38,10 @@ describe("HttpExternalPuginDataSource", () => {
     ],
     name: "test",
   };
-  const exampleAbis: Abis = { "0x0": ABI };
+  const exampleAbis: Abis = { "0x0abc": ABI };
   const exampleB2cSignatures: B2cSignatures = {
-    "0x0": {
-      "0x01": {
+    "0x0abc": {
+      "0x01ff": {
         plugin: "plugin",
         serialized_data: "0x001",
         signature: "0x002",
@@ -68,8 +68,8 @@ describe("HttpExternalPuginDataSource", () => {
     // WHEN
     await datasource.getDappInfos({
       chainId: 1,
-      address: "0x0",
-      selector: "0x01",
+      address: "0x0abc",
+      selector: "0x01ff",
     });
 
     // THEN
@@ -90,8 +90,8 @@ describe("HttpExternalPuginDataSource", () => {
     // WHEN
     const result = await datasource.getDappInfos({
       chainId: 1,
-      address: "0x0",
-      selector: "0x01",
+      address: "0x0abc",
+      selector: "0x01ff",
     });
 
     // THEN
@@ -108,8 +108,8 @@ describe("HttpExternalPuginDataSource", () => {
     // WHEN
     const result = await datasource.getDappInfos({
       chainId: 1,
-      address: "0x0",
-      selector: "0x01",
+      address: "0x0abc",
+      selector: "0x01ff",
     });
 
     // THEN
@@ -126,8 +126,8 @@ describe("HttpExternalPuginDataSource", () => {
     // WHEN
     const result = await datasource.getDappInfos({
       chainId: 1,
-      address: "0x0",
-      selector: "0x01",
+      address: "0x0abc",
+      selector: "0x01ff",
     });
 
     // THEN
@@ -144,8 +144,8 @@ describe("HttpExternalPuginDataSource", () => {
     // WHEN
     const result = await datasource.getDappInfos({
       chainId: 1,
-      address: "0x0",
-      selector: "0x01",
+      address: "0x0abc",
+      selector: "0x01ff",
     });
 
     // THEN
@@ -163,8 +163,8 @@ describe("HttpExternalPuginDataSource", () => {
     // WHEN
     const result = await datasource.getDappInfos({
       chainId: 1,
-      address: "0x0",
-      selector: "0x01",
+      address: "0x0abc",
+      selector: "0x01ff",
     });
 
     // THEN
@@ -181,8 +181,8 @@ describe("HttpExternalPuginDataSource", () => {
     // WHEN
     const result = await datasource.getDappInfos({
       chainId: 1,
-      address: "0x0",
-      selector: "0x01",
+      address: "0x0abc",
+      selector: "0x01ff",
     });
 
     // THEN
@@ -196,10 +196,10 @@ describe("HttpExternalPuginDataSource", () => {
       chainId: 1,
       contracts: [
         {
-          address: "0x0",
+          address: "0x0abc",
           contractName: "name",
           selectors: {
-            "0x01": { method: "swap", plugin: "plugin" },
+            "0x01ff": { method: "swap", plugin: "plugin" },
           },
         },
       ],
@@ -213,8 +213,8 @@ describe("HttpExternalPuginDataSource", () => {
     // WHEN
     const result = await datasource.getDappInfos({
       chainId: 1,
-      address: "0x0",
-      selector: "0x01",
+      address: "0x0abc",
+      selector: "0x01ff",
     });
 
     // THEN
@@ -228,10 +228,10 @@ describe("HttpExternalPuginDataSource", () => {
       chainId: 1,
       contracts: [
         {
-          address: "0x0",
+          address: "0x0abc",
           contractName: "name",
           selectors: {
-            "0x01": { erc20OfInterest: ["fromToken"], plugin: "plugin" },
+            "0x01ff": { erc20OfInterest: ["fromToken"], plugin: "plugin" },
           },
         },
       ],
@@ -245,8 +245,8 @@ describe("HttpExternalPuginDataSource", () => {
     // WHEN
     const result = await datasource.getDappInfos({
       chainId: 1,
-      address: "0x0",
-      selector: "0x01",
+      address: "0x0abc",
+      selector: "0x01ff",
     });
 
     // THEN
@@ -260,10 +260,10 @@ describe("HttpExternalPuginDataSource", () => {
       chainId: 1,
       contracts: [
         {
-          address: "0x0",
+          address: "0x0abc",
           contractName: "name",
           selectors: {
-            "0x01": { erc20OfInterest: ["fromToken"], method: "swap" },
+            "0x01ff": { erc20OfInterest: ["fromToken"], method: "swap" },
           },
         },
       ],
@@ -277,8 +277,8 @@ describe("HttpExternalPuginDataSource", () => {
     // WHEN
     const result = await datasource.getDappInfos({
       chainId: 1,
-      address: "0x0",
-      selector: "0x01",
+      address: "0x0abc",
+      selector: "0x01ff",
     });
 
     // THEN
@@ -292,10 +292,10 @@ describe("HttpExternalPuginDataSource", () => {
       chainId: 1,
       contracts: [
         {
-          address: "0x0",
+          address: "0x0abc",
           contractName: "name",
           selectors: {
-            "0x01": { erc20OfInterest: ["fromToken"], plugin: "plugin" },
+            "0x01ff": { erc20OfInterest: ["fromToken"], plugin: "plugin" },
           },
         },
       ],
@@ -309,8 +309,8 @@ describe("HttpExternalPuginDataSource", () => {
     // WHEN
     const result = await datasource.getDappInfos({
       chainId: 1,
-      address: "0x0",
-      selector: "0x01",
+      address: "0x0abc",
+      selector: "0x01ff",
     });
 
     // THEN
@@ -320,7 +320,7 @@ describe("HttpExternalPuginDataSource", () => {
   it("should return undefined when no signature", async () => {
     // GIVEN
     const B2CSignature = {
-      "0x0": { "0x01": { plugin: "plugin", serialized_data: "0x001" } },
+      "0x0abc": { "0x01ff": { plugin: "plugin", serialized_data: "0x001" } },
     } as unknown as B2cSignatures;
 
     // FIXME
@@ -332,8 +332,8 @@ describe("HttpExternalPuginDataSource", () => {
     // WHEN
     const result = await datasource.getDappInfos({
       chainId: 1,
-      address: "0x0",
-      selector: "0x01",
+      address: "0x0abc",
+      selector: "0x01ff",
     });
 
     // THEN
@@ -343,7 +343,7 @@ describe("HttpExternalPuginDataSource", () => {
   it("should return undefined when no serialized data", async () => {
     // GIVEN
     const B2CSignature = {
-      "0x0": { "0x01": { plugin: "plugin", signature: "0x002" } },
+      "0x0abc": { "0x01ff": { plugin: "plugin", signature: "0x002" } },
     } as unknown as B2cSignatures;
 
     // FIXME
@@ -355,8 +355,8 @@ describe("HttpExternalPuginDataSource", () => {
     // WHEN
     const result = await datasource.getDappInfos({
       chainId: 1,
-      address: "0x0",
-      selector: "0x01",
+      address: "0x0abc",
+      selector: "0x01ff",
     });
 
     // THEN
@@ -377,8 +377,39 @@ describe("HttpExternalPuginDataSource", () => {
     // WHEN
     const result = await datasource.getDappInfos({
       chainId: 1,
-      address: "0x0",
-      selector: "0x01",
+      address: "0x0abc",
+      selector: "0x01ff",
+    });
+
+    // THEN
+    expect(result.extract()).toEqual({
+      abi: ABI,
+      selectorDetails: {
+        erc20OfInterest: ["fromToken"],
+        method: "swap",
+        plugin: "plugin",
+        serializedData: "0x001",
+        signature: "0x002",
+      },
+    });
+  });
+
+  it("should normalize the address and selector", async () => {
+    // GIVEN
+    const response = axiosResponseBuilder([
+      {
+        b2c: exampleB2c,
+        abis: exampleAbis,
+        b2c_signatures: exampleB2cSignatures,
+      },
+    ]);
+    jest.spyOn(axios, "request").mockResolvedValue(response);
+
+    // WHEN
+    const result = await datasource.getDappInfos({
+      chainId: 1,
+      address: "0x0AbC",
+      selector: "0x01Ff",
     });
 
     // THEN
@@ -401,8 +432,8 @@ describe("HttpExternalPuginDataSource", () => {
     // WHEN
     const result = await datasource.getDappInfos({
       chainId: 1,
-      address: "0x0",
-      selector: "0x01",
+      address: "0x0abc",
+      selector: "0x01ff",
     });
 
     // THEN

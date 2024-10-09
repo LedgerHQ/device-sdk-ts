@@ -309,7 +309,7 @@ describe("HttpTypedDataDataSource", () => {
     // WHEN
     const result = await datasource.getTypedDataFilters({
       chainId: 1,
-      address: "0x000000000022d473030f116ddee9f6b43ac78ba3",
+      address: "0x000000000022D473030F116DDEE9F6B43AC78BA3",
       version: "v2",
       schema: TEST_TYPES,
     });
