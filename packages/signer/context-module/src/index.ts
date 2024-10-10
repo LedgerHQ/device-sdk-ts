@@ -1,3 +1,4 @@
+export * from "./config/model/ContextModuleConfig";
 export * from "./ContextModule";
 export * from "./ContextModuleBuilder";
 export * from "./DefaultContextModule";

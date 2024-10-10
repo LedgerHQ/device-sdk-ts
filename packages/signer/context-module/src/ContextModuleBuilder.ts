@@ -21,6 +21,7 @@ export const DEFAULT_CONFIG: ContextModuleConfig = {
   cal: {
     url: DEFAULT_CAL_URL,
     mode: "prod",
+    branch: "main",
   },
 };
 
