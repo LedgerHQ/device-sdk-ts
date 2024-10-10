@@ -54,6 +54,8 @@ function getIconComponent(model: DeviceModelId) {
   }
 }
 
+const DotText = styled(Text).attrs({ mx: 3, color: "neutral.c50" })``;
+
 export const Device: React.FC<DeviceProps> = ({
   name,
   type,
@@ -63,7 +65,6 @@ export const Device: React.FC<DeviceProps> = ({
 }) => {
   const sessionState = useDeviceSessionState(sessionId);
   const IconComponent = getIconComponent(model);
-  const DotText = styled(Text).attrs({ mx: 3, color: "neutral.c50" })``;
   return (
     <Root>
       <IconContainer>

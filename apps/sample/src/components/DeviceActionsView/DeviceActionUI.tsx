@@ -109,6 +109,8 @@ const UserInteractionToAnimationKeyMap: Record<
   [UserInteractionRequired.SignPersonalMessage]: "signTransaction",
 };
 
+const WarningText = styled(Text).attrs({ mb: 4 })``;
+
 const DeviceAnimation: React.FC<DeviceAnimationProps> = ({
   userInteractionRequired,
   deviceModelId,
@@ -118,7 +120,6 @@ const DeviceAnimation: React.FC<DeviceAnimationProps> = ({
   const animationData = animationKey
     ? animationDataMap[deviceModelId][animationKey]
     : null;
-  const WarningText = styled(Text).attrs({ mb: 4 })``;
   return (
     <>
       {animationData ? (
