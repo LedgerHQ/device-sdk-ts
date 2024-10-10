@@ -9,10 +9,19 @@ export type Descriptor = {
   method: string | undefined;
 };
 
+let endpointUrl = "https://crypto-assets-service.api.ledger-test.com";
+let branchName = "main";
+
 export const checkContractAvailability = async (
   contractName: string,
+  endpoint: string = "https://crypto-assets-service.api.ledger-test.com",
+  branch: string = "main",
 ): Promise<ApiResponse> => {
   let descriptors: Descriptor[];
+
+  endpointUrl = endpoint;
+  branchName = branch;
+
   let responseType: "NotFound" | "eip712" | "ethereum_app_plugins";
 
   const pluginResult = await checkPluginAvailability(contractName);
@@ -36,8 +45,6 @@ export const checkContractAvailability = async (
     descriptors: descriptors,
   } as ApiResponse;
 };
-
-const url = "https://crypto-assets-service.api.ledger-test.com";
 
 async function checkPluginAvailability(
   contractName: string,
@@ -66,7 +73,6 @@ async function checkPluginAvailability(
   }
 }
 
-/* eslint-disable-next-line @typescript-eslint/no-explicit-any */
 async function checkEip712Availability(
   contractName: string,
 ): Promise<Descriptor[]> {
@@ -138,7 +144,7 @@ async function fetchRequest(
   output: string,
   contractName: string,
 ): Promise<ResponseDto | null> {
-  const path = `${url}/v1/dapps?output=${output}&chain_id=1&contracts=${contractName}`;
+  const path = `${endpointUrl}/v1/dapps?ref=branch%3A${branchName}&output=${output}&chain_id=1&contracts=${contractName}`;
   const response = await fetch(path);
 
   if (!response.ok) {

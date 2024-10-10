@@ -1,5 +1,6 @@
 import React from "react";
-import { Flex, InfiniteLoader, Text, Icons } from "@ledgerhq/react-ui";
+import { Flex, Icons, InfiniteLoader, Text } from "@ledgerhq/react-ui";
+
 import { Descriptor } from "./CalNetworkDataSource";
 
 type CalAvailabilityResponseProps = {
@@ -28,12 +29,13 @@ export function CalAvailabilityResponseComponent(
             <>
               <Flex align="center">
                 <Icons.CheckmarkCircle style={{ color: "green" }} />
-                <Text ml={2}>
+                <Text>
                   Smart Contract of type <b>`{type}`</b> is deployed
                   <br />
                   <a
                     href={`https://etherscan.io/address/${searchAddress}#code`}
                     target="_blank"
+                    rel="noreferrer"
                   >
                     {searchAddress}
                   </a>
@@ -45,7 +47,7 @@ export function CalAvailabilityResponseComponent(
               </Flex>
               {type === "ethereum_app_plugins" && (
                 <Flex align="center">
-                  <Text ml={2}>
+                  <Text>
                     <ul>
                       {descriptors.map((descriptor: Descriptor) => {
                         return (
@@ -58,7 +60,7 @@ export function CalAvailabilityResponseComponent(
               )}
               {type === "eip712" && (
                 <Flex align="center">
-                  <Text ml={2}>
+                  <Text>
                     <ul>
                       {descriptors.map((descriptor: Descriptor) => {
                         return (
@@ -78,7 +80,7 @@ export function CalAvailabilityResponseComponent(
             <>
               <Flex align="center">
                 <Icons.Warning style={{ color: "red" }} />
-                <Text ml={2}>
+                <Text>
                   Smart Contract with address : <b>{searchAddress}</b> is
                   unknown
                   <span style={{ color: "lightgray", fontSize: "9px" }}>
@@ -93,75 +95,4 @@ export function CalAvailabilityResponseComponent(
       )}
     </>
   );
-}
-
-{
-  /*
-           </>
-            ))}
-
-{/  *
-          {type === "eip712" &&   (
-              <Flex align=  "center">
-                  <Text ml={2}>
-                  <ul>
-                    {Object  .values(data.result).flatMap((item: any) =>
-                        item.descriptors_eip712
-                        ?   Object.values(item.descriptors_eip712).flatMap(  
-                            (descriptor: any) =>
-                                Object.values(descriptor).flatMap  (
-                                (subItem: any) => {
-                                    if (subItem.instructions) {
-                                      return subItem.  instructions
-                                      .filter(
-                                          (instruction: any) =>
-                                            instruction.type === "message",
-                                      )  
-                                      .map((instruction: any) => (
-                                          <li key={instruction.display_name}>
-                                            - {instruction.display_name} (
-                                            {instruction.  field_mappers_count}{" "}
-                                            fields)
-                                          </  li>
-                                      )  );
-                                    }
-                                    return [];
-                                  },  
-                                ),
-                            )
-                                      
-            </>
- : [],
-               )}
-                  </ul>
-                </Text>
-              </Flex>
-             
-            </>
-          )}
-          {type !== "ethereum_app_plugins" && type !== "eip712" && (
-            <Flex align="center">
-              <Icons.Er style={{ color: "green" }} />
-              <Text ml={2}>
-                Address not deployed
-                <br />
-                <a
-                  href={`https://etherscan.io/address/${data.smartContractAddress}#code`}
-                  target="_blank"
-                >
-                  {data.smartContractAddress}
-                </a>
-                <span style={{ color: "lightgray", fontSize: "9px" }}>
-                  <br />
-                  {
-                    //formatDistanceToNow(new Date(data.date), { addSuffix: true })
-                    "TEST"
-                  }
-                </span>
-              </Text>
-            </Flex>
-          )}
-        </>
-      )}
-*/
 }

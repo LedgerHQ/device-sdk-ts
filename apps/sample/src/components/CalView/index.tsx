@@ -1,25 +1,27 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-/* eslint-disable @typescript-eslint/no-unsafe-assignment */
 import React, { useCallback, useEffect, useRef, useState } from "react";
-import { PageWithHeader } from "../PageWithHeader";
-import { ClickableListItem } from "../ClickableListItem";
-import { notFound, useRouter } from "next/navigation";
-import { StyledDrawer } from "@/components/StyledDrawer";
-import { FieldType } from "@/hooks/useForm";
-import { CommandForm, ValueSelector } from "../CommandsView/CommandForm";
-import { Block } from "@/components/Block";
 import {
-  Flex,
   Button,
+  Divider,
+  Flex,
+  Grid,
   Icons,
   InfiniteLoader,
-  Divider,
-  Grid,
 } from "@ledgerhq/react-ui";
+
+import { Block } from "@/components/Block";
+import { ClickableListItem } from "@/components/ClickableListItem";
+import {
+  CommandForm,
+  ValueSelector,
+} from "@/components/CommandsView/CommandForm";
+import { PageWithHeader } from "@/components/PageWithHeader";
+import { StyledDrawer } from "@/components/StyledDrawer";
+import { FieldType } from "@/hooks/useForm";
+
 import { CalAvailabilityResponseComponent } from "./CalAvailabilityResponse";
 import { checkContractAvailability, Descriptor } from "./CalNetworkDataSource";
 
-const SUPPORTED_KEYRINGS = [
+const CAL_SERVICE_ENTRIES = [
   {
     title: "Check dApp availability",
     description: "Check dApp availability in Crypto Asset List",
@@ -27,7 +29,7 @@ const SUPPORTED_KEYRINGS = [
 ];
 
 export type CalActionProps<
-  Output,
+  _,
   Input extends Record<string, FieldType> | void,
 > = {
   title: string;
@@ -67,6 +69,8 @@ export function CalActionDrawer<
 
         const response = await checkContractAvailability(
           values.smartContractAddress.toString(),
+          values.calUrl.toString(),
+          values.branch.toString(),
         );
 
         setResponses((prev) => [
@@ -134,7 +138,7 @@ export function CalActionDrawer<
               loading ? <InfiniteLoader size={20} /> : <Icons.ArrowRight />
             }
           >
-            Check
+            Check Availability
           </Button>
         </Flex>
       </Block>
@@ -149,11 +153,12 @@ export function CalActionDrawer<
           {responses
             .slice()
             .reverse()
-            .map((response, _) => (
+            .map((response, key) => (
               <CalAvailabilityResponseComponent
+                key={key}
                 type={response.responseType}
                 date={response.date}
-                loading={loading}
+                loading={response.loading}
                 descriptors={response.result}
                 searchAddress={response.searchAddress}
               />
@@ -173,7 +178,6 @@ export function CalActionDrawer<
 }
 
 export const CalView = () => {
-  const router = useRouter();
   const [isOpen, setIsOpen] = useState(false);
   const openDrawer = useCallback(() => {
     setIsOpen(true);
@@ -188,8 +192,8 @@ export const CalView = () => {
 
   return (
     <PageWithHeader title="Crypto Assets">
-      <Grid columns={1} rowGap={6} columnGap={6} overflowY="scroll">
-        {SUPPORTED_KEYRINGS.map(({ title, description }) => (
+      <Grid columns={1}>
+        {CAL_SERVICE_ENTRIES.map(({ title, description }) => (
           <ClickableListItem
             key={`keyring-${title}`}
             title={title}
@@ -210,6 +214,8 @@ export const CalView = () => {
           description={""}
           initialValues={{
             smartContractAddress: "0x000000000022D473030F116dDEE9F6B43aC78BA3",
+            calUrl: "https://crypto-assets-service.api.ledger.com/v1",
+            branch: "main",
           }}
         />
       </StyledDrawer>
