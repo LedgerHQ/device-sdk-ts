@@ -107,7 +107,7 @@ export class DeviceSessionRefresher {
           ...state,
           sessionStateType: DeviceSessionStateType.ReadyWithoutSecureChannel,
           deviceStatus: this._deviceStatus,
-          currentApp: parsedResponse.data.name,
+          currentApp: parsedResponse.data,
           installedApps: "installedApps" in state ? state.installedApps : [],
         }));
       });

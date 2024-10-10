@@ -22,14 +22,14 @@ describe("GoToDashboardDeviceAction", () => {
   const closeAppMock = jest.fn();
   const getAppAndVersionMock = jest.fn();
   const getDeviceSessionStateMock = jest.fn();
-  const saveSessionStateMock = jest.fn();
+  const setDeviceSessionStateMock = jest.fn();
 
   function extractDependenciesMock() {
     return {
       closeApp: closeAppMock,
       getAppAndVersion: getAppAndVersionMock,
       getDeviceSessionState: getDeviceSessionStateMock,
-      saveSessionState: saveSessionStateMock,
+      setDeviceSessionState: setDeviceSessionStateMock,
     };
   }
 
@@ -53,7 +53,7 @@ describe("GoToDashboardDeviceAction", () => {
       apiGetDeviceSessionStateMock.mockReturnValue({
         sessionStateType: DeviceSessionStateType.ReadyWithoutSecureChannel,
         deviceStatus: DeviceStatus.CONNECTED,
-        currentApp: "BOLOS",
+        currentApp: { name: "BOLOS", version: "1.5.0" },
         installedApps: [],
       });
 
@@ -63,12 +63,6 @@ describe("GoToDashboardDeviceAction", () => {
             requiredUserInteraction: UserInteractionRequired.None,
           },
           status: DeviceActionStatus.Pending, // GetDeviceStatus events (mocked for tests)
-        },
-        {
-          intermediateValue: {
-            requiredUserInteraction: UserInteractionRequired.None,
-          },
-          status: DeviceActionStatus.Pending,
         },
         {
           intermediateValue: {
@@ -103,7 +97,7 @@ describe("GoToDashboardDeviceAction", () => {
       apiGetDeviceSessionStateMock.mockReturnValue({
         sessionStateType: DeviceSessionStateType.ReadyWithoutSecureChannel,
         deviceStatus: DeviceStatus.CONNECTED,
-        currentApp: "Bitcoin",
+        currentApp: { name: "Bitcoin", version: "1.0.0" },
         installedApps: [],
       });
 
@@ -113,18 +107,12 @@ describe("GoToDashboardDeviceAction", () => {
           CommandResultFactory({
             data: {
               name: "BOLOS",
-              version: "1.0.0",
+              version: "1.5.0",
             },
           }),
         );
 
       const expectedStates: Array<GoToDashboardDAState> = [
-        {
-          intermediateValue: {
-            requiredUserInteraction: UserInteractionRequired.None,
-          },
-          status: DeviceActionStatus.Pending,
-        },
         {
           intermediateValue: {
             requiredUserInteraction: UserInteractionRequired.None,
@@ -175,12 +163,12 @@ describe("GoToDashboardDeviceAction", () => {
       getDeviceSessionStateMock.mockReturnValue({
         sessionStateType: DeviceSessionStateType.Connected,
         deviceStatus: DeviceStatus.CONNECTED,
-        currentApp: "BOLOS",
+        currentApp: { name: "BOLOS", version: "1.5.0" },
       });
 
       getAppAndVersionMock.mockReturnValue({
         app: "BOLOS",
-        version: "1.0.0",
+        version: "1.5.0",
       });
 
       jest
@@ -188,12 +176,6 @@ describe("GoToDashboardDeviceAction", () => {
         .mockReturnValue(extractDependenciesMock());
 
       const expectedStates: Array<GoToDashboardDAState> = [
-        {
-          intermediateValue: {
-            requiredUserInteraction: UserInteractionRequired.None,
-          },
-          status: DeviceActionStatus.Pending,
-        },
         {
           intermediateValue: {
             requiredUserInteraction: UserInteractionRequired.None,
@@ -241,18 +223,12 @@ describe("GoToDashboardDeviceAction", () => {
         CommandResultFactory({
           data: {
             name: "BOLOS",
-            version: "1.0.0",
+            version: "1.5.0",
           },
         }),
       );
 
       const expectedStates: Array<GoToDashboardDAState> = [
-        {
-          intermediateValue: {
-            requiredUserInteraction: UserInteractionRequired.None,
-          },
-          status: DeviceActionStatus.Pending,
-        },
         {
           intermediateValue: {
             requiredUserInteraction: UserInteractionRequired.None,
@@ -291,7 +267,7 @@ describe("GoToDashboardDeviceAction", () => {
       apiGetDeviceSessionStateMock.mockReturnValue({
         sessionStateType: DeviceSessionStateType.ReadyWithoutSecureChannel,
         deviceStatus: DeviceStatus.CONNECTED,
-        currentApp: "BOLOS",
+        currentApp: { name: "BOLOS", version: "1.5.0" },
         installedApps: [],
       });
 
@@ -514,87 +490,6 @@ describe("GoToDashboardDeviceAction", () => {
           {
             status: DeviceActionStatus.Error,
             error: new UnknownDAError("currentApp === null"),
-          },
-        ];
-
-        testDeviceActionStates(
-          goToDashboardDeviceAction,
-          expectedStates,
-          makeDeviceActionInternalApiMock(),
-          done,
-        );
-      });
-
-      it("should return an error if SaveSessionState fails", (done) => {
-        setupGetDeviceStatusMock({
-          currentApp: "Bitcoin",
-          currentAppVersion: "1.0.0",
-        });
-
-        const goToDashboardDeviceAction = new GoToDashboardDeviceAction({
-          input: { unlockTimeout: 500 },
-        });
-
-        jest
-          .spyOn(goToDashboardDeviceAction, "extractDependencies")
-          .mockReturnValue(extractDependenciesMock());
-
-        getDeviceSessionStateMock.mockReturnValue({
-          sessionStateType: DeviceSessionStateType.Connected,
-          deviceStatus: DeviceStatus.CONNECTED,
-          currentApp: "Bitcoin",
-        });
-
-        closeAppMock.mockResolvedValue(
-          CommandResultFactory({ data: undefined }),
-        );
-        getAppAndVersionMock.mockResolvedValue(
-          CommandResultFactory({
-            data: {
-              name: "BOLOS",
-              version: "1.0.0",
-            },
-          }),
-        );
-
-        saveSessionStateMock.mockImplementation(() => {
-          throw new Error("Save session state failed");
-        });
-
-        const expectedStates: Array<GoToDashboardDAState> = [
-          {
-            intermediateValue: {
-              requiredUserInteraction: UserInteractionRequired.None,
-            },
-            status: DeviceActionStatus.Pending,
-          },
-          {
-            intermediateValue: {
-              requiredUserInteraction: UserInteractionRequired.None,
-            },
-            status: DeviceActionStatus.Pending,
-          },
-          {
-            intermediateValue: {
-              requiredUserInteraction: UserInteractionRequired.None,
-            },
-            status: DeviceActionStatus.Pending,
-          },
-          {
-            intermediateValue: {
-              requiredUserInteraction: UserInteractionRequired.None,
-            },
-            status: DeviceActionStatus.Pending,
-          },
-          {
-            intermediateValue: {
-              requiredUserInteraction: UserInteractionRequired.None,
-            },
-            status: DeviceActionStatus.Pending,
-          },
-          {
-            status: DeviceActionStatus.Error,
-            error: new UnknownDAError("SaveAppStateError"),
           },
         ];
 

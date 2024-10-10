@@ -1,14 +1,7 @@
 import { Left, Right } from "purify-ts";
 import { Observable } from "rxjs";
 import { tap, timeout } from "rxjs/operators";
-import {
-  AnyEventObject,
-  assign,
-  fromCallback,
-  fromObservable,
-  fromPromise,
-  setup,
-} from "xstate";
+import { assign, fromObservable, fromPromise, setup } from "xstate";
 
 import { isSuccessCommandResult } from "@api/command/model/CommandResult";
 import {
@@ -22,7 +15,6 @@ import { DEFAULT_UNLOCK_TIMEOUT_MS } from "@api/device-action/os/Const";
 import {
   DeviceLockedError,
   DeviceNotOnboardedError,
-  UnknownDAError,
 } from "@api/device-action/os/Errors";
 import { StateMachineTypes } from "@api/device-action/xstate-utils/StateMachineTypes";
 import {
@@ -55,7 +47,9 @@ export type MachineDependencies = {
   readonly waitForDeviceUnlock: (args: {
     input: { unlockTimeout: number };
   }) => Observable<void>;
-  readonly saveSessionState: (state: DeviceSessionState) => DeviceSessionState;
+  readonly setDeviceSessionState: (
+    state: DeviceSessionState,
+  ) => DeviceSessionState;
   readonly isDeviceOnboarded: () => boolean;
 };
 
@@ -90,7 +84,7 @@ export class GetDeviceStatusDeviceAction extends XStateDeviceAction<
     const {
       getAppAndVersion,
       getDeviceSessionState,
-      saveSessionState,
+      setDeviceSessionState,
       waitForDeviceUnlock,
       isDeviceOnboarded,
     } = this.extractDependencies(internalApi);
@@ -108,31 +102,6 @@ export class GetDeviceStatusDeviceAction extends XStateDeviceAction<
       actors: {
         getAppAndVersion: fromPromise(getAppAndVersion),
         waitForDeviceUnlock: fromObservable(waitForDeviceUnlock),
-        saveSessionState: fromCallback(
-          ({
-            input,
-            sendBack,
-          }: {
-            sendBack: (event: AnyEventObject) => void;
-            input: {
-              currentApp: string | null;
-              currentAppVersion: string | null;
-            };
-          }) => {
-            const { currentApp, currentAppVersion } = input;
-            if (!currentApp) {
-              return sendBack({ type: "error" });
-            }
-            const sessionState = getDeviceSessionState();
-            const updatedState = {
-              ...sessionState,
-              currentApp,
-              currentAppVersion,
-            };
-            saveSessionState(updatedState);
-            sendBack({ type: "done" });
-          },
-        ),
       },
       guards: {
         isDeviceOnboarded: () => isDeviceOnboarded(), // TODO: we don't have this info for now, this can be derived from the "flags" obtained in the getVersion command
@@ -156,12 +125,6 @@ export class GetDeviceStatusDeviceAction extends XStateDeviceAction<
             requiredUserInteraction: UserInteractionRequired.UnlockDevice,
           },
         }),
-        assignErrorSaveAppState: assign({
-          _internalState: (_) => ({
-            ..._.context._internalState,
-            error: new UnknownDAError("SaveAppStateError"),
-          }),
-        }),
         assignErrorFromEvent: assign({
           _internalState: (_) => ({
             ..._.context._internalState,
@@ -184,7 +147,7 @@ export class GetDeviceStatusDeviceAction extends XStateDeviceAction<
         }),
       },
     }).createMachine({
-      /** @xstate-layout N4IgpgJg5mDOIC5QHEwBcAiYBuBLAxmAMpoCGaArrFnoQIL5q4D2AdgHQ0FgBKYpEAJ4BiANoAGALqJQAB2axcTNjJAAPRAEYAnOPYAOAGwB2AEzjxmgMzbj+4wBZDAGhCDEAVmPb2107tN9K2D9UwBfMNdUTBxuEnIqLnpGFg4AeVYAI2ZSACcIXFYoAGEACzB8AGsxKVV5RWVWVQ0EB2NNAw9tKyDta3Egq1d3BA9DK3YrU38HcUMPD0sBiKj0JOIySmpY5Mb2DOy8gqKyiurRTWkkEHqlVObENo79Lp6bfsHhxH0Oh21--R9BxGOaGbQrEDRdbxLbrBh7AAyzCqhRK5SqNSucgUdxU1xauj0c1MhmmfSsTxcbk8YPYxhs8ysmk0HiZrIhUJ2GwS21oYHhqXYSJRJ3R50udRxjQeCEJ7GJpP81kpX1amgc7Cchk0QWmL3+xg5ay5MMSXIFbHYAFVYGBchbWFbWAAbZGVdbCCBsMDsQrYZiVH02u0Op2uqrrCRYm5S+74rSLCZecSzbTjGzBYyqhyaQwGMltPpdcQecKRSHGvmm3ncB3W232lJsMNuj123LMXLsWTO8gAM07AFt6yGm46Xa2uVHJQ046AWizxEnjCnxGngt0rFnqQhpqZ2LZ5trjCvFiYjTEq5szXy63RZLI6KwIAA1O2KNinDFe1g+v0Bn1OSvHk4THdh70fZ831yD9WC-SoEH-fByFSKNp2uW5pXjXdLA6KwU30HMSz6dV9FVMZ9F8MZTDGcRTH6NML2ha8a12QUIKfV931SeDhHbTtu17NAB1yYcgLiFjQL2DioO4z8xUQ1h-WQxo0NqDDYzxedEHMZlJgIoiumZYFVSseZ2HMJkmToswzAWJiTUk80wKIUhsH5B8YTAT1vXQ7FZy09QdLaPNNBoilNBXOj-g8VVDCXAxQlCVktyXGwHOA2FnL2Vz3Igry+NyDtcj8mMAqabDTBC3xwpzKL-G0WKd0WYxNX8erCKXQiInLVhmAgOBVHEwhqykucytxCrtIQABaKkRhmjwD3+FbVpW7wMokkDssFdY+AEEZ-MmmUHFMci7F8KZCKqrdCJ6TaRqc28wIOHJ8lReCZ2OyqXgPVkWRsNcHC6BxzsovxrocW6of0B7uSy57ETdD6xS+rDpscfcekCRqdVCNLyMI9gPD+LxbIiw1y2G+Gb1rMDg0bRoWwjLk0fGhdNHEVrkwcVNIu6UxtxGKxWTpXNTApfwPB0Lw4dGnbLRkriYJ41GNPKmVIvMixcO0HNgnMebPFLSYkrC0tFlmSnVkvLaEbpnK3I82QvLZwKWmmEXibsWYpglxrWXIww83GQIWXaKZ-gcOWnodwUiAofBCFgeB1e+6bBfVeUniBU6T20OKEohgZkymHQY+2xHBQAUSKzs3amoLd3aDUU3aXPBe8Uyfkmdqxka2wix6sIgA */
+      /** @xstate-layout N4IgpgJg5mDOIC5QHEwBcAiYBuBLAxmAMpoCGaArrFnoQIL5q4D2AdgHQ0FgBKYpEAJ4BiANoAGALqJQAB2axcTNjJAAPRAFoArAHZx7AIwAmQ7oCcugMyHzANmMAWYwBoQgxI8vsAHOJM+VuLmVj5e2gC+EW6omDjcJORUXPSMLBwA8qwARsykAE4QuKxQAMIAFmD4ANZiUqryisqsqhoImo4O7OGhPj4h5n6Obh4IunZ2RoZ+ena6nYaGUTHoKcRklNTxqc3sWbkFRSUVVbWihtJIII1K6a1aVtoGTxOOjtbv84YjiObik7ofPM7GFDP9jNofMsQLE1olNmsGLsADLMGrFMqVGp1S5yBS3FRXNqaOzadjiHx2KyORbzcRBczmH4IbTOdjaabaKmdGy6XSRaIw1bbdZJLa0MBI9LsVHo45Ys4XBr45r3dps-n0ubaGxgx6PZlWULkkLBGmDCzGYzQ2Ei+HJEVStjsACqsDA+SdrBdrAANmjqmthBA2GB2MVsMxqmG3R6vT7-TU1hJcdcVXciYgglZycYQiYqRTQoZtMynDmbM4aW8rHYzD4BSs4hL7eLuF7Xe7PWk2AmA0GPflmPl2LJfeQAGbDgC2nbjPe9fv7IpTyqaGdAbXmxnZPkMNNM820VuZ+8M7Dsb3MznpwW31sFtpbGwdEo7dFksjorAgADUPYobAnNiIasGGEZRmGT4JC+bY7NKH5fj+-75IBrDAdUCAQfg5DpCmq5XDcqqZmMjgGDY-yGJeejjFRzJ2P47DZoEJb+Hyx42sKz5ioiC7sIh35-gB6QYcIg7DqO45oFO+SztBhCtrxuwCchwlAQqWGsJGOHNPh9SEemhKbogdLsIMTjmPuNF1nYZaOBW+5OPu9l1oCjZCs2ME8Y6fGIb6BC4WwdDYKQuDjtkvq8HAFC+mgokEXi65GeoiBguYZJOPSJa6Hm1hGsyuglkxxiUjYVjXlq7nyaKCI+cpn7+Tp6TBaF4WRXwsAxXFCpiEqBlJS0JFAo4vg+BCe55e8-QFUVVglVShjlWRtZ2FEgqsMwEBwKo1WKXVG5pgNaokmRZmQg4fyLHR7ieCNpjGPyx7aNo6UNo4nGeQpsFKdKax8AIoyJQSg3Ge0L07q9F3+Istk3Qg1IjUaZ7GNS-LlU4H1wt9+3OvseSFBiGFrsDx01mZ15mHooReFaVj0fZ5Jci5zissYIKY3a2NvnxsrVITCrE8RoMdDucxWgx1jpZCELDHDgKTC9jg6mNXKLDSHPcbV3O7LG3bNH2SYioLB3EmCI1-HuVL6Cj4hU6eNjsIVD3UrWfKXVCj5cV5Wvtr5n6CShaFE-1JMkWzPgXpCjh+Faw3Mjq5jdOlJhGvo-RzRr3uvr79VjgFzQtWFpARVFnWxcHQNCylCBm+eKPjJL4jWMEdNww4O46vSFVsfyD5Nlj3na9KRAUPghCwPAIdV20QIR7e-RzOYbNK98cN7ndgR-BSzgo+YmdfYPOfSgAovkQ75MbyVtItehmSrJgcijz2uHD+pmXyQSQnyVLs2tQA */
       id: "GetDeviceStatusDeviceAction",
       initial: "DeviceReady",
       context: (_) => {
@@ -203,7 +166,7 @@ export class GetDeviceStatusDeviceAction extends XStateDeviceAction<
             currentApp:
               sessionStateType ===
               DeviceSessionStateType.ReadyWithoutSecureChannel
-                ? sessionState.currentApp
+                ? sessionState.currentApp.name
                 : null,
             currentAppVersion: null,
             error: null,
@@ -291,6 +254,17 @@ export class GetDeviceStatusDeviceAction extends XStateDeviceAction<
               actions: assign({
                 _internalState: (_) => {
                   if (isSuccessCommandResult(_.event.output)) {
+                    const state: DeviceSessionState = getDeviceSessionState();
+                    // Narrow the type to ReadyWithoutSecureChannelState or ReadyWithSecureChannelState
+                    if (
+                      state.sessionStateType !==
+                      DeviceSessionStateType.Connected
+                    ) {
+                      setDeviceSessionState({
+                        ...state,
+                        currentApp: _.event.output.data,
+                      });
+                    }
                     return {
                       ..._.context._internalState,
                       currentApp: _.event.output.data.name,
@@ -317,28 +291,9 @@ export class GetDeviceStatusDeviceAction extends XStateDeviceAction<
               target: "Error",
             },
             {
-              target: "SaveAppState",
-            },
-          ],
-        },
-        SaveAppState: {
-          // We save the current app and version in the session state
-          invoke: {
-            src: "saveSessionState",
-            input: (_) => ({
-              currentApp: _.context._internalState.currentApp,
-              currentAppVersion: _.context._internalState.currentAppVersion,
-            }),
-          },
-          on: {
-            done: {
               target: "Success",
             },
-            error: {
-              target: "Error",
-              actions: "assignErrorSaveAppState",
-            },
-          },
+          ],
         },
         Success: {
           type: "final",
@@ -354,7 +309,7 @@ export class GetDeviceStatusDeviceAction extends XStateDeviceAction<
         if (error) {
           return Left(error);
         }
-        return Right({
+        return Right<GetDeviceStatusDAOutput>({
           currentApp: currentApp!,
           currentAppVersion,
         });
@@ -394,7 +349,7 @@ export class GetDeviceStatusDeviceAction extends XStateDeviceAction<
       getAppAndVersion,
       waitForDeviceUnlock,
       getDeviceSessionState: () => internalApi.getDeviceSessionState(),
-      saveSessionState: (state: DeviceSessionState) =>
+      setDeviceSessionState: (state: DeviceSessionState) =>
         internalApi.setDeviceSessionState(state),
       isDeviceOnboarded: () => true, // TODO: we don't have this info for now
     };

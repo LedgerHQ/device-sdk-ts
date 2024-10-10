@@ -20,6 +20,9 @@ export type GetAppAndVersionResponse = {
    * The version of the application currently running on the device.
    */
   readonly version: string;
+  /**
+   * Flags that are used to provide additional information about the application.
+   */
   readonly flags?: number | Uint8Array;
 };
 

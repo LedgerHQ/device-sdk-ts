@@ -50,6 +50,7 @@ export type MachineDependencies = {
     input: { appName: string };
   }) => Promise<OpenAppCommandResult>;
   readonly getDeviceSessionState: () => DeviceSessionState;
+  readonly setDeviceSessionState: (state: DeviceSessionState) => void;
   readonly isDeviceOnboarded: () => boolean;
 };
 
@@ -104,6 +105,7 @@ export class OpenAppDeviceAction extends XStateDeviceAction<
       closeApp,
       openApp,
       getDeviceSessionState,
+      setDeviceSessionState,
       isDeviceOnboarded,
     } = this.extractDependencies(internalApi);
 
@@ -180,7 +182,7 @@ export class OpenAppDeviceAction extends XStateDeviceAction<
         }),
       },
     }).createMachine({
-      /** @xstate-layout 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 */
+      /** @xstate-layout N4IgpgJg5mDOIC5QHkAOYB2BBVqAiYAbgJYDGYWpALsQPYYB0BJ5ASmAIYQCeAxANoAGALqJQqWrGI16YkAA9EARhWCGADgAsAZm1b1SwUoDspgDQhuiAEzX1DbQE5tJlQDYlm414CsAXz8LNEwcfCIyCmo6RmQMACNaDgAnCGIMKABhAAswUgBrARE5CSkZDDlFBCUPbQYfZx91H0FtTRNjCysEbWM1bTdHAzcfH2q9awCg9GxcZgjKMoZYhOTU9Ozcgv4lUSQQEuloiuUauoamlrbzSxtBNTu7pW1BEe1rJUmQYJmwlkjFgAytHyaUyOXyhV24kkh1ke0q7w8DDcxmqjkM1l6Kh8nUQzR8DEEjjcz3UxKUjiMbk+31Cc3IC2iDCBIPW4K2O2KMLKxwQiKUyNRAwxWKUOJu3TaDFsw28bkExmsgnU-Rp0zp4QZUXoDFCABsyBwylhCBxiHqOHE9WBeBB6GAGGlCLQ8g7abNNf8mfrDcbTebLdaEE7gUbokJhBGuaUjvCbCSCdZNI5UQqhg1cQhNOprAxND4XP0xZTHI01SEPX9GTqfaQw-QTWaLVabWAkklaEkGKgLVQAGadgC2S3Vlfm2sYtfr2H9zaDIbrZQjUb2Bx5cb5CelydTxnT2nFXTcmjUBYTzlazkcE0CX1Hv3HiynfqbgbA7FgAFc9VQNhCV9CMZwqAlQuAWZwHiqbStI0mY+PmdRKNYxLZmKgjvDeUwVg+WpPrgBqLtEjYBi2H7fr+7ICJyq7crGIGIK0LwME8dzJuizzNNYmZeLmAysZ4Ph2KYmiaOWPz0l6Nb4b60R-lsRQ0UB5Qbq0pgMM4FJ8dYx4KpomaOJo6k9G4yHvEhBmYmJGpVhOurSYR9ByVRUL7LRwEKAxYq1PUkGtE8+ZaJmBh1A8hieMh17vFZY64UyeAcLAWQrCkTkAa5Sm8tY-TIkmlJvFojjXuocHysiegvB4JJ6P4t7ujhkmMPFiXJRAqXUYBsLKfRfLZSZyYtHYbF2JmQoaMeIweEmJjHtF9XVowGR6pIFD2dOtr2o6GDOq6I7YRJ80MIty3PtEwZbaGS4iGla50R5CBVYSJkFncbzGC4mYoo4zHlfUCo+KieizfttlHbAK09jJ9C8G2HZdj2RoDkkw51cDiyg+DBHTmdzoORgy4KR167dQ9ghPc8A1vUomZIQqeZksmTw9JoJlA56B3oyd9BkT+qUE+lnW8iohgaDoeioUYpgdBKQu5sz8rEgYxjwaJtX3qjTIc6tZTcxRmzOdGAsbqoagmM8Yr-aTTyOCNpXWAW-TGIMfmO6zNmLHVmNlOtGAOiGO0o2ztke5DGDYxd4ZXXzN3uZU1RPBBjTNM7UtdAWxjqQZ6gqv0LyO9oruPkywe49D7adt2vaI8jauB+796e6dC7TvjLnR11d1x955xJ1cKeIAZ6dGEJqJKk4qqq3ttdF-XIc67zrdue3CLVG4gqZyMpbGG4bhBeoq9b-mB7jaTZYT+JU86sX05z5R2wLxlG78oKYpNKW16mx9x6EkhWdGKTSvXgLrFKSENcbsC4Hwa6i9eQHgQgmCkIlBjKmcEFUY24ejaSTMeCkHxPgYFoBAOAcgA5u1um3XkABaHeEoKEEkKvQwQJ4XjKl6ErIBDUmCenATwA2RM7rknUm4FUhV-oiTJFTCUth05j0xJVFUTxt7sIOssRIKRQRyV4bdWOTNkTqDekqAwbxNDIUzFIhwzhZHVHkf0akZ9rKFx1CyPI6j2SaJjsoUsBIBimB8MMeUZJqFdH6PYDwKYBjwQaEYpRtlOYzlfC2NxS8bB6HsM4RUIwiSH0VNxAy6lkL1EEjTYUtisLn1ISAhuDZZxvhvpsRJmVX51FJFlZ4-Qk5wUYcxR2BTTIGUKtEvCoDpwaMUobbqugUzIg8PmEwIiTJ9yqAMaUW90IngCaIgZcUEpJVUa1Vxoy+GVGMbvZiuVf5IM8CoTZOpNZDL4eQjcIlDLIRRH5FhoxDyIGFMiASe8IoFlGNchaS0waxNqfkepG4tACiMGeQw6IiQeBGncMaMycxEl8eoIFu0fiVPbg87qSE3q6MVBpehPQ4K6G+uoZUJIVB7laNiq+2s4DkRGYTLRygs6GSQtmO4iIaWljgvUBgip-K5RErofOdiYocLBZwHhBzOWSkKqKz6Lw3i6U+QgPchlTB7xTPBeCWVHDYoAMqflIOQWA8AlXuO6KMQylImipgMi4BZzhDIKkpM0FEypRimplXNWyABRMuSRIXjNaKvHQ3h0Q0reCYT+3khGNEKgqIRxgAgBCAA */
       id: "OpenAppDeviceAction",
       initial: "DeviceReady",
       context: ({ input }) => {
@@ -196,7 +198,7 @@ export class OpenAppDeviceAction extends XStateDeviceAction<
             currentlyRunningApp:
               sessionStateType ===
               DeviceSessionStateType.ReadyWithoutSecureChannel
-                ? sessionState.currentApp
+                ? sessionState.currentApp.name
                 : null,
           },
         };
@@ -248,6 +250,17 @@ export class OpenAppDeviceAction extends XStateDeviceAction<
               actions: assign({
                 _internalState: (_) => {
                   if (isSuccessCommandResult(_.event.output)) {
+                    const state: DeviceSessionState = getDeviceSessionState();
+                    // Narrow the type to ReadyWithoutSecureChannelState or ReadyWithSecureChannelState
+                    if (
+                      state.sessionStateType !==
+                      DeviceSessionStateType.Connected
+                    ) {
+                      setDeviceSessionState({
+                        ...state,
+                        currentApp: _.event.output.data,
+                      });
+                    }
                     return {
                       ..._.context._internalState,
                       currentlyRunningApp: _.event.output.data.name,
@@ -335,7 +348,7 @@ export class OpenAppDeviceAction extends XStateDeviceAction<
               target: "Error",
               guard: "hasError",
             },
-            "OpenApplication",
+            { target: "OpenApplication" },
           ],
         },
 
@@ -370,13 +383,14 @@ export class OpenAppDeviceAction extends XStateDeviceAction<
             },
           },
         },
+
         OpenApplicationResultCheck: {
           always: [
             {
               target: "Error",
               guard: "hasError",
             },
-            "ApplicationReady",
+            { target: "ApplicationAvailable" },
           ],
         },
 
@@ -417,6 +431,8 @@ export class OpenAppDeviceAction extends XStateDeviceAction<
       closeApp,
       openApp,
       getDeviceSessionState: () => internalApi.getDeviceSessionState(),
+      setDeviceSessionState: (state: DeviceSessionState) =>
+        internalApi.setDeviceSessionState(state),
       isDeviceOnboarded: () => true, // TODO: we don't have this info for now, this can be derived from the "flags" obtained in the getVersion command
     };
   }
