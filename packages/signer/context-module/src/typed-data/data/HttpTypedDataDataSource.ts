@@ -52,6 +52,7 @@ export class HttpTypedDataDataSource implements TypedDataDataSource {
           output: "descriptors_eip712",
           descriptors_eip712_version: version,
           descriptors_eip712: "<set>",
+          ref: `branch:${this.config.cal.branch}`,
         },
         headers: {
           "X-Ledger-Client-Version": `context-module/${PACKAGE.version}`,

@@ -1,8 +1,16 @@
-import { ContextModuleConfig } from "./config/model/ContextModuleConfig";
+import {
+  ContextModuleCalConfig,
+  ContextModuleConfig,
+} from "./config/model/ContextModuleConfig";
 import { ContextModuleBuilder } from "./ContextModuleBuilder";
 import { DefaultContextModule } from "./DefaultContextModule";
 
 describe("ContextModuleBuilder", () => {
+  const defaultCalConfig: ContextModuleCalConfig = {
+    url: "https://crypto-assets-service.api.ledger.com/v1",
+    mode: "prod",
+    branch: "main",
+  };
   it("should return a default context module", () => {
     const contextModuleBuilder = new ContextModuleBuilder();
 
@@ -38,7 +46,7 @@ describe("ContextModuleBuilder", () => {
   it("should return a custom context module with a custom config", () => {
     const contextModuleBuilder = new ContextModuleBuilder();
     const customConfig: ContextModuleConfig = {
-      cal: { url: "https://locahost:3000", mode: "test" },
+      cal: defaultCalConfig,
     };
 
     const res = contextModuleBuilder.withConfig(customConfig).build();
