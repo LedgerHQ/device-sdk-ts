@@ -29,6 +29,14 @@ export const deviceActionStatusToColor: Record<DeviceActionStatus, string> = {
   [DeviceActionStatus.Error]: "error.c80",
 };
 
+const TooltipTitle = styled(Text).attrs({
+  mb: 2,
+  variant: "small",
+  color: "neutral.c60",
+})`
+  flex-grow: 0;
+`;
+
 /**
  * Component to display an event emitted by a device action.
  */
@@ -44,14 +52,6 @@ export function DeviceActionResponse<
   const { args, date, isLatest, id } = props;
 
   const isError = "error" in props;
-
-  const TooltipTitle = styled(Text).attrs({
-    mb: 2,
-    variant: "small",
-    color: "neutral.c60",
-  })`
-    flex-grow: 0;
-  `;
 
   return (
     <Flex
