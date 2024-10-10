@@ -198,10 +198,10 @@ export class BleDeviceConnection implements DeviceConnection {
         });
       },
     );
-    const frames = this._apduSender.caseOf({
-      Just: (apduSender) => apduSender.getFrames(apdu),
-      Nothing: () => [],
-    });
+    const frames = this._apduSender.mapOrDefault(
+      (apduSender) => apduSender.getFrames(apdu),
+      [],
+    );
     for (const frame of frames) {
       try {
         this._logger.debug("Sending Frame", {

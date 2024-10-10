@@ -224,47 +224,37 @@ export class WebBleTransport implements Transport {
 
     return from(this.promptDeviceAccess()).pipe(
       switchMap(async (errorOrBleDevice) =>
-        errorOrBleDevice.caseOf({
-          Right: async (bleDevice) => {
-            // ble connect here as gatt server needs to be opened to fetch gatt service
-            if (bleDevice.gatt) {
-              try {
-                await bleDevice.gatt.connect();
-              } catch (error) {
-                throw new OpeningConnectionError(error);
-              }
+        EitherAsync(async ({ liftEither, fromPromise }) => {
+          const bleDevice = await liftEither(errorOrBleDevice);
+          if (bleDevice.gatt) {
+            try {
+              await bleDevice.gatt.connect();
+            } catch (error) {
+              throw new OpeningConnectionError(error);
             }
-            const errorOrBleGattService =
-              await this.getBleGattService(bleDevice);
-            return errorOrBleGattService.caseOf({
-              Right: (bleGattService) => {
-                const errorOrBleDeviceInfos =
-                  this.getBleDeviceInfos(bleGattService);
-                return errorOrBleDeviceInfos.caseOf({
-                  Right: (bleDeviceInfos) => {
-                    const discoveredDevice =
-                      this.getDiscoveredDeviceFrom(bleDeviceInfos);
-                    this.setInternalDeviceFrom(
-                      discoveredDevice,
-                      bleDevice,
-                      bleDeviceInfos,
-                      bleGattService,
-                    );
-                    return discoveredDevice;
-                  },
-
-                  Left: (error) => {
-                    bleDevice.forget();
-                    throw error;
-                  },
-                });
-              },
-              Left: (error) => {
-                bleDevice.forget();
-                throw error;
-              },
-            });
-          },
+          }
+          try {
+            const bleGattService = await fromPromise(
+              this.getBleGattService(bleDevice),
+            );
+            const bleDeviceInfos = await liftEither(
+              this.getBleDeviceInfos(bleGattService),
+            );
+            const discoveredDevice =
+              this.getDiscoveredDeviceFrom(bleDeviceInfos);
+            this.setInternalDeviceFrom(
+              discoveredDevice,
+              bleDevice,
+              bleDeviceInfos,
+              bleGattService,
+            );
+            return discoveredDevice;
+          } catch (error) {
+            await bleDevice.forget();
+            throw error;
+          }
+        }).caseOf({
+          Right: (discoveredDevice) => discoveredDevice,
           Left: (error) => {
             this._logger.error("Error while getting accessible device", {
               data: { error },
