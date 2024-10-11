@@ -45,6 +45,7 @@ export { LedgerDeviceSdkBuilder as DeviceSdkBuilder } from "./DeviceSdkBuilder";
 export { DeviceExchangeError, UnknownDeviceExchangeError } from "./Error";
 export { LogLevel } from "./logger-subscriber/model/LogLevel";
 export { ConsoleLogger } from "./logger-subscriber/service/ConsoleLogger";
+export { WebLogsExporterLogger } from "./logger-subscriber/service/WebLogsExporterLogger";
 export * from "./types";
 export { ConnectedDevice } from "./usb/model/ConnectedDevice";
 export { InvalidStatusWordError } from "@api/command/Errors";

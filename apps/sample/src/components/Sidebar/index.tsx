@@ -1,12 +1,12 @@
 "use client";
 import React, { useCallback, useEffect, useState } from "react";
-import { Box, Flex, Icons, Link, Text } from "@ledgerhq/react-ui";
+import { Box, Flex, IconsLegacy, Link, Text } from "@ledgerhq/react-ui";
 import { useRouter } from "next/navigation";
 import styled, { DefaultTheme } from "styled-components";
 
 import { Device } from "@/components/Device";
 import { Menu } from "@/components/Menu";
-import { useSdk } from "@/providers/DeviceSdkProvider";
+import { useExportLogsCallback, useSdk } from "@/providers/DeviceSdkProvider";
 import { useDeviceSessionsContext } from "@/providers/DeviceSessionsProvider";
 
 const Root = styled(Flex).attrs({ py: 8, px: 6 })`
@@ -29,13 +29,6 @@ const BottomContainer = styled(Flex)`
   align-items: center;
 `;
 
-const LogsContainer = styled(Flex).attrs({ mb: 6 })`
-  flex-direction: row;
-  align-items: center;
-`;
-
-const LogsText = styled(Text).attrs({ ml: 3 })``;
-
 const VersionText = styled(Text)`
   color: ${({ theme }: { theme: DefaultTheme }) => theme.colors.neutral.c50};
 `;
@@ -43,6 +36,7 @@ const VersionText = styled(Text)`
 export const Sidebar: React.FC = () => {
   const [version, setVersion] = useState("");
   const sdk = useSdk();
+  const exportLogs = useExportLogsCallback();
   const {
     state: { deviceById, selectedId },
     dispatch,
@@ -105,10 +99,14 @@ export const Sidebar: React.FC = () => {
       </MenuContainer>
 
       <BottomContainer>
-        <LogsContainer>
-          <Icons.ExternalLink />
-          <LogsText variant={"paragraph"}>Share logs</LogsText>
-        </LogsContainer>
+        <Link
+          mb={6}
+          onClick={exportLogs}
+          size="large"
+          Icon={IconsLegacy.ExternalLinkMedium}
+        >
+          Share logs
+        </Link>
         <VersionText variant={"body"}>
           Ledger Device Management Kit version {version}
         </VersionText>

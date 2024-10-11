@@ -1,13 +1,17 @@
-import React from "react";
+import React, { useCallback } from "react";
 import { createContext, PropsWithChildren, useContext } from "react";
 import {
   ConsoleLogger,
   DeviceSdk,
   DeviceSdkBuilder,
+  WebLogsExporterLogger,
 } from "@ledgerhq/device-management-kit";
+
+const webLogsExporterLogger = new WebLogsExporterLogger();
 
 export const sdk = new DeviceSdkBuilder()
   .addLogger(new ConsoleLogger())
+  .addLogger(webLogsExporterLogger)
   .build();
 
 const SdkContext = createContext<DeviceSdk>(sdk);
@@ -19,3 +23,9 @@ export const SdkProvider: React.FC<PropsWithChildren> = ({ children }) => {
 export const useSdk = (): DeviceSdk => {
   return useContext(SdkContext);
 };
+
+export function useExportLogsCallback() {
+  return useCallback(() => {
+    webLogsExporterLogger.exportLogsToJSON();
+  }, []);
+}
