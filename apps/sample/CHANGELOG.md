@@ -1,5 +1,11 @@
 # @ledgerhq/device-sdk-sample
 
+## 0.1.3
+
+### Patch Changes
+
+- [`a98ccd5`](https://github.com/LedgerHQ/device-sdk-ts/commit/a98ccd53156234a5dc6362963a511ce996140548) Thanks [@valpinkman](https://github.com/valpinkman)! - Various fixes for release
+
 ## 0.1.2
 
 ### Patch Changes
