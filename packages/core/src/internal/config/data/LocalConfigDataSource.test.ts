@@ -1,6 +1,7 @@
 import { Either, Left } from "purify-ts";
 
 import { JSONParseError, ReadFileError } from "@internal/config/model/Errors";
+import pkg from "@root/package.json";
 
 import { LocalConfigDataSource } from "./ConfigDataSource";
 import * as LocalConfig from "./LocalConfigDataSource";
@@ -70,7 +71,7 @@ describe("LocalConfigDataSource", () => {
       expect(LocalConfig.stubFsReadFile()).toEqual(
         JSON.stringify({
           name: "@ledgerhq/device-management-kit",
-          version: "0.3.0",
+          version: pkg.version,
         }),
       );
     });
