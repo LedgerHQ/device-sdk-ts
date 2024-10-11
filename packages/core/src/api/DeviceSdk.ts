@@ -2,10 +2,15 @@ import { Container } from "inversify";
 import { Observable } from "rxjs";
 
 import { commandTypes } from "@api/command/di/commandTypes";
+import { CommandResult } from "@api/command/model/CommandResult";
 import {
   SendCommandUseCase,
   SendCommandUseCaseArgs,
 } from "@api/command/use-case/SendCommandUseCase";
+import {
+  ExecuteDeviceActionUseCase,
+  ExecuteDeviceActionUseCaseArgs,
+} from "@api/device-action/use-case/ExecuteDeviceActionUseCase";
 import { ApduResponse } from "@api/device-session/ApduResponse";
 import { DeviceSessionState } from "@api/device-session/DeviceSessionState";
 import { DeviceSessionId } from "@api/device-session/types";
@@ -19,7 +24,9 @@ import { ConnectedDevice } from "@api/usb/model/ConnectedDevice";
 import { configTypes } from "@internal/config/di/configTypes";
 import { GetSdkVersionUseCase } from "@internal/config/use-case/GetSdkVersionUseCase";
 import { deviceSessionTypes } from "@internal/device-session/di/deviceSessionTypes";
+import { DeviceSession } from "@internal/device-session/model/DeviceSession";
 import { GetDeviceSessionStateUseCase } from "@internal/device-session/use-case/GetDeviceSessionStateUseCase";
+import { ListDeviceSessionsUseCase } from "@internal/device-session/use-case/ListDeviceSessionsUseCase";
 import { discoveryTypes } from "@internal/discovery/di/discoveryTypes";
 import { ConnectUseCase } from "@internal/discovery/use-case/ConnectUseCase";
 import { DisconnectUseCase } from "@internal/discovery/use-case/DisconnectUseCase";
@@ -34,19 +41,26 @@ import {
 } from "@internal/usb/use-case/GetConnectedDeviceUseCase";
 import { makeContainer, MakeContainerProps } from "@root/src/di";
 
+import {
+  DeviceActionIntermediateValue,
+  ExecuteDeviceActionReturnType,
+} from "./device-action/DeviceAction";
+import { deviceActionTypes } from "./device-action/di/deviceActionTypes";
+import { SdkError } from "./Error";
+
 /**
  * The main class to interact with the SDK.
  *
  * NB: do not instantiate this class directly, instead, use `DeviceSdkBuilder`.
  */
 export class DeviceSdk {
-  container: Container;
+  readonly container: Container;
   /** @internal */
-  constructor({ stub, loggers }: Partial<MakeContainerProps> = {}) {
+  constructor({ stub, loggers, config }: MakeContainerProps) {
     // NOTE: MakeContainerProps might not be the exact type here
     // For the init of the project this is sufficient, but we might need to
     // update the constructor arguments as we go (we might have more than just the container config)
-    this.container = makeContainer({ stub, loggers });
+    this.container = makeContainer({ stub, loggers, config });
   }
 
   /**
@@ -123,14 +137,34 @@ export class DeviceSdk {
   /**
    * Sends a command to a device through a device session.
    *
-   * @param {SendCommandUseCaseArgs<Response, Args>} args - The device session ID, command and command parameters to send.
+   * @param {SendCommandUseCaseArgs<Response, Args, ErrorCodes>} args - The device session ID, command, command error codes and command parameters to send.
    * @returns A promise resolving with the response from the command.
    */
-  sendCommand<Response, Args>(
-    args: SendCommandUseCaseArgs<Response, Args>,
-  ): Promise<Response> {
+  sendCommand<Response, Args, ErrorCodes>(
+    args: SendCommandUseCaseArgs<Response, Args, ErrorCodes>,
+  ): Promise<CommandResult<Response, ErrorCodes>> {
     return this.container
       .get<SendCommandUseCase>(commandTypes.SendCommandUseCase)
+      .execute(args);
+  }
+
+  executeDeviceAction<
+    Output,
+    Input,
+    Error extends SdkError,
+    IntermediateValue extends DeviceActionIntermediateValue,
+  >(
+    args: ExecuteDeviceActionUseCaseArgs<
+      Output,
+      Input,
+      Error,
+      IntermediateValue
+    >,
+  ): ExecuteDeviceActionReturnType<Output, Error, IntermediateValue> {
+    return this.container
+      .get<ExecuteDeviceActionUseCase>(
+        deviceActionTypes.ExecuteDeviceActionUseCase,
+      )
       .execute(args);
   }
 
@@ -160,5 +194,18 @@ export class DeviceSdk {
         deviceSessionTypes.GetDeviceSessionStateUseCase,
       )
       .execute(args);
+  }
+
+  /**
+   * Lists all device sessions.
+   *
+   * @returns {DeviceSession[]} The list of device sessions.
+   */
+  listDeviceSessions(): DeviceSession[] {
+    return this.container
+      .get<ListDeviceSessionsUseCase>(
+        deviceSessionTypes.ListDeviceSessionsUseCase,
+      )
+      .execute();
   }
 }

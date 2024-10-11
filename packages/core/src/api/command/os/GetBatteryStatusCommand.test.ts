@@ -1,4 +1,7 @@
-import { InvalidStatusWordError } from "@api/command/Errors";
+import {
+  CommandResultFactory,
+  isSuccessCommandResult,
+} from "@api/command/model/CommandResult";
 import { ApduResponse } from "@api/device-session/ApduResponse";
 
 import {
@@ -80,9 +83,8 @@ describe("GetBatteryStatus", () => {
       const command = new GetBatteryStatusCommand({
         statusType: BatteryStatusType.BATTERY_PERCENTAGE,
       });
-      command.getApdu();
       const parsed = command.parseResponse(PERCENTAGE_RESPONSE);
-      expect(parsed).toStrictEqual(55);
+      expect(parsed).toStrictEqual(CommandResultFactory({ data: 55 }));
     });
     it("should parse the response when querying voltage", () => {
       const VOLTAGE_RESPONSE = new ApduResponse({
@@ -92,9 +94,8 @@ describe("GetBatteryStatus", () => {
       const command = new GetBatteryStatusCommand({
         statusType: BatteryStatusType.BATTERY_VOLTAGE,
       });
-      command.getApdu();
       const parsed = command.parseResponse(VOLTAGE_RESPONSE);
-      expect(parsed).toStrictEqual(4095);
+      expect(parsed).toStrictEqual(CommandResultFactory({ data: 4095 }));
     });
     it("should parse the response when querying temperature", () => {
       const TEMPERATURE_RESPONSE = new ApduResponse({
@@ -104,9 +105,8 @@ describe("GetBatteryStatus", () => {
       const command = new GetBatteryStatusCommand({
         statusType: BatteryStatusType.BATTERY_TEMPERATURE,
       });
-      command.getApdu();
       const parsed = command.parseResponse(TEMPERATURE_RESPONSE);
-      expect(parsed).toStrictEqual(16);
+      expect(parsed).toStrictEqual(CommandResultFactory({ data: 16 }));
     });
     it("should parse the response when querying flags", () => {
       const FLAGS_RESPONSE = new ApduResponse({
@@ -116,16 +116,19 @@ describe("GetBatteryStatus", () => {
       const command = new GetBatteryStatusCommand({
         statusType: BatteryStatusType.BATTERY_FLAGS,
       });
-      command.getApdu();
       const parsed = command.parseResponse(FLAGS_RESPONSE);
-      expect(parsed).toStrictEqual({
-        charging: ChargingMode.USB,
-        issueCharging: false,
-        issueTemperature: false,
-        issueBattery: false,
-      });
+      expect(parsed).toStrictEqual(
+        CommandResultFactory({
+          data: {
+            charging: ChargingMode.USB,
+            issueCharging: false,
+            issueTemperature: false,
+            issueBattery: false,
+          },
+        }),
+      );
     });
-    it("should throw an error if the response returned unsupported format", () => {
+    it("should return an error if the response returned unsupported format", () => {
       const FAILED_RESPONSE = new ApduResponse({
         statusCode: FAILED_RESPONSE_HEX.slice(-2),
         data: FAILED_RESPONSE_HEX.slice(0, -2),
@@ -133,10 +136,8 @@ describe("GetBatteryStatus", () => {
       const command = new GetBatteryStatusCommand({
         statusType: BatteryStatusType.BATTERY_PERCENTAGE,
       });
-      command.getApdu();
-      expect(() => command.parseResponse(FAILED_RESPONSE)).toThrow(
-        InvalidStatusWordError,
-      );
+      const result = command.parseResponse(FAILED_RESPONSE);
+      expect(isSuccessCommandResult(result)).toBeFalsy();
     });
   });
 });

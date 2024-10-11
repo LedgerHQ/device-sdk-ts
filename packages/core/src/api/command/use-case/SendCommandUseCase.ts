@@ -1,20 +1,21 @@
 import { inject, injectable } from "inversify";
 
 import { Command } from "@api/command/Command";
+import { CommandResult } from "@api/command/model/CommandResult";
 import { deviceSessionTypes } from "@internal/device-session/di/deviceSessionTypes";
 import type { DeviceSessionService } from "@internal/device-session/service/DeviceSessionService";
 import { loggerTypes } from "@internal/logger-publisher/di/loggerTypes";
 import { LoggerPublisherService } from "@internal/logger-publisher/service/LoggerPublisherService";
 
-export type SendCommandUseCaseArgs<Response, Args = void> = {
+export type SendCommandUseCaseArgs<Response, ErrorStatusCodes, Args = void> = {
   /**
    * The device session id.
    */
-  sessionId: string;
+  readonly sessionId: string;
   /**
    * The command to send.
    */
-  command: Command<Response, Args>;
+  readonly command: Command<Response, ErrorStatusCodes, Args>;
 };
 
 /**
@@ -41,17 +42,21 @@ export class SendCommandUseCase {
    * @param command - The command to send.
    * @returns The response from the command.
    */
-  async execute<Response, Args = void>({
+  async execute<Response, Args, ErrorStatusCodes>({
     sessionId,
     command,
-  }: SendCommandUseCaseArgs<Response, Args>): Promise<Response> {
+  }: SendCommandUseCaseArgs<Response, Args, ErrorStatusCodes>): Promise<
+    CommandResult<Response, ErrorStatusCodes>
+  > {
     const deviceSessionOrError =
       this._sessionService.getDeviceSessionById(sessionId);
 
     return deviceSessionOrError.caseOf({
       // Case device session found
       Right: async (deviceSession) =>
-        await deviceSession.sendCommand<Response, Args>(command),
+        await deviceSession.sendCommand<Response, Args, ErrorStatusCodes>(
+          command,
+        ),
       // Case device session not found
       Left: (error) => {
         this._logger.error("Error getting session", {

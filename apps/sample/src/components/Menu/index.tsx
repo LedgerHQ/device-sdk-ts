@@ -1,3 +1,4 @@
+import React from "react";
 import { Flex, Icons, Link } from "@ledgerhq/react-ui";
 import { useRouter } from "next/navigation";
 import styled from "styled-components";
@@ -14,6 +15,7 @@ const MenuTitle = styled(Link).attrs({
 
 export const Menu: React.FC = () => {
   const router = useRouter();
+
   return (
     <>
       <MenuItem>
@@ -22,7 +24,13 @@ export const Menu: React.FC = () => {
       </MenuItem>
       <MenuItem>
         <Icons.LedgerDevices />
-        <MenuTitle>Device action</MenuTitle>
+        <MenuTitle onClick={() => router.push("/commands")}>Commands</MenuTitle>
+      </MenuItem>
+      <MenuItem>
+        <Icons.LedgerDevices />
+        <MenuTitle onClick={() => router.push("device-actions")}>
+          Device actions
+        </MenuTitle>
       </MenuItem>
       <MenuItem>
         <Icons.WirelessCharging />
@@ -31,6 +39,14 @@ export const Menu: React.FC = () => {
       <MenuItem>
         <Icons.Apps />
         <MenuTitle>Install app</MenuTitle>
+      </MenuItem>
+      <MenuItem>
+        <Icons.Signature />
+        <MenuTitle onClick={() => router.push("/keyring")}>Keyrings</MenuTitle>
+      </MenuItem>
+      <MenuItem>
+        <Icons.SettingsAlt2 />
+        <MenuTitle onClick={() => router.push("/cal")}>Crypto Assets</MenuTitle>
       </MenuItem>
     </>
   );

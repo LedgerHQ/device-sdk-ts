@@ -56,4 +56,15 @@ describe("DeviceModel", () => {
 
     expect(deviceModel.getBlockSize(firmwareVersion)).toBe(2 * 1024);
   });
+
+  // flex
+  test("should return the correct block size for Flex", () => {
+    const deviceModel = new InternalDeviceModel({
+      ...stubDeviceModel,
+      id: DeviceModelId.FLEX,
+    });
+    const firmwareVersion = "2.0.0";
+
+    expect(deviceModel.getBlockSize(firmwareVersion)).toBe(32);
+  });
 });

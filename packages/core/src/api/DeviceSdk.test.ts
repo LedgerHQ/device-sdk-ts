@@ -20,7 +20,13 @@ describe("DeviceSdk", () => {
   describe("clean", () => {
     beforeEach(() => {
       logger = new ConsoleLogger();
-      sdk = new DeviceSdk({ stub: false, loggers: [logger] });
+      sdk = new DeviceSdk({
+        stub: false,
+        loggers: [logger],
+        config: {
+          managerApiUrl: "http://fake.url",
+        },
+      });
     });
 
     it("should create an instance", () => {
@@ -55,11 +61,21 @@ describe("DeviceSdk", () => {
     it("should have sendCommand method", () => {
       expect(sdk.sendCommand).toBeDefined();
     });
+
+    it("should have listDeviceSessions method", () => {
+      expect(sdk.listDeviceSessions).toBeDefined();
+    });
   });
 
   describe("stubbed", () => {
     beforeEach(() => {
-      sdk = new DeviceSdk({ stub: true, loggers: [] });
+      sdk = new DeviceSdk({
+        stub: true,
+        loggers: [],
+        config: {
+          managerApiUrl: "http://fake.url",
+        },
+      });
     });
 
     it("should create a stubbed sdk", () => {
@@ -88,25 +104,11 @@ describe("DeviceSdk", () => {
       [usbDiTypes.GetConnectedDeviceUseCase],
       [discoveryTypes.DisconnectUseCase],
       [deviceSessionTypes.GetDeviceSessionStateUseCase],
+      [deviceSessionTypes.ListDeviceSessionsUseCase],
     ])("should have %p use case", (diSymbol) => {
       const uc = sdk.container.get<StubUseCase>(diSymbol);
       expect(uc).toBeInstanceOf(StubUseCase);
       expect(uc.execute()).toBe("stub");
-    });
-  });
-
-  describe("without args", () => {
-    beforeEach(() => {
-      sdk = new DeviceSdk();
-    });
-
-    it("should create an instance", () => {
-      expect(sdk).toBeDefined();
-      expect(sdk).toBeInstanceOf(DeviceSdk);
-    });
-
-    it("should return a clean `version`", async () => {
-      expect(await sdk.getVersion()).toBe(pkg.version);
     });
   });
 });

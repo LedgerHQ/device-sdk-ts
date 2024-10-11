@@ -1,6 +1,6 @@
 <p align="center">
  <img src="https://user-images.githubusercontent.com/9203826/154288895-670f5c23-81a1-4307-a080-1af83f7f8356.svg" align="center" alt="Ledger" />
- <h2 align="center">Web Device SDK</h2>
+ <h2 align="center">Web Device Management Kit</h2>
   <p align="center">
   <!-- Update with each individual package version -->
     <!-- Enable and display when CI set up -->
@@ -43,7 +43,7 @@
 
 # Introduction
 
-The purpose of the Device SDK (DSDK in short) is to provide a library in TypeScript to easily handle Ledger devices:
+The purpose of the Ledger Device Management Kit(LDMK in short) is to provide a library in TypeScript to easily handle Ledger devices:
 
 - Device enumeration, identification and connection management
 - Device actions, with full status and error report
@@ -51,20 +51,20 @@ The purpose of the Device SDK (DSDK in short) is to provide a library in TypeScr
 
 ⚠️
 <mark>
-**The current version of this Device SDK is in alpha stage and is subject to significant changes!!!**
+**The current version of this Device Management Kit is in alpha stage and is subject to significant changes!!!**
 </mark>
 ⚠️
 
 ## How does it works
 
-The Device SDK features an interface for applications to handle any Ledge device (a.k. hardware wallets). It convert intention into
+The Device Management Kit features an interface for applications to handle any Ledge device (a.k. hardware wallets). It convert intention into
 
 ```mermaid
   flowchart LR;
       application(Application) <--API--> DSDK(DeviceSDK) <--USB/BLE--> device(Device);
 ```
 
-The Device SDK is available in 3 different environments (web, Android & iOS).
+The Device Management Kit is available in 3 different environments (web, Android & iOS).
 
 This repository is dedicated to **web environment** and is written in TypeScript.
 
@@ -72,7 +72,7 @@ This repository is dedicated to **web environment** and is written in TypeScript
 
 ### Repository
 
-The Device SDK is structured as a monorepository whose prupose is to centralise all the TypeScript code related to the SDK in one place.
+The Device Management Kit is structured as a monorepository whose prupose is to centralise all the TypeScript code related to the SDK in one place.
 
 This project uses [turbo monorepo](https://turbo.build/repo/docs) to build and release different packages on NPM registry and a sample demo application on Vercel.
 
@@ -82,11 +82,11 @@ A brief description of this project packages:
 
 | Name                              | Path                       | Description                                                                                                                     |
 | --------------------------------- | -------------------------- | ------------------------------------------------------------------------------------------------------------------------------- |
-| @ledgerhq/device-sdk-sample       | apps/sample                | React Next web app used to test & demonstrate the Web Device SDK                                                                |
+| @ledgerhq/device-sdk-sample       | apps/sample                | React Next web app used to test & demonstrate the Web Device Management Kit                                                     |
 | @ledgerhq/eslint-config-dsdk      | packages/config/eslint     | internal package which contains eslint shared config. Used by `extends: ["@ledgerhq/dsdk"]` in `.eslintrc`.                     |
 | @ledgerhq/jest-config-dsdk        | packages/config/jest       | internal package which contains jest shared config. Used by `preset: "@ledgerhq/jest-config-dsdk"` in `jest.config.ts`          |
 | @ledgerhq/tsconfig-dsdk           | packages/config/typescript | internal package which contains typescript shared config. Used by `"extends": "@ledgerhq/tsconfig-dsdk/sdk"` in `tsconfig.json` |
-| @ledgerhq/device-sdk-core         | packages/core              | external package that contains the core of the Web SDK                                                                          |
+| @ledgerhq/device-management-kit   | packages/core              | external package that contains the core of the Web SDK                                                                          |
 | @ledgerhq/device-sdk-signer       | packages/signer            | external package that contains device coin application dedicated handlers                                                       |
 | @ledgerhq/device-sdk-trusted-apps | packages/trusted-apps      | external package that contains device trusted application dedicated handlers                                                    |
 | @ledgerhq/device-sdk-ui           | packages/ui                | external package                                                                                                                |
@@ -179,7 +179,7 @@ Each package is built using the following command (at the root of the monorepo).
 
 ### Core
 
-Device SDK main module.
+Device Management Kit main module.
 
 ```bash
 pnpm core build
@@ -289,18 +289,16 @@ pnpm dev
 Each project folder has a `README.md` file which contains basic documentation.
 It includes background information about the project and how to setup, run and build it.
 
-Please check the [**wiki**](https://github.com/LedgerHQ/device-sdk-ts/wiki) for additional documentation.
-
 ## Reference API
 
-Please refer to the core package [**readme**](https://github.com/LedgerHQ/device-sdk-ts/packages/core/README.md).
+Please refer to the core package [**readme**](https://github.com/LedgerHQ/device-sdk-ts/blob/develop/packages/core/README.md).
 
 # Contributing
 
-Please check the general guidelines for contributing to Ledger Live projects: [`CONTRIBUTING.md`](https://github.com/LedgerHQ/device-sdk-ts/CONTRIBUTING.md).
+Please check the general guidelines for contributing to Ledger Live projects: [`CONTRIBUTING.md`](https://github.com/LedgerHQ/device-sdk-ts/blob/develop/CONTRIBUTING.md).
 
 Each individual project may include its own specific guidelines, located within its respective folder.
 
 # License
 
-Please check each project `LICENSE` file, most of them are under the `MIT` license.
+Please check each project [`LICENSE`](https://github.com/LedgerHQ/device-sdk-ts/blob/develop/LICENSE.md) file, most of them are under the `MIT` license.

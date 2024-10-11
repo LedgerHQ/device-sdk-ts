@@ -1,6 +1,6 @@
 {
-  "name": "@ledgerhq/device-sdk-core",
-  "version": "0.3.0",
+  "name": "@ledgerhq/device-management-kit",
+  "version": "0.4.0",
   "license": "MIT",
   "exports": {
     ".": {
@@ -27,9 +27,12 @@
   ],
   "scripts": {
     "build": "rimraf lib && zx scripts/build.mjs",
-    "dev": "tsc && (concurrently \"tsc -w -p tsconfig.json\" \"tsc-alias -w -p tsconfig.json\")",
+    "dev": "concurrently \"pnpm dev:esm\" \"pnpm dev:cjs\"",
+    "dev:esm": "concurrently \"tsc --watch -p tsconfig.esm.json\" \"tsc-alias --watch -p tsconfig.esm.json\"",
+    "dev:cjs": "concurrently \"tsc --watch -p tsconfig.cjs.json\" \"tsc-alias --watch -p tsconfig.cjs.json\"",
     "lint": "eslint",
     "lint:fix": "pnpm lint --fix",
+    "postpack": "find . -name '*.tgz' -exec cp {} ../../dist/ \\; ",
     "prettier": "prettier . --check",
     "prettier:fix": "prettier . --write",
     "test": "jest",
@@ -40,13 +43,16 @@
   },
   "dependencies": {
     "@sentry/minimal": "^6.19.7",
+    "@statelyai/inspect": "^0.4.0",
+    "axios": "^1.7.7",
     "inversify": "^6.0.2",
     "inversify-logger-middleware": "^3.1.0",
-    "purify-ts": "^2.0.3",
+    "purify-ts": "^2.1.0",
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.1",
-    "semver": "^7.6.2",
-    "uuid": "^9.0.1"
+    "semver": "^7.6.3",
+    "uuid": "^10.0.0",
+    "xstate": "^5.18.2"
   },
   "devDependencies": {
     "@ledgerhq/eslint-config-dsdk": "workspace:*",
@@ -54,7 +60,7 @@
     "@ledgerhq/prettier-config-dsdk": "workspace:*",
     "@ledgerhq/tsconfig-dsdk": "workspace:*",
     "@types/semver": "^7.5.8",
-    "@types/uuid": "^9.0.8",
+    "@types/uuid": "^10.0.0",
     "@types/w3c-web-hid": "^1.0.6",
     "ts-node": "^10.9.2"
   }

@@ -1,5 +1,5 @@
 import React, { useCallback, useState } from "react";
-import { ApduResponse } from "@ledgerhq/device-sdk-core";
+import { ApduResponse } from "@ledgerhq/device-management-kit";
 import { Button, Divider, Flex, Grid, Input, Text } from "@ledgerhq/react-ui";
 import styled, { DefaultTheme } from "styled-components";
 
@@ -62,6 +62,8 @@ const ResultDescText = styled(Text).attrs({ variant: "body", mt: 4, px: 8 })`
   display: inline-block;
 `;
 
+const FieldName = styled(Text).attrs({ mb: 4 })``;
+
 export const ApduView: React.FC = () => {
   const { apduFormValues, setApduFormValue, getRawApdu, getHexString } =
     useApduForm();
@@ -82,6 +84,7 @@ export const ApduView: React.FC = () => {
         });
         setApduResponse(rawApduResponse);
         setLoading(false);
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
       } catch (error) {
         setLoading(false);
       }
@@ -98,9 +101,7 @@ export const ApduView: React.FC = () => {
         <Form>
           <Grid columns={2}>
             <InputContainer>
-              <Text variant="body" mb={4}>
-                Class instruction
-              </Text>
+              <FieldName variant="body">Class instruction</FieldName>
               <Input
                 name="instructionClass"
                 containerProps={inputContainerProps}
@@ -111,9 +112,7 @@ export const ApduView: React.FC = () => {
               />
             </InputContainer>
             <InputContainer>
-              <Text variant="body" mb={4}>
-                Instruction method
-              </Text>
+              <FieldName variant="body">Instruction method</FieldName>
               <Input
                 name="instructionMethod"
                 containerProps={inputContainerProps}
@@ -124,9 +123,7 @@ export const ApduView: React.FC = () => {
               />
             </InputContainer>
             <InputContainer>
-              <Text variant="body" mb={4}>
-                Parameter 1
-              </Text>
+              <FieldName variant="body">Parameter 1</FieldName>
               <Input
                 name="firstParameter"
                 containerProps={inputContainerProps}
@@ -135,9 +132,7 @@ export const ApduView: React.FC = () => {
               />
             </InputContainer>
             <InputContainer>
-              <Text variant="body" mb={4}>
-                Parameter 2
-              </Text>
+              <FieldName variant="body">Parameter 2</FieldName>
               <Input
                 name="secondParameter"
                 containerProps={inputContainerProps}
@@ -146,9 +141,7 @@ export const ApduView: React.FC = () => {
               />
             </InputContainer>
             <InputContainer>
-              <Text variant="body" mb={4}>
-                Data
-              </Text>
+              <FieldName variant="body">Data</FieldName>
               <Input
                 name="data"
                 placeholder="<NO DATA>"
@@ -158,9 +151,7 @@ export const ApduView: React.FC = () => {
               />
             </InputContainer>
             <InputContainer>
-              <Text variant="body" mb={4}>
-                Data length
-              </Text>
+              <FieldName variant="body">Data length</FieldName>
               <Input
                 name="dataLength"
                 disabled

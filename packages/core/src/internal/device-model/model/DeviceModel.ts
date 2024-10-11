@@ -9,7 +9,7 @@ export class InternalDeviceModel {
   id: DeviceModelId;
   productName: string;
   usbProductId: number;
-  legacyUsbProductId: number;
+  bootloaderUsbProductId: number;
   usbOnly: boolean;
   memorySize: number;
   masks: number[];
@@ -24,7 +24,7 @@ export class InternalDeviceModel {
     id: DeviceModelId;
     productName: string;
     usbProductId: number;
-    legacyUsbProductId: number;
+    bootloaderUsbProductId: number;
     usbOnly: boolean;
     memorySize: number;
     masks: number[];
@@ -39,7 +39,7 @@ export class InternalDeviceModel {
     this.id = props.id;
     this.productName = props.productName;
     this.usbProductId = props.usbProductId;
-    this.legacyUsbProductId = props.legacyUsbProductId;
+    this.bootloaderUsbProductId = props.bootloaderUsbProductId;
     this.usbOnly = props.usbOnly;
     this.memorySize = props.memorySize;
     this.masks = props.masks;
@@ -52,11 +52,11 @@ export class InternalDeviceModel {
         return semver.lt(semver.coerce(firmwareVersion) ?? "", "2.0.0")
           ? 4 * 1024
           : 2 * 1024;
-      case DeviceModelId.NANO_SP:
-        return 32;
       case DeviceModelId.NANO_X:
         return 4 * 1024;
+      case DeviceModelId.NANO_SP:
       case DeviceModelId.STAX:
+      case DeviceModelId.FLEX:
         return 32;
     }
   }

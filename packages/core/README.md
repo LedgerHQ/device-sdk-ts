@@ -1,10 +1,9 @@
-# Device SDK Core Library Documentation
+# Device Development Kit Library Documentation
 
 > [!CAUTION]
-> This is still under development and we are free to make new interfaces which may lead to Device SDK breaking changes.
+> This is still under development and we are free to make new interfaces which may lead to Device Development Kit breaking changes.
 
-
-- [Device SDK Core Library Documentation](#device-sdk-core-library-documentation)
+- [Device Development Kit Library Documentation](#device-development-kit-library-documentation)
   - [Description](#description)
   - [Installation](#installation)
   - [Usage](#usage)
@@ -20,18 +19,20 @@
       - [Get OS Version](#get-os-version)
       - [Get App and Version](#get-app-and-version)
     - [Building a Custom Command](#building-a-custom-command)
+    - [Executing a device action](#executing-a-device-action)
+      - [Open App Device Action](#open-app-device-action)
     - [Example in React](#example-in-react)
 
 ## Description
 
-The core package contains the core of the Device SDK. It provides a simple interface to handle Ledger devices and features the SDK's entry points, classes, types, structures, and models.
+This package contains the core of the Device Management Kit. It provides a simple interface to handle Ledger devices and features the Device Management Kit's entry points, classes, types, structures, and models.
 
 ## Installation
 
 To install the core package, run the following command:
 
 ```sh
-npm install @ledgerhq/device-sdk-core
+npm install @ledgerhq/device-management-kit
 ```
 
 ## Usage
@@ -57,7 +58,7 @@ Some of the APIs exposed return objects of type `Observable` from RxJS. Ensure y
   - Get battery status
 
 > [!NOTE]  
-> At the moment we do not provide the possibility to distinguish two devices of the same model, via USB and to avoid connection to the same device twice. 
+> At the moment we do not provide the possibility to distinguish two devices of the same model, via USB and to avoid connection to the same device twice.
 
 ### Setting up the SDK
 
@@ -76,7 +77,7 @@ import {
   ConsoleLogger,
   DeviceSdk,
   DeviceSdkBuilder,
-} from "@ledgerhq/device-sdk-core";
+} from "@ledgerhq/device-management-kit";
 
 export const sdk = new DeviceSdkBuilder()
   .addLogger(new ConsoleLogger())
@@ -135,7 +136,7 @@ import {
   ApduBuilder,
   ApduParser,
   CommandUtils,
-} from "@ledgerhq/device-sdk-core";
+} from "@ledgerhq/device-management-kit";
 
 // ### 1. Building the APDU
 // Use `ApduBuilder` to easily build the APDU and add data to its data field.
@@ -186,7 +187,7 @@ The `sendCommand` method will take care of building the APDU, sending it to the 
 This command will open the app with the given name. If the device is unlocked, it will not resolve/reject until the user has confirmed or denied the app opening on the device.
 
 ```ts
-import { OpenAppCommand } from "@ledgerhq/device-sdk-core";
+import { OpenAppCommand } from "@ledgerhq/device-management-kit";
 
 const command = new OpenAppCommand("Bitcoin"); // Open the Bitcoin app
 
@@ -198,7 +199,7 @@ await sdk.sendCommand({ sessionId, command });
 This command will close the currently opened app.
 
 ```ts
-import { CloseAppCommand } from "@ledgerhq/device-sdk-core";
+import { CloseAppCommand } from "@ledgerhq/device-management-kit";
 
 const command = new CloseAppCommand();
 
@@ -212,7 +213,7 @@ This command will return information about the currently installed OS on the dev
 > ℹ️ If you want this information you can simply get it from the device session state by observing it with `sdk.getDeviceSessionState({ sessionId })`.
 
 ```ts
-import { GetOsVersionCommand } from "@ledgerhq/device-sdk-core";
+import { GetOsVersionCommand } from "@ledgerhq/device-management-kit";
 
 const command = new GetOsVersionCommand();
 
@@ -227,7 +228,7 @@ This command will return the name and version of the currently running app on th
 > ℹ️ If you want this information you can simply get it from the device session state by observing it with `sdk.getDeviceSessionState({ sessionId })`.
 
 ```ts
-import { GetAppAndVersionCommand } from "@ledgerhq/device-sdk-core";
+import { GetAppAndVersionCommand } from "@ledgerhq/device-management-kit";
 
 const command = new GetAppAndVersionCommand();
 
@@ -244,6 +245,78 @@ This is strongly recommended over direct usage of `sendApdu`.
 
 Check the existing commands for a variety of examples.
 
+### Executing a device action
+
+Device actions define a succession of commands to be sent to the device.
+
+They are useful for actions that require user interaction, like opening an app,
+or approving a transaction.
+
+The result of a device action execution is an observable that will emit different states of the action execution. These states contain information about the current status of the action, some intermediate values like the user action required, and the final result.
+
+#### Open App Device Action
+
+```ts
+import {
+  OpenAppDeviceAction,
+  OpenAppDAState,
+} from "@ledgerhq/device-management-kit";
+
+const openAppDeviceAction = new OpenAppDeviceAction({ appName: "Bitcoin" });
+
+const { observable, cancel } = await sdk.executeDeviceAction({
+  deviceAction: openAppDeviceAction,
+  command,
+});
+
+observable.subscribe({
+  next: (state: OpenAppDAState) => {
+    switch (state.status) {
+      case DeviceActionStatus.NotStarted:
+        console.log("Action not started yet");
+        break;
+      case DeviceActionStatus.Pending:
+        const {
+          intermediateValue: { userActionRequired },
+        } = state;
+        switch (userActionRequired) {
+          case UserActionRequiredType.None:
+            console.log("No user action required");
+            break;
+          case UserActionRequiredType.ConfirmOpenApp:
+            console.log(
+              "The user should confirm the app opening on the device",
+            );
+            break;
+          case UserActionRequiredType.UnlockDevice:
+            console.log("The user should unlock the device");
+            break;
+          default:
+            /**
+             * you should make sure that you handle all the possible user action
+             * required types by displaying them to the user.
+             */
+            throw new Exception("Unhandled user action required");
+            break;
+        }
+        console.log("Action is pending");
+        break;
+      case DeviceActionStatus.Stopped:
+        console.log("Action has been stopped");
+        break;
+      case DeviceActionStatus.Completed:
+        const { output } = state;
+        console.log("Action has been completed", output);
+        break;
+      case DeviceActionStatus.Error:
+        const { error } = state;
+        console.log("An error occurred during the action", error);
+        break;
+    }
+  },
+});
+```
+
 ### Example in React
 
-Check [the sample app](https://github.com/LedgerHQ/device-sdk-ts/tree/develop/apps/sample) for an advanced example showcasing all possible usages of the device SDK in a React app.
+Check [the sample app](https://github.com/LedgerHQ/device-sdk-ts/tree/develop/apps/sample) for an advanced example showcasing all possible usages of the Device Management Kit in a React app.

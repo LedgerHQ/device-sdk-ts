@@ -3,31 +3,22 @@ import { SdkError } from "@api/Error";
 import { APDU_MAX_PAYLOAD } from "./ApduBuilder";
 
 interface SdkAppBuilderError extends SdkError {
-  message: string;
-}
-
-export class InvalidValueError implements SdkAppBuilderError {
-  readonly _tag = "InvalidValue";
-  originalError?: Error;
-  message: string;
-  constructor(valueType: string, value?: string) {
-    this.message = `Invalid value for ${valueType}: ${value}`;
-  }
+  readonly message: string;
 }
 
 export class ValueOverflowError implements SdkAppBuilderError {
   readonly _tag = "ValueOverflow";
-  originalError?: Error;
-  message: string;
-  constructor(value: string, max: number = APDU_MAX_PAYLOAD) {
+  readonly originalError?: Error;
+  readonly message: string;
+  constructor(value: string, max: number | bigint = APDU_MAX_PAYLOAD) {
     this.message = `Value overflow for ${value}, max is ${max}`;
   }
 }
 
 export class DataOverflowError implements SdkAppBuilderError {
   readonly _tag = "DataOverflow";
-  message: string;
-  originalError?: Error;
+  readonly message: string;
+  readonly originalError?: Error;
   constructor(value: string, remaining = 0) {
     this.message =
       remaining === 0
@@ -38,8 +29,8 @@ export class DataOverflowError implements SdkAppBuilderError {
 
 export class HexaStringEncodeError implements SdkAppBuilderError {
   readonly _tag = "HexaString";
-  message: string;
-  originalError?: Error;
+  readonly message: string;
+  readonly originalError?: Error;
   constructor(value: string) {
     this.message = `Invalid encoded hexa string or length is null: ${value}`;
   }
@@ -49,7 +40,6 @@ export class HexaStringEncodeError implements SdkAppBuilderError {
  * Type for all possible errors that can be thrown by the AppBuilder.
  */
 export type AppBuilderError =
-  | InvalidValueError
   | ValueOverflowError
   | DataOverflowError
   | HexaStringEncodeError;

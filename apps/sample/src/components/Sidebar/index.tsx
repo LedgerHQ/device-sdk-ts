@@ -1,12 +1,12 @@
 "use client";
 import React, { useCallback, useEffect, useState } from "react";
-import { Box, Flex, Icons, Link, Text } from "@ledgerhq/react-ui";
+import { Box, Flex, IconsLegacy, Link, Text } from "@ledgerhq/react-ui";
 import { useRouter } from "next/navigation";
 import styled, { DefaultTheme } from "styled-components";
 
 import { Device } from "@/components/Device";
 import { Menu } from "@/components/Menu";
-import { useSdk } from "@/providers/DeviceSdkProvider";
+import { useExportLogsCallback, useSdk } from "@/providers/DeviceSdkProvider";
 import { useDeviceSessionsContext } from "@/providers/DeviceSessionsProvider";
 
 const Root = styled(Flex).attrs({ py: 8, px: 6 })`
@@ -20,21 +20,14 @@ const Subtitle = styled(Text).attrs({ mb: 5 })``;
 
 const MenuContainer = styled(Box)`
   flex: 1;
-  opacity: 0.2;
+  opacity: ${({ active }: { active: boolean }) => (active ? 1 : 0.5)};
 `;
 
 const BottomContainer = styled(Flex)`
-  opacity: 0.2;
+  opacity: 0.5;
   flex-direction: column;
   align-items: center;
 `;
-
-const LogsContainer = styled(Flex).attrs({ mb: 6 })`
-  flex-direction: row;
-  align-items: center;
-`;
-
-const LogsText = styled(Text).attrs({ ml: 3 })``;
 
 const VersionText = styled(Text)`
   color: ${({ theme }: { theme: DefaultTheme }) => theme.colors.neutral.c50};
@@ -43,8 +36,9 @@ const VersionText = styled(Text)`
 export const Sidebar: React.FC = () => {
   const [version, setVersion] = useState("");
   const sdk = useSdk();
+  const exportLogs = useExportLogsCallback();
   const {
-    state: { deviceById },
+    state: { deviceById, selectedId },
     dispatch,
   } = useDeviceSessionsContext();
 
@@ -80,7 +74,7 @@ export const Sidebar: React.FC = () => {
           variant: "large",
         }}
       >
-        Ledger Device SDK
+        Ledger Device Management Kit
       </Link>
       <Subtitle variant={"small"}>
         SDK Version: {version ? version : "Loading..."}
@@ -99,18 +93,22 @@ export const Sidebar: React.FC = () => {
         />
       ))}
 
-      <MenuContainer>
+      <MenuContainer active={!!selectedId}>
         <Subtitle variant={"tiny"}>Menu</Subtitle>
         <Menu />
       </MenuContainer>
 
       <BottomContainer>
-        <LogsContainer>
-          <Icons.ExternalLink />
-          <LogsText variant={"paragraph"}>Share logs</LogsText>
-        </LogsContainer>
+        <Link
+          mb={6}
+          onClick={exportLogs}
+          size="large"
+          Icon={IconsLegacy.ExternalLinkMedium}
+        >
+          Share logs
+        </Link>
         <VersionText variant={"body"}>
-          Ledger device SDK version 0.0.1
+          Ledger Device Management Kit version {version}
         </VersionText>
         <VersionText variant={"body"}>App version 0.1</VersionText>
       </BottomContainer>

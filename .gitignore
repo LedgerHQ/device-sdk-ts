@@ -35,3 +35,9 @@ lib
 
 # eslint
 .eslintcache
+
+# npm config
+.npmrc
+
+# sbom
+sbom.json

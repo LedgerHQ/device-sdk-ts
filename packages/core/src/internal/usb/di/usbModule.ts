@@ -11,9 +11,7 @@ type FactoryProps = {
   stub: boolean;
 };
 
-export const usbModuleFactory = ({
-  stub = false,
-}: Partial<FactoryProps> = {}) =>
+export const usbModuleFactory = ({ stub = false }: FactoryProps) =>
   new ContainerModule((bind, _unbind, _isBound, rebind) => {
     // The transport needs to be a singleton to keep the internal states of the devices
     bind(usbDiTypes.UsbHidTransport).to(WebUsbHidTransport).inSingletonScope();

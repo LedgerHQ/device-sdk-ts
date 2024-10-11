@@ -3,7 +3,7 @@ import {
   ConnectionType,
   DeviceModelId,
   DeviceSessionId,
-} from "@ledgerhq/device-sdk-core";
+} from "@ledgerhq/device-management-kit";
 import { Box, DropdownGeneric, Flex, Icons, Text } from "@ledgerhq/react-ui";
 import styled, { DefaultTheme } from "styled-components";
 
@@ -43,6 +43,19 @@ type DeviceProps = {
   onDisconnect: () => Promise<void>;
 };
 
+function getIconComponent(model: DeviceModelId) {
+  switch (model) {
+    case DeviceModelId.STAX:
+      return Icons.Stax;
+    case DeviceModelId.FLEX:
+      return Icons.Flex;
+    default:
+      return Icons.Nano;
+  }
+}
+
+const DotText = styled(Text).attrs({ mx: 3, color: "neutral.c50" })``;
+
 export const Device: React.FC<DeviceProps> = ({
   name,
   type,
@@ -51,14 +64,11 @@ export const Device: React.FC<DeviceProps> = ({
   sessionId,
 }) => {
   const sessionState = useDeviceSessionState(sessionId);
+  const IconComponent = getIconComponent(model);
   return (
     <Root>
       <IconContainer>
-        {model === DeviceModelId.STAX ? (
-          <Icons.Stax size="S" />
-        ) : (
-          <Icons.Nano size="S" />
-        )}
+        <IconComponent size="S" />
       </IconContainer>
       <Box flex={1}>
         <Text variant="body">{name}</Text>
@@ -68,9 +78,7 @@ export const Device: React.FC<DeviceProps> = ({
               <StatusText state={sessionState.deviceStatus}>
                 {sessionState.deviceStatus}
               </StatusText>
-              <Text mx={3} color="neutral.c50">
-                •
-              </Text>
+              <DotText>•</DotText>
             </>
           )}
           <Text variant="paragraph" color="neutral.c80">

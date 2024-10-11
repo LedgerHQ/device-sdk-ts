@@ -1,0 +1,47 @@
+name: Publish snapshot version of npm packages
+on:
+  schedule:
+    - cron: "0 0 * * *"
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: The base branch to publish a snapshot release from
+        required: true
+        default: "develop"
+      tag:
+        description: Snapshot version name
+        required: false
+        default: ""
+
+env:
+  FORCE_COLOR: "1"
+  # if no inputs it's considered as a cron job
+  REF: ${{ inputs.ref || 'develop' }}
+  TAG: ${{ inputs.tag || 'develop' }}
+  NPM_TOKEN: ${{ secrets.NPMJS_TOKEN }}
+
+jobs:
+  snapshot:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ env.REF }}
+
+      - uses: LedgerHQ/device-sdk-ts/.github/actions/setup-toolchain-composite@develop
+
+      - name: install dependencies
+        run: pnpm install
+
+      - name: build libraries
+        run: pnpm build
+
+      - name: create .npmrc
+        run: echo "//registry.npmjs.org/:_authToken=${NPM_TOKEN}" >> .npmrc
+
+      - name: create and publish snapshot release version
+        run: |
+          pnpm bump --snapshot ${{ env.TAG }}
+          pnpm release --snapshot --no-git-tag --tag ${{ env.TAG }}
+        env:
+          GITHUB_TOKEN: ${{ github.token }}

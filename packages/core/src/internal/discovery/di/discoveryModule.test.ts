@@ -3,9 +3,11 @@ import { Container } from "inversify";
 import { deviceModelModuleFactory } from "@internal/device-model/di/deviceModelModule";
 import { deviceSessionModuleFactory } from "@internal/device-session/di/deviceSessionModule";
 import { ConnectUseCase } from "@internal/discovery/use-case/ConnectUseCase";
+import { DisconnectUseCase } from "@internal/discovery/use-case/DisconnectUseCase";
 import { StartDiscoveringUseCase } from "@internal/discovery/use-case/StartDiscoveringUseCase";
 import { StopDiscoveringUseCase } from "@internal/discovery/use-case/StopDiscoveringUseCase";
 import { loggerModuleFactory } from "@internal/logger-publisher/di/loggerModule";
+import { managerApiModuleFactory } from "@internal/manager-api/di/managerApiModule";
 import { usbModuleFactory } from "@internal/usb/di/usbModule";
 
 import { discoveryModuleFactory } from "./discoveryModule";
@@ -15,15 +17,18 @@ describe("discoveryModuleFactory", () => {
   let container: Container;
   let mod: ReturnType<typeof discoveryModuleFactory>;
   beforeEach(() => {
-    mod = discoveryModuleFactory();
+    mod = discoveryModuleFactory({ stub: false });
     container = new Container();
     container.load(
       mod,
       // The following modules are injected into discovery module
       loggerModuleFactory(),
-      usbModuleFactory(),
-      deviceModelModuleFactory(),
+      usbModuleFactory({ stub: false }),
+      deviceModelModuleFactory({ stub: false }),
       deviceSessionModuleFactory(),
+      managerApiModuleFactory({
+        config: { managerApiUrl: "http://fake.url" },
+      }),
     );
   });
 
@@ -41,6 +46,9 @@ describe("discoveryModuleFactory", () => {
       discoveryTypes.StopDiscoveringUseCase,
     );
     expect(stopDiscoveringUseCase).toBeInstanceOf(StopDiscoveringUseCase);
+
+    const disconnectUseCase = container.get(discoveryTypes.DisconnectUseCase);
+    expect(disconnectUseCase).toBeInstanceOf(DisconnectUseCase);
 
     const connectUseCase = container.get(discoveryTypes.ConnectUseCase);
     expect(connectUseCase).toBeInstanceOf(ConnectUseCase);

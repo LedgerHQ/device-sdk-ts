@@ -12,12 +12,12 @@ describe("usbModuleFactory", () => {
   let container: Container;
   let mod: ReturnType<typeof usbModuleFactory>;
   beforeEach(() => {
-    mod = usbModuleFactory();
+    mod = usbModuleFactory({ stub: false });
     container = new Container();
     container.load(loggerModuleFactory());
     container.load(
       mod,
-      deviceModelModuleFactory(),
+      deviceModelModuleFactory({ stub: false }),
       deviceSessionModuleFactory(),
     );
   });

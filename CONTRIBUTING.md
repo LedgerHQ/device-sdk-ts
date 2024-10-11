@@ -11,7 +11,7 @@ While you explore these projects, here are some key points to keep in mind:
 
 - Follow the git workflow, prefix your branches and do not create unnecessary merge commits.
 - Be mindful when creating Pull Requests, clearly specify the purpose of your changes and include tests where applicable.
-- Device SDKs are mostly accepting bugfix contributions. Feature contributions are subject to review; they may be declined if they don't align with our roadmap or our long-term objectives.
+- Device Management Kit is mostly accepting bugfix contributions. Feature contributions are subject to review; they may be declined if they don't align with our roadmap or our long-term objectives.
 
 ## Guidelines
 
@@ -32,26 +32,35 @@ While you explore these projects, here are some key points to keep in mind:
 
 ### Git Conventions
 
-We use the following git conventions for the `Device SDK` monorepo.
+We use the following git conventions for the `Device Management Kit` monorepo.
 
 #### Branch naming
 
 Depending on the purpose every git branch should be prefixed.
 
-- `feat/` Add a new feature to the application or library
-- `bugfix/` Fixing an existing bug
-- `support/` for any other changes (tests, improvements, CI…)
-_For Ledger Employees:_
-- `chore/` Cleaning purpose
+- `feat/` / `feature/` Add a new feature to the application or library
+- `bugfix/` / `bug/` / `fix/` Fixing an existing bug
+- `support/` For any other changes (tests, improvements, CI…)
+  _For Ledger Employees:_
+- `chore/` / `core/`  For  maintenance work on the repo
 - `doc/` Add or modify documentation
-- `refacto/` Modify the code organisation
+- `refacto/` / `refactor/` Modify the code organisation
 
-Then add to the prefix no-issue
-_For Ledger Employees:_ Add the Jira ticket number `DSDK-<number>` 
+_For Ledger Employees only:_ Add the Jira ticket number `DSDK-<number>` _(case insensitive)_ or `NO-ISSUE` if not applicable.
 
-And finally add a small description.
+_If resolving a Github issue (optional and not to be combined with Jira ticket number):_ add `ISSUE-<number>`
 
-**Example:** doc/no-issue-update-readme
+Followed by a small description.
+
+**Examples:**
+
+| User type | Ticket | Example |
+| -- | -- | -- |
+| `employee` | yes | feature/dsdk-350-add-sparkles |
+| `employee` | no | refacto/no-issue-remove-sparkles |
+| `contributor` | yes | feat/issue-37-add-new-transport |
+| `contributor` | no | fix/missing-dependencies |
+
 
 #### Changelogs
 
@@ -91,7 +100,7 @@ The description format is similar to gitmoji:
 
 1. scope is the module/package that is impacted by the update (should be the same than the commit ones).
 
-2. _For Ledger Employees:_ `NO-ISSUE` to be replace by `DSDK-<number>` in case of tracking.
+2. _For Ledger Employees:_ `NO-ISSUE` to be replace by `DSDK-<number>` or `ISSUE-<number>` in case of tracking
 
 3. `<description>` should start with an uppercase.
 
@@ -106,6 +115,8 @@ The description format is similar to gitmoji:
 - Github actions will trigger depending on which part of the codebase is impacted.
 - Your PR must pass the required CI actions.
 - Your PR must include a changelog (`pnpm changeset`), except for tools and maintenance operations.
+
+_For external contributors:_ a member of the Ledger will be required to validate the execution of the CI for external contributions
 
 ### Developer Portal
 

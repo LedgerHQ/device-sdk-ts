@@ -2,16 +2,15 @@ import { injectable } from "inversify";
 import { Either } from "purify-ts";
 import { filter, interval, map, Subscription, switchMap } from "rxjs";
 
-import {
-  GetAppAndVersionCommand,
-  GetAppAndVersionResponse,
-} from "@api/command/os/GetAppAndVersionCommand";
+import { isSuccessCommandResult } from "@api/command/model/CommandResult";
+import { GetAppAndVersionCommand } from "@api/command/os/GetAppAndVersionCommand";
+import { DeviceStatus } from "@api/device/DeviceStatus";
+import { ApduResponse } from "@api/device-session/ApduResponse";
 import {
   DeviceSessionState,
   DeviceSessionStateType,
 } from "@api/device-session/DeviceSessionState";
 import { SdkError } from "@api/Error";
-import { ApduResponse, DeviceStatus } from "@api/index";
 import { type LoggerPublisherService } from "@internal/logger-publisher/service/LoggerPublisherService";
 
 /**
@@ -36,9 +35,12 @@ export type DeviceSessionRefresherArgs = {
   /**
    * Callback that updates the state of the device session with
    * polling response.
-   * @param state - The new state to update to.
+   * @param callback - A function that will take the previous state and return the new state.
+   * @returns void
    */
-  updateStateFn(state: DeviceSessionState): void;
+  updateStateFn(
+    callback: (state: DeviceSessionState) => DeviceSessionState,
+  ): void;
 };
 
 /**
@@ -96,17 +98,18 @@ export class DeviceSessionRefresher {
         ),
         filter((parsedResponse) => parsedResponse !== null),
       )
-      .subscribe((parsedResponse: GetAppAndVersionResponse | null) => {
-        // This should never happen and it should be abled to handle in next version of TypeScript.
-        if (parsedResponse === null) {
+      .subscribe((parsedResponse) => {
+        if (!isSuccessCommandResult(parsedResponse)) {
           return;
         }
         // `batteryStatus` and `firmwareVersion` are not available in the polling response.
-        updateStateFn({
+        updateStateFn((state) => ({
+          ...state,
           sessionStateType: DeviceSessionStateType.ReadyWithoutSecureChannel,
           deviceStatus: this._deviceStatus,
-          currentApp: parsedResponse.name,
-        });
+          currentApp: parsedResponse.data,
+          installedApps: "installedApps" in state ? state.installedApps : [],
+        }));
       });
   }
 

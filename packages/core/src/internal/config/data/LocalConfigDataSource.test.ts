@@ -69,8 +69,8 @@ describe("LocalConfigDataSource", () => {
     it("should return a stringified version of the version object", () => {
       expect(LocalConfig.stubFsReadFile()).toEqual(
         JSON.stringify({
-          name: "@ledgerhq/device-sdk-core",
-          version: "0.0.1",
+          name: "@ledgerhq/device-management-kit",
+          version: "0.3.0",
         }),
       );
     });

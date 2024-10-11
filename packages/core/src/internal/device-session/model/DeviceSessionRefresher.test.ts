@@ -1,17 +1,19 @@
 import { Left, Right } from "purify-ts";
 
+import { CommandResultFactory } from "@api/command/model/CommandResult";
 import {
   GetAppAndVersionCommand,
   GetAppAndVersionResponse,
 } from "@api/command/os/GetAppAndVersionCommand";
-import { ApduResponse, DeviceStatus } from "@api/index";
+import { DeviceStatus } from "@api/device/DeviceStatus";
+import { ApduResponse } from "@api/device-session/ApduResponse";
 import { DefaultLoggerPublisherService } from "@internal/logger-publisher/service/DefaultLoggerPublisherService";
 import { LoggerPublisherService } from "@internal/logger-publisher/service/LoggerPublisherService";
 
 import { DeviceSessionRefresher } from "./DeviceSessionRefresher";
 
 const mockSendApduFn = jest.fn().mockResolvedValue(Right({} as ApduResponse));
-const mockUpdateStateFn = jest.fn().mockImplementation(() => void 0);
+const mockUpdateStateFn = jest.fn().mockImplementation(() => undefined);
 
 jest.useFakeTimers();
 
@@ -22,9 +24,13 @@ describe("DeviceSessionRefresher", () => {
   beforeEach(() => {
     jest
       .spyOn(GetAppAndVersionCommand.prototype, "parseResponse")
-      .mockReturnValueOnce({
-        name: "testAppName",
-      } as GetAppAndVersionResponse);
+      .mockReturnValueOnce(
+        CommandResultFactory({
+          data: {
+            name: "testAppName",
+          } as GetAppAndVersionResponse,
+        }),
+      );
     logger = new DefaultLoggerPublisherService(
       [],
       "DeviceSessionRefresherTest",

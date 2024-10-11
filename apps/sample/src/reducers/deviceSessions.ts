@@ -1,8 +1,11 @@
 import { Reducer } from "react";
-import { ConnectedDevice, DeviceSessionId } from "@ledgerhq/device-sdk-core";
+import {
+  ConnectedDevice,
+  DeviceSessionId,
+} from "@ledgerhq/device-management-kit";
 
 export type DeviceSessionsState = {
-  selectedId: DeviceSessionId | null;
+  selectedId?: DeviceSessionId;
   deviceById: Record<DeviceSessionId, ConnectedDevice>;
 };
 
@@ -17,7 +20,7 @@ export type RemoveSessionAction = {
 };
 
 export const DeviceSessionsInitialState: DeviceSessionsState = {
-  selectedId: null,
+  selectedId: undefined,
   deviceById: {},
 };
 
@@ -40,7 +43,7 @@ export const deviceSessionsReducer: Reducer<
 
       return {
         ...state,
-        selectedId: null,
+        selectedId: undefined,
       };
     default:
       return state;

@@ -1,6 +1,6 @@
 import { of } from "rxjs";
 
-import { DeviceModel } from "@api/index";
+import { DeviceModel } from "@api/device/DeviceModel";
 import { DeviceModelId, DiscoveredDevice } from "@api/types";
 import { DeviceModelDataSource } from "@internal/device-model/data/DeviceModelDataSource";
 import { InternalDeviceModel } from "@internal/device-model/model/DeviceModel";

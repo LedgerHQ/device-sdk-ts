@@ -66,3 +66,10 @@ export class DisconnectError extends GeneralSdkError {
     super(err);
   }
 }
+
+export class ReconnectionFailedError extends GeneralSdkError {
+  override readonly _tag = "ReconnectionFailedError";
+  constructor(readonly err?: unknown) {
+    super(err);
+  }
+}

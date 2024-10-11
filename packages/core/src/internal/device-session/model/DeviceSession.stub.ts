@@ -3,11 +3,13 @@ import {
   SessionConstructorArgs,
 } from "@internal/device-session/model/DeviceSession";
 import { LoggerPublisherService } from "@internal/logger-publisher/service/LoggerPublisherService";
+import type { ManagerApiService } from "@internal/manager-api/service/ManagerApiService";
 import { connectedDeviceStubBuilder } from "@internal/usb/model/InternalConnectedDevice.stub";
 
 export const deviceSessionStubBuilder = (
   props: Partial<SessionConstructorArgs> = {},
   loggerFactory: (tag: string) => LoggerPublisherService,
+  managerApi: ManagerApiService,
 ) =>
   new DeviceSession(
     {
@@ -16,4 +18,5 @@ export const deviceSessionStubBuilder = (
       ...props,
     },
     loggerFactory,
+    managerApi,
   );
