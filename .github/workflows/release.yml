@@ -18,7 +18,7 @@ permissions:
 jobs:
   publish:
     environment: Production
-    runs-on: ledgerhq-shared-medium
+    runs-on: ledgerhq-device-sdk
     steps:
       - uses: actions/checkout@v4
 
