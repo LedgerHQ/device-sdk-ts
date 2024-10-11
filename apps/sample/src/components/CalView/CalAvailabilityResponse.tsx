@@ -1,5 +1,5 @@
 import React from "react";
-import { Flex, Icons, InfiniteLoader, Text } from "@ledgerhq/react-ui";
+import { Box, Flex, Icons, InfiniteLoader, Text } from "@ledgerhq/react-ui";
 
 import { Descriptor } from "./CalNetworkDataSource";
 
@@ -27,23 +27,41 @@ export function CalAvailabilityResponseComponent(
         <>
           {(type === "ethereum_app_plugins" || type === "eip712") && (
             <>
-              <Flex align="center">
-                <Icons.CheckmarkCircle style={{ color: "green" }} />
-                <Text>
-                  Smart Contract of type <b>`{type}`</b> is deployed
-                  <br />
-                  <a
-                    href={`https://etherscan.io/address/${searchAddress}#code`}
-                    target="_blank"
-                    rel="noreferrer"
+              <Flex align="center" flexDirection="column">
+                <Flex alignItems="center">
+                  <Icons.CheckmarkCircle style={{ color: "green" }} />
+                  <Text
+                    variant="large"
+                    fontWeight="regular"
+                    style={{ margin: "6px" }}
                   >
-                    {searchAddress}
-                  </a>
-                  <span style={{ color: "lightgray", fontSize: "9px" }}>
-                    <br />
-                    {"Checked at : " + formattedDate}
-                  </span>
-                </Text>
+                    Smart Contract of type{" "}
+                    <span style={{ fontWeight: "bold" }}>`{type}`</span> is
+                    deployed
+                  </Text>
+                </Flex>
+                <Box>
+                  <Text>
+                    <span style={{ fontSize: "14px" }}>
+                      <a
+                        href={`https://etherscan.io/address/${searchAddress}#code`}
+                        style={{
+                          textDecoration: "underline",
+                          cursor: "pointer",
+                        }}
+                      >
+                        {searchAddress}
+                      </a>
+                    </span>
+                  </Text>
+                </Box>
+                <Box>
+                  <Text>
+                    <span style={{ color: "lightgray", fontSize: "9px" }}>
+                      {"Checked at : " + formattedDate}
+                    </span>
+                  </Text>
+                </Box>
               </Flex>
               {type === "ethereum_app_plugins" && (
                 <Flex align="center">
@@ -78,17 +96,30 @@ export function CalAvailabilityResponseComponent(
           )}
           {type !== "ethereum_app_plugins" && type !== "eip712" && (
             <>
-              <Flex align="center">
+              <Flex alignItems="center">
                 <Icons.Warning style={{ color: "red" }} />
+                <Text
+                  variant="large"
+                  fontWeight="regular"
+                  style={{ marginLeft: "6px" }}
+                >
+                  Smart Contract is unknown
+                </Text>
+              </Flex>
+              <Box>
                 <Text>
-                  Smart Contract with address : <b>{searchAddress}</b> is
-                  unknown
+                  <span style={{ fontSize: "14px" }}>
+                    Make sure the address : <b>{searchAddress}</b> is right.
+                  </span>
+                </Text>
+              </Box>
+              <Box>
+                <Text>
                   <span style={{ color: "lightgray", fontSize: "9px" }}>
-                    <br />
                     {"Checked at : " + formattedDate}
                   </span>
                 </Text>
-              </Flex>
+              </Box>
             </>
           )}
         </>

@@ -150,19 +150,16 @@ export function CalActionDrawer<
           flex={1}
           overflowY="scroll"
         >
-          {responses
-            .slice()
-            .reverse()
-            .map((response, key) => (
-              <CalAvailabilityResponseComponent
-                key={key}
-                type={response.responseType}
-                date={response.date}
-                loading={response.loading}
-                descriptors={response.result}
-                searchAddress={response.searchAddress}
-              />
-            ))}
+          {responses.slice().map((response, key) => (
+            <CalAvailabilityResponseComponent
+              key={key}
+              type={response.responseType}
+              date={response.date}
+              loading={response.loading}
+              descriptors={response.result}
+              searchAddress={response.searchAddress}
+            />
+          ))}
         </Flex>
         <Button
           variant="main"
@@ -214,7 +211,7 @@ export const CalView = () => {
           description={""}
           initialValues={{
             smartContractAddress: "0x000000000022D473030F116dDEE9F6B43aC78BA3",
-            calUrl: "https://crypto-assets-service.api.ledger.com/v1",
+            calUrl: "https://crypto-assets-service.api.ledger-test.com",
             branch: "main",
           }}
         />

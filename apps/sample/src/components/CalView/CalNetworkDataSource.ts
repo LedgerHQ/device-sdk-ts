@@ -9,24 +9,25 @@ export type Descriptor = {
   method: string | undefined;
 };
 
-let endpointUrl = "https://crypto-assets-service.api.ledger-test.com";
-let branchName = "main";
-
 export const checkContractAvailability = async (
   contractName: string,
-  endpoint: string = "https://crypto-assets-service.api.ledger-test.com",
-  branch: string = "main",
+  endpoint: string,
+  branch: string,
 ): Promise<ApiResponse> => {
   let descriptors: Descriptor[];
-
-  endpointUrl = endpoint;
-  branchName = branch;
-
   let responseType: "NotFound" | "eip712" | "ethereum_app_plugins";
 
-  const pluginResult = await checkPluginAvailability(contractName);
+  const pluginResult = await checkPluginAvailability(
+    contractName,
+    endpoint,
+    branch,
+  );
   if (pluginResult.length == 0) {
-    const eip712Result = await checkEip712Availability(contractName);
+    const eip712Result = await checkEip712Availability(
+      contractName,
+      endpoint,
+      branch,
+    );
 
     if (eip712Result.length == 0) {
       responseType = "NotFound";
@@ -48,9 +49,11 @@ export const checkContractAvailability = async (
 
 async function checkPluginAvailability(
   contractName: string,
+  endpoint: string,
+  branch: string,
 ): Promise<Descriptor[]> {
   const output = "descriptors_ethereum_app_plugins";
-  const response = await fetchRequest(output, contractName);
+  const response = await fetchRequest(output, contractName, endpoint, branch);
 
   if (response != null) {
     const descriptors: Descriptor[] = [];
@@ -75,9 +78,16 @@ async function checkPluginAvailability(
 
 async function checkEip712Availability(
   contractName: string,
+  endpoint: string,
+  branch: string,
 ): Promise<Descriptor[]> {
   const output = "descriptors_eip712";
-  const response: ResponseDto | null = await fetchRequest(output, contractName);
+  const response: ResponseDto | null = await fetchRequest(
+    output,
+    contractName,
+    endpoint,
+    branch,
+  );
 
   if (response != null) {
     const descriptors: Descriptor[] = [];
@@ -143,8 +153,10 @@ type ResponseDto = {
 async function fetchRequest(
   output: string,
   contractName: string,
+  endpoint: string,
+  branch: string,
 ): Promise<ResponseDto | null> {
-  const path = `${endpointUrl}/v1/dapps?ref=branch%3A${branchName}&output=${output}&chain_id=1&contracts=${contractName}`;
+  const path = `${endpoint}/v1/dapps?ref=branch%3A${branch}&output=${output}&chain_id=1&contracts=${contractName}`;
   const response = await fetch(path);
 
   if (!response.ok) {
