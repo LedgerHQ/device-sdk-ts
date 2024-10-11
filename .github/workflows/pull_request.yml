@@ -2,6 +2,8 @@ name: Pull Request Checks
 on:
   pull_request:
     types: [opened, synchronize, reopened, edited]
+    branches-ignore:
+      - main
 
 env:
   FORCE_COLOR: "1"

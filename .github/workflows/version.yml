@@ -25,7 +25,7 @@ jobs:
         uses: changesets/action@v1
         with:
           version: pnpm bump
-          commit: "🔖 (release): versioning packages"
-          title: "🔖 (release) [NO-ISSUE]: versioning packages"
+          commit: "🔖 (release): Versioning packages"
+          title: "🔖 (release) [NO-ISSUE]: Versioning packages"
         env:
           GITHUB_TOKEN: ${{ github.token }}
