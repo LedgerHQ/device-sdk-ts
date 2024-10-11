@@ -4,7 +4,10 @@ import { inject, injectable } from "inversify";
 import { Either, Left, Right } from "purify-ts";
 
 import { configTypes } from "@/config/di/configTypes";
-import type { ContextModuleConfig } from "@/config/model/ContextModuleConfig";
+import type {
+  ContextModuleCalMode,
+  ContextModuleConfig,
+} from "@/config/model/ContextModuleConfig";
 import type {
   TypedDataFilter,
   TypedDataMessageInfo,
@@ -86,27 +89,32 @@ export class HttpTypedDataDataSource implements TypedDataDataSource {
       // Parse all the filters
       const filters: TypedDataFilter[] = [];
       for (const field of filtersJson.instructions) {
-        if (this.isInstructionContractInfo(field)) {
+        if (this.isInstructionContractInfo(field, this.config.cal.mode)) {
           messageInfo = {
             displayName: field.display_name,
             signature: field.signatures[this.config.cal.mode],
             filtersCount: field.field_mappers_count,
           };
-        } else if (version === "v1" && this.isInstructionFieldV1(field)) {
+        } else if (
+          version === "v1" &&
+          this.isInstructionFieldV1(field, this.config.cal.mode)
+        ) {
           filters.push({
             type: "raw",
             displayName: field.display_name,
             path: field.field_path,
             signature: field.signatures[this.config.cal.mode],
           });
-        } else if (this.isInstructionFieldV2(field)) {
+        } else if (this.isInstructionFieldV2(field, this.config.cal.mode)) {
           filters.push({
             type: field.format,
             displayName: field.display_name,
             path: field.field_path,
             signature: field.signatures[this.config.cal.mode],
           });
-        } else if (this.isInstructionFieldV2WithCoinRef(field)) {
+        } else if (
+          this.isInstructionFieldV2WithCoinRef(field, this.config.cal.mode)
+        ) {
           filters.push({
             type: field.format,
             displayName: field.display_name,
@@ -143,7 +151,10 @@ export class HttpTypedDataDataSource implements TypedDataDataSource {
 
   private isInstructionFieldV1(
     data: InstructionField,
-  ): data is InstructionFieldV1 {
+    mode: ContextModuleCalMode,
+  ): data is InstructionFieldV1 & {
+    signatures: { [key in ContextModuleCalMode]: string };
+  } {
     // NOTE: Currently the backend return the same structure for V1 and V2,
     // so we can't distinguish them here, but we can still check the required fields
     return (
@@ -151,21 +162,22 @@ export class HttpTypedDataDataSource implements TypedDataDataSource {
       typeof data.display_name === "string" &&
       typeof data.field_path === "string" &&
       typeof data.signatures === "object" &&
-      typeof data.signatures.prod === "string" &&
-      typeof data.signatures.test === "string"
+      typeof data.signatures[mode] === "string"
     );
   }
 
   private isInstructionFieldV2(
     data: InstructionField,
-  ): data is InstructionFieldV2 {
+    mode: ContextModuleCalMode,
+  ): data is InstructionFieldV2 & {
+    signatures: { [key in ContextModuleCalMode]: string };
+  } {
     return (
       typeof data === "object" &&
       typeof data.display_name === "string" &&
       typeof data.field_path === "string" &&
       typeof data.signatures === "object" &&
-      typeof data.signatures.prod === "string" &&
-      typeof data.signatures.test === "string" &&
+      typeof data.signatures[mode] === "string" &&
       typeof data.format === "string" &&
       ["raw", "datetime"].includes(data.format) &&
       data.coin_ref === undefined
@@ -174,14 +186,16 @@ export class HttpTypedDataDataSource implements TypedDataDataSource {
 
   private isInstructionFieldV2WithCoinRef(
     data: InstructionField,
-  ): data is InstructionFieldV2WithCoinRef {
+    mode: ContextModuleCalMode,
+  ): data is InstructionFieldV2WithCoinRef & {
+    signatures: { [key in ContextModuleCalMode]: string };
+  } {
     return (
       typeof data === "object" &&
       typeof data.display_name === "string" &&
       typeof data.field_path === "string" &&
       typeof data.signatures === "object" &&
-      typeof data.signatures.prod === "string" &&
-      typeof data.signatures.test === "string" &&
+      typeof data.signatures[mode] === "string" &&
       typeof data.format === "string" &&
       ["token", "amount"].includes(data.format) &&
       typeof data.coin_ref === "number"
@@ -190,14 +204,16 @@ export class HttpTypedDataDataSource implements TypedDataDataSource {
 
   private isInstructionContractInfo(
     data: InstructionField,
-  ): data is InstructionContractInfo {
+    mode: ContextModuleCalMode,
+  ): data is InstructionContractInfo & {
+    signatures: { [key in ContextModuleCalMode]: string };
+  } {
     return (
       typeof data === "object" &&
       typeof data.display_name === "string" &&
       typeof data.field_mappers_count === "number" &&
       typeof data.signatures === "object" &&
-      typeof data.signatures.prod === "string" &&
-      typeof data.signatures.test === "string" &&
+      typeof data.signatures[mode] === "string" &&
       data.field_path === undefined
     );
   }

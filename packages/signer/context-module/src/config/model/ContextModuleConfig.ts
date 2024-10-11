@@ -1,7 +1,10 @@
+export type ContextModuleCalMode = "prod" | "test";
+export type ContextModuleCalBranch = "next" | "main" | "demo";
+
 export type ContextModuleCalConfig = {
   url: string;
-  mode: "prod" | "test";
-  branch: "next" | "main" | "demo";
+  mode: ContextModuleCalMode;
+  branch: ContextModuleCalBranch;
 };
 
 export type ContextModuleConfig = {
