@@ -51,7 +51,7 @@ jobs:
         if: ${{ steps.health-check.conclusion == 'success' }}
         run: pnpm test:coverage -- --max-warnings=0
 
-      - uses: sonarsource/sonarqube-scan-action@master
+      - uses: sonarsource/sonarqube-scan-action@v3
         if: ${{ steps.unit-tests.conclusion == 'success' && github.actor != 'dependabot[bot]' && github.event.pull_request.head.repo.fork == 'false' }}
         env:
           SONAR_TOKEN: ${{ secrets.GREEN_SONAR_TOKEN }}

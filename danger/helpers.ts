@@ -53,7 +53,7 @@ const Branch = (
   regex: isFork
     ? new RegExp(`^(${BRANCH_PREFIX.join("|")})\/.+`, "i")
     : new RegExp(
-        `^(${BRANCH_PREFIX.join("|")})\/((dsdk)-[0-9]+|no-issue)\-.+`,
+        `^(${BRANCH_PREFIX.join("|")})\/((dsdk)-[0-9]+|no-issue|issue-[0-9]+)\-.+`,
         "i"
       ),
 
@@ -91,7 +91,7 @@ Please fix the PR branch name to match the convention, see [CONTRIBUTING.md](htt
 - Rules:
   - Must start with a type (${BRANCH_PREFIX.join(", ")})
   - Followed by a SLASH ("/")
-  - Followed by a JIRA issue number (DSDK-1234) or "no-issue"
+  - Followed by a JIRA issue number (DSDK-1234) or "no-issue" or "issue-1234" if fixing a Github issue
   - Followed by a DASH ("-")
   - Followed by a description
 
@@ -181,7 +181,7 @@ export const checkCommits = (
 const Title = (danger: DangerDSLType, fail: FailFn, fork: boolean = false) => ({
   regex: fork
     ? /^.+ \(([a-z]+\-?){1,}\): [A-Z].*/
-    : /^.+ \(([a-z]+\-?){1,}\) \[(DSDK-[0-9]+|NO-ISSUE)\]: [A-Z].*/,
+    : /^.+ \(([a-z]+\-?){1,}\) \[(DSDK-[0-9]+|NO-ISSUE|ISSUE-[0-9]+)\]: [A-Z].*/,
 
   fail(wrongTitle: string) {
     if (fork) {
@@ -195,6 +195,9 @@ Please fix the PR title to match the convention, see [CONTRIBUTING.md](https://g
   - Must start with a word (usually an emoji)
   - Followed by a SPACE
   - Followed by a scope in parentheses and in LOWERCASE
+  - _Optional_
+    - _Followed by a SPACE_
+    - _Followed by ISSUE-<number> to reference a Github issue_
   - Followed by a colon (":") and a SPACE
   - Followed by a <ins>C</ins>apitalized message
 
@@ -213,7 +216,7 @@ Please fix the PR title to match the convention, see [CONTRIBUTING.md](https://g
   - Followed by a SPACE
   - Followed by a scope in parentheses and in LOWERCASE
   - Followed by a SPACE
-  - Followed by a JIRA issue number in [brackets] (uppercase)
+  - Followed by a JIRA issue number or NO-ISSUE or ISSUE-<number> in [brackets] (uppercase)
   - Followed by a colon (":") and a SPACE
   - Followed by a <ins>C</ins>apitalized message
 

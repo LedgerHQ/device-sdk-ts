@@ -289,18 +289,16 @@ pnpm dev
 Each project folder has a `README.md` file which contains basic documentation.
 It includes background information about the project and how to setup, run and build it.
 
-Please check the [**wiki**](https://github.com/LedgerHQ/device-sdk-ts/wiki) for additional documentation.
-
 ## Reference API
 
-Please refer to the core package [**readme**](https://github.com/LedgerHQ/device-sdk-ts/packages/core/README.md).
+Please refer to the core package [**readme**](https://github.com/LedgerHQ/device-sdk-ts/blob/develop/packages/core/README.md).
 
 # Contributing
 
-Please check the general guidelines for contributing to Ledger Live projects: [`CONTRIBUTING.md`](https://github.com/LedgerHQ/device-sdk-ts/CONTRIBUTING.md).
+Please check the general guidelines for contributing to Ledger Live projects: [`CONTRIBUTING.md`](https://github.com/LedgerHQ/device-sdk-ts/blob/develop/CONTRIBUTING.md).
 
 Each individual project may include its own specific guidelines, located within its respective folder.
 
 # License
 
-Please check each project `LICENSE` file, most of them are under the `MIT` license.
+Please check each project [`LICENSE`](https://github.com/LedgerHQ/device-sdk-ts/blob/develop/LICENSE.md) file, most of them are under the `MIT` license.
