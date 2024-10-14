@@ -1,6 +1,7 @@
 import { inject, injectable } from "inversify";
 import { Maybe } from "purify-ts";
 
+import { DeviceId } from "@api/types";
 import { CHANNEL_LENGTH } from "@internal/device-session/data/FramerConst";
 import { deviceSessionTypes } from "@internal/device-session/di/deviceSessionTypes";
 import { ApduReceiverService } from "@internal/device-session/service/ApduReceiverService";
@@ -32,6 +33,7 @@ export class UsbHidDeviceConnectionFactory {
 
   public create(
     device: HIDDevice,
+    params: { onConnectionTerminated: () => void; deviceId: DeviceId },
     channel = Maybe.of(
       FramerUtils.numberToByteArray(this.randomChannel, CHANNEL_LENGTH),
     ),
@@ -39,12 +41,14 @@ export class UsbHidDeviceConnectionFactory {
     return new UsbHidDeviceConnection(
       {
         device,
+        deviceId: params.deviceId,
         apduSender: this.apduSenderFactory({
           frameSize: FRAME_SIZE,
           channel,
           padding: true,
         }),
         apduReceiver: this.apduReceiverFactory({ channel }),
+        onConnectionTerminated: params.onConnectionTerminated,
       },
       this.loggerFactory,
     );
