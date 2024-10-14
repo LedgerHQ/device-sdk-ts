@@ -29,11 +29,7 @@ export const BRANCH_PREFIX = [
   "refactor",
 ];
 
-export const checkIfBot = (user: GitHubPRDSL["user"]) => {
-  if (user.type === "Bot") {
-    exit(0);
-  }
-};
+export const checkIfBot = (user: GitHubPRDSL["user"]) => user.type === "Bot";
 
 export const getAuthor = (danger: DangerDSLType) => {
   if (danger.github) {
