@@ -1,13 +1,17 @@
-import { Button, Flex } from "@ledgerhq/react-ui";
-import { BuiltinTransports, SdkError } from "@ledgerhq/device-management-kit";
 import React, { useCallback } from "react";
-import { useSdkConfigContext } from "@/providers/SdkConfig";
+import { BuiltinTransports, SdkError } from "@ledgerhq/device-management-kit";
+import { Button, Flex } from "@ledgerhq/react-ui";
+import styled from "styled-components";
+
 import { useSdk } from "@/providers/DeviceSdkProvider";
 import { useDeviceSessionsContext } from "@/providers/DeviceSessionsProvider";
+import { useSdkConfigContext } from "@/providers/SdkConfig";
 
 type ConnectDeviceActionsProps = {
   onError: (error: SdkError | null) => void;
 };
+
+const ConnectButton = styled(Button).attrs({ mx: 3 })``;
 
 export const ConnectDeviceActions = ({
   onError,
@@ -56,8 +60,7 @@ export const ConnectDeviceActions = ({
   );
 
   return transport === BuiltinTransports.MOCK_SERVER ? (
-    <Button
-      mx={3}
+    <ConnectButton
       onClick={() => onSelectDeviceClicked(BuiltinTransports.MOCK_SERVER)}
       variant="main"
       backgroundColor="main"
@@ -65,27 +68,25 @@ export const ConnectDeviceActions = ({
       data-testid="CTA_select-device"
     >
       Select a device
-    </Button>
+    </ConnectButton>
   ) : (
     <Flex>
-      <Button
-        mx={3}
+      <ConnectButton
         onClick={() => onSelectDeviceClicked(BuiltinTransports.USB)}
         variant="main"
         backgroundColor="main"
         size="large"
       >
         Select a USB device
-      </Button>
-      <Button
-        mx={3}
+      </ConnectButton>
+      <ConnectButton
         onClick={() => onSelectDeviceClicked(BuiltinTransports.BLE)}
         variant="main"
         backgroundColor="main"
         size="large"
       >
         Select a BLE device
-      </Button>
+      </ConnectButton>
     </Flex>
   );
 };

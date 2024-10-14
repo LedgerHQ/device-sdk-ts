@@ -1,4 +1,5 @@
 import React, { useCallback, useState } from "react";
+import { BuiltinTransports } from "@ledgerhq/device-management-kit";
 import {
   Button,
   DropdownGeneric,
@@ -8,8 +9,8 @@ import {
   Switch,
 } from "@ledgerhq/react-ui";
 import styled, { DefaultTheme } from "styled-components";
+
 import { useSdkConfigContext } from "@/providers/SdkConfig";
-import { BuiltinTransports } from "@ledgerhq/device-management-kit";
 
 const Root = styled(Flex).attrs({ py: 3, px: 10, gridGap: 8 })`
   color: ${({ theme }: { theme: DefaultTheme }) => theme.colors.neutral.c90};

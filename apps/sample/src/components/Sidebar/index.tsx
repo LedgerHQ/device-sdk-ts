@@ -1,5 +1,6 @@
 "use client";
 import React, { useCallback, useEffect, useState } from "react";
+import { BuiltinTransports } from "@ledgerhq/device-management-kit";
 import { Box, Flex, IconsLegacy, Link, Text } from "@ledgerhq/react-ui";
 import { useRouter } from "next/navigation";
 import styled, { DefaultTheme } from "styled-components";
@@ -8,8 +9,7 @@ import { Device } from "@/components/Device";
 import { Menu } from "@/components/Menu";
 import { useExportLogsCallback, useSdk } from "@/providers/DeviceSdkProvider";
 import { useDeviceSessionsContext } from "@/providers/DeviceSessionsProvider";
-import { useSdkConfigContext } from "../../providers/SdkConfig";
-import { BuiltinTransports } from "@ledgerhq/device-management-kit";
+import { useSdkConfigContext } from "@/providers/SdkConfig";
 
 const Root = styled(Flex).attrs({ py: 8, px: 6 })`
   flex-direction: column;

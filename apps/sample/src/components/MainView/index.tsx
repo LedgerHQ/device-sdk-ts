@@ -1,9 +1,9 @@
 import React, { useEffect, useState } from "react";
-import { Badge, Flex, Icon, Text, Notification } from "@ledgerhq/react-ui";
+import { SdkError } from "@ledgerhq/device-management-kit";
+import { Badge, Flex, Icon, Notification, Text } from "@ledgerhq/react-ui";
 import Image from "next/image";
 import styled, { DefaultTheme } from "styled-components";
 
-import { SdkError } from "@ledgerhq/device-management-kit";
 import { ConnectDeviceActions } from "./ConnectDeviceActions";
 
 const Root = styled(Flex)`

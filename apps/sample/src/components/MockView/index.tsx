@@ -4,7 +4,7 @@ import { Button, Divider, Flex, Input, Link, Text } from "@ledgerhq/react-ui";
 import styled, { DefaultTheme } from "styled-components";
 
 import { useMockClient } from "@/hooks/useMockClient";
-import { useSdkConfigContext } from "../../providers/SdkConfig";
+import { useSdkConfigContext } from "@/providers/SdkConfig";
 
 const Root = styled(Flex).attrs({ mx: 15, mt: 10, mb: 5 })`
   flex-direction: column;
