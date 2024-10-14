@@ -46,9 +46,9 @@ export { DeviceExchangeError, UnknownDeviceExchangeError } from "./Error";
 export { LogLevel } from "./logger-subscriber/model/LogLevel";
 export { ConsoleLogger } from "./logger-subscriber/service/ConsoleLogger";
 export { WebLogsExporterLogger } from "./logger-subscriber/service/WebLogsExporterLogger";
-export * from "./types";
 export { ConnectedDevice } from "./transport/model/ConnectedDevice";
 export { BuiltinTransports } from "./transport/model/TransportIdentifier";
+export * from "./types";
 export * from "./types";
 export { InvalidStatusWordError } from "@api/command/Errors";
 export {

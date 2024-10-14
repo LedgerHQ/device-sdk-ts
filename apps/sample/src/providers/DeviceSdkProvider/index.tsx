@@ -7,6 +7,7 @@ import {
   DeviceSdkBuilder,
   WebLogsExporterLogger,
 } from "@ledgerhq/device-management-kit";
+
 import { useMockServerContext } from "@/providers/MockServerProvider";
 
 const webLogsExporterLogger = new WebLogsExporterLogger();

@@ -8,9 +8,9 @@ import { Box, DropdownGeneric, Flex, Icons, Text } from "@ledgerhq/react-ui";
 import styled, { DefaultTheme } from "styled-components";
 
 import { useDeviceSessionState } from "@/hooks/useDeviceSessionState";
+import { useDeviceSessionsContext } from "@/providers/DeviceSessionsProvider";
 
 import { StatusText } from "./StatusText";
-import { useDeviceSessionsContext } from "@/providers/DeviceSessionsProvider";
 
 const Root = styled(Flex).attrs({ p: 5, mb: 8, borderRadius: 2 })`
   background: ${({ theme }: { theme: DefaultTheme }) =>

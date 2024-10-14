@@ -17,8 +17,8 @@ import { Header } from "@/components/Header";
 import { Sidebar } from "@/components/Sidebar";
 import { SdkProvider } from "@/providers/DeviceSdkProvider";
 import { DeviceSessionsProvider } from "@/providers/DeviceSessionsProvider";
-import { GlobalStyle } from "@/styles/globalstyles";
 import { MockServerProvider } from "@/providers/MockServerProvider";
+import { GlobalStyle } from "@/styles/globalstyles";
 
 const Root = styled(Flex)`
   flex-direction: row;

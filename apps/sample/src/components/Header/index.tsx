@@ -8,6 +8,7 @@ import {
   Switch,
 } from "@ledgerhq/react-ui";
 import styled, { DefaultTheme } from "styled-components";
+
 import { useMockServerContext } from "@/providers/MockServerProvider";
 
 const Root = styled(Flex).attrs({ py: 3, px: 10, gridGap: 8 })`

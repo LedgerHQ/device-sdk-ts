@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { Mock, Session } from "@ledgerhq/device-sdk-transport-mock";
 import { Button, Divider, Flex, Input, Link, Text } from "@ledgerhq/react-ui";
 import styled, { DefaultTheme } from "styled-components";
+
 import { useMockClient } from "@/hooks/useMockClient";
 import { useMockServerContext } from "@/providers/MockServerProvider";
 
@@ -67,6 +68,7 @@ const MockButton = styled(Button).attrs({
   variant: "main",
   size: "small",
   color: "neutral.c00",
+  mx: 5,
 })``;
 
 export const MockView: React.FC = () => {
@@ -221,7 +223,7 @@ export const MockView: React.FC = () => {
                   value={currentResponse}
                   onChange={(value) => setCurrentResponse(value)}
                 />
-                <MockButton mx={5} onClick={() => handleAddMockClick()}>
+                <MockButton onClick={() => handleAddMockClick()}>
                   <Text color="neutral.c00">Add</Text>
                 </MockButton>
               </MockEntry>

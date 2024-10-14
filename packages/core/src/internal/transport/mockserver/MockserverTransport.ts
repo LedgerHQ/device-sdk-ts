@@ -66,6 +66,10 @@ export class MockTransport implements Transport {
               productName: device.name,
               usbProductId: 0x10,
               legacyUsbProductId: 0x0001,
+              bootloaderUsbProductId: 0x10,
+              getBlockSize() {
+                return 32;
+              },
               usbOnly: true,
               memorySize: 320 * 1024,
               masks: [0x31100000],
@@ -107,6 +111,10 @@ export class MockTransport implements Transport {
           productName: session.device.name,
           usbProductId: 0x10,
           legacyUsbProductId: 0x0001,
+          bootloaderUsbProductId: 0x10,
+          getBlockSize() {
+            return 32;
+          },
           usbOnly: true,
           memorySize: 320 * 1024,
           masks: [0x31100000],

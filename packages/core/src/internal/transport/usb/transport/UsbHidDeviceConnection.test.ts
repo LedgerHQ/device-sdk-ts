@@ -7,9 +7,9 @@ import { defaultApduReceiverServiceStubBuilder } from "@internal/device-session/
 import { defaultApduSenderServiceStubBuilder } from "@internal/device-session/service/DefaultApduSenderService.stub";
 import { DefaultLoggerPublisherService } from "@internal/logger-publisher/service/DefaultLoggerPublisherService";
 import { ReconnectionFailedError } from "@internal/transport/model/Errors";
+import { RECONNECT_DEVICE_TIMEOUT } from "@internal/transport/usb/data/UsbHidConfig";
 import { hidDeviceStubBuilder } from "@internal/transport/usb/model/HIDDevice.stub";
 import { UsbHidDeviceConnection } from "@internal/transport/usb/transport/UsbHidDeviceConnection";
-import { RECONNECT_DEVICE_TIMEOUT } from "@internal/transport/usb/data/UsbHidConfig";
 
 jest.useFakeTimers();
 
