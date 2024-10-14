@@ -1,0 +1,46 @@
+name: Update toolchain
+
+on:
+  schedule:
+    - cron: "0 0 * * 0"
+  workflow_dispatch:
+
+env:
+  BRANCH_NAME: chore/update-toolchain
+
+jobs:
+  update-toolchain:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: LedgerHQ/device-sdk-ts/.github/actions/setup-toolchain-composite@develop
+
+      - name: Setup git and branch
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email 'github-actions[bot]@users.noreply.github.com'
+          git checkout -b ${{ env.BRANCH_NAME }}
+
+      - name: Update toolchain
+        run: |
+          proto outdated --update
+
+      - name: Check for changes
+        id: changes
+        run: |
+          echo "status=$(git status --porcelain | wc -l)" >> $GITHUB_OUTPUT
+
+      - name: Create PR
+        if: steps.changes.outputs.status > 0
+        run: |
+          git add .prototools
+          git commit -m "🔧 (repo) [NO-ISSUE]: Update toolchain"
+          git push origin ${{ env.BRANCH_NAME }}
+          gh pr create \
+          --title "🔧 (repo) [NO-ISSUE]: Update toolchain" \
+          --body "This PR updates the toolchain (node, npm, pnpm) to the newest versions" \
+          --base develop \
+          --head ${{ env.BRANCH_NAME }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
