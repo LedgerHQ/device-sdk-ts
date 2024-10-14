@@ -1,0 +1,20 @@
+{
+  "name": "@ledgerhq/esbuild-tools",
+  "license": "MIT",
+  "version": "0.0.1",
+  "private": true,
+  "description": "Build and watch tools for Ledger Device Management Kit",
+  "bin": {
+    "lmdk-build": "./build.mjs",
+    "lmdk-watch": "./watch.mjs"
+  },
+  "files": [
+    "build.mjs",
+    "watch.mjs"
+  ],
+  "type": "module",
+  "devDependencies": {
+    "esbuild": "^0.24.0",
+    "esbuild-node-externals": "^1.14.0"
+  }
+}

@@ -4,32 +4,23 @@
   "license": "MIT",
   "exports": {
     ".": {
+      "types": "./lib/types/index.d.ts",
       "import": "./lib/esm/index.js",
-      "require": "./lib/cjs/index.js",
-      "default": "./index.ts",
-      "types": "./lib/esm/index.d.ts"
-    },
-    "./*.js": {
-      "import": "./lib/esm/*.js",
-      "require": "./lib/cjs/*.js",
-      "default": "./*.js",
-      "types": "./lib/esm/*.d.ts"
+      "require": "./lib/cjs/index.js"
     },
     "./*": {
-      "import": "./lib/esm/*",
-      "require": "./lib/cjs/*",
-      "default": "./*",
-      "types": "./lib/esm/*"
+      "types": "./lib/types/*"
     }
   },
   "files": [
     "./lib"
   ],
   "scripts": {
-    "build": "rimraf lib && zx scripts/build.mjs",
-    "dev": "concurrently \"pnpm dev:esm\" \"pnpm dev:cjs\"",
-    "dev:esm": "concurrently \"tsc --watch -p tsconfig.esm.json\" \"tsc-alias --watch -p tsconfig.esm.json\"",
-    "dev:cjs": "concurrently \"tsc --watch -p tsconfig.cjs.json\" \"tsc-alias --watch -p tsconfig.cjs.json\"",
+    "prebuild": "rimraf lib",
+    "build": "pnpm lmdk-build --entryPoints index.ts --tsconfig tsconfig.prod.json",
+    "dev": "concurrently \"pnpm watch:builds\" \"pnpm watch:types\"",
+    "watch:builds": "pnpm lmdk-watch --entryPoints index.ts --tsconfig tsconfig.prod.json",
+    "watch:types": "concurrently \"tsc --watch -p tsconfig.prod.json\" \"tsc-alias --watch -p tsconfig.prod.json\"",
     "lint": "eslint",
     "lint:fix": "pnpm lint --fix",
     "postpack": "find . -name '*.tgz' -exec cp {} ../../dist/ \\; ",
@@ -56,6 +47,7 @@
     "xstate": "^5.18.2"
   },
   "devDependencies": {
+    "@ledgerhq/esbuild-tools": "workspace:*",
     "@ledgerhq/eslint-config-dsdk": "workspace:*",
     "@ledgerhq/jest-config-dsdk": "workspace:*",
     "@ledgerhq/prettier-config-dsdk": "workspace:*",

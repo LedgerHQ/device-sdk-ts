@@ -1,5 +1,6 @@
 import React, { useMemo } from "react";
 import {
+  BatteryStatusType,
   CloseAppCommand,
   GetAppAndVersionCommand,
   GetAppAndVersionResponse,
@@ -16,7 +17,6 @@ import {
   OpenAppCommand,
   OpenAppErrorCodes,
 } from "@ledgerhq/device-management-kit";
-import { BatteryStatusType } from "@ledgerhq/device-management-kit/src/api/command/os/GetBatteryStatusCommand.js";
 import { Grid } from "@ledgerhq/react-ui";
 
 import { PageWithHeader } from "@/components/PageWithHeader";

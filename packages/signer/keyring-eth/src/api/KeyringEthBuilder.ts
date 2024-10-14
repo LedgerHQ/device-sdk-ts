@@ -1,6 +1,8 @@
 import { ContextModule, ContextModuleBuilder } from "@ledgerhq/context-module";
-import { DeviceSdk } from "@ledgerhq/device-management-kit";
-import { DeviceSessionId } from "@ledgerhq/device-management-kit/lib/cjs/index.js";
+import {
+  DeviceSdk,
+  type DeviceSessionId,
+} from "@ledgerhq/device-management-kit";
 
 import { DefaultKeyringEth } from "@internal/DefaultKeyringEth";
 
