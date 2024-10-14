@@ -1,4 +1,5 @@
 const oninputreport = jest.fn().mockResolvedValue(void 0);
+
 export const hidDeviceStubBuilder = (
   props: Partial<HIDDevice> = {},
 ): HIDDevice => ({
@@ -7,9 +8,9 @@ export const hidDeviceStubBuilder = (
   vendorId: 0x2c97,
   productName: "Ledger Nano X",
   collections: [],
-  open: jest.fn(),
+  open: jest.fn().mockResolvedValue(undefined),
   oninputreport,
-  close: jest.fn(),
+  close: jest.fn().mockResolvedValue(undefined),
   sendReport: jest.fn().mockResolvedValue(oninputreport()),
   sendFeatureReport: jest.fn(),
   forget: jest.fn(),
