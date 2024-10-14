@@ -1,9 +1,10 @@
 import React from "react";
+import { BuiltinTransports } from "@ledgerhq/device-management-kit";
 import { Flex, Icons, Link } from "@ledgerhq/react-ui";
 import { useRouter } from "next/navigation";
 import styled from "styled-components";
-import { useSdkConfigContext } from "../../providers/SdkConfig";
-import { BuiltinTransports } from "@ledgerhq/device-management-kit";
+
+import { useSdkConfigContext } from "@/providers/SdkConfig";
 
 const MenuItem = styled(Flex).attrs({ p: 3, pl: 5 })`
   align-items: center;

@@ -7,8 +7,9 @@ import {
   DeviceSdkBuilder,
   WebLogsExporterLogger,
 } from "@ledgerhq/device-management-kit";
-import { useSdkConfigContext } from "../SdkConfig";
+
 import { usePrevious } from "@/hooks/usePrevious";
+import { useSdkConfigContext } from "@/providers/SdkConfig";
 
 const webLogsExporterLogger = new WebLogsExporterLogger();
 
