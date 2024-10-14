@@ -93,7 +93,10 @@ export class ProvideEIP712ContextTask {
 
     // Send domain implementation values.
     for (const value of this.args.domain) {
-      await this.getImplementationTask(value).run();
+      result = await this.getImplementationTask(value).run();
+      if (!isSuccessCommandResult(result)) {
+        return result;
+      }
     }
 
     if (this.args.clearSignContext.isJust()) {

@@ -556,4 +556,43 @@ describe("ProvideEIP712ContextTask", () => {
       CommandResultFactory({ error: new UnknownDeviceExchangeError("error") }),
     );
   });
+
+  it("Error when sending struct implementations", async () => {
+    // GIVEN
+    const args: ProvideEIP712ContextTaskArgs = {
+      types: TEST_TYPES,
+      domain: TEST_DOMAIN_VALUES,
+      message: TEST_MESSAGE_VALUES,
+      clearSignContext: Nothing,
+    };
+    // WHEN
+    apiMock.sendCommand
+      // Struct definitions
+      .mockResolvedValueOnce(CommandResultFactory({ data: undefined }))
+      .mockResolvedValueOnce(CommandResultFactory({ data: undefined }))
+      .mockResolvedValueOnce(CommandResultFactory({ data: undefined }))
+      .mockResolvedValueOnce(CommandResultFactory({ data: undefined }))
+      .mockResolvedValueOnce(CommandResultFactory({ data: undefined }))
+      .mockResolvedValueOnce(CommandResultFactory({ data: undefined }))
+      .mockResolvedValueOnce(CommandResultFactory({ data: undefined }))
+      .mockResolvedValueOnce(CommandResultFactory({ data: undefined }))
+      .mockResolvedValueOnce(CommandResultFactory({ data: undefined }))
+      .mockResolvedValueOnce(CommandResultFactory({ data: undefined }))
+      .mockResolvedValueOnce(CommandResultFactory({ data: undefined }))
+      .mockResolvedValueOnce(CommandResultFactory({ data: undefined }))
+      .mockResolvedValueOnce(CommandResultFactory({ data: undefined }))
+      // Struct implementations
+      .mockResolvedValueOnce(
+        CommandResultFactory({
+          error: new UnknownDeviceExchangeError("error"),
+        }),
+      )
+      .mockResolvedValue(CommandResultFactory({ data: undefined }));
+    const promise = new ProvideEIP712ContextTask(apiMock, args).run();
+
+    // THEN
+    await expect(promise).resolves.toStrictEqual(
+      CommandResultFactory({ error: new UnknownDeviceExchangeError("error") }),
+    );
+  });
 });
