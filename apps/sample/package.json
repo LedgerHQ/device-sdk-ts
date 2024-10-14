@@ -33,7 +33,7 @@
     "@types/react-lottie": "^1.2.10",
     "@types/styled-components": "^5.1.25",
     "autoprefixer": "^10.4.20",
-    "globals": "15.10.0",
+    "globals": "15.11.0",
     "postcss": "^8.4.47",
     "typescript": "5.6.2"
   }
