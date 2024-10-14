@@ -1,16 +1,15 @@
 import React, { Context, createContext, useContext, useReducer } from "react";
 
 import {
-  AddSessionAction,
   DeviceSessionsInitialState,
   deviceSessionsReducer,
   DeviceSessionsState,
-  RemoveSessionAction,
+  DeviseSessionsAction,
 } from "@/reducers/deviceSessions";
 
 type DeviceSessionsContextType = {
   state: DeviceSessionsState;
-  dispatch: (value: AddSessionAction | RemoveSessionAction) => void;
+  dispatch: (value: DeviseSessionsAction) => void;
 };
 
 const DeviceSessionsContext: Context<DeviceSessionsContextType> =

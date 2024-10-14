@@ -8,12 +8,21 @@ import { Device } from "@/components/Device";
 import { Menu } from "@/components/Menu";
 import { useExportLogsCallback, useSdk } from "@/providers/DeviceSdkProvider";
 import { useDeviceSessionsContext } from "@/providers/DeviceSessionsProvider";
+import { useMockServerContext } from "@/providers/MockServerProvider";
 
 const Root = styled(Flex).attrs({ py: 8, px: 6 })`
   flex-direction: column;
   width: 280px;
-  background-color: ${({ theme }: { theme: DefaultTheme }) =>
-    theme.colors.background.drawer};
+  background-color: ${({
+    theme,
+    mockServerEnabled,
+  }: {
+    theme: DefaultTheme;
+    mockServerEnabled: boolean;
+  }) =>
+    mockServerEnabled
+      ? theme.colors.constant.purple
+      : theme.colors.background.drawer};
 `;
 
 const Subtitle = styled(Text).attrs({ mb: 5 })``;
@@ -41,6 +50,9 @@ export const Sidebar: React.FC = () => {
     state: { deviceById, selectedId },
     dispatch,
   } = useDeviceSessionsContext();
+  const {
+    state: { enabled: mockServerEnabled },
+  } = useMockServerContext();
 
   useEffect(() => {
     sdk
@@ -65,7 +77,7 @@ export const Sidebar: React.FC = () => {
 
   const router = useRouter();
   return (
-    <Root>
+    <Root mockServerEnabled={mockServerEnabled}>
       <Link
         onClick={() => router.push("/")}
         mb={8}
@@ -75,24 +87,25 @@ export const Sidebar: React.FC = () => {
         }}
       >
         Ledger Device Management Kit
+        {mockServerEnabled && <span> (MOCKED)</span>}
       </Link>
       <Subtitle variant={"small"}>
         SDK Version: {version ? version : "Loading..."}
       </Subtitle>
 
       <Subtitle variant={"tiny"}>Device</Subtitle>
-
-      {Object.entries(deviceById).map(([sessionId, device]) => (
-        <Device
-          key={sessionId}
-          sessionId={sessionId}
-          name={device.name}
-          model={device.modelId}
-          type={device.type}
-          onDisconnect={async () => onDeviceDisconnect(sessionId)}
-        />
-      ))}
-
+      <div data-testid="container_devices">
+        {Object.entries(deviceById).map(([sessionId, device]) => (
+          <Device
+            key={sessionId}
+            sessionId={sessionId}
+            name={device.name}
+            model={device.modelId}
+            type={device.type}
+            onDisconnect={async () => onDeviceDisconnect(sessionId)}
+          />
+        ))}
+      </div>
       <MenuContainer active={!!selectedId}>
         <Subtitle variant={"tiny"}>Menu</Subtitle>
         <Menu />

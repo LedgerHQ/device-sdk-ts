@@ -1,6 +1,11 @@
-import { DEFAULT_MANAGER_API_BASE_URL } from "@internal/manager-api/model/Const";
+import {
+  DEFAULT_MANAGER_API_BASE_URL,
+  DEFAULT_MOCK_SERVER_BASE_URL,
+} from "@internal/manager-api/model/Const";
 
 import { LoggerSubscriberService } from "./logger-subscriber/service/LoggerSubscriberService";
+import { Transport } from "./transport/model/Transport";
+import { BuiltinTransports } from "./transport/model/TransportIdentifier";
 import { DeviceSdk } from "./DeviceSdk";
 import { SdkConfig } from "./SdkConfig";
 
@@ -11,6 +16,8 @@ import { SdkConfig } from "./SdkConfig";
  * ```
  * const sdk = new LedgerDeviceSdkBuilder()
  *  .setStub(false)
+ *  .addTransport(BuiltinTransports.USB)
+ *  .addCustomTransport(new MyTransport())
  *  .addLogger(myLogger)
  *  .build();
  * ```
@@ -18,13 +25,18 @@ import { SdkConfig } from "./SdkConfig";
 export class LedgerDeviceSdkBuilder {
   private stub = false;
   private readonly loggers: LoggerSubscriberService[] = [];
+  private readonly transports: BuiltinTransports[] = [];
+  private readonly customTransports: Transport[] = [];
   private config: SdkConfig = {
     managerApiUrl: DEFAULT_MANAGER_API_BASE_URL,
+    mockUrl: DEFAULT_MOCK_SERVER_BASE_URL,
   };
 
   build(): DeviceSdk {
     return new DeviceSdk({
       stub: this.stub,
+      transports: this.transports,
+      customTransports: this.customTransports,
       loggers: this.loggers,
       config: this.config,
     });
@@ -32,6 +44,16 @@ export class LedgerDeviceSdkBuilder {
 
   setStub(stubbed: boolean): LedgerDeviceSdkBuilder {
     this.stub = stubbed;
+    return this;
+  }
+
+  addTransport(transport: BuiltinTransports): LedgerDeviceSdkBuilder {
+    this.transports.push(transport);
+    return this;
+  }
+
+  addCustomTransport(transport: Transport): LedgerDeviceSdkBuilder {
+    this.customTransports.push(transport);
     return this;
   }
 
@@ -43,7 +65,7 @@ export class LedgerDeviceSdkBuilder {
     return this;
   }
 
-  addConfig(config: SdkConfig): LedgerDeviceSdkBuilder {
+  addConfig(config: Partial<SdkConfig>): LedgerDeviceSdkBuilder {
     this.config = {
       ...this.config,
       ...config,

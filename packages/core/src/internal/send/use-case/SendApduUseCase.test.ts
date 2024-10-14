@@ -14,7 +14,7 @@ import { ManagerApiDataSource } from "@internal/manager-api/data/ManagerApiDataS
 import { DefaultManagerApiService } from "@internal/manager-api/service/DefaultManagerApiService";
 import { ManagerApiService } from "@internal/manager-api/service/ManagerApiService";
 import { SendApduUseCase } from "@internal/send/use-case/SendApduUseCase";
-import { connectedDeviceStubBuilder } from "@internal/usb/model/InternalConnectedDevice.stub";
+import { connectedDeviceStubBuilder } from "@internal/transport/model/InternalConnectedDevice.stub";
 
 jest.mock("@internal/manager-api/data/AxiosManagerApiDataSource");
 
@@ -30,6 +30,7 @@ describe("SendApduUseCase", () => {
     sessionService = new DefaultDeviceSessionService(() => logger);
     managerApiDataSource = new AxiosManagerApiDataSource({
       managerApiUrl: "http://fake.url",
+      mockUrl: "http://fake-mock.url",
     });
     managerApi = new DefaultManagerApiService(managerApiDataSource);
   });

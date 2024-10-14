@@ -8,6 +8,7 @@ import { Box, DropdownGeneric, Flex, Icons, Text } from "@ledgerhq/react-ui";
 import styled, { DefaultTheme } from "styled-components";
 
 import { useDeviceSessionState } from "@/hooks/useDeviceSessionState";
+import { useDeviceSessionsContext } from "@/providers/DeviceSessionsProvider";
 
 import { StatusText } from "./StatusText";
 
@@ -64,6 +65,10 @@ export const Device: React.FC<DeviceProps> = ({
   sessionId,
 }) => {
   const sessionState = useDeviceSessionState(sessionId);
+  const {
+    state: { deviceById, selectedId },
+    dispatch,
+  } = useDeviceSessionsContext();
   const IconComponent = getIconComponent(model);
   return (
     <Root>
@@ -71,11 +76,16 @@ export const Device: React.FC<DeviceProps> = ({
         <IconComponent size="S" />
       </IconContainer>
       <Box flex={1}>
-        <Text variant="body">{name}</Text>
+        <Text data-testid="text_device-name" variant="body">
+          {name}
+        </Text>
         <Flex>
           {sessionState && (
             <>
-              <StatusText state={sessionState.deviceStatus}>
+              <StatusText
+                data-testid="text_device-connection-status"
+                state={sessionState.deviceStatus}
+              >
                 {sessionState.deviceStatus}
               </StatusText>
               <DotText>•</DotText>
@@ -86,14 +96,27 @@ export const Device: React.FC<DeviceProps> = ({
           </Text>
         </Flex>
       </Box>
-      <DropdownGeneric closeOnClickOutside label="" placement="bottom">
-        <ActionRow onClick={onDisconnect}>
-          <Text variant="paragraph" color="neutral.c80">
-            Disconnect
-          </Text>
-          <Icons.ChevronRight size="S" />
-        </ActionRow>
-      </DropdownGeneric>
+      <div data-testid="dropdown_device-option">
+        <DropdownGeneric closeOnClickOutside label="" placement="bottom">
+          {Object.values(deviceById).length > 1 && selectedId !== sessionId && (
+            <ActionRow
+              onClick={() =>
+                dispatch({ type: "select_session", payload: { sessionId } })
+              }
+            >
+              <Text variant="paragraph" color="neutral.c80">
+                Select
+              </Text>
+            </ActionRow>
+          )}
+          <ActionRow data-testid="CTA_disconnect-device" onClick={onDisconnect}>
+            <Text variant="paragraph" color="neutral.c80">
+              Disconnect
+            </Text>
+            <Icons.ChevronRight size="S" />
+          </ActionRow>
+        </DropdownGeneric>
+      </div>
     </Root>
   );
 };

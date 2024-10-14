@@ -1,6 +1,15 @@
-import React from "react";
-import { Flex, Icons } from "@ledgerhq/react-ui";
+import React, { useCallback, useState } from "react";
+import {
+  Button,
+  DropdownGeneric,
+  Flex,
+  Icons,
+  Input,
+  Switch,
+} from "@ledgerhq/react-ui";
 import styled, { DefaultTheme } from "styled-components";
+
+import { useMockServerContext } from "@/providers/MockServerProvider";
 
 const Root = styled(Flex).attrs({ py: 3, px: 10, gridGap: 8 })`
   color: ${({ theme }: { theme: DefaultTheme }) => theme.colors.neutral.c90};
@@ -13,21 +22,72 @@ const Actions = styled(Flex)`
   align-items: center;
   flex: 1 0 0;
 `;
+
 const IconBox = styled(Flex).attrs({ p: 3 })`
   cursor: pointer;
   align-items: center;
   opacity: 0.7;
 `;
 
-export const Header = () => (
-  <Root>
-    <Actions>
-      <IconBox>
-        <Icons.Question size={"M"} />
-      </IconBox>
-      <IconBox>
-        <Icons.Settings size={"M"} />
-      </IconBox>
-    </Actions>
-  </Root>
-);
+const UrlInput = styled(Input)`
+  align-items: center;
+`;
+
+export const Header = () => {
+  const {
+    dispatch,
+    state: { enabled, url },
+  } = useMockServerContext();
+  const onToggleMockServer = useCallback(() => {
+    dispatch({ type: enabled ? "disable_mock_server" : "enable_mock_server" });
+  }, [dispatch, enabled]);
+  const [mockServerStateUrl, setMockServerStateUrl] = useState<string>(url);
+
+  const validateServerUrl = useCallback(
+    () =>
+      dispatch({
+        type: "set_mock_server_url",
+        payload: { url: mockServerStateUrl },
+      }),
+    [mockServerStateUrl],
+  );
+  return (
+    <Root>
+      <Actions>
+        <IconBox>
+          <Icons.Question size={"M"} />
+        </IconBox>
+        <IconBox>
+          <Icons.Settings size={"M"} />
+        </IconBox>
+      </Actions>
+      <div data-testid="dropdown_mock-server-switch">
+        <DropdownGeneric closeOnClickOutside label="" placement="bottom">
+          <Flex my={5} py={6} px={5} width={280}>
+            <div data-testid="switch_mock-server">
+              <Switch
+                onChange={onToggleMockServer}
+                checked={enabled}
+                name="switch-mock-server"
+                label="Enable Mock server"
+              />
+            </div>
+          </Flex>
+          {enabled && (
+            <UrlInput
+              value={mockServerStateUrl}
+              onChange={(url: string) => setMockServerStateUrl(url)}
+              renderRight={() => (
+                <Flex alignItems="center" justifyContent="stretch">
+                  <Button iconButton onClick={validateServerUrl}>
+                    <Icons.CheckmarkCircleFill size="S" />
+                  </Button>
+                </Flex>
+              )}
+            />
+          )}
+        </DropdownGeneric>
+      </div>
+    </Root>
+  );
+};

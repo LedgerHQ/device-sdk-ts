@@ -6,7 +6,10 @@ import {
   ETH_APP,
   ETH_APP_METADATA,
 } from "@api/device-action/__test-utils__/data";
-import { DEFAULT_MANAGER_API_BASE_URL } from "@internal/manager-api//model/Const";
+import {
+  DEFAULT_MANAGER_API_BASE_URL,
+  DEFAULT_MOCK_SERVER_BASE_URL,
+} from "@internal/manager-api//model/Const";
 import { AxiosManagerApiDataSource } from "@internal/manager-api/data/AxiosManagerApiDataSource";
 import { HttpFetchApiError } from "@internal/manager-api/model/Errors";
 
@@ -20,6 +23,7 @@ describe("ManagerApiService", () => {
   beforeEach(() => {
     dataSource = new AxiosManagerApiDataSource({
       managerApiUrl: DEFAULT_MANAGER_API_BASE_URL,
+      mockUrl: DEFAULT_MOCK_SERVER_BASE_URL,
     }) as jest.Mocked<AxiosManagerApiDataSource>;
     service = new DefaultManagerApiService(dataSource);
   });

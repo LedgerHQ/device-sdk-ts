@@ -1,0 +1,47 @@
+{
+  "name": "@ledgerhq/device-sdk-transport-mock",
+  "version": "1.0.0",
+  "license": "MIT",
+  "main": "lib/index.js",
+  "types": "lib/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./lib/esm/index.js",
+      "require": "./lib/cjs/index.js",
+      "default": "./index.ts",
+      "types": "./lib/esm/index.d.ts"
+    },
+    "./*.js": {
+      "import": "./lib/esm/*.js",
+      "require": "./lib/cjs/*.js",
+      "default": "./*.js",
+      "types": "./lib/esm/*.d.ts"
+    },
+    "./*": {
+      "import": "./lib/esm/*",
+      "require": "./lib/cjs/*",
+      "default": "./*",
+      "types": "./lib/esm/*"
+    }
+  },
+  "scripts": {
+    "build": "zx scripts/build.mjs",
+    "dev": "concurrently \"pnpm dev:esm\" \"pnpm dev:cjs\"",
+    "dev:esm": "concurrently \"tsc --watch -p tsconfig.esm.json\" \"tsc-alias --watch -p tsconfig.esm.json\"",
+    "dev:cjs": "concurrently \"tsc --watch -p tsconfig.cjs.json\" \"tsc-alias --watch -p tsconfig.cjs.json\"",
+    "lint": "eslint",
+    "lint:fix": "pnpm lint --fix",
+    "prettier": "prettier . --check",
+    "prettier:fix": "prettier . --write",
+    "typecheck": "tsc --noEmit",
+    "test": "jest --passWithNoTests",
+    "test:coverage": "pnpm test -- --coverage"
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "@ledgerhq/tsconfig-dsdk": "workspace:*",
+    "@ledgerhq/eslint-config-dsdk": "workspace:*",
+    "@ledgerhq/jest-config-dsdk": "workspace:*",
+    "@ledgerhq/prettier-config-dsdk": "workspace:*"
+  }
+}

@@ -26,6 +26,7 @@ export const ClickableListItem: React.FC<{
       backgroundColor={"opacityDefault.c05"}
       borderRadius={2}
       onClick={onClick}
+      data-testid={`CTA_command-${title}`}
     >
       {icon}
       <Flex flex={1} flexDirection="column" rowGap={4}>
