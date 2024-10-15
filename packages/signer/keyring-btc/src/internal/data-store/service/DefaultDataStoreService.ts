@@ -5,10 +5,14 @@ import { Either, Right } from "purify-ts";
 import type { DataStore } from "@internal/data-store/model/DataStore";
 import { merkleTreeTypes } from "@internal/merkle-tree/di/merkleTreeTypes";
 import type { MerkleMap } from "@internal/merkle-tree/model/MerkleMap";
+import type { HasherService } from "@internal/merkle-tree/service/HasherService";
 import type { MerkleMapBuilder } from "@internal/merkle-tree/service/MerkleMapBuilder";
 import type { MerkleTreeBuilder } from "@internal/merkle-tree/service/MerkleTreeBuilder";
 import { Psbt } from "@internal/psbt/model/Psbt";
 import { Value } from "@internal/psbt/model/Value";
+import { walletTypes } from "@internal/wallet/di/walletTypes";
+import { Wallet } from "@internal/wallet/model/Wallet";
+import type { WalletSerializer } from "@internal/wallet/service/WalletSerializer";
 
 import type { DataStoreService, PsbtCommitment } from "./DataStoreService";
 
@@ -19,6 +23,10 @@ export class DefaultDataStoreService implements DataStoreService {
     private merkleTreeBuilder: MerkleTreeBuilder,
     @inject(merkleTreeTypes.MerkleMapBuilder)
     private merkleMapBuilder: MerkleMapBuilder,
+    @inject(walletTypes.WalletSerializer)
+    private walletSerializer: WalletSerializer,
+    @inject(merkleTreeTypes.HasherService)
+    private hasher: HasherService,
   ) {}
 
   merklizeChunks(store: DataStore, chunks: Uint8Array[]): Uint8Array {
@@ -26,6 +34,21 @@ export class DefaultDataStoreService implements DataStoreService {
     const tree = this.merkleTreeBuilder.build(chunks);
     store.addMerkleTree(tree);
     return tree.getRoot();
+  }
+
+  merklizeWallet(store: DataStore, wallet: Wallet): void {
+    // As described in commands documentation, we must expose:
+    // - serialized wallet preimage
+    // - descriptor template preimage
+    // - keys merkle tree
+    // https://github.com/LedgerHQ/app-bitcoin-new/blob/master/doc/bitcoin.md#get_wallet_address
+    const serializedWallet = this.walletSerializer.serialize(wallet);
+    store.addPreimage(this.hasher.hash(serializedWallet), serializedWallet);
+    store.addPreimage(
+      this.hasher.hash(wallet.descriptorBuffer),
+      wallet.descriptorBuffer,
+    );
+    store.addMerkleTree(wallet.keysTree);
   }
 
   merklizePsbt(store: DataStore, psbt: Psbt): Either<Error, PsbtCommitment> {

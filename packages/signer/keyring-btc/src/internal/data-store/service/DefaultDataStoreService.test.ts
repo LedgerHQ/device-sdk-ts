@@ -1,10 +1,15 @@
 import { Left, Right } from "purify-ts";
 
 import { DataStore } from "@internal/data-store/model/DataStore";
+import { Leaf } from "@internal/merkle-tree/model/Leaf";
+import { MerkleTree } from "@internal/merkle-tree/model/MerkleTree";
+import { HasherService } from "@internal/merkle-tree/service/HasherService";
 import { MerkleMapBuilder } from "@internal/merkle-tree/service/MerkleMapBuilder";
 import { MerkleTreeBuilder } from "@internal/merkle-tree/service/MerkleTreeBuilder";
 import { Psbt } from "@internal/psbt/model/Psbt";
 import { Value } from "@internal/psbt/model/Value";
+import { Wallet } from "@internal/wallet/model/Wallet";
+import { WalletSerializer } from "@internal/wallet/service/WalletSerializer";
 
 import { DefaultDataStoreService } from "./DefaultDataStoreService";
 
@@ -17,6 +22,12 @@ describe("DefaultDataStoreService", () => {
     build: jest.fn(),
   };
 
+  const mockWalletSerialize = jest.fn();
+  const mockWalletSerializer: WalletSerializer = {
+    serialize: mockWalletSerialize,
+    getId: jest.fn(),
+  };
+
   const mockDataStore = {
     getPreimage: jest.fn(),
     getMerkleLeafIndex: jest.fn(),
@@ -24,6 +35,11 @@ describe("DefaultDataStoreService", () => {
     addPreimage: jest.fn(),
     addMerkleTree: jest.fn(),
     addMerkleMap: jest.fn(),
+  };
+
+  const mockedHash = jest.fn();
+  const mockedHasherService: HasherService = {
+    hash: mockedHash,
   };
 
   function createMerkleMap(commitment: number) {
@@ -54,6 +70,8 @@ describe("DefaultDataStoreService", () => {
       const storeService = new DefaultDataStoreService(
         mockMerkleTreeBuilder as unknown as MerkleTreeBuilder,
         mockMerkleMapBuilder as unknown as MerkleMapBuilder,
+        mockWalletSerializer,
+        mockedHasherService,
       );
 
       // When
@@ -67,6 +85,56 @@ describe("DefaultDataStoreService", () => {
       expect(mockMerkleTreeBuilder.build).toHaveBeenCalledWith(chunks);
       expect(mockDataStore.addMerkleTree).toHaveBeenCalledWith(merkleTree);
       expect(commitment).toStrictEqual(Uint8Array.from([91]));
+    });
+  });
+
+  describe("Merkleize wallet", () => {
+    beforeEach(() => {
+      jest.resetAllMocks();
+    });
+
+    it("Success case", () => {
+      // Given
+      const merkleTree = new MerkleTree(
+        new Leaf(new Uint8Array(), new Uint8Array(32).fill(7)),
+        [],
+      );
+      const serialized = new Uint8Array(5).fill(6);
+      const hash1 = new Uint8Array(5).fill(7);
+      const hash2 = new Uint8Array(5).fill(8);
+      const wallet = new Wallet({
+        name: "Cold storage",
+        descriptorTemplate: "template descriptor",
+        keys: ["key1", "key2", "key3"],
+        hmac: new Uint8Array(),
+        keysTree: merkleTree,
+        descriptorBuffer: new Uint8Array(32).fill(42),
+      });
+      const storeService = new DefaultDataStoreService(
+        mockMerkleTreeBuilder as unknown as MerkleTreeBuilder,
+        mockMerkleMapBuilder as unknown as MerkleMapBuilder,
+        mockWalletSerializer,
+        mockedHasherService,
+      );
+
+      // When
+      mockWalletSerialize.mockReturnValueOnce(serialized);
+      mockedHash.mockReturnValueOnce(hash1).mockReturnValueOnce(hash2);
+      storeService.merklizeWallet(
+        mockDataStore as unknown as DataStore,
+        wallet,
+      );
+
+      // Then
+      expect(mockWalletSerialize).toHaveBeenCalledWith(wallet);
+      expect(mockedHash).toHaveBeenCalledWith(serialized);
+      expect(mockedHash).toHaveBeenCalledWith(wallet.descriptorBuffer);
+      expect(mockDataStore.addPreimage).toHaveBeenCalledWith(hash1, serialized);
+      expect(mockDataStore.addPreimage).toHaveBeenCalledWith(
+        hash2,
+        new Uint8Array(32).fill(42),
+      );
+      expect(mockDataStore.addMerkleTree).toHaveBeenCalledWith(merkleTree);
     });
   });
 
@@ -107,6 +175,8 @@ describe("DefaultDataStoreService", () => {
       const storeService = new DefaultDataStoreService(
         mockMerkleTreeBuilder as unknown as MerkleTreeBuilder,
         mockMerkleMapBuilder as unknown as MerkleMapBuilder,
+        mockWalletSerializer,
+        mockedHasherService,
       );
       const psbt = new Psbt(TEST_PSBT.globalMap, [], []);
 
@@ -126,6 +196,8 @@ describe("DefaultDataStoreService", () => {
       const storeService = new DefaultDataStoreService(
         mockMerkleTreeBuilder as unknown as MerkleTreeBuilder,
         mockMerkleMapBuilder as unknown as MerkleMapBuilder,
+        mockWalletSerializer,
+        mockedHasherService,
       );
       const psbt = new Psbt(TEST_PSBT.globalMap, TEST_PSBT.inputMaps, []);
 
@@ -148,6 +220,8 @@ describe("DefaultDataStoreService", () => {
       const storeService = new DefaultDataStoreService(
         mockMerkleTreeBuilder as unknown as MerkleTreeBuilder,
         mockMerkleMapBuilder as unknown as MerkleMapBuilder,
+        mockWalletSerializer,
+        mockedHasherService,
       );
 
       // When
@@ -175,6 +249,8 @@ describe("DefaultDataStoreService", () => {
       const storeService = new DefaultDataStoreService(
         mockMerkleTreeBuilder as unknown as MerkleTreeBuilder,
         mockMerkleMapBuilder as unknown as MerkleMapBuilder,
+        mockWalletSerializer,
+        mockedHasherService,
       );
       const psbt = new Psbt(
         TEST_PSBT.globalMap,
@@ -216,6 +292,8 @@ describe("DefaultDataStoreService", () => {
       const storeService = new DefaultDataStoreService(
         mockMerkleTreeBuilder as unknown as MerkleTreeBuilder,
         mockMerkleMapBuilder as unknown as MerkleMapBuilder,
+        mockWalletSerializer,
+        mockedHasherService,
       );
       const psbt = new Psbt(
         TEST_PSBT.globalMap,
