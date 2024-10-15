@@ -7,6 +7,7 @@ import {
   type InternalApi,
 } from "@ledgerhq/device-management-kit";
 import { Just, Maybe, Nothing } from "purify-ts";
+import { gte } from "semver";
 
 import { type TypedData } from "@api/model/TypedData";
 import { type ProvideEIP712ContextTaskArgs } from "@internal/app-binder/task/ProvideEIP712ContextTask";
@@ -74,8 +75,9 @@ export class BuildEIP712ContextTask {
     if (deviceState.currentApp.name !== "Ethereum") {
       return Nothing;
     }
-    // TODO add currentAppVersion to session state
-    // const shouldUseV2Filters = semver.gte(deviceState.currentAppVersion!, "1.11.1-0");
-    return Just("v2");
+    // EIP712 v2 (amount & datetime filters) supported since 1.11.0:
+    // https://github.com/LedgerHQ/app-ethereum/blob/develop/doc/ethapp.adoc#1110-1
+    const shouldUseV2Filters = gte(deviceState.currentApp.version, "1.11.0");
+    return shouldUseV2Filters ? Just("v2") : Just("v1");
   }
 }
