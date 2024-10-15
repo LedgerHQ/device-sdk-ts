@@ -172,7 +172,7 @@ describe("BuildEIP712ContextTask", () => {
       sessionStateType: DeviceSessionStateType.ReadyWithoutSecureChannel,
       deviceStatus: DeviceStatus.CONNECTED,
       installedApps: [],
-      currentApp: { name: "Ethereum", version: "1.0" },
+      currentApp: { name: "Ethereum", version: "1.11.0" },
     });
     contextMouleMock.getTypedDataFilters.mockResolvedValueOnce({
       type: "error",
@@ -208,7 +208,7 @@ describe("BuildEIP712ContextTask", () => {
       sessionStateType: DeviceSessionStateType.ReadyWithoutSecureChannel,
       deviceStatus: DeviceStatus.CONNECTED,
       installedApps: [],
-      currentApp: { name: "Ethereum", version: "1.0" },
+      currentApp: { name: "Ethereum", version: "1.11.0" },
     });
     contextMouleMock.getTypedDataFilters.mockResolvedValueOnce(
       TEST_CLEAR_SIGN_CONTEXT,
@@ -227,6 +227,51 @@ describe("BuildEIP712ContextTask", () => {
       verifyingContract: "0x000000000022d473030f116ddee9f6b43ac78ba3",
       chainId: 137,
       version: "v2",
+      schema: TEST_DATA["types"],
+      fieldsValues: [
+        {
+          path: "details.amount",
+          value: Uint8Array.from([0x12]),
+        },
+        {
+          path: "details.expiration",
+          value: Uint8Array.from([0x13]),
+        },
+      ],
+    });
+  });
+
+  it("Build context with clear signing context V1", async () => {
+    // GIVEN
+    const task = new BuildEIP712ContextTask(
+      apiMock,
+      contextMouleMock,
+      parserMock,
+      TEST_DATA,
+    );
+    parserMock.parse.mockReturnValueOnce(
+      Right({
+        types: TEST_TYPES,
+        domain: TEST_DOMAIN_VALUES,
+        message: TEST_MESSAGE_VALUES,
+      }),
+    );
+    apiMock.getDeviceSessionState.mockReturnValueOnce({
+      sessionStateType: DeviceSessionStateType.ReadyWithoutSecureChannel,
+      deviceStatus: DeviceStatus.CONNECTED,
+      installedApps: [],
+      currentApp: { name: "Ethereum", version: "1.10.0" },
+    });
+    contextMouleMock.getTypedDataFilters.mockResolvedValueOnce(
+      TEST_CLEAR_SIGN_CONTEXT,
+    );
+    // WHEN
+    await task.run();
+    // THEN
+    expect(contextMouleMock.getTypedDataFilters).toHaveBeenCalledWith({
+      verifyingContract: "0x000000000022d473030f116ddee9f6b43ac78ba3",
+      chainId: 137,
+      version: "v1",
       schema: TEST_DATA["types"],
       fieldsValues: [
         {

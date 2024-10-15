@@ -378,6 +378,9 @@ importers:
       reflect-metadata:
         specifier: ^0.2.2
         version: 0.2.2
+      semver:
+        specifier: ^7.6.3
+        version: 7.6.3
       xstate:
         specifier: ^5.18.2
         version: 5.18.2
@@ -403,6 +406,9 @@ importers:
       '@ledgerhq/tsconfig-dsdk':
         specifier: workspace:*
         version: link:../../config/typescript
+      '@types/semver':
+        specifier: ^7.5.8
+        version: 7.5.8
       rxjs:
         specifier: ^7.8.1
         version: 7.8.1

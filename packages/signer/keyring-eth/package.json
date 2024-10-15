@@ -38,16 +38,18 @@
     "inversify-logger-middleware": "^3.1.0",
     "purify-ts": "^2.1.0",
     "reflect-metadata": "^0.2.2",
+    "semver": "^7.6.3",
     "xstate": "^5.18.2"
   },
   "devDependencies": {
-    "@ledgerhq/esbuild-tools": "workspace:*",
     "@ledgerhq/context-module": "workspace:*",
     "@ledgerhq/device-management-kit": "workspace:*",
+    "@ledgerhq/esbuild-tools": "workspace:*",
     "@ledgerhq/eslint-config-dsdk": "workspace:*",
     "@ledgerhq/jest-config-dsdk": "workspace:*",
     "@ledgerhq/prettier-config-dsdk": "workspace:*",
     "@ledgerhq/tsconfig-dsdk": "workspace:*",
+    "@types/semver": "^7.5.8",
     "rxjs": "^7.8.1",
     "ts-node": "^10.9.2"
   },
