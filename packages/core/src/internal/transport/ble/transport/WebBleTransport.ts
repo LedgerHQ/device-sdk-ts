@@ -305,7 +305,7 @@ export class WebBleTransport implements Transport {
     try {
       const [writeCharacteristic, notifyCharacteristic] = await Promise.all([
         internalDevice.bleGattService.getCharacteristic(
-          internalDevice.bleDeviceInfos.writeUuid,
+          internalDevice.bleDeviceInfos.writeCmdUuid,
         ),
         internalDevice.bleGattService.getCharacteristic(
           internalDevice.bleDeviceInfos.notifyUuid,
@@ -375,7 +375,7 @@ export class WebBleTransport implements Transport {
         const [writeC, notifyC] = await Promise.all([
           service
             .extract()
-            .getCharacteristic(internalDevice.bleDeviceInfos.writeUuid),
+            .getCharacteristic(internalDevice.bleDeviceInfos.writeCmdUuid),
           service
             .extract()
             .getCharacteristic(internalDevice.bleDeviceInfos.notifyUuid),

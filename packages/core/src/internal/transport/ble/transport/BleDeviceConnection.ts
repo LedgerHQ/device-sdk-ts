@@ -144,7 +144,7 @@ export class BleDeviceConnection implements DeviceConnection {
     const requestMtuApdu = Uint8Array.from([0x08, 0x00, 0x00, 0x00, 0x00]);
 
     await this._notifyCharacteristic.startNotifications();
-    await this._writeCharacteristic.writeValueWithResponse(requestMtuApdu);
+    await this._writeCharacteristic.writeValueWithoutResponse(requestMtuApdu);
   }
 
   /**
@@ -207,7 +207,7 @@ export class BleDeviceConnection implements DeviceConnection {
         this._logger.debug("Sending Frame", {
           data: { frame: frame.getRawData() },
         });
-        await this._writeCharacteristic.writeValueWithResponse(
+        await this._writeCharacteristic.writeValueWithoutResponse(
           frame.getRawData(),
         );
       } catch (error) {

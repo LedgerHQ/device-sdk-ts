@@ -71,7 +71,7 @@ describe("BleDeviceConnection", () => {
       );
     });
 
-    it("should call writeValueWithResponse if device is setup", async () => {
+    it("should send apdu without error if device is setup", async () => {
       // given
       const connection = new BleDeviceConnection(
         {
@@ -112,9 +112,9 @@ describe("BleDeviceConnection", () => {
       // when
       await connection.setup();
       // then
-      expect(writeCharacteristic.writeValueWithResponse).toHaveBeenCalledWith(
-        new Uint8Array(GET_MTU_APDU),
-      );
+      expect(
+        writeCharacteristic.writeValueWithoutResponse,
+      ).toHaveBeenCalledWith(new Uint8Array(GET_MTU_APDU));
     });
     it("should setup apduSender with the correct mtu size", () => {
       // given
