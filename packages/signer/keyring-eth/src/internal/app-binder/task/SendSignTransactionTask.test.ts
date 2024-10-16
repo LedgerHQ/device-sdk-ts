@@ -85,6 +85,7 @@ describe("SendSignTransactionTask", () => {
         const args = {
           derivationPath: "44'/60'/0'/0/0",
           serializedTransaction: SIMPLE_TRANSACTION,
+          isLegacy: true,
         };
         apiMock.sendCommand.mockResolvedValueOnce(resultOk);
 
@@ -112,6 +113,7 @@ describe("SendSignTransactionTask", () => {
         const args = {
           derivationPath: "44'/60'/0'/0/0",
           serializedTransaction: BIG_TRANSACTION,
+          isLegacy: true,
         };
         apiMock.sendCommand.mockResolvedValueOnce(resultNothing);
         apiMock.sendCommand.mockResolvedValueOnce(resultOk);
@@ -150,6 +152,7 @@ describe("SendSignTransactionTask", () => {
         const args = {
           derivationPath: "44'/60'/0'/0/0",
           serializedTransaction: SIMPLE_TRANSACTION,
+          isLegacy: true,
         };
         apiMock.sendCommand.mockResolvedValueOnce(resultNothing);
 
@@ -179,6 +182,7 @@ describe("SendSignTransactionTask", () => {
         const args = {
           derivationPath: "44'/60'/0'/0/0",
           serializedTransaction: BIG_TRANSACTION,
+          isLegacy: true,
         };
         apiMock.sendCommand.mockResolvedValueOnce(resultNothing);
         apiMock.sendCommand.mockResolvedValueOnce(

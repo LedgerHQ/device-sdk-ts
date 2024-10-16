@@ -54,7 +54,7 @@ describe("SignTransactionDeviceAction", () => {
   let defaultTransaction: Transaction;
 
   beforeEach(() => {
-    jest.resetAllMocks();
+    jest.clearAllMocks();
     defaultTransaction = new Transaction();
     defaultTransaction.chainId = 1n;
     defaultTransaction.nonce = 0;
@@ -199,6 +199,7 @@ describe("SignTransactionDeviceAction", () => {
               input: {
                 derivationPath: "44'/60'/0'/0/0",
                 serializedTransaction: new Uint8Array([0x01, 0x02, 0x03]),
+                isLegacy: true,
               },
             }),
           );

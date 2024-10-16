@@ -65,6 +65,7 @@ export type MachineDependencies = {
     input: {
       derivationPath: string;
       serializedTransaction: Uint8Array;
+      isLegacy: boolean;
     };
   }) => Promise<CommandResult<Signature>>;
 };
@@ -308,6 +309,7 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
               derivationPath: context.input.derivationPath,
               serializedTransaction:
                 context._internalState.serializedTransaction!,
+              isLegacy: true, // TODO: use ETHEREUM app version to determine if legacy
             }),
             onDone: {
               target: "SignTransactionResultCheck",
@@ -377,6 +379,7 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
       input: {
         derivationPath: string;
         serializedTransaction: Uint8Array;
+        isLegacy: boolean;
       };
     }) => new SendSignTransactionTask(internalApi, arg0.input).run();
 
