@@ -53,9 +53,9 @@ export const AllDeviceActions: React.FC<{ sessionId: string }> = ({
         title: "Open app",
         description:
           "Perform all the actions necessary to open an app on the device",
-        executeDeviceAction: ({ appName }, inspect) => {
+        executeDeviceAction: ({ appName, unlockTimeout }, inspect) => {
           const deviceAction = new OpenAppDeviceAction({
-            input: { appName },
+            input: { appName, unlockTimeout },
             inspect,
           });
           return sdk.executeDeviceAction({
@@ -63,7 +63,7 @@ export const AllDeviceActions: React.FC<{ sessionId: string }> = ({
             deviceAction,
           });
         },
-        initialValues: { appName: "" },
+        initialValues: { appName: "", unlockTimeout: UNLOCK_TIMEOUT },
         deviceModelId,
       } satisfies DeviceActionProps<
         OpenAppDAOutput,
@@ -96,9 +96,9 @@ export const AllDeviceActions: React.FC<{ sessionId: string }> = ({
       {
         title: "Go to dashboard",
         description: "Navigate to the dashboard",
-        executeDeviceAction: (_, inspect) => {
+        executeDeviceAction: ({ unlockTimeout }, inspect) => {
           const deviceAction = new GoToDashboardDeviceAction({
-            input: { unlockTimeout: UNLOCK_TIMEOUT },
+            input: { unlockTimeout },
             inspect,
           });
           return sdk.executeDeviceAction({
@@ -117,9 +117,9 @@ export const AllDeviceActions: React.FC<{ sessionId: string }> = ({
       {
         title: "List apps",
         description: "List all applications installed on the device",
-        executeDeviceAction: (_, inspect) => {
+        executeDeviceAction: ({ unlockTimeout }, inspect) => {
           const deviceAction = new ListAppsDeviceAction({
-            input: { unlockTimeout: UNLOCK_TIMEOUT },
+            input: { unlockTimeout },
             inspect,
           });
           return sdk.executeDeviceAction({
@@ -139,9 +139,9 @@ export const AllDeviceActions: React.FC<{ sessionId: string }> = ({
         title: "List apps with metadata",
         description:
           "List all applications installed on the device with additional metadata",
-        executeDeviceAction: (_, inspect) => {
+        executeDeviceAction: ({ unlockTimeout }, inspect) => {
           const deviceAction = new ListAppsWithMetadataDeviceAction({
-            input: { unlockTimeout: UNLOCK_TIMEOUT },
+            input: { unlockTimeout },
             inspect,
           });
           return sdk.executeDeviceAction({
