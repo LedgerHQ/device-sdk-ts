@@ -92,7 +92,9 @@ export function CommandForm<Args extends Record<string, FieldType>>({
               id={key}
               value={value}
               placeholder={key}
-              onChange={(newVal) => setFormValue(key, newVal ?? 0)}
+              onChange={(newVal) =>
+                setFormValue(key, parseInt(newVal.toString(), 10) ?? 0)
+              }
               type="number"
               disabled={disabled}
             />
