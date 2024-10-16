@@ -172,7 +172,7 @@ describe("BuildEIP712ContextTask", () => {
       sessionStateType: DeviceSessionStateType.ReadyWithoutSecureChannel,
       deviceStatus: DeviceStatus.CONNECTED,
       installedApps: [],
-      currentApp: { name: "Ethereum", version: "1.11.0" },
+      currentApp: { name: "Ethereum", version: "1.12.0" },
     });
     contextMouleMock.getTypedDataFilters.mockResolvedValueOnce({
       type: "error",
@@ -208,7 +208,7 @@ describe("BuildEIP712ContextTask", () => {
       sessionStateType: DeviceSessionStateType.ReadyWithoutSecureChannel,
       deviceStatus: DeviceStatus.CONNECTED,
       installedApps: [],
-      currentApp: { name: "Ethereum", version: "1.11.0" },
+      currentApp: { name: "Ethereum", version: "1.12.0" },
     });
     contextMouleMock.getTypedDataFilters.mockResolvedValueOnce(
       TEST_CLEAR_SIGN_CONTEXT,
@@ -260,7 +260,7 @@ describe("BuildEIP712ContextTask", () => {
       sessionStateType: DeviceSessionStateType.ReadyWithoutSecureChannel,
       deviceStatus: DeviceStatus.CONNECTED,
       installedApps: [],
-      currentApp: { name: "Ethereum", version: "1.10.0" },
+      currentApp: { name: "Ethereum", version: "1.11.0" },
     });
     contextMouleMock.getTypedDataFilters.mockResolvedValueOnce(
       TEST_CLEAR_SIGN_CONTEXT,

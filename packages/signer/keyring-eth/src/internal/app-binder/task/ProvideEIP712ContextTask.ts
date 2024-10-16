@@ -39,6 +39,11 @@ export type ProvideEIP712ContextTaskArgs = {
   clearSignContext: Maybe<TypedDataClearSignContextSuccess>;
 };
 
+type DeviceAssetIndexes = {
+  indexes: Record<TypedDataTokenIndex, number>;
+  nextIndex: number;
+};
+
 export class ProvideEIP712ContextTask {
   constructor(
     private api: InternalApi,
@@ -119,20 +124,20 @@ export class ProvideEIP712ContextTask {
     }
 
     // Send message implementation values
-    const tokensIndexes: Record<TypedDataTokenIndex, number> = {};
+    const deviceIndexes: DeviceAssetIndexes = { indexes: {}, nextIndex: 0 };
     for (const value of this.args.message) {
       // Provide the descriptors of tokens referenced by the message, if any.
       // Keep a map of all device indexes for those provided tokens.
       const maybeError = await this.provideTokenInformation(
         value,
-        tokensIndexes,
+        deviceIndexes,
       );
       if (maybeError.isJust()) {
         return maybeError.extract();
       }
       // If there is a filter, it should be sent just before the corresponding implementation:
       // https://github.com/LedgerHQ/app-ethereum/blob/develop/doc/ethapp.adoc#amount-join-token
-      const maybeResult = await this.provideFiltering(value, tokensIndexes);
+      const maybeResult = await this.provideFiltering(value, deviceIndexes);
       if (
         maybeResult.isJust() &&
         !isSuccessCommandResult(maybeResult.extract())
@@ -169,16 +174,16 @@ export class ProvideEIP712ContextTask {
 
   async provideTokenInformation(
     value: TypedDataValue,
-    tokensIndexes: Record<TypedDataTokenIndex, number>,
+    deviceIndexes: DeviceAssetIndexes,
   ): Promise<Maybe<CommandErrorResult>> {
     if (this.args.clearSignContext.isJust()) {
       const filter = this.args.clearSignContext.extract().filters[value.path];
       // Tokens descriptors only needed when a tokenIndex is available in filter.
-      // It should be sent to the device only 1 time so tokensIndexes has to be checked.
+      // It should be sent to the device only 1 time so deviceIndexes has to be checked.
       if (
         filter !== undefined &&
         (filter.type === "amount" || filter.type === "token") &&
-        tokensIndexes[filter.tokenIndex] === undefined
+        deviceIndexes.indexes[filter.tokenIndex] === undefined
       ) {
         const descriptorIndex = filter.tokenIndex;
         const tokens = this.args.clearSignContext.extract().tokens;
@@ -194,13 +199,16 @@ export class ProvideEIP712ContextTask {
           return Maybe.of(provideTokenInfoResult);
         }
         let { tokenIndex: deviceIndex } = provideTokenInfoResult.data;
+        deviceIndexes.nextIndex = deviceIndex + 1;
+
         // The token corresponding to the Verifying Contract of message domain has a special index value, as described here:
         // https://github.com/LedgerHQ/app-ethereum/blob/develop/doc/ethapp.adoc#amount-join-value
         if (Number(descriptorIndex) === VERIFYING_CONTRACT_TOKEN_INDEX) {
           deviceIndex = VERIFYING_CONTRACT_TOKEN_INDEX;
         }
+
         // Save the token index in the device slots. That index will be used by later filtering commands.
-        tokensIndexes[Number(descriptorIndex)] = deviceIndex;
+        deviceIndexes.indexes[Number(descriptorIndex)] = deviceIndex;
       }
     }
     return Nothing;
@@ -208,15 +216,11 @@ export class ProvideEIP712ContextTask {
 
   async provideFiltering(
     value: TypedDataValue,
-    tokensIndexes: Record<TypedDataTokenIndex, number>,
+    deviceIndexes: DeviceAssetIndexes,
   ): Promise<Maybe<CommandResult<void>>> {
     if (this.args.clearSignContext.isJust()) {
       const filter = this.args.clearSignContext.extract().filters[value.path];
-      if (
-        filter === undefined ||
-        ((filter.type === "amount" || filter.type === "token") &&
-          tokensIndexes[filter.tokenIndex] === undefined)
-      ) {
+      if (filter === undefined) {
         return Nothing;
       }
       switch (filter.type) {
@@ -241,22 +245,24 @@ export class ProvideEIP712ContextTask {
             ),
           );
         case "token":
+          this.sanitizeDeviceIndex(filter.tokenIndex, deviceIndexes);
           return Maybe.of(
             await this.api.sendCommand(
               new SendEIP712FilteringCommand({
                 type: Eip712FilterType.Token,
-                tokenIndex: tokensIndexes[filter.tokenIndex]!,
+                tokenIndex: deviceIndexes.indexes[filter.tokenIndex]!,
                 signature: filter.signature,
               }),
             ),
           );
         case "amount":
+          this.sanitizeDeviceIndex(filter.tokenIndex, deviceIndexes);
           return Maybe.of(
             await this.api.sendCommand(
               new SendEIP712FilteringCommand({
                 type: Eip712FilterType.Amount,
                 displayName: filter.displayName,
-                tokenIndex: tokensIndexes[filter.tokenIndex]!,
+                tokenIndex: deviceIndexes.indexes[filter.tokenIndex]!,
                 signature: filter.signature,
               }),
             ),
@@ -264,5 +270,14 @@ export class ProvideEIP712ContextTask {
       }
     }
     return Nothing;
+  }
+
+  private sanitizeDeviceIndex(
+    descriptorIndex: number,
+    deviceIndexes: DeviceAssetIndexes,
+  ) {
+    // If a token is missing, the device will replace it with a placeholder and use the next available index
+    deviceIndexes.indexes[descriptorIndex] =
+      deviceIndexes.indexes[descriptorIndex] ?? deviceIndexes.nextIndex++;
   }
 }
