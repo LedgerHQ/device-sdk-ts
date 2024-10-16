@@ -85,10 +85,12 @@ describe("GoToDashboardDeviceAction", () => {
     });
 
     it("should run the device action with device not on dashboard", (done) => {
-      setupGetDeviceStatusMock({
-        currentApp: "Bitcoin",
-        currentAppVersion: "1.0.0",
-      });
+      setupGetDeviceStatusMock([
+        {
+          currentApp: "Bitcoin",
+          currentAppVersion: "1.0.0",
+        },
+      ]);
 
       const goToDashboardDeviceAction = new GoToDashboardDeviceAction({
         input: { unlockTimeout: 500 },
@@ -258,7 +260,7 @@ describe("GoToDashboardDeviceAction", () => {
 
   describe("error cases", () => {
     it("should return an error if GetDeviceStatus return an error", (done) => {
-      setupGetDeviceStatusMock(new UnknownDAError("Unknown error"));
+      setupGetDeviceStatusMock([new UnknownDAError("Unknown error")]);
 
       const goToDashboardDeviceAction = new GoToDashboardDeviceAction({
         input: { unlockTimeout: 500 },
@@ -300,10 +302,12 @@ describe("GoToDashboardDeviceAction", () => {
 
     describe("not on dashboard", () => {
       it("should return an error if closeApp fails", (done) => {
-        setupGetDeviceStatusMock({
-          currentApp: "Bitcoin",
-          currentAppVersion: "1.0.0",
-        });
+        setupGetDeviceStatusMock([
+          {
+            currentApp: "Bitcoin",
+            currentAppVersion: "1.0.0",
+          },
+        ]);
 
         const goToDashboardDeviceAction = new GoToDashboardDeviceAction({
           input: {},
@@ -359,10 +363,12 @@ describe("GoToDashboardDeviceAction", () => {
       });
 
       it("should return an error if getAppAndVersion fails", (done) => {
-        setupGetDeviceStatusMock({
-          currentApp: "Bitcoin",
-          currentAppVersion: "1.0.0",
-        });
+        setupGetDeviceStatusMock([
+          {
+            currentApp: "Bitcoin",
+            currentAppVersion: "1.0.0",
+          },
+        ]);
 
         const goToDashboardDeviceAction = new GoToDashboardDeviceAction({
           input: { unlockTimeout: 500 },
@@ -431,10 +437,12 @@ describe("GoToDashboardDeviceAction", () => {
       });
 
       it("should return an error if getAppAndVersion does not return an app name", (done) => {
-        setupGetDeviceStatusMock({
-          currentApp: "Bitcoin",
-          currentAppVersion: "1.0.0",
-        });
+        setupGetDeviceStatusMock([
+          {
+            currentApp: "Bitcoin",
+            currentAppVersion: "1.0.0",
+          },
+        ]);
 
         const goToDashboardDeviceAction = new GoToDashboardDeviceAction({
           input: { unlockTimeout: 500 },
