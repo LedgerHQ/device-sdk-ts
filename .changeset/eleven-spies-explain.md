@@ -1,9 +1,8 @@
 ---
 "@ledgerhq/context-module": patch
-"@ledgerhq/keyring-btc": patch
-"@ledgerhq/keyring-eth": patch
+"@ledgerhq/device-signer-kit-ethereum": patch
 "@ledgerhq/device-sdk-trusted-apps": patch
-"@ledgerhq/device-sdk-core": patch
+"@ledgerhq/device-management-kit": patch
 "@ledgerhq/device-sdk-ui": patch
 ---
 
