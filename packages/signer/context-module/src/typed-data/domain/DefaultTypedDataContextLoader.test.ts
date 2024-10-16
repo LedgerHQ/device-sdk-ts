@@ -305,7 +305,7 @@ describe("TokenContextLoader", () => {
       });
     });
 
-    it("should return an error if tokens are unavailable", async () => {
+    it("success with unavailable tokens", async () => {
       // GIVEN
       const ctx = {
         verifyingContract: "0x000000000022d473030f116ddee9f6b43ac78ba3",
@@ -349,8 +349,24 @@ describe("TokenContextLoader", () => {
 
       // THEN
       expect(result).toEqual({
-        type: "error",
-        error: new Error("token error"),
+        type: "success",
+        messageInfo: {
+          displayName: "Permit2",
+          filtersCount: 2,
+          signature:
+            "3045022100e3c597d13d28a87a88b0239404c668373cf5063362f2a81d09eed4582941dfe802207669aabb504fd5b95b2734057f6b8bbf51f14a69a5f9bdf658a5952cefbf44d3",
+        },
+        tokens: {},
+        filters: {
+          "details.token": {
+            displayName: "Amount allowance",
+            path: "details.token",
+            signature:
+              "3044022075103b38995e031d1ebbfe38ac6603bec32854b5146a664e49b4cc4f460c1da6022029f4b0fd1f3b7995ffff1627d4b57f27888a2dcc9b3a4e85c37c67571092c733",
+            tokenIndex: 0,
+            type: "token",
+          },
+        },
       });
     });
 

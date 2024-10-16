@@ -81,12 +81,6 @@ export class DefaultTypedDataContextLoader implements TypedDataContextLoader {
           address,
           chainId,
         });
-        if (payload.isLeft()) {
-          return {
-            type: "error",
-            error: payload.extract(),
-          };
-        }
         payload.ifRight((payload) => {
           mappedTokens[tokenIndex] = payload;
         });
@@ -105,12 +99,6 @@ export class DefaultTypedDataContextLoader implements TypedDataContextLoader {
           address,
           chainId,
         });
-        if (payload.isLeft()) {
-          return {
-            type: "error",
-            error: payload.extract(),
-          };
-        }
         payload.ifRight((payload) => {
           mappedTokens[tokenIndex] = payload;
         });

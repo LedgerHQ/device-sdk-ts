@@ -507,6 +507,136 @@ describe("ProvideEIP712ContextTask", () => {
     );
   });
 
+  it("Both tokens unavailable", async () => {
+    // GIVEN
+    const args: ProvideEIP712ContextTaskArgs = {
+      types: TEST_TYPES,
+      domain: TEST_DOMAIN_VALUES,
+      message: TEST_MESSAGE_VALUES,
+      clearSignContext: Just({
+        type: "success",
+        messageInfo: TEST_CLEAR_SIGN_CONTEXT.messageInfo,
+        filters: TEST_CLEAR_SIGN_CONTEXT.filters,
+        tokens: {},
+      }),
+    };
+
+    // WHEN
+    apiMock.sendCommand.mockResolvedValue(
+      CommandResultFactory({ data: undefined }),
+    );
+    await new ProvideEIP712ContextTask(apiMock, args).run();
+
+    // THEN
+    expect(apiMock.sendCommand).not.toHaveBeenCalledWith(
+      new ProvideTokenInformationCommand({
+        payload: "payload-0x7ceb23fd6bc0add59e62ac25578270cff1b9f619",
+      }),
+    );
+    expect(apiMock.sendCommand).not.toHaveBeenCalledWith(
+      new ProvideTokenInformationCommand({
+        payload: "payload-0x000000000022d473030f116ddee9f6b43ac78ba3",
+      }),
+    );
+    expect(apiMock.sendCommand).toHaveBeenCalledWith(
+      new SendEIP712FilteringCommand({
+        type: Eip712FilterType.Token,
+        tokenIndex: 0,
+        signature:
+          "3044022075103b38995e031d1ebbfe38ac6603bec32854b5146a664e49b4cc4f460c1da6022029f4b0fd1f3b7995ffff1627d4b57f27888a2dcc9b3a4e85c37c67571092c733",
+      }),
+    );
+    expect(apiMock.sendCommand).toHaveBeenCalledWith(
+      new SendEIP712FilteringCommand({
+        type: Eip712FilterType.Amount,
+        displayName: "Amount allowance",
+        tokenIndex: 1,
+        signature:
+          "304402201a46e6b4ef89eaf9fcf4945d053bfc5616a826400fd758312fbbe976bafc07ec022025a9b408722baf983ee053f90179c75b0c55bb0668f437d55493e36069bbd5a3",
+      }),
+    );
+  });
+
+  it("First token unavailable", async () => {
+    // GIVEN
+    const args: ProvideEIP712ContextTaskArgs = {
+      types: TEST_TYPES,
+      domain: TEST_DOMAIN_VALUES,
+      message: TEST_MESSAGE_VALUES,
+      clearSignContext: Just({
+        type: "success",
+        messageInfo: TEST_CLEAR_SIGN_CONTEXT.messageInfo,
+        filters: TEST_CLEAR_SIGN_CONTEXT.filters,
+        tokens: { 255: "payload-0x000000000022d473030f116ddee9f6b43ac78ba3" },
+      }),
+    };
+
+    // WHEN
+    apiMock.sendCommand.mockResolvedValue(
+      CommandResultFactory({ data: { tokenIndex: 4 } }),
+    );
+    await new ProvideEIP712ContextTask(apiMock, args).run();
+
+    // THEN
+    expect(apiMock.sendCommand).toHaveBeenCalledWith(
+      new SendEIP712FilteringCommand({
+        type: Eip712FilterType.Token,
+        tokenIndex: 0,
+        signature:
+          "3044022075103b38995e031d1ebbfe38ac6603bec32854b5146a664e49b4cc4f460c1da6022029f4b0fd1f3b7995ffff1627d4b57f27888a2dcc9b3a4e85c37c67571092c733",
+      }),
+    );
+    expect(apiMock.sendCommand).toHaveBeenCalledWith(
+      new SendEIP712FilteringCommand({
+        type: Eip712FilterType.Amount,
+        displayName: "Amount allowance",
+        tokenIndex: 255,
+        signature:
+          "304402201a46e6b4ef89eaf9fcf4945d053bfc5616a826400fd758312fbbe976bafc07ec022025a9b408722baf983ee053f90179c75b0c55bb0668f437d55493e36069bbd5a3",
+      }),
+    );
+  });
+
+  it("Second token unavailable", async () => {
+    // GIVEN
+    const args: ProvideEIP712ContextTaskArgs = {
+      types: TEST_TYPES,
+      domain: TEST_DOMAIN_VALUES,
+      message: TEST_MESSAGE_VALUES,
+      clearSignContext: Just({
+        type: "success",
+        messageInfo: TEST_CLEAR_SIGN_CONTEXT.messageInfo,
+        filters: TEST_CLEAR_SIGN_CONTEXT.filters,
+        tokens: { 0: "payload-0x7ceb23fd6bc0add59e62ac25578270cff1b9f619" },
+      }),
+    };
+
+    // WHEN
+    apiMock.sendCommand.mockResolvedValue(
+      CommandResultFactory({ data: { tokenIndex: 4 } }),
+    );
+    await new ProvideEIP712ContextTask(apiMock, args).run();
+
+    // THEN
+    expect(apiMock.sendCommand).toHaveBeenCalledWith(
+      new SendEIP712FilteringCommand({
+        type: Eip712FilterType.Token,
+        tokenIndex: 4,
+        signature:
+          "3044022075103b38995e031d1ebbfe38ac6603bec32854b5146a664e49b4cc4f460c1da6022029f4b0fd1f3b7995ffff1627d4b57f27888a2dcc9b3a4e85c37c67571092c733",
+      }),
+    );
+    expect(apiMock.sendCommand).toHaveBeenCalledWith(
+      new SendEIP712FilteringCommand({
+        type: Eip712FilterType.Amount,
+        displayName: "Amount allowance",
+        tokenIndex: 0,
+        signature:
+          "304402201a46e6b4ef89eaf9fcf4945d053bfc5616a826400fd758312fbbe976bafc07ec022025a9b408722baf983ee053f90179c75b0c55bb0668f437d55493e36069bbd5a3",
+      }),
+    );
+  });
+
   it("Error when providing tokens", async () => {
     // GIVEN
     const args: ProvideEIP712ContextTaskArgs = {
