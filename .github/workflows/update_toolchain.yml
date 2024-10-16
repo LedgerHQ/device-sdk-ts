@@ -10,7 +10,7 @@ env:
 
 jobs:
   update-toolchain:
-    runs-on: ubuntu-latest
+    runs-on: ["ledgerhq-device-sdk"]
     steps:
       - uses: actions/checkout@v4
 
@@ -31,8 +31,24 @@ jobs:
         run: |
           echo "status=$(git status --porcelain | wc -l)" >> $GITHUB_OUTPUT
 
-      - name: Create PR
+      - name: Set new versions
         if: steps.changes.outputs.status > 0
+        run: |
+          proto use
+          pnpm i
+
+      - name: Health check
+        if: steps.changes.outputs.status > 0
+        id: health-check
+        run: pnpm health-check
+
+      - name: Tests
+        id: unit-tests
+        if: steps.changes.outputs.status > 0 && success()
+        run: pnpm test:coverage -- --max-warnings=0
+
+      - name: Create PR
+        if: steps.changes.outputs.status > 0 && success()
         run: |
           git add .prototools
           git commit -m "🔧 (repo) [NO-ISSUE]: Update toolchain"
