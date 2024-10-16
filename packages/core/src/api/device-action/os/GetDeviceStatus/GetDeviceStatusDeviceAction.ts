@@ -311,7 +311,7 @@ export class GetDeviceStatusDeviceAction extends XStateDeviceAction<
         }
         return Right<GetDeviceStatusDAOutput>({
           currentApp: currentApp!,
-          currentAppVersion,
+          currentAppVersion: currentAppVersion!,
         });
       },
     });

@@ -9,7 +9,7 @@ import {
 
 export type GetDeviceStatusDAOutput = {
   readonly currentApp: string;
-  readonly currentAppVersion: string | null;
+  readonly currentAppVersion: string;
 };
 export type GetDeviceStatusDAInput = {
   readonly unlockTimeout?: number;
@@ -23,8 +23,7 @@ export type GetDeviceStatusDAError =
 
 export type GetDeviceStatusDARequiredInteraction =
   | UserInteractionRequired.None
-  | UserInteractionRequired.UnlockDevice
-  | UserInteractionRequired.AllowSecureConnection;
+  | UserInteractionRequired.UnlockDevice;
 
 export type GetDeviceStatusDAIntermediateValue = {
   requiredUserInteraction: GetDeviceStatusDARequiredInteraction;
