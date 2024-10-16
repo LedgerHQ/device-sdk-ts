@@ -46,8 +46,8 @@ type WebBleInternalDevice = {
 
 @injectable()
 export class WebBleTransport implements Transport {
-  private _connectedDevices: Array<BluetoothDevice>;
-  private _internalDevicesById: Map<DeviceId, WebBleInternalDevice>;
+  private readonly _connectedDevices: Array<BluetoothDevice>;
+  private readonly _internalDevicesById: Map<DeviceId, WebBleInternalDevice>;
   private _deviceConnectionById: Map<DeviceId, BleDeviceConnection>;
   private _disconnectionHandlersById: Map<DeviceId, () => void>;
   private _logger: LoggerPublisherService;
@@ -148,28 +148,28 @@ export class WebBleTransport implements Transport {
    *
    * @private
    */
-  private async promptDeviceAccess(): Promise<
-    Either<PromptDeviceAccessError, BluetoothDevice>
+  private promptDeviceAccess(): EitherAsync<
+    PromptDeviceAccessError,
+    BluetoothDevice
   > {
-    return EitherAsync.liftEither(this.getBluetoothApi())
-      .map(async (bluetoothApi) => {
-        let bleDevice: BluetoothDevice;
+    return EitherAsync(async ({ liftEither, throwE }) => {
+      const bluetoothApi = await liftEither(this.getBluetoothApi());
+      let bleDevice: BluetoothDevice;
 
-        try {
-          bleDevice = await bluetoothApi.requestDevice({
-            filters: this._deviceModelDataSource
-              .getBluetoothServices()
-              .map((serviceUuid) => ({
-                services: [serviceUuid],
-              })),
-          });
-        } catch (error) {
-          throw new NoAccessibleDeviceError(error);
-        }
+      try {
+        bleDevice = await bluetoothApi.requestDevice({
+          filters: this._deviceModelDataSource
+            .getBluetoothServices()
+            .map((serviceUuid) => ({
+              services: [serviceUuid],
+            })),
+        });
+      } catch (error) {
+        return throwE(new NoAccessibleDeviceError(error));
+      }
 
-        return bleDevice;
-      })
-      .run();
+      return bleDevice;
+    });
   }
 
   /**
