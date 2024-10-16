@@ -35,60 +35,71 @@ describe("SignTransactionCommand", () => {
   const defaultArgs: SignTransactionCommandArgs = {
     serializedTransaction: new Uint8Array(),
     isFirstChunk: true,
+    isLegacy: true,
   };
 
   describe("getApdu", () => {
-    it("should return the correct APDU when the data is empty", () => {
-      // GIVEN
-      const command = new SignTransactionCommand({
-        ...defaultArgs,
+    describe("Legacy", () => {
+      it("should return the correct APDU when the data is empty", () => {
+        // GIVEN
+        const command = new SignTransactionCommand({
+          ...defaultArgs,
+        });
+
+        // WHEN
+        const apdu = command.getApdu();
+
+        // THEN
+        expect(apdu.data).toStrictEqual(new Uint8Array());
+        expect(apdu.cla).toBe(0xe0);
+        expect(apdu.ins).toBe(0x04);
+        expect(apdu.p1).toBe(0x00);
+        expect(apdu.p2).toBe(0x00);
       });
 
-      // WHEN
-      const apdu = command.getApdu();
+      it("should return the correct APDU when the data is not empty", () => {
+        // GIVEN
+        const command = new SignTransactionCommand({
+          ...defaultArgs,
+          serializedTransaction: new Uint8Array([0x01, 0x02, 0x03]),
+        });
 
-      // THEN
-      expect(apdu.data).toStrictEqual(new Uint8Array());
-      expect(apdu.cla).toBe(0xe0);
-      expect(apdu.ins).toBe(0x04);
-      expect(apdu.p1).toBe(0x00);
-      expect(apdu.p2).toBe(0x00);
+        // WHEN
+        const apdu = command.getApdu();
+
+        // THEN
+        expect(apdu.data).toStrictEqual(new Uint8Array([0x01, 0x02, 0x03]));
+        expect(apdu.cla).toBe(0xe0);
+        expect(apdu.ins).toBe(0x04);
+        expect(apdu.p1).toBe(0x00);
+        expect(apdu.p2).toBe(0x00);
+      });
+
+      it("should return the correct APDU when it is not the first chunk", () => {
+        // GIVEN
+        const command = new SignTransactionCommand({
+          ...defaultArgs,
+          isFirstChunk: false,
+        });
+
+        // WHEN
+        const apdu = command.getApdu();
+
+        // THEN
+        expect(apdu.data).toStrictEqual(new Uint8Array());
+        expect(apdu.cla).toBe(0xe0);
+        expect(apdu.ins).toBe(0x04);
+        expect(apdu.p1).toBe(0x80);
+        expect(apdu.p2).toBe(0x00);
+      });
     });
 
-    it("should return the correct APDU when the data is not empty", () => {
-      // GIVEN
-      const command = new SignTransactionCommand({
-        ...defaultArgs,
-        serializedTransaction: new Uint8Array([0x01, 0x02, 0x03]),
-      });
-
-      // WHEN
-      const apdu = command.getApdu();
-
-      // THEN
-      expect(apdu.data).toStrictEqual(new Uint8Array([0x01, 0x02, 0x03]));
-      expect(apdu.cla).toBe(0xe0);
-      expect(apdu.ins).toBe(0x04);
-      expect(apdu.p1).toBe(0x00);
-      expect(apdu.p2).toBe(0x00);
+    describe("Store and start", () => {
+      // TODO
     });
 
-    it("should return the correct APDU when it is not the first chunk", () => {
-      // GIVEN
-      const command = new SignTransactionCommand({
-        ...defaultArgs,
-        isFirstChunk: false,
-      });
-
-      // WHEN
-      const apdu = command.getApdu();
-
-      // THEN
-      expect(apdu.data).toStrictEqual(new Uint8Array());
-      expect(apdu.cla).toBe(0xe0);
-      expect(apdu.ins).toBe(0x04);
-      expect(apdu.p1).toBe(0x80);
-      expect(apdu.p2).toBe(0x00);
+    describe("Start", () => {
+      // TODO
     });
   });
 
@@ -143,7 +154,7 @@ describe("SignTransactionCommand", () => {
 
       // THEN
       expect(isSuccessCommandResult(response)).toBe(false);
-      // @ts-ignore
+      // @ts-expect-error `error`is not typed because we did not narrow it
       expect(response.error).toBeInstanceOf(UnknownDeviceExchangeError);
     });
 
@@ -163,7 +174,7 @@ describe("SignTransactionCommand", () => {
 
       // THEN
       expect(isSuccessCommandResult(response)).toBe(false);
-      // @ts-ignore
+      // @ts-expect-error `error`is not typed because we did not narrow it
       expect(response.error).toBeInstanceOf(InvalidStatusWordError);
     });
 

@@ -57,6 +57,7 @@ export class SendSignTransactionTask {
         new SignTransactionCommand({
           serializedTransaction: buffer.slice(i, i + APDU_MAX_PAYLOAD),
           isFirstChunk: i === 0,
+          isLegacy: true,
         }),
       );
 
