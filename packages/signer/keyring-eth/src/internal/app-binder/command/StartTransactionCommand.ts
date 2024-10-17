@@ -1,4 +1,5 @@
 // https://github.com/LedgerHQ/app-ethereum/blob/develop/doc/ethapp.adoc#sign-eth-transaction
+// https://github.com/LedgerHQ/generic_parser/blob/master/specs.md#sign (to be removed when the top link has been updated)
 import {
   Apdu,
   ApduBuilder,
@@ -10,78 +11,32 @@ import {
   CommandResultFactory,
   CommandUtils,
   GlobalCommandErrorHandler,
-  HexaString,
   InvalidStatusWordError,
 } from "@ledgerhq/device-management-kit";
-import { Just, Maybe, Nothing } from "purify-ts";
+import { Just, Nothing } from "purify-ts";
+
+import { SignTransactionCommandResponse } from "./SignTransactionCommand";
 
 const R_LENGTH = 32;
 const S_LENGTH = 32;
 
-export type SignTransactionCommandResponse = Maybe<{
-  v: number;
-  r: HexaString;
-  s: HexaString;
-}>;
-
-export type SignTransactionCommandArgs = {
-  /**
-   * The transaction to sign in max 150 bytes chunks
-   */
-  readonly serializedTransaction: Uint8Array;
-  /**
-   * If this is the first chunk of the message
-   */
-  readonly isFirstChunk: boolean;
-  /**
-   * If we are using the legacy flow
-   */
-  readonly isLegacy: boolean;
-};
-
-export class SignTransactionCommand
-  implements
-    Command<SignTransactionCommandResponse, SignTransactionCommandArgs>
+/**
+ * StartTransactionCommand is a SignTransactionCommand that is used to sign the transaction.
+ * It signature differs from the SignTransactionCommand because
+ * the command does not need a Transaction to be provided.
+ */
+export class StartTransactionCommand
+  implements Command<SignTransactionCommandResponse, void>
 {
-  args: SignTransactionCommandArgs;
-
-  constructor(args: SignTransactionCommandArgs) {
-    this.args = args;
-  }
-
-  private getP1(): number {
-    const { isLegacy, isFirstChunk } = this.args;
-    if (isLegacy) {
-      return isFirstChunk ? 0x00 : 0x80;
-    }
-
-    return isFirstChunk ? 0x01 : 0x00;
-  }
-
-  private getP2(): number {
-    const { isLegacy } = this.args;
-    if (isLegacy) {
-      return 0x00;
-    }
-
-    return 0x01;
-  }
-
   getApdu(): Apdu {
-    const { serializedTransaction } = this.args;
-
-    const p2 = this.getP2();
-
     const signEthTransactionArgs: ApduBuilderArgs = {
       cla: 0xe0,
       ins: 0x04,
-      p1: this.getP1(),
-      p2,
+      p1: 0x01,
+      p2: 0x03,
     };
-
     const builder = new ApduBuilder(signEthTransactionArgs);
-
-    return builder.addBufferToData(serializedTransaction).build();
+    return builder.build();
   }
 
   parseResponse(
