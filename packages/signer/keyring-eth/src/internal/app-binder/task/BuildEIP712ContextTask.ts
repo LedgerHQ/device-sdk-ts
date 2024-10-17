@@ -77,7 +77,13 @@ export class BuildEIP712ContextTask {
     }
     // EIP712 v2 (amount & datetime filters) supported since 1.11.0:
     // https://github.com/LedgerHQ/app-ethereum/blob/develop/doc/ethapp.adoc#1110-1
-    const shouldUseV2Filters = gte(deviceState.currentApp.version, "1.11.0");
+    // But some issues were still present until 1.12.0 among which:
+    // * V2 descriptor with missing token not supported by the app
+    // * Empty arrays with filters not correctly handled
+    // * Trusted name filters not yet released
+    // Therefore it's safer and easier to use V1 filters before 1.12.0:
+    // https://github.com/LedgerHQ/app-ethereum/blob/develop/doc/ethapp.adoc#1120
+    const shouldUseV2Filters = gte(deviceState.currentApp.version, "1.12.0");
     return shouldUseV2Filters ? Just("v2") : Just("v1");
   }
 }
