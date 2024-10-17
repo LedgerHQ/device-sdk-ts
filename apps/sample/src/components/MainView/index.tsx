@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect } from "react";
+import React, { useCallback } from "react";
 import { Button, Flex, Text } from "@ledgerhq/react-ui";
 import Image from "next/image";
 import styled, { DefaultTheme } from "styled-components";
@@ -52,13 +52,6 @@ export const MainView: React.FC = () => {
       },
     });
   }, [sdk, dispatch]);
-
-  useEffect(() => {
-    return () => {
-      // Example cleaning up the discovery
-      sdk.stopDiscovering();
-    };
-  }, [sdk]);
 
   return (
     <Root>
