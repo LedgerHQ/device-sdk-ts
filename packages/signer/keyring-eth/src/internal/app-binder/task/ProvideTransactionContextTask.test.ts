@@ -4,7 +4,6 @@ import {
   UnknownDeviceExchangeError,
 } from "@ledgerhq/device-management-kit";
 
-import { ProvideDomainNameCommand } from "@internal/app-binder/command/ProvideDomainNameCommand";
 import { ProvideNFTInformationCommand } from "@internal/app-binder/command/ProvideNFTInformationCommand";
 import { ProvideTokenInformationCommand } from "@internal/app-binder/command/ProvideTokenInformationCommand";
 import { SetExternalPluginCommand } from "@internal/app-binder/command/SetExternalPluginCommand";
@@ -115,97 +114,6 @@ describe("ProvideTransactionContextTask", () => {
       expect(api.sendCommand).toHaveBeenCalledTimes(1);
       expect(result.isJust()).toBe(true);
       expect(result.extract()).toStrictEqual(errorResult);
-    });
-    it("should call provideDomainNameTask when receiving a ClearSignContext of type domainName", async () => {
-      jest
-        .spyOn(ProvideTransactionContextTask.prototype, "provideDomainNameTask")
-        .mockResolvedValueOnce(CommandResultFactory<void>({ data: undefined }));
-      // GIVEN
-      const task = new ProvideTransactionContextTask(api, {
-        clearSignContexts: [
-          {
-            type: ClearSignContextType.DOMAIN_NAME,
-            payload: "646f6d61696e4e616d65", // "domainName"
-          },
-        ],
-      });
-      // WHEN
-      await task.run();
-      // THEN
-      expect(
-        ProvideTransactionContextTask.prototype.provideDomainNameTask,
-      ).toHaveBeenCalledTimes(1);
-      expect(
-        ProvideTransactionContextTask.prototype.provideDomainNameTask,
-      ).toHaveBeenCalledWith("646f6d61696e4e616d65");
-    });
-    it("should return the command error result and stop when provideDomainNameTask fails", async () => {
-      jest
-        .spyOn(ProvideTransactionContextTask.prototype, "provideDomainNameTask")
-        .mockResolvedValueOnce(
-          CommandResultFactory<void>({
-            data: undefined,
-            error: {} as UnknownDeviceExchangeError,
-          }),
-        );
-      // GIVEN
-      const task = new ProvideTransactionContextTask(api, {
-        clearSignContexts: [
-          {
-            type: ClearSignContextType.DOMAIN_NAME,
-            payload: "646f6d61696e4e616d65", // "domainName"
-          },
-          {
-            type: ClearSignContextType.PLUGIN,
-            payload: "706c7567696e", // "plugin"
-          },
-        ],
-      });
-      // WHEN
-      const result = await task.run();
-      // THEN
-      expect(result.isJust()).toBe(true);
-      expect(result.extract()).toStrictEqual(errorResult);
-    });
-  });
-
-  describe("provideDomainNameTask", () => {
-    it("should send the multiple ProvideDomainNameCommand to the device", async () => {
-      // GIVEN
-      api.sendCommand.mockResolvedValue(successResult);
-      const task = new ProvideTransactionContextTask(api, {
-        clearSignContexts: [],
-      });
-      // WHEN
-      const domainName = "646f6d61696e4e616d65"; // "domainName"
-      await task.provideDomainNameTask(domainName);
-      // THEN
-      expect(api.sendCommand).toHaveBeenCalledTimes(1);
-      expect(api.sendCommand).toHaveBeenNthCalledWith(
-        1,
-        expect.objectContaining(
-          new ProvideDomainNameCommand({
-            data: Uint8Array.from([
-              0x00, 0x0a, 0x64, 0x6f, 0x6d, 0x61, 0x69, 0x6e, 0x4e, 0x61, 0x6d,
-              0x65,
-            ]),
-            isFirstChunk: true,
-          }),
-        ),
-      );
-    });
-    it("should return the error and stop when command fails", async () => {
-      // GIVEN
-      api.sendCommand.mockResolvedValueOnce(errorResult);
-      const task = new ProvideTransactionContextTask(api, {
-        clearSignContexts: [],
-      });
-      // WHEN
-      const domainName = "646f6d61696e4e616d65"; // "domainName"
-      const res = await task.provideDomainNameTask(domainName);
-      //THEN
-      expect(api.sendCommand).toHaveBeenCalledTimes(1);
-      expect(res).toStrictEqual(errorResult);
     });
   });
 });
