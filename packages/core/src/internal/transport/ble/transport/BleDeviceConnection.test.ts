@@ -87,6 +87,9 @@ describe("BleDeviceConnection", () => {
       const response = connection.sendApdu(new Uint8Array([]));
       receiveApdu(connection, EMPTY_APDU_RESPONSE);
       // then
+      expect(
+        writeCharacteristic.writeValueWithoutResponse,
+      ).toHaveBeenCalledTimes(1);
       expect(await response).toStrictEqual(
         Right(
           new ApduResponse({

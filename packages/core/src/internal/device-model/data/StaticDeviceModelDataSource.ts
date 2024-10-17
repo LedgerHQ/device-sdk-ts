@@ -134,15 +134,11 @@ export class StaticDeviceModelDataSource implements DeviceModelDataSource {
   }
 
   getBluetoothServices(): string[] {
-    return Object.values(StaticDeviceModelDataSource.deviceModelByIds).reduce<
-      string[]
-    >((acc, deviceModel) => {
-      const { bluetoothSpec } = deviceModel;
-
-      if (bluetoothSpec) {
-        return acc.concat(bluetoothSpec.map((spec) => spec.serviceUuid));
-      }
-      return acc;
-    }, []);
+    return Object.values(StaticDeviceModelDataSource.deviceModelByIds)
+      .map((deviceModel) =>
+        (deviceModel.bluetoothSpec || []).map((spec) => spec.serviceUuid),
+      )
+      .flat()
+      .filter((uuid) => !!uuid);
   }
 }
