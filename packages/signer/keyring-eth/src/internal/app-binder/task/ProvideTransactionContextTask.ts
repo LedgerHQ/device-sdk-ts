@@ -133,6 +133,13 @@ export class ProvideTransactionContextTask {
             }),
         }).run();
       }
+      case ClearSignContextType.ENUM:
+      case ClearSignContextType.TRANSACTION_FIELD_DESCRIPTION:
+      case ClearSignContextType.TRANSACTION_INFO: {
+        throw new ProvideTransactionContextTaskError(
+          `The context type [${type}] is not supported`,
+        );
+      }
       default: {
         const uncoveredType: never = type;
         throw new ProvideTransactionContextTaskError(

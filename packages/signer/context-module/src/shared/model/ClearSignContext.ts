@@ -4,6 +4,9 @@ export enum ClearSignContextType {
   DOMAIN_NAME = "domainName",
   PLUGIN = "plugin",
   EXTERNAL_PLUGIN = "externalPlugin",
+  TRANSACTION_INFO = "transactionInfo",
+  ENUM = "enum",
+  TRANSACTION_FIELD_DESCRIPTION = "transactionFieldDescription",
   ERROR = "error",
 }
 
