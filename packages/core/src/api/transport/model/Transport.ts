@@ -25,6 +25,8 @@ export interface Transport {
 
   stopDiscovering(): void;
 
+  listenToKnownDevices(): Observable<InternalDiscoveredDevice[]>;
+
   /**
    * Enables communication with the device by connecting to it.
    *

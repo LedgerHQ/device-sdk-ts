@@ -1,7 +1,7 @@
 import * as Sentry from "@sentry/minimal";
 import { inject, injectable } from "inversify";
 import { Either, EitherAsync, Left, Maybe, Right } from "purify-ts";
-import { from, Observable, switchMap } from "rxjs";
+import { BehaviorSubject, from, map, Observable, switchMap } from "rxjs";
 import { v4 as uuid } from "uuid";
 
 import { DeviceId } from "@api/device/DeviceModel";
@@ -21,7 +21,6 @@ import { DisconnectHandler } from "@internal/transport/model/DeviceConnection";
 import {
   ConnectError,
   DeviceNotRecognizedError,
-  DisconnectError,
   NoAccessibleDeviceError,
   OpeningConnectionError,
   type PromptDeviceAccessError,
@@ -35,27 +34,33 @@ import { usbDiTypes } from "@internal/transport/usb/di/usbDiTypes";
 import { UsbHidDeviceConnectionFactory } from "@internal/transport/usb/service/UsbHidDeviceConnectionFactory";
 import { UsbHidDeviceConnection } from "@internal/transport/usb/transport/UsbHidDeviceConnection";
 
-// An attempt to manage the state of several devices with one transport. Not final.
-type WebHidInternalDevice = {
-  id: DeviceId;
+type WebUsbHidInternalDiscoveredDevice = InternalDiscoveredDevice & {
   hidDevice: HIDDevice;
-  discoveredDevice: InternalDiscoveredDevice;
 };
 
 @injectable()
 export class WebUsbHidTransport implements Transport {
-  /** Maps DeviceId to an internal object containing the associated DiscoveredDevice and HIDDevice */
-  private _internalDevicesById: Map<DeviceId, WebHidInternalDevice> = new Map();
-  /** Maps all *connected* HIDDevice to their UsbHidDeviceConnection */
+  /** List of HID devices that have been discovered */
+  private _internalDiscoveredDevices: BehaviorSubject<
+    Array<WebUsbHidInternalDiscoveredDevice>
+  > = new BehaviorSubject<Array<WebUsbHidInternalDiscoveredDevice>>([]);
+
+  /** Map of *connected* HIDDevice to their UsbHidDeviceConnection */
   private _deviceConnectionsByHidDevice: Map<
     HIDDevice,
     UsbHidDeviceConnection
   > = new Map();
-  /** Set of all the UsbHidDeviceConnection for which HIDDevice has been disconnected, so they are waiting for a reconnection */
+
+  /**
+   * Set of UsbHidDeviceConnection for which the HIDDevice has been
+   * disconnected, so they are waiting for a reconnection
+   */
   private _deviceConnectionsPendingReconnection: Set<UsbHidDeviceConnection> =
     new Set();
+
   /** AbortController to stop listening to HID connection events */
-  private _connectionListenersAbortController: AbortController;
+  private _connectionListenersAbortController: AbortController =
+    new AbortController();
   private _logger: LoggerPublisherService;
   private _usbHidDeviceConnectionFactory: UsbHidDeviceConnectionFactory;
   private readonly connectionType: ConnectionType = "USB";
@@ -69,17 +74,10 @@ export class WebUsbHidTransport implements Transport {
     @inject(usbDiTypes.UsbHidDeviceConnectionFactory)
     usbHidDeviceConnectionFactory: UsbHidDeviceConnectionFactory,
   ) {
-    this._connectionListenersAbortController = new AbortController();
     this._logger = loggerServiceFactory("WebUsbHidTransport");
     this._usbHidDeviceConnectionFactory = usbHidDeviceConnectionFactory;
 
-    this.hidApi.map((hidApi) => {
-      // FIXME: we should not override the global navigator.hid.onconnect and navigator.hid.ondisconnect but instead use addEventListener
-      // The thing is if we want to do that we need a destroy() method on the SDK to remove the event listeners
-      hidApi.ondisconnect = (event) =>
-        this.handleDeviceDisconnectionEvent(event);
-      hidApi.onconnect = (event) => this.handleDeviceConnectionEvent(event);
-    });
+    this.startListeningToConnectionEvents();
   }
 
   /**
@@ -110,13 +108,110 @@ export class WebUsbHidTransport implements Transport {
   }
 
   /**
-   * Currently: as there is no way to uniquely identify a device, we might need to always update the internal mapping
-   * of devices when prompting for device access.
-   *
-   * Also, we cannot trust hidApi.getDevices() as 2 devices of the same models (even on the same USB port) will be recognized
-   * as the same devices.
+   * Wrapper around `navigator.hid.getDevices()`.
+   * It will return the list of plugged in HID devices to which the user has
+   * previously granted access through `navigator.hid.requestDevice()`.
    */
-  // private async promptDeviceAccess(): Promise<Either<PromptDeviceAccessError, DiscoveredDeviceDto[]>> {
+  private async getDevices(): Promise<Either<SdkError, HIDDevice[]>> {
+    return EitherAsync.liftEither(this.hidApi)
+      .map(async (hidApi) => {
+        try {
+          const allDevices = await hidApi.getDevices();
+          return allDevices.filter(
+            (hidDevice) => hidDevice.vendorId === LEDGER_VENDOR_ID,
+          );
+        } catch (error) {
+          const deviceError = new NoAccessibleDeviceError(error);
+          this._logger.error(`getDevices: error getting devices`, {
+            data: { error },
+          });
+          Sentry.captureException(deviceError);
+          throw deviceError;
+        }
+      })
+      .run();
+  }
+
+  /**
+   * Map a HIDDevice to an InternalDiscoveredDevice, either by creating a new one or returning an existing one
+   */
+  private mapHIDDeviceToInternalDiscoveredDevice(
+    hidDevice: HIDDevice,
+  ): WebUsbHidInternalDiscoveredDevice {
+    const existingDiscoveredDevice = this._internalDiscoveredDevices
+      .getValue()
+      .find((internalDevice) => internalDevice.hidDevice === hidDevice);
+
+    if (existingDiscoveredDevice) {
+      return existingDiscoveredDevice;
+    }
+
+    const existingDeviceConnection =
+      this._deviceConnectionsByHidDevice.get(hidDevice);
+
+    const maybeDeviceModel = this.getDeviceModel(hidDevice);
+    return maybeDeviceModel.caseOf({
+      Just: (deviceModel) => {
+        const id = existingDeviceConnection?.deviceId ?? uuid();
+
+        const discoveredDevice = {
+          id,
+          deviceModel,
+          hidDevice,
+          transport: this.identifier,
+        };
+
+        this._logger.debug(
+          `Discovered device ${id} ${discoveredDevice.deviceModel.productName}`,
+        );
+
+        return discoveredDevice;
+      },
+      Nothing: () => {
+        // [ASK] Or we just ignore the not recognized device ? And log them
+        this._logger.warn(
+          `Device not recognized: hidDevice.productId: 0x${hidDevice.productId.toString(16)}`,
+        );
+        throw new DeviceNotRecognizedError(
+          `Device not recognized: hidDevice.productId: 0x${hidDevice.productId.toString(16)}`,
+        );
+      },
+    });
+  }
+
+  /**
+   * Listen to known devices (devices to which the user has granted access)
+   */
+  public listenToKnownDevices(): Observable<InternalDiscoveredDevice[]> {
+    this.updateInternalDiscoveredDevices();
+    return this._internalDiscoveredDevices.pipe(
+      map((devices) => devices.map(({ hidDevice, ...device }) => device)),
+    );
+  }
+
+  private async updateInternalDiscoveredDevices(): Promise<void> {
+    const eitherDevices = await this.getDevices();
+    eitherDevices.caseOf({
+      Left: (error) => {
+        this._logger.error("Error while getting accessible device", {
+          data: { error },
+        });
+        Sentry.captureException(error);
+      },
+      Right: (hidDevices) => {
+        this._internalDiscoveredDevices.next(
+          hidDevices.map((hidDevice) =>
+            this.mapHIDDeviceToInternalDiscoveredDevice(hidDevice),
+          ),
+        );
+      },
+    });
+  }
+
+  /**
+   * Wrapper around navigator.hid.requestDevice()
+   * In a browser, it will show a native dialog to select a HID device.
+   */
   private async promptDeviceAccess(): Promise<
     Either<PromptDeviceAccessError, HIDDevice[]>
   > {
@@ -129,6 +224,7 @@ export class WebUsbHidTransport implements Transport {
           hidDevices = await hidApi.requestDevice({
             filters: [{ vendorId: LEDGER_VENDOR_ID }],
           });
+          await this.updateInternalDiscoveredDevices();
         } catch (error) {
           const deviceError = new NoAccessibleDeviceError(error);
           this._logger.error(`promptDeviceAccess: error requesting device`, {
@@ -163,30 +259,8 @@ export class WebUsbHidTransport implements Transport {
       .run();
   }
 
-  /**
-   * For WebHID, the client can only discover devices for which the user granted access to.
-   *
-   * The issue is that once a user grant access to a device of a model/productId A, any other model/productId A device will be accessible.
-   * Even if plugged on another USB port.
-   * So we cannot rely on the `hid.getDevices` to get the list of accessible devices, because it is not possible to differentiate
-   * between 2 devices of the same model.
-   * Neither on `connect` and `disconnect` events.
-   * We can only rely on the `hid.requestDevice` because it is the user who will select the device that we can access.
-   *
-   * 2 possible implementations:
-   * - only `hid.requestDevice` and return the one selected device
-   * - `hid.getDevices` first to get the previously accessible devices, then a `hid.requestDevice` to get any new one
-   *
-   * [ASK] Should we also subscribe to hid events `connect` and `disconnect` ?
-   *
-   * [ASK] For the 2nd option: the DiscoveredDevice could have a `isSelected` property ?
-   * So the consumer can directly select this device.
-   */
   startDiscovering(): Observable<InternalDiscoveredDevice> {
     this._logger.debug("startDiscovering");
-
-    // Logs the connection and disconnection events
-    this.startListeningToConnectionEvents();
 
     return from(this.promptDeviceAccess()).pipe(
       switchMap((either) => {
@@ -202,52 +276,7 @@ export class WebUsbHidTransport implements Transport {
             this._logger.info(`Got access to ${hidDevices.length} HID devices`);
 
             const discoveredDevices = hidDevices.map((hidDevice) => {
-              const matchingInternalDevice = Array.from(
-                this._internalDevicesById.values(),
-              ).find(
-                (internalDevice) => internalDevice.hidDevice === hidDevice,
-              );
-
-              if (matchingInternalDevice) {
-                this._logger.debug(
-                  `Device already discovered ${matchingInternalDevice.id}`,
-                );
-                return matchingInternalDevice.discoveredDevice;
-              }
-              const maybeDeviceModel = this.getDeviceModel(hidDevice);
-              return maybeDeviceModel.caseOf({
-                Just: (deviceModel) => {
-                  const id = uuid();
-
-                  const discoveredDevice = {
-                    id,
-                    deviceModel,
-                    transport: this.identifier,
-                  };
-
-                  const internalDevice: WebHidInternalDevice = {
-                    id,
-                    hidDevice,
-                    discoveredDevice,
-                  };
-
-                  this._logger.debug(
-                    `Discovered device ${id} ${discoveredDevice.deviceModel.productName}`,
-                  );
-                  this._internalDevicesById.set(id, internalDevice);
-
-                  return discoveredDevice;
-                },
-                Nothing: () => {
-                  // [ASK] Or we just ignore the not recognized device ? And log them
-                  this._logger.warn(
-                    `Device not recognized: hidDevice.productId: 0x${hidDevice.productId.toString(16)}`,
-                  );
-                  throw new DeviceNotRecognizedError(
-                    `Device not recognized: hidDevice.productId: 0x${hidDevice.productId.toString(16)}`,
-                  );
-                },
-              });
+              return this.mapHIDDeviceToInternalDiscoveredDevice(hidDevice);
             });
             return from(discoveredDevices);
           },
@@ -257,30 +286,26 @@ export class WebUsbHidTransport implements Transport {
   }
 
   stopDiscovering(): void {
-    this._logger.debug("stopDiscovering");
-
-    this.stopListeningToConnectionEvents();
+    /**
+     * This does nothing because the startDiscovering method is just a
+     * promise wrapped into an observable. So there is no need to stop it.
+     */
   }
 
-  /**
-   * Logs `connect` and `disconnect` events for already accessible devices
-   */
   private startListeningToConnectionEvents(): void {
     this._logger.debug("startListeningToConnectionEvents");
 
     this.hidApi.map((hidApi) => {
       hidApi.addEventListener(
         "connect",
-        (event) => {
-          this._logger.debug("connection event", { data: { event } });
-        },
+        (event) => this.handleDeviceConnectionEvent(event),
         { signal: this._connectionListenersAbortController.signal },
       );
 
       hidApi.addEventListener(
         "disconnect",
         (event) => {
-          this._logger.debug("disconnect event", { data: { event } });
+          this.handleDeviceDisconnectionEvent(event);
         },
         { signal: this._connectionListenersAbortController.signal },
       );
@@ -304,15 +329,22 @@ export class WebUsbHidTransport implements Transport {
   }): Promise<Either<ConnectError, InternalConnectedDevice>> {
     this._logger.debug("connect", { data: { deviceId } });
 
-    const internalDevice = this._internalDevicesById.get(deviceId);
+    const matchingInternalDevice = this._internalDiscoveredDevices
+      .getValue()
+      .find((internalDevice) => internalDevice.id === deviceId);
 
-    if (!internalDevice) {
+    if (!matchingInternalDevice) {
       this._logger.error(`Unknown device ${deviceId}`);
       return Left(new UnknownDeviceError(`Unknown device ${deviceId}`));
     }
 
     try {
-      await internalDevice.hidDevice.open();
+      if (
+        this._deviceConnectionsByHidDevice.get(matchingInternalDevice.hidDevice)
+      ) {
+        throw new Error("Device already opened");
+      }
+      await matchingInternalDevice.hidDevice.open();
     } catch (error) {
       if (error instanceof DOMException && error.name === "InvalidStateError") {
         this._logger.debug(`Device ${deviceId} is already opened`);
@@ -326,24 +358,25 @@ export class WebUsbHidTransport implements Transport {
       }
     }
 
-    const {
-      discoveredDevice: { deviceModel },
-    } = internalDevice;
+    const { deviceModel } = matchingInternalDevice;
 
     const deviceConnection = this._usbHidDeviceConnectionFactory.create(
-      internalDevice.hidDevice,
+      matchingInternalDevice.hidDevice,
       {
         onConnectionTerminated: () => {
           onDisconnect(deviceId);
           this._deviceConnectionsPendingReconnection.delete(deviceConnection);
-          this.deleteInternalDevice({ internalDevice });
+          this._deviceConnectionsByHidDevice.delete(
+            matchingInternalDevice.hidDevice,
+          );
+          deviceConnection.device.close();
         },
         deviceId,
       },
     );
 
     this._deviceConnectionsByHidDevice.set(
-      internalDevice.hidDevice,
+      matchingInternalDevice.hidDevice,
       deviceConnection,
     );
     const connectedDevice = new InternalConnectedDevice({
@@ -375,24 +408,6 @@ export class WebUsbHidTransport implements Transport {
     });
   }
 
-  private async deleteInternalDevice(params: {
-    internalDevice: WebHidInternalDevice;
-  }): Promise<Either<SdkError, void>> {
-    this._logger.debug("_internalDisconnect", {
-      data: { connectedDevice: params },
-    });
-    const { internalDevice } = params;
-
-    try {
-      this._internalDevicesById.delete(internalDevice.id);
-      this._deviceConnectionsByHidDevice.delete(internalDevice.hidDevice);
-      await internalDevice.hidDevice.close();
-      return Right(void 0);
-    } catch (error) {
-      return Left(new DisconnectError(error));
-    }
-  }
-
   /**
    * Disconnect from a HID USB device
    */
@@ -400,26 +415,27 @@ export class WebUsbHidTransport implements Transport {
     connectedDevice: InternalConnectedDevice;
   }): Promise<Either<SdkError, void>> {
     this._logger.debug("disconnect", { data: { connectedDevice: params } });
-    const internalDevice = this._internalDevicesById.get(
-      params.connectedDevice.id,
+
+    const matchingDeviceConnection = Array.from(
+      this._deviceConnectionsByHidDevice.values(),
+    ).find(
+      (deviceConnection) =>
+        deviceConnection.deviceId === params.connectedDevice.id,
     );
 
-    if (!internalDevice) {
-      this._logger.error(`Unknown device ${params.connectedDevice.id}`);
-      return Left(
-        new UnknownDeviceError(`Unknown device ${params.connectedDevice.id}`),
+    if (!matchingDeviceConnection) {
+      this._logger.error("No matching device connection found", {
+        data: { connectedDevice: params },
+      });
+      return Promise.resolve(
+        Left(
+          new UnknownDeviceError(`Unknown device ${params.connectedDevice.id}`),
+        ),
       );
     }
 
-    const deviceConnection = this._deviceConnectionsByHidDevice.get(
-      internalDevice.hidDevice,
-    );
-
-    deviceConnection?.disconnect();
-
-    return this.deleteInternalDevice({
-      internalDevice,
-    });
+    matchingDeviceConnection.disconnect();
+    return Promise.resolve(Right(undefined));
   }
 
   /**
@@ -451,6 +467,8 @@ export class WebUsbHidTransport implements Transport {
       data: { event },
     });
 
+    this.updateInternalDiscoveredDevices();
+
     try {
       await event.device.close();
     } catch (error) {
@@ -467,6 +485,23 @@ export class WebUsbHidTransport implements Transport {
       matchingDeviceConnection.lostConnection();
       this._deviceConnectionsPendingReconnection.add(matchingDeviceConnection);
       this._deviceConnectionsByHidDevice.delete(event.device);
+    }
+  }
+
+  private handleDeviceReconnection(
+    deviceConnection: UsbHidDeviceConnection,
+    hidDevice: HIDDevice,
+  ) {
+    this._deviceConnectionsPendingReconnection.delete(deviceConnection);
+    this._deviceConnectionsByHidDevice.set(hidDevice, deviceConnection);
+
+    try {
+      deviceConnection.reconnectHidDevice(hidDevice);
+    } catch (error) {
+      this._logger.error("Error while reconnecting to device", {
+        data: { event, error },
+      });
+      deviceConnection.disconnect();
     }
   }
 
@@ -491,36 +526,24 @@ export class WebUsbHidTransport implements Transport {
         this.getHidUsbProductId(deviceConnection.device) ===
         this.getHidUsbProductId(event.device),
     );
-    if (!matchingDeviceConnection) return;
 
-    const matchingInternalDevice = this._internalDevicesById.get(
-      matchingDeviceConnection.deviceId,
-    );
-
-    if (!matchingInternalDevice) {
-      this._logger.error("Internal device not found", {
-        data: { matchingDeviceConnection },
-      });
-      return;
+    if (matchingDeviceConnection) {
+      this.handleDeviceReconnection(matchingDeviceConnection, event.device);
     }
-    this._deviceConnectionsPendingReconnection.delete(matchingDeviceConnection);
-    this._deviceConnectionsByHidDevice.set(
-      event.device,
-      matchingDeviceConnection,
-    );
 
-    this._internalDevicesById.set(matchingDeviceConnection.deviceId, {
-      ...matchingInternalDevice,
-      hidDevice: event.device,
+    /**
+     * Note: we do this after handling the reconnection to allow the newly
+     * discovered device to keep the same DeviceId as the previous one in case
+     * of a reconnection.
+     */
+    this.updateInternalDiscoveredDevices();
+  }
+
+  public destroy() {
+    this.stopListeningToConnectionEvents();
+    this._deviceConnectionsByHidDevice.forEach((connection) => {
+      connection.disconnect();
     });
-
-    try {
-      matchingDeviceConnection.reconnectHidDevice(event.device);
-    } catch (error) {
-      this._logger.error("Error while reconnecting to device", {
-        data: { event, error },
-      });
-      matchingDeviceConnection.disconnect();
-    }
+    this._deviceConnectionsPendingReconnection.clear();
   }
 }

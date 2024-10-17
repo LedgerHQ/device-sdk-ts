@@ -34,6 +34,7 @@ import { discoveryTypes } from "@internal/discovery/di/discoveryTypes";
 import { ConnectUseCase } from "@internal/discovery/use-case/ConnectUseCase";
 import { DisconnectUseCase } from "@internal/discovery/use-case/DisconnectUseCase";
 import { GetConnectedDeviceUseCase } from "@internal/discovery/use-case/GetConnectedDeviceUseCase";
+import { ListenToKnownDevicesUseCase } from "@internal/discovery/use-case/ListenToKnownDevicesUseCase";
 import type { StartDiscoveringUseCase } from "@internal/discovery/use-case/StartDiscoveringUseCase";
 import type { StopDiscoveringUseCase } from "@internal/discovery/use-case/StopDiscoveringUseCase";
 import { sendTypes } from "@internal/send/di/sendTypes";
@@ -106,6 +107,19 @@ export class DeviceSdk {
   stopDiscovering() {
     return this.container
       .get<StopDiscoveringUseCase>(discoveryTypes.StopDiscoveringUseCase)
+      .execute();
+  }
+
+  /**
+   * Listen to list of known discovered devices (and later BLE).
+   *
+   * @returns {Observable<DiscoveredDevice[]>} An observable of known discovered devices.
+   */
+  listenToKnownDevices(): Observable<DiscoveredDevice[]> {
+    return this.container
+      .get<ListenToKnownDevicesUseCase>(
+        discoveryTypes.ListenToKnownDevicesUseCase,
+      )
       .execute();
   }
 

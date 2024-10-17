@@ -4,4 +4,5 @@ export const discoveryTypes = {
   ConnectUseCase: Symbol.for("ConnectUseCase"),
   DisconnectUseCase: Symbol.for("DisconnectUseCase"),
   GetConnectedDeviceUseCase: Symbol.for("GetConnectedDeviceUseCase"),
+  ListenToKnownDevicesUseCase: Symbol.for("ListenToKnownDevicesUseCase"),
 };
