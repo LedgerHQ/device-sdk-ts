@@ -1,15 +1,23 @@
-import React, { Context, createContext, useContext, useReducer } from "react";
+import React, {
+  Context,
+  createContext,
+  useContext,
+  useEffect,
+  useReducer,
+} from "react";
 
+import { useHasChanged } from "@/hooks/useHasChanged";
+import { useSdk } from "@/providers/DeviceSdkProvider";
 import {
+  DeviceSessionsAction,
   DeviceSessionsInitialState,
   deviceSessionsReducer,
   DeviceSessionsState,
-  DeviseSessionsAction,
 } from "@/reducers/deviceSessions";
 
 type DeviceSessionsContextType = {
   state: DeviceSessionsState;
-  dispatch: (value: DeviseSessionsAction) => void;
+  dispatch: (value: DeviceSessionsAction) => void;
 };
 
 const DeviceSessionsContext: Context<DeviceSessionsContextType> =
@@ -21,10 +29,28 @@ const DeviceSessionsContext: Context<DeviceSessionsContextType> =
 export const DeviceSessionsProvider: React.FC<React.PropsWithChildren> = ({
   children,
 }) => {
+  const sdk = useSdk();
   const [state, dispatch] = useReducer(
     deviceSessionsReducer,
     DeviceSessionsInitialState,
   );
+
+  const sdkHasChanged = useHasChanged(sdk);
+  if (sdkHasChanged) {
+    dispatch({ type: "remove_all_sessions" });
+  }
+
+  useEffect(() => {
+    sdk.listDeviceSessions().map((session) => {
+      dispatch({
+        type: "add_session",
+        payload: {
+          sessionId: session.id,
+          connectedDevice: sdk.getConnectedDevice({ sessionId: session.id }),
+        },
+      });
+    });
+  }, [sdk]);
 
   return (
     <DeviceSessionsContext.Provider value={{ state, dispatch }}>

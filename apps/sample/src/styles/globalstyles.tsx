@@ -11,4 +11,7 @@ export const GlobalStyle = createGlobalStyle`
     margin: 0;
     background-color: #000000;
   }
+  body {
+    user-select: none;
+  }
 `;

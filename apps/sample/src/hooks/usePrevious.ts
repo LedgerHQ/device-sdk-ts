@@ -1,9 +1,13 @@
-import { useEffect, useRef } from "react";
+import { useRef } from "react";
 
+/**
+ * A custom hook that returns the previous value of the provided value.
+ * @param value The value to compare against the previous render.
+ * @returns The previous value of the provided value.
+ */
 export function usePrevious<T>(value: T) {
   const ref = useRef<T>();
-  useEffect(() => {
-    ref.current = value; //assign the value of ref to the argument
-  }, [value]); //this code will run when the value of 'value' changes
-  return ref.current; //in the end, return the current ref value.
+  const previousValue = ref.current;
+  ref.current = value;
+  return previousValue;
 }
