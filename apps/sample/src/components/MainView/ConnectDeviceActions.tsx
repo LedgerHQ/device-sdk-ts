@@ -17,7 +17,6 @@ export const ConnectDeviceActions = ({
   onError,
 }: ConnectDeviceActionsProps) => {
   const {
-    dispatch: dispatchSdkConfig,
     state: { transport },
   } = useSdkConfigContext();
   const { dispatch: dispatchDeviceSession } = useDeviceSessionsContext();
@@ -26,10 +25,6 @@ export const ConnectDeviceActions = ({
   const onSelectDeviceClicked = useCallback(
     (selectedTransport: BuiltinTransports) => {
       onError(null);
-      dispatchSdkConfig({
-        type: "set_transport",
-        payload: { transport: selectedTransport },
-      });
       sdk.startDiscovering({ transport: selectedTransport }).subscribe({
         next: (device) => {
           sdk
@@ -56,8 +51,16 @@ export const ConnectDeviceActions = ({
         },
       });
     },
-    [sdk, transport],
+    [dispatchDeviceSession, onError, sdk],
   );
+
+  // This implementation gives the impression that working with the mock server
+  // is a special case, when in fact it's just a transport like the others
+  // TODO: instead of toggling between mock & regular config, we should
+  // just have a menu to select the active transports (where the active menu)
+  // and this here should be a list of one buttons for each active transport
+  // also we should not have a different appearance when the mock server is enabled
+  // we should just display the list of active transports somewhere in the sidebar, discreetly
 
   return transport === BuiltinTransports.MOCK_SERVER ? (
     <ConnectButton

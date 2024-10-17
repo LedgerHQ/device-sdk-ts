@@ -19,10 +19,15 @@ type RemoveSessionAction = {
   payload: { sessionId: DeviceSessionId };
 };
 
-export type DeviseSessionsAction =
+type RemoveAllSessionsAction = {
+  type: "remove_all_sessions";
+};
+
+export type DeviceSessionsAction =
   | AddSessionAction
   | RemoveSessionAction
-  | SelectSessionAction;
+  | SelectSessionAction
+  | RemoveAllSessionsAction;
 
 export type SelectSessionAction = {
   type: "select_session";
@@ -36,7 +41,7 @@ export const DeviceSessionsInitialState: DeviceSessionsState = {
 
 export const deviceSessionsReducer: Reducer<
   DeviceSessionsState,
-  DeviseSessionsAction
+  DeviceSessionsAction
 > = (state, action) => {
   const sessionsCount = Object.keys(state.deviceById).length;
 
@@ -60,6 +65,9 @@ export const deviceSessionsReducer: Reducer<
             ? Object.keys(state.deviceById)[sessionsCount - 1]
             : undefined,
       };
+    case "remove_all_sessions":
+      return DeviceSessionsInitialState;
+
     case "select_session":
       return {
         ...state,
