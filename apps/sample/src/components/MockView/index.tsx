@@ -4,7 +4,7 @@ import { Button, Divider, Flex, Input, Link, Text } from "@ledgerhq/react-ui";
 import styled, { DefaultTheme } from "styled-components";
 
 import { useMockClient } from "@/hooks/useMockClient";
-import { useMockServerContext } from "@/providers/MockServerProvider";
+import { useSdkConfigContext } from "@/providers/SdkConfig";
 
 const Root = styled(Flex).attrs({ mx: 15, mt: 10, mb: 5 })`
   flex-direction: column;
@@ -80,10 +80,10 @@ export const MockView: React.FC = () => {
   const [currentResponse, setCurrentResponse] = useState<string>("6700");
 
   const {
-    state: { url },
-  } = useMockServerContext();
+    state: { mockServerUrl },
+  } = useSdkConfigContext();
 
-  const client = useMockClient(url);
+  const client = useMockClient(mockServerUrl);
 
   const fetchSessions = async () => {
     try {

@@ -1,16 +1,21 @@
-import React, { useCallback, useEffect } from "react";
-import { Button, Flex, Text } from "@ledgerhq/react-ui";
+import React, { useEffect, useState } from "react";
+import { SdkError } from "@ledgerhq/device-management-kit";
+import { Badge, Flex, Icon, Notification, Text } from "@ledgerhq/react-ui";
 import Image from "next/image";
 import styled, { DefaultTheme } from "styled-components";
 
-import { useSdk } from "@/providers/DeviceSdkProvider";
-import { useDeviceSessionsContext } from "@/providers/DeviceSessionsProvider";
+import { ConnectDeviceActions } from "./ConnectDeviceActions";
 
 const Root = styled(Flex)`
   flex: 1;
   justify-content: center;
   align-items: center;
   flex-direction: column;
+`;
+const ErrorNotification = styled(Notification)`
+  position: absolute;
+  bottom: 10px;
+  width: 70%;
 `;
 
 const Description = styled(Text).attrs({ my: 6 })`
@@ -22,43 +27,21 @@ const NanoLogo = styled(Image).attrs({ mb: 8 })`
 `;
 
 export const MainView: React.FC = () => {
-  const sdk = useSdk();
-  const { dispatch } = useDeviceSessionsContext();
-
-  // Example starting the discovery on a user action
-  const onSelectDeviceClicked = useCallback(() => {
-    sdk.startDiscovering({}).subscribe({
-      next: (device) => {
-        sdk
-          .connect({ device })
-          .then((sessionId) => {
-            console.log(
-              `🦖 Response from connect: ${JSON.stringify(sessionId)} 🎉`,
-            );
-            dispatch({
-              type: "add_session",
-              payload: {
-                sessionId,
-                connectedDevice: sdk.getConnectedDevice({ sessionId }),
-              },
-            });
-          })
-          .catch((error) => {
-            console.error(`Error from connection or get-version`, error);
-          });
-      },
-      error: (error) => {
-        console.error(error);
-      },
-    });
-  }, [sdk, dispatch]);
+  const [connectionError, setConnectionError] = useState<SdkError | null>(null);
 
   useEffect(() => {
+    let timeoutId: NodeJS.Timeout;
+    if (connectionError) {
+      timeoutId = setTimeout(() => {
+        setConnectionError(null);
+      }, 3000);
+    }
     return () => {
-      // Example cleaning up the discovery
-      sdk.stopDiscovering();
+      if (timeoutId) {
+        clearTimeout(timeoutId);
+      }
     };
-  }, [sdk]);
+  }, [connectionError]);
 
   return (
     <Root>
@@ -75,15 +58,24 @@ export const MainView: React.FC = () => {
         Use this application to test Ledger hardware device features.
       </Description>
 
-      <Button
-        onClick={onSelectDeviceClicked}
-        variant="main"
-        backgroundColor="main"
-        size="large"
-        data-testid="CTA_select-device"
-      >
-        Select a device
-      </Button>
+      <ConnectDeviceActions onError={setConnectionError} />
+      {connectionError && (
+        <ErrorNotification
+          badge={
+            <Badge
+              backgroundColor="error.c10"
+              color="error.c50"
+              icon={<Icon name="Warning" size={24} />}
+            />
+          }
+          hasBackground
+          title="Error"
+          description={
+            connectionError.message ||
+            (connectionError.originalError as Error | undefined)?.message
+          }
+        />
+      )}
     </Root>
   );
 };

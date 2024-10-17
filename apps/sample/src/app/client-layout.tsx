@@ -17,7 +17,7 @@ import { Header } from "@/components/Header";
 import { Sidebar } from "@/components/Sidebar";
 import { SdkProvider } from "@/providers/DeviceSdkProvider";
 import { DeviceSessionsProvider } from "@/providers/DeviceSessionsProvider";
-import { MockServerProvider } from "@/providers/MockServerProvider";
+import { SdkConfigProvider } from "@/providers/SdkConfig";
 import { GlobalStyle } from "@/styles/globalstyles";
 
 const Root = styled(Flex)`
@@ -37,7 +37,7 @@ const PageContainer = styled(Flex)`
 const ClientRootLayout: React.FC<PropsWithChildren> = ({ children }) => {
   return (
     <html lang="en">
-      <MockServerProvider>
+      <SdkConfigProvider>
         <SdkProvider>
           <StyleProvider selectedPalette="dark" fontsPath="/fonts">
             <GlobalStyle />
@@ -54,7 +54,7 @@ const ClientRootLayout: React.FC<PropsWithChildren> = ({ children }) => {
             </body>
           </StyleProvider>
         </SdkProvider>
-      </MockServerProvider>
+      </SdkConfigProvider>
     </html>
   );
 };
