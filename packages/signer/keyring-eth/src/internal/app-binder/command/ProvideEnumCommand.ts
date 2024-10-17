@@ -15,7 +15,7 @@ export type ProvideEnumCommandArgs = {
   /**
    * The enum data to provide in chunks
    */
-  readonly payload: Uint8Array;
+  readonly data: Uint8Array;
   /**
    * If this is the first chunk of the message
    */
@@ -36,7 +36,7 @@ export class ProvideEnumCommand
     };
 
     return new ApduBuilder(ProvideEnumArgs)
-      .addBufferToData(this.args.payload)
+      .addBufferToData(this.args.data)
       .build();
   }
 

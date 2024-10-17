@@ -1,5 +1,4 @@
 import {
-  APDU_MAX_PAYLOAD,
   ByteArrayBuilder,
   CommandResult,
   CommandResultFactory,
@@ -7,7 +6,6 @@ import {
   InvalidStatusWordError,
   isSuccessCommandResult,
 } from "@ledgerhq/device-management-kit";
-import { Nothing } from "purify-ts";
 
 import { Signature } from "@api/model/Signature";
 import {
@@ -15,6 +13,8 @@ import {
   SignPersonalMessageCommandResponse,
 } from "@internal/app-binder/command/SignPersonalMessageCommand";
 import { DerivationPathUtils } from "@internal/shared/utils/DerivationPathUtils";
+
+import { SendCommandInChunksTask } from "./SendCommandInChunksTask";
 
 const PATH_SIZE = 4;
 
@@ -49,25 +49,24 @@ export class SendSignPersonalMessageTask {
 
     const buffer = builder.build();
 
-    let result = CommandResultFactory<SignPersonalMessageCommandResponse, void>(
-      { data: Nothing },
-    );
+    const result =
+      await new SendCommandInChunksTask<SignPersonalMessageCommandResponse>(
+        this.api,
+        {
+          data: buffer,
+          commandFactory: (args) =>
+            new SignPersonalMessageCommand({
+              data: args.chunkedData,
+              isFirstChunk: args.isFirstChunk,
+            }),
+        },
+      ).run();
 
-    // Split the buffer into chunks
-    for (let i = 0; i < buffer.length; i += APDU_MAX_PAYLOAD) {
-      result = await this.api.sendCommand(
-        new SignPersonalMessageCommand({
-          data: buffer.slice(i, i + APDU_MAX_PAYLOAD),
-          isFirstChunk: i === 0,
-        }),
-      );
-
-      if (!isSuccessCommandResult(result)) {
-        return result;
-      }
+    if (!isSuccessCommandResult(result)) {
+      return result;
     }
 
-    if (isSuccessCommandResult(result) && result.data.isJust()) {
+    if (result.data.isJust()) {
       return CommandResultFactory({
         data: result.data.extract(),
       });
