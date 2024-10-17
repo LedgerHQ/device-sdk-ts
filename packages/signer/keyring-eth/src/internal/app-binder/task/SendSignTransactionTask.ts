@@ -21,6 +21,7 @@ const PATH_SIZE = 4;
 type SendSignTransactionTaskArgs = {
   derivationPath: string;
   serializedTransaction: Uint8Array;
+  isLegacy: boolean;
 };
 
 export class SendSignTransactionTask {
@@ -57,7 +58,7 @@ export class SendSignTransactionTask {
         new SignTransactionCommand({
           serializedTransaction: buffer.slice(i, i + APDU_MAX_PAYLOAD),
           isFirstChunk: i === 0,
-          isLegacy: true,
+          isLegacy: this.args.isLegacy,
         }),
       );
 
