@@ -75,11 +75,22 @@ export const setupGoToDashboardMock = (error: boolean = false) => {
 };
 
 export const setupGetDeviceStatusMock = (
-  output: { currentApp: string; currentAppVersion: string } | SdkError = {
-    currentApp: "BOLOS",
-    currentAppVersion: "1.0.0",
-  },
+  outputs: ReadonlyArray<
+    { currentApp: string; currentAppVersion: string } | SdkError
+  > = [
+    {
+      currentApp: "BOLOS",
+      currentAppVersion: "1.0.0",
+    },
+  ],
 ) => {
+  const outputFn = jest.fn();
+
+  for (const output of outputs) {
+    outputFn.mockImplementationOnce(() =>
+      "currentApp" in output ? Right(output) : Left(output),
+    );
+  }
   (GetDeviceStatusDeviceAction as jest.Mock).mockImplementation(() => ({
     makeStateMachine: jest.fn().mockImplementation(() =>
       createMachine({
@@ -100,9 +111,7 @@ export const setupGetDeviceStatusMock = (
             type: "final",
           },
         },
-        output: () => {
-          return "currentApp" in output ? Right(output) : Left(output);
-        },
+        output: outputFn,
       }),
     ),
   }));
