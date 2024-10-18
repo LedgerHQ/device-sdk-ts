@@ -26,11 +26,13 @@ export function CommandForm<Args extends Record<string, FieldType>>({
   initialValues,
   onChange,
   valueSelector,
+  labelSelector,
   disabled,
 }: {
   initialValues: Args;
   onChange: (values: Args) => void;
   valueSelector?: ValueSelector<FieldType>;
+  labelSelector?: Record<string, string>;
   disabled?: boolean;
 }) {
   const { formValues, setFormValue } = useForm(initialValues);
@@ -53,7 +55,7 @@ export function CommandForm<Args extends Record<string, FieldType>>({
         >
           {typeof value === "boolean" ? null : (
             <Text variant="paragraph" fontWeight="medium">
-              {key}
+              {labelSelector && labelSelector[key] ? labelSelector[key] : key}
             </Text>
           )}
           {valueSelector?.[key] ? (
