@@ -1,3 +1,5 @@
+/* istanbul ignore file */
+// pragma to ignore this file from coverage
 import {
   CommandResponse,
   Device,
@@ -94,9 +96,6 @@ export class MockTransport implements Transport {
     const sessionId: string = params.deviceId;
     try {
       const session: Session = await this.mockClient.connect(sessionId);
-      this.logger.debug("connected device model id::", {
-        data: { session, sessionId },
-      });
       const connectedDevice = {
         sendApdu: (apdu) => {
           return this.sendApdu(

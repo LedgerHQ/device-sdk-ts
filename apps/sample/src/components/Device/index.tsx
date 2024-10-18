@@ -16,6 +16,10 @@ const Root = styled(Flex).attrs({ p: 5, mb: 8, borderRadius: 2 })`
   background: ${({ theme }: { theme: DefaultTheme }) =>
     theme.colors.neutral.c30};
   align-items: center;
+  border: ${({ active, theme }: { theme: DefaultTheme; active: boolean }) =>
+    `1px solid ${active ? theme.colors.success.c40 : "transparent"}`};
+  cursor: ${({ active }: { active: boolean }) =>
+    active ? "normal" : "pointer"};
 `;
 
 const IconContainer = styled(Flex).attrs({ p: 4, mr: 3, borderRadius: 100 })`
@@ -42,6 +46,7 @@ type DeviceProps = {
   sessionId: DeviceSessionId;
   model: DeviceModelId;
   onDisconnect: () => Promise<void>;
+  onSelect: () => void;
 };
 
 function getIconComponent(model: DeviceModelId) {
@@ -62,16 +67,17 @@ export const Device: React.FC<DeviceProps> = ({
   type,
   model,
   onDisconnect,
+  onSelect,
   sessionId,
 }) => {
   const sessionState = useDeviceSessionState(sessionId);
   const {
-    state: { deviceById, selectedId },
-    dispatch,
+    state: { selectedId },
   } = useDeviceSessionsContext();
   const IconComponent = getIconComponent(model);
+  const isActive = selectedId === sessionId;
   return (
-    <Root>
+    <Root active={isActive} onClick={isActive ? undefined : onSelect}>
       <IconContainer>
         <IconComponent size="S" />
       </IconContainer>
@@ -98,17 +104,6 @@ export const Device: React.FC<DeviceProps> = ({
       </Box>
       <div data-testid="dropdown_device-option">
         <DropdownGeneric closeOnClickOutside label="" placement="bottom">
-          {Object.values(deviceById).length > 1 && selectedId !== sessionId && (
-            <ActionRow
-              onClick={() =>
-                dispatch({ type: "select_session", payload: { sessionId } })
-              }
-            >
-              <Text variant="paragraph" color="neutral.c80">
-                Select
-              </Text>
-            </ActionRow>
-          )}
           <ActionRow data-testid="CTA_disconnect-device" onClick={onDisconnect}>
             <Text variant="paragraph" color="neutral.c80">
               Disconnect

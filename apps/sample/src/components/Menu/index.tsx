@@ -1,9 +1,10 @@
 import React from "react";
+import { BuiltinTransports } from "@ledgerhq/device-management-kit";
 import { Flex, Icons, Link } from "@ledgerhq/react-ui";
 import { useRouter } from "next/navigation";
 import styled from "styled-components";
 
-import { useMockServerContext } from "@/providers/MockServerProvider";
+import { useSdkConfigContext } from "@/providers/SdkConfig";
 
 const MenuItem = styled(Flex).attrs({ p: 3, pl: 5 })`
   align-items: center;
@@ -18,8 +19,8 @@ const MenuTitle = styled(Link).attrs({
 export const Menu: React.FC = () => {
   const router = useRouter();
   const {
-    state: { enabled: mockServerEnabled },
-  } = useMockServerContext();
+    state: { transport },
+  } = useSdkConfigContext();
 
   return (
     <>
@@ -71,7 +72,7 @@ export const Menu: React.FC = () => {
         <Icons.SettingsAlt2 />
         <MenuTitle onClick={() => router.push("/cal")}>Crypto Assets</MenuTitle>
       </MenuItem>
-      {mockServerEnabled && (
+      {transport === BuiltinTransports.MOCK_SERVER && (
         <MenuItem>
           <Icons.Settings />
           <MenuTitle

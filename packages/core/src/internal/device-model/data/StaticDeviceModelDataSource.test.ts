@@ -1,4 +1,5 @@
 import { DeviceModelId } from "@api/device/DeviceModel";
+import { BleDeviceInfos } from "@internal/transport/ble/model/BleDeviceInfos";
 
 import { StaticDeviceModelDataSource } from "./StaticDeviceModelDataSource";
 
@@ -147,6 +148,52 @@ describe("StaticDeviceModelDataSource", () => {
         usbProductId: 0x10,
       });
       expect(deviceModels3.length).toEqual(0);
+    });
+  });
+  describe("getBluetoothServicesInfos", () => {
+    it("should return the ble service infos record", () => {
+      // given
+      const dataSource = new StaticDeviceModelDataSource();
+      // when
+      const bleServiceInfos = dataSource.getBluetoothServicesInfos();
+      // then
+      expect(bleServiceInfos).toStrictEqual({
+        "13d63400-2c97-0004-0000-4c6564676572": new BleDeviceInfos(
+          dataSource.getDeviceModel({ id: DeviceModelId.NANO_X }),
+          "13d63400-2c97-0004-0000-4c6564676572",
+          "13d63400-2c97-0004-0002-4c6564676572",
+          "13d63400-2c97-0004-0003-4c6564676572",
+          "13d63400-2c97-0004-0001-4c6564676572",
+        ),
+        "13d63400-2c97-6004-0000-4c6564676572": new BleDeviceInfos(
+          dataSource.getDeviceModel({ id: DeviceModelId.STAX }),
+          "13d63400-2c97-6004-0000-4c6564676572",
+          "13d63400-2c97-6004-0002-4c6564676572",
+          "13d63400-2c97-6004-0003-4c6564676572",
+          "13d63400-2c97-6004-0001-4c6564676572",
+        ),
+        "13d63400-2c97-3004-0000-4c6564676572": new BleDeviceInfos(
+          dataSource.getDeviceModel({ id: DeviceModelId.FLEX }),
+          "13d63400-2c97-3004-0000-4c6564676572",
+          "13d63400-2c97-3004-0002-4c6564676572",
+          "13d63400-2c97-3004-0003-4c6564676572",
+          "13d63400-2c97-3004-0001-4c6564676572",
+        ),
+      });
+    });
+  });
+  describe("getBluetoothServices", () => {
+    it("should return the bluetooth services", () => {
+      // given
+      const dataSource = new StaticDeviceModelDataSource();
+      // when
+      const bleServices = dataSource.getBluetoothServices();
+      // then
+      expect(bleServices).toStrictEqual([
+        "13d63400-2c97-0004-0000-4c6564676572",
+        "13d63400-2c97-6004-0000-4c6564676572",
+        "13d63400-2c97-3004-0000-4c6564676572",
+      ]);
     });
   });
 });

@@ -1,4 +1,5 @@
 import React, { useCallback, useState } from "react";
+import { BuiltinTransports } from "@ledgerhq/device-management-kit";
 import {
   Button,
   DropdownGeneric,
@@ -9,7 +10,7 @@ import {
 } from "@ledgerhq/react-ui";
 import styled, { DefaultTheme } from "styled-components";
 
-import { useMockServerContext } from "@/providers/MockServerProvider";
+import { useSdkConfigContext } from "@/providers/SdkConfig";
 
 const Root = styled(Flex).attrs({ py: 3, px: 10, gridGap: 8 })`
   color: ${({ theme }: { theme: DefaultTheme }) => theme.colors.neutral.c90};
@@ -36,18 +37,28 @@ const UrlInput = styled(Input)`
 export const Header = () => {
   const {
     dispatch,
-    state: { enabled, url },
-  } = useMockServerContext();
+    state: { transport, mockServerUrl },
+  } = useSdkConfigContext();
   const onToggleMockServer = useCallback(() => {
-    dispatch({ type: enabled ? "disable_mock_server" : "enable_mock_server" });
-  }, [dispatch, enabled]);
-  const [mockServerStateUrl, setMockServerStateUrl] = useState<string>(url);
+    dispatch({
+      type: "set_transport",
+      payload: {
+        transport:
+          transport === BuiltinTransports.MOCK_SERVER
+            ? BuiltinTransports.USB
+            : BuiltinTransports.MOCK_SERVER,
+      },
+    });
+  }, [transport]);
+  const [mockServerStateUrl, setMockServerStateUrl] =
+    useState<string>(mockServerUrl);
+  const mockServerEnabled = transport === BuiltinTransports.MOCK_SERVER;
 
   const validateServerUrl = useCallback(
     () =>
       dispatch({
         type: "set_mock_server_url",
-        payload: { url: mockServerStateUrl },
+        payload: { mockServerUrl: mockServerStateUrl },
       }),
     [mockServerStateUrl],
   );
@@ -67,13 +78,13 @@ export const Header = () => {
             <div data-testid="switch_mock-server">
               <Switch
                 onChange={onToggleMockServer}
-                checked={enabled}
+                checked={mockServerEnabled}
                 name="switch-mock-server"
                 label="Enable Mock server"
               />
             </div>
           </Flex>
-          {enabled && (
+          {mockServerEnabled && (
             <UrlInput
               value={mockServerStateUrl}
               onChange={(url: string) => setMockServerStateUrl(url)}
