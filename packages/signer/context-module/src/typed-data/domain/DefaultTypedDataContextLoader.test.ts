@@ -34,7 +34,7 @@ describe("TokenContextLoader", () => {
     ],
     PermitDetails: [
       {
-        type: "address",
+        type: "address[]",
         name: "token",
       },
       {
@@ -67,7 +67,7 @@ describe("TokenContextLoader", () => {
   };
   const TEST_VALUES = [
     {
-      path: "details.token",
+      path: "details.token.[]",
       value: Uint8Array.from([
         0x7c, 0xeb, 0x23, 0xfd, 0x6b, 0xc0, 0xad, 0xd5, 0x9e, 0x62, 0xac, 0x25,
         0x57, 0x82, 0x70, 0xcf, 0xf1, 0xb9, 0xf6, 0x19,
@@ -88,7 +88,7 @@ describe("TokenContextLoader", () => {
   ];
 
   beforeEach(() => {
-    jest.restoreAllMocks();
+    jest.clearAllMocks();
     jest
       .spyOn(mockTokenDataSource, "getTokenInfosPayload")
       .mockImplementation(({ address }) =>
@@ -121,7 +121,7 @@ describe("TokenContextLoader", () => {
                 {
                   type: "token",
                   displayName: "Amount allowance",
-                  path: "details.token",
+                  path: "details.token.[]",
                   tokenIndex: 0,
                   signature:
                     "3044022075103b38995e031d1ebbfe38ac6603bec32854b5146a664e49b4cc4f460c1da6022029f4b0fd1f3b7995ffff1627d4b57f27888a2dcc9b3a4e85c37c67571092c733",
@@ -184,9 +184,9 @@ describe("TokenContextLoader", () => {
               "3044022056b3381e4540629ad73bc434ec49d80523234b82f62340fbb77157fb0eb21a680220459fe9cf6ca309f9c7dfc6d4711fea1848dba661563c57f77b3c2dc480b3a63b",
             type: "datetime",
           },
-          "details.token": {
+          "details.token.[]": {
             displayName: "Amount allowance",
-            path: "details.token",
+            path: "details.token.[]",
             signature:
               "3044022075103b38995e031d1ebbfe38ac6603bec32854b5146a664e49b4cc4f460c1da6022029f4b0fd1f3b7995ffff1627d4b57f27888a2dcc9b3a4e85c37c67571092c733",
             tokenIndex: 0,
@@ -227,7 +227,7 @@ describe("TokenContextLoader", () => {
                 {
                   type: "token",
                   displayName: "Amount allowance",
-                  path: "details.token",
+                  path: "details.token.[]",
                   tokenIndex: 0,
                   signature:
                     "3044022075103b38995e031d1ebbfe38ac6603bec32854b5146a664e49b4cc4f460c1da6022029f4b0fd1f3b7995ffff1627d4b57f27888a2dcc9b3a4e85c37c67571092c733",
@@ -270,9 +270,9 @@ describe("TokenContextLoader", () => {
             tokenIndex: 255,
             type: "amount",
           },
-          "details.token": {
+          "details.token.[]": {
             displayName: "Amount allowance",
-            path: "details.token",
+            path: "details.token.[]",
             signature:
               "3044022075103b38995e031d1ebbfe38ac6603bec32854b5146a664e49b4cc4f460c1da6022029f4b0fd1f3b7995ffff1627d4b57f27888a2dcc9b3a4e85c37c67571092c733",
             tokenIndex: 0,
@@ -305,7 +305,7 @@ describe("TokenContextLoader", () => {
       });
     });
 
-    it("should return an error if tokens are unavailable", async () => {
+    it("success with unavailable tokens", async () => {
       // GIVEN
       const ctx = {
         verifyingContract: "0x000000000022d473030f116ddee9f6b43ac78ba3",
@@ -329,7 +329,7 @@ describe("TokenContextLoader", () => {
                 {
                   type: "token",
                   displayName: "Amount allowance",
-                  path: "details.token",
+                  path: "details.token.[]",
                   tokenIndex: 0,
                   signature:
                     "3044022075103b38995e031d1ebbfe38ac6603bec32854b5146a664e49b4cc4f460c1da6022029f4b0fd1f3b7995ffff1627d4b57f27888a2dcc9b3a4e85c37c67571092c733",
@@ -349,9 +349,139 @@ describe("TokenContextLoader", () => {
 
       // THEN
       expect(result).toEqual({
-        type: "error",
-        error: new Error("token error"),
+        type: "success",
+        messageInfo: {
+          displayName: "Permit2",
+          filtersCount: 2,
+          signature:
+            "3045022100e3c597d13d28a87a88b0239404c668373cf5063362f2a81d09eed4582941dfe802207669aabb504fd5b95b2734057f6b8bbf51f14a69a5f9bdf658a5952cefbf44d3",
+        },
+        tokens: {},
+        filters: {
+          "details.token.[]": {
+            displayName: "Amount allowance",
+            path: "details.token.[]",
+            signature:
+              "3044022075103b38995e031d1ebbfe38ac6603bec32854b5146a664e49b4cc4f460c1da6022029f4b0fd1f3b7995ffff1627d4b57f27888a2dcc9b3a4e85c37c67571092c733",
+            tokenIndex: 0,
+            type: "token",
+          },
+        },
       });
+    });
+
+    it("success with several identic tokens", async () => {
+      // GIVEN
+      const ctx = {
+        verifyingContract: "0x000000000022d473030f116ddee9f6b43ac78ba3",
+        chainId: 1,
+        version: "v2",
+        schema: TEST_TYPES,
+        fieldsValues: [
+          {
+            path: "details.token.[]",
+            value: Uint8Array.from([
+              0x7c, 0xeb, 0x23, 0xfd, 0x6b, 0xc0, 0xad, 0xd5, 0x9e, 0x62, 0xac,
+              0x25, 0x57, 0x82, 0x70, 0xcf, 0xf1, 0xb9, 0xf6, 0x19,
+            ]),
+          },
+          ...TEST_VALUES,
+        ],
+      } as TypedDataContext;
+      jest
+        .spyOn(mockTypedDataDataSource, "getTypedDataFilters")
+        .mockImplementation(() =>
+          Promise.resolve(
+            Right({
+              messageInfo: {
+                displayName: "Permit2",
+                filtersCount: 2,
+                signature:
+                  "3045022100e3c597d13d28a87a88b0239404c668373cf5063362f2a81d09eed4582941dfe802207669aabb504fd5b95b2734057f6b8bbf51f14a69a5f9bdf658a5952cefbf44d3",
+              },
+              filters: [
+                {
+                  type: "token",
+                  displayName: "Amount allowance",
+                  path: "details.token.[]",
+                  tokenIndex: 0,
+                  signature:
+                    "3044022075103b38995e031d1ebbfe38ac6603bec32854b5146a664e49b4cc4f460c1da6022029f4b0fd1f3b7995ffff1627d4b57f27888a2dcc9b3a4e85c37c67571092c733",
+                },
+              ],
+            }),
+          ),
+        );
+      jest
+        .spyOn(mockTokenDataSource, "getTokenInfosPayload")
+        .mockImplementation(() =>
+          Promise.resolve(Left(new Error("token error"))),
+        );
+
+      // WHEN
+      const result = await loader.load(ctx);
+
+      // THEN
+      expect(mockTokenDataSource.getTokenInfosPayload).toHaveBeenCalledWith({
+        address: "0x7ceb23fd6bc0add59e62ac25578270cff1b9f619",
+        chainId: 1,
+      });
+      expect(result.type).toEqual("success");
+    });
+
+    it("success with several different tokens", async () => {
+      // GIVEN
+      const ctx = {
+        verifyingContract: "0x000000000022d473030f116ddee9f6b43ac78ba3",
+        chainId: 1,
+        version: "v2",
+        schema: TEST_TYPES,
+        fieldsValues: [
+          {
+            path: "details.token.[]",
+            value: Uint8Array.from([
+              0x7c, 0xeb, 0x23, 0xfd, 0x6b, 0xc0, 0xad, 0xd5, 0x9e, 0x62, 0xac,
+              0x25, 0x57, 0x82, 0x70, 0xcf, 0xf1, 0xb9, 0xf6, 0xff,
+            ]),
+          },
+          ...TEST_VALUES,
+        ],
+      } as TypedDataContext;
+      jest
+        .spyOn(mockTypedDataDataSource, "getTypedDataFilters")
+        .mockImplementation(() =>
+          Promise.resolve(
+            Right({
+              messageInfo: {
+                displayName: "Permit2",
+                filtersCount: 2,
+                signature:
+                  "3045022100e3c597d13d28a87a88b0239404c668373cf5063362f2a81d09eed4582941dfe802207669aabb504fd5b95b2734057f6b8bbf51f14a69a5f9bdf658a5952cefbf44d3",
+              },
+              filters: [
+                {
+                  type: "token",
+                  displayName: "Amount allowance",
+                  path: "details.token.[]",
+                  tokenIndex: 0,
+                  signature:
+                    "3044022075103b38995e031d1ebbfe38ac6603bec32854b5146a664e49b4cc4f460c1da6022029f4b0fd1f3b7995ffff1627d4b57f27888a2dcc9b3a4e85c37c67571092c733",
+                },
+              ],
+            }),
+          ),
+        );
+      // WHEN
+      const result = await loader.load(ctx);
+
+      // THEN
+      expect(mockTokenDataSource.getTokenInfosPayload).not.toHaveBeenCalledWith(
+        { address: "0x7ceb23fd6bc0add59e62ac25578270cff1b9f6ff", chainId: 1 },
+      );
+      expect(mockTokenDataSource.getTokenInfosPayload).not.toHaveBeenCalledWith(
+        { address: "0x7ceb23fd6bc0add59e62ac25578270cff1b9f619", chainId: 1 },
+      );
+      expect(result.type).toEqual("success");
     });
 
     it("should return an error if value is not found", async () => {
