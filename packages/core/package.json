@@ -9,17 +9,20 @@
       "require": "./lib/cjs/index.js"
     },
     "./*": {
-      "types": "./lib/types/*"
+      "types": "./lib/types/*",
+      "import": "./lib/esm/*",
+      "require": "./lib/cjs/*"
     }
   },
   "files": [
-    "./lib"
+    "./lib",
+    "package.json"
   ],
   "scripts": {
     "prebuild": "rimraf lib",
-    "build": "pnpm lmdk-build --entryPoints index.ts --tsconfig tsconfig.prod.json",
+    "build": "pnpm lmdk-build --entryPoints index.ts,src/**/*.ts --tsconfig tsconfig.prod.json",
     "dev": "concurrently \"pnpm watch:builds\" \"pnpm watch:types\"",
-    "watch:builds": "pnpm lmdk-watch --entryPoints index.ts --tsconfig tsconfig.prod.json",
+    "watch:builds": "pnpm lmdk-watch --entryPoints index.ts,src/**/*.ts --tsconfig tsconfig.prod.json",
     "watch:types": "concurrently \"tsc --watch -p tsconfig.prod.json\" \"tsc-alias --watch -p tsconfig.prod.json\"",
     "lint": "eslint",
     "lint:fix": "pnpm lint --fix",
