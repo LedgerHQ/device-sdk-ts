@@ -3,10 +3,11 @@
 import "zx/globals";
 import esbuild from "esbuild";
 import { nodeExternalsPlugin } from "esbuild-node-externals";
+import { replaceTscAliasPaths } from "tsc-alias";
 
 const config = {
-  minify: false,
-  bundle: true,
+  minify: true,
+  bundle: false,
   treeShaking: true,
   sourcemap: true,
   color: true,
@@ -26,30 +27,47 @@ if (!tsconfig) {
   console.error(chalk.red("TSConfig file is required"));
   process.exit(1);
 }
+
 const entryPointsArray = entryPoints.includes(",")
   ? entryPoints.split(",")
   : [entryPoints];
 
 const buildBrowser = async () => {
   console.log(chalk.blue("Building browser bundle..."));
-  return esbuild.build({
+  await esbuild.build({
     ...config,
     entryPoints: entryPointsArray,
     outdir: "lib/esm",
     format: "esm",
     platform: "browser",
   });
+
+  await $`cp package.json lib/esm/package.json`;
+
+  await replaceTscAliasPaths({
+    configFile: tsconfig,
+    outDir: "lib/esm",
+    watch: false,
+  });
 };
 
 const buildNode = async () => {
   console.log(chalk.blue("Building node bundle..."));
-  return esbuild.build({
+  await esbuild.build({
     ...config,
     entryPoints: entryPointsArray,
     outdir: "lib/cjs",
     format: "cjs",
     platform: "node",
     plugins: [nodeExternalsPlugin()],
+  });
+
+  await $`cp package.json lib/cjs/package.json`;
+
+  await replaceTscAliasPaths({
+    configFile: tsconfig,
+    outDir: "lib/cjs",
+    watch: false,
   });
 };
 
