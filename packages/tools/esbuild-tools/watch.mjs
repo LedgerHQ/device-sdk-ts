@@ -1,11 +1,12 @@
 #!/usr/bin/env zx
 
 import esbuild from "esbuild";
+import { nodeExternalsPlugin } from "esbuild-node-externals";
 import { replaceTscAliasPaths } from "tsc-alias";
 
 const config = {
   entryPoints: ["index.ts"],
-  minify: true,
+  minify: false,
   bundle: false,
   treeShaking: true,
   sourcemap: true,
@@ -33,44 +34,41 @@ const entryPointsArray = entryPoints.includes(",")
 
 const getBrowserContext = async () => {
   console.log(chalk.blue("Watching browser bundle..."));
-  const result = await esbuild.context({
+  await $`cp package.json lib/esm/package.json`;
+
+  await replaceTscAliasPaths({
+    configFile: tsconfig,
+    outDir: "lib/esm",
+    watch: true,
+  });
+
+  return esbuild.context({
     ...config,
     entryPoints: entryPointsArray,
     outdir: "lib/esm",
     format: "esm",
     platform: "browser",
   });
-
-  await $`cp package.json lib/esm/package.json`;
-
-  await replaceTscAliasPaths({
-    configFile: tsconfig,
-    outDir: "lib/esm",
-    watch: false,
-  });
-
-  return result;
 };
 
 const getNodeContext = async () => {
   console.log(chalk.blue("Watching node bundle..."));
-  const res = await esbuild.context({
-    ...config,
-    entryPoints: entryPointsArray,
-    outdir: "lib/cjs",
-    format: "cjs",
-    platform: "node",
-  });
-
   await $`cp package.json lib/cjs/package.json`;
 
   await replaceTscAliasPaths({
     configFile: tsconfig,
     outDir: "lib/cjs",
-    watch: false,
+    watch: true,
   });
 
-  return res;
+  return esbuild.context({
+    ...config,
+    entryPoints: entryPointsArray,
+    outdir: "lib/cjs",
+    format: "cjs",
+    platform: "node",
+    plugins: [nodeExternalsPlugin()],
+  });
 };
 
 const watch = async () => {

@@ -34,40 +34,56 @@ const entryPointsArray = entryPoints.includes(",")
 
 const buildBrowser = async () => {
   console.log(chalk.blue("Building browser bundle..."));
-  await esbuild.build({
+  return esbuild.build({
     ...config,
     entryPoints: entryPointsArray,
     outdir: "lib/esm",
     format: "esm",
     platform: "browser",
-  });
+    plugins: [
+      {
+        name: "tsc-alias",
+        setup(build) {
+          build.onEnd(async () => {
+            await $`cp package.json lib/esm/package.json`;
 
-  await $`cp package.json lib/esm/package.json`;
-
-  await replaceTscAliasPaths({
-    configFile: tsconfig,
-    outDir: "lib/esm",
-    watch: false,
+            await replaceTscAliasPaths({
+              configFile: tsconfig,
+              outDir: "lib/esm",
+              watch: false,
+            });
+          });
+        },
+      },
+    ],
   });
 };
 
 const buildNode = async () => {
   console.log(chalk.blue("Building node bundle..."));
-  await esbuild.build({
+  return esbuild.build({
     ...config,
     entryPoints: entryPointsArray,
     outdir: "lib/cjs",
     format: "cjs",
     platform: "node",
-    plugins: [nodeExternalsPlugin()],
-  });
+    plugins: [
+      nodeExternalsPlugin(),
+      {
+        name: "tsc-alias",
+        setup(build) {
+          build.onEnd(async () => {
+            await $`cp package.json lib/cjs/package.json`;
 
-  await $`cp package.json lib/cjs/package.json`;
-
-  await replaceTscAliasPaths({
-    configFile: tsconfig,
-    outDir: "lib/cjs",
-    watch: false,
+            await replaceTscAliasPaths({
+              configFile: tsconfig,
+              outDir: "lib/cjs",
+              watch: false,
+            });
+          });
+        },
+      },
+    ],
   });
 };
 
