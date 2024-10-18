@@ -13,6 +13,7 @@ import {
   ValueSelector,
 } from "@/components/CommandsView/CommandForm";
 import { FieldType } from "@/hooks/useForm";
+import { useCalConfig } from "@/providers/KeyringEthProvider";
 
 import { CalAvailabilityResponseComponent } from "./CalAvailabilityResponse";
 import { checkContractAvailability, Descriptor } from "./CalNetworkDataSource";
@@ -48,6 +49,7 @@ export function CalCheckDappDrawer<
   const [valuesInvalid, setValuesInvalid] = useState<boolean>(false);
   const [responses, setResponses] = useState<Response[]>([]);
   const [loading, setLoading] = useState(false);
+  const { calConfig } = useCalConfig();
   const handleClickExecute = useCallback(() => {
     setLoading(true);
     const id = ++nonce.current;
@@ -58,8 +60,8 @@ export function CalCheckDappDrawer<
 
         const response = await checkContractAvailability(
           values.smartContractAddress.toString(),
-          values.calUrl.toString(),
-          values.branch.toString(),
+          calConfig.url,
+          calConfig.branch,
         );
 
         setResponses((prev) => [

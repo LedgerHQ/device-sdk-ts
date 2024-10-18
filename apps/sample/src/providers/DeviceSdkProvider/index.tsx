@@ -48,7 +48,7 @@ export const SdkProvider: React.FC<PropsWithChildren> = ({ children }) => {
           .build(),
       );
     }
-  }, [transport, mockServerUrl, previousTransport]);
+  }, [transport, mockServerUrl, previousTransport, sdk]);
 
   return <SdkContext.Provider value={sdk}>{children}</SdkContext.Provider>;
 };

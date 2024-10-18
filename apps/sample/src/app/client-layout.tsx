@@ -17,6 +17,7 @@ import { Header } from "@/components/Header";
 import { Sidebar } from "@/components/Sidebar";
 import { SdkProvider } from "@/providers/DeviceSdkProvider";
 import { DeviceSessionsProvider } from "@/providers/DeviceSessionsProvider";
+import { KeyringEthProvider } from "@/providers/KeyringEthProvider";
 import { SdkConfigProvider } from "@/providers/SdkConfig";
 import { GlobalStyle } from "@/styles/globalstyles";
 
@@ -38,22 +39,24 @@ const ClientRootLayout: React.FC<PropsWithChildren> = ({ children }) => {
   return (
     <html lang="en">
       <SdkConfigProvider>
-        <SdkProvider>
-          <StyleProvider selectedPalette="dark" fontsPath="/fonts">
-            <GlobalStyle />
-            <body>
-              <Root>
-                <DeviceSessionsProvider>
-                  <Sidebar />
-                  <PageContainer>
-                    <Header />
-                    {children}
-                  </PageContainer>
-                </DeviceSessionsProvider>
-              </Root>
-            </body>
-          </StyleProvider>
-        </SdkProvider>
+        <DeviceSessionsProvider>
+          <SdkProvider>
+            <KeyringEthProvider>
+              <StyleProvider selectedPalette="dark" fontsPath="/fonts">
+                <GlobalStyle />
+                <body>
+                  <Root>
+                    <Sidebar />
+                    <PageContainer>
+                      <Header />
+                      {children}
+                    </PageContainer>
+                  </Root>
+                </body>
+              </StyleProvider>
+            </KeyringEthProvider>
+          </SdkProvider>
+        </DeviceSessionsProvider>
       </SdkConfigProvider>
     </html>
   );
