@@ -4,6 +4,7 @@ import { InvalidStatusWordError } from "@api/command/Errors";
 import { CommandResultFactory } from "@api/command/model/CommandResult";
 import { DeviceStatus } from "@api/device/DeviceStatus";
 import { makeDeviceActionInternalApiMock } from "@api/device-action/__test-utils__/makeInternalApi";
+import { setupGetDeviceStatusMock } from "@api/device-action/__test-utils__/setupTestMachine";
 import { testDeviceActionStates } from "@api/device-action/__test-utils__/testDeviceActionStates";
 import { DeviceActionStatus } from "@api/device-action/model/DeviceActionState";
 import { UserInteractionRequired } from "@api/device-action/model/UserInteractionRequired";
@@ -16,6 +17,8 @@ import { DeviceSessionStateType } from "@api/device-session/DeviceSessionState";
 
 import { OpenAppDeviceAction } from "./OpenAppDeviceAction";
 import type { OpenAppDAState } from "./types";
+
+jest.mock("@api/device-action/os/GetDeviceStatus/GetDeviceStatusDeviceAction");
 
 describe("OpenAppDeviceAction", () => {
   const getAppAndVersionMock = jest.fn();
@@ -36,10 +39,8 @@ describe("OpenAppDeviceAction", () => {
     };
   }
 
-  const {
-    sendCommand: sendCommandMock,
-    getDeviceSessionState: apiGetDeviceSessionStateMock,
-  } = makeDeviceActionInternalApiMock();
+  const { getDeviceSessionState: apiGetDeviceSessionStateMock } =
+    makeDeviceActionInternalApiMock();
 
   beforeEach(() => {
     jest.resetAllMocks();
@@ -54,15 +55,12 @@ describe("OpenAppDeviceAction", () => {
         currentApp: { name: "Bitcoin", version: "1.0.0" },
         installedApps: [],
       });
-
-      sendCommandMock.mockResolvedValueOnce(
-        CommandResultFactory({
-          data: {
-            name: "Bitcoin",
-            version: "0.0.0",
-          },
-        }),
-      );
+      setupGetDeviceStatusMock([
+        {
+          currentApp: "Bitcoin",
+          currentAppVersion: "0.0.0",
+        },
+      ]);
 
       const openAppDeviceAction = new OpenAppDeviceAction({
         input: { appName: "Bitcoin" },
@@ -70,7 +68,13 @@ describe("OpenAppDeviceAction", () => {
 
       const expectedStates: Array<OpenAppDAState> = [
         {
-          status: DeviceActionStatus.Pending, // get app and version
+          status: DeviceActionStatus.Pending, // get onboarding status
+          intermediateValue: {
+            requiredUserInteraction: UserInteractionRequired.None,
+          },
+        },
+        {
+          status: DeviceActionStatus.Pending, // get device status
           intermediateValue: {
             requiredUserInteraction: UserInteractionRequired.None,
           },
@@ -97,23 +101,27 @@ describe("OpenAppDeviceAction", () => {
         deviceStatus: DeviceStatus.CONNECTED,
         currentApp: { name: "Bitcoin", version: "1.0.0" },
       });
-      getAppAndVersionMock.mockResolvedValue(
-        CommandResultFactory({
-          data: {
-            name: "Bitcoin",
-            version: "1.0.0",
-          },
-        }),
-      );
 
+      setupGetDeviceStatusMock([
+        {
+          currentApp: "Bitcoin",
+          currentAppVersion: "1.0.0",
+        },
+      ]);
       const openAppDeviceAction = new OpenAppDeviceAction({
-        input: { appName: "Bitcoin" },
+        input: { appName: "Bitcoin", unlockTimeout: undefined },
       });
       jest
         .spyOn(openAppDeviceAction, "extractDependencies")
         .mockReturnValue(extractDependenciesMock());
 
       const expectedStates: Array<OpenAppDAState> = [
+        {
+          status: DeviceActionStatus.Pending, // get onboarding status
+          intermediateValue: {
+            requiredUserInteraction: UserInteractionRequired.None,
+          },
+        },
         {
           status: DeviceActionStatus.Pending, // get app and version
           intermediateValue: {
@@ -140,23 +148,13 @@ describe("OpenAppDeviceAction", () => {
         deviceStatus: DeviceStatus.CONNECTED,
         currentApp: { name: "BOLOS", version: "0.0.0" },
       });
-      getAppAndVersionMock
-        .mockResolvedValueOnce(
-          CommandResultFactory({
-            data: {
-              name: "BOLOS",
-              version: "0.0.0",
-            },
-          }),
-        )
-        .mockResolvedValue(
-          CommandResultFactory({
-            data: {
-              name: "Bitcoin",
-              version: "1.0.0",
-            },
-          }),
-        );
+
+      setupGetDeviceStatusMock([
+        {
+          currentApp: "Bitcoin",
+          currentAppVersion: "1.0.0",
+        },
+      ]);
 
       openAppMock.mockResolvedValue(CommandResultFactory({ data: undefined }));
 
@@ -172,12 +170,6 @@ describe("OpenAppDeviceAction", () => {
           status: DeviceActionStatus.Pending, // get app and version
           intermediateValue: {
             requiredUserInteraction: UserInteractionRequired.None,
-          },
-        },
-        {
-          status: DeviceActionStatus.Pending, // open app
-          intermediateValue: {
-            requiredUserInteraction: UserInteractionRequired.ConfirmOpenApp,
           },
         },
         {
@@ -214,23 +206,13 @@ describe("OpenAppDeviceAction", () => {
         deviceStatus: DeviceStatus.CONNECTED,
         currentApp: { name: "AnotherApp", version: "0.0.0" },
       });
-      getAppAndVersionMock
-        .mockResolvedValueOnce(
-          CommandResultFactory({
-            data: {
-              name: "AnotherApp",
-              version: "0.0.0",
-            },
-          }),
-        )
-        .mockResolvedValueOnce(
-          CommandResultFactory({
-            data: {
-              name: "Bitcoin",
-              version: "1.0.0",
-            },
-          }),
-        );
+      setupGetDeviceStatusMock([
+        {
+          currentApp: "AnotherApp",
+          currentAppVersion: "0.0.0",
+        },
+        { currentApp: "Bitcoin", currentAppVersion: "1.0.0" },
+      ]);
       closeAppMock.mockResolvedValue(CommandResultFactory({ data: undefined }));
       openAppMock.mockResolvedValue(CommandResultFactory({ data: undefined }));
 
@@ -255,9 +237,21 @@ describe("OpenAppDeviceAction", () => {
           },
         },
         {
+          status: DeviceActionStatus.Pending, // get device status
+          intermediateValue: {
+            requiredUserInteraction: UserInteractionRequired.None,
+          },
+        },
+        {
           status: DeviceActionStatus.Pending, // open app
           intermediateValue: {
             requiredUserInteraction: UserInteractionRequired.ConfirmOpenApp,
+          },
+        },
+        {
+          status: DeviceActionStatus.Pending, // get app and version
+          intermediateValue: {
+            requiredUserInteraction: UserInteractionRequired.None,
           },
         },
         {
@@ -328,6 +322,8 @@ describe("OpenAppDeviceAction", () => {
         currentApp: { name: "mockedCurrentApp", version: "1.0.0" },
       });
 
+      setupGetDeviceStatusMock([new DeviceLockedError()]);
+
       const openAppDeviceAction = new OpenAppDeviceAction({
         input: { appName: "Bitcoin" },
       });
@@ -337,6 +333,18 @@ describe("OpenAppDeviceAction", () => {
         .mockReturnValue(extractDependenciesMock());
 
       const expectedStates: Array<OpenAppDAState> = [
+        {
+          status: DeviceActionStatus.Pending,
+          intermediateValue: {
+            requiredUserInteraction: UserInteractionRequired.None,
+          },
+        },
+        {
+          status: DeviceActionStatus.Pending,
+          intermediateValue: {
+            requiredUserInteraction: UserInteractionRequired.None,
+          },
+        },
         {
           status: DeviceActionStatus.Error,
           error: new DeviceLockedError(),
@@ -358,11 +366,7 @@ describe("OpenAppDeviceAction", () => {
         currentApp: { name: "mockedCurrentApp", version: "1.0.0" },
       });
 
-      getAppAndVersionMock.mockReturnValue(
-        CommandResultFactory({
-          error: new InvalidStatusWordError("mocked error"),
-        }),
-      );
+      setupGetDeviceStatusMock([new InvalidStatusWordError("mocked error")]);
 
       const openAppDeviceAction = new OpenAppDeviceAction({
         input: { appName: "Bitcoin" },
@@ -375,6 +379,12 @@ describe("OpenAppDeviceAction", () => {
       const expectedStates: Array<OpenAppDAState> = [
         {
           status: DeviceActionStatus.Pending, // get app and version
+          intermediateValue: {
+            requiredUserInteraction: UserInteractionRequired.None,
+          },
+        },
+        {
+          status: DeviceActionStatus.Pending, // get device status
           intermediateValue: {
             requiredUserInteraction: UserInteractionRequired.None,
           },
@@ -411,6 +421,12 @@ describe("OpenAppDeviceAction", () => {
           },
         }),
       );
+      setupGetDeviceStatusMock([
+        {
+          currentApp: "BOLOS",
+          currentAppVersion: "0.0.0",
+        },
+      ]);
       openAppMock.mockResolvedValue(
         CommandResultFactory({
           error: new InvalidStatusWordError("mocked error"),
@@ -426,7 +442,13 @@ describe("OpenAppDeviceAction", () => {
 
       const expectedStates: Array<OpenAppDAState> = [
         {
-          status: DeviceActionStatus.Pending, // get app and version
+          status: DeviceActionStatus.Pending, // get onboarded status
+          intermediateValue: {
+            requiredUserInteraction: UserInteractionRequired.None,
+          },
+        },
+        {
+          status: DeviceActionStatus.Pending, // get device status
           intermediateValue: {
             requiredUserInteraction: UserInteractionRequired.None,
           },
@@ -457,14 +479,12 @@ describe("OpenAppDeviceAction", () => {
         deviceStatus: DeviceStatus.CONNECTED,
         currentApp: { name: "AnotherApp", version: "0.0.0" },
       });
-      getAppAndVersionMock.mockResolvedValue(
-        CommandResultFactory({
-          data: {
-            name: "AnotherApp",
-            version: "0.0.0",
-          },
-        }),
-      );
+      setupGetDeviceStatusMock([
+        {
+          currentApp: "AnotherApp",
+          currentAppVersion: "0.0.0",
+        },
+      ]);
       closeAppMock.mockResolvedValue(
         CommandResultFactory({
           error: new InvalidStatusWordError("mocked error"),
@@ -480,7 +500,13 @@ describe("OpenAppDeviceAction", () => {
 
       const expectedStates: Array<OpenAppDAState> = [
         {
-          status: DeviceActionStatus.Pending, // get app and version
+          status: DeviceActionStatus.Pending, // get onboarded status
+          intermediateValue: {
+            requiredUserInteraction: UserInteractionRequired.None,
+          },
+        },
+        {
+          status: DeviceActionStatus.Pending, // get device status
           intermediateValue: {
             requiredUserInteraction: UserInteractionRequired.None,
           },
@@ -511,14 +537,12 @@ describe("OpenAppDeviceAction", () => {
         deviceStatus: DeviceStatus.CONNECTED,
         currentApp: { name: "AnotherApp", version: "0.0.0" },
       });
-      getAppAndVersionMock.mockResolvedValue(
-        CommandResultFactory({
-          data: {
-            name: "AnotherApp",
-            version: "0.0.0",
-          },
-        }),
-      );
+      setupGetDeviceStatusMock([
+        {
+          currentApp: "AnotherApp",
+          currentAppVersion: "0.0.0",
+        },
+      ]);
       closeAppMock.mockResolvedValue(CommandResultFactory({ data: undefined }));
       openAppMock.mockResolvedValue(
         CommandResultFactory({
@@ -535,7 +559,13 @@ describe("OpenAppDeviceAction", () => {
 
       const expectedStates: Array<OpenAppDAState> = [
         {
-          status: DeviceActionStatus.Pending, // get app and version
+          status: DeviceActionStatus.Pending, // get onboarded status
+          intermediateValue: {
+            requiredUserInteraction: UserInteractionRequired.None,
+          },
+        },
+        {
+          status: DeviceActionStatus.Pending, // get device status
           intermediateValue: {
             requiredUserInteraction: UserInteractionRequired.None,
           },
@@ -573,9 +603,7 @@ describe("OpenAppDeviceAction", () => {
         currentApp: { name: "mockedCurrentApp", version: "1.0.0" },
       });
 
-      getAppAndVersionMock.mockImplementation(() => {
-        throw new UnknownDAError("Unknow error");
-      });
+      setupGetDeviceStatusMock([new UnknownDAError("Unknown error")]);
 
       const openAppDeviceAction = new OpenAppDeviceAction({
         input: { appName: "Bitcoin" },
@@ -587,14 +615,20 @@ describe("OpenAppDeviceAction", () => {
 
       const expectedStates: Array<OpenAppDAState> = [
         {
-          status: DeviceActionStatus.Pending, // get app and version
+          status: DeviceActionStatus.Pending, // get onboarded status
+          intermediateValue: {
+            requiredUserInteraction: UserInteractionRequired.None,
+          },
+        },
+        {
+          status: DeviceActionStatus.Pending, // get device status
           intermediateValue: {
             requiredUserInteraction: UserInteractionRequired.None,
           },
         },
         {
           status: DeviceActionStatus.Error,
-          error: new UnknownDAError("Unknow error"),
+          error: new UnknownDAError("Unknown error"),
         },
       ];
 
@@ -616,14 +650,12 @@ describe("OpenAppDeviceAction", () => {
           },
         }),
       );
-      getAppAndVersionMock.mockResolvedValue(
-        CommandResultFactory({
-          data: {
-            name: "BOLOS",
-            version: "0.0.0",
-          },
-        }),
-      );
+      setupGetDeviceStatusMock([
+        {
+          currentApp: "BOLOS",
+          currentAppVersion: "0.0.0",
+        },
+      ]);
       openAppMock.mockImplementation(() => {
         throw new UnknownDAError("Unknown error");
       });
@@ -637,7 +669,13 @@ describe("OpenAppDeviceAction", () => {
 
       const expectedStates: Array<OpenAppDAState> = [
         {
-          status: DeviceActionStatus.Pending, // get app and version
+          status: DeviceActionStatus.Pending, // get device onboarded
+          intermediateValue: {
+            requiredUserInteraction: UserInteractionRequired.None,
+          },
+        },
+        {
+          status: DeviceActionStatus.Pending, // get device status
           intermediateValue: {
             requiredUserInteraction: UserInteractionRequired.None,
           },
@@ -672,14 +710,12 @@ describe("OpenAppDeviceAction", () => {
           },
         }),
       );
-      getAppAndVersionMock.mockResolvedValue(
-        CommandResultFactory({
-          data: {
-            name: "anApp",
-            version: "0.0.0",
-          },
-        }),
-      );
+      setupGetDeviceStatusMock([
+        {
+          currentApp: "anApp",
+          currentAppVersion: "0.0.0",
+        },
+      ]);
       closeAppMock.mockImplementation(() => {
         throw new UnknownDAError("Unknown error");
       });
@@ -693,7 +729,13 @@ describe("OpenAppDeviceAction", () => {
 
       const expectedStates: Array<OpenAppDAState> = [
         {
-          status: DeviceActionStatus.Pending, // get app and version
+          status: DeviceActionStatus.Pending, // get onboarded status
+          intermediateValue: {
+            requiredUserInteraction: UserInteractionRequired.None,
+          },
+        },
+        {
+          status: DeviceActionStatus.Pending, // get device status
           intermediateValue: {
             requiredUserInteraction: UserInteractionRequired.None,
           },
@@ -725,14 +767,12 @@ describe("OpenAppDeviceAction", () => {
       deviceStatus: DeviceStatus.CONNECTED,
       currentApp: { name: "AnotherApp", version: "0.0.0" },
     });
-    getAppAndVersionMock.mockResolvedValue(
-      CommandResultFactory({
-        data: {
-          name: "AnotherApp",
-          version: "0.0.0",
-        },
-      }),
-    );
+    setupGetDeviceStatusMock([
+      {
+        currentApp: "AnotherApp",
+        currentAppVersion: "0.0.0",
+      },
+    ]);
 
     const openAppDeviceAction = new OpenAppDeviceAction({
       input: { appName: "Bitcoin" },
@@ -743,7 +783,13 @@ describe("OpenAppDeviceAction", () => {
 
     const expectedStates: Array<OpenAppDAState> = [
       {
-        status: DeviceActionStatus.Pending, // get app and version
+        status: DeviceActionStatus.Pending, // get device onboarded
+        intermediateValue: {
+          requiredUserInteraction: UserInteractionRequired.None,
+        },
+      },
+      {
+        status: DeviceActionStatus.Pending, // get device status
         intermediateValue: {
           requiredUserInteraction: UserInteractionRequired.None,
         },
