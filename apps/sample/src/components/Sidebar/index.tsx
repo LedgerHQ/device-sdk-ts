@@ -5,6 +5,7 @@ import { Box, Flex, IconsLegacy, Link, Text } from "@ledgerhq/react-ui";
 import { useRouter } from "next/navigation";
 import styled, { DefaultTheme } from "styled-components";
 
+import { AvailableDevices } from "@/components/AvailableDevices";
 import { Device } from "@/components/Device";
 import { Menu } from "@/components/Menu";
 import { useExportLogsCallback, useSdk } from "@/providers/DeviceSdkProvider";
@@ -90,11 +91,10 @@ export const Sidebar: React.FC = () => {
         Ledger Device Management Kit
         {transport === BuiltinTransports.MOCK_SERVER && <span> (MOCKED)</span>}
       </Link>
-      <Subtitle variant={"small"}>
-        SDK Version: {version ? version : "Loading..."}
-      </Subtitle>
 
-      <Subtitle variant={"tiny"}>Device</Subtitle>
+      <Subtitle variant={"tiny"}>
+        Device sessions ({Object.values(deviceById).length})
+      </Subtitle>
       <div data-testid="container_devices">
         {Object.entries(deviceById).map(([sessionId, device]) => (
           <Device
@@ -110,6 +110,7 @@ export const Sidebar: React.FC = () => {
           />
         ))}
       </div>
+      <AvailableDevices />
       <MenuContainer active={!!selectedId}>
         <Subtitle variant={"tiny"}>Menu</Subtitle>
         <Menu />
@@ -124,10 +125,9 @@ export const Sidebar: React.FC = () => {
         >
           Share logs
         </Link>
-        <VersionText variant={"body"}>
-          Ledger Device Management Kit version {version}
+        <VersionText variant={"body"} whiteSpace="pre" textAlign="center">
+          Ledger Device Management Kit{"\n"}version {version}
         </VersionText>
-        <VersionText variant={"body"}>App version 0.1</VersionText>
       </BottomContainer>
     </Root>
   );

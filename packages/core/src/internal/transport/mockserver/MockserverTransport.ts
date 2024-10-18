@@ -56,6 +56,10 @@ export class MockTransport implements Transport {
     return this.identifier;
   }
 
+  listenToKnownDevices(): Observable<InternalDiscoveredDevice[]> {
+    return from([]);
+  }
+
   startDiscovering(): Observable<InternalDiscoveredDevice> {
     this.logger.debug("startDiscovering");
     return from(

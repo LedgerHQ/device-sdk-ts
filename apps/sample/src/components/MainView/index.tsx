@@ -42,7 +42,6 @@ export const MainView: React.FC = () => {
       }
     };
   }, [connectionError]);
-
   return (
     <Root>
       <NanoLogo

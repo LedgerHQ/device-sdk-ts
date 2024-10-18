@@ -4,7 +4,14 @@ import {
   DeviceModelId,
   DeviceSessionId,
 } from "@ledgerhq/device-management-kit";
-import { Box, DropdownGeneric, Flex, Icons, Text } from "@ledgerhq/react-ui";
+import {
+  Box,
+  Button,
+  DropdownGeneric,
+  Flex,
+  Icons,
+  Text,
+} from "@ledgerhq/react-ui";
 import styled, { DefaultTheme } from "styled-components";
 
 import { useDeviceSessionState } from "@/hooks/useDeviceSessionState";
@@ -112,6 +119,47 @@ export const Device: React.FC<DeviceProps> = ({
           </ActionRow>
         </DropdownGeneric>
       </div>
+    </Root>
+  );
+};
+
+type AvailableDeviceProps = {
+  model: DeviceModelId;
+  name: string;
+  type: ConnectionType;
+  connected: boolean;
+  onConnect: () => void;
+};
+
+export const AvailableDevice: React.FC<AvailableDeviceProps> = ({
+  model,
+  name,
+  type,
+  onConnect,
+  connected,
+}) => {
+  const IconComponent = getIconComponent(model);
+  return (
+    <Root flex={1} mb={0} m={0}>
+      <IconContainer>
+        <IconComponent size="S" />
+      </IconContainer>
+      <Flex flexDirection="column" flex={1} rowGap={2}>
+        <Text variant="body">{name}</Text>
+        <Flex>
+          <Text variant="paragraph" color="neutral.c80">
+            {type}
+          </Text>
+        </Flex>
+      </Flex>
+      <Button
+        size="small"
+        variant="shade"
+        disabled={connected}
+        onClick={onConnect}
+      >
+        Connect
+      </Button>
     </Root>
   );
 };

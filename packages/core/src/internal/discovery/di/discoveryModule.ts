@@ -3,6 +3,7 @@ import { ContainerModule } from "inversify";
 import { ConnectUseCase } from "@internal/discovery/use-case/ConnectUseCase";
 import { DisconnectUseCase } from "@internal/discovery/use-case/DisconnectUseCase";
 import { GetConnectedDeviceUseCase } from "@internal/discovery/use-case/GetConnectedDeviceUseCase";
+import { ListenToKnownDevicesUseCase } from "@internal/discovery/use-case/ListenToKnownDevicesUseCase";
 import { StartDiscoveringUseCase } from "@internal/discovery/use-case/StartDiscoveringUseCase";
 import { StopDiscoveringUseCase } from "@internal/discovery/use-case/StopDiscoveringUseCase";
 import { StubUseCase } from "@root/src/di.stub";
@@ -22,6 +23,9 @@ export const discoveryModuleFactory = ({ stub = false }: FactoryProps) =>
     bind(discoveryTypes.GetConnectedDeviceUseCase).to(
       GetConnectedDeviceUseCase,
     );
+    bind(discoveryTypes.ListenToKnownDevicesUseCase).to(
+      ListenToKnownDevicesUseCase,
+    );
 
     if (stub) {
       rebind(discoveryTypes.StartDiscoveringUseCase).to(StubUseCase);
@@ -29,5 +33,6 @@ export const discoveryModuleFactory = ({ stub = false }: FactoryProps) =>
       rebind(discoveryTypes.ConnectUseCase).to(StubUseCase);
       rebind(discoveryTypes.DisconnectUseCase).to(StubUseCase);
       rebind(discoveryTypes.GetConnectedDeviceUseCase).to(StubUseCase);
+      rebind(discoveryTypes.ListenToKnownDevicesUseCase).to(StubUseCase);
     }
   });
