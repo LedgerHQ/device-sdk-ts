@@ -67,8 +67,6 @@ export const CalView = () => {
           description={""}
           initialValues={{
             smartContractAddress: "0x000000000022D473030F116dDEE9F6B43aC78BA3",
-            calUrl: "https://crypto-assets-service.api.ledger-test.com",
-            branch: "main",
           }}
         />
       </StyledDrawer>
@@ -79,7 +77,7 @@ export const CalView = () => {
         title="CAL Settings"
         description="Settings for the Crypto Asset List"
       >
-        <CalSettingsDrawer />
+        <CalSettingsDrawer onClose={closeDrawers} />
       </StyledDrawer>
     </PageWithHeader>
   );

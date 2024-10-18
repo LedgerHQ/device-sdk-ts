@@ -1,5 +1,5 @@
 import React from "react";
-import { CryptoIcons, Grid } from "@ledgerhq/react-ui/index";
+import { CryptoIcons, Grid } from "@ledgerhq/react-ui";
 import { useRouter } from "next/navigation";
 
 import { PageWithHeader } from "@/components//PageWithHeader";

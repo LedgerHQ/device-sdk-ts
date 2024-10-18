@@ -8,42 +8,70 @@ import {
   ValueSelector,
 } from "@/components/CommandsView/CommandForm";
 import { FieldType } from "@/hooks/useForm";
+import { useCalConfig } from "@/providers/KeyringEthProvider";
 
-const INITIAL_VALUES = {
-  calUrl: "https://cal.ledger.com",
-  mode: "prod",
-  branchRef: "main",
+type CalSettingsDrawerProps = {
+  onClose: () => void;
 };
 
-export function CalSettingsDrawer() {
-  const [values, setValues] =
-    useState<Record<string, FieldType>>(INITIAL_VALUES);
+export function CalSettingsDrawer({ onClose }: CalSettingsDrawerProps) {
+  const { calConfig, setCalConfig } = useCalConfig();
+  const [values, setValues] = useState<Record<string, FieldType>>(calConfig);
   const valueSelector: ValueSelector<FieldType> = {
     mode: [
       { label: "Production", value: "prod" },
       { label: "Testing", value: "test" },
     ],
-    branchRef: [
+    branch: [
       { label: "Main", value: "main" },
       { label: "Next", value: "next" },
       { label: "Demo", value: "demo" },
     ],
   };
   const labelSelector: Record<string, string> = {
-    calUrl: "CAL URL",
+    url: "CAL URL",
     mode: "Mode",
-    branchRef: "Branch reference",
+    branch: "Branch reference",
   };
 
   const onSettingsUpdate = useCallback(() => {
-    console.log("Settings updated", values);
-  }, [values]);
+    const { url, mode, branch } = values;
+    const isMode = (test: unknown): test is "prod" | "test" =>
+      test === "prod" || test === "test";
+    const isBranch = (test: unknown): test is "main" | "next" | "demo" =>
+      test === "main" || test === "next" || test === "demo";
+
+    console.log("Updating settings", values);
+    if (!url || typeof url !== "string" || !url.startsWith("http")) {
+      console.error("Invalid CAL URL", url);
+      return;
+    }
+
+    if (!mode || !isMode(mode)) {
+      console.error("Invalid mode", mode);
+      return;
+    }
+
+    if (!branch || !isBranch(branch)) {
+      console.error("Invalid branch reference", branch);
+      return;
+    }
+
+    const newSettings: ContextModuleCalConfig = {
+      url,
+      mode,
+      branch,
+    };
+
+    setCalConfig(newSettings);
+    onClose();
+  }, [onClose, setCalConfig, values]);
 
   return (
     <Block>
       <Flex flexDirection="column" rowGap={3}>
         <CommandForm
-          initialValues={INITIAL_VALUES}
+          initialValues={calConfig}
           onChange={setValues}
           valueSelector={valueSelector}
           labelSelector={labelSelector}
