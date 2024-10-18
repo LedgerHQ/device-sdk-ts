@@ -6,7 +6,7 @@ describe("DerivationPathUtils", () => {
     const padding = 0x80000000;
 
     // WHEN
-    const result = DerivationPathUtils.padding;
+    const result = DerivationPathUtils.PADDING;
 
     // THEN
     expect(result).toBe(padding);
@@ -21,7 +21,7 @@ describe("DerivationPathUtils", () => {
 
     // THEN
     expect(result).toStrictEqual([
-      44 + DerivationPathUtils.padding,
+      44 + DerivationPathUtils.PADDING,
       60,
       0,
       0,
@@ -38,10 +38,10 @@ describe("DerivationPathUtils", () => {
 
     // THEN
     expect(result).toStrictEqual([
-      44 + DerivationPathUtils.padding,
-      60 + DerivationPathUtils.padding,
-      0 + DerivationPathUtils.padding,
-      0 + DerivationPathUtils.padding,
+      44 + DerivationPathUtils.PADDING,
+      60 + DerivationPathUtils.PADDING,
+      0 + DerivationPathUtils.PADDING,
+      0 + DerivationPathUtils.PADDING,
       1,
     ]);
   });
@@ -55,8 +55,8 @@ describe("DerivationPathUtils", () => {
 
     // THEN
     expect(result).toStrictEqual([
-      44 + DerivationPathUtils.padding,
-      60 + DerivationPathUtils.padding,
+      44 + DerivationPathUtils.PADDING,
+      60 + DerivationPathUtils.PADDING,
       5,
       4,
       3,

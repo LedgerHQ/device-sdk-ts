@@ -15,7 +15,7 @@ export type ProvideTransactionFieldDescriptionCommandArgs = {
   /**
    * The field description data to provide in chunks
    */
-  readonly payload: Uint8Array;
+  readonly data: Uint8Array;
   /**
    * If this is the first chunk of the message
    */
@@ -38,7 +38,7 @@ export class ProvideTransactionFieldDescriptionCommand
     };
 
     return new ApduBuilder(ProvideTransactionFieldDescriptionArgs)
-      .addBufferToData(this.args.payload)
+      .addBufferToData(this.args.data)
       .build();
   }
 
