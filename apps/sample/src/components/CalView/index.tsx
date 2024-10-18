@@ -6,23 +6,36 @@ import { PageWithHeader } from "@/components/PageWithHeader";
 import { StyledDrawer } from "@/components/StyledDrawer";
 
 import { CalCheckDappDrawer } from "./CalCheckDappDrawer";
-
-const CAL_SERVICE_ENTRIES = [
-  {
-    title: "Check dApp availability",
-    description: "Check dApp availability in Crypto Asset List",
-  },
-];
+import { CalSettingsDrawer } from "./CalSettingsDrawer";
 
 export const CalView = () => {
   const [isCheckDappOpen, setIsCheckDappOpen] = useState(false);
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const openCheckDapp = useCallback(() => {
     setIsCheckDappOpen(true);
   }, []);
 
-  const closeCheckDapp = useCallback(() => {
-    setIsCheckDappOpen(false);
+  const openSettings = useCallback(() => {
+    setIsSettingsOpen(true);
   }, []);
+
+  const closeDrawers = useCallback(() => {
+    setIsCheckDappOpen(false);
+    setIsSettingsOpen(false);
+  }, []);
+
+  const entries = [
+    {
+      title: "Settings",
+      description: "Settings for the Crypto Asset List",
+      onClick: openSettings,
+    },
+    {
+      title: "Check dApp availability",
+      description: "Check dApp availability in Crypto Asset List",
+      onClick: openCheckDapp,
+    },
+  ];
 
   const pageTitle = "Check dApp availability";
   const pageDescription = "Check descriptor availability on the CAL";
@@ -33,18 +46,18 @@ export const CalView = () => {
         columns={1}
         style={{ rowGap: 6, columnGap: 6, overflowY: "scroll" }}
       >
-        {CAL_SERVICE_ENTRIES.map(({ title, description }) => (
+        {entries.map(({ title, description, onClick }) => (
           <ClickableListItem
             key={`keyring-${title}`}
             title={title}
             description={description}
-            onClick={openCheckDapp}
+            onClick={onClick}
           />
         ))}
       </Grid>
       <StyledDrawer
         isOpen={isCheckDappOpen}
-        onClose={closeCheckDapp}
+        onClose={closeDrawers}
         big
         title={pageTitle}
         description={pageDescription}
@@ -58,6 +71,15 @@ export const CalView = () => {
             branch: "main",
           }}
         />
+      </StyledDrawer>
+      <StyledDrawer
+        isOpen={isSettingsOpen}
+        onClose={closeDrawers}
+        big
+        title="CAL Settings"
+        description="Settings for the Crypto Asset List"
+      >
+        <CalSettingsDrawer />
       </StyledDrawer>
     </PageWithHeader>
   );
