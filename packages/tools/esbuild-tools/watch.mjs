@@ -1,6 +1,7 @@
 #!/usr/bin/env zx
 
 import esbuild from "esbuild";
+import { nodeExternalsPlugin } from "esbuild-node-externals";
 import { replaceTscAliasPaths } from "tsc-alias";
 
 const config = {
@@ -33,44 +34,57 @@ const entryPointsArray = entryPoints.includes(",")
 
 const getBrowserContext = async () => {
   console.log(chalk.blue("Watching browser bundle..."));
-  const result = await esbuild.context({
+  return esbuild.context({
     ...config,
     entryPoints: entryPointsArray,
     outdir: "lib/esm",
     format: "esm",
     platform: "browser",
+    plugins: [
+      {
+        name: "tsc-alias",
+        setup(build) {
+          build.onEnd(async () => {
+            await $`cp package.json lib/esm/package.json`;
+
+            await replaceTscAliasPaths({
+              configFile: tsconfig,
+              outDir: "lib/esm",
+              watch: false,
+            });
+          });
+        },
+      },
+    ],
   });
-
-  await $`cp package.json lib/esm/package.json`;
-
-  await replaceTscAliasPaths({
-    configFile: tsconfig,
-    outDir: "lib/esm",
-    watch: false,
-  });
-
-  return result;
 };
 
 const getNodeContext = async () => {
   console.log(chalk.blue("Watching node bundle..."));
-  const res = await esbuild.context({
+  return esbuild.context({
     ...config,
     entryPoints: entryPointsArray,
     outdir: "lib/cjs",
     format: "cjs",
     platform: "node",
+    plugins: [
+      nodeExternalsPlugin(),
+      {
+        name: "tsc-alias",
+        setup(build) {
+          build.onEnd(async () => {
+            await $`cp package.json lib/cjs/package.json`;
+
+            await replaceTscAliasPaths({
+              configFile: tsconfig,
+              outDir: "lib/cjs",
+              watch: false,
+            });
+          });
+        },
+      },
+    ],
   });
-
-  await $`cp package.json lib/cjs/package.json`;
-
-  await replaceTscAliasPaths({
-    configFile: tsconfig,
-    outDir: "lib/cjs",
-    watch: false,
-  });
-
-  return res;
 };
 
 const watch = async () => {
