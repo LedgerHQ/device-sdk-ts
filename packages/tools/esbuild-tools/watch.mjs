@@ -1,5 +1,5 @@
 #!/usr/bin/env zx
-
+import "zx/globals";
 import esbuild from "esbuild";
 import { nodeExternalsPlugin } from "esbuild-node-externals";
 import { replaceTscAliasPaths } from "tsc-alias";
@@ -34,7 +34,6 @@ const entryPointsArray = entryPoints.includes(",")
 
 const getBrowserContext = async () => {
   console.log(chalk.blue("Watching browser bundle..."));
-  await $`cp package.json lib/esm/package.json`;
 
   await replaceTscAliasPaths({
     configFile: tsconfig,
@@ -48,12 +47,21 @@ const getBrowserContext = async () => {
     outdir: "lib/esm",
     format: "esm",
     platform: "browser",
+    plugins: [
+      {
+        name: "copy-package-json",
+        setup(build) {
+          build.onEnd(async () => {
+            await $`cp package.json lib/esm/package.json`;
+          });
+        },
+      },
+    ],
   });
 };
 
 const getNodeContext = async () => {
   console.log(chalk.blue("Watching node bundle..."));
-  await $`cp package.json lib/cjs/package.json`;
 
   await replaceTscAliasPaths({
     configFile: tsconfig,
@@ -67,7 +75,17 @@ const getNodeContext = async () => {
     outdir: "lib/cjs",
     format: "cjs",
     platform: "node",
-    plugins: [nodeExternalsPlugin()],
+    plugins: [
+      nodeExternalsPlugin(),
+      {
+        name: "copy-package-json",
+        setup(build) {
+          build.onEnd(async () => {
+            await $`cp package.json lib/cjs/package.json`;
+          });
+        },
+      },
+    ],
   });
 };
 
