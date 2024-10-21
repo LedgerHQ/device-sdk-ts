@@ -7,10 +7,11 @@ import {
   DeviceNotOnboardedError,
   UnknownDAError,
 } from "@api/device-action/os/Errors";
+import { GetDeviceStatusDAInput } from "@api/device-action/os/GetDeviceStatus/types";
 
 export type OpenAppDAOutput = void;
 
-export type OpenAppDAInput = {
+export type OpenAppDAInput = GetDeviceStatusDAInput & {
   readonly appName: string;
 };
 

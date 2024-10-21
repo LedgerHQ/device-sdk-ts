@@ -7,20 +7,14 @@ import {
   CloseAppCommandResult,
 } from "@api/command/os/CloseAppCommand";
 import {
-  GetAppAndVersionCommand,
-  GetAppAndVersionCommandResult,
-} from "@api/command/os/GetAppAndVersionCommand";
-import {
   OpenAppCommand,
   OpenAppCommandResult,
 } from "@api/command/os/OpenAppCommand";
-import { DeviceStatus } from "@api/device/DeviceStatus";
 import { InternalApi } from "@api/device-action/DeviceAction";
 import { UserInteractionRequired } from "@api/device-action/model/UserInteractionRequired";
-import {
-  DeviceLockedError,
-  DeviceNotOnboardedError,
-} from "@api/device-action/os/Errors";
+import { DEFAULT_UNLOCK_TIMEOUT_MS } from "@api/device-action/os/Const";
+import { DeviceNotOnboardedError } from "@api/device-action/os/Errors";
+import { GetDeviceStatusDeviceAction } from "@api/device-action/os/GetDeviceStatus/GetDeviceStatusDeviceAction";
 import { StateMachineTypes } from "@api/device-action/xstate-utils/StateMachineTypes";
 import {
   DeviceActionStateMachine,
@@ -44,7 +38,6 @@ type OpenAppStateMachineInternalState = {
 };
 
 export type MachineDependencies = {
-  readonly getAppAndVersion: () => Promise<GetAppAndVersionCommandResult>;
   readonly closeApp: () => Promise<CloseAppCommandResult>;
   readonly openApp: (arg0: {
     input: { appName: string };
@@ -101,13 +94,20 @@ export class OpenAppDeviceAction extends XStateDeviceAction<
     >;
 
     const {
-      getAppAndVersion,
       closeApp,
       openApp,
       getDeviceSessionState,
-      setDeviceSessionState,
       isDeviceOnboarded,
+      setDeviceSessionState,
     } = this.extractDependencies(internalApi);
+
+    const unlockTimeout = this.input.unlockTimeout ?? DEFAULT_UNLOCK_TIMEOUT_MS;
+
+    const getDeviceStatusMachine = new GetDeviceStatusDeviceAction({
+      input: {
+        unlockTimeout,
+      },
+    }).makeStateMachine(internalApi);
 
     return setup({
       types: {
@@ -116,14 +116,12 @@ export class OpenAppDeviceAction extends XStateDeviceAction<
         output: {} as types["output"],
       },
       actors: {
-        getAppAndVersion: fromPromise(getAppAndVersion),
         closeApp: fromPromise(closeApp),
         openApp: fromPromise(openApp),
+        getDeviceStatus: getDeviceStatusMachine,
       },
       guards: {
         isDeviceOnboarded: () => isDeviceOnboarded(), // TODO: we don't have this info for now, this can be derived from the "flags" obtained in the getVersion command
-        isDeviceUnlocked: () =>
-          getDeviceSessionState().deviceStatus !== DeviceStatus.LOCKED,
         isRequestedAppOpen: ({ context }: { context: types["context"] }) => {
           if (context._internalState.currentlyRunningApp === null)
             throw new Error("context.currentlyRunningApp === null");
@@ -144,15 +142,6 @@ export class OpenAppDeviceAction extends XStateDeviceAction<
             ..._.context._internalState,
             error: new DeviceNotOnboardedError(),
           }),
-        }),
-        assignErrorDeviceLocked: assign({
-          _internalState: (_) => ({
-            ..._.context._internalState,
-            error: new DeviceLockedError(),
-          }),
-          intermediateValue: {
-            requiredUserInteraction: UserInteractionRequired.UnlockDevice,
-          },
         }),
         assignUserActionNeededOpenApp: assign({
           intermediateValue: (_) =>
@@ -215,7 +204,7 @@ export class OpenAppDeviceAction extends XStateDeviceAction<
           // check onboarding status provided by device session
           always: [
             {
-              target: "LockingCheck",
+              target: "GetDeviceStatus",
               guard: {
                 type: "isDeviceOnboarded",
               },
@@ -227,80 +216,77 @@ export class OpenAppDeviceAction extends XStateDeviceAction<
           ],
         },
 
-        LockingCheck: {
-          // check locking status provided by device session
-          always: [
-            {
-              target: "ApplicationAvailable",
-              guard: "isDeviceUnlocked",
-            },
-            {
-              target: "Error",
-              actions: "assignErrorDeviceLocked",
-            },
-          ],
-        },
-
-        ApplicationAvailable: {
-          // execute getAppAndVersion command
+        GetDeviceStatus: {
+          // We run the GetDeviceStatus flow to get information about the device state
           invoke: {
-            src: "getAppAndVersion",
+            id: "deviceStatus",
+            src: "getDeviceStatus",
+            input: (_) => ({
+              unlockTimeout: _.context.input.unlockTimeout,
+            }),
+            onSnapshot: {
+              actions: assign({
+                intermediateValue: (_) =>
+                  _.event.snapshot.context.intermediateValue,
+              }),
+            },
             onDone: {
-              target: "ApplicationAvailableResultCheck",
+              target: "CheckDeviceStatus",
               actions: assign({
                 _internalState: (_) => {
-                  if (isSuccessCommandResult(_.event.output)) {
-                    const state: DeviceSessionState = getDeviceSessionState();
-                    // Narrow the type to ReadyWithoutSecureChannelState or ReadyWithSecureChannelState
-                    if (
-                      state.sessionStateType !==
-                      DeviceSessionStateType.Connected
-                    ) {
-                      setDeviceSessionState({
-                        ...state,
-                        currentApp: _.event.output.data,
-                      });
-                    }
-                    return {
-                      ..._.context._internalState,
-                      currentlyRunningApp: _.event.output.data.name,
-                    };
-                  } else {
-                    return {
-                      ..._.context._internalState,
-                      error: _.event.output.error,
-                    };
-                  }
+                  return _.event.output.caseOf<OpenAppStateMachineInternalState>(
+                    {
+                      Right: (output) => {
+                        const state: DeviceSessionState =
+                          getDeviceSessionState();
+
+                        if (
+                          state.sessionStateType !==
+                          DeviceSessionStateType.Connected
+                        ) {
+                          setDeviceSessionState({
+                            ...state,
+                            currentApp: {
+                              name: output.currentApp,
+                              version: output.currentAppVersion,
+                            },
+                          });
+                        }
+                        return {
+                          ..._.context._internalState,
+                          currentlyRunningApp: output.currentApp,
+                        };
+                      },
+                      Left: (error) => ({
+                        ..._.context._internalState,
+                        error,
+                      }),
+                    },
+                  );
                 },
               }),
             },
-            onError: {
-              target: "Error",
-              actions: "assignErrorFromEvent",
-            },
+            // NOTE: The way we handle our DeviceActions means that we should never as we return an Either
+            // onError: {
+            //   target: "Error",
+            //   actions: "assignGetDeviceStatusUnknownError",
+            // },
           },
         },
-
-        ApplicationAvailableResultCheck: {
+        CheckDeviceStatus: {
+          // We check the device status to see if we can have an error
           always: [
             {
               target: "Error",
               guard: "hasError",
             },
             {
-              target: "ApplicationCheck",
-            },
-          ],
-        },
-
-        ApplicationCheck: {
-          // Is the current application the requested one
-          always: [
-            {
               target: "ApplicationReady",
               guard: "isRequestedAppOpen",
             },
-            "DashboardCheck",
+            {
+              target: "DashboardCheck",
+            },
           ],
         },
 
@@ -312,43 +298,6 @@ export class OpenAppDeviceAction extends XStateDeviceAction<
               guard: "isDashboardOpen",
             },
             "CloseApplication",
-          ],
-        },
-
-        CloseApplication: {
-          invoke: {
-            src: "closeApp",
-            onDone: {
-              target: "CloseApplicationResultCheck",
-              actions: assign({
-                _internalState: (_) => {
-                  if (isSuccessCommandResult(_.event.output)) {
-                    return {
-                      ..._.context._internalState,
-                      currentlyRunningApp: "BOLOS",
-                    };
-                  } else {
-                    return {
-                      ..._.context._internalState,
-                      error: _.event.output.error,
-                    };
-                  }
-                },
-              }),
-            },
-            onError: {
-              target: "Error",
-              actions: "assignErrorFromEvent",
-            },
-          },
-        },
-        CloseApplicationResultCheck: {
-          always: [
-            {
-              target: "Error",
-              guard: "hasError",
-            },
-            { target: "OpenApplication" },
           ],
         },
 
@@ -390,7 +339,55 @@ export class OpenAppDeviceAction extends XStateDeviceAction<
               target: "Error",
               guard: "hasError",
             },
-            { target: "ApplicationAvailable" },
+            { target: "GetDeviceStatus" },
+          ],
+        },
+
+        CloseApplication: {
+          invoke: {
+            src: "closeApp",
+            onDone: {
+              target: "CloseApplicationResultCheck",
+              actions: assign({
+                _internalState: (_) => {
+                  if (isSuccessCommandResult(_.event.output)) {
+                    return {
+                      ..._.context._internalState,
+                      currentlyRunningApp: "BOLOS",
+                    };
+                  } else {
+                    return {
+                      ..._.context._internalState,
+                      error: _.event.output.error,
+                    };
+                  }
+                },
+              }),
+            },
+            onError: {
+              target: "Error",
+              actions: "assignErrorFromEvent",
+            },
+          },
+        },
+        CloseApplicationResultCheck: {
+          always: [
+            {
+              target: "Error",
+              guard: "hasError",
+            },
+            { target: "OpenApplication" },
+          ],
+        },
+
+        ApplicationCheck: {
+          // Is the current application the requested one
+          always: [
+            {
+              target: "ApplicationReady",
+              guard: "isRequestedAppOpen",
+            },
+            "DashboardCheck",
           ],
         },
 
@@ -418,8 +415,6 @@ export class OpenAppDeviceAction extends XStateDeviceAction<
   }
 
   extractDependencies(internalApi: InternalApi): MachineDependencies {
-    const getAppAndVersion = async () =>
-      internalApi.sendCommand(new GetAppAndVersionCommand());
     const closeApp = async () => internalApi.sendCommand(new CloseAppCommand());
     const openApp = async (arg0: { input: { appName: string } }) =>
       internalApi.sendCommand(
@@ -427,7 +422,6 @@ export class OpenAppDeviceAction extends XStateDeviceAction<
       );
 
     return {
-      getAppAndVersion,
       closeApp,
       openApp,
       getDeviceSessionState: () => internalApi.getDeviceSessionState(),
