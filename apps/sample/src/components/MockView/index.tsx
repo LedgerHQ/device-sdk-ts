@@ -1,68 +1,13 @@
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { Mock, Session } from "@ledgerhq/device-sdk-transport-mock";
-import { Button, Divider, Flex, Input, Link, Text } from "@ledgerhq/react-ui";
-import styled, { DefaultTheme } from "styled-components";
+import { Button, Divider, Flex, Input, Text } from "@ledgerhq/react-ui";
+import styled from "styled-components";
 
+import { ClickableListItem } from "@/components/ClickableListItem";
+import { PageWithHeader } from "@/components/PageWithHeader";
+import { StyledDrawer } from "@/components/StyledDrawer";
 import { useMockClient } from "@/hooks/useMockClient";
 import { useSdkConfigContext } from "@/providers/SdkConfig";
-
-const Root = styled(Flex).attrs({ mx: 15, mt: 10, mb: 5 })`
-  flex-direction: column;
-  flex: 1;
-  justify-content: center;
-  align-items: center;
-`;
-
-const Title = styled(Text).attrs({
-  variant: "large",
-  fontSize: 18,
-  mt: 8,
-})``;
-
-const FormContainer = styled(Flex)`
-  background-color: ${({ theme }: { theme: DefaultTheme }) =>
-    theme.colors.neutral.c30};
-  height: 100%;
-  width: 100%;
-  flex-direction: column;
-  border-radius: 12px;
-`;
-
-const Header = styled(Flex).attrs({ px: 8, py: 6 })`
-  align-items: center;
-`;
-
-const Form = styled(Flex).attrs({ my: 6, px: 10 })`
-  flex: 1;
-  flex-direction: row;
-  justify-content: center;
-  gap: 70px;
-`;
-
-const SessionsContainer = styled(Flex)`
-  height: 100%;
-  flex-direction: column;
-  gap: 10px;
-`;
-
-const SessionEntry = styled(Link).attrs({
-  variant: "paragraph",
-  fontWeight: "semiBold",
-  ml: 5,
-})``;
-
-const MocksContainer = styled(Flex)`
-  height: 100%;
-  width: 70%;
-  flex-direction: column;
-  gap: 10px;
-`;
-
-const MockEntry = styled(Flex)`
-  width: 100%;
-  flex-direction: row;
-  align-items: center;
-`;
 
 const MockButton = styled(Button).attrs({
   variant: "main",
@@ -76,6 +21,7 @@ export const MockView: React.FC = () => {
   const [mocks, setMocks] = useState<Mock[]>([]);
 
   const [currentSession, setCurrentSession] = useState<Session | null>(null);
+  const [drawerVisible, setDrawerVisibility] = useState<boolean>(false);
   const [currentPrefix, setCurrentPrefix] = useState<string>("b001");
   const [currentResponse, setCurrentResponse] = useState<string>("6700");
 
@@ -85,7 +31,7 @@ export const MockView: React.FC = () => {
 
   const client = useMockClient(mockServerUrl);
 
-  const fetchSessions = async () => {
+  const fetchSessions = useCallback(async () => {
     try {
       const response = await client.getConnected();
       setSessions(response);
@@ -93,27 +39,35 @@ export const MockView: React.FC = () => {
     } catch (error) {
       console.error(error);
     }
-  };
+  }, [client]);
 
-  const fetchMocks = async (session: Session) => {
-    try {
-      const response = await client.getMocks(session.id);
-      setMocks(response);
-    } catch (error) {
-      console.error(error);
-    }
-  };
+  const fetchMocks = useCallback(
+    async (session: Session) => {
+      try {
+        const response = await client.getMocks(session.id);
+        setMocks(response);
+      } catch (error) {
+        console.error(error);
+      }
+    },
+    [client],
+  );
 
-  const handleSessionClick = async (session: Session) => {
-    try {
-      setCurrentSession(session);
-      fetchMocks(session).catch(console.error);
-    } catch (error) {
-      console.error(error);
-    }
-  };
+  const handleSessionClick = useCallback(
+    async (session: Session) => {
+      try {
+        setCurrentSession(session);
+        fetchMocks(session)
+          .catch(console.error)
+          .finally(() => setDrawerVisibility(true));
+      } catch (error) {
+        console.error(error);
+      }
+    },
+    [fetchMocks],
+  );
 
-  const handleAddMockClick = async () => {
+  const handleAddMockClick = useCallback(async () => {
     if (!currentSession) {
       return;
     }
@@ -131,7 +85,7 @@ export const MockView: React.FC = () => {
     } catch (error) {
       console.error(error);
     }
-  };
+  }, [client, currentPrefix, currentResponse, currentSession, fetchMocks]);
 
   const handleRemoveMocksClick = async () => {
     if (!currentSession) {
@@ -149,6 +103,22 @@ export const MockView: React.FC = () => {
     }
   };
 
+  const handleRemoveDevice = useCallback(
+    async (sessionId: string) => {
+      try {
+        const response = await client.disconnect(sessionId);
+        if (!response) {
+          console.log("Failed to disconnect device");
+        } else {
+          fetchSessions().catch(console.error);
+        }
+      } catch (error) {
+        console.error(error);
+      }
+    },
+    [client, fetchSessions],
+  );
+
   const handleRemoveDevicesClick = async () => {
     try {
       const response = await client.disconnectAll();
@@ -164,80 +134,123 @@ export const MockView: React.FC = () => {
 
   useEffect(() => {
     fetchSessions().catch(console.error);
-  }, []);
+  }, [fetchSessions]);
 
   const inputContainerProps = { style: { borderRadius: 4 } };
 
   return (
-    <Root>
-      <FormContainer>
-        <Header>
-          <Title>Mock Server</Title>
-        </Header>
-        <Divider my={4} />
-        <Form>
-          <SessionsContainer>
-            <Header>
-              <Title>Devices:</Title>
-            </Header>
-            {sessions.map((session, index) => (
-              <SessionEntry
-                key={index}
-                onClick={() => handleSessionClick(session)}
+    <PageWithHeader title="Mock server">
+      <Flex flexDirection="column" flex={2} justifyContent="space-between">
+        <div style={{ maxHeight: 500, overflow: "scroll" }}>
+          {sessions.map((session) => (
+            <ClickableListItem
+              key={session.id}
+              title={session.device.name}
+              description={`Created at: ${new Date(session.created_at).toUTCString()}`}
+              onClick={() => handleSessionClick(session)}
+              my={2}
+            />
+          ))}
+        </div>
+        <Flex alignSelf="flex-end">
+          <MockButton onClick={() => handleRemoveDevicesClick()}>
+            <Text color="neutral.c00">Remove all devices</Text>
+          </MockButton>
+        </Flex>
+      </Flex>
+
+      <StyledDrawer
+        isOpen={drawerVisible}
+        onClose={() => setDrawerVisibility(false)}
+        big
+        title={currentSession?.device?.name || "No device"}
+      >
+        {currentSession && (
+          <Flex flexDirection="column" flex={2} justifyContent="space-between">
+            <div>
+              <Flex
+                flexDirection="row"
+                flex={5}
+                alignItems="center"
+                justifyContent="center"
               >
-                {session.device.name}
-              </SessionEntry>
-            ))}
-            {currentSession && (
-              <SessionEntry>
-                <MockButton onClick={() => handleRemoveDevicesClick()}>
-                  <Text color="neutral.c00">Remove devices</Text>
-                </MockButton>
-              </SessionEntry>
-            )}
-          </SessionsContainer>
-          <MocksContainer>
-            <Header>
-              <Title>Installed mocks:</Title>
-            </Header>
-            {mocks.length > 0 && <Divider my={4} />}
-            {mocks.map((mock, index) => (
-              <MockEntry key={`${index}`}>
-                <Text variant="body">
-                  {mock.prefix} = {mock.response}
+                <Text style={{ flex: 2 }} textAlign="center" variant="h5">
+                  Prefix
                 </Text>
-              </MockEntry>
-            ))}
-            {currentSession && <Divider my={4} />}
-            {currentSession && (
-              <MockEntry>
-                <Input
-                  name="APDU Prefix"
-                  containerProps={inputContainerProps}
-                  value={currentPrefix}
-                  onChange={(value) => setCurrentPrefix(value)}
-                />
-                <Input
-                  name="Mock response"
-                  containerProps={inputContainerProps}
-                  value={currentResponse}
-                  onChange={(value) => setCurrentResponse(value)}
-                />
-                <MockButton onClick={() => handleAddMockClick()}>
-                  <Text color="neutral.c00">Add</Text>
-                </MockButton>
-              </MockEntry>
-            )}
-            {currentSession && (
-              <MockEntry>
-                <MockButton onClick={() => handleRemoveMocksClick()}>
-                  <Text color="neutral.c00">Remove all mocks</Text>
-                </MockButton>
-              </MockEntry>
-            )}
-          </MocksContainer>
-        </Form>
-      </FormContainer>
-    </Root>
+                <Text style={{ flex: 2 }} textAlign="center" variant="h5">
+                  Response
+                </Text>
+                <Flex style={{ flex: 1 }} />
+              </Flex>
+              <Divider my={5} />
+              <div style={{ overflow: "scroll", maxHeight: "400px" }}>
+                {mocks.map((mock, index) => (
+                  <Flex
+                    flexDirection="row"
+                    key={`${index}`}
+                    flex={5}
+                    alignItems="center"
+                    justifyContent="center"
+                    my={7}
+                  >
+                    <Text variant="body" style={{ flex: 2 }} textAlign="center">
+                      {mock.prefix}
+                    </Text>
+                    <Text variant="body" style={{ flex: 2 }} textAlign="center">
+                      {mock.response}
+                    </Text>
+                    <Flex style={{ flex: 1 }} />
+                  </Flex>
+                ))}
+              </div>
+
+              <Flex flexDirection="row" justifyContent="space-between" flex={5}>
+                <Flex
+                  flexDirection="column"
+                  flex={2}
+                  justifyContent="center"
+                  alignItems="center"
+                >
+                  <Input
+                    style={{ width: "32px" }}
+                    name="APDU Prefix"
+                    containerProps={inputContainerProps}
+                    value={currentPrefix}
+                    onChange={(value) => setCurrentPrefix(value)}
+                  />
+                </Flex>
+                <Flex
+                  flexDirection="column"
+                  flex={2}
+                  justifyContent="center"
+                  alignItems="center"
+                >
+                  <Input
+                    style={{ width: "32px" }}
+                    name="Mock response"
+                    containerProps={inputContainerProps}
+                    value={currentResponse}
+                    onChange={(value) => setCurrentResponse(value)}
+                  />
+                </Flex>
+                <Flex flex={1} alignItems="center">
+                  <MockButton onClick={() => handleAddMockClick()}>
+                    <Text color="neutral.c00">Add</Text>
+                  </MockButton>
+                </Flex>
+              </Flex>
+            </div>
+            <Flex alignSelf="flex-end">
+              <MockButton onClick={handleRemoveMocksClick}>
+                <Text color="neutral.c00">Remove mocks</Text>
+              </MockButton>
+              <MockButton onClick={() => handleRemoveDevice(currentSession.id)}>
+                <Text color="neutral.c00">Remove device</Text>
+              </MockButton>
+            </Flex>
+          </Flex>
+        )}
+      </StyledDrawer>
+    </PageWithHeader>
   );
 };
