@@ -81,8 +81,8 @@ importers:
         specifier: workspace:*
         version: link:../../packages/signer/keyring-eth
       '@ledgerhq/react-ui':
-        specifier: ^0.16.0
-        version: 0.16.0(@emotion/is-prop-valid@1.2.1)(@types/react@18.3.11)(react-dom@18.3.1(react@18.3.1))(react-native-svg@15.3.0(react-native@0.74.3(@babel/core@7.24.7)(@babel/preset-env@7.24.7(@babel/core@7.24.7))(@types/react@18.3.11)(react@18.3.1))(react@18.3.1))(react@18.3.1)(styled-components@5.3.11(@babel/core@7.24.7)(react-dom@18.3.1(react@18.3.1))(react-is@18.3.1)(react@18.3.1))
+        specifier: ^0.16.2
+        version: 0.16.2(@emotion/is-prop-valid@1.2.1)(@types/react@18.3.11)(react-dom@18.3.1(react@18.3.1))(react-native-svg@15.3.0(react-native@0.74.3(@babel/core@7.24.7)(@babel/preset-env@7.24.7(@babel/core@7.24.7))(@types/react@18.3.11)(react@18.3.1))(react@18.3.1))(react@18.3.1)(styled-components@5.3.11(@babel/core@7.24.7)(react-dom@18.3.1(react@18.3.1))(react-is@18.3.1)(react@18.3.1))
       '@playwright/test':
         specifier: ^1.47.0
         version: 1.48.0
@@ -614,10 +614,6 @@ packages:
     resolution: {integrity: sha512-0pYVBnDKZO2fnSPCrgM/6WMc7eS20Fbok+0r88fp+YtWVLZrp4CkafFGIp+W0VKw4a22sgebPT99y+FDNMdP4w==}
     engines: {node: '>=6.9.0'}
 
-  '@babel/helper-module-imports@7.24.7':
-    resolution: {integrity: sha512-8AyH3C+74cgCVVXow/myrynrAGv+nTVg5vKu2nZph9x7RcRwzmh0VFallJuFTZ9mx6u4eSdXZfcOzSqTUm0HCA==}
-    engines: {node: '>=6.9.0'}
-
   '@babel/helper-module-imports@7.25.7':
     resolution: {integrity: sha512-o0xCgpNmRohmnoWKQ0Ij8IdddjyBFE4T2kagL/x6M3+4zUgc+4qTOUBoNe4XxDskt1HPKO007ZPiMgLDq2s7Kw==}
     engines: {node: '>=6.9.0'}
@@ -751,11 +747,6 @@ packages:
 
   '@babel/parser@7.25.6':
     resolution: {integrity: sha512-trGdfBdbD0l1ZPmcJ83eNxB9rbEax4ALFTF7fN386TMYbeCQbyme5cOEXQhbGXKebwGaB/J52w1mrklMcbgy6Q==}
-    engines: {node: '>=6.0.0'}
-    hasBin: true
-
-  '@babel/parser@7.25.7':
-    resolution: {integrity: sha512-aZn7ETtQsjjGG5HruveUK06cU3Hljuhd9Iojm4M8WWv3wLE6OkE5PWbDUkItmMgegmccaITudyuW5RPYrYlgWw==}
     engines: {node: '>=6.0.0'}
     hasBin: true
 
@@ -1388,10 +1379,6 @@ packages:
     resolution: {integrity: sha512-/l42B1qxpG6RdfYf343Uw1vmDjeNhneUXtzhojE7pDgfpEypmRhI6j1kr17XCVv4Cgl9HdAiQY2x0GwKm7rWCw==}
     engines: {node: '>=6.9.0'}
 
-  '@babel/types@7.25.7':
-    resolution: {integrity: sha512-vwIVdXG+j+FOpkwqHRcBgHLYNL7XMkufrlaFvL9o6Ai9sJn9+PdyIL5qa0XzTZw084c+u9LOls53eoZWP/W5WQ==}
-    engines: {node: '>=6.9.0'}
-
   '@babel/types@7.25.8':
     resolution: {integrity: sha512-JWtuCu8VQsMladxVz/P4HzHUGCAwpuqacmowgXFs5XjxIgKuNjnLokQzuVjlTvIzODaDmpjT3oxcC48vyk9EWg==}
     engines: {node: '>=6.9.0'}
@@ -1964,8 +1951,8 @@ packages:
   '@jridgewell/trace-mapping@0.3.9':
     resolution: {integrity: sha512-3Belt6tdc8bPgAtbcmdtNJlirVoTmEb5e2gC94PnkwEW9jI6CAHUeoG85tjWP5WquqfavoMtMwiG4P926ZKKuQ==}
 
-  '@ledgerhq/crypto-icons-ui@1.4.1':
-    resolution: {integrity: sha512-9C8YghzXSzs0jgZjTHQ+AgA9kvbFfBRA4mc9ZAxpdmuSapTd8s/cnzYYNSebD8T6geo7qY/u0CChiqJbFWU7Ow==}
+  '@ledgerhq/crypto-icons-ui@1.5.0':
+    resolution: {integrity: sha512-6lXuH8zk4YpwkvGK+9lC/HGacR5Z3SjkYK9NGMTKYc46tM6uTNMbmHHpjV1AwiCKZIQGDruNjAq56/TePtrIUQ==}
     peerDependencies:
       '@types/react': '*'
       react: '*'
@@ -1976,8 +1963,8 @@ packages:
       '@types/react':
         optional: true
 
-  '@ledgerhq/icons-ui@0.7.3':
-    resolution: {integrity: sha512-/OIw+jH0UHz6q11chlN5KqCqjTwquBAsyrldz7N/O/vYoO9Rr6CVNV0BWJluTDnBezmoDelqXN6bcEHfSqMNUw==}
+  '@ledgerhq/icons-ui@0.8.0':
+    resolution: {integrity: sha512-cWrxwIrMToHbyAVbyxhc/ZuuQ48hSnv31H06UXQmlbDAY2kU/u4eJ9UDfoXAJVJwUmG7QrlwX7DP7zpA13wYlw==}
     peerDependencies:
       '@types/react': '*'
       react: '*'
@@ -1988,8 +1975,8 @@ packages:
       '@types/react':
         optional: true
 
-  '@ledgerhq/react-ui@0.16.0':
-    resolution: {integrity: sha512-O12mJZ6Hp58GHM+/ytLNj4h57HyieTQv4jl0UHPfSpiQkLrRj7b0FWy5oJPzHG0ZgNBjT1y1p2IXkDkAOZ7tRQ==}
+  '@ledgerhq/react-ui@0.16.2':
+    resolution: {integrity: sha512-WfDkaZ9LjwTKw6HxKgMZK9LB4HchirU3b4aSlu2Jqax2cHcdrtjqtBYGqmUq5w4Q5AMImtL643FPLeHJwMsrmg==}
     peerDependencies:
       '@types/react': '*'
       react: '>=17.0.2'
@@ -1999,8 +1986,8 @@ packages:
       '@types/react':
         optional: true
 
-  '@ledgerhq/ui-shared@0.2.1':
-    resolution: {integrity: sha512-mPvo78REWxhYTmkFI96ryCOAyZTV42f+l55AnuoeJ2tGn5nN7bmkOUIzZ4MJOx5VvGlWcvtY/+2dA0yEelCs9w==}
+  '@ledgerhq/ui-shared@0.2.2':
+    resolution: {integrity: sha512-3ASYnyqnZFMRnySADZziM3IIJ2SRQ7lKrRPwpihhf+SsyP7TIo6o4UXMY8eYOupdTARlElS4Qpk4nRL/Ln62Ng==}
 
   '@manypkg/find-root@1.1.0':
     resolution: {integrity: sha512-mki5uBvhHzO8kYYix/WRy2WX8S3B5wdVSc9D6KcU5lQNglP2yt58/VfLuAK49glRXChosY8ap2oJ1qgma3GUVA==}
@@ -7273,7 +7260,7 @@ snapshots:
 
   '@babel/generator@7.25.7':
     dependencies:
-      '@babel/types': 7.25.7
+      '@babel/types': 7.25.8
       '@jridgewell/gen-mapping': 0.3.5
       '@jridgewell/trace-mapping': 0.3.25
       jsesc: 3.0.2
@@ -7374,17 +7361,10 @@ snapshots:
     dependencies:
       '@babel/types': 7.24.0
 
-  '@babel/helper-module-imports@7.24.7':
-    dependencies:
-      '@babel/traverse': 7.25.6
-      '@babel/types': 7.25.6
-    transitivePeerDependencies:
-      - supports-color
-
   '@babel/helper-module-imports@7.25.7':
     dependencies:
       '@babel/traverse': 7.25.7
-      '@babel/types': 7.25.7
+      '@babel/types': 7.25.8
     transitivePeerDependencies:
       - supports-color
 
@@ -7392,7 +7372,7 @@ snapshots:
     dependencies:
       '@babel/core': 7.24.4
       '@babel/helper-environment-visitor': 7.22.20
-      '@babel/helper-module-imports': 7.24.7
+      '@babel/helper-module-imports': 7.25.7
       '@babel/helper-simple-access': 7.22.5
       '@babel/helper-split-export-declaration': 7.22.6
       '@babel/helper-validator-identifier': 7.22.20
@@ -7402,7 +7382,7 @@ snapshots:
   '@babel/helper-module-transforms@7.25.2(@babel/core@7.24.7)':
     dependencies:
       '@babel/core': 7.24.7
-      '@babel/helper-module-imports': 7.24.7
+      '@babel/helper-module-imports': 7.25.7
       '@babel/helper-simple-access': 7.24.7
       '@babel/helper-validator-identifier': 7.24.7
       '@babel/traverse': 7.25.6
@@ -7447,12 +7427,12 @@ snapshots:
 
   '@babel/helper-simple-access@7.22.5':
     dependencies:
-      '@babel/types': 7.25.6
+      '@babel/types': 7.25.8
 
   '@babel/helper-simple-access@7.24.7':
     dependencies:
-      '@babel/traverse': 7.25.6
-      '@babel/types': 7.25.6
+      '@babel/traverse': 7.25.7
+      '@babel/types': 7.25.8
     transitivePeerDependencies:
       - supports-color
 
@@ -7541,10 +7521,6 @@ snapshots:
   '@babel/parser@7.25.6':
     dependencies:
       '@babel/types': 7.25.6
-
-  '@babel/parser@7.25.7':
-    dependencies:
-      '@babel/types': 7.25.7
 
   '@babel/parser@7.25.8':
     dependencies:
@@ -8341,8 +8317,8 @@ snapshots:
   '@babel/template@7.25.7':
     dependencies:
       '@babel/code-frame': 7.25.7
-      '@babel/parser': 7.25.7
-      '@babel/types': 7.25.7
+      '@babel/parser': 7.25.8
+      '@babel/types': 7.25.8
 
   '@babel/traverse@7.24.1(supports-color@5.5.0)':
     dependencies:
@@ -8375,9 +8351,9 @@ snapshots:
     dependencies:
       '@babel/code-frame': 7.25.7
       '@babel/generator': 7.25.7
-      '@babel/parser': 7.25.7
+      '@babel/parser': 7.25.8
       '@babel/template': 7.25.7
-      '@babel/types': 7.25.7
+      '@babel/types': 7.25.8
       debug: 4.3.7(supports-color@5.5.0)
       globals: 11.12.0
     transitivePeerDependencies:
@@ -8393,12 +8369,6 @@ snapshots:
     dependencies:
       '@babel/helper-string-parser': 7.24.8
       '@babel/helper-validator-identifier': 7.24.7
-      to-fast-properties: 2.0.0
-
-  '@babel/types@7.25.7':
-    dependencies:
-      '@babel/helper-string-parser': 7.25.7
-      '@babel/helper-validator-identifier': 7.25.7
       to-fast-properties: 2.0.0
 
   '@babel/types@7.25.8':
@@ -9295,7 +9265,7 @@ snapshots:
       '@jridgewell/resolve-uri': 3.1.2
       '@jridgewell/sourcemap-codec': 1.4.15
 
-  '@ledgerhq/crypto-icons-ui@1.4.1(@types/react@18.3.11)(react-native-svg@15.3.0(react-native@0.74.3(@babel/core@7.24.7)(@babel/preset-env@7.24.7(@babel/core@7.24.7))(@types/react@18.3.11)(react@18.3.1))(react@18.3.1))(react@18.3.1)(styled-components@5.3.11(@babel/core@7.24.7)(react-dom@18.3.1(react@18.3.1))(react-is@18.3.1)(react@18.3.1))(styled-system@5.1.5)':
+  '@ledgerhq/crypto-icons-ui@1.5.0(@types/react@18.3.11)(react-native-svg@15.3.0(react-native@0.74.3(@babel/core@7.24.7)(@babel/preset-env@7.24.7(@babel/core@7.24.7))(@types/react@18.3.11)(react@18.3.1))(react@18.3.1))(react@18.3.1)(styled-components@5.3.11(@babel/core@7.24.7)(react-dom@18.3.1(react@18.3.1))(react-is@18.3.1)(react@18.3.1))(styled-system@5.1.5)':
     dependencies:
       react: 18.3.1
       react-native-svg: 15.3.0(react-native@0.74.3(@babel/core@7.24.7)(@babel/preset-env@7.24.7(@babel/core@7.24.7))(@types/react@18.3.11)(react@18.3.1))(react@18.3.1)
@@ -9304,7 +9274,7 @@ snapshots:
     optionalDependencies:
       '@types/react': 18.3.11
 
-  '@ledgerhq/icons-ui@0.7.3(@types/react@18.3.11)(react-native-svg@15.3.0(react-native@0.74.3(@babel/core@7.24.7)(@babel/preset-env@7.24.7(@babel/core@7.24.7))(@types/react@18.3.11)(react@18.3.1))(react@18.3.1))(react@18.3.1)(styled-components@5.3.11(@babel/core@7.24.7)(react-dom@18.3.1(react@18.3.1))(react-is@18.3.1)(react@18.3.1))(styled-system@5.1.5)':
+  '@ledgerhq/icons-ui@0.8.0(@types/react@18.3.11)(react-native-svg@15.3.0(react-native@0.74.3(@babel/core@7.24.7)(@babel/preset-env@7.24.7(@babel/core@7.24.7))(@types/react@18.3.11)(react@18.3.1))(react@18.3.1))(react@18.3.1)(styled-components@5.3.11(@babel/core@7.24.7)(react-dom@18.3.1(react@18.3.1))(react-is@18.3.1)(react@18.3.1))(styled-system@5.1.5)':
     dependencies:
       react: 18.3.1
       react-native-svg: 15.3.0(react-native@0.74.3(@babel/core@7.24.7)(@babel/preset-env@7.24.7(@babel/core@7.24.7))(@types/react@18.3.11)(react@18.3.1))(react@18.3.1)
@@ -9313,12 +9283,12 @@ snapshots:
     optionalDependencies:
       '@types/react': 18.3.11
 
-  '@ledgerhq/react-ui@0.16.0(@emotion/is-prop-valid@1.2.1)(@types/react@18.3.11)(react-dom@18.3.1(react@18.3.1))(react-native-svg@15.3.0(react-native@0.74.3(@babel/core@7.24.7)(@babel/preset-env@7.24.7(@babel/core@7.24.7))(@types/react@18.3.11)(react@18.3.1))(react@18.3.1))(react@18.3.1)(styled-components@5.3.11(@babel/core@7.24.7)(react-dom@18.3.1(react@18.3.1))(react-is@18.3.1)(react@18.3.1))':
+  '@ledgerhq/react-ui@0.16.2(@emotion/is-prop-valid@1.2.1)(@types/react@18.3.11)(react-dom@18.3.1(react@18.3.1))(react-native-svg@15.3.0(react-native@0.74.3(@babel/core@7.24.7)(@babel/preset-env@7.24.7(@babel/core@7.24.7))(@types/react@18.3.11)(react@18.3.1))(react@18.3.1))(react@18.3.1)(styled-components@5.3.11(@babel/core@7.24.7)(react-dom@18.3.1(react@18.3.1))(react-is@18.3.1)(react@18.3.1))':
     dependencies:
       '@floating-ui/react-dom': 0.4.3(@types/react@18.3.11)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
-      '@ledgerhq/crypto-icons-ui': 1.4.1(@types/react@18.3.11)(react-native-svg@15.3.0(react-native@0.74.3(@babel/core@7.24.7)(@babel/preset-env@7.24.7(@babel/core@7.24.7))(@types/react@18.3.11)(react@18.3.1))(react@18.3.1))(react@18.3.1)(styled-components@5.3.11(@babel/core@7.24.7)(react-dom@18.3.1(react@18.3.1))(react-is@18.3.1)(react@18.3.1))(styled-system@5.1.5)
-      '@ledgerhq/icons-ui': 0.7.3(@types/react@18.3.11)(react-native-svg@15.3.0(react-native@0.74.3(@babel/core@7.24.7)(@babel/preset-env@7.24.7(@babel/core@7.24.7))(@types/react@18.3.11)(react@18.3.1))(react@18.3.1))(react@18.3.1)(styled-components@5.3.11(@babel/core@7.24.7)(react-dom@18.3.1(react@18.3.1))(react-is@18.3.1)(react@18.3.1))(styled-system@5.1.5)
-      '@ledgerhq/ui-shared': 0.2.1
+      '@ledgerhq/crypto-icons-ui': 1.5.0(@types/react@18.3.11)(react-native-svg@15.3.0(react-native@0.74.3(@babel/core@7.24.7)(@babel/preset-env@7.24.7(@babel/core@7.24.7))(@types/react@18.3.11)(react@18.3.1))(react@18.3.1))(react@18.3.1)(styled-components@5.3.11(@babel/core@7.24.7)(react-dom@18.3.1(react@18.3.1))(react-is@18.3.1)(react@18.3.1))(styled-system@5.1.5)
+      '@ledgerhq/icons-ui': 0.8.0(@types/react@18.3.11)(react-native-svg@15.3.0(react-native@0.74.3(@babel/core@7.24.7)(@babel/preset-env@7.24.7(@babel/core@7.24.7))(@types/react@18.3.11)(react@18.3.1))(react@18.3.1))(react@18.3.1)(styled-components@5.3.11(@babel/core@7.24.7)(react-dom@18.3.1(react@18.3.1))(react-is@18.3.1)(react@18.3.1))(styled-system@5.1.5)
+      '@ledgerhq/ui-shared': 0.2.2
       '@tippyjs/react': 4.2.6(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       color: 4.2.3
       embla-carousel-react: 8.0.0-rc17(react@18.3.1)
@@ -9339,7 +9309,7 @@ snapshots:
       - react-native-svg
       - supports-color
 
-  '@ledgerhq/ui-shared@0.2.1': {}
+  '@ledgerhq/ui-shared@0.2.2': {}
 
   '@manypkg/find-root@1.1.0':
     dependencies:
@@ -10443,16 +10413,16 @@ snapshots:
 
   '@types/babel__generator@7.6.8':
     dependencies:
-      '@babel/types': 7.25.6
+      '@babel/types': 7.25.8
 
   '@types/babel__template@7.4.4':
     dependencies:
       '@babel/parser': 7.25.6
-      '@babel/types': 7.25.6
+      '@babel/types': 7.25.8
 
   '@types/babel__traverse@7.20.4':
     dependencies:
-      '@babel/types': 7.25.6
+      '@babel/types': 7.25.8
 
   '@types/connect@3.4.36':
     dependencies:
@@ -11012,7 +10982,7 @@ snapshots:
   babel-plugin-jest-hoist@29.6.3:
     dependencies:
       '@babel/template': 7.25.0
-      '@babel/types': 7.25.6
+      '@babel/types': 7.25.8
       '@types/babel__core': 7.20.5
       '@types/babel__traverse': 7.20.4
 
@@ -12333,7 +12303,7 @@ snapshots:
 
   framer-motion@11.7.0(@emotion/is-prop-valid@1.2.1)(react-dom@18.3.1(react@18.3.1))(react@18.3.1):
     dependencies:
-      tslib: 2.7.0
+      tslib: 2.8.0
     optionalDependencies:
       '@emotion/is-prop-valid': 1.2.1
       react: 18.3.1
