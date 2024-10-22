@@ -1,7 +1,7 @@
 import { inject, injectable } from "inversify";
 
+import { DeviceSessionId } from "@api/types";
 import { deviceSessionTypes } from "@internal/device-session/di/deviceSessionTypes";
-import { DeviceSession } from "@internal/device-session/model/DeviceSession";
 import type { DeviceSessionService } from "@internal/device-session/service/DeviceSessionService";
 import { loggerTypes } from "@internal/logger-publisher/di/loggerTypes";
 import { LoggerPublisherService } from "@internal/logger-publisher/service/LoggerPublisherService";
@@ -24,8 +24,10 @@ export class ListDeviceSessionsUseCase {
     this._logger = loggerFactory("ListDeviceSessionsUseCase");
   }
 
-  execute(): DeviceSession[] {
+  execute(): DeviceSessionId[] {
     this._logger.info("Listing device sessions");
-    return this._sessionService.getDeviceSessions();
+    return this._sessionService
+      .getDeviceSessions()
+      .map((dSession) => dSession.id);
   }
 }

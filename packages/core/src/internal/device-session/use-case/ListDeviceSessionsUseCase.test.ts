@@ -49,7 +49,7 @@ describe("ListDeviceSessionsUseCase", () => {
     const response = useCase.execute();
 
     // then
-    expect(response).toStrictEqual([deviceSession1, deviceSession2]);
+    expect(response).toStrictEqual([deviceSession1.id, deviceSession2.id]);
   });
 
   it("should return empty array if no device sessions", () => {

@@ -26,7 +26,6 @@ import {
 import { configTypes } from "@internal/config/di/configTypes";
 import { GetSdkVersionUseCase } from "@internal/config/use-case/GetSdkVersionUseCase";
 import { deviceSessionTypes } from "@internal/device-session/di/deviceSessionTypes";
-import { DeviceSession } from "@internal/device-session/model/DeviceSession";
 import { CloseSessionsUseCase } from "@internal/device-session/use-case/CloseSessionsUseCase";
 import { GetDeviceSessionStateUseCase } from "@internal/device-session/use-case/GetDeviceSessionStateUseCase";
 import { ListDeviceSessionsUseCase } from "@internal/device-session/use-case/ListDeviceSessionsUseCase";
@@ -219,9 +218,9 @@ export class DeviceSdk {
   /**
    * Lists all device sessions.
    *
-   * @returns {DeviceSession[]} The list of device sessions.
+   * @returns {DeviceSessionId[]} The list of device sessions.
    */
-  listDeviceSessions(): DeviceSession[] {
+  listDeviceSessions(): DeviceSessionId[] {
     return this.container
       .get<ListDeviceSessionsUseCase>(
         deviceSessionTypes.ListDeviceSessionsUseCase,
