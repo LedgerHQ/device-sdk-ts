@@ -78,149 +78,140 @@ describe("SendSignTransactionTask", () => {
     jest.resetAllMocks();
   });
 
-  describe("Legacy", () => {
-    describe("run", () => {
-      it("should send the transaction in one command", async () => {
-        // GIVEN
-        const args = {
-          derivationPath: "44'/60'/0'/0/0",
-          serializedTransaction: SIMPLE_TRANSACTION,
-          isLegacy: true,
-        };
-        apiMock.sendCommand.mockResolvedValueOnce(resultOk);
+  describe("run", () => {
+    it("should send the transaction in one command", async () => {
+      // GIVEN
+      const args = {
+        derivationPath: "44'/60'/0'/0/0",
+        serializedTransaction: SIMPLE_TRANSACTION,
+      };
+      apiMock.sendCommand.mockResolvedValueOnce(resultOk);
 
-        // WHEN
-        const result = await new SendSignTransactionTask(apiMock, args).run();
+      // WHEN
+      const result = await new SendSignTransactionTask(apiMock, args).run();
 
-        // THEN
-        expect(apiMock.sendCommand.mock.calls).toHaveLength(1);
-        expect(apiMock.sendCommand.mock.calls[0]![0]).toStrictEqual(
-          new SignTransactionCommand({
-            serializedTransaction: new Uint8Array([
-              ...PATH,
-              ...SIMPLE_TRANSACTION,
-            ]),
-            isFirstChunk: true,
-            isLegacy: true,
-          }),
-        );
-        // eslint-disable-next-line  @typescript-eslint/no-explicit-any
-        expect((result as any).data).toStrictEqual(signature);
-      });
+      // THEN
+      expect(apiMock.sendCommand.mock.calls).toHaveLength(1);
+      expect(apiMock.sendCommand.mock.calls[0]![0]).toStrictEqual(
+        new SignTransactionCommand({
+          serializedTransaction: new Uint8Array([
+            ...PATH,
+            ...SIMPLE_TRANSACTION,
+          ]),
+          isFirstChunk: true,
+        }),
+      );
+      // eslint-disable-next-line  @typescript-eslint/no-explicit-any
+      expect((result as any).data).toStrictEqual(signature);
+    });
 
-      it("should send the transaction in chunks", async () => {
-        // GIVEN
-        const args = {
-          derivationPath: "44'/60'/0'/0/0",
-          serializedTransaction: BIG_TRANSACTION,
-          isLegacy: true,
-        };
-        apiMock.sendCommand.mockResolvedValueOnce(resultNothing);
-        apiMock.sendCommand.mockResolvedValueOnce(resultOk);
+    it("should send the transaction in chunks", async () => {
+      // GIVEN
+      const args = {
+        derivationPath: "44'/60'/0'/0/0",
+        serializedTransaction: BIG_TRANSACTION,
+        isLegacy: true,
+      };
+      apiMock.sendCommand.mockResolvedValueOnce(resultNothing);
+      apiMock.sendCommand.mockResolvedValueOnce(resultOk);
 
-        // WHEN
-        const result = await new SendSignTransactionTask(apiMock, args).run();
+      // WHEN
+      const result = await new SendSignTransactionTask(apiMock, args).run();
 
-        // THEN
-        expect(apiMock.sendCommand.mock.calls).toHaveLength(2);
-        expect(apiMock.sendCommand.mock.calls[0]![0]).toStrictEqual(
-          new SignTransactionCommand({
-            serializedTransaction: new Uint8Array([
-              ...PATH,
-              ...BIG_TRANSACTION,
-            ]).slice(0, APDU_MAX_PAYLOAD),
-            isFirstChunk: true,
-            isLegacy: true,
-          }),
-        );
-        expect(apiMock.sendCommand.mock.calls[1]![0]).toStrictEqual(
-          new SignTransactionCommand({
-            serializedTransaction: new Uint8Array([
-              ...PATH,
-              ...BIG_TRANSACTION,
-            ]).slice(APDU_MAX_PAYLOAD, APDU_MAX_PAYLOAD * 2),
-            isFirstChunk: false,
-            isLegacy: true,
-          }),
-        );
-        // eslint-disable-next-line  @typescript-eslint/no-explicit-any
-        expect((result as any).data).toStrictEqual(signature);
-      });
+      // THEN
+      expect(apiMock.sendCommand.mock.calls).toHaveLength(2);
+      expect(apiMock.sendCommand.mock.calls[0]![0]).toStrictEqual(
+        new SignTransactionCommand({
+          serializedTransaction: new Uint8Array([
+            ...PATH,
+            ...BIG_TRANSACTION,
+          ]).slice(0, APDU_MAX_PAYLOAD),
+          isFirstChunk: true,
+        }),
+      );
+      expect(apiMock.sendCommand.mock.calls[1]![0]).toStrictEqual(
+        new SignTransactionCommand({
+          serializedTransaction: new Uint8Array([
+            ...PATH,
+            ...BIG_TRANSACTION,
+          ]).slice(APDU_MAX_PAYLOAD, APDU_MAX_PAYLOAD * 2),
+          isFirstChunk: false,
+        }),
+      );
+      // eslint-disable-next-line  @typescript-eslint/no-explicit-any
+      expect((result as any).data).toStrictEqual(signature);
+    });
 
-      it("should return an error if the command fails", async () => {
-        // GIVEN
-        const args = {
-          derivationPath: "44'/60'/0'/0/0",
-          serializedTransaction: SIMPLE_TRANSACTION,
-          isLegacy: true,
-        };
-        apiMock.sendCommand.mockResolvedValueOnce(resultNothing);
+    it("should return an error if the command fails", async () => {
+      // GIVEN
+      const args = {
+        derivationPath: "44'/60'/0'/0/0",
+        serializedTransaction: SIMPLE_TRANSACTION,
+        isLegacy: true,
+      };
+      apiMock.sendCommand.mockResolvedValueOnce(resultNothing);
 
-        // WHEN
-        const result = await new SendSignTransactionTask(apiMock, args).run();
+      // WHEN
+      const result = await new SendSignTransactionTask(apiMock, args).run();
 
-        // THEN
-        expect(apiMock.sendCommand.mock.calls).toHaveLength(1);
-        expect(apiMock.sendCommand.mock.calls[0]![0]).toStrictEqual(
-          new SignTransactionCommand({
-            serializedTransaction: new Uint8Array([
-              ...PATH,
-              ...SIMPLE_TRANSACTION,
-            ]),
-            isFirstChunk: true,
-            isLegacy: true,
-          }),
-        );
-        // eslint-disable-next-line  @typescript-eslint/no-explicit-any
-        expect((result as any).error).toStrictEqual(
-          new InvalidStatusWordError("no signature returned"),
-        );
-      });
+      // THEN
+      expect(apiMock.sendCommand.mock.calls).toHaveLength(1);
+      expect(apiMock.sendCommand.mock.calls[0]![0]).toStrictEqual(
+        new SignTransactionCommand({
+          serializedTransaction: new Uint8Array([
+            ...PATH,
+            ...SIMPLE_TRANSACTION,
+          ]),
+          isFirstChunk: true,
+        }),
+      );
+      // eslint-disable-next-line  @typescript-eslint/no-explicit-any
+      expect((result as any).error).toStrictEqual(
+        new InvalidStatusWordError("no signature returned"),
+      );
+    });
 
-      it("should return an error if the command fails in the middle of the transaction", async () => {
-        // GIVEN
-        const args = {
-          derivationPath: "44'/60'/0'/0/0",
-          serializedTransaction: BIG_TRANSACTION,
-          isLegacy: true,
-        };
-        apiMock.sendCommand.mockResolvedValueOnce(resultNothing);
-        apiMock.sendCommand.mockResolvedValueOnce(
-          CommandResultFactory({
-            error: new InvalidStatusWordError("An error"),
-          }),
-        );
+    it("should return an error if the command fails in the middle of the transaction", async () => {
+      // GIVEN
+      const args = {
+        derivationPath: "44'/60'/0'/0/0",
+        serializedTransaction: BIG_TRANSACTION,
+        isLegacy: true,
+      };
+      apiMock.sendCommand.mockResolvedValueOnce(resultNothing);
+      apiMock.sendCommand.mockResolvedValueOnce(
+        CommandResultFactory({
+          error: new InvalidStatusWordError("An error"),
+        }),
+      );
 
-        // WHEN
-        const result = await new SendSignTransactionTask(apiMock, args).run();
+      // WHEN
+      const result = await new SendSignTransactionTask(apiMock, args).run();
 
-        // THEN
-        expect(apiMock.sendCommand.mock.calls).toHaveLength(2);
-        expect(apiMock.sendCommand.mock.calls[0]![0]).toStrictEqual(
-          new SignTransactionCommand({
-            serializedTransaction: new Uint8Array([
-              ...PATH,
-              ...BIG_TRANSACTION,
-            ]).slice(0, APDU_MAX_PAYLOAD),
-            isFirstChunk: true,
-            isLegacy: true,
-          }),
-        );
-        expect(apiMock.sendCommand.mock.calls[1]![0]).toStrictEqual(
-          new SignTransactionCommand({
-            serializedTransaction: new Uint8Array([
-              ...PATH,
-              ...BIG_TRANSACTION,
-            ]).slice(APDU_MAX_PAYLOAD, APDU_MAX_PAYLOAD * 2),
-            isFirstChunk: false,
-            isLegacy: true,
-          }),
-        );
-        // eslint-disable-next-line  @typescript-eslint/no-explicit-any
-        expect((result as any).error).toStrictEqual(
-          new InvalidStatusWordError("An error"),
-        );
-      });
+      // THEN
+      expect(apiMock.sendCommand.mock.calls).toHaveLength(2);
+      expect(apiMock.sendCommand.mock.calls[0]![0]).toStrictEqual(
+        new SignTransactionCommand({
+          serializedTransaction: new Uint8Array([
+            ...PATH,
+            ...BIG_TRANSACTION,
+          ]).slice(0, APDU_MAX_PAYLOAD),
+          isFirstChunk: true,
+        }),
+      );
+      expect(apiMock.sendCommand.mock.calls[1]![0]).toStrictEqual(
+        new SignTransactionCommand({
+          serializedTransaction: new Uint8Array([
+            ...PATH,
+            ...BIG_TRANSACTION,
+          ]).slice(APDU_MAX_PAYLOAD, APDU_MAX_PAYLOAD * 2),
+          isFirstChunk: false,
+        }),
+      );
+      // eslint-disable-next-line  @typescript-eslint/no-explicit-any
+      expect((result as any).error).toStrictEqual(
+        new InvalidStatusWordError("An error"),
+      );
     });
   });
 });
