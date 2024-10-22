@@ -1,12 +1,15 @@
-import React, { useCallback, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { BuiltinTransports } from "@ledgerhq/device-management-kit";
+import { FlipperPluginManager } from "@ledgerhq/device-management-kit-flipper-plugin-client";
 import {
   Button,
+  Divider,
   DropdownGeneric,
   Flex,
   Icons,
   Input,
   Switch,
+  Text,
 } from "@ledgerhq/react-ui";
 import styled, { DefaultTheme } from "styled-components";
 
@@ -49,7 +52,7 @@ export const Header = () => {
             : BuiltinTransports.MOCK_SERVER,
       },
     });
-  }, [transport]);
+  }, [dispatch, transport]);
   const [mockServerStateUrl, setMockServerStateUrl] =
     useState<string>(mockServerUrl);
   const mockServerEnabled = transport === BuiltinTransports.MOCK_SERVER;
@@ -60,8 +63,32 @@ export const Header = () => {
         type: "set_mock_server_url",
         payload: { mockServerUrl: mockServerStateUrl },
       }),
-    [mockServerStateUrl],
+    [dispatch, mockServerStateUrl],
   );
+
+  const onClickConnectFlipperClient = useCallback(() => {
+    /**
+     * This is useful in case the Flipper server is started after the app and
+     * we want to connect to it without reloading the app, to keep the app state
+     * and the logs.
+     * */
+    FlipperPluginManager.getInstance().attemptInitialization();
+  }, []);
+
+  const [flipperClientConnected, setFlipperClientConnected] =
+    useState<boolean>(false);
+
+  useEffect(() => {
+    const subscription = FlipperPluginManager.getInstance()
+      .observeIsConnected()
+      .subscribe((connected: boolean) => {
+        setFlipperClientConnected(connected);
+      });
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, []);
+
   return (
     <Root>
       <Actions>
@@ -74,7 +101,8 @@ export const Header = () => {
       </Actions>
       <div data-testid="dropdown_mock-server-switch">
         <DropdownGeneric closeOnClickOutside label="" placement="bottom">
-          <Flex my={5} py={6} px={5} width={280}>
+          <Flex p={5} flexDirection="column" rowGap={5}>
+            <Text>Mock server:</Text>
             <div data-testid="switch_mock-server">
               <Switch
                 onChange={onToggleMockServer}
@@ -83,20 +111,32 @@ export const Header = () => {
                 label="Enable Mock server"
               />
             </div>
+
+            {mockServerEnabled && (
+              <UrlInput
+                value={mockServerStateUrl}
+                onChange={(url: string) => setMockServerStateUrl(url)}
+                renderRight={() => (
+                  <Flex alignItems="center" justifyContent="stretch">
+                    <Button iconButton onClick={validateServerUrl}>
+                      <Icons.CheckmarkCircleFill size="S" />
+                    </Button>
+                  </Flex>
+                )}
+              />
+            )}
+            <Divider />
+            <Text>
+              Flipper ({flipperClientConnected ? "Connected" : "Disconnected"}):
+            </Text>
+            <Button
+              onClick={onClickConnectFlipperClient}
+              disabled={flipperClientConnected}
+              variant="shade"
+            >
+              Connect Flipper client
+            </Button>
           </Flex>
-          {mockServerEnabled && (
-            <UrlInput
-              value={mockServerStateUrl}
-              onChange={(url: string) => setMockServerStateUrl(url)}
-              renderRight={() => (
-                <Flex alignItems="center" justifyContent="stretch">
-                  <Button iconButton onClick={validateServerUrl}>
-                    <Icons.CheckmarkCircleFill size="S" />
-                  </Button>
-                </Flex>
-              )}
-            />
-          )}
         </DropdownGeneric>
       </div>
     </Root>

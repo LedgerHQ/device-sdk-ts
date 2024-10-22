@@ -7,6 +7,7 @@ import {
   DeviceSdkBuilder,
   WebLogsExporterLogger,
 } from "@ledgerhq/device-management-kit";
+import { FlipperSdkLogger } from "@ledgerhq/device-management-kit-flipper-plugin-client";
 
 import { usePrevious } from "@/hooks/usePrevious";
 import { useSdkConfigContext } from "@/providers/SdkConfig";
@@ -18,6 +19,7 @@ const defaultSdk = new DeviceSdkBuilder()
   .addTransport(BuiltinTransports.BLE)
   .addTransport(BuiltinTransports.USB)
   .addLogger(webLogsExporterLogger)
+  .addLogger(new FlipperSdkLogger())
   .build();
 
 const SdkContext = createContext<DeviceSdk>(defaultSdk);
@@ -36,6 +38,8 @@ export const SdkProvider: React.FC<PropsWithChildren> = ({ children }) => {
           .addLogger(new ConsoleLogger())
           .addTransport(BuiltinTransports.MOCK_SERVER)
           .addConfig({ mockUrl: mockServerUrl })
+          .addLogger(webLogsExporterLogger)
+          .addLogger(new FlipperSdkLogger())
           .build(),
       );
     } else if (previousTransport === BuiltinTransports.MOCK_SERVER) {
@@ -45,6 +49,8 @@ export const SdkProvider: React.FC<PropsWithChildren> = ({ children }) => {
           .addLogger(new ConsoleLogger())
           .addTransport(BuiltinTransports.BLE)
           .addTransport(BuiltinTransports.USB)
+          .addLogger(webLogsExporterLogger)
+          .addLogger(new FlipperSdkLogger())
           .build(),
       );
     }
