@@ -66,14 +66,11 @@ export class SendSignTransactionTask {
       return result;
     }
 
-    if (result.data.isJust()) {
-      return CommandResultFactory({
-        data: result.data.extract(),
-      });
-    }
-
-    return CommandResultFactory({
-      error: new InvalidStatusWordError("no signature returned"),
-    });
+    return result.data.mapOrDefault(
+      (data) => CommandResultFactory({ data }),
+      CommandResultFactory({
+        error: new InvalidStatusWordError("no signature returned"),
+      }),
+    );
   }
 }
