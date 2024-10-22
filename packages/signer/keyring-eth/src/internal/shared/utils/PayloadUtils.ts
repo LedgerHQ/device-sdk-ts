@@ -1,17 +1,16 @@
 import {
   ByteArrayBuilder,
-  HexaStringEncodeError,
   hexaStringToBuffer,
 } from "@ledgerhq/device-management-kit";
 
 export class PayloadUtils {
-  static PAYLOAD_LENGTH_BYTES = 2;
+  private static PAYLOAD_LENGTH_BYTES = 2;
 
-  static getBufferFromPayload(payload: string): Uint8Array {
+  static getBufferFromPayload(payload: string): Uint8Array | null {
     const buffer = hexaStringToBuffer(payload);
 
     if (buffer === null || buffer.length === 0) {
-      throw new HexaStringEncodeError("Invalid payload");
+      return null;
     }
 
     return new ByteArrayBuilder(buffer.length + this.PAYLOAD_LENGTH_BYTES)

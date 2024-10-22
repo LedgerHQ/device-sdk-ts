@@ -9,14 +9,14 @@ import {
   isSuccessCommandResult,
 } from "@ledgerhq/device-management-kit";
 
-type SendCommandInChunksTaskArgs<T> = {
+export type SendCommandInChunksTaskArgs<T> = {
   data: Uint8Array;
   commandFactory: <V extends ChunkableCommandArgs & Record<string, unknown>>(
     args: ChunkableCommandArgs,
   ) => Command<T, V>;
 };
 
-type ChunkableCommandArgs = {
+export type ChunkableCommandArgs = {
   chunkedData: Uint8Array;
   isFirstChunk: boolean;
 };

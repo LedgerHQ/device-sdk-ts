@@ -5,9 +5,10 @@ import {
 import {
   type CommandErrorResult,
   CommandResult,
+  CommandResultFactory,
   type InternalApi,
+  InvalidStatusWordError,
   isSuccessCommandResult,
-  type SdkError,
 } from "@ledgerhq/device-management-kit";
 import { Just, Maybe, Nothing } from "purify-ts";
 
@@ -30,7 +31,10 @@ import {
 } from "@internal/app-binder/command/SetPluginCommand";
 import { PayloadUtils } from "@internal/shared/utils/PayloadUtils";
 
-import { SendCommandInChunksTask } from "./SendCommandInChunksTask";
+import {
+  SendCommandInChunksTask,
+  SendCommandInChunksTaskArgs,
+} from "./SendCommandInChunksTask";
 
 export type ProvideTransactionContextTaskArgs = {
   /**
@@ -38,20 +42,6 @@ export type ProvideTransactionContextTaskArgs = {
    */
   clearSignContexts: ClearSignContextSuccess[];
 };
-
-/**
- * Temporary error type to be used in the `ProvideTransactionContextTask` in order to not forget to handle the error cases.
- */
-export class ProvideTransactionContextTaskError implements SdkError {
-  readonly _tag = "ProvideTransactionContextTaskError";
-  readonly originalError: Error;
-
-  constructor(message?: string) {
-    this.originalError = new Error(
-      message ?? "Unknow error in ProvideTransactionContextTaskError",
-    );
-  }
-}
 
 export type ProvideTransactionContextTaskErrorCodes =
   | void
@@ -124,28 +114,50 @@ export class ProvideTransactionContextTask {
         );
       }
       case ClearSignContextType.DOMAIN_NAME: {
-        return new SendCommandInChunksTask(this.api, {
-          data: PayloadUtils.getBufferFromPayload(payload),
-          commandFactory: (args) =>
+        return this.sendInChunks(
+          payload,
+          (args) =>
             new ProvideDomainNameCommand({
               data: args.chunkedData,
               isFirstChunk: args.isFirstChunk,
             }),
-        }).run();
+        );
       }
       case ClearSignContextType.ENUM:
       case ClearSignContextType.TRANSACTION_FIELD_DESCRIPTION:
       case ClearSignContextType.TRANSACTION_INFO: {
-        throw new ProvideTransactionContextTaskError(
-          `The context type [${type}] is not supported`,
-        );
+        return CommandResultFactory({
+          error: new InvalidStatusWordError(
+            "The context type [EXTERNAL_PLUGIN] is not valid here",
+          ),
+        });
       }
       default: {
         const uncoveredType: never = type;
-        throw new ProvideTransactionContextTaskError(
-          `The context type [${uncoveredType}] is not covered`,
-        );
+        return CommandResultFactory({
+          error: new InvalidStatusWordError(
+            `The context type [${uncoveredType}] is not covered`,
+          ),
+        });
       }
     }
+  }
+
+  private async sendInChunks<T>(
+    payload: string,
+    commandFactory: SendCommandInChunksTaskArgs<T>[`commandFactory`],
+  ): Promise<CommandResult<T, void>> {
+    const data = PayloadUtils.getBufferFromPayload(payload);
+
+    if (!data) {
+      return CommandResultFactory({
+        error: new InvalidStatusWordError("Invalid payload"),
+      });
+    }
+
+    return new SendCommandInChunksTask(this.api, {
+      data,
+      commandFactory,
+    }).run();
   }
 }
