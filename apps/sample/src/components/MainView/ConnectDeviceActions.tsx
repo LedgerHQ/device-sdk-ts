@@ -67,7 +67,7 @@ export const ConnectDeviceActions = ({
       size="large"
       data-testid="CTA_select-device"
     >
-      Select a device
+      With Mockserver
     </ConnectButton>
   ) : (
     <Flex>
@@ -77,7 +77,7 @@ export const ConnectDeviceActions = ({
         backgroundColor="main"
         size="large"
       >
-        Select a USB device
+        With USB
       </ConnectButton>
       <ConnectButton
         onClick={() => onSelectDeviceClicked(BuiltinTransports.BLE)}
@@ -85,7 +85,7 @@ export const ConnectDeviceActions = ({
         backgroundColor="main"
         size="large"
       >
-        Select a BLE device
+        With Bluetooth
       </ConnectButton>
     </Flex>
   );

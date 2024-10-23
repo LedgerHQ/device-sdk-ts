@@ -19,6 +19,7 @@ import { SdkProvider } from "@/providers/DeviceSdkProvider";
 import { DeviceSessionsProvider } from "@/providers/DeviceSessionsProvider";
 import { SdkConfigProvider } from "@/providers/SdkConfig";
 import { GlobalStyle } from "@/styles/globalstyles";
+import { DeviceSelectionProvider } from "@/providers/DeviceSelectionProvider";
 
 const Root = styled(Flex)`
   flex-direction: row;
@@ -44,11 +45,13 @@ const ClientRootLayout: React.FC<PropsWithChildren> = ({ children }) => {
             <body>
               <Root>
                 <DeviceSessionsProvider>
-                  <Sidebar />
-                  <PageContainer>
-                    <Header />
-                    {children}
-                  </PageContainer>
+                  <DeviceSelectionProvider>
+                    <Sidebar />
+                    <PageContainer>
+                      <Header />
+                      {children}
+                    </PageContainer>
+                  </DeviceSelectionProvider>
                 </DeviceSessionsProvider>
               </Root>
             </body>

@@ -32,7 +32,7 @@ test.describe("ETH Signer: get address, unhappy paths", () => {
     await test.step("Given first device is connected", async () => {
       await whenConnectingDevice(page);
 
-      await thenDeviceIsConnected(page, 0);
+      await thenDeviceIsConnected(page);
     });
 
     await test.step("Then execute ETH: get address with malformed derivation paths", async () => {

@@ -1,5 +1,5 @@
 "use client";
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { BuiltinTransports } from "@ledgerhq/device-management-kit";
 import { Box, Flex, IconsLegacy, Link, Text } from "@ledgerhq/react-ui";
 import { useRouter } from "next/navigation";
@@ -26,6 +26,14 @@ const Root = styled(Flex).attrs({ py: 8, px: 6 })`
       : theme.colors.background.drawer};
 `;
 
+const NoDeviceContainer = styled(Flex).attrs({
+  backgroundColor: "opacityDefault.c10",
+  mb: 8,
+  borderRadius: 2,
+})`
+  height: 66px;
+`;
+
 const Subtitle = styled(Text).attrs({ mb: 5 })``;
 
 const MenuContainer = styled(Box)`
@@ -49,7 +57,6 @@ export const Sidebar: React.FC = () => {
   const exportLogs = useExportLogsCallback();
   const {
     state: { deviceById, selectedId },
-    dispatch,
   } = useDeviceSessionsContext();
   const {
     state: { transport },
@@ -64,21 +71,13 @@ export const Sidebar: React.FC = () => {
         setVersion("");
       });
   }, [sdk]);
-  const onDeviceDisconnect = useCallback(
-    async (sessionId: string) => {
-      try {
-        await sdk.disconnect({ sessionId });
-        dispatch({ type: "remove_session", payload: { sessionId } });
-      } catch (e) {
-        console.error(e);
-      }
-    },
-    [dispatch, sdk],
-  );
 
   const router = useRouter();
   return (
-    <Root mockServerEnabled={transport === BuiltinTransports.MOCK_SERVER}>
+    <Root
+      mockServerEnabled={transport === BuiltinTransports.MOCK_SERVER}
+      data-testid="container_sidebar-view"
+    >
       <Link
         onClick={() => router.push("/")}
         mb={8}
@@ -95,20 +94,21 @@ export const Sidebar: React.FC = () => {
       </Subtitle>
 
       <Subtitle variant={"tiny"}>Device</Subtitle>
-      <div data-testid="container_devices">
-        {Object.entries(deviceById).map(([sessionId, device]) => (
+      <div data-testid="container_main-device">
+        {selectedId ? (
           <Device
-            key={sessionId}
-            sessionId={sessionId}
-            name={device.name}
-            model={device.modelId}
-            type={device.type}
-            onSelect={() =>
-              dispatch({ type: "select_session", payload: { sessionId } })
-            }
-            onDisconnect={() => onDeviceDisconnect(sessionId)}
+            key={selectedId}
+            sessionId={selectedId}
+            name={deviceById[selectedId].name}
+            model={deviceById[selectedId].modelId}
+            type={deviceById[selectedId].type}
+            showSelectDeviceAction
           />
-        ))}
+        ) : (
+          <NoDeviceContainer alignItems="center" justifyContent="center">
+            No device connected
+          </NoDeviceContainer>
+        )}
       </div>
       <MenuContainer active={!!selectedId}>
         <Subtitle variant={"tiny"}>Menu</Subtitle>
