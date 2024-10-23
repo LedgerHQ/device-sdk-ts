@@ -3,6 +3,7 @@ import { Subject } from "rxjs";
 
 import { DeviceModel, DeviceModelId } from "@api/device/DeviceModel";
 import { StaticDeviceModelDataSource } from "@internal/device-model/data/StaticDeviceModelDataSource";
+import { InternalDeviceModel } from "@internal/device-model/model/DeviceModel";
 import { DefaultLoggerPublisherService } from "@internal/logger-publisher/service/DefaultLoggerPublisherService";
 import {
   DeviceNotRecognizedError,
@@ -27,15 +28,26 @@ const logger = new DefaultLoggerPublisherService([], "web-usb-hid");
 
 const stubDevice: HIDDevice = hidDeviceStubBuilder();
 
+/**
+ * Flushes all pending promises
+ */
+const flushPromises = () =>
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+  new Promise(jest.requireActual("timers").setImmediate);
+
 describe("WebUsbHidTransport", () => {
   let transport: WebUsbHidTransport;
 
-  beforeEach(() => {
+  function initializeTransport() {
     transport = new WebUsbHidTransport(
       usbDeviceModelDataSource,
       () => logger,
       usbHidDeviceConnectionFactoryStubBuilder(),
     );
+  }
+
+  beforeEach(() => {
+    initializeTransport();
     jest.useFakeTimers();
   });
 
@@ -79,22 +91,18 @@ describe("WebUsbHidTransport", () => {
     const disconnectionEventsSubject = new Subject<HIDConnectionEvent>();
 
     function emitHIDConnectionEvent(device: HIDDevice) {
-      if (global.navigator.hid.onconnect)
-        global.navigator.hid.onconnect({ device } as HIDConnectionEvent);
       connectionEventsSubject.next({
         device,
       } as HIDConnectionEvent);
     }
 
     function emitHIDDisconnectionEvent(device: HIDDevice) {
-      if (global.navigator.hid.ondisconnect)
-        global.navigator.hid.ondisconnect({ device } as HIDConnectionEvent);
       disconnectionEventsSubject.next({
         device,
       } as HIDConnectionEvent);
     }
 
-    beforeAll(() => {
+    beforeEach(() => {
       global.navigator = {
         hid: {
           getDevices: mockedGetDevices,
@@ -111,9 +119,10 @@ describe("WebUsbHidTransport", () => {
           },
         },
       } as unknown as Navigator;
+      initializeTransport();
     });
 
-    afterAll(() => {
+    afterEach(() => {
       jest.restoreAllMocks();
       global.navigator = undefined as unknown as Navigator;
     });
@@ -289,6 +298,7 @@ describe("WebUsbHidTransport", () => {
 
       it("should emit the same discoveredDevice object if its discovered twice in a row", async () => {
         mockedRequestDevice.mockResolvedValue([stubDevice]);
+        mockedGetDevices.mockResolvedValue([stubDevice]);
 
         const firstDiscoveredDevice = await new Promise((resolve, reject) => {
           discoverDevice(resolve, (err) => reject(err));
@@ -300,11 +310,11 @@ describe("WebUsbHidTransport", () => {
       });
     });
 
-    describe("stopDiscovering", () => {
+    describe("destroy", () => {
       it("should stop monitoring connections if the discovery process is halted", () => {
         const abortSpy = jest.spyOn(AbortController.prototype, "abort");
 
-        transport.stopDiscovering();
+        transport.destroy();
 
         expect(abortSpy).toHaveBeenCalled();
       });
@@ -339,14 +349,14 @@ describe("WebUsbHidTransport", () => {
 
       it("should throw OpeningConnectionError if the device cannot be opened", (done) => {
         const message = "cannot be opened";
-        mockedRequestDevice.mockResolvedValueOnce([
-          {
-            ...stubDevice,
-            open: () => {
-              throw new Error(message);
-            },
+        const mockedDevice = {
+          ...stubDevice,
+          open: () => {
+            throw new Error(message);
           },
-        ]);
+        };
+        mockedRequestDevice.mockResolvedValueOnce([mockedDevice]);
+        mockedGetDevices.mockResolvedValue([mockedDevice]);
 
         discoverDevice(
           (discoveredDevice) => {
@@ -372,15 +382,17 @@ describe("WebUsbHidTransport", () => {
       });
 
       it("should return the opened device", (done) => {
-        mockedRequestDevice.mockResolvedValueOnce([
-          {
-            ...stubDevice,
-            opened: true,
-            open: () => {
-              throw new DOMException("already opened", "InvalidStateError");
-            },
+        const mockedDevice = {
+          ...stubDevice,
+          opened: false,
+          open: () => {
+            mockedDevice.opened = true;
+            return Promise.resolve();
           },
-        ]);
+        };
+
+        mockedRequestDevice.mockResolvedValue([mockedDevice]);
+        mockedGetDevices.mockResolvedValue([mockedDevice]);
 
         discoverDevice(
           (discoveredDevice) => {
@@ -413,6 +425,7 @@ describe("WebUsbHidTransport", () => {
 
       it("should return a device if available", (done) => {
         mockedRequestDevice.mockResolvedValueOnce([stubDevice]);
+        mockedGetDevices.mockResolvedValue([stubDevice]);
 
         discoverDevice(
           (discoveredDevice) => {
@@ -538,6 +551,7 @@ describe("WebUsbHidTransport", () => {
         const hidDevice2 = hidDeviceStubBuilder();
 
         mockedRequestDevice.mockResolvedValueOnce([hidDevice1]);
+        mockedGetDevices.mockResolvedValue([hidDevice1, hidDevice2]);
 
         discoverDevice(async (discoveredDevice) => {
           try {
@@ -576,6 +590,11 @@ describe("WebUsbHidTransport", () => {
         const hidDevice3 = hidDeviceStubBuilder();
 
         mockedRequestDevice.mockResolvedValueOnce([hidDevice1]);
+        mockedGetDevices.mockResolvedValue([
+          hidDevice1,
+          hidDevice2,
+          hidDevice3,
+        ]);
 
         // when
         discoverDevice(async (discoveredDevice) => {
@@ -639,6 +658,168 @@ describe("WebUsbHidTransport", () => {
         const result = transport.isHIDConnectionEvent(event);
         // then
         expect(result).toBe(false);
+      });
+    });
+
+    describe("listenToKnownDevices", () => {
+      it("should emit the devices already connected before listening", async () => {
+        // given
+        const hidDevice = hidDeviceStubBuilder();
+        mockedGetDevices.mockResolvedValue([hidDevice]);
+
+        const onComplete = jest.fn();
+        const onError = jest.fn();
+
+        let observedDevices: InternalDiscoveredDevice[] = [];
+        // when
+        transport.listenToKnownDevices().subscribe({
+          next: (knownDevices) => {
+            observedDevices = knownDevices;
+          },
+          complete: onComplete,
+          error: onError,
+        });
+
+        await flushPromises();
+
+        expect(observedDevices).toEqual([
+          expect.objectContaining({
+            deviceModel: expect.objectContaining({
+              id: DeviceModelId.NANO_X,
+            }) as InternalDeviceModel,
+          }),
+        ]);
+        expect(onComplete).not.toHaveBeenCalled();
+        expect(onError).not.toHaveBeenCalled();
+      });
+
+      it("should emit the new list of devices after connection and disconnection events", async () => {
+        initializeTransport();
+        // given
+        const hidDevice1 = hidDeviceStubBuilder({
+          productId:
+            usbDeviceModelDataSource.getDeviceModel({
+              id: DeviceModelId.NANO_X,
+            }).usbProductId << 8,
+        });
+        const hidDevice2 = hidDeviceStubBuilder({
+          productId:
+            usbDeviceModelDataSource.getDeviceModel({ id: DeviceModelId.STAX })
+              .usbProductId << 8,
+        });
+        mockedGetDevices.mockResolvedValue([hidDevice1]);
+
+        const onComplete = jest.fn();
+        const onError = jest.fn();
+
+        let observedDevices: InternalDiscoveredDevice[] = [];
+        // when
+        transport.listenToKnownDevices().subscribe({
+          next: (knownDevices) => {
+            observedDevices = knownDevices;
+          },
+          complete: onComplete,
+          error: onError,
+        });
+
+        await flushPromises();
+
+        expect(observedDevices).toEqual([
+          expect.objectContaining({
+            deviceModel: expect.objectContaining({
+              id: DeviceModelId.NANO_X,
+            }) as InternalDeviceModel,
+          }),
+        ]);
+
+        // When a new device is connected
+        mockedGetDevices.mockResolvedValue([hidDevice1, hidDevice2]);
+        emitHIDConnectionEvent(hidDevice2);
+        await flushPromises();
+
+        expect(observedDevices).toEqual([
+          expect.objectContaining({
+            deviceModel: expect.objectContaining({
+              id: DeviceModelId.NANO_X,
+            }) as InternalDeviceModel,
+          }),
+          expect.objectContaining({
+            deviceModel: expect.objectContaining({
+              id: DeviceModelId.STAX,
+            }) as InternalDeviceModel,
+          }),
+        ]);
+
+        // When a device is disconnected
+        mockedGetDevices.mockResolvedValue([hidDevice2]);
+        emitHIDDisconnectionEvent(hidDevice1);
+        await flushPromises();
+
+        expect(observedDevices).toEqual([
+          expect.objectContaining({
+            deviceModel: expect.objectContaining({
+              id: DeviceModelId.STAX,
+            }) as InternalDeviceModel,
+          }),
+        ]);
+
+        expect(onComplete).not.toHaveBeenCalled();
+        expect(onError).not.toHaveBeenCalled();
+      });
+
+      it("should preserve DeviceId in case the device has been disconnected and reconnected before the timeout", async () => {
+        // given
+        const hidDevice = hidDeviceStubBuilder();
+
+        mockedGetDevices.mockResolvedValue([hidDevice]);
+
+        const onComplete = jest.fn();
+        const onError = jest.fn();
+        let observedDevices: InternalDiscoveredDevice[] = [];
+        // when
+        transport.listenToKnownDevices().subscribe({
+          next: (knownDevices) => {
+            observedDevices = knownDevices;
+          },
+          complete: onComplete,
+          error: onError,
+        });
+
+        await flushPromises();
+
+        const firstObservedDeviceId = observedDevices[0]?.id;
+        expect(firstObservedDeviceId).toBeTruthy();
+        expect(observedDevices[0]?.deviceModel?.id).toBe(DeviceModelId.NANO_X);
+
+        // Start a connection with the device
+        await transport.connect({
+          deviceId: observedDevices[0]!.id,
+          onDisconnect: jest.fn(),
+        });
+        await flushPromises();
+
+        // When the device is disconnected
+        mockedGetDevices.mockResolvedValue([]);
+        emitHIDDisconnectionEvent(hidDevice);
+        await flushPromises();
+
+        expect(observedDevices).toEqual([]);
+
+        // When the device is reconnected
+        mockedGetDevices.mockResolvedValue([hidDevice]);
+        emitHIDConnectionEvent(hidDevice);
+        await flushPromises();
+
+        expect(observedDevices).toEqual([
+          expect.objectContaining({
+            deviceModel: expect.objectContaining({
+              id: DeviceModelId.NANO_X,
+            }) as InternalDeviceModel,
+          }),
+        ]);
+
+        expect(observedDevices[0]?.id).toBeTruthy();
+        expect(observedDevices[0]?.id).toBe(firstObservedDeviceId);
       });
     });
   });

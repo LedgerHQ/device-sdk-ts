@@ -107,6 +107,9 @@ importers:
       react-lottie:
         specifier: ^1.2.4
         version: 1.2.4(react@18.3.1)
+      rxjs:
+        specifier: ^7.8.1
+        version: 7.8.1
       styled-components:
         specifier: ^5.3.11
         version: 5.3.11(@babel/core@7.24.7)(react-dom@18.3.1(react@18.3.1))(react-is@18.3.1)(react@18.3.1)

@@ -94,6 +94,10 @@ export class WebBleTransport implements Transport {
     return this.identifier;
   }
 
+  listenToKnownDevices(): Observable<InternalDiscoveredDevice[]> {
+    return from([]);
+  }
+
   /**
    * Get Bluetooth GATT Primary service that is used to get writeCharacteristic and notifyCharacteristic
    * @param bleDevice
