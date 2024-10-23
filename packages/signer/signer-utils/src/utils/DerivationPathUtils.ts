@@ -1,5 +1,3 @@
-// TODO: Move to shared package and use in both keyring-btc and keyring-eth
-
 export class DerivationPathUtils {
   static PADDING = 0x80000000;
 

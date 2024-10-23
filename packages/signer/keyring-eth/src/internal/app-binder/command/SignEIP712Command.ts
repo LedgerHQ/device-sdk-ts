@@ -12,10 +12,10 @@ import {
   GlobalCommandErrorHandler,
   InvalidStatusWordError,
 } from "@ledgerhq/device-management-kit";
+import { DerivationPathUtils } from "@ledgerhq/signer-utils";
 import { Maybe } from "purify-ts";
 
 import { type Signature } from "@api/model/Signature";
-import { DerivationPathUtils } from "@internal/shared/utils/DerivationPathUtils";
 
 const R_LENGTH = 32;
 const S_LENGTH = 32;

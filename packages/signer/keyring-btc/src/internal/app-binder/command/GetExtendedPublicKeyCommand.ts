@@ -12,8 +12,7 @@ import {
   GlobalCommandErrorHandler,
   InvalidStatusWordError,
 } from "@ledgerhq/device-management-kit";
-
-import { DerivationPathUtils } from "@internal/shared/utils/DerivationPathUtils";
+import { DerivationPathUtils } from "@ledgerhq/signer-utils";
 
 const STATUS_CODE_LENGTH = 2;
 
