@@ -33,10 +33,6 @@ export type SignTransactionCommandArgs = {
    * If this is the first chunk of the message
    */
   readonly isFirstChunk: boolean;
-  /**
-   * If we are using the legacy flow
-   */
-  readonly isLegacy: boolean;
 };
 
 export class SignTransactionCommand
@@ -49,34 +45,14 @@ export class SignTransactionCommand
     this.args = args;
   }
 
-  private getP1(): number {
-    const { isLegacy, isFirstChunk } = this.args;
-    if (isLegacy) {
-      return isFirstChunk ? 0x00 : 0x80;
-    }
-
-    return isFirstChunk ? 0x01 : 0x00;
-  }
-
-  private getP2(): number {
-    const { isLegacy } = this.args;
-    if (isLegacy) {
-      return 0x00;
-    }
-
-    return 0x01;
-  }
-
   getApdu(): Apdu {
-    const { serializedTransaction } = this.args;
-
-    const p2 = this.getP2();
+    const { serializedTransaction, isFirstChunk } = this.args;
 
     const signEthTransactionArgs: ApduBuilderArgs = {
       cla: 0xe0,
       ins: 0x04,
-      p1: this.getP1(),
-      p2,
+      p1: isFirstChunk ? 0x00 : 0x80,
+      p2: 0x00,
     };
 
     const builder = new ApduBuilder(signEthTransactionArgs);

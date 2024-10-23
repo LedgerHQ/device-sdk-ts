@@ -32,8 +32,8 @@ export class StartTransactionCommand
     const signEthTransactionArgs: ApduBuilderArgs = {
       cla: 0xe0,
       ins: 0x04,
-      p1: 0x01,
-      p2: 0x03,
+      p1: 0x00,
+      p2: 0x02,
     };
     const builder = new ApduBuilder(signEthTransactionArgs);
     return builder.build();

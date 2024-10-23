@@ -21,7 +21,6 @@ const PATH_SIZE = 4;
 type SendSignTransactionTaskArgs = {
   derivationPath: string;
   serializedTransaction: Uint8Array;
-  isLegacy: boolean;
 };
 
 export class SendSignTransactionTask {
@@ -57,7 +56,6 @@ export class SendSignTransactionTask {
             new SignTransactionCommand({
               serializedTransaction: args.chunkedData,
               isFirstChunk: args.isFirstChunk,
-              isLegacy: this.args.isLegacy,
             }),
         },
       ).run();

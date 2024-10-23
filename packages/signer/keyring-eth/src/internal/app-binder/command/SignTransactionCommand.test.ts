@@ -35,7 +35,6 @@ describe("SignTransactionCommand", () => {
   const defaultArgs: SignTransactionCommandArgs = {
     serializedTransaction: new Uint8Array(),
     isFirstChunk: true,
-    isLegacy: true,
   };
 
   describe("getApdu", () => {
