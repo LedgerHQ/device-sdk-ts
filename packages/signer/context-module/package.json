@@ -1,7 +1,7 @@
 {
   "name": "@ledgerhq/context-module",
   "version": "1.0.0",
-  "license": "MIT",
+  "license": "Apache-2.0",
   "exports": {
     ".": {
       "types": "./lib/types/index.d.ts",

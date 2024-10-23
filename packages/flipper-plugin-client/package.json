@@ -1,7 +1,7 @@
 {
   "name": "@ledgerhq/device-management-kit-flipper-plugin-client",
   "version": "1.0.0",
-  "license": "MIT",
+  "license": "Apache-2.0",
   "main": "lib/index.js",
   "types": "lib/index.d.ts",
   "exports": {
