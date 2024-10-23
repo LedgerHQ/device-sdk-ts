@@ -301,4 +301,4 @@ Each individual project may include its own specific guidelines, located within 
 
 # License
 
-Please check each project [`LICENSE`](https://github.com/LedgerHQ/device-sdk-ts/blob/develop/LICENSE.md) file, most of them are under the `MIT` license.
+Please check each project [`LICENSE`](https://github.com/LedgerHQ/device-sdk-ts/blob/develop/LICENSE.md) file, most of them are under the `Apache-2.0` license.

@@ -2,7 +2,7 @@
   "name": "@ledgerhq/device-sdk",
   "version": "1.0.0",
   "private": true,
-  "license": "MIT",
+  "license": "Apache-2.0",
   "scripts": {
     "build": "turbo run build",
     "build:libs": "turbo run build --filter=./packages/**",
