@@ -3,23 +3,16 @@ import {
   ClearSignContextType,
 } from "@ledgerhq/context-module";
 import {
-  APDU_MAX_PAYLOAD,
-  ByteArrayBuilder,
   type CommandErrorResult,
   CommandResult,
   CommandResultFactory,
-  HexaStringEncodeError,
-  hexaStringToBuffer,
   type InternalApi,
+  InvalidStatusWordError,
   isSuccessCommandResult,
-  type SdkError,
 } from "@ledgerhq/device-management-kit";
 import { Just, Maybe, Nothing } from "purify-ts";
 
-import {
-  PAYLOAD_LENGTH_BYTES,
-  ProvideDomainNameCommand,
-} from "@internal/app-binder/command/ProvideDomainNameCommand";
+import { ProvideDomainNameCommand } from "@internal/app-binder/command/ProvideDomainNameCommand";
 import {
   ProvideNFTInformationCommand,
   type ProvideNFTInformationCommandErrorCodes,
@@ -36,6 +29,12 @@ import {
   SetPluginCommand,
   type SetPluginCommandErrorCodes,
 } from "@internal/app-binder/command/SetPluginCommand";
+import { PayloadUtils } from "@internal/shared/utils/PayloadUtils";
+
+import {
+  SendCommandInChunksTask,
+  SendCommandInChunksTaskArgs,
+} from "./SendCommandInChunksTask";
 
 export type ProvideTransactionContextTaskArgs = {
   /**
@@ -43,20 +42,6 @@ export type ProvideTransactionContextTaskArgs = {
    */
   clearSignContexts: ClearSignContextSuccess[];
 };
-
-/**
- * Temporary error type to be used in the `ProvideTransactionContextTask` in order to not forget to handle the error cases.
- */
-export class ProvideTransactionContextTaskError implements SdkError {
-  readonly _tag = "ProvideTransactionContextTaskError";
-  readonly originalError: Error;
-
-  constructor(message?: string) {
-    this.originalError = new Error(
-      message ?? "Unknow error in ProvideTransactionContextTaskError",
-    );
-  }
-}
 
 export type ProvideTransactionContextTaskErrorCodes =
   | void
@@ -129,53 +114,50 @@ export class ProvideTransactionContextTask {
         );
       }
       case ClearSignContextType.DOMAIN_NAME: {
-        return await this.provideDomainNameTask(payload);
+        return this.sendInChunks(
+          payload,
+          (args) =>
+            new ProvideDomainNameCommand({
+              data: args.chunkedData,
+              isFirstChunk: args.isFirstChunk,
+            }),
+        );
+      }
+      case ClearSignContextType.ENUM:
+      case ClearSignContextType.TRANSACTION_FIELD_DESCRIPTION:
+      case ClearSignContextType.TRANSACTION_INFO: {
+        return CommandResultFactory({
+          error: new InvalidStatusWordError(
+            "The context type [EXTERNAL_PLUGIN] is not valid here",
+          ),
+        });
       }
       default: {
         const uncoveredType: never = type;
-        throw new ProvideTransactionContextTaskError(
-          `The context type [${uncoveredType}] is not covered`,
-        );
+        return CommandResultFactory({
+          error: new InvalidStatusWordError(
+            `The context type [${uncoveredType}] is not covered`,
+          ),
+        });
       }
     }
   }
 
-  /**
-   * This method is responsible for chunking the domain name if necessary and sending `ProvideDomainNameCommand` to the device.
-   * It will return the result of the last command sent if all the commands are successful, otherwise it will return the first
-   * error result encountered.
-   *
-   * @param domainName Hexa representation of the domain name.
-   * @returns A promise that resolves when the command is sent.
-   */
-  async provideDomainNameTask(
-    domainName: string,
-  ): Promise<CommandResult<void>> {
-    const buffer = hexaStringToBuffer(domainName);
+  private async sendInChunks<T>(
+    payload: string,
+    commandFactory: SendCommandInChunksTaskArgs<T>[`commandFactory`],
+  ): Promise<CommandResult<T, void>> {
+    const data = PayloadUtils.getBufferFromPayload(payload);
 
-    if (buffer === null || buffer.length === 0) {
-      throw new HexaStringEncodeError("provideDomainNameTask");
+    if (!data) {
+      return CommandResultFactory({
+        error: new InvalidStatusWordError("Invalid payload"),
+      });
     }
 
-    const data = new ByteArrayBuilder(buffer.length + PAYLOAD_LENGTH_BYTES)
-      .add16BitUIntToData(buffer.length)
-      .addBufferToData(buffer)
-      .build();
-
-    let result = CommandResultFactory<void, void>({ data: undefined });
-
-    for (let i = 0; i < data.length; i += APDU_MAX_PAYLOAD) {
-      result = await this.api.sendCommand(
-        new ProvideDomainNameCommand({
-          data: data.slice(i, i + APDU_MAX_PAYLOAD),
-          isFirstChunk: i === 0,
-        }),
-      );
-      if (!isSuccessCommandResult(result)) {
-        return result;
-      }
-    }
-
-    return result;
+    return new SendCommandInChunksTask(this.api, {
+      data,
+      commandFactory,
+    }).run();
   }
 }

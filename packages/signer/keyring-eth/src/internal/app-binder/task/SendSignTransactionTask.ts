@@ -1,5 +1,4 @@
 import {
-  APDU_MAX_PAYLOAD,
   ByteArrayBuilder,
   CommandResult,
   CommandResultFactory,
@@ -7,7 +6,6 @@ import {
   InvalidStatusWordError,
   isSuccessCommandResult,
 } from "@ledgerhq/device-management-kit";
-import { Nothing } from "purify-ts";
 
 import { Signature } from "@api/index";
 import {
@@ -15,6 +13,8 @@ import {
   SignTransactionCommandResponse,
 } from "@internal/app-binder/command/SignTransactionCommand";
 import { DerivationPathUtils } from "@internal/shared/utils/DerivationPathUtils";
+
+import { SendCommandInChunksTask } from "./SendCommandInChunksTask";
 
 const PATH_SIZE = 4;
 
@@ -48,33 +48,29 @@ export class SendSignTransactionTask {
 
     const buffer = builder.build();
 
-    let result = CommandResultFactory<SignTransactionCommandResponse, void>({
-      data: Nothing,
-    });
+    const result =
+      await new SendCommandInChunksTask<SignTransactionCommandResponse>(
+        this.api,
+        {
+          data: buffer,
+          commandFactory: (args) =>
+            new SignTransactionCommand({
+              serializedTransaction: args.chunkedData,
+              isFirstChunk: args.isFirstChunk,
+              isLegacy: this.args.isLegacy,
+            }),
+        },
+      ).run();
 
-    // Split the buffer into chunks
-    for (let i = 0; i < buffer.length; i += APDU_MAX_PAYLOAD) {
-      result = await this.api.sendCommand(
-        new SignTransactionCommand({
-          serializedTransaction: buffer.slice(i, i + APDU_MAX_PAYLOAD),
-          isFirstChunk: i === 0,
-          isLegacy: this.args.isLegacy,
-        }),
-      );
-
-      if (!isSuccessCommandResult(result)) {
-        return result;
-      }
+    if (!isSuccessCommandResult(result)) {
+      return result;
     }
 
-    if (isSuccessCommandResult(result) && result.data.isJust()) {
-      return CommandResultFactory({
-        data: result.data.extract(),
-      });
-    }
-
-    return CommandResultFactory({
-      error: new InvalidStatusWordError("no signature returned"),
-    });
+    return result.data.mapOrDefault(
+      (data) => CommandResultFactory({ data }),
+      CommandResultFactory({
+        error: new InvalidStatusWordError("no signature returned"),
+      }),
+    );
   }
 }

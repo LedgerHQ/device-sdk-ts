@@ -1,6 +1,8 @@
 // TODO: Move to shared package and use in both keyring-btc and keyring-eth
 
 export class DerivationPathUtils {
+  static PADDING = 0x80000000;
+
   static splitPath(path: string): number[] {
     const result: number[] = [];
     const components = path.split("/");
@@ -10,12 +12,10 @@ export class DerivationPathUtils {
         throw new Error("invalid number provided");
       }
       if (element.length > 1 && element[element.length - 1] === "'") {
-        number += this.padding;
+        number += this.PADDING;
       }
       result.push(number);
     });
     return result;
   }
-
-  static padding = 0x80000000;
 }
