@@ -6,13 +6,13 @@ import {
   InvalidStatusWordError,
   isSuccessCommandResult,
 } from "@ledgerhq/device-management-kit";
+import { DerivationPathUtils } from "@ledgerhq/signer-utils";
 
 import { Signature } from "@api/index";
 import {
   SignTransactionCommand,
   SignTransactionCommandResponse,
 } from "@internal/app-binder/command/SignTransactionCommand";
-import { DerivationPathUtils } from "@internal/shared/utils/DerivationPathUtils";
 
 import { SendCommandInChunksTask } from "./SendCommandInChunksTask";
 

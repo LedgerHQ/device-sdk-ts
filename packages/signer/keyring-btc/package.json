@@ -51,6 +51,7 @@
     "@ledgerhq/eslint-config-dsdk": "workspace:*",
     "@ledgerhq/jest-config-dsdk": "workspace:*",
     "@ledgerhq/prettier-config-dsdk": "workspace:*",
+    "@ledgerhq/signer-utils": "workspace:*",
     "@ledgerhq/tsconfig-dsdk": "workspace:*",
     "ts-node": "^10.9.2"
   },

@@ -12,12 +12,12 @@ import {
   InvalidStatusWordError,
   isHexaString,
 } from "@ledgerhq/device-management-kit";
+import { DerivationPathUtils } from "@ledgerhq/signer-utils";
 
 import {
   GetAddressCommandArgs,
   GetAddressCommandResponse,
 } from "@api/app-binder/GetAddressCommandTypes";
-import { DerivationPathUtils } from "@internal/shared/utils/DerivationPathUtils";
 
 const CHAIN_CODE_LENGTH = 32;
 
