@@ -1,14 +1,8 @@
-import React, { useCallback, useMemo } from "react";
-import {
-  ContextModuleBuilder,
-  ContextModuleCalConfig,
-  ContextModuleConfig,
-} from "@ledgerhq/context-module";
+import React, { useMemo } from "react";
 import {
   GetAddressDAError,
   GetAddressDAIntermediateValue,
   GetAddressDAOutput,
-  KeyringEthBuilder,
   SignPersonalMessageDAError,
   SignPersonalMessageDAIntermediateValue,
   SignPersonalMessageDAOutput,
@@ -25,47 +19,13 @@ import { ethers } from "ethers";
 import { DeviceActionsList } from "@/components/DeviceActionsView/DeviceActionsList";
 import { DeviceActionProps } from "@/components/DeviceActionsView/DeviceActionTester";
 import { useSdk } from "@/providers/DeviceSdkProvider";
-
-const DEFAULT_CAL_URL = "https://crypto-assets-service.api.ledger.com/v1";
-const DEFAULT_CAL_BRANCH_REF = "main";
-
-const isBranchRef = (
-  branchRef: string,
-): branchRef is ContextModuleCalConfig["branch"] => {
-  return ["next", "main", "demo"].includes(branchRef);
-};
+import { useKeyringEth } from "@/providers/KeyringEthProvider";
 
 export const KeyringEthView: React.FC<{ sessionId: string }> = ({
   sessionId,
 }) => {
   const sdk = useSdk();
-
-  const getKeyringEth = useCallback(
-    (options?: {
-      test: boolean;
-      calUrl: string;
-      branchRef: ContextModuleCalConfig["branch"];
-    }) => {
-      if (!options) {
-        return new KeyringEthBuilder({ sdk, sessionId }).build();
-      }
-
-      const builder = new ContextModuleBuilder();
-      const calUrl = options.calUrl.length ? options.calUrl : "";
-      const mode = options.test ? "test" : "prod";
-      const config: ContextModuleConfig = {
-        cal: { branch: options.branchRef, url: calUrl, mode },
-      };
-      console.log(
-        `Using context module configuration: ${JSON.stringify(config)}`,
-      );
-      const contextModule = builder.withConfig(config).build();
-      return new KeyringEthBuilder({ sdk, sessionId })
-        .withContextModule(contextModule)
-        .build();
-    },
-    [sdk, sessionId],
-  );
+  const keyring = useKeyringEth();
 
   const deviceModelId = sdk.getConnectedDevice({
     sessionId,
@@ -83,7 +43,10 @@ export const KeyringEthView: React.FC<{ sessionId: string }> = ({
           checkOnDevice,
           returnChainCode,
         }) => {
-          return getKeyringEth().getAddress(derivationPath, {
+          if (!keyring) {
+            throw new Error("Keyring not initialized");
+          }
+          return keyring.getAddress(derivationPath, {
             checkOnDevice,
             returnChainCode,
           });
@@ -109,7 +72,10 @@ export const KeyringEthView: React.FC<{ sessionId: string }> = ({
         description:
           "Perform all the actions necessary to sign a message with the device",
         executeDeviceAction: ({ derivationPath, message }) => {
-          return getKeyringEth().signMessage(derivationPath, message);
+          if (!keyring) {
+            throw new Error("Keyring not initialized");
+          }
+          return keyring.signMessage(derivationPath, message);
         },
         initialValues: {
           derivationPath: "44'/60'/0'/0/0",
@@ -134,7 +100,10 @@ export const KeyringEthView: React.FC<{ sessionId: string }> = ({
           transaction,
           recipientDomain,
         }) => {
-          return getKeyringEth().signTransaction(
+          if (!keyring) {
+            throw new Error("Keyring not initialized");
+          }
+          return keyring.signTransaction(
             derivationPath,
             ethers.Transaction.from(transaction),
             { domain: recipientDomain },
@@ -160,33 +129,19 @@ export const KeyringEthView: React.FC<{ sessionId: string }> = ({
         title: "Sign typed message",
         description:
           "Perform all the actions necessary to sign a typed message on the device",
-        executeDeviceAction: ({
-          derivationPath,
-          message,
-          test,
-          calUrl,
-          branchRef,
-        }) => {
+        executeDeviceAction: ({ derivationPath, message }) => {
           const typedData = JSON.parse(message) as TypedData;
-          return getKeyringEth({ test, calUrl, branchRef }).signTypedData(
-            derivationPath,
-            typedData,
-          );
+
+          if (!keyring) {
+            throw new Error("Keyring not initialized");
+          }
+          return keyring.signTypedData(derivationPath, typedData);
         },
         initialValues: {
           derivationPath: "44'/60'/0'/0/0",
           message: `{"domain":{"name":"USD Coin","verifyingContract":"0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48","chainId":1,"version":"2"},"primaryType":"Permit","message":{"deadline":1718992051,"nonce":0,"spender":"0x111111125421ca6dc452d289314280a0f8842a65","owner":"0x6cbcd73cd8e8a42844662f0a0e76d7f79afd933d","value":"115792089237316195423570985008687907853269984665640564039457584007913129639935"},"types":{"EIP712Domain":[{"name":"name","type":"string"},{"name":"version","type":"string"},{"name":"chainId","type":"uint256"},{"name":"verifyingContract","type":"address"}],"Permit":[{"name":"owner","type":"address"},{"name":"spender","type":"address"},{"name":"value","type":"uint256"},{"name":"nonce","type":"uint256"},{"name":"deadline","type":"uint256"}]}}`,
-          test: false,
-          calUrl: DEFAULT_CAL_URL,
-          branchRef: DEFAULT_CAL_BRANCH_REF,
         },
-        validateValues: ({ message, calUrl, branchRef }) => {
-          if (calUrl.length > 0 && !calUrl.startsWith("http")) {
-            return false;
-          }
-          if (branchRef.length > 0 && !isBranchRef(branchRef)) {
-            return false;
-          }
+        validateValues: ({ message }) => {
           try {
             const parsedData = JSON.parse(message);
             if (
@@ -213,15 +168,12 @@ export const KeyringEthView: React.FC<{ sessionId: string }> = ({
         {
           derivationPath: string;
           message: string;
-          test: boolean;
-          calUrl: string;
-          branchRef: ContextModuleCalConfig["branch"];
         },
         SignTypedDataDAError,
         SignTypedDataDAIntermediateValue
       >,
     ],
-    [deviceModelId, getKeyringEth],
+    [deviceModelId, keyring],
   );
 
   return (

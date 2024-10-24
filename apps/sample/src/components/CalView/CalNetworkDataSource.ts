@@ -156,7 +156,7 @@ async function fetchRequest(
   endpoint: string,
   branch: string,
 ): Promise<ResponseDto | null> {
-  const path = `${endpoint}/v1/dapps?ref=branch%3A${branch}&output=${output}&chain_id=1&contracts=${contractName}`;
+  const path = `${endpoint}/dapps?ref=branch%3A${branch}&output=${output}&chain_id=1&contracts=${contractName}`;
   const response = await fetch(path);
 
   if (!response.ok) {
