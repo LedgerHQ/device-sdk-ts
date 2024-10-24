@@ -2,19 +2,19 @@ import { Left, Right } from "purify-ts";
 import { Subject } from "rxjs";
 
 import { type DeviceModel, DeviceModelId } from "@api/device/DeviceModel";
-import { StaticDeviceModelDataSource } from "@internal/device-model/data/StaticDeviceModelDataSource";
-import { type InternalDeviceModel } from "@internal/device-model/model/DeviceModel";
-import { DefaultLoggerPublisherService } from "@internal/logger-publisher/service/DefaultLoggerPublisherService";
+import { StaticDeviceModelDataSource } from "@api/device-model/data/StaticDeviceModelDataSource";
+import { type TransportDeviceModel } from "@api/device-model/model/DeviceModel";
 import {
   DeviceNotRecognizedError,
   NoAccessibleDeviceError,
   OpeningConnectionError,
   UnknownDeviceError,
-  UsbHidTransportNotSupportedError,
-} from "@internal/transport/model/Errors";
-import { connectedDeviceStubBuilder } from "@internal/transport/model/InternalConnectedDevice.stub";
-import { type InternalDiscoveredDevice } from "@internal/transport/model/InternalDiscoveredDevice";
+} from "@api/transport/model/Errors";
+import { connectedDeviceStubBuilder } from "@api/transport/model/TransportConnectedDevice.stub";
+import { type TransportDiscoveredDevice } from "@api/transport/model/TransportDiscoveredDevice";
+import { DefaultLoggerPublisherService } from "@internal/logger-publisher/service/DefaultLoggerPublisherService";
 import { RECONNECT_DEVICE_TIMEOUT } from "@internal/transport/usb/data/UsbHidConfig";
+import { UsbHidTransportNotSupportedError } from "@internal/transport/usb/model/Errors";
 import { hidDeviceStubBuilder } from "@internal/transport/usb/model/HIDDevice.stub";
 import { usbHidDeviceConnectionFactoryStubBuilder } from "@internal/transport/usb/service/UsbHidDeviceConnectionFactory.stub";
 
@@ -56,7 +56,7 @@ describe("WebUsbHidTransport", () => {
   });
 
   const discoverDevice = (
-    onSuccess: (discoveredDevice: InternalDiscoveredDevice) => void,
+    onSuccess: (discoveredDevice: TransportDiscoveredDevice) => void,
     onError?: (error: unknown) => void,
   ) => {
     transport.startDiscovering().subscribe({
@@ -670,7 +670,7 @@ describe("WebUsbHidTransport", () => {
         const onComplete = jest.fn();
         const onError = jest.fn();
 
-        let observedDevices: InternalDiscoveredDevice[] = [];
+        let observedDevices: TransportDiscoveredDevice[] = [];
         // when
         transport.listenToKnownDevices().subscribe({
           next: (knownDevices) => {
@@ -686,7 +686,7 @@ describe("WebUsbHidTransport", () => {
           expect.objectContaining({
             deviceModel: expect.objectContaining({
               id: DeviceModelId.NANO_X,
-            }) as InternalDeviceModel,
+            }) as TransportDeviceModel,
           }),
         ]);
         expect(onComplete).not.toHaveBeenCalled();
@@ -712,7 +712,7 @@ describe("WebUsbHidTransport", () => {
         const onComplete = jest.fn();
         const onError = jest.fn();
 
-        let observedDevices: InternalDiscoveredDevice[] = [];
+        let observedDevices: TransportDiscoveredDevice[] = [];
         // when
         transport.listenToKnownDevices().subscribe({
           next: (knownDevices) => {
@@ -728,7 +728,7 @@ describe("WebUsbHidTransport", () => {
           expect.objectContaining({
             deviceModel: expect.objectContaining({
               id: DeviceModelId.NANO_X,
-            }) as InternalDeviceModel,
+            }) as TransportDeviceModel,
           }),
         ]);
 
@@ -741,12 +741,12 @@ describe("WebUsbHidTransport", () => {
           expect.objectContaining({
             deviceModel: expect.objectContaining({
               id: DeviceModelId.NANO_X,
-            }) as InternalDeviceModel,
+            }) as TransportDeviceModel,
           }),
           expect.objectContaining({
             deviceModel: expect.objectContaining({
               id: DeviceModelId.STAX,
-            }) as InternalDeviceModel,
+            }) as TransportDeviceModel,
           }),
         ]);
 
@@ -759,7 +759,7 @@ describe("WebUsbHidTransport", () => {
           expect.objectContaining({
             deviceModel: expect.objectContaining({
               id: DeviceModelId.STAX,
-            }) as InternalDeviceModel,
+            }) as TransportDeviceModel,
           }),
         ]);
 
@@ -775,7 +775,7 @@ describe("WebUsbHidTransport", () => {
 
         const onComplete = jest.fn();
         const onError = jest.fn();
-        let observedDevices: InternalDiscoveredDevice[] = [];
+        let observedDevices: TransportDiscoveredDevice[] = [];
         // when
         transport.listenToKnownDevices().subscribe({
           next: (knownDevices) => {
@@ -814,7 +814,7 @@ describe("WebUsbHidTransport", () => {
           expect.objectContaining({
             deviceModel: expect.objectContaining({
               id: DeviceModelId.NANO_X,
-            }) as InternalDeviceModel,
+            }) as TransportDeviceModel,
           }),
         ]);
 

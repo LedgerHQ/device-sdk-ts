@@ -3,9 +3,9 @@ import { from, map, merge, Observable, scan } from "rxjs";
 
 import { DeviceModel } from "@api/device/DeviceModel";
 import type { Transport } from "@api/transport/model/Transport";
+import { TransportDiscoveredDevice } from "@api/transport/model/TransportDiscoveredDevice";
 import { DiscoveredDevice } from "@api/types";
 import { transportDiTypes } from "@internal/transport/di/transportDiTypes";
-import { InternalDiscoveredDevice } from "@internal/transport/model/InternalDiscoveredDevice";
 
 /**
  * Listen to list of known discovered devices (and later BLE).
@@ -20,8 +20,8 @@ export class ListenToKnownDevicesUseCase {
     this._transports = transports;
   }
 
-  private mapInternalDiscoveredDeviceToDiscoveredDevice(
-    discoveredDevice: InternalDiscoveredDevice,
+  private mapTransportDiscoveredDeviceToDiscoveredDevice(
+    discoveredDevice: TransportDiscoveredDevice,
   ): DiscoveredDevice {
     return {
       id: discoveredDevice.id,
@@ -62,12 +62,12 @@ export class ListenToKnownDevicesUseCase {
           acc[index] = arr;
           return acc;
         },
-        {} as { [key: number]: Array<InternalDiscoveredDevice> },
+        {} as { [key: number]: Array<TransportDiscoveredDevice> },
       ),
       map((acc) =>
         Object.values(acc)
           .flat()
-          .map(this.mapInternalDiscoveredDeviceToDiscoveredDevice),
+          .map(this.mapTransportDiscoveredDeviceToDiscoveredDevice),
       ),
     );
   }

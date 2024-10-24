@@ -10,7 +10,7 @@ const paths = pathsToModuleNameMapper(compilerOptions.paths, {
 const config: JestConfigWithTsJest = {
   preset: "@ledgerhq/jest-config-dsdk",
   setupFiles: ["<rootDir>/jest.setup.ts"],
-  testPathIgnorePatterns: ["<rootDir>/lib/esm", "<rootDir>/lib/cjs"],
+  testPathIgnorePatterns: ["<rootDir>/lib/esm/", "<rootDir>/lib/cjs/"],
   collectCoverageFrom: [
     "src/**/*.ts",
     "!src/**/*.stub.ts",

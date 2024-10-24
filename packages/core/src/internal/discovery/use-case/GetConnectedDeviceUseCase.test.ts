@@ -71,7 +71,7 @@ describe("GetConnectedDevice", () => {
     // then
     expect(response).toStrictEqual(
       new ConnectedDevice({
-        internalConnectedDevice: deviceSession.connectedDevice,
+        transportConnectedDevice: deviceSession.connectedDevice,
       }),
     );
   });

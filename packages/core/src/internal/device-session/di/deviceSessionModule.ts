@@ -1,15 +1,15 @@
 import { ContainerModule, type interfaces } from "inversify";
 
-import { type ApduReceiverService } from "@internal/device-session/service/ApduReceiverService";
-import { type ApduSenderService } from "@internal/device-session/service/ApduSenderService";
+import { type ApduReceiverService } from "@api/device-session/service/ApduReceiverService";
+import { type ApduSenderService } from "@api/device-session/service/ApduSenderService";
 import {
   type DefaultApduReceiverConstructorArgs,
   DefaultApduReceiverService,
-} from "@internal/device-session/service/DefaultApduReceiverService";
+} from "@api/device-session/service/DefaultApduReceiverService";
 import {
   DefaultApduSenderService,
   type DefaultApduSenderServiceConstructorArgs,
-} from "@internal/device-session/service/DefaultApduSenderService";
+} from "@api/device-session/service/DefaultApduSenderService";
 import { DefaultDeviceSessionService } from "@internal/device-session/service/DefaultDeviceSessionService";
 import { CloseSessionsUseCase } from "@internal/device-session/use-case/CloseSessionsUseCase";
 import { GetDeviceSessionStateUseCase } from "@internal/device-session/use-case/GetDeviceSessionStateUseCase";

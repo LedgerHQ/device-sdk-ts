@@ -1,8 +1,8 @@
-import { type InternalDeviceModel } from "@internal/device-model/model/DeviceModel";
+import { type TransportDeviceModel } from "@api/device-model/model/DeviceModel";
 
 export class BleDeviceInfos {
   constructor(
-    public deviceModel: InternalDeviceModel,
+    public deviceModel: TransportDeviceModel,
     public serviceUuid: string,
     public writeUuid: string,
     public writeCmdUuid: string,

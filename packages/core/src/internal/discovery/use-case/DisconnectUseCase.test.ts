@@ -1,6 +1,8 @@
 import { Left, Right } from "purify-ts";
 
-import { type DeviceModelDataSource } from "@internal/device-model/data/DeviceModelDataSource";
+import { type DeviceModelDataSource } from "@api/device-model/data/DeviceModelDataSource";
+import { DisconnectError } from "@api/transport/model/Errors";
+import { connectedDeviceStubBuilder } from "@api/transport/model/TransportConnectedDevice.stub";
 import { deviceSessionStubBuilder } from "@internal/device-session/model/DeviceSession.stub";
 import { DeviceSessionNotFound } from "@internal/device-session/model/Errors";
 import { DefaultDeviceSessionService } from "@internal/device-session/service/DefaultDeviceSessionService";
@@ -9,8 +11,6 @@ import { AxiosManagerApiDataSource } from "@internal/manager-api/data/AxiosManag
 import { type ManagerApiDataSource } from "@internal/manager-api/data/ManagerApiDataSource";
 import { DefaultManagerApiService } from "@internal/manager-api/service/DefaultManagerApiService";
 import { type ManagerApiService } from "@internal/manager-api/service/ManagerApiService";
-import { DisconnectError } from "@internal/transport/model/Errors";
-import { connectedDeviceStubBuilder } from "@internal/transport/model/InternalConnectedDevice.stub";
 import { usbHidDeviceConnectionFactoryStubBuilder } from "@internal/transport/usb/service/UsbHidDeviceConnectionFactory.stub";
 import { WebUsbHidTransport } from "@internal/transport/usb/transport/WebUsbHidTransport";
 

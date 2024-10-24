@@ -5,45 +5,48 @@ import { BehaviorSubject, from, map, Observable, switchMap } from "rxjs";
 import { v4 as uuid } from "uuid";
 
 import { DeviceId } from "@api/device/DeviceModel";
+import { LEDGER_VENDOR_ID } from "@api/device/DeviceModel";
+import type { DeviceModelDataSource } from "@api/device-model/data/DeviceModelDataSource";
+import { TransportDeviceModel } from "@api/device-model/model/DeviceModel";
 import { ConnectionType } from "@api/discovery/ConnectionType";
 import { SdkError } from "@api/Error";
-import { Transport } from "@api/transport/model/Transport";
-import {
-  BuiltinTransports,
-  TransportIdentifier,
-} from "@api/transport/model/TransportIdentifier";
-import type { DeviceModelDataSource } from "@internal/device-model/data/DeviceModelDataSource";
-import { deviceModelTypes } from "@internal/device-model/di/deviceModelTypes";
-import { InternalDeviceModel } from "@internal/device-model/model/DeviceModel";
-import { loggerTypes } from "@internal/logger-publisher/di/loggerTypes";
-import type { LoggerPublisherService } from "@internal/logger-publisher/service/LoggerPublisherService";
-import { DisconnectHandler } from "@internal/transport/model/DeviceConnection";
+import { DisconnectHandler } from "@api/transport/model/DeviceConnection";
 import {
   ConnectError,
   DeviceNotRecognizedError,
   NoAccessibleDeviceError,
   OpeningConnectionError,
-  type PromptDeviceAccessError,
   UnknownDeviceError,
-  UsbHidTransportNotSupportedError,
-} from "@internal/transport/model/Errors";
-import { InternalConnectedDevice } from "@internal/transport/model/InternalConnectedDevice";
-import { InternalDiscoveredDevice } from "@internal/transport/model/InternalDiscoveredDevice";
-import { LEDGER_VENDOR_ID } from "@internal/transport/usb/data/UsbHidConfig";
+} from "@api/transport/model/Errors";
+import { Transport } from "@api/transport/model/Transport";
+import { TransportConnectedDevice } from "@api/transport/model/TransportConnectedDevice";
+import { TransportDiscoveredDevice } from "@api/transport/model/TransportDiscoveredDevice";
+import {
+  BuiltinTransports,
+  TransportIdentifier,
+} from "@api/transport/model/TransportIdentifier";
+import { deviceModelTypes } from "@internal/device-model/di/deviceModelTypes";
+import { loggerTypes } from "@internal/logger-publisher/di/loggerTypes";
+import type { LoggerPublisherService } from "@internal/logger-publisher/service/LoggerPublisherService";
 import { usbDiTypes } from "@internal/transport/usb/di/usbDiTypes";
+import { UsbHidTransportNotSupportedError } from "@internal/transport/usb/model/Errors";
 import { UsbHidDeviceConnectionFactory } from "@internal/transport/usb/service/UsbHidDeviceConnectionFactory";
 import { UsbHidDeviceConnection } from "@internal/transport/usb/transport/UsbHidDeviceConnection";
 
-type WebUsbHidInternalDiscoveredDevice = InternalDiscoveredDevice & {
+type PromptDeviceAccessError =
+  | NoAccessibleDeviceError
+  | UsbHidTransportNotSupportedError;
+
+type WebUsbHidTransportDiscoveredDevice = TransportDiscoveredDevice & {
   hidDevice: HIDDevice;
 };
 
 @injectable()
 export class WebUsbHidTransport implements Transport {
   /** List of HID devices that have been discovered */
-  private _internalDiscoveredDevices: BehaviorSubject<
-    Array<WebUsbHidInternalDiscoveredDevice>
-  > = new BehaviorSubject<Array<WebUsbHidInternalDiscoveredDevice>>([]);
+  private _transportDiscoveredDevices: BehaviorSubject<
+    Array<WebUsbHidTransportDiscoveredDevice>
+  > = new BehaviorSubject<Array<WebUsbHidTransportDiscoveredDevice>>([]);
 
   /** Map of *connected* HIDDevice to their UsbHidDeviceConnection */
   private _deviceConnectionsByHidDevice: Map<
@@ -133,12 +136,12 @@ export class WebUsbHidTransport implements Transport {
   }
 
   /**
-   * Map a HIDDevice to an InternalDiscoveredDevice, either by creating a new one or returning an existing one
+   * Map a HIDDevice to an TransportDiscoveredDevice, either by creating a new one or returning an existing one
    */
-  private mapHIDDeviceToInternalDiscoveredDevice(
+  private mapHIDDeviceToTransportDiscoveredDevice(
     hidDevice: HIDDevice,
-  ): WebUsbHidInternalDiscoveredDevice {
-    const existingDiscoveredDevice = this._internalDiscoveredDevices
+  ): WebUsbHidTransportDiscoveredDevice {
+    const existingDiscoveredDevice = this._transportDiscoveredDevices
       .getValue()
       .find((internalDevice) => internalDevice.hidDevice === hidDevice);
 
@@ -182,14 +185,14 @@ export class WebUsbHidTransport implements Transport {
   /**
    * Listen to known devices (devices to which the user has granted access)
    */
-  public listenToKnownDevices(): Observable<InternalDiscoveredDevice[]> {
-    this.updateInternalDiscoveredDevices();
-    return this._internalDiscoveredDevices.pipe(
+  public listenToKnownDevices(): Observable<TransportDiscoveredDevice[]> {
+    this.updateTransportDiscoveredDevices();
+    return this._transportDiscoveredDevices.pipe(
       map((devices) => devices.map(({ hidDevice, ...device }) => device)),
     );
   }
 
-  private async updateInternalDiscoveredDevices(): Promise<void> {
+  private async updateTransportDiscoveredDevices(): Promise<void> {
     const eitherDevices = await this.getDevices();
     eitherDevices.caseOf({
       Left: (error) => {
@@ -199,9 +202,9 @@ export class WebUsbHidTransport implements Transport {
         Sentry.captureException(error);
       },
       Right: (hidDevices) => {
-        this._internalDiscoveredDevices.next(
+        this._transportDiscoveredDevices.next(
           hidDevices.map((hidDevice) =>
-            this.mapHIDDeviceToInternalDiscoveredDevice(hidDevice),
+            this.mapHIDDeviceToTransportDiscoveredDevice(hidDevice),
           ),
         );
       },
@@ -224,7 +227,7 @@ export class WebUsbHidTransport implements Transport {
           hidDevices = await hidApi.requestDevice({
             filters: [{ vendorId: LEDGER_VENDOR_ID }],
           });
-          await this.updateInternalDiscoveredDevices();
+          await this.updateTransportDiscoveredDevices();
         } catch (error) {
           const deviceError = new NoAccessibleDeviceError(error);
           this._logger.error(`promptDeviceAccess: error requesting device`, {
@@ -259,7 +262,7 @@ export class WebUsbHidTransport implements Transport {
       .run();
   }
 
-  startDiscovering(): Observable<InternalDiscoveredDevice> {
+  startDiscovering(): Observable<TransportDiscoveredDevice> {
     this._logger.debug("startDiscovering");
 
     return from(this.promptDeviceAccess()).pipe(
@@ -276,7 +279,7 @@ export class WebUsbHidTransport implements Transport {
             this._logger.info(`Got access to ${hidDevices.length} HID devices`);
 
             const discoveredDevices = hidDevices.map((hidDevice) => {
-              return this.mapHIDDeviceToInternalDiscoveredDevice(hidDevice);
+              return this.mapHIDDeviceToTransportDiscoveredDevice(hidDevice);
             });
             return from(discoveredDevices);
           },
@@ -326,10 +329,10 @@ export class WebUsbHidTransport implements Transport {
   }: {
     deviceId: DeviceId;
     onDisconnect: DisconnectHandler;
-  }): Promise<Either<ConnectError, InternalConnectedDevice>> {
+  }): Promise<Either<ConnectError, TransportConnectedDevice>> {
     this._logger.debug("connect", { data: { deviceId } });
 
-    const matchingInternalDevice = this._internalDiscoveredDevices
+    const matchingInternalDevice = this._transportDiscoveredDevices
       .getValue()
       .find((internalDevice) => internalDevice.id === deviceId);
 
@@ -379,7 +382,7 @@ export class WebUsbHidTransport implements Transport {
       matchingInternalDevice.hidDevice,
       deviceConnection,
     );
-    const connectedDevice = new InternalConnectedDevice({
+    const connectedDevice = new TransportConnectedDevice({
       sendApdu: (apdu, triggersDisconnection) =>
         deviceConnection.sendApdu(apdu, triggersDisconnection),
       deviceModel,
@@ -390,7 +393,7 @@ export class WebUsbHidTransport implements Transport {
     return Right(connectedDevice);
   }
 
-  private getDeviceModel(hidDevice: HIDDevice): Maybe<InternalDeviceModel> {
+  private getDeviceModel(hidDevice: HIDDevice): Maybe<TransportDeviceModel> {
     const { productId } = hidDevice;
     const matchingModel = this.deviceModelDataSource.getAllDeviceModels().find(
       (deviceModel) =>
@@ -412,7 +415,7 @@ export class WebUsbHidTransport implements Transport {
    * Disconnect from a HID USB device
    */
   async disconnect(params: {
-    connectedDevice: InternalConnectedDevice;
+    connectedDevice: TransportConnectedDevice;
   }): Promise<Either<SdkError, void>> {
     this._logger.debug("disconnect", { data: { connectedDevice: params } });
 
@@ -467,7 +470,7 @@ export class WebUsbHidTransport implements Transport {
       data: { event },
     });
 
-    this.updateInternalDiscoveredDevices();
+    this.updateTransportDiscoveredDevices();
 
     try {
       await event.device.close();
@@ -536,7 +539,7 @@ export class WebUsbHidTransport implements Transport {
      * discovered device to keep the same DeviceId as the previous one in case
      * of a reconnection.
      */
-    this.updateInternalDiscoveredDevices();
+    this.updateTransportDiscoveredDevices();
   }
 
   public destroy() {

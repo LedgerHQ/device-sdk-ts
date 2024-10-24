@@ -1,10 +1,10 @@
 import { type Observable } from "rxjs";
 
 import { type Transport } from "@api/transport/model/Transport";
-import { type InternalDiscoveredDevice } from "@internal/transport/model/InternalDiscoveredDevice";
+import { type TransportDiscoveredDevice } from "@api/transport/model/TransportDiscoveredDevice";
 
 export class WebBleTransport implements Transport {
-  listenToKnownDevices(): Observable<InternalDiscoveredDevice[]> {
+  listenToKnownDevices(): Observable<TransportDiscoveredDevice[]> {
     throw new Error("Method not implemented.");
   }
   isSupported = jest.fn();

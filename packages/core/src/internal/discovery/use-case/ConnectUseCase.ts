@@ -2,6 +2,7 @@ import { inject, injectable, multiInject } from "inversify";
 
 import { DeviceSessionId } from "@api/device-session/types";
 import { DiscoveredDevice } from "@api/transport/model/DiscoveredDevice";
+import { TransportNotSupportedError } from "@api/transport/model/Errors";
 import type { Transport } from "@api/transport/model/Transport";
 import { DeviceId } from "@api/types";
 import { deviceSessionTypes } from "@internal/device-session/di/deviceSessionTypes";
@@ -12,7 +13,6 @@ import { LoggerPublisherService } from "@internal/logger-publisher/service/Logge
 import { managerApiTypes } from "@internal/manager-api/di/managerApiTypes";
 import type { ManagerApiService } from "@internal/manager-api/service/ManagerApiService";
 import { transportDiTypes } from "@internal/transport/di/transportDiTypes";
-import { TransportNotSupportedError } from "@internal/transport/model/Errors";
 
 /**
  * The arguments for the ConnectUseCase.

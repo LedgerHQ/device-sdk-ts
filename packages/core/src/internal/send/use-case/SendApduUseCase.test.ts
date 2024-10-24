@@ -1,5 +1,6 @@
 import { Left } from "purify-ts";
 
+import { connectedDeviceStubBuilder } from "@api/transport/model/TransportConnectedDevice.stub";
 import { deviceSessionStubBuilder } from "@internal/device-session/model/DeviceSession.stub";
 import {
   DeviceSessionNotFound,
@@ -14,7 +15,6 @@ import { type ManagerApiDataSource } from "@internal/manager-api/data/ManagerApi
 import { DefaultManagerApiService } from "@internal/manager-api/service/DefaultManagerApiService";
 import { type ManagerApiService } from "@internal/manager-api/service/ManagerApiService";
 import { SendApduUseCase } from "@internal/send/use-case/SendApduUseCase";
-import { connectedDeviceStubBuilder } from "@internal/transport/model/InternalConnectedDevice.stub";
 
 jest.mock("@internal/manager-api/data/AxiosManagerApiDataSource");
 

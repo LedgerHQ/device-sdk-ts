@@ -1,10 +1,11 @@
+import { deviceModelStubBuilder } from "@api/device-model/model/DeviceModel.stub";
 import { defaultApduResponseStubBuilder } from "@api/device-session/ApduResponse.stub";
-import { deviceModelStubBuilder } from "@internal/device-model/model/DeviceModel.stub";
-import { InternalConnectedDevice } from "@internal/transport/model/InternalConnectedDevice";
-import { connectedDeviceStubBuilder } from "@internal/transport/model/InternalConnectedDevice.stub";
 
-describe("InternalConnectedDevice", () => {
-  let connectedDevice: InternalConnectedDevice;
+import { TransportConnectedDevice } from "./TransportConnectedDevice";
+import { connectedDeviceStubBuilder } from "./TransportConnectedDevice.stub";
+
+describe("TransportConnectedDevice", () => {
+  let connectedDevice: TransportConnectedDevice;
 
   beforeEach(() => {
     connectedDevice = connectedDeviceStubBuilder();
@@ -12,7 +13,7 @@ describe("InternalConnectedDevice", () => {
 
   it("should create an instance", () => {
     expect(connectedDevice).toBeDefined();
-    expect(connectedDevice).toBeInstanceOf(InternalConnectedDevice);
+    expect(connectedDevice).toBeInstanceOf(TransportConnectedDevice);
   });
 
   it("should return the correct id", () => {

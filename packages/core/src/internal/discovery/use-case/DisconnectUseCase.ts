@@ -1,5 +1,6 @@
 import { inject, injectable, multiInject } from "inversify";
 
+import { TransportNotSupportedError } from "@api/transport/model/Errors";
 import type { Transport } from "@api/transport/model/Transport";
 import type { DeviceSessionId } from "@api/types";
 import { deviceSessionTypes } from "@internal/device-session/di/deviceSessionTypes";
@@ -7,7 +8,6 @@ import type { DeviceSessionService } from "@internal/device-session/service/Devi
 import { loggerTypes } from "@internal/logger-publisher/di/loggerTypes";
 import { LoggerPublisherService } from "@internal/logger-publisher/service/LoggerPublisherService";
 import { transportDiTypes } from "@internal/transport/di/transportDiTypes";
-import { TransportNotSupportedError } from "@internal/transport/model/Errors";
 
 /**
  * The arguments for the DisconnectUseCase.

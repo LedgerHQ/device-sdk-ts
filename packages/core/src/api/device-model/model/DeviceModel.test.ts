@@ -1,24 +1,24 @@
 import { DeviceModelId } from "@api/device/DeviceModel";
 
-import { InternalDeviceModel } from "./DeviceModel";
+import { TransportDeviceModel } from "./DeviceModel";
 import { deviceModelStubBuilder } from "./DeviceModel.stub";
 
 describe("DeviceModel", () => {
-  let stubDeviceModel: InternalDeviceModel;
+  let stubDeviceModel: TransportDeviceModel;
 
   beforeAll(() => {
     stubDeviceModel = deviceModelStubBuilder();
   });
 
   test("should return the correct block size for Nano X", () => {
-    const deviceModel = new InternalDeviceModel(stubDeviceModel);
+    const deviceModel = new TransportDeviceModel(stubDeviceModel);
     const firmwareVersion = "2.0.0";
 
     expect(deviceModel.getBlockSize(firmwareVersion)).toBe(4 * 1024);
   });
 
   test("should return the correct block size for Stax", () => {
-    const deviceModel = new InternalDeviceModel({
+    const deviceModel = new TransportDeviceModel({
       ...stubDeviceModel,
       id: DeviceModelId.STAX,
     });
@@ -28,7 +28,7 @@ describe("DeviceModel", () => {
   });
 
   test("should return the correct block size for Nano SP", () => {
-    const deviceModel = new InternalDeviceModel({
+    const deviceModel = new TransportDeviceModel({
       ...stubDeviceModel,
       id: DeviceModelId.NANO_SP,
     });
@@ -38,7 +38,7 @@ describe("DeviceModel", () => {
   });
 
   test("should return the correct block size for Nano S with version lower than 2.0.0", () => {
-    const deviceModel = new InternalDeviceModel({
+    const deviceModel = new TransportDeviceModel({
       ...stubDeviceModel,
       id: DeviceModelId.NANO_S,
     });
@@ -48,7 +48,7 @@ describe("DeviceModel", () => {
   });
 
   test("should return the correct block size for Nano S with version 2.0.0", () => {
-    const deviceModel = new InternalDeviceModel({
+    const deviceModel = new TransportDeviceModel({
       ...stubDeviceModel,
       id: DeviceModelId.NANO_S,
     });
@@ -59,7 +59,7 @@ describe("DeviceModel", () => {
 
   // flex
   test("should return the correct block size for Flex", () => {
-    const deviceModel = new InternalDeviceModel({
+    const deviceModel = new TransportDeviceModel({
       ...stubDeviceModel,
       id: DeviceModelId.FLEX,
     });

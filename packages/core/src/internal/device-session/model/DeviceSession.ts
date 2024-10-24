@@ -18,14 +18,14 @@ import {
 } from "@api/device-session/DeviceSessionState";
 import { type DeviceSessionId } from "@api/device-session/types";
 import { type SdkError } from "@api/Error";
+import { type TransportConnectedDevice } from "@api/transport/model/TransportConnectedDevice";
 import { type LoggerPublisherService } from "@internal/logger-publisher/service/LoggerPublisherService";
 import { type ManagerApiService } from "@internal/manager-api/service/ManagerApiService";
-import { type InternalConnectedDevice } from "@internal/transport/model/InternalConnectedDevice";
 
 import { DeviceSessionRefresher } from "./DeviceSessionRefresher";
 
 export type SessionConstructorArgs = {
-  connectedDevice: InternalConnectedDevice;
+  connectedDevice: TransportConnectedDevice;
   id?: DeviceSessionId;
 };
 
@@ -34,7 +34,7 @@ export type SessionConstructorArgs = {
  */
 export class DeviceSession {
   private readonly _id: DeviceSessionId;
-  private readonly _connectedDevice: InternalConnectedDevice;
+  private readonly _connectedDevice: TransportConnectedDevice;
   private readonly _deviceState: BehaviorSubject<DeviceSessionState>;
   private readonly _refresher: DeviceSessionRefresher;
   private readonly _managerApiService: ManagerApiService;

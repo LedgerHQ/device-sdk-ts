@@ -2,16 +2,16 @@ import { type Either, Left, Maybe, Nothing, Right } from "purify-ts";
 
 import { CommandUtils } from "@api/command/utils/CommandUtils";
 import { type ApduResponse } from "@api/device-session/ApduResponse";
+import { type ApduReceiverService } from "@api/device-session/service/ApduReceiverService";
+import { type ApduSenderService } from "@api/device-session/service/ApduSenderService";
+import { type DefaultApduSenderServiceConstructorArgs } from "@api/device-session/service/DefaultApduSenderService";
 import { type SdkError } from "@api/Error";
-import { type ApduReceiverService } from "@internal/device-session/service/ApduReceiverService";
-import { type ApduSenderService } from "@internal/device-session/service/ApduSenderService";
-import { type DefaultApduSenderServiceConstructorArgs } from "@internal/device-session/service/DefaultApduSenderService";
-import type { LoggerPublisherService } from "@internal/logger-publisher/service/LoggerPublisherService";
-import { type DeviceConnection } from "@internal/transport/model/DeviceConnection";
+import { type DeviceConnection } from "@api/transport/model/DeviceConnection";
 import {
   DeviceNotInitializedError,
   ReconnectionFailedError,
-} from "@internal/transport/model/Errors";
+} from "@api/transport/model/Errors";
+import type { LoggerPublisherService } from "@internal/logger-publisher/service/LoggerPublisherService";
 
 type BleDeviceConnectionConstructorArgs = {
   writeCharacteristic: BluetoothRemoteGATTCharacteristic;

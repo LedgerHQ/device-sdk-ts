@@ -1,9 +1,9 @@
 import { inject, injectable } from "inversify";
 
+import { ApduReceiverService } from "@api/device-session/service/ApduReceiverService";
+import { ApduSenderService } from "@api/device-session/service/ApduSenderService";
+import { DefaultApduSenderServiceConstructorArgs } from "@api/device-session/service/DefaultApduSenderService";
 import { deviceSessionTypes } from "@internal/device-session/di/deviceSessionTypes";
-import { ApduReceiverService } from "@internal/device-session/service/ApduReceiverService";
-import { ApduSenderService } from "@internal/device-session/service/ApduSenderService";
-import { DefaultApduSenderServiceConstructorArgs } from "@internal/device-session/service/DefaultApduSenderService";
 import { loggerTypes } from "@internal/logger-publisher/di/loggerTypes";
 import { LoggerPublisherService } from "@internal/logger-publisher/service/LoggerPublisherService";
 import { BleDeviceConnection } from "@internal/transport/ble/transport/BleDeviceConnection";

@@ -1,12 +1,12 @@
 import { Left, Right } from "purify-ts";
 
-import { type ApduReceiverService } from "@internal/device-session/service/ApduReceiverService";
-import { type ApduSenderService } from "@internal/device-session/service/ApduSenderService";
-import { defaultApduReceiverServiceStubBuilder } from "@internal/device-session/service/DefaultApduReceiverService.stub";
-import { defaultApduSenderServiceStubBuilder } from "@internal/device-session/service/DefaultApduSenderService.stub";
+import { type ApduReceiverService } from "@api/device-session/service/ApduReceiverService";
+import { type ApduSenderService } from "@api/device-session/service/ApduSenderService";
+import { defaultApduReceiverServiceStubBuilder } from "@api/device-session/service/DefaultApduReceiverService.stub";
+import { defaultApduSenderServiceStubBuilder } from "@api/device-session/service/DefaultApduSenderService.stub";
+import { DeviceNotInitializedError } from "@api/transport/model/Errors";
 import { DefaultLoggerPublisherService } from "@internal/logger-publisher/service/DefaultLoggerPublisherService";
 import { bleCharacteristicStubBuilder } from "@internal/transport/ble/model/BleDevice.stub";
-import { DeviceNotInitializedError } from "@internal/transport/model/Errors";
 import { ApduResponse } from "@root/src";
 
 import { BleDeviceConnection, type DataViewEvent } from "./BleDeviceConnection";

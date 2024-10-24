@@ -5,7 +5,7 @@ import { DeviceModelId } from "@api/device/DeviceModel";
 /**
  * The info of a device model
  */
-export class InternalDeviceModel {
+export class TransportDeviceModel {
   id: DeviceModelId;
   productName: string;
   usbProductId: number;

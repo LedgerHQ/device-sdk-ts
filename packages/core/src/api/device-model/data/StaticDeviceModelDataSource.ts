@@ -1,7 +1,7 @@
 import { injectable } from "inversify";
 
 import { DeviceModelId } from "@api/device/DeviceModel";
-import { InternalDeviceModel } from "@internal/device-model/model/DeviceModel";
+import { TransportDeviceModel } from "@api/device-model/model/DeviceModel";
 import { BleDeviceInfos } from "@internal/transport/ble/model/BleDeviceInfos";
 
 import { DeviceModelDataSource } from "./DeviceModelDataSource";
@@ -12,9 +12,9 @@ import { DeviceModelDataSource } from "./DeviceModelDataSource";
 @injectable()
 export class StaticDeviceModelDataSource implements DeviceModelDataSource {
   private static deviceModelByIds: {
-    [key in DeviceModelId]: InternalDeviceModel;
+    [key in DeviceModelId]: TransportDeviceModel;
   } = {
-    [DeviceModelId.NANO_S]: new InternalDeviceModel({
+    [DeviceModelId.NANO_S]: new TransportDeviceModel({
       id: DeviceModelId.NANO_S,
       productName: "Ledger Nano S",
       usbProductId: 0x10,
@@ -23,7 +23,7 @@ export class StaticDeviceModelDataSource implements DeviceModelDataSource {
       memorySize: 320 * 1024,
       masks: [0x31100000],
     }),
-    [DeviceModelId.NANO_SP]: new InternalDeviceModel({
+    [DeviceModelId.NANO_SP]: new TransportDeviceModel({
       id: DeviceModelId.NANO_SP,
       productName: "Ledger Nano S Plus",
       usbProductId: 0x50,
@@ -32,7 +32,7 @@ export class StaticDeviceModelDataSource implements DeviceModelDataSource {
       memorySize: 1533 * 1024,
       masks: [0x33100000],
     }),
-    [DeviceModelId.NANO_X]: new InternalDeviceModel({
+    [DeviceModelId.NANO_X]: new TransportDeviceModel({
       id: DeviceModelId.NANO_X,
       productName: "Ledger Nano X",
       usbProductId: 0x40,
@@ -49,7 +49,7 @@ export class StaticDeviceModelDataSource implements DeviceModelDataSource {
         },
       ],
     }),
-    [DeviceModelId.STAX]: new InternalDeviceModel({
+    [DeviceModelId.STAX]: new TransportDeviceModel({
       id: DeviceModelId.STAX,
       productName: "Ledger Stax",
       usbProductId: 0x60,
@@ -66,7 +66,7 @@ export class StaticDeviceModelDataSource implements DeviceModelDataSource {
         },
       ],
     }),
-    [DeviceModelId.FLEX]: new InternalDeviceModel({
+    [DeviceModelId.FLEX]: new TransportDeviceModel({
       id: DeviceModelId.FLEX,
       productName: "Ledger Flex",
       usbProductId: 0x70,
@@ -85,11 +85,11 @@ export class StaticDeviceModelDataSource implements DeviceModelDataSource {
     }),
   };
 
-  getAllDeviceModels(): InternalDeviceModel[] {
+  getAllDeviceModels(): TransportDeviceModel[] {
     return Object.values(StaticDeviceModelDataSource.deviceModelByIds);
   }
 
-  getDeviceModel(params: { id: DeviceModelId }): InternalDeviceModel {
+  getDeviceModel(params: { id: DeviceModelId }): TransportDeviceModel {
     return StaticDeviceModelDataSource.deviceModelByIds[params.id];
   }
 
@@ -97,11 +97,11 @@ export class StaticDeviceModelDataSource implements DeviceModelDataSource {
    * Returns the list of device models that match all the given parameters
    */
   filterDeviceModels(
-    params: Partial<InternalDeviceModel>,
-  ): InternalDeviceModel[] {
+    params: Partial<TransportDeviceModel>,
+  ): TransportDeviceModel[] {
     return this.getAllDeviceModels().filter((deviceModel) => {
       return Object.entries(params).every(([key, value]) => {
-        return deviceModel[key as keyof InternalDeviceModel] === value;
+        return deviceModel[key as keyof TransportDeviceModel] === value;
       });
     });
   }

@@ -1,12 +1,12 @@
 import { of } from "rxjs";
 
 import { DeviceModel } from "@api/device/DeviceModel";
+import { type DeviceModelDataSource } from "@api/device-model/data/DeviceModelDataSource";
+import { type TransportDeviceModel } from "@api/device-model/model/DeviceModel";
+import { type TransportDiscoveredDevice } from "@api/transport/model/TransportDiscoveredDevice";
 import { type DeviceModelId, type DiscoveredDevice } from "@api/types";
-import { type DeviceModelDataSource } from "@internal/device-model/data/DeviceModelDataSource";
-import { type InternalDeviceModel } from "@internal/device-model/model/DeviceModel";
 import { DefaultLoggerPublisherService } from "@internal/logger-publisher/service/DefaultLoggerPublisherService";
 import { type LoggerPublisherService } from "@internal/logger-publisher/service/LoggerPublisherService";
-import { type InternalDiscoveredDevice } from "@internal/transport/model/InternalDiscoveredDevice";
 import { usbHidDeviceConnectionFactoryStubBuilder } from "@internal/transport/usb/service/UsbHidDeviceConnectionFactory.stub";
 import { WebUsbHidTransport } from "@internal/transport/usb/transport/WebUsbHidTransport";
 
@@ -16,12 +16,12 @@ let transport: WebUsbHidTransport;
 let logger: LoggerPublisherService;
 
 describe("StartDiscoveringUseCase", () => {
-  const stubDiscoveredDevice: InternalDiscoveredDevice = {
+  const stubDiscoveredDevice: TransportDiscoveredDevice = {
     id: "internal-discovered-device-id",
     deviceModel: {
       id: "nanoSP" as DeviceModelId,
       productName: "productName",
-    } as InternalDeviceModel,
+    } as TransportDeviceModel,
     transport: "USB",
   };
   const tag = "logger-tag";

@@ -4,36 +4,41 @@ import { from, Observable, switchMap, timer } from "rxjs";
 import { v4 as uuid } from "uuid";
 
 import { DeviceId } from "@api/device/DeviceModel";
+import type { DeviceModelDataSource } from "@api/device-model/data/DeviceModelDataSource";
 import { ConnectionType } from "@api/discovery/ConnectionType";
 import { SdkError } from "@api/Error";
+import { DisconnectHandler } from "@api/transport/model/DeviceConnection";
+import {
+  ConnectError,
+  DeviceNotRecognizedError,
+  NoAccessibleDeviceError,
+  OpeningConnectionError,
+  UnknownDeviceError,
+} from "@api/transport/model/Errors";
 import { Transport } from "@api/transport/model/Transport";
+import { TransportConnectedDevice } from "@api/transport/model/TransportConnectedDevice";
+import { TransportDiscoveredDevice } from "@api/transport/model/TransportDiscoveredDevice";
 import {
   BuiltinTransports,
   TransportIdentifier,
 } from "@api/transport/model/TransportIdentifier";
-import type { DeviceModelDataSource } from "@internal/device-model/data/DeviceModelDataSource";
 import { deviceModelTypes } from "@internal/device-model/di/deviceModelTypes";
 import { loggerTypes } from "@internal/logger-publisher/di/loggerTypes";
 import type { LoggerPublisherService } from "@internal/logger-publisher/service/LoggerPublisherService";
+import { RECONNECT_DEVICE_TIMEOUT } from "@internal/transport/ble/data/WebBleConfig";
 import { bleDiTypes } from "@internal/transport/ble/di/bleDiTypes";
 import { BleDeviceInfos } from "@internal/transport/ble/model/BleDeviceInfos";
-import { BleDeviceConnectionFactory } from "@internal/transport/ble/service/BleDeviceConnectionFactory";
-import { BleDeviceConnection } from "@internal/transport/ble/transport/BleDeviceConnection";
-import { DisconnectHandler } from "@internal/transport/model/DeviceConnection";
 import {
   BleDeviceGattServerError,
   BleTransportNotSupportedError,
-  ConnectError,
   DeviceAlreadyConnectedError,
-  DeviceNotRecognizedError,
-  NoAccessibleDeviceError,
-  OpeningConnectionError,
-  type PromptDeviceAccessError,
-  UnknownDeviceError,
-} from "@internal/transport/model/Errors";
-import { InternalConnectedDevice } from "@internal/transport/model/InternalConnectedDevice";
-import { InternalDiscoveredDevice } from "@internal/transport/model/InternalDiscoveredDevice";
-import { RECONNECT_DEVICE_TIMEOUT } from "@internal/transport/usb/data/UsbHidConfig";
+} from "@internal/transport/ble/model/Errors";
+import { BleDeviceConnectionFactory } from "@internal/transport/ble/service/BleDeviceConnectionFactory";
+import { BleDeviceConnection } from "@internal/transport/ble/transport/BleDeviceConnection";
+
+type PromptDeviceAccessError =
+  | NoAccessibleDeviceError
+  | BleTransportNotSupportedError;
 
 // An attempt to manage the state of several devices with one transport. Not final.
 type WebBleInternalDevice = {
@@ -41,7 +46,7 @@ type WebBleInternalDevice = {
   bleDevice: BluetoothDevice;
   bleDeviceInfos: BleDeviceInfos;
   bleGattService: BluetoothRemoteGATTService;
-  discoveredDevice: InternalDiscoveredDevice;
+  discoveredDevice: TransportDiscoveredDevice;
 };
 
 @injectable()
@@ -94,7 +99,7 @@ export class WebBleTransport implements Transport {
     return this.identifier;
   }
 
-  listenToKnownDevices(): Observable<InternalDiscoveredDevice[]> {
+  listenToKnownDevices(): Observable<TransportDiscoveredDevice[]> {
     return from([]);
   }
 
@@ -183,7 +188,7 @@ export class WebBleTransport implements Transport {
    */
   private getDiscoveredDeviceFrom(
     bleDeviceInfos: BleDeviceInfos,
-  ): InternalDiscoveredDevice {
+  ): TransportDiscoveredDevice {
     return {
       id: uuid(),
       deviceModel: bleDeviceInfos.deviceModel,
@@ -200,7 +205,7 @@ export class WebBleTransport implements Transport {
    * @private
    */
   private setInternalDeviceFrom(
-    discoveredDevice: InternalDiscoveredDevice,
+    discoveredDevice: TransportDiscoveredDevice,
     bleDevice: BluetoothDevice,
     bleDeviceInfos: BleDeviceInfos,
     bleGattService: BluetoothRemoteGATTService,
@@ -221,9 +226,9 @@ export class WebBleTransport implements Transport {
 
   /**
    * Main method to get a device from a button click handler
-   * The GATT connection is done here in order to populate InternalDiscoveredDevice with deviceModel
+   * The GATT connection is done here in order to populate TransportDiscoveredDevice with deviceModel
    */
-  startDiscovering(): Observable<InternalDiscoveredDevice> {
+  startDiscovering(): Observable<TransportDiscoveredDevice> {
     this._logger.debug("startDiscovering");
 
     return from(this.promptDeviceAccess()).pipe(
@@ -284,7 +289,7 @@ export class WebBleTransport implements Transport {
   }: {
     deviceId: DeviceId;
     onDisconnect: DisconnectHandler;
-  }): Promise<Either<ConnectError, InternalConnectedDevice>> {
+  }): Promise<Either<ConnectError, TransportConnectedDevice>> {
     const internalDevice = this._internalDevicesById.get(deviceId);
 
     if (!internalDevice) {
@@ -320,7 +325,7 @@ export class WebBleTransport implements Transport {
         notifyCharacteristic,
       );
       await deviceConnection.setup();
-      const connectedDevice = new InternalConnectedDevice({
+      const connectedDevice = new TransportConnectedDevice({
         sendApdu: (apdu, triggersDisconnection) =>
           deviceConnection.sendApdu(apdu, triggersDisconnection),
         deviceModel,
@@ -393,15 +398,16 @@ export class WebBleTransport implements Transport {
   /**
    * Disconnect from a BLE device and delete its handlers
    *
-   * @param params { connectedDevice: InternalConnectedDevice }
+   * @param params { connectedDevice: TransportConnectedDevice }
    */
   async disconnect(params: {
-    connectedDevice: InternalConnectedDevice;
+    connectedDevice: TransportConnectedDevice;
   }): Promise<Either<SdkError, void>> {
     // retrieve internal device
     const maybeInternalDevice = Maybe.fromNullable(
       this._internalDevicesById.get(params.connectedDevice.id),
     );
+
     this._logger.debug("disconnect device", {
       data: { connectedDevice: params.connectedDevice },
     });
@@ -412,12 +418,14 @@ export class WebBleTransport implements Transport {
         new UnknownDeviceError(`Unknown device ${params.connectedDevice.id}`),
       );
     }
+
     maybeInternalDevice.map((device) => {
       const { bleDevice } = device;
       // retrieve device connection and disconnect it
       const maybeDeviceConnection = Maybe.fromNullable(
         this._deviceConnectionById.get(device.id),
       );
+
       maybeDeviceConnection.map((dConnection) => dConnection.disconnect());
       // disconnect device gatt server
       if (bleDevice.gatt?.connected) {

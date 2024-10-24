@@ -36,7 +36,7 @@ export class GetConnectedDeviceUseCase {
     return deviceSessionOrError.caseOf({
       Right: (deviceSession) =>
         new ConnectedDevice({
-          internalConnectedDevice: deviceSession.connectedDevice,
+          transportConnectedDevice: deviceSession.connectedDevice,
         }),
       Left: (error) => {
         this._logger.error("Error getting session", {

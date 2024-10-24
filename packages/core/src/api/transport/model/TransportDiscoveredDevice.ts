@@ -1,11 +1,11 @@
 import { type DeviceId } from "@api/device/DeviceModel";
+import { type TransportDeviceModel } from "@api/device-model/model/DeviceModel";
 import { type TransportIdentifier } from "@api/transport/model/TransportIdentifier";
-import { type InternalDeviceModel } from "@internal/device-model/model/DeviceModel";
 
 /**
  * A discovered / scanned (not yet connected to) device.
  */
-export type InternalDiscoveredDevice = {
+export type TransportDiscoveredDevice = {
   // type: "web-hid", // "node-hid" in the future -> no need as we will only have 1 USB transport implementation running
 
   /**
@@ -16,6 +16,6 @@ export type InternalDiscoveredDevice = {
    * privacy feature of Ledger devices.
    */
   id: DeviceId;
-  deviceModel: InternalDeviceModel;
+  deviceModel: TransportDeviceModel;
   transport: TransportIdentifier;
 };

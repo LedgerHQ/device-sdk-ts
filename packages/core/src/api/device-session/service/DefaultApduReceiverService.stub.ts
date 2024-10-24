@@ -1,11 +1,12 @@
 import { Maybe } from "purify-ts";
 
-import { type ApduReceiverService } from "@internal/device-session/service/ApduReceiverService";
+import { type LoggerPublisherService } from "@internal/logger-publisher/service/LoggerPublisherService";
+
+import { type ApduReceiverService } from "./ApduReceiverService";
 import {
   type DefaultApduReceiverConstructorArgs,
   DefaultApduReceiverService,
-} from "@internal/device-session/service/DefaultApduReceiverService";
-import { type LoggerPublisherService } from "@internal/logger-publisher/service/LoggerPublisherService";
+} from "./DefaultApduReceiverService";
 
 export const defaultApduReceiverServiceStubBuilder = (
   props: Partial<DefaultApduReceiverConstructorArgs> = {},

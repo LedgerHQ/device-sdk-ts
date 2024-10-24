@@ -1,19 +1,19 @@
 import { Left, Right } from "purify-ts";
 
 import { type DeviceModel } from "@api/device/DeviceModel";
-import { StaticDeviceModelDataSource } from "@internal/device-model/data/StaticDeviceModelDataSource";
-import { DefaultLoggerPublisherService } from "@internal/logger-publisher/service/DefaultLoggerPublisherService";
-import { bleDeviceStubBuilder } from "@internal/transport/ble/model/BleDevice.stub";
-import { bleDeviceConnectionFactoryStubBuilder } from "@internal/transport/ble/service/BleDeviceConnectionFactory.stub";
+import { StaticDeviceModelDataSource } from "@api/device-model/data/StaticDeviceModelDataSource";
 import {
-  BleDeviceGattServerError,
-  BleTransportNotSupportedError,
   NoAccessibleDeviceError,
   OpeningConnectionError,
   UnknownDeviceError,
-} from "@internal/transport/model/Errors";
-import { type InternalDiscoveredDevice } from "@internal/transport/model/InternalDiscoveredDevice";
-import { RECONNECT_DEVICE_TIMEOUT } from "@internal/transport/usb/data/UsbHidConfig";
+} from "@api/transport/model/Errors";
+import { type TransportDiscoveredDevice } from "@api/transport/model/TransportDiscoveredDevice";
+import { DefaultLoggerPublisherService } from "@internal/logger-publisher/service/DefaultLoggerPublisherService";
+import { RECONNECT_DEVICE_TIMEOUT } from "@internal/transport/ble/data/WebBleConfig";
+import { bleDeviceStubBuilder } from "@internal/transport/ble/model/BleDevice.stub";
+import { BleTransportNotSupportedError } from "@internal/transport/ble/model/Errors";
+import { BleDeviceGattServerError } from "@internal/transport/ble/model/Errors";
+import { bleDeviceConnectionFactoryStubBuilder } from "@internal/transport/ble/service/BleDeviceConnectionFactory.stub";
 
 import { WebBleTransport } from "./WebBleTransport";
 
@@ -42,7 +42,7 @@ describe("WebBleTransport", () => {
   });
 
   const discoverDevice = (
-    onSuccess: (discoveredDevice: InternalDiscoveredDevice) => void,
+    onSuccess: (discoveredDevice: TransportDiscoveredDevice) => void,
     onError?: (error: unknown) => void,
   ) => {
     transport.startDiscovering().subscribe({

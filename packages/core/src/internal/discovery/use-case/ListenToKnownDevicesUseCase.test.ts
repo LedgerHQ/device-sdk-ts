@@ -1,9 +1,9 @@
 import { Subject } from "rxjs";
 
 import { type DeviceId, type DeviceModel } from "@api/device/DeviceModel";
+import { deviceModelStubBuilder } from "@api/device-model/model/DeviceModel.stub";
+import { type TransportDiscoveredDevice } from "@api/transport/model/TransportDiscoveredDevice";
 import { type DiscoveredDevice, type Transport } from "@api/types";
-import { deviceModelStubBuilder } from "@internal/device-model/model/DeviceModel.stub";
-import { type InternalDiscoveredDevice } from "@internal/transport/model/InternalDiscoveredDevice";
 
 import { ListenToKnownDevicesUseCase } from "./ListenToKnownDevicesUseCase";
 
@@ -31,10 +31,10 @@ function makeMockDeviceModel(id: DeviceId): DeviceModel {
 
 function setup2MockTransports() {
   const transportAKnownDevicesSubject = new Subject<
-    InternalDiscoveredDevice[]
+    TransportDiscoveredDevice[]
   >();
   const transportBKnownDevicesSubject = new Subject<
-    InternalDiscoveredDevice[]
+    TransportDiscoveredDevice[]
   >();
   const transportA = makeMockTransport({
     listenToKnownDevices: () => transportAKnownDevicesSubject.asObservable(),
@@ -50,9 +50,9 @@ function setup2MockTransports() {
   };
 }
 
-function makeMockInternalDiscoveredDevice(
+function makeMockTransportDiscoveredDevice(
   id: string,
-): InternalDiscoveredDevice {
+): TransportDiscoveredDevice {
   return {
     id,
     deviceModel: mockInternalDeviceModel,
@@ -99,7 +99,7 @@ describe("ListenToKnownDevicesUseCase", () => {
 
       // When transportA emits 1 known device
       transportAKnownDevicesSubject.next([
-        makeMockInternalDiscoveredDevice("transportA-device1"),
+        makeMockTransportDiscoveredDevice("transportA-device1"),
       ]);
 
       expect(observedDiscoveredDevices[0]).toEqual([
@@ -112,8 +112,8 @@ describe("ListenToKnownDevicesUseCase", () => {
 
       // When transportA emits 2 known devices
       transportAKnownDevicesSubject.next([
-        makeMockInternalDiscoveredDevice("transportA-device1"),
-        makeMockInternalDiscoveredDevice("transportA-device2"),
+        makeMockTransportDiscoveredDevice("transportA-device1"),
+        makeMockTransportDiscoveredDevice("transportA-device2"),
       ]);
 
       expect(observedDiscoveredDevices[1]).toEqual([
@@ -131,7 +131,7 @@ describe("ListenToKnownDevicesUseCase", () => {
 
       // When transportA emits 1 known device (device1 disconnects)
       transportAKnownDevicesSubject.next([
-        makeMockInternalDiscoveredDevice("transportA-device2"),
+        makeMockTransportDiscoveredDevice("transportA-device2"),
       ]);
 
       expect(observedDiscoveredDevices[2]).toEqual([
@@ -171,7 +171,7 @@ describe("ListenToKnownDevicesUseCase", () => {
 
       // When transportA emits 1 known device
       transportAKnownDevicesSubject.next([
-        makeMockInternalDiscoveredDevice("transportA-device1"),
+        makeMockTransportDiscoveredDevice("transportA-device1"),
       ]);
 
       expect(observedDiscoveredDevices[0]).toEqual([
@@ -213,7 +213,7 @@ describe("ListenToKnownDevicesUseCase", () => {
 
       // When transportA emits 1 known device
       transportAKnownDevicesSubject.next([
-        makeMockInternalDiscoveredDevice("transportA-device1"),
+        makeMockTransportDiscoveredDevice("transportA-device1"),
       ]);
 
       expect(observedDiscoveredDevices[0]).toEqual([
@@ -226,7 +226,7 @@ describe("ListenToKnownDevicesUseCase", () => {
 
       // When transportB emits 1 known device
       transportBKnownDevicesSubject.next([
-        makeMockInternalDiscoveredDevice("transportB-device1"),
+        makeMockTransportDiscoveredDevice("transportB-device1"),
       ]);
 
       expect(observedDiscoveredDevices[1]).toEqual([
@@ -244,8 +244,8 @@ describe("ListenToKnownDevicesUseCase", () => {
 
       // When transportB emits 2 known devices
       transportBKnownDevicesSubject.next([
-        makeMockInternalDiscoveredDevice("transportB-device1"),
-        makeMockInternalDiscoveredDevice("transportB-device2"),
+        makeMockTransportDiscoveredDevice("transportB-device1"),
+        makeMockTransportDiscoveredDevice("transportB-device2"),
       ]);
 
       expect(observedDiscoveredDevices[2]).toEqual([

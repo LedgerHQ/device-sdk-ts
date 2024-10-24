@@ -3,11 +3,11 @@ import { map, mergeMap, Observable, of } from "rxjs";
 
 import { DeviceModel } from "@api/device/DeviceModel";
 import { DiscoveredDevice } from "@api/transport/model/DiscoveredDevice";
+import { TransportNotSupportedError } from "@api/transport/model/Errors";
 import type { Transport } from "@api/transport/model/Transport";
+import { TransportDiscoveredDevice } from "@api/transport/model/TransportDiscoveredDevice";
 import { TransportIdentifier } from "@api/transport/model/TransportIdentifier";
 import { transportDiTypes } from "@internal/transport/di/transportDiTypes";
-import { TransportNotSupportedError } from "@internal/transport/model/Errors";
-import { InternalDiscoveredDevice } from "@internal/transport/model/InternalDiscoveredDevice";
 
 export type StartDiscoveringUseCaseArgs = {
   /**
@@ -30,7 +30,7 @@ export class StartDiscoveringUseCase {
   ) {}
 
   private mapDiscoveredDevice(
-    device: InternalDiscoveredDevice,
+    device: TransportDiscoveredDevice,
   ): DiscoveredDevice {
     const deviceModel = new DeviceModel({
       id: device.id,

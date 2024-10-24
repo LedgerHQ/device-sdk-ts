@@ -1,23 +1,23 @@
 import { type DeviceId } from "@api/device/DeviceModel";
+import { type TransportDeviceModel } from "@api/device-model/model/DeviceModel";
 import { type ConnectionType } from "@api/discovery/ConnectionType";
+import { type SendApduFnType } from "@api/transport/model/DeviceConnection";
 import { type TransportIdentifier } from "@api/transport/model/TransportIdentifier";
-import { type InternalDeviceModel } from "@internal/device-model/model/DeviceModel";
-import { type SendApduFnType } from "@internal/transport/model/DeviceConnection";
 
 /**
  * The internal connected device.
  */
 export type ConnectedDeviceConstructorArgs = {
   id: DeviceId;
-  deviceModel: InternalDeviceModel;
+  deviceModel: TransportDeviceModel;
   type: ConnectionType;
   transport: TransportIdentifier;
   sendApdu: SendApduFnType;
 };
 
-export class InternalConnectedDevice {
+export class TransportConnectedDevice {
   public readonly id: DeviceId;
-  public readonly deviceModel: InternalDeviceModel;
+  public readonly deviceModel: TransportDeviceModel;
   public readonly sendApdu: SendApduFnType;
   public readonly type: ConnectionType;
   public readonly transport: TransportIdentifier;

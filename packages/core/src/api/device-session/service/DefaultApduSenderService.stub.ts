@@ -1,11 +1,12 @@
 import { Maybe } from "purify-ts";
 
-import { type ApduSenderService } from "@internal/device-session/service/ApduSenderService";
+import { type LoggerPublisherService } from "@internal/logger-publisher/service/LoggerPublisherService";
+
+import { type ApduSenderService } from "./ApduSenderService";
 import {
   DefaultApduSenderService,
   type DefaultApduSenderServiceConstructorArgs,
-} from "@internal/device-session/service/DefaultApduSenderService";
-import { type LoggerPublisherService } from "@internal/logger-publisher/service/LoggerPublisherService";
+} from "./DefaultApduSenderService";
 
 export const defaultApduSenderServiceStubBuilder = (
   props: Partial<DefaultApduSenderServiceConstructorArgs> = {},

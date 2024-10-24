@@ -1,17 +1,18 @@
 import { Right } from "purify-ts";
 
+import { deviceModelStubBuilder } from "@api/device-model/model/DeviceModel.stub";
 import { defaultApduResponseStubBuilder } from "@api/device-session/ApduResponse.stub";
-import { deviceModelStubBuilder } from "@internal/device-model/model/DeviceModel.stub";
+
 import {
   type ConnectedDeviceConstructorArgs,
-  InternalConnectedDevice,
-} from "@internal/transport/model/InternalConnectedDevice";
+  TransportConnectedDevice,
+} from "./TransportConnectedDevice";
 
 export function connectedDeviceStubBuilder(
   props: Partial<ConnectedDeviceConstructorArgs> = {},
-): InternalConnectedDevice {
+): TransportConnectedDevice {
   const deviceModel = deviceModelStubBuilder();
-  return new InternalConnectedDevice({
+  return new TransportConnectedDevice({
     deviceModel,
     id: "42",
     type: "MOCK",
