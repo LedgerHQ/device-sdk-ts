@@ -14,4 +14,10 @@ export const GlobalStyle = createGlobalStyle`
   body {
     user-select: none;
   }
+  .no-scrollbar {
+      &::-webkit-scrollbar {
+          width: 0px;
+          height: 0px;
+      }
+  }
 `;
