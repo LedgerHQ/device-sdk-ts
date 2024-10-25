@@ -4,6 +4,18 @@ export interface SdkError {
   message?: string;
 }
 
+export class GeneralSdkError implements SdkError {
+  _tag = "GeneralSdkError";
+  originalError?: unknown;
+  constructor(err?: unknown) {
+    if (err instanceof Error) {
+      this.originalError = err;
+    } else if (err !== undefined) {
+      this.originalError = new Error(String(err));
+    }
+  }
+}
+
 export type DeviceExchangeErrorArgs<SpecificErrorCodes> = {
   tag: string;
   originalError?: unknown;
@@ -44,4 +56,8 @@ export class UnknownDeviceExchangeError implements SdkError {
     this.originalError = originalError;
     this.message = "Unexpected device exchange error happened.";
   }
+}
+
+export class DeviceSdkInitializationError extends GeneralSdkError {
+  override readonly _tag = "DeviceSdkInitializationError";
 }

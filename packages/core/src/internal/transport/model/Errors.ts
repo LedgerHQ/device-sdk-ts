@@ -57,6 +57,10 @@ export class TransportNotSupportedError extends GeneralSdkError {
   }
 }
 
+export class TransportDuplicatedError extends GeneralSdkError {
+  override readonly _tag = "TransportDuplicatedError";
+}
+
 export class BleTransportNotSupportedError extends GeneralSdkError {
   override readonly _tag = "BleTransportNotSupportedError";
   constructor(readonly err?: unknown) {

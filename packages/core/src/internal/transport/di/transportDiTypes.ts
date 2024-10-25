@@ -1,4 +1,4 @@
 export const transportDiTypes = {
-  Transport: Symbol.for("Transport"),
+  TransportService: Symbol.for("TransportService"),
   SdkConfig: Symbol.for("TransportSdkConfig"),
 };

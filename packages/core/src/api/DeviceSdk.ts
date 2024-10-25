@@ -22,6 +22,7 @@ import {
   GetConnectedDeviceUseCaseArgs,
   SendApduUseCaseArgs,
   StartDiscoveringUseCaseArgs,
+  Transport,
 } from "@api/types";
 import { configTypes } from "@internal/config/di/configTypes";
 import { GetSdkVersionUseCase } from "@internal/config/use-case/GetSdkVersionUseCase";
@@ -39,6 +40,8 @@ import type { StartDiscoveringUseCase } from "@internal/discovery/use-case/Start
 import type { StopDiscoveringUseCase } from "@internal/discovery/use-case/StopDiscoveringUseCase";
 import { sendTypes } from "@internal/send/di/sendTypes";
 import { SendApduUseCase } from "@internal/send/use-case/SendApduUseCase";
+import { transportDiTypes } from "@internal/transport/di/transportDiTypes";
+import { TransportService } from "@internal/transport/service/TransportService";
 import { makeContainer, MakeContainerProps } from "@root/src/di";
 
 import {
@@ -46,7 +49,11 @@ import {
   ExecuteDeviceActionReturnType,
 } from "./device-action/DeviceAction";
 import { deviceActionTypes } from "./device-action/di/deviceActionTypes";
-import { SdkError } from "./Error";
+import { DeviceSdkInitializationError, SdkError } from "./Error";
+
+type DeviceSdkConstructorProps = Partial<MakeContainerProps> & {
+  transports: Transport[];
+};
 
 /**
  * The main class to interact with the SDK.
@@ -59,20 +66,33 @@ export class DeviceSdk {
   constructor({
     stub,
     transports,
-    customTransports,
     loggers,
     config,
-  }: Partial<MakeContainerProps> = {}) {
+  }: DeviceSdkConstructorProps) {
     // NOTE: MakeContainerProps might not be the exact type here
     // For the init of the project this is sufficient, but we might need to
     // update the constructor arguments as we go (we might have more than just the container config)
     this.container = makeContainer({
       stub,
-      transports,
-      customTransports,
       loggers,
       config,
     });
+    // NOTE: builder.build() should throw an error if at least 1 transport is missing or duplicated
+    // ASK: should we separate this code in a setup method or is it ok that the constructor throw an error?
+    const transportService = this.container.get<TransportService>(
+      transportDiTypes.TransportService,
+    );
+    if (transports.length === 0) {
+      throw new DeviceSdkInitializationError(
+        "At least one transport service is required",
+      );
+    }
+    for (const transport of transports) {
+      const errorOrTransportService = transportService.addTransport(transport);
+      if (errorOrTransportService.isLeft()) {
+        throw errorOrTransportService;
+      }
+    }
   }
 
   /**
