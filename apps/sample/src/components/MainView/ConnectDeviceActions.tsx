@@ -1,5 +1,11 @@
 import React, { useCallback } from "react";
-import { BuiltinTransports, SdkError } from "@ledgerhq/device-management-kit";
+import {
+  BuiltinTransports,
+  MockTransport,
+  SdkError,
+  WebBleTransport,
+  WebUsbHidTransport,
+} from "@ledgerhq/device-management-kit";
 import { Button, Flex } from "@ledgerhq/react-ui";
 import styled from "styled-components";
 
@@ -23,7 +29,7 @@ export const ConnectDeviceActions = ({
   const sdk = useSdk();
 
   const onSelectDeviceClicked = useCallback(
-    (selectedTransport: BuiltinTransports) => {
+    (selectedTransport: string) => {
       onError(null);
       sdk.startDiscovering({ transport: selectedTransport }).subscribe({
         next: (device) => {
@@ -64,7 +70,7 @@ export const ConnectDeviceActions = ({
 
   return transport === BuiltinTransports.MOCK_SERVER ? (
     <ConnectButton
-      onClick={() => onSelectDeviceClicked(BuiltinTransports.MOCK_SERVER)}
+      onClick={() => onSelectDeviceClicked(MockTransport.identifier)}
       variant="main"
       backgroundColor="main"
       size="large"
@@ -75,7 +81,7 @@ export const ConnectDeviceActions = ({
   ) : (
     <Flex>
       <ConnectButton
-        onClick={() => onSelectDeviceClicked(BuiltinTransports.USB)}
+        onClick={() => onSelectDeviceClicked(WebUsbHidTransport.identifier)}
         variant="main"
         backgroundColor="main"
         size="large"
@@ -83,7 +89,7 @@ export const ConnectDeviceActions = ({
         Select a USB device
       </ConnectButton>
       <ConnectButton
-        onClick={() => onSelectDeviceClicked(BuiltinTransports.BLE)}
+        onClick={() => onSelectDeviceClicked(WebBleTransport.identifier)}
         variant="main"
         backgroundColor="main"
         size="large"

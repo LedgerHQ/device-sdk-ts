@@ -5,7 +5,10 @@ import {
   ConsoleLogger,
   DeviceSdk,
   DeviceSdkBuilder,
+  MockTransport,
+  WebBleTransport,
   WebLogsExporterLogger,
+  WebUsbHidTransport,
 } from "@ledgerhq/device-management-kit";
 import { FlipperSdkLogger } from "@ledgerhq/device-management-kit-flipper-plugin-client";
 
@@ -15,30 +18,32 @@ import { useSdkConfigContext } from "@/providers/SdkConfig";
 const SdkContext = createContext<DeviceSdk | null>(null);
 const LogsExporterContext = createContext<WebLogsExporterLogger | null>(null);
 
-function buildDefaultSdk(logsExporter: WebLogsExporterLogger) {
-  return new DeviceSdkBuilder()
-    .addTransport(BuiltinTransports.USB)
-    .addTransport(BuiltinTransports.BLE)
-    .addLogger(new ConsoleLogger())
-    .addLogger(logsExporter)
-    .addLogger(new FlipperSdkLogger())
-    .build();
-}
-
-function buildMockSdk(url: string, logsExporter: WebLogsExporterLogger) {
-  return new DeviceSdkBuilder()
-    .addTransport(BuiltinTransports.MOCK_SERVER)
-    .addLogger(new ConsoleLogger())
-    .addLogger(logsExporter)
-    .addLogger(new FlipperSdkLogger())
-    .addConfig({ mockUrl: url })
-    .build();
-}
-
 export const SdkProvider: React.FC<PropsWithChildren> = ({ children }) => {
   const {
     state: { transport, mockServerUrl },
   } = useSdkConfigContext();
+
+  const buildMockSdk = useCallback(
+    (url: string, logsExporter: WebLogsExporterLogger) => {
+      return new DeviceSdkBuilder()
+        .addTransport(new MockTransport(url))
+        .addLogger(new ConsoleLogger())
+        .addLogger(logsExporter)
+        .addLogger(new FlipperSdkLogger())
+        .build();
+    },
+    [],
+  );
+
+  const buildDefaultSdk = useCallback((logsExporter: WebLogsExporterLogger) => {
+    return new DeviceSdkBuilder()
+      .addTransport(new WebBleTransport())
+      .addTransport(new WebUsbHidTransport())
+      .addLogger(new ConsoleLogger())
+      .addLogger(logsExporter)
+      .addLogger(new FlipperSdkLogger())
+      .build();
+  }, []);
 
   const mockServerEnabled = transport === BuiltinTransports.MOCK_SERVER;
   const [state, setState] = useState(() => {
