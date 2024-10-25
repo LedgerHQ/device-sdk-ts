@@ -30,7 +30,6 @@ describe("SendApduUseCase", () => {
     sessionService = new DefaultDeviceSessionService(() => logger);
     managerApiDataSource = new AxiosManagerApiDataSource({
       managerApiUrl: "http://fake.url",
-      mockUrl: "http://fake-mock.url",
     });
     managerApi = new DefaultManagerApiService(managerApiDataSource);
   });

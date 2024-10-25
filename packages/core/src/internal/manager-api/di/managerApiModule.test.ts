@@ -17,7 +17,6 @@ describe("managerApiModuleFactory", () => {
         stub: false,
         config: {
           managerApiUrl: "http://fake.url",
-          mockUrl: "http://fake-mock.url",
         },
       });
       container = new Container();
@@ -42,7 +41,6 @@ describe("managerApiModuleFactory", () => {
       const config = container.get(managerApiTypes.SdkConfig);
       expect(config).toEqual({
         managerApiUrl: "http://fake.url",
-        mockUrl: "http://fake-mock.url",
       });
     });
   });
@@ -55,7 +53,6 @@ describe("managerApiModuleFactory", () => {
         stub: true,
         config: {
           managerApiUrl: "http://fake.url",
-          mockUrl: "http://fake-mock.url",
         },
       });
       container = new Container();
@@ -80,7 +77,6 @@ describe("managerApiModuleFactory", () => {
       const config = container.get(managerApiTypes.SdkConfig);
       expect(config).toEqual({
         managerApiUrl: "http://fake.url",
-        mockUrl: "http://fake-mock.url",
       });
     });
   });

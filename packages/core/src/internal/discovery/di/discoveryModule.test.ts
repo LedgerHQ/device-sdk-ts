@@ -11,7 +11,6 @@ import { loggerModuleFactory } from "@internal/logger-publisher/di/loggerModule"
 import { managerApiModuleFactory } from "@internal/manager-api/di/managerApiModule";
 import { transportModuleFactory } from "@internal/transport/di/transportModule";
 import { usbModuleFactory } from "@internal/transport/usb/di/usbModule";
-import { BuiltinTransports } from "@root/src";
 
 import { discoveryModuleFactory } from "./discoveryModule";
 import { discoveryTypes } from "./discoveryTypes";
@@ -29,11 +28,10 @@ describe("discoveryModuleFactory", () => {
       usbModuleFactory({ stub: false }),
       deviceModelModuleFactory({ stub: false }),
       deviceSessionModuleFactory(),
-      transportModuleFactory({ transports: [BuiltinTransports.USB] }),
+      transportModuleFactory(),
       managerApiModuleFactory({
         config: {
           managerApiUrl: "http://fake.url",
-          mockUrl: "http://fake-mock.url",
         },
       }),
     );

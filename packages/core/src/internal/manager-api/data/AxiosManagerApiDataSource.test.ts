@@ -7,10 +7,7 @@ import {
   CUSTOM_LOCK_SCREEN_APP,
   CUSTOM_LOCK_SCREEN_APP_METADATA,
 } from "@api/device-action/__test-utils__/data";
-import {
-  DEFAULT_MANAGER_API_BASE_URL,
-  DEFAULT_MOCK_SERVER_BASE_URL,
-} from "@internal/manager-api//model/Const";
+import { DEFAULT_MANAGER_API_BASE_URL } from "@internal/manager-api//model/Const";
 import { HttpFetchApiError } from "@internal/manager-api/model/Errors";
 
 import { AxiosManagerApiDataSource } from "./AxiosManagerApiDataSource";
@@ -23,7 +20,6 @@ describe("AxiosManagerApiDataSource", () => {
       it("with BTC app, should return the metadata", async () => {
         const api = new AxiosManagerApiDataSource({
           managerApiUrl: DEFAULT_MANAGER_API_BASE_URL,
-          mockUrl: DEFAULT_MOCK_SERVER_BASE_URL,
         });
 
         jest.spyOn(axios, "post").mockResolvedValue({
@@ -40,7 +36,6 @@ describe("AxiosManagerApiDataSource", () => {
       it("with no apps, should return an empty list", async () => {
         const api = new AxiosManagerApiDataSource({
           managerApiUrl: DEFAULT_MANAGER_API_BASE_URL,
-          mockUrl: DEFAULT_MOCK_SERVER_BASE_URL,
         });
 
         jest.spyOn(axios, "post").mockResolvedValue({
@@ -57,7 +52,6 @@ describe("AxiosManagerApiDataSource", () => {
       it("with BTC app and custom lock screen, should return the metadata", async () => {
         const api = new AxiosManagerApiDataSource({
           managerApiUrl: DEFAULT_MANAGER_API_BASE_URL,
-          mockUrl: DEFAULT_MOCK_SERVER_BASE_URL,
         });
 
         jest.spyOn(axios, "post").mockResolvedValue({
@@ -81,7 +75,6 @@ describe("AxiosManagerApiDataSource", () => {
       it("should throw an error if the request fails", async () => {
         const api = new AxiosManagerApiDataSource({
           managerApiUrl: DEFAULT_MANAGER_API_BASE_URL,
-          mockUrl: DEFAULT_MOCK_SERVER_BASE_URL,
         });
         const err = new Error("fetch error");
         jest.spyOn(axios, "post").mockRejectedValue(err);

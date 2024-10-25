@@ -23,7 +23,6 @@ describe("ListDeviceSessionsUseCase", () => {
     );
     managerApiDataSource = new AxiosManagerApiDataSource({
       managerApiUrl: "http://fake.url",
-      mockUrl: "http://fake-mock.url",
     });
     managerApi = new DefaultManagerApiService(managerApiDataSource);
     sessionService = new DefaultDeviceSessionService(() => logger);
