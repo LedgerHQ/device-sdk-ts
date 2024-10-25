@@ -4,7 +4,6 @@ import { Subject } from "rxjs";
 import { DeviceModel, DeviceModelId } from "@api/device/DeviceModel";
 import { StaticDeviceModelDataSource } from "@internal/device-model/data/StaticDeviceModelDataSource";
 import { InternalDeviceModel } from "@internal/device-model/model/DeviceModel";
-import { DefaultLoggerPublisherService } from "@internal/logger-publisher/service/DefaultLoggerPublisherService";
 import {
   DeviceNotRecognizedError,
   NoAccessibleDeviceError,
@@ -16,7 +15,6 @@ import { connectedDeviceStubBuilder } from "@internal/transport/model/InternalCo
 import { InternalDiscoveredDevice } from "@internal/transport/model/InternalDiscoveredDevice";
 import { RECONNECT_DEVICE_TIMEOUT } from "@internal/transport/usb/data/UsbHidConfig";
 import { hidDeviceStubBuilder } from "@internal/transport/usb/model/HIDDevice.stub";
-import { usbHidDeviceConnectionFactoryStubBuilder } from "@internal/transport/usb/service/UsbHidDeviceConnectionFactory.stub";
 
 import { WebUsbHidTransport } from "./WebUsbHidTransport";
 
@@ -24,7 +22,6 @@ jest.mock("@internal/logger-publisher/service/LoggerPublisherService");
 
 // Our StaticDeviceModelDataSource can directly be used in our unit tests
 const usbDeviceModelDataSource = new StaticDeviceModelDataSource();
-const logger = new DefaultLoggerPublisherService([], "web-usb-hid");
 
 const stubDevice: HIDDevice = hidDeviceStubBuilder();
 
@@ -39,11 +36,7 @@ describe("WebUsbHidTransport", () => {
   let transport: WebUsbHidTransport;
 
   function initializeTransport() {
-    transport = new WebUsbHidTransport(
-      usbDeviceModelDataSource,
-      () => logger,
-      usbHidDeviceConnectionFactoryStubBuilder(),
-    );
+    transport = new WebUsbHidTransport();
   }
 
   beforeEach(() => {

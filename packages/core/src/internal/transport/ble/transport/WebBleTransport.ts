@@ -1,4 +1,4 @@
-import { inject, injectable } from "inversify";
+import { injectable } from "inversify";
 import { Either, EitherAsync, Left, Maybe, Right } from "purify-ts";
 import { from, Observable, switchMap, timer } from "rxjs";
 import { v4 as uuid } from "uuid";
@@ -7,15 +7,9 @@ import { DeviceId } from "@api/device/DeviceModel";
 import { ConnectionType } from "@api/discovery/ConnectionType";
 import { SdkError } from "@api/Error";
 import { Transport } from "@api/transport/model/Transport";
-import {
-  BuiltinTransports,
-  TransportIdentifier,
-} from "@api/transport/model/TransportIdentifier";
+import { TransportIdentifier } from "@api/transport/model/TransportIdentifier";
 import type { DeviceModelDataSource } from "@internal/device-model/data/DeviceModelDataSource";
-import { deviceModelTypes } from "@internal/device-model/di/deviceModelTypes";
-import { loggerTypes } from "@internal/logger-publisher/di/loggerTypes";
 import type { LoggerPublisherService } from "@internal/logger-publisher/service/LoggerPublisherService";
-import { bleDiTypes } from "@internal/transport/ble/di/bleDiTypes";
 import { BleDeviceInfos } from "@internal/transport/ble/model/BleDeviceInfos";
 import { BleDeviceConnectionFactory } from "@internal/transport/ble/service/BleDeviceConnectionFactory";
 import { BleDeviceConnection } from "@internal/transport/ble/transport/BleDeviceConnection";
@@ -46,27 +40,36 @@ type WebBleInternalDevice = {
 
 @injectable()
 export class WebBleTransport implements Transport {
+  static readonly identifier: TransportIdentifier = "BLE";
   private readonly _connectedDevices: Array<BluetoothDevice>;
   private readonly _internalDevicesById: Map<DeviceId, WebBleInternalDevice>;
   private _deviceConnectionById: Map<DeviceId, BleDeviceConnection>;
   private _disconnectionHandlersById: Map<DeviceId, () => void>;
-  private _logger: LoggerPublisherService;
   private readonly connectionType: ConnectionType = "BLE";
-  private readonly identifier: TransportIdentifier = BuiltinTransports.BLE;
 
-  constructor(
-    @inject(deviceModelTypes.DeviceModelDataSource)
-    private _deviceModelDataSource: DeviceModelDataSource,
-    @inject(loggerTypes.LoggerPublisherServiceFactory)
-    loggerServiceFactory: (tag: string) => LoggerPublisherService,
-    @inject(bleDiTypes.BleDeviceConnectionFactory)
-    private _bleDeviceConnectionFactory: BleDeviceConnectionFactory,
-  ) {
+  private _logger!: LoggerPublisherService;
+  private _deviceModelDataSource!: DeviceModelDataSource;
+  private _bleDeviceConnectionFactory!: BleDeviceConnectionFactory;
+
+  constructor() {
     this._connectedDevices = [];
     this._internalDevicesById = new Map();
     this._deviceConnectionById = new Map();
     this._disconnectionHandlersById = new Map();
-    this._logger = loggerServiceFactory("WebBleTransport");
+  }
+
+  setLogger(logger: LoggerPublisherService): void {
+    this._logger = logger;
+  }
+
+  setDeviceModelDataSource(deviceModelDataSource: DeviceModelDataSource): void {
+    this._deviceModelDataSource = deviceModelDataSource;
+  }
+
+  setDeviceConnectionFactory(
+    deviceConnectionFactory: BleDeviceConnectionFactory,
+  ): void {
+    this._bleDeviceConnectionFactory = deviceConnectionFactory;
   }
 
   /**
@@ -91,7 +94,7 @@ export class WebBleTransport implements Transport {
   }
 
   getIdentifier(): TransportIdentifier {
-    return this.identifier;
+    return WebBleTransport.identifier;
   }
 
   listenToKnownDevices(): Observable<InternalDiscoveredDevice[]> {
@@ -187,7 +190,7 @@ export class WebBleTransport implements Transport {
     return {
       id: uuid(),
       deviceModel: bleDeviceInfos.deviceModel,
-      transport: this.identifier,
+      transport: WebBleTransport.identifier,
     };
   }
 
@@ -326,7 +329,7 @@ export class WebBleTransport implements Transport {
         deviceModel,
         id: deviceId,
         type: this.connectionType,
-        transport: this.identifier,
+        transport: WebBleTransport.identifier,
       });
       internalDevice.bleDevice.ongattserverdisconnected =
         this._getDeviceDisconnectedHandler(internalDevice, deviceConnection);

@@ -128,3 +128,7 @@ export {
   hexaStringToBuffer,
   isHexaString,
 } from "@api/utils/HexaString";
+// @TODO delete those internal exports once transports will be externalized
+export { WebBleTransport } from "@internal/transport/ble/transport/WebBleTransport";
+export { MockTransport } from "@internal/transport/mockserver/MockserverTransport";
+export { WebUsbHidTransport } from "@internal/transport/usb/transport/WebUsbHidTransport";

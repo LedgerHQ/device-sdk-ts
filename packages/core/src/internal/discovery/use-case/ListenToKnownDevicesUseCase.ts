@@ -1,24 +1,21 @@
-import { injectable, multiInject } from "inversify";
-import { from, map, merge, Observable, scan } from "rxjs";
+import { inject, injectable } from "inversify";
+import { map, merge, Observable, scan } from "rxjs";
 
 import { DeviceModel } from "@api/device/DeviceModel";
-import type { Transport } from "@api/transport/model/Transport";
 import { DiscoveredDevice } from "@api/types";
 import { transportDiTypes } from "@internal/transport/di/transportDiTypes";
 import { InternalDiscoveredDevice } from "@internal/transport/model/InternalDiscoveredDevice";
+import type { TransportService } from "@internal/transport/service/TransportService";
 
 /**
  * Listen to list of known discovered devices (and later BLE).
  */
 @injectable()
 export class ListenToKnownDevicesUseCase {
-  private readonly _transports: Transport[];
   constructor(
-    @multiInject(transportDiTypes.Transport)
-    transports: Transport[],
-  ) {
-    this._transports = transports;
-  }
+    @inject(transportDiTypes.TransportService)
+    private readonly _transportService: TransportService,
+  ) {}
 
   private mapInternalDiscoveredDeviceToDiscoveredDevice(
     discoveredDevice: InternalDiscoveredDevice,
@@ -35,10 +32,6 @@ export class ListenToKnownDevicesUseCase {
   }
 
   execute(): Observable<DiscoveredDevice[]> {
-    if (this._transports.length === 0) {
-      return from([[]]);
-    }
-
     /**
      * Note: we're not using combineLatest because combineLatest will
      * - wait for all observables to emit at least once before emitting.
@@ -47,14 +40,16 @@ export class ListenToKnownDevicesUseCase {
      * We want to keep listening to all transports until all have completed.
      */
 
-    const observablesWithIndex = this._transports.map((transport, index) =>
-      transport.listenToKnownDevices().pipe(
-        map((arr) => ({
-          index,
-          arr,
-        })),
-      ),
-    );
+    const observablesWithIndex = this._transportService
+      .getTransports()
+      .map((transport, index) =>
+        transport.listenToKnownDevices().pipe(
+          map((arr) => ({
+            index,
+            arr,
+          })),
+        ),
+      );
 
     return merge(...observablesWithIndex).pipe(
       scan(

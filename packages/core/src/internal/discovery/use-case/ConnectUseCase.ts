@@ -1,8 +1,7 @@
-import { inject, injectable, multiInject } from "inversify";
+import { inject, injectable } from "inversify";
 
 import { DeviceSessionId } from "@api/device-session/types";
 import { DiscoveredDevice } from "@api/transport/model/DiscoveredDevice";
-import type { Transport } from "@api/transport/model/Transport";
 import { DeviceId } from "@api/types";
 import { deviceSessionTypes } from "@internal/device-session/di/deviceSessionTypes";
 import { DeviceSession } from "@internal/device-session/model/DeviceSession";
@@ -12,7 +11,7 @@ import { LoggerPublisherService } from "@internal/logger-publisher/service/Logge
 import { managerApiTypes } from "@internal/manager-api/di/managerApiTypes";
 import type { ManagerApiService } from "@internal/manager-api/service/ManagerApiService";
 import { transportDiTypes } from "@internal/transport/di/transportDiTypes";
-import { TransportNotSupportedError } from "@internal/transport/model/Errors";
+import type { TransportService } from "@internal/transport/service/TransportService";
 
 /**
  * The arguments for the ConnectUseCase.
@@ -29,27 +28,19 @@ export type ConnectUseCaseArgs = {
  */
 @injectable()
 export class ConnectUseCase {
-  private readonly _transports: Transport[];
-  private readonly _sessionService: DeviceSessionService;
-  private readonly _loggerFactory: (tag: string) => LoggerPublisherService;
-  private readonly _managerApi: ManagerApiService;
   private readonly _logger: LoggerPublisherService;
 
   constructor(
-    @multiInject(transportDiTypes.Transport)
-    transports: Transport[],
+    @inject(transportDiTypes.TransportService)
+    private readonly _transportService: TransportService,
     @inject(deviceSessionTypes.DeviceSessionService)
-    sessionService: DeviceSessionService,
-    @inject(loggerTypes.LoggerPublisherServiceFactory)
-    loggerFactory: (tag: string) => LoggerPublisherService,
+    private readonly _sessionService: DeviceSessionService,
     @inject(managerApiTypes.ManagerApiService)
-    managerApi: ManagerApiService,
+    private readonly _managerApi: ManagerApiService,
+    @inject(loggerTypes.LoggerPublisherServiceFactory)
+    private readonly _loggerFactory: (tag: string) => LoggerPublisherService,
   ) {
-    this._sessionService = sessionService;
-    this._transports = transports;
-    this._loggerFactory = loggerFactory;
-    this._logger = loggerFactory("ConnectUseCase");
-    this._managerApi = managerApi;
+    this._logger = this._loggerFactory("ConnectUseCase");
   }
 
   private handleDeviceDisconnect(deviceId: DeviceId) {
@@ -61,12 +52,12 @@ export class ConnectUseCase {
   }
 
   async execute({ device }: ConnectUseCaseArgs): Promise<DeviceSessionId> {
-    const transport = this._transports.find(
-      (t) => t.getIdentifier() === device.transport,
-    );
-    if (!transport) {
-      throw new TransportNotSupportedError(new Error("Unknown transport"));
-    }
+    const transport = this._transportService
+      .getTransportById(device.id)
+      .mapLeft((error) => {
+        throw error;
+      })
+      .extract();
     const either = await transport.connect({
       deviceId: device.id,
       onDisconnect: (dId) => this.handleDeviceDisconnect(dId),

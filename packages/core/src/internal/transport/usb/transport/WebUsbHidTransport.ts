@@ -1,5 +1,4 @@
 import * as Sentry from "@sentry/minimal";
-import { inject, injectable } from "inversify";
 import { Either, EitherAsync, Left, Maybe, Right } from "purify-ts";
 import { BehaviorSubject, from, map, Observable, switchMap } from "rxjs";
 import { v4 as uuid } from "uuid";
@@ -8,14 +7,9 @@ import { DeviceId } from "@api/device/DeviceModel";
 import { ConnectionType } from "@api/discovery/ConnectionType";
 import { SdkError } from "@api/Error";
 import { Transport } from "@api/transport/model/Transport";
-import {
-  BuiltinTransports,
-  TransportIdentifier,
-} from "@api/transport/model/TransportIdentifier";
+import { TransportIdentifier } from "@api/transport/model/TransportIdentifier";
 import type { DeviceModelDataSource } from "@internal/device-model/data/DeviceModelDataSource";
-import { deviceModelTypes } from "@internal/device-model/di/deviceModelTypes";
 import { InternalDeviceModel } from "@internal/device-model/model/DeviceModel";
-import { loggerTypes } from "@internal/logger-publisher/di/loggerTypes";
 import type { LoggerPublisherService } from "@internal/logger-publisher/service/LoggerPublisherService";
 import { DisconnectHandler } from "@internal/transport/model/DeviceConnection";
 import {
@@ -30,7 +24,6 @@ import {
 import { InternalConnectedDevice } from "@internal/transport/model/InternalConnectedDevice";
 import { InternalDiscoveredDevice } from "@internal/transport/model/InternalDiscoveredDevice";
 import { LEDGER_VENDOR_ID } from "@internal/transport/usb/data/UsbHidConfig";
-import { usbDiTypes } from "@internal/transport/usb/di/usbDiTypes";
 import { UsbHidDeviceConnectionFactory } from "@internal/transport/usb/service/UsbHidDeviceConnectionFactory";
 import { UsbHidDeviceConnection } from "@internal/transport/usb/transport/UsbHidDeviceConnection";
 
@@ -38,8 +31,8 @@ type WebUsbHidInternalDiscoveredDevice = InternalDiscoveredDevice & {
   hidDevice: HIDDevice;
 };
 
-@injectable()
 export class WebUsbHidTransport implements Transport {
+  static readonly identifier: TransportIdentifier = "USB";
   /** List of HID devices that have been discovered */
   private _internalDiscoveredDevices: BehaviorSubject<
     Array<WebUsbHidInternalDiscoveredDevice>
@@ -61,23 +54,27 @@ export class WebUsbHidTransport implements Transport {
   /** AbortController to stop listening to HID connection events */
   private _connectionListenersAbortController: AbortController =
     new AbortController();
-  private _logger: LoggerPublisherService;
-  private _usbHidDeviceConnectionFactory: UsbHidDeviceConnectionFactory;
   private readonly connectionType: ConnectionType = "USB";
-  private readonly identifier: TransportIdentifier = BuiltinTransports.USB;
 
-  constructor(
-    @inject(deviceModelTypes.DeviceModelDataSource)
-    private deviceModelDataSource: DeviceModelDataSource,
-    @inject(loggerTypes.LoggerPublisherServiceFactory)
-    loggerServiceFactory: (tag: string) => LoggerPublisherService,
-    @inject(usbDiTypes.UsbHidDeviceConnectionFactory)
-    usbHidDeviceConnectionFactory: UsbHidDeviceConnectionFactory,
-  ) {
-    this._logger = loggerServiceFactory("WebUsbHidTransport");
-    this._usbHidDeviceConnectionFactory = usbHidDeviceConnectionFactory;
+  // @TODO: remove those `!`, temp for POC
+  private _logger!: LoggerPublisherService;
+  private _deviceModelDataSource!: DeviceModelDataSource;
+  private _usbHidDeviceConnectionFactory!: UsbHidDeviceConnectionFactory;
 
+  constructor() {
     this.startListeningToConnectionEvents();
+  }
+
+  setLogger(logger: LoggerPublisherService) {
+    this._logger = logger;
+  }
+  setDeviceModelDataSource(deviceModelDataSource: DeviceModelDataSource) {
+    this._deviceModelDataSource = deviceModelDataSource;
+  }
+  setDeviceConnectionFactory(
+    deviceConnectionFactory: UsbHidDeviceConnectionFactory,
+  ) {
+    this._usbHidDeviceConnectionFactory = deviceConnectionFactory;
   }
 
   /**
@@ -93,18 +90,19 @@ export class WebUsbHidTransport implements Transport {
   }
 
   isSupported() {
+    // NOTE: we can't use this._logger because it's not initialized when the transport is created
     try {
       const result = !!navigator?.hid;
-      this._logger.debug(`isSupported: ${result}`);
+      // this._logger.debug(`isSupported: ${result}`);
       return result;
-    } catch (error) {
-      this._logger.error(`isSupported: error`, { data: { error } });
+    } catch (_error) {
+      // this._logger.error(`isSupported: error`, { data: { error } });
       return false;
     }
   }
 
   getIdentifier(): TransportIdentifier {
-    return this.identifier;
+    return WebUsbHidTransport.identifier;
   }
 
   /**
@@ -158,7 +156,7 @@ export class WebUsbHidTransport implements Transport {
           id,
           deviceModel,
           hidDevice,
-          transport: this.identifier,
+          transport: WebUsbHidTransport.identifier,
         };
 
         this._logger.debug(
@@ -293,7 +291,8 @@ export class WebUsbHidTransport implements Transport {
   }
 
   private startListeningToConnectionEvents(): void {
-    this._logger.debug("startListeningToConnectionEvents");
+    // NOTE: we can't use this._logger because it's not initialized when the transport is created
+    // this._logger.debug("startListeningToConnectionEvents");
 
     this.hidApi.map((hidApi) => {
       hidApi.addEventListener(
@@ -385,14 +384,14 @@ export class WebUsbHidTransport implements Transport {
       deviceModel,
       id: deviceId,
       type: this.connectionType,
-      transport: this.identifier,
+      transport: WebUsbHidTransport.identifier,
     });
     return Right(connectedDevice);
   }
 
   private getDeviceModel(hidDevice: HIDDevice): Maybe<InternalDeviceModel> {
     const { productId } = hidDevice;
-    const matchingModel = this.deviceModelDataSource.getAllDeviceModels().find(
+    const matchingModel = this._deviceModelDataSource.getAllDeviceModels().find(
       (deviceModel) =>
         // outside of bootloader mode, the value that we need to identify a device model is the first byte of the actual hidDevice.productId
         deviceModel.usbProductId === productId >> 8 ||

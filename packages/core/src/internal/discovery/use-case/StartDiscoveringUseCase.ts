@@ -1,13 +1,12 @@
-import { injectable, multiInject } from "inversify";
+import { inject, injectable } from "inversify";
 import { map, mergeMap, Observable, of } from "rxjs";
 
 import { DeviceModel } from "@api/device/DeviceModel";
 import { DiscoveredDevice } from "@api/transport/model/DiscoveredDevice";
-import type { Transport } from "@api/transport/model/Transport";
 import { TransportIdentifier } from "@api/transport/model/TransportIdentifier";
 import { transportDiTypes } from "@internal/transport/di/transportDiTypes";
-import { TransportNotSupportedError } from "@internal/transport/model/Errors";
 import { InternalDiscoveredDevice } from "@internal/transport/model/InternalDiscoveredDevice";
+import type { TransportService } from "@internal/transport/service/TransportService";
 
 export type StartDiscoveringUseCaseArgs = {
   /**
@@ -25,8 +24,8 @@ export type StartDiscoveringUseCaseArgs = {
 @injectable()
 export class StartDiscoveringUseCase {
   constructor(
-    @multiInject(transportDiTypes.Transport)
-    private transports: Transport[],
+    @inject(transportDiTypes.TransportService)
+    private _transportService: TransportService,
   ) {}
 
   private mapDiscoveredDevice(
@@ -47,19 +46,23 @@ export class StartDiscoveringUseCase {
   execute({
     transport,
   }: StartDiscoveringUseCaseArgs): Observable<DiscoveredDevice> {
+    console.log(
+      "startDiscoveringUseCase",
+      this._transportService.getTransports(),
+    );
     if (transport) {
-      const instance = this.transports.find(
-        (t) => t.getIdentifier() === transport,
-      );
-      if (!instance) {
-        throw new TransportNotSupportedError(new Error("Unknown transport"));
-      }
+      const instance = this._transportService
+        .getTransportById(transport)
+        .mapLeft((error) => {
+          throw error;
+        })
+        .extract();
       return instance
         .startDiscovering()
         .pipe(map((device) => this.mapDiscoveredDevice(device)));
     } else {
       // Discover from all transports in parallel
-      return of(...this.transports).pipe(
+      return of(...this._transportService.getTransports()).pipe(
         mergeMap((instance) =>
           instance
             .startDiscovering()
