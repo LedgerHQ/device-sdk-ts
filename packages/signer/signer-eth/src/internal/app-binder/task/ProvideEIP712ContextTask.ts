@@ -1,5 +1,6 @@
 import {
   type TypedDataClearSignContextSuccess,
+  type TypedDataFilter,
   type TypedDataTokenIndex,
   VERIFYING_CONTRACT_TOKEN_INDEX,
 } from "@ledgerhq/context-module";
@@ -139,7 +140,7 @@ export class ProvideEIP712ContextTask {
       }
       // If there is a filter, it should be sent just before the corresponding implementation:
       // https://github.com/LedgerHQ/app-ethereum/blob/develop/doc/ethapp.adoc#amount-join-token
-      const maybeResult = await this.provideFiltering(value, deviceIndexes);
+      const maybeResult = await this.filterValue(value, deviceIndexes);
       if (
         maybeResult.isJust() &&
         !isSuccessCommandResult(maybeResult.extract())
@@ -150,6 +151,36 @@ export class ProvideEIP712ContextTask {
       result = await this.getImplementationTask(value).run();
       if (!isSuccessCommandResult(result)) {
         return result;
+      }
+
+      // If the value is an empty array, we should discard all sub-filters since
+      // there will be no according sub-values in the message
+      if (
+        this.args.clearSignContext.isJust() &&
+        value.value instanceof TypedDataValueArray &&
+        value.value.length === 0
+      ) {
+        const filters = Object.entries(
+          this.args.clearSignContext.extract().filters,
+        );
+        const discardedFilters = filters
+          .filter(([path, _]) => path.startsWith(`${value.path}.[]`))
+          .map(([_, filter]) => filter);
+        for (const filter of discardedFilters) {
+          result = await this.api.sendCommand(
+            new SendEIP712FilteringCommand({
+              type: Eip712FilterType.DiscardedPath,
+              path: filter.path,
+            }),
+          );
+          if (!isSuccessCommandResult(result)) {
+            return result;
+          }
+          result = await this.provideFiltering(filter, deviceIndexes, true);
+          if (!isSuccessCommandResult(result)) {
+            return result;
+          }
+        }
       }
     }
     return result;
@@ -216,7 +247,7 @@ export class ProvideEIP712ContextTask {
     return Nothing;
   }
 
-  async provideFiltering(
+  async filterValue(
     value: TypedDataValue,
     deviceIndexes: DeviceAssetIndexes,
   ): Promise<Maybe<CommandResult<void>>> {
@@ -225,53 +256,59 @@ export class ProvideEIP712ContextTask {
       if (filter === undefined) {
         return Nothing;
       }
-      switch (filter.type) {
-        case "datetime":
-          return Maybe.of(
-            await this.api.sendCommand(
-              new SendEIP712FilteringCommand({
-                type: Eip712FilterType.Datetime,
-                displayName: filter.displayName,
-                signature: filter.signature,
-              }),
-            ),
-          );
-        case "raw":
-          return Maybe.of(
-            await this.api.sendCommand(
-              new SendEIP712FilteringCommand({
-                type: Eip712FilterType.Raw,
-                displayName: filter.displayName,
-                signature: filter.signature,
-              }),
-            ),
-          );
-        case "token":
-          this.sanitizeDeviceIndex(filter.tokenIndex, deviceIndexes);
-          return Maybe.of(
-            await this.api.sendCommand(
-              new SendEIP712FilteringCommand({
-                type: Eip712FilterType.Token,
-                tokenIndex: deviceIndexes.indexes[filter.tokenIndex]!,
-                signature: filter.signature,
-              }),
-            ),
-          );
-        case "amount":
-          this.sanitizeDeviceIndex(filter.tokenIndex, deviceIndexes);
-          return Maybe.of(
-            await this.api.sendCommand(
-              new SendEIP712FilteringCommand({
-                type: Eip712FilterType.Amount,
-                displayName: filter.displayName,
-                tokenIndex: deviceIndexes.indexes[filter.tokenIndex]!,
-                signature: filter.signature,
-              }),
-            ),
-          );
-      }
+      return Maybe.of(
+        await this.provideFiltering(filter, deviceIndexes, false),
+      );
     }
     return Nothing;
+  }
+
+  async provideFiltering(
+    filter: TypedDataFilter,
+    deviceIndexes: DeviceAssetIndexes,
+    discarded: boolean,
+  ): Promise<CommandResult<void>> {
+    switch (filter.type) {
+      case "datetime":
+        return await this.api.sendCommand(
+          new SendEIP712FilteringCommand({
+            type: Eip712FilterType.Datetime,
+            discarded,
+            displayName: filter.displayName,
+            signature: filter.signature,
+          }),
+        );
+      case "raw":
+        return await this.api.sendCommand(
+          new SendEIP712FilteringCommand({
+            type: Eip712FilterType.Raw,
+            discarded,
+            displayName: filter.displayName,
+            signature: filter.signature,
+          }),
+        );
+      case "token":
+        this.sanitizeDeviceIndex(filter.tokenIndex, deviceIndexes);
+        return await this.api.sendCommand(
+          new SendEIP712FilteringCommand({
+            type: Eip712FilterType.Token,
+            discarded,
+            tokenIndex: deviceIndexes.indexes[filter.tokenIndex]!,
+            signature: filter.signature,
+          }),
+        );
+      case "amount":
+        this.sanitizeDeviceIndex(filter.tokenIndex, deviceIndexes);
+        return await this.api.sendCommand(
+          new SendEIP712FilteringCommand({
+            type: Eip712FilterType.Amount,
+            discarded,
+            displayName: filter.displayName,
+            tokenIndex: deviceIndexes.indexes[filter.tokenIndex]!,
+            signature: filter.signature,
+          }),
+        );
+    }
   }
 
   private sanitizeDeviceIndex(

@@ -484,7 +484,7 @@ describe("TokenContextLoader", () => {
       expect(result.type).toEqual("success");
     });
 
-    it("should return an error if value is not found", async () => {
+    it("should ignore the token if value is not found", async () => {
       // GIVEN
       const ctx = {
         verifyingContract: "0x000000000022d473030f116ddee9f6b43ac78ba3",
@@ -522,12 +522,13 @@ describe("TokenContextLoader", () => {
       const result = await loader.load(ctx);
 
       // THEN
-      expect(result).toEqual({
-        type: "error",
-        error: new Error(
-          "The token filter references the value details.badtoken which is absent from the message",
-        ),
-      });
+      expect(result.type).toEqual("success");
+      if (result.type === "success") {
+        expect(result.filters["details.badtoken"]?.["displayName"]).toEqual(
+          "Amount allowance",
+        );
+        expect(result.tokens).toEqual({});
+      }
     });
   });
 });

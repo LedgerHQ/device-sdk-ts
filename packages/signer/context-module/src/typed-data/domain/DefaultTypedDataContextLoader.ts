@@ -67,12 +67,8 @@ export class DefaultTypedDataContextLoader implements TypedDataContextLoader {
           (entry) => entry.path === filter.path,
         );
         if (values.length === 0) {
-          return {
-            type: "error",
-            error: new Error(
-              `The token filter references the value ${filter.path} which is absent from the message`,
-            ),
-          };
+          // No value matching the referenced token. It may be located in an empty array.
+          continue;
         }
         const value = values[0]!;
         const address = this.convertAddressToHexaString(value.value);

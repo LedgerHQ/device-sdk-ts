@@ -57,6 +57,10 @@ const DATE_TIME_APDU = Uint8Array.from([
   0xaf, 0x30, 0x3d, 0xc0, 0x16, 0xda, 0x4c, 0x1c, 0x3d, 0x18, 0x46, 0x63, 0xda,
   0x8f, 0x6a,
 ]);
+const DISCARDED_PATH_APDU = Uint8Array.from([
+  0xe0, 0x1e, 0x00, 0x01, 0x11, 0x10, 0x74, 0x6f, 0x2e, 0x5b, 0x5d, 0x2e, 0x77,
+  0x61, 0x6c, 0x6c, 0x65, 0x74, 0x73, 0x2e, 0x5b, 0x5d,
+]);
 
 describe("SendEIP712FilteringCommand", () => {
   describe("getApdu", () => {
@@ -70,6 +74,19 @@ describe("SendEIP712FilteringCommand", () => {
       const apdu = command.getApdu();
       // THEN
       expect(apdu.getRawApdu()).toStrictEqual(ACTIVATE_APDU);
+    });
+
+    it("Discarded path APDU", () => {
+      // GIVEN
+      const args: SendEIP712FilteringCommandArgs = {
+        type: Eip712FilterType.DiscardedPath,
+        path: "to.[].wallets.[]",
+      };
+      // WHEN
+      const command = new SendEIP712FilteringCommand(args);
+      const apdu = command.getApdu();
+      // THEN
+      expect(apdu.getRawApdu()).toStrictEqual(DISCARDED_PATH_APDU);
     });
 
     it("Message info APDU", () => {
@@ -92,6 +109,7 @@ describe("SendEIP712FilteringCommand", () => {
       // GIVEN
       const args: SendEIP712FilteringCommandArgs = {
         type: Eip712FilterType.Raw,
+        discarded: false,
         displayName: "From",
         signature:
           "3045022100b820e4dfb1a0cde6dc97d9a34eebb1a4eef0b226262e6788118ab3c7fb79fe3502202d426a388b4c3a8096b3f84412a702ea537770e61ee0727ec1b710c1da520c44",
@@ -107,6 +125,7 @@ describe("SendEIP712FilteringCommand", () => {
       // GIVEN
       const args: SendEIP712FilteringCommandArgs = {
         type: Eip712FilterType.Token,
+        discarded: false,
         tokenIndex: 1,
         signature:
           "3045022100ff727847445431e571cd2a0d9db42a7eb62e37877b9bf20e6a96584255347e1902200a6e95b7f8e63b2fab0bef88c747de6a387d06351be5bdc34b2c1f9aea6fdd28",
@@ -122,6 +141,7 @@ describe("SendEIP712FilteringCommand", () => {
       // GIVEN
       const args: SendEIP712FilteringCommandArgs = {
         type: Eip712FilterType.Amount,
+        discarded: false,
         displayName: "Receive minimum",
         tokenIndex: 1,
         signature:
@@ -138,6 +158,7 @@ describe("SendEIP712FilteringCommand", () => {
       // GIVEN
       const args: SendEIP712FilteringCommandArgs = {
         type: Eip712FilterType.Datetime,
+        discarded: false,
         displayName: "Approval expire",
         signature:
           "3045022100e847166e60f851e3c8d1f44139811898ccd0d3a03aed6c77f8c3993813f479d2022031fe6b6a574b56c5104003cf07900d11ffaf303dc016da4c1c3d184663da8f6a",
@@ -147,6 +168,24 @@ describe("SendEIP712FilteringCommand", () => {
       const apdu = command.getApdu();
       // THEN
       expect(apdu.getRawApdu()).toStrictEqual(DATE_TIME_APDU);
+    });
+
+    it("Discarded filter", () => {
+      // GIVEN
+      const args: SendEIP712FilteringCommandArgs = {
+        type: Eip712FilterType.Raw,
+        discarded: true,
+        displayName: "From",
+        signature:
+          "3045022100b820e4dfb1a0cde6dc97d9a34eebb1a4eef0b226262e6788118ab3c7fb79fe3502202d426a388b4c3a8096b3f84412a702ea537770e61ee0727ec1b710c1da520c44",
+      };
+      // WHEN
+      const command = new SendEIP712FilteringCommand(args);
+      const apdu = command.getApdu();
+      // THEN
+      expect(apdu.getRawApdu()).toStrictEqual(
+        Uint8Array.from([...RAW_APDU.slice(0, 2), 0x01, ...RAW_APDU.slice(3)]),
+      );
     });
   });
 
