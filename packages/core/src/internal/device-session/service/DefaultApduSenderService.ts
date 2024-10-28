@@ -1,4 +1,3 @@
-import { inject, injectable } from "inversify";
 import { Either, Left, Maybe, Right } from "purify-ts";
 import { v4 } from "uuid";
 
@@ -12,19 +11,21 @@ import {
 import {
   FramerApduError,
   FramerOverflowError,
+  FrameSizeUnsetError,
 } from "@internal/device-session/model/Errors";
 import { Frame } from "@internal/device-session/model/Frame";
 import { FrameHeader } from "@internal/device-session/model/FrameHeader";
+import { DefaultApduReceiverService } from "@internal/device-session/service/DefaultApduReceiverService";
 import { FramerUtils } from "@internal/device-session/utils/FramerUtils";
-import { loggerTypes } from "@internal/logger-publisher/di/loggerTypes";
 import { LoggerPublisherService } from "@internal/logger-publisher/service/LoggerPublisherService";
 import { SdkError } from "@root/src/api/Error";
 
 import type { ApduSenderService } from "./ApduSenderService";
 
 export type DefaultApduSenderServiceConstructorArgs = {
-  frameSize: number;
-  channel?: Maybe<Uint8Array>;
+  loggerFactory: (name: string) => LoggerPublisherService;
+  frameSize?: number;
+  channel?: Uint8Array;
   padding?: boolean;
 };
 
@@ -33,9 +34,8 @@ export type DefaultApduSenderServiceConstructorArgs = {
  *
  * Split APDU in an array of frames readies to send to a InternalConnectedDevice
  */
-@injectable()
 export class DefaultApduSenderService implements ApduSenderService {
-  protected _frameSize: number;
+  protected _frameSize: Maybe<number>;
   protected _channel: Maybe<Uint8Array>;
   protected _padding: boolean;
   private _logger: LoggerPublisherService;
@@ -48,21 +48,24 @@ export class DefaultApduSenderService implements ApduSenderService {
    * @param padding
    * @param loggerServiceFactory
    */
-  constructor(
-    {
-      frameSize,
-      channel = Maybe.zero(),
-      padding = false,
-    }: DefaultApduSenderServiceConstructorArgs,
-    @inject(loggerTypes.LoggerPublisherServiceFactory)
-    loggerServiceFactory: (tag: string) => LoggerPublisherService,
-  ) {
-    this._frameSize = frameSize;
-    this._channel = channel;
+  constructor({
+    frameSize,
+    loggerFactory,
+    channel,
+    padding = false,
+  }: DefaultApduSenderServiceConstructorArgs) {
+    this._frameSize = Maybe.fromNullable(frameSize);
+    this._channel = Maybe.fromNullable(channel);
     this._padding = padding;
-    this._logger = loggerServiceFactory("framer");
+    this._logger = loggerFactory(DefaultApduReceiverService.name);
   }
 
+  /**
+   * Set frame size
+   */
+  public setFrameSize(frameSize: number) {
+    this._frameSize = Maybe.of(frameSize);
+  }
   /**
    * Get frames from apdu
    *
@@ -99,32 +102,38 @@ export class DefaultApduSenderService implements ApduSenderService {
     apdu: Uint8Array,
     frameIndex: number,
   ): Either<SdkError, Frame> {
-    const header = this.getFrameHeaderFrom(frameIndex, apdu.length);
-    const frameOffset =
-      frameIndex * this._frameSize - this.getHeaderSizeSumFrom(frameIndex);
+    return this._frameSize
+      .toEither(new FrameSizeUnsetError("Missing frame size"))
+      .chain((frameSize) => {
+        const header = this.getFrameHeaderFrom(frameIndex, apdu.length);
+        const frameOffset =
+          frameIndex * frameSize - this.getHeaderSizeSumFrom(frameIndex);
 
-    if (frameOffset > apdu.length) {
-      return Left(new FramerOverflowError());
-    }
-    if (header.getLength() > this._frameSize) {
-      return Left(new FramerApduError());
-    }
-    const dataMaxSize = this._frameSize - header.getLength();
-    const data = apdu.slice(
-      frameIndex === 0 ? 0 : frameOffset,
-      frameIndex === 0
-        ? dataMaxSize
-        : frameOffset + this._frameSize - header.getLength(),
-    );
-    const frameData = this._padding
-      ? new Uint8Array(dataMaxSize).fill(0)
-      : new Uint8Array(data.length < dataMaxSize ? data.length : dataMaxSize);
-    frameData.set(data, 0);
-    const frame = new Frame({
-      header,
-      data: frameData,
-    });
-    return Right(frame);
+        if (frameOffset > apdu.length) {
+          return Left(new FramerOverflowError());
+        }
+        if (header.getLength() > frameSize) {
+          return Left(new FramerApduError());
+        }
+        const dataMaxSize = frameSize - header.getLength();
+        const data = apdu.slice(
+          frameIndex === 0 ? 0 : frameOffset,
+          frameIndex === 0
+            ? dataMaxSize
+            : frameOffset + frameSize - header.getLength(),
+        );
+        const frameData = this._padding
+          ? new Uint8Array(dataMaxSize).fill(0)
+          : new Uint8Array(
+              data.length < dataMaxSize ? data.length : dataMaxSize,
+            );
+        frameData.set(data, 0);
+        const frame = new Frame({
+          header,
+          data: frameData,
+        });
+        return Right(frame);
+      });
   }
 
   /**

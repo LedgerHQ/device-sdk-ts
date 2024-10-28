@@ -46,10 +46,7 @@ export class StartDiscoveringUseCase {
   execute({
     transport,
   }: StartDiscoveringUseCaseArgs): Observable<DiscoveredDevice> {
-    console.log(
-      "startDiscoveringUseCase",
-      this._transportService.getTransports(),
-    );
+    console.log("startDiscoveringUseCase", transport);
     if (transport) {
       const instance = this._transportService
         .getTransportById(transport)

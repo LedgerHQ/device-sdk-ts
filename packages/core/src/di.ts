@@ -17,8 +17,6 @@ import { managerApiModuleFactory } from "@internal/manager-api/di/managerApiModu
 import { DEFAULT_MANAGER_API_BASE_URL } from "@internal/manager-api/model/Const";
 import { sendModuleFactory } from "@internal/send/di/sendModule";
 import { transportModuleFactory } from "@internal/transport//di/transportModule";
-import { bleModuleFactory } from "@internal/transport/ble/di/bleModule";
-import { usbModuleFactory } from "@internal/transport/usb/di/usbModule";
 
 // Uncomment this line to enable the logger middleware
 // const logger = makeLoggerMiddleware();
@@ -45,7 +43,6 @@ export const makeContainer = ({
     configModuleFactory({ stub }),
     deviceModelModuleFactory({ stub }),
     transportModuleFactory({ stub }),
-    usbModuleFactory({ stub }),
     managerApiModuleFactory({ stub, config }),
     discoveryModuleFactory({ stub }),
     loggerModuleFactory({ subscribers: loggers }),
@@ -53,7 +50,6 @@ export const makeContainer = ({
     sendModuleFactory({ stub }),
     commandModuleFactory({ stub }),
     deviceActionModuleFactory({ stub }),
-    bleModuleFactory(),
     // modules go here
   );
 

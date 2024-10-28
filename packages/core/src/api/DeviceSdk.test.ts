@@ -27,7 +27,7 @@ describe("DeviceSdk", () => {
         config: {
           managerApiUrl: "http://fake.url",
         },
-        transports: [],
+        transportBuilders: [],
       });
     });
 
@@ -77,7 +77,7 @@ describe("DeviceSdk", () => {
         config: {
           managerApiUrl: "http://fake.url",
         },
-        transports: [],
+        transportBuilders: [],
       });
     });
 

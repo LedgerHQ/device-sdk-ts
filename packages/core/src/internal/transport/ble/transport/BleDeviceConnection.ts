@@ -1,11 +1,10 @@
-import { Either, Left, Maybe, Nothing, Right } from "purify-ts";
+import { Either, Left, Maybe, Right } from "purify-ts";
 
 import { CommandUtils } from "@api/command/utils/CommandUtils";
 import { ApduResponse } from "@api/device-session/ApduResponse";
 import { SdkError } from "@api/Error";
 import { ApduReceiverService } from "@internal/device-session/service/ApduReceiverService";
 import { ApduSenderService } from "@internal/device-session/service/ApduSenderService";
-import { DefaultApduSenderServiceConstructorArgs } from "@internal/device-session/service/DefaultApduSenderService";
 import type { LoggerPublisherService } from "@internal/logger-publisher/service/LoggerPublisherService";
 import { DeviceConnection } from "@internal/transport/model/DeviceConnection";
 import {
@@ -16,10 +15,9 @@ import {
 type BleDeviceConnectionConstructorArgs = {
   writeCharacteristic: BluetoothRemoteGATTCharacteristic;
   notifyCharacteristic: BluetoothRemoteGATTCharacteristic;
-  apduSenderFactory: (
-    args: DefaultApduSenderServiceConstructorArgs,
-  ) => ApduSenderService;
-  apduReceiverFactory: () => ApduReceiverService;
+  apduSender: ApduSenderService;
+  apduReceiver: ApduReceiverService;
+  loggerFactory: (name: string) => LoggerPublisherService;
 };
 
 export type DataViewEvent = Event & {
@@ -32,10 +30,7 @@ export class BleDeviceConnection implements DeviceConnection {
   private _writeCharacteristic: BluetoothRemoteGATTCharacteristic;
   private _notifyCharacteristic: BluetoothRemoteGATTCharacteristic;
   private readonly _logger: LoggerPublisherService;
-  private _apduSender: Maybe<ApduSenderService>;
-  private readonly _apduSenderFactory: (
-    args: DefaultApduSenderServiceConstructorArgs,
-  ) => ApduSenderService;
+  private _apduSender: ApduSenderService;
   private readonly _apduReceiver: ApduReceiverService;
   private _isDeviceReady: boolean;
   private _sendApduPromiseResolver: Maybe<{
@@ -46,19 +41,16 @@ export class BleDeviceConnection implements DeviceConnection {
     reject(err: SdkError): void;
   }>;
 
-  constructor(
-    {
-      writeCharacteristic,
-      notifyCharacteristic,
-      apduSenderFactory,
-      apduReceiverFactory,
-    }: BleDeviceConnectionConstructorArgs,
-    loggerServiceFactory: (tag: string) => LoggerPublisherService,
-  ) {
-    this._apduSenderFactory = apduSenderFactory;
-    this._apduSender = Nothing;
-    this._apduReceiver = apduReceiverFactory();
-    this._logger = loggerServiceFactory("BleDeviceConnection");
+  constructor({
+    writeCharacteristic,
+    notifyCharacteristic,
+    apduSender,
+    apduReceiver,
+    loggerFactory,
+  }: BleDeviceConnectionConstructorArgs) {
+    this._apduSender = apduSender;
+    this._apduReceiver = apduReceiver;
+    this._logger = loggerFactory(BleDeviceConnection.name);
     this._writeCharacteristic = writeCharacteristic;
     this._notifyCharacteristic = notifyCharacteristic;
     this._notifyCharacteristic.oncharacteristicvaluechanged =
@@ -103,7 +95,7 @@ export class BleDeviceConnection implements DeviceConnection {
     // the mtu is the 5th byte of the response
     const [frameSize] = mtuResponse.slice(5);
     if (frameSize) {
-      this._apduSender = Maybe.of(this._apduSenderFactory({ frameSize }));
+      this._apduSender.setFrameSize(frameSize);
       this._settleReconnectionPromiseResolvers.ifJust((promise) => {
         promise.resolve();
         this._settleReconnectionPromiseResolvers = Maybe.zero();
@@ -198,10 +190,7 @@ export class BleDeviceConnection implements DeviceConnection {
         });
       },
     );
-    const frames = this._apduSender.mapOrDefault(
-      (apduSender) => apduSender.getFrames(apdu),
-      [],
-    );
+    const frames = this._apduSender.getFrames(apdu);
     for (const frame of frames) {
       try {
         this._logger.debug("Sending Frame", {

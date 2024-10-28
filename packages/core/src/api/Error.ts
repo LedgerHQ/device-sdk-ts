@@ -61,3 +61,7 @@ export class UnknownDeviceExchangeError implements SdkError {
 export class DeviceSdkInitializationError extends GeneralSdkError {
   override readonly _tag = "DeviceSdkInitializationError";
 }
+
+export class TransportInitializationError extends GeneralSdkError {
+  override readonly _tag = "TransportInitializationError";
+}

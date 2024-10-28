@@ -9,9 +9,10 @@ import { SdkError } from "@api/Error";
 import { Transport } from "@api/transport/model/Transport";
 import { TransportIdentifier } from "@api/transport/model/TransportIdentifier";
 import type { DeviceModelDataSource } from "@internal/device-model/data/DeviceModelDataSource";
+import type { ApduReceiverService } from "@internal/device-session/service/ApduReceiverService";
+import type { ApduSenderService } from "@internal/device-session/service/ApduSenderService";
 import type { LoggerPublisherService } from "@internal/logger-publisher/service/LoggerPublisherService";
 import { BleDeviceInfos } from "@internal/transport/ble/model/BleDeviceInfos";
-import { BleDeviceConnectionFactory } from "@internal/transport/ble/service/BleDeviceConnectionFactory";
 import { BleDeviceConnection } from "@internal/transport/ble/transport/BleDeviceConnection";
 import { DisconnectHandler } from "@internal/transport/model/DeviceConnection";
 import {
@@ -47,29 +48,19 @@ export class WebBleTransport implements Transport {
   private _disconnectionHandlersById: Map<DeviceId, () => void>;
   private readonly connectionType: ConnectionType = "BLE";
 
-  private _logger!: LoggerPublisherService;
-  private _deviceModelDataSource!: DeviceModelDataSource;
-  private _bleDeviceConnectionFactory!: BleDeviceConnectionFactory;
+  private _logger: LoggerPublisherService;
 
-  constructor() {
+  constructor(
+    private readonly _apduSender: ApduSenderService,
+    private readonly _apduReceiver: ApduReceiverService,
+    private readonly _deviceModelDataSource: DeviceModelDataSource,
+    private readonly _loggerFactory: (name: string) => LoggerPublisherService,
+  ) {
+    this._logger = this._loggerFactory(WebBleTransport.name);
     this._connectedDevices = [];
     this._internalDevicesById = new Map();
     this._deviceConnectionById = new Map();
     this._disconnectionHandlersById = new Map();
-  }
-
-  setLogger(logger: LoggerPublisherService): void {
-    this._logger = logger;
-  }
-
-  setDeviceModelDataSource(deviceModelDataSource: DeviceModelDataSource): void {
-    this._deviceModelDataSource = deviceModelDataSource;
-  }
-
-  setDeviceConnectionFactory(
-    deviceConnectionFactory: BleDeviceConnectionFactory,
-  ): void {
-    this._bleDeviceConnectionFactory = deviceConnectionFactory;
   }
 
   /**
@@ -318,10 +309,13 @@ export class WebBleTransport implements Transport {
           internalDevice.bleDeviceInfos.notifyUuid,
         ),
       ]);
-      const deviceConnection = this._bleDeviceConnectionFactory.create(
+      const deviceConnection = new BleDeviceConnection({
         writeCharacteristic,
         notifyCharacteristic,
-      );
+        apduSender: this._apduSender,
+        apduReceiver: this._apduReceiver,
+        loggerFactory: this._loggerFactory,
+      });
       await deviceConnection.setup();
       const connectedDevice = new InternalConnectedDevice({
         sendApdu: (apdu, triggersDisconnection) =>

@@ -10,7 +10,6 @@ import { StopDiscoveringUseCase } from "@internal/discovery/use-case/StopDiscove
 import { loggerModuleFactory } from "@internal/logger-publisher/di/loggerModule";
 import { managerApiModuleFactory } from "@internal/manager-api/di/managerApiModule";
 import { transportModuleFactory } from "@internal/transport/di/transportModule";
-import { usbModuleFactory } from "@internal/transport/usb/di/usbModule";
 
 import { discoveryModuleFactory } from "./discoveryModule";
 import { discoveryTypes } from "./discoveryTypes";
@@ -25,7 +24,6 @@ describe("discoveryModuleFactory", () => {
       mod,
       // The following modules are injected into discovery module
       loggerModuleFactory(),
-      usbModuleFactory({ stub: false }),
       deviceModelModuleFactory({ stub: false }),
       deviceSessionModuleFactory(),
       transportModuleFactory(),

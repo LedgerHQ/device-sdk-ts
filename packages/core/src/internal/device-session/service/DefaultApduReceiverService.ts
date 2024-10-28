@@ -1,4 +1,3 @@
-import { inject, injectable } from "inversify";
 import { Either, Just, Left, Maybe, Nothing, Right } from "purify-ts";
 import { v4 } from "uuid";
 
@@ -14,28 +13,23 @@ import { ReceiverApduError } from "@internal/device-session/model/Errors";
 import { Frame } from "@internal/device-session/model/Frame";
 import { FrameHeader } from "@internal/device-session/model/FrameHeader";
 import { FramerUtils } from "@internal/device-session/utils/FramerUtils";
-import { loggerTypes } from "@internal/logger-publisher/di/loggerTypes";
 import { LoggerPublisherService } from "@internal/logger-publisher/service/LoggerPublisherService";
 
 import { ApduReceiverService } from "./ApduReceiverService";
 
 export type DefaultApduReceiverConstructorArgs = {
-  channel?: Maybe<Uint8Array>;
+  loggerFactory: (name: string) => LoggerPublisherService;
+  channel?: Uint8Array;
 };
 
-@injectable()
 export class DefaultApduReceiverService implements ApduReceiverService {
   private readonly _channel: Maybe<Uint8Array>;
   private readonly _logger: LoggerPublisherService;
   private _pendingFrames: Frame[];
 
-  constructor(
-    { channel = Maybe.zero() }: DefaultApduReceiverConstructorArgs,
-    @inject(loggerTypes.LoggerPublisherServiceFactory)
-    loggerModuleFactory: (tag: string) => LoggerPublisherService,
-  ) {
-    this._channel = channel;
-    this._logger = loggerModuleFactory("ApduReceiverService");
+  constructor({ channel, loggerFactory }: DefaultApduReceiverConstructorArgs) {
+    this._channel = Maybe.fromNullable(channel);
+    this._logger = loggerFactory(DefaultApduReceiverService.name);
     this._pendingFrames = [];
   }
 

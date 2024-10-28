@@ -1,5 +1,3 @@
-import { Maybe } from "purify-ts";
-
 import { ApduReceiverService } from "@internal/device-session/service/ApduReceiverService";
 import {
   DefaultApduReceiverConstructorArgs,
@@ -11,10 +9,8 @@ export const defaultApduReceiverServiceStubBuilder = (
   props: Partial<DefaultApduReceiverConstructorArgs> = {},
   loggerFactory: (tag: string) => LoggerPublisherService,
 ): ApduReceiverService =>
-  new DefaultApduReceiverService(
-    {
-      channel: Maybe.of(new Uint8Array([0x12, 0x34])),
-      ...props,
-    },
+  new DefaultApduReceiverService({
+    channel: new Uint8Array([0x12, 0x34]),
     loggerFactory,
-  );
+    ...props,
+  });

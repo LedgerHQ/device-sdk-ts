@@ -64,10 +64,10 @@ describe("DefaultApduReceiverService", () => {
 
   describe("without dataSize", () => {
     beforeEach(() => {
-      service = new DefaultApduReceiverService(
-        { channel: Just(new Uint8Array([0xaa, 0xaa])) },
-        () => loggerService,
-      );
+      service = new DefaultApduReceiverService({
+        channel: new Uint8Array([0xaa, 0xaa]),
+        loggerFactory: () => loggerService,
+      });
     });
 
     it("should return a left error when the first frame has no dataSize", () => {
@@ -84,10 +84,10 @@ describe("DefaultApduReceiverService", () => {
 
   describe("[USB] With padding and channel", () => {
     beforeEach(() => {
-      service = new DefaultApduReceiverService(
-        { channel: Just(new Uint8Array([0xaa, 0xaa])) },
-        () => loggerService,
-      );
+      service = new DefaultApduReceiverService({
+        channel: new Uint8Array([0xaa, 0xaa]),
+        loggerFactory: () => loggerService,
+      });
     });
 
     it("should return a response directly when a frame is complete", () => {
@@ -207,7 +207,9 @@ describe("DefaultApduReceiverService", () => {
 
   describe("[BLE] Without padding nor channel", () => {
     beforeEach(() => {
-      service = new DefaultApduReceiverService({}, () => loggerService);
+      service = new DefaultApduReceiverService({
+        loggerFactory: () => loggerService,
+      });
     });
 
     it("should return a response directly when a frame is complete", () => {

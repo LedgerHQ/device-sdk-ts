@@ -5,10 +5,10 @@ import {
   ConsoleLogger,
   DeviceSdk,
   DeviceSdkBuilder,
-  MockTransport,
-  WebBleTransport,
+  MockTransportBuilder,
+  WebBleTransportBuilder,
+  WebHidTransportBuilder,
   WebLogsExporterLogger,
-  WebUsbHidTransport,
 } from "@ledgerhq/device-management-kit";
 import { FlipperSdkLogger } from "@ledgerhq/device-management-kit-flipper-plugin-client";
 
@@ -26,7 +26,9 @@ export const SdkProvider: React.FC<PropsWithChildren> = ({ children }) => {
   const buildMockSdk = useCallback(
     (url: string, logsExporter: WebLogsExporterLogger) => {
       return new DeviceSdkBuilder()
-        .addTransport(new MockTransport(url))
+        .addTransportBuilder(
+          new MockTransportBuilder().setConfig({ mockUrl: url }),
+        )
         .addLogger(new ConsoleLogger())
         .addLogger(logsExporter)
         .addLogger(new FlipperSdkLogger())
@@ -37,8 +39,8 @@ export const SdkProvider: React.FC<PropsWithChildren> = ({ children }) => {
 
   const buildDefaultSdk = useCallback((logsExporter: WebLogsExporterLogger) => {
     return new DeviceSdkBuilder()
-      .addTransport(new WebBleTransport())
-      .addTransport(new WebUsbHidTransport())
+      .addTransportBuilder(new WebBleTransportBuilder())
+      .addTransportBuilder(new WebHidTransportBuilder())
       .addLogger(new ConsoleLogger())
       .addLogger(logsExporter)
       .addLogger(new FlipperSdkLogger())

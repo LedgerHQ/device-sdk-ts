@@ -14,7 +14,6 @@ import { ApduResponse } from "@api/device-session/ApduResponse";
 import { SdkError } from "@api/Error";
 import { Transport } from "@api/transport/model/Transport";
 import { TransportIdentifier } from "@api/transport/model/TransportIdentifier";
-import { DeviceModelDataSource } from "@internal/device-model/data/DeviceModelDataSource";
 import { LoggerPublisherService } from "@internal/logger-publisher/service/LoggerPublisherService";
 import { DisconnectHandler } from "@internal/transport/model/DeviceConnection";
 import {
@@ -28,29 +27,15 @@ import { InternalDiscoveredDevice } from "@internal/transport/model/InternalDisc
 
 export class MockTransport implements Transport {
   static readonly identifier: TransportIdentifier = "MOCK_SERVER";
-  private _logger!: LoggerPublisherService;
-  private mockClient: MockClient;
+  private _mockClient: MockClient;
+  private readonly _logger: LoggerPublisherService;
 
-  constructor(mockUrl: string) {
-    this.mockClient = new MockClient(mockUrl);
-  }
-
-  setLogger(_logger: LoggerPublisherService): void {
-    this._logger = _logger;
-  }
-  setDeviceModelDataSource(
-    _deviceModelDataSource: DeviceModelDataSource,
-  ): void {
-    this._logger.debug("Mock service doesn't need a device model data source.");
-  }
-  setDeviceConnectionFactory(_deviceConnectionFactory: unknown): void {
-    this._logger.debug(
-      "Mock service doesn't need a device connection factory.",
-    );
-  }
-
-  setupDependencies(): void {
-    throw new Error("Method not implemented.");
+  constructor(
+    mockUrl: string,
+    loggerFactory: (name: string) => LoggerPublisherService,
+  ) {
+    this._mockClient = new MockClient(mockUrl);
+    this._logger = loggerFactory(MockTransport.name);
   }
 
   isSupported(): boolean {
@@ -68,7 +53,7 @@ export class MockTransport implements Transport {
   startDiscovering(): Observable<InternalDiscoveredDevice> {
     this._logger.debug("startDiscovering");
     return from(
-      this.mockClient.scan().then((devices: Device[]) => {
+      this._mockClient.scan().then((devices: Device[]) => {
         return devices.map((device: Device) => {
           return {
             id: device.id,
@@ -104,7 +89,7 @@ export class MockTransport implements Transport {
     this._logger.debug("connect");
     const sessionId: string = params.deviceId;
     try {
-      const session: Session = await this.mockClient.connect(sessionId);
+      const session: Session = await this._mockClient.connect(sessionId);
       const connectedDevice = {
         sendApdu: (apdu) => {
           return this.sendApdu(
@@ -143,7 +128,7 @@ export class MockTransport implements Transport {
     this._logger.debug("disconnect");
     const sessionId: string = params.connectedDevice.id;
     try {
-      const success: boolean = await this.mockClient.disconnect(sessionId);
+      const success: boolean = await this._mockClient.disconnect(sessionId);
       if (!success) {
         return Left(
           new DisconnectError(new Error(`Failed to disconnect ${sessionId}`)),
@@ -163,18 +148,18 @@ export class MockTransport implements Transport {
   ): Promise<Either<SdkError, ApduResponse>> {
     this._logger.debug("send");
     try {
-      const response: CommandResponse = await this.mockClient.send(
+      const response: CommandResponse = await this._mockClient.send(
         sessionId,
         apdu,
       );
       return Right({
-        statusCode: this.mockClient.fromHexString(
+        statusCode: this._mockClient.fromHexString(
           response.response.substring(
             response.response.length - 4,
             response.response.length,
           ),
         ),
-        data: this.mockClient.fromHexString(
+        data: this._mockClient.fromHexString(
           response.response.substring(0, response.response.length - 4),
         ),
       } as ApduResponse);

@@ -22,18 +22,18 @@ const EMPTY_APDU_RESPONSE = Uint8Array.from([
 describe("BleDeviceConnection", () => {
   let writeCharacteristic: BluetoothRemoteGATTCharacteristic;
   let notifyCharacteristic: BluetoothRemoteGATTCharacteristic;
-  let apduSenderFactory: () => ApduSenderService;
-  let apduReceiverFactory: () => ApduReceiverService;
-  const logger = (tag: string) => new DefaultLoggerPublisherService([], tag);
+  let apduSender: ApduSenderService;
+  let apduReceiver: ApduReceiverService;
+  const loggerFactory = (tag: string) =>
+    new DefaultLoggerPublisherService([], tag);
 
   beforeEach(() => {
     writeCharacteristic = bleCharacteristicStubBuilder();
     notifyCharacteristic = bleCharacteristicStubBuilder();
-    apduSenderFactory = jest.fn(() =>
-      defaultApduSenderServiceStubBuilder(undefined, logger),
-    );
-    apduReceiverFactory = jest.fn(() =>
-      defaultApduReceiverServiceStubBuilder(undefined, logger),
+    apduSender = defaultApduSenderServiceStubBuilder(undefined, loggerFactory);
+    apduReceiver = defaultApduReceiverServiceStubBuilder(
+      undefined,
+      loggerFactory,
     );
   });
 
@@ -52,15 +52,13 @@ describe("BleDeviceConnection", () => {
   describe("sendApdu", () => {
     it("should return an error if the device isn't setup", async () => {
       // given
-      const connection = new BleDeviceConnection(
-        {
-          writeCharacteristic,
-          notifyCharacteristic,
-          apduSenderFactory,
-          apduReceiverFactory,
-        },
-        logger,
-      );
+      const connection = new BleDeviceConnection({
+        writeCharacteristic,
+        notifyCharacteristic,
+        apduSender,
+        apduReceiver,
+        loggerFactory,
+      });
       // when
       const errorOrApduResponse = await connection.sendApdu(
         Uint8Array.from([]),
@@ -73,15 +71,13 @@ describe("BleDeviceConnection", () => {
 
     it("should send apdu without error if device is setup", async () => {
       // given
-      const connection = new BleDeviceConnection(
-        {
-          writeCharacteristic,
-          notifyCharacteristic,
-          apduSenderFactory,
-          apduReceiverFactory,
-        },
-        logger,
-      );
+      const connection = new BleDeviceConnection({
+        writeCharacteristic,
+        notifyCharacteristic,
+        apduSender,
+        apduReceiver,
+        loggerFactory,
+      });
       // when
       receiveApdu(connection, GET_MTU_APDU_RESPONSE);
       const response = connection.sendApdu(new Uint8Array([]));
@@ -103,15 +99,13 @@ describe("BleDeviceConnection", () => {
   describe("setup", () => {
     it("should send the apdu 0x0800000000 to get mtu size", async () => {
       // given
-      const connection = new BleDeviceConnection(
-        {
-          writeCharacteristic,
-          notifyCharacteristic,
-          apduSenderFactory,
-          apduReceiverFactory,
-        },
-        logger,
-      );
+      const connection = new BleDeviceConnection({
+        writeCharacteristic,
+        notifyCharacteristic,
+        apduSender,
+        apduReceiver,
+        loggerFactory,
+      });
       // when
       await connection.setup();
       // then
@@ -121,19 +115,17 @@ describe("BleDeviceConnection", () => {
     });
     it("should setup apduSender with the correct mtu size", () => {
       // given
-      const connection = new BleDeviceConnection(
-        {
-          writeCharacteristic,
-          notifyCharacteristic,
-          apduSenderFactory,
-          apduReceiverFactory,
-        },
-        logger,
-      );
+      const connection = new BleDeviceConnection({
+        writeCharacteristic,
+        notifyCharacteristic,
+        apduSender,
+        apduReceiver,
+        loggerFactory,
+      });
       // when
       receiveApdu(connection, GET_MTU_APDU_RESPONSE);
       // then
-      expect(apduSenderFactory).toHaveBeenCalledWith({ frameSize: 0x42 });
+      expect(apduSender).toHaveBeenCalledWith({ frameSize: 0x42 });
     });
   });
 });

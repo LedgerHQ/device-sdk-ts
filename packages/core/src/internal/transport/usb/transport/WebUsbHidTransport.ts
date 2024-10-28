@@ -10,6 +10,8 @@ import { Transport } from "@api/transport/model/Transport";
 import { TransportIdentifier } from "@api/transport/model/TransportIdentifier";
 import type { DeviceModelDataSource } from "@internal/device-model/data/DeviceModelDataSource";
 import { InternalDeviceModel } from "@internal/device-model/model/DeviceModel";
+import { ApduReceiverService } from "@internal/device-session/service/ApduReceiverService";
+import { ApduSenderService } from "@internal/device-session/service/ApduSenderService";
 import type { LoggerPublisherService } from "@internal/logger-publisher/service/LoggerPublisherService";
 import { DisconnectHandler } from "@internal/transport/model/DeviceConnection";
 import {
@@ -24,7 +26,6 @@ import {
 import { InternalConnectedDevice } from "@internal/transport/model/InternalConnectedDevice";
 import { InternalDiscoveredDevice } from "@internal/transport/model/InternalDiscoveredDevice";
 import { LEDGER_VENDOR_ID } from "@internal/transport/usb/data/UsbHidConfig";
-import { UsbHidDeviceConnectionFactory } from "@internal/transport/usb/service/UsbHidDeviceConnectionFactory";
 import { UsbHidDeviceConnection } from "@internal/transport/usb/transport/UsbHidDeviceConnection";
 
 type WebUsbHidInternalDiscoveredDevice = InternalDiscoveredDevice & {
@@ -55,26 +56,16 @@ export class WebUsbHidTransport implements Transport {
   private _connectionListenersAbortController: AbortController =
     new AbortController();
   private readonly connectionType: ConnectionType = "USB";
+  private readonly _logger: LoggerPublisherService;
 
-  // @TODO: remove those `!`, temp for POC
-  private _logger!: LoggerPublisherService;
-  private _deviceModelDataSource!: DeviceModelDataSource;
-  private _usbHidDeviceConnectionFactory!: UsbHidDeviceConnectionFactory;
-
-  constructor() {
-    this.startListeningToConnectionEvents();
-  }
-
-  setLogger(logger: LoggerPublisherService) {
-    this._logger = logger;
-  }
-  setDeviceModelDataSource(deviceModelDataSource: DeviceModelDataSource) {
-    this._deviceModelDataSource = deviceModelDataSource;
-  }
-  setDeviceConnectionFactory(
-    deviceConnectionFactory: UsbHidDeviceConnectionFactory,
+  constructor(
+    private readonly _apduSender: ApduSenderService,
+    private readonly _apduReceiver: ApduReceiverService,
+    private readonly _deviceModelDataSource: DeviceModelDataSource,
+    private readonly _loggerFactory: (name: string) => LoggerPublisherService,
   ) {
-    this._usbHidDeviceConnectionFactory = deviceConnectionFactory;
+    this._logger = this._loggerFactory("UsbHidTransport");
+    this.startListeningToConnectionEvents();
   }
 
   /**
@@ -359,20 +350,21 @@ export class WebUsbHidTransport implements Transport {
 
     const { deviceModel } = matchingInternalDevice;
 
-    const deviceConnection = this._usbHidDeviceConnectionFactory.create(
-      matchingInternalDevice.hidDevice,
-      {
-        onConnectionTerminated: () => {
-          onDisconnect(deviceId);
-          this._deviceConnectionsPendingReconnection.delete(deviceConnection);
-          this._deviceConnectionsByHidDevice.delete(
-            matchingInternalDevice.hidDevice,
-          );
-          deviceConnection.device.close();
-        },
-        deviceId,
+    const deviceConnection = new UsbHidDeviceConnection({
+      device: matchingInternalDevice.hidDevice,
+      deviceId,
+      apduSender: this._apduSender,
+      apduReceiver: this._apduReceiver,
+      onConnectionTerminated: () => {
+        onDisconnect(deviceId);
+        this._deviceConnectionsPendingReconnection.delete(deviceConnection);
+        this._deviceConnectionsByHidDevice.delete(
+          matchingInternalDevice.hidDevice,
+        );
+        deviceConnection.device.close();
       },
-    );
+      loggerFactory: this._loggerFactory,
+    });
 
     this._deviceConnectionsByHidDevice.set(
       matchingInternalDevice.hidDevice,

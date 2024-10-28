@@ -122,6 +122,9 @@ export {
   DeviceSessionStateType,
 } from "@api/device-session/DeviceSessionState";
 export { type SdkError } from "@api/Error";
+export { MockTransportBuilder } from "@api/transport/MockTransportBuilder";
+export { WebBleTransportBuilder } from "@api/transport/WebBleTransportBuilder";
+export { WebHidTransportBuilder } from "@api/transport/WebHidTransportBuilder";
 export { base64StringToBuffer, isBase64String } from "@api/utils/Base64String";
 export {
   bufferToHexaString,

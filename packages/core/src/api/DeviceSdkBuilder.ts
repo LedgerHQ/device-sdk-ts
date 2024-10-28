@@ -1,3 +1,4 @@
+import { TransportBuilder } from "@api/transport/model/TransportBuilder";
 import { DEFAULT_MANAGER_API_BASE_URL } from "@internal/manager-api/model/Const";
 
 import { LoggerSubscriberService } from "./logger-subscriber/service/LoggerSubscriberService";
@@ -21,7 +22,7 @@ import { SdkConfig } from "./SdkConfig";
 export class LedgerDeviceSdkBuilder {
   private stub = false;
   private readonly loggers: LoggerSubscriberService[] = [];
-  private readonly transports: Transport[] = [];
+  private readonly transportBuilders: TransportBuilder<Transport>[] = [];
   private config: SdkConfig = {
     managerApiUrl: DEFAULT_MANAGER_API_BASE_URL,
   };
@@ -29,7 +30,7 @@ export class LedgerDeviceSdkBuilder {
   build(): DeviceSdk {
     return new DeviceSdk({
       stub: this.stub,
-      transports: this.transports,
+      transportBuilders: this.transportBuilders,
       loggers: this.loggers,
       config: this.config,
     });
@@ -40,8 +41,10 @@ export class LedgerDeviceSdkBuilder {
     return this;
   }
 
-  addTransport(transport: Transport): LedgerDeviceSdkBuilder {
-    this.transports.push(transport);
+  addTransportBuilder<T extends Transport>(
+    transport: TransportBuilder<T>,
+  ): LedgerDeviceSdkBuilder {
+    this.transportBuilders.push(transport);
     return this;
   }
 

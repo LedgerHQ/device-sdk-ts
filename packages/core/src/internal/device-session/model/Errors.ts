@@ -1,4 +1,4 @@
-import { SdkError } from "@root/src/api/Error";
+import { GeneralSdkError, SdkError } from "@root/src/api/Error";
 
 export class FramerOverflowError implements SdkError {
   readonly _tag = "FramerOverflowError";
@@ -17,6 +17,10 @@ export class FramerApduError implements SdkError {
   constructor() {
     this.originalError = new Error("Frame offset is greater than apdu length");
   }
+}
+
+export class FrameSizeUnsetError extends GeneralSdkError {
+  override _tag = "FrameSizeUnsetError";
 }
 
 export class ReceiverApduError implements SdkError {

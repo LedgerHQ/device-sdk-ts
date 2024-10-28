@@ -1,4 +1,3 @@
-import { inject } from "inversify";
 import { Either, Left, Right } from "purify-ts";
 import { Subject } from "rxjs";
 
@@ -8,7 +7,6 @@ import { SdkError } from "@api/Error";
 import { DeviceId } from "@api/types";
 import { ApduReceiverService } from "@internal/device-session/service/ApduReceiverService";
 import { ApduSenderService } from "@internal/device-session/service/ApduSenderService";
-import { loggerTypes } from "@internal/logger-publisher/di/loggerTypes";
 import type { LoggerPublisherService } from "@internal/logger-publisher/service/LoggerPublisherService";
 import { DeviceConnection } from "@internal/transport/model/DeviceConnection";
 import { ReconnectionFailedError } from "@internal/transport/model/Errors";
@@ -21,6 +19,7 @@ type UsbHidDeviceConnectionConstructorArgs = {
   apduSender: ApduSenderService;
   apduReceiver: ApduReceiverService;
   onConnectionTerminated: () => void;
+  loggerFactory: (name: string) => LoggerPublisherService;
 };
 
 /**
@@ -47,21 +46,18 @@ export class UsbHidDeviceConnection implements DeviceConnection {
   /** Flag to indicate if the connection is terminated */
   private terminated = false;
 
-  constructor(
-    {
-      device,
-      deviceId,
-      apduSender,
-      apduReceiver,
-      onConnectionTerminated,
-    }: UsbHidDeviceConnectionConstructorArgs,
-    @inject(loggerTypes.LoggerPublisherServiceFactory)
-    loggerServiceFactory: (tag: string) => LoggerPublisherService,
-  ) {
+  constructor({
+    device,
+    deviceId,
+    apduSender,
+    apduReceiver,
+    onConnectionTerminated,
+    loggerFactory,
+  }: UsbHidDeviceConnectionConstructorArgs) {
     this._apduSender = apduSender;
     this._apduReceiver = apduReceiver;
     this._onConnectionTerminated = onConnectionTerminated;
-    this._logger = loggerServiceFactory("UsbHidDeviceConnection");
+    this._logger = loggerFactory("UsbHidDeviceConnection");
     this._device = device;
     this._device.oninputreport = (event) => this.receiveHidInputReport(event);
     this._deviceId = deviceId;

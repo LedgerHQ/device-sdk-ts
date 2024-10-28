@@ -15,6 +15,7 @@ import { ApduResponse } from "@api/device-session/ApduResponse";
 import { DeviceSessionState } from "@api/device-session/DeviceSessionState";
 import { DeviceSessionId } from "@api/device-session/types";
 import { ConnectedDevice } from "@api/transport/model/ConnectedDevice";
+import { TransportBuilder } from "@api/transport/model/TransportBuilder";
 import {
   ConnectUseCaseArgs,
   DisconnectUseCaseArgs,
@@ -52,7 +53,7 @@ import { deviceActionTypes } from "./device-action/di/deviceActionTypes";
 import { DeviceSdkInitializationError, SdkError } from "./Error";
 
 type DeviceSdkConstructorProps = Partial<MakeContainerProps> & {
-  transports: Transport[];
+  transportBuilders: TransportBuilder<Transport>[];
 };
 
 /**
@@ -65,7 +66,7 @@ export class DeviceSdk {
   /** @internal */
   constructor({
     stub,
-    transports,
+    transportBuilders,
     loggers,
     config,
   }: DeviceSdkConstructorProps) {
@@ -82,15 +83,16 @@ export class DeviceSdk {
     const transportService = this.container.get<TransportService>(
       transportDiTypes.TransportService,
     );
-    if (transports.length === 0) {
+    if (transportBuilders.length === 0) {
       throw new DeviceSdkInitializationError(
         "At least one transport service is required",
       );
     }
-    for (const transport of transports) {
-      const errorOrTransportService = transportService.addTransport(transport);
-      if (errorOrTransportService.isLeft()) {
-        throw errorOrTransportService;
+    for (const transportBuilder of transportBuilders) {
+      const errorOrTransportBuilder =
+        transportService.addTransport(transportBuilder);
+      if (errorOrTransportBuilder.isLeft()) {
+        throw errorOrTransportBuilder;
       }
     }
   }

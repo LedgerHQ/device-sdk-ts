@@ -53,7 +53,7 @@ export class ConnectUseCase {
 
   async execute({ device }: ConnectUseCaseArgs): Promise<DeviceSessionId> {
     const transport = this._transportService
-      .getTransportById(device.id)
+      .getTransportById(device.transport)
       .mapLeft((error) => {
         throw error;
       })
