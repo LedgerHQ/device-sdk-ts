@@ -1,4 +1,4 @@
-import { Left, Right } from "purify-ts";
+import { Left, Maybe, Right } from "purify-ts";
 import * as uuid from "uuid";
 jest.mock("uuid");
 
@@ -7,6 +7,7 @@ import { type DeviceModelDataSource } from "@api/device-model/data/DeviceModelDa
 import { type DiscoveredDevice } from "@api/transport/model/DiscoveredDevice";
 import { UnknownDeviceError } from "@api/transport/model/Errors";
 import { connectedDeviceStubBuilder } from "@api/transport/model/TransportConnectedDevice.stub";
+import { type Transport } from "@api/types";
 import { DefaultDeviceSessionService } from "@internal/device-session/service/DefaultDeviceSessionService";
 import { type DeviceSessionService } from "@internal/device-session/service/DeviceSessionService";
 import { DefaultLoggerPublisherService } from "@internal/logger-publisher/service/DefaultLoggerPublisherService";
@@ -15,19 +16,23 @@ import { AxiosManagerApiDataSource } from "@internal/manager-api/data/AxiosManag
 import { type ManagerApiDataSource } from "@internal/manager-api/data/ManagerApiDataSource";
 import { DefaultManagerApiService } from "@internal/manager-api/service/DefaultManagerApiService";
 import { type ManagerApiService } from "@internal/manager-api/service/ManagerApiService";
-import { usbHidDeviceConnectionFactoryStubBuilder } from "@internal/transport/usb/service/UsbHidDeviceConnectionFactory.stub";
-import { WebUsbHidTransport } from "@internal/transport/usb/transport/WebUsbHidTransport";
+import { type TransportService } from "@internal/transport/service/TransportService";
+import { TransportServiceStub } from "@internal/transport/service/TransportService.stub";
+import { webHidDeviceConnectionFactoryStubBuilder } from "@internal/transport/usb/service/WebHidDeviceConnectionFactory.stub";
+import { WebHidTransport } from "@internal/transport/usb/transport/WebHidTransport";
 
 import { ConnectUseCase } from "./ConnectUseCase";
 
 jest.mock("@internal/manager-api/data/AxiosManagerApiDataSource");
 
 // TODO test several transports
-let transports: WebUsbHidTransport[];
+// let transports: Transport[];
+let transport: Transport;
 let logger: LoggerPublisherService;
 let sessionService: DeviceSessionService;
 let managerApi: ManagerApiService;
 let managerApiDataSource: ManagerApiDataSource;
+let transportService: TransportService;
 const fakeSessionId = "fakeSessionId";
 
 describe("ConnectUseCase", () => {
@@ -42,19 +47,20 @@ describe("ConnectUseCase", () => {
   beforeAll(() => {
     logger = new DefaultLoggerPublisherService([], tag);
     jest.spyOn(uuid, "v4").mockReturnValue(fakeSessionId);
-    transports = [
-      new WebUsbHidTransport(
-        {} as DeviceModelDataSource,
-        () => logger,
-        usbHidDeviceConnectionFactoryStubBuilder(),
-      ),
-    ];
+    transport = new WebHidTransport(
+      {} as DeviceModelDataSource,
+      () => logger,
+      webHidDeviceConnectionFactoryStubBuilder(),
+    );
+    // transports = [transport];
     sessionService = new DefaultDeviceSessionService(() => logger);
     managerApiDataSource = new AxiosManagerApiDataSource({
       managerApiUrl: "http://fake.url",
       mockUrl: "http://fake-mock.url",
     });
     managerApi = new DefaultManagerApiService(managerApiDataSource);
+    // @ts-expect-error stub
+    transportService = new TransportServiceStub();
   });
 
   afterAll(() => {
@@ -63,11 +69,15 @@ describe("ConnectUseCase", () => {
 
   test("If connect use case encounter an error, return it", async () => {
     jest
-      .spyOn(transports[0]!, "connect")
+      .spyOn(transport, "connect")
       .mockResolvedValue(Left(new UnknownDeviceError()));
 
+    jest
+      .spyOn(transportService, "getTransport")
+      .mockReturnValue(Maybe.of(transport));
+
     const usecase = new ConnectUseCase(
-      transports,
+      transportService,
       sessionService,
       () => logger,
       managerApi,
@@ -80,11 +90,15 @@ describe("ConnectUseCase", () => {
 
   test("If connect is in success, return a deviceSession id", async () => {
     jest
-      .spyOn(transports[0]!, "connect")
+      .spyOn(transport, "connect")
       .mockResolvedValue(Promise.resolve(Right(stubConnectedDevice)));
 
+    jest
+      .spyOn(transportService, "getTransport")
+      .mockReturnValue(Maybe.of(transport));
+
     const usecase = new ConnectUseCase(
-      transports,
+      transportService,
       sessionService,
       () => logger,
       managerApi,

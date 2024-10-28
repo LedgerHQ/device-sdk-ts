@@ -16,7 +16,7 @@ export class WebBleTransport implements Transport {
   disconnect = jest.fn();
 }
 
-export function usbHidTransportMockBuilder(
+export function WebHidTransportMockBuilder(
   props: Partial<Transport> = {},
 ): Transport {
   return {

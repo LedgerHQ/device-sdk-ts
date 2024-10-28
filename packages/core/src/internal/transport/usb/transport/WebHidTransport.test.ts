@@ -13,12 +13,12 @@ import {
 import { connectedDeviceStubBuilder } from "@api/transport/model/TransportConnectedDevice.stub";
 import { type TransportDiscoveredDevice } from "@api/transport/model/TransportDiscoveredDevice";
 import { DefaultLoggerPublisherService } from "@internal/logger-publisher/service/DefaultLoggerPublisherService";
-import { RECONNECT_DEVICE_TIMEOUT } from "@internal/transport/usb/data/UsbHidConfig";
-import { UsbHidTransportNotSupportedError } from "@internal/transport/usb/model/Errors";
+import { RECONNECT_DEVICE_TIMEOUT } from "@internal/transport/usb/data/WebHidConfig";
+import { WebHidTransportNotSupportedError } from "@internal/transport/usb/model/Errors";
 import { hidDeviceStubBuilder } from "@internal/transport/usb/model/HIDDevice.stub";
-import { usbHidDeviceConnectionFactoryStubBuilder } from "@internal/transport/usb/service/UsbHidDeviceConnectionFactory.stub";
+import { webHidDeviceConnectionFactoryStubBuilder } from "@internal/transport/usb/service/WebHidDeviceConnectionFactory.stub";
 
-import { WebUsbHidTransport } from "./WebUsbHidTransport";
+import { WebHidTransport } from "./WebHidTransport";
 
 jest.mock("@internal/logger-publisher/service/LoggerPublisherService");
 
@@ -35,14 +35,14 @@ const flushPromises = () =>
   // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
   new Promise(jest.requireActual("timers").setImmediate);
 
-describe("WebUsbHidTransport", () => {
-  let transport: WebUsbHidTransport;
+describe("WebHidTransport", () => {
+  let transport: WebHidTransport;
 
   function initializeTransport() {
-    transport = new WebUsbHidTransport(
+    transport = new WebHidTransport(
       usbDeviceModelDataSource,
       () => logger,
-      usbHidDeviceConnectionFactoryStubBuilder(),
+      webHidDeviceConnectionFactoryStubBuilder(),
     );
   }
 
@@ -76,7 +76,7 @@ describe("WebUsbHidTransport", () => {
           done("Should not emit any value");
         },
         (error) => {
-          expect(error).toBeInstanceOf(UsbHidTransportNotSupportedError);
+          expect(error).toBeInstanceOf(WebHidTransportNotSupportedError);
           done();
         },
       );
@@ -474,6 +474,7 @@ describe("WebUsbHidTransport", () => {
 
       it("should disconnect if the device is connected", (done) => {
         mockedRequestDevice.mockResolvedValueOnce([stubDevice]);
+        mockedGetDevices.mockResolvedValue([stubDevice]);
 
         discoverDevice(
           (discoveredDevice) => {

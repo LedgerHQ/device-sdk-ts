@@ -3,13 +3,11 @@ import { Maybe } from "purify-ts";
 import { type LoggerPublisherService } from "@internal/logger-publisher/service/LoggerPublisherService";
 
 import { type ApduReceiverService } from "./ApduReceiverService";
-import {
-  type DefaultApduReceiverConstructorArgs,
-  DefaultApduReceiverService,
-} from "./DefaultApduReceiverService";
+import { type ApduReceiverConstructorArgs } from "./ApduReceiverService";
+import { DefaultApduReceiverService } from "./DefaultApduReceiverService";
 
 export const defaultApduReceiverServiceStubBuilder = (
-  props: Partial<DefaultApduReceiverConstructorArgs> = {},
+  props: Partial<ApduReceiverConstructorArgs> = {},
   loggerFactory: (tag: string) => LoggerPublisherService,
 ): ApduReceiverService =>
   new DefaultApduReceiverService(

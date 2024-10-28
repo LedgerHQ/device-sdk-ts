@@ -1,3 +1,4 @@
+import { Maybe } from "purify-ts";
 import { of } from "rxjs";
 
 import { DeviceModel } from "@api/device/DeviceModel";
@@ -7,12 +8,15 @@ import { type TransportDiscoveredDevice } from "@api/transport/model/TransportDi
 import { type DeviceModelId, type DiscoveredDevice } from "@api/types";
 import { DefaultLoggerPublisherService } from "@internal/logger-publisher/service/DefaultLoggerPublisherService";
 import { type LoggerPublisherService } from "@internal/logger-publisher/service/LoggerPublisherService";
-import { usbHidDeviceConnectionFactoryStubBuilder } from "@internal/transport/usb/service/UsbHidDeviceConnectionFactory.stub";
-import { WebUsbHidTransport } from "@internal/transport/usb/transport/WebUsbHidTransport";
+import { type TransportService } from "@internal/transport/service/TransportService";
+import { TransportServiceStub } from "@internal/transport/service/TransportService.stub";
+import { webHidDeviceConnectionFactoryStubBuilder } from "@internal/transport/usb/service/WebHidDeviceConnectionFactory.stub";
+import { WebHidTransport } from "@internal/transport/usb/transport/WebHidTransport";
 
 import { StartDiscoveringUseCase } from "./StartDiscoveringUseCase";
 
-let transport: WebUsbHidTransport;
+let transport: WebHidTransport;
+let transportService: TransportService;
 let logger: LoggerPublisherService;
 
 describe("StartDiscoveringUseCase", () => {
@@ -28,11 +32,13 @@ describe("StartDiscoveringUseCase", () => {
 
   beforeEach(() => {
     logger = new DefaultLoggerPublisherService([], tag);
-    transport = new WebUsbHidTransport(
+    transport = new WebHidTransport(
       {} as DeviceModelDataSource,
       () => logger,
-      usbHidDeviceConnectionFactoryStubBuilder(),
+      webHidDeviceConnectionFactoryStubBuilder(),
     );
+    // @ts-expect-error stub
+    transportService = new TransportServiceStub();
   });
 
   afterEach(() => {
@@ -46,7 +52,11 @@ describe("StartDiscoveringUseCase", () => {
     jest
       .spyOn(transport, "startDiscovering")
       .mockImplementation(mockedStartDiscovering);
-    const usecase = new StartDiscoveringUseCase([transport]);
+
+    jest
+      .spyOn(transportService, "getTransport")
+      .mockReturnValue(Maybe.of(transport));
+    const usecase = new StartDiscoveringUseCase(transportService);
 
     const discover = usecase.execute({ transport: "USB" });
 

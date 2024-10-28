@@ -1,13 +1,13 @@
 import { GeneralSdkError } from "@api/transport/model/Errors";
 
-export class UsbHidTransportNotSupportedError extends GeneralSdkError {
-  override readonly _tag = "UsbHidTransportNotSupportedError";
+export class WebHidTransportNotSupportedError extends GeneralSdkError {
+  override readonly _tag = "WebHidTransportNotSupportedError";
   constructor(readonly err?: unknown) {
     super(err);
   }
 }
-export class HidSendReportError extends GeneralSdkError {
-  override readonly _tag = "HidSendReportError";
+export class WebHidSendReportError extends GeneralSdkError {
+  override readonly _tag = "WebHidSendReportError";
   constructor(readonly err?: unknown) {
     super(err);
   }

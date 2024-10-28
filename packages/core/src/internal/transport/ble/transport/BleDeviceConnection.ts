@@ -2,9 +2,14 @@ import { type Either, Left, Maybe, Nothing, Right } from "purify-ts";
 
 import { CommandUtils } from "@api/command/utils/CommandUtils";
 import { type ApduResponse } from "@api/device-session/ApduResponse";
-import { type ApduReceiverService } from "@api/device-session/service/ApduReceiverService";
-import { type ApduSenderService } from "@api/device-session/service/ApduSenderService";
-import { type DefaultApduSenderServiceConstructorArgs } from "@api/device-session/service/DefaultApduSenderService";
+import {
+  type ApduReceiverService,
+  type ApduReceiverServiceFactory,
+} from "@api/device-session/service/ApduReceiverService";
+import {
+  type ApduSenderService,
+  type ApduSenderServiceFactory,
+} from "@api/device-session/service/ApduSenderService";
 import { type SdkError } from "@api/Error";
 import { type DeviceConnection } from "@api/transport/model/DeviceConnection";
 import {
@@ -16,10 +21,8 @@ import type { LoggerPublisherService } from "@internal/logger-publisher/service/
 type BleDeviceConnectionConstructorArgs = {
   writeCharacteristic: BluetoothRemoteGATTCharacteristic;
   notifyCharacteristic: BluetoothRemoteGATTCharacteristic;
-  apduSenderFactory: (
-    args: DefaultApduSenderServiceConstructorArgs,
-  ) => ApduSenderService;
-  apduReceiverFactory: () => ApduReceiverService;
+  apduSenderFactory: ApduSenderServiceFactory;
+  apduReceiverFactory: ApduReceiverServiceFactory;
 };
 
 export type DataViewEvent = Event & {
@@ -33,9 +36,7 @@ export class BleDeviceConnection implements DeviceConnection {
   private _notifyCharacteristic: BluetoothRemoteGATTCharacteristic;
   private readonly _logger: LoggerPublisherService;
   private _apduSender: Maybe<ApduSenderService>;
-  private readonly _apduSenderFactory: (
-    args: DefaultApduSenderServiceConstructorArgs,
-  ) => ApduSenderService;
+  private readonly _apduSenderFactory: ApduSenderServiceFactory;
   private readonly _apduReceiver: ApduReceiverService;
   private _isDeviceReady: boolean;
   private _sendApduPromiseResolver: Maybe<{

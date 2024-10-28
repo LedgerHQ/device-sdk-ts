@@ -1,4 +1,3 @@
-import { inject } from "inversify";
 import { Either, Left, Right } from "purify-ts";
 import { Subject } from "rxjs";
 
@@ -10,12 +9,11 @@ import { SdkError } from "@api/Error";
 import { DeviceConnection } from "@api/transport/model/DeviceConnection";
 import { ReconnectionFailedError } from "@api/transport/model/Errors";
 import { DeviceId } from "@api/types";
-import { loggerTypes } from "@internal/logger-publisher/di/loggerTypes";
 import type { LoggerPublisherService } from "@internal/logger-publisher/service/LoggerPublisherService";
-import { RECONNECT_DEVICE_TIMEOUT } from "@internal/transport/usb/data/UsbHidConfig";
-import { HidSendReportError } from "@internal/transport/usb/model/Errors";
+import { RECONNECT_DEVICE_TIMEOUT } from "@internal/transport/usb/data/WebHidConfig";
+import { WebHidSendReportError } from "@internal/transport/usb/model/Errors";
 
-type UsbHidDeviceConnectionConstructorArgs = {
+type WebHidDeviceConnectionConstructorArgs = {
   device: HIDDevice;
   deviceId: DeviceId;
   apduSender: ApduSenderService;
@@ -28,7 +26,7 @@ type UsbHidDeviceConnectionConstructorArgs = {
  * It sends APDU commands to the device and receives the responses.
  * It handles temporary disconnections and reconnections.
  */
-export class UsbHidDeviceConnection implements DeviceConnection {
+export class WebHidDeviceConnection implements DeviceConnection {
   private _device: HIDDevice;
   private _deviceId: DeviceId;
   private readonly _apduSender: ApduSenderService;
@@ -54,14 +52,13 @@ export class UsbHidDeviceConnection implements DeviceConnection {
       apduSender,
       apduReceiver,
       onConnectionTerminated,
-    }: UsbHidDeviceConnectionConstructorArgs,
-    @inject(loggerTypes.LoggerPublisherServiceFactory)
+    }: WebHidDeviceConnectionConstructorArgs,
     loggerServiceFactory: (tag: string) => LoggerPublisherService,
   ) {
     this._apduSender = apduSender;
     this._apduReceiver = apduReceiver;
     this._onConnectionTerminated = onConnectionTerminated;
-    this._logger = loggerServiceFactory("UsbHidDeviceConnection");
+    this._logger = loggerServiceFactory("WebHidDeviceConnection");
     this._device = device;
     this._device.oninputreport = (event) => this.receiveHidInputReport(event);
     this._deviceId = deviceId;
@@ -125,7 +122,7 @@ export class UsbHidDeviceConnection implements DeviceConnection {
         await this._device.sendReport(0, frame.getRawData());
       } catch (error) {
         this._logger.error("Error sending frame", { data: { error } });
-        return Promise.resolve(Left(new HidSendReportError(error)));
+        return Promise.resolve(Left(new WebHidSendReportError(error)));
       }
     }
 

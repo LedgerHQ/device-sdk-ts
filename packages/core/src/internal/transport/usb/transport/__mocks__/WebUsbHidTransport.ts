@@ -1,6 +1,6 @@
 import { type Transport } from "@api/transport/model/Transport";
 
-export class WebUsbHidTransport implements Transport {
+export class WebWebHidTransport implements Transport {
   isSupported = jest.fn();
   getIdentifier = jest.fn();
   connect = jest.fn();
@@ -11,7 +11,7 @@ export class WebUsbHidTransport implements Transport {
   listenToKnownDevices = jest.fn();
 }
 
-export function usbHidTransportMockBuilder(
+export function WebHidTransportMockBuilder(
   props: Partial<Transport> = {},
 ): Transport {
   return {

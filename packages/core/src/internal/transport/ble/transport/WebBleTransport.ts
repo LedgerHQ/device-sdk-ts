@@ -1,4 +1,3 @@
-import { inject, injectable } from "inversify";
 import { Either, EitherAsync, Left, Maybe, Right } from "purify-ts";
 import { from, Observable, switchMap, timer } from "rxjs";
 import { v4 as uuid } from "uuid";
@@ -22,11 +21,8 @@ import {
   BuiltinTransports,
   TransportIdentifier,
 } from "@api/transport/model/TransportIdentifier";
-import { deviceModelTypes } from "@internal/device-model/di/deviceModelTypes";
-import { loggerTypes } from "@internal/logger-publisher/di/loggerTypes";
 import type { LoggerPublisherService } from "@internal/logger-publisher/service/LoggerPublisherService";
 import { RECONNECT_DEVICE_TIMEOUT } from "@internal/transport/ble/data/WebBleConfig";
-import { bleDiTypes } from "@internal/transport/ble/di/bleDiTypes";
 import { BleDeviceInfos } from "@internal/transport/ble/model/BleDeviceInfos";
 import {
   BleDeviceGattServerError,
@@ -48,9 +44,8 @@ type WebBleInternalDevice = {
   bleGattService: BluetoothRemoteGATTService;
   discoveredDevice: TransportDiscoveredDevice;
 };
-
-@injectable()
 export class WebBleTransport implements Transport {
+  public name = "WEB-BLE";
   private readonly _connectedDevices: Array<BluetoothDevice>;
   private readonly _internalDevicesById: Map<DeviceId, WebBleInternalDevice>;
   private _deviceConnectionById: Map<DeviceId, BleDeviceConnection>;
@@ -60,11 +55,8 @@ export class WebBleTransport implements Transport {
   private readonly identifier: TransportIdentifier = BuiltinTransports.BLE;
 
   constructor(
-    @inject(deviceModelTypes.DeviceModelDataSource)
     private _deviceModelDataSource: DeviceModelDataSource,
-    @inject(loggerTypes.LoggerPublisherServiceFactory)
     loggerServiceFactory: (tag: string) => LoggerPublisherService,
-    @inject(bleDiTypes.BleDeviceConnectionFactory)
     private _bleDeviceConnectionFactory: BleDeviceConnectionFactory,
   ) {
     this._connectedDevices = [];
@@ -414,8 +406,10 @@ export class WebBleTransport implements Transport {
 
     if (maybeInternalDevice.isNothing()) {
       this._logger.error(`Unknown device ${params.connectedDevice.id}`);
-      return Left(
-        new UnknownDeviceError(`Unknown device ${params.connectedDevice.id}`),
+      return Promise.resolve(
+        Left(
+          new UnknownDeviceError(`Unknown device ${params.connectedDevice.id}`),
+        ),
       );
     }
 
@@ -442,6 +436,6 @@ export class WebBleTransport implements Transport {
       }
     });
 
-    return Right(void 0);
+    return Promise.resolve(Right(undefined));
   }
 }

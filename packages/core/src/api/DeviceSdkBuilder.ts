@@ -4,8 +4,7 @@ import {
 } from "@internal/manager-api/model/Const";
 
 import { type LoggerSubscriberService } from "./logger-subscriber/service/LoggerSubscriberService";
-import { type Transport } from "./transport/model/Transport";
-import { type BuiltinTransports } from "./transport/model/TransportIdentifier";
+import { type TransportFactory } from "./transport/model/Transport";
 import { DeviceSdk } from "./DeviceSdk";
 import { type SdkConfig } from "./SdkConfig";
 
@@ -16,8 +15,7 @@ import { type SdkConfig } from "./SdkConfig";
  * ```
  * const sdk = new LedgerDeviceSdkBuilder()
  *  .setStub(false)
- *  .addTransport(BuiltinTransports.USB)
- *  .addCustomTransport(new MyTransport())
+ *  .addTransport(new MyTransport())
  *  .addLogger(myLogger)
  *  .build();
  * ```
@@ -25,8 +23,7 @@ import { type SdkConfig } from "./SdkConfig";
 export class LedgerDeviceSdkBuilder {
   private stub = false;
   private readonly loggers: LoggerSubscriberService[] = [];
-  private readonly transports: BuiltinTransports[] = [];
-  private readonly customTransports: Transport[] = [];
+  private readonly transports: TransportFactory[] = [];
   private config: SdkConfig = {
     managerApiUrl: DEFAULT_MANAGER_API_BASE_URL,
     mockUrl: DEFAULT_MOCK_SERVER_BASE_URL,
@@ -36,7 +33,6 @@ export class LedgerDeviceSdkBuilder {
     return new DeviceSdk({
       stub: this.stub,
       transports: this.transports,
-      customTransports: this.customTransports,
       loggers: this.loggers,
       config: this.config,
     });
@@ -47,13 +43,8 @@ export class LedgerDeviceSdkBuilder {
     return this;
   }
 
-  addTransport(transport: BuiltinTransports): LedgerDeviceSdkBuilder {
+  addTransport(transport: TransportFactory): LedgerDeviceSdkBuilder {
     this.transports.push(transport);
-    return this;
-  }
-
-  addCustomTransport(transport: Transport): LedgerDeviceSdkBuilder {
-    this.customTransports.push(transport);
     return this;
   }
 

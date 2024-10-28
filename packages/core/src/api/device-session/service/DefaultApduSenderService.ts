@@ -8,7 +8,7 @@ import {
   HEAD_TAG,
   HEAD_TAG_LENGTH,
   INDEX_LENGTH,
-} from "@internal/device-session/data/FramerConst";
+} from "@api/device-session/model/FramerConst";
 import {
   FramerApduError,
   FramerOverflowError,
@@ -20,13 +20,10 @@ import { loggerTypes } from "@internal/logger-publisher/di/loggerTypes";
 import { LoggerPublisherService } from "@internal/logger-publisher/service/LoggerPublisherService";
 import { SdkError } from "@root/src/api/Error";
 
-import type { ApduSenderService } from "./ApduSenderService";
-
-export type DefaultApduSenderServiceConstructorArgs = {
-  frameSize: number;
-  channel?: Maybe<Uint8Array>;
-  padding?: boolean;
-};
+import type {
+  ApduSenderService,
+  ApduSenderServiceConstructorArgs,
+} from "./ApduSenderService";
 
 /**
  * Default implementation of ApduSenderService
@@ -53,7 +50,7 @@ export class DefaultApduSenderService implements ApduSenderService {
       frameSize,
       channel = Maybe.zero(),
       padding = false,
-    }: DefaultApduSenderServiceConstructorArgs,
+    }: ApduSenderServiceConstructorArgs,
     @inject(loggerTypes.LoggerPublisherServiceFactory)
     loggerServiceFactory: (tag: string) => LoggerPublisherService,
   ) {

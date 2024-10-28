@@ -1,5 +1,4 @@
 import * as Sentry from "@sentry/minimal";
-import { inject, injectable } from "inversify";
 import { Either, EitherAsync, Left, Maybe, Right } from "purify-ts";
 import { BehaviorSubject, from, map, Observable, switchMap } from "rxjs";
 import { v4 as uuid } from "uuid";
@@ -21,78 +20,70 @@ import {
 import { Transport } from "@api/transport/model/Transport";
 import { TransportConnectedDevice } from "@api/transport/model/TransportConnectedDevice";
 import { TransportDiscoveredDevice } from "@api/transport/model/TransportDiscoveredDevice";
-import {
-  BuiltinTransports,
-  TransportIdentifier,
-} from "@api/transport/model/TransportIdentifier";
-import { deviceModelTypes } from "@internal/device-model/di/deviceModelTypes";
-import { loggerTypes } from "@internal/logger-publisher/di/loggerTypes";
+import { TransportIdentifier } from "@api/transport/model/TransportIdentifier";
 import type { LoggerPublisherService } from "@internal/logger-publisher/service/LoggerPublisherService";
-import { usbDiTypes } from "@internal/transport/usb/di/usbDiTypes";
-import { UsbHidTransportNotSupportedError } from "@internal/transport/usb/model/Errors";
-import { UsbHidDeviceConnectionFactory } from "@internal/transport/usb/service/UsbHidDeviceConnectionFactory";
-import { UsbHidDeviceConnection } from "@internal/transport/usb/transport/UsbHidDeviceConnection";
+import { WebHidTransportNotSupportedError } from "@internal/transport/usb/model/Errors";
+import { WebHidDeviceConnectionFactory } from "@internal/transport/usb/service/WebHidDeviceConnectionFactory";
+import { WebHidDeviceConnection } from "@internal/transport/usb/transport/WebHidDeviceConnection";
 
 type PromptDeviceAccessError =
   | NoAccessibleDeviceError
-  | UsbHidTransportNotSupportedError;
+  | WebHidTransportNotSupportedError;
 
-type WebUsbHidTransportDiscoveredDevice = TransportDiscoveredDevice & {
+type WebWebHidTransportDiscoveredDevice = TransportDiscoveredDevice & {
   hidDevice: HIDDevice;
 };
 
-@injectable()
-export class WebUsbHidTransport implements Transport {
+export const webHidIdentifier: TransportIdentifier = "WEB-HID";
+
+export class WebHidTransport implements Transport {
   /** List of HID devices that have been discovered */
   private _transportDiscoveredDevices: BehaviorSubject<
-    Array<WebUsbHidTransportDiscoveredDevice>
-  > = new BehaviorSubject<Array<WebUsbHidTransportDiscoveredDevice>>([]);
+    Array<WebWebHidTransportDiscoveredDevice>
+  > = new BehaviorSubject<Array<WebWebHidTransportDiscoveredDevice>>([]);
 
-  /** Map of *connected* HIDDevice to their UsbHidDeviceConnection */
+  /** Map of *connected* HIDDevice to their WebHidDeviceConnection */
   private _deviceConnectionsByHidDevice: Map<
     HIDDevice,
-    UsbHidDeviceConnection
+    WebHidDeviceConnection
   > = new Map();
 
   /**
-   * Set of UsbHidDeviceConnection for which the HIDDevice has been
+   * Set of WebHidDeviceConnection for which the HIDDevice has been
    * disconnected, so they are waiting for a reconnection
    */
-  private _deviceConnectionsPendingReconnection: Set<UsbHidDeviceConnection> =
+  private _deviceConnectionsPendingReconnection: Set<WebHidDeviceConnection> =
     new Set();
 
   /** AbortController to stop listening to HID connection events */
   private _connectionListenersAbortController: AbortController =
     new AbortController();
   private _logger: LoggerPublisherService;
-  private _usbHidDeviceConnectionFactory: UsbHidDeviceConnectionFactory;
+  private _WebHidDeviceConnectionFactory: WebHidDeviceConnectionFactory;
   private readonly connectionType: ConnectionType = "USB";
-  private readonly identifier: TransportIdentifier = BuiltinTransports.USB;
+  private readonly identifier: TransportIdentifier = webHidIdentifier;
 
   constructor(
-    @inject(deviceModelTypes.DeviceModelDataSource)
     private deviceModelDataSource: DeviceModelDataSource,
-    @inject(loggerTypes.LoggerPublisherServiceFactory)
     loggerServiceFactory: (tag: string) => LoggerPublisherService,
-    @inject(usbDiTypes.UsbHidDeviceConnectionFactory)
-    usbHidDeviceConnectionFactory: UsbHidDeviceConnectionFactory,
+    deviceConnectionFactory: WebHidDeviceConnectionFactory,
   ) {
-    this._logger = loggerServiceFactory("WebUsbHidTransport");
-    this._usbHidDeviceConnectionFactory = usbHidDeviceConnectionFactory;
+    this._logger = loggerServiceFactory("WebWebHidTransport");
+    this._WebHidDeviceConnectionFactory = deviceConnectionFactory;
 
     this.startListeningToConnectionEvents();
   }
 
   /**
    * Get the WebHID API if supported or error
-   * @returns `Either<UsbHidTransportNotSupportedError, HID>`
+   * @returns `Either<WebHidTransportNotSupportedError, HID>`
    */
-  private get hidApi(): Either<UsbHidTransportNotSupportedError, HID> {
+  private get hidApi(): Either<WebHidTransportNotSupportedError, HID> {
     if (this.isSupported()) {
       return Right(navigator.hid);
     }
 
-    return Left(new UsbHidTransportNotSupportedError("WebHID not supported"));
+    return Left(new WebHidTransportNotSupportedError("WebHID not supported"));
   }
 
   isSupported() {
@@ -116,23 +107,22 @@ export class WebUsbHidTransport implements Transport {
    * previously granted access through `navigator.hid.requestDevice()`.
    */
   private async getDevices(): Promise<Either<SdkError, HIDDevice[]>> {
-    return EitherAsync.liftEither(this.hidApi)
-      .map(async (hidApi) => {
-        try {
-          const allDevices = await hidApi.getDevices();
-          return allDevices.filter(
-            (hidDevice) => hidDevice.vendorId === LEDGER_VENDOR_ID,
-          );
-        } catch (error) {
-          const deviceError = new NoAccessibleDeviceError(error);
-          this._logger.error(`getDevices: error getting devices`, {
-            data: { error },
-          });
-          Sentry.captureException(deviceError);
-          throw deviceError;
-        }
-      })
-      .run();
+    return EitherAsync.liftEither(this.hidApi).map(async (hidApi) => {
+      try {
+        const allDevices = await hidApi.getDevices();
+
+        return allDevices.filter(
+          (hidDevice) => hidDevice.vendorId === LEDGER_VENDOR_ID,
+        );
+      } catch (error) {
+        const deviceError = new NoAccessibleDeviceError(error);
+        this._logger.error(`getDevices: error getting devices`, {
+          data: { error },
+        });
+        Sentry.captureException(deviceError);
+        throw deviceError;
+      }
+    });
   }
 
   /**
@@ -140,7 +130,7 @@ export class WebUsbHidTransport implements Transport {
    */
   private mapHIDDeviceToTransportDiscoveredDevice(
     hidDevice: HIDDevice,
-  ): WebUsbHidTransportDiscoveredDevice {
+  ): WebWebHidTransportDiscoveredDevice {
     const existingDiscoveredDevice = this._transportDiscoveredDevices
       .getValue()
       .find((internalDevice) => internalDevice.hidDevice === hidDevice);
@@ -194,6 +184,7 @@ export class WebUsbHidTransport implements Transport {
 
   private async updateTransportDiscoveredDevices(): Promise<void> {
     const eitherDevices = await this.getDevices();
+
     eitherDevices.caseOf({
       Left: (error) => {
         this._logger.error("Error while getting accessible device", {
@@ -281,6 +272,7 @@ export class WebUsbHidTransport implements Transport {
             const discoveredDevices = hidDevices.map((hidDevice) => {
               return this.mapHIDDeviceToTransportDiscoveredDevice(hidDevice);
             });
+
             return from(discoveredDevices);
           },
         });
@@ -363,7 +355,7 @@ export class WebUsbHidTransport implements Transport {
 
     const { deviceModel } = matchingInternalDevice;
 
-    const deviceConnection = this._usbHidDeviceConnectionFactory.create(
+    const deviceConnection = this._WebHidDeviceConnectionFactory.create(
       matchingInternalDevice.hidDevice,
       {
         onConnectionTerminated: () => {
@@ -492,7 +484,7 @@ export class WebUsbHidTransport implements Transport {
   }
 
   private handleDeviceReconnection(
-    deviceConnection: UsbHidDeviceConnection,
+    deviceConnection: WebHidDeviceConnection,
     hidDevice: HIDDevice,
   ) {
     this._deviceConnectionsPendingReconnection.delete(deviceConnection);

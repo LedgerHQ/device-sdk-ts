@@ -59,7 +59,6 @@ export class DeviceSdk {
   constructor({
     stub,
     transports,
-    customTransports,
     loggers,
     config,
   }: Partial<MakeContainerProps> = {}) {
@@ -69,7 +68,6 @@ export class DeviceSdk {
     this.container = makeContainer({
       stub,
       transports,
-      customTransports,
       loggers,
       config,
     });

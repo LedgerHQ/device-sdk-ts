@@ -7,9 +7,10 @@ import { defaultApduSenderServiceStubBuilder } from "@api/device-session/service
 import { ReconnectionFailedError } from "@api/transport/model/Errors";
 import { type DeviceId } from "@api/types";
 import { DefaultLoggerPublisherService } from "@internal/logger-publisher/service/DefaultLoggerPublisherService";
-import { RECONNECT_DEVICE_TIMEOUT } from "@internal/transport/usb/data/UsbHidConfig";
+import { RECONNECT_DEVICE_TIMEOUT } from "@internal/transport/usb/data/WebHidConfig";
 import { hidDeviceStubBuilder } from "@internal/transport/usb/model/HIDDevice.stub";
-import { UsbHidDeviceConnection } from "@internal/transport/usb/transport/UsbHidDeviceConnection";
+
+import { WebHidDeviceConnection } from "./WebHidDeviceConnection";
 
 jest.useFakeTimers();
 
@@ -38,7 +39,7 @@ const flushPromises = () =>
 
 jest.useFakeTimers();
 
-describe("UsbHidDeviceConnection", () => {
+describe("WebHidDeviceConnection", () => {
   let device: HIDDevice;
   let apduSender: ApduSenderService;
   let apduReceiver: ApduReceiverService;
@@ -54,7 +55,7 @@ describe("UsbHidDeviceConnection", () => {
 
   it("should get device", () => {
     // given
-    const connection = new UsbHidDeviceConnection(
+    const connection = new WebHidDeviceConnection(
       { device, apduSender, apduReceiver, onConnectionTerminated, deviceId },
       logger,
     );
@@ -66,7 +67,7 @@ describe("UsbHidDeviceConnection", () => {
 
   it("should send APDU through hid report", () => {
     // given
-    const connection = new UsbHidDeviceConnection(
+    const connection = new WebHidDeviceConnection(
       { device, apduSender, apduReceiver, onConnectionTerminated, deviceId },
       logger,
     );
@@ -86,7 +87,7 @@ describe("UsbHidDeviceConnection", () => {
         } as HIDInputReportEvent),
       ),
     );
-    const connection = new UsbHidDeviceConnection(
+    const connection = new WebHidDeviceConnection(
       { device, apduSender, apduReceiver, onConnectionTerminated, deviceId },
       logger,
     );
@@ -112,7 +113,7 @@ describe("UsbHidDeviceConnection", () => {
           } as HIDInputReportEvent),
         ),
       );
-      const connection = new UsbHidDeviceConnection(
+      const connection = new WebHidDeviceConnection(
         { device, apduSender, apduReceiver, onConnectionTerminated, deviceId },
         logger,
       );
@@ -156,7 +157,7 @@ describe("UsbHidDeviceConnection", () => {
           } as HIDInputReportEvent),
         ),
       );
-      const connection = new UsbHidDeviceConnection(
+      const connection = new WebHidDeviceConnection(
         { device, apduSender, apduReceiver, onConnectionTerminated, deviceId },
         logger,
       );
@@ -183,7 +184,7 @@ describe("UsbHidDeviceConnection", () => {
           } as HIDInputReportEvent),
         ),
       );
-      const connection = new UsbHidDeviceConnection(
+      const connection = new WebHidDeviceConnection(
         { device, apduSender, apduReceiver, onConnectionTerminated, deviceId },
         logger,
       );
@@ -212,7 +213,7 @@ describe("UsbHidDeviceConnection", () => {
           } as HIDInputReportEvent),
         ),
       );
-      const connection = new UsbHidDeviceConnection(
+      const connection = new WebHidDeviceConnection(
         { device, apduSender, apduReceiver, onConnectionTerminated, deviceId },
         logger,
       );
@@ -238,7 +239,7 @@ describe("UsbHidDeviceConnection", () => {
           } as HIDInputReportEvent),
         ),
       );
-      const connection = new UsbHidDeviceConnection(
+      const connection = new WebHidDeviceConnection(
         { device, apduSender, apduReceiver, onConnectionTerminated, deviceId },
         logger,
       );

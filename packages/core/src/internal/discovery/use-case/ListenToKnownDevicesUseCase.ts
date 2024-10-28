@@ -1,4 +1,4 @@
-import { injectable, multiInject } from "inversify";
+import { inject, injectable } from "inversify";
 import { from, map, merge, Observable, scan } from "rxjs";
 
 import { DeviceModel } from "@api/device/DeviceModel";
@@ -6,6 +6,7 @@ import type { Transport } from "@api/transport/model/Transport";
 import { TransportDiscoveredDevice } from "@api/transport/model/TransportDiscoveredDevice";
 import { DiscoveredDevice } from "@api/types";
 import { transportDiTypes } from "@internal/transport/di/transportDiTypes";
+import { TransportService } from "@internal/transport/service/TransportService";
 
 /**
  * Listen to list of known discovered devices (and later BLE).
@@ -14,10 +15,10 @@ import { transportDiTypes } from "@internal/transport/di/transportDiTypes";
 export class ListenToKnownDevicesUseCase {
   private readonly _transports: Transport[];
   constructor(
-    @multiInject(transportDiTypes.Transport)
-    transports: Transport[],
+    @inject(transportDiTypes.TransportService)
+    transportService: TransportService,
   ) {
-    this._transports = transports;
+    this._transports = transportService.getAllTransports();
   }
 
   private mapTransportDiscoveredDeviceToDiscoveredDevice(
@@ -57,13 +58,13 @@ export class ListenToKnownDevicesUseCase {
     );
 
     return merge(...observablesWithIndex).pipe(
-      scan(
-        (acc, { index, arr }) => {
-          acc[index] = arr;
-          return acc;
-        },
-        {} as { [key: number]: Array<TransportDiscoveredDevice> },
-      ),
+      scan<
+        { index: number; arr: TransportDiscoveredDevice[] },
+        { [key: number]: TransportDiscoveredDevice[] }
+      >((acc, { index, arr }) => {
+        acc[index] = arr;
+        return acc;
+      }, {}),
       map((acc) =>
         Object.values(acc)
           .flat()

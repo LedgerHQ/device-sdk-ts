@@ -80,3 +80,17 @@ export class DeviceNotInitializedError extends GeneralSdkError {
     super(err);
   }
 }
+
+export class NoTransportsProvidedError extends GeneralSdkError {
+  override readonly _tag = "NoTransportsProvidedError";
+  constructor(readonly err?: unknown) {
+    super(err);
+  }
+}
+
+export class TransportAlreadyExistsError extends GeneralSdkError {
+  override readonly _tag = "TransportAlreadyExistsError";
+  constructor(readonly err?: unknown) {
+    super(err);
+  }
+}
