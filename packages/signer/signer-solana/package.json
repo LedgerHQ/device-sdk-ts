@@ -35,6 +35,7 @@
     "test:coverage": "pnpm test -- --coverage"
   },
   "dependencies": {
+    "@ledgerhq/signer-utils": "workspace:*",
     "bs58": "^6.0.0",
     "inversify": "^6.0.3",
     "inversify-logger-middleware": "^3.1.0",
@@ -48,7 +49,6 @@
     "@ledgerhq/eslint-config-dsdk": "workspace:*",
     "@ledgerhq/jest-config-dsdk": "workspace:*",
     "@ledgerhq/prettier-config-dsdk": "workspace:*",
-    "@ledgerhq/signer-utils": "workspace:*",
     "@ledgerhq/tsconfig-dsdk": "workspace:*",
     "rxjs": "^7.8.1",
     "ts-node": "^10.9.2"
