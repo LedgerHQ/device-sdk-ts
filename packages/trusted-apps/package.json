@@ -34,7 +34,7 @@
     "test:coverage": "pnpm test -- --coverage"
   },
   "dependencies": {
-    "inversify": "^6.0.2",
+    "inversify": "^6.0.3",
     "reflect-metadata": "^0.2.2"
   },
   "devDependencies": {
