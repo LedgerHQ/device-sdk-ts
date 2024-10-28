@@ -19,6 +19,7 @@
     "@ledgerhq/device-management-kit": "workspace:*",
     "@ledgerhq/device-management-kit-flipper-plugin-client": "workspace:*",
     "@ledgerhq/device-signer-kit-ethereum": "workspace:*",
+    "@ledgerhq/device-signer-kit-solana": "workspace:*",
     "@ledgerhq/device-sdk-transport-mock": "workspace:*",
     "@ledgerhq/react-ui": "^0.16.2",
     "@sentry/nextjs": "^8.32.0",
