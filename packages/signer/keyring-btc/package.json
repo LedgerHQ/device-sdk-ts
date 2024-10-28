@@ -39,7 +39,7 @@
     "@types/crypto-js": "^4.2.2",
     "bitcoinjs-lib": "^6.1.6",
     "crypto-js": "^4.2.0",
-    "inversify": "^6.0.2",
+    "inversify": "^6.0.3",
     "inversify-logger-middleware": "^3.1.0",
     "purify-ts": "^2.1.0",
     "reflect-metadata": "^0.2.2",
