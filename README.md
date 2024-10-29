@@ -57,7 +57,7 @@ The purpose of the Ledger Device Management Kit(LDMK in short) is to provide a l
 
 ## How does it works
 
-The Device Management Kit features an interface for applications to handle any Ledge device (a.k. hardware wallets). It convert intention into
+The Device Management Kit features an interface for applications to handle any Ledger device (a.k. hardware wallets). It convert intention into
 
 ```mermaid
   flowchart LR;
