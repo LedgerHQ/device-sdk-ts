@@ -2,7 +2,7 @@
 
 import React, {
   createContext,
-  PropsWithChildren,
+  type PropsWithChildren,
   useContext,
   useEffect,
   useState,

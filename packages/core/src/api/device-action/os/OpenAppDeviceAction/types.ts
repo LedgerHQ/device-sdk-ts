@@ -1,13 +1,13 @@
-import { CommandErrorResult } from "@api/command/model/CommandResult";
-import { OpenAppErrorCodes } from "@api/command/os/OpenAppCommand";
-import { DeviceActionState } from "@api/device-action/model/DeviceActionState";
-import { UserInteractionRequired } from "@api/device-action/model/UserInteractionRequired";
+import { type CommandErrorResult } from "@api/command/model/CommandResult";
+import { type OpenAppErrorCodes } from "@api/command/os/OpenAppCommand";
+import { type DeviceActionState } from "@api/device-action/model/DeviceActionState";
+import { type UserInteractionRequired } from "@api/device-action/model/UserInteractionRequired";
 import {
-  DeviceLockedError,
-  DeviceNotOnboardedError,
-  UnknownDAError,
+  type DeviceLockedError,
+  type DeviceNotOnboardedError,
+  type UnknownDAError,
 } from "@api/device-action/os/Errors";
-import { GetDeviceStatusDAInput } from "@api/device-action/os/GetDeviceStatus/types";
+import { type GetDeviceStatusDAInput } from "@api/device-action/os/GetDeviceStatus/types";
 
 export type OpenAppDAOutput = void;
 

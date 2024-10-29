@@ -1,16 +1,19 @@
-import { DeviceSdk, DeviceSessionId } from "@ledgerhq/device-management-kit";
-import { Container } from "inversify";
+import {
+  type DeviceSdk,
+  type DeviceSessionId,
+} from "@ledgerhq/device-management-kit";
+import { type Container } from "inversify";
 
-import { GetAddressDAReturnType } from "@api/app-binder/GetAddressDeviceActionTypes";
-import { GetAppConfigurationDAReturnType } from "@api/app-binder/GetAppConfigurationDeviceActionTypes";
-import { SignMessageDAReturnType } from "@api/app-binder/SignMessageDeviceActionTypes";
-import { SignTransactionDAReturnType } from "@api/app-binder/SignTransactionDeviceActionTypes";
-import { AddressOptions } from "@api/model/AddressOption";
-import { Transaction } from "@api/model/Transaction";
-import { TransactionOptions } from "@api/model/TransactionOptions";
-import { SignerSolana } from "@api/SignerSolana";
+import { type GetAddressDAReturnType } from "@api/app-binder/GetAddressDeviceActionTypes";
+import { type GetAppConfigurationDAReturnType } from "@api/app-binder/GetAppConfigurationDeviceActionTypes";
+import { type SignMessageDAReturnType } from "@api/app-binder/SignMessageDeviceActionTypes";
+import { type SignTransactionDAReturnType } from "@api/app-binder/SignTransactionDeviceActionTypes";
+import { type AddressOptions } from "@api/model/AddressOption";
+import { type Transaction } from "@api/model/Transaction";
+import { type TransactionOptions } from "@api/model/TransactionOptions";
+import { type SignerSolana } from "@api/SignerSolana";
 
-import { GetAddressUseCase } from "./use-cases/address/GetAddressUseCase";
+import { type GetAddressUseCase } from "./use-cases/address/GetAddressUseCase";
 import { useCasesTypes } from "./use-cases/di/useCasesTypes";
 import { makeContainer } from "./di";
 

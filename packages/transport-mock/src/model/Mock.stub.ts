@@ -1,4 +1,4 @@
-import { Mock, MockArgs } from "./Mock";
+import { Mock, type MockArgs } from "./Mock";
 
 export const mockStubBuilder = (args: Partial<MockArgs> = {}) =>
   new Mock({

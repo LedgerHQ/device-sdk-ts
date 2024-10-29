@@ -1,4 +1,4 @@
-import { Reducer } from "react";
+import { type Reducer } from "react";
 import { BuiltinTransports } from "@ledgerhq/device-management-kit";
 
 export type SdkConfigState = {

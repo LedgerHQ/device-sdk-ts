@@ -1,8 +1,8 @@
-import { Either } from "purify-ts";
+import { type Either } from "purify-ts";
 
 import type { DataStore } from "@internal/data-store/model/DataStore";
-import { Psbt } from "@internal/psbt/model/Psbt";
-import { Wallet } from "@internal/wallet/model/Wallet";
+import { type Psbt } from "@internal/psbt/model/Psbt";
+import { type Wallet } from "@internal/wallet/model/Wallet";
 
 export type PsbtCommitment = {
   globalCommitment: Uint8Array;

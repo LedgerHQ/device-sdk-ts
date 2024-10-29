@@ -11,7 +11,7 @@ import {
   Switch,
   Text,
 } from "@ledgerhq/react-ui";
-import styled, { DefaultTheme } from "styled-components";
+import styled, { type DefaultTheme } from "styled-components";
 
 import { useSdkConfigContext } from "@/providers/SdkConfig";
 

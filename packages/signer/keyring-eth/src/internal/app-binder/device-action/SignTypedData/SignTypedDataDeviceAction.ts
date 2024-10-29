@@ -1,11 +1,11 @@
-import { ContextModule } from "@ledgerhq/context-module";
+import { type ContextModule } from "@ledgerhq/context-module";
 import {
-  CommandResult,
+  type CommandResult,
   type DeviceActionStateMachine,
-  InternalApi,
+  type InternalApi,
   isSuccessCommandResult,
   OpenAppDeviceAction,
-  StateMachineTypes,
+  type StateMachineTypes,
   UnknownDAError,
   UserInteractionRequired,
   XStateDeviceAction,
@@ -14,21 +14,21 @@ import { Left, Nothing, Right } from "purify-ts";
 import { assign, fromPromise, setup } from "xstate";
 
 import {
-  SignTypedDataDAError,
-  SignTypedDataDAInput,
-  SignTypedDataDAIntermediateValue,
-  SignTypedDataDAInternalState,
-  SignTypedDataDAOutput,
+  type SignTypedDataDAError,
+  type SignTypedDataDAInput,
+  type SignTypedDataDAIntermediateValue,
+  type SignTypedDataDAInternalState,
+  type SignTypedDataDAOutput,
 } from "@api/app-binder/SignTypedDataDeviceActionTypes";
-import { Signature } from "@api/model/Signature";
-import { TypedData } from "@api/model/TypedData";
+import { type Signature } from "@api/model/Signature";
+import { type TypedData } from "@api/model/TypedData";
 import { SignEIP712Command } from "@internal/app-binder/command/SignEIP712Command";
 import { BuildEIP712ContextTask } from "@internal/app-binder/task/BuildEIP712ContextTask";
 import {
   ProvideEIP712ContextTask,
   type ProvideEIP712ContextTaskArgs,
 } from "@internal/app-binder/task/ProvideEIP712ContextTask";
-import { TypedDataParserService } from "@internal/typed-data/service/TypedDataParserService";
+import { type TypedDataParserService } from "@internal/typed-data/service/TypedDataParserService";
 
 export type MachineDependencies = {
   readonly buildContext: (arg0: {

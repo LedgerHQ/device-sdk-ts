@@ -5,13 +5,13 @@ import {
   type ExecuteDeviceActionReturnType,
   type OpenAppDAError,
   type OpenAppDARequiredInteraction,
-  UserInteractionRequired,
+  type UserInteractionRequired,
 } from "@ledgerhq/device-management-kit";
 
-import { Signature } from "@api/model/Signature";
-import { TypedData } from "@api/model/TypedData";
+import { type Signature } from "@api/model/Signature";
+import { type TypedData } from "@api/model/TypedData";
 import type { ProvideEIP712ContextTaskArgs } from "@internal/app-binder/task/ProvideEIP712ContextTask";
-import { TypedDataParserService } from "@internal/typed-data/service/TypedDataParserService";
+import { type TypedDataParserService } from "@internal/typed-data/service/TypedDataParserService";
 
 export type SignTypedDataDAOutput = Signature;
 

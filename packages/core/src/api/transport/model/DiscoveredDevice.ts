@@ -1,5 +1,5 @@
-import { DeviceId, DeviceModel } from "@api/device/DeviceModel";
-import { TransportIdentifier } from "@api/transport/model/TransportIdentifier";
+import { type DeviceId, type DeviceModel } from "@api/device/DeviceModel";
+import { type TransportIdentifier } from "@api/transport/model/TransportIdentifier";
 
 /**
  * A discovered device.

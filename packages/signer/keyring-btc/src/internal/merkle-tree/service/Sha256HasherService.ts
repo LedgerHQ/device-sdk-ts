@@ -1,7 +1,7 @@
 import { hexaStringToBuffer } from "@ledgerhq/device-management-kit";
 import { lib, SHA256 } from "crypto-js";
 
-import { HasherService } from "./HasherService";
+import { type HasherService } from "./HasherService";
 
 export class Sha256HasherService implements HasherService {
   hash(buffer: Uint8Array): Uint8Array {

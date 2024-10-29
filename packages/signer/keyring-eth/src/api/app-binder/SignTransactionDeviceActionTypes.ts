@@ -1,6 +1,6 @@
 import {
-  ClearSignContextSuccess,
-  ContextModule,
+  type ClearSignContextSuccess,
+  type ContextModule,
 } from "@ledgerhq/context-module";
 import {
   type CommandErrorResult,
@@ -8,14 +8,14 @@ import {
   type ExecuteDeviceActionReturnType,
   type OpenAppDAError,
   type OpenAppDARequiredInteraction,
-  UserInteractionRequired,
+  type UserInteractionRequired,
 } from "@ledgerhq/device-management-kit";
 
-import { Signature } from "@api/model/Signature";
-import { Transaction, TransactionType } from "@api/model/Transaction";
-import { TransactionOptions } from "@api/model/TransactionOptions";
-import { ProvideTransactionContextTaskErrorCodes } from "@internal/app-binder/task/ProvideTransactionContextTask";
-import { TransactionMapperService } from "@internal/transaction/service/mapper/TransactionMapperService";
+import { type Signature } from "@api/model/Signature";
+import { type Transaction, type TransactionType } from "@api/model/Transaction";
+import { type TransactionOptions } from "@api/model/TransactionOptions";
+import { type ProvideTransactionContextTaskErrorCodes } from "@internal/app-binder/task/ProvideTransactionContextTask";
+import { type TransactionMapperService } from "@internal/transaction/service/mapper/TransactionMapperService";
 
 export type SignTransactionDAOutput = Signature;
 

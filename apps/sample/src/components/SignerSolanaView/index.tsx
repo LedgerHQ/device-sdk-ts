@@ -1,13 +1,13 @@
 import React, { useMemo } from "react";
 import {
-  GetAddressDAError,
-  GetAddressDAIntermediateValue,
-  GetAddressDAOutput,
+  type GetAddressDAError,
+  type GetAddressDAIntermediateValue,
+  type GetAddressDAOutput,
   SignerSolanaBuilder,
 } from "@ledgerhq/device-signer-kit-solana";
 
 import { DeviceActionsList } from "@/components/DeviceActionsView/DeviceActionsList";
-import { DeviceActionProps } from "@/components/DeviceActionsView/DeviceActionTester";
+import { type DeviceActionProps } from "@/components/DeviceActionsView/DeviceActionTester";
 import { useSdk } from "@/providers/DeviceSdkProvider";
 
 const DEFAULT_DERIVATION_PATH = "44'/501'";

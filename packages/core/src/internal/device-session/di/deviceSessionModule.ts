@@ -1,21 +1,21 @@
-import { ContainerModule, interfaces } from "inversify";
+import { ContainerModule, type interfaces } from "inversify";
 
-import { ApduReceiverService } from "@internal/device-session/service/ApduReceiverService";
-import { ApduSenderService } from "@internal/device-session/service/ApduSenderService";
+import { type ApduReceiverService } from "@internal/device-session/service/ApduReceiverService";
+import { type ApduSenderService } from "@internal/device-session/service/ApduSenderService";
 import {
-  DefaultApduReceiverConstructorArgs,
+  type DefaultApduReceiverConstructorArgs,
   DefaultApduReceiverService,
 } from "@internal/device-session/service/DefaultApduReceiverService";
 import {
   DefaultApduSenderService,
-  DefaultApduSenderServiceConstructorArgs,
+  type DefaultApduSenderServiceConstructorArgs,
 } from "@internal/device-session/service/DefaultApduSenderService";
 import { DefaultDeviceSessionService } from "@internal/device-session/service/DefaultDeviceSessionService";
 import { CloseSessionsUseCase } from "@internal/device-session/use-case/CloseSessionsUseCase";
 import { GetDeviceSessionStateUseCase } from "@internal/device-session/use-case/GetDeviceSessionStateUseCase";
 import { ListDeviceSessionsUseCase } from "@internal/device-session/use-case/ListDeviceSessionsUseCase";
 import { loggerTypes } from "@internal/logger-publisher/di/loggerTypes";
-import { LoggerPublisherService } from "@internal/logger-publisher/service/LoggerPublisherService";
+import { type LoggerPublisherService } from "@internal/logger-publisher/service/LoggerPublisherService";
 import { StubUseCase } from "@root/src/di.stub";
 
 import { deviceSessionTypes } from "./deviceSessionTypes";

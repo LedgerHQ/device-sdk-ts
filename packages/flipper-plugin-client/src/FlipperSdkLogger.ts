@@ -3,8 +3,8 @@ import {
   LogLevel,
   type LogParams,
 } from "@ledgerhq/device-management-kit";
-import { FlipperPluginConnection } from "js-flipper";
-import { ReplaySubject, Subscription } from "rxjs";
+import { type FlipperPluginConnection } from "js-flipper";
+import { ReplaySubject, type Subscription } from "rxjs";
 
 import { FlipperPluginManager } from "./FlipperPluginManager";
 

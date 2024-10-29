@@ -1,9 +1,9 @@
 import { Left, Right } from "purify-ts";
 import { Subject } from "rxjs";
 
-import { DeviceModel, DeviceModelId } from "@api/device/DeviceModel";
+import { type DeviceModel, DeviceModelId } from "@api/device/DeviceModel";
 import { StaticDeviceModelDataSource } from "@internal/device-model/data/StaticDeviceModelDataSource";
-import { InternalDeviceModel } from "@internal/device-model/model/DeviceModel";
+import { type InternalDeviceModel } from "@internal/device-model/model/DeviceModel";
 import { DefaultLoggerPublisherService } from "@internal/logger-publisher/service/DefaultLoggerPublisherService";
 import {
   DeviceNotRecognizedError,
@@ -13,7 +13,7 @@ import {
   UsbHidTransportNotSupportedError,
 } from "@internal/transport/model/Errors";
 import { connectedDeviceStubBuilder } from "@internal/transport/model/InternalConnectedDevice.stub";
-import { InternalDiscoveredDevice } from "@internal/transport/model/InternalDiscoveredDevice";
+import { type InternalDiscoveredDevice } from "@internal/transport/model/InternalDiscoveredDevice";
 import { RECONNECT_DEVICE_TIMEOUT } from "@internal/transport/usb/data/UsbHidConfig";
 import { hidDeviceStubBuilder } from "@internal/transport/usb/model/HIDDevice.stub";
 import { usbHidDeviceConnectionFactoryStubBuilder } from "@internal/transport/usb/service/UsbHidDeviceConnectionFactory.stub";

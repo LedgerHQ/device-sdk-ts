@@ -1,9 +1,9 @@
 import { Left, Right } from "purify-ts";
 
-import { ForwardDomainDataSource } from "@/forward-domain/data/ForwardDomainDataSource";
+import { type ForwardDomainDataSource } from "@/forward-domain/data/ForwardDomainDataSource";
 import { ForwardDomainContextLoader } from "@/forward-domain/domain/ForwardDomainContextLoader";
 import { ClearSignContextType } from "@/shared/model/ClearSignContext";
-import { TransactionContext } from "@/shared/model/TransactionContext";
+import { type TransactionContext } from "@/shared/model/TransactionContext";
 
 describe("ForwardDomainContextLoader", () => {
   const mockForwardDomainDataSource: ForwardDomainDataSource = {

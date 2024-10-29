@@ -1,7 +1,7 @@
-import { Apdu } from "@api/apdu/model/Apdu";
-import { CommandResult } from "@api/command/model/CommandResult";
-import { DeviceModelId } from "@api/device/DeviceModel";
-import { ApduResponse } from "@api/device-session/ApduResponse";
+import { type Apdu } from "@api/apdu/model/Apdu";
+import { type CommandResult } from "@api/command/model/CommandResult";
+import { type DeviceModelId } from "@api/device/DeviceModel";
+import { type ApduResponse } from "@api/device-session/ApduResponse";
 
 /**
  * A command that can be sent to a device.

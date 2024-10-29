@@ -1,4 +1,4 @@
-import { DeviceExchangeErrorArgs } from "@api/Error";
+import { type DeviceExchangeErrorArgs } from "@api/Error";
 
 /**
  * CommandErrors dictionary utility type

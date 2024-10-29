@@ -2,26 +2,26 @@ import { Left, Right } from "purify-ts";
 import { assign, fromPromise, setup } from "xstate";
 
 import {
-  CommandResult,
+  type CommandResult,
   isSuccessCommandResult,
 } from "@api/command/model/CommandResult";
-import { InternalApi } from "@api/device-action/DeviceAction";
+import { type InternalApi } from "@api/device-action/DeviceAction";
 import { UserInteractionRequired } from "@api/device-action/model/UserInteractionRequired";
 import { UnknownDAError } from "@api/device-action/os/Errors";
 import { OpenAppDeviceAction } from "@api/device-action/os/OpenAppDeviceAction/OpenAppDeviceAction";
-import { StateMachineTypes } from "@api/device-action/xstate-utils/StateMachineTypes";
+import { type StateMachineTypes } from "@api/device-action/xstate-utils/StateMachineTypes";
 import {
-  DeviceActionStateMachine,
+  type DeviceActionStateMachine,
   XStateDeviceAction,
 } from "@api/device-action/xstate-utils/XStateDeviceAction";
-import { Command } from "@api/types";
+import { type Command } from "@api/types";
 
 import {
-  SendCommandInAppDAError,
-  SendCommandInAppDAInput,
-  SendCommandInAppDAIntermediateValue,
-  SendCommandInAppDAInternalState,
-  SendCommandInAppDAOutput,
+  type SendCommandInAppDAError,
+  type SendCommandInAppDAInput,
+  type SendCommandInAppDAIntermediateValue,
+  type SendCommandInAppDAInternalState,
+  type SendCommandInAppDAOutput,
 } from "./SendCommandInAppDeviceActionTypes";
 
 /**

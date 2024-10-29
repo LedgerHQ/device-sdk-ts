@@ -1,14 +1,14 @@
-import { Either, Just, Left, Maybe, Nothing, Right } from "purify-ts";
+import { type Either, Just, Left, Maybe, Nothing, Right } from "purify-ts";
 
-import { TypedDataField } from "@api/model/TypedData";
+import { type TypedDataField } from "@api/model/TypedData";
 import {
   ArrayType,
-  FieldName,
-  FieldType,
+  type FieldName,
+  type FieldType,
   PrimitiveType,
-  StructName,
+  type StructName,
   StructType,
-  TypedDataValue,
+  type TypedDataValue,
   TypedDataValueArray,
   TypedDataValueField,
   TypedDataValueRoot,

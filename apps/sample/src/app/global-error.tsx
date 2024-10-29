@@ -2,7 +2,7 @@
 
 import React, { useEffect } from "react";
 import * as Sentry from "@sentry/nextjs";
-import Error, { ErrorProps } from "next/error";
+import Error, { type ErrorProps } from "next/error";
 
 export default function GlobalError({ error }: { error: ErrorProps }) {
   useEffect(() => {

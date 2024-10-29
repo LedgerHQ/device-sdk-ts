@@ -1,8 +1,8 @@
 import { ContainerModule } from "inversify";
 
-import { SdkConfig } from "@api/SdkConfig";
-import { Transport } from "@api/transport/model/Transport";
-import { BuiltinTransports } from "@api/transport/model/TransportIdentifier";
+import { type SdkConfig } from "@api/SdkConfig";
+import { type Transport } from "@api/transport/model/Transport";
+import { type BuiltinTransports } from "@api/transport/model/TransportIdentifier";
 import { TransportDataSource } from "@internal/transport/data/TransportDataSource";
 
 import { transportDiTypes } from "./transportDiTypes";

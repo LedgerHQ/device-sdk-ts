@@ -1,5 +1,9 @@
 import React, { useCallback, useEffect, useState } from "react";
-import { Mock, MockClient, Session } from "@ledgerhq/device-sdk-transport-mock";
+import {
+  type Mock,
+  type MockClient,
+  type Session,
+} from "@ledgerhq/device-sdk-transport-mock";
 import { Button, Divider, Flex, Input, Text } from "@ledgerhq/react-ui";
 import styled from "styled-components";
 

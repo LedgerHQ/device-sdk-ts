@@ -1,9 +1,9 @@
 import {
-  DeviceAction,
-  DeviceActionIntermediateValue,
-  DeviceActionState,
-  InternalApi,
-  SdkError,
+  type DeviceAction,
+  type DeviceActionIntermediateValue,
+  type DeviceActionState,
+  type InternalApi,
+  type SdkError,
 } from "@ledgerhq/device-management-kit";
 
 /**

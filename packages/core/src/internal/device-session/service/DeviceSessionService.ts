@@ -1,7 +1,7 @@
-import { Either } from "purify-ts";
+import { type Either } from "purify-ts";
 
-import { SdkError } from "@api/Error";
-import { DeviceSession } from "@internal/device-session/model/DeviceSession";
+import { type SdkError } from "@api/Error";
+import { type DeviceSession } from "@internal/device-session/model/DeviceSession";
 
 export interface DeviceSessionService {
   addDeviceSession(deviceSession: DeviceSession): DeviceSessionService;

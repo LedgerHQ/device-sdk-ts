@@ -1,4 +1,4 @@
-import { InternalApi } from "@api/device-action/DeviceAction";
+import { type InternalApi } from "@api/device-action/DeviceAction";
 
 const sendCommandMock = jest.fn();
 const apiGetDeviceSessionStateMock = jest.fn();

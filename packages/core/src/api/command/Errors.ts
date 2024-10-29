@@ -1,4 +1,4 @@
-import { SdkError } from "@api/Error";
+import { type SdkError } from "@api/Error";
 
 export class InvalidStatusWordError implements SdkError {
   readonly _tag = "InvalidStatusWordError";

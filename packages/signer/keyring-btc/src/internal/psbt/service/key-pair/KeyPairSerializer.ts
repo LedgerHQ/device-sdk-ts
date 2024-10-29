@@ -1,11 +1,11 @@
 import {
-  ByteArrayBuilder,
-  ByteArrayParser,
+  type ByteArrayBuilder,
+  type ByteArrayParser,
 } from "@ledgerhq/device-management-kit";
-import { Maybe } from "purify-ts";
+import { type Maybe } from "purify-ts";
 
-import { KeyPair } from "@internal/psbt/model/KeyPair";
-import { Value } from "@internal/psbt/model/Value";
+import { type KeyPair } from "@internal/psbt/model/KeyPair";
+import { type Value } from "@internal/psbt/model/Value";
 
 export interface KeyPairSerializer {
   deserialize(parser: ByteArrayParser): Maybe<KeyPair>;

@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { DiscoveredDevice } from "@ledgerhq/device-management-kit";
-import { Subscription } from "rxjs";
+import { type DiscoveredDevice } from "@ledgerhq/device-management-kit";
+import { type Subscription } from "rxjs";
 
 import { useSdk } from "@/providers/DeviceSdkProvider";
 import { useDeviceSessionsContext } from "@/providers/DeviceSessionsProvider";

@@ -1,6 +1,6 @@
-import { interfaces } from "inversify";
+import { type interfaces } from "inversify";
 
-import { Transport } from "@api/transport/model/Transport";
+import { type Transport } from "@api/transport/model/Transport";
 import { BuiltinTransports } from "@api/transport/model/TransportIdentifier";
 import { WebBleTransport } from "@internal/transport/ble/transport/WebBleTransport";
 import { MockTransport } from "@internal/transport/mockserver/MockserverTransport";

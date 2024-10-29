@@ -19,7 +19,7 @@ import { DeviceSessionStateType } from "@api/device-session/DeviceSessionState";
 import { HttpFetchApiError } from "@internal/manager-api/model/Errors";
 
 import { ListAppsWithMetadataDeviceAction } from "./ListAppsWithMetadataDeviceAction";
-import { ListAppsWithMetadataDAState } from "./types";
+import { type ListAppsWithMetadataDAState } from "./types";
 
 jest.mock("@api/device-action/os/ListApps/ListAppsDeviceAction");
 

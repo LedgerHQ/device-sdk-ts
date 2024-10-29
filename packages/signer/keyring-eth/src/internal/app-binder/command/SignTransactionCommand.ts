@@ -1,19 +1,19 @@
 // https://github.com/LedgerHQ/app-ethereum/blob/develop/doc/ethapp.adoc#sign-eth-transaction
 import {
-  Apdu,
+  type Apdu,
   ApduBuilder,
-  ApduBuilderArgs,
+  type ApduBuilderArgs,
   ApduParser,
-  ApduResponse,
+  type ApduResponse,
   type Command,
-  CommandResult,
+  type CommandResult,
   CommandResultFactory,
   CommandUtils,
   GlobalCommandErrorHandler,
-  HexaString,
+  type HexaString,
   InvalidStatusWordError,
 } from "@ledgerhq/device-management-kit";
-import { Just, Maybe, Nothing } from "purify-ts";
+import { Just, type Maybe, Nothing } from "purify-ts";
 
 const R_LENGTH = 32;
 const S_LENGTH = 32;

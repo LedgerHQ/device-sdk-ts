@@ -1,7 +1,7 @@
-import { Observable } from "rxjs";
+import { type Observable } from "rxjs";
 
-import { Transport } from "@api/transport/model/Transport";
-import { InternalDiscoveredDevice } from "@internal/transport/model/InternalDiscoveredDevice";
+import { type Transport } from "@api/transport/model/Transport";
+import { type InternalDiscoveredDevice } from "@internal/transport/model/InternalDiscoveredDevice";
 
 export class WebBleTransport implements Transport {
   listenToKnownDevices(): Observable<InternalDiscoveredDevice[]> {

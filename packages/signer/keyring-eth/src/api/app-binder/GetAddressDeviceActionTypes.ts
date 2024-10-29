@@ -3,7 +3,7 @@ import {
   type SendCommandInAppDAError,
   type SendCommandInAppDAIntermediateValue,
   type SendCommandInAppDAOutput,
-  UserInteractionRequired,
+  type UserInteractionRequired,
 } from "@ledgerhq/device-management-kit";
 
 import { type GetAddressCommandResponse } from "@api/app-binder/GetAddressCommandTypes";

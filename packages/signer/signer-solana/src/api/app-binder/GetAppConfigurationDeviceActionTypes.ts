@@ -3,10 +3,10 @@ import {
   type SendCommandInAppDAError,
   type SendCommandInAppDAIntermediateValue,
   type SendCommandInAppDAOutput,
-  UserInteractionRequired,
+  type UserInteractionRequired,
 } from "@ledgerhq/device-management-kit";
 
-import { AppConfiguration } from "@api/model/AppConfiguration";
+import { type AppConfiguration } from "@api/model/AppConfiguration";
 
 type GetAppConfigurationDAUserInteractionRequired =
   UserInteractionRequired.None;

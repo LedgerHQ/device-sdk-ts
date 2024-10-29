@@ -1,7 +1,7 @@
 import { hexaStringToBuffer } from "@api/utils/HexaString";
 
 import {
-  AppBuilderError,
+  type AppBuilderError,
   DataOverflowError,
   HexaStringEncodeError,
   ValueOverflowError,

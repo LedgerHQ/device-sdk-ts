@@ -1,5 +1,8 @@
-import { ContextModule } from "@ledgerhq/context-module";
-import { DeviceSdk, DeviceSessionId } from "@ledgerhq/device-management-kit";
+import { type ContextModule } from "@ledgerhq/context-module";
+import {
+  type DeviceSdk,
+  type DeviceSessionId,
+} from "@ledgerhq/device-management-kit";
 import { Container } from "inversify";
 
 // import { makeLoggerMiddleware } from "inversify-logger-middleware";

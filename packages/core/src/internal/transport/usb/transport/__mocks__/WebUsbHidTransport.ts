@@ -1,4 +1,4 @@
-import { Transport } from "@api/transport/model/Transport";
+import { type Transport } from "@api/transport/model/Transport";
 
 export class WebUsbHidTransport implements Transport {
   isSupported = jest.fn();

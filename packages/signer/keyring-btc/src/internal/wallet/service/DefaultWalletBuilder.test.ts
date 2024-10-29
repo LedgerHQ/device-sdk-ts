@@ -7,7 +7,7 @@ import {
 } from "@api/model/Wallet";
 import { Leaf } from "@internal/merkle-tree/model/Leaf";
 import { MerkleTree } from "@internal/merkle-tree/model/MerkleTree";
-import { MerkleTreeBuilder } from "@internal/merkle-tree/service/MerkleTreeBuilder";
+import { type MerkleTreeBuilder } from "@internal/merkle-tree/service/MerkleTreeBuilder";
 
 import { DefaultWalletBuilder } from "./DefaultWalletBuilder";
 

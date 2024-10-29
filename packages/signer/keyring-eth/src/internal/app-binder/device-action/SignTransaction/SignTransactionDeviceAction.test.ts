@@ -1,4 +1,4 @@
-import { ContextModule } from "@ledgerhq/context-module";
+import { type ContextModule } from "@ledgerhq/context-module";
 import {
   CommandResultFactory,
   DeviceActionStatus,
@@ -9,11 +9,11 @@ import { InvalidStatusWordError } from "@ledgerhq/device-management-kit";
 import { Transaction } from "ethers-v6";
 import { Just, Nothing } from "purify-ts";
 
-import { SignTransactionDAState } from "@api/app-binder/SignTransactionDeviceActionTypes";
+import { type SignTransactionDAState } from "@api/app-binder/SignTransactionDeviceActionTypes";
 import { makeDeviceActionInternalApiMock } from "@internal/app-binder/device-action/__test-utils__/makeInternalApi";
 import { setupOpenAppDAMock } from "@internal/app-binder/device-action/__test-utils__/setupOpenAppDAMock";
 import { testDeviceActionStates } from "@internal/app-binder/device-action/__test-utils__/testDeviceActionStates";
-import { TransactionMapperService } from "@internal/transaction/service/mapper/TransactionMapperService";
+import { type TransactionMapperService } from "@internal/transaction/service/mapper/TransactionMapperService";
 
 import { SignTransactionDeviceAction } from "./SignTransactionDeviceAction";
 

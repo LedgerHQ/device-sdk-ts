@@ -1,26 +1,26 @@
 import { Left, Right } from "purify-ts";
 import { assign, createMachine } from "xstate";
 
-import { Apdu } from "@api/apdu/model/Apdu";
+import { type Apdu } from "@api/apdu/model/Apdu";
 import { ApduBuilder } from "@api/apdu/utils/ApduBuilder";
 import { CommandResultFactory } from "@api/command/model/CommandResult";
 import { makeDeviceActionInternalApiMock } from "@api/device-action/__test-utils__/makeInternalApi";
 import { testDeviceActionStates } from "@api/device-action/__test-utils__/testDeviceActionStates";
 import {
-  DeviceActionState,
+  type DeviceActionState,
   DeviceActionStatus,
 } from "@api/device-action/model/DeviceActionState";
 import { UserInteractionRequired } from "@api/device-action/model/UserInteractionRequired";
 import { UnknownDAError } from "@api/device-action/os/Errors";
 import { OpenAppDeviceAction } from "@api/device-action/os/OpenAppDeviceAction/OpenAppDeviceAction";
-import { Command } from "@api/types";
+import { type Command } from "@api/types";
 import { UnknownDeviceExchangeError } from "@root/src";
 
 import { SendCommandInAppDeviceAction } from "./SendCommandInAppDeviceAction";
 import {
-  SendCommandInAppDAError,
-  SendCommandInAppDAIntermediateValue,
-  SendCommandInAppDAOutput,
+  type SendCommandInAppDAError,
+  type SendCommandInAppDAIntermediateValue,
+  type SendCommandInAppDAOutput,
 } from "./SendCommandInAppDeviceActionTypes";
 
 jest.mock(

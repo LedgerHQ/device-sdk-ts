@@ -1,8 +1,8 @@
-import { LogLevel, LogParams } from "@ledgerhq/device-management-kit";
+import { LogLevel, type LogParams } from "@ledgerhq/device-management-kit";
 import { type FlipperPluginConnection } from "js-flipper";
 
 import { FlipperPluginManager } from "./FlipperPluginManager";
-import { FlipperObjLog, FlipperSdkLogger } from "./FlipperSdkLogger";
+import { type FlipperObjLog, FlipperSdkLogger } from "./FlipperSdkLogger";
 
 jest.mock("js-flipper");
 

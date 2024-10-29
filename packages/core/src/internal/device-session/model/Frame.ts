@@ -1,4 +1,4 @@
-import { FrameHeader } from "@internal/device-session/model/FrameHeader";
+import { type FrameHeader } from "@internal/device-session/model/FrameHeader";
 
 type FrameConstructorArgs = {
   header: FrameHeader;

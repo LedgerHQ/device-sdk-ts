@@ -1,10 +1,10 @@
 import {
-  CommandResult,
+  type CommandResult,
   type DeviceActionStateMachine,
-  InternalApi,
+  type InternalApi,
   isSuccessCommandResult,
   OpenAppDeviceAction,
-  StateMachineTypes,
+  type StateMachineTypes,
   UnknownDAError,
   UserInteractionRequired,
   XStateDeviceAction,
@@ -13,13 +13,13 @@ import { Left, Right } from "purify-ts";
 import { assign, fromPromise, setup } from "xstate";
 
 import {
-  SignPersonalMessageDAError,
-  SignPersonalMessageDAInput,
-  SignPersonalMessageDAIntermediateValue,
-  SignPersonalMessageDAInternalState,
-  SignPersonalMessageDAOutput,
+  type SignPersonalMessageDAError,
+  type SignPersonalMessageDAInput,
+  type SignPersonalMessageDAIntermediateValue,
+  type SignPersonalMessageDAInternalState,
+  type SignPersonalMessageDAOutput,
 } from "@api/app-binder/SignPersonalMessageDeviceActionTypes";
-import { Signature } from "@api/model/Signature";
+import { type Signature } from "@api/model/Signature";
 import { SendSignPersonalMessageTask } from "@internal/app-binder/task/SendSignPersonalMessageTask";
 
 export type MachineDependencies = {

@@ -1,11 +1,14 @@
 import {
-  InvalidBatteryDataError,
-  InvalidBatteryStatusTypeError,
-  InvalidResponseFormatError,
-  InvalidStatusWordError,
+  type InvalidBatteryDataError,
+  type InvalidBatteryStatusTypeError,
+  type InvalidResponseFormatError,
+  type InvalidStatusWordError,
 } from "@api/command/Errors";
-import { GlobalCommandErrorStatusCode } from "@api/command/utils/GlobalCommandError";
-import { DeviceExchangeError, UnknownDeviceExchangeError } from "@api/Error";
+import { type GlobalCommandErrorStatusCode } from "@api/command/utils/GlobalCommandError";
+import {
+  type DeviceExchangeError,
+  type UnknownDeviceExchangeError,
+} from "@api/Error";
 
 export enum CommandResultStatus {
   Error = "ERROR",

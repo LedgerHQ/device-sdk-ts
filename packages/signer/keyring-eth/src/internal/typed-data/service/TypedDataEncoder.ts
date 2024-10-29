@@ -2,8 +2,8 @@ import { hexaStringToBuffer } from "@ledgerhq/device-management-kit";
 import { Just, Maybe, Nothing } from "purify-ts";
 
 import {
-  PrimitiveType,
-  PrimitiveTypeName,
+  type PrimitiveType,
+  type PrimitiveTypeName,
 } from "@internal/typed-data/model/Types";
 
 /**

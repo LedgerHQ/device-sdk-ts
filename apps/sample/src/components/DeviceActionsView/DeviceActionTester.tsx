@@ -5,7 +5,7 @@ import type {
   ExecuteDeviceActionReturnType,
   SdkError,
 } from "@ledgerhq/device-management-kit";
-import { DeviceModelId } from "@ledgerhq/device-management-kit";
+import { type DeviceModelId } from "@ledgerhq/device-management-kit";
 import {
   Button,
   Divider,
@@ -22,13 +22,13 @@ import { Block } from "@/components/Block";
 import { ClickableListItem } from "@/components/ClickableListItem";
 import {
   CommandForm,
-  ValueSelector,
+  type ValueSelector,
 } from "@/components/CommandsView/CommandForm";
-import { FieldType } from "@/hooks/useForm";
+import { type FieldType } from "@/hooks/useForm";
 
 import {
   DeviceActionResponse,
-  DeviceActionResponseProps,
+  type DeviceActionResponseProps,
 } from "./DeviceActionResponse";
 import { DeviceActionUI } from "./DeviceActionUI";
 

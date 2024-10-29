@@ -1,5 +1,5 @@
 import { CommandResultFactory } from "@api/command/model/CommandResult";
-import { ListAppsResponse } from "@api/command/os/ListAppsCommand";
+import { type ListAppsResponse } from "@api/command/os/ListAppsCommand";
 import {
   GLOBAL_ERRORS,
   GlobalCommandError,
@@ -19,7 +19,7 @@ import { UserInteractionRequired } from "@api/device-action/model/UserInteractio
 import { UnknownDAError } from "@api/device-action/os/Errors";
 
 import { ListAppsDeviceAction } from "./ListAppsDeviceAction";
-import { ListAppsDAState } from "./types";
+import { type ListAppsDAState } from "./types";
 
 jest.mock("@api/device-action/os/GoToDashboard/GoToDashboardDeviceAction");
 

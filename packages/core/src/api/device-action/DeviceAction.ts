@@ -1,12 +1,12 @@
-import { Observable } from "rxjs";
+import { type Observable } from "rxjs";
 
-import { Command } from "@api/command/Command";
-import { CommandResult } from "@api/command/model/CommandResult";
-import { DeviceSessionState } from "@api/device-session/DeviceSessionState";
-import { SdkError } from "@api/Error";
-import { ManagerApiService } from "@internal/manager-api/service/ManagerApiService";
+import { type Command } from "@api/command/Command";
+import { type CommandResult } from "@api/command/model/CommandResult";
+import { type DeviceSessionState } from "@api/device-session/DeviceSessionState";
+import { type SdkError } from "@api/Error";
+import { type ManagerApiService } from "@internal/manager-api/service/ManagerApiService";
 
-import { DeviceActionState } from "./model/DeviceActionState";
+import { type DeviceActionState } from "./model/DeviceActionState";
 
 export type InternalApi = {
   readonly sendCommand: <Response, Args, ErrorStatusCodes>(

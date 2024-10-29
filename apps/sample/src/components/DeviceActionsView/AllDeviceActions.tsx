@@ -1,37 +1,37 @@
 import React from "react";
 import { useMemo } from "react";
 import {
-  GetDeviceStatusDAError,
-  GetDeviceStatusDAInput,
-  GetDeviceStatusDAIntermediateValue,
-  GetDeviceStatusDAOutput,
+  type GetDeviceStatusDAError,
+  type GetDeviceStatusDAInput,
+  type GetDeviceStatusDAIntermediateValue,
+  type GetDeviceStatusDAOutput,
   GetDeviceStatusDeviceAction,
-  GoToDashboardDAError,
-  GoToDashboardDAInput,
-  GoToDashboardDAIntermediateValue,
-  GoToDashboardDAOutput,
+  type GoToDashboardDAError,
+  type GoToDashboardDAInput,
+  type GoToDashboardDAIntermediateValue,
+  type GoToDashboardDAOutput,
   GoToDashboardDeviceAction,
-  ListAppsDAError,
-  ListAppsDAInput,
-  ListAppsDAIntermediateValue,
-  ListAppsDAOutput,
+  type ListAppsDAError,
+  type ListAppsDAInput,
+  type ListAppsDAIntermediateValue,
+  type ListAppsDAOutput,
   ListAppsDeviceAction,
-  ListAppsWithMetadataDAError,
-  ListAppsWithMetadataDAInput,
-  ListAppsWithMetadataDAIntermediateValue,
-  ListAppsWithMetadataDAOutput,
+  type ListAppsWithMetadataDAError,
+  type ListAppsWithMetadataDAInput,
+  type ListAppsWithMetadataDAIntermediateValue,
+  type ListAppsWithMetadataDAOutput,
   ListAppsWithMetadataDeviceAction,
-  OpenAppDAError,
-  OpenAppDAInput,
-  OpenAppDAIntermediateValue,
-  OpenAppDAOutput,
+  type OpenAppDAError,
+  type OpenAppDAInput,
+  type OpenAppDAIntermediateValue,
+  type OpenAppDAOutput,
   OpenAppDeviceAction,
 } from "@ledgerhq/device-management-kit";
 
 import { useSdk } from "@/providers/DeviceSdkProvider";
 
 import { DeviceActionsList, UNLOCK_TIMEOUT } from "./DeviceActionsList";
-import { DeviceActionProps } from "./DeviceActionTester";
+import { type DeviceActionProps } from "./DeviceActionTester";
 
 export const AllDeviceActions: React.FC<{ sessionId: string }> = ({
   sessionId,

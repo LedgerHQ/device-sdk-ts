@@ -1,4 +1,4 @@
-import { SdkError } from "@api/Error";
+import { type SdkError } from "@api/Error";
 
 import { APDU_MAX_PAYLOAD } from "./ApduBuilder";
 

@@ -1,7 +1,7 @@
-import { CommandResponse } from "./model/CommandResponse";
-import { Device } from "./model/Device";
-import { Mock } from "./model/Mock";
-import { Session } from "./model/Session";
+import { type CommandResponse } from "./model/CommandResponse";
+import { type Device } from "./model/Device";
+import { type Mock } from "./model/Mock";
+import { type Session } from "./model/Session";
 import { ConnectivityService } from "./service/ConnectivityService";
 import { DiscoveryService } from "./service/DiscoveryService";
 import { MockService } from "./service/MockService";

@@ -3,11 +3,11 @@ import {
   DEFAULT_MOCK_SERVER_BASE_URL,
 } from "@internal/manager-api/model/Const";
 
-import { LoggerSubscriberService } from "./logger-subscriber/service/LoggerSubscriberService";
-import { Transport } from "./transport/model/Transport";
-import { BuiltinTransports } from "./transport/model/TransportIdentifier";
+import { type LoggerSubscriberService } from "./logger-subscriber/service/LoggerSubscriberService";
+import { type Transport } from "./transport/model/Transport";
+import { type BuiltinTransports } from "./transport/model/TransportIdentifier";
 import { DeviceSdk } from "./DeviceSdk";
-import { SdkConfig } from "./SdkConfig";
+import { type SdkConfig } from "./SdkConfig";
 
 /**
  * Builder for the `DeviceSdk` class.

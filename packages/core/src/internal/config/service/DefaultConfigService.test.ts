@@ -5,7 +5,7 @@ import { RestRemoteConfigDataSource } from "@internal/config/data/RemoteConfigDa
 import { JSONParseError } from "@internal/config/model/Errors";
 import { DefaultLoggerPublisherService } from "@internal/logger-publisher/service/DefaultLoggerPublisherService";
 
-import { ConfigService } from "./ConfigService";
+import { type ConfigService } from "./ConfigService";
 import { DefaultConfigService } from "./DefaultConfigService";
 
 jest.mock("@internal/config/data/LocalConfigDataSource");

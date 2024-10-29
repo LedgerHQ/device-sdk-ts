@@ -1,5 +1,5 @@
 import {
-  DeviceSdk,
+  type DeviceSdk,
   type DeviceSessionId,
 } from "@ledgerhq/device-management-kit";
 

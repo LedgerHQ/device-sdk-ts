@@ -1,12 +1,15 @@
-import { ContextModule } from "@ledgerhq/context-module";
-import { DeviceSdk, DeviceSessionId } from "@ledgerhq/device-management-kit";
-import { Container } from "inversify";
+import { type ContextModule } from "@ledgerhq/context-module";
+import {
+  type DeviceSdk,
+  type DeviceSessionId,
+} from "@ledgerhq/device-management-kit";
+import { type Container } from "inversify";
 
 import { addressTypes } from "./address/di/addressTypes";
 import { messageTypes } from "./message/di/messageTypes";
 import { transactionTypes } from "./transaction/di/transactionTypes";
 import { typedDataTypes } from "./typed-data/di/typedDataTypes";
-import { Transaction, TypedData } from "..";
+import { type Transaction, type TypedData } from "..";
 import { DefaultKeyringEth } from "./DefaultKeyringEth";
 
 describe("DefaultKeyringEth", () => {

@@ -1,15 +1,15 @@
 import { Left, Right } from "purify-ts";
 
-import { DataStore } from "@internal/data-store/model/DataStore";
+import { type DataStore } from "@internal/data-store/model/DataStore";
 import { Leaf } from "@internal/merkle-tree/model/Leaf";
 import { MerkleTree } from "@internal/merkle-tree/model/MerkleTree";
-import { HasherService } from "@internal/merkle-tree/service/HasherService";
-import { MerkleMapBuilder } from "@internal/merkle-tree/service/MerkleMapBuilder";
-import { MerkleTreeBuilder } from "@internal/merkle-tree/service/MerkleTreeBuilder";
+import { type HasherService } from "@internal/merkle-tree/service/HasherService";
+import { type MerkleMapBuilder } from "@internal/merkle-tree/service/MerkleMapBuilder";
+import { type MerkleTreeBuilder } from "@internal/merkle-tree/service/MerkleTreeBuilder";
 import { Psbt } from "@internal/psbt/model/Psbt";
 import { Value } from "@internal/psbt/model/Value";
 import { Wallet } from "@internal/wallet/model/Wallet";
-import { WalletSerializer } from "@internal/wallet/service/WalletSerializer";
+import { type WalletSerializer } from "@internal/wallet/service/WalletSerializer";
 
 import { DefaultDataStoreService } from "./DefaultDataStoreService";
 

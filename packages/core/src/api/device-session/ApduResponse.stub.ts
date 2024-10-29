@@ -1,4 +1,4 @@
-import { ApduResponse, ApduResponseConstructorArgs } from "./ApduResponse";
+import { ApduResponse, type ApduResponseConstructorArgs } from "./ApduResponse";
 
 type ApduResponseStub = (
   props?: Partial<ApduResponseConstructorArgs>,

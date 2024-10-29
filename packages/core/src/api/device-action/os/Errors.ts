@@ -1,4 +1,4 @@
-import { SdkError } from "@api/Error";
+import { type SdkError } from "@api/Error";
 
 export class DeviceNotOnboardedError implements SdkError {
   readonly _tag = "DeviceNotOnboardedError";

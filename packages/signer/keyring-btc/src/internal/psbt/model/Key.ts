@@ -5,7 +5,7 @@ import {
 
 import { encodeVarint } from "@internal/utils/Varint";
 
-import { PsbtGlobal, PsbtIn, PsbtOut } from "./Psbt";
+import { type PsbtGlobal, type PsbtIn, type PsbtOut } from "./Psbt";
 
 /**
  * According to specification, key-pair is formatted as:

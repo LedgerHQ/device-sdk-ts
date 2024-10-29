@@ -6,7 +6,7 @@ import {
   ParseResponseError,
 } from "@internal/config/model/Errors";
 
-import { RemoteConfigDataSource } from "./ConfigDataSource";
+import { type RemoteConfigDataSource } from "./ConfigDataSource";
 import { RestRemoteConfigDataSource } from "./RemoteConfigDataSource";
 
 let datasource: RemoteConfigDataSource;

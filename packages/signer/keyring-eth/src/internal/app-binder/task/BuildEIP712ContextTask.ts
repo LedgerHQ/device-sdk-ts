@@ -1,12 +1,12 @@
 import {
   type ContextModule,
-  TypedDataClearSignContextSuccess,
+  type TypedDataClearSignContextSuccess,
 } from "@ledgerhq/context-module";
 import {
   DeviceSessionStateType,
   type InternalApi,
 } from "@ledgerhq/device-management-kit";
-import { Just, Maybe, Nothing } from "purify-ts";
+import { Just, type Maybe, Nothing } from "purify-ts";
 import { gte } from "semver";
 
 import { type TypedData } from "@api/model/TypedData";

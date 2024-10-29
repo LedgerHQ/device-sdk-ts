@@ -1,52 +1,52 @@
-import { Container } from "inversify";
-import { Observable } from "rxjs";
+import { type Container } from "inversify";
+import { type Observable } from "rxjs";
 
 import { commandTypes } from "@api/command/di/commandTypes";
-import { CommandResult } from "@api/command/model/CommandResult";
+import { type CommandResult } from "@api/command/model/CommandResult";
 import {
-  SendCommandUseCase,
-  SendCommandUseCaseArgs,
+  type SendCommandUseCase,
+  type SendCommandUseCaseArgs,
 } from "@api/command/use-case/SendCommandUseCase";
 import {
-  ExecuteDeviceActionUseCase,
-  ExecuteDeviceActionUseCaseArgs,
+  type ExecuteDeviceActionUseCase,
+  type ExecuteDeviceActionUseCaseArgs,
 } from "@api/device-action/use-case/ExecuteDeviceActionUseCase";
-import { ApduResponse } from "@api/device-session/ApduResponse";
-import { DeviceSessionState } from "@api/device-session/DeviceSessionState";
-import { DeviceSessionId } from "@api/device-session/types";
-import { ConnectedDevice } from "@api/transport/model/ConnectedDevice";
+import { type ApduResponse } from "@api/device-session/ApduResponse";
+import { type DeviceSessionState } from "@api/device-session/DeviceSessionState";
+import { type DeviceSessionId } from "@api/device-session/types";
+import { type ConnectedDevice } from "@api/transport/model/ConnectedDevice";
 import {
-  ConnectUseCaseArgs,
-  DisconnectUseCaseArgs,
-  DiscoveredDevice,
-  GetConnectedDeviceUseCaseArgs,
-  SendApduUseCaseArgs,
-  StartDiscoveringUseCaseArgs,
+  type ConnectUseCaseArgs,
+  type DisconnectUseCaseArgs,
+  type DiscoveredDevice,
+  type GetConnectedDeviceUseCaseArgs,
+  type SendApduUseCaseArgs,
+  type StartDiscoveringUseCaseArgs,
 } from "@api/types";
 import { configTypes } from "@internal/config/di/configTypes";
-import { GetSdkVersionUseCase } from "@internal/config/use-case/GetSdkVersionUseCase";
+import { type GetSdkVersionUseCase } from "@internal/config/use-case/GetSdkVersionUseCase";
 import { deviceSessionTypes } from "@internal/device-session/di/deviceSessionTypes";
-import { DeviceSession } from "@internal/device-session/model/DeviceSession";
-import { CloseSessionsUseCase } from "@internal/device-session/use-case/CloseSessionsUseCase";
-import { GetDeviceSessionStateUseCase } from "@internal/device-session/use-case/GetDeviceSessionStateUseCase";
-import { ListDeviceSessionsUseCase } from "@internal/device-session/use-case/ListDeviceSessionsUseCase";
+import { type DeviceSession } from "@internal/device-session/model/DeviceSession";
+import { type CloseSessionsUseCase } from "@internal/device-session/use-case/CloseSessionsUseCase";
+import { type GetDeviceSessionStateUseCase } from "@internal/device-session/use-case/GetDeviceSessionStateUseCase";
+import { type ListDeviceSessionsUseCase } from "@internal/device-session/use-case/ListDeviceSessionsUseCase";
 import { discoveryTypes } from "@internal/discovery/di/discoveryTypes";
-import { ConnectUseCase } from "@internal/discovery/use-case/ConnectUseCase";
-import { DisconnectUseCase } from "@internal/discovery/use-case/DisconnectUseCase";
-import { GetConnectedDeviceUseCase } from "@internal/discovery/use-case/GetConnectedDeviceUseCase";
-import { ListenToKnownDevicesUseCase } from "@internal/discovery/use-case/ListenToKnownDevicesUseCase";
+import { type ConnectUseCase } from "@internal/discovery/use-case/ConnectUseCase";
+import { type DisconnectUseCase } from "@internal/discovery/use-case/DisconnectUseCase";
+import { type GetConnectedDeviceUseCase } from "@internal/discovery/use-case/GetConnectedDeviceUseCase";
+import { type ListenToKnownDevicesUseCase } from "@internal/discovery/use-case/ListenToKnownDevicesUseCase";
 import type { StartDiscoveringUseCase } from "@internal/discovery/use-case/StartDiscoveringUseCase";
 import type { StopDiscoveringUseCase } from "@internal/discovery/use-case/StopDiscoveringUseCase";
 import { sendTypes } from "@internal/send/di/sendTypes";
-import { SendApduUseCase } from "@internal/send/use-case/SendApduUseCase";
-import { makeContainer, MakeContainerProps } from "@root/src/di";
+import { type SendApduUseCase } from "@internal/send/use-case/SendApduUseCase";
+import { makeContainer, type MakeContainerProps } from "@root/src/di";
 
 import {
-  DeviceActionIntermediateValue,
-  ExecuteDeviceActionReturnType,
+  type DeviceActionIntermediateValue,
+  type ExecuteDeviceActionReturnType,
 } from "./device-action/DeviceAction";
 import { deviceActionTypes } from "./device-action/di/deviceActionTypes";
-import { SdkError } from "./Error";
+import { type SdkError } from "./Error";
 
 /**
  * The main class to interact with the SDK.

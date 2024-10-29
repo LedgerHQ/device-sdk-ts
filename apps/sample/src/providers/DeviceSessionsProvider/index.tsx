@@ -1,5 +1,5 @@
 import React, {
-  Context,
+  type Context,
   createContext,
   useContext,
   useEffect,
@@ -9,10 +9,10 @@ import React, {
 import { useHasChanged } from "@/hooks/useHasChanged";
 import { useSdk } from "@/providers/DeviceSdkProvider";
 import {
-  DeviceSessionsAction,
+  type DeviceSessionsAction,
   DeviceSessionsInitialState,
   deviceSessionsReducer,
-  DeviceSessionsState,
+  type DeviceSessionsState,
 } from "@/reducers/deviceSessions";
 
 type DeviceSessionsContextType = {

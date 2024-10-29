@@ -1,4 +1,4 @@
-import { TransactionSubset } from "@ledgerhq/context-module";
+import { type TransactionSubset } from "@ledgerhq/context-module";
 
 import type { TransactionType } from "@api/model/Transaction";
 

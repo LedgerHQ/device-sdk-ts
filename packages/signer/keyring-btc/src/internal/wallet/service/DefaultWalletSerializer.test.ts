@@ -2,7 +2,7 @@ import { hexaStringToBuffer } from "@ledgerhq/device-management-kit";
 
 import { Leaf } from "@internal/merkle-tree/model/Leaf";
 import { MerkleTree } from "@internal/merkle-tree/model/MerkleTree";
-import { HasherService } from "@internal/merkle-tree/service/HasherService";
+import { type HasherService } from "@internal/merkle-tree/service/HasherService";
 import { Wallet } from "@internal/wallet/model/Wallet";
 
 import { DefaultWalletSerializer } from "./DefaultWalletSerializer";

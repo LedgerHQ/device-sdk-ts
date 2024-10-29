@@ -3,26 +3,26 @@ import {
   BatteryStatusType,
   CloseAppCommand,
   GetAppAndVersionCommand,
-  GetAppAndVersionResponse,
-  GetBatteryStatusArgs,
+  type GetAppAndVersionResponse,
+  type GetBatteryStatusArgs,
   GetBatteryStatusCommand,
-  GetBatteryStatusResponse,
+  type GetBatteryStatusResponse,
   GetOsVersionCommand,
-  GetOsVersionResponse,
-  ListAppsArgs,
+  type GetOsVersionResponse,
+  type ListAppsArgs,
   ListAppsCommand,
-  ListAppsErrorCodes,
-  ListAppsResponse,
-  OpenAppArgs,
+  type ListAppsErrorCodes,
+  type ListAppsResponse,
+  type OpenAppArgs,
   OpenAppCommand,
-  OpenAppErrorCodes,
+  type OpenAppErrorCodes,
 } from "@ledgerhq/device-management-kit";
 import { Grid } from "@ledgerhq/react-ui";
 
 import { PageWithHeader } from "@/components/PageWithHeader";
 import { useSdk } from "@/providers/DeviceSdkProvider";
 
-import { Command, CommandProps } from "./Command";
+import { Command, type CommandProps } from "./Command";
 import { getValueSelectorFromEnum } from "./CommandForm";
 
 export const CommandsView: React.FC<{ sessionId: string }> = ({

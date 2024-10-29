@@ -1,7 +1,7 @@
 import { Maybe } from "purify-ts";
 
 import { Key } from "./Key";
-import { Value } from "./Value";
+import { type Value } from "./Value";
 
 // Global map keyTypes as specified here:
 // https://github.com/bitcoin/bips/blob/master/bip-0174.mediawiki#specification

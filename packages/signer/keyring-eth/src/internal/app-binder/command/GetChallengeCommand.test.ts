@@ -1,5 +1,5 @@
 import {
-  Command,
+  type Command,
   CommandResultFactory,
   InvalidStatusWordError,
   isSuccessCommandResult,
@@ -7,7 +7,7 @@ import {
 
 import {
   GetChallengeCommand,
-  GetChallengeCommandResponse,
+  type GetChallengeCommandResponse,
 } from "./GetChallengeCommand";
 
 const GET_CHALLENGE_APDU = Uint8Array.from([0xe0, 0x20, 0x00, 0x00, 0x00]);

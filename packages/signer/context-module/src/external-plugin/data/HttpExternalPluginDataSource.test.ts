@@ -1,14 +1,14 @@
 import axios from "axios";
 
-import { ContextModuleConfig } from "@/config/model/ContextModuleConfig";
+import { type ContextModuleConfig } from "@/config/model/ContextModuleConfig";
 import ABI from "@/external-plugin/__tests__/abi.json";
 import {
-  Abis,
-  B2c,
-  B2cSignatures,
-  DAppDto,
+  type Abis,
+  type B2c,
+  type B2cSignatures,
+  type DAppDto,
 } from "@/external-plugin/data/DAppDto";
-import { ExternalPluginDataSource } from "@/external-plugin/data/ExternalPluginDataSource";
+import { type ExternalPluginDataSource } from "@/external-plugin/data/ExternalPluginDataSource";
 import { HttpExternalPluginDataSource } from "@/external-plugin/data/HttpExternalPluginDataSource";
 import PACKAGE from "@root/package.json";
 

@@ -1,4 +1,4 @@
-import { SolanaAppBinder } from "@internal/app-binder/SolanaAppBinder";
+import { type SolanaAppBinder } from "@internal/app-binder/SolanaAppBinder";
 
 import { GetAddressUseCase } from "./GetAddressUseCase";
 

@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useState } from "react";
-import { Session } from "@ledgerhq/device-sdk-transport-mock";
+import { type Session } from "@ledgerhq/device-sdk-transport-mock";
 import { Button, Flex, Text } from "@ledgerhq/react-ui";
 import styled from "styled-components";
 

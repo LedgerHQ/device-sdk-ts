@@ -1,10 +1,10 @@
-import { Either } from "purify-ts";
+import { type Either } from "purify-ts";
 
 import {
-  TypedDataFilter,
-  TypedDataMessageInfo,
+  type TypedDataFilter,
+  type TypedDataMessageInfo,
 } from "@/shared/model/TypedDataClearSignContext";
-import { TypedDataSchema } from "@/shared/model/TypedDataContext";
+import { type TypedDataSchema } from "@/shared/model/TypedDataContext";
 
 export type GetTypedDataFiltersParams = {
   address: string;

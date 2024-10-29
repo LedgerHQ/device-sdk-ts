@@ -1,8 +1,8 @@
 import { BuiltinTransports } from "@api/transport/model/TransportIdentifier";
 import { deviceModelStubBuilder } from "@internal/device-model/model/DeviceModel.stub";
 import { DeviceSession } from "@internal/device-session/model/DeviceSession";
-import { ManagerApiService } from "@internal/manager-api/service/ManagerApiService";
-import { InternalConnectedDevice } from "@internal/transport/model/InternalConnectedDevice";
+import { type ManagerApiService } from "@internal/manager-api/service/ManagerApiService";
+import { type InternalConnectedDevice } from "@internal/transport/model/InternalConnectedDevice";
 
 import { getJSONStringifyReplacer } from "./WebLogsExporterLogger";
 

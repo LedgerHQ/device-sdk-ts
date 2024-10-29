@@ -1,9 +1,9 @@
-import { CommandErrorResult } from "@api/command/model/CommandResult";
+import { type CommandErrorResult } from "@api/command/model/CommandResult";
 import {
-  OpenAppDAError,
-  OpenAppDAIntermediateValue,
+  type OpenAppDAError,
+  type OpenAppDAIntermediateValue,
 } from "@api/device-action/os/OpenAppDeviceAction/types";
-import { Command } from "@api/types";
+import { type Command } from "@api/types";
 
 export type SendCommandInAppDAOutput<CommandResponse> = CommandResponse;
 

@@ -1,11 +1,11 @@
 import {
-  Apdu,
+  type Apdu,
   ApduBuilder,
   type ApduBuilderArgs,
   ApduParser,
-  ApduResponse,
+  type ApduResponse,
   type Command,
-  CommandResult,
+  type CommandResult,
   CommandResultFactory,
   CommandUtils,
   GlobalCommandErrorHandler,
@@ -15,8 +15,8 @@ import {
 import { DerivationPathUtils } from "@ledgerhq/signer-utils";
 
 import {
-  GetAddressCommandArgs,
-  GetAddressCommandResponse,
+  type GetAddressCommandArgs,
+  type GetAddressCommandResponse,
 } from "@api/app-binder/GetAddressCommandTypes";
 
 const CHAIN_CODE_LENGTH = 32;

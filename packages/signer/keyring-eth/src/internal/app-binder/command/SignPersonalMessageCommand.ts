@@ -1,20 +1,20 @@
 // https://github.com/LedgerHQ/app-ethereum/blob/develop/doc/ethapp.adoc#sign-eth-personal-message
 import {
-  Apdu,
+  type Apdu,
   ApduBuilder,
-  ApduBuilderArgs,
+  type ApduBuilderArgs,
   ApduParser,
-  ApduResponse,
-  Command,
-  CommandResult,
+  type ApduResponse,
+  type Command,
+  type CommandResult,
   CommandResultFactory,
   CommandUtils,
   GlobalCommandErrorHandler,
   InvalidStatusWordError,
 } from "@ledgerhq/device-management-kit";
-import { Just, Maybe, Nothing } from "purify-ts";
+import { Just, type Maybe, Nothing } from "purify-ts";
 
-import { Signature } from "@api/model/Signature";
+import { type Signature } from "@api/model/Signature";
 
 const R_LENGTH = 32;
 const S_LENGTH = 32;

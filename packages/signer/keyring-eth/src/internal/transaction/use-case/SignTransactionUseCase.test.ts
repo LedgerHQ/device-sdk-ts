@@ -1,6 +1,6 @@
 import { Transaction } from "ethers-v6";
 
-import { EthAppBinder } from "@internal/app-binder/EthAppBinder";
+import { type EthAppBinder } from "@internal/app-binder/EthAppBinder";
 
 import { SignTransactionUseCase } from "./SignTransactionUseCase";
 

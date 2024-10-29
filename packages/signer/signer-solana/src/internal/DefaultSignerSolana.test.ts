@@ -1,4 +1,7 @@
-import { DeviceSdk, DeviceSessionId } from "@ledgerhq/device-management-kit";
+import {
+  type DeviceSdk,
+  type DeviceSessionId,
+} from "@ledgerhq/device-management-kit";
 
 import { DefaultSignerSolana } from "./DefaultSignerSolana";
 

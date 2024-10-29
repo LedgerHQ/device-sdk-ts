@@ -1,4 +1,4 @@
-import { InternalDeviceModel } from "@internal/device-model/model/DeviceModel";
+import { type InternalDeviceModel } from "@internal/device-model/model/DeviceModel";
 
 export class BleDeviceInfos {
   constructor(

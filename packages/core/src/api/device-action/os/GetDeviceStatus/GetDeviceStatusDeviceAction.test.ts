@@ -18,7 +18,7 @@ import {
 import { DeviceSessionStateType } from "@api/device-session/DeviceSessionState";
 
 import { GetDeviceStatusDeviceAction } from "./GetDeviceStatusDeviceAction";
-import { GetDeviceStatusDAState } from "./types";
+import { type GetDeviceStatusDAState } from "./types";
 
 describe("GetDeviceStatusDeviceAction", () => {
   const getAppAndVersionMock = jest.fn();

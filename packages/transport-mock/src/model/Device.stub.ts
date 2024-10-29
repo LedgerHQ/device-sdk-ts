@@ -1,4 +1,4 @@
-import { Device, DeviceArgs } from "./Device";
+import { Device, type DeviceArgs } from "./Device";
 
 export const deviceStubBuilder = (args: Partial<DeviceArgs> = {}) =>
   new Device({

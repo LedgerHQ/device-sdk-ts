@@ -1,12 +1,12 @@
 // https://github.com/LedgerHQ/app-bitcoin-new/blob/master/doc/bitcoin.md#get_master_fingerprint
 import {
-  Apdu,
+  type Apdu,
   ApduBuilder,
-  ApduBuilderArgs,
+  type ApduBuilderArgs,
   ApduParser,
-  ApduResponse,
-  Command,
-  CommandResult,
+  type ApduResponse,
+  type Command,
+  type CommandResult,
   CommandResultFactory,
   CommandUtils,
   GlobalCommandErrorHandler,

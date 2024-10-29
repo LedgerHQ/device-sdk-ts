@@ -1,6 +1,6 @@
-import { Maybe } from "purify-ts";
+import { type Maybe } from "purify-ts";
 
-import { Value } from "@internal/psbt/model/Value";
+import { type Value } from "@internal/psbt/model/Value";
 
 export interface ValueFactory {
   fromInt32LE(value: number): Maybe<Value>;

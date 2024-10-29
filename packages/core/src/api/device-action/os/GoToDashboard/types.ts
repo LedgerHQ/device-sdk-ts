@@ -1,11 +1,11 @@
-import { CommandErrorResult } from "@api/command/model/CommandResult";
-import { DeviceActionState } from "@api/device-action/model/DeviceActionState";
-import { UserInteractionRequired } from "@api/device-action/model/UserInteractionRequired";
-import { UnknownDAError } from "@api/device-action/os/Errors";
+import { type CommandErrorResult } from "@api/command/model/CommandResult";
+import { type DeviceActionState } from "@api/device-action/model/DeviceActionState";
+import { type UserInteractionRequired } from "@api/device-action/model/UserInteractionRequired";
+import { type UnknownDAError } from "@api/device-action/os/Errors";
 import {
-  GetDeviceStatusDAError,
-  GetDeviceStatusDAInput,
-  GetDeviceStatusDAIntermediateValue,
+  type GetDeviceStatusDAError,
+  type GetDeviceStatusDAInput,
+  type GetDeviceStatusDAIntermediateValue,
 } from "@api/device-action/os/GetDeviceStatus/types";
 
 export type GoToDashboardDAOutput = void;

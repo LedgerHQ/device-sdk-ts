@@ -1,5 +1,5 @@
-import { Key } from "./Key";
-import { Value } from "./Value";
+import { type Key } from "./Key";
+import { type Value } from "./Value";
 
 export class KeyPair {
   constructor(

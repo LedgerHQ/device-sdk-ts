@@ -1,11 +1,11 @@
 import {
-  ApduResponse,
+  type ApduResponse,
   isSuccessCommandResult,
 } from "@ledgerhq/device-management-kit";
 
 import {
   ProvideNFTInformationCommand,
-  ProvideNFTInformationCommandArgs,
+  type ProvideNFTInformationCommandArgs,
 } from "./ProvideNFTInformationCommand";
 
 const NFT_INFORMATION_PAYLOAD =

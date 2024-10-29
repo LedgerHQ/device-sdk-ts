@@ -1,6 +1,6 @@
 import {
   ByteArrayBuilder,
-  ByteArrayParser,
+  type ByteArrayParser,
 } from "@ledgerhq/device-management-kit";
 import { Just, Maybe, Nothing } from "purify-ts";
 

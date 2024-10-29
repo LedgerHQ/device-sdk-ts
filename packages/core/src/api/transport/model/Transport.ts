@@ -1,12 +1,12 @@
-import { Either } from "purify-ts";
-import { Observable } from "rxjs";
+import { type Either } from "purify-ts";
+import { type Observable } from "rxjs";
 
-import { DeviceId } from "@api/device/DeviceModel";
-import { SdkError } from "@api/Error";
-import { TransportIdentifier } from "@api/transport/model/TransportIdentifier";
-import { ConnectError } from "@internal/transport/model/Errors";
-import { InternalConnectedDevice } from "@internal/transport/model/InternalConnectedDevice";
-import { InternalDiscoveredDevice } from "@internal/transport/model/InternalDiscoveredDevice";
+import { type DeviceId } from "@api/device/DeviceModel";
+import { type SdkError } from "@api/Error";
+import { type TransportIdentifier } from "@api/transport/model/TransportIdentifier";
+import { type ConnectError } from "@internal/transport/model/Errors";
+import { type InternalConnectedDevice } from "@internal/transport/model/InternalConnectedDevice";
+import { type InternalDiscoveredDevice } from "@internal/transport/model/InternalDiscoveredDevice";
 
 export type DisconnectHandler = (deviceId: DeviceId) => void;
 

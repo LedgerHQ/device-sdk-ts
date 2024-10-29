@@ -1,10 +1,10 @@
 import {
   APDU_MAX_PAYLOAD,
   ByteArrayBuilder,
-  Command,
-  CommandResult,
+  type Command,
+  type CommandResult,
   CommandResultFactory,
-  InternalApi,
+  type InternalApi,
   InvalidStatusWordError,
   isSuccessCommandResult,
 } from "@ledgerhq/device-management-kit";

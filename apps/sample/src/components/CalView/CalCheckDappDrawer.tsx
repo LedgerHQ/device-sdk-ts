@@ -10,13 +10,16 @@ import {
 import { Block } from "@/components/Block";
 import {
   CommandForm,
-  ValueSelector,
+  type ValueSelector,
 } from "@/components/CommandsView/CommandForm";
-import { FieldType } from "@/hooks/useForm";
+import { type FieldType } from "@/hooks/useForm";
 import { useCalConfig } from "@/providers/KeyringEthProvider";
 
 import { CalAvailabilityResponseComponent } from "./CalAvailabilityResponse";
-import { checkContractAvailability, Descriptor } from "./CalNetworkDataSource";
+import {
+  checkContractAvailability,
+  type Descriptor,
+} from "./CalNetworkDataSource";
 
 export type CalCheckDappDrawerProps<
   _,

@@ -1,20 +1,25 @@
 import { createBrowserInspector } from "@statelyai/inspect";
 import { Observable, ReplaySubject, share } from "rxjs";
-import { createActor, SnapshotFrom, StateMachine, StateSchema } from "xstate";
+import {
+  createActor,
+  type SnapshotFrom,
+  type StateMachine,
+  type StateSchema,
+} from "xstate";
 
 import {
-  DeviceAction,
-  DeviceActionIntermediateValue,
-  ExecuteDeviceActionReturnType,
-  InternalApi,
+  type DeviceAction,
+  type DeviceActionIntermediateValue,
+  type ExecuteDeviceActionReturnType,
+  type InternalApi,
 } from "@api/device-action/DeviceAction";
 import {
-  DeviceActionState,
+  type DeviceActionState,
   DeviceActionStatus,
 } from "@api/device-action/model/DeviceActionState";
-import { SdkError } from "@api/Error";
+import { type SdkError } from "@api/Error";
 
-import { StateMachineTypes } from "./StateMachineTypes";
+import { type StateMachineTypes } from "./StateMachineTypes";
 
 export type DeviceActionStateMachine<
   Output,

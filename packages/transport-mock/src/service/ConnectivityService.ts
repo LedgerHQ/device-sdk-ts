@@ -1,5 +1,5 @@
-import { HttpClient } from "../HttpClient";
-import { Session } from "../model/Session";
+import { type HttpClient } from "../HttpClient";
+import { type Session } from "../model/Session";
 
 type ConnectivityServiceArgs = {
   client: HttpClient;

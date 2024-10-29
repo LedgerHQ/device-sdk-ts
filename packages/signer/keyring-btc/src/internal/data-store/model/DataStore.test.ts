@@ -2,7 +2,7 @@ import { hexaStringToBuffer } from "@ledgerhq/device-management-kit";
 import { Just, Nothing } from "purify-ts";
 
 import { Leaf } from "@internal/merkle-tree/model/Leaf";
-import { MerkleTree } from "@internal/merkle-tree/model/MerkleTree";
+import { type MerkleTree } from "@internal/merkle-tree/model/MerkleTree";
 
 import { DataStore } from "./DataStore";
 

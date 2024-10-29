@@ -1,4 +1,4 @@
-import { MerkleTreeBuilder } from "@internal/merkle-tree/service/MerkleTreeBuilder";
+import { type MerkleTreeBuilder } from "@internal/merkle-tree/service/MerkleTreeBuilder";
 
 import { MerkleMapBuilder } from "./MerkleMapBuilder";
 

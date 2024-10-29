@@ -1,8 +1,8 @@
 import { LogLevel } from "@api/logger-subscriber/model/LogLevel";
-import { LogSubscriberOptions } from "@api/types";
+import { type LogSubscriberOptions } from "@api/types";
 import { DeviceSession } from "@internal/device-session/model/DeviceSession";
 
-import { LoggerSubscriberService } from "./LoggerSubscriberService";
+import { type LoggerSubscriberService } from "./LoggerSubscriberService";
 
 /**
  * This function is used to format the logs to JSON format,

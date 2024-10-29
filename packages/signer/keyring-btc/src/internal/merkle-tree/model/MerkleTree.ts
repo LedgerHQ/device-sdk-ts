@@ -1,7 +1,7 @@
 import { Maybe } from "purify-ts";
 
-import { Leaf } from "@internal/merkle-tree/model/Leaf";
-import { Node } from "@internal/merkle-tree/model/Node";
+import { type Leaf } from "@internal/merkle-tree/model/Leaf";
+import { type Node } from "@internal/merkle-tree/model/Node";
 
 /**
  * This class implements the merkle tree used by Ledger Bitcoin app v2+,

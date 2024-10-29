@@ -1,4 +1,4 @@
-import { Either } from "purify-ts";
+import { type Either } from "purify-ts";
 
 export type GetSetPluginPayloadParams = {
   chainId: number;

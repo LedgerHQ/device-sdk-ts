@@ -1,4 +1,4 @@
-import { SdkError } from "@root/src/api/Error";
+import { type SdkError } from "@root/src/api/Error";
 
 export class FramerOverflowError implements SdkError {
   readonly _tag = "FramerOverflowError";

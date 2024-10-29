@@ -1,11 +1,11 @@
 import {
-  ClearSignContextSuccess,
-  ContextModule,
+  type ClearSignContextSuccess,
+  type ContextModule,
 } from "@ledgerhq/context-module";
 
-import { Transaction, TransactionType } from "@api/model/Transaction";
-import { TransactionOptions } from "@api/model/TransactionOptions";
-import { TransactionMapperService } from "@internal/transaction/service/mapper/TransactionMapperService";
+import { type Transaction, type TransactionType } from "@api/model/Transaction";
+import { type TransactionOptions } from "@api/model/TransactionOptions";
+import { type TransactionMapperService } from "@internal/transaction/service/mapper/TransactionMapperService";
 
 export type BuildTransactionTaskResult = {
   readonly clearSignContexts: ClearSignContextSuccess[];

@@ -1,4 +1,4 @@
-import { TypedDataClearSignContextSuccess } from "@ledgerhq/context-module";
+import { type TypedDataClearSignContextSuccess } from "@ledgerhq/context-module";
 import {
   DeviceSessionStateType,
   DeviceStatus,

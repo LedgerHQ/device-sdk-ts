@@ -1,10 +1,10 @@
 import {
-  DeviceAction,
-  DeviceActionIntermediateValue,
-  InternalApi,
+  type DeviceAction,
+  type DeviceActionIntermediateValue,
+  type InternalApi,
 } from "@api/device-action/DeviceAction";
-import { DeviceActionState } from "@api/device-action/model/DeviceActionState";
-import { SdkError } from "@api/Error";
+import { type DeviceActionState } from "@api/device-action/model/DeviceActionState";
+import { type SdkError } from "@api/Error";
 
 /**
  * Test that the states emitted by a device action match the expected states.

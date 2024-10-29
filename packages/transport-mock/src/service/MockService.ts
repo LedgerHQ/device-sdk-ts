@@ -1,6 +1,6 @@
-import { DefaultHttpClient } from "../DefaultHttpClient";
-import { HttpClient } from "../HttpClient";
-import { Mock } from "../model/Mock";
+import { type DefaultHttpClient } from "../DefaultHttpClient";
+import { type HttpClient } from "../HttpClient";
+import { type Mock } from "../model/Mock";
 
 export class MockService {
   private client: HttpClient;

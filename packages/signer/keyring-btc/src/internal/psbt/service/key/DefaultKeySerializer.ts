@@ -1,13 +1,13 @@
 import {
-  ByteArrayBuilder,
-  ByteArrayParser,
+  type ByteArrayBuilder,
+  type ByteArrayParser,
 } from "@ledgerhq/device-management-kit";
 import { Maybe } from "purify-ts";
 
 import { Key } from "@internal/psbt/model/Key";
 import { encodeVarint, extractVarint } from "@internal/utils/Varint";
 
-import { KeySerializer } from "./KeySerializer";
+import { type KeySerializer } from "./KeySerializer";
 
 export class DefaultKeySerializer implements KeySerializer {
   deserialize(parser: ByteArrayParser): Maybe<Key> {

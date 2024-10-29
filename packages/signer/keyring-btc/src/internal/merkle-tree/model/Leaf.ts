@@ -1,6 +1,6 @@
-import { Maybe, Nothing } from "purify-ts";
+import { type Maybe, Nothing } from "purify-ts";
 
-import { Node } from "@internal/merkle-tree/model/Node";
+import { type Node } from "@internal/merkle-tree/model/Node";
 
 export class Leaf {
   public parent: Maybe<Node> = Nothing;

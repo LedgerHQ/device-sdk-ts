@@ -2,10 +2,10 @@ import React from "react";
 import { createContext, useContext, useReducer } from "react";
 
 import {
-  SdkConfigAction,
+  type SdkConfigAction,
   SdkConfigInitialState,
   sdkConfigReducer,
-  SdkConfigState,
+  type SdkConfigState,
 } from "@/reducers/sdkConfig";
 
 type SdkConfigContextType = {

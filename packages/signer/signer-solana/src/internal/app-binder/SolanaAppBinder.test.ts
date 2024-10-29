@@ -1,17 +1,17 @@
 import {
-  DeviceActionState,
+  type DeviceActionState,
   DeviceActionStatus,
-  DeviceSdk,
-  DeviceSessionId,
+  type DeviceSdk,
+  type DeviceSessionId,
   SendCommandInAppDeviceAction,
   UserInteractionRequired,
 } from "@ledgerhq/device-management-kit";
 import { from } from "rxjs";
 
 import {
-  GetAddressDAError,
-  GetAddressDAIntermediateValue,
-  GetAddressDAOutput,
+  type GetAddressDAError,
+  type GetAddressDAIntermediateValue,
+  type GetAddressDAOutput,
 } from "@api/index";
 
 import { GetPubKeyCommand } from "./command/GetPubKeyCommand";

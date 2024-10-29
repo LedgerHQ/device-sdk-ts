@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import {
-  DeviceSessionId,
-  DeviceSessionState,
+  type DeviceSessionId,
+  type DeviceSessionState,
   DeviceStatus,
 } from "@ledgerhq/device-management-kit";
 
