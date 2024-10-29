@@ -1,4 +1,4 @@
-import { TypedDataClearSignContextSuccess } from "@ledgerhq/context-module";
+import { type TypedDataClearSignContextSuccess } from "@ledgerhq/context-module";
 import {
   CommandResultFactory,
   hexaStringToBuffer,
@@ -21,7 +21,7 @@ import {
 } from "@internal/app-binder/command/SendEIP712StructImplemCommand";
 import { makeDeviceActionInternalApiMock } from "@internal/app-binder/device-action/__test-utils__/makeInternalApi";
 import {
-  FieldType,
+  type FieldType,
   PrimitiveType,
   StructType,
   TypedDataValueField,

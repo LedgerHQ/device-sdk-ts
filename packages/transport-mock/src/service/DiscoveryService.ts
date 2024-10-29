@@ -1,5 +1,5 @@
-import { HttpClient } from "../HttpClient";
-import { Device } from "../model/Device";
+import { type HttpClient } from "../HttpClient";
+import { type Device } from "../model/Device";
 
 export type DiscoveryServiceArgs = {
   client: HttpClient;

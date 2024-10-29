@@ -1,16 +1,16 @@
 // https://github.com/LedgerHQ/app-ethereum/blob/develop/doc/ethapp.adoc#eip712-send-struct-definition
 import {
-  Apdu,
+  type Apdu,
   ApduBuilder,
   type ApduBuilderArgs,
-  ApduResponse,
+  type ApduResponse,
   type Command,
-  CommandResult,
+  type CommandResult,
   CommandResultFactory,
   CommandUtils,
   GlobalCommandErrorHandler,
 } from "@ledgerhq/device-management-kit";
-import { Just, Maybe, Nothing } from "purify-ts";
+import { Just, type Maybe, Nothing } from "purify-ts";
 
 import {
   ArrayType,

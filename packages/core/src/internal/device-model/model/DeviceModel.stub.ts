@@ -1,5 +1,5 @@
 import { DeviceModelId } from "@api/device/DeviceModel";
-import { InternalDeviceModel } from "@internal/device-model/model/DeviceModel";
+import { type InternalDeviceModel } from "@internal/device-model/model/DeviceModel";
 
 export function deviceModelStubBuilder(
   props: Partial<InternalDeviceModel> = {},

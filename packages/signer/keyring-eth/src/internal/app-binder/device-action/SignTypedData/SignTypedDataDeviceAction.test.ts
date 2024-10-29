@@ -8,7 +8,7 @@ import {
 } from "@ledgerhq/device-management-kit";
 import { Just, Nothing } from "purify-ts";
 
-import { SignTypedDataDAState } from "@api/app-binder/SignTypedDataDeviceActionTypes";
+import { type SignTypedDataDAState } from "@api/app-binder/SignTypedDataDeviceActionTypes";
 import { makeDeviceActionInternalApiMock } from "@internal/app-binder/device-action/__test-utils__/makeInternalApi";
 import { setupOpenAppDAMock } from "@internal/app-binder/device-action/__test-utils__/setupOpenAppDAMock";
 import { testDeviceActionStates } from "@internal/app-binder/device-action/__test-utils__/testDeviceActionStates";
@@ -18,7 +18,7 @@ import {
   StructType,
   TypedDataValueField,
 } from "@internal/typed-data/model/Types";
-import { TypedDataParserService } from "@internal/typed-data/service/TypedDataParserService";
+import { type TypedDataParserService } from "@internal/typed-data/service/TypedDataParserService";
 
 import { SignTypedDataDeviceAction } from "./SignTypedDataDeviceAction";
 

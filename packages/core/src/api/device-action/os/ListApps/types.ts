@@ -1,15 +1,15 @@
-import { CommandErrorResult } from "@api/command/model/CommandResult";
+import { type CommandErrorResult } from "@api/command/model/CommandResult";
 import {
-  ListAppsErrorCodes,
-  ListAppsResponse,
+  type ListAppsErrorCodes,
+  type ListAppsResponse,
 } from "@api/command/os/ListAppsCommand";
-import { DeviceActionState } from "@api/device-action/model/DeviceActionState";
-import { UserInteractionRequired } from "@api/device-action/model/UserInteractionRequired";
-import { UnknownDAError } from "@api/device-action/os/Errors";
+import { type DeviceActionState } from "@api/device-action/model/DeviceActionState";
+import { type UserInteractionRequired } from "@api/device-action/model/UserInteractionRequired";
+import { type UnknownDAError } from "@api/device-action/os/Errors";
 import {
-  GoToDashboardDAError,
-  GoToDashboardDAInput,
-  GoToDashboardDAIntermediateValue,
+  type GoToDashboardDAError,
+  type GoToDashboardDAInput,
+  type GoToDashboardDAIntermediateValue,
 } from "@api/device-action/os/GoToDashboard/types";
 
 export type ListAppsDAOutput = ListAppsResponse;

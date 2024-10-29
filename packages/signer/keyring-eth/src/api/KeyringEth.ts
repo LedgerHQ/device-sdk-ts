@@ -1,12 +1,12 @@
-import { GetAddressDAReturnType } from "@api/app-binder/GetAddressDeviceActionTypes";
-import { SignTypedDataDAReturnType } from "@api/app-binder/SignTypedDataDeviceActionTypes";
-import { AddressOptions } from "@api/model/AddressOptions";
-import { Transaction } from "@api/model/Transaction";
-import { TransactionOptions } from "@api/model/TransactionOptions";
-import { TypedData } from "@api/model/TypedData";
+import { type GetAddressDAReturnType } from "@api/app-binder/GetAddressDeviceActionTypes";
+import { type SignTypedDataDAReturnType } from "@api/app-binder/SignTypedDataDeviceActionTypes";
+import { type AddressOptions } from "@api/model/AddressOptions";
+import { type Transaction } from "@api/model/Transaction";
+import { type TransactionOptions } from "@api/model/TransactionOptions";
+import { type TypedData } from "@api/model/TypedData";
 
-import { SignPersonalMessageDAReturnType } from "./app-binder/SignPersonalMessageDeviceActionTypes";
-import { SignTransactionDAReturnType } from "./app-binder/SignTransactionDeviceActionTypes";
+import { type SignPersonalMessageDAReturnType } from "./app-binder/SignPersonalMessageDeviceActionTypes";
+import { type SignTransactionDAReturnType } from "./app-binder/SignTransactionDeviceActionTypes";
 
 export interface KeyringEth {
   signTransaction: (

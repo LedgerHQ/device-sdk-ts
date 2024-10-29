@@ -1,16 +1,16 @@
 import { Left } from "purify-ts";
 
-import { Command } from "@api/command/Command";
+import { type Command } from "@api/command/Command";
 import { CommandResultStatus } from "@api/command/model/CommandResult";
 import { deviceSessionStubBuilder } from "@internal/device-session/model/DeviceSession.stub";
 import { DefaultDeviceSessionService } from "@internal/device-session/service/DefaultDeviceSessionService";
-import { DeviceSessionService } from "@internal/device-session/service/DeviceSessionService";
+import { type DeviceSessionService } from "@internal/device-session/service/DeviceSessionService";
 import { DefaultLoggerPublisherService } from "@internal/logger-publisher/service/DefaultLoggerPublisherService";
-import { LoggerPublisherService } from "@internal/logger-publisher/service/LoggerPublisherService";
+import { type LoggerPublisherService } from "@internal/logger-publisher/service/LoggerPublisherService";
 import { AxiosManagerApiDataSource } from "@internal/manager-api/data/AxiosManagerApiDataSource";
-import { ManagerApiDataSource } from "@internal/manager-api/data/ManagerApiDataSource";
+import { type ManagerApiDataSource } from "@internal/manager-api/data/ManagerApiDataSource";
 import { DefaultManagerApiService } from "@internal/manager-api/service/DefaultManagerApiService";
-import { ManagerApiService } from "@internal/manager-api/service/ManagerApiService";
+import { type ManagerApiService } from "@internal/manager-api/service/ManagerApiService";
 
 import { SendCommandUseCase } from "./SendCommandUseCase";
 

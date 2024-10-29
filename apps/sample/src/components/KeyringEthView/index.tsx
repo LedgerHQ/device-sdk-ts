@@ -1,23 +1,23 @@
 import React, { useMemo } from "react";
 import {
-  GetAddressDAError,
-  GetAddressDAIntermediateValue,
-  GetAddressDAOutput,
-  SignPersonalMessageDAError,
-  SignPersonalMessageDAIntermediateValue,
-  SignPersonalMessageDAOutput,
-  SignTransactionDAError,
-  SignTransactionDAIntermediateValue,
-  SignTransactionDAOutput,
-  SignTypedDataDAError,
-  SignTypedDataDAIntermediateValue,
-  SignTypedDataDAOutput,
-  TypedData,
+  type GetAddressDAError,
+  type GetAddressDAIntermediateValue,
+  type GetAddressDAOutput,
+  type SignPersonalMessageDAError,
+  type SignPersonalMessageDAIntermediateValue,
+  type SignPersonalMessageDAOutput,
+  type SignTransactionDAError,
+  type SignTransactionDAIntermediateValue,
+  type SignTransactionDAOutput,
+  type SignTypedDataDAError,
+  type SignTypedDataDAIntermediateValue,
+  type SignTypedDataDAOutput,
+  type TypedData,
 } from "@ledgerhq/device-signer-kit-ethereum";
 import { ethers } from "ethers";
 
 import { DeviceActionsList } from "@/components/DeviceActionsView/DeviceActionsList";
-import { DeviceActionProps } from "@/components/DeviceActionsView/DeviceActionTester";
+import { type DeviceActionProps } from "@/components/DeviceActionsView/DeviceActionTester";
 import { useSdk } from "@/providers/DeviceSdkProvider";
 import { useKeyringEth } from "@/providers/KeyringEthProvider";
 

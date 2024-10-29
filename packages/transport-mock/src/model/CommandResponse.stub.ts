@@ -1,4 +1,4 @@
-import { CommandResponse, CommandResponseArgs } from "./CommandResponse";
+import { CommandResponse, type CommandResponseArgs } from "./CommandResponse";
 
 export const commandResponseStubBuilder = (
   args: Partial<CommandResponseArgs> = {},

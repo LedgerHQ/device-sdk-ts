@@ -1,16 +1,16 @@
 import {
-  ClearSignContext,
+  type ClearSignContext,
   ClearSignContextType,
 } from "@ledgerhq/context-module";
 import { Transaction } from "ethers-v6";
 import { Left, Right } from "purify-ts";
 
-import { TransactionMapperResult } from "@internal/transaction/service/mapper/model/TransactionMapperResult";
-import { TransactionMapperService } from "@internal/transaction/service/mapper/TransactionMapperService";
+import { type TransactionMapperResult } from "@internal/transaction/service/mapper/model/TransactionMapperResult";
+import { type TransactionMapperService } from "@internal/transaction/service/mapper/TransactionMapperService";
 
 import {
   BuildTransactionContextTask,
-  BuildTransactionContextTaskArgs,
+  type BuildTransactionContextTaskArgs,
 } from "./BuildTransactionContextTask";
 
 describe("BuildTransactionContextTask", () => {

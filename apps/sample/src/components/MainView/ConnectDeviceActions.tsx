@@ -1,5 +1,8 @@
 import React, { useCallback } from "react";
-import { BuiltinTransports, SdkError } from "@ledgerhq/device-management-kit";
+import {
+  BuiltinTransports,
+  type SdkError,
+} from "@ledgerhq/device-management-kit";
 import { Button, Flex } from "@ledgerhq/react-ui";
 import styled from "styled-components";
 

@@ -1,10 +1,10 @@
 // https://github.com/LedgerHQ/app-bitcoin-new/blob/master/doc/bitcoin.md#get_extended_pubkey
 import {
-  Apdu,
+  type Apdu,
   ApduBuilder,
   type ApduBuilderArgs,
   ApduParser,
-  ApduResponse,
+  type ApduResponse,
   type Command,
   type CommandResult,
   CommandResultFactory,

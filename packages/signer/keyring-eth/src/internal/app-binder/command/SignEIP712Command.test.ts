@@ -7,7 +7,7 @@ import { Just, Nothing } from "purify-ts";
 
 import {
   SignEIP712Command,
-  SignEIP712CommandResponse,
+  type SignEIP712CommandResponse,
 } from "./SignEIP712Command";
 
 const SIGN_EIP712_APDU = Uint8Array.from([

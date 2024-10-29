@@ -1,12 +1,12 @@
 // https://github.com/LedgerHQ/app-ethereum/blob/develop/doc/ethapp.adoc#get-challenge
 import {
-  Apdu,
+  type Apdu,
   ApduBuilder,
-  ApduBuilderArgs,
+  type ApduBuilderArgs,
   ApduParser,
-  ApduResponse,
+  type ApduResponse,
   type Command,
-  CommandResult,
+  type CommandResult,
   CommandResultFactory,
   CommandUtils,
   GlobalCommandErrorHandler,

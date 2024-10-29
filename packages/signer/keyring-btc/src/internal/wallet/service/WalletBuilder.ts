@@ -1,5 +1,5 @@
-import { DefaultWallet, RegisteredWallet } from "@api/model/Wallet";
-import { Wallet } from "@internal/wallet/model/Wallet";
+import { type DefaultWallet, type RegisteredWallet } from "@api/model/Wallet";
+import { type Wallet } from "@internal/wallet/model/Wallet";
 
 export interface WalletBuilder {
   fromDefaultWallet(

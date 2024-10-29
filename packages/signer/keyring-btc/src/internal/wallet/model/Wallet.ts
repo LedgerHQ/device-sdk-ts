@@ -1,4 +1,4 @@
-import { MerkleTree } from "@internal/merkle-tree/model/MerkleTree";
+import { type MerkleTree } from "@internal/merkle-tree/model/MerkleTree";
 
 export type WalletArgs = {
   readonly name: string;

@@ -2,13 +2,13 @@ import { Interface } from "ethers";
 import { Left, Right } from "purify-ts";
 
 import ABI from "@/external-plugin/__tests__/abi.json";
-import { ExternalPluginDataSource } from "@/external-plugin/data/ExternalPluginDataSource";
+import { type ExternalPluginDataSource } from "@/external-plugin/data/ExternalPluginDataSource";
 import { ExternalPluginContextLoader } from "@/external-plugin/domain/ExternalPluginContextLoader";
-import { DappInfos } from "@/external-plugin/model/DappInfos";
-import { SelectorDetails } from "@/external-plugin/model/SelectorDetails";
+import { type DappInfos } from "@/external-plugin/model/DappInfos";
+import { type SelectorDetails } from "@/external-plugin/model/SelectorDetails";
 import { ClearSignContextType } from "@/shared/model/ClearSignContext";
-import { TransactionContext } from "@/shared/model/TransactionContext";
-import { TokenDataSource } from "@/token/data/TokenDataSource";
+import { type TransactionContext } from "@/shared/model/TransactionContext";
+import { type TokenDataSource } from "@/token/data/TokenDataSource";
 
 const dappInfosBuilder = ({
   abi,

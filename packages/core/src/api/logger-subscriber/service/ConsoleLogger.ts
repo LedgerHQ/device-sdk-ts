@@ -1,6 +1,6 @@
 import { LogLevel } from "@api/logger-subscriber/model/LogLevel";
-import { LogSubscriberOptions } from "@api/logger-subscriber/model/LogSubscriberOptions";
-import { LoggerSubscriberService } from "@api/logger-subscriber/service/LoggerSubscriberService";
+import { type LogSubscriberOptions } from "@api/logger-subscriber/model/LogSubscriberOptions";
+import { type LoggerSubscriberService } from "@api/logger-subscriber/service/LoggerSubscriberService";
 
 export class ConsoleLogger implements LoggerSubscriberService {
   private readonly maxLevel: LogLevel;

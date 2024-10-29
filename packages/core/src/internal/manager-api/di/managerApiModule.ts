@@ -1,6 +1,6 @@
 import { ContainerModule } from "inversify";
 
-import { SdkConfig } from "@api/SdkConfig";
+import { type SdkConfig } from "@api/SdkConfig";
 import { AxiosManagerApiDataSource } from "@internal/manager-api/data/AxiosManagerApiDataSource";
 import { DefaultManagerApiService } from "@internal/manager-api/service/DefaultManagerApiService";
 import { StubUseCase } from "@root/src/di.stub";

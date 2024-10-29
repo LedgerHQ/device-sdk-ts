@@ -1,6 +1,6 @@
-import { Maybe, Nothing } from "purify-ts";
+import { type Maybe, Nothing } from "purify-ts";
 
-import { Leaf } from "./Leaf";
+import { type Leaf } from "./Leaf";
 
 export class Node {
   public parent: Maybe<Node> = Nothing;

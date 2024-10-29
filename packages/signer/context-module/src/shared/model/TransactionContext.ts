@@ -1,4 +1,4 @@
-import { TransactionSubset } from "@/shared/model/TransactionSubset";
+import { type TransactionSubset } from "@/shared/model/TransactionSubset";
 
 export type TransactionContext = TransactionSubset & {
   challenge: string;

@@ -1,4 +1,4 @@
-import { HttpClient } from "./HttpClient";
+import { type HttpClient } from "./HttpClient";
 
 export type HttpClientArgs = {
   readonly baseUrl: string;

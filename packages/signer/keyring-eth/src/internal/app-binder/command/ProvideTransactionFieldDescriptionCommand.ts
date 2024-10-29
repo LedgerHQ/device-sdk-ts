@@ -1,11 +1,11 @@
 //https://github.com/LedgerHQ/generic_parser/blob/master/specs.md#tx-field-description
 import {
-  Apdu,
+  type Apdu,
   ApduBuilder,
   type ApduBuilderArgs,
-  ApduResponse,
+  type ApduResponse,
   type Command,
-  CommandResult,
+  type CommandResult,
   CommandResultFactory,
   CommandUtils,
   GlobalCommandErrorHandler,

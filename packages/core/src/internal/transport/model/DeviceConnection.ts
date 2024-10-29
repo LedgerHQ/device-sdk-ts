@@ -1,8 +1,8 @@
-import { Either } from "purify-ts";
+import { type Either } from "purify-ts";
 
-import { DeviceId } from "@api/device/DeviceModel";
-import { ApduResponse } from "@api/device-session/ApduResponse";
-import { SdkError } from "@api/Error";
+import { type DeviceId } from "@api/device/DeviceModel";
+import { type ApduResponse } from "@api/device-session/ApduResponse";
+import { type SdkError } from "@api/Error";
 
 export type DisconnectHandler = (deviceId: DeviceId) => void;
 

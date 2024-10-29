@@ -1,6 +1,6 @@
-import { DeviceModelDataSource } from "@internal/device-model/data/DeviceModelDataSource";
+import { type DeviceModelDataSource } from "@internal/device-model/data/DeviceModelDataSource";
 import { DefaultLoggerPublisherService } from "@internal/logger-publisher/service/DefaultLoggerPublisherService";
-import { LoggerPublisherService } from "@internal/logger-publisher/service/LoggerPublisherService";
+import { type LoggerPublisherService } from "@internal/logger-publisher/service/LoggerPublisherService";
 import { usbHidDeviceConnectionFactoryStubBuilder } from "@internal/transport/usb/service/UsbHidDeviceConnectionFactory.stub";
 import { WebUsbHidTransport } from "@internal/transport/usb/transport/WebUsbHidTransport";
 

@@ -1,13 +1,13 @@
 import React, { useCallback, useState } from "react";
-import { ContextModuleCalConfig } from "@ledgerhq/context-module";
+import { type ContextModuleCalConfig } from "@ledgerhq/context-module";
 import { Button, Divider, Flex } from "@ledgerhq/react-ui";
 
 import { Block } from "@/components/Block";
 import {
   CommandForm,
-  ValueSelector,
+  type ValueSelector,
 } from "@/components/CommandsView/CommandForm";
-import { FieldType } from "@/hooks/useForm";
+import { type FieldType } from "@/hooks/useForm";
 import { useCalConfig } from "@/providers/KeyringEthProvider";
 
 type CalSettingsDrawerProps = {

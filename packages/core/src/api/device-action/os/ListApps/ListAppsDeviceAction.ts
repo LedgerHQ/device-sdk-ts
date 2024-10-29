@@ -3,25 +3,25 @@ import { assign, fromPromise, setup } from "xstate";
 
 import { isSuccessCommandResult } from "@api/command/model/CommandResult";
 import {
-  AppResponse,
+  type AppResponse,
   ListAppsCommand,
-  ListAppsCommandResult,
+  type ListAppsCommandResult,
 } from "@api/command/os/ListAppsCommand";
-import { InternalApi } from "@api/device-action/DeviceAction";
+import { type InternalApi } from "@api/device-action/DeviceAction";
 import { UserInteractionRequired } from "@api/device-action/model/UserInteractionRequired";
 import { DEFAULT_UNLOCK_TIMEOUT_MS } from "@api/device-action/os/Const";
 import { GoToDashboardDeviceAction } from "@api/device-action/os/GoToDashboard/GoToDashboardDeviceAction";
-import { StateMachineTypes } from "@api/device-action/xstate-utils/StateMachineTypes";
+import { type StateMachineTypes } from "@api/device-action/xstate-utils/StateMachineTypes";
 import {
-  DeviceActionStateMachine,
+  type DeviceActionStateMachine,
   XStateDeviceAction,
 } from "@api/device-action/xstate-utils/XStateDeviceAction";
 
 import {
-  ListAppsDAError,
-  ListAppsDAInput,
-  ListAppsDAIntermediateValue,
-  ListAppsDAOutput,
+  type ListAppsDAError,
+  type ListAppsDAInput,
+  type ListAppsDAIntermediateValue,
+  type ListAppsDAOutput,
 } from "./types";
 
 type ListAppsMachineInternalState = {

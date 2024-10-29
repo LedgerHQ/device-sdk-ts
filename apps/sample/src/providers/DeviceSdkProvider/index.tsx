@@ -1,9 +1,9 @@
 import React, { useCallback, useEffect, useState } from "react";
-import { createContext, PropsWithChildren, useContext } from "react";
+import { createContext, type PropsWithChildren, useContext } from "react";
 import {
   BuiltinTransports,
   ConsoleLogger,
-  DeviceSdk,
+  type DeviceSdk,
   DeviceSdkBuilder,
   WebLogsExporterLogger,
 } from "@ledgerhq/device-management-kit";

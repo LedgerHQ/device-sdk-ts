@@ -1,12 +1,12 @@
 import axios from "axios";
 import { Right } from "purify-ts";
 
-import { ContextModuleConfig } from "@/config/model/ContextModuleConfig";
+import { type ContextModuleConfig } from "@/config/model/ContextModuleConfig";
 import { HttpTypedDataDataSource } from "@/typed-data/data/HttpTypedDataDataSource";
 import { type TypedDataDataSource } from "@/typed-data/data/TypedDataDataSource";
 import PACKAGE from "@root/package.json";
 
-import { FiltersDto, InstructionField } from "./FiltersDto";
+import { type FiltersDto, type InstructionField } from "./FiltersDto";
 
 jest.mock("axios");
 

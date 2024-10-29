@@ -1,5 +1,5 @@
-import { TransactionContext } from "./shared/model/TransactionContext";
-import { TypedDataContext } from "./shared/model/TypedDataContext";
+import { type TransactionContext } from "./shared/model/TransactionContext";
+import { type TypedDataContext } from "./shared/model/TypedDataContext";
 import type { TypedDataContextLoader } from "./typed-data/domain/TypedDataContextLoader";
 import { DefaultContextModule } from "./DefaultContextModule";
 

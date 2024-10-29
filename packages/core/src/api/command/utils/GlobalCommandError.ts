@@ -1,12 +1,12 @@
 import { ApduParser } from "@api/apdu/utils/ApduParser";
-import { ApduResponse } from "@api/device-session/ApduResponse";
+import { type ApduResponse } from "@api/device-session/ApduResponse";
 import {
-  CommandErrorArgs,
+  type CommandErrorArgs,
   DeviceExchangeError,
   UnknownDeviceExchangeError,
 } from "@api/Error";
 
-import { CommandErrors, isCommandErrorCode } from "./CommandErrors";
+import { type CommandErrors, isCommandErrorCode } from "./CommandErrors";
 
 /**
  * Status word list of global errors that any command could result

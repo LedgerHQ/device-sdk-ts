@@ -1,7 +1,7 @@
 import { hexaStringToBuffer } from "@ledgerhq/device-management-kit";
 import { Just, Nothing, Right } from "purify-ts";
 
-import { TypedData } from "@api/model/TypedData";
+import { type TypedData } from "@api/model/TypedData";
 import {
   ArrayType,
   PrimitiveType,

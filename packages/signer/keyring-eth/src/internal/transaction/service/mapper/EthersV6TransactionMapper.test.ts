@@ -1,7 +1,7 @@
 import { Transaction as EthersV6Transaction } from "ethers-v6";
 import { Just } from "purify-ts";
 
-import { Transaction } from "@api/index";
+import { type Transaction } from "@api/index";
 
 import { EthersV6TransactionMapper } from "./EthersV6TransactionMapper";
 

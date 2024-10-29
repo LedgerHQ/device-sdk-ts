@@ -1,5 +1,5 @@
 import { type TypedData } from "@api/model/TypedData";
-import { EthAppBinder } from "@internal/app-binder/EthAppBinder";
+import { type EthAppBinder } from "@internal/app-binder/EthAppBinder";
 import { type TypedDataParserService } from "@internal/typed-data/service/TypedDataParserService";
 
 import { SignTypedDataUseCase } from "./SignTypedDataUseCase";

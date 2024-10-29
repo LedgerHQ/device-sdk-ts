@@ -1,10 +1,10 @@
-import { CommandErrorResult } from "@api/command/model/CommandResult";
-import { DeviceActionState } from "@api/device-action/model/DeviceActionState";
-import { UserInteractionRequired } from "@api/device-action/model/UserInteractionRequired";
+import { type CommandErrorResult } from "@api/command/model/CommandResult";
+import { type DeviceActionState } from "@api/device-action/model/DeviceActionState";
+import { type UserInteractionRequired } from "@api/device-action/model/UserInteractionRequired";
 import {
-  DeviceLockedError,
-  DeviceNotOnboardedError,
-  UnknownDAError,
+  type DeviceLockedError,
+  type DeviceNotOnboardedError,
+  type UnknownDAError,
 } from "@api/device-action/os/Errors";
 
 export type GetDeviceStatusDAOutput = {

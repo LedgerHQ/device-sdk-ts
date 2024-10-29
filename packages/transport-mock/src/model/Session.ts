@@ -1,4 +1,4 @@
-import { Device } from "./Device";
+import { type Device } from "./Device";
 
 export type SessionArgs = {
   readonly id: string;

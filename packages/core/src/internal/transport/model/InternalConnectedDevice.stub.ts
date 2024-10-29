@@ -3,7 +3,7 @@ import { Right } from "purify-ts";
 import { defaultApduResponseStubBuilder } from "@api/device-session/ApduResponse.stub";
 import { deviceModelStubBuilder } from "@internal/device-model/model/DeviceModel.stub";
 import {
-  ConnectedDeviceConstructorArgs,
+  type ConnectedDeviceConstructorArgs,
   InternalConnectedDevice,
 } from "@internal/transport/model/InternalConnectedDevice";
 

@@ -1,4 +1,4 @@
-import { defineConfig, PlaywrightTestConfig } from "@playwright/test";
+import { defineConfig, type PlaywrightTestConfig } from "@playwright/test";
 import path from "path";
 
 export const config: PlaywrightTestConfig = {

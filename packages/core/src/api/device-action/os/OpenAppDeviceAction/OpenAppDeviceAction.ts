@@ -4,32 +4,32 @@ import { assign, fromPromise, setup } from "xstate";
 import { isSuccessCommandResult } from "@api/command/model/CommandResult";
 import {
   CloseAppCommand,
-  CloseAppCommandResult,
+  type CloseAppCommandResult,
 } from "@api/command/os/CloseAppCommand";
 import {
   OpenAppCommand,
-  OpenAppCommandResult,
+  type OpenAppCommandResult,
 } from "@api/command/os/OpenAppCommand";
-import { InternalApi } from "@api/device-action/DeviceAction";
+import { type InternalApi } from "@api/device-action/DeviceAction";
 import { UserInteractionRequired } from "@api/device-action/model/UserInteractionRequired";
 import { DEFAULT_UNLOCK_TIMEOUT_MS } from "@api/device-action/os/Const";
 import { DeviceNotOnboardedError } from "@api/device-action/os/Errors";
 import { GetDeviceStatusDeviceAction } from "@api/device-action/os/GetDeviceStatus/GetDeviceStatusDeviceAction";
-import { StateMachineTypes } from "@api/device-action/xstate-utils/StateMachineTypes";
+import { type StateMachineTypes } from "@api/device-action/xstate-utils/StateMachineTypes";
 import {
-  DeviceActionStateMachine,
+  type DeviceActionStateMachine,
   XStateDeviceAction,
 } from "@api/device-action/xstate-utils/XStateDeviceAction";
 import {
-  DeviceSessionState,
+  type DeviceSessionState,
   DeviceSessionStateType,
 } from "@api/device-session/DeviceSessionState";
 
 import {
-  OpenAppDAError,
-  OpenAppDAInput,
-  OpenAppDAIntermediateValue,
-  OpenAppDAOutput,
+  type OpenAppDAError,
+  type OpenAppDAInput,
+  type OpenAppDAIntermediateValue,
+  type OpenAppDAOutput,
 } from "./types";
 
 type OpenAppStateMachineInternalState = {

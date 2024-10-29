@@ -1,25 +1,28 @@
-import { ContextModule } from "@ledgerhq/context-module";
-import { DeviceSdk, DeviceSessionId } from "@ledgerhq/device-management-kit";
-import { Container } from "inversify";
+import { type ContextModule } from "@ledgerhq/context-module";
+import {
+  type DeviceSdk,
+  type DeviceSessionId,
+} from "@ledgerhq/device-management-kit";
+import { type Container } from "inversify";
 
-import { GetAddressDAReturnType } from "@api/app-binder/GetAddressDeviceActionTypes";
-import { SignPersonalMessageDAReturnType } from "@api/app-binder/SignPersonalMessageDeviceActionTypes";
-import { SignTransactionDAReturnType } from "@api/app-binder/SignTransactionDeviceActionTypes";
-import { SignTypedDataDAReturnType } from "@api/app-binder/SignTypedDataDeviceActionTypes";
-import { KeyringEth } from "@api/KeyringEth";
-import { AddressOptions } from "@api/model/AddressOptions";
-import { Transaction } from "@api/model/Transaction";
-import { TransactionOptions } from "@api/model/TransactionOptions";
-import { TypedData } from "@api/model/TypedData";
+import { type GetAddressDAReturnType } from "@api/app-binder/GetAddressDeviceActionTypes";
+import { type SignPersonalMessageDAReturnType } from "@api/app-binder/SignPersonalMessageDeviceActionTypes";
+import { type SignTransactionDAReturnType } from "@api/app-binder/SignTransactionDeviceActionTypes";
+import { type SignTypedDataDAReturnType } from "@api/app-binder/SignTypedDataDeviceActionTypes";
+import { type KeyringEth } from "@api/KeyringEth";
+import { type AddressOptions } from "@api/model/AddressOptions";
+import { type Transaction } from "@api/model/Transaction";
+import { type TransactionOptions } from "@api/model/TransactionOptions";
+import { type TypedData } from "@api/model/TypedData";
 import { addressTypes } from "@internal/address/di/addressTypes";
-import { GetAddressUseCase } from "@internal/address/use-case/GetAddressUseCase";
+import { type GetAddressUseCase } from "@internal/address/use-case/GetAddressUseCase";
 import { makeContainer } from "@internal/di";
 import { messageTypes } from "@internal/message/di/messageTypes";
-import { SignMessageUseCase } from "@internal/message/use-case/SignMessageUseCase";
+import { type SignMessageUseCase } from "@internal/message/use-case/SignMessageUseCase";
 import { transactionTypes } from "@internal/transaction/di/transactionTypes";
-import { SignTransactionUseCase } from "@internal/transaction/use-case/SignTransactionUseCase";
+import { type SignTransactionUseCase } from "@internal/transaction/use-case/SignTransactionUseCase";
 import { typedDataTypes } from "@internal/typed-data/di/typedDataTypes";
-import { SignTypedDataUseCase } from "@internal/typed-data/use-case/SignTypedDataUseCase";
+import { type SignTypedDataUseCase } from "@internal/typed-data/use-case/SignTypedDataUseCase";
 
 type DefaultKeyringConstructorArgs = {
   sdk: DeviceSdk;

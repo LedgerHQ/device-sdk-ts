@@ -1,13 +1,13 @@
 // https://github.com/LedgerHQ/app-ethereum/blob/develop/doc/ethapp.adoc#sign-eth-transaction
 // https://github.com/LedgerHQ/generic_parser/blob/master/specs.md#sign (to be removed when the top link has been updated)
 import {
-  Apdu,
+  type Apdu,
   ApduBuilder,
-  ApduBuilderArgs,
+  type ApduBuilderArgs,
   ApduParser,
-  ApduResponse,
+  type ApduResponse,
   type Command,
-  CommandResult,
+  type CommandResult,
   CommandResultFactory,
   CommandUtils,
   GlobalCommandErrorHandler,
@@ -15,7 +15,7 @@ import {
 } from "@ledgerhq/device-management-kit";
 import { Just, Nothing } from "purify-ts";
 
-import { SignTransactionCommandResponse } from "./SignTransactionCommand";
+import { type SignTransactionCommandResponse } from "./SignTransactionCommand";
 
 const R_LENGTH = 32;
 const S_LENGTH = 32;

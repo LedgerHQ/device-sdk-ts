@@ -14,7 +14,7 @@ import { DeviceSessionStateType } from "@api/device-session/DeviceSessionState";
 import { UnknownDeviceExchangeError } from "@root/src";
 
 import { GoToDashboardDeviceAction } from "./GoToDashboardDeviceAction";
-import { GoToDashboardDAState } from "./types";
+import { type GoToDashboardDAState } from "./types";
 
 jest.mock("@api/device-action/os/GetDeviceStatus/GetDeviceStatusDeviceAction");
 

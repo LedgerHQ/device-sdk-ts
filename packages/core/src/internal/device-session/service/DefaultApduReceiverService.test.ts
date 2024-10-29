@@ -1,13 +1,13 @@
 import * as uuid from "uuid";
 jest.mock("uuid");
 
-import { Just, Left, Maybe, Nothing, Right } from "purify-ts";
+import { Just, Left, type Maybe, Nothing, Right } from "purify-ts";
 
 import { ApduResponse } from "@api/device-session/ApduResponse";
 import { ReceiverApduError } from "@internal/device-session/model/Errors";
 import { DefaultLoggerPublisherService } from "@internal/logger-publisher/service/DefaultLoggerPublisherService";
 
-import { ApduReceiverService } from "./ApduReceiverService";
+import { type ApduReceiverService } from "./ApduReceiverService";
 import { DefaultApduReceiverService } from "./DefaultApduReceiverService";
 
 const loggerService = new DefaultLoggerPublisherService([], "frame");

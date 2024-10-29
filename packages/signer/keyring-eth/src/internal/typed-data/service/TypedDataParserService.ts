@@ -1,11 +1,11 @@
-import { Either } from "purify-ts";
+import { type Either } from "purify-ts";
 
-import { TypedData } from "@api/model/TypedData";
+import { type TypedData } from "@api/model/TypedData";
 import {
-  FieldName,
-  FieldType,
-  StructName,
-  TypedDataValue,
+  type FieldName,
+  type FieldType,
+  type StructName,
+  type TypedDataValue,
 } from "@internal/typed-data/model/Types";
 
 export interface ParsedTypedData {

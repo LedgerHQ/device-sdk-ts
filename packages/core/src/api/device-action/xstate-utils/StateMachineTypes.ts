@@ -1,4 +1,4 @@
-import { Either } from "purify-ts";
+import { type Either } from "purify-ts";
 
 /**
  * The internal types of an XState state machine.

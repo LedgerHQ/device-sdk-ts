@@ -1,6 +1,6 @@
 import { Apdu } from "@api/apdu/model/Apdu";
 
-import { AppBuilderError } from "./AppBuilderError";
+import { type AppBuilderError } from "./AppBuilderError";
 import { ByteArrayBuilder } from "./ByteArrayBuilder";
 
 export const HEADER_LENGTH = 5;

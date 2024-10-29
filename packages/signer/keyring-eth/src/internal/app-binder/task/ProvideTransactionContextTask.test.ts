@@ -1,7 +1,7 @@
 import { ClearSignContextType } from "@ledgerhq/context-module";
 import {
   CommandResultFactory,
-  UnknownDeviceExchangeError,
+  type UnknownDeviceExchangeError,
 } from "@ledgerhq/device-management-kit";
 
 import { ProvideNFTInformationCommand } from "@internal/app-binder/command/ProvideNFTInformationCommand";

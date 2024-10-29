@@ -9,9 +9,9 @@
  */
 "use client";
 
-import React, { PropsWithChildren } from "react";
+import React, { type PropsWithChildren } from "react";
 import { Flex, StyleProvider } from "@ledgerhq/react-ui";
-import styled, { DefaultTheme } from "styled-components";
+import styled, { type DefaultTheme } from "styled-components";
 
 import { Header } from "@/components/Header";
 import { Sidebar } from "@/components/Sidebar";

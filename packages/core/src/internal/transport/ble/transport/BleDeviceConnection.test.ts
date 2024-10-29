@@ -1,7 +1,7 @@
 import { Left, Right } from "purify-ts";
 
-import { ApduReceiverService } from "@internal/device-session/service/ApduReceiverService";
-import { ApduSenderService } from "@internal/device-session/service/ApduSenderService";
+import { type ApduReceiverService } from "@internal/device-session/service/ApduReceiverService";
+import { type ApduSenderService } from "@internal/device-session/service/ApduSenderService";
 import { defaultApduReceiverServiceStubBuilder } from "@internal/device-session/service/DefaultApduReceiverService.stub";
 import { defaultApduSenderServiceStubBuilder } from "@internal/device-session/service/DefaultApduSenderService.stub";
 import { DefaultLoggerPublisherService } from "@internal/logger-publisher/service/DefaultLoggerPublisherService";
@@ -9,7 +9,7 @@ import { bleCharacteristicStubBuilder } from "@internal/transport/ble/model/BleD
 import { DeviceNotInitializedError } from "@internal/transport/model/Errors";
 import { ApduResponse } from "@root/src";
 
-import { BleDeviceConnection, DataViewEvent } from "./BleDeviceConnection";
+import { BleDeviceConnection, type DataViewEvent } from "./BleDeviceConnection";
 
 const GET_MTU_APDU = new Uint8Array([0x08, 0x00, 0x00, 0x00, 0x00]);
 const GET_MTU_APDU_RESPONSE = new Uint8Array([

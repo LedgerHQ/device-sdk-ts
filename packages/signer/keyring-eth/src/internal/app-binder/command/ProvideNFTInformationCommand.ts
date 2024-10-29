@@ -1,10 +1,10 @@
 // https://github.com/LedgerHQ/app-ethereum/blob/develop/doc/ethapp.adoc#provide-nft-information
 import {
-  Apdu,
+  type Apdu,
   ApduBuilder,
   type ApduBuilderArgs,
   ApduParser,
-  ApduResponse,
+  type ApduResponse,
   type Command,
   type CommandErrorArgs,
   type CommandErrors,

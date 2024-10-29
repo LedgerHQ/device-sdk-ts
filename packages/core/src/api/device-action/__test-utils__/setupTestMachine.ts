@@ -6,9 +6,9 @@ import { UnknownDAError } from "@api/device-action/os/Errors";
 import { GetDeviceStatusDeviceAction } from "@api/device-action/os/GetDeviceStatus/GetDeviceStatusDeviceAction";
 import { GoToDashboardDeviceAction } from "@api/device-action/os/GoToDashboard/GoToDashboardDeviceAction";
 import { ListAppsDeviceAction } from "@api/device-action/os/ListApps/ListAppsDeviceAction";
-import { SdkError } from "@api/Error";
+import { type SdkError } from "@api/Error";
 
-import { BTC_APP } from "./data";
+import { type BTC_APP } from "./data";
 
 type App = typeof BTC_APP;
 

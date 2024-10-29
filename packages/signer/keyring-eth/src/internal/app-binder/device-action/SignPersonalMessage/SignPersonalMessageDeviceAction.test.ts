@@ -7,7 +7,7 @@ import {
 import { UnknownDAError } from "@ledgerhq/device-management-kit";
 import { InvalidStatusWordError } from "@ledgerhq/device-management-kit";
 
-import { SignPersonalMessageDAState } from "@api/index";
+import { type SignPersonalMessageDAState } from "@api/index";
 import { makeDeviceActionInternalApiMock } from "@internal/app-binder/device-action/__test-utils__/makeInternalApi";
 import { setupOpenAppDAMock } from "@internal/app-binder/device-action/__test-utils__/setupOpenAppDAMock";
 import { testDeviceActionStates } from "@internal/app-binder/device-action/__test-utils__/testDeviceActionStates";

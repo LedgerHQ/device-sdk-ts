@@ -1,6 +1,6 @@
 import { Left, Right } from "purify-ts";
 
-import { DeviceModel } from "@api/device/DeviceModel";
+import { type DeviceModel } from "@api/device/DeviceModel";
 import { StaticDeviceModelDataSource } from "@internal/device-model/data/StaticDeviceModelDataSource";
 import { DefaultLoggerPublisherService } from "@internal/logger-publisher/service/DefaultLoggerPublisherService";
 import { bleDeviceStubBuilder } from "@internal/transport/ble/model/BleDevice.stub";
@@ -12,7 +12,7 @@ import {
   OpeningConnectionError,
   UnknownDeviceError,
 } from "@internal/transport/model/Errors";
-import { InternalDiscoveredDevice } from "@internal/transport/model/InternalDiscoveredDevice";
+import { type InternalDiscoveredDevice } from "@internal/transport/model/InternalDiscoveredDevice";
 import { RECONNECT_DEVICE_TIMEOUT } from "@internal/transport/usb/data/UsbHidConfig";
 
 import { WebBleTransport } from "./WebBleTransport";

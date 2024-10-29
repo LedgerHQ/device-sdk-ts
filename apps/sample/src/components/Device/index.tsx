@@ -1,8 +1,8 @@
 import React from "react";
 import {
-  ConnectionType,
+  type ConnectionType,
   DeviceModelId,
-  DeviceSessionId,
+  type DeviceSessionId,
 } from "@ledgerhq/device-management-kit";
 import {
   Box,
@@ -12,7 +12,7 @@ import {
   Icons,
   Text,
 } from "@ledgerhq/react-ui";
-import styled, { DefaultTheme } from "styled-components";
+import styled, { type DefaultTheme } from "styled-components";
 
 import { useDeviceSessionState } from "@/hooks/useDeviceSessionState";
 import { useDeviceSessionsContext } from "@/providers/DeviceSessionsProvider";

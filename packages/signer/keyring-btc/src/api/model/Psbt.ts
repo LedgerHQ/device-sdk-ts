@@ -1,4 +1,4 @@
-import { Psbt as BitcoinJsPsbt } from "bitcoinjs-lib";
+import { type Psbt as BitcoinJsPsbt } from "bitcoinjs-lib";
 
 /**
  * A PSBT in any version:

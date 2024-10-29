@@ -6,31 +6,31 @@ import { assign, fromObservable, fromPromise, setup } from "xstate";
 import { isSuccessCommandResult } from "@api/command/model/CommandResult";
 import {
   GetAppAndVersionCommand,
-  GetAppAndVersionCommandResult,
+  type GetAppAndVersionCommandResult,
 } from "@api/command/os/GetAppAndVersionCommand";
 import { DeviceStatus } from "@api/device/DeviceStatus";
-import { InternalApi } from "@api/device-action/DeviceAction";
+import { type InternalApi } from "@api/device-action/DeviceAction";
 import { UserInteractionRequired } from "@api/device-action/model/UserInteractionRequired";
 import { DEFAULT_UNLOCK_TIMEOUT_MS } from "@api/device-action/os/Const";
 import {
   DeviceLockedError,
   DeviceNotOnboardedError,
 } from "@api/device-action/os/Errors";
-import { StateMachineTypes } from "@api/device-action/xstate-utils/StateMachineTypes";
+import { type StateMachineTypes } from "@api/device-action/xstate-utils/StateMachineTypes";
 import {
-  DeviceActionStateMachine,
+  type DeviceActionStateMachine,
   XStateDeviceAction,
 } from "@api/device-action/xstate-utils/XStateDeviceAction";
 import {
-  DeviceSessionState,
+  type DeviceSessionState,
   DeviceSessionStateType,
 } from "@api/device-session/DeviceSessionState";
 
 import {
-  GetDeviceStatusDAError,
-  GetDeviceStatusDAInput,
-  GetDeviceStatusDAIntermediateValue,
-  GetDeviceStatusDAOutput,
+  type GetDeviceStatusDAError,
+  type GetDeviceStatusDAInput,
+  type GetDeviceStatusDAIntermediateValue,
+  type GetDeviceStatusDAOutput,
 } from "./types";
 
 type GetDeviceStatusMachineInternalState = {

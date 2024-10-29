@@ -1,5 +1,5 @@
 import { deviceStubBuilder } from "./Device.stub";
-import { Session, SessionArgs } from "./Session";
+import { Session, type SessionArgs } from "./Session";
 
 export const sessionStubBuilder = (args: Partial<SessionArgs> = {}) =>
   new Session({

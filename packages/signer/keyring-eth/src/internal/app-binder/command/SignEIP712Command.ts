@@ -1,19 +1,19 @@
 // https://github.com/LedgerHQ/app-ethereum/blob/develop/doc/ethapp.adoc#sign-eth-eip-712
 import {
-  Apdu,
+  type Apdu,
   ApduBuilder,
   type ApduBuilderArgs,
   ApduParser,
-  ApduResponse,
+  type ApduResponse,
   type Command,
-  CommandResult,
+  type CommandResult,
   CommandResultFactory,
   CommandUtils,
   GlobalCommandErrorHandler,
   InvalidStatusWordError,
 } from "@ledgerhq/device-management-kit";
 import { DerivationPathUtils } from "@ledgerhq/signer-utils";
-import { Maybe } from "purify-ts";
+import { type Maybe } from "purify-ts";
 
 import { type Signature } from "@api/model/Signature";
 

@@ -1,8 +1,8 @@
-import { DeviceId } from "@api/device/DeviceModel";
-import { ConnectionType } from "@api/discovery/ConnectionType";
-import { TransportIdentifier } from "@api/transport/model/TransportIdentifier";
-import { InternalDeviceModel } from "@internal/device-model/model/DeviceModel";
-import { SendApduFnType } from "@internal/transport/model/DeviceConnection";
+import { type DeviceId } from "@api/device/DeviceModel";
+import { type ConnectionType } from "@api/discovery/ConnectionType";
+import { type TransportIdentifier } from "@api/transport/model/TransportIdentifier";
+import { type InternalDeviceModel } from "@internal/device-model/model/DeviceModel";
+import { type SendApduFnType } from "@internal/transport/model/DeviceConnection";
 
 /**
  * The internal connected device.

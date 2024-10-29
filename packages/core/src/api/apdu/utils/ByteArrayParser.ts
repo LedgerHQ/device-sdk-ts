@@ -1,4 +1,4 @@
-import { bufferToHexaString, HexaString } from "@api/utils/HexaString";
+import { bufferToHexaString, type HexaString } from "@api/utils/HexaString";
 
 export type TaggedField = {
   readonly tag: number;

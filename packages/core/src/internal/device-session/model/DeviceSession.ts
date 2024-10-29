@@ -1,26 +1,26 @@
 import { BehaviorSubject } from "rxjs";
 import { v4 as uuidv4 } from "uuid";
 
-import { Command } from "@api/command/Command";
-import { CommandResult } from "@api/command/model/CommandResult";
-import { ListAppsResponse } from "@api/command/os/ListAppsCommand";
+import { type Command } from "@api/command/Command";
+import { type CommandResult } from "@api/command/model/CommandResult";
+import { type ListAppsResponse } from "@api/command/os/ListAppsCommand";
 import { CommandUtils } from "@api/command/utils/CommandUtils";
 import { DeviceStatus } from "@api/device/DeviceStatus";
 import {
-  DeviceAction,
-  DeviceActionIntermediateValue,
-  ExecuteDeviceActionReturnType,
+  type DeviceAction,
+  type DeviceActionIntermediateValue,
+  type ExecuteDeviceActionReturnType,
 } from "@api/device-action/DeviceAction";
-import { ApduResponse } from "@api/device-session/ApduResponse";
+import { type ApduResponse } from "@api/device-session/ApduResponse";
 import {
-  DeviceSessionState,
+  type DeviceSessionState,
   DeviceSessionStateType,
 } from "@api/device-session/DeviceSessionState";
-import { DeviceSessionId } from "@api/device-session/types";
-import { SdkError } from "@api/Error";
-import { LoggerPublisherService } from "@internal/logger-publisher/service/LoggerPublisherService";
+import { type DeviceSessionId } from "@api/device-session/types";
+import { type SdkError } from "@api/Error";
+import { type LoggerPublisherService } from "@internal/logger-publisher/service/LoggerPublisherService";
 import { type ManagerApiService } from "@internal/manager-api/service/ManagerApiService";
-import { InternalConnectedDevice } from "@internal/transport/model/InternalConnectedDevice";
+import { type InternalConnectedDevice } from "@internal/transport/model/InternalConnectedDevice";
 
 import { DeviceSessionRefresher } from "./DeviceSessionRefresher";
 

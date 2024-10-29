@@ -1,5 +1,5 @@
 import {
-  ApduResponse,
+  type ApduResponse,
   CommandResultFactory,
   isSuccessCommandResult,
 } from "@ledgerhq/device-management-kit";
@@ -7,7 +7,7 @@ import {
 import {
   Eip712FilterType,
   SendEIP712FilteringCommand,
-  SendEIP712FilteringCommandArgs,
+  type SendEIP712FilteringCommandArgs,
 } from "./SendEIP712FilteringCommand";
 
 const ACTIVATE_APDU = Uint8Array.from([0xe0, 0x1e, 0x00, 0x00, 0x00]);

@@ -1,7 +1,7 @@
 import React from "react";
 import { Box, Flex, Icons, InfiniteLoader, Text } from "@ledgerhq/react-ui";
 
-import { Descriptor } from "./CalNetworkDataSource";
+import { type Descriptor } from "./CalNetworkDataSource";
 
 type CalAvailabilityResponseProps = {
   loading: boolean;

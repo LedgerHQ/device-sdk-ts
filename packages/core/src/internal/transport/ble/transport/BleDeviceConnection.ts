@@ -1,13 +1,13 @@
-import { Either, Left, Maybe, Nothing, Right } from "purify-ts";
+import { type Either, Left, Maybe, Nothing, Right } from "purify-ts";
 
 import { CommandUtils } from "@api/command/utils/CommandUtils";
-import { ApduResponse } from "@api/device-session/ApduResponse";
-import { SdkError } from "@api/Error";
-import { ApduReceiverService } from "@internal/device-session/service/ApduReceiverService";
-import { ApduSenderService } from "@internal/device-session/service/ApduSenderService";
-import { DefaultApduSenderServiceConstructorArgs } from "@internal/device-session/service/DefaultApduSenderService";
+import { type ApduResponse } from "@api/device-session/ApduResponse";
+import { type SdkError } from "@api/Error";
+import { type ApduReceiverService } from "@internal/device-session/service/ApduReceiverService";
+import { type ApduSenderService } from "@internal/device-session/service/ApduSenderService";
+import { type DefaultApduSenderServiceConstructorArgs } from "@internal/device-session/service/DefaultApduSenderService";
 import type { LoggerPublisherService } from "@internal/logger-publisher/service/LoggerPublisherService";
-import { DeviceConnection } from "@internal/transport/model/DeviceConnection";
+import { type DeviceConnection } from "@internal/transport/model/DeviceConnection";
 import {
   DeviceNotInitializedError,
   ReconnectionFailedError,

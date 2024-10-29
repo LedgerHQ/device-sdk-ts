@@ -1,5 +1,5 @@
 import {
-  CommandErrorResult,
+  type CommandErrorResult,
   CommandResultFactory,
   isSuccessCommandResult,
 } from "@api/command/model/CommandResult";
@@ -8,7 +8,7 @@ import { ApduResponse } from "@api/device-session/ApduResponse";
 import {
   ListAppsCommand,
   ListAppsCommandError,
-  ListAppsErrorCodes,
+  type ListAppsErrorCodes,
 } from "./ListAppsCommand";
 
 // [NOTE] EXAMPLES CREATED USING A NANO X

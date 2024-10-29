@@ -1,6 +1,6 @@
-import { DeviceId, DeviceModelId } from "@api/device/DeviceModel";
-import { ConnectionType } from "@api/discovery/ConnectionType";
-import { InternalConnectedDevice } from "@internal/transport/model/InternalConnectedDevice";
+import { type DeviceId, type DeviceModelId } from "@api/device/DeviceModel";
+import { type ConnectionType } from "@api/discovery/ConnectionType";
+import { type InternalConnectedDevice } from "@internal/transport/model/InternalConnectedDevice";
 
 type ConnectedDeviceConstructorArgs = {
   readonly internalConnectedDevice: InternalConnectedDevice;

@@ -1,13 +1,13 @@
 import {
   BigNumber as EthersV5BigNumber,
-  Transaction as EthersV5Transaction,
+  type Transaction as EthersV5Transaction,
 } from "ethers-v5";
 import { Just } from "purify-ts";
 
-import { Transaction } from "@api/index";
+import { type Transaction } from "@api/index";
 
 import { EthersV5TransactionMapper } from "./EthersV5TransactionMapper";
-import { TransactionMapper } from "./TransactionMapper";
+import { type TransactionMapper } from "./TransactionMapper";
 
 describe("EthersV5TransactionMapper", () => {
   let mapper: TransactionMapper;

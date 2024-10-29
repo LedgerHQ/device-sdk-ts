@@ -3,12 +3,12 @@ import { Left, Right } from "purify-ts";
 import { CommandResultFactory } from "@api/command/model/CommandResult";
 import {
   GetAppAndVersionCommand,
-  GetAppAndVersionResponse,
+  type GetAppAndVersionResponse,
 } from "@api/command/os/GetAppAndVersionCommand";
 import { DeviceStatus } from "@api/device/DeviceStatus";
-import { ApduResponse } from "@api/device-session/ApduResponse";
+import { type ApduResponse } from "@api/device-session/ApduResponse";
 import { DefaultLoggerPublisherService } from "@internal/logger-publisher/service/DefaultLoggerPublisherService";
-import { LoggerPublisherService } from "@internal/logger-publisher/service/LoggerPublisherService";
+import { type LoggerPublisherService } from "@internal/logger-publisher/service/LoggerPublisherService";
 
 import { DeviceSessionRefresher } from "./DeviceSessionRefresher";
 

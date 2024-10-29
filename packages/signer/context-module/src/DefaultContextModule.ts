@@ -1,11 +1,11 @@
 import type { TypedDataClearSignContext } from "@/shared/model/TypedDataClearSignContext";
 import type { TypedDataContext } from "@/shared/model/TypedDataContext";
 
-import { ContextLoader } from "./shared/domain/ContextLoader";
-import { ClearSignContext } from "./shared/model/ClearSignContext";
-import { TransactionContext } from "./shared/model/TransactionContext";
+import { type ContextLoader } from "./shared/domain/ContextLoader";
+import { type ClearSignContext } from "./shared/model/ClearSignContext";
+import { type TransactionContext } from "./shared/model/TransactionContext";
 import type { TypedDataContextLoader } from "./typed-data/domain/TypedDataContextLoader";
-import { ContextModule } from "./ContextModule";
+import { type ContextModule } from "./ContextModule";
 
 type DefaultContextModuleConstructorArgs = {
   loaders: ContextLoader[];

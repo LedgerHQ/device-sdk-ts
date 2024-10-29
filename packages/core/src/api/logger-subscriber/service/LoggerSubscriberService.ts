@@ -1,5 +1,5 @@
-import { LogLevel } from "@api/logger-subscriber/model/LogLevel";
-import { LogSubscriberOptions } from "@api/logger-subscriber/model/LogSubscriberOptions";
+import { type LogLevel } from "@api/logger-subscriber/model/LogLevel";
+import { type LogSubscriberOptions } from "@api/logger-subscriber/model/LogSubscriberOptions";
 
 /**
  * Logger subscriber service.

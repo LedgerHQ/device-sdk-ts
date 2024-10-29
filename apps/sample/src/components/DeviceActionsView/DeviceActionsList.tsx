@@ -6,7 +6,7 @@ import styled from "styled-components";
 import { PageWithHeader } from "@/components/PageWithHeader";
 
 import {
-  DeviceActionProps,
+  type DeviceActionProps,
   DeviceActionRow,
   DeviceActionTester,
 } from "./DeviceActionTester";

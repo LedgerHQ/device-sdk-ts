@@ -4,7 +4,7 @@ import {
   type ExecuteDeviceActionReturnType,
   type OpenAppDAError,
   type OpenAppDARequiredInteraction,
-  UserInteractionRequired,
+  type UserInteractionRequired,
 } from "@ledgerhq/device-management-kit";
 
 import { type Signature } from "@api/model/Signature";

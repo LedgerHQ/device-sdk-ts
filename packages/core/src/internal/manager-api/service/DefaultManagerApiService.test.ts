@@ -14,7 +14,7 @@ import { AxiosManagerApiDataSource } from "@internal/manager-api/data/AxiosManag
 import { HttpFetchApiError } from "@internal/manager-api/model/Errors";
 
 import { DefaultManagerApiService } from "./DefaultManagerApiService";
-import { ManagerApiService } from "./ManagerApiService";
+import { type ManagerApiService } from "./ManagerApiService";
 
 jest.mock("@internal/manager-api/data/AxiosManagerApiDataSource");
 let dataSource: jest.Mocked<AxiosManagerApiDataSource>;

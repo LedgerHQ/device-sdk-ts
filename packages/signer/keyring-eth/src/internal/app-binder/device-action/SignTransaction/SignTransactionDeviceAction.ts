@@ -1,45 +1,45 @@
 import {
-  ClearSignContextSuccess,
-  ContextModule,
+  type ClearSignContextSuccess,
+  type ContextModule,
 } from "@ledgerhq/context-module";
 import {
-  CommandErrorResult,
-  CommandResult,
+  type CommandErrorResult,
+  type CommandResult,
   type DeviceActionStateMachine,
-  InternalApi,
+  type InternalApi,
   isSuccessCommandResult,
   OpenAppDeviceAction,
-  StateMachineTypes,
+  type StateMachineTypes,
   UnknownDAError,
   UserInteractionRequired,
   XStateDeviceAction,
 } from "@ledgerhq/device-management-kit";
-import { Left, Maybe, Right } from "purify-ts";
+import { Left, type Maybe, Right } from "purify-ts";
 import { assign, fromPromise, setup } from "xstate";
 
 import {
-  SignTransactionDAError,
-  SignTransactionDAInput,
-  SignTransactionDAIntermediateValue,
-  SignTransactionDAInternalState,
-  SignTransactionDAOutput,
+  type SignTransactionDAError,
+  type SignTransactionDAInput,
+  type SignTransactionDAIntermediateValue,
+  type SignTransactionDAInternalState,
+  type SignTransactionDAOutput,
 } from "@api/app-binder/SignTransactionDeviceActionTypes";
-import { Signature } from "@api/model/Signature";
-import { Transaction, TransactionType } from "@api/model/Transaction";
-import { TransactionOptions } from "@api/model/TransactionOptions";
+import { type Signature } from "@api/model/Signature";
+import { type Transaction, type TransactionType } from "@api/model/Transaction";
+import { type TransactionOptions } from "@api/model/TransactionOptions";
 import {
   GetChallengeCommand,
-  GetChallengeCommandResponse,
+  type GetChallengeCommandResponse,
 } from "@internal/app-binder/command/GetChallengeCommand";
 import {
   BuildTransactionContextTask,
-  BuildTransactionContextTaskArgs,
-  BuildTransactionTaskResult,
+  type BuildTransactionContextTaskArgs,
+  type BuildTransactionTaskResult,
 } from "@internal/app-binder/task/BuildTransactionContextTask";
 import { ProvideTransactionContextTask } from "@internal/app-binder/task/ProvideTransactionContextTask";
-import { ProvideTransactionContextTaskErrorCodes } from "@internal/app-binder/task/ProvideTransactionContextTask";
+import { type ProvideTransactionContextTaskErrorCodes } from "@internal/app-binder/task/ProvideTransactionContextTask";
 import { SendSignTransactionTask } from "@internal/app-binder/task/SendSignTransactionTask";
-import { TransactionMapperService } from "@internal/transaction/service/mapper/TransactionMapperService";
+import { type TransactionMapperService } from "@internal/transaction/service/mapper/TransactionMapperService";
 
 export type MachineDependencies = {
   readonly getChallenge: () => Promise<

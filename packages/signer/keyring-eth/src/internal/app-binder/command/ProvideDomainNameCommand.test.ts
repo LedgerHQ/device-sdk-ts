@@ -1,11 +1,11 @@
 import {
-  ApduResponse,
+  type ApduResponse,
   isSuccessCommandResult,
 } from "@ledgerhq/device-management-kit";
 
 import {
   ProvideDomainNameCommand,
-  ProvideDomainNameCommandArgs,
+  type ProvideDomainNameCommandArgs,
 } from "./ProvideDomainNameCommand";
 
 const FIRST_CHUNK_APDU = Uint8Array.from([

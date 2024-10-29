@@ -1,7 +1,7 @@
 import { Container } from "inversify";
 
 import { configModuleFactory } from "@/config/di/configModuleFactory";
-import { ContextModuleConfig } from "@/config/model/ContextModuleConfig";
+import { type ContextModuleConfig } from "@/config/model/ContextModuleConfig";
 import { externalPluginModuleFactory } from "@/external-plugin/di/externalPluginModuleFactory";
 import { forwardDomainModuleFactory } from "@/forward-domain/di/forwardDomainModuleFactory";
 import { nftModuleFactory } from "@/nft/di/nftModuleFactory";

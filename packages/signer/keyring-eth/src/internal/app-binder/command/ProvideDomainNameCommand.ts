@@ -1,9 +1,9 @@
 // https://github.com/LedgerHQ/app-ethereum/blob/develop/doc/ethapp.adoc#provide-domain-name
 import {
-  Apdu,
+  type Apdu,
   ApduBuilder,
   type ApduBuilderArgs,
-  ApduResponse,
+  type ApduResponse,
   type Command,
   type CommandResult,
   CommandResultFactory,

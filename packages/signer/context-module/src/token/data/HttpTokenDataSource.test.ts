@@ -1,10 +1,10 @@
 import axios from "axios";
 import { Left } from "purify-ts";
 
-import { ContextModuleConfig } from "@/config/model/ContextModuleConfig";
+import { type ContextModuleConfig } from "@/config/model/ContextModuleConfig";
 import { HttpTokenDataSource } from "@/token/data/HttpTokenDataSource";
-import { TokenDataSource } from "@/token/data/TokenDataSource";
-import { TokenDto } from "@/token/data/TokenDto";
+import { type TokenDataSource } from "@/token/data/TokenDataSource";
+import { type TokenDto } from "@/token/data/TokenDto";
 import PACKAGE from "@root/package.json";
 
 jest.mock("axios");

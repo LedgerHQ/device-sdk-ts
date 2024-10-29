@@ -3,10 +3,10 @@ import {
   type SendCommandInAppDAError,
   type SendCommandInAppDAIntermediateValue,
   type SendCommandInAppDAOutput,
-  UserInteractionRequired,
+  type UserInteractionRequired,
 } from "@ledgerhq/device-management-kit";
 
-import { PublicKey } from "@api/model/PublicKey";
+import { type PublicKey } from "@api/model/PublicKey";
 
 type GetAddressDAUserInteractionRequired =
   | UserInteractionRequired.None

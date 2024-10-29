@@ -1,6 +1,6 @@
-import { DefaultHttpClient } from "../DefaultHttpClient";
-import { HttpClient } from "../HttpClient";
-import { CommandResponse } from "../model/CommandResponse";
+import { type DefaultHttpClient } from "../DefaultHttpClient";
+import { type HttpClient } from "../HttpClient";
+import { type CommandResponse } from "../model/CommandResponse";
 
 export class SendService {
   private client: HttpClient;

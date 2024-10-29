@@ -1,12 +1,12 @@
 // https://github.com/LedgerHQ/app-ethereum/blob/develop/doc/ethapp.adoc#sign-eth-transaction
 // https://github.com/LedgerHQ/generic_parser/blob/master/specs.md#sign (to be removed when the top link has been updated)
 import {
-  Apdu,
+  type Apdu,
   ApduBuilder,
-  ApduBuilderArgs,
-  ApduResponse,
+  type ApduBuilderArgs,
+  type ApduResponse,
   type Command,
-  CommandResult,
+  type CommandResult,
   CommandResultFactory,
   CommandUtils,
   GlobalCommandErrorHandler,

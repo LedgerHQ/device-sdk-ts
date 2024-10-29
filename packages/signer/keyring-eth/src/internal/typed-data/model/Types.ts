@@ -1,4 +1,4 @@
-import { Maybe } from "purify-ts";
+import { type Maybe } from "purify-ts";
 
 export type StructName = string;
 export type FieldName = string;

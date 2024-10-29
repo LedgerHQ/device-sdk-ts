@@ -1,7 +1,7 @@
 import axios from "axios";
 import { Left, Right } from "purify-ts";
 
-import { ForwardDomainDataSource } from "@/forward-domain/data/ForwardDomainDataSource";
+import { type ForwardDomainDataSource } from "@/forward-domain/data/ForwardDomainDataSource";
 import { HttpForwardDomainDataSource } from "@/forward-domain/data/HttpForwardDomainDataSource";
 import PACKAGE from "@root/package.json";
 

@@ -1,5 +1,5 @@
 import {
-  Command,
+  type Command,
   CommandResultFactory,
   isSuccessCommandResult,
 } from "@ledgerhq/device-management-kit";
@@ -13,7 +13,7 @@ import {
 
 import {
   SendEIP712StructDefinitionCommand,
-  SendEIP712StructDefinitionCommandArgs,
+  type SendEIP712StructDefinitionCommandArgs,
   StructDefinitionCommand,
 } from "./SendEIP712StructDefinitionCommand";
 

@@ -1,9 +1,9 @@
 import { Subject } from "rxjs";
 
-import { DeviceId, DeviceModel } from "@api/device/DeviceModel";
-import { DiscoveredDevice, Transport } from "@api/types";
+import { type DeviceId, type DeviceModel } from "@api/device/DeviceModel";
+import { type DiscoveredDevice, type Transport } from "@api/types";
 import { deviceModelStubBuilder } from "@internal/device-model/model/DeviceModel.stub";
-import { InternalDiscoveredDevice } from "@internal/transport/model/InternalDiscoveredDevice";
+import { type InternalDiscoveredDevice } from "@internal/transport/model/InternalDiscoveredDevice";
 
 import { ListenToKnownDevicesUseCase } from "./ListenToKnownDevicesUseCase";
 

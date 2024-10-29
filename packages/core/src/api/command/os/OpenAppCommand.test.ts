@@ -1,11 +1,11 @@
-import { CommandErrorResult } from "@api/command/model/CommandResult";
+import { type CommandErrorResult } from "@api/command/model/CommandResult";
 import { ApduResponse } from "@api/device-session/ApduResponse";
 import { isSuccessCommandResult } from "@root/src";
 
 import {
   OpenAppCommand,
   OpenAppCommandError,
-  OpenAppErrorCodes,
+  type OpenAppErrorCodes,
 } from "./OpenAppCommand";
 
 describe("OpenAppCommand", () => {

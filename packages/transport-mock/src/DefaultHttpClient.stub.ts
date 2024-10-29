@@ -1,4 +1,4 @@
-import { HttpClient } from "./HttpClient";
+import { type HttpClient } from "./HttpClient";
 
 export const httpClientStubBuilder = () =>
   new (class HttpClientStub implements HttpClient {

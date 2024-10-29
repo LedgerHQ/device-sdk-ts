@@ -1,6 +1,6 @@
-import { interfaces } from "inversify";
+import { type interfaces } from "inversify";
 
-import { LocalConfigDataSource } from "@internal/config/data/ConfigDataSource";
+import { type LocalConfigDataSource } from "@internal/config/data/ConfigDataSource";
 import { StubLocalConfigDataSource } from "@internal/config/data/LocalConfigDataSource.stub";
 import { configTypes } from "@internal/config/di/configTypes";
 import { deviceSessionTypes } from "@internal/device-session/di/deviceSessionTypes";

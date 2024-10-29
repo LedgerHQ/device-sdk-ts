@@ -1,7 +1,7 @@
-import { TransactionSubset } from "@ledgerhq/context-module";
-import { Just, Maybe, Nothing, Right } from "purify-ts";
+import { type TransactionSubset } from "@ledgerhq/context-module";
+import { Just, type Maybe, Nothing, Right } from "purify-ts";
 
-import { Transaction } from "@api/index";
+import { type Transaction } from "@api/index";
 
 import { TransactionMapperService } from "./TransactionMapperService";
 

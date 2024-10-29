@@ -1,32 +1,32 @@
-import { EitherAsync, Left, Right } from "purify-ts";
+import { type EitherAsync, Left, Right } from "purify-ts";
 import {
-  AnyEventObject,
+  type AnyEventObject,
   assign,
   fromCallback,
   fromPromise,
   setup,
 } from "xstate";
 
-import { ListAppsResponse } from "@api/command/os/ListAppsCommand";
-import { InternalApi } from "@api/device-action/DeviceAction";
+import { type ListAppsResponse } from "@api/command/os/ListAppsCommand";
+import { type InternalApi } from "@api/device-action/DeviceAction";
 import { UserInteractionRequired } from "@api/device-action/model/UserInteractionRequired";
 import { DEFAULT_UNLOCK_TIMEOUT_MS } from "@api/device-action/os/Const";
 import { ListAppsDeviceAction } from "@api/device-action/os/ListApps/ListAppsDeviceAction";
-import { ListAppsDAOutput } from "@api/device-action/os/ListApps/types";
-import { StateMachineTypes } from "@api/device-action/xstate-utils/StateMachineTypes";
+import { type ListAppsDAOutput } from "@api/device-action/os/ListApps/types";
+import { type StateMachineTypes } from "@api/device-action/xstate-utils/StateMachineTypes";
 import {
-  DeviceActionStateMachine,
+  type DeviceActionStateMachine,
   XStateDeviceAction,
 } from "@api/device-action/xstate-utils/XStateDeviceAction";
-import { DeviceSessionState } from "@api/device-session/DeviceSessionState";
-import { HttpFetchApiError } from "@internal/manager-api/model/Errors";
-import { Application } from "@internal/manager-api/model/ManagerApiType";
+import { type DeviceSessionState } from "@api/device-session/DeviceSessionState";
+import { type HttpFetchApiError } from "@internal/manager-api/model/Errors";
+import { type Application } from "@internal/manager-api/model/ManagerApiType";
 
 import {
-  ListAppsWithMetadataDAError,
-  ListAppsWithMetadataDAInput,
-  ListAppsWithMetadataDAIntermediateValue,
-  ListAppsWithMetadataDAOutput,
+  type ListAppsWithMetadataDAError,
+  type ListAppsWithMetadataDAInput,
+  type ListAppsWithMetadataDAIntermediateValue,
+  type ListAppsWithMetadataDAOutput,
 } from "./types";
 
 type ListAppsWithMetadataMachineInternalState = {

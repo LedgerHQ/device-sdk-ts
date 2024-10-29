@@ -4,10 +4,10 @@ import {
   VERIFYING_CONTRACT_TOKEN_INDEX,
 } from "@ledgerhq/context-module";
 import {
-  CommandErrorResult,
-  CommandResult,
+  type CommandErrorResult,
+  type CommandResult,
   CommandResultFactory,
-  InternalApi,
+  type InternalApi,
   isSuccessCommandResult,
 } from "@ledgerhq/device-management-kit";
 import { Maybe, Nothing } from "purify-ts";
@@ -27,7 +27,7 @@ import {
   type FieldName,
   type FieldType,
   type StructName,
-  TypedDataValue,
+  type TypedDataValue,
   TypedDataValueArray,
   TypedDataValueRoot,
 } from "@internal/typed-data/model/Types";

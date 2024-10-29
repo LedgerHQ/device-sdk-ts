@@ -4,14 +4,14 @@ import { nftTypes } from "@/nft/di/nftTypes";
 import { tokenTypes } from "@/token/di/tokenTypes";
 import { typedDataTypes } from "@/typed-data/di/typedDataTypes";
 
-import { ContextModuleConfig } from "./config/model/ContextModuleConfig";
-import { ExternalPluginContextLoader } from "./external-plugin/domain/ExternalPluginContextLoader";
-import { ForwardDomainContextLoader } from "./forward-domain/domain/ForwardDomainContextLoader";
-import { NftContextLoader } from "./nft/domain/NftContextLoader";
-import { ContextLoader } from "./shared/domain/ContextLoader";
-import { TokenContextLoader } from "./token/domain/TokenContextLoader";
+import { type ContextModuleConfig } from "./config/model/ContextModuleConfig";
+import { type ExternalPluginContextLoader } from "./external-plugin/domain/ExternalPluginContextLoader";
+import { type ForwardDomainContextLoader } from "./forward-domain/domain/ForwardDomainContextLoader";
+import { type NftContextLoader } from "./nft/domain/NftContextLoader";
+import { type ContextLoader } from "./shared/domain/ContextLoader";
+import { type TokenContextLoader } from "./token/domain/TokenContextLoader";
 import { type TypedDataContextLoader } from "./typed-data/domain/TypedDataContextLoader";
-import { ContextModule } from "./ContextModule";
+import { type ContextModule } from "./ContextModule";
 import { DefaultContextModule } from "./DefaultContextModule";
 import { makeContainer } from "./di";
 

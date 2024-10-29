@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from "react";
-import { SdkError } from "@ledgerhq/device-management-kit";
+import { type SdkError } from "@ledgerhq/device-management-kit";
 import { Badge, Flex, Icon, Notification, Text } from "@ledgerhq/react-ui";
 import Image from "next/image";
-import styled, { DefaultTheme } from "styled-components";
+import styled, { type DefaultTheme } from "styled-components";
 
 import { ConnectDeviceActions } from "./ConnectDeviceActions";
 

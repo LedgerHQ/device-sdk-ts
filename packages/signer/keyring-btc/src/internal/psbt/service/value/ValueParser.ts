@@ -1,4 +1,4 @@
-import { Maybe } from "purify-ts";
+import { type Maybe } from "purify-ts";
 
 export interface ValueParser {
   getInt32LE(data: Uint8Array): Maybe<number>;

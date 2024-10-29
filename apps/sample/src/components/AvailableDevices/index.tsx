@@ -1,5 +1,5 @@
 import React, { useCallback, useState } from "react";
-import { DiscoveredDevice } from "@ledgerhq/device-management-kit";
+import { type DiscoveredDevice } from "@ledgerhq/device-management-kit";
 import { Flex, Icons, Text } from "@ledgerhq/react-ui";
 import styled from "styled-components";
 

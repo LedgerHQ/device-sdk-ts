@@ -1,9 +1,9 @@
-import { Either } from "purify-ts";
+import { type Either } from "purify-ts";
 
-import { Config } from "@internal/config/model/Config";
+import { type Config } from "@internal/config/model/Config";
 import {
-  LocalConfigFailure,
-  RemoteConfigFailure,
+  type LocalConfigFailure,
+  type RemoteConfigFailure,
 } from "@internal/config/model/Errors";
 
 // Describe the different data sources interfaces our application could have

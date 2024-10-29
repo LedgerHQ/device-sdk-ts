@@ -1,6 +1,9 @@
-import { ContextModule, ContextModuleBuilder } from "@ledgerhq/context-module";
 import {
-  DeviceSdk,
+  type ContextModule,
+  ContextModuleBuilder,
+} from "@ledgerhq/context-module";
+import {
+  type DeviceSdk,
   type DeviceSessionId,
 } from "@ledgerhq/device-management-kit";
 

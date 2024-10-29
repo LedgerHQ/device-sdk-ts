@@ -94,6 +94,13 @@ export default [
           message: "Prefer named exports",
         },
       ],
+      "@typescript-eslint/consistent-type-imports": [
+        "warn",
+        {
+          prefer: "type-imports",
+          fixStyle: "inline-type-imports",
+        },
+      ],
       "no-void": "off",
       "no-restricted-imports": [
         "error",

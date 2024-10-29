@@ -1,5 +1,8 @@
 import { type ContextModule } from "@ledgerhq/context-module";
-import { DeviceActionState, DeviceSdk } from "@ledgerhq/device-management-kit";
+import {
+  type DeviceActionState,
+  type DeviceSdk,
+} from "@ledgerhq/device-management-kit";
 import { DeviceActionStatus } from "@ledgerhq/device-management-kit";
 import { SendCommandInAppDeviceAction } from "@ledgerhq/device-management-kit";
 import { UserInteractionRequired } from "@ledgerhq/device-management-kit";
@@ -7,28 +10,28 @@ import { Transaction } from "ethers-v6";
 import { from } from "rxjs";
 
 import {
-  GetAddressDAError,
-  GetAddressDAIntermediateValue,
-  GetAddressDAOutput,
+  type GetAddressDAError,
+  type GetAddressDAIntermediateValue,
+  type GetAddressDAOutput,
 } from "@api/app-binder/GetAddressDeviceActionTypes";
 import {
-  SignPersonalMessageDAError,
-  SignPersonalMessageDAIntermediateValue,
-  SignPersonalMessageDAOutput,
+  type SignPersonalMessageDAError,
+  type SignPersonalMessageDAIntermediateValue,
+  type SignPersonalMessageDAOutput,
 } from "@api/app-binder/SignPersonalMessageDeviceActionTypes";
 import {
-  SignTransactionDAError,
-  SignTransactionDAIntermediateValue,
-  SignTransactionDAOutput,
+  type SignTransactionDAError,
+  type SignTransactionDAIntermediateValue,
+  type SignTransactionDAOutput,
 } from "@api/app-binder/SignTransactionDeviceActionTypes";
 import {
-  SignTypedDataDAError,
-  SignTypedDataDAIntermediateValue,
-  SignTypedDataDAOutput,
+  type SignTypedDataDAError,
+  type SignTypedDataDAIntermediateValue,
+  type SignTypedDataDAOutput,
 } from "@api/app-binder/SignTypedDataDeviceActionTypes";
 import { type Signature } from "@api/model/Signature";
 import { type TypedData } from "@api/model/TypedData";
-import { TransactionMapperService } from "@internal/transaction/service/mapper/TransactionMapperService";
+import { type TransactionMapperService } from "@internal/transaction/service/mapper/TransactionMapperService";
 import { type TypedDataParserService } from "@internal/typed-data/service/TypedDataParserService";
 
 import { GetAddressCommand } from "./command/GetAddressCommand";

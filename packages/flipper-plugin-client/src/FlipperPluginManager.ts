@@ -1,10 +1,10 @@
 import {
   flipperClient,
-  FlipperPlugin,
-  FlipperPluginConnection,
-  FlipperWebSocket,
+  type FlipperPlugin,
+  type FlipperPluginConnection,
+  type FlipperWebSocket,
 } from "js-flipper";
-import { BehaviorSubject, Observable, Subject } from "rxjs";
+import { BehaviorSubject, type Observable, Subject } from "rxjs";
 
 export class FlipperPluginManager implements FlipperPlugin {
   private static instance: FlipperPluginManager;

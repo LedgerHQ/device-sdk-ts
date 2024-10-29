@@ -1,15 +1,15 @@
-import { Apdu } from "@api/apdu/model/Apdu";
-import { ApduBuilder, ApduBuilderArgs } from "@api/apdu/utils/ApduBuilder";
+import { type Apdu } from "@api/apdu/model/Apdu";
+import { ApduBuilder, type ApduBuilderArgs } from "@api/apdu/utils/ApduBuilder";
 import { ApduParser } from "@api/apdu/utils/ApduParser";
-import { Command } from "@api/command/Command";
+import { type Command } from "@api/command/Command";
 import {
-  CommandResult,
+  type CommandResult,
   CommandResultFactory,
 } from "@api/command/model/CommandResult";
 import { CommandUtils } from "@api/command/utils/CommandUtils";
 import { GlobalCommandErrorHandler } from "@api/command/utils/GlobalCommandError";
 import { DeviceModelId } from "@api/device/DeviceModel";
-import { ApduResponse } from "@api/device-session/ApduResponse";
+import { type ApduResponse } from "@api/device-session/ApduResponse";
 
 /**
  * Response of the GetOsVersionCommand.

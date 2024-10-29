@@ -1,4 +1,4 @@
-import { Either } from "purify-ts";
+import { type Either } from "purify-ts";
 
 export type GetTokenInfosParams = {
   address: string;

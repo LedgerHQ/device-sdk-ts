@@ -9,7 +9,7 @@ import { Just, Nothing } from "purify-ts";
 
 import {
   SignTransactionCommand,
-  SignTransactionCommandArgs,
+  type SignTransactionCommandArgs,
 } from "./SignTransactionCommand";
 
 const LNX_RESPONSE_GOOD = new ApduResponse({

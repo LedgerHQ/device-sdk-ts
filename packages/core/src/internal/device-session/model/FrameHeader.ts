@@ -1,4 +1,4 @@
-import { Maybe } from "purify-ts";
+import { type Maybe } from "purify-ts";
 
 import { FramerUtils } from "@internal/device-session/utils/FramerUtils";
 

@@ -5,8 +5,8 @@ import { Left, Right } from "purify-ts";
 import { Psbt } from "@internal/psbt/model/Psbt";
 
 import { DefaultPsbtMapper } from "./DefaultPsbtMapper";
-import { DefaultPsbtSerializer } from "./DefaultPsbtSerializer";
-import { DefaultPsbtV2Normalizer } from "./DefaultPsbtV2Normalizer";
+import { type DefaultPsbtSerializer } from "./DefaultPsbtSerializer";
+import { type DefaultPsbtV2Normalizer } from "./DefaultPsbtV2Normalizer";
 
 describe("DefaultPsbtMapper tests", () => {
   // Test case from https://github.com/bitcoin/bips/blob/master/bip-0174.mediawiki#user-content-Test_Vectors

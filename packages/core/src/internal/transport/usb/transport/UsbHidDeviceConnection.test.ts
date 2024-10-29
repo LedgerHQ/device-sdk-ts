@@ -1,8 +1,8 @@
 import { Left, Right } from "purify-ts";
 
-import { DeviceId } from "@api/types";
-import { ApduReceiverService } from "@internal/device-session/service/ApduReceiverService";
-import { ApduSenderService } from "@internal/device-session/service/ApduSenderService";
+import { type DeviceId } from "@api/types";
+import { type ApduReceiverService } from "@internal/device-session/service/ApduReceiverService";
+import { type ApduSenderService } from "@internal/device-session/service/ApduSenderService";
 import { defaultApduReceiverServiceStubBuilder } from "@internal/device-session/service/DefaultApduReceiverService.stub";
 import { defaultApduSenderServiceStubBuilder } from "@internal/device-session/service/DefaultApduSenderService.stub";
 import { DefaultLoggerPublisherService } from "@internal/logger-publisher/service/DefaultLoggerPublisherService";

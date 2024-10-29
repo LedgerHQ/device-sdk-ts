@@ -4,13 +4,13 @@ import {
 } from "@ledgerhq/context-module";
 import {
   type CommandErrorResult,
-  CommandResult,
+  type CommandResult,
   CommandResultFactory,
   type InternalApi,
   InvalidStatusWordError,
   isSuccessCommandResult,
 } from "@ledgerhq/device-management-kit";
-import { Just, Maybe, Nothing } from "purify-ts";
+import { Just, type Maybe, Nothing } from "purify-ts";
 
 import { ProvideDomainNameCommand } from "@internal/app-binder/command/ProvideDomainNameCommand";
 import {
@@ -19,7 +19,7 @@ import {
 } from "@internal/app-binder/command/ProvideNFTInformationCommand";
 import {
   ProvideTokenInformationCommand,
-  ProvideTokenInformationCommandResponse,
+  type ProvideTokenInformationCommandResponse,
 } from "@internal/app-binder/command/ProvideTokenInformationCommand";
 import {
   SetExternalPluginCommand,
@@ -33,7 +33,7 @@ import { PayloadUtils } from "@internal/shared/utils/PayloadUtils";
 
 import {
   SendCommandInChunksTask,
-  SendCommandInChunksTaskArgs,
+  type SendCommandInChunksTaskArgs,
 } from "./SendCommandInChunksTask";
 
 export type ProvideTransactionContextTaskArgs = {

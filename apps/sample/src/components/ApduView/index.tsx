@@ -1,7 +1,7 @@
 import React, { useCallback, useState } from "react";
-import { ApduResponse } from "@ledgerhq/device-management-kit";
+import { type ApduResponse } from "@ledgerhq/device-management-kit";
 import { Button, Divider, Flex, Grid, Input, Text } from "@ledgerhq/react-ui";
-import styled, { DefaultTheme } from "styled-components";
+import styled, { type DefaultTheme } from "styled-components";
 
 import { useApduForm } from "@/hooks/useApduForm";
 import { useSdk } from "@/providers/DeviceSdkProvider";

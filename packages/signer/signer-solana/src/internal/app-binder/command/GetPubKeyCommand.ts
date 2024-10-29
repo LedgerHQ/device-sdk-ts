@@ -1,11 +1,11 @@
 import {
-  Apdu,
+  type Apdu,
   ApduBuilder,
   type ApduBuilderArgs,
   ApduParser,
-  ApduResponse,
+  type ApduResponse,
   type Command,
-  CommandResult,
+  type CommandResult,
   CommandResultFactory,
   CommandUtils,
   GlobalCommandErrorHandler,
@@ -14,7 +14,7 @@ import {
 import { DerivationPathUtils } from "@ledgerhq/signer-utils";
 import bs58 from "bs58";
 
-import { PublicKey } from "@api/model/PublicKey";
+import { type PublicKey } from "@api/model/PublicKey";
 
 const PUBKEY_LENGTH = 32;
 

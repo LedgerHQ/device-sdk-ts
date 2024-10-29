@@ -3,7 +3,7 @@ import { Either, Left } from "purify-ts";
 import { JSONParseError, ReadFileError } from "@internal/config/model/Errors";
 import pkg from "@root/package.json";
 
-import { LocalConfigDataSource } from "./ConfigDataSource";
+import { type LocalConfigDataSource } from "./ConfigDataSource";
 import * as LocalConfig from "./LocalConfigDataSource";
 
 const { FileLocalConfigDataSource } = LocalConfig;

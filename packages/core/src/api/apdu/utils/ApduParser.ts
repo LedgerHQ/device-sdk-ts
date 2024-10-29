@@ -1,5 +1,5 @@
-import { ApduResponse } from "@api/device-session/ApduResponse";
-import { HexaString } from "@api/utils/HexaString";
+import { type ApduResponse } from "@api/device-session/ApduResponse";
+import { type HexaString } from "@api/utils/HexaString";
 
 import { ByteArrayParser } from "./ByteArrayParser";
 

@@ -1,15 +1,15 @@
-import { CommandErrorResult } from "@api/command/model/CommandResult";
-import { ListAppsErrorCodes } from "@api/command/os/ListAppsCommand";
-import { DeviceActionState } from "@api/device-action/model/DeviceActionState";
-import { UserInteractionRequired } from "@api/device-action/model/UserInteractionRequired";
-import { UnknownDAError } from "@api/device-action/os/Errors";
+import { type CommandErrorResult } from "@api/command/model/CommandResult";
+import { type ListAppsErrorCodes } from "@api/command/os/ListAppsCommand";
+import { type DeviceActionState } from "@api/device-action/model/DeviceActionState";
+import { type UserInteractionRequired } from "@api/device-action/model/UserInteractionRequired";
+import { type UnknownDAError } from "@api/device-action/os/Errors";
 import {
-  ListAppsDAError,
-  ListAppsDAInput,
-  ListAppsDAIntermediateValue,
+  type ListAppsDAError,
+  type ListAppsDAInput,
+  type ListAppsDAIntermediateValue,
 } from "@api/device-action/os/ListApps/types";
-import { HttpFetchApiError } from "@internal/manager-api/model/Errors";
-import { Application } from "@internal/manager-api/model/ManagerApiType";
+import { type HttpFetchApiError } from "@internal/manager-api/model/Errors";
+import { type Application } from "@internal/manager-api/model/ManagerApiType";
 
 export type ListAppsWithMetadataDAOutput = Array<Application | null>;
 export type ListAppsWithMetadataDAInput = ListAppsDAInput;

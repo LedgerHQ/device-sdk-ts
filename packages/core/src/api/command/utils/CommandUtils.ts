@@ -1,4 +1,4 @@
-import { ApduResponse } from "@api/device-session/ApduResponse";
+import { type ApduResponse } from "@api/device-session/ApduResponse";
 
 export class CommandUtils {
   static isValidStatusCode(statusCode: Uint8Array) {

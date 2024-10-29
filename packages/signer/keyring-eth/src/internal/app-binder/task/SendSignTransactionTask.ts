@@ -1,18 +1,18 @@
 import {
   ByteArrayBuilder,
-  CommandResult,
+  type CommandResult,
   CommandResultFactory,
-  InternalApi,
+  type InternalApi,
   InvalidStatusWordError,
   isSuccessCommandResult,
 } from "@ledgerhq/device-management-kit";
 import { DerivationPathUtils } from "@ledgerhq/signer-utils";
 
-import { Signature } from "@api/index";
+import { type Signature } from "@api/index";
 import { TransactionType } from "@api/model/Transaction";
 import {
   SignTransactionCommand,
-  SignTransactionCommandResponse,
+  type SignTransactionCommandResponse,
 } from "@internal/app-binder/command/SignTransactionCommand";
 
 import { SendCommandInChunksTask } from "./SendCommandInChunksTask";
