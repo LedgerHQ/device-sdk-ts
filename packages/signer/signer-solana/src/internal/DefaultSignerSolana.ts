@@ -10,6 +10,8 @@ import { Transaction } from "@api/model/Transaction";
 import { TransactionOptions } from "@api/model/TransactionOptions";
 import { SignerSolana } from "@api/SignerSolana";
 
+import { GetAddressUseCase } from "./use-cases/address/GetAddressUseCase";
+import { useCasesTypes } from "./use-cases/di/useCasesTypes";
 import { makeContainer } from "./di";
 
 export type DefaultSignerSolanaConstructorArgs = {
@@ -22,8 +24,6 @@ export class DefaultSignerSolana implements SignerSolana {
 
   constructor({ sdk, sessionId }: DefaultSignerSolanaConstructorArgs) {
     this._container = makeContainer({ sdk, sessionId });
-    // FIXME: avoid lint error for now
-    console.log(this._container);
   }
 
   signTransaction(
@@ -42,10 +42,12 @@ export class DefaultSignerSolana implements SignerSolana {
   }
 
   getAddress(
-    _derivationPath: string,
-    _options?: AddressOptions,
+    derivationPath: string,
+    options?: AddressOptions,
   ): GetAddressDAReturnType {
-    return {} as GetAddressDAReturnType;
+    return this._container
+      .get<GetAddressUseCase>(useCasesTypes.GetAddressUseCase)
+      .execute(derivationPath, options);
   }
 
   getAppConfiguration(): GetAppConfigurationDAReturnType {

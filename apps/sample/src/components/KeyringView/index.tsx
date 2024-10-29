@@ -16,6 +16,11 @@ const SUPPORTED_KEYRINGS = [
     description: "Access Bitcoin keyring functionality",
     icon: <CryptoIcons.BTC size={80} />,
   },
+  {
+    title: "Solana",
+    description: "Access Solana keyring functionality",
+    icon: <CryptoIcons.SOL size={80} />,
+  },
 ];
 
 export const KeyringView = () => {
