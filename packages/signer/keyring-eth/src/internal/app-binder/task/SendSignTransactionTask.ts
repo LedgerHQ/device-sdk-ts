@@ -9,6 +9,7 @@ import {
 import { DerivationPathUtils } from "@ledgerhq/signer-utils";
 
 import { Signature } from "@api/index";
+import { TransactionType } from "@api/model/Transaction";
 import {
   SignTransactionCommand,
   SignTransactionCommandResponse,
@@ -21,6 +22,8 @@ const PATH_SIZE = 4;
 type SendSignTransactionTaskArgs = {
   derivationPath: string;
   serializedTransaction: Uint8Array;
+  chainId: number;
+  transactionType: TransactionType;
 };
 
 export class SendSignTransactionTask {
@@ -64,11 +67,54 @@ export class SendSignTransactionTask {
       return result;
     }
 
-    return result.data.mapOrDefault(
+    return this.recoverSignature(result.data).mapOrDefault(
       (data) => CommandResultFactory({ data }),
       CommandResultFactory({
         error: new InvalidStatusWordError("no signature returned"),
       }),
     );
+  }
+
+  private recoverSignature(
+    data: SignTransactionCommandResponse,
+  ): SignTransactionCommandResponse {
+    return data.map(({ v, r, s }) => {
+      if (this.args.transactionType !== TransactionType.LEGACY) {
+        return { v, r, s };
+      }
+
+      // Legacy transactions after EIP-155 has a signature parity formatted as:
+      //   V = CHAIN_ID * 2 + 35 + {0,1}
+      //     where {0,1} is the parity
+      // https://github.com/ethereum/EIPs/blob/master/EIPS/eip-155.md
+      //
+      // A known issue is present in ethereum app:
+      // - chainId is encoded on 32 bits
+      // - V is encoded on 8 bits
+      // It means both can overflow for big chain IDs.
+      //
+      // That's why the client has to reconstruct it, to keep APDU backward compatibility
+      // for main chain IDs.
+      //
+      // For more infos:
+      // https://github.com/LedgerHQ/app-ethereum/blob/1.12.2/src_features/signTx/ui_common_signTx.c#L36
+      // https://github.com/LedgerHQ/app-ethereum/blob/1.12.2/client/src/ledger_app_clients/ethereum/utils.py#L35
+
+      // First truncate the chainId
+      const MAX_UINT32 = 0xffffffff;
+      let truncatedChainId = this.args.chainId;
+      while (truncatedChainId > MAX_UINT32) {
+        truncatedChainId = truncatedChainId >> 8;
+      }
+
+      // Then truncate the parity encoding
+      const MAX_UINT8 = 0xff;
+      const v0 = (truncatedChainId * 2 + 35) & MAX_UINT8;
+
+      // Now reconstruct the full V
+      const parity = v == v0 ? 0 : 1;
+      const fullV = parity + this.args.chainId * 2 + 35;
+      return { v: fullV, r, s };
+    });
   }
 }

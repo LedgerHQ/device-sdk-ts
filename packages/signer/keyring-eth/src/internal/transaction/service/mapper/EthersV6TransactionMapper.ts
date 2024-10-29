@@ -19,6 +19,7 @@ export class EthersV6TransactionMapper implements TransactionMapper {
           data: transaction.data,
         },
         serializedTransaction,
+        type: transaction.type || 0,
       });
     }
 

@@ -3,13 +3,15 @@ import {
   ContextModule,
 } from "@ledgerhq/context-module";
 
-import { Transaction } from "@api/model/Transaction";
+import { Transaction, TransactionType } from "@api/model/Transaction";
 import { TransactionOptions } from "@api/model/TransactionOptions";
 import { TransactionMapperService } from "@internal/transaction/service/mapper/TransactionMapperService";
 
 export type BuildTransactionTaskResult = {
   readonly clearSignContexts: ClearSignContextSuccess[];
   readonly serializedTransaction: Uint8Array;
+  readonly chainId: number;
+  readonly transactionType: TransactionType;
 };
 
 export type BuildTransactionContextTaskArgs = {
@@ -30,7 +32,7 @@ export class BuildTransactionContextTask {
     parsed.ifLeft((err) => {
       throw err;
     });
-    const { subset, serializedTransaction } = parsed.unsafeCoerce();
+    const { subset, serializedTransaction, type } = parsed.unsafeCoerce();
 
     const clearSignContexts = await contextModule.getContexts({
       challenge,
@@ -46,6 +48,8 @@ export class BuildTransactionContextTask {
     return {
       clearSignContexts: clearSignContextsSuccess,
       serializedTransaction,
+      chainId: subset.chainId,
+      transactionType: type,
     };
   }
 }

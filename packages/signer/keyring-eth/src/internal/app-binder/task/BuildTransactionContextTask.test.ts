@@ -51,6 +51,7 @@ describe("BuildTransactionContextTask", () => {
     const mapperResult: TransactionMapperResult = {
       subset: { chainId: 1, to: undefined, data: "0x" },
       serializedTransaction,
+      type: 0,
     };
     mapperMock.mapTransactionToSubset.mockReturnValueOnce(Right(mapperResult));
     contextModuleMock.getContexts.mockResolvedValueOnce(clearSignContexts);
@@ -62,6 +63,8 @@ describe("BuildTransactionContextTask", () => {
     expect(result).toEqual({
       clearSignContexts,
       serializedTransaction,
+      chainId: 1,
+      transactionType: 0,
     });
   });
 
@@ -81,6 +84,7 @@ describe("BuildTransactionContextTask", () => {
     const mapperResult: TransactionMapperResult = {
       subset: { chainId: 1, to: undefined, data: "0x" },
       serializedTransaction,
+      type: 2,
     };
     mapperMock.mapTransactionToSubset.mockReturnValueOnce(Right(mapperResult));
     contextModuleMock.getContexts.mockResolvedValueOnce(clearSignContexts);
@@ -92,6 +96,8 @@ describe("BuildTransactionContextTask", () => {
     expect(result).toEqual({
       clearSignContexts,
       serializedTransaction,
+      chainId: 1,
+      transactionType: 2,
     });
   });
 
@@ -102,6 +108,7 @@ describe("BuildTransactionContextTask", () => {
     const mapperResult: TransactionMapperResult = {
       subset: { chainId: 1, to: undefined, data: "0x" },
       serializedTransaction,
+      type: 0,
     };
     mapperMock.mapTransactionToSubset.mockReturnValueOnce(Right(mapperResult));
     contextModuleMock.getContexts.mockResolvedValueOnce(clearSignContexts);
@@ -122,6 +129,7 @@ describe("BuildTransactionContextTask", () => {
     const mapperResult: TransactionMapperResult = {
       subset: { chainId: 1, to: undefined, data: "0x" },
       serializedTransaction,
+      type: 0,
     };
     mapperMock.mapTransactionToSubset.mockReturnValueOnce(Right(mapperResult));
     contextModuleMock.getContexts.mockResolvedValueOnce(clearSignContexts);
@@ -173,6 +181,7 @@ describe("BuildTransactionContextTask", () => {
     const mapperResult: TransactionMapperResult = {
       subset: { chainId: 1, to: undefined, data: "0x" },
       serializedTransaction,
+      type: 0,
     };
     mapperMock.mapTransactionToSubset.mockReturnValueOnce(Right(mapperResult));
     contextModuleMock.getContexts.mockResolvedValueOnce(clearSignContexts);
@@ -184,6 +193,8 @@ describe("BuildTransactionContextTask", () => {
     expect(result).toEqual({
       clearSignContexts: [clearSignContexts[1], clearSignContexts[3]],
       serializedTransaction,
+      chainId: 1,
+      transactionType: 0,
     });
   });
 });
