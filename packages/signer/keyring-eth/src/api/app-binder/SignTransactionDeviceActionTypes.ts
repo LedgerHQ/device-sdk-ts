@@ -12,7 +12,7 @@ import {
 } from "@ledgerhq/device-management-kit";
 
 import { Signature } from "@api/model/Signature";
-import { Transaction } from "@api/model/Transaction";
+import { Transaction, TransactionType } from "@api/model/Transaction";
 import { TransactionOptions } from "@api/model/TransactionOptions";
 import { ProvideTransactionContextTaskErrorCodes } from "@internal/app-binder/task/ProvideTransactionContextTask";
 import { TransactionMapperService } from "@internal/transaction/service/mapper/TransactionMapperService";
@@ -51,6 +51,8 @@ export type SignTransactionDAInternalState = {
   readonly challenge: string | null;
   readonly clearSignContexts: ClearSignContextSuccess[] | null;
   readonly serializedTransaction: Uint8Array | null;
+  readonly chainId: number | null;
+  readonly transactionType: TransactionType | null;
   readonly signature: Signature | null;
 };
 

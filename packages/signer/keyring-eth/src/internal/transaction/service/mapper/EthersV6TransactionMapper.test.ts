@@ -35,6 +35,7 @@ describe("EthersV6TransactionMapper", () => {
             data: "0x",
           },
           serializedTransaction,
+          type: 0,
         }),
       );
     });
@@ -64,6 +65,7 @@ describe("EthersV6TransactionMapper", () => {
             data: "0x",
           },
           serializedTransaction,
+          type: 0,
         }),
       );
     });
@@ -71,7 +73,7 @@ describe("EthersV6TransactionMapper", () => {
     it("should return the correct TransactionSubset with all attributes", () => {
       // GIVEN
       const transaction = new EthersV6Transaction();
-      transaction.type = 0;
+      transaction.type = 1;
       transaction.to = "0x0123456789abcdef0123456789abcdef01234567";
       transaction.data = "0x";
       transaction.nonce = 0;
@@ -80,9 +82,9 @@ describe("EthersV6TransactionMapper", () => {
       transaction.value = 0n;
       transaction.chainId = 1n;
       const serializedTransaction = new Uint8Array([
-        0xdd, 0x80, 0x80, 0x80, 0x94, 0x01, 0x23, 0x45, 0x67, 0x89, 0xab, 0xcd,
-        0xef, 0x01, 0x23, 0x45, 0x67, 0x89, 0xab, 0xcd, 0xef, 0x01, 0x23, 0x45,
-        0x67, 0x80, 0x80, 0x01, 0x80, 0x80,
+        0x01, 0xdc, 0x01, 0x80, 0x80, 0x80, 0x94, 0x01, 0x23, 0x45, 0x67, 0x89,
+        0xab, 0xcd, 0xef, 0x01, 0x23, 0x45, 0x67, 0x89, 0xab, 0xcd, 0xef, 0x01,
+        0x23, 0x45, 0x67, 0x80, 0x80, 0xc0,
       ]);
 
       // WHEN
@@ -97,6 +99,7 @@ describe("EthersV6TransactionMapper", () => {
             data: "0x",
           },
           serializedTransaction,
+          type: 1,
         }),
       );
     });

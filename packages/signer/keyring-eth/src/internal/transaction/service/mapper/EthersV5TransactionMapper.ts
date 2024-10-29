@@ -38,6 +38,7 @@ export class EthersV5TransactionMapper implements TransactionMapper {
           data: transaction.data,
         },
         serializedTransaction,
+        type: transaction.type || 0,
       });
     }
 
@@ -57,7 +58,8 @@ export class EthersV5TransactionMapper implements TransactionMapper {
       (tx.gasPrice === undefined || tx.gasPrice instanceof BigNumber) &&
       typeof tx.data === "string" &&
       tx.value instanceof BigNumber &&
-      typeof tx.chainId === "number"
+      typeof tx.chainId === "number" &&
+      (tx.type === undefined || typeof tx.type === "number")
     );
   }
 }

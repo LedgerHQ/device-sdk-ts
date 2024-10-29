@@ -84,6 +84,8 @@ describe("SendSignTransactionTask", () => {
       const args = {
         derivationPath: "44'/60'/0'/0/0",
         serializedTransaction: SIMPLE_TRANSACTION,
+        chainId: 1,
+        transactionType: 1,
       };
       apiMock.sendCommand.mockResolvedValueOnce(resultOk);
 
@@ -110,6 +112,8 @@ describe("SendSignTransactionTask", () => {
       const args = {
         derivationPath: "44'/60'/0'/0/0",
         serializedTransaction: BIG_TRANSACTION,
+        chainId: 1,
+        transactionType: 1,
         isLegacy: true,
       };
       apiMock.sendCommand.mockResolvedValueOnce(resultNothing);
@@ -147,6 +151,8 @@ describe("SendSignTransactionTask", () => {
       const args = {
         derivationPath: "44'/60'/0'/0/0",
         serializedTransaction: SIMPLE_TRANSACTION,
+        chainId: 1,
+        transactionType: 1,
         isLegacy: true,
       };
       apiMock.sendCommand.mockResolvedValueOnce(resultNothing);
@@ -176,6 +182,8 @@ describe("SendSignTransactionTask", () => {
       const args = {
         derivationPath: "44'/60'/0'/0/0",
         serializedTransaction: BIG_TRANSACTION,
+        chainId: 1,
+        transactionType: 1,
         isLegacy: true,
       };
       apiMock.sendCommand.mockResolvedValueOnce(resultNothing);
@@ -212,6 +220,110 @@ describe("SendSignTransactionTask", () => {
       expect((result as any).error).toStrictEqual(
         new InvalidStatusWordError("An error"),
       );
+    });
+
+    it("legacy transaction with small chainId", async () => {
+      // GIVEN
+      const args = {
+        derivationPath: "44'/60'/0'/0/0",
+        serializedTransaction: SIMPLE_TRANSACTION,
+        chainId: 56,
+        transactionType: 0,
+      };
+      apiMock.sendCommand.mockResolvedValueOnce(
+        CommandResultFactory({
+          data: Just({
+            v: 147,
+            r: "0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef",
+            s: "0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef",
+          }),
+        }),
+      );
+
+      // WHEN
+      const result = await new SendSignTransactionTask(apiMock, args).run();
+
+      // THEN
+      // eslint-disable-next-line  @typescript-eslint/no-explicit-any
+      expect((result as any).data.v).toStrictEqual(147);
+    });
+
+    it("legacy transaction with small chainId with positive parity", async () => {
+      // GIVEN
+      const args = {
+        derivationPath: "44'/60'/0'/0/0",
+        serializedTransaction: SIMPLE_TRANSACTION,
+        chainId: 56,
+        transactionType: 0,
+      };
+      apiMock.sendCommand.mockResolvedValueOnce(
+        CommandResultFactory({
+          data: Just({
+            v: 148,
+            r: "0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef",
+            s: "0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef",
+          }),
+        }),
+      );
+
+      // WHEN
+      const result = await new SendSignTransactionTask(apiMock, args).run();
+
+      // THEN
+      // eslint-disable-next-line  @typescript-eslint/no-explicit-any
+      expect((result as any).data.v).toStrictEqual(148);
+    });
+
+    it("legacy transaction with big chainId", async () => {
+      // GIVEN
+      const args = {
+        derivationPath: "44'/60'/0'/0/0",
+        serializedTransaction: SIMPLE_TRANSACTION,
+        chainId: 11297108109,
+        transactionType: 0,
+      };
+      apiMock.sendCommand.mockResolvedValueOnce(
+        CommandResultFactory({
+          data: Just({
+            v: 131,
+            r: "0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef",
+            s: "0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef",
+          }),
+        }),
+      );
+
+      // WHEN
+      const result = await new SendSignTransactionTask(apiMock, args).run();
+
+      // THEN
+      // eslint-disable-next-line  @typescript-eslint/no-explicit-any
+      expect((result as any).data.v).toStrictEqual(22594216253);
+    });
+
+    it("legacy transaction with big chainId with positive parity", async () => {
+      // GIVEN
+      const args = {
+        derivationPath: "44'/60'/0'/0/0",
+        serializedTransaction: SIMPLE_TRANSACTION,
+        chainId: 11297108109,
+        transactionType: 0,
+      };
+      apiMock.sendCommand.mockResolvedValueOnce(
+        CommandResultFactory({
+          data: Just({
+            v: 132,
+            r: "0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef",
+            s: "0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef",
+          }),
+        }),
+      );
+
+      // WHEN
+      const result = await new SendSignTransactionTask(apiMock, args).run();
+
+      // THEN
+      // eslint-disable-next-line  @typescript-eslint/no-explicit-any
+      expect((result as any).data.v).toStrictEqual(22594216254);
     });
   });
 });

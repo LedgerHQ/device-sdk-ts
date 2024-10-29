@@ -42,6 +42,7 @@ describe("EthersV5TransactionMapper", () => {
             data: "0x",
           },
           serializedTransaction,
+          type: 0,
         }),
       );
     });
@@ -72,6 +73,7 @@ describe("EthersV5TransactionMapper", () => {
             data: "0x",
           },
           serializedTransaction,
+          type: 0,
         }),
       );
     });
@@ -89,7 +91,7 @@ describe("EthersV5TransactionMapper", () => {
         r: "0x",
         s: "0x",
         v: 0,
-        type: 0,
+        type: 1,
         maxFeePerGas: EthersV5BigNumber.from(0),
         maxPriorityFeePerGas: EthersV5BigNumber.from(0),
       };
@@ -109,6 +111,7 @@ describe("EthersV5TransactionMapper", () => {
             data: "0x",
           },
           serializedTransaction,
+          type: 1,
         }),
       );
     });

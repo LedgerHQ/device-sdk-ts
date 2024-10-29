@@ -25,7 +25,7 @@ import {
   SignTransactionDAOutput,
 } from "@api/app-binder/SignTransactionDeviceActionTypes";
 import { Signature } from "@api/model/Signature";
-import { Transaction } from "@api/model/Transaction";
+import { Transaction, TransactionType } from "@api/model/Transaction";
 import { TransactionOptions } from "@api/model/TransactionOptions";
 import {
   GetChallengeCommand,
@@ -65,6 +65,8 @@ export type MachineDependencies = {
     input: {
       derivationPath: string;
       serializedTransaction: Uint8Array;
+      chainId: number;
+      transactionType: TransactionType;
       isLegacy: boolean;
     };
   }) => Promise<CommandResult<Signature>>;
@@ -137,6 +139,8 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
             error: null,
             clearSignContexts: null,
             serializedTransaction: null,
+            chainId: null,
+            transactionType: null,
             challenge: null,
             signature: null,
           },
@@ -243,6 +247,8 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
                     ...context._internalState,
                     clearSignContexts: event.output.clearSignContexts!,
                     serializedTransaction: event.output.serializedTransaction,
+                    chainId: event.output.chainId,
+                    transactionType: event.output.transactionType,
                   }),
                 }),
               ],
@@ -309,6 +315,8 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
               derivationPath: context.input.derivationPath,
               serializedTransaction:
                 context._internalState.serializedTransaction!,
+              chainId: context._internalState.chainId!,
+              transactionType: context._internalState.transactionType!,
               isLegacy: true, // TODO: use ETHEREUM app version to determine if legacy
             }),
             onDone: {
@@ -379,6 +387,8 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
       input: {
         derivationPath: string;
         serializedTransaction: Uint8Array;
+        chainId: number;
+        transactionType: TransactionType;
         isLegacy: boolean;
       };
     }) => new SendSignTransactionTask(internalApi, arg0.input).run();
