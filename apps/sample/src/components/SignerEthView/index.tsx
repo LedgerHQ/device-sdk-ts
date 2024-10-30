@@ -19,13 +19,13 @@ import { ethers } from "ethers";
 import { DeviceActionsList } from "@/components/DeviceActionsView/DeviceActionsList";
 import { type DeviceActionProps } from "@/components/DeviceActionsView/DeviceActionTester";
 import { useDmk } from "@/providers/DeviceManagementKitProvider";
-import { useKeyringEth } from "@/providers/KeyringEthProvider";
+import { useSignerEth } from "@/providers/SignerEthProvider";
 
-export const KeyringEthView: React.FC<{ sessionId: string }> = ({
+export const SignerEthView: React.FC<{ sessionId: string }> = ({
   sessionId,
 }) => {
   const dmk = useDmk();
-  const keyring = useKeyringEth();
+  const signer = useSignerEth();
 
   const deviceModelId = dmk.getConnectedDevice({
     sessionId,
@@ -43,10 +43,10 @@ export const KeyringEthView: React.FC<{ sessionId: string }> = ({
           checkOnDevice,
           returnChainCode,
         }) => {
-          if (!keyring) {
-            throw new Error("Keyring not initialized");
+          if (!signer) {
+            throw new Error("Signer not initialized");
           }
-          return keyring.getAddress(derivationPath, {
+          return signer.getAddress(derivationPath, {
             checkOnDevice,
             returnChainCode,
           });
@@ -72,10 +72,10 @@ export const KeyringEthView: React.FC<{ sessionId: string }> = ({
         description:
           "Perform all the actions necessary to sign a message with the device",
         executeDeviceAction: ({ derivationPath, message }) => {
-          if (!keyring) {
-            throw new Error("Keyring not initialized");
+          if (!signer) {
+            throw new Error("Signer not initialized");
           }
-          return keyring.signMessage(derivationPath, message);
+          return signer.signMessage(derivationPath, message);
         },
         initialValues: {
           derivationPath: "44'/60'/0'/0/0",
@@ -100,10 +100,10 @@ export const KeyringEthView: React.FC<{ sessionId: string }> = ({
           transaction,
           recipientDomain,
         }) => {
-          if (!keyring) {
-            throw new Error("Keyring not initialized");
+          if (!signer) {
+            throw new Error("Signer not initialized");
           }
-          return keyring.signTransaction(
+          return signer.signTransaction(
             derivationPath,
             ethers.Transaction.from(transaction),
             { domain: recipientDomain },
@@ -132,10 +132,10 @@ export const KeyringEthView: React.FC<{ sessionId: string }> = ({
         executeDeviceAction: ({ derivationPath, message }) => {
           const typedData = JSON.parse(message) as TypedData;
 
-          if (!keyring) {
-            throw new Error("Keyring not initialized");
+          if (!signer) {
+            throw new Error("Signer not initialized");
           }
-          return keyring.signTypedData(derivationPath, typedData);
+          return signer.signTypedData(derivationPath, typedData);
         },
         initialValues: {
           derivationPath: "44'/60'/0'/0/0",
@@ -173,10 +173,10 @@ export const KeyringEthView: React.FC<{ sessionId: string }> = ({
         SignTypedDataDAIntermediateValue
       >,
     ],
-    [deviceModelId, keyring],
+    [deviceModelId, signer],
   );
 
   return (
-    <DeviceActionsList title="Keyring Ethereum" deviceActions={deviceActions} />
+    <DeviceActionsList title="Signer Ethereum" deviceActions={deviceActions} />
   );
 };

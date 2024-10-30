@@ -79,7 +79,7 @@ importers:
         version: link:../../packages/flipper-plugin-client
       '@ledgerhq/device-signer-kit-ethereum':
         specifier: workspace:*
-        version: link:../../packages/signer/keyring-eth
+        version: link:../../packages/signer/signer-eth
       '@ledgerhq/device-signer-kit-solana':
         specifier: workspace:*
         version: link:../../packages/signer/signer-solana
@@ -349,7 +349,7 @@ importers:
         specifier: ^10.9.2
         version: 10.9.2(@types/node@22.8.1)(typescript@5.6.3)
 
-  packages/signer/keyring-btc:
+  packages/signer/signer-btc:
     dependencies:
       '@types/crypto-js':
         specifier: ^4.2.2
@@ -401,7 +401,7 @@ importers:
         specifier: ^10.9.2
         version: 10.9.2(@types/node@22.8.1)(typescript@5.6.3)
 
-  packages/signer/keyring-eth:
+  packages/signer/signer-eth:
     dependencies:
       ethers-v5:
         specifier: npm:ethers@^5.7.2

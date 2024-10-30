@@ -5,40 +5,40 @@ import { useRouter } from "next/navigation";
 import { PageWithHeader } from "@/components//PageWithHeader";
 import { ClickableListItem } from "@/components/ClickableListItem";
 
-const SUPPORTED_KEYRINGS = [
+const SUPPORTED_SIGNERS = [
   {
     title: "Ethereum",
-    description: "Access EVM compatible keyring functionality",
+    description: "Access EVM compatible signer functionality",
     icon: <CryptoIcons.ETH size={80} />,
   },
   {
     title: "Bitcoin",
-    description: "Access Bitcoin keyring functionality",
+    description: "Access Bitcoin signer functionality",
     icon: <CryptoIcons.BTC size={80} />,
   },
   {
     title: "Solana",
-    description: "Access Solana keyring functionality",
+    description: "Access Solana signer functionality",
     icon: <CryptoIcons.SOL size={80} />,
   },
 ];
 
-export const KeyringView = () => {
+export const SignerView = () => {
   const router = useRouter();
 
   return (
-    <PageWithHeader title="Keyrings">
+    <PageWithHeader title="Signers">
       <Grid
         columns={2}
         style={{ rowGap: 6, columnGap: 6, overflowY: "scroll" }}
       >
-        {SUPPORTED_KEYRINGS.map(({ title, description, icon }) => (
+        {SUPPORTED_SIGNERS.map(({ title, description, icon }) => (
           <ClickableListItem
-            key={`keyring-${title}`}
+            key={`signer-${title}`}
             title={title}
             description={description}
             onClick={() => {
-              router.push(`/keyring/${title.toLowerCase()}`);
+              router.push(`/signer/${title.toLowerCase()}`);
             }}
             icon={icon}
           />

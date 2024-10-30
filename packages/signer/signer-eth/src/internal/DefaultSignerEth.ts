@@ -9,11 +9,11 @@ import { type GetAddressDAReturnType } from "@api/app-binder/GetAddressDeviceAct
 import { type SignPersonalMessageDAReturnType } from "@api/app-binder/SignPersonalMessageDeviceActionTypes";
 import { type SignTransactionDAReturnType } from "@api/app-binder/SignTransactionDeviceActionTypes";
 import { type SignTypedDataDAReturnType } from "@api/app-binder/SignTypedDataDeviceActionTypes";
-import { type KeyringEth } from "@api/KeyringEth";
 import { type AddressOptions } from "@api/model/AddressOptions";
 import { type Transaction } from "@api/model/Transaction";
 import { type TransactionOptions } from "@api/model/TransactionOptions";
 import { type TypedData } from "@api/model/TypedData";
+import { type SignerEth } from "@api/SignerEth";
 import { addressTypes } from "@internal/address/di/addressTypes";
 import { type GetAddressUseCase } from "@internal/address/use-case/GetAddressUseCase";
 import { makeContainer } from "@internal/di";
@@ -24,20 +24,16 @@ import { type SignTransactionUseCase } from "@internal/transaction/use-case/Sign
 import { typedDataTypes } from "@internal/typed-data/di/typedDataTypes";
 import { type SignTypedDataUseCase } from "@internal/typed-data/use-case/SignTypedDataUseCase";
 
-type DefaultKeyringConstructorArgs = {
+type DefaultSignerConstructorArgs = {
   dmk: DeviceManagementKit;
   sessionId: DeviceSessionId;
   contextModule: ContextModule;
 };
 
-export class DefaultKeyringEth implements KeyringEth {
+export class DefaultSignerEth implements SignerEth {
   private _container: Container;
 
-  constructor({
-    dmk,
-    sessionId,
-    contextModule,
-  }: DefaultKeyringConstructorArgs) {
+  constructor({ dmk, sessionId, contextModule }: DefaultSignerConstructorArgs) {
     this._container = makeContainer({ dmk, sessionId, contextModule });
   }
 

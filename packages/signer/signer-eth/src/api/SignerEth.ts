@@ -8,7 +8,7 @@ import { type TypedData } from "@api/model/TypedData";
 import { type SignPersonalMessageDAReturnType } from "./app-binder/SignPersonalMessageDeviceActionTypes";
 import { type SignTransactionDAReturnType } from "./app-binder/SignTransactionDeviceActionTypes";
 
-export interface KeyringEth {
+export interface SignerEth {
   signTransaction: (
     derivationPath: string,
     transaction: Transaction,

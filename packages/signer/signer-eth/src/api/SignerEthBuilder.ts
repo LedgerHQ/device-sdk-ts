@@ -7,28 +7,28 @@ import {
   type DeviceSessionId,
 } from "@ledgerhq/device-management-kit";
 
-import { DefaultKeyringEth } from "@internal/DefaultKeyringEth";
+import { DefaultSignerEth } from "@internal/DefaultSignerEth";
 
-type KeyringEthBuilderConstructorArgs = {
+type SignerEthBuilderConstructorArgs = {
   dmk: DeviceManagementKit;
   sessionId: DeviceSessionId;
 };
 
 /**
- * Builder for the `KeyringEth` class.
+ * Builder for the `SignerEth` class.
  *
  * @example
  * ```
- * const dmk = new KeyringEthBuilder(dmk)
+ * const dmk = new SignerEthBuilder(dmk)
  *  .build();
  * ```
  */
-export class KeyringEthBuilder {
+export class SignerEthBuilder {
   private _dmk: DeviceManagementKit;
   private _sessionId: DeviceSessionId;
   private _contextModule: ContextModule;
 
-  constructor({ dmk, sessionId }: KeyringEthBuilderConstructorArgs) {
+  constructor({ dmk, sessionId }: SignerEthBuilderConstructorArgs) {
     this._dmk = dmk;
     this._sessionId = sessionId;
     // default context module for ETH
@@ -47,12 +47,12 @@ export class KeyringEthBuilder {
   }
 
   /**
-   * Build the ethereum keyring
+   * Build the ethereum signer
    *
-   * @returns the ethereum keyring
+   * @returns the ethereum signer
    */
   public build() {
-    return new DefaultKeyringEth({
+    return new DefaultSignerEth({
       dmk: this._dmk,
       sessionId: this._sessionId,
       contextModule: this._contextModule,

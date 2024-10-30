@@ -4,25 +4,25 @@ import {
 } from "@ledgerhq/context-module";
 import { type DeviceManagementKit } from "@ledgerhq/device-management-kit";
 
-import { KeyringEthBuilder } from "@api/KeyringEthBuilder";
+import { SignerEthBuilder } from "@api/SignerEthBuilder";
 
-describe("KeyringEthBuilder", () => {
+describe("SignerEthBuilder", () => {
   const dmk: DeviceManagementKit = {} as DeviceManagementKit;
 
-  test("should be an instance of KeyringEth", () => {
+  test("should be an instance of SignerEth", () => {
     // GIVEN
-    const builder = new KeyringEthBuilder({ dmk, sessionId: "" });
+    const builder = new SignerEthBuilder({ dmk, sessionId: "" });
 
     // WHEN
     builder.build();
 
     // THEN
-    expect(builder).toBeInstanceOf(KeyringEthBuilder);
+    expect(builder).toBeInstanceOf(SignerEthBuilder);
   });
 
   test("should instanciate with default context module", () => {
     // GIVEN
-    const builder = new KeyringEthBuilder({ dmk, sessionId: "" });
+    const builder = new SignerEthBuilder({ dmk, sessionId: "" });
 
     // WHEN
     builder.build();
@@ -37,7 +37,7 @@ describe("KeyringEthBuilder", () => {
 
   test("should instanciate with custom context module", () => {
     // GIVEN
-    const builder = new KeyringEthBuilder({ dmk, sessionId: "" });
+    const builder = new SignerEthBuilder({ dmk, sessionId: "" });
     const contextModule = {} as ContextModule;
 
     // WHEN

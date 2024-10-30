@@ -3,7 +3,7 @@ import { type Psbt } from "@api/model/Psbt";
 import { type Signature } from "@api/model/Signature";
 import { type Wallet } from "@api/model/Wallet";
 
-export interface KeyringBtc {
+export interface SignerBtc {
   getExtendedPubkey: (
     derivationPath: string,
     checkOnDevice?: boolean,

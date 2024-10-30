@@ -62,10 +62,10 @@ export const Menu: React.FC = () => {
       <MenuItem>
         <Icons.Signature />
         <MenuTitle
-          data-testid="CTA_route-to-/keyring"
-          onClick={() => router.push("/keyring")}
+          data-testid="CTA_route-to-/signer"
+          onClick={() => router.push("/signer")}
         >
-          Keyrings
+          Signers
         </MenuTitle>
       </MenuItem>
       <MenuItem>

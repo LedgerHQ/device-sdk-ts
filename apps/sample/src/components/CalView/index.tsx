@@ -48,7 +48,7 @@ export const CalView = () => {
       >
         {entries.map(({ title, description, onClick }) => (
           <ClickableListItem
-            key={`keyring-${title}`}
+            key={`signer-${title}`}
             title={title}
             description={description}
             onClick={onClick}

@@ -18,7 +18,7 @@ import { Sidebar } from "@/components/Sidebar";
 import { DmkProvider } from "@/providers/DeviceManagementKitProvider";
 import { DeviceSessionsProvider } from "@/providers/DeviceSessionsProvider";
 import { DmkConfigProvider } from "@/providers/DmkConfig";
-import { KeyringEthProvider } from "@/providers/KeyringEthProvider";
+import { SignerEthProvider } from "@/providers/SignerEthProvider";
 import { GlobalStyle } from "@/styles/globalstyles";
 
 const Root = styled(Flex)`
@@ -41,7 +41,7 @@ const ClientRootLayout: React.FC<PropsWithChildren> = ({ children }) => {
       <DmkConfigProvider>
         <DmkProvider>
           <DeviceSessionsProvider>
-            <KeyringEthProvider>
+            <SignerEthProvider>
               <StyleProvider selectedPalette="dark" fontsPath="/fonts">
                 <GlobalStyle />
                 <body>
@@ -54,7 +54,7 @@ const ClientRootLayout: React.FC<PropsWithChildren> = ({ children }) => {
                   </Root>
                 </body>
               </StyleProvider>
-            </KeyringEthProvider>
+            </SignerEthProvider>
           </DeviceSessionsProvider>
         </DmkProvider>
       </DmkConfigProvider>

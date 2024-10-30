@@ -10,10 +10,10 @@ import { messageTypes } from "./message/di/messageTypes";
 import { transactionTypes } from "./transaction/di/transactionTypes";
 import { typedDataTypes } from "./typed-data/di/typedDataTypes";
 import { type Transaction, type TypedData } from "..";
-import { DefaultKeyringEth } from "./DefaultKeyringEth";
+import { DefaultSignerEth } from "./DefaultSignerEth";
 
-describe("DefaultKeyringEth", () => {
-  let keyring: DefaultKeyringEth;
+describe("DefaultSignerEth", () => {
+  let signer: DefaultSignerEth;
   const mock: Container = {
     get: jest.fn((id: symbol) => ({
       execute: jest.fn(() => {
@@ -38,8 +38,8 @@ describe("DefaultKeyringEth", () => {
     const dmk = {} as DeviceManagementKit;
     const sessionId = "" as DeviceSessionId;
     const contextModule = {} as ContextModule;
-    keyring = new DefaultKeyringEth({ dmk, sessionId, contextModule });
-    keyring["_container"] = mock as unknown as Container;
+    signer = new DefaultSignerEth({ dmk, sessionId, contextModule });
+    signer["_container"] = mock as unknown as Container;
   });
 
   describe("signTransaction", () => {
@@ -49,7 +49,7 @@ describe("DefaultKeyringEth", () => {
       const transaction = {} as Transaction;
 
       // WHEN
-      const result = await keyring.signTransaction(derivationPath, transaction);
+      const result = await signer.signTransaction(derivationPath, transaction);
 
       // THEN
       expect(result).toBeDefined();
@@ -67,7 +67,7 @@ describe("DefaultKeyringEth", () => {
       const message = "message";
 
       // WHEN
-      const result = await keyring.signMessage(derivationPath, message);
+      const result = await signer.signMessage(derivationPath, message);
 
       // THEN
       expect(result).toBeDefined();
@@ -83,7 +83,7 @@ describe("DefaultKeyringEth", () => {
       const typedData = {} as TypedData;
 
       // WHEN
-      const result = await keyring.signTypedData(derivationPath, typedData);
+      const result = await signer.signTypedData(derivationPath, typedData);
 
       // THEN
       expect(result).toBeDefined();
@@ -100,7 +100,7 @@ describe("DefaultKeyringEth", () => {
       const derivationPath = "derivationPath";
 
       // WHEN
-      const result = await keyring.getAddress(derivationPath);
+      const result = await signer.getAddress(derivationPath);
 
       // THEN
       expect(result).toBeDefined();

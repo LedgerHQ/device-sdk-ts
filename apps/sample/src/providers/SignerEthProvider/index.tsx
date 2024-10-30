@@ -12,21 +12,21 @@ import {
   type ContextModuleCalConfig,
 } from "@ledgerhq/context-module";
 import {
-  type KeyringEth,
-  KeyringEthBuilder,
+  type SignerEth,
+  SignerEthBuilder,
 } from "@ledgerhq/device-signer-kit-ethereum";
 
 import { useDmk } from "@/providers/DeviceManagementKitProvider";
 import { useDeviceSessionsContext } from "@/providers/DeviceSessionsProvider";
 
-type KeyringEthContextType = {
-  keyring: KeyringEth | null;
+type SignerEthContextType = {
+  signer: SignerEth | null;
   calConfig: ContextModuleCalConfig;
   setCalConfig: (cal: ContextModuleCalConfig) => void;
 };
 
-const initialState: KeyringEthContextType = {
-  keyring: null,
+const initialState: SignerEthContextType = {
+  signer: null,
   calConfig: {
     url: "https://crypto-assets-service.api.ledger.com/v1",
     mode: "prod",
@@ -35,9 +35,9 @@ const initialState: KeyringEthContextType = {
   setCalConfig: () => {},
 };
 
-const KeyringEthContext = createContext<KeyringEthContextType>(initialState);
+const SignerEthContext = createContext<SignerEthContextType>(initialState);
 
-export const KeyringEthProvider: React.FC<PropsWithChildren> = ({
+export const SignerEthProvider: React.FC<PropsWithChildren> = ({
   children,
 }) => {
   const dmk = useDmk();
@@ -45,38 +45,38 @@ export const KeyringEthProvider: React.FC<PropsWithChildren> = ({
     state: { selectedId: sessionId },
   } = useDeviceSessionsContext();
 
-  const [keyring, setKeyring] = useState<KeyringEth | null>(null);
+  const [signer, setSigner] = useState<SignerEth | null>(null);
   const [calConfig, setCalConfig] = useState<ContextModuleCalConfig>(
     initialState.calConfig,
   );
 
   useEffect(() => {
     if (!sessionId || !dmk) {
-      setKeyring(null);
+      setSigner(null);
       return;
     }
 
     const contextModule = new ContextModuleBuilder()
       .withConfig({ cal: calConfig })
       .build();
-    const newKeyring = new KeyringEthBuilder({ dmk, sessionId })
+    const newSigner = new SignerEthBuilder({ dmk, sessionId })
       .withContextModule(contextModule)
       .build();
-    setKeyring(newKeyring);
+    setSigner(newSigner);
   }, [calConfig, dmk, sessionId]);
 
   return (
-    <KeyringEthContext.Provider value={{ keyring, calConfig, setCalConfig }}>
+    <SignerEthContext.Provider value={{ signer, calConfig, setCalConfig }}>
       {children}
-    </KeyringEthContext.Provider>
+    </SignerEthContext.Provider>
   );
 };
 
-export const useKeyringEth = (): KeyringEth | null => {
-  return useContext(KeyringEthContext).keyring;
+export const useSignerEth = (): SignerEth | null => {
+  return useContext(SignerEthContext).signer;
 };
 
 export const useCalConfig = () => {
-  const { calConfig, setCalConfig } = useContext(KeyringEthContext);
+  const { calConfig, setCalConfig } = useContext(SignerEthContext);
   return { calConfig, setCalConfig };
 };

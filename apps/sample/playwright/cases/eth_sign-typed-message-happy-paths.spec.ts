@@ -37,7 +37,7 @@ test.describe("ETH Signer: sign EIP712 message, happy paths", () => {
     });
 
     await test.step("When execute ETH: sign EIP712 message", async () => {
-      await whenNavigateTo(page, "/keyring");
+      await whenNavigateTo(page, "/signer");
       await whenClicking(page, "CTA_command-Ethereum");
 
       await whenExecuteDeviceAction(page, "Sign typed message", [
@@ -76,7 +76,7 @@ test.describe("ETH Signer: sign EIP712 message, happy paths", () => {
     });
 
     await test.step("When execute ETH: sign EIP712 message", async () => {
-      await whenNavigateTo(page, "/keyring");
+      await whenNavigateTo(page, "/signer");
       await whenClicking(page, "CTA_command-Ethereum");
 
       await whenExecuteDeviceAction(page, "Sign typed message", [
@@ -139,7 +139,7 @@ test.describe("ETH Signer: sign EIP712 message, happy paths", () => {
     });
 
     await test.step("When execute ETH: sign EIP712 message", async () => {
-      await whenNavigateTo(page, "/keyring");
+      await whenNavigateTo(page, "/signer");
 
       await whenClicking(page, "CTA_command-Ethereum");
 
