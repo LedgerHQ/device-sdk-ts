@@ -2,8 +2,8 @@ import {
   type DeviceAction,
   type DeviceActionIntermediateValue,
   type DeviceActionState,
+  type DmkError,
   type InternalApi,
-  type SdkError,
 } from "@ledgerhq/device-management-kit";
 
 /**
@@ -15,7 +15,7 @@ import {
 export function testDeviceActionStates<
   Output,
   Input,
-  Error extends SdkError,
+  Error extends DmkError,
   IntermediateValue extends DeviceActionIntermediateValue,
 >(
   deviceAction: DeviceAction<Output, Input, Error, IntermediateValue>,

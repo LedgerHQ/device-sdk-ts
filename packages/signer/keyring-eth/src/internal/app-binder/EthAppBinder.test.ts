@@ -1,7 +1,7 @@
 import { type ContextModule } from "@ledgerhq/context-module";
 import {
   type DeviceActionState,
-  type DeviceSdk,
+  type DeviceManagementKit,
 } from "@ledgerhq/device-management-kit";
 import { DeviceActionStatus } from "@ledgerhq/device-management-kit";
 import { SendCommandInAppDeviceAction } from "@ledgerhq/device-management-kit";
@@ -38,10 +38,10 @@ import { GetAddressCommand } from "./command/GetAddressCommand";
 import { EthAppBinder } from "./EthAppBinder";
 
 describe("EthAppBinder", () => {
-  const mockedSdk: DeviceSdk = {
+  const mockedDmk: DeviceManagementKit = {
     sendCommand: jest.fn(),
     executeDeviceAction: jest.fn(),
-  } as unknown as DeviceSdk;
+  } as unknown as DeviceManagementKit;
   const mockedContextModule: ContextModule = {
     getContexts: jest.fn(),
     getTypedDataFilters: jest.fn(),
@@ -61,7 +61,7 @@ describe("EthAppBinder", () => {
       const publicKey = "04e3785ca";
       const chainCode = undefined;
 
-      jest.spyOn(mockedSdk, "executeDeviceAction").mockReturnValue({
+      jest.spyOn(mockedDmk, "executeDeviceAction").mockReturnValue({
         observable: from([
           {
             status: DeviceActionStatus.Completed,
@@ -77,7 +77,7 @@ describe("EthAppBinder", () => {
 
       // WHEN
       const appBinder = new EthAppBinder(
-        mockedSdk,
+        mockedDmk,
         mockedContextModule,
         mockedMapper,
         "sessionId",
@@ -131,7 +131,7 @@ describe("EthAppBinder", () => {
 
         // WHEN
         const appBinder = new EthAppBinder(
-          mockedSdk,
+          mockedDmk,
           mockedContextModule,
           mockedMapper,
           "sessionId",
@@ -139,7 +139,7 @@ describe("EthAppBinder", () => {
         appBinder.getAddress(params);
 
         // THEN
-        expect(mockedSdk.executeDeviceAction).toHaveBeenCalledWith({
+        expect(mockedDmk.executeDeviceAction).toHaveBeenCalledWith({
           sessionId: "sessionId",
           deviceAction: new SendCommandInAppDeviceAction({
             input: {
@@ -161,7 +161,7 @@ describe("EthAppBinder", () => {
 
         // WHEN
         const appBinder = new EthAppBinder(
-          mockedSdk,
+          mockedDmk,
           mockedContextModule,
           mockedMapper,
           "sessionId",
@@ -169,7 +169,7 @@ describe("EthAppBinder", () => {
         appBinder.getAddress(params);
 
         // THEN
-        expect(mockedSdk.executeDeviceAction).toHaveBeenCalledWith({
+        expect(mockedDmk.executeDeviceAction).toHaveBeenCalledWith({
           sessionId: "sessionId",
           deviceAction: new SendCommandInAppDeviceAction({
             input: {
@@ -196,7 +196,7 @@ describe("EthAppBinder", () => {
       transaction.value = 0n;
       const options = {};
 
-      jest.spyOn(mockedSdk, "executeDeviceAction").mockReturnValue({
+      jest.spyOn(mockedDmk, "executeDeviceAction").mockReturnValue({
         observable: from([
           {
             status: DeviceActionStatus.Completed,
@@ -212,7 +212,7 @@ describe("EthAppBinder", () => {
 
       // WHEN
       const appBinder = new EthAppBinder(
-        mockedSdk,
+        mockedDmk,
         mockedContextModule,
         mockedMapper,
         "sessionId",
@@ -263,7 +263,7 @@ describe("EthAppBinder", () => {
       transaction.to = "0x1234567890123456789012345678901234567890";
       transaction.value = 0n;
 
-      jest.spyOn(mockedSdk, "executeDeviceAction").mockReturnValue({
+      jest.spyOn(mockedDmk, "executeDeviceAction").mockReturnValue({
         observable: from([
           {
             status: DeviceActionStatus.Completed,
@@ -279,7 +279,7 @@ describe("EthAppBinder", () => {
 
       // WHEN
       const appBinder = new EthAppBinder(
-        mockedSdk,
+        mockedDmk,
         mockedContextModule,
         mockedMapper,
         "sessionId",
@@ -330,7 +330,7 @@ describe("EthAppBinder", () => {
       };
       const message = "Hello, World!";
 
-      jest.spyOn(mockedSdk, "executeDeviceAction").mockReturnValue({
+      jest.spyOn(mockedDmk, "executeDeviceAction").mockReturnValue({
         observable: from([
           {
             status: DeviceActionStatus.Completed,
@@ -346,7 +346,7 @@ describe("EthAppBinder", () => {
 
       // WHEN
       const appBinder = new EthAppBinder(
-        mockedSdk,
+        mockedDmk,
         mockedContextModule,
         mockedMapper,
         "sessionId",
@@ -404,7 +404,7 @@ describe("EthAppBinder", () => {
         parse: jest.fn(),
       };
 
-      jest.spyOn(mockedSdk, "executeDeviceAction").mockReturnValue({
+      jest.spyOn(mockedDmk, "executeDeviceAction").mockReturnValue({
         observable: from([
           {
             status: DeviceActionStatus.Completed,
@@ -420,7 +420,7 @@ describe("EthAppBinder", () => {
 
       // WHEN
       const appBinder = new EthAppBinder(
-        mockedSdk,
+        mockedDmk,
         mockedContextModule,
         mockedMapper,
         "sessionId",

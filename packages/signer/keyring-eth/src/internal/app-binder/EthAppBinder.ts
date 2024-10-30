@@ -1,6 +1,6 @@
 import { type ContextModule } from "@ledgerhq/context-module";
 import {
-  DeviceSdk,
+  DeviceManagementKit,
   type DeviceSessionId,
 } from "@ledgerhq/device-management-kit";
 import { SendCommandInAppDeviceAction } from "@ledgerhq/device-management-kit";
@@ -27,7 +27,7 @@ import { SignTransactionDeviceAction } from "./device-action/SignTransaction/Sig
 @injectable()
 export class EthAppBinder {
   constructor(
-    @inject(externalTypes.Sdk) private sdk: DeviceSdk,
+    @inject(externalTypes.Dmk) private dmk: DeviceManagementKit,
     @inject(externalTypes.ContextModule) private contextModule: ContextModule,
     @inject(transactionTypes.TransactionMapperService)
     private mapper: TransactionMapperService,
@@ -39,7 +39,7 @@ export class EthAppBinder {
     checkOnDevice?: boolean;
     returnChainCode?: boolean;
   }): GetAddressDAReturnType {
-    return this.sdk.executeDeviceAction({
+    return this.dmk.executeDeviceAction({
       sessionId: this.sessionId,
       deviceAction: new SendCommandInAppDeviceAction({
         input: {
@@ -57,7 +57,7 @@ export class EthAppBinder {
     derivationPath: string;
     message: string;
   }): SignPersonalMessageDAReturnType {
-    return this.sdk.executeDeviceAction({
+    return this.dmk.executeDeviceAction({
       sessionId: this.sessionId,
       deviceAction: new SignPersonalMessageDeviceAction({
         input: {
@@ -73,7 +73,7 @@ export class EthAppBinder {
     transaction: Transaction;
     options?: TransactionOptions;
   }): SignTransactionDAReturnType {
-    return this.sdk.executeDeviceAction({
+    return this.dmk.executeDeviceAction({
       sessionId: this.sessionId,
       deviceAction: new SignTransactionDeviceAction({
         input: {
@@ -92,7 +92,7 @@ export class EthAppBinder {
     parser: TypedDataParserService;
     data: TypedData;
   }): SignTypedDataDAReturnType {
-    return this.sdk.executeDeviceAction({
+    return this.dmk.executeDeviceAction({
       sessionId: this.sessionId,
       deviceAction: new SignTypedDataDeviceAction({
         input: {

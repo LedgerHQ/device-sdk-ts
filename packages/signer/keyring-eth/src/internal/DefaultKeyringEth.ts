@@ -1,6 +1,6 @@
 import { type ContextModule } from "@ledgerhq/context-module";
 import {
-  type DeviceSdk,
+  type DeviceManagementKit,
   type DeviceSessionId,
 } from "@ledgerhq/device-management-kit";
 import { type Container } from "inversify";
@@ -25,7 +25,7 @@ import { typedDataTypes } from "@internal/typed-data/di/typedDataTypes";
 import { type SignTypedDataUseCase } from "@internal/typed-data/use-case/SignTypedDataUseCase";
 
 type DefaultKeyringConstructorArgs = {
-  sdk: DeviceSdk;
+  dmk: DeviceManagementKit;
   sessionId: DeviceSessionId;
   contextModule: ContextModule;
 };
@@ -34,11 +34,11 @@ export class DefaultKeyringEth implements KeyringEth {
   private _container: Container;
 
   constructor({
-    sdk,
+    dmk,
     sessionId,
     contextModule,
   }: DefaultKeyringConstructorArgs) {
-    this._container = makeContainer({ sdk, sessionId, contextModule });
+    this._container = makeContainer({ dmk, sessionId, contextModule });
   }
 
   signTransaction(
