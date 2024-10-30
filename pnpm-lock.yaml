@@ -77,15 +77,15 @@ importers:
       '@ledgerhq/device-management-kit-flipper-plugin-client':
         specifier: workspace:*
         version: link:../../packages/flipper-plugin-client
-      '@ledgerhq/device-sdk-transport-mock':
-        specifier: workspace:*
-        version: link:../../packages/transport-mock
       '@ledgerhq/device-signer-kit-ethereum':
         specifier: workspace:*
         version: link:../../packages/signer/keyring-eth
       '@ledgerhq/device-signer-kit-solana':
         specifier: workspace:*
         version: link:../../packages/signer/signer-solana
+      '@ledgerhq/device-transport-kit-mock-client':
+        specifier: workspace:*
+        version: link:../../packages/transport-mock
       '@ledgerhq/react-ui':
         specifier: ^0.16.2
         version: 0.16.2(@emotion/is-prop-valid@1.2.1)(@types/react@18.3.11)(react-dom@18.3.1(react@18.3.1))(react-native-svg@15.3.0(react-native@0.74.3(@babel/core@7.24.7)(@babel/preset-env@7.24.7(@babel/core@7.24.7))(@types/react@18.3.11)(react@18.3.1))(react@18.3.1))(react@18.3.1)(styled-components@5.3.11(@babel/core@7.24.7)(react-dom@18.3.1(react@18.3.1))(react-is@18.3.1)(react@18.3.1))
@@ -207,7 +207,7 @@ importers:
 
   packages/core:
     dependencies:
-      '@ledgerhq/device-sdk-transport-mock':
+      '@ledgerhq/device-transport-kit-mock-client':
         specifier: workspace:*
         version: link:../transport-mock
       '@sentry/minimal':

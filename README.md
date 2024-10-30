@@ -4,9 +4,6 @@
   <p align="center">
   <!-- Update with each individual package version -->
     <!-- Enable and display when CI set up -->
-    <!-- <a href="https://github.com/LedgerHQ/platform-sdk/actions">
-      <img alt="Tests Passing" src="https://github.com/LedgerHQ/platform-sdk/workflows/CI/badge.svg" />
-    </a> -->
     <a href="https://www.typescriptlang.org/">
       <img alt="TypeScript" src="https://img.shields.io/badge/TypeScript-007ACC?style=for-the-badge&logo=typescript&logoColor=white" />
     </a>
@@ -28,6 +25,10 @@
     </a>
     <a href="https://www.npmjs.com/">
       <img alt="NPM" src="https://img.shields.io/badge/npm-CB3837?style=for-the-badge&logo=npm&logoColor=white" />
+    </a>
+<br />
+    <a href="https://github.com/LedgerHQ/device-sdk-ts/actions/workflows/pull_request.yml">
+      <img alt="Pull request Tests Passing" src="https://github.com/LedgerHQ/device-sdk-ts/actions/workflows/pull_request.yml/badge.svg" />
     </a>
   </p>
 
@@ -61,7 +62,7 @@ The Device Management Kit features an interface for applications to handle any L
 
 ```mermaid
   flowchart LR;
-      application(Application) <--API--> DSDK(DeviceSDK) <--USB/BLE--> device(Device);
+      application(Application) <--API--> LDMK(LedgerDeviceManagementKit) <--USB/BLE--> device(Device);
 ```
 
 The Device Management Kit is available in 3 different environments (web, Android & iOS).
@@ -72,7 +73,7 @@ This repository is dedicated to **web environment** and is written in TypeScript
 
 ### Repository
 
-The Device Management Kit is structured as a monorepository whose prupose is to centralise all the TypeScript code related to the SDK in one place.
+The Device Management Kit is structured as a monorepository whose prupose is to centralise all the TypeScript code related to the Device Management Kit in one place.
 
 This project uses [turbo monorepo](https://turbo.build/repo/docs) to build and release different packages on NPM registry and a sample demo application on Vercel.
 
@@ -80,16 +81,16 @@ This project uses [turbo monorepo](https://turbo.build/repo/docs) to build and r
 
 A brief description of this project packages:
 
-| Name                              | Path                       | Description                                                                                                                              |
-| --------------------------------- | -------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
-| @ledgerhq/device-sdk-sample       | apps/sample                | React Next web app used to test & demonstrate the Web Device Management Kit                                                              |
-| @ledgerhq/eslint-config-dsdk      | packages/config/eslint     | internal package which contains eslint shared config. Used by `extends: ["@ledgerhq/dsdk"]` in `.eslintrc`.                              |
-| @ledgerhq/jest-config-dsdk        | packages/config/jest       | internal package which contains jest shared config. Used by `preset: "@ledgerhq/jest-config-dsdk"` in `jest.config.ts`                   |
-| @ledgerhq/tsconfig-dsdk           | packages/config/typescript | internal package which contains typescript shared config. Used by `"extends": "@ledgerhq/tsconfig-dsdk/tsconfig.sdk"` in `tsconfig.json` |
-| @ledgerhq/device-management-kit   | packages/core              | external package that contains the core of the Web SDK                                                                                   |
-| @ledgerhq/device-sdk-signer       | packages/signer            | external package that contains device coin application dedicated handlers                                                                |
-| @ledgerhq/device-sdk-trusted-apps | packages/trusted-apps      | external package that contains device trusted application dedicated handlers                                                             |
-| @ledgerhq/device-sdk-ui           | packages/ui                | external package                                                                                                                         |
+| Name                                   | Path                           | Description                                                                                                                              |
+|----------------------------------------|--------------------------------|------------------------------------------------------------------------------------------------------------------------------------------|
+| @ledgerhq/device-management-kit-sample | apps/sample                    | React Next web app used to test & demonstrate the Web Device Management Kit                                                              |
+| @ledgerhq/eslint-config-dsdk           | packages/config/eslint         | internal package which contains eslint shared config. Used by `extends: ["@ledgerhq/dsdk"]` in `.eslintrc`.                              |
+| @ledgerhq/jest-config-dsdk             | packages/config/jest           | internal package which contains jest shared config. Used by `preset: "@ledgerhq/jest-config-dsdk"` in `jest.config.ts`                   |
+| @ledgerhq/tsconfig-dsdk                | packages/config/typescript     | internal package which contains typescript shared config. Used by `"extends": "@ledgerhq/tsconfig-dsdk/tsconfig.sdk"` in `tsconfig.json` |
+| @ledgerhq/device-management-kit        | packages/core                  | external package that contains the core of the Web Device Management Kit                                                                 |
+| @ledgerhq/device-signer-kit-ethereum   | packages/signer/keyring-eth    | external package that contains device ethereum coin application dedicated handlers                                                       |
+| @ledgerhq/device-signer-kit-solana     | packages/signer/signer-solana  | external package that contains device solana coin application dedicated handlers                                                         |
+| @ledgerhq/device-management-kit-flipper-plugin-client     | packages/flipper-plugin-client | external package that contains [flipper](https://github.com/facebook/flipper) logger for Device Management Kit                                                              |
 
 # Getting started
 

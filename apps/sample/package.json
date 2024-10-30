@@ -1,5 +1,5 @@
 {
-  "name": "@ledgerhq/device-sdk-sample",
+  "name": "@ledgerhq/device-management-kit-sample",
   "version": "0.1.3",
   "private": true,
   "scripts": {
@@ -20,7 +20,7 @@
     "@ledgerhq/device-management-kit-flipper-plugin-client": "workspace:*",
     "@ledgerhq/device-signer-kit-ethereum": "workspace:*",
     "@ledgerhq/device-signer-kit-solana": "workspace:*",
-    "@ledgerhq/device-sdk-transport-mock": "workspace:*",
+    "@ledgerhq/device-transport-kit-mock-client": "workspace:*",
     "@ledgerhq/react-ui": "^0.16.2",
     "@sentry/nextjs": "^8.32.0",
     "@playwright/test": "^1.47.0",

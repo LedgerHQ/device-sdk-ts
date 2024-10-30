@@ -23,7 +23,7 @@ const sentryWebpackPluginOptions = {
 
   silent: true,
   org: "ledger",
-  project: "device-sdk-sample",
+  project: "device-management-kit-sample",
 
   // Additional Sentry options
   widenClientFileUpload: true, // Upload a larger set of source maps for prettier stack traces (increases build time)
