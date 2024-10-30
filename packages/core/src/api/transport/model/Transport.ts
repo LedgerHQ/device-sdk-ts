@@ -3,20 +3,14 @@ import { type Observable } from "rxjs";
 
 import { type DeviceId } from "@api/device/DeviceModel";
 import { type DeviceModelDataSource } from "@api/device-model/data/DeviceModelDataSource";
-import {
-  type ApduReceiverConstructorArgs,
-  type ApduReceiverService,
-} from "@api/device-session/service/ApduReceiverService";
-import {
-  type ApduSenderService,
-  type ApduSenderServiceConstructorArgs,
-} from "@api/device-session/service/ApduSenderService";
+import { type ApduReceiverServiceFactory } from "@api/device-session/service/ApduReceiverService";
+import { type ApduSenderServiceFactory } from "@api/device-session/service/ApduSenderService";
 import { type SdkError } from "@api/Error";
+import { type LoggerPublisherService } from "@api/logger-publisher/service/LoggerPublisherService";
 import { type SdkConfig } from "@api/SdkConfig";
 import { type ConnectError } from "@api/transport/model/Errors";
 import { type TransportDiscoveredDevice } from "@api/transport/model/TransportDiscoveredDevice";
 import { type TransportIdentifier } from "@api/transport/model/TransportIdentifier";
-import { type LoggerPublisherService } from "@internal/logger-publisher/service/LoggerPublisherService";
 
 import { type TransportConnectedDevice } from "./TransportConnectedDevice";
 
@@ -59,12 +53,8 @@ export type TransportArgs = {
   deviceModelDataSource: DeviceModelDataSource;
   loggerServiceFactory: (tag: string) => LoggerPublisherService;
   config: SdkConfig;
-  apduSenderServiceFactory: (
-    args: ApduSenderServiceConstructorArgs,
-  ) => ApduSenderService;
-  apduReceiverServiceFactory: (
-    args: ApduReceiverConstructorArgs,
-  ) => ApduReceiverService;
+  apduSenderServiceFactory: ApduSenderServiceFactory;
+  apduReceiverServiceFactory: ApduReceiverServiceFactory;
 };
 
 export type TransportFactory = (args: TransportArgs) => Transport;

@@ -3,6 +3,7 @@ import {
   BuiltinTransports,
   type SdkError,
 } from "@ledgerhq/device-management-kit";
+import { webHidIdentifier } from "@ledgerhq/device-transport-kit-web-hid";
 import { Button, Flex } from "@ledgerhq/react-ui";
 import styled from "styled-components";
 
@@ -26,7 +27,7 @@ export const ConnectDeviceActions = ({
   const sdk = useSdk();
 
   const onSelectDeviceClicked = useCallback(
-    (selectedTransport: BuiltinTransports) => {
+    (selectedTransport: string) => {
       onError(null);
       sdk.startDiscovering({ transport: selectedTransport }).subscribe({
         next: (device) => {
@@ -78,21 +79,21 @@ export const ConnectDeviceActions = ({
   ) : (
     <Flex>
       <ConnectButton
-        onClick={() => onSelectDeviceClicked(BuiltinTransports.USB)}
+        onClick={() => onSelectDeviceClicked(webHidIdentifier)}
         variant="main"
         backgroundColor="main"
         size="large"
       >
         Select a USB device
       </ConnectButton>
-      <ConnectButton
+      {/* <ConnectButton
         onClick={() => onSelectDeviceClicked(BuiltinTransports.BLE)}
         variant="main"
         backgroundColor="main"
         size="large"
       >
         Select a BLE device
-      </ConnectButton>
+      </ConnectButton> */}
     </Flex>
   );
 };

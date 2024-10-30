@@ -1,4 +1,4 @@
-import { GeneralSdkError } from "@api/transport/model/Errors";
+import { GeneralSdkError } from "@ledgerhq/device-management-kit";
 
 export class WebHidTransportNotSupportedError extends GeneralSdkError {
   override readonly _tag = "WebHidTransportNotSupportedError";

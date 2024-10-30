@@ -4,3 +4,4 @@ packages:
   - "packages/config/*"
   - "packages/signer/*"
   - "packages/tools/*"
+  - "packages/transport/*"

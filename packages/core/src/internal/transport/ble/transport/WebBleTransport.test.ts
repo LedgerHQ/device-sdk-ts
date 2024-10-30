@@ -17,7 +17,7 @@ import { bleDeviceConnectionFactoryStubBuilder } from "@internal/transport/ble/s
 
 import { WebBleTransport } from "./WebBleTransport";
 
-jest.mock("@internal/logger-publisher/service/LoggerPublisherService");
+jest.mock("@api/logger-publisher/service/LoggerPublisherService");
 
 // Our StaticDeviceModelDataSource can directly be used in our unit tests
 const bleDeviceModelDataSource = new StaticDeviceModelDataSource();

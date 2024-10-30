@@ -2,6 +2,7 @@ import { inject, injectable } from "inversify";
 import { EitherAsync } from "purify-ts";
 
 import { DeviceSessionId } from "@api/device-session/types";
+import { LoggerPublisherService } from "@api/logger-publisher/service/LoggerPublisherService";
 import { DiscoveredDevice } from "@api/transport/model/DiscoveredDevice";
 import { TransportNotSupportedError } from "@api/transport/model/Errors";
 import { DeviceId } from "@api/types";
@@ -9,7 +10,6 @@ import { deviceSessionTypes } from "@internal/device-session/di/deviceSessionTyp
 import { DeviceSession } from "@internal/device-session/model/DeviceSession";
 import type { DeviceSessionService } from "@internal/device-session/service/DeviceSessionService";
 import { loggerTypes } from "@internal/logger-publisher/di/loggerTypes";
-import { LoggerPublisherService } from "@internal/logger-publisher/service/LoggerPublisherService";
 import { managerApiTypes } from "@internal/manager-api/di/managerApiTypes";
 import type { ManagerApiService } from "@internal/manager-api/service/ManagerApiService";
 import { transportDiTypes } from "@internal/transport/di/transportDiTypes";

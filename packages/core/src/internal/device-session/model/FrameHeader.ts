@@ -1,6 +1,6 @@
 import { type Maybe } from "purify-ts";
 
-import { FramerUtils } from "@internal/device-session/utils/FramerUtils";
+import { FramerUtils } from "@api/device-session/utils/FramerUtils";
 
 type FrameHeaderConstructorArgs = {
   uuid: string;

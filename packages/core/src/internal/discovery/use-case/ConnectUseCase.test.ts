@@ -3,23 +3,21 @@ import * as uuid from "uuid";
 jest.mock("uuid");
 
 import { type DeviceModel } from "@api/device/DeviceModel";
-import { type DeviceModelDataSource } from "@api/device-model/data/DeviceModelDataSource";
+import { type LoggerPublisherService } from "@api/logger-publisher/service/LoggerPublisherService";
 import { type DiscoveredDevice } from "@api/transport/model/DiscoveredDevice";
 import { UnknownDeviceError } from "@api/transport/model/Errors";
+import { TransportStub } from "@api/transport/model/Transport.stub";
 import { connectedDeviceStubBuilder } from "@api/transport/model/TransportConnectedDevice.stub";
 import { type Transport } from "@api/types";
 import { DefaultDeviceSessionService } from "@internal/device-session/service/DefaultDeviceSessionService";
 import { type DeviceSessionService } from "@internal/device-session/service/DeviceSessionService";
 import { DefaultLoggerPublisherService } from "@internal/logger-publisher/service/DefaultLoggerPublisherService";
-import { type LoggerPublisherService } from "@internal/logger-publisher/service/LoggerPublisherService";
 import { AxiosManagerApiDataSource } from "@internal/manager-api/data/AxiosManagerApiDataSource";
 import { type ManagerApiDataSource } from "@internal/manager-api/data/ManagerApiDataSource";
 import { DefaultManagerApiService } from "@internal/manager-api/service/DefaultManagerApiService";
 import { type ManagerApiService } from "@internal/manager-api/service/ManagerApiService";
 import { type TransportService } from "@internal/transport/service/TransportService";
 import { TransportServiceStub } from "@internal/transport/service/TransportService.stub";
-import { webHidDeviceConnectionFactoryStubBuilder } from "@internal/transport/usb/service/WebHidDeviceConnectionFactory.stub";
-import { WebHidTransport } from "@internal/transport/usb/transport/WebHidTransport";
 
 import { ConnectUseCase } from "./ConnectUseCase";
 
@@ -47,11 +45,7 @@ describe("ConnectUseCase", () => {
   beforeAll(() => {
     logger = new DefaultLoggerPublisherService([], tag);
     jest.spyOn(uuid, "v4").mockReturnValue(fakeSessionId);
-    transport = new WebHidTransport(
-      {} as DeviceModelDataSource,
-      () => logger,
-      webHidDeviceConnectionFactoryStubBuilder(),
-    );
+    transport = new TransportStub();
     // transports = [transport];
     sessionService = new DefaultDeviceSessionService(() => logger);
     managerApiDataSource = new AxiosManagerApiDataSource({

@@ -1,6 +1,6 @@
 import { type ApduReceiverServiceFactory } from "@api/device-session/service/ApduReceiverService";
 import { type ApduSenderServiceFactory } from "@api/device-session/service/ApduSenderService";
-import { LoggerPublisherService } from "@internal/logger-publisher/service/LoggerPublisherService";
+import { LoggerPublisherService } from "@api/logger-publisher/service/LoggerPublisherService";
 import { BleDeviceConnection } from "@internal/transport/ble/transport/BleDeviceConnection";
 
 export class BleDeviceConnectionFactory {

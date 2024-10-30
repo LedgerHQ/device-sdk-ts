@@ -3,21 +3,15 @@ import { Maybe } from "purify-ts";
 
 import { type DeviceModelDataSource } from "@api/device-model/data/DeviceModelDataSource";
 import { deviceModelTypes } from "@api/device-model/di/deviceModelTypes";
-import {
-  ApduReceiverConstructorArgs,
-  ApduReceiverService,
-} from "@api/device-session/service/ApduReceiverService";
-import {
-  ApduSenderService,
-  ApduSenderServiceConstructorArgs,
-} from "@api/device-session/service/ApduSenderService";
+import { type ApduReceiverServiceFactory } from "@api/device-session/service/ApduReceiverService";
+import { type ApduSenderServiceFactory } from "@api/device-session/service/ApduSenderService";
+import { LoggerPublisherService } from "@api/logger-publisher/service/LoggerPublisherService";
 import { type SdkConfig } from "@api/SdkConfig";
 import { TransportAlreadyExistsError } from "@api/transport/model/Errors";
 import { TransportFactory } from "@api/transport/model/Transport";
 import { Transport } from "@api/types";
 import { deviceSessionTypes } from "@internal/device-session/di/deviceSessionTypes";
 import { loggerTypes } from "@internal/logger-publisher/di/loggerTypes";
-import { LoggerPublisherService } from "@internal/logger-publisher/service/LoggerPublisherService";
 import { transportDiTypes } from "@internal/transport/di/transportDiTypes";
 
 @injectable()
@@ -27,12 +21,8 @@ export class TransportService {
   private _logger: LoggerPublisherService;
   private _config: SdkConfig;
   private _deviceModelDataSource: DeviceModelDataSource;
-  private _apduSenderServiceFactory: (
-    args: ApduSenderServiceConstructorArgs,
-  ) => ApduSenderService;
-  private _apduReceiverServiceFactory: (
-    args: ApduReceiverConstructorArgs,
-  ) => ApduReceiverService;
+  private _apduSenderServiceFactory: ApduSenderServiceFactory;
+  private _apduReceiverServiceFactory: ApduReceiverServiceFactory;
 
   constructor(
     @inject(transportDiTypes.TransportsInput)
@@ -44,13 +34,9 @@ export class TransportService {
     @inject(deviceModelTypes.DeviceModelDataSource)
     _deviceModelDataSource: DeviceModelDataSource,
     @inject(deviceSessionTypes.ApduSenderServiceFactory)
-    _apduSenderServiceFactory: (
-      args: ApduSenderServiceConstructorArgs,
-    ) => ApduSenderService,
+    _apduSenderServiceFactory: ApduSenderServiceFactory,
     @inject(deviceSessionTypes.ApduReceiverServiceFactory)
-    _apduReceiverServiceFactory: (
-      args: ApduReceiverConstructorArgs,
-    ) => ApduReceiverService,
+    _apduReceiverServiceFactory: ApduReceiverServiceFactory,
   ) {
     this._logger = _loggerModuleFactory("TransportService");
 
@@ -66,6 +52,8 @@ export class TransportService {
     this._deviceModelDataSource = _deviceModelDataSource;
     this._apduSenderServiceFactory = _apduSenderServiceFactory;
     this._apduReceiverServiceFactory = _apduReceiverServiceFactory;
+
+    console.log(`😵 Transports: ${_transports} 🎉`);
 
     for (const transport of _transports) {
       this.addTransport(transport);

@@ -1,17 +1,19 @@
+import {
+  ApduReceiverService,
+  ApduResponse,
+  ApduSenderService,
+  CommandUtils,
+  DeviceConnection,
+  DeviceId,
+  LoggerPublisherService,
+  ReconnectionFailedError,
+  SdkError,
+} from "@ledgerhq/device-management-kit";
 import { Either, Left, Right } from "purify-ts";
 import { Subject } from "rxjs";
 
-import { CommandUtils } from "@api/command/utils/CommandUtils";
-import { ApduResponse } from "@api/device-session/ApduResponse";
-import { ApduReceiverService } from "@api/device-session/service/ApduReceiverService";
-import { ApduSenderService } from "@api/device-session/service/ApduSenderService";
-import { SdkError } from "@api/Error";
-import { DeviceConnection } from "@api/transport/model/DeviceConnection";
-import { ReconnectionFailedError } from "@api/transport/model/Errors";
-import { DeviceId } from "@api/types";
-import type { LoggerPublisherService } from "@internal/logger-publisher/service/LoggerPublisherService";
-import { RECONNECT_DEVICE_TIMEOUT } from "@internal/transport/usb/data/WebHidConfig";
-import { WebHidSendReportError } from "@internal/transport/usb/model/Errors";
+import { RECONNECT_DEVICE_TIMEOUT } from "@api/data/WebHidConfig";
+import { WebHidSendReportError } from "@api/model/Errors";
 
 type WebHidDeviceConnectionConstructorArgs = {
   device: HIDDevice;

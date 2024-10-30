@@ -1,7 +1,7 @@
 import { Left, Maybe, Right } from "purify-ts";
 
-import { type DeviceModelDataSource } from "@api/device-model/data/DeviceModelDataSource";
 import { DisconnectError } from "@api/transport/model/Errors";
+import { TransportStub } from "@api/transport/model/Transport.stub";
 import { connectedDeviceStubBuilder } from "@api/transport/model/TransportConnectedDevice.stub";
 import { type Transport } from "@api/types";
 import { deviceSessionStubBuilder } from "@internal/device-session/model/DeviceSession.stub";
@@ -14,8 +14,6 @@ import { DefaultManagerApiService } from "@internal/manager-api/service/DefaultM
 import { type ManagerApiService } from "@internal/manager-api/service/ManagerApiService";
 import { type TransportService } from "@internal/transport/service/TransportService";
 import { TransportServiceStub } from "@internal/transport/service/TransportService.stub";
-import { webHidDeviceConnectionFactoryStubBuilder } from "@internal/transport/usb/service/WebHidDeviceConnectionFactory.stub";
-import { WebHidTransport } from "@internal/transport/usb/transport/WebHidTransport";
 
 import { DisconnectUseCase } from "./DisconnectUseCase";
 
@@ -36,11 +34,7 @@ const sessionId = "sessionId";
 
 describe("DisconnectUseCase", () => {
   beforeAll(() => {
-    transport = new WebHidTransport(
-      {} as DeviceModelDataSource,
-      loggerFactory,
-      webHidDeviceConnectionFactoryStubBuilder(),
-    );
+    transport = new TransportStub();
     transports = [transport];
     sessionService = new DefaultDeviceSessionService(loggerFactory);
     // @ts-expect-error stub

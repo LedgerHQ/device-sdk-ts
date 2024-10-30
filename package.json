@@ -6,7 +6,7 @@
   "scripts": {
     "build": "turbo run build",
     "build:libs": "turbo run build --filter=./packages/**",
-    "dev": "turbo run dev",
+    "dev": "turbo run dev --concurrency 20",
     "lint": "turbo run lint",
     "lint:fix": "turbo run lint:fix",
     "prettier": "turbo run prettier",
@@ -23,6 +23,9 @@
     "transport-mock": "pnpm --filter @ledgerhq/device-sdk-transport-mock",
     "trusted-apps": "pnpm --filter @ledgerhq/device-sdk-trusted-apps",
     "ui": "pnpm --filter @ledgerhq/device-sdk-ui",
+    "transports": "pnpm --filter @ledgerhq/device-transport-*",
+    "transport-web-hid": "pnpm --filter @ledgerhq/device-transport-kit-web-hid",
+    "transport-web-ble": "pnpm --filter @ledgerhq/device-transport-kit-web-ble",
     "flipper": "pnpm --filter @ledgerhq/device-management-kit-flipper-plugin-client",
     "sample": "pnpm --filter @ledgerhq/device-sdk-sample",
     "bump": "changeset version",

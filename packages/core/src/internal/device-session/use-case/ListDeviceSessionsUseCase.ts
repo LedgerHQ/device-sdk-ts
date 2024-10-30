@@ -1,10 +1,10 @@
 import { inject, injectable } from "inversify";
 
+import { LoggerPublisherService } from "@api/logger-publisher/service/LoggerPublisherService";
 import { deviceSessionTypes } from "@internal/device-session/di/deviceSessionTypes";
 import { DeviceSession } from "@internal/device-session/model/DeviceSession";
 import type { DeviceSessionService } from "@internal/device-session/service/DeviceSessionService";
 import { loggerTypes } from "@internal/logger-publisher/di/loggerTypes";
-import { LoggerPublisherService } from "@internal/logger-publisher/service/LoggerPublisherService";
 
 /**
  * List all device sessions.

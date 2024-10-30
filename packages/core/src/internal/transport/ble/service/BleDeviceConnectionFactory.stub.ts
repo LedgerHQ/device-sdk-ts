@@ -1,10 +1,9 @@
 import { defaultApduReceiverServiceStubBuilder } from "@api/device-session/service/DefaultApduReceiverService.stub";
 import { defaultApduSenderServiceStubBuilder } from "@api/device-session/service/DefaultApduSenderService.stub";
-// TODO: Should not import from __mocks__ in a stub
-import { DefaultLoggerPublisherService } from "@internal/logger-publisher/service/__mocks__/DefaultLoggerService";
+import { DefaultLoggerPublisherServiceStub } from "@internal/logger-publisher/service/DefaultLoggerService.stub";
 import { BleDeviceConnectionFactory } from "@internal/transport/ble/service/BleDeviceConnectionFactory";
 
-const loggerFactory = () => new DefaultLoggerPublisherService();
+const loggerFactory = () => new DefaultLoggerPublisherServiceStub();
 
 export const bleDeviceConnectionFactoryStubBuilder = () =>
   new BleDeviceConnectionFactory(

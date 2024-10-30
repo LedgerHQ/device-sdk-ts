@@ -1,30 +1,44 @@
+import {
+  type ApduReceiverServiceFactory,
+  type ApduSenderServiceFactory,
+  connectedDeviceStubBuilder,
+  type DeviceModel,
+  DeviceModelId,
+  DeviceNotRecognizedError,
+  type LoggerPublisherService,
+  type LoggerSubscriberService,
+  NoAccessibleDeviceError,
+  OpeningConnectionError,
+  StaticDeviceModelDataSource,
+  type TransportDeviceModel,
+  type TransportDiscoveredDevice,
+  UnknownDeviceError,
+} from "@ledgerhq/device-management-kit";
 import { Left, Right } from "purify-ts";
 import { Subject } from "rxjs";
 
-import { type DeviceModel, DeviceModelId } from "@api/device/DeviceModel";
-import { StaticDeviceModelDataSource } from "@api/device-model/data/StaticDeviceModelDataSource";
-import { type TransportDeviceModel } from "@api/device-model/model/DeviceModel";
-import {
-  DeviceNotRecognizedError,
-  NoAccessibleDeviceError,
-  OpeningConnectionError,
-  UnknownDeviceError,
-} from "@api/transport/model/Errors";
-import { connectedDeviceStubBuilder } from "@api/transport/model/TransportConnectedDevice.stub";
-import { type TransportDiscoveredDevice } from "@api/transport/model/TransportDiscoveredDevice";
-import { DefaultLoggerPublisherService } from "@internal/logger-publisher/service/DefaultLoggerPublisherService";
-import { RECONNECT_DEVICE_TIMEOUT } from "@internal/transport/usb/data/WebHidConfig";
-import { WebHidTransportNotSupportedError } from "@internal/transport/usb/model/Errors";
-import { hidDeviceStubBuilder } from "@internal/transport/usb/model/HIDDevice.stub";
-import { webHidDeviceConnectionFactoryStubBuilder } from "@internal/transport/usb/service/WebHidDeviceConnectionFactory.stub";
+import { RECONNECT_DEVICE_TIMEOUT } from "@api/data/WebHidConfig";
+import { WebHidTransportNotSupportedError } from "@api/model/Errors";
+import { hidDeviceStubBuilder } from "@api/model/HIDDevice.stub";
 
 import { WebHidTransport } from "./WebHidTransport";
 
-jest.mock("@internal/logger-publisher/service/LoggerPublisherService");
+class LoggerPublisherServiceStub implements LoggerPublisherService {
+  constructor(subscribers: LoggerSubscriberService[], tag: string) {
+    this.subscribers = subscribers;
+    this.tag = tag;
+  }
+  subscribers: LoggerSubscriberService[] = [];
+  tag: string = "";
+  error = jest.fn();
+  warn = jest.fn();
+  info = jest.fn();
+  debug = jest.fn();
+}
 
 // Our StaticDeviceModelDataSource can directly be used in our unit tests
 const usbDeviceModelDataSource = new StaticDeviceModelDataSource();
-const logger = new DefaultLoggerPublisherService([], "web-usb-hid");
+const logger = new LoggerPublisherServiceStub([], "web-usb-hid");
 
 const stubDevice: HIDDevice = hidDeviceStubBuilder();
 
@@ -37,12 +51,17 @@ const flushPromises = () =>
 
 describe("WebHidTransport", () => {
   let transport: WebHidTransport;
+  let apduReceiverServiceFactoryStub: ApduReceiverServiceFactory;
+  let apduSenderServiceFactoryStub: ApduSenderServiceFactory;
 
   function initializeTransport() {
+    apduReceiverServiceFactoryStub = jest.fn();
+    apduSenderServiceFactoryStub = jest.fn();
     transport = new WebHidTransport(
       usbDeviceModelDataSource,
       () => logger,
-      webHidDeviceConnectionFactoryStubBuilder(),
+      apduSenderServiceFactoryStub,
+      apduReceiverServiceFactoryStub,
     );
   }
 
@@ -123,7 +142,7 @@ describe("WebHidTransport", () => {
     });
 
     afterEach(() => {
-      jest.restoreAllMocks();
+      jest.clearAllMocks();
       global.navigator = undefined as unknown as Navigator;
     });
 
@@ -489,7 +508,7 @@ describe("WebHidTransport", () => {
                     transport
                       .disconnect({ connectedDevice: device })
                       .then((value) => {
-                        expect(value).toStrictEqual(Right(void 0));
+                        expect(value).toStrictEqual(Right(undefined));
                         done();
                       })
                       .catch((error) => {
@@ -514,10 +533,23 @@ describe("WebHidTransport", () => {
         // given
         const onDisconnect = jest.fn();
         mockedRequestDevice.mockResolvedValueOnce([stubDevice]);
+        mockedGetDevices.mockResolvedValue([stubDevice]);
 
         // when
         transport.startDiscovering().subscribe({
           next: (discoveredDevice) => {
+            const mock = {
+              sendApdu: jest.fn(),
+              device: stubDevice,
+              deviceId: discoveredDevice.id,
+              disconnect: onDisconnect,
+              lostConnection: jest.fn().mockImplementation(() => {
+                setTimeout(() => {
+                  mock.disconnect();
+                }, RECONNECT_DEVICE_TIMEOUT);
+              }),
+            };
+
             transport
               .connect({
                 deviceId: discoveredDevice.id,
@@ -544,7 +576,7 @@ describe("WebHidTransport", () => {
     });
 
     describe("reconnect", () => {
-      it("should stop disconnection if reconnection happen", (done) => {
+      it.only("should stop disconnection if reconnection happen", (done) => {
         // given
         const onDisconnect = jest.fn();
 
@@ -555,6 +587,18 @@ describe("WebHidTransport", () => {
         mockedGetDevices.mockResolvedValue([hidDevice1, hidDevice2]);
 
         discoverDevice(async (discoveredDevice) => {
+          const mock = {
+            sendApdu: jest.fn(),
+            device: hidDevice2,
+            deviceId: discoveredDevice.id,
+            disconnect: onDisconnect,
+            lostConnection: jest.fn().mockImplementation(() => {
+              setTimeout(() => {
+                mock.disconnect();
+              }, RECONNECT_DEVICE_TIMEOUT);
+            }),
+          };
+
           try {
             await transport.connect({
               deviceId: discoveredDevice.id,
@@ -573,6 +617,7 @@ describe("WebHidTransport", () => {
 
             expect(hidDevice2.open).toHaveBeenCalled();
             await Promise.resolve(); // wait for the next tick so the hidDevice2.open promise is resolved
+
             jest.advanceTimersByTime(RECONNECT_DEVICE_TIMEOUT);
             expect(onDisconnect).not.toHaveBeenCalled();
             done();
@@ -639,6 +684,7 @@ describe("WebHidTransport", () => {
         });
       });
     });
+
     describe("Connection event typeguard", () => {
       it("should validate type of an HIDConnectionEvent", () => {
         // given

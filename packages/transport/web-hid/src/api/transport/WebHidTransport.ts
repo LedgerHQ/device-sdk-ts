@@ -1,30 +1,33 @@
+import {
+  type ApduReceiverServiceFactory,
+  type ApduSenderServiceFactory,
+  ConnectError,
+  type ConnectionType,
+  type DeviceId,
+  type DeviceModelDataSource,
+  DeviceNotRecognizedError,
+  type DisconnectHandler,
+  FramerUtils,
+  LEDGER_VENDOR_ID,
+  type LoggerPublisherService,
+  NoAccessibleDeviceError,
+  OpeningConnectionError,
+  type SdkError,
+  type Transport,
+  TransportConnectedDevice,
+  type TransportDeviceModel,
+  type TransportDiscoveredDevice,
+  type TransportIdentifier,
+  UnknownDeviceError,
+} from "@ledgerhq/device-management-kit";
 import * as Sentry from "@sentry/minimal";
 import { Either, EitherAsync, Left, Maybe, Right } from "purify-ts";
 import { BehaviorSubject, from, map, Observable, switchMap } from "rxjs";
 import { v4 as uuid } from "uuid";
 
-import { DeviceId } from "@api/device/DeviceModel";
-import { LEDGER_VENDOR_ID } from "@api/device/DeviceModel";
-import type { DeviceModelDataSource } from "@api/device-model/data/DeviceModelDataSource";
-import { TransportDeviceModel } from "@api/device-model/model/DeviceModel";
-import { ConnectionType } from "@api/discovery/ConnectionType";
-import { SdkError } from "@api/Error";
-import { DisconnectHandler } from "@api/transport/model/DeviceConnection";
-import {
-  ConnectError,
-  DeviceNotRecognizedError,
-  NoAccessibleDeviceError,
-  OpeningConnectionError,
-  UnknownDeviceError,
-} from "@api/transport/model/Errors";
-import { Transport } from "@api/transport/model/Transport";
-import { TransportConnectedDevice } from "@api/transport/model/TransportConnectedDevice";
-import { TransportDiscoveredDevice } from "@api/transport/model/TransportDiscoveredDevice";
-import { TransportIdentifier } from "@api/transport/model/TransportIdentifier";
-import type { LoggerPublisherService } from "@internal/logger-publisher/service/LoggerPublisherService";
-import { WebHidTransportNotSupportedError } from "@internal/transport/usb/model/Errors";
-import { WebHidDeviceConnectionFactory } from "@internal/transport/usb/service/WebHidDeviceConnectionFactory";
-import { WebHidDeviceConnection } from "@internal/transport/usb/transport/WebHidDeviceConnection";
+import { FRAME_SIZE } from "@api/data/WebHidConfig";
+import { WebHidTransportNotSupportedError } from "@api/model/Errors";
+import { WebHidDeviceConnection } from "@api/transport/WebHidDeviceConnection";
 
 type PromptDeviceAccessError =
   | NoAccessibleDeviceError
@@ -59,17 +62,18 @@ export class WebHidTransport implements Transport {
   private _connectionListenersAbortController: AbortController =
     new AbortController();
   private _logger: LoggerPublisherService;
-  private _WebHidDeviceConnectionFactory: WebHidDeviceConnectionFactory;
   private readonly connectionType: ConnectionType = "USB";
   private readonly identifier: TransportIdentifier = webHidIdentifier;
 
   constructor(
-    private deviceModelDataSource: DeviceModelDataSource,
-    loggerServiceFactory: (tag: string) => LoggerPublisherService,
-    deviceConnectionFactory: WebHidDeviceConnectionFactory,
+    private readonly _deviceModelDataSource: DeviceModelDataSource,
+    private readonly _loggerServiceFactory: (
+      tag: string,
+    ) => LoggerPublisherService,
+    private readonly _apduSenderFactory: ApduSenderServiceFactory,
+    private readonly _apduReceiverFactory: ApduReceiverServiceFactory,
   ) {
-    this._logger = loggerServiceFactory("WebWebHidTransport");
-    this._WebHidDeviceConnectionFactory = deviceConnectionFactory;
+    this._logger = _loggerServiceFactory("WebWebHidTransport");
 
     this.startListeningToConnectionEvents();
   }
@@ -299,9 +303,7 @@ export class WebHidTransport implements Transport {
 
       hidApi.addEventListener(
         "disconnect",
-        (event) => {
-          this.handleDeviceDisconnectionEvent(event);
-        },
+        (event) => this.handleDeviceDisconnectionEvent(event),
         { signal: this._connectionListenersAbortController.signal },
       );
     });
@@ -355,9 +357,19 @@ export class WebHidTransport implements Transport {
 
     const { deviceModel } = matchingInternalDevice;
 
-    const deviceConnection = this._WebHidDeviceConnectionFactory.create(
-      matchingInternalDevice.hidDevice,
+    const channel = Maybe.of(
+      FramerUtils.numberToByteArray(Math.floor(Math.random() * 0xffff), 2),
+    );
+    const deviceConnection = new WebHidDeviceConnection(
       {
+        device: matchingInternalDevice.hidDevice,
+        deviceId,
+        apduSender: this._apduSenderFactory({
+          frameSize: FRAME_SIZE,
+          channel,
+          padding: true,
+        }),
+        apduReceiver: this._apduReceiverFactory({ channel }),
         onConnectionTerminated: () => {
           onDisconnect(deviceId);
           this._deviceConnectionsPendingReconnection.delete(deviceConnection);
@@ -366,14 +378,15 @@ export class WebHidTransport implements Transport {
           );
           deviceConnection.device.close();
         },
-        deviceId,
       },
+      this._loggerServiceFactory,
     );
 
     this._deviceConnectionsByHidDevice.set(
       matchingInternalDevice.hidDevice,
       deviceConnection,
     );
+
     const connectedDevice = new TransportConnectedDevice({
       sendApdu: (apdu, triggersDisconnection) =>
         deviceConnection.sendApdu(apdu, triggersDisconnection),
@@ -382,12 +395,13 @@ export class WebHidTransport implements Transport {
       type: this.connectionType,
       transport: this.identifier,
     });
+
     return Right(connectedDevice);
   }
 
   private getDeviceModel(hidDevice: HIDDevice): Maybe<TransportDeviceModel> {
     const { productId } = hidDevice;
-    const matchingModel = this.deviceModelDataSource.getAllDeviceModels().find(
+    const matchingModel = this._deviceModelDataSource.getAllDeviceModels().find(
       (deviceModel) =>
         // outside of bootloader mode, the value that we need to identify a device model is the first byte of the actual hidDevice.productId
         deviceModel.usbProductId === productId >> 8 ||
@@ -489,6 +503,9 @@ export class WebHidTransport implements Transport {
   ) {
     this._deviceConnectionsPendingReconnection.delete(deviceConnection);
     this._deviceConnectionsByHidDevice.set(hidDevice, deviceConnection);
+
+    console.log(`🦖 Reconnecting device 🎉`);
+    console.log(deviceConnection);
 
     try {
       deviceConnection.reconnectHidDevice(hidDevice);

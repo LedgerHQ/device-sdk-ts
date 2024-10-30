@@ -16,7 +16,7 @@ const config = {
   // metafile: true,
 };
 
-const { entryPoints, tsconfig } = argv;
+const { entryPoints, tsconfig, platform } = argv;
 
 if (!entryPoints) {
   console.error(chalk.red("Entry points are required"));
@@ -93,8 +93,25 @@ const buildTypes = async () => {
   await $`tsc-alias --project ${tsconfig}`;
 };
 
-const build = async () =>
-  spinner(() => Promise.all([buildBrowser(), buildNode(), buildTypes()]));
+const build = async () => {
+  const p = [];
+  if (platform === "web") {
+    console.log(chalk.magenta("Target:", platform));
+    p.push(buildBrowser());
+    p.push(buildTypes());
+  } else if (platform === "node") {
+    console.log(chalk.magenta("Target:", platform));
+    p.push(buildNode());
+    p.push(buildTypes());
+  } else {
+    console.log(chalk.magenta("Building for both web and node"));
+    p.push(buildBrowser());
+    p.push(buildNode());
+    p.push(buildTypes());
+  }
+
+  return spinner(() => Promise.all(p));
+};
 
 build()
   .then(() => {

@@ -52,6 +52,7 @@ export { BuiltinTransports } from "./transport/model/TransportIdentifier";
 export * from "./types";
 export * from "@api/apdu/utils/AppBuilderError";
 export { InvalidStatusWordError } from "@api/command/Errors";
+export { LEDGER_VENDOR_ID } from "@api/device/DeviceModel";
 export {
   type DeviceAction,
   type DeviceActionIntermediateValue,
@@ -117,11 +118,31 @@ export {
   type DeviceActionStateMachine,
   XStateDeviceAction,
 } from "@api/device-action/xstate-utils/XStateDeviceAction";
+export { type DeviceModelDataSource } from "@api/device-model/data/DeviceModelDataSource";
+export { StaticDeviceModelDataSource } from "@api/device-model/data/StaticDeviceModelDataSource";
+export { TransportDeviceModel } from "@api/device-model/model/DeviceModel";
 export {
   type DeviceSessionState,
   DeviceSessionStateType,
 } from "@api/device-session/DeviceSessionState";
+export * from "@api/device-session/model/FramerConst";
+export { type ApduReceiverService } from "@api/device-session/service/ApduReceiverService";
+export { type ApduReceiverServiceFactory } from "@api/device-session/service/ApduReceiverService";
+export { type ApduSenderServiceFactory } from "@api/device-session/service/ApduSenderService";
+export { type ApduSenderService } from "@api/device-session/service/ApduSenderService";
+export { defaultApduReceiverServiceStubBuilder } from "@api/device-session/service/DefaultApduReceiverService.stub";
+export { defaultApduSenderServiceStubBuilder } from "@api/device-session/service/DefaultApduSenderService.stub";
+export { FramerUtils } from "@api/device-session/utils/FramerUtils";
 export { type SdkError } from "@api/Error";
+export { type LoggerPublisherService } from "@api/logger-publisher/service/LoggerPublisherService";
+export {
+  type DeviceConnection,
+  type DisconnectHandler,
+} from "@api/transport/model/DeviceConnection";
+export * from "@api/transport/model/Errors";
+export { TransportConnectedDevice } from "@api/transport/model/TransportConnectedDevice";
+export { connectedDeviceStubBuilder } from "@api/transport/model/TransportConnectedDevice.stub";
+export { type TransportDiscoveredDevice } from "@api/transport/model/TransportDiscoveredDevice";
 export { base64StringToBuffer, isBase64String } from "@api/utils/Base64String";
 export {
   bufferToHexaString,

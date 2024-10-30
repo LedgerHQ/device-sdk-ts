@@ -7,9 +7,9 @@ export interface ApduReceiverService {
   handleFrame(apdu: Uint8Array): Either<SdkError, Maybe<ApduResponse>>;
 }
 
-export type ApduReceiverConstructorArgs = Partial<{
-  channel: Maybe<Uint8Array>;
-}>;
+export type ApduReceiverConstructorArgs = {
+  channel?: Maybe<Uint8Array>;
+};
 
 export type ApduReceiverServiceFactory = (
   args?: ApduReceiverConstructorArgs,

@@ -6,12 +6,12 @@ import { type ApduSenderService } from "@api/device-session/service/ApduSenderSe
 import { type ApduSenderServiceConstructorArgs } from "@api/device-session/service/ApduSenderService";
 import { DefaultApduReceiverService } from "@api/device-session/service/DefaultApduReceiverService";
 import { DefaultApduSenderService } from "@api/device-session/service/DefaultApduSenderService";
+import { type LoggerPublisherService } from "@api/logger-publisher/service/LoggerPublisherService";
 import { DefaultDeviceSessionService } from "@internal/device-session/service/DefaultDeviceSessionService";
 import { CloseSessionsUseCase } from "@internal/device-session/use-case/CloseSessionsUseCase";
 import { GetDeviceSessionStateUseCase } from "@internal/device-session/use-case/GetDeviceSessionStateUseCase";
 import { ListDeviceSessionsUseCase } from "@internal/device-session/use-case/ListDeviceSessionsUseCase";
 import { loggerTypes } from "@internal/logger-publisher/di/loggerTypes";
-import { type LoggerPublisherService } from "@internal/logger-publisher/service/LoggerPublisherService";
 import { StubUseCase } from "@root/src/di.stub";
 
 import { deviceSessionTypes } from "./deviceSessionTypes";

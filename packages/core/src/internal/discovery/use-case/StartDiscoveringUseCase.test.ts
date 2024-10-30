@@ -2,22 +2,21 @@ import { Maybe } from "purify-ts";
 import { of } from "rxjs";
 
 import { DeviceModel } from "@api/device/DeviceModel";
-import { type DeviceModelDataSource } from "@api/device-model/data/DeviceModelDataSource";
 import { type TransportDeviceModel } from "@api/device-model/model/DeviceModel";
+import { TransportStub } from "@api/transport/model/Transport.stub";
 import { type TransportDiscoveredDevice } from "@api/transport/model/TransportDiscoveredDevice";
-import { type DeviceModelId, type DiscoveredDevice } from "@api/types";
-import { DefaultLoggerPublisherService } from "@internal/logger-publisher/service/DefaultLoggerPublisherService";
-import { type LoggerPublisherService } from "@internal/logger-publisher/service/LoggerPublisherService";
+import {
+  type DeviceModelId,
+  type DiscoveredDevice,
+  type Transport,
+} from "@api/types";
 import { type TransportService } from "@internal/transport/service/TransportService";
 import { TransportServiceStub } from "@internal/transport/service/TransportService.stub";
-import { webHidDeviceConnectionFactoryStubBuilder } from "@internal/transport/usb/service/WebHidDeviceConnectionFactory.stub";
-import { WebHidTransport } from "@internal/transport/usb/transport/WebHidTransport";
 
 import { StartDiscoveringUseCase } from "./StartDiscoveringUseCase";
 
-let transport: WebHidTransport;
+let transport: Transport;
 let transportService: TransportService;
-let logger: LoggerPublisherService;
 
 describe("StartDiscoveringUseCase", () => {
   const stubDiscoveredDevice: TransportDiscoveredDevice = {
@@ -28,15 +27,9 @@ describe("StartDiscoveringUseCase", () => {
     } as TransportDeviceModel,
     transport: "USB",
   };
-  const tag = "logger-tag";
 
   beforeEach(() => {
-    logger = new DefaultLoggerPublisherService([], tag);
-    transport = new WebHidTransport(
-      {} as DeviceModelDataSource,
-      () => logger,
-      webHidDeviceConnectionFactoryStubBuilder(),
-    );
+    transport = new TransportStub();
     // @ts-expect-error stub
     transportService = new TransportServiceStub();
   });
@@ -56,6 +49,7 @@ describe("StartDiscoveringUseCase", () => {
     jest
       .spyOn(transportService, "getTransport")
       .mockReturnValue(Maybe.of(transport));
+
     const usecase = new StartDiscoveringUseCase(transportService);
 
     const discover = usecase.execute({ transport: "USB" });

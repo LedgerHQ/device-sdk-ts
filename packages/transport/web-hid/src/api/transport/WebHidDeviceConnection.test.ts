@@ -1,14 +1,17 @@
+import {
+  type ApduReceiverService,
+  type ApduSenderService,
+  defaultApduReceiverServiceStubBuilder,
+  defaultApduSenderServiceStubBuilder,
+  type DeviceId,
+  type LoggerPublisherService,
+  type LoggerSubscriberService,
+  ReconnectionFailedError,
+} from "@ledgerhq/device-management-kit";
 import { Left, Right } from "purify-ts";
 
-import { type ApduReceiverService } from "@api/device-session/service/ApduReceiverService";
-import { type ApduSenderService } from "@api/device-session/service/ApduSenderService";
-import { defaultApduReceiverServiceStubBuilder } from "@api/device-session/service/DefaultApduReceiverService.stub";
-import { defaultApduSenderServiceStubBuilder } from "@api/device-session/service/DefaultApduSenderService.stub";
-import { ReconnectionFailedError } from "@api/transport/model/Errors";
-import { type DeviceId } from "@api/types";
-import { DefaultLoggerPublisherService } from "@internal/logger-publisher/service/DefaultLoggerPublisherService";
-import { RECONNECT_DEVICE_TIMEOUT } from "@internal/transport/usb/data/WebHidConfig";
-import { hidDeviceStubBuilder } from "@internal/transport/usb/model/HIDDevice.stub";
+import { RECONNECT_DEVICE_TIMEOUT } from "@api/data/WebHidConfig";
+import { hidDeviceStubBuilder } from "@api/model/HIDDevice.stub";
 
 import { WebHidDeviceConnection } from "./WebHidDeviceConnection";
 
@@ -30,6 +33,19 @@ const RESPONSE_SUCCESS = new Uint8Array([
   0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 ]);
 
+class LoggerPublisherServiceStub implements LoggerPublisherService {
+  tag: string;
+  constructor(subscribers: LoggerSubscriberService[], tag: string) {
+    this.subscribers = subscribers;
+    this.tag = tag;
+  }
+  subscribers: LoggerSubscriberService[] = [];
+  error = jest.fn();
+  warn = jest.fn();
+  debug = jest.fn();
+  info = jest.fn();
+}
+
 /**
  * Flushes all pending promises
  */
@@ -45,7 +61,7 @@ describe("WebHidDeviceConnection", () => {
   let apduReceiver: ApduReceiverService;
   const onConnectionTerminated = () => {};
   const deviceId: DeviceId = "test-device-id";
-  const logger = (tag: string) => new DefaultLoggerPublisherService([], tag);
+  const logger = (tag: string) => new LoggerPublisherServiceStub([], tag);
 
   beforeEach(() => {
     device = hidDeviceStubBuilder({ opened: true });

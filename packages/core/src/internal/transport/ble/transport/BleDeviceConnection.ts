@@ -11,12 +11,12 @@ import {
   type ApduSenderServiceFactory,
 } from "@api/device-session/service/ApduSenderService";
 import { type SdkError } from "@api/Error";
+import type { LoggerPublisherService } from "@api/logger-publisher/service/LoggerPublisherService";
 import { type DeviceConnection } from "@api/transport/model/DeviceConnection";
 import {
   DeviceNotInitializedError,
   ReconnectionFailedError,
 } from "@api/transport/model/Errors";
-import type { LoggerPublisherService } from "@internal/logger-publisher/service/LoggerPublisherService";
 
 type BleDeviceConnectionConstructorArgs = {
   writeCharacteristic: BluetoothRemoteGATTCharacteristic;

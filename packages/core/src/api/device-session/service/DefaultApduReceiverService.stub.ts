@@ -1,6 +1,6 @@
 import { Maybe } from "purify-ts";
 
-import { type LoggerPublisherService } from "@internal/logger-publisher/service/LoggerPublisherService";
+import { type LoggerPublisherService } from "@api/logger-publisher/service/LoggerPublisherService";
 
 import { type ApduReceiverService } from "./ApduReceiverService";
 import { type ApduReceiverConstructorArgs } from "./ApduReceiverService";

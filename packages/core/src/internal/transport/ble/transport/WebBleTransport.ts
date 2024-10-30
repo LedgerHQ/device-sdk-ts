@@ -6,6 +6,7 @@ import { DeviceId } from "@api/device/DeviceModel";
 import type { DeviceModelDataSource } from "@api/device-model/data/DeviceModelDataSource";
 import { ConnectionType } from "@api/discovery/ConnectionType";
 import { SdkError } from "@api/Error";
+import type { LoggerPublisherService } from "@api/logger-publisher/service/LoggerPublisherService";
 import { DisconnectHandler } from "@api/transport/model/DeviceConnection";
 import {
   ConnectError,
@@ -21,7 +22,6 @@ import {
   BuiltinTransports,
   TransportIdentifier,
 } from "@api/transport/model/TransportIdentifier";
-import type { LoggerPublisherService } from "@internal/logger-publisher/service/LoggerPublisherService";
 import { RECONNECT_DEVICE_TIMEOUT } from "@internal/transport/ble/data/WebBleConfig";
 import { BleDeviceInfos } from "@internal/transport/ble/model/BleDeviceInfos";
 import {

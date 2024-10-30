@@ -1,12 +1,12 @@
 import { inject, injectable } from "inversify";
 import { EitherAsync } from "purify-ts";
 
+import { LoggerPublisherService } from "@api/logger-publisher/service/LoggerPublisherService";
 import { TransportNotSupportedError } from "@api/transport/model/Errors";
 import type { DeviceSessionId } from "@api/types";
 import { deviceSessionTypes } from "@internal/device-session/di/deviceSessionTypes";
 import type { DeviceSessionService } from "@internal/device-session/service/DeviceSessionService";
 import { loggerTypes } from "@internal/logger-publisher/di/loggerTypes";
-import { LoggerPublisherService } from "@internal/logger-publisher/service/LoggerPublisherService";
 import { transportDiTypes } from "@internal/transport/di/transportDiTypes";
 import { TransportService } from "@internal/transport/service/TransportService";
 

@@ -8,6 +8,7 @@ import {
   WebLogsExporterLogger,
 } from "@ledgerhq/device-management-kit";
 import { FlipperSdkLogger } from "@ledgerhq/device-management-kit-flipper-plugin-client";
+import { WebHidTransport } from "@ledgerhq/device-transport-kit-web-hid";
 
 import { useHasChanged } from "@/hooks/useHasChanged";
 import { useSdkConfigContext } from "@/providers/SdkConfig";
@@ -17,23 +18,35 @@ const LogsExporterContext = createContext<WebLogsExporterLogger | null>(null);
 
 function buildDefaultSdk(logsExporter: WebLogsExporterLogger) {
   return new DeviceSdkBuilder()
-    .addTransport(BuiltinTransports.USB)
-    .addTransport(BuiltinTransports.BLE)
     .addLogger(new ConsoleLogger())
+    .addTransport(
+      ({
+        deviceModelDataSource,
+        loggerServiceFactory,
+        apduSenderServiceFactory,
+        apduReceiverServiceFactory,
+      }) =>
+        new WebHidTransport(
+          deviceModelDataSource,
+          loggerServiceFactory,
+          apduSenderServiceFactory,
+          apduReceiverServiceFactory,
+        ),
+    )
     .addLogger(logsExporter)
     .addLogger(new FlipperSdkLogger())
     .build();
 }
 
-function buildMockSdk(url: string, logsExporter: WebLogsExporterLogger) {
-  return new DeviceSdkBuilder()
-    .addTransport(BuiltinTransports.MOCK_SERVER)
-    .addLogger(new ConsoleLogger())
-    .addLogger(logsExporter)
-    .addLogger(new FlipperSdkLogger())
-    .addConfig({ mockUrl: url })
-    .build();
-}
+// function buildMockSdk(url: string, logsExporter: WebLogsExporterLogger) {
+//   return new DeviceSdkBuilder()
+//     .addTransport(BuiltinTransports.MOCK_SERVER)
+//     .addLogger(new ConsoleLogger())
+//     .addLogger(logsExporter)
+//     .addLogger(new FlipperSdkLogger())
+//     .addConfig({ mockUrl: url })
+//     .build();
+// }
 
 export const SdkProvider: React.FC<PropsWithChildren> = ({ children }) => {
   const {
@@ -43,9 +56,10 @@ export const SdkProvider: React.FC<PropsWithChildren> = ({ children }) => {
   const mockServerEnabled = transport === BuiltinTransports.MOCK_SERVER;
   const [state, setState] = useState(() => {
     const logsExporter = new WebLogsExporterLogger();
-    const sdk = mockServerEnabled
-      ? buildMockSdk(mockServerUrl, logsExporter)
-      : buildDefaultSdk(logsExporter);
+    // const sdk = mockServerEnabled
+    //   ? buildMockSdk(mockServerUrl, logsExporter)
+    //   : buildDefaultSdk(logsExporter);
+    const sdk = buildDefaultSdk(logsExporter);
     return { sdk, logsExporter };
   });
 
@@ -55,9 +69,10 @@ export const SdkProvider: React.FC<PropsWithChildren> = ({ children }) => {
   if (mockServerEnabledChanged || mockServerUrlChanged) {
     setState(({ logsExporter }) => {
       return {
-        sdk: mockServerEnabled
-          ? buildMockSdk(mockServerUrl, logsExporter)
-          : buildDefaultSdk(logsExporter),
+        // sdk: mockServerEnabled
+        //   ? buildMockSdk(mockServerUrl, logsExporter)
+        //   : buildDefaultSdk(logsExporter),
+        sdk: buildDefaultSdk(logsExporter),
         logsExporter,
       };
     });

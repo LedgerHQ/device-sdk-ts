@@ -1,9 +1,9 @@
 import { DeviceModelDataSource } from "@api/device-model/data/DeviceModelDataSource";
 import { SdkConfig } from "@api/SdkConfig";
 import { Transport } from "@api/types";
-import { DefaultLoggerPublisherService } from "@internal/logger-publisher/service/__mocks__/DefaultLoggerService";
+import { DefaultLoggerPublisherServiceStub } from "@internal/logger-publisher/service/DefaultLoggerService.stub";
 
-const loggerFactory = (_arg: string) => new DefaultLoggerPublisherService();
+const loggerFactory = (_arg: string) => new DefaultLoggerPublisherServiceStub();
 export class TransportServiceStub {
   _transports: Map<string, Transport> = new Map();
   _loggerModuleFactory = loggerFactory;

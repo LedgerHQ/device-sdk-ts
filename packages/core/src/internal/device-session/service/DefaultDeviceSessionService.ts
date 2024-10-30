@@ -1,11 +1,11 @@
 import { inject, injectable } from "inversify";
 import { Maybe } from "purify-ts";
 
+import { LoggerPublisherService } from "@api/logger-publisher/service/LoggerPublisherService";
 import { DeviceSession } from "@internal/device-session/model/DeviceSession";
 import { DeviceSessionNotFound } from "@internal/device-session/model/Errors";
 import { DeviceSessionService } from "@internal/device-session/service/DeviceSessionService";
 import { loggerTypes } from "@internal/logger-publisher/di/loggerTypes";
-import { LoggerPublisherService } from "@internal/logger-publisher/service/LoggerPublisherService";
 
 @injectable()
 export class DefaultDeviceSessionService implements DeviceSessionService {

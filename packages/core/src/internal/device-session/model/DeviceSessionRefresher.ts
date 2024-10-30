@@ -11,7 +11,7 @@ import {
   DeviceSessionStateType,
 } from "@api/device-session/DeviceSessionState";
 import { SdkError } from "@api/Error";
-import { type LoggerPublisherService } from "@internal/logger-publisher/service/LoggerPublisherService";
+import { type LoggerPublisherService } from "@api/logger-publisher/service/LoggerPublisherService";
 
 /**
  * The arguments for the DeviceSessionRefresher.

@@ -13,6 +13,7 @@ import { from, mergeMap, Observable } from "rxjs";
 import { DeviceId, DeviceModelId } from "@api/device/DeviceModel";
 import { ApduResponse } from "@api/device-session/ApduResponse";
 import { SdkError } from "@api/Error";
+import { LoggerPublisherService } from "@api/logger-publisher/service/LoggerPublisherService";
 import type { SdkConfig } from "@api/SdkConfig";
 import { DisconnectHandler } from "@api/transport/model/DeviceConnection";
 import {
@@ -29,7 +30,6 @@ import {
   TransportIdentifier,
 } from "@api/transport/model/TransportIdentifier";
 import { loggerTypes } from "@internal/logger-publisher/di/loggerTypes";
-import { LoggerPublisherService } from "@internal/logger-publisher/service/LoggerPublisherService";
 import { transportDiTypes } from "@internal/transport/di/transportDiTypes";
 
 @injectable()

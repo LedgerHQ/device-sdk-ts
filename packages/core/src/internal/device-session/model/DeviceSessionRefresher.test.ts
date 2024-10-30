@@ -7,8 +7,8 @@ import {
 } from "@api/command/os/GetAppAndVersionCommand";
 import { DeviceStatus } from "@api/device/DeviceStatus";
 import { type ApduResponse } from "@api/device-session/ApduResponse";
+import { type LoggerPublisherService } from "@api/logger-publisher/service/LoggerPublisherService";
 import { DefaultLoggerPublisherService } from "@internal/logger-publisher/service/DefaultLoggerPublisherService";
-import { type LoggerPublisherService } from "@internal/logger-publisher/service/LoggerPublisherService";
 
 import { DeviceSessionRefresher } from "./DeviceSessionRefresher";
 

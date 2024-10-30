@@ -1,36 +1,25 @@
-import { type DeviceModelDataSource } from "@api/device-model/data/DeviceModelDataSource";
+import { TransportStub } from "@api/transport/model/Transport.stub";
 import { type Transport } from "@api/types";
-import { DefaultLoggerPublisherService } from "@internal/logger-publisher/service/DefaultLoggerPublisherService";
-import { type LoggerPublisherService } from "@internal/logger-publisher/service/LoggerPublisherService";
 import { type TransportService } from "@internal/transport/service/TransportService";
 import { TransportServiceStub } from "@internal/transport/service/TransportService.stub";
-import { webHidDeviceConnectionFactoryStubBuilder } from "@internal/transport/usb/service/WebHidDeviceConnectionFactory.stub";
-import { WebHidTransport } from "@internal/transport/usb/transport/WebHidTransport";
 
 import { StopDiscoveringUseCase } from "./StopDiscoveringUseCase";
 
 // TODO test several transports
 let transport: Transport;
 let transports: Transport[];
-let logger: LoggerPublisherService;
 let transportService: TransportService;
-const tag = "logger-tag";
 
 describe("StopDiscoveringUseCase", () => {
   beforeEach(() => {
-    logger = new DefaultLoggerPublisherService([], tag);
-    transport = new WebHidTransport(
-      {} as DeviceModelDataSource,
-      () => logger,
-      webHidDeviceConnectionFactoryStubBuilder(),
-    );
+    transport = new TransportStub();
     transports = [transport];
     // @ts-expect-error stub
     transportService = new TransportServiceStub(transports);
   });
 
   afterEach(() => {
-    jest.restoreAllMocks();
+    jest.clearAllMocks();
   });
 
   test("should call stop discovering", () => {

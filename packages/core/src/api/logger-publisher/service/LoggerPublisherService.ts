@@ -1,5 +1,5 @@
-import { type LoggerSubscriberService } from "@api/logger-subscriber/service/LoggerSubscriberService";
-import { type LogPublisherOptions } from "@internal/logger-publisher/model/LogPublisherOptions";
+import type { LoggerSubscriberService } from "@api/logger-subscriber/service/LoggerSubscriberService";
+import type { LogPublisherOptions } from "@internal/logger-publisher/model/LogPublisherOptions";
 
 export interface LoggerPublisherService {
   subscribers: LoggerSubscriberService[];
