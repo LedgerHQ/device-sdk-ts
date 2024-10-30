@@ -15,10 +15,10 @@ import styled, { type DefaultTheme } from "styled-components";
 
 import { Header } from "@/components/Header";
 import { Sidebar } from "@/components/Sidebar";
-import { SdkProvider } from "@/providers/DeviceSdkProvider";
+import { DmkProvider } from "@/providers/DeviceManagementKitProvider";
 import { DeviceSessionsProvider } from "@/providers/DeviceSessionsProvider";
+import { DmkConfigProvider } from "@/providers/DmkConfig";
 import { KeyringEthProvider } from "@/providers/KeyringEthProvider";
-import { SdkConfigProvider } from "@/providers/SdkConfig";
 import { GlobalStyle } from "@/styles/globalstyles";
 
 const Root = styled(Flex)`
@@ -38,8 +38,8 @@ const PageContainer = styled(Flex)`
 const ClientRootLayout: React.FC<PropsWithChildren> = ({ children }) => {
   return (
     <html lang="en">
-      <SdkConfigProvider>
-        <SdkProvider>
+      <DmkConfigProvider>
+        <DmkProvider>
           <DeviceSessionsProvider>
             <KeyringEthProvider>
               <StyleProvider selectedPalette="dark" fontsPath="/fonts">
@@ -56,8 +56,8 @@ const ClientRootLayout: React.FC<PropsWithChildren> = ({ children }) => {
               </StyleProvider>
             </KeyringEthProvider>
           </DeviceSessionsProvider>
-        </SdkProvider>
-      </SdkConfigProvider>
+        </DmkProvider>
+      </DmkConfigProvider>
     </html>
   );
 };

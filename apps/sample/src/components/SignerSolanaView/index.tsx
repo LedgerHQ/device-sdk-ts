@@ -8,17 +8,17 @@ import {
 
 import { DeviceActionsList } from "@/components/DeviceActionsView/DeviceActionsList";
 import { type DeviceActionProps } from "@/components/DeviceActionsView/DeviceActionTester";
-import { useSdk } from "@/providers/DeviceSdkProvider";
+import { useDmk } from "@/providers/DeviceManagementKitProvider";
 
 const DEFAULT_DERIVATION_PATH = "44'/501'";
 
 export const SignerSolanaView: React.FC<{ sessionId: string }> = ({
   sessionId,
 }) => {
-  const sdk = useSdk();
-  const signer = new SignerSolanaBuilder({ sdk, sessionId }).build();
+  const dmk = useDmk();
+  const signer = new SignerSolanaBuilder({ dmk, sessionId }).build();
 
-  const deviceModelId = sdk.getConnectedDevice({
+  const deviceModelId = dmk.getConnectedDevice({
     sessionId,
   }).modelId;
 

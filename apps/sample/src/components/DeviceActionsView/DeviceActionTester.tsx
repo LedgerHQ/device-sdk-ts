@@ -2,8 +2,8 @@ import React from "react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import type {
   DeviceActionIntermediateValue,
+  DmkError,
   ExecuteDeviceActionReturnType,
-  SdkError,
 } from "@ledgerhq/device-management-kit";
 import { type DeviceModelId } from "@ledgerhq/device-management-kit";
 import {
@@ -35,7 +35,7 @@ import { DeviceActionUI } from "./DeviceActionUI";
 export type DeviceActionProps<
   Output,
   Input extends Record<string, FieldType> | void,
-  Error extends SdkError,
+  Error extends DmkError,
   IntermediateValue extends DeviceActionIntermediateValue,
 > = {
   title: string;
@@ -85,7 +85,7 @@ const BoxHeader: React.FC<{ children: string; hint: string }> = ({
 export function DeviceActionTester<
   Output,
   Input extends Record<string, FieldType>,
-  Error extends SdkError,
+  Error extends DmkError,
   IntermediateValue extends DeviceActionIntermediateValue,
 >(props: DeviceActionProps<Output, Input, Error, IntermediateValue>) {
   const {
@@ -300,7 +300,7 @@ export function DeviceActionTester<
 export function DeviceActionRow<
   Output,
   Input extends Record<string, FieldType>,
-  Error extends SdkError,
+  Error extends DmkError,
   IntermediateValue extends DeviceActionIntermediateValue,
 >(
   props: DeviceActionProps<Output, Input, Error, IntermediateValue> & {

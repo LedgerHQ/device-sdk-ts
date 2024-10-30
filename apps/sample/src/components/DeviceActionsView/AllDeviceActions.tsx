@@ -28,7 +28,7 @@ import {
   OpenAppDeviceAction,
 } from "@ledgerhq/device-management-kit";
 
-import { useSdk } from "@/providers/DeviceSdkProvider";
+import { useDmk } from "@/providers/DeviceManagementKitProvider";
 
 import { DeviceActionsList, UNLOCK_TIMEOUT } from "./DeviceActionsList";
 import { type DeviceActionProps } from "./DeviceActionTester";
@@ -36,9 +36,9 @@ import { type DeviceActionProps } from "./DeviceActionTester";
 export const AllDeviceActions: React.FC<{ sessionId: string }> = ({
   sessionId,
 }) => {
-  const sdk = useSdk();
+  const dmk = useDmk();
 
-  const deviceModelId = sdk.getConnectedDevice({
+  const deviceModelId = dmk.getConnectedDevice({
     sessionId,
   }).modelId;
 
@@ -54,7 +54,7 @@ export const AllDeviceActions: React.FC<{ sessionId: string }> = ({
             input: { appName, unlockTimeout },
             inspect,
           });
-          return sdk.executeDeviceAction({
+          return dmk.executeDeviceAction({
             sessionId,
             deviceAction,
           });
@@ -76,7 +76,7 @@ export const AllDeviceActions: React.FC<{ sessionId: string }> = ({
             input: { unlockTimeout },
             inspect,
           });
-          return sdk.executeDeviceAction({
+          return dmk.executeDeviceAction({
             sessionId,
             deviceAction,
           });
@@ -97,7 +97,7 @@ export const AllDeviceActions: React.FC<{ sessionId: string }> = ({
             input: { unlockTimeout },
             inspect,
           });
-          return sdk.executeDeviceAction({
+          return dmk.executeDeviceAction({
             sessionId,
             deviceAction,
           });
@@ -118,7 +118,7 @@ export const AllDeviceActions: React.FC<{ sessionId: string }> = ({
             input: { unlockTimeout },
             inspect,
           });
-          return sdk.executeDeviceAction({
+          return dmk.executeDeviceAction({
             sessionId,
             deviceAction,
           });
@@ -140,7 +140,7 @@ export const AllDeviceActions: React.FC<{ sessionId: string }> = ({
             input: { unlockTimeout },
             inspect,
           });
-          return sdk.executeDeviceAction({
+          return dmk.executeDeviceAction({
             sessionId,
             deviceAction,
           });
@@ -154,7 +154,7 @@ export const AllDeviceActions: React.FC<{ sessionId: string }> = ({
         ListAppsWithMetadataDAIntermediateValue
       >,
     ],
-    [deviceModelId, sdk, sessionId],
+    [deviceModelId, dmk, sessionId],
   );
 
   return (

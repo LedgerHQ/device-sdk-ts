@@ -1,7 +1,7 @@
 import { type Reducer } from "react";
 import { BuiltinTransports } from "@ledgerhq/device-management-kit";
 
-export type SdkConfigState = {
+export type DmkConfigState = {
   mockServerUrl: string;
   transport: BuiltinTransports;
 };
@@ -20,16 +20,16 @@ type SetMockServerUrlAction = {
   };
 };
 
-export type SdkConfigAction = SetTransportAction | SetMockServerUrlAction;
+export type DmkConfigAction = SetTransportAction | SetMockServerUrlAction;
 
-export const SdkConfigInitialState: SdkConfigState = {
+export const DmkConfigInitialState: DmkConfigState = {
   mockServerUrl: "http://127.0.0.1:8080/",
   transport:
-    (process.env.SDK_CONFIG_TRANSPORT as BuiltinTransports) ||
+    (process.env.Dmk_CONFIG_TRANSPORT as BuiltinTransports) ||
     BuiltinTransports.USB,
 };
 
-export const sdkConfigReducer: Reducer<SdkConfigState, SdkConfigAction> = (
+export const dmkConfigReducer: Reducer<DmkConfigState, DmkConfigAction> = (
   state,
   action,
 ) => {

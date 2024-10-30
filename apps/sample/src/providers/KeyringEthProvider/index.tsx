@@ -16,7 +16,7 @@ import {
   KeyringEthBuilder,
 } from "@ledgerhq/device-signer-kit-ethereum";
 
-import { useSdk } from "@/providers/DeviceSdkProvider";
+import { useDmk } from "@/providers/DeviceManagementKitProvider";
 import { useDeviceSessionsContext } from "@/providers/DeviceSessionsProvider";
 
 type KeyringEthContextType = {
@@ -40,7 +40,7 @@ const KeyringEthContext = createContext<KeyringEthContextType>(initialState);
 export const KeyringEthProvider: React.FC<PropsWithChildren> = ({
   children,
 }) => {
-  const sdk = useSdk();
+  const dmk = useDmk();
   const {
     state: { selectedId: sessionId },
   } = useDeviceSessionsContext();
@@ -51,7 +51,7 @@ export const KeyringEthProvider: React.FC<PropsWithChildren> = ({
   );
 
   useEffect(() => {
-    if (!sessionId || !sdk) {
+    if (!sessionId || !dmk) {
       setKeyring(null);
       return;
     }
@@ -59,11 +59,11 @@ export const KeyringEthProvider: React.FC<PropsWithChildren> = ({
     const contextModule = new ContextModuleBuilder()
       .withConfig({ cal: calConfig })
       .build();
-    const newKeyring = new KeyringEthBuilder({ sdk, sessionId })
+    const newKeyring = new KeyringEthBuilder({ dmk, sessionId })
       .withContextModule(contextModule)
       .build();
     setKeyring(newKeyring);
-  }, [calConfig, sdk, sessionId]);
+  }, [calConfig, dmk, sessionId]);
 
   return (
     <KeyringEthContext.Provider value={{ keyring, calConfig, setCalConfig }}>

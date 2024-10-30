@@ -18,16 +18,16 @@ import { ethers } from "ethers";
 
 import { DeviceActionsList } from "@/components/DeviceActionsView/DeviceActionsList";
 import { type DeviceActionProps } from "@/components/DeviceActionsView/DeviceActionTester";
-import { useSdk } from "@/providers/DeviceSdkProvider";
+import { useDmk } from "@/providers/DeviceManagementKitProvider";
 import { useKeyringEth } from "@/providers/KeyringEthProvider";
 
 export const KeyringEthView: React.FC<{ sessionId: string }> = ({
   sessionId,
 }) => {
-  const sdk = useSdk();
+  const dmk = useDmk();
   const keyring = useKeyringEth();
 
-  const deviceModelId = sdk.getConnectedDevice({
+  const deviceModelId = dmk.getConnectedDevice({
     sessionId,
   }).modelId;
 

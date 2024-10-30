@@ -3,50 +3,50 @@ import { createContext, type PropsWithChildren, useContext } from "react";
 import {
   BuiltinTransports,
   ConsoleLogger,
-  type DeviceSdk,
-  DeviceSdkBuilder,
+  type DeviceManagementKit,
+  DeviceManagementKitBuilder,
   WebLogsExporterLogger,
 } from "@ledgerhq/device-management-kit";
-import { FlipperSdkLogger } from "@ledgerhq/device-management-kit-flipper-plugin-client";
+import { FlipperDmkLogger } from "@ledgerhq/device-management-kit-flipper-plugin-client";
 
 import { useHasChanged } from "@/hooks/useHasChanged";
-import { useSdkConfigContext } from "@/providers/SdkConfig";
+import { useDmkConfigContext } from "@/providers/DmkConfig";
 
-const SdkContext = createContext<DeviceSdk | null>(null);
+const DmkContext = createContext<DeviceManagementKit | null>(null);
 const LogsExporterContext = createContext<WebLogsExporterLogger | null>(null);
 
-function buildDefaultSdk(logsExporter: WebLogsExporterLogger) {
-  return new DeviceSdkBuilder()
+function buildDefaultDmk(logsExporter: WebLogsExporterLogger) {
+  return new DeviceManagementKitBuilder()
     .addTransport(BuiltinTransports.USB)
     .addTransport(BuiltinTransports.BLE)
     .addLogger(new ConsoleLogger())
     .addLogger(logsExporter)
-    .addLogger(new FlipperSdkLogger())
+    .addLogger(new FlipperDmkLogger())
     .build();
 }
 
-function buildMockSdk(url: string, logsExporter: WebLogsExporterLogger) {
-  return new DeviceSdkBuilder()
+function buildMockDmk(url: string, logsExporter: WebLogsExporterLogger) {
+  return new DeviceManagementKitBuilder()
     .addTransport(BuiltinTransports.MOCK_SERVER)
     .addLogger(new ConsoleLogger())
     .addLogger(logsExporter)
-    .addLogger(new FlipperSdkLogger())
+    .addLogger(new FlipperDmkLogger())
     .addConfig({ mockUrl: url })
     .build();
 }
 
-export const SdkProvider: React.FC<PropsWithChildren> = ({ children }) => {
+export const DmkProvider: React.FC<PropsWithChildren> = ({ children }) => {
   const {
     state: { transport, mockServerUrl },
-  } = useSdkConfigContext();
+  } = useDmkConfigContext();
 
   const mockServerEnabled = transport === BuiltinTransports.MOCK_SERVER;
   const [state, setState] = useState(() => {
     const logsExporter = new WebLogsExporterLogger();
-    const sdk = mockServerEnabled
-      ? buildMockSdk(mockServerUrl, logsExporter)
-      : buildDefaultSdk(logsExporter);
-    return { sdk, logsExporter };
+    const dmk = mockServerEnabled
+      ? buildMockDmk(mockServerUrl, logsExporter)
+      : buildDefaultDmk(logsExporter);
+    return { dmk, logsExporter };
   });
 
   const mockServerEnabledChanged = useHasChanged(mockServerEnabled);
@@ -55,9 +55,9 @@ export const SdkProvider: React.FC<PropsWithChildren> = ({ children }) => {
   if (mockServerEnabledChanged || mockServerUrlChanged) {
     setState(({ logsExporter }) => {
       return {
-        sdk: mockServerEnabled
-          ? buildMockSdk(mockServerUrl, logsExporter)
-          : buildDefaultSdk(logsExporter),
+        dmk: mockServerEnabled
+          ? buildMockDmk(mockServerUrl, logsExporter)
+          : buildDefaultDmk(logsExporter),
         logsExporter,
       };
     });
@@ -65,24 +65,24 @@ export const SdkProvider: React.FC<PropsWithChildren> = ({ children }) => {
 
   useEffect(() => {
     return () => {
-      state.sdk.close();
+      state.dmk.close();
     };
-  }, [state.sdk]);
+  }, [state.dmk]);
 
   return (
-    <SdkContext.Provider value={state.sdk}>
+    <DmkContext.Provider value={state.dmk}>
       <LogsExporterContext.Provider value={state.logsExporter}>
         {children}
       </LogsExporterContext.Provider>
-    </SdkContext.Provider>
+    </DmkContext.Provider>
   );
 };
 
-export const useSdk = (): DeviceSdk => {
-  const sdk = useContext(SdkContext);
-  if (sdk === null)
-    throw new Error("useSdk must be used within a SdkContext.Provider");
-  return sdk;
+export const useDmk = (): DeviceManagementKit => {
+  const dmk = useContext(DmkContext);
+  if (dmk === null)
+    throw new Error("useDmk must be used within a DmkContext.Provider");
+  return dmk;
 };
 
 export function useExportLogsCallback() {

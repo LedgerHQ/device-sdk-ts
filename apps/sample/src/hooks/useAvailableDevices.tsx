@@ -2,13 +2,13 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { type DiscoveredDevice } from "@ledgerhq/device-management-kit";
 import { type Subscription } from "rxjs";
 
-import { useSdk } from "@/providers/DeviceSdkProvider";
+import { useDmk } from "@/providers/DeviceManagementKitProvider";
 import { useDeviceSessionsContext } from "@/providers/DeviceSessionsProvider";
 
 type AvailableDevice = DiscoveredDevice & { connected: boolean };
 
 export function useAvailableDevices(): AvailableDevice[] {
-  const sdk = useSdk();
+  const dmk = useDmk();
   const [discoveredDevices, setDiscoveredDevices] = useState<
     DiscoveredDevice[]
   >([]);
@@ -17,7 +17,7 @@ export function useAvailableDevices(): AvailableDevice[] {
   const subscription = useRef<Subscription | null>(null);
   useEffect(() => {
     if (!subscription.current) {
-      subscription.current = sdk.listenToKnownDevices().subscribe((devices) => {
+      subscription.current = dmk.listenToKnownDevices().subscribe((devices) => {
         setDiscoveredDevices(devices);
       });
     }
@@ -28,7 +28,7 @@ export function useAvailableDevices(): AvailableDevice[] {
         subscription.current = null;
       }
     };
-  }, [sdk]);
+  }, [dmk]);
 
   const result = useMemo(
     () =>
