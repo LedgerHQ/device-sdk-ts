@@ -29,7 +29,7 @@ export class FlipperPluginManager implements FlipperPlugin {
    * If the Flipper server is not running, this will fail silently.
    */
   attemptInitialization() {
-    flipperClient.start("ledger-device-sdk", {
+    flipperClient.start("ledger-device-dmk", {
       onError: () => {},
       websocketFactory: (url) => {
         console.log("Creating Flipper WebSocket");
@@ -67,7 +67,7 @@ export class FlipperPluginManager implements FlipperPlugin {
 
   /** FlipperPlugin interface methods */
   getId(): string {
-    return "ledger-device-sdk";
+    return "ledger-device-dmk";
   }
 
   onConnect(connection: FlipperPluginConnection): void {

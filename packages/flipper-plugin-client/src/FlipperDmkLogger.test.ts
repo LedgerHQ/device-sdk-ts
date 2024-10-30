@@ -1,8 +1,8 @@
 import { LogLevel, type LogParams } from "@ledgerhq/device-management-kit";
 import { type FlipperPluginConnection } from "js-flipper";
 
+import { FlipperDmkLogger, type FlipperObjLog } from "./FlipperDmkLogger";
 import { FlipperPluginManager } from "./FlipperPluginManager";
-import { type FlipperObjLog, FlipperSdkLogger } from "./FlipperSdkLogger";
 
 jest.mock("js-flipper");
 
@@ -103,12 +103,12 @@ const expectedFlipperMessages = expectedFlipperLogs.map((log) => ({
   params: log,
 }));
 
-describe("FlipperSdkLogger", () => {
+describe("FlipperDmkLogger", () => {
   beforeEach(() => {});
   test("subscribeToLogs should return a subscription emitting all the logs, formatted", () => {
     const flipperPluginManager = FlipperPluginManager.getInstance();
 
-    const logger = new FlipperSdkLogger(flipperPluginManager);
+    const logger = new FlipperDmkLogger(flipperPluginManager);
 
     // Logs emitted before a Flipper connection is established
     for (const log of testLogs.slice(0, 2)) {

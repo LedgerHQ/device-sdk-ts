@@ -34,8 +34,8 @@ function stringifyUint8ArrayFormatter(_: string, value: unknown) {
   return value;
 }
 
-function mapSdkLogToFlipperObjLog(sdkLog: LogParams): FlipperObjLog {
-  const [level, message, options] = sdkLog;
+function mapDmkLogToFlipperObjLog(dmkLog: LogParams): FlipperObjLog {
+  const [level, message, options] = dmkLog;
 
   const verbosities: Record<LogLevel, FlipperObjLog["verbosity"]> = {
     [LogLevel.Debug]: "debug",
@@ -64,7 +64,7 @@ function mapSdkLogToFlipperObjLog(sdkLog: LogParams): FlipperObjLog {
   };
 }
 
-export class FlipperSdkLogger implements LoggerSubscriberService {
+export class FlipperDmkLogger implements LoggerSubscriberService {
   /**
    * A ReplaySubject allows the plugin to receive all the logs that were emitted
    * before the connection was established.
@@ -103,6 +103,6 @@ export class FlipperSdkLogger implements LoggerSubscriberService {
   }
 
   public log(...logParams: LogParams) {
-    this.logsSubject.next(mapSdkLogToFlipperObjLog(logParams));
+    this.logsSubject.next(mapDmkLogToFlipperObjLog(logParams));
   }
 }
