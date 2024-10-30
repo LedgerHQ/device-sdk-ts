@@ -5,15 +5,15 @@ import {
   Device,
   MockClient,
   Session,
-} from "@ledgerhq/device-sdk-transport-mock";
+} from "@ledgerhq/device-transport-kit-mock-client";
 import { inject, injectable } from "inversify";
 import { Either, Left, Right } from "purify-ts";
 import { from, mergeMap, Observable } from "rxjs";
 
 import { DeviceId } from "@api/device/DeviceModel";
 import { ApduResponse } from "@api/device-session/ApduResponse";
-import { SdkError } from "@api/Error";
-import type { SdkConfig } from "@api/SdkConfig";
+import type { DmkConfig } from "@api/DmkConfig";
+import { DmkError } from "@api/Error";
 import { Transport } from "@api/transport/model/Transport";
 import {
   BuiltinTransports,
@@ -42,7 +42,7 @@ export class MockTransport implements Transport {
   constructor(
     @inject(loggerTypes.LoggerPublisherServiceFactory)
     loggerServiceFactory: (tag: string) => LoggerPublisherService,
-    @inject(transportDiTypes.SdkConfig) config: SdkConfig,
+    @inject(transportDiTypes.DmkConfig) config: DmkConfig,
   ) {
     this.logger = loggerServiceFactory("MockTransport");
     this.mockClient = new MockClient(config.mockUrl);
@@ -134,7 +134,7 @@ export class MockTransport implements Transport {
 
   async disconnect(params: {
     connectedDevice: InternalConnectedDevice;
-  }): Promise<Either<SdkError, void>> {
+  }): Promise<Either<DmkError, void>> {
     this.logger.debug("disconnect");
     const sessionId: string = params.connectedDevice.id;
     try {
@@ -155,7 +155,7 @@ export class MockTransport implements Transport {
     deviceId: DeviceId,
     onDisconnect: DisconnectHandler,
     apdu: Uint8Array,
-  ): Promise<Either<SdkError, ApduResponse>> {
+  ): Promise<Either<DmkError, ApduResponse>> {
     this.logger.debug("send");
     try {
       const response: CommandResponse = await this.mockClient.send(

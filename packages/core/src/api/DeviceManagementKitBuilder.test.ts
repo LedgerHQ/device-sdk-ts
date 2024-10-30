@@ -1,20 +1,20 @@
 import { ConsoleLogger } from "./logger-subscriber/service/ConsoleLogger";
-import { DeviceSdk } from "./DeviceSdk";
-import { LedgerDeviceSdkBuilder } from "./DeviceSdkBuilder";
+import { DeviceManagementKit } from "./DeviceManagementKit";
+import { DeviceManagementKitBuilder } from "./DeviceManagementKitBuilder";
 
 jest.mock("./logger-subscriber/service/ConsoleLogger");
 
-let builder: LedgerDeviceSdkBuilder;
+let builder: DeviceManagementKitBuilder;
 let logger: ConsoleLogger;
 
-describe("LedgerDeviceSdkBuilder", () => {
+describe("LedgerDeviceManagementKitBuilder", () => {
   beforeEach(() => {
-    builder = new LedgerDeviceSdkBuilder();
+    builder = new DeviceManagementKitBuilder();
   });
 
-  it("should build a DeviceSdk instance", () => {
-    const sdk: DeviceSdk = builder.build();
-    expect(sdk).toBeInstanceOf(DeviceSdk);
+  it("should build a DeviceManagementKit instance", () => {
+    const dmk: DeviceManagementKit = builder.build();
+    expect(dmk).toBeInstanceOf(DeviceManagementKit);
   });
 
   it("should set the stub flag", () => {

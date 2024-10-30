@@ -2,7 +2,7 @@ import axios from "axios";
 import { inject, injectable } from "inversify";
 import { EitherAsync } from "purify-ts";
 
-import { type SdkConfig } from "@api/SdkConfig";
+import { type DmkConfig } from "@api/DmkConfig";
 import { managerApiTypes } from "@internal/manager-api/di/managerApiTypes";
 import { HttpFetchApiError } from "@internal/manager-api/model/Errors";
 import {
@@ -16,7 +16,7 @@ import { ApplicationDto, AppTypeDto } from "./ManagerApiDto";
 @injectable()
 export class AxiosManagerApiDataSource implements ManagerApiDataSource {
   private readonly baseUrl: string;
-  constructor(@inject(managerApiTypes.SdkConfig) config: SdkConfig) {
+  constructor(@inject(managerApiTypes.DmkConfig) config: DmkConfig) {
     this.baseUrl = config.managerApiUrl;
   }
 

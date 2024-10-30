@@ -4,7 +4,7 @@ import { type LogSubscriberOptions } from "@api/logger-subscriber/model/LogSubsc
 /**
  * Logger subscriber service.
  *
- * Implement this interface and use `LedgerDeviceSdkBuilder.addLogger` to
+ * Implement this interface and use `DeviceManagementKitBuilder.addLogger` to
  * receive logs from the SDK.
  */
 export type LogParams = [

@@ -10,7 +10,7 @@ import {
   DeviceSessionState,
   DeviceSessionStateType,
 } from "@api/device-session/DeviceSessionState";
-import { SdkError } from "@api/Error";
+import { DmkError } from "@api/Error";
 import { type LoggerPublisherService } from "@internal/logger-publisher/service/LoggerPublisherService";
 
 /**
@@ -30,7 +30,7 @@ export type DeviceSessionRefresherArgs = {
   /**
    * The function used to send APDU commands to the device.
    */
-  sendApduFn: (rawApdu: Uint8Array) => Promise<Either<SdkError, ApduResponse>>;
+  sendApduFn: (rawApdu: Uint8Array) => Promise<Either<DmkError, ApduResponse>>;
 
   /**
    * Callback that updates the state of the device session with

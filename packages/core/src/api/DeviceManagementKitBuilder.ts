@@ -6,15 +6,15 @@ import {
 import { type LoggerSubscriberService } from "./logger-subscriber/service/LoggerSubscriberService";
 import { type Transport } from "./transport/model/Transport";
 import { type BuiltinTransports } from "./transport/model/TransportIdentifier";
-import { DeviceSdk } from "./DeviceSdk";
-import { type SdkConfig } from "./SdkConfig";
+import { DeviceManagementKit } from "./DeviceManagementKit";
+import { type DmkConfig } from "./DmkConfig";
 
 /**
- * Builder for the `DeviceSdk` class.
+ * Builder for the `DeviceManagementKit` class.
  *
  * @example
  * ```
- * const sdk = new LedgerDeviceSdkBuilder()
+ * const dmk = new LedgerDeviceManagementKitBuilder()
  *  .setStub(false)
  *  .addTransport(BuiltinTransports.USB)
  *  .addCustomTransport(new MyTransport())
@@ -22,18 +22,18 @@ import { type SdkConfig } from "./SdkConfig";
  *  .build();
  * ```
  */
-export class LedgerDeviceSdkBuilder {
+export class DeviceManagementKitBuilder {
   private stub = false;
   private readonly loggers: LoggerSubscriberService[] = [];
   private readonly transports: BuiltinTransports[] = [];
   private readonly customTransports: Transport[] = [];
-  private config: SdkConfig = {
+  private config: DmkConfig = {
     managerApiUrl: DEFAULT_MANAGER_API_BASE_URL,
     mockUrl: DEFAULT_MOCK_SERVER_BASE_URL,
   };
 
-  build(): DeviceSdk {
-    return new DeviceSdk({
+  build(): DeviceManagementKit {
+    return new DeviceManagementKit({
       stub: this.stub,
       transports: this.transports,
       customTransports: this.customTransports,
@@ -42,17 +42,17 @@ export class LedgerDeviceSdkBuilder {
     });
   }
 
-  setStub(stubbed: boolean): LedgerDeviceSdkBuilder {
+  setStub(stubbed: boolean): DeviceManagementKitBuilder {
     this.stub = stubbed;
     return this;
   }
 
-  addTransport(transport: BuiltinTransports): LedgerDeviceSdkBuilder {
+  addTransport(transport: BuiltinTransports): DeviceManagementKitBuilder {
     this.transports.push(transport);
     return this;
   }
 
-  addCustomTransport(transport: Transport): LedgerDeviceSdkBuilder {
+  addCustomTransport(transport: Transport): DeviceManagementKitBuilder {
     this.customTransports.push(transport);
     return this;
   }
@@ -60,12 +60,12 @@ export class LedgerDeviceSdkBuilder {
   /**
    * Add a logger to the SDK that will receive its logs
    */
-  addLogger(logger: LoggerSubscriberService): LedgerDeviceSdkBuilder {
+  addLogger(logger: LoggerSubscriberService): DeviceManagementKitBuilder {
     this.loggers.push(logger);
     return this;
   }
 
-  addConfig(config: Partial<SdkConfig>): LedgerDeviceSdkBuilder {
+  addConfig(config: Partial<DmkConfig>): DeviceManagementKitBuilder {
     this.config = {
       ...this.config,
       ...config,

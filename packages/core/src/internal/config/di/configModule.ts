@@ -5,7 +5,7 @@ import { StubLocalConfigDataSource } from "@internal/config/data/LocalConfigData
 import { RestRemoteConfigDataSource } from "@internal/config/data/RemoteConfigDataSource";
 import { StubRemoteConfigDataSource } from "@internal/config/data/RemoteConfigDataSource.stub";
 import { DefaultConfigService } from "@internal/config/service/DefaultConfigService";
-import { GetSdkVersionUseCase } from "@internal/config/use-case/GetSdkVersionUseCase";
+import { GetDmkVersionUseCase } from "@internal/config/use-case/GetDmkVersionUseCase";
 
 import { configTypes } from "./configTypes";
 
@@ -19,7 +19,7 @@ export const configModuleFactory = ({ stub }: FactoryProps) =>
   new ContainerModule((bind, _unbind, _isBound, rebind) => {
     bind(configTypes.LocalConfigDataSource).to(FileLocalConfigDataSource);
     bind(configTypes.RemoteConfigDataSource).to(RestRemoteConfigDataSource);
-    bind(configTypes.GetSdkVersionUseCase).to(GetSdkVersionUseCase);
+    bind(configTypes.GetDmkVersionUseCase).to(GetDmkVersionUseCase);
     bind(configTypes.ConfigService).to(DefaultConfigService);
 
     if (stub) {

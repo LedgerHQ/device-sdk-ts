@@ -1,6 +1,6 @@
-import { type SdkError } from "@api/Error";
+import { type DmkError } from "@api/Error";
 
-export class InvalidStatusWordError implements SdkError {
+export class InvalidStatusWordError implements DmkError {
   readonly _tag = "InvalidStatusWordError";
   readonly originalError?: Error;
 
@@ -9,7 +9,7 @@ export class InvalidStatusWordError implements SdkError {
   }
 }
 
-export class InvalidBatteryStatusTypeError implements SdkError {
+export class InvalidBatteryStatusTypeError implements DmkError {
   readonly _tag = "InvalidBatteryStatusTypeError";
   readonly originalError: Error;
 
@@ -18,7 +18,7 @@ export class InvalidBatteryStatusTypeError implements SdkError {
   }
 }
 
-export class InvalidBatteryDataError implements SdkError {
+export class InvalidBatteryDataError implements DmkError {
   readonly _tag = "InvalidBatteryDataError";
   readonly originalError: Error;
 
@@ -27,7 +27,7 @@ export class InvalidBatteryDataError implements SdkError {
   }
 }
 
-export class InvalidBatteryFlagsError implements SdkError {
+export class InvalidBatteryFlagsError implements DmkError {
   readonly _tag = "InvalidBatteryFlagsError";
   readonly originalError: Error;
 
@@ -36,7 +36,7 @@ export class InvalidBatteryFlagsError implements SdkError {
   }
 }
 
-export class InvalidResponseFormatError implements SdkError {
+export class InvalidResponseFormatError implements DmkError {
   readonly _tag = "InvalidResponseFormatError";
   readonly originalError: Error;
 

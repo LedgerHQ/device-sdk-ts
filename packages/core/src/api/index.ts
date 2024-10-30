@@ -41,8 +41,8 @@ export {
 export { DeviceModel, DeviceModelId } from "./device/DeviceModel";
 export { DeviceStatus } from "./device/DeviceStatus";
 export { ApduResponse } from "./device-session/ApduResponse";
-export { DeviceSdk } from "./DeviceSdk";
-export { LedgerDeviceSdkBuilder as DeviceSdkBuilder } from "./DeviceSdkBuilder";
+export { DeviceManagementKit } from "./DeviceManagementKit";
+export { DeviceManagementKitBuilder } from "./DeviceManagementKitBuilder";
 export { DeviceExchangeError, UnknownDeviceExchangeError } from "./Error";
 export { LogLevel } from "./logger-subscriber/model/LogLevel";
 export { ConsoleLogger } from "./logger-subscriber/service/ConsoleLogger";
@@ -121,7 +121,7 @@ export {
   type DeviceSessionState,
   DeviceSessionStateType,
 } from "@api/device-session/DeviceSessionState";
-export { type SdkError } from "@api/Error";
+export { type DmkError } from "@api/Error";
 export { base64StringToBuffer, isBase64String } from "@api/utils/Base64String";
 export {
   bufferToHexaString,

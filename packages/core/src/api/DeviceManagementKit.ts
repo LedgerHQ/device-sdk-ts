@@ -24,7 +24,7 @@ import {
   type StartDiscoveringUseCaseArgs,
 } from "@api/types";
 import { configTypes } from "@internal/config/di/configTypes";
-import { type GetSdkVersionUseCase } from "@internal/config/use-case/GetSdkVersionUseCase";
+import { type GetDmkVersionUseCase } from "@internal/config/use-case/GetDmkVersionUseCase";
 import { deviceSessionTypes } from "@internal/device-session/di/deviceSessionTypes";
 import { type DeviceSession } from "@internal/device-session/model/DeviceSession";
 import { type CloseSessionsUseCase } from "@internal/device-session/use-case/CloseSessionsUseCase";
@@ -46,14 +46,14 @@ import {
   type ExecuteDeviceActionReturnType,
 } from "./device-action/DeviceAction";
 import { deviceActionTypes } from "./device-action/di/deviceActionTypes";
-import { type SdkError } from "./Error";
+import { type DmkError } from "./Error";
 
 /**
- * The main class to interact with the SDK.
+ * The main class to interact with the Device Management Kit.
  *
- * NB: do not instantiate this class directly, instead, use `DeviceSdkBuilder`.
+ * NB: do not instantiate this class directly, instead, use `LedgerDMKBuilder`.
  */
-export class DeviceSdk {
+export class DeviceManagementKit {
   readonly container: Container;
   /** @internal */
   constructor({
@@ -80,8 +80,8 @@ export class DeviceSdk {
    */
   getVersion(): Promise<string> {
     return this.container
-      .get<GetSdkVersionUseCase>(configTypes.GetSdkVersionUseCase)
-      .getSdkVersion();
+      .get<GetDmkVersionUseCase>(configTypes.GetDmkVersionUseCase)
+      .getDmkVersion();
   }
 
   /**
@@ -124,11 +124,11 @@ export class DeviceSdk {
   }
 
   /**
-   * Connects to a device previously discovered with `DeviceSdk.startDiscovering`.
+   * Connects to a device previously discovered with `DeviceManagementKit.startDiscovering`.
    * Creates a new device session which:
    * - Represents the connection to the device.
    * - Is terminated upon disconnection of the device.
-   * - Exposes the device state through an observable (see `DeviceSdk.getDeviceSessionState`)
+   * - Exposes the device state through an observable (see `DeviceManagementKit.getDeviceSessionState`)
    * - Should be used for all subsequent communication with the device.
    *
    * @param {ConnectUseCaseArgs} args - The device ID (obtained in discovery) to connect to.
@@ -179,7 +179,7 @@ export class DeviceSdk {
   executeDeviceAction<
     Output,
     Input,
-    Error extends SdkError,
+    Error extends DmkError,
     IntermediateValue extends DeviceActionIntermediateValue,
   >(
     args: ExecuteDeviceActionUseCaseArgs<

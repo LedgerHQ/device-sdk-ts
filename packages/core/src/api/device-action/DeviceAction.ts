@@ -3,7 +3,7 @@ import { type Observable } from "rxjs";
 import { type Command } from "@api/command/Command";
 import { type CommandResult } from "@api/command/model/CommandResult";
 import { type DeviceSessionState } from "@api/device-session/DeviceSessionState";
-import { type SdkError } from "@api/Error";
+import { type DmkError } from "@api/Error";
 import { type ManagerApiService } from "@internal/manager-api/service/ManagerApiService";
 
 import { type DeviceActionState } from "./model/DeviceActionState";
@@ -34,7 +34,7 @@ export type ExecuteDeviceActionReturnType<Output, Error, IntermediateValue> = {
 export interface DeviceAction<
   Output,
   Input,
-  Error extends SdkError,
+  Error extends DmkError,
   IntermediateValue extends DeviceActionIntermediateValue,
 > {
   readonly input: Input;

@@ -37,7 +37,7 @@ export const GLOBAL_ERRORS: CommandErrors<GlobalCommandErrorStatusCode> = {
  */
 export class GlobalCommandErrorHandler {
   /**
-   * Static method to get a handled GlobalCommandError or an unhandled SdkError from an apdu response
+   * Static method to get a handled GlobalCommandError or an unhandled DmkError from an apdu response
    * @param apduResponse
    */
   static handle(

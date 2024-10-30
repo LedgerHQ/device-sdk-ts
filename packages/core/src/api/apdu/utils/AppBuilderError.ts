@@ -1,12 +1,12 @@
-import { type SdkError } from "@api/Error";
+import { type DmkError } from "@api/Error";
 
 import { APDU_MAX_PAYLOAD } from "./ApduBuilder";
 
-interface SdkAppBuilderError extends SdkError {
+interface DmkAppBuilderError extends DmkError {
   readonly message: string;
 }
 
-export class ValueOverflowError implements SdkAppBuilderError {
+export class ValueOverflowError implements DmkAppBuilderError {
   readonly _tag = "ValueOverflow";
   readonly originalError?: Error;
   readonly message: string;
@@ -15,7 +15,7 @@ export class ValueOverflowError implements SdkAppBuilderError {
   }
 }
 
-export class DataOverflowError implements SdkAppBuilderError {
+export class DataOverflowError implements DmkAppBuilderError {
   readonly _tag = "DataOverflow";
   readonly message: string;
   readonly originalError?: Error;
@@ -27,7 +27,7 @@ export class DataOverflowError implements SdkAppBuilderError {
   }
 }
 
-export class HexaStringEncodeError implements SdkAppBuilderError {
+export class HexaStringEncodeError implements DmkAppBuilderError {
   readonly _tag = "HexaString";
   readonly message: string;
   readonly originalError?: Error;

@@ -31,7 +31,7 @@ export class DefaultConfigService implements ConfigService {
     this._logger = loggerServiceFactory("config");
   }
 
-  async getSdkConfig(): Promise<Config> {
+  async getDmkConfig(): Promise<Config> {
     // Returns an Either<ReadFileError | JsonParseError, Config>
     const localConfig = this._local
       .getConfig()
@@ -52,7 +52,7 @@ export class DefaultConfigService implements ConfigService {
         .mapLeft((error: RemoteConfigFailure) => {
           // Here we handle the error and return a default value
           this._logger.error("Local config available", { data: { error } });
-          return { name: "DeadSdk", version: "0.0.0-dead.1" };
+          return { name: "DeadDmk", version: "0.0.0-dead.1" };
         })
         .extract();
     });

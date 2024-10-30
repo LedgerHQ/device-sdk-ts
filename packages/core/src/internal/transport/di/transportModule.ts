@@ -1,6 +1,6 @@
 import { ContainerModule } from "inversify";
 
-import { type SdkConfig } from "@api/SdkConfig";
+import { type DmkConfig } from "@api/DmkConfig";
 import { type Transport } from "@api/transport/model/Transport";
 import { type BuiltinTransports } from "@api/transport/model/TransportIdentifier";
 import { TransportDataSource } from "@internal/transport/data/TransportDataSource";
@@ -11,7 +11,7 @@ type FactoryProps = {
   stub: boolean;
   transports: BuiltinTransports[];
   customTransports: Transport[];
-  config: SdkConfig;
+  config: DmkConfig;
 };
 
 export const transportModuleFactory = ({
@@ -29,7 +29,7 @@ export const transportModuleFactory = ({
     for (const transport of customTransports) {
       bind(transportDiTypes.Transport).toConstantValue(transport);
     }
-    bind(transportDiTypes.SdkConfig).toConstantValue(config);
+    bind(transportDiTypes.DmkConfig).toConstantValue(config);
     if (stub) {
       // Add stubs here
     }

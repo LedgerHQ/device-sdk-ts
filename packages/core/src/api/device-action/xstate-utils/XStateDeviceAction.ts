@@ -17,14 +17,14 @@ import {
   type DeviceActionState,
   DeviceActionStatus,
 } from "@api/device-action/model/DeviceActionState";
-import { type SdkError } from "@api/Error";
+import { type DmkError } from "@api/Error";
 
 import { type StateMachineTypes } from "./StateMachineTypes";
 
 export type DeviceActionStateMachine<
   Output,
   Input,
-  Error extends SdkError,
+  Error extends DmkError,
   IntermediateValue extends DeviceActionIntermediateValue,
   InternalState,
 > = StateMachine<
@@ -78,7 +78,7 @@ export type DeviceActionStateMachine<
 export abstract class XStateDeviceAction<
   Output,
   Input,
-  Error extends SdkError,
+  Error extends DmkError,
   IntermediateValue extends DeviceActionIntermediateValue,
   InternalState,
 > implements DeviceAction<Output, Input, Error, IntermediateValue>

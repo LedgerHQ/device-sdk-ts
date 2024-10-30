@@ -66,7 +66,7 @@ export type ExtractMachineDependencies = (
  *      appName: "MyApp",
  *    },
  *  });
- * sdk.executeDeviceAction({ sessionId: "mySessionId", deviceAction });
+ * dmk.executeDeviceAction({ sessionId: "mySessionId", deviceAction });
  * ```
  */
 export class OpenAppDeviceAction extends XStateDeviceAction<

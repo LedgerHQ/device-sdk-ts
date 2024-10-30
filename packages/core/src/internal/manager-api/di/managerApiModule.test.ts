@@ -39,7 +39,7 @@ describe("managerApiModuleFactory", () => {
       );
       expect(managerApiService).toBeInstanceOf(DefaultManagerApiService);
 
-      const config = container.get(managerApiTypes.SdkConfig);
+      const config = container.get(managerApiTypes.DmkConfig);
       expect(config).toEqual({
         managerApiUrl: "http://fake.url",
         mockUrl: "http://fake-mock.url",
@@ -77,7 +77,7 @@ describe("managerApiModuleFactory", () => {
       );
       expect(managerApiService).toBeInstanceOf(StubUseCase);
 
-      const config = container.get(managerApiTypes.SdkConfig);
+      const config = container.get(managerApiTypes.DmkConfig);
       expect(config).toEqual({
         managerApiUrl: "http://fake.url",
         mockUrl: "http://fake-mock.url",

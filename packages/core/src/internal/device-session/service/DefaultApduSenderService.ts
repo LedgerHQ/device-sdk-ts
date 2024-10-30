@@ -18,7 +18,7 @@ import { FrameHeader } from "@internal/device-session/model/FrameHeader";
 import { FramerUtils } from "@internal/device-session/utils/FramerUtils";
 import { loggerTypes } from "@internal/logger-publisher/di/loggerTypes";
 import { LoggerPublisherService } from "@internal/logger-publisher/service/LoggerPublisherService";
-import { SdkError } from "@root/src/api/Error";
+import { DmkError } from "@root/src/api/Error";
 
 import type { ApduSenderService } from "./ApduSenderService";
 
@@ -98,7 +98,7 @@ export class DefaultApduSenderService implements ApduSenderService {
   private getFrameAtIndex(
     apdu: Uint8Array,
     frameIndex: number,
-  ): Either<SdkError, Frame> {
+  ): Either<DmkError, Frame> {
     const header = this.getFrameHeaderFrom(frameIndex, apdu.length);
     const frameOffset =
       frameIndex * this._frameSize - this.getHeaderSizeSumFrom(frameIndex);

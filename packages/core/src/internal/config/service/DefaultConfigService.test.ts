@@ -45,7 +45,7 @@ describe("DefaultConfigService", () => {
         }),
       );
 
-      expect(await service.getSdkConfig()).toStrictEqual({
+      expect(await service.getDmkConfig()).toStrictEqual({
         name: "DeviceSDK",
         version: "1.0.0-local",
       });
@@ -62,7 +62,7 @@ describe("DefaultConfigService", () => {
         }),
       );
 
-      expect(await service.getSdkConfig()).toStrictEqual({
+      expect(await service.getDmkConfig()).toStrictEqual({
         name: "DeviceSDK",
         version: "1.0.0-remote",
       });
@@ -74,8 +74,8 @@ describe("DefaultConfigService", () => {
       localDataSource.getConfig.mockReturnValue(Left(new JSONParseError()));
       remoteDataSource.getConfig.mockResolvedValue(Left(new JSONParseError()));
 
-      expect(await service.getSdkConfig()).toStrictEqual({
-        name: "DeadSdk",
+      expect(await service.getDmkConfig()).toStrictEqual({
+        name: "DeadDmk",
         version: "0.0.0-dead.1",
       });
     });

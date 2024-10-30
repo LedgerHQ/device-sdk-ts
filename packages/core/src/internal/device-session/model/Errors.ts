@@ -1,6 +1,6 @@
-import { type SdkError } from "@root/src/api/Error";
+import { type DmkError } from "@root/src/api/Error";
 
-export class FramerOverflowError implements SdkError {
+export class FramerOverflowError implements DmkError {
   readonly _tag = "FramerOverflowError";
   originalError?: Error;
   constructor() {
@@ -10,7 +10,7 @@ export class FramerOverflowError implements SdkError {
   }
 }
 
-export class FramerApduError implements SdkError {
+export class FramerApduError implements DmkError {
   readonly _tag = "FramerApduError";
   originalError?: Error;
 
@@ -19,7 +19,7 @@ export class FramerApduError implements SdkError {
   }
 }
 
-export class ReceiverApduError implements SdkError {
+export class ReceiverApduError implements DmkError {
   readonly _tag = "ReceiverApduError";
   originalError: Error;
 
@@ -28,7 +28,7 @@ export class ReceiverApduError implements SdkError {
   }
 }
 
-export class DeviceSessionNotFound implements SdkError {
+export class DeviceSessionNotFound implements DmkError {
   readonly _tag = "DeviceSessionNotFound";
   originalError?: Error;
 
@@ -37,7 +37,7 @@ export class DeviceSessionNotFound implements SdkError {
   }
 }
 
-export class DeviceSessionRefresherError implements SdkError {
+export class DeviceSessionRefresherError implements DmkError {
   readonly _tag = "DeviceSessionRefresherError";
   originalError?: Error;
 

@@ -47,7 +47,7 @@ import {
  *   requiredUserInteraction: UserInteractionRequired.None,
  *  },
  * });
- * sdk.executeDeviceAction({ sessionId: "mySessionId", deviceAction });
+ * dmk.executeDeviceAction({ sessionId: "mySessionId", deviceAction });
  * ```
  */
 export class SendCommandInAppDeviceAction<

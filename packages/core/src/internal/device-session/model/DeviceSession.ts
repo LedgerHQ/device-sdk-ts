@@ -17,7 +17,7 @@ import {
   DeviceSessionStateType,
 } from "@api/device-session/DeviceSessionState";
 import { type DeviceSessionId } from "@api/device-session/types";
-import { type SdkError } from "@api/Error";
+import { type DmkError } from "@api/Error";
 import { type LoggerPublisherService } from "@internal/logger-publisher/service/LoggerPublisherService";
 import { type ManagerApiService } from "@internal/manager-api/service/ManagerApiService";
 import { type InternalConnectedDevice } from "@internal/transport/model/InternalConnectedDevice";
@@ -107,6 +107,7 @@ export class DeviceSession {
       rawApdu,
       options.triggersDisconnection,
     );
+    console.log("errrorOrResponse", rawApdu);
 
     return errorOrResponse.ifRight((response: ApduResponse) => {
       if (CommandUtils.isLockedDeviceResponse(response)) {
@@ -138,7 +139,7 @@ export class DeviceSession {
   executeDeviceAction<
     Output,
     Input,
-    Error extends SdkError,
+    Error extends DmkError,
     IntermediateValue extends DeviceActionIntermediateValue,
   >(
     deviceAction: DeviceAction<Output, Input, Error, IntermediateValue>,

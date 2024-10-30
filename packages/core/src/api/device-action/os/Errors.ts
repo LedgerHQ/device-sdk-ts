@@ -1,6 +1,6 @@
-import { type SdkError } from "@api/Error";
+import { type DmkError } from "@api/Error";
 
-export class DeviceNotOnboardedError implements SdkError {
+export class DeviceNotOnboardedError implements DmkError {
   readonly _tag = "DeviceNotOnboardedError";
   readonly originalError?: Error;
 
@@ -9,7 +9,7 @@ export class DeviceNotOnboardedError implements SdkError {
   }
 }
 
-export class DeviceLockedError implements SdkError {
+export class DeviceLockedError implements DmkError {
   readonly _tag = "DeviceLockedError";
   readonly originalError?: Error;
 
@@ -18,7 +18,7 @@ export class DeviceLockedError implements SdkError {
   }
 }
 
-export class UnknownDAError implements SdkError {
+export class UnknownDAError implements DmkError {
   readonly _tag = "UnknownDAError";
   readonly originalError?: Error;
 

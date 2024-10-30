@@ -6,7 +6,7 @@ import { v4 as uuid } from "uuid";
 
 import { DeviceId } from "@api/device/DeviceModel";
 import { ConnectionType } from "@api/discovery/ConnectionType";
-import { SdkError } from "@api/Error";
+import { DmkError } from "@api/Error";
 import { Transport } from "@api/transport/model/Transport";
 import {
   BuiltinTransports,
@@ -112,7 +112,7 @@ export class WebUsbHidTransport implements Transport {
    * It will return the list of plugged in HID devices to which the user has
    * previously granted access through `navigator.hid.requestDevice()`.
    */
-  private async getDevices(): Promise<Either<SdkError, HIDDevice[]>> {
+  private async getDevices(): Promise<Either<DmkError, HIDDevice[]>> {
     return EitherAsync.liftEither(this.hidApi)
       .map(async (hidApi) => {
         try {
@@ -413,7 +413,7 @@ export class WebUsbHidTransport implements Transport {
    */
   async disconnect(params: {
     connectedDevice: InternalConnectedDevice;
-  }): Promise<Either<SdkError, void>> {
+  }): Promise<Either<DmkError, void>> {
     this._logger.debug("disconnect", { data: { connectedDevice: params } });
 
     const matchingDeviceConnection = Array.from(

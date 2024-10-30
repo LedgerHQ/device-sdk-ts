@@ -1,6 +1,6 @@
-import { type SdkError } from "@api/Error";
+import { type DmkError } from "@api/Error";
 
-export class HttpFetchApiError implements SdkError {
+export class HttpFetchApiError implements DmkError {
   _tag = "FetchError";
   originalError?: unknown;
 

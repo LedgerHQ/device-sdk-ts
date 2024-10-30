@@ -4,7 +4,7 @@ import { Subject } from "rxjs";
 
 import { CommandUtils } from "@api/command/utils/CommandUtils";
 import { ApduResponse } from "@api/device-session/ApduResponse";
-import { SdkError } from "@api/Error";
+import { DmkError } from "@api/Error";
 import { DeviceId } from "@api/types";
 import { ApduReceiverService } from "@internal/device-session/service/ApduReceiverService";
 import { ApduSenderService } from "@internal/device-session/service/ApduSenderService";
@@ -39,7 +39,7 @@ export class UsbHidDeviceConnection implements DeviceConnection {
   /** Callback to notify the connection termination */
   private _onConnectionTerminated: () => void;
   /** Subject to notify the reconnection status */
-  private reconnectionSubject: Subject<"success" | SdkError> = new Subject();
+  private reconnectionSubject: Subject<"success" | DmkError> = new Subject();
   /** Flag to indicate if the connection is waiting for a reconnection */
   private waitingForReconnection = false;
   /** Timeout to wait for the device to reconnect */
@@ -79,7 +79,7 @@ export class UsbHidDeviceConnection implements DeviceConnection {
   async sendApdu(
     apdu: Uint8Array,
     triggersDisconnection?: boolean,
-  ): Promise<Either<SdkError, ApduResponse>> {
+  ): Promise<Either<DmkError, ApduResponse>> {
     this._sendApduSubject = new Subject();
 
     this._logger.debug("Sending APDU", {
@@ -87,7 +87,7 @@ export class UsbHidDeviceConnection implements DeviceConnection {
       tag: "apdu-sender",
     });
 
-    const resultPromise = new Promise<Either<SdkError, ApduResponse>>(
+    const resultPromise = new Promise<Either<DmkError, ApduResponse>>(
       (resolve) => {
         this._sendApduSubject.subscribe({
           next: async (r) => {
@@ -155,10 +155,10 @@ export class UsbHidDeviceConnection implements DeviceConnection {
     });
   }
 
-  private waitForReconnection(): Promise<Either<SdkError, void>> {
+  private waitForReconnection(): Promise<Either<DmkError, void>> {
     if (this.terminated)
       return Promise.resolve(Left(new ReconnectionFailedError()));
-    return new Promise<Either<SdkError, void>>((resolve) => {
+    return new Promise<Either<DmkError, void>>((resolve) => {
       const sub = this.reconnectionSubject.subscribe({
         next: (res) => {
           if (res === "success") {

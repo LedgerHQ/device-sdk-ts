@@ -14,7 +14,7 @@ import { TransportNotSupportedError } from "@internal/transport/model/Errors";
  */
 export type DisconnectUseCaseArgs = {
   /**
-   * Device session identifier from `DeviceSdk.connect`.
+   * Device session identifier from `DeviceManagementKit.connect`.
    */
   sessionId: DeviceSessionId;
 };

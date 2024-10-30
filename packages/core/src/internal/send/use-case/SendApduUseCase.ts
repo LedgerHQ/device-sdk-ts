@@ -12,7 +12,7 @@ import { LoggerPublisherService } from "@internal/logger-publisher/service/Logge
  */
 export type SendApduUseCaseArgs = {
   /**
-   * Device session identifier from `DeviceSdk.connect`.
+   * Device session identifier from `DeviceManagementKit.connect`.
    */
   sessionId: DeviceSessionId;
   /**

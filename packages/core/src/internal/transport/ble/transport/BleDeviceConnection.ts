@@ -2,7 +2,7 @@ import { type Either, Left, Maybe, Nothing, Right } from "purify-ts";
 
 import { CommandUtils } from "@api/command/utils/CommandUtils";
 import { type ApduResponse } from "@api/device-session/ApduResponse";
-import { type SdkError } from "@api/Error";
+import { type DmkError } from "@api/Error";
 import { type ApduReceiverService } from "@internal/device-session/service/ApduReceiverService";
 import { type ApduSenderService } from "@internal/device-session/service/ApduSenderService";
 import { type DefaultApduSenderServiceConstructorArgs } from "@internal/device-session/service/DefaultApduSenderService";
@@ -39,11 +39,11 @@ export class BleDeviceConnection implements DeviceConnection {
   private readonly _apduReceiver: ApduReceiverService;
   private _isDeviceReady: boolean;
   private _sendApduPromiseResolver: Maybe<{
-    resolve(value: Either<SdkError, ApduResponse>): void;
+    resolve(value: Either<DmkError, ApduResponse>): void;
   }>;
   private _settleReconnectionPromiseResolvers: Maybe<{
     resolve(): void;
-    reject(err: SdkError): void;
+    reject(err: DmkError): void;
   }>;
 
   constructor(
@@ -184,14 +184,14 @@ export class BleDeviceConnection implements DeviceConnection {
   async sendApdu(
     apdu: Uint8Array,
     triggersDisconnection?: boolean,
-  ): Promise<Either<SdkError, ApduResponse>> {
+  ): Promise<Either<DmkError, ApduResponse>> {
     if (!this._isDeviceReady) {
       return Promise.resolve(
         Left(new DeviceNotInitializedError("Unknown MTU")),
       );
     }
     // Create a promise that would be resolved once the response had been received
-    const resultPromise = new Promise<Either<SdkError, ApduResponse>>(
+    const resultPromise = new Promise<Either<DmkError, ApduResponse>>(
       (resolve) => {
         this._sendApduPromiseResolver = Maybe.of({
           resolve,
@@ -251,11 +251,11 @@ export class BleDeviceConnection implements DeviceConnection {
    *
    * @private
    */
-  private setupWaitForReconnection(): Promise<Either<SdkError, void>> {
-    return new Promise<Either<SdkError, void>>((resolve) => {
+  private setupWaitForReconnection(): Promise<Either<DmkError, void>> {
+    return new Promise<Either<DmkError, void>>((resolve) => {
       this._settleReconnectionPromiseResolvers = Maybe.of({
         resolve: () => resolve(Right(undefined)),
-        reject: (error: SdkError) => resolve(Left(error)),
+        reject: (error: DmkError) => resolve(Left(error)),
       });
     });
   }

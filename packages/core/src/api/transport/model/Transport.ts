@@ -2,7 +2,7 @@ import { type Either } from "purify-ts";
 import { type Observable } from "rxjs";
 
 import { type DeviceId } from "@api/device/DeviceModel";
-import { type SdkError } from "@api/Error";
+import { type DmkError } from "@api/Error";
 import { type TransportIdentifier } from "@api/transport/model/TransportIdentifier";
 import { type ConnectError } from "@internal/transport/model/Errors";
 import { type InternalConnectedDevice } from "@internal/transport/model/InternalConnectedDevice";
@@ -40,5 +40,5 @@ export interface Transport {
 
   disconnect(params: {
     connectedDevice: InternalConnectedDevice;
-  }): Promise<Either<SdkError, void>>;
+  }): Promise<Either<DmkError, void>>;
 }

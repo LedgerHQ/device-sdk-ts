@@ -11,17 +11,17 @@ import { StubUseCase } from "@root/src/di.stub";
 
 import { commandTypes } from "./command/di/commandTypes";
 import { ConsoleLogger } from "./logger-subscriber/service/ConsoleLogger";
-import { DeviceSdk } from "./DeviceSdk";
+import { DeviceManagementKit } from "./DeviceManagementKit";
 
 jest.mock("./logger-subscriber/service/ConsoleLogger");
 
-let sdk: DeviceSdk;
+let dmk: DeviceManagementKit;
 let logger: ConsoleLogger;
-describe("DeviceSdk", () => {
+describe("DeviceManagementKit", () => {
   describe("clean", () => {
     beforeEach(() => {
       logger = new ConsoleLogger();
-      sdk = new DeviceSdk({
+      dmk = new DeviceManagementKit({
         stub: false,
         loggers: [logger],
         config: {
@@ -32,46 +32,46 @@ describe("DeviceSdk", () => {
     });
 
     it("should create an instance", () => {
-      expect(sdk).toBeDefined();
-      expect(sdk).toBeInstanceOf(DeviceSdk);
+      expect(dmk).toBeDefined();
+      expect(dmk).toBeInstanceOf(DeviceManagementKit);
     });
 
     it("should return a clean `version`", async () => {
-      expect(await sdk.getVersion()).toBe(pkg.version);
+      expect(await dmk.getVersion()).toBe(pkg.version);
     });
 
     it("should have startDiscovery method", () => {
-      expect(sdk.startDiscovering).toBeDefined();
+      expect(dmk.startDiscovering).toBeDefined();
     });
 
     it("should have stopDiscovery method", () => {
-      expect(sdk.stopDiscovering).toBeDefined();
+      expect(dmk.stopDiscovering).toBeDefined();
     });
 
     it("should have connect method", () => {
-      expect(sdk.connect).toBeDefined();
+      expect(dmk.connect).toBeDefined();
     });
 
     it("should have sendApdu method", () => {
-      expect(sdk.sendApdu).toBeDefined();
+      expect(dmk.sendApdu).toBeDefined();
     });
 
     it("should have getConnectedDevice method", () => {
-      expect(sdk.getConnectedDevice).toBeDefined();
+      expect(dmk.getConnectedDevice).toBeDefined();
     });
 
     it("should have sendCommand method", () => {
-      expect(sdk.sendCommand).toBeDefined();
+      expect(dmk.sendCommand).toBeDefined();
     });
 
     it("should have listDeviceSessions method", () => {
-      expect(sdk.listDeviceSessions).toBeDefined();
+      expect(dmk.listDeviceSessions).toBeDefined();
     });
   });
 
   describe("stubbed", () => {
     beforeEach(() => {
-      sdk = new DeviceSdk({
+      dmk = new DeviceManagementKit({
         stub: true,
         loggers: [],
         config: {
@@ -81,21 +81,21 @@ describe("DeviceSdk", () => {
       });
     });
 
-    it("should create a stubbed sdk", () => {
-      expect(sdk).toBeDefined();
-      expect(sdk).toBeInstanceOf(DeviceSdk);
+    it("should create a stubbed dmk", () => {
+      expect(dmk).toBeDefined();
+      expect(dmk).toBeInstanceOf(DeviceManagementKit);
     });
 
     it("should return a stubbed config", () => {
       expect(
-        sdk.container.get<LocalConfigDataSource>(
+        dmk.container.get<LocalConfigDataSource>(
           configTypes.LocalConfigDataSource,
         ),
       ).toBeInstanceOf(StubLocalConfigDataSource);
     });
 
     it("should return a stubbed version", async () => {
-      expect(await sdk.getVersion()).toBe("0.0.0-stub.1");
+      expect(await dmk.getVersion()).toBe("0.0.0-stub.1");
     });
 
     it.each([
@@ -111,7 +111,7 @@ describe("DeviceSdk", () => {
     ])(
       "should have %p use case",
       (diSymbol: interfaces.ServiceIdentifier<StubUseCase>) => {
-        const uc = sdk.container.get<StubUseCase>(diSymbol);
+        const uc = dmk.container.get<StubUseCase>(diSymbol);
         expect(uc).toBeInstanceOf(StubUseCase);
         expect(uc.execute()).toBe("stub");
       },

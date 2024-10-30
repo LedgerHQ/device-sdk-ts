@@ -6,7 +6,7 @@ import { UnknownDAError } from "@api/device-action/os/Errors";
 import { GetDeviceStatusDeviceAction } from "@api/device-action/os/GetDeviceStatus/GetDeviceStatusDeviceAction";
 import { GoToDashboardDeviceAction } from "@api/device-action/os/GoToDashboard/GoToDashboardDeviceAction";
 import { ListAppsDeviceAction } from "@api/device-action/os/ListApps/ListAppsDeviceAction";
-import { type SdkError } from "@api/Error";
+import { type DmkError } from "@api/Error";
 
 import { type BTC_APP } from "./data";
 
@@ -76,7 +76,7 @@ export const setupGoToDashboardMock = (error: boolean = false) => {
 
 export const setupGetDeviceStatusMock = (
   outputs: ReadonlyArray<
-    { currentApp: string; currentAppVersion: string } | SdkError
+    { currentApp: string; currentAppVersion: string } | DmkError
   > = [
     {
       currentApp: "BOLOS",

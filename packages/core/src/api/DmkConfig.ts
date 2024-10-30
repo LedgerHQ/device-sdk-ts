@@ -1,4 +1,4 @@
-export type SdkConfig = {
+export type DmkConfig = {
   mockUrl: string;
   managerApiUrl: string;
 };

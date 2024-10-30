@@ -4,7 +4,7 @@ import {
   type InternalApi,
 } from "@api/device-action/DeviceAction";
 import { type DeviceActionState } from "@api/device-action/model/DeviceActionState";
-import { type SdkError } from "@api/Error";
+import { type DmkError } from "@api/Error";
 
 /**
  * Test that the states emitted by a device action match the expected states.
@@ -16,7 +16,7 @@ import { type SdkError } from "@api/Error";
 export function testDeviceActionStates<
   Output,
   Input,
-  Error extends SdkError,
+  Error extends DmkError,
   IntermediateValue extends DeviceActionIntermediateValue,
 >(
   deviceAction: DeviceAction<Output, Input, Error, IntermediateValue>,

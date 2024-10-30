@@ -1,4 +1,4 @@
-export interface SdkError {
+export interface DmkError {
   readonly _tag: string;
   readonly originalError?: unknown;
   message?: string;
@@ -35,7 +35,7 @@ export abstract class DeviceExchangeError<SpecificErrorCodes = void> {
   }
 }
 
-export class UnknownDeviceExchangeError implements SdkError {
+export class UnknownDeviceExchangeError implements DmkError {
   readonly _tag = "UnknownDeviceExchangeError";
   readonly originalError?: unknown;
   readonly message: string;

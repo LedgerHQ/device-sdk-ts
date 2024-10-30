@@ -5,7 +5,7 @@ import { v4 as uuid } from "uuid";
 
 import { DeviceId } from "@api/device/DeviceModel";
 import { ConnectionType } from "@api/discovery/ConnectionType";
-import { SdkError } from "@api/Error";
+import { DmkError } from "@api/Error";
 import { Transport } from "@api/transport/model/Transport";
 import {
   BuiltinTransports,
@@ -397,7 +397,7 @@ export class WebBleTransport implements Transport {
    */
   async disconnect(params: {
     connectedDevice: InternalConnectedDevice;
-  }): Promise<Either<SdkError, void>> {
+  }): Promise<Either<DmkError, void>> {
     // retrieve internal device
     const maybeInternalDevice = Maybe.fromNullable(
       this._internalDevicesById.get(params.connectedDevice.id),

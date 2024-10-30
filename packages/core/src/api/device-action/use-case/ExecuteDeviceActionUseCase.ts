@@ -5,7 +5,7 @@ import {
   DeviceActionIntermediateValue,
   ExecuteDeviceActionReturnType,
 } from "@api/device-action/DeviceAction";
-import { SdkError } from "@api/Error";
+import { DmkError } from "@api/Error";
 import { deviceSessionTypes } from "@internal/device-session/di/deviceSessionTypes";
 import type { DeviceSessionService } from "@internal/device-session/service/DeviceSessionService";
 import { loggerTypes } from "@internal/logger-publisher/di/loggerTypes";
@@ -14,7 +14,7 @@ import { LoggerPublisherService } from "@internal/logger-publisher/service/Logge
 export type ExecuteDeviceActionUseCaseArgs<
   Output,
   Input,
-  Error extends SdkError,
+  Error extends DmkError,
   IntermediateValue extends DeviceActionIntermediateValue,
 > = {
   /**
@@ -53,7 +53,7 @@ export class ExecuteDeviceActionUseCase {
    */
   execute<
     Output,
-    Error extends SdkError,
+    Error extends DmkError,
     IntermediateValue extends DeviceActionIntermediateValue,
     Input,
   >({
