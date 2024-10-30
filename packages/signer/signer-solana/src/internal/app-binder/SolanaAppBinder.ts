@@ -1,5 +1,5 @@
 import {
-  DeviceSdk,
+  DeviceManagementKit,
   type DeviceSessionId,
   SendCommandInAppDeviceAction,
   UserInteractionRequired,
@@ -18,7 +18,7 @@ import { GetPubKeyCommand } from "./command/GetPubKeyCommand";
 @injectable()
 export class SolanaAppBinder {
   constructor(
-    @inject(externalTypes.Sdk) private sdk: DeviceSdk,
+    @inject(externalTypes.Dmk) private dmk: DeviceManagementKit,
     @inject(externalTypes.SessionId) private sessionId: DeviceSessionId,
   ) {}
 
@@ -26,7 +26,7 @@ export class SolanaAppBinder {
     derivationPath: string;
     checkOnDevice: boolean;
   }): GetAddressDAReturnType {
-    return this.sdk.executeDeviceAction({
+    return this.dmk.executeDeviceAction({
       sessionId: this.sessionId,
       deviceAction: new SendCommandInAppDeviceAction({
         input: {

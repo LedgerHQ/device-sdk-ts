@@ -1,4 +1,4 @@
 export const externalTypes = {
-  Sdk: Symbol.for("Sdk"),
+  Dmk: Symbol.for("Dmk"),
   SessionId: Symbol.for("SessionId"),
 };
