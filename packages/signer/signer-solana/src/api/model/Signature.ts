@@ -1,1 +1,1 @@
-export type Signature = Uint8Array[64];
+export type Signature = Uint8Array;
