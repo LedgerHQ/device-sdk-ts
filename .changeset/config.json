@@ -12,5 +12,5 @@
   "access": "public",
   "baseBranch": "develop",
   "updateInternalDependencies": "patch",
-  "ignore": ["@ledgerhq/keyring-btc"]
+  "ignore": ["@ledgerhq/device-signer-kit-btc"]
 }

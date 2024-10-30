@@ -1,8 +1,8 @@
-# Ledger Ethereum Keyring Implementation
+# Ledger Ethereum Signer Implementation
 
 ## Introduction
 
-This module provides the implementation of the Ledger Ethereum keyring of the Device Management Kit. It enables interaction with the Ethereum application on a Ledger device including:
+This module provides the implementation of the Ledger Ethereum signer of the Device Management Kit. It enables interaction with the Ethereum application on a Ledger device including:
 
 - Retrieving the Ethereum address using a given derivation path;
 - Signing an Ethereum transaction ([Clear Signing](https://www.ledger.com/academy/topics/ledgersolutions/what-is-clear-signing));
@@ -11,7 +11,7 @@ This module provides the implementation of the Ledger Ethereum keyring of the De
 
 ### How it works
 
-The Ledger Ethereum Keyring utilizes the advanced capabilities of the Ledger device to provide secure operations for end users. It takes advantage of the interface provided by the Device Management Kit to establish communication with the Ledger device and execute various operations, including signing transactions. The communication with the Ledger device is performed using [APDU](https://en.wikipedia.org/wiki/Smart_card_application_protocol_data_unit)s (Application Protocol Data Units), which are encapsulated within the `Command` object. These commands are then organized into tasks, allowing for the execution of complex operations with one or more APDUs. The tasks are further encapsulated within `DeviceAction` objects to handle different real-world scenarios. Finally, the Keyring exposes dedicated and independent use cases that can be directly utilized by end users.
+The Ledger Ethereum Signer utilizes the advanced capabilities of the Ledger device to provide secure operations for end users. It takes advantage of the interface provided by the Device Management Kit to establish communication with the Ledger device and execute various operations, including signing transactions. The communication with the Ledger device is performed using [APDU](https://en.wikipedia.org/wiki/Smart_card_application_protocol_data_unit)s (Application Protocol Data Units), which are encapsulated within the `Command` object. These commands are then organized into tasks, allowing for the execution of complex operations with one or more APDUs. The tasks are further encapsulated within `DeviceAction` objects to handle different real-world scenarios. Finally, the Signer exposes dedicated and independent use cases that can be directly utilized by end users.
 
 ### Installation
 
@@ -27,32 +27,32 @@ npm install @ledgerhq/device-signer-kit-ethereum
 
 ### Setting up
 
-To initialize an Ethereum keyring instance, you need a Ledger Device Management Kit instance and the ID of the session of the connected device. Use the `KeyringEthBuilder` along with the [Context Module](https://github.com/LedgerHQ/device-sdk-ts/tree/develop/packages/signer/context-module) by default developed by Ledger:
+To initialize an Ethereum signer instance, you need a Ledger Device Management Kit instance and the ID of the session of the connected device. Use the `SignerEthBuilder` along with the [Context Module](https://github.com/LedgerHQ/device-sdk-ts/tree/develop/packages/signer/context-module) by default developed by Ledger:
 
 ```typescript
-// Initialize an Ethereum keyring instance using default context module
-const keyringEth = new KeyringEthBuilder({ sdk, sessionId }).build();
+// Initialize an Ethereum signer instance using default context module
+const signerEth = new SignerEthBuilder({ sdk, sessionId }).build();
 ```
 
 You can also configure the context module yourself:
 
 ```typescript
-// Initialize an Ethereum keyring instance using customized context module
-const keyringEth = new KeyringEthBuilder({ sdk, sessionId })
+// Initialize an Ethereum signer instance using customized context module
+const signerEth = new SignerEthBuilder({ sdk, sessionId })
   .withContextModule(customContextModule)
   .build();
 ```
 
 ### Use Cases
 
-The `KeyringEthBuilder.build()` method will return a `KeyringEth` instance that exposes 4 dedicated methods, each of which calls an independent use case. Each use case will return an object that contains an observable and a method called `cancel`.
+The `SignerEthBuilder.build()` method will return a `SignerEth` instance that exposes 4 dedicated methods, each of which calls an independent use case. Each use case will return an object that contains an observable and a method called `cancel`.
 
 #### Use Case 1: Get Address
 
 This method allows users to retrieve the Ethereum address according to given `derivationPath`.
 
 ```typescript
-const { observable, cancel } = keyringETH.getAddress(derivationPath, options);
+const { observable, cancel } = signerEth.getAddress(derivationPath, options);
 ```
 
 **Parameters**
@@ -180,7 +180,7 @@ const { observable, cancel } = keyringETH.getAddress(derivationPath, options);
 This method enables users to securely sign transactions using clear signing on Ledger devices.
 
 ```typescript
-const { observable, cancel } = keyringETH.signTransaction(
+const { observable, cancel } = signerEth.signTransaction(
   derivationPath,
   transaction,
   options,
@@ -316,7 +316,7 @@ const { observable, cancel } = keyringETH.signTransaction(
 This method allows users to sign a text string that is displayed on Ledger devices.
 
 ```typescript
-const { observable, cancel } = keyringETH.signMessage(derivationPath, message);
+const { observable, cancel } = signerEth.signMessage(derivationPath, message);
 ```
 
 **Parameters**
@@ -433,7 +433,7 @@ const { observable, cancel } = keyringETH.signMessage(derivationPath, message);
 This method enables users to sign an Ethereum message following the [EIP-712](https://eips.ethereum.org/EIPS/eip-712) specification.
 
 ```typescript
-const { observable, cancel } = keyringETH.signTypedData(
+const { observable, cancel } = signerEth.signTypedData(
   derivationPath,
   typedData,
 );
@@ -573,4 +573,4 @@ const { observable, cancel } = keyringETH.signTypedData(
 
 ## Example
 
-We encourage you to explore the Ethereum Keyring by trying it out in our online [sample application](https://app.devicesdk.ledger-test.com/). Experience how it works and see its capabilities in action. Of course, you will need a Ledger device connected.
+We encourage you to explore the Ethereum Signer by trying it out in our online [sample application](https://app.devicesdk.ledger-test.com/). Experience how it works and see its capabilities in action. Of course, you will need a Ledger device connected.

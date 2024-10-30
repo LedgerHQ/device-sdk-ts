@@ -88,7 +88,7 @@ A brief description of this project packages:
 | @ledgerhq/jest-config-dsdk             | packages/config/jest           | internal package which contains jest shared config. Used by `preset: "@ledgerhq/jest-config-dsdk"` in `jest.config.ts`                   |
 | @ledgerhq/tsconfig-dsdk                | packages/config/typescript     | internal package which contains typescript shared config. Used by `"extends": "@ledgerhq/tsconfig-dsdk/tsconfig.sdk"` in `tsconfig.json` |
 | @ledgerhq/device-management-kit        | packages/core                  | external package that contains the core of the Web Device Management Kit                                                                 |
-| @ledgerhq/device-signer-kit-ethereum   | packages/signer/keyring-eth    | external package that contains device ethereum coin application dedicated handlers                                                       |
+| @ledgerhq/device-signer-kit-ethereum   | packages/signer/signer-eth     | external package that contains device ethereum coin application dedicated handlers                                                       |
 | @ledgerhq/device-signer-kit-solana     | packages/signer/signer-solana  | external package that contains device solana coin application dedicated handlers                                                         |
 | @ledgerhq/device-management-kit-flipper-plugin-client     | packages/flipper-plugin-client | external package that contains [flipper](https://github.com/facebook/flipper) logger for Device Management Kit                                                              |
 
