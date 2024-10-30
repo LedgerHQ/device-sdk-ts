@@ -1,5 +1,4 @@
 import { type SdkError } from "@api/Error";
-import { type DeviceAlreadyConnectedError } from "@internal/transport/ble/model/Errors";
 
 export type ConnectError =
   | UnknownDeviceError
@@ -20,6 +19,13 @@ export class GeneralSdkError implements SdkError {
 
 export class DeviceNotRecognizedError extends GeneralSdkError {
   override readonly _tag = "DeviceNotRecognizedError";
+  constructor(readonly err?: unknown) {
+    super(err);
+  }
+}
+
+export class DeviceAlreadyConnectedError extends GeneralSdkError {
+  override readonly _tag = "DeviceAlreadyDiscoveredError";
   constructor(readonly err?: unknown) {
     super(err);
   }

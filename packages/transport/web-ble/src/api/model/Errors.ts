@@ -1,4 +1,4 @@
-import { GeneralSdkError } from "@api/transport/model/Errors";
+import { GeneralSdkError } from "@ledgerhq/device-management-kit";
 
 export class BleTransportNotSupportedError extends GeneralSdkError {
   override readonly _tag = "BleTransportNotSupportedError";
@@ -8,13 +8,6 @@ export class BleTransportNotSupportedError extends GeneralSdkError {
 }
 export class BleDeviceGattServerError extends GeneralSdkError {
   override readonly _tag = "BleDeviceGattServerError";
-  constructor(readonly err?: unknown) {
-    super(err);
-  }
-}
-
-export class DeviceAlreadyConnectedError extends GeneralSdkError {
-  override readonly _tag = "DeviceAlreadyDiscoveredError";
   constructor(readonly err?: unknown) {
     super(err);
   }

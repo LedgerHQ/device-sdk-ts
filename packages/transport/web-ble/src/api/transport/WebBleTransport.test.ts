@@ -1,38 +1,56 @@
-import { Left, Right } from "purify-ts";
-
-import { type DeviceModel } from "@api/device/DeviceModel";
-import { StaticDeviceModelDataSource } from "@api/device-model/data/StaticDeviceModelDataSource";
 import {
+  type ApduReceiverServiceFactory,
+  type ApduSenderServiceFactory,
+  type DeviceModel,
+  type LoggerPublisherService,
+  type LoggerSubscriberService,
   NoAccessibleDeviceError,
   OpeningConnectionError,
+  StaticDeviceModelDataSource,
+  type TransportDiscoveredDevice,
   UnknownDeviceError,
-} from "@api/transport/model/Errors";
-import { type TransportDiscoveredDevice } from "@api/transport/model/TransportDiscoveredDevice";
-import { DefaultLoggerPublisherService } from "@internal/logger-publisher/service/DefaultLoggerPublisherService";
-import { RECONNECT_DEVICE_TIMEOUT } from "@internal/transport/ble/data/WebBleConfig";
-import { bleDeviceStubBuilder } from "@internal/transport/ble/model/BleDevice.stub";
-import { BleTransportNotSupportedError } from "@internal/transport/ble/model/Errors";
-import { BleDeviceGattServerError } from "@internal/transport/ble/model/Errors";
-import { bleDeviceConnectionFactoryStubBuilder } from "@internal/transport/ble/service/BleDeviceConnectionFactory.stub";
+} from "@ledgerhq/device-management-kit";
+import { Left, Right } from "purify-ts";
+
+import { RECONNECT_DEVICE_TIMEOUT } from "@api/data/WebBleConfig";
+import { bleDeviceStubBuilder } from "@api/model/BleDevice.stub";
+import { BleTransportNotSupportedError } from "@api/model/Errors";
+import { BleDeviceGattServerError } from "@api/model/Errors";
 
 import { WebBleTransport } from "./WebBleTransport";
 
-jest.mock("@api/logger-publisher/service/LoggerPublisherService");
+class LoggerPublisherServiceStub implements LoggerPublisherService {
+  subscribers: LoggerSubscriberService[] = [];
+  tag: string;
+  constructor(subscribers: LoggerSubscriberService[], tag: string) {
+    this.subscribers = subscribers;
+    this.tag = tag;
+  }
+  error = jest.fn();
+  warn = jest.fn();
+  info = jest.fn();
+  debug = jest.fn();
+}
 
 // Our StaticDeviceModelDataSource can directly be used in our unit tests
 const bleDeviceModelDataSource = new StaticDeviceModelDataSource();
-const logger = new DefaultLoggerPublisherService([], "web-ble");
+const logger = new LoggerPublisherServiceStub([], "web-ble");
 
 const stubDevice: BluetoothDevice = bleDeviceStubBuilder();
 
 describe("WebBleTransport", () => {
   let transport: WebBleTransport;
+  let apduReceiverServiceFactoryStub: ApduReceiverServiceFactory;
+  let apduSenderServiceFactoryStub: ApduSenderServiceFactory;
 
   beforeEach(() => {
+    apduReceiverServiceFactoryStub = jest.fn();
+    apduSenderServiceFactoryStub = jest.fn();
     transport = new WebBleTransport(
       bleDeviceModelDataSource,
       () => logger,
-      bleDeviceConnectionFactoryStubBuilder(),
+      apduSenderServiceFactoryStub,
+      apduReceiverServiceFactoryStub,
     );
     jest.useFakeTimers();
   });

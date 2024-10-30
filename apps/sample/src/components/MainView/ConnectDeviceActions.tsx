@@ -3,6 +3,7 @@ import {
   BuiltinTransports,
   type SdkError,
 } from "@ledgerhq/device-management-kit";
+import { webBleIdentifier } from "@ledgerhq/device-transport-kit-web-ble";
 import { webHidIdentifier } from "@ledgerhq/device-transport-kit-web-hid";
 import { Button, Flex } from "@ledgerhq/react-ui";
 import styled from "styled-components";
@@ -86,14 +87,14 @@ export const ConnectDeviceActions = ({
       >
         Select a USB device
       </ConnectButton>
-      {/* <ConnectButton
-        onClick={() => onSelectDeviceClicked(BuiltinTransports.BLE)}
+      <ConnectButton
+        onClick={() => onSelectDeviceClicked(webBleIdentifier)}
         variant="main"
         backgroundColor="main"
         size="large"
       >
         Select a BLE device
-      </ConnectButton> */}
+      </ConnectButton>
     </Flex>
   );
 };

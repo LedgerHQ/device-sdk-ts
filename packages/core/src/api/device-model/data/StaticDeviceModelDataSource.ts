@@ -1,8 +1,10 @@
 import { injectable } from "inversify";
 
 import { DeviceModelId } from "@api/device/DeviceModel";
-import { TransportDeviceModel } from "@api/device-model/model/DeviceModel";
-import { BleDeviceInfos } from "@internal/transport/ble/model/BleDeviceInfos";
+import {
+  BleDeviceInfos,
+  TransportDeviceModel,
+} from "@api/device-model/model/DeviceModel";
 
 import { DeviceModelDataSource } from "./DeviceModelDataSource";
 

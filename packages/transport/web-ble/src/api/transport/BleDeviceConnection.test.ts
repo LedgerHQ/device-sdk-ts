@@ -1,13 +1,16 @@
+import {
+  type ApduReceiverService,
+  ApduResponse,
+  type ApduSenderService,
+  defaultApduReceiverServiceStubBuilder,
+  defaultApduSenderServiceStubBuilder,
+  DeviceNotInitializedError,
+  type LoggerPublisherService,
+  type LoggerSubscriberService,
+} from "@ledgerhq/device-management-kit";
 import { Left, Right } from "purify-ts";
 
-import { type ApduReceiverService } from "@api/device-session/service/ApduReceiverService";
-import { type ApduSenderService } from "@api/device-session/service/ApduSenderService";
-import { defaultApduReceiverServiceStubBuilder } from "@api/device-session/service/DefaultApduReceiverService.stub";
-import { defaultApduSenderServiceStubBuilder } from "@api/device-session/service/DefaultApduSenderService.stub";
-import { DeviceNotInitializedError } from "@api/transport/model/Errors";
-import { DefaultLoggerPublisherService } from "@internal/logger-publisher/service/DefaultLoggerPublisherService";
-import { bleCharacteristicStubBuilder } from "@internal/transport/ble/model/BleDevice.stub";
-import { ApduResponse } from "@root/src";
+import { bleCharacteristicStubBuilder } from "@api/model/BleDevice.stub";
 
 import { BleDeviceConnection, type DataViewEvent } from "./BleDeviceConnection";
 
@@ -19,12 +22,25 @@ const EMPTY_APDU_RESPONSE = Uint8Array.from([
   0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 ]);
 
+class LoggerPublisherServiceStub implements LoggerPublisherService {
+  subscribers: LoggerSubscriberService[] = [];
+  tag: string;
+  constructor(subscribers: LoggerSubscriberService[], tag: string) {
+    this.subscribers = subscribers;
+    this.tag = tag;
+  }
+  error = jest.fn();
+  warn = jest.fn();
+  info = jest.fn();
+  debug = jest.fn();
+}
+
 describe("BleDeviceConnection", () => {
   let writeCharacteristic: BluetoothRemoteGATTCharacteristic;
   let notifyCharacteristic: BluetoothRemoteGATTCharacteristic;
   let apduSenderFactory: () => ApduSenderService;
   let apduReceiverFactory: () => ApduReceiverService;
-  const logger = (tag: string) => new DefaultLoggerPublisherService([], tag);
+  const logger = (tag: string) => new LoggerPublisherServiceStub([], tag);
 
   beforeEach(() => {
     writeCharacteristic = bleCharacteristicStubBuilder();

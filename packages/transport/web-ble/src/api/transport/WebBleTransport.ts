@@ -1,36 +1,34 @@
+import {
+  ApduReceiverServiceFactory,
+  ApduSenderServiceFactory,
+  BleDeviceInfos,
+  ConnectError,
+  type ConnectionType,
+  DeviceAlreadyConnectedError,
+  DeviceId,
+  type DeviceModelDataSource,
+  DeviceNotRecognizedError,
+  type DisconnectHandler,
+  type LoggerPublisherService,
+  NoAccessibleDeviceError,
+  OpeningConnectionError,
+  SdkError,
+  type Transport,
+  TransportConnectedDevice,
+  TransportDiscoveredDevice,
+  TransportIdentifier,
+  UnknownDeviceError,
+} from "@ledgerhq/device-management-kit";
 import { Either, EitherAsync, Left, Maybe, Right } from "purify-ts";
 import { from, Observable, switchMap, timer } from "rxjs";
 import { v4 as uuid } from "uuid";
 
-import { DeviceId } from "@api/device/DeviceModel";
-import type { DeviceModelDataSource } from "@api/device-model/data/DeviceModelDataSource";
-import { ConnectionType } from "@api/discovery/ConnectionType";
-import { SdkError } from "@api/Error";
-import type { LoggerPublisherService } from "@api/logger-publisher/service/LoggerPublisherService";
-import { DisconnectHandler } from "@api/transport/model/DeviceConnection";
-import {
-  ConnectError,
-  DeviceNotRecognizedError,
-  NoAccessibleDeviceError,
-  OpeningConnectionError,
-  UnknownDeviceError,
-} from "@api/transport/model/Errors";
-import { Transport } from "@api/transport/model/Transport";
-import { TransportConnectedDevice } from "@api/transport/model/TransportConnectedDevice";
-import { TransportDiscoveredDevice } from "@api/transport/model/TransportDiscoveredDevice";
-import {
-  BuiltinTransports,
-  TransportIdentifier,
-} from "@api/transport/model/TransportIdentifier";
-import { RECONNECT_DEVICE_TIMEOUT } from "@internal/transport/ble/data/WebBleConfig";
-import { BleDeviceInfos } from "@internal/transport/ble/model/BleDeviceInfos";
+import { RECONNECT_DEVICE_TIMEOUT } from "@api/data/WebBleConfig";
 import {
   BleDeviceGattServerError,
   BleTransportNotSupportedError,
-  DeviceAlreadyConnectedError,
-} from "@internal/transport/ble/model/Errors";
-import { BleDeviceConnectionFactory } from "@internal/transport/ble/service/BleDeviceConnectionFactory";
-import { BleDeviceConnection } from "@internal/transport/ble/transport/BleDeviceConnection";
+} from "@api/model/Errors";
+import { BleDeviceConnection } from "@api/transport/BleDeviceConnection";
 
 type PromptDeviceAccessError =
   | NoAccessibleDeviceError
@@ -44,26 +42,31 @@ type WebBleInternalDevice = {
   bleGattService: BluetoothRemoteGATTService;
   discoveredDevice: TransportDiscoveredDevice;
 };
+
+export const webBleIdentifier: TransportIdentifier = "WEB-BLE";
+
 export class WebBleTransport implements Transport {
-  public name = "WEB-BLE";
   private readonly _connectedDevices: Array<BluetoothDevice>;
   private readonly _internalDevicesById: Map<DeviceId, WebBleInternalDevice>;
   private _deviceConnectionById: Map<DeviceId, BleDeviceConnection>;
   private _disconnectionHandlersById: Map<DeviceId, () => void>;
   private _logger: LoggerPublisherService;
   private readonly connectionType: ConnectionType = "BLE";
-  private readonly identifier: TransportIdentifier = BuiltinTransports.BLE;
+  private readonly identifier: TransportIdentifier = webBleIdentifier;
 
   constructor(
-    private _deviceModelDataSource: DeviceModelDataSource,
-    loggerServiceFactory: (tag: string) => LoggerPublisherService,
-    private _bleDeviceConnectionFactory: BleDeviceConnectionFactory,
+    private readonly _deviceModelDataSource: DeviceModelDataSource,
+    private readonly _loggerServiceFactory: (
+      tag: string,
+    ) => LoggerPublisherService,
+    private readonly _apduSenderFactory: ApduSenderServiceFactory,
+    private readonly _apduReceiverFactory: ApduReceiverServiceFactory,
   ) {
     this._connectedDevices = [];
     this._internalDevicesById = new Map();
     this._deviceConnectionById = new Map();
     this._disconnectionHandlersById = new Map();
-    this._logger = loggerServiceFactory("WebBleTransport");
+    this._logger = _loggerServiceFactory("WebBleTransport");
   }
 
   /**
@@ -312,11 +315,19 @@ export class WebBleTransport implements Transport {
           internalDevice.bleDeviceInfos.notifyUuid,
         ),
       ]);
-      const deviceConnection = this._bleDeviceConnectionFactory.create(
-        writeCharacteristic,
-        notifyCharacteristic,
+
+      const deviceConnection = new BleDeviceConnection(
+        {
+          writeCharacteristic,
+          notifyCharacteristic,
+          apduReceiverFactory: this._apduReceiverFactory,
+          apduSenderFactory: this._apduSenderFactory,
+        },
+        this._loggerServiceFactory,
       );
+
       await deviceConnection.setup();
+
       const connectedDevice = new TransportConnectedDevice({
         sendApdu: (apdu, triggersDisconnection) =>
           deviceConnection.sendApdu(apdu, triggersDisconnection),
@@ -325,20 +336,27 @@ export class WebBleTransport implements Transport {
         type: this.connectionType,
         transport: this.identifier,
       });
+
       internalDevice.bleDevice.ongattserverdisconnected =
         this._getDeviceDisconnectedHandler(internalDevice, deviceConnection);
+
       this._deviceConnectionById.set(internalDevice.id, deviceConnection);
       this._disconnectionHandlersById.set(internalDevice.id, () => {
         this.disconnect({ connectedDevice }).then(() => onDisconnect(deviceId));
       });
+
       this._connectedDevices.push(internalDevice.bleDevice);
+
       return Right(connectedDevice);
     } catch (error) {
       await internalDevice.bleDevice.forget();
+
       this._internalDevicesById.delete(deviceId);
+
       this._logger.error("Error while getting characteristics", {
         data: { error },
       });
+
       return Left(new OpeningConnectionError(error));
     }
   }
@@ -366,12 +384,16 @@ export class WebBleTransport implements Transport {
           disconnectHandler.map((handler) => handler());
         },
       );
+
       // connect to the navigator device
       await internalDevice.bleDevice.gatt?.connect();
+
       // cancel disconnection timeout
       disconnectObserver.unsubscribe();
+
       // retrieve new ble characteristics
       const service = await this.getBleGattService(internalDevice.bleDevice);
+
       if (service.isRight()) {
         const [writeC, notifyC] = await Promise.all([
           service
@@ -381,6 +403,7 @@ export class WebBleTransport implements Transport {
             .extract()
             .getCharacteristic(internalDevice.bleDeviceInfos.notifyUuid),
         ]);
+
         // reconnect device connection
         await deviceConnection.reconnect(writeC, notifyC);
       }
@@ -406,6 +429,7 @@ export class WebBleTransport implements Transport {
 
     if (maybeInternalDevice.isNothing()) {
       this._logger.error(`Unknown device ${params.connectedDevice.id}`);
+
       return Promise.resolve(
         Left(
           new UnknownDeviceError(`Unknown device ${params.connectedDevice.id}`),
@@ -415,12 +439,14 @@ export class WebBleTransport implements Transport {
 
     maybeInternalDevice.map((device) => {
       const { bleDevice } = device;
+
       // retrieve device connection and disconnect it
       const maybeDeviceConnection = Maybe.fromNullable(
         this._deviceConnectionById.get(device.id),
       );
 
       maybeDeviceConnection.map((dConnection) => dConnection.disconnect());
+
       // disconnect device gatt server
       if (bleDevice.gatt?.connected) {
         bleDevice.gatt.disconnect();
@@ -429,6 +455,7 @@ export class WebBleTransport implements Transport {
       this._internalDevicesById.delete(device.id);
       this._deviceConnectionById.delete(device.id);
       this._disconnectionHandlersById.delete(device.id);
+
       if (this._connectedDevices.includes(bleDevice)) {
         delete this._connectedDevices[
           this._connectedDevices.indexOf(bleDevice)

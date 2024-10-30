@@ -1,5 +1,5 @@
 {
-  "name": "@ledgerhq/device-transport-kit-web-hid",
+  "name": "@ledgerhq/device-transport-kit-web-ble",
   "version": "0.0.1",
   "license": "Apache-2.0",
   "private": true,
@@ -36,8 +36,7 @@
   },
   "dependencies": {
     "@sentry/minimal": "^6.19.7",
-    "purify-ts": "^2.1.0",
-    "uuid": "^10.0.0"
+    "purify-ts": "^2.1.0"
   },
   "devDependencies": {
     "@ledgerhq/device-management-kit": "workspace:*",
@@ -46,8 +45,7 @@
     "@ledgerhq/jest-config-dsdk": "workspace:*",
     "@ledgerhq/prettier-config-dsdk": "workspace:*",
     "@ledgerhq/tsconfig-dsdk": "workspace:*",
-    "@types/uuid": "^10.0.0",
-    "@types/w3c-web-hid": "^1.0.6",
+    "@types/web-bluetooth": "^0.0.20",
     "rxjs": "^7.8.1",
     "ts-node": "^10.9.2"
   },

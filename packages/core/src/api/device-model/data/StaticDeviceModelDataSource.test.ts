@@ -1,5 +1,5 @@
 import { DeviceModelId } from "@api/device/DeviceModel";
-import { BleDeviceInfos } from "@internal/transport/ble/model/BleDeviceInfos";
+import { BleDeviceInfos } from "@api/device-model/model/DeviceModel";
 
 import { StaticDeviceModelDataSource } from "./StaticDeviceModelDataSource";
 

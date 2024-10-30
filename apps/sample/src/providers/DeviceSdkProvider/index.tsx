@@ -8,6 +8,7 @@ import {
   WebLogsExporterLogger,
 } from "@ledgerhq/device-management-kit";
 import { FlipperSdkLogger } from "@ledgerhq/device-management-kit-flipper-plugin-client";
+import { WebBleTransport } from "@ledgerhq/device-transport-kit-web-ble";
 import { WebHidTransport } from "@ledgerhq/device-transport-kit-web-hid";
 
 import { useHasChanged } from "@/hooks/useHasChanged";
@@ -27,6 +28,20 @@ function buildDefaultSdk(logsExporter: WebLogsExporterLogger) {
         apduReceiverServiceFactory,
       }) =>
         new WebHidTransport(
+          deviceModelDataSource,
+          loggerServiceFactory,
+          apduSenderServiceFactory,
+          apduReceiverServiceFactory,
+        ),
+    )
+    .addTransport(
+      ({
+        deviceModelDataSource,
+        loggerServiceFactory,
+        apduSenderServiceFactory,
+        apduReceiverServiceFactory,
+      }) =>
+        new WebBleTransport(
           deviceModelDataSource,
           loggerServiceFactory,
           apduSenderServiceFactory,
