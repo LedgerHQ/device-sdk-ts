@@ -73,7 +73,7 @@ importers:
         version: link:../../packages/signer/context-module
       '@ledgerhq/device-management-kit':
         specifier: workspace:*
-        version: link:../../packages/core
+        version: link:../../packages/device-management-kit
       '@ledgerhq/device-management-kit-flipper-plugin-client':
         specifier: workspace:*
         version: link:../../packages/flipper-plugin-client
@@ -205,7 +205,7 @@ importers:
         specifier: ^18.3.0
         version: 18.3.0
 
-  packages/core:
+  packages/device-management-kit:
     dependencies:
       '@ledgerhq/device-transport-kit-mock-client':
         specifier: workspace:*
@@ -286,7 +286,7 @@ importers:
     devDependencies:
       '@ledgerhq/device-management-kit':
         specifier: workspace:*
-        version: link:../core
+        version: link:../device-management-kit
       '@ledgerhq/esbuild-tools':
         specifier: workspace:*
         version: link:../tools/esbuild-tools
@@ -326,7 +326,7 @@ importers:
     devDependencies:
       '@ledgerhq/device-management-kit':
         specifier: workspace:*
-        version: link:../../core
+        version: link:../../device-management-kit
       '@ledgerhq/esbuild-tools':
         specifier: workspace:*
         version: link:../../tools/esbuild-tools
@@ -378,7 +378,7 @@ importers:
     devDependencies:
       '@ledgerhq/device-management-kit':
         specifier: workspace:*
-        version: link:../../core
+        version: link:../../device-management-kit
       '@ledgerhq/esbuild-tools':
         specifier: workspace:*
         version: link:../../tools/esbuild-tools
@@ -433,7 +433,7 @@ importers:
         version: link:../context-module
       '@ledgerhq/device-management-kit':
         specifier: workspace:*
-        version: link:../../core
+        version: link:../../device-management-kit
       '@ledgerhq/esbuild-tools':
         specifier: workspace:*
         version: link:../../tools/esbuild-tools
@@ -488,7 +488,7 @@ importers:
     devDependencies:
       '@ledgerhq/device-management-kit':
         specifier: workspace:*
-        version: link:../../core
+        version: link:../../device-management-kit
       '@ledgerhq/esbuild-tools':
         specifier: workspace:*
         version: link:../../tools/esbuild-tools
@@ -515,7 +515,7 @@ importers:
     devDependencies:
       '@ledgerhq/device-management-kit':
         specifier: workspace:*
-        version: link:../../core
+        version: link:../../device-management-kit
       '@ledgerhq/esbuild-tools':
         specifier: workspace:*
         version: link:../../tools/esbuild-tools

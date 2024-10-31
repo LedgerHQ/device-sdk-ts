@@ -15,7 +15,7 @@ The Ledger Ethereum Signer utilizes the advanced capabilities of the Ledger devi
 
 ### Installation
 
-> **Note:** This module is not standalone; it depends on the [@ledgerhq/device-management-kit](https://github.com/LedgerHQ/device-sdk-ts/tree/develop/packages/core) package, so you need to install it first.
+> **Note:** This module is not standalone; it depends on the [@ledgerhq/device-management-kit](https://github.com/LedgerHQ/device-sdk-ts/tree/develop/packages/device-management-kit) package, so you need to install it first.
 
 To install the `device-signer-kit-ethereum` package, run the following command:
 
@@ -82,7 +82,7 @@ const { observable, cancel } = signerEth.getAddress(derivationPath, options);
 
 - `observable`
 
-  - An [Observable](https://rxjs.dev/guide/observable) object that contains the [`DeviceActionState`](https://github.com/LedgerHQ/device-sdk-ts/blob/develop/packages/core/src/api/device-action/model/DeviceActionState.ts) derived instance, which reprensents the operation's state. For example:
+  - An [Observable](https://rxjs.dev/guide/observable) object that contains the [`DeviceActionState`](https://github.com/LedgerHQ/device-sdk-ts/blob/develop/packages/device-management-kit/src/api/device-action/model/DeviceActionState.ts) derived instance, which reprensents the operation's state. For example:
 
     ```typescript
     observable.subscribe({
@@ -218,7 +218,7 @@ const { observable, cancel } = signerEth.signTransaction(
 
 - `observable`
 
-  - An [Observable](https://rxjs.dev/guide/observable) object that contains the [`DeviceActionState`](https://github.com/LedgerHQ/device-sdk-ts/blob/develop/packages/core/src/api/device-action/model/DeviceActionState.ts) derived instance which reprensents the operation's state. For example:
+  - An [Observable](https://rxjs.dev/guide/observable) object that contains the [`DeviceActionState`](https://github.com/LedgerHQ/device-sdk-ts/blob/develop/packages/device-management-kit/src/api/device-action/model/DeviceActionState.ts) derived instance which reprensents the operation's state. For example:
 
     ```typescript
     observable.subscribe({
@@ -337,7 +337,7 @@ const { observable, cancel } = signerEth.signMessage(derivationPath, message);
 
 - `observable`
 
-  - An [Observable](https://rxjs.dev/guide/observable) object that contains the [`DeviceActionState`](https://github.com/LedgerHQ/device-sdk-ts/blob/develop/packages/core/src/api/device-action/model/DeviceActionState.ts) derived instance which reprensents the operation's state. For example:
+  - An [Observable](https://rxjs.dev/guide/observable) object that contains the [`DeviceActionState`](https://github.com/LedgerHQ/device-sdk-ts/blob/develop/packages/device-management-kit/src/api/device-action/model/DeviceActionState.ts) derived instance which reprensents the operation's state. For example:
 
     ```typescript
     observable.subscribe({
@@ -480,7 +480,7 @@ const { observable, cancel } = signerEth.signTypedData(
 
 - `observable`
 
-  - An [Observable](https://rxjs.dev/guide/observable) object that contains the [`DeviceActionState`](https://github.com/LedgerHQ/device-sdk-ts/blob/develop/packages/core/src/api/device-action/model/DeviceActionState.ts) derived instance which reprensents the operation's state. For example:
+  - An [Observable](https://rxjs.dev/guide/observable) object that contains the [`DeviceActionState`](https://github.com/LedgerHQ/device-sdk-ts/blob/develop/packages/device-management-kit/src/api/device-action/model/DeviceActionState.ts) derived instance which reprensents the operation's state. For example:
 
     ```typescript
     observable.subscribe({
