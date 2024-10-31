@@ -1,5 +1,5 @@
 import {
-  type DeviceSdk,
+  type DeviceManagementKit,
   type DeviceSessionId,
 } from "@ledgerhq/device-management-kit";
 import { Container } from "inversify";
@@ -13,16 +13,16 @@ import { externalTypes } from "./externalTypes";
 // const logger = makeLoggerMiddleware();
 
 export type MakeContainerProps = {
-  sdk: DeviceSdk;
+  dmk: DeviceManagementKit;
   sessionId: DeviceSessionId;
 };
-export const makeContainer = ({ sdk, sessionId }: MakeContainerProps) => {
+export const makeContainer = ({ dmk, sessionId }: MakeContainerProps) => {
   const container = new Container();
 
   // Uncomment this line to enable the logger middleware
   // container.applyMiddleware(logger);
 
-  container.bind<DeviceSdk>(externalTypes.Sdk).toConstantValue(sdk);
+  container.bind<DeviceManagementKit>(externalTypes.Dmk).toConstantValue(dmk);
   container
     .bind<DeviceSessionId>(externalTypes.SessionId)
     .toConstantValue(sessionId);

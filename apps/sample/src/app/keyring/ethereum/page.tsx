@@ -1,11 +1,11 @@
 "use client";
 import React from "react";
 
-import { KeyringEthView } from "@/components/KeyringEthView";
 import { SessionIdWrapper } from "@/components/SessionIdWrapper";
+import { SignerEthView } from "@/components/SignerEthView";
 
-const Keyring: React.FC = () => {
-  return <SessionIdWrapper ChildComponent={KeyringEthView} />;
+const Signer: React.FC = () => {
+  return <SessionIdWrapper ChildComponent={SignerEthView} />;
 };
 
-export default Keyring;
+export default Signer;

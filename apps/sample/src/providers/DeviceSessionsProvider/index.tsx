@@ -7,7 +7,7 @@ import React, {
 } from "react";
 
 import { useHasChanged } from "@/hooks/useHasChanged";
-import { useSdk } from "@/providers/DeviceSdkProvider";
+import { useDmk } from "@/providers/DeviceManagementKitProvider";
 import {
   type DeviceSessionsAction,
   DeviceSessionsInitialState,
@@ -29,28 +29,28 @@ const DeviceSessionsContext: Context<DeviceSessionsContextType> =
 export const DeviceSessionsProvider: React.FC<React.PropsWithChildren> = ({
   children,
 }) => {
-  const sdk = useSdk();
+  const dmk = useDmk();
   const [state, dispatch] = useReducer(
     deviceSessionsReducer,
     DeviceSessionsInitialState,
   );
 
-  const sdkHasChanged = useHasChanged(sdk);
-  if (sdkHasChanged) {
+  const dmkHasChanged = useHasChanged(dmk);
+  if (dmkHasChanged) {
     dispatch({ type: "remove_all_sessions" });
   }
 
   useEffect(() => {
-    sdk.listDeviceSessions().map((session) => {
+    dmk.listDeviceSessions().map((session) => {
       dispatch({
         type: "add_session",
         payload: {
           sessionId: session.id,
-          connectedDevice: sdk.getConnectedDevice({ sessionId: session.id }),
+          connectedDevice: dmk.getConnectedDevice({ sessionId: session.id }),
         },
       });
     });
-  }, [sdk]);
+  }, [dmk]);
 
   return (
     <DeviceSessionsContext.Provider value={{ state, dispatch }}>

@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { type SdkError } from "@ledgerhq/device-management-kit";
+import { type DmkError } from "@ledgerhq/device-management-kit";
 import { Badge, Flex, Icon, Notification, Text } from "@ledgerhq/react-ui";
 import Image from "next/image";
 import styled, { type DefaultTheme } from "styled-components";
@@ -27,7 +27,7 @@ const NanoLogo = styled(Image).attrs({ mb: 8 })`
 `;
 
 export const MainView: React.FC = () => {
-  const [connectionError, setConnectionError] = useState<SdkError | null>(null);
+  const [connectionError, setConnectionError] = useState<DmkError | null>(null);
 
   useEffect(() => {
     let timeoutId: NodeJS.Timeout;

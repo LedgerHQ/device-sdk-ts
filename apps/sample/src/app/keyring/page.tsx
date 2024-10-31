@@ -1,10 +1,10 @@
 "use client";
 import React from "react";
 
-import { KeyringView } from "@/components/KeyringView";
+import { SignerView } from "@/components/SignerView";
 
-const Keyring: React.FC = () => {
-  return <KeyringView />;
+const Signer: React.FC = () => {
+  return <SignerView />;
 };
 
-export default Keyring;
+export default Signer;

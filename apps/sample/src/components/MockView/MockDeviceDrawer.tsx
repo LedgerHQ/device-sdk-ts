@@ -3,7 +3,7 @@ import {
   type Mock,
   type MockClient,
   type Session,
-} from "@ledgerhq/device-sdk-transport-mock";
+} from "@ledgerhq/device-transport-kit-mock-client";
 import { Button, Divider, Flex, Input, Text } from "@ledgerhq/react-ui";
 import styled from "styled-components";
 

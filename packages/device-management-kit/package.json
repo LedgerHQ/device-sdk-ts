@@ -1,0 +1,64 @@
+{
+  "name": "@ledgerhq/device-management-kit",
+  "version": "0.4.0",
+  "license": "Apache-2.0",
+  "exports": {
+    ".": {
+      "types": "./lib/types/index.d.ts",
+      "import": "./lib/esm/index.js",
+      "require": "./lib/cjs/index.js"
+    },
+    "./*": {
+      "types": "./lib/types/*",
+      "import": "./lib/esm/*",
+      "require": "./lib/cjs/*"
+    }
+  },
+  "files": [
+    "./lib",
+    "package.json"
+  ],
+  "scripts": {
+    "prebuild": "rimraf lib",
+    "build": "pnpm lmdk-build --entryPoints index.ts,src/**/*.ts --tsconfig tsconfig.prod.json",
+    "dev": "concurrently \"pnpm watch:builds\" \"pnpm watch:types\"",
+    "watch:builds": "pnpm lmdk-watch --entryPoints index.ts,src/**/*.ts --tsconfig tsconfig.prod.json",
+    "watch:types": "concurrently \"tsc --watch -p tsconfig.prod.json\" \"tsc-alias --watch -p tsconfig.prod.json\"",
+    "lint": "eslint",
+    "lint:fix": "pnpm lint --fix",
+    "postpack": "find . -name '*.tgz' -exec cp {} ../../dist/ \\; ",
+    "prettier": "prettier . --check",
+    "prettier:fix": "prettier . --write",
+    "test": "jest",
+    "test:watch": "pnpm test -- --watch",
+    "test:coverage": "pnpm test -- --coverage",
+    "typecheck": "tsc --noEmit",
+    "module:create": "pnpm hygen core-module with-prompt"
+  },
+  "dependencies": {
+    "@ledgerhq/device-transport-kit-mock-client": "workspace:*",
+    "@sentry/minimal": "^6.19.7",
+    "@statelyai/inspect": "^0.4.0",
+    "axios": "^1.7.7",
+    "inversify": "^6.0.3",
+    "inversify-logger-middleware": "^3.1.0",
+    "purify-ts": "^2.1.0",
+    "reflect-metadata": "^0.2.2",
+    "rxjs": "^7.8.1",
+    "semver": "^7.6.3",
+    "uuid": "^10.0.0",
+    "xstate": "^5.18.2"
+  },
+  "devDependencies": {
+    "@ledgerhq/esbuild-tools": "workspace:*",
+    "@ledgerhq/eslint-config-dsdk": "workspace:*",
+    "@ledgerhq/jest-config-dsdk": "workspace:*",
+    "@ledgerhq/prettier-config-dsdk": "workspace:*",
+    "@ledgerhq/tsconfig-dsdk": "workspace:*",
+    "@types/semver": "^7.5.8",
+    "@types/uuid": "^10.0.0",
+    "@types/w3c-web-hid": "^1.0.6",
+    "@types/web-bluetooth": "^0.0.20",
+    "ts-node": "^10.9.2"
+  }
+}

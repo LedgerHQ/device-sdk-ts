@@ -1,7 +1,7 @@
 import {
   type DeviceActionState,
   DeviceActionStatus,
-  type DeviceSdk,
+  type DeviceManagementKit,
   type DeviceSessionId,
   SendCommandInAppDeviceAction,
   UserInteractionRequired,
@@ -18,17 +18,20 @@ import { GetPubKeyCommand } from "./command/GetPubKeyCommand";
 import { SolanaAppBinder } from "./SolanaAppBinder";
 
 describe("SolanaAppBinder", () => {
-  const mockedSdk: DeviceSdk = {
+  const mockedDmk: DeviceManagementKit = {
     sendCommand: jest.fn(),
     executeDeviceAction: jest.fn(),
-  } as unknown as DeviceSdk;
+  } as unknown as DeviceManagementKit;
 
   beforeEach(() => {
     jest.clearAllMocks();
   });
 
   it("should be defined", () => {
-    const binder = new SolanaAppBinder({} as DeviceSdk, {} as DeviceSessionId);
+    const binder = new SolanaAppBinder(
+      {} as DeviceManagementKit,
+      {} as DeviceSessionId,
+    );
     expect(binder).toBeDefined();
   });
 
@@ -37,7 +40,7 @@ describe("SolanaAppBinder", () => {
       // GIVEN
       const address = "D2PPQSYFe83nDzk96FqGumVU8JA7J8vj2Rhjc2oXzEi5";
 
-      jest.spyOn(mockedSdk, "executeDeviceAction").mockReturnValue({
+      jest.spyOn(mockedDmk, "executeDeviceAction").mockReturnValue({
         observable: from([
           {
             status: DeviceActionStatus.Completed,
@@ -52,7 +55,7 @@ describe("SolanaAppBinder", () => {
       });
 
       // WHEN
-      const appBinder = new SolanaAppBinder(mockedSdk, "sessionId");
+      const appBinder = new SolanaAppBinder(mockedDmk, "sessionId");
       const { observable } = appBinder.getAddress({
         derivationPath: "44'/501'",
         checkOnDevice: false,
@@ -102,11 +105,11 @@ describe("SolanaAppBinder", () => {
         };
 
         // WHEN
-        const appBinder = new SolanaAppBinder(mockedSdk, "sessionId");
+        const appBinder = new SolanaAppBinder(mockedDmk, "sessionId");
         appBinder.getAddress(params);
 
         // THEN
-        expect(mockedSdk.executeDeviceAction).toHaveBeenCalledWith({
+        expect(mockedDmk.executeDeviceAction).toHaveBeenCalledWith({
           sessionId: "sessionId",
           deviceAction: new SendCommandInAppDeviceAction({
             input: {
@@ -127,11 +130,11 @@ describe("SolanaAppBinder", () => {
         };
 
         // WHEN
-        const appBinder = new SolanaAppBinder(mockedSdk, "sessionId");
+        const appBinder = new SolanaAppBinder(mockedDmk, "sessionId");
         appBinder.getAddress(params);
 
         // THEN
-        expect(mockedSdk.executeDeviceAction).toHaveBeenCalledWith({
+        expect(mockedDmk.executeDeviceAction).toHaveBeenCalledWith({
           sessionId: "sessionId",
           deviceAction: new SendCommandInAppDeviceAction({
             input: {

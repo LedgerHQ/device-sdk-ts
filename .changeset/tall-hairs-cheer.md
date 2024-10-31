@@ -1,5 +1,5 @@
 ---
-"@ledgerhq/keyring-btc": minor
+"@ledgerhq/device-signer-kit-btc": minor
 ---
 
-Create keyring-btc package
+Create device-signer-kit-btc package

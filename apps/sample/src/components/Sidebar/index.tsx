@@ -8,9 +8,12 @@ import styled, { type DefaultTheme } from "styled-components";
 import { AvailableDevices } from "@/components/AvailableDevices";
 import { Device } from "@/components/Device";
 import { Menu } from "@/components/Menu";
-import { useExportLogsCallback, useSdk } from "@/providers/DeviceSdkProvider";
+import {
+  useDmk,
+  useExportLogsCallback,
+} from "@/providers/DeviceManagementKitProvider";
 import { useDeviceSessionsContext } from "@/providers/DeviceSessionsProvider";
-import { useSdkConfigContext } from "@/providers/SdkConfig";
+import { useDmkConfigContext } from "@/providers/DmkConfig";
 
 const Root = styled(Flex).attrs({ py: 8, px: 6 })`
   flex-direction: column;
@@ -46,7 +49,7 @@ const VersionText = styled(Text)`
 
 export const Sidebar: React.FC = () => {
   const [version, setVersion] = useState("");
-  const sdk = useSdk();
+  const dmk = useDmk();
   const exportLogs = useExportLogsCallback();
   const {
     state: { deviceById, selectedId },
@@ -54,27 +57,27 @@ export const Sidebar: React.FC = () => {
   } = useDeviceSessionsContext();
   const {
     state: { transport },
-  } = useSdkConfigContext();
+  } = useDmkConfigContext();
 
   useEffect(() => {
-    sdk
+    dmk
       .getVersion()
       .then((v) => setVersion(v))
       .catch((error: unknown) => {
         console.error(new Error(String(error)));
         setVersion("");
       });
-  }, [sdk]);
+  }, [dmk]);
   const onDeviceDisconnect = useCallback(
     async (sessionId: string) => {
       try {
-        await sdk.disconnect({ sessionId });
+        await dmk.disconnect({ sessionId });
         dispatch({ type: "remove_session", payload: { sessionId } });
       } catch (e) {
         console.error(e);
       }
     },
-    [dispatch, sdk],
+    [dispatch, dmk],
   );
 
   const router = useRouter();

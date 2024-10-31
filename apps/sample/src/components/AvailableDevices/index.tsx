@@ -5,7 +5,7 @@ import styled from "styled-components";
 
 import { AvailableDevice } from "@/components/Device";
 import { useAvailableDevices } from "@/hooks/useAvailableDevices";
-import { useSdk } from "@/providers/DeviceSdkProvider";
+import { useDmk } from "@/providers/DeviceManagementKitProvider";
 import { useDeviceSessionsContext } from "@/providers/DeviceSessionsProvider";
 
 const Title = styled(Text)<{ disabled: boolean }>`
@@ -66,19 +66,19 @@ const KnownDevice: React.FC<DiscoveredDevice & { connected: boolean }> = (
   device,
 ) => {
   const { deviceModel, connected } = device;
-  const sdk = useSdk();
+  const dmk = useDmk();
   const { dispatch } = useDeviceSessionsContext();
   const connectToDevice = useCallback(() => {
-    sdk.connect({ device }).then((sessionId) => {
+    dmk.connect({ device }).then((sessionId) => {
       dispatch({
         type: "add_session",
         payload: {
           sessionId,
-          connectedDevice: sdk.getConnectedDevice({ sessionId }),
+          connectedDevice: dmk.getConnectedDevice({ sessionId }),
         },
       });
     });
-  }, [sdk, device, dispatch]);
+  }, [dmk, device, dispatch]);
 
   return (
     <Flex flexDirection="row" alignItems="center">

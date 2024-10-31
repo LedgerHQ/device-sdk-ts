@@ -1,12 +1,12 @@
 import {
-  type DeviceSdk,
+  type DeviceManagementKit,
   type DeviceSessionId,
 } from "@ledgerhq/device-management-kit";
 
 import { DefaultSignerSolana } from "@internal/DefaultSignerSolana";
 
 type SignerSolanaBuilderConstructorArgs = {
-  sdk: DeviceSdk;
+  dmk: DeviceManagementKit;
   sessionId: DeviceSessionId;
 };
 
@@ -15,16 +15,16 @@ type SignerSolanaBuilderConstructorArgs = {
  *
  * @example
  * ```
- * const sdk = new SignerSolanaBuilder({ sdk, sessionId })
+ * const dmk = new SignerSolanaBuilder({ dmk, sessionId })
  *  .build();
  * ```
  */
 export class SignerSolanaBuilder {
-  private _sdk: DeviceSdk;
+  private _dmk: DeviceManagementKit;
   private _sessionId: DeviceSessionId;
 
-  constructor({ sdk, sessionId }: SignerSolanaBuilderConstructorArgs) {
-    this._sdk = sdk;
+  constructor({ dmk, sessionId }: SignerSolanaBuilderConstructorArgs) {
+    this._dmk = dmk;
     this._sessionId = sessionId;
   }
 
@@ -35,7 +35,7 @@ export class SignerSolanaBuilder {
    */
   public build() {
     return new DefaultSignerSolana({
-      sdk: this._sdk,
+      dmk: this._dmk,
       sessionId: this._sessionId,
     });
   }

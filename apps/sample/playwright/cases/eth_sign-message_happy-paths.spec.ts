@@ -37,7 +37,7 @@ test.describe("ETH Signer: sign message, happy paths", () => {
     });
 
     await test.step("When execute ETH: sign message", async () => {
-      await whenNavigateTo(page, "/keyring");
+      await whenNavigateTo(page, "/signer");
       await whenClicking(page, "CTA_command-Ethereum");
 
       await whenExecuteDeviceAction(page, "Sign message", [
@@ -75,7 +75,7 @@ test.describe("ETH Signer: sign message, happy paths", () => {
     });
 
     await test.step("When execute ETH: sign message", async () => {
-      await whenNavigateTo(page, "/keyring");
+      await whenNavigateTo(page, "/signer");
 
       await whenClicking(page, "CTA_command-Ethereum");
 
@@ -137,7 +137,7 @@ test.describe("ETH Signer: sign message, happy paths", () => {
     });
 
     await test.step("When execute ETH: sign message", async () => {
-      await whenNavigateTo(page, "/keyring");
+      await whenNavigateTo(page, "/signer");
 
       await whenClicking(page, "CTA_command-Ethereum");
 

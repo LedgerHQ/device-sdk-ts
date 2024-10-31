@@ -15,10 +15,10 @@ import styled, { type DefaultTheme } from "styled-components";
 
 import { Header } from "@/components/Header";
 import { Sidebar } from "@/components/Sidebar";
-import { SdkProvider } from "@/providers/DeviceSdkProvider";
+import { DmkProvider } from "@/providers/DeviceManagementKitProvider";
 import { DeviceSessionsProvider } from "@/providers/DeviceSessionsProvider";
-import { KeyringEthProvider } from "@/providers/KeyringEthProvider";
-import { SdkConfigProvider } from "@/providers/SdkConfig";
+import { DmkConfigProvider } from "@/providers/DmkConfig";
+import { SignerEthProvider } from "@/providers/SignerEthProvider";
 import { GlobalStyle } from "@/styles/globalstyles";
 
 const Root = styled(Flex)`
@@ -38,10 +38,10 @@ const PageContainer = styled(Flex)`
 const ClientRootLayout: React.FC<PropsWithChildren> = ({ children }) => {
   return (
     <html lang="en">
-      <SdkConfigProvider>
-        <SdkProvider>
+      <DmkConfigProvider>
+        <DmkProvider>
           <DeviceSessionsProvider>
-            <KeyringEthProvider>
+            <SignerEthProvider>
               <StyleProvider selectedPalette="dark" fontsPath="/fonts">
                 <GlobalStyle />
                 <body>
@@ -54,10 +54,10 @@ const ClientRootLayout: React.FC<PropsWithChildren> = ({ children }) => {
                   </Root>
                 </body>
               </StyleProvider>
-            </KeyringEthProvider>
+            </SignerEthProvider>
           </DeviceSessionsProvider>
-        </SdkProvider>
-      </SdkConfigProvider>
+        </DmkProvider>
+      </DmkConfigProvider>
     </html>
   );
 };

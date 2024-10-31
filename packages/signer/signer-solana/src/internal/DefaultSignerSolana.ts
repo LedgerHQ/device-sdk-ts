@@ -1,5 +1,5 @@
 import {
-  type DeviceSdk,
+  type DeviceManagementKit,
   type DeviceSessionId,
 } from "@ledgerhq/device-management-kit";
 import { type Container } from "inversify";
@@ -18,15 +18,15 @@ import { useCasesTypes } from "./use-cases/di/useCasesTypes";
 import { makeContainer } from "./di";
 
 export type DefaultSignerSolanaConstructorArgs = {
-  sdk: DeviceSdk;
+  dmk: DeviceManagementKit;
   sessionId: DeviceSessionId;
 };
 
 export class DefaultSignerSolana implements SignerSolana {
   private _container: Container;
 
-  constructor({ sdk, sessionId }: DefaultSignerSolanaConstructorArgs) {
-    this._container = makeContainer({ sdk, sessionId });
+  constructor({ dmk, sessionId }: DefaultSignerSolanaConstructorArgs) {
+    this._container = makeContainer({ dmk, sessionId });
   }
 
   signTransaction(

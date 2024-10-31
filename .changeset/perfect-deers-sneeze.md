@@ -1,5 +1,5 @@
 ---
-"@ledgerhq/keyring-btc": patch
+"@ledgerhq/device-signer-kit-btc": patch
 ---
 
 Rename packages

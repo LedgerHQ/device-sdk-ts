@@ -20,7 +20,7 @@ import {
 import { Grid } from "@ledgerhq/react-ui";
 
 import { PageWithHeader } from "@/components/PageWithHeader";
-import { useSdk } from "@/providers/DeviceSdkProvider";
+import { useDmk } from "@/providers/DeviceManagementKitProvider";
 
 import { Command, type CommandProps } from "./Command";
 import { getValueSelectorFromEnum } from "./CommandForm";
@@ -28,7 +28,7 @@ import { getValueSelectorFromEnum } from "./CommandForm";
 export const CommandsView: React.FC<{ sessionId: string }> = ({
   sessionId: selectedSessionId,
 }) => {
-  const sdk = useSdk();
+  const dmk = useDmk();
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const commands: CommandProps<any, any, any>[] = useMemo(
@@ -38,7 +38,7 @@ export const CommandsView: React.FC<{ sessionId: string }> = ({
         description: "List all apps on the device",
         sendCommand: ({ isContinue }) => {
           const command = new ListAppsCommand({ isContinue });
-          return sdk.sendCommand({
+          return dmk.sendCommand({
             sessionId: selectedSessionId,
             command,
           });
@@ -54,7 +54,7 @@ export const CommandsView: React.FC<{ sessionId: string }> = ({
         description: "Launch an app on the device",
         sendCommand: ({ appName }) => {
           const command = new OpenAppCommand({ appName });
-          return sdk.sendCommand({
+          return dmk.sendCommand({
             sessionId: selectedSessionId,
             command,
           });
@@ -67,7 +67,7 @@ export const CommandsView: React.FC<{ sessionId: string }> = ({
         description: "Close the currently open app",
         sendCommand: () => {
           const command = new CloseAppCommand();
-          return sdk.sendCommand({
+          return dmk.sendCommand({
             sessionId: selectedSessionId,
             command,
           });
@@ -79,7 +79,7 @@ export const CommandsView: React.FC<{ sessionId: string }> = ({
         description: "Get the currently open app and its version",
         sendCommand: () => {
           const command = new GetAppAndVersionCommand();
-          return sdk.sendCommand({
+          return dmk.sendCommand({
             sessionId: selectedSessionId,
             command,
           });
@@ -91,7 +91,7 @@ export const CommandsView: React.FC<{ sessionId: string }> = ({
         description: "Get the OS version of the device",
         sendCommand: () => {
           const command = new GetOsVersionCommand();
-          return sdk.sendCommand({
+          return dmk.sendCommand({
             sessionId: selectedSessionId,
             command,
           });
@@ -103,7 +103,7 @@ export const CommandsView: React.FC<{ sessionId: string }> = ({
         description: "Get the battery status of the device",
         sendCommand: ({ statusType }) => {
           const command = new GetBatteryStatusCommand({ statusType });
-          return sdk.sendCommand({
+          return dmk.sendCommand({
             sessionId: selectedSessionId,
             command,
           });
@@ -116,7 +116,7 @@ export const CommandsView: React.FC<{ sessionId: string }> = ({
         },
       } satisfies CommandProps<GetBatteryStatusArgs, GetBatteryStatusResponse>,
     ],
-    [selectedSessionId, sdk],
+    [selectedSessionId, dmk],
   );
 
   return (

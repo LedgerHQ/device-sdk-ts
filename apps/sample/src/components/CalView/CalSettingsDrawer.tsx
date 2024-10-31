@@ -8,7 +8,7 @@ import {
   type ValueSelector,
 } from "@/components/CommandsView/CommandForm";
 import { type FieldType } from "@/hooks/useForm";
-import { useCalConfig } from "@/providers/KeyringEthProvider";
+import { useCalConfig } from "@/providers/SignerEthProvider";
 
 type CalSettingsDrawerProps = {
   onClose: () => void;

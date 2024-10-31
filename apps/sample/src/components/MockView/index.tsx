@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useState } from "react";
-import { type Session } from "@ledgerhq/device-sdk-transport-mock";
+import { type Session } from "@ledgerhq/device-transport-kit-mock-client";
 import { Button, Flex, Text } from "@ledgerhq/react-ui";
 import styled from "styled-components";
 
@@ -7,7 +7,7 @@ import { ClickableListItem } from "@/components/ClickableListItem";
 import { MockDeviceDrawer } from "@/components/MockView/MockDeviceDrawer";
 import { PageWithHeader } from "@/components/PageWithHeader";
 import { useMockClient } from "@/hooks/useMockClient";
-import { useSdkConfigContext } from "@/providers/SdkConfig";
+import { useDmkConfigContext } from "@/providers/DmkConfig";
 
 const MockButton = styled(Button).attrs({
   variant: "main",
@@ -23,7 +23,7 @@ export const MockView: React.FC = () => {
 
   const {
     state: { mockServerUrl },
-  } = useSdkConfigContext();
+  } = useDmkConfigContext();
 
   const client = useMockClient(mockServerUrl);
 

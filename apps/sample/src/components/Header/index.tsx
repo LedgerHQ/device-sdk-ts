@@ -13,7 +13,7 @@ import {
 } from "@ledgerhq/react-ui";
 import styled, { type DefaultTheme } from "styled-components";
 
-import { useSdkConfigContext } from "@/providers/SdkConfig";
+import { useDmkConfigContext } from "@/providers/DmkConfig";
 
 const Root = styled(Flex).attrs({ py: 3, px: 10, gridGap: 8 })`
   color: ${({ theme }: { theme: DefaultTheme }) => theme.colors.neutral.c90};
@@ -41,7 +41,7 @@ export const Header = () => {
   const {
     dispatch,
     state: { transport, mockServerUrl },
-  } = useSdkConfigContext();
+  } = useDmkConfigContext();
   const onToggleMockServer = useCallback(() => {
     dispatch({
       type: "set_transport",

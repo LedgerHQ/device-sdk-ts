@@ -5,18 +5,18 @@ import {
   DeviceStatus,
 } from "@ledgerhq/device-management-kit";
 
-import { useSdk } from "@/providers/DeviceSdkProvider";
+import { useDmk } from "@/providers/DeviceManagementKitProvider";
 import { useDeviceSessionsContext } from "@/providers/DeviceSessionsProvider";
 
 export function useDeviceSessionState(sessionId: DeviceSessionId) {
-  const sdk = useSdk();
+  const dmk = useDmk();
   const [deviceSessionState, setDeviceSessionState] =
     useState<DeviceSessionState>();
   const { dispatch } = useDeviceSessionsContext();
 
   useEffect(() => {
     if (sessionId) {
-      const subscription = sdk
+      const subscription = dmk
         .getDeviceSessionState({
           sessionId,
         })
@@ -32,7 +32,7 @@ export function useDeviceSessionState(sessionId: DeviceSessionId) {
         subscription.unsubscribe();
       };
     }
-  }, [sessionId, sdk, dispatch]);
+  }, [sessionId, dmk, dispatch]);
 
   return deviceSessionState;
 }

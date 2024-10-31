@@ -1,17 +1,17 @@
 import React, { useCallback } from "react";
 import {
   BuiltinTransports,
-  type SdkError,
+  type DmkError,
 } from "@ledgerhq/device-management-kit";
 import { Button, Flex } from "@ledgerhq/react-ui";
 import styled from "styled-components";
 
-import { useSdk } from "@/providers/DeviceSdkProvider";
+import { useDmk } from "@/providers/DeviceManagementKitProvider";
 import { useDeviceSessionsContext } from "@/providers/DeviceSessionsProvider";
-import { useSdkConfigContext } from "@/providers/SdkConfig";
+import { useDmkConfigContext } from "@/providers/DmkConfig";
 
 type ConnectDeviceActionsProps = {
-  onError: (error: SdkError | null) => void;
+  onError: (error: DmkError | null) => void;
 };
 
 const ConnectButton = styled(Button).attrs({ mx: 3 })``;
@@ -21,16 +21,16 @@ export const ConnectDeviceActions = ({
 }: ConnectDeviceActionsProps) => {
   const {
     state: { transport },
-  } = useSdkConfigContext();
+  } = useDmkConfigContext();
   const { dispatch: dispatchDeviceSession } = useDeviceSessionsContext();
-  const sdk = useSdk();
+  const dmk = useDmk();
 
   const onSelectDeviceClicked = useCallback(
     (selectedTransport: BuiltinTransports) => {
       onError(null);
-      sdk.startDiscovering({ transport: selectedTransport }).subscribe({
+      dmk.startDiscovering({ transport: selectedTransport }).subscribe({
         next: (device) => {
-          sdk
+          dmk
             .connect({ device })
             .then((sessionId) => {
               console.log(
@@ -40,7 +40,7 @@ export const ConnectDeviceActions = ({
                 type: "add_session",
                 payload: {
                   sessionId,
-                  connectedDevice: sdk.getConnectedDevice({ sessionId }),
+                  connectedDevice: dmk.getConnectedDevice({ sessionId }),
                 },
               });
             })
@@ -54,7 +54,7 @@ export const ConnectDeviceActions = ({
         },
       });
     },
-    [dispatchDeviceSession, onError, sdk],
+    [dispatchDeviceSession, onError, dmk],
   );
 
   // This implementation gives the impression that working with the mock server
