@@ -6,7 +6,7 @@ import styled, { type DefaultTheme } from "styled-components";
 
 import { ConnectDeviceActions } from "./ConnectDeviceActions";
 
-const Root = styled(Flex)`
+const Root = styled(Flex).attrs({ rowGap: 6 })`
   flex: 1;
   justify-content: center;
   align-items: center;
@@ -18,12 +18,8 @@ const ErrorNotification = styled(Notification)`
   width: 70%;
 `;
 
-const Description = styled(Text).attrs({ my: 6 })`
+const Description = styled(Text)`
   color: ${({ theme }: { theme: DefaultTheme }) => theme.colors.neutral.c70};
-`;
-
-const NanoLogo = styled(Image).attrs({ mb: 8 })`
-  transform: rotate(23deg);
 `;
 
 export const MainView: React.FC = () => {
@@ -44,11 +40,11 @@ export const MainView: React.FC = () => {
   }, [connectionError]);
   return (
     <Root>
-      <NanoLogo
-        src={"/nano-x.png"}
-        alt={"nano-x-logo"}
-        width={155}
-        height={250}
+      <Image
+        src={"/devices_crop.png"}
+        alt={"ledger-devices-image"}
+        width={400}
+        height={330}
       />
       <Text variant={"h2Inter"} fontWeight={"semiBold"} textTransform={"none"}>
         Ledger Device Management Kit
