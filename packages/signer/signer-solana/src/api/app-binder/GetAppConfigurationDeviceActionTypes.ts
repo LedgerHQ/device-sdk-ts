@@ -8,14 +8,13 @@ import {
 
 import { type AppConfiguration } from "@api/model/AppConfiguration";
 
-type GetAppConfigurationDAUserInteractionRequired =
-  UserInteractionRequired.None;
-
 export type GetAppConfigurationDAOutput =
   SendCommandInAppDAOutput<AppConfiguration>;
+
 export type GetAppConfigurationDAError = SendCommandInAppDAError<never>;
+
 export type GetAppConfigurationDAIntermediateValue =
-  SendCommandInAppDAIntermediateValue<GetAppConfigurationDAUserInteractionRequired>;
+  SendCommandInAppDAIntermediateValue<UserInteractionRequired.None>;
 
 export type GetAppConfigurationDAReturnType = ExecuteDeviceActionReturnType<
   GetAppConfigurationDAOutput,

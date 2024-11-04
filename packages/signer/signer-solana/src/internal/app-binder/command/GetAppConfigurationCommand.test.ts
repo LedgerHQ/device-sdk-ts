@@ -5,6 +5,7 @@ import {
 } from "@ledgerhq/device-management-kit";
 
 import { GetAppConfigurationCommand } from "./GetAppConfigurationCommand";
+import { PublicKeyDisplayMode } from "@api/model/PublicKeyDisplayMode";
 
 const GET_APP_CONFIG_APDU = new Uint8Array([0xe0, 0x04, 0x00, 0x00, 0x00]);
 
@@ -15,6 +16,15 @@ const GET_APP_CONFIG_RESPONSE_DATA = new Uint8Array([
 const GET_APP_CONFIG_RESPONSE = new ApduResponse({
   statusCode: Uint8Array.from([0x90, 0x00]),
   data: GET_APP_CONFIG_RESPONSE_DATA,
+});
+
+const GET_APP_CONFIG_RESPONSE_DATA_SHORT_PUB_KEY_DISPLAY_MODE = new Uint8Array([
+  0x01, 0x01, 0x02, 0x05, 0x0a,
+]);
+
+const GET_APP_CONFIG_RESPONSE_SHORT_PUB_KEY_DISPLAY_MODE = new ApduResponse({
+  statusCode: Uint8Array.from([0x90, 0x00]),
+  data: GET_APP_CONFIG_RESPONSE_DATA_SHORT_PUB_KEY_DISPLAY_MODE,
 });
 
 describe("GetAppConfigurationCommand", () => {
@@ -40,7 +50,22 @@ describe("GetAppConfigurationCommand", () => {
         CommandResultFactory({
           data: {
             blindSigningEnabled: true,
-            pubKeyDisplayMode: false,
+            pubKeyDisplayMode: PublicKeyDisplayMode.LONG,
+            version: "2.5.10",
+          },
+        }),
+      );
+    });
+
+    it("should parse the response correctly with short pub key display mode", () => {
+      const parsed = command.parseResponse(
+        GET_APP_CONFIG_RESPONSE_SHORT_PUB_KEY_DISPLAY_MODE,
+      );
+      expect(parsed).toStrictEqual(
+        CommandResultFactory({
+          data: {
+            blindSigningEnabled: true,
+            pubKeyDisplayMode: PublicKeyDisplayMode.SHORT,
             version: "2.5.10",
           },
         }),
