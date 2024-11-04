@@ -1,8 +1,10 @@
 import {
   APDU_MAX_PAYLOAD,
   CommandResultFactory,
+  hexaStringToBuffer,
   InvalidStatusWordError,
 } from "@ledgerhq/device-management-kit";
+import { Transaction } from "ethers-v6";
 import { Just, Nothing } from "purify-ts";
 
 import { SignTransactionCommand } from "@internal/app-binder/command/SignTransactionCommand";
@@ -145,6 +147,61 @@ describe("SendSignTransactionTask", () => {
       // eslint-disable-next-line  @typescript-eslint/no-explicit-any
       expect((result as any).data).toStrictEqual(signature);
     });
+
+    it.each([
+      [458, 127, 254],
+      [458, 0x818181818181, 254],
+      [452, 0x818181818181, 251],
+    ])(
+      "should prevent chunking legacy transactions just before the [r,s,v] for dataSize %i, chainId %i",
+      async (dataSize, chainId, chunkSize) => {
+        // GIVEN
+        const transaction = new Transaction();
+        transaction.to = "0x0123456789abcdef0123456789abcdef01234567";
+        transaction.nonce = 0;
+        transaction.value = 0n;
+        transaction.gasLimit = 1n;
+        transaction.gasPrice = 2n;
+        transaction.data = "0x" + new Array(dataSize).fill("00").join("");
+        transaction.chainId = chainId;
+        transaction.type = 0;
+        const serialized = hexaStringToBuffer(transaction.unsignedSerialized)!;
+        const args = {
+          derivationPath: "44'/60'/0'/0/0",
+          serializedTransaction: serialized,
+          chainId,
+          transactionType: 0,
+        };
+        apiMock.sendCommand.mockResolvedValueOnce(resultNothing);
+        apiMock.sendCommand.mockResolvedValueOnce(resultNothing);
+        apiMock.sendCommand.mockResolvedValue(resultOk);
+
+        // WHEN
+        await new SendSignTransactionTask(apiMock, args).run();
+
+        // THEN
+        const payload = Uint8Array.from([...PATH, ...serialized]);
+        expect(apiMock.sendCommand.mock.calls).toHaveLength(3);
+        expect(apiMock.sendCommand.mock.calls[0]![0]).toStrictEqual(
+          new SignTransactionCommand({
+            serializedTransaction: payload.slice(0, chunkSize),
+            isFirstChunk: true,
+          }),
+        );
+        expect(apiMock.sendCommand.mock.calls[1]![0]).toStrictEqual(
+          new SignTransactionCommand({
+            serializedTransaction: payload.slice(chunkSize, chunkSize * 2),
+            isFirstChunk: false,
+          }),
+        );
+        expect(apiMock.sendCommand.mock.calls[2]![0]).toStrictEqual(
+          new SignTransactionCommand({
+            serializedTransaction: payload.slice(chunkSize * 2),
+            isFirstChunk: false,
+          }),
+        );
+      },
+    );
 
     it("should return an error if the command fails", async () => {
       // GIVEN

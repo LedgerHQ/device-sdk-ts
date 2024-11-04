@@ -1,12 +1,16 @@
 import {
+  APDU_MAX_PAYLOAD,
   ByteArrayBuilder,
   type CommandResult,
   CommandResultFactory,
+  hexaStringToBuffer,
   type InternalApi,
   InvalidStatusWordError,
   isSuccessCommandResult,
 } from "@ledgerhq/device-management-kit";
 import { DerivationPathUtils } from "@ledgerhq/signer-utils";
+import { decodeRlp, encodeRlp } from "ethers-v6";
+import { Nothing } from "purify-ts";
 
 import { type Signature } from "@api/index";
 import { TransactionType } from "@api/model/Transaction";
@@ -14,8 +18,6 @@ import {
   SignTransactionCommand,
   type SignTransactionCommandResponse,
 } from "@internal/app-binder/command/SignTransactionCommand";
-
-import { SendCommandInChunksTask } from "./SendCommandInChunksTask";
 
 const PATH_SIZE = 4;
 
@@ -35,7 +37,6 @@ export class SendSignTransactionTask {
   async run(): Promise<CommandResult<Signature, void>> {
     const { derivationPath, serializedTransaction } = this.args;
     const paths = DerivationPathUtils.splitPath(derivationPath);
-
     const builder = new ByteArrayBuilder(
       serializedTransaction.length + 1 + paths.length * PATH_SIZE,
     );
@@ -45,34 +46,97 @@ export class SendSignTransactionTask {
     paths.forEach((path) => {
       builder.add32BitUIntToData(path);
     });
-    // add the transaction
-    builder.addBufferToData(serializedTransaction);
+    const derivations = builder.build();
 
-    const buffer = builder.build();
-
-    const result =
-      await new SendCommandInChunksTask<SignTransactionCommandResponse>(
-        this.api,
-        {
-          data: buffer,
-          commandFactory: (args) =>
-            new SignTransactionCommand({
-              serializedTransaction: args.chunkedData,
-              isFirstChunk: args.isFirstChunk,
-            }),
-        },
-      ).run();
-
-    if (!isSuccessCommandResult(result)) {
-      return result;
+    // Send chunks
+    const chunks = this.getChunks(derivations, serializedTransaction);
+    let resultData: SignTransactionCommandResponse = Nothing;
+    for (let i = 0; i < chunks.length; i++) {
+      const result = await this.api.sendCommand(
+        new SignTransactionCommand({
+          serializedTransaction: chunks[i]!,
+          isFirstChunk: i === 0,
+        }),
+      );
+      if (!isSuccessCommandResult(result)) {
+        return result;
+      }
+      resultData = result.data;
     }
 
-    return this.recoverSignature(result.data).mapOrDefault(
+    return this.recoverSignature(resultData).mapOrDefault(
       (data) => CommandResultFactory({ data }),
       CommandResultFactory({
         error: new InvalidStatusWordError("no signature returned"),
       }),
     );
+  }
+
+  private getChunks(
+    derivations: Uint8Array,
+    serializedTransaction: Uint8Array,
+  ): Uint8Array[] {
+    const buffer = Uint8Array.from([...derivations, ...serializedTransaction]);
+
+    // No chunking for small transactions
+    let chunkSize = APDU_MAX_PAYLOAD;
+    if (buffer.length <= chunkSize) {
+      return [buffer];
+    }
+
+    // Since EIP-155, legacy transactions signature encode the chainId in V parity and
+    // it has to be part of the hashed transaction:
+    // https://github.com/ethereum/EIPs/blob/master/EIPS/eip-155.md
+    //
+    // A known issue is present in ethereum app for those transactions:
+    // if the last chunk start at the EIP-155 marker (the chainId), then the app
+    // will confuse it with a pre-eip155 transaction, and compute an invalid signature
+    // before receiving the last chunk...
+    // It cannot be fixed without breaking APDU backward compatibility.
+    //
+    // Therefore the client has to make sure the last chunk don't start on that marker.
+    if (this.args.transactionType === TransactionType.LEGACY) {
+      try {
+        // Decode the RLP of the transaction and keep only the last 3 elements (v, r, s)
+        const decodedRlp = decodeRlp(serializedTransaction);
+        if (Array.isArray(decodedRlp)) {
+          const decodedVrs = decodedRlp.slice(-3);
+          // Encode those values back to RLP in order to get the length of this serialized list
+          // Result should be something like [0xc0 + list payload length, list.map(rlp)]
+          // since only v can be used to store the chainId in legacy transactions
+          const encodedVrs = encodeRlp(decodedVrs);
+          // Since chainIds are uint256, the list payload length can be 1B (v rlp description) + 32B (v) + 1B (r) + 1B (s) = 35B max (< 55B)
+          // Therefore, the RLP of this vrs list should be prefixed by a value between [0xc1, 0xe3] (0xc0 + 35B = 0xe3 max)
+          // @see https://ethereum.org/en/developers/docs/data-structures-and-encoding/rlp/
+          // `encodedVrs` is then everything but the first byte of this serialization
+          const encodedVrsBuff = hexaStringToBuffer(encodedVrs)!.subarray(1);
+
+          // Now we search for the biggest chunk value that won't chunk just before the v,r,s values.
+          for (
+            chunkSize = APDU_MAX_PAYLOAD;
+            chunkSize > derivations.length;
+            chunkSize--
+          ) {
+            const lastChunkSize = buffer.length % chunkSize;
+            if (lastChunkSize === 0 || lastChunkSize > encodedVrsBuff.length) {
+              break;
+            }
+          }
+        }
+      } catch (_error) {
+        // fallback to "standard" APDU chunk size if the transaction cannot be decoded
+        chunkSize = APDU_MAX_PAYLOAD;
+      }
+    }
+
+    // Finally we can chunk the buffer
+    let offset = 0;
+    const chunks: Uint8Array[] = [];
+    while (offset < buffer.length) {
+      chunks.push(buffer.slice(offset, offset + chunkSize));
+      offset += chunkSize;
+    }
+    return chunks;
   }
 
   private recoverSignature(
