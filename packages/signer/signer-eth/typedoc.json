@@ -1,0 +1,5 @@
+{
+  "plugin": ["typedoc-plugin-markdown"],
+  "out": "../../../docs/pages/signer-eth",
+  "entryPoints": ["src/index.ts"]
+}

@@ -38,6 +38,9 @@
     },
     "health-check": {
       "dependsOn": ["build", "prettier", "lint", "typecheck"]
+    },
+    "build:docs": {
+      "dependsOn": []
     }
   }
 }
