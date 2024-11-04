@@ -1,7 +1,7 @@
 import { type GetAppAndVersionResponse } from "@api/command/os/GetAppAndVersionCommand";
 import { type BatteryStatusFlags } from "@api/command/os/GetBatteryStatusCommand";
 import { type DeviceStatus } from "@api/device/DeviceStatus";
-import { type Application } from "@internal/manager-api/model/ManagerApiType";
+import { type Application } from "@internal/manager-api/model/Application";
 
 /**
  * The battery status of a device.

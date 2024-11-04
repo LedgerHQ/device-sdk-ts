@@ -1,11 +1,13 @@
 import { inject, injectable } from "inversify";
 import { EitherAsync } from "purify-ts";
 
+import { GetOsVersionResponse } from "@api/command/os/GetOsVersionCommand";
 import { ListAppsResponse } from "@api/command/os/ListAppsCommand";
 import { type ManagerApiDataSource } from "@internal/manager-api/data/ManagerApiDataSource";
 import { managerApiTypes } from "@internal/manager-api/di/managerApiTypes";
+import { type Application } from "@internal/manager-api/model/Application";
+import { DeviceVersion } from "@internal/manager-api/model/Device";
 import { HttpFetchApiError } from "@internal/manager-api/model/Errors";
-import { Application } from "@internal/manager-api/model/ManagerApiType";
 
 import { ManagerApiService } from "./ManagerApiService";
 
@@ -16,6 +18,25 @@ export class DefaultManagerApiService implements ManagerApiService {
     private readonly dataSource: ManagerApiDataSource,
   ) {
     this.dataSource = dataSource;
+  }
+
+  getDeviceVersion(deviceInfo: GetOsVersionResponse, provider: number) {
+    return this.dataSource.getDeviceVersion(
+      deviceInfo.targetId.toString(),
+      provider,
+    );
+  }
+
+  getFirmwareVersion(
+    deviceInfo: GetOsVersionResponse,
+    deviceVersion: DeviceVersion,
+    provider: number,
+  ) {
+    return this.dataSource.getFirmwareVersion(
+      deviceInfo.seVersion,
+      deviceVersion.id,
+      provider,
+    );
   }
 
   getAppsByHash(apps: ListAppsResponse) {

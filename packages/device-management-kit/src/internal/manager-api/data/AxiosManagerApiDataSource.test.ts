@@ -11,6 +11,8 @@ import {
   DEFAULT_MANAGER_API_BASE_URL,
   DEFAULT_MOCK_SERVER_BASE_URL,
 } from "@internal/manager-api//model/Const";
+import { deviceVersionMockBuilder } from "@internal/manager-api/data/__mocks__/GetDeviceVersion";
+import { firmwareVersionMockBuilder } from "@internal/manager-api/data/__mocks__/GetFirmwareVersion";
 import { HttpFetchApiError } from "@internal/manager-api/model/Errors";
 
 import { AxiosManagerApiDataSource } from "./AxiosManagerApiDataSource";
@@ -18,6 +20,9 @@ import { AxiosManagerApiDataSource } from "./AxiosManagerApiDataSource";
 jest.mock("axios");
 
 describe("AxiosManagerApiDataSource", () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
   describe("getAppsByHash", () => {
     describe("success cases", () => {
       it("with BTC app, should return the metadata", async () => {
@@ -78,7 +83,8 @@ describe("AxiosManagerApiDataSource", () => {
     });
 
     describe("error cases", () => {
-      it("should throw an error if the request fails", async () => {
+      it("should throw an error if the request fails", () => {
+        // given
         const api = new AxiosManagerApiDataSource({
           managerApiUrl: DEFAULT_MANAGER_API_BASE_URL,
           mockUrl: DEFAULT_MOCK_SERVER_BASE_URL,
@@ -88,12 +94,82 @@ describe("AxiosManagerApiDataSource", () => {
 
         const hashes = [BTC_APP.appFullHash];
 
-        try {
-          await api.getAppsByHash(hashes);
-        } catch (error) {
-          expect(error).toEqual(Left(new HttpFetchApiError(err)));
-        }
+        // when
+        const response = api.getAppsByHash(hashes);
+
+        // then
+        expect(response).resolves.toEqual(Left(new HttpFetchApiError(err)));
       });
+    });
+  });
+
+  describe("getDeviceVersion", () => {
+    it("should return a complete device version", () => {
+      // given
+      const api = new AxiosManagerApiDataSource({
+        managerApiUrl: DEFAULT_MANAGER_API_BASE_URL,
+        mockUrl: DEFAULT_MOCK_SERVER_BASE_URL,
+      });
+      const mockedDeviceVersion = deviceVersionMockBuilder();
+      jest
+        .spyOn(axios, "get")
+        .mockResolvedValueOnce({ data: mockedDeviceVersion });
+
+      // when
+      const response = api.getDeviceVersion("targetId", 42);
+
+      // then
+      expect(response).resolves.toEqual(Right(mockedDeviceVersion));
+    });
+    it("should return an error if the request fails", () => {
+      // given
+      const api = new AxiosManagerApiDataSource({
+        managerApiUrl: DEFAULT_MANAGER_API_BASE_URL,
+        mockUrl: DEFAULT_MOCK_SERVER_BASE_URL,
+      });
+      const error = new Error("fetch error");
+      jest.spyOn(axios, "get").mockRejectedValue(error);
+
+      // when
+      const response = api.getDeviceVersion("targetId", 42);
+
+      // then
+      expect(response).resolves.toEqual(Left(new HttpFetchApiError(error)));
+    });
+  });
+
+  describe("getFirmwareVersion", () => {
+    it("should return a complete firmware version", () => {
+      // given
+      const api = new AxiosManagerApiDataSource({
+        managerApiUrl: DEFAULT_MANAGER_API_BASE_URL,
+        mockUrl: DEFAULT_MOCK_SERVER_BASE_URL,
+      });
+      const mockedFirmwareVersion = firmwareVersionMockBuilder();
+      jest
+        .spyOn(axios, "get")
+        .mockResolvedValueOnce({ data: mockedFirmwareVersion });
+
+      // when
+      const response = api.getFirmwareVersion("versionName", 42, 21);
+
+      // then
+      expect(response).resolves.toEqual(Right(mockedFirmwareVersion));
+    });
+    it("should return an error if the request fails", () => {
+      // given
+      const api = new AxiosManagerApiDataSource({
+        managerApiUrl: DEFAULT_MANAGER_API_BASE_URL,
+        mockUrl: DEFAULT_MOCK_SERVER_BASE_URL,
+      });
+      const error = new Error("fetch error");
+      jest.spyOn(axios, "get").mockRejectedValue(error);
+
+      // when
+      const response = api.getFirmwareVersion("versionName", 42, 21);
+
+      // then
+      expect(response).resolves.toEqual(Left(new HttpFetchApiError(error)));
     });
   });
 });

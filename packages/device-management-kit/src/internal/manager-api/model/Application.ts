@@ -1,5 +1,3 @@
-export type Id = number;
-
 export enum AppType {
   currency = "currency",
   plugin = "plugin",
@@ -8,7 +6,7 @@ export enum AppType {
 }
 
 export type Application = {
-  versionId: Id;
+  versionId: number;
   versionName: string;
   versionDisplayName: string;
   version: string;

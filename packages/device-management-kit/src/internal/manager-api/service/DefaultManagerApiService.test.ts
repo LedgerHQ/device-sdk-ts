@@ -1,5 +1,7 @@
 import { Left, Right } from "purify-ts";
 
+import { getOsVersionCommandResponseStubBuilder } from "@api/command/os/__mocks__/GetOsVersionCommand";
+import { DeviceModelId } from "@api/device/DeviceModel";
 import {
   BTC_APP,
   BTC_APP_METADATA,
@@ -10,6 +12,7 @@ import {
   DEFAULT_MANAGER_API_BASE_URL,
   DEFAULT_MOCK_SERVER_BASE_URL,
 } from "@internal/manager-api//model/Const";
+import { deviceVersionMockBuilder } from "@internal/manager-api/data/__mocks__/GetDeviceVersion";
 import { AxiosManagerApiDataSource } from "@internal/manager-api/data/AxiosManagerApiDataSource";
 import { HttpFetchApiError } from "@internal/manager-api/model/Errors";
 
@@ -74,6 +77,38 @@ describe("ManagerApiService", () => {
           Left(new HttpFetchApiError(error)),
         );
       });
+    });
+  });
+
+  describe("getDeviceVersion", () => {
+    it("should call api with the correct parameters", () => {
+      // given
+      const deviceInfo = getOsVersionCommandResponseStubBuilder(
+        DeviceModelId.STAX,
+      );
+      const provider = 42;
+      // when
+      service.getDeviceVersion(deviceInfo, provider);
+      // then
+      expect(dataSource.getDeviceVersion).toHaveBeenCalledWith("857735172", 42);
+    });
+  });
+  describe("getFirmwareVersion", () => {
+    it("should call api with the correct parameters", () => {
+      // given
+      const deviceVersion = deviceVersionMockBuilder();
+      const deviceInfo = getOsVersionCommandResponseStubBuilder(
+        DeviceModelId.STAX,
+      );
+      const provider = 42;
+      // when
+      service.getFirmwareVersion(deviceInfo, deviceVersion, provider);
+      // then
+      expect(dataSource.getFirmwareVersion).toHaveBeenCalledWith(
+        "1.3.0",
+        17,
+        42,
+      );
     });
   });
 });
