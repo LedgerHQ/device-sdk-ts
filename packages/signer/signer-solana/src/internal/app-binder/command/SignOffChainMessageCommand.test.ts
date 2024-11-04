@@ -3,6 +3,7 @@ import {
   ApduResponse,
   isSuccessCommandResult,
 } from "@ledgerhq/device-management-kit";
+import { Just } from "purify-ts";
 
 import { SignOffChainMessageCommand } from "./SignOffChainMessageCommand";
 
@@ -50,7 +51,7 @@ describe("SignOffChainMessageCommand", () => {
 
       expect(isSuccessCommandResult(parsed)).toBe(true);
       if (isSuccessCommandResult(parsed)) {
-        expect(parsed.data).toEqual(signature);
+        expect(parsed.data).toEqual(Just(signature));
       } else {
         fail("Expected success result");
       }
