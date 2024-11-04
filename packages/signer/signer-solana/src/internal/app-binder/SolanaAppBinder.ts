@@ -13,6 +13,7 @@ import { SignTransactionDAReturnType } from "@api/app-binder/SignTransactionDevi
 import { Transaction } from "@api/model/Transaction";
 import { externalTypes } from "@internal/externalTypes";
 
+import { GetAppConfigurationCommand } from "./command/GetAppConfigurationCommand";
 import { GetPubKeyCommand } from "./command/GetPubKeyCommand";
 
 @injectable()
@@ -55,6 +56,15 @@ export class SolanaAppBinder {
   }
 
   getAppConfiguration(): GetAppConfigurationDAReturnType {
-    return {} as GetAppConfigurationDAReturnType;
+    return this.dmk.executeDeviceAction({
+      sessionId: this.sessionId,
+      deviceAction: new SendCommandInAppDeviceAction({
+        input: {
+          command: new GetAppConfigurationCommand(),
+          appName: "Solana",
+          requiredUserInteraction: UserInteractionRequired.None,
+        },
+      }),
+    });
   }
 }

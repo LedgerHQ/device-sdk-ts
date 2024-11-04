@@ -9,6 +9,11 @@ import {
 import { from } from "rxjs";
 
 import {
+  type GetAppConfigurationDAError,
+  type GetAppConfigurationDAIntermediateValue,
+  type GetAppConfigurationDAOutput,
+} from "@api/app-binder/GetAppConfigurationDeviceActionTypes";
+import {
   type GetAddressDAError,
   type GetAddressDAIntermediateValue,
   type GetAddressDAOutput,
@@ -144,6 +149,63 @@ describe("SolanaAppBinder", () => {
             },
           }),
         });
+      });
+    });
+  });
+
+  describe("getAppConfiguration", () => {
+    it("should return the app configuration", (done) => {
+      // GIVEN
+      const appConfiguration = {
+        blindSigningEnabled: true,
+        pubKeyDisplayMode: "LONG",
+        version: "2.5.10",
+      };
+
+      jest.spyOn(mockedDmk, "executeDeviceAction").mockReturnValue({
+        observable: from([
+          {
+            status: DeviceActionStatus.Completed,
+            output: appConfiguration,
+          } as DeviceActionState<
+            GetAppConfigurationDAOutput,
+            GetAppConfigurationDAError,
+            GetAppConfigurationDAIntermediateValue
+          >,
+        ]),
+        cancel: jest.fn(),
+      });
+
+      // WHEN
+      const appBinder = new SolanaAppBinder(mockedDmk, "sessionId");
+      const { observable } = appBinder.getAppConfiguration();
+
+      // THEN
+      const states: DeviceActionState<
+        GetAppConfigurationDAOutput,
+        GetAppConfigurationDAError,
+        GetAppConfigurationDAIntermediateValue
+      >[] = [];
+      observable.subscribe({
+        next: (state) => {
+          states.push(state);
+        },
+        error: (err) => {
+          done(err);
+        },
+        complete: () => {
+          try {
+            expect(states).toEqual([
+              {
+                status: DeviceActionStatus.Completed,
+                output: appConfiguration,
+              },
+            ]);
+            done();
+          } catch (err) {
+            done(err);
+          }
+        },
       });
     });
   });

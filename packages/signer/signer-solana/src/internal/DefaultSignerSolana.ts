@@ -14,6 +14,7 @@ import { type TransactionOptions } from "@api/model/TransactionOptions";
 import { type SignerSolana } from "@api/SignerSolana";
 
 import { type GetAddressUseCase } from "./use-cases/address/GetAddressUseCase";
+import { type GetAppConfigurationUseCase } from "./use-cases/app-configuration/GetAppConfigurationUseCase";
 import { useCasesTypes } from "./use-cases/di/useCasesTypes";
 import { makeContainer } from "./di";
 
@@ -54,6 +55,8 @@ export class DefaultSignerSolana implements SignerSolana {
   }
 
   getAppConfiguration(): GetAppConfigurationDAReturnType {
-    return {} as GetAppConfigurationDAReturnType;
+    return this._container
+      .get<GetAppConfigurationUseCase>(useCasesTypes.GetAppConfigurationUseCase)
+      .execute();
   }
 }

@@ -1,6 +1,7 @@
 import { ContainerModule } from "inversify";
 
 import { GetAddressUseCase } from "@internal/use-cases/address/GetAddressUseCase";
+import { GetAppConfigurationUseCase } from "@internal/use-cases/app-configuration/GetAppConfigurationUseCase";
 import { useCasesTypes } from "@internal/use-cases/di/useCasesTypes";
 
 export const useCasesModuleFactory = () =>
@@ -15,5 +16,8 @@ export const useCasesModuleFactory = () =>
       _onDeactivation,
     ) => {
       bind(useCasesTypes.GetAddressUseCase).to(GetAddressUseCase);
+      bind(useCasesTypes.GetAppConfigurationUseCase).to(
+        GetAppConfigurationUseCase,
+      );
     },
   );

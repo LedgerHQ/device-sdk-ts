@@ -20,5 +20,11 @@ describe("useCasesModuleFactory", () => {
     it("should bind GetAddressUseCase", () => {
       expect(container.isBound(useCasesTypes.GetAddressUseCase)).toBeTruthy();
     });
+
+    it("should bind GetAppConfigurationUseCase", () => {
+      expect(
+        container.isBound(useCasesTypes.GetAppConfigurationUseCase),
+      ).toBeTruthy();
+    });
   });
 });
