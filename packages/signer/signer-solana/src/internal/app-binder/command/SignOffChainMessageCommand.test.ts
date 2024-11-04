@@ -3,7 +3,6 @@ import {
   ApduResponse,
   isSuccessCommandResult,
 } from "@ledgerhq/device-management-kit";
-import { Just } from "purify-ts";
 
 import { SignOffChainMessageCommand } from "./SignOffChainMessageCommand";
 
@@ -17,6 +16,7 @@ describe("SignOffChainMessageCommand", () => {
   beforeEach(() => {
     command = new SignOffChainMessageCommand({
       message: MESSAGE,
+      derivationPath: "44'/501'/0'/0'",
     });
     jest.clearAllMocks();
     jest.requireActual("@ledgerhq/device-management-kit");
@@ -51,7 +51,7 @@ describe("SignOffChainMessageCommand", () => {
 
       expect(isSuccessCommandResult(parsed)).toBe(true);
       if (isSuccessCommandResult(parsed)) {
-        expect(parsed.data).toEqual(Just(signature));
+        expect(parsed.data).toEqual(signature);
       } else {
         fail("Expected success result");
       }

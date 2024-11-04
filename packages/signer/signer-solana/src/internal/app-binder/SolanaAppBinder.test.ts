@@ -1,8 +1,10 @@
 import {
+  type DeviceActionIntermediateValue,
   type DeviceActionState,
   DeviceActionStatus,
   type DeviceManagementKit,
   type DeviceSessionId,
+  type DmkError,
   SendCommandInAppDeviceAction,
   UserInteractionRequired,
 } from "@ledgerhq/device-management-kit";
@@ -22,7 +24,9 @@ import {
   type SignTransactionDAOutput,
 } from "@api/index";
 
+import { GetAppConfigurationCommand } from "./command/GetAppConfigurationCommand";
 import { GetPubKeyCommand } from "./command/GetPubKeyCommand";
+import { SignMessageDeviceAction } from "./device-action/SignMessage/SignMessageDeviceAction";
 import { SignTransactionDeviceAction } from "./device-action/SignTransactionDeviceAction";
 import { SolanaAppBinder } from "./SolanaAppBinder";
 
@@ -235,6 +239,82 @@ describe("SolanaAppBinder", () => {
     });
   });
 
+  describe("signMessage", () => {
+    it("should return the signed message", (done) => {
+      // GIVEN
+      const signedMessage = new Uint8Array([0x1c, 0x8a, 0x54, 0x05, 0x10]);
+      const signMessageArgs = {
+        derivationPath: "44'/501'/0'/0'",
+        message: "Hello world",
+      };
+
+      jest.spyOn(mockedDmk, "executeDeviceAction").mockReturnValue({
+        observable: from([
+          {
+            status: DeviceActionStatus.Completed,
+            output: signedMessage,
+          } as DeviceActionState<
+            Uint8Array,
+            DmkError,
+            DeviceActionIntermediateValue
+          >,
+        ]),
+        cancel: jest.fn(),
+      });
+
+      // WHEN
+      const appBinder = new SolanaAppBinder(mockedDmk, "sessionId");
+      const { observable } = appBinder.signMessage(signMessageArgs);
+
+      // THEN
+      const states: DeviceActionState<Uint8Array, unknown, unknown>[] = [];
+      observable.subscribe({
+        next: (state) => {
+          states.push(state);
+        },
+        error: (err) => {
+          done(err);
+        },
+        complete: () => {
+          try {
+            expect(states).toEqual([
+              {
+                status: DeviceActionStatus.Completed,
+                output: signedMessage,
+              },
+            ]);
+            done();
+          } catch (err) {
+            done(err);
+          }
+        },
+      });
+    });
+
+    it("should call executeDeviceAction with correct parameters", () => {
+      // GIVEN
+      const signMessageArgs = {
+        derivationPath: "44'/501'/0'/0'",
+        message: "Hello world",
+      };
+
+      // WHEN
+      const appBinder = new SolanaAppBinder(mockedDmk, "sessionId");
+      appBinder.signMessage(signMessageArgs);
+
+      // THEN
+      expect(mockedDmk.executeDeviceAction).toHaveBeenCalledWith({
+        sessionId: "sessionId",
+        deviceAction: new SignMessageDeviceAction({
+          input: {
+            derivationPath: signMessageArgs.derivationPath,
+            message: signMessageArgs.message,
+          },
+        }),
+      });
+    });
+  });
+
   describe("getAppConfiguration", () => {
     it("should return the app configuration", (done) => {
       // GIVEN
@@ -288,6 +368,26 @@ describe("SolanaAppBinder", () => {
             done(err);
           }
         },
+      });
+    });
+
+    it("should call executeDeviceAction with the correct params", () => {
+      // GIVEN
+      const appBinder = new SolanaAppBinder(mockedDmk, "sessionId");
+
+      // WHEN
+      appBinder.getAppConfiguration();
+
+      // THEN
+      expect(mockedDmk.executeDeviceAction).toHaveBeenCalledWith({
+        sessionId: "sessionId",
+        deviceAction: new SendCommandInAppDeviceAction({
+          input: {
+            command: new GetAppConfigurationCommand(), // Correct command
+            appName: "Solana",
+            requiredUserInteraction: UserInteractionRequired.None,
+          },
+        }),
       });
     });
   });

@@ -132,7 +132,6 @@ describe("SignTransactionCommand", () => {
     it("should return the signature when the response is not empty", () => {
       // GIVEN
       const command = new SignTransactionCommand(defaultArgs);
-      // Uint8Array of 64 bytes
       const data = new Uint8Array(Array.from({ length: 64 }, (_, i) => i + 1));
 
       // WHEN

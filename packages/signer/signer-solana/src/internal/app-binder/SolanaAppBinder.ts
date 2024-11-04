@@ -16,6 +16,7 @@ import { externalTypes } from "@internal/externalTypes";
 
 import { GetAppConfigurationCommand } from "./command/GetAppConfigurationCommand";
 import { GetPubKeyCommand } from "./command/GetPubKeyCommand";
+import { SignMessageDeviceAction } from "./device-action/SignMessage/SignMessageDeviceAction";
 import { SignTransactionDeviceAction } from "./device-action/SignTransactionDeviceAction";
 
 @injectable()
@@ -60,11 +61,19 @@ export class SolanaAppBinder {
     });
   }
 
-  signMessage(_args: {
+  signMessage(args: {
     derivationPath: string;
     message: string;
   }): SignMessageDAReturnType {
-    return {} as SignMessageDAReturnType;
+    return this.dmk.executeDeviceAction({
+      sessionId: this.sessionId,
+      deviceAction: new SignMessageDeviceAction({
+        input: {
+          derivationPath: args.derivationPath,
+          message: args.message,
+        },
+      }),
+    });
   }
 
   getAppConfiguration(): GetAppConfigurationDAReturnType {
