@@ -1,5 +1,3 @@
-import { AppConfiguration } from "@api/model/AppConfiguration";
-import { PublicKeyDisplayMode } from "@api/model/PublicKeyDisplayMode";
 import {
   type Apdu,
   ApduBuilder,
@@ -12,6 +10,9 @@ import {
   GlobalCommandErrorHandler,
   InvalidStatusWordError,
 } from "@ledgerhq/device-management-kit";
+
+import { type AppConfiguration } from "@api/model/AppConfiguration";
+import { PublicKeyDisplayMode } from "@api/model/PublicKeyDisplayMode";
 
 type GetAppConfigurationCommandArgs = void;
 

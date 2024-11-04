@@ -4,8 +4,9 @@ import {
   isSuccessCommandResult,
 } from "@ledgerhq/device-management-kit";
 
-import { GetAppConfigurationCommand } from "./GetAppConfigurationCommand";
 import { PublicKeyDisplayMode } from "@api/model/PublicKeyDisplayMode";
+
+import { GetAppConfigurationCommand } from "./GetAppConfigurationCommand";
 
 const GET_APP_CONFIG_APDU = new Uint8Array([0xe0, 0x04, 0x00, 0x00, 0x00]);
 

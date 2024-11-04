@@ -13,4 +13,14 @@ describe("DefaultSignerSolana", () => {
     });
     expect(signer).toBeDefined();
   });
+
+  it("should call getAppConfiguration", () => {
+    const dmk = {
+      executeDeviceAction: jest.fn(),
+    } as unknown as DeviceManagementKit;
+    const sessionId = {} as DeviceSessionId;
+    const signer = new DefaultSignerSolana({ dmk, sessionId });
+    signer.getAppConfiguration();
+    expect(dmk.executeDeviceAction).toHaveBeenCalled();
+  });
 });
