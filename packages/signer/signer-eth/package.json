@@ -32,7 +32,8 @@
     "typecheck": "tsc --noEmit",
     "test": "jest",
     "test:watch": "pnpm test -- --watch",
-    "test:coverage": "pnpm test -- --coverage"
+    "test:coverage": "pnpm test -- --coverage",
+    "build:docs": "pnpm typedoc"
   },
   "dependencies": {
     "ethers-v5": "npm:ethers@^5.7.2",
@@ -55,7 +56,9 @@
     "@ledgerhq/tsconfig-dsdk": "workspace:*",
     "@types/semver": "^7.5.8",
     "rxjs": "^7.8.1",
-    "ts-node": "^10.9.2"
+    "ts-node": "^10.9.2",
+    "typedoc": "^0.26.11",
+    "typedoc-plugin-markdown": "^4.2.10"
   },
   "peerDependencies": {
     "@ledgerhq/context-module": "workspace:*",
