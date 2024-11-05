@@ -24,6 +24,7 @@ import {
   type FieldType,
   PrimitiveType,
   StructType,
+  TypedDataValueArray,
   TypedDataValueField,
   TypedDataValueRoot,
 } from "@internal/typed-data/model/Types";
@@ -188,10 +189,11 @@ describe("ProvideEIP712ContextTask", () => {
       type: StructImplemType.ROOT,
       value,
     });
-  /*const sendStructImplArray = (value: number) => new SendEIP712StructImplemCommand({
-    type: StructImplemType.ARRAY,
-    value,
-  });*/
+  const sendStructImplArray = (value: number) =>
+    new SendEIP712StructImplemCommand({
+      type: StructImplemType.ARRAY,
+      value,
+    });
   const sendStructImplField = (data: Uint8Array) =>
     new SendEIP712StructImplemCommand({
       type: StructImplemType.FIELD,
@@ -442,6 +444,7 @@ describe("ProvideEIP712ContextTask", () => {
     expect(apiMock.sendCommand.mock.calls[21]![0]).toStrictEqual(
       new SendEIP712FilteringCommand({
         type: Eip712FilterType.Token,
+        discarded: false,
         tokenIndex: 4,
         signature:
           "3044022075103b38995e031d1ebbfe38ac6603bec32854b5146a664e49b4cc4f460c1da6022029f4b0fd1f3b7995ffff1627d4b57f27888a2dcc9b3a4e85c37c67571092c733",
@@ -463,6 +466,7 @@ describe("ProvideEIP712ContextTask", () => {
     expect(apiMock.sendCommand.mock.calls[24]![0]).toStrictEqual(
       new SendEIP712FilteringCommand({
         type: Eip712FilterType.Amount,
+        discarded: false,
         displayName: "Amount allowance",
         tokenIndex: 255,
         signature:
@@ -475,6 +479,7 @@ describe("ProvideEIP712ContextTask", () => {
     expect(apiMock.sendCommand.mock.calls[26]![0]).toStrictEqual(
       new SendEIP712FilteringCommand({
         type: Eip712FilterType.Datetime,
+        discarded: false,
         displayName: "Approval expire",
         signature:
           "3044022056b3381e4540629ad73bc434ec49d80523234b82f62340fbb77157fb0eb21a680220459fe9cf6ca309f9c7dfc6d4711fea1848dba661563c57f77b3c2dc480b3a63b",
@@ -489,6 +494,7 @@ describe("ProvideEIP712ContextTask", () => {
     expect(apiMock.sendCommand.mock.calls[29]![0]).toStrictEqual(
       new SendEIP712FilteringCommand({
         type: Eip712FilterType.Raw,
+        discarded: false,
         displayName: "Approve to spender",
         signature:
           "3044022033e5713d9cb9bc375b56a9fb53b736c81ea3c4ac5cfb2d3ca7f8b8f0558fe2430220543ca4fef6d6f725f29e343f167fe9dd582aa856ecb5797259050eb990a1befb",
@@ -541,6 +547,7 @@ describe("ProvideEIP712ContextTask", () => {
     expect(apiMock.sendCommand).toHaveBeenCalledWith(
       new SendEIP712FilteringCommand({
         type: Eip712FilterType.Token,
+        discarded: false,
         tokenIndex: 0,
         signature:
           "3044022075103b38995e031d1ebbfe38ac6603bec32854b5146a664e49b4cc4f460c1da6022029f4b0fd1f3b7995ffff1627d4b57f27888a2dcc9b3a4e85c37c67571092c733",
@@ -549,6 +556,7 @@ describe("ProvideEIP712ContextTask", () => {
     expect(apiMock.sendCommand).toHaveBeenCalledWith(
       new SendEIP712FilteringCommand({
         type: Eip712FilterType.Amount,
+        discarded: false,
         displayName: "Amount allowance",
         tokenIndex: 1,
         signature:
@@ -581,6 +589,7 @@ describe("ProvideEIP712ContextTask", () => {
     expect(apiMock.sendCommand).toHaveBeenCalledWith(
       new SendEIP712FilteringCommand({
         type: Eip712FilterType.Token,
+        discarded: false,
         tokenIndex: 0,
         signature:
           "3044022075103b38995e031d1ebbfe38ac6603bec32854b5146a664e49b4cc4f460c1da6022029f4b0fd1f3b7995ffff1627d4b57f27888a2dcc9b3a4e85c37c67571092c733",
@@ -589,6 +598,7 @@ describe("ProvideEIP712ContextTask", () => {
     expect(apiMock.sendCommand).toHaveBeenCalledWith(
       new SendEIP712FilteringCommand({
         type: Eip712FilterType.Amount,
+        discarded: false,
         displayName: "Amount allowance",
         tokenIndex: 255,
         signature:
@@ -621,6 +631,7 @@ describe("ProvideEIP712ContextTask", () => {
     expect(apiMock.sendCommand).toHaveBeenCalledWith(
       new SendEIP712FilteringCommand({
         type: Eip712FilterType.Token,
+        discarded: false,
         tokenIndex: 4,
         signature:
           "3044022075103b38995e031d1ebbfe38ac6603bec32854b5146a664e49b4cc4f460c1da6022029f4b0fd1f3b7995ffff1627d4b57f27888a2dcc9b3a4e85c37c67571092c733",
@@ -629,6 +640,7 @@ describe("ProvideEIP712ContextTask", () => {
     expect(apiMock.sendCommand).toHaveBeenCalledWith(
       new SendEIP712FilteringCommand({
         type: Eip712FilterType.Amount,
+        discarded: false,
         displayName: "Amount allowance",
         tokenIndex: 0,
         signature:
@@ -723,6 +735,116 @@ describe("ProvideEIP712ContextTask", () => {
     // THEN
     await expect(promise).resolves.toStrictEqual(
       CommandResultFactory({ error: new UnknownDeviceExchangeError("error") }),
+    );
+  });
+
+  it("Send struct array", async () => {
+    // GIVEN
+    const args: ProvideEIP712ContextTaskArgs = {
+      types: {},
+      domain: [],
+      message: [
+        // Array containing an element
+        {
+          path: "spenders",
+          type: "address[]",
+          value: new TypedDataValueArray(1),
+        },
+        {
+          path: "spenders.[]",
+          type: "address",
+          value: new TypedDataValueField(
+            hexaStringToBuffer("0x7ceb23fd6bc0add59e62ac25578270cff1b9f619")!,
+          ),
+        },
+        // Empty array
+        {
+          path: "beneficiaries",
+          type: "address[]",
+          value: new TypedDataValueArray(0),
+        },
+      ],
+      clearSignContext: Just({
+        type: "success",
+        messageInfo: {
+          displayName: "Permit2",
+          filtersCount: 2,
+          signature: "sig",
+        },
+        tokens: {},
+        filters: {
+          "spenders.[]": {
+            displayName: "Spender",
+            path: "spenders.[]",
+            signature: "sig",
+            type: "raw",
+          },
+          "beneficiaries.[]": {
+            displayName: "Beneficiary",
+            path: "beneficiaries.[]",
+            signature: "sig",
+            type: "raw",
+          },
+        },
+      }),
+    };
+    // WHEN
+    apiMock.sendCommand.mockResolvedValue(
+      CommandResultFactory({ data: undefined }),
+    );
+    await new ProvideEIP712ContextTask(apiMock, args).run();
+
+    // THEN
+    // Activate the filtering
+    expect(apiMock.sendCommand.mock.calls[0]![0]).toStrictEqual(
+      new SendEIP712FilteringCommand({ type: Eip712FilterType.Activation }),
+    );
+    // Send the message information filter
+    expect(apiMock.sendCommand.mock.calls[1]![0]).toStrictEqual(
+      new SendEIP712FilteringCommand({
+        type: Eip712FilterType.MessageInfo,
+        displayName: "Permit2",
+        filtersCount: 2,
+        signature: "sig",
+      }),
+    );
+    // Send first array containing 1 element
+    expect(apiMock.sendCommand.mock.calls[2]![0]).toStrictEqual(
+      sendStructImplArray(1),
+    );
+    expect(apiMock.sendCommand.mock.calls[3]![0]).toStrictEqual(
+      new SendEIP712FilteringCommand({
+        type: Eip712FilterType.Raw,
+        discarded: false,
+        displayName: "Spender",
+        signature: "sig",
+      }),
+    );
+    expect(apiMock.sendCommand.mock.calls[4]![0]).toStrictEqual(
+      sendStructImplField(
+        Uint8Array.from([
+          0x00, 0x14, 0x7c, 0xeb, 0x23, 0xfd, 0x6b, 0xc0, 0xad, 0xd5, 0x9e,
+          0x62, 0xac, 0x25, 0x57, 0x82, 0x70, 0xcf, 0xf1, 0xb9, 0xf6, 0x19,
+        ]),
+      ),
+    );
+    // Send second empty array, with discarded filter
+    expect(apiMock.sendCommand.mock.calls[5]![0]).toStrictEqual(
+      sendStructImplArray(0),
+    );
+    expect(apiMock.sendCommand.mock.calls[6]![0]).toStrictEqual(
+      new SendEIP712FilteringCommand({
+        type: Eip712FilterType.DiscardedPath,
+        path: "beneficiaries.[]",
+      }),
+    );
+    expect(apiMock.sendCommand.mock.calls[7]![0]).toStrictEqual(
+      new SendEIP712FilteringCommand({
+        type: Eip712FilterType.Raw,
+        discarded: true,
+        displayName: "Beneficiary",
+        signature: "sig",
+      }),
     );
   });
 });

@@ -13,6 +13,7 @@ import {
 
 export enum Eip712FilterType {
   Activation = "activation",
+  DiscardedPath = "discarded_path",
   MessageInfo = "message_info",
   Datetime = "datetime",
   Raw = "raw",
@@ -22,17 +23,34 @@ export enum Eip712FilterType {
 
 export type SendEIP712FilteringCommandArgs =
   | { type: Eip712FilterType.Activation }
+  | { type: Eip712FilterType.DiscardedPath; path: string }
   | {
       type: Eip712FilterType.MessageInfo;
       displayName: string;
       filtersCount: number;
       signature: string;
     }
-  | { type: Eip712FilterType.Datetime; displayName: string; signature: string }
-  | { type: Eip712FilterType.Token; tokenIndex: number; signature: string }
-  | { type: Eip712FilterType.Raw; displayName: string; signature: string }
+  | {
+      type: Eip712FilterType.Datetime;
+      discarded: boolean;
+      displayName: string;
+      signature: string;
+    }
+  | {
+      type: Eip712FilterType.Token;
+      discarded: boolean;
+      tokenIndex: number;
+      signature: string;
+    }
+  | {
+      type: Eip712FilterType.Raw;
+      discarded: boolean;
+      displayName: string;
+      signature: string;
+    }
   | {
       type: Eip712FilterType.Amount;
+      discarded: boolean;
       displayName: string;
       tokenIndex: number;
       signature: string;
@@ -40,6 +58,7 @@ export type SendEIP712FilteringCommandArgs =
 
 const FILTER_TO_P2: Record<Eip712FilterType, number> = {
   [Eip712FilterType.Activation]: 0x00,
+  [Eip712FilterType.DiscardedPath]: 0x01,
   [Eip712FilterType.MessageInfo]: 0x0f,
   [Eip712FilterType.Datetime]: 0xfc,
   [Eip712FilterType.Token]: 0xfd,
@@ -56,7 +75,7 @@ export class SendEIP712FilteringCommand
     const filteringArgs: ApduBuilderArgs = {
       cla: 0xe0,
       ins: 0x1e,
-      p1: 0x00,
+      p1: "discarded" in this.args && this.args.discarded ? 0x01 : 0x00,
       p2: FILTER_TO_P2[this.args.type],
     };
     const builder = new ApduBuilder(filteringArgs);
@@ -66,6 +85,8 @@ export class SendEIP712FilteringCommand
         .encodeInLVFromAscii(this.args.displayName)
         .add8BitUIntToData(this.args.filtersCount)
         .encodeInLVFromHexa(this.args.signature);
+    } else if (this.args.type === Eip712FilterType.DiscardedPath) {
+      builder.encodeInLVFromAscii(this.args.path);
     } else if (
       this.args.type === Eip712FilterType.Datetime ||
       this.args.type === Eip712FilterType.Raw
