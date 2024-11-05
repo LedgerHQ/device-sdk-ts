@@ -3,6 +3,8 @@ import {
   BuiltinTransports,
   type DmkError,
 } from "@ledgerhq/device-management-kit";
+import { webBleIdentifier } from "@ledgerhq/device-transport-kit-web-ble";
+import { webHidIdentifier } from "@ledgerhq/device-transport-kit-web-hid";
 import { Button, Flex } from "@ledgerhq/react-ui";
 import styled from "styled-components";
 
@@ -26,7 +28,7 @@ export const ConnectDeviceActions = ({
   const dmk = useDmk();
 
   const onSelectDeviceClicked = useCallback(
-    (selectedTransport: BuiltinTransports) => {
+    (selectedTransport: string) => {
       onError(null);
       dmk.startDiscovering({ transport: selectedTransport }).subscribe({
         next: (device) => {
@@ -78,7 +80,7 @@ export const ConnectDeviceActions = ({
   ) : (
     <Flex>
       <ConnectButton
-        onClick={() => onSelectDeviceClicked(BuiltinTransports.USB)}
+        onClick={() => onSelectDeviceClicked(webHidIdentifier)}
         variant="main"
         backgroundColor="main"
         size="large"
@@ -86,7 +88,7 @@ export const ConnectDeviceActions = ({
         Select a USB device
       </ConnectButton>
       <ConnectButton
-        onClick={() => onSelectDeviceClicked(BuiltinTransports.BLE)}
+        onClick={() => onSelectDeviceClicked(webBleIdentifier)}
         variant="main"
         backgroundColor="main"
         size="large"

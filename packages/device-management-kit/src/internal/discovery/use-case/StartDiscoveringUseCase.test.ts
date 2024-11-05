@@ -1,38 +1,37 @@
+import { Maybe } from "purify-ts";
 import { of } from "rxjs";
 
 import { DeviceModel } from "@api/device/DeviceModel";
-import { type DeviceModelId, type DiscoveredDevice } from "@api/types";
-import { type DeviceModelDataSource } from "@internal/device-model/data/DeviceModelDataSource";
-import { type InternalDeviceModel } from "@internal/device-model/model/DeviceModel";
-import { DefaultLoggerPublisherService } from "@internal/logger-publisher/service/DefaultLoggerPublisherService";
-import { type LoggerPublisherService } from "@internal/logger-publisher/service/LoggerPublisherService";
-import { type InternalDiscoveredDevice } from "@internal/transport/model/InternalDiscoveredDevice";
-import { usbHidDeviceConnectionFactoryStubBuilder } from "@internal/transport/usb/service/UsbHidDeviceConnectionFactory.stub";
-import { WebUsbHidTransport } from "@internal/transport/usb/transport/WebUsbHidTransport";
+import { type TransportDeviceModel } from "@api/device-model/model/DeviceModel";
+import { TransportStub } from "@api/transport/model/Transport.stub";
+import { type TransportDiscoveredDevice } from "@api/transport/model/TransportDiscoveredDevice";
+import {
+  type DeviceModelId,
+  type DiscoveredDevice,
+  type Transport,
+} from "@api/types";
+import { type TransportService } from "@internal/transport/service/TransportService";
+import { TransportServiceStub } from "@internal/transport/service/TransportService.stub";
 
 import { StartDiscoveringUseCase } from "./StartDiscoveringUseCase";
 
-let transport: WebUsbHidTransport;
-let logger: LoggerPublisherService;
+let transport: Transport;
+let transportService: TransportService;
 
 describe("StartDiscoveringUseCase", () => {
-  const stubDiscoveredDevice: InternalDiscoveredDevice = {
+  const stubDiscoveredDevice: TransportDiscoveredDevice = {
     id: "internal-discovered-device-id",
     deviceModel: {
       id: "nanoSP" as DeviceModelId,
       productName: "productName",
-    } as InternalDeviceModel,
+    } as TransportDeviceModel,
     transport: "USB",
   };
-  const tag = "logger-tag";
 
   beforeEach(() => {
-    logger = new DefaultLoggerPublisherService([], tag);
-    transport = new WebUsbHidTransport(
-      {} as DeviceModelDataSource,
-      () => logger,
-      usbHidDeviceConnectionFactoryStubBuilder(),
-    );
+    transport = new TransportStub();
+    // @ts-expect-error stub
+    transportService = new TransportServiceStub();
   });
 
   afterEach(() => {
@@ -46,7 +45,12 @@ describe("StartDiscoveringUseCase", () => {
     jest
       .spyOn(transport, "startDiscovering")
       .mockImplementation(mockedStartDiscovering);
-    const usecase = new StartDiscoveringUseCase([transport]);
+
+    jest
+      .spyOn(transportService, "getTransport")
+      .mockReturnValue(Maybe.of(transport));
+
+    const usecase = new StartDiscoveringUseCase(transportService);
 
     const discover = usecase.execute({ transport: "USB" });
 

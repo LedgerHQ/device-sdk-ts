@@ -1,13 +1,13 @@
-import { injectable, multiInject } from "inversify";
+import { inject, injectable } from "inversify";
 import { map, mergeMap, Observable, of } from "rxjs";
 
 import { DeviceModel } from "@api/device/DeviceModel";
 import { DiscoveredDevice } from "@api/transport/model/DiscoveredDevice";
-import type { Transport } from "@api/transport/model/Transport";
+import { TransportNotSupportedError } from "@api/transport/model/Errors";
+import { TransportDiscoveredDevice } from "@api/transport/model/TransportDiscoveredDevice";
 import { TransportIdentifier } from "@api/transport/model/TransportIdentifier";
 import { transportDiTypes } from "@internal/transport/di/transportDiTypes";
-import { TransportNotSupportedError } from "@internal/transport/model/Errors";
-import { InternalDiscoveredDevice } from "@internal/transport/model/InternalDiscoveredDevice";
+import { TransportService } from "@internal/transport/service/TransportService";
 
 export type StartDiscoveringUseCaseArgs = {
   /**
@@ -25,12 +25,12 @@ export type StartDiscoveringUseCaseArgs = {
 @injectable()
 export class StartDiscoveringUseCase {
   constructor(
-    @multiInject(transportDiTypes.Transport)
-    private transports: Transport[],
+    @inject(transportDiTypes.TransportService)
+    private readonly _transportService: TransportService,
   ) {}
 
   private mapDiscoveredDevice(
-    device: InternalDiscoveredDevice,
+    device: TransportDiscoveredDevice,
   ): DiscoveredDevice {
     const deviceModel = new DeviceModel({
       id: device.id,
@@ -47,19 +47,9 @@ export class StartDiscoveringUseCase {
   execute({
     transport,
   }: StartDiscoveringUseCaseArgs): Observable<DiscoveredDevice> {
-    if (transport) {
-      const instance = this.transports.find(
-        (t) => t.getIdentifier() === transport,
-      );
-      if (!instance) {
-        throw new TransportNotSupportedError(new Error("Unknown transport"));
-      }
-      return instance
-        .startDiscovering()
-        .pipe(map((device) => this.mapDiscoveredDevice(device)));
-    } else {
-      // Discover from all transports in parallel
-      return of(...this.transports).pipe(
+    if (!transport) {
+      const transports = this._transportService.getAllTransports();
+      return of(...transports).pipe(
         mergeMap((instance) =>
           instance
             .startDiscovering()
@@ -67,5 +57,18 @@ export class StartDiscoveringUseCase {
         ),
       );
     }
+
+    const instance = this._transportService.getTransport(transport);
+
+    return instance.caseOf({
+      Just: (t) => {
+        return t
+          .startDiscovering()
+          .pipe(map((device) => this.mapDiscoveredDevice(device)));
+      },
+      Nothing: () => {
+        throw new TransportNotSupportedError(new Error("Unknown transport"));
+      },
+    });
   }
 }

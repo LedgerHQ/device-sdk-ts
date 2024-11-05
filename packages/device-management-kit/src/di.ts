@@ -8,8 +8,7 @@ import { deviceActionModuleFactory } from "@api/device-action/di/deviceActionMod
 // import { makeLoggerMiddleware } from "inversify-logger-middleware";
 import { type DmkConfig } from "@api/DmkConfig";
 import { type LoggerSubscriberService } from "@api/logger-subscriber/service/LoggerSubscriberService";
-import { type Transport } from "@api/transport/model/Transport";
-import { type BuiltinTransports } from "@api/transport/model/TransportIdentifier";
+import { type TransportFactory } from "@api/transport/model/Transport";
 import { configModuleFactory } from "@internal/config/di/configModule";
 import { deviceModelModuleFactory } from "@internal/device-model/di/deviceModelModule";
 import { deviceSessionModuleFactory } from "@internal/device-session/di/deviceSessionModule";
@@ -22,16 +21,14 @@ import {
 } from "@internal/manager-api/model/Const";
 import { sendModuleFactory } from "@internal/send/di/sendModule";
 import { transportModuleFactory } from "@internal/transport//di/transportModule";
-import { bleModuleFactory } from "@internal/transport/ble/di/bleModule";
-import { usbModuleFactory } from "@internal/transport/usb/di/usbModule";
 
 // Uncomment this line to enable the logger middleware
 // const logger = makeLoggerMiddleware();
 
 export type MakeContainerProps = {
   stub: boolean;
-  transports: BuiltinTransports[];
-  customTransports: Transport[];
+  transports: TransportFactory[];
+  customTransports: TransportFactory[];
   loggers: LoggerSubscriberService[];
   config: DmkConfig;
 };
@@ -39,7 +36,6 @@ export type MakeContainerProps = {
 export const makeContainer = ({
   stub = false,
   transports = [],
-  customTransports = [],
   loggers = [],
   config = {
     managerApiUrl: DEFAULT_MANAGER_API_BASE_URL,
@@ -54,8 +50,7 @@ export const makeContainer = ({
   container.load(
     configModuleFactory({ stub }),
     deviceModelModuleFactory({ stub }),
-    transportModuleFactory({ stub, transports, customTransports, config }),
-    usbModuleFactory({ stub }),
+    transportModuleFactory({ stub, transports, config }),
     managerApiModuleFactory({ stub, config }),
     discoveryModuleFactory({ stub }),
     loggerModuleFactory({ subscribers: loggers }),
@@ -63,7 +58,6 @@ export const makeContainer = ({
     sendModuleFactory({ stub }),
     commandModuleFactory({ stub }),
     deviceActionModuleFactory({ stub }),
-    bleModuleFactory(),
     // modules go here
   );
 

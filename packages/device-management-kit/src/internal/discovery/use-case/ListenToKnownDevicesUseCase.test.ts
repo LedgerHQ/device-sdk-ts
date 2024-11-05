@@ -1,12 +1,15 @@
 import { Subject } from "rxjs";
 
 import { type DeviceId, type DeviceModel } from "@api/device/DeviceModel";
+import { deviceModelStubBuilder } from "@api/device-model/model/DeviceModel.stub";
+import { type TransportDiscoveredDevice } from "@api/transport/model/TransportDiscoveredDevice";
 import { type DiscoveredDevice, type Transport } from "@api/types";
-import { deviceModelStubBuilder } from "@internal/device-model/model/DeviceModel.stub";
-import { type InternalDiscoveredDevice } from "@internal/transport/model/InternalDiscoveredDevice";
+import { type TransportService } from "@internal/transport/service/TransportService";
+import { TransportServiceStub } from "@internal/transport/service/TransportService.stub";
 
 import { ListenToKnownDevicesUseCase } from "./ListenToKnownDevicesUseCase";
 
+let transportService: TransportService;
 function makeMockTransport(props: Partial<Transport>): Transport {
   return {
     listenToKnownDevices: jest.fn(),
@@ -31,10 +34,10 @@ function makeMockDeviceModel(id: DeviceId): DeviceModel {
 
 function setup2MockTransports() {
   const transportAKnownDevicesSubject = new Subject<
-    InternalDiscoveredDevice[]
+    TransportDiscoveredDevice[]
   >();
   const transportBKnownDevicesSubject = new Subject<
-    InternalDiscoveredDevice[]
+    TransportDiscoveredDevice[]
   >();
   const transportA = makeMockTransport({
     listenToKnownDevices: () => transportAKnownDevicesSubject.asObservable(),
@@ -50,9 +53,9 @@ function setup2MockTransports() {
   };
 }
 
-function makeMockInternalDiscoveredDevice(
+function makeMockTransportDiscoveredDevice(
   id: string,
-): InternalDiscoveredDevice {
+): TransportDiscoveredDevice {
   return {
     id,
     deviceModel: mockInternalDeviceModel,
@@ -61,9 +64,17 @@ function makeMockInternalDiscoveredDevice(
 }
 
 describe("ListenToKnownDevicesUseCase", () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+    // @ts-expect-error stub
+    transportService = new TransportServiceStub();
+  });
+
   describe("when no transports are available", () => {
     it("should return no discovered devices", (done) => {
-      const useCase = new ListenToKnownDevicesUseCase([]);
+      jest.spyOn(transportService, "getAllTransports").mockReturnValue([]);
+
+      const useCase = new ListenToKnownDevicesUseCase(transportService);
 
       const observedDiscoveredDevices: DiscoveredDevice[][] = [];
       useCase.execute().subscribe({
@@ -90,8 +101,12 @@ describe("ListenToKnownDevicesUseCase", () => {
       const { transportA, transportAKnownDevicesSubject } =
         setup2MockTransports();
 
+      jest
+        .spyOn(transportService, "getAllTransports")
+        .mockReturnValue([transportA]);
+
       const observedDiscoveredDevices: DiscoveredDevice[][] = [];
-      new ListenToKnownDevicesUseCase([transportA])
+      new ListenToKnownDevicesUseCase(transportService)
         .execute()
         .subscribe((devices) => {
           observedDiscoveredDevices.push(devices);
@@ -99,7 +114,7 @@ describe("ListenToKnownDevicesUseCase", () => {
 
       // When transportA emits 1 known device
       transportAKnownDevicesSubject.next([
-        makeMockInternalDiscoveredDevice("transportA-device1"),
+        makeMockTransportDiscoveredDevice("transportA-device1"),
       ]);
 
       expect(observedDiscoveredDevices[0]).toEqual([
@@ -112,8 +127,8 @@ describe("ListenToKnownDevicesUseCase", () => {
 
       // When transportA emits 2 known devices
       transportAKnownDevicesSubject.next([
-        makeMockInternalDiscoveredDevice("transportA-device1"),
-        makeMockInternalDiscoveredDevice("transportA-device2"),
+        makeMockTransportDiscoveredDevice("transportA-device1"),
+        makeMockTransportDiscoveredDevice("transportA-device2"),
       ]);
 
       expect(observedDiscoveredDevices[1]).toEqual([
@@ -131,7 +146,7 @@ describe("ListenToKnownDevicesUseCase", () => {
 
       // When transportA emits 1 known device (device1 disconnects)
       transportAKnownDevicesSubject.next([
-        makeMockInternalDiscoveredDevice("transportA-device2"),
+        makeMockTransportDiscoveredDevice("transportA-device2"),
       ]);
 
       expect(observedDiscoveredDevices[2]).toEqual([
@@ -154,24 +169,26 @@ describe("ListenToKnownDevicesUseCase", () => {
       const { transportAKnownDevicesSubject, transportA, transportB } =
         setup2MockTransports();
 
+      jest
+        .spyOn(transportService, "getAllTransports")
+        .mockReturnValue([transportA, transportB]);
+
       const observedDiscoveredDevices: DiscoveredDevice[][] = [];
 
       const onError = jest.fn();
       const onComplete = jest.fn();
 
-      new ListenToKnownDevicesUseCase([transportA, transportB])
-        .execute()
-        .subscribe({
-          next: (devices) => {
-            observedDiscoveredDevices.push(devices);
-          },
-          error: onError,
-          complete: onComplete,
-        });
+      new ListenToKnownDevicesUseCase(transportService).execute().subscribe({
+        next: (devices) => {
+          observedDiscoveredDevices.push(devices);
+        },
+        error: onError,
+        complete: onComplete,
+      });
 
       // When transportA emits 1 known device
       transportAKnownDevicesSubject.next([
-        makeMockInternalDiscoveredDevice("transportA-device1"),
+        makeMockTransportDiscoveredDevice("transportA-device1"),
       ]);
 
       expect(observedDiscoveredDevices[0]).toEqual([
@@ -199,21 +216,23 @@ describe("ListenToKnownDevicesUseCase", () => {
 
       const observedDiscoveredDevices: DiscoveredDevice[][] = [];
 
+      jest
+        .spyOn(transportService, "getAllTransports")
+        .mockReturnValue([transportA, transportB]);
+
       const onError = jest.fn();
       const onComplete = jest.fn();
-      new ListenToKnownDevicesUseCase([transportA, transportB])
-        .execute()
-        .subscribe({
-          next: (devices) => {
-            observedDiscoveredDevices.push(devices);
-          },
-          error: onError,
-          complete: onComplete,
-        });
+      new ListenToKnownDevicesUseCase(transportService).execute().subscribe({
+        next: (devices) => {
+          observedDiscoveredDevices.push(devices);
+        },
+        error: onError,
+        complete: onComplete,
+      });
 
       // When transportA emits 1 known device
       transportAKnownDevicesSubject.next([
-        makeMockInternalDiscoveredDevice("transportA-device1"),
+        makeMockTransportDiscoveredDevice("transportA-device1"),
       ]);
 
       expect(observedDiscoveredDevices[0]).toEqual([
@@ -226,7 +245,7 @@ describe("ListenToKnownDevicesUseCase", () => {
 
       // When transportB emits 1 known device
       transportBKnownDevicesSubject.next([
-        makeMockInternalDiscoveredDevice("transportB-device1"),
+        makeMockTransportDiscoveredDevice("transportB-device1"),
       ]);
 
       expect(observedDiscoveredDevices[1]).toEqual([
@@ -244,8 +263,8 @@ describe("ListenToKnownDevicesUseCase", () => {
 
       // When transportB emits 2 known devices
       transportBKnownDevicesSubject.next([
-        makeMockInternalDiscoveredDevice("transportB-device1"),
-        makeMockInternalDiscoveredDevice("transportB-device2"),
+        makeMockTransportDiscoveredDevice("transportB-device1"),
+        makeMockTransportDiscoveredDevice("transportB-device2"),
       ]);
 
       expect(observedDiscoveredDevices[2]).toEqual([

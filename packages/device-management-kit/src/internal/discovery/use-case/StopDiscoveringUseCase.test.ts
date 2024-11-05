@@ -1,38 +1,38 @@
-import { type DeviceModelDataSource } from "@internal/device-model/data/DeviceModelDataSource";
-import { DefaultLoggerPublisherService } from "@internal/logger-publisher/service/DefaultLoggerPublisherService";
-import { type LoggerPublisherService } from "@internal/logger-publisher/service/LoggerPublisherService";
-import { usbHidDeviceConnectionFactoryStubBuilder } from "@internal/transport/usb/service/UsbHidDeviceConnectionFactory.stub";
-import { WebUsbHidTransport } from "@internal/transport/usb/transport/WebUsbHidTransport";
+import { TransportStub } from "@api/transport/model/Transport.stub";
+import { type Transport } from "@api/types";
+import { type TransportService } from "@internal/transport/service/TransportService";
+import { TransportServiceStub } from "@internal/transport/service/TransportService.stub";
 
 import { StopDiscoveringUseCase } from "./StopDiscoveringUseCase";
 
 // TODO test several transports
-let transports: WebUsbHidTransport[];
-let logger: LoggerPublisherService;
-const tag = "logger-tag";
+let transport: Transport;
+let transports: Transport[];
+let transportService: TransportService;
 
 describe("StopDiscoveringUseCase", () => {
   beforeEach(() => {
-    logger = new DefaultLoggerPublisherService([], tag);
-    transports = [
-      new WebUsbHidTransport(
-        {} as DeviceModelDataSource,
-        () => logger,
-        usbHidDeviceConnectionFactoryStubBuilder(),
-      ),
-    ];
+    transport = new TransportStub();
+    transports = [transport];
+    // @ts-expect-error stub
+    transportService = new TransportServiceStub(transports);
   });
 
   afterEach(() => {
-    jest.restoreAllMocks();
+    jest.clearAllMocks();
   });
 
   test("should call stop discovering", () => {
     const mockedStopDiscovering = jest.fn();
     jest
-      .spyOn(transports[0]!, "stopDiscovering")
+      .spyOn(transport, "stopDiscovering")
       .mockImplementation(mockedStopDiscovering);
-    const usecase = new StopDiscoveringUseCase(transports);
+
+    jest
+      .spyOn(transportService, "getAllTransports")
+      .mockReturnValue(transports);
+
+    const usecase = new StopDiscoveringUseCase(transportService);
 
     usecase.execute();
 

@@ -81,16 +81,18 @@ This project uses [turbo monorepo](https://turbo.build/repo/docs) to build and r
 
 A brief description of this project packages:
 
-| Name                                   | Path                           | Description                                                                                                                              |
-|----------------------------------------|--------------------------------|------------------------------------------------------------------------------------------------------------------------------------------|
-| @ledgerhq/device-management-kit-sample | apps/sample                    | React Next web app used to test & demonstrate the Web Device Management Kit                                                              |
-| @ledgerhq/eslint-config-dsdk           | packages/config/eslint         | internal package which contains eslint shared config. Used by `extends: ["@ledgerhq/dsdk"]` in `.eslintrc`.                              |
-| @ledgerhq/jest-config-dsdk             | packages/config/jest           | internal package which contains jest shared config. Used by `preset: "@ledgerhq/jest-config-dsdk"` in `jest.config.ts`                   |
-| @ledgerhq/tsconfig-dsdk                | packages/config/typescript     | internal package which contains typescript shared config. Used by `"extends": "@ledgerhq/tsconfig-dsdk/tsconfig.sdk"` in `tsconfig.json` |
-| @ledgerhq/device-management-kit        | packages/device-management-kit | external package that contains the core of the Web Device Management Kit                                                                 |
-| @ledgerhq/device-signer-kit-ethereum   | packages/signer/signer-eth     | external package that contains device ethereum coin application dedicated handlers                                                       |
-| @ledgerhq/device-signer-kit-solana     | packages/signer/signer-solana  | external package that contains device solana coin application dedicated handlers                                                         |
-| @ledgerhq/device-management-kit-flipper-plugin-client     | packages/flipper-plugin-client | external package that contains [flipper](https://github.com/facebook/flipper) logger for Device Management Kit                                                              |
+| Name                                                  | Path                           | Description                                                                                                                              |
+|-------------------------------------------------------|--------------------------------|------------------------------------------------------------------------------------------------------------------------------------------|
+| @ledgerhq/device-management-kit-sample                | apps/sample                    | React Next web app used to test & demonstrate the Web Device Management Kit                                                              |
+| @ledgerhq/eslint-config-dsdk                          | packages/config/eslint         | internal package which contains eslint shared config. Used by `extends: ["@ledgerhq/dsdk"]` in `.eslintrc`.                              |
+| @ledgerhq/jest-config-dsdk                            | packages/config/jest           | internal package which contains jest shared config. Used by `preset: "@ledgerhq/jest-config-dsdk"` in `jest.config.ts`                   |
+| @ledgerhq/tsconfig-dsdk                               | packages/config/typescript     | internal package which contains typescript shared config. Used by `"extends": "@ledgerhq/tsconfig-dsdk/tsconfig.sdk"` in `tsconfig.json` |
+| @ledgerhq/device-management-kit                       | packages/device-management-kit | external package that contains the core of the Web Device Management Kit                                                                 |
+| @ledgerhq/device-signer-kit-ethereum                  | packages/signer/signer-eth     | external package that contains device ethereum coin application dedicated handlers                                                       |
+| @ledgerhq/device-signer-kit-solana                    | packages/signer/signer-solana  | external package that contains device solana coin application dedicated handlers                                                         |
+| @ledgerhq/device-management-kit-flipper-plugin-client | packages/flipper-plugin-client | external package that contains [flipper](https://github.com/facebook/flipper) logger for Device Management Kit                           |
+| @ledgerhq/device-transport-kit-web-hid                | packages/transport/web-hid     | external package that contains the Web Hid transport implementation                                                                      |
+| @ledgerhq/device-transport-kit-web-ble                | packages/transport/web-ble     | external package that contains the Web Ble transport implementation                                                                      |
 
 # Getting started
 
@@ -275,7 +277,7 @@ pnpm hygen <name> with-prompt
 
 | workspace | script          | description                           |
 | --------- | --------------- | ------------------------------------- |
-| 📦 core   | `module:create` | scaffolds a new _src/internal_ module |
+| 📦 dmk    | `module:create` | scaffolds a new _src/internal_ module |
 
 ## Play with the sample app ?
 

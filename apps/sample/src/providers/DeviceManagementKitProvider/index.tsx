@@ -8,6 +8,8 @@ import {
   WebLogsExporterLogger,
 } from "@ledgerhq/device-management-kit";
 import { FlipperDmkLogger } from "@ledgerhq/device-management-kit-flipper-plugin-client";
+import { WebBleTransport } from "@ledgerhq/device-transport-kit-web-ble";
+import { WebHidTransport } from "@ledgerhq/device-transport-kit-web-hid";
 
 import { useHasChanged } from "@/hooks/useHasChanged";
 import { useDmkConfigContext } from "@/providers/DmkConfig";
@@ -17,23 +19,49 @@ const LogsExporterContext = createContext<WebLogsExporterLogger | null>(null);
 
 function buildDefaultDmk(logsExporter: WebLogsExporterLogger) {
   return new DeviceManagementKitBuilder()
-    .addTransport(BuiltinTransports.USB)
-    .addTransport(BuiltinTransports.BLE)
+    .addTransport(
+      ({
+        deviceModelDataSource,
+        loggerServiceFactory,
+        apduSenderServiceFactory,
+        apduReceiverServiceFactory,
+      }) =>
+        new WebHidTransport(
+          deviceModelDataSource,
+          loggerServiceFactory,
+          apduSenderServiceFactory,
+          apduReceiverServiceFactory,
+        ),
+    )
+    .addTransport(
+      ({
+        deviceModelDataSource,
+        loggerServiceFactory,
+        apduSenderServiceFactory,
+        apduReceiverServiceFactory,
+      }) =>
+        new WebBleTransport(
+          deviceModelDataSource,
+          loggerServiceFactory,
+          apduSenderServiceFactory,
+          apduReceiverServiceFactory,
+        ),
+    )
     .addLogger(new ConsoleLogger())
     .addLogger(logsExporter)
     .addLogger(new FlipperDmkLogger())
     .build();
 }
 
-function buildMockDmk(url: string, logsExporter: WebLogsExporterLogger) {
-  return new DeviceManagementKitBuilder()
-    .addTransport(BuiltinTransports.MOCK_SERVER)
-    .addLogger(new ConsoleLogger())
-    .addLogger(logsExporter)
-    .addLogger(new FlipperDmkLogger())
-    .addConfig({ mockUrl: url })
-    .build();
-}
+// function buildMockDmk(url: string, logsExporter: WebLogsExporterLogger) {
+//   return new DeviceManagementKitBuilder()
+//     .addTransport(BuiltinTransports.MOCK_SERVER)
+//     .addLogger(new ConsoleLogger())
+//     .addLogger(logsExporter)
+//     .addLogger(new FlipperDmkLogger())
+//     .addConfig({ mockUrl: url })
+//     .build();
+// }
 
 export const DmkProvider: React.FC<PropsWithChildren> = ({ children }) => {
   const {
@@ -43,9 +71,10 @@ export const DmkProvider: React.FC<PropsWithChildren> = ({ children }) => {
   const mockServerEnabled = transport === BuiltinTransports.MOCK_SERVER;
   const [state, setState] = useState(() => {
     const logsExporter = new WebLogsExporterLogger();
-    const dmk = mockServerEnabled
-      ? buildMockDmk(mockServerUrl, logsExporter)
-      : buildDefaultDmk(logsExporter);
+    // const dmk = mockServerEnabled
+    //   ? buildMockDmk(mockServerUrl, logsExporter)
+    //   : buildDefaultDmk(logsExporter);
+    const dmk = buildDefaultDmk(logsExporter);
     return { dmk, logsExporter };
   });
 
@@ -55,9 +84,10 @@ export const DmkProvider: React.FC<PropsWithChildren> = ({ children }) => {
   if (mockServerEnabledChanged || mockServerUrlChanged) {
     setState(({ logsExporter }) => {
       return {
-        dmk: mockServerEnabled
-          ? buildMockDmk(mockServerUrl, logsExporter)
-          : buildDefaultDmk(logsExporter),
+        dmk: buildDefaultDmk(logsExporter),
+        // dmk: mockServerEnabled
+        //   ? buildMockDmk(mockServerUrl, logsExporter)
+        //   : buildDefaultDmk(logsExporter),
         logsExporter,
       };
     });

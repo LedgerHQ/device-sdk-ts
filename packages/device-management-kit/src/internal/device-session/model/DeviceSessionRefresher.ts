@@ -27,8 +27,8 @@ import {
   DeviceSessionStateType,
 } from "@api/device-session/DeviceSessionState";
 import { DmkError } from "@api/Error";
-import { type LoggerPublisherService } from "@internal/logger-publisher/service/LoggerPublisherService";
-import { SendApduFnType } from "@internal/transport/model/DeviceConnection";
+import { SendApduFnType } from "@api/transport/model/DeviceConnection";
+import { type LoggerPublisherService } from "@api/logger-publisher/service/LoggerPublisherService";
 
 type UpdateStateFnType = (
   callback: (state: DeviceSessionState) => DeviceSessionState,

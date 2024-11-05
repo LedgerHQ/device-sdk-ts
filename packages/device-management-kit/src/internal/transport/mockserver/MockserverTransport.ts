@@ -10,27 +10,27 @@ import { inject, injectable } from "inversify";
 import { Either, Left, Right } from "purify-ts";
 import { from, mergeMap, Observable } from "rxjs";
 
-import { DeviceId } from "@api/device/DeviceModel";
+import { DeviceId, DeviceModelId } from "@api/device/DeviceModel";
 import { ApduResponse } from "@api/device-session/ApduResponse";
 import type { DmkConfig } from "@api/DmkConfig";
 import { DmkError } from "@api/Error";
-import { Transport } from "@api/transport/model/Transport";
-import {
-  BuiltinTransports,
-  TransportIdentifier,
-} from "@api/transport/model/TransportIdentifier";
-import { loggerTypes } from "@internal/logger-publisher/di/loggerTypes";
-import { LoggerPublisherService } from "@internal/logger-publisher/service/LoggerPublisherService";
-import { transportDiTypes } from "@internal/transport/di/transportDiTypes";
-import { DisconnectHandler } from "@internal/transport/model/DeviceConnection";
+import { LoggerPublisherService } from "@api/logger-publisher/service/LoggerPublisherService";
+import { DisconnectHandler } from "@api/transport/model/DeviceConnection";
 import {
   ConnectError,
   DisconnectError,
   NoAccessibleDeviceError,
   OpeningConnectionError,
-} from "@internal/transport/model/Errors";
-import { InternalConnectedDevice } from "@internal/transport/model/InternalConnectedDevice";
-import { InternalDiscoveredDevice } from "@internal/transport/model/InternalDiscoveredDevice";
+} from "@api/transport/model/Errors";
+import { Transport } from "@api/transport/model/Transport";
+import { TransportConnectedDevice } from "@api/transport/model/TransportConnectedDevice";
+import { TransportDiscoveredDevice } from "@api/transport/model/TransportDiscoveredDevice";
+import {
+  BuiltinTransports,
+  TransportIdentifier,
+} from "@api/transport/model/TransportIdentifier";
+import { loggerTypes } from "@internal/logger-publisher/di/loggerTypes";
+import { transportDiTypes } from "@internal/transport/di/transportDiTypes";
 
 @injectable()
 export class MockTransport implements Transport {
@@ -56,33 +56,30 @@ export class MockTransport implements Transport {
     return this.identifier;
   }
 
-  listenToKnownDevices(): Observable<InternalDiscoveredDevice[]> {
+  listenToKnownDevices(): Observable<TransportDiscoveredDevice[]> {
     return from([]);
   }
 
-  startDiscovering(): Observable<InternalDiscoveredDevice> {
+  startDiscovering(): Observable<TransportDiscoveredDevice> {
     this.logger.debug("startDiscovering");
     return from(
       this.mockClient.scan().then((devices: Device[]) => {
-        return devices.map((device: Device) => {
-          return {
-            id: device.id,
-            deviceModel: {
-              id: device.device_type,
-              productName: device.name,
-              usbProductId: 0x10,
-              legacyUsbProductId: 0x0001,
-              bootloaderUsbProductId: 0x10,
-              getBlockSize() {
-                return 32;
-              },
-              usbOnly: true,
-              memorySize: 320 * 1024,
-              masks: [0x31100000],
+        return devices.map((device: Device) => ({
+          id: device.id,
+          deviceModel: {
+            id: device.device_type as DeviceModelId,
+            productName: device.name,
+            usbProductId: 0x10,
+            bootloaderUsbProductId: 0x0001,
+            getBlockSize() {
+              return 32;
             },
-            transport: this.identifier,
-          } as InternalDiscoveredDevice;
-        });
+            usbOnly: true,
+            memorySize: 320 * 1024,
+            masks: [0x31100000],
+          },
+          transport: this.identifier,
+        }));
       }),
     ).pipe(mergeMap((device) => device));
   }
@@ -95,7 +92,7 @@ export class MockTransport implements Transport {
   async connect(params: {
     deviceId: DeviceId;
     onDisconnect: DisconnectHandler;
-  }): Promise<Either<ConnectError, InternalConnectedDevice>> {
+  }): Promise<Either<ConnectError, TransportConnectedDevice>> {
     this.logger.debug("connect");
     const sessionId: string = params.deviceId;
     try {
@@ -125,7 +122,7 @@ export class MockTransport implements Transport {
         id: params.deviceId,
         type: session.device.connectivity_type,
         transport: this.identifier,
-      } as InternalConnectedDevice;
+      } as TransportConnectedDevice;
       return Right(connectedDevice);
     } catch (error) {
       return Left(new OpeningConnectionError(error as Error));
@@ -133,7 +130,7 @@ export class MockTransport implements Transport {
   }
 
   async disconnect(params: {
-    connectedDevice: InternalConnectedDevice;
+    connectedDevice: TransportConnectedDevice;
   }): Promise<Either<DmkError, void>> {
     this.logger.debug("disconnect");
     const sessionId: string = params.connectedDevice.id;

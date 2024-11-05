@@ -1,5 +1,7 @@
 import { Left } from "purify-ts";
 
+import { type LoggerPublisherService } from "@api/logger-publisher/service/LoggerPublisherService";
+import { connectedDeviceStubBuilder } from "@api/transport/model/TransportConnectedDevice.stub";
 import { deviceSessionStubBuilder } from "@internal/device-session/model/DeviceSession.stub";
 import {
   DeviceSessionNotFound,
@@ -8,13 +10,11 @@ import {
 import { DefaultDeviceSessionService } from "@internal/device-session/service/DefaultDeviceSessionService";
 import { type DeviceSessionService } from "@internal/device-session/service/DeviceSessionService";
 import { DefaultLoggerPublisherService } from "@internal/logger-publisher/service/DefaultLoggerPublisherService";
-import { type LoggerPublisherService } from "@internal/logger-publisher/service/LoggerPublisherService";
 import { AxiosManagerApiDataSource } from "@internal/manager-api/data/AxiosManagerApiDataSource";
 import { type ManagerApiDataSource } from "@internal/manager-api/data/ManagerApiDataSource";
 import { DefaultManagerApiService } from "@internal/manager-api/service/DefaultManagerApiService";
 import { type ManagerApiService } from "@internal/manager-api/service/ManagerApiService";
 import { SendApduUseCase } from "@internal/send/use-case/SendApduUseCase";
-import { connectedDeviceStubBuilder } from "@internal/transport/model/InternalConnectedDevice.stub";
 
 jest.mock("@internal/manager-api/data/AxiosManagerApiDataSource");
 

@@ -21,6 +21,8 @@
     "@ledgerhq/device-signer-kit-ethereum": "workspace:*",
     "@ledgerhq/device-signer-kit-solana": "workspace:*",
     "@ledgerhq/device-transport-kit-mock-client": "workspace:*",
+    "@ledgerhq/device-transport-kit-web-ble": "workspace:*",
+    "@ledgerhq/device-transport-kit-web-hid": "workspace:*",
     "@ledgerhq/react-ui": "^0.16.2",
     "@playwright/test": "^1.48.2",
     "@sentry/nextjs": "^8.32.0",

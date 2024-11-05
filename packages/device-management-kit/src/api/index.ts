@@ -1,57 +1,54 @@
 "use strict";
 
-export { Apdu } from "./apdu/model/Apdu";
-export { APDU_MAX_PAYLOAD, ApduBuilder } from "./apdu/utils/ApduBuilder";
-export { ApduParser } from "./apdu/utils/ApduParser";
-export { ByteArrayBuilder } from "./apdu/utils/ByteArrayBuilder";
-export { ByteArrayParser } from "./apdu/utils/ByteArrayParser";
+export { Apdu } from "@api/apdu/model/Apdu";
+export { APDU_MAX_PAYLOAD, ApduBuilder } from "@api/apdu/utils/ApduBuilder";
+export { ApduParser } from "@api/apdu/utils/ApduParser";
+export * from "@api/apdu/utils/AppBuilderError";
+export { ByteArrayBuilder } from "@api/apdu/utils/ByteArrayBuilder";
+export { ByteArrayParser } from "@api/apdu/utils/ByteArrayParser";
+export { InvalidStatusWordError } from "@api/command/Errors";
 export {
   CommandResultFactory,
   CommandResultStatus,
   isSuccessCommandResult,
-} from "./command/model/CommandResult";
-export { CloseAppCommand } from "./command/os/CloseAppCommand";
+} from "@api/command/model/CommandResult";
+export { CloseAppCommand } from "@api/command/os/CloseAppCommand";
 export {
   GetAppAndVersionCommand,
   type GetAppAndVersionResponse,
-} from "./command/os/GetAppAndVersionCommand";
+} from "@api/command/os/GetAppAndVersionCommand";
 export {
   BatteryStatusType,
   type GetBatteryStatusArgs,
   GetBatteryStatusCommand,
   type GetBatteryStatusResponse,
-} from "./command/os/GetBatteryStatusCommand";
+} from "@api/command/os/GetBatteryStatusCommand";
 export {
   GetOsVersionCommand,
   type GetOsVersionResponse,
-} from "./command/os/GetOsVersionCommand";
+} from "@api/command/os/GetOsVersionCommand";
 export {
   type ListAppsArgs,
   ListAppsCommand,
   type ListAppsErrorCodes,
   type ListAppsResponse,
-} from "./command/os/ListAppsCommand";
-export { type OpenAppArgs, OpenAppCommand } from "./command/os/OpenAppCommand";
-export { isCommandErrorCode } from "./command/utils/CommandErrors";
-export { CommandUtils } from "./command/utils/CommandUtils";
+} from "@api/command/os/ListAppsCommand";
+export {
+  type OpenAppArgs,
+  OpenAppCommand,
+} from "@api/command/os/OpenAppCommand";
+export { isCommandErrorCode } from "@api/command/utils/CommandErrors";
+export { CommandUtils } from "@api/command/utils/CommandUtils";
 export {
   GlobalCommandError,
   GlobalCommandErrorHandler,
-} from "./command/utils/GlobalCommandError";
-export { DeviceModel, DeviceModelId } from "./device/DeviceModel";
-export { DeviceStatus } from "./device/DeviceStatus";
-export { ApduResponse } from "./device-session/ApduResponse";
-export { DeviceManagementKit } from "./DeviceManagementKit";
-export { DeviceManagementKitBuilder } from "./DeviceManagementKitBuilder";
-export { DeviceExchangeError, UnknownDeviceExchangeError } from "./Error";
-export { LogLevel } from "./logger-subscriber/model/LogLevel";
-export { ConsoleLogger } from "./logger-subscriber/service/ConsoleLogger";
-export { WebLogsExporterLogger } from "./logger-subscriber/service/WebLogsExporterLogger";
-export { ConnectedDevice } from "./transport/model/ConnectedDevice";
-export { BuiltinTransports } from "./transport/model/TransportIdentifier";
-export * from "./types";
-export * from "@api/apdu/utils/AppBuilderError";
-export { InvalidStatusWordError } from "@api/command/Errors";
+} from "@api/command/utils/GlobalCommandError";
+export {
+  DeviceModel,
+  DeviceModelId,
+  LEDGER_VENDOR_ID,
+} from "@api/device/DeviceModel";
+export { DeviceStatus } from "@api/device/DeviceStatus";
 export {
   type DeviceAction,
   type DeviceActionIntermediateValue,
@@ -117,11 +114,44 @@ export {
   type DeviceActionStateMachine,
   XStateDeviceAction,
 } from "@api/device-action/xstate-utils/XStateDeviceAction";
+export { type DeviceModelDataSource } from "@api/device-model/data/DeviceModelDataSource";
+export { StaticDeviceModelDataSource } from "@api/device-model/data/StaticDeviceModelDataSource";
+export { BleDeviceInfos } from "@api/device-model/model/BleDeviceInfos";
+export { TransportDeviceModel } from "@api/device-model/model/DeviceModel";
+export { ApduResponse } from "@api/device-session/ApduResponse";
+export * from "@api/device-session/data/FramerConst";
 export {
   type DeviceSessionState,
   DeviceSessionStateType,
 } from "@api/device-session/DeviceSessionState";
+export { type ApduReceiverService } from "@api/device-session/service/ApduReceiverService";
+export { type ApduReceiverServiceFactory } from "@api/device-session/service/ApduReceiverService";
+export { type ApduSenderServiceFactory } from "@api/device-session/service/ApduSenderService";
+export { type ApduSenderService } from "@api/device-session/service/ApduSenderService";
+// TODO: remove from exported
+export { defaultApduReceiverServiceStubBuilder } from "@api/device-session/service/DefaultApduReceiverService.stub";
+export { defaultApduSenderServiceStubBuilder } from "@api/device-session/service/DefaultApduSenderService.stub";
+export { FramerUtils } from "@api/device-session/utils/FramerUtils";
+export { DeviceManagementKit } from "@api/DeviceManagementKit";
+export { DeviceManagementKitBuilder } from "@api/DeviceManagementKitBuilder";
+export { DeviceExchangeError, UnknownDeviceExchangeError } from "@api/Error";
 export { type DmkError } from "@api/Error";
+export { type LoggerPublisherService } from "@api/logger-publisher/service/LoggerPublisherService";
+export { LogLevel } from "@api/logger-subscriber/model/LogLevel";
+export { ConsoleLogger } from "@api/logger-subscriber/service/ConsoleLogger";
+export { WebLogsExporterLogger } from "@api/logger-subscriber/service/WebLogsExporterLogger";
+export { ConnectedDevice } from "@api/transport/model/ConnectedDevice";
+export {
+  type DeviceConnection,
+  type DisconnectHandler,
+  type SendApduFnType,
+} from "@api/transport/model/DeviceConnection";
+export * from "@api/transport/model/Errors";
+export { TransportConnectedDevice } from "@api/transport/model/TransportConnectedDevice";
+export { connectedDeviceStubBuilder } from "@api/transport/model/TransportConnectedDevice.stub";
+export { type TransportDiscoveredDevice } from "@api/transport/model/TransportDiscoveredDevice";
+export { BuiltinTransports } from "@api/transport/model/TransportIdentifier";
+export * from "@api/types";
 export { base64StringToBuffer, isBase64String } from "@api/utils/Base64String";
 export {
   bufferToHexaString,

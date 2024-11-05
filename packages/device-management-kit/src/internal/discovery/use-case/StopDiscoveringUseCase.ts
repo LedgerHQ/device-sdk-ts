@@ -1,7 +1,7 @@
-import { injectable, multiInject } from "inversify";
+import { inject, injectable } from "inversify";
 
-import type { Transport } from "@api/transport/model/Transport";
 import { transportDiTypes } from "@internal/transport/di/transportDiTypes";
+import { TransportService } from "@internal/transport/service/TransportService";
 
 /**
  * Stops discovering devices connected.
@@ -9,12 +9,12 @@ import { transportDiTypes } from "@internal/transport/di/transportDiTypes";
 @injectable()
 export class StopDiscoveringUseCase {
   constructor(
-    @multiInject(transportDiTypes.Transport)
-    private transports: Transport[],
+    @inject(transportDiTypes.TransportService)
+    private transportService: TransportService,
   ) {}
 
   execute(): void {
-    for (const transport of this.transports) {
+    for (const transport of this.transportService.getAllTransports()) {
       transport.stopDiscovering();
     }
   }

@@ -1,11 +1,11 @@
 import { inject, injectable } from "inversify";
 
 import { ApduResponse } from "@api/device-session/ApduResponse";
+import { type LoggerPublisherService } from "@api/logger-publisher/service/LoggerPublisherService";
 import { DeviceSessionId } from "@api/types";
 import { deviceSessionTypes } from "@internal/device-session/di/deviceSessionTypes";
 import type { DeviceSessionService } from "@internal/device-session/service/DeviceSessionService";
 import { loggerTypes } from "@internal/logger-publisher/di/loggerTypes";
-import { LoggerPublisherService } from "@internal/logger-publisher/service/LoggerPublisherService";
 
 /**
  * The arguments for the SendApduUseCase.

@@ -1,6 +1,9 @@
-import { Left, Right } from "purify-ts";
+import { Left, Maybe, Right } from "purify-ts";
 
-import { type DeviceModelDataSource } from "@internal/device-model/data/DeviceModelDataSource";
+import { DisconnectError } from "@api/transport/model/Errors";
+import { TransportStub } from "@api/transport/model/Transport.stub";
+import { connectedDeviceStubBuilder } from "@api/transport/model/TransportConnectedDevice.stub";
+import { type Transport } from "@api/types";
 import { deviceSessionStubBuilder } from "@internal/device-session/model/DeviceSession.stub";
 import { DeviceSessionNotFound } from "@internal/device-session/model/Errors";
 import { DefaultDeviceSessionService } from "@internal/device-session/service/DefaultDeviceSessionService";
@@ -9,22 +12,21 @@ import { AxiosManagerApiDataSource } from "@internal/manager-api/data/AxiosManag
 import { type ManagerApiDataSource } from "@internal/manager-api/data/ManagerApiDataSource";
 import { DefaultManagerApiService } from "@internal/manager-api/service/DefaultManagerApiService";
 import { type ManagerApiService } from "@internal/manager-api/service/ManagerApiService";
-import { DisconnectError } from "@internal/transport/model/Errors";
-import { connectedDeviceStubBuilder } from "@internal/transport/model/InternalConnectedDevice.stub";
-import { usbHidDeviceConnectionFactoryStubBuilder } from "@internal/transport/usb/service/UsbHidDeviceConnectionFactory.stub";
-import { WebUsbHidTransport } from "@internal/transport/usb/transport/WebUsbHidTransport";
+import { type TransportService } from "@internal/transport/service/TransportService";
+import { TransportServiceStub } from "@internal/transport/service/TransportService.stub";
 
 import { DisconnectUseCase } from "./DisconnectUseCase";
 
 let sessionService: DefaultDeviceSessionService;
 // TODO test several transports
-let transports: WebUsbHidTransport[] = [];
+let transport: Transport;
+let transports: Transport[] = [];
 const loggerFactory = jest
   .fn()
   .mockReturnValue(
     new DefaultLoggerPublisherService([], "DisconnectUseCaseTest"),
   );
-
+let transportService: TransportService;
 let managerApi: ManagerApiService;
 let managerApiDataSource: ManagerApiDataSource;
 
@@ -32,14 +34,14 @@ const sessionId = "sessionId";
 
 describe("DisconnectUseCase", () => {
   beforeAll(() => {
-    transports = [
-      new WebUsbHidTransport(
-        {} as DeviceModelDataSource,
-        loggerFactory,
-        usbHidDeviceConnectionFactoryStubBuilder(),
-      ),
-    ];
+    transport = new TransportStub();
+    transports = [transport];
     sessionService = new DefaultDeviceSessionService(loggerFactory);
+    // @ts-expect-error stub
+    transportService = new TransportServiceStub();
+    jest
+      .spyOn(transportService, "getTransport")
+      .mockReturnValue(Maybe.of(transport));
   });
 
   it("should disconnect from a device", async () => {
@@ -67,7 +69,7 @@ describe("DisconnectUseCase", () => {
       .spyOn(transports[0]!, "disconnect")
       .mockImplementation(() => Promise.resolve(Right(void 0)));
     const disconnectUseCase = new DisconnectUseCase(
-      transports,
+      transportService,
       sessionService,
       loggerFactory,
     );
@@ -85,7 +87,7 @@ describe("DisconnectUseCase", () => {
   it("should throw an error when deviceSession not found", async () => {
     // Given
     const disconnectUseCase = new DisconnectUseCase(
-      transports,
+      transportService,
       sessionService,
       loggerFactory,
     );
@@ -115,7 +117,7 @@ describe("DisconnectUseCase", () => {
       .spyOn(transports[0]!, "disconnect")
       .mockResolvedValue(Promise.resolve(Left(new DisconnectError())));
     const disconnectUseCase = new DisconnectUseCase(
-      transports,
+      transportService,
       sessionService,
       loggerFactory,
     );
