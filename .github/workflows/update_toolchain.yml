@@ -41,18 +41,8 @@ jobs:
 
       - name: Update package.json
         if: steps.changes.outputs.status > 0
-        uses: actions/github-script@v7
-        with:
-          script: |
-            const fs = require('fs');
-            const packageJson = fs.readFileSync('./package.json', 'utf8');
-            const json = JSON.parse(packageJson);
-            const packageManager = json.packageManager;
-            const newVersion = `pnpm@${{ steps.new-versions.outputs.version }}`;
-            if (packageManager !== newVersion) {
-              json.packageManager = newVersion;
-              fs.writeFileSync('./package.json', JSON.stringify(json, null, 2));
-            }
+        run: |
+          jq '.packageManager = "pnpm@${{ steps.new-versions.outputs.version }}"' package.json > tmp.json && mv tmp.json package.json
 
       - name: Health check
         if: steps.changes.outputs.status > 0
