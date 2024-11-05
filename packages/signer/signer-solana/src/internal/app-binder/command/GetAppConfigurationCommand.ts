@@ -11,17 +11,13 @@ import {
   InvalidStatusWordError,
 } from "@ledgerhq/device-management-kit";
 
-type GetAppConfigurationCommandResponse = {
-  blindSigningEnabled: boolean;
-  pubKeyDisplayMode: boolean;
-  version: string;
-};
+import { type AppConfiguration } from "@api/model/AppConfiguration";
+import { PublicKeyDisplayMode } from "@api/model/PublicKeyDisplayMode";
 
 type GetAppConfigurationCommandArgs = void;
 
 export class GetAppConfigurationCommand
-  implements
-    Command<GetAppConfigurationCommandResponse, GetAppConfigurationCommandArgs>
+  implements Command<AppConfiguration, GetAppConfigurationCommandArgs>
 {
   args: GetAppConfigurationCommandArgs;
 
@@ -38,9 +34,7 @@ export class GetAppConfigurationCommand
     }).build();
   }
 
-  parseResponse(
-    response: ApduResponse,
-  ): CommandResult<GetAppConfigurationCommandResponse> {
+  parseResponse(response: ApduResponse): CommandResult<AppConfiguration> {
     const parser = new ApduParser(response);
 
     if (!CommandUtils.isSuccessResponse(response)) {
@@ -61,12 +55,17 @@ export class GetAppConfigurationCommand
       });
     }
 
+    const config: AppConfiguration = {
+      blindSigningEnabled: Boolean(buffer[0]),
+      pubKeyDisplayMode:
+        buffer[1] === 0
+          ? PublicKeyDisplayMode.LONG
+          : PublicKeyDisplayMode.SHORT,
+      version: `${buffer[2]}.${buffer[3]}.${buffer[4]}`,
+    };
+
     return CommandResultFactory({
-      data: {
-        blindSigningEnabled: Boolean(buffer[0]),
-        pubKeyDisplayMode: Boolean(buffer[1]),
-        version: `${buffer[2]}.${buffer[3]}.${buffer[4]}`,
-      },
+      data: config,
     });
   }
 }

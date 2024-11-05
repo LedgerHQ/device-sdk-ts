@@ -10,13 +10,15 @@ import {
   GlobalCommandErrorHandler,
   InvalidStatusWordError,
 } from "@ledgerhq/device-management-kit";
+import { Just, type Maybe, Nothing } from "purify-ts";
+
+import { type Signature } from "@api/model/Signature";
 
 const SIGNATURE_LENGTH = 64;
 
-type SignOffChainMessageCommandResponse = Uint8Array;
-
-type SignOffChainMessageCommandArgs = {
-  message: Uint8Array;
+export type SignOffChainMessageCommandResponse = Maybe<Signature>;
+export type SignOffChainMessageCommandArgs = {
+  readonly message: Uint8Array;
 };
 
 export class SignOffChainMessageCommand
@@ -57,6 +59,12 @@ export class SignOffChainMessageCommand
       });
     }
 
+    if (parser.getUnparsedRemainingLength() === 0) {
+      return CommandResultFactory({
+        data: Nothing,
+      });
+    }
+
     const signature = parser.extractFieldByLength(SIGNATURE_LENGTH);
     if (!signature) {
       return CommandResultFactory({
@@ -65,7 +73,7 @@ export class SignOffChainMessageCommand
     }
 
     return CommandResultFactory({
-      data: signature,
+      data: Just(signature),
     });
   }
 }

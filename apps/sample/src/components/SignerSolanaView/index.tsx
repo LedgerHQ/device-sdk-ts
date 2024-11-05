@@ -3,6 +3,9 @@ import {
   type GetAddressDAError,
   type GetAddressDAIntermediateValue,
   type GetAddressDAOutput,
+  type GetAppConfigurationDAError,
+  type GetAppConfigurationDAIntermediateValue,
+  type GetAppConfigurationDAOutput,
   SignerSolanaBuilder,
 } from "@ledgerhq/device-signer-kit-solana";
 
@@ -47,6 +50,21 @@ export const SignerSolanaView: React.FC<{ sessionId: string }> = ({
         },
         GetAddressDAError,
         GetAddressDAIntermediateValue
+      >,
+      {
+        title: "Get app configuration",
+        description:
+          "Perform all the actions necessary to get the Solana app configuration from the device",
+        executeDeviceAction: () => {
+          return signer.getAppConfiguration();
+        },
+        initialValues: {},
+        deviceModelId,
+      } satisfies DeviceActionProps<
+        GetAppConfigurationDAOutput,
+        Record<string, never>,
+        GetAppConfigurationDAError,
+        GetAppConfigurationDAIntermediateValue
       >,
     ],
     [deviceModelId, signer],
