@@ -8,7 +8,7 @@
     "tsconfig.web.json"
   ],
   "devDependencies": {
-    "@tsconfig/recommended": "^1.0.7",
+    "@tsconfig/recommended": "^1.0.8",
     "@types/react": "^18.3.11",
     "@types/react-dom": "^18.3.0"
   }
