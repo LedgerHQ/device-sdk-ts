@@ -2,8 +2,10 @@ import {
   ByteArrayBuilder,
   type CommandResult,
   CommandResultFactory,
+  hexaStringToBuffer,
   type InternalApi,
   InvalidStatusWordError,
+  isHexaString,
   isSuccessCommandResult,
 } from "@ledgerhq/device-management-kit";
 import { DerivationPathUtils } from "@ledgerhq/signer-utils";
@@ -33,8 +35,12 @@ export class SendSignPersonalMessageTask {
     const { derivationPath, message } = this.args;
     const paths = DerivationPathUtils.splitPath(derivationPath);
 
+    const messageLength = isHexaString(message)
+      ? hexaStringToBuffer(message)!.length
+      : message.length;
+
     const builder = new ByteArrayBuilder(
-      message.length + 1 + (paths.length + 1) * PATH_SIZE,
+      messageLength + (paths.length + 1) * PATH_SIZE,
     );
     // add the derivation paths length
     builder.add8BitUIntToData(paths.length);
@@ -43,9 +49,13 @@ export class SendSignPersonalMessageTask {
       builder.add32BitUIntToData(path);
     });
     // add message length
-    builder.add32BitUIntToData(message.length);
+    builder.add32BitUIntToData(messageLength);
     // add the message
-    builder.addAsciiStringToData(message);
+    if (isHexaString(message)) {
+      builder.addHexaStringToData(message);
+    } else {
+      builder.addAsciiStringToData(message);
+    }
 
     const buffer = builder.build();
 
