@@ -41,15 +41,20 @@ export const DeviceSessionsProvider: React.FC<React.PropsWithChildren> = ({
   }
 
   useEffect(() => {
-    dmk.listDeviceSessions().map((session) => {
-      dispatch({
-        type: "add_session",
-        payload: {
-          sessionId: session.id,
-          connectedDevice: dmk.getConnectedDevice({ sessionId: session.id }),
-        },
+    const subscription = dmk
+      .listenToConnectedDevice()
+      .subscribe((connectedDevice) => {
+        dispatch({
+          type: "add_session",
+          payload: {
+            sessionId: connectedDevice.sessionId,
+            connectedDevice,
+          },
+        });
       });
-    });
+    return () => {
+      subscription.unsubscribe();
+    };
   }, [dmk]);
 
   return (
