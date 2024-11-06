@@ -1,14 +1,14 @@
 import { deviceSessionStubBuilder } from "@internal/device-session/model/DeviceSession.stub";
 import { DefaultDeviceSessionService } from "@internal/device-session/service/DefaultDeviceSessionService";
 import { type DeviceSessionService } from "@internal/device-session/service/DeviceSessionService";
+import { ListConnectedDevicesUseCase } from "@internal/discovery/use-case/ListConnectedDevicesUseCase";
 import { DefaultLoggerPublisherService } from "@internal/logger-publisher/service/DefaultLoggerPublisherService";
 import { type LoggerPublisherService } from "@internal/logger-publisher/service/LoggerPublisherService";
 import { AxiosManagerApiDataSource } from "@internal/manager-api/data/AxiosManagerApiDataSource";
 import { type ManagerApiDataSource } from "@internal/manager-api/data/ManagerApiDataSource";
 import { DefaultManagerApiService } from "@internal/manager-api/service/DefaultManagerApiService";
 import { type ManagerApiService } from "@internal/manager-api/service/ManagerApiService";
-
-import { ListDeviceSessionsUseCase } from "./ListDeviceSessionsUseCase";
+import { ConnectedDevice } from "@root/src";
 
 let logger: LoggerPublisherService;
 let sessionService: DeviceSessionService;
@@ -43,18 +43,33 @@ describe("ListDeviceSessionsUseCase", () => {
     );
     sessionService.addDeviceSession(deviceSession1);
     sessionService.addDeviceSession(deviceSession2);
-    const useCase = new ListDeviceSessionsUseCase(sessionService, () => logger);
+    const useCase = new ListConnectedDevicesUseCase(
+      sessionService,
+      () => logger,
+    );
 
     // when
     const response = useCase.execute();
 
     // then
-    expect(response).toStrictEqual([deviceSession1, deviceSession2]);
+    expect(response).toStrictEqual([
+      new ConnectedDevice({
+        internalConnectedDevice: deviceSession1.connectedDevice,
+        sessionId: deviceSession1.id,
+      }),
+      new ConnectedDevice({
+        internalConnectedDevice: deviceSession2.connectedDevice,
+        sessionId: deviceSession2.id,
+      }),
+    ]);
   });
 
   it("should return empty array if no device sessions", () => {
     // given
-    const useCase = new ListDeviceSessionsUseCase(sessionService, () => logger);
+    const useCase = new ListConnectedDevicesUseCase(
+      sessionService,
+      () => logger,
+    );
 
     // when
     const response = useCase.execute();

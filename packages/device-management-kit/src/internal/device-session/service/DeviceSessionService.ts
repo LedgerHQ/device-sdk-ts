@@ -1,4 +1,5 @@
 import { type Either } from "purify-ts";
+import { type Observable } from "rxjs";
 
 import { type DmkError } from "@api/Error";
 import { type DeviceSession } from "@internal/device-session/model/DeviceSession";
@@ -9,4 +10,5 @@ export interface DeviceSessionService {
   getDeviceSessionByDeviceId(deviceId: string): Either<DmkError, DeviceSession>;
   removeDeviceSession(sessionId: string): DeviceSessionService;
   getDeviceSessions(): DeviceSession[];
+  get sessionsObs(): Observable<DeviceSession>;
 }

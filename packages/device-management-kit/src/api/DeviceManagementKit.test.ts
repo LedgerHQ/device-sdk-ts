@@ -64,8 +64,12 @@ describe("DeviceManagementKit", () => {
       expect(dmk.sendCommand).toBeDefined();
     });
 
-    it("should have listDeviceSessions method", () => {
-      expect(dmk.listDeviceSessions).toBeDefined();
+    it("should have listConnectedDevices method", () => {
+      expect(dmk.listConnectedDevices).toBeDefined();
+    });
+
+    it("should have listenToConnectedDevice method", () => {
+      expect(dmk.listenToConnectedDevice).toBeDefined();
     });
   });
 
@@ -107,7 +111,8 @@ describe("DeviceManagementKit", () => {
       [discoveryTypes.GetConnectedDeviceUseCase],
       [discoveryTypes.DisconnectUseCase],
       [deviceSessionTypes.GetDeviceSessionStateUseCase],
-      [deviceSessionTypes.ListDeviceSessionsUseCase],
+      [discoveryTypes.ListConnectedDevicesUseCase],
+      [discoveryTypes.ListenToConnectedDeviceUseCase],
     ])(
       "should have %p use case",
       (diSymbol: interfaces.ServiceIdentifier<StubUseCase>) => {
