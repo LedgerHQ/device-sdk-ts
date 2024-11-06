@@ -17,7 +17,7 @@ export class SignMessageUseCase {
 
   execute(
     derivationPath: string,
-    message: string,
+    message: string | Uint8Array,
   ): SignPersonalMessageDAReturnType {
     // 1- Sign the transaction using the app binding
     return this._appBinding.signPersonalMessage({

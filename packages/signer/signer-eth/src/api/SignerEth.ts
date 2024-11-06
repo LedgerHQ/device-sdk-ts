@@ -16,7 +16,7 @@ export interface SignerEth {
   ) => SignTransactionDAReturnType;
   signMessage: (
     derivationPath: string,
-    message: string,
+    message: string | Uint8Array,
   ) => SignPersonalMessageDAReturnType;
   signTypedData: (
     derivationPath: string,

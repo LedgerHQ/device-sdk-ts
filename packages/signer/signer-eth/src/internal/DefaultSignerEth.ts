@@ -49,7 +49,7 @@ export class DefaultSignerEth implements SignerEth {
 
   signMessage(
     _derivationPath: string,
-    _message: string,
+    _message: string | Uint8Array,
   ): SignPersonalMessageDAReturnType {
     return this._container
       .get<SignMessageUseCase>(messageTypes.SignMessageUseCase)

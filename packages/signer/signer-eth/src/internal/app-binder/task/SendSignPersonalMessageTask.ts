@@ -20,7 +20,7 @@ const PATH_SIZE = 4;
 
 type SendSignPersonalMessageTaskArgs = {
   derivationPath: string;
-  message: string;
+  message: string | Uint8Array;
 };
 
 export class SendSignPersonalMessageTask {
@@ -45,7 +45,11 @@ export class SendSignPersonalMessageTask {
     // add message length
     builder.add32BitUIntToData(message.length);
     // add the message
-    builder.addAsciiStringToData(message);
+    if (typeof message === "string") {
+      builder.addAsciiStringToData(message);
+    } else {
+      builder.addBufferToData(message);
+    }
 
     const buffer = builder.build();
 
