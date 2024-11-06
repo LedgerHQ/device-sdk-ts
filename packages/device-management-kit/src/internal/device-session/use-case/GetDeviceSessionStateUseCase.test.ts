@@ -1,5 +1,6 @@
 import { type LoggerPublisherService } from "@api/logger-publisher/service/LoggerPublisherService";
 import { deviceSessionStubBuilder } from "@internal/device-session/model/DeviceSession.stub";
+import { DeviceSessionNotFound } from "@internal/device-session/model/Errors";
 import { DefaultDeviceSessionService } from "@internal/device-session/service/DefaultDeviceSessionService";
 import { type DeviceSessionService } from "@internal/device-session/service/DeviceSessionService";
 import { DefaultLoggerPublisherService } from "@internal/logger-publisher/service/DefaultLoggerPublisherService";
@@ -33,6 +34,8 @@ describe("GetDeviceSessionStateUseCase", () => {
     sessionService = new DefaultDeviceSessionService(() => logger);
   });
 
+  // TODO: This test does not close a subscription
+  // ¯\_(ツ)_/¯ I cannot find which one unfortunatly
   it("should retrieve deviceSession device state", () => {
     // given
     const deviceSession = deviceSessionStubBuilder(
@@ -46,18 +49,23 @@ describe("GetDeviceSessionStateUseCase", () => {
       () => logger,
     );
 
-    // when
-    const response = useCase.execute({
-      sessionId: fakeSessionId,
-    });
+    const res = useCase.execute({ sessionId: fakeSessionId });
+    const expected = deviceSession.state;
 
+<<<<<<< HEAD
     deviceSession.close();
 
     // then
     expect(response).toStrictEqual(deviceSession.state);
+||||||| parent of 61c06245 (✅ (dmk): Add tests for TransportService + fixes)
+    // then
+    expect(response).toStrictEqual(deviceSession.state);
+=======
+    expect(res).toStrictEqual(expected);
+>>>>>>> 61c06245 (✅ (dmk): Add tests for TransportService + fixes)
   });
 
-  it("should throw error when deviceSession is not found", () => {
+  it("should throw error when deviceSession is not found", (done) => {
     // given
     const useCase = new GetDeviceSessionStateUseCase(
       sessionService,
@@ -65,12 +73,16 @@ describe("GetDeviceSessionStateUseCase", () => {
     );
 
     // when
-    const execute = () =>
-      useCase.execute({
-        sessionId: fakeSessionId,
-      });
-
-    // then
-    expect(execute).toThrowError();
+    try {
+      useCase
+        .execute({
+          sessionId: fakeSessionId,
+        })
+        .subscribe();
+    } catch (error) {
+      // then
+      expect(error).toBeInstanceOf(DeviceSessionNotFound);
+      done();
+    }
   });
 });

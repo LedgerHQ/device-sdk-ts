@@ -504,9 +504,6 @@ export class WebHidTransport implements Transport {
     this._deviceConnectionsPendingReconnection.delete(deviceConnection);
     this._deviceConnectionsByHidDevice.set(hidDevice, deviceConnection);
 
-    console.log(`🦖 Reconnecting device 🎉`);
-    console.log(deviceConnection);
-
     try {
       deviceConnection.reconnectHidDevice(hidDevice);
     } catch (error) {

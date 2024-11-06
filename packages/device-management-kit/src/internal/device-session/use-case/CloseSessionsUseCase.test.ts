@@ -14,7 +14,7 @@ let managerApiDataSource: ManagerApiDataSource;
 let managerApi: ManagerApiService;
 let sessionService: DeviceSessionService;
 
-describe("CloseSessionsUseState", () => {
+describe("CloseSessionsUseCase", () => {
   beforeEach(() => {
     logger = new DefaultLoggerPublisherService(
       [],

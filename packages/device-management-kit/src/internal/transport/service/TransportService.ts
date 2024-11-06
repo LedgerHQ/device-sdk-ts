@@ -53,8 +53,6 @@ export class TransportService {
     this._apduSenderServiceFactory = _apduSenderServiceFactory;
     this._apduReceiverServiceFactory = _apduReceiverServiceFactory;
 
-    console.log(`😵 Transports: ${_transports} 🎉`);
-
     for (const transport of _transports) {
       this.addTransport(transport);
     }
