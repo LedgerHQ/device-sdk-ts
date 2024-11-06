@@ -8,6 +8,9 @@ import { makeDeviceActionInternalApiMock } from "@internal/app-binder/device-act
 import { SendSignPersonalMessageTask } from "./SendSignPersonalMessageTask";
 
 const SEND_MESSAGE_HELLO_WORLD = "Hello, World!";
+const SEND_MESSAGE_HELLO_WORLD_BYTES = new Uint8Array([
+  0x48, 0x65, 0x6c, 0x6c, 0x6f, 0x2c, 0x20, 0x57, 0x6f, 0x72, 0x6c, 0x64, 0x21,
+]);
 const SEND_MESSAGE_HELLO_WORLD_DATA = new Uint8Array([
   0x05, 0x80, 0x00, 0x00, 0x2c, 0x80, 0x00, 0x00, 0x3c, 0x80, 0x00, 0x00, 0x00,
   0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x0d, 0x48,
@@ -78,6 +81,30 @@ describe("SendSignPersonalMessageTask", () => {
       const args = {
         derivationPath: "44'/60'/0'/0/0",
         message: SEND_MESSAGE_HELLO_WORLD,
+      };
+      apiMock.sendCommand.mockResolvedValueOnce(resultOk);
+      apiMock.sendCommand.mockResolvedValueOnce(resultNothing);
+
+      // WHEN
+      const result = await new SendSignPersonalMessageTask(apiMock, args).run();
+
+      // THEN
+      expect(apiMock.sendCommand.mock.calls).toHaveLength(1);
+      expect(apiMock.sendCommand.mock.calls[0]![0]).toStrictEqual(
+        new SignPersonalMessageCommand({
+          data: new Uint8Array(SEND_MESSAGE_HELLO_WORLD_DATA),
+          isFirstChunk: true,
+        }),
+      );
+      // eslint-disable-next-line  @typescript-eslint/no-explicit-any
+      expect((result as any).data).toStrictEqual(signature);
+    });
+
+    it("should send the message as byte arrays", async () => {
+      // GIVEN
+      const args = {
+        derivationPath: "44'/60'/0'/0/0",
+        message: SEND_MESSAGE_HELLO_WORLD_BYTES,
       };
       apiMock.sendCommand.mockResolvedValueOnce(resultOk);
       apiMock.sendCommand.mockResolvedValueOnce(resultNothing);

@@ -26,7 +26,7 @@ export type MachineDependencies = {
   readonly signPersonalMessage: (arg0: {
     input: {
       derivationPath: string;
-      message: string;
+      message: string | Uint8Array;
     };
   }) => Promise<CommandResult<Signature>>;
 };
@@ -215,7 +215,7 @@ export class SignPersonalMessageDeviceAction extends XStateDeviceAction<
     const signPersonalMessage = async (arg0: {
       input: {
         derivationPath: string;
-        message: string;
+        message: string | Uint8Array;
       };
     }) => new SendSignPersonalMessageTask(internalApi, arg0.input).run();
 

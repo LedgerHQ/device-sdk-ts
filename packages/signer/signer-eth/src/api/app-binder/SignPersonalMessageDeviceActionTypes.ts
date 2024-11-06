@@ -13,7 +13,7 @@ export type SignPersonalMessageDAOutput = Signature;
 
 export type SignPersonalMessageDAInput = {
   readonly derivationPath: string;
-  readonly message: string;
+  readonly message: string | Uint8Array;
 };
 
 export type SignPersonalMessageDAError =

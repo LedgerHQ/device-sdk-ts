@@ -55,7 +55,7 @@ export class EthAppBinder {
 
   signPersonalMessage(args: {
     derivationPath: string;
-    message: string;
+    message: string | Uint8Array;
   }): SignPersonalMessageDAReturnType {
     return this.dmk.executeDeviceAction({
       sessionId: this.sessionId,
