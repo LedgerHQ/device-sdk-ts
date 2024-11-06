@@ -1,48 +1,40 @@
-/* istanbul ignore file */
-// pragma to ignore this file from coverage
 import {
-  CommandResponse,
-  Device,
-  MockClient,
-  Session,
-} from "@ledgerhq/device-transport-kit-mock-client";
-import { inject, injectable } from "inversify";
-import { Either, Left, Right } from "purify-ts";
-import { from, mergeMap, Observable } from "rxjs";
-
-import { DeviceId, DeviceModelId } from "@api/device/DeviceModel";
-import { ApduResponse } from "@api/device-session/ApduResponse";
-import type { DmkConfig } from "@api/DmkConfig";
-import { DmkError } from "@api/Error";
-import { LoggerPublisherService } from "@api/logger-publisher/service/LoggerPublisherService";
-import { DisconnectHandler } from "@api/transport/model/DeviceConnection";
-import {
-  ConnectError,
+  type ApduResponse,
+  type ConnectError,
+  type DeviceId,
+  type DeviceModelId,
   DisconnectError,
+  type DisconnectHandler,
+  type DmkConfig,
+  type DmkError,
+  type LoggerPublisherService,
   NoAccessibleDeviceError,
   OpeningConnectionError,
-} from "@api/transport/model/Errors";
-import { Transport } from "@api/transport/model/Transport";
-import { TransportConnectedDevice } from "@api/transport/model/TransportConnectedDevice";
-import { TransportDiscoveredDevice } from "@api/transport/model/TransportDiscoveredDevice";
+  type Transport,
+  type TransportConnectedDevice,
+  type TransportDiscoveredDevice,
+  type TransportIdentifier,
+} from "@ledgerhq/device-management-kit";
+import { type TransportFactory } from "@ledgerhq/device-management-kit/src/api/transport/model/Transport.js";
 import {
-  BuiltinTransports,
-  TransportIdentifier,
-} from "@api/transport/model/TransportIdentifier";
-import { loggerTypes } from "@internal/logger-publisher/di/loggerTypes";
-import { transportDiTypes } from "@internal/transport/di/transportDiTypes";
+  type CommandResponse,
+  type Device,
+  MockClient,
+  type Session,
+} from "@ledgerhq/device-mockserver-client";
+import { type Either, Left, Right } from "purify-ts";
+import { from, mergeMap, type Observable } from "rxjs";
 
-@injectable()
+export const mockserverIdentifier: TransportIdentifier = "MOCKSERVER";
+
 export class MockTransport implements Transport {
   private logger: LoggerPublisherService;
   private mockClient: MockClient;
-  private readonly identifier: TransportIdentifier =
-    BuiltinTransports.MOCK_SERVER;
+  private readonly identifier: TransportIdentifier = mockserverIdentifier;
 
   constructor(
-    @inject(loggerTypes.LoggerPublisherServiceFactory)
     loggerServiceFactory: (tag: string) => LoggerPublisherService,
-    @inject(transportDiTypes.DmkConfig) config: DmkConfig,
+    config: DmkConfig,
   ) {
     this.logger = loggerServiceFactory("MockTransport");
     this.mockClient = new MockClient(config.mockUrl);
@@ -176,3 +168,8 @@ export class MockTransport implements Transport {
     }
   }
 }
+
+export const mockserverTransportFactory: TransportFactory = ({
+  config,
+  loggerServiceFactory,
+}) => new MockTransport(loggerServiceFactory, config);

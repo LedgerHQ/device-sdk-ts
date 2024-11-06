@@ -1,10 +1,8 @@
 {
-  "name": "@ledgerhq/device-transport-kit-mock-client",
-  "private": true,
-  "version": "1.0.1",
+  "name": "@ledgerhq/device-transport-kit-mockserver",
+  "version": "0.0.1",
   "license": "Apache-2.0",
-  "main": "lib/index.js",
-  "types": "lib/index.d.ts",
+  "private": true,
   "exports": {
     ".": {
       "types": "./lib/types/index.d.ts",
@@ -22,24 +20,37 @@
   ],
   "scripts": {
     "prebuild": "rimraf lib",
-    "build": "pnpm lmdk-build --entryPoints index.ts,src/**/*.ts --tsconfig tsconfig.prod.json",
+    "build": "pnpm lmdk-build --entryPoints src/index.ts,src/**/*.ts --tsconfig tsconfig.prod.json",
     "dev": "concurrently \"pnpm watch:builds\" \"pnpm watch:types\"",
-    "watch:builds": "pnpm lmdk-watch --entryPoints index.ts,src/**/*.ts --tsconfig tsconfig.prod.json",
+    "watch:builds": "pnpm lmdk-watch --entryPoints src/index.ts,src/**/*.ts --tsconfig tsconfig.prod.json",
     "watch:types": "concurrently \"tsc --watch -p tsconfig.prod.json\" \"tsc-alias --watch -p tsconfig.prod.json\"",
     "lint": "eslint",
     "lint:fix": "pnpm lint --fix",
+    "postpack": "find . -name '*.tgz' -exec cp {} ../../../dist/ \\; ",
     "prettier": "prettier . --check",
     "prettier:fix": "prettier . --write",
     "typecheck": "tsc --noEmit",
     "test": "jest --passWithNoTests",
+    "test:watch": "pnpm test -- --watch",
     "test:coverage": "pnpm test -- --coverage"
   },
-  "dependencies": {},
+  "dependencies": {
+    "@sentry/minimal": "^6.19.7",
+    "purify-ts": "^2.1.0"
+  },
   "devDependencies": {
+    "@ledgerhq/device-management-kit": "workspace:*",
+    "@ledgerhq/device-mockserver-client": "workspace:*",
     "@ledgerhq/esbuild-tools": "workspace:*",
-    "@ledgerhq/tsconfig-dsdk": "workspace:*",
     "@ledgerhq/eslint-config-dsdk": "workspace:*",
     "@ledgerhq/jest-config-dsdk": "workspace:*",
-    "@ledgerhq/prettier-config-dsdk": "workspace:*"
+    "@ledgerhq/prettier-config-dsdk": "workspace:*",
+    "@ledgerhq/tsconfig-dsdk": "workspace:*",
+    "rxjs": "^7.8.1",
+    "ts-node": "^10.9.2"
+  },
+  "peerDependencies": {
+    "@ledgerhq/device-management-kit": "workspace:*",
+    "rxjs": "^7.8.1"
   }
 }

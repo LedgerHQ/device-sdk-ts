@@ -20,6 +20,7 @@ import {
   type TransportIdentifier,
   UnknownDeviceError,
 } from "@ledgerhq/device-management-kit";
+import { type TransportFactory } from "@ledgerhq/device-management-kit/src/api/transport/model/Transport.js";
 import * as Sentry from "@sentry/minimal";
 import { type Either, EitherAsync, Left, Maybe, Right } from "purify-ts";
 import { BehaviorSubject, from, map, type Observable, switchMap } from "rxjs";
@@ -556,3 +557,16 @@ export class WebHidTransport implements Transport {
     this._deviceConnectionsPendingReconnection.clear();
   }
 }
+
+export const webHidTransportFactory: TransportFactory = ({
+  deviceModelDataSource,
+  loggerServiceFactory,
+  apduSenderServiceFactory,
+  apduReceiverServiceFactory,
+}) =>
+  new WebHidTransport(
+    deviceModelDataSource,
+    loggerServiceFactory,
+    apduSenderServiceFactory,
+    apduReceiverServiceFactory,
+  );

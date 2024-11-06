@@ -134,6 +134,7 @@ export { defaultApduSenderServiceStubBuilder } from "@api/device-session/service
 export { FramerUtils } from "@api/device-session/utils/FramerUtils";
 export { DeviceManagementKit } from "@api/DeviceManagementKit";
 export { DeviceManagementKitBuilder } from "@api/DeviceManagementKitBuilder";
+export { type DmkConfig } from "@api/DmkConfig";
 export { DeviceExchangeError, UnknownDeviceExchangeError } from "@api/Error";
 export { type DmkError } from "@api/Error";
 export { type LoggerPublisherService } from "@api/logger-publisher/service/LoggerPublisherService";

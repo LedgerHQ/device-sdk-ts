@@ -19,6 +19,7 @@ import {
   type TransportIdentifier,
   UnknownDeviceError,
 } from "@ledgerhq/device-management-kit";
+import { type TransportFactory } from "@ledgerhq/device-management-kit/src/api/transport/model/Transport.js";
 import { type Either, EitherAsync, Left, Maybe, Right } from "purify-ts";
 import { from, type Observable, switchMap, timer } from "rxjs";
 import { v4 as uuid } from "uuid";
@@ -466,3 +467,16 @@ export class WebBleTransport implements Transport {
     return Promise.resolve(Right(undefined));
   }
 }
+
+export const webBleTransportFactory: TransportFactory = ({
+  deviceModelDataSource,
+  loggerServiceFactory,
+  apduSenderServiceFactory,
+  apduReceiverServiceFactory,
+}) =>
+  new WebBleTransport(
+    deviceModelDataSource,
+    loggerServiceFactory,
+    apduSenderServiceFactory,
+    apduReceiverServiceFactory,
+  );

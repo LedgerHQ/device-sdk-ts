@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { type Mock } from "@ledgerhq/device-transport-kit-mock-client";
+import { type Mock } from "@ledgerhq/device-mockserver-client";
 import { Button, Flex, Icons, Input, Text } from "@ledgerhq/react-ui";
 
 type MockItemProps = {

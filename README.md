@@ -93,6 +93,7 @@ A brief description of this project packages:
 | @ledgerhq/device-management-kit-flipper-plugin-client | packages/flipper-plugin-client | external package that contains [flipper](https://github.com/facebook/flipper) logger for Device Management Kit                           |
 | @ledgerhq/device-transport-kit-web-hid                | packages/transport/web-hid     | external package that contains the Web Hid transport implementation                                                                      |
 | @ledgerhq/device-transport-kit-web-ble                | packages/transport/web-ble     | external package that contains the Web Ble transport implementation                                                                      |
+| @ledgerhq/device-mockserver-client                    | packages/mockserver-client     | external package that contains the client to interact with the mock-server                                                               |
 
 # Getting started
 
@@ -180,7 +181,7 @@ Please configure JEST extention accordingly.
 
 Each package is built using the following command (at the root of the monorepo).
 
-### Core
+### Devie Management Kit
 
 Device Management Kit main module.
 
