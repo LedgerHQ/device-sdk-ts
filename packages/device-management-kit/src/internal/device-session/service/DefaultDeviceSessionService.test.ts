@@ -89,9 +89,10 @@ describe("DefaultDeviceSessionService", () => {
   });
 
   it("should emit new session", (done) => {
-    sessionService.sessionsObs.subscribe({
+    const subscription = sessionService.sessionsObs.subscribe({
       next(emittedDeviceSession) {
         expect(emittedDeviceSession).toStrictEqual(deviceSession);
+        subscription.unsubscribe();
         done();
       },
     });
@@ -108,11 +109,12 @@ describe("DefaultDeviceSessionService", () => {
     sessionService.addDeviceSession(deviceSession);
     sessionService.addDeviceSession(lastDeviceSession);
 
-    sessionService.sessionsObs.subscribe({
+    const subscription = sessionService.sessionsObs.subscribe({
       next(emittedDeviceSession) {
         emittedSessions.push(emittedDeviceSession);
       },
     });
     expect(emittedSessions).toEqual([deviceSession, lastDeviceSession]);
+    subscription.unsubscribe();
   });
 });

@@ -49,7 +49,7 @@ describe("ListenToConnectedDevice", () => {
       () => logger,
     ).execute();
 
-    observable.subscribe({
+    const subscription = observable.subscribe({
       next(emittedConnectedDevice) {
         // then
         expect(emittedConnectedDevice).toEqual(
@@ -58,6 +58,7 @@ describe("ListenToConnectedDevice", () => {
             sessionId: fakeSessionId,
           }),
         );
+        subscription.unsubscribe();
         done();
       },
     });
