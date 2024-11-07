@@ -1,8 +1,6 @@
 import React, { useCallback } from "react";
-import {
-  BuiltinTransports,
-  type DmkError,
-} from "@ledgerhq/device-management-kit";
+import { type DmkError } from "@ledgerhq/device-management-kit";
+import { mockserverIdentifier } from "@ledgerhq/device-transport-kit-mockserver";
 import { webBleIdentifier } from "@ledgerhq/device-transport-kit-web-ble";
 import { webHidIdentifier } from "@ledgerhq/device-transport-kit-web-hid";
 import { Button, Flex } from "@ledgerhq/react-ui";
@@ -67,9 +65,9 @@ export const ConnectDeviceActions = ({
   // also we should not have a different appearance when the mock server is enabled
   // we should just display the list of active transports somewhere in the sidebar, discreetly
 
-  return transport === BuiltinTransports.MOCK_SERVER ? (
+  return transport === mockserverIdentifier ? (
     <ConnectButton
-      onClick={() => onSelectDeviceClicked(BuiltinTransports.MOCK_SERVER)}
+      onClick={() => onSelectDeviceClicked(mockserverIdentifier)}
       variant="main"
       backgroundColor="main"
       size="large"

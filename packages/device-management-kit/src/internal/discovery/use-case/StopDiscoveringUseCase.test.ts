@@ -1,9 +1,10 @@
-import { TransportStub } from "@api/transport/model/Transport.stub";
+import { TransportMock } from "@api/transport/model/__mocks__/TransportMock";
 import { type Transport } from "@api/types";
-import { type TransportService } from "@internal/transport/service/TransportService";
-import { TransportServiceStub } from "@internal/transport/service/TransportService.stub";
+import { TransportService } from "@internal/transport/service/TransportService";
 
 import { StopDiscoveringUseCase } from "./StopDiscoveringUseCase";
+
+jest.mock("@internal/transport/service/TransportService");
 
 // TODO test several transports
 let transport: Transport;
@@ -12,10 +13,10 @@ let transportService: TransportService;
 
 describe("StopDiscoveringUseCase", () => {
   beforeEach(() => {
-    transport = new TransportStub();
+    transport = new TransportMock();
     transports = [transport];
-    // @ts-expect-error stub
-    transportService = new TransportServiceStub(transports);
+    // @ts-expect-error mock
+    transportService = new TransportService(transports);
   });
 
   afterEach(() => {

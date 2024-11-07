@@ -18,14 +18,14 @@ export const transportModuleFactory = ({
   config,
 }: Partial<FactoryProps> = {}) =>
   new ContainerModule((bind, _unbind, _isBound, _rebind) => {
+    bind(transportDiTypes.TransportsInput).toConstantValue(transports);
     bind(transportDiTypes.TransportService)
       .to(TransportService)
       .inSingletonScope();
 
     bind(transportDiTypes.DmkConfig).toConstantValue(config);
 
-    bind(transportDiTypes.TransportsInput).toConstantValue(transports);
     if (stub) {
-      // Add stubs here
+      // TODO: Implement stub
     }
   });

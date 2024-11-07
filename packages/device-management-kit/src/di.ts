@@ -4,8 +4,6 @@ import { Container } from "inversify";
 // import { makeLoggerMiddleware } from "inversify-logger-middleware";
 import { commandModuleFactory } from "@api/command/di/commandModule";
 import { deviceActionModuleFactory } from "@api/device-action/di/deviceActionModule";
-// Uncomment this line to enable the logger middleware
-// import { makeLoggerMiddleware } from "inversify-logger-middleware";
 import { type DmkConfig } from "@api/DmkConfig";
 import { type LoggerSubscriberService } from "@api/logger-subscriber/service/LoggerSubscriberService";
 import { type TransportFactory } from "@api/transport/model/Transport";
@@ -28,7 +26,6 @@ import { transportModuleFactory } from "@internal/transport//di/transportModule"
 export type MakeContainerProps = {
   stub: boolean;
   transports: TransportFactory[];
-  customTransports: TransportFactory[];
   loggers: LoggerSubscriberService[];
   config: DmkConfig;
 };

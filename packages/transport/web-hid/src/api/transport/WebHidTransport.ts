@@ -17,10 +17,10 @@ import {
   TransportConnectedDevice,
   type TransportDeviceModel,
   type TransportDiscoveredDevice,
+  type TransportFactory,
   type TransportIdentifier,
   UnknownDeviceError,
 } from "@ledgerhq/device-management-kit";
-import { type TransportFactory } from "@ledgerhq/device-management-kit/src/api/transport/model/Transport.js";
 import * as Sentry from "@sentry/minimal";
 import { type Either, EitherAsync, Left, Maybe, Right } from "purify-ts";
 import { BehaviorSubject, from, map, type Observable, switchMap } from "rxjs";
@@ -34,7 +34,7 @@ type PromptDeviceAccessError =
   | NoAccessibleDeviceError
   | WebHidTransportNotSupportedError;
 
-type WebWebHidTransportDiscoveredDevice = TransportDiscoveredDevice & {
+type WebHidTransportDiscoveredDevice = TransportDiscoveredDevice & {
   hidDevice: HIDDevice;
 };
 
@@ -43,8 +43,8 @@ export const webHidIdentifier: TransportIdentifier = "WEB-HID";
 export class WebHidTransport implements Transport {
   /** List of HID devices that have been discovered */
   private _transportDiscoveredDevices: BehaviorSubject<
-    Array<WebWebHidTransportDiscoveredDevice>
-  > = new BehaviorSubject<Array<WebWebHidTransportDiscoveredDevice>>([]);
+    Array<WebHidTransportDiscoveredDevice>
+  > = new BehaviorSubject<Array<WebHidTransportDiscoveredDevice>>([]);
 
   /** Map of *connected* HIDDevice to their WebHidDeviceConnection */
   private _deviceConnectionsByHidDevice: Map<
@@ -135,7 +135,7 @@ export class WebHidTransport implements Transport {
    */
   private mapHIDDeviceToTransportDiscoveredDevice(
     hidDevice: HIDDevice,
-  ): WebWebHidTransportDiscoveredDevice {
+  ): WebHidTransportDiscoveredDevice {
     const existingDiscoveredDevice = this._transportDiscoveredDevices
       .getValue()
       .find((internalDevice) => internalDevice.hidDevice === hidDevice);

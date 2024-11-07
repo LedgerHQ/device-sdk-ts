@@ -100,3 +100,10 @@ export class TransportAlreadyExistsError extends GeneralDmkError {
     super(err);
   }
 }
+
+export class NoTransportProvidedError extends GeneralDmkError {
+  override readonly _tag = "NoTransportProvidedError";
+  constructor(readonly err?: unknown) {
+    super(err);
+  }
+}

@@ -1,12 +1,15 @@
 import { inject, injectable } from "inversify";
-import { Maybe } from "purify-ts";
+import { Either, Left, Maybe, Right } from "purify-ts";
 
 import { type DeviceModelDataSource } from "@api/device-model/data/DeviceModelDataSource";
 import { type ApduReceiverServiceFactory } from "@api/device-session/service/ApduReceiverService";
 import { type ApduSenderServiceFactory } from "@api/device-session/service/ApduSenderService";
 import { type DmkConfig } from "@api/DmkConfig";
 import { LoggerPublisherService } from "@api/logger-publisher/service/LoggerPublisherService";
-import { TransportAlreadyExistsError } from "@api/transport/model/Errors";
+import {
+  NoTransportProvidedError,
+  TransportAlreadyExistsError,
+} from "@api/transport/model/Errors";
 import { TransportFactory } from "@api/transport/model/Transport";
 import { Transport } from "@api/types";
 import { deviceModelTypes } from "@internal/device-model/di/deviceModelTypes";
@@ -17,48 +20,48 @@ import { transportDiTypes } from "@internal/transport/di/transportDiTypes";
 @injectable()
 export class TransportService {
   private _transports: Map<string, Transport> = new Map();
-  private _loggerModuleFactory: (tag: string) => LoggerPublisherService;
   private _logger: LoggerPublisherService;
-  private _config: DmkConfig;
-  private _deviceModelDataSource: DeviceModelDataSource;
-  private _apduSenderServiceFactory: ApduSenderServiceFactory;
-  private _apduReceiverServiceFactory: ApduReceiverServiceFactory;
 
   constructor(
     @inject(transportDiTypes.TransportsInput)
     _transports: TransportFactory[],
     @inject(transportDiTypes.DmkConfig)
-    _config: DmkConfig,
+    private readonly _config: DmkConfig,
     @inject(loggerTypes.LoggerPublisherServiceFactory)
-    _loggerModuleFactory: (tag: string) => LoggerPublisherService,
+    private readonly _loggerModuleFactory: (
+      tag: string,
+    ) => LoggerPublisherService,
     @inject(deviceModelTypes.DeviceModelDataSource)
-    _deviceModelDataSource: DeviceModelDataSource,
+    private readonly _deviceModelDataSource: DeviceModelDataSource,
     @inject(deviceSessionTypes.ApduSenderServiceFactory)
-    _apduSenderServiceFactory: ApduSenderServiceFactory,
+    private readonly _apduSenderServiceFactory: ApduSenderServiceFactory,
     @inject(deviceSessionTypes.ApduReceiverServiceFactory)
-    _apduReceiverServiceFactory: ApduReceiverServiceFactory,
+    private readonly _apduReceiverServiceFactory: ApduReceiverServiceFactory,
   ) {
     this._logger = _loggerModuleFactory("TransportService");
 
     if (_transports.length === 0) {
-      // TODO: Handle throwing error here
       this._logger.warn(
+        "No transports provided, please check your configuration",
+      );
+
+      throw new NoTransportProvidedError(
         "No transports provided, please check your configuration",
       );
     }
 
-    this._loggerModuleFactory = _loggerModuleFactory;
-    this._config = _config;
-    this._deviceModelDataSource = _deviceModelDataSource;
-    this._apduSenderServiceFactory = _apduSenderServiceFactory;
-    this._apduReceiverServiceFactory = _apduReceiverServiceFactory;
-
     for (const transport of _transports) {
-      this.addTransport(transport);
+      const either = this.addTransport(transport);
+
+      if (either.isLeft()) {
+        throw either.extract();
+      }
     }
   }
 
-  addTransport(factory: TransportFactory) {
+  addTransport(
+    factory: TransportFactory,
+  ): Either<TransportAlreadyExistsError, void> {
     const transport = factory({
       deviceModelDataSource: this._deviceModelDataSource,
       loggerServiceFactory: this._loggerModuleFactory,
@@ -67,10 +70,12 @@ export class TransportService {
       apduReceiverServiceFactory: this._apduReceiverServiceFactory,
     });
 
-    this.addTransportInternal(transport);
+    return this.addTransportInternal(transport);
   }
 
-  private addTransportInternal(transport: Transport) {
+  private addTransportInternal(
+    transport: Transport,
+  ): Either<TransportAlreadyExistsError, void> {
     const MaybeTransport = this.getTransport(transport.getIdentifier());
 
     if (MaybeTransport.isJust()) {
@@ -78,18 +83,19 @@ export class TransportService {
         `Transport ${transport.getIdentifier()} already exists, please check your configuration`,
       );
 
-      throw new TransportAlreadyExistsError(
-        `Transport ${transport.getIdentifier()} already exists, please check your configuration`,
+      return Left(
+        new TransportAlreadyExistsError(
+          `Transport ${transport.getIdentifier()} already exists, please check your configuration`,
+        ),
       );
     }
 
     this._transports.set(transport.getIdentifier(), transport);
+    return Right(undefined);
   }
 
-  getTransport(identifier?: string): Maybe<Transport> {
-    return Maybe.fromNullable(
-      identifier ? this._transports.get(identifier) : undefined,
-    );
+  getTransport(identifier: string): Maybe<Transport> {
+    return Maybe.fromNullable(this._transports.get(identifier));
   }
 
   getAllTransports(): Transport[] {

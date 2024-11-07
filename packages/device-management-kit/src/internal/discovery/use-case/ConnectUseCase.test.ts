@@ -4,9 +4,9 @@ jest.mock("uuid");
 
 import { type DeviceModel } from "@api/device/DeviceModel";
 import { type LoggerPublisherService } from "@api/logger-publisher/service/LoggerPublisherService";
+import { TransportMock } from "@api/transport/model/__mocks__/TransportMock";
 import { type DiscoveredDevice } from "@api/transport/model/DiscoveredDevice";
 import { UnknownDeviceError } from "@api/transport/model/Errors";
-import { TransportStub } from "@api/transport/model/Transport.stub";
 import { connectedDeviceStubBuilder } from "@api/transport/model/TransportConnectedDevice.stub";
 import { type Transport } from "@api/types";
 import { DefaultDeviceSessionService } from "@internal/device-session/service/DefaultDeviceSessionService";
@@ -16,12 +16,12 @@ import { AxiosManagerApiDataSource } from "@internal/manager-api/data/AxiosManag
 import { type ManagerApiDataSource } from "@internal/manager-api/data/ManagerApiDataSource";
 import { DefaultManagerApiService } from "@internal/manager-api/service/DefaultManagerApiService";
 import { type ManagerApiService } from "@internal/manager-api/service/ManagerApiService";
-import { type TransportService } from "@internal/transport/service/TransportService";
-import { TransportServiceStub } from "@internal/transport/service/TransportService.stub";
+import { TransportService } from "@internal/transport/service/TransportService";
 
 import { ConnectUseCase } from "./ConnectUseCase";
 
 jest.mock("@internal/manager-api/data/AxiosManagerApiDataSource");
+jest.mock("@internal/transport/service/TransportService");
 
 // TODO test several transports
 // let transports: WebUsbHidTransport[];
@@ -45,15 +45,15 @@ describe("ConnectUseCase", () => {
   beforeAll(() => {
     logger = new DefaultLoggerPublisherService([], tag);
     jest.spyOn(uuid, "v4").mockReturnValue(fakeSessionId);
-    transport = new TransportStub();
+    transport = new TransportMock();
     sessionService = new DefaultDeviceSessionService(() => logger);
     managerApiDataSource = new AxiosManagerApiDataSource({
       managerApiUrl: "http://fake.url",
       mockUrl: "http://fake-mock.url",
     });
     managerApi = new DefaultManagerApiService(managerApiDataSource);
-    // @ts-expect-error stub
-    transportService = new TransportServiceStub();
+    // @ts-expect-error mock
+    transportService = new TransportService();
   });
 
   afterEach(() => {

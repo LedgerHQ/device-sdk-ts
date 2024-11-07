@@ -1,6 +1,6 @@
-import { type Transport } from "./Transport";
+import { type Transport } from "@api/transport/model/Transport";
 
-export class TransportStub implements Transport {
+export class TransportMock implements Transport {
   constructor() {}
   getIdentifier = jest.fn();
   isSupported = jest.fn();

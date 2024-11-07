@@ -13,9 +13,9 @@ import {
   type Transport,
   type TransportConnectedDevice,
   type TransportDiscoveredDevice,
+  type TransportFactory,
   type TransportIdentifier,
 } from "@ledgerhq/device-management-kit";
-import { type TransportFactory } from "@ledgerhq/device-management-kit/src/api/transport/model/Transport.js";
 import {
   type CommandResponse,
   type Device,

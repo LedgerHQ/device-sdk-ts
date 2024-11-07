@@ -1,14 +1,16 @@
 import React, { useCallback, useEffect, useState } from "react";
 import { createContext, type PropsWithChildren, useContext } from "react";
 import {
-  BuiltinTransports,
   ConsoleLogger,
   type DeviceManagementKit,
   DeviceManagementKitBuilder,
   WebLogsExporterLogger,
 } from "@ledgerhq/device-management-kit";
 import { FlipperDmkLogger } from "@ledgerhq/device-management-kit-flipper-plugin-client";
-import { mockserverTransportFactory } from "@ledgerhq/device-transport-kit-mockserver";
+import {
+  mockserverIdentifier,
+  mockserverTransportFactory,
+} from "@ledgerhq/device-transport-kit-mockserver";
 import { webBleTransportFactory } from "@ledgerhq/device-transport-kit-web-ble";
 import { webHidTransportFactory } from "@ledgerhq/device-transport-kit-web-hid";
 
@@ -43,7 +45,7 @@ export const DmkProvider: React.FC<PropsWithChildren> = ({ children }) => {
     state: { transport, mockServerUrl },
   } = useDmkConfigContext();
 
-  const mockServerEnabled = transport === BuiltinTransports.MOCK_SERVER;
+  const mockServerEnabled = transport === mockserverIdentifier;
   const [state, setState] = useState(() => {
     const logsExporter = new WebLogsExporterLogger();
     const dmk = mockServerEnabled

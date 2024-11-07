@@ -8,12 +8,15 @@ import { defaultApduReceiverServiceStubBuilder } from "@api/device-session/servi
 import { defaultApduSenderServiceStubBuilder } from "@api/device-session/service/DefaultApduSenderService.stub";
 import { type DmkConfig } from "@api/DmkConfig";
 import { type LoggerPublisherService } from "@api/logger-publisher/service/LoggerPublisherService";
-import { TransportAlreadyExistsError } from "@api/transport/model/Errors";
+import { TransportMock } from "@api/transport/model/__mocks__/TransportMock";
+import {
+  NoTransportProvidedError,
+  TransportAlreadyExistsError,
+} from "@api/transport/model/Errors";
 import {
   type Transport,
   type TransportFactory,
 } from "@api/transport/model/Transport";
-import { TransportStub } from "@api/transport/model/Transport.stub";
 import { DefaultLoggerPublisherService } from "@internal/logger-publisher/service/DefaultLoggerPublisherService";
 
 import { TransportService } from "./TransportService";
@@ -41,8 +44,8 @@ describe("TransportService", () => {
     });
     deviceModelDataSource = new StaticDeviceModelDataSource();
     config = {} as DmkConfig;
-    transport = new TransportStub();
-    transport2 = new TransportStub();
+    transport = new TransportMock();
+    transport2 = new TransportMock();
     jest.spyOn(transport, "getIdentifier").mockReturnValue("transport");
     jest.spyOn(transport2, "getIdentifier").mockReturnValue("transport2");
     transportFactory = jest.fn().mockImplementation(() => transport);
@@ -59,24 +62,24 @@ describe("TransportService", () => {
       let spy: jest.SpyInstance;
       beforeEach(() => {
         spy = jest.spyOn(logger, "warn");
-        transportService = new TransportService(
-          [],
-          config,
-          loggerFactory,
-          deviceModelDataSource,
-          apduSenderService,
-          apduReceiverService,
-        );
       });
 
-      it("should not throw an error", () => {
-        expect(transportService).toBeDefined();
-      });
-
-      it("should log a warning", () => {
-        expect(spy).toHaveBeenCalledWith(
-          "No transports provided, please check your configuration",
-        );
+      it("should throw an error", () => {
+        try {
+          transportService = new TransportService(
+            [],
+            config,
+            loggerFactory,
+            deviceModelDataSource,
+            apduSenderService,
+            apduReceiverService,
+          );
+        } catch (error) {
+          expect(spy).toHaveBeenCalledWith(
+            "No transports provided, please check your configuration",
+          );
+          expect(error).toBeInstanceOf(NoTransportProvidedError);
+        }
       });
     });
 
@@ -186,15 +189,10 @@ describe("TransportService", () => {
       const t = transportService.getTransport("transport2");
       expect(t).toEqual(Maybe.empty());
     });
-
-    it("returns Nothing if no identifier is provided", () => {
-      const t = transportService.getTransport();
-      expect(t).toEqual(Maybe.empty());
-    });
   });
 
   describe("getAllTransports", () => {
-    it("returns all transports", () => {
+    it("returns all transports (1 transport)", () => {
       transportService = new TransportService(
         [transportFactory],
         config,
@@ -207,21 +205,7 @@ describe("TransportService", () => {
       expect(transports).toEqual([transport]);
     });
 
-    it("returns an empty array if no transports are added", () => {
-      transportService = new TransportService(
-        [],
-        config,
-        loggerFactory,
-        deviceModelDataSource,
-        apduSenderService,
-        apduReceiverService,
-      );
-
-      const transports = transportService.getAllTransports();
-      expect(transports).toEqual([]);
-    });
-
-    it("returns all transports", () => {
+    it("returns all transports (2 transports)", () => {
       transportService = new TransportService(
         [transportFactory, transportFactory2],
         config,

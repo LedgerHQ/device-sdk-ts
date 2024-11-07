@@ -1,7 +1,7 @@
 import { Left, Maybe, Right } from "purify-ts";
 
+import { TransportMock } from "@api/transport/model/__mocks__/TransportMock";
 import { DisconnectError } from "@api/transport/model/Errors";
-import { TransportStub } from "@api/transport/model/Transport.stub";
 import { connectedDeviceStubBuilder } from "@api/transport/model/TransportConnectedDevice.stub";
 import { type Transport } from "@api/types";
 import { deviceSessionStubBuilder } from "@internal/device-session/model/DeviceSession.stub";
@@ -12,10 +12,11 @@ import { AxiosManagerApiDataSource } from "@internal/manager-api/data/AxiosManag
 import { type ManagerApiDataSource } from "@internal/manager-api/data/ManagerApiDataSource";
 import { DefaultManagerApiService } from "@internal/manager-api/service/DefaultManagerApiService";
 import { type ManagerApiService } from "@internal/manager-api/service/ManagerApiService";
-import { type TransportService } from "@internal/transport/service/TransportService";
-import { TransportServiceStub } from "@internal/transport/service/TransportService.stub";
+import { TransportService } from "@internal/transport/service/TransportService";
 
 import { DisconnectUseCase } from "./DisconnectUseCase";
+
+jest.mock("@internal/transport/service/TransportService");
 
 let sessionService: DefaultDeviceSessionService;
 // TODO test several transports
@@ -34,11 +35,11 @@ const sessionId = "sessionId";
 
 describe("DisconnectUseCase", () => {
   beforeAll(() => {
-    transport = new TransportStub();
+    transport = new TransportMock();
     transports = [transport];
     sessionService = new DefaultDeviceSessionService(loggerFactory);
-    // @ts-expect-error stub
-    transportService = new TransportServiceStub();
+    // @ts-expect-error mock
+    transportService = new TransportService();
     jest
       .spyOn(transportService, "getTransport")
       .mockReturnValue(Maybe.of(transport));

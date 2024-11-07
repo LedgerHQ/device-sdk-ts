@@ -3,17 +3,18 @@ import { of } from "rxjs";
 
 import { DeviceModel } from "@api/device/DeviceModel";
 import { type TransportDeviceModel } from "@api/device-model/model/DeviceModel";
-import { TransportStub } from "@api/transport/model/Transport.stub";
+import { TransportMock } from "@api/transport/model/__mocks__/TransportMock";
 import { type TransportDiscoveredDevice } from "@api/transport/model/TransportDiscoveredDevice";
 import {
   type DeviceModelId,
   type DiscoveredDevice,
   type Transport,
 } from "@api/types";
-import { type TransportService } from "@internal/transport/service/TransportService";
-import { TransportServiceStub } from "@internal/transport/service/TransportService.stub";
+import { TransportService } from "@internal/transport/service/TransportService";
 
 import { StartDiscoveringUseCase } from "./StartDiscoveringUseCase";
+
+jest.mock("@internal/transport/service/TransportService");
 
 let transport: Transport;
 let transportService: TransportService;
@@ -29,9 +30,9 @@ describe("StartDiscoveringUseCase", () => {
   };
 
   beforeEach(() => {
-    transport = new TransportStub();
-    // @ts-expect-error stub
-    transportService = new TransportServiceStub();
+    transport = new TransportMock();
+    // @ts-expect-error mock
+    transportService = new TransportService();
   });
 
   afterEach(() => {

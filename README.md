@@ -181,7 +181,7 @@ Please configure JEST extention accordingly.
 
 Each package is built using the following command (at the root of the monorepo).
 
-### Devie Management Kit
+### Device Management Kit
 
 Device Management Kit main module.
 

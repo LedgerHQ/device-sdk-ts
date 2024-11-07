@@ -1,5 +1,7 @@
 import { Container } from "inversify";
 
+import { TransportMock } from "@api/transport/model/__mocks__/TransportMock";
+import { type Transport } from "@api/types";
 import { deviceModelModuleFactory } from "@internal/device-model/di/deviceModelModule";
 import { deviceSessionModuleFactory } from "@internal/device-session/di/deviceSessionModule";
 import { ConnectUseCase } from "@internal/discovery/use-case/ConnectUseCase";
@@ -18,16 +20,21 @@ import { discoveryTypes } from "./discoveryTypes";
 describe("discoveryModuleFactory", () => {
   let container: Container;
   let mod: ReturnType<typeof discoveryModuleFactory>;
+  let transport: Transport;
   beforeEach(() => {
     mod = discoveryModuleFactory({ stub: false });
     container = new Container();
+    transport = new TransportMock();
+
     container.load(
       mod,
       // The following modules are injected into discovery module
       loggerModuleFactory(),
       deviceModelModuleFactory({ stub: false }),
       deviceSessionModuleFactory(),
-      transportModuleFactory({ transports: [] }),
+      transportModuleFactory({
+        transports: [jest.fn().mockImplementation(() => transport)],
+      }),
       managerApiModuleFactory({
         config: {
           managerApiUrl: "http://fake.url",

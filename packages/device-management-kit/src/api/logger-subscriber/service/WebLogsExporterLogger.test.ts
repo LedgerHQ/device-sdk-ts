@@ -1,6 +1,5 @@
 import { deviceModelStubBuilder } from "@api/device-model/model/DeviceModel.stub";
 import { type TransportConnectedDevice } from "@api/transport/model/TransportConnectedDevice";
-import { BuiltinTransports } from "@api/transport/model/TransportIdentifier";
 import { DeviceSession } from "@internal/device-session/model/DeviceSession";
 import { type ManagerApiService } from "@internal/manager-api/service/ManagerApiService";
 
@@ -27,7 +26,7 @@ describe("getJSONStringifyReplacer", () => {
       type: "USB",
       id: "mockedDeviceId",
       sendApdu: jest.fn(),
-      transport: BuiltinTransports.USB,
+      transport: "USB",
     };
 
     const value = new DeviceSession(
