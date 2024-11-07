@@ -1,0 +1,30 @@
+---
+title: Ledger Device Management Kit Documentation
+---
+
+export function Card({ title, description, link, icon }) {
+  return (
+    <div className="card">
+      <div className="icon">{icon}</div>
+      <div className="title">{title}</div>
+      <p>{description}</p>
+      <a href={link} className="btn">
+        Explore
+      </a>
+    </div>
+  );
+}
+
+export function Hero() {
+  return (
+    <div className="hero">
+      <h1>Interact with Ledger Devices</h1>
+      <p>
+        Seamlessly connect Ledger's devices into your applications with our{" "}
+        <em>Device Management Kit.</em>
+      </p>
+    </div>
+  );
+}
+
+<Hero />
