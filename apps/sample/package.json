@@ -23,7 +23,7 @@
     "@ledgerhq/device-transport-kit-mock-client": "workspace:*",
     "@ledgerhq/react-ui": "^0.16.2",
     "@sentry/nextjs": "^8.32.0",
-    "@playwright/test": "^1.47.0",
+    "@playwright/test": "^1.48.2",
     "ethers": "^6.13.2",
     "next": "14.2.13",
     "react": "^18.3.1",
