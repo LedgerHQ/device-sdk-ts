@@ -107,7 +107,6 @@ export class DeviceSession {
       rawApdu,
       options.triggersDisconnection,
     );
-    console.log("errrorOrResponse", rawApdu);
 
     return errorOrResponse.ifRight((response: ApduResponse) => {
       if (CommandUtils.isLockedDeviceResponse(response)) {

@@ -1,5 +1,6 @@
 import { inject, injectable } from "inversify";
 import { Maybe } from "purify-ts";
+import { Observable, ReplaySubject } from "rxjs";
 
 import { DeviceSession } from "@internal/device-session/model/DeviceSession";
 import { DeviceSessionNotFound } from "@internal/device-session/model/Errors";
@@ -10,14 +11,20 @@ import { LoggerPublisherService } from "@internal/logger-publisher/service/Logge
 @injectable()
 export class DefaultDeviceSessionService implements DeviceSessionService {
   private _sessions: DeviceSession[];
-  private _logger: LoggerPublisherService;
+  private readonly _logger: LoggerPublisherService;
+  private _sessionsSubject: ReplaySubject<DeviceSession>;
 
   constructor(
     @inject(loggerTypes.LoggerPublisherServiceFactory)
     loggerModuleFactory: (tag: string) => LoggerPublisherService,
   ) {
     this._sessions = [];
+    this._sessionsSubject = new ReplaySubject();
     this._logger = loggerModuleFactory("DeviceSessionService");
+  }
+
+  public get sessionsObs(): Observable<DeviceSession> {
+    return this._sessionsSubject.asObservable();
   }
 
   addDeviceSession(deviceSession: DeviceSession) {
@@ -30,6 +37,7 @@ export class DefaultDeviceSessionService implements DeviceSessionService {
     }
 
     this._sessions.push(deviceSession);
+    this._sessionsSubject.next(deviceSession);
     this._logger.info("DeviceSession added", { data: { deviceSession } });
     return this;
   }

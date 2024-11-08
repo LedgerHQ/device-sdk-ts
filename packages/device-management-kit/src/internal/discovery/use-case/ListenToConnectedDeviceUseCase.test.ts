@@ -2,14 +2,14 @@ import { ConnectedDevice } from "@api/transport/model/ConnectedDevice";
 import { deviceSessionStubBuilder } from "@internal/device-session/model/DeviceSession.stub";
 import { DefaultDeviceSessionService } from "@internal/device-session/service/DefaultDeviceSessionService";
 import { type DeviceSessionService } from "@internal/device-session/service/DeviceSessionService";
+import { ListenToConnectedDeviceUseCase } from "@internal/discovery/use-case/ListenToConnectedDeviceUseCase";
 import { DefaultLoggerPublisherService } from "@internal/logger-publisher/service/DefaultLoggerPublisherService";
 import { type LoggerPublisherService } from "@internal/logger-publisher/service/LoggerPublisherService";
 import { AxiosManagerApiDataSource } from "@internal/manager-api/data/AxiosManagerApiDataSource";
 import { type ManagerApiDataSource } from "@internal/manager-api/data/ManagerApiDataSource";
 import { DefaultManagerApiService } from "@internal/manager-api/service/DefaultManagerApiService";
 import { type ManagerApiService } from "@internal/manager-api/service/ManagerApiService";
-
-import { GetConnectedDeviceUseCase } from "./GetConnectedDeviceUseCase";
+import { connectedDeviceStubBuilder } from "@internal/transport/model/InternalConnectedDevice.stub";
 
 jest.mock("@internal/manager-api/data/AxiosManagerApiDataSource");
 
@@ -18,13 +18,13 @@ let sessionService: DeviceSessionService;
 let managerApiDataSource: ManagerApiDataSource;
 let managerApi: ManagerApiService;
 
-const fakeSessionId = "fakeSessionId";
+const fakeSessionId = "test-list-connected-device-session-id";
 
-describe("GetConnectedDevice", () => {
+describe("ListenToConnectedDevice", () => {
   beforeEach(() => {
     logger = new DefaultLoggerPublisherService(
       [],
-      "get-connected-device-use-case",
+      "listen-to-connected-device-use-case",
     );
     managerApiDataSource = new AxiosManagerApiDataSource({
       managerApiUrl: "http://fake.url",
@@ -34,46 +34,36 @@ describe("GetConnectedDevice", () => {
     sessionService = new DefaultDeviceSessionService(() => logger);
   });
 
-  it("should retrieve an instance of ConnectedDevice", () => {
+  it("should emit an instance of ConnectedDevice", (done) => {
     // given
+    const connectedDevice = connectedDeviceStubBuilder({
+      id: "test-list-connected-device-id",
+    });
     const deviceSession = deviceSessionStubBuilder(
-      { id: fakeSessionId },
+      { id: fakeSessionId, connectedDevice },
       () => logger,
       managerApi,
     );
-    sessionService.addDeviceSession(deviceSession);
-    const useCase = new GetConnectedDeviceUseCase(sessionService, () => logger);
-
-    // when
-    const response = useCase.execute({
-      sessionId: fakeSessionId,
-    });
-
-    // then
-    expect(response).toBeInstanceOf(ConnectedDevice);
-  });
-
-  it("should retrieve correct device from session", () => {
-    // given
-    const deviceSession = deviceSessionStubBuilder(
-      { id: fakeSessionId },
+    const observable = new ListenToConnectedDeviceUseCase(
+      sessionService,
       () => logger,
-      managerApi,
-    );
-    sessionService.addDeviceSession(deviceSession);
-    const useCase = new GetConnectedDeviceUseCase(sessionService, () => logger);
+    ).execute();
 
-    // when
-    const response = useCase.execute({
-      sessionId: fakeSessionId,
+    const subscription = observable.subscribe({
+      next(emittedConnectedDevice) {
+        // then
+        expect(emittedConnectedDevice).toEqual(
+          new ConnectedDevice({
+            internalConnectedDevice: connectedDevice,
+            sessionId: fakeSessionId,
+          }),
+        );
+        subscription.unsubscribe();
+        done();
+      },
     });
 
-    // then
-    expect(response).toStrictEqual(
-      new ConnectedDevice({
-        internalConnectedDevice: deviceSession.connectedDevice,
-        sessionId: fakeSessionId,
-      }),
-    );
+    // when
+    sessionService.addDeviceSession(deviceSession);
   });
 });

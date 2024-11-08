@@ -26,14 +26,14 @@ import {
 import { configTypes } from "@internal/config/di/configTypes";
 import { type GetDmkVersionUseCase } from "@internal/config/use-case/GetDmkVersionUseCase";
 import { deviceSessionTypes } from "@internal/device-session/di/deviceSessionTypes";
-import { type DeviceSession } from "@internal/device-session/model/DeviceSession";
 import { type CloseSessionsUseCase } from "@internal/device-session/use-case/CloseSessionsUseCase";
 import { type GetDeviceSessionStateUseCase } from "@internal/device-session/use-case/GetDeviceSessionStateUseCase";
-import { type ListDeviceSessionsUseCase } from "@internal/device-session/use-case/ListDeviceSessionsUseCase";
 import { discoveryTypes } from "@internal/discovery/di/discoveryTypes";
 import { type ConnectUseCase } from "@internal/discovery/use-case/ConnectUseCase";
 import { type DisconnectUseCase } from "@internal/discovery/use-case/DisconnectUseCase";
 import { type GetConnectedDeviceUseCase } from "@internal/discovery/use-case/GetConnectedDeviceUseCase";
+import { type ListConnectedDevicesUseCase } from "@internal/discovery/use-case/ListConnectedDevicesUseCase";
+import { type ListenToConnectedDeviceUseCase } from "@internal/discovery/use-case/ListenToConnectedDeviceUseCase";
 import { type ListenToKnownDevicesUseCase } from "@internal/discovery/use-case/ListenToKnownDevicesUseCase";
 import type { StartDiscoveringUseCase } from "@internal/discovery/use-case/StartDiscoveringUseCase";
 import type { StopDiscoveringUseCase } from "@internal/discovery/use-case/StopDiscoveringUseCase";
@@ -224,6 +224,10 @@ export class DeviceManagementKit {
       .execute(args);
   }
 
+  /**
+   * Close the Device Management kit.
+   *
+   */
   close() {
     return this.container
       .get<CloseSessionsUseCase>(deviceSessionTypes.CloseSessionsUseCase)
@@ -231,14 +235,27 @@ export class DeviceManagementKit {
   }
 
   /**
-   * Lists all device sessions.
+   * Lists all connected devices.
    *
-   * @returns {DeviceSession[]} The list of device sessions.
+   * @returns {ConnectedDevice[]} The list of device sessions.
    */
-  listDeviceSessions(): DeviceSession[] {
+  listConnectedDevices(): ConnectedDevice[] {
     return this.container
-      .get<ListDeviceSessionsUseCase>(
-        deviceSessionTypes.ListDeviceSessionsUseCase,
+      .get<ListConnectedDevicesUseCase>(
+        discoveryTypes.ListConnectedDevicesUseCase,
+      )
+      .execute();
+  }
+
+  /**
+   * Listen to connected device.
+   *
+   * @returns {Observable<ConnectedDevice>} An observable of connected device.
+   */
+  listenToConnectedDevice(): Observable<ConnectedDevice> {
+    return this.container
+      .get<ListenToConnectedDeviceUseCase>(
+        discoveryTypes.ListenToConnectedDeviceUseCase,
       )
       .execute();
   }

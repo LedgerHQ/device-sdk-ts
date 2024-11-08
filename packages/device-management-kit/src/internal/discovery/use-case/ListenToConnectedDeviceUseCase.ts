@@ -1,31 +1,38 @@
 import { inject, injectable } from "inversify";
+import { map, Observable } from "rxjs";
 
 import { deviceSessionTypes } from "@internal/device-session/di/deviceSessionTypes";
-import { DeviceSession } from "@internal/device-session/model/DeviceSession";
 import type { DeviceSessionService } from "@internal/device-session/service/DeviceSessionService";
 import { loggerTypes } from "@internal/logger-publisher/di/loggerTypes";
 import { LoggerPublisherService } from "@internal/logger-publisher/service/LoggerPublisherService";
+import { ConnectedDevice } from "@root/src";
 
 /**
- * List all device sessions.
+ * Listen to connected devices
  */
 @injectable()
-export class ListDeviceSessionsUseCase {
-  private readonly _sessionService: DeviceSessionService;
+export class ListenToConnectedDeviceUseCase {
   private readonly _logger: LoggerPublisherService;
 
   constructor(
     @inject(deviceSessionTypes.DeviceSessionService)
-    sessionService: DeviceSessionService,
+    private readonly _sessionService: DeviceSessionService,
     @inject(loggerTypes.LoggerPublisherServiceFactory)
     loggerFactory: (tag: string) => LoggerPublisherService,
   ) {
-    this._sessionService = sessionService;
-    this._logger = loggerFactory("ListDeviceSessionsUseCase");
+    this._logger = loggerFactory("ListenToConnectedDeviceUseCase");
   }
 
-  execute(): DeviceSession[] {
-    this._logger.info("Listing device sessions");
-    return this._sessionService.getDeviceSessions();
+  execute(): Observable<ConnectedDevice> {
+    this._logger.info("Observe connected devices");
+    return this._sessionService.sessionsObs.pipe(
+      map(
+        (deviceSession) =>
+          new ConnectedDevice({
+            internalConnectedDevice: deviceSession.connectedDevice,
+            sessionId: deviceSession.id,
+          }),
+      ),
+    );
   }
 }

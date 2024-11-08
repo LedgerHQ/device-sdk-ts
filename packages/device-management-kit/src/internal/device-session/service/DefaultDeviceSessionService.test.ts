@@ -1,13 +1,14 @@
 import { Either, Left } from "purify-ts";
+import { Observable } from "rxjs";
 
-import { DeviceSession } from "@internal/device-session/model/DeviceSession";
+import { type DeviceSession } from "@internal/device-session/model/DeviceSession";
+import { deviceSessionStubBuilder } from "@internal/device-session/model/DeviceSession.stub";
 import { DeviceSessionNotFound } from "@internal/device-session/model/Errors";
 import { DefaultLoggerPublisherService } from "@internal/logger-publisher/service/DefaultLoggerPublisherService";
 import { AxiosManagerApiDataSource } from "@internal/manager-api/data/AxiosManagerApiDataSource";
 import { type ManagerApiDataSource } from "@internal/manager-api/data/ManagerApiDataSource";
 import { DefaultManagerApiService } from "@internal/manager-api/service/DefaultManagerApiService";
 import type { ManagerApiService } from "@internal/manager-api/service/ManagerApiService";
-import { connectedDeviceStubBuilder } from "@internal/transport/model/InternalConnectedDevice.stub";
 
 import { DefaultDeviceSessionService } from "./DefaultDeviceSessionService";
 
@@ -30,10 +31,8 @@ describe("DefaultDeviceSessionService", () => {
     });
     managerApi = new DefaultManagerApiService(managerApiDataSource);
 
-    deviceSession = new DeviceSession(
-      {
-        connectedDevice: connectedDeviceStubBuilder(),
-      },
+    deviceSession = deviceSessionStubBuilder(
+      {},
       () => loggerService,
       managerApi,
     );
@@ -81,5 +80,41 @@ describe("DefaultDeviceSessionService", () => {
   it("should get all sessions", () => {
     sessionService.addDeviceSession(deviceSession);
     expect(sessionService.getDeviceSessions()).toEqual([deviceSession]);
+  });
+
+  it("should retrieve sessionObs", () => {
+    expect(sessionService.sessionsObs).toBeInstanceOf(
+      Observable<DeviceSession>,
+    );
+  });
+
+  it("should emit new session", (done) => {
+    const subscription = sessionService.sessionsObs.subscribe({
+      next(emittedDeviceSession) {
+        expect(emittedDeviceSession).toStrictEqual(deviceSession);
+        subscription.unsubscribe();
+        done();
+      },
+    });
+    sessionService.addDeviceSession(deviceSession);
+  });
+
+  it("should emit previous added session", () => {
+    const lastDeviceSession = deviceSessionStubBuilder(
+      { id: "last-session" },
+      () => loggerService,
+      managerApi,
+    );
+    const emittedSessions: DeviceSession[] = [];
+    sessionService.addDeviceSession(deviceSession);
+    sessionService.addDeviceSession(lastDeviceSession);
+
+    const subscription = sessionService.sessionsObs.subscribe({
+      next(emittedDeviceSession) {
+        emittedSessions.push(emittedDeviceSession);
+      },
+    });
+    expect(emittedSessions).toEqual([deviceSession, lastDeviceSession]);
+    subscription.unsubscribe();
   });
 });
