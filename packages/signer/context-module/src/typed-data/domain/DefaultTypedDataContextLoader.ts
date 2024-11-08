@@ -86,8 +86,8 @@ export class DefaultTypedDataContextLoader implements TypedDataContextLoader {
             address,
             chainId,
           });
-          payload.ifRight((payload) => {
-            mappedTokens[tokenIndex] = payload;
+          payload.ifRight((p) => {
+            mappedTokens[tokenIndex] = p;
           });
         }
       }
@@ -105,8 +105,8 @@ export class DefaultTypedDataContextLoader implements TypedDataContextLoader {
           address,
           chainId,
         });
-        payload.ifRight((payload) => {
-          mappedTokens[tokenIndex] = payload;
+        payload.ifRight((p) => {
+          mappedTokens[tokenIndex] = p;
         });
       }
     }

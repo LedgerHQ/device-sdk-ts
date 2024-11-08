@@ -8,12 +8,12 @@ Ledger JS libraries where initially made for **Ledger Live** applications. As Le
 we have inevitably a big technical debt. Moreover time make that some part of the logic are today hard to understand and to maintain.
 
 Moreover, some device behavior are not well handled by the libraries. For example, opening an application on the device will cause unexpected disconnection.
-Another feedback we have learnt from partners (software wallets) is that we have a lack of simplicity in the libraries, it require low level knowledge to use them (ex: APDU concept). 
+Another feedback we have learnt from partners (software wallets) is that we have a lack of simplicity in the libraries, it require low level knowledge to use them (ex: APDU concept).
 
 ## Target
 
-LedgerJS was intended for Ledger Live. It was not designed to be used by third party developers. 
-With DMK we are targeting **third party developers first**. 
+LedgerJS was intended for Ledger Live. It was not designed to be used by third party developers.
+With DMK we are targeting **third party developers first**.
 
 ## Abstract complexity
 
@@ -21,6 +21,7 @@ As said above, we wanted to reduce the entry level to interact with Ledger devic
 So we have tried as much as possible to abstract the complexity of the communication with the device and provide a simple and easy-to-use API.
 
 ## Multiple Connected devices
+
 With LedgerJS, it was impossible to be connected at the same time to two devices.
 With DMK, we have made it possible to connect to multiple devices at the same time and interact from one to another.
 

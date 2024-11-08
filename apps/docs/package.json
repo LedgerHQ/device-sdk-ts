@@ -4,10 +4,14 @@
   "description": "",
   "private": true,
   "scripts": {
-    "build": "next build",
     "dev": "next dev",
+    "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "eslint",
+    "lint:fix": "eslint --fix",
+    "prettier": "prettier . --check",
+    "prettier:fix": "prettier . --write",
+    "typecheck": "tsc --noEmit"
   },
   "keywords": [],
   "author": "",
@@ -16,15 +20,18 @@
     "autoprefixer": "^10.4.17",
     "next": "^14.1.0",
     "nextra": "^2.13.3",
-    "nextra-theme-blog": "^2.13.3",
     "nextra-theme-docs": "^2.13.3",
     "postcss": "^8.4.35",
-    "react": "^18.2.0",
-    "react-dom": "^18.2.0",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
     "tailwindcss": "^3.4.1"
   },
   "devDependencies": {
-    "@types/node": "^20.11.19",
-    "typescript": "^5.3.3"
+    "@ledgerhq/eslint-config-dsdk": "workspace:*",
+    "@ledgerhq/prettier-config-dsdk": "workspace:*",
+    "@ledgerhq/tsconfig-dsdk": "workspace:*",
+    "@types/node": "^22.7.5",
+    "@types/react": "^18.3.11",
+    "globals": "15.11.0"
   }
 }
