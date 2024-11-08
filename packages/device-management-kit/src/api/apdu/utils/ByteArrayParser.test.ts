@@ -69,6 +69,10 @@ describe("ByteArrayParser", () => {
           return parser.extract32BitInt(bigEndian);
         case 8:
           return parser.extract64BitInt(bigEndian);
+        case 16:
+          return parser.extract128BitInt(bigEndian);
+        case 32:
+          return parser.extract256BitInt(bigEndian);
       }
     } else {
       switch (sizeInBits) {
@@ -78,6 +82,10 @@ describe("ByteArrayParser", () => {
           return parser.extract32BitUInt(bigEndian);
         case 8:
           return parser.extract64BitUInt(bigEndian);
+        case 16:
+          return parser.extract128BitUInt(bigEndian);
+        case 32:
+          return parser.extract256BitUInt(bigEndian);
       }
     }
     return undefined;
@@ -150,6 +158,48 @@ describe("ByteArrayParser", () => {
       [8, false, true, "ffffffffffffffff", 0xffffffffffffffffn],
       [8, true, true, "7fffffffffffffff", 0x7fffffffffffffffn],
       [8, true, true, "8000000000000000", -0x8000000000000000n],
+      [
+        16,
+        false,
+        true,
+        "ffffffffffffffffffffffffffffffff",
+        0xffffffffffffffffffffffffffffffffn,
+      ],
+      [
+        16,
+        true,
+        true,
+        "7fffffffffffffffffffffffffffffff",
+        0x7fffffffffffffffffffffffffffffffn,
+      ],
+      [
+        16,
+        true,
+        true,
+        "80000000000000000000000000000000",
+        -0x80000000000000000000000000000000n,
+      ],
+      [
+        32,
+        false,
+        true,
+        "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+        0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffn,
+      ],
+      [
+        32,
+        true,
+        true,
+        "7fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+        0x7fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffn,
+      ],
+      [
+        32,
+        true,
+        true,
+        "8000000000000000000000000000000000000000000000000000000000000000",
+        -0x8000000000000000000000000000000000000000000000000000000000000000n,
+      ],
     ])(
       "Extract a number to the limit: size %i, signed %s, bigEndian %s, buffer %s, expected %i",
       (sizeInBits, signed, bigEndian, input, output) => {
@@ -178,6 +228,90 @@ describe("ByteArrayParser", () => {
       [8, true, true, "ffcdbcabbda7bbb9", -14147778004927559n],
       [8, true, false, "4744584254433200", 14147778004927559n],
       [8, true, false, "b9bba7bdabbccdff", -14147778004927559n],
+      [
+        16,
+        false,
+        true,
+        "00324354425844470032435442584447",
+        0x00324354425844470032435442584447n,
+      ],
+      [
+        16,
+        false,
+        false,
+        "47445842544332004744584254433200",
+        0x00324354425844470032435442584447n,
+      ],
+      [
+        16,
+        true,
+        true,
+        "00324354425844470032435442584447",
+        0x00324354425844470032435442584447n,
+      ],
+      [
+        16,
+        true,
+        true,
+        "ffcdbcabbda7bbb8ffcdbcabbda7bbb9",
+        -0x00324354425844470032435442584447n,
+      ],
+      [
+        16,
+        true,
+        false,
+        "47445842544332004744584254433200",
+        0x00324354425844470032435442584447n,
+      ],
+      [
+        16,
+        true,
+        false,
+        "b9bba7bdabbccdffb8bba7bdabbccdff",
+        -0x00324354425844470032435442584447n,
+      ],
+      [
+        32,
+        false,
+        true,
+        "0032435442584447003243544258444700324354425844470032435442584447",
+        0x0032435442584447003243544258444700324354425844470032435442584447n,
+      ],
+      [
+        32,
+        false,
+        false,
+        "4744584254433200474458425443320047445842544332004744584254433200",
+        0x0032435442584447003243544258444700324354425844470032435442584447n,
+      ],
+      [
+        32,
+        true,
+        true,
+        "0032435442584447003243544258444700324354425844470032435442584447",
+        0x0032435442584447003243544258444700324354425844470032435442584447n,
+      ],
+      [
+        32,
+        true,
+        true,
+        "ffcdbcabbda7bbb8ffcdbcabbda7bbb8ffcdbcabbda7bbb8ffcdbcabbda7bbb9",
+        -0x0032435442584447003243544258444700324354425844470032435442584447n,
+      ],
+      [
+        32,
+        true,
+        false,
+        "4744584254433200474458425443320047445842544332004744584254433200",
+        0x0032435442584447003243544258444700324354425844470032435442584447n,
+      ],
+      [
+        32,
+        true,
+        false,
+        "b9bba7bdabbccdffb8bba7bdabbccdffb8bba7bdabbccdffb8bba7bdabbccdff",
+        -0x0032435442584447003243544258444700324354425844470032435442584447n,
+      ],
     ])(
       "Extract the following number: size %i, signed %s, bigEndian %s, buffer %s, expected %i",
       (sizeInBits, signed, bigEndian, input, output) => {

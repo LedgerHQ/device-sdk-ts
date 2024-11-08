@@ -7,6 +7,7 @@ export * from "./forward-domain/domain/ForwardDomainContextLoader";
 export * from "./nft/domain/NftContextLoader";
 export * from "./shared/domain/ContextLoader";
 export * from "./shared/model/ClearSignContext";
+export * from "./shared/model/GenericPath";
 export * from "./shared/model/TransactionContext";
 export * from "./shared/model/TransactionSubset";
 export * from "./shared/model/TypedDataClearSignContext";

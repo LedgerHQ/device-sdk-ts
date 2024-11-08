@@ -103,6 +103,42 @@ export class ByteArrayParser {
   }
 
   /**
+   * Extract a 128-bit unsigned integer from the response
+   * @param bigEndian: boolean - True to decode in big endian, false for little endian
+   * @returns {number | undefined} - Returns the 128-bit unsigned integer extracted from the response
+   */
+  extract128BitUInt(bigEndian: boolean = true): bigint | undefined {
+    return this.extractNumber(128n, false, bigEndian);
+  }
+
+  /**
+   * Extract a 128-bit signed integer from the response
+   * @param bigEndian: boolean - True to decode in big endian, false for little endian
+   * @returns {number | undefined} - Returns the 128-bit signed integer extracted from the response
+   */
+  extract128BitInt(bigEndian: boolean = true): bigint | undefined {
+    return this.extractNumber(128n, true, bigEndian);
+  }
+
+  /**
+   * Extract a 256-bit unsigned integer from the response
+   * @param bigEndian: boolean - True to decode in big endian, false for little endian
+   * @returns {number | undefined} - Returns the 256-bit unsigned integer extracted from the response
+   */
+  extract256BitUInt(bigEndian: boolean = true): bigint | undefined {
+    return this.extractNumber(256n, false, bigEndian);
+  }
+
+  /**
+   * Extract a 256-bit signed integer from the response
+   * @param bigEndian: boolean - True to decode in big endian, false for little endian
+   * @returns {number | undefined} - Returns the 256-bit signed integer extracted from the response
+   */
+  extract256BitInt(bigEndian: boolean = true): bigint | undefined {
+    return this.extractNumber(256n, true, bigEndian);
+  }
+
+  /**
    * Extract a field of a specified length from the response
    * @param length: number - The length of the field to extract
    * @returns {Uint8Array | undefined} - Returns the field extracted from the response
