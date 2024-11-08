@@ -1,10 +1,11 @@
 import { TransportMock } from "@api/transport/model/__mocks__/TransportMock";
 import { type Transport } from "@api/types";
-import { TransportService } from "@internal/transport/service/TransportService";
+import { DefaultTransportService } from "@internal/transport/service/DefaultTransportService";
+import { type TransportService } from "@internal/transport/service/TransportService";
 
 import { StopDiscoveringUseCase } from "./StopDiscoveringUseCase";
 
-jest.mock("@internal/transport/service/TransportService");
+jest.mock("@internal/transport/service/DefaultTransportService");
 
 // TODO test several transports
 let transport: Transport;
@@ -16,7 +17,7 @@ describe("StopDiscoveringUseCase", () => {
     transport = new TransportMock();
     transports = [transport];
     // @ts-expect-error mock
-    transportService = new TransportService(transports);
+    transportService = new DefaultTransportService(transports);
   });
 
   afterEach(() => {

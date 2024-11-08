@@ -6,7 +6,7 @@ import type { Transport } from "@api/transport/model/Transport";
 import { TransportDiscoveredDevice } from "@api/transport/model/TransportDiscoveredDevice";
 import { DiscoveredDevice } from "@api/types";
 import { transportDiTypes } from "@internal/transport/di/transportDiTypes";
-import { TransportService } from "@internal/transport/service/TransportService";
+import { type TransportService } from "@internal/transport/service/TransportService";
 
 /**
  * Listen to list of known discovered devices (and later BLE).

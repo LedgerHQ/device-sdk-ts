@@ -1,7 +1,7 @@
 import { inject, injectable } from "inversify";
 
 import { transportDiTypes } from "@internal/transport/di/transportDiTypes";
-import { TransportService } from "@internal/transport/service/TransportService";
+import { type TransportService } from "@internal/transport/service/TransportService";
 
 /**
  * Stops discovering devices connected.

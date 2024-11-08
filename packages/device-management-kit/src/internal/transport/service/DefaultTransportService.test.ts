@@ -19,7 +19,7 @@ import {
 } from "@api/transport/model/Transport";
 import { DefaultLoggerPublisherService } from "@internal/logger-publisher/service/DefaultLoggerPublisherService";
 
-import { TransportService } from "./TransportService";
+import { DefaultTransportService } from "./DefaultTransportService";
 
 let apduSenderService: ApduSenderServiceFactory;
 let apduReceiverService: ApduReceiverServiceFactory;
@@ -30,7 +30,7 @@ let transport: Transport;
 let transportFactory2: TransportFactory;
 let transport2: Transport;
 let deviceModelDataSource: DeviceModelDataSource;
-let transportService: TransportService;
+let transportService: DefaultTransportService;
 let loggerFactory: () => LoggerPublisherService;
 
 describe("TransportService", () => {
@@ -66,7 +66,7 @@ describe("TransportService", () => {
 
       it("should throw an error", () => {
         try {
-          transportService = new TransportService(
+          transportService = new DefaultTransportService(
             [],
             config,
             loggerFactory,
@@ -85,7 +85,7 @@ describe("TransportService", () => {
 
     describe("when transports are provided", () => {
       it("should add 1 transport", () => {
-        transportService = new TransportService(
+        transportService = new DefaultTransportService(
           [transportFactory],
           config,
           loggerFactory,
@@ -98,7 +98,7 @@ describe("TransportService", () => {
       });
 
       it("should add multiple transports", () => {
-        transportService = new TransportService(
+        transportService = new DefaultTransportService(
           [transportFactory, transportFactory2],
           config,
           loggerFactory,
@@ -113,7 +113,7 @@ describe("TransportService", () => {
 
       it("should not add duplicate transports", () => {
         try {
-          new TransportService(
+          new DefaultTransportService(
             [transportFactory, transportFactory],
             config,
             loggerFactory,
@@ -130,7 +130,7 @@ describe("TransportService", () => {
 
   describe("addTransport", () => {
     beforeEach(() => {
-      transportService = new TransportService(
+      transportService = new DefaultTransportService(
         [transportFactory],
         config,
         loggerFactory,
@@ -170,7 +170,7 @@ describe("TransportService", () => {
 
   describe("getTransport", () => {
     beforeEach(() => {
-      transportService = new TransportService(
+      transportService = new DefaultTransportService(
         [transportFactory],
         config,
         loggerFactory,
@@ -193,7 +193,7 @@ describe("TransportService", () => {
 
   describe("getAllTransports", () => {
     it("returns all transports (1 transport)", () => {
-      transportService = new TransportService(
+      transportService = new DefaultTransportService(
         [transportFactory],
         config,
         loggerFactory,
@@ -206,7 +206,7 @@ describe("TransportService", () => {
     });
 
     it("returns all transports (2 transports)", () => {
-      transportService = new TransportService(
+      transportService = new DefaultTransportService(
         [transportFactory, transportFactory2],
         config,
         loggerFactory,

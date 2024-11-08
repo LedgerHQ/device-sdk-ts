@@ -18,9 +18,9 @@ import {
 } from "@api/device-session/DeviceSessionState";
 import { type DeviceSessionId } from "@api/device-session/types";
 import { type DmkError } from "@api/Error";
-import { DEVICE_SESSION_REFRESH_INTERVAL } from "@internal/device-session/data/DeviceSessionRefresherConst";
 import { type LoggerPublisherService } from "@api/logger-publisher/service/LoggerPublisherService";
 import { type TransportConnectedDevice } from "@api/transport/model/TransportConnectedDevice";
+import { DEVICE_SESSION_REFRESH_INTERVAL } from "@internal/device-session/data/DeviceSessionRefresherConst";
 import { type ManagerApiService } from "@internal/manager-api/service/ManagerApiService";
 
 import { DeviceSessionRefresher } from "./DeviceSessionRefresher";

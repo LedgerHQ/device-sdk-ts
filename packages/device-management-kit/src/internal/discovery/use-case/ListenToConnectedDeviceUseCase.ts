@@ -1,10 +1,10 @@
 import { inject, injectable } from "inversify";
 import { map, Observable } from "rxjs";
 
+import { LoggerPublisherService } from "@api/logger-publisher/service/LoggerPublisherService";
 import { deviceSessionTypes } from "@internal/device-session/di/deviceSessionTypes";
 import type { DeviceSessionService } from "@internal/device-session/service/DeviceSessionService";
 import { loggerTypes } from "@internal/logger-publisher/di/loggerTypes";
-import { LoggerPublisherService } from "@internal/logger-publisher/service/LoggerPublisherService";
 import { ConnectedDevice } from "@root/src";
 
 /**
@@ -29,7 +29,7 @@ export class ListenToConnectedDeviceUseCase {
       map(
         (deviceSession) =>
           new ConnectedDevice({
-            internalConnectedDevice: deviceSession.connectedDevice,
+            transportConnectedDevice: deviceSession.connectedDevice,
             sessionId: deviceSession.id,
           }),
       ),

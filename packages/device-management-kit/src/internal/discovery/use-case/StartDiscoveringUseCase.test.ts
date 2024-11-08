@@ -10,11 +10,12 @@ import {
   type DiscoveredDevice,
   type Transport,
 } from "@api/types";
-import { TransportService } from "@internal/transport/service/TransportService";
+import { DefaultTransportService } from "@internal/transport/service/DefaultTransportService";
+import { type TransportService } from "@internal/transport/service/TransportService";
 
 import { StartDiscoveringUseCase } from "./StartDiscoveringUseCase";
 
-jest.mock("@internal/transport/service/TransportService");
+jest.mock("@internal/transport/service/DefaultTransportService");
 
 let transport: Transport;
 let transportService: TransportService;
@@ -32,7 +33,7 @@ describe("StartDiscoveringUseCase", () => {
   beforeEach(() => {
     transport = new TransportMock();
     // @ts-expect-error mock
-    transportService = new TransportService();
+    transportService = new DefaultTransportService();
   });
 
   afterEach(() => {

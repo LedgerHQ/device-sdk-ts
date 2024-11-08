@@ -13,8 +13,8 @@ import { DeviceModelId } from "@api/device/DeviceModel";
 import { DeviceStatus } from "@api/device/DeviceStatus";
 import { type ApduResponse } from "@api/device-session/ApduResponse";
 import { type DeviceSessionState } from "@api/device-session/DeviceSessionState";
-import { DEVICE_SESSION_REFRESH_INTERVAL } from "@internal/device-session/data/DeviceSessionRefresherConst";
 import { type LoggerPublisherService } from "@api/logger-publisher/service/LoggerPublisherService";
+import { DEVICE_SESSION_REFRESH_INTERVAL } from "@internal/device-session/data/DeviceSessionRefresherConst";
 import { DefaultLoggerPublisherService } from "@internal/logger-publisher/service/DefaultLoggerPublisherService";
 
 import { DeviceSessionRefresher } from "./DeviceSessionRefresher";

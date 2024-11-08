@@ -13,7 +13,7 @@ import { loggerTypes } from "@internal/logger-publisher/di/loggerTypes";
 import { managerApiTypes } from "@internal/manager-api/di/managerApiTypes";
 import type { ManagerApiService } from "@internal/manager-api/service/ManagerApiService";
 import { transportDiTypes } from "@internal/transport/di/transportDiTypes";
-import { TransportService } from "@internal/transport/service/TransportService";
+import { type TransportService } from "@internal/transport/service/TransportService";
 
 /**
  * The arguments for the ConnectUseCase.

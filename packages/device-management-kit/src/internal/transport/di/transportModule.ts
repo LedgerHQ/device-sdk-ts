@@ -2,7 +2,7 @@ import { ContainerModule } from "inversify";
 
 import { type DmkConfig } from "@api/DmkConfig";
 import { type TransportFactory } from "@api/transport/model/Transport";
-import { TransportService } from "@internal/transport/service/TransportService";
+import { DefaultTransportService } from "@internal/transport/service/DefaultTransportService";
 
 import { transportDiTypes } from "./transportDiTypes";
 
@@ -20,7 +20,7 @@ export const transportModuleFactory = ({
   new ContainerModule((bind, _unbind, _isBound, _rebind) => {
     bind(transportDiTypes.TransportsInput).toConstantValue(transports);
     bind(transportDiTypes.TransportService)
-      .to(TransportService)
+      .to(DefaultTransportService)
       .inSingletonScope();
 
     bind(transportDiTypes.DmkConfig).toConstantValue(config);

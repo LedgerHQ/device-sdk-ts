@@ -52,17 +52,10 @@ describe("GetDeviceSessionStateUseCase", () => {
     const res = useCase.execute({ sessionId: fakeSessionId });
     const expected = deviceSession.state;
 
-<<<<<<< HEAD
     deviceSession.close();
 
     // then
-    expect(response).toStrictEqual(deviceSession.state);
-||||||| parent of 61c06245 (✅ (dmk): Add tests for TransportService + fixes)
-    // then
-    expect(response).toStrictEqual(deviceSession.state);
-=======
     expect(res).toStrictEqual(expected);
->>>>>>> 61c06245 (✅ (dmk): Add tests for TransportService + fixes)
   });
 
   it("should throw error when deviceSession is not found", (done) => {

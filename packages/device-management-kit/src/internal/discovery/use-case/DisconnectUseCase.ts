@@ -8,7 +8,7 @@ import { deviceSessionTypes } from "@internal/device-session/di/deviceSessionTyp
 import type { DeviceSessionService } from "@internal/device-session/service/DeviceSessionService";
 import { loggerTypes } from "@internal/logger-publisher/di/loggerTypes";
 import { transportDiTypes } from "@internal/transport/di/transportDiTypes";
-import { TransportService } from "@internal/transport/service/TransportService";
+import { type TransportService } from "@internal/transport/service/TransportService";
 
 /**
  * The arguments for the DisconnectUseCase.

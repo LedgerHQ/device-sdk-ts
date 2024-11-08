@@ -12,11 +12,12 @@ import { AxiosManagerApiDataSource } from "@internal/manager-api/data/AxiosManag
 import { type ManagerApiDataSource } from "@internal/manager-api/data/ManagerApiDataSource";
 import { DefaultManagerApiService } from "@internal/manager-api/service/DefaultManagerApiService";
 import { type ManagerApiService } from "@internal/manager-api/service/ManagerApiService";
-import { TransportService } from "@internal/transport/service/TransportService";
+import { DefaultTransportService } from "@internal/transport/service/DefaultTransportService";
+import { type TransportService } from "@internal/transport/service/TransportService";
 
 import { DisconnectUseCase } from "./DisconnectUseCase";
 
-jest.mock("@internal/transport/service/TransportService");
+jest.mock("@internal/transport/service/DefaultTransportService");
 
 let sessionService: DefaultDeviceSessionService;
 // TODO test several transports
@@ -39,7 +40,7 @@ describe("DisconnectUseCase", () => {
     transports = [transport];
     sessionService = new DefaultDeviceSessionService(loggerFactory);
     // @ts-expect-error mock
-    transportService = new TransportService();
+    transportService = new DefaultTransportService();
     jest
       .spyOn(transportService, "getTransport")
       .mockReturnValue(Maybe.of(transport));

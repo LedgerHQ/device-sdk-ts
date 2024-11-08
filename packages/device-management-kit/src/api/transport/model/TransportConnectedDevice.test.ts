@@ -32,21 +32,9 @@ describe("TransportConnectedDevice", () => {
     expect(connectedDevice.type).toEqual("MOCK");
   });
 
-<<<<<<< HEAD
   it("should return the correct send apdu response", () => {
     expect(connectedDevice.sendApdu(new Uint8Array())).resolves.toMatchObject(
       Right(defaultApduResponseStubBuilder()),
     );
-||||||| parent of 61c06245 (✅ (dmk): Add tests for TransportService + fixes)
-  it("should return the correct send apdu response", () => {
-    expect(connectedDevice.sendApdu(new Uint8Array())).toMatchObject(
-      Promise.resolve(defaultApduResponseStubBuilder()),
-    );
-=======
-  it("should return the correct send apdu response", async () => {
-    const response = await connectedDevice.sendApdu(new Uint8Array());
-
-    expect(response).toMatchObject(Right(defaultApduResponseStubBuilder()));
->>>>>>> 61c06245 (✅ (dmk): Add tests for TransportService + fixes)
   });
 });

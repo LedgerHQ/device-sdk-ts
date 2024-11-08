@@ -7,7 +7,7 @@ import { TransportNotSupportedError } from "@api/transport/model/Errors";
 import { TransportDiscoveredDevice } from "@api/transport/model/TransportDiscoveredDevice";
 import { TransportIdentifier } from "@api/transport/model/TransportIdentifier";
 import { transportDiTypes } from "@internal/transport/di/transportDiTypes";
-import { TransportService } from "@internal/transport/service/TransportService";
+import { type TransportService } from "@internal/transport/service/TransportService";
 
 export type StartDiscoveringUseCaseArgs = {
   /**

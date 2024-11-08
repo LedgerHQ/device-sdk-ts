@@ -4,11 +4,12 @@ import { type DeviceId, type DeviceModel } from "@api/device/DeviceModel";
 import { deviceModelStubBuilder } from "@api/device-model/model/DeviceModel.stub";
 import { type TransportDiscoveredDevice } from "@api/transport/model/TransportDiscoveredDevice";
 import { type DiscoveredDevice, type Transport } from "@api/types";
-import { TransportService } from "@internal/transport/service/TransportService";
+import { DefaultTransportService } from "@internal/transport/service/DefaultTransportService";
+import { type TransportService } from "@internal/transport/service/TransportService";
 
 import { ListenToKnownDevicesUseCase } from "./ListenToKnownDevicesUseCase";
 
-jest.mock("@internal/transport/service/TransportService");
+jest.mock("@internal/transport/service/DefaultTransportService");
 
 let transportService: TransportService;
 function makeMockTransport(props: Partial<Transport>): Transport {
@@ -68,7 +69,7 @@ describe("ListenToKnownDevicesUseCase", () => {
   beforeEach(() => {
     jest.clearAllMocks();
     // @ts-expect-error mock
-    transportService = new TransportService();
+    transportService = new DefaultTransportService();
   });
 
   describe("when no transports are available", () => {

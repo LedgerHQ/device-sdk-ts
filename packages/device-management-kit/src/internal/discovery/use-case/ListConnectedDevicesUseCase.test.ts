@@ -57,11 +57,11 @@ describe("ListDeviceSessionsUseCase", () => {
     // then
     expect(response).toStrictEqual([
       new ConnectedDevice({
-        internalConnectedDevice: deviceSession1.connectedDevice,
+        transportConnectedDevice: deviceSession1.connectedDevice,
         sessionId: deviceSession1.id,
       }),
       new ConnectedDevice({
-        internalConnectedDevice: deviceSession2.connectedDevice,
+        transportConnectedDevice: deviceSession2.connectedDevice,
         sessionId: deviceSession2.id,
       }),
     ]);
