@@ -17,7 +17,7 @@ As we wanted to make the project modular.
   - Open app
   - Close app
   - Get battery status
-- Execute a flow of commands with **DeviceAction**. 
+- Execute a flow of commands with **DeviceAction**.
 
 > [!NOTE]  
 > At the moment we do not provide the possibility to distinguish two devices of the same model, via WebHID and to avoid connection to the same device twice.
@@ -27,18 +27,20 @@ As we wanted to make the project modular.
 DMK is offering several ways to communicate with the device.
 
 ### Send APDU
+
 <Callout type="warning" emoji="⚠️">
-    This method is not recommended for most of the use cases.
-    We recommend using the _Command_ or _DeviceAction_ instead.
+  This method is not recommended for most of the use cases. We recommend using
+  the _Command_ or _DeviceAction_ instead.
 </Callout>
 
 You can send APDU commands to the device using the `sendApdu` method of the `dmk` instance.
 Parameters:
+
 - `sessionId`: string - The session ID, which an identifier of the connection with a device.
-- `apdu`: UInt8Array - Byte array of data to be send to the device. 
+- `apdu`: UInt8Array - Byte array of data to be send to the device.
 
 ```typescript
- await dmk.sendApdu({ sessionId, apdu });
+await dmk.sendApdu({ sessionId, apdu });
 ```
 
 ### Commands
@@ -46,6 +48,7 @@ Parameters:
 Commands are pre-defined actions that you can send to the device.
 You can use the `sendCommand` method of the `dmk` instance to send a command to the device.
 Parameters:
+
 - `sessionId`: string - The session ID, which an identifier of the connection with a device.
 - `command`: Command - The command to be sent to the device.
 
@@ -55,6 +58,7 @@ import { OpenAppCommand } from "@ledgerhq/device-management-kit";
 const command = new OpenAppCommand("Bitcoin"); // Open the Bitcoin app
 await dmk.sendCommand({ sessionId, command });
 ```
+
 ### Device Actions
 
 Device actions are a set of commands that are executed in a sequence.
@@ -64,6 +68,7 @@ It is returning an observable that will emit different states of the action exec
 A device action is cancellable, you can cancel it by calling the `cancel` function returned by the `executeDeviceAction` method.
 
 Parameters:
+
 - `sessionId`: string - The session ID, which an identifier of the connection with a device.
 - `deviceAction`: DeviceAction - The DeviceAction to be sent to the device.
 
@@ -75,10 +80,12 @@ const { observable, cancel } = await dmk.executeDeviceAction({
   openAppDeviceAction,
 });
 ```
+
 ## State Management
 
 For each connected device, we are managing and providing a device state.
 The states are:
+
 - `connected`: The device is connected.
 - `locked`: The device is locked.
 - `busy`: The device is busy, so not reachable.

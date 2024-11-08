@@ -1,39 +1,19 @@
 {
-  "parserOptions": {
-    "project": "./tsconfig.json"
-  },
+  "extends": "@ledgerhq/tsconfig-dsdk/tsconfig.web",
   "compilerOptions": {
-    "baseUrl": ".",
-    "target": "es5",
-    "lib": [
-      "dom",
-      "dom.iterable",
-      "esnext"
+    "plugins": [
+      {
+        "name": "next"
+      }
     ],
-    "allowJs": true,
-    "skipLibCheck": true,
-    "strict": false,
-    "forceConsistentCasingInFileNames": true,
-    "noEmit": true,
-    "incremental": true,
-    "esModuleInterop": true,
-    "isolatedModules": true,
-    "moduleResolution": "node",
-    "jsx": "preserve",
-    "module": "esnext",
-    "resolveJsonModule": true,
-    "paths": {
-      "@components/*": [
-        "components/*"
-      ]
-    }
+    "forceConsistentCasingInFileNames": true
   },
   "include": [
     "next-env.d.ts",
     "**/*.ts",
-    "**/*.tsx"
+    "**/*.tsx",
+    "eslint.config.mjs",
+    "tailwind.config.js"
   ],
-  "exclude": [
-    "node_modules"
-  ]
+  "exclude": ["node_modules"]
 }

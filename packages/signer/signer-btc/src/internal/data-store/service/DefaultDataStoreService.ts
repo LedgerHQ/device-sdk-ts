@@ -88,18 +88,18 @@ export class DefaultDataStoreService implements DataStoreService {
     );
 
     // Check results
-    return globalCommitment.chain((globalCommitment) =>
-      inputCommitments.chain((inputCommitments) =>
-        outputCommitments.map((outputCommitments) => {
+    return globalCommitment.chain((global) =>
+      inputCommitments.chain((input) =>
+        outputCommitments.map((output) => {
           // Compute a merkletree for all inputs and outputs commitments
-          const inputsTree = this.merkleTreeBuilder.build(inputCommitments);
-          const outputsTree = this.merkleTreeBuilder.build(outputCommitments);
+          const inputsTree = this.merkleTreeBuilder.build(input);
+          const outputsTree = this.merkleTreeBuilder.build(output);
           // Store the trees
           store.addMerkleTree(inputsTree);
           store.addMerkleTree(outputsTree);
           // Return all the commitments
           return {
-            globalCommitment,
+            globalCommitment: global,
             inputsRoot: inputsTree.getRoot(),
             outputsRoot: outputsTree.getRoot(),
           };
