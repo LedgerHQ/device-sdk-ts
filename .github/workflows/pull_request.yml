@@ -4,6 +4,7 @@ on:
     types: [opened, synchronize, reopened, edited]
     branches-ignore:
       - main
+  merge_group:
 
 env:
   FORCE_COLOR: "1"
@@ -16,12 +17,14 @@ jobs:
   auto-assign:
     name: Auto assign
     runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
     steps:
       - uses: toshimaru/auto-author-assign@v2.1.1
 
   danger:
     name: Run Danger check
     runs-on: [ubuntu-latest]
+    if: github.event_name == 'pull_request'
     steps:
       - uses: actions/checkout@v4
 
@@ -37,7 +40,6 @@ jobs:
 
   checks:
     name: Run health check and unit tests
-    needs: [danger]
     runs-on: ${{ github.event.pull_request.head.repo.fork == 'true' && 'ubuntu-latest' || 'ledgerhq-device-sdk' }}
     steps:
       - uses: actions/checkout@v4
@@ -54,7 +56,7 @@ jobs:
         run: pnpm test:coverage -- --max-warnings=0
 
       - uses: sonarsource/sonarqube-scan-action@v3
-        if: ${{ steps.unit-tests.conclusion == 'success' && github.actor != 'dependabot[bot]' && github.event.pull_request.head.repo.fork == 'false' }}
+        if: ${{ steps.unit-tests.conclusion == 'success' && github.actor != 'dependabot[bot]' && github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == 'false' }}
         env:
           SONAR_TOKEN: ${{ secrets.GREEN_SONAR_TOKEN }}
           SONAR_HOST_URL: ${{ secrets.GREEN_SONAR_HOST_URL }}
