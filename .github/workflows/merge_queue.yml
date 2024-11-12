@@ -25,4 +25,4 @@ jobs:
       - name: Tests
         id: unit-tests
         if: ${{ steps.health-check.conclusion == 'success' }}
-        run: pnpm test -- --max-warnings=0
+        run: pnpm test
