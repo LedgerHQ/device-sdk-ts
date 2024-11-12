@@ -1,5 +1,9 @@
 import React, { useMemo } from "react";
 import {
+  base64StringToBuffer,
+  isBase64String,
+} from "@ledgerhq/device-management-kit";
+import {
   type GetAddressDAError,
   type GetAddressDAIntermediateValue,
   type GetAddressDAOutput,
@@ -7,6 +11,9 @@ import {
   type GetAppConfigurationDAIntermediateValue,
   type GetAppConfigurationDAOutput,
   SignerSolanaBuilder,
+  type SignTransactionDAError,
+  type SignTransactionDAIntermediateValue,
+  type SignTransactionDAOutput,
 } from "@ledgerhq/device-signer-kit-solana";
 
 import { DeviceActionsList } from "@/components/DeviceActionsView/DeviceActionsList";
@@ -50,6 +57,35 @@ export const SignerSolanaView: React.FC<{ sessionId: string }> = ({
         },
         GetAddressDAError,
         GetAddressDAIntermediateValue
+      >,
+      {
+        title: "Sign Transaction",
+        description:
+          "Perform all the actions necessary to sign a Solana transaction with the device",
+        executeDeviceAction: ({ derivationPath, transaction }) => {
+          const serializedTransaction =
+            base64StringToBuffer(transaction) ?? new Uint8Array();
+          return signer.signTransaction(
+            derivationPath,
+            serializedTransaction,
+            {},
+          );
+        },
+        initialValues: {
+          derivationPath: DEFAULT_DERIVATION_PATH,
+          transaction: "",
+        },
+        deviceModelId,
+        validateValues: ({ transaction }) =>
+          isBase64String(transaction) && transaction.length > 0,
+      } satisfies DeviceActionProps<
+        SignTransactionDAOutput,
+        {
+          derivationPath: string;
+          transaction: string;
+        },
+        SignTransactionDAError,
+        SignTransactionDAIntermediateValue
       >,
       {
         title: "Get app configuration",
