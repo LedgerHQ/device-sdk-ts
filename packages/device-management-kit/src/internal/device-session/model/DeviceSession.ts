@@ -18,6 +18,7 @@ import {
 } from "@api/device-session/DeviceSessionState";
 import { type DeviceSessionId } from "@api/device-session/types";
 import { type DmkError } from "@api/Error";
+import { DEVICE_SESSION_REFRESH_INTERVAL } from "@internal/device-session/data/DeviceSessionRefresherConst";
 import { type LoggerPublisherService } from "@internal/logger-publisher/service/LoggerPublisherService";
 import { type ManagerApiService } from "@internal/manager-api/service/ManagerApiService";
 import { type InternalConnectedDevice } from "@internal/transport/model/InternalConnectedDevice";
@@ -52,8 +53,9 @@ export class DeviceSession {
     });
     this._refresher = new DeviceSessionRefresher(
       {
-        refreshInterval: 1000,
+        refreshInterval: DEVICE_SESSION_REFRESH_INTERVAL,
         deviceStatus: DeviceStatus.CONNECTED,
+        deviceModelId: this._connectedDevice.deviceModel.id,
         sendApduFn: (rawApdu: Uint8Array) =>
           this.sendApdu(rawApdu, {
             isPolling: true,
@@ -96,7 +98,10 @@ export class DeviceSession {
 
   async sendApdu(
     rawApdu: Uint8Array,
-    options: { isPolling: boolean; triggersDisconnection: boolean } = {
+    options: {
+      isPolling: boolean;
+      triggersDisconnection: boolean;
+    } = {
       isPolling: false,
       triggersDisconnection: false,
     },
