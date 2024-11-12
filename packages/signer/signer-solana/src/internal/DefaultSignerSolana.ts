@@ -16,6 +16,7 @@ import { type SignerSolana } from "@api/SignerSolana";
 import { type GetAddressUseCase } from "./use-cases/address/GetAddressUseCase";
 import { type GetAppConfigurationUseCase } from "./use-cases/app-configuration/GetAppConfigurationUseCase";
 import { useCasesTypes } from "./use-cases/di/useCasesTypes";
+import { type SignTransactionUseCase } from "./use-cases/transaction/SignTransactionUseCase";
 import { makeContainer } from "./di";
 
 export type DefaultSignerSolanaConstructorArgs = {
@@ -31,11 +32,13 @@ export class DefaultSignerSolana implements SignerSolana {
   }
 
   signTransaction(
-    _derivationPath: string,
-    _transaction: Transaction,
-    _options?: TransactionOptions,
+    derivationPath: string,
+    transaction: Transaction,
+    options?: TransactionOptions,
   ): SignTransactionDAReturnType {
-    return {} as SignTransactionDAReturnType;
+    return this._container
+      .get<SignTransactionUseCase>(useCasesTypes.SignTransactionUseCase)
+      .execute(derivationPath, transaction, options);
   }
 
   signMessage(

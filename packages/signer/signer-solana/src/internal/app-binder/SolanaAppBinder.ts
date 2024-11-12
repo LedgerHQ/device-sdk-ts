@@ -11,10 +11,12 @@ import { GetAppConfigurationDAReturnType } from "@api/app-binder/GetAppConfigura
 import { SignMessageDAReturnType } from "@api/app-binder/SignMessageDeviceActionTypes";
 import { SignTransactionDAReturnType } from "@api/app-binder/SignTransactionDeviceActionTypes";
 import { Transaction } from "@api/model/Transaction";
+import { TransactionOptions } from "@api/model/TransactionOptions";
 import { externalTypes } from "@internal/externalTypes";
 
 import { GetAppConfigurationCommand } from "./command/GetAppConfigurationCommand";
 import { GetPubKeyCommand } from "./command/GetPubKeyCommand";
+import { SignTransactionDeviceAction } from "./device-action/SignTransactionDeviceAction";
 
 @injectable()
 export class SolanaAppBinder {
@@ -41,11 +43,21 @@ export class SolanaAppBinder {
     });
   }
 
-  signTransaction(_args: {
+  signTransaction(args: {
     derivationPath: string;
     transaction: Transaction;
+    options?: TransactionOptions;
   }): SignTransactionDAReturnType {
-    return {} as SignTransactionDAReturnType;
+    return this.dmk.executeDeviceAction({
+      sessionId: this.sessionId,
+      deviceAction: new SignTransactionDeviceAction({
+        input: {
+          derivationPath: args.derivationPath,
+          transaction: args.transaction,
+          options: args.options ?? {},
+        },
+      }),
+    });
   }
 
   signMessage(_args: {

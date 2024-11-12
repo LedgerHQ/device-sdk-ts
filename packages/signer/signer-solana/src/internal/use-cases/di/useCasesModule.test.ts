@@ -26,5 +26,11 @@ describe("useCasesModuleFactory", () => {
         container.isBound(useCasesTypes.GetAppConfigurationUseCase),
       ).toBeTruthy();
     });
+
+    it("should bind SignTransactionUseCase", () => {
+      expect(
+        container.isBound(useCasesTypes.SignTransactionUseCase),
+      ).toBeTruthy();
+    });
   });
 });
