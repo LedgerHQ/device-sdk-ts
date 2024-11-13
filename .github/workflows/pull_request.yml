@@ -39,6 +39,9 @@ jobs:
     name: Run health check and unit tests
     needs: [danger]
     runs-on: ${{ github.event.pull_request.head.repo.fork == 'true' && 'ubuntu-latest' || 'ledgerhq-device-sdk' }}
+    env:
+      NODE_OPTIONS: "--max-old-space-size=7168"
+      TURBO_DAEMON: false
     steps:
       - uses: actions/checkout@v4
 
@@ -47,14 +50,13 @@ jobs:
       - name: Health check
         id: health-check
         run: pnpm health-check
-
       - name: Tests
         id: unit-tests
         if: ${{ steps.health-check.conclusion == 'success' }}
-        run: pnpm test:coverage -- --max-warnings=0
+        run: pnpm test:coverage -- --max-warnings=0 --maxWorkers=4
 
       - uses: sonarsource/sonarqube-scan-action@v4
-        if: ${{ steps.unit-tests.conclusion == 'success' && github.actor != 'dependabot[bot]' && github.event.pull_request.head.repo.fork == 'false' }}
+        # if: ${{ steps.unit-tests.conclusion == 'success' && github.actor != 'dependabot[bot]' && github.event.pull_request.head.repo.fork == 'false' }}
         env:
-          SONAR_TOKEN: ${{ secrets.GREEN_SONAR_TOKEN }}
-          SONAR_HOST_URL: ${{ secrets.GREEN_SONAR_HOST_URL }}
+          SONAR_TOKEN: ${{ secrets.PUBLIC_GREEN_SONAR_TOKEN }}
+          SONAR_HOST_URL: ${{ secrets.PUBLIC_SONAR_HOST_URL }}

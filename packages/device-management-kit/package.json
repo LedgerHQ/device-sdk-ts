@@ -30,8 +30,8 @@
     "prettier": "prettier . --check",
     "prettier:fix": "prettier . --write",
     "test": "jest",
-    "test:watch": "pnpm test -- --watch",
-    "test:coverage": "pnpm test -- --coverage",
+    "test:watch": "jest --watch",
+    "test:coverage": "jest --coverage",
     "typecheck": "tsc --noEmit",
     "module:create": "pnpm hygen core-module with-prompt"
   },

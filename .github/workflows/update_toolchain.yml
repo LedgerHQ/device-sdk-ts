@@ -11,6 +11,8 @@ env:
 jobs:
   update-toolchain:
     runs-on: ["ledgerhq-device-sdk"]
+    env:
+      NODE_OPTIONS: "--max-old-space-size=7168"
     steps:
       - uses: actions/checkout@v4
 
