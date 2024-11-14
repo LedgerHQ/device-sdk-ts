@@ -84,7 +84,10 @@ describe("GetAppConfigurationCommand", () => {
         if (!isSuccessCommandResult(result)) {
           expect(result.error).toEqual(
             expect.objectContaining({
-              message: "Unexpected device exchange error happened.",
+              _tag: "InvalidStatusWordError",
+              originalError: expect.objectContaining({
+                message: "Invalid response",
+              }),
             }),
           );
         } else {
@@ -92,17 +95,20 @@ describe("GetAppConfigurationCommand", () => {
         }
       });
 
-      it("should return error if response length is invalid", () => {
+      it("should return error if response is not success", () => {
         const response = new ApduResponse({
-          statusCode: Uint8Array.from([0x90, 0x00]),
-          data: new Uint8Array([0x01, 0x00]),
+          statusCode: Uint8Array.from([0x6a, 0x82]),
+          data: new Uint8Array(0),
         });
         const result = command.parseResponse(response);
         expect(isSuccessCommandResult(result)).toBe(false);
         if (!isSuccessCommandResult(result)) {
-          expect(result.error.originalError).toEqual(
+          expect(result.error).toEqual(
             expect.objectContaining({
-              message: "Invalid response",
+              _tag: "InvalidStatusWordError",
+              originalError: expect.objectContaining({
+                message: "Invalid response",
+              }),
             }),
           );
         } else {

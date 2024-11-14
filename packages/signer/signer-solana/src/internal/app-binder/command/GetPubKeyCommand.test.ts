@@ -96,7 +96,10 @@ describe("GetPubKeyCommand", () => {
         if (!isSuccessCommandResult(result)) {
           expect(result.error).toEqual(
             expect.objectContaining({
-              message: "Unexpected device exchange error happened.",
+              _tag: "InvalidStatusWordError",
+              originalError: expect.objectContaining({
+                message: "Public key is missing",
+              }),
             }),
           );
         } else {

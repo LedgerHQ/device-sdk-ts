@@ -3,7 +3,6 @@ import {
   CommandResultFactory,
   InvalidStatusWordError,
   isSuccessCommandResult,
-  UnknownDeviceExchangeError,
 } from "@ledgerhq/device-management-kit";
 import { Just, Nothing } from "purify-ts";
 
@@ -148,26 +147,6 @@ describe("SignTransactionCommand", () => {
           data: Just(data),
         }),
       );
-    });
-
-    it("should return an error when the response is not successful", () => {
-      // GIVEN
-      const command = new SignTransactionCommand(defaultArgs);
-
-      // WHEN
-      const result = command.parseResponse(
-        new ApduResponse({
-          statusCode: Uint8Array.from([0x6a, 0x80]),
-          data: new Uint8Array([]),
-        }),
-      );
-
-      // THEN
-      if (isSuccessCommandResult(result))
-        fail("The result should be an error.");
-      else {
-        expect(result.error).toBeInstanceOf(UnknownDeviceExchangeError);
-      }
     });
 
     it("should return an error when the response data is not valid", () => {

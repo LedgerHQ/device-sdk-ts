@@ -7,14 +7,18 @@ import {
   type Command,
   type CommandResult,
   CommandResultFactory,
-  CommandUtils,
-  GlobalCommandErrorHandler,
   InvalidStatusWordError,
+  isCommandErrorCode,
 } from "@ledgerhq/device-management-kit";
 import { DerivationPathUtils } from "@ledgerhq/signer-utils";
 import bs58 from "bs58";
 
 import { type PublicKey } from "@api/model/PublicKey";
+
+import {
+  SolanaAppCommandError,
+  solanaAppErrors,
+} from "./utils/solanaAppErrors";
 
 const PUBKEY_LENGTH = 32;
 
@@ -56,10 +60,13 @@ export class GetPubKeyCommand
     response: ApduResponse,
   ): CommandResult<GetPubKeyCommandResponse> {
     const parser = new ApduParser(response);
-
-    if (!CommandUtils.isSuccessResponse(response)) {
+    const errorCode = parser.encodeToHexaString(response.statusCode);
+    if (isCommandErrorCode(errorCode, solanaAppErrors)) {
       return CommandResultFactory({
-        error: GlobalCommandErrorHandler.handle(response),
+        error: new SolanaAppCommandError({
+          ...solanaAppErrors[errorCode],
+          errorCode,
+        }),
       });
     }
 
@@ -70,17 +77,14 @@ export class GetPubKeyCommand
     }
 
     const buffer = parser.extractFieldByLength(PUBKEY_LENGTH);
-
     if (buffer === undefined) {
       return CommandResultFactory({
         error: new InvalidStatusWordError("Unable to extract public key"),
       });
     }
 
-    const publicKey = bs58.encode(buffer);
-
     return CommandResultFactory({
-      data: publicKey,
+      data: bs58.encode(buffer),
     });
   }
 }

@@ -6,12 +6,16 @@ import {
   type Command,
   type CommandResult,
   CommandResultFactory,
-  CommandUtils,
-  GlobalCommandErrorHandler,
   InvalidStatusWordError,
+  isCommandErrorCode,
 } from "@ledgerhq/device-management-kit";
 
 import { type Signature } from "@api/model/Signature";
+
+import {
+  SolanaAppCommandError,
+  solanaAppErrors,
+} from "./utils/solanaAppErrors";
 
 const SIGNATURE_LENGTH = 64;
 
@@ -45,17 +49,14 @@ export class SignOffChainMessageCommand
   parseResponse(
     response: ApduResponse,
   ): CommandResult<SignOffChainMessageCommandResponse> {
-    if (!CommandUtils.isSuccessResponse(response)) {
-      return CommandResultFactory({
-        error: GlobalCommandErrorHandler.handle(response),
-      });
-    }
-
     const parser = new ApduParser(response);
-
-    if (!parser.testMinimalLength(SIGNATURE_LENGTH)) {
+    const errorCode = parser.encodeToHexaString(response.statusCode);
+    if (isCommandErrorCode(errorCode, solanaAppErrors)) {
       return CommandResultFactory({
-        error: new InvalidStatusWordError("Signature is missing or incomplete"),
+        error: new SolanaAppCommandError({
+          ...solanaAppErrors[errorCode],
+          errorCode,
+        }),
       });
     }
 
@@ -65,6 +66,7 @@ export class SignOffChainMessageCommand
         error: new InvalidStatusWordError("Signature extraction failed"),
       });
     }
+
     return CommandResultFactory({
       data: signature,
     });

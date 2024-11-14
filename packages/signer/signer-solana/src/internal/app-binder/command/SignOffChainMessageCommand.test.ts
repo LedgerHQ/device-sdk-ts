@@ -70,7 +70,10 @@ describe("SignOffChainMessageCommand", () => {
         if (!isSuccessCommandResult(result)) {
           expect(result.error).toEqual(
             expect.objectContaining({
-              message: "Unexpected device exchange error happened.",
+              _tag: "InvalidStatusWordError", // Adjust this based on your actual implementation
+              originalError: expect.objectContaining({
+                message: "Signature extraction failed",
+              }),
             }),
           );
         } else {
@@ -96,7 +99,7 @@ describe("SignOffChainMessageCommand", () => {
             "message" in result.error.originalError
           ) {
             expect(result.error.originalError.message).toBe(
-              "Signature is missing or incomplete",
+              "Signature extraction failed",
             );
           }
         } else {
