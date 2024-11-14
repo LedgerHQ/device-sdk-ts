@@ -29,7 +29,7 @@
     "postpack": "find . -name '*.tgz' -exec cp {} ../../dist/ \\; ",
     "prettier": "prettier . --check",
     "prettier:fix": "prettier . --write",
-    "test": "jest",
+    "test": "jest --maxWorkers=2",
     "test:watch": "pnpm test -- --watch",
     "test:coverage": "pnpm test -- --coverage",
     "typecheck": "tsc --noEmit",

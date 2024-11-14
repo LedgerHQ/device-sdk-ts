@@ -31,7 +31,7 @@
     "prettier": "prettier . --check",
     "prettier:fix": "prettier . --write",
     "typecheck": "tsc --noEmit",
-    "test": "jest --passWithNoTests",
+    "test": "jest --maxWorkers=2 --passWithNoTests",
     "test:coverage": "pnpm test -- --coverage"
   },
   "dependencies": {
