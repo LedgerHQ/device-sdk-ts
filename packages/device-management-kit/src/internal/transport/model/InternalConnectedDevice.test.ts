@@ -1,3 +1,5 @@
+import { Right } from "purify-ts";
+
 import { defaultApduResponseStubBuilder } from "@api/device-session/ApduResponse.stub";
 import { deviceModelStubBuilder } from "@internal/device-model/model/DeviceModel.stub";
 import { InternalConnectedDevice } from "@internal/transport/model/InternalConnectedDevice";
@@ -30,8 +32,8 @@ describe("InternalConnectedDevice", () => {
   });
 
   it("should return the correct send apdu response", () => {
-    expect(connectedDevice.sendApdu(new Uint8Array())).toMatchObject(
-      Promise.resolve(defaultApduResponseStubBuilder()),
+    expect(connectedDevice.sendApdu(new Uint8Array())).resolves.toMatchObject(
+      Right(defaultApduResponseStubBuilder()),
     );
   });
 });

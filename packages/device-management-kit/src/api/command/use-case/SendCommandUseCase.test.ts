@@ -59,6 +59,8 @@ describe("SendCommandUseCase", () => {
       command,
     });
 
+    deviceSession.close();
+
     expect(response).toStrictEqual({
       status: CommandResultStatus.Success,
       data: undefined,

@@ -49,6 +49,8 @@ describe("GetConnectedDevice", () => {
       sessionId: fakeSessionId,
     });
 
+    deviceSession.close();
+
     // then
     expect(response).toBeInstanceOf(ConnectedDevice);
   });
@@ -67,6 +69,8 @@ describe("GetConnectedDevice", () => {
     const response = useCase.execute({
       sessionId: fakeSessionId,
     });
+
+    deviceSession.close();
 
     // then
     expect(response).toStrictEqual(

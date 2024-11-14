@@ -51,6 +51,8 @@ describe("GetDeviceSessionStateUseCase", () => {
       sessionId: fakeSessionId,
     });
 
+    deviceSession.close();
+
     // then
     expect(response).toStrictEqual(deviceSession.state);
   });

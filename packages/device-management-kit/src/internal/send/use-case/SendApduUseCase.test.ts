@@ -51,6 +51,7 @@ describe("SendApduUseCase", () => {
       apdu: new Uint8Array([0x00, 0x01, 0x02, 0x03]),
     });
 
+    deviceSession.close();
     // then
     expect(deviceSession.connectedDevice.sendApdu).toHaveBeenCalledTimes(1);
     expect(response).toBeDefined();
@@ -90,6 +91,8 @@ describe("SendApduUseCase", () => {
       sessionId: fakeSessionId,
       apdu: new Uint8Array([0x00, 0x01, 0x02, 0x03]),
     });
+
+    deviceSession.close();
 
     // then
     await expect(response).rejects.toBeInstanceOf(ReceiverApduError);

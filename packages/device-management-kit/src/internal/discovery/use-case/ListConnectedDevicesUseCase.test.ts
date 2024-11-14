@@ -51,6 +51,9 @@ describe("ListDeviceSessionsUseCase", () => {
     // when
     const response = useCase.execute();
 
+    deviceSession1.close();
+    deviceSession2.close();
+
     // then
     expect(response).toStrictEqual([
       new ConnectedDevice({

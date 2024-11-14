@@ -94,7 +94,9 @@ const buildTypes = async () => {
 };
 
 const build = async () =>
-  spinner(() => Promise.all([buildBrowser(), buildNode(), buildTypes()]));
+  process.env.CI
+    ? Promise.all([buildBrowser(), buildNode(), buildTypes()])
+    : spinner(() => Promise.all([buildBrowser(), buildNode(), buildTypes()]));
 
 build()
   .then(() => {
