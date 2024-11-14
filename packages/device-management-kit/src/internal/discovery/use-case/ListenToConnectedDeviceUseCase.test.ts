@@ -58,10 +58,15 @@ describe("ListenToConnectedDevice", () => {
             sessionId: fakeSessionId,
           }),
         );
-        subscription.unsubscribe();
-        done();
+        terminate();
       },
     });
+
+    function terminate() {
+      subscription.unsubscribe();
+      deviceSession.close();
+      done();
+    }
 
     // when
     sessionService.addDeviceSession(deviceSession);

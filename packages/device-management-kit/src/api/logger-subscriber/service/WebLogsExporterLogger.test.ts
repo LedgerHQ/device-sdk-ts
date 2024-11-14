@@ -42,6 +42,7 @@ describe("getJSONStringifyReplacer", () => {
     const expected = `{"id":"mockedSessionId","connectedDevice":{"deviceModel":${JSON.stringify(
       stubDeviceModel,
     )},"type":"USB","id":"mockedDeviceId"}}`;
+    value.close();
     expect(result).toEqual(expected);
   });
 
