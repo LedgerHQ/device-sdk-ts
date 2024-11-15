@@ -38,47 +38,44 @@ describe("DefaultDeviceSessionService", () => {
     );
   });
 
+  afterEach(() => {
+    deviceSession.close();
+  });
+
   it("should have an empty sessions list", () => {
     expect(sessionService.getDeviceSessions()).toEqual([]);
-    deviceSession.close();
   });
 
   it("should add a deviceSession", () => {
     sessionService.addDeviceSession(deviceSession);
-    deviceSession.close();
     expect(sessionService.getDeviceSessions()).toEqual([deviceSession]);
   });
 
   it("should not add a deviceSession if it already exists", () => {
     sessionService.addDeviceSession(deviceSession);
     sessionService.addDeviceSession(deviceSession);
-    deviceSession.close();
     expect(sessionService.getDeviceSessions()).toEqual([deviceSession]);
   });
 
   it("should remove a deviceSession", () => {
     sessionService.addDeviceSession(deviceSession);
-    deviceSession.close();
     sessionService.removeDeviceSession(deviceSession.id);
     expect(sessionService.getDeviceSessions()).toEqual([]);
   });
 
   it("should not remove a deviceSession if it does not exist", () => {
-    deviceSession.close();
     sessionService.removeDeviceSession(deviceSession.id);
     expect(sessionService.getDeviceSessions()).toEqual([]);
   });
 
   it("should get a deviceSession", () => {
     sessionService.addDeviceSession(deviceSession);
-    deviceSession.close();
     expect(sessionService.getDeviceSessionById(deviceSession.id)).toEqual(
       Either.of(deviceSession),
     );
   });
 
   it("should not get a deviceSession if it does not exist", () => {
-    deviceSession.close();
     expect(sessionService.getDeviceSessionById(deviceSession.id)).toEqual(
       Left(new DeviceSessionNotFound()),
     );
@@ -86,7 +83,6 @@ describe("DefaultDeviceSessionService", () => {
 
   it("should get all sessions", () => {
     sessionService.addDeviceSession(deviceSession);
-    deviceSession.close();
     expect(sessionService.getDeviceSessions()).toEqual([deviceSession]);
   });
 
@@ -94,7 +90,6 @@ describe("DefaultDeviceSessionService", () => {
     expect(sessionService.sessionsObs).toBeInstanceOf(
       Observable<DeviceSession>,
     );
-    deviceSession.close();
   });
 
   it("should emit new session", (done) => {
@@ -106,7 +101,6 @@ describe("DefaultDeviceSessionService", () => {
       },
     });
     sessionService.addDeviceSession(deviceSession);
-    deviceSession.close();
   });
 
   it("should emit previous added session", () => {
@@ -124,7 +118,6 @@ describe("DefaultDeviceSessionService", () => {
         emittedSessions.push(emittedDeviceSession);
       },
     });
-    deviceSession.close();
     lastDeviceSession.close();
     expect(emittedSessions).toEqual([deviceSession, lastDeviceSession]);
     subscription.unsubscribe();

@@ -8,20 +8,16 @@
       "inputs": ["src/**/*.ts", "index.ts"]
     },
     "lint": {
-      "dependsOn": ["build"],
-      "outputs": []
+      "dependsOn": ["build"]
     },
     "lint:fix": {
-      "dependsOn": ["build"],
-      "outputs": []
+      "dependsOn": ["build"]
     },
     "prettier": {
-      "dependsOn": ["^prettier"],
-      "outputs": []
+      "dependsOn": ["^prettier"]
     },
     "prettier:fix": {
-      "dependsOn": ["^prettier:fix"],
-      "outputs": []
+      "dependsOn": ["^prettier:fix"]
     },
     "dev": {
       "cache": false,
@@ -29,17 +25,21 @@
     },
     "test": {
       "dependsOn": ["^build"],
-      "outputs": [],
-      "inputs": ["src/**/*.ts", "tests/**/*.ts"]
+      "inputs": ["src/**/*.ts"]
     },
     "test:coverage": {
       "dependsOn": ["^build"],
       "outputs": ["coverage/**"],
-      "inputs": ["src/**/*.ts", "tests/**/*.ts"]
+      "inputs": ["src/**/*.ts"]
     },
     "typecheck": {
-      "dependsOn": ["^build", "^typecheck"],
-      "outputs": []
+      "dependsOn": ["^build", "^typecheck"]
+    },
+    "@ledgerhq/device-management-kit-sample#typecheck": {
+      "dependsOn": ["build", "^typecheck"]
+    },
+    "@ledgerhq/ledger-dmk-docs#typecheck": {
+      "dependsOn": ["build", "^typecheck"]
     },
     "health-check": {
       "dependsOn": ["build", "prettier", "lint", "typecheck"]

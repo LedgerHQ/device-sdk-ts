@@ -4,6 +4,7 @@
   "private": true,
   "license": "Apache-2.0",
   "scripts": {
+    "clean": "rimraf -g **/.turbo **/.next **/coverage",
     "build": "turbo run build",
     "build:libs": "turbo run build --filter=./packages/**",
     "dev": "turbo run dev",

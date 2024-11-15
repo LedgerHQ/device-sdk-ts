@@ -12,7 +12,7 @@ concurrency:
 jobs:
   checks:
     name: Run health check and unit tests
-    runs-on: ubuntu-latest
+    runs-on: ledgerhq-device-sdk
     steps:
       - uses: actions/checkout@v4
 
@@ -25,4 +25,4 @@ jobs:
       - name: Tests
         id: unit-tests
         if: ${{ steps.health-check.conclusion == 'success' }}
-        run: pnpm test
+        run: pnpm test -- -- --maxWorkers=50%
