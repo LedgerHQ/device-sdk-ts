@@ -17,9 +17,13 @@ import {
   type GetAddressDAError,
   type GetAddressDAIntermediateValue,
   type GetAddressDAOutput,
+  type SignTransactionDAError,
+  type SignTransactionDAIntermediateValue,
+  type SignTransactionDAOutput,
 } from "@api/index";
 
 import { GetPubKeyCommand } from "./command/GetPubKeyCommand";
+import { SignTransactionDeviceAction } from "./device-action/SignTransactionDeviceAction";
 import { SolanaAppBinder } from "./SolanaAppBinder";
 
 describe("SolanaAppBinder", () => {
@@ -149,6 +153,84 @@ describe("SolanaAppBinder", () => {
             },
           }),
         });
+      });
+    });
+  });
+
+  describe("signTransaction", () => {
+    it("should return the signature", (done) => {
+      // GIVEN
+      const signature = new Uint8Array([0x01, 0x02, 0x03]);
+
+      jest.spyOn(mockedDmk, "executeDeviceAction").mockReturnValue({
+        observable: from([
+          {
+            status: DeviceActionStatus.Completed,
+            output: signature,
+          } as DeviceActionState<
+            SignTransactionDAOutput,
+            SignTransactionDAError,
+            SignTransactionDAIntermediateValue
+          >,
+        ]),
+        cancel: jest.fn(),
+      });
+
+      // WHEN
+      const appBinder = new SolanaAppBinder(mockedDmk, "sessionId");
+      const { observable } = appBinder.signTransaction({
+        derivationPath: "44'/501'",
+        transaction: new Uint8Array([0x01, 0x02, 0x03, 0x04]),
+      });
+
+      // THEN
+      const states: DeviceActionState<
+        SignTransactionDAOutput,
+        SignTransactionDAError,
+        SignTransactionDAIntermediateValue
+      >[] = [];
+      observable.subscribe({
+        next: (state) => {
+          states.push(state);
+        },
+        error: (err) => {
+          done(err);
+        },
+        complete: () => {
+          try {
+            expect(states).toEqual([
+              {
+                status: DeviceActionStatus.Completed,
+                output: signature,
+              },
+            ]);
+            done();
+          } catch (err) {
+            done(err);
+          }
+        },
+      });
+    });
+
+    it("should call executeDeviceAction with the correct params", () => {
+      // GIVEN
+      const derivationPath = "44'/60'/3'/2/1";
+      const transaction = new Uint8Array([0x01, 0x02, 0x03, 0x04]);
+
+      // WHEN
+      const appBinder = new SolanaAppBinder(mockedDmk, "sessionId");
+      appBinder.signTransaction({ derivationPath, transaction });
+
+      // THEN
+      expect(mockedDmk.executeDeviceAction).toHaveBeenCalledWith({
+        deviceAction: new SignTransactionDeviceAction({
+          input: {
+            derivationPath,
+            transaction,
+            options: {},
+          },
+        }),
+        sessionId: "sessionId",
       });
     });
   });

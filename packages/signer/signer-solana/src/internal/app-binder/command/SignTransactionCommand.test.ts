@@ -15,6 +15,8 @@ import {
 describe("SignTransactionCommand", () => {
   const defaultArgs: SignTransactionCommandArgs = {
     serializedTransaction: new Uint8Array(),
+    more: false,
+    extend: false,
   };
 
   describe("getApdu", () => {
@@ -37,6 +39,8 @@ describe("SignTransactionCommand", () => {
       // GIVEN
       const command = new SignTransactionCommand({
         serializedTransaction: new Uint8Array([0x01, 0x02, 0x03]),
+        more: false,
+        extend: false,
       });
 
       // WHEN
@@ -48,6 +52,63 @@ describe("SignTransactionCommand", () => {
       expect(apdu.ins).toBe(0x06);
       expect(apdu.p1).toBe(0x01);
       expect(apdu.p2).toBe(0x00);
+    });
+
+    it("should return the correct APDU when the more flag is set", () => {
+      // GIVEN
+      const command = new SignTransactionCommand({
+        serializedTransaction: new Uint8Array([0x01, 0x02, 0x03]),
+        more: true,
+        extend: false,
+      });
+
+      // WHEN
+      const apdu = command.getApdu();
+
+      // THEN
+      expect(apdu.data).toStrictEqual(new Uint8Array([0x01, 0x02, 0x03]));
+      expect(apdu.cla).toBe(0xe0);
+      expect(apdu.ins).toBe(0x06);
+      expect(apdu.p1).toBe(0x01);
+      expect(apdu.p2).toBe(0x02);
+    });
+
+    it("should return the correct APDU when the extend flag is set", () => {
+      // GIVEN
+      const command = new SignTransactionCommand({
+        serializedTransaction: new Uint8Array([0x01, 0x02, 0x03]),
+        more: false,
+        extend: true,
+      });
+
+      // WHEN
+      const apdu = command.getApdu();
+
+      // THEN
+      expect(apdu.data).toStrictEqual(new Uint8Array([0x01, 0x02, 0x03]));
+      expect(apdu.cla).toBe(0xe0);
+      expect(apdu.ins).toBe(0x06);
+      expect(apdu.p1).toBe(0x01);
+      expect(apdu.p2).toBe(0x01);
+    });
+
+    it("should return the correct APDU when the more and extend flags are set", () => {
+      // GIVEN
+      const command = new SignTransactionCommand({
+        serializedTransaction: new Uint8Array([0x01, 0x02, 0x03]),
+        more: true,
+        extend: true,
+      });
+
+      // WHEN
+      const apdu = command.getApdu();
+
+      // THEN
+      expect(apdu.data).toStrictEqual(new Uint8Array([0x01, 0x02, 0x03]));
+      expect(apdu.cla).toBe(0xe0);
+      expect(apdu.ins).toBe(0x06);
+      expect(apdu.p1).toBe(0x01);
+      expect(apdu.p2).toBe(0x03);
     });
   });
 

@@ -32,9 +32,13 @@ export class SignDataTask {
 
     const paths = DerivationPathUtils.splitPath(derivationPath);
     const builder = new ByteArrayBuilder(
-      sendingData.length + 1 + paths.length * PATH_SIZE,
+      sendingData.length + 2 + paths.length * PATH_SIZE,
     );
+    // add the number of signers
+    builder.add8BitUIntToData(1);
+    // add the number of derivation
     builder.add8BitUIntToData(paths.length);
+    // add every derivation path
     paths.forEach((path) => builder.add32BitUIntToData(path));
     builder.addBufferToData(sendingData);
     const buffer = builder.build();

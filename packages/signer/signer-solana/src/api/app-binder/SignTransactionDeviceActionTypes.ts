@@ -39,7 +39,6 @@ export type SignTransactionDAState = DeviceActionState<
 
 export type SignTransactionDAInternalState = {
   readonly error: SignTransactionDAError | null;
-  readonly serializedTransaction: Uint8Array | null;
   readonly signature: Signature | null;
 };
 

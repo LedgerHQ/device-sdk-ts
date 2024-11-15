@@ -20,6 +20,8 @@ export type CommandFactory<T> = <V extends ChunkableCommandArgs>(
 
 export type ChunkableCommandArgs = {
   chunkedData: Uint8Array;
+  more: boolean;
+  extend: boolean;
 };
 
 export class SendCommandInChunksTask<T> {
@@ -43,6 +45,8 @@ export class SendCommandInChunksTask<T> {
       const isLastChunk = offset + APDU_MAX_PAYLOAD >= dataBuffer.length;
       const result = await this.api.sendCommand(
         commandFactory({
+          more: !isLastChunk,
+          extend: offset > 0,
           chunkedData: dataBuffer.slice(offset, offset + APDU_MAX_PAYLOAD),
         }),
       );
