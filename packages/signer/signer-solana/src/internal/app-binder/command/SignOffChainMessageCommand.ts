@@ -10,15 +10,15 @@ import {
   GlobalCommandErrorHandler,
   InvalidStatusWordError,
 } from "@ledgerhq/device-management-kit";
-import { Just, type Maybe, Nothing } from "purify-ts";
 
 import { type Signature } from "@api/model/Signature";
 
 const SIGNATURE_LENGTH = 64;
 
-export type SignOffChainMessageCommandResponse = Maybe<Signature>;
+export type SignOffChainMessageCommandResponse = Signature;
 export type SignOffChainMessageCommandArgs = {
   readonly message: Uint8Array;
+  readonly derivationPath: string;
 };
 
 export class SignOffChainMessageCommand
@@ -59,21 +59,14 @@ export class SignOffChainMessageCommand
       });
     }
 
-    if (parser.getUnparsedRemainingLength() === 0) {
-      return CommandResultFactory({
-        data: Nothing,
-      });
-    }
-
     const signature = parser.extractFieldByLength(SIGNATURE_LENGTH);
     if (!signature) {
       return CommandResultFactory({
-        error: new InvalidStatusWordError("Unable to extract signature"),
+        error: new InvalidStatusWordError("Signature extraction failed"),
       });
     }
-
     return CommandResultFactory({
-      data: Just(signature),
+      data: signature,
     });
   }
 }

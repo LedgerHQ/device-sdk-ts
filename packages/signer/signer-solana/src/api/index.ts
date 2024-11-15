@@ -10,6 +10,11 @@ export type {
   GetAppConfigurationDAOutput,
 } from "@api/app-binder/GetAppConfigurationDeviceActionTypes";
 export type {
+  SignMessageDAError,
+  SignMessageDAIntermediateValue,
+  SignMessageDAOutput,
+} from "@api/app-binder/SignMessageDeviceActionTypes";
+export type {
   SignTransactionDAError,
   SignTransactionDAIntermediateValue,
   SignTransactionDAOutput,

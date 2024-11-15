@@ -6,13 +6,13 @@ import { EthAppBinder } from "@internal/app-binder/EthAppBinder";
 
 @injectable()
 export class SignMessageUseCase {
-  private _appBinding: EthAppBinder;
+  private _appBinder: EthAppBinder;
 
   constructor(
     @inject(appBinderTypes.AppBinding)
     appBinding: EthAppBinder,
   ) {
-    this._appBinding = appBinding;
+    this._appBinder = appBinding;
   }
 
   execute(
@@ -20,7 +20,7 @@ export class SignMessageUseCase {
     message: string | Uint8Array,
   ): SignPersonalMessageDAReturnType {
     // 1- Sign the transaction using the app binding
-    return this._appBinding.signPersonalMessage({
+    return this._appBinder.signPersonalMessage({
       derivationPath,
       message,
     });

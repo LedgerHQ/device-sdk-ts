@@ -11,6 +11,9 @@ import {
   type GetAppConfigurationDAIntermediateValue,
   type GetAppConfigurationDAOutput,
   SignerSolanaBuilder,
+  type SignMessageDAError,
+  type SignMessageDAIntermediateValue,
+  type SignMessageDAOutput,
   type SignTransactionDAError,
   type SignTransactionDAIntermediateValue,
   type SignTransactionDAOutput,
@@ -20,7 +23,7 @@ import { DeviceActionsList } from "@/components/DeviceActionsView/DeviceActionsL
 import { type DeviceActionProps } from "@/components/DeviceActionsView/DeviceActionTester";
 import { useDmk } from "@/providers/DeviceManagementKitProvider";
 
-const DEFAULT_DERIVATION_PATH = "44'/501'";
+const DEFAULT_DERIVATION_PATH = "44'/501'/0'/0'";
 
 export const SignerSolanaView: React.FC<{ sessionId: string }> = ({
   sessionId,
@@ -86,6 +89,30 @@ export const SignerSolanaView: React.FC<{ sessionId: string }> = ({
         },
         SignTransactionDAError,
         SignTransactionDAIntermediateValue
+      >,
+      {
+        title: "Sign off chain message",
+        description:
+          "Perform all the actions necessary to sign a solana off-chain message from the device",
+        executeDeviceAction: ({ derivationPath, message }) => {
+          if (!signer) {
+            throw new Error("Signer not initialized");
+          }
+          return signer.signMessage(derivationPath, message);
+        },
+        initialValues: {
+          derivationPath: DEFAULT_DERIVATION_PATH,
+          message: "Hello World",
+        },
+        deviceModelId,
+      } satisfies DeviceActionProps<
+        SignMessageDAOutput,
+        {
+          derivationPath: string;
+          message: string;
+        },
+        SignMessageDAError,
+        SignMessageDAIntermediateValue
       >,
       {
         title: "Get app configuration",
