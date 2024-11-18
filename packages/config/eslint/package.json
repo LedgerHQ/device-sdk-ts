@@ -1,7 +1,7 @@
 {
   "name": "@ledgerhq/eslint-config-dsdk",
   "license": "Apache-2.0",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "private": true,
   "description": "Base ESLint configuration for LedgerHQ DSDK projects",
   "main": "index.js",

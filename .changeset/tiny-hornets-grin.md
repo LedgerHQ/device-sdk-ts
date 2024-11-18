@@ -1,5 +1,4 @@
 ---
-"@ledgerhq/device-management-kit": patch
 "@ledgerhq/device-management-kit-sample": patch
 ---
 
