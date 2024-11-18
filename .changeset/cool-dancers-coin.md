@@ -2,4 +2,4 @@
 "@ledgerhq/device-signer-kit-ethereum": patch
 ---
 
-Add ProvideTransactionGenericContext Task
+Update license to Apache-2.0

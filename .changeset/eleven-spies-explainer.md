@@ -2,4 +2,4 @@
 "@ledgerhq/device-signer-kit-ethereum": patch
 ---
 
-Add ProvideTransactionGenericContext Task
+Use esbuild to build libraries

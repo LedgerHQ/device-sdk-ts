@@ -2,7 +2,6 @@
 "@ledgerhq/device-management-kit-flipper-plugin-client": patch
 "@ledgerhq/context-module": patch
 "@ledgerhq/esbuild-tools": patch
-"@ledgerhq/device-signer-kit-ethereum": patch
 "@ledgerhq/tsconfig-dsdk": patch
 "@ledgerhq/prettier-config-dsdk": patch
 "@ledgerhq/device-transport-kit-mock-client": patch

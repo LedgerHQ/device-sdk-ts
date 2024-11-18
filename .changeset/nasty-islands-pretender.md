@@ -1,5 +1,5 @@
 ---
-"@ledgerhq/device-management-kit-sample": minor
+"@ledgerhq/device-signer-kit-solana": minor
 ---
 
 Add solana getAppConfiguration use case
