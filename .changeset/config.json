@@ -12,5 +12,10 @@
   "access": "public",
   "baseBranch": "develop",
   "updateInternalDependencies": "patch",
-  "ignore": ["@ledgerhq/device-signer-kit-btc"]
+  "ignore": [
+    "@ledgerhq/device-signer-kit-btc",
+    "@ledgerhq/device-signer-kit-eth",
+    "@ledgerhq/device-signer-kit-solana",
+    "@ledgerhq/context-module"
+  ]
 }

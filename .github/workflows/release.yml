@@ -46,7 +46,7 @@ jobs:
 
       - name: Publish
         id: changesets
-        uses: changesets/action@v1
+        uses: ledgerhq/changeset-action-ledger@main
         with:
           publish: pnpm release
         env:
