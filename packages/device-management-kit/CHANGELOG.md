@@ -1,6 +1,10 @@
 # @ledgerhq/device-management-kit
 
-## 0.4.1
+## 0.5.0
+
+### Minor Changes
+
+- [#221](https://github.com/LedgerHQ/device-sdk-ts/pull/221) [`55d62f2`](https://github.com/LedgerHQ/device-sdk-ts/commit/55d62f2dfe9cd979c99fbc8f8aeed7909c653807) Thanks [@jdabbech-ledger](https://github.com/jdabbech-ledger)! - Add BLE support
 
 ### Patch Changes
 
@@ -11,8 +15,6 @@
 - [#477](https://github.com/LedgerHQ/device-sdk-ts/pull/477) [`64e8886`](https://github.com/LedgerHQ/device-sdk-ts/commit/64e88863fd93c7140c32be5c91fde231293be7be) Thanks [@jdabbech-ledger](https://github.com/jdabbech-ledger)! - Replace ListDeviceSessionsUseCase with ListConnectedDevicesUseCase
 
 - [#460](https://github.com/LedgerHQ/device-sdk-ts/pull/460) [`a99fe1b`](https://github.com/LedgerHQ/device-sdk-ts/commit/a99fe1bfd362b6b5f9e8ee2489d285766e06272a) Thanks [@jdabbech-ledger](https://github.com/jdabbech-ledger)! - Rename SDK to DMK
-
-- [#221](https://github.com/LedgerHQ/device-sdk-ts/pull/221) [`55d62f2`](https://github.com/LedgerHQ/device-sdk-ts/commit/55d62f2dfe9cd979c99fbc8f8aeed7909c653807) Thanks [@jdabbech-ledger](https://github.com/jdabbech-ledger)! - Add BLE support
 
 - [`5085f6d`](https://github.com/LedgerHQ/device-sdk-ts/commit/5085f6dd397b5800849e34f593e71fd9c61c0e40) Thanks [@valpinkman](https://github.com/valpinkman)! - Implement basic Flipper client for the Ledger Device Management Kit
 
