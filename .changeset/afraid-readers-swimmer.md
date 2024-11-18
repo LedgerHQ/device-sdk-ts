@@ -1,5 +1,5 @@
 ---
-"@ledgerhq/device-signer-kit-ethereum": patch
+"@ledgerhq/context-module": patch
 ---
 
 Add ProvideTransactionGenericContext Task
