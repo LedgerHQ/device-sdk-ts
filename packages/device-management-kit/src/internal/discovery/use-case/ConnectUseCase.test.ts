@@ -57,6 +57,12 @@ describe("ConnectUseCase", () => {
     managerApi = new DefaultManagerApiService(managerApiDataSource);
   });
 
+  afterEach(() => {
+    for (const session of sessionService.getDeviceSessions()) {
+      sessionService.removeDeviceSession(session.id);
+    }
+  });
+
   afterAll(() => {
     jest.restoreAllMocks();
   });
@@ -94,5 +100,6 @@ describe("ConnectUseCase", () => {
       device: stubDiscoveredDevice,
     });
     expect(sessionId).toBe(fakeSessionId);
+    sessionService.removeDeviceSession(sessionId);
   });
 });
