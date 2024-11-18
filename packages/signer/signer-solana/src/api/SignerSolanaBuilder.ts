@@ -15,7 +15,7 @@ type SignerSolanaBuilderConstructorArgs = {
  *
  * @example
  * ```
- * const dmk = new SignerSolanaBuilder({ dmk, sessionId })
+ * const signer = new SignerSolanaBuilder({ dmk, sessionId })
  *  .build();
  * ```
  */
