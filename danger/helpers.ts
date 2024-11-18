@@ -11,7 +11,7 @@ import { execSync } from "child_process";
 type FailFn = (message: MarkdownString, file?: string, line?: number) => void;
 type MessageFn = (
   message: MarkdownString,
-  opts?: { file?: string; line?: number; icon?: MarkdownString }
+  opts?: { file?: string; line?: number; icon?: MarkdownString },
 ) => void;
 
 export const BRANCH_PREFIX = [
@@ -29,11 +29,7 @@ export const BRANCH_PREFIX = [
   "refactor",
 ];
 
-export const checkIfBot = (user: GitHubPRDSL["user"]) => {
-  if (user.type === "Bot") {
-    exit(0);
-  }
-};
+export const checkIfBot = (user: GitHubPRDSL["user"]) => user.type === "Bot";
 
 export const getAuthor = (danger: DangerDSLType) => {
   if (danger.github) {
@@ -48,13 +44,13 @@ export const isFork = (pr: GitHubPRDSL) => pr?.head?.repo?.fork ?? false;
 const Branch = (
   danger: DangerDSLType,
   fail: FailFn,
-  isFork: boolean = false
+  isFork: boolean = false,
 ) => ({
   regex: isFork
     ? new RegExp(`^(${BRANCH_PREFIX.join("|")})\/.+`, "i")
     : new RegExp(
         `^(${BRANCH_PREFIX.join("|")})\/((dsdk)-[0-9]+|no-issue|issue-[0-9]+)\-.+`,
-        "i"
+        "i",
       ),
 
   getBranch: () => {
@@ -103,7 +99,7 @@ Please fix the PR branch name to match the convention, see [CONTRIBUTING.md](htt
 export const checkBranches = (
   danger: DangerDSLType,
   fail: FailFn,
-  fork: boolean = false
+  fork: boolean = false,
 ) => {
   const config = Branch(danger, fail, fork);
   const currentBranch = config.getBranch();
@@ -119,7 +115,7 @@ export const checkBranches = (
 const Commits = (
   danger: DangerDSLType,
   fail: FailFn,
-  fork: boolean = false
+  fork: boolean = false,
 ) => ({
   regex: /^.+\(([a-z]+\-?){1,}\): [A-Z].*/,
 
@@ -150,7 +146,7 @@ Example: \`💚 (scope): My feature\`\
 
     const currentBranch = Branch(danger, fail, fork).getBranch();
     return execSync(
-      `git log origin/develop..${currentBranch} --pretty=format:%s`
+      `git log origin/develop..${currentBranch} --pretty=format:%s`,
     )
       .toString()
       .split("\n");
@@ -160,14 +156,14 @@ Example: \`💚 (scope): My feature\`\
 export const checkCommits = (
   danger: DangerDSLType,
   fail: FailFn,
-  fork: boolean = false
+  fork: boolean = false,
 ) => {
   const config = Commits(danger, fail, fork);
   const branchCommits = config.getCommits();
   console.log("Branch commits:", branchCommits);
 
   const wrongCommits = branchCommits.filter(
-    (commit) => !config.regex.test(commit)
+    (commit) => !config.regex.test(commit),
   );
 
   if (wrongCommits.length > 0) {
@@ -229,7 +225,7 @@ Please fix the PR title to match the convention, see [CONTRIBUTING.md](https://g
 export const checkTitle = (
   danger: DangerDSLType,
   fail: FailFn,
-  fork: boolean = false
+  fork: boolean = false,
 ) => {
   const config = Title(danger, fail, fork);
   if (!config.regex.test(danger.github.pr.title)) {
@@ -247,7 +243,7 @@ export const checkChangesets = (danger: DangerDSLType, message: MessageFn) => {
       `\ No changeset file found in the PR. Please add a changeset file.`,
       {
         icon: "⚠️",
-      }
+      },
     );
     return false;
   }

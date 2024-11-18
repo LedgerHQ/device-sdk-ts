@@ -1,9 +1,9 @@
 import { Left, Right } from "purify-ts";
 
-import { NftDataSource } from "@/nft/data/NftDataSource";
+import { type NftDataSource } from "@/nft/data/NftDataSource";
 import { NftContextLoader } from "@/nft/domain/NftContextLoader";
 import { ClearSignContextType } from "@/shared/model/ClearSignContext";
-import { TransactionContext } from "@/shared/model/TransactionContext";
+import { type TransactionContext } from "@/shared/model/TransactionContext";
 
 describe("NftContextLoader", () => {
   const spyGetNftInfosPayload = jest.fn();

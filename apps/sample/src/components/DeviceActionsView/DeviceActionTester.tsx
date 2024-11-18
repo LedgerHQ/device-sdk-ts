@@ -2,10 +2,10 @@ import React from "react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import type {
   DeviceActionIntermediateValue,
+  DmkError,
   ExecuteDeviceActionReturnType,
-  SdkError,
 } from "@ledgerhq/device-management-kit";
-import { DeviceModelId } from "@ledgerhq/device-management-kit";
+import { type DeviceModelId } from "@ledgerhq/device-management-kit";
 import {
   Button,
   Divider,
@@ -22,20 +22,20 @@ import { Block } from "@/components/Block";
 import { ClickableListItem } from "@/components/ClickableListItem";
 import {
   CommandForm,
-  ValueSelector,
+  type ValueSelector,
 } from "@/components/CommandsView/CommandForm";
-import { FieldType } from "@/hooks/useForm";
+import { type FieldType } from "@/hooks/useForm";
 
 import {
   DeviceActionResponse,
-  DeviceActionResponseProps,
+  type DeviceActionResponseProps,
 } from "./DeviceActionResponse";
 import { DeviceActionUI } from "./DeviceActionUI";
 
 export type DeviceActionProps<
   Output,
   Input extends Record<string, FieldType> | void,
-  Error extends SdkError,
+  Error extends DmkError,
   IntermediateValue extends DeviceActionIntermediateValue,
 > = {
   title: string;
@@ -85,7 +85,7 @@ const BoxHeader: React.FC<{ children: string; hint: string }> = ({
 export function DeviceActionTester<
   Output,
   Input extends Record<string, FieldType>,
-  Error extends SdkError,
+  Error extends DmkError,
   IntermediateValue extends DeviceActionIntermediateValue,
 >(props: DeviceActionProps<Output, Input, Error, IntermediateValue>) {
   const {
@@ -196,7 +196,7 @@ export function DeviceActionTester<
 
   return (
     <Flex flexDirection="column" rowGap={3} overflow="hidden" flex={1}>
-      <Block>
+      <Block data-testid="form_device-action">
         <BoxHeader hint={hintInput}>Device Action input</BoxHeader>
         <Flex
           flexDirection="column"
@@ -243,6 +243,7 @@ export function DeviceActionTester<
               Icon={() =>
                 loading ? <InfiniteLoader size={20} /> : <Icons.ArrowRight />
               }
+              data-testid="CTA_send-device-action"
             >
               Execute
             </Button>
@@ -264,6 +265,7 @@ export function DeviceActionTester<
             overflowY="scroll"
             height="100%"
             flex={1}
+            data-testid="box_device-commands-responses"
           >
             {responses.map((response, index, arr) => {
               const isLatest = index === arr.length - 1;
@@ -273,7 +275,10 @@ export function DeviceActionTester<
                   key={`${response.date.toISOString()}-index-${index}`}
                 >
                   <DeviceActionResponse {...response} isLatest={isLatest} />
-                  {isLatest ? null : <Divider my={2} />}
+                  <div hidden={isLatest}>
+                    {/** if I just unmount it, all dividers are glitching out */}
+                    <Divider my={2} />
+                  </div>
                 </Flex>
               );
             })}
@@ -295,7 +300,7 @@ export function DeviceActionTester<
 export function DeviceActionRow<
   Output,
   Input extends Record<string, FieldType>,
-  Error extends SdkError,
+  Error extends DmkError,
   IntermediateValue extends DeviceActionIntermediateValue,
 >(
   props: DeviceActionProps<Output, Input, Error, IntermediateValue> & {

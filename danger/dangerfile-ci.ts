@@ -8,11 +8,17 @@ import {
   checkIfBot,
   isFork,
 } from "./helpers";
+import { exit } from "process";
 
 const author = getAuthor(danger);
 console.log("PR Actor:", author);
 
-checkIfBot(danger.github.pr.user);
+const isBot = checkIfBot(danger.github.pr.user);
+
+if (isBot) {
+  console.log("PR Actor is a bot, skipping checks...");
+  exit(0);
+}
 
 const results: boolean[] = [];
 

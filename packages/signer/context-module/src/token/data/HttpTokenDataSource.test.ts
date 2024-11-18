@@ -1,10 +1,10 @@
 import axios from "axios";
 import { Left } from "purify-ts";
 
-import { ContextModuleConfig } from "@/config/model/ContextModuleConfig";
+import { type ContextModuleConfig } from "@/config/model/ContextModuleConfig";
 import { HttpTokenDataSource } from "@/token/data/HttpTokenDataSource";
-import { TokenDataSource } from "@/token/data/TokenDataSource";
-import { TokenDto } from "@/token/data/TokenDto";
+import { type TokenDataSource } from "@/token/data/TokenDataSource";
+import { type TokenDto } from "@/token/data/TokenDto";
 import PACKAGE from "@root/package.json";
 
 jest.mock("axios");
@@ -16,6 +16,8 @@ describe("HttpTokenDataSource", () => {
     const config = {
       cal: {
         url: "https://crypto-assets-service.api.ledger.com/v1",
+        mode: "prod",
+        branch: "main",
       },
     } as ContextModuleConfig;
     datasource = new HttpTokenDataSource(config);
@@ -42,9 +44,13 @@ describe("HttpTokenDataSource", () => {
   it("should return a string when axios response is correct", async () => {
     // GIVEN
     const tokenDTO: TokenDto = {
-      live_signature: "0123",
-      decimals: 8,
       ticker: "USDC",
+      descriptor: {
+        data: "55534443000000000800000001",
+        signatures: {
+          prod: "0123",
+        },
+      },
     };
     jest.spyOn(axios, "request").mockResolvedValue({ data: [tokenDTO] });
 
@@ -100,9 +106,16 @@ describe("HttpTokenDataSource", () => {
 
   it("should return undefined when no ticker", async () => {
     // GIVEN
-    jest
-      .spyOn(axios, "request")
-      .mockResolvedValue({ data: [{ live_signature: "0x0" }] });
+    const tokenDTO: TokenDto = {
+      ticker: "USDC",
+      descriptor: {
+        data: "55534443000000000800000001",
+        signatures: {
+          test: "0123",
+        },
+      },
+    };
+    jest.spyOn(axios, "request").mockResolvedValue({ data: [tokenDTO] });
 
     // WHEN
     const result = await datasource.getTokenInfosPayload({

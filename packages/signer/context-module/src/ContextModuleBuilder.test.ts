@@ -1,6 +1,6 @@
 import {
-  ContextModuleCalConfig,
-  ContextModuleConfig,
+  type ContextModuleCalConfig,
+  type ContextModuleConfig,
 } from "./config/model/ContextModuleConfig";
 import { ContextModuleBuilder } from "./ContextModuleBuilder";
 import { DefaultContextModule } from "./DefaultContextModule";

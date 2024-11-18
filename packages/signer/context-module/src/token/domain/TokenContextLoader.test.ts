@@ -1,8 +1,8 @@
 import { Left, Right } from "purify-ts";
 
 import { ClearSignContextType } from "@/shared/model/ClearSignContext";
-import { TransactionContext } from "@/shared/model/TransactionContext";
-import { TokenDataSource } from "@/token/data/TokenDataSource";
+import { type TransactionContext } from "@/shared/model/TransactionContext";
+import { type TokenDataSource } from "@/token/data/TokenDataSource";
 import { TokenContextLoader } from "@/token/domain/TokenContextLoader";
 
 describe("TokenContextLoader", () => {

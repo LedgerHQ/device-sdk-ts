@@ -1,4 +1,4 @@
-import { Either } from "purify-ts/Either";
+import { type Either } from "purify-ts/Either";
 
 export type GetForwardDomainInfosParams = {
   domain: string;

@@ -1,13 +1,21 @@
 import React from "react";
 import {
-  ConnectionType,
+  type ConnectionType,
   DeviceModelId,
-  DeviceSessionId,
+  type DeviceSessionId,
 } from "@ledgerhq/device-management-kit";
-import { Box, DropdownGeneric, Flex, Icons, Text } from "@ledgerhq/react-ui";
-import styled, { DefaultTheme } from "styled-components";
+import {
+  Box,
+  Button,
+  DropdownGeneric,
+  Flex,
+  Icons,
+  Text,
+} from "@ledgerhq/react-ui";
+import styled, { type DefaultTheme } from "styled-components";
 
 import { useDeviceSessionState } from "@/hooks/useDeviceSessionState";
+import { useDeviceSessionsContext } from "@/providers/DeviceSessionsProvider";
 
 import { StatusText } from "./StatusText";
 
@@ -15,6 +23,10 @@ const Root = styled(Flex).attrs({ p: 5, mb: 8, borderRadius: 2 })`
   background: ${({ theme }: { theme: DefaultTheme }) =>
     theme.colors.neutral.c30};
   align-items: center;
+  border: ${({ active, theme }: { theme: DefaultTheme; active: boolean }) =>
+    `1px solid ${active ? theme.colors.success.c40 : "transparent"}`};
+  cursor: ${({ active }: { active: boolean }) =>
+    active ? "normal" : "pointer"};
 `;
 
 const IconContainer = styled(Flex).attrs({ p: 4, mr: 3, borderRadius: 100 })`
@@ -41,6 +53,7 @@ type DeviceProps = {
   sessionId: DeviceSessionId;
   model: DeviceModelId;
   onDisconnect: () => Promise<void>;
+  onSelect: () => void;
 };
 
 function getIconComponent(model: DeviceModelId) {
@@ -61,21 +74,31 @@ export const Device: React.FC<DeviceProps> = ({
   type,
   model,
   onDisconnect,
+  onSelect,
   sessionId,
 }) => {
   const sessionState = useDeviceSessionState(sessionId);
+  const {
+    state: { selectedId },
+  } = useDeviceSessionsContext();
   const IconComponent = getIconComponent(model);
+  const isActive = selectedId === sessionId;
   return (
-    <Root>
+    <Root active={isActive} onClick={isActive ? undefined : onSelect}>
       <IconContainer>
         <IconComponent size="S" />
       </IconContainer>
       <Box flex={1}>
-        <Text variant="body">{name}</Text>
+        <Text data-testid="text_device-name" variant="body">
+          {name}
+        </Text>
         <Flex>
           {sessionState && (
             <>
-              <StatusText state={sessionState.deviceStatus}>
+              <StatusText
+                data-testid="text_device-connection-status"
+                state={sessionState.deviceStatus}
+              >
                 {sessionState.deviceStatus}
               </StatusText>
               <DotText>•</DotText>
@@ -86,14 +109,57 @@ export const Device: React.FC<DeviceProps> = ({
           </Text>
         </Flex>
       </Box>
-      <DropdownGeneric closeOnClickOutside label="" placement="bottom">
-        <ActionRow onClick={onDisconnect}>
+      <div data-testid="dropdown_device-option">
+        <DropdownGeneric closeOnClickOutside label="" placement="bottom">
+          <ActionRow data-testid="CTA_disconnect-device" onClick={onDisconnect}>
+            <Text variant="paragraph" color="neutral.c80">
+              Disconnect
+            </Text>
+            <Icons.ChevronRight size="S" />
+          </ActionRow>
+        </DropdownGeneric>
+      </div>
+    </Root>
+  );
+};
+
+type AvailableDeviceProps = {
+  model: DeviceModelId;
+  name: string;
+  type: ConnectionType;
+  connected: boolean;
+  onConnect: () => void;
+};
+
+export const AvailableDevice: React.FC<AvailableDeviceProps> = ({
+  model,
+  name,
+  type,
+  onConnect,
+  connected,
+}) => {
+  const IconComponent = getIconComponent(model);
+  return (
+    <Root flex={1} mb={0} m={0}>
+      <IconContainer>
+        <IconComponent size="S" />
+      </IconContainer>
+      <Flex flexDirection="column" flex={1} rowGap={2}>
+        <Text variant="body">{name}</Text>
+        <Flex>
           <Text variant="paragraph" color="neutral.c80">
-            Disconnect
+            {type}
           </Text>
-          <Icons.ChevronRight size="S" />
-        </ActionRow>
-      </DropdownGeneric>
+        </Flex>
+      </Flex>
+      <Button
+        size="small"
+        variant="shade"
+        disabled={connected}
+        onClick={onConnect}
+      >
+        Connect
+      </Button>
     </Root>
   );
 };

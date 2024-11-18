@@ -1,0 +1,19 @@
+{
+  "extends": "@ledgerhq/tsconfig-dsdk/tsconfig.web",
+  "compilerOptions": {
+    "plugins": [
+      {
+        "name": "next"
+      }
+    ],
+    "forceConsistentCasingInFileNames": true
+  },
+  "include": [
+    "next-env.d.ts",
+    "**/*.ts",
+    "**/*.tsx",
+    "eslint.config.mjs",
+    "tailwind.config.js"
+  ],
+  "exclude": ["node_modules"]
+}

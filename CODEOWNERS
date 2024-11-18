@@ -1,0 +1,9 @@
+# How does it work? => https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners
+# This is a comment.
+# Each line is a file pattern followed by one or more owners.
+# Order is important; the last matching pattern takes the most
+# precedence. When someone opens a pull request that only
+# modifies JS files, only @js-owner and not the global
+# owner(s) will be requested for a review.
+
+*                   @ledgerhq/live-devices

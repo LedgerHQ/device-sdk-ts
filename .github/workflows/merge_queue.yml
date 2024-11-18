@@ -1,0 +1,28 @@
+name: Merge Queue Checks
+on:
+  merge_group:
+
+env:
+  FORCE_COLOR: "1"
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref_name != 'develop' && github.ref || github.run_id }}
+  cancel-in-progress: true
+
+jobs:
+  checks:
+    name: Run health check and unit tests
+    runs-on: ledgerhq-device-sdk
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: LedgerHQ/device-sdk-ts/.github/actions/setup-toolchain-composite@develop
+
+      - name: Health check
+        id: health-check
+        run: pnpm health-check
+
+      - name: Tests
+        id: unit-tests
+        if: ${{ steps.health-check.conclusion == 'success' }}
+        run: pnpm test -- -- --maxWorkers=50%

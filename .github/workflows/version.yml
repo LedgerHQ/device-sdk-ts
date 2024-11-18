@@ -15,17 +15,14 @@ jobs:
 
       - uses: LedgerHQ/device-sdk-ts/.github/actions/setup-toolchain-composite@develop
 
-      - name: install dependencies
-        run: pnpm install
-
       - name: build libraries
         run: pnpm build:libs
 
-      - name: create release pull request or publish
+      - name: create release pull request
         uses: changesets/action@v1
         with:
           version: pnpm bump
-          commit: "🔖 (release): versioning packages"
-          title: "🔖 (release) [NO-ISSUE]: versioning packages"
+          commit: "🔖 (release): Versioning packages"
+          title: "🔖 (release) [NO-ISSUE]: Versioning packages"
         env:
           GITHUB_TOKEN: ${{ github.token }}

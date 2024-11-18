@@ -46,9 +46,8 @@ jobs:
 
       - name: Publish
         id: changesets
-        uses: changesets/action@v1
+        uses: ledgerhq/changeset-action-ledger@main
         with:
-          version: echo "not running version"
           publish: pnpm release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

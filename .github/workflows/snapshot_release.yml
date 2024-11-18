@@ -30,9 +30,6 @@ jobs:
 
       - uses: LedgerHQ/device-sdk-ts/.github/actions/setup-toolchain-composite@develop
 
-      - name: install dependencies
-        run: pnpm install
-
       - name: build libraries
         run: pnpm build
 

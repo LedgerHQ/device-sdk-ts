@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useState } from "react";
 import {
-  CommandResult,
+  type CommandResult,
   isSuccessCommandResult,
 } from "@ledgerhq/device-management-kit";
 import { Button, Flex, Icons, InfiniteLoader } from "@ledgerhq/react-ui";
@@ -8,10 +8,10 @@ import { Button, Flex, Icons, InfiniteLoader } from "@ledgerhq/react-ui";
 import { Block } from "@/components/Block";
 import { ClickableListItem } from "@/components/ClickableListItem";
 import { StyledDrawer } from "@/components/StyledDrawer";
-import { FieldType } from "@/hooks/useForm";
+import { type FieldType } from "@/hooks/useForm";
 
-import { CommandForm, ValueSelector } from "./CommandForm";
-import { CommandResponse, CommandResponseProps } from "./CommandResponse";
+import { CommandForm, type ValueSelector } from "./CommandForm";
+import { CommandResponse, type CommandResponseProps } from "./CommandResponse";
 
 export type CommandProps<
   CommandArgs extends Record<string, FieldType> | void,
@@ -79,6 +79,13 @@ export function Command<
           ];
         });
       })
+      .catch((error) => {
+        setLoading(false);
+        setResponses((prev) => [
+          ...prev.slice(0, -1),
+          { args: values, date: new Date(), loading: false, response: error },
+        ]);
+      })
       .finally(() => {
         setLoading(false);
       });
@@ -111,7 +118,7 @@ export function Command<
         title={title}
         description={description}
       >
-        <Block>
+        <Block data-testid="form_device-command">
           <CommandForm
             initialValues={values}
             onChange={setValues}
@@ -124,6 +131,7 @@ export function Command<
             Icon={() =>
               loading ? <InfiniteLoader size={20} /> : <Icons.ArrowRight />
             }
+            data-testid="CTA_send-device-command"
           >
             Send
           </Button>
@@ -135,6 +143,7 @@ export function Command<
             rowGap={4}
             flex={1}
             overflowY="scroll"
+            data-testid="box_device-commands-responses"
           >
             {responses.map(({ args, date, response, loading }, index) => (
               <CommandResponse

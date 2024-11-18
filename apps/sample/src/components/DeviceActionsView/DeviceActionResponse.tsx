@@ -8,7 +8,7 @@ import {
 import { Flex, Icons, Tag, Text, Tooltip } from "@ledgerhq/react-ui";
 import styled from "styled-components";
 
-import { FieldType } from "@/hooks/useForm";
+import { type FieldType } from "@/hooks/useForm";
 
 export type DeviceActionResponseProps<Output, Error, IntermediateValue> = {
   args: Record<string, FieldType>;

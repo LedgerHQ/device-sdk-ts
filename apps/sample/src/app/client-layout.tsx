@@ -9,14 +9,16 @@
  */
 "use client";
 
-import React, { PropsWithChildren } from "react";
+import React, { type PropsWithChildren } from "react";
 import { Flex, StyleProvider } from "@ledgerhq/react-ui";
-import styled, { DefaultTheme } from "styled-components";
+import styled, { type DefaultTheme } from "styled-components";
 
 import { Header } from "@/components/Header";
 import { Sidebar } from "@/components/Sidebar";
-import { SdkProvider } from "@/providers/DeviceSdkProvider";
+import { DmkProvider } from "@/providers/DeviceManagementKitProvider";
 import { DeviceSessionsProvider } from "@/providers/DeviceSessionsProvider";
+import { DmkConfigProvider } from "@/providers/DmkConfig";
+import { SignerEthProvider } from "@/providers/SignerEthProvider";
 import { GlobalStyle } from "@/styles/globalstyles";
 
 const Root = styled(Flex)`
@@ -36,22 +38,26 @@ const PageContainer = styled(Flex)`
 const ClientRootLayout: React.FC<PropsWithChildren> = ({ children }) => {
   return (
     <html lang="en">
-      <SdkProvider>
-        <StyleProvider selectedPalette="dark" fontsPath="/fonts">
-          <GlobalStyle />
-          <body>
-            <Root>
-              <DeviceSessionsProvider>
-                <Sidebar />
-                <PageContainer>
-                  <Header />
-                  {children}
-                </PageContainer>
-              </DeviceSessionsProvider>
-            </Root>
-          </body>
-        </StyleProvider>
-      </SdkProvider>
+      <DmkConfigProvider>
+        <DmkProvider>
+          <DeviceSessionsProvider>
+            <SignerEthProvider>
+              <StyleProvider selectedPalette="dark" fontsPath="/fonts">
+                <GlobalStyle />
+                <body>
+                  <Root>
+                    <Sidebar />
+                    <PageContainer>
+                      <Header />
+                      {children}
+                    </PageContainer>
+                  </Root>
+                </body>
+              </StyleProvider>
+            </SignerEthProvider>
+          </DeviceSessionsProvider>
+        </DmkProvider>
+      </DmkConfigProvider>
     </html>
   );
 };

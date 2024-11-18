@@ -2,6 +2,8 @@ name: Pull Request Checks
 on:
   pull_request:
     types: [opened, synchronize, reopened, edited]
+    branches-ignore:
+      - main
 
 env:
   FORCE_COLOR: "1"
@@ -49,10 +51,10 @@ jobs:
       - name: Tests
         id: unit-tests
         if: ${{ steps.health-check.conclusion == 'success' }}
-        run: pnpm test:coverage -- --max-warnings=0
+        run: pnpm test:coverage -- --maxWorkers=50%
 
-      - uses: sonarsource/sonarqube-scan-action@v3
-        if: ${{ steps.unit-tests.conclusion == 'success' && github.actor != 'dependabot[bot]' && github.event.pull_request.head.repo.fork == 'false' }}
+      - uses: sonarsource/sonarqube-scan-action@v4
+        if: ${{ steps.unit-tests.conclusion == 'success' && github.actor != 'dependabot[bot]' && !github.event.pull_request.head.repo.fork }}
         env:
-          SONAR_TOKEN: ${{ secrets.GREEN_SONAR_TOKEN }}
-          SONAR_HOST_URL: ${{ secrets.GREEN_SONAR_HOST_URL }}
+          SONAR_TOKEN: ${{ secrets.PUBLIC_GREEN_SONAR_TOKEN }}
+          SONAR_HOST_URL: ${{ secrets.PUBLIC_SONAR_HOST_URL }}

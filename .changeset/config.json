@@ -12,5 +12,11 @@
   "access": "public",
   "baseBranch": "develop",
   "updateInternalDependencies": "patch",
-  "ignore": ["@ledgerhq/keyring-btc"]
+  "ignore": [
+    "@ledgerhq/ledger-dmk-docs",
+    "@ledgerhq/device-management-kit-sample",
+    "@ledgerhq/device-signer-kit-btc",
+    "@ledgerhq/device-signer-kit-ethereum",
+    "@ledgerhq/context-module"
+  ]
 }

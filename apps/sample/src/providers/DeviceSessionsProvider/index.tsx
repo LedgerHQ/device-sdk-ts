@@ -1,16 +1,23 @@
-import React, { Context, createContext, useContext, useReducer } from "react";
+import React, {
+  type Context,
+  createContext,
+  useContext,
+  useEffect,
+  useReducer,
+} from "react";
 
+import { useHasChanged } from "@/hooks/useHasChanged";
+import { useDmk } from "@/providers/DeviceManagementKitProvider";
 import {
-  AddSessionAction,
+  type DeviceSessionsAction,
   DeviceSessionsInitialState,
   deviceSessionsReducer,
-  DeviceSessionsState,
-  RemoveSessionAction,
+  type DeviceSessionsState,
 } from "@/reducers/deviceSessions";
 
 type DeviceSessionsContextType = {
   state: DeviceSessionsState;
-  dispatch: (value: AddSessionAction | RemoveSessionAction) => void;
+  dispatch: (value: DeviceSessionsAction) => void;
 };
 
 const DeviceSessionsContext: Context<DeviceSessionsContextType> =
@@ -22,10 +29,33 @@ const DeviceSessionsContext: Context<DeviceSessionsContextType> =
 export const DeviceSessionsProvider: React.FC<React.PropsWithChildren> = ({
   children,
 }) => {
+  const dmk = useDmk();
   const [state, dispatch] = useReducer(
     deviceSessionsReducer,
     DeviceSessionsInitialState,
   );
+
+  const dmkHasChanged = useHasChanged(dmk);
+  if (dmkHasChanged) {
+    dispatch({ type: "remove_all_sessions" });
+  }
+
+  useEffect(() => {
+    const subscription = dmk
+      .listenToConnectedDevice()
+      .subscribe((connectedDevice) => {
+        dispatch({
+          type: "add_session",
+          payload: {
+            sessionId: connectedDevice.sessionId,
+            connectedDevice,
+          },
+        });
+      });
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, [dmk]);
 
   return (
     <DeviceSessionsContext.Provider value={{ state, dispatch }}>

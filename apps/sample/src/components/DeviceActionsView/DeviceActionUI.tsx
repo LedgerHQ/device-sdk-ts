@@ -34,7 +34,7 @@ import * as ContinueOnLedgerStaxDark from "./lotties/stax/04_STAX_DARK_CONTINUE_
 import * as SignTransactionStaxDark from "./lotties/stax/05_STAX_DARK_SIGN_TRANSACTION.json";
 import * as FrontViewStaxDark from "./lotties/stax/06_STAX_DARK_FRONT_VIEW.json";
 import {
-  DeviceActionResponseProps,
+  type DeviceActionResponseProps,
   deviceActionStatusToColor,
 } from "./DeviceActionResponse";
 

@@ -1,7 +1,7 @@
-import { Reducer } from "react";
+import { type Reducer } from "react";
 import {
-  ConnectedDevice,
-  DeviceSessionId,
+  type ConnectedDevice,
+  type DeviceSessionId,
 } from "@ledgerhq/device-management-kit";
 
 export type DeviceSessionsState = {
@@ -9,13 +9,28 @@ export type DeviceSessionsState = {
   deviceById: Record<DeviceSessionId, ConnectedDevice>;
 };
 
-export type AddSessionAction = {
+type AddSessionAction = {
   type: "add_session";
   payload: { sessionId: DeviceSessionId; connectedDevice: ConnectedDevice };
 };
 
-export type RemoveSessionAction = {
+type RemoveSessionAction = {
   type: "remove_session";
+  payload: { sessionId: DeviceSessionId };
+};
+
+type RemoveAllSessionsAction = {
+  type: "remove_all_sessions";
+};
+
+export type DeviceSessionsAction =
+  | AddSessionAction
+  | RemoveSessionAction
+  | SelectSessionAction
+  | RemoveAllSessionsAction;
+
+export type SelectSessionAction = {
+  type: "select_session";
   payload: { sessionId: DeviceSessionId };
 };
 
@@ -26,8 +41,10 @@ export const DeviceSessionsInitialState: DeviceSessionsState = {
 
 export const deviceSessionsReducer: Reducer<
   DeviceSessionsState,
-  AddSessionAction | RemoveSessionAction
+  DeviceSessionsAction
 > = (state, action) => {
+  const sessionsCount = Object.keys(state.deviceById).length;
+
   switch (action.type) {
     case "add_session":
       return {
@@ -43,7 +60,18 @@ export const deviceSessionsReducer: Reducer<
 
       return {
         ...state,
-        selectedId: undefined,
+        selectedId:
+          sessionsCount > 0
+            ? Object.keys(state.deviceById)[sessionsCount - 1]
+            : undefined,
+      };
+    case "remove_all_sessions":
+      return DeviceSessionsInitialState;
+
+    case "select_session":
+      return {
+        ...state,
+        selectedId: action.payload.sessionId,
       };
     default:
       return state;

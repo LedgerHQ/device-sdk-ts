@@ -1,5 +1,5 @@
 {
-  "extends": "@ledgerhq/tsconfig-dsdk/web",
+  "extends": "@ledgerhq/tsconfig-dsdk/tsconfig.web",
   "compilerOptions": {
     "plugins": [
       {
@@ -11,6 +11,12 @@
     },
     "strictNullChecks": true
   },
-  "include": ["**/*.ts", "**/*.tsx", ".next/types/**/*.ts"],
+  "include": [
+    "**/*.ts",
+    "**/*.tsx",
+    "eslint.config.mjs",
+    "next-env.d.ts",
+    ".next/types/**/*.ts"
+  ],
   "exclude": ["node_modules"]
 }

@@ -1,7 +1,7 @@
-import { HexaString } from "@ledgerhq/device-management-kit";
-import { Either } from "purify-ts";
+import { type HexaString } from "@ledgerhq/device-management-kit";
+import { type Either } from "purify-ts";
 
-import { DappInfos } from "@/external-plugin/model/DappInfos";
+import { type DappInfos } from "@/external-plugin/model/DappInfos";
 
 export type GetDappInfos = {
   address: string;

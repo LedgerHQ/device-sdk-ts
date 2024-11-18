@@ -1,6 +1,6 @@
 import { ContainerModule } from "inversify";
 
-import { ContextModuleConfig } from "@/config/model/ContextModuleConfig";
+import { type ContextModuleConfig } from "@/config/model/ContextModuleConfig";
 
 import { configTypes } from "./configTypes";
 
