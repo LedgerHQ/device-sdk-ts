@@ -7,13 +7,17 @@ import {
   type Command,
   type CommandResult,
   CommandResultFactory,
-  CommandUtils,
-  GlobalCommandErrorHandler,
   InvalidStatusWordError,
+  isCommandErrorCode,
 } from "@ledgerhq/device-management-kit";
 import { Just, type Maybe, Nothing } from "purify-ts";
 
 import { type Signature } from "@api/model/Signature";
+
+import {
+  SolanaAppCommandError,
+  solanaAppErrors,
+} from "./utils/solanaAppErrors";
 
 const SIGNATURE_LENGTH = 64;
 
@@ -59,10 +63,15 @@ export class SignTransactionCommand
     response: ApduResponse,
   ): CommandResult<SignTransactionCommandResponse> {
     const parser = new ApduParser(response);
-
-    if (!CommandUtils.isSuccessResponse(response)) {
+    const errorCode = parser.encodeToHexaString(response.statusCode);
+    console.log("Status Code:", response.statusCode); // Debugging
+    console.log("Error Code:", errorCode); // Debugging
+    if (isCommandErrorCode(errorCode, solanaAppErrors)) {
       return CommandResultFactory({
-        error: GlobalCommandErrorHandler.handle(response),
+        error: new SolanaAppCommandError({
+          ...solanaAppErrors[errorCode],
+          errorCode,
+        }),
       });
     }
 
@@ -73,7 +82,6 @@ export class SignTransactionCommand
     }
 
     const signature = parser.extractFieldByLength(SIGNATURE_LENGTH);
-
     if (!signature) {
       return CommandResultFactory({
         error: new InvalidStatusWordError("Signature is missing"),

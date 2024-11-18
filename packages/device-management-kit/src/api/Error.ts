@@ -31,7 +31,7 @@ export abstract class DeviceExchangeError<SpecificErrorCodes = void> {
     this._tag = tag;
     this.originalError = originalError;
     this.errorCode = errorCode;
-    this.message = message;
+    this.message = message ?? "An error occured during device exchange.";
   }
 }
 

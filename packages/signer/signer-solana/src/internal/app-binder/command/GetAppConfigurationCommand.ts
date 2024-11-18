@@ -6,13 +6,17 @@ import {
   type Command,
   type CommandResult,
   CommandResultFactory,
-  CommandUtils,
-  GlobalCommandErrorHandler,
   InvalidStatusWordError,
+  isCommandErrorCode,
 } from "@ledgerhq/device-management-kit";
 
 import { type AppConfiguration } from "@api/model/AppConfiguration";
 import { PublicKeyDisplayMode } from "@api/model/PublicKeyDisplayMode";
+
+import {
+  SolanaAppCommandError,
+  solanaAppErrors,
+} from "./utils/solanaAppErrors";
 
 type GetAppConfigurationCommandArgs = void;
 
@@ -36,15 +40,17 @@ export class GetAppConfigurationCommand
 
   parseResponse(response: ApduResponse): CommandResult<AppConfiguration> {
     const parser = new ApduParser(response);
-
-    if (!CommandUtils.isSuccessResponse(response)) {
+    const errorCode = parser.encodeToHexaString(response.statusCode);
+    if (isCommandErrorCode(errorCode, solanaAppErrors)) {
       return CommandResultFactory({
-        error: GlobalCommandErrorHandler.handle(response),
+        error: new SolanaAppCommandError({
+          ...solanaAppErrors[errorCode],
+          errorCode,
+        }),
       });
     }
 
     const buffer = parser.extractFieldByLength(5);
-
     if (
       !buffer ||
       buffer.length !== 5 ||
