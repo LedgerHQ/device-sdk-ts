@@ -14,6 +14,6 @@
   "updateInternalDependencies": "patch",
   "ignore": [
     "@ledgerhq/device-signer-kit-btc",
-    "@ledgerhq/device-signer-kit-eth"
+    "@ledgerhq/device-signer-kit-ethereum"
   ]
 }
