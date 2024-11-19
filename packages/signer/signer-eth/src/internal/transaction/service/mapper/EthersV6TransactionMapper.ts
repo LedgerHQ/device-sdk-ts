@@ -1,8 +1,12 @@
-import { getBytes, Transaction as EthersV6Transaction } from "ethers-v6";
+import {
+  BigNumberish,
+  getBytes,
+  Transaction as EthersV6Transaction,
+} from "ethers-v6";
 import { injectable } from "inversify";
 import { Just, Maybe, Nothing } from "purify-ts";
 
-import { Transaction } from "@api/index";
+import { Transaction } from "@api/model/Transaction";
 
 import { TransactionMapperResult } from "./model/TransactionMapperResult";
 import { TransactionMapper } from "./TransactionMapper";
@@ -29,6 +33,21 @@ export class EthersV6TransactionMapper implements TransactionMapper {
   private isEthersV6Transaction(
     transaction: Transaction,
   ): transaction is EthersV6Transaction {
-    return transaction instanceof EthersV6Transaction;
+    return (
+      typeof transaction === "object" &&
+      (transaction.hash === null || typeof transaction.hash === "string") &&
+      (transaction.to === null || typeof transaction.to === "string") &&
+      (transaction.gasLimit == null || isBigNumberish(transaction.gasLimit)) &&
+      (transaction.gasPrice === null || isBigNumberish(transaction.gasPrice)) &&
+      (transaction.value === null || isBigNumberish(transaction.value)) &&
+      (transaction.chainId === null ||
+        isBigNumberish(typeof transaction.chainId)) &&
+      (transaction.type === null || typeof transaction.type === "number")
+    );
   }
 }
+
+const isBigNumberish = (number: unknown): number is BigNumberish =>
+  typeof number === "string" ||
+  typeof number === "number" ||
+  typeof number === "bigint";
