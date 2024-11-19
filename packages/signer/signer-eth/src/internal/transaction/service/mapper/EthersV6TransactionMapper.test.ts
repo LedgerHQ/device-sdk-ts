@@ -1,3 +1,7 @@
+import {
+  BigNumber as EthersV5BigNumber,
+  type Transaction as EthersV5Transaction,
+} from "ethers-v5";
 import { Transaction as EthersV6Transaction } from "ethers-v6";
 import { Just } from "purify-ts";
 
@@ -107,6 +111,31 @@ describe("EthersV6TransactionMapper", () => {
     it("should return Nothing when the transaction is not an EthersV6Transaction", () => {
       // GIVEN
       const transaction = {} as Transaction;
+
+      // WHEN
+      const result = mapper.map(transaction);
+
+      // THEN
+      expect(result.isNothing()).toBeTruthy();
+    });
+
+    it("should return Nothing when the transaction is not an EthersV5Transaction", () => {
+      // GIVEN
+      const transaction: EthersV5Transaction = {
+        chainId: 1,
+        nonce: 0,
+        gasLimit: EthersV5BigNumber.from(0),
+        gasPrice: EthersV5BigNumber.from(0),
+        value: EthersV5BigNumber.from(0),
+        data: "0x",
+        from: "0x",
+        r: "0x",
+        s: "0x",
+        v: 0,
+        type: 1,
+        maxFeePerGas: EthersV5BigNumber.from(0),
+        maxPriorityFeePerGas: EthersV5BigNumber.from(0),
+      };
 
       // WHEN
       const result = mapper.map(transaction);
