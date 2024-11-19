@@ -15,6 +15,7 @@ import {
 
 describe("BuildTransactionContextTask", () => {
   const contextModuleMock = {
+    getContext: jest.fn(),
     getContexts: jest.fn(),
     getTypedDataFilters: jest.fn(),
   };

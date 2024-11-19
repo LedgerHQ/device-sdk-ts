@@ -12,8 +12,14 @@ import { type ForwardDomainContextLoader } from "./forward-domain/domain/Forward
 import { nftTypes } from "./nft/di/nftTypes";
 import { type NftContextLoader } from "./nft/domain/NftContextLoader";
 import { type ContextLoader } from "./shared/domain/ContextLoader";
-import { type ClearSignContext } from "./shared/model/ClearSignContext";
-import { type TransactionContext } from "./shared/model/TransactionContext";
+import {
+  type ClearSignContext,
+  ClearSignContextType,
+} from "./shared/model/ClearSignContext";
+import {
+  type TransactionContext,
+  type TransactionFieldContext,
+} from "./shared/model/TransactionContext";
 import { tokenTypes } from "./token/di/tokenTypes";
 import { type TokenContextLoader } from "./token/domain/TokenContextLoader";
 import { type TransactionContextLoader } from "./transaction/domain/TransactionContextLoader";
@@ -63,6 +69,21 @@ export class DefaultContextModule implements ContextModule {
     const promises = this._loaders.map((fetcher) => fetcher.load(transaction));
     const responses = await Promise.all(promises);
     return responses.flat();
+  }
+
+  public async getContext(
+    field: TransactionFieldContext,
+  ): Promise<ClearSignContext> {
+    const promises = this._loaders
+      .filter((fetcher) => fetcher.loadField)
+      .map((fetcher) => fetcher.loadField!(field));
+    const responses = await Promise.all(promises);
+    return (
+      responses.find((resp) => resp !== null) || {
+        type: ClearSignContextType.ERROR,
+        error: new Error(`Field type not supported: ${field.type}`),
+      }
+    );
   }
 
   public async getTypedDataFilters(

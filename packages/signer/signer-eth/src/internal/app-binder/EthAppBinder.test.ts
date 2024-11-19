@@ -43,6 +43,7 @@ describe("EthAppBinder", () => {
     executeDeviceAction: jest.fn(),
   } as unknown as DeviceManagementKit;
   const mockedContextModule: ContextModule = {
+    getContext: jest.fn(),
     getContexts: jest.fn(),
     getTypedDataFilters: jest.fn(),
   };

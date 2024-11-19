@@ -1,11 +1,14 @@
 import { type ContextModuleConfig } from "./config/model/ContextModuleConfig";
-import { type TransactionContext } from "./shared/model/TransactionContext";
+import {
+  type TransactionContext,
+  type TransactionFieldContext,
+} from "./shared/model/TransactionContext";
 import { type TypedDataContext } from "./shared/model/TypedDataContext";
 import type { TypedDataContextLoader } from "./typed-data/domain/TypedDataContextLoader";
 import { DefaultContextModule } from "./DefaultContextModule";
 
 const contextLoaderStubBuilder = () => {
-  return { load: jest.fn() };
+  return { load: jest.fn(), loadField: jest.fn() };
 };
 
 describe("DefaultContextModule", () => {
@@ -86,5 +89,64 @@ describe("DefaultContextModule", () => {
     await contextModule.getTypedDataFilters({} as TypedDataContext);
 
     expect(typedDataLoader.load).toHaveBeenCalledTimes(1);
+  });
+
+  it("should return a single context", async () => {
+    const loader = contextLoaderStubBuilder();
+    const responses = [null, { type: "token", payload: "payload" }];
+    jest
+      .spyOn(loader, "loadField")
+      .mockResolvedValueOnce(responses[0])
+      .mockResolvedValueOnce(responses[1]);
+    const contextModule = new DefaultContextModule({
+      loaders: [loader, { load: jest.fn() }, loader],
+      typedDataLoader,
+    });
+
+    const res = await contextModule.getContext({
+      type: "token",
+    } as TransactionFieldContext);
+
+    expect(loader.loadField).toHaveBeenCalledTimes(2);
+    expect(res).toEqual({ type: "token", payload: "payload" });
+  });
+
+  it("context field not supported", async () => {
+    const loader = contextLoaderStubBuilder();
+    const responses = [null, null];
+    jest
+      .spyOn(loader, "loadField")
+      .mockResolvedValueOnce(responses[0])
+      .mockResolvedValueOnce(responses[1]);
+    const contextModule = new DefaultContextModule({
+      loaders: [loader, { load: jest.fn() }, loader],
+      typedDataLoader,
+    });
+
+    const res = await contextModule.getContext({
+      type: "token",
+    } as TransactionFieldContext);
+
+    expect(loader.loadField).toHaveBeenCalledTimes(2);
+    expect(res).toEqual({
+      type: "error",
+      error: new Error("Field type not supported: token"),
+    });
+  });
+
+  it("getField not implemented", async () => {
+    const contextModule = new DefaultContextModule({
+      loaders: [{ load: jest.fn() }],
+      typedDataLoader,
+    });
+
+    const res = await contextModule.getContext({
+      type: "token",
+    } as TransactionFieldContext);
+
+    expect(res).toEqual({
+      type: "error",
+      error: new Error("Field type not supported: token"),
+    });
   });
 });

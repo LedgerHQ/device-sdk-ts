@@ -18,6 +18,7 @@ import { BuildEIP712ContextTask } from "./BuildEIP712ContextTask";
 describe("BuildEIP712ContextTask", () => {
   const apiMock = makeDeviceActionInternalApiMock();
   const contextMouleMock = {
+    getContext: jest.fn(),
     getContexts: jest.fn(),
     getTypedDataFilters: jest.fn(),
   };

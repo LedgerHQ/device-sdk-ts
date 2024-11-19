@@ -30,6 +30,7 @@ jest.mock(
 
 describe("SignTransactionDeviceAction", () => {
   const contextModuleMock: ContextModule = {
+    getContext: jest.fn(),
     getContexts: jest.fn(),
     getTypedDataFilters: jest.fn(),
   };
