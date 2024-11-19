@@ -18,7 +18,7 @@
     "health-check": "turbo run health-check --output-logs=errors-only --continue",
     "dmk": "pnpm --filter @ledgerhq/device-management-kit",
     "context-module": "pnpm --filter @ledgerhq/context-module",
-    "signer-btc": "pnpm --filter @ledgerhq/device-signer-kit-btc",
+    "signer-btc": "pnpm --filter @ledgerhq/device-signer-kit-bitcoin",
     "signer-eth": "pnpm --filter @ledgerhq/device-signer-kit-ethereum",
     "signer-solana": "pnpm --filter @ledgerhq/device-signer-kit-solana",
     "mock-client": "pnpm --filter @ledgerhq/device-transport-kit-mock-client",

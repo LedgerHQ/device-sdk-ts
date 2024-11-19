@@ -1,5 +1,5 @@
 {
-  "name": "@ledgerhq/device-signer-kit-btc",
+  "name": "@ledgerhq/device-signer-kit-bitcoin",
   "version": "0.0.1",
   "license": "Apache-2.0",
   "main": "lib/cjs/index.js",
