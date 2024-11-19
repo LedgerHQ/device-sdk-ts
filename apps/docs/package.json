@@ -30,8 +30,8 @@
     "@ledgerhq/eslint-config-dsdk": "workspace:*",
     "@ledgerhq/prettier-config-dsdk": "workspace:*",
     "@ledgerhq/tsconfig-dsdk": "workspace:*",
-    "@types/node": "^22.7.5",
-    "@types/react": "^18.3.11",
-    "globals": "15.11.0"
+    "@types/node": "^22.9.0",
+    "@types/react": "^18.3.12",
+    "globals": "15.12.0"
   }
 }
