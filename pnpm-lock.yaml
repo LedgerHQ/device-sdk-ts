@@ -397,9 +397,6 @@ importers:
       '@types/crypto-js':
         specifier: ^4.2.2
         version: 4.2.2
-      bitcoinjs-lib:
-        specifier: ^6.1.6
-        version: 6.1.6
       crypto-js:
         specifier: ^4.2.0
         version: 4.2.0
@@ -440,6 +437,9 @@ importers:
       '@ledgerhq/tsconfig-dsdk':
         specifier: workspace:*
         version: link:../../config/typescript
+      bitcoinjs-lib:
+        specifier: ^6.1.6
+        version: 6.1.6
       ts-node:
         specifier: ^10.9.2
         version: 10.9.2(@types/node@22.9.0)(typescript@5.6.3)
