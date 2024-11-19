@@ -1,0 +1,44 @@
+{
+  "name": "@near-wallet-selector/ledger",
+  "version": "8.9.14",
+  "exports": {
+    ".": {
+      "types": "./lib/types/index.d.ts",
+      "import": "./lib/esm/index.js",
+      "require": "./lib/cjs/index.js"
+    },
+    "./*": {
+      "types": "./lib/types/*",
+      "import": "./lib/esm/*",
+      "require": "./lib/cjs/*"
+    }
+  },
+  "files": [
+    "./lib"
+  ],
+  "scripts": {
+    "build": "pnpm lmdk-build --entryPoints src/**/*.ts --tsconfig tsconfig.prod.json"
+  },
+  "devDependencies": {
+    "@ledgerhq/device-management-kit": "workspace:*",
+    "@ledgerhq/device-signer-kit-near": "workspace:*",
+    "@ledgerhq/esbuild-tools": "workspace:*",
+    "@ledgerhq/eslint-config-dsdk": "workspace:*",
+    "@ledgerhq/jest-config-dsdk": "workspace:*",
+    "@ledgerhq/prettier-config-dsdk": "workspace:*",
+    "@ledgerhq/tsconfig-dsdk": "workspace:*",
+    "@near-wallet-selector/core": "^8.9.13",
+    "@near-wallet-selector/wallet-utils": "^8.9.13",
+    "is-mobile": "^5.0.0",
+    "near-api-js": "^5.0.1",
+    "rxjs": "^7.8.1"
+  },
+  "peerDependencies": {
+    "@ledgerhq/device-management-kit": "workspace:*",
+    "@near-wallet-selector/core": "^8.9.13",
+    "@near-wallet-selector/wallet-utils": "^8.9.13",
+    "is-mobile": "^5.0.0",
+    "near-api-js": "^5.0.1",
+    "rxjs": "^7.8.1"
+  }
+}
