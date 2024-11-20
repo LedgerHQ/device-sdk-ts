@@ -3,12 +3,11 @@ import { type Container } from "inversify";
 import type { TypedDataClearSignContext } from "@/shared/model/TypedDataClearSignContext";
 import type { TypedDataContext } from "@/shared/model/TypedDataContext";
 import { transactionTypes } from "@/transaction/di/transactionTypes";
+import { trustedNameTypes } from "@/trusted-name/di/trustedNameTypes";
 
 import { type ContextModuleConfig } from "./config/model/ContextModuleConfig";
 import { externalPluginTypes } from "./external-plugin/di/externalPluginTypes";
 import { type ExternalPluginContextLoader } from "./external-plugin/domain/ExternalPluginContextLoader";
-import { forwardDomainTypes } from "./forward-domain/di/forwardDomainTypes";
-import { type ForwardDomainContextLoader } from "./forward-domain/domain/ForwardDomainContextLoader";
 import { nftTypes } from "./nft/di/nftTypes";
 import { type NftContextLoader } from "./nft/domain/NftContextLoader";
 import { type ContextLoader } from "./shared/domain/ContextLoader";
@@ -23,6 +22,7 @@ import {
 import { tokenTypes } from "./token/di/tokenTypes";
 import { type TokenContextLoader } from "./token/domain/TokenContextLoader";
 import { type TransactionContextLoader } from "./transaction/domain/TransactionContextLoader";
+import { type TrustedNameContextLoader } from "./trusted-name/domain/TrustedNameContextLoader";
 import { typedDataTypes } from "./typed-data/di/typedDataTypes";
 import type { TypedDataContextLoader } from "./typed-data/domain/TypedDataContextLoader";
 import { type ContextModule } from "./ContextModule";
@@ -46,8 +46,8 @@ export class DefaultContextModule implements ContextModule {
       this._container.get<ExternalPluginContextLoader>(
         externalPluginTypes.ExternalPluginContextLoader,
       ),
-      this._container.get<ForwardDomainContextLoader>(
-        forwardDomainTypes.ForwardDomainContextLoader,
+      this._container.get<TrustedNameContextLoader>(
+        trustedNameTypes.TrustedNameContextLoader,
       ),
       this._container.get<NftContextLoader>(nftTypes.NftContextLoader),
       this._container.get<TokenContextLoader>(tokenTypes.TokenContextLoader),

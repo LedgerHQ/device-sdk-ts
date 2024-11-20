@@ -99,8 +99,8 @@ describe("DefaultContextModule", () => {
       .mockResolvedValueOnce(responses[0])
       .mockResolvedValueOnce(responses[1]);
     const contextModule = new DefaultContextModule({
-      loaders: [loader, { load: jest.fn() }, loader],
-      typedDataLoader,
+      ...defaultContextModuleConfig,
+      customLoaders: [loader, { load: jest.fn() }, loader],
     });
 
     const res = await contextModule.getContext({
@@ -119,8 +119,8 @@ describe("DefaultContextModule", () => {
       .mockResolvedValueOnce(responses[0])
       .mockResolvedValueOnce(responses[1]);
     const contextModule = new DefaultContextModule({
-      loaders: [loader, { load: jest.fn() }, loader],
-      typedDataLoader,
+      ...defaultContextModuleConfig,
+      customLoaders: [loader, { load: jest.fn() }, loader],
     });
 
     const res = await contextModule.getContext({
@@ -136,8 +136,8 @@ describe("DefaultContextModule", () => {
 
   it("getField not implemented", async () => {
     const contextModule = new DefaultContextModule({
-      loaders: [{ load: jest.fn() }],
-      typedDataLoader,
+      ...defaultContextModuleConfig,
+      customLoaders: [{ load: jest.fn() }],
     });
 
     const res = await contextModule.getContext({

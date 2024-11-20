@@ -1,21 +1,24 @@
 import { inject, injectable } from "inversify";
 
-import type { ForwardDomainDataSource } from "@/forward-domain/data/ForwardDomainDataSource";
-import { forwardDomainTypes } from "@/forward-domain/di/forwardDomainTypes";
 import { ContextLoader } from "@/shared/domain/ContextLoader";
 import {
   ClearSignContext,
   ClearSignContextType,
 } from "@/shared/model/ClearSignContext";
-import { TransactionContext } from "@/shared/model/TransactionContext";
+import {
+  TransactionContext,
+  TransactionFieldContext,
+} from "@/shared/model/TransactionContext";
+import type { TrustedNameDataSource } from "@/trusted-name/data/TrustedNameDataSource";
+import { trustedNameTypes } from "@/trusted-name/di/trustedNameTypes";
 
 @injectable()
-export class ForwardDomainContextLoader implements ContextLoader {
-  private _dataSource: ForwardDomainDataSource;
+export class TrustedNameContextLoader implements ContextLoader {
+  private _dataSource: TrustedNameDataSource;
 
   constructor(
-    @inject(forwardDomainTypes.ForwardDomainDataSource)
-    dataSource: ForwardDomainDataSource,
+    @inject(trustedNameTypes.TrustedNameDataSource)
+    dataSource: TrustedNameDataSource,
   ) {
     this._dataSource = dataSource;
   }
@@ -33,9 +36,7 @@ export class ForwardDomainContextLoader implements ContextLoader {
       return [
         {
           type: ClearSignContextType.ERROR,
-          error: new Error(
-            "[ContextModule] ForwardDomainLoader: invalid domain",
-          ),
+          error: new Error("[ContextModule] TrustedNameLoader: invalid domain"),
         },
       ];
     }
@@ -52,11 +53,35 @@ export class ForwardDomainContextLoader implements ContextLoader {
           error: error,
         }),
         Right: (value): ClearSignContext => ({
-          type: ClearSignContextType.DOMAIN_NAME,
+          type: ClearSignContextType.TRUSTED_NAME,
           payload: value,
         }),
       }),
     ];
+  }
+
+  async loadField(
+    field: TransactionFieldContext,
+  ): Promise<ClearSignContext | null> {
+    if (field.type !== ClearSignContextType.TRUSTED_NAME) {
+      return null;
+    }
+    const payload = await this._dataSource.getTrustedNamePayload({
+      address: field.address,
+      challenge: field.challenge,
+      types: field.types,
+      sources: field.sources,
+    });
+    return payload.caseOf({
+      Left: (error): ClearSignContext => ({
+        type: ClearSignContextType.ERROR,
+        error,
+      }),
+      Right: (value): ClearSignContext => ({
+        type: ClearSignContextType.TRUSTED_NAME,
+        payload: value,
+      }),
+    });
   }
 
   private isDomainValid(domain: string) {

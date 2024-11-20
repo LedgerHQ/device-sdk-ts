@@ -60,7 +60,7 @@ describe("ProvideTransactionContextTask", () => {
     afterEach(() => {
       jest.restoreAllMocks();
     });
-    it("should send relative commands when receiving ClearSignContexts of type not domainName", async () => {
+    it("should send relative commands when receiving ClearSignContexts of type not trustedName", async () => {
       api.sendCommand.mockResolvedValue(successResult);
       // GIVEN
       const task = new ProvideTransactionContextTask(api, args);

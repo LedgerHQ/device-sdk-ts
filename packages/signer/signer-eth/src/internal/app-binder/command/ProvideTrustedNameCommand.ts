@@ -1,4 +1,4 @@
-// https://github.com/LedgerHQ/app-ethereum/blob/develop/doc/ethapp.adoc#provide-domain-name
+// https://github.com/LedgerHQ/app-ethereum/blob/develop/doc/ethapp.adoc#provide-trusted-name
 import {
   type Apdu,
   ApduBuilder,
@@ -11,7 +11,7 @@ import {
   GlobalCommandErrorHandler,
 } from "@ledgerhq/device-management-kit";
 
-export type ProvideDomainNameCommandArgs = {
+export type ProvideTrustedNameCommandArgs = {
   data: Uint8Array;
   isFirstChunk: boolean;
 };
@@ -22,12 +22,12 @@ export type ProvideDomainNameCommandArgs = {
 export const PAYLOAD_LENGTH_BYTES = 2;
 
 /**
- * The command that provides a chunk of the domain name to the device.
+ * The command that provides a chunk of the trusted name to the device.
  */
-export class ProvideDomainNameCommand
-  implements Command<void, ProvideDomainNameCommandArgs>
+export class ProvideTrustedNameCommand
+  implements Command<void, ProvideTrustedNameCommandArgs>
 {
-  constructor(private readonly args: ProvideDomainNameCommandArgs) {}
+  constructor(private readonly args: ProvideTrustedNameCommandArgs) {}
 
   getApdu(): Apdu {
     const apduBuilderArgs: ApduBuilderArgs = {
