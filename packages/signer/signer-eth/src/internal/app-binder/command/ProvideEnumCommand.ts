@@ -30,7 +30,7 @@ export class ProvideEnumCommand
   getApdu(): Apdu {
     const ProvideEnumArgs: ApduBuilderArgs = {
       cla: 0xe0,
-      ins: 0x99, // FIXME: TBD
+      ins: 0x24,
       p1: this.args.isFirstChunk ? 0x01 : 0x00,
       p2: 0x00,
     };

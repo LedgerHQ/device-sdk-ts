@@ -1,17 +1,22 @@
 import {
+  type ClearSignContextReference,
   type ClearSignContextSuccess,
   ClearSignContextType,
+  type ContextModule,
 } from "@ledgerhq/context-module";
 import {
+  bufferToHexaString,
   type CommandErrorResult,
   type CommandResult,
   CommandResultFactory,
+  CommandResultStatus,
   type InternalApi,
   InvalidStatusWordError,
   isSuccessCommandResult,
 } from "@ledgerhq/device-management-kit";
 import { Just, type Maybe, Nothing } from "purify-ts";
 
+import { GetChallengeCommand } from "@internal/app-binder/command/GetChallengeCommand";
 import { ProvideEnumCommand } from "@internal/app-binder/command/ProvideEnumCommand";
 import {
   ProvideNFTInformationCommand,
@@ -24,29 +29,30 @@ import {
 import { ProvideTransactionFieldDescriptionCommand } from "@internal/app-binder/command/ProvideTransactionFieldDescriptionCommand";
 import { ProvideTransactionInformationCommand } from "@internal/app-binder/command/ProvideTransactionInformationCommand";
 import { ProvideTrustedNameCommand } from "@internal/app-binder/command/ProvideTrustedNameCommand";
-import {
-  SetPluginCommand,
-  type SetPluginCommandErrorCodes,
-} from "@internal/app-binder/command/SetPluginCommand";
 import { StoreTransactionCommand } from "@internal/app-binder/command/StoreTransactionCommand";
 import { PayloadUtils } from "@internal/shared/utils/PayloadUtils";
+import { type TransactionParserService } from "@internal/transaction/service/parser/TransactionParserService";
 
 import {
   SendCommandInChunksTask,
   type SendCommandInChunksTaskArgs,
 } from "./SendCommandInChunksTask";
 
+export type GenericContext = {
+  readonly transactionInfo: string;
+  readonly transactionFields: ClearSignContextSuccess[];
+};
+
 export type ProvideTransactionGenericContextTaskArgs = {
-  serializedTransaction: Uint8Array;
-  transactionInfo: Uint8Array;
-  transactionFieldDescription: Record<string, string>;
-  metadatas: Record<string, ClearSignContextSuccess>;
+  readonly contextModule: ContextModule;
+  readonly transactionParser: TransactionParserService;
+  readonly chainId: number;
+  readonly serializedTransaction: Uint8Array;
+  readonly context: GenericContext;
 };
 
 export type ProvideTransactionGenericContextTaskErrorCodes =
-  | void
-  | SetPluginCommandErrorCodes
-  | ProvideNFTInformationCommandErrorCodes;
+  void | ProvideNFTInformationCommandErrorCodes;
 
 export class ProvideTransactionGenericContextTask {
   constructor(
@@ -72,43 +78,88 @@ export class ProvideTransactionGenericContextTask {
     }
 
     // Provide the transaction information
-    const transactionInfoResult = await new SendCommandInChunksTask(this.api, {
-      data: this.args.transactionInfo,
-      commandFactory: (args) =>
+    const transactionInfoResult = await this.sendInChunks(
+      this.args.context.transactionInfo,
+      (args) =>
         new ProvideTransactionInformationCommand({
           data: args.chunkedData,
           isFirstChunk: args.isFirstChunk,
         }),
-    }).run();
+    );
 
     if (!isSuccessCommandResult(transactionInfoResult)) {
       return Just(transactionInfoResult);
     }
 
-    // Provide the transaction field description and metadata
-    // The metadata should be provided first if it exists
-    for (const key of Object.keys(this.args.transactionFieldDescription)) {
-      if (this.args.metadatas[key]) {
-        const metadata = this.args.metadatas[key];
-        const metadataResult = await this.provideContext(metadata);
-
-        if (!isSuccessCommandResult(metadataResult)) {
-          return Just(metadataResult);
+    // Provide the transaction field description and according metadata reference
+    for (const field of this.args.context.transactionFields) {
+      if (field.reference !== undefined) {
+        const provideReferenceResult = await this.provideContextReference(
+          field.reference,
+        );
+        if (provideReferenceResult.isJust()) {
+          return provideReferenceResult;
         }
       }
 
-      const transactionFieldResult = await this.provideContext({
-        type: ClearSignContextType.TRANSACTION_FIELD_DESCRIPTION,
-        // key is a keyof typeof this.args.transactionFieldDescription
-        // so it is safe to use it as a key to access the value of the object
-        payload: this.args.transactionFieldDescription[key]!,
-      });
-
+      const transactionFieldResult = await this.provideContext({ ...field });
       if (!isSuccessCommandResult(transactionFieldResult)) {
         return Just(transactionFieldResult);
       }
     }
 
+    return Nothing;
+  }
+
+  async provideContextReference(
+    reference: ClearSignContextReference,
+  ): Promise<
+    Maybe<CommandErrorResult<ProvideTransactionGenericContextTaskErrorCodes>>
+  > {
+    const values = this.args.transactionParser.extractValue(
+      this.args.serializedTransaction,
+      reference.valuePath,
+    );
+    if (values.isLeft()) {
+      return Just({
+        status: CommandResultStatus.Error,
+        error: new InvalidStatusWordError(
+          "The clear sign context reference contains a path not found in that transaction",
+        ),
+      });
+    }
+    for (const value of values.unsafeCoerce()) {
+      const address = bufferToHexaString(value.slice(0, 20));
+      let context;
+      if (reference.type === ClearSignContextType.TRUSTED_NAME) {
+        const getChallengeResult = await this.api.sendCommand(
+          new GetChallengeCommand(),
+        );
+        if (!isSuccessCommandResult(getChallengeResult)) {
+          return Just(getChallengeResult);
+        }
+        context = await this.args.contextModule.getContext({
+          type: reference.type,
+          chainId: this.args.chainId,
+          address,
+          challenge: getChallengeResult.data.challenge,
+          types: reference.types,
+          sources: reference.sources,
+        });
+      } else {
+        context = await this.args.contextModule.getContext({
+          type: reference.type,
+          chainId: this.args.chainId,
+          address,
+        });
+      }
+      if (context.type !== ClearSignContextType.ERROR) {
+        const provideReferenceResult = await this.provideContext(context);
+        if (!isSuccessCommandResult(provideReferenceResult)) {
+          return Just(provideReferenceResult);
+        }
+      }
+    }
     return Nothing;
   }
 
@@ -130,20 +181,15 @@ export class ProvideTransactionGenericContextTask {
     >
   > {
     switch (type) {
-      case ClearSignContextType.PLUGIN: {
-        return await this.api.sendCommand(new SetPluginCommand({ payload }));
-      }
-      case ClearSignContextType.NFT: {
+      case ClearSignContextType.NFT:
         return await this.api.sendCommand(
           new ProvideNFTInformationCommand({ payload }),
         );
-      }
-      case ClearSignContextType.TOKEN: {
+      case ClearSignContextType.TOKEN:
         return await this.api.sendCommand(
           new ProvideTokenInformationCommand({ payload }),
         );
-      }
-      case ClearSignContextType.TRUSTED_NAME: {
+      case ClearSignContextType.TRUSTED_NAME:
         return this.sendInChunks(
           payload,
           (args) =>
@@ -152,8 +198,7 @@ export class ProvideTransactionGenericContextTask {
               isFirstChunk: args.isFirstChunk,
             }),
         );
-      }
-      case ClearSignContextType.ENUM: {
+      case ClearSignContextType.ENUM:
         return this.sendInChunks(
           payload,
           (args) =>
@@ -162,8 +207,7 @@ export class ProvideTransactionGenericContextTask {
               isFirstChunk: args.isFirstChunk,
             }),
         );
-      }
-      case ClearSignContextType.TRANSACTION_FIELD_DESCRIPTION: {
+      case ClearSignContextType.TRANSACTION_FIELD_DESCRIPTION:
         return this.sendInChunks(
           payload,
           (args) =>
@@ -172,24 +216,14 @@ export class ProvideTransactionGenericContextTask {
               isFirstChunk: args.isFirstChunk,
             }),
         );
-      }
-      case ClearSignContextType.TRANSACTION_INFO: {
-        return this.sendInChunks(
-          payload,
-          (args) =>
-            new ProvideTransactionInformationCommand({
-              data: args.chunkedData,
-              isFirstChunk: args.isFirstChunk,
-            }),
-        );
-      }
-      case ClearSignContextType.EXTERNAL_PLUGIN: {
+      case ClearSignContextType.TRANSACTION_INFO:
+      case ClearSignContextType.PLUGIN:
+      case ClearSignContextType.EXTERNAL_PLUGIN:
         return CommandResultFactory({
           error: new InvalidStatusWordError(
-            "The context type [EXTERNAL_PLUGIN] is not valid here",
+            `The context type [${type}] is not valid as a transaction field or metadata`,
           ),
         });
-      }
       default: {
         const uncoveredType: never = type;
         return CommandResultFactory({
