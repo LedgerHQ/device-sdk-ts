@@ -1,5 +1,6 @@
 import { inject, injectable } from "inversify";
 
+import type { LoggerPublisherService } from "@api/logger-publisher/service/LoggerPublisherService";
 import type {
   LocalConfigDataSource,
   RemoteConfigDataSource,
@@ -11,7 +12,6 @@ import {
   RemoteConfigFailure,
 } from "@internal/config/model/Errors";
 import { loggerTypes } from "@internal/logger-publisher/di/loggerTypes";
-import type { LoggerPublisherService } from "@internal/logger-publisher/service/LoggerPublisherService";
 
 import { ConfigService } from "./ConfigService";
 

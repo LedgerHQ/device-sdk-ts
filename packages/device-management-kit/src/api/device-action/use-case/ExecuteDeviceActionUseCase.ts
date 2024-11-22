@@ -6,10 +6,10 @@ import {
   ExecuteDeviceActionReturnType,
 } from "@api/device-action/DeviceAction";
 import { DmkError } from "@api/Error";
+import { LoggerPublisherService } from "@api/logger-publisher/service/LoggerPublisherService";
 import { deviceSessionTypes } from "@internal/device-session/di/deviceSessionTypes";
 import type { DeviceSessionService } from "@internal/device-session/service/DeviceSessionService";
 import { loggerTypes } from "@internal/logger-publisher/di/loggerTypes";
-import { LoggerPublisherService } from "@internal/logger-publisher/service/LoggerPublisherService";
 
 export type ExecuteDeviceActionUseCaseArgs<
   Output,

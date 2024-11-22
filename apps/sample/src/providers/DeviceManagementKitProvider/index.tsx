@@ -1,13 +1,18 @@
 import React, { useCallback, useEffect, useState } from "react";
 import { createContext, type PropsWithChildren, useContext } from "react";
 import {
-  BuiltinTransports,
   ConsoleLogger,
   type DeviceManagementKit,
   DeviceManagementKitBuilder,
   WebLogsExporterLogger,
 } from "@ledgerhq/device-management-kit";
 import { FlipperDmkLogger } from "@ledgerhq/device-management-kit-flipper-plugin-client";
+import {
+  mockserverIdentifier,
+  mockserverTransportFactory,
+} from "@ledgerhq/device-transport-kit-mockserver";
+import { webBleTransportFactory } from "@ledgerhq/device-transport-kit-web-ble";
+import { webHidTransportFactory } from "@ledgerhq/device-transport-kit-web-hid";
 
 import { useHasChanged } from "@/hooks/useHasChanged";
 import { useDmkConfigContext } from "@/providers/DmkConfig";
@@ -17,8 +22,8 @@ const LogsExporterContext = createContext<WebLogsExporterLogger | null>(null);
 
 function buildDefaultDmk(logsExporter: WebLogsExporterLogger) {
   return new DeviceManagementKitBuilder()
-    .addTransport(BuiltinTransports.USB)
-    .addTransport(BuiltinTransports.BLE)
+    .addTransport(webHidTransportFactory)
+    .addTransport(webBleTransportFactory)
     .addLogger(new ConsoleLogger())
     .addLogger(logsExporter)
     .addLogger(new FlipperDmkLogger())
@@ -27,7 +32,7 @@ function buildDefaultDmk(logsExporter: WebLogsExporterLogger) {
 
 function buildMockDmk(url: string, logsExporter: WebLogsExporterLogger) {
   return new DeviceManagementKitBuilder()
-    .addTransport(BuiltinTransports.MOCK_SERVER)
+    .addTransport(mockserverTransportFactory)
     .addLogger(new ConsoleLogger())
     .addLogger(logsExporter)
     .addLogger(new FlipperDmkLogger())
@@ -40,7 +45,7 @@ export const DmkProvider: React.FC<PropsWithChildren> = ({ children }) => {
     state: { transport, mockServerUrl },
   } = useDmkConfigContext();
 
-  const mockServerEnabled = transport === BuiltinTransports.MOCK_SERVER;
+  const mockServerEnabled = transport === mockserverIdentifier;
   const [state, setState] = useState(() => {
     const logsExporter = new WebLogsExporterLogger();
     const dmk = mockServerEnabled

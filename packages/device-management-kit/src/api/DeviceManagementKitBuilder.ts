@@ -4,8 +4,7 @@ import {
 } from "@internal/manager-api/model/Const";
 
 import { type LoggerSubscriberService } from "./logger-subscriber/service/LoggerSubscriberService";
-import { type Transport } from "./transport/model/Transport";
-import { type BuiltinTransports } from "./transport/model/TransportIdentifier";
+import { type TransportFactory } from "./transport/model/Transport";
 import { DeviceManagementKit } from "./DeviceManagementKit";
 import { type DmkConfig } from "./DmkConfig";
 
@@ -16,8 +15,8 @@ import { type DmkConfig } from "./DmkConfig";
  * ```
  * const dmk = new LedgerDeviceManagementKitBuilder()
  *  .setStub(false)
- *  .addTransport(BuiltinTransports.USB)
- *  .addCustomTransport(new MyTransport())
+ *  .addTransport((args) => transportFactory(args))
+ *  .addTransport(transportFactory)
  *  .addLogger(myLogger)
  *  .build();
  * ```
@@ -25,8 +24,7 @@ import { type DmkConfig } from "./DmkConfig";
 export class DeviceManagementKitBuilder {
   private stub = false;
   private readonly loggers: LoggerSubscriberService[] = [];
-  private readonly transports: BuiltinTransports[] = [];
-  private readonly customTransports: Transport[] = [];
+  private readonly transports: TransportFactory[] = [];
   private config: DmkConfig = {
     managerApiUrl: DEFAULT_MANAGER_API_BASE_URL,
     mockUrl: DEFAULT_MOCK_SERVER_BASE_URL,
@@ -36,7 +34,6 @@ export class DeviceManagementKitBuilder {
     return new DeviceManagementKit({
       stub: this.stub,
       transports: this.transports,
-      customTransports: this.customTransports,
       loggers: this.loggers,
       config: this.config,
     });
@@ -47,13 +44,8 @@ export class DeviceManagementKitBuilder {
     return this;
   }
 
-  addTransport(transport: BuiltinTransports): DeviceManagementKitBuilder {
+  addTransport(transport: TransportFactory): DeviceManagementKitBuilder {
     this.transports.push(transport);
-    return this;
-  }
-
-  addCustomTransport(transport: Transport): DeviceManagementKitBuilder {
-    this.customTransports.push(transport);
     return this;
   }
 

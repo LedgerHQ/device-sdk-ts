@@ -1,8 +1,8 @@
 import { ContainerModule, type interfaces } from "inversify";
 
+import { type LoggerPublisherService } from "@api/logger-publisher/service/LoggerPublisherService";
 import { type LoggerSubscriberService } from "@api/logger-subscriber/service/LoggerSubscriberService";
 import { DefaultLoggerPublisherService } from "@internal/logger-publisher/service/DefaultLoggerPublisherService";
-import { type LoggerPublisherService } from "@internal/logger-publisher/service/LoggerPublisherService";
 
 import { loggerTypes } from "./loggerTypes";
 

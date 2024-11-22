@@ -1,19 +1,19 @@
 # Differences with LedgerJS
 
-Device management kit aim to replace LedgerJS libraries, mainly `hw-app-XXX` and `transport-XXX` libraries
+Device management kit aims to replace LedgerJS libraries, mainly `hw-app-XXX` and `hw-transport-XXX` libraries
 
 ## Current Problems
 
 Ledger JS libraries where initially made for **Ledger Live** applications. As Ledger Live is a pretty old project (> 7 years),
 we have inevitably a big technical debt. Moreover time make that some part of the logic are today hard to understand and to maintain.
 
-Moreover, some device behavior are not well handled by the libraries. For example, opening an application on the device will cause unexpected disconnection.
-Another feedback we have learnt from partners (software wallets) is that we have a lack of simplicity in the libraries, it require low level knowledge to use them (ex: APDU concept).
+Some device behavior are not correctly handled by the libraries, for example opening an application on the device will cause unexpected disconnection.
+Another feedback we have learnt from partners (software wallets) is that we have a lack of simplicity in the libraries, it requires low level knowledge to use them (ex: APDU concept).
 
 ## Target
 
 LedgerJS was intended for Ledger Live. It was not designed to be used by third party developers.
-With DMK we are targeting **third party developers first**.
+With the Device Management Kit we are targeting **third party developers first**.
 
 ## Abstract complexity
 

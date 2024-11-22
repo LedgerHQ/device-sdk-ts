@@ -38,7 +38,7 @@ jobs:
   checks:
     name: Run health check and unit tests
     needs: [danger]
-    runs-on: ${{ github.event.pull_request.head.repo.fork == 'true' && 'ubuntu-latest' || 'ledgerhq-device-sdk' }}
+    runs-on: ${{ !github.event.pull_request.head.repo.fork && 'ledgerhq-device-sdk' || 'ubuntu-latest' }}
     steps:
       - uses: actions/checkout@v4
 

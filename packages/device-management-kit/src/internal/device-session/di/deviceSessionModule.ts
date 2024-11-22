@@ -1,20 +1,16 @@
 import { ContainerModule, type interfaces } from "inversify";
 
-import { type ApduReceiverService } from "@internal/device-session/service/ApduReceiverService";
-import { type ApduSenderService } from "@internal/device-session/service/ApduSenderService";
-import {
-  type DefaultApduReceiverConstructorArgs,
-  DefaultApduReceiverService,
-} from "@internal/device-session/service/DefaultApduReceiverService";
-import {
-  DefaultApduSenderService,
-  type DefaultApduSenderServiceConstructorArgs,
-} from "@internal/device-session/service/DefaultApduSenderService";
+import { type ApduReceiverService } from "@api/device-session/service/ApduReceiverService";
+import { type ApduReceiverConstructorArgs } from "@api/device-session/service/ApduReceiverService";
+import { type ApduSenderService } from "@api/device-session/service/ApduSenderService";
+import { type ApduSenderServiceConstructorArgs } from "@api/device-session/service/ApduSenderService";
+import { type LoggerPublisherService } from "@api/logger-publisher/service/LoggerPublisherService";
+import { DefaultApduReceiverService } from "@internal/device-session/service/DefaultApduReceiverService";
+import { DefaultApduSenderService } from "@internal/device-session/service/DefaultApduSenderService";
 import { DefaultDeviceSessionService } from "@internal/device-session/service/DefaultDeviceSessionService";
 import { CloseSessionsUseCase } from "@internal/device-session/use-case/CloseSessionsUseCase";
 import { GetDeviceSessionStateUseCase } from "@internal/device-session/use-case/GetDeviceSessionStateUseCase";
 import { loggerTypes } from "@internal/logger-publisher/di/loggerTypes";
-import { type LoggerPublisherService } from "@internal/logger-publisher/service/LoggerPublisherService";
 import { StubUseCase } from "@root/src/di.stub";
 
 import { deviceSessionTypes } from "./deviceSessionTypes";
@@ -43,7 +39,7 @@ export const deviceSessionModuleFactory = (
           (name: string) => LoggerPublisherService
         >(loggerTypes.LoggerPublisherServiceFactory);
 
-        return (args: DefaultApduSenderServiceConstructorArgs) => {
+        return (args: ApduSenderServiceConstructorArgs) => {
           return new DefaultApduSenderService(args, logger);
         };
       });
@@ -55,7 +51,7 @@ export const deviceSessionModuleFactory = (
           (name: string) => LoggerPublisherService
         >(loggerTypes.LoggerPublisherServiceFactory);
 
-        return (args: DefaultApduReceiverConstructorArgs = {}) => {
+        return (args: ApduReceiverConstructorArgs = {}) => {
           return new DefaultApduReceiverService(args, logger);
         };
       });

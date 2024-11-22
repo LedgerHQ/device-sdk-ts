@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useState } from "react";
-import { BuiltinTransports } from "@ledgerhq/device-management-kit";
 import { FlipperPluginManager } from "@ledgerhq/device-management-kit-flipper-plugin-client";
+import { mockserverIdentifier } from "@ledgerhq/device-transport-kit-mockserver";
+import { webHidIdentifier } from "@ledgerhq/device-transport-kit-web-hid";
 import {
   Button,
   Divider,
@@ -47,15 +48,15 @@ export const Header = () => {
       type: "set_transport",
       payload: {
         transport:
-          transport === BuiltinTransports.MOCK_SERVER
-            ? BuiltinTransports.USB
-            : BuiltinTransports.MOCK_SERVER,
+          transport === mockserverIdentifier
+            ? webHidIdentifier
+            : mockserverIdentifier,
       },
     });
   }, [dispatch, transport]);
   const [mockServerStateUrl, setMockServerStateUrl] =
     useState<string>(mockServerUrl);
-  const mockServerEnabled = transport === BuiltinTransports.MOCK_SERVER;
+  const mockServerEnabled = transport === mockserverIdentifier;
 
   const validateServerUrl = useCallback(
     () =>

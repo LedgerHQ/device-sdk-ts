@@ -16,7 +16,7 @@ const config = {
   // metafile: true,
 };
 
-const { entryPoints, tsconfig } = argv;
+const { entryPoints, tsconfig, platform } = argv;
 
 if (!entryPoints) {
   console.error(chalk.red("Entry points are required"));
@@ -92,8 +92,14 @@ const getNodeContext = async () => {
 const watch = async () => {
   const browserContext = await getBrowserContext();
   const nodeContext = await getNodeContext();
-  await browserContext.watch();
-  await nodeContext.watch();
+  if (platform === "web") {
+    await browserContext.watch();
+  } else if (platform === "node") {
+    await nodeContext.watch();
+  } else {
+    await browserContext.watch();
+    await nodeContext.watch();
+  }
 };
 
 watch().catch((e) => {

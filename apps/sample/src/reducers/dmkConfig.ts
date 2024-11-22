@@ -1,15 +1,16 @@
 import { type Reducer } from "react";
-import { BuiltinTransports } from "@ledgerhq/device-management-kit";
+import { type TransportIdentifier } from "@ledgerhq/device-management-kit";
+import { webHidIdentifier } from "@ledgerhq/device-transport-kit-web-hid";
 
 export type DmkConfigState = {
   mockServerUrl: string;
-  transport: BuiltinTransports;
+  transport: TransportIdentifier;
 };
 
 type SetTransportAction = {
   type: "set_transport";
   payload: {
-    transport: BuiltinTransports;
+    transport: string;
   };
 };
 
@@ -24,9 +25,7 @@ export type DmkConfigAction = SetTransportAction | SetMockServerUrlAction;
 
 export const DmkConfigInitialState: DmkConfigState = {
   mockServerUrl: "http://127.0.0.1:8080/",
-  transport:
-    (process.env.Dmk_CONFIG_TRANSPORT as BuiltinTransports) ||
-    BuiltinTransports.USB,
+  transport: process.env.Dmk_CONFIG_TRANSPORT || webHidIdentifier,
 };
 
 export const dmkConfigReducer: Reducer<DmkConfigState, DmkConfigAction> = (

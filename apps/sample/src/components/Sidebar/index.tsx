@@ -1,6 +1,6 @@
 "use client";
 import React, { useCallback, useEffect, useState } from "react";
-import { BuiltinTransports } from "@ledgerhq/device-management-kit";
+import { mockserverIdentifier } from "@ledgerhq/device-transport-kit-mockserver";
 import { Box, Flex, IconsLegacy, Link, Text } from "@ledgerhq/react-ui";
 import { useRouter } from "next/navigation";
 import styled, { type DefaultTheme } from "styled-components";
@@ -82,7 +82,7 @@ export const Sidebar: React.FC = () => {
 
   const router = useRouter();
   return (
-    <Root mockServerEnabled={transport === BuiltinTransports.MOCK_SERVER}>
+    <Root mockServerEnabled={transport === mockserverIdentifier}>
       <Link
         onClick={() => router.push("/")}
         mb={8}
@@ -92,7 +92,7 @@ export const Sidebar: React.FC = () => {
         }}
       >
         Ledger Device Management Kit
-        {transport === BuiltinTransports.MOCK_SERVER && <span> (MOCKED)</span>}
+        {transport === mockserverIdentifier && <span> (MOCKED)</span>}
       </Link>
 
       <Subtitle variant={"tiny"}>
