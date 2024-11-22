@@ -52,7 +52,7 @@ jobs:
       - name: Tests
         id: unit-tests
         if: steps.changes.outputs.status > 0 && success()
-        run: pnpm test:coverage -- --maxWorkers=50%
+        run: pnpm test:coverage
 
       - name: Create PR
         if: steps.changes.outputs.status > 0 && success()
