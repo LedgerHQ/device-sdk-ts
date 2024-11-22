@@ -1,11 +1,10 @@
 import { injectable } from "inversify";
 
+import { LoggerPublisherService } from "@api/logger-publisher/service/LoggerPublisherService";
 import { LogLevel } from "@api/logger-subscriber/model/LogLevel";
 import { LogSubscriberOptions } from "@api/logger-subscriber/model/LogSubscriberOptions";
 import { LoggerSubscriberService } from "@api/logger-subscriber/service/LoggerSubscriberService";
 import { LogPublisherOptions } from "@internal/logger-publisher/model/LogPublisherOptions";
-
-import { LoggerPublisherService } from "./LoggerPublisherService";
 
 @injectable()
 export class DefaultLoggerPublisherService implements LoggerPublisherService {

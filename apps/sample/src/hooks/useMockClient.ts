@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { MockClient } from "@ledgerhq/device-transport-kit-mock-client";
+import { MockClient } from "@ledgerhq/device-mockserver-client";
 
 export const useMockClient = (url: string): MockClient => {
   const [client, setClient] = useState(new MockClient(url));

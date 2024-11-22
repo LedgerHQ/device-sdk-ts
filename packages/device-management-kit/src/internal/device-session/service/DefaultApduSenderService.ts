@@ -8,30 +8,25 @@ import {
   HEAD_TAG,
   HEAD_TAG_LENGTH,
   INDEX_LENGTH,
-} from "@internal/device-session/data/FramerConst";
+} from "@api/device-session/data/FramerConst";
+import type {
+  ApduSenderService,
+  ApduSenderServiceConstructorArgs,
+} from "@api/device-session/service/ApduSenderService";
+import { FramerUtils } from "@api/device-session/utils/FramerUtils";
+import { LoggerPublisherService } from "@api/logger-publisher/service/LoggerPublisherService";
 import {
   FramerApduError,
   FramerOverflowError,
 } from "@internal/device-session/model/Errors";
 import { Frame } from "@internal/device-session/model/Frame";
 import { FrameHeader } from "@internal/device-session/model/FrameHeader";
-import { FramerUtils } from "@internal/device-session/utils/FramerUtils";
 import { loggerTypes } from "@internal/logger-publisher/di/loggerTypes";
-import { LoggerPublisherService } from "@internal/logger-publisher/service/LoggerPublisherService";
 import { DmkError } from "@root/src/api/Error";
-
-import type { ApduSenderService } from "./ApduSenderService";
-
-export type DefaultApduSenderServiceConstructorArgs = {
-  frameSize: number;
-  channel?: Maybe<Uint8Array>;
-  padding?: boolean;
-};
-
 /**
  * Default implementation of ApduSenderService
  *
- * Split APDU in an array of frames readies to send to a InternalConnectedDevice
+ * Split APDU in an array of frames readies to send to a TransportConnectedDevice
  */
 @injectable()
 export class DefaultApduSenderService implements ApduSenderService {
@@ -53,7 +48,7 @@ export class DefaultApduSenderService implements ApduSenderService {
       frameSize,
       channel = Maybe.zero(),
       padding = false,
-    }: DefaultApduSenderServiceConstructorArgs,
+    }: ApduSenderServiceConstructorArgs,
     @inject(loggerTypes.LoggerPublisherServiceFactory)
     loggerServiceFactory: (tag: string) => LoggerPublisherService,
   ) {

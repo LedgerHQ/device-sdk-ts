@@ -1,11 +1,11 @@
 import { inject, injectable } from "inversify";
 
 import { DeviceSessionId } from "@api/device-session/types";
+import { LoggerPublisherService } from "@api/logger-publisher/service/LoggerPublisherService";
 import { ConnectedDevice } from "@api/transport/model/ConnectedDevice";
 import { deviceSessionTypes } from "@internal/device-session/di/deviceSessionTypes";
 import type { DeviceSessionService } from "@internal/device-session/service/DeviceSessionService";
 import { loggerTypes } from "@internal/logger-publisher/di/loggerTypes";
-import { LoggerPublisherService } from "@internal/logger-publisher/service/LoggerPublisherService";
 
 export type GetConnectedDeviceUseCaseArgs = {
   sessionId: DeviceSessionId;
@@ -36,8 +36,8 @@ export class GetConnectedDeviceUseCase {
     return deviceSessionOrError.caseOf({
       Right: (deviceSession) =>
         new ConnectedDevice({
-          internalConnectedDevice: deviceSession.connectedDevice,
           sessionId: deviceSession.id,
+          transportConnectedDevice: deviceSession.connectedDevice,
         }),
       Left: (error) => {
         this._logger.error("Error getting session", {

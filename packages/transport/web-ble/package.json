@@ -1,0 +1,58 @@
+{
+  "name": "@ledgerhq/device-transport-kit-web-ble",
+  "version": "0.0.1",
+  "license": "Apache-2.0",
+  "private": true,
+  "exports": {
+    ".": {
+      "types": "./lib/types/index.d.ts",
+      "import": "./lib/esm/index.js",
+      "require": "./lib/cjs/index.js"
+    },
+    "./*": {
+      "types": "./lib/types/*",
+      "import": "./lib/esm/*",
+      "require": "./lib/cjs/*"
+    }
+  },
+  "files": [
+    "./lib"
+  ],
+  "scripts": {
+    "prebuild": "rimraf lib",
+    "build": "pnpm lmdk-build --entryPoints src/index.ts,src/**/*.ts --tsconfig tsconfig.prod.json --platform web",
+    "dev": "concurrently \"pnpm watch:builds\" \"pnpm watch:types\"",
+    "watch:builds": "pnpm lmdk-watch --entryPoints src/index.ts,src/**/*.ts --tsconfig tsconfig.prod.json --platform web",
+    "watch:types": "concurrently \"tsc --watch -p tsconfig.prod.json\" \"tsc-alias --watch -p tsconfig.prod.json\"",
+    "lint": "eslint",
+    "lint:fix": "pnpm lint --fix",
+    "postpack": "find . -name '*.tgz' -exec cp {} ../../../dist/ \\; ",
+    "prettier": "prettier . --check",
+    "prettier:fix": "prettier . --write",
+    "typecheck": "tsc --noEmit",
+    "test": "jest --passWithNoTests",
+    "test:watch": "pnpm test -- --watch",
+    "test:coverage": "pnpm test -- --coverage"
+  },
+  "dependencies": {
+    "@sentry/minimal": "^6.19.7",
+    "purify-ts": "^2.1.0",
+    "uuid": "^10.0.0"
+  },
+  "devDependencies": {
+    "@ledgerhq/device-management-kit": "workspace:*",
+    "@ledgerhq/esbuild-tools": "workspace:*",
+    "@ledgerhq/eslint-config-dsdk": "workspace:*",
+    "@ledgerhq/jest-config-dsdk": "workspace:*",
+    "@ledgerhq/prettier-config-dsdk": "workspace:*",
+    "@ledgerhq/tsconfig-dsdk": "workspace:*",
+    "@types/uuid": "^10.0.0",
+    "@types/web-bluetooth": "^0.0.20",
+    "rxjs": "^7.8.1",
+    "ts-node": "^10.9.2"
+  },
+  "peerDependencies": {
+    "@ledgerhq/device-management-kit": "workspace:*",
+    "rxjs": "^7.8.1"
+  }
+}

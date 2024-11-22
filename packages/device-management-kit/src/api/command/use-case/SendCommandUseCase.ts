@@ -2,10 +2,10 @@ import { inject, injectable } from "inversify";
 
 import { Command } from "@api/command/Command";
 import { CommandResult } from "@api/command/model/CommandResult";
+import { type LoggerPublisherService } from "@api/logger-publisher/service/LoggerPublisherService";
 import { deviceSessionTypes } from "@internal/device-session/di/deviceSessionTypes";
 import type { DeviceSessionService } from "@internal/device-session/service/DeviceSessionService";
 import { loggerTypes } from "@internal/logger-publisher/di/loggerTypes";
-import { LoggerPublisherService } from "@internal/logger-publisher/service/LoggerPublisherService";
 
 export type SendCommandUseCaseArgs<Response, ErrorStatusCodes, Args = void> = {
   /**

@@ -145,13 +145,13 @@ export function Command<
             overflowY="scroll"
             data-testid="box_device-commands-responses"
           >
-            {responses.map(({ args, date, response, loading }, index) => (
+            {responses.map(({ args, date, response, loading: l }, index) => (
               <CommandResponse
                 args={args}
                 key={date.toISOString()}
                 date={date}
                 response={response}
-                loading={loading}
+                loading={l}
                 isLatest={index === responses.length - 1}
               />
             ))}

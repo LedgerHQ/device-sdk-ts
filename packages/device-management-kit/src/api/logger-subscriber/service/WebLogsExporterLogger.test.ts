@@ -1,8 +1,7 @@
-import { BuiltinTransports } from "@api/transport/model/TransportIdentifier";
-import { deviceModelStubBuilder } from "@internal/device-model/model/DeviceModel.stub";
+import { deviceModelStubBuilder } from "@api/device-model/model/DeviceModel.stub";
+import { type TransportConnectedDevice } from "@api/transport/model/TransportConnectedDevice";
 import { DeviceSession } from "@internal/device-session/model/DeviceSession";
 import { type ManagerApiService } from "@internal/manager-api/service/ManagerApiService";
-import { type InternalConnectedDevice } from "@internal/transport/model/InternalConnectedDevice";
 
 import { getJSONStringifyReplacer } from "./WebLogsExporterLogger";
 
@@ -22,12 +21,12 @@ describe("getJSONStringifyReplacer", () => {
     const stubDeviceModel = deviceModelStubBuilder();
     const replacer = getJSONStringifyReplacer();
 
-    const connectedDevice: InternalConnectedDevice = {
+    const connectedDevice: TransportConnectedDevice = {
       deviceModel: deviceModelStubBuilder(),
       type: "USB",
       id: "mockedDeviceId",
       sendApdu: jest.fn(),
-      transport: BuiltinTransports.USB,
+      transport: "USB",
     };
 
     const value = new DeviceSession(

@@ -41,7 +41,7 @@ describe("ApduParser", () => {
   });
 
   it("Test zero length", () => {
-    const response: ApduResponse = new ApduResponse({
+    response = new ApduResponse({
       statusCode: STATUS_WORD_SUCCESS,
       data: RESPONSE_LV_ZERO,
     });
