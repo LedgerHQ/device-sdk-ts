@@ -38,8 +38,13 @@ import {
 } from "@internal/app-binder/task/BuildTransactionContextTask";
 import { ProvideTransactionContextTask } from "@internal/app-binder/task/ProvideTransactionContextTask";
 import { type ProvideTransactionContextTaskErrorCodes } from "@internal/app-binder/task/ProvideTransactionContextTask";
+import {
+  type GenericContext,
+  ProvideTransactionGenericContextTask,
+} from "@internal/app-binder/task/ProvideTransactionGenericContextTask";
 import { SendSignTransactionTask } from "@internal/app-binder/task/SendSignTransactionTask";
 import { type TransactionMapperService } from "@internal/transaction/service/mapper/TransactionMapperService";
+import { type TransactionParserService } from "@internal/transaction/service/parser/TransactionParserService";
 
 export type MachineDependencies = {
   readonly getChallenge: () => Promise<
@@ -57,6 +62,17 @@ export type MachineDependencies = {
   readonly provideContext: (arg0: {
     input: {
       clearSignContexts: ClearSignContextSuccess[];
+    };
+  }) => Promise<
+    Maybe<CommandErrorResult<ProvideTransactionContextTaskErrorCodes>>
+  >;
+  readonly provideGenericContext: (arg0: {
+    input: {
+      contextModule: ContextModule;
+      transactionParser: TransactionParserService;
+      chainId: number;
+      serializedTransaction: Uint8Array;
+      context: GenericContext;
     };
   }) => Promise<
     Maybe<CommandErrorResult<ProvideTransactionContextTaskErrorCodes>>
@@ -96,8 +112,13 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
       SignTransactionDAInternalState
     >;
 
-    const { getChallenge, buildContext, provideContext, signTransaction } =
-      this.extractDependencies(internalApi);
+    const {
+      getChallenge,
+      buildContext,
+      provideContext,
+      provideGenericContext,
+      signTransaction,
+    } = this.extractDependencies(internalApi);
 
     return setup({
       types: {
@@ -112,10 +133,15 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
         getChallenge: fromPromise(getChallenge),
         buildContext: fromPromise(buildContext),
         provideContext: fromPromise(provideContext),
+        provideGenericContext: fromPromise(provideGenericContext),
         signTransaction: fromPromise(signTransaction),
       },
       guards: {
         noInternalError: ({ context }) => context._internalState.error === null,
+        isGenericContext: ({ context }) =>
+          context._internalState.clearSignContexts !== null &&
+          typeof (context._internalState.clearSignContexts as GenericContext)
+            .transactionInfo === "string",
       },
       actions: {
         assignErrorFromEvent: assign({
@@ -142,6 +168,7 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
             chainId: null,
             transactionType: null,
             challenge: null,
+            isLegacy: true,
             signature: null,
           },
         };
@@ -240,7 +267,7 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
               challenge: context._internalState.challenge!,
             }),
             onDone: {
-              target: "ProvideContext",
+              target: "BuildContextResultCheck",
               actions: [
                 assign({
                   _internalState: ({ event, context }) => ({
@@ -259,12 +286,24 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
             },
           },
         },
+        BuildContextResultCheck: {
+          always: [
+            {
+              target: "ProvideGenericContext",
+              guard: "isGenericContext",
+            },
+            {
+              target: "ProvideContext",
+            },
+          ],
+        },
         ProvideContext: {
           invoke: {
             id: "provideContext",
             src: "provideContext",
             input: ({ context }) => ({
-              clearSignContexts: context._internalState.clearSignContexts!,
+              clearSignContexts: context._internalState
+                .clearSignContexts as ClearSignContextSuccess[],
             }),
             onDone: {
               actions: assign({
@@ -275,6 +314,44 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
                       error: error.error,
                     }),
                     Nothing: () => context._internalState,
+                  });
+                },
+              }),
+              target: "ProvideContextResultCheck",
+            },
+            onError: {
+              target: "Error",
+              actions: "assignErrorFromEvent",
+            },
+          },
+        },
+        ProvideGenericContext: {
+          invoke: {
+            id: "provideGenericContext",
+            src: "provideGenericContext",
+            input: ({ context }) => ({
+              contextModule: context.input.contextModule,
+              transactionParser: context.input.parser,
+              chainId: context._internalState.chainId!,
+              serializedTransaction:
+                context._internalState.serializedTransaction!,
+              context: context._internalState
+                .clearSignContexts as GenericContext,
+            }),
+            onDone: {
+              actions: assign({
+                _internalState: ({ event, context }) => {
+                  const { isLegacy: _, ...rest } = context._internalState;
+                  return event.output.caseOf({
+                    Just: (error) => ({
+                      ...rest,
+                      isLegacy: false,
+                      error: error.error,
+                    }),
+                    Nothing: () => ({
+                      ...rest,
+                      isLegacy: false,
+                    }),
                   });
                 },
               }),
@@ -317,7 +394,7 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
                 context._internalState.serializedTransaction!,
               chainId: context._internalState.chainId!,
               transactionType: context._internalState.transactionType!,
-              isLegacy: true, // TODO: use ETHEREUM app version to determine if legacy
+              isLegacy: context._internalState.isLegacy,
             }),
             onDone: {
               target: "SignTransactionResultCheck",
@@ -372,7 +449,7 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
       internalApi.sendCommand(new GetChallengeCommand());
     const buildContext = async (arg0: {
       input: BuildTransactionContextTaskArgs;
-    }) => new BuildTransactionContextTask(arg0.input).run();
+    }) => new BuildTransactionContextTask(internalApi, arg0.input).run();
 
     const provideContext = async (arg0: {
       input: {
@@ -381,6 +458,23 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
     }) =>
       new ProvideTransactionContextTask(internalApi, {
         clearSignContexts: arg0.input.clearSignContexts,
+      }).run();
+
+    const provideGenericContext = async (arg0: {
+      input: {
+        contextModule: ContextModule;
+        transactionParser: TransactionParserService;
+        chainId: number;
+        serializedTransaction: Uint8Array;
+        context: GenericContext;
+      };
+    }) =>
+      new ProvideTransactionGenericContextTask(internalApi, {
+        contextModule: arg0.input.contextModule,
+        transactionParser: arg0.input.transactionParser,
+        chainId: arg0.input.chainId,
+        serializedTransaction: arg0.input.serializedTransaction,
+        context: arg0.input.context,
       }).run();
 
     const signTransaction = async (arg0: {
@@ -397,6 +491,7 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
       getChallenge,
       buildContext,
       provideContext,
+      provideGenericContext,
       signTransaction,
     };
   }

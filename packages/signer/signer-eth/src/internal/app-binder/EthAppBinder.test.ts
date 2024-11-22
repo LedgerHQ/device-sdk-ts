@@ -32,6 +32,7 @@ import {
 import { type Signature } from "@api/model/Signature";
 import { type TypedData } from "@api/model/TypedData";
 import { type TransactionMapperService } from "@internal/transaction/service/mapper/TransactionMapperService";
+import { type TransactionParserService } from "@internal/transaction/service/parser/TransactionParserService";
 import { type TypedDataParserService } from "@internal/typed-data/service/TypedDataParserService";
 
 import { GetAddressCommand } from "./command/GetAddressCommand";
@@ -50,6 +51,9 @@ describe("EthAppBinder", () => {
   const mockedMapper: TransactionMapperService = {
     mapTransactionToSubset: jest.fn(),
   } as unknown as TransactionMapperService;
+  const mockedParser: TransactionParserService = {
+    extractValue: jest.fn(),
+  } as unknown as TransactionParserService;
 
   beforeEach(() => {
     jest.clearAllMocks();
@@ -81,6 +85,7 @@ describe("EthAppBinder", () => {
         mockedDmk,
         mockedContextModule,
         mockedMapper,
+        mockedParser,
         "sessionId",
       );
       const { observable } = appBinder.getAddress({
@@ -135,6 +140,7 @@ describe("EthAppBinder", () => {
           mockedDmk,
           mockedContextModule,
           mockedMapper,
+          mockedParser,
           "sessionId",
         );
         appBinder.getAddress(params);
@@ -165,6 +171,7 @@ describe("EthAppBinder", () => {
           mockedDmk,
           mockedContextModule,
           mockedMapper,
+          mockedParser,
           "sessionId",
         );
         appBinder.getAddress(params);
@@ -216,6 +223,7 @@ describe("EthAppBinder", () => {
         mockedDmk,
         mockedContextModule,
         mockedMapper,
+        mockedParser,
         "sessionId",
       );
       const { observable } = appBinder.signTransaction({
@@ -283,6 +291,7 @@ describe("EthAppBinder", () => {
         mockedDmk,
         mockedContextModule,
         mockedMapper,
+        mockedParser,
         "sessionId",
       );
       const { observable } = appBinder.signTransaction({
@@ -350,6 +359,7 @@ describe("EthAppBinder", () => {
         mockedDmk,
         mockedContextModule,
         mockedMapper,
+        mockedParser,
         "sessionId",
       );
       const { observable } = appBinder.signPersonalMessage({
@@ -424,6 +434,7 @@ describe("EthAppBinder", () => {
         mockedDmk,
         mockedContextModule,
         mockedMapper,
+        mockedParser,
         "sessionId",
       );
       const { observable } = appBinder.signTypedData({
