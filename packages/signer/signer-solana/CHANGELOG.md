@@ -1,13 +1,5 @@
 # @ledgerhq/device-signer-kit-solana
 
-## 1.0.1
-
-### Patch Changes
-
-- Updated dependencies []:
-  - @ledgerhq/device-management-kit@0.5.1
-  - @ledgerhq/signer-utils@1.0.2
-
 ## 1.0.0
 
 ### Minor Changes

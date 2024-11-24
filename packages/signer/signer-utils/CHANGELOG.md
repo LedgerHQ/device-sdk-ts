@@ -1,12 +1,5 @@
 # @ledgerhq/signer-utils
 
-## 1.0.2
-
-### Patch Changes
-
-- Updated dependencies []:
-  - @ledgerhq/device-management-kit@0.5.1
-
 ## 1.0.1
 
 ### Patch Changes

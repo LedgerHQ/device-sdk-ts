@@ -1,12 +1,5 @@
 # @ledgerhq/device-management-kit
 
-## 0.5.1
-
-### Patch Changes
-
-- Updated dependencies [[`649bd73`](https://github.com/LedgerHQ/device-sdk-ts/commit/649bd73c85c461c5e226a1ff15cd3087ff1387c9)]:
-  - @ledgerhq/device-transport-kit-mock-client@1.1.0
-
 ## 0.5.0
 
 ### Minor Changes
