@@ -1,3 +1,4 @@
+import { type ContextModuleConfig } from "./config/model/ContextModuleConfig";
 import { type TransactionContext } from "./shared/model/TransactionContext";
 import { type TypedDataContext } from "./shared/model/TypedDataContext";
 import type { TypedDataContextLoader } from "./typed-data/domain/TypedDataContextLoader";
@@ -9,16 +10,23 @@ const contextLoaderStubBuilder = () => {
 
 describe("DefaultContextModule", () => {
   const typedDataLoader: TypedDataContextLoader = { load: jest.fn() };
+  const defaultContextModuleConfig: ContextModuleConfig = {
+    customLoaders: [],
+    defaultLoaders: false,
+    customTypedDataLoader: typedDataLoader,
+    cal: {
+      url: "https://crypto-assets-service.api.ledger.com/v1",
+      mode: "prod",
+      branch: "main",
+    },
+  };
 
   beforeEach(() => {
     jest.restoreAllMocks();
   });
 
   it("should initialize the context module with all the default loaders", async () => {
-    const contextModule = new DefaultContextModule({
-      loaders: [],
-      typedDataLoader,
-    });
+    const contextModule = new DefaultContextModule(defaultContextModuleConfig);
 
     const res = await contextModule.getContexts({} as TransactionContext);
 
@@ -26,10 +34,7 @@ describe("DefaultContextModule", () => {
   });
 
   it("should return an empty array when no loaders", async () => {
-    const contextModule = new DefaultContextModule({
-      loaders: [],
-      typedDataLoader,
-    });
+    const contextModule = new DefaultContextModule(defaultContextModuleConfig);
 
     const res = await contextModule.getContexts({} as TransactionContext);
 
@@ -39,8 +44,8 @@ describe("DefaultContextModule", () => {
   it("should call all fetch method from metadata fetcher", async () => {
     const loader = contextLoaderStubBuilder();
     const contextModule = new DefaultContextModule({
-      loaders: [loader, loader],
-      typedDataLoader,
+      ...defaultContextModuleConfig,
+      customLoaders: [loader, loader],
     });
 
     await contextModule.getContexts({} as TransactionContext);
@@ -62,8 +67,8 @@ describe("DefaultContextModule", () => {
       .mockResolvedValueOnce(responses[0])
       .mockResolvedValueOnce(responses[1]);
     const contextModule = new DefaultContextModule({
-      loaders: [loader, loader],
-      typedDataLoader,
+      ...defaultContextModuleConfig,
+      customLoaders: [loader, loader],
     });
 
     const res = await contextModule.getContexts({} as TransactionContext);
@@ -74,8 +79,8 @@ describe("DefaultContextModule", () => {
 
   it("should call the typed data loader", async () => {
     const contextModule = new DefaultContextModule({
-      loaders: [],
-      typedDataLoader,
+      ...defaultContextModuleConfig,
+      customTypedDataLoader: typedDataLoader,
     });
 
     await contextModule.getTypedDataFilters({} as TypedDataContext);

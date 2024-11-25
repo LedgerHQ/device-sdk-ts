@@ -57,7 +57,7 @@ export const SignerEthProvider: React.FC<PropsWithChildren> = ({
     }
 
     const contextModule = new ContextModuleBuilder()
-      .withConfig({ cal: calConfig })
+      .addCalConfig(calConfig)
       .build();
     const newSigner = new SignerEthBuilder({ dmk, sessionId })
       .withContextModule(contextModule)
