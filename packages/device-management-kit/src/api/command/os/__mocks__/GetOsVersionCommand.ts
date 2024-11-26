@@ -1,7 +1,7 @@
+import { type GetOsVersionResponse } from "@api/command/os/GetOsVersionCommand";
 import { DeviceModelId } from "@api/device/DeviceModel";
-import { type GetOsVersionResponse } from "@api/index";
 
-export const getOsVersionCommandResponseStubBuilder = (
+export const getOsVersionCommandResponseMockBuilder = (
   deviceModelId: DeviceModelId = DeviceModelId.NANO_SP,
   props: Partial<GetOsVersionResponse> = {},
 ): GetOsVersionResponse =>

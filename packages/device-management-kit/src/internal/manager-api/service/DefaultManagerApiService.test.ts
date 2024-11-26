@@ -1,6 +1,6 @@
 import { Left, Right } from "purify-ts";
 
-import { getOsVersionCommandResponseStubBuilder } from "@api/command/os/__mocks__/GetOsVersionCommand";
+import { getOsVersionCommandResponseMockBuilder } from "@api/command/os/__mocks__/GetOsVersionCommand";
 import { DeviceModelId } from "@api/device/DeviceModel";
 import {
   BTC_APP,
@@ -12,7 +12,6 @@ import {
   DEFAULT_MANAGER_API_BASE_URL,
   DEFAULT_MOCK_SERVER_BASE_URL,
 } from "@internal/manager-api//model/Const";
-import { deviceVersionMockBuilder } from "@internal/manager-api/data/__mocks__/GetDeviceVersion";
 import { AxiosManagerApiDataSource } from "@internal/manager-api/data/AxiosManagerApiDataSource";
 import { HttpFetchApiError } from "@internal/manager-api/model/Errors";
 
@@ -83,7 +82,7 @@ describe("ManagerApiService", () => {
   describe("getDeviceVersion", () => {
     it("should call api with the correct parameters", () => {
       // given
-      const deviceInfo = getOsVersionCommandResponseStubBuilder(
+      const deviceInfo = getOsVersionCommandResponseMockBuilder(
         DeviceModelId.STAX,
       );
       const provider = 42;
@@ -96,13 +95,16 @@ describe("ManagerApiService", () => {
   describe("getFirmwareVersion", () => {
     it("should call api with the correct parameters", () => {
       // given
-      const deviceVersion = deviceVersionMockBuilder();
-      const deviceInfo = getOsVersionCommandResponseStubBuilder(
+      const mockGetDeviceVersion = {
+        id: 17,
+        target_id: "857735172",
+      };
+      const deviceInfo = getOsVersionCommandResponseMockBuilder(
         DeviceModelId.STAX,
       );
       const provider = 42;
       // when
-      service.getFirmwareVersion(deviceInfo, deviceVersion, provider);
+      service.getFirmwareVersion(deviceInfo, mockGetDeviceVersion, provider);
       // then
       expect(dataSource.getFirmwareVersion).toHaveBeenCalledWith(
         "1.3.0",

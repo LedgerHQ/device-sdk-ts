@@ -10,21 +10,29 @@ import {
 import {
   DEFAULT_MANAGER_API_BASE_URL,
   DEFAULT_MOCK_SERVER_BASE_URL,
-} from "@internal/manager-api//model/Const";
-import { deviceVersionMockBuilder } from "@internal/manager-api/data/__mocks__/GetDeviceVersion";
-import { firmwareVersionMockBuilder } from "@internal/manager-api/data/__mocks__/GetFirmwareVersion";
+} from "@internal/manager-api/model/Const";
 import { HttpFetchApiError } from "@internal/manager-api/model/Errors";
 
 import { AxiosManagerApiDataSource } from "./AxiosManagerApiDataSource";
 
 jest.mock("axios");
 
+const mockGetDeviceVersion = {
+  id: 17,
+  target_id: "857735172",
+};
+
+const mockGetFirmwareVersion = {
+  id: 361,
+  perso: "perso_11",
+};
+
 describe("AxiosManagerApiDataSource", () => {
-  beforeEach(() => {
-    jest.clearAllMocks();
-  });
   describe("getAppsByHash", () => {
     describe("success cases", () => {
+      afterEach(() => {
+        jest.clearAllMocks();
+      });
       it("with BTC app, should return the metadata", async () => {
         const api = new AxiosManagerApiDataSource({
           managerApiUrl: DEFAULT_MANAGER_API_BASE_URL,
@@ -83,6 +91,9 @@ describe("AxiosManagerApiDataSource", () => {
     });
 
     describe("error cases", () => {
+      afterEach(() => {
+        jest.clearAllMocks();
+      });
       it("should throw an error if the request fails", () => {
         // given
         const api = new AxiosManagerApiDataSource({
@@ -104,22 +115,24 @@ describe("AxiosManagerApiDataSource", () => {
   });
 
   describe("getDeviceVersion", () => {
+    afterEach(() => {
+      jest.clearAllMocks();
+    });
     it("should return a complete device version", () => {
       // given
       const api = new AxiosManagerApiDataSource({
         managerApiUrl: DEFAULT_MANAGER_API_BASE_URL,
         mockUrl: DEFAULT_MOCK_SERVER_BASE_URL,
       });
-      const mockedDeviceVersion = deviceVersionMockBuilder();
       jest
         .spyOn(axios, "get")
-        .mockResolvedValueOnce({ data: mockedDeviceVersion });
+        .mockResolvedValue({ data: mockGetDeviceVersion });
 
       // when
       const response = api.getDeviceVersion("targetId", 42);
 
       // then
-      expect(response).resolves.toEqual(Right(mockedDeviceVersion));
+      expect(response).resolves.toEqual(Right(mockGetDeviceVersion));
     });
     it("should return an error if the request fails", () => {
       // given
@@ -139,22 +152,24 @@ describe("AxiosManagerApiDataSource", () => {
   });
 
   describe("getFirmwareVersion", () => {
+    afterEach(() => {
+      jest.clearAllMocks();
+    });
     it("should return a complete firmware version", () => {
       // given
       const api = new AxiosManagerApiDataSource({
         managerApiUrl: DEFAULT_MANAGER_API_BASE_URL,
         mockUrl: DEFAULT_MOCK_SERVER_BASE_URL,
       });
-      const mockedFirmwareVersion = firmwareVersionMockBuilder();
       jest
         .spyOn(axios, "get")
-        .mockResolvedValueOnce({ data: mockedFirmwareVersion });
+        .mockResolvedValue({ data: mockGetFirmwareVersion });
 
       // when
       const response = api.getFirmwareVersion("versionName", 42, 21);
 
       // then
-      expect(response).resolves.toEqual(Right(mockedFirmwareVersion));
+      expect(response).resolves.toEqual(Right(mockGetFirmwareVersion));
     });
     it("should return an error if the request fails", () => {
       // given

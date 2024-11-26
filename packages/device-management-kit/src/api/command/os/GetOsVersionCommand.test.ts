@@ -5,7 +5,7 @@ import {
 import { DeviceModelId } from "@api/device/DeviceModel";
 import { ApduResponse } from "@api/device-session/ApduResponse";
 
-import { getOsVersionCommandResponseStubBuilder } from "./__mocks__/GetOsVersionCommand";
+import { getOsVersionCommandResponseMockBuilder } from "./__mocks__/GetOsVersionCommand";
 import { GetOsVersionCommand } from "./GetOsVersionCommand";
 
 const GET_OS_VERSION_APDU = Uint8Array.from([0xe0, 0x01, 0x00, 0x00, 0x00]);
@@ -63,7 +63,7 @@ describe("GetOsVersionCommand", () => {
         );
 
         const expected = CommandResultFactory({
-          data: getOsVersionCommandResponseStubBuilder(DeviceModelId.NANO_X),
+          data: getOsVersionCommandResponseMockBuilder(DeviceModelId.NANO_X),
         });
 
         expect(parsed).toStrictEqual(expected);
@@ -78,7 +78,7 @@ describe("GetOsVersionCommand", () => {
         );
 
         const expected = CommandResultFactory({
-          data: getOsVersionCommandResponseStubBuilder(DeviceModelId.NANO_SP),
+          data: getOsVersionCommandResponseMockBuilder(DeviceModelId.NANO_SP),
         });
 
         expect(parsed).toStrictEqual(expected);
@@ -93,7 +93,7 @@ describe("GetOsVersionCommand", () => {
         );
 
         const expected = CommandResultFactory({
-          data: getOsVersionCommandResponseStubBuilder(DeviceModelId.STAX),
+          data: getOsVersionCommandResponseMockBuilder(DeviceModelId.STAX),
         });
 
         expect(parsed).toStrictEqual(expected);
