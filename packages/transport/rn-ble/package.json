@@ -1,8 +1,8 @@
 {
-  "name": "@ledgerhq/device-management-kit",
-  "version": "0.5.1",
-  "private": false,
+  "name": "@ledgerhq/device-transport-kit-rn-ble",
+  "version": "0.0.1",
   "license": "Apache-2.0",
+  "private": true,
   "exports": {
     ".": {
       "types": "./lib/types/index.d.ts",
@@ -17,50 +17,43 @@
   ],
   "scripts": {
     "prebuild": "rimraf lib",
-    "build": "pnpm lmdk-build --entryPoints index.ts,src/**/*.ts --tsconfig tsconfig.prod.json",
+    "build": "pnpm lmdk-build --entryPoints src/index.ts,src/**/*.ts --tsconfig tsconfig.prod.json",
     "dev": "concurrently \"pnpm watch:builds\" \"pnpm watch:types\"",
-    "watch:builds": "pnpm lmdk-watch --entryPoints index.ts,src/**/*.ts --tsconfig tsconfig.prod.json",
+    "watch:builds": "pnpm lmdk-watch --entryPoints src/index.ts,src/**/*.ts --tsconfig tsconfig.prod.json",
     "watch:types": "concurrently \"tsc --watch -p tsconfig.prod.json\" \"tsc-alias --watch -p tsconfig.prod.json\"",
     "lint": "eslint",
     "lint:fix": "pnpm lint --fix",
-    "postpack": "find . -name '*.tgz' -exec cp {} ../../dist/ \\; ",
+    "postpack": "find . -name '*.tgz' -exec cp {} ../../../dist/ \\; ",
     "prettier": "prettier . --check",
     "prettier:fix": "prettier . --write",
-    "test": "jest",
-    "test:watch": "pnpm test -- --watch",
-    "test:coverage": "pnpm test -- --coverage",
     "typecheck": "tsc --noEmit",
-    "module:create": "pnpm hygen core-module with-prompt"
+    "test": "jest --passWithNoTests",
+    "test:watch": "pnpm test -- --watch",
+    "test:coverage": "pnpm test -- --coverage"
   },
   "dependencies": {
     "@sentry/minimal": "^6.19.7",
-    "@statelyai/inspect": "^0.4.0",
-    "axios": "^1.7.9",
-    "inversify": "^6.2.1",
-    "inversify-logger-middleware": "^3.1.0",
-    "isomorphic-ws": "^5.0.0",
     "js-base64": "^3.7.7",
     "purify-ts": "^2.1.0",
-    "reflect-metadata": "^0.2.2",
-    "semver": "^7.6.3",
-    "url": "^0.11.4",
-    "uuid": "^11.0.3",
-    "ws": "^8.18.0",
-    "xstate": "^5.19.1"
-  },
-  "peerDependencies": {
-    "rxjs": "^7.8.1"
+    "uuid": "^10.0.0"
   },
   "devDependencies": {
+    "@ledgerhq/device-management-kit": "workspace:*",
     "@ledgerhq/esbuild-tools": "workspace:*",
     "@ledgerhq/eslint-config-dsdk": "workspace:*",
     "@ledgerhq/jest-config-dsdk": "workspace:*",
     "@ledgerhq/prettier-config-dsdk": "workspace:*",
     "@ledgerhq/tsconfig-dsdk": "workspace:*",
-    "@types/semver": "^7.5.8",
     "@types/uuid": "^10.0.0",
-    "@types/ws": "^8.5.13",
+    "react-native": "^0.76.3",
+    "react-native-ble-plx": "^3.2.1",
     "rxjs": "^7.8.1",
     "ts-node": "^10.9.2"
+  },
+  "peerDependencies": {
+    "@ledgerhq/device-management-kit": "workspace:*",
+    "react-native-ble-plx": "^3.2.1",
+    "react-native": ">0.70",
+    "rxjs": "^7.8.1"
   }
 }

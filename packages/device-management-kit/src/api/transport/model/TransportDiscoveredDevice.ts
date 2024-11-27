@@ -18,4 +18,5 @@ export type TransportDiscoveredDevice = {
   id: DeviceId;
   deviceModel: TransportDeviceModel;
   transport: TransportIdentifier;
+  isNew?: boolean;
 };

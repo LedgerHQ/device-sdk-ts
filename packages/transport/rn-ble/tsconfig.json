@@ -8,13 +8,10 @@
     "moduleResolution": "bundler",
     "emitDeclarationOnly": true,
     "paths": {
-      "@api/*": ["src/api/*"],
-      "@internal/*": ["src/internal/*"],
-      "@root/*": ["./*"]
+      "@api/*": ["./src/api/*"]
     },
-    "experimentalDecorators": true,
-    "resolveJsonModule": true,
-    "skipLibCheck": true
+    "skipLibCheck": true,
+    "resolveJsonModule": true
   },
-  "include": ["src", "index.ts", "jest.*.ts"]
+  "include": ["src", "jest.*.ts"]
 }
