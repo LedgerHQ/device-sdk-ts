@@ -42,6 +42,7 @@
     "axios": "^1.7.7",
     "inversify": "^6.0.3",
     "inversify-logger-middleware": "^3.1.0",
+    "js-base64": "^3.7.7",
     "purify-ts": "^2.1.0",
     "reflect-metadata": "^0.2.2",
     "semver": "^7.6.3",
@@ -61,5 +62,17 @@
     "@types/uuid": "^10.0.0",
     "rxjs": "^7.8.1",
     "ts-node": "^10.9.2"
+  },
+  "peerDependencies": {
+    "react-native": "*",
+    "react-native-ble-plx": "^3.2.1"
+  },
+  "peerDependenciesMeta": {
+    "react-native": {
+      "optional": true
+    },
+    "react-native-ble-plx": {
+      "optional": true
+    }
   }
 }

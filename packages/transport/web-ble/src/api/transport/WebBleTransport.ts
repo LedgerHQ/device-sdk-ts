@@ -364,7 +364,6 @@ export class WebBleTransport implements Transport {
         data: { error },
       });
 
-
       return Left(new OpeningConnectionError(error));
     }
   }

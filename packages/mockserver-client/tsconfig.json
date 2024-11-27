@@ -1,6 +1,5 @@
 {
   "extends": "@ledgerhq/tsconfig-dsdk/tsconfig.sdk",
-  "include": ["src", "index.ts", "jest.*.ts"],
   "compilerOptions": {
     "baseUrl": ".",
     "outDir": "./lib/types",
@@ -13,6 +12,9 @@
       "@internal/*": ["src/internal/*"],
       "@root/*": ["./*"]
     },
-    "resolveJsonModule": true
-  }
+    "experimentalDecorators": true,
+    "resolveJsonModule": true,
+    "skipLibCheck": true
+  },
+  "include": ["src", "index.ts", "jest.*.ts"]
 }

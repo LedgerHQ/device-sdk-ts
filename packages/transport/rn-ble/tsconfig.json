@@ -1,0 +1,19 @@
+{
+  "extends": "@ledgerhq/tsconfig-dsdk/tsconfig.sdk",
+  "compilerOptions": {
+    "baseUrl": ".",
+    "outDir": "./lib/types",
+    "module": "esnext",
+    "target": "esnext",
+    "moduleResolution": "bundler",
+    "emitDeclarationOnly": true,
+    "paths": {
+      "@api/*": ["./src/api/*"]
+    },
+    "noEmit": true,
+    "strict": true,
+    "skipLibCheck": true,
+    "resolveJsonModule": true
+  },
+  "include": ["src", "jest.*.ts"]
+}
