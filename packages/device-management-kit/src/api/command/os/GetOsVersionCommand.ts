@@ -18,7 +18,7 @@ export type GetOsVersionResponse = {
   /**
    * Target identifier.
    */
-  readonly targetId: string;
+  readonly targetId: number;
 
   /**
    * Version of BOLOS on the secure element (SE).
@@ -91,7 +91,10 @@ export class GetOsVersionCommand implements Command<GetOsVersionResponse> {
     }
     const parser = new ApduParser(apduResponse);
 
-    const targetId = parser.encodeToHexaString(parser.extractFieldByLength(4));
+    const targetId = parseInt(
+      parser.encodeToHexaString(parser.extractFieldByLength(4)),
+      16,
+    );
     const seVersion = parser.encodeToString(parser.extractFieldLVEncoded());
     const seFlags = parseInt(
       parser.encodeToHexaString(parser.extractFieldLVEncoded()).toString(),

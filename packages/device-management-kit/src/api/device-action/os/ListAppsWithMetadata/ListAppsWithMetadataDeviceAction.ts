@@ -19,8 +19,8 @@ import {
   XStateDeviceAction,
 } from "@api/device-action/xstate-utils/XStateDeviceAction";
 import { type DeviceSessionState } from "@api/device-session/DeviceSessionState";
+import { type Application } from "@internal/manager-api/model/Application";
 import { type HttpFetchApiError } from "@internal/manager-api/model/Errors";
-import { type Application } from "@internal/manager-api/model/ManagerApiType";
 
 import {
   type ListAppsWithMetadataDAError,

@@ -5,6 +5,7 @@ import {
 import { DeviceModelId } from "@api/device/DeviceModel";
 import { ApduResponse } from "@api/device-session/ApduResponse";
 
+import { getOsVersionCommandResponseMockBuilder } from "./__mocks__/GetOsVersionCommand";
 import { GetOsVersionCommand } from "./GetOsVersionCommand";
 
 const GET_OS_VERSION_APDU = Uint8Array.from([0xe0, 0x01, 0x00, 0x00, 0x00]);
@@ -62,16 +63,7 @@ describe("GetOsVersionCommand", () => {
         );
 
         const expected = CommandResultFactory({
-          data: {
-            targetId: "33000004",
-            seVersion: "2.2.3",
-            seFlags: 3858759680,
-            mcuSephVersion: "2.30",
-            mcuBootloaderVersion: "1.16",
-            hwVersion: "00",
-            langId: "00",
-            recoverState: "00",
-          },
+          data: getOsVersionCommandResponseMockBuilder(DeviceModelId.NANO_X),
         });
 
         expect(parsed).toStrictEqual(expected);
@@ -86,16 +78,7 @@ describe("GetOsVersionCommand", () => {
         );
 
         const expected = CommandResultFactory({
-          data: {
-            targetId: "33100004",
-            seVersion: "1.1.1",
-            seFlags: 3858759680,
-            mcuSephVersion: "4.03",
-            mcuBootloaderVersion: "3.12",
-            hwVersion: "00",
-            langId: "00",
-            recoverState: "00",
-          },
+          data: getOsVersionCommandResponseMockBuilder(DeviceModelId.NANO_SP),
         });
 
         expect(parsed).toStrictEqual(expected);
@@ -110,16 +93,7 @@ describe("GetOsVersionCommand", () => {
         );
 
         const expected = CommandResultFactory({
-          data: {
-            targetId: "33200004",
-            seVersion: "1.3.0",
-            seFlags: 3858759680,
-            mcuSephVersion: "5.24",
-            mcuBootloaderVersion: "0.48",
-            hwVersion: "00",
-            langId: "00",
-            recoverState: "00",
-          },
+          data: getOsVersionCommandResponseMockBuilder(DeviceModelId.STAX),
         });
 
         expect(parsed).toStrictEqual(expected);
