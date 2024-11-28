@@ -124,6 +124,7 @@ export class ProvideTransactionContextTask {
         );
       }
       case ClearSignContextType.ENUM:
+      case ClearSignContextType.TRUSTED_NAME:
       case ClearSignContextType.TRANSACTION_FIELD_DESCRIPTION:
       case ClearSignContextType.TRANSACTION_INFO: {
         return CommandResultFactory({

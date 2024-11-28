@@ -6,6 +6,7 @@ import { externalPluginModuleFactory } from "@/external-plugin/di/externalPlugin
 import { forwardDomainModuleFactory } from "@/forward-domain/di/forwardDomainModuleFactory";
 import { nftModuleFactory } from "@/nft/di/nftModuleFactory";
 import { tokenModuleFactory } from "@/token/di/tokenModuleFactory";
+import { transactionModuleFactory } from "@/transaction/di/transactionModuleFactory";
 import { typedDataModuleFactory } from "@/typed-data/di/typedDataModuleFactory";
 
 type MakeContainerArgs = {
@@ -21,6 +22,7 @@ export const makeContainer = ({ config }: MakeContainerArgs) => {
     forwardDomainModuleFactory(),
     nftModuleFactory(),
     tokenModuleFactory(),
+    transactionModuleFactory(),
     typedDataModuleFactory(),
   );
 

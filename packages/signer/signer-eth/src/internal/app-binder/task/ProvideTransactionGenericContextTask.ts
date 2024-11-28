@@ -183,6 +183,13 @@ export class ProvideTransactionGenericContextTask {
             }),
         );
       }
+      case ClearSignContextType.TRUSTED_NAME: {
+        return CommandResultFactory({
+          error: new InvalidStatusWordError(
+            "The context type [TRUSTED_NAME] is not implemented yet",
+          ),
+        });
+      }
       case ClearSignContextType.EXTERNAL_PLUGIN: {
         return CommandResultFactory({
           error: new InvalidStatusWordError(

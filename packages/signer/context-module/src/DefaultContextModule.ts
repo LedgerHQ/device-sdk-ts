@@ -2,6 +2,7 @@ import { type Container } from "inversify";
 
 import type { TypedDataClearSignContext } from "@/shared/model/TypedDataClearSignContext";
 import type { TypedDataContext } from "@/shared/model/TypedDataContext";
+import { transactionTypes } from "@/transaction/di/transactionTypes";
 
 import { type ContextModuleConfig } from "./config/model/ContextModuleConfig";
 import { externalPluginTypes } from "./external-plugin/di/externalPluginTypes";
@@ -15,6 +16,7 @@ import { type ClearSignContext } from "./shared/model/ClearSignContext";
 import { type TransactionContext } from "./shared/model/TransactionContext";
 import { tokenTypes } from "./token/di/tokenTypes";
 import { type TokenContextLoader } from "./token/domain/TokenContextLoader";
+import { type TransactionContextLoader } from "./transaction/domain/TransactionContextLoader";
 import { typedDataTypes } from "./typed-data/di/typedDataTypes";
 import type { TypedDataContextLoader } from "./typed-data/domain/TypedDataContextLoader";
 import { type ContextModule } from "./ContextModule";
@@ -43,6 +45,9 @@ export class DefaultContextModule implements ContextModule {
       ),
       this._container.get<NftContextLoader>(nftTypes.NftContextLoader),
       this._container.get<TokenContextLoader>(tokenTypes.TokenContextLoader),
+      this._container.get<TransactionContextLoader>(
+        transactionTypes.TransactionContextLoader,
+      ),
     ];
   }
 
