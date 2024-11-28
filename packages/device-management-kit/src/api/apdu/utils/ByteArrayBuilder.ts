@@ -100,6 +100,32 @@ export class ByteArrayBuilder {
   };
 
   /**
+   * Add a 128-bit unsigned integer to the payload
+   * @param value: number | bigint - The value to add to the data
+   * @param bigEndian: boolean - True to encode in big endian, false for little endian
+   * @returns {ByteArrayBuilder} - Returns the current instance of ByteArrayBuilder
+   */
+  add128BitUIntToData = (
+    value: number | bigint,
+    bigEndian: boolean = true,
+  ): ByteArrayBuilder => {
+    return this.addNumberToData(value, 128n, false, bigEndian);
+  };
+
+  /**
+   * Add a 256-bit unsigned integer to the payload
+   * @param value: number | bigint - The value to add to the data
+   * @param bigEndian: boolean - True to encode in big endian, false for little endian
+   * @returns {ByteArrayBuilder} - Returns the current instance of ByteArrayBuilder
+   */
+  add256BitUIntToData = (
+    value: number | bigint,
+    bigEndian: boolean = true,
+  ): ByteArrayBuilder => {
+    return this.addNumberToData(value, 256n, false, bigEndian);
+  };
+
+  /**
    * Add a 16-bit signed integer to the payload (value between -0x8000 to 0x7fff)
    * @param value: number | bigint - The value to add to the data
    * @param bigEndian: boolean - True to encode in big endian, false for little endian
@@ -136,6 +162,32 @@ export class ByteArrayBuilder {
     bigEndian: boolean = true,
   ): ByteArrayBuilder => {
     return this.addNumberToData(value, 64n, true, bigEndian);
+  };
+
+  /**
+   * Add a 128-bit signed integer to the payload
+   * @param value: number | bigint - The value to add to the data
+   * @param bigEndian: boolean - True to encode in big endian, false for little endian
+   * @returns {ByteArrayBuilder} - Returns the current instance of ByteArrayBuilder
+   */
+  add128BitIntToData = (
+    value: number | bigint,
+    bigEndian: boolean = true,
+  ): ByteArrayBuilder => {
+    return this.addNumberToData(value, 128n, true, bigEndian);
+  };
+
+  /**
+   * Add a 256-bit signed integer to the payload
+   * @param value: number | bigint - The value to add to the data
+   * @param bigEndian: boolean - True to encode in big endian, false for little endian
+   * @returns {ByteArrayBuilder} - Returns the current instance of ByteArrayBuilder
+   */
+  add256BitIntToData = (
+    value: number | bigint,
+    bigEndian: boolean = true,
+  ): ByteArrayBuilder => {
+    return this.addNumberToData(value, 256n, true, bigEndian);
   };
 
   /**

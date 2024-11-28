@@ -50,6 +50,12 @@ describe("ByteArrayBuilder", () => {
         case 8:
           builder.add64BitIntToData(num, bigEndian);
           break;
+        case 16:
+          builder.add128BitIntToData(num, bigEndian);
+          break;
+        case 32:
+          builder.add256BitIntToData(num, bigEndian);
+          break;
       }
     } else {
       switch (sizeInBits) {
@@ -61,6 +67,12 @@ describe("ByteArrayBuilder", () => {
           break;
         case 8:
           builder.add64BitUIntToData(num, bigEndian);
+          break;
+        case 16:
+          builder.add128BitUIntToData(num, bigEndian);
+          break;
+        case 32:
+          builder.add256BitUIntToData(num, bigEndian);
           break;
       }
     }
@@ -112,6 +124,90 @@ describe("ByteArrayBuilder", () => {
       [8, true, true, -14147778004927559n, "ffcdbcabbda7bbb9"],
       [8, true, false, 14147778004927559n, "4744584254433200"],
       [8, true, false, -14147778004927559n, "b9bba7bdabbccdff"],
+      [
+        16,
+        false,
+        true,
+        0x00324354425844470032435442584447n,
+        "00324354425844470032435442584447",
+      ],
+      [
+        16,
+        false,
+        false,
+        0x00324354425844470032435442584447n,
+        "47445842544332004744584254433200",
+      ],
+      [
+        16,
+        true,
+        true,
+        0x00324354425844470032435442584447n,
+        "00324354425844470032435442584447",
+      ],
+      [
+        16,
+        true,
+        true,
+        -0x00324354425844470032435442584447n,
+        "ffcdbcabbda7bbb8ffcdbcabbda7bbb9",
+      ],
+      [
+        16,
+        true,
+        false,
+        0x00324354425844470032435442584447n,
+        "47445842544332004744584254433200",
+      ],
+      [
+        16,
+        true,
+        false,
+        -0x00324354425844470032435442584447n,
+        "b9bba7bdabbccdffb8bba7bdabbccdff",
+      ],
+      [
+        32,
+        false,
+        true,
+        0x0032435442584447003243544258444700324354425844470032435442584447n,
+        "0032435442584447003243544258444700324354425844470032435442584447",
+      ],
+      [
+        32,
+        false,
+        false,
+        0x0032435442584447003243544258444700324354425844470032435442584447n,
+        "4744584254433200474458425443320047445842544332004744584254433200",
+      ],
+      [
+        32,
+        true,
+        true,
+        0x0032435442584447003243544258444700324354425844470032435442584447n,
+        "0032435442584447003243544258444700324354425844470032435442584447",
+      ],
+      [
+        32,
+        true,
+        true,
+        -0x0032435442584447003243544258444700324354425844470032435442584447n,
+        "ffcdbcabbda7bbb8ffcdbcabbda7bbb8ffcdbcabbda7bbb8ffcdbcabbda7bbb9",
+      ],
+      [
+        32,
+        true,
+        false,
+        0x0032435442584447003243544258444700324354425844470032435442584447n,
+        "4744584254433200474458425443320047445842544332004744584254433200",
+      ],
+      [
+        32,
+        true,
+        false,
+        -0x0032435442584447003243544258444700324354425844470032435442584447n,
+        "b9bba7bdabbccdffb8bba7bdabbccdffb8bba7bdabbccdffb8bba7bdabbccdff",
+      ],
     ])(
       "serialize the following number: size %i, signed %s, bigEndian %s, value %i, expected %s",
       (sizeInBits, signed, bigEndian, input, output) => {
@@ -138,6 +234,48 @@ describe("ByteArrayBuilder", () => {
       [8, false, true, 0xffffffffffffffffn, "ffffffffffffffff"],
       [8, true, true, 0x7fffffffffffffffn, "7fffffffffffffff"],
       [8, true, true, -0x8000000000000000n, "8000000000000000"],
+      [
+        16,
+        false,
+        true,
+        0xffffffffffffffffffffffffffffffffn,
+        "ffffffffffffffffffffffffffffffff",
+      ],
+      [
+        16,
+        true,
+        true,
+        0x7fffffffffffffffffffffffffffffffn,
+        "7fffffffffffffffffffffffffffffff",
+      ],
+      [
+        16,
+        true,
+        true,
+        -0x80000000000000000000000000000000n,
+        "80000000000000000000000000000000",
+      ],
+      [
+        32,
+        false,
+        true,
+        0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffn,
+        "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+      ],
+      [
+        32,
+        true,
+        true,
+        0x7fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffn,
+        "7fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+      ],
+      [
+        32,
+        true,
+        true,
+        -0x8000000000000000000000000000000000000000000000000000000000000000n,
+        "8000000000000000000000000000000000000000000000000000000000000000",
+      ],
     ])(
       "serialize the number to the limit: size %i, signed %s, bigEndian %s, value %i, expected %s",
       (sizeInBits, signed, bigEndian, input, output) => {
