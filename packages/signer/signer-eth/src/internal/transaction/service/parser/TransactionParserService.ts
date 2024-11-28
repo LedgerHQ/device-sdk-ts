@@ -15,6 +15,7 @@ import {
   hexaStringToBuffer,
 } from "@ledgerhq/device-management-kit";
 import { Transaction } from "ethers-v6";
+import { injectable } from "inversify";
 import { Either, Left, Maybe, Right } from "purify-ts";
 
 /**
@@ -72,6 +73,7 @@ import { Either, Left, Maybe, Right } from "purify-ts";
 const SELECTOR_LENGTH = 4;
 const CHUNK_SIZE = 32;
 
+@injectable()
 export class TransactionParserService {
   public extractValue(
     serializedTransaction: Uint8Array,

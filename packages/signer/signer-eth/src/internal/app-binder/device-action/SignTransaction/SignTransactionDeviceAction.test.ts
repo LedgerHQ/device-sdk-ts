@@ -360,6 +360,7 @@ describe("SignTransactionDeviceAction", () => {
                   ],
                 },
                 contextModule: contextModuleMock,
+                derivationPath: "44'/60'/0'/0/0",
                 serializedTransaction: new Uint8Array([0x01, 0x02, 0x03]),
                 transactionParser: parserMock,
               },

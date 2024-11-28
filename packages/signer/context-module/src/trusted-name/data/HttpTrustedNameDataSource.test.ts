@@ -173,7 +173,7 @@ describe("HttpTrustedNameDataSource", () => {
       // GIVEN
       const response = {
         data: {
-          signedDescriptor: { data: "payload", signatures: { prod: "sig" } },
+          signedDescriptor: { data: "payload" },
         },
       };
       jest.spyOn(axios, "request").mockResolvedValue(response);
@@ -187,7 +187,28 @@ describe("HttpTrustedNameDataSource", () => {
       });
 
       // THEN
-      expect(result).toEqual(Right("payloadsig"));
+      expect(result).toEqual(Right("payload"));
+    });
+
+    it("should return a payload with a signature", async () => {
+      // GIVEN
+      const response = {
+        data: {
+          signedDescriptor: { data: "payload", signatures: { prod: "12345" } },
+        },
+      };
+      jest.spyOn(axios, "request").mockResolvedValue(response);
+
+      // WHEN
+      const result = await datasource.getTrustedNamePayload({
+        address: "0x1234",
+        challenge: "",
+        sources: ["ens"],
+        types: ["eoa"],
+      });
+
+      // THEN
+      expect(result).toEqual(Right("payload153012345"));
     });
   });
 });

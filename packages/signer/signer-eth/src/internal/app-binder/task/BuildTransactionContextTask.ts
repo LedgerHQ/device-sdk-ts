@@ -97,6 +97,6 @@ export class BuildTransactionContextTask {
     if (deviceState.currentApp.name !== "Ethereum") {
       return false;
     }
-    return gte(deviceState.currentApp.version, "1.13.0");
+    return gte(deviceState.currentApp.version, "1.14.0");
   }
 }

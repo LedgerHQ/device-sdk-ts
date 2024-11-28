@@ -158,7 +158,7 @@ describe("BuildTransactionContextTask", () => {
       sessionStateType: DeviceSessionStateType.ReadyWithoutSecureChannel,
       deviceStatus: DeviceStatus.CONNECTED,
       installedApps: [],
-      currentApp: { name: "Ethereum", version: "1.13.0" },
+      currentApp: { name: "Ethereum", version: "1.14.0" },
     });
 
     // WHEN
@@ -389,7 +389,7 @@ describe("BuildTransactionContextTask", () => {
       sessionStateType: DeviceSessionStateType.ReadyWithoutSecureChannel,
       deviceStatus: DeviceStatus.CONNECTED,
       installedApps: [],
-      currentApp: { name: "Ethereum", version: "1.13.0" },
+      currentApp: { name: "Ethereum", version: "1.14.0" },
     });
 
     // WHEN
@@ -439,7 +439,7 @@ describe("BuildTransactionContextTask", () => {
       sessionStateType: DeviceSessionStateType.ReadyWithoutSecureChannel,
       deviceStatus: DeviceStatus.CONNECTED,
       installedApps: [],
-      currentApp: { name: "Ethereum", version: "1.13.0" },
+      currentApp: { name: "Ethereum", version: "1.14.0" },
     });
 
     // WHEN

@@ -71,6 +71,7 @@ export type MachineDependencies = {
       contextModule: ContextModule;
       transactionParser: TransactionParserService;
       chainId: number;
+      derivationPath: string;
       serializedTransaction: Uint8Array;
       context: GenericContext;
     };
@@ -333,6 +334,7 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
               contextModule: context.input.contextModule,
               transactionParser: context.input.parser,
               chainId: context._internalState.chainId!,
+              derivationPath: context.input.derivationPath,
               serializedTransaction:
                 context._internalState.serializedTransaction!,
               context: context._internalState
@@ -465,6 +467,7 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
         contextModule: ContextModule;
         transactionParser: TransactionParserService;
         chainId: number;
+        derivationPath: string;
         serializedTransaction: Uint8Array;
         context: GenericContext;
       };
@@ -473,6 +476,7 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
         contextModule: arg0.input.contextModule,
         transactionParser: arg0.input.transactionParser,
         chainId: arg0.input.chainId,
+        derivationPath: arg0.input.derivationPath,
         serializedTransaction: arg0.input.serializedTransaction,
         context: arg0.input.context,
       }).run();

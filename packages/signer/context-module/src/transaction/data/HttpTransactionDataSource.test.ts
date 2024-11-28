@@ -66,6 +66,7 @@ describe("HttpTransactionDataSource", () => {
       param: {
         value: {
           binary_path: {
+            type: "DATA",
             elements: [
               {
                 type: "TUPLE",
@@ -83,6 +84,7 @@ describe("HttpTransactionDataSource", () => {
         type: "TOKEN_AMOUNT",
         token: {
           binary_path: {
+            type: "DATA",
             elements: [
               {
                 type: "ARRAY",
@@ -106,7 +108,10 @@ describe("HttpTransactionDataSource", () => {
     fieldTrustedName = {
       param: {
         value: {
-          binary_path: "TO",
+          binary_path: {
+            type: "CONTAINER",
+            value: "TO",
+          },
           type_family: "STRING",
           type_size: 20,
         },
@@ -121,6 +126,7 @@ describe("HttpTransactionDataSource", () => {
       param: {
         value: {
           binary_path: {
+            type: "DATA",
             elements: [
               {
                 type: "ARRAY",
@@ -141,6 +147,7 @@ describe("HttpTransactionDataSource", () => {
         },
         collection: {
           binary_path: {
+            type: "DATA",
             elements: [
               {
                 type: "REF",
@@ -166,7 +173,7 @@ describe("HttpTransactionDataSource", () => {
   });
 
   function createFieldWithoutReference(
-    binary_path: unknown,
+    binary_path: string,
     type_family: string,
     type: string,
     descriptor: string,
@@ -174,7 +181,10 @@ describe("HttpTransactionDataSource", () => {
     return {
       param: {
         value: {
-          binary_path,
+          binary_path: {
+            type: "CONTAINER",
+            value: binary_path,
+          },
           type_family,
           type_size: 32,
         },
@@ -310,7 +320,7 @@ describe("HttpTransactionDataSource", () => {
     expect(result.extract()).toEqual([
       {
         payload:
-          "0001000108000000000000000102147d2768de32b0b80b7a3454c06bdac94a69ddc7a9030469328dec04207d5e9ed0004b8035b164edd9d78c37415ad6b1d123be4943d0abd5a50035cae3050857697468647261770604416176650708416176652044414f081068747470733a2f2f616176652e636f6d0a045fc4ba9c3045022100eb67599abfd9c7360b07599a2a2cb769c6e3f0f74e1e52444d788c8f577a16d20220402e92b0adbf97d890fa2f9654bc30c7bd70dacabe870f160e6842d9eb73d36f",
+          "0001000108000000000000000102147d2768de32b0b80b7a3454c06bdac94a69ddc7a9030469328dec04207d5e9ed0004b8035b164edd9d78c37415ad6b1d123be4943d0abd5a50035cae3050857697468647261770604416176650708416176652044414f081068747470733a2f2f616176652e636f6d0a045fc4ba9c81ff473045022100eb67599abfd9c7360b07599a2a2cb769c6e3f0f74e1e52444d788c8f577a16d20220402e92b0adbf97d890fa2f9654bc30c7bd70dacabe870f160e6842d9eb73d36f",
         type: "transactionInfo",
       },
       {
@@ -393,7 +403,7 @@ describe("HttpTransactionDataSource", () => {
     expect(result.extract()).toEqual([
       {
         payload:
-          "0001000108000000000000000102147d2768de32b0b80b7a3454c06bdac94a69ddc7a9030469328dec04207d5e9ed0004b8035b164edd9d78c37415ad6b1d123be4943d0abd5a50035cae3050857697468647261770604416176650708416176652044414f081068747470733a2f2f616176652e636f6d0a045fc4ba9c3045022100eb67599abfd9c7360b07599a2a2cb769c6e3f0f74e1e52444d788c8f577a16d20220402e92b0adbf97d890fa2f9654bc30c7bd70dacabe870f160e6842d9eb73d36f",
+          "0001000108000000000000000102147d2768de32b0b80b7a3454c06bdac94a69ddc7a9030469328dec04207d5e9ed0004b8035b164edd9d78c37415ad6b1d123be4943d0abd5a50035cae3050857697468647261770604416176650708416176652044414f081068747470733a2f2f616176652e636f6d0a045fc4ba9c81ff473045022100eb67599abfd9c7360b07599a2a2cb769c6e3f0f74e1e52444d788c8f577a16d20220402e92b0adbf97d890fa2f9654bc30c7bd70dacabe870f160e6842d9eb73d36f",
         type: "transactionInfo",
       },
       {
