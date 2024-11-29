@@ -13,7 +13,7 @@ import {
   GlobalCommandErrorHandler,
   InvalidStatusWordError,
 } from "@ledgerhq/device-management-kit";
-import { Just, Nothing } from "purify-ts";
+import { Just } from "purify-ts";
 
 import { type SignTransactionCommandResponse } from "./SignTransactionCommand";
 
@@ -53,7 +53,9 @@ export class StartTransactionCommand
     // The data is returned only for the last chunk
     const v = parser.extract8BitUInt();
     if (v === undefined) {
-      return CommandResultFactory({ data: Nothing });
+      return CommandResultFactory({
+        error: new InvalidStatusWordError("V is missing"),
+      });
     }
 
     const r = parser.encodeToHexaString(
