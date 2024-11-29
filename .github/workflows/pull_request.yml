@@ -15,13 +15,13 @@ concurrency:
 jobs:
   auto-assign:
     name: Auto assign
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     steps:
       - uses: toshimaru/auto-author-assign@v2.1.1
 
   danger:
     name: Run Danger check
-    runs-on: [ubuntu-latest]
+    runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v4
 
@@ -38,7 +38,7 @@ jobs:
   checks:
     name: Run health check and unit tests
     needs: [danger]
-    runs-on: ${{ !github.event.pull_request.head.repo.fork && 'ledgerhq-device-sdk' || 'ubuntu-latest' }}
+    runs-on: ${{ !github.event.pull_request.head.repo.fork && 'ledgerhq-device-sdk' || 'ubuntu-22.04' }}
     steps:
       - uses: actions/checkout@v4
 
