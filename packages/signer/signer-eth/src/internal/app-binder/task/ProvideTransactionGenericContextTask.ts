@@ -12,7 +12,6 @@ import {
 } from "@ledgerhq/device-management-kit";
 import { Just, type Maybe, Nothing } from "purify-ts";
 
-import { ProvideDomainNameCommand } from "@internal/app-binder/command/ProvideDomainNameCommand";
 import { ProvideEnumCommand } from "@internal/app-binder/command/ProvideEnumCommand";
 import {
   ProvideNFTInformationCommand,
@@ -24,6 +23,7 @@ import {
 } from "@internal/app-binder/command/ProvideTokenInformationCommand";
 import { ProvideTransactionFieldDescriptionCommand } from "@internal/app-binder/command/ProvideTransactionFieldDescriptionCommand";
 import { ProvideTransactionInformationCommand } from "@internal/app-binder/command/ProvideTransactionInformationCommand";
+import { ProvideTrustedNameCommand } from "@internal/app-binder/command/ProvideTrustedNameCommand";
 import {
   SetPluginCommand,
   type SetPluginCommandErrorCodes,
@@ -143,11 +143,11 @@ export class ProvideTransactionGenericContextTask {
           new ProvideTokenInformationCommand({ payload }),
         );
       }
-      case ClearSignContextType.DOMAIN_NAME: {
+      case ClearSignContextType.TRUSTED_NAME: {
         return this.sendInChunks(
           payload,
           (args) =>
-            new ProvideDomainNameCommand({
+            new ProvideTrustedNameCommand({
               data: args.chunkedData,
               isFirstChunk: args.isFirstChunk,
             }),
@@ -182,13 +182,6 @@ export class ProvideTransactionGenericContextTask {
               isFirstChunk: args.isFirstChunk,
             }),
         );
-      }
-      case ClearSignContextType.TRUSTED_NAME: {
-        return CommandResultFactory({
-          error: new InvalidStatusWordError(
-            "The context type [TRUSTED_NAME] is not implemented yet",
-          ),
-        });
       }
       case ClearSignContextType.EXTERNAL_PLUGIN: {
         return CommandResultFactory({

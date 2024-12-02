@@ -88,6 +88,7 @@ describe("SignTypedDataDeviceAction", () => {
     parse: jest.fn(),
   };
   const mockContextModule: ContextModule = {
+    getContext: jest.fn(),
     getContexts: jest.fn(),
     getTypedDataFilters: jest.fn(),
   };

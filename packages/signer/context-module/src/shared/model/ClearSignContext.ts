@@ -3,7 +3,6 @@ import { type GenericPath } from "./GenericPath";
 export enum ClearSignContextType {
   TOKEN = "token",
   NFT = "nft",
-  DOMAIN_NAME = "domainName",
   TRUSTED_NAME = "trustedName",
   PLUGIN = "plugin",
   EXTERNAL_PLUGIN = "externalPlugin",
