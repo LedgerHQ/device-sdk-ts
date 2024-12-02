@@ -1,1 +1,4 @@
-export * from "@api/SignerBtc";
+// inversify
+import "reflect-metadata";
+
+export * from "@api/index";

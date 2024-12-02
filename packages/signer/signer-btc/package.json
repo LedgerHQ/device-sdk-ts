@@ -53,6 +53,7 @@
     "@ledgerhq/signer-utils": "workspace:*",
     "@ledgerhq/tsconfig-dsdk": "workspace:*",
     "bitcoinjs-lib": "^6.1.6",
+    "rxjs": "^7.8.1",
     "ts-node": "^10.9.2"
   },
   "peerDependencies": {
