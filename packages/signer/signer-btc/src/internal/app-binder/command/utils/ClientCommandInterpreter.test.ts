@@ -1,3 +1,5 @@
+import { type InternalApi } from "@ledgerhq/device-management-kit";
+
 import {
   GetMerkleLeafIndexCommandHandler,
   GetMerkleLeafProofCommandHandler,
@@ -32,6 +34,7 @@ jest.mock("@internal/app-binder/command/clientCommandHandlers", () => ({
 describe("ClientCommandInterpreter - Integration Tests", () => {
   let interpreter: ClientCommandInterpreter;
   let mockDataStore: jest.Mocked<DataStore>;
+  let mockApi: jest.Mocked<InternalApi>;
 
   let yieldHandler: YieldCommandHandler;
   let getPreimageHandler: GetPreimageCommandHandler;
@@ -64,6 +67,13 @@ describe("ClientCommandInterpreter - Integration Tests", () => {
       [ClientCommandCodes.GET_MORE_ELEMENTS, getMoreElementsHandler],
     ]);
 
+    mockApi = {
+      sendCommand: jest.fn().mockImplementation(async (cmd) => {
+        // Return the command itself or an appropriate response
+        return cmd;
+      }),
+    } as unknown as jest.Mocked<InternalApi>;
+
     interpreter = new ClientCommandInterpreter(
       mockDataStore,
       clientCommandsMap,
@@ -71,27 +81,27 @@ describe("ClientCommandInterpreter - Integration Tests", () => {
   });
 
   describe("Command Delegation", () => {
-    it("should delegate YIELD command to YieldCommandHandler", () => {
-      // Arrange
+    it("should delegate YIELD command to YieldCommandHandler", async () => {
+      // given
       const payload = new Uint8Array([0xde, 0xf1, 0xaa]);
       const request = new Uint8Array([ClientCommandCodes.YIELD, ...payload]);
 
       // spy
-      const executeSpy = jest.spyOn(yieldHandler, "execute");
+      const executespy = jest.spyOn(yieldHandler, "execute");
 
       // when
-      interpreter.execute(request);
+      await interpreter.execute(mockApi, request);
 
       // then
-      expect(executeSpy).toHaveBeenCalledWith(request, {
+      expect(executespy).toHaveBeenCalledWith(request, {
         dataStore: mockDataStore,
         queue: [],
         yieldedResults: [],
       });
     });
 
-    it("should delegate GET_PREIMAGE command to GetPreimageCommandHandler", () => {
-      // Arrange
+    it("should delegate GET_PREIMAGE command to GetPreimageCommandHandler", async () => {
+      // given
       const hash = new Uint8Array(32).fill(0xaf);
       const request = new Uint8Array([
         ClientCommandCodes.GET_PREIMAGE,
@@ -100,21 +110,21 @@ describe("ClientCommandInterpreter - Integration Tests", () => {
       ]);
 
       // spy
-      const executeSpy = jest.spyOn(getPreimageHandler, "execute");
+      const executespy = jest.spyOn(getPreimageHandler, "execute");
 
       // when
-      interpreter.execute(request);
+      await interpreter.execute(mockApi, request);
 
       // then
-      expect(executeSpy).toHaveBeenCalledWith(request, {
+      expect(executespy).toHaveBeenCalledWith(request, {
         dataStore: mockDataStore,
         queue: [],
         yieldedResults: [],
       });
     });
 
-    it("should delegate GET_MERKLE_LEAF_PROOF command to GetMerkleLeafProofCommandHandler", () => {
-      // Arrange
+    it("should delegate GET_MERKLE_LEAF_PROOF command to GetMerkleLeafProofCommandHandler", async () => {
+      // given
       const rootHash = new Uint8Array(32).fill(0xaf);
       const varintN = new Uint8Array([0xde]);
       const varintI = new Uint8Array([0xf1]);
@@ -126,21 +136,21 @@ describe("ClientCommandInterpreter - Integration Tests", () => {
       ]);
 
       // spy
-      const executeSpy = jest.spyOn(getMerkleLeafProofHandler, "execute");
+      const executespy = jest.spyOn(getMerkleLeafProofHandler, "execute");
 
       // when
-      interpreter.execute(request);
+      await interpreter.execute(mockApi, request);
 
       // then
-      expect(executeSpy).toHaveBeenCalledWith(request, {
+      expect(executespy).toHaveBeenCalledWith(request, {
         dataStore: mockDataStore,
         queue: [],
         yieldedResults: [],
       });
     });
 
-    it("should delegate GET_MERKLE_LEAF_INDEX command to GetMerkleLeafIndexCommandHandler", () => {
-      // Arrange
+    it("should delegate GET_MERKLE_LEAF_INDEX command to GetMerkleLeafIndexCommandHandler", async () => {
+      // given
       const rootHash = new Uint8Array(32).fill(0xde);
       const leafHash = new Uint8Array(32).fill(0xf1);
       const request = new Uint8Array([
@@ -150,31 +160,31 @@ describe("ClientCommandInterpreter - Integration Tests", () => {
       ]);
 
       // spy
-      const executeSpy = jest.spyOn(getMerkleLeafIndexHandler, "execute");
+      const executespy = jest.spyOn(getMerkleLeafIndexHandler, "execute");
 
       // when
-      interpreter.execute(request);
+      await interpreter.execute(mockApi, request);
 
       // then
-      expect(executeSpy).toHaveBeenCalledWith(request, {
+      expect(executespy).toHaveBeenCalledWith(request, {
         dataStore: mockDataStore,
         queue: [],
         yieldedResults: [],
       });
     });
 
-    it("should delegate GET_MORE_ELEMENTS command to GetMoreElementsCommandHandler", () => {
-      // Arrange
+    it("should delegate GET_MORE_ELEMENTS command to GetMoreElementsCommandHandler", async () => {
+      // given
       const request = new Uint8Array([ClientCommandCodes.GET_MORE_ELEMENTS]);
 
       // spy
-      const executeSpy = jest.spyOn(getMoreElementsHandler, "execute");
+      const executespy = jest.spyOn(getMoreElementsHandler, "execute");
 
       // when
-      interpreter.execute(request);
+      await interpreter.execute(mockApi, request);
 
       // then
-      expect(executeSpy).toHaveBeenCalledWith(request, {
+      expect(executespy).toHaveBeenCalledWith(request, {
         dataStore: mockDataStore,
         queue: [],
         yieldedResults: [],
@@ -183,21 +193,21 @@ describe("ClientCommandInterpreter - Integration Tests", () => {
   });
 
   describe("Unsupported Command", () => {
-    it("should throw an error for unsupported command codes", () => {
-      // Arrange
+    it("should throw an error for unsupported command codes", async () => {
+      // given
       const unsupportedCode = 0xff;
       const request = new Uint8Array([unsupportedCode, 0xde, 0xf1]);
 
       // then
-      expect(() => interpreter.execute(request)).toThrowError(
+      await expect(interpreter.execute(mockApi, request)).rejects.toThrowError(
         `Unexpected command code ${unsupportedCode}`,
       );
     });
   });
 
   describe("Error Propagation", () => {
-    it("should propagate errors thrown by handlers", () => {
-      // Arrange
+    it("should propagate errors thrown by handlers", async () => {
+      // given
       const payload = new Uint8Array([0xaa, 0xff, 0xaa]);
       const request = new Uint8Array([ClientCommandCodes.YIELD, ...payload]);
 
@@ -207,7 +217,9 @@ describe("ClientCommandInterpreter - Integration Tests", () => {
       });
 
       // then
-      expect(() => interpreter.execute(request)).toThrow(handlerError);
+      await expect(interpreter.execute(mockApi, request)).rejects.toThrow(
+        handlerError,
+      );
     });
   });
 });
