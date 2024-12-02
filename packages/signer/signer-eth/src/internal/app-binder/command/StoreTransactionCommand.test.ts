@@ -5,43 +5,43 @@ import {
 } from "@ledgerhq/device-management-kit";
 
 import {
-  ProvideTransactionFieldDescriptionCommand,
-  type ProvideTransactionFieldDescriptionCommandArgs,
-} from "./ProvideTransactionFieldDescriptionCommand";
+  StoreTransactionCommand,
+  type StoreTransactionCommandArgs,
+} from "./StoreTransactionCommand";
 
-describe("ProvideTransactionFieldDescriptionCommand", () => {
+describe("StoreTransactionCommand", () => {
   describe("getApdu", () => {
     it("should return the raw APDU for the first chunk", () => {
       // GIVEN
-      const args: ProvideTransactionFieldDescriptionCommandArgs = {
-        data: Uint8Array.from([0x01, 0x02, 0x03]),
+      const args: StoreTransactionCommandArgs = {
+        serializedTransaction: Uint8Array.from([0x01, 0x02, 0x03]),
         isFirstChunk: true,
       };
 
       // WHEN
-      const command = new ProvideTransactionFieldDescriptionCommand(args);
+      const command = new StoreTransactionCommand(args);
       const apdu = command.getApdu();
 
       // THEN
       expect(apdu.getRawApdu()).toStrictEqual(
-        Uint8Array.from([0xe0, 0x28, 0x01, 0x00, 0x03, 0x01, 0x02, 0x03]),
+        Uint8Array.from([0xe0, 0x04, 0x00, 0x01, 0x03, 0x01, 0x02, 0x03]),
       );
     });
 
     it("should return the raw APDU for the subsequent chunk", () => {
       // GIVEN
-      const args: ProvideTransactionFieldDescriptionCommandArgs = {
-        data: Uint8Array.from([0x04, 0x05, 0x06]),
+      const args: StoreTransactionCommandArgs = {
+        serializedTransaction: Uint8Array.from([0x04, 0x05, 0x06]),
         isFirstChunk: false,
       };
 
       // WHEN
-      const command = new ProvideTransactionFieldDescriptionCommand(args);
+      const command = new StoreTransactionCommand(args);
       const apdu = command.getApdu();
 
       // THEN
       expect(apdu.getRawApdu()).toStrictEqual(
-        Uint8Array.from([0xe0, 0x28, 0x00, 0x00, 0x03, 0x04, 0x05, 0x06]),
+        Uint8Array.from([0xe0, 0x04, 0x80, 0x01, 0x03, 0x04, 0x05, 0x06]),
       );
     });
   });
@@ -55,22 +55,21 @@ describe("ProvideTransactionFieldDescriptionCommand", () => {
       };
 
       // WHEN
-      const command = new ProvideTransactionFieldDescriptionCommand({
-        data: new Uint8Array(0),
+      const command = new StoreTransactionCommand({
+        serializedTransaction: new Uint8Array(0),
         isFirstChunk: true,
       });
       const result = command.parseResponse(response);
 
       // THEN
       if (isSuccessCommandResult(result)) {
-        throw new Error("Expected an error");
+        throw new Error("Expected error");
       } else {
-        expect(result.error).toBeDefined();
         expect(result.error).toBeInstanceOf(UnknownDeviceExchangeError);
       }
     });
 
-    it("should return a success result if the response status code is valid", () => {
+    it("should return the correct response", () => {
       // GIVEN
       const response: ApduResponse = {
         data: Uint8Array.from([]),
@@ -78,17 +77,17 @@ describe("ProvideTransactionFieldDescriptionCommand", () => {
       };
 
       // WHEN
-      const command = new ProvideTransactionFieldDescriptionCommand({
-        data: new Uint8Array(0),
+      const command = new StoreTransactionCommand({
+        serializedTransaction: new Uint8Array(0),
         isFirstChunk: true,
       });
       const result = command.parseResponse(response);
 
       // THEN
-      if (!isSuccessCommandResult(result)) {
-        throw new Error("Expected a success result");
-      } else {
+      if (isSuccessCommandResult(result)) {
         expect(result.data).toBeUndefined();
+      } else {
+        throw new Error("Expected success");
       }
     });
   });
