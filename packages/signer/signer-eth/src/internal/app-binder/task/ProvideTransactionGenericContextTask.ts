@@ -6,14 +6,15 @@ import {
 } from "@ledgerhq/context-module";
 import {
   bufferToHexaString,
+  ByteArrayBuilder,
   type CommandErrorResult,
   type CommandResult,
   CommandResultFactory,
-  CommandResultStatus,
   type InternalApi,
   InvalidStatusWordError,
   isSuccessCommandResult,
 } from "@ledgerhq/device-management-kit";
+import { DerivationPathUtils } from "@ledgerhq/signer-utils";
 import { Just, type Maybe, Nothing } from "purify-ts";
 
 import { GetChallengeCommand } from "@internal/app-binder/command/GetChallengeCommand";
@@ -47,6 +48,7 @@ export type ProvideTransactionGenericContextTaskArgs = {
   readonly contextModule: ContextModule;
   readonly transactionParser: TransactionParserService;
   readonly chainId: number;
+  readonly derivationPath: string;
   readonly serializedTransaction: Uint8Array;
   readonly context: GenericContext;
 };
@@ -64,8 +66,15 @@ export class ProvideTransactionGenericContextTask {
     Maybe<CommandErrorResult<ProvideTransactionGenericContextTaskErrorCodes>>
   > {
     // Store the transaction in the device memory
+    const paths = DerivationPathUtils.splitPath(this.args.derivationPath);
+    const builder = new ByteArrayBuilder();
+    builder.add8BitUIntToData(paths.length);
+    paths.forEach((path) => {
+      builder.add32BitUIntToData(path);
+    });
+    builder.addBufferToData(this.args.serializedTransaction);
     const storeTransactionResult = await new SendCommandInChunksTask(this.api, {
-      data: this.args.serializedTransaction,
+      data: builder.build(),
       commandFactory: (args) =>
         new StoreTransactionCommand({
           serializedTransaction: args.chunkedData,
@@ -121,15 +130,13 @@ export class ProvideTransactionGenericContextTask {
       reference.valuePath,
     );
     if (values.isLeft()) {
-      return Just({
-        status: CommandResultStatus.Error,
-        error: new InvalidStatusWordError(
-          "The clear sign context reference contains a path not found in that transaction",
-        ),
-      });
+      // The path was not found in transaction payload. In that case we should raw-sign that field.
+      return Nothing;
     }
     for (const value of values.unsafeCoerce()) {
-      const address = bufferToHexaString(value.slice(0, 20));
+      const address = bufferToHexaString(
+        value.slice(Math.max(0, value.length - 20)),
+      );
       let context;
       if (reference.type === ClearSignContextType.TRUSTED_NAME) {
         const getChallengeResult = await this.api.sendCommand(

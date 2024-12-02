@@ -108,7 +108,7 @@ export class HttpTransactionDataSource implements TransactionDataSource {
       ];
     const info: ClearSignContextSuccess = {
       type: ClearSignContextType.TRANSACTION_INFO,
-      payload: `${infoData}${infoSignature}`,
+      payload: this.formatTransactionInfo(infoData, infoSignature),
     };
     const enums: ClearSignContextSuccess[] = calldataDescriptor.enums.map(
       (e) => ({
@@ -124,6 +124,20 @@ export class HttpTransactionDataSource implements TransactionDataSource {
       }),
     );
     return Right([info, ...enums, ...fields]);
+  }
+
+  private formatTransactionInfo(
+    infoData: string,
+    infoSignature: string,
+  ): string {
+    // Ensure correct padding
+    if (infoSignature.length % 2 !== 0) {
+      infoSignature = "0" + infoSignature;
+    }
+    // TLV encoding as according to generic parser documentation
+    const infoSignatureTag = "81ff";
+    const infoSignatureLength = (infoSignature.length / 2).toString(16);
+    return `${infoData}${infoSignatureTag}${infoSignatureLength}${infoSignature}`;
   }
 
   private getReference(
@@ -153,8 +167,8 @@ export class HttpTransactionDataSource implements TransactionDataSource {
   private toGenericPath(
     path: CalldataDescriptorContainerPathV1 | CalldataDescriptorPathElementsV1,
   ): GenericPath {
-    if (typeof path !== "object") {
-      return path;
+    if (path.type === "CONTAINER") {
+      return path.value;
     }
     return path.elements.map((element) => {
       if (element.type === "ARRAY") {
@@ -259,9 +273,10 @@ export class HttpTransactionDataSource implements TransactionDataSource {
       ].includes(data.type_family) &&
       (typeof data.type_size === "undefined" ||
         typeof data.type_size === "number") &&
-      ((typeof data.binary_path === "string" &&
-        ["FROM", "TO", "VALUE"].includes(data.binary_path)) ||
-        (typeof data.binary_path === "object" &&
+      ((typeof data.binary_path === "object" &&
+        data.binary_path.type === "CONTAINER" &&
+        ["FROM", "TO", "VALUE"].includes(data.binary_path.value)) ||
+        (data.binary_path.type === "DATA" &&
           Array.isArray(data.binary_path.elements) &&
           data.binary_path.elements.every((e) => this.isPathElementV1(e))))
     );

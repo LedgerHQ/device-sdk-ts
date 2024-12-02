@@ -18,6 +18,7 @@ import { SignTypedDataDeviceAction } from "@internal/app-binder/device-action/Si
 import { externalTypes } from "@internal/externalTypes";
 import { transactionTypes } from "@internal/transaction/di/transactionTypes";
 import { TransactionMapperService } from "@internal/transaction/service/mapper/TransactionMapperService";
+import { TransactionParserService } from "@internal/transaction/service/parser/TransactionParserService";
 import { type TypedDataParserService } from "@internal/typed-data/service/TypedDataParserService";
 
 import { GetAddressCommand } from "./command/GetAddressCommand";
@@ -31,6 +32,8 @@ export class EthAppBinder {
     @inject(externalTypes.ContextModule) private contextModule: ContextModule,
     @inject(transactionTypes.TransactionMapperService)
     private mapper: TransactionMapperService,
+    @inject(transactionTypes.TransactionParserService)
+    private parser: TransactionParserService,
     @inject(externalTypes.SessionId) private sessionId: DeviceSessionId,
   ) {}
 
@@ -80,6 +83,7 @@ export class EthAppBinder {
           derivationPath: args.derivationPath,
           transaction: args.transaction,
           mapper: this.mapper,
+          parser: this.parser,
           contextModule: this.contextModule,
           options: args.options ?? {},
         },

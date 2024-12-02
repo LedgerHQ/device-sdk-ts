@@ -112,7 +112,13 @@ export interface CalldataDescriptorValueV1 {
   type_size?: number;
 }
 
+export interface CalldataDescriptorContainerPathV1 {
+  type: "CONTAINER";
+  value: CalldataDescriptorContainerPathTypeV1;
+}
+
 export interface CalldataDescriptorPathElementsV1 {
+  type: "DATA";
   elements: CalldataDescriptorPathElementV1[];
 }
 
@@ -150,7 +156,7 @@ export interface CalldataDescriptorPathElementSliceV1 {
   end?: number;
 }
 
-export type CalldataDescriptorContainerPathV1 = "FROM" | "TO" | "VALUE";
+export type CalldataDescriptorContainerPathTypeV1 = "FROM" | "TO" | "VALUE";
 export type CalldataDescriptorPathLeafTypeV1 =
   | "ARRAY_LEAF"
   | "TUPLE_LEAF"
