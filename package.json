@@ -20,6 +20,7 @@
     "context-module": "pnpm --filter @ledgerhq/context-module",
     "signer-btc": "pnpm --filter @ledgerhq/device-signer-kit-bitcoin",
     "signer-eth": "pnpm --filter @ledgerhq/device-signer-kit-ethereum",
+    "signer-near": "pnpm --filter @ledgerhq/device-signer-kit-near",
     "signer-solana": "pnpm --filter @ledgerhq/device-signer-kit-solana",
     "signer-utils": "pnpm --filter @ledgerhq/signer-utils",
     "mockserver-client": "pnpm --filter @ledgerhq/device-mockserver-client",
