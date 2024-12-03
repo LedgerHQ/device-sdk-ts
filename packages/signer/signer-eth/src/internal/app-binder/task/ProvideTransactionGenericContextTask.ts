@@ -38,6 +38,7 @@ import {
   SendCommandInChunksTask,
   type SendCommandInChunksTaskArgs,
 } from "./SendCommandInChunksTask";
+import { SendPayloadInChunksTask } from "./SendPayloadInChunksTask";
 
 export type GenericContext = {
   readonly transactionInfo: string;
@@ -87,14 +88,14 @@ export class ProvideTransactionGenericContextTask {
     }
 
     // Provide the transaction information
-    const transactionInfoResult = await this.sendInChunks(
-      this.args.context.transactionInfo,
-      (args) =>
+    const transactionInfoResult = await new SendPayloadInChunksTask(this.api, {
+      payload: this.args.context.transactionInfo,
+      commandFactory: (args) =>
         new ProvideTransactionInformationCommand({
           data: args.chunkedData,
           isFirstChunk: args.isFirstChunk,
         }),
-    );
+    }).run();
 
     if (!isSuccessCommandResult(transactionInfoResult)) {
       return Just(transactionInfoResult);
