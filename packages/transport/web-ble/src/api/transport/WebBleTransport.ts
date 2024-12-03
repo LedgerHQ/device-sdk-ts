@@ -255,7 +255,12 @@ export class WebBleTransport implements Transport {
             );
             return discoveredDevice;
           } catch (error) {
-            await bleDevice.forget();
+            this._logger.error("Error while discovering device", {
+              data: { error, bleDevice },
+            });
+            if (bleDevice.forget) {
+              await bleDevice.forget();
+            }
             throw error;
           }
         }).caseOf({
@@ -350,8 +355,9 @@ export class WebBleTransport implements Transport {
 
       return Right(connectedDevice);
     } catch (error) {
-      await internalDevice.bleDevice.forget();
-
+      if (internalDevice.bleDevice.forget) {
+        await internalDevice.bleDevice.forget();
+      }
       this._internalDevicesById.delete(deviceId);
 
       this._logger.error("Error while getting characteristics", {
