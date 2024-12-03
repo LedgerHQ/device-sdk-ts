@@ -1,9 +1,12 @@
 #!/usr/bin/env zx
 
 import "zx/globals";
+import {usePowerShell} from 'zx'
 import esbuild from "esbuild";
 import { nodeExternalsPlugin } from "esbuild-node-externals";
 import { replaceTscAliasPaths } from "tsc-alias";
+
+if ( process.platform === 'win32' ) usePowerShell()
 
 const config = {
   minify: true,
