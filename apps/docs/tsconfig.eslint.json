@@ -4,7 +4,7 @@
     "**/*.ts",
     "**/*.tsx",
     ".next/types/**/*.ts",
-    "next.config.js",
+    "next.config.mjs",
     "postcss.config.js",
     "eslint.config.mjs",
     "tailwind.config.js"
