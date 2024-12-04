@@ -14,7 +14,7 @@ metadata:
     github.com/project-slug: "LedgerHQ/device-sdk-ts"
     github.com/team-slug: "LedgerHQ/live-devices"
     ledger.com/code_repository: https://github.com/LedgerHQ/device-sdk-ts
-    ledger.com/documentation: https://developers.ledger.com/docs/device-interaction/integration/ldmk
+    ledger.com/documentation: https://developers.ledger.com/docs/device-interaction/getting-started
     jira/project-key: DSDK
   labels:
     ledger.com/contains_pii: "no"
@@ -41,7 +41,7 @@ spec:
   lifecycle: production
   owner: group:live-devices
   system: ledger-device-management-kit
-  subComponentOf: ts-device-management-kit
+  subComponentOf: device-management-kit-ts
 ---
 apiVersion: backstage.io/v1alpha1
 kind: Component
@@ -66,6 +66,23 @@ spec:
   owner: group:live-devices
   system: ledger-device-management-kit
   subComponentOf: ts-device-management-kit
+---
+apiVersion: backstage.io/v1alpha1
+kind: Component
+metadata:
+  name: ts-device-signer-kit-solana
+  description: Signer Kit for Solana
+  tags:
+    - typescript
+    - signer
+    - solana
+    - npm
+spec:
+  type: library
+  lifecycle: production
+  owner: group:live-devices
+  system: ledger-device-management-kit
+  subComponentOf: device-management-kit-ts
 ---
 apiVersion: backstage.io/v1alpha1
 kind: Component
@@ -82,4 +99,4 @@ spec:
   lifecycle: production
   owner: group:live-devices
   system: ledger-device-management-kit
-  subComponentOf: ts-device-management-kit
+  subComponentOf: device-management-kit-ts
