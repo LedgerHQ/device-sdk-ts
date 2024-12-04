@@ -12,7 +12,9 @@
     "next-env.d.ts",
     "**/*.ts",
     "**/*.tsx",
+    "**/*.js",
     "eslint.config.mjs",
+    "pages/_app.js",
     "tailwind.config.js"
   ],
   "exclude": ["node_modules"]
