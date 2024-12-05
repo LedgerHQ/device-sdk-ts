@@ -29,12 +29,8 @@ import {
   SetPluginCommand,
   type SetPluginCommandErrorCodes,
 } from "@internal/app-binder/command/SetPluginCommand";
-import { PayloadUtils } from "@internal/shared/utils/PayloadUtils";
 
-import {
-  SendCommandInChunksTask,
-  type SendCommandInChunksTaskArgs,
-} from "./SendCommandInChunksTask";
+import { SendPayloadInChunksTask } from "./SendPayloadInChunksTask";
 
 export type ProvideTransactionContextTaskArgs = {
   /**
@@ -114,14 +110,14 @@ export class ProvideTransactionContextTask {
         );
       }
       case ClearSignContextType.TRUSTED_NAME: {
-        return this.sendInChunks(
+        return new SendPayloadInChunksTask(this.api, {
           payload,
-          (args) =>
+          commandFactory: (args) =>
             new ProvideTrustedNameCommand({
               data: args.chunkedData,
               isFirstChunk: args.isFirstChunk,
             }),
-        );
+        }).run();
       }
       case ClearSignContextType.ENUM:
       case ClearSignContextType.TRANSACTION_FIELD_DESCRIPTION:
@@ -141,23 +137,5 @@ export class ProvideTransactionContextTask {
         });
       }
     }
-  }
-
-  private async sendInChunks<T>(
-    payload: string,
-    commandFactory: SendCommandInChunksTaskArgs<T>[`commandFactory`],
-  ): Promise<CommandResult<T, void>> {
-    const data = PayloadUtils.getBufferFromPayload(payload);
-
-    if (!data) {
-      return CommandResultFactory({
-        error: new InvalidStatusWordError("Invalid payload"),
-      });
-    }
-
-    return new SendCommandInChunksTask(this.api, {
-      data,
-      commandFactory,
-    }).run();
   }
 }
