@@ -47,7 +47,7 @@ describe("GetMasterFingerprintCommand", () => {
       expect(result).toEqual(
         CommandResultFactory({
           data: {
-            masterFingerprint: "828dc2f3",
+            masterFingerprint: Uint8Array.from([0x82, 0x8d, 0xc2, 0xf3]),
           },
         }),
       );
