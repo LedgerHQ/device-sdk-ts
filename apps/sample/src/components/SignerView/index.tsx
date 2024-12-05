@@ -21,6 +21,11 @@ const SUPPORTED_SIGNERS = [
     description: "Access Solana signer functionality",
     icon: <CryptoIcons.SOL size={80} />,
   },
+  {
+    title: "Near",
+    description: "Access Near keyring functionality",
+    icon: <CryptoIcons.NEAR size={80} />,
+  },
 ];
 
 export const SignerView = () => {
