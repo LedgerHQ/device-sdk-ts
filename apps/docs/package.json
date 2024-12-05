@@ -1,7 +1,7 @@
 {
   "name": "@ledgerhq/ledger-dmk-docs",
   "version": "1.0.0",
-  "description": "",
+  "description": "Device Management Kit documentation",
   "private": true,
   "scripts": {
     "dev": "next dev",
@@ -17,16 +17,17 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "autoprefixer": "^10.4.17",
-    "next": "^14.1.0",
-    "nextra": "^2.13.3",
-    "nextra-theme-docs": "^2.13.3",
-    "postcss": "^8.4.35",
+    "next": "^14.2.15",
+    "nextra": "^3.0.13",
+    "nextra-theme-blog": "^3.0.13",
+    "nextra-theme-docs": "^3.0.15",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
-    "tailwindcss": "^3.4.1"
+    "tailwindcss": "^3.0.10",
+    "tailwind-merge": "^1.14.0"
   },
   "devDependencies": {
+    "autoprefixer": "^10.4.17",
     "@ledgerhq/eslint-config-dsdk": "workspace:*",
     "@ledgerhq/prettier-config-dsdk": "workspace:*",
     "@ledgerhq/tsconfig-dsdk": "workspace:*",
