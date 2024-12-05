@@ -64,8 +64,6 @@ export class SignTransactionCommand
   ): CommandResult<SignTransactionCommandResponse> {
     const parser = new ApduParser(response);
     const errorCode = parser.encodeToHexaString(response.statusCode);
-    console.log("Status Code:", response.statusCode); // Debugging
-    console.log("Error Code:", errorCode); // Debugging
     if (isCommandErrorCode(errorCode, solanaAppErrors)) {
       return CommandResultFactory({
         error: new SolanaAppCommandError({
