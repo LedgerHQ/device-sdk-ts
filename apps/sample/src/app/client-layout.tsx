@@ -44,6 +44,9 @@ const ClientRootLayout: React.FC<PropsWithChildren> = ({ children }) => {
             <SignerEthProvider>
               <StyleProvider selectedPalette="dark" fontsPath="/fonts">
                 <GlobalStyle />
+                <head>
+                  <link rel="shortcut icon" href="../favicon.png" />
+                </head>
                 <body>
                   <Root>
                     <Sidebar />
