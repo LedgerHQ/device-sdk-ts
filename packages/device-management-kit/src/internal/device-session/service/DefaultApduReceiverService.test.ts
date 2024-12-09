@@ -1,4 +1,3 @@
-import * as uuid from "uuid";
 jest.mock("uuid");
 
 import { Just, Left, type Maybe, Nothing, Right } from "purify-ts";
@@ -59,7 +58,9 @@ describe("DefaultApduReceiverService", () => {
   let service: ApduReceiverService;
 
   beforeAll(() => {
-    jest.spyOn(uuid, "v4").mockReturnValue("42");
+    jest.mock("uuid", () => ({
+      v4: jest.fn().mockReturnValue("42"),
+    }));
   });
 
   describe("without dataSize", () => {

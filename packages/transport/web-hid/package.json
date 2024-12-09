@@ -37,7 +37,7 @@
   "dependencies": {
     "@sentry/minimal": "^6.19.7",
     "purify-ts": "^2.1.0",
-    "uuid": "^10.0.0"
+    "uuid": "^11.0.3"
   },
   "devDependencies": {
     "@ledgerhq/device-management-kit": "workspace:*",
