@@ -1,5 +1,6 @@
-import * as uuid from "uuid";
-jest.mock("uuid");
+jest.mock("uuid", () => ({
+  v4: jest.fn().mockReturnValue("42"),
+}));
 
 import { Maybe } from "purify-ts";
 
@@ -12,10 +13,6 @@ import { DefaultApduSenderService } from "./DefaultApduSenderService";
 const loggerService = new DefaultLoggerPublisherService([], "frame");
 
 describe("DefaultApduSenderService", () => {
-  beforeAll(() => {
-    jest.spyOn(uuid, "v4").mockReturnValue("42");
-  });
-
   describe("[USB] With padding and channel", () => {
     it("should return 1 frame", () => {
       // given

@@ -1,6 +1,4 @@
 import { Left, Maybe, Right } from "purify-ts";
-import * as uuid from "uuid";
-jest.mock("uuid");
 
 import { type DeviceModel } from "@api/device/DeviceModel";
 import { type LoggerPublisherService } from "@api/logger-publisher/service/LoggerPublisherService";
@@ -21,6 +19,10 @@ import { type TransportService } from "@internal/transport/service/TransportServ
 
 import { ConnectUseCase } from "./ConnectUseCase";
 
+jest.mock("uuid", () => ({
+  v4: jest.fn().mockReturnValue("fakeSessionId"),
+}));
+
 jest.mock("@internal/manager-api/data/AxiosManagerApiDataSource");
 jest.mock("@internal/transport/service/DefaultTransportService");
 
@@ -33,7 +35,6 @@ let sessionService: DeviceSessionService;
 let managerApi: ManagerApiService;
 let managerApiDataSource: ManagerApiDataSource;
 const fakeSessionId = "fakeSessionId";
-
 describe("ConnectUseCase", () => {
   const stubDiscoveredDevice: DiscoveredDevice = {
     id: "",
@@ -45,7 +46,6 @@ describe("ConnectUseCase", () => {
 
   beforeAll(() => {
     logger = new DefaultLoggerPublisherService([], tag);
-    jest.spyOn(uuid, "v4").mockReturnValue(fakeSessionId);
     transport = new TransportMock();
     sessionService = new DefaultDeviceSessionService(() => logger);
     managerApiDataSource = new AxiosManagerApiDataSource({
