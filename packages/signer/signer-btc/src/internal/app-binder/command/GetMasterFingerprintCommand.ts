@@ -16,7 +16,7 @@ import {
 const MASTER_FINGERPRINT_LENGTH = 4;
 
 type GetMasterFingerprintCommandResponse = {
-  masterFingerprint: string;
+  masterFingerprint: Uint8Array;
 };
 
 export class GetMasterFingerprintCommand
@@ -43,15 +43,15 @@ export class GetMasterFingerprintCommand
       });
     }
 
-    if (!parser.testMinimalLength(MASTER_FINGERPRINT_LENGTH)) {
+    const masterFingerprint = parser.extractFieldByLength(
+      MASTER_FINGERPRINT_LENGTH,
+    );
+
+    if (!masterFingerprint) {
       return CommandResultFactory({
         error: new InvalidStatusWordError("Master fingerprint is missing"),
       });
     }
-
-    const masterFingerprint = parser.encodeToHexaString(
-      parser.extractFieldByLength(MASTER_FINGERPRINT_LENGTH),
-    );
 
     return CommandResultFactory({
       data: {
