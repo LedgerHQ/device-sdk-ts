@@ -32,8 +32,7 @@ export type SignTransactionCommandArgs = {
 };
 
 export class SignTransactionCommand
-  implements
-    Command<SignTransactionCommandResponse, SignTransactionCommandArgs>
+  implements Command<SignTransactionCommandResponse, SignTransactionCommandArgs>
 {
   args: SignTransactionCommandArgs;
 

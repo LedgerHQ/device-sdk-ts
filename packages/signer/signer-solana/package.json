@@ -36,11 +36,11 @@
   "dependencies": {
     "@ledgerhq/signer-utils": "workspace:*",
     "bs58": "^6.0.0",
-    "inversify": "^6.0.3",
+    "inversify": "^6.1.6",
     "inversify-logger-middleware": "^3.1.0",
     "purify-ts": "^2.1.0",
     "reflect-metadata": "^0.2.2",
-    "xstate": "^5.18.2"
+    "xstate": "^5.19.0"
   },
   "devDependencies": {
     "@ledgerhq/device-management-kit": "workspace:*",

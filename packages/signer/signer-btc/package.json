@@ -38,15 +38,15 @@
   "dependencies": {
     "@types/crypto-js": "^4.2.2",
     "crypto-js": "^4.2.0",
-    "inversify": "^6.0.3",
+    "inversify": "^6.1.6",
     "inversify-logger-middleware": "^3.1.0",
     "purify-ts": "^2.1.0",
     "reflect-metadata": "^0.2.2",
-    "xstate": "^5.18.2"
+    "xstate": "^5.19.0"
   },
   "devDependencies": {
-    "@ledgerhq/esbuild-tools": "workspace:*",
     "@ledgerhq/device-management-kit": "workspace:*",
+    "@ledgerhq/esbuild-tools": "workspace:*",
     "@ledgerhq/eslint-config-dsdk": "workspace:*",
     "@ledgerhq/jest-config-dsdk": "workspace:*",
     "@ledgerhq/prettier-config-dsdk": "workspace:*",

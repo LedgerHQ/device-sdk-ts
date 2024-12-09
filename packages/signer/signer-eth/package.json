@@ -36,13 +36,13 @@
   },
   "dependencies": {
     "ethers-v5": "npm:ethers@^5.7.2",
-    "ethers-v6": "npm:ethers@^6.13.2",
-    "inversify": "^6.0.3",
+    "ethers-v6": "npm:ethers@6.13.4",
+    "inversify": "^6.1.6",
     "inversify-logger-middleware": "^3.1.0",
     "purify-ts": "^2.1.0",
     "reflect-metadata": "^0.2.2",
     "semver": "^7.6.3",
-    "xstate": "^5.18.2"
+    "xstate": "^5.19.0"
   },
   "devDependencies": {
     "@ledgerhq/context-module": "workspace:*",
