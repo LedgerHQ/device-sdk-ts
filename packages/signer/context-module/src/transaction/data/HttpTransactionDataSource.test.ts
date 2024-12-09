@@ -45,8 +45,24 @@ describe("HttpTransactionDataSource", () => {
       },
     };
     enums = [
-      { descriptor: "0001000401000501010606737461626c65" },
-      { descriptor: "00010004010005010206087661726961626c65" },
+      {
+        id: 0,
+        name: "enum1",
+        value: 0,
+        descriptor: {
+          data: "0001000401000501010606737461626c65",
+          signatures: { test: "1234" },
+        },
+      },
+      {
+        id: 0,
+        name: "enum2",
+        value: 1,
+        descriptor: {
+          data: "00010004010005010206087661726961626c65",
+          signatures: { test: "5678" },
+        },
+      },
     ];
     fieldAmount = createFieldWithoutReference("FROM", "UFIXED", "AMOUNT", "06");
     fieldDatetime = createFieldWithoutReference(

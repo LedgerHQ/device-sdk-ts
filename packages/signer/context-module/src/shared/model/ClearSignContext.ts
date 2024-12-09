@@ -18,25 +18,52 @@ export type ClearSignContextReference =
       valuePath: GenericPath;
     }
   | {
+      type: ClearSignContextType.ENUM;
+      valuePath: GenericPath;
+      id: number; // enum id to reference
+    }
+  | {
       type: ClearSignContextType.TRUSTED_NAME;
       valuePath: GenericPath;
       types: string[];
       sources: string[];
     };
 
-export type ClearSignContextSuccess = {
-  type: Exclude<ClearSignContextType, ClearSignContextType.ERROR>;
-  /**
-   * Hexadecimal string representation of the payload.
-   */
-  payload: string;
-  /**
-   * Optional reference to another asset descriptor.
-   * ie: a 'transactionFieldDescription' descriptor can reference a token or
-   * a trusted name.
-   */
-  reference?: ClearSignContextReference;
-};
+export type ClearSignContextSuccessType = Exclude<
+  ClearSignContextType,
+  ClearSignContextType.ERROR
+>;
+
+// NOTE: this is a union of all possible success types
+// There is currently two types of success:
+// - ENUM: which is a special case, we need to handle it differently
+//         because we don't want to send the whole enum
+//         but only the parts that are needed.
+//          - id: the enum id to reference
+//          - payload: the payload to send with a provideEnum command
+//          - name: the name of the enum to be displayed on the device
+//          - value: the value of the enum to be retrieved from the transaction
+// - All other types
+//          - payload: the payload to send with a provide command
+//          - reference: the reference to the value to be retrieved from the transaction
+export type ClearSignContextSuccess<
+  Type extends ClearSignContextSuccessType = ClearSignContextSuccessType,
+> = Type extends ClearSignContextType.ENUM
+  ? {
+      type: ClearSignContextType.ENUM;
+      id: number;
+      payload: string;
+      name: string;
+      value: number;
+    }
+  : {
+      type: Exclude<
+        ClearSignContextType,
+        ClearSignContextType.ENUM | ClearSignContextType.ERROR
+      >;
+      payload: string;
+      reference?: ClearSignContextReference;
+    };
 
 export type ClearSignContextError = {
   type: ClearSignContextType.ERROR;

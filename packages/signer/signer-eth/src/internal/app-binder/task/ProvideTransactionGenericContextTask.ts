@@ -1,6 +1,7 @@
 import {
   type ClearSignContextReference,
   type ClearSignContextSuccess,
+  type ClearSignContextSuccessType,
   ClearSignContextType,
   type ContextModule,
 } from "@ledgerhq/context-module";
@@ -41,7 +42,10 @@ import {
 
 export type GenericContext = {
   readonly transactionInfo: string;
-  readonly transactionFields: ClearSignContextSuccess[];
+  readonly transactionFields: ClearSignContextSuccess<
+    Exclude<ClearSignContextSuccessType, ClearSignContextType.ENUM>
+  >[];
+  readonly transactionEnums: ClearSignContextSuccess<ClearSignContextType.ENUM>[];
 };
 
 export type ProvideTransactionGenericContextTaskArgs = {
@@ -134,6 +138,21 @@ export class ProvideTransactionGenericContextTask {
       return Nothing;
     }
     for (const value of values.unsafeCoerce()) {
+      if (reference.type === ClearSignContextType.ENUM) {
+        const enumValue = value[value.length - 1]!; // last byte is the enum value
+        const enumDescriptor = this.args.context.transactionEnums.find(
+          (enumContext) =>
+            enumContext.value === enumValue && enumContext.id === reference.id,
+        );
+        if (enumDescriptor) {
+          const provideEnumResult = await this.provideContext(enumDescriptor);
+          if (!isSuccessCommandResult(provideEnumResult)) {
+            return Just(provideEnumResult);
+          }
+        }
+        return Nothing;
+      }
+
       const address = bufferToHexaString(
         value.slice(Math.max(0, value.length - 20)),
       );

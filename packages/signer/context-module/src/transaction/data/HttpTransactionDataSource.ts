@@ -8,6 +8,7 @@ import type {
   ContextModuleConfig,
 } from "@/config/model/ContextModuleConfig";
 import {
+  ClearSignContext,
   ClearSignContextReference,
   ClearSignContextSuccess,
   ClearSignContextType,
@@ -43,7 +44,7 @@ export class HttpTransactionDataSource implements TransactionDataSource {
     address,
     selector,
   }: GetTransactionDescriptorsParams): Promise<
-    Either<Error, ClearSignContextSuccess[]>
+    Either<Error, ClearSignContext[]>
   > {
     let calldata: CalldataDto | undefined;
     try {
@@ -112,8 +113,14 @@ export class HttpTransactionDataSource implements TransactionDataSource {
     };
     const enums: ClearSignContextSuccess[] = calldataDescriptor.enums.map(
       (e) => ({
+        id: e.id,
         type: ClearSignContextType.ENUM,
-        payload: e.descriptor,
+        payload: this.formatTransactionInfo(
+          e.descriptor.data,
+          e.descriptor.signatures[this.config.cal.mode]!, // TODO: remove the forced non-null assertion
+        ),
+        name: e.name,
+        value: e.value,
       }),
     );
     const fields: ClearSignContextSuccess[] = calldataDescriptor.fields.map(
@@ -160,6 +167,12 @@ export class HttpTransactionDataSource implements TransactionDataSource {
         types: param.types,
         sources: param.sources,
       };
+    } else if (param.type === "ENUM") {
+      return {
+        type: ClearSignContextType.ENUM,
+        valuePath: this.toGenericPath(param.value.binary_path),
+        id: param.id,
+      };
     }
     return undefined;
   }
@@ -205,7 +218,7 @@ export class HttpTransactionDataSource implements TransactionDataSource {
       this.isTransactionInfoV1(data.transaction_info, mode) &&
       Array.isArray(data.enums) &&
       Array.isArray(data.fields) &&
-      data.enums.every((e) => this.isEnumV1(e)) &&
+      data.enums.every((e) => this.isEnumV1(e, mode)) &&
       data.fields.every((f) => this.isFieldV1(f))
     );
   }
@@ -227,8 +240,17 @@ export class HttpTransactionDataSource implements TransactionDataSource {
     );
   }
 
-  private isEnumV1(data: CalldataEnumV1): boolean {
-    return typeof data === "object" && typeof data.descriptor === "string";
+  private isEnumV1(
+    data: CalldataEnumV1,
+    mode: ContextModuleCalMode,
+  ): data is CalldataEnumV1 {
+    return (
+      typeof data === "object" &&
+      typeof data.descriptor === "object" &&
+      typeof data.descriptor.data === "string" &&
+      typeof data.descriptor.signatures === "object" &&
+      typeof data.descriptor.signatures[mode] === "string"
+    );
   }
 
   private isFieldV1(data: CalldataFieldV1): boolean {
