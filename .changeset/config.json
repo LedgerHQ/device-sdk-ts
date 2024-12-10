@@ -10,7 +10,10 @@
   "fixed": [],
   "linked": [],
   "access": "public",
+  "privatePackages": {
+    "version": false
+  },
   "baseBranch": "develop",
-  "updateInternalDependencies": "patch",
+  "updateInternalDependencies": "minor",
   "ignore": []
 }

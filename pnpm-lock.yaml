@@ -483,6 +483,9 @@ importers:
 
   packages/signer/signer-eth:
     dependencies:
+      '@ledgerhq/signer-utils':
+        specifier: workspace:*
+        version: link:../signer-utils
       ethers-v5:
         specifier: npm:ethers@^5.7.2
         version: ethers@5.7.2
@@ -526,9 +529,6 @@ importers:
       '@ledgerhq/prettier-config-dsdk':
         specifier: workspace:*
         version: link:../../config/prettier
-      '@ledgerhq/signer-utils':
-        specifier: workspace:*
-        version: link:../signer-utils
       '@ledgerhq/tsconfig-dsdk':
         specifier: workspace:*
         version: link:../../config/typescript
