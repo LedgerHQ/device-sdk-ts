@@ -1,5 +1,15 @@
 # @ledgerhq/device-management-kit
 
+## 0.6.0
+
+### Minor Changes
+
+- [#474](https://github.com/LedgerHQ/device-sdk-ts/pull/474) [`3cdf201`](https://github.com/LedgerHQ/device-sdk-ts/commit/3cdf2012117fdb1916be43f42869d6d75bee584f) Thanks [@valpinkman](https://github.com/valpinkman)! - Extract Transports to their own module
+
+### Patch Changes
+
+- [#469](https://github.com/LedgerHQ/device-sdk-ts/pull/469) [`eafad9e`](https://github.com/LedgerHQ/device-sdk-ts/commit/eafad9e1b39573ad3321413b7adaa0814245da96) Thanks [@jdabbech-ledger](https://github.com/jdabbech-ledger)! - Add manager api calls for secure channel
+
 ## 0.5.1
 
 ### Patch Changes

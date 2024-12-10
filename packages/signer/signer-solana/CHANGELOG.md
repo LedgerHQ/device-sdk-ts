@@ -1,5 +1,15 @@
 # @ledgerhq/device-signer-kit-solana
 
+## 2.0.0
+
+### Patch Changes
+
+- [#540](https://github.com/LedgerHQ/device-sdk-ts/pull/540) [`8ca777b`](https://github.com/LedgerHQ/device-sdk-ts/commit/8ca777b1ccc835d4922efcbaeff0d32882914eb2) Thanks [@aussedatlo](https://github.com/aussedatlo)! - Remove debug logs
+
+- Updated dependencies [[`3cdf201`](https://github.com/LedgerHQ/device-sdk-ts/commit/3cdf2012117fdb1916be43f42869d6d75bee584f), [`eafad9e`](https://github.com/LedgerHQ/device-sdk-ts/commit/eafad9e1b39573ad3321413b7adaa0814245da96)]:
+  - @ledgerhq/device-management-kit@0.6.0
+  - @ledgerhq/signer-utils@2.0.0
+
 ## 1.0.1
 
 ### Patch Changes

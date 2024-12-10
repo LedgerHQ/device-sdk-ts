@@ -1,5 +1,47 @@
 # @ledgerhq/device-sdk-sample
 
+## 0.2.0
+
+### Minor Changes
+
+- [#474](https://github.com/LedgerHQ/device-sdk-ts/pull/474) [`3cdf201`](https://github.com/LedgerHQ/device-sdk-ts/commit/3cdf2012117fdb1916be43f42869d6d75bee584f) Thanks [@valpinkman](https://github.com/valpinkman)! - Extract Transports to their own module
+
+- [#451](https://github.com/LedgerHQ/device-sdk-ts/pull/451) [`c11b4b8`](https://github.com/LedgerHQ/device-sdk-ts/commit/c11b4b8cc793f2af70dde4eb0265939e758d0271) Thanks [@aussedatlo](https://github.com/aussedatlo)! - Add GetAddress Solana Signer use case
+
+- [#468](https://github.com/LedgerHQ/device-sdk-ts/pull/468) [`d706c4b`](https://github.com/LedgerHQ/device-sdk-ts/commit/d706c4b7df0e1fffde29de84985feb867f2024fd) Thanks [@aussedatlo](https://github.com/aussedatlo)! - Add solana getAppConfiguration use case
+
+- [#431](https://github.com/LedgerHQ/device-sdk-ts/pull/431) [`f964c98`](https://github.com/LedgerHQ/device-sdk-ts/commit/f964c987021168a14b453592f5d3c3130d36f0d5) Thanks [@aussedatlo](https://github.com/aussedatlo)! - Add keyring eth provider
+
+### Patch Changes
+
+- [#506](https://github.com/LedgerHQ/device-sdk-ts/pull/506) [`5085f6d`](https://github.com/LedgerHQ/device-sdk-ts/commit/5085f6dd397b5800849e34f593e71fd9c61c0e40) Thanks [@valpinkman](https://github.com/valpinkman)! - Rename keyring to signer
+
+- [#526](https://github.com/LedgerHQ/device-sdk-ts/pull/526) [`3b69436`](https://github.com/LedgerHQ/device-sdk-ts/commit/3b6943633e8b076a998db39ed92b753a6e5d3309) Thanks [@aussedatlo](https://github.com/aussedatlo)! - Rework context module builder
+
+- [#506](https://github.com/LedgerHQ/device-sdk-ts/pull/506) [`5085f6d`](https://github.com/LedgerHQ/device-sdk-ts/commit/5085f6dd397b5800849e34f593e71fd9c61c0e40) Thanks [@valpinkman](https://github.com/valpinkman)! - Rename SDK to DMK
+
+- [#375](https://github.com/LedgerHQ/device-sdk-ts/pull/375) [`bb6beca`](https://github.com/LedgerHQ/device-sdk-ts/commit/bb6beca571094c9b8e6745982c69a28343227c96) Thanks [@ofreyssinet-ledger](https://github.com/ofreyssinet-ledger)! - Implement basic Flipper client for the Ledger Device Management Kit
+
+- [#146](https://github.com/LedgerHQ/device-sdk-ts/pull/146) [`eb33b3e`](https://github.com/LedgerHQ/device-sdk-ts/commit/eb33b3e300e43d0edfd3b210dd95cf8e403de0ba) Thanks [@jdabbech-ledger](https://github.com/jdabbech-ledger)! - Add mockserver integration with transport
+
+- [#489](https://github.com/LedgerHQ/device-sdk-ts/pull/489) [`d9b50a2`](https://github.com/LedgerHQ/device-sdk-ts/commit/d9b50a28e406046d60ccda9c0ae1f217ce7892a1) Thanks [@aussedatlo](https://github.com/aussedatlo)! - Add signTransaction usecase for Solana signer
+
+- [#506](https://github.com/LedgerHQ/device-sdk-ts/pull/506) [`5085f6d`](https://github.com/LedgerHQ/device-sdk-ts/commit/5085f6dd397b5800849e34f593e71fd9c61c0e40) Thanks [@valpinkman](https://github.com/valpinkman)! - Use type keyword when importing type
+
+- [#417](https://github.com/LedgerHQ/device-sdk-ts/pull/417) [`1e3eed9`](https://github.com/LedgerHQ/device-sdk-ts/commit/1e3eed9b30660f282640bb125c313fc98fcb8c3f) Thanks [@jdabbech-ledger](https://github.com/jdabbech-ledger)! - Add unlock timeout input in open app device action
+
+- [#506](https://github.com/LedgerHQ/device-sdk-ts/pull/506) [`5085f6d`](https://github.com/LedgerHQ/device-sdk-ts/commit/5085f6dd397b5800849e34f593e71fd9c61c0e40) Thanks [@valpinkman](https://github.com/valpinkman)! - New use case listenToKnownDevices
+
+- Updated dependencies [[`91a9022`](https://github.com/LedgerHQ/device-sdk-ts/commit/91a9022f3407908411c5784453bb35fa9ef1527e), [`5085f6d`](https://github.com/LedgerHQ/device-sdk-ts/commit/5085f6dd397b5800849e34f593e71fd9c61c0e40), [`3cdf201`](https://github.com/LedgerHQ/device-sdk-ts/commit/3cdf2012117fdb1916be43f42869d6d75bee584f), [`5085f6d`](https://github.com/LedgerHQ/device-sdk-ts/commit/5085f6dd397b5800849e34f593e71fd9c61c0e40), [`5085f6d`](https://github.com/LedgerHQ/device-sdk-ts/commit/5085f6dd397b5800849e34f593e71fd9c61c0e40), [`07c575d`](https://github.com/LedgerHQ/device-sdk-ts/commit/07c575d44361c53d4d6c0e73a1eb61a43d2ed8d4), [`5085f6d`](https://github.com/LedgerHQ/device-sdk-ts/commit/5085f6dd397b5800849e34f593e71fd9c61c0e40), [`ebd01e8`](https://github.com/LedgerHQ/device-sdk-ts/commit/ebd01e87731c8483d8ab934d8b591158644d25cf), [`fa9c3d6`](https://github.com/LedgerHQ/device-sdk-ts/commit/fa9c3d61735f7c2aaf2d00a878eeba7ece16078a), [`269f102`](https://github.com/LedgerHQ/device-sdk-ts/commit/269f102b43aca408ccecae2a135974e6dc6835df), [`3b69436`](https://github.com/LedgerHQ/device-sdk-ts/commit/3b6943633e8b076a998db39ed92b753a6e5d3309), [`ebd01e8`](https://github.com/LedgerHQ/device-sdk-ts/commit/ebd01e87731c8483d8ab934d8b591158644d25cf), [`fbac50a`](https://github.com/LedgerHQ/device-sdk-ts/commit/fbac50a8448e89fa4196cbec78f967616e371874), [`a747e4b`](https://github.com/LedgerHQ/device-sdk-ts/commit/a747e4b282f9d2a8f3f96a2fb22b5aefdf58b8ac), [`62acf6c`](https://github.com/LedgerHQ/device-sdk-ts/commit/62acf6c6e524de8ee77c48b07785f7fa06c041d4), [`0dcccfc`](https://github.com/LedgerHQ/device-sdk-ts/commit/0dcccfcb7bdace8d34e5dcdd0d6be82c87e6b3db), [`5085f6d`](https://github.com/LedgerHQ/device-sdk-ts/commit/5085f6dd397b5800849e34f593e71fd9c61c0e40), [`773e620`](https://github.com/LedgerHQ/device-sdk-ts/commit/773e6204e710ca03d8ac5cc08b773826502c6392), [`d07a4f5`](https://github.com/LedgerHQ/device-sdk-ts/commit/d07a4f573bc30982750c861e5793a07d652db599), [`baa0206`](https://github.com/LedgerHQ/device-sdk-ts/commit/baa0206e525cc812436fb934cb79f49cc38eac11), [`b13a95a`](https://github.com/LedgerHQ/device-sdk-ts/commit/b13a95a95ceca9a251d2c27360b61a5d2dd559d4), [`715ea1c`](https://github.com/LedgerHQ/device-sdk-ts/commit/715ea1c8db3641ed901e83305e11f7af463875f9), [`eafad9e`](https://github.com/LedgerHQ/device-sdk-ts/commit/eafad9e1b39573ad3321413b7adaa0814245da96), [`1fda407`](https://github.com/LedgerHQ/device-sdk-ts/commit/1fda407103792d265fe836deda99568335fdabd2), [`766d3fa`](https://github.com/LedgerHQ/device-sdk-ts/commit/766d3fa5645e86889d82e4dfff2ba838b30da683), [`8ca777b`](https://github.com/LedgerHQ/device-sdk-ts/commit/8ca777b1ccc835d4922efcbaeff0d32882914eb2), [`637fe6c`](https://github.com/LedgerHQ/device-sdk-ts/commit/637fe6c3e8cee434925f4347a602648abd6aee69), [`71c3eca`](https://github.com/LedgerHQ/device-sdk-ts/commit/71c3eca21e3243989cd981d67df2393a683ee147), [`5085f6d`](https://github.com/LedgerHQ/device-sdk-ts/commit/5085f6dd397b5800849e34f593e71fd9c61c0e40), [`afbce1b`](https://github.com/LedgerHQ/device-sdk-ts/commit/afbce1b9e4b5d3347e7452bfe25828753e1bad43), [`2082f88`](https://github.com/LedgerHQ/device-sdk-ts/commit/2082f884b431cab9ca3e698d83ee08f1de6c5aa7), [`120b56a`](https://github.com/LedgerHQ/device-sdk-ts/commit/120b56a6f0a464eb92f3aec99e91ad0ecf26f248)]:
+  - @ledgerhq/device-signer-kit-ethereum@2.0.0
+  - @ledgerhq/context-module@2.0.0
+  - @ledgerhq/device-management-kit@0.6.0
+  - @ledgerhq/device-transport-kit-mockserver@1.0.0
+  - @ledgerhq/device-transport-kit-web-ble@1.0.0
+  - @ledgerhq/device-transport-kit-web-hid@1.0.0
+  - @ledgerhq/device-signer-kit-solana@2.0.0
+  - @ledgerhq/device-management-kit-flipper-plugin-client@2.0.0
+
 ## 0.1.3
 
 ### Patch Changes

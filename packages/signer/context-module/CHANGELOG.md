@@ -1,5 +1,30 @@
 # @ledgerhq/context-module
 
+## 2.0.0
+
+### Minor Changes
+
+- [#493](https://github.com/LedgerHQ/device-sdk-ts/pull/493) [`07c575d`](https://github.com/LedgerHQ/device-sdk-ts/commit/07c575d44361c53d4d6c0e73a1eb61a43d2ed8d4) Thanks [@paoun-ledger](https://github.com/paoun-ledger)! - Implement generic transaction context loader
+
+- [#513](https://github.com/LedgerHQ/device-sdk-ts/pull/513) [`fa9c3d6`](https://github.com/LedgerHQ/device-sdk-ts/commit/fa9c3d61735f7c2aaf2d00a878eeba7ece16078a) Thanks [@paoun-ledger](https://github.com/paoun-ledger)! - Implement transaction fields loader
+
+- [#526](https://github.com/LedgerHQ/device-sdk-ts/pull/526) [`3b69436`](https://github.com/LedgerHQ/device-sdk-ts/commit/3b6943633e8b076a998db39ed92b753a6e5d3309) Thanks [@aussedatlo](https://github.com/aussedatlo)! - Rework context module builder
+
+### Patch Changes
+
+- [#506](https://github.com/LedgerHQ/device-sdk-ts/pull/506) [`5085f6d`](https://github.com/LedgerHQ/device-sdk-ts/commit/5085f6dd397b5800849e34f593e71fd9c61c0e40) Thanks [@valpinkman](https://github.com/valpinkman)! - Add ProvideTransactionGenericContext Task
+
+- [#506](https://github.com/LedgerHQ/device-sdk-ts/pull/506) [`5085f6d`](https://github.com/LedgerHQ/device-sdk-ts/commit/5085f6dd397b5800849e34f593e71fd9c61c0e40) Thanks [@valpinkman](https://github.com/valpinkman)! - Update license to Apache-2.0
+
+- [#506](https://github.com/LedgerHQ/device-sdk-ts/pull/506) [`5085f6d`](https://github.com/LedgerHQ/device-sdk-ts/commit/5085f6dd397b5800849e34f593e71fd9c61c0e40) Thanks [@valpinkman](https://github.com/valpinkman)! - Use esbuild to build libraries
+
+- [#397](https://github.com/LedgerHQ/device-sdk-ts/pull/397) [`637fe6c`](https://github.com/LedgerHQ/device-sdk-ts/commit/637fe6c3e8cee434925f4347a602648abd6aee69) Thanks [@paoun-ledger](https://github.com/paoun-ledger)! - Fix CAL test signatures for EIP712
+
+- [#506](https://github.com/LedgerHQ/device-sdk-ts/pull/506) [`5085f6d`](https://github.com/LedgerHQ/device-sdk-ts/commit/5085f6dd397b5800849e34f593e71fd9c61c0e40) Thanks [@valpinkman](https://github.com/valpinkman)! - Use type keyword when importing type
+
+- Updated dependencies [[`3cdf201`](https://github.com/LedgerHQ/device-sdk-ts/commit/3cdf2012117fdb1916be43f42869d6d75bee584f), [`eafad9e`](https://github.com/LedgerHQ/device-sdk-ts/commit/eafad9e1b39573ad3321413b7adaa0814245da96)]:
+  - @ledgerhq/device-management-kit@0.6.0
+
 ## 1.0.0
 
 ### Minor Changes
