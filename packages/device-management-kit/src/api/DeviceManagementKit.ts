@@ -46,6 +46,7 @@ import {
   type ExecuteDeviceActionReturnType,
 } from "./device-action/DeviceAction";
 import { deviceActionTypes } from "./device-action/di/deviceActionTypes";
+import { type ToggleDeviceSessionRefresherUseCase } from "./device-session/use-case/ToggleDeviceSessionRefresher";
 import { type DmkError } from "./Error";
 
 /**
@@ -256,5 +257,21 @@ export class DeviceManagementKit {
         discoveryTypes.ListenToConnectedDeviceUseCase,
       )
       .execute();
+  }
+
+  /**
+   * Toggle the device session refresher.
+   *
+   * @param {DeviceSessionId} args - The device session ID.
+   */
+  toggleDeviceSessionRefresher(args: {
+    sessionId: DeviceSessionId;
+    enabled: boolean;
+  }) {
+    return this.container
+      .get<ToggleDeviceSessionRefresherUseCase>(
+        deviceSessionTypes.ToggleDeviceSessionRefresherUseCase,
+      )
+      .execute(args);
   }
 }
