@@ -4,12 +4,14 @@ import {
   CommandResultFactory,
   type InternalApi,
   InvalidStatusWordError,
+  isSuccessCommandResult,
 } from "@ledgerhq/device-management-kit";
 
 import { type ClientCommandContext } from "@internal/app-binder/command/client-command-handlers/ClientCommandHandlersTypes";
 import { ContinueCommand } from "@internal/app-binder/command/ContinueCommand";
 import { ClientCommandInterpreter } from "@internal/app-binder/command/service/ClientCommandInterpreter";
 import { SignMessageCommand } from "@internal/app-binder/command/SignMessageCommand";
+import { CHUNK_SIZE } from "@internal/app-binder/command/utils/constants";
 import { DataStore } from "@internal/data-store/model/DataStore";
 import { type DataStoreService } from "@internal/data-store/service/DataStoreService";
 import { DefaultDataStoreService } from "@internal/data-store/service/DefaultDataStoreService";
@@ -23,8 +25,6 @@ type SendSignMessageTaskArgs = {
   derivationPath: string;
   message: string;
 };
-
-const CHUNK_SIZE = 64;
 
 export class SendSignMessageTask {
   private dataStoreService: DataStoreService;
@@ -77,6 +77,11 @@ export class SendSignMessageTask {
     let response: ApduResponse = await this.api.sendCommand(signMessageCommand);
 
     if (!CommandUtils.isContinueResponse(response)) {
+      //@ts-expect-error
+      if (!isSuccessCommandResult(response)) {
+        //@ts-expect-error
+        return response;
+      }
       return CommandResultFactory<Uint8Array, Error>({
         data: response.data,
       });
@@ -99,6 +104,11 @@ export class SendSignMessageTask {
           //@ts-expect-error
           response = await this.api.sendCommand(responseToDevice);
         }
+      }
+      //@ts-expect-error
+      if (!isSuccessCommandResult(response)) {
+        //@ts-expect-error
+        return response;
       }
 
       return CommandResultFactory<Uint8Array, Error>({

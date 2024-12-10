@@ -2,6 +2,8 @@ export const PROTOCOL_VERSION = 1;
 
 export const BUFFER_SIZE = 32;
 
+export const CHUNK_SIZE = 64;
+
 export enum ClientCommandCodes {
   YIELD = 0x10,
   GET_PREIMAGE = 0x40,
