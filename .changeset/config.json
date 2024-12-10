@@ -13,7 +13,8 @@
   "privatePackages": {
     "version": false
   },
+  "bumpVersionsWithWorkspaceProtocolOnly": true,
   "baseBranch": "develop",
-  "updateInternalDependencies": "minor",
+  "updateInternalDependencies": "patch",
   "ignore": []
 }
