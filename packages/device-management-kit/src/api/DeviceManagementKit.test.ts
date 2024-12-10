@@ -71,6 +71,10 @@ describe("DeviceManagementKit", () => {
     it("should have listenToConnectedDevice method", () => {
       expect(dmk.listenToConnectedDevice).toBeDefined();
     });
+
+    it("should have toggleDeviceSessionRefresher method", () => {
+      expect(dmk.toggleDeviceSessionRefresher).toBeDefined();
+    });
   });
 
   describe("stubbed", () => {

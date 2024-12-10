@@ -4,6 +4,7 @@ import { type ApduReceiverService } from "@api/device-session/service/ApduReceiv
 import { type ApduReceiverConstructorArgs } from "@api/device-session/service/ApduReceiverService";
 import { type ApduSenderService } from "@api/device-session/service/ApduSenderService";
 import { type ApduSenderServiceConstructorArgs } from "@api/device-session/service/ApduSenderService";
+import { ToggleDeviceSessionRefresherUseCase } from "@api/device-session/use-case/ToggleDeviceSessionRefresher";
 import { type LoggerPublisherService } from "@api/logger-publisher/service/LoggerPublisherService";
 import { DefaultApduReceiverService } from "@internal/device-session/service/DefaultApduReceiverService";
 import { DefaultApduSenderService } from "@internal/device-session/service/DefaultApduSenderService";
@@ -64,9 +65,15 @@ export const deviceSessionModuleFactory = (
         GetDeviceSessionStateUseCase,
       );
       bind(deviceSessionTypes.CloseSessionsUseCase).to(CloseSessionsUseCase);
+      bind(deviceSessionTypes.ToggleDeviceSessionRefresherUseCase).to(
+        ToggleDeviceSessionRefresherUseCase,
+      );
 
       if (stub) {
         rebind(deviceSessionTypes.GetDeviceSessionStateUseCase).to(StubUseCase);
+        rebind(deviceSessionTypes.ToggleDeviceSessionRefresherUseCase).to(
+          StubUseCase,
+        );
       }
     },
   );

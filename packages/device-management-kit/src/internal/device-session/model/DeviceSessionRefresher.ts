@@ -76,7 +76,9 @@ export class DeviceSessionRefresher {
   private readonly _getAppAndVersionCommand = new GetAppAndVersionCommand();
   private readonly _getOsVersionCommand = new GetOsVersionCommand();
   private _deviceStatus: DeviceStatus;
-  private _subscription: Subscription;
+  private _subscription?: Subscription;
+  private readonly _refreshInterval: number;
+  private readonly _deviceModelId: DeviceModelId;
   private readonly _sendApduFn: SendApduFnType;
   private readonly _updateStateFn: UpdateStateFnType;
 
@@ -94,12 +96,27 @@ export class DeviceSessionRefresher {
     this._logger = logger;
     this._sendApduFn = sendApduFn;
     this._updateStateFn = updateStateFn;
+    this._refreshInterval = refreshInterval;
+    this._deviceModelId = deviceModelId;
+
+    this.start();
+  }
+
+  /**
+   * Start the session refresher.
+   * The refresher will send commands to refresh the session.
+   */
+  start() {
+    if (this._subscription && !this._subscription.closed) {
+      this._logger.warn("Refresher already started");
+      return;
+    }
 
     // NanoS has a specific refresher that sends GetAppAndVersion and GetOsVersion commands
     const refreshObservable =
-      deviceModelId === DeviceModelId.NANO_S
-        ? this._getNanoSRefreshObservable(refreshInterval * 2)
-        : this._getDefaultRefreshObservable(interval(refreshInterval));
+      this._deviceModelId === DeviceModelId.NANO_S
+        ? this._getNanoSRefreshObservable(this._refreshInterval * 2)
+        : this._getDefaultRefreshObservable(interval(this._refreshInterval));
 
     this._subscription = refreshObservable.subscribe((parsedResponse) => {
       if (!parsedResponse || !isSuccessCommandResult(parsedResponse)) {
@@ -214,5 +231,6 @@ export class DeviceSessionRefresher {
       return;
     }
     this._subscription.unsubscribe();
+    this._subscription = undefined;
   }
 }

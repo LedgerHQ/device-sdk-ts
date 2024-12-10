@@ -46,3 +46,13 @@ export class DeviceSessionRefresherError implements DmkError {
       originalError ?? new Error("Device session refresher error");
   }
 }
+
+export class DeviceBusyError implements DmkError {
+  readonly _tag = "DeviceBusyError";
+  originalError?: Error;
+
+  constructor(originalError?: Error) {
+    this.originalError =
+      originalError ?? new Error("Device is busy, please try again later");
+  }
+}

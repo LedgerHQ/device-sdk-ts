@@ -126,6 +126,11 @@ describe("DeviceSessionRefresher", () => {
       deviceSessionRefresher.stop();
       expect(() => deviceSessionRefresher.stop()).not.toThrow();
     });
+
+    it("should not throw error if start is called on a started refresher", () => {
+      deviceSessionRefresher.start();
+      expect(() => deviceSessionRefresher.start()).not.toThrow();
+    });
   });
 
   describe("With a NanoS device", () => {

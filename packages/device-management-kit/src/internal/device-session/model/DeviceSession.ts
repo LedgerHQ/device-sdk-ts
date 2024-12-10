@@ -1,3 +1,4 @@
+import { type Either, Left } from "purify-ts";
 import { BehaviorSubject } from "rxjs";
 import { v4 as uuidv4 } from "uuid";
 
@@ -24,6 +25,7 @@ import { DEVICE_SESSION_REFRESH_INTERVAL } from "@internal/device-session/data/D
 import { type ManagerApiService } from "@internal/manager-api/service/ManagerApiService";
 
 import { DeviceSessionRefresher } from "./DeviceSessionRefresher";
+import { DeviceBusyError } from "./Errors";
 
 export type SessionConstructorArgs = {
   connectedDevice: TransportConnectedDevice;
@@ -105,7 +107,12 @@ export class DeviceSession {
       isPolling: false,
       triggersDisconnection: false,
     },
-  ) {
+  ): Promise<Either<DmkError, ApduResponse>> {
+    const sessionState = this._deviceState.getValue();
+    if (sessionState.deviceStatus === DeviceStatus.BUSY) {
+      return Left(new DeviceBusyError());
+    }
+
     if (!options.isPolling) this.updateDeviceStatus(DeviceStatus.BUSY);
 
     const errorOrResponse = await this._connectedDevice.sendApdu(
@@ -171,5 +178,14 @@ export class DeviceSession {
   close() {
     this.updateDeviceStatus(DeviceStatus.NOT_CONNECTED);
     this._deviceState.complete();
+    this._refresher.stop();
+  }
+
+  toggleRefresher(enabled: boolean) {
+    if (enabled) {
+      this._refresher.start();
+    } else {
+      this._refresher.stop();
+    }
   }
 }
