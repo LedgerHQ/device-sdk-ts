@@ -1,7 +1,7 @@
 import { type HexaString } from "@ledgerhq/device-management-kit";
 import { type Either } from "purify-ts";
 
-import { type ClearSignContextSuccess } from "@/shared/model/ClearSignContext";
+import { type ClearSignContext } from "@/shared/model/ClearSignContext";
 
 export type GetTransactionDescriptorsParams = {
   address: string;
@@ -12,5 +12,5 @@ export type GetTransactionDescriptorsParams = {
 export interface TransactionDataSource {
   getTransactionDescriptors(
     params: GetTransactionDescriptorsParams,
-  ): Promise<Either<Error, ClearSignContextSuccess[]>>;
+  ): Promise<Either<Error, ClearSignContext[]>>;
 }

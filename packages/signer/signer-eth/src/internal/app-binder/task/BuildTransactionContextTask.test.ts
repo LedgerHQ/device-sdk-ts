@@ -141,6 +141,9 @@ describe("BuildTransactionContextTask", () => {
       {
         type: ClearSignContextType.ENUM,
         payload: "payload-3",
+        id: 1,
+        name: "enum-name",
+        value: 2,
       },
       {
         type: ClearSignContextType.TRANSACTION_FIELD_DESCRIPTION,
@@ -171,7 +174,8 @@ describe("BuildTransactionContextTask", () => {
     expect(result).toEqual({
       clearSignContexts: {
         transactionInfo: "payload-1",
-        transactionFields: [...clearSignContexts.slice(1)],
+        transactionFields: [clearSignContexts[1], clearSignContexts[3]],
+        transactionEnums: [clearSignContexts[2]],
       },
       serializedTransaction,
       chainId: 1,
@@ -326,6 +330,9 @@ describe("BuildTransactionContextTask", () => {
       {
         type: ClearSignContextType.ENUM,
         payload: "enum",
+        id: 1,
+        name: "enum-name",
+        value: 2,
       },
     ];
     const mapperResult: TransactionMapperResult = {
@@ -372,6 +379,9 @@ describe("BuildTransactionContextTask", () => {
       {
         type: ClearSignContextType.ENUM,
         payload: "enum",
+        id: 1,
+        name: "enum-name",
+        value: 2,
       },
       {
         type: ClearSignContextType.NFT,
@@ -427,6 +437,13 @@ describe("BuildTransactionContextTask", () => {
         type: ClearSignContextType.TRANSACTION_FIELD_DESCRIPTION,
         payload: "payload-4",
       },
+      {
+        type: ClearSignContextType.ENUM,
+        payload: "payload-5",
+        id: 1,
+        name: "enum-name",
+        value: 2,
+      },
     ];
     const mapperResult: TransactionMapperResult = {
       subset: { chainId: 1, to: undefined, data: "0x" },
@@ -453,6 +470,7 @@ describe("BuildTransactionContextTask", () => {
       clearSignContexts: {
         transactionInfo: "payload-2",
         transactionFields: [clearSignContexts[3]],
+        transactionEnums: [clearSignContexts[4]],
       },
       serializedTransaction,
       chainId: 1,
