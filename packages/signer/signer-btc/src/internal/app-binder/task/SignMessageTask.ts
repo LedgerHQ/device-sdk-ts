@@ -4,12 +4,18 @@ import {
   CommandResultFactory,
   type InternalApi,
   InvalidStatusWordError,
+  isSuccessCommandResult,
 } from "@ledgerhq/device-management-kit";
 
+import { type Signature } from "@api/model/Signature";
 import { type ClientCommandContext } from "@internal/app-binder/command/client-command-handlers/ClientCommandHandlersTypes";
 import { ContinueCommand } from "@internal/app-binder/command/ContinueCommand";
 import { ClientCommandInterpreter } from "@internal/app-binder/command/service/ClientCommandInterpreter";
-import { SignMessageCommand } from "@internal/app-binder/command/SignMessageCommand";
+import {
+  SignMessageCommand,
+  type SignMessageCommandResponse,
+} from "@internal/app-binder/command/SignMessageCommand";
+import { CHUNK_SIZE } from "@internal/app-binder/command/utils/constants";
 import { DataStore } from "@internal/data-store/model/DataStore";
 import { type DataStoreService } from "@internal/data-store/service/DataStoreService";
 import { DefaultDataStoreService } from "@internal/data-store/service/DefaultDataStoreService";
@@ -23,8 +29,6 @@ type SendSignMessageTaskArgs = {
   derivationPath: string;
   message: string;
 };
-
-const CHUNK_SIZE = 64;
 
 export class SendSignMessageTask {
   private dataStoreService: DataStoreService;
@@ -47,7 +51,7 @@ export class SendSignMessageTask {
     );
   }
 
-  async run(): Promise<CommandResult<Uint8Array, Error>> {
+  async run(): Promise<CommandResult<Signature, Error>> {
     const { derivationPath, message } = this.args;
 
     const dataStore = new DataStore();
@@ -68,42 +72,88 @@ export class SendSignMessageTask {
       yieldedResults: [],
     };
 
-    const signMessageCommand = new SignMessageCommand({
-      derivationPath,
-      messageLength: messageBuffer.length,
-      messageMerkleRoot: merkleRoot,
-    });
-    //@ts-expect-error
-    let response: ApduResponse = await this.api.sendCommand(signMessageCommand);
+    const signMessageFirstCommandResponse = await this.api.sendCommand(
+      new SignMessageCommand({
+        derivationPath,
+        messageLength: messageBuffer.length,
+        messageMerkleRoot: merkleRoot,
+      }),
+    );
 
-    if (!CommandUtils.isContinueResponse(response)) {
-      return CommandResultFactory<Uint8Array, Error>({
-        data: response.data,
-      });
-    } else {
-      while (CommandUtils.isContinueResponse(response)) {
-        const deviceRequest = interpreter.getClientCommandPayload(
-          response.data,
-          commandHandlersContext,
-        );
-
-        if (deviceRequest.isLeft()) {
-          return CommandResultFactory<Uint8Array, Error>({
-            error: new InvalidStatusWordError(deviceRequest.extract().message),
-          });
-        } else {
-          const payload = deviceRequest.extract() as Uint8Array;
-          const responseToDevice = new ContinueCommand({
-            payload,
-          });
-          //@ts-expect-error
-          response = await this.api.sendCommand(responseToDevice);
-        }
-      }
-
-      return CommandResultFactory<Uint8Array, Error>({
-        data: response.data,
+    if (
+      isSuccessCommandResult(signMessageFirstCommandResponse) &&
+      this.isSignature(signMessageFirstCommandResponse.data)
+    ) {
+      return CommandResultFactory({
+        data: signMessageFirstCommandResponse.data,
       });
     }
+
+    if (isSuccessCommandResult(signMessageFirstCommandResponse)) {
+      let currentResponse = signMessageFirstCommandResponse;
+      while (
+        this.isApduResponse(currentResponse.data) &&
+        CommandUtils.isContinueResponse(currentResponse.data)
+      ) {
+        const maybeCommandPayload = interpreter.getClientCommandPayload(
+          currentResponse.data.data,
+          commandHandlersContext,
+        );
+        if (maybeCommandPayload.isLeft()) {
+          return CommandResultFactory({
+            error: new InvalidStatusWordError(
+              maybeCommandPayload.extract().message,
+            ),
+          });
+        }
+
+        const payload = maybeCommandPayload.extract();
+        if (payload instanceof Uint8Array) {
+          const nextResponse = await this.api.sendCommand(
+            new ContinueCommand({
+              payload,
+            }),
+          );
+          if (!isSuccessCommandResult(nextResponse)) {
+            return CommandResultFactory({
+              error: new InvalidStatusWordError("Invalid response type"),
+            });
+          }
+          if (this.isSignature(nextResponse.data)) {
+            return CommandResultFactory({
+              data: nextResponse.data,
+            });
+          }
+
+          currentResponse = nextResponse;
+        }
+      }
+    }
+    return CommandResultFactory<Signature, Error>({
+      error: new InvalidStatusWordError("Failed to send sign message command."),
+    });
   }
+
+  private isSignature = (
+    response: SignMessageCommandResponse,
+  ): response is Signature => {
+    return (
+      response &&
+      typeof response === "object" &&
+      "v" in response &&
+      "r" in response &&
+      "s" in response
+    );
+  };
+
+  private isApduResponse = (
+    response: SignMessageCommandResponse,
+  ): response is ApduResponse => {
+    return (
+      response &&
+      typeof response === "object" &&
+      "statusCode" in response &&
+      "data" in response
+    );
+  };
 }
