@@ -74,13 +74,13 @@ export interface DataPathElementTuple {
  * Path element to navigate in an array of variable size.
  * - itemSize: the length of each item in that array (not the number of items which is variable).
  * - start: the start of the array slice to iterate on. If unset, start from the beginning of that array.
- * - length: the length of the array slice to iterate on. If unset, iterate until the end of that array.
+ * - end: the end of the array slice to iterate on (exclusive). If unset, iterate until the end of that array.
  */
 export interface DataPathElementArray {
   type: "ARRAY";
   itemSize: number;
   start?: number;
-  length?: number;
+  end?: number;
 }
 
 // Path element to indicate the current item should be de-referenced (its value contains a pointer).

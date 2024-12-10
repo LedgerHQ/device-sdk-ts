@@ -169,16 +169,20 @@ export class TransactionParserService {
                     ? length + element.start
                     : element.start;
               const end =
-                element.length === undefined ? length : start + element.length;
+                element.end === undefined
+                  ? length
+                  : element.end < 0
+                    ? length + element.end
+                    : element.end;
               if (
                 start < 0 ||
                 start >= length ||
                 end > length ||
-                start === end
+                start >= end
               ) {
                 return Left(
                   new Error(
-                    `Array slice out of bounds, start=${element.start}, length=${element.length}`,
+                    `Array slice out of bounds, start=${element.start}, end=${element.end}`,
                   ),
                 );
               }

@@ -89,7 +89,7 @@ describe("HttpTransactionDataSource", () => {
               {
                 type: "ARRAY",
                 start: 0,
-                length: 5,
+                end: 5,
                 weight: 1,
               },
               {
@@ -340,7 +340,7 @@ describe("HttpTransactionDataSource", () => {
             {
               type: "ARRAY",
               start: 0,
-              length: 5,
+              end: 5,
               itemSize: 1,
             },
             {

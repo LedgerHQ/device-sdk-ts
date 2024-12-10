@@ -137,7 +137,7 @@ export interface CalldataDescriptorPathElementTupleV1 {
 export interface CalldataDescriptorPathElementArrayV1 {
   type: "ARRAY";
   start?: number;
-  length?: number;
+  end?: number;
   weight: number;
 }
 
