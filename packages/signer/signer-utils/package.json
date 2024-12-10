@@ -2,7 +2,6 @@
   "name": "@ledgerhq/signer-utils",
   "version": "1.0.2",
   "license": "Apache-2.0",
-  "private": true,
   "exports": {
     ".": {
       "types": "./lib/types/index.d.ts",
@@ -44,6 +43,6 @@
     "ts-node": "^10.9.2"
   },
   "peerDependencies": {
-    "@ledgerhq/device-management-kit": "workspace:*"
+    "@ledgerhq/device-management-kit": "^0.5.1"
   }
 }

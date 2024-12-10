@@ -483,6 +483,9 @@ importers:
 
   packages/signer/signer-eth:
     dependencies:
+      '@ledgerhq/context-module':
+        specifier: workspace:*
+        version: link:../context-module
       ethers-v5:
         specifier: npm:ethers@^5.7.2
         version: ethers@5.7.2
@@ -508,9 +511,6 @@ importers:
         specifier: ^5.19.0
         version: 5.19.0
     devDependencies:
-      '@ledgerhq/context-module':
-        specifier: workspace:*
-        version: link:../context-module
       '@ledgerhq/device-management-kit':
         specifier: workspace:*
         version: link:../../device-management-kit
