@@ -1,16 +1,18 @@
 import {
-  type CommandResult,
   CommandResultFactory,
   CommandResultStatus,
   InvalidStatusWordError,
 } from "@ledgerhq/device-management-kit";
+import { type ApduResponse } from "@ledgerhq/device-management-kit";
 import { makeDeviceActionInternalApiMock } from "@ledgerhq/device-management-kit/src/api/device-action/__test-utils__/makeInternalApi.js";
-import { Just, Left, Right } from "purify-ts";
+import { Left, Right } from "purify-ts";
 
-import { ContinueCommand } from "@internal/app-binder/command/ContinueCommand";
+import { type Signature } from "@api/model/Signature";
+import { ClientCommandHandlerError } from "@internal/app-binder/command/client-command-handlers/Errors";
 import { ClientCommandInterpreter } from "@internal/app-binder/command/service/ClientCommandInterpreter";
-import { SignMessageCommand } from "@internal/app-binder/command/SignMessageCommand";
 import {
+  BUFFER_SIZE,
+  CHUNK_SIZE,
   ClientCommandCodes,
   SW_INTERRUPTED_EXECUTION,
 } from "@internal/app-binder/command/utils/constants";
@@ -18,23 +20,28 @@ import { DefaultDataStoreService } from "@internal/data-store/service/DefaultDat
 
 import { SendSignMessageTask } from "./SignMessageTask";
 
-const EXACT_ONE_CHUNK_MESSAGE = "a".repeat(64);
-const EXACT_TWO_CHUNKS_MESSAGE = "a".repeat(128);
+const EXACT_ONE_CHUNK_MESSAGE = "a".repeat(CHUNK_SIZE);
+const EXACT_TWO_CHUNKS_MESSAGE = "a".repeat(CHUNK_SIZE * 2);
 const DERIVATION_PATH = "44'/0'/0'/0/0";
 const PREIMAGE = new Uint8Array([1, 2, 3, 4]);
-const MERKLE_ROOT = new Uint8Array(32).fill(0x01);
+const MERKLE_ROOT = new Uint8Array(BUFFER_SIZE).fill(0x01);
 
-const signature = {
+const SIGNATURE: Signature = {
   v: 27,
   r: "0x1212121212121212121212121212121212121212121212121212121212121212",
   s: "0x3434343434343434343434343434343434343434343434343434343434343434",
 };
 
+const APDU_RESPONSE_YELD: ApduResponse = {
+  statusCode: SW_INTERRUPTED_EXECUTION,
+  data: new Uint8Array([ClientCommandCodes.YIELD]),
+};
+
 describe("SendSignMessageTask", () => {
-  const apiMock = makeDeviceActionInternalApiMock();
-  const resultOk = CommandResultFactory({
-    data: Just(signature),
+  const signatureResult = CommandResultFactory<Signature, Error>({
+    data: SIGNATURE,
   });
+  const apiMock = makeDeviceActionInternalApiMock();
 
   beforeEach(() => {
     jest.resetAllMocks();
@@ -51,24 +58,20 @@ describe("SendSignMessageTask", () => {
       jest
         .spyOn(DefaultDataStoreService.prototype, "merklizeChunks")
         .mockImplementation((_, chunks) => {
-          expect(chunks.length).toBe(1); // validate the number of chunks
+          expect(chunks.length).toBe(1);
           return MERKLE_ROOT;
         });
 
-      apiMock.sendCommand.mockResolvedValueOnce(resultOk);
+      apiMock.sendCommand.mockResolvedValueOnce(signatureResult);
 
       // WHEN
       const result = await new SendSignMessageTask(apiMock, args).run();
 
       // THEN
-      expect(apiMock.sendCommand.mock.calls).toHaveLength(1);
+      expect(apiMock.sendCommand).toHaveBeenCalledTimes(1);
       expect(result.status).toBe(CommandResultStatus.Success);
-      // @ts-expect-error
-      if (result.data.isJust()) {
-        // @ts-expect-error
-        expect(result.data.extract()).toStrictEqual(signature);
-      } else {
-        throw new Error("Expected Just value, but got Nothing");
+      if (result.status === CommandResultStatus.Success) {
+        expect(result.data).toStrictEqual(SIGNATURE);
       }
     });
 
@@ -82,28 +85,25 @@ describe("SendSignMessageTask", () => {
       jest
         .spyOn(DefaultDataStoreService.prototype, "merklizeChunks")
         .mockImplementation((_, chunks) => {
-          expect(chunks.length).toBe(2); // validate the number of chunks
+          expect(chunks.length).toBe(2);
           return MERKLE_ROOT;
         });
 
-      apiMock.sendCommand.mockResolvedValueOnce(resultOk);
+      apiMock.sendCommand.mockResolvedValueOnce(signatureResult);
 
       // WHEN
       const result = await new SendSignMessageTask(apiMock, args).run();
 
       // THEN
-      expect(apiMock.sendCommand.mock.calls).toHaveLength(1);
+      expect(apiMock.sendCommand).toHaveBeenCalledTimes(1);
       expect(result.status).toBe(CommandResultStatus.Success);
-      // @ts-expect-error
-      if (result.data.isJust()) {
-        // @ts-expect-error
-        expect(result.data.extract()).toStrictEqual(signature);
-      } else {
-        throw new Error("Expected Just value, but got Nothing");
+      if (result.status === CommandResultStatus.Success) {
+        expect(result.data).toStrictEqual(SIGNATURE);
       }
     });
 
-    it("should handle interrupted execution with YIELD, CONTINUE, and GET_PREIMAGE commands in sequence", async () => {
+    it("should handle interrupted execution with interactive commands", async () => {
+      // GIVEN
       const args = {
         derivationPath: DERIVATION_PATH,
         message: EXACT_TWO_CHUNKS_MESSAGE,
@@ -112,62 +112,219 @@ describe("SendSignMessageTask", () => {
       jest
         .spyOn(DefaultDataStoreService.prototype, "merklizeChunks")
         .mockImplementation((_, chunks) => {
-          expect(chunks.length).toBe(2); // validate the number of chunks
+          expect(chunks.length).toBe(2);
           return MERKLE_ROOT;
         });
 
-      // mock command sequence
       apiMock.sendCommand
-        .mockResolvedValueOnce({
-          statusCode: SW_INTERRUPTED_EXECUTION, // SW_INTERRUPTED_EXECUTION
-          data: new Uint8Array([ClientCommandCodes.YIELD]),
-        } as unknown as CommandResult<Uint8Array, Error>)
-        .mockResolvedValueOnce({
-          statusCode: SW_INTERRUPTED_EXECUTION, // SW_INTERRUPTED_EXECUTION for first ContinueCommand
-          data: new Uint8Array([ClientCommandCodes.GET_PREIMAGE]),
-        } as unknown as CommandResult<Uint8Array, Error>)
-        .mockResolvedValueOnce(resultOk);
+        .mockResolvedValueOnce(
+          CommandResultFactory<ApduResponse, Error>({
+            data: APDU_RESPONSE_YELD,
+          }),
+        )
+        .mockResolvedValueOnce(
+          CommandResultFactory<ApduResponse, Error>({
+            data: {
+              statusCode: SW_INTERRUPTED_EXECUTION,
+              data: new Uint8Array([ClientCommandCodes.GET_PREIMAGE]),
+            },
+          }),
+        )
+        .mockResolvedValueOnce(signatureResult);
 
-      jest
+      const getClientCommandPayloadMock = jest
         .spyOn(ClientCommandInterpreter.prototype, "getClientCommandPayload")
-        .mockImplementation((request, context) => {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        .mockImplementation((request: Uint8Array, context: any) => {
           const commandCode = request[0];
-          if (commandCode === 0x10) {
-            // YIELD
+          if (commandCode === ClientCommandCodes.YIELD) {
+            // simulate YIELD command
             context.yieldedResults.push(new Uint8Array([]));
-            return Right(new Uint8Array()); // continueCommand with empty payload
+            return Right(new Uint8Array([0x00]));
           }
-          if (commandCode === 0x40) {
-            // GET_PREIMAGE
-            return Right(PREIMAGE); // continueCommand with preimage
+          if (commandCode === ClientCommandCodes.GET_PREIMAGE) {
+            // simulate GET_PREIMAGE command
+            return Right(PREIMAGE);
           }
-          return Left(new InvalidStatusWordError("Unhandled command"));
+          return Left(new ClientCommandHandlerError("error"));
         });
 
       // WHEN
-      const sendSignMessageTask = new SendSignMessageTask(apiMock, args);
-      const result = await sendSignMessageTask.run();
+      const result = await new SendSignMessageTask(apiMock, args).run();
 
       // THEN
+      // expected number of sendCommand calls:
+      // 1. SignMessageCommand
+      // 2. ContinueCommand after YIELD
+      // 3. ContinueCommand after GET_PREIMAGE
       expect(apiMock.sendCommand).toHaveBeenCalledTimes(3);
 
-      const firstCommand = apiMock.sendCommand.mock.calls[0]?.[0];
-      expect(firstCommand).toBeInstanceOf(SignMessageCommand);
+      // check that sendCommand was called with the correct commands
+      expect(apiMock.sendCommand).toHaveBeenNthCalledWith(
+        1,
+        expect.objectContaining({
+          args: {
+            derivationPath: DERIVATION_PATH,
+            messageLength: new TextEncoder().encode(EXACT_TWO_CHUNKS_MESSAGE)
+              .length,
+            messageMerkleRoot: MERKLE_ROOT,
+          },
+        }),
+      );
 
-      const firstContinueCommand = apiMock.sendCommand.mock.calls[1]?.[0];
-      expect(firstContinueCommand).toBeInstanceOf(ContinueCommand);
+      expect(apiMock.sendCommand).toHaveBeenNthCalledWith(
+        2,
+        expect.objectContaining({
+          args: {
+            payload: new Uint8Array([0x00]),
+          },
+        }),
+      );
 
-      const secondContinueCommand = apiMock.sendCommand.mock.calls[2]?.[0];
-      expect(secondContinueCommand).toBeInstanceOf(ContinueCommand);
+      expect(apiMock.sendCommand).toHaveBeenNthCalledWith(
+        3,
+        expect.objectContaining({
+          args: {
+            payload: PREIMAGE,
+          },
+        }),
+      );
 
+      // check the final result
       expect(result.status).toBe(CommandResultStatus.Success);
-      // @ts-expect-error
-      if (result.data.isJust()) {
-        // @ts-expect-error
-        expect(result.data.extract()).toStrictEqual(signature);
-      } else {
-        throw new Error("Expected Just value, but got Nothing");
+      if (result.status === CommandResultStatus.Success) {
+        expect(result.data).toStrictEqual(SIGNATURE);
       }
+
+      // check that getClientCommandPayload was called correctly
+      expect(getClientCommandPayloadMock).toHaveBeenCalledTimes(2);
+      expect(getClientCommandPayloadMock).toHaveBeenNthCalledWith(
+        1,
+        new Uint8Array([ClientCommandCodes.YIELD]),
+        expect.any(Object),
+      );
+      expect(getClientCommandPayloadMock).toHaveBeenNthCalledWith(
+        2,
+        new Uint8Array([ClientCommandCodes.GET_PREIMAGE]),
+        expect.any(Object),
+      );
+    });
+
+    it("should return an error if the initial SignMessageCommand fails", async () => {
+      // GIVEN
+      const args = {
+        derivationPath: DERIVATION_PATH,
+        message: EXACT_ONE_CHUNK_MESSAGE,
+      };
+
+      const resultError = CommandResultFactory<Signature, Error>({
+        error: new InvalidStatusWordError("error"),
+      });
+
+      jest
+        .spyOn(DefaultDataStoreService.prototype, "merklizeChunks")
+        .mockImplementation((_, chunks) => {
+          expect(chunks.length).toBe(1);
+          return MERKLE_ROOT;
+        });
+
+      apiMock.sendCommand.mockResolvedValueOnce(resultError);
+
+      // WHEN
+      const result = await new SendSignMessageTask(apiMock, args).run();
+
+      // THEN
+      expect(apiMock.sendCommand).toHaveBeenCalledTimes(1);
+      expect(result.status).toBe(CommandResultStatus.Error);
+      if (result.status === CommandResultStatus.Error) {
+        expect(result.error).toBeInstanceOf(InvalidStatusWordError);
+      }
+    });
+
+    it("should return an error if a ContinueCommand fails during interactive execution", async () => {
+      // GIVEN
+      const args = {
+        derivationPath: DERIVATION_PATH,
+        message: EXACT_TWO_CHUNKS_MESSAGE,
+      };
+
+      jest
+        .spyOn(DefaultDataStoreService.prototype, "merklizeChunks")
+        .mockImplementation((_, chunks) => {
+          expect(chunks.length).toBe(2);
+          return MERKLE_ROOT;
+        });
+
+      const resultError = CommandResultFactory<Signature, Error>({
+        error: new InvalidStatusWordError("error"),
+      });
+
+      apiMock.sendCommand
+        .mockResolvedValueOnce(
+          CommandResultFactory<ApduResponse, Error>({
+            data: APDU_RESPONSE_YELD,
+          }),
+        )
+        .mockResolvedValueOnce(resultError);
+
+      const getClientCommandPayloadMock = jest
+        .spyOn(ClientCommandInterpreter.prototype, "getClientCommandPayload")
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        .mockImplementation((request: Uint8Array, context: any) => {
+          const commandCode = request[0];
+          if (commandCode === ClientCommandCodes.YIELD) {
+            // simulate YIELD command
+            context.yieldedResults.push(new Uint8Array([]));
+            return Right(new Uint8Array([0x00]));
+          }
+          // no need GET_PREIMAGE since as it should fail before
+          return Left(new ClientCommandHandlerError("error"));
+        });
+
+      // WHEN
+      const result = await new SendSignMessageTask(apiMock, args).run();
+
+      // THEN
+      // expected number of sendCommand calls:
+      // 1. SignMessageCommand
+      // 2. ContinueCommand after YIELD (which fails)
+      expect(apiMock.sendCommand).toHaveBeenCalledTimes(2);
+
+      // check that sendCommand was called with the correct commands
+      expect(apiMock.sendCommand).toHaveBeenNthCalledWith(
+        1,
+        expect.objectContaining({
+          args: {
+            derivationPath: DERIVATION_PATH,
+            messageLength: new TextEncoder().encode(EXACT_TWO_CHUNKS_MESSAGE)
+              .length,
+            messageMerkleRoot: MERKLE_ROOT,
+          },
+        }),
+      );
+
+      expect(apiMock.sendCommand).toHaveBeenNthCalledWith(
+        2,
+        expect.objectContaining({
+          args: {
+            payload: new Uint8Array([0x00]),
+          },
+        }),
+      );
+
+      // check the final result
+      expect(result.status).toBe(CommandResultStatus.Error);
+      if (result.status === CommandResultStatus.Error) {
+        expect(result.error).toBeInstanceOf(InvalidStatusWordError);
+      }
+
+      // check that getClientCommandPayload was called correctly
+      expect(getClientCommandPayloadMock).toHaveBeenCalledTimes(1);
+      expect(getClientCommandPayloadMock).toHaveBeenNthCalledWith(
+        1,
+        new Uint8Array([ClientCommandCodes.YIELD]),
+        expect.any(Object),
+      );
     });
   });
 });

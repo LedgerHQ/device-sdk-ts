@@ -2,6 +2,8 @@ export const PROTOCOL_VERSION = 1;
 
 export const BUFFER_SIZE = 32;
 
+export const CHUNK_SIZE = 64;
+
 export enum ClientCommandCodes {
   YIELD = 0x10,
   GET_PREIMAGE = 0x40,
@@ -10,4 +12,4 @@ export enum ClientCommandCodes {
   GET_MORE_ELEMENTS = 0xa0,
 }
 
-export const SW_INTERRUPTED_EXECUTION = [0xe0, 0x00];
+export const SW_INTERRUPTED_EXECUTION = Uint8Array.from([0xe0, 0x00]);
