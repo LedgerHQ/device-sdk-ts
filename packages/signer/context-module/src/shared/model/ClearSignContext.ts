@@ -34,7 +34,7 @@ export type ClearSignContextReference<
         sources: string[];
       }
     : {
-        type: ClearSignContextType.TOKEN | ClearSignContextType.NFT;
+        type: Type;
         valuePath: GenericPath;
       };
 
@@ -62,7 +62,6 @@ export type ClearSignContextSuccess<
       type: ClearSignContextType.ENUM;
       id: number;
       payload: string;
-      name: string;
       value: number;
     }
   : {

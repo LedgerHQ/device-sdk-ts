@@ -12,7 +12,7 @@ export interface CalldataDescriptorV1 {
   type: "calldata";
   version: "v1";
   transaction_info: CalldataTransactionInfoV1;
-  enums: CalldataEnumV1[];
+  enums: CalldataEnumV1;
   fields: CalldataFieldV1[];
 }
 
@@ -36,10 +36,9 @@ export interface CalldataTransactionInfoV1 {
 }
 
 export interface CalldataEnumV1 {
-  descriptor: CalldataTransactionDescriptor;
-  id: number;
-  name: string;
-  value: number;
+  [id: number]: {
+    [value: number]: CalldataTransactionDescriptor;
+  };
 }
 
 export interface CalldataFieldV1 {

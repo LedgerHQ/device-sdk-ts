@@ -123,14 +123,12 @@ describe("ProvideTransactionFieldDescriptionTask", () => {
             value: 0x01,
             type: ClearSignContextType.ENUM,
             payload: "0x060708",
-            name: "enum-name",
           },
           {
             id: 0x42,
             value: 0x04,
             type: ClearSignContextType.ENUM,
             payload: "0x080706",
-            name: "enum-name",
           },
         ],
       }).run();
@@ -489,14 +487,12 @@ describe("ProvideTransactionFieldDescriptionTask", () => {
             value: 0x01,
             type: ClearSignContextType.ENUM,
             payload: "0x060708",
-            name: "enum-name",
           },
           {
             id: 0x42,
             value: 0x04,
             type: ClearSignContextType.ENUM,
             payload: "0x080706",
-            name: "enum-name",
           },
         ],
       });
@@ -766,7 +762,6 @@ describe("ProvideTransactionFieldDescriptionTask", () => {
             value: 0x04,
             type: ClearSignContextType.ENUM,
             payload: "0x080706",
-            name: "enum-name",
           },
         ],
       });

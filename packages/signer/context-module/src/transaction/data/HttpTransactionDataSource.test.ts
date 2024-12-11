@@ -16,7 +16,7 @@ jest.mock("axios");
 describe("HttpTransactionDataSource", () => {
   let datasource: TransactionDataSource;
   let transactionInfo: CalldataTransactionInfoV1;
-  let enums: CalldataEnumV1[];
+  let enums: CalldataEnumV1;
   let fieldToken: CalldataFieldV1;
   let fieldTrustedName: CalldataFieldV1;
   let fieldNft: CalldataFieldV1;
@@ -45,26 +45,23 @@ describe("HttpTransactionDataSource", () => {
         },
       },
     };
-    enums = [
-      {
-        id: 0,
-        name: "enum1",
-        value: 0,
-        descriptor: {
-          data: "0001000401000501010606737461626c65",
-          signatures: { test: "1234" },
+    enums = {
+      "0": {
+        "1": {
+          data: "0001010108000000000000000102147d2768de32b0b80b7a3454c06bdac94a69ddc7a9030469328dec0401000501010606737461626c65",
+          signatures: {
+            test: "3045022100862e724db664f5d94484928a6a5963268a22cd8178ad36e8c4ff13769ac5c27e0220079da2b6e86810156f6b5955b8190bc016c2fe813d27fcb878a9b99658546582",
+          },
+        },
+        "2": {
+          data: "0001010108000000000000000102147d2768de32b0b80b7a3454c06bdac94a69ddc7a9030469328dec04010005010206087661726961626c65",
+          signatures: {
+            test: "3045022100b838ee3d597d6bad2533606cef7335f6c8a45b46d5717803e646777f6c8a6897022074f04b82c3dad8445bb6230ab762010c5fc6ee06198fd3e54752287cbf95c523",
+          },
         },
       },
-      {
-        id: 0,
-        name: "enum2",
-        value: 1,
-        descriptor: {
-          data: "00010004010005010206087661726961626c65",
-          signatures: { test: "5678" },
-        },
-      },
-    ];
+    };
+
     fieldAmount = createFieldWithoutReference("FROM", "UFIXED", "AMOUNT", "06");
     fieldDatetime = createFieldWithoutReference(
       "TO",
@@ -228,8 +225,8 @@ describe("HttpTransactionDataSource", () => {
   }
 
   function createCalldata(
-    transactionInfo: unknown,
-    enums: unknown[],
+    calldataTransactionInfo: CalldataTransactionInfoV1,
+    calldataEnums: CalldataEnumV1,
     fields: unknown[],
   ): unknown {
     return {
@@ -238,8 +235,8 @@ describe("HttpTransactionDataSource", () => {
           "0x69328dec": {
             type: "calldata",
             version: "v1",
-            transaction_info: transactionInfo,
-            enums: enums,
+            transaction_info: calldataTransactionInfo,
+            enums: calldataEnums,
             fields: fields,
           },
         },
@@ -358,18 +355,18 @@ describe("HttpTransactionDataSource", () => {
         type: "transactionInfo",
       },
       {
-        payload: "0001000401000501010606737461626c6581ff21234",
+        payload:
+          "0001010108000000000000000102147d2768de32b0b80b7a3454c06bdac94a69ddc7a9030469328dec0401000501010606737461626c6581ff473045022100862e724db664f5d94484928a6a5963268a22cd8178ad36e8c4ff13769ac5c27e0220079da2b6e86810156f6b5955b8190bc016c2fe813d27fcb878a9b99658546582",
         type: "enum",
         id: 0,
-        name: "enum1",
-        value: 0,
+        value: 1,
       },
       {
-        payload: "00010004010005010206087661726961626c6581ff25678",
+        payload:
+          "0001010108000000000000000102147d2768de32b0b80b7a3454c06bdac94a69ddc7a9030469328dec04010005010206087661726961626c6581ff473045022100b838ee3d597d6bad2533606cef7335f6c8a45b46d5717803e646777f6c8a6897022074f04b82c3dad8445bb6230ab762010c5fc6ee06198fd3e54752287cbf95c523",
         type: "enum",
         id: 0,
-        name: "enum2",
-        value: 1,
+        value: 2,
       },
       {
         payload: fieldToken.descriptor,
@@ -595,7 +592,7 @@ describe("HttpTransactionDataSource", () => {
     // GIVEN
     const calldataDTO = createCalldata(
       transactionInfo,
-      ["badEnum"],
+      ["badEnum"] as unknown as CalldataEnumV1,
       [fieldToken],
     );
     jest.spyOn(axios, "request").mockResolvedValue({ data: [calldataDTO] });
@@ -621,7 +618,7 @@ describe("HttpTransactionDataSource", () => {
     // GIVEN
     const calldataDTO = createCalldata(
       transactionInfo,
-      [{ id: 0, name: "enum1", value: 0 }],
+      { 0: { 1: { data: "1234" } } } as unknown as CalldataEnumV1,
       [fieldToken],
     );
     jest.spyOn(axios, "request").mockResolvedValue({ data: [calldataDTO] });
@@ -637,7 +634,7 @@ describe("HttpTransactionDataSource", () => {
     expect(result).toEqual(
       Left(
         new Error(
-          "[ContextModule] HttpTransactionDataSource: Failed to decode enum descriptor for contract 0x7d2768de32b0b80b7a3454c06bdac94a69ddc7a9 and selector 0x69328dec",
+          "[ContextModule] HttpTransactionDataSource: Failed to decode transaction descriptor for contract 0x7d2768de32b0b80b7a3454c06bdac94a69ddc7a9 and selector 0x69328dec",
         ),
       ),
     );
@@ -647,19 +644,16 @@ describe("HttpTransactionDataSource", () => {
     // GIVEN
     const calldataDTO = createCalldata(
       transactionInfo,
-      [
-        {
-          id: 0,
-          name: "enum1",
-          value: 0,
-          descriptor: {
-            data: "1234",
+      {
+        0: {
+          1: {
+            data: "0001010108000000000000000102147d2768de32b0b80b7a3454c06bdac94a69ddc7a9030469328dec04010005010106067374626c65",
             signatures: {
-              prod: "1234", // prod instead of test
+              prod: "wrongSignature", // prod instead of test signature
             },
           },
         },
-      ],
+      },
       [fieldToken],
     );
     jest.spyOn(axios, "request").mockResolvedValue({ data: [calldataDTO] });
@@ -675,7 +669,7 @@ describe("HttpTransactionDataSource", () => {
     expect(result).toEqual(
       Left(
         new Error(
-          "[ContextModule] HttpTransactionDataSource: Failed to decode enum descriptor for contract 0x7d2768de32b0b80b7a3454c06bdac94a69ddc7a9 and selector 0x69328dec",
+          "[ContextModule] HttpTransactionDataSource: Failed to decode transaction descriptor for contract 0x7d2768de32b0b80b7a3454c06bdac94a69ddc7a9 and selector 0x69328dec",
         ),
       ),
     );
