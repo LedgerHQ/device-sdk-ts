@@ -201,7 +201,6 @@ export function DeviceActionTester<
         <Flex
           flexDirection="column"
           opacity={loading ? 0.5 : 1}
-          rowGap={3}
           pointerEvents={loading ? "none" : "auto"}
         >
           <CommandForm
@@ -209,6 +208,7 @@ export function DeviceActionTester<
             onChange={setValues}
             valueSelector={valueSelector}
             disabled={loading}
+            columns={3}
           />
           <Divider />
           <Switch
