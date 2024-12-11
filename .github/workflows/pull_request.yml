@@ -1,4 +1,4 @@
-name: Pull Request Checks
+name: "[Checks] Pull Request"
 on:
   pull_request:
     types: [opened, synchronize, reopened, edited]

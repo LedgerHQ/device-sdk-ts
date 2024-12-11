@@ -1,4 +1,4 @@
-name: Update toolchain
+name: "[Automation] Update Toolchain"
 
 on:
   schedule:
@@ -10,6 +10,7 @@ env:
 
 jobs:
   update-toolchain:
+    name: "Update Toolchain"
     runs-on: ["ledgerhq-device-sdk"]
     steps:
       - uses: actions/checkout@v4

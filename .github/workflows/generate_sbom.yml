@@ -1,4 +1,4 @@
-name: Generate SBOM
+name: "[Automation] Generate SBOM"
 
 on:
   push:
@@ -9,6 +9,7 @@ on:
 
 jobs:
   generate-sbom:
+    name: Generate SBOM
     runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v4
