@@ -20,8 +20,8 @@ type SignerBtcBuilderConstructorArgs = {
  * ```
  */
 export class SignerBtcBuilder {
-  private _dmk: DeviceManagementKit;
-  private _sessionId: DeviceSessionId;
+  private readonly _dmk: DeviceManagementKit;
+  private readonly _sessionId: DeviceSessionId;
 
   constructor({ dmk, sessionId }: SignerBtcBuilderConstructorArgs) {
     this._dmk = dmk;
