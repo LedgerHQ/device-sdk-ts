@@ -10,6 +10,10 @@
   "fixed": [],
   "linked": [],
   "access": "public",
+  "privatePackages": {
+    "version": false
+  },
+  "bumpVersionsWithWorkspaceProtocolOnly": true,
   "baseBranch": "develop",
   "updateInternalDependencies": "patch",
   "ignore": []

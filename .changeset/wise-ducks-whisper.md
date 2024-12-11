@@ -1,5 +1,4 @@
 ---
-"@ledgerhq/context-module": minor
 "@ledgerhq/device-management-kit-sample": patch
 ---
 
