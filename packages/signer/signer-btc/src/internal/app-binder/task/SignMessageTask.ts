@@ -25,7 +25,7 @@ import { Sha256HasherService } from "@internal/merkle-tree/service/Sha256HasherS
 import { CommandUtils } from "@internal/utils/CommandUtils";
 import { DefaultWalletSerializer } from "@internal/wallet/service/DefaultWalletSerializer";
 
-type SendSignMessageTaskArgs = {
+export type SendSignMessageTaskArgs = {
   derivationPath: string;
   message: string;
 };
@@ -51,7 +51,7 @@ export class SendSignMessageTask {
     );
   }
 
-  async run(): Promise<CommandResult<Signature, Error>> {
+  async run(): Promise<CommandResult<Signature, void>> {
     const { derivationPath, message } = this.args;
 
     const dataStore = new DataStore();
@@ -79,57 +79,60 @@ export class SendSignMessageTask {
         messageMerkleRoot: merkleRoot,
       }),
     );
+    if (!isSuccessCommandResult(signMessageFirstCommandResponse)) {
+      return CommandResultFactory({
+        error: new InvalidStatusWordError(
+          "Invalid signMessageFirstCommandResponse response",
+        ),
+      });
+    }
 
-    if (
-      isSuccessCommandResult(signMessageFirstCommandResponse) &&
-      this.isSignature(signMessageFirstCommandResponse.data)
-    ) {
+    if (this.isSignature(signMessageFirstCommandResponse.data)) {
       return CommandResultFactory({
         data: signMessageFirstCommandResponse.data,
       });
     }
 
-    if (isSuccessCommandResult(signMessageFirstCommandResponse)) {
-      let currentResponse = signMessageFirstCommandResponse;
-      while (
-        this.isApduResponse(currentResponse.data) &&
-        CommandUtils.isContinueResponse(currentResponse.data)
-      ) {
-        const maybeCommandPayload = interpreter.getClientCommandPayload(
-          currentResponse.data.data,
-          commandHandlersContext,
+    let currentResponse = signMessageFirstCommandResponse;
+    while (
+      this.isApduResponse(currentResponse.data) &&
+      CommandUtils.isContinueResponse(currentResponse.data)
+    ) {
+      const maybeCommandPayload = interpreter.getClientCommandPayload(
+        currentResponse.data.data,
+        commandHandlersContext,
+      );
+      if (maybeCommandPayload.isLeft()) {
+        return CommandResultFactory({
+          error: new InvalidStatusWordError(
+            maybeCommandPayload.extract().message,
+          ),
+        });
+      }
+
+      const payload = maybeCommandPayload.extract();
+      if (payload instanceof Uint8Array) {
+        const nextResponse = await this.api.sendCommand(
+          new ContinueCommand({
+            payload,
+          }),
         );
-        if (maybeCommandPayload.isLeft()) {
+        if (!isSuccessCommandResult(nextResponse)) {
           return CommandResultFactory({
-            error: new InvalidStatusWordError(
-              maybeCommandPayload.extract().message,
-            ),
+            error: new InvalidStatusWordError("Invalid response type"),
+          });
+        }
+        if (this.isSignature(nextResponse.data)) {
+          return CommandResultFactory({
+            data: nextResponse.data,
           });
         }
 
-        const payload = maybeCommandPayload.extract();
-        if (payload instanceof Uint8Array) {
-          const nextResponse = await this.api.sendCommand(
-            new ContinueCommand({
-              payload,
-            }),
-          );
-          if (!isSuccessCommandResult(nextResponse)) {
-            return CommandResultFactory({
-              error: new InvalidStatusWordError("Invalid response type"),
-            });
-          }
-          if (this.isSignature(nextResponse.data)) {
-            return CommandResultFactory({
-              data: nextResponse.data,
-            });
-          }
-
-          currentResponse = nextResponse;
-        }
+        currentResponse = nextResponse;
       }
     }
-    return CommandResultFactory<Signature, Error>({
+
+    return CommandResultFactory<Signature, void>({
       error: new InvalidStatusWordError("Failed to send sign message command."),
     });
   }

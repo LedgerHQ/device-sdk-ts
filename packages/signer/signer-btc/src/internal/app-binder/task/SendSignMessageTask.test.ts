@@ -38,7 +38,7 @@ const APDU_RESPONSE_YELD: ApduResponse = {
 };
 
 describe("SendSignMessageTask", () => {
-  const signatureResult = CommandResultFactory<Signature, Error>({
+  const signatureResult = CommandResultFactory<Signature, void>({
     data: SIGNATURE,
   });
   const apiMock = makeDeviceActionInternalApiMock();
@@ -217,7 +217,7 @@ describe("SendSignMessageTask", () => {
         message: EXACT_ONE_CHUNK_MESSAGE,
       };
 
-      const resultError = CommandResultFactory<Signature, Error>({
+      const resultError = CommandResultFactory<Signature, void>({
         error: new InvalidStatusWordError("error"),
       });
 
@@ -255,7 +255,7 @@ describe("SendSignMessageTask", () => {
           return MERKLE_ROOT;
         });
 
-      const resultError = CommandResultFactory<Signature, Error>({
+      const resultError = CommandResultFactory<Signature, void>({
         error: new InvalidStatusWordError("error"),
       });
 

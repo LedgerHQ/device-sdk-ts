@@ -10,8 +10,11 @@ import {
   GetExtendedPublicKeyDAInput,
   GetExtendedPublicKeyReturnType,
 } from "@api/app-binder/GetExtendedPublicKeyDeviceActionTypes";
+import { SignMessageDAReturnType } from "@api/index";
 import { GetExtendedPublicKeyCommand } from "@internal/app-binder/command/GetExtendedPublicKeyCommand";
 import { externalTypes } from "@internal/externalTypes";
+
+import { SignMessageDeviceAction } from "./device-action/SignMessage/SignMessageDeviceAction";
 
 @injectable()
 export class BtcAppBinder {
@@ -19,6 +22,7 @@ export class BtcAppBinder {
     @inject(externalTypes.Dmk) private dmk: DeviceManagementKit,
     @inject(externalTypes.SessionId) private sessionId: DeviceSessionId,
   ) {}
+
   getExtendedPublicKey(
     args: GetExtendedPublicKeyDAInput,
   ): GetExtendedPublicKeyReturnType {
@@ -31,6 +35,21 @@ export class BtcAppBinder {
           requiredUserInteraction: args.checkOnDevice
             ? UserInteractionRequired.VerifyAddress
             : UserInteractionRequired.None,
+        },
+      }),
+    });
+  }
+
+  signMessage(args: {
+    derivationPath: string;
+    message: string;
+  }): SignMessageDAReturnType {
+    return this.dmk.executeDeviceAction({
+      sessionId: this.sessionId,
+      deviceAction: new SignMessageDeviceAction({
+        input: {
+          derivationPath: args.derivationPath,
+          message: args.message,
         },
       }),
     });
