@@ -19,6 +19,7 @@
     "@ledgerhq/device-management-kit": "workspace:*",
     "@ledgerhq/device-management-kit-flipper-plugin-client": "workspace:*",
     "@ledgerhq/device-mockserver-client": "workspace:*",
+    "@ledgerhq/device-signer-kit-bitcoin": "workspace:*",
     "@ledgerhq/device-signer-kit-ethereum": "workspace:*",
     "@ledgerhq/device-signer-kit-solana": "workspace:*",
     "@ledgerhq/device-signer-kit-bitcoin": "workspace:*",

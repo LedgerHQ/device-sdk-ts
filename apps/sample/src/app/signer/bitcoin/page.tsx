@@ -2,10 +2,10 @@
 import React from "react";
 
 import { SessionIdWrapper } from "@/components/SessionIdWrapper";
-import { SignerBitcoinView } from "@/components/SignerBtcView";
+import { SignerBtcView } from "@/components/SignerBtcView";
 
 const Signer: React.FC = () => {
-  return <SessionIdWrapper ChildComponent={SignerBitcoinView} />;
+  return <SessionIdWrapper ChildComponent={SignerBtcView} />;
 };
 
 export default Signer;
