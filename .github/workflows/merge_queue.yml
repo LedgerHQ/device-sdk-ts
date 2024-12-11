@@ -1,4 +1,4 @@
-name: Merge Queue Checks
+name: "[Checks] Merge Queue"
 on:
   merge_group:
 

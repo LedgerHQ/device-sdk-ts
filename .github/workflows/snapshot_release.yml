@@ -1,4 +1,4 @@
-name: Publish snapshot version of npm packages
+name: "[Release] Snapshot Release"
 on:
   schedule:
     - cron: "0 0 * * *"
@@ -36,7 +36,7 @@ jobs:
 
       - uses: LedgerHQ/device-sdk-ts/.github/actions/setup-toolchain-composite@develop
 
-      - name: build libraries
+      - name: Build libraries
         run: pnpm build:libs
 
       - name: Login to internal JFrog registry
@@ -59,7 +59,7 @@ jobs:
       # - name: create .npmrc
       #   run: echo "//registry.npmjs.org/:_authToken=${NPM_TOKEN}" >> .npmrc
 
-      - name: create and publish snapshot release version
+      - name: Create and publish snapshot release version
         id: changesets
         run: |
           pnpm bump --snapshot ${{ env.TAG }}

@@ -1,4 +1,4 @@
-name: Create release pull request
+name: "[Release] Create Versioning Pull Request"
 on:
   push:
     branches:
@@ -15,10 +15,10 @@ jobs:
 
       - uses: LedgerHQ/device-sdk-ts/.github/actions/setup-toolchain-composite@develop
 
-      - name: build libraries
+      - name: Build libraries
         run: pnpm build:libs
 
-      - name: create release pull request
+      - name: Create release pull request
         uses: changesets/action@v1
         with:
           version: pnpm bump
