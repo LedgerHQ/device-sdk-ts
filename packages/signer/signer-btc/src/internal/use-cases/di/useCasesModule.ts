@@ -2,6 +2,7 @@ import { ContainerModule } from "inversify";
 
 import { useCasesTypes } from "@internal/use-cases/di/useCasesTypes";
 import { GetExtendedPublicKeyUseCase } from "@internal/use-cases/get-extended-public-key/GetExtendedPublicKeyUseCase";
+import { SignMessageUseCase } from "@internal/use-cases/sign-message/SignMessageUseCase";
 
 export const useCasesModuleFactory = () =>
   new ContainerModule(
@@ -17,5 +18,6 @@ export const useCasesModuleFactory = () =>
       bind(useCasesTypes.GetExtendedPublicKeyUseCase).to(
         GetExtendedPublicKeyUseCase,
       );
+      bind(useCasesTypes.SignMessageUseCase).to(SignMessageUseCase);
     },
   );

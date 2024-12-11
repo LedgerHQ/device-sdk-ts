@@ -8,8 +8,8 @@ import { SW_INTERRUPTED_EXECUTION } from "@internal/app-binder/command/utils/con
 export class CommandUtils {
   static isContinueResponse(response: ApduResponse) {
     return (
-      response.statusCode?.[0] === SW_INTERRUPTED_EXECUTION[0] &&
-      response.statusCode?.[1] === SW_INTERRUPTED_EXECUTION[1]
+      response.statusCode[0] === SW_INTERRUPTED_EXECUTION[0] &&
+      response.statusCode[1] === SW_INTERRUPTED_EXECUTION[1]
     );
   }
   static isSuccessResponse(response: ApduResponse) {

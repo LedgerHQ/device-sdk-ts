@@ -1,8 +1,8 @@
 import { Just, Nothing } from "purify-ts";
 
 import {
-  BUFFER_SIZE,
   ClientCommandCodes,
+  SHA256_SIZE,
 } from "@internal/app-binder/command/utils/constants";
 import { type DataStore } from "@internal/data-store/model/DataStore";
 import { encodeVarint } from "@internal/utils/Varint";
@@ -39,8 +39,8 @@ describe("GetMerkleLeafIndexCommandHandler", () => {
 
   it("should return the index when the Merkle leaf is found", () => {
     // given
-    const merkleRootHash = new Uint8Array(BUFFER_SIZE).fill(0xaa);
-    const leafNodeHash = new Uint8Array(BUFFER_SIZE).fill(0xff);
+    const merkleRootHash = new Uint8Array(SHA256_SIZE).fill(0xaa);
+    const leafNodeHash = new Uint8Array(SHA256_SIZE).fill(0xff);
     const handlerRequest = createRequest(
       COMMAND_CODE,
       merkleRootHash,
@@ -75,8 +75,8 @@ describe("GetMerkleLeafIndexCommandHandler", () => {
 
   it("should return a failure response when the Merkle leaf is not found", () => {
     // given
-    const merkleRootHash = new Uint8Array(BUFFER_SIZE).fill(0xaa);
-    const leafNodeHash = new Uint8Array(BUFFER_SIZE).fill(0xff);
+    const merkleRootHash = new Uint8Array(SHA256_SIZE).fill(0xaa);
+    const leafNodeHash = new Uint8Array(SHA256_SIZE).fill(0xff);
     const handlerRequest = createRequest(
       COMMAND_CODE,
       merkleRootHash,
@@ -107,8 +107,8 @@ describe("GetMerkleLeafIndexCommandHandler", () => {
 
   it("should correctly handle a leaf index of zero", () => {
     // given
-    const merkleRootHash = new Uint8Array(BUFFER_SIZE).fill(0xaa);
-    const leafNodeHash = new Uint8Array(BUFFER_SIZE).fill(0xff);
+    const merkleRootHash = new Uint8Array(SHA256_SIZE).fill(0xaa);
+    const leafNodeHash = new Uint8Array(SHA256_SIZE).fill(0xff);
     const handlerRequest = createRequest(
       COMMAND_CODE,
       merkleRootHash,
@@ -141,16 +141,16 @@ describe("GetMerkleLeafIndexCommandHandler", () => {
     expect(commandHandlerContext.queue).toHaveLength(0);
   });
 
-  it("should correctly handle the maximum BUFFER_SIZE-bit unsigned integer as a leaf index", () => {
+  it("should correctly handle the maximum SHA256_SIZE-bit unsigned integer as a leaf index", () => {
     // given
-    const merkleRootHash = new Uint8Array(BUFFER_SIZE).fill(0xaa);
-    const leafNodeHash = new Uint8Array(BUFFER_SIZE).fill(0xff);
+    const merkleRootHash = new Uint8Array(SHA256_SIZE).fill(0xaa);
+    const leafNodeHash = new Uint8Array(SHA256_SIZE).fill(0xff);
     const handlerRequest = createRequest(
       COMMAND_CODE,
       merkleRootHash,
       leafNodeHash,
     );
-    const maximumLeafIndex = 0xffffffff; // maximum value of a BUFFER_SIZE-bit unsigned integer
+    const maximumLeafIndex = 0xffffffff; // maximum value of a SHA256_SIZE-bit unsigned integer
     const encodedLeafIndexVarint =
       encodeVarint(maximumLeafIndex).unsafeCoerce();
 

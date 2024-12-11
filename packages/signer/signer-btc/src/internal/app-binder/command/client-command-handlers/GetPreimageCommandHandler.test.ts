@@ -1,9 +1,9 @@
 import { type DmkError } from "@ledgerhq/device-management-kit";
-import { Just, Nothing } from "purify-ts";
+import { Either, Just, Nothing } from "purify-ts";
 
 import {
-  BUFFER_SIZE,
   ClientCommandCodes,
+  SHA256_SIZE,
 } from "@internal/app-binder/command/utils/constants";
 import { type DataStore } from "@internal/data-store/model/DataStore";
 import { encodeVarint } from "@internal/utils/Varint";
@@ -38,7 +38,7 @@ describe("GetPreimageCommandHandler", () => {
 
   it("should return the preimage when it is found and its length is within the maximum payload size", () => {
     // given
-    const requestHash = new Uint8Array(BUFFER_SIZE).fill(0x01);
+    const requestHash = new Uint8Array(SHA256_SIZE).fill(0x01);
     const preimage = new Uint8Array([0xaa, 0xbb, 0xcc]);
     const preimageLength = preimage.length;
 
@@ -74,7 +74,7 @@ describe("GetPreimageCommandHandler", () => {
 
   it("should handle a preimage longer than the maximum payload size by queuing the remaining bytes", () => {
     // given
-    const requestHash = new Uint8Array(BUFFER_SIZE).fill(0x02);
+    const requestHash = new Uint8Array(SHA256_SIZE).fill(0x02);
     const preimage = new Uint8Array(300).fill(0xff);
     const preimageLength = preimage.length;
 
@@ -129,7 +129,7 @@ describe("GetPreimageCommandHandler", () => {
 
   it("should return an error when the preimage is not found", () => {
     // given
-    const requestHash = new Uint8Array(BUFFER_SIZE).fill(0x03);
+    const requestHash = new Uint8Array(SHA256_SIZE).fill(0x03);
 
     // when
     mockDataStore.getPreimage.mockReturnValue(Nothing);
@@ -157,7 +157,7 @@ describe("GetPreimageCommandHandler", () => {
 
   it("should handle a preimage length where the maximum payload size exactly matches the preimage length", () => {
     // given
-    const requestHash = new Uint8Array(BUFFER_SIZE).fill(0x05);
+    const requestHash = new Uint8Array(SHA256_SIZE).fill(0x05);
     const preimage = new Uint8Array(252);
     preimage.fill(0x77);
 
@@ -188,14 +188,7 @@ describe("GetPreimageCommandHandler", () => {
     expectedResponse.set(preimage, varintEncodedLength.length + 1);
 
     // then
-    handlerResult.caseOf({
-      Left: (_) => {
-        throw new Error("Expected Right, got Left");
-      },
-      Right: (response) => {
-        expect(response).toEqual(expectedResponse);
-        expect(commandHandlerContext.queue).toHaveLength(0);
-      },
-    });
+    expect(handlerResult).toStrictEqual(Either.of(expectedResponse));
+    expect(commandHandlerContext.queue).toHaveLength(0);
   });
 });

@@ -1,9 +1,12 @@
 import {
+  ApduParser,
   type ApduResponse,
   type CommandResult,
   CommandResultFactory,
+  GlobalCommandErrorHandler,
   type InternalApi,
   InvalidStatusWordError,
+  isCommandErrorCode,
   isSuccessCommandResult,
 } from "@ledgerhq/device-management-kit";
 
@@ -15,6 +18,10 @@ import {
   SignMessageCommand,
   type SignMessageCommandResponse,
 } from "@internal/app-binder/command/SignMessageCommand";
+import {
+  BitcoinAppCommandError,
+  bitcoinAppErrors,
+} from "@internal/app-binder/command/utils/bitcoinAppErrors";
 import { CHUNK_SIZE } from "@internal/app-binder/command/utils/constants";
 import { DataStore } from "@internal/data-store/model/DataStore";
 import { type DataStoreService } from "@internal/data-store/service/DataStoreService";
@@ -23,9 +30,13 @@ import { MerkleMapBuilder } from "@internal/merkle-tree/service/MerkleMapBuilder
 import { MerkleTreeBuilder } from "@internal/merkle-tree/service/MerkleTreeBuilder";
 import { Sha256HasherService } from "@internal/merkle-tree/service/Sha256HasherService";
 import { CommandUtils } from "@internal/utils/CommandUtils";
+import { CommandUtils as BtcCommandUtils } from "@internal/utils/CommandUtils";
 import { DefaultWalletSerializer } from "@internal/wallet/service/DefaultWalletSerializer";
 
-type SendSignMessageTaskArgs = {
+const R_LENGTH = 32;
+const S_LENGTH = 32;
+
+export type SendSignMessageTaskArgs = {
   derivationPath: string;
   message: string;
 };
@@ -51,7 +62,7 @@ export class SendSignMessageTask {
     );
   }
 
-  async run(): Promise<CommandResult<Signature, Error>> {
+  async run(): Promise<CommandResult<Signature, void>> {
     const { derivationPath, message } = this.args;
 
     const dataStore = new DataStore();
@@ -79,57 +90,63 @@ export class SendSignMessageTask {
         messageMerkleRoot: merkleRoot,
       }),
     );
+    if (!isSuccessCommandResult(signMessageFirstCommandResponse)) {
+      return CommandResultFactory({
+        error: new InvalidStatusWordError(
+          "Invalid signMessageFirstCommandResponse response",
+        ),
+      });
+    }
 
-    if (
-      isSuccessCommandResult(signMessageFirstCommandResponse) &&
-      this.isSignature(signMessageFirstCommandResponse.data)
-    ) {
+    if (this.isSignature(signMessageFirstCommandResponse.data)) {
       return CommandResultFactory({
         data: signMessageFirstCommandResponse.data,
       });
     }
 
-    if (isSuccessCommandResult(signMessageFirstCommandResponse)) {
-      let currentResponse = signMessageFirstCommandResponse;
-      while (
-        this.isApduResponse(currentResponse.data) &&
-        CommandUtils.isContinueResponse(currentResponse.data)
-      ) {
-        const maybeCommandPayload = interpreter.getClientCommandPayload(
-          currentResponse.data.data,
-          commandHandlersContext,
+    let currentResponse = signMessageFirstCommandResponse;
+    while (
+      this.isApduResponse(currentResponse.data) &&
+      CommandUtils.isContinueResponse(currentResponse.data)
+    ) {
+      const maybeCommandPayload = interpreter.getClientCommandPayload(
+        currentResponse.data.data,
+        commandHandlersContext,
+      );
+      if (maybeCommandPayload.isLeft()) {
+        return CommandResultFactory({
+          error: new InvalidStatusWordError(
+            maybeCommandPayload.extract().message,
+          ),
+        });
+      }
+
+      const payload = maybeCommandPayload.extract();
+      if (payload instanceof Uint8Array) {
+        const nextResponse = await this.api.sendCommand(
+          new ContinueCommand(
+            {
+              payload,
+            },
+            this.parseBitcoinSignatureResponse,
+          ),
         );
-        if (maybeCommandPayload.isLeft()) {
+        if (!isSuccessCommandResult(nextResponse)) {
           return CommandResultFactory({
-            error: new InvalidStatusWordError(
-              maybeCommandPayload.extract().message,
-            ),
+            error: new InvalidStatusWordError("Invalid response type"),
+          });
+        }
+        if (this.isSignature(nextResponse.data)) {
+          return CommandResultFactory({
+            data: nextResponse.data,
           });
         }
 
-        const payload = maybeCommandPayload.extract();
-        if (payload instanceof Uint8Array) {
-          const nextResponse = await this.api.sendCommand(
-            new ContinueCommand({
-              payload,
-            }),
-          );
-          if (!isSuccessCommandResult(nextResponse)) {
-            return CommandResultFactory({
-              error: new InvalidStatusWordError("Invalid response type"),
-            });
-          }
-          if (this.isSignature(nextResponse.data)) {
-            return CommandResultFactory({
-              data: nextResponse.data,
-            });
-          }
-
-          currentResponse = nextResponse;
-        }
+        currentResponse = nextResponse;
       }
     }
-    return CommandResultFactory<Signature, Error>({
+
+    return CommandResultFactory<Signature, void>({
       error: new InvalidStatusWordError("Failed to send sign message command."),
     });
   }
@@ -156,4 +173,66 @@ export class SendSignMessageTask {
       "data" in response
     );
   };
+
+  private parseBitcoinSignatureResponse(
+    response: ApduResponse,
+  ): CommandResult<ApduResponse | Signature> {
+    if (BtcCommandUtils.isContinueResponse(response)) {
+      return CommandResultFactory({
+        data: response,
+      });
+    }
+
+    if (!CommandUtils.isSuccessResponse(response)) {
+      return CommandResultFactory({
+        error: GlobalCommandErrorHandler.handle(response),
+      });
+    }
+
+    const parser = new ApduParser(response);
+    const errorCode = parser.encodeToHexaString(response.statusCode);
+    if (isCommandErrorCode(errorCode, bitcoinAppErrors)) {
+      return CommandResultFactory({
+        error: new BitcoinAppCommandError({
+          ...bitcoinAppErrors[errorCode],
+          errorCode,
+        }),
+      });
+    }
+
+    const v = parser.extract8BitUInt();
+    if (v === undefined) {
+      return CommandResultFactory({
+        error: new InvalidStatusWordError("V is missing"),
+      });
+    }
+
+    const r = parser.encodeToHexaString(
+      parser.extractFieldByLength(R_LENGTH),
+      true,
+    );
+    if (!r) {
+      return CommandResultFactory({
+        error: new InvalidStatusWordError("R is missing"),
+      });
+    }
+
+    const s = parser.encodeToHexaString(
+      parser.extractFieldByLength(S_LENGTH),
+      true,
+    );
+    if (!s) {
+      return CommandResultFactory({
+        error: new InvalidStatusWordError("S is missing"),
+      });
+    }
+
+    return CommandResultFactory({
+      data: {
+        v,
+        r,
+        s,
+      },
+    });
+  }
 }

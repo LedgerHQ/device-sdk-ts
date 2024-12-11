@@ -1,5 +1,6 @@
 import {
   APDU_MAX_PAYLOAD,
+  ByteArrayBuilder,
   type DmkError,
 } from "@ledgerhq/device-management-kit";
 import { type Either, Left, Right } from "purify-ts";
@@ -30,14 +31,11 @@ export const GetPreimageCommandHandler: CommandHandler = (
       preimage.length,
     );
 
-    const response = new Uint8Array(
-      preimageLengthVarint.length + 1 + bytesToIncludeInResponse,
-    );
-    let responseOffset = 0;
-    response.set(preimageLengthVarint, responseOffset); // preimage length varint
-    responseOffset += preimageLengthVarint.length;
-    response[responseOffset++] = bytesToIncludeInResponse; // number of bytes in the response
-    response.set(preimage.slice(0, bytesToIncludeInResponse), responseOffset);
+    const response = new ByteArrayBuilder()
+      .addBufferToData(preimageLengthVarint) // varint
+      .add8BitUIntToData(bytesToIncludeInResponse) // byte count
+      .addBufferToData(preimage.slice(0, bytesToIncludeInResponse)) // requested part of the preimage
+      .build();
 
     if (bytesToIncludeInResponse < preimage.length) {
       for (

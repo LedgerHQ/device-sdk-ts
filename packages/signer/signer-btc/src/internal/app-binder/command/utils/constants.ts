@@ -1,6 +1,6 @@
 export const PROTOCOL_VERSION = 1;
 
-export const BUFFER_SIZE = 32;
+export const SHA256_SIZE = 32;
 
 export const CHUNK_SIZE = 64;
 

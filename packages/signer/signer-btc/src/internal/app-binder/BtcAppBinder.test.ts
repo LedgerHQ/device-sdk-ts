@@ -13,6 +13,12 @@ import {
   type GetExtendedPublicKeyDAError,
   type GetExtendedPublicKeyDAOutput,
 } from "@api/app-binder/GetExtendedPublicKeyDeviceActionTypes";
+import {
+  type SignMessageDAError,
+  type SignMessageDAIntermediateValue,
+  type SignMessageDAOutput,
+} from "@api/index";
+import { type Signature } from "@api/model/Signature";
 import { BtcAppBinder } from "@internal/app-binder/BtcAppBinder";
 import { GetExtendedPublicKeyCommand } from "@internal/app-binder/command/GetExtendedPublicKeyCommand";
 
@@ -149,6 +155,67 @@ describe("BtcAppBinder", () => {
             },
           }),
         });
+      });
+    });
+  });
+
+  describe("signMessage", () => {
+    it("should return the signature", (done) => {
+      // GIVEN
+      const signature: Signature = {
+        r: `0xDEF1`,
+        s: `0xAFAF`,
+        v: 0,
+      };
+      const message = "Hello, World!";
+
+      jest.spyOn(mockedDmk, "executeDeviceAction").mockReturnValue({
+        observable: from([
+          {
+            status: DeviceActionStatus.Completed,
+            output: signature,
+          } as DeviceActionState<
+            SignMessageDAOutput,
+            SignMessageDAError,
+            SignMessageDAIntermediateValue
+          >,
+        ]),
+        cancel: jest.fn(),
+      });
+
+      // WHEN
+      const appBinder = new BtcAppBinder(mockedDmk, "sessionId");
+      const { observable } = appBinder.signMessage({
+        derivationPath: "44'/60'/3'/2/1",
+        message,
+      });
+
+      // THEN
+      const states: DeviceActionState<
+        SignMessageDAOutput,
+        SignMessageDAError,
+        SignMessageDAIntermediateValue
+      >[] = [];
+      observable.subscribe({
+        next: (state) => {
+          states.push(state);
+        },
+        error: (err) => {
+          done(err);
+        },
+        complete: () => {
+          try {
+            expect(states).toEqual([
+              {
+                status: DeviceActionStatus.Completed,
+                output: signature,
+              },
+            ]);
+            done();
+          } catch (err) {
+            done(err);
+          }
+        },
       });
     });
   });

@@ -1,7 +1,7 @@
 import { type DmkError } from "@ledgerhq/device-management-kit";
 import { type Either, Right } from "purify-ts";
 
-import { BUFFER_SIZE } from "@internal/app-binder/command/utils/constants";
+import { SHA256_SIZE } from "@internal/app-binder/command/utils/constants";
 import { encodeVarint } from "@internal/utils/Varint";
 
 import {
@@ -13,8 +13,8 @@ export const GetMerkleLeafIndexCommandHandler: CommandHandler = (
   request: Uint8Array,
   commandHandlerContext: CommandHandlerContext,
 ): Either<DmkError, Uint8Array> => {
-  const merkleRootHash = request.slice(1, BUFFER_SIZE + 1); // extract the Merkle root hash
-  const leafNodeHash = request.slice(BUFFER_SIZE + 1, BUFFER_SIZE * 2 + 1); // extract the leaf hash
+  const merkleRootHash = request.slice(1, SHA256_SIZE + 1); // extract the Merkle root hash
+  const leafNodeHash = request.slice(SHA256_SIZE + 1, SHA256_SIZE * 2 + 1); // extract the leaf hash
 
   const maybeMerkleIndex = commandHandlerContext.dataStore.getMerkleLeafIndex(
     merkleRootHash,

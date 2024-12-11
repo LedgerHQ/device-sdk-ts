@@ -2,8 +2,8 @@ import { APDU_MAX_PAYLOAD } from "@ledgerhq/device-management-kit";
 import { Just, Nothing } from "purify-ts";
 
 import {
-  BUFFER_SIZE,
   ClientCommandCodes,
+  SHA256_SIZE,
 } from "@internal/app-binder/command/utils/constants";
 import { type DataStore } from "@internal/data-store/model/DataStore";
 import { encodeVarint } from "@internal/utils/Varint";
@@ -47,7 +47,7 @@ describe("GetMerkleLeafProofCommandHandler", () => {
 
   it("should return the Merkle leaf and proof when found and proof length is less than or equal to the maximum allowed", () => {
     // given
-    const merkleRootHash = new Uint8Array(BUFFER_SIZE).fill(0x01);
+    const merkleRootHash = new Uint8Array(SHA256_SIZE).fill(0x01);
     const totalElements = 1;
     const proofElementIndex = 2;
     const request = createRequest(
@@ -56,10 +56,10 @@ describe("GetMerkleLeafProofCommandHandler", () => {
       totalElements,
       proofElementIndex,
     );
-    const leafNodeHash = new Uint8Array(BUFFER_SIZE).fill(0xaa);
+    const leafNodeHash = new Uint8Array(SHA256_SIZE).fill(0xaa);
     const proofElements = [
-      new Uint8Array(BUFFER_SIZE).fill(0xbb),
-      new Uint8Array(BUFFER_SIZE).fill(0xcc),
+      new Uint8Array(SHA256_SIZE).fill(0xbb),
+      new Uint8Array(SHA256_SIZE).fill(0xcc),
     ];
 
     // when
@@ -72,19 +72,19 @@ describe("GetMerkleLeafProofCommandHandler", () => {
       commandHandlerContext,
     );
 
-    const maximumPayloadSize = APDU_MAX_PAYLOAD - BUFFER_SIZE - 1 - 1;
-    const maximumProofElements = Math.floor(maximumPayloadSize / BUFFER_SIZE);
+    const maximumPayloadSize = APDU_MAX_PAYLOAD - SHA256_SIZE - 1 - 1;
+    const maximumProofElements = Math.floor(maximumPayloadSize / SHA256_SIZE);
     const proofElementsToInclude = Math.min(
       proofElements.length,
       maximumProofElements,
     );
 
     const expectedResponse = new Uint8Array(
-      BUFFER_SIZE + 1 + 1 + BUFFER_SIZE * proofElementsToInclude,
+      SHA256_SIZE + 1 + 1 + SHA256_SIZE * proofElementsToInclude,
     );
     let responseBufferOffset = 0;
     expectedResponse.set(leafNodeHash, responseBufferOffset); // leafHash
-    responseBufferOffset += BUFFER_SIZE;
+    responseBufferOffset += SHA256_SIZE;
     expectedResponse[responseBufferOffset++] = proofElements.length; // total proof length
     expectedResponse[responseBufferOffset++] = proofElementsToInclude;
     for (
@@ -96,7 +96,7 @@ describe("GetMerkleLeafProofCommandHandler", () => {
         proofElements[proofElementIndex] as Uint8Array,
         responseBufferOffset,
       );
-      responseBufferOffset += BUFFER_SIZE;
+      responseBufferOffset += SHA256_SIZE;
     }
 
     // then
@@ -111,7 +111,7 @@ describe("GetMerkleLeafProofCommandHandler", () => {
 
   it("should handle proof longer than the maximum allowed by queuing the remaining proof elements", () => {
     // given
-    const merkleRootHash = new Uint8Array(BUFFER_SIZE).fill(0x02);
+    const merkleRootHash = new Uint8Array(SHA256_SIZE).fill(0x02);
     const totalElements = 1;
     const proofElementIndex = 3;
     const request = createRequest(
@@ -120,11 +120,11 @@ describe("GetMerkleLeafProofCommandHandler", () => {
       totalElements,
       proofElementIndex,
     );
-    const leafNodeHash = new Uint8Array(BUFFER_SIZE).fill(0xdd);
+    const leafNodeHash = new Uint8Array(SHA256_SIZE).fill(0xdd);
     const totalProofLength = 10;
     const proofElements = Array.from(
       { length: totalProofLength },
-      (_, proofIndex) => new Uint8Array(BUFFER_SIZE).fill(0xee + proofIndex),
+      (_, proofIndex) => new Uint8Array(SHA256_SIZE).fill(0xee + proofIndex),
     );
 
     // when
@@ -137,19 +137,19 @@ describe("GetMerkleLeafProofCommandHandler", () => {
       commandHandlerContext,
     );
 
-    const maximumPayloadSize = APDU_MAX_PAYLOAD - BUFFER_SIZE - 1 - 1;
-    const maximumProofElements = Math.floor(maximumPayloadSize / BUFFER_SIZE);
+    const maximumPayloadSize = APDU_MAX_PAYLOAD - SHA256_SIZE - 1 - 1;
+    const maximumProofElements = Math.floor(maximumPayloadSize / SHA256_SIZE);
     const proofElementsToInclude = Math.min(
       proofElements.length,
       maximumProofElements,
     );
 
     const expectedResponse = new Uint8Array(
-      BUFFER_SIZE + 1 + 1 + BUFFER_SIZE * proofElementsToInclude,
+      SHA256_SIZE + 1 + 1 + SHA256_SIZE * proofElementsToInclude,
     );
     let responseBufferOffset = 0;
     expectedResponse.set(leafNodeHash, responseBufferOffset); // leafHash
-    responseBufferOffset += BUFFER_SIZE;
+    responseBufferOffset += SHA256_SIZE;
     expectedResponse[responseBufferOffset++] = proofElements.length; // total proof length
     expectedResponse[responseBufferOffset++] = proofElementsToInclude;
     for (
@@ -161,7 +161,7 @@ describe("GetMerkleLeafProofCommandHandler", () => {
         proofElements[proofElementIndex] as Uint8Array,
         responseBufferOffset,
       );
-      responseBufferOffset += BUFFER_SIZE;
+      responseBufferOffset += SHA256_SIZE;
     }
 
     // then
@@ -187,7 +187,7 @@ describe("GetMerkleLeafProofCommandHandler", () => {
 
   it("should return an error when the Merkle proof is not found in the data store", () => {
     // given
-    const merkleRootHash = new Uint8Array(BUFFER_SIZE).fill(0x04);
+    const merkleRootHash = new Uint8Array(SHA256_SIZE).fill(0x04);
     const totalElements = 1;
     const proofElementIndex = 5;
     const request = createRequest(
