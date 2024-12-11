@@ -41,7 +41,7 @@ const GET_EXTENDED_PUBLIC_KEY_VALID_RESPONSE = new Uint8Array([
 describe("GetExtendedPublicKeyCommand", () => {
   let command: GetExtendedPublicKeyCommand;
   const defaultArgs: GetExtendedPublicKeyCommandArgs = {
-    displayOnDevice: true,
+    checkOnDevice: true,
     derivationPath: "84'/0'/0'",
   };
 
@@ -65,7 +65,7 @@ describe("GetExtendedPublicKeyCommand", () => {
       // GIVEN
       command = new GetExtendedPublicKeyCommand({
         ...defaultArgs,
-        displayOnDevice: false,
+        checkOnDevice: false,
       });
 
       // WHEN

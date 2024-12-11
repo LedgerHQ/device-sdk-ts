@@ -18,6 +18,7 @@ import {
   SignTransactionCommand,
   type SignTransactionCommandResponse,
 } from "@internal/app-binder/command/SignTransactionCommand";
+import { StartTransactionCommand } from "@internal/app-binder/command/StartTransactionCommand";
 
 const PATH_SIZE = 4;
 
@@ -26,6 +27,7 @@ type SendSignTransactionTaskArgs = {
   serializedTransaction: Uint8Array;
   chainId: number;
   transactionType: TransactionType;
+  isLegacy: boolean;
 };
 
 export class SendSignTransactionTask {
@@ -35,6 +37,23 @@ export class SendSignTransactionTask {
   ) {}
 
   async run(): Promise<CommandResult<Signature, void>> {
+    // For generic-parser transactions, the derivation path and transaction were previously sent
+    if (!this.args.isLegacy) {
+      const signature = await this.api.sendCommand(
+        new StartTransactionCommand(),
+      );
+      if (!isSuccessCommandResult(signature)) {
+        return signature;
+      }
+      return this.recoverSignature(signature.data).mapOrDefault(
+        (data) => CommandResultFactory({ data }),
+        CommandResultFactory({
+          error: new InvalidStatusWordError("no signature returned"),
+        }),
+      );
+    }
+
+    // For other transactions, add derivation path and transaction to the payload
     const { derivationPath, serializedTransaction } = this.args;
     const paths = DerivationPathUtils.splitPath(derivationPath);
     const builder = new ByteArrayBuilder(

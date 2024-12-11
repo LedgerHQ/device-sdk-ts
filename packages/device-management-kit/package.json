@@ -1,6 +1,7 @@
 {
   "name": "@ledgerhq/device-management-kit",
   "version": "0.5.1",
+  "private": true,
   "license": "Apache-2.0",
   "exports": {
     ".": {
@@ -36,18 +37,20 @@
     "module:create": "pnpm hygen core-module with-prompt"
   },
   "dependencies": {
-    "@ledgerhq/device-transport-kit-mock-client": "workspace:*",
+    "@ledgerhq/device-mockserver-client": "workspace:*",
     "@sentry/minimal": "^6.19.7",
     "@statelyai/inspect": "^0.4.0",
-    "axios": "^1.7.7",
-    "inversify": "^6.0.3",
+    "axios": "^1.7.9",
+    "inversify": "^6.1.6",
     "inversify-logger-middleware": "^3.1.0",
     "purify-ts": "^2.1.0",
     "reflect-metadata": "^0.2.2",
-    "rxjs": "^7.8.1",
     "semver": "^7.6.3",
-    "uuid": "^10.0.0",
-    "xstate": "^5.18.2"
+    "uuid": "^11.0.3",
+    "xstate": "^5.19.0"
+  },
+  "peerDependencies": {
+    "rxjs": "^7.8.1"
   },
   "devDependencies": {
     "@ledgerhq/esbuild-tools": "workspace:*",
@@ -57,8 +60,7 @@
     "@ledgerhq/tsconfig-dsdk": "workspace:*",
     "@types/semver": "^7.5.8",
     "@types/uuid": "^10.0.0",
-    "@types/w3c-web-hid": "^1.0.6",
-    "@types/web-bluetooth": "^0.0.20",
+    "rxjs": "^7.8.1",
     "ts-node": "^10.9.2"
   }
 }

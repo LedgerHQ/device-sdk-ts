@@ -8,7 +8,10 @@ import {
   ClearSignContext,
   ClearSignContextType,
 } from "@/shared/model/ClearSignContext";
-import { TransactionContext } from "@/shared/model/TransactionContext";
+import {
+  TransactionContext,
+  TransactionFieldContext,
+} from "@/shared/model/TransactionContext";
 
 enum ERC721_SUPPORTED_SELECTOR {
   Approve = "0x095ea7b3",
@@ -110,6 +113,28 @@ export class NftContextLoader implements ContextLoader {
     responses.push(nftInfosPayload);
 
     return responses;
+  }
+
+  async loadField(
+    field: TransactionFieldContext,
+  ): Promise<ClearSignContext | null> {
+    if (field.type !== ClearSignContextType.NFT) {
+      return null;
+    }
+    const payload = await this._dataSource.getNftInfosPayload({
+      address: field.address,
+      chainId: field.chainId,
+    });
+    return payload.caseOf({
+      Left: (error): ClearSignContext => ({
+        type: ClearSignContextType.ERROR,
+        error,
+      }),
+      Right: (value): ClearSignContext => ({
+        type: ClearSignContextType.NFT,
+        payload: value,
+      }),
+    });
   }
 
   private isSelectorSupported(selector: HexaString) {

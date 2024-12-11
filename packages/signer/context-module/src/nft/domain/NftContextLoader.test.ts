@@ -3,7 +3,10 @@ import { Left, Right } from "purify-ts";
 import { type NftDataSource } from "@/nft/data/NftDataSource";
 import { NftContextLoader } from "@/nft/domain/NftContextLoader";
 import { ClearSignContextType } from "@/shared/model/ClearSignContext";
-import { type TransactionContext } from "@/shared/model/TransactionContext";
+import {
+  type TransactionContext,
+  type TransactionFieldContext,
+} from "@/shared/model/TransactionContext";
 
 describe("NftContextLoader", () => {
   const spyGetNftInfosPayload = jest.fn();
@@ -133,6 +136,58 @@ describe("NftContextLoader", () => {
           payload: "payload2",
         },
       ]);
+    });
+  });
+
+  describe("loadField function", () => {
+    it("should return an error when field type if not supported", async () => {
+      const field: TransactionFieldContext = {
+        type: ClearSignContextType.TOKEN,
+        chainId: 7,
+        address: "0x1234",
+      };
+
+      const result = await loader.loadField(field);
+
+      expect(result).toEqual(null);
+    });
+
+    it("should return a payload", async () => {
+      // GIVEN
+      const field: TransactionFieldContext = {
+        type: ClearSignContextType.NFT,
+        chainId: 7,
+        address: "0x1234",
+      };
+
+      // WHEN
+      spyGetNftInfosPayload.mockResolvedValueOnce(Right("payload"));
+      const result = await loader.loadField(field);
+
+      // THEN
+      expect(result).toEqual({
+        type: ClearSignContextType.NFT,
+        payload: "payload",
+      });
+    });
+
+    it("should return an error when unable to fetch the datasource", async () => {
+      // GIVEN
+      const field: TransactionFieldContext = {
+        type: ClearSignContextType.NFT,
+        chainId: 7,
+        address: "0x1234",
+      };
+
+      // WHEN
+      spyGetNftInfosPayload.mockResolvedValueOnce(Left(new Error("error")));
+      const result = await loader.loadField(field);
+
+      // THEN
+      expect(result).toEqual({
+        type: ClearSignContextType.ERROR,
+        error: new Error("error"),
+      });
     });
   });
 });

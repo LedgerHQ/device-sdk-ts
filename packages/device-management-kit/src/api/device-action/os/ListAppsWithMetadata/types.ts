@@ -8,8 +8,8 @@ import {
   type ListAppsDAInput,
   type ListAppsDAIntermediateValue,
 } from "@api/device-action/os/ListApps/types";
+import { type Application } from "@internal/manager-api/model/Application";
 import { type HttpFetchApiError } from "@internal/manager-api/model/Errors";
-import { type Application } from "@internal/manager-api/model/ManagerApiType";
 
 export type ListAppsWithMetadataDAOutput = Array<Application | null>;
 export type ListAppsWithMetadataDAInput = ListAppsDAInput;

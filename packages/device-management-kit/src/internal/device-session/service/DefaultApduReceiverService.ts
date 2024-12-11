@@ -3,25 +3,23 @@ import { Either, Just, Left, Maybe, Nothing, Right } from "purify-ts";
 import { v4 } from "uuid";
 
 import { ApduResponse } from "@api/device-session/ApduResponse";
-import { APDU_RESPONSE_STATUS_CODE_LENGTH } from "@internal/device-session/data/ApduResponseConst";
 import {
   APDU_DATA_LENGTH_LENGTH,
   CHANNEL_LENGTH,
   HEAD_TAG_LENGTH,
   INDEX_LENGTH,
-} from "@internal/device-session/data/FramerConst";
+} from "@api/device-session/data/FramerConst";
+import {
+  type ApduReceiverConstructorArgs,
+  ApduReceiverService,
+} from "@api/device-session/service/ApduReceiverService";
+import { FramerUtils } from "@api/device-session/utils/FramerUtils";
+import { LoggerPublisherService } from "@api/logger-publisher/service/LoggerPublisherService";
+import { APDU_RESPONSE_STATUS_CODE_LENGTH } from "@internal/device-session/data/ApduResponseConst";
 import { ReceiverApduError } from "@internal/device-session/model/Errors";
 import { Frame } from "@internal/device-session/model/Frame";
 import { FrameHeader } from "@internal/device-session/model/FrameHeader";
-import { FramerUtils } from "@internal/device-session/utils/FramerUtils";
 import { loggerTypes } from "@internal/logger-publisher/di/loggerTypes";
-import { LoggerPublisherService } from "@internal/logger-publisher/service/LoggerPublisherService";
-
-import { ApduReceiverService } from "./ApduReceiverService";
-
-export type DefaultApduReceiverConstructorArgs = {
-  channel?: Maybe<Uint8Array>;
-};
 
 @injectable()
 export class DefaultApduReceiverService implements ApduReceiverService {
@@ -30,7 +28,7 @@ export class DefaultApduReceiverService implements ApduReceiverService {
   private _pendingFrames: Frame[];
 
   constructor(
-    { channel = Maybe.zero() }: DefaultApduReceiverConstructorArgs,
+    { channel = Maybe.zero() }: ApduReceiverConstructorArgs,
     @inject(loggerTypes.LoggerPublisherServiceFactory)
     loggerModuleFactory: (tag: string) => LoggerPublisherService,
   ) {

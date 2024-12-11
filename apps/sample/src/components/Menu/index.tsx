@@ -1,5 +1,5 @@
 import React from "react";
-import { BuiltinTransports } from "@ledgerhq/device-management-kit";
+import { mockserverIdentifier } from "@ledgerhq/device-transport-kit-mockserver";
 import { Flex, Icons, Link } from "@ledgerhq/react-ui";
 import { useRouter } from "next/navigation";
 import styled from "styled-components";
@@ -72,7 +72,7 @@ export const Menu: React.FC = () => {
         <Icons.SettingsAlt2 />
         <MenuTitle onClick={() => router.push("/cal")}>Crypto Assets</MenuTitle>
       </MenuItem>
-      {transport === BuiltinTransports.MOCK_SERVER && (
+      {transport === mockserverIdentifier && (
         <MenuItem>
           <Icons.Settings />
           <MenuTitle

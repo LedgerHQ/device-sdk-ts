@@ -1,8 +1,7 @@
 {
   "name": "@ledgerhq/device-signer-kit-ethereum",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "license": "Apache-2.0",
-  "private": true,
   "exports": {
     ".": {
       "types": "./lib/types/index.d.ts",
@@ -35,14 +34,15 @@
     "test:coverage": "pnpm test -- --coverage"
   },
   "dependencies": {
+    "@ledgerhq/signer-utils": "workspace:*",
     "ethers-v5": "npm:ethers@^5.7.2",
-    "ethers-v6": "npm:ethers@^6.13.2",
-    "inversify": "^6.0.3",
+    "ethers-v6": "npm:ethers@6.13.4",
+    "inversify": "^6.1.6",
     "inversify-logger-middleware": "^3.1.0",
     "purify-ts": "^2.1.0",
     "reflect-metadata": "^0.2.2",
     "semver": "^7.6.3",
-    "xstate": "^5.18.2"
+    "xstate": "^5.19.0"
   },
   "devDependencies": {
     "@ledgerhq/context-module": "workspace:*",
@@ -51,14 +51,13 @@
     "@ledgerhq/eslint-config-dsdk": "workspace:*",
     "@ledgerhq/jest-config-dsdk": "workspace:*",
     "@ledgerhq/prettier-config-dsdk": "workspace:*",
-    "@ledgerhq/signer-utils": "workspace:*",
     "@ledgerhq/tsconfig-dsdk": "workspace:*",
     "@types/semver": "^7.5.8",
     "rxjs": "^7.8.1",
     "ts-node": "^10.9.2"
   },
   "peerDependencies": {
-    "@ledgerhq/context-module": "workspace:*",
-    "@ledgerhq/device-management-kit": "workspace:*"
+    "@ledgerhq/context-module": "^1.0.0",
+    "@ledgerhq/device-management-kit": "^0.5.1"
   }
 }

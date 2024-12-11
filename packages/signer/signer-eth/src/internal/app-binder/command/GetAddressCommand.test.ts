@@ -1,6 +1,7 @@
 import {
   ApduResponse,
   CommandResultFactory,
+  InvalidStatusWordError,
   isSuccessCommandResult,
 } from "@ledgerhq/device-management-kit";
 
@@ -183,14 +184,149 @@ describe("GetAddressCommand", () => {
       );
     });
 
-    describe("error handling", () => {
-      it("should return an error if the response is not successfull", () => {
+    describe("should return an error", () => {
+      it("when the response is not successfull", () => {
         const response = new ApduResponse({
           statusCode: Uint8Array.from([0x6d, 0x00]),
           data: new Uint8Array(0),
         });
         const result = command.parseResponse(response);
         expect(isSuccessCommandResult(result)).toBe(false);
+      });
+
+      it("when publicKeyLength is invalid", () => {
+        // GIVEN
+        const response = {
+          data: Uint8Array.from([]), // Invalid public key length
+          statusCode: Uint8Array.from([0x90, 0x00]), // Success status code
+        };
+
+        // WHEN
+        const result = command.parseResponse(response);
+
+        // THEN
+        if (isSuccessCommandResult(result)) {
+          fail("Expected an error");
+        } else {
+          expect(result.error).toBeInstanceOf(InvalidStatusWordError);
+          expect(result.error.originalError).toEqual(
+            new Error("Public key length is missing"),
+          );
+        }
+      });
+
+      it("when publicKey is invalid", () => {
+        // GIVEN
+        const response = {
+          data: Uint8Array.from([0x01]), // Invalid public key
+          statusCode: Uint8Array.from([0x90, 0x00]), // Success status code
+        };
+
+        // WHEN
+        const result = command.parseResponse(response);
+
+        // THEN
+        if (isSuccessCommandResult(result)) {
+          fail("Expected an error");
+        } else {
+          expect(result.error).toBeInstanceOf(InvalidStatusWordError);
+          expect(result.error.originalError).toEqual(
+            new Error("Public key is missing"),
+          );
+        }
+      });
+
+      it("when addressLength is invalid", () => {
+        // GIVEN
+        const response = {
+          data: Uint8Array.from([0x20, ...Array<number>(32).fill(0x02)]), // Invalid address length
+          statusCode: Uint8Array.from([0x90, 0x00]), // Success status code
+        };
+
+        // WHEN
+        const result = command.parseResponse(response);
+
+        // THEN
+        if (isSuccessCommandResult(result)) {
+          fail("Expected an error");
+        } else {
+          expect(result.error).toBeInstanceOf(InvalidStatusWordError);
+          expect(result.error.originalError).toEqual(
+            new Error("Ethereum address length is missing"),
+          );
+        }
+      });
+
+      it("when address is missing", () => {
+        // GIVEN
+        const response = {
+          data: Uint8Array.from([0x20, ...Array<number>(32).fill(0x02), 0x01]), // Invalid address
+          statusCode: Uint8Array.from([0x90, 0x00]), // Success status code
+        };
+
+        // WHEN
+        const result = command.parseResponse(response);
+
+        // THEN
+        if (isSuccessCommandResult(result)) {
+          fail("Expected an error");
+        } else {
+          expect(result.error).toBeInstanceOf(InvalidStatusWordError);
+          expect(result.error.originalError).toEqual(
+            new Error("Ethereum address is missing"),
+          );
+        }
+      });
+
+      it("when the address is invalid", () => {
+        // GIVEN
+        const response = {
+          data: Uint8Array.from([
+            0x20,
+            ...Array<number>(32).fill(0x02),
+            0x01,
+            0x02,
+          ]), // Invalid address
+          statusCode: Uint8Array.from([0x90, 0x00]), // Success status code
+        };
+
+        // WHEN
+        const result = command.parseResponse(response);
+
+        // THEN
+        if (isSuccessCommandResult(result)) {
+          fail("Expected an error");
+        } else {
+          expect(result.error).toBeInstanceOf(InvalidStatusWordError);
+          expect(result.error.originalError).toEqual(
+            new Error("Invalid Ethereum address"),
+          );
+        }
+      });
+
+      it("when chainCode is invalid", () => {
+        // GIVEN
+        const response = {
+          data: LNX_RESPONSE_DATA_GOOD_WITH_CHAIN_CODE.slice(0, -1), // Invalid chainCode
+          statusCode: Uint8Array.from([0x90, 0x00]), // Success status code
+        };
+
+        // WHEN
+        const commandWithChainCode = new GetAddressCommand({
+          ...defaultArgs,
+          returnChainCode: true,
+        });
+        const result = commandWithChainCode.parseResponse(response);
+
+        // THEN
+        if (isSuccessCommandResult(result)) {
+          fail("Expected an error");
+        } else {
+          expect(result.error).toBeInstanceOf(InvalidStatusWordError);
+          expect(result.error.originalError).toEqual(
+            new Error("Invalid Chaincode"),
+          );
+        }
       });
     });
   });

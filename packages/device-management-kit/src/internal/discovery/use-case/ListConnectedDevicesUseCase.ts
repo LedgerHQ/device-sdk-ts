@@ -1,10 +1,10 @@
 import { inject, injectable } from "inversify";
 
+import { type LoggerPublisherService } from "@api/logger-publisher/service/LoggerPublisherService";
 import { ConnectedDevice } from "@api/transport/model/ConnectedDevice";
 import { deviceSessionTypes } from "@internal/device-session/di/deviceSessionTypes";
 import type { DeviceSessionService } from "@internal/device-session/service/DeviceSessionService";
 import { loggerTypes } from "@internal/logger-publisher/di/loggerTypes";
-import { LoggerPublisherService } from "@internal/logger-publisher/service/LoggerPublisherService";
 
 /**
  * List all connected devices.
@@ -29,7 +29,7 @@ export class ListConnectedDevicesUseCase {
     return this._sessionService.getDeviceSessions().map(
       (session) =>
         new ConnectedDevice({
-          internalConnectedDevice: session.connectedDevice,
+          transportConnectedDevice: session.connectedDevice,
           sessionId: session.id,
         }),
     );

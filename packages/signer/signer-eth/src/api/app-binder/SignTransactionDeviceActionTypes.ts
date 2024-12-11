@@ -15,7 +15,9 @@ import { type Signature } from "@api/model/Signature";
 import { type Transaction, type TransactionType } from "@api/model/Transaction";
 import { type TransactionOptions } from "@api/model/TransactionOptions";
 import { type ProvideTransactionContextTaskErrorCodes } from "@internal/app-binder/task/ProvideTransactionContextTask";
+import { type GenericContext } from "@internal/app-binder/task/ProvideTransactionGenericContextTask";
 import { type TransactionMapperService } from "@internal/transaction/service/mapper/TransactionMapperService";
+import { type TransactionParserService } from "@internal/transaction/service/parser/TransactionParserService";
 
 export type SignTransactionDAOutput = Signature;
 
@@ -23,6 +25,7 @@ export type SignTransactionDAInput = {
   readonly derivationPath: string;
   readonly transaction: Transaction;
   readonly mapper: TransactionMapperService;
+  readonly parser: TransactionParserService;
   readonly contextModule: ContextModule;
   readonly options: TransactionOptions;
 };
@@ -49,10 +52,11 @@ export type SignTransactionDAState = DeviceActionState<
 export type SignTransactionDAInternalState = {
   readonly error: SignTransactionDAError | null;
   readonly challenge: string | null;
-  readonly clearSignContexts: ClearSignContextSuccess[] | null;
+  readonly clearSignContexts: ClearSignContextSuccess[] | GenericContext | null;
   readonly serializedTransaction: Uint8Array | null;
   readonly chainId: number | null;
   readonly transactionType: TransactionType | null;
+  readonly isLegacy: boolean;
   readonly signature: Signature | null;
 };
 

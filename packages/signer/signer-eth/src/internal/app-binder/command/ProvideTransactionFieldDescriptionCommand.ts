@@ -32,7 +32,7 @@ export class ProvideTransactionFieldDescriptionCommand
   getApdu(): Apdu {
     const ProvideTransactionFieldDescriptionArgs: ApduBuilderArgs = {
       cla: 0xe0,
-      ins: 0x99, // FIXME: TBD
+      ins: 0x28,
       p1: this.args.isFirstChunk ? 0x01 : 0x00,
       p2: 0x00,
     };

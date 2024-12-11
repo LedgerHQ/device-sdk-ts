@@ -17,7 +17,7 @@ import { DerivationPathUtils } from "@ledgerhq/signer-utils";
 const STATUS_CODE_LENGTH = 2;
 
 export type GetExtendedPublicKeyCommandArgs = {
-  displayOnDevice: boolean;
+  checkOnDevice: boolean;
   derivationPath: string;
 };
 
@@ -35,7 +35,7 @@ export class GetExtendedPublicKeyCommand
   constructor(private readonly args: GetExtendedPublicKeyCommandArgs) {}
 
   getApdu(): Apdu {
-    const { displayOnDevice, derivationPath } = this.args;
+    const { checkOnDevice, derivationPath } = this.args;
 
     const getExtendedPublicKeyArgs: ApduBuilderArgs = {
       cla: 0xe1,
@@ -44,7 +44,7 @@ export class GetExtendedPublicKeyCommand
       p2: 0x00,
     };
     const builder = new ApduBuilder(getExtendedPublicKeyArgs).add8BitUIntToData(
-      displayOnDevice ? 0x01 : 0x00,
+      checkOnDevice ? 0x01 : 0x00,
     );
 
     const path = DerivationPathUtils.splitPath(derivationPath);

@@ -12,7 +12,6 @@ import {
 } from "@ledgerhq/device-management-kit";
 import { Just, type Maybe, Nothing } from "purify-ts";
 
-import { ProvideDomainNameCommand } from "@internal/app-binder/command/ProvideDomainNameCommand";
 import {
   ProvideNFTInformationCommand,
   type ProvideNFTInformationCommandErrorCodes,
@@ -21,6 +20,7 @@ import {
   ProvideTokenInformationCommand,
   type ProvideTokenInformationCommandResponse,
 } from "@internal/app-binder/command/ProvideTokenInformationCommand";
+import { ProvideTrustedNameCommand } from "@internal/app-binder/command/ProvideTrustedNameCommand";
 import {
   SetExternalPluginCommand,
   type SetExternalPluginCommandErrorCodes,
@@ -29,12 +29,8 @@ import {
   SetPluginCommand,
   type SetPluginCommandErrorCodes,
 } from "@internal/app-binder/command/SetPluginCommand";
-import { PayloadUtils } from "@internal/shared/utils/PayloadUtils";
 
-import {
-  SendCommandInChunksTask,
-  type SendCommandInChunksTaskArgs,
-} from "./SendCommandInChunksTask";
+import { SendPayloadInChunksTask } from "./SendPayloadInChunksTask";
 
 export type ProvideTransactionContextTaskArgs = {
   /**
@@ -56,9 +52,9 @@ export type ProvideTransactionContextTaskErrorCodes =
  * - `SetExternalPluginCommand` (single command)
  * - `ProvideNFTInformationCommand` (single command)
  * - `ProvideTokenInformationCommand` (single command)
- * - `ProvideDomainNameCommand` (__mulpitle commands__)
+ * - `ProvideTrustedNameCommand` (__mulpitle commands__)
  *
- * The method `provideDomainNameTask` is dedicated to send the multiple `ProvideDomainNameCommand`.
+ * The method `provideTrustedNameTask` is dedicated to send the multiple `ProvideTrustedNameCommand`.
  */
 export class ProvideTransactionContextTask {
   constructor(
@@ -80,10 +76,10 @@ export class ProvideTransactionContextTask {
 
   /**
    * This method will send a command according to the clear sign context type and return the command result if only one command
-   * is sent, otherwise it will return the result of the `provideDomainNameTask`.
+   * is sent, otherwise it will return the result of the `provideTrustedNameTask`.
    *
    * @param context The clear sign context to provide.
-   * @returns A promise that resolves when the command is sent or result of the `provideDomainNameTask`.
+   * @returns A promise that resolves when the command is sent or result of the `provideTrustedNameTask`.
    */
   async provideContext({
     type,
@@ -113,15 +109,15 @@ export class ProvideTransactionContextTask {
           new ProvideTokenInformationCommand({ payload }),
         );
       }
-      case ClearSignContextType.DOMAIN_NAME: {
-        return this.sendInChunks(
+      case ClearSignContextType.TRUSTED_NAME: {
+        return new SendPayloadInChunksTask(this.api, {
           payload,
-          (args) =>
-            new ProvideDomainNameCommand({
+          commandFactory: (args) =>
+            new ProvideTrustedNameCommand({
               data: args.chunkedData,
               isFirstChunk: args.isFirstChunk,
             }),
-        );
+        }).run();
       }
       case ClearSignContextType.ENUM:
       case ClearSignContextType.TRANSACTION_FIELD_DESCRIPTION:
@@ -141,23 +137,5 @@ export class ProvideTransactionContextTask {
         });
       }
     }
-  }
-
-  private async sendInChunks<T>(
-    payload: string,
-    commandFactory: SendCommandInChunksTaskArgs<T>[`commandFactory`],
-  ): Promise<CommandResult<T, void>> {
-    const data = PayloadUtils.getBufferFromPayload(payload);
-
-    if (!data) {
-      return CommandResultFactory({
-        error: new InvalidStatusWordError("Invalid payload"),
-      });
-    }
-
-    return new SendCommandInChunksTask(this.api, {
-      data,
-      commandFactory,
-    }).run();
   }
 }

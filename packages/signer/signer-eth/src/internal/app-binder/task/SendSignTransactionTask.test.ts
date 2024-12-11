@@ -8,6 +8,7 @@ import { Transaction } from "ethers-v6";
 import { Just, Nothing } from "purify-ts";
 
 import { SignTransactionCommand } from "@internal/app-binder/command/SignTransactionCommand";
+import { StartTransactionCommand } from "@internal/app-binder/command/StartTransactionCommand";
 import { makeDeviceActionInternalApiMock } from "@internal/app-binder/device-action/__test-utils__/makeInternalApi";
 
 import { SendSignTransactionTask } from "./SendSignTransactionTask";
@@ -88,6 +89,7 @@ describe("SendSignTransactionTask", () => {
         serializedTransaction: SIMPLE_TRANSACTION,
         chainId: 1,
         transactionType: 1,
+        isLegacy: true,
       };
       apiMock.sendCommand.mockResolvedValueOnce(resultOk);
 
@@ -104,6 +106,29 @@ describe("SendSignTransactionTask", () => {
           ]),
           isFirstChunk: true,
         }),
+      );
+      // eslint-disable-next-line  @typescript-eslint/no-explicit-any
+      expect((result as any).data).toStrictEqual(signature);
+    });
+
+    it("Generic-parser transaction should be signed without payload", async () => {
+      // GIVEN
+      const args = {
+        derivationPath: "44'/60'/0'/0/0",
+        serializedTransaction: SIMPLE_TRANSACTION,
+        chainId: 1,
+        transactionType: 1,
+        isLegacy: false,
+      };
+      apiMock.sendCommand.mockResolvedValueOnce(resultOk);
+
+      // WHEN
+      const result = await new SendSignTransactionTask(apiMock, args).run();
+
+      // THEN
+      expect(apiMock.sendCommand.mock.calls).toHaveLength(1);
+      expect(apiMock.sendCommand.mock.calls[0]![0]).toStrictEqual(
+        new StartTransactionCommand(),
       );
       // eslint-disable-next-line  @typescript-eslint/no-explicit-any
       expect((result as any).data).toStrictEqual(signature);
@@ -171,6 +196,7 @@ describe("SendSignTransactionTask", () => {
           serializedTransaction: serialized,
           chainId,
           transactionType: 0,
+          isLegacy: true,
         };
         apiMock.sendCommand.mockResolvedValueOnce(resultNothing);
         apiMock.sendCommand.mockResolvedValueOnce(resultNothing);
@@ -234,6 +260,31 @@ describe("SendSignTransactionTask", () => {
       );
     });
 
+    it("should return an error if the generic-parser command fails", async () => {
+      // GIVEN
+      const args = {
+        derivationPath: "44'/60'/0'/0/0",
+        serializedTransaction: SIMPLE_TRANSACTION,
+        chainId: 1,
+        transactionType: 1,
+        isLegacy: false,
+      };
+      apiMock.sendCommand.mockResolvedValueOnce(resultNothing);
+
+      // WHEN
+      const result = await new SendSignTransactionTask(apiMock, args).run();
+
+      // THEN
+      expect(apiMock.sendCommand.mock.calls).toHaveLength(1);
+      expect(apiMock.sendCommand.mock.calls[0]![0]).toStrictEqual(
+        new StartTransactionCommand(),
+      );
+      // eslint-disable-next-line  @typescript-eslint/no-explicit-any
+      expect((result as any).error).toStrictEqual(
+        new InvalidStatusWordError("no signature returned"),
+      );
+    });
+
     it("should return an error if the command fails in the middle of the transaction", async () => {
       // GIVEN
       const args = {
@@ -286,6 +337,7 @@ describe("SendSignTransactionTask", () => {
         serializedTransaction: SIMPLE_TRANSACTION,
         chainId: 56,
         transactionType: 0,
+        isLegacy: true,
       };
       apiMock.sendCommand.mockResolvedValueOnce(
         CommandResultFactory({
@@ -312,6 +364,7 @@ describe("SendSignTransactionTask", () => {
         serializedTransaction: SIMPLE_TRANSACTION,
         chainId: 56,
         transactionType: 0,
+        isLegacy: true,
       };
       apiMock.sendCommand.mockResolvedValueOnce(
         CommandResultFactory({
@@ -338,6 +391,7 @@ describe("SendSignTransactionTask", () => {
         serializedTransaction: SIMPLE_TRANSACTION,
         chainId: 11297108109,
         transactionType: 0,
+        isLegacy: true,
       };
       apiMock.sendCommand.mockResolvedValueOnce(
         CommandResultFactory({
@@ -364,6 +418,7 @@ describe("SendSignTransactionTask", () => {
         serializedTransaction: SIMPLE_TRANSACTION,
         chainId: 11297108109,
         transactionType: 0,
+        isLegacy: true,
       };
       apiMock.sendCommand.mockResolvedValueOnce(
         CommandResultFactory({

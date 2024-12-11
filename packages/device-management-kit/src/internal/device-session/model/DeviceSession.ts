@@ -1,3 +1,4 @@
+import { type Either, Left } from "purify-ts";
 import { BehaviorSubject } from "rxjs";
 import { v4 as uuidv4 } from "uuid";
 
@@ -18,15 +19,16 @@ import {
 } from "@api/device-session/DeviceSessionState";
 import { type DeviceSessionId } from "@api/device-session/types";
 import { type DmkError } from "@api/Error";
+import { type LoggerPublisherService } from "@api/logger-publisher/service/LoggerPublisherService";
+import { type TransportConnectedDevice } from "@api/transport/model/TransportConnectedDevice";
 import { DEVICE_SESSION_REFRESH_INTERVAL } from "@internal/device-session/data/DeviceSessionRefresherConst";
-import { type LoggerPublisherService } from "@internal/logger-publisher/service/LoggerPublisherService";
 import { type ManagerApiService } from "@internal/manager-api/service/ManagerApiService";
-import { type InternalConnectedDevice } from "@internal/transport/model/InternalConnectedDevice";
 
 import { DeviceSessionRefresher } from "./DeviceSessionRefresher";
+import { DeviceBusyError } from "./Errors";
 
 export type SessionConstructorArgs = {
-  connectedDevice: InternalConnectedDevice;
+  connectedDevice: TransportConnectedDevice;
   id?: DeviceSessionId;
 };
 
@@ -35,7 +37,7 @@ export type SessionConstructorArgs = {
  */
 export class DeviceSession {
   private readonly _id: DeviceSessionId;
-  private readonly _connectedDevice: InternalConnectedDevice;
+  private readonly _connectedDevice: TransportConnectedDevice;
   private readonly _deviceState: BehaviorSubject<DeviceSessionState>;
   private readonly _refresher: DeviceSessionRefresher;
   private readonly _managerApiService: ManagerApiService;
@@ -105,7 +107,12 @@ export class DeviceSession {
       isPolling: false,
       triggersDisconnection: false,
     },
-  ) {
+  ): Promise<Either<DmkError, ApduResponse>> {
+    const sessionState = this._deviceState.getValue();
+    if (sessionState.deviceStatus === DeviceStatus.BUSY) {
+      return Left(new DeviceBusyError());
+    }
+
     if (!options.isPolling) this.updateDeviceStatus(DeviceStatus.BUSY);
 
     const errorOrResponse = await this._connectedDevice.sendApdu(
@@ -171,5 +178,14 @@ export class DeviceSession {
   close() {
     this.updateDeviceStatus(DeviceStatus.NOT_CONNECTED);
     this._deviceState.complete();
+    this._refresher.stop();
+  }
+
+  toggleRefresher(enabled: boolean) {
+    if (enabled) {
+      this._refresher.start();
+    } else {
+      this._refresher.stop();
+    }
   }
 }

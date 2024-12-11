@@ -1,13 +1,12 @@
-import * as uuid from "uuid";
 jest.mock("uuid");
 
 import { Just, Left, type Maybe, Nothing, Right } from "purify-ts";
 
 import { ApduResponse } from "@api/device-session/ApduResponse";
+import { type ApduReceiverService } from "@api/device-session/service/ApduReceiverService";
 import { ReceiverApduError } from "@internal/device-session/model/Errors";
 import { DefaultLoggerPublisherService } from "@internal/logger-publisher/service/DefaultLoggerPublisherService";
 
-import { type ApduReceiverService } from "./ApduReceiverService";
 import { DefaultApduReceiverService } from "./DefaultApduReceiverService";
 
 const loggerService = new DefaultLoggerPublisherService([], "frame");
@@ -59,7 +58,9 @@ describe("DefaultApduReceiverService", () => {
   let service: ApduReceiverService;
 
   beforeAll(() => {
-    jest.spyOn(uuid, "v4").mockReturnValue("42");
+    jest.mock("uuid", () => ({
+      v4: jest.fn().mockReturnValue("42"),
+    }));
   });
 
   describe("without dataSize", () => {

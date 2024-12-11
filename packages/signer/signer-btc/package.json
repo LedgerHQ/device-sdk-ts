@@ -1,5 +1,5 @@
 {
-  "name": "@ledgerhq/device-signer-kit-btc",
+  "name": "@ledgerhq/device-signer-kit-bitcoin",
   "version": "0.0.1",
   "license": "Apache-2.0",
   "main": "lib/cjs/index.js",
@@ -37,25 +37,27 @@
   },
   "dependencies": {
     "@types/crypto-js": "^4.2.2",
-    "bitcoinjs-lib": "^6.1.6",
     "crypto-js": "^4.2.0",
-    "inversify": "^6.0.3",
+    "inversify": "^6.1.6",
     "inversify-logger-middleware": "^3.1.0",
     "purify-ts": "^2.1.0",
     "reflect-metadata": "^0.2.2",
-    "xstate": "^5.18.2"
+    "xstate": "^5.19.0"
   },
   "devDependencies": {
-    "@ledgerhq/esbuild-tools": "workspace:*",
     "@ledgerhq/device-management-kit": "workspace:*",
+    "@ledgerhq/esbuild-tools": "workspace:*",
     "@ledgerhq/eslint-config-dsdk": "workspace:*",
     "@ledgerhq/jest-config-dsdk": "workspace:*",
     "@ledgerhq/prettier-config-dsdk": "workspace:*",
     "@ledgerhq/signer-utils": "workspace:*",
     "@ledgerhq/tsconfig-dsdk": "workspace:*",
+    "bitcoinjs-lib": "^6.1.6",
+    "rxjs": "^7.8.1",
     "ts-node": "^10.9.2"
   },
   "peerDependencies": {
-    "@ledgerhq/device-management-kit": "workspace:*"
+    "@ledgerhq/device-management-kit": "workspace:*",
+    "bitcoinjs-lib": "^6.1.6"
   }
 }

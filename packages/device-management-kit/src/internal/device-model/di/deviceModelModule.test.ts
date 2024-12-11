@@ -1,6 +1,6 @@
 import { Container } from "inversify";
 
-import { StaticDeviceModelDataSource } from "@internal/device-model/data/StaticDeviceModelDataSource";
+import { StaticDeviceModelDataSource } from "@api/device-model/data/StaticDeviceModelDataSource";
 
 import { deviceModelModuleFactory } from "./deviceModelModule";
 import { deviceModelTypes } from "./deviceModelTypes";

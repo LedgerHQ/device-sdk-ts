@@ -4,11 +4,13 @@ import { EitherAsync } from "purify-ts";
 
 import { type DmkConfig } from "@api/DmkConfig";
 import { managerApiTypes } from "@internal/manager-api/di/managerApiTypes";
-import { HttpFetchApiError } from "@internal/manager-api/model/Errors";
 import {
-  Application,
+  type Application,
   AppType,
-} from "@internal/manager-api/model/ManagerApiType";
+} from "@internal/manager-api/model/Application";
+import { type DeviceVersion } from "@internal/manager-api/model/Device";
+import { HttpFetchApiError } from "@internal/manager-api/model/Errors";
+import { type FinalFirmware } from "@internal/manager-api/model/Firmware";
 
 import { ManagerApiDataSource } from "./ManagerApiDataSource";
 import { ApplicationDto, AppTypeDto } from "./ManagerApiDto";
@@ -16,8 +18,42 @@ import { ApplicationDto, AppTypeDto } from "./ManagerApiDto";
 @injectable()
 export class AxiosManagerApiDataSource implements ManagerApiDataSource {
   private readonly baseUrl: string;
+
   constructor(@inject(managerApiTypes.DmkConfig) config: DmkConfig) {
     this.baseUrl = config.managerApiUrl;
+  }
+
+  getDeviceVersion(
+    targetId: string,
+    provider: number,
+  ): EitherAsync<HttpFetchApiError, DeviceVersion> {
+    return EitherAsync(() =>
+      axios.get<DeviceVersion>(`${this.baseUrl}/get_device_version`, {
+        params: {
+          target_id: targetId,
+          provider,
+        },
+      }),
+    )
+      .map((res) => res.data)
+      .mapLeft((error) => new HttpFetchApiError(error));
+  }
+  getFirmwareVersion(
+    version: string,
+    deviceId: number,
+    provider: number,
+  ): EitherAsync<HttpFetchApiError, FinalFirmware> {
+    return EitherAsync(() =>
+      axios.get<FinalFirmware>(`${this.baseUrl}/get_firmware_version`, {
+        params: {
+          device_version: deviceId,
+          version_name: version,
+          provider,
+        },
+      }),
+    )
+      .map((res) => res.data)
+      .mapLeft((error) => new HttpFetchApiError(error));
   }
 
   private mapAppTypeDtoToAppType(appType: AppTypeDto): AppType {

@@ -1,4 +1,4 @@
-import { AppType } from "@internal/manager-api/model/ManagerApiType";
+import { AppType } from "@internal/manager-api/model/Application";
 
 export const BTC_APP = {
   appEntryLength: 77,

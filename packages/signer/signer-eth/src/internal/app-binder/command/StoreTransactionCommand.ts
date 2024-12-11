@@ -39,8 +39,8 @@ export class StoreTransactionCommand
     const signEthTransactionArgs: ApduBuilderArgs = {
       cla: 0xe0,
       ins: 0x04,
-      p1: isFirstChunk ? 0x01 : 0x00,
-      p2: 0x02,
+      p1: isFirstChunk ? 0x00 : 0x80,
+      p2: 0x01,
     };
     const builder = new ApduBuilder(signEthTransactionArgs);
     return builder.addBufferToData(serializedTransaction).build();

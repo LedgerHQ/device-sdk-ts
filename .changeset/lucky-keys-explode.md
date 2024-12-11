@@ -1,5 +1,5 @@
 ---
-"@ledgerhq/device-signer-kit-btc": minor
+"@ledgerhq/device-signer-kit-bitcoin": minor
 ---
 
 Implement GetMasterFingerprintCommand

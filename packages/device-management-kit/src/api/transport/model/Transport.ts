@@ -2,11 +2,17 @@ import { type Either } from "purify-ts";
 import { type Observable } from "rxjs";
 
 import { type DeviceId } from "@api/device/DeviceModel";
+import { type DeviceModelDataSource } from "@api/device-model/data/DeviceModelDataSource";
+import { type ApduReceiverServiceFactory } from "@api/device-session/service/ApduReceiverService";
+import { type ApduSenderServiceFactory } from "@api/device-session/service/ApduSenderService";
+import { type DmkConfig } from "@api/DmkConfig";
 import { type DmkError } from "@api/Error";
+import { type LoggerPublisherService } from "@api/logger-publisher/service/LoggerPublisherService";
+import { type ConnectError } from "@api/transport/model/Errors";
+import { type TransportDiscoveredDevice } from "@api/transport/model/TransportDiscoveredDevice";
 import { type TransportIdentifier } from "@api/transport/model/TransportIdentifier";
-import { type ConnectError } from "@internal/transport/model/Errors";
-import { type InternalConnectedDevice } from "@internal/transport/model/InternalConnectedDevice";
-import { type InternalDiscoveredDevice } from "@internal/transport/model/InternalDiscoveredDevice";
+
+import { type TransportConnectedDevice } from "./TransportConnectedDevice";
 
 export type DisconnectHandler = (deviceId: DeviceId) => void;
 
@@ -21,11 +27,11 @@ export interface Transport {
 
   isSupported(): boolean;
 
-  startDiscovering(): Observable<InternalDiscoveredDevice>;
+  startDiscovering(): Observable<TransportDiscoveredDevice>;
 
   stopDiscovering(): void;
 
-  listenToKnownDevices(): Observable<InternalDiscoveredDevice[]>;
+  listenToKnownDevices(): Observable<TransportDiscoveredDevice[]>;
 
   /**
    * Enables communication with the device by connecting to it.
@@ -36,9 +42,19 @@ export interface Transport {
   connect(params: {
     deviceId: DeviceId;
     onDisconnect: DisconnectHandler;
-  }): Promise<Either<ConnectError, InternalConnectedDevice>>;
+  }): Promise<Either<ConnectError, TransportConnectedDevice>>;
 
   disconnect(params: {
-    connectedDevice: InternalConnectedDevice;
+    connectedDevice: TransportConnectedDevice;
   }): Promise<Either<DmkError, void>>;
 }
+
+export type TransportArgs = {
+  deviceModelDataSource: DeviceModelDataSource;
+  loggerServiceFactory: (tag: string) => LoggerPublisherService;
+  config: DmkConfig;
+  apduSenderServiceFactory: ApduSenderServiceFactory;
+  apduReceiverServiceFactory: ApduReceiverServiceFactory;
+};
+
+export type TransportFactory = (args: TransportArgs) => Transport;

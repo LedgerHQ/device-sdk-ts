@@ -111,7 +111,7 @@ export class GetAddressCommand
     if (this.args.returnChainCode) {
       if (parser.testMinimalLength(CHAIN_CODE_LENGTH) === false) {
         return CommandResultFactory({
-          error: new InvalidStatusWordError("Invalid Ethereum address"),
+          error: new InvalidStatusWordError("Invalid Chaincode"),
         });
       }
 

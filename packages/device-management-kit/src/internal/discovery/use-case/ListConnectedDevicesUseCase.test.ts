@@ -1,9 +1,9 @@
+import { type LoggerPublisherService } from "@api/logger-publisher/service/LoggerPublisherService";
 import { deviceSessionStubBuilder } from "@internal/device-session/model/DeviceSession.stub";
 import { DefaultDeviceSessionService } from "@internal/device-session/service/DefaultDeviceSessionService";
 import { type DeviceSessionService } from "@internal/device-session/service/DeviceSessionService";
 import { ListConnectedDevicesUseCase } from "@internal/discovery/use-case/ListConnectedDevicesUseCase";
 import { DefaultLoggerPublisherService } from "@internal/logger-publisher/service/DefaultLoggerPublisherService";
-import { type LoggerPublisherService } from "@internal/logger-publisher/service/LoggerPublisherService";
 import { AxiosManagerApiDataSource } from "@internal/manager-api/data/AxiosManagerApiDataSource";
 import { type ManagerApiDataSource } from "@internal/manager-api/data/ManagerApiDataSource";
 import { DefaultManagerApiService } from "@internal/manager-api/service/DefaultManagerApiService";
@@ -57,11 +57,11 @@ describe("ListDeviceSessionsUseCase", () => {
     // then
     expect(response).toStrictEqual([
       new ConnectedDevice({
-        internalConnectedDevice: deviceSession1.connectedDevice,
+        transportConnectedDevice: deviceSession1.connectedDevice,
         sessionId: deviceSession1.id,
       }),
       new ConnectedDevice({
-        internalConnectedDevice: deviceSession2.connectedDevice,
+        transportConnectedDevice: deviceSession2.connectedDevice,
         sessionId: deviceSession2.id,
       }),
     ]);
