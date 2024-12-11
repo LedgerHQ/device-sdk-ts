@@ -8,12 +8,5 @@ export class DerivationPathUtils {
         ? this.PADDING + Math.abs(parseInt(part.slice(0, -1)))
         : this.PADDING + Math.abs(parseInt(part));
     });
-    // .map((i32) => [
-    //   (i32 >> 24) & 0xff,
-    //   (i32 >> 16) & 0xff,
-    //   (i32 >> 8) & 0xff,
-    //   i32 & 0xff,
-    // ])
-    // .flat();
   }
 }

@@ -7,12 +7,14 @@ import {
 } from "@ledgerhq/device-management-kit";
 
 import { type GetWalletIdCommandResponse } from "@api/app-binder/GetWalletIdCommandTypes";
+import { type NearAppErrorCodes } from "@internal/app-binder/command/NearAppCommand";
 
-type GetWalletIdDAUserInteractionRequired = UserInteractionRequired.None;
+type GetWalletIdDAUserInteractionRequired =
+  UserInteractionRequired.VerifyAddress;
 
 export type GetWalletIdDAOutput =
   SendCommandInAppDAOutput<GetWalletIdCommandResponse>;
-export type GetWalletIdDAError = SendCommandInAppDAError<never>; // TODO: add specific command errors when error handling for commands is properly implemented
+export type GetWalletIdDAError = SendCommandInAppDAError<NearAppErrorCodes>;
 export type GetWalletIdDAIntermediateValue =
   SendCommandInAppDAIntermediateValue<GetWalletIdDAUserInteractionRequired>;
 

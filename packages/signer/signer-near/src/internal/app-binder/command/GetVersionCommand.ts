@@ -4,28 +4,32 @@ import {
   type ApduBuilderArgs,
   ApduParser,
   type ApduResponse,
-  type Command,
   type CommandResult,
   CommandResultFactory,
   CommandUtils,
-  GlobalCommandErrorHandler,
 } from "@ledgerhq/device-management-kit";
 
 import {
   type GetVersionCommandArgs,
   type GetVersionCommandResponse,
 } from "@api/app-binder/GetVersionCommandTypes";
+import {
+  NearAppCommand,
+  type NearAppErrorCodes,
+} from "@internal/app-binder/command/NearAppCommand";
 
-export class GetVersionCommand
-  implements Command<GetVersionCommandResponse, GetVersionCommandArgs>
-{
+export class GetVersionCommand extends NearAppCommand<
+  GetVersionCommandResponse,
+  GetVersionCommandArgs
+> {
   args: GetVersionCommandArgs;
 
   constructor(args: GetVersionCommandArgs) {
+    super();
     this.args = args;
   }
 
-  getApdu(): Apdu {
+  override getApdu(): Apdu {
     const getNearVersionArgs: ApduBuilderArgs = {
       cla: 0x80,
       ins: 0x06,
@@ -37,15 +41,13 @@ export class GetVersionCommand
     return builder.build();
   }
 
-  parseResponse(
+  override parseResponse(
     response: ApduResponse,
-  ): CommandResult<GetVersionCommandResponse> {
+  ): CommandResult<GetVersionCommandResponse, NearAppErrorCodes> {
     const parser = new ApduParser(response);
 
     if (!CommandUtils.isSuccessResponse(response)) {
-      return CommandResultFactory({
-        error: GlobalCommandErrorHandler.handle(response),
-      });
+      return this._getError(response, parser);
     }
 
     const major = parser.extract8BitUInt();

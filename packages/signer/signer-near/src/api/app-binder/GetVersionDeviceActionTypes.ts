@@ -7,6 +7,7 @@ import {
 } from "@ledgerhq/device-management-kit";
 
 import { type GetVersionCommandResponse } from "@api/app-binder/GetVersionCommandTypes";
+import { type NearAppErrorCodes } from "@internal/app-binder/command/NearAppCommand";
 
 type GetVersionDAUserInteractionRequired =
   | UserInteractionRequired.None
@@ -14,7 +15,7 @@ type GetVersionDAUserInteractionRequired =
 
 export type GetVersionDAOutput =
   SendCommandInAppDAOutput<GetVersionCommandResponse>;
-export type GetVersionDAError = SendCommandInAppDAError<never>; // TODO: add specific command errors when error handling for commands is properly implemented
+export type GetVersionDAError = SendCommandInAppDAError<NearAppErrorCodes>;
 export type GetVersionDAIntermediateValue =
   SendCommandInAppDAIntermediateValue<GetVersionDAUserInteractionRequired>;
 

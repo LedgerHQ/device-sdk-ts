@@ -2,14 +2,18 @@ import {
   type Apdu,
   ApduBuilder,
   type ApduBuilderArgs,
+  ApduParser,
   type ApduResponse,
-  type Command,
   type CommandResult,
   CommandResultFactory,
   CommandUtils,
-  GlobalCommandErrorHandler,
 } from "@ledgerhq/device-management-kit";
 import { Just, type Maybe, Nothing } from "purify-ts";
+
+import {
+  NearAppCommand,
+  type NearAppErrorCodes,
+} from "@internal/app-binder/command/NearAppCommand";
 
 export type SignMessageCommandResponse = Maybe<Uint8Array>;
 
@@ -24,37 +28,35 @@ export type SignMessageCommandArgs = {
   readonly isLastChunk: boolean;
 };
 
-export class SignMessageCommand
-  implements Command<SignMessageCommandResponse, SignMessageCommandArgs>
-{
+export class SignMessageCommand extends NearAppCommand<
+  SignMessageCommandResponse,
+  SignMessageCommandArgs
+> {
   args: SignMessageCommandArgs;
 
   constructor(args: SignMessageCommandArgs) {
+    super();
     this.args = args;
   }
 
-  getApdu(): Apdu {
+  override getApdu(): Apdu {
     const { data, isLastChunk } = this.args;
 
-    const signNearTransactionArgs: ApduBuilderArgs = {
+    const signMessageArgs: ApduBuilderArgs = {
       cla: 0x80,
       ins: 0x07,
       p1: isLastChunk ? 0x80 : 0x00,
       p2: "W".charCodeAt(0),
     };
-    const builder = new ApduBuilder(signNearTransactionArgs);
+    const builder = new ApduBuilder(signMessageArgs);
     return builder.addBufferToData(data).build();
   }
 
-  parseResponse(
+  override parseResponse(
     response: ApduResponse,
-  ): CommandResult<SignMessageCommandResponse> {
-    // const parser = new ApduParser(response);
-
+  ): CommandResult<SignMessageCommandResponse, NearAppErrorCodes> {
     if (!CommandUtils.isSuccessResponse(response)) {
-      return CommandResultFactory({
-        error: GlobalCommandErrorHandler.handle(response),
-      });
+      return this._getError(response, new ApduParser(response));
     }
     if (!this.args.isLastChunk) {
       return CommandResultFactory({

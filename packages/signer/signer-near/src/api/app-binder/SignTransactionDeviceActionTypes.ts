@@ -7,6 +7,7 @@ import {
   type UserInteractionRequired,
 } from "@ledgerhq/device-management-kit";
 
+import { type NearAppErrorCodes } from "@internal/app-binder/command/NearAppCommand";
 import { type SignTransactionTaskArgs } from "@internal/app-binder/task/SignTransactionTask";
 
 export type SignTransactionDAOutput = Uint8Array;
@@ -17,7 +18,7 @@ export type SignTransactionDAInput = {
 
 export type SignTransactionDAError =
   | OpenAppDAError
-  | CommandErrorResult["error"];
+  | CommandErrorResult<NearAppErrorCodes>["error"];
 
 type SignTransactionDARequiredInteraction =
   | OpenAppDARequiredInteraction

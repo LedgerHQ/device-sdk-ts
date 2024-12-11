@@ -1,7 +1,5 @@
 import {
-  type Apdu,
   ApduBuilder,
-  type ApduBuilderArgs,
   ApduParser,
   type ApduResponse,
   type CommandResult,
@@ -15,46 +13,36 @@ import {
   type NearAppErrorCodes,
 } from "@internal/app-binder/command/NearAppCommand";
 
-export type SignTransactionCommandResponse = Maybe<Uint8Array>;
+type SignDelegateCommandResponse = Maybe<Uint8Array>;
 
-export type SignTransactionCommandArgs = {
-  /**
-   * The transaction to sign in max 150 bytes chunks
-   */
-  readonly data: Uint8Array;
-  /**
-   * If this is the first chunk of the message
-   */
-  readonly isLastChunk: boolean;
+type SignDelegateCommandArgs = {
+  isLastChunk: boolean;
+  data: Uint8Array;
 };
 
-export class SignTransactionCommand extends NearAppCommand<
-  SignTransactionCommandResponse,
-  SignTransactionCommandArgs
+export class SignDelegateCommand extends NearAppCommand<
+  SignDelegateCommandResponse,
+  SignDelegateCommandArgs
 > {
-  args: SignTransactionCommandArgs;
-
-  constructor(args: SignTransactionCommandArgs) {
+  constructor(readonly args: SignDelegateCommandArgs) {
     super();
-    this.args = args;
   }
-
-  override getApdu(): Apdu {
+  override getApdu() {
     const { data, isLastChunk } = this.args;
 
-    const signTransactionArgs: ApduBuilderArgs = {
+    return new ApduBuilder({
       cla: 0x80,
-      ins: 0x02,
+      ins: 0x08,
       p1: isLastChunk ? 0x80 : 0x00,
       p2: "W".charCodeAt(0),
-    };
-    const builder = new ApduBuilder(signTransactionArgs);
-    return builder.addBufferToData(data).build();
+    })
+      .addBufferToData(data)
+      .build();
   }
 
   override parseResponse(
     response: ApduResponse,
-  ): CommandResult<SignTransactionCommandResponse, NearAppErrorCodes> {
+  ): CommandResult<SignDelegateCommandResponse, NearAppErrorCodes> {
     if (!CommandUtils.isSuccessResponse(response)) {
       return this._getError(response, new ApduParser(response));
     }

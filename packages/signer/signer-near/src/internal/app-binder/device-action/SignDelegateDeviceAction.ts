@@ -13,53 +13,53 @@ import { Left, Right } from "purify-ts";
 import { assign, fromPromise, setup } from "xstate";
 
 import {
-  type SignTransactionDAError,
-  type SignTransactionDAInput,
-  type SignTransactionDAIntermediateValue,
-  type SignTransactionDAInternalState,
-  type SignTransactionDAOutput,
-} from "@api/app-binder/SignTransactionDeviceActionTypes";
+  type SignDelegateDAError,
+  type SignDelegateDAInput,
+  type SignDelegateDAIntermediateValue,
+  type SignDelegateDAInternalState,
+  type SignDelegateDAOutput,
+} from "@api/app-binder/SignDelegateDeviceActionTypes";
 import { GetPublicKeyCommand } from "@internal/app-binder/command/GetPublicKeyCommand";
 import { type NearAppErrorCodes } from "@internal/app-binder/command/NearAppCommand";
 import {
-  SignTransactionTask,
-  type SignTransactionTaskArgs,
-} from "@internal/app-binder/task/SignTransactionTask";
+  SignDelegateTask,
+  type SignDelegateTaskArgs,
+} from "@internal/app-binder/task/SignDelegateTask";
 
 export type MachineDependencies = {
   readonly getPublicKey: (args0: {
     input: { derivationPath: string };
   }) => Promise<CommandResult<string, NearAppErrorCodes>>;
-  readonly signTransactionTask: (args0: {
-    input: { publicKey: string } & SignTransactionTaskArgs;
+  readonly signDelegateTask: (args0: {
+    input: { publicKey: string } & SignDelegateTaskArgs;
   }) => Promise<CommandResult<Uint8Array, NearAppErrorCodes>>;
 };
 
-export class SignTransactionDeviceAction extends XStateDeviceAction<
-  SignTransactionDAOutput,
-  SignTransactionDAInput,
-  SignTransactionDAError,
-  SignTransactionDAIntermediateValue,
-  SignTransactionDAInternalState
+export class SignDelegateDeviceAction extends XStateDeviceAction<
+  SignDelegateDAOutput,
+  SignDelegateDAInput,
+  SignDelegateDAError,
+  SignDelegateDAIntermediateValue,
+  SignDelegateDAInternalState
 > {
   makeStateMachine(
     internalApi: InternalApi,
   ): DeviceActionStateMachine<
-    SignTransactionDAOutput,
-    SignTransactionDAInput,
-    SignTransactionDAError,
-    SignTransactionDAIntermediateValue,
-    SignTransactionDAInternalState
+    SignDelegateDAOutput,
+    SignDelegateDAInput,
+    SignDelegateDAError,
+    SignDelegateDAIntermediateValue,
+    SignDelegateDAInternalState
   > {
     type types = StateMachineTypes<
-      SignTransactionDAOutput,
-      SignTransactionDAInput,
-      SignTransactionDAError,
-      SignTransactionDAIntermediateValue,
-      SignTransactionDAInternalState
+      SignDelegateDAOutput,
+      SignDelegateDAInput,
+      SignDelegateDAError,
+      SignDelegateDAIntermediateValue,
+      SignDelegateDAInternalState
     >;
 
-    const { signTransactionTask, getPublicKey } =
+    const { signDelegateTask, getPublicKey } =
       this.extractDependencies(internalApi);
 
     return setup({
@@ -73,7 +73,7 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
           input: { appName: "NEAR" },
         }).makeStateMachine(internalApi),
         GetPublicKey: fromPromise(getPublicKey),
-        SignTransactionTask: fromPromise(signTransactionTask),
+        SignDelegateTask: fromPromise(signDelegateTask),
       },
       guards: {
         noInternalError: ({ context }) => context._internalState.error === null,
@@ -87,7 +87,7 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
         }),
       },
     }).createMachine({
-      id: "SignTransactionDeviceAction",
+      id: "SignDelegateDeviceAction",
       initial: "OpenAppDeviceAction",
       context: ({ input }) => {
         return {
@@ -122,7 +122,7 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
             onDone: {
               actions: assign({
                 _internalState: (_) =>
-                  _.event.output.caseOf<SignTransactionDAInternalState>({
+                  _.event.output.caseOf<SignDelegateDAInternalState>({
                     Right: () => _.context._internalState,
                     Left: (error) => ({
                       ..._.context._internalState,
@@ -178,13 +178,13 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
         GetPublicKeyResultCheck: {
           always: [
             {
-              target: "SignTransactionTask",
+              target: "SignDelegateTask",
               guard: "noInternalError",
             },
             "Error",
           ],
         },
-        SignTransactionTask: {
+        SignDelegateTask: {
           entry: assign({
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.SignTransaction,
@@ -196,14 +196,14 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
             },
           }),
           invoke: {
-            id: "SignTransactionTask",
-            src: "SignTransactionTask",
+            id: "SignDelegateTask",
+            src: "SignDelegateTask",
             input: ({ context }) => ({
               ...this.input.args,
               publicKey: context._internalState.publicKey!,
             }),
             onDone: {
-              target: "SignTransactionResultCheck",
+              target: "SignDelegateResultCheck",
               actions: [
                 assign({
                   _internalState: ({ event, context }) => {
@@ -227,7 +227,7 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
             },
           },
         },
-        SignTransactionResultCheck: {
+        SignDelegateResultCheck: {
           always: [
             { guard: "noInternalError", target: "Success" },
             { target: "Error" },
@@ -260,15 +260,15 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
         new GetPublicKeyCommand({ derivationPath, checkOnDevice: false }),
       );
 
-    const signTransactionTask = async ({
+    const signDelegateTask = async ({
       input: { publicKey, ...args },
     }: {
-      input: { publicKey: string } & SignTransactionTaskArgs;
-    }) => new SignTransactionTask(internalApi, args).run(publicKey);
+      input: { publicKey: string } & SignDelegateTaskArgs;
+    }) => new SignDelegateTask(internalApi, args).run(publicKey);
 
     return {
       getPublicKey,
-      signTransactionTask,
+      signDelegateTask,
     };
   }
 }

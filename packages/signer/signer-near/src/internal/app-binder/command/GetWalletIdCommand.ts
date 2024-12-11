@@ -4,36 +4,39 @@ import {
   type ApduBuilderArgs,
   ApduParser,
   type ApduResponse,
-  type Command,
   type CommandResult,
   CommandResultFactory,
   CommandUtils,
-  GlobalCommandErrorHandler,
-  InvalidStatusWordError,
 } from "@ledgerhq/device-management-kit";
 
 import {
   type GetWalletIdCommandArgs,
   type GetWalletIdCommandResponse,
 } from "@api/app-binder/GetWalletIdCommandTypes";
+import {
+  NearAppCommand,
+  type NearAppErrorCodes,
+} from "@internal/app-binder/command/NearAppCommand";
 import { DerivationPathUtils } from "@internal/shared/utils/DerivationPathUtils";
 
 const WALLET_ID_LENGTH = 32;
 
-export class GetWalletIdCommand
-  implements Command<GetWalletIdCommandResponse, GetWalletIdCommandArgs>
-{
+export class GetWalletIdCommand extends NearAppCommand<
+  GetWalletIdCommandResponse,
+  GetWalletIdCommandArgs
+> {
   args: GetWalletIdCommandArgs;
 
   constructor(args: GetWalletIdCommandArgs) {
+    super();
     this.args = args;
   }
 
-  getApdu(): Apdu {
+  override getApdu(): Apdu {
     const getNearWalletIdArgs: ApduBuilderArgs = {
       cla: 0x80,
       ins: 0x05,
-      p1: this.args.checkOnDevice ? 0x00 : 0x01,
+      p1: 0x00,
       p2: 0x00,
     };
     const builder = new ApduBuilder(getNearWalletIdArgs);
@@ -47,29 +50,20 @@ export class GetWalletIdCommand
     return builder.build();
   }
 
-  parseResponse(
+  override parseResponse(
     response: ApduResponse,
-  ): CommandResult<GetWalletIdCommandResponse> {
+  ): CommandResult<GetWalletIdCommandResponse, NearAppErrorCodes> {
     const parser = new ApduParser(response);
 
-    // TODO: handle the error correctly using a generic error handler
     if (!CommandUtils.isSuccessResponse(response)) {
-      return CommandResultFactory({
-        error: GlobalCommandErrorHandler.handle(response),
-      });
+      return this._getError(response, parser);
     }
-    const walletId = parser.extractFieldByLength(WALLET_ID_LENGTH);
-
-    if (walletId === undefined) {
-      return CommandResultFactory({
-        error: new InvalidStatusWordError("Invalid wallet id"),
-      });
-    }
+    const walletId = parser.encodeToHexaString(
+      parser.extractFieldByLength(WALLET_ID_LENGTH),
+    );
 
     return CommandResultFactory({
-      data: {
-        walletId,
-      },
+      data: walletId,
     });
   }
 }
