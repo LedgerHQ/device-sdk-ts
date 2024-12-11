@@ -33,19 +33,21 @@ function functionCall(): Action {
   return new Action({
     functionCall: new FunctionCall({
       methodName: "testMethod",
-      args: Uint8Array.from([42]),
-      gas: BigInt(42),
-      deposit: BigInt(420),
+      args: Uint8Array.from([21 * 1e23]),
+      gas: BigInt(1e20),
+      deposit: BigInt(42 * 1e24),
     }),
   });
 }
 
 function stake(): Action {
-  return new Action({ stake: new Stake({ stake: BigInt(42), publicKey }) });
+  return new Action({
+    stake: new Stake({ stake: BigInt(42 * 1e23), publicKey }),
+  });
 }
 
 function transfer(): Action {
-  return new Action({ transfer: new Transfer({ deposit: BigInt(42) }) });
+  return new Action({ transfer: new Transfer({ deposit: BigInt(42 * 1e23) }) });
 }
 
 function addKey() {
