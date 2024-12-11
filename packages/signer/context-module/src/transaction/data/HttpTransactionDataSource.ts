@@ -3,9 +3,9 @@ import { inject, injectable } from "inversify";
 import { Either, Left, Right } from "purify-ts";
 
 import { configTypes } from "@/config/di/configTypes";
-import type {
-  ContextModuleCalMode,
-  ContextModuleConfig,
+import {
+  type ContextModuleCalMode,
+  type ContextModuleConfig,
 } from "@/config/model/ContextModuleConfig";
 import {
   ClearSignContext,
@@ -27,6 +27,8 @@ import {
   CalldataDto,
   CalldataEnumV1,
   CalldataFieldV1,
+  CalldataSignatures,
+  CalldataTransactionDescriptor,
   CalldataTransactionInfoV1,
 } from "./CalldataDto";
 import {
@@ -102,18 +104,6 @@ export class HttpTransactionDataSource implements TransactionDataSource {
       );
     }
 
-    if (
-      !calldataDescriptor.enums.every((e) =>
-        this.isEnumV1(e, this.config.cal.mode),
-      )
-    ) {
-      return Left(
-        new Error(
-          `[ContextModule] HttpTransactionDataSource: Failed to decode enum descriptor for contract ${address} and selector ${selector}`,
-        ),
-      );
-    }
-
     const infoData = calldataDescriptor.transaction_info.descriptor.data;
     const infoSignature =
       calldataDescriptor.transaction_info.descriptor.signatures[
@@ -123,18 +113,24 @@ export class HttpTransactionDataSource implements TransactionDataSource {
       type: ClearSignContextType.TRANSACTION_INFO,
       payload: this.formatTransactionInfo(infoData, infoSignature),
     };
-    const enums: ClearSignContextSuccess[] = calldataDescriptor.enums.map(
-      (e) => ({
-        id: e.id,
-        type: ClearSignContextType.ENUM,
-        payload: this.formatTransactionInfo(
-          e.descriptor.data,
-          e.descriptor.signatures[this.config.cal.mode],
-        ),
-        name: e.name,
-        value: e.value,
-      }),
-    );
+    const enums: ClearSignContextSuccess[] = [];
+    for (const [id, values] of Object.entries(calldataDescriptor.enums)) {
+      for (const [
+        value,
+        { data, signatures },
+      ] of Object.entries<CalldataTransactionDescriptor>(values)) {
+        enums.push({
+          type: ClearSignContextType.ENUM,
+          id: Number(id),
+          value: Number(value),
+          payload: this.formatTransactionInfo(
+            data,
+            signatures[this.config.cal.mode]!, // the enum is validated by isCalldataDescriptorV1
+          ),
+        });
+      }
+    }
+
     const fields: ClearSignContextSuccess[] = calldataDescriptor.fields.map(
       (field) => ({
         type: ClearSignContextType.TRANSACTION_FIELD_DESCRIPTION,
@@ -228,10 +224,8 @@ export class HttpTransactionDataSource implements TransactionDataSource {
       data.type === "calldata" &&
       data.version === "v1" &&
       this.isTransactionInfoV1(data.transaction_info, mode) &&
-      Array.isArray(data.enums) &&
+      this.isEnumV1(data.enums, mode) &&
       Array.isArray(data.fields) &&
-      // enums are tested separately to type them correctly
-      data.enums.every((e) => typeof e === "object") &&
       data.fields.every((f) => this.isFieldV1(f))
     );
   }
@@ -254,20 +248,31 @@ export class HttpTransactionDataSource implements TransactionDataSource {
   }
 
   private isEnumV1(
-    data: CalldataEnumV1,
+    calldata: CalldataEnumV1,
     mode: ContextModuleCalMode,
-  ): data is CalldataEnumV1 & {
-    descriptor: {
-      signatures: { [key in ContextModuleCalMode]: string };
-    };
-  } {
+  ): calldata is CalldataEnumV1 {
     return (
-      typeof data === "object" &&
-      typeof data.descriptor === "object" &&
-      typeof data.descriptor.data === "string" &&
-      typeof data.descriptor.signatures === "object" &&
-      typeof data.descriptor.signatures[mode] === "string"
+      typeof calldata === "object" &&
+      Object.entries(calldata).every(
+        ([id, values]) =>
+          typeof id === "string" &&
+          typeof values === "object" &&
+          Object.entries<CalldataTransactionDescriptor>(values).every(
+            ([value, obj]) =>
+              typeof value === "string" &&
+              typeof obj === "object" &&
+              obj.signatures !== undefined &&
+              this.isCalldataSignatures(obj.signatures, mode),
+          ),
+      )
     );
+  }
+
+  private isCalldataSignatures(
+    data: CalldataSignatures,
+    mode: ContextModuleCalMode,
+  ): data is CalldataSignatures & { [key in ContextModuleCalMode]: string } {
+    return typeof data === "object" && typeof data[mode] === "string";
   }
 
   private isFieldV1(data: CalldataFieldV1): boolean {

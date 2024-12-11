@@ -142,7 +142,6 @@ describe("BuildTransactionContextTask", () => {
         type: ClearSignContextType.ENUM,
         payload: "payload-3",
         id: 1,
-        name: "enum-name",
         value: 2,
       },
       {
@@ -331,7 +330,6 @@ describe("BuildTransactionContextTask", () => {
         type: ClearSignContextType.ENUM,
         payload: "enum",
         id: 1,
-        name: "enum-name",
         value: 2,
       },
     ];
@@ -380,7 +378,6 @@ describe("BuildTransactionContextTask", () => {
         type: ClearSignContextType.ENUM,
         payload: "enum",
         id: 1,
-        name: "enum-name",
         value: 2,
       },
       {
@@ -441,7 +438,6 @@ describe("BuildTransactionContextTask", () => {
         type: ClearSignContextType.ENUM,
         payload: "payload-5",
         id: 1,
-        name: "enum-name",
         value: 2,
       },
     ];

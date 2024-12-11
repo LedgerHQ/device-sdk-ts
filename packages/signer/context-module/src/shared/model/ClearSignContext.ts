@@ -62,7 +62,6 @@ export type ClearSignContextSuccess<
       type: ClearSignContextType.ENUM;
       id: number;
       payload: string;
-      name: string;
       value: number;
     }
   : {
