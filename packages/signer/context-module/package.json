@@ -1,6 +1,7 @@
 {
   "name": "@ledgerhq/context-module",
   "version": "1.1.0",
+  "private": true,
   "license": "Apache-2.0",
   "exports": {
     ".": {
@@ -52,6 +53,6 @@
     "reflect-metadata": "^0.2.2"
   },
   "peerDependencies": {
-    "@ledgerhq/device-management-kit": "^0.5.1"
+    "@ledgerhq/device-management-kit": "workspace:*"
   }
 }

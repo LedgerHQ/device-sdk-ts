@@ -1,6 +1,7 @@
 {
   "name": "@ledgerhq/signer-utils",
   "version": "1.0.2",
+  "private": true,
   "license": "Apache-2.0",
   "exports": {
     ".": {
@@ -43,6 +44,6 @@
     "ts-node": "^10.9.2"
   },
   "peerDependencies": {
-    "@ledgerhq/device-management-kit": "^0.5.1"
+    "@ledgerhq/device-management-kit": "workspace:*"
   }
 }
