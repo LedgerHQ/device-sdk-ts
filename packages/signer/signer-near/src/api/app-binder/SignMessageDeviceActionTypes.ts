@@ -7,6 +7,7 @@ import {
   type UserInteractionRequired,
 } from "@ledgerhq/device-management-kit";
 
+import { type NearAppErrorCodes } from "@internal/app-binder/command/NearAppCommand";
 import { type SignMessageTaskArgs } from "@internal/app-binder/task/SignMessageTask";
 
 export type SignMessageDAOutput = Uint8Array;
@@ -15,7 +16,9 @@ export type SignMessageDAInput = {
   args: SignMessageTaskArgs;
 };
 
-export type SignMessageDAError = OpenAppDAError | CommandErrorResult["error"];
+export type SignMessageDAError =
+  | OpenAppDAError
+  | CommandErrorResult<NearAppErrorCodes>["error"];
 
 type SignMessageDARequiredInteraction =
   | OpenAppDARequiredInteraction

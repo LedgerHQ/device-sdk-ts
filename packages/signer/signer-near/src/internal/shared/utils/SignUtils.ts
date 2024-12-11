@@ -1,13 +1,13 @@
 import {
   APDU_MAX_PAYLOAD,
-  Command,
+  type Command,
   CommandResultFactory,
-  InternalApi,
+  type InternalApi,
   isSuccessCommandResult,
 } from "@ledgerhq/device-management-kit";
 import { type Maybe, Nothing } from "purify-ts";
 
-type SignCommandArgs = {
+export type SignCommandArgs = {
   data: Uint8Array;
   isLastChunk: boolean;
 };
@@ -17,13 +17,18 @@ export class SignUtils {
     private readonly api: InternalApi,
     private readonly chunkSize: number = APDU_MAX_PAYLOAD,
   ) {}
-  async signInChunks<CommandResponse>(
+  async signInChunks<CommandResponse, CommandErrorCodes>(
     command: {
-      new (args: SignCommandArgs): Command<CommandResponse, SignCommandArgs>;
+      new (
+        args: SignCommandArgs,
+      ): Command<CommandResponse, SignCommandArgs, CommandErrorCodes>;
     },
     buffer: Uint8Array,
   ) {
-    let result = CommandResultFactory<CommandResponse | Maybe<never>>({
+    let result = CommandResultFactory<
+      CommandResponse | Maybe<never>,
+      CommandErrorCodes
+    >({
       data: Nothing,
     });
 

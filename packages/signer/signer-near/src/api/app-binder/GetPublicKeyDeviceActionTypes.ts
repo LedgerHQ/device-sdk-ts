@@ -7,6 +7,7 @@ import {
 } from "@ledgerhq/device-management-kit";
 
 import { type GetPublicKeyCommandResponse } from "@api/app-binder/GetPublicKeyCommandTypes";
+import { type NearAppErrorCodes } from "@internal/app-binder/command/NearAppCommand";
 
 type GetPublicKeyDAUserInteractionRequired =
   | UserInteractionRequired.None
@@ -14,7 +15,7 @@ type GetPublicKeyDAUserInteractionRequired =
 
 export type GetPublicKeyDAOutput =
   SendCommandInAppDAOutput<GetPublicKeyCommandResponse>;
-export type GetPublicKeyDAError = SendCommandInAppDAError<never>; // TODO: add specific command errors when error handling for commands is properly implemented
+export type GetPublicKeyDAError = SendCommandInAppDAError<NearAppErrorCodes>;
 export type GetPublicKeyDAIntermediateValue =
   SendCommandInAppDAIntermediateValue<GetPublicKeyDAUserInteractionRequired>;
 

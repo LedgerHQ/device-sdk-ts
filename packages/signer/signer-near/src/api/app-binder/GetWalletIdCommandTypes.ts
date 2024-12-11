@@ -1,8 +1,5 @@
-export type GetWalletIdCommandResponse = {
-  readonly walletId: Uint8Array;
-};
+export type GetWalletIdCommandResponse = string;
 
 export type GetWalletIdCommandArgs = {
   derivationPath: string;
-  checkOnDevice: boolean;
 };

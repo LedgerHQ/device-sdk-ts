@@ -1,29 +1,35 @@
-import { type GetPublicKeyCommandArgs } from "@api/app-binder/GetPublicKeyCommandTypes";
 import { type GetPublicKeyDAReturnType } from "@api/app-binder/GetPublicKeyDeviceActionTypes";
 import { type GetVersionDAReturnType } from "@api/app-binder/GetVersionDeviceActionTypes";
-import { type GetWalletIdCommandArgs } from "@api/app-binder/GetWalletIdCommandTypes";
 import { type GetWalletIdDAReturnType } from "@api/app-binder/GetWalletIdDeviceActionTypes";
+import { type SignDelegateDAReturnType } from "@api/app-binder/SignDelegateDeviceActionTypes";
 import { type SignMessageDAReturnType } from "@api/app-binder/SignMessageDeviceActionTypes";
 import { type SignTransactionDAReturnType } from "@api/app-binder/SignTransactionDeviceActionTypes";
+import { type AddressOptions } from "@api/model/AddressOptions";
+import { type DeviceActionOptions } from "@api/model/DeviceActionOptions";
+import { type SignDelegateTaskArgs } from "@internal/app-binder/task/SignDelegateTask";
 import { type SignMessageTaskArgs } from "@internal/app-binder/task/SignMessageTask";
 import { type SignTransactionTaskArgs } from "@internal/app-binder/task/SignTransactionTask";
 
 export interface SignerNear {
   getWalletId(
-    args: GetWalletIdCommandArgs,
-    inspect?: boolean,
+    derivationPath: string,
+    options: DeviceActionOptions,
   ): GetWalletIdDAReturnType;
   getPublicKey(
-    args: GetPublicKeyCommandArgs,
-    inspect?: boolean,
+    derivationPath: string,
+    options: AddressOptions & DeviceActionOptions,
   ): GetPublicKeyDAReturnType;
+  getVersion(options: DeviceActionOptions): GetVersionDAReturnType;
   signMessage(
-    args: SignMessageTaskArgs,
-    inspect?: boolean,
+    derivationPath: string,
+    options: Omit<SignMessageTaskArgs, "derivationPath"> & DeviceActionOptions,
   ): SignMessageDAReturnType;
   signTransaction(
-    args: SignTransactionTaskArgs,
-    inspect?: boolean,
+    derivationPath: string,
+    args: Omit<SignTransactionTaskArgs, "derivationPath"> & DeviceActionOptions,
   ): SignTransactionDAReturnType;
-  getVersion(inspect?: boolean): GetVersionDAReturnType;
+  signDelegate(
+    derivationPath: string,
+    args: Omit<SignDelegateTaskArgs, "derivationPath"> & DeviceActionOptions,
+  ): SignDelegateDAReturnType;
 }

@@ -4,11 +4,9 @@ import {
   type ApduBuilderArgs,
   ApduParser,
   type ApduResponse,
-  type Command,
   type CommandResult,
   CommandResultFactory,
   CommandUtils,
-  GlobalCommandErrorHandler,
   InvalidStatusWordError,
 } from "@ledgerhq/device-management-kit";
 import { baseEncode } from "@near-js/utils";
@@ -17,20 +15,26 @@ import {
   type GetPublicKeyCommandArgs,
   type GetPublicKeyCommandResponse,
 } from "@api/app-binder/GetPublicKeyCommandTypes";
+import {
+  NearAppCommand,
+  type NearAppErrorCodes,
+} from "@internal/app-binder/command/NearAppCommand";
 import { DerivationPathUtils } from "@internal/shared/utils/DerivationPathUtils";
 
 const PUBKEY_LENGTH = 32;
 
-export class GetPublicKeyCommand
-  implements Command<GetPublicKeyCommandResponse, GetPublicKeyCommandArgs>
-{
+export class GetPublicKeyCommand extends NearAppCommand<
+  GetPublicKeyCommandResponse,
+  GetPublicKeyCommandArgs
+> {
   args: GetPublicKeyCommandArgs;
 
   constructor(args: GetPublicKeyCommandArgs) {
+    super();
     this.args = args;
   }
 
-  getApdu(): Apdu {
+  override getApdu(): Apdu {
     const getNearPublicKeyArgs: ApduBuilderArgs = {
       cla: 0x80,
       ins: 0x04,
@@ -41,7 +45,6 @@ export class GetPublicKeyCommand
     const derivationPath = this.args.derivationPath;
 
     const path = DerivationPathUtils.splitPath(derivationPath);
-    // builder.add8BitUIntToData(path.length);
     path.forEach((element) => {
       builder.add32BitUIntToData(element);
     });
@@ -49,16 +52,13 @@ export class GetPublicKeyCommand
     return builder.build();
   }
 
-  parseResponse(
+  override parseResponse(
     response: ApduResponse,
-  ): CommandResult<GetPublicKeyCommandResponse> {
+  ): CommandResult<GetPublicKeyCommandResponse, NearAppErrorCodes> {
     const parser = new ApduParser(response);
 
-    // TODO: handle the error correctly using a generic error handler
     if (!CommandUtils.isSuccessResponse(response)) {
-      return CommandResultFactory({
-        error: GlobalCommandErrorHandler.handle(response),
-      });
+      return this._getError(response, parser);
     }
     if (parser.testMinimalLength(PUBKEY_LENGTH) === false) {
       return CommandResultFactory({
