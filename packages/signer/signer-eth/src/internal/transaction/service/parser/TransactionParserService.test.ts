@@ -277,7 +277,7 @@ describe("TransactionParserService", () => {
           type: "ARRAY",
           itemSize: 1,
           start: 0,
-          length: 1,
+          end: 1,
         },
         {
           type: "REF",
@@ -307,7 +307,7 @@ describe("TransactionParserService", () => {
       ]);
     });
 
-    it("Extract all the elements of x[0][-1:]", () => {
+    it("Extract all the elements of x[0:-1][-1:]", () => {
       // GIVEN
       const path: DataPathElement[] = [
         {
@@ -321,7 +321,7 @@ describe("TransactionParserService", () => {
           type: "ARRAY",
           itemSize: 1,
           start: 0,
-          length: 1,
+          end: -1,
         },
         {
           type: "REF",
@@ -363,7 +363,7 @@ describe("TransactionParserService", () => {
           type: "ARRAY",
           itemSize: 1,
           start: 0,
-          length: 1,
+          end: 1,
         },
         {
           type: "REF",
@@ -372,7 +372,7 @@ describe("TransactionParserService", () => {
           type: "ARRAY",
           itemSize: 1,
           start: 2,
-          length: 1,
+          end: 3,
         },
         {
           type: "LEAF",
@@ -435,7 +435,7 @@ describe("TransactionParserService", () => {
         {
           type: "ARRAY",
           itemSize: 1,
-          length: 2,
+          end: 2,
         },
         {
           type: "REF",
@@ -471,7 +471,7 @@ describe("TransactionParserService", () => {
           type: "ARRAY",
           itemSize: 1,
           start: 2,
-          length: 1,
+          end: 3,
         },
         {
           type: "REF",
@@ -511,7 +511,7 @@ describe("TransactionParserService", () => {
           type: "ARRAY",
           itemSize: 1,
           start: 2,
-          length: 1,
+          end: 3,
         },
         {
           type: "REF",
@@ -548,7 +548,7 @@ describe("TransactionParserService", () => {
           type: "ARRAY",
           itemSize: 1,
           start: 2,
-          length: 1,
+          end: 3,
         },
         {
           type: "REF",

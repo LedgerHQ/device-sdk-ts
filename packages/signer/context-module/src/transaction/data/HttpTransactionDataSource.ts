@@ -291,8 +291,7 @@ export class HttpTransactionDataSource implements TransactionDataSource {
           typeof data.weight === "number" &&
           (typeof data.start === "undefined" ||
             typeof data.start === "number") &&
-          (typeof data.length === "undefined" ||
-            typeof data.length === "number")) ||
+          (typeof data.end === "undefined" || typeof data.end === "number")) ||
         (data.type === "LEAF" &&
           typeof data.leaf_type === "string" &&
           ["ARRAY_LEAF", "TUPLE_LEAF", "STATIC_LEAF", "DYNAMIC_LEAF"].includes(
