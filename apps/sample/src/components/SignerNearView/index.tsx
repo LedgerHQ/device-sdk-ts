@@ -9,6 +9,9 @@ import {
   type GetWalletIdDAError,
   type GetWalletIdDAIntermediateValue,
   type GetWalletIdDAOutput,
+  type SignDelegateDAError,
+  type SignDelegateDAIntermediateValue,
+  type SignDelegateDAOutput,
   SignerNearBuilder,
   type SignMessageDAError,
   type SignMessageDAIntermediateValue,
@@ -46,8 +49,8 @@ export const SignerNearView: React.FC<{ sessionId: string }> = ({
         title: "Get public key",
         description:
           "Perform all the actions necessary to get an near public key from the device",
-        executeDeviceAction: (args, inspect) => {
-          return signer.getPublicKey(args, inspect);
+        executeDeviceAction: ({ derivationPath, ...args }, inspect) => {
+          return signer.getPublicKey(derivationPath, { ...args, inspect });
         },
         deviceModelId,
         initialValues: {
@@ -67,19 +70,17 @@ export const SignerNearView: React.FC<{ sessionId: string }> = ({
         title: "Get wallet id",
         description:
           "Perform all the actions necessary to get a near wallet id from the device",
-        executeDeviceAction: (args, inspect) => {
-          return signer.getWalletId(args, inspect);
+        executeDeviceAction: ({ derivationPath }, inspect) => {
+          return signer.getWalletId(derivationPath, { inspect });
         },
         deviceModelId,
         initialValues: {
           derivationPath: DEFAULT_DERIVATION_PATH,
-          checkOnDevice: true,
         },
       } satisfies DeviceActionProps<
         GetWalletIdDAOutput,
         {
           derivationPath: string;
-          checkOnDevice: boolean;
         },
         GetWalletIdDAError,
         GetWalletIdDAIntermediateValue
@@ -89,7 +90,7 @@ export const SignerNearView: React.FC<{ sessionId: string }> = ({
         description:
           "Perform all the actions necessary to get a near wallet app version from the device",
         executeDeviceAction: (inspect) => {
-          return signer.getVersion(inspect);
+          return signer.getVersion({ inspect });
         },
         deviceModelId,
         initialValues: undefined,
@@ -107,62 +108,68 @@ export const SignerNearView: React.FC<{ sessionId: string }> = ({
           { signerId, receiverId, derivationPath, ...actions },
           inspect,
         ) => {
-          const nonce = crypto.getRandomValues(new Uint32Array(1));
+          // const nonce = crypto.getRandomValues(new Uint32Array(1));
           const nearActions = Object.entries<boolean>(actions)
             .filter(
               ([action, enabled]) => signTransactionActions[action] && enabled,
             )
             .map(([action]) => signTransactionActions[action]());
-          return signer.signTransaction(
-            {
-              signerId,
-              receiverId,
-              nonce: BigInt(nonce[0]),
-              actions: nearActions,
-              blockHash: crypto.getRandomValues(new Uint8Array(32)),
-              derivationPath,
-            },
+          return signer.signTransaction(derivationPath, {
+            signerId,
+            receiverId,
+            nonce: BigInt(0),
+            actions: nearActions,
+            blockHash: Uint8Array.from(new Array(32).fill(0)),
             inspect,
-          );
+          });
         },
         deviceModelId,
         initialValues: {
-          signerId:
-            "c4f5941e81e071c2fd1dae2e71fd3d859d462484391d9a90bf219211dcbb320f",
-          receiverId:
-            "dc7e34eecec3096a4a661e10932834f801149c49dba9b93322f6d9de18047f9c",
-          addKey: false,
-          createAccount: false,
-          deleteAccount: false,
-          stake: false,
-          transfer: false,
           derivationPath: DEFAULT_DERIVATION_PATH,
+          signerId: "alice.near",
+          receiverId: "bob.near",
+          createAccount: false,
+          stake: false,
+          functionCall: false,
+          transfer: false,
+          addKey: false,
+          deleteAccount: false,
+          signedDelegate: false,
+          deployContract: false,
         },
       } satisfies DeviceActionProps<
         SignTransactionDAOutput,
         {
+          derivationPath: string;
           signerId: string;
           receiverId: string;
-          addKey: boolean;
           createAccount: boolean;
-          deleteAccount: boolean;
           stake: boolean;
+          functionCall: boolean;
           transfer: boolean;
-          derivationPath: string;
+          addKey: boolean;
+          deleteAccount: boolean;
+          signedDelegate: boolean;
+          deployContract: boolean;
         },
         SignTransactionDAError,
         SignTransactionDAIntermediateValue
       >,
       {
-        title: "Sign message",
+        title: "Sign NEP413 message",
         description:
           "Perform all the actions necessary sign a NEP413 message from the device",
-        executeDeviceAction: (args, inspect) => {
+        executeDeviceAction: ({ derivationPath, ...args }, inspect) => {
           const nonce = crypto.getRandomValues(new Uint8Array(32));
-          return signer.signMessage({ ...args, nonce }, inspect);
+          return signer.signMessage(derivationPath, {
+            ...args,
+            nonce,
+            inspect,
+          });
         },
         deviceModelId,
         initialValues: {
+          derivationPath: DEFAULT_DERIVATION_PATH,
           message:
             "1Makes it possible to authenticate users without having to add new ac" +
             "cess keys. This will improve UX, save money and will not increase the on-chain storage " +
@@ -173,7 +180,6 @@ export const SignerNearView: React.FC<{ sessionId: string }> = ({
             "n storage of the users' accounts.",
           recipient: "alice.near",
           callbackUrl: "myapp.com/callback",
-          derivationPath: DEFAULT_DERIVATION_PATH,
         },
       } satisfies DeviceActionProps<
         SignMessageDAOutput,
@@ -186,11 +192,59 @@ export const SignerNearView: React.FC<{ sessionId: string }> = ({
         SignMessageDAError,
         SignMessageDAIntermediateValue
       >,
+      {
+        title: "Sign NEP366 delegate action",
+        description:
+          "Perform all the actions necessary sign a NEP366 delegate action from the device",
+        executeDeviceAction: (
+          { derivationPath, senderId, receiverId, ...actions },
+          inspect,
+        ) => {
+          const nearActions = Object.entries<boolean>(actions)
+            .filter(
+              ([action, enabled]) => signTransactionActions[action] && enabled,
+            )
+            .map(([action]) => signTransactionActions[action]());
+          return signer.signDelegate(derivationPath, {
+            senderId,
+            receiverId,
+            nonce: BigInt(42 * 1e23),
+            actions: nearActions,
+            maxBlockHeight: BigInt(1e23),
+            inspect,
+          });
+        },
+        deviceModelId,
+        initialValues: {
+          derivationPath: DEFAULT_DERIVATION_PATH,
+          senderId: "bob.near",
+          receiverId: "alice.near",
+          stake: false,
+          functionCall: false,
+          transfer: false,
+          deployContract: false,
+          signedDelegate: false,
+        },
+      } satisfies DeviceActionProps<
+        SignDelegateDAOutput,
+        {
+          derivationPath: string;
+          senderId: string;
+          receiverId: string;
+          stake: boolean;
+          functionCall: boolean;
+          transfer: boolean;
+          deployContract: boolean;
+          signedDelegate: boolean;
+        },
+        SignDelegateDAError,
+        SignDelegateDAIntermediateValue
+      >,
     ],
     [deviceModelId, signer],
   );
 
   return (
-    <DeviceActionsList title="Keyring Near" deviceActions={deviceActions} />
+    <DeviceActionsList title="Signer Near" deviceActions={deviceActions} />
   );
 };
