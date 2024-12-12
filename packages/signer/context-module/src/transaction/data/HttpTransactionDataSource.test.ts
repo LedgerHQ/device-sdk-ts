@@ -24,6 +24,7 @@ describe("HttpTransactionDataSource", () => {
   let fieldDatetime: CalldataFieldV1;
   let fieldUnit: CalldataFieldV1;
   let fieldDuration: CalldataFieldV1;
+  let fieldEnum: CalldataFieldV1;
 
   beforeAll(() => {
     jest.clearAllMocks();
@@ -45,8 +46,24 @@ describe("HttpTransactionDataSource", () => {
       },
     };
     enums = [
-      { descriptor: "0001000401000501010606737461626c65" },
-      { descriptor: "00010004010005010206087661726961626c65" },
+      {
+        id: 0,
+        name: "enum1",
+        value: 0,
+        descriptor: {
+          data: "0001000401000501010606737461626c65",
+          signatures: { test: "1234" },
+        },
+      },
+      {
+        id: 0,
+        name: "enum2",
+        value: 1,
+        descriptor: {
+          data: "00010004010005010206087661726961626c65",
+          signatures: { test: "5678" },
+        },
+      },
     ];
     fieldAmount = createFieldWithoutReference("FROM", "UFIXED", "AMOUNT", "06");
     fieldDatetime = createFieldWithoutReference(
@@ -169,6 +186,22 @@ describe("HttpTransactionDataSource", () => {
       },
       descriptor:
         "000100010c546f20726563697069656e7402010803230001000115000100010105020114",
+    };
+    fieldEnum = {
+      param: {
+        id: 0,
+        value: {
+          binary_path: {
+            type: "DATA",
+            elements: [],
+          },
+          type_family: "BYTES",
+          type_size: 20,
+        },
+        type: "ENUM",
+      },
+      descriptor:
+        "000100010c546f20726563697069656e7402010803230001000115000100010105020112",
     };
   });
 
@@ -306,6 +339,7 @@ describe("HttpTransactionDataSource", () => {
       fieldToken,
       fieldTrustedName,
       fieldNft,
+      fieldEnum,
     ]);
     jest.spyOn(axios, "request").mockResolvedValue({ data: [calldataDTO] });
 
@@ -324,12 +358,18 @@ describe("HttpTransactionDataSource", () => {
         type: "transactionInfo",
       },
       {
-        payload: "0001000401000501010606737461626c65",
+        payload: "0001000401000501010606737461626c6581ff21234",
         type: "enum",
+        id: 0,
+        name: "enum1",
+        value: 0,
       },
       {
-        payload: "00010004010005010206087661726961626c65",
+        payload: "00010004010005010206087661726961626c6581ff25678",
         type: "enum",
+        id: 0,
+        name: "enum2",
+        value: 1,
       },
       {
         payload: fieldToken.descriptor,
@@ -380,6 +420,15 @@ describe("HttpTransactionDataSource", () => {
           ],
         },
       },
+      {
+        payload: fieldEnum.descriptor,
+        type: "transactionFieldDescription",
+        reference: {
+          type: "enum",
+          valuePath: [],
+          id: 0,
+        },
+      },
     ]);
   });
 
@@ -404,6 +453,56 @@ describe("HttpTransactionDataSource", () => {
       {
         payload:
           "0001000108000000000000000102147d2768de32b0b80b7a3454c06bdac94a69ddc7a9030469328dec04207d5e9ed0004b8035b164edd9d78c37415ad6b1d123be4943d0abd5a50035cae3050857697468647261770604416176650708416176652044414f081068747470733a2f2f616176652e636f6d0a045fc4ba9c81ff473045022100eb67599abfd9c7360b07599a2a2cb769c6e3f0f74e1e52444d788c8f577a16d20220402e92b0adbf97d890fa2f9654bc30c7bd70dacabe870f160e6842d9eb73d36f",
+        type: "transactionInfo",
+      },
+      {
+        type: "transactionFieldDescription",
+        payload: fieldAmount.descriptor,
+      },
+      {
+        type: "transactionFieldDescription",
+        payload: fieldDatetime.descriptor,
+      },
+      {
+        type: "transactionFieldDescription",
+        payload: fieldUnit.descriptor,
+      },
+      {
+        type: "transactionFieldDescription",
+        payload: fieldDuration.descriptor,
+      },
+    ]);
+  });
+
+  it("Calldata without fields references and transaction info signature length % 2 different from 0", async () => {
+    // GIVEN
+    const newTransactionInfo: CalldataTransactionInfoV1 = {
+      descriptor: {
+        data: transactionInfo.descriptor.data,
+        signatures: {
+          test: transactionInfo.descriptor.signatures.test + "0",
+        },
+      },
+    };
+    const calldataDTO = createCalldata(
+      newTransactionInfo,
+      [],
+      [fieldAmount, fieldDatetime, fieldUnit, fieldDuration],
+    );
+    jest.spyOn(axios, "request").mockResolvedValue({ data: [calldataDTO] });
+
+    // WHEN
+    const result = await datasource.getTransactionDescriptors({
+      chainId: 1,
+      address: "0x7d2768de32b0b80b7a3454c06bdac94a69ddc7a9",
+      selector: "0x69328dec",
+    });
+
+    // THEN
+    expect(result.extract()).toEqual([
+      {
+        payload:
+          "0001000108000000000000000102147d2768de32b0b80b7a3454c06bdac94a69ddc7a9030469328dec04207d5e9ed0004b8035b164edd9d78c37415ad6b1d123be4943d0abd5a50035cae3050857697468647261770604416176650708416176652044414f081068747470733a2f2f616176652e636f6d0a045fc4ba9c81ff4803045022100eb67599abfd9c7360b07599a2a2cb769c6e3f0f74e1e52444d788c8f577a16d20220402e92b0adbf97d890fa2f9654bc30c7bd70dacabe870f160e6842d9eb73d36f0",
         type: "transactionInfo",
       },
       {
@@ -513,6 +612,70 @@ describe("HttpTransactionDataSource", () => {
       Left(
         new Error(
           "[ContextModule] HttpTransactionDataSource: Failed to decode transaction descriptor for contract 0x7d2768de32b0b80b7a3454c06bdac94a69ddc7a9 and selector 0x69328dec",
+        ),
+      ),
+    );
+  });
+
+  it("should return an error when enum does not contain a signature", async () => {
+    // GIVEN
+    const calldataDTO = createCalldata(
+      transactionInfo,
+      [{ id: 0, name: "enum1", value: 0 }],
+      [fieldToken],
+    );
+    jest.spyOn(axios, "request").mockResolvedValue({ data: [calldataDTO] });
+
+    // WHEN
+    const result = await datasource.getTransactionDescriptors({
+      chainId: 1,
+      address: "0x7d2768de32b0b80b7a3454c06bdac94a69ddc7a9",
+      selector: "0x69328dec",
+    });
+
+    // THEN
+    expect(result).toEqual(
+      Left(
+        new Error(
+          "[ContextModule] HttpTransactionDataSource: Failed to decode enum descriptor for contract 0x7d2768de32b0b80b7a3454c06bdac94a69ddc7a9 and selector 0x69328dec",
+        ),
+      ),
+    );
+  });
+
+  it("should return an error when enum contain the wrong signature", async () => {
+    // GIVEN
+    const calldataDTO = createCalldata(
+      transactionInfo,
+      [
+        {
+          id: 0,
+          name: "enum1",
+          value: 0,
+          descriptor: {
+            data: "1234",
+            signatures: {
+              prod: "1234", // prod instead of test
+            },
+          },
+        },
+      ],
+      [fieldToken],
+    );
+    jest.spyOn(axios, "request").mockResolvedValue({ data: [calldataDTO] });
+
+    // WHEN
+    const result = await datasource.getTransactionDescriptors({
+      chainId: 1,
+      address: "0x7d2768de32b0b80b7a3454c06bdac94a69ddc7a9",
+      selector: "0x69328dec",
+    });
+
+    // THEN
+    expect(result).toEqual(
+      Left(
+        new Error(
+          "[ContextModule] HttpTransactionDataSource: Failed to decode enum descriptor for contract 0x7d2768de32b0b80b7a3454c06bdac94a69ddc7a9 and selector 0x69328dec",
         ),
       ),
     );

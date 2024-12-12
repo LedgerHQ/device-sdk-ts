@@ -36,7 +36,10 @@ export interface CalldataTransactionInfoV1 {
 }
 
 export interface CalldataEnumV1 {
-  descriptor: string;
+  descriptor: CalldataTransactionDescriptor;
+  id: number;
+  name: string;
+  value: number;
 }
 
 export interface CalldataFieldV1 {
@@ -95,6 +98,7 @@ export interface CalldataDescriptorParamUnitV1 {
 export interface CalldataDescriptorParamEnumV1 {
   type: "ENUM";
   value: CalldataDescriptorValueV1;
+  id: number;
 }
 
 export interface CalldataDescriptorParamTrustedNameV1 {

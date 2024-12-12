@@ -1,5 +1,6 @@
 import {
   type ClearSignContextSuccess,
+  type ClearSignContextSuccessType,
   ClearSignContextType,
   type ContextModule,
 } from "@ledgerhq/context-module";
@@ -51,33 +52,45 @@ export class BuildTransactionContextTask {
       ...subset,
     });
 
-    // TODO: for now we ignore the error contexts
-    // as we consider that they are warnings and not blocking
-    const clearSignContextsSuccess: ClearSignContextSuccess[] =
+    // NOTE: we need to filter out the ENUM and ERROR types
+    // ENUM are handled differently
+    // ERROR are not handled at all for now
+    const clearSignContextsSuccess: ClearSignContextSuccess<
+      Exclude<ClearSignContextSuccessType, ClearSignContextType.ENUM>
+    >[] = clearSignContexts.filter(
+      (context) =>
+        context.type !== ClearSignContextType.ERROR &&
+        context.type !== ClearSignContextType.ENUM,
+    );
+
+    // Retrieve all ENUM contexts
+    const transactionEnums: ClearSignContextSuccess<ClearSignContextType.ENUM>[] =
       clearSignContexts.filter(
-        (context) => context.type !== ClearSignContextType.ERROR,
+        (context) => context.type === ClearSignContextType.ENUM,
       );
 
     let filteredContexts: ClearSignContextSuccess[] | GenericContext = [];
     const transactionInfo = clearSignContextsSuccess.find(
       (ctx) => ctx.type === ClearSignContextType.TRANSACTION_INFO,
     );
+    // If the device does not support the generic parser,
+    // we need to filter out the transaction info and transaction field description
+    // as they are not supported by the device
     if (!this.supportsGenericParser() || transactionInfo === undefined) {
       filteredContexts = clearSignContextsSuccess.filter(
         (ctx) =>
           ctx.type !== ClearSignContextType.TRANSACTION_INFO &&
-          ctx.type !== ClearSignContextType.TRANSACTION_FIELD_DESCRIPTION &&
-          ctx.type !== ClearSignContextType.ENUM,
+          ctx.type !== ClearSignContextType.TRANSACTION_FIELD_DESCRIPTION,
       );
     } else {
       const transactionFields = clearSignContextsSuccess.filter(
         (ctx) =>
-          ctx.type === ClearSignContextType.TRANSACTION_FIELD_DESCRIPTION ||
-          ctx.type === ClearSignContextType.ENUM,
+          ctx.type === ClearSignContextType.TRANSACTION_FIELD_DESCRIPTION,
       );
       filteredContexts = {
         transactionInfo: transactionInfo.payload,
         transactionFields,
+        transactionEnums,
       };
     }
 
