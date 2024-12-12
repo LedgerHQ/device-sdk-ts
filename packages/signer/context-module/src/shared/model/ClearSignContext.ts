@@ -9,6 +9,7 @@ export enum ClearSignContextType {
   TRANSACTION_INFO = "transactionInfo",
   ENUM = "enum",
   TRANSACTION_FIELD_DESCRIPTION = "transactionFieldDescription",
+  WEB3_CHECK = "web3Check",
   ERROR = "error",
 }
 
@@ -36,6 +37,11 @@ export type ClearSignContextSuccess = {
    * a trusted name.
    */
   reference?: ClearSignContextReference;
+
+  /**
+   * Optional certificate to be used in case of partner provider using PKI.
+   */
+  certificate?: string;
 };
 
 export type ClearSignContextError = {

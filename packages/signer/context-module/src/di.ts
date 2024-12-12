@@ -8,6 +8,7 @@ import { tokenModuleFactory } from "@/token/di/tokenModuleFactory";
 import { transactionModuleFactory } from "@/transaction/di/transactionModuleFactory";
 import { trustedNameModuleFactory } from "@/trusted-name/di/trustedNameModuleFactory";
 import { typedDataModuleFactory } from "@/typed-data/di/typedDataModuleFactory";
+import { web3CheckModuleFactory } from "@/web3-check/di/web3CheckModuleFactory";
 
 type MakeContainerArgs = {
   config: ContextModuleConfig;
@@ -24,6 +25,7 @@ export const makeContainer = ({ config }: MakeContainerArgs) => {
     transactionModuleFactory(),
     trustedNameModuleFactory(),
     typedDataModuleFactory(),
+    web3CheckModuleFactory(),
   );
 
   return container;

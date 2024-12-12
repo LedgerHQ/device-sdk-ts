@@ -46,6 +46,8 @@ export class TrustedNameContextLoader implements ContextLoader {
       challenge: challenge,
     });
 
+    //TODO Add certificate fetch here
+
     return [
       payload.caseOf({
         Left: (error): ClearSignContext => ({
