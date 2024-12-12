@@ -1,14 +1,17 @@
 import {
   type ClearSignContextReference,
   type ClearSignContextSuccess,
+  type ClearSignContextSuccessType,
   ClearSignContextType,
   type ContextModule,
+  type TransactionFieldContext,
 } from "@ledgerhq/context-module";
 import {
   bufferToHexaString,
   type CommandErrorResult,
   type CommandResult,
   CommandResultFactory,
+  type HexaString,
   type InternalApi,
   InvalidStatusWordError,
   isSuccessCommandResult,
@@ -35,11 +38,14 @@ import { type ProvideTransactionGenericContextTaskErrorCodes } from "./ProvideTr
 import { SendPayloadInChunksTask } from "./SendPayloadInChunksTask";
 
 export type ProvideTransactionFieldDescriptionTaskArgs = {
-  field: ClearSignContextSuccess;
+  field: ClearSignContextSuccess<
+    Exclude<ClearSignContextSuccessType, ClearSignContextType.ENUM>
+  >;
   serializedTransaction: Uint8Array;
   chainId: number;
   transactionParser: TransactionParserService;
   contextModule: ContextModule;
+  transactionEnums: ClearSignContextSuccess<ClearSignContextType.ENUM>[];
 };
 
 export type ProvideTransactionFieldDescriptionTaskErrorCodes =
@@ -63,11 +69,22 @@ export class ProvideTransactionFieldDescriptionTask {
   > {
     const { field } = this.args;
     if (field.reference !== undefined) {
-      const provideReferenceResult = await this.provideContextReference(
-        field.reference,
+      // iterate on each reference and provide the context
+      const referenceValues = this.args.transactionParser.extractValue(
+        this.args.serializedTransaction,
+        field.reference.valuePath,
       );
-      if (provideReferenceResult.isJust()) {
-        return provideReferenceResult;
+
+      if (referenceValues.isRight()) {
+        for (const value of referenceValues.extract()) {
+          const provideReferenceResult = await this.provideContextReference(
+            field.reference,
+            value,
+          );
+          if (provideReferenceResult.isJust()) {
+            return provideReferenceResult;
+          }
+        }
       }
     }
 
@@ -79,51 +96,121 @@ export class ProvideTransactionFieldDescriptionTask {
     return Nothing;
   }
 
-  async provideContextReference(
+  /**
+   * This method will provide the context reference to the device.
+   *
+   * @param {ClearSignContextReference} reference The reference to provide.
+   * @param {Uint8Array} value The value of the reference.
+   * @returns A promise that resolves when the context is provided.
+   */
+  private async provideContextReference(
     reference: ClearSignContextReference,
+    value: Uint8Array,
   ): Promise<
     Maybe<CommandErrorResult<ProvideTransactionGenericContextTaskErrorCodes>>
   > {
-    const values = this.args.transactionParser.extractValue(
-      this.args.serializedTransaction,
-      reference.valuePath,
-    );
-    if (values.isLeft()) {
-      // The path was not found in transaction payload. In that case we should raw-sign that field.
-      return Nothing;
+    if (reference.type === ClearSignContextType.ENUM) {
+      return this.provideEnumContextReference(reference, value);
     }
-    for (const value of values.unsafeCoerce()) {
-      const address = bufferToHexaString(
-        value.slice(Math.max(0, value.length - 20)),
-      );
-      let context;
-      if (reference.type === ClearSignContextType.TRUSTED_NAME) {
-        const getChallengeResult = await this.api.sendCommand(
-          new GetChallengeCommand(),
-        );
-        if (!isSuccessCommandResult(getChallengeResult)) {
-          return Just(getChallengeResult);
-        }
-        context = await this.args.contextModule.getContext({
-          type: reference.type,
-          chainId: this.args.chainId,
-          address,
-          challenge: getChallengeResult.data.challenge,
-          types: reference.types,
-          sources: reference.sources,
-        });
-      } else {
-        context = await this.args.contextModule.getContext({
-          type: reference.type,
-          chainId: this.args.chainId,
-          address,
-        });
+
+    const address = bufferToHexaString(
+      value.slice(Math.max(0, value.length - 20)),
+    );
+
+    if (reference.type === ClearSignContextType.TRUSTED_NAME) {
+      return this.provideTustedNameContextReference(reference, address);
+    }
+
+    return this.getAndProvideContext({
+      type: reference.type,
+      chainId: this.args.chainId,
+      address,
+    });
+  }
+
+  /**
+   * This method will provide the enum context reference to the device
+   * if the enum value is found in the transaction enums mapping.
+   *
+   * Note: We do not need to call the context module to get the enum context
+   * as it is already provided with transactionEnums mapping.
+   *
+   * @param {ClearSignContextReference<ClearSignContextType.ENUM>} reference The enum reference to provide.
+   * @param {Uint8Array} value The value of the enum.
+   * @returns A promise that resolves when the context is provided.
+   */
+  private async provideEnumContextReference(
+    reference: ClearSignContextReference<ClearSignContextType.ENUM>,
+    value: Uint8Array,
+  ): Promise<
+    Maybe<CommandErrorResult<ProvideTransactionGenericContextTaskErrorCodes>>
+  > {
+    const enumValue = value[value.length - 1];
+    if (!enumValue) return Nothing;
+
+    const enumDescriptor = this.args.transactionEnums.find(
+      (enumContext) =>
+        enumContext.value === enumValue && enumContext.id === reference.id,
+    );
+    if (enumDescriptor) {
+      const provideEnumResult = await this.provideContext(enumDescriptor);
+      if (!isSuccessCommandResult(provideEnumResult)) {
+        return Just(provideEnumResult);
       }
-      if (context.type !== ClearSignContextType.ERROR) {
-        const provideReferenceResult = await this.provideContext(context);
-        if (!isSuccessCommandResult(provideReferenceResult)) {
-          return Just(provideReferenceResult);
-        }
+    }
+    return Nothing;
+  }
+
+  /**
+   * This method will provide the trusted name context reference to the device.
+   *
+   * Note: We need to call the context module to get the trusted name context
+   * with a challenge to ensure the trusted name is valid.
+   *
+   * @param {ClearSignContextReference<ClearSignContextType.TRUSTED_NAME>} reference The trusted name reference to provide.
+   * @param {HexaString} address The address of the trusted name.
+   * @returns A promise that resolves when the context is provided.
+   */
+  private async provideTustedNameContextReference(
+    reference: ClearSignContextReference<ClearSignContextType.TRUSTED_NAME>,
+    address: HexaString,
+  ): Promise<
+    Maybe<CommandErrorResult<ProvideTransactionGenericContextTaskErrorCodes>>
+  > {
+    const getChallengeResult = await this.api.sendCommand(
+      new GetChallengeCommand(),
+    );
+    if (!isSuccessCommandResult(getChallengeResult)) {
+      return Just(getChallengeResult);
+    }
+
+    return this.getAndProvideContext({
+      type: reference.type,
+      chainId: this.args.chainId,
+      address,
+      challenge: getChallengeResult.data.challenge,
+      types: reference.types,
+      sources: reference.sources,
+    });
+  }
+
+  /**
+   * This method will get the context from the context module
+   * and provide it to the device.
+   *
+   * @param {TransactionFieldContext} field The field to provide.
+   * @returns A promise that resolves when the context is provided.
+   */
+  private async getAndProvideContext(
+    field: TransactionFieldContext,
+  ): Promise<
+    Maybe<CommandErrorResult<ProvideTransactionGenericContextTaskErrorCodes>>
+  > {
+    const context = await this.args.contextModule.getContext(field);
+    if (context.type !== ClearSignContextType.ERROR) {
+      const provideReferenceResult = await this.provideContext(context);
+      if (!isSuccessCommandResult(provideReferenceResult)) {
+        return Just(provideReferenceResult);
       }
     }
     return Nothing;
@@ -137,7 +224,7 @@ export class ProvideTransactionFieldDescriptionTask {
    * @param {ClearSignContextSuccess} context The clear sign context to provide.
    * @returns A promise that resolves when the command return a command response.
    */
-  async provideContext({
+  private async provideContext({
     type,
     payload,
   }: ClearSignContextSuccess): Promise<
