@@ -1,6 +1,7 @@
 {
   "name": "@ledgerhq/device-management-kit",
   "version": "0.5.1",
+  "private": false,
   "license": "Apache-2.0",
   "exports": {
     ".": {
@@ -36,7 +37,6 @@
     "module:create": "pnpm hygen core-module with-prompt"
   },
   "dependencies": {
-    "@ledgerhq/device-mockserver-client": "workspace:*",
     "@sentry/minimal": "^6.19.7",
     "@statelyai/inspect": "^0.4.0",
     "axios": "^1.7.9",

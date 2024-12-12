@@ -1,5 +1,62 @@
 # @ledgerhq/device-signer-kit-ethereum
 
+## 1.1.0
+
+### Minor Changes
+
+- [#485](https://github.com/LedgerHQ/device-sdk-ts/pull/485) [`62acf6c`](https://github.com/LedgerHQ/device-sdk-ts/commit/62acf6c6e524de8ee77c48b07785f7fa06c041d4) Thanks [@paoun-ledger](https://github.com/paoun-ledger)! - Implement parser of binary paths for transactions
+
+- [#518](https://github.com/LedgerHQ/device-sdk-ts/pull/518) [`773e620`](https://github.com/LedgerHQ/device-sdk-ts/commit/773e6204e710ca03d8ac5cc08b773826502c6392) Thanks [@paoun-ledger](https://github.com/paoun-ledger)! - Update SignTransaction device action with generic-parser support
+
+### Patch Changes
+
+- [#423](https://github.com/LedgerHQ/device-sdk-ts/pull/423) [`91a9022`](https://github.com/LedgerHQ/device-sdk-ts/commit/91a9022f3407908411c5784453bb35fa9ef1527e) Thanks [@aussedatlo](https://github.com/aussedatlo)! - Add ProvideTransactionGenericContext Task
+
+- [#506](https://github.com/LedgerHQ/device-sdk-ts/pull/506) [`5085f6d`](https://github.com/LedgerHQ/device-sdk-ts/commit/5085f6dd397b5800849e34f593e71fd9c61c0e40) Thanks [@valpinkman](https://github.com/valpinkman)! - Update license to Apache-2.0
+
+- [#506](https://github.com/LedgerHQ/device-sdk-ts/pull/506) [`5085f6d`](https://github.com/LedgerHQ/device-sdk-ts/commit/5085f6dd397b5800849e34f593e71fd9c61c0e40) Thanks [@valpinkman](https://github.com/valpinkman)! - Rename keyring to signer
+
+- [#506](https://github.com/LedgerHQ/device-sdk-ts/pull/506) [`5085f6d`](https://github.com/LedgerHQ/device-sdk-ts/commit/5085f6dd397b5800849e34f593e71fd9c61c0e40) Thanks [@valpinkman](https://github.com/valpinkman)! - Use esbuild to build libraries
+
+- [#531](https://github.com/LedgerHQ/device-sdk-ts/pull/531) [`ebd01e8`](https://github.com/LedgerHQ/device-sdk-ts/commit/ebd01e87731c8483d8ab934d8b591158644d25cf) Thanks [@aussedatlo](https://github.com/aussedatlo)! - Return an error if StartTransaction cmd does not contain a signature
+
+- [#418](https://github.com/LedgerHQ/device-sdk-ts/pull/418) [`269f102`](https://github.com/LedgerHQ/device-sdk-ts/commit/269f102b43aca408ccecae2a135974e6dc6835df) Thanks [@valpinkman](https://github.com/valpinkman)! - Adapt SignTransactionCommand and add StoreTransaction to prepare for the new version of Ethereum app (1.13)
+
+- [#531](https://github.com/LedgerHQ/device-sdk-ts/pull/531) [`ebd01e8`](https://github.com/LedgerHQ/device-sdk-ts/commit/ebd01e87731c8483d8ab934d8b591158644d25cf) Thanks [@aussedatlo](https://github.com/aussedatlo)! - Update error message for invalid chaincode
+
+- [#415](https://github.com/LedgerHQ/device-sdk-ts/pull/415) [`fbac50a`](https://github.com/LedgerHQ/device-sdk-ts/commit/fbac50a8448e89fa4196cbec78f967616e371874) Thanks [@paoun-ledger](https://github.com/paoun-ledger)! - Add support for EIP712 filters with missing token
+
+- [#450](https://github.com/LedgerHQ/device-sdk-ts/pull/450) [`a747e4b`](https://github.com/LedgerHQ/device-sdk-ts/commit/a747e4b282f9d2a8f3f96a2fb22b5aefdf58b8ac) Thanks [@paoun-ledger](https://github.com/paoun-ledger)! - Fix clear signing of EIP712 messages with an empty array
+
+- [#476](https://github.com/LedgerHQ/device-sdk-ts/pull/476) [`0dcccfc`](https://github.com/LedgerHQ/device-sdk-ts/commit/0dcccfcb7bdace8d34e5dcdd0d6be82c87e6b3db) Thanks [@paoun-ledger](https://github.com/paoun-ledger)! - Allow signing a message as a byte array
+
+- [#506](https://github.com/LedgerHQ/device-sdk-ts/pull/506) [`5085f6d`](https://github.com/LedgerHQ/device-sdk-ts/commit/5085f6dd397b5800849e34f593e71fd9c61c0e40) Thanks [@valpinkman](https://github.com/valpinkman)! - Rename SDK to DMK
+
+- [#411](https://github.com/LedgerHQ/device-sdk-ts/pull/411) [`d07a4f5`](https://github.com/LedgerHQ/device-sdk-ts/commit/d07a4f573bc30982750c861e5793a07d652db599) Thanks [@paoun-ledger](https://github.com/paoun-ledger)! - Add support for V1 clear signing contexts
+
+- [#457](https://github.com/LedgerHQ/device-sdk-ts/pull/457) [`baa0206`](https://github.com/LedgerHQ/device-sdk-ts/commit/baa0206e525cc812436fb934cb79f49cc38eac11) Thanks [@paoun-ledger](https://github.com/paoun-ledger)! - Reconstruct V full value for legacy transactions
+
+- [#539](https://github.com/LedgerHQ/device-sdk-ts/pull/539) [`b13a95a`](https://github.com/LedgerHQ/device-sdk-ts/commit/b13a95a95ceca9a251d2c27360b61a5d2dd559d4) Thanks [@aussedatlo](https://github.com/aussedatlo)! - Improve provide generic context structure and tests
+
+- [#412](https://github.com/LedgerHQ/device-sdk-ts/pull/412) [`715ea1c`](https://github.com/LedgerHQ/device-sdk-ts/commit/715ea1c8db3641ed901e83305e11f7af463875f9) Thanks [@aussedatlo](https://github.com/aussedatlo)! - Add ProvideTransactionInformation command
+
+- [#508](https://github.com/LedgerHQ/device-sdk-ts/pull/508) [`1fda407`](https://github.com/LedgerHQ/device-sdk-ts/commit/1fda407103792d265fe836deda99568335fdabd2) Thanks [@jdabbech-ledger](https://github.com/jdabbech-ledger)! - Improve transaction v6 typeguard
+
+- [#413](https://github.com/LedgerHQ/device-sdk-ts/pull/413) [`766d3fa`](https://github.com/LedgerHQ/device-sdk-ts/commit/766d3fa5645e86889d82e4dfff2ba838b30da683) Thanks [@aussedatlo](https://github.com/aussedatlo)! - Add ProvideTransactionFieldDescription command
+
+- [#470](https://github.com/LedgerHQ/device-sdk-ts/pull/470) [`71c3eca`](https://github.com/LedgerHQ/device-sdk-ts/commit/71c3eca21e3243989cd981d67df2393a683ee147) Thanks [@paoun-ledger](https://github.com/paoun-ledger)! - Prevent chunking legacy transactions just before the EIP-155 marker
+
+- [#506](https://github.com/LedgerHQ/device-sdk-ts/pull/506) [`5085f6d`](https://github.com/LedgerHQ/device-sdk-ts/commit/5085f6dd397b5800849e34f593e71fd9c61c0e40) Thanks [@valpinkman](https://github.com/valpinkman)! - Use type keyword when importing type
+
+- [#434](https://github.com/LedgerHQ/device-sdk-ts/pull/434) [`afbce1b`](https://github.com/LedgerHQ/device-sdk-ts/commit/afbce1b9e4b5d3347e7452bfe25828753e1bad43) Thanks [@aussedatlo](https://github.com/aussedatlo)! - Remove legacy parameter for internal sign transacion command
+
+- [#384](https://github.com/LedgerHQ/device-sdk-ts/pull/384) [`2082f88`](https://github.com/LedgerHQ/device-sdk-ts/commit/2082f884b431cab9ca3e698d83ee08f1de6c5aa7) Thanks [@paoun-ledger](https://github.com/paoun-ledger)! - Early return when EIP712 Domain fails to be sent
+
+- [#414](https://github.com/LedgerHQ/device-sdk-ts/pull/414) [`120b56a`](https://github.com/LedgerHQ/device-sdk-ts/commit/120b56a6f0a464eb92f3aec99e91ad0ecf26f248) Thanks [@aussedatlo](https://github.com/aussedatlo)! - Add ProvideEnum command
+
+- Updated dependencies [[`5085f6d`](https://github.com/LedgerHQ/device-sdk-ts/commit/5085f6dd397b5800849e34f593e71fd9c61c0e40), [`5085f6d`](https://github.com/LedgerHQ/device-sdk-ts/commit/5085f6dd397b5800849e34f593e71fd9c61c0e40), [`07c575d`](https://github.com/LedgerHQ/device-sdk-ts/commit/07c575d44361c53d4d6c0e73a1eb61a43d2ed8d4), [`5085f6d`](https://github.com/LedgerHQ/device-sdk-ts/commit/5085f6dd397b5800849e34f593e71fd9c61c0e40), [`fa9c3d6`](https://github.com/LedgerHQ/device-sdk-ts/commit/fa9c3d61735f7c2aaf2d00a878eeba7ece16078a), [`3b69436`](https://github.com/LedgerHQ/device-sdk-ts/commit/3b6943633e8b076a998db39ed92b753a6e5d3309), [`637fe6c`](https://github.com/LedgerHQ/device-sdk-ts/commit/637fe6c3e8cee434925f4347a602648abd6aee69), [`5085f6d`](https://github.com/LedgerHQ/device-sdk-ts/commit/5085f6dd397b5800849e34f593e71fd9c61c0e40)]:
+  - @ledgerhq/context-module@1.1.0
+
 ## 1.0.0
 
 ### Minor Changes
