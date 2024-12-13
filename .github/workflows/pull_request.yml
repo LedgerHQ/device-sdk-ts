@@ -57,4 +57,4 @@ jobs:
         if: ${{ steps.unit-tests.conclusion == 'success' && github.actor != 'dependabot[bot]' && !github.event.pull_request.head.repo.fork }}
         env:
           SONAR_TOKEN: ${{ secrets.PUBLIC_GREEN_SONAR_TOKEN }}
-          SONAR_HOST_URL: ${{ secrets.PUBLIC_SONAR_HOST_URL }}
+          SONAR_HOST_URL: ${{ vars.GREEN_SONAR_HOST_URL }}
