@@ -47,7 +47,7 @@ export class HttpTransactionDataSource implements TransactionDataSource {
   }: GetTransactionDescriptorsParams): Promise<
     Either<Error, ClearSignContextSuccess[]>
   > {
-    let calldata: CalldataDto | undefined;
+    let dto: CalldataDto[] | undefined;
     try {
       const response = await axios.request<CalldataDto[]>({
         method: "GET",
@@ -62,7 +62,7 @@ export class HttpTransactionDataSource implements TransactionDataSource {
           "X-Ledger-Client-Version": `context-module/${PACKAGE.version}`,
         },
       });
-      calldata = response.data?.[0];
+      dto = response.data;
     } catch (error) {
       return Left(
         new Error(
@@ -71,73 +71,78 @@ export class HttpTransactionDataSource implements TransactionDataSource {
       );
     }
 
-    if (!calldata) {
+    if (!Array.isArray(dto)) {
       return Left(
         new Error(
-          `[ContextModule] HttpTransactionDataSource: No generic descriptor for contract ${address}`,
+          `[ContextModule] HttpTransactionDataSource: Response is not an array`,
         ),
       );
     }
 
-    // Normalize the address and selector
-    address = address.toLowerCase();
-    selector = `0x${selector.slice(2).toLowerCase()}`;
-
-    const calldataDescriptor =
-      calldata.descriptors_calldata?.[address]?.[selector];
-    if (!calldataDescriptor) {
+    if (dto.length === 0) {
       return Left(
         new Error(
-          `[ContextModule] HttpTransactionDataSource: Invalid response for contract ${address} and selector ${selector}`,
+          `[ContextModule] HttpTransactionDataSource: No data for contract ${address} and selector ${selector}`,
         ),
       );
     }
 
-    if (
-      !this.isCalldataDescriptorV1(calldataDescriptor, this.config.cal.mode)
-    ) {
-      return Left(
-        new Error(
-          `[ContextModule] HttpTransactionDataSource: Failed to decode transaction descriptor for contract ${address} and selector ${selector}`,
-        ),
-      );
-    }
+    for (const calldata of dto) {
+      // Normalize the address and selector
+      address = address.toLowerCase();
+      selector = `0x${selector.slice(2).toLowerCase()}`;
+      const calldataDescriptor =
+        calldata.descriptors_calldata?.[address]?.[selector];
 
-    const infoData = calldataDescriptor.transaction_info.descriptor.data;
-    const infoSignature =
-      calldataDescriptor.transaction_info.descriptor.signatures[
-        this.config.cal.mode
-      ];
-    const info: ClearSignContextSuccess = {
-      type: ClearSignContextType.TRANSACTION_INFO,
-      payload: this.formatTransactionInfo(infoData, infoSignature),
-    };
-    const enums: ClearSignContextSuccess[] = [];
-    for (const [id, values] of Object.entries(calldataDescriptor.enums)) {
-      for (const [
-        value,
-        { data, signatures },
-      ] of Object.entries<CalldataTransactionDescriptor>(values)) {
-        enums.push({
-          type: ClearSignContextType.ENUM,
-          id: Number(id),
-          value: Number(value),
-          payload: this.formatTransactionInfo(
-            data,
-            signatures[this.config.cal.mode]!, // the enum is validated by isCalldataDescriptorV1
-          ),
-        });
+      if (
+        !calldataDescriptor ||
+        !this.isCalldataDescriptorV1(calldataDescriptor, this.config.cal.mode)
+      ) {
+        continue;
       }
+
+      const infoData = calldataDescriptor.transaction_info.descriptor.data;
+      const infoSignature =
+        calldataDescriptor.transaction_info.descriptor.signatures[
+          this.config.cal.mode
+        ];
+      const info: ClearSignContextSuccess = {
+        type: ClearSignContextType.TRANSACTION_INFO,
+        payload: this.formatTransactionInfo(infoData, infoSignature),
+      };
+      const enums: ClearSignContextSuccess[] = [];
+      for (const [id, values] of Object.entries(calldataDescriptor.enums)) {
+        for (const [
+          value,
+          { data, signatures },
+        ] of Object.entries<CalldataTransactionDescriptor>(values)) {
+          enums.push({
+            type: ClearSignContextType.ENUM,
+            id: Number(id),
+            value: Number(value),
+            payload: this.formatTransactionInfo(
+              data,
+              signatures[this.config.cal.mode]!, // the enum is validated by isCalldataDescriptorV1
+            ),
+          });
+        }
+      }
+
+      const fields: ClearSignContextSuccess[] = calldataDescriptor.fields.map(
+        (field) => ({
+          type: ClearSignContextType.TRANSACTION_FIELD_DESCRIPTION,
+          payload: field.descriptor,
+          reference: this.getReference(field.param),
+        }),
+      );
+      return Right([info, ...enums, ...fields]);
     }
 
-    const fields: ClearSignContextSuccess[] = calldataDescriptor.fields.map(
-      (field) => ({
-        type: ClearSignContextType.TRANSACTION_FIELD_DESCRIPTION,
-        payload: field.descriptor,
-        reference: this.getReference(field.param),
-      }),
+    return Left(
+      new Error(
+        `[ContextModule] HttpTransactionDataSource: Invalid response for contract ${address} and selector ${selector}`,
+      ),
     );
-    return Right([info, ...enums, ...fields]);
   }
 
   private formatTransactionInfo(

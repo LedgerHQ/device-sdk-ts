@@ -302,7 +302,28 @@ describe("HttpTransactionDataSource", () => {
     expect(result).toEqual(
       Left(
         new Error(
-          "[ContextModule] HttpTransactionDataSource: No generic descriptor for contract 0x0abc",
+          "[ContextModule] HttpTransactionDataSource: Response is not an array",
+        ),
+      ),
+    );
+  });
+
+  it("should return an error when an empty array is returned", async () => {
+    // GIVEN
+    jest.spyOn(axios, "request").mockResolvedValue({ data: [] });
+
+    // WHEN
+    const result = await datasource.getTransactionDescriptors({
+      chainId: 1,
+      address: "0x0abc",
+      selector: "0x01ff",
+    });
+
+    // THEN
+    expect(result).toEqual(
+      Left(
+        new Error(
+          "[ContextModule] HttpTransactionDataSource: No data for contract 0x0abc and selector 0x01ff",
         ),
       ),
     );
@@ -471,6 +492,50 @@ describe("HttpTransactionDataSource", () => {
     ]);
   });
 
+  it("Calldata on third array element", async () => {
+    // GIVEN
+    const calldataDTO = createCalldata(
+      transactionInfo,
+      [],
+      [fieldAmount, fieldDatetime, fieldUnit, fieldDuration],
+    );
+    jest
+      .spyOn(axios, "request")
+      .mockResolvedValue({ data: [{}, {}, calldataDTO] });
+
+    // WHEN
+    const result = await datasource.getTransactionDescriptors({
+      chainId: 1,
+      address: "0x7d2768de32b0b80b7a3454c06bdac94a69ddc7a9",
+      selector: "0x69328dec",
+    });
+
+    // THEN
+    expect(result.extract()).toEqual([
+      {
+        payload:
+          "0001000108000000000000000102147d2768de32b0b80b7a3454c06bdac94a69ddc7a9030469328dec04207d5e9ed0004b8035b164edd9d78c37415ad6b1d123be4943d0abd5a50035cae3050857697468647261770604416176650708416176652044414f081068747470733a2f2f616176652e636f6d0a045fc4ba9c81ff473045022100eb67599abfd9c7360b07599a2a2cb769c6e3f0f74e1e52444d788c8f577a16d20220402e92b0adbf97d890fa2f9654bc30c7bd70dacabe870f160e6842d9eb73d36f",
+        type: "transactionInfo",
+      },
+      {
+        type: "transactionFieldDescription",
+        payload: fieldAmount.descriptor,
+      },
+      {
+        type: "transactionFieldDescription",
+        payload: fieldDatetime.descriptor,
+      },
+      {
+        type: "transactionFieldDescription",
+        payload: fieldUnit.descriptor,
+      },
+      {
+        type: "transactionFieldDescription",
+        payload: fieldDuration.descriptor,
+      },
+    ]);
+  });
+
   it("Calldata without fields references and transaction info signature length % 2 different from 0", async () => {
     // GIVEN
     const newTransactionInfo: CalldataTransactionInfoV1 = {
@@ -549,7 +614,7 @@ describe("HttpTransactionDataSource", () => {
     expect(result).toEqual(
       Left(
         new Error(
-          "[ContextModule] HttpTransactionDataSource: Failed to decode transaction descriptor for contract 0x7d2768de32b0b80b7a3454c06bdac94a69ddc7a9 and selector 0x69328dec",
+          "[ContextModule] HttpTransactionDataSource: Invalid response for contract 0x7d2768de32b0b80b7a3454c06bdac94a69ddc7a9 and selector 0x69328dec",
         ),
       ),
     );
@@ -582,7 +647,7 @@ describe("HttpTransactionDataSource", () => {
     expect(result).toEqual(
       Left(
         new Error(
-          "[ContextModule] HttpTransactionDataSource: Failed to decode transaction descriptor for contract 0x7d2768de32b0b80b7a3454c06bdac94a69ddc7a9 and selector 0x69328dec",
+          "[ContextModule] HttpTransactionDataSource: Invalid response for contract 0x7d2768de32b0b80b7a3454c06bdac94a69ddc7a9 and selector 0x69328dec",
         ),
       ),
     );
@@ -608,7 +673,7 @@ describe("HttpTransactionDataSource", () => {
     expect(result).toEqual(
       Left(
         new Error(
-          "[ContextModule] HttpTransactionDataSource: Failed to decode transaction descriptor for contract 0x7d2768de32b0b80b7a3454c06bdac94a69ddc7a9 and selector 0x69328dec",
+          "[ContextModule] HttpTransactionDataSource: Invalid response for contract 0x7d2768de32b0b80b7a3454c06bdac94a69ddc7a9 and selector 0x69328dec",
         ),
       ),
     );
@@ -634,7 +699,7 @@ describe("HttpTransactionDataSource", () => {
     expect(result).toEqual(
       Left(
         new Error(
-          "[ContextModule] HttpTransactionDataSource: Failed to decode transaction descriptor for contract 0x7d2768de32b0b80b7a3454c06bdac94a69ddc7a9 and selector 0x69328dec",
+          "[ContextModule] HttpTransactionDataSource: Invalid response for contract 0x7d2768de32b0b80b7a3454c06bdac94a69ddc7a9 and selector 0x69328dec",
         ),
       ),
     );
@@ -669,7 +734,7 @@ describe("HttpTransactionDataSource", () => {
     expect(result).toEqual(
       Left(
         new Error(
-          "[ContextModule] HttpTransactionDataSource: Failed to decode transaction descriptor for contract 0x7d2768de32b0b80b7a3454c06bdac94a69ddc7a9 and selector 0x69328dec",
+          "[ContextModule] HttpTransactionDataSource: Invalid response for contract 0x7d2768de32b0b80b7a3454c06bdac94a69ddc7a9 and selector 0x69328dec",
         ),
       ),
     );
@@ -695,7 +760,7 @@ describe("HttpTransactionDataSource", () => {
     expect(result).toEqual(
       Left(
         new Error(
-          "[ContextModule] HttpTransactionDataSource: Failed to decode transaction descriptor for contract 0x7d2768de32b0b80b7a3454c06bdac94a69ddc7a9 and selector 0x69328dec",
+          "[ContextModule] HttpTransactionDataSource: Invalid response for contract 0x7d2768de32b0b80b7a3454c06bdac94a69ddc7a9 and selector 0x69328dec",
         ),
       ),
     );
@@ -728,7 +793,7 @@ describe("HttpTransactionDataSource", () => {
     expect(result).toEqual(
       Left(
         new Error(
-          "[ContextModule] HttpTransactionDataSource: Failed to decode transaction descriptor for contract 0x7d2768de32b0b80b7a3454c06bdac94a69ddc7a9 and selector 0x69328dec",
+          "[ContextModule] HttpTransactionDataSource: Invalid response for contract 0x7d2768de32b0b80b7a3454c06bdac94a69ddc7a9 and selector 0x69328dec",
         ),
       ),
     );
@@ -761,7 +826,7 @@ describe("HttpTransactionDataSource", () => {
     expect(result).toEqual(
       Left(
         new Error(
-          "[ContextModule] HttpTransactionDataSource: Failed to decode transaction descriptor for contract 0x7d2768de32b0b80b7a3454c06bdac94a69ddc7a9 and selector 0x69328dec",
+          "[ContextModule] HttpTransactionDataSource: Invalid response for contract 0x7d2768de32b0b80b7a3454c06bdac94a69ddc7a9 and selector 0x69328dec",
         ),
       ),
     );
@@ -800,7 +865,7 @@ describe("HttpTransactionDataSource", () => {
     expect(result).toEqual(
       Left(
         new Error(
-          "[ContextModule] HttpTransactionDataSource: Failed to decode transaction descriptor for contract 0x7d2768de32b0b80b7a3454c06bdac94a69ddc7a9 and selector 0x69328dec",
+          "[ContextModule] HttpTransactionDataSource: Invalid response for contract 0x7d2768de32b0b80b7a3454c06bdac94a69ddc7a9 and selector 0x69328dec",
         ),
       ),
     );
@@ -833,7 +898,7 @@ describe("HttpTransactionDataSource", () => {
     expect(result).toEqual(
       Left(
         new Error(
-          "[ContextModule] HttpTransactionDataSource: Failed to decode transaction descriptor for contract 0x7d2768de32b0b80b7a3454c06bdac94a69ddc7a9 and selector 0x69328dec",
+          "[ContextModule] HttpTransactionDataSource: Invalid response for contract 0x7d2768de32b0b80b7a3454c06bdac94a69ddc7a9 and selector 0x69328dec",
         ),
       ),
     );
