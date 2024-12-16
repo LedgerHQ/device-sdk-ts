@@ -1,5 +1,7 @@
 import {
   type ClearSignContextSuccess,
+  type ClearSignContextSuccessType,
+  type ClearSignContextType,
   type ContextModule,
 } from "@ledgerhq/context-module";
 import {
@@ -24,7 +26,11 @@ describe("ProvideTransactionGenericContextTask", () => {
   const derivationPath = "44/60'/0'/0'/0/0";
   const serializedTransaction = new Uint8Array([0x12, 0x34]);
   const transactionInfo = "0x5678";
-  const transactionFields: ClearSignContextSuccess[] = [];
+  const transactionFields: ClearSignContextSuccess<
+    Exclude<ClearSignContextSuccessType, ClearSignContextType.ENUM>
+  >[] = [];
+  const transactionEnums: ClearSignContextSuccess<ClearSignContextType.ENUM>[] =
+    [];
   const chainId = 1;
   const transactionParser = {} as TransactionParserService;
   const contextModule = {} as ContextModule;
@@ -35,6 +41,7 @@ describe("ProvideTransactionGenericContextTask", () => {
     context: {
       transactionInfo,
       transactionFields,
+      transactionEnums,
     },
     chainId,
     transactionParser,
@@ -134,7 +141,10 @@ describe("ProvideTransactionGenericContextTask", () => {
             ...defaultArgs,
             context: {
               transactionInfo,
-              transactionFields: [{} as ClearSignContextSuccess],
+              transactionFields: [
+                {} as ClearSignContextSuccess<ClearSignContextType.TRANSACTION_INFO>,
+              ],
+              transactionEnums,
             },
           },
         ).run();
@@ -154,10 +164,11 @@ describe("ProvideTransactionGenericContextTask", () => {
 
     it("should call ProvideTransactionFieldDescriptionTask for each field", async () => {
       // GIVEN
-      const fields: ClearSignContextSuccess[] = [
-        "field-1" as unknown as ClearSignContextSuccess,
-        "field-2" as unknown as ClearSignContextSuccess,
-      ];
+      const fields: ClearSignContextSuccess<ClearSignContextType.TRANSACTION_FIELD_DESCRIPTION>[] =
+        [
+          "field-1" as unknown as ClearSignContextSuccess<ClearSignContextType.TRANSACTION_FIELD_DESCRIPTION>,
+          "field-2" as unknown as ClearSignContextSuccess<ClearSignContextType.TRANSACTION_FIELD_DESCRIPTION>,
+        ];
       jest.spyOn(SendCommandInChunksTask.prototype, "run").mockResolvedValue(
         CommandResultFactory({
           data: "0x1234",
@@ -178,6 +189,7 @@ describe("ProvideTransactionGenericContextTask", () => {
         context: {
           transactionInfo,
           transactionFields: fields,
+          transactionEnums,
         },
       }).run();
 

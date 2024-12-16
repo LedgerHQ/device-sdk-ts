@@ -3,9 +3,9 @@ import { inject, injectable } from "inversify";
 import { Either, Left, Right } from "purify-ts";
 
 import { configTypes } from "@/config/di/configTypes";
-import type {
-  ContextModuleCalMode,
-  ContextModuleConfig,
+import {
+  type ContextModuleCalMode,
+  type ContextModuleConfig,
 } from "@/config/model/ContextModuleConfig";
 import {
   ClearSignContextReference,
@@ -26,6 +26,8 @@ import {
   CalldataDto,
   CalldataEnumV1,
   CalldataFieldV1,
+  CalldataSignatures,
+  CalldataTransactionDescriptor,
   CalldataTransactionInfoV1,
 } from "./CalldataDto";
 import {
@@ -110,12 +112,24 @@ export class HttpTransactionDataSource implements TransactionDataSource {
       type: ClearSignContextType.TRANSACTION_INFO,
       payload: this.formatTransactionInfo(infoData, infoSignature),
     };
-    const enums: ClearSignContextSuccess[] = calldataDescriptor.enums.map(
-      (e) => ({
-        type: ClearSignContextType.ENUM,
-        payload: e.descriptor,
-      }),
-    );
+    const enums: ClearSignContextSuccess[] = [];
+    for (const [id, values] of Object.entries(calldataDescriptor.enums)) {
+      for (const [
+        value,
+        { data, signatures },
+      ] of Object.entries<CalldataTransactionDescriptor>(values)) {
+        enums.push({
+          type: ClearSignContextType.ENUM,
+          id: Number(id),
+          value: Number(value),
+          payload: this.formatTransactionInfo(
+            data,
+            signatures[this.config.cal.mode]!, // the enum is validated by isCalldataDescriptorV1
+          ),
+        });
+      }
+    }
+
     const fields: ClearSignContextSuccess[] = calldataDescriptor.fields.map(
       (field) => ({
         type: ClearSignContextType.TRANSACTION_FIELD_DESCRIPTION,
@@ -160,6 +174,12 @@ export class HttpTransactionDataSource implements TransactionDataSource {
         types: param.types,
         sources: param.sources,
       };
+    } else if (param.type === "ENUM") {
+      return {
+        type: ClearSignContextType.ENUM,
+        valuePath: this.toGenericPath(param.value.binary_path),
+        id: param.id,
+      };
     }
     return undefined;
   }
@@ -203,9 +223,8 @@ export class HttpTransactionDataSource implements TransactionDataSource {
       data.type === "calldata" &&
       data.version === "v1" &&
       this.isTransactionInfoV1(data.transaction_info, mode) &&
-      Array.isArray(data.enums) &&
+      this.isEnumV1(data.enums, mode) &&
       Array.isArray(data.fields) &&
-      data.enums.every((e) => this.isEnumV1(e)) &&
       data.fields.every((f) => this.isFieldV1(f))
     );
   }
@@ -227,8 +246,33 @@ export class HttpTransactionDataSource implements TransactionDataSource {
     );
   }
 
-  private isEnumV1(data: CalldataEnumV1): boolean {
-    return typeof data === "object" && typeof data.descriptor === "string";
+  private isEnumV1(
+    calldata: CalldataEnumV1,
+    mode: ContextModuleCalMode,
+  ): calldata is CalldataEnumV1 {
+    return (
+      typeof calldata === "object" &&
+      Object.entries(calldata).every(
+        ([id, values]) =>
+          typeof id === "string" &&
+          typeof values === "object" &&
+          Object.entries<CalldataTransactionDescriptor>(values).every(
+            ([value, obj]) =>
+              typeof value === "string" &&
+              typeof obj === "object" &&
+              typeof obj.data === "string" &&
+              obj.signatures !== undefined &&
+              this.isCalldataSignatures(obj.signatures, mode),
+          ),
+      )
+    );
+  }
+
+  private isCalldataSignatures(
+    data: CalldataSignatures,
+    mode: ContextModuleCalMode,
+  ): data is CalldataSignatures & { [key in ContextModuleCalMode]: string } {
+    return typeof data === "object" && typeof data[mode] === "string";
   }
 
   private isFieldV1(data: CalldataFieldV1): boolean {

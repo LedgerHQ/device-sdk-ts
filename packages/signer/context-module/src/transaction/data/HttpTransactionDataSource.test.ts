@@ -16,7 +16,7 @@ jest.mock("axios");
 describe("HttpTransactionDataSource", () => {
   let datasource: TransactionDataSource;
   let transactionInfo: CalldataTransactionInfoV1;
-  let enums: CalldataEnumV1[];
+  let enums: CalldataEnumV1;
   let fieldToken: CalldataFieldV1;
   let fieldTrustedName: CalldataFieldV1;
   let fieldNft: CalldataFieldV1;
@@ -24,6 +24,7 @@ describe("HttpTransactionDataSource", () => {
   let fieldDatetime: CalldataFieldV1;
   let fieldUnit: CalldataFieldV1;
   let fieldDuration: CalldataFieldV1;
+  let fieldEnum: CalldataFieldV1;
 
   beforeAll(() => {
     jest.clearAllMocks();
@@ -44,10 +45,23 @@ describe("HttpTransactionDataSource", () => {
         },
       },
     };
-    enums = [
-      { descriptor: "0001000401000501010606737461626c65" },
-      { descriptor: "00010004010005010206087661726961626c65" },
-    ];
+    enums = {
+      "0": {
+        "1": {
+          data: "0001010108000000000000000102147d2768de32b0b80b7a3454c06bdac94a69ddc7a9030469328dec0401000501010606737461626c65",
+          signatures: {
+            test: "3045022100862e724db664f5d94484928a6a5963268a22cd8178ad36e8c4ff13769ac5c27e0220079da2b6e86810156f6b5955b8190bc016c2fe813d27fcb878a9b99658546582",
+          },
+        },
+        "2": {
+          data: "0001010108000000000000000102147d2768de32b0b80b7a3454c06bdac94a69ddc7a9030469328dec04010005010206087661726961626c65",
+          signatures: {
+            test: "3045022100b838ee3d597d6bad2533606cef7335f6c8a45b46d5717803e646777f6c8a6897022074f04b82c3dad8445bb6230ab762010c5fc6ee06198fd3e54752287cbf95c523",
+          },
+        },
+      },
+    };
+
     fieldAmount = createFieldWithoutReference("FROM", "UFIXED", "AMOUNT", "06");
     fieldDatetime = createFieldWithoutReference(
       "TO",
@@ -170,6 +184,22 @@ describe("HttpTransactionDataSource", () => {
       descriptor:
         "000100010c546f20726563697069656e7402010803230001000115000100010105020114",
     };
+    fieldEnum = {
+      param: {
+        id: 0,
+        value: {
+          binary_path: {
+            type: "DATA",
+            elements: [],
+          },
+          type_family: "BYTES",
+          type_size: 20,
+        },
+        type: "ENUM",
+      },
+      descriptor:
+        "000100010c546f20726563697069656e7402010803230001000115000100010105020112",
+    };
   });
 
   function createFieldWithoutReference(
@@ -195,8 +225,8 @@ describe("HttpTransactionDataSource", () => {
   }
 
   function createCalldata(
-    transactionInfo: unknown,
-    enums: unknown[],
+    calldataTransactionInfo: CalldataTransactionInfoV1,
+    calldataEnums: CalldataEnumV1,
     fields: unknown[],
   ): unknown {
     return {
@@ -205,8 +235,8 @@ describe("HttpTransactionDataSource", () => {
           "0x69328dec": {
             type: "calldata",
             version: "v1",
-            transaction_info: transactionInfo,
-            enums: enums,
+            transaction_info: calldataTransactionInfo,
+            enums: calldataEnums,
             fields: fields,
           },
         },
@@ -306,6 +336,7 @@ describe("HttpTransactionDataSource", () => {
       fieldToken,
       fieldTrustedName,
       fieldNft,
+      fieldEnum,
     ]);
     jest.spyOn(axios, "request").mockResolvedValue({ data: [calldataDTO] });
 
@@ -324,12 +355,18 @@ describe("HttpTransactionDataSource", () => {
         type: "transactionInfo",
       },
       {
-        payload: "0001000401000501010606737461626c65",
+        payload:
+          "0001010108000000000000000102147d2768de32b0b80b7a3454c06bdac94a69ddc7a9030469328dec0401000501010606737461626c6581ff473045022100862e724db664f5d94484928a6a5963268a22cd8178ad36e8c4ff13769ac5c27e0220079da2b6e86810156f6b5955b8190bc016c2fe813d27fcb878a9b99658546582",
         type: "enum",
+        id: 0,
+        value: 1,
       },
       {
-        payload: "00010004010005010206087661726961626c65",
+        payload:
+          "0001010108000000000000000102147d2768de32b0b80b7a3454c06bdac94a69ddc7a9030469328dec04010005010206087661726961626c6581ff473045022100b838ee3d597d6bad2533606cef7335f6c8a45b46d5717803e646777f6c8a6897022074f04b82c3dad8445bb6230ab762010c5fc6ee06198fd3e54752287cbf95c523",
         type: "enum",
+        id: 0,
+        value: 2,
       },
       {
         payload: fieldToken.descriptor,
@@ -380,6 +417,15 @@ describe("HttpTransactionDataSource", () => {
           ],
         },
       },
+      {
+        payload: fieldEnum.descriptor,
+        type: "transactionFieldDescription",
+        reference: {
+          type: "enum",
+          valuePath: [],
+          id: 0,
+        },
+      },
     ]);
   });
 
@@ -404,6 +450,56 @@ describe("HttpTransactionDataSource", () => {
       {
         payload:
           "0001000108000000000000000102147d2768de32b0b80b7a3454c06bdac94a69ddc7a9030469328dec04207d5e9ed0004b8035b164edd9d78c37415ad6b1d123be4943d0abd5a50035cae3050857697468647261770604416176650708416176652044414f081068747470733a2f2f616176652e636f6d0a045fc4ba9c81ff473045022100eb67599abfd9c7360b07599a2a2cb769c6e3f0f74e1e52444d788c8f577a16d20220402e92b0adbf97d890fa2f9654bc30c7bd70dacabe870f160e6842d9eb73d36f",
+        type: "transactionInfo",
+      },
+      {
+        type: "transactionFieldDescription",
+        payload: fieldAmount.descriptor,
+      },
+      {
+        type: "transactionFieldDescription",
+        payload: fieldDatetime.descriptor,
+      },
+      {
+        type: "transactionFieldDescription",
+        payload: fieldUnit.descriptor,
+      },
+      {
+        type: "transactionFieldDescription",
+        payload: fieldDuration.descriptor,
+      },
+    ]);
+  });
+
+  it("Calldata without fields references and transaction info signature length % 2 different from 0", async () => {
+    // GIVEN
+    const newTransactionInfo: CalldataTransactionInfoV1 = {
+      descriptor: {
+        data: transactionInfo.descriptor.data,
+        signatures: {
+          test: transactionInfo.descriptor.signatures.test + "0",
+        },
+      },
+    };
+    const calldataDTO = createCalldata(
+      newTransactionInfo,
+      [],
+      [fieldAmount, fieldDatetime, fieldUnit, fieldDuration],
+    );
+    jest.spyOn(axios, "request").mockResolvedValue({ data: [calldataDTO] });
+
+    // WHEN
+    const result = await datasource.getTransactionDescriptors({
+      chainId: 1,
+      address: "0x7d2768de32b0b80b7a3454c06bdac94a69ddc7a9",
+      selector: "0x69328dec",
+    });
+
+    // THEN
+    expect(result.extract()).toEqual([
+      {
+        payload:
+          "0001000108000000000000000102147d2768de32b0b80b7a3454c06bdac94a69ddc7a9030469328dec04207d5e9ed0004b8035b164edd9d78c37415ad6b1d123be4943d0abd5a50035cae3050857697468647261770604416176650708416176652044414f081068747470733a2f2f616176652e636f6d0a045fc4ba9c81ff4803045022100eb67599abfd9c7360b07599a2a2cb769c6e3f0f74e1e52444d788c8f577a16d20220402e92b0adbf97d890fa2f9654bc30c7bd70dacabe870f160e6842d9eb73d36f0",
         type: "transactionInfo",
       },
       {
@@ -496,7 +592,68 @@ describe("HttpTransactionDataSource", () => {
     // GIVEN
     const calldataDTO = createCalldata(
       transactionInfo,
-      ["badEnum"],
+      ["badEnum"] as unknown as CalldataEnumV1,
+      [fieldToken],
+    );
+    jest.spyOn(axios, "request").mockResolvedValue({ data: [calldataDTO] });
+
+    // WHEN
+    const result = await datasource.getTransactionDescriptors({
+      chainId: 1,
+      address: "0x7d2768de32b0b80b7a3454c06bdac94a69ddc7a9",
+      selector: "0x69328dec",
+    });
+
+    // THEN
+    expect(result).toEqual(
+      Left(
+        new Error(
+          "[ContextModule] HttpTransactionDataSource: Failed to decode transaction descriptor for contract 0x7d2768de32b0b80b7a3454c06bdac94a69ddc7a9 and selector 0x69328dec",
+        ),
+      ),
+    );
+  });
+
+  it("should return an error when enum does not contain a signature", async () => {
+    // GIVEN
+    const calldataDTO = createCalldata(
+      transactionInfo,
+      { 0: { 1: { data: "1234" } } } as unknown as CalldataEnumV1,
+      [fieldToken],
+    );
+    jest.spyOn(axios, "request").mockResolvedValue({ data: [calldataDTO] });
+
+    // WHEN
+    const result = await datasource.getTransactionDescriptors({
+      chainId: 1,
+      address: "0x7d2768de32b0b80b7a3454c06bdac94a69ddc7a9",
+      selector: "0x69328dec",
+    });
+
+    // THEN
+    expect(result).toEqual(
+      Left(
+        new Error(
+          "[ContextModule] HttpTransactionDataSource: Failed to decode transaction descriptor for contract 0x7d2768de32b0b80b7a3454c06bdac94a69ddc7a9 and selector 0x69328dec",
+        ),
+      ),
+    );
+  });
+
+  it("should return an error when enum contain the wrong signature", async () => {
+    // GIVEN
+    const calldataDTO = createCalldata(
+      transactionInfo,
+      {
+        0: {
+          1: {
+            data: "0001010108000000000000000102147d2768de32b0b80b7a3454c06bdac94a69ddc7a9030469328dec04010005010106067374626c65",
+            signatures: {
+              prod: "wrongSignature", // prod instead of test signature
+            },
+          },
+        },
+      },
       [fieldToken],
     );
     jest.spyOn(axios, "request").mockResolvedValue({ data: [calldataDTO] });

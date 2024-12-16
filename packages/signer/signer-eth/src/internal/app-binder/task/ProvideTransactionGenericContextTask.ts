@@ -1,5 +1,7 @@
 import {
   type ClearSignContextSuccess,
+  type ClearSignContextSuccessType,
+  type ClearSignContextType,
   type ContextModule,
 } from "@ledgerhq/context-module";
 import {
@@ -24,7 +26,10 @@ import { SendPayloadInChunksTask } from "./SendPayloadInChunksTask";
 
 export type GenericContext = {
   readonly transactionInfo: string;
-  readonly transactionFields: ClearSignContextSuccess[];
+  readonly transactionFields: ClearSignContextSuccess<
+    Exclude<ClearSignContextSuccessType, ClearSignContextType.ENUM>
+  >[];
+  readonly transactionEnums: ClearSignContextSuccess<ClearSignContextType.ENUM>[];
 };
 
 export type ProvideTransactionGenericContextTaskArgs = {
@@ -96,6 +101,7 @@ export class ProvideTransactionGenericContextTask {
           chainId: this.args.chainId,
           transactionParser: this.args.transactionParser,
           contextModule: this.args.contextModule,
+          transactionEnums: this.args.context.transactionEnums,
         },
       ).run();
 

@@ -1,5 +1,6 @@
 import {
   type ClearSignContextSuccess,
+  type ClearSignContextSuccessType,
   ClearSignContextType,
   ContainerPath,
   type ContextModule,
@@ -38,7 +39,9 @@ describe("ProvideTransactionFieldDescriptionTask", () => {
 
   describe("should call the right provide command", () => {
     it.each<{
-      type: ClearSignContextSuccess["type"];
+      type: ClearSignContextSuccess<
+        Exclude<ClearSignContextSuccessType, ClearSignContextType.ENUM>
+      >["type"];
       commandInstanceType: unknown;
     }>([
       {
@@ -52,10 +55,6 @@ describe("ProvideTransactionFieldDescriptionTask", () => {
       {
         type: ClearSignContextType.TRUSTED_NAME,
         commandInstanceType: ProvideTrustedNameCommand,
-      },
-      {
-        type: ClearSignContextType.ENUM,
-        commandInstanceType: ProvideEnumCommand,
       },
       {
         type: ClearSignContextType.TRANSACTION_FIELD_DESCRIPTION,
@@ -79,6 +78,7 @@ describe("ProvideTransactionFieldDescriptionTask", () => {
         chainId: 1,
         transactionParser: transactionParserMock,
         contextModule: contextModuleMock,
+        transactionEnums: [],
       }).run();
 
       // THEN
@@ -87,14 +87,74 @@ describe("ProvideTransactionFieldDescriptionTask", () => {
       ).toBeInstanceOf(commandInstanceType);
       expect(apiMock.sendCommand).toHaveBeenCalledTimes(1);
     });
+
+    it("when type is transactionFieldDescription with a enum reference", async () => {
+      // GIVEN
+      jest
+        .spyOn(apiMock, "sendCommand")
+        .mockResolvedValueOnce(CommandResultFactory({ data: "ok" }));
+      jest
+        .spyOn(apiMock, "sendCommand")
+        .mockResolvedValueOnce(CommandResultFactory({ data: "ok" }));
+      jest
+        .spyOn(transactionParserMock, "extractValue")
+        .mockReturnValueOnce(Right([new Uint8Array([0x01, 0x02, 0x03, 0x04])]));
+      const payload = `0x01020304`;
+      const field: ClearSignContextSuccess = {
+        type: ClearSignContextType.TRANSACTION_FIELD_DESCRIPTION,
+        payload,
+        reference: {
+          type: ClearSignContextType.ENUM,
+          valuePath: ContainerPath.VALUE,
+          id: 0x42,
+        },
+      };
+
+      // WHEN
+      await new ProvideTransactionFieldDescriptionTask(apiMock, {
+        field,
+        serializedTransaction: new Uint8Array(),
+        chainId: 1,
+        transactionParser: transactionParserMock,
+        contextModule: contextModuleMock,
+        transactionEnums: [
+          {
+            id: 0x42,
+            value: 0x01,
+            type: ClearSignContextType.ENUM,
+            payload: "0x060708",
+          },
+          {
+            id: 0x42,
+            value: 0x04,
+            type: ClearSignContextType.ENUM,
+            payload: "0x080706",
+          },
+        ],
+      }).run();
+
+      expect(apiMock.sendCommand).toHaveBeenCalledTimes(2);
+      expect(
+        (apiMock.sendCommand as jest.Mock).mock.calls[0][0],
+      ).toBeInstanceOf(ProvideEnumCommand);
+      expect(
+        (apiMock.sendCommand as jest.Mock).mock.calls[0][0].args.data,
+      ).toEqual(new Uint8Array([0x00, 0x03, 0x08, 0x07, 0x06])); // length + value of the enum with id 0x42 and value 0x04
+      expect(
+        (apiMock.sendCommand as jest.Mock).mock.calls[1][0],
+      ).toBeInstanceOf(ProvideTransactionFieldDescriptionCommand);
+    });
   });
 
   describe("should return nothing", () => {
-    it.each<ClearSignContextSuccess["type"]>([
+    it.each<
+      ClearSignContextSuccess<
+        Exclude<ClearSignContextSuccessType, ClearSignContextType.ENUM>
+      >["type"]
+    >([
       ClearSignContextType.NFT,
       ClearSignContextType.TOKEN,
       ClearSignContextType.TRUSTED_NAME,
-      ClearSignContextType.ENUM,
       ClearSignContextType.TRANSACTION_FIELD_DESCRIPTION,
     ])("when type is %s with no reference", async (type) => {
       // GIVEN
@@ -114,6 +174,7 @@ describe("ProvideTransactionFieldDescriptionTask", () => {
         chainId: 1,
         transactionParser: transactionParserMock,
         contextModule: contextModuleMock,
+        transactionEnums: [],
       });
       const result = await task.run();
 
@@ -123,55 +184,62 @@ describe("ProvideTransactionFieldDescriptionTask", () => {
   });
 
   describe("should provide a reference context", () => {
-    it.each<ClearSignContextSuccess["type"]>([
-      ClearSignContextType.NFT,
-      ClearSignContextType.TOKEN,
-    ])("when type is %s with a reference", async (type) => {
-      // GIVEN
-      const payload = `0x01020304`;
-      const field: ClearSignContextSuccess = {
-        type,
-        payload,
-        reference: {
+    it.each<
+      ClearSignContextSuccess<
+        Exclude<ClearSignContextSuccessType, ClearSignContextType.ENUM>
+      >["type"]
+    >([ClearSignContextType.NFT, ClearSignContextType.TOKEN])(
+      "when type is %s with a reference",
+      async (type) => {
+        // GIVEN
+        const payload = `0x01020304`;
+        const field: ClearSignContextSuccess = {
+          type,
+          payload,
+          reference: {
+            type: ClearSignContextType.TOKEN,
+            valuePath: ContainerPath.VALUE,
+          },
+        };
+        // provide reference context
+        jest
+          .spyOn(apiMock, "sendCommand")
+          .mockResolvedValueOnce(CommandResultFactory({ data: "ok" }));
+        // provide context
+        jest
+          .spyOn(apiMock, "sendCommand")
+          .mockResolvedValueOnce(CommandResultFactory({ data: "ok" }));
+        jest
+          .spyOn(transactionParserMock, "extractValue")
+          .mockReturnValueOnce(
+            Right([new Uint8Array([0x01, 0x02, 0x03, 0x04])]),
+          );
+        jest
+          .spyOn(contextModuleMock, "getContext")
+          .mockResolvedValueOnce({ type, payload });
+
+        // WHEN
+        const task = new ProvideTransactionFieldDescriptionTask(apiMock, {
+          field,
+          serializedTransaction: new Uint8Array(),
+          chainId: 1,
+          transactionParser: transactionParserMock,
+          contextModule: contextModuleMock,
+          transactionEnums: [],
+        });
+        const result = await task.run();
+
+        // THEN
+        expect(contextModuleMock.getContext).toHaveBeenCalledTimes(1);
+        expect(contextModuleMock.getContext).toHaveBeenCalledWith({
           type: ClearSignContextType.TOKEN,
-          valuePath: ContainerPath.VALUE,
-        },
-      };
-      // provide reference context
-      jest
-        .spyOn(apiMock, "sendCommand")
-        .mockResolvedValueOnce(CommandResultFactory({ data: "ok" }));
-      // provide context
-      jest
-        .spyOn(apiMock, "sendCommand")
-        .mockResolvedValueOnce(CommandResultFactory({ data: "ok" }));
-      jest
-        .spyOn(transactionParserMock, "extractValue")
-        .mockReturnValueOnce(Right([new Uint8Array([0x01, 0x02, 0x03, 0x04])]));
-      jest
-        .spyOn(contextModuleMock, "getContext")
-        .mockResolvedValueOnce({ type, payload });
-
-      // WHEN
-      const task = new ProvideTransactionFieldDescriptionTask(apiMock, {
-        field,
-        serializedTransaction: new Uint8Array(),
-        chainId: 1,
-        transactionParser: transactionParserMock,
-        contextModule: contextModuleMock,
-      });
-      const result = await task.run();
-
-      // THEN
-      expect(contextModuleMock.getContext).toHaveBeenCalledTimes(1);
-      expect(contextModuleMock.getContext).toHaveBeenCalledWith({
-        type: ClearSignContextType.TOKEN,
-        chainId: 1,
-        address: "0x01020304",
-      });
-      expect(result).toEqual(Nothing);
-      expect(apiMock.sendCommand).toHaveBeenCalledTimes(2);
-    });
+          chainId: 1,
+          address: "0x01020304",
+        });
+        expect(result).toEqual(Nothing);
+        expect(apiMock.sendCommand).toHaveBeenCalledTimes(2);
+      },
+    );
 
     it("when type is trustes-name with a reference", async () => {
       // GIVEN
@@ -179,7 +247,9 @@ describe("ProvideTransactionFieldDescriptionTask", () => {
       const payload2 = `0x05060708`;
       const extractedValue = new Uint8Array([0x11, 0x22, 0x33, 0x44]);
       const extractedValueAddress = "0x11223344";
-      const field: ClearSignContextSuccess = {
+      const field: ClearSignContextSuccess<
+        Exclude<ClearSignContextSuccessType, ClearSignContextType.ENUM>
+      > = {
         type: ClearSignContextType.TRUSTED_NAME,
         payload: payload1,
         reference: {
@@ -218,6 +288,7 @@ describe("ProvideTransactionFieldDescriptionTask", () => {
         chainId: 1,
         transactionParser: transactionParserMock,
         contextModule: contextModuleMock,
+        transactionEnums: [],
       });
       const result = await task.run();
 
@@ -259,7 +330,9 @@ describe("ProvideTransactionFieldDescriptionTask", () => {
     it("when the path is not found in transaction payload", async () => {
       // GIVEN
       const payload = `0x01020304`;
-      const field: ClearSignContextSuccess = {
+      const field: ClearSignContextSuccess<
+        Exclude<ClearSignContextSuccessType, ClearSignContextType.ENUM>
+      > = {
         type: ClearSignContextType.TRUSTED_NAME,
         payload,
         reference: {
@@ -284,6 +357,7 @@ describe("ProvideTransactionFieldDescriptionTask", () => {
         chainId: 1,
         transactionParser: transactionParserMock,
         contextModule: contextModuleMock,
+        transactionEnums: [],
       });
       const result = await task.run();
 
@@ -296,7 +370,9 @@ describe("ProvideTransactionFieldDescriptionTask", () => {
     it("when getContext return a type error", async () => {
       // GIVEN
       const payload = `0x01020304`;
-      const field: ClearSignContextSuccess = {
+      const field: ClearSignContextSuccess<
+        Exclude<ClearSignContextSuccessType, ClearSignContextType.ENUM>
+      > = {
         type: ClearSignContextType.TRUSTED_NAME,
         payload,
         reference: {
@@ -331,6 +407,7 @@ describe("ProvideTransactionFieldDescriptionTask", () => {
         chainId: 1,
         transactionParser: transactionParserMock,
         contextModule: contextModuleMock,
+        transactionEnums: [],
       });
       const result = await task.run();
 
@@ -339,17 +416,112 @@ describe("ProvideTransactionFieldDescriptionTask", () => {
       expect(apiMock.sendCommand).toHaveBeenCalledTimes(2);
       expect(contextModuleMock.getContext).toHaveBeenCalledTimes(1);
     });
+
+    it("when no enum descriptor is found", async () => {
+      // GIVEN
+      const payload = `0x01020304`;
+      const field: ClearSignContextSuccess = {
+        type: ClearSignContextType.TRANSACTION_FIELD_DESCRIPTION,
+        payload,
+        reference: {
+          type: ClearSignContextType.ENUM,
+          valuePath: ContainerPath.VALUE,
+          id: 0x42,
+        },
+      };
+      jest
+        .spyOn(transactionParserMock, "extractValue")
+        .mockReturnValueOnce(Right([new Uint8Array([0x01, 0x02, 0x03, 0x04])]));
+      jest
+        .spyOn(apiMock, "sendCommand")
+        .mockResolvedValueOnce(CommandResultFactory({ data: "ok" }));
+
+      // WHEN
+      const task = new ProvideTransactionFieldDescriptionTask(apiMock, {
+        field,
+        serializedTransaction: new Uint8Array(),
+        chainId: 1,
+        transactionParser: transactionParserMock,
+        contextModule: contextModuleMock,
+        transactionEnums: [],
+      });
+      const result = await task.run();
+
+      // THEN
+      expect(result).toEqual(Nothing);
+      expect(apiMock.sendCommand).toHaveBeenCalledTimes(1);
+      expect(
+        (apiMock.sendCommand as jest.Mock).mock.calls[0][0],
+      ).toBeInstanceOf(ProvideTransactionFieldDescriptionCommand);
+    });
+
+    it("when the enum reference path value is empty", async () => {
+      // GIVEN
+      const payload = `0x01020304`;
+      const field: ClearSignContextSuccess = {
+        type: ClearSignContextType.TRANSACTION_FIELD_DESCRIPTION,
+        payload,
+        reference: {
+          type: ClearSignContextType.ENUM,
+          valuePath: ContainerPath.VALUE,
+          id: 0x42,
+        },
+      };
+      jest
+        .spyOn(transactionParserMock, "extractValue")
+        .mockReturnValueOnce(Right([new Uint8Array([])])); // empty value
+      jest
+        .spyOn(apiMock, "sendCommand")
+        .mockResolvedValueOnce(CommandResultFactory({ data: "ok" }));
+
+      // WHEN
+      const task = new ProvideTransactionFieldDescriptionTask(apiMock, {
+        field,
+        serializedTransaction: new Uint8Array(),
+        chainId: 1,
+        transactionParser: transactionParserMock,
+        contextModule: contextModuleMock,
+        transactionEnums: [
+          {
+            id: 0x42,
+            value: 0x01,
+            type: ClearSignContextType.ENUM,
+            payload: "0x060708",
+          },
+          {
+            id: 0x42,
+            value: 0x04,
+            type: ClearSignContextType.ENUM,
+            payload: "0x080706",
+          },
+        ],
+      });
+      const result = await task.run();
+
+      // THEN
+      expect(result).toEqual(Nothing);
+      expect(apiMock.sendCommand).toHaveBeenCalledTimes(1);
+      expect(
+        (apiMock.sendCommand as jest.Mock).mock.calls[0][0],
+      ).toBeInstanceOf(ProvideTransactionFieldDescriptionCommand);
+    });
   });
 
   describe("should return an error", () => {
-    it.each<ClearSignContextSuccess["type"]>([
+    it.each<
+      ClearSignContextSuccess<
+        Exclude<ClearSignContextSuccessType, ClearSignContextType.ENUM>
+      >["type"]
+    >([
       ClearSignContextType.TRANSACTION_INFO,
       ClearSignContextType.PLUGIN,
       ClearSignContextType.EXTERNAL_PLUGIN,
     ])("when type is %s", async (type) => {
       // GIVEN
       const payload = `payload-${type}`;
-      const field: ClearSignContextSuccess = {
+      const field: ClearSignContextSuccess<
+        Exclude<ClearSignContextSuccessType, ClearSignContextType.ENUM>
+      > = {
         type,
         payload,
       };
@@ -361,6 +533,7 @@ describe("ProvideTransactionFieldDescriptionTask", () => {
         chainId: 1,
         transactionParser: transactionParserMock,
         contextModule: contextModuleMock,
+        transactionEnums: [],
       });
       const result = await task.run();
 
@@ -377,10 +550,12 @@ describe("ProvideTransactionFieldDescriptionTask", () => {
     it("when type is unknown", async () => {
       // GIVEN
       const payload = `payload-unknown`;
-      const field: ClearSignContextSuccess = {
+      const field = {
         type: "unknown" as ClearSignContextType,
         payload,
-      } as ClearSignContextSuccess;
+      } as ClearSignContextSuccess<
+        Exclude<ClearSignContextSuccessType, ClearSignContextType.ENUM>
+      >;
 
       // WHEN
       const task = new ProvideTransactionFieldDescriptionTask(apiMock, {
@@ -389,6 +564,7 @@ describe("ProvideTransactionFieldDescriptionTask", () => {
         chainId: 1,
         transactionParser: transactionParserMock,
         contextModule: contextModuleMock,
+        transactionEnums: [],
       });
       const result = await task.run();
 
@@ -405,7 +581,9 @@ describe("ProvideTransactionFieldDescriptionTask", () => {
     it("when getChallenge fails", async () => {
       // GIVEN
       const payload = `0x01020304`;
-      const field: ClearSignContextSuccess = {
+      const field: ClearSignContextSuccess<
+        Exclude<ClearSignContextSuccessType, ClearSignContextType.ENUM>
+      > = {
         type: ClearSignContextType.TRUSTED_NAME,
         payload,
         reference: {
@@ -431,6 +609,7 @@ describe("ProvideTransactionFieldDescriptionTask", () => {
         chainId: 1,
         transactionParser: transactionParserMock,
         contextModule: contextModuleMock,
+        transactionEnums: [],
       });
       const result = await task.run();
 
@@ -442,10 +621,62 @@ describe("ProvideTransactionFieldDescriptionTask", () => {
       );
     });
 
-    it("when provide reference fails", async () => {
+    it("when provide reference with a token fails", async () => {
       // GIVEN
       const payload = `0x01020304`;
-      const field: ClearSignContextSuccess = {
+      const field: ClearSignContextSuccess<
+        Exclude<ClearSignContextSuccessType, ClearSignContextType.ENUM>
+      > = {
+        type: ClearSignContextType.TRANSACTION_FIELD_DESCRIPTION,
+        payload,
+        reference: {
+          type: ClearSignContextType.TOKEN,
+          valuePath: ContainerPath.VALUE,
+        },
+      };
+      // provide reference context
+      jest.spyOn(apiMock, "sendCommand").mockResolvedValueOnce(
+        CommandResultFactory({
+          error: new InvalidStatusWordError("provide reference error"),
+        }),
+      );
+      // provide field
+      jest
+        .spyOn(apiMock, "sendCommand")
+        .mockResolvedValueOnce(CommandResultFactory({ data: "ok" }));
+      jest
+        .spyOn(transactionParserMock, "extractValue")
+        .mockReturnValueOnce(Right([new Uint8Array([0x11, 0x22, 0x33, 0x44])]));
+      jest.spyOn(contextModuleMock, "getContext").mockResolvedValueOnce({
+        type: ClearSignContextType.TOKEN,
+        payload: "0x05060708",
+      });
+
+      // WHEN
+      const task = new ProvideTransactionFieldDescriptionTask(apiMock, {
+        field,
+        serializedTransaction: new Uint8Array(),
+        chainId: 1,
+        transactionParser: transactionParserMock,
+        contextModule: contextModuleMock,
+        transactionEnums: [],
+      });
+      const result = await task.run();
+
+      // THEN
+      expect(result.extract()).toEqual(
+        CommandResultFactory({
+          error: new InvalidStatusWordError("provide reference error"),
+        }),
+      );
+    });
+
+    it("when provide reference with a trusted name fails", async () => {
+      // GIVEN
+      const payload = `0x01020304`;
+      const field: ClearSignContextSuccess<
+        Exclude<ClearSignContextSuccessType, ClearSignContextType.ENUM>
+      > = {
         type: ClearSignContextType.TRUSTED_NAME,
         payload,
         reference: {
@@ -480,6 +711,7 @@ describe("ProvideTransactionFieldDescriptionTask", () => {
         chainId: 1,
         transactionParser: transactionParserMock,
         contextModule: contextModuleMock,
+        transactionEnums: [],
       });
       const result = await task.run();
 
@@ -489,6 +721,62 @@ describe("ProvideTransactionFieldDescriptionTask", () => {
           error: new InvalidStatusWordError("provide reference error"),
         }),
       );
+    });
+
+    it("when provide reference with a enum reference fails", async () => {
+      // GIVEN
+      const payload = `0x01020304`;
+      const field: ClearSignContextSuccess = {
+        type: ClearSignContextType.TRANSACTION_FIELD_DESCRIPTION,
+        payload,
+        reference: {
+          type: ClearSignContextType.ENUM,
+          valuePath: ContainerPath.VALUE,
+          id: 0x42,
+        },
+      };
+      jest
+        .spyOn(transactionParserMock, "extractValue")
+        .mockReturnValueOnce(Right([new Uint8Array([0x01, 0x02, 0x03, 0x04])]));
+      jest.spyOn(apiMock, "sendCommand").mockResolvedValueOnce(
+        CommandResultFactory({
+          error: new InvalidStatusWordError("provide reference error"),
+        }),
+      );
+      jest.spyOn(apiMock, "sendCommand").mockResolvedValueOnce(
+        CommandResultFactory({
+          data: "ok",
+        }),
+      );
+
+      // WHEN
+      const task = new ProvideTransactionFieldDescriptionTask(apiMock, {
+        field,
+        serializedTransaction: new Uint8Array(),
+        chainId: 1,
+        transactionParser: transactionParserMock,
+        contextModule: contextModuleMock,
+        transactionEnums: [
+          {
+            id: 0x42,
+            value: 0x04,
+            type: ClearSignContextType.ENUM,
+            payload: "0x080706",
+          },
+        ],
+      });
+      const result = await task.run();
+
+      // THEN
+      expect(result.extract()).toEqual(
+        CommandResultFactory({
+          error: new InvalidStatusWordError("provide reference error"),
+        }),
+      );
+      expect(apiMock.sendCommand).toHaveBeenCalledTimes(1);
+      expect(
+        (apiMock.sendCommand as jest.Mock).mock.calls[0][0],
+      ).toBeInstanceOf(ProvideEnumCommand);
     });
   });
 });
