@@ -22,5 +22,9 @@ describe("useCasesModuleFactory", () => {
         container.isBound(useCasesTypes.GetExtendedPublicKeyUseCase),
       ).toBeTruthy();
     });
+
+    it("should bind SignMessageUseCase", () => {
+      expect(container.isBound(useCasesTypes.SignMessageUseCase)).toBeTruthy();
+    });
   });
 });

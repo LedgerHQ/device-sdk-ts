@@ -4,10 +4,8 @@ import {
   InvalidStatusWordError,
   isSuccessCommandResult,
 } from "@ledgerhq/device-management-kit";
-import { Just } from "purify-ts";
 
-import { type Signature } from "@api/model/Signature";
-
+import { SW_INTERRUPTED_EXECUTION } from "./utils/constants";
 import { SignMessageCommand } from "./SignMessageCommand";
 
 const PATH = "44'/0'/0'/0/0";
@@ -101,6 +99,27 @@ describe("SignMessageCommand", (): void => {
   });
 
   describe("parseResponse", () => {
+    it("should return the APDU response if it's a continue response", () => {
+      // given
+      const command = new SignMessageCommand(defaultArgs);
+      const continueResponseData = new Uint8Array([0x01, 0x02, 0x03, 0x04]);
+
+      const apduResponse = new ApduResponse({
+        statusCode: SW_INTERRUPTED_EXECUTION,
+        data: continueResponseData,
+      });
+
+      // when
+      const response = command.parseResponse(apduResponse);
+
+      // then
+      expect(response).toStrictEqual(
+        CommandResultFactory({
+          data: apduResponse,
+        }),
+      );
+    });
+
     it("should return correct response after successful signing", () => {
       // given
       const command = new SignMessageCommand(defaultArgs);
@@ -113,11 +132,11 @@ describe("SignMessageCommand", (): void => {
       // then
       expect(response).toStrictEqual(
         CommandResultFactory({
-          data: Just<Signature>({
+          data: {
             v: 27,
             r: "0x97a4ca8f694633592601f5a23e0bcc553c9d0a90d3a3422d575508a92898b96e",
             s: "0x6950d02e74e9c102c164a225533082cabdd890efc463f67f60cefe8c3f87cfce",
-          }),
+          },
         }),
       );
     });
@@ -168,8 +187,7 @@ describe("SignMessageCommand", (): void => {
       // then
       expect(isSuccessCommandResult(response)).toBe(true);
       if (isSuccessCommandResult(response)) {
-        expect(response.data.isJust()).toBe(true);
-        expect(response.data.extract()).toStrictEqual({
+        expect(response.data).toStrictEqual({
           v: 27,
           r: "0x97a4ca8f694633592601f5a23e0bcc553c9d0a90d3a3422d575508a92898b96e",
           s: "0x6950d02e74e9c102c164a225533082cabdd890efc463f67f60cefe8c3f87cfce",

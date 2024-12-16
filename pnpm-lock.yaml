@@ -139,6 +139,9 @@ importers:
       '@ledgerhq/device-mockserver-client':
         specifier: workspace:*
         version: link:../../packages/mockserver-client
+      '@ledgerhq/device-signer-kit-bitcoin':
+        specifier: workspace:*
+        version: link:../../packages/signer/signer-btc
       '@ledgerhq/device-signer-kit-ethereum':
         specifier: workspace:*
         version: link:../../packages/signer/signer-eth

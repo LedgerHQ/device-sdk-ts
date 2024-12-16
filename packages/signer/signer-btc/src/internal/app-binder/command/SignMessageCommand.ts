@@ -12,10 +12,10 @@ import {
   isCommandErrorCode,
 } from "@ledgerhq/device-management-kit";
 import { DerivationPathUtils } from "@ledgerhq/signer-utils";
-import { Just, type Maybe } from "purify-ts";
 
 import { type Signature } from "@api/model/Signature";
 import { PROTOCOL_VERSION } from "@internal/app-binder/command/utils/constants";
+import { CommandUtils as BtcCommandUtils } from "@internal/utils/CommandUtils";
 import { encodeVarint } from "@internal/utils/Varint";
 
 import {
@@ -41,7 +41,7 @@ export type SignMessageCommandArgs = {
   readonly messageMerkleRoot: Uint8Array;
 };
 
-export type SignMessageCommandResponse = Maybe<Signature>;
+export type SignMessageCommandResponse = Signature | ApduResponse;
 
 export class SignMessageCommand
   implements Command<SignMessageCommandResponse, SignMessageCommandArgs>
@@ -77,6 +77,18 @@ export class SignMessageCommand
   parseResponse(
     apduResponse: ApduResponse,
   ): CommandResult<SignMessageCommandResponse> {
+    if (BtcCommandUtils.isContinueResponse(apduResponse)) {
+      return CommandResultFactory({
+        data: apduResponse,
+      });
+    }
+
+    if (!CommandUtils.isSuccessResponse(apduResponse)) {
+      return CommandResultFactory({
+        error: GlobalCommandErrorHandler.handle(apduResponse),
+      });
+    }
+
     const parser = new ApduParser(apduResponse);
     const errorCode = parser.encodeToHexaString(apduResponse.statusCode);
     if (isCommandErrorCode(errorCode, bitcoinAppErrors)) {
@@ -85,12 +97,6 @@ export class SignMessageCommand
           ...bitcoinAppErrors[errorCode],
           errorCode,
         }),
-      });
-    }
-
-    if (!CommandUtils.isSuccessResponse(apduResponse)) {
-      return CommandResultFactory({
-        error: GlobalCommandErrorHandler.handle(apduResponse),
       });
     }
 
@@ -125,11 +131,11 @@ export class SignMessageCommand
     }
 
     return CommandResultFactory({
-      data: Just({
+      data: {
         v,
         r,
         s,
-      }),
+      },
     });
   }
 }
