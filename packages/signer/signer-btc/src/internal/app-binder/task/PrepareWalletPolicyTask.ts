@@ -48,6 +48,7 @@ export class PrepareWalletPolicyTask {
         }),
       );
     }
+    console.log("GET XPUB", wallet);
     // Get xpub and masterfingerprint for a default wallet
     const xPubKeyResult = await this._api.sendCommand(
       new GetExtendedPublicKeyCommand({
@@ -55,12 +56,14 @@ export class PrepareWalletPolicyTask {
         derivationPath: wallet.derivationPath,
       }),
     );
+    console.log("XPUB", xPubKeyResult);
     if (!isSuccessCommandResult(xPubKeyResult)) {
       return xPubKeyResult;
     }
     const masterFingerprintResult = await this._api.sendCommand(
       new GetMasterFingerprintCommand(),
     );
+    console.log("MASTER FINGERPRINT", masterFingerprintResult);
     if (!isSuccessCommandResult(masterFingerprintResult)) {
       return masterFingerprintResult;
     }
