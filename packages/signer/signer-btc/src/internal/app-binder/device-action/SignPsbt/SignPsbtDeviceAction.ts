@@ -13,22 +13,21 @@ import { Left, Right } from "purify-ts";
 import { assign, fromPromise, setup } from "xstate";
 
 import {
-  type SignMessageDAError,
-  type SignMessageDAInput,
-  type SignMessageDAIntermediateValue,
-  type SignMessageDAInternalState,
-  type SignMessageDAOutput,
-} from "@api/app-binder/SignMessageDeviceActionTypes";
+  type SignPsbtDAError,
+  type SignPsbtDAInput,
+  type SignPsbtDAIntermediateValue,
+  type SignPsbtDAInternalState,
+  type SignPsbtDAOutput,
+} from "@api/app-binder/SignPsbtDeviceActionTypes";
+import { type Psbt } from "@api/model/Psbt";
 import { type Signature } from "@api/model/Signature";
+import { type Wallet as ApiWallet } from "@api/model/Wallet";
 import { type BitcoinAppErrorCodes } from "@internal/app-binder/command/utils/bitcoinAppErrors";
-import {
-  SendSignMessageTask,
-  type SendSignMessageTaskArgs,
-} from "@internal/app-binder/task/SignMessageTask";
+import { SignPsbtTask } from "@internal/app-binder/task/SignPsbtTask";
 
 export type MachineDependencies = {
-  readonly signMessage: (arg0: {
-    input: SendSignMessageTaskArgs;
+  readonly signPsbt: (arg0: {
+    input: { wallet: ApiWallet; psbt: Psbt };
   }) => Promise<CommandResult<Signature, BitcoinAppErrorCodes>>;
 };
 
@@ -36,31 +35,34 @@ export type ExtractMachineDependencies = (
   internalApi: InternalApi,
 ) => MachineDependencies;
 
-export class SignMessageDeviceAction extends XStateDeviceAction<
-  SignMessageDAOutput,
-  SignMessageDAInput,
-  SignMessageDAError,
-  SignMessageDAIntermediateValue,
-  SignMessageDAInternalState
+export class SignPsbtDeviceAction extends XStateDeviceAction<
+  SignPsbtDAOutput,
+  SignPsbtDAInput,
+  SignPsbtDAError,
+  SignPsbtDAIntermediateValue,
+  SignPsbtDAInternalState
 > {
+  constructor(args: { input: SignPsbtDAInput; inspect?: boolean }) {
+    super(args);
+  }
   makeStateMachine(
     internalApi: InternalApi,
   ): DeviceActionStateMachine<
-    SignMessageDAOutput,
-    SignMessageDAInput,
-    SignMessageDAError,
-    SignMessageDAIntermediateValue,
-    SignMessageDAInternalState
+    SignPsbtDAOutput,
+    SignPsbtDAInput,
+    SignPsbtDAError,
+    SignPsbtDAIntermediateValue,
+    SignPsbtDAInternalState
   > {
     type types = StateMachineTypes<
-      SignMessageDAOutput,
-      SignMessageDAInput,
-      SignMessageDAError,
-      SignMessageDAIntermediateValue,
-      SignMessageDAInternalState
+      SignPsbtDAOutput,
+      SignPsbtDAInput,
+      SignPsbtDAError,
+      SignPsbtDAIntermediateValue,
+      SignPsbtDAInternalState
     >;
 
-    const { signMessage } = this.extractDependencies(internalApi);
+    const { signPsbt } = this.extractDependencies(internalApi);
 
     return setup({
       types: {
@@ -68,11 +70,12 @@ export class SignMessageDeviceAction extends XStateDeviceAction<
         context: {} as types["context"],
         output: {} as types["output"],
       },
+
       actors: {
         openAppStateMachine: new OpenAppDeviceAction({
           input: { appName: "Bitcoin" },
         }).makeStateMachine(internalApi),
-        signMessage: fromPromise(signMessage),
+        signPsbt: fromPromise(signPsbt),
       },
       guards: {
         noInternalError: ({ context }) => context._internalState.error === null,
@@ -87,7 +90,7 @@ export class SignMessageDeviceAction extends XStateDeviceAction<
       },
     }).createMachine({
       /** @xstate-layout N4IgpgJg5mDOIC5QGUCWUB2AFMAnWA9hgIYA2AsnLMTACJgBuqAxmAILMAuqRAdAPIAHMBjaDB9Jqw7ciAYghEwvVBgYEA1soLDR45J2Kcw5YswAWqsAG0ADAF1EoQQVipZGJyAAeiACwAzADsvACcABwAjKGRtuG2AGyRSX4ANCAAnoiRAEwArLy2uX6RQUGRpeHhfgC+NelomDj4RGSUsNR0jCzsXDwYvADC5mDMGkIiYhLd0n1EAEpwAK6knHJ2jkggLm4eXr4IoRG8eTlFOaWhQX45QaHpWQiRN4UBfu8JeaE3obY5OXUGuhsHhCCQKFQaGBJD0ZP0hiMxhM9NMpL0PItYCs1tZIptnK53P19ogjuETmdcpdrrd7pl-M8wnkgvkgvFbH48n4EkFASBGiCWuD2p1oTN0fCBc0wW1ITAFEoVGpNMo3E1Qa0IR0oRsvDsiUQSU88tVeOEktEEuE8m8cjcHqScicgokTXk8rZygFQgD6vzgdLNSKoTDZh5eFKNcK5WA5HhcARcLxBKQjAAzRMAW14asFMq1ot1W31ey2B0iJr8ZotoStNpu9vpCDtoTNHr8PoizyKvL9kaFsu1XTRcL4-fzwZgmOxw1GGnWDj1hNLoAOFwCBWC5u5RySEQdT1sra+OSt1wCAQuzICfPHQZjoYlY4DUcHounq1nY3WeKXu2JZaIOum5sgkO61tE4QHhWBS2HkCT-G8R5wc8N58hgBAQHAXh3tGQ5iiOcyeMWy4AauiAALQJAeVGFLY9EMYxDG9kC6oDgWIbiqOAzIlMj7cX+BrEeRCCNo8sS2CcRz-B6zIsnBaGsXm974fxREInOvHiGpGLLKsgkrj4iBnrwFwVgkCHfEeCQBNB3K8IEpxBO6ySep8in+mxE4Plx6m4W+UIGWRRlPJEVRmncOTmhyLI2QeUS8GFQRvPBXZRLWt4vuxk4EbCflZd5+EfpwX4aEFhqAU84RRYUpyXmBATJBeQTQZEARhKEG5Ne69GUplXkqaKOmSkszCsB05XCSFOSXgUyVshUdoJLYF7QYkvAXkUER3H45q1qE-XKXhQ2+eGACiuAJrgk1GjN+S8PNUTFMtq1Nrckl-O6wTct6KF5HUdRAA */
-      id: "SignMessageDeviceAction",
+      id: "SignPsbtDeviceAction",
       initial: "OpenAppDeviceAction",
       context: ({ input }) => {
         return {
@@ -98,6 +101,7 @@ export class SignMessageDeviceAction extends XStateDeviceAction<
           _internalState: {
             error: null,
             signature: null,
+            wallet: null,
           },
         };
       },
@@ -121,7 +125,7 @@ export class SignMessageDeviceAction extends XStateDeviceAction<
             onDone: {
               actions: assign({
                 _internalState: (_) => {
-                  return _.event.output.caseOf<SignMessageDAInternalState>({
+                  return _.event.output.caseOf<SignPsbtDAInternalState>({
                     Right: () => _.context._internalState,
                     Left: (error) => ({
                       ..._.context._internalState,
@@ -137,33 +141,22 @@ export class SignMessageDeviceAction extends XStateDeviceAction<
         CheckOpenAppDeviceActionResult: {
           always: [
             {
-              target: "SignMessage",
+              target: "SignPsbt",
               guard: "noInternalError",
             },
             "Error",
           ],
         },
-        SignMessage: {
-          entry: assign({
-            intermediateValue: {
-              requiredUserInteraction:
-                UserInteractionRequired.SignPersonalMessage,
-            },
-          }),
-          exit: assign({
-            intermediateValue: {
-              requiredUserInteraction: UserInteractionRequired.None,
-            },
-          }),
+        SignPsbt: {
           invoke: {
-            id: "signMessage",
-            src: "signMessage",
+            id: "signPsbt",
+            src: "signPsbt",
             input: ({ context }) => ({
-              derivationPath: context.input.derivationPath,
-              message: context.input.message,
+              psbt: context.input.psbt,
+              wallet: context.input.wallet,
             }),
             onDone: {
-              target: "SignMessageResultCheck",
+              target: "SignPsbtResultCheck",
               actions: [
                 assign({
                   _internalState: ({ event, context }) => {
@@ -187,7 +180,7 @@ export class SignMessageDeviceAction extends XStateDeviceAction<
             },
           },
         },
-        SignMessageResultCheck: {
+        SignPsbtResultCheck: {
           always: [
             { guard: "noInternalError", target: "Success" },
             { target: "Error" },
@@ -211,15 +204,13 @@ export class SignMessageDeviceAction extends XStateDeviceAction<
   }
 
   extractDependencies(internalApi: InternalApi): MachineDependencies {
-    const signMessage = async (arg0: {
-      input: {
-        derivationPath: string;
-        message: string;
-      };
-    }) => new SendSignMessageTask(internalApi, arg0.input).run();
-
+    const signPsbt = async (arg0: {
+      input: { wallet: ApiWallet; psbt: Psbt };
+    }): Promise<CommandResult<Signature, BitcoinAppErrorCodes>> => {
+      return await new SignPsbtTask(internalApi, arg0.input).run();
+    };
     return {
-      signMessage,
+      signPsbt,
     };
   }
 }

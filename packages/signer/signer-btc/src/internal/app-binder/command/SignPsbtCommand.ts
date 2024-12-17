@@ -2,14 +2,13 @@ import {
   type Apdu,
   ApduBuilder,
   type ApduResponse,
-  type Command,
   type CommandResult,
   CommandResultFactory,
-  GlobalCommandErrorHandler,
 } from "@ledgerhq/device-management-kit";
 
+import { type BitcoinAppErrorCodes } from "@internal/app-binder/command/utils/bitcoinAppErrors";
+import { BtcCommand } from "@internal/app-binder/command/utils/BtcCommand";
 import { PROTOCOL_VERSION } from "@internal/app-binder/command/utils/constants";
-import { CommandUtils } from "@internal/utils/CommandUtils";
 
 export type SignPsbtCommandArgs = {
   globalCommitments: Uint8Array;
@@ -19,14 +18,17 @@ export type SignPsbtCommandArgs = {
   walletHmac: Uint8Array;
 };
 
-type SignPsbtCommandResponse = void;
+type SignPsbtCommandResponse = ApduResponse;
 
-export class SignPsbtCommand
-  implements Command<SignPsbtCommandResponse, SignPsbtCommandArgs>
-{
-  constructor(private _args: SignPsbtCommandArgs) {}
+export class SignPsbtCommand extends BtcCommand<
+  SignPsbtCommandResponse,
+  SignPsbtCommandArgs
+> {
+  constructor(private _args: SignPsbtCommandArgs) {
+    super();
+  }
 
-  getApdu(): Apdu {
+  override getApdu(): Apdu {
     const builder = new ApduBuilder({
       cla: 0xe1,
       ins: 0x04,
@@ -49,16 +51,11 @@ export class SignPsbtCommand
       .addBufferToData(walletHmac)
       .build();
   }
-  parseResponse(
+  override parseResponse(
     response: ApduResponse,
-  ): CommandResult<SignPsbtCommandResponse> {
-    if (!CommandUtils.isSuccessResponse(response)) {
-      return CommandResultFactory({
-        error: GlobalCommandErrorHandler.handle(response),
-      });
-    }
-    return CommandResultFactory({
-      data: undefined,
-    });
+  ): CommandResult<SignPsbtCommandResponse, BitcoinAppErrorCodes> {
+    return this._getError(response).orDefault(
+      CommandResultFactory({ data: response }),
+    );
   }
 }

@@ -3,21 +3,15 @@ import {
   ApduBuilder,
   ApduParser,
   type ApduResponse,
-  type Command,
   type CommandResult,
   CommandResultFactory,
-  CommandUtils,
-  GlobalCommandErrorHandler,
   InvalidStatusWordError,
-  isCommandErrorCode,
 } from "@ledgerhq/device-management-kit";
 
+import { BtcCommand } from "@internal/app-binder/command/utils/BtcCommand";
 import { PROTOCOL_VERSION } from "@internal/app-binder/command/utils/constants";
 
-import {
-  BitcoinAppCommandError,
-  bitcoinAppErrors,
-} from "./utils/bitcoinAppErrors";
+import { type BitcoinAppErrorCodes } from "./utils/bitcoinAppErrors";
 
 export type GetWalletAddressCommandResponse = {
   readonly address: string;
@@ -31,13 +25,15 @@ export type GetWalletAddressCommandArgs = {
   readonly addressIndex: number;
 };
 
-export class GetWalletAddressCommand
-  implements
-    Command<GetWalletAddressCommandResponse, GetWalletAddressCommandArgs>
-{
-  constructor(private readonly args: GetWalletAddressCommandArgs) {}
+export class GetWalletAddressCommand extends BtcCommand<
+  GetWalletAddressCommandResponse,
+  GetWalletAddressCommandArgs
+> {
+  constructor(private readonly args: GetWalletAddressCommandArgs) {
+    super();
+  }
 
-  getApdu(): Apdu {
+  override getApdu(): Apdu {
     return new ApduBuilder({
       cla: 0xe1,
       ins: 0x03,
@@ -52,39 +48,25 @@ export class GetWalletAddressCommand
       .build();
   }
 
-  parseResponse(
+  override parseResponse(
     response: ApduResponse,
-  ): CommandResult<GetWalletAddressCommandResponse> {
-    const parser = new ApduParser(response);
-    const errorCode = parser.encodeToHexaString(response.statusCode);
-    if (isCommandErrorCode(errorCode, bitcoinAppErrors)) {
-      return CommandResultFactory<GetWalletAddressCommandResponse>({
-        error: new BitcoinAppCommandError({
-          ...bitcoinAppErrors[errorCode],
-          errorCode,
-        }),
-      });
-    }
+  ): CommandResult<GetWalletAddressCommandResponse, BitcoinAppErrorCodes> {
+    return this._getError(response).orDefaultLazy(() => {
+      const parser = new ApduParser(response);
+      if (response.data.length === 0) {
+        return CommandResultFactory({
+          error: new InvalidStatusWordError(
+            "Failed to extract address from response",
+          ),
+        });
+      }
 
-    if (!CommandUtils.isSuccessResponse(response)) {
+      const address = parser.encodeToString(response.data);
       return CommandResultFactory({
-        error: GlobalCommandErrorHandler.handle(response),
+        data: {
+          address,
+        },
       });
-    }
-
-    if (response.data.length === 0) {
-      return CommandResultFactory({
-        error: new InvalidStatusWordError(
-          "Failed to extract address from response",
-        ),
-      });
-    }
-
-    const address = parser.encodeToString(response.data);
-    return CommandResultFactory({
-      data: {
-        address,
-      },
     });
   }
 }

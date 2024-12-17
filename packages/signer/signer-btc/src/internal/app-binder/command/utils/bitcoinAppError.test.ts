@@ -3,7 +3,7 @@ import { DeviceExchangeError } from "@ledgerhq/device-management-kit";
 import {
   BitcoinAppCommandError,
   type BitcoinAppErrorCodes,
-  bitcoinAppErrors,
+  BTC_APP_ERRORS,
 } from "./bitcoinAppErrors";
 
 describe("BitcoinAppCommandError", () => {
@@ -34,15 +34,6 @@ describe("BitcoinAppCommandError", () => {
     expect(error.message).toBe(customMessage);
   });
 
-  it("should set the default message when none is provided", () => {
-    const error = new BitcoinAppCommandError({
-      message: undefined,
-      errorCode: "6985",
-    });
-
-    expect(error.message).toBe("An error occurred during device exchange.");
-  });
-
   it("should set the correct customErrorCode", () => {
     const errorCode: BitcoinAppErrorCodes = "6A86";
     const error = new BitcoinAppCommandError({
@@ -50,19 +41,19 @@ describe("BitcoinAppCommandError", () => {
       errorCode,
     });
 
-    expect(error.customErrorCode).toBe(errorCode);
+    expect(error.errorCode).toBe(errorCode);
   });
 
   it("should correlate error codes with messages from bitcoinAppErrors", () => {
     const errorCode: BitcoinAppErrorCodes = "6E00";
-    const expectedMessage = bitcoinAppErrors[errorCode].message;
+    const expectedMessage = BTC_APP_ERRORS[errorCode].message;
 
     const error = new BitcoinAppCommandError({
       message: expectedMessage,
       errorCode,
     });
 
-    expect(error.customErrorCode).toBe(errorCode);
+    expect(error.errorCode).toBe(errorCode);
     expect(error.message).toBe(expectedMessage);
 
     expect(error).toBeInstanceOf(DeviceExchangeError);

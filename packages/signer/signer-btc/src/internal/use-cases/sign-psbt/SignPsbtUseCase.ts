@@ -1,11 +1,13 @@
 import { inject, injectable } from "inversify";
 
-import { SignMessageDAReturnType } from "@api/app-binder/SignMessageDeviceActionTypes";
+import { SignPsbtDAReturnType } from "@api/app-binder/SignPsbtDeviceActionTypes";
+import { Psbt } from "@api/model/Psbt";
+import { Wallet } from "@api/model/Wallet";
 import { BtcAppBinder } from "@internal/app-binder/BtcAppBinder";
 import { appBinderTypes } from "@internal/app-binder/di/appBinderTypes";
 
 @injectable()
-export class SignMessageUseCase {
+export class SignPsbtUseCase {
   private _appBinder: BtcAppBinder;
 
   constructor(
@@ -15,11 +17,10 @@ export class SignMessageUseCase {
     this._appBinder = appBinding;
   }
 
-  execute(derivationPath: string, message: string): SignMessageDAReturnType {
-    // 1- Sign msg using the app binding
-    return this._appBinder.signMessage({
-      derivationPath,
-      message,
+  execute(wallet: Wallet, psbt: Psbt): SignPsbtDAReturnType {
+    return this._appBinder.signPsbt({
+      wallet,
+      psbt,
     });
   }
 }
