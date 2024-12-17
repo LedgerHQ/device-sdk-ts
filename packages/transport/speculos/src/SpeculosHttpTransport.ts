@@ -1,10 +1,13 @@
 import {
   type ApduResponse,
+  bufferToHexaString,
   type ConnectError,
   type DeviceId,
-  type DeviceModelId,
+  DeviceModel,
+  DeviceModelId,
   DisconnectError,
   type DisconnectHandler,
+  DiscoveredDevice,
   type DmkConfig,
   type DmkError,
   type LoggerPublisherService,
@@ -19,21 +22,41 @@ import {
 
 import { type Either, Left, Right } from "purify-ts";
 import { from, mergeMap, type Observable } from "rxjs";
+import { HttpSpeculosDatasource } from "./datasource/HttpSpeculosDatasource";
+import { SpeculosDatasource } from "./datasource/SpeculosDatasource";
 
 export const mockserverIdentifier: TransportIdentifier =
   "SPECULOS_HTTP_TRANSPORT";
 
 export class SpeculosHttpTransport implements Transport {
   private logger: LoggerPublisherService;
-  private mockClient: MockClient;
   private readonly identifier: TransportIdentifier = mockserverIdentifier;
+  private readonly _speculosDataSource: SpeculosDatasource;
+  private readonly speculosDevice: TransportDiscoveredDevice = {
+    id: "SpeculosID", //TODO make it dynamic at creation
+    deviceModel: {
+      id: DeviceModelId.STAX,
+      productName: "Speculos - App Name - version",
+      usbProductId: 0x10,
+      bootloaderUsbProductId: 0x0001,
+      getBlockSize() {
+        return 32;
+      },
+      usbOnly: true,
+      memorySize: 320 * 1024,
+      masks: [0x31100000],
+    },
+    transport: this.identifier,
+  };
 
   constructor(
     loggerServiceFactory: (tag: string) => LoggerPublisherService,
-    config: DmkConfig,
+    private readonly config: DmkConfig,
   ) {
-    this.logger = loggerServiceFactory("MockTransport");
-    this.mockClient = new MockClient(config.mockUrl);
+    this.logger = loggerServiceFactory("SpeculosTransport");
+    this._speculosDataSource = new HttpSpeculosDatasource(
+      "https://localhost:5001/",
+    ); // See how to pass properly speculos config.
   }
 
   isSupported(): boolean {
@@ -50,26 +73,7 @@ export class SpeculosHttpTransport implements Transport {
 
   startDiscovering(): Observable<TransportDiscoveredDevice> {
     this.logger.debug("startDiscovering");
-    return from(
-      this.mockClient.scan().then((devices: Device[]) => {
-        return devices.map((device: Device) => ({
-          id: device.id,
-          deviceModel: {
-            id: device.device_type as DeviceModelId,
-            productName: device.name,
-            usbProductId: 0x10,
-            bootloaderUsbProductId: 0x0001,
-            getBlockSize() {
-              return 32;
-            },
-            usbOnly: true,
-            memorySize: 320 * 1024,
-            masks: [0x31100000],
-          },
-          transport: this.identifier,
-        }));
-      }),
-    ).pipe(mergeMap((device) => device));
+    return from([this.speculosDevice]);
   }
 
   stopDiscovering(): void {
@@ -84,7 +88,6 @@ export class SpeculosHttpTransport implements Transport {
     this.logger.debug("connect");
     const sessionId: string = params.deviceId;
     try {
-      const session: Session = await this.mockClient.connect(sessionId);
       const connectedDevice = {
         sendApdu: (apdu) => {
           return this.sendApdu(
@@ -94,22 +97,7 @@ export class SpeculosHttpTransport implements Transport {
             apdu,
           );
         },
-        deviceModel: {
-          id: session.device.device_type,
-          productName: session.device.name,
-          usbProductId: 0x10,
-          legacyUsbProductId: 0x0001,
-          bootloaderUsbProductId: 0x10,
-          getBlockSize() {
-            return 32;
-          },
-          usbOnly: true,
-          memorySize: 320 * 1024,
-          masks: [0x31100000],
-        },
-        id: params.deviceId,
-        type: session.device.connectivity_type,
-        transport: this.identifier,
+        deviceModel: this.speculosDevice.deviceModel,
       } as TransportConnectedDevice;
       return Right(connectedDevice);
     } catch (error) {
@@ -121,18 +109,7 @@ export class SpeculosHttpTransport implements Transport {
     connectedDevice: TransportConnectedDevice;
   }): Promise<Either<DmkError, void>> {
     this.logger.debug("disconnect");
-    const sessionId: string = params.connectedDevice.id;
-    try {
-      const success: boolean = await this.mockClient.disconnect(sessionId);
-      if (!success) {
-        return Left(
-          new DisconnectError(new Error(`Failed to disconnect ${sessionId}`)),
-        );
-      }
-      return Right(void 0);
-    } catch (error) {
-      return Left(new DisconnectError(error as Error));
-    }
+    return Right(void 0);
   }
 
   async sendApdu(
@@ -142,30 +119,30 @@ export class SpeculosHttpTransport implements Transport {
     apdu: Uint8Array,
   ): Promise<Either<DmkError, ApduResponse>> {
     this.logger.debug("send");
-    try {
-      const response: CommandResponse = await this.mockClient.send(
-        sessionId,
-        apdu,
-      );
-      return Right({
-        statusCode: this.mockClient.fromHexString(
-          response.response.substring(
-            response.response.length - 4,
-            response.response.length,
-          ),
-        ),
-        data: this.mockClient.fromHexString(
-          response.response.substring(0, response.response.length - 4),
-        ),
-      } as ApduResponse);
-    } catch (error) {
-      onDisconnect(deviceId);
-      return Left(new NoAccessibleDeviceError(error as Error));
+    const hexApdu = bufferToHexaString(apdu);
+    const hexResponse: string =
+      await this._speculosDataSource.postAdpu(hexApdu);
+    return Right({
+      statusCode: this.fromHexString(
+        hexResponse.substring(hexResponse.length - 4, hexResponse.length),
+      ),
+      data: this.fromHexString(
+        hexResponse.substring(0, hexResponse.length - 4),
+      ),
+    } as ApduResponse);
+  }
+
+  private fromHexString(hexString: string): Uint8Array {
+    if (!hexString) {
+      return Uint8Array.from([]);
     }
+    return new Uint8Array(
+      hexString.match(/.{1,2}/g)!.map((byte) => parseInt(byte, 16)),
+    );
   }
 }
 
-export const mockserverTransportFactory: TransportFactory = ({
+export const speculosHtttpTransportFactory: TransportFactory = ({
   config,
   loggerServiceFactory,
-}) => new MockTransport(loggerServiceFactory, config);
+}) => new SpeculosHttpTransport(loggerServiceFactory, config);

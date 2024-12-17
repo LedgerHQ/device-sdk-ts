@@ -1,3 +1,3 @@
 export interface SpeculosDatasource {
-  send(): Promise<void>;
+  postAdpu(apdu: string): Promise<string>;
 }

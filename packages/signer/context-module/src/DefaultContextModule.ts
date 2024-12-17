@@ -25,11 +25,11 @@ import { type TransactionContextLoader } from "./transaction/domain/TransactionC
 import { type TrustedNameContextLoader } from "./trusted-name/domain/TrustedNameContextLoader";
 import { typedDataTypes } from "./typed-data/di/typedDataTypes";
 import type { TypedDataContextLoader } from "./typed-data/domain/TypedDataContextLoader";
+import { web3CheckTypes } from "./web3-check/di/web3CheckTypes";
+import { type Web3CheckContextLoader } from "./web3-check/domain/Web3CheckContextLoader";
+import { type Web3CheckContext } from "./web3-check/domain/web3CheckTypes";
 import { type ContextModule } from "./ContextModule";
 import { makeContainer } from "./di";
-import { Web3CheckContextLoader } from "./web3-check/domain/Web3CheckContextLoader";
-import { web3CheckTypes } from "./web3-check/di/web3CheckTypes";
-import { Web3CheckContext } from "./web3-check/domain/web3CheckTypes";
 
 export class DefaultContextModule implements ContextModule {
   private _container: Container;
@@ -106,7 +106,19 @@ export class DefaultContextModule implements ContextModule {
 
   public async getWeb3Checks(
     transactionContext: Web3CheckContext,
-  ): Promise<ClearSignContext> {
-    return this._web3CheckLoader.load(transactionContext);
+  ): Promise<ClearSignContext | null> {
+    const web3Checks = await this._web3CheckLoader.load(transactionContext);
+
+    if (web3Checks.isLeft()) {
+      return null;
+    } else {
+      const web3ChecksValue = web3Checks.unsafeCoerce();
+      // add Nano PKI fetch here should looks like =>
+      // const web3CheckCertificate = await this._pkiCertificateLoader.fetchCertificate(...)
+      return {
+        type: ClearSignContextType.WEB3_CHECK,
+        payload: web3ChecksValue.descriptor,
+      };
+    }
   }
 }

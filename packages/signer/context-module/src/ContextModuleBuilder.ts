@@ -4,9 +4,9 @@ import {
 } from "./config/model/ContextModuleConfig";
 import { type ContextLoader } from "./shared/domain/ContextLoader";
 import { type TypedDataContextLoader } from "./typed-data/domain/TypedDataContextLoader";
+import { type Web3CheckContextLoader } from "./web3-check/domain/Web3CheckContextLoader";
 import { type ContextModule } from "./ContextModule";
 import { DefaultContextModule } from "./DefaultContextModule";
-import { Web3CheckContextLoader } from "./web3-check/domain/Web3CheckContextLoader";
 
 const DEFAULT_CAL_URL = "https://crypto-assets-service.api.ledger.com/v1";
 const DEFAULT_WEB3_CHECKS_URL =

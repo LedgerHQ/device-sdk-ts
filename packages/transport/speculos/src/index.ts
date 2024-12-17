@@ -1,1 +1,1 @@
-export * from "./MockserverTransport";
+export * from "./SpeculosHttpTransport";

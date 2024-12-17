@@ -21,6 +21,7 @@ import {
   type ProvideTokenInformationCommandResponse,
 } from "@internal/app-binder/command/ProvideTokenInformationCommand";
 import { ProvideTrustedNameCommand } from "@internal/app-binder/command/ProvideTrustedNameCommand";
+import { ProvideWeb3CheckCommand } from "@internal/app-binder/command/ProvideWeb3CheckCommand";
 import {
   SetExternalPluginCommand,
   type SetExternalPluginCommandErrorCodes,
@@ -128,6 +129,10 @@ export class ProvideTransactionContextTask {
           ),
         });
       }
+      case ClearSignContextType.WEB3_CHECK:
+        return await this.api.sendCommand(
+          new ProvideWeb3CheckCommand({ payload }),
+        );
       default: {
         const uncoveredType: never = type;
         return CommandResultFactory({

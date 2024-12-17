@@ -47,6 +47,7 @@ describe("EthAppBinder", () => {
     getContext: jest.fn(),
     getContexts: jest.fn(),
     getTypedDataFilters: jest.fn(),
+    getWeb3Checks: jest.fn(),
   };
   const mockedMapper: TransactionMapperService = {
     mapTransactionToSubset: jest.fn(),
