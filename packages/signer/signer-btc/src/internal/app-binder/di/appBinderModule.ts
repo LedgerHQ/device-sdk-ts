@@ -2,6 +2,7 @@ import { ContainerModule } from "inversify";
 
 import { BtcAppBinder } from "@internal/app-binder/BtcAppBinder";
 import { appBinderTypes } from "@internal/app-binder/di/appBinderTypes";
+import { SignPsbtTask } from "@internal/app-binder/task/SignPsbtTask";
 
 export const appBinderModuleFactory = () =>
   new ContainerModule(
@@ -15,5 +16,6 @@ export const appBinderModuleFactory = () =>
       _onDeactivation,
     ) => {
       bind(appBinderTypes.AppBinder).to(BtcAppBinder);
+      bind(appBinderTypes.SignPsbtTask).to(SignPsbtTask);
     },
   );

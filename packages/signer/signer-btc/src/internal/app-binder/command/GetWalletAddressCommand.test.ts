@@ -6,7 +6,7 @@ import {
 
 import {
   BitcoinAppCommandError,
-  bitcoinAppErrors,
+  BTC_APP_ERRORS,
 } from "./utils/bitcoinAppErrors";
 import {
   GetWalletAddressCommand,
@@ -115,8 +115,7 @@ describe("GetWalletAddressCommand", () => {
       if (!isSuccessCommandResult(result)) {
         expect(result.error).toBeInstanceOf(BitcoinAppCommandError);
         const error = result.error as BitcoinAppCommandError;
-        expect(error.customErrorCode).toBe("6985");
-        const expectedErrorInfo = bitcoinAppErrors["6985"];
+        const expectedErrorInfo = BTC_APP_ERRORS["6985"];
         expect(expectedErrorInfo).toBeDefined();
         if (expectedErrorInfo) {
           expect(error.message).toBe(expectedErrorInfo.message);

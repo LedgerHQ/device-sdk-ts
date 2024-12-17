@@ -8,10 +8,14 @@ import { inject, injectable } from "inversify";
 
 import {
   GetExtendedPublicKeyDAInput,
-  GetExtendedPublicKeyReturnType,
+  GetExtendedPublicKeyDAReturnType,
 } from "@api/app-binder/GetExtendedPublicKeyDeviceActionTypes";
-import { SignMessageDAReturnType } from "@api/index";
+import { SignMessageDAReturnType } from "@api/app-binder/SignMessageDeviceActionTypes";
+import { SignPsbtDAReturnType } from "@api/app-binder/SignPsbtDeviceActionTypes";
+import { Psbt } from "@api/model/Psbt";
+import { Wallet } from "@api/model/Wallet";
 import { GetExtendedPublicKeyCommand } from "@internal/app-binder/command/GetExtendedPublicKeyCommand";
+import { SignPsbtDeviceAction } from "@internal/app-binder/device-action/SignPsbt/SignPsbtDeviceAction";
 import { externalTypes } from "@internal/externalTypes";
 
 import { SignMessageDeviceAction } from "./device-action/SignMessage/SignMessageDeviceAction";
@@ -25,7 +29,7 @@ export class BtcAppBinder {
 
   getExtendedPublicKey(
     args: GetExtendedPublicKeyDAInput,
-  ): GetExtendedPublicKeyReturnType {
+  ): GetExtendedPublicKeyDAReturnType {
     return this.dmk.executeDeviceAction({
       sessionId: this.sessionId,
       deviceAction: new SendCommandInAppDeviceAction({
@@ -50,6 +54,18 @@ export class BtcAppBinder {
         input: {
           derivationPath: args.derivationPath,
           message: args.message,
+        },
+      }),
+    });
+  }
+
+  signPsbt(args: { psbt: Psbt; wallet: Wallet }): SignPsbtDAReturnType {
+    return this.dmk.executeDeviceAction({
+      sessionId: this.sessionId,
+      deviceAction: new SignPsbtDeviceAction({
+        input: {
+          psbt: args.psbt,
+          wallet: args.wallet,
         },
       }),
     });

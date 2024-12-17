@@ -1,5 +1,7 @@
 import React, { useMemo } from "react";
 import {
+  DefaultDescriptorTemplate,
+  DefaultWallet,
   type GetExtendedDAIntermediateValue,
   type GetExtendedPublicKeyDAError,
   type GetExtendedPublicKeyDAOutput,
@@ -7,10 +9,14 @@ import {
   type SignMessageDAError,
   type SignMessageDAIntermediateValue,
   type SignMessageDAOutput,
+  type SignPsbtDAError,
+  type SignPsbtDAIntermediateValue,
+  type SignPsbtDAOutput,
 } from "@ledgerhq/device-signer-kit-bitcoin";
 
 import { DeviceActionsList } from "@/components/DeviceActionsView/DeviceActionsList";
 import { type DeviceActionProps } from "@/components/DeviceActionsView/DeviceActionTester";
+import { psbtB64 } from "@/components/SignerBtcView/psbt";
 import { useDmk } from "@/providers/DeviceManagementKitProvider";
 
 const DEFAULT_DERIVATION_PATH = "84'/0'/0'";
@@ -77,6 +83,33 @@ export const SignerBtcView: React.FC<{ sessionId: string }> = ({
         },
         SignMessageDAError,
         SignMessageDAIntermediateValue
+      >,
+      {
+        title: "Sign psbt",
+        description:
+          "Perform all the actions necessary to sign a PSBT with the device",
+        executeDeviceAction: ({ derivationPath, psbt }) => {
+          if (!signer) {
+            throw new Error("Signer not initialized");
+          }
+          return signer.signPsbt(
+            new DefaultWallet(derivationPath, DefaultDescriptorTemplate.LEGACY),
+            psbt,
+          );
+        },
+        initialValues: {
+          derivationPath: DEFAULT_DERIVATION_PATH,
+          psbt: psbtB64,
+        },
+        deviceModelId,
+      } satisfies DeviceActionProps<
+        SignPsbtDAOutput,
+        {
+          psbt: string;
+          derivationPath: string;
+        },
+        SignPsbtDAError,
+        SignPsbtDAIntermediateValue
       >,
     ],
     [deviceModelId, signer],
