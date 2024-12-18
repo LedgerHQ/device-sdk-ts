@@ -3,15 +3,12 @@ import {
   bufferToHexaString,
   type ConnectError,
   type DeviceId,
-  DeviceModel,
   DeviceModelId,
-  DisconnectError,
   type DisconnectHandler,
-  DiscoveredDevice,
   type DmkConfig,
   type DmkError,
+  GeneralDmkError,
   type LoggerPublisherService,
-  NoAccessibleDeviceError,
   OpeningConnectionError,
   type Transport,
   type TransportConnectedDevice,
@@ -19,18 +16,18 @@ import {
   type TransportFactory,
   type TransportIdentifier,
 } from "@ledgerhq/device-management-kit";
-
 import { type Either, Left, Right } from "purify-ts";
-import { from, mergeMap, type Observable } from "rxjs";
-import { HttpSpeculosDatasource } from "./datasource/HttpSpeculosDatasource";
-import { SpeculosDatasource } from "./datasource/SpeculosDatasource";
+import { delay, from, type Observable } from "rxjs";
 
-export const mockserverIdentifier: TransportIdentifier =
+import { HttpSpeculosDatasource } from "@internal/datasource/HttpSpeculosDatasource";
+import { type SpeculosDatasource } from "@internal/datasource/SpeculosDatasource";
+
+export const speculosIdentifier: TransportIdentifier =
   "SPECULOS_HTTP_TRANSPORT";
 
-export class SpeculosHttpTransport implements Transport {
+export class SpeculosTransport implements Transport {
   private logger: LoggerPublisherService;
-  private readonly identifier: TransportIdentifier = mockserverIdentifier;
+  private readonly identifier: TransportIdentifier = speculosIdentifier;
   private readonly _speculosDataSource: SpeculosDatasource;
   private readonly speculosDevice: TransportDiscoveredDevice = {
     id: "SpeculosID", //TODO make it dynamic at creation
@@ -51,11 +48,11 @@ export class SpeculosHttpTransport implements Transport {
 
   constructor(
     loggerServiceFactory: (tag: string) => LoggerPublisherService,
-    private readonly config: DmkConfig,
+    _config: DmkConfig,
   ) {
     this.logger = loggerServiceFactory("SpeculosTransport");
     this._speculosDataSource = new HttpSpeculosDatasource(
-      "https://localhost:5001/",
+      "http://127.0.0.1:5000",
     ); // See how to pass properly speculos config.
   }
 
@@ -86,6 +83,7 @@ export class SpeculosHttpTransport implements Transport {
     onDisconnect: DisconnectHandler;
   }): Promise<Either<ConnectError, TransportConnectedDevice>> {
     this.logger.debug("connect");
+    await delay(500);
     const sessionId: string = params.deviceId;
     try {
       const connectedDevice = {
@@ -105,7 +103,7 @@ export class SpeculosHttpTransport implements Transport {
     }
   }
 
-  async disconnect(params: {
+  async disconnect(_params: {
     connectedDevice: TransportConnectedDevice;
   }): Promise<Either<DmkError, void>> {
     this.logger.debug("disconnect");
@@ -113,25 +111,30 @@ export class SpeculosHttpTransport implements Transport {
   }
 
   async sendApdu(
-    sessionId: string,
-    deviceId: DeviceId,
-    onDisconnect: DisconnectHandler,
+    _sessionId: string,
+    _deviceId: DeviceId,
+    _onDisconnect: DisconnectHandler,
     apdu: Uint8Array,
   ): Promise<Either<DmkError, ApduResponse>> {
-    this.logger.debug("send");
-    const hexApdu = bufferToHexaString(apdu);
-    const hexResponse: string =
-      await this._speculosDataSource.postAdpu(hexApdu);
-    return Right({
-      statusCode: this.fromHexString(
-        hexResponse.substring(hexResponse.length - 4, hexResponse.length),
-      ),
-      data: this.fromHexString(
-        hexResponse.substring(0, hexResponse.length - 4),
-      ),
-    } as ApduResponse);
+    try {
+      this.logger.debug("send");
+      const hexApdu = bufferToHexaString(apdu).substring(2);
+      const hexResponse: string =
+        await this._speculosDataSource.postAdpu(hexApdu);
+      return Right({
+        statusCode: this.fromHexString(
+          hexResponse.substring(hexResponse.length - 4, hexResponse.length),
+        ),
+        data: this.fromHexString(
+          hexResponse.substring(0, hexResponse.length - 4),
+        ),
+      } as ApduResponse);
+    } catch (error) {
+      return Left(new GeneralDmkError(error));
+    }
   }
 
+  //TODO: Move this to a helper
   private fromHexString(hexString: string): Uint8Array {
     if (!hexString) {
       return Uint8Array.from([]);
@@ -142,7 +145,7 @@ export class SpeculosHttpTransport implements Transport {
   }
 }
 
-export const speculosHtttpTransportFactory: TransportFactory = ({
+export const speculosTransportFactory: TransportFactory = ({
   config,
   loggerServiceFactory,
-}) => new SpeculosHttpTransport(loggerServiceFactory, config);
+}) => new SpeculosTransport(loggerServiceFactory, config);

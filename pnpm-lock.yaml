@@ -148,6 +148,9 @@ importers:
       '@ledgerhq/device-transport-kit-mockserver':
         specifier: workspace:*
         version: link:../../packages/transport/mockserver
+      '@ledgerhq/device-transport-kit-speculos':
+        specifier: workspace:*
+        version: link:../../packages/transport/speculos
       '@ledgerhq/device-transport-kit-web-ble':
         specifier: workspace:*
         version: link:../../packages/transport/web-ble

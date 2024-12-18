@@ -8,9 +8,11 @@
     "moduleResolution": "bundler",
     "emitDeclarationOnly": true,
     "paths": {
-      "@api/*": ["./src/api/*"]
+      "@root/*": ["./*"],
+      "@api/*": ["./src/api/*"],
+      "@internal/*": ["./src/internal/*"]
     },
     "resolveJsonModule": true
   },
-  "include": ["src", "jest.*.ts"]
+  "include": ["index.ts", "src", "jest.*.ts"]
 }

@@ -1,6 +1,7 @@
 import React, { useCallback } from "react";
 import { type DmkError } from "@ledgerhq/device-management-kit";
 import { mockserverIdentifier } from "@ledgerhq/device-transport-kit-mockserver";
+import { speculosIdentifier } from "@ledgerhq/device-transport-kit-speculos";
 import { webBleIdentifier } from "@ledgerhq/device-transport-kit-web-ble";
 import { webHidIdentifier } from "@ledgerhq/device-transport-kit-web-hid";
 import { Button, Flex } from "@ledgerhq/react-ui";
@@ -65,34 +66,40 @@ export const ConnectDeviceActions = ({
   // also we should not have a different appearance when the mock server is enabled
   // we should just display the list of active transports somewhere in the sidebar, discreetly
 
-  return transport === mockserverIdentifier ? (
-    <ConnectButton
-      onClick={() => onSelectDeviceClicked(mockserverIdentifier)}
-      variant="main"
-      backgroundColor="main"
-      size="large"
-      data-testid="CTA_select-device"
-    >
-      Select a device
-    </ConnectButton>
-  ) : (
-    <Flex>
-      <ConnectButton
-        onClick={() => onSelectDeviceClicked(webHidIdentifier)}
-        variant="main"
-        backgroundColor="main"
-        size="large"
-      >
-        Select a USB device
-      </ConnectButton>
-      <ConnectButton
-        onClick={() => onSelectDeviceClicked(webBleIdentifier)}
-        variant="main"
-        backgroundColor="main"
-        size="large"
-      >
-        Select a BLE device
-      </ConnectButton>
-    </Flex>
-  );
+  switch (transport) {
+    case mockserverIdentifier:
+    case speculosIdentifier:
+      return (
+        <ConnectButton
+          onClick={() => onSelectDeviceClicked(transport)}
+          variant="main"
+          backgroundColor="main"
+          size="large"
+          data-testid="CTA_select-device"
+        >
+          Select a device
+        </ConnectButton>
+      );
+    default:
+      return (
+        <Flex>
+          <ConnectButton
+            onClick={() => onSelectDeviceClicked(webHidIdentifier)}
+            variant="main"
+            backgroundColor="main"
+            size="large"
+          >
+            Select a USB device
+          </ConnectButton>
+          <ConnectButton
+            onClick={() => onSelectDeviceClicked(webBleIdentifier)}
+            variant="main"
+            backgroundColor="main"
+            size="large"
+          >
+            Select a BLE device
+          </ConnectButton>
+        </Flex>
+      );
+  }
 };

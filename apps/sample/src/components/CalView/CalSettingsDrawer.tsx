@@ -58,7 +58,8 @@ export function CalSettingsDrawer({ onClose }: CalSettingsDrawerProps) {
     }
 
     const newSettings: ContextModuleCalConfig = {
-      url,
+      url: url,
+      web3checksUrl: "web3CheckUrl",
       mode,
       branch,
     };

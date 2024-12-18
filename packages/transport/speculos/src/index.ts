@@ -1,1 +1,1 @@
-export * from "./SpeculosHttpTransport";
+export * from "./api/SpeculosTransport";
