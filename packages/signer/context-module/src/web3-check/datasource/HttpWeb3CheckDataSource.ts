@@ -30,12 +30,12 @@ export class HttpWeb3CheckDataSource implements Web3CheckDataSource {
           from: params.from,
           raw: params.rawTx,
         },
-        chainId: params.chainId,
+        chain: params.chainId,
       };
       const response = await axios.request<Web3CheckDto>({
         method: "POST",
-        url: `${this.config.cal.web3checksUrl}/blockchain/ethereum/scan/tx`,
-        params: requestDto,
+        url: `${this.config.cal.web3checksUrl}`,
+        data: requestDto,
         headers: {
           "X-Ledger-Client-Version": `context-module/${PACKAGE.version}`,
         },

@@ -76,6 +76,7 @@ export type MachineDependencies = {
   readonly provideContext: (arg0: {
     input: {
       clearSignContexts: ClearSignContextSuccess[];
+      web3Check: ClearSignContextSuccess | null;
     };
   }) => Promise<
     Maybe<CommandErrorResult<ProvideTransactionContextTaskErrorCodes>>
@@ -292,19 +293,8 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
                     console.log(event.output);
                     return {
                       ...context._internalState,
-                      web3Check: null,
+                      web3Check: event.output.web3Check,
                     };
-
-                    /*if (event.output.data != null)) {
-                      return {
-                        ...context._internalState,
-                        web3Check: event.output,
-                      };
-                    }
-                    return {
-                      ...context._internalState,
-                      error: event.output.error,
-                    };*/
                   },
                 }),
               ],
@@ -365,6 +355,7 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
             input: ({ context }) => ({
               clearSignContexts: context._internalState
                 .clearSignContexts as ClearSignContextSuccess[],
+              web3Check: context._internalState.web3Check,
             }),
             onDone: {
               actions: assign({
@@ -520,10 +511,12 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
     const provideContext = async (arg0: {
       input: {
         clearSignContexts: ClearSignContextSuccess[];
+        web3Check: ClearSignContextSuccess | null;
       };
     }) =>
       new ProvideTransactionContextTask(internalApi, {
         clearSignContexts: arg0.input.clearSignContexts,
+        web3Check: arg0.input.web3Check,
       }).run();
 
     const provideGenericContext = async (arg0: {

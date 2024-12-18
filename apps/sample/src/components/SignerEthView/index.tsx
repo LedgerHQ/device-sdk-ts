@@ -103,11 +103,23 @@ export const SignerEthView: React.FC<{ sessionId: string }> = ({
           if (!signer) {
             throw new Error("Signer not initialized");
           }
-          return signer.signTransaction(
-            derivationPath,
-            ethers.Transaction.from(transaction),
-            { domain: recipientDomain },
-          );
+          try {
+            const parsedTransaction = JSON.parse(transaction);
+            if ("from" in parsedTransaction) {
+              delete parsedTransaction.from;
+            }
+            return signer.signTransaction(
+              derivationPath,
+              ethers.Transaction.from(parsedTransaction),
+              { domain: recipientDomain },
+            );
+          } catch (error) {
+            return signer.signTransaction(
+              derivationPath,
+              ethers.Transaction.from(transaction),
+              { domain: recipientDomain },
+            );
+          }
         },
         initialValues: {
           derivationPath: "44'/60'/0'/0/0",

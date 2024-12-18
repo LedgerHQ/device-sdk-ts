@@ -23,6 +23,7 @@ export type GetWeb3CheckTaskResult =
       readonly web3Check: ClearSignContextSuccess | null;
     }
   | {
+      readonly web3Check: null;
       error: DmkError;
     };
 
@@ -52,6 +53,7 @@ export class GetWeb3CheckTask {
     //check error
     if (!isSuccessCommandResult(configResult)) {
       return {
+        web3Check: null,
         error: configResult.error,
       };
     }
@@ -66,6 +68,7 @@ export class GetWeb3CheckTask {
       const getAddressResult = await this.api.sendCommand(getAddressCmd);
       if (!isSuccessCommandResult(getAddressResult)) {
         return {
+          web3Check: null,
           error: getAddressResult.error,
         };
       }

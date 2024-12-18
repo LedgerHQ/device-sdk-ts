@@ -3,11 +3,11 @@ export type GetWeb3ChecksRequestDto = {
     from: string;
     raw: string;
   };
-  chainId: number;
+  chain: number;
 };
 
 export type Web3CheckDto = {
   public_key_id: string;
   descriptor: string;
-  block: string;
+  block: number;
 };

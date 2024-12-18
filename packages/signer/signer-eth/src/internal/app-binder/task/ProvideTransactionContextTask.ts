@@ -38,6 +38,7 @@ export type ProvideTransactionContextTaskArgs = {
    * The valid clear sign contexts offerred by the `BuildTrancationContextTask`.
    */
   clearSignContexts: ClearSignContextSuccess[];
+  web3Check: ClearSignContextSuccess | null;
 };
 
 export type ProvideTransactionContextTaskErrorCodes =
@@ -68,6 +69,12 @@ export class ProvideTransactionContextTask {
   > {
     for (const context of this.args.clearSignContexts) {
       const res = await this.provideContext(context);
+      if (!isSuccessCommandResult(res)) {
+        return Just(res);
+      }
+    }
+    if (this.args.web3Check) {
+      const res = await this.provideContext(this.args.web3Check);
       if (!isSuccessCommandResult(res)) {
         return Just(res);
       }
