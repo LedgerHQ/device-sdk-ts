@@ -4,11 +4,14 @@ import {
   isSuccessCommandResult,
 } from "@ledgerhq/device-management-kit";
 
-import { BTC_APP_ERRORS, BtcAppCommandError } from "./utils/bitcoinAppErrors";
+import { SW_INTERRUPTED_EXECUTION } from "./utils/constants";
 import {
   GetWalletAddressCommand,
   type GetWalletAddressCommandArgs,
 } from "./GetWalletAddressCommand";
+
+const SUCCESS_STATUS = new Uint8Array([0x90, 0x00]);
+const USER_DENIED_STATUS = new Uint8Array([0x69, 0x85]);
 
 describe("GetWalletAddressCommand", () => {
   let command: GetWalletAddressCommand;
@@ -79,67 +82,61 @@ describe("GetWalletAddressCommand", () => {
   });
 
   describe("parseResponse", () => {
-    it("should parse the response and extract the address", () => {
-      const responseData = Uint8Array.from("myAddressData", (c) =>
-        c.charCodeAt(0),
-      );
-      const response = new ApduResponse({
-        statusCode: Uint8Array.from([0x90, 0x00]),
-        data: responseData,
+    it("should return the APDU response if it's a continue response", () => {
+      // given
+      const continueResponseData = new Uint8Array([0x01, 0x02, 0x03, 0x04]);
+
+      const apduResponse = new ApduResponse({
+        statusCode: SW_INTERRUPTED_EXECUTION,
+        data: continueResponseData,
       });
 
-      const result = command.parseResponse(response);
+      // when
+      const response = command.parseResponse(apduResponse);
 
-      expect(result).toStrictEqual(
+      // then
+      expect(response).toStrictEqual(
         CommandResultFactory({
-          data: {
-            address: new TextDecoder().decode(responseData),
-          },
+          data: apduResponse,
         }),
       );
     });
 
-    it("should return an error if response status code is an error code", () => {
-      const errorStatusCode = Uint8Array.from([0x69, 0x85]);
-      const response = new ApduResponse({
-        statusCode: errorStatusCode,
-        data: new Uint8Array(),
+    it("should return an error if user denied the operation", () => {
+      // given
+      const apduResponse = new ApduResponse({
+        statusCode: USER_DENIED_STATUS,
+        data: new Uint8Array([]),
       });
 
-      const result = command.parseResponse(response);
+      // when
+      const response = command.parseResponse(apduResponse);
 
-      expect(isSuccessCommandResult(result)).toBe(false);
-      if (!isSuccessCommandResult(result)) {
-        expect(result.error).toBeInstanceOf(BtcAppCommandError);
-        const error = result.error as BtcAppCommandError;
-        const expectedErrorInfo = BTC_APP_ERRORS["6985"];
-        expect(expectedErrorInfo).toBeDefined();
-        if (expectedErrorInfo) {
-          expect(error.message).toBe(expectedErrorInfo.message);
-        }
-      } else {
-        fail("Expected error");
+      // then
+      expect(isSuccessCommandResult(response)).toBe(false);
+      if (!isSuccessCommandResult(response)) {
+        expect(response.error).toBeDefined();
       }
     });
 
-    it("should return an error if address cannot be extracted", () => {
-      const response = new ApduResponse({
-        statusCode: Uint8Array.from([0x90, 0x00]),
-        data: new Uint8Array(),
+    it("should return correct data when response is not empty", () => {
+      // given
+      const responseData = Uint8Array.from("addressData", (c) =>
+        c.charCodeAt(0),
+      );
+
+      const apduResponse = new ApduResponse({
+        statusCode: SUCCESS_STATUS,
+        data: responseData,
       });
 
-      const result = command.parseResponse(response);
+      // when
+      const response = command.parseResponse(apduResponse);
 
-      expect(isSuccessCommandResult(result)).toBe(false);
-      if (!isSuccessCommandResult(result)) {
-        expect(result.error.originalError).toEqual(
-          expect.objectContaining({
-            message: "Failed to extract address from response",
-          }),
-        );
-      } else {
-        fail("Expected error");
-      }
+      // then
+      expect(response).toStrictEqual(
+        CommandResultFactory({ data: apduResponse }),
+      );
     });
   });
 });
