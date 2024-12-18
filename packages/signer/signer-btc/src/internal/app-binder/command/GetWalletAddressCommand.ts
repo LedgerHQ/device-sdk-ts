@@ -1,12 +1,10 @@
 import {
   type Apdu,
   ApduBuilder,
-  ApduParser,
   type ApduResponse,
   type Command,
   type CommandResult,
   CommandResultFactory,
-  InvalidStatusWordError,
 } from "@ledgerhq/device-management-kit";
 import { CommandErrorHelper } from "@ledgerhq/signer-utils";
 import { Maybe } from "purify-ts";
@@ -20,9 +18,7 @@ import {
   type BtcErrorCodes,
 } from "./utils/bitcoinAppErrors";
 
-export type GetWalletAddressCommandResponse = {
-  readonly address: string;
-};
+export type GetWalletAddressCommandResponse = ApduResponse;
 
 export type GetWalletAddressCommandArgs = {
   readonly display: boolean;
@@ -69,25 +65,9 @@ export class GetWalletAddressCommand
 
   parseResponse(
     response: ApduResponse,
-  ): CommandResult<GetWalletAddressCommandResponse, BtcErrorCodes> {
-    return Maybe.fromNullable(
-      this._errorHelper.getError(response),
-    ).orDefaultLazy(() => {
-      const parser = new ApduParser(response);
-      if (response.data.length === 0) {
-        return CommandResultFactory({
-          error: new InvalidStatusWordError(
-            "Failed to extract address from response",
-          ),
-        });
-      }
-
-      const address = parser.encodeToString(response.data);
-      return CommandResultFactory({
-        data: {
-          address,
-        },
-      });
-    });
+  ): CommandResult<ApduResponse, BtcErrorCodes> {
+    return Maybe.fromNullable(this._errorHelper.getError(response)).orDefault(
+      CommandResultFactory({ data: response }),
+    );
   }
 }

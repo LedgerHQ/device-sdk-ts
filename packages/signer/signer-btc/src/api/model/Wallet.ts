@@ -47,3 +47,7 @@ export class WalletPolicy {
 }
 
 export type Wallet = DefaultWallet | RegisteredWallet;
+
+export type WalletAddress = {
+  address: string;
+};
