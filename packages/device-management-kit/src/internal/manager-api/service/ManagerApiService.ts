@@ -20,4 +20,5 @@ export interface ManagerApiService {
     deviceVersion: DeviceVersion,
     provider: number,
   ): EitherAsync<HttpFetchApiError, FinalFirmware>;
+  genuieCheck(): EitherAsync<HttpFetchApiError, WebSocket>;
 }

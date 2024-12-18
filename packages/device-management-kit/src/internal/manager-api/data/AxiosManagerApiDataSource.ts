@@ -1,6 +1,6 @@
 import axios from "axios";
 import { inject, injectable } from "inversify";
-import { EitherAsync } from "purify-ts";
+import { Either, EitherAsync, Left, Right } from "purify-ts";
 
 import { type DmkConfig } from "@api/DmkConfig";
 import { managerApiTypes } from "@internal/manager-api/di/managerApiTypes";
@@ -9,11 +9,19 @@ import {
   AppType,
 } from "@internal/manager-api/model/Application";
 import { type DeviceVersion } from "@internal/manager-api/model/Device";
-import { HttpFetchApiError } from "@internal/manager-api/model/Errors";
+import {
+  HttpFetchApiError,
+  WebSocketError,
+} from "@internal/manager-api/model/Errors";
 import { type FinalFirmware } from "@internal/manager-api/model/Firmware";
 
 import { ManagerApiDataSource } from "./ManagerApiDataSource";
 import { ApplicationDto, AppTypeDto } from "./ManagerApiDto";
+
+export type GenuineCheckParams = {
+  targetId: string;
+  perso: string;
+};
 
 @injectable()
 export class AxiosManagerApiDataSource implements ManagerApiDataSource {
@@ -54,6 +62,19 @@ export class AxiosManagerApiDataSource implements ManagerApiDataSource {
     )
       .map((res) => res.data)
       .mapLeft((error) => new HttpFetchApiError(error));
+  }
+
+  genuineCheck({
+    targetId,
+    perso,
+  }: GenuineCheckParams): Either<WebSocketError, WebSocket> {
+    try {
+      const url = `${this.baseUrl}/genuine_check?target_id=${targetId}&perso=${perso}`;
+      const ws = new WebSocket(`${this.baseUrl}/genuie_check`);
+      return Right(ws);
+    } catch (error) {
+      return Left(new WebSocketError(error));
+    }
   }
 
   private mapAppTypeDtoToAppType(appType: AppTypeDto): AppType {

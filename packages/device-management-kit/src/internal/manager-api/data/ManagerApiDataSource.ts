@@ -1,4 +1,4 @@
-import { type EitherAsync } from "purify-ts";
+import { type Either, type EitherAsync } from "purify-ts";
 
 import { type Application } from "@internal/manager-api/model/Application";
 import { type DeviceVersion } from "@internal/manager-api/model/Device";
@@ -18,4 +18,5 @@ export interface ManagerApiDataSource {
     deviceId: number,
     provider: number,
   ): EitherAsync<HttpFetchApiError, FinalFirmware>;
+  genuineCheck(): Either<HttpFetchApiError, WebSocket>;
 }
