@@ -11,7 +11,7 @@ import {
 import { BtcCommand } from "@internal/app-binder/command/utils/BtcCommand";
 import { PROTOCOL_VERSION } from "@internal/app-binder/command/utils/constants";
 
-import { type BitcoinAppErrorCodes } from "./utils/bitcoinAppErrors";
+import { type BtcErrorCodes } from "./utils/bitcoinAppErrors";
 
 export type GetWalletAddressCommandResponse = {
   readonly address: string;
@@ -50,7 +50,7 @@ export class GetWalletAddressCommand extends BtcCommand<
 
   override parseResponse(
     response: ApduResponse,
-  ): CommandResult<GetWalletAddressCommandResponse, BitcoinAppErrorCodes> {
+  ): CommandResult<GetWalletAddressCommandResponse, BtcErrorCodes> {
     return this._getError(response).orDefaultLazy(() => {
       const parser = new ApduParser(response);
       if (response.data.length === 0) {

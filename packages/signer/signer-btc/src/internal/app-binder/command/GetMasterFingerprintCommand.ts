@@ -10,7 +10,7 @@ import {
   InvalidStatusWordError,
 } from "@ledgerhq/device-management-kit";
 
-import { type BitcoinAppErrorCodes } from "@internal/app-binder/command/utils/bitcoinAppErrors";
+import { type BtcErrorCodes } from "@internal/app-binder/command/utils/bitcoinAppErrors";
 import { BtcCommand } from "@internal/app-binder/command/utils/BtcCommand";
 
 const MASTER_FINGERPRINT_LENGTH = 4;
@@ -32,7 +32,7 @@ export class GetMasterFingerprintCommand extends BtcCommand<GetMasterFingerprint
 
   override parseResponse(
     response: ApduResponse,
-  ): CommandResult<GetMasterFingerprintCommandResponse, BitcoinAppErrorCodes> {
+  ): CommandResult<GetMasterFingerprintCommandResponse, BtcErrorCodes> {
     return this._getError(response).orDefaultLazy(() => {
       const parser = new ApduParser(response);
 

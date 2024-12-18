@@ -14,23 +14,27 @@ import {
   type ContinueCommandResponse,
 } from "@internal/app-binder/command/ContinueCommand";
 import { ClientCommandInterpreter } from "@internal/app-binder/command/service/ClientCommandInterpreter";
-import { type BitcoinAppErrorCodes } from "@internal/app-binder/command/utils/bitcoinAppErrors";
+import { type BtcErrorCodes } from "@internal/app-binder/command/utils/bitcoinAppErrors";
 import { type DataStore } from "@internal/data-store/model/DataStore";
 import { CommandUtils } from "@internal/utils/CommandUtils";
 
 export class ContinueTask {
-  constructor(private readonly _api: InternalApi) {}
+  private readonly _clientCommandInterpreter: ClientCommandInterpreter;
+
+  constructor(
+    private readonly _api: InternalApi,
+    clientCommandInterpreter?: ClientCommandInterpreter,
+  ) {
+    this._clientCommandInterpreter =
+      clientCommandInterpreter || new ClientCommandInterpreter();
+  }
 
   async run(
     dataStore: DataStore,
-    fromResult: CommandResult<ApduResponse, BitcoinAppErrorCodes>,
-  ): Promise<CommandResult<ContinueCommandResponse, BitcoinAppErrorCodes>> {
-    let currentResponse: CommandResult<
-      ContinueCommandResponse,
-      BitcoinAppErrorCodes
-    > = fromResult;
-    const interpreter = new ClientCommandInterpreter();
-
+    fromResult: CommandResult<ApduResponse, BtcErrorCodes>,
+  ): Promise<CommandResult<ContinueCommandResponse, BtcErrorCodes>> {
+    let currentResponse: CommandResult<ContinueCommandResponse, BtcErrorCodes> =
+      fromResult;
     const commandHandlersContext: ClientCommandContext = {
       dataStore,
       queue: [],
@@ -38,10 +42,10 @@ export class ContinueTask {
     };
 
     while (
-      this.isApduResponse(currentResponse) &&
+      this.isApduResult(currentResponse) &&
       CommandUtils.isContinueResponse(currentResponse.data)
     ) {
-      currentResponse = await interpreter
+      currentResponse = await this._clientCommandInterpreter
         .getClientCommandPayload(
           currentResponse.data.data,
           commandHandlersContext,
@@ -63,8 +67,8 @@ export class ContinueTask {
     }
     return currentResponse;
   }
-  private isApduResponse = (
-    response: CommandResult<ContinueCommandResponse, BitcoinAppErrorCodes>,
+  private isApduResult = (
+    response: CommandResult<ContinueCommandResponse, BtcErrorCodes>,
   ): response is CommandSuccessResult<ApduResponse> => {
     return (
       isSuccessCommandResult(response) &&

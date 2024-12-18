@@ -1,12 +1,12 @@
 import { DeviceExchangeError } from "@ledgerhq/device-management-kit";
 
 import {
-  BitcoinAppCommandError,
-  type BitcoinAppErrorCodes,
   BTC_APP_ERRORS,
+  BtcAppCommandError,
+  type BtcErrorCodes,
 } from "./bitcoinAppErrors";
 
-describe("BitcoinAppCommandError", () => {
+describe("BtcAppCommandError", () => {
   afterEach(() => {
     jest.resetAllMocks();
   });
@@ -16,7 +16,7 @@ describe("BitcoinAppCommandError", () => {
   });
 
   it("should be an instance of DeviceExchangeError", () => {
-    const error = new BitcoinAppCommandError({
+    const error = new BtcAppCommandError({
       message: "Test error message",
       errorCode: "6985",
     });
@@ -26,7 +26,7 @@ describe("BitcoinAppCommandError", () => {
 
   it("should set the correct message when provided", () => {
     const customMessage = "Custom error message";
-    const error = new BitcoinAppCommandError({
+    const error = new BtcAppCommandError({
       message: customMessage,
       errorCode: "6985",
     });
@@ -35,8 +35,8 @@ describe("BitcoinAppCommandError", () => {
   });
 
   it("should set the correct customErrorCode", () => {
-    const errorCode: BitcoinAppErrorCodes = "6A86";
-    const error = new BitcoinAppCommandError({
+    const errorCode: BtcErrorCodes = "6A86";
+    const error = new BtcAppCommandError({
       message: "Either P1 or P2 is incorrect",
       errorCode,
     });
@@ -45,10 +45,10 @@ describe("BitcoinAppCommandError", () => {
   });
 
   it("should correlate error codes with messages from bitcoinAppErrors", () => {
-    const errorCode: BitcoinAppErrorCodes = "6E00";
+    const errorCode: BtcErrorCodes = "6E00";
     const expectedMessage = BTC_APP_ERRORS[errorCode].message;
 
-    const error = new BitcoinAppCommandError({
+    const error = new BtcAppCommandError({
       message: expectedMessage,
       errorCode,
     });

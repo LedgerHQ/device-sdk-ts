@@ -10,7 +10,7 @@ import {
   type GetExtendedPublicKeyCommandArgs,
   type GetExtendedPublicKeyCommandResponse,
 } from "@internal/app-binder/command/GetExtendedPublicKeyCommand";
-import { type BitcoinAppErrorCodes } from "@internal/app-binder/command/utils/bitcoinAppErrors";
+import { type BtcErrorCodes } from "@internal/app-binder/command/utils/bitcoinAppErrors";
 
 type GetExtendedPublicKeyDARequiredInteraction =
   | UserInteractionRequired.None
@@ -20,7 +20,7 @@ export type GetExtendedPublicKeyDAOutput =
   SendCommandInAppDAOutput<GetExtendedPublicKeyCommandResponse>;
 
 export type GetExtendedPublicKeyDAError =
-  SendCommandInAppDAError<BitcoinAppErrorCodes>;
+  SendCommandInAppDAError<BtcErrorCodes>;
 
 export type GetExtendedDAIntermediateValue =
   SendCommandInAppDAIntermediateValue<GetExtendedPublicKeyDARequiredInteraction>;

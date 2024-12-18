@@ -1,30 +1,26 @@
 import {
   CommandResultFactory,
   type InternalApi,
-  isSuccessCommandResult,
   UnknownDeviceExchangeError,
 } from "@ledgerhq/device-management-kit";
 
 import {
   DefaultDescriptorTemplate,
   DefaultWallet,
+  RegisteredWallet,
   type Wallet,
 } from "@api/model/Wallet";
 import { PrepareWalletPolicyTask } from "@internal/app-binder/task/PrepareWalletPolicyTask";
-import { DataStore } from "@internal/data-store/model/DataStore";
-import { type DataStoreService } from "@internal/data-store/service/DataStoreService";
 import { type WalletBuilder } from "@internal/wallet/service/WalletBuilder";
 const fromDefaultWalletMock = jest.fn();
-const merklizeWalletMock = jest.fn();
+const fromRegisteredWalletMock = jest.fn();
 
 describe("PrepareWalletPolicyTask", () => {
   let internalApi: { sendCommand: jest.Mock };
   const walletBuilder = {
     fromDefaultWallet: fromDefaultWalletMock,
+    fromRegisteredWallet: fromRegisteredWalletMock,
   } as unknown as WalletBuilder;
-  const dataStoreService = {
-    merklizeWallet: merklizeWalletMock,
-  } as unknown as DataStoreService;
   beforeEach(() => {
     internalApi = {
       sendCommand: jest.fn(),
@@ -34,7 +30,7 @@ describe("PrepareWalletPolicyTask", () => {
     jest.resetAllMocks();
   });
 
-  it("should return a filled data store", async () => {
+  it("should return a builded wallet from a default one", async () => {
     // given
     const defaultWallet = new DefaultWallet(
       "49'/0'/0'",
@@ -42,17 +38,8 @@ describe("PrepareWalletPolicyTask", () => {
     );
     const task = new PrepareWalletPolicyTask(
       internalApi as unknown as InternalApi,
+      { wallet: defaultWallet },
       walletBuilder,
-      dataStoreService,
-    );
-    internalApi.sendCommand.mockResolvedValueOnce(
-      Promise.resolve(
-        CommandResultFactory({
-          data: {
-            masterFingerprint: Uint8Array.from([0x42, 0x21, 0x12, 0x24]),
-          },
-        }),
-      ),
     );
     internalApi.sendCommand.mockResolvedValueOnce(
       Promise.resolve(
@@ -63,22 +50,74 @@ describe("PrepareWalletPolicyTask", () => {
         }),
       ),
     );
+    internalApi.sendCommand.mockResolvedValueOnce(
+      Promise.resolve(
+        CommandResultFactory({
+          data: {
+            masterFingerprint: Uint8Array.from([0x42, 0x21, 0x12, 0x24]),
+          },
+        }),
+      ),
+    );
     const wallet = {} as Wallet;
     fromDefaultWalletMock.mockReturnValue(wallet);
     // when
-    const result = await task.run(defaultWallet);
+    const result = await task.run();
     // then
-    if (isSuccessCommandResult(result)) {
-      expect(fromDefaultWalletMock).toHaveBeenCalledWith(
-        Uint8Array.from([0x42, 0x21, 0x12, 0x24]),
-        "xPublicKey",
-        defaultWallet,
-      );
-      expect(merklizeWalletMock).toHaveBeenCalledWith(new DataStore(), wallet);
-      expect(result.data).toBeInstanceOf(DataStore);
-    } else {
-      fail("Expected a success result, but the result was an error");
-    }
+    expect(fromDefaultWalletMock).toHaveBeenCalledWith(
+      Uint8Array.from([0x42, 0x21, 0x12, 0x24]),
+      "xPublicKey",
+      defaultWallet,
+    );
+    expect(result).toStrictEqual(
+      CommandResultFactory({
+        data: wallet,
+      }),
+    );
+  });
+
+  it("should return a builded wallet from a registered one", async () => {
+    // given
+    const registeredWallet = new RegisteredWallet(
+      "walletName",
+      DefaultDescriptorTemplate.LEGACY,
+      ["key0", "key1"],
+      Uint8Array.from([42]),
+    );
+    const task = new PrepareWalletPolicyTask(
+      internalApi as unknown as InternalApi,
+      { wallet: registeredWallet },
+      walletBuilder,
+    );
+    internalApi.sendCommand.mockResolvedValueOnce(
+      Promise.resolve(
+        CommandResultFactory({
+          data: {
+            extendedPublicKey: "xPublicKey",
+          },
+        }),
+      ),
+    );
+    internalApi.sendCommand.mockResolvedValueOnce(
+      Promise.resolve(
+        CommandResultFactory({
+          data: {
+            masterFingerprint: Uint8Array.from([0x42, 0x21, 0x12, 0x24]),
+          },
+        }),
+      ),
+    );
+    const wallet = {} as Wallet;
+    fromRegisteredWalletMock.mockReturnValue(wallet);
+    // when
+    const result = await task.run();
+    // then
+    expect(fromRegisteredWalletMock).toHaveBeenCalledWith(registeredWallet);
+    expect(result).toStrictEqual(
+      CommandResultFactory({
+        data: wallet,
+      }),
+    );
   });
 
   it("should return an error if getMasterFingerprint failed", async () => {
@@ -89,8 +128,8 @@ describe("PrepareWalletPolicyTask", () => {
     );
     const task = new PrepareWalletPolicyTask(
       internalApi as unknown as InternalApi,
+      { wallet: defaultWallet },
       walletBuilder,
-      dataStoreService,
     );
     const error = new UnknownDeviceExchangeError("Failed");
     internalApi.sendCommand.mockResolvedValueOnce(
@@ -101,13 +140,9 @@ describe("PrepareWalletPolicyTask", () => {
       ),
     );
     // when
-    const result = await task.run(defaultWallet);
+    const result = await task.run();
     // then
-    if (isSuccessCommandResult(result) === false) {
-      expect(result.error).toStrictEqual(error);
-    } else {
-      fail("Expected an error, but the result was successful");
-    }
+    expect(result).toStrictEqual(CommandResultFactory({ error }));
   });
 
   it("should return an error if getExtendedPublicKey failed", async () => {
@@ -118,8 +153,8 @@ describe("PrepareWalletPolicyTask", () => {
     );
     const task = new PrepareWalletPolicyTask(
       internalApi as unknown as InternalApi,
+      { wallet: defaultWallet },
       walletBuilder,
-      dataStoreService,
     );
     const error = new UnknownDeviceExchangeError("Failed");
     internalApi.sendCommand.mockResolvedValueOnce(
@@ -139,12 +174,13 @@ describe("PrepareWalletPolicyTask", () => {
       ),
     );
     // when
-    const result = await task.run(defaultWallet);
+    const result = await task.run();
     // then
-    if (isSuccessCommandResult(result) === false) {
-      expect(result.error).toStrictEqual(error);
-    } else {
-      fail("Expected an error, but the result was successful");
-    }
+    expect(result).toStrictEqual(CommandResultFactory({ error }));
+    expect(result).toStrictEqual(
+      CommandResultFactory({
+        error,
+      }),
+    );
   });
 });

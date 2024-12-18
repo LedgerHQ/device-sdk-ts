@@ -9,7 +9,7 @@ import {
 import { type Psbt } from "@api/model/Psbt";
 import { type Signature } from "@api/model/Signature";
 import { type Wallet } from "@api/model/Wallet";
-import { type BitcoinAppErrorCodes } from "@internal/app-binder/command/utils/bitcoinAppErrors";
+import { type BtcErrorCodes } from "@internal/app-binder/command/utils/bitcoinAppErrors";
 
 export type SignPsbtDAOutput = Signature;
 
@@ -20,7 +20,7 @@ export type SignPsbtDAInput = {
 
 export type SignPsbtDAError =
   | OpenAppDAError
-  | CommandErrorResult<BitcoinAppErrorCodes>["error"];
+  | CommandErrorResult<BtcErrorCodes>["error"];
 
 type SignPsbtDARequiredInteraction = OpenAppDARequiredInteraction;
 

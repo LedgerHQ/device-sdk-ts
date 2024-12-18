@@ -5,16 +5,22 @@ import {
   type ApduBuilderArgs,
   ApduParser,
   type ApduResponse,
+  type Command,
   type CommandResult,
   CommandResultFactory,
   InvalidStatusWordError,
 } from "@ledgerhq/device-management-kit";
-import { DerivationPathUtils } from "@ledgerhq/signer-utils";
+import {
+  CommandErrorHelper,
+  DerivationPathUtils,
+} from "@ledgerhq/signer-utils";
+import { Maybe } from "purify-ts";
 
-import { type BitcoinAppErrorCodes } from "@internal/app-binder/command/utils/bitcoinAppErrors";
-import { BtcCommand } from "@internal/app-binder/command/utils/BtcCommand";
-
-const STATUS_CODE_LENGTH = 2;
+import {
+  BTC_APP_ERRORS,
+  BtcAppCommandErrorFactory,
+  type BtcErrorCodes,
+} from "@internal/app-binder/command/utils/bitcoinAppErrors";
 
 export type GetExtendedPublicKeyCommandArgs = {
   checkOnDevice: boolean;
@@ -25,16 +31,32 @@ export type GetExtendedPublicKeyCommandResponse = {
   extendedPublicKey: string;
 };
 
-export class GetExtendedPublicKeyCommand extends BtcCommand<
-  GetExtendedPublicKeyCommandResponse,
-  GetExtendedPublicKeyCommandArgs
-> {
-  constructor(private readonly args: GetExtendedPublicKeyCommandArgs) {
-    super();
+export class GetExtendedPublicKeyCommand
+  implements
+    Command<
+      GetExtendedPublicKeyCommandResponse,
+      GetExtendedPublicKeyCommandArgs,
+      BtcErrorCodes
+    >
+{
+  _errorHelper: CommandErrorHelper<
+    GetExtendedPublicKeyCommandResponse,
+    BtcErrorCodes
+  >;
+  constructor(
+    private readonly _args: GetExtendedPublicKeyCommandArgs,
+    errorHelper?: CommandErrorHelper<
+      GetExtendedPublicKeyCommandResponse,
+      BtcErrorCodes
+    >,
+  ) {
+    this._errorHelper =
+      errorHelper ||
+      new CommandErrorHelper(BTC_APP_ERRORS, BtcAppCommandErrorFactory);
   }
 
-  override getApdu(): Apdu {
-    const { checkOnDevice, derivationPath } = this.args;
+  getApdu(): Apdu {
+    const { checkOnDevice, derivationPath } = this._args;
 
     const getExtendedPublicKeyArgs: ApduBuilderArgs = {
       cla: 0xe1,
@@ -55,12 +77,14 @@ export class GetExtendedPublicKeyCommand extends BtcCommand<
     return builder.build();
   }
 
-  override parseResponse(
+  parseResponse(
     response: ApduResponse,
-  ): CommandResult<GetExtendedPublicKeyCommandResponse, BitcoinAppErrorCodes> {
-    return this._getError(response).orDefaultLazy(() => {
+  ): CommandResult<GetExtendedPublicKeyCommandResponse, BtcErrorCodes> {
+    return Maybe.fromNullable(
+      this._errorHelper.getError(response),
+    ).orDefaultLazy(() => {
       const parser = new ApduParser(response);
-      const length = parser.getUnparsedRemainingLength() - STATUS_CODE_LENGTH;
+      const length = parser.getUnparsedRemainingLength();
 
       if (length <= 0) {
         return CommandResultFactory({

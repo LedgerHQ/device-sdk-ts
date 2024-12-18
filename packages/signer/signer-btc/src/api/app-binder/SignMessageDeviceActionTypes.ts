@@ -8,7 +8,7 @@ import {
 } from "@ledgerhq/device-management-kit";
 
 import { type Signature } from "@api/model/Signature";
-import { type BitcoinAppErrorCodes } from "@internal/app-binder/command/utils/bitcoinAppErrors";
+import { type BtcErrorCodes } from "@internal/app-binder/command/utils/bitcoinAppErrors";
 
 export type SignMessageDAOutput = Signature;
 
@@ -19,7 +19,7 @@ export type SignMessageDAInput = {
 
 export type SignMessageDAError =
   | OpenAppDAError
-  | CommandErrorResult<BitcoinAppErrorCodes>["error"];
+  | CommandErrorResult<BtcErrorCodes>["error"];
 
 type SignMessageDARequiredInteraction =
   | OpenAppDARequiredInteraction

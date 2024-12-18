@@ -10,7 +10,7 @@ import {
 
 import { type Signature } from "@api/model/Signature";
 import { SignMessageCommand } from "@internal/app-binder/command/SignMessageCommand";
-import { type BitcoinAppErrorCodes } from "@internal/app-binder/command/utils/bitcoinAppErrors";
+import { type BtcErrorCodes } from "@internal/app-binder/command/utils/bitcoinAppErrors";
 import { CHUNK_SIZE } from "@internal/app-binder/command/utils/constants";
 import { ContinueTask } from "@internal/app-binder/task/ContinueTask";
 import { DataStore } from "@internal/data-store/model/DataStore";
@@ -50,7 +50,7 @@ export class SendSignMessageTask {
     );
   }
 
-  async run(): Promise<CommandResult<Signature, BitcoinAppErrorCodes>> {
+  async run(): Promise<CommandResult<Signature, BtcErrorCodes>> {
     const { derivationPath, message } = this.args;
 
     const dataStore = new DataStore();
@@ -84,7 +84,7 @@ export class SendSignMessageTask {
 
   private parseBitcoinSignatureResponse = (
     response: ApduResponse,
-  ): CommandResult<Signature, BitcoinAppErrorCodes> => {
+  ): CommandResult<Signature, BtcErrorCodes> => {
     const parser = new ApduParser(response);
 
     const v = parser.extract8BitUInt();

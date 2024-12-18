@@ -4,10 +4,7 @@ import {
   isSuccessCommandResult,
 } from "@ledgerhq/device-management-kit";
 
-import {
-  BitcoinAppCommandError,
-  BTC_APP_ERRORS,
-} from "./utils/bitcoinAppErrors";
+import { BTC_APP_ERRORS, BtcAppCommandError } from "./utils/bitcoinAppErrors";
 import {
   GetWalletAddressCommand,
   type GetWalletAddressCommandArgs,
@@ -113,8 +110,8 @@ describe("GetWalletAddressCommand", () => {
 
       expect(isSuccessCommandResult(result)).toBe(false);
       if (!isSuccessCommandResult(result)) {
-        expect(result.error).toBeInstanceOf(BitcoinAppCommandError);
-        const error = result.error as BitcoinAppCommandError;
+        expect(result.error).toBeInstanceOf(BtcAppCommandError);
+        const error = result.error as BtcAppCommandError;
         const expectedErrorInfo = BTC_APP_ERRORS["6985"];
         expect(expectedErrorInfo).toBeDefined();
         if (expectedErrorInfo) {

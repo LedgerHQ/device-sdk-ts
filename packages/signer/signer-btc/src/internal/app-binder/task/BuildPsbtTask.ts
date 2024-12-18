@@ -6,7 +6,7 @@ import {
 import { EitherAsync } from "purify-ts";
 
 import { type Psbt } from "@api/model/Psbt";
-import { type BitcoinAppErrorCodes } from "@internal/app-binder/command/utils/bitcoinAppErrors";
+import { type BtcErrorCodes } from "@internal/app-binder/command/utils/bitcoinAppErrors";
 import { DataStore } from "@internal/data-store/model/DataStore";
 import {
   type DataStoreService,
@@ -68,9 +68,7 @@ export class BuildPsbtTask {
       );
   }
 
-  async run(): Promise<
-    CommandResult<BuildPsbtTaskResponse, BitcoinAppErrorCodes>
-  > {
+  async run(): Promise<CommandResult<BuildPsbtTaskResponse, BtcErrorCodes>> {
     const dataStore = new DataStore();
     return await EitherAsync(async ({ liftEither }) => {
       // map the input PSBT (V1 or V2, string or byte array) into a normalized and parsed PSBTv2

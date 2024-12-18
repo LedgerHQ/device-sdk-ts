@@ -22,13 +22,13 @@ import {
 import { type Psbt } from "@api/model/Psbt";
 import { type Signature } from "@api/model/Signature";
 import { type Wallet as ApiWallet } from "@api/model/Wallet";
-import { type BitcoinAppErrorCodes } from "@internal/app-binder/command/utils/bitcoinAppErrors";
+import { type BtcErrorCodes } from "@internal/app-binder/command/utils/bitcoinAppErrors";
 import { SignPsbtTask } from "@internal/app-binder/task/SignPsbtTask";
 
 export type MachineDependencies = {
   readonly signPsbt: (arg0: {
     input: { wallet: ApiWallet; psbt: Psbt };
-  }) => Promise<CommandResult<Signature, BitcoinAppErrorCodes>>;
+  }) => Promise<CommandResult<Signature, BtcErrorCodes>>;
 };
 
 export type ExtractMachineDependencies = (
@@ -206,7 +206,7 @@ export class SignPsbtDeviceAction extends XStateDeviceAction<
   extractDependencies(internalApi: InternalApi): MachineDependencies {
     const signPsbt = async (arg0: {
       input: { wallet: ApiWallet; psbt: Psbt };
-    }): Promise<CommandResult<Signature, BitcoinAppErrorCodes>> => {
+    }): Promise<CommandResult<Signature, BtcErrorCodes>> => {
       return await new SignPsbtTask(internalApi, arg0.input).run();
     };
     return {

@@ -2,12 +2,18 @@ import {
   type Apdu,
   ApduBuilder,
   type ApduResponse,
+  type Command,
   type CommandResult,
   CommandResultFactory,
 } from "@ledgerhq/device-management-kit";
+import { CommandErrorHelper } from "@ledgerhq/signer-utils";
+import { Maybe } from "purify-ts";
 
-import { type BitcoinAppErrorCodes } from "@internal/app-binder/command/utils/bitcoinAppErrors";
-import { BtcCommand } from "@internal/app-binder/command/utils/BtcCommand";
+import {
+  BTC_APP_ERRORS,
+  BtcAppCommandErrorFactory,
+  type BtcErrorCodes,
+} from "@internal/app-binder/command/utils/bitcoinAppErrors";
 
 export type ContinueCommandArgs = {
   payload: Uint8Array;
@@ -15,29 +21,35 @@ export type ContinueCommandArgs = {
 
 export type ContinueCommandResponse = ApduResponse;
 
-export class ContinueCommand extends BtcCommand<
-  ContinueCommandResponse,
-  ContinueCommandArgs
-> {
-  constructor(private readonly args: ContinueCommandArgs) {
-    super();
+export class ContinueCommand
+  implements
+    Command<ContinueCommandResponse, ContinueCommandArgs, BtcErrorCodes>
+{
+  _errorHelper: CommandErrorHelper<ContinueCommandResponse, BtcErrorCodes>;
+  constructor(
+    private readonly _args: ContinueCommandArgs,
+    errorHelper?: CommandErrorHelper<ContinueCommandResponse, BtcErrorCodes>,
+  ) {
+    this._errorHelper =
+      errorHelper ||
+      new CommandErrorHelper(BTC_APP_ERRORS, BtcAppCommandErrorFactory);
   }
 
-  override getApdu(): Apdu {
+  getApdu(): Apdu {
     return new ApduBuilder({
       cla: 0xf8,
       ins: 0x01,
       p1: 0x00,
       p2: 0x00,
     })
-      .addBufferToData(this.args.payload)
+      .addBufferToData(this._args.payload)
       .build();
   }
 
-  override parseResponse(
+  parseResponse(
     response: ApduResponse,
-  ): CommandResult<ContinueCommandResponse, BitcoinAppErrorCodes> {
-    return this._getError(response).orDefault(
+  ): CommandResult<ContinueCommandResponse, BtcErrorCodes> {
+    return Maybe.fromNullable(this._errorHelper.getError(response)).orDefault(
       CommandResultFactory({
         data: response,
       }),

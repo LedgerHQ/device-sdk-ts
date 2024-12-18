@@ -10,7 +10,7 @@ import { DerivationPathUtils } from "@ledgerhq/signer-utils";
 import { PROTOCOL_VERSION } from "@internal/app-binder/command/utils/constants";
 import { encodeVarint } from "@internal/utils/Varint";
 
-import { type BitcoinAppErrorCodes } from "./utils/bitcoinAppErrors";
+import { type BtcErrorCodes } from "./utils/bitcoinAppErrors";
 import { BtcCommand } from "./utils/BtcCommand";
 
 export type SignMessageCommandArgs = {
@@ -65,7 +65,7 @@ export class SignMessageCommand extends BtcCommand<
 
   override parseResponse(
     apduResponse: ApduResponse,
-  ): CommandResult<SignMessageCommandResponse, BitcoinAppErrorCodes> {
+  ): CommandResult<SignMessageCommandResponse, BtcErrorCodes> {
     return this._getError(apduResponse).orDefault(
       CommandResultFactory({ data: apduResponse }),
     );

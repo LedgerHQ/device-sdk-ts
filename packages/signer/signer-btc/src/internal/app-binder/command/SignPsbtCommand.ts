@@ -6,7 +6,7 @@ import {
   CommandResultFactory,
 } from "@ledgerhq/device-management-kit";
 
-import { type BitcoinAppErrorCodes } from "@internal/app-binder/command/utils/bitcoinAppErrors";
+import { type BtcErrorCodes } from "@internal/app-binder/command/utils/bitcoinAppErrors";
 import { BtcCommand } from "@internal/app-binder/command/utils/BtcCommand";
 import { PROTOCOL_VERSION } from "@internal/app-binder/command/utils/constants";
 
@@ -53,7 +53,7 @@ export class SignPsbtCommand extends BtcCommand<
   }
   override parseResponse(
     response: ApduResponse,
-  ): CommandResult<SignPsbtCommandResponse, BitcoinAppErrorCodes> {
+  ): CommandResult<SignPsbtCommandResponse, BtcErrorCodes> {
     return this._getError(response).orDefault(
       CommandResultFactory({ data: response }),
     );

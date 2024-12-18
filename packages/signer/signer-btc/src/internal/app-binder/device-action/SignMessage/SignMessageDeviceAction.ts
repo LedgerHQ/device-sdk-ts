@@ -20,7 +20,7 @@ import {
   type SignMessageDAOutput,
 } from "@api/app-binder/SignMessageDeviceActionTypes";
 import { type Signature } from "@api/model/Signature";
-import { type BitcoinAppErrorCodes } from "@internal/app-binder/command/utils/bitcoinAppErrors";
+import { type BtcErrorCodes } from "@internal/app-binder/command/utils/bitcoinAppErrors";
 import {
   SendSignMessageTask,
   type SendSignMessageTaskArgs,
@@ -29,7 +29,7 @@ import {
 export type MachineDependencies = {
   readonly signMessage: (arg0: {
     input: SendSignMessageTaskArgs;
-  }) => Promise<CommandResult<Signature, BitcoinAppErrorCodes>>;
+  }) => Promise<CommandResult<Signature, BtcErrorCodes>>;
 };
 
 export type ExtractMachineDependencies = (

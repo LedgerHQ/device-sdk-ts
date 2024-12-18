@@ -1,10 +1,15 @@
 import React, { useMemo } from "react";
 import {
+  bufferToHexaString,
+  DeviceActionStatus,
+} from "@ledgerhq/device-management-kit";
+import {
   DefaultDescriptorTemplate,
   DefaultWallet,
   type GetExtendedDAIntermediateValue,
   type GetExtendedPublicKeyDAError,
   type GetExtendedPublicKeyDAOutput,
+  type GetExtendedPublicKeyDAReturnType,
   SignerBtcBuilder,
   type SignMessageDAError,
   type SignMessageDAIntermediateValue,
@@ -13,13 +18,26 @@ import {
   type SignPsbtDAIntermediateValue,
   type SignPsbtDAOutput,
 } from "@ledgerhq/device-signer-kit-bitcoin";
+import { lastValueFrom } from "rxjs";
 
 import { DeviceActionsList } from "@/components/DeviceActionsView/DeviceActionsList";
 import { type DeviceActionProps } from "@/components/DeviceActionsView/DeviceActionTester";
-import { psbtB64 } from "@/components/SignerBtcView/psbt";
+import { psbtB64, pubkeyFromXpub } from "@/components/SignerBtcView/psbt";
+// import { psbtB64 } from "@/components/SignerBtcView/psbt";
 import { useDmk } from "@/providers/DeviceManagementKitProvider";
 
+// Native segwit
 const DEFAULT_DERIVATION_PATH = "84'/0'/0'";
+
+const logPubKey = async (xPubKeyObs: GetExtendedPublicKeyDAReturnType) => {
+  const lastValue = await lastValueFrom(xPubKeyObs.observable);
+  if (lastValue.status === DeviceActionStatus.Completed) {
+    console.log(
+      "public key",
+      bufferToHexaString(pubkeyFromXpub(lastValue.output.extendedPublicKey)),
+    );
+  }
+};
 
 export const SignerBtcView: React.FC<{ sessionId: string }> = ({
   sessionId,
@@ -42,9 +60,14 @@ export const SignerBtcView: React.FC<{ sessionId: string }> = ({
         description:
           "Perform all the actions necessary to get a btc extended public key",
         executeDeviceAction: ({ derivationPath, checkOnDevice }) => {
-          return signer.getExtendedPublicKey(derivationPath, {
+          const xPubkeyObs = signer.getExtendedPublicKey(derivationPath, {
             checkOnDevice,
           });
+          logPubKey(xPubkeyObs);
+          return xPubkeyObs;
+          // return signer.getExtendedPublicKey(derivationPath, {
+          //   checkOnDevice,
+          // });
         },
         initialValues: {
           derivationPath: "84'/0'/0'",

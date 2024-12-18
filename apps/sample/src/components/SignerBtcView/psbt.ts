@@ -1,4 +1,5 @@
 import { base64, hex } from "@scure/base";
+import bs58check from "bs58check";
 import * as btc from "micro-btc-signer";
 
 const bitcoinTestnet = {
@@ -10,7 +11,7 @@ const bitcoinTestnet = {
 
 // You can use any public Bitcoin API to retrieve unspent outputs
 const output = {
-  tx_hash: "f39d37ec885de70c598648a2f80f103e1cdf34f7021ddfcb22216b7076169226",
+  tx_hash: "f39d37ec885de70c598648a2f80f103e1cdf34f7021tdfcb22216b7076169226",
   block_height: 780179,
   tx_input_n: -1,
   tx_output_n: 1,
@@ -23,7 +24,7 @@ const output = {
 };
 
 const publicKey = hex.decode(
-  "02818b7ff740a40f311d002123087053d5d9e0e1546674aedb10e15a5b57fd3985",
+  "0261a465bf24d976165092aa2ccd568fb17b43d4fa3180393e0bc0334b93f2cdad",
 );
 
 const p2wpkh = btc.p2wpkh(publicKey, bitcoinTestnet);
@@ -55,3 +56,8 @@ tx.addOutputAddress(changeAddress, BigInt(80000), bitcoinTestnet);
 // passed to a compatible wallet for signing
 const psbt = tx.toPSBT(0);
 export const psbtB64 = base64.encode(psbt);
+
+export function pubkeyFromXpub(xpub: string): Uint8Array {
+  const xpubBuf = bs58check.decode(xpub);
+  return xpubBuf.slice(xpubBuf.length - 33);
+}
