@@ -4,7 +4,6 @@ import { v4 as uuidv4 } from "uuid";
 
 import { type Command } from "@api/command/Command";
 import { type CommandResult } from "@api/command/model/CommandResult";
-import { type ListAppsResponse } from "@api/command/os/ListAppsCommand";
 import { CommandUtils } from "@api/command/utils/CommandUtils";
 import { DeviceStatus } from "@api/device/DeviceStatus";
 import {
@@ -165,8 +164,7 @@ export class DeviceSession {
         this.setDeviceSessionState(state);
         return this._deviceState.getValue();
       },
-      getMetadataForAppHashes: (apps: ListAppsResponse) =>
-        this._managerApiService.getAppsByHash(apps),
+      getManagerApiService: () => this._managerApiService,
     });
 
     return {

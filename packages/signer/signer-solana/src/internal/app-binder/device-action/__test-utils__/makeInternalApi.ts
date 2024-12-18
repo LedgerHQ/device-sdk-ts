@@ -4,7 +4,7 @@ const sendCommandMock = jest.fn();
 const apiGetDeviceSessionStateMock = jest.fn();
 const apiGetDeviceSessionStateObservableMock = jest.fn();
 const setDeviceSessionStateMock = jest.fn();
-const getMetadataForAppHashesMock = jest.fn();
+const getManagerApiServiceMock = jest.fn();
 
 export function makeDeviceActionInternalApiMock(): jest.Mocked<InternalApi> {
   return {
@@ -12,6 +12,6 @@ export function makeDeviceActionInternalApiMock(): jest.Mocked<InternalApi> {
     getDeviceSessionState: apiGetDeviceSessionStateMock,
     getDeviceSessionStateObservable: apiGetDeviceSessionStateObservableMock,
     setDeviceSessionState: setDeviceSessionStateMock,
-    getMetadataForAppHashes: getMetadataForAppHashesMock,
+    getManagerApiService: getManagerApiServiceMock,
   };
 }
