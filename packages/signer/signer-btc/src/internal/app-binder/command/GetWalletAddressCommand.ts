@@ -13,15 +13,18 @@ import {
 } from "@ledgerhq/device-management-kit";
 
 import { PROTOCOL_VERSION } from "@internal/app-binder/command/utils/constants";
+import { CommandUtils as BtcCommandUtils } from "@internal/utils/CommandUtils";
 
 import {
   BitcoinAppCommandError,
   bitcoinAppErrors,
 } from "./utils/bitcoinAppErrors";
 
-export type GetWalletAddressCommandResponse = {
-  readonly address: string;
-};
+export type GetWalletAddressCommandResponse =
+  | {
+      readonly address: string;
+    }
+  | ApduResponse;
 
 export type GetWalletAddressCommandArgs = {
   readonly display: boolean;
@@ -55,6 +58,12 @@ export class GetWalletAddressCommand
   parseResponse(
     response: ApduResponse,
   ): CommandResult<GetWalletAddressCommandResponse> {
+    if (BtcCommandUtils.isContinueResponse(response)) {
+      return CommandResultFactory({
+        data: response,
+      });
+    }
+
     const parser = new ApduParser(response);
     const errorCode = parser.encodeToHexaString(response.statusCode);
     if (isCommandErrorCode(errorCode, bitcoinAppErrors)) {
