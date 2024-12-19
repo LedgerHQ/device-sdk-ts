@@ -79,6 +79,7 @@ describe("HttpTransactionDataSource", () => {
     fieldToken = {
       param: {
         value: {
+          type: "path",
           binary_path: {
             type: "DATA",
             elements: [
@@ -97,6 +98,7 @@ describe("HttpTransactionDataSource", () => {
         },
         type: "TOKEN_AMOUNT",
         token: {
+          type: "path",
           binary_path: {
             type: "DATA",
             elements: [
@@ -122,6 +124,7 @@ describe("HttpTransactionDataSource", () => {
     fieldTrustedName = {
       param: {
         value: {
+          type: "path",
           binary_path: {
             type: "CONTAINER",
             value: "TO",
@@ -139,6 +142,7 @@ describe("HttpTransactionDataSource", () => {
     fieldNft = {
       param: {
         value: {
+          type: "path",
           binary_path: {
             type: "DATA",
             elements: [
@@ -160,6 +164,7 @@ describe("HttpTransactionDataSource", () => {
           type_size: 20,
         },
         collection: {
+          type: "path",
           binary_path: {
             type: "DATA",
             elements: [
@@ -188,6 +193,7 @@ describe("HttpTransactionDataSource", () => {
       param: {
         id: 0,
         value: {
+          type: "path",
           binary_path: {
             type: "DATA",
             elements: [],
@@ -211,6 +217,7 @@ describe("HttpTransactionDataSource", () => {
     return {
       param: {
         value: {
+          type: "path",
           binary_path: {
             type: "CONTAINER",
             value: binary_path,
@@ -582,6 +589,166 @@ describe("HttpTransactionDataSource", () => {
       {
         type: "transactionFieldDescription",
         payload: fieldDuration.descriptor,
+      },
+    ]);
+  });
+
+  it("Calldata with token fields references as constants", async () => {
+    // GIVEN
+    const field = {
+      name: "Amount to exchange",
+      param: {
+        type: "TOKEN_AMOUNT",
+        token: {
+          raw: "0xae7ab96520de3a18e5e111b5eaab095312d7fe84",
+          type: "constant",
+          value: "0xae7ab96520DE3A18E5e111B5EaAb095312D7fE84",
+          version: 1,
+          type_size: 20,
+          type_family: "ADDRESS",
+        },
+        value: {
+          type: "path",
+          version: 1,
+          abi_path: {
+            type: "data",
+            absolute: true,
+            elements: [
+              {
+                type: "field",
+                identifier: "_stETHAmount",
+              },
+            ],
+          },
+          type_size: 32,
+          binary_path: {
+            type: "DATA",
+            version: 1,
+            elements: [
+              {
+                type: "TUPLE",
+                offset: 0,
+              },
+              {
+                type: "LEAF",
+                leaf_type: "STATIC_LEAF",
+              },
+            ],
+          },
+          type_family: "UINT",
+        },
+        version: 1,
+      },
+      version: 1,
+      descriptor:
+        "0001010112416d6f756e7420746f2065786368616e6765020102033b0001010115000101010101020120030a00010101020000040103021f0001010101050201140514ae7ab96520de3a18e5e111b5eaab095312d7fe84",
+    };
+    const calldataDTO = createCalldata(transactionInfo, [], [field]);
+    jest.spyOn(axios, "request").mockResolvedValue({ data: [calldataDTO] });
+
+    // WHEN
+    const result = await datasource.getTransactionDescriptors({
+      chainId: 1,
+      address: "0x7d2768de32b0b80b7a3454c06bdac94a69ddc7a9",
+      selector: "0x69328dec",
+    });
+
+    // THEN
+    expect(result.extract()).toEqual([
+      {
+        payload:
+          "0001000108000000000000000102147d2768de32b0b80b7a3454c06bdac94a69ddc7a9030469328dec04207d5e9ed0004b8035b164edd9d78c37415ad6b1d123be4943d0abd5a50035cae3050857697468647261770604416176650708416176652044414f081068747470733a2f2f616176652e636f6d0a045fc4ba9c81ff473045022100eb67599abfd9c7360b07599a2a2cb769c6e3f0f74e1e52444d788c8f577a16d20220402e92b0adbf97d890fa2f9654bc30c7bd70dacabe870f160e6842d9eb73d36f",
+        type: "transactionInfo",
+      },
+      {
+        payload: field.descriptor,
+        type: "transactionFieldDescription",
+        reference: {
+          type: "token",
+          value: "0xae7ab96520DE3A18E5e111B5EaAb095312D7fE84",
+        },
+      },
+    ]);
+  });
+
+  it("Calldata with collection fields references as constants", async () => {
+    // GIVEN
+    const field = {
+      name: "Collection ID",
+      param: {
+        type: "NFT",
+        collection: {
+          raw: "0x7d2768de32b0b80b7a3454c06bdac94a69ddc7a9",
+          type: "constant",
+          value: "0x7d2768de32b0b80b7a3454c06bdac94a69ddc7a9",
+          version: 1,
+          type_size: 20,
+          type_family: "ADDRESS",
+        },
+        value: {
+          type: "path",
+          version: 1,
+          abi_path: {
+            type: "data",
+            absolute: true,
+            elements: [
+              {
+                type: "field",
+                identifier: "_collectionId",
+              },
+            ],
+          },
+          type_size: 20,
+          binary_path: {
+            type: "DATA",
+            version: 1,
+            elements: [
+              {
+                type: "ARRAY",
+                weight: 2,
+              },
+              {
+                type: "LEAF",
+                leaf_type: "TUPLE_LEAF",
+              },
+              {
+                type: "SLICE",
+                end: 2,
+              },
+            ],
+          },
+          type_family: "BYTES",
+        },
+        version: 1,
+      },
+      version: 1,
+      descriptor:
+        "0001010112416d6f756e7420746f2065786368616e6765020102033b0001010115000101010101020120030a00010101020000040103021f00010101010502011405147d2768de32b0b80b7a3454c06bdac94a69ddc7a9",
+    };
+    const calldataDTO = createCalldata(transactionInfo, [], [field]);
+    jest.spyOn(axios, "request").mockResolvedValue({ data: [calldataDTO] });
+
+    // WHEN
+    const result = await datasource.getTransactionDescriptors({
+      chainId: 1,
+      address: "0x7d2768de32b0b80b7a3454c06bdac94a69ddc7a9",
+      selector: "0x69328dec",
+    });
+
+    // THEN
+    expect(result.extract()).toEqual([
+      {
+        payload:
+          "0001000108000000000000000102147d2768de32b0b80b7a3454c06bdac94a69ddc7a9030469328dec04207d5e9ed0004b8035b164edd9d78c37415ad6b1d123be4943d0abd5a50035cae3050857697468647261770604416176650708416176652044414f081068747470733a2f2f616176652e636f6d0a045fc4ba9c81ff473045022100eb67599abfd9c7360b07599a2a2cb769c6e3f0f74e1e52444d788c8f577a16d20220402e92b0adbf97d890fa2f9654bc30c7bd70dacabe870f160e6842d9eb73d36f",
+        type: "transactionInfo",
+      },
+      {
+        payload: field.descriptor,
+        type: "transactionFieldDescription",
+        reference: {
+          type: "nft",
+          value: "0x7d2768de32b0b80b7a3454c06bdac94a69ddc7a9",
+        },
       },
     ]);
   });

@@ -33,10 +33,17 @@ export type ClearSignContextReference<
         types: string[];
         sources: string[];
       }
-    : {
-        type: Type;
-        valuePath: GenericPath;
-      };
+    :
+        | {
+            type: Type;
+            valuePath: GenericPath;
+            value?: never;
+          }
+        | {
+            type: Type;
+            valuePath?: never;
+            value: string;
+          };
 
 export type ClearSignContextSuccessType = Exclude<
   ClearSignContextType,
