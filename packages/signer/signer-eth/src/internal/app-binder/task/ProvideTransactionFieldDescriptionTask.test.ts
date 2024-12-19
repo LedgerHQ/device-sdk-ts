@@ -324,6 +324,100 @@ describe("ProvideTransactionFieldDescriptionTask", () => {
         }),
       );
     });
+
+    it("when type is token with a constant reference", async () => {
+      // GIVEN
+      const payload = `0x01020304`;
+      const field: ClearSignContextSuccess = {
+        type: ClearSignContextType.TOKEN,
+        payload,
+        reference: {
+          type: ClearSignContextType.TOKEN,
+          value: "0x09080706",
+        },
+      };
+      // provide reference context
+      jest
+        .spyOn(apiMock, "sendCommand")
+        .mockResolvedValueOnce(CommandResultFactory({ data: "ok" }));
+      // provide context
+      jest
+        .spyOn(apiMock, "sendCommand")
+        .mockResolvedValueOnce(CommandResultFactory({ data: "ok" }));
+      jest.spyOn(contextModuleMock, "getContext").mockResolvedValueOnce({
+        type: ClearSignContextType.TOKEN,
+        payload: "0x05060708",
+      });
+
+      // WHEN
+      const task = new ProvideTransactionFieldDescriptionTask(apiMock, {
+        field,
+        serializedTransaction: new Uint8Array(),
+        chainId: 1,
+        transactionParser: transactionParserMock,
+        contextModule: contextModuleMock,
+        transactionEnums: [],
+      });
+      const result = await task.run();
+
+      // THEN
+      expect(transactionParserMock.extractValue).not.toHaveBeenCalled();
+      expect(contextModuleMock.getContext).toHaveBeenCalledTimes(1);
+      expect(contextModuleMock.getContext).toHaveBeenCalledWith({
+        type: ClearSignContextType.TOKEN,
+        chainId: 1,
+        address: "0x09080706",
+      });
+      expect(result).toEqual(Nothing);
+      expect(apiMock.sendCommand).toHaveBeenCalledTimes(2);
+    });
+
+    it("when type is a ntf with a constant reference", async () => {
+      // GIVEN
+      const payload = `0x01020304`;
+      const field: ClearSignContextSuccess = {
+        type: ClearSignContextType.NFT,
+        payload,
+        reference: {
+          type: ClearSignContextType.NFT,
+          value: "0x09080706",
+        },
+      };
+      // provide reference context
+      jest
+        .spyOn(apiMock, "sendCommand")
+        .mockResolvedValueOnce(CommandResultFactory({ data: "ok" }));
+      // provide context
+      jest
+        .spyOn(apiMock, "sendCommand")
+        .mockResolvedValueOnce(CommandResultFactory({ data: "ok" }));
+      jest.spyOn(contextModuleMock, "getContext").mockResolvedValueOnce({
+        type: ClearSignContextType.NFT,
+        payload: "0x05060708",
+      });
+
+      // WHEN
+      const task = new ProvideTransactionFieldDescriptionTask(apiMock, {
+        field,
+        serializedTransaction: new Uint8Array(),
+        chainId: 1,
+        transactionParser: transactionParserMock,
+        contextModule: contextModuleMock,
+        transactionEnums: [],
+      });
+      const result = await task.run();
+
+      // THEN
+      expect(transactionParserMock.extractValue).not.toHaveBeenCalled();
+      expect(contextModuleMock.getContext).toHaveBeenCalledTimes(1);
+      expect(contextModuleMock.getContext).toHaveBeenCalledWith({
+        type: ClearSignContextType.NFT,
+        chainId: 1,
+        address: "0x09080706",
+      });
+      expect(result).toEqual(Nothing);
+      expect(apiMock.sendCommand).toHaveBeenCalledTimes(2);
+    });
   });
 
   describe("should not provide a reference context", () => {

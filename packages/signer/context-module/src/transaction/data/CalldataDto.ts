@@ -107,13 +107,25 @@ export interface CalldataDescriptorParamTrustedNameV1 {
   sources: string[];
 }
 
-export interface CalldataDescriptorValueV1 {
+export interface CalldataDescriptorValueBinaryPathV1 {
+  type: "path";
   binary_path:
     | CalldataDescriptorContainerPathV1
     | CalldataDescriptorPathElementsV1;
   type_family: CalldataDescriptorTypeFamilyV1;
   type_size?: number;
 }
+
+export interface CalldataDescriptorValueConstantV1 {
+  type: "constant";
+  value: string;
+  type_family: CalldataDescriptorTypeFamilyV1;
+  type_size?: number;
+}
+
+export type CalldataDescriptorValueV1 =
+  | CalldataDescriptorValueBinaryPathV1
+  | CalldataDescriptorValueConstantV1;
 
 export interface CalldataDescriptorContainerPathV1 {
   type: "CONTAINER";

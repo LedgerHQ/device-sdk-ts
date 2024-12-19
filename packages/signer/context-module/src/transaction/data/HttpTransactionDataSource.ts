@@ -22,6 +22,8 @@ import {
   CalldataDescriptorPathElementsV1,
   CalldataDescriptorPathElementV1,
   CalldataDescriptorV1,
+  CalldataDescriptorValueBinaryPathV1,
+  CalldataDescriptorValueConstantV1,
   CalldataDescriptorValueV1,
   CalldataDto,
   CalldataEnumV1,
@@ -162,24 +164,42 @@ export class HttpTransactionDataSource implements TransactionDataSource {
   private getReference(
     param: CalldataDescriptorParam,
   ): ClearSignContextReference | undefined {
-    if (param.type === "TOKEN_AMOUNT" && param.token !== undefined) {
+    if (
+      param.type === "TOKEN_AMOUNT" &&
+      param.token !== undefined &&
+      param.token.type === "path"
+    ) {
       return {
         type: ClearSignContextType.TOKEN,
         valuePath: this.toGenericPath(param.token.binary_path),
       };
-    } else if (param.type === "NFT") {
+    } else if (
+      param.type === "TOKEN_AMOUNT" &&
+      param.token !== undefined &&
+      param.token.type === "constant"
+    ) {
+      return {
+        type: ClearSignContextType.TOKEN,
+        value: param.token.value,
+      };
+    } else if (param.type === "NFT" && param.collection.type === "path") {
       return {
         type: ClearSignContextType.NFT,
         valuePath: this.toGenericPath(param.collection.binary_path),
       };
-    } else if (param.type === "TRUSTED_NAME") {
+    } else if (param.type === "NFT" && param.collection.type === "constant") {
+      return {
+        type: ClearSignContextType.NFT,
+        value: param.collection.value,
+      };
+    } else if (param.type === "TRUSTED_NAME" && param.value.type === "path") {
       return {
         type: ClearSignContextType.TRUSTED_NAME,
         valuePath: this.toGenericPath(param.value.binary_path),
         types: param.types,
         sources: param.sources,
       };
-    } else if (param.type === "ENUM") {
+    } else if (param.type === "ENUM" && param.value.type === "path") {
       return {
         type: ClearSignContextType.ENUM,
         valuePath: this.toGenericPath(param.value.binary_path),
@@ -322,7 +342,29 @@ export class HttpTransactionDataSource implements TransactionDataSource {
       ].includes(data.type_family) &&
       (typeof data.type_size === "undefined" ||
         typeof data.type_size === "number") &&
-      ((typeof data.binary_path === "object" &&
+      ((data.type === "path" &&
+        this.isCalldataDescriptorValueBinaryPathV1(data)) ||
+        (data.type === "constant" &&
+          this.isCalldataDescriptorValueConstantV1(data)))
+    );
+  }
+
+  private isCalldataDescriptorValueConstantV1(
+    data: CalldataDescriptorValueConstantV1,
+  ): boolean {
+    return (
+      typeof data === "object" &&
+      data.type === "constant" &&
+      typeof data.value === "string"
+    );
+  }
+
+  private isCalldataDescriptorValueBinaryPathV1(
+    data: CalldataDescriptorValueBinaryPathV1,
+  ): boolean {
+    return (
+      typeof data === "object" &&
+      ((data.type === "path" &&
         data.binary_path.type === "CONTAINER" &&
         ["FROM", "TO", "VALUE"].includes(data.binary_path.value)) ||
         (data.binary_path.type === "DATA" &&

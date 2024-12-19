@@ -68,7 +68,28 @@ export class ProvideTransactionFieldDescriptionTask {
     Maybe<CommandErrorResult<ProvideTransactionFieldDescriptionTaskErrorCodes>>
   > {
     const { field } = this.args;
-    if (field.reference !== undefined) {
+
+    // if the reference is a string, it means it is a direct address
+    // and we don't need to extract the value from the transaction
+    // as it is already provided in the reference
+    if (
+      field.reference !== undefined &&
+      "value" in field.reference &&
+      field.reference.value !== undefined
+    ) {
+      await this.getAndProvideContext({
+        type: field.reference.type,
+        chainId: this.args.chainId,
+        address: field.reference.value,
+      });
+    }
+
+    // if the reference is a path, it means we need to extract the value
+    // from the transaction and provide it to the device
+    if (
+      field.reference !== undefined &&
+      field.reference.valuePath !== undefined
+    ) {
       // iterate on each reference and provide the context
       const referenceValues = this.args.transactionParser.extractValue(
         this.args.serializedTransaction,
