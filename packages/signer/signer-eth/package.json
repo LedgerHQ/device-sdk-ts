@@ -38,7 +38,7 @@
     "@ledgerhq/signer-utils": "workspace:*",
     "ethers-v5": "npm:ethers@^5.7.2",
     "ethers-v6": "npm:ethers@6.13.4",
-    "inversify": "^6.1.6",
+    "inversify": "^6.2.1",
     "inversify-logger-middleware": "^3.1.0",
     "purify-ts": "^2.1.0",
     "reflect-metadata": "^0.2.2",

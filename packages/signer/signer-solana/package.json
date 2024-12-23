@@ -37,7 +37,7 @@
   "dependencies": {
     "@ledgerhq/signer-utils": "workspace:*",
     "bs58": "^6.0.0",
-    "inversify": "^6.1.6",
+    "inversify": "^6.2.1",
     "inversify-logger-middleware": "^3.1.0",
     "purify-ts": "^2.1.0",
     "reflect-metadata": "^0.2.2",
