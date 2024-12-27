@@ -18,8 +18,9 @@ import {
   type SignMessageDAIntermediateValue,
   type SignMessageDAInternalState,
   type SignMessageDAOutput,
-} from "@api/app-binder/SignMessageDeviceActionType";
+} from "@api/app-binder/SignMessageDeviceActionTypes";
 import { type Signature } from "@api/model/Signature";
+import { type BtcErrorCodes } from "@internal/app-binder/command/utils/bitcoinAppErrors";
 import {
   SendSignMessageTask,
   type SendSignMessageTaskArgs,
@@ -28,7 +29,7 @@ import {
 export type MachineDependencies = {
   readonly signMessage: (arg0: {
     input: SendSignMessageTaskArgs;
-  }) => Promise<CommandResult<Signature>>;
+  }) => Promise<CommandResult<Signature, BtcErrorCodes>>;
 };
 
 export type ExtractMachineDependencies = (
