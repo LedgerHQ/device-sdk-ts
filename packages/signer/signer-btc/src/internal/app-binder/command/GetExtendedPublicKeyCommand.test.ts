@@ -2,9 +2,12 @@ import {
   ApduResponse,
   CommandResultFactory,
   InvalidStatusWordError,
-  isSuccessCommandResult,
-  UnknownDeviceExchangeError,
 } from "@ledgerhq/device-management-kit";
+
+import {
+  BTC_APP_ERRORS,
+  BtcAppCommandErrorFactory,
+} from "@internal/app-binder/command/utils/bitcoinAppErrors";
 
 import {
   GetExtendedPublicKeyCommand,
@@ -129,11 +132,14 @@ describe("GetExtendedPublicKeyCommand", () => {
       const result = command.parseResponse(response);
 
       // THEN
-      if (!isSuccessCommandResult(result)) {
-        expect(result.error).toBeInstanceOf(UnknownDeviceExchangeError);
-      } else {
-        fail("Expected an error, but the result was successful");
-      }
+      expect(result).toStrictEqual(
+        CommandResultFactory({
+          error: BtcAppCommandErrorFactory({
+            ...BTC_APP_ERRORS["6d00"],
+            errorCode: "6d00",
+          }),
+        }),
+      );
     });
 
     it("should return an error if the response is too short", () => {
