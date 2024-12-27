@@ -14,7 +14,7 @@ export enum CommandResultStatus {
   Error = "ERROR",
   Success = "SUCCESS",
 }
-type CommandSuccessResult<Data> = {
+export type CommandSuccessResult<Data> = {
   status: CommandResultStatus.Success;
   data: Data;
 };

@@ -16,6 +16,7 @@ export type { Command } from "@api/command/Command";
 export type {
   CommandErrorResult,
   CommandResult,
+  CommandSuccessResult,
 } from "@api/command/model/CommandResult";
 export type { SendCommandUseCaseArgs } from "@api/command/use-case/SendCommandUseCase";
 export type { DeviceModelId } from "@api/device/DeviceModel";
