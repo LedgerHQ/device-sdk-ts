@@ -148,13 +148,11 @@ describe("GetExtendedPublicKeyCommand", () => {
       const result = command.parseResponse(response);
 
       // THEN
-      if (!isSuccessCommandResult(result)) {
-        expect(result.error).toEqual(
-          new InvalidStatusWordError("Invalid response length"),
-        );
-      } else {
-        fail("Expected an error, but the result was successful");
-      }
+      expect(result).toStrictEqual(
+        CommandResultFactory({
+          error: new InvalidStatusWordError("Invalid response length"),
+        }),
+      );
     });
   });
 });

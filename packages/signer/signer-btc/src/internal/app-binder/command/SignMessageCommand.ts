@@ -1,30 +1,26 @@
 import {
   type Apdu,
   ApduBuilder,
-  ApduParser,
   type ApduResponse,
   type Command,
   type CommandResult,
   CommandResultFactory,
-  CommandUtils,
-  GlobalCommandErrorHandler,
-  InvalidStatusWordError,
-  isCommandErrorCode,
 } from "@ledgerhq/device-management-kit";
-import { DerivationPathUtils } from "@ledgerhq/signer-utils";
+import {
+  CommandErrorHelper,
+  DerivationPathUtils,
+} from "@ledgerhq/signer-utils";
+import { Maybe } from "purify-ts";
 
-import { type Signature } from "@api/model/Signature";
 import { PROTOCOL_VERSION } from "@internal/app-binder/command/utils/constants";
-import { CommandUtils as BtcCommandUtils } from "@internal/utils/CommandUtils";
+import { BtcCommandUtils } from "@internal/utils/BtcCommandUtils";
 import { encodeVarint } from "@internal/utils/Varint";
 
 import {
-  BitcoinAppCommandError,
-  bitcoinAppErrors,
+  BTC_APP_ERRORS,
+  BtcAppCommandErrorFactory,
+  type BtcErrorCodes,
 } from "./utils/bitcoinAppErrors";
-
-const R_LENGTH = 32;
-const S_LENGTH = 32;
 
 export type SignMessageCommandArgs = {
   /**
@@ -41,19 +37,26 @@ export type SignMessageCommandArgs = {
   readonly messageMerkleRoot: Uint8Array;
 };
 
-export type SignMessageCommandResponse = Signature | ApduResponse;
+export type SignMessageCommandResponse = ApduResponse;
 
 export class SignMessageCommand
-  implements Command<SignMessageCommandResponse, SignMessageCommandArgs>
+  implements
+    Command<SignMessageCommandResponse, SignMessageCommandArgs, BtcErrorCodes>
 {
-  readonly args: SignMessageCommandArgs;
-
-  constructor(args: SignMessageCommandArgs) {
-    this.args = args;
-  }
+  constructor(
+    private readonly _args: SignMessageCommandArgs,
+    private readonly _errorHelper = new CommandErrorHelper<
+      SignMessageCommandResponse,
+      BtcErrorCodes
+    >(
+      BTC_APP_ERRORS,
+      BtcAppCommandErrorFactory,
+      BtcCommandUtils.isSuccessResponse,
+    ),
+  ) {}
 
   getApdu(): Apdu {
-    const { derivationPath, messageLength, messageMerkleRoot } = this.args;
+    const { derivationPath, messageLength, messageMerkleRoot } = this._args;
 
     const builder = new ApduBuilder({
       cla: 0xe1,
@@ -76,66 +79,9 @@ export class SignMessageCommand
 
   parseResponse(
     apduResponse: ApduResponse,
-  ): CommandResult<SignMessageCommandResponse> {
-    if (BtcCommandUtils.isContinueResponse(apduResponse)) {
-      return CommandResultFactory({
-        data: apduResponse,
-      });
-    }
-
-    if (!CommandUtils.isSuccessResponse(apduResponse)) {
-      return CommandResultFactory({
-        error: GlobalCommandErrorHandler.handle(apduResponse),
-      });
-    }
-
-    const parser = new ApduParser(apduResponse);
-    const errorCode = parser.encodeToHexaString(apduResponse.statusCode);
-    if (isCommandErrorCode(errorCode, bitcoinAppErrors)) {
-      return CommandResultFactory({
-        error: new BitcoinAppCommandError({
-          ...bitcoinAppErrors[errorCode],
-          errorCode,
-        }),
-      });
-    }
-
-    // Extract 'v'
-    const v = parser.extract8BitUInt();
-    if (v === undefined) {
-      return CommandResultFactory({
-        error: new InvalidStatusWordError("V is missing"),
-      });
-    }
-
-    // Extract 'r'
-    const r = parser.encodeToHexaString(
-      parser.extractFieldByLength(R_LENGTH),
-      true,
-    );
-    if (!r) {
-      return CommandResultFactory({
-        error: new InvalidStatusWordError("R is missing"),
-      });
-    }
-
-    // Extract 's'
-    const s = parser.encodeToHexaString(
-      parser.extractFieldByLength(S_LENGTH),
-      true,
-    );
-    if (!s) {
-      return CommandResultFactory({
-        error: new InvalidStatusWordError("S is missing"),
-      });
-    }
-
-    return CommandResultFactory({
-      data: {
-        v,
-        r,
-        s,
-      },
-    });
+  ): CommandResult<SignMessageCommandResponse, BtcErrorCodes> {
+    return Maybe.fromNullable(
+      this._errorHelper.getError(apduResponse),
+    ).orDefault(CommandResultFactory({ data: apduResponse }));
   }
 }
