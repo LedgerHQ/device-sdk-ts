@@ -1,5 +1,7 @@
 import React, { useMemo } from "react";
 import {
+  DefaultDescriptorTemplate,
+  DefaultWallet,
   type GetExtendedDAIntermediateValue,
   type GetExtendedPublicKeyDAError,
   type GetExtendedPublicKeyDAOutput,
@@ -7,12 +9,16 @@ import {
   type SignMessageDAError,
   type SignMessageDAIntermediateValue,
   type SignMessageDAOutput,
+  type SignPsbtDAError,
+  type SignPsbtDAIntermediateValue,
+  type SignPsbtDAOutput,
 } from "@ledgerhq/device-signer-kit-bitcoin";
 
 import { DeviceActionsList } from "@/components/DeviceActionsView/DeviceActionsList";
 import { type DeviceActionProps } from "@/components/DeviceActionsView/DeviceActionTester";
 import { useDmk } from "@/providers/DeviceManagementKitProvider";
 
+// Native segwit
 const DEFAULT_DERIVATION_PATH = "84'/0'/0'";
 
 export const SignerBtcView: React.FC<{ sessionId: string }> = ({
@@ -77,6 +83,37 @@ export const SignerBtcView: React.FC<{ sessionId: string }> = ({
         },
         SignMessageDAError,
         SignMessageDAIntermediateValue
+      >,
+      {
+        title: "Sign psbt",
+        description:
+          "Perform all the actions necessary to sign a PSBT with the device",
+        executeDeviceAction: ({ derivationPath, psbt }) => {
+          if (!signer) {
+            throw new Error("Signer not initialized");
+          }
+
+          return signer.signPsbt(
+            new DefaultWallet(
+              derivationPath,
+              DefaultDescriptorTemplate.TAPROOT,
+            ),
+            psbt,
+          );
+        },
+        initialValues: {
+          derivationPath: DEFAULT_DERIVATION_PATH,
+          psbt: "cHNidP8BAFUCAAAAAVEiws3mgj5VdUF1uSycV6Co4ayDw44Xh/06H/M0jpUTAQAAAAD9////AXhBDwAAAAAAGXapFBPX1YFmlGw+wCKTQGbYwNER0btBiKwaBB0AAAEA+QIAAAAAAQHsIw5TCVJWBSokKCcO7ASYlEsQ9vHFePQxwj0AmLSuWgEAAAAXFgAUKBU5gg4t6XOuQbpgBLQxySHE2G3+////AnJydQAAAAAAF6kUyLkGrymMcOYDoow+/C+uGearKA+HQEIPAAAAAAAZdqkUy65bUM+Tnm9TG4prer14j+FLApeIrAJHMEQCIDfstCSDYar9T4wR5wXw+npfvc1ZUXL81WQ/OxG+/11AAiACDG0yb2w31jzsra9OszX67ffETgX17x0raBQLAjvRPQEhA9rIL8Cs/Pw2NI1KSKRvAc6nfyuezj+MO0yZ0LCy+ZXShPIcACIGAu6GCCB+IQKEJvaedkR9fj1eB3BJ9eaDwxNsIxR2KkcYGPWswv0sAACAAQAAgAAAAIAAAAAAAAAAAAAA",
+        },
+        deviceModelId,
+      } satisfies DeviceActionProps<
+        SignPsbtDAOutput,
+        {
+          psbt: string;
+          derivationPath: string;
+        },
+        SignPsbtDAError,
+        SignPsbtDAIntermediateValue
       >,
     ],
     [deviceModelId, signer],
