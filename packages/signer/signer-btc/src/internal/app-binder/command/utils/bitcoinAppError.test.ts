@@ -35,7 +35,7 @@ describe("BtcAppCommandError", () => {
   });
 
   it("should set the correct customErrorCode", () => {
-    const errorCode: BtcErrorCodes = "6A86";
+    const errorCode: BtcErrorCodes = "6a86";
     const error = new BtcAppCommandError({
       message: "Either P1 or P2 is incorrect",
       errorCode,
@@ -45,7 +45,7 @@ describe("BtcAppCommandError", () => {
   });
 
   it("should correlate error codes with messages from bitcoinAppErrors", () => {
-    const errorCode: BtcErrorCodes = "6E00";
+    const errorCode: BtcErrorCodes = "6e00";
     const expectedMessage = BTC_APP_ERRORS[errorCode].message;
 
     const error = new BtcAppCommandError({

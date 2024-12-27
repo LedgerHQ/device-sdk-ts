@@ -42,9 +42,11 @@ const SIGN_PSBT_APDU = Uint8Array.from([
   0x04,
   0x00,
   0x01,
-  0xc3,
+  0xc5,
   ...GLOBAL_COMMITMENTS,
+  0x01,
   ...INPUTS_COMMITMENTS,
+  0x01,
   ...OUTPUTS_COMMITMENTS,
   ...WALLET_ID,
   ...WALLET_HMAC,
@@ -53,7 +55,9 @@ const SIGN_PSBT_APDU = Uint8Array.from([
 describe("SignPsbtCommand", () => {
   const args: SignPsbtCommandArgs = {
     globalCommitments: GLOBAL_COMMITMENTS,
+    inputsCount: 1,
     inputsCommitments: INPUTS_COMMITMENTS,
+    outputsCount: 1,
     outputsCommitments: OUTPUTS_COMMITMENTS,
     walletId: WALLET_ID,
     walletHmac: WALLET_HMAC,
