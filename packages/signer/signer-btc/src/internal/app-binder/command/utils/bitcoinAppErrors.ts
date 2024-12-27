@@ -1,12 +1,10 @@
-//temp file, will be changed in a specific PR
-
 import {
+  type CommandErrorArgs,
   type CommandErrors,
   DeviceExchangeError,
-  type DmkError,
 } from "@ledgerhq/device-management-kit";
 
-export type BitcoinAppErrorCodes =
+export type BtcErrorCodes =
   | "6985"
   | "6A86"
   | "6A87"
@@ -16,7 +14,7 @@ export type BitcoinAppErrorCodes =
   | "B007"
   | "B008";
 
-export const bitcoinAppErrors: CommandErrors<BitcoinAppErrorCodes> = {
+export const BTC_APP_ERRORS: CommandErrors<BtcErrorCodes> = {
   "6985": { message: "Rejected by user" },
   "6A86": { message: "Either P1 or P2 is incorrect" },
   "6A87": { message: "Lc or minimum APDU length is incorrect" },
@@ -27,18 +25,12 @@ export const bitcoinAppErrors: CommandErrors<BitcoinAppErrorCodes> = {
   B008: { message: "Invalid signature or HMAC" },
 };
 
-export class BitcoinAppCommandError
-  extends DeviceExchangeError<void>
-  implements DmkError
-{
-  public readonly customErrorCode?: BitcoinAppErrorCodes;
-
-  constructor(args: { message?: string; errorCode?: BitcoinAppErrorCodes }) {
-    super({
-      tag: "BitcoinAppCommandError",
-      message: args.message || "An error occurred during device exchange.",
-      errorCode: undefined,
-    });
-    this.customErrorCode = args.errorCode;
+export class BtcAppCommandError extends DeviceExchangeError<BtcErrorCodes> {
+  constructor(args: CommandErrorArgs<BtcErrorCodes>) {
+    super({ tag: "BtcAppCommandError", ...args });
   }
 }
+
+export const BtcAppCommandErrorFactory = (
+  args: CommandErrorArgs<BtcErrorCodes>,
+) => new BtcAppCommandError(args);

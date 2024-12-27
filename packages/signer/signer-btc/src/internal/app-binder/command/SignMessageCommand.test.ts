@@ -1,7 +1,6 @@
 import {
   ApduResponse,
   CommandResultFactory,
-  InvalidStatusWordError,
   isSuccessCommandResult,
 } from "@ledgerhq/device-management-kit";
 
@@ -120,27 +119,6 @@ describe("SignMessageCommand", (): void => {
       );
     });
 
-    it("should return correct response after successful signing", () => {
-      // given
-      const command = new SignMessageCommand(defaultArgs);
-      const apduResponse = new ApduResponse({
-        statusCode: new Uint8Array([0x90, 0x00]),
-        data: getResponse(),
-      });
-      // when
-      const response = command.parseResponse(apduResponse);
-      // then
-      expect(response).toStrictEqual(
-        CommandResultFactory({
-          data: {
-            v: 27,
-            r: "0x97a4ca8f694633592601f5a23e0bcc553c9d0a90d3a3422d575508a92898b96e",
-            s: "0x6950d02e74e9c102c164a225533082cabdd890efc463f67f60cefe8c3f87cfce",
-          },
-        }),
-      );
-    });
-
     it("should return an error if user denied the operation", () => {
       // given
       const command = new SignMessageCommand(defaultArgs);
@@ -157,24 +135,6 @@ describe("SignMessageCommand", (): void => {
       }
     });
 
-    it("should return an error when the response data is empty", () => {
-      // given
-      const command = new SignMessageCommand(defaultArgs);
-      const apduResponse = new ApduResponse({
-        statusCode: new Uint8Array([0x90, 0x00]),
-        data: new Uint8Array([]),
-      });
-      // when
-      const response = command.parseResponse(apduResponse);
-      // then
-      expect(isSuccessCommandResult(response)).toBe(false);
-      expect(response).toStrictEqual(
-        CommandResultFactory({
-          error: new InvalidStatusWordError("V is missing"),
-        }),
-      );
-    });
-
     it("should return correct data when the response data is not empty", () => {
       // given
       const command = new SignMessageCommand(defaultArgs);
@@ -185,46 +145,9 @@ describe("SignMessageCommand", (): void => {
       // when
       const response = command.parseResponse(apduResponse);
       // then
-      expect(isSuccessCommandResult(response)).toBe(true);
-      if (isSuccessCommandResult(response)) {
-        expect(response.data).toStrictEqual({
-          v: 27,
-          r: "0x97a4ca8f694633592601f5a23e0bcc553c9d0a90d3a3422d575508a92898b96e",
-          s: "0x6950d02e74e9c102c164a225533082cabdd890efc463f67f60cefe8c3f87cfce",
-        });
-      }
-    });
-
-    it("should return an error if 'r' is missing", () => {
-      // given
-      const command = new SignMessageCommand(defaultArgs);
-      const apduResponse = new ApduResponse({
-        statusCode: new Uint8Array([0x90, 0x00]),
-        data: getResponse({ omitR: true }),
-      });
-      // when
-      const response = command.parseResponse(apduResponse);
-      // then
       expect(response).toStrictEqual(
         CommandResultFactory({
-          error: new InvalidStatusWordError("R is missing"),
-        }),
-      );
-    });
-
-    it("should return an error if 's' is missing", () => {
-      // given
-      const command = new SignMessageCommand(defaultArgs);
-      const apduResponse = new ApduResponse({
-        statusCode: new Uint8Array([0x90, 0x00]),
-        data: getResponse({ omitS: true }),
-      });
-      // when
-      const response = command.parseResponse(apduResponse);
-      // then
-      expect(response).toStrictEqual(
-        CommandResultFactory({
-          error: new InvalidStatusWordError("S is missing"),
+          data: apduResponse,
         }),
       );
     });

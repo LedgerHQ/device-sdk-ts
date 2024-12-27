@@ -8,20 +8,37 @@ import {
   type Command,
   type CommandResult,
   CommandResultFactory,
-  CommandUtils,
-  GlobalCommandErrorHandler,
   InvalidStatusWordError,
 } from "@ledgerhq/device-management-kit";
+import { CommandErrorHelper } from "@ledgerhq/signer-utils";
+import { Maybe } from "purify-ts";
+
+import {
+  BTC_APP_ERRORS,
+  BtcAppCommandErrorFactory,
+  type BtcErrorCodes,
+} from "@internal/app-binder/command/utils/bitcoinAppErrors";
+import { BtcCommandUtils } from "@internal/utils/BtcCommandUtils";
 
 const MASTER_FINGERPRINT_LENGTH = 4;
 
 type GetMasterFingerprintCommandResponse = {
-  masterFingerprint: string;
+  masterFingerprint: Uint8Array;
 };
 
 export class GetMasterFingerprintCommand
-  implements Command<GetMasterFingerprintCommandResponse, void>
+  implements Command<GetMasterFingerprintCommandResponse, void, BtcErrorCodes>
 {
+  constructor(
+    private readonly _errorHelper = new CommandErrorHelper<
+      GetMasterFingerprintCommandResponse,
+      BtcErrorCodes
+    >(
+      BTC_APP_ERRORS,
+      BtcAppCommandErrorFactory,
+      BtcCommandUtils.isSuccessResponse,
+    ),
+  ) {}
   getApdu(): Apdu {
     const getMasterFingerprintArgs: ApduBuilderArgs = {
       cla: 0xe1,
@@ -34,29 +51,26 @@ export class GetMasterFingerprintCommand
 
   parseResponse(
     response: ApduResponse,
-  ): CommandResult<GetMasterFingerprintCommandResponse> {
-    const parser = new ApduParser(response);
+  ): CommandResult<GetMasterFingerprintCommandResponse, BtcErrorCodes> {
+    return Maybe.fromNullable(
+      this._errorHelper.getError(response),
+    ).orDefaultLazy(() => {
+      const parser = new ApduParser(response);
 
-    if (!CommandUtils.isSuccessResponse(response)) {
+      const masterFingerprint = parser.extractFieldByLength(
+        MASTER_FINGERPRINT_LENGTH,
+      );
+      if (!masterFingerprint) {
+        return CommandResultFactory({
+          error: new InvalidStatusWordError("Master fingerprint is missing"),
+        });
+      }
+
       return CommandResultFactory({
-        error: GlobalCommandErrorHandler.handle(response),
+        data: {
+          masterFingerprint,
+        },
       });
-    }
-
-    if (!parser.testMinimalLength(MASTER_FINGERPRINT_LENGTH)) {
-      return CommandResultFactory({
-        error: new InvalidStatusWordError("Master fingerprint is missing"),
-      });
-    }
-
-    const masterFingerprint = parser.encodeToHexaString(
-      parser.extractFieldByLength(MASTER_FINGERPRINT_LENGTH),
-    );
-
-    return CommandResultFactory({
-      data: {
-        masterFingerprint,
-      },
     });
   }
 }

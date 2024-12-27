@@ -6,17 +6,18 @@ import {
   type Command,
   type CommandResult,
   CommandResultFactory,
-  CommandUtils,
-  GlobalCommandErrorHandler,
   InvalidStatusWordError,
-  isCommandErrorCode,
 } from "@ledgerhq/device-management-kit";
+import { CommandErrorHelper } from "@ledgerhq/signer-utils";
+import { Maybe } from "purify-ts";
 
 import { PROTOCOL_VERSION } from "@internal/app-binder/command/utils/constants";
+import { BtcCommandUtils } from "@internal/utils/BtcCommandUtils";
 
 import {
-  BitcoinAppCommandError,
-  bitcoinAppErrors,
+  BTC_APP_ERRORS,
+  BtcAppCommandErrorFactory,
+  type BtcErrorCodes,
 } from "./utils/bitcoinAppErrors";
 
 export type GetWalletAddressCommandResponse = {
@@ -33,9 +34,23 @@ export type GetWalletAddressCommandArgs = {
 
 export class GetWalletAddressCommand
   implements
-    Command<GetWalletAddressCommandResponse, GetWalletAddressCommandArgs>
+    Command<
+      GetWalletAddressCommandResponse,
+      GetWalletAddressCommandArgs,
+      BtcErrorCodes
+    >
 {
-  constructor(private readonly args: GetWalletAddressCommandArgs) {}
+  constructor(
+    private readonly args: GetWalletAddressCommandArgs,
+    private readonly _errorHelper = new CommandErrorHelper<
+      GetWalletAddressCommandResponse,
+      BtcErrorCodes
+    >(
+      BTC_APP_ERRORS,
+      BtcAppCommandErrorFactory,
+      BtcCommandUtils.isSuccessResponse,
+    ),
+  ) {}
 
   getApdu(): Apdu {
     return new ApduBuilder({
@@ -54,37 +69,25 @@ export class GetWalletAddressCommand
 
   parseResponse(
     response: ApduResponse,
-  ): CommandResult<GetWalletAddressCommandResponse> {
-    const parser = new ApduParser(response);
-    const errorCode = parser.encodeToHexaString(response.statusCode);
-    if (isCommandErrorCode(errorCode, bitcoinAppErrors)) {
-      return CommandResultFactory<GetWalletAddressCommandResponse>({
-        error: new BitcoinAppCommandError({
-          ...bitcoinAppErrors[errorCode],
-          errorCode,
-        }),
-      });
-    }
+  ): CommandResult<GetWalletAddressCommandResponse, BtcErrorCodes> {
+    return Maybe.fromNullable(
+      this._errorHelper.getError(response),
+    ).orDefaultLazy(() => {
+      const parser = new ApduParser(response);
+      if (response.data.length === 0) {
+        return CommandResultFactory({
+          error: new InvalidStatusWordError(
+            "Failed to extract address from response",
+          ),
+        });
+      }
 
-    if (!CommandUtils.isSuccessResponse(response)) {
+      const address = parser.encodeToString(response.data);
       return CommandResultFactory({
-        error: GlobalCommandErrorHandler.handle(response),
+        data: {
+          address,
+        },
       });
-    }
-
-    if (response.data.length === 0) {
-      return CommandResultFactory({
-        error: new InvalidStatusWordError(
-          "Failed to extract address from response",
-        ),
-      });
-    }
-
-    const address = parser.encodeToString(response.data);
-    return CommandResultFactory({
-      data: {
-        address,
-      },
     });
   }
 }
