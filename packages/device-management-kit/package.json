@@ -46,7 +46,7 @@
     "reflect-metadata": "^0.2.2",
     "semver": "^7.6.3",
     "uuid": "^11.0.3",
-    "xstate": "^5.19.0"
+    "xstate": "^5.19.1"
   },
   "peerDependencies": {
     "rxjs": "^7.8.1"

@@ -280,7 +280,7 @@ importers:
         version: 6.19.7
       '@statelyai/inspect':
         specifier: ^0.4.0
-        version: 0.4.0(ws@8.18.0)(xstate@5.19.0)
+        version: 0.4.0(ws@8.18.0)(xstate@5.19.1)
       axios:
         specifier: ^1.7.9
         version: 1.7.9
@@ -303,8 +303,8 @@ importers:
         specifier: ^11.0.3
         version: 11.0.3
       xstate:
-        specifier: ^5.19.0
-        version: 5.19.0
+        specifier: ^5.19.1
+        version: 5.19.1
     devDependencies:
       '@ledgerhq/esbuild-tools':
         specifier: workspace:*
@@ -447,8 +447,8 @@ importers:
         specifier: ^0.2.2
         version: 0.2.2
       xstate:
-        specifier: ^5.19.0
-        version: 5.19.0
+        specifier: ^5.19.1
+        version: 5.19.1
     devDependencies:
       '@ledgerhq/device-management-kit':
         specifier: workspace:*
@@ -508,8 +508,8 @@ importers:
         specifier: ^7.6.3
         version: 7.6.3
       xstate:
-        specifier: ^5.19.0
-        version: 5.19.0
+        specifier: ^5.19.1
+        version: 5.19.1
     devDependencies:
       '@ledgerhq/context-module':
         specifier: workspace:*
@@ -563,8 +563,8 @@ importers:
         specifier: ^0.2.2
         version: 0.2.2
       xstate:
-        specifier: ^5.19.0
-        version: 5.19.0
+        specifier: ^5.19.1
+        version: 5.19.1
     devDependencies:
       '@ledgerhq/device-management-kit':
         specifier: workspace:*
@@ -8623,8 +8623,8 @@ packages:
     resolution: {integrity: sha512-GCPAHLvrIH13+c0SuacwvRYj2SxJXQ4kaVTT5xgL3kPrz56XxkF21IGhjSE1+W0aw7gpBWRGXLCPnPby6lSpmQ==}
     engines: {node: '>=12'}
 
-  xstate@5.19.0:
-    resolution: {integrity: sha512-Juh1MjeRaVWr1IRxXYvQMMRFMrei6vq6+AfP6Zk9D9YV0ZuvubN0aM6s2ITwUrq+uWtP1NTO8kOZmsM/IqeOiQ==}
+  xstate@5.19.1:
+    resolution: {integrity: sha512-vFt3q9EBnO/qTTf9AG/5GosGwdDEftw5VOd3ytfSwUQRvkj6oJkxeBQaCqJUANjHrkK341jMkEZP0zeqrx2tww==}
 
   xtend@4.0.2:
     resolution: {integrity: sha512-LKYU1iAXJXUgAXn9URjiu+MWhyUXHsvfp7mcuYm9dSUKK0/CjtrUwFAxD82/mCWbtLsGjFIad0wIsod4zrTAEQ==}
@@ -11977,7 +11977,7 @@ snapshots:
     dependencies:
       '@sinonjs/commons': 3.0.0
 
-  '@statelyai/inspect@0.4.0(ws@8.18.0)(xstate@5.19.0)':
+  '@statelyai/inspect@0.4.0(ws@8.18.0)(xstate@5.19.1)':
     dependencies:
       fast-safe-stringify: 2.1.1
       isomorphic-ws: 5.0.0(ws@8.18.0)
@@ -11985,7 +11985,7 @@ snapshots:
       safe-stable-stringify: 2.4.3
       superjson: 1.13.3
       uuid: 9.0.1
-      xstate: 5.19.0
+      xstate: 5.19.1
     transitivePeerDependencies:
       - ws
 
@@ -18827,7 +18827,7 @@ snapshots:
 
   xdg-basedir@5.1.0: {}
 
-  xstate@5.19.0: {}
+  xstate@5.19.1: {}
 
   xtend@4.0.2: {}
 
