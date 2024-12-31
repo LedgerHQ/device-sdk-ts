@@ -6,17 +6,12 @@
   "exports": {
     ".": {
       "types": "./lib/types/index.d.ts",
-      "import": "./lib/esm/index.js",
-      "require": "./lib/cjs/index.js"
-    },
-    "./*": {
-      "types": "./lib/types/*",
-      "import": "./lib/esm/*",
-      "require": "./lib/cjs/*"
+      "import": "./lib/esm/index.js"
     }
   },
   "files": [
-    "./lib"
+    "./lib",
+    "package.json"
   ],
   "scripts": {
     "prebuild": "rimraf lib",

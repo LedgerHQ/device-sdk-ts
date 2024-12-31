@@ -9,7 +9,7 @@ import {
   type LoggerPublisherService,
   ReconnectionFailedError,
 } from "@ledgerhq/device-management-kit";
-import { type Either, Left, Right } from "purify-ts";
+import { type Either, Left, Maybe, Nothing, Right } from "purify-ts";
 import { Subject } from "rxjs";
 
 import { RECONNECT_DEVICE_TIMEOUT } from "@api/data/WebHidConfig";
@@ -35,6 +35,7 @@ export class WebHidDeviceConnection implements DeviceConnection {
   private readonly _apduReceiver: ApduReceiverService;
   private _sendApduSubject: Subject<ApduResponse> = new Subject();
   private readonly _logger: LoggerPublisherService;
+  private _pendingApdu: Maybe<Uint8Array> = Nothing;
 
   /** Callback to notify the connection termination */
   private _onConnectionTerminated: () => void;
@@ -80,7 +81,7 @@ export class WebHidDeviceConnection implements DeviceConnection {
     triggersDisconnection?: boolean,
   ): Promise<Either<DmkError, ApduResponse>> {
     this._sendApduSubject = new Subject();
-
+    this._pendingApdu = Maybe.of(apdu);
     this._logger.debug("Sending APDU", {
       data: { apdu },
       tag: "apdu-sender",
@@ -90,6 +91,7 @@ export class WebHidDeviceConnection implements DeviceConnection {
       (resolve) => {
         this._sendApduSubject.subscribe({
           next: async (r) => {
+            this._pendingApdu = Nothing;
             if (triggersDisconnection && CommandUtils.isSuccessResponse(r)) {
               // Anticipate the disconnection and wait for the reconnection before resolving
               const reconnectionRes = await this.waitForReconnection();
@@ -102,6 +104,7 @@ export class WebHidDeviceConnection implements DeviceConnection {
             }
           },
           error: (err) => {
+            this._pendingApdu = Nothing;
             resolve(Left(err));
           },
         });
@@ -109,7 +112,13 @@ export class WebHidDeviceConnection implements DeviceConnection {
     );
 
     if (this.waitingForReconnection || !this.device.opened) {
-      const reconnectionRes = await this.waitForReconnection();
+      const waitingForDeviceResponse =
+        this.device.opened && this._pendingApdu.isJust();
+
+      const reconnectionRes = await this.waitForReconnection(
+        waitingForDeviceResponse,
+      );
+
       if (reconnectionRes.isLeft()) {
         return reconnectionRes;
       }
@@ -154,12 +163,20 @@ export class WebHidDeviceConnection implements DeviceConnection {
     });
   }
 
-  private waitForReconnection(): Promise<Either<DmkError, void>> {
-    if (this.terminated)
+  private waitForReconnection(
+    waitingForDeviceResponse: boolean = false,
+  ): Promise<Either<DmkError, void>> {
+    if (this.terminated) {
       return Promise.resolve(Left(new ReconnectionFailedError()));
+    }
+
     return new Promise<Either<DmkError, void>>((resolve) => {
       const sub = this.reconnectionSubject.subscribe({
         next: (res) => {
+          if (waitingForDeviceResponse) {
+            this._sendApduSubject.error(new WebHidSendReportError());
+          }
+
           if (res === "success") {
             resolve(Right(undefined));
           } else {
@@ -193,7 +210,13 @@ export class WebHidDeviceConnection implements DeviceConnection {
       this._logger.info("⏱️🔌 Device reconnected");
       clearTimeout(this.lostConnectionTimeout);
     }
+
     await device.open();
+
+    if (this._pendingApdu.isJust()) {
+      this._sendApduSubject.error(new WebHidSendReportError());
+    }
+
     this.waitingForReconnection = false;
     this.reconnectionSubject.next("success");
   }
