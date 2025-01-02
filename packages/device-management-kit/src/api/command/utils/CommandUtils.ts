@@ -6,7 +6,7 @@ export class CommandUtils {
   }
 
   static isSuccessResponse({ statusCode }: ApduResponse) {
-    if (!this.isValidStatusCode(statusCode)) {
+    if (!CommandUtils.isValidStatusCode(statusCode)) {
       return false;
     }
 
@@ -14,7 +14,7 @@ export class CommandUtils {
   }
 
   static isLockedDeviceResponse({ statusCode }: ApduResponse) {
-    if (!this.isValidStatusCode(statusCode)) {
+    if (!CommandUtils.isValidStatusCode(statusCode)) {
       return false;
     }
 
