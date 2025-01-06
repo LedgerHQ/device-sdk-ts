@@ -17,6 +17,7 @@ import { UserInteractionRequired } from "@api/device-action/model/UserInteractio
 import { UnknownDAError } from "@api/device-action/os/Errors";
 import { DeviceSessionStateType } from "@api/device-session/DeviceSessionState";
 import { HttpFetchApiError } from "@internal/manager-api/model/Errors";
+import { type ManagerApiService } from "@internal/manager-api/service/ManagerApiService";
 
 import { ListAppsWithMetadataDeviceAction } from "./ListAppsWithMetadataDeviceAction";
 import { type ListAppsWithMetadataDAState } from "./types";
@@ -24,11 +25,8 @@ import { type ListAppsWithMetadataDAState } from "./types";
 jest.mock("@api/device-action/os/ListApps/ListAppsDeviceAction");
 
 describe("ListAppsWithMetadataDeviceAction", () => {
-  const {
-    getMetadataForAppHashes: getMetadataForAppHashesMock,
-    // getDeviceSessionState: apiGetDeviceSessionStateMock,
-    // setDeviceSessionState: apiSetDeviceSessionStateMock,
-  } = makeDeviceActionInternalApiMock();
+  const { getManagerApiService: getManagerApiServiceMock } =
+    makeDeviceActionInternalApiMock();
 
   const saveSessionStateMock = jest.fn();
   const getDeviceSessionStateMock = jest.fn();
@@ -54,7 +52,9 @@ describe("ListAppsWithMetadataDeviceAction", () => {
           input: {},
         });
 
-      getMetadataForAppHashesMock.mockResolvedValue(Right([]));
+      getManagerApiServiceMock.mockReturnValue({
+        getAppsByHash: jest.fn().mockResolvedValue(Right([])),
+      } as unknown as ManagerApiService);
 
       const expectedStates: Array<ListAppsWithMetadataDAState> = [
         {
@@ -90,7 +90,9 @@ describe("ListAppsWithMetadataDeviceAction", () => {
           input: {},
         });
 
-      getMetadataForAppHashesMock.mockResolvedValue(Right([BTC_APP_METADATA]));
+      getManagerApiServiceMock.mockReturnValue({
+        getAppsByHash: jest.fn().mockResolvedValue(Right([BTC_APP_METADATA])),
+      } as unknown as ManagerApiService);
 
       const expectedStates: Array<ListAppsWithMetadataDAState> = [
         {
@@ -138,9 +140,11 @@ describe("ListAppsWithMetadataDeviceAction", () => {
           input: {},
         });
 
-      getMetadataForAppHashesMock.mockResolvedValue(
-        Right([BTC_APP_METADATA, ETH_APP_METADATA]),
-      );
+      getManagerApiServiceMock.mockReturnValue({
+        getAppsByHash: jest
+          .fn()
+          .mockResolvedValue(Right([BTC_APP_METADATA, ETH_APP_METADATA])),
+      } as unknown as ManagerApiService);
 
       const expectedStates: Array<ListAppsWithMetadataDAState> = [
         {
@@ -188,9 +192,13 @@ describe("ListAppsWithMetadataDeviceAction", () => {
           input: {},
         });
 
-      getMetadataForAppHashesMock.mockResolvedValue(
-        Right([BTC_APP_METADATA, CUSTOM_LOCK_SCREEN_APP_METADATA]),
-      );
+      getManagerApiServiceMock.mockReturnValue({
+        getAppsByHash: jest
+          .fn()
+          .mockResolvedValue(
+            Right([BTC_APP_METADATA, CUSTOM_LOCK_SCREEN_APP_METADATA]),
+          ),
+      } as unknown as ManagerApiService);
 
       const expectedStates: Array<ListAppsWithMetadataDAState> = [
         {
@@ -274,9 +282,11 @@ describe("ListAppsWithMetadataDeviceAction", () => {
           input: {},
         });
 
-      getMetadataForAppHashesMock.mockRejectedValue(
-        new UnknownDAError("getAppsByHash failed"),
-      );
+      getManagerApiServiceMock.mockReturnValue({
+        getAppsByHash: jest
+          .fn()
+          .mockRejectedValue(new UnknownDAError("getAppsByHash failed")),
+      } as unknown as ManagerApiService);
 
       const expectedStates: Array<ListAppsWithMetadataDAState> = [
         {
@@ -320,7 +330,9 @@ describe("ListAppsWithMetadataDeviceAction", () => {
 
       const error = new HttpFetchApiError(new Error("Failed to fetch data"));
 
-      getMetadataForAppHashesMock.mockResolvedValue(Left(error));
+      getManagerApiServiceMock.mockReturnValue({
+        getAppsByHash: jest.fn().mockResolvedValue(Left(error)),
+      } as unknown as ManagerApiService);
 
       const expectedStates: Array<ListAppsWithMetadataDAState> = [
         {

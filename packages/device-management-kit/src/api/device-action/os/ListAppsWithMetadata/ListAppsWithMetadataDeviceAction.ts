@@ -290,7 +290,8 @@ export class ListAppsWithMetadataDeviceAction extends XStateDeviceAction<
 
   extractDependencies(internalApi: InternalApi): MachineDependencies {
     return {
-      getAppsByHash: ({ input }) => internalApi.getMetadataForAppHashes(input),
+      getAppsByHash: ({ input }) =>
+        internalApi.getManagerApiService().getAppsByHash(input),
       getDeviceSessionState: () => internalApi.getDeviceSessionState(),
       saveSessionState: (state: DeviceSessionState) =>
         internalApi.setDeviceSessionState(state),

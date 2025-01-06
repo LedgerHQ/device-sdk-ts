@@ -17,7 +17,7 @@ export type InternalApi = {
   readonly setDeviceSessionState: (
     state: DeviceSessionState,
   ) => DeviceSessionState;
-  getMetadataForAppHashes: ManagerApiService["getAppsByHash"];
+  readonly getManagerApiService: () => ManagerApiService;
 };
 
 export type DeviceActionIntermediateValue = {
