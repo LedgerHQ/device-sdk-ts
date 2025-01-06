@@ -1,4 +1,5 @@
-import { Transaction } from "ethers-v6";
+import { hexaStringToBuffer } from "@ledgerhq/device-management-kit";
+import { Transaction } from "ethers";
 
 import { type EthAppBinder } from "@internal/app-binder/EthAppBinder";
 
@@ -8,14 +9,15 @@ describe("SignTransactionUseCase", () => {
   it("should call signTransaction on appBinder with the correct arguments", () => {
     // Given
     const derivationPath = "m/44'/60'/0'/0/0";
-    const transaction: Transaction = new Transaction();
-    transaction.to = "0x1234567890123456789012345678901234567890";
-    transaction.value = 0n;
-    transaction.data = "0x";
+    const tx: Transaction = new Transaction();
+    tx.to = "0x1234567890123456789012345678901234567890";
+    tx.value = 0n;
+    tx.data = "0x";
     const appBinder: EthAppBinder = {
       signTransaction: jest.fn(),
     } as unknown as EthAppBinder;
     const useCase = new SignTransactionUseCase(appBinder);
+    const transaction = hexaStringToBuffer(tx.unsignedSerialized) as Uint8Array;
 
     // When
     useCase.execute(derivationPath, transaction);

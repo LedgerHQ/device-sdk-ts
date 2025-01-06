@@ -10,7 +10,6 @@ import { type SignPersonalMessageDAReturnType } from "@api/app-binder/SignPerson
 import { type SignTransactionDAReturnType } from "@api/app-binder/SignTransactionDeviceActionTypes";
 import { type SignTypedDataDAReturnType } from "@api/app-binder/SignTypedDataDeviceActionTypes";
 import { type AddressOptions } from "@api/model/AddressOptions";
-import { type Transaction } from "@api/model/Transaction";
 import { type TransactionOptions } from "@api/model/TransactionOptions";
 import { type TypedData } from "@api/model/TypedData";
 import { type SignerEth } from "@api/SignerEth";
@@ -39,7 +38,7 @@ export class DefaultSignerEth implements SignerEth {
 
   signTransaction(
     derivationPath: string,
-    transaction: Transaction,
+    transaction: Uint8Array,
     options?: TransactionOptions,
   ): SignTransactionDAReturnType {
     return this._container

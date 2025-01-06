@@ -1,6 +1,6 @@
 import { type TransactionSubset } from "@ledgerhq/context-module";
 
-import type { TransactionType } from "@api/model/Transaction";
+import type { TransactionType } from "@api/model/TransactionType";
 
 export type TransactionMapperResult = {
   /**

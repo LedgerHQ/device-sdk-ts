@@ -4,7 +4,7 @@ import {
   hexaStringToBuffer,
   InvalidStatusWordError,
 } from "@ledgerhq/device-management-kit";
-import { Transaction } from "ethers-v6";
+import { Transaction } from "ethers";
 import { Just, Nothing } from "purify-ts";
 
 import { SignTransactionCommand } from "@internal/app-binder/command/SignTransactionCommand";

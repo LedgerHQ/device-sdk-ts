@@ -25,8 +25,8 @@ import {
   type SignTransactionDAOutput,
 } from "@api/app-binder/SignTransactionDeviceActionTypes";
 import { type Signature } from "@api/model/Signature";
-import { type Transaction, type TransactionType } from "@api/model/Transaction";
 import { type TransactionOptions } from "@api/model/TransactionOptions";
+import { type TransactionType } from "@api/model/TransactionType";
 import {
   GetChallengeCommand,
   type GetChallengeCommandResponse,
@@ -54,7 +54,7 @@ export type MachineDependencies = {
     input: {
       contextModule: ContextModule;
       mapper: TransactionMapperService;
-      transaction: Transaction;
+      transaction: Uint8Array;
       options: TransactionOptions;
       challenge: string;
     };

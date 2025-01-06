@@ -12,8 +12,8 @@ import {
 } from "@ledgerhq/device-management-kit";
 
 import { type Signature } from "@api/model/Signature";
-import { type Transaction, type TransactionType } from "@api/model/Transaction";
 import { type TransactionOptions } from "@api/model/TransactionOptions";
+import { type TransactionType } from "@api/model/TransactionType";
 import { type ProvideTransactionContextTaskErrorCodes } from "@internal/app-binder/task/ProvideTransactionContextTask";
 import { type GenericContext } from "@internal/app-binder/task/ProvideTransactionGenericContextTask";
 import { type TransactionMapperService } from "@internal/transaction/service/mapper/TransactionMapperService";
@@ -23,7 +23,7 @@ export type SignTransactionDAOutput = Signature;
 
 export type SignTransactionDAInput = {
   readonly derivationPath: string;
-  readonly transaction: Transaction;
+  readonly transaction: Uint8Array;
   readonly mapper: TransactionMapperService;
   readonly parser: TransactionParserService;
   readonly contextModule: ContextModule;

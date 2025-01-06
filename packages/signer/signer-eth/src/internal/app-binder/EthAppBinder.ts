@@ -11,7 +11,6 @@ import { type GetAddressDAReturnType } from "@api/app-binder/GetAddressDeviceAct
 import { type SignPersonalMessageDAReturnType } from "@api/app-binder/SignPersonalMessageDeviceActionTypes";
 import { type SignTransactionDAReturnType } from "@api/app-binder/SignTransactionDeviceActionTypes";
 import { type SignTypedDataDAReturnType } from "@api/app-binder/SignTypedDataDeviceActionTypes";
-import { type Transaction } from "@api/model/Transaction";
 import { type TransactionOptions } from "@api/model/TransactionOptions";
 import { type TypedData } from "@api/model/TypedData";
 import { SignTypedDataDeviceAction } from "@internal/app-binder/device-action/SignTypedData/SignTypedDataDeviceAction";
@@ -73,7 +72,7 @@ export class EthAppBinder {
 
   signTransaction(args: {
     derivationPath: string;
-    transaction: Transaction;
+    transaction: Uint8Array;
     options?: TransactionOptions;
   }): SignTransactionDAReturnType {
     return this.dmk.executeDeviceAction({

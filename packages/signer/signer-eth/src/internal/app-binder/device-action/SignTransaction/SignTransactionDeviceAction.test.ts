@@ -2,15 +2,16 @@ import { type ContextModule } from "@ledgerhq/context-module";
 import {
   CommandResultFactory,
   DeviceActionStatus,
+  hexaStringToBuffer,
   UnknownDAError,
   UserInteractionRequired,
 } from "@ledgerhq/device-management-kit";
 import { InvalidStatusWordError } from "@ledgerhq/device-management-kit";
-import { Transaction } from "ethers-v6";
+import { Transaction } from "ethers";
 import { Just, Nothing } from "purify-ts";
 
 import { type SignTransactionDAState } from "@api/app-binder/SignTransactionDeviceActionTypes";
-import { TransactionType } from "@api/model/Transaction";
+import { TransactionType } from "@api/model/TransactionType";
 import { makeDeviceActionInternalApiMock } from "@internal/app-binder/device-action/__test-utils__/makeInternalApi";
 import { setupOpenAppDAMock } from "@internal/app-binder/device-action/__test-utils__/setupOpenAppDAMock";
 import { testDeviceActionStates } from "@internal/app-binder/device-action/__test-utils__/testDeviceActionStates";
@@ -59,14 +60,16 @@ describe("SignTransactionDeviceAction", () => {
   const defaultOptions = {
     domain: "domain-name.eth",
   };
-  let defaultTransaction: Transaction;
+  const defaultTransaction: Uint8Array = hexaStringToBuffer(
+    Transaction.from({
+      chainId: 1n,
+      nonce: 0,
+      data: "0x",
+    }).unsignedSerialized,
+  )!;
 
   beforeEach(() => {
     jest.clearAllMocks();
-    defaultTransaction = new Transaction();
-    defaultTransaction.chainId = 1n;
-    defaultTransaction.nonce = 0;
-    defaultTransaction.data = "0x";
   });
 
   describe("Happy path", () => {
