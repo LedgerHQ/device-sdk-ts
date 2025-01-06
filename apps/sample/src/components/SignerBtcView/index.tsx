@@ -18,7 +18,6 @@ import { DeviceActionsList } from "@/components/DeviceActionsView/DeviceActionsL
 import { type DeviceActionProps } from "@/components/DeviceActionsView/DeviceActionTester";
 import { useDmk } from "@/providers/DeviceManagementKitProvider";
 
-// Native segwit
 const DEFAULT_DERIVATION_PATH = "84'/0'/0'";
 
 export const SignerBtcView: React.FC<{ sessionId: string }> = ({
@@ -96,14 +95,14 @@ export const SignerBtcView: React.FC<{ sessionId: string }> = ({
           return signer.signPsbt(
             new DefaultWallet(
               derivationPath,
-              DefaultDescriptorTemplate.TAPROOT,
+              DefaultDescriptorTemplate.NATIVE_SEGWIT,
             ),
             psbt,
           );
         },
         initialValues: {
           derivationPath: DEFAULT_DERIVATION_PATH,
-          psbt: "cHNidP8BAFUCAAAAAVEiws3mgj5VdUF1uSycV6Co4ayDw44Xh/06H/M0jpUTAQAAAAD9////AXhBDwAAAAAAGXapFBPX1YFmlGw+wCKTQGbYwNER0btBiKwaBB0AAAEA+QIAAAAAAQHsIw5TCVJWBSokKCcO7ASYlEsQ9vHFePQxwj0AmLSuWgEAAAAXFgAUKBU5gg4t6XOuQbpgBLQxySHE2G3+////AnJydQAAAAAAF6kUyLkGrymMcOYDoow+/C+uGearKA+HQEIPAAAAAAAZdqkUy65bUM+Tnm9TG4prer14j+FLApeIrAJHMEQCIDfstCSDYar9T4wR5wXw+npfvc1ZUXL81WQ/OxG+/11AAiACDG0yb2w31jzsra9OszX67ffETgX17x0raBQLAjvRPQEhA9rIL8Cs/Pw2NI1KSKRvAc6nfyuezj+MO0yZ0LCy+ZXShPIcACIGAu6GCCB+IQKEJvaedkR9fj1eB3BJ9eaDwxNsIxR2KkcYGPWswv0sAACAAQAAgAAAAIAAAAAAAAAAAAAA",
+          psbt: "70736274ff0104010101fb0402000000010204020000000105010100011004000000000103040100000001007102000000013daeeb9a92e7b5af90c787d53f0e60d2cf4cfd47bca9a0d8bc77a7464b024c0b00000000000000000002ff0300000000000016001402fe597c6ec0e2982712929bcf079a4e11d37e8d950b0000000000001600144dc432cb6a26c52a1e6ddd2bcf0ee49199fae0cc000000002206031869567d5e88d988ff7baf6827983f89530ddd79dbaeadaa6ec538a8f03dea8b18f5acc2fd540000800000008000000080000000000000000001011fff0300000000000016001402fe597c6ec0e2982712929bcf079a4e11d37e8d010e200cf08d04fa11ff024d5a50165ba65e495409b50ba6657788dfa15274adb682df010f0400000000000103086b01000000000000010416001429159115f12bb6a7e977439c83d3f8d555d72d5f00",
         },
         deviceModelId,
       } satisfies DeviceActionProps<

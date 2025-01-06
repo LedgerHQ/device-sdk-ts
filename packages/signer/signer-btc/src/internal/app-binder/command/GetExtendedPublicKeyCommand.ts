@@ -23,8 +23,6 @@ import {
 } from "@internal/app-binder/command/utils/bitcoinAppErrors";
 import { BtcCommandUtils } from "@internal/utils/BtcCommandUtils";
 
-const STATUS_CODE_LENGTH = 2;
-
 export type GetExtendedPublicKeyCommandArgs = {
   checkOnDevice: boolean;
   derivationPath: string;
@@ -83,7 +81,7 @@ export class GetExtendedPublicKeyCommand
       this._errorHelper.getError(response),
     ).orDefaultLazy(() => {
       const parser = new ApduParser(response);
-      const length = parser.getUnparsedRemainingLength() - STATUS_CODE_LENGTH;
+      const length = parser.getUnparsedRemainingLength();
 
       if (length <= 0) {
         return CommandResultFactory({

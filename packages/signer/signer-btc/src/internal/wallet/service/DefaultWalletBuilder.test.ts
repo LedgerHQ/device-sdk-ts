@@ -57,7 +57,7 @@ describe("DefaultWalletBuilder tests", () => {
     // Given
     const builder = new DefaultWalletBuilder(mockMerkleTree);
     const defaultWallet = new DefaultWallet(
-      "/48'/1'/0'/0'",
+      "48'/1'/0'/0'",
       DefaultDescriptorTemplate.NATIVE_SEGWIT,
     );
     const masterFingerprint = hexaStringToBuffer("5c9e228d")!;
