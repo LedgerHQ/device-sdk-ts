@@ -17,7 +17,7 @@ env:
   FORCE_COLOR: "1"
   REF: ${{ inputs.ref }}
   TAG: ${{ inputs.tag }}
-  NPM_REGISTRY: jfrog.ledgerlabs.net/artifactory/api/npm/ldk-npm-prod-public
+  # NPM_REGISTRY: jfrog.ledgerlabs.net/artifactory/api/npm/ldk-npm-prod-public
 
 permissions:
   id-token: write
@@ -43,21 +43,26 @@ jobs:
         id: jfrog-login
         uses: LedgerHQ/actions-security/actions/jfrog-login@actions/jfrog-login-1
 
-      - name: Setup npm config for JFrog
-        env:
-          NPM_REGISTRY_TOKEN: ${{ steps.jfrog-login.outputs.oidc-token }}
-        run: |
-          cat << EOF | tee .npmrc
-          enable-pre-post-scripts=true
-          registry=https://${NPM_REGISTRY}/
-          //${NPM_REGISTRY}/:_authToken=${NPM_REGISTRY_TOKEN}
-          EOF
+      # - name: Setup npm config for JFrog
+      #   env:
+      #     NPM_REGISTRY_TOKEN: ${{ steps.jfrog-login.outputs.oidc-token }}
+      #   run: |
+      #     cat << EOF | tee .npmrc
+      #     enable-pre-post-scripts=true
+      #     registry=https://${NPM_REGISTRY}/
+      #     //${NPM_REGISTRY}/:_authToken=${NPM_REGISTRY_TOKEN}
+      #     EOF
 
       - name: Create dist directory to store tarball
         run: mkdir -p dist
 
-      # - name: create .npmrc
-      #   run: echo "//registry.npmjs.org/:_authToken=${NPM_TOKEN}" >> .npmrc
+      - name: create .npmrc
+        run: |
+          cat << EOF > "$HOME/.npmrc"
+            //registry.npmjs.org/:_authToken=${NPM_TOKEN}
+          EOF
+        env:
+          NPM_TOKEN: ${{ secrets.NPMJS_TOKEN }}
 
       - name: Create and publish snapshot release version
         id: changesets
