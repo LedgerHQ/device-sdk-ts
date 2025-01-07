@@ -123,10 +123,12 @@ export class BleDeviceConnection implements DeviceConnection {
         value: { buffer },
       },
     } = event;
-    if (!this._isDeviceReady) {
-      this.onReceiveSetupApduResponse(buffer);
-    } else {
-      this.receiveApdu(buffer);
+    if (buffer instanceof ArrayBuffer) {
+      if (!this._isDeviceReady) {
+        this.onReceiveSetupApduResponse(buffer);
+      } else {
+        this.receiveApdu(buffer);
+      }
     }
   };
 
