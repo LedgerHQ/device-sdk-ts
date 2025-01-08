@@ -66,8 +66,7 @@ export class SendSignMessageTask {
         messageMerkleRoot: merkleRoot,
       }),
     );
-    const response = await new ContinueTask(this.api).run(
-      dataStore,
+    const response = await new ContinueTask(this.api, dataStore).run(
       signMessageFirstCommandResponse,
     );
     if (isSuccessCommandResult(response)) {

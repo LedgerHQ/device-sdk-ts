@@ -56,11 +56,7 @@ describe("SignPsbtDeviceAction", () => {
         .mockReturnValue(extractDependenciesMock());
       signPersonalPsbtMock.mockResolvedValueOnce(
         CommandResultFactory({
-          data: {
-            v: 0x1c,
-            r: "0x8a540510e13b0f2b11a451275716d29e08caad07e89a1c84964782fb5e1ad788",
-            s: "0x64a0de235b270fbe81e8e40688f4a9f9ad9d283d690552c9331d7773ceafa513",
-          },
+          data: [Uint8Array.from([0x01, 0x02, 0x03])],
         }),
       );
 
@@ -86,11 +82,7 @@ describe("SignPsbtDeviceAction", () => {
           status: DeviceActionStatus.Pending,
         },
         {
-          output: {
-            v: 0x1c,
-            r: "0x8a540510e13b0f2b11a451275716d29e08caad07e89a1c84964782fb5e1ad788",
-            s: "0x64a0de235b270fbe81e8e40688f4a9f9ad9d283d690552c9331d7773ceafa513",
-          },
+          output: [Uint8Array.from([0x01, 0x02, 0x03])],
           status: DeviceActionStatus.Completed,
         },
       ];

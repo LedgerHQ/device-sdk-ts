@@ -1,4 +1,6 @@
 import {
+  CommandResult,
+  CommandResultFactory,
   type InternalApi,
   isSuccessCommandResult,
 } from "@ledgerhq/device-management-kit";
@@ -7,13 +9,13 @@ import { injectable } from "inversify";
 import { Psbt } from "@api/model/Psbt";
 import { Wallet as ApiWallet } from "@api/model/Wallet";
 import { SignPsbtCommand } from "@internal/app-binder/command/SignPsbtCommand";
+import { BtcErrorCodes } from "@internal/app-binder/command/utils/bitcoinAppErrors";
 import { BuildPsbtTask } from "@internal/app-binder/task/BuildPsbtTask";
 import { ContinueTask } from "@internal/app-binder/task/ContinueTask";
 import { PrepareWalletPolicyTask } from "@internal/app-binder/task/PrepareWalletPolicyTask";
 import { DataStore } from "@internal/data-store/model/DataStore";
 import { PsbtCommitment } from "@internal/data-store/service/DataStoreService";
 import { Sha256HasherService } from "@internal/merkle-tree/service/Sha256HasherService";
-import { BtcCommandUtils } from "@internal/utils/BtcCommandUtils";
 import { Wallet as InternalWallet } from "@internal/wallet/model/Wallet";
 import { DefaultWalletSerializer } from "@internal/wallet/service/DefaultWalletSerializer";
 import type { WalletSerializer } from "@internal/wallet/service/WalletSerializer";
@@ -51,7 +53,7 @@ export class SignPsbtTask {
     inputsCount: number,
     outputsCount: number,
     wallet: InternalWallet,
-  ) {
+  ): Promise<CommandResult<Uint8Array[], BtcErrorCodes>> {
     const signPsbtCommandResult = await this._api.sendCommand(
       new SignPsbtCommand({
         globalCommitments: psbtCommitment.globalCommitment,
@@ -64,11 +66,12 @@ export class SignPsbtTask {
       }),
     );
 
-    const continueTask = new ContinueTask(this._api);
-    const result = await continueTask.run(dataStore, signPsbtCommandResult);
+    const continueTask = new ContinueTask(this._api, dataStore);
+    const result = await continueTask.run(signPsbtCommandResult);
 
     if (isSuccessCommandResult(result)) {
-      return BtcCommandUtils.getSignature(result);
+      const signatureList = continueTask.getYieldedResults();
+      return CommandResultFactory({ data: signatureList });
     }
     return result;
   }
