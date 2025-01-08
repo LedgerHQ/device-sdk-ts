@@ -290,6 +290,9 @@ importers:
       inversify-logger-middleware:
         specifier: ^3.1.0
         version: 3.1.0
+      isomorphic-ws:
+        specifier: ^5.0.0
+        version: 5.0.0(ws@8.18.0)
       purify-ts:
         specifier: ^2.1.0
         version: 2.1.0
@@ -302,6 +305,9 @@ importers:
       uuid:
         specifier: ^11.0.3
         version: 11.0.3
+      ws:
+        specifier: ^8.18.0
+        version: 8.18.0
       xstate:
         specifier: ^5.19.1
         version: 5.19.1
@@ -327,6 +333,9 @@ importers:
       '@types/uuid':
         specifier: ^10.0.0
         version: 10.0.0
+      '@types/ws':
+        specifier: ^8.5.13
+        version: 8.5.13
       rxjs:
         specifier: ^7.8.1
         version: 7.8.1
@@ -3524,6 +3533,9 @@ packages:
 
   '@types/web-bluetooth@0.0.20':
     resolution: {integrity: sha512-g9gZnnXVq7gM7v3tJCWV/qw7w+KeOlSHAhgF9RytFyifW6AF61hdT2ucrYhPq9hLs5JIryeupHV3qGk95dH9ow==}
+
+  '@types/ws@8.5.13':
+    resolution: {integrity: sha512-osM/gWBTPKgHV8XkTunnegTRIsvF6owmf5w+JtAfOw472dptdm0dlGv4xCt6GwQRcC2XVOvvRE/0bAoQcL2QkA==}
 
   '@types/yargs-parser@21.0.3':
     resolution: {integrity: sha512-I4q9QU9MQv4oEOz4tAHJtNz1cwuLxn2F3xcc2iV5WdqLPpUnj30aUuxt1mAxYTG+oe8CZMV/+6rU4S4gRDzqtQ==}
@@ -12671,6 +12683,10 @@ snapshots:
   '@types/w3c-web-hid@1.0.6': {}
 
   '@types/web-bluetooth@0.0.20': {}
+
+  '@types/ws@8.5.13':
+    dependencies:
+      '@types/node': 22.10.5
 
   '@types/yargs-parser@21.0.3': {}
 
