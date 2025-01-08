@@ -20,36 +20,33 @@ import { BtcCommandUtils } from "@internal/utils/BtcCommandUtils";
 
 export class ContinueTask {
   private readonly _clientCommandInterpreter: ClientCommandInterpreter;
+  private readonly _context: ClientCommandContext;
 
   constructor(
     private readonly _api: InternalApi,
+    dataStore: DataStore,
     clientCommandInterpreter?: ClientCommandInterpreter,
   ) {
+    this._context = {
+      dataStore,
+      queue: [],
+      yieldedResults: [],
+    };
     this._clientCommandInterpreter =
       clientCommandInterpreter || new ClientCommandInterpreter();
   }
 
   async run(
-    dataStore: DataStore,
     fromResult: CommandResult<ApduResponse, BtcErrorCodes>,
   ): Promise<CommandResult<ContinueCommandResponse, BtcErrorCodes>> {
     let currentResponse: CommandResult<ContinueCommandResponse, BtcErrorCodes> =
       fromResult;
-    const commandHandlersContext: ClientCommandContext = {
-      dataStore,
-      queue: [],
-      yieldedResults: [],
-    };
-
     while (
       this.isApduResult(currentResponse) &&
       BtcCommandUtils.isContinueResponse(currentResponse.data)
     ) {
       currentResponse = await this._clientCommandInterpreter
-        .getClientCommandPayload(
-          currentResponse.data.data,
-          commandHandlersContext,
-        )
+        .getClientCommandPayload(currentResponse.data.data, this._context)
         .caseOf({
           Left: (error) =>
             Promise.resolve(
@@ -67,6 +64,11 @@ export class ContinueTask {
     }
     return currentResponse;
   }
+
+  getYieldedResults() {
+    return this._context.yieldedResults;
+  }
+
   private isApduResult = (
     response: CommandResult<ContinueCommandResponse, BtcErrorCodes>,
   ): response is CommandSuccessResult<ApduResponse> => {

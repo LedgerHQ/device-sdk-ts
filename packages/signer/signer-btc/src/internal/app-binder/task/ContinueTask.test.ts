@@ -55,9 +55,10 @@ describe("ContinueTask", () => {
     // when
     const task = new ContinueTask(
       api as unknown as InternalApi,
+      {} as DataStore,
       clientCommandInterpreter,
     );
-    await task.run({} as DataStore, fromResult);
+    await task.run(fromResult);
     // then
     expect(
       clientCommandInterpreter.getClientCommandPayload,
@@ -79,9 +80,10 @@ describe("ContinueTask", () => {
     // when
     const task = new ContinueTask(
       api as unknown as InternalApi,
+      {} as DataStore,
       clientCommandInterpreter,
     );
-    const result = await task.run({} as DataStore, fromResult);
+    const result = await task.run(fromResult);
     // then
     expect(api.sendCommand).toHaveBeenCalledTimes(0);
     expect(result).toStrictEqual(
@@ -101,9 +103,10 @@ describe("ContinueTask", () => {
     // when
     const task = new ContinueTask(
       api as unknown as InternalApi,
+      {} as DataStore,
       clientCommandInterpreter,
     );
-    const result = await task.run({} as DataStore, fromResult);
+    const result = await task.run(fromResult);
     // then
     expect(
       clientCommandInterpreter.getClientCommandPayload,

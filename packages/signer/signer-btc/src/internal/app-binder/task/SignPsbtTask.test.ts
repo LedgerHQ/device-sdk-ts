@@ -32,6 +32,7 @@ jest.mock("@internal/app-binder/task/BuildPsbtTask", () => ({
 jest.mock("@internal/app-binder/task/ContinueTask", () => ({
   ContinueTask: jest.fn().mockImplementation(() => ({
     run: mockRunContinue,
+    getYieldedResults: jest.fn(() => []),
   })),
 }));
 jest.mock("@internal/app-binder/task/PrepareWalletPolicyTask", () => ({

@@ -7,11 +7,11 @@ import {
 } from "@ledgerhq/device-management-kit";
 
 import { type Psbt } from "@api/model/Psbt";
-import { type Signature } from "@api/model/Signature";
 import { type Wallet } from "@api/model/Wallet";
 import { type BtcErrorCodes } from "@internal/app-binder/command/utils/bitcoinAppErrors";
 
-export type SignPsbtDAOutput = Signature;
+// @toDo Update this return value to Psbt once it would be updated in SignPsbtTask
+export type SignPsbtDAOutput = Uint8Array[];
 
 export type SignPsbtDAInput = {
   psbt: Psbt;
@@ -36,7 +36,8 @@ export type SignPsbtDAState = DeviceActionState<
 
 export type SignPsbtDAInternalState = {
   readonly error: SignPsbtDAError | null;
-  readonly signature: Signature | null;
+  // [SHOULD] be psbt instead of signature
+  readonly signature: Uint8Array[] | null;
 };
 
 export type SignPsbtDAReturnType = ExecuteDeviceActionReturnType<
