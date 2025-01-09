@@ -16,7 +16,7 @@ const USER_DENIED_STATUS = new Uint8Array([0x69, 0x85]);
 describe("GetWalletAddressCommand", () => {
   let command: GetWalletAddressCommand;
   const defaultArgs: GetWalletAddressCommandArgs = {
-    display: true,
+    checkOnDevice: true,
     walletId: Uint8Array.from("walletIdBuffer", (c) => c.charCodeAt(0)),
     walletHmac: Uint8Array.from("walletHmacBuffer", (c) => c.charCodeAt(0)),
     change: false,
@@ -38,7 +38,7 @@ describe("GetWalletAddressCommand", () => {
         0x00, // P1
         0x01, // P2
         0x24, // Length of data: 36 bytes
-        0x01, // display: true
+        0x01, // checkOnDevice: true
         ...Uint8Array.from("walletIdBuffer", (c) => c.charCodeAt(0)),
         ...Uint8Array.from("walletHmacBuffer", (c) => c.charCodeAt(0)),
         0x00, // change: false
@@ -52,7 +52,7 @@ describe("GetWalletAddressCommand", () => {
 
     it("should return correct APDU for different arguments", () => {
       const args: GetWalletAddressCommandArgs = {
-        display: false,
+        checkOnDevice: false,
         walletId: Uint8Array.from("anotherWalletId", (c) => c.charCodeAt(0)),
         walletHmac: Uint8Array.from("anotherWalletHmac", (c) =>
           c.charCodeAt(0),
@@ -68,7 +68,7 @@ describe("GetWalletAddressCommand", () => {
         0x00, // P1
         0x01, // P2
         0x26, // Length of data
-        0x00, // display: false
+        0x00, // checkOnDevice: false
         ...Uint8Array.from("anotherWalletId", (c) => c.charCodeAt(0)),
         ...Uint8Array.from("anotherWalletHmac", (c) => c.charCodeAt(0)),
         0x01, // change: true

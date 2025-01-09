@@ -5,6 +5,9 @@ import {
   type GetExtendedDAIntermediateValue,
   type GetExtendedPublicKeyDAError,
   type GetExtendedPublicKeyDAOutput,
+  type GetWalletAddressDAError,
+  type GetWalletAddressDAIntermediateValue,
+  type GetWalletAddressDAOutput,
   SignerBtcBuilder,
   type SignMessageDAError,
   type SignMessageDAIntermediateValue,
@@ -21,6 +24,7 @@ import { DeviceActionsList } from "@/components/DeviceActionsView/DeviceActionsL
 import { type DeviceActionProps } from "@/components/DeviceActionsView/DeviceActionTester";
 import {
   descriptorTemplateToDerivationPath,
+  GetWalletAddressInputValuesForm,
   SignPsbtDAInputValuesForm,
 } from "@/components/SignerBtcView/SignPsbtDAInputValusForm";
 import { useDmk } from "@/providers/DeviceManagementKitProvider";
@@ -153,6 +157,48 @@ export const SignerBtcView: React.FC<{ sessionId: string }> = ({
         },
         SignTransactionDAError,
         SignTransactionDAIntermediateValue
+      >,
+      {
+        title: "Get wallet address",
+        description:
+          "Perform all the actions necessary to get the device's Bitcoin wallet address",
+        executeDeviceAction: ({
+          checkOnDevice,
+          change,
+          addressIndex,
+          derivationPath,
+          descriptorTemplate,
+        }) => {
+          if (!signer) {
+            throw new Error("Signer not initialized");
+          }
+
+          return signer.getWalletAddress(
+            new DefaultWallet(derivationPath, descriptorTemplate),
+            addressIndex,
+            { checkOnDevice, change },
+          );
+        },
+        InputValuesComponent: GetWalletAddressInputValuesForm,
+        initialValues: {
+          checkOnDevice: false,
+          change: false,
+          derivationPath: DEFAULT_DERIVATION_PATH,
+          addressIndex: 0,
+          descriptorTemplate: DefaultDescriptorTemplate.NATIVE_SEGWIT,
+        },
+        deviceModelId,
+      } satisfies DeviceActionProps<
+        GetWalletAddressDAOutput,
+        {
+          checkOnDevice: boolean;
+          change: boolean;
+          addressIndex: number;
+          derivationPath: string;
+          descriptorTemplate: DefaultDescriptorTemplate;
+        },
+        GetWalletAddressDAError,
+        GetWalletAddressDAIntermediateValue
       >,
     ],
     [deviceModelId, signer],

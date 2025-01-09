@@ -75,7 +75,7 @@ export class BtcCommandUtils {
     response: CommandSuccessResult<ApduResponse>,
   ): CommandResult<WalletAddress, BtcErrorCodes> {
     const parser = new ApduParser(response.data);
-    if (response.data.data.length === 0) {
+    if (!response.data) {
       return CommandResultFactory({
         error: new InvalidStatusWordError(
           "Failed to extract address from response",

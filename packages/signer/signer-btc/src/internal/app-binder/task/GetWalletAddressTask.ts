@@ -1,7 +1,5 @@
 import {
   type CommandResult,
-  CommandResultFactory,
-  InvalidStatusWordError,
   isSuccessCommandResult,
 } from "@ledgerhq/device-management-kit";
 import { type InternalApi } from "@ledgerhq/device-management-kit";
@@ -10,78 +8,60 @@ import { type WalletAddress } from "@api/model/Wallet";
 import { GetWalletAddressCommand } from "@internal/app-binder/command/GetWalletAddressCommand";
 import { type BtcErrorCodes } from "@internal/app-binder/command/utils/bitcoinAppErrors";
 import { DataStore } from "@internal/data-store/model/DataStore";
-import { Sha256HasherService } from "@internal/merkle-tree/service/Sha256HasherService";
+import { type DataStoreService } from "@internal/data-store/service/DataStoreService";
 import { BtcCommandUtils } from "@internal/utils/BtcCommandUtils";
-import { type Wallet } from "@internal/wallet/model/Wallet";
-import { DefaultWalletSerializer } from "@internal/wallet/service/DefaultWalletSerializer";
+import { type Wallet as InternalWallet } from "@internal/wallet/model/Wallet";
 import { type WalletSerializer } from "@internal/wallet/service/WalletSerializer";
 
 import { ContinueTask } from "./ContinueTask";
-import { PrepareWalletPolicyTask } from "./PrepareWalletPolicyTask";
 
 export type SendGetWalletAddressTaskArgs = {
-  display: boolean;
-  wallet: Wallet;
+  checkOnDevice: boolean;
+  wallet: InternalWallet;
   change: boolean;
   addressIndex: number;
 };
 
 export class GetWalletAddressTask {
-  private readonly _walletSerializer: WalletSerializer;
-  private readonly _dataStore: DataStore;
-
   constructor(
-    private api: InternalApi,
-    private args: SendGetWalletAddressTaskArgs,
-    walletSerializer?: WalletSerializer,
-    dataStore?: DataStore,
-  ) {
-    this._walletSerializer =
-      walletSerializer ||
-      new DefaultWalletSerializer(new Sha256HasherService());
-    this._dataStore = dataStore || new DataStore();
-  }
+    private readonly _api: InternalApi,
+    private readonly _args: SendGetWalletAddressTaskArgs,
+    private readonly _walletSerializer: WalletSerializer,
+    private readonly _dataStoreService: DataStoreService,
+    private readonly _continueTaskFactory = (
+      api: InternalApi,
+      dataStore: DataStore,
+    ) => new ContinueTask(api, dataStore),
+    private readonly _getAddress = BtcCommandUtils.getAddress,
+  ) {}
 
-  private async runPrepareWalletPolicy() {
-    return new PrepareWalletPolicyTask(this.api, {
-      wallet: this.args.wallet,
-    }).run();
-  }
+  async run(): Promise<CommandResult<WalletAddress, BtcErrorCodes>> {
+    const { checkOnDevice, change, addressIndex, wallet } = this._args;
 
-  private async runGetWalletAddressTask(
-    wallet: Wallet,
-  ): Promise<CommandResult<WalletAddress, BtcErrorCodes>> {
-    const { display, change, addressIndex } = this.args;
+    const dataStore = new DataStore();
 
-    const walletId = this._walletSerializer.serialize(wallet);
+    this._dataStoreService.merklizeWallet(dataStore, wallet);
 
-    const getWalletAddressInitialResponse = await this.api.sendCommand(
+    const walletId = this._walletSerializer.getId(wallet);
+
+    const getWalletAddressInitialResponse = await this._api.sendCommand(
       new GetWalletAddressCommand({
-        display,
+        checkOnDevice,
         walletId,
         walletHmac: wallet.hmac,
         change,
         addressIndex,
       }),
     );
-    const response = await new ContinueTask(this.api, this._dataStore).run(
+
+    const response = await this._continueTaskFactory(this._api, dataStore).run(
       getWalletAddressInitialResponse,
     );
+
     if (isSuccessCommandResult(response)) {
-      return BtcCommandUtils.getAddress(response);
+      return this._getAddress(response);
     }
 
-    return CommandResultFactory({
-      error: new InvalidStatusWordError("Invalid response from the device"),
-    });
-  }
-
-  async run(): Promise<CommandResult<WalletAddress, BtcErrorCodes>> {
-    const walletPolicyResult = await this.runPrepareWalletPolicy();
-    if (!isSuccessCommandResult(walletPolicyResult)) {
-      return walletPolicyResult;
-    }
-
-    return this.runGetWalletAddressTask(walletPolicyResult.data);
+    return response;
   }
 }

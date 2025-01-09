@@ -1,13 +1,8 @@
 export { type SignerBtc } from "./SignerBtc";
 export { SignerBtcBuilder } from "./SignerBtcBuilder";
 export * from "@api/app-binder/GetExtendedPublicKeyDeviceActionTypes";
-export type {
-  SignMessageDAError,
-  SignMessageDAInput,
-  SignMessageDAIntermediateValue,
-  SignMessageDAOutput,
-  SignMessageDAState,
-} from "@api/app-binder/SignMessageDeviceActionTypes";
+export * from "@api/app-binder/GetWalletAddressDeviceActionTypes";
+export * from "@api/app-binder/SignMessageDeviceActionTypes";
 export * from "@api/app-binder/SignPsbtDeviceActionTypes";
 export * from "@api/app-binder/SignTransactionDeviceActionTypes";
 export { DefaultDescriptorTemplate, DefaultWallet } from "@api/model/Wallet";

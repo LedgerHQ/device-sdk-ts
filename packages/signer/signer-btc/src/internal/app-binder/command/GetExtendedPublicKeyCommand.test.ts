@@ -64,7 +64,7 @@ describe("GetExtendedPublicKeyCommand", () => {
       );
     });
 
-    it("should return the correct APDU without display", () => {
+    it("should return the correct APDU without checkOnDevice", () => {
       // GIVEN
       command = new GetExtendedPublicKeyCommand({
         ...defaultArgs,

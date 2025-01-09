@@ -21,7 +21,7 @@ import {
 export type GetWalletAddressCommandResponse = ApduResponse;
 
 export type GetWalletAddressCommandArgs = {
-  readonly display: boolean;
+  readonly checkOnDevice: boolean;
   readonly walletId: Uint8Array;
   readonly walletHmac: Uint8Array;
   readonly change: boolean;
@@ -37,7 +37,7 @@ export class GetWalletAddressCommand
     >
 {
   constructor(
-    private readonly _args: GetWalletAddressCommandArgs,
+    private readonly args: GetWalletAddressCommandArgs,
     private readonly _errorHelper = new CommandErrorHelper<
       GetWalletAddressCommandResponse,
       BtcErrorCodes
@@ -55,11 +55,11 @@ export class GetWalletAddressCommand
       p1: 0x00,
       p2: PROTOCOL_VERSION,
     })
-      .addBufferToData(Uint8Array.from([this._args.display ? 1 : 0]))
-      .addBufferToData(this._args.walletId)
-      .addBufferToData(this._args.walletHmac)
-      .addBufferToData(Uint8Array.from([this._args.change ? 1 : 0]))
-      .add32BitUIntToData(this._args.addressIndex)
+      .addBufferToData(Uint8Array.from([this.args.checkOnDevice ? 1 : 0]))
+      .addBufferToData(this.args.walletId)
+      .addBufferToData(this.args.walletHmac)
+      .addBufferToData(Uint8Array.from([this.args.change ? 1 : 0]))
+      .add32BitUIntToData(this.args.addressIndex)
       .build();
   }
 
