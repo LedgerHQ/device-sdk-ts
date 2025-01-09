@@ -8,7 +8,7 @@ import { AxiosManagerApiDataSource } from "@internal/manager-api/data/AxiosManag
 import { type ManagerApiDataSource } from "@internal/manager-api/data/ManagerApiDataSource";
 import { DefaultManagerApiService } from "@internal/manager-api/service/DefaultManagerApiService";
 import { type ManagerApiService } from "@internal/manager-api/service/ManagerApiService";
-import { ConnectedDevice } from "@root/src";
+import { ConnectedDevice, type DmkConfig } from "@root/src";
 
 let logger: LoggerPublisherService;
 let sessionService: DeviceSessionService;
@@ -21,10 +21,7 @@ describe("ListDeviceSessionsUseCase", () => {
       [],
       "list-device-sessions-use-case-test",
     );
-    managerApiDataSource = new AxiosManagerApiDataSource({
-      managerApiUrl: "http://fake.url",
-      mockUrl: "http://fake-mock.url",
-    });
+    managerApiDataSource = new AxiosManagerApiDataSource({} as DmkConfig);
     managerApi = new DefaultManagerApiService(managerApiDataSource);
     sessionService = new DefaultDeviceSessionService(() => logger);
   });

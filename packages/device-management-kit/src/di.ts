@@ -16,6 +16,7 @@ import { managerApiModuleFactory } from "@internal/manager-api/di/managerApiModu
 import {
   DEFAULT_MANAGER_API_BASE_URL,
   DEFAULT_MOCK_SERVER_BASE_URL,
+  DEFAULT_WEB_SOCKET_BASE_URL,
 } from "@internal/manager-api/model/Const";
 import { sendModuleFactory } from "@internal/send/di/sendModule";
 import { transportModuleFactory } from "@internal/transport//di/transportModule";
@@ -35,8 +36,9 @@ export const makeContainer = ({
   transports = [],
   loggers = [],
   config = {
-    managerApiUrl: DEFAULT_MANAGER_API_BASE_URL,
     mockUrl: DEFAULT_MOCK_SERVER_BASE_URL,
+    managerApiUrl: DEFAULT_MANAGER_API_BASE_URL,
+    webSocketUrl: DEFAULT_WEB_SOCKET_BASE_URL,
   },
 }: Partial<MakeContainerProps>) => {
   const container = new Container();

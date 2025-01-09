@@ -6,7 +6,7 @@ import { TransportMock } from "@api/transport/model/__mocks__/TransportMock";
 import { type DiscoveredDevice } from "@api/transport/model/DiscoveredDevice";
 import { UnknownDeviceError } from "@api/transport/model/Errors";
 import { connectedDeviceStubBuilder } from "@api/transport/model/TransportConnectedDevice.stub";
-import { type Transport } from "@api/types";
+import type { DmkConfig, Transport } from "@api/types";
 import { DefaultDeviceSessionService } from "@internal/device-session/service/DefaultDeviceSessionService";
 import { type DeviceSessionService } from "@internal/device-session/service/DeviceSessionService";
 import { DefaultLoggerPublisherService } from "@internal/logger-publisher/service/DefaultLoggerPublisherService";
@@ -48,10 +48,7 @@ describe("ConnectUseCase", () => {
     logger = new DefaultLoggerPublisherService([], tag);
     transport = new TransportMock();
     sessionService = new DefaultDeviceSessionService(() => logger);
-    managerApiDataSource = new AxiosManagerApiDataSource({
-      managerApiUrl: "http://fake.url",
-      mockUrl: "http://fake-mock.url",
-    });
+    managerApiDataSource = new AxiosManagerApiDataSource({} as DmkConfig);
     managerApi = new DefaultManagerApiService(managerApiDataSource);
     // @ts-expect-error mock
     transportService = new DefaultTransportService();

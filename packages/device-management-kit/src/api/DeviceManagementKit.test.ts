@@ -27,6 +27,7 @@ describe("DeviceManagementKit", () => {
         config: {
           managerApiUrl: "http://fake.url",
           mockUrl: "http://fake-mock.url",
+          webSocketUrl: "http://fake-websocket.url",
         },
       });
     });
@@ -85,6 +86,7 @@ describe("DeviceManagementKit", () => {
         config: {
           managerApiUrl: "http://fake.url",
           mockUrl: "http://fake-mock.url",
+          webSocketUrl: "http://fake-websocket.url",
         },
       });
     });

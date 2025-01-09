@@ -2,6 +2,7 @@ import { Left } from "purify-ts";
 
 import { type Command } from "@api/command/Command";
 import { CommandResultStatus } from "@api/command/model/CommandResult";
+import { type DmkConfig } from "@api/DmkConfig";
 import { type LoggerPublisherService } from "@api/logger-publisher/service/LoggerPublisherService";
 import { deviceSessionStubBuilder } from "@internal/device-session/model/DeviceSession.stub";
 import { DefaultDeviceSessionService } from "@internal/device-session/service/DefaultDeviceSessionService";
@@ -25,10 +26,7 @@ describe("SendCommandUseCase", () => {
   beforeEach(() => {
     logger = new DefaultLoggerPublisherService([], "send-command-use-case");
     sessionService = new DefaultDeviceSessionService(() => logger);
-    managerApiDataSource = new AxiosManagerApiDataSource({
-      managerApiUrl: "http://fake.url",
-      mockUrl: "http://fake-mock.url",
-    });
+    managerApiDataSource = new AxiosManagerApiDataSource({} as DmkConfig);
     managerApi = new DefaultManagerApiService(managerApiDataSource);
     command = {
       getApdu: jest.fn(),

@@ -1,6 +1,7 @@
 import { Either, Left } from "purify-ts";
 import { Observable } from "rxjs";
 
+import { type DmkConfig } from "@api/DmkConfig";
 import { type DeviceSession } from "@internal/device-session/model/DeviceSession";
 import { deviceSessionStubBuilder } from "@internal/device-session/model/DeviceSession.stub";
 import { DeviceSessionNotFound } from "@internal/device-session/model/Errors";
@@ -25,10 +26,7 @@ describe("DefaultDeviceSessionService", () => {
     jest.restoreAllMocks();
     loggerService = new DefaultLoggerPublisherService([], "deviceSession");
     sessionService = new DefaultDeviceSessionService(() => loggerService);
-    managerApiDataSource = new AxiosManagerApiDataSource({
-      managerApiUrl: "http://fake.url",
-      mockUrl: "http://fake-mock.url",
-    });
+    managerApiDataSource = new AxiosManagerApiDataSource({} as DmkConfig);
     managerApi = new DefaultManagerApiService(managerApiDataSource);
 
     deviceSession = deviceSessionStubBuilder(
