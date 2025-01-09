@@ -33,6 +33,7 @@
     "transport-mockserver": "pnpm --filter @ledgerhq/device-transport-kit-mockserver",
     "transport-rn-ble": "pnpm --filter @ledgerhq/device-transport-kit-react-native-ble",
     "transport-rn-hid": "pnpm --filter @ledgerhq/device-transport-kit-react-native-hid",
+    "transport-speculos": "pnpm --filter @ledgerhq/device-transport-kit-speculos",
     "flipper": "pnpm --filter @ledgerhq/device-management-kit-flipper-plugin-client",
     "sample": "pnpm --filter @ledgerhq/device-management-kit-sample",
     "mobile": "pnpm --filter @ledgerhq/device-management-kit-mobile-sample",
