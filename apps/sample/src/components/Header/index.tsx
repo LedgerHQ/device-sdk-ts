@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useState } from "react";
 import { FlipperPluginManager } from "@ledgerhq/device-management-kit-flipper-plugin-client";
 import { mockserverIdentifier } from "@ledgerhq/device-transport-kit-mockserver";
+import { speculosIdentifier } from "@ledgerhq/device-transport-kit-speculos";
 import { webHidIdentifier } from "@ledgerhq/device-transport-kit-web-hid";
 import {
   Button,
@@ -54,9 +55,22 @@ export const Header = () => {
       },
     });
   }, [dispatch, transport]);
+
+  const onToggleSpeculos = useCallback(() => {
+    dispatch({
+      type: "set_transport",
+      payload: {
+        transport:
+          transport === speculosIdentifier
+            ? webHidIdentifier
+            : speculosIdentifier,
+      },
+    });
+  }, [dispatch, transport]);
   const [mockServerStateUrl, setMockServerStateUrl] =
     useState<string>(mockServerUrl);
   const mockServerEnabled = transport === mockserverIdentifier;
+  const speculosEnabled = transport === speculosIdentifier;
 
   const validateServerUrl = useCallback(
     () =>
@@ -112,7 +126,14 @@ export const Header = () => {
                 label="Enable Mock server"
               />
             </div>
-
+            <div data-testid="switch_speculos">
+              <Switch
+                onChange={onToggleSpeculos}
+                checked={speculosEnabled}
+                name="switch-speculos"
+                label="Enable Speculos"
+              />
+            </div>
             {mockServerEnabled && (
               <UrlInput
                 value={mockServerStateUrl}
