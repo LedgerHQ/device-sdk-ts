@@ -1,6 +1,7 @@
 export { type SignerBtc } from "./SignerBtc";
 export { SignerBtcBuilder } from "./SignerBtcBuilder";
 export * from "@api/app-binder/GetExtendedPublicKeyDeviceActionTypes";
+export * from "@api/app-binder/GetWalletAddressDeviceActionTypes";
 export type {
   SignMessageDAError,
   SignMessageDAInput,

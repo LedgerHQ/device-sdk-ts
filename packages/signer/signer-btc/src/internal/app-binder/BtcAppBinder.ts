@@ -12,6 +12,7 @@ import {
 } from "@api/app-binder/GetExtendedPublicKeyDeviceActionTypes";
 import { SignMessageDAReturnType } from "@api/app-binder/SignMessageDeviceActionTypes";
 import { SignPsbtDAReturnType } from "@api/app-binder/SignPsbtDeviceActionTypes";
+import { GetWalletAddressDAReturnType } from "@api/index";
 import { Psbt } from "@api/model/Psbt";
 import { Wallet } from "@api/model/Wallet";
 import { GetExtendedPublicKeyCommand } from "@internal/app-binder/command/GetExtendedPublicKeyCommand";
@@ -26,6 +27,7 @@ import { walletTypes } from "@internal/wallet/di/walletTypes";
 import type { WalletBuilder } from "@internal/wallet/service/WalletBuilder";
 import type { WalletSerializer } from "@internal/wallet/service/WalletSerializer";
 
+import { GetWalletAddressDeviceAction } from "./device-action/GetWalletAddress/GetWalletAddressDeviceAction";
 import { SignMessageDeviceAction } from "./device-action/SignMessage/SignMessageDeviceAction";
 
 @injectable()
@@ -92,6 +94,28 @@ export class BtcAppBinder {
           dataStoreService: this._dataStoreService,
           psbtMapper: this._psbtMapper,
           valueParser: this._valueParser,
+        },
+      }),
+    });
+  }
+
+  getWalletAddress(args: {
+    checkOnDevice: boolean;
+    wallet: Wallet;
+    change: boolean;
+    addressIndex: number;
+  }): GetWalletAddressDAReturnType {
+    return this._dmk.executeDeviceAction({
+      sessionId: this._sessionId,
+      deviceAction: new GetWalletAddressDeviceAction({
+        input: {
+          wallet: args.wallet,
+          checkOnDevice: args.checkOnDevice,
+          change: args.change,
+          addressIndex: args.addressIndex,
+          walletBuilder: this._walletBuilder,
+          walletSerializer: this._walletSerializer,
+          dataStoreService: this._dataStoreService,
         },
       }),
     });

@@ -14,12 +14,12 @@ import {
   type GetExtendedPublicKeyCommandArgs,
 } from "./GetExtendedPublicKeyCommand";
 
-const GET_EXTENDED_PUBLIC_KEY_APDU_WITH_DISPLAY = new Uint8Array([
+const GET_EXTENDED_PUBLIC_KEY_APDU_WITH_checkOnDevice = new Uint8Array([
   0xe1, 0x00, 0x00, 0x00, 0x0e, 0x01, 0x03, 0x80, 0x00, 0x00, 0x54, 0x80, 0x00,
   0x00, 0x00, 0x80, 0x00, 0x00, 0x00,
 ]);
 
-const GET_EXTENDED_PUBLIC_KEY_APDU_WITHOUT_DISPLAY = new Uint8Array([
+const GET_EXTENDED_PUBLIC_KEY_APDU_WITHOUT_checkOnDevice = new Uint8Array([
   0xe1, 0x00, 0x00, 0x00, 0x0e, 0x00, 0x03, 0x80, 0x00, 0x00, 0x54, 0x80, 0x00,
   0x00, 0x00, 0x80, 0x00, 0x00, 0x00,
 ]);
@@ -60,11 +60,11 @@ describe("GetExtendedPublicKeyCommand", () => {
 
       //THEN
       expect(apdu.getRawApdu()).toEqual(
-        GET_EXTENDED_PUBLIC_KEY_APDU_WITH_DISPLAY,
+        GET_EXTENDED_PUBLIC_KEY_APDU_WITH_checkOnDevice,
       );
     });
 
-    it("should return the correct APDU without display", () => {
+    it("should return the correct APDU without checkOnDevice", () => {
       // GIVEN
       command = new GetExtendedPublicKeyCommand({
         ...defaultArgs,
@@ -76,7 +76,7 @@ describe("GetExtendedPublicKeyCommand", () => {
 
       //THEN
       expect(apdu.getRawApdu()).toEqual(
-        GET_EXTENDED_PUBLIC_KEY_APDU_WITHOUT_DISPLAY,
+        GET_EXTENDED_PUBLIC_KEY_APDU_WITHOUT_checkOnDevice,
       );
     });
 

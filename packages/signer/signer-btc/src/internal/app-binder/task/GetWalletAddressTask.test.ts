@@ -1,196 +1,201 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import {
-  type ApduResponse,
   CommandResultFactory,
-  CommandResultStatus,
   type InternalApi,
   InvalidStatusWordError,
 } from "@ledgerhq/device-management-kit";
-import { Left, Right } from "purify-ts";
 
-import { ClientCommandHandlerError } from "@internal/app-binder/command/client-command-handlers/Errors";
-import { ContinueCommand } from "@internal/app-binder/command/ContinueCommand";
-import { GetWalletAddressCommand } from "@internal/app-binder/command/GetWalletAddressCommand";
-import { ClientCommandInterpreter } from "@internal/app-binder/command/service/ClientCommandInterpreter";
-import {
-  ClientCommandCodes,
-  SW_INTERRUPTED_EXECUTION,
-} from "@internal/app-binder/command/utils/constants";
-import { type Wallet } from "@internal/wallet/model/Wallet";
-import { DefaultWalletSerializer } from "@internal/wallet/service/DefaultWalletSerializer";
+import { type DataStoreService } from "@internal/data-store/service/DataStoreService";
+import { type Wallet as InternalWallet } from "@internal/wallet/model/Wallet";
+import { type WalletSerializer } from "@internal/wallet/service/WalletSerializer";
 
+import { type ContinueTask } from "./ContinueTask";
 import { GetWalletAddressTask } from "./GetWalletAddressTask";
 
-const DISPLAY = true;
-const CHANGE = false;
-const ADDRESS_INDEX = 0;
-const TEST_ADDRESS = "bc1qexampleaddress";
-const REGISTERED_WALLET_ID = new Uint8Array(32).fill(0xaf);
-const REGISTERED_WALLET_HMAC = new Uint8Array(32).fill(0xfa);
-
-const MOCK_WALLET: Wallet = {
-  hmac: REGISTERED_WALLET_HMAC,
-  name: "TestWallet",
-  descriptorTemplate: "wpkh([fingerprint/]/0h/0h/0h)",
-  keys: [],
-  //@ts-ignore
-  keysTree: {},
-  descriptorBuffer: new Uint8Array(),
-};
+jest.mock("@ledgerhq/device-management-kit", () => {
+  const originalModule = jest.requireActual("@ledgerhq/device-management-kit");
+  return {
+    ...originalModule,
+    ApduParser: jest.fn().mockImplementation(() => ({
+      encodeToString: jest.fn(() => "some address"),
+    })),
+  };
+});
 
 describe("GetWalletAddressTask", () => {
-  const apiMock = {
-    sendCommand: jest.fn(),
-  } as unknown as InternalApi;
+  describe("run", () => {
+    it("should return a wallet address successfully", async () => {
+      // given
+      const api = {
+        sendCommand: jest.fn().mockResolvedValueOnce(
+          CommandResultFactory({
+            data: Uint8Array.from([0x01, 0x02, 0x03]),
+          }),
+        ),
+      } as unknown as InternalApi;
 
-  const APDU_SUCCESS_RESPONSE: ApduResponse = {
-    statusCode: new Uint8Array([0x90, 0x00]),
-    data: new TextEncoder().encode(TEST_ADDRESS),
-  };
+      const wallet = {
+        hmac: Uint8Array.from([0x04]),
+      } as unknown as InternalWallet;
 
-  afterEach(() => {
-    jest.resetAllMocks();
-  });
+      const walletSerializer = {
+        getId: jest.fn().mockReturnValue(Uint8Array.from([0x05])),
+      } as unknown as WalletSerializer;
 
-  it("should return address if initial GET_WALLET_ADDRESS command succeeds", async () => {
-    // given
-    (apiMock.sendCommand as jest.Mock).mockResolvedValueOnce(
-      CommandResultFactory({ data: APDU_SUCCESS_RESPONSE }),
-    );
+      const dataStoreService = {
+        merklizeWallet: jest.fn(),
+      } as unknown as DataStoreService;
 
-    jest
-      .spyOn(DefaultWalletSerializer.prototype, "serialize")
-      .mockReturnValue(REGISTERED_WALLET_ID);
+      const continueTaskFactory = () =>
+        ({
+          run: jest.fn().mockResolvedValue(
+            CommandResultFactory({
+              data: {
+                data: Uint8Array.from([
+                  0x34, 0x56, 0x78, 0x9a, 0xbc, 0xde, 0xf1,
+                ]),
+              },
+            }),
+          ),
+        }) as unknown as ContinueTask;
 
-    // when
-    const result = await new GetWalletAddressTask(apiMock, {
-      display: DISPLAY,
-      wallet: MOCK_WALLET,
-      change: CHANGE,
-      addressIndex: ADDRESS_INDEX,
-    }).run();
+      // when
+      const result = await new GetWalletAddressTask(
+        api,
+        {
+          checkOnDevice: true,
+          wallet,
+          change: false,
+          addressIndex: 0,
+        },
+        walletSerializer,
+        dataStoreService,
+        continueTaskFactory,
+      ).run();
 
-    // then
-    expect(apiMock.sendCommand).toHaveBeenCalledTimes(1);
-    expect(apiMock.sendCommand).toHaveBeenCalledWith(
-      expect.any(GetWalletAddressCommand),
-    );
-    expect(result).toStrictEqual(
-      CommandResultFactory({ data: { address: TEST_ADDRESS } }),
-    );
-  });
-
-  it("should handle interactive requests after an interrupted execution", async () => {
-    // given
-    (apiMock.sendCommand as jest.Mock)
-      .mockResolvedValueOnce(
+      // then
+      expect(walletSerializer.getId).toHaveBeenCalledWith(wallet);
+      expect((api.sendCommand as jest.Mock).mock.calls[0][0].args).toEqual(
+        expect.objectContaining({
+          checkOnDevice: true,
+          walletId: Uint8Array.from([0x05]),
+          walletHmac: Uint8Array.from([0x04]),
+          change: false,
+          addressIndex: 0,
+        }),
+      );
+      expect(result).toStrictEqual(
         CommandResultFactory({
           data: {
-            statusCode: SW_INTERRUPTED_EXECUTION,
-            data: new Uint8Array([ClientCommandCodes.YIELD]),
+            address: "some address",
           },
         }),
-      ) // first GET_WALLET_ADDRESS
-      .mockResolvedValueOnce(
-        CommandResultFactory({ data: APDU_SUCCESS_RESPONSE }),
-      ); // after CONTINUE
-
-    jest
-      .spyOn(DefaultWalletSerializer.prototype, "serialize")
-      .mockReturnValue(REGISTERED_WALLET_ID);
-
-    jest
-      .spyOn(ClientCommandInterpreter.prototype, "getClientCommandPayload")
-      .mockImplementation((request: Uint8Array, context: any) => {
-        // YIELD command
-        if (request[0] === ClientCommandCodes.YIELD) {
-          context.yieldedResults.push(new Uint8Array([]));
-          return Right(new Uint8Array([0x00]));
-        }
-        return Left(new ClientCommandHandlerError("Unexpected command"));
-      });
-
-    // when
-    const result = await new GetWalletAddressTask(apiMock, {
-      display: DISPLAY,
-      wallet: MOCK_WALLET,
-      change: CHANGE,
-      addressIndex: ADDRESS_INDEX,
-    }).run();
-
-    // then
-    expect(apiMock.sendCommand).toHaveBeenCalledTimes(2);
-    expect(apiMock.sendCommand).toHaveBeenNthCalledWith(
-      2,
-      expect.any(ContinueCommand),
-    );
-    expect(result).toStrictEqual(
-      CommandResultFactory({ data: { address: TEST_ADDRESS } }),
-    );
-  });
-
-  it("should fail if initial GET_WALLET_ADDRESS command fails", async () => {
-    // given
-    const getAddrFail = CommandResultFactory({
-      error: new InvalidStatusWordError("Invalid response from the device"),
+      );
     });
 
-    (apiMock.sendCommand as jest.Mock).mockResolvedValueOnce(getAddrFail);
+    it("should fail if ContinueTask fails", async () => {
+      // given
+      const api = {
+        sendCommand: jest.fn(),
+      } as unknown as InternalApi;
 
-    // when
-    const result = await new GetWalletAddressTask(apiMock, {
-      display: DISPLAY,
-      wallet: MOCK_WALLET,
-      change: CHANGE,
-      addressIndex: ADDRESS_INDEX,
-    }).run();
+      const wallet = {
+        hmac: Uint8Array.from([0x04]),
+      } as unknown as InternalWallet;
 
-    // then
-    expect(apiMock.sendCommand).toHaveBeenCalledTimes(1);
-    expect(result.status).toBe(CommandResultStatus.Error);
-    expect(result).toStrictEqual(
-      CommandResultFactory({
-        error: new InvalidStatusWordError("Invalid response from the device"),
-      }),
-    );
-  });
+      const walletSerializer = {
+        getId: jest.fn().mockReturnValue(Uint8Array.from([0x05])),
+      } as unknown as WalletSerializer;
 
-  it("should fail if no address is extracted after all continuations", async () => {
-    // given
-    // continue response but never a final address
-    const continueResponse: ApduResponse = {
-      statusCode: SW_INTERRUPTED_EXECUTION,
-      data: new Uint8Array([ClientCommandCodes.YIELD]),
-    };
+      const dataStoreService = {
+        merklizeWallet: jest.fn(),
+      } as unknown as DataStoreService;
 
-    (apiMock.sendCommand as jest.Mock)
-      .mockResolvedValueOnce(CommandResultFactory({ data: continueResponse }))
-      .mockResolvedValueOnce(CommandResultFactory({ data: continueResponse }))
-      .mockResolvedValueOnce(
+      const continueTaskFactory = () =>
+        ({
+          run: jest.fn().mockResolvedValue(
+            CommandResultFactory({
+              error: new InvalidStatusWordError("ContinueTask failed"),
+            }),
+          ),
+        }) as unknown as ContinueTask;
+
+      // when
+      const result = await new GetWalletAddressTask(
+        api,
+        {
+          checkOnDevice: true,
+          wallet,
+          change: false,
+          addressIndex: 0,
+        },
+        walletSerializer,
+        dataStoreService,
+        continueTaskFactory,
+      ).run();
+
+      // then
+      expect(result).toStrictEqual(
+        CommandResultFactory({
+          error: new InvalidStatusWordError("ContinueTask failed"),
+        }),
+      );
+    });
+
+    it("should fail with an invalid device response", async () => {
+      // given
+      const api = {
+        sendCommand: jest.fn().mockResolvedValueOnce(
+          CommandResultFactory({
+            error: new InvalidStatusWordError(
+              "Invalid response from the device",
+            ),
+          }),
+        ),
+      } as unknown as InternalApi;
+
+      const wallet = {
+        hmac: Uint8Array.from([0x04]),
+      } as unknown as InternalWallet;
+
+      const walletSerializer = {
+        getId: jest.fn().mockReturnValue(Uint8Array.from([0x05])),
+      } as unknown as WalletSerializer;
+
+      const dataStoreService = {
+        merklizeWallet: jest.fn(),
+      } as unknown as DataStoreService;
+
+      const continueTaskFactory = () =>
+        ({
+          run: jest.fn().mockResolvedValue(
+            CommandResultFactory({
+              error: new InvalidStatusWordError(
+                "Invalid response from the device",
+              ),
+            }),
+          ),
+        }) as unknown as ContinueTask;
+
+      // when
+      const result = await new GetWalletAddressTask(
+        api,
+        {
+          checkOnDevice: true,
+          wallet,
+          change: false,
+          addressIndex: 0,
+        },
+        walletSerializer,
+        dataStoreService,
+        continueTaskFactory,
+      ).run();
+
+      // then
+      expect(result).toStrictEqual(
         CommandResultFactory({
           error: new InvalidStatusWordError("Invalid response from the device"),
         }),
       );
-
-    jest
-      .spyOn(ClientCommandInterpreter.prototype, "getClientCommandPayload")
-      .mockImplementation(() => Right(new Uint8Array([0x00])));
-
-    // when
-    const result = await new GetWalletAddressTask(apiMock, {
-      display: DISPLAY,
-      wallet: MOCK_WALLET,
-      change: CHANGE,
-      addressIndex: ADDRESS_INDEX,
-    }).run();
-
-    // then
-    expect(apiMock.sendCommand).toHaveBeenCalledTimes(3);
-    expect(result.status).toBe(CommandResultStatus.Error);
-    expect(result).toStrictEqual(
-      CommandResultFactory({
-        error: new InvalidStatusWordError("Invalid response from the device"),
-      }),
-    );
+    });
   });
 });

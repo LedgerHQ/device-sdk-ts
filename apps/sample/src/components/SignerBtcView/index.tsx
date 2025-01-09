@@ -5,6 +5,9 @@ import {
   type GetExtendedDAIntermediateValue,
   type GetExtendedPublicKeyDAError,
   type GetExtendedPublicKeyDAOutput,
+  type GetWalletAddressDAError,
+  type GetWalletAddressDAIntermediateValue,
+  type GetWalletAddressDAOutput,
   SignerBtcBuilder,
   type SignMessageDAError,
   type SignMessageDAIntermediateValue,
@@ -114,6 +117,47 @@ export const SignerBtcView: React.FC<{ sessionId: string }> = ({
         },
         SignPsbtDAError,
         SignPsbtDAIntermediateValue
+      >,
+      {
+        title: "Get wallet address",
+        description:
+          "Perform all the actions necessary to get the device's Bitcoin wallet address",
+        executeDeviceAction: ({
+          checkOnDevice,
+          change,
+          addressIndex,
+          derivationPath,
+        }) => {
+          if (!signer) {
+            throw new Error("Signer not initialized");
+          }
+
+          return signer.getWalletAddress(
+            new DefaultWallet(
+              derivationPath,
+              DefaultDescriptorTemplate.NATIVE_SEGWIT,
+            ),
+            addressIndex,
+            { checkOnDevice, change },
+          );
+        },
+        initialValues: {
+          checkOnDevice: false,
+          change: false,
+          derivationPath: DEFAULT_DERIVATION_PATH,
+          addressIndex: 0,
+        },
+        deviceModelId,
+      } satisfies DeviceActionProps<
+        GetWalletAddressDAOutput,
+        {
+          checkOnDevice: boolean;
+          change: boolean;
+          addressIndex: number;
+          derivationPath: string;
+        },
+        GetWalletAddressDAError,
+        GetWalletAddressDAIntermediateValue
       >,
     ],
     [deviceModelId, signer],
