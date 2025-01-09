@@ -28,7 +28,7 @@ export type BuildTransactionContextTaskArgs = {
   readonly mapper: TransactionMapperService;
   readonly transaction: Uint8Array;
   readonly options: TransactionOptions;
-  readonly challenge: string;
+  readonly challenge: string | null;
 };
 
 export class BuildTransactionContextTask {
@@ -45,6 +45,15 @@ export class BuildTransactionContextTask {
       throw err;
     });
     const { subset, serializedTransaction, type } = parsed.unsafeCoerce();
+
+    if (!challenge) {
+      return {
+        clearSignContexts: [],
+        serializedTransaction,
+        chainId: subset.chainId,
+        transactionType: type,
+      };
+    }
 
     const clearSignContexts = await contextModule.getContexts({
       challenge,
