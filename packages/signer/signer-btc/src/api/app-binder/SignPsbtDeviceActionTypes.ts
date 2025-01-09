@@ -4,6 +4,7 @@ import {
   type ExecuteDeviceActionReturnType,
   type OpenAppDAError,
   type OpenAppDARequiredInteraction,
+  type UserInteractionRequired,
 } from "@ledgerhq/device-management-kit";
 
 import { type Psbt } from "@api/model/Psbt";
@@ -22,7 +23,9 @@ export type SignPsbtDAError =
   | OpenAppDAError
   | CommandErrorResult<BtcErrorCodes>["error"];
 
-type SignPsbtDARequiredInteraction = OpenAppDARequiredInteraction;
+type SignPsbtDARequiredInteraction =
+  | OpenAppDARequiredInteraction
+  | UserInteractionRequired.SignTransaction;
 
 export type SignPsbtDAIntermediateValue = {
   requiredUserInteraction: SignPsbtDARequiredInteraction;

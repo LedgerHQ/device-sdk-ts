@@ -147,6 +147,16 @@ export class SignPsbtDeviceAction extends XStateDeviceAction<
           ],
         },
         SignPsbt: {
+          entry: assign({
+            intermediateValue: {
+              requiredUserInteraction: UserInteractionRequired.SignTransaction,
+            },
+          }),
+          exit: assign({
+            intermediateValue: {
+              requiredUserInteraction: UserInteractionRequired.None,
+            },
+          }),
           invoke: {
             id: "signPsbt",
             src: "signPsbt",

@@ -77,7 +77,7 @@ describe("SignPsbtDeviceAction", () => {
         },
         {
           intermediateValue: {
-            requiredUserInteraction: UserInteractionRequired.None,
+            requiredUserInteraction: UserInteractionRequired.SignTransaction,
           },
           status: DeviceActionStatus.Pending,
         },
@@ -184,7 +184,7 @@ describe("SignPsbtDeviceAction", () => {
         {
           status: DeviceActionStatus.Pending,
           intermediateValue: {
-            requiredUserInteraction: UserInteractionRequired.None,
+            requiredUserInteraction: UserInteractionRequired.SignTransaction,
           },
         },
         {
@@ -235,7 +235,7 @@ describe("SignPsbtDeviceAction", () => {
         {
           status: DeviceActionStatus.Pending,
           intermediateValue: {
-            requiredUserInteraction: UserInteractionRequired.None,
+            requiredUserInteraction: UserInteractionRequired.SignTransaction,
           },
         },
         {
@@ -288,7 +288,7 @@ describe("SignPsbtDeviceAction", () => {
         {
           status: DeviceActionStatus.Pending,
           intermediateValue: {
-            requiredUserInteraction: UserInteractionRequired.None,
+            requiredUserInteraction: UserInteractionRequired.SignTransaction,
           },
         },
         {
@@ -341,7 +341,7 @@ describe("SignPsbtDeviceAction", () => {
         {
           status: DeviceActionStatus.Pending,
           intermediateValue: {
-            requiredUserInteraction: UserInteractionRequired.None,
+            requiredUserInteraction: UserInteractionRequired.SignTransaction,
           },
         },
         {
