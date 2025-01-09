@@ -11,6 +11,10 @@ import {
   mockserverIdentifier,
   mockserverTransportFactory,
 } from "@ledgerhq/device-transport-kit-mockserver";
+import {
+  speculosIdentifier,
+  speculosTransportFactory,
+} from "@ledgerhq/device-transport-kit-speculos";
 import { webBleTransportFactory } from "@ledgerhq/device-transport-kit-web-ble";
 import { webHidTransportFactory } from "@ledgerhq/device-transport-kit-web-hid";
 
@@ -24,6 +28,16 @@ function buildDefaultDmk(logsExporter: WebLogsExporterLogger) {
   return new DeviceManagementKitBuilder()
     .addTransport(webHidTransportFactory)
     .addTransport(webBleTransportFactory)
+    .addLogger(new ConsoleLogger())
+    .addLogger(logsExporter)
+    .addLogger(new FlipperDmkLogger())
+    .build();
+}
+
+//TODO add speculos URL to config
+function buildSpeculosDmk(logsExporter: WebLogsExporterLogger) {
+  return new DeviceManagementKitBuilder()
+    .addTransport(speculosTransportFactory)
     .addLogger(new ConsoleLogger())
     .addLogger(logsExporter)
     .addLogger(new FlipperDmkLogger())
@@ -46,23 +60,35 @@ export const DmkProvider: React.FC<PropsWithChildren> = ({ children }) => {
   } = useDmkConfigContext();
 
   const mockServerEnabled = transport === mockserverIdentifier;
+  const speculosEnabled = transport === speculosIdentifier;
+
   const [state, setState] = useState(() => {
     const logsExporter = new WebLogsExporterLogger();
-    const dmk = mockServerEnabled
-      ? buildMockDmk(mockServerUrl, logsExporter)
-      : buildDefaultDmk(logsExporter);
+    const dmk = speculosEnabled
+      ? buildSpeculosDmk(logsExporter)
+      : mockServerEnabled
+        ? buildMockDmk(mockServerUrl, logsExporter)
+        : buildDefaultDmk(logsExporter);
     return { dmk, logsExporter };
   });
 
+  console.log("transport changed", transport);
   const mockServerEnabledChanged = useHasChanged(mockServerEnabled);
   const mockServerUrlChanged = useHasChanged(mockServerUrl);
+  const speculosEnabledChanged = useHasChanged(speculosEnabled);
 
-  if (mockServerEnabledChanged || mockServerUrlChanged) {
+  if (
+    mockServerEnabledChanged ||
+    mockServerUrlChanged ||
+    speculosEnabledChanged
+  ) {
     setState(({ logsExporter }) => {
       return {
-        dmk: mockServerEnabled
-          ? buildMockDmk(mockServerUrl, logsExporter)
-          : buildDefaultDmk(logsExporter),
+        dmk: speculosEnabled
+          ? buildSpeculosDmk(logsExporter)
+          : mockServerEnabled
+            ? buildMockDmk(mockServerUrl, logsExporter)
+            : buildDefaultDmk(logsExporter),
         logsExporter,
       };
     });
