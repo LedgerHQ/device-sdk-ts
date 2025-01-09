@@ -144,6 +144,9 @@ importers:
       '@ledgerhq/device-transport-kit-mockserver':
         specifier: workspace:*
         version: link:../../packages/transport/mockserver
+      '@ledgerhq/device-transport-kit-speculos':
+        specifier: workspace:*
+        version: link:../../packages/transport/speculos
       '@ledgerhq/device-transport-kit-web-ble':
         specifier: workspace:*
         version: link:../../packages/transport/web-ble
@@ -655,6 +658,43 @@ importers:
       ts-node:
         specifier: ^10.9.2
         version: 10.9.2(@types/node@22.13.4)(typescript@5.7.3)
+
+  packages/transport/speculos:
+    dependencies:
+      '@sentry/minimal':
+        specifier: ^6.19.7
+        version: 6.19.7
+      axios:
+        specifier: ^1.7.9
+        version: 1.7.9
+      purify-ts:
+        specifier: ^2.1.0
+        version: 2.1.0
+    devDependencies:
+      '@ledgerhq/device-management-kit':
+        specifier: workspace:*
+        version: link:../../device-management-kit
+      '@ledgerhq/esbuild-tools':
+        specifier: workspace:*
+        version: link:../../tools/esbuild-tools
+      '@ledgerhq/eslint-config-dsdk':
+        specifier: workspace:*
+        version: link:../../config/eslint
+      '@ledgerhq/jest-config-dsdk':
+        specifier: workspace:*
+        version: link:../../config/jest
+      '@ledgerhq/prettier-config-dsdk':
+        specifier: workspace:*
+        version: link:../../config/prettier
+      '@ledgerhq/tsconfig-dsdk':
+        specifier: workspace:*
+        version: link:../../config/typescript
+      rxjs:
+        specifier: ^7.8.1
+        version: 7.8.1
+      ts-node:
+        specifier: ^10.9.2
+        version: 10.9.2(@types/node@22.10.5)(typescript@5.7.2)
 
   packages/transport/web-ble:
     dependencies:
@@ -2381,9 +2421,6 @@ packages:
 
   '@jridgewell/source-map@0.3.6':
     resolution: {integrity: sha512-1ZJTZebgqllO79ue2bm3rIGud/bOe0pP5BjSRCRxxYkEZS8STV7zN84UBbiYu7jy+eCKSnVIUgoWWE/tt+shMQ==}
-
-  '@jridgewell/sourcemap-codec@1.4.15':
-    resolution: {integrity: sha512-eF2rxCRulEKXHTRiDrDy6erMYWqNw4LPdQ8UQA4huuxaQsVeRPFl2oM8oDGxMFhJUWZf9McpLtJasDDZb/Bpeg==}
 
   '@jridgewell/sourcemap-codec@1.5.0':
     resolution: {integrity: sha512-gv3ZRaISU3fjPAgNsriBRqGWQL6quFx04YMPW/zD8XMLsU32mhCCbfbO6KZFLjvYpCZ8zyDEgqsgf+PwPaM7GQ==}
@@ -11012,7 +11049,7 @@ snapshots:
   '@jridgewell/gen-mapping@0.3.5':
     dependencies:
       '@jridgewell/set-array': 1.2.1
-      '@jridgewell/sourcemap-codec': 1.4.15
+      '@jridgewell/sourcemap-codec': 1.5.0
       '@jridgewell/trace-mapping': 0.3.25
 
   '@jridgewell/gen-mapping@0.3.8':
@@ -11030,19 +11067,17 @@ snapshots:
       '@jridgewell/gen-mapping': 0.3.8
       '@jridgewell/trace-mapping': 0.3.25
 
-  '@jridgewell/sourcemap-codec@1.4.15': {}
-
   '@jridgewell/sourcemap-codec@1.5.0': {}
 
   '@jridgewell/trace-mapping@0.3.25':
     dependencies:
       '@jridgewell/resolve-uri': 3.1.2
-      '@jridgewell/sourcemap-codec': 1.4.15
+      '@jridgewell/sourcemap-codec': 1.5.0
 
   '@jridgewell/trace-mapping@0.3.9':
     dependencies:
       '@jridgewell/resolve-uri': 3.1.2
-      '@jridgewell/sourcemap-codec': 1.4.15
+      '@jridgewell/sourcemap-codec': 1.5.0
 
   '@ledgerhq/crypto-icons-ui@1.6.0(@types/react@18.3.12)(react-native-svg@15.3.0(react-native@0.74.3(@babel/core@7.24.7)(@babel/preset-env@7.24.7(@babel/core@7.24.7))(@types/react@18.3.12)(react@18.3.1))(react@18.3.1))(react@18.3.1)(styled-components@5.3.11(@babel/core@7.24.7)(react-dom@18.3.1(react@18.3.1))(react-is@18.3.1)(react@18.3.1))(styled-system@5.1.5)':
     dependencies:
@@ -16096,7 +16131,7 @@ snapshots:
 
   magic-string@0.30.10:
     dependencies:
-      '@jridgewell/sourcemap-codec': 1.4.15
+      '@jridgewell/sourcemap-codec': 1.5.0
 
   magic-string@0.30.17:
     dependencies:
@@ -16104,7 +16139,7 @@ snapshots:
 
   magic-string@0.30.8:
     dependencies:
-      '@jridgewell/sourcemap-codec': 1.4.15
+      '@jridgewell/sourcemap-codec': 1.5.0
 
   magicast@0.3.5:
     dependencies:
