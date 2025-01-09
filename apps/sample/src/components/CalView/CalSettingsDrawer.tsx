@@ -30,12 +30,13 @@ export function CalSettingsDrawer({ onClose }: CalSettingsDrawerProps) {
   };
   const labelSelector: Record<string, string> = {
     url: "CAL URL",
+    web3checksUrl: "Web3checks URL",
     mode: "Mode",
     branch: "Branch reference",
   };
 
   const onSettingsUpdate = useCallback(() => {
-    const { url, mode, branch } = values;
+    const { url, web3checksUrl, mode, branch } = values;
     const isMode = (test: unknown): test is "prod" | "test" =>
       test === "prod" || test === "test";
     const isBranch = (test: unknown): test is "main" | "next" | "demo" =>
@@ -43,6 +44,10 @@ export function CalSettingsDrawer({ onClose }: CalSettingsDrawerProps) {
 
     console.log("Updating settings", values);
     if (!url || typeof url !== "string" || !url.startsWith("http")) {
+      console.error("Invalid CAL URL", url);
+      return;
+    }
+    if (!web3checksUrl || typeof web3checksUrl !== "string" || !web3checksUrl.startsWith("http")) {
       console.error("Invalid CAL URL", url);
       return;
     }
@@ -59,6 +64,7 @@ export function CalSettingsDrawer({ onClose }: CalSettingsDrawerProps) {
 
     const newSettings: ContextModuleCalConfig = {
       url,
+      web3checksUrl,
       mode,
       branch,
     };

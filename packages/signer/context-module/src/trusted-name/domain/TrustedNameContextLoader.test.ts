@@ -1,5 +1,6 @@
 import { Left, Right } from "purify-ts";
 
+import { type PkiCertificateLoader } from "@/pki/domain/PkiCertificateLoader";
 import { ClearSignContextType } from "@/shared/model/ClearSignContext";
 import {
   type TransactionContext,
@@ -14,17 +15,28 @@ describe("TrustedNameContextLoader", () => {
     getTrustedNamePayload: jest.fn(),
   };
 
+  const mockCertificateLoader: PkiCertificateLoader = {
+    loadCertificate: jest.fn(),
+  };
+
   beforeEach(() => {
     jest.restoreAllMocks();
     jest
       .spyOn(mockTrustedNameDataSource, "getDomainNamePayload")
       .mockResolvedValue(Right("payload"));
+
+    jest
+      .spyOn(mockCertificateLoader, "loadCertificate")
+      .mockResolvedValue(undefined);
   });
 
   describe("load function", () => {
     it("should return an empty array when no domain or registry", () => {
       const transaction = {} as TransactionContext;
-      const loader = new TrustedNameContextLoader(mockTrustedNameDataSource);
+      const loader = new TrustedNameContextLoader(
+        mockTrustedNameDataSource,
+        mockCertificateLoader,
+      );
       const promise = () => loader.load(transaction);
 
       expect(promise()).resolves.toEqual([]);
@@ -36,7 +48,10 @@ describe("TrustedNameContextLoader", () => {
         challenge: "challenge",
       } as TransactionContext;
 
-      const loader = new TrustedNameContextLoader(mockTrustedNameDataSource);
+      const loader = new TrustedNameContextLoader(
+        mockTrustedNameDataSource,
+        mockCertificateLoader,
+      );
       const result = await loader.load(transaction);
 
       expect(result).toEqual([
@@ -53,7 +68,10 @@ describe("TrustedNameContextLoader", () => {
         challenge: "challenge",
       } as TransactionContext;
 
-      const loader = new TrustedNameContextLoader(mockTrustedNameDataSource);
+      const loader = new TrustedNameContextLoader(
+        mockTrustedNameDataSource,
+        mockCertificateLoader,
+      );
       const result = await loader.load(transaction);
 
       expect(result).toEqual([
@@ -70,7 +88,10 @@ describe("TrustedNameContextLoader", () => {
         challenge: "challenge",
       } as TransactionContext;
 
-      const loader = new TrustedNameContextLoader(mockTrustedNameDataSource);
+      const loader = new TrustedNameContextLoader(
+        mockTrustedNameDataSource,
+        mockCertificateLoader,
+      );
       const result = await loader.load(transaction);
 
       expect(result).toEqual([
@@ -92,7 +113,10 @@ describe("TrustedNameContextLoader", () => {
       jest
         .spyOn(mockTrustedNameDataSource, "getDomainNamePayload")
         .mockResolvedValue(Left(new Error("error")));
-      const loader = new TrustedNameContextLoader(mockTrustedNameDataSource);
+      const loader = new TrustedNameContextLoader(
+        mockTrustedNameDataSource,
+        mockCertificateLoader,
+      );
       const result = await loader.load(transaction);
 
       // THEN
@@ -109,7 +133,10 @@ describe("TrustedNameContextLoader", () => {
       } as TransactionContext;
 
       // WHEN
-      const loader = new TrustedNameContextLoader(mockTrustedNameDataSource);
+      const loader = new TrustedNameContextLoader(
+        mockTrustedNameDataSource,
+        mockCertificateLoader,
+      );
       const result = await loader.load(transaction);
 
       // THEN
@@ -125,7 +152,10 @@ describe("TrustedNameContextLoader", () => {
         address: "0x1234",
       };
 
-      const loader = new TrustedNameContextLoader(mockTrustedNameDataSource);
+      const loader = new TrustedNameContextLoader(
+        mockTrustedNameDataSource,
+        mockCertificateLoader,
+      );
       const result = await loader.loadField(field);
 
       expect(result).toEqual(null);
@@ -146,7 +176,10 @@ describe("TrustedNameContextLoader", () => {
       jest
         .spyOn(mockTrustedNameDataSource, "getTrustedNamePayload")
         .mockResolvedValue(Right("payload"));
-      const loader = new TrustedNameContextLoader(mockTrustedNameDataSource);
+      const loader = new TrustedNameContextLoader(
+        mockTrustedNameDataSource,
+        mockCertificateLoader,
+      );
       const result = await loader.loadField(field);
 
       // THEN
@@ -171,7 +204,10 @@ describe("TrustedNameContextLoader", () => {
       jest
         .spyOn(mockTrustedNameDataSource, "getTrustedNamePayload")
         .mockResolvedValue(Left(new Error("error")));
-      const loader = new TrustedNameContextLoader(mockTrustedNameDataSource);
+      const loader = new TrustedNameContextLoader(
+        mockTrustedNameDataSource,
+        mockCertificateLoader,
+      );
       const result = await loader.loadField(field);
 
       // THEN

@@ -4,14 +4,18 @@ import {
 } from "./config/model/ContextModuleConfig";
 import { type ContextLoader } from "./shared/domain/ContextLoader";
 import { type TypedDataContextLoader } from "./typed-data/domain/TypedDataContextLoader";
+import { type Web3CheckContextLoader } from "./web3-check/domain/Web3CheckContextLoader";
 import { type ContextModule } from "./ContextModule";
 import { DefaultContextModule } from "./DefaultContextModule";
 
 const DEFAULT_CAL_URL = "https://crypto-assets-service.api.ledger.com/v1";
+const DEFAULT_WEB3_CHECKS_URL =
+  "https://crypto-assets-service.api.ledger.com/v1";
 
 export const DEFAULT_CONFIG: ContextModuleConfig = {
   cal: {
     url: DEFAULT_CAL_URL,
+    web3checksUrl: DEFAULT_WEB3_CHECKS_URL,
     mode: "prod",
     branch: "main",
   },
@@ -54,6 +58,17 @@ export class ContextModuleBuilder {
    */
   addTypedDataLoader(loader: TypedDataContextLoader) {
     this.config.customTypedDataLoader = loader;
+    return this;
+  }
+
+  /**
+   * Replace the default loader for web3 checks
+   *
+   * @param loader loader to use for web3 checks
+   * @returns this
+   */
+  addWeb3CheckLoader(loader: Web3CheckContextLoader) {
+    this.config.customWeb3CheckLoader = loader;
     return this;
   }
 

@@ -103,6 +103,7 @@ export const SignerEthView: React.FC<{ sessionId: string }> = ({
           if (!signer) {
             throw new Error("Signer not initialized");
           }
+              ethers.Transaction.from(parsedTransaction),
 
           const tx = hexaStringToBuffer(transaction);
           if (!tx) {

@@ -37,6 +37,7 @@ describe("SignTransactionDeviceAction", () => {
     getContext: jest.fn(),
     getContexts: jest.fn(),
     getTypedDataFilters: jest.fn(),
+    getWeb3Checks: jest.fn(),
   };
   const mapperMock: TransactionMapperService = {
     mapTransactionToSubset: jest.fn(),
@@ -56,6 +57,7 @@ describe("SignTransactionDeviceAction", () => {
       provideContext: provideContextMock,
       provideGenericContext: provideGenericContextMock,
       signTransaction: signTransactionMock,
+      getWeb3Check: jest.fn(),
     };
   }
   const defaultOptions = {

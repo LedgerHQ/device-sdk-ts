@@ -95,6 +95,7 @@ describe("SignTypedDataDeviceAction", () => {
     getContext: jest.fn(),
     getContexts: jest.fn(),
     getTypedDataFilters: jest.fn(),
+    getWeb3Checks: jest.fn(),
   };
   const buildContextMock = jest.fn();
   const provideContextMock = jest.fn();

@@ -13,6 +13,8 @@ import {
   ClearSignContextType,
 } from "@/shared/model/ClearSignContext";
 import { GenericPath } from "@/shared/model/GenericPath";
+import { INFO_SIGNATURE_TAG } from "@/shared/model/SignatureTags";
+import { HexStringUtils } from "@/shared/utils/HexStringUtils";
 import PACKAGE from "@root/package.json";
 
 import {
@@ -110,7 +112,11 @@ export class HttpTransactionDataSource implements TransactionDataSource {
         ];
       const info: ClearSignContextSuccess = {
         type: ClearSignContextType.TRANSACTION_INFO,
-        payload: this.formatTransactionInfo(infoData, infoSignature),
+        payload: HexStringUtils.appendSignatureToPayload(
+          infoData,
+          infoSignature,
+          INFO_SIGNATURE_TAG,
+        ),
       };
       const enums: ClearSignContextSuccess[] = [];
       for (const [id, values] of Object.entries(calldataDescriptor.enums)) {
@@ -122,9 +128,10 @@ export class HttpTransactionDataSource implements TransactionDataSource {
             type: ClearSignContextType.ENUM,
             id: Number(id),
             value: Number(value),
-            payload: this.formatTransactionInfo(
+            payload: HexStringUtils.appendSignatureToPayload(
               data,
-              signatures[this.config.cal.mode]!, // the enum is validated by isCalldataDescriptorV1
+              signatures[this.config.cal.mode]!,
+              INFO_SIGNATURE_TAG,
             ),
           });
         }
@@ -145,20 +152,6 @@ export class HttpTransactionDataSource implements TransactionDataSource {
         `[ContextModule] HttpTransactionDataSource: Invalid response for contract ${address} and selector ${selector}`,
       ),
     );
-  }
-
-  private formatTransactionInfo(
-    infoData: string,
-    infoSignature: string,
-  ): string {
-    // Ensure correct padding
-    if (infoSignature.length % 2 !== 0) {
-      infoSignature = "0" + infoSignature;
-    }
-    // TLV encoding as according to generic parser documentation
-    const infoSignatureTag = "81ff";
-    const infoSignatureLength = (infoSignature.length / 2).toString(16);
-    return `${infoData}${infoSignatureTag}${infoSignatureLength}${infoSignature}`;
   }
 
   private getReference(

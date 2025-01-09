@@ -19,4 +19,5 @@ export type TransactionFieldContext =
 export type TransactionContext = TransactionSubset & {
   challenge?: string;
   domain?: string;
+  deviceModel?: string;
 };

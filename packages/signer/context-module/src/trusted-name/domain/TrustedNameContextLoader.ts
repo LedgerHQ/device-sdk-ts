@@ -11,16 +11,23 @@ import {
 } from "@/shared/model/TransactionContext";
 import type { TrustedNameDataSource } from "@/trusted-name/data/TrustedNameDataSource";
 import { trustedNameTypes } from "@/trusted-name/di/trustedNameTypes";
+import { type PkiCertificateLoader } from "@/pki/domain/PkiCertificateLoader";
+import { pkiTypes } from "@/pki/di/pkiDiTypes";
+import { KeyUsage } from "@/pki/domain/model/KeyUsage";
 
 @injectable()
 export class TrustedNameContextLoader implements ContextLoader {
   private _dataSource: TrustedNameDataSource;
+  private _certificateLoader: PkiCertificateLoader;
 
   constructor(
     @inject(trustedNameTypes.TrustedNameDataSource)
     dataSource: TrustedNameDataSource,
+    @inject(pkiTypes.PkiCertificateLoader)
+    certificateLoader: PkiCertificateLoader,
   ) {
     this._dataSource = dataSource;
+    this._certificateLoader = certificateLoader;
   }
 
   async load(
@@ -46,6 +53,12 @@ export class TrustedNameContextLoader implements ContextLoader {
       challenge: challenge,
     });
 
+    //Try to fetch Nano PKI certificate
+    const certificate = await this._certificateLoader.loadCertificate({
+      targetDevice: "flex",
+      keyUsage: KeyUsage.TrustedName,
+    });
+
     return [
       payload.caseOf({
         Left: (error): ClearSignContext => ({
@@ -55,6 +68,7 @@ export class TrustedNameContextLoader implements ContextLoader {
         Right: (value): ClearSignContext => ({
           type: ClearSignContextType.TRUSTED_NAME,
           payload: value,
+          certificate: certificate ? certificate : undefined,
         }),
       }),
     ];

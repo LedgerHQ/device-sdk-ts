@@ -50,6 +50,7 @@ describe("ProvideTransactionContextTask", () => {
           payload: "746f6b656e", // "token"
         },
       ],
+      web3Check: null,
     };
     afterEach(() => {
       jest.restoreAllMocks();
