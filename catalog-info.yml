@@ -1,0 +1,102 @@
+---
+apiVersion: backstage.io/v1alpha1
+kind: Component
+metadata:
+  name: device-management-kit-ts
+  description: Device Management Kit Library
+  tags:
+    - typescript
+    - sdk
+    - device-management-kit
+  annotations:
+    #backstage.io/techdocs-ref: dir:.
+    #backstage.io/adr-location: docs/architecture/decisions
+    github.com/project-slug: "LedgerHQ/device-sdk-ts"
+    github.com/team-slug: "LedgerHQ/live-devices"
+    ledger.com/code_repository: https://github.com/LedgerHQ/device-sdk-ts
+    ledger.com/documentation: https://developers.ledger.com/docs/device-interaction/getting-started
+    jira/project-key: DSDK
+  labels:
+    ledger.com/contains_pii: "no"
+    ledger.com/donjon_review: "on-demand"
+    license: Apache-2.0
+spec:
+  type: library
+  lifecycle: production
+  owner: group:live-devices
+  system: ledger-device-management-kit
+---
+apiVersion: backstage.io/v1alpha1
+kind: Component
+metadata:
+  name: ts-device-management-kit
+  description: Device Management Kit Library
+  tags:
+    - typescript
+    - library
+    - device-management-kit
+    - npm
+spec:
+  type: library
+  lifecycle: production
+  owner: group:live-devices
+  system: ledger-device-management-kit
+  subComponentOf: device-management-kit-ts
+---
+apiVersion: backstage.io/v1alpha1
+kind: Component
+metadata:
+  name: ts-device-signer-kit-ethereum
+  description: Signer Kit for ETH
+spec:
+  type: library
+  lifecycle: production
+  owner: group:live-devices
+  system: ledger-device-management-kit
+  subComponentOf: ts-device-management-kit
+---
+apiVersion: backstage.io/v1alpha1
+kind: Component
+metadata:
+  name: ts-device-signer-kit-ethereum
+  description: Signer Kit for ETH
+spec:
+  type: library
+  lifecycle: production
+  owner: group:live-devices
+  system: ledger-device-management-kit
+  subComponentOf: ts-device-management-kit
+---
+apiVersion: backstage.io/v1alpha1
+kind: Component
+metadata:
+  name: ts-device-signer-kit-solana
+  description: Signer Kit for Solana
+  tags:
+    - typescript
+    - signer
+    - solana
+    - npm
+spec:
+  type: library
+  lifecycle: production
+  owner: group:live-devices
+  system: ledger-device-management-kit
+  subComponentOf: device-management-kit-ts
+---
+apiVersion: backstage.io/v1alpha1
+kind: Component
+metadata:
+  name: ts-context-module
+  description: Module for adding context to transactions
+  tags:
+    - typescript
+    - cal-service
+    - clear-signing
+    - npm
+spec:
+  type: library
+  lifecycle: production
+  owner: group:live-devices
+  system: ledger-device-management-kit
+  subComponentOf: device-management-kit-ts
