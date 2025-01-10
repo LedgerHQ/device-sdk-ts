@@ -1,0 +1,65 @@
+name: "[Automation] Sync Doc"
+on:
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: The base branch to publish a snapshot release from
+        required: false
+        default: main
+  push:
+    branches:
+      - main
+    paths:
+      - "apps/docs/pages/docs/*"
+
+jobs:
+  sync_doc:
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.inputs.ref || github.event.ref }}
+          path: ldmk
+          sparse-checkout: |
+            apps/docs/pages/docs
+
+      - uses: actions/checkout@v4
+        with:
+          repository: ledgerhq/developer-portal
+          path: portal
+          token: ${{ secrets.DEVICE_SDK_TS_CI }}
+
+      - name: Set up Git
+        run: |
+          git config --global user.name 'github-actions[bot]'
+          git config --global user.email '41898282+github-actions[bot]@users.noreply.github.com'
+
+
+      - name: Copy files
+        run: |
+          rm -rf portal/pages/docs/device-interaction
+          mkdir -p portal/pages/docs/device-interaction
+          cp -r ldmk/apps/docs/pages/docs/* portal/pages/docs/device-interaction
+
+
+      - name:  Set branch name in outputs
+        id: branch-name
+        run: |
+          branch_name="sync-dmk-doc-$(date +%Y-%m-%d-%H-%M)"
+          echo "BRANCH_NAME=$branch_name" >> $GITHUB_OUTPUT
+
+      - name: Commit changes
+        run: |
+          cd portal
+          # add timestamp to commit message
+          git checkout -b ${{ steps.branch-name.outputs.BRANCH_NAME }}
+          git add pages/docs/device-interaction
+          git commit -m "doc: add new changes from device management kit to portal"
+
+      - name: Create pull request
+        env:
+          GH_TOKEN: ${{ secrets.DEVICE_SDK_TS_CI }}
+        run: |
+          cd portal
+          git push origin ${{ steps.branch-name.outputs.BRANCH_NAME }}
+          gh pr create --title "doc: add new changes from device management kit to portal" --body "update doc from device management kit" --base main --head ${{ steps.branch-name.outputs.BRANCH_NAME }}
