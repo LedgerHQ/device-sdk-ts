@@ -45,6 +45,12 @@ export type DeviceActionProps<
     debug?: boolean,
   ) => ExecuteDeviceActionReturnType<Output, Error, IntermediateValue>;
   initialValues: Input;
+  InputValuesComponent?: React.FC<{
+    initialValues: Input;
+    onChange: (values: Input) => void;
+    valueSelector?: ValueSelector<FieldType>;
+    disabled?: boolean;
+  }>;
   validateValues?: (args: Input) => boolean;
   valueSelector?: ValueSelector<FieldType>;
   deviceModelId: DeviceModelId;
@@ -94,6 +100,7 @@ export function DeviceActionTester<
     executeDeviceAction,
     valueSelector,
     validateValues,
+    InputValuesComponent,
   } = props;
 
   const nonce = useRef(-1);
@@ -204,12 +211,21 @@ export function DeviceActionTester<
           rowGap={3}
           pointerEvents={loading ? "none" : "auto"}
         >
-          <CommandForm
-            initialValues={values}
-            onChange={setValues}
-            valueSelector={valueSelector}
-            disabled={loading}
-          />
+          {InputValuesComponent ? (
+            <InputValuesComponent
+              initialValues={values}
+              onChange={setValues}
+              valueSelector={valueSelector}
+              disabled={loading}
+            />
+          ) : (
+            <CommandForm
+              initialValues={values}
+              onChange={setValues}
+              valueSelector={valueSelector}
+              disabled={loading}
+            />
+          )}
           <Divider />
           <Switch
             checked={inspect}

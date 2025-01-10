@@ -12,7 +12,7 @@ export const GlobalStyle = createGlobalStyle`
     background-color: #000000;
   }
   body {
-    user-select: none;
+    user-select: text;
   }
   .no-scrollbar {
       &::-webkit-scrollbar {

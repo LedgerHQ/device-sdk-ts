@@ -7,6 +7,7 @@ import {
 } from "@ledgerhq/device-management-kit";
 import { Flex, Icons, Tag, Text, Tooltip } from "@ledgerhq/react-ui";
 import styled from "styled-components";
+import { inspect } from "util";
 
 import { type FieldType } from "@/hooks/useForm";
 
@@ -91,11 +92,11 @@ export function DeviceActionResponse<
           wordBreak: "break-word",
         }}
       >
-        {JSON.stringify(
-          isError ? props.error : props.deviceActionState,
-          null,
-          2,
-        )}
+        {isError
+          ? inspect(props.error, { depth: null })
+          : props.deviceActionState.status === DeviceActionStatus.Error
+            ? inspect(props.deviceActionState.error, { depth: null })
+            : JSON.stringify(props.deviceActionState, null, 2)}
       </Text>
       {!isError &&
       props.deviceActionState.status === DeviceActionStatus.Pending ? (
