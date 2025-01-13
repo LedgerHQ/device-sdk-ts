@@ -10,7 +10,7 @@ import {
   UserInteractionRequired,
   XStateDeviceAction,
 } from "@ledgerhq/device-management-kit";
-import { Left, Nothing, Right } from "purify-ts";
+import { Just, Left, Nothing, Right } from "purify-ts";
 import { assign, fromPromise, setup } from "xstate";
 
 import {
@@ -48,6 +48,13 @@ export type MachineDependencies = {
       derivationPath: string;
     };
   }) => Promise<CommandResult<Signature>>;
+  readonly signTypedDataLegacy: (arg0: {
+    input: {
+      derivationPath: string;
+      domainHash: string;
+      messageHash: string;
+    };
+  }) => Promise<CommandResult<Signature>>;
 };
 
 export class SignTypedDataDeviceAction extends XStateDeviceAction<
@@ -74,7 +81,7 @@ export class SignTypedDataDeviceAction extends XStateDeviceAction<
       SignTypedDataDAInternalState
     >;
 
-    const { buildContext, provideContext, signTypedData } =
+    const { buildContext, provideContext, signTypedData, signTypedDataLegacy } =
       this.extractDependencies(internalApi);
 
     return setup({
@@ -90,6 +97,7 @@ export class SignTypedDataDeviceAction extends XStateDeviceAction<
         buildContext: fromPromise(buildContext),
         provideContext: fromPromise(provideContext),
         signTypedData: fromPromise(signTypedData),
+        signTypedDataLegacy: fromPromise(signTypedDataLegacy),
       },
       guards: {
         noInternalError: ({ context }) => context._internalState.error === null,
@@ -187,16 +195,6 @@ export class SignTypedDataDeviceAction extends XStateDeviceAction<
           },
         },
         ProvideContext: {
-          entry: assign({
-            intermediateValue: {
-              requiredUserInteraction: UserInteractionRequired.SignTypedData,
-            },
-          }),
-          exit: assign({
-            intermediateValue: {
-              requiredUserInteraction: UserInteractionRequired.None,
-            },
-          }),
           invoke: {
             id: "provideContext",
             src: "provideContext",
@@ -225,13 +223,8 @@ export class SignTypedDataDeviceAction extends XStateDeviceAction<
         },
         ProvideContextResultCheck: {
           always: [
-            {
-              target: "SignTypedData",
-              guard: "noInternalError",
-            },
-            {
-              target: "Error",
-            },
+            { guard: "noInternalError", target: "SignTypedData" },
+            { target: "SignTypedDataLegacy" },
           ],
         },
         SignTypedData: {
@@ -250,6 +243,50 @@ export class SignTypedDataDeviceAction extends XStateDeviceAction<
             src: "signTypedData",
             input: ({ context }) => ({
               derivationPath: context.input.derivationPath,
+            }),
+            onDone: {
+              target: "SignTypedDataResultCheck",
+              actions: [
+                assign({
+                  _internalState: ({ event, context }) => {
+                    if (isSuccessCommandResult(event.output)) {
+                      return {
+                        ...context._internalState,
+                        signature: event.output.data,
+                      };
+                    }
+                    return {
+                      ...context._internalState,
+                      error: event.output.error,
+                    };
+                  },
+                }),
+              ],
+            },
+            onError: {
+              target: "Error",
+              actions: "assignErrorFromEvent",
+            },
+          },
+        },
+        SignTypedDataLegacy: {
+          entry: assign({
+            intermediateValue: {
+              requiredUserInteraction: UserInteractionRequired.SignTypedData,
+            },
+          }),
+          exit: assign({
+            intermediateValue: {
+              requiredUserInteraction: UserInteractionRequired.None,
+            },
+          }),
+          invoke: {
+            id: "signTypedDataLegacy",
+            src: "signTypedDataLegacy",
+            input: ({ context }) => ({
+              derivationPath: context.input.derivationPath,
+              domainHash: context._internalState.typedDataContext!.domainHash,
+              messageHash: context._internalState.typedDataContext!.messageHash,
             }),
             onDone: {
               target: "SignTypedDataResultCheck",
@@ -332,10 +369,28 @@ export class SignTypedDataDeviceAction extends XStateDeviceAction<
         }),
       );
 
+    const signTypedDataLegacy = async (arg0: {
+      input: {
+        derivationPath: string;
+        domainHash: string;
+        messageHash: string;
+      };
+    }) =>
+      internalApi.sendCommand(
+        new SignEIP712Command({
+          derivationPath: arg0.input.derivationPath,
+          legacyArgs: Just({
+            domainHash: arg0.input.domainHash,
+            messageHash: arg0.input.messageHash,
+          }),
+        }),
+      );
+
     return {
       buildContext,
       provideContext,
       signTypedData,
+      signTypedDataLegacy,
     };
   }
 }

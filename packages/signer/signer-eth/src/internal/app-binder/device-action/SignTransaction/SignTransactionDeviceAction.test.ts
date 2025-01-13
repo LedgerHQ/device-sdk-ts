@@ -4,6 +4,7 @@ import {
   DeviceActionStatus,
   hexaStringToBuffer,
   UnknownDAError,
+  UnknownDeviceExchangeError,
   UserInteractionRequired,
 } from "@ledgerhq/device-management-kit";
 import { InvalidStatusWordError } from "@ledgerhq/device-management-kit";
@@ -706,6 +707,139 @@ describe("SignTransactionDeviceAction", () => {
         },
       });
     });
+
+    it("should fallback to blind signing if getChallenge return an error", (done) => {
+      setupOpenAppDAMock();
+
+      const deviceAction = new SignTransactionDeviceAction({
+        input: {
+          derivationPath: "44'/60'/0'/0/0",
+          transaction: defaultTransaction,
+          options: defaultOptions,
+          contextModule: contextModuleMock,
+          mapper: mapperMock,
+          parser: parserMock,
+        },
+      });
+
+      // Mock the dependencies to return some sample data
+      getChallengeMock.mockResolvedValueOnce(
+        CommandResultFactory({
+          error: new UnknownDeviceExchangeError("getChallenge error"),
+        }),
+      );
+      buildContextMock.mockResolvedValueOnce({
+        clearSignContexts: [],
+        serializedTransaction: new Uint8Array([0x01, 0x02, 0x03]),
+        chainId: 7,
+        transactionType: TransactionType.EIP1559,
+      });
+      provideGenericContextMock.mockResolvedValueOnce(Nothing);
+      signTransactionMock.mockResolvedValueOnce(
+        CommandResultFactory({
+          data: {
+            v: 0x1c,
+            r: "0x8a540510e13b0f2b11a451275716d29e08caad07e89a1c84964782fb5e1ad788",
+            s: "0x64a0de235b270fbe81e8e40688f4a9f9ad9d283d690552c9331d7773ceafa513",
+          },
+        }),
+      );
+      jest
+        .spyOn(deviceAction, "extractDependencies")
+        .mockReturnValue(extractDependenciesMock());
+
+      // Expected intermediate values for the following state sequence:
+      //   Initial -> OpenApp -> GetChallenge -> BuildContext -> ProvideGenericContext -> SignTransaction
+      const expectedStates: Array<SignTransactionDAState> = [
+        // Initial state
+        {
+          intermediateValue: {
+            requiredUserInteraction: UserInteractionRequired.None,
+          },
+          status: DeviceActionStatus.Pending,
+        },
+        // OpenApp interaction
+        {
+          intermediateValue: {
+            requiredUserInteraction: UserInteractionRequired.ConfirmOpenApp,
+          },
+          status: DeviceActionStatus.Pending,
+        },
+        // GetChallenge state
+        {
+          intermediateValue: {
+            requiredUserInteraction: UserInteractionRequired.None,
+          },
+          status: DeviceActionStatus.Pending,
+        },
+        // BuildContext state
+        {
+          intermediateValue: {
+            requiredUserInteraction: UserInteractionRequired.None,
+          },
+          status: DeviceActionStatus.Pending,
+        },
+        // ProvideContext state
+        {
+          intermediateValue: {
+            requiredUserInteraction: UserInteractionRequired.None,
+          },
+          status: DeviceActionStatus.Pending,
+        },
+        // SignTransaction state
+        {
+          intermediateValue: {
+            requiredUserInteraction: UserInteractionRequired.SignTransaction,
+          },
+          status: DeviceActionStatus.Pending,
+        },
+        // Final state
+        {
+          output: {
+            v: 0x1c,
+            r: "0x8a540510e13b0f2b11a451275716d29e08caad07e89a1c84964782fb5e1ad788",
+            s: "0x64a0de235b270fbe81e8e40688f4a9f9ad9d283d690552c9331d7773ceafa513",
+          },
+          status: DeviceActionStatus.Completed,
+        },
+      ];
+
+      const { observable } = testDeviceActionStates(
+        deviceAction,
+        expectedStates,
+        makeDeviceActionInternalApiMock(),
+        done,
+      );
+
+      // Verify mocks calls parameters
+      observable.subscribe({
+        complete: () => {
+          expect(getChallengeMock).toHaveBeenCalled();
+          expect(buildContextMock).toHaveBeenCalledWith(
+            expect.objectContaining({
+              input: {
+                challenge: null,
+                contextModule: contextModuleMock,
+                mapper: mapperMock,
+                options: defaultOptions,
+                transaction: defaultTransaction,
+              },
+            }),
+          );
+          expect(signTransactionMock).toHaveBeenCalledWith(
+            expect.objectContaining({
+              input: {
+                derivationPath: "44'/60'/0'/0/0",
+                serializedTransaction: new Uint8Array([0x01, 0x02, 0x03]),
+                isLegacy: true,
+                chainId: 7,
+                transactionType: TransactionType.EIP1559,
+              },
+            }),
+          );
+        },
+      });
+    });
   });
 
   describe("OpenApp errors", () => {
@@ -759,66 +893,6 @@ describe("SignTransactionDeviceAction", () => {
   });
 
   describe("GetChallenge errors", () => {
-    it("should fail if getChallenge returns an error", (done) => {
-      setupOpenAppDAMock();
-
-      const deviceAction = new SignTransactionDeviceAction({
-        input: {
-          derivationPath: "44'/60'/0'/0/0",
-          transaction: defaultTransaction,
-          options: defaultOptions,
-          contextModule: contextModuleMock,
-          mapper: mapperMock,
-          parser: parserMock,
-        },
-      });
-
-      getChallengeMock.mockResolvedValueOnce(
-        CommandResultFactory({
-          error: new InvalidStatusWordError("getChallenge error"),
-        }),
-      );
-      jest
-        .spyOn(deviceAction, "extractDependencies")
-        .mockReturnValue(extractDependenciesMock());
-
-      const expectedStates: Array<SignTransactionDAState> = [
-        // Initial state
-        {
-          intermediateValue: {
-            requiredUserInteraction: UserInteractionRequired.None,
-          },
-          status: DeviceActionStatus.Pending,
-        },
-        // OpenApp interaction
-        {
-          intermediateValue: {
-            requiredUserInteraction: UserInteractionRequired.ConfirmOpenApp,
-          },
-          status: DeviceActionStatus.Pending,
-        },
-        // GetChallenge state
-        {
-          intermediateValue: {
-            requiredUserInteraction: UserInteractionRequired.None,
-          },
-          status: DeviceActionStatus.Pending,
-        },
-        // GetChallenge error
-        {
-          error: new InvalidStatusWordError("getChallenge error"),
-          status: DeviceActionStatus.Error,
-        },
-      ];
-
-      testDeviceActionStates(
-        deviceAction,
-        expectedStates,
-        makeDeviceActionInternalApiMock(),
-        done,
-      );
-    });
-
     it("should fail if getChallenge throws an error", (done) => {
       setupOpenAppDAMock();
 

@@ -241,6 +241,33 @@ describe("BuildTransactionContextTask", () => {
     });
   });
 
+  it("should return no context if the challenge is not provided", async () => {
+    // GIVEN
+    const serializedTransaction = new Uint8Array([0x01, 0x02, 0x03]);
+    const mapperResult: TransactionMapperResult = {
+      subset: { chainId: 1, to: undefined, data: "0x" },
+      serializedTransaction,
+      type: 0,
+    };
+    mapperMock.mapTransactionToSubset.mockReturnValueOnce(Right(mapperResult));
+    const args = {
+      ...defaultArgs,
+      challenge: null,
+    };
+
+    // WHEN
+    const result = await new BuildTransactionContextTask(apiMock, args).run();
+
+    // THEN
+    expect(result).toEqual({
+      clearSignContexts: [],
+      serializedTransaction,
+      chainId: 1,
+      transactionType: 0,
+    });
+    expect(contextModuleMock.getContexts).not.toHaveBeenCalled();
+  });
+
   it("should throw an error if the mapper returns an error", async () => {
     // GIVEN
     const error = new Error("error");

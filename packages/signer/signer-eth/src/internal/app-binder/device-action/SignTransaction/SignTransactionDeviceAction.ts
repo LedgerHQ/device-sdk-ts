@@ -56,7 +56,7 @@ export type MachineDependencies = {
       mapper: TransactionMapperService;
       transaction: Uint8Array;
       options: TransactionOptions;
-      challenge: string;
+      challenge: string | null;
     };
   }) => Promise<BuildTransactionTaskResult>;
   readonly provideContext: (arg0: {
@@ -221,7 +221,7 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
             id: "getChallenge",
             src: "getChallenge",
             onDone: {
-              target: "GetChallengeResultCheck",
+              target: "BuildContext",
               actions: [
                 assign({
                   _internalState: ({ event, context }) => {
@@ -245,17 +245,6 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
             },
           },
         },
-        GetChallengeResultCheck: {
-          always: [
-            {
-              target: "BuildContext",
-              guard: "noInternalError",
-            },
-            {
-              target: "Error",
-            },
-          ],
-        },
         BuildContext: {
           invoke: {
             id: "buildContext",
@@ -265,7 +254,7 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
               mapper: context.input.mapper,
               transaction: context.input.transaction,
               options: context.input.options,
-              challenge: context._internalState.challenge!,
+              challenge: context._internalState.challenge,
             }),
             onDone: {
               target: "BuildContextResultCheck",
