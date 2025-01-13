@@ -18,11 +18,11 @@ import { PROTOCOL_VERSION } from "@internal/app-binder/command/utils/constants";
 import { BtcCommandUtils } from "@internal/utils/BtcCommandUtils";
 
 export type SignPsbtCommandArgs = {
-  globalCommitments: Uint8Array;
+  globalCommitment: Uint8Array;
   inputsCount: number;
-  inputsCommitments: Uint8Array;
+  inputsRoot: Uint8Array;
   outputsCount: number;
-  outputsCommitments: Uint8Array;
+  outputsRoot: Uint8Array;
   walletId: Uint8Array;
   walletHmac: Uint8Array;
 };
@@ -53,21 +53,21 @@ export class SignPsbtCommand
       p2: PROTOCOL_VERSION,
     });
     const {
-      globalCommitments,
+      globalCommitment,
       inputsCount,
-      inputsCommitments,
+      inputsRoot,
       outputsCount,
-      outputsCommitments,
+      outputsRoot,
       walletHmac,
       walletId,
     } = this._args;
 
     return builder
-      .addBufferToData(globalCommitments)
+      .addBufferToData(globalCommitment)
       .add8BitUIntToData(inputsCount)
-      .addBufferToData(inputsCommitments)
+      .addBufferToData(inputsRoot)
       .add8BitUIntToData(outputsCount)
-      .addBufferToData(outputsCommitments)
+      .addBufferToData(outputsRoot)
       .addBufferToData(walletId)
       .addBufferToData(walletHmac)
       .build();

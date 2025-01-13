@@ -1,13 +1,16 @@
 import {
   CommandResultFactory,
-  isSuccessCommandResult,
   UnknownDeviceExchangeError,
 } from "@ledgerhq/device-management-kit";
-import { Left, Nothing, Right } from "purify-ts";
+import { Left, Right } from "purify-ts";
 
 import { type Psbt } from "@api/model/Psbt";
 import { BuildPsbtTask } from "@internal/app-binder/task/BuildPsbtTask";
-import { type PsbtCommitment } from "@internal/data-store/service/DataStoreService";
+import { DataStore } from "@internal/data-store/model/DataStore";
+import {
+  type DataStoreService,
+  type PsbtCommitment,
+} from "@internal/data-store/service/DataStoreService";
 import { type Psbt as InternalPsbt } from "@internal/psbt/model/Psbt";
 import { type Wallet } from "@internal/wallet/model/Wallet";
 
@@ -15,31 +18,45 @@ describe("BuildPsbtTask", () => {
   it("should build psbt and fill datastore", async () => {
     // given
     const psbtMapper = {
-      map: jest.fn(() =>
-        Right({
-          getGlobalValue: jest.fn(() => Nothing),
-        } as unknown as InternalPsbt),
-      ),
+      map: jest.fn(() => Right("InternalPsbt" as unknown as InternalPsbt)),
     };
     const dataStoreService = {
       merklizeWallet: jest.fn(),
-      merklizePsbt: jest.fn(() => Right({} as PsbtCommitment)),
-      merklizeChunks: jest.fn(),
-    };
+      merklizePsbt: jest.fn(() =>
+        Right("PsbtCommitment" as unknown as PsbtCommitment),
+      ),
+    } as unknown as DataStoreService;
+    const dataStore = new DataStore();
     const task = new BuildPsbtTask(
       {
-        wallet: {} as unknown as Wallet,
-        psbt: {
-          getGlobalValue: jest.fn(),
-        } as unknown as Psbt,
+        wallet: "Wallet" as unknown as Wallet,
+        psbt: "ApiPsbt" as unknown as Psbt,
       },
-      psbtMapper,
       dataStoreService,
+      psbtMapper,
+      () => dataStore,
     );
     // when
     const result = await task.run();
     // then
-    expect(isSuccessCommandResult(result)).toBe(true);
+    expect(psbtMapper.map).toHaveBeenCalledWith("ApiPsbt");
+    expect(dataStoreService.merklizePsbt).toHaveBeenCalledWith(
+      dataStore,
+      "InternalPsbt",
+    );
+    expect(dataStoreService.merklizeWallet).toHaveBeenCalledWith(
+      dataStore,
+      "Wallet",
+    );
+    expect(result).toStrictEqual(
+      CommandResultFactory({
+        data: {
+          psbtCommitment: "PsbtCommitment",
+          dataStore,
+          psbt: "InternalPsbt",
+        },
+      }),
+    );
   });
   it("should return an error if datastore fails", async () => {
     // given
@@ -57,8 +74,8 @@ describe("BuildPsbtTask", () => {
         wallet: {} as unknown as Wallet,
         psbt: {} as unknown as Psbt,
       },
-      psbtMapper,
       dataStoreService,
+      psbtMapper,
     );
     // when
     const result = await task.run();
@@ -85,8 +102,8 @@ describe("BuildPsbtTask", () => {
         wallet: {} as unknown as Wallet,
         psbt: {} as unknown as Psbt,
       },
-      psbtMapper,
       dataStoreService,
+      psbtMapper,
     );
     // when
     const result = await task.run();

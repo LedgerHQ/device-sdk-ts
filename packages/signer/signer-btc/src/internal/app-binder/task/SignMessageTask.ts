@@ -1,8 +1,6 @@
 import {
   type CommandResult,
-  CommandResultFactory,
   type InternalApi,
-  InvalidStatusWordError,
   isSuccessCommandResult,
 } from "@ledgerhq/device-management-kit";
 
@@ -13,12 +11,7 @@ import { CHUNK_SIZE } from "@internal/app-binder/command/utils/constants";
 import { ContinueTask } from "@internal/app-binder/task/ContinueTask";
 import { DataStore } from "@internal/data-store/model/DataStore";
 import { type DataStoreService } from "@internal/data-store/service/DataStoreService";
-import { DefaultDataStoreService } from "@internal/data-store/service/DefaultDataStoreService";
-import { MerkleMapBuilder } from "@internal/merkle-tree/service/MerkleMapBuilder";
-import { MerkleTreeBuilder } from "@internal/merkle-tree/service/MerkleTreeBuilder";
-import { Sha256HasherService } from "@internal/merkle-tree/service/Sha256HasherService";
 import { BtcCommandUtils } from "@internal/utils/BtcCommandUtils";
-import { DefaultWalletSerializer } from "@internal/wallet/service/DefaultWalletSerializer";
 
 export type SendSignMessageTaskArgs = {
   derivationPath: string;
@@ -26,28 +19,18 @@ export type SendSignMessageTaskArgs = {
 };
 
 export class SendSignMessageTask {
-  private dataStoreService: DataStoreService;
-
   constructor(
-    private api: InternalApi,
-    private args: SendSignMessageTaskArgs,
-  ) {
-    const merkleTreeBuilder = new MerkleTreeBuilder(new Sha256HasherService());
-    const merkleMapBuilder = new MerkleMapBuilder(merkleTreeBuilder);
-    const walletSerializer = new DefaultWalletSerializer(
-      new Sha256HasherService(),
-    );
-
-    this.dataStoreService = new DefaultDataStoreService(
-      merkleTreeBuilder,
-      merkleMapBuilder,
-      walletSerializer,
-      new Sha256HasherService(),
-    );
-  }
+    private readonly _api: InternalApi,
+    private readonly _args: SendSignMessageTaskArgs,
+    private readonly _dataStoreService: DataStoreService,
+    private readonly _continueTaskFactory = (
+      api: InternalApi,
+      dataStore: DataStore,
+    ) => new ContinueTask(api, dataStore),
+  ) {}
 
   async run(): Promise<CommandResult<Signature, BtcErrorCodes>> {
-    const { derivationPath, message } = this.args;
+    const { derivationPath, message } = this._args;
 
     const dataStore = new DataStore();
 
@@ -57,23 +40,21 @@ export class SendSignMessageTask {
       chunks.push(messageBuffer.subarray(i, i + CHUNK_SIZE));
     }
 
-    const merkleRoot = this.dataStoreService.merklizeChunks(dataStore, chunks);
+    const merkleRoot = this._dataStoreService.merklizeChunks(dataStore, chunks);
 
-    const signMessageFirstCommandResponse = await this.api.sendCommand(
+    const signMessageFirstCommandResponse = await this._api.sendCommand(
       new SignMessageCommand({
         derivationPath,
         messageLength: messageBuffer.length,
         messageMerkleRoot: merkleRoot,
       }),
     );
-    const response = await new ContinueTask(this.api, dataStore).run(
+    const response = await this._continueTaskFactory(this._api, dataStore).run(
       signMessageFirstCommandResponse,
     );
     if (isSuccessCommandResult(response)) {
       return BtcCommandUtils.getSignature(response);
     }
-    return CommandResultFactory({
-      error: new InvalidStatusWordError("Invalid response from the device"),
-    });
+    return response;
   }
 }

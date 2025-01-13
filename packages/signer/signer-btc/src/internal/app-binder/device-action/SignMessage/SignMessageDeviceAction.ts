@@ -25,10 +25,11 @@ import {
   SendSignMessageTask,
   type SendSignMessageTaskArgs,
 } from "@internal/app-binder/task/SignMessageTask";
+import { type DataStoreService } from "@internal/data-store/service/DataStoreService";
 
 export type MachineDependencies = {
   readonly signMessage: (arg0: {
-    input: SendSignMessageTaskArgs;
+    input: SendSignMessageTaskArgs & { dataStoreService: DataStoreService };
   }) => Promise<CommandResult<Signature, BtcErrorCodes>>;
 };
 
@@ -161,6 +162,7 @@ export class SignMessageDeviceAction extends XStateDeviceAction<
             input: ({ context }) => ({
               derivationPath: context.input.derivationPath,
               message: context.input.message,
+              dataStoreService: context.input.dataStoreService,
             }),
             onDone: {
               target: "SignMessageResultCheck",
@@ -215,8 +217,18 @@ export class SignMessageDeviceAction extends XStateDeviceAction<
       input: {
         derivationPath: string;
         message: string;
+        dataStoreService: DataStoreService;
       };
-    }) => new SendSignMessageTask(internalApi, arg0.input).run();
+    }) => {
+      const {
+        input: { derivationPath, message, dataStoreService },
+      } = arg0;
+      return new SendSignMessageTask(
+        internalApi,
+        { derivationPath, message },
+        dataStoreService,
+      ).run();
+    };
 
     return {
       signMessage,

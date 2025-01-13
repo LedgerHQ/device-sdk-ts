@@ -12,75 +12,29 @@ import {
   type DataStoreService,
   type PsbtCommitment,
 } from "@internal/data-store/service/DataStoreService";
-import { DefaultDataStoreService } from "@internal/data-store/service/DefaultDataStoreService";
-import { MerkleMapBuilder } from "@internal/merkle-tree/service/MerkleMapBuilder";
-import { MerkleTreeBuilder } from "@internal/merkle-tree/service/MerkleTreeBuilder";
-import { Sha256HasherService } from "@internal/merkle-tree/service/Sha256HasherService";
-import {
-  type Psbt as InternalPsbt,
-  PsbtGlobal,
-} from "@internal/psbt/model/Psbt";
-import { DefaultKeySerializer } from "@internal/psbt/service/key/DefaultKeySerializer";
-import { DefaultKeyPairSerializer } from "@internal/psbt/service/key-pair/DefaultKeyPairSerializer";
-import { DefaultPsbtMapper } from "@internal/psbt/service/psbt/DefaultPsbtMapper";
-import { DefaultPsbtSerializer } from "@internal/psbt/service/psbt/DefaultPsbtSerializer";
-import { DefaultPsbtV2Normalizer } from "@internal/psbt/service/psbt/DefaultPsbtV2Normalizer";
+import { type Psbt as InternalPsbt } from "@internal/psbt/model/Psbt";
 import type { PsbtMapper } from "@internal/psbt/service/psbt/PsbtMapper";
-import { DefaultValueFactory } from "@internal/psbt/service/value/DefaultValueFactory";
-import { DefaultValueParser } from "@internal/psbt/service/value/DefaultValueParser";
-import { type ValueParser } from "@internal/psbt/service/value/ValueParser";
 import { type Wallet } from "@internal/wallet/model/Wallet";
-import { DefaultWalletSerializer } from "@internal/wallet/service/DefaultWalletSerializer";
 
-type BuildPsbtTaskResponse = {
+export type BuildPsbtTaskResult = {
   psbtCommitment: PsbtCommitment;
   dataStore: DataStore;
-  inputsCount: number;
-  outputsCount: number;
+  psbt: InternalPsbt;
 };
 
 export class BuildPsbtTask {
-  private readonly _dataStoreService: DataStoreService;
-  private readonly _psbtMapper: PsbtMapper;
-  private readonly _valueParser: ValueParser;
-
   constructor(
     private readonly _args: {
       wallet: Wallet;
       psbt: Psbt;
     },
-    psbtMapper?: PsbtMapper,
-    dataStoreService?: DataStoreService,
-  ) {
-    this._valueParser = new DefaultValueParser();
-    const merkleTreeBuilder = new MerkleTreeBuilder(new Sha256HasherService());
-    const merkleMapBuilder = new MerkleMapBuilder(merkleTreeBuilder);
-    const hasher = new Sha256HasherService();
+    private readonly _dataStoreService: DataStoreService,
+    private readonly _psbtMapper: PsbtMapper,
+    private readonly _dataStoreFactory = () => new DataStore(),
+  ) {}
 
-    this._psbtMapper =
-      psbtMapper ||
-      new DefaultPsbtMapper(
-        new DefaultPsbtSerializer(
-          this._valueParser,
-          new DefaultKeyPairSerializer(new DefaultKeySerializer()),
-        ),
-        new DefaultPsbtV2Normalizer(
-          this._valueParser,
-          new DefaultValueFactory(),
-        ),
-      );
-    this._dataStoreService =
-      dataStoreService ||
-      new DefaultDataStoreService(
-        merkleTreeBuilder,
-        merkleMapBuilder,
-        new DefaultWalletSerializer(hasher),
-        hasher,
-      );
-  }
-
-  async run(): Promise<CommandResult<BuildPsbtTaskResponse, BtcErrorCodes>> {
-    const dataStore = new DataStore();
+  async run(): Promise<CommandResult<BuildPsbtTaskResult, BtcErrorCodes>> {
+    const dataStore = this._dataStoreFactory();
     let psbt: InternalPsbt;
     return await EitherAsync(async ({ liftEither }) => {
       // map the input PSBT (V1 or V2, string or byte array) into a normalized and parsed PSBTv2
@@ -99,18 +53,7 @@ export class BuildPsbtTask {
           data: {
             psbtCommitment,
             dataStore,
-            inputsCount: psbt
-              .getGlobalValue(PsbtGlobal.INPUT_COUNT)
-              .mapOrDefault(
-                (value) => this._valueParser.getVarint(value.data).orDefault(0),
-                0,
-              ),
-            outputsCount: psbt
-              .getGlobalValue(PsbtGlobal.OUTPUT_COUNT)
-              .mapOrDefault(
-                (value) => this._valueParser.getVarint(value.data).orDefault(0),
-                0,
-              ),
+            psbt,
           },
         });
       },

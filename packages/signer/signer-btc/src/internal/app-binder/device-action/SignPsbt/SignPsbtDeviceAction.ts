@@ -19,15 +19,48 @@ import {
   type SignPsbtDAInternalState,
   type SignPsbtDAOutput,
 } from "@api/app-binder/SignPsbtDeviceActionTypes";
-import { type Psbt } from "@api/model/Psbt";
+import { type Psbt as ApiPsbt } from "@api/model/Psbt";
 import { type Wallet as ApiWallet } from "@api/model/Wallet";
 import { type BtcErrorCodes } from "@internal/app-binder/command/utils/bitcoinAppErrors";
-import { SignPsbtTask } from "@internal/app-binder/task/SignPsbtTask";
+import {
+  BuildPsbtTask,
+  type BuildPsbtTaskResult,
+} from "@internal/app-binder/task/BuildPsbtTask";
+import { PrepareWalletPolicyTask } from "@internal/app-binder/task/PrepareWalletPolicyTask";
+import {
+  type PsbtSignature,
+  SignPsbtTask,
+} from "@internal/app-binder/task/SignPsbtTask";
+import type { DataStoreService } from "@internal/data-store/service/DataStoreService";
+import type { PsbtMapper } from "@internal/psbt/service/psbt/PsbtMapper";
+import type { ValueParser } from "@internal/psbt/service/value/ValueParser";
+import { type Wallet as InternalWallet } from "@internal/wallet/model/Wallet";
+import { type WalletBuilder } from "@internal/wallet/service/WalletBuilder";
+import { type WalletSerializer } from "@internal/wallet/service/WalletSerializer";
 
 export type MachineDependencies = {
+  readonly prepareWalletPolicy: (arg0: {
+    input: {
+      wallet: ApiWallet;
+      walletBuilder: WalletBuilder;
+    };
+  }) => Promise<CommandResult<InternalWallet, BtcErrorCodes>>;
+  readonly buildPsbt: (arg0: {
+    input: {
+      psbt: ApiPsbt;
+      wallet: InternalWallet;
+      dataStoreService: DataStoreService;
+      psbtMapper: PsbtMapper;
+    };
+  }) => Promise<CommandResult<BuildPsbtTaskResult, BtcErrorCodes>>;
   readonly signPsbt: (arg0: {
-    input: { wallet: ApiWallet; psbt: Psbt };
-  }) => Promise<CommandResult<Uint8Array[], BtcErrorCodes>>;
+    input: {
+      wallet: InternalWallet;
+      buildPsbtResult: BuildPsbtTaskResult;
+      walletSerializer: WalletSerializer;
+      valueParser: ValueParser;
+    };
+  }) => Promise<CommandResult<PsbtSignature[], BtcErrorCodes>>;
 };
 
 export type ExtractMachineDependencies = (
@@ -61,7 +94,8 @@ export class SignPsbtDeviceAction extends XStateDeviceAction<
       SignPsbtDAInternalState
     >;
 
-    const { signPsbt } = this.extractDependencies(internalApi);
+    const { signPsbt, prepareWalletPolicy, buildPsbt } =
+      this.extractDependencies(internalApi);
 
     return setup({
       types: {
@@ -74,6 +108,8 @@ export class SignPsbtDeviceAction extends XStateDeviceAction<
         openAppStateMachine: new OpenAppDeviceAction({
           input: { appName: "Bitcoin" },
         }).makeStateMachine(internalApi),
+        prepareWalletPolicy: fromPromise(prepareWalletPolicy),
+        buildPsbt: fromPromise(buildPsbt),
         signPsbt: fromPromise(signPsbt),
       },
       guards: {
@@ -99,8 +135,10 @@ export class SignPsbtDeviceAction extends XStateDeviceAction<
           },
           _internalState: {
             error: null,
-            signature: null,
             wallet: null,
+            buildPsbtResult: null,
+            signatures: null,
+            signedPsbt: null,
           },
         };
       },
@@ -140,10 +178,90 @@ export class SignPsbtDeviceAction extends XStateDeviceAction<
         CheckOpenAppDeviceActionResult: {
           always: [
             {
-              target: "SignPsbt",
+              target: "PrepareWalletPolicy",
               guard: "noInternalError",
             },
             "Error",
+          ],
+        },
+        PrepareWalletPolicy: {
+          invoke: {
+            id: "prepareWalletPolicy",
+            src: "prepareWalletPolicy",
+            input: ({ context }) => ({
+              wallet: context.input.wallet,
+              walletBuilder: context.input.walletBuilder,
+            }),
+            onDone: {
+              target: "PrepareWalletPolicyResultCheck",
+              actions: [
+                assign({
+                  _internalState: ({ event, context }) => {
+                    if (isSuccessCommandResult(event.output)) {
+                      return {
+                        ...context._internalState,
+                        wallet: event.output.data,
+                      };
+                    }
+                    return {
+                      ...context._internalState,
+                      error: event.output.error,
+                    };
+                  },
+                }),
+              ],
+            },
+            onError: {
+              target: "Error",
+              actions: "assignErrorFromEvent",
+            },
+          },
+        },
+        PrepareWalletPolicyResultCheck: {
+          always: [
+            { guard: "noInternalError", target: "BuildPsbt" },
+            { target: "Error" },
+          ],
+        },
+        BuildPsbt: {
+          invoke: {
+            id: "buildPsbt",
+            src: "buildPsbt",
+            input: ({ context }) => ({
+              psbt: context.input.psbt,
+              wallet: context._internalState.wallet!,
+              dataStoreService: context.input.dataStoreService,
+              psbtMapper: context.input.psbtMapper,
+            }),
+            onDone: {
+              target: "BuildPsbtResultCheck",
+              actions: [
+                assign({
+                  _internalState: ({ event, context }) => {
+                    if (isSuccessCommandResult(event.output)) {
+                      return {
+                        ...context._internalState,
+                        buildPsbtResult: event.output.data,
+                      };
+                    }
+                    return {
+                      ...context._internalState,
+                      error: event.output.error,
+                    };
+                  },
+                }),
+              ],
+            },
+            onError: {
+              target: "Error",
+              actions: "assignErrorFromEvent",
+            },
+          },
+        },
+        BuildPsbtResultCheck: {
+          always: [
+            { guard: "noInternalError", target: "SignPsbt" },
+            { target: "Error" },
           ],
         },
         SignPsbt: {
@@ -161,8 +279,10 @@ export class SignPsbtDeviceAction extends XStateDeviceAction<
             id: "signPsbt",
             src: "signPsbt",
             input: ({ context }) => ({
-              psbt: context.input.psbt,
-              wallet: context.input.wallet,
+              walletSerializer: context.input.walletSerializer,
+              valueParser: context.input.valueParser,
+              buildPsbtResult: context._internalState.buildPsbtResult!,
+              wallet: context._internalState.wallet!,
             }),
             onDone: {
               target: "SignPsbtResultCheck",
@@ -172,7 +292,7 @@ export class SignPsbtDeviceAction extends XStateDeviceAction<
                     if (isSuccessCommandResult(event.output)) {
                       return {
                         ...context._internalState,
-                        signature: event.output.data,
+                        signatures: event.output.data,
                       };
                     }
                     return {
@@ -202,23 +322,69 @@ export class SignPsbtDeviceAction extends XStateDeviceAction<
           type: "final",
         },
       },
-      output: ({ context }) =>
-        context._internalState.signature
-          ? Right(context._internalState.signature)
-          : Left(
-              context._internalState.error ||
-                new UnknownDAError("No error in final state"),
-            ),
+      output: ({
+        context: {
+          _internalState: { signatures, error },
+        },
+      }) =>
+        signatures
+          ? Right(signatures)
+          : Left(error || new UnknownDAError("No error in final state")),
     });
   }
 
   extractDependencies(internalApi: InternalApi): MachineDependencies {
-    const signPsbt = async (arg0: {
-      input: { wallet: ApiWallet; psbt: Psbt };
-    }): Promise<CommandResult<Uint8Array[], BtcErrorCodes>> => {
-      return await new SignPsbtTask(internalApi, arg0.input).run();
+    const prepareWalletPolicy = async (arg0: {
+      input: { wallet: ApiWallet; walletBuilder: WalletBuilder };
+    }): Promise<CommandResult<InternalWallet, BtcErrorCodes>> => {
+      const {
+        input: { walletBuilder, wallet },
+      } = arg0;
+      return await new PrepareWalletPolicyTask(
+        internalApi,
+        { wallet },
+        walletBuilder,
+      ).run();
     };
+    const buildPsbt = async (arg0: {
+      input: {
+        psbt: ApiPsbt;
+        wallet: InternalWallet;
+        dataStoreService: DataStoreService;
+        psbtMapper: PsbtMapper;
+      };
+    }): Promise<CommandResult<BuildPsbtTaskResult, BtcErrorCodes>> => {
+      const {
+        input: { psbt, wallet, dataStoreService, psbtMapper },
+      } = arg0;
+      return new BuildPsbtTask(
+        { psbt, wallet },
+        dataStoreService,
+        psbtMapper,
+      ).run();
+    };
+    const signPsbt = async (arg0: {
+      input: {
+        wallet: InternalWallet;
+        buildPsbtResult: BuildPsbtTaskResult;
+        walletSerializer: WalletSerializer;
+        valueParser: ValueParser;
+      };
+    }): Promise<CommandResult<PsbtSignature[], BtcErrorCodes>> => {
+      const {
+        input: { wallet, buildPsbtResult, walletSerializer, valueParser },
+      } = arg0;
+      return await new SignPsbtTask(
+        internalApi,
+        { wallet, ...buildPsbtResult },
+        walletSerializer,
+        valueParser,
+      ).run();
+    };
+
     return {
+      prepareWalletPolicy,
+      buildPsbt,
       signPsbt,
     };
   }

@@ -11,27 +11,17 @@ import {
 import { GetExtendedPublicKeyCommand } from "@internal/app-binder/command/GetExtendedPublicKeyCommand";
 import { GetMasterFingerprintCommand } from "@internal/app-binder/command/GetMasterFingerprintCommand";
 import { type BtcErrorCodes } from "@internal/app-binder/command/utils/bitcoinAppErrors";
-import { MerkleTreeBuilder } from "@internal/merkle-tree/service/MerkleTreeBuilder";
-import { Sha256HasherService } from "@internal/merkle-tree/service/Sha256HasherService";
 import { type Wallet as InternalWallet } from "@internal/wallet/model/Wallet";
-import { DefaultWalletBuilder } from "@internal/wallet/service/DefaultWalletBuilder";
 import { type WalletBuilder } from "@internal/wallet/service/WalletBuilder";
 
 export type PrepareWalletPolicyTaskArgs = { wallet: ApiWallet };
 
 export class PrepareWalletPolicyTask {
-  private readonly _walletBuilder: WalletBuilder;
   constructor(
     private readonly _api: InternalApi,
     private readonly _args: PrepareWalletPolicyTaskArgs,
-    walletBuilder?: WalletBuilder,
-  ) {
-    this._walletBuilder =
-      walletBuilder ||
-      new DefaultWalletBuilder(
-        new MerkleTreeBuilder(new Sha256HasherService()),
-      );
-  }
+    private readonly _walletBuilder: WalletBuilder,
+  ) {}
 
   private isDefaultWallet(wallet: ApiWallet): wallet is DefaultWallet {
     return "derivationPath" in wallet;

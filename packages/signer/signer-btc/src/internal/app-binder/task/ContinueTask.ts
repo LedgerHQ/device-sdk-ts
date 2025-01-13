@@ -19,21 +19,18 @@ import { type DataStore } from "@internal/data-store/model/DataStore";
 import { BtcCommandUtils } from "@internal/utils/BtcCommandUtils";
 
 export class ContinueTask {
-  private readonly _clientCommandInterpreter: ClientCommandInterpreter;
   private readonly _context: ClientCommandContext;
 
   constructor(
     private readonly _api: InternalApi,
     dataStore: DataStore,
-    clientCommandInterpreter?: ClientCommandInterpreter,
+    private readonly _clientCommandInterpreter = new ClientCommandInterpreter(),
   ) {
     this._context = {
       dataStore,
       queue: [],
       yieldedResults: [],
     };
-    this._clientCommandInterpreter =
-      clientCommandInterpreter || new ClientCommandInterpreter();
   }
 
   async run(
