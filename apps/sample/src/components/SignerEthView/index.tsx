@@ -1,4 +1,5 @@
 import React, { useMemo } from "react";
+import { hexaStringToBuffer } from "@ledgerhq/device-management-kit";
 import {
   type GetAddressDAError,
   type GetAddressDAIntermediateValue,
@@ -14,7 +15,6 @@ import {
   type SignTypedDataDAOutput,
   type TypedData,
 } from "@ledgerhq/device-signer-kit-ethereum";
-import { ethers } from "ethers";
 
 import { DeviceActionsList } from "@/components/DeviceActionsView/DeviceActionsList";
 import { type DeviceActionProps } from "@/components/DeviceActionsView/DeviceActionTester";
@@ -103,11 +103,15 @@ export const SignerEthView: React.FC<{ sessionId: string }> = ({
           if (!signer) {
             throw new Error("Signer not initialized");
           }
-          return signer.signTransaction(
-            derivationPath,
-            ethers.Transaction.from(transaction),
-            { domain: recipientDomain },
-          );
+
+          const tx = hexaStringToBuffer(transaction);
+          if (!tx) {
+            throw new Error("Invalid transaction format");
+          }
+
+          return signer.signTransaction(derivationPath, tx, {
+            domain: recipientDomain,
+          });
         },
         initialValues: {
           derivationPath: "44'/60'/0'/0/0",

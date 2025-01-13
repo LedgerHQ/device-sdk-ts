@@ -2,11 +2,12 @@ import { type ContextModule } from "@ledgerhq/context-module";
 import {
   type DeviceActionState,
   type DeviceManagementKit,
+  hexaStringToBuffer,
 } from "@ledgerhq/device-management-kit";
 import { DeviceActionStatus } from "@ledgerhq/device-management-kit";
 import { SendCommandInAppDeviceAction } from "@ledgerhq/device-management-kit";
 import { UserInteractionRequired } from "@ledgerhq/device-management-kit";
-import { Transaction } from "ethers-v6";
+import { Transaction } from "ethers";
 import { from } from "rxjs";
 
 import {
@@ -199,9 +200,12 @@ describe("EthAppBinder", () => {
         s: `0xBEEF`,
         v: 0,
       };
-      const transaction: Transaction = new Transaction();
-      transaction.to = "0x1234567890123456789012345678901234567890";
-      transaction.value = 0n;
+      const transaction: Uint8Array = hexaStringToBuffer(
+        Transaction.from({
+          to: "0x1234567890123456789012345678901234567890",
+          value: 0n,
+        }).unsignedSerialized,
+      )!;
       const options = {};
 
       jest.spyOn(mockedDmk, "executeDeviceAction").mockReturnValue({
@@ -268,9 +272,12 @@ describe("EthAppBinder", () => {
         s: `0xBEEF`,
         v: 0,
       };
-      const transaction: Transaction = new Transaction();
-      transaction.to = "0x1234567890123456789012345678901234567890";
-      transaction.value = 0n;
+      const transaction: Uint8Array = hexaStringToBuffer(
+        Transaction.from({
+          to: "0x1234567890123456789012345678901234567890",
+          value: 0n,
+        }).unsignedSerialized,
+      )!;
 
       jest.spyOn(mockedDmk, "executeDeviceAction").mockReturnValue({
         observable: from([

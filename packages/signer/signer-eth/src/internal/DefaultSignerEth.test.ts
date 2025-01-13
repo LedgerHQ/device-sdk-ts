@@ -9,7 +9,7 @@ import { addressTypes } from "./address/di/addressTypes";
 import { messageTypes } from "./message/di/messageTypes";
 import { transactionTypes } from "./transaction/di/transactionTypes";
 import { typedDataTypes } from "./typed-data/di/typedDataTypes";
-import { type Transaction, type TypedData } from "..";
+import { type TypedData } from "..";
 import { DefaultSignerEth } from "./DefaultSignerEth";
 
 describe("DefaultSignerEth", () => {
@@ -46,7 +46,7 @@ describe("DefaultSignerEth", () => {
     it("should sign a transaction", async () => {
       // GIVEN
       const derivationPath = "derivationPath";
-      const transaction = {} as Transaction;
+      const transaction = new Uint8Array(0);
 
       // WHEN
       const result = await signer.signTransaction(derivationPath, transaction);

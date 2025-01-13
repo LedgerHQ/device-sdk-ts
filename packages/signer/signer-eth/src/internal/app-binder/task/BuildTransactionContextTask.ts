@@ -10,8 +10,8 @@ import {
 } from "@ledgerhq/device-management-kit";
 import { gte } from "semver";
 
-import { type Transaction, type TransactionType } from "@api/model/Transaction";
 import { type TransactionOptions } from "@api/model/TransactionOptions";
+import { type TransactionType } from "@api/model/TransactionType";
 import { type TransactionMapperService } from "@internal/transaction/service/mapper/TransactionMapperService";
 
 import { type GenericContext } from "./ProvideTransactionGenericContextTask";
@@ -26,7 +26,7 @@ export type BuildTransactionTaskResult = {
 export type BuildTransactionContextTaskArgs = {
   readonly contextModule: ContextModule;
   readonly mapper: TransactionMapperService;
-  readonly transaction: Transaction;
+  readonly transaction: Uint8Array;
   readonly options: TransactionOptions;
   readonly challenge: string;
 };

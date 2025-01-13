@@ -17,10 +17,10 @@ describe("transactionModuleFactory", () => {
       expect(mod).toBeDefined();
     });
 
-    it("should bind a list of transaction mappers", () => {
+    it("should bind a transaction mapper", () => {
       expect(
         container.getAll(transactionTypes.TransactionMappers),
-      ).toHaveLength(2);
+      ).toHaveLength(1);
     });
   });
 });

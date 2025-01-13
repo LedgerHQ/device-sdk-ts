@@ -1,7 +1,6 @@
 import { injectable, multiInject } from "inversify";
 import { Either, Left, Right } from "purify-ts";
 
-import { Transaction } from "@api/index";
 import { transactionTypes } from "@internal/transaction/di/transactionTypes";
 
 import { TransactionMapperResult } from "./model/TransactionMapperResult";
@@ -19,7 +18,7 @@ export class TransactionMapperService {
   }
 
   mapTransactionToSubset(
-    transaction: Transaction,
+    transaction: Uint8Array,
   ): Either<Error, TransactionMapperResult> {
     for (const mapper of this._mappers) {
       const result = mapper.map(transaction);

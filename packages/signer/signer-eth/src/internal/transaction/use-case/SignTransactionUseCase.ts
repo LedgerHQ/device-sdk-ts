@@ -1,7 +1,6 @@
 import { inject, injectable } from "inversify";
 
 import { SignTransactionDAReturnType } from "@api/app-binder/SignTransactionDeviceActionTypes";
-import { Transaction } from "@api/model/Transaction";
 import { TransactionOptions } from "@api/model/TransactionOptions";
 import { appBinderTypes } from "@internal/app-binder/di/appBinderTypes";
 import { EthAppBinder } from "@internal/app-binder/EthAppBinder";
@@ -19,7 +18,7 @@ export class SignTransactionUseCase {
 
   execute(
     derivationPath: string,
-    transaction: Transaction,
+    transaction: Uint8Array,
     options?: TransactionOptions,
   ): SignTransactionDAReturnType {
     return this._appBinding.signTransaction({

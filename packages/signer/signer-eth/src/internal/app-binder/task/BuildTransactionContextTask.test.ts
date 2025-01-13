@@ -5,8 +5,9 @@ import {
 import {
   DeviceSessionStateType,
   DeviceStatus,
+  hexaStringToBuffer,
 } from "@ledgerhq/device-management-kit";
-import { Transaction } from "ethers-v6";
+import { Transaction } from "ethers";
 import { Left, Right } from "purify-ts";
 
 import { makeDeviceActionInternalApiMock } from "@internal/app-binder/device-action/__test-utils__/makeInternalApi";
@@ -30,17 +31,19 @@ describe("BuildTransactionContextTask", () => {
   const defaultOptions = {
     domain: "domain-name.eth",
   };
-  let defaultTransaction: Transaction;
+  const defaultTransaction: Uint8Array = hexaStringToBuffer(
+    Transaction.from({
+      chainId: 1n,
+      nonce: 0,
+      data: "0x",
+    }).unsignedSerialized,
+  )!;
+
   let defaultArgs: BuildTransactionContextTaskArgs;
   const apiMock = makeDeviceActionInternalApiMock();
 
   beforeEach(() => {
     jest.clearAllMocks();
-
-    defaultTransaction = new Transaction();
-    defaultTransaction.chainId = 1n;
-    defaultTransaction.nonce = 0;
-    defaultTransaction.data = "0x";
 
     defaultArgs = {
       contextModule: contextModuleMock,

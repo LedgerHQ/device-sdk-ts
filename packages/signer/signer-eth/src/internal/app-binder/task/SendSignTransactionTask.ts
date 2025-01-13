@@ -9,11 +9,11 @@ import {
   isSuccessCommandResult,
 } from "@ledgerhq/device-management-kit";
 import { DerivationPathUtils } from "@ledgerhq/signer-utils";
-import { decodeRlp, encodeRlp } from "ethers-v6";
+import { decodeRlp, encodeRlp } from "ethers";
 import { Nothing } from "purify-ts";
 
 import { type Signature } from "@api/index";
-import { TransactionType } from "@api/model/Transaction";
+import { TransactionType } from "@api/model/TransactionType";
 import {
   SignTransactionCommand,
   type SignTransactionCommandResponse,

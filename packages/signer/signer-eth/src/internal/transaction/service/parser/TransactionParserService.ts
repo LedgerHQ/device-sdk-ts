@@ -14,7 +14,7 @@ import {
   ByteArrayParser,
   hexaStringToBuffer,
 } from "@ledgerhq/device-management-kit";
-import { Transaction } from "ethers-v6";
+import { Transaction } from "ethers";
 import { injectable } from "inversify";
 import { Either, Left, Maybe, Right } from "purify-ts";
 

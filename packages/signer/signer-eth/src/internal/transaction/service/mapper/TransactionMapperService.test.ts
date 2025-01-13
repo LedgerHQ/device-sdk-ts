@@ -1,8 +1,6 @@
 import { type TransactionSubset } from "@ledgerhq/context-module";
 import { Just, type Maybe, Nothing, Right } from "purify-ts";
 
-import { type Transaction } from "@api/index";
-
 import { TransactionMapperService } from "./TransactionMapperService";
 
 const transactionMapperBuilder = (value?: Maybe<TransactionSubset>) => {
@@ -26,7 +24,7 @@ describe("TransactionMapperService", () => {
     service = new TransactionMapperService(mappers);
 
     // WHEN
-    const result = service.mapTransactionToSubset({} as Transaction);
+    const result = service.mapTransactionToSubset(new Uint8Array(0));
 
     // THEN
     expect(mappers[0]!.map).toHaveBeenCalled();
@@ -43,7 +41,7 @@ describe("TransactionMapperService", () => {
     service = new TransactionMapperService(mappers);
 
     // WHEN
-    const result = service.mapTransactionToSubset({} as Transaction);
+    const result = service.mapTransactionToSubset(new Uint8Array(0));
 
     // THEN
     expect(mappers[0]!.map).toHaveBeenCalled();
@@ -60,7 +58,7 @@ describe("TransactionMapperService", () => {
     service = new TransactionMapperService(mappers);
 
     // WHEN
-    const result = service.mapTransactionToSubset({} as Transaction);
+    const result = service.mapTransactionToSubset(new Uint8Array(0));
 
     // THEN
     expect(mappers[0]!.map).toHaveBeenCalled();
