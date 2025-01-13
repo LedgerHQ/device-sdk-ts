@@ -81,7 +81,7 @@ export { defaultApduSenderServiceStubBuilder } from "@api/device-session/service
 export { FramerUtils } from "@api/device-session/utils/FramerUtils";
 export { DeviceManagementKit } from "@api/DeviceManagementKit";
 export { DeviceManagementKitBuilder } from "@api/DeviceManagementKitBuilder";
-export { DeviceExchangeError, UnknownDeviceExchangeError } from "@api/Error";
+export * from "@api/Error";
 export { LogLevel } from "@api/logger-subscriber/model/LogLevel";
 export { ConsoleLogger } from "@api/logger-subscriber/service/ConsoleLogger";
 export { WebLogsExporterLogger } from "@api/logger-subscriber/service/WebLogsExporterLogger";

@@ -1,4 +1,4 @@
-import { type DmkError } from "@root/src/api/Error";
+import { type DmkError } from "@api/Error";
 
 export class FramerOverflowError implements DmkError {
   readonly _tag = "FramerOverflowError";
@@ -44,15 +44,5 @@ export class DeviceSessionRefresherError implements DmkError {
   constructor(originalError?: Error) {
     this.originalError =
       originalError ?? new Error("Device session refresher error");
-  }
-}
-
-export class DeviceBusyError implements DmkError {
-  readonly _tag = "DeviceBusyError";
-  originalError?: Error;
-
-  constructor(originalError?: Error) {
-    this.originalError =
-      originalError ?? new Error("Device is busy, please try again later");
   }
 }

@@ -11,6 +11,7 @@ import {
 import { Left, Right } from "purify-ts";
 
 import { RECONNECT_DEVICE_TIMEOUT } from "@api/data/WebHidConfig";
+import { WebHidSendReportError } from "@api/model/Errors";
 import { hidDeviceStubBuilder } from "@api/model/HIDDevice.stub";
 
 import { WebHidDeviceConnection } from "./WebHidDeviceConnection";
@@ -282,12 +283,7 @@ describe("WebHidDeviceConnection", () => {
 
       const response = await responsePromise;
 
-      expect(response).toEqual(
-        Right({
-          statusCode: new Uint8Array([0x90, 0x00]),
-          data: new Uint8Array([]),
-        }),
-      );
+      expect(response).toEqual(Left(new WebHidSendReportError()));
     });
   });
 });
