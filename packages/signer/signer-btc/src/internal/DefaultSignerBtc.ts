@@ -12,6 +12,7 @@ import { type SignerBtc } from "@api/SignerBtc";
 import { useCasesTypes } from "@internal/use-cases/di/useCasesTypes";
 import { type GetExtendedPublicKeyUseCase } from "@internal/use-cases/get-extended-public-key/GetExtendedPublicKeyUseCase";
 import { type SignPsbtUseCase } from "@internal/use-cases/sign-psbt/SignPsbtUseCase";
+import { type SignTransactionUseCase } from "@internal/use-cases/sign-transaction/SignTransactionUseCase";
 
 import { type SignMessageUseCase } from "./use-cases/sign-message/SignMessageUseCase";
 import { makeContainer } from "./di";
@@ -52,5 +53,11 @@ export class DefaultSignerBtc implements SignerBtc {
     return this._container
       .get<SignMessageUseCase>(useCasesTypes.SignMessageUseCase)
       .execute(_derivationPath, _message);
+  }
+
+  signTransaction(wallet: Wallet, psbt: Psbt) {
+    return this._container
+      .get<SignTransactionUseCase>(useCasesTypes.SignTransactionUseCase)
+      .execute(wallet, psbt);
   }
 }

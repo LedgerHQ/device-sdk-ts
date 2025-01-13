@@ -9,6 +9,7 @@ export type {
   SignMessageDAState,
 } from "@api/app-binder/SignMessageDeviceActionTypes";
 export * from "@api/app-binder/SignPsbtDeviceActionTypes";
+export * from "@api/app-binder/SignTransactionDeviceActionTypes";
 export { DefaultDescriptorTemplate, DefaultWallet } from "@api/model/Wallet";
 export * from "@api/SignerBtc";
 export * from "@api/SignerBtcBuilder";
