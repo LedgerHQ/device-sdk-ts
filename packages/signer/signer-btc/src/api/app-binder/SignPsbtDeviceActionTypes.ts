@@ -35,7 +35,7 @@ export type SignPsbtDAError =
   | OpenAppDAError
   | CommandErrorResult<BtcErrorCodes>["error"];
 
-type SignPsbtDARequiredInteraction =
+export type SignPsbtDARequiredInteraction =
   | OpenAppDARequiredInteraction
   | UserInteractionRequired.SignTransaction;
 
