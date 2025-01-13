@@ -38,6 +38,8 @@ export type ProvideEIP712ContextTaskArgs = {
   domain: Array<TypedDataValue>;
   message: Array<TypedDataValue>;
   clearSignContext: Maybe<TypedDataClearSignContextSuccess>;
+  domainHash: string;
+  messageHash: string;
 };
 
 const DEVICE_ASSETS_MAX = 5;

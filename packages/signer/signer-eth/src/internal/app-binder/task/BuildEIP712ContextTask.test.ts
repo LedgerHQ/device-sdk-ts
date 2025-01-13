@@ -3,7 +3,7 @@ import {
   DeviceSessionStateType,
   DeviceStatus,
 } from "@ledgerhq/device-management-kit";
-import { Just, Nothing, Right } from "purify-ts";
+import { Just, Left, Nothing, Right } from "purify-ts";
 
 import { makeDeviceActionInternalApiMock } from "@internal/app-binder/device-action/__test-utils__/makeInternalApi";
 import {
@@ -58,6 +58,12 @@ describe("BuildEIP712ContextTask", () => {
           type: "uint256",
         },
       ],
+      PermitDetails: [
+        { name: "token", type: "address" },
+        { name: "amount", type: "uint" },
+        { name: "expiration", type: "uint" },
+        { name: "nonce", type: "uint" },
+      ],
     },
   };
 
@@ -66,6 +72,12 @@ describe("BuildEIP712ContextTask", () => {
       details: new StructType("PermitDetails"),
       spender: new PrimitiveType("address", "address", Nothing),
       sigDeadline: new PrimitiveType("uint256", "uint", Just(32)),
+    },
+    PermitDetails: {
+      token: new PrimitiveType("address", "address", Nothing),
+      amount: new PrimitiveType("uint160", "uint", Just(20)),
+      expiration: new PrimitiveType("uint48", "uint", Just(6)),
+      nonce: new PrimitiveType("uint48", "uint", Just(6)),
     },
   };
   const TEST_DOMAIN_VALUES = [
@@ -151,6 +163,10 @@ describe("BuildEIP712ContextTask", () => {
       domain: TEST_DOMAIN_VALUES,
       message: TEST_MESSAGE_VALUES,
       clearSignContext: Nothing,
+      domainHash:
+        "0xf033048cb2764f596bc4d98e089fa38bb84b4be3d5da2e77f9bfac0e4d6c68ca",
+      messageHash:
+        "0x1087495b5e10337738059920fe1de8216235299745e8c97e21b409009a4c362a",
     });
   });
 
@@ -187,6 +203,10 @@ describe("BuildEIP712ContextTask", () => {
       domain: TEST_DOMAIN_VALUES,
       message: TEST_MESSAGE_VALUES,
       clearSignContext: Nothing,
+      domainHash:
+        "0xf033048cb2764f596bc4d98e089fa38bb84b4be3d5da2e77f9bfac0e4d6c68ca",
+      messageHash:
+        "0x1087495b5e10337738059920fe1de8216235299745e8c97e21b409009a4c362a",
     });
   });
 
@@ -222,6 +242,10 @@ describe("BuildEIP712ContextTask", () => {
       domain: TEST_DOMAIN_VALUES,
       message: TEST_MESSAGE_VALUES,
       clearSignContext: Just(TEST_CLEAR_SIGN_CONTEXT),
+      domainHash:
+        "0xf033048cb2764f596bc4d98e089fa38bb84b4be3d5da2e77f9bfac0e4d6c68ca",
+      messageHash:
+        "0x1087495b5e10337738059920fe1de8216235299745e8c97e21b409009a4c362a",
     });
     expect(parserMock.parse).toHaveBeenCalledWith(TEST_DATA);
     expect(contextMouleMock.getTypedDataFilters).toHaveBeenCalledWith({
@@ -285,5 +309,54 @@ describe("BuildEIP712ContextTask", () => {
         },
       ],
     });
+  });
+
+  it("Should throw error if no primary type", async () => {
+    // GIVEN
+    const task = new BuildEIP712ContextTask(
+      apiMock,
+      contextMouleMock,
+      parserMock,
+      {
+        ...TEST_DATA,
+        primaryType: "",
+      },
+    );
+    parserMock.parse.mockReturnValueOnce(
+      Right({
+        types: TEST_TYPES,
+        domain: TEST_DOMAIN_VALUES,
+        message: TEST_MESSAGE_VALUES,
+      }),
+    );
+    // WHEN
+    try {
+      await task.run();
+    } catch (e) {
+      // THEN
+      expect(e).toBeInstanceOf(Error);
+      // @ts-expect-error
+      expect(e.message).toBe('Primary type "" is not defined in the types.');
+    }
+  });
+
+  it("Should throw an error if parsing fails", async () => {
+    // GIVEN
+    const task = new BuildEIP712ContextTask(
+      apiMock,
+      contextMouleMock,
+      parserMock,
+      TEST_DATA,
+    );
+    parserMock.parse.mockReturnValueOnce(Left(new Error("Parsing error")));
+    // WHEN
+    try {
+      await task.run();
+    } catch (e) {
+      // THEN
+      expect(e).toBeInstanceOf(Error);
+      // @ts-expect-error
+      expect(e.message).toBe("Parsing error");
+    }
   });
 });

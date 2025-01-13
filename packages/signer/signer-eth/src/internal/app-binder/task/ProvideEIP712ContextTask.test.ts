@@ -214,6 +214,8 @@ describe("ProvideEIP712ContextTask", () => {
       domain: TEST_DOMAIN_VALUES,
       message: TEST_MESSAGE_VALUES,
       clearSignContext: Nothing,
+      domainHash: "0x",
+      messageHash: "0x",
     };
     // WHEN
     apiMock.sendCommand.mockResolvedValue(
@@ -324,6 +326,8 @@ describe("ProvideEIP712ContextTask", () => {
       domain: TEST_DOMAIN_VALUES,
       message: TEST_MESSAGE_VALUES,
       clearSignContext: Just(TEST_CLEAR_SIGN_CONTEXT),
+      domainHash: "0x",
+      messageHash: "0x",
     };
     apiMock.sendCommand
       .mockResolvedValueOnce(CommandResultFactory({ data: undefined }))
@@ -525,6 +529,8 @@ describe("ProvideEIP712ContextTask", () => {
         filters: TEST_CLEAR_SIGN_CONTEXT.filters,
         tokens: {},
       }),
+      domainHash: "0x",
+      messageHash: "0x",
     };
 
     // WHEN
@@ -577,6 +583,8 @@ describe("ProvideEIP712ContextTask", () => {
         filters: TEST_CLEAR_SIGN_CONTEXT.filters,
         tokens: { 255: "payload-0x000000000022d473030f116ddee9f6b43ac78ba3" },
       }),
+      domainHash: "0x",
+      messageHash: "0x",
     };
 
     // WHEN
@@ -619,6 +627,8 @@ describe("ProvideEIP712ContextTask", () => {
         filters: TEST_CLEAR_SIGN_CONTEXT.filters,
         tokens: { 0: "payload-0x7ceb23fd6bc0add59e62ac25578270cff1b9f619" },
       }),
+      domainHash: "0x",
+      messageHash: "0x",
     };
 
     // WHEN
@@ -656,6 +666,8 @@ describe("ProvideEIP712ContextTask", () => {
       domain: TEST_DOMAIN_VALUES,
       message: TEST_MESSAGE_VALUES,
       clearSignContext: Just(TEST_CLEAR_SIGN_CONTEXT),
+      domainHash: "0x",
+      messageHash: "0x",
     };
     apiMock.sendCommand.mockResolvedValueOnce(
       CommandResultFactory({
@@ -680,6 +692,8 @@ describe("ProvideEIP712ContextTask", () => {
       domain: TEST_DOMAIN_VALUES,
       message: TEST_MESSAGE_VALUES,
       clearSignContext: Just(TEST_CLEAR_SIGN_CONTEXT),
+      domainHash: "0x",
+      messageHash: "0x",
     };
     apiMock.sendCommand
       .mockResolvedValueOnce(CommandResultFactory({ data: { tokenIndex: 4 } }))
@@ -706,6 +720,8 @@ describe("ProvideEIP712ContextTask", () => {
       domain: TEST_DOMAIN_VALUES,
       message: TEST_MESSAGE_VALUES,
       clearSignContext: Nothing,
+      domainHash: "0x",
+      messageHash: "0x",
     };
     // WHEN
     apiMock.sendCommand
@@ -741,6 +757,8 @@ describe("ProvideEIP712ContextTask", () => {
   it("Send struct array", async () => {
     // GIVEN
     const args: ProvideEIP712ContextTaskArgs = {
+      domainHash: "0x",
+      messageHash: "0x",
       types: {},
       domain: [],
       message: [
