@@ -21,6 +21,11 @@ import {
 import { type Signature } from "@api/model/Signature";
 import { BtcAppBinder } from "@internal/app-binder/BtcAppBinder";
 import { GetExtendedPublicKeyCommand } from "@internal/app-binder/command/GetExtendedPublicKeyCommand";
+import { type DataStoreService } from "@internal/data-store/service/DataStoreService";
+import { type PsbtMapper } from "@internal/psbt/service/psbt/PsbtMapper";
+import { type ValueParser } from "@internal/psbt/service/value/ValueParser";
+import { type WalletBuilder } from "@internal/wallet/service/WalletBuilder";
+import { type WalletSerializer } from "@internal/wallet/service/WalletSerializer";
 
 describe("BtcAppBinder", () => {
   const mockedDmk: DeviceManagementKit = {
@@ -36,6 +41,11 @@ describe("BtcAppBinder", () => {
     const binder = new BtcAppBinder(
       {} as DeviceManagementKit,
       {} as DeviceSessionId,
+      {} as WalletBuilder,
+      {} as WalletSerializer,
+      {} as DataStoreService,
+      {} as PsbtMapper,
+      {} as ValueParser,
     );
     expect(binder).toBeDefined();
   });
@@ -66,7 +76,15 @@ describe("BtcAppBinder", () => {
       });
 
       // WHEN
-      const appBinder = new BtcAppBinder(mockedDmk, "sessionId");
+      const appBinder = new BtcAppBinder(
+        mockedDmk,
+        "sessionId",
+        {} as WalletBuilder,
+        {} as WalletSerializer,
+        {} as DataStoreService,
+        {} as PsbtMapper,
+        {} as ValueParser,
+      );
       const { observable } = appBinder.getExtendedPublicKey({
         derivationPath: "44'/501'",
         checkOnDevice: false,
@@ -116,7 +134,15 @@ describe("BtcAppBinder", () => {
         };
 
         // WHEN
-        const appBinder = new BtcAppBinder(mockedDmk, "sessionId");
+        const appBinder = new BtcAppBinder(
+          mockedDmk,
+          "sessionId",
+          {} as WalletBuilder,
+          {} as WalletSerializer,
+          {} as DataStoreService,
+          {} as PsbtMapper,
+          {} as ValueParser,
+        );
         appBinder.getExtendedPublicKey(params);
 
         // THEN
@@ -141,7 +167,15 @@ describe("BtcAppBinder", () => {
         };
 
         // WHEN
-        const appBinder = new BtcAppBinder(mockedDmk, "sessionId");
+        const appBinder = new BtcAppBinder(
+          mockedDmk,
+          "sessionId",
+          {} as WalletBuilder,
+          {} as WalletSerializer,
+          {} as DataStoreService,
+          {} as PsbtMapper,
+          {} as ValueParser,
+        );
         appBinder.getExtendedPublicKey(params);
 
         // THEN
@@ -184,7 +218,15 @@ describe("BtcAppBinder", () => {
       });
 
       // WHEN
-      const appBinder = new BtcAppBinder(mockedDmk, "sessionId");
+      const appBinder = new BtcAppBinder(
+        mockedDmk,
+        "sessionId",
+        {} as WalletBuilder,
+        {} as WalletSerializer,
+        {} as DataStoreService,
+        {} as PsbtMapper,
+        {} as ValueParser,
+      );
       const { observable } = appBinder.signMessage({
         derivationPath: "44'/60'/3'/2/1",
         message,

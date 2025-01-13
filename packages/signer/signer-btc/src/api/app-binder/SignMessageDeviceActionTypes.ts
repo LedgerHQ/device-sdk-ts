@@ -9,12 +9,14 @@ import {
 
 import { type Signature } from "@api/model/Signature";
 import { type BtcErrorCodes } from "@internal/app-binder/command/utils/bitcoinAppErrors";
+import { type DataStoreService } from "@internal/data-store/service/DataStoreService";
 
 export type SignMessageDAOutput = Signature;
 
 export type SignMessageDAInput = {
   readonly derivationPath: string;
   readonly message: string;
+  readonly dataStoreService: DataStoreService;
 };
 
 export type SignMessageDAError =
