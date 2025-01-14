@@ -8,10 +8,10 @@ import {
 } from "@ledgerhq/device-management-kit";
 
 import { type Psbt } from "@api/model/Psbt";
+import { type PsbtSignature } from "@api/model/Signature";
 import { type Wallet as ApiWallet } from "@api/model/Wallet";
 import { type BtcErrorCodes } from "@internal/app-binder/command/utils/bitcoinAppErrors";
 import { type BuildPsbtTaskResult } from "@internal/app-binder/task/BuildPsbtTask";
-import { type PsbtSignature } from "@internal/app-binder/task/SignPsbtTask";
 import { type DataStoreService } from "@internal/data-store/service/DataStoreService";
 import { type PsbtMapper } from "@internal/psbt/service/psbt/PsbtMapper";
 import { type ValueParser } from "@internal/psbt/service/value/ValueParser";

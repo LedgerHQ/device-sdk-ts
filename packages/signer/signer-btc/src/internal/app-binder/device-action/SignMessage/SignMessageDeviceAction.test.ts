@@ -101,9 +101,10 @@ describe("SignMessageDeviceAction", () => {
         deviceAction,
         expectedStates,
         makeDeviceActionInternalApiMock(),
+        done,
       );
 
-      // Verify mocks calls parameters
+      // @todo Put this in a onDone handle of testDeviceActionStates
       observable.subscribe({
         complete: () => {
           expect(signPersonalMessageMock).toHaveBeenCalledWith(
@@ -115,7 +116,6 @@ describe("SignMessageDeviceAction", () => {
               },
             }),
           );
-          done();
         },
       });
     });

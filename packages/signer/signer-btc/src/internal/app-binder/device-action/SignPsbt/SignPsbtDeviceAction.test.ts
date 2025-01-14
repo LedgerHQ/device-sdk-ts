@@ -81,7 +81,7 @@ describe("SignPsbtDeviceAction", () => {
           data: [
             {
               inputIndex: 0,
-              pubKeyAugmented: Uint8Array.from([0x04, 0x05, 0x06]),
+              pubkey: Uint8Array.from([0x04, 0x05, 0x06]),
               signature: Uint8Array.from([0x01, 0x02, 0x03]),
             },
           ],
@@ -125,7 +125,7 @@ describe("SignPsbtDeviceAction", () => {
           output: [
             {
               inputIndex: 0,
-              pubKeyAugmented: Uint8Array.from([0x04, 0x05, 0x06]),
+              pubkey: Uint8Array.from([0x04, 0x05, 0x06]),
               signature: Uint8Array.from([0x01, 0x02, 0x03]),
             },
           ],
@@ -137,9 +137,10 @@ describe("SignPsbtDeviceAction", () => {
         deviceAction,
         expectedStates,
         makeDeviceActionInternalApiMock(),
+        done,
       );
 
-      // Verify mocks calls parameters
+      // @todo Put this in a onDone handle of testDeviceActionStates
       observable.subscribe({
         complete: () => {
           expect(prepareWalletPolicyMock).toHaveBeenCalledWith(
@@ -167,7 +168,6 @@ describe("SignPsbtDeviceAction", () => {
               },
             }),
           );
-          done();
         },
       });
     });

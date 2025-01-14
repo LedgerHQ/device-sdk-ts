@@ -20,6 +20,7 @@ import {
   type SignPsbtDAOutput,
 } from "@api/app-binder/SignPsbtDeviceActionTypes";
 import { type Psbt as ApiPsbt } from "@api/model/Psbt";
+import { type PsbtSignature } from "@api/model/Signature";
 import { type Wallet as ApiWallet } from "@api/model/Wallet";
 import { type BtcErrorCodes } from "@internal/app-binder/command/utils/bitcoinAppErrors";
 import {
@@ -27,10 +28,7 @@ import {
   type BuildPsbtTaskResult,
 } from "@internal/app-binder/task/BuildPsbtTask";
 import { PrepareWalletPolicyTask } from "@internal/app-binder/task/PrepareWalletPolicyTask";
-import {
-  type PsbtSignature,
-  SignPsbtTask,
-} from "@internal/app-binder/task/SignPsbtTask";
+import { SignPsbtTask } from "@internal/app-binder/task/SignPsbtTask";
 import type { DataStoreService } from "@internal/data-store/service/DataStoreService";
 import type { PsbtMapper } from "@internal/psbt/service/psbt/PsbtMapper";
 import type { ValueParser } from "@internal/psbt/service/value/ValueParser";
