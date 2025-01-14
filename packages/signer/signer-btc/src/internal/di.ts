@@ -4,8 +4,12 @@ import {
 } from "@ledgerhq/device-management-kit";
 import { Container } from "inversify";
 
+import { dataStoreModuleFactory } from "@internal/data-store/di/dataStoreModule";
 import { externalTypes } from "@internal/externalTypes";
+import { merkleTreeModuleFactory } from "@internal/merkle-tree/di/merkleTreeModule";
+import { psbtModuleFactory } from "@internal/psbt/di/psbtModule";
 import { useCasesModuleFactory } from "@internal/use-cases/di/useCasesModule";
+import { walletModuleFactory } from "@internal/wallet/di/walletModule";
 
 import { appBinderModuleFactory } from "./app-binder/di/appBinderModule";
 
@@ -21,7 +25,14 @@ export const makeContainer = ({ dmk, sessionId }: MakeContainerProps) => {
     .bind<DeviceSessionId>(externalTypes.SessionId)
     .toConstantValue(sessionId);
 
-  container.load(appBinderModuleFactory(), useCasesModuleFactory());
+  container.load(
+    appBinderModuleFactory(),
+    useCasesModuleFactory(),
+    walletModuleFactory(),
+    psbtModuleFactory(),
+    dataStoreModuleFactory(),
+    merkleTreeModuleFactory(),
+  );
 
   return container;
 };

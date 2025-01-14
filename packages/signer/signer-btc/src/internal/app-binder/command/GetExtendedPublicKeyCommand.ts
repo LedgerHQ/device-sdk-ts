@@ -8,13 +8,20 @@ import {
   type Command,
   type CommandResult,
   CommandResultFactory,
-  CommandUtils,
-  GlobalCommandErrorHandler,
   InvalidStatusWordError,
 } from "@ledgerhq/device-management-kit";
-import { DerivationPathUtils } from "@ledgerhq/signer-utils";
+import {
+  CommandErrorHelper,
+  DerivationPathUtils,
+} from "@ledgerhq/signer-utils";
+import { Maybe } from "purify-ts";
 
-const STATUS_CODE_LENGTH = 2;
+import {
+  BTC_APP_ERRORS,
+  BtcAppCommandErrorFactory,
+  type BtcErrorCodes,
+} from "@internal/app-binder/command/utils/bitcoinAppErrors";
+import { BtcCommandUtils } from "@internal/utils/BtcCommandUtils";
 
 export type GetExtendedPublicKeyCommandArgs = {
   checkOnDevice: boolean;
@@ -29,13 +36,24 @@ export class GetExtendedPublicKeyCommand
   implements
     Command<
       GetExtendedPublicKeyCommandResponse,
-      GetExtendedPublicKeyCommandArgs
+      GetExtendedPublicKeyCommandArgs,
+      BtcErrorCodes
     >
 {
-  constructor(private readonly args: GetExtendedPublicKeyCommandArgs) {}
+  constructor(
+    private readonly _args: GetExtendedPublicKeyCommandArgs,
+    private readonly _errorHelper = new CommandErrorHelper<
+      GetExtendedPublicKeyCommandResponse,
+      BtcErrorCodes
+    >(
+      BTC_APP_ERRORS,
+      BtcAppCommandErrorFactory,
+      BtcCommandUtils.isSuccessResponse,
+    ),
+  ) {}
 
   getApdu(): Apdu {
-    const { checkOnDevice, derivationPath } = this.args;
+    const { checkOnDevice, derivationPath } = this._args;
 
     const getExtendedPublicKeyArgs: ApduBuilderArgs = {
       cla: 0xe1,
@@ -58,31 +76,28 @@ export class GetExtendedPublicKeyCommand
 
   parseResponse(
     response: ApduResponse,
-  ): CommandResult<GetExtendedPublicKeyCommandResponse> {
-    const parser = new ApduParser(response);
+  ): CommandResult<GetExtendedPublicKeyCommandResponse, BtcErrorCodes> {
+    return Maybe.fromNullable(
+      this._errorHelper.getError(response),
+    ).orDefaultLazy(() => {
+      const parser = new ApduParser(response);
+      const length = parser.getUnparsedRemainingLength();
 
-    if (!CommandUtils.isSuccessResponse(response)) {
+      if (length <= 0) {
+        return CommandResultFactory({
+          error: new InvalidStatusWordError("Invalid response length"),
+        });
+      }
+
+      const extendedPublicKey = parser.encodeToString(
+        parser.extractFieldByLength(length),
+      );
+
       return CommandResultFactory({
-        error: GlobalCommandErrorHandler.handle(response),
+        data: {
+          extendedPublicKey,
+        },
       });
-    }
-
-    const length = parser.getUnparsedRemainingLength() - STATUS_CODE_LENGTH;
-
-    if (length <= 0) {
-      return CommandResultFactory({
-        error: new InvalidStatusWordError("Invalid response length"),
-      });
-    }
-
-    const extendedPublicKey = parser.encodeToString(
-      parser.extractFieldByLength(length),
-    );
-
-    return CommandResultFactory({
-      data: {
-        extendedPublicKey,
-      },
     });
   }
 }

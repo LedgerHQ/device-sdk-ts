@@ -1,6 +1,6 @@
 import { inject, injectable } from "inversify";
 
-import { SignMessageDAReturnType } from "@api/app-binder/SignMessageDeviceActionType";
+import { SignMessageDAReturnType } from "@api/app-binder/SignMessageDeviceActionTypes";
 import { BtcAppBinder } from "@internal/app-binder/BtcAppBinder";
 import { appBinderTypes } from "@internal/app-binder/di/appBinderTypes";
 

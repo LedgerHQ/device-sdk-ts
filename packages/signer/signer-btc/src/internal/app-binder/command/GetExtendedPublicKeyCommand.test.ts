@@ -2,9 +2,12 @@ import {
   ApduResponse,
   CommandResultFactory,
   InvalidStatusWordError,
-  isSuccessCommandResult,
-  UnknownDeviceExchangeError,
 } from "@ledgerhq/device-management-kit";
+
+import {
+  BTC_APP_ERRORS,
+  BtcAppCommandErrorFactory,
+} from "@internal/app-binder/command/utils/bitcoinAppErrors";
 
 import {
   GetExtendedPublicKeyCommand,
@@ -35,7 +38,7 @@ const GET_EXTENDED_PUBLIC_KEY_VALID_RESPONSE = new Uint8Array([
   0x59, 0x6d, 0x6b, 0x53, 0x48, 0x4c, 0x66, 0x52, 0x31, 0x56, 0x51, 0x59, 0x6a,
   0x35, 0x6a, 0x61, 0x79, 0x71, 0x77, 0x53, 0x59, 0x41, 0x52, 0x6e, 0x75, 0x42,
   0x4a, 0x69, 0x50, 0x53, 0x44, 0x61, 0x62, 0x79, 0x79, 0x54, 0x69, 0x43, 0x44,
-  0x37, 0x42, 0x33, 0x63, 0x6a, 0x50, 0x71, 0x90, 0x00,
+  0x37, 0x42, 0x33, 0x63, 0x6a, 0x50, 0x71,
 ]);
 
 describe("GetExtendedPublicKeyCommand", () => {
@@ -129,18 +132,21 @@ describe("GetExtendedPublicKeyCommand", () => {
       const result = command.parseResponse(response);
 
       // THEN
-      if (!isSuccessCommandResult(result)) {
-        expect(result.error).toBeInstanceOf(UnknownDeviceExchangeError);
-      } else {
-        fail("Expected an error, but the result was successful");
-      }
+      expect(result).toStrictEqual(
+        CommandResultFactory({
+          error: BtcAppCommandErrorFactory({
+            ...BTC_APP_ERRORS["6d00"],
+            errorCode: "6d00",
+          }),
+        }),
+      );
     });
 
     it("should return an error if the response is too short", () => {
       // GIVEN
       command = new GetExtendedPublicKeyCommand(defaultArgs);
       const response = new ApduResponse({
-        data: GET_EXTENDED_PUBLIC_KEY_VALID_RESPONSE.slice(0, 2),
+        data: Uint8Array.from([]),
         statusCode: new Uint8Array([0x90, 0x00]),
       });
 
@@ -148,13 +154,11 @@ describe("GetExtendedPublicKeyCommand", () => {
       const result = command.parseResponse(response);
 
       // THEN
-      if (!isSuccessCommandResult(result)) {
-        expect(result.error).toEqual(
-          new InvalidStatusWordError("Invalid response length"),
-        );
-      } else {
-        fail("Expected an error, but the result was successful");
-      }
+      expect(result).toStrictEqual(
+        CommandResultFactory({
+          error: new InvalidStatusWordError("Invalid response length"),
+        }),
+      );
     });
   });
 });

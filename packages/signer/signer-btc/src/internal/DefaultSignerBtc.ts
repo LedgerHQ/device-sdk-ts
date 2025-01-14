@@ -4,11 +4,14 @@ import {
 } from "@ledgerhq/device-management-kit";
 import { type Container } from "inversify";
 
-import { type SignMessageDAReturnType } from "@api/app-binder/SignMessageDeviceActionType";
+import { type SignMessageDAReturnType } from "@api/app-binder/SignMessageDeviceActionTypes";
 import { type AddressOptions } from "@api/model/AddressOptions";
+import { type Psbt } from "@api/model/Psbt";
+import { type Wallet } from "@api/model/Wallet";
 import { type SignerBtc } from "@api/SignerBtc";
 import { useCasesTypes } from "@internal/use-cases/di/useCasesTypes";
 import { type GetExtendedPublicKeyUseCase } from "@internal/use-cases/get-extended-public-key/GetExtendedPublicKeyUseCase";
+import { type SignPsbtUseCase } from "@internal/use-cases/sign-psbt/SignPsbtUseCase";
 
 import { type SignMessageUseCase } from "./use-cases/sign-message/SignMessageUseCase";
 import { makeContainer } from "./di";
@@ -23,6 +26,12 @@ export class DefaultSignerBtc implements SignerBtc {
 
   constructor({ dmk, sessionId }: DefaultSignerBtcConstructorArgs) {
     this._container = makeContainer({ dmk, sessionId });
+  }
+
+  signPsbt(wallet: Wallet, psbt: Psbt) {
+    return this._container
+      .get<SignPsbtUseCase>(useCasesTypes.SignPsbtUseCase)
+      .execute(wallet, psbt);
   }
 
   getExtendedPublicKey(

@@ -11,6 +11,7 @@ import { type SignMessageDAState } from "@api/index";
 import { makeDeviceActionInternalApiMock } from "@internal/app-binder/device-action/__test-utils__/makeInternalApi";
 import { setupOpenAppDAMock } from "@internal/app-binder/device-action/__test-utils__/setupOpenAppDAMock";
 import { testDeviceActionStates } from "@internal/app-binder/device-action/__test-utils__/testDeviceActionStates";
+import { type DataStoreService } from "@internal/data-store/service/DataStoreService";
 
 import { SignMessageDeviceAction } from "./SignMessageDeviceAction";
 
@@ -34,7 +35,7 @@ describe("SignMessageDeviceAction", () => {
     };
   }
 
-  beforeEach(() => {
+  afterEach(() => {
     jest.resetAllMocks();
   });
 
@@ -46,6 +47,7 @@ describe("SignMessageDeviceAction", () => {
         input: {
           derivationPath: "44'/60'/0'/0/0",
           message: "Hello world",
+          dataStoreService: "DataStoreService" as unknown as DataStoreService,
         },
       });
 
@@ -102,7 +104,7 @@ describe("SignMessageDeviceAction", () => {
         done,
       );
 
-      // Verify mocks calls parameters
+      // @todo Put this in a onDone handle of testDeviceActionStates
       observable.subscribe({
         complete: () => {
           expect(signPersonalMessageMock).toHaveBeenCalledWith(
@@ -110,6 +112,7 @@ describe("SignMessageDeviceAction", () => {
               input: {
                 derivationPath: "44'/60'/0'/0/0",
                 message: "Hello world",
+                dataStoreService: "DataStoreService",
               },
             }),
           );
@@ -145,6 +148,7 @@ describe("SignMessageDeviceAction", () => {
         input: {
           derivationPath: "44'/60'/0'/0/0",
           message: "Hello world",
+          dataStoreService: "DataStoreService" as unknown as DataStoreService,
         },
       });
 
@@ -163,6 +167,7 @@ describe("SignMessageDeviceAction", () => {
         input: {
           derivationPath: "44'/60'/0'/0/0",
           message: "Hello world",
+          dataStoreService: "DataStoreService" as unknown as DataStoreService,
         },
       });
 
@@ -217,6 +222,7 @@ describe("SignMessageDeviceAction", () => {
         input: {
           derivationPath: "44'/60'/0'/0/0",
           message: "Hello world",
+          dataStoreService: "DataStoreService" as unknown as DataStoreService,
         },
       });
 
@@ -269,6 +275,7 @@ describe("SignMessageDeviceAction", () => {
         input: {
           derivationPath: "44'/60'/0'/0/0",
           message: "Hello world",
+          dataStoreService: "DataStoreService" as unknown as DataStoreService,
         },
       });
 
@@ -323,6 +330,7 @@ describe("SignMessageDeviceAction", () => {
         input: {
           derivationPath: "44'/60'/0'/0/0",
           message: "Hello world",
+          dataStoreService: "DataStoreService" as unknown as DataStoreService,
         },
       });
 
