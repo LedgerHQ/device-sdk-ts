@@ -82,11 +82,11 @@ describe("SignMessageTask", () => {
     data: SIGNATURE,
   });
   const apiMock = {
-    sendCommand: jest.fn(),
+    sendCommand: vi.fn(),
   } as unknown as InternalApi;
 
   afterEach(() => {
-    jest.resetAllMocks();
+    vi.resetAllMocks();
   });
 
   describe("run", () => {
@@ -97,14 +97,15 @@ describe("SignMessageTask", () => {
         message: EXACT_ONE_CHUNK_MESSAGE,
       };
 
-      jest
-        .spyOn(DefaultDataStoreService.prototype, "merklizeChunks")
-        .mockImplementation((_, chunks) => {
-          expect(chunks.length).toBe(1);
-          return MERKLE_ROOT;
-        });
+      vi.spyOn(
+        DefaultDataStoreService.prototype,
+        "merklizeChunks",
+      ).mockImplementation((_, chunks) => {
+        expect(chunks.length).toBe(1);
+        return MERKLE_ROOT;
+      });
 
-      (apiMock.sendCommand as jest.Mock).mockResolvedValueOnce(signatureResult);
+      (apiMock.sendCommand as vi.Mock).mockResolvedValueOnce(signatureResult);
 
       // WHEN
       const result = await new SendSignMessageTask(apiMock, args).run();
@@ -121,14 +122,15 @@ describe("SignMessageTask", () => {
         message: EXACT_TWO_CHUNKS_MESSAGE,
       };
 
-      jest
-        .spyOn(DefaultDataStoreService.prototype, "merklizeChunks")
-        .mockImplementation((_, chunks) => {
-          expect(chunks.length).toBe(2);
-          return MERKLE_ROOT;
-        });
+      vi.spyOn(
+        DefaultDataStoreService.prototype,
+        "merklizeChunks",
+      ).mockImplementation((_, chunks) => {
+        expect(chunks.length).toBe(2);
+        return MERKLE_ROOT;
+      });
 
-      (apiMock.sendCommand as jest.Mock).mockResolvedValueOnce(signatureResult);
+      (apiMock.sendCommand as vi.Mock).mockResolvedValueOnce(signatureResult);
 
       // WHEN
       const result = await new SendSignMessageTask(apiMock, args).run();
@@ -145,14 +147,15 @@ describe("SignMessageTask", () => {
         message: EXACT_TWO_CHUNKS_MESSAGE,
       };
 
-      jest
-        .spyOn(DefaultDataStoreService.prototype, "merklizeChunks")
-        .mockImplementation((_, chunks) => {
-          expect(chunks.length).toBe(2);
-          return MERKLE_ROOT;
-        });
+      vi.spyOn(
+        DefaultDataStoreService.prototype,
+        "merklizeChunks",
+      ).mockImplementation((_, chunks) => {
+        expect(chunks.length).toBe(2);
+        return MERKLE_ROOT;
+      });
 
-      (apiMock.sendCommand as jest.Mock)
+      (apiMock.sendCommand as vi.Mock)
         .mockResolvedValueOnce(
           CommandResultFactory<ApduResponse, Error>({
             data: APDU_RESPONSE_YELD,
@@ -168,7 +171,7 @@ describe("SignMessageTask", () => {
         )
         .mockResolvedValueOnce(signatureResult);
 
-      const getClientCommandPayloadMock = jest
+      const getClientCommandPayloadMock = vi
         .spyOn(ClientCommandInterpreter.prototype, "getClientCommandPayload")
 
         .mockImplementation((request: Uint8Array, context: any) => {
@@ -254,14 +257,15 @@ describe("SignMessageTask", () => {
         error: new InvalidStatusWordError("error"),
       });
 
-      jest
-        .spyOn(DefaultDataStoreService.prototype, "merklizeChunks")
-        .mockImplementation((_, chunks) => {
-          expect(chunks.length).toBe(1);
-          return MERKLE_ROOT;
-        });
+      vi.spyOn(
+        DefaultDataStoreService.prototype,
+        "merklizeChunks",
+      ).mockImplementation((_, chunks) => {
+        expect(chunks.length).toBe(1);
+        return MERKLE_ROOT;
+      });
 
-      (apiMock.sendCommand as jest.Mock).mockResolvedValueOnce(resultError);
+      (apiMock.sendCommand as vi.Mock).mockResolvedValueOnce(resultError);
 
       // WHEN
       const result = await new SendSignMessageTask(apiMock, args).run();
@@ -281,18 +285,19 @@ describe("SignMessageTask", () => {
         message: EXACT_TWO_CHUNKS_MESSAGE,
       };
 
-      jest
-        .spyOn(DefaultDataStoreService.prototype, "merklizeChunks")
-        .mockImplementation((_, chunks) => {
-          expect(chunks.length).toBe(2);
-          return MERKLE_ROOT;
-        });
+      vi.spyOn(
+        DefaultDataStoreService.prototype,
+        "merklizeChunks",
+      ).mockImplementation((_, chunks) => {
+        expect(chunks.length).toBe(2);
+        return MERKLE_ROOT;
+      });
 
       const resultError = CommandResultFactory<Signature, void>({
         error: new InvalidStatusWordError("error"),
       });
 
-      (apiMock.sendCommand as jest.Mock)
+      (apiMock.sendCommand as vi.Mock)
         .mockResolvedValueOnce(
           CommandResultFactory<ApduResponse, Error>({
             data: APDU_RESPONSE_YELD,
@@ -300,7 +305,7 @@ describe("SignMessageTask", () => {
         )
         .mockResolvedValueOnce(resultError);
 
-      const getClientCommandPayloadMock = jest
+      const getClientCommandPayloadMock = vi
         .spyOn(ClientCommandInterpreter.prototype, "getClientCommandPayload")
 
         .mockImplementation((request: Uint8Array, context: any) => {

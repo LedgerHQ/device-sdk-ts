@@ -5,21 +5,21 @@ import PACKAGE from "@root/package.json";
 import { HttpNftDataSource } from "./HttpNftDataSource";
 import { type NftDataSource } from "./NftDataSource";
 
-jest.mock("axios");
+vi.mock("axios");
 
 describe("HttpNftDataSource", () => {
   let datasource: NftDataSource;
 
   beforeAll(() => {
     datasource = new HttpNftDataSource();
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   it("should call axios with the ledger client version header", async () => {
     // GIVEN
     const version = `context-module/${PACKAGE.version}`;
-    const requestSpy = jest.fn(() => Promise.resolve({ data: [] }));
-    jest.spyOn(axios, "request").mockImplementation(requestSpy);
+    const requestSpy = vi.fn(() => Promise.resolve({ data: [] }));
+    vi.spyOn(axios, "request").mockImplementation(requestSpy);
 
     // WHEN
     await datasource.getNftInfosPayload({ address: "0x00", chainId: 1 });
@@ -47,7 +47,7 @@ describe("HttpNftDataSource", () => {
   describe("getNftInfosPayload", () => {
     it("should return an error when axios throws an error", async () => {
       // GIVEN
-      jest.spyOn(axios, "request").mockRejectedValue(new Error("error"));
+      vi.spyOn(axios, "request").mockRejectedValue(new Error("error"));
 
       // WHEN
       const result = await datasource.getNftInfosPayload({
@@ -66,7 +66,7 @@ describe("HttpNftDataSource", () => {
     it("should return an error when the response is empty", async () => {
       // GIVEN
       const response = { data: {} };
-      jest.spyOn(axios, "request").mockResolvedValue(response);
+      vi.spyOn(axios, "request").mockResolvedValue(response);
 
       // WHEN
       const result = await datasource.getNftInfosPayload({
@@ -83,7 +83,7 @@ describe("HttpNftDataSource", () => {
     it("should return the payload", async () => {
       // GIVEN
       const response = { data: { payload: "payload" } };
-      jest.spyOn(axios, "request").mockResolvedValue(response);
+      vi.spyOn(axios, "request").mockResolvedValue(response);
 
       // WHEN
       const result = await datasource.getNftInfosPayload({
@@ -99,7 +99,7 @@ describe("HttpNftDataSource", () => {
   describe("getSetPluginPayload", () => {
     it("should return an error when axios throws an error", async () => {
       // GIVEN
-      jest.spyOn(axios, "request").mockRejectedValue(new Error("error"));
+      vi.spyOn(axios, "request").mockRejectedValue(new Error("error"));
 
       // WHEN
       const result = await datasource.getSetPluginPayload({
@@ -119,7 +119,7 @@ describe("HttpNftDataSource", () => {
     it("should return an error when the response is empty", async () => {
       // GIVEN
       const response = { data: {} };
-      jest.spyOn(axios, "request").mockResolvedValue(response);
+      vi.spyOn(axios, "request").mockResolvedValue(response);
 
       // WHEN
       const result = await datasource.getSetPluginPayload({
@@ -139,7 +139,7 @@ describe("HttpNftDataSource", () => {
     it("should return the payload", async () => {
       // GIVEN
       const response = { data: { payload: "payload" } };
-      jest.spyOn(axios, "request").mockResolvedValue(response);
+      vi.spyOn(axios, "request").mockResolvedValue(response);
 
       // WHEN
       const result = await datasource.getSetPluginPayload({

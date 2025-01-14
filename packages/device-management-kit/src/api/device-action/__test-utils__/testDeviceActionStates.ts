@@ -11,7 +11,7 @@ import { type DmkError } from "@api/Error";
  * @param deviceAction The device action to test.
  * @param expectedStates The expected states.
  * @param internalApi
- * @param done The Jest done callback.
+ * @param done A promise resolve callback.
  */
 export function testDeviceActionStates<
   Output,
@@ -22,7 +22,7 @@ export function testDeviceActionStates<
   deviceAction: DeviceAction<Output, Input, Error, IntermediateValue>,
   expectedStates: Array<DeviceActionState<Output, Error, IntermediateValue>>,
   internalApi: InternalApi,
-  done: jest.DoneCallback,
+  done: (value?: unknown) => void,
 ) {
   const observedStates: Array<
     DeviceActionState<Output, Error, IntermediateValue>

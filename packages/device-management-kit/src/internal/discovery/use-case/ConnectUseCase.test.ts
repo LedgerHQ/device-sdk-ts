@@ -19,12 +19,12 @@ import { type TransportService } from "@internal/transport/service/TransportServ
 
 import { ConnectUseCase } from "./ConnectUseCase";
 
-jest.mock("uuid", () => ({
-  v4: jest.fn().mockReturnValue("fakeSessionId"),
+vi.mock("uuid", () => ({
+  v4: vi.fn().mockReturnValue("fakeSessionId"),
 }));
 
-jest.mock("@internal/manager-api/data/AxiosManagerApiDataSource");
-jest.mock("@internal/transport/service/DefaultTransportService");
+vi.mock("@internal/manager-api/data/AxiosManagerApiDataSource");
+vi.mock("@internal/transport/service/DefaultTransportService");
 
 // TODO test several transports
 // let transports: WebUsbHidTransport[];
@@ -64,17 +64,17 @@ describe("ConnectUseCase", () => {
   });
 
   afterAll(() => {
-    jest.restoreAllMocks();
+    vi.restoreAllMocks();
   });
 
   test("If connect use case encounter an error, return it", async () => {
-    jest
-      .spyOn(transport, "connect")
-      .mockResolvedValue(Left(new UnknownDeviceError()));
+    vi.spyOn(transport, "connect").mockResolvedValue(
+      Left(new UnknownDeviceError()),
+    );
 
-    jest
-      .spyOn(transportService, "getTransport")
-      .mockReturnValue(Maybe.of(transport));
+    vi.spyOn(transportService, "getTransport").mockReturnValue(
+      Maybe.of(transport),
+    );
 
     const usecase = new ConnectUseCase(
       transportService,
@@ -89,13 +89,13 @@ describe("ConnectUseCase", () => {
   });
 
   test("If connect is in success, return a deviceSession id", async () => {
-    jest
-      .spyOn(transport, "connect")
-      .mockResolvedValue(Promise.resolve(Right(stubConnectedDevice)));
+    vi.spyOn(transport, "connect").mockResolvedValue(
+      Right(stubConnectedDevice),
+    );
 
-    jest
-      .spyOn(transportService, "getTransport")
-      .mockReturnValue(Maybe.of(transport));
+    vi.spyOn(transportService, "getTransport").mockReturnValue(
+      Maybe.of(transport),
+    );
 
     const usecase = new ConnectUseCase(
       transportService,

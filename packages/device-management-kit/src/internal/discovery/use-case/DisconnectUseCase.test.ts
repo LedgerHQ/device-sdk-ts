@@ -17,13 +17,13 @@ import { type TransportService } from "@internal/transport/service/TransportServ
 
 import { DisconnectUseCase } from "./DisconnectUseCase";
 
-jest.mock("@internal/transport/service/DefaultTransportService");
+vi.mock("@internal/transport/service/DefaultTransportService");
 
 let sessionService: DefaultDeviceSessionService;
 // TODO test several transports
 let transport: Transport;
 let transports: Transport[] = [];
-const loggerFactory = jest
+const loggerFactory = vi
   .fn()
   .mockReturnValue(
     new DefaultLoggerPublisherService([], "DisconnectUseCaseTest"),
@@ -41,9 +41,9 @@ describe("DisconnectUseCase", () => {
     sessionService = new DefaultDeviceSessionService(loggerFactory);
     // @ts-expect-error mock
     transportService = new DefaultTransportService();
-    jest
-      .spyOn(transportService, "getTransport")
-      .mockReturnValue(Maybe.of(transport));
+    vi.spyOn(transportService, "getTransport").mockReturnValue(
+      Maybe.of(transport),
+    );
   });
 
   it("should disconnect from a device", async () => {
@@ -62,14 +62,14 @@ describe("DisconnectUseCase", () => {
       loggerFactory,
       managerApi,
     );
-    jest
-      .spyOn(sessionService, "getDeviceSessionById")
-      .mockImplementation(() => Right(deviceSession));
-    jest.spyOn(deviceSession, "close");
-    jest.spyOn(sessionService, "removeDeviceSession");
-    jest
-      .spyOn(transports[0]!, "disconnect")
-      .mockImplementation(() => Promise.resolve(Right(void 0)));
+    vi.spyOn(sessionService, "getDeviceSessionById").mockImplementation(() =>
+      Right(deviceSession),
+    );
+    vi.spyOn(deviceSession, "close");
+    vi.spyOn(sessionService, "removeDeviceSession");
+    vi.spyOn(transports[0]!, "disconnect").mockImplementation(() =>
+      Promise.resolve(Right(void 0)),
+    );
     const disconnectUseCase = new DisconnectUseCase(
       transportService,
       sessionService,
@@ -104,20 +104,14 @@ describe("DisconnectUseCase", () => {
 
   it("should throw an error if usb hid disconnection fails", async () => {
     // Given
-    jest
-      .spyOn(sessionService, "getDeviceSessionById")
-      .mockImplementation(() =>
-        Right(
-          deviceSessionStubBuilder(
-            { id: sessionId },
-            loggerFactory,
-            managerApi,
-          ),
-        ),
-      );
-    jest
-      .spyOn(transports[0]!, "disconnect")
-      .mockResolvedValue(Promise.resolve(Left(new DisconnectError())));
+    vi.spyOn(sessionService, "getDeviceSessionById").mockImplementation(() =>
+      Right(
+        deviceSessionStubBuilder({ id: sessionId }, loggerFactory, managerApi),
+      ),
+    );
+    vi.spyOn(transports[0]!, "disconnect").mockResolvedValue(
+      Left(new DisconnectError()),
+    );
     const disconnectUseCase = new DisconnectUseCase(
       transportService,
       sessionService,

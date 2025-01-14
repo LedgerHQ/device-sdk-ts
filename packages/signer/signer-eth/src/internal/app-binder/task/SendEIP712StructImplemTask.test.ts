@@ -18,7 +18,7 @@ describe("SendEIP712StructImplemTask", () => {
   const apiMock = makeDeviceActionInternalApiMock();
 
   beforeEach(() => {
-    jest.resetAllMocks();
+    vi.clearAllMocks();
   });
 
   it("Should forward root implementations", async () => {

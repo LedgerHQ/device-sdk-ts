@@ -2,7 +2,7 @@ import { ConsoleLogger } from "./logger-subscriber/service/ConsoleLogger";
 import { DeviceManagementKit } from "./DeviceManagementKit";
 import { DeviceManagementKitBuilder } from "./DeviceManagementKitBuilder";
 
-jest.mock("./logger-subscriber/service/ConsoleLogger");
+vi.mock("./logger-subscriber/service/ConsoleLogger");
 
 let builder: DeviceManagementKitBuilder;
 let logger: ConsoleLogger;

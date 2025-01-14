@@ -11,7 +11,7 @@ import { HttpTransactionDataSource } from "@/transaction/data/HttpTransactionDat
 import type { TransactionDataSource } from "@/transaction/data/TransactionDataSource";
 import PACKAGE from "@root/package.json";
 
-jest.mock("axios");
+vi.mock("axios");
 
 describe("HttpTransactionDataSource", () => {
   let datasource: TransactionDataSource;
@@ -27,7 +27,7 @@ describe("HttpTransactionDataSource", () => {
   let fieldEnum: CalldataFieldV1;
 
   beforeAll(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
     const config = {
       cal: {
         url: "https://crypto-assets-service.api.ledger.com/v1",
@@ -254,8 +254,8 @@ describe("HttpTransactionDataSource", () => {
   it("should call axios with the ledger client version header", async () => {
     // GIVEN
     const version = `context-module/${PACKAGE.version}`;
-    const requestSpy = jest.fn(() => Promise.resolve({ data: [] }));
-    jest.spyOn(axios, "request").mockImplementation(requestSpy);
+    const requestSpy = vi.fn(() => Promise.resolve({ data: [] }));
+    vi.spyOn(axios, "request").mockImplementation(requestSpy);
 
     // WHEN
     await datasource.getTransactionDescriptors({
@@ -274,7 +274,7 @@ describe("HttpTransactionDataSource", () => {
 
   it("should return an error when axios throws an error", async () => {
     // GIVEN
-    jest.spyOn(axios, "request").mockRejectedValue(new Error());
+    vi.spyOn(axios, "request").mockRejectedValue(new Error());
 
     // WHEN
     const result = await datasource.getTransactionDescriptors({
@@ -296,7 +296,7 @@ describe("HttpTransactionDataSource", () => {
   it("should return an error when no payload is returned", async () => {
     // GIVEN
     const response = { data: { test: "" } };
-    jest.spyOn(axios, "request").mockResolvedValue(response);
+    vi.spyOn(axios, "request").mockResolvedValue(response);
 
     // WHEN
     const result = await datasource.getTransactionDescriptors({
@@ -317,7 +317,7 @@ describe("HttpTransactionDataSource", () => {
 
   it("should return an error when an empty array is returned", async () => {
     // GIVEN
-    jest.spyOn(axios, "request").mockResolvedValue({ data: [] });
+    vi.spyOn(axios, "request").mockResolvedValue({ data: [] });
 
     // WHEN
     const result = await datasource.getTransactionDescriptors({
@@ -339,7 +339,7 @@ describe("HttpTransactionDataSource", () => {
   it("should return an error when selector is not found", async () => {
     // GIVEN
     const calldataDTO = createCalldata(transactionInfo, enums, [fieldToken]);
-    jest.spyOn(axios, "request").mockResolvedValue({ data: [calldataDTO] });
+    vi.spyOn(axios, "request").mockResolvedValue({ data: [calldataDTO] });
 
     // WHEN
     const result = await datasource.getTransactionDescriptors({
@@ -366,7 +366,7 @@ describe("HttpTransactionDataSource", () => {
       fieldNft,
       fieldEnum,
     ]);
-    jest.spyOn(axios, "request").mockResolvedValue({ data: [calldataDTO] });
+    vi.spyOn(axios, "request").mockResolvedValue({ data: [calldataDTO] });
 
     // WHEN
     const result = await datasource.getTransactionDescriptors({
@@ -464,7 +464,7 @@ describe("HttpTransactionDataSource", () => {
       [],
       [fieldAmount, fieldDatetime, fieldUnit, fieldDuration],
     );
-    jest.spyOn(axios, "request").mockResolvedValue({ data: [calldataDTO] });
+    vi.spyOn(axios, "request").mockResolvedValue({ data: [calldataDTO] });
 
     // WHEN
     const result = await datasource.getTransactionDescriptors({
@@ -506,9 +506,9 @@ describe("HttpTransactionDataSource", () => {
       [],
       [fieldAmount, fieldDatetime, fieldUnit, fieldDuration],
     );
-    jest
-      .spyOn(axios, "request")
-      .mockResolvedValue({ data: [{}, {}, calldataDTO] });
+    vi.spyOn(axios, "request").mockResolvedValue({
+      data: [{}, {}, calldataDTO],
+    });
 
     // WHEN
     const result = await datasource.getTransactionDescriptors({
@@ -558,7 +558,7 @@ describe("HttpTransactionDataSource", () => {
       [],
       [fieldAmount, fieldDatetime, fieldUnit, fieldDuration],
     );
-    jest.spyOn(axios, "request").mockResolvedValue({ data: [calldataDTO] });
+    vi.spyOn(axios, "request").mockResolvedValue({ data: [calldataDTO] });
 
     // WHEN
     const result = await datasource.getTransactionDescriptors({
@@ -644,7 +644,7 @@ describe("HttpTransactionDataSource", () => {
         "0001010112416d6f756e7420746f2065786368616e6765020102033b0001010115000101010101020120030a00010101020000040103021f0001010101050201140514ae7ab96520de3a18e5e111b5eaab095312d7fe84",
     };
     const calldataDTO = createCalldata(transactionInfo, [], [field]);
-    jest.spyOn(axios, "request").mockResolvedValue({ data: [calldataDTO] });
+    vi.spyOn(axios, "request").mockResolvedValue({ data: [calldataDTO] });
 
     // WHEN
     const result = await datasource.getTransactionDescriptors({
@@ -726,7 +726,7 @@ describe("HttpTransactionDataSource", () => {
         "0001010112416d6f756e7420746f2065786368616e6765020102033b0001010115000101010101020120030a00010101020000040103021f00010101010502011405147d2768de32b0b80b7a3454c06bdac94a69ddc7a9",
     };
     const calldataDTO = createCalldata(transactionInfo, [], [field]);
-    jest.spyOn(axios, "request").mockResolvedValue({ data: [calldataDTO] });
+    vi.spyOn(axios, "request").mockResolvedValue({ data: [calldataDTO] });
 
     // WHEN
     const result = await datasource.getTransactionDescriptors({
@@ -768,7 +768,7 @@ describe("HttpTransactionDataSource", () => {
         },
       },
     };
-    jest.spyOn(axios, "request").mockResolvedValue({ data: [calldataDTO] });
+    vi.spyOn(axios, "request").mockResolvedValue({ data: [calldataDTO] });
 
     // WHEN
     const result = await datasource.getTransactionDescriptors({
@@ -801,7 +801,7 @@ describe("HttpTransactionDataSource", () => {
       enums,
       [fieldToken],
     );
-    jest.spyOn(axios, "request").mockResolvedValue({ data: [calldataDTO] });
+    vi.spyOn(axios, "request").mockResolvedValue({ data: [calldataDTO] });
 
     // WHEN
     const result = await datasource.getTransactionDescriptors({
@@ -827,7 +827,7 @@ describe("HttpTransactionDataSource", () => {
       ["badEnum"] as unknown as CalldataEnumV1,
       [fieldToken],
     );
-    jest.spyOn(axios, "request").mockResolvedValue({ data: [calldataDTO] });
+    vi.spyOn(axios, "request").mockResolvedValue({ data: [calldataDTO] });
 
     // WHEN
     const result = await datasource.getTransactionDescriptors({
@@ -853,7 +853,7 @@ describe("HttpTransactionDataSource", () => {
       { 0: { 1: { data: "1234" } } } as unknown as CalldataEnumV1,
       [fieldToken],
     );
-    jest.spyOn(axios, "request").mockResolvedValue({ data: [calldataDTO] });
+    vi.spyOn(axios, "request").mockResolvedValue({ data: [calldataDTO] });
 
     // WHEN
     const result = await datasource.getTransactionDescriptors({
@@ -888,7 +888,7 @@ describe("HttpTransactionDataSource", () => {
       },
       [fieldToken],
     );
-    jest.spyOn(axios, "request").mockResolvedValue({ data: [calldataDTO] });
+    vi.spyOn(axios, "request").mockResolvedValue({ data: [calldataDTO] });
 
     // WHEN
     const result = await datasource.getTransactionDescriptors({
@@ -914,7 +914,7 @@ describe("HttpTransactionDataSource", () => {
       [],
       [{ descriptor: 3 }],
     );
-    jest.spyOn(axios, "request").mockResolvedValue({ data: [calldataDTO] });
+    vi.spyOn(axios, "request").mockResolvedValue({ data: [calldataDTO] });
 
     // WHEN
     const result = await datasource.getTransactionDescriptors({
@@ -947,7 +947,7 @@ describe("HttpTransactionDataSource", () => {
       descriptor: "000100010c546f20726563697069667",
     };
     const calldataDTO = createCalldata(transactionInfo, [], [field]);
-    jest.spyOn(axios, "request").mockResolvedValue({ data: [calldataDTO] });
+    vi.spyOn(axios, "request").mockResolvedValue({ data: [calldataDTO] });
 
     // WHEN
     const result = await datasource.getTransactionDescriptors({
@@ -980,7 +980,7 @@ describe("HttpTransactionDataSource", () => {
       descriptor: "000100010c546f20726563697069667",
     };
     const calldataDTO = createCalldata(transactionInfo, [], [field]);
-    jest.spyOn(axios, "request").mockResolvedValue({ data: [calldataDTO] });
+    vi.spyOn(axios, "request").mockResolvedValue({ data: [calldataDTO] });
 
     // WHEN
     const result = await datasource.getTransactionDescriptors({
@@ -1019,7 +1019,7 @@ describe("HttpTransactionDataSource", () => {
       descriptor: "000100010c546f20726563697069667",
     };
     const calldataDTO = createCalldata(transactionInfo, [], [field]);
-    jest.spyOn(axios, "request").mockResolvedValue({ data: [calldataDTO] });
+    vi.spyOn(axios, "request").mockResolvedValue({ data: [calldataDTO] });
 
     // WHEN
     const result = await datasource.getTransactionDescriptors({
@@ -1052,7 +1052,7 @@ describe("HttpTransactionDataSource", () => {
       descriptor: "000100010c546f20726563697069667",
     };
     const calldataDTO = createCalldata(transactionInfo, [], [field]);
-    jest.spyOn(axios, "request").mockResolvedValue({ data: [calldataDTO] });
+    vi.spyOn(axios, "request").mockResolvedValue({ data: [calldataDTO] });
 
     // WHEN
     const result = await datasource.getTransactionDescriptors({

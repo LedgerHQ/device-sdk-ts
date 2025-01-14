@@ -36,7 +36,7 @@ describe("CloseSessionsUseCase", () => {
         () => logger,
         managerApi,
       );
-      jest.spyOn(session, "close");
+      vi.spyOn(session, "close");
       return session;
     });
     sessions.forEach((session) => sessionService.addDeviceSession(session));

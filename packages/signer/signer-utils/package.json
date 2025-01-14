@@ -30,17 +30,17 @@
     "prettier": "prettier . --check",
     "prettier:fix": "prettier . --write",
     "typecheck": "tsc --noEmit",
-    "test": "jest",
-    "test:watch": "pnpm test -- --watch",
-    "test:coverage": "pnpm test -- --coverage"
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage"
   },
   "devDependencies": {
     "@ledgerhq/device-management-kit": "workspace:*",
     "@ledgerhq/esbuild-tools": "workspace:*",
     "@ledgerhq/eslint-config-dsdk": "workspace:*",
-    "@ledgerhq/jest-config-dsdk": "workspace:*",
     "@ledgerhq/prettier-config-dsdk": "workspace:*",
     "@ledgerhq/tsconfig-dsdk": "workspace:*",
+    "@ledgerhq/vitest-config-dmk": "workspace:*",
     "ts-node": "^10.9.2"
   },
   "peerDependencies": {

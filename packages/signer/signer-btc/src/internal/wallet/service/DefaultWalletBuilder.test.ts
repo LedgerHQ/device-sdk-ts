@@ -12,7 +12,7 @@ import { type MerkleTreeBuilder } from "@internal/merkle-tree/service/MerkleTree
 import { DefaultWalletBuilder } from "./DefaultWalletBuilder";
 
 describe("DefaultWalletBuilder tests", () => {
-  const mockCreateMerkleTree = jest.fn();
+  const mockCreateMerkleTree = vi.fn();
   const mockMerkleTree = {
     build: mockCreateMerkleTree,
   } as unknown as MerkleTreeBuilder;

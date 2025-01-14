@@ -32,9 +32,9 @@ describe("TransportConnectedDevice", () => {
     expect(connectedDevice.type).toEqual("MOCK");
   });
 
-  it("should return the correct send apdu response", () => {
-    expect(connectedDevice.sendApdu(new Uint8Array())).resolves.toMatchObject(
-      Right(defaultApduResponseStubBuilder()),
-    );
+  it("should return the correct send apdu response", async () => {
+    await expect(
+      connectedDevice.sendApdu(new Uint8Array()),
+    ).resolves.toMatchObject(Right(defaultApduResponseStubBuilder()));
   });
 });

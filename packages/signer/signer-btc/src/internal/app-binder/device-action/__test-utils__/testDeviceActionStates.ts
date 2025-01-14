@@ -10,7 +10,7 @@ import {
  * Test that the states emitted by a device action match the expected states.
  * @param deviceAction The device action to test.
  * @param expectedStates The expected states.
- * @param done The Jest done callback.
+ * @param done The vi done callback.
  */
 export function testDeviceActionStates<
   Output,
@@ -21,7 +21,7 @@ export function testDeviceActionStates<
   deviceAction: DeviceAction<Output, Input, Error, IntermediateValue>,
   expectedStates: Array<DeviceActionState<Output, Error, IntermediateValue>>,
   internalApi: InternalApi,
-  done?: jest.DoneCallback,
+  done?: vi.DoneCallback,
 ) {
   const observedStates: Array<
     DeviceActionState<Output, Error, IntermediateValue>

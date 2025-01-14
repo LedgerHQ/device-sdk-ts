@@ -11,7 +11,7 @@ import { type ManagerApiService } from "@internal/manager-api/service/ManagerApi
 
 import { GetConnectedDeviceUseCase } from "./GetConnectedDeviceUseCase";
 
-jest.mock("@internal/manager-api/data/AxiosManagerApiDataSource");
+vi.mock("@internal/manager-api/data/AxiosManagerApiDataSource");
 
 let logger: LoggerPublisherService;
 let sessionService: DeviceSessionService;

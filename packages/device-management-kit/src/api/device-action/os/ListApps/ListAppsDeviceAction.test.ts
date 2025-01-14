@@ -21,498 +21,510 @@ import { UnknownDAError } from "@api/device-action/os/Errors";
 import { ListAppsDeviceAction } from "./ListAppsDeviceAction";
 import { type ListAppsDAState } from "./types";
 
-jest.mock("@api/device-action/os/GoToDashboard/GoToDashboardDeviceAction");
+vi.mock("@api/device-action/os/GoToDashboard/GoToDashboardDeviceAction");
 
 describe("ListAppsDeviceAction", () => {
   const { sendCommand: sendCommandMock } = makeDeviceActionInternalApiMock();
 
   beforeEach(() => {
-    jest.resetAllMocks();
+    vi.resetAllMocks();
   });
 
   describe("success cases", () => {
-    it("should run the device action with no apps installed", (done) => {
-      setupGoToDashboardMock();
-      const listAppsDeviceAction = new ListAppsDeviceAction({
-        input: {},
-      });
+    it("should run the device action with no apps installed", () =>
+      new Promise((done) => {
+        setupGoToDashboardMock();
+        const listAppsDeviceAction = new ListAppsDeviceAction({
+          input: {},
+        });
 
-      sendCommandMock.mockResolvedValue(CommandResultFactory({ data: [] }));
+        sendCommandMock.mockResolvedValue(CommandResultFactory({ data: [] }));
 
-      const expectedStates: Array<ListAppsDAState> = [
-        {
-          intermediateValue: {
-            requiredUserInteraction: UserInteractionRequired.None,
+        const expectedStates: Array<ListAppsDAState> = [
+          {
+            intermediateValue: {
+              requiredUserInteraction: UserInteractionRequired.None,
+            },
+            status: DeviceActionStatus.Pending, // GoToDashboardDeviceAction
           },
-          status: DeviceActionStatus.Pending, // GoToDashboardDeviceAction
-        },
-        {
-          intermediateValue: {
-            requiredUserInteraction: UserInteractionRequired.None,
+          {
+            intermediateValue: {
+              requiredUserInteraction: UserInteractionRequired.None,
+            },
+            status: DeviceActionStatus.Pending, // GoToDashboardCheck
           },
-          status: DeviceActionStatus.Pending, // GoToDashboardCheck
-        },
-        {
-          intermediateValue: {
-            requiredUserInteraction: UserInteractionRequired.AllowListApps,
+          {
+            intermediateValue: {
+              requiredUserInteraction: UserInteractionRequired.AllowListApps,
+            },
+            status: DeviceActionStatus.Pending, // ListApps
           },
-          status: DeviceActionStatus.Pending, // ListApps
-        },
-        {
-          output: [],
-          status: DeviceActionStatus.Completed, // Success
-        },
-      ];
+          {
+            output: [],
+            status: DeviceActionStatus.Completed, // Success
+          },
+        ];
 
-      testDeviceActionStates(
-        listAppsDeviceAction,
-        expectedStates,
-        makeDeviceActionInternalApiMock(),
-        done,
-      );
-    });
+        testDeviceActionStates(
+          listAppsDeviceAction,
+          expectedStates,
+          makeDeviceActionInternalApiMock(),
+          done,
+        );
+      }));
 
-    it("should run the device action with one app installed", (done) => {
-      setupGoToDashboardMock();
-      const listAppsDeviceAction = new ListAppsDeviceAction({
-        input: { unlockTimeout: 500 },
-      });
+    it("should run the device action with one app installed", () =>
+      new Promise((done) => {
+        setupGoToDashboardMock();
+        const listAppsDeviceAction = new ListAppsDeviceAction({
+          input: { unlockTimeout: 500 },
+        });
 
-      sendCommandMock.mockResolvedValueOnce(
-        CommandResultFactory({ data: [BTC_APP] }),
-      );
+        sendCommandMock.mockResolvedValueOnce(
+          CommandResultFactory({ data: [BTC_APP] }),
+        );
 
-      const expectedStates: Array<ListAppsDAState> = [
-        {
-          intermediateValue: {
-            requiredUserInteraction: UserInteractionRequired.None,
+        const expectedStates: Array<ListAppsDAState> = [
+          {
+            intermediateValue: {
+              requiredUserInteraction: UserInteractionRequired.None,
+            },
+            status: DeviceActionStatus.Pending, // GoToDashboardDeviceAction
           },
-          status: DeviceActionStatus.Pending, // GoToDashboardDeviceAction
-        },
-        {
-          intermediateValue: {
-            requiredUserInteraction: UserInteractionRequired.None,
+          {
+            intermediateValue: {
+              requiredUserInteraction: UserInteractionRequired.None,
+            },
+            status: DeviceActionStatus.Pending, // GoToDashboardCheck
           },
-          status: DeviceActionStatus.Pending, // GoToDashboardCheck
-        },
-        {
-          intermediateValue: {
-            requiredUserInteraction: UserInteractionRequired.AllowListApps,
+          {
+            intermediateValue: {
+              requiredUserInteraction: UserInteractionRequired.AllowListApps,
+            },
+            status: DeviceActionStatus.Pending, // ListApps
           },
-          status: DeviceActionStatus.Pending, // ListApps
-        },
-        {
-          output: [BTC_APP],
-          status: DeviceActionStatus.Completed, // Success
-        },
-      ];
+          {
+            output: [BTC_APP],
+            status: DeviceActionStatus.Completed, // Success
+          },
+        ];
 
-      testDeviceActionStates(
-        listAppsDeviceAction,
-        expectedStates,
-        makeDeviceActionInternalApiMock(),
-        done,
-      );
-    });
+        testDeviceActionStates(
+          listAppsDeviceAction,
+          expectedStates,
+          makeDeviceActionInternalApiMock(),
+          done,
+        );
+      }));
 
-    it("should run the device action with two app installed", (done) => {
-      setupGoToDashboardMock();
-      const listAppsDeviceAction = new ListAppsDeviceAction({
-        input: { unlockTimeout: 500 },
-      });
+    it("should run the device action with two app installed", () =>
+      new Promise((done) => {
+        setupGoToDashboardMock();
+        const listAppsDeviceAction = new ListAppsDeviceAction({
+          input: { unlockTimeout: 500 },
+        });
 
-      sendCommandMock
-        .mockResolvedValueOnce(
-          CommandResultFactory({ data: [BTC_APP, CUSTOM_LOCK_SCREEN_APP] }),
-        )
-        .mockResolvedValueOnce(CommandResultFactory({ data: [] }));
+        sendCommandMock
+          .mockResolvedValueOnce(
+            CommandResultFactory({ data: [BTC_APP, CUSTOM_LOCK_SCREEN_APP] }),
+          )
+          .mockResolvedValueOnce(CommandResultFactory({ data: [] }));
 
-      const expectedStates: Array<ListAppsDAState> = [
-        {
-          intermediateValue: {
-            requiredUserInteraction: UserInteractionRequired.None,
+        const expectedStates: Array<ListAppsDAState> = [
+          {
+            intermediateValue: {
+              requiredUserInteraction: UserInteractionRequired.None,
+            },
+            status: DeviceActionStatus.Pending, // GoToDashboardDeviceAction
           },
-          status: DeviceActionStatus.Pending, // GoToDashboardDeviceAction
-        },
-        {
-          intermediateValue: {
-            requiredUserInteraction: UserInteractionRequired.None,
+          {
+            intermediateValue: {
+              requiredUserInteraction: UserInteractionRequired.None,
+            },
+            status: DeviceActionStatus.Pending, // GoToDashboardCheck
           },
-          status: DeviceActionStatus.Pending, // GoToDashboardCheck
-        },
-        {
-          intermediateValue: {
-            requiredUserInteraction: UserInteractionRequired.AllowListApps,
+          {
+            intermediateValue: {
+              requiredUserInteraction: UserInteractionRequired.AllowListApps,
+            },
+            status: DeviceActionStatus.Pending, // ListApps
           },
-          status: DeviceActionStatus.Pending, // ListApps
-        },
-        {
-          intermediateValue: {
-            requiredUserInteraction: UserInteractionRequired.None,
+          {
+            intermediateValue: {
+              requiredUserInteraction: UserInteractionRequired.None,
+            },
+            status: DeviceActionStatus.Pending, // ContinueListApps
           },
-          status: DeviceActionStatus.Pending, // ContinueListApps
-        },
-        {
-          output: [BTC_APP, CUSTOM_LOCK_SCREEN_APP],
-          status: DeviceActionStatus.Completed, // Success
-        },
-      ];
+          {
+            output: [BTC_APP, CUSTOM_LOCK_SCREEN_APP],
+            status: DeviceActionStatus.Completed, // Success
+          },
+        ];
 
-      testDeviceActionStates(
-        listAppsDeviceAction,
-        expectedStates,
-        makeDeviceActionInternalApiMock(),
-        done,
-      );
-    });
+        testDeviceActionStates(
+          listAppsDeviceAction,
+          expectedStates,
+          makeDeviceActionInternalApiMock(),
+          done,
+        );
+      }));
 
-    it("should run the device action with three app installed", (done) => {
-      setupGoToDashboardMock();
-      const listAppsDeviceAction = new ListAppsDeviceAction({
-        input: { unlockTimeout: 500 },
-      });
+    it("should run the device action with three app installed", () =>
+      new Promise((done) => {
+        setupGoToDashboardMock();
+        const listAppsDeviceAction = new ListAppsDeviceAction({
+          input: { unlockTimeout: 500 },
+        });
 
-      sendCommandMock
-        .mockResolvedValueOnce(
-          CommandResultFactory({ data: [BTC_APP, CUSTOM_LOCK_SCREEN_APP] }),
-        )
-        .mockResolvedValueOnce(CommandResultFactory({ data: [ETH_APP] }));
+        sendCommandMock
+          .mockResolvedValueOnce(
+            CommandResultFactory({ data: [BTC_APP, CUSTOM_LOCK_SCREEN_APP] }),
+          )
+          .mockResolvedValueOnce(CommandResultFactory({ data: [ETH_APP] }));
 
-      const expectedStates: Array<ListAppsDAState> = [
-        {
-          intermediateValue: {
-            requiredUserInteraction: UserInteractionRequired.None,
+        const expectedStates: Array<ListAppsDAState> = [
+          {
+            intermediateValue: {
+              requiredUserInteraction: UserInteractionRequired.None,
+            },
+            status: DeviceActionStatus.Pending, // GoToDashboardDeviceAction
           },
-          status: DeviceActionStatus.Pending, // GoToDashboardDeviceAction
-        },
-        {
-          intermediateValue: {
-            requiredUserInteraction: UserInteractionRequired.None,
+          {
+            intermediateValue: {
+              requiredUserInteraction: UserInteractionRequired.None,
+            },
+            status: DeviceActionStatus.Pending, // GoToDashboardCheck
           },
-          status: DeviceActionStatus.Pending, // GoToDashboardCheck
-        },
-        {
-          intermediateValue: {
-            requiredUserInteraction: UserInteractionRequired.AllowListApps,
+          {
+            intermediateValue: {
+              requiredUserInteraction: UserInteractionRequired.AllowListApps,
+            },
+            status: DeviceActionStatus.Pending, // ListApps
           },
-          status: DeviceActionStatus.Pending, // ListApps
-        },
-        {
-          intermediateValue: {
-            requiredUserInteraction: UserInteractionRequired.None,
+          {
+            intermediateValue: {
+              requiredUserInteraction: UserInteractionRequired.None,
+            },
+            status: DeviceActionStatus.Pending, // ContinueListApps
           },
-          status: DeviceActionStatus.Pending, // ContinueListApps
-        },
-        {
-          output: [BTC_APP, CUSTOM_LOCK_SCREEN_APP, ETH_APP],
-          status: DeviceActionStatus.Completed, // Success
-        },
-      ];
+          {
+            output: [BTC_APP, CUSTOM_LOCK_SCREEN_APP, ETH_APP],
+            status: DeviceActionStatus.Completed, // Success
+          },
+        ];
 
-      testDeviceActionStates(
-        listAppsDeviceAction,
-        expectedStates,
-        makeDeviceActionInternalApiMock(),
-        done,
-      );
-    });
+        testDeviceActionStates(
+          listAppsDeviceAction,
+          expectedStates,
+          makeDeviceActionInternalApiMock(),
+          done,
+        );
+      }));
 
-    it("should run the device action with four app installed", (done) => {
-      setupGoToDashboardMock();
-      const listAppsDeviceAction = new ListAppsDeviceAction({
-        input: { unlockTimeout: 500 },
-      });
+    it("should run the device action with four app installed", () =>
+      new Promise((done) => {
+        setupGoToDashboardMock();
+        const listAppsDeviceAction = new ListAppsDeviceAction({
+          input: { unlockTimeout: 500 },
+        });
 
-      sendCommandMock
-        .mockResolvedValueOnce(
-          CommandResultFactory({ data: [BTC_APP, CUSTOM_LOCK_SCREEN_APP] }),
-        )
-        .mockResolvedValueOnce(
-          CommandResultFactory({ data: [ETH_APP, SOLANA_APP] }),
-        )
-        .mockResolvedValueOnce(CommandResultFactory({ data: [] }));
+        sendCommandMock
+          .mockResolvedValueOnce(
+            CommandResultFactory({ data: [BTC_APP, CUSTOM_LOCK_SCREEN_APP] }),
+          )
+          .mockResolvedValueOnce(
+            CommandResultFactory({ data: [ETH_APP, SOLANA_APP] }),
+          )
+          .mockResolvedValueOnce(CommandResultFactory({ data: [] }));
 
-      const expectedStates: Array<ListAppsDAState> = [
-        {
-          intermediateValue: {
-            requiredUserInteraction: UserInteractionRequired.None,
+        const expectedStates: Array<ListAppsDAState> = [
+          {
+            intermediateValue: {
+              requiredUserInteraction: UserInteractionRequired.None,
+            },
+            status: DeviceActionStatus.Pending, // GoToDashboardDeviceAction
           },
-          status: DeviceActionStatus.Pending, // GoToDashboardDeviceAction
-        },
-        {
-          intermediateValue: {
-            requiredUserInteraction: UserInteractionRequired.None,
+          {
+            intermediateValue: {
+              requiredUserInteraction: UserInteractionRequired.None,
+            },
+            status: DeviceActionStatus.Pending, // GoToDashboardCheck
           },
-          status: DeviceActionStatus.Pending, // GoToDashboardCheck
-        },
-        {
-          intermediateValue: {
-            requiredUserInteraction: UserInteractionRequired.AllowListApps,
+          {
+            intermediateValue: {
+              requiredUserInteraction: UserInteractionRequired.AllowListApps,
+            },
+            status: DeviceActionStatus.Pending, // ListApps
           },
-          status: DeviceActionStatus.Pending, // ListApps
-        },
-        {
-          intermediateValue: {
-            requiredUserInteraction: UserInteractionRequired.None,
+          {
+            intermediateValue: {
+              requiredUserInteraction: UserInteractionRequired.None,
+            },
+            status: DeviceActionStatus.Pending, // ContinueListApps
           },
-          status: DeviceActionStatus.Pending, // ContinueListApps
-        },
-        {
-          intermediateValue: {
-            requiredUserInteraction: UserInteractionRequired.None,
+          {
+            intermediateValue: {
+              requiredUserInteraction: UserInteractionRequired.None,
+            },
+            status: DeviceActionStatus.Pending, // ContinueListApps
           },
-          status: DeviceActionStatus.Pending, // ContinueListApps
-        },
-        {
-          output: [BTC_APP, CUSTOM_LOCK_SCREEN_APP, ETH_APP, SOLANA_APP],
-          status: DeviceActionStatus.Completed, // Success
-        },
-      ];
+          {
+            output: [BTC_APP, CUSTOM_LOCK_SCREEN_APP, ETH_APP, SOLANA_APP],
+            status: DeviceActionStatus.Completed, // Success
+          },
+        ];
 
-      testDeviceActionStates(
-        listAppsDeviceAction,
-        expectedStates,
-        makeDeviceActionInternalApiMock(),
-        done,
-      );
-    });
+        testDeviceActionStates(
+          listAppsDeviceAction,
+          expectedStates,
+          makeDeviceActionInternalApiMock(),
+          done,
+        );
+      }));
 
-    it("should run the device action with five app installed", (done) => {
-      setupGoToDashboardMock();
-      const listAppsDeviceAction = new ListAppsDeviceAction({
-        input: { unlockTimeout: 500 },
-      });
+    it("should run the device action with five app installed", () =>
+      new Promise((done) => {
+        setupGoToDashboardMock();
+        const listAppsDeviceAction = new ListAppsDeviceAction({
+          input: { unlockTimeout: 500 },
+        });
 
-      sendCommandMock
-        .mockResolvedValueOnce(
-          CommandResultFactory({ data: [BTC_APP, CUSTOM_LOCK_SCREEN_APP] }),
-        )
-        .mockResolvedValueOnce(
-          CommandResultFactory({ data: [ETH_APP, SOLANA_APP] }),
-        )
-        .mockResolvedValueOnce(CommandResultFactory({ data: [DOGECOIN_APP] }));
-      const expectedStates: Array<ListAppsDAState> = [
-        {
-          intermediateValue: {
-            requiredUserInteraction: UserInteractionRequired.None,
+        sendCommandMock
+          .mockResolvedValueOnce(
+            CommandResultFactory({ data: [BTC_APP, CUSTOM_LOCK_SCREEN_APP] }),
+          )
+          .mockResolvedValueOnce(
+            CommandResultFactory({ data: [ETH_APP, SOLANA_APP] }),
+          )
+          .mockResolvedValueOnce(
+            CommandResultFactory({ data: [DOGECOIN_APP] }),
+          );
+        const expectedStates: Array<ListAppsDAState> = [
+          {
+            intermediateValue: {
+              requiredUserInteraction: UserInteractionRequired.None,
+            },
+            status: DeviceActionStatus.Pending, // GoToDashboardDeviceAction
           },
-          status: DeviceActionStatus.Pending, // GoToDashboardDeviceAction
-        },
-        {
-          intermediateValue: {
-            requiredUserInteraction: UserInteractionRequired.None,
+          {
+            intermediateValue: {
+              requiredUserInteraction: UserInteractionRequired.None,
+            },
+            status: DeviceActionStatus.Pending, // GoToDashboardCheck
           },
-          status: DeviceActionStatus.Pending, // GoToDashboardCheck
-        },
-        {
-          intermediateValue: {
-            requiredUserInteraction: UserInteractionRequired.AllowListApps,
+          {
+            intermediateValue: {
+              requiredUserInteraction: UserInteractionRequired.AllowListApps,
+            },
+            status: DeviceActionStatus.Pending, // ListApps
           },
-          status: DeviceActionStatus.Pending, // ListApps
-        },
-        {
-          intermediateValue: {
-            requiredUserInteraction: UserInteractionRequired.None,
+          {
+            intermediateValue: {
+              requiredUserInteraction: UserInteractionRequired.None,
+            },
+            status: DeviceActionStatus.Pending, // ContinueListApps
           },
-          status: DeviceActionStatus.Pending, // ContinueListApps
-        },
-        {
-          intermediateValue: {
-            requiredUserInteraction: UserInteractionRequired.None,
+          {
+            intermediateValue: {
+              requiredUserInteraction: UserInteractionRequired.None,
+            },
+            status: DeviceActionStatus.Pending, // ContinueListApps
           },
-          status: DeviceActionStatus.Pending, // ContinueListApps
-        },
-        {
-          output: [
-            BTC_APP,
-            CUSTOM_LOCK_SCREEN_APP,
-            ETH_APP,
-            SOLANA_APP,
-            DOGECOIN_APP,
-          ] as ListAppsResponse,
-          status: DeviceActionStatus.Completed, // Success
-        },
-      ];
+          {
+            output: [
+              BTC_APP,
+              CUSTOM_LOCK_SCREEN_APP,
+              ETH_APP,
+              SOLANA_APP,
+              DOGECOIN_APP,
+            ] as ListAppsResponse,
+            status: DeviceActionStatus.Completed, // Success
+          },
+        ];
 
-      testDeviceActionStates(
-        listAppsDeviceAction,
-        expectedStates,
-        makeDeviceActionInternalApiMock(),
-        done,
-      );
-    });
+        testDeviceActionStates(
+          listAppsDeviceAction,
+          expectedStates,
+          makeDeviceActionInternalApiMock(),
+          done,
+        );
+      }));
   });
 
   describe("error cases", () => {
-    it("should return an error if GoTodashboard fails", (done) => {
-      setupGoToDashboardMock(true);
-      const listAppsDeviceAction = new ListAppsDeviceAction({
-        input: { unlockTimeout: 500 },
-      });
+    it("should return an error if GoTodashboard fails", () =>
+      new Promise((done) => {
+        setupGoToDashboardMock(true);
+        const listAppsDeviceAction = new ListAppsDeviceAction({
+          input: { unlockTimeout: 500 },
+        });
 
-      sendCommandMock.mockResolvedValue(CommandResultFactory({ data: [] }));
+        sendCommandMock.mockResolvedValue(CommandResultFactory({ data: [] }));
 
-      const expectedStates: Array<ListAppsDAState> = [
-        {
-          intermediateValue: {
-            requiredUserInteraction: UserInteractionRequired.None,
+        const expectedStates: Array<ListAppsDAState> = [
+          {
+            intermediateValue: {
+              requiredUserInteraction: UserInteractionRequired.None,
+            },
+            status: DeviceActionStatus.Pending, // GoToDashboardDeviceAction
           },
-          status: DeviceActionStatus.Pending, // GoToDashboardDeviceAction
-        },
-        {
-          intermediateValue: {
-            requiredUserInteraction: UserInteractionRequired.None,
+          {
+            intermediateValue: {
+              requiredUserInteraction: UserInteractionRequired.None,
+            },
+            status: DeviceActionStatus.Pending, // GoToDashboardCheck
           },
-          status: DeviceActionStatus.Pending, // GoToDashboardCheck
-        },
-        {
-          error: new UnknownDAError("GoToDashboard failed"),
-          status: DeviceActionStatus.Error, // Error
-        },
-      ];
-
-      testDeviceActionStates(
-        listAppsDeviceAction,
-        expectedStates,
-        makeDeviceActionInternalApiMock(),
-        done,
-      );
-    });
-
-    it("should run the device action if GoTodashboard fails", (done) => {
-      setupGoToDashboardMock(true);
-      const listAppsDeviceAction = new ListAppsDeviceAction({
-        input: { unlockTimeout: 500 },
-      });
-
-      sendCommandMock.mockResolvedValue(CommandResultFactory({ data: [] }));
-
-      const expectedStates: Array<ListAppsDAState> = [
-        {
-          intermediateValue: {
-            requiredUserInteraction: UserInteractionRequired.None,
+          {
+            error: new UnknownDAError("GoToDashboard failed"),
+            status: DeviceActionStatus.Error, // Error
           },
-          status: DeviceActionStatus.Pending, // GoToDashboardDeviceAction
-        },
-        {
-          intermediateValue: {
-            requiredUserInteraction: UserInteractionRequired.None,
+        ];
+
+        testDeviceActionStates(
+          listAppsDeviceAction,
+          expectedStates,
+          makeDeviceActionInternalApiMock(),
+          done,
+        );
+      }));
+
+    it("should run the device action if GoTodashboard fails", () =>
+      new Promise((done) => {
+        setupGoToDashboardMock(true);
+        const listAppsDeviceAction = new ListAppsDeviceAction({
+          input: { unlockTimeout: 500 },
+        });
+
+        sendCommandMock.mockResolvedValue(CommandResultFactory({ data: [] }));
+
+        const expectedStates: Array<ListAppsDAState> = [
+          {
+            intermediateValue: {
+              requiredUserInteraction: UserInteractionRequired.None,
+            },
+            status: DeviceActionStatus.Pending, // GoToDashboardDeviceAction
           },
-          status: DeviceActionStatus.Pending, // GoToDashboardCheck
-        },
-        {
-          error: new UnknownDAError("GoToDashboard failed"),
-          status: DeviceActionStatus.Error, // Error
-        },
-      ];
-
-      testDeviceActionStates(
-        listAppsDeviceAction,
-        expectedStates,
-        makeDeviceActionInternalApiMock(),
-        done,
-      );
-    });
-
-    it("should return an error if ListApps fails", (done) => {
-      setupGoToDashboardMock();
-      const listAppsDeviceAction = new ListAppsDeviceAction({
-        input: { unlockTimeout: 500 },
-      });
-
-      const globalError = new GlobalCommandError({
-        errorCode: "5501",
-        ...GLOBAL_ERRORS["5501"],
-      });
-
-      sendCommandMock.mockResolvedValue(
-        CommandResultFactory({
-          error: globalError,
-        }),
-      );
-
-      const expectedStates: Array<ListAppsDAState> = [
-        {
-          intermediateValue: {
-            requiredUserInteraction: UserInteractionRequired.None,
+          {
+            intermediateValue: {
+              requiredUserInteraction: UserInteractionRequired.None,
+            },
+            status: DeviceActionStatus.Pending, // GoToDashboardCheck
           },
-          status: DeviceActionStatus.Pending, // GoToDashboardDeviceAction
-        },
-        {
-          intermediateValue: {
-            requiredUserInteraction: UserInteractionRequired.None,
+          {
+            error: new UnknownDAError("GoToDashboard failed"),
+            status: DeviceActionStatus.Error, // Error
           },
-          status: DeviceActionStatus.Pending, // GoToDashboardCheck
-        },
-        {
-          intermediateValue: {
-            requiredUserInteraction: UserInteractionRequired.AllowListApps,
-          },
-          status: DeviceActionStatus.Pending, // ListApps
-        },
-        {
-          error: globalError,
-          status: DeviceActionStatus.Error, // Error
-        },
-      ];
+        ];
 
-      testDeviceActionStates(
-        listAppsDeviceAction,
-        expectedStates,
-        makeDeviceActionInternalApiMock(),
-        done,
-      );
-    });
+        testDeviceActionStates(
+          listAppsDeviceAction,
+          expectedStates,
+          makeDeviceActionInternalApiMock(),
+          done,
+        );
+      }));
 
-    it("should return an error if ListAppsContinue fails", (done) => {
-      setupGoToDashboardMock();
-      const listAppsDeviceAction = new ListAppsDeviceAction({
-        input: { unlockTimeout: 500 },
-      });
+    it("should return an error if ListApps fails", () =>
+      new Promise((done) => {
+        setupGoToDashboardMock();
+        const listAppsDeviceAction = new ListAppsDeviceAction({
+          input: { unlockTimeout: 500 },
+        });
 
-      sendCommandMock
-        .mockResolvedValueOnce(
-          CommandResultFactory({ data: [BTC_APP, CUSTOM_LOCK_SCREEN_APP] }),
-        )
-        .mockRejectedValueOnce(new UnknownDAError("mocked error"));
+        const globalError = new GlobalCommandError({
+          errorCode: "5501",
+          ...GLOBAL_ERRORS["5501"],
+        });
 
-      const expectedStates: Array<ListAppsDAState> = [
-        {
-          intermediateValue: {
-            requiredUserInteraction: UserInteractionRequired.None,
-          },
-          status: DeviceActionStatus.Pending, // GoToDashboardDeviceAction
-        },
-        {
-          intermediateValue: {
-            requiredUserInteraction: UserInteractionRequired.None,
-          },
-          status: DeviceActionStatus.Pending, // GoToDashboardCheck
-        },
-        {
-          intermediateValue: {
-            requiredUserInteraction: UserInteractionRequired.AllowListApps,
-          },
-          status: DeviceActionStatus.Pending, // ListApps
-        },
-        {
-          intermediateValue: {
-            requiredUserInteraction: UserInteractionRequired.None,
-          },
-          status: DeviceActionStatus.Pending, // ContinueListApps
-        },
-        {
-          error: new UnknownDAError("mocked error"),
-          status: DeviceActionStatus.Error, // Success
-        },
-      ];
+        sendCommandMock.mockResolvedValue(
+          CommandResultFactory({
+            error: globalError,
+          }),
+        );
 
-      testDeviceActionStates(
-        listAppsDeviceAction,
-        expectedStates,
-        makeDeviceActionInternalApiMock(),
-        done,
-      );
-    });
+        const expectedStates: Array<ListAppsDAState> = [
+          {
+            intermediateValue: {
+              requiredUserInteraction: UserInteractionRequired.None,
+            },
+            status: DeviceActionStatus.Pending, // GoToDashboardDeviceAction
+          },
+          {
+            intermediateValue: {
+              requiredUserInteraction: UserInteractionRequired.None,
+            },
+            status: DeviceActionStatus.Pending, // GoToDashboardCheck
+          },
+          {
+            intermediateValue: {
+              requiredUserInteraction: UserInteractionRequired.AllowListApps,
+            },
+            status: DeviceActionStatus.Pending, // ListApps
+          },
+          {
+            error: globalError,
+            status: DeviceActionStatus.Error, // Error
+          },
+        ];
+
+        testDeviceActionStates(
+          listAppsDeviceAction,
+          expectedStates,
+          makeDeviceActionInternalApiMock(),
+          done,
+        );
+      }));
+
+    it("should return an error if ListAppsContinue fails", () =>
+      new Promise((done) => {
+        setupGoToDashboardMock();
+        const listAppsDeviceAction = new ListAppsDeviceAction({
+          input: { unlockTimeout: 500 },
+        });
+
+        sendCommandMock
+          .mockResolvedValueOnce(
+            CommandResultFactory({ data: [BTC_APP, CUSTOM_LOCK_SCREEN_APP] }),
+          )
+          .mockRejectedValueOnce(new UnknownDAError("mocked error"));
+
+        const expectedStates: Array<ListAppsDAState> = [
+          {
+            intermediateValue: {
+              requiredUserInteraction: UserInteractionRequired.None,
+            },
+            status: DeviceActionStatus.Pending, // GoToDashboardDeviceAction
+          },
+          {
+            intermediateValue: {
+              requiredUserInteraction: UserInteractionRequired.None,
+            },
+            status: DeviceActionStatus.Pending, // GoToDashboardCheck
+          },
+          {
+            intermediateValue: {
+              requiredUserInteraction: UserInteractionRequired.AllowListApps,
+            },
+            status: DeviceActionStatus.Pending, // ListApps
+          },
+          {
+            intermediateValue: {
+              requiredUserInteraction: UserInteractionRequired.None,
+            },
+            status: DeviceActionStatus.Pending, // ContinueListApps
+          },
+          {
+            error: new UnknownDAError("mocked error"),
+            status: DeviceActionStatus.Error, // Success
+          },
+        ];
+
+        testDeviceActionStates(
+          listAppsDeviceAction,
+          expectedStates,
+          makeDeviceActionInternalApiMock(),
+          done,
+        );
+      }));
   });
 });

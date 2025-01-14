@@ -19,14 +19,14 @@ describe("MerkleMapBuilder", () => {
     Uint8Array.from([0xfe, 57]),
   ];
 
-  const mockCreateMerkleTree = jest.fn();
+  const mockCreateMerkleTree = vi.fn();
   const mockMerkleTree: MerkleTreeBuilder = {
     build: mockCreateMerkleTree,
   } as unknown as MerkleTreeBuilder;
   let builder: MerkleMapBuilder;
 
   beforeEach(() => {
-    jest.resetAllMocks();
+    vi.resetAllMocks();
     builder = new MerkleMapBuilder(mockMerkleTree);
   });
 

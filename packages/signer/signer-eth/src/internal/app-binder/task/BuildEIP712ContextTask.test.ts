@@ -18,12 +18,12 @@ import { BuildEIP712ContextTask } from "./BuildEIP712ContextTask";
 describe("BuildEIP712ContextTask", () => {
   const apiMock = makeDeviceActionInternalApiMock();
   const contextMouleMock = {
-    getContext: jest.fn(),
-    getContexts: jest.fn(),
-    getTypedDataFilters: jest.fn(),
+    getContext: vi.fn(),
+    getContexts: vi.fn(),
+    getTypedDataFilters: vi.fn(),
   };
   const parserMock = {
-    parse: jest.fn(),
+    parse: vi.fn(),
   };
 
   const TEST_DATA = {
@@ -119,7 +119,7 @@ describe("BuildEIP712ContextTask", () => {
   };
 
   beforeEach(() => {
-    jest.resetAllMocks();
+    vi.resetAllMocks();
   });
 
   it("Build context with clear signing context not supported by the device", async () => {

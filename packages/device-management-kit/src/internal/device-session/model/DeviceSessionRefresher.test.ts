@@ -13,40 +13,43 @@ import { DeviceModelId } from "@api/device/DeviceModel";
 import { DeviceStatus } from "@api/device/DeviceStatus";
 import { type ApduResponse } from "@api/device-session/ApduResponse";
 import { type DeviceSessionState } from "@api/device-session/DeviceSessionState";
+import { type Apdu } from "@api/index";
 import { type LoggerPublisherService } from "@api/logger-publisher/service/LoggerPublisherService";
 import { DEVICE_SESSION_REFRESH_INTERVAL } from "@internal/device-session/data/DeviceSessionRefresherConst";
 import { DefaultLoggerPublisherService } from "@internal/logger-publisher/service/DefaultLoggerPublisherService";
 
 import { DeviceSessionRefresher } from "./DeviceSessionRefresher";
 
-const mockSendApduFn = jest
+const mockSendApduFn = vi
   .fn()
   .mockResolvedValue(Promise.resolve(Right({} as ApduResponse)));
-const mockUpdateStateFn = jest.fn().mockImplementation(() => undefined);
+const mockUpdateStateFn = vi.fn().mockImplementation(() => undefined);
 
-jest.useFakeTimers();
+vi.useFakeTimers();
 
 describe("DeviceSessionRefresher", () => {
   let deviceSessionRefresher: DeviceSessionRefresher;
   let logger: LoggerPublisherService;
 
   beforeEach(() => {
-    jest
-      .spyOn(GetAppAndVersionCommand.prototype, "parseResponse")
-      .mockReturnValueOnce(
-        CommandResultFactory({
-          data: {
-            name: "testAppName",
-          } as GetAppAndVersionResponse,
-        }),
-      );
-    jest
-      .spyOn(GetOsVersionCommand.prototype, "parseResponse")
-      .mockReturnValueOnce(
-        CommandResultFactory({
-          data: {} as GetOsVersionResponse,
-        }),
-      );
+    vi.spyOn(
+      GetAppAndVersionCommand.prototype,
+      "parseResponse",
+    ).mockReturnValueOnce(
+      CommandResultFactory({
+        data: {
+          name: "testAppName",
+        } as GetAppAndVersionResponse,
+      }),
+    );
+    vi.spyOn(
+      GetOsVersionCommand.prototype,
+      "parseResponse",
+    ).mockReturnValueOnce(
+      CommandResultFactory({
+        data: {} as GetOsVersionResponse,
+      }),
+    );
     logger = new DefaultLoggerPublisherService(
       [],
       "DeviceSessionRefresherTest",
@@ -73,18 +76,18 @@ describe("DeviceSessionRefresher", () => {
 
     afterEach(() => {
       deviceSessionRefresher.stop();
-      jest.clearAllMocks();
+      vi.clearAllMocks();
     });
 
     it("should poll by calling sendApduFn 2 times", () => {
-      jest.advanceTimersByTime(DEVICE_SESSION_REFRESH_INTERVAL * 2);
+      vi.advanceTimersByTime(DEVICE_SESSION_REFRESH_INTERVAL * 2);
       expect(mockSendApduFn).toHaveBeenCalledTimes(2);
     });
 
     it("should not poll when device is busy", () => {
       deviceSessionRefresher.setDeviceStatus(DeviceStatus.BUSY);
 
-      jest.advanceTimersByTime(DEVICE_SESSION_REFRESH_INTERVAL);
+      vi.advanceTimersByTime(DEVICE_SESSION_REFRESH_INTERVAL);
 
       expect(mockSendApduFn).not.toHaveBeenCalled();
     });
@@ -92,13 +95,13 @@ describe("DeviceSessionRefresher", () => {
     it("should not poll when device is disconnected", () => {
       deviceSessionRefresher.setDeviceStatus(DeviceStatus.NOT_CONNECTED);
 
-      jest.advanceTimersByTime(DEVICE_SESSION_REFRESH_INTERVAL);
+      vi.advanceTimersByTime(DEVICE_SESSION_REFRESH_INTERVAL);
 
       expect(mockSendApduFn).not.toHaveBeenCalled();
     });
 
     it("should update device session state by calling updateStateFn", async () => {
-      jest.advanceTimersByTime(DEVICE_SESSION_REFRESH_INTERVAL);
+      vi.advanceTimersByTime(DEVICE_SESSION_REFRESH_INTERVAL);
 
       await expect(mockSendApduFn()).resolves.toEqual(Right({}));
       expect(mockSendApduFn).toHaveBeenCalled();
@@ -107,9 +110,9 @@ describe("DeviceSessionRefresher", () => {
 
     it("should not update device session state with failed polling response", async () => {
       mockSendApduFn.mockResolvedValueOnce(Promise.resolve(Left("error")));
-      const spy = jest.spyOn(logger, "error");
+      const spy = vi.spyOn(logger, "error");
 
-      jest.advanceTimersByTime(DEVICE_SESSION_REFRESH_INTERVAL);
+      vi.advanceTimersByTime(DEVICE_SESSION_REFRESH_INTERVAL);
       await mockSendApduFn();
 
       await expect(mockUpdateStateFn).not.toHaveBeenCalled();
@@ -117,7 +120,7 @@ describe("DeviceSessionRefresher", () => {
     });
 
     it("should stop the refresher when device is disconnected", () => {
-      const spy = jest.spyOn(deviceSessionRefresher, "stop");
+      const spy = vi.spyOn(deviceSessionRefresher, "stop");
       deviceSessionRefresher.setDeviceStatus(DeviceStatus.NOT_CONNECTED);
       expect(spy).toHaveBeenCalledTimes(1);
     });
@@ -136,7 +139,7 @@ describe("DeviceSessionRefresher", () => {
   describe("With a NanoS device", () => {
     afterEach(() => {
       deviceSessionRefresher.stop();
-      jest.clearAllMocks();
+      vi.clearAllMocks();
     });
 
     it("should call sendApduFn 2 times and update state 1 time for a single interval", async () => {
@@ -150,7 +153,7 @@ describe("DeviceSessionRefresher", () => {
         },
         logger,
       );
-      jest.advanceTimersByTime(DEVICE_SESSION_REFRESH_INTERVAL * 2 + 100);
+      vi.advanceTimersByTime(DEVICE_SESSION_REFRESH_INTERVAL * 2 + 100);
 
       await Promise.resolve();
       expect(mockSendApduFn).toHaveBeenNthCalledWith(
@@ -168,7 +171,7 @@ describe("DeviceSessionRefresher", () => {
     });
 
     it("should set device locked when get os version times out", async () => {
-      mockSendApduFn.mockImplementation((apdu) => {
+      mockSendApduFn.mockImplementation((apdu: Apdu) => {
         if (
           apdu.toString() ===
           new GetOsVersionCommand().getApdu().getRawApdu().toString()
@@ -197,8 +200,8 @@ describe("DeviceSessionRefresher", () => {
         },
         logger,
       );
-      jest.spyOn(deviceSessionRefresher, "setDeviceStatus");
-      jest.advanceTimersByTime(DEVICE_SESSION_REFRESH_INTERVAL * 5 + 100);
+      vi.spyOn(deviceSessionRefresher, "setDeviceStatus");
+      vi.advanceTimersByTime(DEVICE_SESSION_REFRESH_INTERVAL * 5 + 100);
       await Promise.resolve();
       expect(mockSendApduFn).toHaveBeenNthCalledWith(
         1,

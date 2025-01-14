@@ -13,7 +13,7 @@ import { commandTypes } from "./command/di/commandTypes";
 import { ConsoleLogger } from "./logger-subscriber/service/ConsoleLogger";
 import { DeviceManagementKit } from "./DeviceManagementKit";
 
-jest.mock("./logger-subscriber/service/ConsoleLogger");
+vi.mock("./logger-subscriber/service/ConsoleLogger");
 
 let dmk: DeviceManagementKit;
 let logger: ConsoleLogger;
@@ -118,7 +118,7 @@ describe("DeviceManagementKit", () => {
       [discoveryTypes.ListConnectedDevicesUseCase],
       [discoveryTypes.ListenToConnectedDeviceUseCase],
     ])(
-      "should have %p use case",
+      "should have %s use case",
       (diSymbol: interfaces.ServiceIdentifier<StubUseCase>) => {
         const uc = dmk.container.get<StubUseCase>(diSymbol);
         expect(uc).toBeInstanceOf(StubUseCase);

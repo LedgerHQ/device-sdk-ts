@@ -1,7 +1,7 @@
 export class DeviceConnectionFactoryStub {
   constructor() {}
 
-  create = jest.fn().mockImplementation(() => ({
-    sendApdu: jest.fn(),
+  create = vi.fn().mockImplementation(() => ({
+    sendApdu: vi.fn(),
   }));
 }

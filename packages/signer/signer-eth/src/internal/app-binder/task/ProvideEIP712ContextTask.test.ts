@@ -204,7 +204,7 @@ describe("ProvideEIP712ContextTask", () => {
     });
 
   beforeEach(() => {
-    jest.resetAllMocks();
+    vi.clearAllMocks();
   });
 
   it("Send context with no clear signing context", async () => {

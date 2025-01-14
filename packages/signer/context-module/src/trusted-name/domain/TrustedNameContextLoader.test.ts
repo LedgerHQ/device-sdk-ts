@@ -10,15 +10,16 @@ import { TrustedNameContextLoader } from "@/trusted-name/domain/TrustedNameConte
 
 describe("TrustedNameContextLoader", () => {
   const mockTrustedNameDataSource: TrustedNameDataSource = {
-    getDomainNamePayload: jest.fn(),
-    getTrustedNamePayload: jest.fn(),
+    getDomainNamePayload: vi.fn(),
+    getTrustedNamePayload: vi.fn(),
   };
 
   beforeEach(() => {
-    jest.restoreAllMocks();
-    jest
-      .spyOn(mockTrustedNameDataSource, "getDomainNamePayload")
-      .mockResolvedValue(Right("payload"));
+    vi.restoreAllMocks();
+    vi.spyOn(
+      mockTrustedNameDataSource,
+      "getDomainNamePayload",
+    ).mockResolvedValue(Right("payload"));
   });
 
   describe("load function", () => {
@@ -87,9 +88,10 @@ describe("TrustedNameContextLoader", () => {
       } as TransactionContext;
 
       // WHEN
-      jest
-        .spyOn(mockTrustedNameDataSource, "getDomainNamePayload")
-        .mockResolvedValue(Left(new Error("error")));
+      vi.spyOn(
+        mockTrustedNameDataSource,
+        "getDomainNamePayload",
+      ).mockResolvedValue(Left(new Error("error")));
       const loader = new TrustedNameContextLoader(mockTrustedNameDataSource);
       const result = await loader.load(transaction);
 
@@ -126,9 +128,10 @@ describe("TrustedNameContextLoader", () => {
       };
 
       // WHEN
-      jest
-        .spyOn(mockTrustedNameDataSource, "getTrustedNamePayload")
-        .mockResolvedValue(Right("payload"));
+      vi.spyOn(
+        mockTrustedNameDataSource,
+        "getTrustedNamePayload",
+      ).mockResolvedValue(Right("payload"));
       const loader = new TrustedNameContextLoader(mockTrustedNameDataSource);
       const result = await loader.loadField(field);
 
@@ -151,9 +154,10 @@ describe("TrustedNameContextLoader", () => {
       };
 
       // WHEN
-      jest
-        .spyOn(mockTrustedNameDataSource, "getTrustedNamePayload")
-        .mockResolvedValue(Left(new Error("error")));
+      vi.spyOn(
+        mockTrustedNameDataSource,
+        "getTrustedNamePayload",
+      ).mockResolvedValue(Left(new Error("error")));
       const loader = new TrustedNameContextLoader(mockTrustedNameDataSource);
       const result = await loader.loadField(field);
 

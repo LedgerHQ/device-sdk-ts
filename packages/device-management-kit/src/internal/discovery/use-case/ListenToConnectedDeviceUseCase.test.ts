@@ -11,7 +11,7 @@ import { type ManagerApiDataSource } from "@internal/manager-api/data/ManagerApi
 import { DefaultManagerApiService } from "@internal/manager-api/service/DefaultManagerApiService";
 import { type ManagerApiService } from "@internal/manager-api/service/ManagerApiService";
 
-jest.mock("@internal/manager-api/data/AxiosManagerApiDataSource");
+vi.mock("@internal/manager-api/data/AxiosManagerApiDataSource");
 
 let logger: LoggerPublisherService;
 let sessionService: DeviceSessionService;
@@ -34,41 +34,42 @@ describe("ListenToConnectedDevice", () => {
     sessionService = new DefaultDeviceSessionService(() => logger);
   });
 
-  it("should emit an instance of ConnectedDevice", (done) => {
-    // given
-    const connectedDevice = connectedDeviceStubBuilder({
-      id: "test-list-connected-device-id",
-    });
-    const deviceSession = deviceSessionStubBuilder(
-      { id: fakeSessionId, connectedDevice },
-      () => logger,
-      managerApi,
-    );
-    const observable = new ListenToConnectedDeviceUseCase(
-      sessionService,
-      () => logger,
-    ).execute();
+  it("should emit an instance of ConnectedDevice", () =>
+    new Promise<void>((done) => {
+      // given
+      const connectedDevice = connectedDeviceStubBuilder({
+        id: "test-list-connected-device-id",
+      });
+      const deviceSession = deviceSessionStubBuilder(
+        { id: fakeSessionId, connectedDevice },
+        () => logger,
+        managerApi,
+      );
+      const observable = new ListenToConnectedDeviceUseCase(
+        sessionService,
+        () => logger,
+      ).execute();
 
-    const subscription = observable.subscribe({
-      next(emittedConnectedDevice) {
-        // then
-        expect(emittedConnectedDevice).toEqual(
-          new ConnectedDevice({
-            transportConnectedDevice: connectedDevice,
-            sessionId: fakeSessionId,
-          }),
-        );
-        terminate();
-      },
-    });
+      const subscription = observable.subscribe({
+        next(emittedConnectedDevice) {
+          // then
+          expect(emittedConnectedDevice).toEqual(
+            new ConnectedDevice({
+              transportConnectedDevice: connectedDevice,
+              sessionId: fakeSessionId,
+            }),
+          );
+          terminate();
+        },
+      });
 
-    function terminate() {
-      subscription.unsubscribe();
-      deviceSession.close();
-      done();
-    }
+      function terminate() {
+        subscription.unsubscribe();
+        deviceSession.close();
+        done();
+      }
 
-    // when
-    sessionService.addDeviceSession(deviceSession);
-  });
+      // when
+      sessionService.addDeviceSession(deviceSession);
+    }));
 });

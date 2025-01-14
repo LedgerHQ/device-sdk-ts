@@ -14,12 +14,12 @@ const COMMAND_CODE = ClientCommandCodes.GET_MORE_ELEMENTS;
 
 describe("GetMoreElementsCommandHandler", () => {
   let commandHandlerContext: CommandHandlerContext;
-  let mockDataStore: jest.Mocked<DataStore>;
+  let mockDataStore: vi.Mocked<DataStore>;
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
 
-    mockDataStore = {} as unknown as jest.Mocked<DataStore>;
+    mockDataStore = {} as unknown as vi.Mocked<DataStore>;
 
     commandHandlerContext = {
       dataStore: mockDataStore,

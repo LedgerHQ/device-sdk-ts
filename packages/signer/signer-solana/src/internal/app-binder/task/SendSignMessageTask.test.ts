@@ -12,7 +12,7 @@ describe("SendSignMessageTask", () => {
   const apiMock = makeDeviceActionInternalApiMock();
 
   beforeEach(() => {
-    jest.resetAllMocks();
+    vi.resetAllMocks();
   });
 
   const SIMPLE_MESSAGE = new Uint8Array([0x01, 0x02, 0x03, 0x04]);

@@ -7,7 +7,7 @@ import { type TokenDataSource } from "@/token/data/TokenDataSource";
 import { type TokenDto } from "@/token/data/TokenDto";
 import PACKAGE from "@root/package.json";
 
-jest.mock("axios");
+vi.mock("axios");
 
 describe("HttpTokenDataSource", () => {
   let datasource: TokenDataSource;
@@ -21,14 +21,14 @@ describe("HttpTokenDataSource", () => {
       },
     } as ContextModuleConfig;
     datasource = new HttpTokenDataSource(config);
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   it("should call axios with the ledger client version header", async () => {
     // GIVEN
     const version = `context-module/${PACKAGE.version}`;
-    const requestSpy = jest.fn(() => Promise.resolve({ data: [] }));
-    jest.spyOn(axios, "request").mockImplementation(requestSpy);
+    const requestSpy = vi.fn(() => Promise.resolve({ data: [] }));
+    vi.spyOn(axios, "request").mockImplementation(requestSpy);
 
     // WHEN
     await datasource.getTokenInfosPayload({ address: "0x00", chainId: 1 });
@@ -52,7 +52,7 @@ describe("HttpTokenDataSource", () => {
         },
       },
     };
-    jest.spyOn(axios, "request").mockResolvedValue({ data: [tokenDTO] });
+    vi.spyOn(axios, "request").mockResolvedValue({ data: [tokenDTO] });
 
     // WHEN
     const result = await datasource.getTokenInfosPayload({
@@ -66,7 +66,7 @@ describe("HttpTokenDataSource", () => {
 
   it("should return an error when data is empty", async () => {
     // GIVEN
-    jest.spyOn(axios, "request").mockResolvedValue({ data: undefined });
+    vi.spyOn(axios, "request").mockResolvedValue({ data: undefined });
 
     // WHEN
     const result = await datasource.getTokenInfosPayload({
@@ -86,7 +86,7 @@ describe("HttpTokenDataSource", () => {
 
   it("should return undefined when no signature", async () => {
     // GIVEN
-    jest.spyOn(axios, "request").mockResolvedValue({ data: [{}] });
+    vi.spyOn(axios, "request").mockResolvedValue({ data: [{}] });
 
     // WHEN
     const result = await datasource.getTokenInfosPayload({
@@ -115,7 +115,7 @@ describe("HttpTokenDataSource", () => {
         },
       },
     };
-    jest.spyOn(axios, "request").mockResolvedValue({ data: [tokenDTO] });
+    vi.spyOn(axios, "request").mockResolvedValue({ data: [tokenDTO] });
 
     // WHEN
     const result = await datasource.getTokenInfosPayload({
@@ -135,9 +135,9 @@ describe("HttpTokenDataSource", () => {
 
   it("should return undefined when no decimals", async () => {
     // GIVEN
-    jest
-      .spyOn(axios, "request")
-      .mockResolvedValue({ data: [{ live_signature: "0x0", ticker: "USDC" }] });
+    vi.spyOn(axios, "request").mockResolvedValue({
+      data: [{ live_signature: "0x0", ticker: "USDC" }],
+    });
 
     // WHEN
     const result = await datasource.getTokenInfosPayload({
@@ -157,7 +157,7 @@ describe("HttpTokenDataSource", () => {
 
   it("should return an error when axios throws an error", async () => {
     // GIVEN
-    jest.spyOn(axios, "request").mockRejectedValue(new Error());
+    vi.spyOn(axios, "request").mockRejectedValue(new Error());
 
     // WHEN
     const result = await datasource.getTokenInfosPayload({

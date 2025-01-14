@@ -15,29 +15,29 @@ import { DefaultDataStoreService } from "./DefaultDataStoreService";
 
 describe("DefaultDataStoreService", () => {
   const mockMerkleMapBuilder = {
-    build: jest.fn(),
+    build: vi.fn(),
   };
 
   const mockMerkleTreeBuilder = {
-    build: jest.fn(),
+    build: vi.fn(),
   };
 
-  const mockWalletSerialize = jest.fn();
+  const mockWalletSerialize = vi.fn();
   const mockWalletSerializer: WalletSerializer = {
     serialize: mockWalletSerialize,
-    getId: jest.fn(),
+    getId: vi.fn(),
   };
 
   const mockDataStore = {
-    getPreimage: jest.fn(),
-    getMerkleLeafIndex: jest.fn(),
-    getMerkleProof: jest.fn(),
-    addPreimage: jest.fn(),
-    addMerkleTree: jest.fn(),
-    addMerkleMap: jest.fn(),
+    getPreimage: vi.fn(),
+    getMerkleLeafIndex: vi.fn(),
+    getMerkleProof: vi.fn(),
+    addPreimage: vi.fn(),
+    addMerkleTree: vi.fn(),
+    addMerkleMap: vi.fn(),
   };
 
-  const mockedHash = jest.fn();
+  const mockedHash = vi.fn();
   const mockedHasherService: HasherService = {
     hash: mockedHash,
   };
@@ -56,7 +56,7 @@ describe("DefaultDataStoreService", () => {
 
   describe("Merkleize chunks", () => {
     beforeEach(() => {
-      jest.resetAllMocks();
+      vi.resetAllMocks();
     });
 
     it("Success case", () => {
@@ -90,7 +90,7 @@ describe("DefaultDataStoreService", () => {
 
   describe("Merkleize wallet", () => {
     beforeEach(() => {
-      jest.resetAllMocks();
+      vi.resetAllMocks();
     });
 
     it("Success case", () => {
@@ -167,7 +167,7 @@ describe("DefaultDataStoreService", () => {
     };
 
     beforeEach(() => {
-      jest.resetAllMocks();
+      vi.resetAllMocks();
     });
 
     it("Merkle map service failure", () => {

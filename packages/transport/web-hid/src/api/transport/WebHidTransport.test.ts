@@ -2,6 +2,7 @@ import {
   type ApduReceiverServiceFactory,
   type ApduSenderServiceFactory,
   connectedDeviceStubBuilder,
+  type ConnectError,
   type DeviceModel,
   DeviceModelId,
   DeviceNotRecognizedError,
@@ -10,11 +11,12 @@ import {
   NoAccessibleDeviceError,
   OpeningConnectionError,
   StaticDeviceModelDataSource,
+  type TransportConnectedDevice,
   type TransportDeviceModel,
   type TransportDiscoveredDevice,
   UnknownDeviceError,
 } from "@ledgerhq/device-management-kit";
-import { Left, Right } from "purify-ts";
+import { type Either, Left, Right } from "purify-ts";
 import { Subject } from "rxjs";
 
 import { RECONNECT_DEVICE_TIMEOUT } from "@api/data/WebHidConfig";
@@ -30,10 +32,10 @@ class LoggerPublisherServiceStub implements LoggerPublisherService {
   }
   subscribers: LoggerSubscriberService[] = [];
   tag: string = "";
-  error = jest.fn();
-  warn = jest.fn();
-  info = jest.fn();
-  debug = jest.fn();
+  error = vi.fn();
+  warn = vi.fn();
+  info = vi.fn();
+  debug = vi.fn();
 }
 
 // Our StaticDeviceModelDataSource can directly be used in our unit tests
@@ -45,9 +47,13 @@ const stubDevice: HIDDevice = hidDeviceStubBuilder();
 /**
  * Flushes all pending promises
  */
-const flushPromises = () =>
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-  new Promise(jest.requireActual("timers").setImmediate);
+/**
+ * Flushes all pending promises
+ */
+const flushPromises = async () => {
+  const timers = await vi.importActual<typeof import("timers")>("timers");
+  return new Promise(timers.setImmediate);
+};
 
 describe("WebHidTransport", () => {
   let transport: WebHidTransport;
@@ -55,8 +61,8 @@ describe("WebHidTransport", () => {
   let apduSenderServiceFactoryStub: ApduSenderServiceFactory;
 
   function initializeTransport() {
-    apduReceiverServiceFactoryStub = jest.fn();
-    apduSenderServiceFactoryStub = jest.fn();
+    apduReceiverServiceFactoryStub = vi.fn();
+    apduSenderServiceFactoryStub = vi.fn();
     transport = new WebHidTransport(
       usbDeviceModelDataSource,
       () => logger,
@@ -67,11 +73,11 @@ describe("WebHidTransport", () => {
 
   beforeEach(() => {
     initializeTransport();
-    jest.useFakeTimers();
+    vi.useFakeTimers();
   });
 
   afterEach(() => {
-    jest.restoreAllMocks();
+    vi.restoreAllMocks();
   });
 
   const discoverDevice = (
@@ -89,22 +95,23 @@ describe("WebHidTransport", () => {
       expect(transport.isSupported()).toBe(false);
     });
 
-    it("should emit a startDiscovering error", (done) => {
-      discoverDevice(
-        () => {
-          done("Should not emit any value");
-        },
-        (error) => {
-          expect(error).toBeInstanceOf(WebHidTransportNotSupportedError);
-          done();
-        },
-      );
-    });
+    it("should emit a startDiscovering error", () =>
+      new Promise<string | void>((done) => {
+        discoverDevice(
+          () => {
+            done("Should not emit any value");
+          },
+          (error) => {
+            expect(error).toBeInstanceOf(WebHidTransportNotSupportedError);
+            done();
+          },
+        );
+      }));
   });
 
   describe("When WebHID API is supported", () => {
-    const mockedGetDevices = jest.fn();
-    const mockedRequestDevice = jest.fn();
+    const mockedGetDevices = vi.fn();
+    const mockedRequestDevice = vi.fn();
 
     const connectionEventsSubject = new Subject<HIDConnectionEvent>();
     const disconnectionEventsSubject = new Subject<HIDConnectionEvent>();
@@ -142,7 +149,7 @@ describe("WebHidTransport", () => {
     });
 
     afterEach(() => {
-      jest.clearAllMocks();
+      vi.clearAllMocks();
       global.navigator = undefined as unknown as Navigator;
     });
 
@@ -175,146 +182,154 @@ describe("WebHidTransport", () => {
         });
 
       testCases.forEach((testCase) => {
-        it(testCase.testTitle, (done) => {
-          mockedRequestDevice.mockResolvedValueOnce([testCase.hidDevice]);
+        it(
+          testCase.testTitle,
+          () =>
+            new Promise<Error | void>((done) => {
+              mockedRequestDevice.mockResolvedValueOnce([testCase.hidDevice]);
 
-          discoverDevice(
-            (discoveredDevice) => {
-              try {
-                expect(discoveredDevice).toEqual(
-                  expect.objectContaining({
-                    deviceModel: testCase.expectedDeviceModel,
-                  }),
-                );
+              discoverDevice(
+                (discoveredDevice) => {
+                  try {
+                    expect(discoveredDevice).toEqual(
+                      expect.objectContaining({
+                        deviceModel: testCase.expectedDeviceModel,
+                      }),
+                    );
 
-                done();
-              } catch (expectError) {
-                done(expectError);
-              }
-            },
-            (error) => {
-              done(error);
-            },
-          );
-        });
+                    done();
+                  } catch (expectError) {
+                    done(expectError as Error);
+                  }
+                },
+                (error) => {
+                  done(error as Error);
+                },
+              );
+            }),
+        );
       });
 
       // It does not seem possible for a user to select several devices on the browser popup.
       // But if it was possible, we should emit them
-      it("should emit devices if new grant accesses", (done) => {
-        mockedRequestDevice.mockResolvedValueOnce([
-          stubDevice,
-          {
-            ...stubDevice,
-            productId: 0x5011,
-            productName: "Ledger Nano S Plus",
-          },
-        ]);
+      it("should emit devices if new grant accesses", () =>
+        new Promise<Error | void>((done) => {
+          mockedRequestDevice.mockResolvedValueOnce([
+            stubDevice,
+            {
+              ...stubDevice,
+              productId: 0x5011,
+              productName: "Ledger Nano S Plus",
+            },
+          ]);
 
-        let count = 0;
-        discoverDevice(
-          (discoveredDevice) => {
-            try {
-              switch (count) {
-                case 0:
-                  expect(discoveredDevice).toEqual(
-                    expect.objectContaining({
-                      deviceModel: expect.objectContaining({
-                        id: DeviceModelId.NANO_X,
-                        productName: "Ledger Nano X",
-                        usbProductId: 0x40,
-                      }) as DeviceModel,
-                    }),
-                  );
-                  break;
-                case 1:
-                  expect(discoveredDevice).toEqual(
-                    expect.objectContaining({
-                      deviceModel: expect.objectContaining({
-                        id: DeviceModelId.NANO_SP,
-                        productName: "Ledger Nano S Plus",
-                        usbProductId: 0x50,
-                      }) as DeviceModel,
-                    }),
-                  );
+          let count = 0;
+          discoverDevice(
+            (discoveredDevice) => {
+              try {
+                switch (count) {
+                  case 0:
+                    expect(discoveredDevice).toEqual(
+                      expect.objectContaining({
+                        deviceModel: expect.objectContaining({
+                          id: DeviceModelId.NANO_X,
+                          productName: "Ledger Nano X",
+                          usbProductId: 0x40,
+                        }) as DeviceModel,
+                      }),
+                    );
+                    break;
+                  case 1:
+                    expect(discoveredDevice).toEqual(
+                      expect.objectContaining({
+                        deviceModel: expect.objectContaining({
+                          id: DeviceModelId.NANO_SP,
+                          productName: "Ledger Nano S Plus",
+                          usbProductId: 0x50,
+                        }) as DeviceModel,
+                      }),
+                    );
 
-                  done();
-                  break;
+                    done();
+                    break;
+                }
+
+                count++;
+              } catch (expectError) {
+                done(expectError as Error);
               }
+            },
+            (error) => {
+              done(error as Error);
+            },
+          );
+        }));
 
-              count++;
-            } catch (expectError) {
-              done(expectError);
-            }
-          },
-          (error) => {
-            done(error);
-          },
-        );
-      });
+      it("should throw DeviceNotRecognizedError if the device is not recognized", () =>
+        new Promise<Error | string | void>((done) => {
+          mockedRequestDevice.mockResolvedValueOnce([
+            {
+              ...stubDevice,
+              productId: 0x4242,
+            },
+          ]);
 
-      it("should throw DeviceNotRecognizedError if the device is not recognized", (done) => {
-        mockedRequestDevice.mockResolvedValueOnce([
-          {
-            ...stubDevice,
-            productId: 0x4242,
-          },
-        ]);
+          discoverDevice(
+            () => {
+              done("should not return a device");
+            },
+            (error) => {
+              expect(error).toBeInstanceOf(DeviceNotRecognizedError);
+              done();
+            },
+          );
+        }));
 
-        discoverDevice(
-          () => {
-            done("should not return a device");
-          },
-          (error) => {
-            expect(error).toBeInstanceOf(DeviceNotRecognizedError);
-            done();
-          },
-        );
-      });
+      it("should emit an error if the request device is in error", () =>
+        new Promise<string | void>((done) => {
+          const message = "request device error";
+          mockedRequestDevice.mockImplementationOnce(() => {
+            throw new Error(message);
+          });
 
-      it("should emit an error if the request device is in error", (done) => {
-        const message = "request device error";
-        mockedRequestDevice.mockImplementationOnce(() => {
-          throw new Error(message);
-        });
-
-        discoverDevice(
-          () => {
-            done("should not return a device");
-          },
-          (error) => {
-            expect(error).toBeInstanceOf(NoAccessibleDeviceError);
-            expect(error).toStrictEqual(
-              new NoAccessibleDeviceError(new Error(message)),
-            );
-            done();
-          },
-        );
-      });
+          discoverDevice(
+            () => {
+              done("should not return a device");
+            },
+            (error) => {
+              expect(error).toBeInstanceOf(NoAccessibleDeviceError);
+              expect(error).toStrictEqual(
+                new NoAccessibleDeviceError(new Error(message)),
+              );
+              done();
+            },
+          );
+        }));
 
       // [ASK] Is this the behavior we want when the user does not select any device ?
-      it("should emit an error if the user did not grant us access to a device (clicking on cancel on the browser popup for ex)", (done) => {
-        // When the user does not select any device, the `requestDevice` will return an empty array
-        mockedRequestDevice.mockResolvedValueOnce([]);
+      it("should emit an error if the user did not grant us access to a device (clicking on cancel on the browser popup for ex)", () =>
+        new Promise<string | Error | void>((done) => {
+          // When the user does not select any device, the `requestDevice` will return an empty array
+          mockedRequestDevice.mockResolvedValueOnce([]);
 
-        discoverDevice(
-          (discoveredDevice) => {
-            done(
-              `Should not emit any value, but emitted ${JSON.stringify(
-                discoveredDevice,
-              )}`,
-            );
-          },
-          (error) => {
-            try {
-              expect(error).toBeInstanceOf(NoAccessibleDeviceError);
-              done();
-            } catch (expectError) {
-              done(expectError);
-            }
-          },
-        );
-      });
+          discoverDevice(
+            (discoveredDevice) => {
+              done(
+                `Should not emit any value, but emitted ${JSON.stringify(
+                  discoveredDevice,
+                )}`,
+              );
+            },
+            (error) => {
+              try {
+                expect(error).toBeInstanceOf(NoAccessibleDeviceError);
+                done();
+              } catch (expectError) {
+                done(expectError as Error);
+              }
+            },
+          );
+        }));
 
       it("should emit the same discoveredDevice object if its discovered twice in a row", async () => {
         mockedRequestDevice.mockResolvedValue([stubDevice]);
@@ -332,7 +347,7 @@ describe("WebHidTransport", () => {
 
     describe("destroy", () => {
       it("should stop monitoring connections if the discovery process is halted", () => {
-        const abortSpy = jest.spyOn(AbortController.prototype, "abort");
+        const abortSpy = vi.spyOn(AbortController.prototype, "abort");
 
         transport.destroy();
 
@@ -344,7 +359,7 @@ describe("WebHidTransport", () => {
       it("should throw UnknownDeviceError if no internal device", async () => {
         const connectParams = {
           deviceId: "fake",
-          onDisconnect: jest.fn(),
+          onDisconnect: vi.fn(),
         };
 
         const connect = await transport.connect(connectParams);
@@ -357,7 +372,7 @@ describe("WebHidTransport", () => {
       it("should throw OpeningConnectionError if the device is already opened", async () => {
         const device = {
           deviceId: "fake",
-          onDisconnect: jest.fn(),
+          onDisconnect: vi.fn(),
         };
 
         const connect = await transport.connect(device);
@@ -367,114 +382,121 @@ describe("WebHidTransport", () => {
         );
       });
 
-      it("should throw OpeningConnectionError if the device cannot be opened", (done) => {
-        const message = "cannot be opened";
-        const mockedDevice = {
-          ...stubDevice,
-          open: () => {
-            throw new Error(message);
-          },
-        };
-        mockedRequestDevice.mockResolvedValueOnce([mockedDevice]);
-        mockedGetDevices.mockResolvedValue([mockedDevice]);
+      it("should throw OpeningConnectionError if the device cannot be opened", () =>
+        new Promise<Error | void>((done) => {
+          const message = "cannot be opened";
+          const mockedDevice = {
+            ...stubDevice,
+            open: () => {
+              throw new Error(message);
+            },
+          };
+          mockedRequestDevice.mockResolvedValueOnce([mockedDevice]);
+          mockedGetDevices.mockResolvedValue([mockedDevice]);
 
-        discoverDevice(
-          (discoveredDevice) => {
-            transport
-              .connect({
-                deviceId: discoveredDevice.id,
-                onDisconnect: jest.fn(),
-              })
-              .then((value) => {
-                expect(value).toStrictEqual(
-                  Left(new OpeningConnectionError(new Error(message))),
-                );
-                done();
-              })
-              .catch((error) => {
-                done(error);
-              });
-          },
-          (error) => {
-            done(error);
-          },
-        );
-      });
+          discoverDevice(
+            (discoveredDevice) => {
+              transport
+                .connect({
+                  deviceId: discoveredDevice.id,
+                  onDisconnect: vi.fn(),
+                })
+                .then((value) => {
+                  expect(value).toStrictEqual(
+                    Left(new OpeningConnectionError(new Error(message))),
+                  );
+                  done();
+                })
+                .catch((error) => {
+                  done(error);
+                });
+            },
+            (error) => {
+              done(error as Error);
+            },
+          );
+        }));
 
-      it("should return the opened device", (done) => {
-        const mockedDevice = {
-          ...stubDevice,
-          opened: false,
-          open: () => {
-            mockedDevice.opened = true;
-            return Promise.resolve();
-          },
-        };
+      it("should return the opened device", () =>
+        new Promise<
+          Either<ConnectError, TransportConnectedDevice> | Error | void
+        >((done) => {
+          const mockedDevice = {
+            ...stubDevice,
+            opened: false,
+            open: () => {
+              mockedDevice.opened = true;
+              return Promise.resolve();
+            },
+          };
 
-        mockedRequestDevice.mockResolvedValue([mockedDevice]);
-        mockedGetDevices.mockResolvedValue([mockedDevice]);
+          mockedRequestDevice.mockResolvedValue([mockedDevice]);
+          mockedGetDevices.mockResolvedValue([mockedDevice]);
 
-        discoverDevice(
-          (discoveredDevice) => {
-            transport
-              .connect({
-                deviceId: discoveredDevice.id,
-                onDisconnect: jest.fn(),
-              })
-              .then((connectedDevice) => {
-                connectedDevice
-                  .ifRight((device) => {
-                    expect(device).toEqual(
-                      expect.objectContaining({ id: discoveredDevice.id }),
-                    );
-                    done();
-                  })
-                  .ifLeft(() => {
-                    done(connectedDevice);
-                  });
-              })
-              .catch((error) => {
-                done(error);
-              });
-          },
-          (error) => {
-            done(error);
-          },
-        );
-      });
+          discoverDevice(
+            (discoveredDevice) => {
+              transport
+                .connect({
+                  deviceId: discoveredDevice.id,
+                  onDisconnect: vi.fn(),
+                })
+                .then((connectedDevice) => {
+                  connectedDevice
+                    .ifRight((device) => {
+                      expect(device).toEqual(
+                        expect.objectContaining({ id: discoveredDevice.id }),
+                      );
+                      done();
+                    })
+                    .ifLeft(() => {
+                      done(connectedDevice);
+                    });
+                })
+                .catch((error) => {
+                  done(error);
+                });
+            },
+            (error) => {
+              done(error as Error);
+            },
+          );
+        }));
 
-      it("should return a device if available", (done) => {
-        mockedRequestDevice.mockResolvedValueOnce([stubDevice]);
-        mockedGetDevices.mockResolvedValue([stubDevice]);
+      it("should return a device if available", () =>
+        new Promise<
+          Either<ConnectError, TransportConnectedDevice> | Error | void
+        >((done) => {
+          mockedRequestDevice.mockResolvedValueOnce([stubDevice]);
+          mockedGetDevices.mockResolvedValue([stubDevice]);
 
-        discoverDevice(
-          (discoveredDevice) => {
-            transport
-              .connect({
-                deviceId: discoveredDevice.id,
-                onDisconnect: jest.fn(),
-              })
-              .then((connectedDevice) => {
-                connectedDevice
-                  .ifRight((device) => {
-                    expect(device).toEqual(
-                      expect.objectContaining({ id: discoveredDevice.id }),
-                    );
-                    done();
-                  })
-                  .ifLeft(() => {
-                    done(connectedDevice);
-                  });
-              })
-              .catch((error) => {
-                done(error);
-              });
-          },
-          (error) => {
-            done(error);
-          },
-        );
-      });
+          discoverDevice(
+            (discoveredDevice) => {
+              transport
+                .connect({
+                  deviceId: discoveredDevice.id,
+                  onDisconnect: vi.fn(),
+                })
+                .then((connectedDevice) => {
+                  connectedDevice
+                    .ifRight((device) => {
+                      expect(device).toEqual(
+                        expect.objectContaining({ id: discoveredDevice.id }),
+                      );
+                      done();
+                    })
+                    .ifLeft(() => {
+                      done(connectedDevice);
+                    });
+                })
+                .catch((error) => {
+                  done(error);
+                });
+            },
+            (error) => {
+              done(error as Error);
+            },
+          );
+        }));
     });
 
     describe("disconnect", () => {
@@ -492,198 +514,204 @@ describe("WebHidTransport", () => {
         );
       });
 
-      it("should disconnect if the device is connected", (done) => {
-        mockedRequestDevice.mockResolvedValueOnce([stubDevice]);
-        mockedGetDevices.mockResolvedValue([stubDevice]);
+      it("should disconnect if the device is connected", () =>
+        new Promise<
+          Either<ConnectError, TransportConnectedDevice> | Error | void
+        >((done) => {
+          mockedRequestDevice.mockResolvedValueOnce([stubDevice]);
+          mockedGetDevices.mockResolvedValue([stubDevice]);
 
-        discoverDevice(
-          (discoveredDevice) => {
-            transport
-              .connect({
+          discoverDevice(
+            (discoveredDevice) => {
+              transport
+                .connect({
+                  deviceId: discoveredDevice.id,
+                  onDisconnect: vi.fn(),
+                })
+                .then((connectedDevice) => {
+                  connectedDevice
+                    .ifRight((device) => {
+                      transport
+                        .disconnect({ connectedDevice: device })
+                        .then((value) => {
+                          expect(value).toStrictEqual(Right(undefined));
+                          done();
+                        })
+                        .catch((error) => {
+                          done(error);
+                        });
+                    })
+                    .ifLeft(() => {
+                      done(connectedDevice);
+                    });
+                })
+                .catch((error) => {
+                  done(error);
+                });
+            },
+            (error) => {
+              done(error as Error);
+            },
+          );
+        }));
+
+      it("should call disconnect handler if a connected device is unplugged", () =>
+        new Promise<Error | void>((done) => {
+          // given
+          const onDisconnect = vi.fn();
+          mockedRequestDevice.mockResolvedValueOnce([stubDevice]);
+          mockedGetDevices.mockResolvedValue([stubDevice]);
+
+          // when
+          transport.startDiscovering().subscribe({
+            next: (discoveredDevice) => {
+              const mock = {
+                sendApdu: vi.fn(),
+                device: stubDevice,
                 deviceId: discoveredDevice.id,
-                onDisconnect: jest.fn(),
-              })
-              .then((connectedDevice) => {
-                connectedDevice
-                  .ifRight((device) => {
-                    transport
-                      .disconnect({ connectedDevice: device })
-                      .then((value) => {
-                        expect(value).toStrictEqual(Right(undefined));
-                        done();
-                      })
-                      .catch((error) => {
-                        done(error);
-                      });
-                  })
-                  .ifLeft(() => {
-                    done(connectedDevice);
-                  });
-              })
-              .catch((error) => {
-                done(error);
-              });
-          },
-          (error) => {
-            done(error);
-          },
-        );
-      });
+                disconnect: onDisconnect,
+                lostConnection: vi.fn().mockImplementation(() => {
+                  setTimeout(() => {
+                    mock.disconnect();
+                  }, RECONNECT_DEVICE_TIMEOUT);
+                }),
+              };
 
-      it("should call disconnect handler if a connected device is unplugged", (done) => {
-        // given
-        const onDisconnect = jest.fn();
-        mockedRequestDevice.mockResolvedValueOnce([stubDevice]);
-        mockedGetDevices.mockResolvedValue([stubDevice]);
+              transport
+                .connect({
+                  deviceId: discoveredDevice.id,
+                  onDisconnect,
+                })
+                .then(async () => {
+                  emitHIDDisconnectionEvent(stubDevice);
 
-        // when
-        transport.startDiscovering().subscribe({
-          next: (discoveredDevice) => {
+                  expect(stubDevice.close).toHaveBeenCalled();
+                  await Promise.resolve(); // wait for the next tick so the stubDevice.close promise is resolved
+                  expect(onDisconnect).not.toHaveBeenCalled();
+                  vi.advanceTimersByTime(RECONNECT_DEVICE_TIMEOUT / 2);
+                  expect(onDisconnect).not.toHaveBeenCalled();
+                  vi.advanceTimersByTime(RECONNECT_DEVICE_TIMEOUT / 2);
+                  expect(onDisconnect).toHaveBeenCalled();
+                  done();
+                })
+                .catch((error) => {
+                  done(error);
+                });
+            },
+          });
+        }));
+    });
+
+    describe("reconnect", () => {
+      it("should stop disconnection if reconnection happen", () =>
+        new Promise<Error | void>((done) => {
+          // given
+          const onDisconnect = vi.fn();
+
+          const hidDevice1 = hidDeviceStubBuilder();
+          const hidDevice2 = hidDeviceStubBuilder();
+
+          mockedRequestDevice.mockResolvedValueOnce([hidDevice1]);
+          mockedGetDevices.mockResolvedValue([hidDevice1, hidDevice2]);
+
+          discoverDevice(async (discoveredDevice) => {
             const mock = {
-              sendApdu: jest.fn(),
-              device: stubDevice,
+              sendApdu: vi.fn(),
+              device: hidDevice2,
               deviceId: discoveredDevice.id,
               disconnect: onDisconnect,
-              lostConnection: jest.fn().mockImplementation(() => {
+              lostConnection: vi.fn().mockImplementation(() => {
                 setTimeout(() => {
                   mock.disconnect();
                 }, RECONNECT_DEVICE_TIMEOUT);
               }),
             };
 
-            transport
-              .connect({
+            try {
+              await transport.connect({
                 deviceId: discoveredDevice.id,
                 onDisconnect,
-              })
-              .then(async () => {
-                emitHIDDisconnectionEvent(stubDevice);
-
-                expect(stubDevice.close).toHaveBeenCalled();
-                await Promise.resolve(); // wait for the next tick so the stubDevice.close promise is resolved
-                expect(onDisconnect).not.toHaveBeenCalled();
-                jest.advanceTimersByTime(RECONNECT_DEVICE_TIMEOUT / 2);
-                expect(onDisconnect).not.toHaveBeenCalled();
-                jest.advanceTimersByTime(RECONNECT_DEVICE_TIMEOUT / 2);
-                expect(onDisconnect).toHaveBeenCalled();
-                done();
-              })
-              .catch((error) => {
-                done(error);
               });
-          },
-        });
-      });
-    });
 
-    describe("reconnect", () => {
-      it.only("should stop disconnection if reconnection happen", (done) => {
-        // given
-        const onDisconnect = jest.fn();
+              /* Disconnection */
+              emitHIDDisconnectionEvent(hidDevice1);
+              expect(hidDevice1.close).toHaveBeenCalled();
+              await Promise.resolve(); // wait for the next tick so the hidDevice1.close promise is resolved
 
-        const hidDevice1 = hidDeviceStubBuilder();
-        const hidDevice2 = hidDeviceStubBuilder();
+              vi.advanceTimersByTime(RECONNECT_DEVICE_TIMEOUT / 3);
 
-        mockedRequestDevice.mockResolvedValueOnce([hidDevice1]);
-        mockedGetDevices.mockResolvedValue([hidDevice1, hidDevice2]);
+              /* Reconnection */
+              emitHIDConnectionEvent(hidDevice2);
 
-        discoverDevice(async (discoveredDevice) => {
-          const mock = {
-            sendApdu: jest.fn(),
-            device: hidDevice2,
-            deviceId: discoveredDevice.id,
-            disconnect: onDisconnect,
-            lostConnection: jest.fn().mockImplementation(() => {
-              setTimeout(() => {
-                mock.disconnect();
-              }, RECONNECT_DEVICE_TIMEOUT);
-            }),
-          };
+              expect(hidDevice2.open).toHaveBeenCalled();
+              await Promise.resolve(); // wait for the next tick so the hidDevice2.open promise is resolved
 
-          try {
+              vi.advanceTimersByTime(RECONNECT_DEVICE_TIMEOUT);
+              expect(onDisconnect).not.toHaveBeenCalled();
+              done();
+            } catch (error) {
+              done(error as Error);
+            }
+          });
+        }));
+
+      it("should be able to reconnect twice in a row if the device is unplugged and replugged twice", () =>
+        new Promise<Error | void>((done) => {
+          // given
+          const onDisconnect = vi.fn();
+
+          const hidDevice1 = hidDeviceStubBuilder();
+          const hidDevice2 = hidDeviceStubBuilder();
+          const hidDevice3 = hidDeviceStubBuilder();
+
+          mockedRequestDevice.mockResolvedValueOnce([hidDevice1]);
+          mockedGetDevices.mockResolvedValue([
+            hidDevice1,
+            hidDevice2,
+            hidDevice3,
+          ]);
+
+          // when
+          discoverDevice(async (discoveredDevice) => {
             await transport.connect({
               deviceId: discoveredDevice.id,
               onDisconnect,
             });
+            try {
+              /* First disconnection */
+              emitHIDDisconnectionEvent(hidDevice1);
+              expect(hidDevice1.close).toHaveBeenCalled();
+              await Promise.resolve(); // wait for the next tick so the hidDevice1.close promise is resolved
+              vi.advanceTimersByTime(RECONNECT_DEVICE_TIMEOUT / 3);
 
-            /* Disconnection */
-            emitHIDDisconnectionEvent(hidDevice1);
-            expect(hidDevice1.close).toHaveBeenCalled();
-            await Promise.resolve(); // wait for the next tick so the hidDevice1.close promise is resolved
+              /* First reconnection */
+              emitHIDConnectionEvent(hidDevice2);
 
-            jest.advanceTimersByTime(RECONNECT_DEVICE_TIMEOUT / 3);
+              expect(hidDevice2.open).toHaveBeenCalled();
+              await Promise.resolve(); // wait for the next tick so the hidDevice2.open promise is resolved
+              vi.advanceTimersByTime(RECONNECT_DEVICE_TIMEOUT);
+              expect(onDisconnect).not.toHaveBeenCalled();
 
-            /* Reconnection */
-            emitHIDConnectionEvent(hidDevice2);
+              /* Second disconnection */
+              emitHIDDisconnectionEvent(hidDevice2);
+              expect(hidDevice2.close).toHaveBeenCalled();
+              await Promise.resolve(); // wait for the next tick so the hidDevice2.close promise is resolved
+              vi.advanceTimersByTime(RECONNECT_DEVICE_TIMEOUT / 3);
 
-            expect(hidDevice2.open).toHaveBeenCalled();
-            await Promise.resolve(); // wait for the next tick so the hidDevice2.open promise is resolved
+              /* Second reconnection */
+              emitHIDConnectionEvent(hidDevice3);
 
-            jest.advanceTimersByTime(RECONNECT_DEVICE_TIMEOUT);
-            expect(onDisconnect).not.toHaveBeenCalled();
-            done();
-          } catch (error) {
-            done(error);
-          }
-        });
-      });
+              expect(hidDevice3.open).toHaveBeenCalled();
+              await Promise.resolve(); // wait for the next tick so the hidDevice3.open promise is resolved
+              vi.advanceTimersByTime(RECONNECT_DEVICE_TIMEOUT);
+              expect(onDisconnect).not.toHaveBeenCalled();
 
-      it("should be able to reconnect twice in a row if the device is unplugged and replugged twice", (done) => {
-        // given
-        const onDisconnect = jest.fn();
-
-        const hidDevice1 = hidDeviceStubBuilder();
-        const hidDevice2 = hidDeviceStubBuilder();
-        const hidDevice3 = hidDeviceStubBuilder();
-
-        mockedRequestDevice.mockResolvedValueOnce([hidDevice1]);
-        mockedGetDevices.mockResolvedValue([
-          hidDevice1,
-          hidDevice2,
-          hidDevice3,
-        ]);
-
-        // when
-        discoverDevice(async (discoveredDevice) => {
-          await transport.connect({
-            deviceId: discoveredDevice.id,
-            onDisconnect,
+              done();
+            } catch (error) {
+              done(error as Error);
+            }
           });
-          try {
-            /* First disconnection */
-            emitHIDDisconnectionEvent(hidDevice1);
-            expect(hidDevice1.close).toHaveBeenCalled();
-            await Promise.resolve(); // wait for the next tick so the hidDevice1.close promise is resolved
-            jest.advanceTimersByTime(RECONNECT_DEVICE_TIMEOUT / 3);
-
-            /* First reconnection */
-            emitHIDConnectionEvent(hidDevice2);
-
-            expect(hidDevice2.open).toHaveBeenCalled();
-            await Promise.resolve(); // wait for the next tick so the hidDevice2.open promise is resolved
-            jest.advanceTimersByTime(RECONNECT_DEVICE_TIMEOUT);
-            expect(onDisconnect).not.toHaveBeenCalled();
-
-            /* Second disconnection */
-            emitHIDDisconnectionEvent(hidDevice2);
-            expect(hidDevice2.close).toHaveBeenCalled();
-            await Promise.resolve(); // wait for the next tick so the hidDevice2.close promise is resolved
-            jest.advanceTimersByTime(RECONNECT_DEVICE_TIMEOUT / 3);
-
-            /* Second reconnection */
-            emitHIDConnectionEvent(hidDevice3);
-
-            expect(hidDevice3.open).toHaveBeenCalled();
-            await Promise.resolve(); // wait for the next tick so the hidDevice3.open promise is resolved
-            jest.advanceTimersByTime(RECONNECT_DEVICE_TIMEOUT);
-            expect(onDisconnect).not.toHaveBeenCalled();
-
-            done();
-          } catch (error) {
-            done(error);
-          }
-        });
-      });
+        }));
     });
 
     describe("Connection event typeguard", () => {
@@ -715,8 +743,8 @@ describe("WebHidTransport", () => {
         const hidDevice = hidDeviceStubBuilder();
         mockedGetDevices.mockResolvedValue([hidDevice]);
 
-        const onComplete = jest.fn();
-        const onError = jest.fn();
+        const onComplete = vi.fn();
+        const onError = vi.fn();
 
         let observedDevices: TransportDiscoveredDevice[] = [];
         // when
@@ -757,8 +785,8 @@ describe("WebHidTransport", () => {
         });
         mockedGetDevices.mockResolvedValue([hidDevice1]);
 
-        const onComplete = jest.fn();
-        const onError = jest.fn();
+        const onComplete = vi.fn();
+        const onError = vi.fn();
 
         let observedDevices: TransportDiscoveredDevice[] = [];
         // when
@@ -821,8 +849,8 @@ describe("WebHidTransport", () => {
 
         mockedGetDevices.mockResolvedValue([hidDevice]);
 
-        const onComplete = jest.fn();
-        const onError = jest.fn();
+        const onComplete = vi.fn();
+        const onError = vi.fn();
         let observedDevices: TransportDiscoveredDevice[] = [];
         // when
         transport.listenToKnownDevices().subscribe({
@@ -842,7 +870,7 @@ describe("WebHidTransport", () => {
         // Start a connection with the device
         await transport.connect({
           deviceId: observedDevices[0]!.id,
-          onDisconnect: jest.fn(),
+          onDisconnect: vi.fn(),
         });
         await flushPromises();
 

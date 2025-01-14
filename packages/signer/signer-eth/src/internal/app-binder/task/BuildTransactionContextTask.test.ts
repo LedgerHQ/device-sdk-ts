@@ -21,12 +21,12 @@ import {
 
 describe("BuildTransactionContextTask", () => {
   const contextModuleMock = {
-    getContext: jest.fn(),
-    getContexts: jest.fn(),
-    getTypedDataFilters: jest.fn(),
+    getContext: vi.fn(),
+    getContexts: vi.fn(),
+    getTypedDataFilters: vi.fn(),
   };
   const mapperMock = {
-    mapTransactionToSubset: jest.fn(),
+    mapTransactionToSubset: vi.fn(),
   };
   const defaultOptions = {
     domain: "domain-name.eth",
@@ -43,7 +43,7 @@ describe("BuildTransactionContextTask", () => {
   const apiMock = makeDeviceActionInternalApiMock();
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
 
     defaultArgs = {
       contextModule: contextModuleMock,

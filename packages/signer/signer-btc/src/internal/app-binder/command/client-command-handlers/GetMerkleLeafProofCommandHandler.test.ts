@@ -16,14 +16,14 @@ const COMMAND_CODE = ClientCommandCodes.GET_MERKLE_LEAF_PROOF;
 
 describe("GetMerkleLeafProofCommandHandler", () => {
   let commandHandlerContext: CommandHandlerContext;
-  let mockDataStore: jest.Mocked<DataStore>;
+  let mockDataStore: vi.Mocked<DataStore>;
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
 
     mockDataStore = {
-      getMerkleProof: jest.fn(),
-    } as unknown as jest.Mocked<DataStore>;
+      getMerkleProof: vi.fn(),
+    } as unknown as vi.Mocked<DataStore>;
 
     commandHandlerContext = {
       dataStore: mockDataStore,

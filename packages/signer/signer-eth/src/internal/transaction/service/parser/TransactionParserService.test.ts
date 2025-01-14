@@ -18,7 +18,7 @@ describe("TransactionParserService", () => {
     .build();
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   describe("Container paths", () => {

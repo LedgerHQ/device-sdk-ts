@@ -15,10 +15,10 @@ describe("DefaultSignerBtc", () => {
   });
 
   it("should call getExtendedPublicKeyUseCase", () => {
-    jest.spyOn(GetExtendedPublicKeyUseCase.prototype, "execute");
+    vi.spyOn(GetExtendedPublicKeyUseCase.prototype, "execute");
     const sessionId = "session-id";
     const dmk = {
-      executeDeviceAction: jest.fn(),
+      executeDeviceAction: vi.fn(),
     } as unknown as DeviceManagementKit;
     const signer = new DefaultSignerBtc({ dmk, sessionId });
     signer.getExtendedPublicKey("44'/0'/0'/0/0", {
@@ -28,10 +28,10 @@ describe("DefaultSignerBtc", () => {
   });
 
   it("should call signMessageUseCase", () => {
-    jest.spyOn(SignMessageUseCase.prototype, "execute");
+    vi.spyOn(SignMessageUseCase.prototype, "execute");
     const sessionId = "session-id";
     const dmk = {
-      executeDeviceAction: jest.fn(),
+      executeDeviceAction: vi.fn(),
     } as unknown as DeviceManagementKit;
     const derivationPath = "44'/0'/0'/0/0";
     const message = "message";

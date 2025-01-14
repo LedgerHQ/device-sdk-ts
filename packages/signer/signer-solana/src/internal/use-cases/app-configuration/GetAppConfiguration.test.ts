@@ -5,7 +5,7 @@ import { type SolanaAppBinder } from "@internal/app-binder/SolanaAppBinder";
 import { GetAppConfigurationUseCase } from "./GetAppConfigurationUseCase";
 
 describe("GetAppConfigurationUseCase", () => {
-  const getAppConfigurationMock = jest.fn();
+  const getAppConfigurationMock = vi.fn();
   const config: AppConfiguration = {
     blindSigningEnabled: false,
     pubKeyDisplayMode: PublicKeyDisplayMode.LONG,
@@ -17,7 +17,7 @@ describe("GetAppConfigurationUseCase", () => {
   let useCase: GetAppConfigurationUseCase;
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
     useCase = new GetAppConfigurationUseCase(appBinderMock);
   });
 

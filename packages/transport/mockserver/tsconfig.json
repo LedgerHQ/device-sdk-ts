@@ -7,10 +7,8 @@
     "target": "esnext",
     "moduleResolution": "bundler",
     "emitDeclarationOnly": true,
-    "paths": {
-      "@api/*": ["./src/api/*"]
-    },
-    "resolveJsonModule": true
+    "resolveJsonModule": true,
+    "types": ["node", "vitest/globals"]
   },
   "include": ["src", "jest.*.ts"]
 }

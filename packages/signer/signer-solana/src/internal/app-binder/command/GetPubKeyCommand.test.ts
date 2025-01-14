@@ -42,8 +42,8 @@ describe("GetPubKeyCommand", () => {
 
   beforeEach(() => {
     command = new GetPubKeyCommand(defaultArgs);
-    jest.clearAllMocks();
-    jest.requireActual("@ledgerhq/device-management-kit");
+    vi.clearAllMocks();
+    vi.importActual("@ledgerhq/device-management-kit");
   });
 
   describe("getApdu", () => {
@@ -103,7 +103,7 @@ describe("GetPubKeyCommand", () => {
             }),
           );
         } else {
-          fail("Expected error");
+          assert.fail("Expected error");
         }
       });
 
@@ -121,7 +121,7 @@ describe("GetPubKeyCommand", () => {
             }),
           );
         } else {
-          fail("Expected error");
+          assert.fail("Expected error");
         }
       });
     });

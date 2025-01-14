@@ -6,8 +6,8 @@ import { Left, Right } from "purify-ts";
 import { assign, createMachine } from "xstate";
 
 export const setupOpenAppDAMock = (error?: unknown) => {
-  (OpenAppDeviceAction as jest.Mock).mockImplementation(() => ({
-    makeStateMachine: jest.fn().mockImplementation(() =>
+  (OpenAppDeviceAction as vi.Mock).mockImplementation(() => ({
+    makeStateMachine: vi.fn().mockImplementation(() =>
       createMachine({
         initial: "pending",
         states: {

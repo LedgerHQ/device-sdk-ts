@@ -9,18 +9,18 @@ import { type TransportService } from "@internal/transport/service/TransportServ
 
 import { ListenToKnownDevicesUseCase } from "./ListenToKnownDevicesUseCase";
 
-jest.mock("@internal/transport/service/DefaultTransportService");
+vi.mock("@internal/transport/service/DefaultTransportService");
 
 let transportService: TransportService;
 function makeMockTransport(props: Partial<Transport>): Transport {
   return {
-    listenToKnownDevices: jest.fn(),
-    connect: jest.fn(),
-    disconnect: jest.fn(),
-    startDiscovering: jest.fn(),
-    stopDiscovering: jest.fn(),
-    getIdentifier: jest.fn(),
-    isSupported: jest.fn(),
+    listenToKnownDevices: vi.fn(),
+    connect: vi.fn(),
+    disconnect: vi.fn(),
+    startDiscovering: vi.fn(),
+    stopDiscovering: vi.fn(),
+    getIdentifier: vi.fn(),
+    isSupported: vi.fn(),
     ...props,
   };
 }
@@ -67,35 +67,36 @@ function makeMockTransportDiscoveredDevice(
 
 describe("ListenToKnownDevicesUseCase", () => {
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
     // @ts-expect-error mock
     transportService = new DefaultTransportService();
   });
 
   describe("when no transports are available", () => {
-    it("should return no discovered devices", (done) => {
-      jest.spyOn(transportService, "getAllTransports").mockReturnValue([]);
+    it("should return no discovered devices", () =>
+      new Promise<Error | void>((done) => {
+        vi.spyOn(transportService, "getAllTransports").mockReturnValue([]);
 
-      const useCase = new ListenToKnownDevicesUseCase(transportService);
+        const useCase = new ListenToKnownDevicesUseCase(transportService);
 
-      const observedDiscoveredDevices: DiscoveredDevice[][] = [];
-      useCase.execute().subscribe({
-        next: (devices) => {
-          observedDiscoveredDevices.push(devices);
-        },
-        complete: () => {
-          try {
-            expect(observedDiscoveredDevices).toEqual([[]]);
-            done();
-          } catch (error) {
-            done(error);
-          }
-        },
-        error: (error) => {
-          done(error);
-        },
-      });
-    });
+        const observedDiscoveredDevices: DiscoveredDevice[][] = [];
+        useCase.execute().subscribe({
+          next: (devices) => {
+            observedDiscoveredDevices.push(devices);
+          },
+          complete: () => {
+            try {
+              expect(observedDiscoveredDevices).toEqual([[]]);
+              done();
+            } catch (error) {
+              done(error as Error);
+            }
+          },
+          error: (error) => {
+            done(error as Error);
+          },
+        });
+      }));
   });
 
   describe("when one transport is available", () => {
@@ -103,9 +104,9 @@ describe("ListenToKnownDevicesUseCase", () => {
       const { transportA, transportAKnownDevicesSubject } =
         setup2MockTransports();
 
-      jest
-        .spyOn(transportService, "getAllTransports")
-        .mockReturnValue([transportA]);
+      vi.spyOn(transportService, "getAllTransports").mockReturnValue([
+        transportA,
+      ]);
 
       const observedDiscoveredDevices: DiscoveredDevice[][] = [];
       new ListenToKnownDevicesUseCase(transportService)
@@ -171,14 +172,15 @@ describe("ListenToKnownDevicesUseCase", () => {
       const { transportAKnownDevicesSubject, transportA, transportB } =
         setup2MockTransports();
 
-      jest
-        .spyOn(transportService, "getAllTransports")
-        .mockReturnValue([transportA, transportB]);
+      vi.spyOn(transportService, "getAllTransports").mockReturnValue([
+        transportA,
+        transportB,
+      ]);
 
       const observedDiscoveredDevices: DiscoveredDevice[][] = [];
 
-      const onError = jest.fn();
-      const onComplete = jest.fn();
+      const onError = vi.fn();
+      const onComplete = vi.fn();
 
       new ListenToKnownDevicesUseCase(transportService).execute().subscribe({
         next: (devices) => {
@@ -218,12 +220,13 @@ describe("ListenToKnownDevicesUseCase", () => {
 
       const observedDiscoveredDevices: DiscoveredDevice[][] = [];
 
-      jest
-        .spyOn(transportService, "getAllTransports")
-        .mockReturnValue([transportA, transportB]);
+      vi.spyOn(transportService, "getAllTransports").mockReturnValue([
+        transportA,
+        transportB,
+      ]);
 
-      const onError = jest.fn();
-      const onComplete = jest.fn();
+      const onError = vi.fn();
+      const onComplete = vi.fn();
       new ListenToKnownDevicesUseCase(transportService).execute().subscribe({
         next: (devices) => {
           observedDiscoveredDevices.push(devices);

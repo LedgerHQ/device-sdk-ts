@@ -1,6 +1,6 @@
 import { GetDmkVersionUseCase } from "./GetDmkVersionUseCase";
 
-const getDmkConfigMock = jest.fn();
+const getDmkConfigMock = vi.fn();
 
 let usecase: GetDmkVersionUseCase;
 describe("GetDmkVersionUseCase", () => {

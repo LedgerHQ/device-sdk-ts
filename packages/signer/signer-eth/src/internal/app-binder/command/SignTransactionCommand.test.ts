@@ -93,11 +93,11 @@ describe("SignTransactionCommand", () => {
       });
     });
 
-    describe("Store and start", () => {
+    describe.todo("Store and start", () => {
       // TODO
     });
 
-    describe("Start", () => {
+    describe.todo("Start", () => {
       // TODO
     });
   });

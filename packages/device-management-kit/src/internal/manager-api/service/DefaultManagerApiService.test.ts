@@ -17,16 +17,17 @@ import { HttpFetchApiError } from "@internal/manager-api/model/Errors";
 
 import { DefaultManagerApiService } from "./DefaultManagerApiService";
 import { type ManagerApiService } from "./ManagerApiService";
+import { Mocked } from "vitest";
 
-jest.mock("@internal/manager-api/data/AxiosManagerApiDataSource");
-let dataSource: jest.Mocked<AxiosManagerApiDataSource>;
+vi.mock("@internal/manager-api/data/AxiosManagerApiDataSource");
+let dataSource: Mocked<AxiosManagerApiDataSource>;
 let service: ManagerApiService;
 describe("ManagerApiService", () => {
   beforeEach(() => {
     dataSource = new AxiosManagerApiDataSource({
       managerApiUrl: DEFAULT_MANAGER_API_BASE_URL,
       mockUrl: DEFAULT_MOCK_SERVER_BASE_URL,
-    }) as jest.Mocked<AxiosManagerApiDataSource>;
+    }) as Mocked<AxiosManagerApiDataSource>;
     service = new DefaultManagerApiService(dataSource);
   });
 

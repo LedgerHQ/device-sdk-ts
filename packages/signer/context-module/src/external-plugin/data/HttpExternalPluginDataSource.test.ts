@@ -12,7 +12,7 @@ import { type ExternalPluginDataSource } from "@/external-plugin/data/ExternalPl
 import { HttpExternalPluginDataSource } from "@/external-plugin/data/HttpExternalPluginDataSource";
 import PACKAGE from "@root/package.json";
 
-jest.mock("axios");
+vi.mock("axios");
 
 const axiosResponseBuilder = (dto: Partial<DAppDto>[]) => {
   return { data: dto };
@@ -74,14 +74,14 @@ describe("HttpExternalPuginDataSource", () => {
       },
     } as ContextModuleConfig;
     datasource = new HttpExternalPluginDataSource(config);
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   it("should call axios with the ledger client version header", async () => {
     // GIVEN
     const version = `context-module/${PACKAGE.version}`;
-    const requestSpy = jest.fn(() => Promise.resolve({ data: [] }));
-    jest.spyOn(axios, "request").mockImplementation(requestSpy);
+    const requestSpy = vi.fn(() => Promise.resolve({ data: [] }));
+    vi.spyOn(axios, "request").mockImplementation(requestSpy);
 
     // WHEN
     await datasource.getDappInfos({
@@ -103,7 +103,7 @@ describe("HttpExternalPuginDataSource", () => {
     const response = axiosResponseBuilder([
       { b2c: exampleB2c, b2c_signatures: exampleB2cSignatures },
     ]);
-    jest.spyOn(axios, "request").mockResolvedValue(response);
+    vi.spyOn(axios, "request").mockResolvedValue(response);
 
     // WHEN
     const result = await datasource.getDappInfos({
@@ -121,7 +121,7 @@ describe("HttpExternalPuginDataSource", () => {
     const response = axiosResponseBuilder([
       { abis: exampleAbis, b2c_signatures: exampleB2cSignatures },
     ]);
-    jest.spyOn(axios, "request").mockResolvedValue(response);
+    vi.spyOn(axios, "request").mockResolvedValue(response);
 
     // WHEN
     const result = await datasource.getDappInfos({
@@ -139,7 +139,7 @@ describe("HttpExternalPuginDataSource", () => {
     const response = axiosResponseBuilder([
       { abis: {}, b2c: exampleB2c, b2c_signatures: exampleB2cSignatures },
     ]);
-    jest.spyOn(axios, "request").mockResolvedValue(response);
+    vi.spyOn(axios, "request").mockResolvedValue(response);
 
     // WHEN
     const result = await datasource.getDappInfos({
@@ -157,7 +157,7 @@ describe("HttpExternalPuginDataSource", () => {
     const response = axiosResponseBuilder([
       { abis: {}, b2c: exampleB2c, b2c_signatures: exampleB2cSignatures },
     ]);
-    jest.spyOn(axios, "request").mockResolvedValue(response);
+    vi.spyOn(axios, "request").mockResolvedValue(response);
 
     // WHEN
     const result = await datasource.getDappInfos({
@@ -176,7 +176,7 @@ describe("HttpExternalPuginDataSource", () => {
     const response = axiosResponseBuilder([
       { abis, b2c: exampleB2c, b2c_signatures: exampleB2cSignatures },
     ]);
-    jest.spyOn(axios, "request").mockResolvedValue(response);
+    vi.spyOn(axios, "request").mockResolvedValue(response);
 
     // WHEN
     const result = await datasource.getDappInfos({
@@ -194,7 +194,7 @@ describe("HttpExternalPuginDataSource", () => {
     const response = axiosResponseBuilder([
       { b2c: exampleB2c, abis: exampleAbis },
     ]);
-    jest.spyOn(axios, "request").mockResolvedValue(response);
+    vi.spyOn(axios, "request").mockResolvedValue(response);
 
     // WHEN
     const result = await datasource.getDappInfos({
@@ -226,7 +226,7 @@ describe("HttpExternalPuginDataSource", () => {
     const response = axiosResponseBuilder([
       { b2c, abis: exampleAbis, b2c_signatures: exampleB2cSignatures },
     ]);
-    jest.spyOn(axios, "request").mockResolvedValue(response);
+    vi.spyOn(axios, "request").mockResolvedValue(response);
 
     // WHEN
     const result = await datasource.getDappInfos({
@@ -258,7 +258,7 @@ describe("HttpExternalPuginDataSource", () => {
     const response = axiosResponseBuilder([
       { b2c, abis: exampleAbis, b2c_signatures: exampleB2cSignatures },
     ]);
-    jest.spyOn(axios, "request").mockResolvedValue(response);
+    vi.spyOn(axios, "request").mockResolvedValue(response);
 
     // WHEN
     const result = await datasource.getDappInfos({
@@ -290,7 +290,7 @@ describe("HttpExternalPuginDataSource", () => {
     const response = axiosResponseBuilder([
       { b2c, abis: exampleAbis, b2c_signatures: exampleB2cSignatures },
     ]);
-    jest.spyOn(axios, "request").mockResolvedValue(response);
+    vi.spyOn(axios, "request").mockResolvedValue(response);
 
     // WHEN
     const result = await datasource.getDappInfos({
@@ -322,7 +322,7 @@ describe("HttpExternalPuginDataSource", () => {
     const response = axiosResponseBuilder([
       { b2c, abis: exampleAbis, b2c_signatures: exampleB2cSignatures },
     ]);
-    jest.spyOn(axios, "request").mockResolvedValue(response);
+    vi.spyOn(axios, "request").mockResolvedValue(response);
 
     // WHEN
     const result = await datasource.getDappInfos({
@@ -345,7 +345,7 @@ describe("HttpExternalPuginDataSource", () => {
     const response = axiosResponseBuilder([
       { b2c: exampleB2c, abis: exampleAbis, b2c_signatures: B2CSignature },
     ]);
-    jest.spyOn(axios, "request").mockResolvedValue(response);
+    vi.spyOn(axios, "request").mockResolvedValue(response);
 
     // WHEN
     const result = await datasource.getDappInfos({
@@ -368,7 +368,7 @@ describe("HttpExternalPuginDataSource", () => {
     const response = axiosResponseBuilder([
       { b2c: exampleB2c, abis: exampleAbis, b2c_signatures: B2CSignature },
     ]);
-    jest.spyOn(axios, "request").mockResolvedValue(response);
+    vi.spyOn(axios, "request").mockResolvedValue(response);
 
     // WHEN
     const result = await datasource.getDappInfos({
@@ -390,7 +390,7 @@ describe("HttpExternalPuginDataSource", () => {
         b2c_signatures: exampleB2cSignatures,
       },
     ]);
-    jest.spyOn(axios, "request").mockResolvedValue(response);
+    vi.spyOn(axios, "request").mockResolvedValue(response);
 
     // WHEN
     const result = await datasource.getDappInfos({
@@ -421,7 +421,7 @@ describe("HttpExternalPuginDataSource", () => {
         b2c_signatures: exampleB2cSignatures,
       },
     ]);
-    jest.spyOn(axios, "request").mockResolvedValue(response);
+    vi.spyOn(axios, "request").mockResolvedValue(response);
 
     // WHEN
     const result = await datasource.getDappInfos({
@@ -445,7 +445,7 @@ describe("HttpExternalPuginDataSource", () => {
 
   it("should return an error when axios throws an error", async () => {
     // GIVEN
-    jest.spyOn(axios, "request").mockRejectedValue(new Error("error"));
+    vi.spyOn(axios, "request").mockRejectedValue(new Error("error"));
 
     // WHEN
     const result = await datasource.getDappInfos({

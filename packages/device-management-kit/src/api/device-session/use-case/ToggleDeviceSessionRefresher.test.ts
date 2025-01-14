@@ -32,7 +32,7 @@ describe("ToggleDeviceSessionRefresherUseCase", () => {
   });
 
   afterEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   describe("execute", () => {
@@ -49,7 +49,7 @@ describe("ToggleDeviceSessionRefresherUseCase", () => {
         () => logger,
       );
 
-      const spy = jest.spyOn(deviceSession, "toggleRefresher");
+      const spy = vi.spyOn(deviceSession, "toggleRefresher");
 
       // when
       useCase.execute({ sessionId: "fakeSessionId", enabled: false });

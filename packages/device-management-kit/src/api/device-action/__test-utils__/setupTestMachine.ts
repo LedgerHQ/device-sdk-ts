@@ -1,4 +1,5 @@
 import { Left, Right } from "purify-ts";
+import { type Mock } from "vitest";
 import { assign, createMachine } from "xstate";
 
 import { UserInteractionRequired } from "@api/device-action/model/UserInteractionRequired";
@@ -13,8 +14,8 @@ import { type BTC_APP } from "./data";
 type App = typeof BTC_APP;
 
 export const setupListAppsMock = (apps: App[], error = false) => {
-  (ListAppsDeviceAction as jest.Mock).mockImplementation(() => ({
-    makeStateMachine: jest.fn().mockImplementation(() =>
+  (ListAppsDeviceAction as Mock).mockImplementation(() => ({
+    makeStateMachine: vi.fn().mockImplementation(() =>
       createMachine({
         id: "MockListAppsDeviceAction",
         initial: "ready",
@@ -44,8 +45,8 @@ export const setupListAppsMock = (apps: App[], error = false) => {
 };
 
 export const setupGoToDashboardMock = (error: boolean = false) => {
-  (GoToDashboardDeviceAction as jest.Mock).mockImplementation(() => ({
-    makeStateMachine: jest.fn().mockImplementation(() =>
+  (GoToDashboardDeviceAction as Mock).mockImplementation(() => ({
+    makeStateMachine: vi.fn().mockImplementation(() =>
       createMachine({
         id: "MockGoToDashboardDeviceAction",
         initial: "ready",
@@ -84,15 +85,15 @@ export const setupGetDeviceStatusMock = (
     },
   ],
 ) => {
-  const outputFn = jest.fn();
+  const outputFn = vi.fn();
 
   for (const output of outputs) {
     outputFn.mockImplementationOnce(() =>
       "currentApp" in output ? Right(output) : Left(output),
     );
   }
-  (GetDeviceStatusDeviceAction as jest.Mock).mockImplementation(() => ({
-    makeStateMachine: jest.fn().mockImplementation(() =>
+  (GetDeviceStatusDeviceAction as Mock).mockImplementation(() => ({
+    makeStateMachine: vi.fn().mockImplementation(() =>
       createMachine({
         id: "MockGetDeviceStatusDeviceAction",
         initial: "ready",

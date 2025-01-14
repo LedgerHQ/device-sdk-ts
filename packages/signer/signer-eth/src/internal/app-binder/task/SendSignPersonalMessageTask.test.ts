@@ -72,7 +72,7 @@ describe("SendSignPersonalMessageTask", () => {
   const resultNothing = CommandResultFactory({ data: Nothing });
 
   beforeEach(() => {
-    jest.resetAllMocks();
+    vi.resetAllMocks();
   });
 
   describe("run", () => {
@@ -82,8 +82,9 @@ describe("SendSignPersonalMessageTask", () => {
         derivationPath: "44'/60'/0'/0/0",
         message: SEND_MESSAGE_HELLO_WORLD,
       };
-      apiMock.sendCommand.mockResolvedValueOnce(resultOk);
-      apiMock.sendCommand.mockResolvedValueOnce(resultNothing);
+      apiMock.sendCommand
+        .mockResolvedValueOnce(resultOk)
+        .mockResolvedValueOnce(resultNothing);
 
       // WHEN
       const result = await new SendSignPersonalMessageTask(apiMock, args).run();
@@ -106,8 +107,10 @@ describe("SendSignPersonalMessageTask", () => {
         derivationPath: "44'/60'/0'/0/0",
         message: SEND_MESSAGE_HELLO_WORLD_BYTES,
       };
-      apiMock.sendCommand.mockResolvedValueOnce(resultOk);
-      apiMock.sendCommand.mockResolvedValueOnce(resultNothing);
+
+      apiMock.sendCommand
+        .mockResolvedValueOnce(resultOk)
+        .mockResolvedValueOnce(resultNothing);
 
       // WHEN
       const result = await new SendSignPersonalMessageTask(apiMock, args).run();
@@ -120,6 +123,7 @@ describe("SendSignPersonalMessageTask", () => {
           isFirstChunk: true,
         }),
       );
+      console.log("test", result);
       // eslint-disable-next-line  @typescript-eslint/no-explicit-any
       expect((result as any).data).toStrictEqual(signature);
     });

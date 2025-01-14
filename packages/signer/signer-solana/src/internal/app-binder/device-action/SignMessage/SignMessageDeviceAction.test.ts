@@ -12,19 +12,19 @@ import { setupOpenAppDAMock } from "@internal/app-binder/device-action/__test-ut
 import { testDeviceActionStates } from "@internal/app-binder/device-action/__test-utils__/testDeviceActionStates";
 import { SignMessageDeviceAction } from "@internal/app-binder/device-action/SignMessage/SignMessageDeviceAction";
 
-jest.mock(
-  "@ledgerhq/device-management-kit",
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-  () => ({
-    ...jest.requireActual("@ledgerhq/device-management-kit"),
-    OpenAppDeviceAction: jest.fn(() => ({
-      makeStateMachine: jest.fn(),
+vi.mock("@ledgerhq/device-management-kit", async (importOriginal) => {
+  const original =
+    await importOriginal<typeof import("@ledgerhq/device-management-kit")>();
+  return {
+    ...original,
+    OpenAppDeviceAction: vi.fn(() => ({
+      makeStateMachine: vi.fn(),
     })),
-  }),
-);
+  };
+});
 
 describe("SignMessageDeviceAction", () => {
-  const signMessageMock = jest.fn();
+  const signMessageMock = vi.fn();
 
   function extractDependenciesMock() {
     return {
@@ -33,283 +33,287 @@ describe("SignMessageDeviceAction", () => {
   }
 
   beforeEach(() => {
-    jest.resetAllMocks();
+    vi.resetAllMocks();
   });
 
   describe("Success case", () => {
-    it("should call external dependencies with the correct parameters", (done) => {
-      setupOpenAppDAMock();
+    it("should call external dependencies with the correct parameters", () =>
+      new Promise<Error | void>((done) => {
+        setupOpenAppDAMock();
 
-      const deviceAction = new SignMessageDeviceAction({
-        input: {
-          derivationPath: "44'/501'/0'/0'",
-          message: "Hello world",
-        },
-      });
-
-      jest
-        .spyOn(deviceAction, "extractDependencies")
-        .mockImplementation(() => extractDependenciesMock());
-
-      const signatureData = new Uint8Array([
-        // signature data...
-      ]);
-
-      signMessageMock.mockResolvedValueOnce(
-        CommandResultFactory({
-          data: signatureData,
-        }),
-      );
-
-      const expectedStates: Array<SignMessageDAState> = [
-        {
-          intermediateValue: {
-            requiredUserInteraction: UserInteractionRequired.None,
+        const deviceAction = new SignMessageDeviceAction({
+          input: {
+            derivationPath: "44'/501'/0'/0'",
+            message: "Hello world",
           },
-          status: DeviceActionStatus.Pending,
-        },
-        {
-          intermediateValue: {
-            requiredUserInteraction: UserInteractionRequired.ConfirmOpenApp,
-          },
-          status: DeviceActionStatus.Pending,
-        },
-        {
-          intermediateValue: {
-            requiredUserInteraction:
-              UserInteractionRequired.SignPersonalMessage,
-          },
-          status: DeviceActionStatus.Pending,
-        },
-        {
-          output: signatureData,
-          status: DeviceActionStatus.Completed,
-        },
-      ];
+        });
 
-      const { observable } = testDeviceActionStates(
-        deviceAction,
-        expectedStates,
-        makeDeviceActionInternalApiMock(),
-      );
+        vi.spyOn(deviceAction, "extractDependencies").mockImplementation(() =>
+          extractDependenciesMock(),
+        );
 
-      observable.subscribe({
-        complete: () => {
-          try {
-            expect(signMessageMock).toHaveBeenCalledWith(
-              expect.objectContaining({
-                input: expect.objectContaining({
-                  derivationPath: "44'/501'/0'/0'",
-                  sendingData: new TextEncoder().encode("Hello world"),
+        const signatureData = new Uint8Array([
+          // signature data...
+        ]);
+
+        signMessageMock.mockResolvedValueOnce(
+          CommandResultFactory({
+            data: signatureData,
+          }),
+        );
+
+        const expectedStates: Array<SignMessageDAState> = [
+          {
+            intermediateValue: {
+              requiredUserInteraction: UserInteractionRequired.None,
+            },
+            status: DeviceActionStatus.Pending,
+          },
+          {
+            intermediateValue: {
+              requiredUserInteraction: UserInteractionRequired.ConfirmOpenApp,
+            },
+            status: DeviceActionStatus.Pending,
+          },
+          {
+            intermediateValue: {
+              requiredUserInteraction:
+                UserInteractionRequired.SignPersonalMessage,
+            },
+            status: DeviceActionStatus.Pending,
+          },
+          {
+            output: signatureData,
+            status: DeviceActionStatus.Completed,
+          },
+        ];
+
+        const { observable } = testDeviceActionStates(
+          deviceAction,
+          expectedStates,
+          makeDeviceActionInternalApiMock(),
+        );
+
+        observable.subscribe({
+          complete: () => {
+            try {
+              expect(signMessageMock).toHaveBeenCalledWith(
+                expect.objectContaining({
+                  input: expect.objectContaining({
+                    derivationPath: "44'/501'/0'/0'",
+                    sendingData: new TextEncoder().encode("Hello world"),
+                  }),
                 }),
-              }),
-            );
-            done();
-          } catch (error) {
-            done(error);
-          }
-        },
-        error: (err) => {
-          done(err);
-        },
-      });
-    });
+              );
+              done();
+            } catch (error) {
+              done(error as Error);
+            }
+          },
+          error: (err) => {
+            done(err);
+          },
+        });
+      }));
   });
 
   describe("error cases", () => {
-    it("Error if the open app fails", (done) => {
-      setupOpenAppDAMock(new UnknownDeviceExchangeError("Mocked error"));
+    it("Error if the open app fails", () =>
+      new Promise<Error | void>((done) => {
+        setupOpenAppDAMock(new UnknownDeviceExchangeError("Mocked error"));
 
-      const expectedStates: Array<SignMessageDAState> = [
-        {
-          status: DeviceActionStatus.Pending,
-          intermediateValue: {
-            requiredUserInteraction: UserInteractionRequired.None,
+        const expectedStates: Array<SignMessageDAState> = [
+          {
+            status: DeviceActionStatus.Pending,
+            intermediateValue: {
+              requiredUserInteraction: UserInteractionRequired.None,
+            },
           },
-        },
-        {
-          status: DeviceActionStatus.Pending,
-          intermediateValue: {
-            requiredUserInteraction: UserInteractionRequired.ConfirmOpenApp,
+          {
+            status: DeviceActionStatus.Pending,
+            intermediateValue: {
+              requiredUserInteraction: UserInteractionRequired.ConfirmOpenApp,
+            },
           },
-        },
-        {
-          status: DeviceActionStatus.Error,
-          error: new UnknownDeviceExchangeError("Mocked error"),
-        },
-      ];
-
-      const deviceAction = new SignMessageDeviceAction({
-        input: {
-          derivationPath: "44'/60'/0'/0/0",
-          message: "Hello world",
-        },
-      });
-
-      jest
-        .spyOn(deviceAction, "extractDependencies")
-        .mockImplementation(() => extractDependenciesMock());
-
-      const { observable } = testDeviceActionStates(
-        deviceAction,
-        expectedStates,
-        makeDeviceActionInternalApiMock(),
-      );
-
-      observable.subscribe({
-        complete: () => {
-          try {
-            expect(signMessageMock).not.toHaveBeenCalled();
-            done();
-          } catch (error) {
-            done(error);
-          }
-        },
-        error: (err) => {
-          done(err);
-        },
-      });
-    });
-
-    it("Error if the signMessage fails", (done) => {
-      setupOpenAppDAMock();
-
-      const deviceAction = new SignMessageDeviceAction({
-        input: {
-          derivationPath: "44'/60'/0'/0/0",
-          message: "Hello world",
-        },
-      });
-
-      jest
-        .spyOn(deviceAction, "extractDependencies")
-        .mockImplementation(() => extractDependenciesMock());
-
-      signMessageMock.mockResolvedValueOnce(
-        CommandResultFactory({
-          error: new UnknownDeviceExchangeError("Mocked error"),
-        }),
-      );
-
-      const expectedStates: Array<SignMessageDAState> = [
-        {
-          status: DeviceActionStatus.Pending,
-          intermediateValue: {
-            requiredUserInteraction: UserInteractionRequired.None,
+          {
+            status: DeviceActionStatus.Error,
+            error: new UnknownDeviceExchangeError("Mocked error"),
           },
-        },
-        {
-          status: DeviceActionStatus.Pending,
-          intermediateValue: {
-            requiredUserInteraction: UserInteractionRequired.ConfirmOpenApp,
+        ];
+
+        const deviceAction = new SignMessageDeviceAction({
+          input: {
+            derivationPath: "44'/60'/0'/0/0",
+            message: "Hello world",
           },
-        },
-        {
-          status: DeviceActionStatus.Pending,
-          intermediateValue: {
-            requiredUserInteraction:
-              UserInteractionRequired.SignPersonalMessage,
+        });
+
+        vi.spyOn(deviceAction, "extractDependencies").mockImplementation(() =>
+          extractDependenciesMock(),
+        );
+
+        const { observable } = testDeviceActionStates(
+          deviceAction,
+          expectedStates,
+          makeDeviceActionInternalApiMock(),
+        );
+
+        observable.subscribe({
+          complete: () => {
+            try {
+              expect(signMessageMock).not.toHaveBeenCalled();
+              done();
+            } catch (error) {
+              done(error as Error);
+            }
           },
-        },
-        {
-          status: DeviceActionStatus.Error,
-          error: new UnknownDeviceExchangeError("Mocked error"),
-        },
-      ];
-
-      const { observable } = testDeviceActionStates(
-        deviceAction,
-        expectedStates,
-        makeDeviceActionInternalApiMock(),
-      );
-
-      observable.subscribe({
-        complete: () => {
-          try {
-            expect(signMessageMock).toHaveBeenCalled();
-            done();
-          } catch (error) {
-            done(error);
-          }
-        },
-        error: (err) => {
-          done(err);
-        },
-      });
-    });
-
-    it("Return a Left if the final state has no signature", (done) => {
-      setupOpenAppDAMock();
-
-      const deviceAction = new SignMessageDeviceAction({
-        input: {
-          derivationPath: "44'/60'/0'/0/0",
-          message: "Hello world",
-        },
-      });
-
-      jest
-        .spyOn(deviceAction, "extractDependencies")
-        .mockImplementation(() => extractDependenciesMock());
-
-      signMessageMock.mockResolvedValueOnce(
-        CommandResultFactory({
-          data: undefined,
-        }),
-      );
-
-      const expectedStates: Array<SignMessageDAState> = [
-        {
-          status: DeviceActionStatus.Pending,
-          intermediateValue: {
-            requiredUserInteraction: UserInteractionRequired.None,
+          error: (err) => {
+            done(err);
           },
-        },
-        {
-          status: DeviceActionStatus.Pending,
-          intermediateValue: {
-            requiredUserInteraction: UserInteractionRequired.ConfirmOpenApp,
-          },
-        },
-        {
-          status: DeviceActionStatus.Pending,
-          intermediateValue: {
-            requiredUserInteraction:
-              UserInteractionRequired.SignPersonalMessage,
-          },
-        },
-        {
-          status: DeviceActionStatus.Error,
-          error: new UnknownDAError("No error in final state"),
-        },
-      ];
+        });
+      }));
 
-      const { observable } = testDeviceActionStates(
-        deviceAction,
-        expectedStates,
-        makeDeviceActionInternalApiMock(),
-      );
+    it("Error if the signMessage fails", () =>
+      new Promise<Error | void>((done) => {
+        setupOpenAppDAMock();
 
-      observable.subscribe({
-        complete: () => {
-          try {
-            expect(signMessageMock).toHaveBeenCalledWith(
-              expect.objectContaining({
-                input: expect.objectContaining({
-                  derivationPath: "44'/60'/0'/0/0",
-                  sendingData: new TextEncoder().encode("Hello world"),
+        const deviceAction = new SignMessageDeviceAction({
+          input: {
+            derivationPath: "44'/60'/0'/0/0",
+            message: "Hello world",
+          },
+        });
+
+        vi.spyOn(deviceAction, "extractDependencies").mockImplementation(() =>
+          extractDependenciesMock(),
+        );
+
+        signMessageMock.mockResolvedValueOnce(
+          CommandResultFactory({
+            error: new UnknownDeviceExchangeError("Mocked error"),
+          }),
+        );
+
+        const expectedStates: Array<SignMessageDAState> = [
+          {
+            status: DeviceActionStatus.Pending,
+            intermediateValue: {
+              requiredUserInteraction: UserInteractionRequired.None,
+            },
+          },
+          {
+            status: DeviceActionStatus.Pending,
+            intermediateValue: {
+              requiredUserInteraction: UserInteractionRequired.ConfirmOpenApp,
+            },
+          },
+          {
+            status: DeviceActionStatus.Pending,
+            intermediateValue: {
+              requiredUserInteraction:
+                UserInteractionRequired.SignPersonalMessage,
+            },
+          },
+          {
+            status: DeviceActionStatus.Error,
+            error: new UnknownDeviceExchangeError("Mocked error"),
+          },
+        ];
+
+        const { observable } = testDeviceActionStates(
+          deviceAction,
+          expectedStates,
+          makeDeviceActionInternalApiMock(),
+        );
+
+        observable.subscribe({
+          complete: () => {
+            try {
+              expect(signMessageMock).toHaveBeenCalled();
+              done();
+            } catch (error) {
+              done(error as Error);
+            }
+          },
+          error: (err) => {
+            done(err);
+          },
+        });
+      }));
+
+    it("Return a Left if the final state has no signature", () =>
+      new Promise<Error | void>((done) => {
+        setupOpenAppDAMock();
+
+        const deviceAction = new SignMessageDeviceAction({
+          input: {
+            derivationPath: "44'/60'/0'/0/0",
+            message: "Hello world",
+          },
+        });
+
+        vi.spyOn(deviceAction, "extractDependencies").mockImplementation(() =>
+          extractDependenciesMock(),
+        );
+
+        signMessageMock.mockResolvedValueOnce(
+          CommandResultFactory({
+            data: undefined,
+          }),
+        );
+
+        const expectedStates: Array<SignMessageDAState> = [
+          {
+            status: DeviceActionStatus.Pending,
+            intermediateValue: {
+              requiredUserInteraction: UserInteractionRequired.None,
+            },
+          },
+          {
+            status: DeviceActionStatus.Pending,
+            intermediateValue: {
+              requiredUserInteraction: UserInteractionRequired.ConfirmOpenApp,
+            },
+          },
+          {
+            status: DeviceActionStatus.Pending,
+            intermediateValue: {
+              requiredUserInteraction:
+                UserInteractionRequired.SignPersonalMessage,
+            },
+          },
+          {
+            status: DeviceActionStatus.Error,
+            error: new UnknownDAError("No error in final state"),
+          },
+        ];
+
+        const { observable } = testDeviceActionStates(
+          deviceAction,
+          expectedStates,
+          makeDeviceActionInternalApiMock(),
+        );
+
+        observable.subscribe({
+          complete: () => {
+            try {
+              expect(signMessageMock).toHaveBeenCalledWith(
+                expect.objectContaining({
+                  input: expect.objectContaining({
+                    derivationPath: "44'/60'/0'/0/0",
+                    sendingData: new TextEncoder().encode("Hello world"),
+                  }),
                 }),
-              }),
-            );
-            done();
-          } catch (error) {
-            done(error);
-          }
-        },
-        error: (err) => {
-          done(err);
-        },
-      });
-    });
+              );
+              done();
+            } catch (error) {
+              done(error as Error);
+            }
+          },
+          error: (err) => {
+            done(err);
+          },
+        });
+      }));
   });
 });

@@ -8,7 +8,7 @@ describe("SignMessageUseCase", () => {
     const derivationPath = "44'/501'/0'/0'";
     const message = "Hello world";
     const appBinder = {
-      signMessage: jest.fn(),
+      signMessage: vi.fn(),
     };
     const signMessageUseCase = new SignMessageUseCase(
       appBinder as unknown as BtcAppBinder,

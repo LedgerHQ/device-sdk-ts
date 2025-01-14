@@ -15,7 +15,7 @@ import { HttpFetchApiError } from "@internal/manager-api/model/Errors";
 
 import { AxiosManagerApiDataSource } from "./AxiosManagerApiDataSource";
 
-jest.mock("axios");
+vi.mock("axios");
 
 const mockGetDeviceVersion = {
   id: 17,
@@ -31,7 +31,7 @@ describe("AxiosManagerApiDataSource", () => {
   describe("getAppsByHash", () => {
     describe("success cases", () => {
       afterEach(() => {
-        jest.clearAllMocks();
+        vi.clearAllMocks();
       });
       it("with BTC app, should return the metadata", async () => {
         const api = new AxiosManagerApiDataSource({
@@ -39,7 +39,7 @@ describe("AxiosManagerApiDataSource", () => {
           mockUrl: DEFAULT_MOCK_SERVER_BASE_URL,
         });
 
-        jest.spyOn(axios, "post").mockResolvedValue({
+        vi.spyOn(axios, "post").mockResolvedValue({
           data: [BTC_APP_METADATA],
         });
 
@@ -56,7 +56,7 @@ describe("AxiosManagerApiDataSource", () => {
           mockUrl: DEFAULT_MOCK_SERVER_BASE_URL,
         });
 
-        jest.spyOn(axios, "post").mockResolvedValue({
+        vi.spyOn(axios, "post").mockResolvedValue({
           data: [],
         });
 
@@ -73,7 +73,7 @@ describe("AxiosManagerApiDataSource", () => {
           mockUrl: DEFAULT_MOCK_SERVER_BASE_URL,
         });
 
-        jest.spyOn(axios, "post").mockResolvedValue({
+        vi.spyOn(axios, "post").mockResolvedValue({
           data: [BTC_APP_METADATA, CUSTOM_LOCK_SCREEN_APP_METADATA],
         });
 
@@ -92,16 +92,16 @@ describe("AxiosManagerApiDataSource", () => {
 
     describe("error cases", () => {
       afterEach(() => {
-        jest.clearAllMocks();
+        vi.clearAllMocks();
       });
-      it("should throw an error if the request fails", () => {
+      it("should throw an error if the request fails", async () => {
         // given
         const api = new AxiosManagerApiDataSource({
           managerApiUrl: DEFAULT_MANAGER_API_BASE_URL,
           mockUrl: DEFAULT_MOCK_SERVER_BASE_URL,
         });
         const err = new Error("fetch error");
-        jest.spyOn(axios, "post").mockRejectedValue(err);
+        vi.spyOn(axios, "post").mockRejectedValue(err);
 
         const hashes = [BTC_APP.appFullHash];
 
@@ -109,82 +109,87 @@ describe("AxiosManagerApiDataSource", () => {
         const response = api.getAppsByHash(hashes);
 
         // then
-        expect(response).resolves.toEqual(Left(new HttpFetchApiError(err)));
+        await expect(response).resolves.toEqual(
+          Left(new HttpFetchApiError(err)),
+        );
       });
     });
   });
 
   describe("getDeviceVersion", () => {
     afterEach(() => {
-      jest.clearAllMocks();
+      vi.clearAllMocks();
     });
-    it("should return a complete device version", () => {
+    it("should return a complete device version", async () => {
       // given
       const api = new AxiosManagerApiDataSource({
         managerApiUrl: DEFAULT_MANAGER_API_BASE_URL,
         mockUrl: DEFAULT_MOCK_SERVER_BASE_URL,
       });
-      jest
-        .spyOn(axios, "get")
-        .mockResolvedValue({ data: mockGetDeviceVersion });
+      vi.spyOn(axios, "get").mockResolvedValue({ data: mockGetDeviceVersion });
 
       // when
       const response = api.getDeviceVersion("targetId", 42);
 
       // then
-      expect(response).resolves.toEqual(Right(mockGetDeviceVersion));
+      await expect(response).resolves.toEqual(Right(mockGetDeviceVersion));
     });
-    it("should return an error if the request fails", () => {
+
+    it("should return an error if the request fails", async () => {
       // given
       const api = new AxiosManagerApiDataSource({
         managerApiUrl: DEFAULT_MANAGER_API_BASE_URL,
         mockUrl: DEFAULT_MOCK_SERVER_BASE_URL,
       });
       const error = new Error("fetch error");
-      jest.spyOn(axios, "get").mockRejectedValue(error);
+      vi.spyOn(axios, "get").mockRejectedValue(error);
 
       // when
       const response = api.getDeviceVersion("targetId", 42);
 
       // then
-      expect(response).resolves.toEqual(Left(new HttpFetchApiError(error)));
+      await expect(response).resolves.toEqual(
+        Left(new HttpFetchApiError(error)),
+      );
     });
   });
 
   describe("getFirmwareVersion", () => {
     afterEach(() => {
-      jest.clearAllMocks();
+      vi.clearAllMocks();
     });
-    it("should return a complete firmware version", () => {
+    it("should return a complete firmware version", async () => {
       // given
       const api = new AxiosManagerApiDataSource({
         managerApiUrl: DEFAULT_MANAGER_API_BASE_URL,
         mockUrl: DEFAULT_MOCK_SERVER_BASE_URL,
       });
-      jest
-        .spyOn(axios, "get")
-        .mockResolvedValue({ data: mockGetFirmwareVersion });
+      vi.spyOn(axios, "get").mockResolvedValue({
+        data: mockGetFirmwareVersion,
+      });
 
       // when
       const response = api.getFirmwareVersion("versionName", 42, 21);
 
       // then
-      expect(response).resolves.toEqual(Right(mockGetFirmwareVersion));
+      await expect(response).resolves.toEqual(Right(mockGetFirmwareVersion));
     });
-    it("should return an error if the request fails", () => {
+    it("should return an error if the request fails", async () => {
       // given
       const api = new AxiosManagerApiDataSource({
         managerApiUrl: DEFAULT_MANAGER_API_BASE_URL,
         mockUrl: DEFAULT_MOCK_SERVER_BASE_URL,
       });
       const error = new Error("fetch error");
-      jest.spyOn(axios, "get").mockRejectedValue(error);
+      vi.spyOn(axios, "get").mockRejectedValue(error);
 
       // when
       const response = api.getFirmwareVersion("versionName", 42, 21);
 
       // then
-      expect(response).resolves.toEqual(Left(new HttpFetchApiError(error)));
+      await expect(response).resolves.toEqual(
+        Left(new HttpFetchApiError(error)),
+      );
     });
   });
 });

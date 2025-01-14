@@ -37,7 +37,7 @@ describe("transportModuleFactory", () => {
     let transport: TransportMock;
     beforeEach(() => {
       transport = new TransportMock();
-      jest.spyOn(transport, "getIdentifier").mockReturnValue("MOCK");
+      vi.spyOn(transport, "getIdentifier").mockReturnValue("MOCK");
       const logger = loggerModuleFactory();
       const deviceModel = deviceModelModuleFactory({ stub: true });
       const deviceSession = deviceSessionModuleFactory({ stub: true });
@@ -63,7 +63,7 @@ describe("transportModuleFactory", () => {
     let transport: TransportMock;
     beforeEach(() => {
       transport = new TransportMock();
-      jest.spyOn(transport, "getIdentifier").mockReturnValue("MOCK");
+      vi.spyOn(transport, "getIdentifier").mockReturnValue("MOCK");
       mod = transportModuleFactory({
         stub: true,
         transports: [() => transport],

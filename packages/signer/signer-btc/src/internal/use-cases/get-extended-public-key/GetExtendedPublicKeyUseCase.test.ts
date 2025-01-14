@@ -5,14 +5,14 @@ import { GetExtendedPublicKeyUseCase } from "./GetExtendedPublicKeyUseCase";
 describe("GetAddressUseCase", () => {
   const derivationPath = "44'/501'";
   const address = "some-pkey";
-  const getExtendedPublicKeyMock = jest.fn().mockReturnValue(address);
+  const getExtendedPublicKeyMock = vi.fn().mockReturnValue(address);
   const appBinderMock = {
     getExtendedPublicKey: getExtendedPublicKeyMock,
   } as unknown as BtcAppBinder;
   let useCase: GetExtendedPublicKeyUseCase;
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
     useCase = new GetExtendedPublicKeyUseCase(appBinderMock);
   });
 

@@ -45,10 +45,10 @@ const transactionBuilder = (
 
 describe("ExternalPluginContextLoader", () => {
   const mockTokenDataSource: TokenDataSource = {
-    getTokenInfosPayload: jest.fn(),
+    getTokenInfosPayload: vi.fn(),
   };
   const mockExternalPluginDataSource: ExternalPluginDataSource = {
-    getDappInfos: jest.fn(),
+    getDappInfos: vi.fn(),
   };
   const loader = new ExternalPluginContextLoader(
     mockExternalPluginDataSource,
@@ -56,12 +56,10 @@ describe("ExternalPluginContextLoader", () => {
   );
 
   beforeEach(() => {
-    jest.clearAllMocks();
-    jest
-      .spyOn(mockTokenDataSource, "getTokenInfosPayload")
-      .mockImplementation(({ address }) =>
-        Promise.resolve(Right(`payload-${address}`)),
-      );
+    vi.clearAllMocks();
+    vi.spyOn(mockTokenDataSource, "getTokenInfosPayload").mockImplementation(
+      ({ address }) => Promise.resolve(Right(`payload-${address}`)),
+    );
   });
 
   describe("load function", () => {
@@ -103,9 +101,9 @@ describe("ExternalPluginContextLoader", () => {
       const transaction = transactionBuilder(ABI, "singleParam", [
         "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48",
       ]);
-      jest
-        .spyOn(mockExternalPluginDataSource, "getDappInfos")
-        .mockResolvedValue(Right(undefined));
+      vi.spyOn(mockExternalPluginDataSource, "getDappInfos").mockResolvedValue(
+        Right(undefined),
+      );
 
       // WHEN
       const result = await loader.load(transaction);
@@ -126,9 +124,9 @@ describe("ExternalPluginContextLoader", () => {
       const transaction = transactionBuilder(ABI, "singleParam", [
         "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48",
       ]);
-      jest
-        .spyOn(mockExternalPluginDataSource, "getDappInfos")
-        .mockResolvedValue(Right(dappInfos));
+      vi.spyOn(mockExternalPluginDataSource, "getDappInfos").mockResolvedValue(
+        Right(dappInfos),
+      );
 
       // WHEN
       const result = await loader.load(transaction);
@@ -154,9 +152,9 @@ describe("ExternalPluginContextLoader", () => {
       const transaction = transactionBuilder(ABI, "singleParam", [
         "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48",
       ]);
-      jest
-        .spyOn(mockExternalPluginDataSource, "getDappInfos")
-        .mockResolvedValue(Right(dappInfos));
+      vi.spyOn(mockExternalPluginDataSource, "getDappInfos").mockResolvedValue(
+        Right(dappInfos),
+      );
 
       // WHEN
       const result = await loader.load(transaction);
@@ -188,12 +186,12 @@ describe("ExternalPluginContextLoader", () => {
       const transaction = transactionBuilder(ABI, "singleParam", [
         "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48",
       ]);
-      jest
-        .spyOn(mockExternalPluginDataSource, "getDappInfos")
-        .mockResolvedValue(Right(dappInfos));
-      jest
-        .spyOn(mockTokenDataSource, "getTokenInfosPayload")
-        .mockResolvedValue(Left(Error("error")));
+      vi.spyOn(mockExternalPluginDataSource, "getDappInfos").mockResolvedValue(
+        Right(dappInfos),
+      );
+      vi.spyOn(mockTokenDataSource, "getTokenInfosPayload").mockResolvedValue(
+        Left(Error("error")),
+      );
 
       // WHEN
       const result = await loader.load(transaction);
@@ -224,9 +222,9 @@ describe("ExternalPluginContextLoader", () => {
         "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48",
         "0xdAC17F958D2ee523a2206206994597C13D831ec7",
       ]);
-      jest
-        .spyOn(mockExternalPluginDataSource, "getDappInfos")
-        .mockResolvedValue(Right(dappInfos));
+      vi.spyOn(mockExternalPluginDataSource, "getDappInfos").mockResolvedValue(
+        Right(dappInfos),
+      );
 
       // WHEN
       const result = await loader.load(transaction);
@@ -271,9 +269,9 @@ describe("ExternalPluginContextLoader", () => {
           "0xB8c77482e45F1F44dE1745F52C74426C631bDD52",
         ],
       ]);
-      jest
-        .spyOn(mockExternalPluginDataSource, "getDappInfos")
-        .mockResolvedValue(Right(dappInfos));
+      vi.spyOn(mockExternalPluginDataSource, "getDappInfos").mockResolvedValue(
+        Right(dappInfos),
+      );
 
       // WHEN
       const result = await loader.load(transaction);
@@ -317,12 +315,12 @@ describe("ExternalPluginContextLoader", () => {
       const transaction = transactionBuilder(ABI, "singleParam", [
         "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48",
       ]);
-      jest
-        .spyOn(mockExternalPluginDataSource, "getDappInfos")
-        .mockResolvedValue(Right(dappInfos));
-      jest
-        .spyOn(mockTokenDataSource, "getTokenInfosPayload")
-        .mockResolvedValue(Left(new Error("error")));
+      vi.spyOn(mockExternalPluginDataSource, "getDappInfos").mockResolvedValue(
+        Right(dappInfos),
+      );
+      vi.spyOn(mockTokenDataSource, "getTokenInfosPayload").mockResolvedValue(
+        Left(new Error("error")),
+      );
 
       // WHEN
       const result = await loader.load(transaction);
@@ -352,9 +350,9 @@ describe("ExternalPluginContextLoader", () => {
       const transaction = transactionBuilder(ABI, "singleParam", [
         "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48",
       ]);
-      jest
-        .spyOn(mockExternalPluginDataSource, "getDappInfos")
-        .mockResolvedValue(Right(dappInfos));
+      vi.spyOn(mockExternalPluginDataSource, "getDappInfos").mockResolvedValue(
+        Right(dappInfos),
+      );
 
       // WHEN
       const result = await loader.load(transaction);
@@ -386,9 +384,9 @@ describe("ExternalPluginContextLoader", () => {
       const transaction = transactionBuilder(ABI, "singleParam", [
         "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48",
       ]);
-      jest
-        .spyOn(mockExternalPluginDataSource, "getDappInfos")
-        .mockResolvedValue(Right(dappInfos));
+      vi.spyOn(mockExternalPluginDataSource, "getDappInfos").mockResolvedValue(
+        Right(dappInfos),
+      );
 
       // WHEN
       const result = await loader.load(transaction);
@@ -420,9 +418,9 @@ describe("ExternalPluginContextLoader", () => {
           "0xB8c77482e45F1F44dE1745F52C74426C631bDD52",
         ],
       ]);
-      jest
-        .spyOn(mockExternalPluginDataSource, "getDappInfos")
-        .mockResolvedValue(Right(dappInfos));
+      vi.spyOn(mockExternalPluginDataSource, "getDappInfos").mockResolvedValue(
+        Right(dappInfos),
+      );
 
       // WHEN
       const result = await loader.load(transaction);
@@ -474,9 +472,9 @@ describe("ExternalPluginContextLoader", () => {
           },
         },
       ]);
-      jest
-        .spyOn(mockExternalPluginDataSource, "getDappInfos")
-        .mockResolvedValue(Right(dappInfos));
+      vi.spyOn(mockExternalPluginDataSource, "getDappInfos").mockResolvedValue(
+        Right(dappInfos),
+      );
 
       // WHEN
       const result = await loader.load(transaction);
@@ -519,9 +517,9 @@ describe("ExternalPluginContextLoader", () => {
       const transaction = transactionBuilder(ABI, "singleParam", [
         "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48",
       ]);
-      jest
-        .spyOn(mockExternalPluginDataSource, "getDappInfos")
-        .mockResolvedValue(Left(new Error("error")));
+      vi.spyOn(mockExternalPluginDataSource, "getDappInfos").mockResolvedValue(
+        Left(new Error("error")),
+      );
 
       // WHEN
       const result = await loader.load(transaction);

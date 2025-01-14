@@ -16,7 +16,13 @@ const version = {
   version: pkg.version,
 };
 
-export const stubFsReadFile = () => JSON.stringify(version);
+export const stubFsReadFile = () => {
+  try {
+    return JSON.stringify(version);
+  } catch (error) {
+    throw error;
+  }
+};
 
 @injectable()
 /**
@@ -32,7 +38,13 @@ export class FileLocalConfigDataSource implements LocalConfigDataSource {
       .mapLeft((error) => new ReadFileError(error))
       .chain((str) => {
         return Either.encase(() => {
-          const config: unknown = JSON.parse(str);
+          let config: unknown;
+          try {
+            config = JSON.parse(str);
+          } catch (error) {
+            console.log(error);
+            throw error;
+          }
           if (isConfig(config)) {
             return config;
           }

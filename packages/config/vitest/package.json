@@ -1,0 +1,8 @@
+{
+  "name": "@ledgerhq/vitest-config-dmk",
+  "version": "0.0.0",
+  "main": "index.js",
+  "license": "Apache-2.0",
+  "type": "module",
+  "private": true
+}

@@ -22,16 +22,16 @@ import { type TypedDataParserService } from "@internal/typed-data/service/TypedD
 
 import { SignTypedDataDeviceAction } from "./SignTypedDataDeviceAction";
 
-jest.mock(
-  "@ledgerhq/device-management-kit",
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-  () => ({
-    ...jest.requireActual("@ledgerhq/device-management-kit"),
-    OpenAppDeviceAction: jest.fn(() => ({
-      makeStateMachine: jest.fn(),
+vi.mock("@ledgerhq/device-management-kit", async (importOriginal) => {
+  const original =
+    await importOriginal<typeof import("@ledgerhq/device-management-kit")>();
+  return {
+    ...original,
+    OpenAppDeviceAction: vi.fn(() => ({
+      makeStateMachine: vi.fn(),
     })),
-  }),
-);
+  };
+});
 
 describe("SignTypedDataDeviceAction", () => {
   const TEST_MESSAGE = {
@@ -85,16 +85,16 @@ describe("SignTypedDataDeviceAction", () => {
   };
 
   const mockParser: TypedDataParserService = {
-    parse: jest.fn(),
+    parse: vi.fn(),
   };
   const mockContextModule: ContextModule = {
-    getContext: jest.fn(),
-    getContexts: jest.fn(),
-    getTypedDataFilters: jest.fn(),
+    getContext: vi.fn(),
+    getContexts: vi.fn(),
+    getTypedDataFilters: vi.fn(),
   };
-  const buildContextMock = jest.fn();
-  const provideContextMock = jest.fn();
-  const signTypedDataMock = jest.fn();
+  const buildContextMock = vi.fn();
+  const provideContextMock = vi.fn();
+  const signTypedDataMock = vi.fn();
   function extractDependenciesMock() {
     return {
       buildContext: buildContextMock,
@@ -104,343 +104,348 @@ describe("SignTypedDataDeviceAction", () => {
   }
 
   beforeEach(() => {
-    jest.resetAllMocks();
+    vi.resetAllMocks();
   });
 
   describe("Success case", () => {
-    it("should call external dependencies with the correct parameters", (done) => {
-      setupOpenAppDAMock();
+    it("should call external dependencies with the correct parameters", () =>
+      new Promise((done) => {
+        setupOpenAppDAMock();
 
-      const deviceAction = new SignTypedDataDeviceAction({
-        input: {
-          derivationPath: "44'/60'/0'/0/0",
-          data: TEST_MESSAGE,
-          contextModule: mockContextModule,
-          parser: mockParser,
-        },
-      });
+        const deviceAction = new SignTypedDataDeviceAction({
+          input: {
+            derivationPath: "44'/60'/0'/0/0",
+            data: TEST_MESSAGE,
+            contextModule: mockContextModule,
+            parser: mockParser,
+          },
+        });
 
-      // Mock the dependencies to return some sample data
-      jest
-        .spyOn(deviceAction, "extractDependencies")
-        .mockReturnValue(extractDependenciesMock());
-      buildContextMock.mockResolvedValueOnce(TEST_BUILT_CONTEXT);
-      provideContextMock.mockResolvedValueOnce(
-        CommandResultFactory({ data: undefined }),
-      );
-      signTypedDataMock.mockResolvedValueOnce(
-        CommandResultFactory({
-          data: {
-            v: 0x1c,
-            r: "0x8a540510e13b0f2b11a451275716d29e08caad07e89a1c84964782fb5e1ad788",
-            s: "0x64a0de235b270fbe81e8e40688f4a9f9ad9d283d690552c9331d7773ceafa513",
-          },
-        }),
-      );
+        // Mock the dependencies to return some sample data
+        vi.spyOn(deviceAction, "extractDependencies").mockReturnValue(
+          extractDependenciesMock(),
+        );
+        buildContextMock.mockResolvedValueOnce(TEST_BUILT_CONTEXT);
+        provideContextMock.mockResolvedValueOnce(
+          CommandResultFactory({ data: undefined }),
+        );
+        signTypedDataMock.mockResolvedValueOnce(
+          CommandResultFactory({
+            data: {
+              v: 0x1c,
+              r: "0x8a540510e13b0f2b11a451275716d29e08caad07e89a1c84964782fb5e1ad788",
+              s: "0x64a0de235b270fbe81e8e40688f4a9f9ad9d283d690552c9331d7773ceafa513",
+            },
+          }),
+        );
 
-      // Expected intermediate values for the following state sequence:
-      //   Initial -> OpenApp -> BuildContext -> ProvideContext -> SignTypedData
-      const expectedStates: Array<SignTypedDataDAState> = [
-        {
-          intermediateValue: {
-            requiredUserInteraction: UserInteractionRequired.None,
+        // Expected intermediate values for the following state sequence:
+        //   Initial -> OpenApp -> BuildContext -> ProvideContext -> SignTypedData
+        const expectedStates: Array<SignTypedDataDAState> = [
+          {
+            intermediateValue: {
+              requiredUserInteraction: UserInteractionRequired.None,
+            },
+            status: DeviceActionStatus.Pending,
           },
-          status: DeviceActionStatus.Pending,
-        },
-        {
-          intermediateValue: {
-            requiredUserInteraction: UserInteractionRequired.ConfirmOpenApp,
+          {
+            intermediateValue: {
+              requiredUserInteraction: UserInteractionRequired.ConfirmOpenApp,
+            },
+            status: DeviceActionStatus.Pending,
           },
-          status: DeviceActionStatus.Pending,
-        },
-        {
-          intermediateValue: {
-            requiredUserInteraction: UserInteractionRequired.None,
+          {
+            intermediateValue: {
+              requiredUserInteraction: UserInteractionRequired.None,
+            },
+            status: DeviceActionStatus.Pending,
           },
-          status: DeviceActionStatus.Pending,
-        },
-        {
-          intermediateValue: {
-            requiredUserInteraction: UserInteractionRequired.SignTypedData,
+          {
+            intermediateValue: {
+              requiredUserInteraction: UserInteractionRequired.SignTypedData,
+            },
+            status: DeviceActionStatus.Pending,
           },
-          status: DeviceActionStatus.Pending,
-        },
-        {
-          intermediateValue: {
-            requiredUserInteraction: UserInteractionRequired.SignTypedData,
+          {
+            intermediateValue: {
+              requiredUserInteraction: UserInteractionRequired.SignTypedData,
+            },
+            status: DeviceActionStatus.Pending,
           },
-          status: DeviceActionStatus.Pending,
-        },
-        {
-          output: {
-            v: 0x1c,
-            r: "0x8a540510e13b0f2b11a451275716d29e08caad07e89a1c84964782fb5e1ad788",
-            s: "0x64a0de235b270fbe81e8e40688f4a9f9ad9d283d690552c9331d7773ceafa513",
+          {
+            output: {
+              v: 0x1c,
+              r: "0x8a540510e13b0f2b11a451275716d29e08caad07e89a1c84964782fb5e1ad788",
+              s: "0x64a0de235b270fbe81e8e40688f4a9f9ad9d283d690552c9331d7773ceafa513",
+            },
+            status: DeviceActionStatus.Completed,
           },
-          status: DeviceActionStatus.Completed,
-        },
-      ];
+        ];
 
-      const { observable } = testDeviceActionStates(
-        deviceAction,
-        expectedStates,
-        makeDeviceActionInternalApiMock(),
-        done,
-      );
+        const { observable } = testDeviceActionStates(
+          deviceAction,
+          expectedStates,
+          makeDeviceActionInternalApiMock(),
+          done,
+        );
 
-      // Verify mocks calls parameters
-      observable.subscribe({
-        complete: () => {
-          expect(buildContextMock).toHaveBeenCalledWith(
-            expect.objectContaining({
-              input: {
-                contextModule: mockContextModule,
-                parser: mockParser,
-                data: TEST_MESSAGE,
-              },
-            }),
-          );
-          expect(provideContextMock).toHaveBeenCalledWith(
-            expect.objectContaining({
-              input: {
-                taskArgs: TEST_BUILT_CONTEXT,
-              },
-            }),
-          );
-          expect(signTypedDataMock).toHaveBeenCalledWith(
-            expect.objectContaining({
-              input: {
-                derivationPath: "44'/60'/0'/0/0",
-              },
-            }),
-          );
-        },
-      });
-    });
+        // Verify mocks calls parameters
+        observable.subscribe({
+          complete: () => {
+            expect(buildContextMock).toHaveBeenCalledWith(
+              expect.objectContaining({
+                input: {
+                  contextModule: mockContextModule,
+                  parser: mockParser,
+                  data: TEST_MESSAGE,
+                },
+              }),
+            );
+            expect(provideContextMock).toHaveBeenCalledWith(
+              expect.objectContaining({
+                input: {
+                  taskArgs: TEST_BUILT_CONTEXT,
+                },
+              }),
+            );
+            expect(signTypedDataMock).toHaveBeenCalledWith(
+              expect.objectContaining({
+                input: {
+                  derivationPath: "44'/60'/0'/0/0",
+                },
+              }),
+            );
+          },
+        });
+      }));
   });
 
   describe("error cases", () => {
-    it("Error if the open app fails", (done) => {
-      setupOpenAppDAMock(new UnknownDAError("Mocked error"));
+    it("Error if the open app fails", () =>
+      new Promise((done) => {
+        setupOpenAppDAMock(new UnknownDAError("Mocked error"));
 
-      const expectedStates: Array<SignTypedDataDAState> = [
-        {
-          status: DeviceActionStatus.Pending,
-          intermediateValue: {
-            requiredUserInteraction: UserInteractionRequired.None,
+        const expectedStates: Array<SignTypedDataDAState> = [
+          {
+            status: DeviceActionStatus.Pending,
+            intermediateValue: {
+              requiredUserInteraction: UserInteractionRequired.None,
+            },
           },
-        },
-        {
-          status: DeviceActionStatus.Pending,
-          intermediateValue: {
-            requiredUserInteraction: UserInteractionRequired.ConfirmOpenApp,
+          {
+            status: DeviceActionStatus.Pending,
+            intermediateValue: {
+              requiredUserInteraction: UserInteractionRequired.ConfirmOpenApp,
+            },
           },
-        },
-        {
-          status: DeviceActionStatus.Error,
-          error: new UnknownDAError("Mocked error"),
-        },
-      ];
-
-      const deviceAction = new SignTypedDataDeviceAction({
-        input: {
-          derivationPath: "44'/60'/0'/0/0",
-          data: TEST_MESSAGE,
-          contextModule: mockContextModule,
-          parser: mockParser,
-        },
-      });
-
-      testDeviceActionStates(
-        deviceAction,
-        expectedStates,
-        makeDeviceActionInternalApiMock(),
-        done,
-      );
-    });
-
-    it("Error while building context", (done) => {
-      setupOpenAppDAMock();
-
-      const deviceAction = new SignTypedDataDeviceAction({
-        input: {
-          derivationPath: "44'/60'/0'/0/0",
-          data: TEST_MESSAGE,
-          contextModule: mockContextModule,
-          parser: mockParser,
-        },
-      });
-
-      // Mock the parsing error
-      jest
-        .spyOn(deviceAction, "extractDependencies")
-        .mockReturnValue(extractDependenciesMock());
-      buildContextMock.mockRejectedValueOnce(new UnknownDAError("Error"));
-
-      const expectedStates: Array<SignTypedDataDAState> = [
-        {
-          intermediateValue: {
-            requiredUserInteraction: UserInteractionRequired.None,
+          {
+            status: DeviceActionStatus.Error,
+            error: new UnknownDAError("Mocked error"),
           },
-          status: DeviceActionStatus.Pending,
-        },
-        {
-          intermediateValue: {
-            requiredUserInteraction: UserInteractionRequired.ConfirmOpenApp,
-          },
-          status: DeviceActionStatus.Pending,
-        },
-        {
-          intermediateValue: {
-            requiredUserInteraction: UserInteractionRequired.None,
-          },
-          status: DeviceActionStatus.Pending,
-        },
-        {
-          error: new UnknownDAError("Error"),
-          status: DeviceActionStatus.Error,
-        },
-      ];
+        ];
 
-      testDeviceActionStates(
-        deviceAction,
-        expectedStates,
-        makeDeviceActionInternalApiMock(),
-        done,
-      );
-    });
-
-    it("Error thrown while providing context", (done) => {
-      setupOpenAppDAMock();
-
-      const deviceAction = new SignTypedDataDeviceAction({
-        input: {
-          derivationPath: "44'/60'/0'/0/0",
-          data: TEST_MESSAGE,
-          contextModule: mockContextModule,
-          parser: mockParser,
-        },
-      });
-
-      // Mock the providing error
-      jest
-        .spyOn(deviceAction, "extractDependencies")
-        .mockReturnValue(extractDependenciesMock());
-      buildContextMock.mockResolvedValueOnce(TEST_BUILT_CONTEXT);
-      provideContextMock.mockRejectedValueOnce(new UnknownDAError("Error"));
-
-      const expectedStates: Array<SignTypedDataDAState> = [
-        {
-          intermediateValue: {
-            requiredUserInteraction: UserInteractionRequired.None,
+        const deviceAction = new SignTypedDataDeviceAction({
+          input: {
+            derivationPath: "44'/60'/0'/0/0",
+            data: TEST_MESSAGE,
+            contextModule: mockContextModule,
+            parser: mockParser,
           },
-          status: DeviceActionStatus.Pending,
-        },
-        {
-          intermediateValue: {
-            requiredUserInteraction: UserInteractionRequired.ConfirmOpenApp,
-          },
-          status: DeviceActionStatus.Pending,
-        },
-        {
-          intermediateValue: {
-            requiredUserInteraction: UserInteractionRequired.None,
-          },
-          status: DeviceActionStatus.Pending,
-        },
-        {
-          intermediateValue: {
-            requiredUserInteraction: UserInteractionRequired.SignTypedData,
-          },
-          status: DeviceActionStatus.Pending,
-        },
-        {
-          error: new UnknownDAError("Error"),
-          status: DeviceActionStatus.Error,
-        },
-      ];
+        });
 
-      testDeviceActionStates(
-        deviceAction,
-        expectedStates,
-        makeDeviceActionInternalApiMock(),
-        done,
-      );
-    });
+        testDeviceActionStates(
+          deviceAction,
+          expectedStates,
+          makeDeviceActionInternalApiMock(),
+          done,
+        );
+      }));
 
-    it("Error while signing", (done) => {
-      setupOpenAppDAMock();
+    it("Error while building context", () =>
+      new Promise((done) => {
+        setupOpenAppDAMock();
 
-      const deviceAction = new SignTypedDataDeviceAction({
-        input: {
-          derivationPath: "44'/60'/0'/0/0",
-          data: TEST_MESSAGE,
-          contextModule: mockContextModule,
-          parser: mockParser,
-        },
-      });
+        const deviceAction = new SignTypedDataDeviceAction({
+          input: {
+            derivationPath: "44'/60'/0'/0/0",
+            data: TEST_MESSAGE,
+            contextModule: mockContextModule,
+            parser: mockParser,
+          },
+        });
 
-      // Mock signing error
-      jest
-        .spyOn(deviceAction, "extractDependencies")
-        .mockReturnValue(extractDependenciesMock());
-      buildContextMock.mockResolvedValueOnce(TEST_BUILT_CONTEXT);
-      provideContextMock.mockResolvedValueOnce(
-        CommandResultFactory({ data: undefined }),
-      );
-      signTypedDataMock.mockResolvedValueOnce(
-        CommandResultFactory({
-          error: new UnknownDeviceExchangeError(
-            "Error while signing the typed data",
-          ),
-        }),
-      );
+        // Mock the parsing error
+        vi.spyOn(deviceAction, "extractDependencies").mockReturnValue(
+          extractDependenciesMock(),
+        );
+        buildContextMock.mockRejectedValueOnce(new UnknownDAError("Error"));
 
-      const expectedStates: Array<SignTypedDataDAState> = [
-        {
-          intermediateValue: {
-            requiredUserInteraction: UserInteractionRequired.None,
+        const expectedStates: Array<SignTypedDataDAState> = [
+          {
+            intermediateValue: {
+              requiredUserInteraction: UserInteractionRequired.None,
+            },
+            status: DeviceActionStatus.Pending,
           },
-          status: DeviceActionStatus.Pending,
-        },
-        {
-          intermediateValue: {
-            requiredUserInteraction: UserInteractionRequired.ConfirmOpenApp,
+          {
+            intermediateValue: {
+              requiredUserInteraction: UserInteractionRequired.ConfirmOpenApp,
+            },
+            status: DeviceActionStatus.Pending,
           },
-          status: DeviceActionStatus.Pending,
-        },
-        {
-          intermediateValue: {
-            requiredUserInteraction: UserInteractionRequired.None,
+          {
+            intermediateValue: {
+              requiredUserInteraction: UserInteractionRequired.None,
+            },
+            status: DeviceActionStatus.Pending,
           },
-          status: DeviceActionStatus.Pending,
-        },
-        {
-          intermediateValue: {
-            requiredUserInteraction: UserInteractionRequired.SignTypedData,
+          {
+            error: new UnknownDAError("Error"),
+            status: DeviceActionStatus.Error,
           },
-          status: DeviceActionStatus.Pending,
-        },
-        {
-          intermediateValue: {
-            requiredUserInteraction: UserInteractionRequired.SignTypedData,
-          },
-          status: DeviceActionStatus.Pending,
-        },
-        {
-          error: new UnknownDeviceExchangeError(
-            "Error while signing the typed data",
-          ),
-          status: DeviceActionStatus.Error,
-        },
-      ];
+        ];
 
-      testDeviceActionStates(
-        deviceAction,
-        expectedStates,
-        makeDeviceActionInternalApiMock(),
-        done,
-      );
-    });
+        testDeviceActionStates(
+          deviceAction,
+          expectedStates,
+          makeDeviceActionInternalApiMock(),
+          done,
+        );
+      }));
+
+    it("Error thrown while providing context", () =>
+      new Promise((done) => {
+        setupOpenAppDAMock();
+
+        const deviceAction = new SignTypedDataDeviceAction({
+          input: {
+            derivationPath: "44'/60'/0'/0/0",
+            data: TEST_MESSAGE,
+            contextModule: mockContextModule,
+            parser: mockParser,
+          },
+        });
+
+        // Mock the providing error
+        vi.spyOn(deviceAction, "extractDependencies").mockReturnValue(
+          extractDependenciesMock(),
+        );
+        buildContextMock.mockResolvedValueOnce(TEST_BUILT_CONTEXT);
+        provideContextMock.mockRejectedValueOnce(new UnknownDAError("Error"));
+
+        const expectedStates: Array<SignTypedDataDAState> = [
+          {
+            intermediateValue: {
+              requiredUserInteraction: UserInteractionRequired.None,
+            },
+            status: DeviceActionStatus.Pending,
+          },
+          {
+            intermediateValue: {
+              requiredUserInteraction: UserInteractionRequired.ConfirmOpenApp,
+            },
+            status: DeviceActionStatus.Pending,
+          },
+          {
+            intermediateValue: {
+              requiredUserInteraction: UserInteractionRequired.None,
+            },
+            status: DeviceActionStatus.Pending,
+          },
+          {
+            intermediateValue: {
+              requiredUserInteraction: UserInteractionRequired.SignTypedData,
+            },
+            status: DeviceActionStatus.Pending,
+          },
+          {
+            error: new UnknownDAError("Error"),
+            status: DeviceActionStatus.Error,
+          },
+        ];
+
+        testDeviceActionStates(
+          deviceAction,
+          expectedStates,
+          makeDeviceActionInternalApiMock(),
+          done,
+        );
+      }));
+
+    it("Error while signing", () =>
+      new Promise((done) => {
+        setupOpenAppDAMock();
+
+        const deviceAction = new SignTypedDataDeviceAction({
+          input: {
+            derivationPath: "44'/60'/0'/0/0",
+            data: TEST_MESSAGE,
+            contextModule: mockContextModule,
+            parser: mockParser,
+          },
+        });
+
+        // Mock signing error
+        vi.spyOn(deviceAction, "extractDependencies").mockReturnValue(
+          extractDependenciesMock(),
+        );
+        buildContextMock.mockResolvedValueOnce(TEST_BUILT_CONTEXT);
+        provideContextMock.mockResolvedValueOnce(
+          CommandResultFactory({ data: undefined }),
+        );
+        signTypedDataMock.mockResolvedValueOnce(
+          CommandResultFactory({
+            error: new UnknownDeviceExchangeError(
+              "Error while signing the typed data",
+            ),
+          }),
+        );
+
+        const expectedStates: Array<SignTypedDataDAState> = [
+          {
+            intermediateValue: {
+              requiredUserInteraction: UserInteractionRequired.None,
+            },
+            status: DeviceActionStatus.Pending,
+          },
+          {
+            intermediateValue: {
+              requiredUserInteraction: UserInteractionRequired.ConfirmOpenApp,
+            },
+            status: DeviceActionStatus.Pending,
+          },
+          {
+            intermediateValue: {
+              requiredUserInteraction: UserInteractionRequired.None,
+            },
+            status: DeviceActionStatus.Pending,
+          },
+          {
+            intermediateValue: {
+              requiredUserInteraction: UserInteractionRequired.SignTypedData,
+            },
+            status: DeviceActionStatus.Pending,
+          },
+          {
+            intermediateValue: {
+              requiredUserInteraction: UserInteractionRequired.SignTypedData,
+            },
+            status: DeviceActionStatus.Pending,
+          },
+          {
+            error: new UnknownDeviceExchangeError(
+              "Error while signing the typed data",
+            ),
+            status: DeviceActionStatus.Error,
+          },
+        ];
+
+        testDeviceActionStates(
+          deviceAction,
+          expectedStates,
+          makeDeviceActionInternalApiMock(),
+          done,
+        );
+      }));
   });
 });

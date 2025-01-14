@@ -8,11 +8,11 @@ import type { TypedDataContextLoader } from "./typed-data/domain/TypedDataContex
 import { DefaultContextModule } from "./DefaultContextModule";
 
 const contextLoaderStubBuilder = () => {
-  return { load: jest.fn(), loadField: jest.fn() };
+  return { load: vi.fn(), loadField: vi.fn() };
 };
 
 describe("DefaultContextModule", () => {
-  const typedDataLoader: TypedDataContextLoader = { load: jest.fn() };
+  const typedDataLoader: TypedDataContextLoader = { load: vi.fn() };
   const defaultContextModuleConfig: ContextModuleConfig = {
     customLoaders: [],
     defaultLoaders: false,
@@ -25,7 +25,7 @@ describe("DefaultContextModule", () => {
   };
 
   beforeEach(() => {
-    jest.restoreAllMocks();
+    vi.restoreAllMocks();
   });
 
   it("should initialize the context module with all the default loaders", async () => {
@@ -65,8 +65,7 @@ describe("DefaultContextModule", () => {
         { type: "plugin", payload: "payload3" },
       ],
     ];
-    jest
-      .spyOn(loader, "load")
+    vi.spyOn(loader, "load")
       .mockResolvedValueOnce(responses[0])
       .mockResolvedValueOnce(responses[1]);
     const contextModule = new DefaultContextModule({
@@ -94,13 +93,12 @@ describe("DefaultContextModule", () => {
   it("should return a single context", async () => {
     const loader = contextLoaderStubBuilder();
     const responses = [null, { type: "token", payload: "payload" }];
-    jest
-      .spyOn(loader, "loadField")
+    vi.spyOn(loader, "loadField")
       .mockResolvedValueOnce(responses[0])
       .mockResolvedValueOnce(responses[1]);
     const contextModule = new DefaultContextModule({
       ...defaultContextModuleConfig,
-      customLoaders: [loader, { load: jest.fn() }, loader],
+      customLoaders: [loader, { load: vi.fn() }, loader],
     });
 
     const res = await contextModule.getContext({
@@ -114,13 +112,12 @@ describe("DefaultContextModule", () => {
   it("context field not supported", async () => {
     const loader = contextLoaderStubBuilder();
     const responses = [null, null];
-    jest
-      .spyOn(loader, "loadField")
+    vi.spyOn(loader, "loadField")
       .mockResolvedValueOnce(responses[0])
       .mockResolvedValueOnce(responses[1]);
     const contextModule = new DefaultContextModule({
       ...defaultContextModuleConfig,
-      customLoaders: [loader, { load: jest.fn() }, loader],
+      customLoaders: [loader, { load: vi.fn() }, loader],
     });
 
     const res = await contextModule.getContext({
@@ -137,7 +134,7 @@ describe("DefaultContextModule", () => {
   it("getField not implemented", async () => {
     const contextModule = new DefaultContextModule({
       ...defaultContextModuleConfig,
-      customLoaders: [{ load: jest.fn() }],
+      customLoaders: [{ load: vi.fn() }],
     });
 
     const res = await contextModule.getContext({
