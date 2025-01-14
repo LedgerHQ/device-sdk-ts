@@ -3,6 +3,7 @@ import {
   GLOBAL_ERRORS,
   GlobalCommandError,
 } from "@api/command/utils/GlobalCommandError";
+import { DeviceModelId } from "@api/device/DeviceModel";
 import { DeviceStatus } from "@api/device/DeviceStatus";
 import { makeDeviceActionInternalApiMock } from "@api/device-action/__test-utils__/makeInternalApi";
 import { setupGetDeviceStatusMock } from "@api/device-action/__test-utils__/setupTestMachine";
@@ -55,6 +56,7 @@ describe("GoToDashboardDeviceAction", () => {
         deviceStatus: DeviceStatus.CONNECTED,
         currentApp: { name: "BOLOS", version: "1.5.0" },
         installedApps: [],
+        deviceModelId: DeviceModelId.NANO_X,
       });
 
       const expectedStates: Array<GoToDashboardDAState> = [
@@ -101,6 +103,7 @@ describe("GoToDashboardDeviceAction", () => {
         deviceStatus: DeviceStatus.CONNECTED,
         currentApp: { name: "Bitcoin", version: "1.0.0" },
         installedApps: [],
+        deviceModelId: DeviceModelId.NANO_X,
       });
 
       sendCommandMock
@@ -271,6 +274,7 @@ describe("GoToDashboardDeviceAction", () => {
         deviceStatus: DeviceStatus.CONNECTED,
         currentApp: { name: "BOLOS", version: "1.5.0" },
         installedApps: [],
+        deviceModelId: DeviceModelId.NANO_X,
       });
 
       const expectedStates: Array<GoToDashboardDAState> = [

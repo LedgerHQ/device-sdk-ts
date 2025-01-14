@@ -708,7 +708,7 @@ describe("SignTransactionDeviceAction", () => {
       });
     });
 
-    it("should fallback to blind signing if getChallenge return an error", (done) => {
+    it("should continue if getChallenge return an error 6d00 not supported", (done) => {
       setupOpenAppDAMock();
 
       const deviceAction = new SignTransactionDeviceAction({
@@ -725,7 +725,10 @@ describe("SignTransactionDeviceAction", () => {
       // Mock the dependencies to return some sample data
       getChallengeMock.mockResolvedValueOnce(
         CommandResultFactory({
-          error: new UnknownDeviceExchangeError("getChallenge error"),
+          error: new UnknownDeviceExchangeError({
+            message: "UnknownError",
+            errorCode: "6d00",
+          }),
         }),
       );
       buildContextMock.mockResolvedValueOnce({
@@ -909,6 +912,66 @@ describe("SignTransactionDeviceAction", () => {
 
       getChallengeMock.mockRejectedValueOnce(
         new InvalidStatusWordError("getChallenge error"),
+      );
+      jest
+        .spyOn(deviceAction, "extractDependencies")
+        .mockReturnValue(extractDependenciesMock());
+
+      const expectedStates: Array<SignTransactionDAState> = [
+        // Initial state
+        {
+          intermediateValue: {
+            requiredUserInteraction: UserInteractionRequired.None,
+          },
+          status: DeviceActionStatus.Pending,
+        },
+        // OpenApp interaction
+        {
+          intermediateValue: {
+            requiredUserInteraction: UserInteractionRequired.ConfirmOpenApp,
+          },
+          status: DeviceActionStatus.Pending,
+        },
+        // GetChallenge state
+        {
+          intermediateValue: {
+            requiredUserInteraction: UserInteractionRequired.None,
+          },
+          status: DeviceActionStatus.Pending,
+        },
+        // GetChallenge error
+        {
+          error: new InvalidStatusWordError("getChallenge error"),
+          status: DeviceActionStatus.Error,
+        },
+      ];
+
+      testDeviceActionStates(
+        deviceAction,
+        expectedStates,
+        makeDeviceActionInternalApiMock(),
+        done,
+      );
+    });
+
+    it("should fail if getChallenge return an error", (done) => {
+      setupOpenAppDAMock();
+
+      const deviceAction = new SignTransactionDeviceAction({
+        input: {
+          derivationPath: "44'/60'/0'/0/0",
+          transaction: defaultTransaction,
+          options: defaultOptions,
+          contextModule: contextModuleMock,
+          mapper: mapperMock,
+          parser: parserMock,
+        },
+      });
+
+      getChallengeMock.mockResolvedValueOnce(
+        CommandResultFactory({
+          error: new InvalidStatusWordError("getChallenge error"),
+        }),
       );
       jest
         .spyOn(deviceAction, "extractDependencies")

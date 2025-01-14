@@ -3,6 +3,7 @@ import {
   ClearSignContextType,
 } from "@ledgerhq/context-module";
 import {
+  DeviceModelId,
   DeviceSessionStateType,
   DeviceStatus,
   hexaStringToBuffer,
@@ -43,7 +44,7 @@ describe("BuildTransactionContextTask", () => {
   const apiMock = makeDeviceActionInternalApiMock();
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    jest.resetAllMocks();
 
     defaultArgs = {
       contextModule: contextModuleMock,
@@ -70,6 +71,7 @@ describe("BuildTransactionContextTask", () => {
       deviceStatus: DeviceStatus.CONNECTED,
       installedApps: [],
       currentApp: { name: "Ethereum", version: "1.12.0" },
+      deviceModelId: DeviceModelId.FLEX,
     });
 
     // WHEN
@@ -112,6 +114,7 @@ describe("BuildTransactionContextTask", () => {
       deviceStatus: DeviceStatus.CONNECTED,
       installedApps: [],
       currentApp: { name: "Ethereum", version: "1.12.0" },
+      deviceModelId: DeviceModelId.FLEX,
     });
 
     // WHEN
@@ -164,6 +167,7 @@ describe("BuildTransactionContextTask", () => {
       deviceStatus: DeviceStatus.CONNECTED,
       installedApps: [],
       currentApp: { name: "Ethereum", version: "1.14.0" },
+      deviceModelId: DeviceModelId.FLEX,
     });
 
     // WHEN
@@ -201,6 +205,7 @@ describe("BuildTransactionContextTask", () => {
       deviceStatus: DeviceStatus.CONNECTED,
       installedApps: [],
       currentApp: { name: "Ethereum", version: "1.12.0" },
+      deviceModelId: DeviceModelId.FLEX,
     });
 
     // WHEN
@@ -228,6 +233,7 @@ describe("BuildTransactionContextTask", () => {
       deviceStatus: DeviceStatus.CONNECTED,
       installedApps: [],
       currentApp: { name: "Ethereum", version: "1.12.0" },
+      deviceModelId: DeviceModelId.FLEX,
     });
 
     // WHEN
@@ -241,33 +247,6 @@ describe("BuildTransactionContextTask", () => {
     });
   });
 
-  it("should return no context if the challenge is not provided", async () => {
-    // GIVEN
-    const serializedTransaction = new Uint8Array([0x01, 0x02, 0x03]);
-    const mapperResult: TransactionMapperResult = {
-      subset: { chainId: 1, to: undefined, data: "0x" },
-      serializedTransaction,
-      type: 0,
-    };
-    mapperMock.mapTransactionToSubset.mockReturnValueOnce(Right(mapperResult));
-    const args = {
-      ...defaultArgs,
-      challenge: null,
-    };
-
-    // WHEN
-    const result = await new BuildTransactionContextTask(apiMock, args).run();
-
-    // THEN
-    expect(result).toEqual({
-      clearSignContexts: [],
-      serializedTransaction,
-      chainId: 1,
-      transactionType: 0,
-    });
-    expect(contextModuleMock.getContexts).not.toHaveBeenCalled();
-  });
-
   it("should throw an error if the mapper returns an error", async () => {
     // GIVEN
     const error = new Error("error");
@@ -277,6 +256,7 @@ describe("BuildTransactionContextTask", () => {
       deviceStatus: DeviceStatus.CONNECTED,
       installedApps: [],
       currentApp: { name: "Ethereum", version: "1.12.0" },
+      deviceModelId: DeviceModelId.FLEX,
     });
 
     // WHEN
@@ -319,6 +299,7 @@ describe("BuildTransactionContextTask", () => {
       deviceStatus: DeviceStatus.CONNECTED,
       installedApps: [],
       currentApp: { name: "Ethereum", version: "1.12.0" },
+      deviceModelId: DeviceModelId.FLEX,
     });
 
     // WHEN
@@ -375,6 +356,7 @@ describe("BuildTransactionContextTask", () => {
       deviceStatus: DeviceStatus.CONNECTED,
       installedApps: [],
       currentApp: { name: "Ethereum", version: "1.12.0" },
+      deviceModelId: DeviceModelId.FLEX,
     });
 
     // WHEN
@@ -427,6 +409,7 @@ describe("BuildTransactionContextTask", () => {
       deviceStatus: DeviceStatus.CONNECTED,
       installedApps: [],
       currentApp: { name: "Ethereum", version: "1.14.0" },
+      deviceModelId: DeviceModelId.FLEX,
     });
 
     // WHEN
@@ -483,6 +466,7 @@ describe("BuildTransactionContextTask", () => {
       deviceStatus: DeviceStatus.CONNECTED,
       installedApps: [],
       currentApp: { name: "Ethereum", version: "1.14.0" },
+      deviceModelId: DeviceModelId.FLEX,
     });
 
     // WHEN
@@ -498,6 +482,59 @@ describe("BuildTransactionContextTask", () => {
         transactionFields: [clearSignContexts[3]],
         transactionEnums: [clearSignContexts[4]],
       },
+      serializedTransaction,
+      chainId: 1,
+      transactionType: 2,
+    });
+  });
+
+  it("should exclude generic-parser contexts with a nano s device", async () => {
+    // GIVEN
+    const serializedTransaction = new Uint8Array([0x01, 0x02, 0x03]);
+    const clearSignContexts: ClearSignContext[] = [
+      {
+        type: ClearSignContextType.TOKEN,
+        payload: "payload-1",
+      },
+      {
+        type: ClearSignContextType.TRANSACTION_INFO,
+        payload: "payload-2",
+      },
+      {
+        type: ClearSignContextType.TRANSACTION_FIELD_DESCRIPTION,
+        payload: "payload-3",
+      },
+      {
+        type: ClearSignContextType.ENUM,
+        payload: "payload-4",
+        id: 1,
+        value: 2,
+      },
+    ];
+    const mapperResult: TransactionMapperResult = {
+      subset: { chainId: 1, to: undefined, data: "0x" },
+      serializedTransaction,
+      type: 2,
+    };
+    mapperMock.mapTransactionToSubset.mockReturnValueOnce(Right(mapperResult));
+    contextModuleMock.getContexts.mockResolvedValueOnce(clearSignContexts);
+    apiMock.getDeviceSessionState.mockReturnValueOnce({
+      sessionStateType: DeviceSessionStateType.ReadyWithoutSecureChannel,
+      deviceStatus: DeviceStatus.CONNECTED,
+      installedApps: [],
+      currentApp: { name: "Ethereum", version: "1.14.0" },
+      deviceModelId: DeviceModelId.NANO_S,
+    });
+
+    // WHEN
+    const result = await new BuildTransactionContextTask(apiMock, {
+      ...defaultArgs,
+      challenge: null,
+    }).run();
+
+    // THEN
+    expect(result).toEqual({
+      clearSignContexts: [clearSignContexts[0]],
       serializedTransaction,
       chainId: 1,
       transactionType: 2,

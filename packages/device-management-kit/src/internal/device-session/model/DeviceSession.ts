@@ -50,6 +50,7 @@ export class DeviceSession {
     this._deviceState = new BehaviorSubject<DeviceSessionState>({
       sessionStateType: DeviceSessionStateType.Connected,
       deviceStatus: DeviceStatus.CONNECTED,
+      deviceModelId: this._connectedDevice.deviceModel.id,
     });
     this._refresher = new DeviceSessionRefresher(
       {

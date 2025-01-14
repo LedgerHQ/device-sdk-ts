@@ -221,7 +221,7 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
             id: "getChallenge",
             src: "getChallenge",
             onDone: {
-              target: "BuildContext",
+              target: "GetChallengeResultCheck",
               actions: [
                 assign({
                   _internalState: ({ event, context }) => {
@@ -231,6 +231,17 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
                         challenge: event.output.data.challenge,
                       };
                     }
+
+                    // if the command is not supported, we can skip the error
+                    if (
+                      typeof event.output.error.originalError === "object" &&
+                      event.output.error.originalError !== null &&
+                      "errorCode" in event.output.error.originalError &&
+                      event.output.error.originalError.errorCode === "6d00"
+                    ) {
+                      return context._internalState;
+                    }
+
                     return {
                       ...context._internalState,
                       error: event.output.error,
@@ -244,6 +255,15 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
               actions: "assignErrorFromEvent",
             },
           },
+        },
+        GetChallengeResultCheck: {
+          always: [
+            {
+              target: "BuildContext",
+              guard: "noInternalError",
+            },
+            "Error",
+          ],
         },
         BuildContext: {
           invoke: {

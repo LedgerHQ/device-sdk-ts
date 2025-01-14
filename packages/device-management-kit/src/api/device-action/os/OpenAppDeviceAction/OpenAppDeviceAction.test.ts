@@ -2,6 +2,7 @@ import { lastValueFrom } from "rxjs";
 
 import { InvalidStatusWordError } from "@api/command/Errors";
 import { CommandResultFactory } from "@api/command/model/CommandResult";
+import { DeviceModelId } from "@api/device/DeviceModel";
 import { DeviceStatus } from "@api/device/DeviceStatus";
 import { makeDeviceActionInternalApiMock } from "@api/device-action/__test-utils__/makeInternalApi";
 import { setupGetDeviceStatusMock } from "@api/device-action/__test-utils__/setupTestMachine";
@@ -54,6 +55,7 @@ describe("OpenAppDeviceAction", () => {
         deviceStatus: DeviceStatus.CONNECTED,
         currentApp: { name: "Bitcoin", version: "1.0.0" },
         installedApps: [],
+        deviceModelId: DeviceModelId.NANO_X,
       });
       setupGetDeviceStatusMock([
         {

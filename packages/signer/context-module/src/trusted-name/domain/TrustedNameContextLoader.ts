@@ -28,7 +28,7 @@ export class TrustedNameContextLoader implements ContextLoader {
   ): Promise<ClearSignContext[]> {
     const { domain, challenge } = transactionContext;
 
-    if (!domain) {
+    if (!domain || !challenge) {
       return [];
     }
 
