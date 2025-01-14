@@ -6,7 +6,6 @@ import { StubUseCase } from "@root/src/di.stub";
 
 import { managerApiModuleFactory } from "./managerApiModule";
 import { managerApiTypes } from "./managerApiTypes";
-// import { types } from "./managerApiTypes";
 
 describe("managerApiModuleFactory", () => {
   describe("Default", () => {
@@ -18,6 +17,7 @@ describe("managerApiModuleFactory", () => {
         config: {
           managerApiUrl: "http://fake.url",
           mockUrl: "http://fake-mock.url",
+          webSocketUrl: "http://fake-websocket.url",
         },
       });
       container = new Container();
@@ -43,6 +43,7 @@ describe("managerApiModuleFactory", () => {
       expect(config).toEqual({
         managerApiUrl: "http://fake.url",
         mockUrl: "http://fake-mock.url",
+        webSocketUrl: "http://fake-websocket.url",
       });
     });
   });
@@ -56,6 +57,7 @@ describe("managerApiModuleFactory", () => {
         config: {
           managerApiUrl: "http://fake.url",
           mockUrl: "http://fake-mock.url",
+          webSocketUrl: "http://fake-websocket.url",
         },
       });
       container = new Container();
@@ -81,6 +83,7 @@ describe("managerApiModuleFactory", () => {
       expect(config).toEqual({
         managerApiUrl: "http://fake.url",
         mockUrl: "http://fake-mock.url",
+        webSocketUrl: "http://fake-websocket.url",
       });
     });
   });

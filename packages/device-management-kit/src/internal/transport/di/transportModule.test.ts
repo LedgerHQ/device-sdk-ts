@@ -46,6 +46,7 @@ describe("transportModuleFactory", () => {
         config: {
           managerApiUrl: "http://fake.url/api",
           mockUrl: "http://fake.url",
+          webSocketUrl: "ws://fake.websocket.url",
         },
       });
       container = new Container();

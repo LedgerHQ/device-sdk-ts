@@ -1,5 +1,6 @@
 import { Left } from "purify-ts";
 
+import { type DmkConfig } from "@api/DmkConfig";
 import { type LoggerPublisherService } from "@api/logger-publisher/service/LoggerPublisherService";
 import { connectedDeviceStubBuilder } from "@api/transport/model/TransportConnectedDevice.stub";
 import { deviceSessionStubBuilder } from "@internal/device-session/model/DeviceSession.stub";
@@ -28,10 +29,7 @@ describe("SendApduUseCase", () => {
   beforeEach(() => {
     logger = new DefaultLoggerPublisherService([], "send-apdu-use-case");
     sessionService = new DefaultDeviceSessionService(() => logger);
-    managerApiDataSource = new AxiosManagerApiDataSource({
-      managerApiUrl: "http://fake.url",
-      mockUrl: "http://fake-mock.url",
-    });
+    managerApiDataSource = new AxiosManagerApiDataSource({} as DmkConfig);
     managerApi = new DefaultManagerApiService(managerApiDataSource);
   });
 

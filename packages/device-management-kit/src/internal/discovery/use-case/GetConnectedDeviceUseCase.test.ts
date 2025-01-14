@@ -1,3 +1,4 @@
+import { type DmkConfig } from "@api/DmkConfig";
 import { type LoggerPublisherService } from "@api/logger-publisher/service/LoggerPublisherService";
 import { ConnectedDevice } from "@api/transport/model/ConnectedDevice";
 import { deviceSessionStubBuilder } from "@internal/device-session/model/DeviceSession.stub";
@@ -26,10 +27,7 @@ describe("GetConnectedDevice", () => {
       [],
       "get-connected-device-use-case",
     );
-    managerApiDataSource = new AxiosManagerApiDataSource({
-      managerApiUrl: "http://fake.url",
-      mockUrl: "http://fake-mock.url",
-    });
+    managerApiDataSource = new AxiosManagerApiDataSource({} as DmkConfig);
     managerApi = new DefaultManagerApiService(managerApiDataSource);
     sessionService = new DefaultDeviceSessionService(() => logger);
   });

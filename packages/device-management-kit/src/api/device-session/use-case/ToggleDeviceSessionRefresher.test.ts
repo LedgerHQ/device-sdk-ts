@@ -1,3 +1,4 @@
+import { type DmkConfig } from "@api/DmkConfig";
 import { type LoggerPublisherService } from "@api/logger-publisher/service/LoggerPublisherService";
 import { type DeviceSession } from "@internal/device-session/model/DeviceSession";
 import { deviceSessionStubBuilder } from "@internal/device-session/model/DeviceSession.stub";
@@ -24,10 +25,7 @@ describe("ToggleDeviceSessionRefresherUseCase", () => {
     );
     sessionService = new DefaultDeviceSessionService(() => logger);
     managerApi = new DefaultManagerApiService(
-      new AxiosManagerApiDataSource({
-        managerApiUrl: "http://fake.url",
-        mockUrl: "http://fake-mock.url",
-      }),
+      new AxiosManagerApiDataSource({} as DmkConfig),
     );
   });
 

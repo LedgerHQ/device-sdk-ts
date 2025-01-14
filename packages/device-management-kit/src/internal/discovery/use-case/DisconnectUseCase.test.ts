@@ -3,7 +3,7 @@ import { Left, Maybe, Right } from "purify-ts";
 import { TransportMock } from "@api/transport/model/__mocks__/TransportMock";
 import { DisconnectError } from "@api/transport/model/Errors";
 import { connectedDeviceStubBuilder } from "@api/transport/model/TransportConnectedDevice.stub";
-import { type Transport } from "@api/types";
+import type { DmkConfig, Transport } from "@api/types";
 import { deviceSessionStubBuilder } from "@internal/device-session/model/DeviceSession.stub";
 import { DeviceSessionNotFound } from "@internal/device-session/model/Errors";
 import { DefaultDeviceSessionService } from "@internal/device-session/service/DefaultDeviceSessionService";
@@ -49,10 +49,7 @@ describe("DisconnectUseCase", () => {
   it("should disconnect from a device", async () => {
     // Given
     const connectedDevice = connectedDeviceStubBuilder();
-    managerApiDataSource = new AxiosManagerApiDataSource({
-      managerApiUrl: "http://fake.url",
-      mockUrl: "http://fake-mock.url",
-    });
+    managerApiDataSource = new AxiosManagerApiDataSource({} as DmkConfig);
     managerApi = new DefaultManagerApiService(managerApiDataSource);
     const deviceSession = deviceSessionStubBuilder(
       {

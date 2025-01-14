@@ -1,6 +1,7 @@
 import {
   DEFAULT_MANAGER_API_BASE_URL,
   DEFAULT_MOCK_SERVER_BASE_URL,
+  DEFAULT_WEB_SOCKET_BASE_URL,
 } from "@internal/manager-api/model/Const";
 
 import { type LoggerSubscriberService } from "./logger-subscriber/service/LoggerSubscriberService";
@@ -28,6 +29,7 @@ export class DeviceManagementKitBuilder {
   private config: DmkConfig = {
     managerApiUrl: DEFAULT_MANAGER_API_BASE_URL,
     mockUrl: DEFAULT_MOCK_SERVER_BASE_URL,
+    webSocketUrl: DEFAULT_WEB_SOCKET_BASE_URL,
   };
 
   build(): DeviceManagementKit {

@@ -37,10 +37,12 @@
     "axios": "^1.7.9",
     "inversify": "^6.2.1",
     "inversify-logger-middleware": "^3.1.0",
+    "isomorphic-ws": "^5.0.0",
     "purify-ts": "^2.1.0",
     "reflect-metadata": "^0.2.2",
     "semver": "^7.6.3",
     "uuid": "^11.0.3",
+    "ws": "^8.18.0",
     "xstate": "^5.19.1"
   },
   "peerDependencies": {
@@ -54,6 +56,7 @@
     "@ledgerhq/tsconfig-dsdk": "workspace:*",
     "@types/semver": "^7.5.8",
     "@types/uuid": "^10.0.0",
+    "@types/ws": "^8.5.13",
     "rxjs": "^7.8.1",
     "ts-node": "^10.9.2"
   }
