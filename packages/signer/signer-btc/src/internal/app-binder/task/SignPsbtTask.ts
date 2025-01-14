@@ -162,9 +162,10 @@ export class SignPsbtTask {
   private _decodeMusigPubNonce(
     parser: ByteArrayParser,
   ): Either<InvalidStatusWordError, MusigPubNonce> {
-    const inputIndexOrError = extractVarint(parser)
-      .map((val) => val.value)
-      .toEither(new InvalidStatusWordError("Invalid input index"));
+    const inputIndex = extractVarint(parser).mapOrDefault(
+      (val) => val.value,
+      0,
+    );
     const pubnonceOrError = Maybe.fromNullable(
       parser.extractFieldByLength(PUBNONCE_LENGTH),
     ).toEither(new InvalidStatusWordError("Pubnonce is missing"));
@@ -174,22 +175,20 @@ export class SignPsbtTask {
     const aggregatedPubkeyOrError = Maybe.fromNullable(
       parser.extractFieldByLength(PUBKEY_LENGTH_COMPRESSED),
     ).toEither(new InvalidStatusWordError("Aggregated pubkey is missing"));
-    const tapleafHash = Maybe.fromNullable(
-      parser.extractFieldByLength(parser.getUnparsedRemainingLength()),
-    ).orDefault(Uint8Array.from([]));
-    return inputIndexOrError.chain((inputIndex) =>
-      Either.sequence([
-        pubnonceOrError,
-        participantPubkeyOrError,
-        aggregatedPubkeyOrError,
-      ]).map((values) => ({
-        inputIndex,
-        pubnonce: values[0]!,
-        participantPubkey: values[1]!,
-        aggregatedPubkey: values[2]!,
-        tapleafHash,
-      })),
+    const tapleafHash = parser.extractFieldByLength(
+      parser.getUnparsedRemainingLength(),
     );
+    return Either.sequence([
+      pubnonceOrError,
+      participantPubkeyOrError,
+      aggregatedPubkeyOrError,
+    ]).map((values) => ({
+      inputIndex,
+      pubnonce: values[0]!,
+      participantPubkey: values[1]!,
+      aggregatedPubkey: values[2]!,
+      tapleafHash,
+    }));
   }
 
   /**
@@ -205,9 +204,10 @@ export class SignPsbtTask {
   private _decodeMusigPartialSignature(
     parser: ByteArrayParser,
   ): Either<InvalidStatusWordError, MusigPartialSignature> {
-    const inputIndexOrError = extractVarint(parser)
-      .map((val) => val.value)
-      .toEither(new InvalidStatusWordError("Invalid input index"));
+    const inputIndex = extractVarint(parser).mapOrDefault(
+      (val) => val.value,
+      0,
+    );
     const partialSignatureOrError = Maybe.fromNullable(
       parser.extractFieldByLength(PARTIAL_SIGNATURE_LENGTH),
     ).toEither(new InvalidStatusWordError("Partial signature is missing"));
@@ -217,22 +217,20 @@ export class SignPsbtTask {
     const aggregatedPubkeyOrError = Maybe.fromNullable(
       parser.extractFieldByLength(PUBKEY_LENGTH_COMPRESSED),
     ).toEither(new InvalidStatusWordError("Aggregated pubkey is missing"));
-    const tapleafHash = Maybe.fromNullable(
-      parser.extractFieldByLength(parser.getUnparsedRemainingLength()),
-    ).orDefault(Uint8Array.from([]));
-    return inputIndexOrError.chain((inputIndex) => {
-      return Either.sequence([
-        partialSignatureOrError,
-        participantPubkeyOrError,
-        aggregatedPubkeyOrError,
-      ]).map((values) => ({
-        inputIndex,
-        partialSignature: values[0]!,
-        participantPubkey: values[1]!,
-        aggregatedPubkey: values[2]!,
-        tapleafHash,
-      }));
-    });
+    const tapleafHash = parser.extractFieldByLength(
+      parser.getUnparsedRemainingLength(),
+    );
+    return Either.sequence([
+      partialSignatureOrError,
+      participantPubkeyOrError,
+      aggregatedPubkeyOrError,
+    ]).map((values) => ({
+      inputIndex,
+      partialSignature: values[0]!,
+      participantPubkey: values[1]!,
+      aggregatedPubkey: values[2]!,
+      tapleafHash,
+    }));
   }
 
   /**

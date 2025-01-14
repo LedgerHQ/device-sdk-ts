@@ -13,7 +13,7 @@ export type MusigPubNonce = {
   inputIndex: number;
   participantPubkey: Uint8Array;
   aggregatedPubkey: Uint8Array;
-  tapleafHash: Uint8Array;
+  tapleafHash?: Uint8Array;
   pubnonce: Uint8Array;
 };
 
@@ -21,7 +21,7 @@ export type MusigPartialSignature = {
   inputIndex: number;
   participantPubkey: Uint8Array;
   aggregatedPubkey: Uint8Array;
-  tapleafHash: Uint8Array;
+  tapleafHash?: Uint8Array;
   partialSignature: Uint8Array;
 };
 
