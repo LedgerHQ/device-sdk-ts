@@ -12,23 +12,15 @@ import {
 } from "@ledgerhq/device-management-kit";
 import { Just, type Maybe, Nothing } from "purify-ts";
 
-import {
-  ProvideNFTInformationCommand,
-  type ProvideNFTInformationCommandErrorCodes,
-} from "@internal/app-binder/command/ProvideNFTInformationCommand";
+import { ProvideNFTInformationCommand } from "@internal/app-binder/command/ProvideNFTInformationCommand";
 import {
   ProvideTokenInformationCommand,
   type ProvideTokenInformationCommandResponse,
 } from "@internal/app-binder/command/ProvideTokenInformationCommand";
 import { ProvideTrustedNameCommand } from "@internal/app-binder/command/ProvideTrustedNameCommand";
-import {
-  SetExternalPluginCommand,
-  type SetExternalPluginCommandErrorCodes,
-} from "@internal/app-binder/command/SetExternalPluginCommand";
-import {
-  SetPluginCommand,
-  type SetPluginCommandErrorCodes,
-} from "@internal/app-binder/command/SetPluginCommand";
+import { SetExternalPluginCommand } from "@internal/app-binder/command/SetExternalPluginCommand";
+import { SetPluginCommand } from "@internal/app-binder/command/SetPluginCommand";
+import { type EthErrorCodes } from "@internal/app-binder/command/utils/ethAppErrors";
 
 import { SendPayloadInChunksTask } from "./SendPayloadInChunksTask";
 
@@ -38,12 +30,6 @@ export type ProvideTransactionContextTaskArgs = {
    */
   clearSignContexts: ClearSignContextSuccess[];
 };
-
-export type ProvideTransactionContextTaskErrorCodes =
-  | void
-  | SetExternalPluginCommandErrorCodes
-  | SetPluginCommandErrorCodes
-  | ProvideNFTInformationCommandErrorCodes;
 
 /**
  * This task is responsible for providing the transaction context to the device.
@@ -62,9 +48,7 @@ export class ProvideTransactionContextTask {
     private args: ProvideTransactionContextTaskArgs,
   ) {}
 
-  async run(): Promise<
-    Maybe<CommandErrorResult<ProvideTransactionContextTaskErrorCodes>>
-  > {
+  async run(): Promise<Maybe<CommandErrorResult<EthErrorCodes>>> {
     for (const context of this.args.clearSignContexts) {
       const res = await this.provideContext(context);
       if (!isSuccessCommandResult(res)) {
@@ -85,10 +69,7 @@ export class ProvideTransactionContextTask {
     type,
     payload,
   }: ClearSignContextSuccess): Promise<
-    CommandResult<
-      void | ProvideTokenInformationCommandResponse,
-      ProvideTransactionContextTaskErrorCodes
-    >
+    CommandResult<void | ProvideTokenInformationCommandResponse, EthErrorCodes>
   > {
     switch (type) {
       case ClearSignContextType.PLUGIN: {

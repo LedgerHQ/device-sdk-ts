@@ -3,10 +3,10 @@ import {
   isSuccessCommandResult,
 } from "@ledgerhq/device-management-kit";
 
+import { EthAppCommandError } from "./utils/ethAppErrors";
 import {
   SetPluginCommand,
   type SetPluginCommandArgs,
-  SetPluginCommandError,
 } from "./SetPluginCommand";
 
 const SET_PLUGIN_COMMAND_PAYLOAD =
@@ -61,8 +61,8 @@ describe("SetPluginCommand", () => {
         // THEN
         expect(isSuccessCommandResult(result)).toBe(false);
         if (!isSuccessCommandResult(result)) {
-          expect(result.error).toBeInstanceOf(SetPluginCommandError);
-          if (result.error instanceof SetPluginCommandError)
+          expect(result.error).toBeInstanceOf(EthAppCommandError);
+          if (result.error instanceof EthAppCommandError)
             expect(result.error.errorCode).toStrictEqual(errorCode);
         }
       },

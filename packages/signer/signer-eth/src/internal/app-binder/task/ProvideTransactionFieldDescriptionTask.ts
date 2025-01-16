@@ -20,18 +20,14 @@ import { Just, type Maybe, Nothing } from "purify-ts";
 
 import { GetChallengeCommand } from "@internal/app-binder/command/GetChallengeCommand";
 import { ProvideEnumCommand } from "@internal/app-binder/command/ProvideEnumCommand";
-import {
-  ProvideNFTInformationCommand,
-  type ProvideNFTInformationCommandErrorCodes,
-} from "@internal/app-binder/command/ProvideNFTInformationCommand";
+import { ProvideNFTInformationCommand } from "@internal/app-binder/command/ProvideNFTInformationCommand";
 import {
   ProvideTokenInformationCommand,
   type ProvideTokenInformationCommandResponse,
 } from "@internal/app-binder/command/ProvideTokenInformationCommand";
 import { ProvideTransactionFieldDescriptionCommand } from "@internal/app-binder/command/ProvideTransactionFieldDescriptionCommand";
 import { ProvideTrustedNameCommand } from "@internal/app-binder/command/ProvideTrustedNameCommand";
-import { type SetExternalPluginCommandErrorCodes } from "@internal/app-binder/command/SetExternalPluginCommand";
-import { type SetPluginCommandErrorCodes } from "@internal/app-binder/command/SetPluginCommand";
+import { type EthErrorCodes } from "@internal/app-binder/command/utils/ethAppErrors";
 import { type TransactionParserService } from "@internal/transaction/service/parser/TransactionParserService";
 
 import { type ProvideTransactionGenericContextTaskErrorCodes } from "./ProvideTransactionGenericContextTask";
@@ -49,10 +45,7 @@ export type ProvideTransactionFieldDescriptionTaskArgs = {
 };
 
 export type ProvideTransactionFieldDescriptionTaskErrorCodes =
-  | void
-  | SetExternalPluginCommandErrorCodes
-  | SetPluginCommandErrorCodes
-  | ProvideNFTInformationCommandErrorCodes;
+  void | EthErrorCodes;
 
 /**
  * This task is responsible for providing the transaction context to the device.
@@ -65,7 +58,11 @@ export class ProvideTransactionFieldDescriptionTask {
   ) {}
 
   async run(): Promise<
-    Maybe<CommandErrorResult<ProvideTransactionFieldDescriptionTaskErrorCodes>>
+    Maybe<
+      CommandErrorResult<
+        ProvideTransactionFieldDescriptionTaskErrorCodes | EthErrorCodes
+      >
+    >
   > {
     const { field } = this.args;
 
@@ -128,7 +125,11 @@ export class ProvideTransactionFieldDescriptionTask {
     reference: ClearSignContextReference,
     value: Uint8Array,
   ): Promise<
-    Maybe<CommandErrorResult<ProvideTransactionGenericContextTaskErrorCodes>>
+    Maybe<
+      CommandErrorResult<
+        ProvideTransactionGenericContextTaskErrorCodes | EthErrorCodes
+      >
+    >
   > {
     if (reference.type === ClearSignContextType.ENUM) {
       return this.provideEnumContextReference(reference, value);
@@ -196,7 +197,11 @@ export class ProvideTransactionFieldDescriptionTask {
     reference: ClearSignContextReference<ClearSignContextType.TRUSTED_NAME>,
     address: HexaString,
   ): Promise<
-    Maybe<CommandErrorResult<ProvideTransactionGenericContextTaskErrorCodes>>
+    Maybe<
+      CommandErrorResult<
+        ProvideTransactionGenericContextTaskErrorCodes | EthErrorCodes
+      >
+    >
   > {
     const getChallengeResult = await this.api.sendCommand(
       new GetChallengeCommand(),

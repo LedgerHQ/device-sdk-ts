@@ -8,10 +8,16 @@ import {
   type Command,
   type CommandResult,
   CommandResultFactory,
-  CommandUtils,
-  GlobalCommandErrorHandler,
   InvalidStatusWordError,
 } from "@ledgerhq/device-management-kit";
+import { CommandErrorHelper } from "@ledgerhq/signer-utils";
+import { Maybe } from "purify-ts";
+
+import {
+  ETH_APP_ERRORS,
+  EthAppCommandErrorFactory,
+  type EthErrorCodes,
+} from "./utils/ethAppErrors";
 
 const CHALLENGE_LENGTH = 4;
 
@@ -20,8 +26,13 @@ export type GetChallengeCommandResponse = {
 };
 
 export class GetChallengeCommand
-  implements Command<GetChallengeCommandResponse>
+  implements Command<GetChallengeCommandResponse, void, EthErrorCodes>
 {
+  private readonly errorHelper = new CommandErrorHelper<
+    GetChallengeCommandResponse,
+    EthErrorCodes
+  >(ETH_APP_ERRORS, EthAppCommandErrorFactory);
+
   constructor() {}
 
   getApdu(): Apdu {
@@ -36,29 +47,27 @@ export class GetChallengeCommand
 
   parseResponse(
     response: ApduResponse,
-  ): CommandResult<GetChallengeCommandResponse> {
-    if (!CommandUtils.isSuccessResponse(response)) {
+  ): CommandResult<GetChallengeCommandResponse, EthErrorCodes> {
+    return Maybe.fromNullable(
+      this.errorHelper.getError(response),
+    ).orDefaultLazy(() => {
+      const parser = new ApduParser(response);
+
+      if (parser.testMinimalLength(CHALLENGE_LENGTH) === false) {
+        return CommandResultFactory({
+          error: new InvalidStatusWordError("Challenge key is missing"),
+        });
+      }
+
+      const challenge = parser.encodeToHexaString(
+        parser.extractFieldByLength(CHALLENGE_LENGTH),
+      );
+
       return CommandResultFactory({
-        error: GlobalCommandErrorHandler.handle(response),
+        data: {
+          challenge,
+        },
       });
-    }
-
-    const parser = new ApduParser(response);
-
-    if (parser.testMinimalLength(CHALLENGE_LENGTH) === false) {
-      return CommandResultFactory({
-        error: new InvalidStatusWordError("Challenge key is missing"),
-      });
-    }
-
-    const challenge = parser.encodeToHexaString(
-      parser.extractFieldByLength(CHALLENGE_LENGTH),
-    );
-
-    return CommandResultFactory({
-      data: {
-        challenge,
-      },
     });
   }
 }

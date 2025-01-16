@@ -8,26 +8,20 @@ import { ProvideNFTInformationCommand } from "@internal/app-binder/command/Provi
 import { ProvideTokenInformationCommand } from "@internal/app-binder/command/ProvideTokenInformationCommand";
 import { SetExternalPluginCommand } from "@internal/app-binder/command/SetExternalPluginCommand";
 import { SetPluginCommand } from "@internal/app-binder/command/SetPluginCommand";
+import { type EthErrorCodes } from "@internal/app-binder/command/utils/ethAppErrors";
 import { makeDeviceActionInternalApiMock } from "@internal/app-binder/device-action/__test-utils__/makeInternalApi";
 
 import {
   ProvideTransactionContextTask,
   type ProvideTransactionContextTaskArgs,
-  type ProvideTransactionContextTaskErrorCodes,
 } from "./ProvideTransactionContextTask";
 
 describe("ProvideTransactionContextTask", () => {
   const api = makeDeviceActionInternalApiMock();
-  const successResult = CommandResultFactory<
-    void,
-    ProvideTransactionContextTaskErrorCodes
-  >({
+  const successResult = CommandResultFactory<void, EthErrorCodes>({
     data: undefined,
   });
-  const errorResult = CommandResultFactory<
-    void,
-    ProvideTransactionContextTaskErrorCodes
-  >({
+  const errorResult = CommandResultFactory<void, EthErrorCodes>({
     data: undefined,
     error: {} as UnknownDeviceExchangeError,
   });

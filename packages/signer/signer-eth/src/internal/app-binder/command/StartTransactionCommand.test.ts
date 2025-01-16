@@ -1,9 +1,9 @@
 import {
   InvalidStatusWordError,
   isSuccessCommandResult,
-  UnknownDeviceExchangeError,
 } from "@ledgerhq/device-management-kit";
 
+import { EthAppCommandError } from "./utils/ethAppErrors";
 import { StartTransactionCommand } from "./StartTransactionCommand";
 
 describe("StartTransactionCommand", () => {
@@ -36,7 +36,7 @@ describe("StartTransactionCommand", () => {
       if (isSuccessCommandResult(result)) {
         fail("Expected an error");
       } else {
-        expect(result.error).toBeInstanceOf(UnknownDeviceExchangeError);
+        expect(result.error).toBeInstanceOf(EthAppCommandError);
       }
     });
 

@@ -7,24 +7,37 @@ import {
   type Command,
   type CommandResult,
   CommandResultFactory,
-  CommandUtils,
-  GlobalCommandErrorHandler,
   InvalidStatusWordError,
   isHexaString,
 } from "@ledgerhq/device-management-kit";
-import { DerivationPathUtils } from "@ledgerhq/signer-utils";
+import {
+  CommandErrorHelper,
+  DerivationPathUtils,
+} from "@ledgerhq/signer-utils";
+import { Maybe } from "purify-ts";
 
 import {
   type GetAddressCommandArgs,
   type GetAddressCommandResponse,
 } from "@api/app-binder/GetAddressCommandTypes";
 
+import {
+  ETH_APP_ERRORS,
+  EthAppCommandErrorFactory,
+  type EthErrorCodes,
+} from "./utils/ethAppErrors";
+
 const CHAIN_CODE_LENGTH = 32;
 
 export class GetAddressCommand
-  implements Command<GetAddressCommandResponse, GetAddressCommandArgs>
+  implements
+    Command<GetAddressCommandResponse, GetAddressCommandArgs, EthErrorCodes>
 {
-  args: GetAddressCommandArgs;
+  private readonly args: GetAddressCommandArgs;
+  private readonly errorHelper = new CommandErrorHelper<
+    GetAddressCommandResponse,
+    EthErrorCodes
+  >(ETH_APP_ERRORS, EthAppCommandErrorFactory);
 
   constructor(args: GetAddressCommandArgs) {
     this.args = args;
@@ -55,77 +68,76 @@ export class GetAddressCommand
 
   parseResponse(
     response: ApduResponse,
-  ): CommandResult<GetAddressCommandResponse> {
-    const parser = new ApduParser(response);
+  ): CommandResult<GetAddressCommandResponse, EthErrorCodes> {
+    return Maybe.fromNullable(
+      this.errorHelper.getError(response),
+    ).orDefaultLazy(() => {
+      const parser = new ApduParser(response);
 
-    // TODO: handle the error correctly using a generic error handler
-    if (!CommandUtils.isSuccessResponse(response)) {
-      return CommandResultFactory({
-        error: GlobalCommandErrorHandler.handle(response),
-      });
-    }
-
-    const publicKeyLength = parser.extract8BitUInt();
-    if (publicKeyLength === undefined) {
-      return CommandResultFactory({
-        error: new InvalidStatusWordError("Public key length is missing"),
-      });
-    }
-
-    if (parser.testMinimalLength(publicKeyLength) === false) {
-      return CommandResultFactory({
-        error: new InvalidStatusWordError("Public key is missing"),
-      });
-    }
-
-    const publicKey = parser.encodeToHexaString(
-      parser.extractFieldByLength(publicKeyLength),
-    );
-
-    const addressLength = parser.extract8BitUInt();
-    if (addressLength === undefined) {
-      return CommandResultFactory({
-        error: new InvalidStatusWordError("Ethereum address length is missing"),
-      });
-    }
-
-    if (parser.testMinimalLength(addressLength) === false) {
-      return CommandResultFactory({
-        error: new InvalidStatusWordError("Ethereum address is missing"),
-      });
-    }
-
-    const result = parser.encodeToString(
-      parser.extractFieldByLength(addressLength),
-    );
-
-    const address = `0x${result}`;
-
-    if (isHexaString(address) === false) {
-      return CommandResultFactory({
-        error: new InvalidStatusWordError("Invalid Ethereum address"),
-      });
-    }
-
-    let chainCode = undefined;
-    if (this.args.returnChainCode) {
-      if (parser.testMinimalLength(CHAIN_CODE_LENGTH) === false) {
+      const publicKeyLength = parser.extract8BitUInt();
+      if (publicKeyLength === undefined) {
         return CommandResultFactory({
-          error: new InvalidStatusWordError("Invalid Chaincode"),
+          error: new InvalidStatusWordError("Public key length is missing"),
         });
       }
 
-      chainCode = parser.encodeToHexaString(
-        parser.extractFieldByLength(CHAIN_CODE_LENGTH),
-      );
-    }
+      if (parser.testMinimalLength(publicKeyLength) === false) {
+        return CommandResultFactory({
+          error: new InvalidStatusWordError("Public key is missing"),
+        });
+      }
 
-    return CommandResultFactory({
-      data: {
-        publicKey,
-        address,
-        chainCode,
-      },
+      const publicKey = parser.encodeToHexaString(
+        parser.extractFieldByLength(publicKeyLength),
+      );
+
+      const addressLength = parser.extract8BitUInt();
+      if (addressLength === undefined) {
+        return CommandResultFactory({
+          error: new InvalidStatusWordError(
+            "Ethereum address length is missing",
+          ),
+        });
+      }
+
+      if (parser.testMinimalLength(addressLength) === false) {
+        return CommandResultFactory({
+          error: new InvalidStatusWordError("Ethereum address is missing"),
+        });
+      }
+
+      const result = parser.encodeToString(
+        parser.extractFieldByLength(addressLength),
+      );
+
+      const address = `0x${result}`;
+
+      if (isHexaString(address) === false) {
+        return CommandResultFactory({
+          error: new InvalidStatusWordError("Invalid Ethereum address"),
+        });
+      }
+
+      let chainCode = undefined;
+      if (this.args.returnChainCode) {
+        if (parser.testMinimalLength(CHAIN_CODE_LENGTH) === false) {
+          return CommandResultFactory({
+            error: new InvalidStatusWordError("Invalid Chaincode"),
+          });
+        }
+
+        chainCode = parser.encodeToHexaString(
+          parser.extractFieldByLength(CHAIN_CODE_LENGTH),
+        );
+      }
+
+      return CommandResultFactory({
+        data: {
+          publicKey,
+          address,
+          chainCode,
+        },
+      });
     });
   }
 }

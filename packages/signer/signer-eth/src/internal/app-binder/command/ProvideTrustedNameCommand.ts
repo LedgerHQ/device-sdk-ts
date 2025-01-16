@@ -7,9 +7,15 @@ import {
   type Command,
   type CommandResult,
   CommandResultFactory,
-  CommandUtils,
-  GlobalCommandErrorHandler,
 } from "@ledgerhq/device-management-kit";
+import { CommandErrorHelper } from "@ledgerhq/signer-utils";
+import { Maybe } from "purify-ts";
+
+import {
+  ETH_APP_ERRORS,
+  EthAppCommandErrorFactory,
+  type EthErrorCodes,
+} from "./utils/ethAppErrors";
 
 export type ProvideTrustedNameCommandArgs = {
   data: Uint8Array;
@@ -25,8 +31,13 @@ export const PAYLOAD_LENGTH_BYTES = 2;
  * The command that provides a chunk of the trusted name to the device.
  */
 export class ProvideTrustedNameCommand
-  implements Command<void, ProvideTrustedNameCommandArgs>
+  implements Command<void, ProvideTrustedNameCommandArgs, EthErrorCodes>
 {
+  private readonly errorHelper = new CommandErrorHelper<void, EthErrorCodes>(
+    ETH_APP_ERRORS,
+    EthAppCommandErrorFactory,
+  );
+
   constructor(private readonly args: ProvideTrustedNameCommandArgs) {}
 
   getApdu(): Apdu {
@@ -42,14 +53,9 @@ export class ProvideTrustedNameCommand
       .build();
   }
 
-  parseResponse(response: ApduResponse): CommandResult<void> {
-    if (!CommandUtils.isSuccessResponse(response)) {
-      return CommandResultFactory({
-        error: GlobalCommandErrorHandler.handle(response),
-      });
-    }
-    return CommandResultFactory({
-      data: undefined,
-    });
+  parseResponse(response: ApduResponse): CommandResult<void, EthErrorCodes> {
+    return Maybe.fromNullable(this.errorHelper.getError(response)).orDefault(
+      CommandResultFactory({ data: undefined }),
+    );
   }
 }

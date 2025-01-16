@@ -13,6 +13,7 @@ import {
   SignPersonalMessageCommand,
   type SignPersonalMessageCommandResponse,
 } from "@internal/app-binder/command/SignPersonalMessageCommand";
+import { type EthErrorCodes } from "@internal/app-binder/command/utils/ethAppErrors";
 
 import { SendCommandInChunksTask } from "./SendCommandInChunksTask";
 
@@ -29,7 +30,7 @@ export class SendSignPersonalMessageTask {
     private args: SendSignPersonalMessageTaskArgs,
   ) {}
 
-  async run(): Promise<CommandResult<Signature, void>> {
+  async run(): Promise<CommandResult<Signature, EthErrorCodes>> {
     const { derivationPath, message } = this.args;
     const paths = DerivationPathUtils.splitPath(derivationPath);
 

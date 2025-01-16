@@ -3,25 +3,19 @@ import {
   type Apdu,
   ApduBuilder,
   type ApduBuilderArgs,
-  ApduParser,
   type ApduResponse,
   type Command,
-  type CommandErrorArgs,
-  type CommandErrors,
   type CommandResult,
   CommandResultFactory,
-  CommandUtils,
-  DeviceExchangeError,
-  GlobalCommandErrorHandler,
-  isCommandErrorCode,
 } from "@ledgerhq/device-management-kit";
+import { CommandErrorHelper } from "@ledgerhq/signer-utils";
+import { Maybe } from "purify-ts";
 
-export type SetPluginCommandErrorCodes = "6984" | "6d00";
-
-const SET_PLUGIN_ERRORS: CommandErrors<SetPluginCommandErrorCodes> = {
-  "6984": { message: "The requested plugin is not installed on the device" },
-  "6d00": { message: "ETH app is not up to date" },
-};
+import {
+  ETH_APP_ERRORS,
+  EthAppCommandErrorFactory,
+  type EthErrorCodes,
+} from "./utils/ethAppErrors";
 
 export type SetPluginCommandArgs = {
   /**
@@ -30,15 +24,14 @@ export type SetPluginCommandArgs = {
   payload: string;
 };
 
-export class SetPluginCommandError extends DeviceExchangeError<SetPluginCommandErrorCodes> {
-  constructor(args: CommandErrorArgs<SetPluginCommandErrorCodes>) {
-    super({ ...args, tag: "SetPluginCommandError" });
-  }
-}
-
 export class SetPluginCommand
-  implements Command<void, SetPluginCommandArgs, SetPluginCommandErrorCodes>
+  implements Command<void, SetPluginCommandArgs, EthErrorCodes>
 {
+  private readonly errorHelper = new CommandErrorHelper<void, EthErrorCodes>(
+    ETH_APP_ERRORS,
+    EthAppCommandErrorFactory,
+  );
+
   constructor(private readonly args: SetPluginCommandArgs) {}
 
   getApdu(): Apdu {
@@ -53,25 +46,9 @@ export class SetPluginCommand
       .build();
   }
 
-  parseResponse(
-    response: ApduResponse,
-  ): CommandResult<void, SetPluginCommandErrorCodes> {
-    if (CommandUtils.isSuccessResponse(response)) {
-      return CommandResultFactory({ data: undefined });
-    }
-    const parser = new ApduParser(response);
-    const errorCode = parser.encodeToHexaString(response.statusCode);
-
-    if (isCommandErrorCode(errorCode, SET_PLUGIN_ERRORS)) {
-      return CommandResultFactory({
-        error: new SetPluginCommandError({
-          ...SET_PLUGIN_ERRORS[errorCode],
-          errorCode,
-        }),
-      });
-    }
-    return CommandResultFactory({
-      error: GlobalCommandErrorHandler.handle(response),
-    });
+  parseResponse(response: ApduResponse): CommandResult<void, EthErrorCodes> {
+    return Maybe.fromNullable(this.errorHelper.getError(response)).orDefault(
+      CommandResultFactory({ data: undefined }),
+    );
   }
 }

@@ -3,18 +3,19 @@ import {
   type Apdu,
   ApduBuilder,
   type ApduBuilderArgs,
-  ApduParser,
   type ApduResponse,
   type Command,
-  type CommandErrorArgs,
-  type CommandErrors,
   type CommandResult,
   CommandResultFactory,
-  CommandUtils,
-  DeviceExchangeError,
-  GlobalCommandErrorHandler,
-  isCommandErrorCode,
 } from "@ledgerhq/device-management-kit";
+import { CommandErrorHelper } from "@ledgerhq/signer-utils";
+import { Maybe } from "purify-ts";
+
+import {
+  ETH_APP_ERRORS,
+  EthAppCommandErrorFactory,
+  type EthErrorCodes,
+} from "./utils/ethAppErrors";
 
 export type ProvideNFTInformationCommandArgs = {
   /**
@@ -23,27 +24,14 @@ export type ProvideNFTInformationCommandArgs = {
   payload: string;
 };
 
-export type ProvideNFTInformationCommandErrorCodes = "6d00";
-
-const PROVIDE_NFT_INFO_ERRORS: CommandErrors<ProvideNFTInformationCommandErrorCodes> =
-  {
-    "6d00": { message: "ETH app is not up to date" },
-  };
-
-class ProvideNFTInformationCommandError extends DeviceExchangeError<ProvideNFTInformationCommandErrorCodes> {
-  constructor(args: CommandErrorArgs<ProvideNFTInformationCommandErrorCodes>) {
-    super({ ...args, tag: "ProvideNFTInformationCommandError" });
-  }
-}
-
 export class ProvideNFTInformationCommand
-  implements
-    Command<
-      void,
-      ProvideNFTInformationCommandArgs,
-      ProvideNFTInformationCommandErrorCodes
-    >
+  implements Command<void, ProvideNFTInformationCommandArgs, EthErrorCodes>
 {
+  private readonly errorHelper = new CommandErrorHelper<void, EthErrorCodes>(
+    ETH_APP_ERRORS,
+    EthAppCommandErrorFactory,
+  );
+
   constructor(private readonly args: ProvideNFTInformationCommandArgs) {}
 
   getApdu(): Apdu {
@@ -58,26 +46,9 @@ export class ProvideNFTInformationCommand
       .build();
   }
 
-  parseResponse(
-    response: ApduResponse,
-  ): CommandResult<void, ProvideNFTInformationCommandErrorCodes> {
-    if (CommandUtils.isSuccessResponse(response)) {
-      return CommandResultFactory({ data: undefined });
-    }
-    const parser = new ApduParser(response);
-    const errorCode = parser.encodeToHexaString(response.statusCode);
-
-    if (isCommandErrorCode(errorCode, PROVIDE_NFT_INFO_ERRORS)) {
-      return CommandResultFactory({
-        error: new ProvideNFTInformationCommandError({
-          ...PROVIDE_NFT_INFO_ERRORS[errorCode],
-          errorCode,
-        }),
-      });
-    }
-
-    return CommandResultFactory({
-      error: GlobalCommandErrorHandler.handle(response),
-    });
+  parseResponse(response: ApduResponse): CommandResult<void, EthErrorCodes> {
+    return Maybe.fromNullable(this.errorHelper.getError(response)).orDefault(
+      CommandResultFactory({ data: undefined }),
+    );
   }
 }

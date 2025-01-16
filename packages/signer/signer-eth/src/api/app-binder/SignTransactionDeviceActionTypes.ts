@@ -14,7 +14,7 @@ import {
 import { type Signature } from "@api/model/Signature";
 import { type TransactionOptions } from "@api/model/TransactionOptions";
 import { type TransactionType } from "@api/model/TransactionType";
-import { type ProvideTransactionContextTaskErrorCodes } from "@internal/app-binder/task/ProvideTransactionContextTask";
+import { type EthErrorCodes } from "@internal/app-binder/command/utils/ethAppErrors";
 import { type GenericContext } from "@internal/app-binder/task/ProvideTransactionGenericContextTask";
 import { type TransactionMapperService } from "@internal/transaction/service/mapper/TransactionMapperService";
 import { type TransactionParserService } from "@internal/transaction/service/parser/TransactionParserService";
@@ -32,8 +32,7 @@ export type SignTransactionDAInput = {
 
 export type SignTransactionDAError =
   | OpenAppDAError
-  | CommandErrorResult["error"]
-  | CommandErrorResult<ProvideTransactionContextTaskErrorCodes>["error"];
+  | CommandErrorResult<EthErrorCodes>["error"];
 
 type SignTransactionDARequiredInteraction =
   | OpenAppDARequiredInteraction
