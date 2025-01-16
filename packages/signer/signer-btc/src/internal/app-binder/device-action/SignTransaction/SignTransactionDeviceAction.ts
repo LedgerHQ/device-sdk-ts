@@ -1,6 +1,7 @@
 import {
   type CommandResult,
   type DeviceActionStateMachine,
+  type HexaString,
   type InternalApi,
   isSuccessCommandResult,
   type StateMachineTypes,
@@ -19,10 +20,10 @@ import {
   type SignTransactionDAOutput,
 } from "@api/app-binder/SignTransactionDeviceActionTypes";
 import { type Psbt as ApiPsbt } from "@api/model/Psbt";
+import { type PsbtSignature } from "@api/model/Signature";
 import { type BtcErrorCodes } from "@internal/app-binder/command/utils/bitcoinAppErrors";
 import { SignPsbtDeviceAction } from "@internal/app-binder/device-action/SignPsbt/SignPsbtDeviceAction";
 import { ExtractTransactionTask } from "@internal/app-binder/task/ExtractTransactionTask";
-import { type PsbtSignature } from "@internal/app-binder/task/SignPsbtTask";
 import { UpdatePsbtTask } from "@internal/app-binder/task/UpdatePsbtTask";
 import { type Psbt as InternalPsbt } from "@internal/psbt/model/Psbt";
 import { type PsbtMapper } from "@internal/psbt/service/psbt/PsbtMapper";
@@ -39,7 +40,7 @@ export type MachineDependencies = {
   }) => Promise<CommandResult<InternalPsbt, BtcErrorCodes>>;
   readonly extractTransaction: (arg0: {
     input: { psbt: InternalPsbt; valueParser: ValueParser };
-  }) => Promise<CommandResult<string, BtcErrorCodes>>;
+  }) => Promise<CommandResult<HexaString, BtcErrorCodes>>;
 };
 
 export type ExtractMachineDependencies = (
@@ -286,7 +287,7 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
 
     const extractTransaction = async (arg0: {
       input: { psbt: InternalPsbt; valueParser: ValueParser };
-    }): Promise<CommandResult<string, BtcErrorCodes>> => {
+    }): Promise<CommandResult<HexaString, BtcErrorCodes>> => {
       const {
         input: { psbt, valueParser },
       } = arg0;

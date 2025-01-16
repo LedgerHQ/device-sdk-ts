@@ -7,8 +7,12 @@ import {
 import { Either, EitherAsync } from "purify-ts";
 
 import { type Psbt as ApiPsbt } from "@api/model/Psbt";
+import {
+  isPartialSignature,
+  type PartialSignature,
+  type PsbtSignature,
+} from "@api/model/Signature";
 import { type BtcErrorCodes } from "@internal/app-binder/command/utils/bitcoinAppErrors";
-import { type PsbtSignature } from "@internal/app-binder/task/SignPsbtTask";
 import {
   type Psbt as InternalPsbt,
   PsbtGlobal,
@@ -17,6 +21,7 @@ import {
 import { Value } from "@internal/psbt/model/Value";
 import { type PsbtMapper } from "@internal/psbt/service/psbt/PsbtMapper";
 import { type ValueParser } from "@internal/psbt/service/value/ValueParser";
+import { encodeScriptOperations } from "@internal/utils/ScriptOperation";
 import { encodeVarint } from "@internal/utils/Varint";
 
 type UpdatePsbtTaskArgs = {
@@ -31,8 +36,31 @@ export class UpdatePsbtTask {
     private readonly _psbtMapper: PsbtMapper,
   ) {}
 
+  /**
+   * Executes the process of mapping, signing, and updating a PSBT (Partially Signed Bitcoin Transaction).
+   *
+   * This method performs the following steps:
+   * 1. Filters and validates the given signatures as partial signatures.
+   * 2. Maps the API-provided PSBT to an internal PSBT format.
+   * 3. Signs the PSBT with the valid signatures.
+   * 4. Updates the PSBT with additional information.
+   *
+   * If no valid signatures are provided, it returns an error.
+   *
+   * @return {Promise<CommandResult<InternalPsbt, BtcErrorCodes>>} A `CommandResult` object encapsulating either:
+   *         - a signed and updated PSBT if the operation is successful, or
+   *         - an error if the operation fails (e.g., no signatures provided or mapping/signing/updating fails).
+   */
   public async run(): Promise<CommandResult<InternalPsbt, BtcErrorCodes>> {
-    const { psbt: apiPsbt, signatures } = this._args;
+    const { psbt: apiPsbt, signatures: psbtSignatures } = this._args;
+    const signatures = psbtSignatures.filter((psbtSignature) =>
+      isPartialSignature(psbtSignature),
+    );
+    if (signatures.length === 0) {
+      return CommandResultFactory({
+        error: new UnknownDeviceExchangeError("No signature provided"),
+      });
+    }
     return await EitherAsync(async ({ liftEither }) => {
       const psbt = await liftEither(this._psbtMapper.map(apiPsbt));
       const signedPsbt = await liftEither(this.getSignedPsbt(psbt, signatures));
@@ -47,9 +75,16 @@ export class UpdatePsbtTask {
     });
   }
 
+  /**
+   * Signs a Partially Signed Bitcoin Transaction (PSBT) with the provided signatures.
+   *
+   * @param {InternalPsbt} psbt - The partially signed PSBT that needs to be signed.
+   * @param {PartialSignature[]} psbtSignatures - An array of partial signatures, each containing the signature and related index or public key.
+   * @return {Either<Error, InternalPsbt>} An Either instance that contains an error if signing fails, or a signed InternalPsbt if successful.
+   */
   private getSignedPsbt(
     psbt: InternalPsbt,
-    psbtSignatures: PsbtSignature[],
+    psbtSignatures: PartialSignature[],
   ): Either<Error, InternalPsbt> {
     return Either.encase(() => {
       for (const psbtSignature of psbtSignatures) {
@@ -64,7 +99,7 @@ export class UpdatePsbtTask {
             });
           });
         pubkeys.map((pkeys) => {
-          if (pkeys.length != 1) {
+          if (pkeys.length === 0) {
             // No legacy BIP32_DERIVATION, assume we're using taproot.
             const pubkey = psbt
               .getInputKeyDatas(
@@ -94,7 +129,7 @@ export class UpdatePsbtTask {
               psbtSignature.inputIndex,
               PsbtIn.PARTIAL_SIG,
               psbtSignature.signature,
-              new Value(psbtSignature.pubKeyAugmented),
+              new Value(psbtSignature.pubkey),
             );
           }
         });
@@ -103,6 +138,14 @@ export class UpdatePsbtTask {
     });
   }
 
+  /**
+   * Updates a provided Partially Signed Bitcoin Transaction (PSBT) by verifying
+   * the presence of signatures for each input and processing them accordingly.
+   *
+   * @param {InternalPsbt} fromPsbt - The original PSBT object to be updated.
+   * @return {Either<Error, InternalPsbt>} Either an error if an issue arises during processing
+   *                                       or the updated PSBT object after processing all inputs.
+   */
   private getUpdatedPsbt(fromPsbt: InternalPsbt): Either<Error, InternalPsbt> {
     return Either.encase(() => {
       let psbt = fromPsbt;
@@ -137,6 +180,14 @@ export class UpdatePsbtTask {
     });
   }
 
+  /**
+   * Clears specific updated entries from the given PSBT input at the specified index,
+   * ensuring only the necessary details are retained.
+   *
+   * @param {InternalPsbt} fromPsbt - The PSBT (Partially Signed Bitcoin Transaction) object to modify.
+   * @param {number} inputIndex - The index of the input to be processed.
+   * @return {InternalPsbt} The updated PSBT object with the specified entries cleared.
+   */
   private clearUpdatedPsbtInput(
     fromPsbt: InternalPsbt,
     inputIndex: number,
@@ -164,6 +215,18 @@ export class UpdatePsbtTask {
     return psbt;
   }
 
+  /**
+   * Updates a PSBT (Partially Signed Bitcoin Transaction) input with legacy signature data.
+   *
+   * @param fromPsbt - The original PSBT object to be updated.
+   * @param inputIndex - The index of the specific input to update within the PSBT.
+   * @param legacyPubkeys - Array containing one legacy public key related to the input.
+   * @return The updated PSBT object with the finalized legacy input data.
+   * @throws Will throw an error if multiple or no legacy public keys are provided.
+   * @throws Will throw an error if both taproot and non-taproot signatures are present.
+   * @throws Will throw an error if a partial signature for the input is not found.
+   * @throws Will throw an error if a non-empty redeem script is expected but not present.
+   */
   private getLegacyUpdatedPsbtInput(
     fromPsbt: InternalPsbt,
     inputIndex: number,
@@ -237,8 +300,8 @@ export class UpdatePsbtTask {
     } else {
       // Legacy input
       const scriptSig = new ByteArrayBuilder();
-      writePush(scriptSig, sig);
-      writePush(scriptSig, legacyPubkeys[0]!);
+      scriptSig.addBufferToData(encodeScriptOperations(sig));
+      scriptSig.addBufferToData(encodeScriptOperations(legacyPubkeys[0]!));
       psbt.setInputValue(
         inputIndex,
         PsbtIn.FINAL_SCRIPTSIG,
@@ -248,6 +311,15 @@ export class UpdatePsbtTask {
     return psbt;
   }
 
+  /**
+   * Updates the given PSBT input with the taproot signature and constructs
+   * the final script witness for the specified input index.
+   *
+   * @param {InternalPsbt} fromPsbt - The PSBT object containing the input to be updated.
+   * @param {number} inputIndex - The index of the input in the PSBT that needs to be updated.
+   * @return {InternalPsbt} The updated PSBT object with the finalized script witness for the taproot input.
+   * @throws {Error} If there is no signature for the taproot input or if the signature length is invalid.
+   */
   private getTaprootUpdatedPsbtInput(
     fromPsbt: InternalPsbt,
     inputIndex: number,
@@ -278,20 +350,4 @@ export class UpdatePsbtTask {
     );
     return psbt;
   }
-}
-
-function writePush(buf: ByteArrayBuilder, data: Uint8Array) {
-  if (data.length <= 75) {
-    buf.add8BitUIntToData(data.length);
-  } else if (data.length <= 256) {
-    buf.add8BitUIntToData(76);
-    buf.add8BitUIntToData(data.length);
-  } else if (data.length <= 256 * 256) {
-    buf.add8BitUIntToData(77);
-    const b = new ByteArrayBuilder()
-      .add16BitUIntToData(data.length, false)
-      .build();
-    buf.addBufferToData(b);
-  }
-  buf.addBufferToData(data);
 }

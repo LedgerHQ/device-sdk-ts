@@ -3,6 +3,7 @@ import {
   ByteArrayBuilder,
   type CommandResult,
   CommandResultFactory,
+  type HexaString,
 } from "@ledgerhq/device-management-kit";
 
 import { type BtcErrorCodes } from "@internal/app-binder/command/utils/bitcoinAppErrors";
@@ -24,7 +25,14 @@ export class ExtractTransactionTask {
     private readonly _args: ExtractTransactionTaskArgs,
     private readonly _valueParser: ValueParser,
   ) {}
-  run(): CommandResult<string, BtcErrorCodes> {
+
+  /**
+   * Processes a PSBT (Partially Signed Bitcoin Transaction) and constructs a finalized Bitcoin transaction.
+   *
+   * @return {CommandResult<HexaString, BtcErrorCodes>} A `CommandResult` object containing the resulting serialized transaction
+   *         as a hexadecimal string (without the "0x" prefix) on success, or an error code (`BtcErrorCodes`) on failure.
+   */
+  run(): CommandResult<HexaString, BtcErrorCodes> {
     const { psbt } = this._args;
     const transaction = new ByteArrayBuilder();
     const psbtVersion = psbt
@@ -93,7 +101,7 @@ export class ExtractTransactionTask {
       .orDefault(0);
     transaction.add32BitUIntToData(locktime, false);
     return CommandResultFactory({
-      data: bufferToHexaString(transaction.build()).slice(2),
+      data: bufferToHexaString(transaction.build()),
     });
   }
 }
