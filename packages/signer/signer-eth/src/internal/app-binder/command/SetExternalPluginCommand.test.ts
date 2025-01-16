@@ -5,10 +5,7 @@ import {
   isSuccessCommandResult,
 } from "@ledgerhq/device-management-kit";
 
-import {
-  SetExternalPluginCommand,
-  SetExternalPluginCommandError,
-} from "@internal/app-binder/command/SetExternalPluginCommand";
+import { SetExternalPluginCommand } from "@internal/app-binder/command/SetExternalPluginCommand";
 
 /**
  * Test payload contains:
@@ -61,37 +58,6 @@ describe("Set External plugin", () => {
     });
   });
   describe("parseResponse", () => {
-    it.each`
-      apduResponseCode                 | errorCode
-      ${Uint8Array.from([0x6a, 0x80])} | ${"6a80"}
-      ${Uint8Array.from([0x69, 0x84])} | ${"6984"}
-      ${Uint8Array.from([0x6d, 0x00])} | ${"6d00"}
-    `(
-      "should return an error for the response status code $errorCode",
-      ({
-        apduResponseCode,
-        errorCode,
-      }: Record<"apduResponseCode" | "errorCode", Uint8Array>) => {
-        // GIVEN
-        const response = new ApduResponse({
-          data: Uint8Array.from([]),
-          statusCode: apduResponseCode,
-        });
-        const command = new SetExternalPluginCommand({
-          payload: "",
-          signature: "",
-        });
-        // WHEN
-        const result = command.parseResponse(response);
-        // THEN
-        expect(isSuccessCommandResult(result)).toBe(false);
-        if (!isSuccessCommandResult(result)) {
-          expect(result.error).toBeInstanceOf(SetExternalPluginCommandError);
-          if (result.error instanceof SetExternalPluginCommandError)
-            expect(result.error.errorCode).toStrictEqual(errorCode);
-        }
-      },
-    );
     it("should return a global error", () => {
       // given
       const command = new SetExternalPluginCommand({

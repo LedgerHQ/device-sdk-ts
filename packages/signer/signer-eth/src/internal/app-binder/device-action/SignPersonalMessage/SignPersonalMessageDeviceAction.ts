@@ -20,6 +20,7 @@ import {
   type SignPersonalMessageDAOutput,
 } from "@api/app-binder/SignPersonalMessageDeviceActionTypes";
 import { type Signature } from "@api/model/Signature";
+import { type EthErrorCodes } from "@internal/app-binder/command/utils/ethAppErrors";
 import { SendSignPersonalMessageTask } from "@internal/app-binder/task/SendSignPersonalMessageTask";
 
 export type MachineDependencies = {
@@ -28,7 +29,7 @@ export type MachineDependencies = {
       derivationPath: string;
       message: string | Uint8Array;
     };
-  }) => Promise<CommandResult<Signature>>;
+  }) => Promise<CommandResult<Signature, EthErrorCodes>>;
 };
 
 export type ExtractMachineDependencies = (

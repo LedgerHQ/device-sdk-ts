@@ -23,10 +23,12 @@ import {
 import { type Signature } from "@api/model/Signature";
 import { type TypedData } from "@api/model/TypedData";
 import { SignEIP712Command } from "@internal/app-binder/command/SignEIP712Command";
+import { type EthErrorCodes } from "@internal/app-binder/command/utils/ethAppErrors";
 import { BuildEIP712ContextTask } from "@internal/app-binder/task/BuildEIP712ContextTask";
 import {
   ProvideEIP712ContextTask,
   type ProvideEIP712ContextTaskArgs,
+  type ProvideEIP712ContextTaskReturnType,
 } from "@internal/app-binder/task/ProvideEIP712ContextTask";
 import { type TypedDataParserService } from "@internal/typed-data/service/TypedDataParserService";
 
@@ -42,19 +44,19 @@ export type MachineDependencies = {
     input: {
       taskArgs: ProvideEIP712ContextTaskArgs;
     };
-  }) => Promise<CommandResult<void>>;
+  }) => ProvideEIP712ContextTaskReturnType;
   readonly signTypedData: (arg0: {
     input: {
       derivationPath: string;
     };
-  }) => Promise<CommandResult<Signature>>;
+  }) => Promise<CommandResult<Signature, EthErrorCodes>>;
   readonly signTypedDataLegacy: (arg0: {
     input: {
       derivationPath: string;
       domainHash: string;
       messageHash: string;
     };
-  }) => Promise<CommandResult<Signature>>;
+  }) => Promise<CommandResult<Signature, EthErrorCodes>>;
 };
 
 export class SignTypedDataDeviceAction extends XStateDeviceAction<
@@ -361,7 +363,7 @@ export class SignTypedDataDeviceAction extends XStateDeviceAction<
       input: {
         derivationPath: string;
       };
-    }) =>
+    }): Promise<CommandResult<Signature, EthErrorCodes>> =>
       internalApi.sendCommand(
         new SignEIP712Command({
           derivationPath: arg0.input.derivationPath,

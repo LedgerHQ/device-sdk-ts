@@ -3,51 +3,33 @@ import {
   type Apdu,
   ApduBuilder,
   type ApduBuilderArgs,
-  ApduParser,
   type ApduResponse,
   type Command,
-  type CommandErrorArgs,
-  type CommandErrors,
   type CommandResult,
   CommandResultFactory,
-  CommandUtils,
-  DeviceExchangeError,
-  GlobalCommandErrorHandler,
-  isCommandErrorCode,
 } from "@ledgerhq/device-management-kit";
+import { CommandErrorHelper } from "@ledgerhq/signer-utils";
+import { Maybe } from "purify-ts";
+
+import {
+  ETH_APP_ERRORS,
+  EthAppCommandErrorFactory,
+  type EthErrorCodes,
+} from "./utils/ethAppErrors";
 
 type SetExternalPluginCommandArgs = {
   payload: string;
   signature?: string;
 };
 
-export type SetExternalPluginCommandErrorCodes = "6a80" | "6984" | "6d00";
-
-const SET_EXTERNAL_PLUGIN_ERRORS: CommandErrors<SetExternalPluginCommandErrorCodes> =
-  {
-    "6a80": { message: "Invalid plugin name size" },
-    "6984": { message: "Plugin not installed on device" },
-    "6d00": { message: "Version of Eth app not supported" },
-  };
-
-export class SetExternalPluginCommandError extends DeviceExchangeError<SetExternalPluginCommandErrorCodes> {
-  constructor({
-    message,
-    errorCode,
-  }: CommandErrorArgs<SetExternalPluginCommandErrorCodes>) {
-    super({ tag: "SetExternalPluginCommandError", message, errorCode });
-  }
-}
-
 export class SetExternalPluginCommand
-  implements
-    Command<
-      void,
-      SetExternalPluginCommandArgs,
-      SetExternalPluginCommandErrorCodes
-    >
+  implements Command<void, SetExternalPluginCommandArgs, EthErrorCodes>
 {
   constructor(private readonly args: SetExternalPluginCommandArgs) {}
+  private readonly errorHelper = new CommandErrorHelper<void, EthErrorCodes>(
+    ETH_APP_ERRORS,
+    EthAppCommandErrorFactory,
+  );
 
   getApdu(): Apdu {
     const setExternalPluginBuilderArgs: ApduBuilderArgs = {
@@ -69,24 +51,9 @@ export class SetExternalPluginCommand
 
   parseResponse(
     apduResponse: ApduResponse,
-  ): CommandResult<void, SetExternalPluginCommandErrorCodes> {
-    if (CommandUtils.isSuccessResponse(apduResponse)) {
-      return CommandResultFactory({ data: undefined });
-    }
-
-    const parser = new ApduParser(apduResponse);
-    const statusCodeHex = parser.encodeToHexaString(apduResponse.statusCode);
-
-    if (isCommandErrorCode(statusCodeHex, SET_EXTERNAL_PLUGIN_ERRORS)) {
-      return CommandResultFactory({
-        error: new SetExternalPluginCommandError({
-          ...SET_EXTERNAL_PLUGIN_ERRORS[statusCodeHex],
-          errorCode: statusCodeHex,
-        }),
-      });
-    }
-    return CommandResultFactory({
-      error: GlobalCommandErrorHandler.handle(apduResponse),
-    });
+  ): CommandResult<void, EthErrorCodes> {
+    return Maybe.fromNullable(
+      this.errorHelper.getError(apduResponse),
+    ).orDefault(CommandResultFactory({ data: undefined }));
   }
 }

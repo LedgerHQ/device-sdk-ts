@@ -9,12 +9,16 @@ import {
   type Command,
   type CommandResult,
   CommandResultFactory,
-  CommandUtils,
-  GlobalCommandErrorHandler,
   InvalidStatusWordError,
 } from "@ledgerhq/device-management-kit";
-import { Just } from "purify-ts";
+import { CommandErrorHelper } from "@ledgerhq/signer-utils";
+import { Just, Maybe } from "purify-ts";
 
+import {
+  ETH_APP_ERRORS,
+  EthAppCommandErrorFactory,
+  type EthErrorCodes,
+} from "./utils/ethAppErrors";
 import { type SignTransactionCommandResponse } from "./SignTransactionCommand";
 
 const R_LENGTH = 32;
@@ -26,8 +30,13 @@ const S_LENGTH = 32;
  * the command does not need a Transaction to be provided.
  */
 export class StartTransactionCommand
-  implements Command<SignTransactionCommandResponse, void>
+  implements Command<SignTransactionCommandResponse, void, EthErrorCodes>
 {
+  private readonly errorHelper = new CommandErrorHelper<
+    SignTransactionCommandResponse,
+    EthErrorCodes
+  >(ETH_APP_ERRORS, EthAppCommandErrorFactory);
+
   getApdu(): Apdu {
     const signEthTransactionArgs: ApduBuilderArgs = {
       cla: 0xe0,
@@ -41,49 +50,47 @@ export class StartTransactionCommand
 
   parseResponse(
     response: ApduResponse,
-  ): CommandResult<SignTransactionCommandResponse> {
-    const parser = new ApduParser(response);
+  ): CommandResult<SignTransactionCommandResponse, EthErrorCodes> {
+    return Maybe.fromNullable(
+      this.errorHelper.getError(response),
+    ).orDefaultLazy(() => {
+      const parser = new ApduParser(response);
 
-    if (!CommandUtils.isSuccessResponse(response)) {
+      // The data is returned only for the last chunk
+      const v = parser.extract8BitUInt();
+      if (v === undefined) {
+        return CommandResultFactory({
+          error: new InvalidStatusWordError("V is missing"),
+        });
+      }
+
+      const r = parser.encodeToHexaString(
+        parser.extractFieldByLength(R_LENGTH),
+        true,
+      );
+      if (!r) {
+        return CommandResultFactory({
+          error: new InvalidStatusWordError("R is missing"),
+        });
+      }
+
+      const s = parser.encodeToHexaString(
+        parser.extractFieldByLength(S_LENGTH),
+        true,
+      );
+      if (!s) {
+        return CommandResultFactory({
+          error: new InvalidStatusWordError("S is missing"),
+        });
+      }
+
       return CommandResultFactory({
-        error: GlobalCommandErrorHandler.handle(response),
+        data: Just({
+          v,
+          r,
+          s,
+        }),
       });
-    }
-
-    // The data is returned only for the last chunk
-    const v = parser.extract8BitUInt();
-    if (v === undefined) {
-      return CommandResultFactory({
-        error: new InvalidStatusWordError("V is missing"),
-      });
-    }
-
-    const r = parser.encodeToHexaString(
-      parser.extractFieldByLength(R_LENGTH),
-      true,
-    );
-    if (!r) {
-      return CommandResultFactory({
-        error: new InvalidStatusWordError("R is missing"),
-      });
-    }
-
-    const s = parser.encodeToHexaString(
-      parser.extractFieldByLength(S_LENGTH),
-      true,
-    );
-    if (!s) {
-      return CommandResultFactory({
-        error: new InvalidStatusWordError("S is missing"),
-      });
-    }
-
-    return CommandResultFactory({
-      data: Just({
-        v,
-        r,
-        s,
-      }),
     });
   }
 }

@@ -7,10 +7,9 @@ import {
   type Command,
   type CommandResult,
   CommandResultFactory,
-  CommandUtils,
-  GlobalCommandErrorHandler,
 } from "@ledgerhq/device-management-kit";
-import { Just, type Maybe, Nothing } from "purify-ts";
+import { CommandErrorHelper } from "@ledgerhq/signer-utils";
+import { Just, Maybe, Nothing } from "purify-ts";
 
 import {
   ArrayType,
@@ -19,6 +18,12 @@ import {
   PrimitiveType,
   StructType,
 } from "@internal/typed-data/model/Types";
+
+import {
+  ETH_APP_ERRORS,
+  EthAppCommandErrorFactory,
+  type EthErrorCodes,
+} from "./utils/ethAppErrors";
 
 export enum StructDefinitionCommand {
   Name = 0,
@@ -50,8 +55,13 @@ enum Type {
 }
 
 export class SendEIP712StructDefinitionCommand
-  implements Command<void, SendEIP712StructDefinitionCommandArgs>
+  implements Command<void, SendEIP712StructDefinitionCommandArgs, EthErrorCodes>
 {
+  private readonly errorHelper = new CommandErrorHelper<void, EthErrorCodes>(
+    ETH_APP_ERRORS,
+    EthAppCommandErrorFactory,
+  );
+
   constructor(private args: SendEIP712StructDefinitionCommandArgs) {}
 
   getApdu(): Apdu {
@@ -106,13 +116,10 @@ export class SendEIP712StructDefinitionCommand
     return builder.encodeInLVFromAscii(this.args.name).build();
   }
 
-  parseResponse(response: ApduResponse): CommandResult<void> {
-    if (!CommandUtils.isSuccessResponse(response)) {
-      return CommandResultFactory({
-        error: GlobalCommandErrorHandler.handle(response),
-      });
-    }
-    return CommandResultFactory({ data: undefined });
+  parseResponse(response: ApduResponse): CommandResult<void, EthErrorCodes> {
+    return Maybe.fromNullable(this.errorHelper.getError(response)).orDefault(
+      CommandResultFactory({ data: undefined }),
+    );
   }
 
   private constructTypeDescByte(type: FieldType): number {

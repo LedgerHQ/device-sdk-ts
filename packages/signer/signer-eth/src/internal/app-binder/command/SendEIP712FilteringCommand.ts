@@ -7,9 +7,15 @@ import {
   type Command,
   type CommandResult,
   CommandResultFactory,
-  CommandUtils,
-  GlobalCommandErrorHandler,
 } from "@ledgerhq/device-management-kit";
+import { CommandErrorHelper } from "@ledgerhq/signer-utils";
+import { Maybe } from "purify-ts";
+
+import {
+  ETH_APP_ERRORS,
+  EthAppCommandErrorFactory,
+  type EthErrorCodes,
+} from "./utils/ethAppErrors";
 
 export enum Eip712FilterType {
   Activation = "activation",
@@ -67,8 +73,13 @@ const FILTER_TO_P2: Record<Eip712FilterType, number> = {
 };
 
 export class SendEIP712FilteringCommand
-  implements Command<void, SendEIP712FilteringCommandArgs>
+  implements Command<void, SendEIP712FilteringCommandArgs, EthErrorCodes>
 {
+  private readonly errorHelper = new CommandErrorHelper<void, EthErrorCodes>(
+    ETH_APP_ERRORS,
+    EthAppCommandErrorFactory,
+  );
+
   constructor(private readonly args: SendEIP712FilteringCommandArgs) {}
 
   getApdu(): Apdu {
@@ -109,12 +120,11 @@ export class SendEIP712FilteringCommand
     return builder.build();
   }
 
-  parseResponse(apduResponse: ApduResponse): CommandResult<void> {
-    if (!CommandUtils.isSuccessResponse(apduResponse)) {
-      return CommandResultFactory({
-        error: GlobalCommandErrorHandler.handle(apduResponse),
-      });
-    }
-    return CommandResultFactory({ data: undefined });
+  parseResponse(
+    apduResponse: ApduResponse,
+  ): CommandResult<void, EthErrorCodes> {
+    return Maybe.fromNullable(
+      this.errorHelper.getError(apduResponse),
+    ).orDefault(CommandResultFactory({ data: undefined }));
   }
 }

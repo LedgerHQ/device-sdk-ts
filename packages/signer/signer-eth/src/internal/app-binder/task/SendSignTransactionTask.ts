@@ -19,6 +19,7 @@ import {
   type SignTransactionCommandResponse,
 } from "@internal/app-binder/command/SignTransactionCommand";
 import { StartTransactionCommand } from "@internal/app-binder/command/StartTransactionCommand";
+import { type EthErrorCodes } from "@internal/app-binder/command/utils/ethAppErrors";
 
 const PATH_SIZE = 4;
 
@@ -36,7 +37,7 @@ export class SendSignTransactionTask {
     private args: SendSignTransactionTaskArgs,
   ) {}
 
-  async run(): Promise<CommandResult<Signature, void>> {
+  async run(): Promise<CommandResult<Signature, EthErrorCodes>> {
     // For generic-parser transactions, the derivation path and transaction were previously sent
     if (!this.args.isLegacy) {
       const signature = await this.api.sendCommand(

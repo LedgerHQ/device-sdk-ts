@@ -5,6 +5,7 @@ import {
 } from "@ledgerhq/device-management-kit";
 import { Just, Nothing } from "purify-ts";
 
+import { type EthErrorCodes } from "./utils/ethAppErrors";
 import {
   SignEIP712Command,
   type SignEIP712CommandResponse,
@@ -51,7 +52,7 @@ const LNX_RESPONSE_TOO_SHORT = {
 };
 
 describe("SignEIP712Command", () => {
-  let command: Command<SignEIP712CommandResponse, void>;
+  let command: Command<SignEIP712CommandResponse, void, EthErrorCodes>;
 
   beforeEach(() => {
     command = new SignEIP712Command({

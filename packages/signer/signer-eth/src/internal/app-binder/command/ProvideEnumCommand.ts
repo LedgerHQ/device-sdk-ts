@@ -7,9 +7,15 @@ import {
   type Command,
   type CommandResult,
   CommandResultFactory,
-  CommandUtils,
-  GlobalCommandErrorHandler,
 } from "@ledgerhq/device-management-kit";
+import { CommandErrorHelper } from "@ledgerhq/signer-utils";
+import { Maybe } from "purify-ts";
+
+import {
+  ETH_APP_ERRORS,
+  EthAppCommandErrorFactory,
+  type EthErrorCodes,
+} from "./utils/ethAppErrors";
 
 export type ProvideEnumCommandArgs = {
   /**
@@ -23,8 +29,13 @@ export type ProvideEnumCommandArgs = {
 };
 
 export class ProvideEnumCommand
-  implements Command<void, ProvideEnumCommandArgs>
+  implements Command<void, ProvideEnumCommandArgs, EthErrorCodes>
 {
+  private readonly errorHelper = new CommandErrorHelper<void, EthErrorCodes>(
+    ETH_APP_ERRORS,
+    EthAppCommandErrorFactory,
+  );
+
   constructor(private readonly args: ProvideEnumCommandArgs) {}
 
   getApdu(): Apdu {
@@ -40,13 +51,9 @@ export class ProvideEnumCommand
       .build();
   }
 
-  parseResponse(response: ApduResponse): CommandResult<void> {
-    if (CommandUtils.isSuccessResponse(response)) {
-      return CommandResultFactory({ data: undefined });
-    }
-
-    return CommandResultFactory({
-      error: GlobalCommandErrorHandler.handle(response),
-    });
+  parseResponse(response: ApduResponse): CommandResult<void, EthErrorCodes> {
+    return Maybe.fromNullable(this.errorHelper.getError(response)).orDefault(
+      CommandResultFactory({ data: undefined }),
+    );
   }
 }

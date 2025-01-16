@@ -8,13 +8,18 @@ import {
   type Command,
   type CommandResult,
   CommandResultFactory,
-  CommandUtils,
-  GlobalCommandErrorHandler,
   InvalidStatusWordError,
 } from "@ledgerhq/device-management-kit";
-import { Just, type Maybe, Nothing } from "purify-ts";
+import { CommandErrorHelper } from "@ledgerhq/signer-utils";
+import { Just, Maybe, Nothing } from "purify-ts";
 
 import { type Signature } from "@api/model/Signature";
+
+import {
+  ETH_APP_ERRORS,
+  EthAppCommandErrorFactory,
+  type EthErrorCodes,
+} from "./utils/ethAppErrors";
 
 const R_LENGTH = 32;
 const S_LENGTH = 32;
@@ -34,9 +39,17 @@ export type SignPersonalMessageCommandResponse = Maybe<Signature>;
 
 export class SignPersonalMessageCommand
   implements
-    Command<SignPersonalMessageCommandResponse, SignPersonalMessageCommandArgs>
+    Command<
+      SignPersonalMessageCommandResponse,
+      SignPersonalMessageCommandArgs,
+      EthErrorCodes
+    >
 {
   readonly args: SignPersonalMessageCommandArgs;
+  private readonly errorHelper = new CommandErrorHelper<
+    SignPersonalMessageCommandResponse,
+    EthErrorCodes
+  >(ETH_APP_ERRORS, EthAppCommandErrorFactory);
 
   constructor(args: SignPersonalMessageCommandArgs) {
     this.args = args;
@@ -58,47 +71,45 @@ export class SignPersonalMessageCommand
 
   parseResponse(
     apduResponse: ApduResponse,
-  ): CommandResult<SignPersonalMessageCommandResponse> {
-    const parser = new ApduParser(apduResponse);
+  ): CommandResult<SignPersonalMessageCommandResponse, EthErrorCodes> {
+    return Maybe.fromNullable(
+      this.errorHelper.getError(apduResponse),
+    ).orDefaultLazy(() => {
+      const parser = new ApduParser(apduResponse);
 
-    if (!CommandUtils.isSuccessResponse(apduResponse)) {
+      // The data is returned only for the last chunk
+      const v = parser.extract8BitUInt();
+      if (v === undefined) {
+        return CommandResultFactory({ data: Nothing });
+      }
+
+      const r = parser.encodeToHexaString(
+        parser.extractFieldByLength(R_LENGTH),
+        true,
+      );
+      if (!r) {
+        return CommandResultFactory({
+          error: new InvalidStatusWordError("R is missing"),
+        });
+      }
+
+      const s = parser.encodeToHexaString(
+        parser.extractFieldByLength(S_LENGTH),
+        true,
+      );
+      if (!s) {
+        return CommandResultFactory({
+          error: new InvalidStatusWordError("S is missing"),
+        });
+      }
+
       return CommandResultFactory({
-        error: GlobalCommandErrorHandler.handle(apduResponse),
+        data: Just({
+          r,
+          s,
+          v,
+        }),
       });
-    }
-
-    // The data is returned only for the last chunk
-    const v = parser.extract8BitUInt();
-    if (v === undefined) {
-      return CommandResultFactory({ data: Nothing });
-    }
-
-    const r = parser.encodeToHexaString(
-      parser.extractFieldByLength(R_LENGTH),
-      true,
-    );
-    if (!r) {
-      return CommandResultFactory({
-        error: new InvalidStatusWordError("R is missing"),
-      });
-    }
-
-    const s = parser.encodeToHexaString(
-      parser.extractFieldByLength(S_LENGTH),
-      true,
-    );
-    if (!s) {
-      return CommandResultFactory({
-        error: new InvalidStatusWordError("S is missing"),
-      });
-    }
-
-    return CommandResultFactory({
-      data: Just({
-        r,
-        s,
-        v,
-      }),
     });
   }
 }

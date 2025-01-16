@@ -8,6 +8,7 @@ import {
 } from "@ledgerhq/device-management-kit";
 
 import { type Signature } from "@api/model/Signature";
+import { type EthErrorCodes } from "@internal/app-binder/command/utils/ethAppErrors";
 
 export type SignPersonalMessageDAOutput = Signature;
 
@@ -18,7 +19,7 @@ export type SignPersonalMessageDAInput = {
 
 export type SignPersonalMessageDAError =
   | OpenAppDAError
-  | CommandErrorResult["error"];
+  | CommandErrorResult<EthErrorCodes>["error"];
 
 type SignPersonalMessageDARequiredInteraction =
   | OpenAppDARequiredInteraction
