@@ -2,27 +2,27 @@ import {
   type CommandErrorResult,
   type DeviceActionState,
   type ExecuteDeviceActionReturnType,
+  type HexaString,
   type OpenAppDAError,
   type OpenAppDARequiredInteraction,
-  type UserInteractionRequired,
 } from "@ledgerhq/device-management-kit";
 
-import { type Psbt } from "@api/model/Psbt";
+import { type SignPsbtDARequiredInteraction } from "@api/app-binder/SignPsbtDeviceActionTypes";
+import { type Psbt as ApiPsbt } from "@api/model/Psbt";
 import { type PsbtSignature } from "@api/model/Signature";
 import { type Wallet as ApiWallet } from "@api/model/Wallet";
 import { type BtcErrorCodes } from "@internal/app-binder/command/utils/bitcoinAppErrors";
-import { type BuildPsbtTaskResult } from "@internal/app-binder/task/BuildPsbtTask";
 import { type DataStoreService } from "@internal/data-store/service/DataStoreService";
+import { type Psbt as InternalPsbt } from "@internal/psbt/model/Psbt";
 import { type PsbtMapper } from "@internal/psbt/service/psbt/PsbtMapper";
 import { type ValueParser } from "@internal/psbt/service/value/ValueParser";
-import { type Wallet as InternalWallet } from "@internal/wallet/model/Wallet";
 import { type WalletBuilder } from "@internal/wallet/service/WalletBuilder";
 import { type WalletSerializer } from "@internal/wallet/service/WalletSerializer";
 
-export type SignPsbtDAOutput = PsbtSignature[];
+export type SignTransactionDAOutput = HexaString;
 
-export type SignPsbtDAInput = {
-  psbt: Psbt;
+export type SignTransactionDAInput = {
+  psbt: ApiPsbt;
   wallet: ApiWallet;
   walletBuilder: WalletBuilder;
   walletSerializer: WalletSerializer;
@@ -31,33 +31,33 @@ export type SignPsbtDAInput = {
   valueParser: ValueParser;
 };
 
-export type SignPsbtDAError =
+export type SignTransactionDAError =
   | OpenAppDAError
   | CommandErrorResult<BtcErrorCodes>["error"];
 
-export type SignPsbtDARequiredInteraction =
+type SignTransactionDARequiredInteraction =
   | OpenAppDARequiredInteraction
-  | UserInteractionRequired.SignTransaction;
+  | SignPsbtDARequiredInteraction;
 
-export type SignPsbtDAIntermediateValue = {
-  requiredUserInteraction: SignPsbtDARequiredInteraction;
+export type SignTransactionDAIntermediateValue = {
+  requiredUserInteraction: SignTransactionDARequiredInteraction;
 };
 
-export type SignPsbtDAState = DeviceActionState<
-  SignPsbtDAOutput,
-  SignPsbtDAError,
-  SignPsbtDAIntermediateValue
+export type SignTransactionDAState = DeviceActionState<
+  SignTransactionDAOutput,
+  SignTransactionDAError,
+  SignTransactionDAIntermediateValue
 >;
 
-export type SignPsbtDAInternalState = {
-  readonly error: SignPsbtDAError | null;
-  readonly wallet: InternalWallet | null;
-  readonly buildPsbtResult: BuildPsbtTaskResult | null;
+export type SignTransactionDAInternalState = {
+  readonly error: SignTransactionDAError | null;
   readonly signatures: PsbtSignature[] | null;
+  readonly signedPsbt: InternalPsbt | null;
+  readonly transaction: HexaString | null;
 };
 
-export type SignPsbtDAReturnType = ExecuteDeviceActionReturnType<
-  SignPsbtDAOutput,
-  SignPsbtDAError,
-  SignPsbtDAIntermediateValue
+export type SignTransactionDAReturnType = ExecuteDeviceActionReturnType<
+  SignTransactionDAOutput,
+  SignTransactionDAError,
+  SignTransactionDAIntermediateValue
 >;

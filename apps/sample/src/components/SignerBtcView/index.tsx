@@ -12,11 +12,17 @@ import {
   type SignPsbtDAError,
   type SignPsbtDAIntermediateValue,
   type SignPsbtDAOutput,
+  type SignTransactionDAError,
+  type SignTransactionDAIntermediateValue,
+  type SignTransactionDAOutput,
 } from "@ledgerhq/device-signer-kit-bitcoin";
 
 import { DeviceActionsList } from "@/components/DeviceActionsView/DeviceActionsList";
 import { type DeviceActionProps } from "@/components/DeviceActionsView/DeviceActionTester";
-import { SignPsbtDAInputValuesForm } from "@/components/SignerBtcView/SignPsbtDAInputValusForm";
+import {
+  descriptorTemplateToDerivationPath,
+  SignPsbtDAInputValuesForm,
+} from "@/components/SignerBtcView/SignPsbtDAInputValusForm";
 import { useDmk } from "@/providers/DeviceManagementKitProvider";
 
 const DEFAULT_DERIVATION_PATH = "84'/0'/0'";
@@ -114,6 +120,39 @@ export const SignerBtcView: React.FC<{ sessionId: string }> = ({
         },
         SignPsbtDAError,
         SignPsbtDAIntermediateValue
+      >,
+      {
+        title: "Sign transaction",
+        description:
+          "Perform all the actions necessary to sign a PSBT with the device and extract transaction",
+        executeDeviceAction: ({ descriptorTemplate, psbt, path }) => {
+          if (!signer) {
+            throw new Error("Signer not initialized");
+          }
+
+          return signer.signTransaction(
+            new DefaultWallet(path, descriptorTemplate),
+            psbt,
+          );
+        },
+        InputValuesComponent: SignPsbtDAInputValuesForm,
+        initialValues: {
+          descriptorTemplate: DefaultDescriptorTemplate.NATIVE_SEGWIT,
+          psbt: "",
+          path: descriptorTemplateToDerivationPath[
+            DefaultDescriptorTemplate.NATIVE_SEGWIT
+          ],
+        },
+        deviceModelId,
+      } satisfies DeviceActionProps<
+        SignTransactionDAOutput,
+        {
+          psbt: string;
+          path: string;
+          descriptorTemplate: DefaultDescriptorTemplate;
+        },
+        SignTransactionDAError,
+        SignTransactionDAIntermediateValue
       >,
     ],
     [deviceModelId, signer],

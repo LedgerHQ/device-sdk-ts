@@ -12,10 +12,12 @@ import {
 } from "@api/app-binder/GetExtendedPublicKeyDeviceActionTypes";
 import { SignMessageDAReturnType } from "@api/app-binder/SignMessageDeviceActionTypes";
 import { SignPsbtDAReturnType } from "@api/app-binder/SignPsbtDeviceActionTypes";
+import { SignTransactionDAReturnType } from "@api/app-binder/SignTransactionDeviceActionTypes";
 import { Psbt } from "@api/model/Psbt";
 import { Wallet } from "@api/model/Wallet";
 import { GetExtendedPublicKeyCommand } from "@internal/app-binder/command/GetExtendedPublicKeyCommand";
 import { SignPsbtDeviceAction } from "@internal/app-binder/device-action/SignPsbt/SignPsbtDeviceAction";
+import { SignTransactionDeviceAction } from "@internal/app-binder/device-action/SignTransaction/SignTransactionDeviceAction";
 import { dataStoreTypes } from "@internal/data-store/di/dataStoreTypes";
 import type { DataStoreService } from "@internal/data-store/service/DataStoreService";
 import { externalTypes } from "@internal/externalTypes";
@@ -84,6 +86,26 @@ export class BtcAppBinder {
     return this._dmk.executeDeviceAction({
       sessionId: this._sessionId,
       deviceAction: new SignPsbtDeviceAction({
+        input: {
+          psbt: args.psbt,
+          wallet: args.wallet,
+          walletBuilder: this._walletBuilder,
+          walletSerializer: this._walletSerializer,
+          dataStoreService: this._dataStoreService,
+          psbtMapper: this._psbtMapper,
+          valueParser: this._valueParser,
+        },
+      }),
+    });
+  }
+
+  signTransaction(args: {
+    psbt: Psbt;
+    wallet: Wallet;
+  }): SignTransactionDAReturnType {
+    return this._dmk.executeDeviceAction({
+      sessionId: this._sessionId,
+      deviceAction: new SignTransactionDeviceAction({
         input: {
           psbt: args.psbt,
           wallet: args.wallet,

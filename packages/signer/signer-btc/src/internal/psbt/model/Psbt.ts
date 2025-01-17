@@ -95,6 +95,15 @@ export class Psbt {
     );
   }
 
+  getInputKeyDatas(inputIndex: number, keyType: PsbtIn): Maybe<string[]> {
+    const key = new Key(keyType).toHexaString();
+    return Maybe.fromNullable(this.inputMaps[inputIndex]).map((input) => {
+      return Array.from(input.keys())
+        .filter((k) => k.startsWith(key))
+        .map((k) => k.slice(2));
+    });
+  }
+
   getOutputValue(outputIndex: number, key: PsbtOut): Maybe<Value> {
     return Maybe.fromNullable(this.outputMaps[outputIndex]).chain((output) =>
       Maybe.fromNullable(output.get(new Key(key).toHexaString())),
@@ -105,11 +114,43 @@ export class Psbt {
     this.globalMap.set(new Key(key).toHexaString(), value);
   }
 
-  setInputValue(inputIndex: number, key: PsbtIn, value: Value) {
-    this.inputMaps[inputIndex]?.set(new Key(key).toHexaString(), value);
+  setInputValue(
+    inputIndex: number,
+    key: PsbtIn,
+    value: Value,
+    keyData?: Uint8Array,
+  ) {
+    this.inputMaps[inputIndex]?.set(
+      new Key(key, keyData).toHexaString(),
+      value,
+    );
+  }
+
+  getKeyDataInputValue(
+    inputIndex: number,
+    keyIn: PsbtIn,
+    keyData: Uint8Array,
+  ): Maybe<Value> {
+    return Maybe.fromNullable(this.inputMaps[inputIndex]).chain((input) =>
+      Maybe.fromNullable(input.get(new Key(keyIn, keyData).toHexaString())),
+    );
   }
 
   setOutputValue(outputIndex: number, key: PsbtOut, value: Value) {
     this.outputMaps[outputIndex]?.set(new Key(key).toHexaString(), value);
+  }
+
+  deleteInputEntries(inputIndex: number, keyTypes: PsbtIn[]) {
+    const maybeInputEntries = Maybe.fromNullable(this.inputMaps[inputIndex]);
+    maybeInputEntries.map((inputEntries) => {
+      keyTypes.forEach((keyType) => {
+        const key = new Key(keyType);
+        inputEntries.forEach((_value, k, map) => {
+          if (k.startsWith(key.toHexaString())) {
+            map.delete(k);
+          }
+        });
+      });
+    });
   }
 }

@@ -2,9 +2,10 @@ import { ByteArrayBuilder } from "@ledgerhq/device-management-kit";
 import { Maybe } from "purify-ts";
 
 import { Value } from "@internal/psbt/model/Value";
+import { type ValueFactory } from "@internal/psbt/service/value/ValueFactory";
 import { encodeVarint } from "@internal/utils/Varint";
 
-export class DefaultValueFactory {
+export class DefaultValueFactory implements ValueFactory {
   fromInt32LE(value: number): Maybe<Value> {
     return Maybe.fromNullable(
       new ByteArrayBuilder().add32BitIntToData(value, false).tryBuild(),

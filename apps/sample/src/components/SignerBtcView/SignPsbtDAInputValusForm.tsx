@@ -10,7 +10,7 @@ type SignPsbtInputValuesType = {
   descriptorTemplate: DefaultDescriptorTemplate;
 };
 
-const descriptorTemplateToDerivationPath: Record<
+export const descriptorTemplateToDerivationPath: Record<
   DefaultDescriptorTemplate,
   string
 > = {
