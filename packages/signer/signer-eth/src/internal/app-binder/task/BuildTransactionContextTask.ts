@@ -5,6 +5,7 @@ import {
   type ContextModule,
 } from "@ledgerhq/context-module";
 import {
+  DeviceModelId,
   DeviceSessionStateType,
   type InternalApi,
 } from "@ledgerhq/device-management-kit";
@@ -46,17 +47,8 @@ export class BuildTransactionContextTask {
     });
     const { subset, serializedTransaction, type } = parsed.unsafeCoerce();
 
-    if (!challenge) {
-      return {
-        clearSignContexts: [],
-        serializedTransaction,
-        chainId: subset.chainId,
-        transactionType: type,
-      };
-    }
-
     const clearSignContexts = await contextModule.getContexts({
-      challenge,
+      challenge: challenge ?? undefined,
       domain: options.domain,
       ...subset,
     });
@@ -117,6 +109,9 @@ export class BuildTransactionContextTask {
       return false;
     }
     if (deviceState.currentApp.name !== "Ethereum") {
+      return false;
+    }
+    if (deviceState.deviceModelId === DeviceModelId.NANO_S) {
       return false;
     }
     return gte(deviceState.currentApp.version, "1.14.0");

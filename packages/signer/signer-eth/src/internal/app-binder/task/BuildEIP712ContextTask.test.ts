@@ -1,5 +1,6 @@
 import { type TypedDataClearSignContextSuccess } from "@ledgerhq/context-module";
 import {
+  DeviceModelId,
   DeviceSessionStateType,
   DeviceStatus,
 } from "@ledgerhq/device-management-kit";
@@ -154,6 +155,7 @@ describe("BuildEIP712ContextTask", () => {
       deviceStatus: DeviceStatus.CONNECTED,
       installedApps: [],
       currentApp: { name: "Bitcoin", version: "1.0" },
+      deviceModelId: DeviceModelId.FLEX,
     });
     // WHEN
     const builtContext = await task.run();
@@ -190,6 +192,7 @@ describe("BuildEIP712ContextTask", () => {
       deviceStatus: DeviceStatus.CONNECTED,
       installedApps: [],
       currentApp: { name: "Ethereum", version: "1.12.0" },
+      deviceModelId: DeviceModelId.FLEX,
     });
     contextMouleMock.getTypedDataFilters.mockResolvedValueOnce({
       type: "error",
@@ -230,6 +233,7 @@ describe("BuildEIP712ContextTask", () => {
       deviceStatus: DeviceStatus.CONNECTED,
       installedApps: [],
       currentApp: { name: "Ethereum", version: "1.12.0" },
+      deviceModelId: DeviceModelId.FLEX,
     });
     contextMouleMock.getTypedDataFilters.mockResolvedValueOnce(
       TEST_CLEAR_SIGN_CONTEXT,
@@ -286,6 +290,7 @@ describe("BuildEIP712ContextTask", () => {
       deviceStatus: DeviceStatus.CONNECTED,
       installedApps: [],
       currentApp: { name: "Ethereum", version: "1.11.0" },
+      deviceModelId: DeviceModelId.FLEX,
     });
     contextMouleMock.getTypedDataFilters.mockResolvedValueOnce(
       TEST_CLEAR_SIGN_CONTEXT,

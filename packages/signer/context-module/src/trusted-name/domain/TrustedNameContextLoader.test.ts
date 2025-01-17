@@ -33,6 +33,7 @@ describe("TrustedNameContextLoader", () => {
     it("should return an error when domain > max length", async () => {
       const transaction = {
         domain: "maxlength-maxlength-maxlength-maxlength-maxlength-maxlength",
+        challenge: "challenge",
       } as TransactionContext;
 
       const loader = new TrustedNameContextLoader(mockTrustedNameDataSource);
@@ -49,6 +50,7 @@ describe("TrustedNameContextLoader", () => {
     it("should return an error when domain is not valid", async () => {
       const transaction = {
         domain: "hello👋",
+        challenge: "challenge",
       } as TransactionContext;
 
       const loader = new TrustedNameContextLoader(mockTrustedNameDataSource);
@@ -97,6 +99,21 @@ describe("TrustedNameContextLoader", () => {
       expect(result).toEqual([
         { type: ClearSignContextType.ERROR, error: new Error("error") },
       ]);
+    });
+
+    it("should return an empty array when no challenge", async () => {
+      // GIVEN
+      const transaction = {
+        domain: "hello.eth",
+        challenge: undefined,
+      } as TransactionContext;
+
+      // WHEN
+      const loader = new TrustedNameContextLoader(mockTrustedNameDataSource);
+      const result = await loader.load(transaction);
+
+      // THEN
+      expect(result).toEqual([]);
     });
   });
 

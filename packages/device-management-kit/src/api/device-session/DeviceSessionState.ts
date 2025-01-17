@@ -1,5 +1,6 @@
 import { type GetAppAndVersionResponse } from "@api/command/os/GetAppAndVersionCommand";
 import { type BatteryStatusFlags } from "@api/command/os/GetBatteryStatusCommand";
+import { type DeviceModelId } from "@api/device/DeviceModel";
 import { type DeviceStatus } from "@api/device/DeviceStatus";
 import { type Application } from "@internal/manager-api/model/Application";
 
@@ -55,6 +56,11 @@ type DeviceSessionBaseState = {
    * The status of the device.
    */
   readonly deviceStatus: DeviceStatus;
+
+  /**
+   * The model of the device.
+   */
+  readonly deviceModelId: DeviceModelId;
 
   /**
    * The name of the device.

@@ -17,6 +17,6 @@ export type TransactionFieldContext =
     };
 
 export type TransactionContext = TransactionSubset & {
-  challenge: string;
+  challenge?: string;
   domain?: string;
 };

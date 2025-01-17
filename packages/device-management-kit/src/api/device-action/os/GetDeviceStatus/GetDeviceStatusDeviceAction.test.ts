@@ -5,6 +5,7 @@ import {
   GLOBAL_ERRORS,
   GlobalCommandError,
 } from "@api/command/utils/GlobalCommandError";
+import { DeviceModelId } from "@api/device/DeviceModel";
 import { DeviceStatus } from "@api/device/DeviceStatus";
 import { makeDeviceActionInternalApiMock } from "@api/device-action/__test-utils__/makeInternalApi";
 import { testDeviceActionStates } from "@api/device-action/__test-utils__/testDeviceActionStates";
@@ -56,6 +57,7 @@ describe("GetDeviceStatusDeviceAction", () => {
       apiGetDeviceSessionStateMock.mockReturnValue({
         sessionStateType: DeviceSessionStateType.Connected,
         deviceStatus: DeviceStatus.CONNECTED,
+        deviceModelId: DeviceModelId.FLEX,
       });
 
       sendCommandMock.mockResolvedValue(
@@ -101,6 +103,7 @@ describe("GetDeviceStatusDeviceAction", () => {
         deviceStatus: DeviceStatus.LOCKED,
         currentApp: { name: "mockedCurrentApp", version: "1.0.0" },
         installedApps: [],
+        deviceModelId: DeviceModelId.FLEX,
       });
 
       apiGetDeviceSessionStateObservableMock.mockImplementation(
@@ -115,6 +118,7 @@ describe("GetDeviceStatusDeviceAction", () => {
                     deviceStatus: DeviceStatus.CONNECTED,
                     currentApp: { name: "mockedCurrentApp", version: "1.0.0" },
                     installedApps: [],
+                    deviceModelId: DeviceModelId.FLEX,
                   });
                   o.complete();
                 } else {
@@ -124,6 +128,7 @@ describe("GetDeviceStatusDeviceAction", () => {
                     deviceStatus: DeviceStatus.LOCKED,
                     currentApp: { name: "mockedCurrentApp", version: "1.0.0" },
                     installedApps: [],
+                    deviceModelId: DeviceModelId.FLEX,
                   });
                 }
               },
@@ -359,6 +364,7 @@ describe("GetDeviceStatusDeviceAction", () => {
                   deviceStatus: DeviceStatus.LOCKED,
                   currentApp: { name: "mockedCurrentApp", version: "1.0.0" },
                   installedApps: [],
+                  deviceModelId: DeviceModelId.FLEX,
                 });
               },
             });
@@ -537,6 +543,7 @@ describe("GetDeviceStatusDeviceAction", () => {
       deviceStatus: DeviceStatus.CONNECTED,
       currentApp: { name: "mockedCurrentApp", version: "1.0.0" },
       installedApps: [],
+      deviceModelId: DeviceModelId.FLEX,
     });
 
     sendCommandMock.mockResolvedValue(
