@@ -15,6 +15,10 @@ export class DefaultValueParser implements ValueParser {
     );
   }
 
+  getInt64LE(data: Uint8Array): Maybe<bigint> {
+    return Maybe.fromNullable(new ByteArrayParser(data).extract64BitInt(false));
+  }
+
   getVarint(data: Uint8Array): Maybe<number> {
     return extractVarint(new ByteArrayParser(data)).map(
       (varint) => varint.value,

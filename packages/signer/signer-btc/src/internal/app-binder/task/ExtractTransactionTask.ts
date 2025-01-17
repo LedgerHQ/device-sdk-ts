@@ -65,7 +65,8 @@ export class ExtractTransactionTask {
       const scriptSig = psbt
         .getInputValue(i, PsbtIn.FINAL_SCRIPTSIG)
         .mapOrDefault((v) => v.data, Uint8Array.from([]));
-      transaction.encodeInLVFromBuffer(scriptSig);
+      transaction.addBufferToData(encodeVarint(scriptSig.length).extract()!);
+      transaction.addBufferToData(scriptSig);
       const sequence = psbt
         .getInputValue(i, PsbtIn.SEQUENCE)
         .chain((value) => this._valueParser.getUInt32LE(value.data))
@@ -78,21 +79,22 @@ export class ExtractTransactionTask {
         witnessBuffer.addBufferToData(witness);
       }
     }
-    const ouputCount = psbt
+    const outputCount = psbt
       .getGlobalValue(PsbtGlobal.OUTPUT_COUNT)
-      .chain((value) => this._valueParser.getUInt32LE(value.data))
+      .chain((value) => this._valueParser.getVarint(value.data))
       .orDefault(0);
-    transaction.addBufferToData(encodeVarint(ouputCount).extract()!);
-    for (let o = 0; o < ouputCount; o++) {
+    transaction.addBufferToData(encodeVarint(outputCount).extract()!);
+    for (let o = 0; o < outputCount; o++) {
       const amount = psbt
         .getOutputValue(o, PsbtOut.AMOUNT)
-        .chain((value) => this._valueParser.getVarint(value.data))
-        .orDefault(0);
+        .chain((value) => this._valueParser.getInt64LE(value.data))
+        .orDefault(0n);
       const script = psbt
         .getOutputValue(o, PsbtOut.SCRIPT)
         .mapOrDefault((v) => v.data, Buffer.from([]));
-      transaction.addBufferToData(encodeVarint(amount).extract()!);
-      transaction.encodeInLVFromBuffer(script);
+      transaction.add64BitIntToData(amount, false);
+      transaction.addBufferToData(encodeVarint(script.length).extract()!);
+      transaction.addBufferToData(script);
     }
     transaction.addBufferToData(witnessBuffer.build());
     const locktime = psbt

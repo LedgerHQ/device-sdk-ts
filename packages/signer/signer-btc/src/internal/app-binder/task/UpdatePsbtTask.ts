@@ -29,6 +29,9 @@ type UpdatePsbtTaskArgs = {
   signatures: PsbtSignature[];
 };
 
+const SCHORR_SIG_LENGTH = 64;
+const SCHORR_SIG_LENGTH_WITH_EXTRA_BYTE = 65;
+
 export class UpdatePsbtTask {
   constructor(
     private readonly _args: UpdatePsbtTaskArgs,
@@ -118,6 +121,12 @@ export class UpdatePsbtTask {
                   `Missing pubkey derivation for input ${psbtSignature.inputIndex}`,
                 );
               }
+              // @todo handle PSBT_IN_TAP_SCRIPT_SIG as described here https://github.com/bitcoin/bips/blob/master/bip-0371.mediawiki#specification
+              if (psbtSignature.tapleafHash !== undefined) {
+                throw new Error(
+                  "Unhandled psbt key type PSBT_IN_TAP_SCRIPT_SIG",
+                );
+              }
               psbt.setInputValue(
                 psbtSignature.inputIndex,
                 PsbtIn.TAP_KEY_SIG,
@@ -125,11 +134,11 @@ export class UpdatePsbtTask {
               );
             });
           } else {
-            psbt.setKeyDataInputValue(
+            psbt.setInputValue(
               psbtSignature.inputIndex,
               PsbtIn.PARTIAL_SIG,
-              psbtSignature.signature,
-              new Value(psbtSignature.pubkey),
+              new Value(psbtSignature.signature),
+              psbtSignature.pubkey,
             );
           }
         });
@@ -325,7 +334,6 @@ export class UpdatePsbtTask {
     inputIndex: number,
   ): InternalPsbt {
     const psbt = fromPsbt;
-    // Taproot input
     const maybeSignature = psbt.getInputValue(inputIndex, PsbtIn.TAP_KEY_SIG);
     if (maybeSignature.isNothing()) {
       throw Error("No signature for taproot input " + inputIndex);
@@ -335,13 +343,15 @@ export class UpdatePsbtTask {
       Uint8Array.from([]),
     );
 
-    if (signature.length != 64 && signature.length != 65) {
+    if (
+      ![SCHORR_SIG_LENGTH, SCHORR_SIG_LENGTH_WITH_EXTRA_BYTE].includes(
+        signature.length,
+      )
+    ) {
       throw Error("Unexpected length of schnorr signature.");
     }
     const witnessBufferBuilder = new ByteArrayBuilder();
-    witnessBufferBuilder.addBufferToData(
-      encodeVarint(1).mapOrDefault((v) => v, Uint8Array.from([1])),
-    );
+    witnessBufferBuilder.add8BitUIntToData(0x01);
     witnessBufferBuilder.encodeInLVFromBuffer(signature);
     psbt.setInputValue(
       inputIndex,

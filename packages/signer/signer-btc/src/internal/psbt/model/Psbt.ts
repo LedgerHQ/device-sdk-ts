@@ -114,18 +114,14 @@ export class Psbt {
     this.globalMap.set(new Key(key).toHexaString(), value);
   }
 
-  setInputValue(inputIndex: number, key: PsbtIn, value: Value) {
-    this.inputMaps[inputIndex]?.set(new Key(key).toHexaString(), value);
-  }
-
-  setKeyDataInputValue(
+  setInputValue(
     inputIndex: number,
-    keyIn: PsbtIn,
-    keyData: Uint8Array,
+    key: PsbtIn,
     value: Value,
+    keyData?: Uint8Array,
   ) {
     this.inputMaps[inputIndex]?.set(
-      new Key(keyIn, keyData).toHexaString(),
+      new Key(key, keyData).toHexaString(),
       value,
     );
   }

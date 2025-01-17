@@ -162,7 +162,7 @@ describe("UpdatePsbtTask", () => {
               ],
               [
                 new Key(PsbtIn.FINAL_SCRIPTSIG).toHexaString(),
-                new Value(Uint8Array.from([0x01, 0x21, 0x01, 0x42])),
+                new Value(Uint8Array.from([0x01, 0x42, 0x01, 0x21])),
               ],
             ]),
           ],
@@ -242,7 +242,7 @@ describe("UpdatePsbtTask", () => {
               ],
               [
                 new Key(PsbtIn.FINAL_SCRIPTWITNESS).toHexaString(),
-                new Value(Uint8Array.from([0x02, 0x01, 0x21, 0x01, 0x42])),
+                new Value(Uint8Array.from([0x02, 0x01, 0x42, 0x01, 0x21])),
               ],
               [
                 new Key(PsbtIn.FINAL_SCRIPTSIG).toHexaString(),

@@ -77,7 +77,7 @@ describe("ExtractTransactionTask", () => {
     // then
     expect(tx).toStrictEqual(
       CommandResultFactory({
-        data: "0x0000000000010108000000000293980000000000203009080706",
+        data: "0x000000000001010800000000029398000000000100000000000000000109203009080706",
       }),
     );
   });

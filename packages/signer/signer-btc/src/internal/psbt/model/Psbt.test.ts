@@ -186,12 +186,7 @@ describe("Psbt", () => {
     const psbt = new Psbt(new Map(), [new Map()]);
     const value = new Value(Uint8Array.of(0x03));
     // when
-    psbt.setKeyDataInputValue(
-      0,
-      PsbtIn.PARTIAL_SIG,
-      Uint8Array.from([0x42]),
-      value,
-    );
+    psbt.setInputValue(0, PsbtIn.PARTIAL_SIG, value, Uint8Array.from([0x42]));
     // then
     expect(psbt).toStrictEqual(
       new Psbt(
