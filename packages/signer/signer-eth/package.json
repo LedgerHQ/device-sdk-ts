@@ -42,7 +42,7 @@
     "purify-ts": "^2.1.0",
     "reflect-metadata": "^0.2.2",
     "semver": "^7.6.3",
-    "xstate": "^5.19.1"
+    "xstate": "^5.19.2"
   },
   "devDependencies": {
     "@ledgerhq/context-module": "workspace:*",
