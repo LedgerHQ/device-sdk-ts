@@ -6,7 +6,7 @@ import {
   DeviceManagementKitBuilder,
   WebLogsExporterLogger,
 } from '@ledgerhq/device-management-kit';
-import {RNBleTransportFactory} from '@ledgerhq/device-transport-kit-rn-ble';
+import {RNBleTransportFactory} from '@ledgerhq/device-transport-kit-react-native-ble';
 
 const DmkContext = createContext<DeviceManagementKit | null>(null);
 const LogsExporterContext = createContext<WebLogsExporterLogger | null>(null);
@@ -49,13 +49,13 @@ export const useDmk = (): DeviceManagementKit => {
 };
 
 export function useExportLogsCallback() {
-  const logsExporter = useContext(LogsExporterContext);
-  if (logsExporter === null) {
+  const logsExp = useContext(LogsExporterContext);
+  if (logsExp === null) {
     throw new Error(
       'useExportLogsCallback must be used within LogsExporterContext.Provider',
     );
   }
   return useCallback(() => {
-    logsExporter.exportLogsToJSON();
-  }, [logsExporter]);
+    logsExp.exportLogsToJSON();
+  }, [logsExp]);
 }

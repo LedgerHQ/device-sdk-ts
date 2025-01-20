@@ -10,9 +10,11 @@ export const HomeScreen: React.FC = () => {
   >({});
   const [isScanningDevices, setIsScanningDevices] = React.useState(false);
   const [sessionId, setSessionId] = React.useState<string | null>(null);
+
   useEffect(() => {
     setDevices({});
   }, [sessionId]);
+
   const onScan = useCallback(() => {
     const obs = dmk.startDiscovering({});
     setDevices({});
@@ -31,12 +33,13 @@ export const HomeScreen: React.FC = () => {
       subscription.unsubscribe();
       dmk.stopDiscovering();
     };
-  }, [dmk]);
+  }, [dmk, devices]);
 
   const onStop = () => {
     setIsScanningDevices(false);
     dmk.stopDiscovering();
   };
+
   const onConnect = async (device: DiscoveredDevice) => {
     try {
       const id = await dmk.connect({device});
