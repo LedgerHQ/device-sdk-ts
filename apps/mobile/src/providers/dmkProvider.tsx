@@ -10,18 +10,15 @@ import {
   type DeviceManagementKit,
   DeviceManagementKitBuilder,
 } from "@ledgerhq/device-management-kit";
-// import { RNBleTransportFactory } from "@ledgerhq/device-transport-kit-react-native-ble";
+import { RNBleTransportFactory } from "@ledgerhq/device-transport-kit-react-native-ble";
 
 const DmkContext = createContext<DeviceManagementKit | null>(null);
 
 function buildDefaultDmk() {
-  return (
-    new DeviceManagementKitBuilder()
-      // TODO: Reenable when transport is ready
-      // .addTransport(RNBleTransportFactory)
-      .addLogger(new ConsoleLogger())
-      .build()
-  );
+  return new DeviceManagementKitBuilder()
+    .addTransport(RNBleTransportFactory)
+    .addLogger(new ConsoleLogger())
+    .build();
 }
 
 export const DmkProvider: React.FC<PropsWithChildren> = ({ children }) => {
