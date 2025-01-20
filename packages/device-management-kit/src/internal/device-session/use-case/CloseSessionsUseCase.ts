@@ -17,7 +17,7 @@ export class CloseSessionsUseCase {
     const deviceSessions = this._sessionService.getDeviceSessions();
 
     for (const dSession of deviceSessions) {
-      dSession.close();
+      this._sessionService.removeDeviceSession(dSession.id);
     }
   }
 }

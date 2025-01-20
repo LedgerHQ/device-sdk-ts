@@ -24,14 +24,17 @@ export class ListenToKnownDevicesUseCase {
   private mapTransportDiscoveredDeviceToDiscoveredDevice(
     discoveredDevice: TransportDiscoveredDevice,
   ): DiscoveredDevice {
+    const deviceModel = new DeviceModel({
+      id: discoveredDevice.id,
+      model: discoveredDevice.deviceModel.id,
+      name: discoveredDevice.deviceModel.productName,
+    });
     return {
       id: discoveredDevice.id,
-      deviceModel: new DeviceModel({
-        id: discoveredDevice.id,
-        model: discoveredDevice.deviceModel.id,
-        name: discoveredDevice.deviceModel.productName,
-      }),
+      deviceModel,
       transport: discoveredDevice.transport,
+      name: discoveredDevice.name || deviceModel.name,
+      available: discoveredDevice.available || true,
     };
   }
 
