@@ -253,7 +253,7 @@ importers:
     devDependencies:
       ts-node:
         specifier: ^10.9.2
-        version: 10.9.2(@types/node@22.10.5)(typescript@5.7.3)
+        version: 10.9.2(@types/node@22.10.7)(typescript@5.7.3)
 
   packages/config/prettier:
     devDependencies:
@@ -280,7 +280,7 @@ importers:
         version: 6.19.7
       '@statelyai/inspect':
         specifier: ^0.4.0
-        version: 0.4.0(ws@8.18.0)(xstate@5.19.1)
+        version: 0.4.0(ws@8.18.0)(xstate@5.19.2)
       axios:
         specifier: ^1.7.9
         version: 1.7.9
@@ -309,8 +309,8 @@ importers:
         specifier: ^8.18.0
         version: 8.18.0
       xstate:
-        specifier: ^5.19.1
-        version: 5.19.1
+        specifier: ^5.19.2
+        version: 5.19.2
     devDependencies:
       '@ledgerhq/esbuild-tools':
         specifier: workspace:*
@@ -341,7 +341,7 @@ importers:
         version: 7.8.1
       ts-node:
         specifier: ^10.9.2
-        version: 10.9.2(@types/node@22.10.5)(typescript@5.7.3)
+        version: 10.9.2(@types/node@22.10.7)(typescript@5.7.3)
 
   packages/flipper-plugin-client:
     dependencies:
@@ -433,7 +433,7 @@ importers:
         version: 4.2.2
       ts-node:
         specifier: ^10.9.2
-        version: 10.9.2(@types/node@22.10.5)(typescript@5.7.3)
+        version: 10.9.2(@types/node@22.10.7)(typescript@5.7.3)
 
   packages/signer/signer-btc:
     dependencies:
@@ -456,8 +456,8 @@ importers:
         specifier: ^0.2.2
         version: 0.2.2
       xstate:
-        specifier: ^5.19.1
-        version: 5.19.1
+        specifier: ^5.19.2
+        version: 5.19.2
     devDependencies:
       '@ledgerhq/device-management-kit':
         specifier: workspace:*
@@ -488,7 +488,7 @@ importers:
         version: 7.8.1
       ts-node:
         specifier: ^10.9.2
-        version: 10.9.2(@types/node@22.10.5)(typescript@5.7.3)
+        version: 10.9.2(@types/node@22.10.7)(typescript@5.7.3)
 
   packages/signer/signer-eth:
     dependencies:
@@ -514,8 +514,8 @@ importers:
         specifier: ^7.6.3
         version: 7.6.3
       xstate:
-        specifier: ^5.19.1
-        version: 5.19.1
+        specifier: ^5.19.2
+        version: 5.19.2
     devDependencies:
       '@ledgerhq/context-module':
         specifier: workspace:*
@@ -546,7 +546,7 @@ importers:
         version: 7.8.1
       ts-node:
         specifier: ^10.9.2
-        version: 10.9.2(@types/node@22.10.5)(typescript@5.7.3)
+        version: 10.9.2(@types/node@22.10.7)(typescript@5.7.3)
 
   packages/signer/signer-solana:
     dependencies:
@@ -569,8 +569,8 @@ importers:
         specifier: ^0.2.2
         version: 0.2.2
       xstate:
-        specifier: ^5.19.1
-        version: 5.19.1
+        specifier: ^5.19.2
+        version: 5.19.2
     devDependencies:
       '@ledgerhq/device-management-kit':
         specifier: workspace:*
@@ -595,7 +595,7 @@ importers:
         version: 7.8.1
       ts-node:
         specifier: ^10.9.2
-        version: 10.9.2(@types/node@22.10.5)(typescript@5.7.3)
+        version: 10.9.2(@types/node@22.10.7)(typescript@5.7.3)
 
   packages/signer/signer-utils:
     devDependencies:
@@ -619,7 +619,7 @@ importers:
         version: link:../../config/typescript
       ts-node:
         specifier: ^10.9.2
-        version: 10.9.2(@types/node@22.10.5)(typescript@5.7.3)
+        version: 10.9.2(@types/node@22.10.7)(typescript@5.7.3)
 
   packages/tools/esbuild-tools:
     devDependencies:
@@ -665,7 +665,7 @@ importers:
         version: 7.8.1
       ts-node:
         specifier: ^10.9.2
-        version: 10.9.2(@types/node@22.10.5)(typescript@5.7.3)
+        version: 10.9.2(@types/node@22.10.7)(typescript@5.7.3)
 
   packages/transport/web-ble:
     dependencies:
@@ -708,7 +708,7 @@ importers:
         version: 7.8.1
       ts-node:
         specifier: ^10.9.2
-        version: 10.9.2(@types/node@22.10.5)(typescript@5.7.3)
+        version: 10.9.2(@types/node@22.10.7)(typescript@5.7.3)
 
   packages/transport/web-hid:
     dependencies:
@@ -751,7 +751,7 @@ importers:
         version: 7.8.1
       ts-node:
         specifier: ^10.9.2
-        version: 10.9.2(@types/node@22.10.5)(typescript@5.7.3)
+        version: 10.9.2(@types/node@22.10.7)(typescript@5.7.3)
 
   packages/trusted-apps:
     dependencies:
@@ -1495,8 +1495,8 @@ packages:
     peerDependencies:
       '@babel/core': ^7.0.0-0
 
-  '@babel/plugin-transform-nullish-coalescing-operator@7.26.5':
-    resolution: {integrity: sha512-OHqczNm4NTQlW1ghrVY43FPoiRzbmzNVbcgVnMKZN/RQYezHUSdjACjaX50CD3B7UIAjv39+MlsrVDb3v741FA==}
+  '@babel/plugin-transform-nullish-coalescing-operator@7.26.6':
+    resolution: {integrity: sha512-CKW8Vu+uUZneQCPtXmSBUC6NCAUdya26hWCElAWh5mVSlSRsmiCPUUDKb3Z0szng1hiAJa098Hkhg9o4SE35Qw==}
     engines: {node: '>=6.9.0'}
     peerDependencies:
       '@babel/core': ^7.0.0-0
@@ -3465,14 +3465,17 @@ packages:
   '@types/node@17.0.45':
     resolution: {integrity: sha512-w+tIMs3rq2afQdsPJlODhoUEKzFP1ayaoyl1CcnwtIlsVe7K7bA1NGm4s3PraqTLlXnbIN84zuBlxBWo1u9BLw==}
 
-  '@types/node@18.19.70':
-    resolution: {integrity: sha512-RE+K0+KZoEpDUbGGctnGdkrLFwi1eYKTlIHNl2Um98mUkGsm1u2Ff6Ltd0e8DktTtC98uy7rSj+hO8t/QuLoVQ==}
+  '@types/node@18.19.71':
+    resolution: {integrity: sha512-evXpcgtZm8FY4jqBSN8+DmOTcVkkvTmAayeo4Wf3m1xAruyVGzGuDh/Fb/WWX2yLItUiho42ozyJjB0dw//Tkw==}
 
   '@types/node@22.10.1':
     resolution: {integrity: sha512-qKgsUwfHZV2WCWLAnVP1JqnpE6Im6h3Y0+fYgMTasNQ7V++CBX5OT1as0g0f+OyubbFqhf6XVNIsmN4IIhEgGQ==}
 
   '@types/node@22.10.5':
     resolution: {integrity: sha512-F8Q+SeGimwOo86fiovQh8qiXfFEh2/ocYv7tU5pJ3EXMSSxk1Joj5wefpFK2fHTf/N6HKGSxIDBT9f3gCxXPkQ==}
+
+  '@types/node@22.10.7':
+    resolution: {integrity: sha512-V09KvXxFiutGp6B7XkpaDXlNadZxrzajcY50EuoLIpQ6WWYCSvf19lVIazzfIzQvhUN2HjX12spLojTnhuKlGg==}
 
   '@types/node@22.7.5':
     resolution: {integrity: sha512-jML7s2NAzMWc//QSJ1a3prpk78cOPchGvXJsC3C6R6PSMoooztvRVQEz89gmBTBY1SPMaqo5teB4uNHPdetShQ==}
@@ -4104,8 +4107,8 @@ packages:
   caniuse-lite@1.0.30001690:
     resolution: {integrity: sha512-5ExiE3qQN6oF8Clf8ifIDcMRCRE/dMGcETG/XGMD8/XiXm6HXQgQTh1yZYLXXpSOsEUlJm1Xr7kGULZTuGtP/w==}
 
-  caniuse-lite@1.0.30001692:
-    resolution: {integrity: sha512-A95VKan0kdtrsnMubMKxEKUKImOPSuCpYgxSQBo036P5YYgVIcOYJEgt/txJWqObiRQeISNCfef9nvlQ0vbV7A==}
+  caniuse-lite@1.0.30001695:
+    resolution: {integrity: sha512-vHyLade6wTgI2u1ec3WQBxv+2BrTERV28UXQu9LO6lZ9pYeMk34vjXFLOxo1A4UBA8XTL4njRQZdno/yYaSmWw==}
 
   ccount@2.0.1:
     resolution: {integrity: sha512-eyrF0jiFpY+3drT6383f1qhkbGsLSifNAjA61IUjZjmLCWjItY6LB9ft9YhoDgwfmclB2zhu51Lc7+95b8NRAg==}
@@ -4809,8 +4812,8 @@ packages:
   electron-to-chromium@1.5.4:
     resolution: {integrity: sha512-orzA81VqLyIGUEA77YkVA1D+N+nNfl2isJVjjmOyrlxuooZ19ynb+dOlaDTqd/idKRS9lDCSBmtzM+kyCsMnkA==}
 
-  electron-to-chromium@1.5.80:
-    resolution: {integrity: sha512-LTrKpW0AqIuHwmlVNV+cjFYTnXtM9K37OGhpe0ZI10ScPSxqVSryZHIY3WnCS5NSYbBODRTZyhRMS2h5FAEqAw==}
+  electron-to-chromium@1.5.83:
+    resolution: {integrity: sha512-LcUDPqSt+V0QmI47XLzZrz5OqILSMGsPFkDYus22rIbgorSvBYEFqq854ltTmUdHkY92FSdAAvsh4jWEULMdfQ==}
 
   embla-carousel-react@8.0.0-rc17:
     resolution: {integrity: sha512-x4aFprwFB+PQO9EsHHZsrDxARb0uYNBYn9mr5oDFdBdPez4M8G1r5yidWbUcT9pNUc8AQXC9sGzlfauBfBxVOw==}
@@ -5255,8 +5258,8 @@ packages:
   flow-enums-runtime@0.0.6:
     resolution: {integrity: sha512-3PYnM29RFXwvAN6Pc/scUfkI7RwhQ/xqyLUyPNlXUp9S40zI8nup9tUSrTLSVnWGBN38FNiGWbwZOB6uR4OGdw==}
 
-  flow-parser@0.258.1:
-    resolution: {integrity: sha512-Y8CrO98EcXVCiYE4s5z0LTMbeYjKyd3MAEUJqxA7B8yGRlmdrG5UDqq4pVrUAfAu2tMFgpQESvBhBu9Xg1tpow==}
+  flow-parser@0.259.1:
+    resolution: {integrity: sha512-xiXLmMH2Z7OmdE9Q+MjljUMr/rbemFqZIRxaeZieVScG4HzQrKKhNcCYZbWTGpoN7ZPi7z8ClQbeVPq6t5AszQ==}
     engines: {node: '>=0.4.0'}
 
   follow-redirects@1.15.6:
@@ -8940,8 +8943,8 @@ packages:
     resolution: {integrity: sha512-f9s+fUkX04BxQf+7mMWAp5zk61pciie+fFLC9hX9UVvCeJQfNHRHXpeo5MPcR0EUf57PYLdt+ZO4f3Ipk2oZUw==}
     engines: {node: '>=0.1'}
 
-  xstate@5.19.1:
-    resolution: {integrity: sha512-vFt3q9EBnO/qTTf9AG/5GosGwdDEftw5VOd3ytfSwUQRvkj6oJkxeBQaCqJUANjHrkK341jMkEZP0zeqrx2tww==}
+  xstate@5.19.2:
+    resolution: {integrity: sha512-B8fL2aP0ogn5aviAXFzI5oZseAMqN00fg/TeDa3ZtatyDcViYLIfuQl4y8qmHCiKZgGEzmnTyNtNQL9oeJE2gw==}
 
   xtend@4.0.2:
     resolution: {integrity: sha512-LKYU1iAXJXUgAXn9URjiu+MWhyUXHsvfp7mcuYm9dSUKK0/CjtrUwFAxD82/mCWbtLsGjFIad0wIsod4zrTAEQ==}
@@ -9873,7 +9876,7 @@ snapshots:
       '@babel/core': 7.24.7
       '@babel/helper-plugin-utils': 7.26.5
 
-  '@babel/plugin-transform-nullish-coalescing-operator@7.26.5(@babel/core@7.24.7)':
+  '@babel/plugin-transform-nullish-coalescing-operator@7.26.6(@babel/core@7.24.7)':
     dependencies:
       '@babel/core': 7.24.7
       '@babel/helper-plugin-utils': 7.26.5
@@ -10106,7 +10109,7 @@ snapshots:
       '@babel/plugin-transform-modules-umd': 7.25.9(@babel/core@7.24.7)
       '@babel/plugin-transform-named-capturing-groups-regex': 7.25.9(@babel/core@7.24.7)
       '@babel/plugin-transform-new-target': 7.25.9(@babel/core@7.24.7)
-      '@babel/plugin-transform-nullish-coalescing-operator': 7.26.5(@babel/core@7.24.7)
+      '@babel/plugin-transform-nullish-coalescing-operator': 7.26.6(@babel/core@7.24.7)
       '@babel/plugin-transform-numeric-separator': 7.25.9(@babel/core@7.24.7)
       '@babel/plugin-transform-object-rest-spread': 7.25.9(@babel/core@7.24.7)
       '@babel/plugin-transform-object-super': 7.25.9(@babel/core@7.24.7)
@@ -10962,7 +10965,7 @@ snapshots:
     dependencies:
       '@types/istanbul-lib-coverage': 2.0.6
       '@types/istanbul-reports': 3.0.4
-      '@types/node': 22.10.5
+      '@types/node': 22.10.7
       '@types/yargs': 15.0.19
       chalk: 4.1.2
 
@@ -11972,7 +11975,7 @@ snapshots:
 
   '@rnx-kit/chromium-edge-launcher@1.0.0':
     dependencies:
-      '@types/node': 18.19.70
+      '@types/node': 18.19.71
       escape-string-regexp: 4.0.0
       is-wsl: 2.2.0
       lighthouse-logger: 1.4.2
@@ -12256,7 +12259,7 @@ snapshots:
     dependencies:
       '@sinonjs/commons': 3.0.0
 
-  '@statelyai/inspect@0.4.0(ws@8.18.0)(xstate@5.19.1)':
+  '@statelyai/inspect@0.4.0(ws@8.18.0)(xstate@5.19.2)':
     dependencies:
       fast-safe-stringify: 2.1.1
       isomorphic-ws: 5.0.0(ws@8.18.0)
@@ -12264,7 +12267,7 @@ snapshots:
       safe-stable-stringify: 2.4.3
       superjson: 1.13.3
       uuid: 9.0.1
-      xstate: 5.19.1
+      xstate: 5.19.2
     transitivePeerDependencies:
       - ws
 
@@ -12602,13 +12605,13 @@ snapshots:
 
   '@types/node-forge@1.3.11':
     dependencies:
-      '@types/node': 22.10.5
+      '@types/node': 22.10.7
 
   '@types/node@12.20.55': {}
 
   '@types/node@17.0.45': {}
 
-  '@types/node@18.19.70':
+  '@types/node@18.19.71':
     dependencies:
       undici-types: 5.26.5
 
@@ -12617,6 +12620,10 @@ snapshots:
       undici-types: 6.20.0
 
   '@types/node@22.10.5':
+    dependencies:
+      undici-types: 6.20.0
+
+  '@types/node@22.10.7':
     dependencies:
       undici-types: 6.20.0
 
@@ -13286,8 +13293,8 @@ snapshots:
 
   browserslist@4.24.3:
     dependencies:
-      caniuse-lite: 1.0.30001692
-      electron-to-chromium: 1.5.80
+      caniuse-lite: 1.0.30001695
+      electron-to-chromium: 1.5.83
       node-releases: 2.0.19
       update-browserslist-db: 1.1.2(browserslist@4.24.3)
 
@@ -13377,7 +13384,7 @@ snapshots:
 
   caniuse-lite@1.0.30001690: {}
 
-  caniuse-lite@1.0.30001692: {}
+  caniuse-lite@1.0.30001695: {}
 
   ccount@2.0.1: {}
 
@@ -13468,7 +13475,7 @@ snapshots:
 
   chrome-launcher@0.15.2:
     dependencies:
-      '@types/node': 22.10.5
+      '@types/node': 22.10.7
       escape-string-regexp: 4.0.0
       is-wsl: 2.2.0
       lighthouse-logger: 1.4.2
@@ -14158,7 +14165,7 @@ snapshots:
 
   electron-to-chromium@1.5.4: {}
 
-  electron-to-chromium@1.5.80: {}
+  electron-to-chromium@1.5.83: {}
 
   embla-carousel-react@8.0.0-rc17(react@18.3.1):
     dependencies:
@@ -14742,7 +14749,7 @@ snapshots:
 
   flow-enums-runtime@0.0.6: {}
 
-  flow-parser@0.258.1: {}
+  flow-parser@0.259.1: {}
 
   follow-redirects@1.15.6: {}
 
@@ -15985,7 +15992,7 @@ snapshots:
 
   jest-worker@27.5.1:
     dependencies:
-      '@types/node': 22.10.5
+      '@types/node': 22.10.7
       merge-stream: 2.0.0
       supports-color: 8.1.1
 
@@ -16051,7 +16058,7 @@ snapshots:
       '@babel/register': 7.25.9(@babel/core@7.24.7)
       babel-core: 7.0.0-bridge.0(@babel/core@7.24.7)
       chalk: 4.1.2
-      flow-parser: 0.258.1
+      flow-parser: 0.259.1
       graceful-fs: 4.2.11
       micromatch: 4.0.8
       neo-async: 2.6.2
@@ -18991,14 +18998,14 @@ snapshots:
       yn: 3.1.1
     optional: true
 
-  ts-node@10.9.2(@types/node@22.10.5)(typescript@5.7.3):
+  ts-node@10.9.2(@types/node@22.10.7)(typescript@5.7.3):
     dependencies:
       '@cspotcode/source-map-support': 0.8.1
       '@tsconfig/node10': 1.0.9
       '@tsconfig/node12': 1.0.11
       '@tsconfig/node14': 1.0.3
       '@tsconfig/node16': 1.0.4
-      '@types/node': 22.10.5
+      '@types/node': 22.10.7
       acorn: 8.14.0
       acorn-walk: 8.3.1
       arg: 4.1.3
@@ -19511,7 +19518,7 @@ snapshots:
 
   xmldom-sre@0.1.31: {}
 
-  xstate@5.19.1: {}
+  xstate@5.19.2: {}
 
   xtend@4.0.2: {}
 

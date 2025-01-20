@@ -43,7 +43,7 @@
     "semver": "^7.6.3",
     "uuid": "^11.0.3",
     "ws": "^8.18.0",
-    "xstate": "^5.19.1"
+    "xstate": "^5.19.2"
   },
   "peerDependencies": {
     "rxjs": "^7.8.1"
