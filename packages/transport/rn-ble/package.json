@@ -46,7 +46,7 @@
     "@ledgerhq/device-management-kit": "workspace:*",
     "@ledgerhq/esbuild-tools": "workspace:*",
     "@ledgerhq/eslint-config-dsdk": "workspace:*",
-    "@ledgerhq/jest-config-dsdk": "workspace:*",
+    "@ledgerhq/vitest-config-dmk": "workspace:*",
     "@ledgerhq/prettier-config-dsdk": "workspace:*",
     "@ledgerhq/tsconfig-dsdk": "workspace:*",
     "@types/uuid": "^10.0.0",
