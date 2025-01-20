@@ -1,20 +1,20 @@
 import { Subject } from "rxjs";
 
-import { type DeviceId, type DeviceModel } from "@api/device/DeviceModel";
+import { type DeviceId, DeviceModel } from "@api/device/DeviceModel";
 import { deviceModelStubBuilder } from "@api/device-model/model/DeviceModel.stub";
 import { type TransportDiscoveredDevice } from "@api/transport/model/TransportDiscoveredDevice";
 import { type DiscoveredDevice, type Transport } from "@api/types";
 import { DefaultTransportService } from "@internal/transport/service/DefaultTransportService";
 import { type TransportService } from "@internal/transport/service/TransportService";
 
-import { ListenToKnownDevicesUseCase } from "./ListenToKnownDevicesUseCase";
+import { ListenToAvailableDevicesUseCase } from "./ListenToAvailableDevicesUseCase";
 
 vi.mock("@internal/transport/service/DefaultTransportService");
 
 let transportService: TransportService;
 function makeMockTransport(props: Partial<Transport>): Transport {
   return {
-    listenToKnownDevices: vi.fn(),
+    listenToAvailableDevices: vi.fn(),
     connect: vi.fn(),
     disconnect: vi.fn(),
     startDiscovering: vi.fn(),
@@ -27,11 +27,11 @@ function makeMockTransport(props: Partial<Transport>): Transport {
 
 const mockInternalDeviceModel = deviceModelStubBuilder();
 function makeMockDeviceModel(id: DeviceId): DeviceModel {
-  return {
+  return new DeviceModel({
     id,
     model: mockInternalDeviceModel.id,
     name: mockInternalDeviceModel.productName,
-  };
+  });
 }
 
 function setup2MockTransports() {
@@ -42,10 +42,12 @@ function setup2MockTransports() {
     TransportDiscoveredDevice[]
   >();
   const transportA = makeMockTransport({
-    listenToKnownDevices: () => transportAKnownDevicesSubject.asObservable(),
+    listenToAvailableDevices: () =>
+      transportAKnownDevicesSubject.asObservable(),
   });
   const transportB = makeMockTransport({
-    listenToKnownDevices: () => transportBKnownDevicesSubject.asObservable(),
+    listenToAvailableDevices: () =>
+      transportBKnownDevicesSubject.asObservable(),
   });
   return {
     transportAKnownDevicesSubject,
@@ -77,7 +79,7 @@ describe("ListenToKnownDevicesUseCase", () => {
       new Promise<void>((resolve, reject) => {
         vi.spyOn(transportService, "getAllTransports").mockReturnValue([]);
 
-        const useCase = new ListenToKnownDevicesUseCase(transportService);
+        const useCase = new ListenToAvailableDevicesUseCase(transportService);
 
         const observedDiscoveredDevices: DiscoveredDevice[][] = [];
         useCase.execute().subscribe({
@@ -109,7 +111,7 @@ describe("ListenToKnownDevicesUseCase", () => {
       ]);
 
       const observedDiscoveredDevices: DiscoveredDevice[][] = [];
-      new ListenToKnownDevicesUseCase(transportService)
+      new ListenToAvailableDevicesUseCase(transportService)
         .execute()
         .subscribe((devices) => {
           observedDiscoveredDevices.push(devices);
@@ -124,7 +126,9 @@ describe("ListenToKnownDevicesUseCase", () => {
         {
           id: "transportA-device1",
           deviceModel: makeMockDeviceModel("transportA-device1"),
+          name: "Ledger Nano X",
           transport: "mock",
+          rssi: undefined,
         },
       ]);
 
@@ -139,11 +143,15 @@ describe("ListenToKnownDevicesUseCase", () => {
           id: "transportA-device1",
           deviceModel: makeMockDeviceModel("transportA-device1"),
           transport: "mock",
+          name: "Ledger Nano X",
+          rssi: undefined,
         },
         {
           id: "transportA-device2",
           deviceModel: makeMockDeviceModel("transportA-device2"),
           transport: "mock",
+          name: "Ledger Nano X",
+          rssi: undefined,
         },
       ]);
 
@@ -157,6 +165,8 @@ describe("ListenToKnownDevicesUseCase", () => {
           id: "transportA-device2",
           deviceModel: makeMockDeviceModel("transportA-device2"),
           transport: "mock",
+          name: "Ledger Nano X",
+          rssi: undefined,
         },
       ]);
 
@@ -182,13 +192,15 @@ describe("ListenToKnownDevicesUseCase", () => {
       const onError = vi.fn();
       const onComplete = vi.fn();
 
-      new ListenToKnownDevicesUseCase(transportService).execute().subscribe({
-        next: (devices) => {
-          observedDiscoveredDevices.push(devices);
-        },
-        error: onError,
-        complete: onComplete,
-      });
+      new ListenToAvailableDevicesUseCase(transportService)
+        .execute()
+        .subscribe({
+          next: (devices) => {
+            observedDiscoveredDevices.push(devices);
+          },
+          error: onError,
+          complete: onComplete,
+        });
 
       // When transportA emits 1 known device
       transportAKnownDevicesSubject.next([
@@ -200,6 +212,8 @@ describe("ListenToKnownDevicesUseCase", () => {
           id: "transportA-device1",
           deviceModel: makeMockDeviceModel("transportA-device1"),
           transport: "mock",
+          name: "Ledger Nano X",
+          rssi: undefined,
         },
       ]);
 
@@ -227,13 +241,15 @@ describe("ListenToKnownDevicesUseCase", () => {
 
       const onError = vi.fn();
       const onComplete = vi.fn();
-      new ListenToKnownDevicesUseCase(transportService).execute().subscribe({
-        next: (devices) => {
-          observedDiscoveredDevices.push(devices);
-        },
-        error: onError,
-        complete: onComplete,
-      });
+      new ListenToAvailableDevicesUseCase(transportService)
+        .execute()
+        .subscribe({
+          next: (devices) => {
+            observedDiscoveredDevices.push(devices);
+          },
+          error: onError,
+          complete: onComplete,
+        });
 
       // When transportA emits 1 known device
       transportAKnownDevicesSubject.next([
@@ -245,6 +261,8 @@ describe("ListenToKnownDevicesUseCase", () => {
           id: "transportA-device1",
           deviceModel: makeMockDeviceModel("transportA-device1"),
           transport: "mock",
+          name: "Ledger Nano X",
+          rssi: undefined,
         },
       ]);
 
@@ -258,11 +276,15 @@ describe("ListenToKnownDevicesUseCase", () => {
           id: "transportA-device1",
           deviceModel: makeMockDeviceModel("transportA-device1"),
           transport: "mock",
+          name: "Ledger Nano X",
+          rssi: undefined,
         },
         {
           id: "transportB-device1",
           deviceModel: makeMockDeviceModel("transportB-device1"),
           transport: "mock",
+          name: "Ledger Nano X",
+          rssi: undefined,
         },
       ]);
 
@@ -277,16 +299,22 @@ describe("ListenToKnownDevicesUseCase", () => {
           id: "transportA-device1",
           deviceModel: makeMockDeviceModel("transportA-device1"),
           transport: "mock",
+          name: "Ledger Nano X",
+          rssi: undefined,
         },
         {
           id: "transportB-device1",
           deviceModel: makeMockDeviceModel("transportB-device1"),
           transport: "mock",
+          name: "Ledger Nano X",
+          rssi: undefined,
         },
         {
           id: "transportB-device2",
           deviceModel: makeMockDeviceModel("transportB-device2"),
           transport: "mock",
+          name: "Ledger Nano X",
+          rssi: undefined,
         },
       ]);
 
@@ -298,11 +326,15 @@ describe("ListenToKnownDevicesUseCase", () => {
           id: "transportB-device1",
           deviceModel: makeMockDeviceModel("transportB-device1"),
           transport: "mock",
+          name: "Ledger Nano X",
+          rssi: undefined,
         },
         {
           id: "transportB-device2",
           deviceModel: makeMockDeviceModel("transportB-device2"),
           transport: "mock",
+          name: "Ledger Nano X",
+          rssi: undefined,
         },
       ]);
 

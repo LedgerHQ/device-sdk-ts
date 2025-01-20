@@ -1,0 +1,33 @@
+# This file contains the fastlane.tools configuration
+# You can find the documentation at https://docs.fastlane.tools
+#
+# For a list of all available actions, check out
+#
+#     https://docs.fastlane.tools/actions
+#
+# For a list of all available plugins, check out
+#
+#     https://docs.fastlane.tools/plugins/available-plugins
+#
+
+# Uncomment the line if you want fastlane to automatically update itself
+# update_fastlane
+
+default_platform(:android)
+
+platform :android do
+  desc "Build a new version of sample app"
+  signingFilePath = File.join(Dir.pwd, "..", "android", "staging.kstr")
+  lane :build do
+    gradle(
+        task: "clean assemble",
+        build_type: "Release",
+        print_command: false,
+        properties: {
+            "android.injected.signing.store.file" => signingFilePath,
+            "android.injected.signing.key.alias" => "staging",
+            "android.injected.signing.key.password" => "dmkmobile",
+        }
+    )
+  end
+end

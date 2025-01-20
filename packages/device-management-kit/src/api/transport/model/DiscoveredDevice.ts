@@ -8,4 +8,6 @@ export type DiscoveredDevice = {
   readonly id: DeviceId;
   readonly deviceModel: DeviceModel;
   readonly transport: TransportIdentifier;
+  readonly name?: string;
+  readonly rssi?: number | null;
 };
