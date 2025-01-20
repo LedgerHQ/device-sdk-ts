@@ -1,7 +1,8 @@
-import React, {useCallback, useEffect} from 'react';
-import {ActivityIndicator, Button, FlatList, Text, View} from 'react-native';
-import {useDmk} from '_providers/dmkProvider.tsx';
-import {DiscoveredDevice} from '@ledgerhq/device-management-kit';
+/* eslint react-native/no-inline-styles: 0 */
+import React, { useCallback, useEffect } from "react";
+import { ActivityIndicator, Button, FlatList, Text, View } from "react-native";
+import { useDmk } from "_providers/dmkProvider.tsx";
+import { DiscoveredDevice } from "@ledgerhq/device-management-kit";
 
 export const HomeScreen: React.FC = () => {
   const dmk = useDmk();
@@ -10,20 +11,22 @@ export const HomeScreen: React.FC = () => {
   >({});
   const [isScanningDevices, setIsScanningDevices] = React.useState(false);
   const [sessionId, setSessionId] = React.useState<string | null>(null);
+
   useEffect(() => {
     setDevices({});
   }, [sessionId]);
+
   const onScan = useCallback(() => {
     const obs = dmk.startDiscovering({});
     setDevices({});
     setIsScanningDevices(true);
     const subscription = obs.subscribe({
       next: async device => {
-        setDevices({...devices, [device.id]: device});
-        console.log('setting new device in state', device);
+        setDevices({ ...devices, [device.id]: device });
+        console.log("setting new device in state", device);
       },
       error: err => {
-        console.log('error discovered', err);
+        console.log("error discovered", err);
       },
     });
 
@@ -31,15 +34,16 @@ export const HomeScreen: React.FC = () => {
       subscription.unsubscribe();
       dmk.stopDiscovering();
     };
-  }, [dmk]);
+  }, [dmk, devices]);
 
   const onStop = () => {
     setIsScanningDevices(false);
     dmk.stopDiscovering();
   };
+
   const onConnect = async (device: DiscoveredDevice) => {
     try {
-      const id = await dmk.connect({device});
+      const id = await dmk.connect({ device });
       dmk.stopDiscovering();
       setIsScanningDevices(false);
       setSessionId(id);
@@ -48,22 +52,24 @@ export const HomeScreen: React.FC = () => {
     }
   };
 
+  const separator = useCallback(() => <View style={{ height: 10 }} />, []);
+
   return (
-    <View style={{flex: 1, alignItems: 'center', paddingVertical: 25}}>
+    <View style={{ flex: 1, alignItems: "center", paddingVertical: 25 }}>
       <FlatList
         data={Object.values(devices).filter(device => device.available)}
         keyExtractor={item => item.id}
-        extraData={{isScanningDevices}}
+        extraData={{ isScanningDevices }}
         ListHeaderComponent={
-          <View style={{padding: 10}}>
+          <View style={{ padding: 10 }}>
             {!sessionId ? (
               <>
                 <View
                   style={{
                     flex: 1,
-                    flexDirection: 'row',
-                    justifyContent: 'center',
-                    alignItems: 'center',
+                    flexDirection: "row",
+                    justifyContent: "center",
+                    alignItems: "center",
                     padding: 10,
                   }}>
                   {!isScanningDevices ? (
@@ -79,7 +85,7 @@ export const HomeScreen: React.FC = () => {
                 <Button
                   title="Disconnect"
                   onPress={async () => {
-                    await dmk.disconnect({sessionId});
+                    await dmk.disconnect({ sessionId });
                     setSessionId(null);
                   }}
                 />
@@ -90,8 +96,8 @@ export const HomeScreen: React.FC = () => {
         ListFooterComponent={
           isScanningDevices ? <ActivityIndicator animating /> : null
         }
-        ItemSeparatorComponent={() => <View style={{height: 10}} />}
-        renderItem={({item}) => (
+        ItemSeparatorComponent={separator}
+        renderItem={({ item }) => (
           <Button
             onPress={() => onConnect(item)}
             title={`Connect to ${item.name}`}

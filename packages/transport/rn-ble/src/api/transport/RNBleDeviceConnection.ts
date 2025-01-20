@@ -88,7 +88,9 @@ export class RNBleDeviceConnection implements DeviceConnection {
     if (!characteristic.value) {
       return;
     }
+
     const apdu = Base64.toUint8Array(characteristic.value);
+
     if (!this._isDeviceReady) {
       this.onReceiveSetupApduResponse(apdu);
     } else {
@@ -118,10 +120,12 @@ export class RNBleDeviceConnection implements DeviceConnection {
         this._sendApduPromiseResolver = Maybe.of(resolve);
       },
     );
+
     const frames = this._apduSender.caseOf({
       Just: (apduSender) => apduSender.getFrames(apdu),
       Nothing: () => [],
     });
+
     for (const frame of frames) {
       try {
         await this._writeCharacteristic.writeWithoutResponse(
@@ -131,8 +135,11 @@ export class RNBleDeviceConnection implements DeviceConnection {
         this._logger.error("Error sending frame", { data: { error } });
       }
     }
+
     const response = await resultPromise;
+
     this._sendApduPromiseResolver = Maybe.zero();
+
     return response.caseOf({
       Right: (apduResponse) => {
         return Promise.resolve(Right(apduResponse));
@@ -147,6 +154,7 @@ export class RNBleDeviceConnection implements DeviceConnection {
   ) {
     this._writeCharacteristic = writeCharacteristic;
     this._notifyCharacteristic = notifyCharacteristic;
+
     await this.setup();
   }
 

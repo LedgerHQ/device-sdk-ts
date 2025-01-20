@@ -9,7 +9,7 @@ export function useForm<T extends Record<string, string | boolean | number>>(
 
   const setFormValue = useCallback((field: keyof T, value: FieldType) => {
     const newValues = { [field]: value };
-    setFormValues((prev) => ({ ...prev, ...newValues }));
+    setFormValues(prev => ({ ...prev, ...newValues }));
   }, []);
 
   return {
