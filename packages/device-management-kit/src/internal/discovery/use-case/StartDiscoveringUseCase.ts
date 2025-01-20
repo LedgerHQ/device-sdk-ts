@@ -41,6 +41,8 @@ export class StartDiscoveringUseCase {
       id: device.id,
       deviceModel,
       transport: device.transport,
+      name: device.name || deviceModel.name,
+      available: device.available === undefined ? true : device.available,
     };
   }
 
