@@ -31,6 +31,7 @@ import {
   GetChallengeCommand,
   type GetChallengeCommandResponse,
 } from "@internal/app-binder/command/GetChallengeCommand";
+import { ETHEREUM_PLUGINS } from "@internal/app-binder/constant/plugins";
 import {
   BuildTransactionContextTask,
   type BuildTransactionContextTaskArgs,
@@ -129,7 +130,7 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
       },
       actors: {
         openAppStateMachine: new OpenAppDeviceAction({
-          input: { appName: "Ethereum" },
+          input: { appName: "Ethereum", compatibleAppNames: ETHEREUM_PLUGINS },
         }).makeStateMachine(internalApi),
         getChallenge: fromPromise(getChallenge),
         buildContext: fromPromise(buildContext),
@@ -183,7 +184,10 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
           }),
           invoke: {
             id: "openAppStateMachine",
-            input: { appName: "Ethereum" },
+            input: {
+              appName: "Ethereum",
+              compatibleAppNames: ETHEREUM_PLUGINS,
+            },
             src: "openAppStateMachine",
             onSnapshot: {
               actions: assign({
