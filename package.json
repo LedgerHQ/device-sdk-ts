@@ -32,6 +32,7 @@
     "transport-mockserver": "pnpm --filter @ledgerhq/device-transport-kit-mockserver",
     "flipper": "pnpm --filter @ledgerhq/device-management-kit-flipper-plugin-client",
     "sample": "pnpm --filter @ledgerhq/device-management-kit-sample",
+    "mobile": "pnpm --filter @ledgerhq/device-management-kit-mobile-sample",
     "doc": "pnpm --filter @ledgerhq/ledger-dmk-docs",
     "bump": "changeset version",
     "prerelease": "pnpm recursive exec -- pnpm pack",
