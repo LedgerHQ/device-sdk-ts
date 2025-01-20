@@ -1,4 +1,4 @@
-import {BleManager} from 'react-native-ble-plx';
+import { BleManager } from "react-native-ble-plx";
 
 // create your own singleton class
 class BLEServiceInstance {
