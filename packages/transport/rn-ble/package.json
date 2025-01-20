@@ -1,18 +1,16 @@
 {
-  "name": "@ledgerhq/device-transport-kit-rn-ble",
+  "name": "@ledgerhq/device-transport-kit-react-native-ble",
   "version": "0.0.1",
   "license": "Apache-2.0",
   "private": true,
   "exports": {
     ".": {
       "types": "./lib/types/index.d.ts",
-      "react-native": "./lib/cjs/index.js",
       "import": "./lib/esm/index.js",
       "require": "./lib/cjs/index.js"
     },
     "./*": {
       "types": "./lib/types/*",
-      "react-native": "./lib/cjs/*",
       "import": "./lib/esm/*",
       "require": "./lib/cjs/*"
     }
@@ -22,9 +20,9 @@
   ],
   "scripts": {
     "prebuild": "rimraf lib",
-    "build": "pnpm lmdk-build --entryPoints src/index.ts,src/**/*.ts --tsconfig tsconfig.prod.json --platform node",
+    "build": "pnpm lmdk-build --entryPoints src/index.ts,src/**/*.ts --tsconfig tsconfig.prod.json",
     "dev": "concurrently \"pnpm watch:builds\" \"pnpm watch:types\"",
-    "watch:builds": "pnpm lmdk-watch --entryPoints src/index.ts,src/**/*.ts --tsconfig tsconfig.prod.json --platform node",
+    "watch:builds": "pnpm lmdk-watch --entryPoints src/index.ts,src/**/*.ts --tsconfig tsconfig.prod.json",
     "watch:types": "concurrently \"tsc --watch -p tsconfig.prod.json\" \"tsc-alias --watch -p tsconfig.prod.json\"",
     "lint": "eslint",
     "lint:fix": "pnpm lint --fix",

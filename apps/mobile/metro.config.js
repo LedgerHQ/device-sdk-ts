@@ -1,10 +1,10 @@
-const {getDefaultConfig, mergeConfig} = require('@react-native/metro-config');
-const path = require('path');
+const { getDefaultConfig, mergeConfig } = require("@react-native/metro-config");
+const path = require("path");
 
 const nodeModulesPaths = [
-  path.resolve(__dirname, 'node_modules'),
-  path.resolve(__dirname, '..', '..', 'node_modules'),
-  path.resolve(__dirname, '..', '..', 'node_modules', '.pnpm'),
+  path.resolve(__dirname, "node_modules"),
+  path.resolve(__dirname, "..", "..", "node_modules"),
+  path.resolve(__dirname, "..", "..", "node_modules", ".pnpm"),
 ];
 
 /**
@@ -15,16 +15,16 @@ const nodeModulesPaths = [
  */
 const config = {
   projectRoot: __dirname,
-  watchFolders: [path.resolve(__dirname, '../../')],
+  watchFolders: [path.resolve(__dirname, "../../")],
   resolver: {
     unstable_enablePackageExports: true,
-    unstable_conditionNames: ['browser', 'react-native', 'import', 'require'],
+    unstable_conditionNames: ["browser", "react-native", "import", "require"],
     resolverMainFields: [
-      'browser',
-      'react-native',
-      'import',
-      'require',
-      'main',
+      "browser",
+      "react-native",
+      "import",
+      "require",
+      "main",
     ],
     nodeModulesPaths,
   },

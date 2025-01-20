@@ -133,7 +133,10 @@ importers:
       '@ledgerhq/device-management-kit':
         specifier: workspace:*
         version: link:../../packages/device-management-kit
-      '@ledgerhq/device-transport-kit-rn-ble':
+      '@ledgerhq/device-mockserver-client':
+        specifier: workspace:*
+        version: link:../../packages/mockserver-client
+      '@ledgerhq/device-transport-kit-react-native-ble':
         specifier: workspace:*
         version: link:../../packages/transport/rn-ble
       '@react-navigation/native':
@@ -197,11 +200,17 @@ importers:
       '@react-native/typescript-config':
         specifier: 0.76.6
         version: 0.76.6
+      '@tsconfig/react-native':
+        specifier: ^3.0.5
+        version: 3.0.5
+      '@types/jest':
+        specifier: ^29.5.14
+        version: 29.5.14
       '@types/react':
-        specifier: ^18.2.6
+        specifier: ^18.3.12
         version: 18.3.12
       '@types/react-test-renderer':
-        specifier: ^18.0.0
+        specifier: ^18.3.1
         version: 18.3.1
       babel-jest:
         specifier: ^29.6.3
@@ -218,6 +227,9 @@ importers:
       prettier:
         specifier: 2.8.8
         version: 2.8.8
+      react-native-get-random-values:
+        specifier: ^1.11.0
+        version: 1.11.0(react-native@0.76.6(@babel/core@7.26.7)(@babel/preset-env@7.26.7(@babel/core@7.26.7))(@react-native-community/cli-server-api@15.0.1)(@types/react@18.3.12)(react@18.3.1))
       react-test-renderer:
         specifier: 18.3.1
         version: 18.3.1(react@18.3.1)
@@ -3281,6 +3293,9 @@ packages:
   '@tsconfig/node16@1.0.4':
     resolution: {integrity: sha512-vxhUy4J8lyeyinH7Azl1pdd43GJhZH/tP2weN8TntQblOY+A0XbT8DJk1/oCPuOOyg/Ja757rG0CgHcWC8OfMA==}
 
+  '@tsconfig/react-native@3.0.5':
+    resolution: {integrity: sha512-0+pmYzHccvwWpFz2Tv5AJxp6UroLALmAy+SX34tKlwaCie1mNbtCv6uOJp7x8pKchgNA9/n6BGrx7uLQvw8p9A==}
+
   '@tsconfig/recommended@1.0.8':
     resolution: {integrity: sha512-TotjFaaXveVUdsrXCdalyF6E5RyG6+7hHHQVZonQtdlk1rJZ1myDIvPUUKPhoYv+JAzThb2lQJh9+9ZfF46hsA==}
 
@@ -5343,6 +5358,9 @@ packages:
   external-editor@3.1.0:
     resolution: {integrity: sha512-hMQ4CX1p1izmuLYyZqLMO/qGNw10wSv9QDCPfzXfyFrOaCSSoRfqE1Kf1s5an66J5JZC62NewG+mK49jOCtQew==}
     engines: {node: '>=4'}
+
+  fast-base64-decode@1.0.0:
+    resolution: {integrity: sha512-qwaScUgUGBYeDNRnbc/KyllVU88Jk1pRHPStuF/lO7B0/RTRLj7U0lkdTAutlBblY08rwZDff6tNU9cjv6j//Q==}
 
   fast-deep-equal@3.1.3:
     resolution: {integrity: sha512-f3qQ9oQy9j2AhBe/H9VC91wLmKBCCU/gDOnKNAYG5hswO7BLKj09Hc5HYNz9cGI++xlpDCIgDaitVs03ATR84Q==}
@@ -7792,6 +7810,11 @@ packages:
     peerDependencies:
       react: '*'
       react-native: '*'
+
+  react-native-get-random-values@1.11.0:
+    resolution: {integrity: sha512-4BTbDbRmS7iPdhYLRcz3PGFIpFJBwNZg9g42iwa2P6FOv9vZj/xJc678RZXnLNZzd0qd7Q3CCF6Yd+CU2eoXKQ==}
+    peerDependencies:
+      react-native: '>=0.56'
 
   react-native-safe-area-context@5.2.0:
     resolution: {integrity: sha512-QpcGA6MRKe8Zbpf1hirCBudNQYGsMv0n/CTTROMOFcXbqRUoEXLCsYxUmYKi7JJb3ziL2DbyzWXyH2/gw4Tkfw==}
@@ -12453,6 +12476,8 @@ snapshots:
 
   '@tsconfig/node16@1.0.4': {}
 
+  '@tsconfig/react-native@3.0.5': {}
+
   '@tsconfig/recommended@1.0.8': {}
 
   '@types/acorn@4.0.6':
@@ -15017,6 +15042,8 @@ snapshots:
       chardet: 0.7.0
       iconv-lite: 0.4.24
       tmp: 0.0.33
+
+  fast-base64-decode@1.0.0: {}
 
   fast-deep-equal@3.1.3: {}
 
@@ -18351,6 +18378,11 @@ snapshots:
       hoist-non-react-statics: 3.3.2
       invariant: 2.2.4
       react: 18.3.1
+      react-native: 0.76.6(@babel/core@7.26.7)(@babel/preset-env@7.26.7(@babel/core@7.26.7))(@react-native-community/cli-server-api@15.0.1)(@types/react@18.3.12)(react@18.3.1)
+
+  react-native-get-random-values@1.11.0(react-native@0.76.6(@babel/core@7.26.7)(@babel/preset-env@7.26.7(@babel/core@7.26.7))(@react-native-community/cli-server-api@15.0.1)(@types/react@18.3.12)(react@18.3.1)):
+    dependencies:
+      fast-base64-decode: 1.0.0
       react-native: 0.76.6(@babel/core@7.26.7)(@babel/preset-env@7.26.7(@babel/core@7.26.7))(@react-native-community/cli-server-api@15.0.1)(@types/react@18.3.12)(react@18.3.1)
 
   react-native-safe-area-context@5.2.0(react-native@0.76.6(@babel/core@7.26.7)(@babel/preset-env@7.26.7(@babel/core@7.26.7))(@react-native-community/cli-server-api@15.0.1)(@types/react@18.3.12)(react@18.3.1))(react@18.3.1):

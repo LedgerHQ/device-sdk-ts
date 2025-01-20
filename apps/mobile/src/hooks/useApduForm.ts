@@ -21,12 +21,15 @@ export function useApduForm() {
     data: "",
   });
 
-  const setValue = useCallback((field: keyof ApduFormValues, value: string) => {
-    setFormValue(field, value);
-    if (field === "data") {
-      setFormValue("dataLength", Math.floor(value.length / 2).toString(16));
-    }
-  }, []);
+  const setValue = useCallback(
+    (field: keyof ApduFormValues, value: string) => {
+      setFormValue(field, value);
+      if (field === "data") {
+        setFormValue("dataLength", Math.floor(value.length / 2).toString(16));
+      }
+    },
+    [setFormValue],
+  );
 
   const getRawApdu = useCallback(
     (apduFormValue: ApduFormValues): Uint8Array =>
@@ -35,10 +38,10 @@ export function useApduForm() {
           (acc, curr) => [
             ...acc,
             ...chunkString(curr.replace(/\s/g, ""))
-              .map((char) => Number(`0x${char}`))
-              .filter((nbr) => !Number.isNaN(nbr)),
+              .map(char => Number(`0x${char}`))
+              .filter(nbr => !Number.isNaN(nbr)),
           ],
-          Array<number>(),
+          [] as number[],
         ),
       ),
     [],
