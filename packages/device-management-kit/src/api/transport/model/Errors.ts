@@ -100,6 +100,27 @@ export class TransportAlreadyExistsError extends GeneralDmkError {
   }
 }
 
+export class DeviceDisconnectedWhileSendingError extends GeneralDmkError {
+  override readonly _tag = "DeviceDisconnectedWhileSendingError";
+  constructor(readonly err?: unknown) {
+    super(err);
+  }
+}
+
+export class AlreadySendingApduError extends GeneralDmkError {
+  override readonly _tag = "AlreadySendingApduError";
+  constructor(readonly err?: unknown) {
+    super(err);
+  }
+}
+
+export class DeviceDisconnectedBeforeSendingApdu extends GeneralDmkError {
+  override readonly _tag = "DeviceDisconnectedBeforeSendingApdu";
+  constructor(readonly err?: unknown) {
+    super(err);
+  }
+}
+
 export class NoTransportProvidedError extends GeneralDmkError {
   override readonly _tag = "NoTransportProvidedError";
   constructor(readonly err?: unknown) {

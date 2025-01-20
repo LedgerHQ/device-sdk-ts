@@ -1,8 +1,8 @@
 {
-  "name": "@ledgerhq/device-signer-kit-solana",
-  "version": "1.1.0",
-  "private": true,
+  "name": "@ledgerhq/device-transport-kit-react-native-ble",
+  "version": "0.0.1",
   "license": "Apache-2.0",
+  "private": false,
   "exports": {
     ".": {
       "types": "./lib/types/index.d.ts",
@@ -30,30 +30,33 @@
     "prettier": "prettier . --check",
     "prettier:fix": "prettier . --write",
     "typecheck": "tsc --noEmit",
-    "test": "vitest run",
-    "test:watch": "vitest",
-    "test:coverage": "vitest run --coverage"
+    "test": "vitest run --passWithNoTests",
+    "test:watch": "vitest --passWithNoTests",
+    "test:coverage": "vitest run --coverage --passWithNoTests"
   },
   "dependencies": {
-    "@ledgerhq/signer-utils": "workspace:*",
-    "bs58": "^6.0.0",
-    "inversify": "^6.2.2",
-    "inversify-logger-middleware": "^3.1.0",
+    "@sentry/minimal": "^6.19.7",
+    "js-base64": "^3.7.7",
     "purify-ts": "^2.1.0",
-    "reflect-metadata": "^0.2.2",
-    "xstate": "^5.19.2"
+    "uuid": "^10.0.0"
   },
   "devDependencies": {
     "@ledgerhq/device-management-kit": "workspace:*",
     "@ledgerhq/esbuild-tools": "workspace:*",
     "@ledgerhq/eslint-config-dsdk": "workspace:*",
+    "@ledgerhq/vitest-config-dmk": "workspace:*",
     "@ledgerhq/prettier-config-dsdk": "workspace:*",
     "@ledgerhq/tsconfig-dsdk": "workspace:*",
-    "@ledgerhq/vitest-config-dmk": "workspace:*",
-    "rxjs": "^7.8.2",
+    "@types/uuid": "^10.0.0",
+    "react-native": "^0.76.3",
+    "react-native-ble-plx": "^3.2.1",
+    "rxjs": "^7.8.1",
     "ts-node": "^10.9.2"
   },
   "peerDependencies": {
-    "@ledgerhq/device-management-kit": "workspace:*"
+    "@ledgerhq/device-management-kit": "workspace:*",
+    "react-native-ble-plx": "^3.2.1",
+    "react-native": ">0.70",
+    "rxjs": "^7.8.1"
   }
 }
