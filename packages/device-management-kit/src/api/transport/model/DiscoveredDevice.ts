@@ -6,8 +6,8 @@ import { type TransportIdentifier } from "@api/transport/model/TransportIdentifi
  */
 export type DiscoveredDevice = {
   readonly id: DeviceId;
+  readonly name: string;
   readonly deviceModel: DeviceModel;
   readonly transport: TransportIdentifier;
-  readonly name?: string;
   readonly rssi?: number | null;
 };
