@@ -26,14 +26,21 @@ import {
   type TransportIdentifier,
   UnknownDeviceError,
 } from "@ledgerhq/device-management-kit";
-import { Either, EitherAsync, Left, Maybe, Nothing, Right } from "purify-ts";
+import {
+  type Either,
+  EitherAsync,
+  Left,
+  Maybe,
+  Nothing,
+  Right,
+} from "purify-ts";
 import {
   concat,
   delay,
   from,
   Observable,
   retry,
-  Subscriber,
+  type Subscriber,
   switchMap,
   throwError,
 } from "rxjs";
@@ -102,13 +109,17 @@ export class RNBleTransport implements Transport {
       },
     });
   }
+
   getIdentifier(): TransportIdentifier {
     return this.identifier;
   }
+
   async requestPermission(): Promise<boolean> {
     if (Platform.OS === "ios") {
       this._isSupported = Maybe.of(true);
+      return true;
     }
+
     if (
       Platform.OS === "android" &&
       PermissionsAndroid.PERMISSIONS["ACCESS_FINE_LOCATION"]
@@ -141,6 +152,7 @@ export class RNBleTransport implements Transport {
             result["android.permission.ACCESS_FINE_LOCATION"] ===
               PermissionsAndroid.RESULTS["GRANTED"],
         );
+
         return true;
       }
     }
@@ -152,6 +164,7 @@ export class RNBleTransport implements Transport {
     this._isSupported = Maybe.of(false);
     return false;
   }
+
   private _getDiscoveredDeviceFrom(
     rnDevice: Device,
     ledgerUuids: string[],
@@ -174,6 +187,7 @@ export class RNBleTransport implements Transport {
       });
       return Nothing;
     }
+
     return maybeUuid.mapOrDefault((uuid) => {
       const serviceToBleInfos =
         this._deviceModelDataSource.getBluetoothServicesInfos();
@@ -247,10 +261,12 @@ export class RNBleTransport implements Transport {
     return new Observable<TransportDiscoveredDevice>((subscriber) => {
       BLEService.manager.startDeviceScan(null, null, (error, device) => {
         this._handleLostDiscoveredDevices(subscriber);
+
         if (error || !device) {
           subscriber.error(error);
           return;
         }
+
         this._getDiscoveredDeviceFrom(device, ledgerUuids).map(
           ({ discoveredDevice, bleDeviceInfos }) => {
             this._emitDiscoveredDevice(
@@ -264,6 +280,7 @@ export class RNBleTransport implements Transport {
       });
     });
   }
+
   private _discoverKnownDevices(
     ledgerUuids: string[],
   ): Observable<TransportDiscoveredDevice> {
@@ -287,6 +304,7 @@ export class RNBleTransport implements Transport {
       ),
     );
   }
+
   startDiscovering(): Observable<TransportDiscoveredDevice> {
     const ledgerUuids = this._deviceModelDataSource.getBluetoothServices();
     this._logger.info("StartDiscovering", { data: { ledgerUuids } });
@@ -439,6 +457,7 @@ export class RNBleTransport implements Transport {
       },
     ).run();
   }
+
   disconnect(_params: {
     connectedDevice: TransportConnectedDevice;
   }): Promise<Either<DmkError, void>> {

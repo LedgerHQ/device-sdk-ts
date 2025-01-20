@@ -1,12 +1,12 @@
-import React, {useCallback, useEffect, useRef} from 'react';
-import {createContext, type PropsWithChildren, useContext} from 'react';
+import React, { useCallback, useEffect, useRef } from "react";
+import { createContext, type PropsWithChildren, useContext } from "react";
 import {
   ConsoleLogger,
   type DeviceManagementKit,
   DeviceManagementKitBuilder,
   WebLogsExporterLogger,
-} from '@ledgerhq/device-management-kit';
-import {RNBleTransportFactory} from '@ledgerhq/device-transport-kit-rn-ble';
+} from "@ledgerhq/device-management-kit";
+import { RNBleTransportFactory } from "@ledgerhq/device-transport-kit-react-native-ble";
 
 const DmkContext = createContext<DeviceManagementKit | null>(null);
 const LogsExporterContext = createContext<WebLogsExporterLogger | null>(null);
@@ -20,13 +20,13 @@ function buildDefaultDmk(logsExporter: WebLogsExporterLogger) {
 }
 const logsExporter = new WebLogsExporterLogger();
 
-export const DmkProvider: React.FC<PropsWithChildren> = ({children}) => {
+export const DmkProvider: React.FC<PropsWithChildren> = ({ children }) => {
   const dmk = useRef(buildDefaultDmk(new WebLogsExporterLogger()));
 
   useEffect(() => {
     const dmkRef = dmk.current;
     return () => {
-      console.log('close dmk');
+      console.log("close dmk");
       dmkRef.close();
     };
   }, []);
@@ -43,19 +43,19 @@ export const DmkProvider: React.FC<PropsWithChildren> = ({children}) => {
 export const useDmk = (): DeviceManagementKit => {
   const dmk = useContext(DmkContext);
   if (dmk === null) {
-    throw new Error('useDmk must be used within a DmkContext.Provider');
+    throw new Error("useDmk must be used within a DmkContext.Provider");
   }
   return dmk;
 };
 
 export function useExportLogsCallback() {
-  const logsExporter = useContext(LogsExporterContext);
-  if (logsExporter === null) {
+  const logsExp = useContext(LogsExporterContext);
+  if (logsExp === null) {
     throw new Error(
-      'useExportLogsCallback must be used within LogsExporterContext.Provider',
+      "useExportLogsCallback must be used within LogsExporterContext.Provider",
     );
   }
   return useCallback(() => {
-    logsExporter.exportLogsToJSON();
-  }, [logsExporter]);
+    logsExp.exportLogsToJSON();
+  }, [logsExp]);
 }
