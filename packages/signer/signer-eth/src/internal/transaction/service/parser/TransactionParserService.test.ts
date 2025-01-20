@@ -161,6 +161,33 @@ describe("TransactionParserService", () => {
       ]);
     });
 
+    it("Slice the static leaf", () => {
+      // GIVEN
+      const path: DataPathElement[] = [
+        {
+          type: "TUPLE",
+          offset: 0,
+        },
+        {
+          type: "LEAF",
+          leafType: "STATIC_LEAF",
+        },
+        {
+          type: "SLICE",
+          start: -4,
+        },
+      ];
+
+      // WHEN
+      const value = parser.extractValue(TX, path);
+
+      // THEN
+      expect(value.isRight()).toStrictEqual(true);
+      expect(value.unsafeCoerce()).toStrictEqual([
+        hexaStringToBuffer("0x00000045")!,
+      ]);
+    });
+
     it("Out of bounds", () => {
       // GIVEN
       const path: DataPathElement[] = [

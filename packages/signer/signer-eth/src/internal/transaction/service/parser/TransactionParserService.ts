@@ -230,9 +230,13 @@ export class TransactionParserService {
               );
             case DataPathLeafType.STATIC_LEAF:
               // A static leaf is the chunk of current offset (data of static size)
-              return this.getSlice(data, offset, CHUNK_SIZE).map((leaf) => [
-                leaf,
-              ]);
+              return this.getSlice(data, offset, CHUNK_SIZE).chain((leaf) => {
+                if (leafSlice === null) {
+                  return Right([leaf]);
+                } else {
+                  return this.sliceLeaf(leaf, leafSlice);
+                }
+              });
             case DataPathLeafType.DYNAMIC_LEAF:
               // A dynamic leaf is composed of a length followed by the actual value
               // (data of variable size such as a string).
