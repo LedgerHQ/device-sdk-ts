@@ -21,6 +21,7 @@ import { TransactionParserService } from "@internal/transaction/service/parser/T
 import { type TypedDataParserService } from "@internal/typed-data/service/TypedDataParserService";
 
 import { GetAddressCommand } from "./command/GetAddressCommand";
+import { ETHEREUM_PLUGINS } from "./constant/plugins";
 import { SignPersonalMessageDeviceAction } from "./device-action/SignPersonalMessage/SignPersonalMessageDeviceAction";
 import { SignTransactionDeviceAction } from "./device-action/SignTransaction/SignTransactionDeviceAction";
 
@@ -47,6 +48,7 @@ export class EthAppBinder {
         input: {
           command: new GetAddressCommand(args),
           appName: "Ethereum",
+          compatibleAppNames: ETHEREUM_PLUGINS,
           requiredUserInteraction: args.checkOnDevice
             ? UserInteractionRequired.VerifyAddress
             : UserInteractionRequired.None,

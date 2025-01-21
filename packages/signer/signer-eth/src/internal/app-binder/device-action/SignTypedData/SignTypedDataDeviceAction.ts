@@ -23,6 +23,7 @@ import {
 import { type Signature } from "@api/model/Signature";
 import { type TypedData } from "@api/model/TypedData";
 import { SignEIP712Command } from "@internal/app-binder/command/SignEIP712Command";
+import { ETHEREUM_PLUGINS } from "@internal/app-binder/constant/plugins";
 import { BuildEIP712ContextTask } from "@internal/app-binder/task/BuildEIP712ContextTask";
 import {
   ProvideEIP712ContextTask,
@@ -92,7 +93,7 @@ export class SignTypedDataDeviceAction extends XStateDeviceAction<
       },
       actors: {
         openAppStateMachine: new OpenAppDeviceAction({
-          input: { appName: "Ethereum" },
+          input: { appName: "Ethereum", compatibleAppNames: ETHEREUM_PLUGINS },
         }).makeStateMachine(internalApi),
         buildContext: fromPromise(buildContext),
         provideContext: fromPromise(provideContext),
@@ -135,7 +136,10 @@ export class SignTypedDataDeviceAction extends XStateDeviceAction<
           }),
           invoke: {
             id: "openAppStateMachine",
-            input: { appName: "Ethereum" },
+            input: {
+              appName: "Ethereum",
+              compatibleAppNames: ETHEREUM_PLUGINS,
+            },
             src: "openAppStateMachine",
             onSnapshot: {
               actions: assign({

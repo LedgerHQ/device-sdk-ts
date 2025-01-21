@@ -105,7 +105,10 @@ export class SendCommandInAppDeviceAction<
       actors: {
         sendCommand: fromPromise(sendCommand),
         openAppStateMachine: new OpenAppDeviceAction({
-          input: { appName: this.input.appName },
+          input: {
+            appName: this.input.appName,
+            compatibleAppNames: this.input.compatibleAppNames,
+          },
         }).makeStateMachine(internalAPI),
       },
       guards: {
@@ -139,7 +142,10 @@ export class SendCommandInAppDeviceAction<
         OpenAppDeviceAction: {
           invoke: {
             id: "openAppStateMachine",
-            input: { appName: this.input.appName },
+            input: {
+              appName: this.input.appName,
+              compatibleAppNames: this.input.compatibleAppNames,
+            },
             src: "openAppStateMachine",
             onSnapshot: {
               actions: assign({

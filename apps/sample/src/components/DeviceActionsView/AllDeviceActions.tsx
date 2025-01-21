@@ -49,9 +49,19 @@ export const AllDeviceActions: React.FC<{ sessionId: string }> = ({
         title: "Open app",
         description:
           "Perform all the actions necessary to open an app on the device",
-        executeDeviceAction: ({ appName, unlockTimeout }, inspect) => {
+        executeDeviceAction: (
+          { appName, unlockTimeout, compatibleAppNames },
+          inspect,
+        ) => {
+          const compatibleAppNamesArray: string[] = compatibleAppNames
+            .split(",")
+            .map((name) => name.trim());
           const deviceAction = new OpenAppDeviceAction({
-            input: { appName, unlockTimeout },
+            input: {
+              appName,
+              unlockTimeout,
+              compatibleAppNames: compatibleAppNamesArray,
+            },
             inspect,
           });
           return dmk.executeDeviceAction({
@@ -59,11 +69,17 @@ export const AllDeviceActions: React.FC<{ sessionId: string }> = ({
             deviceAction,
           });
         },
-        initialValues: { appName: "", unlockTimeout: UNLOCK_TIMEOUT },
+        initialValues: {
+          appName: "",
+          unlockTimeout: UNLOCK_TIMEOUT,
+          compatibleAppNames: "",
+        },
         deviceModelId,
       } satisfies DeviceActionProps<
         OpenAppDAOutput,
-        OpenAppDAInput,
+        Omit<OpenAppDAInput, "compatibleAppNames"> & {
+          compatibleAppNames: string;
+        },
         OpenAppDAError,
         OpenAppDAIntermediateValue
       >,

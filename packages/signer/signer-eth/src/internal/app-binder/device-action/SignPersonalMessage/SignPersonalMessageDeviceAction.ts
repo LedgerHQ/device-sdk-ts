@@ -20,6 +20,7 @@ import {
   type SignPersonalMessageDAOutput,
 } from "@api/app-binder/SignPersonalMessageDeviceActionTypes";
 import { type Signature } from "@api/model/Signature";
+import { ETHEREUM_PLUGINS } from "@internal/app-binder/constant/plugins";
 import { SendSignPersonalMessageTask } from "@internal/app-binder/task/SendSignPersonalMessageTask";
 
 export type MachineDependencies = {
@@ -69,7 +70,7 @@ export class SignPersonalMessageDeviceAction extends XStateDeviceAction<
       },
       actors: {
         openAppStateMachine: new OpenAppDeviceAction({
-          input: { appName: "Ethereum" },
+          input: { appName: "Ethereum", compatibleAppNames: ETHEREUM_PLUGINS },
         }).makeStateMachine(internalApi),
         signPersonalMessage: fromPromise(signPersonalMessage),
       },
@@ -109,7 +110,10 @@ export class SignPersonalMessageDeviceAction extends XStateDeviceAction<
           }),
           invoke: {
             id: "openAppStateMachine",
-            input: { appName: "Ethereum" },
+            input: {
+              appName: "Ethereum",
+              compatibleAppNames: ETHEREUM_PLUGINS,
+            },
             src: "openAppStateMachine",
             onSnapshot: {
               actions: assign({
