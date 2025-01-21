@@ -8,17 +8,21 @@ import {
   type CommandResult,
   CommandResultFactory,
   InvalidStatusWordError,
-  isCommandErrorCode,
 } from "@ledgerhq/device-management-kit";
-import { DerivationPathUtils } from "@ledgerhq/signer-utils";
+import {
+  CommandErrorHelper,
+  DerivationPathUtils,
+} from "@ledgerhq/signer-utils";
 import bs58 from "bs58";
+import { Maybe } from "purify-ts";
 
 import { type PublicKey } from "@api/model/PublicKey";
 
 import {
-  SolanaAppCommandError,
-  solanaAppErrors,
-} from "./utils/solanaAppErrors";
+  SOLANA_APP_ERRORS,
+  SolanaAppCommandErrorFactory,
+  type SolanaAppErrorCodes,
+} from "./utils/SolanaApplicationErrors";
 
 const PUBKEY_LENGTH = 32;
 
@@ -29,8 +33,14 @@ type GetPubKeyCommandArgs = {
 };
 
 export class GetPubKeyCommand
-  implements Command<GetPubKeyCommandResponse, GetPubKeyCommandArgs>
+  implements
+    Command<GetPubKeyCommandResponse, GetPubKeyCommandArgs, SolanaAppErrorCodes>
 {
+  private readonly errorHelper = new CommandErrorHelper<
+    GetPubKeyCommandResponse,
+    SolanaAppErrorCodes
+  >(SOLANA_APP_ERRORS, SolanaAppCommandErrorFactory);
+
   args: GetPubKeyCommandArgs;
 
   constructor(args: GetPubKeyCommandArgs) {
@@ -58,33 +68,28 @@ export class GetPubKeyCommand
 
   parseResponse(
     response: ApduResponse,
-  ): CommandResult<GetPubKeyCommandResponse> {
-    const parser = new ApduParser(response);
-    const errorCode = parser.encodeToHexaString(response.statusCode);
-    if (isCommandErrorCode(errorCode, solanaAppErrors)) {
-      return CommandResultFactory({
-        error: new SolanaAppCommandError({
-          ...solanaAppErrors[errorCode],
-          errorCode,
-        }),
-      });
-    }
+  ): CommandResult<GetPubKeyCommandResponse, SolanaAppErrorCodes> {
+    return Maybe.fromNullable(
+      this.errorHelper.getError(response),
+    ).orDefaultLazy(() => {
+      const parser = new ApduParser(response);
 
-    if (parser.testMinimalLength(PUBKEY_LENGTH) === false) {
-      return CommandResultFactory({
-        error: new InvalidStatusWordError("Public key is missing"),
-      });
-    }
+      if (parser.testMinimalLength(PUBKEY_LENGTH) === false) {
+        return CommandResultFactory({
+          error: new InvalidStatusWordError("Public key is missing"),
+        });
+      }
 
-    const buffer = parser.extractFieldByLength(PUBKEY_LENGTH);
-    if (buffer === undefined) {
-      return CommandResultFactory({
-        error: new InvalidStatusWordError("Unable to extract public key"),
-      });
-    }
+      const buffer = parser.extractFieldByLength(PUBKEY_LENGTH);
+      if (buffer === undefined) {
+        return CommandResultFactory({
+          error: new InvalidStatusWordError("Unable to extract public key"),
+        });
+      }
 
-    return CommandResultFactory({
-      data: bs58.encode(buffer),
+      return CommandResultFactory({
+        data: bs58.encode(buffer),
+      });
     });
   }
 }

@@ -7,6 +7,7 @@ import { DerivationPathUtils } from "@ledgerhq/signer-utils";
 import { type Maybe } from "purify-ts";
 
 import { type Signature } from "@api/model/Signature";
+import { type SolanaAppErrorCodes } from "@internal/app-binder/command/utils/SolanaApplicationErrors";
 
 import {
   type CommandFactory,
@@ -18,7 +19,7 @@ const PATH_SIZE = 4;
 type SignDataTaskArgs = {
   sendingData: Uint8Array;
   derivationPath: string;
-  commandFactory: CommandFactory<Maybe<Signature>>;
+  commandFactory: CommandFactory<Maybe<Signature | SolanaAppErrorCodes>>;
 };
 
 export class SignDataTask {
@@ -27,7 +28,9 @@ export class SignDataTask {
     private args: SignDataTaskArgs,
   ) {}
 
-  async run(): Promise<CommandResult<Maybe<Signature>, void>> {
+  async run(): Promise<
+    CommandResult<Maybe<Signature | SolanaAppErrorCodes>, SolanaAppErrorCodes>
+  > {
     const { sendingData, derivationPath, commandFactory } = this.args;
 
     const paths = DerivationPathUtils.splitPath(derivationPath);
@@ -43,7 +46,9 @@ export class SignDataTask {
     builder.addBufferToData(sendingData);
     const buffer = builder.build();
 
-    return await new SendCommandInChunksTask<Maybe<Signature>>(this.api, {
+    return await new SendCommandInChunksTask<
+      Maybe<Signature | SolanaAppErrorCodes>
+    >(this.api, {
       data: buffer,
       commandFactory,
     }).run();

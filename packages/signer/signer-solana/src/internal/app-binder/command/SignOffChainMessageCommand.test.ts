@@ -70,10 +70,9 @@ describe("SignOffChainMessageCommand", () => {
         if (!isSuccessCommandResult(result)) {
           expect(result.error).toEqual(
             expect.objectContaining({
-              _tag: "InvalidStatusWordError", // Adjust this based on your actual implementation
-              originalError: expect.objectContaining({
-                message: "Signature extraction failed",
-              }),
+              _tag: "SolanaAppCommandError",
+              errorCode: "6a82",
+              message: "Invalid off-chain message format",
             }),
           );
         } else {

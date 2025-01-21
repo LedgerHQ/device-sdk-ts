@@ -1,15 +1,16 @@
 import {
-  type CommandErrorResult,
   type DeviceActionState,
   type ExecuteDeviceActionReturnType,
   type OpenAppDAError,
   type OpenAppDARequiredInteraction,
+  type SendCommandInAppDAError,
   type UserInteractionRequired,
 } from "@ledgerhq/device-management-kit";
 
 import { type Signature } from "@api/model/Signature";
 import { type Transaction } from "@api/model/Transaction";
 import { type TransactionOptions } from "@api/model/TransactionOptions";
+import { type SolanaAppErrorCodes } from "@internal/app-binder/command/utils/SolanaApplicationErrors";
 
 export type SignTransactionDAOutput = Signature;
 
@@ -21,7 +22,7 @@ export type SignTransactionDAInput = {
 
 export type SignTransactionDAError =
   | OpenAppDAError
-  | CommandErrorResult["error"];
+  | SendCommandInAppDAError<SolanaAppErrorCodes>;
 
 type SignTransactionDARequiredInteraction =
   | OpenAppDARequiredInteraction

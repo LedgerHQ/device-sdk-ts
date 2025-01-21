@@ -8,16 +8,17 @@ import {
   type CommandResult,
   CommandResultFactory,
   InvalidStatusWordError,
-  isCommandErrorCode,
 } from "@ledgerhq/device-management-kit";
-import { Just, type Maybe, Nothing } from "purify-ts";
+import { CommandErrorHelper } from "@ledgerhq/signer-utils";
+import { Just, Maybe, Nothing } from "purify-ts";
 
 import { type Signature } from "@api/model/Signature";
 
 import {
-  SolanaAppCommandError,
-  solanaAppErrors,
-} from "./utils/solanaAppErrors";
+  SOLANA_APP_ERRORS,
+  SolanaAppCommandErrorFactory,
+  type SolanaAppErrorCodes,
+} from "./utils/SolanaApplicationErrors";
 
 const SIGNATURE_LENGTH = 64;
 
@@ -32,8 +33,18 @@ export type SignTransactionCommandArgs = {
 };
 
 export class SignTransactionCommand
-  implements Command<SignTransactionCommandResponse, SignTransactionCommandArgs>
+  implements
+    Command<
+      SignTransactionCommandResponse,
+      SignTransactionCommandArgs,
+      SolanaAppErrorCodes
+    >
 {
+  private readonly errorHelper = new CommandErrorHelper<
+    SignTransactionCommandResponse,
+    SolanaAppErrorCodes
+  >(SOLANA_APP_ERRORS, SolanaAppCommandErrorFactory);
+
   args: SignTransactionCommandArgs;
 
   constructor(args: SignTransactionCommandArgs) {
@@ -60,33 +71,28 @@ export class SignTransactionCommand
 
   parseResponse(
     response: ApduResponse,
-  ): CommandResult<SignTransactionCommandResponse> {
-    const parser = new ApduParser(response);
-    const errorCode = parser.encodeToHexaString(response.statusCode);
-    if (isCommandErrorCode(errorCode, solanaAppErrors)) {
-      return CommandResultFactory({
-        error: new SolanaAppCommandError({
-          ...solanaAppErrors[errorCode],
-          errorCode,
-        }),
-      });
-    }
+  ): CommandResult<SignTransactionCommandResponse, SolanaAppErrorCodes> {
+    return Maybe.fromNullable(
+      this.errorHelper.getError(response),
+    ).orDefaultLazy(() => {
+      const parser = new ApduParser(response);
 
-    if (parser.getUnparsedRemainingLength() === 0) {
-      return CommandResultFactory({
-        data: Nothing,
-      });
-    }
+      if (parser.getUnparsedRemainingLength() === 0) {
+        return CommandResultFactory({
+          data: Nothing,
+        });
+      }
 
-    const signature = parser.extractFieldByLength(SIGNATURE_LENGTH);
-    if (!signature) {
-      return CommandResultFactory({
-        error: new InvalidStatusWordError("Signature is missing"),
-      });
-    }
+      const signature = parser.extractFieldByLength(SIGNATURE_LENGTH);
+      if (!signature) {
+        return CommandResultFactory({
+          error: new InvalidStatusWordError("Signature is missing"),
+        });
+      }
 
-    return CommandResultFactory({
-      data: Just(signature),
+      return CommandResultFactory({
+        data: Just(signature),
+      });
     });
   }
 }

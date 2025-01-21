@@ -84,10 +84,9 @@ describe("GetAppConfigurationCommand", () => {
         if (!isSuccessCommandResult(result)) {
           expect(result.error).toEqual(
             expect.objectContaining({
-              _tag: "InvalidStatusWordError",
-              originalError: expect.objectContaining({
-                message: "Invalid response",
-              }),
+              _tag: "SolanaAppCommandError",
+              errorCode: "6a82",
+              message: "Invalid off-chain message format",
             }),
           );
         } else {
@@ -105,10 +104,9 @@ describe("GetAppConfigurationCommand", () => {
         if (!isSuccessCommandResult(result)) {
           expect(result.error).toEqual(
             expect.objectContaining({
-              _tag: "InvalidStatusWordError",
-              originalError: expect.objectContaining({
-                message: "Invalid response",
-              }),
+              _tag: "SolanaAppCommandError",
+              errorCode: "6a82",
+              message: "Invalid off-chain message format",
             }),
           );
         } else {
