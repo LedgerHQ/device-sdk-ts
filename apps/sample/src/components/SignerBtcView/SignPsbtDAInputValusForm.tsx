@@ -1,12 +1,20 @@
 import React, { useCallback, useEffect } from "react";
 import { DefaultDescriptorTemplate } from "@ledgerhq/device-signer-kit-bitcoin";
-import { Flex, Input, SelectInput, Text } from "@ledgerhq/react-ui";
+import { Flex, Input, SelectInput, Switch, Text } from "@ledgerhq/react-ui";
 
 import { useForm } from "@/hooks/useForm";
 
 type SignPsbtInputValuesType = {
   psbt: string;
   path: string;
+  descriptorTemplate: DefaultDescriptorTemplate;
+};
+
+type GetWalletAddressInputValuesType = {
+  checkOnDevice: boolean;
+  change: boolean;
+  addressIndex: number;
+  derivationPath: string;
   descriptorTemplate: DefaultDescriptorTemplate;
 };
 
@@ -94,6 +102,54 @@ export const SignPsbtDAInputValuesForm: React.FC<{
         onChange={(newVal) => setFormValue("psbt", newVal)}
         disabled={disabled}
         data-testid="input-text_psbt"
+      />
+    </Flex>
+  );
+};
+
+export const GetWalletAddressInputValuesForm: React.FC<{
+  initialValues: GetWalletAddressInputValuesType;
+  onChange: (values: GetWalletAddressInputValuesType) => void;
+  disabled?: boolean;
+}> = ({ initialValues, onChange, disabled }) => {
+  const { formValues, setFormValue } = useForm(initialValues);
+
+  useEffect(() => {
+    onChange(formValues);
+  }, [formValues, onChange]);
+
+  return (
+    <Flex flexDirection="column" rowGap={6}>
+      <Switch
+        label="Check on device"
+        name="checkOnDevice"
+        checked={formValues.checkOnDevice}
+        disabled={disabled}
+        onChange={() =>
+          setFormValue("checkOnDevice", !formValues.checkOnDevice)
+        }
+      />
+
+      <Switch
+        label="Change address"
+        name="change"
+        checked={formValues.change}
+        disabled={disabled}
+        onChange={() => setFormValue("change", !formValues.change)}
+      />
+
+      <Input
+        label="Derivation path"
+        value={formValues.derivationPath}
+        onChange={(val) => setFormValue("derivationPath", val)}
+        disabled={disabled}
+      />
+
+      <Input
+        label="Address index"
+        value={String(formValues.addressIndex)}
+        onChange={(val) => setFormValue("addressIndex", Number(val))}
+        disabled={disabled}
       />
     </Flex>
   );

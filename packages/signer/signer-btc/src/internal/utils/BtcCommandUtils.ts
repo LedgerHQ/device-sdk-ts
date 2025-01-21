@@ -9,6 +9,7 @@ import {
 } from "@ledgerhq/device-management-kit";
 
 import { type Signature } from "@api/model/Signature";
+import { type WalletAddress } from "@api/model/Wallet";
 import { type BtcErrorCodes } from "@internal/app-binder/command/utils/bitcoinAppErrors";
 import { SW_INTERRUPTED_EXECUTION } from "@internal/app-binder/command/utils/constants";
 
@@ -66,6 +67,26 @@ export class BtcCommandUtils {
         v,
         r,
         s,
+      },
+    });
+  }
+
+  static getAddress(
+    response: CommandSuccessResult<ApduResponse>,
+  ): CommandResult<WalletAddress, BtcErrorCodes> {
+    const parser = new ApduParser(response.data);
+    if (!response.data) {
+      return CommandResultFactory({
+        error: new InvalidStatusWordError(
+          "Failed to extract address from response",
+        ),
+      });
+    }
+
+    const address = parser.encodeToString(response.data.data);
+    return CommandResultFactory({
+      data: {
+        address,
       },
     });
   }

@@ -6,6 +6,9 @@ import { type AddressOptions } from "@api/model/AddressOptions";
 import { type Psbt } from "@api/model/Psbt";
 import { type Wallet } from "@api/model/Wallet";
 
+import { type GetWalletAddressDAReturnType } from "./app-binder/GetWalletAddressDeviceActionTypes";
+import { type WalletAddressOptions } from "./model/WalletAddressOptions";
+
 export interface SignerBtc {
   getExtendedPublicKey: (
     derivationPath: string,
@@ -17,5 +20,9 @@ export interface SignerBtc {
   ) => SignMessageDAReturnType;
   signPsbt: (wallet: Wallet, psbt: Psbt) => SignPsbtDAReturnType;
   signTransaction: (wallet: Wallet, psbt: Psbt) => SignTransactionDAReturnType;
-  // getAddress: (wallet: Wallet, options?: AddressOptions) => Promise<string>;
+  getWalletAddress: (
+    wallet: Wallet,
+    addressIndex: number,
+    options: WalletAddressOptions,
+  ) => GetWalletAddressDAReturnType;
 }

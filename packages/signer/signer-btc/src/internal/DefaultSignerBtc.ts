@@ -8,12 +8,14 @@ import { type SignMessageDAReturnType } from "@api/app-binder/SignMessageDeviceA
 import { type AddressOptions } from "@api/model/AddressOptions";
 import { type Psbt } from "@api/model/Psbt";
 import { type Wallet } from "@api/model/Wallet";
+import { type WalletAddressOptions } from "@api/model/WalletAddressOptions";
 import { type SignerBtc } from "@api/SignerBtc";
 import { useCasesTypes } from "@internal/use-cases/di/useCasesTypes";
 import { type GetExtendedPublicKeyUseCase } from "@internal/use-cases/get-extended-public-key/GetExtendedPublicKeyUseCase";
 import { type SignPsbtUseCase } from "@internal/use-cases/sign-psbt/SignPsbtUseCase";
 import { type SignTransactionUseCase } from "@internal/use-cases/sign-transaction/SignTransactionUseCase";
 
+import { type GetWalletAddressUseCase } from "./use-cases/get-wallet-address/GetWalletAddressUseCase";
 import { type SignMessageUseCase } from "./use-cases/sign-message/SignMessageUseCase";
 import { makeContainer } from "./di";
 
@@ -27,6 +29,16 @@ export class DefaultSignerBtc implements SignerBtc {
 
   constructor({ dmk, sessionId }: DefaultSignerBtcConstructorArgs) {
     this._container = makeContainer({ dmk, sessionId });
+  }
+
+  getWalletAddress(
+    wallet: Wallet,
+    addressIndex: number,
+    { checkOnDevice = false, change = false }: WalletAddressOptions,
+  ) {
+    return this._container
+      .get<GetWalletAddressUseCase>(useCasesTypes.GetWalletAddressUseCase)
+      .execute(checkOnDevice, wallet, change, addressIndex);
   }
 
   signPsbt(wallet: Wallet, psbt: Psbt) {
@@ -47,12 +59,12 @@ export class DefaultSignerBtc implements SignerBtc {
   }
 
   signMessage(
-    _derivationPath: string,
-    _message: string,
+    derivationPath: string,
+    message: string,
   ): SignMessageDAReturnType {
     return this._container
       .get<SignMessageUseCase>(useCasesTypes.SignMessageUseCase)
-      .execute(_derivationPath, _message);
+      .execute(derivationPath, message);
   }
 
   signTransaction(wallet: Wallet, psbt: Psbt) {

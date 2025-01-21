@@ -1,12 +1,10 @@
 import {
   type Apdu,
   ApduBuilder,
-  ApduParser,
   type ApduResponse,
   type Command,
   type CommandResult,
   CommandResultFactory,
-  InvalidStatusWordError,
 } from "@ledgerhq/device-management-kit";
 import { CommandErrorHelper } from "@ledgerhq/signer-utils";
 import { Maybe } from "purify-ts";
@@ -20,12 +18,10 @@ import {
   type BtcErrorCodes,
 } from "./utils/bitcoinAppErrors";
 
-export type GetWalletAddressCommandResponse = {
-  readonly address: string;
-};
+export type GetWalletAddressCommandResponse = ApduResponse;
 
 export type GetWalletAddressCommandArgs = {
-  readonly display: boolean;
+  readonly checkOnDevice: boolean;
   readonly walletId: Uint8Array;
   readonly walletHmac: Uint8Array;
   readonly change: boolean;
@@ -41,7 +37,7 @@ export class GetWalletAddressCommand
     >
 {
   constructor(
-    private readonly _args: GetWalletAddressCommandArgs,
+    private readonly args: GetWalletAddressCommandArgs,
     private readonly _errorHelper = new CommandErrorHelper<
       GetWalletAddressCommandResponse,
       BtcErrorCodes
@@ -59,35 +55,19 @@ export class GetWalletAddressCommand
       p1: 0x00,
       p2: PROTOCOL_VERSION,
     })
-      .addBufferToData(Uint8Array.from([this._args.display ? 1 : 0]))
-      .addBufferToData(this._args.walletId)
-      .addBufferToData(this._args.walletHmac)
-      .addBufferToData(Uint8Array.from([this._args.change ? 1 : 0]))
-      .add32BitUIntToData(this._args.addressIndex)
+      .addBufferToData(Uint8Array.from([this.args.checkOnDevice ? 1 : 0]))
+      .addBufferToData(this.args.walletId)
+      .addBufferToData(this.args.walletHmac)
+      .addBufferToData(Uint8Array.from([this.args.change ? 1 : 0]))
+      .add32BitUIntToData(this.args.addressIndex)
       .build();
   }
 
   parseResponse(
     response: ApduResponse,
-  ): CommandResult<GetWalletAddressCommandResponse, BtcErrorCodes> {
-    return Maybe.fromNullable(
-      this._errorHelper.getError(response),
-    ).orDefaultLazy(() => {
-      const parser = new ApduParser(response);
-      if (response.data.length === 0) {
-        return CommandResultFactory({
-          error: new InvalidStatusWordError(
-            "Failed to extract address from response",
-          ),
-        });
-      }
-
-      const address = parser.encodeToString(response.data);
-      return CommandResultFactory({
-        data: {
-          address,
-        },
-      });
-    });
+  ): CommandResult<ApduResponse, BtcErrorCodes> {
+    return Maybe.fromNullable(this._errorHelper.getError(response)).orDefault(
+      CommandResultFactory({ data: response }),
+    );
   }
 }
