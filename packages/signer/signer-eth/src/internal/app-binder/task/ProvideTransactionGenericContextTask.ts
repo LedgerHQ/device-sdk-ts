@@ -13,11 +13,9 @@ import {
 import { DerivationPathUtils } from "@ledgerhq/signer-utils";
 import { Just, type Maybe, Nothing } from "purify-ts";
 
-import { type ProvideNFTInformationCommandErrorCodes } from "@internal/app-binder/command/ProvideNFTInformationCommand";
 import { ProvideTransactionInformationCommand } from "@internal/app-binder/command/ProvideTransactionInformationCommand";
-import { type SetExternalPluginCommandErrorCodes } from "@internal/app-binder/command/SetExternalPluginCommand";
-import { type SetPluginCommandErrorCodes } from "@internal/app-binder/command/SetPluginCommand";
 import { StoreTransactionCommand } from "@internal/app-binder/command/StoreTransactionCommand";
+import { type EthErrorCodes } from "@internal/app-binder/command/utils/ethAppErrors";
 import { type TransactionParserService } from "@internal/transaction/service/parser/TransactionParserService";
 
 import { ProvideTransactionFieldDescriptionTask } from "./ProvideTransactionFieldDescriptionTask";
@@ -42,10 +40,7 @@ export type ProvideTransactionGenericContextTaskArgs = {
 };
 
 export type ProvideTransactionGenericContextTaskErrorCodes =
-  | void
-  | SetExternalPluginCommandErrorCodes
-  | SetPluginCommandErrorCodes
-  | ProvideNFTInformationCommandErrorCodes;
+  void | EthErrorCodes;
 
 export class ProvideTransactionGenericContextTask {
   constructor(

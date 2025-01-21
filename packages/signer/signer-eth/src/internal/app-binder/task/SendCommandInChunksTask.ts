@@ -9,11 +9,13 @@ import {
   isSuccessCommandResult,
 } from "@ledgerhq/device-management-kit";
 
+import { type EthErrorCodes } from "@internal/app-binder/command/utils/ethAppErrors";
+
 export type SendCommandInChunksTaskArgs<T> = {
   data: Uint8Array;
   commandFactory: <V extends ChunkableCommandArgs & Record<string, unknown>>(
     args: ChunkableCommandArgs,
-  ) => Command<T, V>;
+  ) => Command<T, V, EthErrorCodes>;
 };
 
 export type ChunkableCommandArgs = {
@@ -27,7 +29,7 @@ export class SendCommandInChunksTask<T> {
     private args: SendCommandInChunksTaskArgs<T>,
   ) {}
 
-  async run(): Promise<CommandResult<T, void>> {
+  async run(): Promise<CommandResult<T, EthErrorCodes>> {
     const { data: payload, commandFactory } = this.args;
 
     const data = new ByteArrayBuilder(payload.length)

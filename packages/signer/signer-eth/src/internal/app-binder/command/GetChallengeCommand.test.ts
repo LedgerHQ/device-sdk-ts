@@ -5,6 +5,7 @@ import {
   isSuccessCommandResult,
 } from "@ledgerhq/device-management-kit";
 
+import { type EthErrorCodes } from "./utils/ethAppErrors";
 import {
   GetChallengeCommand,
   type GetChallengeCommandResponse,
@@ -32,7 +33,7 @@ const LNX_RESPONSE_TOO_SHORT = {
 };
 
 describe("GetChallengeCommand", () => {
-  let command: Command<GetChallengeCommandResponse, void>;
+  let command: Command<GetChallengeCommandResponse, EthErrorCodes, string>;
 
   beforeEach(() => {
     command = new GetChallengeCommand();

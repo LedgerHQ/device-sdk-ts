@@ -7,9 +7,15 @@ import {
   type Command,
   type CommandResult,
   CommandResultFactory,
-  CommandUtils,
-  GlobalCommandErrorHandler,
 } from "@ledgerhq/device-management-kit";
+import { CommandErrorHelper } from "@ledgerhq/signer-utils";
+import { Maybe } from "purify-ts";
+
+import {
+  ETH_APP_ERRORS,
+  EthAppCommandErrorFactory,
+  type EthErrorCodes,
+} from "./utils/ethAppErrors";
 
 export enum StructImplemType {
   ROOT = 0x00,
@@ -38,7 +44,13 @@ export type SendEIP712StructImplemCommandArgs =
       };
     };
 
-export class SendEIP712StructImplemCommand implements Command<void> {
+export class SendEIP712StructImplemCommand
+  implements Command<void, SendEIP712StructImplemCommandArgs, EthErrorCodes>
+{
+  private readonly errorHelper = new CommandErrorHelper<void, EthErrorCodes>(
+    ETH_APP_ERRORS,
+    EthAppCommandErrorFactory,
+  );
   constructor(private readonly args: SendEIP712StructImplemCommandArgs) {}
 
   getApdu(): Apdu {
@@ -67,12 +79,9 @@ export class SendEIP712StructImplemCommand implements Command<void> {
     }
   }
 
-  parseResponse(response: ApduResponse): CommandResult<void> {
-    if (!CommandUtils.isSuccessResponse(response)) {
-      return CommandResultFactory({
-        error: GlobalCommandErrorHandler.handle(response),
-      });
-    }
-    return CommandResultFactory({ data: undefined });
+  parseResponse(response: ApduResponse): CommandResult<void, EthErrorCodes> {
+    return Maybe.fromNullable(this.errorHelper.getError(response)).orDefault(
+      CommandResultFactory({ data: undefined }),
+    );
   }
 }

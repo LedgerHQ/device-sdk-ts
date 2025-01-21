@@ -10,6 +10,7 @@ import {
 
 import { type Signature } from "@api/model/Signature";
 import { type TypedData } from "@api/model/TypedData";
+import { type EthErrorCodes } from "@internal/app-binder/command/utils/ethAppErrors";
 import type { ProvideEIP712ContextTaskArgs } from "@internal/app-binder/task/ProvideEIP712ContextTask";
 import { type TypedDataParserService } from "@internal/typed-data/service/TypedDataParserService";
 
@@ -22,7 +23,9 @@ export type SignTypedDataDAInput = {
   readonly contextModule: ContextModule;
 };
 
-export type SignTypedDataDAError = OpenAppDAError | CommandErrorResult["error"];
+export type SignTypedDataDAError =
+  | OpenAppDAError
+  | CommandErrorResult<EthErrorCodes>["error"];
 
 type SignTypedDataDARequiredInteraction =
   | OpenAppDARequiredInteraction
@@ -39,7 +42,7 @@ export type SignTypedDataDAState = DeviceActionState<
 >;
 
 export type SignTypedDataDAInternalState = {
-  readonly error: OpenAppDAError | null;
+  readonly error: SignTypedDataDAError | null;
   readonly typedDataContext: ProvideEIP712ContextTaskArgs | null;
   readonly signature: Signature | null;
 };

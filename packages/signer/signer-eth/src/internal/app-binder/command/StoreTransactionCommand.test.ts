@@ -1,9 +1,9 @@
 import {
   type ApduResponse,
   isSuccessCommandResult,
-  UnknownDeviceExchangeError,
 } from "@ledgerhq/device-management-kit";
 
+import { EthAppCommandError } from "./utils/ethAppErrors";
 import {
   StoreTransactionCommand,
   type StoreTransactionCommandArgs,
@@ -65,7 +65,7 @@ describe("StoreTransactionCommand", () => {
       if (isSuccessCommandResult(result)) {
         throw new Error("Expected error");
       } else {
-        expect(result.error).toBeInstanceOf(UnknownDeviceExchangeError);
+        expect(result.error).toBeInstanceOf(EthAppCommandError);
       }
     });
 

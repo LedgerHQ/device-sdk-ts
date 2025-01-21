@@ -11,6 +11,7 @@ import {
   SendEIP712StructImplemCommand,
   StructImplemType,
 } from "@internal/app-binder/command/SendEIP712StructImplemCommand";
+import { type EthErrorCodes } from "@internal/app-binder/command/utils/ethAppErrors";
 
 export type SendEIP712StructImplemTaskArgs =
   | {
@@ -32,7 +33,7 @@ export class SendEIP712StructImplemTask {
     private args: SendEIP712StructImplemTaskArgs,
   ) {}
 
-  async run(): Promise<CommandResult<void>> {
+  async run(): Promise<CommandResult<void, EthErrorCodes>> {
     // No particular operation to perform on root and array implementations.
     if (this.args.type !== StructImplemType.FIELD) {
       return await this.api.sendCommand(
@@ -42,7 +43,10 @@ export class SendEIP712StructImplemTask {
 
     // If the value is a field, we should prepend its size, and chunk it if necessary.
 
-    let result = CommandResultFactory<void, void>({ data: undefined });
+    let result: CommandResult<void, EthErrorCodes> = CommandResultFactory<
+      void,
+      EthErrorCodes
+    >({ data: undefined });
     // Prepend the length to the array, in uint16 big endian encoding
     const buffer = new ByteArrayBuilder(this.args.value.length + 2)
       .add16BitUIntToData(this.args.value.length)

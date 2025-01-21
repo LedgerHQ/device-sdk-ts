@@ -5,6 +5,7 @@ import {
   InvalidStatusWordError,
 } from "@ledgerhq/device-management-kit";
 
+import { type EthErrorCodes } from "@internal/app-binder/command/utils/ethAppErrors";
 import { PayloadUtils } from "@internal/shared/utils/PayloadUtils";
 
 import {
@@ -22,7 +23,7 @@ export class SendPayloadInChunksTask<T> {
     private api: InternalApi,
     private args: SendPayloadInChunksTaskArgs<T>,
   ) {}
-  async run(): Promise<CommandResult<T, void>> {
+  async run(): Promise<CommandResult<T, EthErrorCodes>> {
     const data = PayloadUtils.getBufferFromPayload(this.args.payload);
 
     if (!data) {

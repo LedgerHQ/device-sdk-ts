@@ -31,6 +31,7 @@ import {
   GetChallengeCommand,
   type GetChallengeCommandResponse,
 } from "@internal/app-binder/command/GetChallengeCommand";
+import { type EthErrorCodes } from "@internal/app-binder/command/utils/ethAppErrors";
 import { ETHEREUM_PLUGINS } from "@internal/app-binder/constant/plugins";
 import {
   BuildTransactionContextTask,
@@ -38,10 +39,10 @@ import {
   type BuildTransactionTaskResult,
 } from "@internal/app-binder/task/BuildTransactionContextTask";
 import { ProvideTransactionContextTask } from "@internal/app-binder/task/ProvideTransactionContextTask";
-import { type ProvideTransactionContextTaskErrorCodes } from "@internal/app-binder/task/ProvideTransactionContextTask";
 import {
   type GenericContext,
   ProvideTransactionGenericContextTask,
+  type ProvideTransactionGenericContextTaskErrorCodes,
 } from "@internal/app-binder/task/ProvideTransactionGenericContextTask";
 import { SendSignTransactionTask } from "@internal/app-binder/task/SendSignTransactionTask";
 import { type TransactionMapperService } from "@internal/transaction/service/mapper/TransactionMapperService";
@@ -49,7 +50,7 @@ import { type TransactionParserService } from "@internal/transaction/service/par
 
 export type MachineDependencies = {
   readonly getChallenge: () => Promise<
-    CommandResult<GetChallengeCommandResponse, void>
+    CommandResult<GetChallengeCommandResponse, EthErrorCodes>
   >;
   readonly buildContext: (arg0: {
     input: {
@@ -64,9 +65,7 @@ export type MachineDependencies = {
     input: {
       clearSignContexts: ClearSignContextSuccess[];
     };
-  }) => Promise<
-    Maybe<CommandErrorResult<ProvideTransactionContextTaskErrorCodes>>
-  >;
+  }) => Promise<Maybe<CommandErrorResult<EthErrorCodes>>>;
   readonly provideGenericContext: (arg0: {
     input: {
       contextModule: ContextModule;
@@ -77,7 +76,7 @@ export type MachineDependencies = {
       context: GenericContext;
     };
   }) => Promise<
-    Maybe<CommandErrorResult<ProvideTransactionContextTaskErrorCodes>>
+    Maybe<CommandErrorResult<ProvideTransactionGenericContextTaskErrorCodes>>
   >;
   readonly signTransaction: (arg0: {
     input: {
@@ -87,7 +86,7 @@ export type MachineDependencies = {
       transactionType: TransactionType;
       isLegacy: boolean;
     };
-  }) => Promise<CommandResult<Signature>>;
+  }) => Promise<CommandResult<Signature, EthErrorCodes>>;
 };
 
 export class SignTransactionDeviceAction extends XStateDeviceAction<
@@ -130,7 +129,7 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
       },
       actors: {
         openAppStateMachine: new OpenAppDeviceAction({
-          input: { appName: "Ethereum", compatibleAppNames: ETHEREUM_PLUGINS },
+          input: { appName: "Ethereum" },
         }).makeStateMachine(internalApi),
         getChallenge: fromPromise(getChallenge),
         buildContext: fromPromise(buildContext),

@@ -5,10 +5,9 @@ import {
   isSuccessCommandResult,
 } from "@ledgerhq/device-management-kit";
 
-import {
-  SetExternalPluginCommand,
-  SetExternalPluginCommandError,
-} from "@internal/app-binder/command/SetExternalPluginCommand";
+import { SetExternalPluginCommand } from "@internal/app-binder/command/SetExternalPluginCommand";
+
+import { EthAppCommandError } from "./utils/ethAppErrors";
 
 /**
  * Test payload contains:
@@ -86,8 +85,8 @@ describe("Set External plugin", () => {
         // THEN
         expect(isSuccessCommandResult(result)).toBe(false);
         if (!isSuccessCommandResult(result)) {
-          expect(result.error).toBeInstanceOf(SetExternalPluginCommandError);
-          if (result.error instanceof SetExternalPluginCommandError)
+          expect(result.error).toBeInstanceOf(EthAppCommandError);
+          if (result.error instanceof EthAppCommandError)
             expect(result.error.errorCode).toStrictEqual(errorCode);
         }
       },

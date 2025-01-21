@@ -8,9 +8,15 @@ import {
   type Command,
   type CommandResult,
   CommandResultFactory,
-  CommandUtils,
-  GlobalCommandErrorHandler,
 } from "@ledgerhq/device-management-kit";
+import { CommandErrorHelper } from "@ledgerhq/signer-utils";
+import { Maybe } from "purify-ts";
+
+import {
+  ETH_APP_ERRORS,
+  EthAppCommandErrorFactory,
+  type EthErrorCodes,
+} from "./utils/ethAppErrors";
 
 export type ProvideTokenInformationCommandArgs = {
   payload: string;
@@ -24,9 +30,15 @@ export class ProvideTokenInformationCommand
   implements
     Command<
       ProvideTokenInformationCommandResponse,
-      ProvideTokenInformationCommandArgs
+      ProvideTokenInformationCommandArgs,
+      EthErrorCodes
     >
 {
+  private readonly errorHelper = new CommandErrorHelper<
+    ProvideTokenInformationCommandResponse,
+    EthErrorCodes
+  >(ETH_APP_ERRORS, EthAppCommandErrorFactory);
+
   constructor(private readonly args: ProvideTokenInformationCommandArgs) {}
 
   getApdu(): Apdu {
@@ -43,15 +55,13 @@ export class ProvideTokenInformationCommand
 
   parseResponse(
     response: ApduResponse,
-  ): CommandResult<ProvideTokenInformationCommandResponse> {
-    const parser = new ApduParser(response);
-
-    if (!CommandUtils.isSuccessResponse(response)) {
-      return CommandResultFactory({
-        error: GlobalCommandErrorHandler.handle(response),
-      });
-    }
-    const tokenIndex = parser.extract8BitUInt() ?? 0;
-    return CommandResultFactory({ data: { tokenIndex } });
+  ): CommandResult<ProvideTokenInformationCommandResponse, EthErrorCodes> {
+    return Maybe.fromNullable(
+      this.errorHelper.getError(response),
+    ).orDefaultLazy(() => {
+      const parser = new ApduParser(response);
+      const tokenIndex = parser.extract8BitUInt() ?? 0;
+      return CommandResultFactory({ data: { tokenIndex } });
+    });
   }
 }

@@ -11,6 +11,7 @@ import {
   StructType,
 } from "@internal/typed-data/model/Types";
 
+import { type EthErrorCodes } from "./utils/ethAppErrors";
 import {
   SendEIP712StructDefinitionCommand,
   type SendEIP712StructDefinitionCommandArgs,
@@ -100,7 +101,11 @@ const EIP712_DEF_FIELD_DEPTHY_UINT8 = Uint8Array.from([
 // TODO: find examples for bool and int types.
 
 describe("SendEIP712StructDefinitionCommand", () => {
-  let command: Command<void, SendEIP712StructDefinitionCommandArgs>;
+  let command: Command<
+    void,
+    SendEIP712StructDefinitionCommandArgs,
+    EthErrorCodes
+  >;
 
   describe("getApdu", () => {
     it("should return the apdu for 'EIP712Domain' name definition", () => {
