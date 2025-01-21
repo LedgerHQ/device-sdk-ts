@@ -17,6 +17,7 @@ This module provides the implementation of the Ledger Bitcoin signer of the Devi
    - [Sign Message](#use-case-2-sign-message)
    - [Sign Partially Signed Transaction (PSBT)](#use-case-3-sign-psbt)
    - [Sign Transaction](#use-case-4-sign-transaction)
+   - [Get Wallet address](#use-case-5-get-wallet-address)
 5. [Observable Behavior](#observable-behavior)
 6. [Example](#example)
 
@@ -83,7 +84,7 @@ const { observable, cancel } = signerBitcoin.getExtendedPublicKey(
 
 #### **Returns**
 
-- `observable` Emits DeviceActionState updates, including the following details::
+- `observable` Emits DeviceActionState updates, including the following details:
 
 ```typescript
 type GetAddressCommandResponse = {
@@ -117,12 +118,12 @@ const { observable, cancel } = signerBitcoin.signMessage(
 - `message`
 
   - **Required**
-  - **Type:**: `string`
+  - **Type:** `string`
   - The message to be signed, which will be displayed on the Ledger device.
 
 #### **Returns**
 
-- `observable` Emits DeviceActionState updates, including the following details::
+- `observable` Emits DeviceActionState updates, including the following details:
 
 ```typescript
 type Signature = {
@@ -178,19 +179,38 @@ const { observable, cancel } = signerBitcoin.signPsbt(
 
 - `psbt`
   - **Required**
-  - **Type:** `string`
-  - The base64 psbt string
+  - **Type:** `string | Psbt`
+  - A base64/hex psbt string or [bitcoin-js Psbt](https://github.com/bitcoinjs/bitcoinjs-lib/blob/151173f05e26a9af7c98d8d1e3f90e97185955f1/ts_src/psbt.ts#L131)
 
 #### **Returns**
 
-- `observable` Emits DeviceActionState updates, including the following details::
+- `observable` Emits DeviceActionState updates, including the following details:
 
 ```typescript
-type Signature = {
-  r: `0x${string}`; // R component of the signature
-  s: `0x${string}`; // S component of the signature
-  v: number; // Recovery parameter
+type PartialSignature = {
+  inputIndex: number;
+  pubkey: Uint8Array;
+  signature: Uint8Array;
+  tapleafHash?: Uint8Array;
 };
+
+type MusigPubNonce = {
+  inputIndex: number;
+  participantPubkey: Uint8Array;
+  aggregatedPubkey: Uint8Array;
+  tapleafHash: Uint8Array;
+  pubnonce: Uint8Array;
+};
+
+type MusigPartialSignature = {
+  inputIndex: number;
+  participantPubkey: Uint8Array;
+  aggregatedPubkey: Uint8Array;
+  tapleafHash: Uint8Array;
+  partialSignature: Uint8Array;
+};
+
+type PsbtSignature = PartialSignature | MusigPartialSignature | MusigPubNonce;
 ```
 
 - `cancel` A function to cancel the action on the Ledger device.
@@ -239,22 +259,70 @@ const { observable, cancel } = signerBitcoin.signTransaction(
 
   - `psbt`
     - **Required**
-    - **Type:** `string`
-    - The base64 psbt string
+    - **Type:** `string | Psbt`
+    - A base64/hex psbt string or [bitcoin-js Psbt](https://github.com/bitcoinjs/bitcoinjs-lib/blob/151173f05e26a9af7c98d8d1e3f90e97185955f1/ts_src/psbt.ts#L131)
 
 #### **Returns**
 
-- `observable` Emits DeviceActionState updates, including the following details::
+- `observable` Emits DeviceActionState updates, including the following details:
 
 ```typescript
-type Signature = {
-  r: `0x${string}`; // R component of the signature
-  s: `0x${string}`; // S component of the signature
-  v: number; // Recovery parameter
+type TransactionHash = `0x${string}`;
+```
+
+- `cancel` A function to cancel the action on the Ledger device.
+
+### Use Case 5: Get wallet address
+
+This method allows users to get the wallet address linked of a Ledger devices.
+
+```typescript
+const { observable, cancel } = signerBitcoin.getWalletAddress(
+  derivationPath,
+  addressIndex,
+  options,
+);
+```
+
+#### **Parameters**
+
+- `derivationPath`
+
+  - **Required**
+  - **Type:** `string` (e.g. `"84'/0'/0'"` for a Native Segwit wallet)
+  - The derivation path used for the Bitcoin address. See [here](https://www.ledger.com/blog/understanding-crypto-addresses-and-derivation-paths) for more information.
+
+- `addressIndex`
+
+  - **Required**
+  - **Type:** `number`
+  - The desired address index on the Ledger device.
+
+- `options`
+
+  - Optional
+  - Type: `WalletAddressOptions`
+
+  ```typescript
+  type WalletAddressOptions = {
+    checkOnDevice?: boolean;
+    change?: boolean;
+  };
+  ```
+
+#### **Returns**
+
+- `observable` Emits DeviceActionState updates, including the following details:
+
+```typescript
+type WalletAddress = {
+  address: string;
 };
 ```
 
 - `cancel` A function to cancel the action on the Ledger device.
+
+---
 
 ## 🔹 Observable Behavior
 
