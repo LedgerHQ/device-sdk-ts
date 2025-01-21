@@ -112,22 +112,61 @@ export const GetWalletAddressInputValuesForm: React.FC<{
   onChange: (values: GetWalletAddressInputValuesType) => void;
   disabled?: boolean;
 }> = ({ initialValues, onChange, disabled }) => {
-  const { formValues, setFormValue } = useForm(initialValues);
+  const { formValues, setFormValues, setFormValue } = useForm(initialValues);
 
   useEffect(() => {
     onChange(formValues);
   }, [formValues, onChange]);
 
+  const onWalletDescriptorTemplateChange = useCallback(
+    (value: DefaultDescriptorTemplate) => {
+      const newValues = {
+        derivationPath: descriptorTemplateToDerivationPath[value],
+        descriptorTemplate: value,
+      };
+      setFormValues((prev) => ({ ...prev, ...newValues }));
+    },
+    [setFormValues],
+  );
+
   return (
     <Flex flexDirection="column" rowGap={6}>
-      <Switch
-        label="Check on device"
-        name="checkOnDevice"
-        checked={formValues.checkOnDevice}
+      <Flex flexDirection="row" alignItems="center" mb={4}>
+        <Text style={{ marginRight: 8 }}>Wallet address type</Text>
+        <SelectInput
+          options={Object.entries(DefaultDescriptorTemplate).map(
+            ([_key, value]) => ({
+              label: descriptorTemplateToLabel[value],
+              value,
+            }),
+          )}
+          value={{
+            label: descriptorTemplateToLabel[formValues.descriptorTemplate],
+            value: formValues.descriptorTemplate,
+          }}
+          isMulti={false}
+          isSearchable={false}
+          onChange={(newVal) =>
+            newVal && onWalletDescriptorTemplateChange(newVal.value)
+          }
+        />
+      </Flex>
+
+      <Input
+        label="Derivation path"
+        value={formValues.derivationPath}
+        onChange={(val) => setFormValue("derivationPath", val)}
         disabled={disabled}
-        onChange={() =>
-          setFormValue("checkOnDevice", !formValues.checkOnDevice)
-        }
+      />
+
+      <Text variant="paragraph" fontWeight="medium">
+        {"Address index"}
+      </Text>
+      <Input
+        label="Address index"
+        value={String(formValues.addressIndex)}
+        onChange={(val) => setFormValue("addressIndex", val)}
+        disabled={disabled}
       />
 
       <Switch
@@ -138,18 +177,14 @@ export const GetWalletAddressInputValuesForm: React.FC<{
         onChange={() => setFormValue("change", !formValues.change)}
       />
 
-      <Input
-        label="Derivation path"
-        value={formValues.derivationPath}
-        onChange={(val) => setFormValue("derivationPath", val)}
+      <Switch
+        label="Check on device"
+        name="checkOnDevice"
+        checked={formValues.checkOnDevice}
         disabled={disabled}
-      />
-
-      <Input
-        label="Address index"
-        value={String(formValues.addressIndex)}
-        onChange={(val) => setFormValue("addressIndex", Number(val))}
-        disabled={disabled}
+        onChange={() =>
+          setFormValue("checkOnDevice", !formValues.checkOnDevice)
+        }
       />
     </Flex>
   );
