@@ -13,6 +13,7 @@
   "dependencies": {
     "@ledgerhq/device-management-kit": "workspace:*",
     "@ledgerhq/device-transport-kit-react-native-ble": "workspace:*",
+    "@ledgerhq/device-transport-kit-react-native-hid": "workspace:*",
     "@react-navigation/native": "^7.0.14",
     "@react-navigation/stack": "^7.1.1",
     "react": "18.3.1",
