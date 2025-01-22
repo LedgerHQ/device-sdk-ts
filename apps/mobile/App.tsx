@@ -7,6 +7,7 @@
 
 import React from 'react';
 import {SafeAreaView, StatusBar, useColorScheme} from 'react-native';
+import {StyleProvider} from '@ledgerhq/native-ui';
 
 import {NavigationContainer} from '@react-navigation/native';
 import {RootNavigator} from '_navigators/RootNavigator';
@@ -23,14 +24,16 @@ function App(): React.JSX.Element {
   return (
     <SafeAreaView style={backgroundStyle}>
       <StatusBar
-        barStyle={isDarkMode ? 'light-content' : 'dark-content'}
+        barStyle={isDarkMode ? 'dark-content' : 'light-content'}
         backgroundColor={backgroundStyle.backgroundColor}
       />
-      <NavigationContainer>
-        <DmkProvider>
-          <RootNavigator />
-        </DmkProvider>
-      </NavigationContainer>
+      <StyleProvider selectedPalette={isDarkMode ? 'dark' : 'light'}>
+        <NavigationContainer>
+          <DmkProvider>
+            <RootNavigator />
+          </DmkProvider>
+        </NavigationContainer>
+      </StyleProvider>
     </SafeAreaView>
   );
 }
