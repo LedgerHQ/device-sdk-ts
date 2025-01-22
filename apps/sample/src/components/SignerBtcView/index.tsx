@@ -71,6 +71,49 @@ export const SignerBtcView: React.FC<{ sessionId: string }> = ({
         GetExtendedDAIntermediateValue
       >,
       {
+        title: "Get wallet address",
+        description:
+          "Perform all the actions necessary to get the device's Bitcoin wallet address",
+        executeDeviceAction: ({
+          checkOnDevice,
+          change,
+          addressIndex,
+          derivationPath,
+          descriptorTemplate,
+        }) => {
+          if (!signer) {
+            throw new Error("Signer not initialized");
+          }
+
+          return signer.getWalletAddress(
+            new DefaultWallet(derivationPath, descriptorTemplate),
+            Number(addressIndex),
+            { checkOnDevice, change },
+          );
+        },
+        InputValuesComponent: GetWalletAddressInputValuesForm,
+        initialValues: {
+          checkOnDevice: false,
+          change: false,
+          derivationPath: DEFAULT_DERIVATION_PATH,
+          addressIndex: 0,
+          descriptorTemplate: DefaultDescriptorTemplate.NATIVE_SEGWIT,
+        },
+        validateValues: ({ addressIndex }) => !isNaN(Number(addressIndex)),
+        deviceModelId,
+      } satisfies DeviceActionProps<
+        GetWalletAddressDAOutput,
+        {
+          checkOnDevice: boolean;
+          change: boolean;
+          addressIndex: number;
+          derivationPath: string;
+          descriptorTemplate: DefaultDescriptorTemplate;
+        },
+        GetWalletAddressDAError,
+        GetWalletAddressDAIntermediateValue
+      >,
+      {
         title: "Sign message",
         description:
           "Perform all the actions necessary to sign a message with the device",
@@ -157,48 +200,6 @@ export const SignerBtcView: React.FC<{ sessionId: string }> = ({
         },
         SignTransactionDAError,
         SignTransactionDAIntermediateValue
-      >,
-      {
-        title: "Get wallet address",
-        description:
-          "Perform all the actions necessary to get the device's Bitcoin wallet address",
-        executeDeviceAction: ({
-          checkOnDevice,
-          change,
-          addressIndex,
-          derivationPath,
-          descriptorTemplate,
-        }) => {
-          if (!signer) {
-            throw new Error("Signer not initialized");
-          }
-
-          return signer.getWalletAddress(
-            new DefaultWallet(derivationPath, descriptorTemplate),
-            addressIndex,
-            { checkOnDevice, change },
-          );
-        },
-        InputValuesComponent: GetWalletAddressInputValuesForm,
-        initialValues: {
-          checkOnDevice: false,
-          change: false,
-          derivationPath: DEFAULT_DERIVATION_PATH,
-          addressIndex: 0,
-          descriptorTemplate: DefaultDescriptorTemplate.NATIVE_SEGWIT,
-        },
-        deviceModelId,
-      } satisfies DeviceActionProps<
-        GetWalletAddressDAOutput,
-        {
-          checkOnDevice: boolean;
-          change: boolean;
-          addressIndex: number;
-          derivationPath: string;
-          descriptorTemplate: DefaultDescriptorTemplate;
-        },
-        GetWalletAddressDAError,
-        GetWalletAddressDAIntermediateValue
       >,
     ],
     [deviceModelId, signer],
