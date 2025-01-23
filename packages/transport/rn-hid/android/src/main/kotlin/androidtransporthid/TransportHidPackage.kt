@@ -1,4 +1,4 @@
-package androidtransporthid
+package com.ledger.androidtransporthid
 
 import android.view.View
 import com.facebook.react.ReactPackage
