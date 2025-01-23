@@ -128,8 +128,8 @@ const { observable, cancel } = signerEth.signTransaction(
 - `transaction`
 
   - **Required**
-  - **Type:**`Transaction` (compatible with [ethers v5](https://docs.ethers.org/v5/) or [ethers v6](https://docs.ethers.org/v6/))
-  - The transaction object that needs to be signed.
+  - **Type:**`Uint8Array`
+  - The transaction buffer that needs to be signed.
 
 - `options`
 
