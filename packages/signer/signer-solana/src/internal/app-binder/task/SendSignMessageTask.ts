@@ -5,7 +5,9 @@ import {
 } from "@ledgerhq/device-management-kit";
 import { DerivationPathUtils } from "@ledgerhq/signer-utils";
 
+import { type Signature } from "@api/index";
 import { SignOffChainMessageCommand } from "@internal/app-binder/command/SignOffChainMessageCommand";
+import { type SolanaAppErrorCodes } from "@internal/app-binder/command/utils/SolanaApplicationErrors";
 
 export type SendSignMessageTaskArgs = {
   sendingData: Uint8Array;
@@ -13,7 +15,7 @@ export type SendSignMessageTaskArgs = {
 };
 
 export type SendSignMessageTaskRunFunctionReturn = Promise<
-  CommandResult<Uint8Array, void>
+  CommandResult<Signature, SolanaAppErrorCodes>
 >;
 
 export class SendSignMessageTask {

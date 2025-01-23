@@ -21,6 +21,7 @@ import {
 } from "@api/app-binder/SignTransactionDeviceActionTypes";
 import { type Signature } from "@api/model/Signature";
 import { SignTransactionCommand } from "@internal/app-binder/command/SignTransactionCommand";
+import { type SolanaAppErrorCodes } from "@internal/app-binder/command/utils/SolanaApplicationErrors";
 import { SignDataTask } from "@internal/app-binder/task/SendSignDataTask";
 
 export type MachineDependencies = {
@@ -29,7 +30,9 @@ export type MachineDependencies = {
       derivationPath: string;
       serializedTransaction: Uint8Array;
     };
-  }) => Promise<CommandResult<Maybe<Signature>>>;
+  }) => Promise<
+    CommandResult<Maybe<Signature | SolanaAppErrorCodes>, SolanaAppErrorCodes>
+  >;
 };
 
 export class SignTransactionDeviceAction extends XStateDeviceAction<
@@ -168,10 +171,14 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
                         error: event.output.error,
                       };
 
-                    if (event.output.data.isJust())
+                    const data = event.output.data.extract();
+                    if (
+                      event.output.data.isJust() &&
+                      data instanceof Uint8Array
+                    )
                       return {
                         ...context._internalState,
-                        signature: event.output.data.extract(),
+                        signature: data,
                       };
 
                     return {

@@ -7,15 +7,17 @@ import {
   type CommandResult,
   CommandResultFactory,
   InvalidStatusWordError,
-  isCommandErrorCode,
 } from "@ledgerhq/device-management-kit";
+import { CommandErrorHelper } from "@ledgerhq/signer-utils";
+import { Maybe } from "purify-ts";
 
 import { type Signature } from "@api/model/Signature";
 
 import {
-  SolanaAppCommandError,
-  solanaAppErrors,
-} from "./utils/solanaAppErrors";
+  SOLANA_APP_ERRORS,
+  SolanaAppCommandErrorFactory,
+  type SolanaAppErrorCodes,
+} from "./utils/SolanaApplicationErrors";
 
 const SIGNATURE_LENGTH = 64;
 
@@ -27,8 +29,17 @@ export type SignOffChainMessageCommandArgs = {
 
 export class SignOffChainMessageCommand
   implements
-    Command<SignOffChainMessageCommandResponse, SignOffChainMessageCommandArgs>
+    Command<
+      SignOffChainMessageCommandResponse,
+      SignOffChainMessageCommandArgs,
+      SolanaAppErrorCodes
+    >
 {
+  private readonly errorHelper = new CommandErrorHelper<
+    SignOffChainMessageCommandResponse,
+    SolanaAppErrorCodes
+  >(SOLANA_APP_ERRORS, SolanaAppCommandErrorFactory);
+
   args: SignOffChainMessageCommandArgs;
 
   constructor(args: SignOffChainMessageCommandArgs) {
@@ -48,27 +59,22 @@ export class SignOffChainMessageCommand
 
   parseResponse(
     response: ApduResponse,
-  ): CommandResult<SignOffChainMessageCommandResponse> {
-    const parser = new ApduParser(response);
-    const errorCode = parser.encodeToHexaString(response.statusCode);
-    if (isCommandErrorCode(errorCode, solanaAppErrors)) {
-      return CommandResultFactory({
-        error: new SolanaAppCommandError({
-          ...solanaAppErrors[errorCode],
-          errorCode,
-        }),
-      });
-    }
+  ): CommandResult<SignOffChainMessageCommandResponse, SolanaAppErrorCodes> {
+    return Maybe.fromNullable(
+      this.errorHelper.getError(response),
+    ).orDefaultLazy(() => {
+      const parser = new ApduParser(response);
 
-    const signature = parser.extractFieldByLength(SIGNATURE_LENGTH);
-    if (!signature) {
-      return CommandResultFactory({
-        error: new InvalidStatusWordError("Signature extraction failed"),
-      });
-    }
+      const signature = parser.extractFieldByLength(SIGNATURE_LENGTH);
+      if (!signature) {
+        return CommandResultFactory({
+          error: new InvalidStatusWordError("Signature extraction failed"),
+        });
+      }
 
-    return CommandResultFactory({
-      data: signature,
+      return CommandResultFactory({
+        data: signature,
+      });
     });
   }
 }

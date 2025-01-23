@@ -9,6 +9,8 @@ import {
   isSuccessCommandResult,
 } from "@ledgerhq/device-management-kit";
 
+import { type SolanaAppErrorCodes } from "@internal/app-binder/command/utils/SolanaApplicationErrors";
+
 export type SendCommandInChunksTaskArgs<T> = {
   data: Uint8Array;
   commandFactory: CommandFactory<T>;
@@ -16,7 +18,7 @@ export type SendCommandInChunksTaskArgs<T> = {
 
 export type CommandFactory<T> = <V extends ChunkableCommandArgs>(
   args: ChunkableCommandArgs,
-) => Command<T, V>;
+) => Command<T, V, SolanaAppErrorCodes>;
 
 export type ChunkableCommandArgs = {
   chunkedData: Uint8Array;
@@ -30,7 +32,7 @@ export class SendCommandInChunksTask<T> {
     private args: SendCommandInChunksTaskArgs<T>,
   ) {}
 
-  async run(): Promise<CommandResult<T, void>> {
+  async run(): Promise<CommandResult<T, SolanaAppErrorCodes>> {
     const { data: fullPayload, commandFactory } = this.args;
 
     const dataBuffer = new ByteArrayBuilder(fullPayload.length)
