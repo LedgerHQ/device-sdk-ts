@@ -14,6 +14,10 @@ import {
 import { type Either } from "purify-ts";
 import { type Observable } from "rxjs";
 
+import { NATIVE_MODULE_NAME } from "@api/bridge/constants";
+
+const NativeTransportModule = NativeModules[NATIVE_MODULE_NAME];
+
 export const rnHidTransportIdentifier = "RN_HID";
 
 export class RNHidTransport implements Transport {
@@ -29,7 +33,7 @@ export class RNHidTransport implements Transport {
     return rnHidTransportIdentifier;
   }
   isSupported(): boolean {
-    return Platform.OS === "android" && !!NativeModules["HID"];
+    return Platform.OS === "android" && !!NativeTransportModule;
   }
   startDiscovering(): Observable<TransportDiscoveredDevice> {
     // NativeEventEmitter listen device

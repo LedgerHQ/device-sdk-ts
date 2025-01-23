@@ -1,4 +1,7 @@
 buildscript {
+  ext {
+    kotlin_version = '1.9.24'
+  }
   repositories {
     mavenCentral()
     google()
@@ -6,7 +9,8 @@ buildscript {
   }
 
   dependencies {
-    classpath 'com.android.tools.build:gradle:3.5.1'
+    classpath 'com.android.tools.build:gradle:8.3.2'
+    classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
   }
 }
 
@@ -19,23 +23,28 @@ allprojects {
 }
 
 apply plugin: 'com.android.library'
+apply plugin: 'org.jetbrains.kotlin.android'
 
 def safeExtGet(prop, fallback) {
   rootProject.ext.has(prop) ? rootProject.ext.get(prop) : fallback
 }
 
 android {
-  compileSdkVersion safeExtGet("compileSdkVersion", 29)
+  namespace "com.ledger.androidtransporthid"
+  compileSdkVersion safeExtGet("compileSdkVersion", 30)
 
   defaultConfig {
-    minSdkVersion safeExtGet("minSdkVersion", 24)
-    targetSdkVersion safeExtGet("targetSdkVersion", 29)
+    minSdkVersion safeExtGet("minSdkVersion", 30)
+    targetSdkVersion safeExtGet("targetSdkVersion", 30)
     versionCode 1
     versionName "1.0"
   }
   lintOptions {
     abortOnError false
     warning 'InvalidPackage'
+  }
+  kotlinOptions {
+    jvmTarget = '1.8'
   }
 }
 
