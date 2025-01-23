@@ -3,4 +3,5 @@ export default {
   ledgerjs: "Differences with LedgerJS",
   dmk: "Device Management Kit",
   signers: "Signer kits",
+  transports: "Transports",
 };
