@@ -6,12 +6,7 @@
  */
 
 import React from 'react';
-import {SafeAreaView, StatusBar, useColorScheme} from 'react-native';
-import {StyleProvider} from '@ledgerhq/native-ui';
-
-import {NavigationContainer} from '@react-navigation/native';
-import {RootNavigator} from '_navigators/RootNavigator';
-import {DmkProvider} from '_providers/dmkProvider';
+import {SafeAreaView, useColorScheme, View, Text} from 'react-native';
 
 function App(): React.JSX.Element {
   const isDarkMode = useColorScheme() === 'dark';
@@ -21,20 +16,16 @@ function App(): React.JSX.Element {
     flex: 1,
   };
 
+  const textStyle = {
+    color: isDarkMode ? 'black' : 'white',
+  };
+
   return (
-    <SafeAreaView style={backgroundStyle}>
-      <StatusBar
-        barStyle={isDarkMode ? 'dark-content' : 'light-content'}
-        backgroundColor={backgroundStyle.backgroundColor}
-      />
-      <StyleProvider selectedPalette={isDarkMode ? 'dark' : 'light'}>
-        <NavigationContainer>
-          <DmkProvider>
-            <RootNavigator />
-          </DmkProvider>
-        </NavigationContainer>
-      </StyleProvider>
-    </SafeAreaView>
+    <View style={backgroundStyle}>
+      <SafeAreaView>
+        <Text style={textStyle}>yo</Text>
+      </SafeAreaView>
+    </View>
   );
 }
 
