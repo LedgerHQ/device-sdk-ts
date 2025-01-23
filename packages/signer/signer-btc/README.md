@@ -9,17 +9,17 @@ This module provides the implementation of the Ledger Bitcoin signer of the Devi
 
 ## 🔹 Index
 
-1. [How it works](#how-it-works)
-2. [Installation](#installation)
-3. [Initialisation](#initialisation)
-4. [Use Cases](#use-cases)
+1. [How it works](#🔹-how-it-works)
+2. [Installation](#🔹-installation)
+3. [Initialisation](#🔹-initialisation)
+4. [Use Cases](#🔹-use-cases)
    - [Get Extended Public Key](#use-case-1-get-extended-public-key)
    - [Sign Message](#use-case-2-sign-message)
    - [Sign Partially Signed Transaction (PSBT)](#use-case-3-sign-psbt)
    - [Sign Transaction](#use-case-4-sign-transaction)
    - [Get Wallet address](#use-case-5-get-wallet-address)
-5. [Observable Behavior](#observable-behavior)
-6. [Example](#example)
+5. [Observable Behavior](#🔹-observable-behavior)
+6. [Example](#🔹-example)
 
 ## 🔹 How it works
 
@@ -40,7 +40,7 @@ npm install @ledgerhq/device-signer-kit-bitcoin
 To initialise a Bitcoin signer instance, you need a Ledger Device Management Kit instance and the ID of the session of the connected device. Use the `SignerBtcBuilder` along with the [Context Module](https://github.com/LedgerHQ/device-sdk-ts/tree/develop/packages/signer/context-module) by default developed by Ledger:
 
 ```typescript
-// Initialize a Bitcoin signer instance
+// Initialise a Bitcoin signer instance
 const signerBitcoin = new SignerBtcBuilder({ sdk, sessionId }).build();
 ```
 
@@ -50,7 +50,7 @@ The `SignerBtcBuilder.build()` method will return a `SignerBitcoin` instance tha
 
 ---
 
-### Use Case 1: Get Extended Public Key
+### Use Case 1: Get extended public key
 
 This method allows users to retrieve the Bitcoin extended public key based on a given `derivationPath`.
 
@@ -66,7 +66,7 @@ const { observable, cancel } = signerBitcoin.getExtendedPublicKey(
 - `derivationPath`
 
   - **Required**
-  - **Type:** `string` (e.g. `"84'/0'/0'"` for a Native Segwit wallet)
+  - **Type:** `string` (e.g. `"84'/0'/0'"` for a Native SegWit wallet)
   - The derivation path used for the Bitcoin address. See [here](https://www.ledger.com/blog/understanding-crypto-addresses-and-derivation-paths) for more information.
 
 - `options`
@@ -96,7 +96,7 @@ type GetAddressCommandResponse = {
 
 ---
 
-### Use Case 2: Sign Message
+### Use Case 2: Sign message
 
 This method allows users to sign a text string that is displayed on Ledger devices.
 
@@ -112,7 +112,7 @@ const { observable, cancel } = signerBitcoin.signMessage(
 - `derivationPath`
 
   - **Required**
-  - **Type:** `string` (e.g. `"84'/0'/0'"` for a Native Segwit wallet)
+  - **Type:** `string` (e.g. `"84'/0'/0'"` for a Native SegWit wallet)
   - The derivation path used for the Bitcoin address. See [here](https://www.ledger.com/blog/understanding-crypto-addresses-and-derivation-paths) for more information.
 
 - `message`
@@ -160,7 +160,7 @@ const { observable, cancel } = signerBitcoin.signPsbt(
 
   class DefaultWallet {
     constructor(
-      // Derivation path without master key respresentation.
+      // Derivation path without master key representation.
       // Format example: /44'/0'/0'
       public derivationPath: string,
       public template: DefaultDescriptorTemplate,
@@ -240,7 +240,7 @@ const { observable, cancel } = signerBitcoin.signTransaction(
 
   class DefaultWallet {
     constructor(
-      // Derivation path without master key respresentation.
+      // Derivation path without master key representation.
       // Format example: /44'/0'/0'
       public derivationPath: string,
       public template: DefaultDescriptorTemplate,
@@ -274,7 +274,7 @@ type TransactionHash = `0x${string}`;
 
 ### Use Case 5: Get wallet address
 
-This method allows users to get the wallet address linked of a Ledger devices.
+This method allows users to get the wallet address linked to a Ledger device.
 
 ```typescript
 const { observable, cancel } = signerBitcoin.getWalletAddress(
@@ -289,7 +289,7 @@ const { observable, cancel } = signerBitcoin.getWalletAddress(
 - `derivationPath`
 
   - **Required**
-  - **Type:** `string` (e.g. `"84'/0'/0'"` for a Native Segwit wallet)
+  - **Type:** `string` (e.g. `"84'/0'/0'"` for a Native SegWit wallet)
   - The derivation path used for the Bitcoin address. See [here](https://www.ledger.com/blog/understanding-crypto-addresses-and-derivation-paths) for more information.
 
 - `addressIndex`
@@ -367,8 +367,8 @@ observable.subscribe({
       }
       case DeviceActionStatus.Error: {
         const { error } = state;
-        // Access the error here if occured
-        console.log("An error occured during the action: ", error);
+        // Access the error here if occurred
+        console.log("An error occurred during the action: ", error);
         break;
       }
     }
