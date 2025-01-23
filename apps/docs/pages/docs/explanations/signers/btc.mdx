@@ -9,17 +9,17 @@ This module provides the implementation of the Ledger Bitcoin signer of the Devi
 
 ## 🔹 Index
 
-1. [How it works](#🔹-how-it-works)
-2. [Installation](#🔹-installation)
-3. [Initialisation](#🔹-initialisation)
-4. [Use Cases](#🔹-use-cases)
+1. [How it works](#-how-it-works)
+2. [Installation](#-installation)
+3. [Initialisation](#-initialisation)
+4. [Use Cases](#-use-cases)
    - [Get Extended Public Key](#use-case-1-get-extended-public-key)
    - [Sign Message](#use-case-2-sign-message)
    - [Sign Partially Signed Transaction (PSBT)](#use-case-3-sign-psbt)
    - [Sign Transaction](#use-case-4-sign-transaction)
    - [Get Wallet address](#use-case-5-get-wallet-address)
-5. [Observable Behavior](#🔹-observable-behavior)
-6. [Example](#🔹-example)
+5. [Observable Behavior](#-observable-behavior)
+6. [Example](#-example)
 
 ## 🔹 How it works
 

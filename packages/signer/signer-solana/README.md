@@ -9,16 +9,16 @@ This module provides the implementation of the Ledger Solana signer of the Devic
 
 ## 🔹 Index
 
-1. [How it works](#🔹-how-it-works)
-2. [Installation](#🔹-installation)
-3. [Initialisation](#🔹-initialisation)
-4. [Use Cases](#🔹-use-cases)
+1. [How it works](#-how-it-works)
+2. [Installation](#-installation)
+3. [Initialisation](#-initialisation)
+4. [Use Cases](#-use-cases)
    - [Get Address](#use-case-1-get-address)
    - [Sign Transaction](#use-case-2-sign-transaction)
    - [Sign Message](#use-case-3-sign-message)
    - [Get App Configuration](#use-case-4-get-app-configuration)
-5. [Observable Behavior](#🔹-observable-behavior)
-6. [Example](#🔹-example)
+5. [Observable Behavior](#-observable-behavior)
+6. [Example](#-example)
 
 ## 🔹 How it works
 
