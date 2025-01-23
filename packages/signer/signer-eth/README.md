@@ -9,16 +9,16 @@ This module provides the implementation of the Ledger Ethereum signer of the Dev
 
 ## 🔹 Index
 
-1. [How it works](#how-it-works)
-2. [Installation](#installation)
-3. [Initialisation](#initialization)
-4. [Use Cases](#use-cases)
+1. [How it works](#-how-it-works)
+2. [Installation](#-installation)
+3. [Initialisation](#-initialisation)
+4. [Use Cases](#-use-cases)
    - [Get Address](#use-case-1-get-address)
    - [Sign Transaction](#use-case-2-sign-transaction)
    - [Sign Message](#use-case-3-sign-message)
    - [Sign Typed Data](#use-case-4-sign-typed-data)
-5. [Observable Behavior](#observable-behavior)
-6. [Example](#example)
+5. [Observable Behavior](#-observable-behavior)
+6. [Example](#-example)
 
 ## 🔹 How it works
 
@@ -128,8 +128,8 @@ const { observable, cancel } = signerEth.signTransaction(
 - `transaction`
 
   - **Required**
-  - **Type:**`Transaction` (compatible with [ethers v5](https://docs.ethers.org/v5/) or [ethers v6](https://docs.ethers.org/v6/))
-  - The transaction object that needs to be signed.
+  - **Type:**`Uint8Array`
+  - The transaction buffer that needs to be signed.
 
 - `options`
 
@@ -146,7 +146,7 @@ const { observable, cancel } = signerEth.signTransaction(
 
 #### **Returns**
 
-- `observable` Emits DeviceActionState updates, including the following details::
+- `observable` Emits DeviceActionState updates, including the following details:
 
 ```typescript
 type Signature = {
@@ -184,7 +184,7 @@ const { observable, cancel } = signerEth.signMessage(derivationPath, message);
 
 #### **Returns**
 
-- `observable` Emits DeviceActionState updates, including the following details::
+- `observable` Emits DeviceActionState updates, including the following details:
 
 ```typescript
 type Signature = {
@@ -248,7 +248,7 @@ const { observable, cancel } = signerEth.signTypedData(
 
 #### **Returns**
 
-- `observable` Emits DeviceActionState updates, including the following details::
+- `observable` Emits DeviceActionState updates, including the following details:
 
 ```typescript
 type Signature = {
@@ -303,8 +303,8 @@ observable.subscribe({
       }
       case DeviceActionStatus.Error: {
         const { error } = state;
-        // Access the error here if occured
-        console.log("An error occured during the action: ", error);
+        // Access the error here if occurred
+        console.log("An error occurred during the action: ", error);
         break;
       }
     }

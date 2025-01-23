@@ -5,20 +5,20 @@ This module provides the implementation of the Ledger Solana signer of the Devic
 - Retrieving the Solana address using a given derivation path;
 - Signing a Solana transaction;
 - Signing an offchain message displayed on a Ledger device;
-- Retreiving the app configuration;
+- Retrieving the app configuration;
 
 ## 🔹 Index
 
-1. [How it works](#how-it-works)
-2. [Installation](#installation)
-3. [Initialisation](#initialization)
-4. [Use Cases](#use-cases)
+1. [How it works](#-how-it-works)
+2. [Installation](#-installation)
+3. [Initialisation](#-initialisation)
+4. [Use Cases](#-use-cases)
    - [Get Address](#use-case-1-get-address)
    - [Sign Transaction](#use-case-2-sign-transaction)
    - [Sign Message](#use-case-3-sign-message)
    - [Get App Configuration](#use-case-4-get-app-configuration)
-5. [Observable Behavior](#observable-behavior)
-6. [Example](#example)
+5. [Observable Behavior](#-observable-behavior)
+6. [Example](#-example)
 
 ## 🔹 How it works
 
@@ -79,7 +79,7 @@ const { observable, cancel } = signerSolana.getAddress(derivationPath, options);
 
 #### **Returns**
 
-- `observable` Emits DeviceActionState updates, including the following details::
+- `observable` Emits DeviceActionState updates, including the following details:
 
 ```typescript
 type GetAddressCommandResponse = {
@@ -129,7 +129,7 @@ const { observable, cancel } = signerSolana.signTransaction(
 
 #### **Returns**
 
-- `observable` Emits DeviceActionState updates, including the following details::
+- `observable` Emits DeviceActionState updates, including the following details:
 
 ```typescript
 type Signature = Uint8Array; // Signed transaction bytes
@@ -166,7 +166,7 @@ const { observable, cancel } = signerSolana.signMessage(
 
 #### **Returns**
 
-- `observable` Emits DeviceActionState updates, including the following details::
+- `observable` Emits DeviceActionState updates, including the following details:
 
 ```typescript
 type Signature = Uint8Array; // Signed message bytes
@@ -178,7 +178,7 @@ type Signature = Uint8Array; // Signed message bytes
 
 ### Use Case 4: Get App Configuration
 
-This method allow the user to fetch the current app configuration.
+This method allows the user to fetch the current app configuration.
 
 ```typescript
 const { observable, cancel } = signerSolana.getAppConfiguration();
@@ -186,7 +186,7 @@ const { observable, cancel } = signerSolana.getAppConfiguration();
 
 #### **Returns**
 
-- `observable` Emits DeviceActionState updates, including the following details::
+- `observable` Emits DeviceActionState updates, including the following details:
 
 ```typescript
 type AppConfiguration = {
@@ -241,8 +241,8 @@ observable.subscribe({
       }
       case DeviceActionStatus.Error: {
         const { error } = state;
-        // Access the error here if occured
-        console.log("An error occured during the action: ", error);
+        // Access the error here if occurred
+        console.log("An error occurred during the action: ", error);
         break;
       }
     }
