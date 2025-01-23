@@ -5,25 +5,22 @@
  * @format
  */
 
+import {HIDTransportTester} from '_components/HIDTransportTester';
 import React from 'react';
-import {SafeAreaView, useColorScheme, View, Text} from 'react-native';
+import {SafeAreaView, useColorScheme, View} from 'react-native';
 
 function App(): React.JSX.Element {
   const isDarkMode = useColorScheme() === 'dark';
 
   const backgroundStyle = {
-    backgroundColor: isDarkMode ? 'white' : 'black',
+    backgroundColor: isDarkMode ? 'black' : 'white',
     flex: 1,
-  };
-
-  const textStyle = {
-    color: isDarkMode ? 'black' : 'white',
   };
 
   return (
     <View style={backgroundStyle}>
       <SafeAreaView>
-        <Text style={textStyle}>yo</Text>
+        <HIDTransportTester />
       </SafeAreaView>
     </View>
   );
