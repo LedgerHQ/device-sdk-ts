@@ -30,7 +30,7 @@ def safeExtGet(prop, fallback) {
 }
 
 android {
-  namespace "com.ledger.androidtransporthid"
+  namespace "com.ledger.com.ledger.androidtransporthid.androidtransporthid"
   compileSdkVersion safeExtGet("compileSdkVersion", 30)
 
   defaultConfig {

@@ -6,7 +6,6 @@ import com.facebook.react.bridge.NativeModule
 import com.facebook.react.bridge.ReactApplicationContext
 import com.facebook.react.uimanager.ReactShadowNode
 import com.facebook.react.uimanager.ViewManager
-import com.ledger.androidtransporthid.TransportHidModule
 
 class TransportHidPackage(): ReactPackage {
     override fun createNativeModules(context: ReactApplicationContext): MutableList<NativeModule> {
