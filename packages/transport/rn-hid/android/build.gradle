@@ -31,11 +31,11 @@ def safeExtGet(prop, fallback) {
 
 android {
   namespace "com.ledger.com.ledger.androidtransporthid.androidtransporthid"
-  compileSdkVersion safeExtGet("compileSdkVersion", 30)
+  compileSdkVersion safeExtGet("compileSdkVersion", 34)
 
   defaultConfig {
     minSdkVersion safeExtGet("minSdkVersion", 30)
-    targetSdkVersion safeExtGet("targetSdkVersion", 30)
+    targetSdkVersion safeExtGet("targetSdkVersion", 32)
     versionCode 1
     versionName "1.0"
   }
@@ -57,4 +57,10 @@ repositories {
 
 dependencies {
   implementation 'com.facebook.react:react-native:+'
+  implementation(libs.androidCoreKtx)
+  implementation(libs.bundles.kotlinBundle)
+  implementation(libs.bundles.koinAndroidBase)
+  implementation(libs.timber)
+  implementation(libs.koinCore)
+  implementation(libs.buffer)
 }
