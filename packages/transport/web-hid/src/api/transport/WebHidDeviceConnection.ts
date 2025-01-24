@@ -23,6 +23,8 @@ type WebHidDeviceConnectionConstructorArgs = {
   onConnectionTerminated: () => void;
 };
 
+type Timer = ReturnType<typeof setTimeout>;
+
 /**
  * Class to manage the connection with a USB HID device.
  * It sends APDU commands to the device and receives the responses.
@@ -44,7 +46,9 @@ export class WebHidDeviceConnection implements DeviceConnection {
   /** Flag to indicate if the connection is waiting for a reconnection */
   private waitingForReconnection = false;
   /** Timeout to wait for the device to reconnect */
-  private lostConnectionTimeout: NodeJS.Timeout | null = null;
+  private lostConnectionTimeout: Timer | null = null;
+  /** Time since disconnection */
+  private timeSinceDisconnection: Maybe<number> = Nothing;
   /** Flag to indicate if the connection is terminated */
   private terminated = false;
 
@@ -194,6 +198,7 @@ export class WebHidDeviceConnection implements DeviceConnection {
    * */
   public lostConnection() {
     this._logger.info("⏱️ Lost connection, starting timer");
+    this.timeSinceDisconnection = Maybe.of(Date.now());
     this.waitingForReconnection = true;
     this.lostConnectionTimeout = setTimeout(() => {
       this._logger.info("❌ Disconnection timeout, terminating connection");
@@ -214,7 +219,16 @@ export class WebHidDeviceConnection implements DeviceConnection {
     await device.open();
 
     if (this._pendingApdu.isJust()) {
-      this._sendApduSubject.error(new WebHidSendReportError());
+      if (this.timeSinceDisconnection.isJust()) {
+        const now = Date.now();
+        const timeSinceDisconnection =
+          now - this.timeSinceDisconnection.extract();
+        // 3 seconds timeout
+        if (timeSinceDisconnection > RECONNECT_DEVICE_TIMEOUT / 2) {
+          this._sendApduSubject.error(new WebHidSendReportError());
+        }
+      }
+      this.timeSinceDisconnection = Nothing;
     }
 
     this.waitingForReconnection = false;
