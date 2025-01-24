@@ -27,10 +27,8 @@ import {
 } from "@internal/app-binder/command/ProvideTokenInformationCommand";
 import { ProvideTransactionFieldDescriptionCommand } from "@internal/app-binder/command/ProvideTransactionFieldDescriptionCommand";
 import { ProvideTrustedNameCommand } from "@internal/app-binder/command/ProvideTrustedNameCommand";
-import { type EthErrorCodes } from "@internal/app-binder/command/utils/ethAppErrors";
 import { ProvideWeb3CheckCommand } from "@internal/app-binder/command/ProvideWeb3CheckCommand";
-import { type SetExternalPluginCommandErrorCodes } from "@internal/app-binder/command/SetExternalPluginCommand";
-import { type SetPluginCommandErrorCodes } from "@internal/app-binder/command/SetPluginCommand";
+import { type EthErrorCodes } from "@internal/app-binder/command/utils/ethAppErrors";
 import { type TransactionParserService } from "@internal/transaction/service/parser/TransactionParserService";
 
 import { type ProvideTransactionGenericContextTaskErrorCodes } from "./ProvideTransactionGenericContextTask";

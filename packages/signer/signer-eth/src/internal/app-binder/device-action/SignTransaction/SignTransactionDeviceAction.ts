@@ -40,8 +40,8 @@ import {
 } from "@internal/app-binder/task/BuildTransactionContextTask";
 import {
   GetWeb3CheckTask,
-  GetWeb3CheckTaskArgs,
-  GetWeb3CheckTaskResult,
+  type GetWeb3CheckTaskArgs,
+  type GetWeb3CheckTaskResult,
 } from "@internal/app-binder/task/GetWeb3CheckTask";
 import { ProvideTransactionContextTask } from "@internal/app-binder/task/ProvideTransactionContextTask";
 import {
@@ -70,7 +70,7 @@ export type MachineDependencies = {
     input: {
       contextModule: ContextModule;
       mapper: TransactionMapperService;
-      transaction: Transaction;
+      transaction: Uint8Array;
       options: TransactionOptions;
       derivationPath: string;
     };

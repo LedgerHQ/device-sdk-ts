@@ -1,4 +1,3 @@
-// https://github.com/LedgerHQ/app-ethereum/blob/develop/doc/ethapp.adoc#provide-trusted-name
 import {
   type Apdu,
   ApduBuilder,
@@ -7,21 +6,31 @@ import {
   type Command,
   type CommandResult,
   CommandResultFactory,
-  CommandUtils,
-  GlobalCommandErrorHandler,
 } from "@ledgerhq/device-management-kit";
+import { CommandErrorHelper } from "@ledgerhq/signer-utils";
+import { Maybe } from "purify-ts";
+
+import {
+  ETH_APP_ERRORS,
+  EthAppCommandErrorFactory,
+  type EthErrorCodes,
+} from "@internal/app-binder/command/utils/ethAppErrors";
 
 export type ProvideWeb3CheckCommandArgs = {
   payload: string;
-  certificate?: boolean;
 };
 
 /**
  * The command that provides a chunk of the trusted name to the device.
  */
 export class ProvideWeb3CheckCommand
-  implements Command<void, ProvideWeb3CheckCommandArgs>
+  implements Command<void, ProvideWeb3CheckCommandArgs, EthErrorCodes>
 {
+  private readonly errorHelper = new CommandErrorHelper<void, EthErrorCodes>(
+    ETH_APP_ERRORS,
+    EthAppCommandErrorFactory,
+  );
+
   constructor(private readonly args: ProvideWeb3CheckCommandArgs) {}
 
   getApdu(): Apdu {
@@ -37,14 +46,9 @@ export class ProvideWeb3CheckCommand
       .build();
   }
 
-  parseResponse(response: ApduResponse): CommandResult<void> {
-    if (!CommandUtils.isSuccessResponse(response)) {
-      return CommandResultFactory({
-        error: GlobalCommandErrorHandler.handle(response),
-      });
-    }
-    return CommandResultFactory({
-      data: undefined,
-    });
+  parseResponse(response: ApduResponse): CommandResult<void, EthErrorCodes> {
+    return Maybe.fromNullable(this.errorHelper.getError(response)).orDefault(
+      CommandResultFactory({ data: undefined }),
+    );
   }
 }

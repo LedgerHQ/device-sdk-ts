@@ -9,8 +9,8 @@ import {
   type InternalApi,
   InvalidStatusWordError,
   isSuccessCommandResult,
+  LoadCertificateCommand,
 } from "@ledgerhq/device-management-kit";
-import { LoadCertificateCommand } from "@ledgerhq/device-management-kit/src/api/command/os/ProvidePkiCertificateCommand.js";
 import { Just, type Maybe, Nothing } from "purify-ts";
 
 import { ProvideNFTInformationCommand } from "@internal/app-binder/command/ProvideNFTInformationCommand";
@@ -20,14 +20,9 @@ import {
 } from "@internal/app-binder/command/ProvideTokenInformationCommand";
 import { ProvideTrustedNameCommand } from "@internal/app-binder/command/ProvideTrustedNameCommand";
 import { ProvideWeb3CheckCommand } from "@internal/app-binder/command/ProvideWeb3CheckCommand";
-import {
-  SetExternalPluginCommand,
-  type SetExternalPluginCommandErrorCodes,
-} from "@internal/app-binder/command/SetExternalPluginCommand";
-import {
-  SetPluginCommand,
-  type SetPluginCommandErrorCodes,
-} from "@internal/app-binder/command/SetPluginCommand";
+import { SetExternalPluginCommand } from "@internal/app-binder/command/SetExternalPluginCommand";
+import { SetPluginCommand } from "@internal/app-binder/command/SetPluginCommand";
+import { type EthErrorCodes } from "@internal/app-binder/command/utils/ethAppErrors";
 
 import { SendPayloadInChunksTask } from "./SendPayloadInChunksTask";
 
@@ -86,7 +81,7 @@ export class ProvideTransactionContextTask {
   }: ClearSignContextSuccess): Promise<
     CommandResult<void | ProvideTokenInformationCommandResponse, EthErrorCodes>
   > {
-    //if a certificate is provided, we load it before sending the command
+    // if a certificate is provided, we load it before sending the command
     if (certificate) {
       await this.api.sendCommand(
         new LoadCertificateCommand({

@@ -7,15 +7,14 @@ import {
 } from "@ledgerhq/context-module";
 import {
   bufferToHexaString,
-  DmkError,
+  type DmkError,
   type InternalApi,
   isSuccessCommandResult,
 } from "@ledgerhq/device-management-kit";
 
-import { type Transaction } from "@api/model/Transaction";
 import { type TransactionOptions } from "@api/model/TransactionOptions";
 import { GetAddressCommand } from "@internal/app-binder/command/GetAddressCommand";
-import { GetConfigCommand } from "@internal/app-binder/command/GetConfigCommand";
+import { GetAppConfiguration } from "@internal/app-binder/command/GetAppConfigurationCommand";
 import { type TransactionMapperService } from "@internal/transaction/service/mapper/TransactionMapperService";
 
 export type GetWeb3CheckTaskResult =
@@ -30,7 +29,7 @@ export type GetWeb3CheckTaskResult =
 export type GetWeb3CheckTaskArgs = {
   readonly contextModule: ContextModule;
   readonly mapper: TransactionMapperService;
-  readonly transaction: Transaction;
+  readonly transaction: Uint8Array;
   readonly options: TransactionOptions;
   readonly derivationPath: string;
 };
@@ -49,7 +48,7 @@ export class GetWeb3CheckTask {
     });
     const { subset, serializedTransaction } = parsed.unsafeCoerce();
 
-    const configResult = await this.api.sendCommand(new GetConfigCommand());
+    const configResult = await this.api.sendCommand(new GetAppConfiguration());
     //check error
     if (!isSuccessCommandResult(configResult)) {
       return {
