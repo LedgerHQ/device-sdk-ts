@@ -1,8 +1,10 @@
 package com.ledger.androidtransporthid
+
 import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
 import android.hardware.usb.UsbManager
+import android.util.Log
 import com.facebook.react.bridge.LifecycleEventListener
 import com.facebook.react.bridge.Promise
 import com.facebook.react.bridge.ReactApplicationContext
@@ -15,30 +17,29 @@ import com.ledger.devicesdk.shared.androidMain.transport.usb.controller.UsbAttac
 import com.ledger.devicesdk.shared.androidMain.transport.usb.controller.UsbDetachedReceiverController
 import com.ledger.devicesdk.shared.androidMain.transport.usb.controller.UsbPermissionReceiver
 import com.ledger.devicesdk.shared.internal.event.SdkEventDispatcher
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import timber.log.Timber
 import kotlin.random.Random
 import kotlin.time.Duration.Companion.milliseconds
 
-class TransportHidModule(private val reactContext: ReactApplicationContext): ReactContextBaseJavaModule(reactContext), LifecycleEventListener {
+class TransportHidModule(private val reactContext: ReactApplicationContext) :
+    ReactContextBaseJavaModule(reactContext), LifecycleEventListener {
     override fun getName(): String = "RCTTransportHIDModule"
 
-    private var transport: AndroidUsbTransport? = null
     private var usbPermissionReceiver: UsbPermissionReceiver? = null
     private var usbAttachedReceiverController: UsbAttachedReceiverController? = null
     private var usbDetachedReceiverController: UsbDetachedReceiverController? = null
 
-    init {
-        reactContext.addLifecycleEventListener(this)
-        start()
-    }
-
-    private fun start() {
+    private val transport: AndroidUsbTransport? by lazy {
         val currentActivity = reactContext.currentActivity
         val currentApplication = currentActivity?.application
 
+        var transport: AndroidUsbTransport? = null
         if (currentApplication != null) {
+            Log.d("RNHIDModule", "init transport")
             transport = DefaultAndroidUsbTransport(
                 application = currentApplication,
                 usbManager = reactContext.getSystemService(Context.USB_SERVICE) as UsbManager,
@@ -56,7 +57,8 @@ class TransportHidModule(private val reactContext: ReactApplicationContext): Rea
                 eventDispatcher = SdkEventDispatcher(),
                 coroutineDispatcher = Dispatchers.IO,
                 loggerService = { logInfo ->
-                    Timber.tag(logInfo.tag).d(logInfo.message)
+                    Log.d("RNHIDModule[transport logs] " + logInfo.tag, logInfo.message)
+                    // Timber.tag("RNHIDModule " + logInfo.tag).d(logInfo.message)
                 },
                 scanDelay = 500.milliseconds,
             )
@@ -75,7 +77,15 @@ class TransportHidModule(private val reactContext: ReactApplicationContext): Rea
             usbPermissionReceiver!!.start()
             usbAttachedReceiverController!!.start()
             usbDetachedReceiverController!!.start()
+        } else {
+            Log.d("RNHIDModule", "init transport -> NULL")
         }
+        transport
+    }
+
+    init {
+        Log.d("RNHIDModule", "init")
+        reactContext.addLifecycleEventListener(this)
     }
 
     override fun onHostResume() {}
@@ -90,22 +100,25 @@ class TransportHidModule(private val reactContext: ReactApplicationContext): Rea
 
     @ReactMethod
     fun startDiscovering(promise: Promise) {
+        Log.d("RNHIDModule startDiscovering", "startDiscovering")
         try {
-            transport?.startScan()?.onEach {
+            transport!!.startScan().onEach {
+                Log.d("RNHIDModule startDiscovering", "Discovered device: $it")
                 sendEvent(reactContext, BridgeEvents.DiscoveredDevices(it))
-            }
+            }.launchIn(CoroutineScope(Dispatchers.Default))
             promise.resolve(null)
-        } catch(e: Exception) {
+        } catch (e: Exception) {
             promise.reject(e);
         }
     }
 
     @ReactMethod
     fun stopDiscovering(promise: Promise) {
+        Log.d("RNHIDModule stopDiscovering", "stopDiscovering")
         try {
-            transport?.stopScan()
+            transport!!.stopScan()
             promise.resolve(null)
-        } catch(e: Exception) {
+        } catch (e: Exception) {
             promise.reject(e)
         }
     }

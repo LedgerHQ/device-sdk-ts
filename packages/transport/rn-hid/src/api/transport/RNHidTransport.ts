@@ -12,7 +12,7 @@ import {
   type TransportIdentifier,
 } from "@ledgerhq/device-management-kit";
 import { type Either } from "purify-ts";
-import { filter, map, type Observable } from "rxjs";
+import { filter, map, type Observable, tap } from "rxjs";
 
 import { subscribeToDiscoveredDevicesEvents } from "@api/bridge/events";
 import { getObservableOfArraysNewItems } from "@api/bridge/getObservableOfArraysNewItems";
@@ -42,6 +42,9 @@ export class RNHidTransport implements Transport {
       subscribeToDiscoveredDevicesEvents(),
       (deviceA, deviceB) => deviceA.uid === deviceB.uid,
     ).pipe(
+      tap((device) => {
+        console.log("NEW nativedevice detected", device);
+      }),
       map((nativeDevice) =>
         mapNativeDiscoveryDeviceToTransportDiscoveredDevice(
           nativeDevice,
@@ -49,13 +52,20 @@ export class RNHidTransport implements Transport {
         ),
       ),
       filter((device) => device != null),
+      tap((device) => {
+        console.log("NEW device detected", device);
+      }),
     );
-    NativeTransportModule.startDiscovering();
+    NativeTransportModule.startDiscovering().catch((error) => {
+      console.error("startDiscovering error", error);
+    });
     return observable;
   }
 
   stopDiscovering(): void {
-    NativeTransportModule.stopDiscovering();
+    NativeTransportModule.stopDiscovering().catch((error) => {
+      console.error("stopDiscovering error", error);
+    });
   }
 
   listenToKnownDevices(): Observable<TransportDiscoveredDevice[]> {

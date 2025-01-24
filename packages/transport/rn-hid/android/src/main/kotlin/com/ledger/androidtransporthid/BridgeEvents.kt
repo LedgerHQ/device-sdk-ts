@@ -16,7 +16,7 @@ sealed class EventParams {
 sealed class BridgeEvents(val eventName: String, val params: EventParams) {
     data class DiscoveredDevices(
         val devices: List<DiscoveryDevice>,
-    ): BridgeEvents("DiscoveredDevice", EventParams.WArray(devices.toWritableArray()))
+    ): BridgeEvents("DiscoveredDevices", EventParams.WArray(devices.toWritableArray()))
 }
 
 fun sendEvent(reactContext: ReactContext, bridgeEvent: BridgeEvents) {
