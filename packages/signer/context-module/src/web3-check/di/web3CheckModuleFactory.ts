@@ -1,6 +1,6 @@
 import { ContainerModule } from "inversify";
 
-import { HttpWeb3CheckDataSource } from "@/web3-check/datasource/HttpWeb3CheckDataSource";
+import { HttpWeb3CheckDataSource } from "@/web3-check/data/HttpWeb3CheckDataSource";
 import { DefaultWeb3CheckContextLoader } from "@/web3-check/domain/DefaultWeb3CheckLoader";
 
 import { web3CheckTypes } from "./web3CheckTypes";

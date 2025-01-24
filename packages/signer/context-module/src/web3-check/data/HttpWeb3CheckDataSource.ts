@@ -37,7 +37,7 @@ export class HttpWeb3CheckDataSource implements Web3CheckDataSource {
         url: `${this.config.cal.web3checksUrl}`,
         data: requestDto,
         headers: {
-          'x-api-key': 'oo9TP3XqBSAQ5JNDN6VWdUCtGdtI4bx0',
+          "x-api-key": "oo9TP3XqBSAQ5JNDN6VWdUCtGdtI4bx0",
           "X-Ledger-Client-Version": `context-module/${PACKAGE.version}`,
         },
       });
@@ -51,12 +51,7 @@ export class HttpWeb3CheckDataSource implements Web3CheckDataSource {
       );
     }
 
-    if (
-      web3CheckDto.public_key_id == null ||
-      typeof web3CheckDto.public_key_id != "string" ||
-      web3CheckDto.descriptor == null ||
-      typeof web3CheckDto.descriptor != "string"
-    ) {
+    if (!this.isWeb3CheckDto(web3CheckDto)) {
       return Left(
         new Error(
           "[ContextModule] HttpWeb3CheckDataSource: Cannot exploit Web3 checks data received",
@@ -70,5 +65,18 @@ export class HttpWeb3CheckDataSource implements Web3CheckDataSource {
     };
 
     return Right(result);
+  }
+
+  private isWeb3CheckDto(dto: unknown): dto is Web3CheckDto {
+    return (
+      dto != null &&
+      typeof dto == "object" &&
+      "public_key_id" in dto &&
+      dto.public_key_id != null &&
+      typeof dto.public_key_id == "string" &&
+      "descriptor" in dto &&
+      dto.descriptor != null &&
+      typeof dto.descriptor == "string"
+    );
   }
 }

@@ -1,7 +1,7 @@
 import { inject, injectable } from "inversify";
 import { Either, Left } from "purify-ts";
 
-import { type Web3CheckDataSource } from "@/web3-check/datasource/Web3CheckDataSource";
+import { type Web3CheckDataSource } from "@/web3-check/data/Web3CheckDataSource";
 import { web3CheckTypes } from "@/web3-check/di/web3CheckTypes";
 
 import { Web3CheckContextLoader } from "./Web3CheckContextLoader";
