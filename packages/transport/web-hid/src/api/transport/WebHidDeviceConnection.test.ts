@@ -120,7 +120,7 @@ describe("WebHidDeviceConnection", () => {
   });
 
   describe("anticipating loss of connection after sending an APDU", () => {
-    test("sendApdu(whatever, true) should wait for reconnection before resolving if the response is a success", async () => {
+    it("sendApdu(whatever, true) should wait for reconnection before resolving if the response is a success", async () => {
       // given
       device.sendReport = jest.fn(() =>
         Promise.resolve(
@@ -130,12 +130,14 @@ describe("WebHidDeviceConnection", () => {
           } as HIDInputReportEvent),
         ),
       );
+
       const connection = new WebHidDeviceConnection(
         { device, apduSender, apduReceiver, onConnectionTerminated, deviceId },
         logger,
       );
 
       let hasResolved = false;
+
       const responsePromise = connection
         .sendApdu(Uint8Array.from([]), true)
         .then((response) => {
@@ -164,7 +166,7 @@ describe("WebHidDeviceConnection", () => {
       );
     });
 
-    test("sendApdu(whatever, true) should not wait for reconnection if the response is not a success", async () => {
+    it("sendApdu(whatever, true) should not wait for reconnection if the response is not a success", async () => {
       // given
       device.sendReport = jest.fn(() =>
         Promise.resolve(
@@ -191,7 +193,7 @@ describe("WebHidDeviceConnection", () => {
       );
     });
 
-    test("sendApdu(whatever, true) should return an error if the device gets disconnected while waiting for reconnection", async () => {
+    it("sendApdu(whatever, true) should return an error if the device gets disconnected while waiting for reconnection", async () => {
       // given
       device.sendReport = jest.fn(() =>
         Promise.resolve(
@@ -220,7 +222,7 @@ describe("WebHidDeviceConnection", () => {
   });
 
   describe("connection lost before sending an APDU", () => {
-    test("sendApdu(whatever, false) should return an error if the device connection has been lost and times out", async () => {
+    it("sendApdu(whatever, false) should return an error if the device connection has been lost and times out", async () => {
       // given
       device.sendReport = jest.fn(() =>
         Promise.resolve(
@@ -246,7 +248,7 @@ describe("WebHidDeviceConnection", () => {
       expect(response).toEqual(Left(new ReconnectionFailedError()));
     });
 
-    test("sendApdu(whatever, false) should wait for reconnection to resolve", async () => {
+    it("sendApdu(whatever, false) should wait for reconnection to resolve", async () => {
       // given
       device.sendReport = jest.fn(() =>
         Promise.resolve(
@@ -283,7 +285,13 @@ describe("WebHidDeviceConnection", () => {
 
       const response = await responsePromise;
 
-      expect(response).toEqual(Left(new WebHidSendReportError()));
+      expect(response).toEqual(
+        Left(
+          new WebHidSendReportError(
+            new Error("Device disconnected while waiting for device response"),
+          ),
+        ),
+      );
     });
   });
 });
