@@ -1,4 +1,4 @@
-import { NativeModules, Platform } from "react-native";
+import { Platform } from "react-native";
 import {
   type ConnectError,
   type DeviceId,
@@ -12,47 +12,64 @@ import {
   type TransportIdentifier,
 } from "@ledgerhq/device-management-kit";
 import { type Either } from "purify-ts";
-import { type Observable } from "rxjs";
+import { filter, map, type Observable } from "rxjs";
 
-import { NATIVE_MODULE_NAME } from "@api/bridge/constants";
-
-const NativeTransportModule = NativeModules[NATIVE_MODULE_NAME];
-
-export const rnHidTransportIdentifier = "RN_HID";
+import { subscribeToDiscoveredDevicesEvents } from "@api/bridge/events";
+import { getObservableOfArraysNewItems } from "@api/bridge/getObservableOfArraysNewItems";
+import { mapNativeDiscoveryDeviceToTransportDiscoveredDevice } from "@api/bridge/mapper";
+import { NativeTransportModule } from "@api/bridge/nativeModule";
+import { TRANSPORT_IDENTIFIER } from "@api/transport/rnHidTransportIdentifier";
 
 export class RNHidTransport implements Transport {
   constructor(
-    // @ts-expect-error
     private readonly _deviceModelDataSource: DeviceModelDataSource,
-    // @ts-expect-error
+    // @ts-expect-error not used yet
     private readonly _loggerServiceFactory: (
       tag: string,
     ) => LoggerPublisherService,
   ) {}
+
   getIdentifier(): TransportIdentifier {
-    return rnHidTransportIdentifier;
+    return TRANSPORT_IDENTIFIER;
   }
+
   isSupported(): boolean {
     return Platform.OS === "android" && !!NativeTransportModule;
   }
+
   startDiscovering(): Observable<TransportDiscoveredDevice> {
-    // NativeEventEmitter listen device
-    throw new Error("Method not implemented.");
+    const observable = getObservableOfArraysNewItems(
+      subscribeToDiscoveredDevicesEvents(),
+      (deviceA, deviceB) => deviceA.uid === deviceB.uid,
+    ).pipe(
+      map((nativeDevice) =>
+        mapNativeDiscoveryDeviceToTransportDiscoveredDevice(
+          nativeDevice,
+          this._deviceModelDataSource,
+        ),
+      ),
+      filter((device) => device != null),
+    );
+    NativeTransportModule.startDiscovering();
+    return observable;
   }
+
   stopDiscovering(): void {
-    // NativeEventEmitter stop listen device
-    throw new Error("Method not implemented.");
+    NativeTransportModule.stopDiscovering();
   }
+
   listenToKnownDevices(): Observable<TransportDiscoveredDevice[]> {
     // NativeEventEmitter start listen
     throw new Error("Method not implemented.");
   }
+
   connect(_params: {
     deviceId: DeviceId;
   }): Promise<Either<ConnectError, TransportConnectedDevice>> {
     // connect
     throw new Error("Method not implemented.");
   }
+
   disconnect(_params: {
     connectedDevice: TransportConnectedDevice;
   }): Promise<Either<DmkError, void>> {
