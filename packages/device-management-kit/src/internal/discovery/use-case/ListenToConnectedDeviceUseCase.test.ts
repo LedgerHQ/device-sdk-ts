@@ -11,6 +11,10 @@ import { AxiosManagerApiDataSource } from "@internal/manager-api/data/AxiosManag
 import { type ManagerApiDataSource } from "@internal/manager-api/data/ManagerApiDataSource";
 import { DefaultManagerApiService } from "@internal/manager-api/service/DefaultManagerApiService";
 import { type ManagerApiService } from "@internal/manager-api/service/ManagerApiService";
+import { DefaultSecureChannelDataSource } from "@internal/secure-channel/data/DefaultSecureChannelDataSource";
+import { type SecureChannelDataSource } from "@internal/secure-channel/data/SecureChannelDataSource";
+import { DefaultSecureChannelService } from "@internal/secure-channel/service/DefaultSecureChannelService";
+import { type SecureChannelService } from "@internal/secure-channel/service/SecureChannelService";
 
 jest.mock("@internal/manager-api/data/AxiosManagerApiDataSource");
 
@@ -18,6 +22,8 @@ let logger: LoggerPublisherService;
 let sessionService: DeviceSessionService;
 let managerApiDataSource: ManagerApiDataSource;
 let managerApi: ManagerApiService;
+let secureChannelDataSource: SecureChannelDataSource;
+let secureChannel: SecureChannelService;
 
 const fakeSessionId = "test-list-connected-device-session-id";
 
@@ -29,6 +35,10 @@ describe("ListenToConnectedDevice", () => {
     );
     managerApiDataSource = new AxiosManagerApiDataSource({} as DmkConfig);
     managerApi = new DefaultManagerApiService(managerApiDataSource);
+    secureChannelDataSource = new DefaultSecureChannelDataSource(
+      {} as DmkConfig,
+    );
+    secureChannel = new DefaultSecureChannelService(secureChannelDataSource);
     sessionService = new DefaultDeviceSessionService(() => logger);
   });
 
@@ -41,6 +51,7 @@ describe("ListenToConnectedDevice", () => {
       { id: fakeSessionId, connectedDevice },
       () => logger,
       managerApi,
+      secureChannel,
     );
     const observable = new ListenToConnectedDeviceUseCase(
       sessionService,

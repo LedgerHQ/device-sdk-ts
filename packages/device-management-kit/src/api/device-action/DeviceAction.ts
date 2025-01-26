@@ -5,6 +5,7 @@ import { type CommandResult } from "@api/command/model/CommandResult";
 import { type DeviceSessionState } from "@api/device-session/DeviceSessionState";
 import { type DmkError } from "@api/Error";
 import { type ManagerApiService } from "@internal/manager-api/service/ManagerApiService";
+import { type SecureChannelService } from "@internal/secure-channel/service/SecureChannelService";
 
 import { type DeviceActionState } from "./model/DeviceActionState";
 
@@ -18,6 +19,7 @@ export type InternalApi = {
     state: DeviceSessionState,
   ) => DeviceSessionState;
   readonly getManagerApiService: () => ManagerApiService;
+  readonly getSecureChannelService: () => SecureChannelService;
 };
 
 export type DeviceActionIntermediateValue = {

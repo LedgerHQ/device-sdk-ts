@@ -22,6 +22,7 @@ import { type LoggerPublisherService } from "@api/logger-publisher/service/Logge
 import { type TransportConnectedDevice } from "@api/transport/model/TransportConnectedDevice";
 import { DEVICE_SESSION_REFRESH_INTERVAL } from "@internal/device-session/data/DeviceSessionRefresherConst";
 import { type ManagerApiService } from "@internal/manager-api/service/ManagerApiService";
+import { type SecureChannelService } from "@internal/secure-channel/service/SecureChannelService";
 
 import { DeviceSessionRefresher } from "./DeviceSessionRefresher";
 
@@ -39,11 +40,13 @@ export class DeviceSession {
   private readonly _deviceState: BehaviorSubject<DeviceSessionState>;
   private readonly _refresher: DeviceSessionRefresher;
   private readonly _managerApiService: ManagerApiService;
+  private readonly _secureChannelService: SecureChannelService;
 
   constructor(
     { connectedDevice, id = uuidv4() }: SessionConstructorArgs,
     loggerModuleFactory: (tag: string) => LoggerPublisherService,
     managerApiService: ManagerApiService,
+    secureChannelService: SecureChannelService,
   ) {
     this._id = id;
     this._connectedDevice = connectedDevice;
@@ -70,6 +73,7 @@ export class DeviceSession {
       loggerModuleFactory("device-session-refresher"),
     );
     this._managerApiService = managerApiService;
+    this._secureChannelService = secureChannelService;
   }
 
   public get id() {
@@ -169,6 +173,7 @@ export class DeviceSession {
         return this._deviceState.getValue();
       },
       getManagerApiService: () => this._managerApiService,
+      getSecureChannelService: () => this._secureChannelService,
     });
 
     return {
