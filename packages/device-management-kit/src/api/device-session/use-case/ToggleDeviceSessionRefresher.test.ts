@@ -9,6 +9,9 @@ import { DefaultLoggerPublisherService } from "@internal/logger-publisher/servic
 import { AxiosManagerApiDataSource } from "@internal/manager-api/data/AxiosManagerApiDataSource";
 import { DefaultManagerApiService } from "@internal/manager-api/service/DefaultManagerApiService";
 import { type ManagerApiService } from "@internal/manager-api/service/ManagerApiService";
+import { DefaultSecureChannelDataSource } from "@internal/secure-channel/data/DefaultSecureChannelDataSource";
+import { DefaultSecureChannelService } from "@internal/secure-channel/service/DefaultSecureChannelService";
+import { type SecureChannelService } from "@internal/secure-channel/service/SecureChannelService";
 
 import { ToggleDeviceSessionRefresherUseCase } from "./ToggleDeviceSessionRefresher";
 
@@ -17,6 +20,7 @@ let sessionService: DeviceSessionService;
 let useCase: ToggleDeviceSessionRefresherUseCase;
 let deviceSession: DeviceSession;
 let managerApi: ManagerApiService;
+let secureChannel: SecureChannelService;
 describe("ToggleDeviceSessionRefresherUseCase", () => {
   beforeEach(() => {
     logger = new DefaultLoggerPublisherService(
@@ -26,6 +30,9 @@ describe("ToggleDeviceSessionRefresherUseCase", () => {
     sessionService = new DefaultDeviceSessionService(() => logger);
     managerApi = new DefaultManagerApiService(
       new AxiosManagerApiDataSource({} as DmkConfig),
+    );
+    secureChannel = new DefaultSecureChannelService(
+      new DefaultSecureChannelDataSource({} as DmkConfig),
     );
   });
 
@@ -40,6 +47,7 @@ describe("ToggleDeviceSessionRefresherUseCase", () => {
         { id: "fakeSessionId" },
         () => logger,
         managerApi,
+        secureChannel,
       );
       sessionService.addDeviceSession(deviceSession);
       useCase = new ToggleDeviceSessionRefresherUseCase(

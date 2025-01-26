@@ -1,7 +1,7 @@
 import { type DmkError } from "@api/Error";
 
-export class HttpFetchApiError implements DmkError {
-  _tag = "FetchError";
+export class WebSocketConnectionError implements DmkError {
+  _tag = "WebSocketConnectionError";
   originalError?: unknown;
 
   constructor(public readonly error: unknown) {

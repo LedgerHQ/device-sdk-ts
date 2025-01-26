@@ -10,6 +10,10 @@ import { AxiosManagerApiDataSource } from "@internal/manager-api/data/AxiosManag
 import { type ManagerApiDataSource } from "@internal/manager-api/data/ManagerApiDataSource";
 import { DefaultManagerApiService } from "@internal/manager-api/service/DefaultManagerApiService";
 import type { ManagerApiService } from "@internal/manager-api/service/ManagerApiService";
+import { DefaultSecureChannelDataSource } from "@internal/secure-channel/data/DefaultSecureChannelDataSource";
+import { type SecureChannelDataSource } from "@internal/secure-channel/data/SecureChannelDataSource";
+import { DefaultSecureChannelService } from "@internal/secure-channel/service/DefaultSecureChannelService";
+import { type SecureChannelService } from "@internal/secure-channel/service/SecureChannelService";
 
 import { DefaultDeviceSessionService } from "./DefaultDeviceSessionService";
 
@@ -19,8 +23,11 @@ jest.mock("@internal/manager-api/data/AxiosManagerApiDataSource");
 let sessionService: DefaultDeviceSessionService;
 let loggerService: DefaultLoggerPublisherService;
 let deviceSession: DeviceSession;
-let managerApi: ManagerApiService;
 let managerApiDataSource: ManagerApiDataSource;
+let managerApi: ManagerApiService;
+let secureChannelDataSource: SecureChannelDataSource;
+let secureChannel: SecureChannelService;
+
 describe("DefaultDeviceSessionService", () => {
   beforeEach(() => {
     jest.restoreAllMocks();
@@ -28,11 +35,16 @@ describe("DefaultDeviceSessionService", () => {
     sessionService = new DefaultDeviceSessionService(() => loggerService);
     managerApiDataSource = new AxiosManagerApiDataSource({} as DmkConfig);
     managerApi = new DefaultManagerApiService(managerApiDataSource);
+    secureChannelDataSource = new DefaultSecureChannelDataSource(
+      {} as DmkConfig,
+    );
+    secureChannel = new DefaultSecureChannelService(secureChannelDataSource);
 
     deviceSession = deviceSessionStubBuilder(
       {},
       () => loggerService,
       managerApi,
+      secureChannel,
     );
   });
 
@@ -106,6 +118,7 @@ describe("DefaultDeviceSessionService", () => {
       { id: "last-session" },
       () => loggerService,
       managerApi,
+      secureChannel,
     );
     const emittedSessions: DeviceSession[] = [];
     sessionService.addDeviceSession(deviceSession);

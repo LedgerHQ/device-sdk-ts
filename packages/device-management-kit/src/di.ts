@@ -16,8 +16,9 @@ import { managerApiModuleFactory } from "@internal/manager-api/di/managerApiModu
 import {
   DEFAULT_MANAGER_API_BASE_URL,
   DEFAULT_MOCK_SERVER_BASE_URL,
-  DEFAULT_WEB_SOCKET_BASE_URL,
 } from "@internal/manager-api/model/Const";
+import { secureChannelModuleFactory } from "@internal/secure-channel/di/secureChannelModule";
+import { DEFAULT_WEB_SOCKET_BASE_URL } from "@internal/secure-channel/model/Const";
 import { sendModuleFactory } from "@internal/send/di/sendModule";
 import { transportModuleFactory } from "@internal/transport//di/transportModule";
 
@@ -51,6 +52,7 @@ export const makeContainer = ({
     deviceModelModuleFactory({ stub }),
     transportModuleFactory({ stub, transports, config }),
     managerApiModuleFactory({ stub, config }),
+    secureChannelModuleFactory({ stub, config }),
     discoveryModuleFactory({ stub }),
     loggerModuleFactory({ subscribers: loggers }),
     deviceSessionModuleFactory({ stub }),

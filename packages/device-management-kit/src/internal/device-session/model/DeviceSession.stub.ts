@@ -5,11 +5,13 @@ import {
   type SessionConstructorArgs,
 } from "@internal/device-session/model/DeviceSession";
 import type { ManagerApiService } from "@internal/manager-api/service/ManagerApiService";
+import { type SecureChannelService } from "@internal/secure-channel/service/SecureChannelService";
 
 export const deviceSessionStubBuilder = (
   props: Partial<SessionConstructorArgs> = {},
   loggerFactory: (tag: string) => LoggerPublisherService,
   managerApi: ManagerApiService,
+  secureChannel: SecureChannelService,
 ) =>
   new DeviceSession(
     {
@@ -19,4 +21,5 @@ export const deviceSessionStubBuilder = (
     },
     loggerFactory,
     managerApi,
+    secureChannel,
   );
