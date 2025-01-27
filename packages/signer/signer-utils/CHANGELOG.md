@@ -1,5 +1,14 @@
 # @ledgerhq/signer-utils
 
+## 1.0.3
+
+### Patch Changes
+
+- [#581](https://github.com/LedgerHQ/device-sdk-ts/pull/581) [`a00e30c`](https://github.com/LedgerHQ/device-sdk-ts/commit/a00e30cc1559d364a4654668a6492945de1163f5) Thanks [@jdabbech-ledger](https://github.com/jdabbech-ledger)! - Create CommandErrorHelper to handle command errors
+
+- Updated dependencies [[`a7984cd`](https://github.com/LedgerHQ/device-sdk-ts/commit/a7984cdcbd8e18aec614d6f07fda293971bd61eb), [`a56740a`](https://github.com/LedgerHQ/device-sdk-ts/commit/a56740a608dc95ab3545d90666c71aeff2f67212), [`1bf2166`](https://github.com/LedgerHQ/device-sdk-ts/commit/1bf2166776ed16c2adf8a4d9d796a567629f983b), [`8f6907a`](https://github.com/LedgerHQ/device-sdk-ts/commit/8f6907a9fd99546d88520f2d167485ef59f8ca2e), [`df4ef37`](https://github.com/LedgerHQ/device-sdk-ts/commit/df4ef37d39a2e214a06930b7ff3c09cf22befb7f), [`1153a78`](https://github.com/LedgerHQ/device-sdk-ts/commit/1153a78b1b56f1767dae380466a8bc7fd86fec73), [`eafad9e`](https://github.com/LedgerHQ/device-sdk-ts/commit/eafad9e1b39573ad3321413b7adaa0814245da96), [`cc342e5`](https://github.com/LedgerHQ/device-sdk-ts/commit/cc342e5335ef1bc91b82967f6f59808796f88b36), [`8799e83`](https://github.com/LedgerHQ/device-sdk-ts/commit/8799e83c92baeb5ccba53546a3d59867d3d6185c)]:
+  - @ledgerhq/device-management-kit@0.6.0
+
 ## 1.0.2
 
 ### Patch Changes

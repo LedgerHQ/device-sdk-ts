@@ -1,5 +1,29 @@
 # @ledgerhq/device-management-kit
 
+## 0.6.0
+
+### Minor Changes
+
+- [#559](https://github.com/LedgerHQ/device-sdk-ts/pull/559) [`a56740a`](https://github.com/LedgerHQ/device-sdk-ts/commit/a56740a608dc95ab3545d90666c71aeff2f67212) Thanks [@valpinkman](https://github.com/valpinkman)! - Extract Transports to their own module
+
+- [#548](https://github.com/LedgerHQ/device-sdk-ts/pull/548) [`8f6907a`](https://github.com/LedgerHQ/device-sdk-ts/commit/8f6907a9fd99546d88520f2d167485ef59f8ca2e) Thanks [@valpinkman](https://github.com/valpinkman)! - Add new toggle for the device session refresher
+
+- [#608](https://github.com/LedgerHQ/device-sdk-ts/pull/608) [`1153a78`](https://github.com/LedgerHQ/device-sdk-ts/commit/1153a78b1b56f1767dae380466a8bc7fd86fec73) Thanks [@jiyuzhuang](https://github.com/jiyuzhuang)! - Add WebSocket data source
+
+### Patch Changes
+
+- [#581](https://github.com/LedgerHQ/device-sdk-ts/pull/581) [`a7984cd`](https://github.com/LedgerHQ/device-sdk-ts/commit/a7984cdcbd8e18aec614d6f07fda293971bd61eb) Thanks [@jdabbech-ledger](https://github.com/jdabbech-ledger)! - Fix CommandUtils static calls
+
+- [#574](https://github.com/LedgerHQ/device-sdk-ts/pull/574) [`1bf2166`](https://github.com/LedgerHQ/device-sdk-ts/commit/1bf2166776ed16c2adf8a4d9d796a567629f983b) Thanks [@jiyuzhuang](https://github.com/jiyuzhuang)! - Get manager API service from internal API
+
+- [#581](https://github.com/LedgerHQ/device-sdk-ts/pull/581) [`df4ef37`](https://github.com/LedgerHQ/device-sdk-ts/commit/df4ef37d39a2e214a06930b7ff3c09cf22befb7f) Thanks [@jdabbech-ledger](https://github.com/jdabbech-ledger)! - Expose CommandSuccessResult
+
+- [#469](https://github.com/LedgerHQ/device-sdk-ts/pull/469) [`eafad9e`](https://github.com/LedgerHQ/device-sdk-ts/commit/eafad9e1b39573ad3321413b7adaa0814245da96) Thanks [@jdabbech-ledger](https://github.com/jdabbech-ledger)! - Add manager api calls for secure channel
+
+- [#559](https://github.com/LedgerHQ/device-sdk-ts/pull/559) [`cc342e5`](https://github.com/LedgerHQ/device-sdk-ts/commit/cc342e5335ef1bc91b82967f6f59808796f88b36) Thanks [@valpinkman](https://github.com/valpinkman)! - Update DeviceSession to change the state of the device in case of an error
+
+- [#621](https://github.com/LedgerHQ/device-sdk-ts/pull/621) [`8799e83`](https://github.com/LedgerHQ/device-sdk-ts/commit/8799e83c92baeb5ccba53546a3d59867d3d6185c) Thanks [@aussedatlo](https://github.com/aussedatlo)! - Add a list of compatible apps for OpenAppDA and SendCommandInAppDA
+
 ## 0.5.1
 
 ### Patch Changes
