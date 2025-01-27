@@ -302,7 +302,6 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
               actions: [
                 assign({
                   _internalState: ({ event, context }) => {
-                    console.log(event.output);
                     return {
                       ...context._internalState,
                       web3Check: event.output.web3Check,
@@ -326,7 +325,6 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
               mapper: context.input.mapper,
               transaction: context.input.transaction,
               options: context.input.options,
-              clearSignContexts: context._internalState.clearSignContexts,
               challenge: context._internalState.challenge,
             }),
             onDone: {
