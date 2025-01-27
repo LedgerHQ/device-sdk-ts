@@ -1,3 +1,4 @@
+/* eslint-disable react-native/no-inline-styles */
 import {
   defaultApduReceiverServiceStubBuilder,
   defaultApduSenderServiceStubBuilder,
@@ -7,7 +8,7 @@ import {
   type TransportDiscoveredDevice,
 } from '@ledgerhq/device-management-kit';
 import {RNHidTransportFactory} from '@ledgerhq/device-transport-kit-react-native-hid';
-import React, {useEffect, useRef, useState} from 'react';
+import React, {useEffect, useMemo, useState} from 'react';
 import {
   View,
   Text,
@@ -54,6 +55,7 @@ const buttonStyle = {
   padding: 10,
   margin: 10,
   backgroundColor: 'lightblue',
+  flex: 1,
 };
 
 function useTextStyle() {
@@ -61,8 +63,18 @@ function useTextStyle() {
   return isDarkMode ? {color: 'white'} : {color: 'black'};
 }
 
-const Button = ({onPress, title}: {onPress: () => void; title: string}) => (
-  <TouchableOpacity onPress={onPress} style={buttonStyle}>
+const Button = ({
+  onPress,
+  title,
+  disabled,
+}: {
+  onPress: () => void;
+  title: string;
+  disabled?: boolean;
+}) => (
+  <TouchableOpacity
+    onPress={disabled ? () => {} : onPress}
+    style={[buttonStyle, disabled ? {opacity: 0.5} : {}]}>
     <Text>{title}</Text>
   </TouchableOpacity>
 );
@@ -95,52 +107,62 @@ const DiscoveredDevice: React.FC<{
   );
 };
 
+type DiscoveryMode = 'none' | 'discovering' | 'listeningKnownDevice';
+
 export function HIDTransportTester() {
-  const isDarkMode = useColorScheme() === 'dark';
-  const textStyle = isDarkMode ? {color: 'white'} : {color: 'black'};
-  const [isDiscovering, setIsDiscovering] = useState<boolean>(false);
+  const [discoveryMode, setDiscoveryMode] = useState<DiscoveryMode>('none');
 
   const [discoveredDevices, setDiscoveredDevices] = useState<
     Array<TransportDiscoveredDevice>
   >([]);
 
-  const discoverySubscription = useRef<Subscription | null>(null);
-
-  const startDiscovering = () => {
-    setIsDiscovering(true);
-    discoverySubscription.current = hidTransport.startDiscovering().subscribe({
-      next: device => {
-        setDiscoveredDevices(devices => [...devices, device]);
-      },
-      complete: () => {
-        setIsDiscovering(false);
-      },
-    });
-  };
-
-  const stopDiscovering = () => {
-    setIsDiscovering(false);
-    setDiscoveredDevices([]);
-    discoverySubscription.current?.unsubscribe();
-    hidTransport.stopDiscovering();
-  };
-
   useEffect(() => {
-    return () => {
-      discoverySubscription.current?.unsubscribe();
-    };
-  }, []);
+    let subscription: Subscription;
+    switch (discoveryMode) {
+      case 'discovering':
+        subscription = hidTransport.startDiscovering().subscribe({
+          next: discoveredDevice => {
+            setDiscoveredDevices(prev => [...prev, discoveredDevice]);
+          },
+        });
+        return () => {
+          subscription.unsubscribe();
+          hidTransport.stopDiscovering();
+          setDiscoveredDevices([]);
+        };
+      case 'listeningKnownDevice':
+        subscription = hidTransport.listenToKnownDevices().subscribe({
+          next: setDiscoveredDevices,
+        });
+        return () => {
+          subscription.unsubscribe();
+          setDiscoveredDevices([]);
+        };
+      case 'none':
+        return;
+    }
+  }, [discoveryMode]);
+
+  const buttons = useMemo(
+    () =>
+      (
+        ['none', 'discovering', 'listeningKnownDevice'] as Array<DiscoveryMode>
+      ).map(mode => (
+        <Button
+          key={mode}
+          onPress={() => setDiscoveryMode(mode)}
+          disabled={discoveryMode === mode}
+          title={mode}
+        />
+      )),
+    [discoveryMode],
+  );
 
   return (
-    <View>
-      {isDiscovering ? (
-        <>
-          <Button onPress={stopDiscovering} title="stop discovering" />
-          <Text style={textStyle}>Discovering...</Text>
-        </>
-      ) : (
-        <Button onPress={startDiscovering} title="start discovering" />
-      )}
+    <View style={{height: '100%'}}>
+      <View style={{flexDirection: 'row', alignItems: 'center'}}>
+        {buttons}
+      </View>
       <ScrollView>
         {discoveredDevices.map(discoveredDevice => (
           <DiscoveredDevice

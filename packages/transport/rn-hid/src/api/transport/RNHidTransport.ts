@@ -1,4 +1,3 @@
-import { Platform } from "react-native";
 import {
   type ConnectError,
   type DeviceId,
@@ -23,6 +22,7 @@ export class RNHidTransport implements Transport {
   private _loggerService: LoggerPublisherService;
 
   constructor(
+    private readonly _isSupported: boolean,
     private readonly _deviceModelDataSource: DeviceModelDataSource,
     private readonly _loggerServiceFactory: (
       tag: string,
@@ -52,7 +52,7 @@ export class RNHidTransport implements Transport {
   }
 
   isSupported(): boolean {
-    return Platform.OS === "android";
+    return this._isSupported;
   }
 
   startDiscovering(): Observable<TransportDiscoveredDevice> {
