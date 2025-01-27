@@ -5,72 +5,96 @@ import {
   type DeviceModelDataSource,
   type DmkError,
   type LoggerPublisherService,
+  LogLevel,
   type Transport,
   type TransportConnectedDevice,
   type TransportDiscoveredDevice,
-  type TransportFactory,
   type TransportIdentifier,
 } from "@ledgerhq/device-management-kit";
 import { type Either } from "purify-ts";
-import { filter, map, type Observable, tap } from "rxjs";
+import { Observable } from "rxjs";
 
-import { subscribeToDiscoveredDevicesEvents } from "@api/bridge/events";
-import { getObservableOfArraysNewItems } from "@api/bridge/getObservableOfArraysNewItems";
-import { mapNativeDiscoveryDeviceToTransportDiscoveredDevice } from "@api/bridge/mapper";
-import { NativeTransportModule } from "@api/bridge/nativeModule";
+import { getObservableOfArraysNewItems } from "@api/helpers/getObservableOfArraysNewItems";
 import { TRANSPORT_IDENTIFIER } from "@api/transport/rnHidTransportIdentifier";
 
+import { type NativeModuleWrapper } from "./NativeModuleWrapper";
+
 export class RNHidTransport implements Transport {
+  private _loggerService: LoggerPublisherService;
+
   constructor(
     private readonly _deviceModelDataSource: DeviceModelDataSource,
-    // @ts-expect-error not used yet
     private readonly _loggerServiceFactory: (
       tag: string,
     ) => LoggerPublisherService,
-  ) {}
+    private readonly _nativeModuleWrapper: NativeModuleWrapper,
+  ) {
+    this._loggerService = this._loggerServiceFactory("RNHidTransport");
+    this._nativeModuleWrapper.subscribeToTransportLogs().subscribe((log) => {
+      const message = `[NativeModule][${log.tag}] ${log.message}`;
+      const logMethod = {
+        [LogLevel.Fatal]: this._loggerService.error,
+        [LogLevel.Error]: this._loggerService.error,
+        [LogLevel.Warning]: this._loggerService.warn,
+        [LogLevel.Info]: this._loggerService.info,
+        [LogLevel.Debug]: this._loggerService.debug,
+      }[LogLevel[log.level]];
+      if (!logMethod) {
+        console.warn("Unknown log level", log.level);
+        return;
+      }
+      logMethod(message, { data: log.jsonPayload });
+    });
+  }
 
   getIdentifier(): TransportIdentifier {
     return TRANSPORT_IDENTIFIER;
   }
 
   isSupported(): boolean {
-    return Platform.OS === "android" && !!NativeTransportModule;
+    return Platform.OS === "android";
   }
 
   startDiscovering(): Observable<TransportDiscoveredDevice> {
     const observable = getObservableOfArraysNewItems(
-      subscribeToDiscoveredDevicesEvents(),
-      (deviceA, deviceB) => deviceA.uid === deviceB.uid,
-    ).pipe(
-      tap((device) => {
-        console.log("NEW nativedevice detected", device);
-      }),
-      map((nativeDevice) =>
-        mapNativeDiscoveryDeviceToTransportDiscoveredDevice(
-          nativeDevice,
-          this._deviceModelDataSource,
-        ),
-      ),
-      filter((device) => device != null),
-      tap((device) => {
-        console.log("NEW device detected", device);
-      }),
+      this._nativeModuleWrapper.subscribeToDiscoveredDevicesEvents(),
+      (deviceA, deviceB) => deviceA.id === deviceB.id,
     );
-    NativeTransportModule.startDiscovering().catch((error) => {
+    this._nativeModuleWrapper.startScan().catch((error) => {
       console.error("startDiscovering error", error);
     });
     return observable;
   }
 
   stopDiscovering(): void {
-    NativeTransportModule.stopDiscovering().catch((error) => {
+    this._nativeModuleWrapper.stopScan().catch((error) => {
       console.error("stopDiscovering error", error);
     });
   }
 
   listenToKnownDevices(): Observable<TransportDiscoveredDevice[]> {
-    // NativeEventEmitter start listen
-    throw new Error("Method not implemented.");
+    /**
+     * NB: here we need to define the unsubscribe logic as there is no
+     * "stopListeningToKnownDevices" method.
+     */
+    const observable = new Observable<TransportDiscoveredDevice[]>(
+      (subscriber) => {
+        this._nativeModuleWrapper
+          .subscribeToDiscoveredDevicesEvents()
+          .subscribe((devices) => {
+            subscriber.next(devices);
+          });
+        return () => {
+          this._nativeModuleWrapper.stopScan().catch((error) => {
+            console.error("stopDiscovering error", error);
+          });
+        };
+      },
+    );
+    this._nativeModuleWrapper.startScan().catch((error) => {
+      console.error("startDiscovering error", error);
+    });
+    return observable;
   }
 
   connect(_params: {
@@ -87,8 +111,3 @@ export class RNHidTransport implements Transport {
     throw new Error("Method not implemented.");
   }
 }
-
-export const RNHidTransportFactory: TransportFactory = ({
-  deviceModelDataSource,
-  loggerServiceFactory,
-}) => new RNHidTransport(deviceModelDataSource, loggerServiceFactory);

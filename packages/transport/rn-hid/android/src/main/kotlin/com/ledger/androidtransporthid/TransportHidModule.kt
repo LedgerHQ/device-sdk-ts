@@ -21,7 +21,6 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
-import timber.log.Timber
 import kotlin.random.Random
 import kotlin.time.Duration.Companion.milliseconds
 
@@ -39,7 +38,6 @@ class TransportHidModule(private val reactContext: ReactApplicationContext) :
 
         var transport: AndroidUsbTransport? = null
         if (currentApplication != null) {
-            Log.d("RNHIDModule", "init transport")
             transport = DefaultAndroidUsbTransport(
                 application = currentApplication,
                 usbManager = reactContext.getSystemService(Context.USB_SERVICE) as UsbManager,
@@ -58,27 +56,26 @@ class TransportHidModule(private val reactContext: ReactApplicationContext) :
                 coroutineDispatcher = Dispatchers.IO,
                 loggerService = { logInfo ->
                     Log.d("RNHIDModule[transport logs] " + logInfo.tag, logInfo.message)
+                    sendEvent(reactContext, BridgeEvents.TransportLog(logInfo))
                     // Timber.tag("RNHIDModule " + logInfo.tag).d(logInfo.message)
                 },
                 scanDelay = 500.milliseconds,
             )
             usbPermissionReceiver = UsbPermissionReceiver(
                 context = reactContext,
-                androidUsbTransport = transport as DefaultAndroidUsbTransport,
+                androidUsbTransport = transport,
             )
             usbDetachedReceiverController = UsbDetachedReceiverController(
                 context = reactContext,
-                androidUsbTransport = transport as DefaultAndroidUsbTransport,
+                androidUsbTransport = transport,
             )
             usbAttachedReceiverController = UsbAttachedReceiverController(
                 context = reactContext,
-                androidUsbTransport = transport as DefaultAndroidUsbTransport,
+                androidUsbTransport = transport,
             )
             usbPermissionReceiver!!.start()
             usbAttachedReceiverController!!.start()
             usbDetachedReceiverController!!.start()
-        } else {
-            Log.d("RNHIDModule", "init transport -> NULL")
         }
         transport
     }
@@ -98,12 +95,16 @@ class TransportHidModule(private val reactContext: ReactApplicationContext) :
         usbDetachedReceiverController?.stop()
     }
 
+    private var discoveryCount = 0
     @ReactMethod
-    fun startDiscovering(promise: Promise) {
-        Log.d("RNHIDModule startDiscovering", "startDiscovering")
+    fun startScan(promise: Promise) {
+        discoveryCount += 1
+        if (discoveryCount > 1) {
+            promise.resolve(null)
+            return
+        }
         try {
             transport!!.startScan().onEach {
-                Log.d("RNHIDModule startDiscovering", "Discovered device: $it")
                 sendEvent(reactContext, BridgeEvents.DiscoveredDevices(it))
             }.launchIn(CoroutineScope(Dispatchers.Default))
             promise.resolve(null)
@@ -113,18 +114,17 @@ class TransportHidModule(private val reactContext: ReactApplicationContext) :
     }
 
     @ReactMethod
-    fun stopDiscovering(promise: Promise) {
-        Log.d("RNHIDModule stopDiscovering", "stopDiscovering")
+    fun stopScan(promise: Promise) {
+        discoveryCount -= 1
+        if (discoveryCount > 0) {
+            promise.resolve(null)
+            return
+        }
         try {
             transport!!.stopScan()
             promise.resolve(null)
         } catch (e: Exception) {
             promise.reject(e)
         }
-    }
-
-    @ReactMethod
-    fun test(promise: Promise) {
-        promise.resolve("test OK")
     }
 }

@@ -1,9 +1,12 @@
 import {
+  defaultApduReceiverServiceStubBuilder,
+  defaultApduSenderServiceStubBuilder,
+  DmkConfig,
   type LoggerPublisherService,
   StaticDeviceModelDataSource,
   type TransportDiscoveredDevice,
 } from '@ledgerhq/device-management-kit';
-import {RNHidTransport} from '@ledgerhq/device-transport-kit-react-native-hid';
+import {RNHidTransportFactory} from '@ledgerhq/device-transport-kit-react-native-hid';
 import React, {useEffect, useRef, useState} from 'react';
 import {
   View,
@@ -14,12 +17,38 @@ import {
 } from 'react-native';
 import {Subscription} from 'rxjs';
 
-const hidTransport = new RNHidTransport(
-  new StaticDeviceModelDataSource(),
-  () => ({
-    log: () => ({} as LoggerPublisherService),
-  }),
-);
+function makeHidTransport() {
+  const loggerServiceFactory = (_tag: string) => {
+    const loggerService: LoggerPublisherService = {
+      debug: (l, o) => {
+        console.debug(l, o);
+      },
+      error: (l, o) => {
+        console.error(l, o);
+      },
+      info: (l, o) => {
+        console.info(l, o);
+      },
+      warn: (l, o) => {
+        console.warn(l, o);
+      },
+      subscribers: [],
+    };
+    return loggerService;
+  };
+  const hidTransport = RNHidTransportFactory({
+    deviceModelDataSource: new StaticDeviceModelDataSource(),
+    loggerServiceFactory,
+    apduReceiverServiceFactory: () =>
+      defaultApduReceiverServiceStubBuilder({}, loggerServiceFactory),
+    apduSenderServiceFactory: () =>
+      defaultApduSenderServiceStubBuilder({}, loggerServiceFactory),
+    config: {} as DmkConfig,
+  });
+  return hidTransport;
+}
+
+const hidTransport = makeHidTransport();
 
 const buttonStyle = {
   padding: 10,
@@ -95,6 +124,12 @@ export function HIDTransportTester() {
     discoverySubscription.current?.unsubscribe();
     hidTransport.stopDiscovering();
   };
+
+  useEffect(() => {
+    return () => {
+      discoverySubscription.current?.unsubscribe();
+    };
+  }, []);
 
   return (
     <View>
