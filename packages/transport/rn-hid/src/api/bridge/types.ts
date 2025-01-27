@@ -24,6 +24,28 @@ export type NativeLog = {
   jsonPayload: Record<string, string>;
 };
 
+export type NativeInternalConnectionResult =
+  | {
+      success: true;
+      sessionId: string;
+      ledgerDevice: NativeLedgerDevice;
+      deviceName: string;
+    }
+  | {
+      success: false;
+      error: string;
+    };
+
+export type NativeSendApduResult =
+  | {
+      success: true;
+      apdu: string;
+    }
+  | {
+      success: false;
+      error: string;
+    };
+
 /**
  * Events
  */
@@ -57,4 +79,7 @@ export type NativeEvent = DiscoveredDevicesEvent | TransportLogEvent;
 export type NativeTransportModuleType = {
   startScan: () => Promise<void>;
   stopScan: () => Promise<void>;
+  connectDevice: (uid: string) => Promise<NativeInternalConnectionResult>;
+  disconnectDevice: (sessionId: string) => Promise<void>;
+  sendApdu: (sessionId: string, apdu: string) => Promise<NativeSendApduResult>;
 } & NativeModule;

@@ -27,6 +27,7 @@ internal class UsbPermissionReceiver(
 ) : BroadcastReceiver(),
     Controller {
     override fun start() {
+        Timber.i("UsbPermissionReceiver started")
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             ContextCompat.registerReceiver(
                 context,
@@ -47,6 +48,7 @@ internal class UsbPermissionReceiver(
     }
 
     override fun stop() {
+        Timber.i("UsbPermissionReceiver stopped")
         context.unregisterReceiver(this)
     }
 

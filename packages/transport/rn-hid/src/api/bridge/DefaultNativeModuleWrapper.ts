@@ -5,11 +5,18 @@ import {
 } from "@ledgerhq/device-management-kit";
 import { Observable } from "rxjs";
 
+import { uint8ArrayToBase64 } from "@api/helpers/uint8ArrayToBase64";
 import { type NativeModuleWrapper } from "@api/transport/NativeModuleWrapper";
-import { type Log } from "@api/transport/types";
+import {
+  type ConnectionResult,
+  type Log,
+  type SendApduResult,
+} from "@api/transport/types";
 
 import {
+  mapNativeConnectionResultToConnectionResult,
   mapNativeDiscoveryDeviceToTransportDiscoveredDevice,
+  mapNativeSendApduResultToSendApduResult,
   mapNativeTransportLogToLog,
 } from "./mapper";
 import {
@@ -84,5 +91,25 @@ export class DefaultNativeModuleWrapper implements NativeModuleWrapper {
         eventListener.remove();
       };
     });
+  }
+
+  async connectDevice(uid: string): Promise<ConnectionResult> {
+    const nConnectionResult = await NativeTransportModule.connectDevice(uid);
+    return mapNativeConnectionResultToConnectionResult(
+      nConnectionResult,
+      this._deviceModelDataSource,
+    );
+  }
+
+  async disconnectDevice(sessionId: string): Promise<void> {
+    return NativeTransportModule.disconnectDevice(sessionId);
+  }
+
+  async sendApdu(sessionId: string, apdu: Uint8Array): Promise<SendApduResult> {
+    const nSendApduResult = await NativeTransportModule.sendApdu(
+      sessionId,
+      uint8ArrayToBase64(apdu),
+    );
+    return mapNativeSendApduResultToSendApduResult(nSendApduResult);
   }
 }

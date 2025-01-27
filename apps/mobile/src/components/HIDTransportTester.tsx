@@ -1,20 +1,24 @@
 /* eslint-disable react-native/no-inline-styles */
 import {
+  ConnectError,
   defaultApduReceiverServiceStubBuilder,
   defaultApduSenderServiceStubBuilder,
   DmkConfig,
+  GetAppAndVersionCommand,
   type LoggerPublisherService,
   StaticDeviceModelDataSource,
+  TransportConnectedDevice,
   type TransportDiscoveredDevice,
 } from '@ledgerhq/device-management-kit';
 import {RNHidTransportFactory} from '@ledgerhq/device-transport-kit-react-native-hid';
-import React, {useEffect, useMemo, useState} from 'react';
+import React, {useCallback, useEffect, useMemo, useState} from 'react';
 import {
   View,
   Text,
   TouchableOpacity,
   ScrollView,
   useColorScheme,
+  Alert,
 } from 'react-native';
 import {Subscription} from 'rxjs';
 
@@ -81,7 +85,8 @@ const Button = ({
 
 const DiscoveredDevice: React.FC<{
   discoveredDevice: TransportDiscoveredDevice;
-}> = ({discoveredDevice}) => {
+  onPressConnect(deviceId: string): void;
+}> = ({discoveredDevice, onPressConnect}) => {
   const textStyle = useTextStyle();
   const containerStyle = {
     margin: 2,
@@ -99,10 +104,14 @@ const DiscoveredDevice: React.FC<{
       <Text style={textStyle}>
         productName: {discoveredDevice.deviceModel.productName}
       </Text>
-      <Text style={[textStyle, {color: 'black'}]}>
+      <Button
+        onPress={() => onPressConnect(discoveredDevice.id)}
+        title="Connect"
+      />
+      {/* <Text style={[textStyle, {color: 'black'}]}>
         full TransportDiscoveredDevice (DMK TS object): {'\n'}
         {JSON.stringify(discoveredDevice, null, 2)}
-      </Text>
+      </Text> */}
     </View>
   );
 };
@@ -115,6 +124,8 @@ export function HIDTransportTester() {
   const [discoveredDevices, setDiscoveredDevices] = useState<
     Array<TransportDiscoveredDevice>
   >([]);
+
+  const textStyle = useTextStyle();
 
   useEffect(() => {
     let subscription: Subscription;
@@ -143,6 +154,44 @@ export function HIDTransportTester() {
     }
   }, [discoveryMode]);
 
+  const [connectionResult, setConnectionResult] = useState<
+    ConnectError | TransportConnectedDevice | null
+  >(null);
+
+  const connectToDevice = useCallback((deviceId: string) => {
+    hidTransport
+      .connect({deviceId, onDisconnect: () => {}})
+      .then(res => {
+        console.log('connectedDevice', res);
+        setConnectionResult(res.extract());
+      })
+      .catch(e => {
+        console.error('connectToDevice error', e);
+      });
+  }, []);
+
+  const sendGetAppAndVersion = useCallback(() => {
+    if (connectionResult instanceof TransportConnectedDevice) {
+      const command = new GetAppAndVersionCommand();
+      connectionResult
+        .sendApdu(command.getApdu().getRawApdu())
+        .then(res => {
+          console.log('sendApdu result', res.extract());
+          res.map(successRes => {
+            const parsed = command.parseResponse(successRes);
+            console.log('sendApdu parsed result', parsed);
+            Alert.alert(
+              'GetAppAndVersionCommand result',
+              JSON.stringify(parsed),
+            );
+          });
+        })
+        .catch(e => {
+          console.error('sendApdu error', e);
+        });
+    }
+  }, [connectionResult]);
+
   const buttons = useMemo(
     () =>
       (
@@ -168,9 +217,15 @@ export function HIDTransportTester() {
           <DiscoveredDevice
             key={discoveredDevice.id}
             discoveredDevice={discoveredDevice}
+            onPressConnect={connectToDevice}
           />
         ))}
       </ScrollView>
+      <Text style={textStyle}>Connection result:</Text>
+      <Text style={textStyle}>{JSON.stringify(connectionResult, null, 2)}</Text>
+      {connectionResult instanceof TransportConnectedDevice && (
+        <Button onPress={sendGetAppAndVersion} title="sendGetAppAndVersion" />
+      )}
     </View>
   );
 }
