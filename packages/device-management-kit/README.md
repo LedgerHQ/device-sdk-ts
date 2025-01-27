@@ -8,7 +8,6 @@
   - [Installation](#installation)
   - [Usage](#usage)
     - [Compatibility](#compatibility)
-    - [Pre-requisites](#pre-requisites)
     - [Main Features](#main-features)
     - [Setting up the SDK](#setting-up-the-sdk)
     - [Connecting to a Device](#connecting-to-a-device)
@@ -37,13 +36,9 @@ npm install @ledgerhq/device-management-kit
 
 ## Usage
 
-### Compatibility
-
-This library works in [any browser supporting the WebHID API](https://developer.mozilla.org/en-US/docs/Web/API/WebHID_API#browser_compatibility).
-
 ### Pre-requisites
 
-Some of the APIs exposed return objects of type `Observable` from RxJS. Ensure you are familiar with the basics of the Observer pattern and RxJS before using this SDK. You can refer to [RxJS documentation](https://rxjs.dev/guide/overview) for more information.
+Some of the APIs exposed return objects of type `Observable` from RxJS. Ensure you are familiar with the basics of the Observer pattern and RxJS before using this Device Management Kit. You can refer to [RxJS documentation](https://rxjs.dev/guide/overview) for more information.
 
 ### Main Features
 
@@ -60,27 +55,28 @@ Some of the APIs exposed return objects of type `Observable` from RxJS. Ensure y
 > [!NOTE]  
 > At the moment we do not provide the possibility to distinguish two devices of the same model, via USB and to avoid connection to the same device twice.
 
-### Setting up the SDK
+### Setting up the Device Management Kit
 
-The core package exposes an SDK builder `DeviceSdkBuilder` which will be used to initialise the SDK with your configuration.
+The core package exposes a Device Manageent Kit builder `DeviceManagementKitBuilder` which will be used to initialise the Device Management Kit with your configuration.
 
 For now it allows you to add one or more custom loggers.
 
-In the following example, we add a console logger (`.addLogger(new ConsoleLogger())`). Then we build the SDK with `.build()`.
+In the following example, we add a console logger (`.addLogger(new ConsoleLogger())`) and a WebHID transport. Then we build the Device Management Kit with `.build()`.
 
-**The returned object will be the entrypoint for all your interactions with the SDK.**
+**The returned object will be the entrypoint for all your interactions with the Device Management Kit.**
 
-The SDK should be built only once in your application runtime so keep a reference of this object somewhere.
+The Device Management Kit should be built only once in your application runtime so keep a reference of this object somewhere.
 
 ```ts
 import {
   ConsoleLogger,
-  DeviceSdk,
-  DeviceSdkBuilder,
+  DeviceManagementKitBuilder,
 } from "@ledgerhq/device-management-kit";
+import { webHidTransportFactory } from "@ledgerhq/device-transport-kit-web-hid";
 
-export const sdk = new DeviceSdkBuilder()
+export const sdk = new DeviceManagementKitBuilder()
   .addLogger(new ConsoleLogger())
+  .addTransport(webHidTransportFactory)
   .build();
 ```
 
@@ -88,20 +84,20 @@ export const sdk = new DeviceSdkBuilder()
 
 There are two steps to connecting to a device:
 
-- **Discovery**: `sdk.startDiscovering()`
+- **Discovery**: `dmk.startDiscovering()`
   - Returns an observable which will emit a new `DiscoveredDevice` for every scanned device.
   - The `DiscoveredDevice` objects contain information about the device model.
   - Use one of these values to connect to a given discovered device.
-- **Connection**: `sdk.connect({ deviceId: device.id })`
+- **Connection**: `dmk.connect({ deviceId: device.id })`
   - Returns a Promise resolving in a device session identifier `DeviceSessionId`.
   - **Keep this device session identifier to further interact with the device.**
-  - Then, `sdk.getConnectedDevice({ sessionId })` returns the `ConnectedDevice`, which contains information about the device model and its name.
+  - Then, `dmk.getConnectedDevice({ sessionId })` returns the `ConnectedDevice`, which contains information about the device model and its name.
 
 ```ts
-sdk.startDiscovering().subscribe({
+dmk.startDiscovering().subscribe({
   next: (device) => {
-    sdk.connect({ deviceId: device.id }).then((sessionId) => {
-      const connectedDevice = sdk.getConnectedDevice({ sessionId });
+    dmk.connect({ deviceId: device.id }).then((sessionId) => {
+      const connectedDevice = dmk.getConnectedDevice({ sessionId });
     });
   },
   error: (error) => {
@@ -112,8 +108,8 @@ sdk.startDiscovering().subscribe({
 
 Then once a device is connected:
 
-- **Disconnection**: `sdk.disconnect({ sessionId })`
-- **Observe the device session state**: `sdk.getDeviceSessionState({ sessionId })`
+- **Disconnection**: `dmk.disconnect({ sessionId })`
+- **Observe the device session state**: `dmk.getDeviceSessionState({ sessionId })`
   - This will return an `Observable<DeviceSessionState>` to listen to the known information about the device:
     - device status:
       - ready to process a command
@@ -154,7 +150,7 @@ const apdu = new ApduBuilder(openAppApduArgs)
 
 // ### 2. Sending the APDU
 
-const apduResponse = await sdk.sendApdu({ sessionId, apdu });
+const apduResponse = await dmk.sendApdu({ sessionId, apdu });
 
 // ### 3. Parsing the result
 
@@ -178,7 +174,7 @@ The `sendCommand` method will take care of building the APDU, sending it to the 
 > ### ❗️ Error Responses
 >
 > Most of the commands will reject with an error if the device is locked.
-> Ensure that the device is unlocked before sending commands. You can check the device session state (`sdk.getDeviceSessionState`) to know if the device is locked.
+> Ensure that the device is unlocked before sending commands. You can check the device session state (`dmk.getDeviceSessionState`) to know if the device is locked.
 >
 > Most of the commands will reject with an error if the response status word is not `0x9000` (success response from the device).
 
@@ -191,7 +187,7 @@ import { OpenAppCommand } from "@ledgerhq/device-management-kit";
 
 const command = new OpenAppCommand("Bitcoin"); // Open the Bitcoin app
 
-await sdk.sendCommand({ sessionId, command });
+await dmk.sendCommand({ sessionId, command });
 ```
 
 #### Close App
@@ -203,14 +199,14 @@ import { CloseAppCommand } from "@ledgerhq/device-management-kit";
 
 const command = new CloseAppCommand();
 
-await sdk.sendCommand({ sessionId, command });
+await dmk.sendCommand({ sessionId, command });
 ```
 
 #### Get OS Version
 
 This command will return information about the currently installed OS on the device.
 
-> ℹ️ If you want this information you can simply get it from the device session state by observing it with `sdk.getDeviceSessionState({ sessionId })`.
+> ℹ️ If you want this information you can simply get it from the device session state by observing it with `dmk.getDeviceSessionState({ sessionId })`.
 
 ```ts
 import { GetOsVersionCommand } from "@ledgerhq/device-management-kit";
@@ -218,21 +214,21 @@ import { GetOsVersionCommand } from "@ledgerhq/device-management-kit";
 const command = new GetOsVersionCommand();
 
 const { seVersion, mcuSephVersion, mcuBootloaderVersion } =
-  await sdk.sendCommand({ sessionId, command });
+  await dmk.sendCommand({ sessionId, command });
 ```
 
 #### Get App and Version
 
 This command will return the name and version of the currently running app on the device.
 
-> ℹ️ If you want this information you can simply get it from the device session state by observing it with `sdk.getDeviceSessionState({ sessionId })`.
+> ℹ️ If you want this information you can simply get it from the device session state by observing it with `dmk.getDeviceSessionState({ sessionId })`.
 
 ```ts
 import { GetAppAndVersionCommand } from "@ledgerhq/device-management-kit";
 
 const command = new GetAppAndVersionCommand();
 
-const { name, version } = await sdk.sendCommand({ sessionId, command });
+const { name, version } = await dmk.sendCommand({ sessionId, command });
 ```
 
 ### Building a Custom Command
@@ -264,7 +260,7 @@ import {
 
 const openAppDeviceAction = new OpenAppDeviceAction({ appName: "Bitcoin" });
 
-const { observable, cancel } = await sdk.executeDeviceAction({
+const { observable, cancel } = await dmk.executeDeviceAction({
   deviceAction: openAppDeviceAction,
   command,
 });

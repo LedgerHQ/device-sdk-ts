@@ -145,12 +145,6 @@ proto use
 pnpm i
 ```
 
-Alternatively, if you want to bypass the postinstall scripts which can be long to run.
-
-```bash
-pnpm i --ignore-scripts
-```
-
 4- Check the shell configuration file
 
 In you shell configuration file (e.g. .bashrc or .zshrc ) verify the path for `proto` is correctly set.
@@ -189,12 +183,13 @@ Device Management Kit main module.
 pnpm dmk build
 ```
 
-### Signer
+### Signers
 
 Transaction and message signer module.
+Each signer is its own package. Here is an exemple with the ETH signer:
 
 ```bash
-pnpm signer build
+pnpm signer-eth build
 ```
 
 ### Trusted Apps
@@ -219,6 +214,12 @@ Sample application module.
 
 ```bash
 pnpm sample build
+```
+
+#### Documentation
+
+```bash
+pnpm doc build
 ```
 
 # Processes & usage
@@ -295,7 +296,7 @@ It includes background information about the project and how to setup, run and b
 
 ## Reference API
 
-Please refer to the core package [**readme**](https://github.com/LedgerHQ/device-sdk-ts/blob/develop/packages/core/README.md).
+Please refer to the core package [**readme**](https://github.com/LedgerHQ/device-sdk-ts/blob/develop/packages/device-management-kit/README.md).
 
 # Contributing
 
