@@ -5,18 +5,14 @@ Depending on the environment and usecase, you can choose the transport that best
 
 ## Available transports
 
-| Transport                                                                      | Description                                                                                                   |
-| ------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------- |
-| [WebHid](https://www.npmjs.com/package/@ledgerhq/device-transport-kit-web-hid) | The WebHID transport is a transport that uses the WebHID API (usb) to communicate with a Ledger device.       |
-| [WebBle](https://www.npmjs.com/package/@ledgerhq/device-transport-kit-web-ble) | The WebBLE transport is a transport that uses the WebBLE API (bluetooth) to communicate with a Ledger device. |
-
-### WebBLE
-
-The WebBLE transport is a transport that uses the WebBLE API (bluetooth) to communicate with a Ledger device.
+| Transport                                                                      | Description                                                                                |
+| ------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------ |
+| [WebHid](https://www.npmjs.com/package/@ledgerhq/device-transport-kit-web-hid) | The WebHID transport uses the Web HID API (usb) to communicate with a Ledger device.       |
+| [WebBle](https://www.npmjs.com/package/@ledgerhq/device-transport-kit-web-ble) | The WebBLE transport uses the Web BLE API (bluetooth) to communicate with a Ledger device. |
 
 ## How to use a transport
 
-Transports are injected in the DeviceManagementKitBuilder before building the DeviceManagementKit instance.
+Transports are injected in the DeviceManagementKitBuilder before building the Device Management Kit instance.
 This is done by calling the `addTransport` method on the builder.
 You can inject the transport in two different ways:
 
