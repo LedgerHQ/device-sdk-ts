@@ -12,7 +12,6 @@ import {
   isSuccessCommandResult,
 } from "@ledgerhq/device-management-kit";
 
-import { type TransactionOptions } from "@api/model/TransactionOptions";
 import { GetAddressCommand } from "@internal/app-binder/command/GetAddressCommand";
 import { GetAppConfiguration } from "@internal/app-binder/command/GetAppConfigurationCommand";
 import { type TransactionMapperService } from "@internal/transaction/service/mapper/TransactionMapperService";
@@ -30,7 +29,6 @@ export type GetWeb3CheckTaskArgs = {
   readonly contextModule: ContextModule;
   readonly mapper: TransactionMapperService;
   readonly transaction: Uint8Array;
-  readonly options: TransactionOptions;
   readonly derivationPath: string;
 };
 
@@ -58,45 +56,46 @@ export class GetWeb3CheckTask {
     }
 
     //Only do Web3 Check if it is activated
-    if (configResult.data.web3ChecksEnabled) {
-      const getAddressCmd = new GetAddressCommand({
-        derivationPath: this.args.derivationPath,
-        checkOnDevice: false,
-        returnChainCode: false,
-      });
-      const getAddressResult = await this.api.sendCommand(getAddressCmd);
-      if (!isSuccessCommandResult(getAddressResult)) {
-        return {
-          web3Check: null,
-          error: getAddressResult.error,
-        };
-      }
-
-      const address = getAddressResult.data.address;
-      const web3Params: Web3CheckContext = {
-        from: address,
-        rawTx: bufferToHexaString(serializedTransaction),
-        chainId: subset.chainId,
-      };
-      const web3CheckContext: ClearSignContext | null =
-        await contextModule.getWeb3Checks(web3Params);
-
-      if (
-        web3CheckContext === null ||
-        web3CheckContext?.type === ClearSignContextType.ERROR
-      ) {
-        return {
-          web3Check: null,
-        };
-      } else {
-        return {
-          web3Check: web3CheckContext,
-        };
-      }
-    } else {
+    if (!configResult.data.web3ChecksEnabled) {
       return {
         web3Check: null,
       };
     }
+
+    const getAddressResult = await this.api.sendCommand(
+      new GetAddressCommand({
+        derivationPath: this.args.derivationPath,
+        checkOnDevice: false,
+        returnChainCode: false,
+      }),
+    );
+    if (!isSuccessCommandResult(getAddressResult)) {
+      return {
+        web3Check: null,
+        error: getAddressResult.error,
+      };
+    }
+
+    const address = getAddressResult.data.address;
+    const web3Params: Web3CheckContext = {
+      from: address,
+      rawTx: bufferToHexaString(serializedTransaction),
+      chainId: subset.chainId,
+    };
+    const web3CheckContext: ClearSignContext | null =
+      await contextModule.getWeb3Checks(web3Params);
+
+    if (
+      web3CheckContext === null ||
+      web3CheckContext?.type === ClearSignContextType.ERROR
+    ) {
+      return {
+        web3Check: null,
+      };
+    }
+
+    return {
+      web3Check: web3CheckContext,
+    };
   }
 }
