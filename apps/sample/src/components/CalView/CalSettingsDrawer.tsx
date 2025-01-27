@@ -47,7 +47,11 @@ export function CalSettingsDrawer({ onClose }: CalSettingsDrawerProps) {
       console.error("Invalid CAL URL", url);
       return;
     }
-    if (!web3checksUrl || typeof web3checksUrl !== "string" || !web3checksUrl.startsWith("http")) {
+    if (
+      !web3checksUrl ||
+      typeof web3checksUrl !== "string" ||
+      !web3checksUrl.startsWith("http")
+    ) {
       console.error("Invalid CAL URL", url);
       return;
     }

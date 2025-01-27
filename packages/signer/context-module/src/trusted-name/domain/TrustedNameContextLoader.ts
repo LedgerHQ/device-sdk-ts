@@ -1,5 +1,8 @@
 import { inject, injectable } from "inversify";
 
+import { pkiTypes } from "@/pki/di/pkiDiTypes";
+import { KeyUsage } from "@/pki/domain/model/KeyUsage";
+import { type PkiCertificateLoader } from "@/pki/domain/PkiCertificateLoader";
 import { ContextLoader } from "@/shared/domain/ContextLoader";
 import {
   ClearSignContext,
@@ -11,9 +14,6 @@ import {
 } from "@/shared/model/TransactionContext";
 import type { TrustedNameDataSource } from "@/trusted-name/data/TrustedNameDataSource";
 import { trustedNameTypes } from "@/trusted-name/di/trustedNameTypes";
-import { type PkiCertificateLoader } from "@/pki/domain/PkiCertificateLoader";
-import { pkiTypes } from "@/pki/di/pkiDiTypes";
-import { KeyUsage } from "@/pki/domain/model/KeyUsage";
 
 @injectable()
 export class TrustedNameContextLoader implements ContextLoader {

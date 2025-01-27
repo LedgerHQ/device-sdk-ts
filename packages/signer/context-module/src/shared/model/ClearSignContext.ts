@@ -1,4 +1,5 @@
-import { PkiCertificate } from "@/pki/domain/pkiCertificateTypes";
+import { type PkiCertificate } from "@/pki/domain/pkiCertificateTypes";
+
 import { type GenericPath } from "./GenericPath";
 
 export enum ClearSignContextType {
