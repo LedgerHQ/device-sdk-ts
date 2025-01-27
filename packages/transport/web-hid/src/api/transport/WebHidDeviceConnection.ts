@@ -10,7 +10,7 @@ import {
   ReconnectionFailedError,
 } from "@ledgerhq/device-management-kit";
 import { type Either, Left, Maybe, Nothing, Right } from "purify-ts";
-import { Subject } from "rxjs";
+import { firstValueFrom, from, retry, Subject } from "rxjs";
 
 import { RECONNECT_DEVICE_TIMEOUT } from "@api/data/WebHidConfig";
 import { WebHidSendReportError } from "@api/model/Errors";
@@ -22,6 +22,8 @@ type WebHidDeviceConnectionConstructorArgs = {
   apduReceiver: ApduReceiverService;
   onConnectionTerminated: () => void;
 };
+
+type Timer = ReturnType<typeof setTimeout>;
 
 /**
  * Class to manage the connection with a USB HID device.
@@ -44,7 +46,7 @@ export class WebHidDeviceConnection implements DeviceConnection {
   /** Flag to indicate if the connection is waiting for a reconnection */
   private waitingForReconnection = false;
   /** Timeout to wait for the device to reconnect */
-  private lostConnectionTimeout: NodeJS.Timeout | null = null;
+  private lostConnectionTimeout: Timer | null = null;
   /** Flag to indicate if the connection is terminated */
   private terminated = false;
 
@@ -114,11 +116,9 @@ export class WebHidDeviceConnection implements DeviceConnection {
     if (this.waitingForReconnection || !this.device.opened) {
       const waitingForDeviceResponse =
         this.device.opened && this._pendingApdu.isJust();
-
       const reconnectionRes = await this.waitForReconnection(
         waitingForDeviceResponse,
       );
-
       if (reconnectionRes.isLeft()) {
         return reconnectionRes;
       }
@@ -129,8 +129,16 @@ export class WebHidDeviceConnection implements DeviceConnection {
       this._logger.debug("Sending Frame", {
         data: { frame: frame.getRawData() },
       });
+
       try {
-        await this._device.sendReport(0, frame.getRawData());
+        await firstValueFrom(
+          from(this._device.sendReport(0, frame.getRawData())).pipe(
+            retry({
+              count: 3,
+              delay: 500,
+            }),
+          ),
+        );
       } catch (error) {
         this._logger.error("Error sending frame", { data: { error } });
         return Promise.resolve(Left(new WebHidSendReportError(error)));
@@ -174,7 +182,13 @@ export class WebHidDeviceConnection implements DeviceConnection {
       const sub = this.reconnectionSubject.subscribe({
         next: (res) => {
           if (waitingForDeviceResponse) {
-            this._sendApduSubject.error(new WebHidSendReportError());
+            this._sendApduSubject.error(
+              new WebHidSendReportError(
+                new Error(
+                  "Device disconnected while waiting for device response",
+                ),
+              ),
+            );
           }
 
           if (res === "success") {
@@ -182,6 +196,7 @@ export class WebHidDeviceConnection implements DeviceConnection {
           } else {
             resolve(Left(res));
           }
+
           sub.unsubscribe();
         },
       });
@@ -207,16 +222,11 @@ export class WebHidDeviceConnection implements DeviceConnection {
     this._device.oninputreport = (event) => this.receiveHidInputReport(event);
 
     if (this.lostConnectionTimeout) {
-      this._logger.info("⏱️🔌 Device reconnected");
       clearTimeout(this.lostConnectionTimeout);
     }
 
     await device.open();
-
-    if (this._pendingApdu.isJust()) {
-      this._sendApduSubject.error(new WebHidSendReportError());
-    }
-
+    this._logger.info("⏱️🔌 Device reconnected");
     this.waitingForReconnection = false;
     this.reconnectionSubject.next("success");
   }
