@@ -15,5 +15,6 @@ export function useForm<T extends Record<string, string | boolean | number>>(
   return {
     formValues,
     setFormValue,
+    setFormValues,
   };
 }

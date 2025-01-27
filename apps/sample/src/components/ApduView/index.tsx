@@ -1,10 +1,10 @@
 import React, { useCallback, useState } from "react";
-import { ApduResponse } from "@ledgerhq/device-management-kit";
+import { type ApduResponse } from "@ledgerhq/device-management-kit";
 import { Button, Divider, Flex, Grid, Input, Text } from "@ledgerhq/react-ui";
-import styled, { DefaultTheme } from "styled-components";
+import styled, { type DefaultTheme } from "styled-components";
 
 import { useApduForm } from "@/hooks/useApduForm";
-import { useSdk } from "@/providers/DeviceSdkProvider";
+import { useDmk } from "@/providers/DeviceManagementKitProvider";
 import { useDeviceSessionsContext } from "@/providers/DeviceSessionsProvider";
 
 const Root = styled(Flex).attrs({ mx: 15, mt: 10, mb: 5 })`
@@ -69,7 +69,7 @@ export const ApduView: React.FC = () => {
     useApduForm();
   const [loading, setLoading] = useState(false);
   const [apduResponse, setApduResponse] = useState<ApduResponse>();
-  const sdk = useSdk();
+  const dmk = useDmk();
   const {
     state: { selectedId: selectedSessionId },
   } = useDeviceSessionsContext();
@@ -78,7 +78,7 @@ export const ApduView: React.FC = () => {
       setLoading(true);
       let rawApduResponse;
       try {
-        rawApduResponse = await sdk.sendApdu({
+        rawApduResponse = await dmk.sendApdu({
           sessionId: selectedSessionId ?? "",
           apdu: getRawApdu(values),
         });
@@ -89,7 +89,7 @@ export const ApduView: React.FC = () => {
         setLoading(false);
       }
     },
-    [getRawApdu, sdk, selectedSessionId],
+    [getRawApdu, dmk, selectedSessionId],
   );
   return (
     <Root>

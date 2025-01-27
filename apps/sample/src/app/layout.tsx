@@ -6,7 +6,7 @@
  * Combines Styled Components Registry with the ClientRootLayout
  * for rendering the application.
  */
-import React, { PropsWithChildren } from "react";
+import React, { type PropsWithChildren } from "react";
 
 import { StyledComponentsRegistry } from "@/lib/registry";
 

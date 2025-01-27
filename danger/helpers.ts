@@ -29,11 +29,7 @@ export const BRANCH_PREFIX = [
   "refactor",
 ];
 
-export const checkIfBot = (user: GitHubPRDSL["user"]) => {
-  if (user.type === "Bot") {
-    exit(0);
-  }
-};
+export const checkIfBot = (user: GitHubPRDSL["user"]) => user.type === "Bot";
 
 export const getAuthor = (danger: DangerDSLType) => {
   if (danger.github) {
@@ -244,7 +240,7 @@ export const checkChangesets = (danger: DangerDSLType, message: MessageFn) => {
   const changesetFiles = danger.git.fileMatch("**/.changeset/*.md");
   if (changesetFiles.edited === false) {
     message(
-      `\ No changeset file found in the PR. Please add a changeset file.`,
+      `\ No changeset file found. Please make sure this is intended or add a changeset file.`,
       {
         icon: "⚠️",
       }

@@ -1,7 +1,12 @@
-export type InstructionSignatures = {
-  prod: string;
-  test: string;
-};
+export type InstructionSignatures =
+  | {
+      prod: string;
+      test?: string;
+    }
+  | {
+      prod?: string;
+      test: string;
+    };
 
 export type InstructionFieldV1 = {
   display_name: string;

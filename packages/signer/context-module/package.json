@@ -1,35 +1,29 @@
 {
   "name": "@ledgerhq/context-module",
-  "version": "1.0.0",
-  "license": "MIT",
+  "version": "1.1.0",
+  "private": true,
+  "license": "Apache-2.0",
   "exports": {
     ".": {
+      "types": "./lib/types/index.d.ts",
       "import": "./lib/esm/index.js",
-      "require": "./lib/cjs/index.js",
-      "default": "./index.ts",
-      "types": "./lib/esm/index.d.ts"
-    },
-    "./*.js": {
-      "import": "./lib/esm/*.js",
-      "require": "./lib/cjs/*.js",
-      "default": "./*.js",
-      "types": "./lib/esm/*.d.ts"
+      "require": "./lib/cjs/index.js"
     },
     "./*": {
+      "types": "./lib/types/*",
       "import": "./lib/esm/*",
-      "require": "./lib/cjs/*",
-      "default": "./*",
-      "types": "./lib/esm/*"
+      "require": "./lib/cjs/*"
     }
   },
   "files": [
     "./lib"
   ],
   "scripts": {
-    "build": "rimraf lib && zx scripts/build.mjs",
-    "dev": "concurrently \"pnpm dev:esm\" \"pnpm dev:cjs\"",
-    "dev:esm": "concurrently \"tsc --watch -p tsconfig.esm.json\" \"tsc-alias --watch -p tsconfig.esm.json\"",
-    "dev:cjs": "concurrently \"tsc --watch -p tsconfig.cjs.json\" \"tsc-alias --watch -p tsconfig.cjs.json\"",
+    "prebuild": "rimraf lib",
+    "build": "pnpm lmdk-build --entryPoints index.ts,src/**/*.ts --tsconfig tsconfig.prod.json",
+    "dev": "concurrently \"pnpm watch:builds\" \"pnpm watch:types\"",
+    "watch:builds": "pnpm lmdk-watch --entryPoints index.ts,src/**/*.ts --tsconfig tsconfig.prod.json",
+    "watch:types": "concurrently \"tsc --watch -p tsconfig.prod.json\" \"tsc-alias --watch -p tsconfig.prod.json\"",
     "lint": "eslint",
     "lint:fix": "pnpm lint --fix",
     "postpack": "find . -name '*.tgz' -exec cp {} ../../../dist/ \\; ",
@@ -42,6 +36,7 @@
   },
   "devDependencies": {
     "@ledgerhq/device-management-kit": "workspace:*",
+    "@ledgerhq/esbuild-tools": "workspace:*",
     "@ledgerhq/eslint-config-dsdk": "workspace:*",
     "@ledgerhq/jest-config-dsdk": "workspace:*",
     "@ledgerhq/prettier-config-dsdk": "workspace:*",
@@ -50,10 +45,10 @@
     "ts-node": "^10.9.2"
   },
   "dependencies": {
-    "axios": "^1.7.7",
+    "axios": "^1.7.9",
     "crypto-js": "^4.2.0",
-    "ethers": "^6.13.2",
-    "inversify": "^6.0.2",
+    "ethers": "6.13.4",
+    "inversify": "^6.2.1",
     "purify-ts": "^2.1.0",
     "reflect-metadata": "^0.2.2"
   },

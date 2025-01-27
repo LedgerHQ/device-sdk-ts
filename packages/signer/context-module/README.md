@@ -62,18 +62,16 @@ const contextModule = new ContextModuleBuilder().build();
 You can use a custom configuration for your context module.
 
 ```ts
-const config: ContextModuleConfig = {
+const config: ContextModuleCalConfig = {
   // config to use
 };
-const contextModule = new ContextModuleBuilder().withConfig(config).build();
+const contextModule = new ContextModuleBuilder().addCalConfig(config).build();
 ```
 
 It is also possible to instantiate the context module without the default loaders.
 
 ```ts
-const contextModule = new ContextModuleBuilder()
-  .withoutDefaultLoaders()
-  .build();
+const contextModule = new ContextModuleBuilder().removeDefaultLoaders().build();
 ```
 
 > [!NOTE]
@@ -93,7 +91,7 @@ const myCustomTokenDataSource = new MyCustomTokenDataSource();
 const myTokenLoader = new TokenCOntextLoader();
 
 const contextModule = new ContextModuleBuilder()
-  .withoutDefaultLoaders()
+  .removeDefaultLoaders()
   .addLoader(tokenLoader)
   .addLoader(myTokenLoader)
   .addLoader(myCustomLoader)

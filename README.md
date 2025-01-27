@@ -4,9 +4,6 @@
   <p align="center">
   <!-- Update with each individual package version -->
     <!-- Enable and display when CI set up -->
-    <!-- <a href="https://github.com/LedgerHQ/platform-sdk/actions">
-      <img alt="Tests Passing" src="https://github.com/LedgerHQ/platform-sdk/workflows/CI/badge.svg" />
-    </a> -->
     <a href="https://www.typescriptlang.org/">
       <img alt="TypeScript" src="https://img.shields.io/badge/TypeScript-007ACC?style=for-the-badge&logo=typescript&logoColor=white" />
     </a>
@@ -28,6 +25,10 @@
     </a>
     <a href="https://www.npmjs.com/">
       <img alt="NPM" src="https://img.shields.io/badge/npm-CB3837?style=for-the-badge&logo=npm&logoColor=white" />
+    </a>
+<br />
+    <a href="https://github.com/LedgerHQ/device-sdk-ts/actions/workflows/pull_request.yml">
+      <img alt="Pull request Tests Passing" src="https://github.com/LedgerHQ/device-sdk-ts/actions/workflows/pull_request.yml/badge.svg" />
     </a>
   </p>
 
@@ -57,11 +58,11 @@ The purpose of the Ledger Device Management Kit(LDMK in short) is to provide a l
 
 ## How does it works
 
-The Device Management Kit features an interface for applications to handle any Ledge device (a.k. hardware wallets). It convert intention into
+The Device Management Kit features an interface for applications to handle any Ledger device (a.k. hardware wallets). It convert intention into
 
 ```mermaid
   flowchart LR;
-      application(Application) <--API--> DSDK(DeviceSDK) <--USB/BLE--> device(Device);
+      application(Application) <--API--> LDMK(LedgerDeviceManagementKit) <--USB/BLE--> device(Device);
 ```
 
 The Device Management Kit is available in 3 different environments (web, Android & iOS).
@@ -72,7 +73,7 @@ This repository is dedicated to **web environment** and is written in TypeScript
 
 ### Repository
 
-The Device Management Kit is structured as a monorepository whose prupose is to centralise all the TypeScript code related to the SDK in one place.
+The Device Management Kit is structured as a monorepository whose prupose is to centralise all the TypeScript code related to the Device Management Kit in one place.
 
 This project uses [turbo monorepo](https://turbo.build/repo/docs) to build and release different packages on NPM registry and a sample demo application on Vercel.
 
@@ -80,16 +81,19 @@ This project uses [turbo monorepo](https://turbo.build/repo/docs) to build and r
 
 A brief description of this project packages:
 
-| Name                              | Path                       | Description                                                                                                                     |
-| --------------------------------- | -------------------------- | ------------------------------------------------------------------------------------------------------------------------------- |
-| @ledgerhq/device-sdk-sample       | apps/sample                | React Next web app used to test & demonstrate the Web Device Management Kit                                                     |
-| @ledgerhq/eslint-config-dsdk      | packages/config/eslint     | internal package which contains eslint shared config. Used by `extends: ["@ledgerhq/dsdk"]` in `.eslintrc`.                     |
-| @ledgerhq/jest-config-dsdk        | packages/config/jest       | internal package which contains jest shared config. Used by `preset: "@ledgerhq/jest-config-dsdk"` in `jest.config.ts`          |
-| @ledgerhq/tsconfig-dsdk           | packages/config/typescript | internal package which contains typescript shared config. Used by `"extends": "@ledgerhq/tsconfig-dsdk/sdk"` in `tsconfig.json` |
-| @ledgerhq/device-management-kit   | packages/core              | external package that contains the core of the Web SDK                                                                          |
-| @ledgerhq/device-sdk-signer       | packages/signer            | external package that contains device coin application dedicated handlers                                                       |
-| @ledgerhq/device-sdk-trusted-apps | packages/trusted-apps      | external package that contains device trusted application dedicated handlers                                                    |
-| @ledgerhq/device-sdk-ui           | packages/ui                | external package                                                                                                                |
+| Name                                                  | Path                           | Description                                                                                                                              |
+|-------------------------------------------------------|--------------------------------|------------------------------------------------------------------------------------------------------------------------------------------|
+| @ledgerhq/device-management-kit-sample                | apps/sample                    | React Next web app used to test & demonstrate the Web Device Management Kit                                                              |
+| @ledgerhq/eslint-config-dsdk                          | packages/config/eslint         | internal package which contains eslint shared config. Used by `extends: ["@ledgerhq/dsdk"]` in `.eslintrc`.                              |
+| @ledgerhq/jest-config-dsdk                            | packages/config/jest           | internal package which contains jest shared config. Used by `preset: "@ledgerhq/jest-config-dsdk"` in `jest.config.ts`                   |
+| @ledgerhq/tsconfig-dsdk                               | packages/config/typescript     | internal package which contains typescript shared config. Used by `"extends": "@ledgerhq/tsconfig-dsdk/tsconfig.sdk"` in `tsconfig.json` |
+| @ledgerhq/device-management-kit                       | packages/device-management-kit | external package that contains the core of the Web Device Management Kit                                                                 |
+| @ledgerhq/device-signer-kit-ethereum                  | packages/signer/signer-eth     | external package that contains device ethereum coin application dedicated handlers                                                       |
+| @ledgerhq/device-signer-kit-solana                    | packages/signer/signer-solana  | external package that contains device solana coin application dedicated handlers                                                         |
+| @ledgerhq/device-management-kit-flipper-plugin-client | packages/flipper-plugin-client | external package that contains [flipper](https://github.com/facebook/flipper) logger for Device Management Kit                           |
+| @ledgerhq/device-transport-kit-web-hid                | packages/transport/web-hid     | external package that contains the Web Hid transport implementation                                                                      |
+| @ledgerhq/device-transport-kit-web-ble                | packages/transport/web-ble     | external package that contains the Web Ble transport implementation                                                                      |
+| @ledgerhq/device-mockserver-client                    | packages/mockserver-client     | external package that contains the client to interact with the mock-server                                                               |
 
 # Getting started
 
@@ -141,12 +145,6 @@ proto use
 pnpm i
 ```
 
-Alternatively, if you want to bypass the postinstall scripts which can be long to run.
-
-```bash
-pnpm i --ignore-scripts
-```
-
 4- Check the shell configuration file
 
 In you shell configuration file (e.g. .bashrc or .zshrc ) verify the path for `proto` is correctly set.
@@ -177,20 +175,21 @@ Please configure JEST extention accordingly.
 
 Each package is built using the following command (at the root of the monorepo).
 
-### Core
+### Device Management Kit
 
 Device Management Kit main module.
 
 ```bash
-pnpm core build
+pnpm dmk build
 ```
 
-### Signer
+### Signers
 
 Transaction and message signer module.
+Each signer is its own package. Here is an exemple with the ETH signer:
 
 ```bash
-pnpm signer build
+pnpm signer-eth build
 ```
 
 ### Trusted Apps
@@ -215,6 +214,12 @@ Sample application module.
 
 ```bash
 pnpm sample build
+```
+
+#### Documentation
+
+```bash
+pnpm doc build
 ```
 
 # Processes & usage
@@ -258,7 +263,7 @@ Finally, we should add a script in the correct `package.json` as a shortcut to t
 eg:
 
 ```
-pnpm core module:create
+pnpm dmk module:create
 ```
 
 Under the hood, the script looks like this:
@@ -274,7 +279,7 @@ pnpm hygen <name> with-prompt
 
 | workspace | script          | description                           |
 | --------- | --------------- | ------------------------------------- |
-| 📦 core   | `module:create` | scaffolds a new _src/internal_ module |
+| 📦 dmk    | `module:create` | scaffolds a new _src/internal_ module |
 
 ## Play with the sample app ?
 
@@ -291,7 +296,7 @@ It includes background information about the project and how to setup, run and b
 
 ## Reference API
 
-Please refer to the core package [**readme**](https://github.com/LedgerHQ/device-sdk-ts/blob/develop/packages/core/README.md).
+Please refer to the core package [**readme**](https://github.com/LedgerHQ/device-sdk-ts/blob/develop/packages/device-management-kit/README.md).
 
 # Contributing
 
@@ -301,4 +306,4 @@ Each individual project may include its own specific guidelines, located within 
 
 # License
 
-Please check each project [`LICENSE`](https://github.com/LedgerHQ/device-sdk-ts/blob/develop/LICENSE.md) file, most of them are under the `MIT` license.
+Please check each project [`LICENSE`](https://github.com/LedgerHQ/device-sdk-ts/blob/develop/LICENSE.md) file, most of them are under the `Apache-2.0` license.

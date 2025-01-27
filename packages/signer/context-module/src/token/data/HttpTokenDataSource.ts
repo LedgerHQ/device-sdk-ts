@@ -4,7 +4,6 @@ import { Either, Left, Right } from "purify-ts";
 
 import { configTypes } from "@/config/di/configTypes";
 import type { ContextModuleConfig } from "@/config/model/ContextModuleConfig";
-import { HexStringUtils } from "@/shared/utils/HexStringUtils";
 import PACKAGE from "@root/package.json";
 
 import { GetTokenInfosParams, TokenDataSource } from "./TokenDataSource";
@@ -26,7 +25,8 @@ export class HttpTokenDataSource implements TokenDataSource {
         params: {
           contract_address: address,
           chain_id: chainId,
-          output: "live_signature,ticker,decimals",
+          output: "descriptor,ticker",
+          ref: `branch:${this.config.cal.branch}`,
         },
         headers: {
           "X-Ledger-Client-Version": `context-module/${PACKAGE.version}`,
@@ -36,9 +36,12 @@ export class HttpTokenDataSource implements TokenDataSource {
 
       if (
         !tokenInfos ||
-        !tokenInfos.live_signature ||
         !tokenInfos.ticker ||
-        !tokenInfos.decimals
+        !tokenInfos.descriptor ||
+        !tokenInfos.descriptor.data ||
+        !tokenInfos.descriptor.signatures ||
+        typeof tokenInfos.descriptor.signatures[this.config.cal.mode] !==
+          "string"
       ) {
         return Left(
           new Error(
@@ -52,26 +55,11 @@ export class HttpTokenDataSource implements TokenDataSource {
         .toString(16)
         .padStart(2, "0");
 
-      // ticker ascii
-      const tickerBuff = HexStringUtils.stringToHex(tokenInfos.ticker);
-
-      // bufferized address
-      const addressBuff = address.slice(2);
-
-      // 4 bytes for the decimals
-      const decimalsBuff = tokenInfos.decimals.toString(16).padStart(8, "0");
-
-      // 4 bytes for the chainId
-      const chainIdBuff = chainId.toString(16).padStart(8, "0");
-
       return Right(
         [
           tickerLengthBuff,
-          tickerBuff,
-          addressBuff,
-          decimalsBuff,
-          chainIdBuff,
-          tokenInfos.live_signature,
+          tokenInfos.descriptor.data,
+          tokenInfos.descriptor.signatures[this.config.cal.mode],
         ].join(""),
       );
     } catch (_error) {

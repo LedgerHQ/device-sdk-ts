@@ -1,5 +1,6 @@
 import React from "react";
 import { Flex, Icons, Text } from "@ledgerhq/react-ui";
+import { type BaseStyledProps } from "@ledgerhq/react-ui/components/styled";
 import styled from "styled-components";
 
 const ListItemWrapper = styled(Flex)`
@@ -12,12 +13,14 @@ const ListItemWrapper = styled(Flex)`
   cursor: pointer;
 `;
 
-export const ClickableListItem: React.FC<{
-  title: string;
-  description: string;
-  onClick(): void;
-  icon?: React.ReactNode;
-}> = ({ title, description, onClick, icon }) => {
+export const ClickableListItem: React.FC<
+  {
+    title: string;
+    description: string;
+    onClick(): void;
+    icon?: React.ReactNode;
+  } & BaseStyledProps
+> = ({ title, description, onClick, icon, ...styleProps }) => {
   return (
     <ListItemWrapper
       flexDirection="row"
@@ -26,6 +29,8 @@ export const ClickableListItem: React.FC<{
       backgroundColor={"opacityDefault.c05"}
       borderRadius={2}
       onClick={onClick}
+      data-testid={`CTA_command-${title}`}
+      {...styleProps}
     >
       {icon}
       <Flex flex={1} flexDirection="column" rowGap={4}>

@@ -1,5 +1,6 @@
 import React from "react";
 import {
+  bufferToHexaString,
   type DeviceActionIntermediateValue,
   type DeviceActionState,
   DeviceActionStatus,
@@ -7,8 +8,9 @@ import {
 } from "@ledgerhq/device-management-kit";
 import { Flex, Icons, Tag, Text, Tooltip } from "@ledgerhq/react-ui";
 import styled from "styled-components";
+import { inspect } from "util";
 
-import { FieldType } from "@/hooks/useForm";
+import { type FieldType } from "@/hooks/useForm";
 
 export type DeviceActionResponseProps<Output, Error, IntermediateValue> = {
   args: Record<string, FieldType>;
@@ -36,6 +38,14 @@ const TooltipTitle = styled(Text).attrs({
 })`
   flex-grow: 0;
 `;
+
+function bufferStringifyReplacer(_key: string, value: unknown): unknown {
+  // Pretty-print buffers to make signatures or public keys readable
+  if (value instanceof Uint8Array) {
+    return bufferToHexaString(value);
+  }
+  return value;
+}
 
 /**
  * Component to display an event emitted by a device action.
@@ -68,7 +78,7 @@ export function DeviceActionResponse<
         content={
           <Text color="neutral.c00" whiteSpace="pre-wrap">
             Arguments:{"\n"}
-            {JSON.stringify(args, null, 2)}
+            {JSON.stringify(args, bufferStringifyReplacer, 2)}
           </Text>
         }
       >
@@ -91,11 +101,15 @@ export function DeviceActionResponse<
           wordBreak: "break-word",
         }}
       >
-        {JSON.stringify(
-          isError ? props.error : props.deviceActionState,
-          null,
-          2,
-        )}
+        {isError
+          ? inspect(props.error, { depth: null })
+          : props.deviceActionState.status === DeviceActionStatus.Error
+            ? inspect(props.deviceActionState.error, { depth: null })
+            : JSON.stringify(
+                props.deviceActionState,
+                bufferStringifyReplacer,
+                2,
+              )}
       </Text>
       {!isError &&
       props.deviceActionState.status === DeviceActionStatus.Pending ? (

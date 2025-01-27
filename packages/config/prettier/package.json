@@ -1,12 +1,12 @@
 {
   "name": "@ledgerhq/prettier-config-dsdk",
-  "license": "MIT",
-  "version": "0.0.1",
+  "license": "Apache-2.0",
+  "version": "0.0.2",
   "private": true,
   "files": [
     "index.js"
   ],
   "devDependencies": {
-    "prettier": "^3.3.3"
+    "prettier": "^3.4.2"
   }
 }

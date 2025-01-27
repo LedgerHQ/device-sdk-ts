@@ -1,4 +1,4 @@
-name: Create release pull request
+name: "[Release] Create Versioning Pull Request"
 on:
   push:
     branches:
@@ -9,23 +9,20 @@ env:
 
 jobs:
   version:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v4
 
       - uses: LedgerHQ/device-sdk-ts/.github/actions/setup-toolchain-composite@develop
 
-      - name: install dependencies
-        run: pnpm install
-
-      - name: build libraries
+      - name: Build libraries
         run: pnpm build:libs
 
-      - name: create release pull request or publish
+      - name: Create release pull request
         uses: changesets/action@v1
         with:
           version: pnpm bump
-          commit: "🔖 (release): versioning packages"
-          title: "🔖 (release) [NO-ISSUE]: versioning packages"
+          commit: "🔖 (release): Versioning packages"
+          title: "🔖 (release) [NO-ISSUE]: Versioning packages"
         env:
           GITHUB_TOKEN: ${{ github.token }}

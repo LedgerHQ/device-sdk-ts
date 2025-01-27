@@ -1,0 +1,106 @@
+/* Hero Section */
+
+.title {
+  font-size: 2em;
+}
+
+.hero {
+  padding: 60px 20px;
+  text-align: center;
+  height: 60vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.hero h1 {
+  font-size: 2.5em;
+  margin-bottom: 20px;
+}
+
+.hero p {
+  font-size: 1.2em;
+}
+
+em {
+  color: #ff5300;
+}
+
+/* Cards */
+.card-container {
+  display: flex;
+  justify-content: center;
+  margin: 40px 0;
+}
+
+.card {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  border-radius: 8px;
+  padding: 20px;
+  width: 250px;
+  text-align: center;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  margin: 0 20px;
+}
+
+.card .icon {
+  font-size: 3em;
+}
+
+.card h3 {
+  margin-top: 20px;
+  margin-bottom: 10px;
+  font-size: 1.5em;
+}
+
+.card p {
+  font-size: 1em;
+  margin-bottom: 20px;
+}
+
+.btn {
+  display: inline-block;
+  background-color: #ff5300;
+  color: white;
+  padding: 10px 20px;
+  text-align: center;
+  border-radius: 4px;
+  text-decoration: none;
+}
+
+.btn:hover {
+  background-color: #ff5300;
+}
+
+/* Additional Resources */
+.resources-container {
+  text-align: center;
+  padding: 40px 20px;
+}
+
+.resources-container h2 {
+  font-size: 1.8em;
+  margin-bottom: 20px;
+}
+
+.resources-container ul {
+  list-style: none;
+  padding: 0;
+}
+
+.resources-container ul li {
+  margin: 10px 0;
+}
+
+.resources-container ul li a {
+  font-size: 1.1em;
+  text-decoration: none;
+  color: #333;
+}
+
+.resources-container ul li a:hover {
+  text-decoration: underline;
+}

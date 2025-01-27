@@ -1,44 +1,44 @@
 import React from "react";
 import { useMemo } from "react";
 import {
-  GetDeviceStatusDAError,
-  GetDeviceStatusDAInput,
-  GetDeviceStatusDAIntermediateValue,
-  GetDeviceStatusDAOutput,
+  type GetDeviceStatusDAError,
+  type GetDeviceStatusDAInput,
+  type GetDeviceStatusDAIntermediateValue,
+  type GetDeviceStatusDAOutput,
   GetDeviceStatusDeviceAction,
-  GoToDashboardDAError,
-  GoToDashboardDAInput,
-  GoToDashboardDAIntermediateValue,
-  GoToDashboardDAOutput,
+  type GoToDashboardDAError,
+  type GoToDashboardDAInput,
+  type GoToDashboardDAIntermediateValue,
+  type GoToDashboardDAOutput,
   GoToDashboardDeviceAction,
-  ListAppsDAError,
-  ListAppsDAInput,
-  ListAppsDAIntermediateValue,
-  ListAppsDAOutput,
+  type ListAppsDAError,
+  type ListAppsDAInput,
+  type ListAppsDAIntermediateValue,
+  type ListAppsDAOutput,
   ListAppsDeviceAction,
-  ListAppsWithMetadataDAError,
-  ListAppsWithMetadataDAInput,
-  ListAppsWithMetadataDAIntermediateValue,
-  ListAppsWithMetadataDAOutput,
+  type ListAppsWithMetadataDAError,
+  type ListAppsWithMetadataDAInput,
+  type ListAppsWithMetadataDAIntermediateValue,
+  type ListAppsWithMetadataDAOutput,
   ListAppsWithMetadataDeviceAction,
-  OpenAppDAError,
-  OpenAppDAInput,
-  OpenAppDAIntermediateValue,
-  OpenAppDAOutput,
+  type OpenAppDAError,
+  type OpenAppDAInput,
+  type OpenAppDAIntermediateValue,
+  type OpenAppDAOutput,
   OpenAppDeviceAction,
 } from "@ledgerhq/device-management-kit";
 
-import { useSdk } from "@/providers/DeviceSdkProvider";
+import { useDmk } from "@/providers/DeviceManagementKitProvider";
 
 import { DeviceActionsList, UNLOCK_TIMEOUT } from "./DeviceActionsList";
-import { DeviceActionProps } from "./DeviceActionTester";
+import { type DeviceActionProps } from "./DeviceActionTester";
 
 export const AllDeviceActions: React.FC<{ sessionId: string }> = ({
   sessionId,
 }) => {
-  const sdk = useSdk();
+  const dmk = useDmk();
 
-  const deviceModelId = sdk.getConnectedDevice({
+  const deviceModelId = dmk.getConnectedDevice({
     sessionId,
   }).modelId;
 
@@ -49,21 +49,37 @@ export const AllDeviceActions: React.FC<{ sessionId: string }> = ({
         title: "Open app",
         description:
           "Perform all the actions necessary to open an app on the device",
-        executeDeviceAction: ({ appName }, inspect) => {
+        executeDeviceAction: (
+          { appName, unlockTimeout, compatibleAppNames },
+          inspect,
+        ) => {
+          const compatibleAppNamesArray: string[] = compatibleAppNames
+            .split(",")
+            .map((name) => name.trim());
           const deviceAction = new OpenAppDeviceAction({
-            input: { appName },
+            input: {
+              appName,
+              unlockTimeout,
+              compatibleAppNames: compatibleAppNamesArray,
+            },
             inspect,
           });
-          return sdk.executeDeviceAction({
+          return dmk.executeDeviceAction({
             sessionId,
             deviceAction,
           });
         },
-        initialValues: { appName: "" },
+        initialValues: {
+          appName: "",
+          unlockTimeout: UNLOCK_TIMEOUT,
+          compatibleAppNames: "",
+        },
         deviceModelId,
       } satisfies DeviceActionProps<
         OpenAppDAOutput,
-        OpenAppDAInput,
+        Omit<OpenAppDAInput, "compatibleAppNames"> & {
+          compatibleAppNames: string;
+        },
         OpenAppDAError,
         OpenAppDAIntermediateValue
       >,
@@ -76,7 +92,7 @@ export const AllDeviceActions: React.FC<{ sessionId: string }> = ({
             input: { unlockTimeout },
             inspect,
           });
-          return sdk.executeDeviceAction({
+          return dmk.executeDeviceAction({
             sessionId,
             deviceAction,
           });
@@ -92,12 +108,12 @@ export const AllDeviceActions: React.FC<{ sessionId: string }> = ({
       {
         title: "Go to dashboard",
         description: "Navigate to the dashboard",
-        executeDeviceAction: (_, inspect) => {
+        executeDeviceAction: ({ unlockTimeout }, inspect) => {
           const deviceAction = new GoToDashboardDeviceAction({
-            input: { unlockTimeout: UNLOCK_TIMEOUT },
+            input: { unlockTimeout },
             inspect,
           });
-          return sdk.executeDeviceAction({
+          return dmk.executeDeviceAction({
             sessionId,
             deviceAction,
           });
@@ -113,12 +129,12 @@ export const AllDeviceActions: React.FC<{ sessionId: string }> = ({
       {
         title: "List apps",
         description: "List all applications installed on the device",
-        executeDeviceAction: (_, inspect) => {
+        executeDeviceAction: ({ unlockTimeout }, inspect) => {
           const deviceAction = new ListAppsDeviceAction({
-            input: { unlockTimeout: UNLOCK_TIMEOUT },
+            input: { unlockTimeout },
             inspect,
           });
-          return sdk.executeDeviceAction({
+          return dmk.executeDeviceAction({
             sessionId,
             deviceAction,
           });
@@ -135,12 +151,12 @@ export const AllDeviceActions: React.FC<{ sessionId: string }> = ({
         title: "List apps with metadata",
         description:
           "List all applications installed on the device with additional metadata",
-        executeDeviceAction: (_, inspect) => {
+        executeDeviceAction: ({ unlockTimeout }, inspect) => {
           const deviceAction = new ListAppsWithMetadataDeviceAction({
-            input: { unlockTimeout: UNLOCK_TIMEOUT },
+            input: { unlockTimeout },
             inspect,
           });
-          return sdk.executeDeviceAction({
+          return dmk.executeDeviceAction({
             sessionId,
             deviceAction,
           });
@@ -154,7 +170,7 @@ export const AllDeviceActions: React.FC<{ sessionId: string }> = ({
         ListAppsWithMetadataDAIntermediateValue
       >,
     ],
-    [deviceModelId, sdk, sessionId],
+    [deviceModelId, dmk, sessionId],
   );
 
   return (

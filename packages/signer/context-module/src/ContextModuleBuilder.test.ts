@@ -1,7 +1,4 @@
-import {
-  ContextModuleCalConfig,
-  ContextModuleConfig,
-} from "./config/model/ContextModuleConfig";
+import { type ContextModuleCalConfig } from "./config/model/ContextModuleConfig";
 import { ContextModuleBuilder } from "./ContextModuleBuilder";
 import { DefaultContextModule } from "./DefaultContextModule";
 
@@ -24,7 +21,7 @@ describe("ContextModuleBuilder", () => {
     const customLoader = { load: jest.fn() };
 
     const res = contextModuleBuilder
-      .withoutDefaultLoaders()
+      .removeDefaultLoaders()
       .addLoader(customLoader)
       .build();
 
@@ -36,8 +33,8 @@ describe("ContextModuleBuilder", () => {
     const customLoader = { load: jest.fn() };
 
     const res = contextModuleBuilder
-      .withoutDefaultLoaders()
-      .withTypedDataLoader(customLoader)
+      .removeDefaultLoaders()
+      .addTypedDataLoader(customLoader)
       .build();
 
     expect(res).toBeInstanceOf(DefaultContextModule);
@@ -45,11 +42,8 @@ describe("ContextModuleBuilder", () => {
 
   it("should return a custom context module with a custom config", () => {
     const contextModuleBuilder = new ContextModuleBuilder();
-    const customConfig: ContextModuleConfig = {
-      cal: defaultCalConfig,
-    };
 
-    const res = contextModuleBuilder.withConfig(customConfig).build();
+    const res = contextModuleBuilder.addCalConfig(defaultCalConfig).build();
 
     expect(res).toBeInstanceOf(DefaultContextModule);
   });

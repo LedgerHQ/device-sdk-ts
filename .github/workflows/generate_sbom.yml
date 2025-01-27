@@ -1,4 +1,4 @@
-name: Generate SBOM
+name: "[Automation] Generate SBOM"
 
 on:
   push:
@@ -9,10 +9,11 @@ on:
 
 jobs:
   generate-sbom:
-    runs-on: ubuntu-latest
+    name: Generate SBOM
+    runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v4
 
       - uses: LedgerHQ/device-sdk-ts/.github/actions/setup-toolchain-composite@develop
 
-      - uses: ./.github/actions/generate-sbom-composite
+      - uses: LedgerHQ/device-sdk-ts/.github/actions/generate-sbom-composite@develop

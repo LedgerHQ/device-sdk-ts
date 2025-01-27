@@ -11,4 +11,13 @@ export const GlobalStyle = createGlobalStyle`
     margin: 0;
     background-color: #000000;
   }
+  body {
+    user-select: text;
+  }
+  .no-scrollbar {
+      &::-webkit-scrollbar {
+          width: 0px;
+          height: 0px;
+      }
+  }
 `;

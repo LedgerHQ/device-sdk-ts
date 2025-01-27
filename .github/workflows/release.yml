@@ -1,4 +1,4 @@
-name: Publish npm packages
+name: "[Release] Publish Packages"
 on:
   push:
     branches:
@@ -24,7 +24,7 @@ jobs:
 
       - uses: LedgerHQ/device-sdk-ts/.github/actions/setup-toolchain-composite@develop
 
-      - name: build libraries
+      - name: Build libraries
         run: pnpm build:libs
 
       - name: Login to internal JFrog registry
@@ -46,9 +46,8 @@ jobs:
 
       - name: Publish
         id: changesets
-        uses: changesets/action@v1
+        uses: ledgerhq/changeset-action-ledger@main
         with:
-          version: echo "not running version"
           publish: pnpm release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

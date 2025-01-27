@@ -3,7 +3,7 @@ import axios from "axios";
 import PACKAGE from "@root/package.json";
 
 import { HttpNftDataSource } from "./HttpNftDataSource";
-import { NftDataSource } from "./NftDataSource";
+import { type NftDataSource } from "./NftDataSource";
 
 jest.mock("axios");
 

@@ -1,7 +1,7 @@
 import React, { useEffect } from "react";
 import { Flex, Input, SelectInput, Switch, Text } from "@ledgerhq/react-ui";
 
-import { FieldType, useForm } from "@/hooks/useForm";
+import { type FieldType, useForm } from "@/hooks/useForm";
 
 export type ValueSelector<T extends FieldType> = Record<
   string,
@@ -26,11 +26,13 @@ export function CommandForm<Args extends Record<string, FieldType>>({
   initialValues,
   onChange,
   valueSelector,
+  labelSelector,
   disabled,
 }: {
   initialValues: Args;
   onChange: (values: Args) => void;
   valueSelector?: ValueSelector<FieldType>;
+  labelSelector?: Record<string, string>;
   disabled?: boolean;
 }) {
   const { formValues, setFormValue } = useForm(initialValues);
@@ -53,7 +55,7 @@ export function CommandForm<Args extends Record<string, FieldType>>({
         >
           {typeof value === "boolean" ? null : (
             <Text variant="paragraph" fontWeight="medium">
-              {key}
+              {labelSelector && labelSelector[key] ? labelSelector[key] : key}
             </Text>
           )}
           {valueSelector?.[key] ? (
@@ -69,13 +71,15 @@ export function CommandForm<Args extends Record<string, FieldType>>({
               />
             </Flex>
           ) : typeof value === "boolean" ? (
-            <Switch
-              name="key"
-              checked={value}
-              onChange={() => setFormValue(key, !value)}
-              disabled={disabled}
-              label={key}
-            />
+            <div data-testid={`input-switch_${key}`}>
+              <Switch
+                name="key"
+                checked={value}
+                onChange={() => setFormValue(key, !value)}
+                disabled={disabled}
+                label={key}
+              />
+            </div>
           ) : typeof value === "string" ? (
             <Input
               id={key}
@@ -83,13 +87,16 @@ export function CommandForm<Args extends Record<string, FieldType>>({
               placeholder={key}
               onChange={(newVal) => setFormValue(key, newVal)}
               disabled={disabled}
+              data-testid={`input-text_${key}`}
             />
           ) : (
             <Input
               id={key}
               value={value}
               placeholder={key}
-              onChange={(newVal) => setFormValue(key, newVal ?? 0)}
+              onChange={(newVal) =>
+                setFormValue(key, parseInt(newVal.toString(), 10) ?? 0)
+              }
               type="number"
               disabled={disabled}
             />

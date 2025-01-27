@@ -63,33 +63,33 @@ export class DefaultTypedDataContextLoader implements TypedDataContextLoader {
 
       // If the filter is a token, get token address from typed message values, and fetch descriptor
       if (filter.type === "token") {
-        const value = typedData.fieldsValues.find(
+        const values = typedData.fieldsValues.filter(
           (entry) => entry.path === filter.path,
         );
-        if (value === undefined) {
-          return {
-            type: "error",
-            error: new Error(
-              `The token filter references the value ${filter.path} which is absent from the message`,
-            ),
-          };
+        if (values.length === 0) {
+          // No value matching the referenced token. It may be located in an empty array.
+          continue;
         }
-        // Fetch descriptor
+        const value = values[0]!;
         const address = this.convertAddressToHexaString(value.value);
-        const chainId = typedData.chainId;
-        const payload = await this.tokenDataSource.getTokenInfosPayload({
-          address,
-          chainId,
-        });
-        if (payload.isLeft()) {
-          return {
-            type: "error",
-            error: payload.extract(),
-          };
+
+        // Arrays with different tokens are not supported since there is only 1 tokenIndex per filter.
+        // Only fetch tokens if all values are the same.
+        if (
+          values.every(
+            (entry) => this.convertAddressToHexaString(entry.value) === address,
+          )
+        ) {
+          // Fetch descriptor
+          const chainId = typedData.chainId;
+          const payload = await this.tokenDataSource.getTokenInfosPayload({
+            address,
+            chainId,
+          });
+          payload.ifRight((p) => {
+            mappedTokens[tokenIndex] = p;
+          });
         }
-        payload.ifRight((payload) => {
-          mappedTokens[tokenIndex] = payload;
-        });
       }
 
       // If the filter is an amount with a reference to the verifyingContract, fetch verifyingContract descriptor.
@@ -105,14 +105,8 @@ export class DefaultTypedDataContextLoader implements TypedDataContextLoader {
           address,
           chainId,
         });
-        if (payload.isLeft()) {
-          return {
-            type: "error",
-            error: payload.extract(),
-          };
-        }
-        payload.ifRight((payload) => {
-          mappedTokens[tokenIndex] = payload;
+        payload.ifRight((p) => {
+          mappedTokens[tokenIndex] = p;
         });
       }
     }

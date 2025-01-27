@@ -1,19 +1,33 @@
 "use client";
 import React, { useCallback, useEffect, useState } from "react";
+import { mockserverIdentifier } from "@ledgerhq/device-transport-kit-mockserver";
 import { Box, Flex, IconsLegacy, Link, Text } from "@ledgerhq/react-ui";
 import { useRouter } from "next/navigation";
-import styled, { DefaultTheme } from "styled-components";
+import styled, { type DefaultTheme } from "styled-components";
 
+import { AvailableDevices } from "@/components/AvailableDevices";
 import { Device } from "@/components/Device";
 import { Menu } from "@/components/Menu";
-import { useExportLogsCallback, useSdk } from "@/providers/DeviceSdkProvider";
+import {
+  useDmk,
+  useExportLogsCallback,
+} from "@/providers/DeviceManagementKitProvider";
 import { useDeviceSessionsContext } from "@/providers/DeviceSessionsProvider";
+import { useDmkConfigContext } from "@/providers/DmkConfig";
 
 const Root = styled(Flex).attrs({ py: 8, px: 6 })`
   flex-direction: column;
   width: 280px;
-  background-color: ${({ theme }: { theme: DefaultTheme }) =>
-    theme.colors.background.drawer};
+  background-color: ${({
+    theme,
+    mockServerEnabled,
+  }: {
+    theme: DefaultTheme;
+    mockServerEnabled: boolean;
+  }) =>
+    mockServerEnabled
+      ? theme.colors.constant.purple
+      : theme.colors.background.drawer};
 `;
 
 const Subtitle = styled(Text).attrs({ mb: 5 })``;
@@ -35,37 +49,40 @@ const VersionText = styled(Text)`
 
 export const Sidebar: React.FC = () => {
   const [version, setVersion] = useState("");
-  const sdk = useSdk();
+  const dmk = useDmk();
   const exportLogs = useExportLogsCallback();
   const {
     state: { deviceById, selectedId },
     dispatch,
   } = useDeviceSessionsContext();
+  const {
+    state: { transport },
+  } = useDmkConfigContext();
 
   useEffect(() => {
-    sdk
+    dmk
       .getVersion()
       .then((v) => setVersion(v))
       .catch((error: unknown) => {
         console.error(new Error(String(error)));
         setVersion("");
       });
-  }, [sdk]);
+  }, [dmk]);
   const onDeviceDisconnect = useCallback(
     async (sessionId: string) => {
       try {
-        await sdk.disconnect({ sessionId });
+        await dmk.disconnect({ sessionId });
         dispatch({ type: "remove_session", payload: { sessionId } });
       } catch (e) {
         console.error(e);
       }
     },
-    [dispatch, sdk],
+    [dispatch, dmk],
   );
 
   const router = useRouter();
   return (
-    <Root>
+    <Root mockServerEnabled={transport === mockserverIdentifier}>
       <Link
         onClick={() => router.push("/")}
         mb={8}
@@ -75,24 +92,28 @@ export const Sidebar: React.FC = () => {
         }}
       >
         Ledger Device Management Kit
+        {transport === mockserverIdentifier && <span> (MOCKED)</span>}
       </Link>
-      <Subtitle variant={"small"}>
-        SDK Version: {version ? version : "Loading..."}
+
+      <Subtitle variant={"tiny"}>
+        Device sessions ({Object.values(deviceById).length})
       </Subtitle>
-
-      <Subtitle variant={"tiny"}>Device</Subtitle>
-
-      {Object.entries(deviceById).map(([sessionId, device]) => (
-        <Device
-          key={sessionId}
-          sessionId={sessionId}
-          name={device.name}
-          model={device.modelId}
-          type={device.type}
-          onDisconnect={async () => onDeviceDisconnect(sessionId)}
-        />
-      ))}
-
+      <div data-testid="container_devices">
+        {Object.entries(deviceById).map(([sessionId, device]) => (
+          <Device
+            key={sessionId}
+            sessionId={sessionId}
+            name={device.name}
+            model={device.modelId}
+            type={device.type}
+            onSelect={() =>
+              dispatch({ type: "select_session", payload: { sessionId } })
+            }
+            onDisconnect={() => onDeviceDisconnect(sessionId)}
+          />
+        ))}
+      </div>
+      <AvailableDevices />
       <MenuContainer active={!!selectedId}>
         <Subtitle variant={"tiny"}>Menu</Subtitle>
         <Menu />
@@ -107,10 +128,9 @@ export const Sidebar: React.FC = () => {
         >
           Share logs
         </Link>
-        <VersionText variant={"body"}>
-          Ledger Device Management Kit version {version}
+        <VersionText variant={"body"} whiteSpace="pre" textAlign="center">
+          Ledger Device Management Kit{"\n"}version {version}
         </VersionText>
-        <VersionText variant={"body"}>App version 0.1</VersionText>
       </BottomContainer>
     </Root>
   );
