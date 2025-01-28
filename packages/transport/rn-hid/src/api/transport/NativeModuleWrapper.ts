@@ -1,7 +1,12 @@
 import { type TransportDiscoveredDevice } from "@ledgerhq/device-management-kit";
 import { from, type Observable } from "rxjs";
 
-import { type ConnectionResult, type Log, type SendApduResult } from "./types";
+import {
+  type ConnectionResult,
+  type DeviceDisconnected,
+  type Log,
+  type SendApduResult,
+} from "./types";
 
 export interface NativeModuleWrapper {
   startScan(): Promise<void>;
@@ -9,6 +14,7 @@ export interface NativeModuleWrapper {
   subscribeToDiscoveredDevicesEvents(): Observable<
     Array<TransportDiscoveredDevice>
   >;
+  subscribeToDeviceDisconnectedEvents(): Observable<DeviceDisconnected>;
   subscribeToTransportLogs(): Observable<Log>;
   connectDevice(uid: string): Promise<ConnectionResult>;
   disconnectDevice(uid: string): Promise<void>; // TODO: better return type
@@ -44,5 +50,9 @@ export class StubNativeModuleWrapper implements NativeModuleWrapper {
 
   sendApdu(): Promise<SendApduResult> {
     throw new Error("Method not implemented.");
+  }
+
+  subscribeToDeviceDisconnectedEvents(): Observable<DeviceDisconnected> {
+    return from([]);
   }
 }

@@ -14,11 +14,13 @@ import { SendApduError } from "@api/transport/Errors";
 import { TRANSPORT_IDENTIFIER } from "@api/transport/rnHidTransportIdentifier";
 import {
   type ConnectionResult,
+  type DeviceDisconnected,
   type Log,
   type SendApduResult,
 } from "@api/transport/types";
 
 import {
+  type NativeDeviceConnectionLost,
   type NativeDiscoveryDevice,
   type NativeInternalConnectionResult,
   type NativeLedgerDevice,
@@ -122,4 +124,12 @@ export function mapNativeSendApduResultToSendApduResult(
   } else {
     return Left(new SendApduError(result.error));
   }
+}
+
+export function mapNativeDeviceConnectionLostToDeviceDisconnected(
+  nativeDeviceConnectionLost: NativeDeviceConnectionLost,
+): DeviceDisconnected {
+  return {
+    sessionId: nativeDeviceConnectionLost.id,
+  };
 }

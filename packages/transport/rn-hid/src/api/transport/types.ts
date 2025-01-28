@@ -19,6 +19,10 @@ type ConnectionSuccess = {
   transportDeviceModel: TransportDeviceModel;
 };
 
+export type DeviceDisconnected = {
+  sessionId: string;
+};
+
 export type ConnectionResult = Either<ConnectError, ConnectionSuccess>;
 
 export type SendApduResult = Either<DmkError, ApduResponse>;

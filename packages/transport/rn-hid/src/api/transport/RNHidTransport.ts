@@ -42,12 +42,15 @@ export class RNHidTransport implements Transport {
         [LogLevel.Warning]: this._loggerService.warn,
         [LogLevel.Info]: this._loggerService.info,
         [LogLevel.Debug]: this._loggerService.debug,
-      }[LogLevel[log.level]];
+      }[log.level];
       if (!logMethod) {
         console.warn("Unknown log level", log.level);
         return;
       }
-      logMethod(message, { data: log.jsonPayload });
+      logMethod(
+        message,
+        log.jsonPayload ? { data: log.jsonPayload } : undefined,
+      );
     });
   }
 
@@ -112,6 +115,15 @@ export class RNHidTransport implements Transport {
       .then((result) => {
         return result.map(
           ({ sessionId, transportDeviceModel: deviceModel }) => {
+            const sub = this._nativeModuleWrapper
+              .subscribeToDeviceDisconnectedEvents()
+              .subscribe((device) => {
+                if (device.sessionId === sessionId) {
+                  _params.onDisconnect(sessionId);
+                  sub.unsubscribe();
+                }
+              });
+
             return new TransportConnectedDevice({
               id: sessionId,
               deviceModel,

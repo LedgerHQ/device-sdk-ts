@@ -5,7 +5,6 @@ import android.content.Context
 import android.content.Intent
 import android.hardware.usb.UsbManager
 import android.util.Base64
-import android.util.Log
 import com.facebook.react.bridge.LifecycleEventListener
 import com.facebook.react.bridge.Promise
 import com.facebook.react.bridge.ReactApplicationContext
@@ -18,12 +17,12 @@ import com.ledger.devicesdk.shared.androidMain.transport.usb.controller.ACTION_U
 import com.ledger.devicesdk.shared.androidMain.transport.usb.controller.UsbAttachedReceiverController
 import com.ledger.devicesdk.shared.androidMain.transport.usb.controller.UsbDetachedReceiverController
 import com.ledger.devicesdk.shared.androidMain.transport.usb.controller.UsbPermissionReceiver
-import com.ledger.devicesdk.shared.api.apdu.SendApduResult
-import com.ledger.devicesdk.shared.api.connection.ConnectionResult
 import com.ledger.devicesdk.shared.api.discovery.DiscoveryDevice
 import com.ledger.devicesdk.shared.internal.connection.InternalConnectedDevice
 import com.ledger.devicesdk.shared.internal.connection.InternalConnectionResult
 import com.ledger.devicesdk.shared.internal.event.SdkEventDispatcher
+import com.ledger.devicesdk.shared.internal.service.logger.LogInfo
+import com.ledger.devicesdk.shared.internal.service.logger.LoggerService
 import com.ledger.devicesdk.shared.internal.transport.TransportEvent
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -42,6 +41,11 @@ class TransportHidModule(private val reactContext: ReactApplicationContext) :
     private var usbAttachedReceiverController: UsbAttachedReceiverController? = null
     private var usbDetachedReceiverController: UsbDetachedReceiverController? = null
     private var sdkEventDispatcher: SdkEventDispatcher = SdkEventDispatcher()
+    private val loggerService: LoggerService =
+        LoggerService { info ->
+            Timber.tag("RNHIDModule " + info.tag).d(info.message)
+            sendEvent(reactContext, BridgeEvents.TransportLog(info))
+        }
 
     private val transport: AndroidUsbTransport? by lazy {
         val currentActivity = reactContext.currentActivity
@@ -65,10 +69,7 @@ class TransportHidModule(private val reactContext: ReactApplicationContext) :
                 },
                 eventDispatcher = sdkEventDispatcher,
                 coroutineDispatcher = Dispatchers.IO,
-                loggerService = { logInfo ->
-                    Timber.tag("RNHIDModule " + logInfo.tag).d(logInfo.message)
-                    sendEvent(reactContext, BridgeEvents.TransportLog(logInfo))
-                },
+                loggerService = loggerService,
                 scanDelay = 500.milliseconds,
             )
             usbPermissionReceiver = UsbPermissionReceiver(
@@ -99,7 +100,10 @@ class TransportHidModule(private val reactContext: ReactApplicationContext) :
         sdkEventDispatcher.listen().onEach {
             when(it) {
                 is TransportEvent.DeviceConnectionLost -> {
+                    Timber.tag("RNHIDModule")
+                    Timber.i("TransportEvent.DeviceConnectionLost ${it.id}")
                     connectedDevices.removeIf { device -> device.id == it.id }
+                    sendEvent(reactContext, BridgeEvents.DeviceDisconnected(it))
                 }
                 else -> {}
             }

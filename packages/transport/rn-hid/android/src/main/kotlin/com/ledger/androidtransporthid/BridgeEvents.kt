@@ -8,6 +8,7 @@ import com.ledger.androidtransporthid.bridge.toWritableArray
 import com.ledger.androidtransporthid.bridge.toWritableMap
 import com.ledger.devicesdk.shared.api.discovery.DiscoveryDevice
 import com.ledger.devicesdk.shared.internal.service.logger.LogInfo
+import com.ledger.devicesdk.shared.internal.transport.TransportEvent
 
 internal sealed class EventParams {
     data class WMap(val map: WritableMap): EventParams()
@@ -22,6 +23,9 @@ internal sealed class BridgeEvents(val eventName: String, val params: EventParam
     data class TransportLog(
         val logInfo: LogInfo,
     ): BridgeEvents("TransportLog", EventParams.WMap(logInfo.toWritableMap()));
+    data class DeviceDisconnected(
+        val deviceConnectionLost: TransportEvent.DeviceConnectionLost,
+    ): BridgeEvents("DeviceDisconnected", EventParams.WMap(deviceConnectionLost.toWritableMap()))
 }
 
 internal fun sendEvent(reactContext: ReactContext, bridgeEvent: BridgeEvents) {

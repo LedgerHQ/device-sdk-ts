@@ -9,20 +9,25 @@ import { uint8ArrayToBase64 } from "@api/helpers/uint8ArrayToBase64";
 import { type NativeModuleWrapper } from "@api/transport/NativeModuleWrapper";
 import {
   type ConnectionResult,
+  type DeviceDisconnected,
   type Log,
   type SendApduResult,
 } from "@api/transport/types";
 
 import {
   mapNativeConnectionResultToConnectionResult,
+  mapNativeDeviceConnectionLostToDeviceDisconnected,
   mapNativeDiscoveryDeviceToTransportDiscoveredDevice,
   mapNativeSendApduResultToSendApduResult,
   mapNativeTransportLogToLog,
 } from "./mapper";
 import {
+  DEVICE_DISCONNECTED_EVENT,
+  type DeviceDisconnectedEventPayload,
   DISCOVERED_DEVICES_EVENT,
   type DiscoveredDevicesEventPayload,
   type NativeLog,
+  TRANSPORT_LOG_EVENT,
 } from "./types";
 import { type NativeTransportModuleType } from "./types";
 
@@ -77,11 +82,29 @@ export class DefaultNativeModuleWrapper implements NativeModuleWrapper {
     });
   }
 
+  subscribeToDeviceDisconnectedEvents(): Observable<DeviceDisconnected> {
+    return new Observable((subscriber) => {
+      const eventEmitter = new NativeEventEmitter(this._nativeModule);
+      const eventListener = eventEmitter.addListener(
+        DEVICE_DISCONNECTED_EVENT,
+        (device: DeviceDisconnectedEventPayload) => {
+          subscriber.next(
+            mapNativeDeviceConnectionLostToDeviceDisconnected(device),
+          );
+        },
+      );
+
+      return () => {
+        eventListener.remove();
+      };
+    });
+  }
+
   subscribeToTransportLogs(): Observable<Log> {
     return new Observable((subscriber) => {
       const eventEmitter = new NativeEventEmitter(this._nativeModule);
       const eventListener = eventEmitter.addListener(
-        "log",
+        TRANSPORT_LOG_EVENT,
         (logParams: NativeLog) => {
           subscriber.next(mapNativeTransportLogToLog(logParams));
         },

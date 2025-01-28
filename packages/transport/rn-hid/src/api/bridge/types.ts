@@ -46,10 +46,15 @@ export type NativeSendApduResult =
       error: string;
     };
 
+export type NativeDeviceConnectionLost = {
+  id: string;
+};
+
 /**
  * Events
  */
 
+/** DiscoveredDevices */
 export const DISCOVERED_DEVICES_EVENT = "DiscoveredDevices";
 export type DiscoveredDevicesEventPayload = Array<NativeDiscoveryDevice>;
 
@@ -58,6 +63,7 @@ type DiscoveredDevicesEvent = {
   payload: DiscoveredDevicesEventPayload;
 };
 
+/** TransportLog */
 export const TRANSPORT_LOG_EVENT = "TransportLog";
 export type LogEventPayload = NativeLog;
 
@@ -66,11 +72,23 @@ type TransportLogEvent = {
   payload: LogEventPayload;
 };
 
+/** DeviceDisconnected */
+export const DEVICE_DISCONNECTED_EVENT = "DeviceDisconnected";
+export type DeviceDisconnectedEventPayload = NativeDeviceConnectionLost;
+
+type DeviceDisconnectedEvent = {
+  type: typeof DEVICE_DISCONNECTED_EVENT;
+  payload: DeviceDisconnectedEventPayload;
+};
+
 /**
  * All events type
  */
 
-export type NativeEvent = DiscoveredDevicesEvent | TransportLogEvent;
+export type NativeEvent =
+  | DiscoveredDevicesEvent
+  | TransportLogEvent
+  | DeviceDisconnectedEvent;
 
 /**
  *

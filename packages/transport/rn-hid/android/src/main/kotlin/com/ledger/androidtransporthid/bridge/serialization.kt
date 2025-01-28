@@ -12,6 +12,7 @@ import com.ledger.devicesdk.shared.api.discovery.DiscoveryDevice
 import com.ledger.devicesdk.shared.internal.connection.InternalConnectionResult
 import com.ledger.devicesdk.shared.internal.service.logger.LogInfo
 import com.ledger.devicesdk.shared.internal.service.logger.LogLevel
+import com.ledger.devicesdk.shared.internal.transport.TransportEvent
 import kotlinx.datetime.Clock
 
 fun LedgerDevice.toWritableMap(): WritableMap {
@@ -115,7 +116,12 @@ internal fun SendApduResult.toWritableMap(): WritableMap {
             return map
         }
     }
+}
 
+internal fun TransportEvent.DeviceConnectionLost.toWritableMap(): WritableMap {
+    val map = Arguments.createMap()
+    map.putString("id", this.id)
+    return map
 }
 
 /* lists */

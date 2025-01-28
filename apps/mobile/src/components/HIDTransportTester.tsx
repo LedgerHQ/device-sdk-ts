@@ -3,8 +3,10 @@ import {
   ConnectError,
   defaultApduReceiverServiceStubBuilder,
   defaultApduSenderServiceStubBuilder,
+  DisconnectHandler,
   DmkConfig,
   GetAppAndVersionCommand,
+  ListAppsWithMetadataDeviceAction,
   type LoggerPublisherService,
   StaticDeviceModelDataSource,
   TransportConnectedDevice,
@@ -26,16 +28,16 @@ function makeHidTransport() {
   const loggerServiceFactory = (_tag: string) => {
     const loggerService: LoggerPublisherService = {
       debug: (l, o) => {
-        console.debug(l, o);
+        o ? console.debug(l, o) : console.debug(l);
       },
       error: (l, o) => {
-        console.error(l, o);
+        o ? console.error(l, o) : console.error(l);
       },
       info: (l, o) => {
-        console.info(l, o);
+        o ? console.info(l, o) : console.info(l);
       },
       warn: (l, o) => {
-        console.warn(l, o);
+        o ? console.warn(l, o) : console.warn(l);
       },
       subscribers: [],
     };
@@ -165,22 +167,47 @@ export function HIDTransportTester() {
     }
   }, [discoveryMode]);
 
+  useEffect(() => {
+    if (tab === 'connected') {
+      setDiscoveryMode('none');
+    }
+  }, [tab]);
+
   const [connectionResult, setConnectionResult] = useState<
     ConnectError | TransportConnectedDevice | null
   >(null);
 
-  const connectToDevice = useCallback((deviceId: string) => {
-    hidTransport
-      .connect({deviceId, onDisconnect: () => {}})
-      .then(res => {
-        console.log('connectedDevice', res);
-        setConnectionResult(res.extract());
-        setTab('connected');
-      })
-      .catch(e => {
-        console.error('connectToDevice error', e);
-      });
+  const disconnectHandler: DisconnectHandler = useCallback(deviceId => {
+    console.log('disconnectHandler', deviceId);
+    setConnectionResult(currConnectionResult => {
+      if (
+        currConnectionResult instanceof TransportConnectedDevice &&
+        currConnectionResult.id === deviceId
+      ) {
+        console.log('successfully detected device disconnection');
+      } else {
+        console.error('unexpected device disconnection', deviceId);
+      }
+      return null;
+    });
+    setTab('discovery');
   }, []);
+
+  const connectToDevice = useCallback(
+    (deviceId: string) => {
+      hidTransport
+        .connect({deviceId, onDisconnect: disconnectHandler})
+        .then(res => {
+          console.log('connectedDevice', res);
+          setConnectionResult(res.extract());
+          setTab('connected');
+        })
+        .catch(e => {
+          console.error('connectToDevice error', e);
+        });
+    },
+    [disconnectHandler],
+  );
 
   const sendGetAppAndVersion = useCallback(() => {
     if (connectionResult instanceof TransportConnectedDevice) {
@@ -248,9 +275,18 @@ export function HIDTransportTester() {
             <>
               <Button
                 onPress={sendGetAppAndVersion}
-                title="sendGetAppAndVersion"
+                title="Send GetAppAndVersion command"
               />
-              <Button onPress={() => {}} disabled title="TODO: disconnect" />
+              <Button
+                onPress={() => {
+                  hidTransport
+                    .disconnect({connectedDevice: connectionResult})
+                    .then(res => {
+                      console.log('disconnect res', res.extract());
+                    });
+                }}
+                title="Disconnect"
+              />
             </>
           )}
         </View>
