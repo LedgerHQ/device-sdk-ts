@@ -159,8 +159,7 @@ class TransportHidModule(private val reactContext: ReactApplicationContext) :
     fun connectDevice(uid: String, promise: Promise) {
         val device = discoveryDevices.firstOrNull { it.uid == uid }
         if (device == null) {
-            // TODO: resolve with an error rather than reject
-            promise.reject("[TransportHidModule][connectDevice] Device not found")
+            promise.reject(Exception("[TransportHidModule][connectDevice] Device not found"))
             return
         }
 
@@ -175,9 +174,7 @@ class TransportHidModule(private val reactContext: ReactApplicationContext) :
                 }
                 promise.resolve(connectionResult.toWritableMap())
             } catch (e: Exception) {
-                val connectionResult = InternalConnectionResult
-                    .ConnectionError(InternalConnectionResult.Failure.Unknown("${e.message}\n${e.cause}"))
-                promise.resolve(connectionResult.toWritableMap())
+                promise.reject(e)
             }
         }
     }
@@ -189,7 +186,7 @@ class TransportHidModule(private val reactContext: ReactApplicationContext) :
                 transport!!.disconnect(sessionId)
                 promise.resolve(null);
             } catch (e: Exception) {
-                promise.reject(e) // TODO: do not throw, rather resolve with an error
+                promise.reject(e)
             }
         }
     }
@@ -199,7 +196,7 @@ class TransportHidModule(private val reactContext: ReactApplicationContext) :
         try {
             val device = connectedDevices.firstOrNull() { it.id == sessionId }
             if (device == null) {
-                promise.reject("[TransportHidModule][sendApdu] Device not found") // TODO: resolve with an error rather than reject
+                promise.reject(Exception("[TransportHidModule][sendApdu] Device not found"))
                 return
             }
             CoroutineScope(Dispatchers.Default).launch {
@@ -209,12 +206,12 @@ class TransportHidModule(private val reactContext: ReactApplicationContext) :
                     promise.resolve(res.toWritableMap())
                 } catch (e: Exception) {
                     Timber.i("$e, ${e.cause}")
-                    promise.reject(e) // TODO: resolve with an error rather than reject
+                    promise.reject(e)
                 }
             }
         } catch (e: Exception) {
             Timber.i("$e, ${e.cause}")
-            promise.reject(e) // TODO: resolve with an error rather than reject
+            promise.reject(e)
         }
     }
 }

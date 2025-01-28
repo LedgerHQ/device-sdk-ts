@@ -7,17 +7,19 @@ import {
   type DmkError,
   type LoggerPublisherService,
   LogLevel,
+  OpeningConnectionError,
   type Transport,
   TransportConnectedDevice,
   type TransportDiscoveredDevice,
   type TransportIdentifier,
 } from "@ledgerhq/device-management-kit";
 import { type Either, Left, Right } from "purify-ts";
-import { Observable } from "rxjs";
+import { Observable, Subject } from "rxjs";
 
 import { getObservableOfArraysNewItems } from "@api/helpers/getObservableOfArraysNewItems";
 import { TRANSPORT_IDENTIFIER } from "@api/transport/rnHidTransportIdentifier";
 
+import { SendApduError } from "./Errors";
 import { type NativeModuleWrapper } from "./NativeModuleWrapper";
 
 export class RNHidTransport implements Transport {
@@ -108,7 +110,7 @@ export class RNHidTransport implements Transport {
 
   connect(_params: {
     deviceId: DeviceId;
-    onDisconnect: DisconnectHandler; // TODO: implement onDisconnect
+    onDisconnect: DisconnectHandler;
   }): Promise<Either<ConnectError, TransportConnectedDevice>> {
     return this._nativeModuleWrapper
       .connectDevice(_params.deviceId)
@@ -128,13 +130,18 @@ export class RNHidTransport implements Transport {
               id: sessionId,
               deviceModel,
               sendApdu: async (apdu) => {
-                return this._nativeModuleWrapper.sendApdu(sessionId, apdu);
+                return this._nativeModuleWrapper
+                  .sendApdu(sessionId, apdu)
+                  .catch((e) => Left(new SendApduError(e)));
               },
               transport: this.getIdentifier(),
               type: "USB",
             });
           },
         );
+      })
+      .catch((error) => {
+        return Left(new OpeningConnectionError(error));
       });
   }
 
