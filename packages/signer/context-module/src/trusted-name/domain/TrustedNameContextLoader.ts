@@ -1,7 +1,6 @@
 import { inject, injectable } from "inversify";
 
 import { pkiTypes } from "@/pki/di/pkiDiTypes";
-import { KeyUsage } from "@/pki/domain/model/KeyUsage";
 import { type PkiCertificateLoader } from "@/pki/domain/PkiCertificateLoader";
 import { ContextLoader } from "@/shared/domain/ContextLoader";
 import {
@@ -17,17 +16,13 @@ import { trustedNameTypes } from "@/trusted-name/di/trustedNameTypes";
 
 @injectable()
 export class TrustedNameContextLoader implements ContextLoader {
-  private _dataSource: TrustedNameDataSource;
-  private _certificateLoader: PkiCertificateLoader;
-
   constructor(
     @inject(trustedNameTypes.TrustedNameDataSource)
-    dataSource: TrustedNameDataSource,
+    private readonly _dataSource: TrustedNameDataSource,
     @inject(pkiTypes.PkiCertificateLoader)
-    certificateLoader: PkiCertificateLoader,
+    private readonly _certificateLoader: PkiCertificateLoader,
   ) {
-    this._dataSource = dataSource;
-    this._certificateLoader = certificateLoader;
+    console.log(this._certificateLoader);
   }
 
   async load(
@@ -54,10 +49,11 @@ export class TrustedNameContextLoader implements ContextLoader {
     });
 
     //Try to fetch Nano PKI certificate
-    const certificate = await this._certificateLoader.loadCertificate({
-      targetDevice: "flex",
-      keyUsage: KeyUsage.TrustedName,
-    });
+    // const certificate = await this._certificateLoader.loadCertificate({
+    //   targetDevice: "flex", // TODO: get from config
+    //   keyUsage: KeyUsage.TrustedName,
+    // });
+    const certificate = undefined;
 
     return [
       payload.caseOf({

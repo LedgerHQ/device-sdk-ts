@@ -15,6 +15,7 @@ import {
   type InternalApi,
   InvalidStatusWordError,
   isSuccessCommandResult,
+  LoadCertificateCommand,
 } from "@ledgerhq/device-management-kit";
 import { Just, type Maybe, Nothing } from "purify-ts";
 
@@ -66,6 +67,15 @@ export class ProvideTransactionFieldDescriptionTask {
     >
   > {
     const { field } = this.args;
+
+    if (field.certificate) {
+      await this.api.sendCommand(
+        new LoadCertificateCommand({
+          keyUsage: field.certificate.keyUsageNumber,
+          certificate: field.certificate.payload,
+        }),
+      );
+    }
 
     // if the reference is a string, it means it is a direct address
     // and we don't need to extract the value from the transaction
@@ -176,6 +186,15 @@ export class ProvideTransactionFieldDescriptionTask {
         enumContext.value === enumValue && enumContext.id === reference.id,
     );
     if (enumDescriptor) {
+      if (enumDescriptor.certificate) {
+        await this.api.sendCommand(
+          new LoadCertificateCommand({
+            keyUsage: enumDescriptor.certificate.keyUsageNumber,
+            certificate: enumDescriptor.certificate.payload,
+          }),
+        );
+      }
+
       const provideEnumResult = await this.provideContext(enumDescriptor);
       if (!isSuccessCommandResult(provideEnumResult)) {
         return Just(provideEnumResult);

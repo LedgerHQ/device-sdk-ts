@@ -31,7 +31,7 @@ const initialState: SignerEthContextType = {
     url: "https://crypto-assets-service.api.ledger.com/v1",
     web3checksUrl: "https://api.blockaid.io/v0/ledger/transaction/scan",
     mode: "prod",
-    branch: "main",
+    branch: "next",
   },
   setCalConfig: () => {},
 };

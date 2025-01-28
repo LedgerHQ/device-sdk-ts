@@ -30,8 +30,14 @@ export class KeyUsageMapper {
       case "seed_id_auth":
         keyUsageNumber = 9;
         break;
-      case "web3checks":
+      case "tx_simu_signer":
         keyUsageNumber = 10;
+        break;
+      case "calldata":
+        keyUsageNumber = 11;
+        break;
+      case "network":
+        keyUsageNumber = 12;
         break;
       default:
         break;

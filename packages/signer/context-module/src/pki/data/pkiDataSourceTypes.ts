@@ -1,6 +1,6 @@
 export type PkiCertificateRequestDto = {
-  key_id: string | undefined;
-  key_usage: string;
+  public_key_id: string | undefined;
+  public_key_usage: string;
   output: string;
   target_device: string;
   latest: boolean;

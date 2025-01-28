@@ -20,7 +20,6 @@ import {
   type PkiCertificateResponseDto,
 } from "./pkiDataSourceTypes";
 
-const KEY_USAGE = "trusted_name";
 @injectable()
 export class HttpPkiCertificateDataSource implements PkiCertificateDataSource {
   constructor(
@@ -34,26 +33,31 @@ export class HttpPkiCertificateDataSource implements PkiCertificateDataSource {
       output: "descriptor",
       target_device: pkiCertificateInfo.targetDevice,
       latest: true,
-      key_id: pkiCertificateInfo.keyId,
-      key_usage: pkiCertificateInfo.keyUsage,
+      public_key_id: pkiCertificateInfo.keyId,
+      public_key_usage: pkiCertificateInfo.keyUsage,
     };
 
     try {
-      const pkiCertificateResponse =
-        await axios.request<PkiCertificateResponseDto>({
-          method: "GET",
-          url: `${this.config.cal.url}/certificates`,
-          params: requestDto,
-          headers: {
-            "X-Ledger-Client-Version": `context-module/${PACKAGE.version}`,
-          },
-        });
+      const pkiCertificateResponse = await axios.request<
+        PkiCertificateResponseDto[]
+      >({
+        method: "GET",
+        url: `${this.config.cal.url}/certificates`,
+        params: requestDto,
+        headers: {
+          "X-Ledger-Client-Version": `context-module/${PACKAGE.version}`,
+        },
+      });
 
-      if (pkiCertificateResponse.status == 200) {
+      if (
+        pkiCertificateResponse.status == 200 &&
+        pkiCertificateResponse.data !== undefined &&
+        pkiCertificateResponse.data.length > 0
+      ) {
         const payload = hexaStringToBuffer(
           HexStringUtils.appendSignatureToPayload(
-            pkiCertificateResponse.data.descriptor.data,
-            pkiCertificateResponse.data.descriptor.signatures[
+            pkiCertificateResponse.data[0]!.descriptor.data,
+            pkiCertificateResponse.data[0]!.descriptor.signatures[
               this.config.cal.mode
             ],
             SIGNATURE_TAG,
@@ -66,7 +70,9 @@ export class HttpPkiCertificateDataSource implements PkiCertificateDataSource {
         }
         const pkiCertificate: PkiCertificate = {
           payload: payload,
-          keyUsageNumber: KeyUsageMapper.mapKeyUsageForFirmware(KEY_USAGE),
+          keyUsageNumber: KeyUsageMapper.mapKeyUsageForFirmware(
+            pkiCertificateInfo.keyUsage,
+          ),
         };
         return Right(pkiCertificate);
       } else {

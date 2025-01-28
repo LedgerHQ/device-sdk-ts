@@ -37,6 +37,7 @@ export class TransactionContextLoader implements ContextLoader {
       address: transaction.to,
       chainId: transaction.chainId,
       selector,
+      deviceModelId: transaction.deviceModelId,
     });
 
     return result.caseOf({

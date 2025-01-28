@@ -7,6 +7,14 @@ import {
   type ContextModuleCalMode,
   type ContextModuleConfig,
 } from "@/config/model/ContextModuleConfig";
+import { pkiTypes } from "@/pki/di/pkiDiTypes";
+import { KeyId } from "@/pki/domain/model/KeyId";
+import { KeyUsage } from "@/pki/domain/model/KeyUsage";
+import { type PkiCertificateLoader } from "@/pki/domain/PkiCertificateLoader";
+import {
+  PkiCertificate,
+  PkiCertificateInfo,
+} from "@/pki/domain/pkiCertificateTypes";
 import {
   ClearSignContextReference,
   ClearSignContextSuccess,
@@ -43,11 +51,15 @@ import {
 export class HttpTransactionDataSource implements TransactionDataSource {
   constructor(
     @inject(configTypes.Config) private readonly config: ContextModuleConfig,
+    @inject(pkiTypes.PkiCertificateLoader)
+    private readonly _certificateLoader: PkiCertificateLoader,
   ) {}
+
   public async getTransactionDescriptors({
     chainId,
     address,
     selector,
+    deviceModelId,
   }: GetTransactionDescriptorsParams): Promise<
     Either<Error, ClearSignContextSuccess[]>
   > {
@@ -110,6 +122,18 @@ export class HttpTransactionDataSource implements TransactionDataSource {
         calldataDescriptor.transaction_info.descriptor.signatures[
           this.config.cal.mode
         ];
+
+      let certificate: PkiCertificate | undefined = undefined;
+      if (deviceModelId) {
+        const certificateInfos: PkiCertificateInfo = {
+          targetDevice: deviceModelId,
+          keyUsage: KeyUsage.Calldata,
+          keyId: KeyId.CalCalldataKey,
+        };
+        certificate =
+          await this._certificateLoader.loadCertificate(certificateInfos);
+      }
+
       const info: ClearSignContextSuccess = {
         type: ClearSignContextType.TRANSACTION_INFO,
         payload: HexStringUtils.appendSignatureToPayload(
@@ -117,7 +141,11 @@ export class HttpTransactionDataSource implements TransactionDataSource {
           infoSignature,
           INFO_SIGNATURE_TAG,
         ),
+        certificate,
       };
+
+      console.log("info", info);
+
       const enums: ClearSignContextSuccess[] = [];
       for (const [id, values] of Object.entries(calldataDescriptor.enums)) {
         for (const [
@@ -133,6 +161,7 @@ export class HttpTransactionDataSource implements TransactionDataSource {
               signatures[this.config.cal.mode]!,
               INFO_SIGNATURE_TAG,
             ),
+            certificate,
           });
         }
       }
