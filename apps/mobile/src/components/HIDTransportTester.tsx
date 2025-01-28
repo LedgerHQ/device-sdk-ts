@@ -60,6 +60,8 @@ const buttonStyle = {
   margin: 10,
   backgroundColor: 'lightblue',
   flex: 1,
+  borderWidth: 1,
+  borderColor: 'transparent',
 };
 
 function useTextStyle() {
@@ -71,14 +73,21 @@ const Button = ({
   onPress,
   title,
   disabled,
+  selected,
 }: {
   onPress: () => void;
   title: string;
   disabled?: boolean;
+  selected?: boolean;
 }) => (
   <TouchableOpacity
-    onPress={disabled ? () => {} : onPress}
-    style={[buttonStyle, disabled ? {opacity: 0.5} : {}]}>
+    disabled={disabled || selected}
+    onPress={onPress}
+    style={[
+      buttonStyle,
+      disabled ? {opacity: 0.5} : {},
+      selected ? {borderColor: 'black'} : {},
+    ]}>
     <Text>{title}</Text>
   </TouchableOpacity>
 );
@@ -116,9 +125,11 @@ const DiscoveredDevice: React.FC<{
   );
 };
 
+type Tab = 'discovery' | 'connected';
 type DiscoveryMode = 'none' | 'discovering' | 'listeningKnownDevice';
 
 export function HIDTransportTester() {
+  const [tab, setTab] = useState<Tab>('discovery');
   const [discoveryMode, setDiscoveryMode] = useState<DiscoveryMode>('none');
 
   const [discoveredDevices, setDiscoveredDevices] = useState<
@@ -164,6 +175,7 @@ export function HIDTransportTester() {
       .then(res => {
         console.log('connectedDevice', res);
         setConnectionResult(res.extract());
+        setTab('connected');
       })
       .catch(e => {
         console.error('connectToDevice error', e);
@@ -209,23 +221,53 @@ export function HIDTransportTester() {
 
   return (
     <View style={{height: '100%'}}>
-      <View style={{flexDirection: 'row', alignItems: 'center'}}>
-        {buttons}
-      </View>
-      <ScrollView>
-        {discoveredDevices.map(discoveredDevice => (
-          <DiscoveredDevice
-            key={discoveredDevice.id}
-            discoveredDevice={discoveredDevice}
-            onPressConnect={connectToDevice}
-          />
-        ))}
-      </ScrollView>
-      <Text style={textStyle}>Connection result:</Text>
-      <Text style={textStyle}>{JSON.stringify(connectionResult, null, 2)}</Text>
-      {connectionResult instanceof TransportConnectedDevice && (
-        <Button onPress={sendGetAppAndVersion} title="sendGetAppAndVersion" />
+      {tab === 'discovery' ? (
+        <View style={{flex: 1}}>
+          <Text style={textStyle}>Discovery mode:</Text>
+          <View style={{flexDirection: 'row', alignItems: 'center'}}>
+            {buttons}
+          </View>
+          <Text style={textStyle}>Discovered devices:</Text>
+          <ScrollView>
+            {discoveredDevices.map(discoveredDevice => (
+              <DiscoveredDevice
+                key={discoveredDevice.id}
+                discoveredDevice={discoveredDevice}
+                onPressConnect={connectToDevice}
+              />
+            ))}
+          </ScrollView>
+        </View>
+      ) : (
+        <View style={{flex: 1}}>
+          <Text style={textStyle}>Connection result:</Text>
+          <Text style={textStyle}>
+            {JSON.stringify(connectionResult, null, 2)}
+          </Text>
+          {connectionResult instanceof TransportConnectedDevice && (
+            <>
+              <Button
+                onPress={sendGetAppAndVersion}
+                title="sendGetAppAndVersion"
+              />
+              <Button onPress={() => {}} disabled title="TODO: disconnect" />
+            </>
+          )}
+        </View>
       )}
+      <View style={{flexDirection: 'row', backgroundColor: 'darkgrey'}}>
+        <Button
+          onPress={() => setTab('discovery')}
+          title="Device Discovery"
+          selected={tab === 'discovery'}
+        />
+        <Button
+          onPress={() => setTab('connected')}
+          title="Connected Device"
+          disabled={connectionResult === null}
+          selected={tab === 'connected'}
+        />
+      </View>
     </View>
   );
 }
