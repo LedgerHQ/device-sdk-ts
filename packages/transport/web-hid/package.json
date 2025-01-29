@@ -2,7 +2,7 @@
   "name": "@ledgerhq/device-transport-kit-web-hid",
   "version": "1.0.1",
   "license": "Apache-2.0",
-  "private": false,
+  "private": true,
   "exports": {
     ".": {
       "types": "./lib/types/index.d.ts",
@@ -47,7 +47,7 @@
     "ts-node": "^10.9.2"
   },
   "peerDependencies": {
-    "@ledgerhq/device-management-kit": ">= 0.6 < 2",
+    "@ledgerhq/device-management-kit": "workspace:*",
     "rxjs": "^7.8.1"
   }
 }
