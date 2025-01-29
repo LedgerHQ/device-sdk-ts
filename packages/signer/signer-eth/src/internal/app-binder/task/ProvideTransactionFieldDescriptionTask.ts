@@ -4,6 +4,7 @@ import {
   type ClearSignContextSuccessType,
   ClearSignContextType,
   type ContextModule,
+  type PkiCertificate,
   type TransactionFieldContext,
 } from "@ledgerhq/context-module";
 import {
@@ -15,6 +16,7 @@ import {
   type InternalApi,
   InvalidStatusWordError,
   isSuccessCommandResult,
+  LoadCertificateCommand,
 } from "@ledgerhq/device-management-kit";
 import { Just, type Maybe, Nothing } from "purify-ts";
 
@@ -66,6 +68,9 @@ export class ProvideTransactionFieldDescriptionTask {
   > {
     const { field } = this.args;
 
+    // If a certificate is provided, start by loading it to the device
+    await this.loadCertificate(field.certificate);
+
     // if the reference is a string, it means it is a direct address
     // and we don't need to extract the value from the transaction
     // as it is already provided in the reference
@@ -112,6 +117,25 @@ export class ProvideTransactionFieldDescriptionTask {
     }
 
     return Nothing;
+  }
+
+  /**
+   * This method will load the certificate to the device if it is provided.
+   *
+   * @param {PkiCertificate | undefined} certificate The certificate to load to the device.
+   * @returns A promise that resolves when the certificate is loaded.
+   */
+  private async loadCertificate(
+    certificate: PkiCertificate | undefined,
+  ): Promise<void> {
+    if (!certificate) return;
+
+    await this.api.sendCommand(
+      new LoadCertificateCommand({
+        keyUsage: certificate.keyUsageNumber,
+        certificate: certificate.payload,
+      }),
+    );
   }
 
   /**
@@ -175,6 +199,8 @@ export class ProvideTransactionFieldDescriptionTask {
         enumContext.value === enumValue && enumContext.id === reference.id,
     );
     if (enumDescriptor) {
+      await this.loadCertificate(enumDescriptor.certificate);
+
       const provideEnumResult = await this.provideContext(enumDescriptor);
       if (!isSuccessCommandResult(provideEnumResult)) {
         return Just(provideEnumResult);
