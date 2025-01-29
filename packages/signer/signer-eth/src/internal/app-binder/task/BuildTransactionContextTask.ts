@@ -6,6 +6,7 @@ import {
 } from "@ledgerhq/context-module";
 import {
   DeviceModelId,
+  type DeviceSessionState,
   DeviceSessionStateType,
   type InternalApi,
 } from "@ledgerhq/device-management-kit";
@@ -41,6 +42,8 @@ export class BuildTransactionContextTask {
   async run(): Promise<BuildTransactionTaskResult> {
     const { contextModule, mapper, transaction, options, challenge } =
       this.args;
+    const deviceState = this.api.getDeviceSessionState();
+
     const parsed = mapper.mapTransactionToSubset(transaction);
     parsed.ifLeft((err) => {
       throw err;
@@ -50,6 +53,7 @@ export class BuildTransactionContextTask {
     const clearSignContexts = await contextModule.getContexts({
       challenge: challenge ?? undefined,
       domain: options.domain,
+      deviceModelId: deviceState.deviceModelId,
       ...subset,
     });
 
@@ -74,10 +78,18 @@ export class BuildTransactionContextTask {
     const transactionInfo = clearSignContextsSuccess.find(
       (ctx) => ctx.type === ClearSignContextType.TRANSACTION_INFO,
     );
+
+    if (transactionInfo && !transactionInfo.certificate) {
+      throw new Error("Transaction info certificate is missing");
+    }
+
     // If the device does not support the generic parser,
     // we need to filter out the transaction info and transaction field description
     // as they are not supported by the device
-    if (!this.supportsGenericParser() || transactionInfo === undefined) {
+    if (
+      !this.supportsGenericParser(deviceState) ||
+      transactionInfo === undefined
+    ) {
       filteredContexts = clearSignContextsSuccess.filter(
         (ctx) =>
           ctx.type !== ClearSignContextType.TRANSACTION_INFO &&
@@ -90,6 +102,7 @@ export class BuildTransactionContextTask {
       );
       filteredContexts = {
         transactionInfo: transactionInfo.payload,
+        transactionInfoCertificate: transactionInfo.certificate!,
         transactionFields,
         transactionEnums,
       };
@@ -103,8 +116,7 @@ export class BuildTransactionContextTask {
     };
   }
 
-  private supportsGenericParser(): boolean {
-    const deviceState = this.api.getDeviceSessionState();
+  private supportsGenericParser(deviceState: DeviceSessionState): boolean {
     if (deviceState.sessionStateType === DeviceSessionStateType.Connected) {
       return false;
     }

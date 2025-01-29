@@ -4,6 +4,8 @@ import { Either, Left, Right } from "purify-ts";
 
 import { configTypes } from "@/config/di/configTypes";
 import type { ContextModuleConfig } from "@/config/model/ContextModuleConfig";
+import { SIGNATURE_TAG } from "@/shared/model/SignatureTags";
+import { HexStringUtils } from "@/shared/utils/HexStringUtils";
 import {
   GetDomainNameInfosParams,
   GetTrustedNameInfosParams,
@@ -92,7 +94,13 @@ export class HttpTrustedNameDataSource implements TrustedNameDataSource {
 
       const signature =
         trustedName.signedDescriptor.signatures[this.config.cal.mode]!;
-      return Right(this.formatTrustedName(payload, signature));
+      return Right(
+        HexStringUtils.appendSignatureToPayload(
+          payload,
+          signature,
+          SIGNATURE_TAG,
+        ),
+      );
     } catch (_error) {
       return Left(
         new Error(
@@ -100,16 +108,5 @@ export class HttpTrustedNameDataSource implements TrustedNameDataSource {
         ),
       );
     }
-  }
-
-  private formatTrustedName(payload: string, signature: string): string {
-    // Ensure correct padding
-    if (signature.length % 2 !== 0) {
-      signature = "0" + signature;
-    }
-    // TLV encoding as according to trusted name documentation
-    const signatureTag = "15";
-    const signatureLength = (signature.length / 2).toString(16);
-    return `${payload}${signatureTag}${signatureLength}${signature}`;
   }
 }

@@ -2,6 +2,7 @@ import axios from "axios";
 import { Left } from "purify-ts";
 
 import type { ContextModuleConfig } from "@/config/model/ContextModuleConfig";
+import { type PkiCertificateLoader } from "@/pki/domain/PkiCertificateLoader";
 import type {
   CalldataEnumV1,
   CalldataFieldV1,
@@ -35,7 +36,13 @@ describe("HttpTransactionDataSource", () => {
         branch: "main",
       },
     } as ContextModuleConfig;
-    datasource = new HttpTransactionDataSource(config);
+    const certificateLoaderMock = {
+      load: jest.fn(),
+    };
+    datasource = new HttpTransactionDataSource(
+      config,
+      certificateLoaderMock as unknown as PkiCertificateLoader,
+    );
 
     transactionInfo = {
       descriptor: {

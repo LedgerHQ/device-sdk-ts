@@ -21,6 +21,7 @@ describe("DefaultContextModule", () => {
       url: "https://crypto-assets-service.api.ledger.com/v1",
       mode: "prod",
       branch: "main",
+      web3checksUrl: "https://api.blockaid.io/v0/ledger/transaction/scan",
     },
   };
 

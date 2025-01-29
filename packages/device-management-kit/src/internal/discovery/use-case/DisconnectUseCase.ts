@@ -57,7 +57,11 @@ export class DisconnectUseCase {
         this._transportService
           .getTransport(transportIdentifier)
           .toEither(
-            new TransportNotSupportedError(new Error("Unknown transport")),
+            new TransportNotSupportedError(
+              new Error(
+                `Unknown transport with identifier: ${transportIdentifier}`,
+              ),
+            ),
           ),
       );
 

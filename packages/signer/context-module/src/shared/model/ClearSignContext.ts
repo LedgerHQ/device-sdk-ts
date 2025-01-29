@@ -1,3 +1,5 @@
+import { type PkiCertificate } from "@/pki/domain/pkiCertificateTypes";
+
 import { type GenericPath } from "./GenericPath";
 
 export enum ClearSignContextType {
@@ -9,6 +11,7 @@ export enum ClearSignContextType {
   TRANSACTION_INFO = "transactionInfo",
   ENUM = "enum",
   TRANSACTION_FIELD_DESCRIPTION = "transactionFieldDescription",
+  WEB3_CHECK = "web3Check",
   ERROR = "error",
 }
 
@@ -70,6 +73,7 @@ export type ClearSignContextSuccess<
       id: number;
       payload: string;
       value: number;
+      certificate?: PkiCertificate | undefined;
     }
   : {
       type: Exclude<
@@ -78,6 +82,7 @@ export type ClearSignContextSuccess<
       >;
       payload: string;
       reference?: ClearSignContextReference;
+      certificate?: PkiCertificate | undefined;
     };
 
 export type ClearSignContextError = {

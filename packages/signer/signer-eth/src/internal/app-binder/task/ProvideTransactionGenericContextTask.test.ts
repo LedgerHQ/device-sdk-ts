@@ -4,6 +4,7 @@ import {
   type ClearSignContextType,
   type ContextModule,
 } from "@ledgerhq/context-module";
+import { type PkiCertificate } from "@ledgerhq/context-module/src/pki/domain/pkiCertificateTypes.js";
 import {
   type CommandErrorResult,
   CommandResultFactory,
@@ -34,12 +35,14 @@ describe("ProvideTransactionGenericContextTask", () => {
   const chainId = 1;
   const transactionParser = {} as TransactionParserService;
   const contextModule = {} as ContextModule;
+  const transactionInfoCertificate = {} as PkiCertificate;
 
   const defaultArgs: ProvideTransactionGenericContextTaskArgs = {
     derivationPath,
     serializedTransaction,
     context: {
       transactionInfo,
+      transactionInfoCertificate,
       transactionFields,
       transactionEnums,
     },
@@ -141,6 +144,7 @@ describe("ProvideTransactionGenericContextTask", () => {
             ...defaultArgs,
             context: {
               transactionInfo,
+              transactionInfoCertificate,
               transactionFields: [
                 {} as ClearSignContextSuccess<ClearSignContextType.TRANSACTION_INFO>,
               ],
@@ -188,6 +192,7 @@ describe("ProvideTransactionGenericContextTask", () => {
         ...defaultArgs,
         context: {
           transactionInfo,
+          transactionInfoCertificate,
           transactionFields: fields,
           transactionEnums,
         },

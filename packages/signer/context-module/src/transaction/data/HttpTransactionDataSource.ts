@@ -7,12 +7,22 @@ import {
   type ContextModuleCalMode,
   type ContextModuleConfig,
 } from "@/config/model/ContextModuleConfig";
+import { pkiTypes } from "@/pki/di/pkiDiTypes";
+import { KeyId } from "@/pki/domain/model/KeyId";
+import { KeyUsage } from "@/pki/domain/model/KeyUsage";
+import { type PkiCertificateLoader } from "@/pki/domain/PkiCertificateLoader";
+import {
+  PkiCertificate,
+  PkiCertificateInfo,
+} from "@/pki/domain/pkiCertificateTypes";
 import {
   ClearSignContextReference,
   ClearSignContextSuccess,
   ClearSignContextType,
 } from "@/shared/model/ClearSignContext";
 import { GenericPath } from "@/shared/model/GenericPath";
+import { INFO_SIGNATURE_TAG } from "@/shared/model/SignatureTags";
+import { HexStringUtils } from "@/shared/utils/HexStringUtils";
 import PACKAGE from "@root/package.json";
 
 import {
@@ -41,11 +51,15 @@ import {
 export class HttpTransactionDataSource implements TransactionDataSource {
   constructor(
     @inject(configTypes.Config) private readonly config: ContextModuleConfig,
+    @inject(pkiTypes.PkiCertificateLoader)
+    private readonly _certificateLoader: PkiCertificateLoader,
   ) {}
+
   public async getTransactionDescriptors({
     chainId,
     address,
     selector,
+    deviceModelId,
   }: GetTransactionDescriptorsParams): Promise<
     Either<Error, ClearSignContextSuccess[]>
   > {
@@ -108,10 +122,30 @@ export class HttpTransactionDataSource implements TransactionDataSource {
         calldataDescriptor.transaction_info.descriptor.signatures[
           this.config.cal.mode
         ];
+
+      let certificate: PkiCertificate | undefined = undefined;
+      if (deviceModelId) {
+        const certificateInfos: PkiCertificateInfo = {
+          targetDevice: deviceModelId,
+          keyUsage: KeyUsage.Calldata,
+          keyId: KeyId.CalCalldataKey,
+        };
+        certificate =
+          await this._certificateLoader.loadCertificate(certificateInfos);
+      }
+
       const info: ClearSignContextSuccess = {
         type: ClearSignContextType.TRANSACTION_INFO,
-        payload: this.formatTransactionInfo(infoData, infoSignature),
+        payload: HexStringUtils.appendSignatureToPayload(
+          infoData,
+          infoSignature,
+          INFO_SIGNATURE_TAG,
+        ),
+        certificate,
       };
+
+      console.log("info", info);
+
       const enums: ClearSignContextSuccess[] = [];
       for (const [id, values] of Object.entries(calldataDescriptor.enums)) {
         for (const [
@@ -122,10 +156,12 @@ export class HttpTransactionDataSource implements TransactionDataSource {
             type: ClearSignContextType.ENUM,
             id: Number(id),
             value: Number(value),
-            payload: this.formatTransactionInfo(
+            payload: HexStringUtils.appendSignatureToPayload(
               data,
-              signatures[this.config.cal.mode]!, // the enum is validated by isCalldataDescriptorV1
+              signatures[this.config.cal.mode]!,
+              INFO_SIGNATURE_TAG,
             ),
+            certificate,
           });
         }
       }
@@ -145,20 +181,6 @@ export class HttpTransactionDataSource implements TransactionDataSource {
         `[ContextModule] HttpTransactionDataSource: Invalid response for contract ${address} and selector ${selector}`,
       ),
     );
-  }
-
-  private formatTransactionInfo(
-    infoData: string,
-    infoSignature: string,
-  ): string {
-    // Ensure correct padding
-    if (infoSignature.length % 2 !== 0) {
-      infoSignature = "0" + infoSignature;
-    }
-    // TLV encoding as according to generic parser documentation
-    const infoSignatureTag = "81ff";
-    const infoSignatureLength = (infoSignature.length / 2).toString(16);
-    return `${infoData}${infoSignatureTag}${infoSignatureLength}${infoSignature}`;
   }
 
   private getReference(
