@@ -14,6 +14,7 @@ import { gte } from "semver";
 
 import { type TransactionOptions } from "@api/model/TransactionOptions";
 import { type TransactionType } from "@api/model/TransactionType";
+import { ETHEREUM_PLUGINS } from "@internal/app-binder/constant/plugins";
 import { type TransactionMapperService } from "@internal/transaction/service/mapper/TransactionMapperService";
 
 import { type GenericContext } from "./ProvideTransactionGenericContextTask";
@@ -120,9 +121,15 @@ export class BuildTransactionContextTask {
     if (deviceState.sessionStateType === DeviceSessionStateType.Connected) {
       return false;
     }
-    if (deviceState.currentApp.name !== "Ethereum") {
-      return false;
+
+    if (
+      deviceState.currentApp.name !== "Ethereum" &&
+      !ETHEREUM_PLUGINS.includes(deviceState.currentApp.name)
+    ) {
+      // Sanity check, should never happen as open app is called before this task
+      throw new Error("Unsupported app");
     }
+
     if (deviceState.deviceModelId === DeviceModelId.NANO_S) {
       return false;
     }
