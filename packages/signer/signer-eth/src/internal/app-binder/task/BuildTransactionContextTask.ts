@@ -133,6 +133,6 @@ export class BuildTransactionContextTask {
     if (deviceState.deviceModelId === DeviceModelId.NANO_S) {
       return false;
     }
-    return gte(deviceState.currentApp.version, "1.14.0");
+    return gte(deviceState.currentApp.version, "1.15.0");
   }
 }
