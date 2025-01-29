@@ -1,5 +1,11 @@
 # @ledgerhq/device-transport-kit-web-hid
 
+## 1.0.1
+
+### Patch Changes
+
+- [#643](https://github.com/LedgerHQ/device-sdk-ts/pull/643) [`d9ec133`](https://github.com/LedgerHQ/device-sdk-ts/commit/d9ec13318fb7288e12820e871d49df70099da6fa) Thanks [@valpinkman](https://github.com/valpinkman)! - Fix reconnection on WebHid Transport
+
 ## 1.0.0
 
 ### Major Changes
