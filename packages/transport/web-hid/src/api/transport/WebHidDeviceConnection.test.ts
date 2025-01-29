@@ -285,13 +285,7 @@ describe("WebHidDeviceConnection", () => {
 
       const response = await responsePromise;
 
-      expect(response).toEqual(
-        Left(
-          new WebHidSendReportError(
-            new Error("Device disconnected while waiting for device response"),
-          ),
-        ),
-      );
+      expect(response).toEqual(Left(new WebHidSendReportError()));
     });
   });
 });

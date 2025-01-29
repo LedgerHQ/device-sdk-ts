@@ -225,13 +225,22 @@ export class WebHidDeviceConnection implements DeviceConnection {
       clearTimeout(this.lostConnectionTimeout);
     }
 
+    if (this._pendingApdu.isJust()) {
+      this._sendApduSubject.error(new WebHidSendReportError());
+    }
+
     await device.open();
+
     this._logger.info("⏱️🔌 Device reconnected");
     this.waitingForReconnection = false;
     this.reconnectionSubject.next("success");
   }
 
   public disconnect() {
+    if (this._pendingApdu.isJust()) {
+      this._sendApduSubject.error(new WebHidSendReportError());
+    }
+
     this._logger.info("🔚 Disconnect");
     if (this.lostConnectionTimeout) clearTimeout(this.lostConnectionTimeout);
     this.terminated = true;

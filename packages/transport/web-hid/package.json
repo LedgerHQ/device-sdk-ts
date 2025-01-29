@@ -1,6 +1,6 @@
 {
   "name": "@ledgerhq/device-transport-kit-web-hid",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "license": "Apache-2.0",
   "private": false,
   "exports": {
@@ -25,7 +25,7 @@
     "prettier": "prettier . --check",
     "prettier:fix": "prettier . --write",
     "typecheck": "tsc --noEmit",
-    "test": "jest --passWithNoTests",
+    "test": "jest",
     "test:watch": "pnpm test -- --watch",
     "test:coverage": "pnpm test -- --coverage"
   },
@@ -47,7 +47,7 @@
     "ts-node": "^10.9.2"
   },
   "peerDependencies": {
-    "@ledgerhq/device-management-kit": "workspace:*",
+    "@ledgerhq/device-management-kit": ">= 0.6 < 2",
     "rxjs": "^7.8.1"
   }
 }
