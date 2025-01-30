@@ -1,7 +1,10 @@
 import {
+  APDU_MAX_PAYLOAD,
   ByteArrayBuilder,
   type CommandResult,
+  CommandResultFactory,
   type InternalApi,
+  InvalidStatusWordError,
 } from "@ledgerhq/device-management-kit";
 import { DerivationPathUtils } from "@ledgerhq/signer-utils";
 
@@ -31,6 +34,14 @@ export class SendSignMessageTask {
       this._buildFullMessage(sendingData),
       DerivationPathUtils.splitPath(derivationPath),
     );
+
+    if (commandBuffer.length > APDU_MAX_PAYLOAD) {
+      return CommandResultFactory({
+        error: new InvalidStatusWordError(
+          "The APDU command exceeds the maximum allowable size (255 bytes)",
+        ),
+      });
+    }
 
     return await this.api.sendCommand(
       new SignOffChainMessageCommand({

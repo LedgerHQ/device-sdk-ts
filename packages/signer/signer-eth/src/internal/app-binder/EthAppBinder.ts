@@ -3,7 +3,10 @@ import {
   DeviceManagementKit,
   type DeviceSessionId,
 } from "@ledgerhq/device-management-kit";
-import { SendCommandInAppDeviceAction } from "@ledgerhq/device-management-kit";
+import {
+  CallTaskInAppDeviceAction,
+  SendCommandInAppDeviceAction,
+} from "@ledgerhq/device-management-kit";
 import { UserInteractionRequired } from "@ledgerhq/device-management-kit";
 import { inject, injectable } from "inversify";
 
@@ -14,6 +17,7 @@ import { type SignTypedDataDAReturnType } from "@api/app-binder/SignTypedDataDev
 import { type TransactionOptions } from "@api/model/TransactionOptions";
 import { type TypedData } from "@api/model/TypedData";
 import { SignTypedDataDeviceAction } from "@internal/app-binder/device-action/SignTypedData/SignTypedDataDeviceAction";
+import { SendSignPersonalMessageTask } from "@internal/app-binder/task/SendSignPersonalMessageTask";
 import { externalTypes } from "@internal/externalTypes";
 import { transactionTypes } from "@internal/transaction/di/transactionTypes";
 import { TransactionMapperService } from "@internal/transaction/service/mapper/TransactionMapperService";
@@ -22,7 +26,6 @@ import { type TypedDataParserService } from "@internal/typed-data/service/TypedD
 
 import { GetAddressCommand } from "./command/GetAddressCommand";
 import { ETHEREUM_PLUGINS } from "./constant/plugins";
-import { SignPersonalMessageDeviceAction } from "./device-action/SignPersonalMessage/SignPersonalMessageDeviceAction";
 import { SignTransactionDeviceAction } from "./device-action/SignTransaction/SignTransactionDeviceAction";
 
 @injectable()
@@ -63,10 +66,13 @@ export class EthAppBinder {
   }): SignPersonalMessageDAReturnType {
     return this.dmk.executeDeviceAction({
       sessionId: this.sessionId,
-      deviceAction: new SignPersonalMessageDeviceAction({
+      deviceAction: new CallTaskInAppDeviceAction({
         input: {
-          derivationPath: args.derivationPath,
-          message: args.message,
+          task: async (internalApi) =>
+            new SendSignPersonalMessageTask(internalApi, args).run(),
+          appName: "Ethereum",
+          compatibleAppNames: ETHEREUM_PLUGINS,
+          requiredUserInteraction: UserInteractionRequired.SignPersonalMessage,
         },
       }),
     });

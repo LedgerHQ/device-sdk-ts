@@ -26,7 +26,6 @@ import {
 
 import { GetAppConfigurationCommand } from "./command/GetAppConfigurationCommand";
 import { GetPubKeyCommand } from "./command/GetPubKeyCommand";
-import { SignMessageDeviceAction } from "./device-action/SignMessage/SignMessageDeviceAction";
 import { SignTransactionDeviceAction } from "./device-action/SignTransactionDeviceAction";
 import { SolanaAppBinder } from "./SolanaAppBinder";
 
@@ -288,29 +287,6 @@ describe("SolanaAppBinder", () => {
             done(err);
           }
         },
-      });
-    });
-
-    it("should call executeDeviceAction with correct parameters", () => {
-      // GIVEN
-      const signMessageArgs = {
-        derivationPath: "44'/501'/0'/0'",
-        message: "Hello world",
-      };
-
-      // WHEN
-      const appBinder = new SolanaAppBinder(mockedDmk, "sessionId");
-      appBinder.signMessage(signMessageArgs);
-
-      // THEN
-      expect(mockedDmk.executeDeviceAction).toHaveBeenCalledWith({
-        sessionId: "sessionId",
-        deviceAction: new SignMessageDeviceAction({
-          input: {
-            derivationPath: signMessageArgs.derivationPath,
-            message: signMessageArgs.message,
-          },
-        }),
       });
     });
   });

@@ -1,4 +1,5 @@
 import {
+  CallTaskInAppDeviceAction,
   DeviceManagementKit,
   type DeviceSessionId,
   SendCommandInAppDeviceAction,
@@ -19,6 +20,7 @@ import { Wallet } from "@api/model/Wallet";
 import { GetExtendedPublicKeyCommand } from "@internal/app-binder/command/GetExtendedPublicKeyCommand";
 import { SignPsbtDeviceAction } from "@internal/app-binder/device-action/SignPsbt/SignPsbtDeviceAction";
 import { SignTransactionDeviceAction } from "@internal/app-binder/device-action/SignTransaction/SignTransactionDeviceAction";
+import { SendSignMessageTask } from "@internal/app-binder/task/SignMessageTask";
 import { dataStoreTypes } from "@internal/data-store/di/dataStoreTypes";
 import type { DataStoreService } from "@internal/data-store/service/DataStoreService";
 import { externalTypes } from "@internal/externalTypes";
@@ -30,7 +32,6 @@ import type { WalletBuilder } from "@internal/wallet/service/WalletBuilder";
 import type { WalletSerializer } from "@internal/wallet/service/WalletSerializer";
 
 import { GetWalletAddressDeviceAction } from "./device-action/GetWalletAddress/GetWalletAddressDeviceAction";
-import { SignMessageDeviceAction } from "./device-action/SignMessage/SignMessageDeviceAction";
 
 @injectable()
 export class BtcAppBinder {
@@ -74,11 +75,16 @@ export class BtcAppBinder {
   }): SignMessageDAReturnType {
     return this._dmk.executeDeviceAction({
       sessionId: this._sessionId,
-      deviceAction: new SignMessageDeviceAction({
+      deviceAction: new CallTaskInAppDeviceAction({
         input: {
-          derivationPath: args.derivationPath,
-          message: args.message,
-          dataStoreService: this._dataStoreService,
+          task: async (internalApi) =>
+            new SendSignMessageTask(
+              internalApi,
+              args,
+              this._dataStoreService,
+            ).run(),
+          appName: "Bitcoin",
+          requiredUserInteraction: UserInteractionRequired.SignPersonalMessage,
         },
       }),
     });

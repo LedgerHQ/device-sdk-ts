@@ -143,7 +143,17 @@ describe("SendSignMessageTask", () => {
     it("should handle messages with maximum allowed length", async () => {
       // GIVEN-------------------------------
       //-------------------------------------
-      const maxLengthMessage = new Uint8Array(255).fill(0x01);
+      const headerSize =
+        1 + // numberOfSigners
+        1 + // numberOfDerivations
+        4 * 4; // paths
+      const fullMessageHeaderSize =
+        1 +
+        15 + // prefix
+        4; // length
+      const maxLengthMessage = new Uint8Array(
+        255 - headerSize - fullMessageHeaderSize,
+      ).fill(0x01);
       const args = {
         derivationPath: DERIVATION_PATH,
         sendingData: maxLengthMessage,
@@ -165,6 +175,48 @@ describe("SendSignMessageTask", () => {
         expect(result.data).toEqual(new Uint8Array([0x99, 0x88, 0x77]));
       } else {
         throw new Error("Expected result to have data property");
+      }
+    });
+
+    it("should fail messages if too big", async () => {
+      // GIVEN-------------------------------
+      //-------------------------------------
+      const headerSize =
+        1 + // numberOfSigners
+        1 + // numberOfDerivations
+        4 * 4; // paths
+      const fullMessageHeaderSize =
+        1 +
+        15 + // prefix
+        4; // length
+      const maxLengthMessage = new Uint8Array(
+        256 - headerSize - fullMessageHeaderSize,
+      ).fill(0x01);
+      const args = {
+        derivationPath: DERIVATION_PATH,
+        sendingData: maxLengthMessage,
+      };
+      apiMock.sendCommand.mockResolvedValueOnce(
+        CommandResultFactory({
+          data: new Uint8Array([0x99, 0x88, 0x77]),
+        }),
+      );
+
+      // WHEN--------------------------------
+      //-------------------------------------
+      const result = await new SendSignMessageTask(apiMock, args).run();
+
+      // THEN--------------------------------
+      //-------------------------------------
+      expect(apiMock.sendCommand).toHaveBeenCalledTimes(0);
+      if ("error" in result) {
+        expect(result.error).toEqual(
+          new InvalidStatusWordError(
+            "The APDU command exceeds the maximum allowable size (255 bytes)",
+          ),
+        );
+      } else {
+        throw new Error("Expected result to have error property");
       }
     });
   });

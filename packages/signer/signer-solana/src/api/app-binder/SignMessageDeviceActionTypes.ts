@@ -1,5 +1,4 @@
 import {
-  type DeviceActionState,
   type ExecuteDeviceActionReturnType,
   type OpenAppDAError,
   type OpenAppDARequiredInteraction,
@@ -12,11 +11,6 @@ import { type SolanaAppErrorCodes } from "@internal/app-binder/command/utils/Sol
 
 export type SignMessageDAOutput = Signature;
 
-export type SignMessageDAInput = {
-  readonly derivationPath: string;
-  readonly message: string;
-};
-
 export type SignMessageDAError =
   | OpenAppDAError
   | SendCommandInAppDAError<SolanaAppErrorCodes>;
@@ -27,17 +21,6 @@ type SignMessageDARequiredInteraction =
 
 export type SignMessageDAIntermediateValue = {
   requiredUserInteraction: SignMessageDARequiredInteraction;
-};
-
-export type SignMessageDAState = DeviceActionState<
-  SignMessageDAOutput,
-  SignMessageDAError,
-  SignMessageDAIntermediateValue
->;
-
-export type SignMessageDAInternalState = {
-  readonly error: SignMessageDAError | null;
-  readonly signature: Signature | null;
 };
 
 export type SignMessageDAReturnType = ExecuteDeviceActionReturnType<
