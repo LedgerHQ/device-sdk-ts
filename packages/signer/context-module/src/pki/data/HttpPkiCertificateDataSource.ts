@@ -4,7 +4,10 @@ import { inject, injectable } from "inversify";
 import { Either, Left, Right } from "purify-ts";
 
 import { configTypes } from "@/config/di/configTypes";
-import type { ContextModuleConfig } from "@/config/model/ContextModuleConfig";
+import type {
+  ContextModuleCalMode,
+  ContextModuleConfig,
+} from "@/config/model/ContextModuleConfig";
 import { PkiCertificate } from "@/pki/model/PkiCertificate";
 import { PkiCertificateInfo } from "@/pki/model/PkiCertificateInfo";
 import { SIGNATURE_TAG } from "@/shared/model/SignatureTags";
@@ -50,12 +53,16 @@ export class HttpPkiCertificateDataSource implements PkiCertificateDataSource {
       if (
         pkiCertificateResponse.status == 200 &&
         pkiCertificateResponse.data !== undefined &&
-        pkiCertificateResponse.data.length > 0
+        pkiCertificateResponse.data.length > 0 &&
+        this.isValidPkiCertificateResponse(
+          pkiCertificateResponse.data[0],
+          this.config.cal.mode,
+        )
       ) {
         const payload = hexaStringToBuffer(
           HexStringUtils.appendSignatureToPayload(
-            pkiCertificateResponse.data[0]!.descriptor.data,
-            pkiCertificateResponse.data[0]!.descriptor.signatures[
+            pkiCertificateResponse.data[0].descriptor.data,
+            pkiCertificateResponse.data[0].descriptor.signatures[
               this.config.cal.mode
             ],
             SIGNATURE_TAG,
@@ -89,5 +96,26 @@ export class HttpPkiCertificateDataSource implements PkiCertificateDataSource {
         ),
       );
     }
+  }
+
+  private isValidPkiCertificateResponse(
+    value: unknown,
+    mode: ContextModuleCalMode,
+  ): value is PkiCertificateResponseDto {
+    return (
+      typeof value === "object" &&
+      value !== null &&
+      "descriptor" in value &&
+      typeof value.descriptor === "object" &&
+      value.descriptor !== null &&
+      "data" in value.descriptor &&
+      typeof value.descriptor.data === "string" &&
+      "signatures" in value.descriptor &&
+      typeof value.descriptor.signatures === "object" &&
+      value.descriptor.signatures !== null &&
+      mode in value.descriptor.signatures &&
+      typeof (value.descriptor.signatures as Record<string, unknown>)[mode] ===
+        "string"
+    );
   }
 }
