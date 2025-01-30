@@ -1,3 +1,5 @@
+import { type PkiCertificate } from "@/pki/model/PkiCertificate";
+
 import { type GenericPath } from "./GenericPath";
 
 export enum ClearSignContextType {
@@ -70,6 +72,7 @@ export type ClearSignContextSuccess<
       id: number;
       payload: string;
       value: number;
+      certificate?: PkiCertificate;
     }
   : {
       type: Exclude<
@@ -78,6 +81,7 @@ export type ClearSignContextSuccess<
       >;
       payload: string;
       reference?: ClearSignContextReference;
+      certificate?: PkiCertificate;
     };
 
 export type ClearSignContextError = {

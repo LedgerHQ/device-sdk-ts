@@ -3,15 +3,16 @@ import {
   type ClearSignContextSuccessType,
   type ClearSignContextType,
   type ContextModule,
+  type PkiCertificate,
 } from "@ledgerhq/context-module";
 import {
   type CommandErrorResult,
   CommandResultFactory,
-  type InternalApi,
   InvalidStatusWordError,
 } from "@ledgerhq/device-management-kit";
 import { Just, Nothing } from "purify-ts";
 
+import { makeDeviceActionInternalApiMock } from "@internal/app-binder/device-action/__test-utils__/makeInternalApi";
 import { type TransactionParserService } from "@internal/transaction/service/parser/TransactionParserService";
 
 import { ProvideTransactionFieldDescriptionTask } from "./ProvideTransactionFieldDescriptionTask";
@@ -34,12 +35,17 @@ describe("ProvideTransactionGenericContextTask", () => {
   const chainId = 1;
   const transactionParser = {} as TransactionParserService;
   const contextModule = {} as ContextModule;
+  const transactionInfoCertificate: PkiCertificate = {
+    keyUsageNumber: 0,
+    payload: new Uint8Array([0x12, 0x34]),
+  };
 
   const defaultArgs: ProvideTransactionGenericContextTaskArgs = {
     derivationPath,
     serializedTransaction,
     context: {
       transactionInfo,
+      transactionInfoCertificate,
       transactionFields,
       transactionEnums,
     },
@@ -47,6 +53,9 @@ describe("ProvideTransactionGenericContextTask", () => {
     transactionParser,
     contextModule,
   };
+
+  const apiMock = makeDeviceActionInternalApiMock();
+
   describe("run", () => {
     beforeEach(() => {
       jest.resetAllMocks();
@@ -60,10 +69,16 @@ describe("ProvideTransactionGenericContextTask", () => {
             error: new InvalidStatusWordError("storeTransactionError"),
           }),
         );
+        // loadCertificateCommand
+        jest.spyOn(apiMock, "sendCommand").mockResolvedValueOnce(
+          CommandResultFactory({
+            data: undefined,
+          }),
+        );
 
         // WHEN
         const result = await new ProvideTransactionGenericContextTask(
-          {} as InternalApi,
+          apiMock,
           defaultArgs,
         ).run();
 
@@ -91,10 +106,16 @@ describe("ProvideTransactionGenericContextTask", () => {
             ),
           }),
         );
+        // loadCertificateCommand
+        jest.spyOn(apiMock, "sendCommand").mockResolvedValueOnce(
+          CommandResultFactory({
+            data: undefined,
+          }),
+        );
 
         // WHEN
         const result = await new ProvideTransactionGenericContextTask(
-          {} as InternalApi,
+          apiMock,
           defaultArgs,
         ).run();
 
@@ -133,21 +154,25 @@ describe("ProvideTransactionGenericContextTask", () => {
               }) as CommandErrorResult,
             ),
           );
+        // loadCertificateCommand
+        jest.spyOn(apiMock, "sendCommand").mockResolvedValueOnce(
+          CommandResultFactory({
+            data: undefined,
+          }),
+        );
 
         // WHEN
-        const result = await new ProvideTransactionGenericContextTask(
-          {} as InternalApi,
-          {
-            ...defaultArgs,
-            context: {
-              transactionInfo,
-              transactionFields: [
-                {} as ClearSignContextSuccess<ClearSignContextType.TRANSACTION_INFO>,
-              ],
-              transactionEnums,
-            },
+        const result = await new ProvideTransactionGenericContextTask(apiMock, {
+          ...defaultArgs,
+          context: {
+            transactionInfo,
+            transactionInfoCertificate,
+            transactionFields: [
+              {} as ClearSignContextSuccess<ClearSignContextType.TRANSACTION_INFO>,
+            ],
+            transactionEnums,
           },
-        ).run();
+        }).run();
 
         // THEN
         expect(result).toEqual(
@@ -182,12 +207,19 @@ describe("ProvideTransactionGenericContextTask", () => {
       jest
         .spyOn(ProvideTransactionFieldDescriptionTask.prototype, "run")
         .mockResolvedValue(Nothing);
+      // loadCertificateCommand
+      jest.spyOn(apiMock, "sendCommand").mockResolvedValueOnce(
+        CommandResultFactory({
+          data: undefined,
+        }),
+      );
 
       // WHEN
-      await new ProvideTransactionGenericContextTask({} as InternalApi, {
+      await new ProvideTransactionGenericContextTask(apiMock, {
         ...defaultArgs,
         context: {
           transactionInfo,
+          transactionInfoCertificate,
           transactionFields: fields,
           transactionEnums,
         },
@@ -214,15 +246,52 @@ describe("ProvideTransactionGenericContextTask", () => {
       jest
         .spyOn(ProvideTransactionFieldDescriptionTask.prototype, "run")
         .mockResolvedValue(Nothing);
+      // loadCertificateCommand
+      jest.spyOn(apiMock, "sendCommand").mockResolvedValueOnce(
+        CommandResultFactory({
+          data: undefined,
+        }),
+      );
 
       // WHEN
       const result = await new ProvideTransactionGenericContextTask(
-        {} as InternalApi,
+        apiMock,
         defaultArgs,
       ).run();
 
       // THEN
       expect(result).toEqual(Nothing);
+    });
+
+    it("should load the transaction info certificate", async () => {
+      // GIVEN
+      jest.spyOn(SendCommandInChunksTask.prototype, "run").mockResolvedValue(
+        CommandResultFactory({
+          data: "0x1234",
+        }),
+      );
+      jest.spyOn(SendPayloadInChunksTask.prototype, "run").mockResolvedValue(
+        CommandResultFactory({
+          data: "0x5678",
+        }),
+      );
+      jest
+        .spyOn(ProvideTransactionFieldDescriptionTask.prototype, "run")
+        .mockResolvedValue(Nothing);
+
+      // WHEN
+      await new ProvideTransactionGenericContextTask(apiMock, {
+        ...defaultArgs,
+        context: {
+          transactionInfo,
+          transactionInfoCertificate,
+          transactionFields,
+          transactionEnums,
+        },
+      }).run();
+
+      // THEN
+      expect(apiMock.sendCommand).toHaveBeenCalledTimes(1);
     });
   });
 });

@@ -34,6 +34,11 @@ export {
   type ListAppsResponse,
 } from "@api/command/os/ListAppsCommand";
 export {
+  type LoadCertificateArgs,
+  LoadCertificateCommand,
+  type LoadCertificateErrorCodes,
+} from "@api/command/os/LoadCertificateCommand";
+export {
   type OpenAppArgs,
   OpenAppCommand,
 } from "@api/command/os/OpenAppCommand";
