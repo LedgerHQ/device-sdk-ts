@@ -15,6 +15,7 @@ import {
   type SignTypedDataDAOutput,
   type TypedData,
 } from "@ledgerhq/device-signer-kit-ethereum";
+import { ethers } from "ethers";
 
 import { DeviceActionsList } from "@/components/DeviceActionsView/DeviceActionsList";
 import { type DeviceActionProps } from "@/components/DeviceActionsView/DeviceActionTester";
@@ -94,7 +95,7 @@ export const SignerEthView: React.FC<{ sessionId: string }> = ({
       {
         title: "Sign transaction",
         description:
-          "Perform all the actions necessary to sign a transaction with the device",
+          "Perform all the actions necessary to sign a transaction with the device (JSON or serialized raw TX)",
         executeDeviceAction: ({
           derivationPath,
           transaction,
@@ -104,6 +105,20 @@ export const SignerEthView: React.FC<{ sessionId: string }> = ({
             throw new Error("Signer not initialized");
           }
 
+          // If it's a json transaction, try to parse it
+          try {
+            const jsonTx = JSON.parse(transaction);
+            // Remove "from" if present in the json transaction because it make no sense
+            // in an unsigned ethereum tx, and ethers will reject it
+            if (jsonTx.from) {
+              delete jsonTx.from;
+            }
+            transaction = ethers.Transaction.from(jsonTx).unsignedSerialized;
+          } catch (_: unknown) {
+            // Not a JSON
+          }
+
+          // Convert the serialized rawTx into a buffer
           const tx = hexaStringToBuffer(transaction);
           if (!tx) {
             throw new Error("Invalid transaction format");
