@@ -24,7 +24,6 @@ const SIGNATURE_LENGTH = 64;
 export type SignOffChainMessageCommandResponse = Signature;
 export type SignOffChainMessageCommandArgs = {
   readonly message: Uint8Array;
-  readonly derivationPath: string;
 };
 
 export class SignOffChainMessageCommand
