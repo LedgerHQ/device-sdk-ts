@@ -16,7 +16,6 @@ describe("SignOffChainMessageCommand", () => {
   beforeEach(() => {
     command = new SignOffChainMessageCommand({
       message: MESSAGE,
-      derivationPath: "44'/501'/0'/0'",
     });
     jest.clearAllMocks();
     jest.requireActual("@ledgerhq/device-management-kit");
