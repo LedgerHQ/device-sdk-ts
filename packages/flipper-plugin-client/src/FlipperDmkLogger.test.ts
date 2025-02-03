@@ -4,7 +4,7 @@ import { type FlipperPluginConnection } from "js-flipper";
 import { FlipperDmkLogger, type FlipperObjLog } from "./FlipperDmkLogger";
 import { FlipperPluginManager } from "./FlipperPluginManager";
 
-jest.mock("js-flipper");
+vi.mock("js-flipper");
 
 const testLogs: LogParams[] = [
   [

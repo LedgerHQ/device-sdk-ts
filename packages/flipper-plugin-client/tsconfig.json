@@ -8,11 +8,7 @@
     "target": "esnext",
     "moduleResolution": "bundler",
     "emitDeclarationOnly": true,
-    "paths": {
-      "@api/*": ["src/api/*"],
-      "@internal/*": ["src/internal/*"],
-      "@root/*": ["./*"]
-    },
-    "resolveJsonModule": true
+    "resolveJsonModule": true,
+    "types": ["node", "vitest/globals"]
   }
 }
