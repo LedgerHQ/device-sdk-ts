@@ -22,6 +22,7 @@ describe("BuildEIP712ContextTask", () => {
     getContext: jest.fn(),
     getContexts: jest.fn(),
     getTypedDataFilters: jest.fn(),
+    getWeb3Checks: jest.fn(),
   };
   const parserMock = {
     parse: jest.fn(),
