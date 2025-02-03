@@ -11,7 +11,8 @@
       "@/*": ["src/*"],
       "@root/*": ["./*"]
     },
-    "resolveJsonModule": true
+    "resolveJsonModule": true,
+    "types": ["node", "vitest/globals", "crypto-js"]
   },
   "include": ["index.ts", "src", "vitest.*.mjs"]
 }

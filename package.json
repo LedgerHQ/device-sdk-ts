@@ -55,6 +55,7 @@
     "eslint": "9.19.0",
     "gitmoji-cli": "^9.5.0",
     "hygen": "^6.2.11",
+    "jsdom": "^26.0.0",
     "prettier": "^3.4.2",
     "rimraf": "^6.0.1",
     "tsc-alias": "^1.8.10",

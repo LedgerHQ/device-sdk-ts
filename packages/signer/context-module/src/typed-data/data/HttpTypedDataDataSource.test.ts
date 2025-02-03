@@ -8,7 +8,7 @@ import PACKAGE from "@root/package.json";
 
 import { type FiltersDto, type InstructionField } from "./FiltersDto";
 
-jest.mock("axios");
+vi.mock("axios");
 
 export const buildDescriptor = (
   instructions: InstructionField[],
@@ -214,14 +214,14 @@ describe("HttpTypedDataDataSource", () => {
       },
     } as ContextModuleConfig;
     datasource = new HttpTypedDataDataSource(config);
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   it("should call axios with the ledger client version header", async () => {
     // GIVEN
     const version = `context-module/${PACKAGE.version}`;
-    const requestSpy = jest.fn(() => Promise.resolve({ data: [] }));
-    jest.spyOn(axios, "request").mockImplementation(requestSpy);
+    const requestSpy = vi.fn(() => Promise.resolve({ data: [] }));
+    vi.spyOn(axios, "request").mockImplementation(requestSpy);
 
     // WHEN
     await datasource.getTypedDataFilters({
@@ -299,7 +299,7 @@ describe("HttpTypedDataDataSource", () => {
         type: "field",
       },
     ]);
-    jest.spyOn(axios, "request").mockResolvedValue({ data: filtersDTO });
+    vi.spyOn(axios, "request").mockResolvedValue({ data: filtersDTO });
 
     // WHEN
     const result = await datasource.getTypedDataFilters({
@@ -414,7 +414,7 @@ describe("HttpTypedDataDataSource", () => {
         type: "field",
       },
     ]);
-    jest.spyOn(axios, "request").mockResolvedValue({ data: filtersDTO });
+    vi.spyOn(axios, "request").mockResolvedValue({ data: filtersDTO });
 
     // WHEN
     const result = await datasource.getTypedDataFilters({
@@ -469,7 +469,7 @@ describe("HttpTypedDataDataSource", () => {
 
   it("should return an error when data is empty", async () => {
     // GIVEN
-    jest.spyOn(axios, "request").mockResolvedValue({ data: undefined });
+    vi.spyOn(axios, "request").mockResolvedValue({ data: undefined });
 
     // WHEN
     const result = await datasource.getTypedDataFilters({
@@ -491,7 +491,7 @@ describe("HttpTypedDataDataSource", () => {
   it("should return an error when schema is not found", async () => {
     const filtersDTO = buildDescriptor([]);
     // GIVEN
-    jest.spyOn(axios, "request").mockResolvedValue({ data: filtersDTO });
+    vi.spyOn(axios, "request").mockResolvedValue({ data: filtersDTO });
 
     // WHEN
     const result = await datasource.getTypedDataFilters({
@@ -515,7 +515,7 @@ describe("HttpTypedDataDataSource", () => {
       undefined as unknown as InstructionField[],
     );
     // GIVEN
-    jest.spyOn(axios, "request").mockResolvedValue({ data: filtersDTO });
+    vi.spyOn(axios, "request").mockResolvedValue({ data: filtersDTO });
 
     // WHEN
     const result = await datasource.getTypedDataFilters({
@@ -550,7 +550,7 @@ describe("HttpTypedDataDataSource", () => {
       },
     ]);
     // GIVEN
-    jest.spyOn(axios, "request").mockResolvedValue({ data: filtersDTO });
+    vi.spyOn(axios, "request").mockResolvedValue({ data: filtersDTO });
 
     // WHEN
     const result = await datasource.getTypedDataFilters({
@@ -583,7 +583,7 @@ describe("HttpTypedDataDataSource", () => {
       } as InstructionField,
     ]);
     // GIVEN
-    jest.spyOn(axios, "request").mockResolvedValue({ data: filtersDTO });
+    vi.spyOn(axios, "request").mockResolvedValue({ data: filtersDTO });
 
     // WHEN
     const result = await datasource.getTypedDataFilters({
@@ -618,7 +618,7 @@ describe("HttpTypedDataDataSource", () => {
       } as InstructionField,
     ]);
     // GIVEN
-    jest.spyOn(axios, "request").mockResolvedValue({ data: filtersDTO });
+    vi.spyOn(axios, "request").mockResolvedValue({ data: filtersDTO });
 
     // WHEN
     const result = await datasource.getTypedDataFilters({
@@ -653,7 +653,7 @@ describe("HttpTypedDataDataSource", () => {
       } as InstructionField,
     ]);
     // GIVEN
-    jest.spyOn(axios, "request").mockResolvedValue({ data: filtersDTO });
+    vi.spyOn(axios, "request").mockResolvedValue({ data: filtersDTO });
 
     // WHEN
     const result = await datasource.getTypedDataFilters({
@@ -688,7 +688,7 @@ describe("HttpTypedDataDataSource", () => {
       } as InstructionField,
     ]);
     // GIVEN
-    jest.spyOn(axios, "request").mockResolvedValue({ data: filtersDTO });
+    vi.spyOn(axios, "request").mockResolvedValue({ data: filtersDTO });
 
     // WHEN
     const result = await datasource.getTypedDataFilters({
@@ -723,7 +723,7 @@ describe("HttpTypedDataDataSource", () => {
       } as unknown as InstructionField,
     ]);
     // GIVEN
-    jest.spyOn(axios, "request").mockResolvedValue({ data: filtersDTO });
+    vi.spyOn(axios, "request").mockResolvedValue({ data: filtersDTO });
 
     // WHEN
     const result = await datasource.getTypedDataFilters({
@@ -744,7 +744,7 @@ describe("HttpTypedDataDataSource", () => {
 
   it("should return an error when axios throws an error", async () => {
     // GIVEN
-    jest.spyOn(axios, "request").mockRejectedValue(new Error("error"));
+    vi.spyOn(axios, "request").mockRejectedValue(new Error("error"));
 
     // WHEN
     const result = await datasource.getTypedDataFilters({

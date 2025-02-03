@@ -12,7 +12,8 @@
       "@internal/*": ["./src/internal/*"],
       "@root/*": ["./*"]
     },
-    "resolveJsonModule": true
+    "resolveJsonModule": true,
+    "types": ["node","vitest/globals"]
   },
   "include": ["src", "vitest.*.mjs"]
 }

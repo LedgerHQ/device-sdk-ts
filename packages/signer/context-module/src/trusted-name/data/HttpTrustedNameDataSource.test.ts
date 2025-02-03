@@ -6,7 +6,7 @@ import { HttpTrustedNameDataSource } from "@/trusted-name/data/HttpTrustedNameDa
 import { type TrustedNameDataSource } from "@/trusted-name/data/TrustedNameDataSource";
 import PACKAGE from "@root/package.json";
 
-jest.mock("axios");
+vi.mock("axios");
 
 describe("HttpTrustedNameDataSource", () => {
   let datasource: TrustedNameDataSource;
@@ -20,15 +20,15 @@ describe("HttpTrustedNameDataSource", () => {
       },
     } as ContextModuleConfig;
     datasource = new HttpTrustedNameDataSource(config);
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   describe("getDomainNamePayload", () => {
     it("should call axios with the ledger client version header", async () => {
       // GIVEN
       const version = `context-module/${PACKAGE.version}`;
-      const requestSpy = jest.fn(() => Promise.resolve({ data: [] }));
-      jest.spyOn(axios, "request").mockImplementation(requestSpy);
+      const requestSpy = vi.fn(() => Promise.resolve({ data: [] }));
+      vi.spyOn(axios, "request").mockImplementation(requestSpy);
 
       // WHEN
       await datasource.getDomainNamePayload({
@@ -46,7 +46,7 @@ describe("HttpTrustedNameDataSource", () => {
 
     it("should throw an error when axios throws an error", async () => {
       // GIVEN
-      jest.spyOn(axios, "request").mockRejectedValue(new Error());
+      vi.spyOn(axios, "request").mockRejectedValue(new Error());
 
       // WHEN
       const result = await datasource.getDomainNamePayload({
@@ -67,7 +67,7 @@ describe("HttpTrustedNameDataSource", () => {
     it("should return an error when no payload is returned", async () => {
       // GIVEN
       const response = { data: { test: "" } };
-      jest.spyOn(axios, "request").mockResolvedValue(response);
+      vi.spyOn(axios, "request").mockResolvedValue(response);
 
       // WHEN
       const result = await datasource.getDomainNamePayload({
@@ -88,7 +88,7 @@ describe("HttpTrustedNameDataSource", () => {
     it("should return a payload", async () => {
       // GIVEN
       const response = { data: { signedDescriptor: { data: "payload" } } };
-      jest.spyOn(axios, "request").mockResolvedValue(response);
+      vi.spyOn(axios, "request").mockResolvedValue(response);
 
       // WHEN
       const result = await datasource.getDomainNamePayload({
@@ -105,8 +105,8 @@ describe("HttpTrustedNameDataSource", () => {
     it("should call axios with the ledger client version header", async () => {
       // GIVEN
       const version = `context-module/${PACKAGE.version}`;
-      const requestSpy = jest.fn(() => Promise.resolve({ data: [] }));
-      jest.spyOn(axios, "request").mockImplementation(requestSpy);
+      const requestSpy = vi.fn(() => Promise.resolve({ data: [] }));
+      vi.spyOn(axios, "request").mockImplementation(requestSpy);
 
       // WHEN
       await datasource.getTrustedNamePayload({
@@ -126,7 +126,7 @@ describe("HttpTrustedNameDataSource", () => {
 
     it("should throw an error when axios throws an error", async () => {
       // GIVEN
-      jest.spyOn(axios, "request").mockRejectedValue(new Error());
+      vi.spyOn(axios, "request").mockRejectedValue(new Error());
 
       // WHEN
       const result = await datasource.getTrustedNamePayload({
@@ -149,7 +149,7 @@ describe("HttpTrustedNameDataSource", () => {
     it("should return an error when no payload is returned", async () => {
       // GIVEN
       const response = { data: { test: "" } };
-      jest.spyOn(axios, "request").mockResolvedValue(response);
+      vi.spyOn(axios, "request").mockResolvedValue(response);
 
       // WHEN
       const result = await datasource.getTrustedNamePayload({
@@ -176,7 +176,7 @@ describe("HttpTrustedNameDataSource", () => {
           signedDescriptor: { data: "payload" },
         },
       };
-      jest.spyOn(axios, "request").mockResolvedValue(response);
+      vi.spyOn(axios, "request").mockResolvedValue(response);
 
       // WHEN
       const result = await datasource.getTrustedNamePayload({
@@ -197,7 +197,7 @@ describe("HttpTrustedNameDataSource", () => {
           signedDescriptor: { data: "payload", signatures: { prod: "12345" } },
         },
       };
-      jest.spyOn(axios, "request").mockResolvedValue(response);
+      vi.spyOn(axios, "request").mockResolvedValue(response);
 
       // WHEN
       const result = await datasource.getTrustedNamePayload({
