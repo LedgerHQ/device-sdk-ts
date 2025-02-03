@@ -18,11 +18,11 @@ describe("BuildPsbtTask", () => {
   it("should build psbt and fill datastore", async () => {
     // given
     const psbtMapper = {
-      map: jest.fn(() => Right("InternalPsbt" as unknown as InternalPsbt)),
+      map: vi.fn(() => Right("InternalPsbt" as unknown as InternalPsbt)),
     };
     const dataStoreService = {
-      merklizeWallet: jest.fn(),
-      merklizePsbt: jest.fn(() =>
+      merklizeWallet: vi.fn(),
+      merklizePsbt: vi.fn(() =>
         Right("PsbtCommitment" as unknown as PsbtCommitment),
       ),
     } as unknown as DataStoreService;
@@ -61,13 +61,13 @@ describe("BuildPsbtTask", () => {
   it("should return an error if datastore fails", async () => {
     // given
     const psbtMapper = {
-      map: jest.fn(() => Right({} as InternalPsbt)),
+      map: vi.fn(() => Right({} as InternalPsbt)),
     };
     const error = new Error("Failed");
     const dataStoreService = {
-      merklizeWallet: jest.fn(),
-      merklizePsbt: jest.fn(() => Left(error)),
-      merklizeChunks: jest.fn(),
+      merklizeWallet: vi.fn(),
+      merklizePsbt: vi.fn(() => Left(error)),
+      merklizeChunks: vi.fn(),
     };
     const task = new BuildPsbtTask(
       {
@@ -90,12 +90,12 @@ describe("BuildPsbtTask", () => {
     // given
     const error = new Error("Failed");
     const psbtMapper = {
-      map: jest.fn(() => Left(error)),
+      map: vi.fn(() => Left(error)),
     };
     const dataStoreService = {
-      merklizeWallet: jest.fn(),
-      merklizePsbt: jest.fn(() => Right({} as PsbtCommitment)),
-      merklizeChunks: jest.fn(),
+      merklizeWallet: vi.fn(),
+      merklizePsbt: vi.fn(() => Right({} as PsbtCommitment)),
+      merklizeChunks: vi.fn(),
     };
     const task = new BuildPsbtTask(
       {

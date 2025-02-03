@@ -29,12 +29,12 @@ import { type WalletSerializer } from "@internal/wallet/service/WalletSerializer
 
 describe("BtcAppBinder", () => {
   const mockedDmk: DeviceManagementKit = {
-    sendCommand: jest.fn(),
-    executeDeviceAction: jest.fn(),
+    sendCommand: vi.fn(),
+    executeDeviceAction: vi.fn(),
   } as unknown as DeviceManagementKit;
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   it("should be defined", () => {
@@ -57,67 +57,69 @@ describe("BtcAppBinder", () => {
         subscription.unsubscribe();
       }
     });
-    it("should return the pub key", (done) => {
-      // GIVEN
-      const extendedPublicKey = "D2PPQSYFe83nDzk96FqGumVU8JA7J8vj2Rhjc2oXzEi5";
+    it("should return the pub key", () =>
+      new Promise<Error | void>((done) => {
+        // GIVEN
+        const extendedPublicKey =
+          "D2PPQSYFe83nDzk96FqGumVU8JA7J8vj2Rhjc2oXzEi5";
 
-      jest.spyOn(mockedDmk, "executeDeviceAction").mockReturnValue({
-        observable: from([
-          {
-            status: DeviceActionStatus.Completed,
-            output: { extendedPublicKey },
-          } as DeviceActionState<
-            GetExtendedPublicKeyDAOutput,
-            GetExtendedPublicKeyDAError,
-            GetExtendedDAIntermediateValue
-          >,
-        ]),
-        cancel: jest.fn(),
-      });
+        vi.spyOn(mockedDmk, "executeDeviceAction").mockReturnValue({
+          observable: from([
+            {
+              status: DeviceActionStatus.Completed,
+              output: { extendedPublicKey },
+            } as DeviceActionState<
+              GetExtendedPublicKeyDAOutput,
+              GetExtendedPublicKeyDAError,
+              GetExtendedDAIntermediateValue
+            >,
+          ]),
+          cancel: vi.fn(),
+        });
 
-      // WHEN
-      const appBinder = new BtcAppBinder(
-        mockedDmk,
-        "sessionId",
-        {} as WalletBuilder,
-        {} as WalletSerializer,
-        {} as DataStoreService,
-        {} as PsbtMapper,
-        {} as ValueParser,
-      );
-      const { observable } = appBinder.getExtendedPublicKey({
-        derivationPath: "44'/501'",
-        checkOnDevice: false,
-      });
+        // WHEN
+        const appBinder = new BtcAppBinder(
+          mockedDmk,
+          "sessionId",
+          {} as WalletBuilder,
+          {} as WalletSerializer,
+          {} as DataStoreService,
+          {} as PsbtMapper,
+          {} as ValueParser,
+        );
+        const { observable } = appBinder.getExtendedPublicKey({
+          derivationPath: "44'/501'",
+          checkOnDevice: false,
+        });
 
-      // THEN
-      const states: DeviceActionState<
-        GetExtendedPublicKeyDAOutput,
-        GetExtendedPublicKeyDAError,
-        GetExtendedDAIntermediateValue
-      >[] = [];
-      subscription = observable.subscribe({
-        next: (state) => {
-          states.push(state);
-        },
-        error: (err) => {
-          done(err);
-        },
-        complete: () => {
-          try {
-            expect(states).toEqual([
-              {
-                status: DeviceActionStatus.Completed,
-                output: { extendedPublicKey },
-              },
-            ]);
-            done();
-          } catch (err) {
+        // THEN
+        const states: DeviceActionState<
+          GetExtendedPublicKeyDAOutput,
+          GetExtendedPublicKeyDAError,
+          GetExtendedDAIntermediateValue
+        >[] = [];
+        subscription = observable.subscribe({
+          next: (state) => {
+            states.push(state);
+          },
+          error: (err) => {
             done(err);
-          }
-        },
-      });
-    });
+          },
+          complete: () => {
+            try {
+              expect(states).toEqual([
+                {
+                  status: DeviceActionStatus.Completed,
+                  output: { extendedPublicKey },
+                },
+              ]);
+              done();
+            } catch (err) {
+              done(err as Error);
+            }
+          },
+        });
+      }));
 
     describe("calls of executeDeviceAction with the correct params", () => {
       const baseParams = {
@@ -194,71 +196,72 @@ describe("BtcAppBinder", () => {
   });
 
   describe("signMessage", () => {
-    it("should return the signature", (done) => {
-      // GIVEN
-      const signature: Signature = {
-        r: `0xDEF1`,
-        s: `0xAFAF`,
-        v: 0,
-      };
-      const message = "Hello, World!";
+    it("should return the signature", () =>
+      new Promise<Error | void>((done) => {
+        // GIVEN
+        const signature: Signature = {
+          r: `0xDEF1`,
+          s: `0xAFAF`,
+          v: 0,
+        };
+        const message = "Hello, World!";
 
-      jest.spyOn(mockedDmk, "executeDeviceAction").mockReturnValue({
-        observable: from([
-          {
-            status: DeviceActionStatus.Completed,
-            output: signature,
-          } as DeviceActionState<
-            SignMessageDAOutput,
-            SignMessageDAError,
-            SignMessageDAIntermediateValue
-          >,
-        ]),
-        cancel: jest.fn(),
-      });
+        vi.spyOn(mockedDmk, "executeDeviceAction").mockReturnValue({
+          observable: from([
+            {
+              status: DeviceActionStatus.Completed,
+              output: signature,
+            } as DeviceActionState<
+              SignMessageDAOutput,
+              SignMessageDAError,
+              SignMessageDAIntermediateValue
+            >,
+          ]),
+          cancel: vi.fn(),
+        });
 
-      // WHEN
-      const appBinder = new BtcAppBinder(
-        mockedDmk,
-        "sessionId",
-        {} as WalletBuilder,
-        {} as WalletSerializer,
-        {} as DataStoreService,
-        {} as PsbtMapper,
-        {} as ValueParser,
-      );
-      const { observable } = appBinder.signMessage({
-        derivationPath: "44'/60'/3'/2/1",
-        message,
-      });
+        // WHEN
+        const appBinder = new BtcAppBinder(
+          mockedDmk,
+          "sessionId",
+          {} as WalletBuilder,
+          {} as WalletSerializer,
+          {} as DataStoreService,
+          {} as PsbtMapper,
+          {} as ValueParser,
+        );
+        const { observable } = appBinder.signMessage({
+          derivationPath: "44'/60'/3'/2/1",
+          message,
+        });
 
-      // THEN
-      const states: DeviceActionState<
-        SignMessageDAOutput,
-        SignMessageDAError,
-        SignMessageDAIntermediateValue
-      >[] = [];
-      observable.subscribe({
-        next: (state) => {
-          states.push(state);
-        },
-        error: (err) => {
-          done(err);
-        },
-        complete: () => {
-          try {
-            expect(states).toEqual([
-              {
-                status: DeviceActionStatus.Completed,
-                output: signature,
-              },
-            ]);
-            done();
-          } catch (err) {
+        // THEN
+        const states: DeviceActionState<
+          SignMessageDAOutput,
+          SignMessageDAError,
+          SignMessageDAIntermediateValue
+        >[] = [];
+        observable.subscribe({
+          next: (state) => {
+            states.push(state);
+          },
+          error: (err) => {
             done(err);
-          }
-        },
-      });
-    });
+          },
+          complete: () => {
+            try {
+              expect(states).toEqual([
+                {
+                  status: DeviceActionStatus.Completed,
+                  output: signature,
+                },
+              ]);
+              done();
+            } catch (err) {
+              done(err as Error);
+            }
+          },
+        });
+      }));
   });
 });

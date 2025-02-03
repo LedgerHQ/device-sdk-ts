@@ -12,7 +12,7 @@ describe("SignPsbtUseCase", () => {
     );
     const psbt = "some-psbt";
     const appBinder = {
-      signPsbt: jest.fn(),
+      signPsbt: vi.fn(),
     };
     const signPsbtUseCase = new SignPsbtUseCase(
       appBinder as unknown as BtcAppBinder,

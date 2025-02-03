@@ -1,3 +1,4 @@
+/* eslint @typescript-eslint/consistent-type-imports: off */
 import {
   CommandResultFactory,
   DeviceActionStatus,
@@ -22,21 +23,21 @@ import { type WalletSerializer } from "@internal/wallet/service/WalletSerializer
 
 import { SignPsbtDeviceAction } from "./SignPsbtDeviceAction";
 
-jest.mock(
-  "@ledgerhq/device-management-kit",
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-  () => ({
-    ...jest.requireActual("@ledgerhq/device-management-kit"),
-    OpenAppDeviceAction: jest.fn(() => ({
-      makeStateMachine: jest.fn(),
+vi.mock("@ledgerhq/device-management-kit", async (importOriginal) => {
+  const original =
+    await importOriginal<typeof import("@ledgerhq/device-management-kit")>();
+  return {
+    ...original,
+    OpenAppDeviceAction: vi.fn(() => ({
+      makeStateMachine: vi.fn(),
     })),
-  }),
-);
+  };
+});
 
 describe("SignPsbtDeviceAction", () => {
-  const signPsbtMock = jest.fn();
-  const prepareWalletPolicyMock = jest.fn();
-  const buildPsbtMock = jest.fn();
+  const signPsbtMock = vi.fn();
+  const prepareWalletPolicyMock = vi.fn();
+  const buildPsbtMock = vi.fn();
 
   function extractDependenciesMock() {
     return {
@@ -47,537 +48,544 @@ describe("SignPsbtDeviceAction", () => {
   }
 
   describe("Success case", () => {
-    it("should call external dependencies with the correct parameters", (done) => {
-      setupOpenAppDAMock();
+    it("should call external dependencies with the correct parameters", () =>
+      new Promise((done) => {
+        setupOpenAppDAMock();
 
-      const deviceAction = new SignPsbtDeviceAction({
-        input: {
-          wallet: "ApiWallet" as unknown as RegisteredWallet,
-          psbt: "Hello world",
-          walletBuilder: "WalletBuilder" as unknown as WalletBuilder,
-          walletSerializer: "WalletSerializer" as unknown as WalletSerializer,
-          dataStoreService: "DataStoreService" as unknown as DataStoreService,
-          psbtMapper: "PsbtMapper" as unknown as PsbtMapper,
-          valueParser: "ValueParser" as unknown as ValueParser,
-        },
-      });
+        const deviceAction = new SignPsbtDeviceAction({
+          input: {
+            wallet: "ApiWallet" as unknown as RegisteredWallet,
+            psbt: "Hello world",
+            walletBuilder: "WalletBuilder" as unknown as WalletBuilder,
+            walletSerializer: "WalletSerializer" as unknown as WalletSerializer,
+            dataStoreService: "DataStoreService" as unknown as DataStoreService,
+            psbtMapper: "PsbtMapper" as unknown as PsbtMapper,
+            valueParser: "ValueParser" as unknown as ValueParser,
+          },
+        });
 
-      // Mock the dependencies to return some sample data
-      jest
-        .spyOn(deviceAction, "extractDependencies")
-        .mockReturnValue(extractDependenciesMock());
-      prepareWalletPolicyMock.mockResolvedValueOnce(
-        CommandResultFactory({
-          data: "Wallet" as unknown as Wallet,
-        }),
-      );
-      buildPsbtMock.mockResolvedValueOnce(
-        CommandResultFactory({
-          data: "BuildPsbtResult" as unknown as BuildPsbtTaskResult,
-        }),
-      );
-      signPsbtMock.mockResolvedValueOnce(
-        CommandResultFactory({
-          data: [
-            {
-              inputIndex: 0,
-              pubkey: Uint8Array.from([0x04, 0x05, 0x06]),
-              signature: Uint8Array.from([0x01, 0x02, 0x03]),
-            },
-          ],
-        }),
-      );
-
-      // Expected intermediate values for the following state sequence:
-      //   Initial -> OpenApp -> PrepareWalletPolicy -> BuildPsbt -> SignPsbt
-      const expectedStates: Array<SignPsbtDAState> = [
-        {
-          intermediateValue: {
-            requiredUserInteraction: UserInteractionRequired.None,
-          },
-          status: DeviceActionStatus.Pending,
-        },
-        {
-          intermediateValue: {
-            requiredUserInteraction: UserInteractionRequired.ConfirmOpenApp,
-          },
-          status: DeviceActionStatus.Pending,
-        },
-        {
-          intermediateValue: {
-            requiredUserInteraction: UserInteractionRequired.None,
-          },
-          status: DeviceActionStatus.Pending,
-        },
-        {
-          intermediateValue: {
-            requiredUserInteraction: UserInteractionRequired.None,
-          },
-          status: DeviceActionStatus.Pending,
-        },
-        {
-          intermediateValue: {
-            requiredUserInteraction: UserInteractionRequired.SignTransaction,
-          },
-          status: DeviceActionStatus.Pending,
-        },
-        {
-          output: [
-            {
-              inputIndex: 0,
-              pubkey: Uint8Array.from([0x04, 0x05, 0x06]),
-              signature: Uint8Array.from([0x01, 0x02, 0x03]),
-            },
-          ],
-          status: DeviceActionStatus.Completed,
-        },
-      ];
-
-      const { observable } = testDeviceActionStates(
-        deviceAction,
-        expectedStates,
-        makeDeviceActionInternalApiMock(),
-        done,
-      );
-
-      // @todo Put this in a onDone handle of testDeviceActionStates
-      observable.subscribe({
-        complete: () => {
-          expect(prepareWalletPolicyMock).toHaveBeenCalledWith(
-            expect.objectContaining({
-              input: { wallet: "ApiWallet", walletBuilder: "WalletBuilder" },
-            }),
-          );
-          expect(buildPsbtMock).toHaveBeenCalledWith(
-            expect.objectContaining({
-              input: {
-                psbt: "Hello world",
-                wallet: "Wallet",
-                dataStoreService: "DataStoreService",
-                psbtMapper: "PsbtMapper",
+        // Mock the dependencies to return some sample data
+        vi.spyOn(deviceAction, "extractDependencies").mockReturnValue(
+          extractDependenciesMock(),
+        );
+        prepareWalletPolicyMock.mockResolvedValueOnce(
+          CommandResultFactory({
+            data: "Wallet" as unknown as Wallet,
+          }),
+        );
+        buildPsbtMock.mockResolvedValueOnce(
+          CommandResultFactory({
+            data: "BuildPsbtResult" as unknown as BuildPsbtTaskResult,
+          }),
+        );
+        signPsbtMock.mockResolvedValueOnce(
+          CommandResultFactory({
+            data: [
+              {
+                inputIndex: 0,
+                pubkey: Uint8Array.from([0x04, 0x05, 0x06]),
+                signature: Uint8Array.from([0x01, 0x02, 0x03]),
               },
-            }),
-          );
-          expect(signPsbtMock).toHaveBeenCalledWith(
-            expect.objectContaining({
-              input: {
-                wallet: "Wallet",
-                buildPsbtResult: "BuildPsbtResult",
-                walletSerializer: "WalletSerializer",
-                valueParser: "ValueParser",
+            ],
+          }),
+        );
+
+        // Expected intermediate values for the following state sequence:
+        //   Initial -> OpenApp -> PrepareWalletPolicy -> BuildPsbt -> SignPsbt
+        const expectedStates: Array<SignPsbtDAState> = [
+          {
+            intermediateValue: {
+              requiredUserInteraction: UserInteractionRequired.None,
+            },
+            status: DeviceActionStatus.Pending,
+          },
+          {
+            intermediateValue: {
+              requiredUserInteraction: UserInteractionRequired.ConfirmOpenApp,
+            },
+            status: DeviceActionStatus.Pending,
+          },
+          {
+            intermediateValue: {
+              requiredUserInteraction: UserInteractionRequired.None,
+            },
+            status: DeviceActionStatus.Pending,
+          },
+          {
+            intermediateValue: {
+              requiredUserInteraction: UserInteractionRequired.None,
+            },
+            status: DeviceActionStatus.Pending,
+          },
+          {
+            intermediateValue: {
+              requiredUserInteraction: UserInteractionRequired.SignTransaction,
+            },
+            status: DeviceActionStatus.Pending,
+          },
+          {
+            output: [
+              {
+                inputIndex: 0,
+                pubkey: Uint8Array.from([0x04, 0x05, 0x06]),
+                signature: Uint8Array.from([0x01, 0x02, 0x03]),
               },
-            }),
-          );
-        },
-      });
-    });
+            ],
+            status: DeviceActionStatus.Completed,
+          },
+        ];
+
+        const { observable } = testDeviceActionStates(
+          deviceAction,
+          expectedStates,
+          makeDeviceActionInternalApiMock(),
+          done,
+        );
+
+        // @todo Put this in a onDone handle of testDeviceActionStates
+        observable.subscribe({
+          complete: () => {
+            expect(prepareWalletPolicyMock).toHaveBeenCalledWith(
+              expect.objectContaining({
+                input: { wallet: "ApiWallet", walletBuilder: "WalletBuilder" },
+              }),
+            );
+            expect(buildPsbtMock).toHaveBeenCalledWith(
+              expect.objectContaining({
+                input: {
+                  psbt: "Hello world",
+                  wallet: "Wallet",
+                  dataStoreService: "DataStoreService",
+                  psbtMapper: "PsbtMapper",
+                },
+              }),
+            );
+            expect(signPsbtMock).toHaveBeenCalledWith(
+              expect.objectContaining({
+                input: {
+                  wallet: "Wallet",
+                  buildPsbtResult: "BuildPsbtResult",
+                  walletSerializer: "WalletSerializer",
+                  valueParser: "ValueParser",
+                },
+              }),
+            );
+          },
+        });
+      }));
   });
 
   describe("error cases", () => {
     beforeEach(() => {
-      jest.resetAllMocks();
+      vi.resetAllMocks();
     });
-    it("Error if open app fails", (done) => {
-      setupOpenAppDAMock(new UnknownDeviceExchangeError("Mocked error"));
+    it("Error if open app fails", () =>
+      new Promise((done) => {
+        setupOpenAppDAMock(new UnknownDeviceExchangeError("Mocked error"));
 
-      const expectedStates: Array<SignPsbtDAState> = [
-        {
-          status: DeviceActionStatus.Pending,
-          intermediateValue: {
-            requiredUserInteraction: UserInteractionRequired.None,
+        const expectedStates: Array<SignPsbtDAState> = [
+          {
+            status: DeviceActionStatus.Pending,
+            intermediateValue: {
+              requiredUserInteraction: UserInteractionRequired.None,
+            },
           },
-        },
-        {
-          status: DeviceActionStatus.Pending,
-          intermediateValue: {
-            requiredUserInteraction: UserInteractionRequired.ConfirmOpenApp,
+          {
+            status: DeviceActionStatus.Pending,
+            intermediateValue: {
+              requiredUserInteraction: UserInteractionRequired.ConfirmOpenApp,
+            },
           },
-        },
-        {
-          status: DeviceActionStatus.Error,
-          error: new UnknownDeviceExchangeError("Mocked error"),
-        },
-      ];
-
-      const deviceAction = new SignPsbtDeviceAction({
-        input: {
-          wallet: {} as unknown as RegisteredWallet,
-          psbt: "Hello world",
-          walletBuilder: {} as WalletBuilder,
-          walletSerializer: {} as WalletSerializer,
-          dataStoreService: {} as DataStoreService,
-          psbtMapper: {} as PsbtMapper,
-          valueParser: {} as ValueParser,
-        },
-      });
-
-      testDeviceActionStates(
-        deviceAction,
-        expectedStates,
-        makeDeviceActionInternalApiMock(),
-        done,
-      );
-    });
-
-    it("Error if prepareWallet fails", (done) => {
-      setupOpenAppDAMock();
-
-      const deviceAction = new SignPsbtDeviceAction({
-        input: {
-          wallet: {} as unknown as RegisteredWallet,
-          psbt: "Hello world",
-          walletBuilder: {} as WalletBuilder,
-          walletSerializer: {} as WalletSerializer,
-          dataStoreService: {} as DataStoreService,
-          psbtMapper: {} as PsbtMapper,
-          valueParser: {} as ValueParser,
-        },
-      });
-
-      // Mock the dependencies to return some sample data
-      jest
-        .spyOn(deviceAction, "extractDependencies")
-        .mockReturnValue(extractDependenciesMock());
-      prepareWalletPolicyMock.mockResolvedValueOnce(
-        CommandResultFactory({
-          error: new UnknownDeviceExchangeError("Mocked error"),
-        }),
-      );
-
-      const expectedStates: Array<SignPsbtDAState> = [
-        {
-          status: DeviceActionStatus.Pending,
-          intermediateValue: {
-            requiredUserInteraction: UserInteractionRequired.None,
+          {
+            status: DeviceActionStatus.Error,
+            error: new UnknownDeviceExchangeError("Mocked error"),
           },
-        },
-        {
-          status: DeviceActionStatus.Pending,
-          intermediateValue: {
-            requiredUserInteraction: UserInteractionRequired.ConfirmOpenApp,
-          },
-        },
-        {
-          status: DeviceActionStatus.Pending,
-          intermediateValue: {
-            requiredUserInteraction: UserInteractionRequired.None,
-          },
-        },
-        {
-          status: DeviceActionStatus.Error,
-          error: new UnknownDeviceExchangeError("Mocked error"),
-        },
-      ];
+        ];
 
-      testDeviceActionStates(
-        deviceAction,
-        expectedStates,
-        makeDeviceActionInternalApiMock(),
-        done,
-      );
-    });
-
-    it("Error if buildPsbt fails", (done) => {
-      setupOpenAppDAMock();
-
-      const deviceAction = new SignPsbtDeviceAction({
-        input: {
-          wallet: {} as unknown as RegisteredWallet,
-          psbt: "Hello world",
-          walletBuilder: {} as WalletBuilder,
-          walletSerializer: {} as WalletSerializer,
-          dataStoreService: {} as DataStoreService,
-          psbtMapper: {} as PsbtMapper,
-          valueParser: {} as ValueParser,
-        },
-      });
-
-      // Mock the dependencies to return some sample data
-      jest
-        .spyOn(deviceAction, "extractDependencies")
-        .mockReturnValue(extractDependenciesMock());
-      prepareWalletPolicyMock.mockResolvedValueOnce(
-        CommandResultFactory({
-          data: {} as Wallet,
-        }),
-      );
-      buildPsbtMock.mockResolvedValueOnce(
-        CommandResultFactory({
-          error: new UnknownDeviceExchangeError("Mocked error"),
-        }),
-      );
-
-      const expectedStates: Array<SignPsbtDAState> = [
-        {
-          status: DeviceActionStatus.Pending,
-          intermediateValue: {
-            requiredUserInteraction: UserInteractionRequired.None,
+        const deviceAction = new SignPsbtDeviceAction({
+          input: {
+            wallet: {} as unknown as RegisteredWallet,
+            psbt: "Hello world",
+            walletBuilder: {} as WalletBuilder,
+            walletSerializer: {} as WalletSerializer,
+            dataStoreService: {} as DataStoreService,
+            psbtMapper: {} as PsbtMapper,
+            valueParser: {} as ValueParser,
           },
-        },
-        {
-          status: DeviceActionStatus.Pending,
-          intermediateValue: {
-            requiredUserInteraction: UserInteractionRequired.ConfirmOpenApp,
-          },
-        },
-        {
-          status: DeviceActionStatus.Pending,
-          intermediateValue: {
-            requiredUserInteraction: UserInteractionRequired.None,
-          },
-        },
-        {
-          status: DeviceActionStatus.Pending,
-          intermediateValue: {
-            requiredUserInteraction: UserInteractionRequired.None,
-          },
-        },
-        {
-          status: DeviceActionStatus.Error,
-          error: new UnknownDeviceExchangeError("Mocked error"),
-        },
-      ];
+        });
 
-      testDeviceActionStates(
-        deviceAction,
-        expectedStates,
-        makeDeviceActionInternalApiMock(),
-        done,
-      );
-    });
+        testDeviceActionStates(
+          deviceAction,
+          expectedStates,
+          makeDeviceActionInternalApiMock(),
+          done,
+        );
+      }));
 
-    it("Error if signPsbt fails", (done) => {
-      setupOpenAppDAMock();
+    it("Error if prepareWallet fails", () =>
+      new Promise((done) => {
+        setupOpenAppDAMock();
 
-      const deviceAction = new SignPsbtDeviceAction({
-        input: {
-          wallet: {} as unknown as RegisteredWallet,
-          psbt: "Hello world",
-          walletBuilder: {} as WalletBuilder,
-          walletSerializer: {} as WalletSerializer,
-          dataStoreService: {} as DataStoreService,
-          psbtMapper: {} as PsbtMapper,
-          valueParser: {} as ValueParser,
-        },
-      });
+        const deviceAction = new SignPsbtDeviceAction({
+          input: {
+            wallet: {} as unknown as RegisteredWallet,
+            psbt: "Hello world",
+            walletBuilder: {} as WalletBuilder,
+            walletSerializer: {} as WalletSerializer,
+            dataStoreService: {} as DataStoreService,
+            psbtMapper: {} as PsbtMapper,
+            valueParser: {} as ValueParser,
+          },
+        });
 
-      // Mock the dependencies to return some sample data
-      jest
-        .spyOn(deviceAction, "extractDependencies")
-        .mockReturnValue(extractDependenciesMock());
-      prepareWalletPolicyMock.mockResolvedValueOnce(
-        CommandResultFactory({
-          data: {} as Wallet,
-        }),
-      );
-      buildPsbtMock.mockResolvedValueOnce(
-        CommandResultFactory({
-          data: {} as BuildPsbtTaskResult,
-        }),
-      );
-      signPsbtMock.mockResolvedValueOnce(
-        CommandResultFactory({
-          error: new UnknownDeviceExchangeError("Mocked error"),
-        }),
-      );
+        // Mock the dependencies to return some sample data
+        vi.spyOn(deviceAction, "extractDependencies").mockReturnValue(
+          extractDependenciesMock(),
+        );
+        prepareWalletPolicyMock.mockResolvedValueOnce(
+          CommandResultFactory({
+            error: new UnknownDeviceExchangeError("Mocked error"),
+          }),
+        );
 
-      const expectedStates: Array<SignPsbtDAState> = [
-        {
-          status: DeviceActionStatus.Pending,
-          intermediateValue: {
-            requiredUserInteraction: UserInteractionRequired.None,
+        const expectedStates: Array<SignPsbtDAState> = [
+          {
+            status: DeviceActionStatus.Pending,
+            intermediateValue: {
+              requiredUserInteraction: UserInteractionRequired.None,
+            },
           },
-        },
-        {
-          status: DeviceActionStatus.Pending,
-          intermediateValue: {
-            requiredUserInteraction: UserInteractionRequired.ConfirmOpenApp,
+          {
+            status: DeviceActionStatus.Pending,
+            intermediateValue: {
+              requiredUserInteraction: UserInteractionRequired.ConfirmOpenApp,
+            },
           },
-        },
-        {
-          status: DeviceActionStatus.Pending,
-          intermediateValue: {
-            requiredUserInteraction: UserInteractionRequired.None,
+          {
+            status: DeviceActionStatus.Pending,
+            intermediateValue: {
+              requiredUserInteraction: UserInteractionRequired.None,
+            },
           },
-        },
-        {
-          status: DeviceActionStatus.Pending,
-          intermediateValue: {
-            requiredUserInteraction: UserInteractionRequired.None,
+          {
+            status: DeviceActionStatus.Error,
+            error: new UnknownDeviceExchangeError("Mocked error"),
           },
-        },
-        {
-          status: DeviceActionStatus.Pending,
-          intermediateValue: {
-            requiredUserInteraction: UserInteractionRequired.SignTransaction,
-          },
-        },
-        {
-          status: DeviceActionStatus.Error,
-          error: new UnknownDeviceExchangeError("Mocked error"),
-        },
-      ];
+        ];
 
-      testDeviceActionStates(
-        deviceAction,
-        expectedStates,
-        makeDeviceActionInternalApiMock(),
-        done,
-      );
-    });
+        testDeviceActionStates(
+          deviceAction,
+          expectedStates,
+          makeDeviceActionInternalApiMock(),
+          done,
+        );
+      }));
 
-    it("Error if signPsbt throws an exception", (done) => {
-      setupOpenAppDAMock();
+    it("Error if buildPsbt fails", () =>
+      new Promise((done) => {
+        setupOpenAppDAMock();
 
-      const deviceAction = new SignPsbtDeviceAction({
-        input: {
-          wallet: {} as unknown as RegisteredWallet,
-          psbt: "Hello world",
-          walletBuilder: {} as WalletBuilder,
-          walletSerializer: {} as WalletSerializer,
-          dataStoreService: {} as DataStoreService,
-          psbtMapper: {} as PsbtMapper,
-          valueParser: {} as ValueParser,
-        },
-      });
+        const deviceAction = new SignPsbtDeviceAction({
+          input: {
+            wallet: {} as unknown as RegisteredWallet,
+            psbt: "Hello world",
+            walletBuilder: {} as WalletBuilder,
+            walletSerializer: {} as WalletSerializer,
+            dataStoreService: {} as DataStoreService,
+            psbtMapper: {} as PsbtMapper,
+            valueParser: {} as ValueParser,
+          },
+        });
 
-      // Mock the dependencies to return some sample data
-      jest
-        .spyOn(deviceAction, "extractDependencies")
-        .mockReturnValue(extractDependenciesMock());
-      prepareWalletPolicyMock.mockResolvedValueOnce(
-        CommandResultFactory({ data: {} as Wallet }),
-      );
-      buildPsbtMock.mockResolvedValueOnce(
-        CommandResultFactory({ data: {} as BuildPsbtTaskResult }),
-      );
-      signPsbtMock.mockRejectedValueOnce(
-        new InvalidStatusWordError("Mocked error"),
-      );
+        // Mock the dependencies to return some sample data
+        vi.spyOn(deviceAction, "extractDependencies").mockReturnValue(
+          extractDependenciesMock(),
+        );
+        prepareWalletPolicyMock.mockResolvedValueOnce(
+          CommandResultFactory({
+            data: {} as Wallet,
+          }),
+        );
+        buildPsbtMock.mockResolvedValueOnce(
+          CommandResultFactory({
+            error: new UnknownDeviceExchangeError("Mocked error"),
+          }),
+        );
 
-      const expectedStates: Array<SignPsbtDAState> = [
-        {
-          status: DeviceActionStatus.Pending,
-          intermediateValue: {
-            requiredUserInteraction: UserInteractionRequired.None,
+        const expectedStates: Array<SignPsbtDAState> = [
+          {
+            status: DeviceActionStatus.Pending,
+            intermediateValue: {
+              requiredUserInteraction: UserInteractionRequired.None,
+            },
           },
-        },
-        {
-          status: DeviceActionStatus.Pending,
-          intermediateValue: {
-            requiredUserInteraction: UserInteractionRequired.ConfirmOpenApp,
+          {
+            status: DeviceActionStatus.Pending,
+            intermediateValue: {
+              requiredUserInteraction: UserInteractionRequired.ConfirmOpenApp,
+            },
           },
-        },
-        {
-          status: DeviceActionStatus.Pending,
-          intermediateValue: {
-            requiredUserInteraction: UserInteractionRequired.None,
+          {
+            status: DeviceActionStatus.Pending,
+            intermediateValue: {
+              requiredUserInteraction: UserInteractionRequired.None,
+            },
           },
-        },
-        {
-          status: DeviceActionStatus.Pending,
-          intermediateValue: {
-            requiredUserInteraction: UserInteractionRequired.None,
+          {
+            status: DeviceActionStatus.Pending,
+            intermediateValue: {
+              requiredUserInteraction: UserInteractionRequired.None,
+            },
           },
-        },
-        {
-          status: DeviceActionStatus.Pending,
-          intermediateValue: {
-            requiredUserInteraction: UserInteractionRequired.SignTransaction,
+          {
+            status: DeviceActionStatus.Error,
+            error: new UnknownDeviceExchangeError("Mocked error"),
           },
-        },
-        {
-          status: DeviceActionStatus.Error,
-          error: new InvalidStatusWordError("Mocked error"),
-        },
-      ];
+        ];
 
-      testDeviceActionStates(
-        deviceAction,
-        expectedStates,
-        makeDeviceActionInternalApiMock(),
-        done,
-      );
-    });
+        testDeviceActionStates(
+          deviceAction,
+          expectedStates,
+          makeDeviceActionInternalApiMock(),
+          done,
+        );
+      }));
 
-    it("Return a Left if the final state has no signature", (done) => {
-      setupOpenAppDAMock();
+    it("Error if signPsbt fails", () =>
+      new Promise((done) => {
+        setupOpenAppDAMock();
 
-      const deviceAction = new SignPsbtDeviceAction({
-        input: {
-          wallet: {} as unknown as RegisteredWallet,
-          psbt: "Hello world",
-          walletBuilder: {} as WalletBuilder,
-          walletSerializer: {} as WalletSerializer,
-          dataStoreService: {} as DataStoreService,
-          psbtMapper: {} as PsbtMapper,
-          valueParser: {} as ValueParser,
-        },
-      });
+        const deviceAction = new SignPsbtDeviceAction({
+          input: {
+            wallet: {} as unknown as RegisteredWallet,
+            psbt: "Hello world",
+            walletBuilder: {} as WalletBuilder,
+            walletSerializer: {} as WalletSerializer,
+            dataStoreService: {} as DataStoreService,
+            psbtMapper: {} as PsbtMapper,
+            valueParser: {} as ValueParser,
+          },
+        });
 
-      // Mock the dependencies to return some sample data
-      jest
-        .spyOn(deviceAction, "extractDependencies")
-        .mockReturnValue(extractDependenciesMock());
-      prepareWalletPolicyMock.mockResolvedValueOnce(
-        CommandResultFactory({
-          data: {} as Wallet,
-        }),
-      );
-      buildPsbtMock.mockResolvedValueOnce(
-        CommandResultFactory({
-          data: {} as BuildPsbtTaskResult,
-        }),
-      );
-      signPsbtMock.mockResolvedValueOnce(
-        CommandResultFactory({
-          data: undefined,
-        }),
-      );
+        // Mock the dependencies to return some sample data
+        vi.spyOn(deviceAction, "extractDependencies").mockReturnValue(
+          extractDependenciesMock(),
+        );
+        prepareWalletPolicyMock.mockResolvedValueOnce(
+          CommandResultFactory({
+            data: {} as Wallet,
+          }),
+        );
+        buildPsbtMock.mockResolvedValueOnce(
+          CommandResultFactory({
+            data: {} as BuildPsbtTaskResult,
+          }),
+        );
+        signPsbtMock.mockResolvedValueOnce(
+          CommandResultFactory({
+            error: new UnknownDeviceExchangeError("Mocked error"),
+          }),
+        );
 
-      const expectedStates: Array<SignPsbtDAState> = [
-        {
-          status: DeviceActionStatus.Pending,
-          intermediateValue: {
-            requiredUserInteraction: UserInteractionRequired.None,
+        const expectedStates: Array<SignPsbtDAState> = [
+          {
+            status: DeviceActionStatus.Pending,
+            intermediateValue: {
+              requiredUserInteraction: UserInteractionRequired.None,
+            },
           },
-        },
-        {
-          status: DeviceActionStatus.Pending,
-          intermediateValue: {
-            requiredUserInteraction: UserInteractionRequired.ConfirmOpenApp,
+          {
+            status: DeviceActionStatus.Pending,
+            intermediateValue: {
+              requiredUserInteraction: UserInteractionRequired.ConfirmOpenApp,
+            },
           },
-        },
-        {
-          status: DeviceActionStatus.Pending,
-          intermediateValue: {
-            requiredUserInteraction: UserInteractionRequired.None,
+          {
+            status: DeviceActionStatus.Pending,
+            intermediateValue: {
+              requiredUserInteraction: UserInteractionRequired.None,
+            },
           },
-        },
-        {
-          status: DeviceActionStatus.Pending,
-          intermediateValue: {
-            requiredUserInteraction: UserInteractionRequired.None,
+          {
+            status: DeviceActionStatus.Pending,
+            intermediateValue: {
+              requiredUserInteraction: UserInteractionRequired.None,
+            },
           },
-        },
-        {
-          status: DeviceActionStatus.Pending,
-          intermediateValue: {
-            requiredUserInteraction: UserInteractionRequired.SignTransaction,
+          {
+            status: DeviceActionStatus.Pending,
+            intermediateValue: {
+              requiredUserInteraction: UserInteractionRequired.SignTransaction,
+            },
           },
-        },
-        {
-          status: DeviceActionStatus.Error,
-          error: new UnknownDAError("No error in final state"),
-        },
-      ];
+          {
+            status: DeviceActionStatus.Error,
+            error: new UnknownDeviceExchangeError("Mocked error"),
+          },
+        ];
 
-      testDeviceActionStates(
-        deviceAction,
-        expectedStates,
-        makeDeviceActionInternalApiMock(),
-        done,
-      );
-    });
+        testDeviceActionStates(
+          deviceAction,
+          expectedStates,
+          makeDeviceActionInternalApiMock(),
+          done,
+        );
+      }));
+
+    it("Error if signPsbt throws an exception", () =>
+      new Promise((done) => {
+        setupOpenAppDAMock();
+
+        const deviceAction = new SignPsbtDeviceAction({
+          input: {
+            wallet: {} as unknown as RegisteredWallet,
+            psbt: "Hello world",
+            walletBuilder: {} as WalletBuilder,
+            walletSerializer: {} as WalletSerializer,
+            dataStoreService: {} as DataStoreService,
+            psbtMapper: {} as PsbtMapper,
+            valueParser: {} as ValueParser,
+          },
+        });
+
+        // Mock the dependencies to return some sample data
+        vi.spyOn(deviceAction, "extractDependencies").mockReturnValue(
+          extractDependenciesMock(),
+        );
+        prepareWalletPolicyMock.mockResolvedValueOnce(
+          CommandResultFactory({ data: {} as Wallet }),
+        );
+        buildPsbtMock.mockResolvedValueOnce(
+          CommandResultFactory({ data: {} as BuildPsbtTaskResult }),
+        );
+        signPsbtMock.mockRejectedValueOnce(
+          new InvalidStatusWordError("Mocked error"),
+        );
+
+        const expectedStates: Array<SignPsbtDAState> = [
+          {
+            status: DeviceActionStatus.Pending,
+            intermediateValue: {
+              requiredUserInteraction: UserInteractionRequired.None,
+            },
+          },
+          {
+            status: DeviceActionStatus.Pending,
+            intermediateValue: {
+              requiredUserInteraction: UserInteractionRequired.ConfirmOpenApp,
+            },
+          },
+          {
+            status: DeviceActionStatus.Pending,
+            intermediateValue: {
+              requiredUserInteraction: UserInteractionRequired.None,
+            },
+          },
+          {
+            status: DeviceActionStatus.Pending,
+            intermediateValue: {
+              requiredUserInteraction: UserInteractionRequired.None,
+            },
+          },
+          {
+            status: DeviceActionStatus.Pending,
+            intermediateValue: {
+              requiredUserInteraction: UserInteractionRequired.SignTransaction,
+            },
+          },
+          {
+            status: DeviceActionStatus.Error,
+            error: new InvalidStatusWordError("Mocked error"),
+          },
+        ];
+
+        testDeviceActionStates(
+          deviceAction,
+          expectedStates,
+          makeDeviceActionInternalApiMock(),
+          done,
+        );
+      }));
+
+    it("Return a Left if the final state has no signature", () =>
+      new Promise((done) => {
+        setupOpenAppDAMock();
+
+        const deviceAction = new SignPsbtDeviceAction({
+          input: {
+            wallet: {} as unknown as RegisteredWallet,
+            psbt: "Hello world",
+            walletBuilder: {} as WalletBuilder,
+            walletSerializer: {} as WalletSerializer,
+            dataStoreService: {} as DataStoreService,
+            psbtMapper: {} as PsbtMapper,
+            valueParser: {} as ValueParser,
+          },
+        });
+
+        // Mock the dependencies to return some sample data
+        vi.spyOn(deviceAction, "extractDependencies").mockReturnValue(
+          extractDependenciesMock(),
+        );
+        prepareWalletPolicyMock.mockResolvedValueOnce(
+          CommandResultFactory({
+            data: {} as Wallet,
+          }),
+        );
+        buildPsbtMock.mockResolvedValueOnce(
+          CommandResultFactory({
+            data: {} as BuildPsbtTaskResult,
+          }),
+        );
+        signPsbtMock.mockResolvedValueOnce(
+          CommandResultFactory({
+            data: undefined,
+          }),
+        );
+
+        const expectedStates: Array<SignPsbtDAState> = [
+          {
+            status: DeviceActionStatus.Pending,
+            intermediateValue: {
+              requiredUserInteraction: UserInteractionRequired.None,
+            },
+          },
+          {
+            status: DeviceActionStatus.Pending,
+            intermediateValue: {
+              requiredUserInteraction: UserInteractionRequired.ConfirmOpenApp,
+            },
+          },
+          {
+            status: DeviceActionStatus.Pending,
+            intermediateValue: {
+              requiredUserInteraction: UserInteractionRequired.None,
+            },
+          },
+          {
+            status: DeviceActionStatus.Pending,
+            intermediateValue: {
+              requiredUserInteraction: UserInteractionRequired.None,
+            },
+          },
+          {
+            status: DeviceActionStatus.Pending,
+            intermediateValue: {
+              requiredUserInteraction: UserInteractionRequired.SignTransaction,
+            },
+          },
+          {
+            status: DeviceActionStatus.Error,
+            error: new UnknownDAError("No error in final state"),
+          },
+        ];
+
+        testDeviceActionStates(
+          deviceAction,
+          expectedStates,
+          makeDeviceActionInternalApiMock(),
+          done,
+        );
+      }));
   });
 });

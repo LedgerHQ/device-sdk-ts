@@ -1,4 +1,5 @@
 import { Left, Right } from "purify-ts";
+import { type MockInstance } from "vitest";
 
 import { type ClientCommandContext } from "@internal/app-binder/command/client-command-handlers/ClientCommandHandlersTypes";
 import { ClientCommandHandlerError } from "@internal/app-binder/command/client-command-handlers/Errors";
@@ -14,31 +15,31 @@ describe("ClientCommandInterpreter", () => {
   let interpreter: ClientCommandInterpreter;
   let context: ClientCommandContext;
 
-  let yieldSpy: jest.SpyInstance;
-  let getPreimageSpy: jest.SpyInstance;
-  let getMerkleLeafProofSpy: jest.SpyInstance;
-  let getMerkleLeafIndexSpy: jest.SpyInstance;
-  let getMoreElementsSpy: jest.SpyInstance;
+  let yieldSpy: MockInstance;
+  let getPreimageSpy: MockInstance;
+  let getMerkleLeafProofSpy: MockInstance;
+  let getMerkleLeafIndexSpy: MockInstance;
+  let getMoreElementsSpy: MockInstance;
 
   beforeAll(() => {
-    yieldSpy = jest
+    yieldSpy = vi
       .spyOn(YieldCommandHandlerModule, "YieldCommandHandler")
       .mockImplementation((request, ctx) => {
         ctx.yieldedResults.push(request.slice(1));
         return Right(new Uint8Array([]));
       });
 
-    getPreimageSpy = jest
+    getPreimageSpy = vi
       .spyOn(GetPreimageCommandHandlerModule, "GetPreimageCommandHandler")
       .mockImplementation((_request, ctx) => {
         const preimage = new Uint8Array([1, 2, 3]);
-        ctx.dataStore.getPreimage = jest
+        ctx.dataStore.getPreimage = vi
           .fn()
           .mockReturnValue({ isJust: () => true, extract: () => preimage });
         return Right(preimage);
       });
 
-    getMerkleLeafProofSpy = jest
+    getMerkleLeafProofSpy = vi
       .spyOn(
         GetMerkleLeafProofCommandHandlerModule,
         "GetMerkleLeafProofCommandHandler",
@@ -47,20 +48,20 @@ describe("ClientCommandInterpreter", () => {
         return Right(new Uint8Array([]));
       });
 
-    getMerkleLeafIndexSpy = jest
+    getMerkleLeafIndexSpy = vi
       .spyOn(
         GetMerkleLeafIndexCommandHandlerModule,
         "GetMerkleLeafIndexCommandHandler",
       )
       .mockImplementation((_request, ctx) => {
-        ctx.dataStore.getMerkleLeafIndex = jest.fn().mockReturnValue({
+        ctx.dataStore.getMerkleLeafIndex = vi.fn().mockReturnValue({
           mapOrDefault: (f: (idx: number) => Uint8Array, _def: Uint8Array) =>
             f(42),
         });
         return Right(new Uint8Array([42]));
       });
 
-    getMoreElementsSpy = jest
+    getMoreElementsSpy = vi
       .spyOn(
         GetMoreElementsCommandHandlerModule,
         "GetMoreElementsCommandHandler",
@@ -80,13 +81,13 @@ describe("ClientCommandInterpreter", () => {
     context = {
       yieldedResults: [],
       dataStore: {
-        getPreimage: jest.fn().mockReturnValue({ isJust: () => false }),
-        getMerkleLeafIndex: jest.fn(),
+        getPreimage: vi.fn().mockReturnValue({ isJust: () => false }),
+        getMerkleLeafIndex: vi.fn(),
       },
       queue: [new Uint8Array([0x01])],
     } as unknown as ClientCommandContext;
 
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   it("should call YieldCommandHandler when request code is YIELD", () => {

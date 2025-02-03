@@ -110,7 +110,7 @@ describe("RegisterWalletAddressCommand", () => {
           new InvalidStatusWordError("Data mismatch"),
         );
       } else {
-        fail("Expected an error, but the result was successful");
+        assert.fail("Expected an error, but the result was successful");
       }
     });
   });

@@ -43,11 +43,11 @@ describe("SignMessageTask", () => {
     }),
   });
   const apiMock = {
-    sendCommand: jest.fn(),
+    sendCommand: vi.fn(),
   } as unknown as InternalApi;
 
   afterEach(() => {
-    jest.resetAllMocks();
+    vi.resetAllMocks();
   });
 
   describe("run", () => {
@@ -59,12 +59,12 @@ describe("SignMessageTask", () => {
       };
 
       const dataStoreService = {
-        merklizeChunks: jest.fn().mockReturnValue(MERKLE_ROOT),
+        merklizeChunks: vi.fn().mockReturnValue(MERKLE_ROOT),
       } as unknown as DataStoreService;
 
       const continueTaskFactory = () =>
         ({
-          run: jest.fn().mockReturnValue(signatureResult),
+          run: vi.fn().mockReturnValue(signatureResult),
         }) as unknown as ContinueTask;
 
       // WHEN
@@ -91,12 +91,12 @@ describe("SignMessageTask", () => {
       };
 
       const dataStoreService = {
-        merklizeChunks: jest.fn().mockReturnValue(MERKLE_ROOT),
+        merklizeChunks: vi.fn().mockReturnValue(MERKLE_ROOT),
       } as unknown as DataStoreService;
 
       const continueTaskFactory = () =>
         ({
-          run: jest.fn().mockReturnValue(signatureResult),
+          run: vi.fn().mockReturnValue(signatureResult),
         }) as unknown as ContinueTask;
 
       // WHEN
@@ -129,12 +129,12 @@ describe("SignMessageTask", () => {
         error: new InvalidStatusWordError("error"),
       });
       const dataStoreService = {
-        merklizeChunks: jest.fn().mockReturnValue(MERKLE_ROOT),
+        merklizeChunks: vi.fn().mockReturnValue(MERKLE_ROOT),
       } as unknown as DataStoreService;
 
       const continueTaskFactory = () =>
         ({
-          run: jest.fn().mockReturnValue(resultError),
+          run: vi.fn().mockReturnValue(resultError),
         }) as unknown as ContinueTask;
 
       // WHEN

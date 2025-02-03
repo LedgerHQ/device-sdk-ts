@@ -23,7 +23,7 @@ describe("GetWalletAddressUseCase", () => {
     const addressIndex = 0;
 
     const appBinder = {
-      getWalletAddress: jest.fn(),
+      getWalletAddress: vi.fn(),
     };
     const getWalletAddressUseCase = new GetWalletAddressUseCase(
       appBinder as unknown as BtcAppBinder,
