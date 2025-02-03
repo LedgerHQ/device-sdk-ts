@@ -1,4 +1,6 @@
+/* eslint @typescript-eslint/consistent-type-imports:0 */
 import { Left, Right } from "purify-ts";
+import { type Mock } from "vitest";
 import { assign, createMachine } from "xstate";
 
 import { type Apdu } from "@api/apdu/model/Apdu";
@@ -23,22 +25,26 @@ import {
   type CallTaskInAppDAOutput,
 } from "./CallTaskInAppDeviceActionTypes";
 
-jest.mock(
+vi.mock(
   "@api/device-action/os/OpenAppDeviceAction/OpenAppDeviceAction",
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-  () => ({
-    ...jest.requireActual(
-      "@api/device-action/os/OpenAppDeviceAction/OpenAppDeviceAction",
-    ),
-    OpenAppDeviceAction: jest.fn(() => ({
-      makeStateMachine: jest.fn(),
-    })),
-  }),
+  async (importOriginal) => {
+    const original =
+      await importOriginal<
+        typeof import("@api/device-action/os/OpenAppDeviceAction/OpenAppDeviceAction")
+      >();
+    return {
+      ...original,
+      OpenAppDeviceAction: vi.fn(() => ({
+        ...original.OpenAppDeviceAction,
+        makeStateMachine: vi.fn(),
+      })),
+    };
+  },
 );
 
 const setupOpenAppDAMock = (error?: unknown) => {
-  (OpenAppDeviceAction as jest.Mock).mockImplementation(() => ({
-    makeStateMachine: jest.fn().mockImplementation(() =>
+  (OpenAppDeviceAction as Mock).mockImplementation(() => ({
+    makeStateMachine: vi.fn().mockImplementation(() =>
       createMachine({
         initial: "pending",
         states: {
@@ -63,7 +69,7 @@ const setupOpenAppDAMock = (error?: unknown) => {
 };
 
 describe("CallTaskInAppDeviceAction", () => {
-  const callMyTask = jest.fn();
+  const callMyTask = vi.fn();
 
   const extractDependenciesMock = () => ({
     callTask: callMyTask,
@@ -80,7 +86,7 @@ describe("CallTaskInAppDeviceAction", () => {
     aString: "mockedResponseString",
   };
   beforeEach(() => {
-    jest.resetAllMocks();
+    vi.resetAllMocks();
   });
 
   describe("without mocking extractDependencies", () => {
@@ -115,152 +121,155 @@ describe("CallTaskInAppDeviceAction", () => {
   });
 
   describe("error cases", () => {
-    it("should error and output the error if the open app fails", (done) => {
-      setupOpenAppDAMock(new UnknownDAError("Mocked error"));
+    it("should error and output the error if the open app fails", () =>
+      new Promise((done) => {
+        setupOpenAppDAMock(new UnknownDAError("Mocked error"));
 
-      const expectedStates: MyCommandCallTaskDAState[] = [
-        {
-          status: DeviceActionStatus.Pending,
-          intermediateValue: {
-            requiredUserInteraction: UserInteractionRequired.None,
+        const expectedStates: MyCommandCallTaskDAState[] = [
+          {
+            status: DeviceActionStatus.Pending,
+            intermediateValue: {
+              requiredUserInteraction: UserInteractionRequired.None,
+            },
           },
-        },
-        {
-          status: DeviceActionStatus.Pending,
-          intermediateValue: {
-            requiredUserInteraction: UserInteractionRequired.ConfirmOpenApp,
+          {
+            status: DeviceActionStatus.Pending,
+            intermediateValue: {
+              requiredUserInteraction: UserInteractionRequired.ConfirmOpenApp,
+            },
           },
-        },
-        {
-          status: DeviceActionStatus.Error,
-          error: new UnknownDAError("Mocked error"),
-        },
-      ];
+          {
+            status: DeviceActionStatus.Error,
+            error: new UnknownDAError("Mocked error"),
+          },
+        ];
 
-      testDeviceActionStates(
-        new CallTaskInAppDeviceAction({
+        testDeviceActionStates(
+          new CallTaskInAppDeviceAction({
+            input: {
+              task: async (internalApi) =>
+                await internalApi.sendCommand(new TestCommand(commandParams)),
+              appName: "MyApp",
+              requiredUserInteraction: UserInteractionRequired.VerifyAddress,
+            },
+          }),
+          expectedStates,
+          makeDeviceActionInternalApiMock(),
+          done,
+        );
+      }));
+
+    it("should error and output an error if the call task fails", () =>
+      new Promise((done) => {
+        setupOpenAppDAMock();
+
+        callMyTask.mockResolvedValue(
+          CommandResultFactory({
+            error: new UnknownDeviceExchangeError("Mocked error"),
+          }),
+        );
+
+        const deviceAction = new CallTaskInAppDeviceAction({
           input: {
             task: async (internalApi) =>
               await internalApi.sendCommand(new TestCommand(commandParams)),
             appName: "MyApp",
             requiredUserInteraction: UserInteractionRequired.VerifyAddress,
           },
-        }),
-        expectedStates,
-        makeDeviceActionInternalApiMock(),
-        done,
-      );
-    });
+        });
 
-    it("should error and output an error if the call task fails", (done) => {
-      setupOpenAppDAMock();
+        vi.spyOn(deviceAction, "extractDependencies").mockImplementation(
+          extractDependenciesMock,
+        );
 
-      callMyTask.mockResolvedValue(
-        CommandResultFactory({
-          error: new UnknownDeviceExchangeError("Mocked error"),
-        }),
-      );
-
-      const deviceAction = new CallTaskInAppDeviceAction({
-        input: {
-          task: async (internalApi) =>
-            await internalApi.sendCommand(new TestCommand(commandParams)),
-          appName: "MyApp",
-          requiredUserInteraction: UserInteractionRequired.VerifyAddress,
-        },
-      });
-
-      jest
-        .spyOn(deviceAction, "extractDependencies")
-        .mockImplementation(extractDependenciesMock);
-
-      const expectedStates: MyCommandCallTaskDAState[] = [
-        {
-          status: DeviceActionStatus.Pending,
-          intermediateValue: {
-            requiredUserInteraction: UserInteractionRequired.None,
+        const expectedStates: MyCommandCallTaskDAState[] = [
+          {
+            status: DeviceActionStatus.Pending,
+            intermediateValue: {
+              requiredUserInteraction: UserInteractionRequired.None,
+            },
           },
-        },
-        {
-          status: DeviceActionStatus.Pending,
-          intermediateValue: {
-            requiredUserInteraction: UserInteractionRequired.ConfirmOpenApp,
+          {
+            status: DeviceActionStatus.Pending,
+            intermediateValue: {
+              requiredUserInteraction: UserInteractionRequired.ConfirmOpenApp,
+            },
           },
-        },
-        {
-          status: DeviceActionStatus.Pending,
-          intermediateValue: {
-            requiredUserInteraction: UserInteractionRequired.VerifyAddress,
+          {
+            status: DeviceActionStatus.Pending,
+            intermediateValue: {
+              requiredUserInteraction: UserInteractionRequired.VerifyAddress,
+            },
           },
-        },
-        {
-          status: DeviceActionStatus.Error,
-          error: new UnknownDeviceExchangeError("Mocked error"),
-        },
-      ];
+          {
+            status: DeviceActionStatus.Error,
+            error: new UnknownDeviceExchangeError("Mocked error"),
+          },
+        ];
 
-      testDeviceActionStates(
-        deviceAction,
-        expectedStates,
-        makeDeviceActionInternalApiMock(),
-        done,
-      );
-    });
+        testDeviceActionStates(
+          deviceAction,
+          expectedStates,
+          makeDeviceActionInternalApiMock(),
+          done,
+        );
+      }));
   });
 
   describe("success cases", () => {
-    it("should succeed and output the command result if the send command succeeds", (done) => {
-      setupOpenAppDAMock();
+    it("should succeed and output the command result if the send command succeeds", () =>
+      new Promise((done) => {
+        setupOpenAppDAMock();
 
-      callMyTask.mockResolvedValue(
-        CommandResultFactory({ data: mockedCommandResponse }),
-      );
+        callMyTask.mockResolvedValue(
+          CommandResultFactory({ data: mockedCommandResponse }),
+        );
 
-      const deviceAction = new CallTaskInAppDeviceAction({
-        input: {
-          task: async (internalApi) =>
-            await internalApi.sendCommand(new TestCommand(commandParams)),
-          appName: "MyApp",
-          requiredUserInteraction: UserInteractionRequired.VerifyAddress,
-        },
-      });
-
-      jest
-        .spyOn(deviceAction, "extractDependencies")
-        .mockImplementation(extractDependenciesMock);
-
-      const expectedStates: MyCommandCallTaskDAState[] = [
-        {
-          status: DeviceActionStatus.Pending,
-          intermediateValue: {
-            requiredUserInteraction: UserInteractionRequired.None,
-          },
-        },
-        {
-          status: DeviceActionStatus.Pending,
-          intermediateValue: {
-            requiredUserInteraction: UserInteractionRequired.ConfirmOpenApp,
-          },
-        },
-        {
-          status: DeviceActionStatus.Pending,
-          intermediateValue: {
+        const deviceAction = new CallTaskInAppDeviceAction({
+          input: {
+            task: async (internalApi) =>
+              await internalApi.sendCommand(new TestCommand(commandParams)),
+            appName: "MyApp",
             requiredUserInteraction: UserInteractionRequired.VerifyAddress,
           },
-        },
-        {
-          status: DeviceActionStatus.Completed,
-          output: mockedCommandResponse,
-        },
-      ];
+        });
 
-      testDeviceActionStates(
-        deviceAction,
-        expectedStates,
-        makeDeviceActionInternalApiMock(),
-        done,
-      );
-    });
+        vi.spyOn(deviceAction, "extractDependencies").mockImplementation(
+          extractDependenciesMock,
+        );
+
+        const expectedStates: MyCommandCallTaskDAState[] = [
+          {
+            status: DeviceActionStatus.Pending,
+            intermediateValue: {
+              requiredUserInteraction: UserInteractionRequired.None,
+            },
+          },
+          {
+            status: DeviceActionStatus.Pending,
+            intermediateValue: {
+              requiredUserInteraction: UserInteractionRequired.ConfirmOpenApp,
+            },
+          },
+          {
+            status: DeviceActionStatus.Pending,
+            intermediateValue: {
+              requiredUserInteraction: UserInteractionRequired.VerifyAddress,
+            },
+          },
+          {
+            status: DeviceActionStatus.Completed,
+            output: mockedCommandResponse,
+          },
+        ];
+
+        testDeviceActionStates(
+          deviceAction,
+          expectedStates,
+          makeDeviceActionInternalApiMock(),
+          done,
+        );
+      }));
   });
 });
 

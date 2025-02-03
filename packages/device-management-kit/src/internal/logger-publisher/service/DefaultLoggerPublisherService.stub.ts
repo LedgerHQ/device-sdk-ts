@@ -6,9 +6,9 @@ export class DefaultLoggerPublisherServiceStub
 {
   subscribers: LoggerSubscriberService[] = [];
 
-  _log = jest.fn();
-  info = jest.fn();
-  warn = jest.fn();
-  debug = jest.fn();
-  error = jest.fn();
+  _log = vi.fn();
+  info = vi.fn();
+  warn = vi.fn();
+  debug = vi.fn();
+  error = vi.fn();
 }

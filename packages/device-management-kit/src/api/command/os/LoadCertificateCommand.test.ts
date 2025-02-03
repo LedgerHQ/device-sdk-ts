@@ -68,7 +68,7 @@ describe("LoadCertificateCommand", () => {
 
         // THEN
         if (isSuccessCommandResult(result)) {
-          fail("Expected error command result");
+          assert.fail("Expected error command result");
         } else {
           expect(result.error).toBeInstanceOf(GlobalCommandError);
         }
@@ -106,10 +106,10 @@ describe("LoadCertificateCommand", () => {
 
           // THEN
           if (isSuccessCommandResult(result)) {
-            fail("Expected error command result");
+            assert.fail("Expected error command result");
           } else {
             expect(result.error).toBeInstanceOf(LoadCertificateCommandError);
-            // @ts-ignore
+            // @ts-expect-error intended
             expect(result.error.errorCode).toBe(errorCode);
           }
         },

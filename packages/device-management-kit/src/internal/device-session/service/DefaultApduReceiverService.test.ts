@@ -1,4 +1,4 @@
-jest.mock("uuid");
+vi.mock("uuid");
 
 import { Just, Left, type Maybe, Nothing, Right } from "purify-ts";
 
@@ -58,8 +58,8 @@ describe("DefaultApduReceiverService", () => {
   let service: ApduReceiverService;
 
   beforeAll(() => {
-    jest.mock("uuid", () => ({
-      v4: jest.fn().mockReturnValue("42"),
+    vi.mock("uuid", () => ({
+      v4: vi.fn().mockReturnValue("42"),
     }));
   });
 

@@ -39,13 +39,13 @@ describe("SendCommandUseCase", () => {
     );
     secureChannel = new DefaultSecureChannelService(secureChannelDataSource);
     command = {
-      getApdu: jest.fn(),
-      parseResponse: jest.fn(),
+      getApdu: vi.fn(),
+      parseResponse: vi.fn(),
     };
   });
 
   afterEach(() => {
-    jest.restoreAllMocks();
+    vi.restoreAllMocks();
   });
 
   it("should send a command to a connected device", async () => {
@@ -58,7 +58,7 @@ describe("SendCommandUseCase", () => {
     sessionService.addDeviceSession(deviceSession);
     const useCase = new SendCommandUseCase(sessionService, () => logger);
 
-    jest.spyOn(deviceSession, "sendCommand").mockResolvedValue({
+    vi.spyOn(deviceSession, "sendCommand").mockResolvedValue({
       status: CommandResultStatus.Success,
       data: undefined,
     });
@@ -78,9 +78,9 @@ describe("SendCommandUseCase", () => {
 
   it("should throw an error if the session is not found", async () => {
     const useCase = new SendCommandUseCase(sessionService, () => logger);
-    jest
-      .spyOn(sessionService, "getDeviceSessionById")
-      .mockReturnValue(Left({ _tag: "DeviceSessionNotFound" }));
+    vi.spyOn(sessionService, "getDeviceSessionById").mockReturnValue(
+      Left({ _tag: "DeviceSessionNotFound" }),
+    );
 
     const res = useCase.execute<{ status: string }, void, void>({
       sessionId: fakeSessionId,

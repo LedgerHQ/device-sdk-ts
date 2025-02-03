@@ -1,7 +1,3 @@
-jest.mock("uuid", () => ({
-  v4: jest.fn().mockReturnValue("42"),
-}));
-
 import { Maybe } from "purify-ts";
 
 import { Frame } from "@internal/device-session/model/Frame";
@@ -9,6 +5,10 @@ import { FrameHeader } from "@internal/device-session/model/FrameHeader";
 import { DefaultLoggerPublisherService } from "@internal/logger-publisher/service/DefaultLoggerPublisherService";
 
 import { DefaultApduSenderService } from "./DefaultApduSenderService";
+
+vi.mock("uuid", () => ({
+  v4: vi.fn().mockReturnValue("42"),
+}));
 
 const loggerService = new DefaultLoggerPublisherService([], "frame");
 

@@ -15,7 +15,7 @@ import { type TransportService } from "@internal/transport/service/TransportServ
 
 import { StartDiscoveringUseCase } from "./StartDiscoveringUseCase";
 
-jest.mock("@internal/transport/service/DefaultTransportService");
+vi.mock("@internal/transport/service/DefaultTransportService");
 
 let transport: Transport;
 let transportService: TransportService;
@@ -37,42 +37,43 @@ describe("StartDiscoveringUseCase", () => {
   });
 
   afterEach(() => {
-    jest.restoreAllMocks();
+    vi.restoreAllMocks();
   });
 
-  test("If connect use case encounter an error, return it", (done) => {
-    const mockedStartDiscovering = jest.fn(() => {
-      return of(stubDiscoveredDevice);
-    });
-    jest
-      .spyOn(transport, "startDiscovering")
-      .mockImplementation(mockedStartDiscovering);
+  test("If connect use case encounter an error, return it", () =>
+    new Promise<Error | void>((done) => {
+      const mockedStartDiscovering = vi.fn(() => {
+        return of(stubDiscoveredDevice);
+      });
+      vi.spyOn(transport, "startDiscovering").mockImplementation(
+        mockedStartDiscovering,
+      );
 
-    jest
-      .spyOn(transportService, "getTransport")
-      .mockReturnValue(Maybe.of(transport));
+      vi.spyOn(transportService, "getTransport").mockReturnValue(
+        Maybe.of(transport),
+      );
 
-    const usecase = new StartDiscoveringUseCase(transportService);
+      const usecase = new StartDiscoveringUseCase(transportService);
 
-    const discover = usecase.execute({ transport: "USB" });
+      const discover = usecase.execute({ transport: "USB" });
 
-    expect(mockedStartDiscovering).toHaveBeenCalled();
-    discover.subscribe({
-      next: (discoveredDevice) => {
-        expect(discoveredDevice).toStrictEqual({
-          id: "internal-discovered-device-id",
-          transport: "USB",
-          deviceModel: new DeviceModel({
+      expect(mockedStartDiscovering).toHaveBeenCalled();
+      discover.subscribe({
+        next: (discoveredDevice) => {
+          expect(discoveredDevice).toStrictEqual({
             id: "internal-discovered-device-id",
-            model: "nanoSP" as DeviceModelId,
-            name: "productName",
-          }),
-        } as DiscoveredDevice);
-        done();
-      },
-      error: (error) => {
-        done(error);
-      },
-    });
-  });
+            transport: "USB",
+            deviceModel: new DeviceModel({
+              id: "internal-discovered-device-id",
+              model: "nanoSP" as DeviceModelId,
+              name: "productName",
+            }),
+          } as DiscoveredDevice);
+          done();
+        },
+        error: (error) => {
+          done(error);
+        },
+      });
+    }));
 });
