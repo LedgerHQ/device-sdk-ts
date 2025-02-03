@@ -12,6 +12,8 @@ import type { DeviceSessionService } from "@internal/device-session/service/Devi
 import { loggerTypes } from "@internal/logger-publisher/di/loggerTypes";
 import { managerApiTypes } from "@internal/manager-api/di/managerApiTypes";
 import type { ManagerApiService } from "@internal/manager-api/service/ManagerApiService";
+import { secureChannelTypes } from "@internal/secure-channel/di/secureChannelTypes";
+import type { SecureChannelService } from "@internal/secure-channel/service/SecureChannelService";
 import { transportDiTypes } from "@internal/transport/di/transportDiTypes";
 import { type TransportService } from "@internal/transport/service/TransportService";
 
@@ -34,6 +36,7 @@ export class ConnectUseCase {
   private readonly _sessionService: DeviceSessionService;
   private readonly _loggerFactory: (tag: string) => LoggerPublisherService;
   private readonly _managerApi: ManagerApiService;
+  private readonly _secureChannel: SecureChannelService;
   private readonly _logger: LoggerPublisherService;
 
   constructor(
@@ -45,12 +48,15 @@ export class ConnectUseCase {
     loggerFactory: (tag: string) => LoggerPublisherService,
     @inject(managerApiTypes.ManagerApiService)
     managerApi: ManagerApiService,
+    @inject(secureChannelTypes.SecureChannelService)
+    secureChannel: SecureChannelService,
   ) {
     this._sessionService = sessionService;
     this._transportService = transportService;
     this._loggerFactory = loggerFactory;
     this._logger = loggerFactory("ConnectUseCase");
     this._managerApi = managerApi;
+    this._secureChannel = secureChannel;
   }
 
   private handleDeviceDisconnect(deviceId: DeviceId) {
@@ -85,6 +91,7 @@ export class ConnectUseCase {
           { connectedDevice },
           this._loggerFactory,
           this._managerApi,
+          this._secureChannel,
         );
         this._sessionService.addDeviceSession(deviceSession);
         return deviceSession.id;

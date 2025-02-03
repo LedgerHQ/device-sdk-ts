@@ -15,6 +15,10 @@ import { AxiosManagerApiDataSource } from "@internal/manager-api/data/AxiosManag
 import { type ManagerApiDataSource } from "@internal/manager-api/data/ManagerApiDataSource";
 import { DefaultManagerApiService } from "@internal/manager-api/service/DefaultManagerApiService";
 import { type ManagerApiService } from "@internal/manager-api/service/ManagerApiService";
+import { DefaultSecureChannelDataSource } from "@internal/secure-channel/data/DefaultSecureChannelDataSource";
+import { type SecureChannelDataSource } from "@internal/secure-channel/data/SecureChannelDataSource";
+import { DefaultSecureChannelService } from "@internal/secure-channel/service/DefaultSecureChannelService";
+import { type SecureChannelService } from "@internal/secure-channel/service/SecureChannelService";
 import { SendApduUseCase } from "@internal/send/use-case/SendApduUseCase";
 
 jest.mock("@internal/manager-api/data/AxiosManagerApiDataSource");
@@ -23,6 +27,8 @@ let logger: LoggerPublisherService;
 let sessionService: DeviceSessionService;
 let managerApiDataSource: ManagerApiDataSource;
 let managerApi: ManagerApiService;
+let secureChannelDataSource: SecureChannelDataSource;
+let secureChannel: SecureChannelService;
 const fakeSessionId = "fakeSessionId";
 
 describe("SendApduUseCase", () => {
@@ -31,6 +37,10 @@ describe("SendApduUseCase", () => {
     sessionService = new DefaultDeviceSessionService(() => logger);
     managerApiDataSource = new AxiosManagerApiDataSource({} as DmkConfig);
     managerApi = new DefaultManagerApiService(managerApiDataSource);
+    secureChannelDataSource = new DefaultSecureChannelDataSource(
+      {} as DmkConfig,
+    );
+    secureChannel = new DefaultSecureChannelService(secureChannelDataSource);
   });
 
   it("should send an APDU to a connected device", async () => {
@@ -39,6 +49,7 @@ describe("SendApduUseCase", () => {
       {},
       () => logger,
       managerApi,
+      secureChannel,
     );
     sessionService.addDeviceSession(deviceSession);
     const useCase = new SendApduUseCase(sessionService, () => logger);
@@ -80,6 +91,7 @@ describe("SendApduUseCase", () => {
       { connectedDevice },
       () => logger,
       managerApi,
+      secureChannel,
     );
     sessionService.addDeviceSession(deviceSession);
     const useCase = new SendApduUseCase(sessionService, () => logger);
