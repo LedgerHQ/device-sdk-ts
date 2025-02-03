@@ -24,17 +24,17 @@ import { ProvideTransactionFieldDescriptionTask } from "./ProvideTransactionFiel
 
 describe("ProvideTransactionFieldDescriptionTask", () => {
   const transactionParserMock = {
-    extractValue: jest.fn(),
+    extractValue: vi.fn(),
   } as unknown as TransactionParserService;
   const contextModuleMock = {
-    getContext: jest.fn(),
+    getContext: vi.fn(),
   } as unknown as ContextModule;
   const apiMock: InternalApi = {
-    sendCommand: jest.fn(),
+    sendCommand: vi.fn(),
   } as unknown as InternalApi;
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   describe("should call the right provide command", () => {
@@ -62,7 +62,7 @@ describe("ProvideTransactionFieldDescriptionTask", () => {
       },
     ])("when type is $type", async ({ type, commandInstanceType }) => {
       // GIVEN
-      jest
+      const spy = vi
         .spyOn(apiMock, "sendCommand")
         .mockResolvedValueOnce(CommandResultFactory({ data: "ok" }));
       const payload = `0x01020304`;
@@ -82,23 +82,21 @@ describe("ProvideTransactionFieldDescriptionTask", () => {
       }).run();
 
       // THEN
-      expect(
-        (apiMock.sendCommand as jest.Mock).mock.calls[0][0],
-      ).toBeInstanceOf(commandInstanceType);
+      expect(spy.mock.calls[0]![0]).toBeInstanceOf(commandInstanceType);
       expect(apiMock.sendCommand).toHaveBeenCalledTimes(1);
     });
 
     it("when type is transactionFieldDescription with a enum reference", async () => {
       // GIVEN
-      jest
+      const spy = vi
         .spyOn(apiMock, "sendCommand")
+        .mockResolvedValueOnce(CommandResultFactory({ data: "ok" }))
         .mockResolvedValueOnce(CommandResultFactory({ data: "ok" }));
-      jest
-        .spyOn(apiMock, "sendCommand")
-        .mockResolvedValueOnce(CommandResultFactory({ data: "ok" }));
-      jest
-        .spyOn(transactionParserMock, "extractValue")
-        .mockReturnValueOnce(Right([new Uint8Array([0x01, 0x02, 0x03, 0x04])]));
+
+      vi.spyOn(transactionParserMock, "extractValue").mockReturnValueOnce(
+        Right([new Uint8Array([0x01, 0x02, 0x03, 0x04])]),
+      );
+
       const payload = `0x01020304`;
       const field: ClearSignContextSuccess = {
         type: ClearSignContextType.TRANSACTION_FIELD_DESCRIPTION,
@@ -134,15 +132,14 @@ describe("ProvideTransactionFieldDescriptionTask", () => {
       }).run();
 
       expect(apiMock.sendCommand).toHaveBeenCalledTimes(2);
-      expect(
-        (apiMock.sendCommand as jest.Mock).mock.calls[0][0],
-      ).toBeInstanceOf(ProvideEnumCommand);
-      expect(
-        (apiMock.sendCommand as jest.Mock).mock.calls[0][0].args.data,
-      ).toEqual(new Uint8Array([0x00, 0x03, 0x08, 0x07, 0x06])); // length + value of the enum with id 0x42 and value 0x04
-      expect(
-        (apiMock.sendCommand as jest.Mock).mock.calls[1][0],
-      ).toBeInstanceOf(ProvideTransactionFieldDescriptionCommand);
+      expect(spy.mock.calls[0]![0]).toBeInstanceOf(ProvideEnumCommand);
+      // @ts-expect-error args exists
+      expect(spy.mock.calls[0]![0].args.data).toEqual(
+        new Uint8Array([0x00, 0x03, 0x08, 0x07, 0x06]),
+      ); // length + value of the enum with id 0x42 and value 0x04
+      expect(spy.mock.calls[1]![0]).toBeInstanceOf(
+        ProvideTransactionFieldDescriptionCommand,
+      );
     });
   });
 
@@ -163,9 +160,9 @@ describe("ProvideTransactionFieldDescriptionTask", () => {
         type,
         payload,
       };
-      jest
-        .spyOn(apiMock, "sendCommand")
-        .mockResolvedValueOnce(CommandResultFactory({ data: "ok" }));
+      vi.spyOn(apiMock, "sendCommand").mockResolvedValueOnce(
+        CommandResultFactory({ data: "ok" }),
+      );
 
       // WHEN
       const task = new ProvideTransactionFieldDescriptionTask(apiMock, {
@@ -202,21 +199,20 @@ describe("ProvideTransactionFieldDescriptionTask", () => {
           },
         };
         // provide reference context
-        jest
-          .spyOn(apiMock, "sendCommand")
-          .mockResolvedValueOnce(CommandResultFactory({ data: "ok" }));
+        vi.spyOn(apiMock, "sendCommand").mockResolvedValueOnce(
+          CommandResultFactory({ data: "ok" }),
+        );
         // provide context
-        jest
-          .spyOn(apiMock, "sendCommand")
-          .mockResolvedValueOnce(CommandResultFactory({ data: "ok" }));
-        jest
-          .spyOn(transactionParserMock, "extractValue")
-          .mockReturnValueOnce(
-            Right([new Uint8Array([0x01, 0x02, 0x03, 0x04])]),
-          );
-        jest
-          .spyOn(contextModuleMock, "getContext")
-          .mockResolvedValueOnce({ type, payload });
+        vi.spyOn(apiMock, "sendCommand").mockResolvedValueOnce(
+          CommandResultFactory({ data: "ok" }),
+        );
+        vi.spyOn(transactionParserMock, "extractValue").mockReturnValueOnce(
+          Right([new Uint8Array([0x01, 0x02, 0x03, 0x04])]),
+        );
+        vi.spyOn(contextModuleMock, "getContext").mockResolvedValueOnce({
+          type,
+          payload,
+        });
 
         // WHEN
         const task = new ProvideTransactionFieldDescriptionTask(apiMock, {
@@ -259,24 +255,22 @@ describe("ProvideTransactionFieldDescriptionTask", () => {
           sources: ["source"],
         },
       };
-      // getChallenge
-      jest
-        .spyOn(apiMock, "sendCommand")
+
+      vi.spyOn(apiMock, "sendCommand")
+        // getChallenge
         .mockResolvedValueOnce(
           CommandResultFactory({ data: { challenge: 0x42 } }),
-        );
-      // provide reference context
-      jest
-        .spyOn(apiMock, "sendCommand")
+        )
+        // provide reference context
+        .mockResolvedValueOnce(CommandResultFactory({ data: "ok" }))
+        // provide context
         .mockResolvedValueOnce(CommandResultFactory({ data: "ok" }));
-      // provide context
-      jest
-        .spyOn(apiMock, "sendCommand")
-        .mockResolvedValueOnce(CommandResultFactory({ data: "ok" }));
-      jest
-        .spyOn(transactionParserMock, "extractValue")
-        .mockReturnValueOnce(Right([extractedValue]));
-      jest.spyOn(contextModuleMock, "getContext").mockResolvedValueOnce({
+
+      vi.spyOn(transactionParserMock, "extractValue").mockReturnValueOnce(
+        Right([extractedValue]),
+      );
+
+      vi.spyOn(contextModuleMock, "getContext").mockResolvedValueOnce({
         type: ClearSignContextType.TRUSTED_NAME,
         payload: payload2,
       });
@@ -336,15 +330,13 @@ describe("ProvideTransactionFieldDescriptionTask", () => {
           value: "0x09080706",
         },
       };
-      // provide reference context
-      jest
-        .spyOn(apiMock, "sendCommand")
+      vi.spyOn(apiMock, "sendCommand")
+        // provide reference context
+        .mockResolvedValueOnce(CommandResultFactory({ data: "ok" }))
+        // provide context
         .mockResolvedValueOnce(CommandResultFactory({ data: "ok" }));
-      // provide context
-      jest
-        .spyOn(apiMock, "sendCommand")
-        .mockResolvedValueOnce(CommandResultFactory({ data: "ok" }));
-      jest.spyOn(contextModuleMock, "getContext").mockResolvedValueOnce({
+
+      vi.spyOn(contextModuleMock, "getContext").mockResolvedValueOnce({
         type: ClearSignContextType.TOKEN,
         payload: "0x05060708",
       });
@@ -384,14 +376,14 @@ describe("ProvideTransactionFieldDescriptionTask", () => {
         },
       };
       // provide reference context
-      jest
-        .spyOn(apiMock, "sendCommand")
-        .mockResolvedValueOnce(CommandResultFactory({ data: "ok" }));
+      vi.spyOn(apiMock, "sendCommand").mockResolvedValueOnce(
+        CommandResultFactory({ data: "ok" }),
+      );
       // provide context
-      jest
-        .spyOn(apiMock, "sendCommand")
-        .mockResolvedValueOnce(CommandResultFactory({ data: "ok" }));
-      jest.spyOn(contextModuleMock, "getContext").mockResolvedValueOnce({
+      vi.spyOn(apiMock, "sendCommand").mockResolvedValueOnce(
+        CommandResultFactory({ data: "ok" }),
+      );
+      vi.spyOn(contextModuleMock, "getContext").mockResolvedValueOnce({
         type: ClearSignContextType.NFT,
         payload: "0x05060708",
       });
@@ -437,12 +429,13 @@ describe("ProvideTransactionFieldDescriptionTask", () => {
         },
       };
       // provide context
-      jest
-        .spyOn(apiMock, "sendCommand")
-        .mockResolvedValueOnce(CommandResultFactory({ data: "ok" }));
-      jest
-        .spyOn(transactionParserMock, "extractValue")
-        .mockReturnValueOnce(Left(new Error("path not found")));
+      vi.spyOn(apiMock, "sendCommand").mockResolvedValueOnce(
+        CommandResultFactory({ data: "ok" }),
+      );
+
+      vi.spyOn(transactionParserMock, "extractValue").mockReturnValueOnce(
+        Left(new Error("path not found")),
+      );
 
       // WHEN
       const task = new ProvideTransactionFieldDescriptionTask(apiMock, {
@@ -476,23 +469,21 @@ describe("ProvideTransactionFieldDescriptionTask", () => {
           sources: ["source"],
         },
       };
-      jest
-        .spyOn(transactionParserMock, "extractValue")
-        .mockReturnValueOnce(Right([new Uint8Array([0x11, 0x22, 0x33, 0x44])]));
-      jest.spyOn(contextModuleMock, "getContext").mockResolvedValueOnce({
+      vi.spyOn(transactionParserMock, "extractValue").mockReturnValueOnce(
+        Right([new Uint8Array([0x11, 0x22, 0x33, 0x44])]),
+      );
+      vi.spyOn(contextModuleMock, "getContext").mockResolvedValueOnce({
         type: ClearSignContextType.ERROR,
         error: new Error("getContext error"),
       });
       // getChallenge
-      jest
-        .spyOn(apiMock, "sendCommand")
-        .mockResolvedValueOnce(
-          CommandResultFactory({ data: { challenge: 0x42 } }),
-        );
+      vi.spyOn(apiMock, "sendCommand").mockResolvedValueOnce(
+        CommandResultFactory({ data: { challenge: 0x42 } }),
+      );
       // provide context
-      jest
-        .spyOn(apiMock, "sendCommand")
-        .mockResolvedValueOnce(CommandResultFactory({ data: "ok" }));
+      vi.spyOn(apiMock, "sendCommand").mockResolvedValueOnce(
+        CommandResultFactory({ data: "ok" }),
+      );
 
       // WHEN
       const task = new ProvideTransactionFieldDescriptionTask(apiMock, {
@@ -523,10 +514,12 @@ describe("ProvideTransactionFieldDescriptionTask", () => {
           id: 0x42,
         },
       };
-      jest
-        .spyOn(transactionParserMock, "extractValue")
-        .mockReturnValueOnce(Right([new Uint8Array([0x01, 0x02, 0x03, 0x04])]));
-      jest
+
+      vi.spyOn(transactionParserMock, "extractValue").mockReturnValueOnce(
+        Right([new Uint8Array([0x01, 0x02, 0x03, 0x04])]),
+      );
+
+      const spy = vi
         .spyOn(apiMock, "sendCommand")
         .mockResolvedValueOnce(CommandResultFactory({ data: "ok" }));
 
@@ -544,9 +537,9 @@ describe("ProvideTransactionFieldDescriptionTask", () => {
       // THEN
       expect(result).toEqual(Nothing);
       expect(apiMock.sendCommand).toHaveBeenCalledTimes(1);
-      expect(
-        (apiMock.sendCommand as jest.Mock).mock.calls[0][0],
-      ).toBeInstanceOf(ProvideTransactionFieldDescriptionCommand);
+      expect(spy.mock.calls[0]![0]).toBeInstanceOf(
+        ProvideTransactionFieldDescriptionCommand,
+      );
     });
 
     it("when the enum reference path value is empty", async () => {
@@ -561,10 +554,12 @@ describe("ProvideTransactionFieldDescriptionTask", () => {
           id: 0x42,
         },
       };
-      jest
-        .spyOn(transactionParserMock, "extractValue")
-        .mockReturnValueOnce(Right([new Uint8Array([])])); // empty value
-      jest
+
+      vi.spyOn(transactionParserMock, "extractValue").mockReturnValueOnce(
+        Right([new Uint8Array([])]),
+      ); // empty value
+
+      const spy = vi
         .spyOn(apiMock, "sendCommand")
         .mockResolvedValueOnce(CommandResultFactory({ data: "ok" }));
 
@@ -595,9 +590,9 @@ describe("ProvideTransactionFieldDescriptionTask", () => {
       // THEN
       expect(result).toEqual(Nothing);
       expect(apiMock.sendCommand).toHaveBeenCalledTimes(1);
-      expect(
-        (apiMock.sendCommand as jest.Mock).mock.calls[0][0],
-      ).toBeInstanceOf(ProvideTransactionFieldDescriptionCommand);
+      expect(spy.mock.calls[0]![0]).toBeInstanceOf(
+        ProvideTransactionFieldDescriptionCommand,
+      );
     });
   });
 
@@ -687,14 +682,14 @@ describe("ProvideTransactionFieldDescriptionTask", () => {
           sources: ["source"],
         },
       };
-      jest.spyOn(apiMock, "sendCommand").mockResolvedValueOnce(
+      vi.spyOn(apiMock, "sendCommand").mockResolvedValueOnce(
         CommandResultFactory({
           error: new InvalidStatusWordError("getChallenge error"),
         }),
       );
-      jest
-        .spyOn(transactionParserMock, "extractValue")
-        .mockReturnValueOnce(Right([new Uint8Array([0x11, 0x22, 0x33, 0x44])]));
+      vi.spyOn(transactionParserMock, "extractValue").mockReturnValueOnce(
+        Right([new Uint8Array([0x11, 0x22, 0x33, 0x44])]),
+      );
 
       // WHEN
       const task = new ProvideTransactionFieldDescriptionTask(apiMock, {
@@ -729,19 +724,19 @@ describe("ProvideTransactionFieldDescriptionTask", () => {
         },
       };
       // provide reference context
-      jest.spyOn(apiMock, "sendCommand").mockResolvedValueOnce(
+      vi.spyOn(apiMock, "sendCommand").mockResolvedValueOnce(
         CommandResultFactory({
           error: new InvalidStatusWordError("provide reference error"),
         }),
       );
       // provide field
-      jest
-        .spyOn(apiMock, "sendCommand")
-        .mockResolvedValueOnce(CommandResultFactory({ data: "ok" }));
-      jest
-        .spyOn(transactionParserMock, "extractValue")
-        .mockReturnValueOnce(Right([new Uint8Array([0x11, 0x22, 0x33, 0x44])]));
-      jest.spyOn(contextModuleMock, "getContext").mockResolvedValueOnce({
+      vi.spyOn(apiMock, "sendCommand").mockResolvedValueOnce(
+        CommandResultFactory({ data: "ok" }),
+      );
+      vi.spyOn(transactionParserMock, "extractValue").mockReturnValueOnce(
+        Right([new Uint8Array([0x11, 0x22, 0x33, 0x44])]),
+      );
+      vi.spyOn(contextModuleMock, "getContext").mockResolvedValueOnce({
         type: ClearSignContextType.TOKEN,
         payload: "0x05060708",
       });
@@ -781,19 +776,19 @@ describe("ProvideTransactionFieldDescriptionTask", () => {
         },
       };
       // getChallenge
-      jest
-        .spyOn(apiMock, "sendCommand")
-        .mockResolvedValueOnce(CommandResultFactory({ data: "ok" }));
+      vi.spyOn(apiMock, "sendCommand").mockResolvedValueOnce(
+        CommandResultFactory({ data: "ok" }),
+      );
       // provide reference context
-      jest.spyOn(apiMock, "sendCommand").mockResolvedValueOnce(
+      vi.spyOn(apiMock, "sendCommand").mockResolvedValueOnce(
         CommandResultFactory({
           error: new InvalidStatusWordError("provide reference error"),
         }),
       );
-      jest
-        .spyOn(transactionParserMock, "extractValue")
-        .mockReturnValueOnce(Right([new Uint8Array([0x11, 0x22, 0x33, 0x44])]));
-      jest.spyOn(contextModuleMock, "getContext").mockResolvedValueOnce({
+      vi.spyOn(transactionParserMock, "extractValue").mockReturnValueOnce(
+        Right([new Uint8Array([0x11, 0x22, 0x33, 0x44])]),
+      );
+      vi.spyOn(contextModuleMock, "getContext").mockResolvedValueOnce({
         type: ClearSignContextType.TRUSTED_NAME,
         payload: "0x05060708",
       });
@@ -829,19 +824,23 @@ describe("ProvideTransactionFieldDescriptionTask", () => {
           id: 0x42,
         },
       };
-      jest
-        .spyOn(transactionParserMock, "extractValue")
-        .mockReturnValueOnce(Right([new Uint8Array([0x01, 0x02, 0x03, 0x04])]));
-      jest.spyOn(apiMock, "sendCommand").mockResolvedValueOnce(
-        CommandResultFactory({
-          error: new InvalidStatusWordError("provide reference error"),
-        }),
+
+      vi.spyOn(transactionParserMock, "extractValue").mockReturnValueOnce(
+        Right([new Uint8Array([0x01, 0x02, 0x03, 0x04])]),
       );
-      jest.spyOn(apiMock, "sendCommand").mockResolvedValueOnce(
-        CommandResultFactory({
-          data: "ok",
-        }),
-      );
+
+      const spy = vi
+        .spyOn(apiMock, "sendCommand")
+        .mockResolvedValueOnce(
+          CommandResultFactory({
+            error: new InvalidStatusWordError("provide reference error"),
+          }),
+        )
+        .mockResolvedValueOnce(
+          CommandResultFactory({
+            data: "ok",
+          }),
+        );
 
       // WHEN
       const task = new ProvideTransactionFieldDescriptionTask(apiMock, {
@@ -868,9 +867,7 @@ describe("ProvideTransactionFieldDescriptionTask", () => {
         }),
       );
       expect(apiMock.sendCommand).toHaveBeenCalledTimes(1);
-      expect(
-        (apiMock.sendCommand as jest.Mock).mock.calls[0][0],
-      ).toBeInstanceOf(ProvideEnumCommand);
+      expect(spy.mock.calls[0]![0]).toBeInstanceOf(ProvideEnumCommand);
     });
   });
 });

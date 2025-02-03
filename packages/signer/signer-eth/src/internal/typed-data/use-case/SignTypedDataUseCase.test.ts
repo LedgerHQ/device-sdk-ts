@@ -15,10 +15,10 @@ describe("SignTypedDataUseCase", () => {
       message: {},
     };
     const parser: TypedDataParserService = {
-      parse: jest.fn(),
+      parse: vi.fn(),
     };
     const appBinder = {
-      signTypedData: jest.fn(),
+      signTypedData: vi.fn(),
     };
     const signTypedDataUseCase = new SignTypedDataUseCase(
       appBinder as unknown as EthAppBinder,

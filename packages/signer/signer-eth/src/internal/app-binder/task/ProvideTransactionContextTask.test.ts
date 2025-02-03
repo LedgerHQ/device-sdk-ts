@@ -27,7 +27,7 @@ describe("ProvideTransactionContextTask", () => {
   });
 
   beforeEach(() => {
-    jest.resetAllMocks();
+    vi.resetAllMocks();
   });
 
   describe("run", () => {
@@ -52,7 +52,7 @@ describe("ProvideTransactionContextTask", () => {
       ],
     };
     afterEach(() => {
-      jest.restoreAllMocks();
+      vi.restoreAllMocks();
     });
     it("should send relative commands when receiving ClearSignContexts of type not trustedName", async () => {
       api.sendCommand.mockResolvedValue(successResult);

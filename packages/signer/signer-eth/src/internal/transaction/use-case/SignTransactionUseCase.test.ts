@@ -14,7 +14,7 @@ describe("SignTransactionUseCase", () => {
     tx.value = 0n;
     tx.data = "0x";
     const appBinder: EthAppBinder = {
-      signTransaction: jest.fn(),
+      signTransaction: vi.fn(),
     } as unknown as EthAppBinder;
     const useCase = new SignTransactionUseCase(appBinder);
     const transaction = hexaStringToBuffer(tx.unsignedSerialized) as Uint8Array;

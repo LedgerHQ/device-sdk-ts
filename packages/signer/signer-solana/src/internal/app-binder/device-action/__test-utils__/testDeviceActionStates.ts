@@ -10,7 +10,7 @@ import {
  * Test that the states emitted by a device action match the expected states.
  * @param deviceAction The device action to test.
  * @param expectedStates The expected states.
- * @param done The Jest done callback.
+ * @param done A promise resolve callback.
  */
 export function testDeviceActionStates<
   Output,

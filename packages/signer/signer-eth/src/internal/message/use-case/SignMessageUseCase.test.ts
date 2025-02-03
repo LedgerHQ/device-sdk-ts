@@ -8,7 +8,7 @@ describe("SignMessageUseCase", () => {
     const derivationPath = "44'/501'/0'/0'";
     const message = "Hello world";
     const appBinder = {
-      signPersonalMessage: jest.fn(),
+      signPersonalMessage: vi.fn(),
     };
     const signMessageUseCase = new SignMessageUseCase(
       appBinder as unknown as EthAppBinder,
