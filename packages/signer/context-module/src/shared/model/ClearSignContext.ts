@@ -11,6 +11,7 @@ export enum ClearSignContextType {
   TRANSACTION_INFO = "transactionInfo",
   ENUM = "enum",
   TRANSACTION_FIELD_DESCRIPTION = "transactionFieldDescription",
+  WEB3_CHECK = "web3Check",
   ERROR = "error",
 }
 
