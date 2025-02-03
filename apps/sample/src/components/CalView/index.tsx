@@ -7,33 +7,34 @@ import { StyledDrawer } from "@/components/StyledDrawer";
 
 import { CalCheckDappDrawer } from "./CalCheckDappDrawer";
 import { CalSettingsDrawer } from "./CalSettingsDrawer";
+import { Web3ChecksDrawer } from "./Web3ChecksDrawer";
 
 export const CalView = () => {
   const [isCheckDappOpen, setIsCheckDappOpen] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
-  const openCheckDapp = useCallback(() => {
-    setIsCheckDappOpen(true);
-  }, []);
-
-  const openSettings = useCallback(() => {
-    setIsSettingsOpen(true);
-  }, []);
+  const [isWeb3ChecksOpen, setIsWeb3ChecksOpen] = useState(false);
 
   const closeDrawers = useCallback(() => {
     setIsCheckDappOpen(false);
     setIsSettingsOpen(false);
+    setIsWeb3ChecksOpen(false);
   }, []);
 
   const entries = [
     {
       title: "Settings",
       description: "Settings for the Crypto Asset List",
-      onClick: openSettings,
+      onClick: () => setIsSettingsOpen(true),
     },
     {
       title: "Check dApp availability",
       description: "Check dApp availability in Crypto Asset List",
-      onClick: openCheckDapp,
+      onClick: () => setIsCheckDappOpen(true),
+    },
+    {
+      title: "Web3Checks Settings",
+      description: "Settings for the Web3Checks provider",
+      onClick: () => setIsWeb3ChecksOpen(true),
     },
   ];
 
@@ -78,6 +79,15 @@ export const CalView = () => {
         description="Settings for the Crypto Asset List"
       >
         <CalSettingsDrawer onClose={closeDrawers} />
+      </StyledDrawer>
+      <StyledDrawer
+        isOpen={isWeb3ChecksOpen}
+        onClose={closeDrawers}
+        big
+        title="Web3Checks Settings"
+        description="Settings for the Web3Checks provider"
+      >
+        <Web3ChecksDrawer onClose={closeDrawers} />
       </StyledDrawer>
     </PageWithHeader>
   );
