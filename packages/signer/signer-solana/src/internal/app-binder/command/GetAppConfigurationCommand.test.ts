@@ -33,8 +33,8 @@ describe("GetAppConfigurationCommand", () => {
 
   beforeEach(() => {
     command = new GetAppConfigurationCommand();
-    jest.clearAllMocks();
-    jest.requireActual("@ledgerhq/device-management-kit");
+    vi.clearAllMocks();
+    vi.importActual("@ledgerhq/device-management-kit");
   });
 
   describe("getApdu", () => {
@@ -90,7 +90,7 @@ describe("GetAppConfigurationCommand", () => {
             }),
           );
         } else {
-          fail("Expected error");
+          assert.fail("Expected error");
         }
       });
 
@@ -110,7 +110,7 @@ describe("GetAppConfigurationCommand", () => {
             }),
           );
         } else {
-          fail("Expected error");
+          assert.fail("Expected error");
         }
       });
     });

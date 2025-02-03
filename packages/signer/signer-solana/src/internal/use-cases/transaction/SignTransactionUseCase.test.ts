@@ -3,14 +3,14 @@ import { type SolanaAppBinder } from "@internal/app-binder/SolanaAppBinder";
 import { SignTransactionUseCase } from "./SignTransactionUseCase";
 
 describe("GetAppConfigurationUseCase", () => {
-  const signTransactionMock = jest.fn();
+  const signTransactionMock = vi.fn();
   const appBinderMock = {
     signTransaction: signTransactionMock,
   } as unknown as SolanaAppBinder;
   let useCase: SignTransactionUseCase;
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
     useCase = new SignTransactionUseCase(appBinderMock);
   });
 

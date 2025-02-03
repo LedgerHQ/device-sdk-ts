@@ -163,7 +163,7 @@ describe("SignTransactionCommand", () => {
 
       // THEN
       if (isSuccessCommandResult(result))
-        fail("The result should be an error.");
+        assert.fail("The result should be an error.");
       else {
         expect(result.error).toEqual(
           new InvalidStatusWordError("Signature is missing"),

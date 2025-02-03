@@ -21,7 +21,7 @@ export function testDeviceActionStates<
   deviceAction: DeviceAction<Output, Input, Error, IntermediateValue>,
   expectedStates: Array<DeviceActionState<Output, Error, IntermediateValue>>,
   internalApi: InternalApi,
-  done?: jest.DoneCallback,
+  done?: (arg?: unknown) => void,
 ) {
   const observedStates: Array<
     DeviceActionState<Output, Error, IntermediateValue>

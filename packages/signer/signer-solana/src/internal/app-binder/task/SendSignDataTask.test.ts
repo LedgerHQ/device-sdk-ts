@@ -26,7 +26,7 @@ describe("SignDataTask", () => {
   const resultNothing = CommandResultFactory({ data: Nothing });
 
   beforeEach(() => {
-    jest.resetAllMocks();
+    vi.resetAllMocks();
   });
 
   describe("run with SignTransactionCommand", () => {
@@ -75,7 +75,9 @@ describe("SignDataTask", () => {
       if (isSuccessCommandResult(result)) {
         expect(result.data).toEqual(Just(signature));
       } else {
-        fail(`Expected a successful result, but got an error: ${result.error}`);
+        assert.fail(
+          `Expected a successful result, but got an error: ${result.error}`,
+        );
       }
     });
 
@@ -162,7 +164,9 @@ describe("SignDataTask", () => {
       if (isSuccessCommandResult(result)) {
         expect(result.data).toEqual(Just(signature));
       } else {
-        fail(`Expected a successful result, but got an error: ${result.error}`);
+        assert.fail(
+          `Expected a successful result, but got an error: ${result.error}`,
+        );
       }
     });
 
