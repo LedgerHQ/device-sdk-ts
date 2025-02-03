@@ -29,10 +29,10 @@ class LoggerPublisherServiceStub implements LoggerPublisherService {
     this.subscribers = subscribers;
     this.tag = tag;
   }
-  error = jest.fn();
-  warn = jest.fn();
-  info = jest.fn();
-  debug = jest.fn();
+  error = vi.fn();
+  warn = vi.fn();
+  info = vi.fn();
+  debug = vi.fn();
 }
 
 describe("BleDeviceConnection", () => {
@@ -45,10 +45,10 @@ describe("BleDeviceConnection", () => {
   beforeEach(() => {
     writeCharacteristic = bleCharacteristicStubBuilder();
     notifyCharacteristic = bleCharacteristicStubBuilder();
-    apduSenderFactory = jest.fn(() =>
+    apduSenderFactory = vi.fn(() =>
       defaultApduSenderServiceStubBuilder(undefined, logger),
     );
-    apduReceiverFactory = jest.fn(() =>
+    apduReceiverFactory = vi.fn(() =>
       defaultApduReceiverServiceStubBuilder(undefined, logger),
     );
   });

@@ -30,9 +30,9 @@
     "prettier": "prettier . --check",
     "prettier:fix": "prettier . --write",
     "typecheck": "tsc --noEmit",
-    "test": "vitest run",
-    "test:watch": "vitest",
-    "test:coverage": "vitest run --coverage"
+    "test": "vitest run --passWithNoTests",
+    "test:watch": "vitest --passWithNoTests",
+    "test:coverage": "vitest run --coverage --passWithNoTests"
   },
   "dependencies": {
     "@sentry/minimal": "^6.19.7",

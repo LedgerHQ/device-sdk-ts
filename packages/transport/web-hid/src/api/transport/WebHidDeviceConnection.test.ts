@@ -1,3 +1,4 @@
+/* eslint @typescript-eslint/consistent-type-imports: off */
 import {
   type ApduReceiverService,
   type ApduSenderService,
@@ -16,7 +17,7 @@ import { hidDeviceStubBuilder } from "@api/model/HIDDevice.stub";
 
 import { WebHidDeviceConnection } from "./WebHidDeviceConnection";
 
-jest.useFakeTimers();
+vi.useFakeTimers();
 
 const RESPONSE_LOCKED_DEVICE = new Uint8Array([
   0xaa, 0xaa, 0x05, 0x00, 0x00, 0x00, 0x02, 0x55, 0x15, 0x00, 0x00, 0x00, 0x00,
@@ -41,20 +42,21 @@ class LoggerPublisherServiceStub implements LoggerPublisherService {
     this.tag = tag;
   }
   subscribers: LoggerSubscriberService[] = [];
-  error = jest.fn();
-  warn = jest.fn();
-  debug = jest.fn();
-  info = jest.fn();
+  error = vi.fn();
+  warn = vi.fn();
+  debug = vi.fn();
+  info = vi.fn();
 }
 
 /**
  * Flushes all pending promises
  */
-const flushPromises = () =>
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-  new Promise(jest.requireActual("timers").setImmediate);
+const flushPromises = async () => {
+  const timers = await vi.importActual<typeof import("timers")>("timers");
+  return new Promise(timers.setImmediate);
+};
 
-jest.useFakeTimers();
+vi.useFakeTimers();
 
 describe("WebHidDeviceConnection", () => {
   let device: HIDDevice;
@@ -96,7 +98,7 @@ describe("WebHidDeviceConnection", () => {
 
   it("should receive APDU through hid report", async () => {
     // given
-    device.sendReport = jest.fn(() =>
+    device.sendReport = vi.fn(() =>
       Promise.resolve(
         device.oninputreport!({
           type: "inputreport",
@@ -122,7 +124,7 @@ describe("WebHidDeviceConnection", () => {
   describe("anticipating loss of connection after sending an APDU", () => {
     it("sendApdu(whatever, true) should wait for reconnection before resolving if the response is a success", async () => {
       // given
-      device.sendReport = jest.fn(() =>
+      device.sendReport = vi.fn(() =>
         Promise.resolve(
           device.oninputreport!({
             type: "inputreport",
@@ -168,7 +170,7 @@ describe("WebHidDeviceConnection", () => {
 
     it("sendApdu(whatever, true) should not wait for reconnection if the response is not a success", async () => {
       // given
-      device.sendReport = jest.fn(() =>
+      device.sendReport = vi.fn(() =>
         Promise.resolve(
           device.oninputreport!({
             type: "inputreport",
@@ -195,7 +197,7 @@ describe("WebHidDeviceConnection", () => {
 
     it("sendApdu(whatever, true) should return an error if the device gets disconnected while waiting for reconnection", async () => {
       // given
-      device.sendReport = jest.fn(() =>
+      device.sendReport = vi.fn(() =>
         Promise.resolve(
           device.oninputreport!({
             type: "inputreport",
@@ -212,7 +214,7 @@ describe("WebHidDeviceConnection", () => {
 
       // when disconnecting
       connection.lostConnection();
-      jest.advanceTimersByTime(RECONNECT_DEVICE_TIMEOUT);
+      vi.advanceTimersByTime(RECONNECT_DEVICE_TIMEOUT);
       await flushPromises();
 
       // then
@@ -224,7 +226,7 @@ describe("WebHidDeviceConnection", () => {
   describe("connection lost before sending an APDU", () => {
     it("sendApdu(whatever, false) should return an error if the device connection has been lost and times out", async () => {
       // given
-      device.sendReport = jest.fn(() =>
+      device.sendReport = vi.fn(() =>
         Promise.resolve(
           device.oninputreport!({
             type: "inputreport",
@@ -239,7 +241,7 @@ describe("WebHidDeviceConnection", () => {
 
       // when losing connection
       connection.lostConnection();
-      jest.advanceTimersByTime(RECONNECT_DEVICE_TIMEOUT);
+      vi.advanceTimersByTime(RECONNECT_DEVICE_TIMEOUT);
       await flushPromises();
 
       // then
@@ -250,7 +252,7 @@ describe("WebHidDeviceConnection", () => {
 
     it("sendApdu(whatever, false) should wait for reconnection to resolve", async () => {
       // given
-      device.sendReport = jest.fn(() =>
+      device.sendReport = vi.fn(() =>
         Promise.resolve(
           device.oninputreport!({
             type: "inputreport",
