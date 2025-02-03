@@ -27,6 +27,7 @@ describe("BuildTransactionContextTask", () => {
     getContext: jest.fn(),
     getContexts: jest.fn(),
     getTypedDataFilters: jest.fn(),
+    getWeb3Checks: jest.fn(),
   };
   const mapperMock = {
     mapTransactionToSubset: jest.fn(),
