@@ -1,18 +1,16 @@
 import {
   type ApduReceiverServiceFactory,
   type ApduSenderServiceFactory,
-  type ConnectError,
   type DeviceModel,
   type LoggerPublisherService,
   type LoggerSubscriberService,
   NoAccessibleDeviceError,
   OpeningConnectionError,
   StaticDeviceModelDataSource,
-  type TransportConnectedDevice,
   type TransportDiscoveredDevice,
   UnknownDeviceError,
 } from "@ledgerhq/device-management-kit";
-import { type Either, Left, Right } from "purify-ts";
+import { Left, Right } from "purify-ts";
 
 import { RECONNECT_DEVICE_TIMEOUT } from "@api/data/WebBleConfig";
 import { bleDeviceStubBuilder } from "@api/model/BleDevice.stub";
@@ -77,14 +75,14 @@ describe("WebBleTransport", () => {
     });
 
     it("should emit a startDiscovering error", () =>
-      new Promise<string | void>((done) => {
+      new Promise<void>((resolve, reject) => {
         discoverDevice(
           () => {
-            done("Should not emit any value");
+            reject("Should not emit any value");
           },
           (error) => {
             expect(error).toBeInstanceOf(BleTransportNotSupportedError);
-            done();
+            resolve();
           },
         );
       }));
@@ -112,7 +110,7 @@ describe("WebBleTransport", () => {
 
     describe("startDiscovering", () => {
       it("should emit device if one new grant access", () =>
-        new Promise<Error | void>((done) => {
+        new Promise<void>((resolve, reject) => {
           mockedRequestDevice.mockResolvedValueOnce(stubDevice);
 
           discoverDevice(
@@ -127,19 +125,19 @@ describe("WebBleTransport", () => {
                   }),
                 );
 
-                done();
+                resolve();
               } catch (expectError) {
-                done(expectError as Error);
+                reject(expectError as Error);
               }
             },
             (error) => {
-              done(error as Error);
+              reject(error as Error);
             },
           );
         }));
 
       it("should throw DeviceNotRecognizedError if the device is not recognized", () =>
-        new Promise<string | void>((done) => {
+        new Promise<void>((resolve, reject) => {
           mockedRequestDevice.mockResolvedValueOnce({
             ...stubDevice,
             gatt: {
@@ -151,17 +149,17 @@ describe("WebBleTransport", () => {
 
           discoverDevice(
             () => {
-              done("should not return a device");
+              reject("should not return a device");
             },
             (error) => {
               expect(error).toBeInstanceOf(BleDeviceGattServerError);
-              done();
+              resolve();
             },
           );
         }));
 
       it("should emit an error if the request device is in error", () =>
-        new Promise<string | void>((done) => {
+        new Promise<void>((resolve, reject) => {
           const message = "request device error";
           mockedRequestDevice.mockImplementationOnce(() => {
             throw new Error(message);
@@ -169,25 +167,25 @@ describe("WebBleTransport", () => {
 
           discoverDevice(
             () => {
-              done("should not return a device");
+              reject("should not return a device");
             },
             (error) => {
               expect(error).toBeInstanceOf(NoAccessibleDeviceError);
               expect(error).toStrictEqual(
                 new NoAccessibleDeviceError(new Error(message)),
               );
-              done();
+              resolve();
             },
           );
         }));
 
       it("should emit an error if the user did not grant us access to a device (clicking on cancel on the browser popup for ex)", () =>
-        new Promise<Error | string | void>((done) => {
+        new Promise<void>((resolve, reject) => {
           mockedRequestDevice.mockResolvedValueOnce({ forget: vi.fn() });
 
           discoverDevice(
             (discoveredDevice) => {
-              done(
+              reject(
                 `Should not emit any value, but emitted ${JSON.stringify(
                   discoveredDevice,
                 )}`,
@@ -196,9 +194,9 @@ describe("WebBleTransport", () => {
             (error) => {
               try {
                 expect(error).toBeInstanceOf(BleDeviceGattServerError);
-                done();
+                resolve();
               } catch (expectError) {
-                done(expectError as Error);
+                reject(expectError as Error);
               }
             },
           );
@@ -233,7 +231,7 @@ describe("WebBleTransport", () => {
       });
 
       it("should throw OpeningConnectionError if the device cannot be opened", () =>
-        new Promise<void>((done) => {
+        new Promise<void>((resolve, reject) => {
           const message = "cannot be opened";
           mockedRequestDevice.mockResolvedValueOnce({
             ...stubDevice,
@@ -246,19 +244,17 @@ describe("WebBleTransport", () => {
 
           discoverDevice(
             () => {
-              done();
+              reject("Should not emit any value");
             },
             (error) => {
               expect(error).toBeInstanceOf(OpeningConnectionError);
-              done();
+              resolve();
             },
           );
         }));
 
       it("should return the opened device", () =>
-        new Promise<
-          Either<ConnectError, TransportConnectedDevice> | Error | void
-        >((done) => {
+        new Promise<void>((resolve, reject) => {
           mockedRequestDevice.mockResolvedValueOnce({
             ...stubDevice,
             gatt: {
@@ -280,26 +276,24 @@ describe("WebBleTransport", () => {
                       expect(device).toEqual(
                         expect.objectContaining({ id: discoveredDevice.id }),
                       );
-                      done();
+                      resolve();
                     })
                     .ifLeft(() => {
-                      done(connectedDevice);
+                      reject(connectedDevice);
                     });
                 })
                 .catch((error) => {
-                  done(error);
+                  reject(error);
                 });
             },
             (error) => {
-              done(error as Error);
+              reject(error as Error);
             },
           );
         }));
 
       it("should return a device if available", () =>
-        new Promise<
-          Either<ConnectError, TransportConnectedDevice> | Error | void
-        >((done) => {
+        new Promise<void>((resolve, reject) => {
           mockedRequestDevice.mockResolvedValueOnce(stubDevice);
 
           discoverDevice(
@@ -315,18 +309,18 @@ describe("WebBleTransport", () => {
                       expect(device).toEqual(
                         expect.objectContaining({ id: discoveredDevice.id }),
                       );
-                      done();
+                      resolve();
                     })
                     .ifLeft(() => {
-                      done(connectedDevice);
+                      reject(connectedDevice);
                     });
                 })
                 .catch((error) => {
-                  done(error);
+                  reject(error);
                 });
             },
             (error) => {
-              done(error as Error);
+              reject(error as Error);
             },
           );
         }));
@@ -334,7 +328,7 @@ describe("WebBleTransport", () => {
 
     describe("disconnect", () => {
       it("should disconnect the device", () =>
-        new Promise<Error | void>((done) => {
+        new Promise<void>((resolve, reject) => {
           mockedRequestDevice.mockResolvedValueOnce(stubDevice);
 
           const onDisconnect = vi.fn();
@@ -352,22 +346,22 @@ describe("WebBleTransport", () => {
                       .disconnect({ connectedDevice: device })
                       .then((value) => {
                         expect(value).toStrictEqual(Right(void 0));
-                        done();
+                        resolve();
                       })
                       .catch((error) => {
-                        done(error);
+                        reject(error);
                       });
                   });
                 });
             },
             (error) => {
-              done(error as Error);
+              reject(error as Error);
             },
           );
         }));
 
       it("should call disconnect handler if device is hardware disconnected", () =>
-        new Promise<Error | void>((done) => {
+        new Promise<void>((resolve, reject) => {
           const onDisconnect = vi.fn();
           const disconnectSpy = vi.spyOn(transport, "disconnect");
           mockedRequestDevice.mockResolvedValueOnce(stubDevice);
@@ -383,11 +377,11 @@ describe("WebBleTransport", () => {
                   stubDevice.ongattserverdisconnected(new Event(""));
                   vi.advanceTimersByTime(RECONNECT_DEVICE_TIMEOUT);
                   expect(disconnectSpy).toHaveBeenCalled();
-                  done();
+                  resolve();
                 });
             },
             (error) => {
-              done(error as Error);
+              reject(error as Error);
             },
           );
         }));
@@ -395,7 +389,7 @@ describe("WebBleTransport", () => {
 
     describe("reconnect", () => {
       it("should not call disconnection if reconnection happen", () =>
-        new Promise<Error | void>((done) => {
+        new Promise<void>((resolve, reject) => {
           // given
           const onDisconnect = vi.fn();
           const disconnectSpy = vi.spyOn(transport, "disconnect");
@@ -415,10 +409,10 @@ describe("WebBleTransport", () => {
 
                 // then
                 expect(disconnectSpy).toHaveBeenCalledTimes(0);
-                done();
+                resolve();
               })
               .catch((error) => {
-                done(error);
+                reject(error);
               });
           });
         }));

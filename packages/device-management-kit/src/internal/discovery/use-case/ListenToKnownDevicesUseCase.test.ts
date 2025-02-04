@@ -74,7 +74,7 @@ describe("ListenToKnownDevicesUseCase", () => {
 
   describe("when no transports are available", () => {
     it("should return no discovered devices", () =>
-      new Promise<Error | void>((done) => {
+      new Promise<void>((resolve, reject) => {
         vi.spyOn(transportService, "getAllTransports").mockReturnValue([]);
 
         const useCase = new ListenToKnownDevicesUseCase(transportService);
@@ -87,13 +87,13 @@ describe("ListenToKnownDevicesUseCase", () => {
           complete: () => {
             try {
               expect(observedDiscoveredDevices).toEqual([[]]);
-              done();
+              resolve();
             } catch (error) {
-              done(error as Error);
+              reject(error as Error);
             }
           },
           error: (error) => {
-            done(error);
+            reject(error);
           },
         });
       }));

@@ -43,7 +43,7 @@ describe("ListenToConnectedDevice", () => {
   });
 
   it("should emit an instance of ConnectedDevice", () =>
-    new Promise<void>((done) => {
+    new Promise<void>((resolve, reject) => {
       // given
       const connectedDevice = connectedDeviceStubBuilder({
         id: "test-list-connected-device-id",
@@ -62,20 +62,24 @@ describe("ListenToConnectedDevice", () => {
       const subscription = observable.subscribe({
         next(emittedConnectedDevice) {
           // then
-          expect(emittedConnectedDevice).toEqual(
-            new ConnectedDevice({
-              transportConnectedDevice: connectedDevice,
-              sessionId: fakeSessionId,
-            }),
-          );
-          terminate();
+          try {
+            expect(emittedConnectedDevice).toEqual(
+              new ConnectedDevice({
+                transportConnectedDevice: connectedDevice,
+                sessionId: fakeSessionId,
+              }),
+            );
+            terminate();
+          } catch (error) {
+            reject(error);
+          }
         },
       });
 
       function terminate() {
         subscription.unsubscribe();
         deviceSession.close();
-        done();
+        resolve();
       }
 
       // when

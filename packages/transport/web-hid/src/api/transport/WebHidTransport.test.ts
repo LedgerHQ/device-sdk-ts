@@ -3,7 +3,6 @@ import {
   type ApduReceiverServiceFactory,
   type ApduSenderServiceFactory,
   connectedDeviceStubBuilder,
-  ConnectError,
   type DeviceModel,
   DeviceModelId,
   DeviceNotRecognizedError,
@@ -12,12 +11,11 @@ import {
   NoAccessibleDeviceError,
   OpeningConnectionError,
   StaticDeviceModelDataSource,
-  TransportConnectedDevice,
   type TransportDeviceModel,
   type TransportDiscoveredDevice,
   UnknownDeviceError,
 } from "@ledgerhq/device-management-kit";
-import { Either, Left, Right } from "purify-ts";
+import { Left, Right } from "purify-ts";
 import { Subject } from "rxjs";
 
 import { RECONNECT_DEVICE_TIMEOUT } from "@api/data/WebHidConfig";
@@ -94,14 +92,14 @@ describe("WebHidTransport", () => {
     });
 
     it("should emit a startDiscovering error", () =>
-      new Promise<string | void>((done) => {
+      new Promise<void>((resolve, reject) => {
         discoverDevice(
           () => {
-            done("Should not emit any value");
+            reject("Should not emit any value");
           },
           (error) => {
             expect(error).toBeInstanceOf(WebHidTransportNotSupportedError);
-            done();
+            resolve();
           },
         );
       }));
@@ -183,7 +181,7 @@ describe("WebHidTransport", () => {
         it(
           testCase.testTitle,
           () =>
-            new Promise<Error | void>((done) => {
+            new Promise<void>((resolve, reject) => {
               mockedRequestDevice.mockResolvedValueOnce([testCase.hidDevice]);
 
               discoverDevice(
@@ -195,13 +193,13 @@ describe("WebHidTransport", () => {
                       }),
                     );
 
-                    done();
+                    resolve();
                   } catch (expectError) {
-                    done(expectError as Error);
+                    reject(expectError as Error);
                   }
                 },
                 (error) => {
-                  done(error as Error);
+                  reject(error as Error);
                 },
               );
             }),
@@ -211,7 +209,7 @@ describe("WebHidTransport", () => {
       // It does not seem possible for a user to select several devices on the browser popup.
       // But if it was possible, we should emit them
       it("should emit devices if new grant accesses", () =>
-        new Promise<Error | void>((done) => {
+        new Promise<void>((resolve, reject) => {
           mockedRequestDevice.mockResolvedValueOnce([
             stubDevice,
             {
@@ -248,23 +246,23 @@ describe("WebHidTransport", () => {
                       }),
                     );
 
-                    done();
+                    resolve();
                     break;
                 }
 
                 count++;
               } catch (expectError) {
-                done(expectError as Error);
+                reject(expectError as Error);
               }
             },
             (error) => {
-              done(error as Error);
+              reject(error as Error);
             },
           );
         }));
 
       it("should throw DeviceNotRecognizedError if the device is not recognized", () =>
-        new Promise<string | void>((done) => {
+        new Promise<void>((resolve, reject) => {
           mockedRequestDevice.mockResolvedValueOnce([
             {
               ...stubDevice,
@@ -274,17 +272,17 @@ describe("WebHidTransport", () => {
 
           discoverDevice(
             () => {
-              done("should not return a device");
+              reject("should not return a device");
             },
             (error) => {
               expect(error).toBeInstanceOf(DeviceNotRecognizedError);
-              done();
+              resolve();
             },
           );
         }));
 
       it("should emit an error if the request device is in error", () =>
-        new Promise<string | void>((done) => {
+        new Promise<void>((resolve, reject) => {
           const message = "request device error";
           mockedRequestDevice.mockImplementationOnce(() => {
             throw new Error(message);
@@ -292,27 +290,27 @@ describe("WebHidTransport", () => {
 
           discoverDevice(
             () => {
-              done("should not return a device");
+              reject("should not return a device");
             },
             (error) => {
               expect(error).toBeInstanceOf(NoAccessibleDeviceError);
               expect(error).toStrictEqual(
                 new NoAccessibleDeviceError(new Error(message)),
               );
-              done();
+              resolve();
             },
           );
         }));
 
       // [ASK] Is this the behavior we want when the user does not select any device ?
       it("should emit an error if the user did not grant us access to a device (clicking on cancel on the browser popup for ex)", () =>
-        new Promise<Error | string | void>((done) => {
+        new Promise<void>((resolve, reject) => {
           // When the user does not select any device, the `requestDevice` will return an empty array
           mockedRequestDevice.mockResolvedValueOnce([]);
 
           discoverDevice(
             (discoveredDevice) => {
-              done(
+              reject(
                 `Should not emit any value, but emitted ${JSON.stringify(
                   discoveredDevice,
                 )}`,
@@ -321,9 +319,9 @@ describe("WebHidTransport", () => {
             (error) => {
               try {
                 expect(error).toBeInstanceOf(NoAccessibleDeviceError);
-                done();
+                resolve();
               } catch (expectError) {
-                done(expectError as Error);
+                reject(expectError as Error);
               }
             },
           );
@@ -333,12 +331,22 @@ describe("WebHidTransport", () => {
         mockedRequestDevice.mockResolvedValue([stubDevice]);
         mockedGetDevices.mockResolvedValue([stubDevice]);
 
-        const firstDiscoveredDevice = await new Promise((resolve, reject) => {
-          discoverDevice(resolve, (err) => reject(err));
-        });
-        const secondDiscoveredDevice = await new Promise((resolve, reject) => {
-          discoverDevice(resolve, (err) => reject(err));
-        });
+        const firstDiscoveredDevice = await new Promise<void>(
+          (resolve, reject) => {
+            discoverDevice(
+              () => resolve(),
+              (err) => reject(err),
+            );
+          },
+        );
+        const secondDiscoveredDevice = await new Promise<void>(
+          (resolve, reject) => {
+            discoverDevice(
+              () => resolve(),
+              (err) => reject(err),
+            );
+          },
+        );
         expect(secondDiscoveredDevice).toBe(firstDiscoveredDevice);
       });
     });
@@ -381,7 +389,7 @@ describe("WebHidTransport", () => {
       });
 
       it("should throw OpeningConnectionError if the device cannot be opened", () =>
-        new Promise<Error | void>((done) => {
+        new Promise<void>((resolve, reject) => {
           const message = "cannot be opened";
           const mockedDevice = {
             ...stubDevice,
@@ -403,22 +411,20 @@ describe("WebHidTransport", () => {
                   expect(value).toStrictEqual(
                     Left(new OpeningConnectionError(new Error(message))),
                   );
-                  done();
+                  resolve();
                 })
                 .catch((error) => {
-                  done(error);
+                  reject(error);
                 });
             },
             (error) => {
-              done(error as Error);
+              reject(error as Error);
             },
           );
         }));
 
       it("should return the opened device", () =>
-        new Promise<
-          Either<ConnectError, TransportConnectedDevice> | Error | void
-        >((done) => {
+        new Promise<void>((resolve, reject) => {
           const mockedDevice = {
             ...stubDevice,
             opened: false,
@@ -444,26 +450,24 @@ describe("WebHidTransport", () => {
                       expect(device).toEqual(
                         expect.objectContaining({ id: discoveredDevice.id }),
                       );
-                      done();
+                      resolve();
                     })
                     .ifLeft(() => {
-                      done(connectedDevice);
+                      reject(connectedDevice);
                     });
                 })
                 .catch((error) => {
-                  done(error);
+                  reject(error);
                 });
             },
             (error) => {
-              done(error as Error);
+              reject(error as Error);
             },
           );
         }));
 
       it("should return a device if available", () =>
-        new Promise<
-          Either<ConnectError, TransportConnectedDevice> | Error | void
-        >((done) => {
+        new Promise<void>((resolve, reject) => {
           mockedRequestDevice.mockResolvedValueOnce([stubDevice]);
           mockedGetDevices.mockResolvedValue([stubDevice]);
 
@@ -480,18 +484,18 @@ describe("WebHidTransport", () => {
                       expect(device).toEqual(
                         expect.objectContaining({ id: discoveredDevice.id }),
                       );
-                      done();
+                      resolve();
                     })
                     .ifLeft(() => {
-                      done(connectedDevice);
+                      reject(connectedDevice);
                     });
                 })
                 .catch((error) => {
-                  done(error);
+                  reject(error);
                 });
             },
             (error) => {
-              done(error as Error);
+              reject(error as Error);
             },
           );
         }));
@@ -513,9 +517,7 @@ describe("WebHidTransport", () => {
       });
 
       it("should disconnect if the device is connected", () =>
-        new Promise<
-          Either<ConnectError, TransportConnectedDevice> | Error | void
-        >((done) => {
+        new Promise<void>((resolve, reject) => {
           mockedRequestDevice.mockResolvedValueOnce([stubDevice]);
           mockedGetDevices.mockResolvedValue([stubDevice]);
 
@@ -533,28 +535,28 @@ describe("WebHidTransport", () => {
                         .disconnect({ connectedDevice: device })
                         .then((value) => {
                           expect(value).toStrictEqual(Right(undefined));
-                          done();
+                          resolve();
                         })
                         .catch((error) => {
-                          done(error);
+                          reject(error);
                         });
                     })
                     .ifLeft(() => {
-                      done(connectedDevice);
+                      reject(connectedDevice);
                     });
                 })
                 .catch((error) => {
-                  done(error);
+                  reject(error);
                 });
             },
             (error) => {
-              done(error as Error);
+              reject(error as Error);
             },
           );
         }));
 
       it("should call disconnect handler if a connected device is unplugged", () =>
-        new Promise<Error | void>((done) => {
+        new Promise<void>((resolve, reject) => {
           // given
           const onDisconnect = vi.fn();
           mockedRequestDevice.mockResolvedValueOnce([stubDevice]);
@@ -590,10 +592,10 @@ describe("WebHidTransport", () => {
                   expect(onDisconnect).not.toHaveBeenCalled();
                   vi.advanceTimersByTime(RECONNECT_DEVICE_TIMEOUT / 2);
                   expect(onDisconnect).toHaveBeenCalled();
-                  done();
+                  resolve();
                 })
                 .catch((error) => {
-                  done(error);
+                  reject(error);
                 });
             },
           });
@@ -602,7 +604,7 @@ describe("WebHidTransport", () => {
 
     describe("reconnect", () => {
       it("should stop disconnection if reconnection happen", () =>
-        new Promise<Error | void>((done) => {
+        new Promise<void>((resolve, reject) => {
           // given
           const onDisconnect = vi.fn();
 
@@ -646,15 +648,15 @@ describe("WebHidTransport", () => {
 
               vi.advanceTimersByTime(RECONNECT_DEVICE_TIMEOUT);
               expect(onDisconnect).not.toHaveBeenCalled();
-              done();
+              resolve();
             } catch (error) {
-              done(error as Error);
+              reject(error as Error);
             }
           });
         }));
 
       it("should be able to reconnect twice in a row if the device is unplugged and replugged twice", () =>
-        new Promise<Error | void>((done) => {
+        new Promise<void>((resolve, reject) => {
           // given
           const onDisconnect = vi.fn();
 
@@ -704,9 +706,9 @@ describe("WebHidTransport", () => {
               vi.advanceTimersByTime(RECONNECT_DEVICE_TIMEOUT);
               expect(onDisconnect).not.toHaveBeenCalled();
 
-              done();
+              resolve();
             } catch (error) {
-              done(error as Error);
+              reject(error as Error);
             }
           });
         }));
@@ -724,6 +726,7 @@ describe("WebHidTransport", () => {
         // then
         expect(result).toBe(true);
       });
+
       it("should not validate type of another event", () => {
         // given
         const event = new Event("disconnect", {});

@@ -41,7 +41,7 @@ describe("StartDiscoveringUseCase", () => {
   });
 
   test("If connect use case encounter an error, return it", () =>
-    new Promise<Error | void>((done) => {
+    new Promise<void>((resolve, reject) => {
       const mockedStartDiscovering = vi.fn(() => {
         return of(stubDiscoveredDevice);
       });
@@ -58,21 +58,26 @@ describe("StartDiscoveringUseCase", () => {
       const discover = usecase.execute({ transport: "USB" });
 
       expect(mockedStartDiscovering).toHaveBeenCalled();
+
       discover.subscribe({
         next: (discoveredDevice) => {
-          expect(discoveredDevice).toStrictEqual({
-            id: "internal-discovered-device-id",
-            transport: "USB",
-            deviceModel: new DeviceModel({
+          try {
+            expect(discoveredDevice).toStrictEqual({
               id: "internal-discovered-device-id",
-              model: "nanoSP" as DeviceModelId,
-              name: "productName",
-            }),
-          } as DiscoveredDevice);
-          done();
+              transport: "USB",
+              deviceModel: new DeviceModel({
+                id: "internal-discovered-device-id",
+                model: "nanoSP" as DeviceModelId,
+                name: "productName",
+              }),
+            } as DiscoveredDevice);
+            resolve();
+          } catch (error) {
+            reject(error);
+          }
         },
         error: (error) => {
-          done(error);
+          reject(error);
         },
       });
     }));

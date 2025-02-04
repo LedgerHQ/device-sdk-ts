@@ -63,7 +63,7 @@ describe("EthAppBinder", () => {
 
   describe("getAddress", () => {
     it("should return the address, publicKey, and chainCode", () =>
-      new Promise<Error | void>((done) => {
+      new Promise<void>((resolve, reject) => {
         // GIVEN
         const address = "0xF7C69BedB292Dd3fC2cA4103989B5BD705164c43";
         const publicKey = "04e3785ca";
@@ -106,7 +106,7 @@ describe("EthAppBinder", () => {
             states.push(state);
           },
           error: (err) => {
-            done(err);
+            reject(err);
           },
           complete: () => {
             try {
@@ -116,9 +116,9 @@ describe("EthAppBinder", () => {
                   output: { address, publicKey, chainCode },
                 },
               ]);
-              done();
+              resolve();
             } catch (err) {
-              done(err as Error);
+              reject(err as Error);
             }
           },
         });
@@ -198,7 +198,7 @@ describe("EthAppBinder", () => {
 
   describe("signTransaction", () => {
     it("should return the signature", () =>
-      new Promise<Error | void>((done) => {
+      new Promise<void>((resolve, reject) => {
         // GIVEN
         const signature: Signature = {
           r: `0xDEAD`,
@@ -252,7 +252,7 @@ describe("EthAppBinder", () => {
             states.push(state);
           },
           error: (err) => {
-            done(err);
+            reject(err);
           },
           complete: () => {
             try {
@@ -262,16 +262,16 @@ describe("EthAppBinder", () => {
                   output: signature,
                 },
               ]);
-              done();
+              resolve();
             } catch (err) {
-              done(err as Error);
+              reject(err as Error);
             }
           },
         });
       }));
 
     it("should return the signature without options", () =>
-      new Promise<Error | void>((done) => {
+      new Promise<void>((resolve, reject) => {
         // GIVEN
         const signature: Signature = {
           r: `0xDEAD`,
@@ -324,7 +324,7 @@ describe("EthAppBinder", () => {
             states.push(state);
           },
           error: (err) => {
-            done(err);
+            reject(err);
           },
           complete: () => {
             try {
@@ -334,9 +334,9 @@ describe("EthAppBinder", () => {
                   output: signature,
                 },
               ]);
-              done();
+              resolve();
             } catch (err) {
-              done(err as Error);
+              reject(err as Error);
             }
           },
         });
@@ -345,7 +345,7 @@ describe("EthAppBinder", () => {
 
   describe("signMessage", () => {
     it("should return the signature", () =>
-      new Promise<Error | void>((done) => {
+      new Promise<void>((resolve, reject) => {
         // GIVEN
         const signature: Signature = {
           r: `0xDEAD`,
@@ -392,7 +392,7 @@ describe("EthAppBinder", () => {
             states.push(state);
           },
           error: (err) => {
-            done(err);
+            reject(err);
           },
           complete: () => {
             try {
@@ -402,9 +402,9 @@ describe("EthAppBinder", () => {
                   output: signature,
                 },
               ]);
-              done();
+              resolve();
             } catch (err) {
-              done(err as Error);
+              reject(err as Error);
             }
           },
         });
@@ -413,7 +413,7 @@ describe("EthAppBinder", () => {
 
   describe("signTypedData", () => {
     it("should return the signature", () =>
-      new Promise<Error | void>((done) => {
+      new Promise<void>((resolve, reject) => {
         // GIVEN
         const signature: Signature = {
           r: `0xDEAD`,
@@ -469,7 +469,7 @@ describe("EthAppBinder", () => {
             states.push(state);
           },
           error: (err) => {
-            done(err);
+            reject(err);
           },
           complete: () => {
             try {
@@ -479,9 +479,9 @@ describe("EthAppBinder", () => {
                   output: signature,
                 },
               ]);
-              done();
+              resolve();
             } catch (err) {
-              done(err as Error);
+              reject(err as Error);
             }
           },
         });

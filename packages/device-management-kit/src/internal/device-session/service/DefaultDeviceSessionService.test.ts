@@ -103,12 +103,16 @@ describe("DefaultDeviceSessionService", () => {
   });
 
   it("should emit new session", () =>
-    new Promise<void>((done) => {
+    new Promise<void>((resolve, reject) => {
       const subscription = sessionService.sessionsObs.subscribe({
         next(emittedDeviceSession) {
-          expect(emittedDeviceSession).toStrictEqual(deviceSession);
-          subscription.unsubscribe();
-          done();
+          try {
+            expect(emittedDeviceSession).toStrictEqual(deviceSession);
+            subscription.unsubscribe();
+            resolve();
+          } catch (error) {
+            reject(error);
+          }
         },
       });
       sessionService.addDeviceSession(deviceSession);

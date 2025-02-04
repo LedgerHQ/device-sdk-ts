@@ -49,7 +49,7 @@ describe("SolanaAppBinder", () => {
 
   describe("getAddress", () => {
     it("should return the address", () =>
-      new Promise<Error | void>((done) => {
+      new Promise<void>((resolve, reject) => {
         // GIVEN
         const address = "D2PPQSYFe83nDzk96FqGumVU8JA7J8vj2Rhjc2oXzEi5";
 
@@ -85,7 +85,7 @@ describe("SolanaAppBinder", () => {
             states.push(state);
           },
           error: (err) => {
-            done(err);
+            reject(err);
           },
           complete: () => {
             try {
@@ -95,9 +95,9 @@ describe("SolanaAppBinder", () => {
                   output: address,
                 },
               ]);
-              done();
+              resolve();
             } catch (err) {
-              done(err as Error);
+              reject(err as Error);
             }
           },
         });
@@ -163,7 +163,7 @@ describe("SolanaAppBinder", () => {
 
   describe("signTransaction", () => {
     it("should return the signature", () =>
-      new Promise<Error | void>((done) => {
+      new Promise<void>((resolve, reject) => {
         // GIVEN
         const signature = new Uint8Array([0x01, 0x02, 0x03]);
 
@@ -199,7 +199,7 @@ describe("SolanaAppBinder", () => {
             states.push(state);
           },
           error: (err) => {
-            done(err);
+            reject(err);
           },
           complete: () => {
             try {
@@ -209,9 +209,9 @@ describe("SolanaAppBinder", () => {
                   output: signature,
                 },
               ]);
-              done();
+              resolve();
             } catch (err) {
-              done(err as Error);
+              reject(err as Error);
             }
           },
         });
@@ -242,7 +242,7 @@ describe("SolanaAppBinder", () => {
 
   describe("signMessage", () => {
     it("should return the signed message", () =>
-      new Promise<Error | void>((done) => {
+      new Promise<void>((resolve, reject) => {
         // GIVEN
         const signedMessage = new Uint8Array([0x1c, 0x8a, 0x54, 0x05, 0x10]);
         const signMessageArgs = {
@@ -275,7 +275,7 @@ describe("SolanaAppBinder", () => {
             states.push(state);
           },
           error: (err) => {
-            done(err);
+            reject(err);
           },
           complete: () => {
             try {
@@ -285,9 +285,9 @@ describe("SolanaAppBinder", () => {
                   output: signedMessage,
                 },
               ]);
-              done();
+              resolve();
             } catch (err) {
-              done(err as Error);
+              reject(err as Error);
             }
           },
         });
@@ -296,7 +296,7 @@ describe("SolanaAppBinder", () => {
 
   describe("getAppConfiguration", () => {
     it("should return the app configuration", () =>
-      new Promise<Error | void>((done) => {
+      new Promise<void>((resolve, reject) => {
         // GIVEN
         const appConfiguration = {
           blindSigningEnabled: true,
@@ -328,12 +328,13 @@ describe("SolanaAppBinder", () => {
           GetAppConfigurationDAError,
           GetAppConfigurationDAIntermediateValue
         >[] = [];
+
         observable.subscribe({
           next: (state) => {
             states.push(state);
           },
           error: (err) => {
-            done(err);
+            reject(err);
           },
           complete: () => {
             try {
@@ -343,9 +344,9 @@ describe("SolanaAppBinder", () => {
                   output: appConfiguration,
                 },
               ]);
-              done();
+              resolve();
             } catch (err) {
-              done(err as Error);
+              reject(err as Error);
             }
           },
         });

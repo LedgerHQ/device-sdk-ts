@@ -58,7 +58,7 @@ describe("BtcAppBinder", () => {
       }
     });
     it("should return the pub key", () =>
-      new Promise<Error | void>((done) => {
+      new Promise<void>((resolve, reject) => {
         // GIVEN
         const extendedPublicKey =
           "D2PPQSYFe83nDzk96FqGumVU8JA7J8vj2Rhjc2oXzEi5";
@@ -103,7 +103,7 @@ describe("BtcAppBinder", () => {
             states.push(state);
           },
           error: (err) => {
-            done(err);
+            reject(err);
           },
           complete: () => {
             try {
@@ -113,9 +113,9 @@ describe("BtcAppBinder", () => {
                   output: { extendedPublicKey },
                 },
               ]);
-              done();
+              resolve();
             } catch (err) {
-              done(err as Error);
+              reject(err as Error);
             }
           },
         });
@@ -197,7 +197,7 @@ describe("BtcAppBinder", () => {
 
   describe("signMessage", () => {
     it("should return the signature", () =>
-      new Promise<Error | void>((done) => {
+      new Promise<void>((resolve, reject) => {
         // GIVEN
         const signature: Signature = {
           r: `0xDEF1`,
@@ -246,7 +246,7 @@ describe("BtcAppBinder", () => {
             states.push(state);
           },
           error: (err) => {
-            done(err);
+            reject(err);
           },
           complete: () => {
             try {
@@ -256,9 +256,9 @@ describe("BtcAppBinder", () => {
                   output: signature,
                 },
               ]);
-              done();
+              resolve();
             } catch (err) {
-              done(err as Error);
+              reject(err as Error);
             }
           },
         });
