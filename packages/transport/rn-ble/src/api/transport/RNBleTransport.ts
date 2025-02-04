@@ -262,6 +262,9 @@ export class RNBleTransport implements Transport {
       BLEService.manager.startDeviceScan(null, null, (error, device) => {
         this._handleLostDiscoveredDevices(subscriber);
 
+        console.log("device", device);
+        console.log("error", error);
+
         if (error || !device) {
           subscriber.error(error);
           return;

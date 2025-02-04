@@ -6,9 +6,9 @@
  */
 
 import React from "react";
-import { SafeAreaView, StatusBar, useColorScheme } from "react-native";
-
+import { StatusBar, useColorScheme, View } from "react-native";
 import { NavigationContainer } from "@react-navigation/native";
+
 import { RootNavigator } from "_navigators/RootNavigator";
 import { DmkProvider } from "_providers/dmkProvider";
 
@@ -21,7 +21,7 @@ function App(): React.JSX.Element {
   };
 
   return (
-    <SafeAreaView style={backgroundStyle}>
+    <View style={backgroundStyle}>
       <StatusBar
         barStyle={isDarkMode ? "light-content" : "dark-content"}
         backgroundColor={backgroundStyle.backgroundColor}
@@ -31,7 +31,7 @@ function App(): React.JSX.Element {
           <RootNavigator />
         </DmkProvider>
       </NavigationContainer>
-    </SafeAreaView>
+    </View>
   );
 }
 
