@@ -68,7 +68,7 @@ describe("GetDeviceSessionStateUseCase", () => {
   });
 
   it("should throw error when deviceSession is not found", () =>
-    new Promise<void>((done) => {
+    new Promise<void>((resolve) => {
       // given
       const useCase = new GetDeviceSessionStateUseCase(
         sessionService,
@@ -85,7 +85,7 @@ describe("GetDeviceSessionStateUseCase", () => {
       } catch (error) {
         // then
         expect(error).toBeInstanceOf(DeviceSessionNotFound);
-        done();
+        resolve();
       }
     }));
 });
