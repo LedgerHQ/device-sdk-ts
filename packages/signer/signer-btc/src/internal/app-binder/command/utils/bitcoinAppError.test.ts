@@ -8,11 +8,11 @@ import {
 
 describe("BtcAppCommandError", () => {
   afterEach(() => {
-    jest.resetAllMocks();
+    vi.resetAllMocks();
   });
 
   afterAll(() => {
-    jest.resetModules();
+    vi.resetModules();
   });
 
   it("should be an instance of DeviceExchangeError", () => {

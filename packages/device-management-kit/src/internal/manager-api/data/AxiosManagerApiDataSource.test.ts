@@ -13,7 +13,7 @@ import { HttpFetchApiError } from "@internal/manager-api/model/Errors";
 import { AxiosManagerApiDataSource } from "./AxiosManagerApiDataSource";
 import { type ManagerApiDataSource } from "./ManagerApiDataSource";
 
-jest.mock("axios");
+vi.mock("axios");
 
 const mockGetDeviceVersion = {
   id: 17,
@@ -33,10 +33,10 @@ describe("AxiosManagerApiDataSource", () => {
         api = new AxiosManagerApiDataSource({} as DmkConfig);
       });
       afterEach(() => {
-        jest.clearAllMocks();
+        vi.clearAllMocks();
       });
       it("with BTC app, should return the metadata", async () => {
-        jest.spyOn(axios, "post").mockResolvedValue({
+        vi.spyOn(axios, "post").mockResolvedValue({
           data: [BTC_APP_METADATA],
         });
 
@@ -48,7 +48,7 @@ describe("AxiosManagerApiDataSource", () => {
       });
 
       it("with no apps, should return an empty list", async () => {
-        jest.spyOn(axios, "post").mockResolvedValue({
+        vi.spyOn(axios, "post").mockResolvedValue({
           data: [],
         });
 
@@ -60,7 +60,7 @@ describe("AxiosManagerApiDataSource", () => {
       });
 
       it("with BTC app and custom lock screen, should return the metadata", async () => {
-        jest.spyOn(axios, "post").mockResolvedValue({
+        vi.spyOn(axios, "post").mockResolvedValue({
           data: [BTC_APP_METADATA, CUSTOM_LOCK_SCREEN_APP_METADATA],
         });
 
@@ -79,14 +79,14 @@ describe("AxiosManagerApiDataSource", () => {
 
     describe("error cases", () => {
       afterEach(() => {
-        jest.clearAllMocks();
+        vi.clearAllMocks();
       });
       it("should throw an error if the request fails", () => {
         // given
         const api = new AxiosManagerApiDataSource({} as DmkConfig);
 
         const err = new Error("fetch error");
-        jest.spyOn(axios, "post").mockRejectedValue(err);
+        vi.spyOn(axios, "post").mockRejectedValue(err);
 
         const hashes = [BTC_APP.appFullHash];
 
@@ -105,13 +105,11 @@ describe("AxiosManagerApiDataSource", () => {
       api = new AxiosManagerApiDataSource({} as DmkConfig);
     });
     afterEach(() => {
-      jest.clearAllMocks();
+      vi.clearAllMocks();
     });
     it("should return a complete device version", () => {
       // given
-      jest
-        .spyOn(axios, "get")
-        .mockResolvedValue({ data: mockGetDeviceVersion });
+      vi.spyOn(axios, "get").mockResolvedValue({ data: mockGetDeviceVersion });
 
       // when
       const response = api.getDeviceVersion("targetId", 42);
@@ -123,7 +121,7 @@ describe("AxiosManagerApiDataSource", () => {
       // given
 
       const error = new Error("fetch error");
-      jest.spyOn(axios, "get").mockRejectedValue(error);
+      vi.spyOn(axios, "get").mockRejectedValue(error);
 
       // when
       const response = api.getDeviceVersion("targetId", 42);
@@ -139,13 +137,13 @@ describe("AxiosManagerApiDataSource", () => {
       api = new AxiosManagerApiDataSource({} as DmkConfig);
     });
     afterEach(() => {
-      jest.clearAllMocks();
+      vi.clearAllMocks();
     });
     it("should return a complete firmware version", () => {
       // given
-      jest
-        .spyOn(axios, "get")
-        .mockResolvedValue({ data: mockGetFirmwareVersion });
+      vi.spyOn(axios, "get").mockResolvedValue({
+        data: mockGetFirmwareVersion,
+      });
 
       // when
       const response = api.getFirmwareVersion("versionName", 42, 21);
@@ -156,7 +154,7 @@ describe("AxiosManagerApiDataSource", () => {
     it("should return an error if the request fails", () => {
       // given
       const error = new Error("fetch error");
-      jest.spyOn(axios, "get").mockRejectedValue(error);
+      vi.spyOn(axios, "get").mockRejectedValue(error);
 
       // when
       const response = api.getFirmwareVersion("versionName", 42, 21);

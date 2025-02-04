@@ -16,7 +16,7 @@ describe("DefaultSignerSolana", () => {
 
   it("should call getAddress", () => {
     const dmk = {
-      executeDeviceAction: jest.fn(),
+      executeDeviceAction: vi.fn(),
     } as unknown as DeviceManagementKit;
     const sessionId = {} as DeviceSessionId;
     const signer = new DefaultSignerSolana({ dmk, sessionId });
@@ -26,7 +26,7 @@ describe("DefaultSignerSolana", () => {
 
   it("should call signTransaction", () => {
     const dmk = {
-      executeDeviceAction: jest.fn(),
+      executeDeviceAction: vi.fn(),
     } as unknown as DeviceManagementKit;
     const sessionId = {} as DeviceSessionId;
     const signer = new DefaultSignerSolana({ dmk, sessionId });
@@ -36,7 +36,7 @@ describe("DefaultSignerSolana", () => {
 
   it("should call signMessage", () => {
     const dmk = {
-      executeDeviceAction: jest.fn(),
+      executeDeviceAction: vi.fn(),
     } as unknown as DeviceManagementKit;
     const sessionId = {} as DeviceSessionId;
     const signer = new DefaultSignerSolana({ dmk, sessionId });
@@ -46,7 +46,7 @@ describe("DefaultSignerSolana", () => {
 
   it("should call getAppConfiguration", () => {
     const dmk = {
-      executeDeviceAction: jest.fn(),
+      executeDeviceAction: vi.fn(),
     } as unknown as DeviceManagementKit;
     const sessionId = {} as DeviceSessionId;
     const signer = new DefaultSignerSolana({ dmk, sessionId });

@@ -16,7 +16,7 @@ import { type SecureChannelService } from "@internal/secure-channel/service/Secu
 
 import { GetConnectedDeviceUseCase } from "./GetConnectedDeviceUseCase";
 
-jest.mock("@internal/manager-api/data/AxiosManagerApiDataSource");
+vi.mock("@internal/manager-api/data/AxiosManagerApiDataSource");
 
 let logger: LoggerPublisherService;
 let sessionService: DeviceSessionService;

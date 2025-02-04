@@ -6,7 +6,7 @@ import { HttpPkiCertificateDataSource } from "@/pki/data/HttpPkiCertificateDataS
 import { KeyUsage } from "@/pki/model/KeyUsage";
 import { type PkiCertificateInfo } from "@/pki/model/PkiCertificateInfo";
 
-jest.mock("axios");
+vi.mock("axios");
 
 describe("HttpPkiCertificateDataSource", () => {
   const config = {
@@ -25,7 +25,7 @@ describe("HttpPkiCertificateDataSource", () => {
         keyUsage: KeyUsage.Calldata,
         keyId: "keyId",
       };
-      jest.spyOn(axios, "request").mockResolvedValue({
+      vi.spyOn(axios, "request").mockResolvedValue({
         status: 200,
         data: [
           {
@@ -62,7 +62,7 @@ describe("HttpPkiCertificateDataSource", () => {
         keyUsage: KeyUsage.Calldata,
         keyId: "keyId",
       };
-      jest.spyOn(axios, "request").mockResolvedValue({
+      vi.spyOn(axios, "request").mockResolvedValue({
         status: 200,
         data: [],
       });
@@ -89,7 +89,7 @@ describe("HttpPkiCertificateDataSource", () => {
         keyUsage: KeyUsage.Calldata,
         keyId: "keyId",
       };
-      jest.spyOn(axios, "request").mockRejectedValue(new Error("error"));
+      vi.spyOn(axios, "request").mockRejectedValue(new Error("error"));
 
       // WHEN
       const result = await new HttpPkiCertificateDataSource(
@@ -113,7 +113,7 @@ describe("HttpPkiCertificateDataSource", () => {
         keyUsage: KeyUsage.Calldata,
         keyId: "keyId",
       };
-      jest.spyOn(axios, "request").mockResolvedValue({
+      vi.spyOn(axios, "request").mockResolvedValue({
         status: 200,
         data: [
           {

@@ -1,4 +1,5 @@
 import { Left, Right } from "purify-ts";
+import { type Mocked } from "vitest";
 
 import { getOsVersionCommandResponseMockBuilder } from "@api/command/os/__mocks__/GetOsVersionCommand";
 import { DeviceModelId } from "@api/device/DeviceModel";
@@ -15,14 +16,14 @@ import { HttpFetchApiError } from "@internal/manager-api/model/Errors";
 import { DefaultManagerApiService } from "./DefaultManagerApiService";
 import { type ManagerApiService } from "./ManagerApiService";
 
-jest.mock("@internal/manager-api/data/AxiosManagerApiDataSource");
-let dataSource: jest.Mocked<AxiosManagerApiDataSource>;
+vi.mock("@internal/manager-api/data/AxiosManagerApiDataSource");
+let dataSource: Mocked<AxiosManagerApiDataSource>;
 let service: ManagerApiService;
 describe("ManagerApiService", () => {
   beforeEach(() => {
     dataSource = new AxiosManagerApiDataSource(
       {} as DmkConfig,
-    ) as jest.Mocked<AxiosManagerApiDataSource>;
+    ) as Mocked<AxiosManagerApiDataSource>;
     service = new DefaultManagerApiService(dataSource);
   });
 

@@ -8,25 +8,25 @@ import { SendCommandInChunksTask } from "./SendCommandInChunksTask";
 import { SendPayloadInChunksTask } from "./SendPayloadInChunksTask";
 
 // mock SendCommandInChunksTask
-jest.mock("./SendCommandInChunksTask");
+vi.mock("./SendCommandInChunksTask");
 
 describe("SendPayloadInChunksTask", () => {
   describe("run", () => {
     beforeAll(() => {
-      jest.resetAllMocks();
+      vi.resetAllMocks();
     });
 
     it("should return a CommandResult", async () => {
       // GIVEN
       const payload = "0x1234";
-      jest
-        .spyOn(SendCommandInChunksTask.prototype, "run")
-        .mockResolvedValue(CommandResultFactory({ data: "0x5678" }));
+      vi.spyOn(SendCommandInChunksTask.prototype, "run").mockResolvedValue(
+        CommandResultFactory({ data: "0x5678" }),
+      );
 
       // WHEN
       const result = await new SendPayloadInChunksTask({} as InternalApi, {
         payload,
-        commandFactory: jest.fn(),
+        commandFactory: vi.fn(),
       }).run();
 
       // THEN
@@ -40,7 +40,7 @@ describe("SendPayloadInChunksTask", () => {
       // WHEN
       const result = await new SendPayloadInChunksTask({} as InternalApi, {
         payload,
-        commandFactory: jest.fn(),
+        commandFactory: vi.fn(),
       }).run();
 
       // THEN

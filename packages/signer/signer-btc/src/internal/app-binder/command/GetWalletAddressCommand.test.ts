@@ -25,8 +25,8 @@ describe("GetWalletAddressCommand", () => {
 
   beforeEach(() => {
     command = new GetWalletAddressCommand(defaultArgs);
-    jest.clearAllMocks();
-    jest.requireActual("@ledgerhq/device-management-kit");
+    vi.clearAllMocks();
+    vi.importActual("@ledgerhq/device-management-kit");
   });
 
   describe("getApdu", () => {

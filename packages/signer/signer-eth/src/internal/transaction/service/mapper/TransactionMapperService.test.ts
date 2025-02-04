@@ -4,7 +4,7 @@ import { Just, type Maybe, Nothing, Right } from "purify-ts";
 import { TransactionMapperService } from "./TransactionMapperService";
 
 const transactionMapperBuilder = (value?: Maybe<TransactionSubset>) => {
-  const map = jest.fn().mockReturnValue(value);
+  const map = vi.fn().mockReturnValue(value);
   return { map };
 };
 
@@ -12,7 +12,7 @@ describe("TransactionMapperService", () => {
   let service: TransactionMapperService;
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   it("should return a TransactionSubset", () => {

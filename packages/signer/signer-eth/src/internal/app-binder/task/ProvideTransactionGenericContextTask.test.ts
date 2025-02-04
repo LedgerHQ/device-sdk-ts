@@ -58,19 +58,19 @@ describe("ProvideTransactionGenericContextTask", () => {
 
   describe("run", () => {
     beforeEach(() => {
-      jest.resetAllMocks();
+      vi.resetAllMocks();
     });
 
     describe("should return an error", () => {
       it("when storeTransactionResult fail", async () => {
         // GIVEN
-        jest.spyOn(SendCommandInChunksTask.prototype, "run").mockResolvedValue(
+        vi.spyOn(SendCommandInChunksTask.prototype, "run").mockResolvedValue(
           CommandResultFactory({
             error: new InvalidStatusWordError("storeTransactionError"),
           }),
         );
         // loadCertificateCommand
-        jest.spyOn(apiMock, "sendCommand").mockResolvedValueOnce(
+        vi.spyOn(apiMock, "sendCommand").mockResolvedValueOnce(
           CommandResultFactory({
             data: undefined,
           }),
@@ -94,12 +94,12 @@ describe("ProvideTransactionGenericContextTask", () => {
 
       it("when provideTransactionInformationResult fail", async () => {
         // GIVEN
-        jest.spyOn(SendCommandInChunksTask.prototype, "run").mockResolvedValue(
+        vi.spyOn(SendCommandInChunksTask.prototype, "run").mockResolvedValue(
           CommandResultFactory({
             data: "0x1234",
           }),
         );
-        jest.spyOn(SendPayloadInChunksTask.prototype, "run").mockResolvedValue(
+        vi.spyOn(SendPayloadInChunksTask.prototype, "run").mockResolvedValue(
           CommandResultFactory({
             error: new InvalidStatusWordError(
               "provideTransactionInformationError",
@@ -107,7 +107,7 @@ describe("ProvideTransactionGenericContextTask", () => {
           }),
         );
         // loadCertificateCommand
-        jest.spyOn(apiMock, "sendCommand").mockResolvedValueOnce(
+        vi.spyOn(apiMock, "sendCommand").mockResolvedValueOnce(
           CommandResultFactory({
             data: undefined,
           }),
@@ -133,29 +133,30 @@ describe("ProvideTransactionGenericContextTask", () => {
 
       it("when ProvideTransactionGenericContextTask fail", async () => {
         // GIVEN
-        jest.spyOn(SendCommandInChunksTask.prototype, "run").mockResolvedValue(
+        vi.spyOn(SendCommandInChunksTask.prototype, "run").mockResolvedValue(
           CommandResultFactory({
             data: "0x1234",
           }),
         );
-        jest.spyOn(SendPayloadInChunksTask.prototype, "run").mockResolvedValue(
+        vi.spyOn(SendPayloadInChunksTask.prototype, "run").mockResolvedValue(
           CommandResultFactory({
             data: "0x5678",
           }),
         );
-        jest
-          .spyOn(ProvideTransactionFieldDescriptionTask.prototype, "run")
-          .mockResolvedValue(
-            Just(
-              CommandResultFactory({
-                error: new InvalidStatusWordError(
-                  "provideTransactionGenericContextTaskError",
-                ),
-              }) as CommandErrorResult,
-            ),
-          );
+        vi.spyOn(
+          ProvideTransactionFieldDescriptionTask.prototype,
+          "run",
+        ).mockResolvedValue(
+          Just(
+            CommandResultFactory({
+              error: new InvalidStatusWordError(
+                "provideTransactionGenericContextTaskError",
+              ),
+            }) as CommandErrorResult,
+          ),
+        );
         // loadCertificateCommand
-        jest.spyOn(apiMock, "sendCommand").mockResolvedValueOnce(
+        vi.spyOn(apiMock, "sendCommand").mockResolvedValueOnce(
           CommandResultFactory({
             data: undefined,
           }),
@@ -194,21 +195,22 @@ describe("ProvideTransactionGenericContextTask", () => {
           "field-1" as unknown as ClearSignContextSuccess<ClearSignContextType.TRANSACTION_FIELD_DESCRIPTION>,
           "field-2" as unknown as ClearSignContextSuccess<ClearSignContextType.TRANSACTION_FIELD_DESCRIPTION>,
         ];
-      jest.spyOn(SendCommandInChunksTask.prototype, "run").mockResolvedValue(
+      vi.spyOn(SendCommandInChunksTask.prototype, "run").mockResolvedValue(
         CommandResultFactory({
           data: "0x1234",
         }),
       );
-      jest.spyOn(SendPayloadInChunksTask.prototype, "run").mockResolvedValue(
+      vi.spyOn(SendPayloadInChunksTask.prototype, "run").mockResolvedValue(
         CommandResultFactory({
           data: "0x5678",
         }),
       );
-      jest
-        .spyOn(ProvideTransactionFieldDescriptionTask.prototype, "run")
-        .mockResolvedValue(Nothing);
+      vi.spyOn(
+        ProvideTransactionFieldDescriptionTask.prototype,
+        "run",
+      ).mockResolvedValue(Nothing);
       // loadCertificateCommand
-      jest.spyOn(apiMock, "sendCommand").mockResolvedValueOnce(
+      vi.spyOn(apiMock, "sendCommand").mockResolvedValueOnce(
         CommandResultFactory({
           data: undefined,
         }),
@@ -233,21 +235,22 @@ describe("ProvideTransactionGenericContextTask", () => {
 
     it("should return Nothing when all fields are provided", async () => {
       // GIVEN
-      jest.spyOn(SendCommandInChunksTask.prototype, "run").mockResolvedValue(
+      vi.spyOn(SendCommandInChunksTask.prototype, "run").mockResolvedValue(
         CommandResultFactory({
           data: "0x1234",
         }),
       );
-      jest.spyOn(SendPayloadInChunksTask.prototype, "run").mockResolvedValue(
+      vi.spyOn(SendPayloadInChunksTask.prototype, "run").mockResolvedValue(
         CommandResultFactory({
           data: "0x5678",
         }),
       );
-      jest
-        .spyOn(ProvideTransactionFieldDescriptionTask.prototype, "run")
-        .mockResolvedValue(Nothing);
+      vi.spyOn(
+        ProvideTransactionFieldDescriptionTask.prototype,
+        "run",
+      ).mockResolvedValue(Nothing);
       // loadCertificateCommand
-      jest.spyOn(apiMock, "sendCommand").mockResolvedValueOnce(
+      vi.spyOn(apiMock, "sendCommand").mockResolvedValueOnce(
         CommandResultFactory({
           data: undefined,
         }),
@@ -265,19 +268,20 @@ describe("ProvideTransactionGenericContextTask", () => {
 
     it("should load the transaction info certificate", async () => {
       // GIVEN
-      jest.spyOn(SendCommandInChunksTask.prototype, "run").mockResolvedValue(
+      vi.spyOn(SendCommandInChunksTask.prototype, "run").mockResolvedValue(
         CommandResultFactory({
           data: "0x1234",
         }),
       );
-      jest.spyOn(SendPayloadInChunksTask.prototype, "run").mockResolvedValue(
+      vi.spyOn(SendPayloadInChunksTask.prototype, "run").mockResolvedValue(
         CommandResultFactory({
           data: "0x5678",
         }),
       );
-      jest
-        .spyOn(ProvideTransactionFieldDescriptionTask.prototype, "run")
-        .mockResolvedValue(Nothing);
+      vi.spyOn(
+        ProvideTransactionFieldDescriptionTask.prototype,
+        "run",
+      ).mockResolvedValue(Nothing);
 
       // WHEN
       await new ProvideTransactionGenericContextTask(apiMock, {

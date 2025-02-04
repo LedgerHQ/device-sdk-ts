@@ -1,3 +1,3 @@
 export class ConsoleLogger {
-  log = jest.fn();
+  log = vi.fn();
 }

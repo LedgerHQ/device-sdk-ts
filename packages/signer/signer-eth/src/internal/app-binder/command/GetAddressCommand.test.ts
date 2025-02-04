@@ -206,7 +206,7 @@ describe("GetAddressCommand", () => {
 
         // THEN
         if (isSuccessCommandResult(result)) {
-          fail("Expected an error");
+          assert.fail("Expected an error");
         } else {
           expect(result.error).toBeInstanceOf(InvalidStatusWordError);
           expect(result.error.originalError).toEqual(
@@ -227,7 +227,7 @@ describe("GetAddressCommand", () => {
 
         // THEN
         if (isSuccessCommandResult(result)) {
-          fail("Expected an error");
+          assert.fail("Expected an error");
         } else {
           expect(result.error).toBeInstanceOf(InvalidStatusWordError);
           expect(result.error.originalError).toEqual(
@@ -248,7 +248,7 @@ describe("GetAddressCommand", () => {
 
         // THEN
         if (isSuccessCommandResult(result)) {
-          fail("Expected an error");
+          assert.fail("Expected an error");
         } else {
           expect(result.error).toBeInstanceOf(InvalidStatusWordError);
           expect(result.error.originalError).toEqual(
@@ -269,7 +269,7 @@ describe("GetAddressCommand", () => {
 
         // THEN
         if (isSuccessCommandResult(result)) {
-          fail("Expected an error");
+          assert.fail("Expected an error");
         } else {
           expect(result.error).toBeInstanceOf(InvalidStatusWordError);
           expect(result.error.originalError).toEqual(
@@ -295,7 +295,7 @@ describe("GetAddressCommand", () => {
 
         // THEN
         if (isSuccessCommandResult(result)) {
-          fail("Expected an error");
+          assert.fail("Expected an error");
         } else {
           expect(result.error).toBeInstanceOf(InvalidStatusWordError);
           expect(result.error.originalError).toEqual(
@@ -320,7 +320,7 @@ describe("GetAddressCommand", () => {
 
         // THEN
         if (isSuccessCommandResult(result)) {
-          fail("Expected an error");
+          assert.fail("Expected an error");
         } else {
           expect(result.error).toBeInstanceOf(InvalidStatusWordError);
           expect(result.error.originalError).toEqual(

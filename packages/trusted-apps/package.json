@@ -30,8 +30,9 @@
     "prettier": "prettier . --check",
     "prettier:fix": "prettier . --write",
     "typecheck": "tsc --noEmit",
-    "test": "jest --passWithNoTests",
-    "test:coverage": "pnpm test -- --coverage"
+    "test": "vitest run  --passWithNoTests",
+    "test:watch": "vitest --passWithNoTests",
+    "test:coverage": "vitest run --coverage --passWithNoTests"
   },
   "dependencies": {
     "inversify": "^6.2.2",
@@ -40,8 +41,8 @@
   "devDependencies": {
     "@ledgerhq/esbuild-tools": "workspace:*",
     "@ledgerhq/eslint-config-dsdk": "workspace:*",
-    "@ledgerhq/jest-config-dsdk": "workspace:*",
     "@ledgerhq/prettier-config-dsdk": "workspace:*",
-    "@ledgerhq/tsconfig-dsdk": "workspace:*"
+    "@ledgerhq/tsconfig-dsdk": "workspace:*",
+    "@ledgerhq/vitest-config-dmk": "workspace:*"
   }
 }

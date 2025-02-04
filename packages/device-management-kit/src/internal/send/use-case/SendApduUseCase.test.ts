@@ -21,7 +21,7 @@ import { DefaultSecureChannelService } from "@internal/secure-channel/service/De
 import { type SecureChannelService } from "@internal/secure-channel/service/SecureChannelService";
 import { SendApduUseCase } from "@internal/send/use-case/SendApduUseCase";
 
-jest.mock("@internal/manager-api/data/AxiosManagerApiDataSource");
+vi.mock("@internal/manager-api/data/AxiosManagerApiDataSource");
 
 let logger: LoggerPublisherService;
 let sessionService: DeviceSessionService;
@@ -83,7 +83,7 @@ describe("SendApduUseCase", () => {
   it("should throw an error if the apdu receiver failed", async () => {
     // given
     const connectedDevice = connectedDeviceStubBuilder({
-      sendApdu: jest.fn(async () =>
+      sendApdu: vi.fn(async () =>
         Promise.resolve(Left(new ReceiverApduError())),
       ),
     });

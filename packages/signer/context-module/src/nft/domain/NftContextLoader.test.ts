@@ -9,13 +9,13 @@ import {
 } from "@/shared/model/TransactionContext";
 
 describe("NftContextLoader", () => {
-  const spyGetNftInfosPayload = jest.fn();
-  const spyGetPluginPayload = jest.fn();
+  const spyGetNftInfosPayload = vi.fn();
+  const spyGetPluginPayload = vi.fn();
   let mockDataSource: NftDataSource;
   let loader: NftContextLoader;
 
   beforeEach(() => {
-    jest.restoreAllMocks();
+    vi.restoreAllMocks();
     mockDataSource = {
       getNftInfosPayload: spyGetNftInfosPayload,
       getSetPluginPayload: spyGetPluginPayload,

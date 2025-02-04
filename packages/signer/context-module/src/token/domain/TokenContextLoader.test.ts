@@ -10,17 +10,15 @@ import { TokenContextLoader } from "@/token/domain/TokenContextLoader";
 
 describe("TokenContextLoader", () => {
   const mockTokenDataSource: TokenDataSource = {
-    getTokenInfosPayload: jest.fn(),
+    getTokenInfosPayload: vi.fn(),
   };
   const loader = new TokenContextLoader(mockTokenDataSource);
 
   beforeEach(() => {
-    jest.restoreAllMocks();
-    jest
-      .spyOn(mockTokenDataSource, "getTokenInfosPayload")
-      .mockImplementation(({ address }) =>
-        Promise.resolve(Right(`payload-${address}`)),
-      );
+    vi.restoreAllMocks();
+    vi.spyOn(mockTokenDataSource, "getTokenInfosPayload").mockImplementation(
+      ({ address }) => Promise.resolve(Right(`payload-${address}`)),
+    );
   });
 
   describe("load function", () => {
@@ -103,9 +101,9 @@ describe("TokenContextLoader", () => {
         data: "0x095ea7b30000000000",
         chainId: 1,
       } as TransactionContext;
-      jest
-        .spyOn(mockTokenDataSource, "getTokenInfosPayload")
-        .mockResolvedValue(Left(new Error("error")));
+      vi.spyOn(mockTokenDataSource, "getTokenInfosPayload").mockResolvedValue(
+        Left(new Error("error")),
+      );
 
       // WHEN
       const result = await loader.load(transaction);
@@ -159,9 +157,9 @@ describe("TokenContextLoader", () => {
       };
 
       // WHEN
-      jest
-        .spyOn(mockTokenDataSource, "getTokenInfosPayload")
-        .mockResolvedValue(Right("payload"));
+      vi.spyOn(mockTokenDataSource, "getTokenInfosPayload").mockResolvedValue(
+        Right("payload"),
+      );
       const result = await loader.loadField(field);
 
       // THEN
@@ -180,9 +178,9 @@ describe("TokenContextLoader", () => {
       };
 
       // WHEN
-      jest
-        .spyOn(mockTokenDataSource, "getTokenInfosPayload")
-        .mockResolvedValue(Left(new Error("error")));
+      vi.spyOn(mockTokenDataSource, "getTokenInfosPayload").mockResolvedValue(
+        Left(new Error("error")),
+      );
       const result = await loader.loadField(field);
 
       // THEN

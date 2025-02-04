@@ -16,7 +16,7 @@ import { type SecureChannelService } from "@internal/secure-channel/service/Secu
 
 import { GetDeviceSessionStateUseCase } from "./GetDeviceSessionStateUseCase";
 
-jest.mock("@internal/manager-api/data/AxiosManagerApiDataSource");
+vi.mock("@internal/manager-api/data/AxiosManagerApiDataSource");
 
 let logger: LoggerPublisherService;
 let sessionService: DeviceSessionService;
@@ -67,24 +67,25 @@ describe("GetDeviceSessionStateUseCase", () => {
     expect(res).toStrictEqual(expected);
   });
 
-  it("should throw error when deviceSession is not found", (done) => {
-    // given
-    const useCase = new GetDeviceSessionStateUseCase(
-      sessionService,
-      () => logger,
-    );
+  it("should throw error when deviceSession is not found", () =>
+    new Promise<void>((done) => {
+      // given
+      const useCase = new GetDeviceSessionStateUseCase(
+        sessionService,
+        () => logger,
+      );
 
-    // when
-    try {
-      useCase
-        .execute({
-          sessionId: fakeSessionId,
-        })
-        .subscribe();
-    } catch (error) {
-      // then
-      expect(error).toBeInstanceOf(DeviceSessionNotFound);
-      done();
-    }
-  });
+      // when
+      try {
+        useCase
+          .execute({
+            sessionId: fakeSessionId,
+          })
+          .subscribe();
+      } catch (error) {
+        // then
+        expect(error).toBeInstanceOf(DeviceSessionNotFound);
+        done();
+      }
+    }));
 });

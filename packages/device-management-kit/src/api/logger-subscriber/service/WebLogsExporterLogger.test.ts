@@ -26,7 +26,7 @@ describe("getJSONStringifyReplacer", () => {
       deviceModel: deviceModelStubBuilder(),
       type: "USB",
       id: "mockedDeviceId",
-      sendApdu: jest.fn(),
+      sendApdu: vi.fn(),
       transport: "USB",
     };
 
@@ -35,7 +35,7 @@ describe("getJSONStringifyReplacer", () => {
         connectedDevice,
         id: "mockedSessionId",
       },
-      jest.fn(),
+      vi.fn(),
       {} as ManagerApiService,
       {} as SecureChannelService,
     );

@@ -34,7 +34,7 @@ describe("discoveryModuleFactory", () => {
       deviceModelModuleFactory({ stub: false }),
       deviceSessionModuleFactory(),
       transportModuleFactory({
-        transports: [jest.fn().mockImplementation(() => transport)],
+        transports: [vi.fn().mockImplementation(() => transport)],
       }),
       managerApiModuleFactory({
         config: {

@@ -42,86 +42,87 @@ import { EthAppBinder } from "./EthAppBinder";
 
 describe("EthAppBinder", () => {
   const mockedDmk: DeviceManagementKit = {
-    sendCommand: jest.fn(),
-    executeDeviceAction: jest.fn(),
+    sendCommand: vi.fn(),
+    executeDeviceAction: vi.fn(),
   } as unknown as DeviceManagementKit;
   const mockedContextModule: ContextModule = {
-    getContext: jest.fn(),
-    getContexts: jest.fn(),
-    getTypedDataFilters: jest.fn(),
+    getContext: vi.fn(),
+    getContexts: vi.fn(),
+    getTypedDataFilters: vi.fn(),
   };
   const mockedMapper: TransactionMapperService = {
-    mapTransactionToSubset: jest.fn(),
+    mapTransactionToSubset: vi.fn(),
   } as unknown as TransactionMapperService;
   const mockedParser: TransactionParserService = {
-    extractValue: jest.fn(),
+    extractValue: vi.fn(),
   } as unknown as TransactionParserService;
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   describe("getAddress", () => {
-    it("should return the address, publicKey, and chainCode", (done) => {
-      // GIVEN
-      const address = "0xF7C69BedB292Dd3fC2cA4103989B5BD705164c43";
-      const publicKey = "04e3785ca";
-      const chainCode = undefined;
+    it("should return the address, publicKey, and chainCode", () =>
+      new Promise<Error | void>((done) => {
+        // GIVEN
+        const address = "0xF7C69BedB292Dd3fC2cA4103989B5BD705164c43";
+        const publicKey = "04e3785ca";
+        const chainCode = undefined;
 
-      jest.spyOn(mockedDmk, "executeDeviceAction").mockReturnValue({
-        observable: from([
-          {
-            status: DeviceActionStatus.Completed,
-            output: { address, publicKey, chainCode },
-          } as DeviceActionState<
-            GetAddressDAOutput,
-            GetAddressDAError,
-            GetAddressDAIntermediateValue
-          >,
-        ]),
-        cancel: jest.fn(),
-      });
+        vi.spyOn(mockedDmk, "executeDeviceAction").mockReturnValue({
+          observable: from([
+            {
+              status: DeviceActionStatus.Completed,
+              output: { address, publicKey, chainCode },
+            } as DeviceActionState<
+              GetAddressDAOutput,
+              GetAddressDAError,
+              GetAddressDAIntermediateValue
+            >,
+          ]),
+          cancel: vi.fn(),
+        });
 
-      // WHEN
-      const appBinder = new EthAppBinder(
-        mockedDmk,
-        mockedContextModule,
-        mockedMapper,
-        mockedParser,
-        "sessionId",
-      );
-      const { observable } = appBinder.getAddress({
-        derivationPath: "44'/60'/3'/2/1",
-      });
+        // WHEN
+        const appBinder = new EthAppBinder(
+          mockedDmk,
+          mockedContextModule,
+          mockedMapper,
+          mockedParser,
+          "sessionId",
+        );
+        const { observable } = appBinder.getAddress({
+          derivationPath: "44'/60'/3'/2/1",
+        });
 
-      // THEN
-      const states: DeviceActionState<
-        GetAddressDAOutput,
-        GetAddressDAError,
-        GetAddressDAIntermediateValue
-      >[] = [];
-      observable.subscribe({
-        next: (state) => {
-          states.push(state);
-        },
-        error: (err) => {
-          done(err);
-        },
-        complete: () => {
-          try {
-            expect(states).toEqual([
-              {
-                status: DeviceActionStatus.Completed,
-                output: { address, publicKey, chainCode },
-              },
-            ]);
-            done();
-          } catch (err) {
+        // THEN
+        const states: DeviceActionState<
+          GetAddressDAOutput,
+          GetAddressDAError,
+          GetAddressDAIntermediateValue
+        >[] = [];
+        observable.subscribe({
+          next: (state) => {
+            states.push(state);
+          },
+          error: (err) => {
             done(err);
-          }
-        },
-      });
-    });
+          },
+          complete: () => {
+            try {
+              expect(states).toEqual([
+                {
+                  status: DeviceActionStatus.Completed,
+                  output: { address, publicKey, chainCode },
+                },
+              ]);
+              done();
+            } catch (err) {
+              done(err as Error);
+            }
+          },
+        });
+      }));
 
     describe("calls of executeDeviceAction with the correct params", () => {
       const baseParams = {
@@ -196,290 +197,294 @@ describe("EthAppBinder", () => {
   });
 
   describe("signTransaction", () => {
-    it("should return the signature", (done) => {
-      // GIVEN
-      const signature: Signature = {
-        r: `0xDEAD`,
-        s: `0xBEEF`,
-        v: 0,
-      };
-      const transaction: Uint8Array = hexaStringToBuffer(
-        Transaction.from({
-          to: "0x1234567890123456789012345678901234567890",
-          value: 0n,
-        }).unsignedSerialized,
-      )!;
-      const options = {};
+    it("should return the signature", () =>
+      new Promise<Error | void>((done) => {
+        // GIVEN
+        const signature: Signature = {
+          r: `0xDEAD`,
+          s: `0xBEEF`,
+          v: 0,
+        };
+        const transaction: Uint8Array = hexaStringToBuffer(
+          Transaction.from({
+            to: "0x1234567890123456789012345678901234567890",
+            value: 0n,
+          }).unsignedSerialized,
+        )!;
+        const options = {};
 
-      jest.spyOn(mockedDmk, "executeDeviceAction").mockReturnValue({
-        observable: from([
-          {
-            status: DeviceActionStatus.Completed,
-            output: signature,
-          } as DeviceActionState<
-            SignTypedDataDAOutput,
-            SignTypedDataDAError,
-            SignTypedDataDAIntermediateValue
-          >,
-        ]),
-        cancel: jest.fn(),
-      });
+        vi.spyOn(mockedDmk, "executeDeviceAction").mockReturnValue({
+          observable: from([
+            {
+              status: DeviceActionStatus.Completed,
+              output: signature,
+            } as DeviceActionState<
+              SignTypedDataDAOutput,
+              SignTypedDataDAError,
+              SignTypedDataDAIntermediateValue
+            >,
+          ]),
+          cancel: vi.fn(),
+        });
 
-      // WHEN
-      const appBinder = new EthAppBinder(
-        mockedDmk,
-        mockedContextModule,
-        mockedMapper,
-        mockedParser,
-        "sessionId",
-      );
-      const { observable } = appBinder.signTransaction({
-        derivationPath: "44'/60'/3'/2/1",
-        transaction,
-        options,
-      });
+        // WHEN
+        const appBinder = new EthAppBinder(
+          mockedDmk,
+          mockedContextModule,
+          mockedMapper,
+          mockedParser,
+          "sessionId",
+        );
+        const { observable } = appBinder.signTransaction({
+          derivationPath: "44'/60'/3'/2/1",
+          transaction,
+          options,
+        });
 
-      // THEN
-      const states: DeviceActionState<
-        SignTransactionDAOutput,
-        SignTransactionDAError,
-        SignTransactionDAIntermediateValue
-      >[] = [];
-      observable.subscribe({
-        next: (state) => {
-          states.push(state);
-        },
-        error: (err) => {
-          done(err);
-        },
-        complete: () => {
-          try {
-            expect(states).toEqual([
-              {
-                status: DeviceActionStatus.Completed,
-                output: signature,
-              },
-            ]);
-            done();
-          } catch (err) {
+        // THEN
+        const states: DeviceActionState<
+          SignTransactionDAOutput,
+          SignTransactionDAError,
+          SignTransactionDAIntermediateValue
+        >[] = [];
+        observable.subscribe({
+          next: (state) => {
+            states.push(state);
+          },
+          error: (err) => {
             done(err);
-          }
-        },
-      });
-    });
+          },
+          complete: () => {
+            try {
+              expect(states).toEqual([
+                {
+                  status: DeviceActionStatus.Completed,
+                  output: signature,
+                },
+              ]);
+              done();
+            } catch (err) {
+              done(err as Error);
+            }
+          },
+        });
+      }));
 
-    it("should return the signature without options", (done) => {
-      // GIVEN
-      const signature: Signature = {
-        r: `0xDEAD`,
-        s: `0xBEEF`,
-        v: 0,
-      };
-      const transaction: Uint8Array = hexaStringToBuffer(
-        Transaction.from({
-          to: "0x1234567890123456789012345678901234567890",
-          value: 0n,
-        }).unsignedSerialized,
-      )!;
+    it("should return the signature without options", () =>
+      new Promise<Error | void>((done) => {
+        // GIVEN
+        const signature: Signature = {
+          r: `0xDEAD`,
+          s: `0xBEEF`,
+          v: 0,
+        };
+        const transaction: Uint8Array = hexaStringToBuffer(
+          Transaction.from({
+            to: "0x1234567890123456789012345678901234567890",
+            value: 0n,
+          }).unsignedSerialized,
+        )!;
 
-      jest.spyOn(mockedDmk, "executeDeviceAction").mockReturnValue({
-        observable: from([
-          {
-            status: DeviceActionStatus.Completed,
-            output: signature,
-          } as DeviceActionState<
-            SignTypedDataDAOutput,
-            SignTypedDataDAError,
-            SignTypedDataDAIntermediateValue
-          >,
-        ]),
-        cancel: jest.fn(),
-      });
+        vi.spyOn(mockedDmk, "executeDeviceAction").mockReturnValue({
+          observable: from([
+            {
+              status: DeviceActionStatus.Completed,
+              output: signature,
+            } as DeviceActionState<
+              SignTypedDataDAOutput,
+              SignTypedDataDAError,
+              SignTypedDataDAIntermediateValue
+            >,
+          ]),
+          cancel: vi.fn(),
+        });
 
-      // WHEN
-      const appBinder = new EthAppBinder(
-        mockedDmk,
-        mockedContextModule,
-        mockedMapper,
-        mockedParser,
-        "sessionId",
-      );
-      const { observable } = appBinder.signTransaction({
-        derivationPath: "44'/60'/3'/2/1",
-        transaction,
-        options: undefined,
-      });
+        // WHEN
+        const appBinder = new EthAppBinder(
+          mockedDmk,
+          mockedContextModule,
+          mockedMapper,
+          mockedParser,
+          "sessionId",
+        );
+        const { observable } = appBinder.signTransaction({
+          derivationPath: "44'/60'/3'/2/1",
+          transaction,
+          options: undefined,
+        });
 
-      // THEN
-      const states: DeviceActionState<
-        SignTransactionDAOutput,
-        SignTransactionDAError,
-        SignTransactionDAIntermediateValue
-      >[] = [];
-      observable.subscribe({
-        next: (state) => {
-          states.push(state);
-        },
-        error: (err) => {
-          done(err);
-        },
-        complete: () => {
-          try {
-            expect(states).toEqual([
-              {
-                status: DeviceActionStatus.Completed,
-                output: signature,
-              },
-            ]);
-            done();
-          } catch (err) {
+        // THEN
+        const states: DeviceActionState<
+          SignTransactionDAOutput,
+          SignTransactionDAError,
+          SignTransactionDAIntermediateValue
+        >[] = [];
+        observable.subscribe({
+          next: (state) => {
+            states.push(state);
+          },
+          error: (err) => {
             done(err);
-          }
-        },
-      });
-    });
+          },
+          complete: () => {
+            try {
+              expect(states).toEqual([
+                {
+                  status: DeviceActionStatus.Completed,
+                  output: signature,
+                },
+              ]);
+              done();
+            } catch (err) {
+              done(err as Error);
+            }
+          },
+        });
+      }));
   });
 
   describe("signMessage", () => {
-    it("should return the signature", (done) => {
-      // GIVEN
-      const signature: Signature = {
-        r: `0xDEAD`,
-        s: `0xBEEF`,
-        v: 0,
-      };
-      const message = "Hello, World!";
+    it("should return the signature", () =>
+      new Promise<Error | void>((done) => {
+        // GIVEN
+        const signature: Signature = {
+          r: `0xDEAD`,
+          s: `0xBEEF`,
+          v: 0,
+        };
+        const message = "Hello, World!";
 
-      jest.spyOn(mockedDmk, "executeDeviceAction").mockReturnValue({
-        observable: from([
-          {
-            status: DeviceActionStatus.Completed,
-            output: signature,
-          } as DeviceActionState<
-            SignPersonalMessageDAOutput,
-            SignPersonalMessageDAError,
-            SignPersonalMessageDAIntermediateValue
-          >,
-        ]),
-        cancel: jest.fn(),
-      });
+        vi.spyOn(mockedDmk, "executeDeviceAction").mockReturnValue({
+          observable: from([
+            {
+              status: DeviceActionStatus.Completed,
+              output: signature,
+            } as DeviceActionState<
+              SignPersonalMessageDAOutput,
+              SignPersonalMessageDAError,
+              SignPersonalMessageDAIntermediateValue
+            >,
+          ]),
+          cancel: vi.fn(),
+        });
 
-      // WHEN
-      const appBinder = new EthAppBinder(
-        mockedDmk,
-        mockedContextModule,
-        mockedMapper,
-        mockedParser,
-        "sessionId",
-      );
-      const { observable } = appBinder.signPersonalMessage({
-        derivationPath: "44'/60'/3'/2/1",
-        message,
-      });
+        // WHEN
+        const appBinder = new EthAppBinder(
+          mockedDmk,
+          mockedContextModule,
+          mockedMapper,
+          mockedParser,
+          "sessionId",
+        );
+        const { observable } = appBinder.signPersonalMessage({
+          derivationPath: "44'/60'/3'/2/1",
+          message,
+        });
 
-      // THEN
-      const states: DeviceActionState<
-        SignPersonalMessageDAOutput,
-        SignPersonalMessageDAError,
-        SignPersonalMessageDAIntermediateValue
-      >[] = [];
-      observable.subscribe({
-        next: (state) => {
-          states.push(state);
-        },
-        error: (err) => {
-          done(err);
-        },
-        complete: () => {
-          try {
-            expect(states).toEqual([
-              {
-                status: DeviceActionStatus.Completed,
-                output: signature,
-              },
-            ]);
-            done();
-          } catch (err) {
+        // THEN
+        const states: DeviceActionState<
+          SignPersonalMessageDAOutput,
+          SignPersonalMessageDAError,
+          SignPersonalMessageDAIntermediateValue
+        >[] = [];
+        observable.subscribe({
+          next: (state) => {
+            states.push(state);
+          },
+          error: (err) => {
             done(err);
-          }
-        },
-      });
-    });
+          },
+          complete: () => {
+            try {
+              expect(states).toEqual([
+                {
+                  status: DeviceActionStatus.Completed,
+                  output: signature,
+                },
+              ]);
+              done();
+            } catch (err) {
+              done(err as Error);
+            }
+          },
+        });
+      }));
   });
 
   describe("signTypedData", () => {
-    it("should return the signature", (done) => {
-      // GIVEN
-      const signature: Signature = {
-        r: `0xDEAD`,
-        s: `0xBEEF`,
-        v: 0,
-      };
-      const typedData: TypedData = {
-        domain: {},
-        types: {},
-        primaryType: "test",
-        message: {},
-      };
-      const parser: TypedDataParserService = {
-        parse: jest.fn(),
-      };
+    it("should return the signature", () =>
+      new Promise<Error | void>((done) => {
+        // GIVEN
+        const signature: Signature = {
+          r: `0xDEAD`,
+          s: `0xBEEF`,
+          v: 0,
+        };
+        const typedData: TypedData = {
+          domain: {},
+          types: {},
+          primaryType: "test",
+          message: {},
+        };
+        const parser: TypedDataParserService = {
+          parse: vi.fn(),
+        };
 
-      jest.spyOn(mockedDmk, "executeDeviceAction").mockReturnValue({
-        observable: from([
-          {
-            status: DeviceActionStatus.Completed,
-            output: signature,
-          } as DeviceActionState<
-            SignTypedDataDAOutput,
-            SignTypedDataDAError,
-            SignTypedDataDAIntermediateValue
-          >,
-        ]),
-        cancel: jest.fn(),
-      });
+        vi.spyOn(mockedDmk, "executeDeviceAction").mockReturnValue({
+          observable: from([
+            {
+              status: DeviceActionStatus.Completed,
+              output: signature,
+            } as DeviceActionState<
+              SignTypedDataDAOutput,
+              SignTypedDataDAError,
+              SignTypedDataDAIntermediateValue
+            >,
+          ]),
+          cancel: vi.fn(),
+        });
 
-      // WHEN
-      const appBinder = new EthAppBinder(
-        mockedDmk,
-        mockedContextModule,
-        mockedMapper,
-        mockedParser,
-        "sessionId",
-      );
-      const { observable } = appBinder.signTypedData({
-        derivationPath: "44'/60'/3'/2/1",
-        parser,
-        data: typedData,
-      });
+        // WHEN
+        const appBinder = new EthAppBinder(
+          mockedDmk,
+          mockedContextModule,
+          mockedMapper,
+          mockedParser,
+          "sessionId",
+        );
+        const { observable } = appBinder.signTypedData({
+          derivationPath: "44'/60'/3'/2/1",
+          parser,
+          data: typedData,
+        });
 
-      // THEN
-      const states: DeviceActionState<
-        SignTypedDataDAOutput,
-        SignTypedDataDAError,
-        SignTypedDataDAIntermediateValue
-      >[] = [];
-      observable.subscribe({
-        next: (state) => {
-          states.push(state);
-        },
-        error: (err) => {
-          done(err);
-        },
-        complete: () => {
-          try {
-            expect(states).toEqual([
-              {
-                status: DeviceActionStatus.Completed,
-                output: signature,
-              },
-            ]);
-            done();
-          } catch (err) {
+        // THEN
+        const states: DeviceActionState<
+          SignTypedDataDAOutput,
+          SignTypedDataDAError,
+          SignTypedDataDAIntermediateValue
+        >[] = [];
+        observable.subscribe({
+          next: (state) => {
+            states.push(state);
+          },
+          error: (err) => {
             done(err);
-          }
-        },
-      });
-    });
+          },
+          complete: () => {
+            try {
+              expect(states).toEqual([
+                {
+                  status: DeviceActionStatus.Completed,
+                  output: signature,
+                },
+              ]);
+              done();
+            } catch (err) {
+              done(err as Error);
+            }
+          },
+        });
+      }));
   });
 });

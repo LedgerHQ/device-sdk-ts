@@ -30,9 +30,9 @@
     "prettier": "prettier . --check",
     "prettier:fix": "prettier . --write",
     "typecheck": "tsc --noEmit",
-    "test": "jest --passWithNoTests",
-    "test:watch": "pnpm test -- --watch",
-    "test:coverage": "pnpm test -- --coverage"
+    "test": "vitest run --passWithNoTests",
+    "test:watch": "vitest --passWithNoTests",
+    "test:coverage": "vitest run --coverage --passWithNoTests"
   },
   "dependencies": {
     "@sentry/minimal": "^6.19.7",
@@ -43,9 +43,9 @@
     "@ledgerhq/device-mockserver-client": "workspace:*",
     "@ledgerhq/esbuild-tools": "workspace:*",
     "@ledgerhq/eslint-config-dsdk": "workspace:*",
-    "@ledgerhq/jest-config-dsdk": "workspace:*",
     "@ledgerhq/prettier-config-dsdk": "workspace:*",
     "@ledgerhq/tsconfig-dsdk": "workspace:*",
+    "@ledgerhq/vitest-config-dmk": "workspace:*",
     "rxjs": "^7.8.1",
     "ts-node": "^10.9.2"
   },

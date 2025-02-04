@@ -93,13 +93,9 @@ describe("SignTransactionCommand", () => {
       });
     });
 
-    describe("Store and start", () => {
-      // TODO
-    });
+    describe.todo("Store and start", () => {});
 
-    describe("Start", () => {
-      // TODO
-    });
+    describe.todo("Start", () => {});
   });
 
   describe("parseResponse", () => {

@@ -2,6 +2,7 @@ import {
   APDU_MAX_PAYLOAD,
   type DmkError,
 } from "@ledgerhq/device-management-kit";
+import { type Mocked } from "vitest";
 
 import { ClientCommandCodes } from "@internal/app-binder/command/utils/constants";
 import { type DataStore } from "@internal/data-store/model/DataStore";
@@ -14,12 +15,12 @@ const COMMAND_CODE = ClientCommandCodes.GET_MORE_ELEMENTS;
 
 describe("GetMoreElementsCommandHandler", () => {
   let commandHandlerContext: CommandHandlerContext;
-  let mockDataStore: jest.Mocked<DataStore>;
+  let mockDataStore: Mocked<DataStore>;
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
 
-    mockDataStore = {} as unknown as jest.Mocked<DataStore>;
+    mockDataStore = {} as unknown as Mocked<DataStore>;
 
     commandHandlerContext = {
       dataStore: mockDataStore,

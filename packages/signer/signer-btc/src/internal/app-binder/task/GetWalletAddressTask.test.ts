@@ -16,7 +16,7 @@ describe("GetWalletAddressTask", () => {
     it("should return a wallet address successfully", async () => {
       // given
       const api = {
-        sendCommand: jest.fn().mockResolvedValueOnce(
+        sendCommand: vi.fn().mockResolvedValueOnce(
           CommandResultFactory({
             data: Uint8Array.from([0x01, 0x02, 0x03]),
           }),
@@ -28,16 +28,16 @@ describe("GetWalletAddressTask", () => {
       } as unknown as InternalWallet;
 
       const walletSerializer = {
-        getId: jest.fn().mockReturnValue(Uint8Array.from([0x05])),
+        getId: vi.fn().mockReturnValue(Uint8Array.from([0x05])),
       } as unknown as WalletSerializer;
 
       const dataStoreService = {
-        merklizeWallet: jest.fn(),
+        merklizeWallet: vi.fn(),
       } as unknown as DataStoreService;
 
       const continueTaskFactory = () =>
         ({
-          run: jest.fn().mockResolvedValue(
+          run: vi.fn().mockResolvedValue(
             CommandResultFactory({
               data: {
                 data: Uint8Array.from([
@@ -48,7 +48,7 @@ describe("GetWalletAddressTask", () => {
           ),
         }) as unknown as ContinueTask;
 
-      const mockGetAddress = jest.fn().mockReturnValue(
+      const mockGetAddress = vi.fn().mockReturnValue(
         CommandResultFactory({
           data: { address: "some address" },
         }),
@@ -83,7 +83,7 @@ describe("GetWalletAddressTask", () => {
     it("should fail if ContinueTask fails", async () => {
       // given
       const api = {
-        sendCommand: jest.fn(),
+        sendCommand: vi.fn(),
       } as unknown as InternalApi;
 
       const wallet = {
@@ -91,16 +91,16 @@ describe("GetWalletAddressTask", () => {
       } as unknown as InternalWallet;
 
       const walletSerializer = {
-        getId: jest.fn().mockReturnValue(Uint8Array.from([0x05])),
+        getId: vi.fn().mockReturnValue(Uint8Array.from([0x05])),
       } as unknown as WalletSerializer;
 
       const dataStoreService = {
-        merklizeWallet: jest.fn(),
+        merklizeWallet: vi.fn(),
       } as unknown as DataStoreService;
 
       const continueTaskFactory = () =>
         ({
-          run: jest.fn().mockResolvedValue(
+          run: vi.fn().mockResolvedValue(
             CommandResultFactory({
               error: new InvalidStatusWordError("ContinueTask failed"),
             }),
@@ -132,7 +132,7 @@ describe("GetWalletAddressTask", () => {
     it("should fail with an invalid device response", async () => {
       // given
       const api = {
-        sendCommand: jest.fn().mockResolvedValueOnce(
+        sendCommand: vi.fn().mockResolvedValueOnce(
           CommandResultFactory({
             error: new InvalidStatusWordError(
               "Invalid response from the device",
@@ -146,16 +146,16 @@ describe("GetWalletAddressTask", () => {
       } as unknown as InternalWallet;
 
       const walletSerializer = {
-        getId: jest.fn().mockReturnValue(Uint8Array.from([0x05])),
+        getId: vi.fn().mockReturnValue(Uint8Array.from([0x05])),
       } as unknown as WalletSerializer;
 
       const dataStoreService = {
-        merklizeWallet: jest.fn(),
+        merklizeWallet: vi.fn(),
       } as unknown as DataStoreService;
 
       const continueTaskFactory = () =>
         ({
-          run: jest.fn().mockResolvedValue(
+          run: vi.fn().mockResolvedValue(
             CommandResultFactory({
               error: new InvalidStatusWordError(
                 "Invalid response from the device",

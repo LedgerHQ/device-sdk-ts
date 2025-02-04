@@ -17,8 +17,8 @@ import { type SecureChannelService } from "@internal/secure-channel/service/Secu
 
 import { DefaultDeviceSessionService } from "./DefaultDeviceSessionService";
 
-jest.mock("@internal/logger-publisher/service/DefaultLoggerPublisherService");
-jest.mock("@internal/manager-api/data/AxiosManagerApiDataSource");
+vi.mock("@internal/logger-publisher/service/DefaultLoggerPublisherService");
+vi.mock("@internal/manager-api/data/AxiosManagerApiDataSource");
 
 let sessionService: DefaultDeviceSessionService;
 let loggerService: DefaultLoggerPublisherService;
@@ -30,7 +30,7 @@ let secureChannel: SecureChannelService;
 
 describe("DefaultDeviceSessionService", () => {
   beforeEach(() => {
-    jest.restoreAllMocks();
+    vi.restoreAllMocks();
     loggerService = new DefaultLoggerPublisherService([], "deviceSession");
     sessionService = new DefaultDeviceSessionService(() => loggerService);
     managerApiDataSource = new AxiosManagerApiDataSource({} as DmkConfig);
@@ -102,16 +102,17 @@ describe("DefaultDeviceSessionService", () => {
     );
   });
 
-  it("should emit new session", (done) => {
-    const subscription = sessionService.sessionsObs.subscribe({
-      next(emittedDeviceSession) {
-        expect(emittedDeviceSession).toStrictEqual(deviceSession);
-        subscription.unsubscribe();
-        done();
-      },
-    });
-    sessionService.addDeviceSession(deviceSession);
-  });
+  it("should emit new session", () =>
+    new Promise<void>((done) => {
+      const subscription = sessionService.sessionsObs.subscribe({
+        next(emittedDeviceSession) {
+          expect(emittedDeviceSession).toStrictEqual(deviceSession);
+          subscription.unsubscribe();
+          done();
+        },
+      });
+      sessionService.addDeviceSession(deviceSession);
+    }));
 
   it("should emit previous added session", () => {
     const lastDeviceSession = deviceSessionStubBuilder(

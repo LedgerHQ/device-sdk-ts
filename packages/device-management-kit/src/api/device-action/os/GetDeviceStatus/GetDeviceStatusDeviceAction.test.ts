@@ -22,11 +22,11 @@ import { GetDeviceStatusDeviceAction } from "./GetDeviceStatusDeviceAction";
 import { type GetDeviceStatusDAState } from "./types";
 
 describe("GetDeviceStatusDeviceAction", () => {
-  const getAppAndVersionMock = jest.fn();
-  const getDeviceSessionStateMock = jest.fn();
-  const waitForDeviceUnlockMock = jest.fn();
-  const setDeviceSessionState = jest.fn();
-  const isDeviceOnboardedMock = jest.fn();
+  const getAppAndVersionMock = vi.fn();
+  const getDeviceSessionStateMock = vi.fn();
+  const waitForDeviceUnlockMock = vi.fn();
+  const setDeviceSessionState = vi.fn();
+  const isDeviceOnboardedMock = vi.fn();
 
   function extractDependenciesMock() {
     return {
@@ -44,539 +44,599 @@ describe("GetDeviceStatusDeviceAction", () => {
     getDeviceSessionStateObservable: apiGetDeviceSessionStateObservableMock,
   } = makeDeviceActionInternalApiMock();
   beforeEach(() => {
-    jest.resetAllMocks();
+    vi.resetAllMocks();
     isDeviceOnboardedMock.mockReturnValue(true);
   });
 
   describe("without overriding `extractDependencies`", () => {
-    it("should run the device action with an unlocked device", (done) => {
-      const getDeviceStateDeviceAction = new GetDeviceStatusDeviceAction({
-        input: { unlockTimeout: 500 },
-      });
+    it("should run the device action with an unlocked device", () =>
+      new Promise<void>((resolve, reject) => {
+        const getDeviceStateDeviceAction = new GetDeviceStatusDeviceAction({
+          input: { unlockTimeout: 500 },
+        });
 
-      apiGetDeviceSessionStateMock.mockReturnValue({
-        sessionStateType: DeviceSessionStateType.Connected,
-        deviceStatus: DeviceStatus.CONNECTED,
-        deviceModelId: DeviceModelId.FLEX,
-      });
+        apiGetDeviceSessionStateMock.mockReturnValue({
+          sessionStateType: DeviceSessionStateType.Connected,
+          deviceStatus: DeviceStatus.CONNECTED,
+          deviceModelId: DeviceModelId.NANO_X,
+        });
 
-      sendCommandMock.mockResolvedValue(
-        CommandResultFactory({
-          data: {
-            name: "BOLOS",
-            version: "1.0.0",
-          },
-        }),
-      );
-
-      const expectedStates: Array<GetDeviceStatusDAState> = [
-        {
-          intermediateValue: {
-            requiredUserInteraction: UserInteractionRequired.None,
-          },
-          status: DeviceActionStatus.Pending,
-        },
-        {
-          output: {
-            currentApp: "BOLOS",
-            currentAppVersion: "1.0.0",
-          },
-          status: DeviceActionStatus.Completed,
-        },
-      ];
-
-      testDeviceActionStates(
-        getDeviceStateDeviceAction,
-        expectedStates,
-        makeDeviceActionInternalApiMock(),
-        done,
-      );
-    });
-
-    it("should run the device action with a locked device", (done) => {
-      const getDeviceStateDeviceAction = new GetDeviceStatusDeviceAction({
-        input: { unlockTimeout: 500 },
-      });
-
-      apiGetDeviceSessionStateMock.mockReturnValue({
-        sessionStateType: DeviceSessionStateType.ReadyWithoutSecureChannel,
-        deviceStatus: DeviceStatus.LOCKED,
-        currentApp: { name: "mockedCurrentApp", version: "1.0.0" },
-        installedApps: [],
-        deviceModelId: DeviceModelId.FLEX,
-      });
-
-      apiGetDeviceSessionStateObservableMock.mockImplementation(
-        () =>
-          new Observable((o) => {
-            const inner = interval(50).subscribe({
-              next: (i) => {
-                if (i > 2) {
-                  o.next({
-                    sessionStateType:
-                      DeviceSessionStateType.ReadyWithoutSecureChannel,
-                    deviceStatus: DeviceStatus.CONNECTED,
-                    currentApp: { name: "mockedCurrentApp", version: "1.0.0" },
-                    installedApps: [],
-                    deviceModelId: DeviceModelId.FLEX,
-                  });
-                  o.complete();
-                } else {
-                  o.next({
-                    sessionStateType:
-                      DeviceSessionStateType.ReadyWithoutSecureChannel,
-                    deviceStatus: DeviceStatus.LOCKED,
-                    currentApp: { name: "mockedCurrentApp", version: "1.0.0" },
-                    installedApps: [],
-                    deviceModelId: DeviceModelId.FLEX,
-                  });
-                }
-              },
-            });
-
-            return () => {
-              inner.unsubscribe();
-            };
+        sendCommandMock.mockResolvedValue(
+          CommandResultFactory({
+            data: {
+              name: "BOLOS",
+              version: "1.0.0",
+            },
           }),
-      );
+        );
 
-      sendCommandMock.mockResolvedValue(
-        CommandResultFactory({
-          data: {
-            name: "BOLOS",
-            version: "1.0.0",
+        const expectedStates: Array<GetDeviceStatusDAState> = [
+          {
+            intermediateValue: {
+              requiredUserInteraction: UserInteractionRequired.None,
+            },
+            status: DeviceActionStatus.Pending,
           },
-        }),
-      );
+          {
+            output: {
+              currentApp: "BOLOS",
+              currentAppVersion: "1.0.0",
+            },
+            status: DeviceActionStatus.Completed,
+          },
+        ];
 
-      const expectedStates: Array<GetDeviceStatusDAState> = [
-        {
-          intermediateValue: {
-            requiredUserInteraction: UserInteractionRequired.UnlockDevice,
+        testDeviceActionStates(
+          getDeviceStateDeviceAction,
+          expectedStates,
+          makeDeviceActionInternalApiMock(),
+          {
+            onDone: resolve,
+            onError: reject,
           },
-          status: DeviceActionStatus.Pending,
-        },
-        {
-          intermediateValue: {
-            requiredUserInteraction: UserInteractionRequired.None,
-          },
-          status: DeviceActionStatus.Pending,
-        },
-        {
-          output: {
-            currentApp: "BOLOS",
-            currentAppVersion: "1.0.0",
-          },
-          status: DeviceActionStatus.Completed,
-        },
-      ];
+        );
+      }));
 
-      testDeviceActionStates(
-        getDeviceStateDeviceAction,
-        expectedStates,
-        makeDeviceActionInternalApiMock(),
-        done,
-      );
-    });
+    it("should run the device action with a locked device", () =>
+      new Promise<void>((resolve, reject) => {
+        const getDeviceStateDeviceAction = new GetDeviceStatusDeviceAction({
+          input: { unlockTimeout: 500 },
+        });
+
+        apiGetDeviceSessionStateMock.mockReturnValue({
+          sessionStateType: DeviceSessionStateType.ReadyWithoutSecureChannel,
+          deviceStatus: DeviceStatus.LOCKED,
+          currentApp: { name: "mockedCurrentApp", version: "1.0.0" },
+          installedApps: [],
+          deviceModelId: DeviceModelId.NANO_X,
+        });
+
+        apiGetDeviceSessionStateObservableMock.mockImplementation(
+          () =>
+            new Observable((o) => {
+              const inner = interval(50).subscribe({
+                next: (i) => {
+                  if (i > 2) {
+                    o.next({
+                      sessionStateType:
+                        DeviceSessionStateType.ReadyWithoutSecureChannel,
+                      deviceStatus: DeviceStatus.CONNECTED,
+                      currentApp: {
+                        name: "mockedCurrentApp",
+                        version: "1.0.0",
+                      },
+                      installedApps: [],
+                      deviceModelId: DeviceModelId.NANO_X,
+                    });
+                    o.complete();
+                  } else {
+                    o.next({
+                      sessionStateType:
+                        DeviceSessionStateType.ReadyWithoutSecureChannel,
+                      deviceStatus: DeviceStatus.LOCKED,
+                      currentApp: {
+                        name: "mockedCurrentApp",
+                        version: "1.0.0",
+                      },
+                      installedApps: [],
+                      deviceModelId: DeviceModelId.NANO_X,
+                    });
+                  }
+                },
+              });
+
+              return () => {
+                inner.unsubscribe();
+              };
+            }),
+        );
+
+        sendCommandMock.mockResolvedValue(
+          CommandResultFactory({
+            data: {
+              name: "BOLOS",
+              version: "1.0.0",
+            },
+          }),
+        );
+
+        const expectedStates: Array<GetDeviceStatusDAState> = [
+          {
+            intermediateValue: {
+              requiredUserInteraction: UserInteractionRequired.UnlockDevice,
+            },
+            status: DeviceActionStatus.Pending,
+          },
+          {
+            intermediateValue: {
+              requiredUserInteraction: UserInteractionRequired.None,
+            },
+            status: DeviceActionStatus.Pending,
+          },
+          {
+            output: {
+              currentApp: "BOLOS",
+              currentAppVersion: "1.0.0",
+            },
+            status: DeviceActionStatus.Completed,
+          },
+        ];
+
+        testDeviceActionStates(
+          getDeviceStateDeviceAction,
+          expectedStates,
+          makeDeviceActionInternalApiMock(),
+          {
+            onDone: resolve,
+            onError: reject,
+          },
+        );
+      }));
   });
 
   describe("success cases", () => {
-    it("should return the device status if the device is unlocked", (done) => {
-      getDeviceSessionStateMock.mockReturnValue({
-        sessionStateType: DeviceSessionStateType.ReadyWithoutSecureChannel,
-        deviceStatus: DeviceStatus.CONNECTED,
-        currentApp: { name: "mockedCurrentApp", version: "1.0.0" },
-      });
+    it("should return the device status if the device is unlocked", () =>
+      new Promise<void>((resolve, reject) => {
+        getDeviceSessionStateMock.mockReturnValue({
+          sessionStateType: DeviceSessionStateType.ReadyWithoutSecureChannel,
+          deviceStatus: DeviceStatus.CONNECTED,
+          currentApp: { name: "mockedCurrentApp", version: "1.0.0" },
+        });
 
-      getAppAndVersionMock.mockResolvedValue(
-        CommandResultFactory({
-          data: {
-            name: "BOLOS",
-            version: "1.0.0",
-          },
-        }),
-      );
-
-      const getDeviceStateDeviceAction = new GetDeviceStatusDeviceAction({
-        input: { unlockTimeout: undefined },
-      });
-
-      jest
-        .spyOn(getDeviceStateDeviceAction, "extractDependencies")
-        .mockReturnValue(extractDependenciesMock());
-
-      const expectedStates: Array<GetDeviceStatusDAState> = [
-        {
-          intermediateValue: {
-            requiredUserInteraction: UserInteractionRequired.None,
-          },
-          status: DeviceActionStatus.Pending,
-        },
-        {
-          status: DeviceActionStatus.Completed,
-          output: {
-            currentApp: "BOLOS",
-            currentAppVersion: "1.0.0",
-          },
-        },
-      ];
-
-      testDeviceActionStates(
-        getDeviceStateDeviceAction,
-        expectedStates,
-        makeDeviceActionInternalApiMock(),
-        done,
-      );
-    });
-
-    it("should return the device status if the device is locked and the user unlocks the device", (done) => {
-      getDeviceSessionStateMock.mockReturnValue({
-        sessionStateType: DeviceSessionStateType.ReadyWithoutSecureChannel,
-        deviceStatus: DeviceStatus.LOCKED,
-        currentApp: { name: "mockedCurrentApp", version: "1.0.0" },
-      });
-
-      getAppAndVersionMock.mockResolvedValue(
-        CommandResultFactory({
-          data: {
-            name: "BOLOS",
-            version: "1.0.0",
-          },
-        }),
-      );
-
-      waitForDeviceUnlockMock.mockImplementation(
-        () =>
-          new Observable((o) => {
-            const inner = interval(50).subscribe({
-              next: (i) => {
-                if (i > 2) {
-                  o.next({
-                    sessionStateType:
-                      DeviceSessionStateType.ReadyWithoutSecureChannel,
-                    deviceStatus: DeviceStatus.CONNECTED,
-                    currentApp: { name: "mockedCurrentApp", version: "1.0.0" },
-                  });
-                  o.complete();
-                } else {
-                  o.next({
-                    sessionStateType:
-                      DeviceSessionStateType.ReadyWithoutSecureChannel,
-                    deviceStatus: DeviceStatus.LOCKED,
-                    currentApp: { name: "mockedCurrentApp", version: "1.0.0" },
-                  });
-                }
-              },
-            });
-
-            return () => {
-              inner.unsubscribe();
-            };
+        getAppAndVersionMock.mockResolvedValue(
+          CommandResultFactory({
+            data: {
+              name: "BOLOS",
+              version: "1.0.0",
+            },
           }),
-      );
+        );
 
-      const getDeviceStateDeviceAction = new GetDeviceStatusDeviceAction({
-        input: { unlockTimeout: 500 },
-      });
+        const getDeviceStateDeviceAction = new GetDeviceStatusDeviceAction({
+          input: { unlockTimeout: undefined },
+        });
 
-      jest
-        .spyOn(getDeviceStateDeviceAction, "extractDependencies")
-        .mockReturnValue(extractDependenciesMock());
+        vi.spyOn(
+          getDeviceStateDeviceAction,
+          "extractDependencies",
+        ).mockReturnValue(extractDependenciesMock());
 
-      const expectedStates: Array<GetDeviceStatusDAState> = [
-        {
-          intermediateValue: {
-            requiredUserInteraction: UserInteractionRequired.UnlockDevice,
+        const expectedStates: Array<GetDeviceStatusDAState> = [
+          {
+            intermediateValue: {
+              requiredUserInteraction: UserInteractionRequired.None,
+            },
+            status: DeviceActionStatus.Pending,
           },
-          status: DeviceActionStatus.Pending,
-        },
-        {
-          intermediateValue: {
-            requiredUserInteraction: UserInteractionRequired.None,
+          {
+            status: DeviceActionStatus.Completed,
+            output: {
+              currentApp: "BOLOS",
+              currentAppVersion: "1.0.0",
+            },
           },
-          status: DeviceActionStatus.Pending,
-        },
-        {
-          status: DeviceActionStatus.Completed,
-          output: {
-            currentApp: "BOLOS",
-            currentAppVersion: "1.0.0",
-          },
-        },
-      ];
+        ];
 
-      testDeviceActionStates(
-        getDeviceStateDeviceAction,
-        expectedStates,
-        makeDeviceActionInternalApiMock(),
-        done,
-      );
-    });
+        testDeviceActionStates(
+          getDeviceStateDeviceAction,
+          expectedStates,
+          makeDeviceActionInternalApiMock(),
+          {
+            onDone: resolve,
+            onError: reject,
+          },
+        );
+      }));
+
+    it("should return the device status if the device is locked and the user unlocks the device", () =>
+      new Promise<void>((resolve, reject) => {
+        getDeviceSessionStateMock.mockReturnValue({
+          sessionStateType: DeviceSessionStateType.ReadyWithoutSecureChannel,
+          deviceStatus: DeviceStatus.LOCKED,
+          currentApp: { name: "mockedCurrentApp", version: "1.0.0" },
+        });
+
+        getAppAndVersionMock.mockResolvedValue(
+          CommandResultFactory({
+            data: {
+              name: "BOLOS",
+              version: "1.0.0",
+            },
+          }),
+        );
+
+        waitForDeviceUnlockMock.mockImplementation(
+          () =>
+            new Observable((o) => {
+              const inner = interval(50).subscribe({
+                next: (i) => {
+                  if (i > 2) {
+                    o.next({
+                      sessionStateType:
+                        DeviceSessionStateType.ReadyWithoutSecureChannel,
+                      deviceStatus: DeviceStatus.CONNECTED,
+                      currentApp: {
+                        name: "mockedCurrentApp",
+                        version: "1.0.0",
+                      },
+                    });
+                    o.complete();
+                  } else {
+                    o.next({
+                      sessionStateType:
+                        DeviceSessionStateType.ReadyWithoutSecureChannel,
+                      deviceStatus: DeviceStatus.LOCKED,
+                      currentApp: {
+                        name: "mockedCurrentApp",
+                        version: "1.0.0",
+                      },
+                    });
+                  }
+                },
+              });
+
+              return () => {
+                inner.unsubscribe();
+              };
+            }),
+        );
+
+        const getDeviceStateDeviceAction = new GetDeviceStatusDeviceAction({
+          input: { unlockTimeout: 500 },
+        });
+
+        vi.spyOn(
+          getDeviceStateDeviceAction,
+          "extractDependencies",
+        ).mockReturnValue(extractDependenciesMock());
+
+        const expectedStates: Array<GetDeviceStatusDAState> = [
+          {
+            intermediateValue: {
+              requiredUserInteraction: UserInteractionRequired.UnlockDevice,
+            },
+            status: DeviceActionStatus.Pending,
+          },
+          {
+            intermediateValue: {
+              requiredUserInteraction: UserInteractionRequired.None,
+            },
+            status: DeviceActionStatus.Pending,
+          },
+          {
+            status: DeviceActionStatus.Completed,
+            output: {
+              currentApp: "BOLOS",
+              currentAppVersion: "1.0.0",
+            },
+          },
+        ];
+
+        testDeviceActionStates(
+          getDeviceStateDeviceAction,
+          expectedStates,
+          makeDeviceActionInternalApiMock(),
+          {
+            onDone: resolve,
+            onError: reject,
+          },
+        );
+      }));
   });
 
   describe("errors cases", () => {
-    it("should end in an error if the device is not onboarded", (done) => {
-      getDeviceSessionStateMock.mockReturnValue({
-        sessionStateType: DeviceSessionStateType.ReadyWithoutSecureChannel,
-        deviceStatus: DeviceStatus.LOCKED,
-        currentApp: { name: "mockedCurrentApp", version: "1.0.0" },
-      });
-      isDeviceOnboardedMock.mockReturnValue(false);
+    it("should end in an error if the device is not onboarded", () =>
+      new Promise<void>((resolve, reject) => {
+        getDeviceSessionStateMock.mockReturnValue({
+          sessionStateType: DeviceSessionStateType.ReadyWithoutSecureChannel,
+          deviceStatus: DeviceStatus.LOCKED,
+          currentApp: { name: "mockedCurrentApp", version: "1.0.0" },
+        });
+        isDeviceOnboardedMock.mockReturnValue(false);
 
-      const getDeviceStateDeviceAction = new GetDeviceStatusDeviceAction({
-        input: { unlockTimeout: 500 },
-      });
+        const getDeviceStateDeviceAction = new GetDeviceStatusDeviceAction({
+          input: { unlockTimeout: 500 },
+        });
 
-      jest
-        .spyOn(getDeviceStateDeviceAction, "extractDependencies")
-        .mockReturnValue(extractDependenciesMock());
+        vi.spyOn(
+          getDeviceStateDeviceAction,
+          "extractDependencies",
+        ).mockReturnValue(extractDependenciesMock());
 
-      const expectedStates: Array<GetDeviceStatusDAState> = [
-        {
-          error: new DeviceNotOnboardedError(),
-          status: DeviceActionStatus.Error,
-        },
-      ];
-
-      testDeviceActionStates(
-        getDeviceStateDeviceAction,
-        expectedStates,
-        makeDeviceActionInternalApiMock(),
-        done,
-      );
-    });
-
-    it("should end in an error if the device is locked and the user does not unlock", (done) => {
-      getDeviceSessionStateMock.mockReturnValue({
-        sessionStateType: DeviceSessionStateType.ReadyWithoutSecureChannel,
-        deviceStatus: DeviceStatus.LOCKED,
-        currentApp: { name: "mockedCurrentApp", version: "1.0.0" },
-      });
-
-      apiGetDeviceSessionStateObservableMock.mockImplementation(
-        () =>
-          new Observable((o) => {
-            const inner = interval(200).subscribe({
-              next: () => {
-                o.next({
-                  sessionStateType:
-                    DeviceSessionStateType.ReadyWithoutSecureChannel,
-                  deviceStatus: DeviceStatus.LOCKED,
-                  currentApp: { name: "mockedCurrentApp", version: "1.0.0" },
-                  installedApps: [],
-                  deviceModelId: DeviceModelId.FLEX,
-                });
-              },
-            });
-
-            return () => {
-              inner.unsubscribe();
-            };
-          }),
-      );
-
-      const getDeviceStateDeviceAction = new GetDeviceStatusDeviceAction({
-        input: { unlockTimeout: 500 },
-      });
-
-      jest
-        .spyOn(getDeviceStateDeviceAction, "extractDependencies")
-        .mockReturnValue(extractDependenciesMock());
-
-      const expectedStates: Array<GetDeviceStatusDAState> = [
-        {
-          intermediateValue: {
-            requiredUserInteraction: UserInteractionRequired.UnlockDevice,
+        const expectedStates: Array<GetDeviceStatusDAState> = [
+          {
+            error: new DeviceNotOnboardedError(),
+            status: DeviceActionStatus.Error,
           },
-          status: DeviceActionStatus.Pending,
-        },
-        {
-          error: new DeviceLockedError("Device locked."),
-          status: DeviceActionStatus.Error,
-        },
-      ];
+        ];
 
-      testDeviceActionStates(
-        getDeviceStateDeviceAction,
-        expectedStates,
-        makeDeviceActionInternalApiMock(),
-        done,
-      );
-    });
+        testDeviceActionStates(
+          getDeviceStateDeviceAction,
+          expectedStates,
+          makeDeviceActionInternalApiMock(),
+          {
+            onDone: resolve,
+            onError: reject,
+          },
+        );
+      }));
 
-    it("should end in an error if the GetAppAndVersion command fails", (done) => {
-      getDeviceSessionStateMock.mockReturnValue({
-        sessionStateType: DeviceSessionStateType.ReadyWithoutSecureChannel,
-        deviceStatus: DeviceStatus.LOCKED,
-        currentApp: { name: "mockedCurrentApp", version: "1.0.0" },
-      });
+    it("should end in an error if the device is locked and the user does not unlock", () =>
+      new Promise<void>((resolve, reject) => {
+        getDeviceSessionStateMock.mockReturnValue({
+          sessionStateType: DeviceSessionStateType.ReadyWithoutSecureChannel,
+          deviceStatus: DeviceStatus.LOCKED,
+          currentApp: { name: "mockedCurrentApp", version: "1.0.0" },
+        });
 
-      const error = new GlobalCommandError({
-        ...GLOBAL_ERRORS["5501"],
-        errorCode: "5501",
-      });
-
-      getAppAndVersionMock.mockResolvedValue(CommandResultFactory({ error }));
-
-      waitForDeviceUnlockMock.mockImplementation(
-        () =>
-          new Observable((o) => {
-            const inner = interval(50).subscribe({
-              next: (i) => {
-                if (i > 2) {
-                  o.next({
-                    sessionStateType:
-                      DeviceSessionStateType.ReadyWithoutSecureChannel,
-                    deviceStatus: DeviceStatus.CONNECTED,
-                    currentApp: { name: "mockedCurrentApp", version: "1.0.0" },
-                  });
-                  o.complete();
-                } else {
+        apiGetDeviceSessionStateObservableMock.mockImplementation(
+          () =>
+            new Observable((o) => {
+              const inner = interval(200).subscribe({
+                next: () => {
                   o.next({
                     sessionStateType:
                       DeviceSessionStateType.ReadyWithoutSecureChannel,
                     deviceStatus: DeviceStatus.LOCKED,
                     currentApp: { name: "mockedCurrentApp", version: "1.0.0" },
+                    installedApps: [],
+                    deviceModelId: DeviceModelId.NANO_X,
                   });
-                }
-              },
-            });
+                },
+              });
 
-            return () => {
-              inner.unsubscribe();
-            };
-          }),
-      );
+              return () => {
+                inner.unsubscribe();
+              };
+            }),
+        );
 
-      const getDeviceStateDeviceAction = new GetDeviceStatusDeviceAction({
-        input: { unlockTimeout: 500 },
-      });
+        const getDeviceStateDeviceAction = new GetDeviceStatusDeviceAction({
+          input: { unlockTimeout: 500 },
+        });
 
-      jest
-        .spyOn(getDeviceStateDeviceAction, "extractDependencies")
-        .mockReturnValue(extractDependenciesMock());
+        vi.spyOn(
+          getDeviceStateDeviceAction,
+          "extractDependencies",
+        ).mockReturnValue(extractDependenciesMock());
 
-      const expectedStates: Array<GetDeviceStatusDAState> = [
-        {
-          intermediateValue: {
-            requiredUserInteraction: UserInteractionRequired.UnlockDevice,
+        const expectedStates: Array<GetDeviceStatusDAState> = [
+          {
+            intermediateValue: {
+              requiredUserInteraction: UserInteractionRequired.UnlockDevice,
+            },
+            status: DeviceActionStatus.Pending,
           },
-          status: DeviceActionStatus.Pending,
-        },
-        {
-          intermediateValue: {
-            requiredUserInteraction: UserInteractionRequired.None,
+          {
+            error: new DeviceLockedError("Device locked."),
+            status: DeviceActionStatus.Error,
           },
-          status: DeviceActionStatus.Pending,
-        },
-        {
-          error,
-          status: DeviceActionStatus.Error,
-        },
-      ];
+        ];
 
-      testDeviceActionStates(
-        getDeviceStateDeviceAction,
-        expectedStates,
-        makeDeviceActionInternalApiMock(),
-        done,
-      );
-    });
+        testDeviceActionStates(
+          getDeviceStateDeviceAction,
+          expectedStates,
+          makeDeviceActionInternalApiMock(),
+          {
+            onDone: resolve,
+            onError: reject,
+          },
+        );
+      }));
 
-    it("should end in an error if getAppAndVersion actor throws an error", (done) => {
-      getDeviceSessionStateMock.mockReturnValue({
+    it("should end in an error if the GetAppAndVersion command fails", () =>
+      new Promise<void>((resolve, reject) => {
+        getDeviceSessionStateMock.mockReturnValue({
+          sessionStateType: DeviceSessionStateType.ReadyWithoutSecureChannel,
+          deviceStatus: DeviceStatus.LOCKED,
+          currentApp: { name: "mockedCurrentApp", version: "1.0.0" },
+        });
+
+        const error = new GlobalCommandError({
+          ...GLOBAL_ERRORS["5501"],
+          errorCode: "5501",
+        });
+
+        getAppAndVersionMock.mockResolvedValue(CommandResultFactory({ error }));
+
+        waitForDeviceUnlockMock.mockImplementation(
+          () =>
+            new Observable((o) => {
+              const inner = interval(50).subscribe({
+                next: (i) => {
+                  if (i > 2) {
+                    o.next({
+                      sessionStateType:
+                        DeviceSessionStateType.ReadyWithoutSecureChannel,
+                      deviceStatus: DeviceStatus.CONNECTED,
+                      currentApp: {
+                        name: "mockedCurrentApp",
+                        version: "1.0.0",
+                      },
+                    });
+                    o.complete();
+                  } else {
+                    o.next({
+                      sessionStateType:
+                        DeviceSessionStateType.ReadyWithoutSecureChannel,
+                      deviceStatus: DeviceStatus.LOCKED,
+                      currentApp: {
+                        name: "mockedCurrentApp",
+                        version: "1.0.0",
+                      },
+                    });
+                  }
+                },
+              });
+
+              return () => {
+                inner.unsubscribe();
+              };
+            }),
+        );
+
+        const getDeviceStateDeviceAction = new GetDeviceStatusDeviceAction({
+          input: { unlockTimeout: 500 },
+        });
+
+        vi.spyOn(
+          getDeviceStateDeviceAction,
+          "extractDependencies",
+        ).mockReturnValue(extractDependenciesMock());
+
+        const expectedStates: Array<GetDeviceStatusDAState> = [
+          {
+            intermediateValue: {
+              requiredUserInteraction: UserInteractionRequired.UnlockDevice,
+            },
+            status: DeviceActionStatus.Pending,
+          },
+          {
+            intermediateValue: {
+              requiredUserInteraction: UserInteractionRequired.None,
+            },
+            status: DeviceActionStatus.Pending,
+          },
+          {
+            error,
+            status: DeviceActionStatus.Error,
+          },
+        ];
+
+        testDeviceActionStates(
+          getDeviceStateDeviceAction,
+          expectedStates,
+          makeDeviceActionInternalApiMock(),
+          {
+            onDone: resolve,
+            onError: reject,
+          },
+        );
+      }));
+
+    it("should end in an error if getAppAndVersion actor throws an error", () =>
+      new Promise<void>((resolve, reject) => {
+        getDeviceSessionStateMock.mockReturnValue({
+          sessionStateType: DeviceSessionStateType.ReadyWithoutSecureChannel,
+          deviceStatus: DeviceStatus.LOCKED,
+          currentApp: { name: "mockedCurrentApp", version: "1.0.0" },
+        });
+
+        getAppAndVersionMock.mockImplementation(() => {
+          throw new UnknownDAError("error");
+        });
+
+        waitForDeviceUnlockMock.mockImplementation(
+          () =>
+            new Observable((o) => {
+              o.complete();
+            }),
+        );
+
+        const getDeviceStateDeviceAction = new GetDeviceStatusDeviceAction({
+          input: { unlockTimeout: 500 },
+        });
+
+        vi.spyOn(
+          getDeviceStateDeviceAction,
+          "extractDependencies",
+        ).mockReturnValue(extractDependenciesMock());
+
+        const expectedStates: Array<GetDeviceStatusDAState> = [
+          {
+            intermediateValue: {
+              requiredUserInteraction: UserInteractionRequired.UnlockDevice,
+            },
+            status: DeviceActionStatus.Pending,
+          },
+          {
+            intermediateValue: {
+              requiredUserInteraction: UserInteractionRequired.None,
+            },
+            status: DeviceActionStatus.Pending,
+          },
+          {
+            error: new UnknownDAError("error"),
+            status: DeviceActionStatus.Error,
+          },
+        ];
+
+        testDeviceActionStates(
+          getDeviceStateDeviceAction,
+          expectedStates,
+          makeDeviceActionInternalApiMock(),
+          {
+            onDone: resolve,
+            onError: reject,
+          },
+        );
+      }));
+  });
+
+  it("should emit a stopped state if the action is cancelled", () =>
+    new Promise<void>((resolve, reject) => {
+      apiGetDeviceSessionStateMock.mockReturnValue({
         sessionStateType: DeviceSessionStateType.ReadyWithoutSecureChannel,
-        deviceStatus: DeviceStatus.LOCKED,
+        deviceStatus: DeviceStatus.CONNECTED,
         currentApp: { name: "mockedCurrentApp", version: "1.0.0" },
+        installedApps: [],
+        deviceModelId: DeviceModelId.NANO_X,
       });
 
-      getAppAndVersionMock.mockImplementation(() => {
-        throw new UnknownDAError("error");
-      });
-
-      waitForDeviceUnlockMock.mockImplementation(
-        () =>
-          new Observable((o) => {
-            o.complete();
-          }),
+      sendCommandMock.mockResolvedValue(
+        CommandResultFactory({
+          data: {
+            name: "BOLOS",
+            version: "1.0.0",
+          },
+        }),
       );
 
       const getDeviceStateDeviceAction = new GetDeviceStatusDeviceAction({
         input: { unlockTimeout: 500 },
       });
 
-      jest
-        .spyOn(getDeviceStateDeviceAction, "extractDependencies")
-        .mockReturnValue(extractDependenciesMock());
-
       const expectedStates: Array<GetDeviceStatusDAState> = [
         {
-          intermediateValue: {
-            requiredUserInteraction: UserInteractionRequired.UnlockDevice,
-          },
-          status: DeviceActionStatus.Pending,
-        },
-        {
+          status: DeviceActionStatus.Pending, // get app and version
           intermediateValue: {
             requiredUserInteraction: UserInteractionRequired.None,
           },
-          status: DeviceActionStatus.Pending,
         },
         {
-          error: new UnknownDAError("error"),
-          status: DeviceActionStatus.Error,
+          status: DeviceActionStatus.Stopped,
         },
       ];
 
-      testDeviceActionStates(
+      const { cancel } = testDeviceActionStates(
         getDeviceStateDeviceAction,
         expectedStates,
         makeDeviceActionInternalApiMock(),
-        done,
+        {
+          onDone: resolve,
+          onError: reject,
+        },
       );
-    });
-  });
-
-  it("should emit a stopped state if the action is cancelled", (done) => {
-    apiGetDeviceSessionStateMock.mockReturnValue({
-      sessionStateType: DeviceSessionStateType.ReadyWithoutSecureChannel,
-      deviceStatus: DeviceStatus.CONNECTED,
-      currentApp: { name: "mockedCurrentApp", version: "1.0.0" },
-      installedApps: [],
-      deviceModelId: DeviceModelId.FLEX,
-    });
-
-    sendCommandMock.mockResolvedValue(
-      CommandResultFactory({
-        data: {
-          name: "BOLOS",
-          version: "1.0.0",
-        },
-      }),
-    );
-
-    const getDeviceStateDeviceAction = new GetDeviceStatusDeviceAction({
-      input: { unlockTimeout: 500 },
-    });
-
-    const expectedStates: Array<GetDeviceStatusDAState> = [
-      {
-        status: DeviceActionStatus.Pending, // get app and version
-        intermediateValue: {
-          requiredUserInteraction: UserInteractionRequired.None,
-        },
-      },
-      {
-        status: DeviceActionStatus.Stopped,
-      },
-    ];
-
-    const { cancel } = testDeviceActionStates(
-      getDeviceStateDeviceAction,
-      expectedStates,
-      makeDeviceActionInternalApiMock(),
-      done,
-    );
-    cancel();
-  });
+      cancel();
+    }));
 });

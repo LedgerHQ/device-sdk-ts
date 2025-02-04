@@ -5,7 +5,7 @@ import { type TransportService } from "@internal/transport/service/TransportServ
 
 import { StopDiscoveringUseCase } from "./StopDiscoveringUseCase";
 
-jest.mock("@internal/transport/service/DefaultTransportService");
+vi.mock("@internal/transport/service/DefaultTransportService");
 
 // TODO test several transports
 let transport: Transport;
@@ -21,18 +21,16 @@ describe("StopDiscoveringUseCase", () => {
   });
 
   afterEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   test("should call stop discovering", () => {
-    const mockedStopDiscovering = jest.fn();
-    jest
-      .spyOn(transport, "stopDiscovering")
-      .mockImplementation(mockedStopDiscovering);
+    const mockedStopDiscovering = vi.fn();
+    vi.spyOn(transport, "stopDiscovering").mockImplementation(
+      mockedStopDiscovering,
+    );
 
-    jest
-      .spyOn(transportService, "getAllTransports")
-      .mockReturnValue(transports);
+    vi.spyOn(transportService, "getAllTransports").mockReturnValue(transports);
 
     const usecase = new StopDiscoveringUseCase(transportService);
 

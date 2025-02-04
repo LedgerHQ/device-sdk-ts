@@ -20,7 +20,7 @@ describe("DefaultPkiCertificateLoader", () => {
         ]),
       };
       const dataSource = {
-        fetchCertificate: jest.fn().mockResolvedValue(Right(certificate)),
+        fetchCertificate: vi.fn().mockResolvedValue(Right(certificate)),
       };
 
       // WHEN
