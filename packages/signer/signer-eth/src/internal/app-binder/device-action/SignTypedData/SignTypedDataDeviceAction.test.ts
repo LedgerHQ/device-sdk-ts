@@ -116,7 +116,7 @@ describe("SignTypedDataDeviceAction", () => {
 
   describe("Success case", () => {
     it("should call external dependencies with the correct parameters", () =>
-      new Promise((done) => {
+      new Promise<void>((resolve, reject) => {
         setupOpenAppDAMock();
 
         const deviceAction = new SignTypedDataDeviceAction({
@@ -189,45 +189,48 @@ describe("SignTypedDataDeviceAction", () => {
           },
         ];
 
-        const { observable } = testDeviceActionStates(
+        testDeviceActionStates(
           deviceAction,
           expectedStates,
           makeDeviceActionInternalApiMock(),
-          done,
-        );
+          {
+            onError: reject,
+            onDone: () => {
+              // Verify mocks calls parameters
+              expect(buildContextMock).toHaveBeenCalledWith(
+                expect.objectContaining({
+                  input: {
+                    contextModule: mockContextModule,
+                    parser: mockParser,
+                    data: TEST_MESSAGE,
+                  },
+                }),
+              );
 
-        // Verify mocks calls parameters
-        observable.subscribe({
-          complete: () => {
-            expect(buildContextMock).toHaveBeenCalledWith(
-              expect.objectContaining({
-                input: {
-                  contextModule: mockContextModule,
-                  parser: mockParser,
-                  data: TEST_MESSAGE,
-                },
-              }),
-            );
-            expect(provideContextMock).toHaveBeenCalledWith(
-              expect.objectContaining({
-                input: {
-                  taskArgs: TEST_BUILT_CONTEXT,
-                },
-              }),
-            );
-            expect(signTypedDataMock).toHaveBeenCalledWith(
-              expect.objectContaining({
-                input: {
-                  derivationPath: "44'/60'/0'/0/0",
-                },
-              }),
-            );
+              expect(provideContextMock).toHaveBeenCalledWith(
+                expect.objectContaining({
+                  input: {
+                    taskArgs: TEST_BUILT_CONTEXT,
+                  },
+                }),
+              );
+
+              expect(signTypedDataMock).toHaveBeenCalledWith(
+                expect.objectContaining({
+                  input: {
+                    derivationPath: "44'/60'/0'/0/0",
+                  },
+                }),
+              );
+
+              resolve();
+            },
           },
-        });
+        );
       }));
 
     it("should fallback to legacy signing if the new one fails", () =>
-      new Promise((done) => {
+      new Promise<void>((resolve, reject) => {
         setupOpenAppDAMock();
 
         const deviceAction = new SignTypedDataDeviceAction({
@@ -304,14 +307,17 @@ describe("SignTypedDataDeviceAction", () => {
           deviceAction,
           expectedStates,
           makeDeviceActionInternalApiMock(),
-          done,
+          {
+            onError: reject,
+            onDone: resolve,
+          },
         );
       }));
   });
 
   describe("error cases", () => {
     it("Error if the open app fails", () =>
-      new Promise((done) => {
+      new Promise<void>((resolve, reject) => {
         setupOpenAppDAMock(new UnknownDAError("Mocked error"));
 
         const expectedStates: Array<SignTypedDataDAState> = [
@@ -346,12 +352,15 @@ describe("SignTypedDataDeviceAction", () => {
           deviceAction,
           expectedStates,
           makeDeviceActionInternalApiMock(),
-          done,
+          {
+            onError: reject,
+            onDone: resolve,
+          },
         );
       }));
 
     it("Error while building context", () =>
-      new Promise((done) => {
+      new Promise<void>((resolve, reject) => {
         setupOpenAppDAMock();
 
         const deviceAction = new SignTypedDataDeviceAction({
@@ -398,12 +407,15 @@ describe("SignTypedDataDeviceAction", () => {
           deviceAction,
           expectedStates,
           makeDeviceActionInternalApiMock(),
-          done,
+          {
+            onError: reject,
+            onDone: resolve,
+          },
         );
       }));
 
     it("Error thrown while providing context", () =>
-      new Promise((done) => {
+      new Promise<void>((resolve, reject) => {
         setupOpenAppDAMock();
 
         const deviceAction = new SignTypedDataDeviceAction({
@@ -457,12 +469,15 @@ describe("SignTypedDataDeviceAction", () => {
           deviceAction,
           expectedStates,
           makeDeviceActionInternalApiMock(),
-          done,
+          {
+            onError: reject,
+            onDone: resolve,
+          },
         );
       }));
 
     it("Error while signing", () =>
-      new Promise((done) => {
+      new Promise<void>((resolve, reject) => {
         setupOpenAppDAMock();
 
         const deviceAction = new SignTypedDataDeviceAction({
@@ -533,7 +548,10 @@ describe("SignTypedDataDeviceAction", () => {
           deviceAction,
           expectedStates,
           makeDeviceActionInternalApiMock(),
-          done,
+          {
+            onError: reject,
+            onDone: resolve,
+          },
         );
       }));
   });

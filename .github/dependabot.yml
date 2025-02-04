@@ -45,10 +45,10 @@ updates:
       changesets:
         patterns:
          - "@changesets*"
-      jest:
+      vitest:
         patterns:
-         - "jest*"
-         - "@jest*"
+         - "vitest*"
+         - "@vitest*"
       typescript:
         patterns:
          - "typescript*"

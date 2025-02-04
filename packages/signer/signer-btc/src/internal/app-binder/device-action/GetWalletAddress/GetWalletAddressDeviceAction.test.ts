@@ -41,7 +41,7 @@ describe("GetWalletAddressDeviceAction", () => {
 
   describe("Success case", () => {
     it("should call external dependencies with the correct parameters", () =>
-      new Promise((done) => {
+      new Promise<void>((resolve, reject) => {
         // given
         setupOpenAppDAMock();
 
@@ -107,7 +107,10 @@ describe("GetWalletAddressDeviceAction", () => {
           deviceAction,
           expectedStates,
           makeDeviceActionInternalApiMock(),
-          done,
+          {
+            onDone: resolve,
+            onError: reject,
+          },
         );
       }));
   });
@@ -118,7 +121,7 @@ describe("GetWalletAddressDeviceAction", () => {
     });
 
     it("Error if open app fails", () =>
-      new Promise((done) => {
+      new Promise<void>((resolve, reject) => {
         // given
         setupOpenAppDAMock(new UnknownDeviceExchangeError("Mocked error"));
 
@@ -161,7 +164,10 @@ describe("GetWalletAddressDeviceAction", () => {
           deviceAction,
           expectedStates,
           makeDeviceActionInternalApiMock(),
-          done,
+          {
+            onDone: resolve,
+            onError: reject,
+          },
         );
 
         // then
@@ -169,7 +175,7 @@ describe("GetWalletAddressDeviceAction", () => {
       }));
 
     it("Error if prepareWalletPolicy fails", () =>
-      new Promise((done) => {
+      new Promise<void>((resolve, reject) => {
         // given
         setupOpenAppDAMock();
 
@@ -224,14 +230,17 @@ describe("GetWalletAddressDeviceAction", () => {
           deviceAction,
           expectedStates,
           makeDeviceActionInternalApiMock(),
-          done,
+          {
+            onDone: resolve,
+            onError: reject,
+          },
         );
 
         expect(getWalletAddressMock).not.toHaveBeenCalled();
       }));
 
     it("Error if getWalletAddress fails", () =>
-      new Promise((done) => {
+      new Promise<void>((resolve, reject) => {
         // given
         setupOpenAppDAMock();
 
@@ -297,7 +306,10 @@ describe("GetWalletAddressDeviceAction", () => {
           deviceAction,
           expectedStates,
           makeDeviceActionInternalApiMock(),
-          done,
+          {
+            onDone: resolve,
+            onError: reject,
+          },
         );
       }));
   });

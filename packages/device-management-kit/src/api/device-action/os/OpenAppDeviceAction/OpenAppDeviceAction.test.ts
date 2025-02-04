@@ -50,7 +50,7 @@ describe("OpenAppDeviceAction", () => {
 
   describe("without overriding `extractDependencies`", () => {
     it("should end if the required application is opened", () =>
-      new Promise((done) => {
+      new Promise<void>((resolve, reject) => {
         apiGetDeviceSessionStateMock.mockReturnValue({
           sessionStateType: DeviceSessionStateType.ReadyWithoutSecureChannel,
           deviceStatus: DeviceStatus.CONNECTED,
@@ -92,14 +92,17 @@ describe("OpenAppDeviceAction", () => {
           openAppDeviceAction,
           expectedStates,
           makeDeviceActionInternalApiMock(),
-          done,
+          {
+            onDone: resolve,
+            onError: reject,
+          },
         );
       }));
   });
 
   describe("success cases", () => {
     it("should end in a success if the app is already opened", () =>
-      new Promise((done) => {
+      new Promise<void>((resolve, reject) => {
         getDeviceSessionStateMock.mockReturnValue({
           sessionStateType: DeviceSessionStateType.ReadyWithoutSecureChannel,
           deviceStatus: DeviceStatus.CONNECTED,
@@ -142,12 +145,15 @@ describe("OpenAppDeviceAction", () => {
           openAppDeviceAction,
           expectedStates,
           makeDeviceActionInternalApiMock(),
-          done,
+          {
+            onDone: resolve,
+            onError: reject,
+          },
         );
       }));
 
     it("should end in a success if a compatible app is already opened", () =>
-      new Promise((done) => {
+      new Promise<void>((resolve, reject) => {
         getDeviceSessionStateMock.mockReturnValue({
           sessionStateType: DeviceSessionStateType.ReadyWithoutSecureChannel,
           deviceStatus: DeviceStatus.CONNECTED,
@@ -197,12 +203,15 @@ describe("OpenAppDeviceAction", () => {
           openAppDeviceAction,
           expectedStates,
           makeDeviceActionInternalApiMock(),
-          done,
+          {
+            onDone: resolve,
+            onError: reject,
+          },
         );
       }));
 
     it("should end in a success if the dashboard is open and open app succeeds", () =>
-      new Promise((done) => {
+      new Promise<void>((resolve, reject) => {
         getDeviceSessionStateMock.mockReturnValue({
           sessionStateType: DeviceSessionStateType.ReadyWithoutSecureChannel,
           deviceStatus: DeviceStatus.CONNECTED,
@@ -250,7 +259,10 @@ describe("OpenAppDeviceAction", () => {
           openAppDeviceAction,
           expectedStates,
           makeDeviceActionInternalApiMock(),
-          done,
+          {
+            onDone: resolve,
+            onError: reject,
+          },
         );
 
         lastValueFrom(observable).then(() => {
@@ -263,7 +275,7 @@ describe("OpenAppDeviceAction", () => {
       }));
 
     it("should end in a success if another app is open, close app succeeds and open app succeeds", () =>
-      new Promise((done) => {
+      new Promise<void>((resolve, reject) => {
         getDeviceSessionStateMock.mockReturnValue({
           sessionStateType: DeviceSessionStateType.ReadyWithoutSecureChannel,
           deviceStatus: DeviceStatus.CONNECTED,
@@ -337,7 +349,10 @@ describe("OpenAppDeviceAction", () => {
           openAppDeviceAction,
           expectedStates,
           makeDeviceActionInternalApiMock(),
-          done,
+          {
+            onDone: resolve,
+            onError: reject,
+          },
         );
 
         lastValueFrom(observable).then(() => {
@@ -352,7 +367,7 @@ describe("OpenAppDeviceAction", () => {
 
   describe("errors cases", () => {
     it("should end in an error if the device is not onboarded", () =>
-      new Promise((done) => {
+      new Promise<void>((resolve, reject) => {
         getDeviceSessionStateMock.mockReturnValue({
           sessionStateType: DeviceSessionStateType.ReadyWithoutSecureChannel,
           deviceStatus: DeviceStatus.CONNECTED,
@@ -379,12 +394,15 @@ describe("OpenAppDeviceAction", () => {
           openAppDeviceAction,
           expectedStates,
           makeDeviceActionInternalApiMock(),
-          done,
+          {
+            onDone: resolve,
+            onError: reject,
+          },
         );
       }));
 
     it("should end in an error if the device is locked", () =>
-      new Promise((done) => {
+      new Promise<void>((resolve, reject) => {
         getDeviceSessionStateMock.mockReturnValue({
           sessionStateType: DeviceSessionStateType.ReadyWithoutSecureChannel,
           deviceStatus: DeviceStatus.LOCKED,
@@ -424,12 +442,15 @@ describe("OpenAppDeviceAction", () => {
           openAppDeviceAction,
           expectedStates,
           makeDeviceActionInternalApiMock(),
-          done,
+          {
+            onDone: resolve,
+            onError: reject,
+          },
         );
       }));
 
     it("should end in an error if getAppAndVersion returns an error", () =>
-      new Promise((done) => {
+      new Promise<void>((resolve, reject) => {
         getDeviceSessionStateMock.mockReturnValue({
           sessionStateType: DeviceSessionStateType.ReadyWithoutSecureChannel,
           deviceStatus: DeviceStatus.CONNECTED,
@@ -469,12 +490,15 @@ describe("OpenAppDeviceAction", () => {
           openAppDeviceAction,
           expectedStates,
           makeDeviceActionInternalApiMock(),
-          done,
+          {
+            onDone: resolve,
+            onError: reject,
+          },
         );
       }));
 
     it("should end in an error if the dashboard is open and open app returns an error", () =>
-      new Promise((done) => {
+      new Promise<void>((resolve, reject) => {
         getDeviceSessionStateMock.mockReturnValue(
           CommandResultFactory({
             data: {
@@ -541,12 +565,15 @@ describe("OpenAppDeviceAction", () => {
           openAppDeviceAction,
           expectedStates,
           makeDeviceActionInternalApiMock(),
-          done,
+          {
+            onDone: resolve,
+            onError: reject,
+          },
         );
       }));
 
     it("should end in an error if another app is open, and close app returns an error", () =>
-      new Promise((done) => {
+      new Promise<void>((resolve, reject) => {
         getDeviceSessionStateMock.mockReturnValue({
           sessionStateType: DeviceSessionStateType.ReadyWithoutSecureChannel,
           deviceStatus: DeviceStatus.CONNECTED,
@@ -600,12 +627,15 @@ describe("OpenAppDeviceAction", () => {
           openAppDeviceAction,
           expectedStates,
           makeDeviceActionInternalApiMock(),
-          done,
+          {
+            onDone: resolve,
+            onError: reject,
+          },
         );
       }));
 
     it("should end in an error if another app is open, close app succeeds but open app returns an error", () =>
-      new Promise((done) => {
+      new Promise<void>((resolve, reject) => {
         getDeviceSessionStateMock.mockReturnValue({
           sessionStateType: DeviceSessionStateType.ReadyWithoutSecureChannel,
           deviceStatus: DeviceStatus.CONNECTED,
@@ -668,12 +698,15 @@ describe("OpenAppDeviceAction", () => {
           openAppDeviceAction,
           expectedStates,
           makeDeviceActionInternalApiMock(),
-          done,
+          {
+            onDone: resolve,
+            onError: reject,
+          },
         );
       }));
 
     it("should end in an error if getAppAndVersion actor throws an error", () =>
-      new Promise((done) => {
+      new Promise<void>((resolve, reject) => {
         getDeviceSessionStateMock.mockReturnValue({
           sessionStateType: DeviceSessionStateType.ReadyWithoutSecureChannel,
           deviceStatus: DeviceStatus.CONNECTED,
@@ -713,12 +746,15 @@ describe("OpenAppDeviceAction", () => {
           openAppDeviceAction,
           expectedStates,
           makeDeviceActionInternalApiMock(),
-          done,
+          {
+            onDone: resolve,
+            onError: reject,
+          },
         );
       }));
 
     it("should end in an error if openApp actor throws an error", () =>
-      new Promise((done) => {
+      new Promise<void>((resolve, reject) => {
         getDeviceSessionStateMock.mockReturnValue(
           CommandResultFactory({
             data: {
@@ -775,12 +811,15 @@ describe("OpenAppDeviceAction", () => {
           openAppDeviceAction,
           expectedStates,
           makeDeviceActionInternalApiMock(),
-          done,
+          {
+            onDone: resolve,
+            onError: reject,
+          },
         );
       }));
 
     it("should end in an error if closeApp actor throws an error", () =>
-      new Promise((done) => {
+      new Promise<void>((resolve, reject) => {
         getDeviceSessionStateMock.mockReturnValue(
           CommandResultFactory({
             data: {
@@ -837,12 +876,15 @@ describe("OpenAppDeviceAction", () => {
           openAppDeviceAction,
           expectedStates,
           makeDeviceActionInternalApiMock(),
-          done,
+          {
+            onDone: resolve,
+            onError: reject,
+          },
         );
       }));
 
     it("should emit a stopped state if the action is cancelled", () =>
-      new Promise((done) => {
+      new Promise<void>((resolve, reject) => {
         getDeviceSessionStateMock.mockReturnValue({
           sessionStateType: DeviceSessionStateType.ReadyWithoutSecureChannel,
           deviceStatus: DeviceStatus.CONNECTED,
@@ -884,7 +926,10 @@ describe("OpenAppDeviceAction", () => {
           openAppDeviceAction,
           expectedStates,
           makeDeviceActionInternalApiMock(),
-          done,
+          {
+            onDone: resolve,
+            onError: reject,
+          },
         );
         cancel();
       }));

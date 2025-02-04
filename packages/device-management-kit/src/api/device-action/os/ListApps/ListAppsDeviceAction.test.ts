@@ -32,7 +32,7 @@ describe("ListAppsDeviceAction", () => {
 
   describe("success cases", () => {
     it("should run the device action with no apps installed", () =>
-      new Promise((done) => {
+      new Promise<void>((resolve, reject) => {
         setupGoToDashboardMock();
         const listAppsDeviceAction = new ListAppsDeviceAction({
           input: {},
@@ -69,12 +69,15 @@ describe("ListAppsDeviceAction", () => {
           listAppsDeviceAction,
           expectedStates,
           makeDeviceActionInternalApiMock(),
-          done,
+          {
+            onDone: resolve,
+            onError: reject,
+          },
         );
       }));
 
     it("should run the device action with one app installed", () =>
-      new Promise((done) => {
+      new Promise<void>((resolve, reject) => {
         setupGoToDashboardMock();
         const listAppsDeviceAction = new ListAppsDeviceAction({
           input: { unlockTimeout: 500 },
@@ -113,12 +116,15 @@ describe("ListAppsDeviceAction", () => {
           listAppsDeviceAction,
           expectedStates,
           makeDeviceActionInternalApiMock(),
-          done,
+          {
+            onDone: resolve,
+            onError: reject,
+          },
         );
       }));
 
     it("should run the device action with two app installed", () =>
-      new Promise((done) => {
+      new Promise<void>((resolve, reject) => {
         setupGoToDashboardMock();
         const listAppsDeviceAction = new ListAppsDeviceAction({
           input: { unlockTimeout: 500 },
@@ -165,12 +171,15 @@ describe("ListAppsDeviceAction", () => {
           listAppsDeviceAction,
           expectedStates,
           makeDeviceActionInternalApiMock(),
-          done,
+          {
+            onDone: resolve,
+            onError: reject,
+          },
         );
       }));
 
     it("should run the device action with three app installed", () =>
-      new Promise((done) => {
+      new Promise<void>((resolve, reject) => {
         setupGoToDashboardMock();
         const listAppsDeviceAction = new ListAppsDeviceAction({
           input: { unlockTimeout: 500 },
@@ -217,12 +226,15 @@ describe("ListAppsDeviceAction", () => {
           listAppsDeviceAction,
           expectedStates,
           makeDeviceActionInternalApiMock(),
-          done,
+          {
+            onDone: resolve,
+            onError: reject,
+          },
         );
       }));
 
     it("should run the device action with four app installed", () =>
-      new Promise((done) => {
+      new Promise<void>((resolve, reject) => {
         setupGoToDashboardMock();
         const listAppsDeviceAction = new ListAppsDeviceAction({
           input: { unlockTimeout: 500 },
@@ -278,12 +290,15 @@ describe("ListAppsDeviceAction", () => {
           listAppsDeviceAction,
           expectedStates,
           makeDeviceActionInternalApiMock(),
-          done,
+          {
+            onDone: resolve,
+            onError: reject,
+          },
         );
       }));
 
     it("should run the device action with five app installed", () =>
-      new Promise((done) => {
+      new Promise<void>((resolve, reject) => {
         setupGoToDashboardMock();
         const listAppsDeviceAction = new ListAppsDeviceAction({
           input: { unlockTimeout: 500 },
@@ -346,14 +361,17 @@ describe("ListAppsDeviceAction", () => {
           listAppsDeviceAction,
           expectedStates,
           makeDeviceActionInternalApiMock(),
-          done,
+          {
+            onDone: resolve,
+            onError: reject,
+          },
         );
       }));
   });
 
   describe("error cases", () => {
     it("should return an error if GoTodashboard fails", () =>
-      new Promise((done) => {
+      new Promise<void>((resolve, reject) => {
         setupGoToDashboardMock(true);
         const listAppsDeviceAction = new ListAppsDeviceAction({
           input: { unlockTimeout: 500 },
@@ -384,12 +402,15 @@ describe("ListAppsDeviceAction", () => {
           listAppsDeviceAction,
           expectedStates,
           makeDeviceActionInternalApiMock(),
-          done,
+          {
+            onDone: resolve,
+            onError: reject,
+          },
         );
       }));
 
     it("should run the device action if GoTodashboard fails", () =>
-      new Promise((done) => {
+      new Promise<void>((resolve, reject) => {
         setupGoToDashboardMock(true);
         const listAppsDeviceAction = new ListAppsDeviceAction({
           input: { unlockTimeout: 500 },
@@ -420,12 +441,15 @@ describe("ListAppsDeviceAction", () => {
           listAppsDeviceAction,
           expectedStates,
           makeDeviceActionInternalApiMock(),
-          done,
+          {
+            onDone: resolve,
+            onError: reject,
+          },
         );
       }));
 
     it("should return an error if ListApps fails", () =>
-      new Promise((done) => {
+      new Promise<void>((resolve, reject) => {
         setupGoToDashboardMock();
         const listAppsDeviceAction = new ListAppsDeviceAction({
           input: { unlockTimeout: 500 },
@@ -471,12 +495,15 @@ describe("ListAppsDeviceAction", () => {
           listAppsDeviceAction,
           expectedStates,
           makeDeviceActionInternalApiMock(),
-          done,
+          {
+            onDone: resolve,
+            onError: reject,
+          },
         );
       }));
 
     it("should return an error if ListAppsContinue fails", () =>
-      new Promise((done) => {
+      new Promise<void>((resolve, reject) => {
         setupGoToDashboardMock();
         const listAppsDeviceAction = new ListAppsDeviceAction({
           input: { unlockTimeout: 500 },
@@ -523,7 +550,10 @@ describe("ListAppsDeviceAction", () => {
           listAppsDeviceAction,
           expectedStates,
           makeDeviceActionInternalApiMock(),
-          done,
+          {
+            onDone: resolve,
+            onError: reject,
+          },
         );
       }));
   });

@@ -44,7 +44,7 @@ describe("SignTransactionDeviceAction", () => {
 
   describe("Happy path", () => {
     it("should call external dependencies with the correct parameters", () =>
-      new Promise((done) => {
+      new Promise<void>((resolve, reject) => {
         setupOpenAppDAMock();
 
         const deviceAction = new SignTransactionDeviceAction({
@@ -96,32 +96,32 @@ describe("SignTransactionDeviceAction", () => {
           },
         ];
 
-        const { observable } = testDeviceActionStates(
+        testDeviceActionStates(
           deviceAction,
           expectedStates,
           makeDeviceActionInternalApiMock(),
-          done,
-        );
-
-        // Verify mocks calls parameters
-        observable.subscribe({
-          complete: () => {
-            expect(signTransactionMock).toHaveBeenCalledWith(
-              expect.objectContaining({
-                input: {
-                  derivationPath: "44'/501'/0'/0'",
-                  serializedTransaction: new Uint8Array([0x01, 0x02, 0x03]),
-                },
-              }),
-            );
+          {
+            onError: reject,
+            onDone: () => {
+              // Verify mocks calls parameters
+              expect(signTransactionMock).toHaveBeenCalledWith(
+                expect.objectContaining({
+                  input: {
+                    derivationPath: "44'/501'/0'/0'",
+                    serializedTransaction: new Uint8Array([0x01, 0x02, 0x03]),
+                  },
+                }),
+              );
+              resolve();
+            },
           },
-        });
+        );
       }));
   });
 
   describe("OpenApp errors", () => {
     it("should fail if OpenApp throw an error", () =>
-      new Promise((done) => {
+      new Promise<void>((resolve, reject) => {
         setupOpenAppDAMock(new UnknownDAError("OpenApp error"));
 
         const deviceAction = new SignTransactionDeviceAction({
@@ -162,14 +162,17 @@ describe("SignTransactionDeviceAction", () => {
           deviceAction,
           expectedStates,
           makeDeviceActionInternalApiMock(),
-          done,
+          {
+            onDone: resolve,
+            onError: reject,
+          },
         );
       }));
   });
 
   describe("SignTransaction errors", () => {
     it("should fail if signTransaction returns an error", () =>
-      new Promise((done) => {
+      new Promise<void>((resolve, reject) => {
         setupOpenAppDAMock();
 
         const deviceAction = new SignTransactionDeviceAction({
@@ -222,12 +225,15 @@ describe("SignTransactionDeviceAction", () => {
           deviceAction,
           expectedStates,
           makeDeviceActionInternalApiMock(),
-          done,
+          {
+            onDone: resolve,
+            onError: reject,
+          },
         );
       }));
 
     it("should fail if signTransaction returns nothing", () =>
-      new Promise((done) => {
+      new Promise<void>((resolve, reject) => {
         setupOpenAppDAMock();
 
         const deviceAction = new SignTransactionDeviceAction({
@@ -280,7 +286,10 @@ describe("SignTransactionDeviceAction", () => {
           deviceAction,
           expectedStates,
           makeDeviceActionInternalApiMock(),
-          done,
+          {
+            onDone: resolve,
+            onError: reject,
+          },
         );
       }));
   });

@@ -11,7 +11,7 @@ import { type DmkError } from "@api/Error";
  * @param deviceAction The device action to test.
  * @param expectedStates The expected states.
  * @param internalApi
- * @param done A promise resolve callback.
+ * @param callbacks { onDone, onError } The callbacks to call when the test is done or an error occurs.
  */
 export function testDeviceActionStates<
   Output,
@@ -22,28 +22,36 @@ export function testDeviceActionStates<
   deviceAction: DeviceAction<Output, Input, Error, IntermediateValue>,
   expectedStates: Array<DeviceActionState<Output, Error, IntermediateValue>>,
   internalApi: InternalApi,
-  done: (value?: unknown) => void,
+  {
+    onDone,
+    onError,
+  }: {
+    onDone: () => void;
+    onError: (error: Error) => void;
+  },
 ) {
   const observedStates: Array<
     DeviceActionState<Output, Error, IntermediateValue>
   > = [];
 
   const { observable, cancel } = deviceAction._execute(internalApi);
+
   observable.subscribe({
     next: (state) => {
       observedStates.push(state);
     },
     error: (error) => {
-      done(error);
+      onError(error);
     },
     complete: () => {
       try {
         expect(observedStates).toEqual(expectedStates);
-        done();
+        onDone();
       } catch (e) {
-        done(e);
+        onError(e as Error);
       }
     },
   });
+
   return { observable, cancel };
 }

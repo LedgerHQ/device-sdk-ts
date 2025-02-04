@@ -10,7 +10,7 @@ import {
  * Test that the states emitted by a device action match the expected states.
  * @param deviceAction The device action to test.
  * @param expectedStates The expected states.
- * @param done A promise resolve callback.
+ * @param callbacks { onDone, onError } The callbacks to call when the test is done or an error occurs.
  */
 export function testDeviceActionStates<
   Output,
@@ -21,7 +21,13 @@ export function testDeviceActionStates<
   deviceAction: DeviceAction<Output, Input, Error, IntermediateValue>,
   expectedStates: Array<DeviceActionState<Output, Error, IntermediateValue>>,
   internalApi: InternalApi,
-  done?: (arg?: unknown) => void,
+  {
+    onDone,
+    onError,
+  }: {
+    onDone: () => void;
+    onError: (error: Error) => void;
+  },
 ) {
   const observedStates: Array<
     DeviceActionState<Output, Error, IntermediateValue>
@@ -33,14 +39,14 @@ export function testDeviceActionStates<
       observedStates.push(state);
     },
     error: (error) => {
-      if (done) done(error);
+      onError(error);
     },
     complete: () => {
       try {
         expect(observedStates).toEqual(expectedStates);
-        if (done) done();
+        onDone();
       } catch (e) {
-        if (done) done(e);
+        onError(e as Error);
       }
     },
   });

@@ -50,7 +50,7 @@ describe("GetDeviceStatusDeviceAction", () => {
 
   describe("without overriding `extractDependencies`", () => {
     it("should run the device action with an unlocked device", () =>
-      new Promise((done) => {
+      new Promise<void>((resolve, reject) => {
         const getDeviceStateDeviceAction = new GetDeviceStatusDeviceAction({
           input: { unlockTimeout: 500 },
         });
@@ -90,12 +90,15 @@ describe("GetDeviceStatusDeviceAction", () => {
           getDeviceStateDeviceAction,
           expectedStates,
           makeDeviceActionInternalApiMock(),
-          done,
+          {
+            onDone: resolve,
+            onError: reject,
+          },
         );
       }));
 
     it("should run the device action with a locked device", () =>
-      new Promise((done) => {
+      new Promise<void>((resolve, reject) => {
         const getDeviceStateDeviceAction = new GetDeviceStatusDeviceAction({
           input: { unlockTimeout: 500 },
         });
@@ -183,14 +186,17 @@ describe("GetDeviceStatusDeviceAction", () => {
           getDeviceStateDeviceAction,
           expectedStates,
           makeDeviceActionInternalApiMock(),
-          done,
+          {
+            onDone: resolve,
+            onError: reject,
+          },
         );
       }));
   });
 
   describe("success cases", () => {
     it("should return the device status if the device is unlocked", () =>
-      new Promise((done) => {
+      new Promise<void>((resolve, reject) => {
         getDeviceSessionStateMock.mockReturnValue({
           sessionStateType: DeviceSessionStateType.ReadyWithoutSecureChannel,
           deviceStatus: DeviceStatus.CONNECTED,
@@ -235,12 +241,15 @@ describe("GetDeviceStatusDeviceAction", () => {
           getDeviceStateDeviceAction,
           expectedStates,
           makeDeviceActionInternalApiMock(),
-          done,
+          {
+            onDone: resolve,
+            onError: reject,
+          },
         );
       }));
 
     it("should return the device status if the device is locked and the user unlocks the device", () =>
-      new Promise((done) => {
+      new Promise<void>((resolve, reject) => {
         getDeviceSessionStateMock.mockReturnValue({
           sessionStateType: DeviceSessionStateType.ReadyWithoutSecureChannel,
           deviceStatus: DeviceStatus.LOCKED,
@@ -327,14 +336,17 @@ describe("GetDeviceStatusDeviceAction", () => {
           getDeviceStateDeviceAction,
           expectedStates,
           makeDeviceActionInternalApiMock(),
-          done,
+          {
+            onDone: resolve,
+            onError: reject,
+          },
         );
       }));
   });
 
   describe("errors cases", () => {
     it("should end in an error if the device is not onboarded", () =>
-      new Promise((done) => {
+      new Promise<void>((resolve, reject) => {
         getDeviceSessionStateMock.mockReturnValue({
           sessionStateType: DeviceSessionStateType.ReadyWithoutSecureChannel,
           deviceStatus: DeviceStatus.LOCKED,
@@ -362,12 +374,15 @@ describe("GetDeviceStatusDeviceAction", () => {
           getDeviceStateDeviceAction,
           expectedStates,
           makeDeviceActionInternalApiMock(),
-          done,
+          {
+            onDone: resolve,
+            onError: reject,
+          },
         );
       }));
 
     it("should end in an error if the device is locked and the user does not unlock", () =>
-      new Promise((done) => {
+      new Promise<void>((resolve, reject) => {
         getDeviceSessionStateMock.mockReturnValue({
           sessionStateType: DeviceSessionStateType.ReadyWithoutSecureChannel,
           deviceStatus: DeviceStatus.LOCKED,
@@ -422,12 +437,15 @@ describe("GetDeviceStatusDeviceAction", () => {
           getDeviceStateDeviceAction,
           expectedStates,
           makeDeviceActionInternalApiMock(),
-          done,
+          {
+            onDone: resolve,
+            onError: reject,
+          },
         );
       }));
 
     it("should end in an error if the GetAppAndVersion command fails", () =>
-      new Promise((done) => {
+      new Promise<void>((resolve, reject) => {
         getDeviceSessionStateMock.mockReturnValue({
           sessionStateType: DeviceSessionStateType.ReadyWithoutSecureChannel,
           deviceStatus: DeviceStatus.LOCKED,
@@ -509,12 +527,15 @@ describe("GetDeviceStatusDeviceAction", () => {
           getDeviceStateDeviceAction,
           expectedStates,
           makeDeviceActionInternalApiMock(),
-          done,
+          {
+            onDone: resolve,
+            onError: reject,
+          },
         );
       }));
 
     it("should end in an error if getAppAndVersion actor throws an error", () =>
-      new Promise((done) => {
+      new Promise<void>((resolve, reject) => {
         getDeviceSessionStateMock.mockReturnValue({
           sessionStateType: DeviceSessionStateType.ReadyWithoutSecureChannel,
           deviceStatus: DeviceStatus.LOCKED,
@@ -564,13 +585,16 @@ describe("GetDeviceStatusDeviceAction", () => {
           getDeviceStateDeviceAction,
           expectedStates,
           makeDeviceActionInternalApiMock(),
-          done,
+          {
+            onDone: resolve,
+            onError: reject,
+          },
         );
       }));
   });
 
   it("should emit a stopped state if the action is cancelled", () =>
-    new Promise((done) => {
+    new Promise<void>((resolve, reject) => {
       apiGetDeviceSessionStateMock.mockReturnValue({
         sessionStateType: DeviceSessionStateType.ReadyWithoutSecureChannel,
         deviceStatus: DeviceStatus.CONNECTED,
@@ -608,7 +632,10 @@ describe("GetDeviceStatusDeviceAction", () => {
         getDeviceStateDeviceAction,
         expectedStates,
         makeDeviceActionInternalApiMock(),
-        done,
+        {
+          onDone: resolve,
+          onError: reject,
+        },
       );
       cancel();
     }));

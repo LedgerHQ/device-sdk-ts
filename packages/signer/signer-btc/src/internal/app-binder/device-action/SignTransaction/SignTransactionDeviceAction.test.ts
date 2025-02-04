@@ -49,7 +49,7 @@ describe("SignTransactionDeviceAction", () => {
 
   describe("Success case", () => {
     it("should call external dependencies with the correct parameters", () =>
-      new Promise((done) => {
+      new Promise<void>((resolve, reject) => {
         setupSignPsbtDAMock([
           {
             inputIndex: 0,
@@ -117,42 +117,41 @@ describe("SignTransactionDeviceAction", () => {
           },
         ];
 
-        const { observable } = testDeviceActionStates(
+        testDeviceActionStates(
           deviceAction,
           expectedStates,
           makeDeviceActionInternalApiMock(),
-          done,
-        );
-
-        // @todo Put this in a onDone handle of testDeviceActionStates
-        observable.subscribe({
-          complete: () => {
-            expect(updatePsbtMock).toHaveBeenCalledWith(
-              expect.objectContaining({
-                input: {
-                  psbt: "Hello world",
-                  psbtMapper: "PsbtMapper",
-                  signatures: [
-                    {
-                      inputIndex: 0,
-                      pubkey: Uint8Array.from([0x04, 0x05, 0x06]),
-                      signature: Uint8Array.from([0x01, 0x02, 0x03]),
-                    },
-                  ],
-                  valueParser: "ValueParser",
-                },
-              }),
-            );
-            expect(extractTransactionMock).toHaveBeenCalledWith(
-              expect.objectContaining({
-                input: {
-                  psbt: "Psbt",
-                  valueParser: "ValueParser",
-                },
-              }),
-            );
+          {
+            onDone: () => {
+              expect(updatePsbtMock).toHaveBeenCalledWith(
+                expect.objectContaining({
+                  input: {
+                    psbt: "Hello world",
+                    psbtMapper: "PsbtMapper",
+                    signatures: [
+                      {
+                        inputIndex: 0,
+                        pubkey: Uint8Array.from([0x04, 0x05, 0x06]),
+                        signature: Uint8Array.from([0x01, 0x02, 0x03]),
+                      },
+                    ],
+                    valueParser: "ValueParser",
+                  },
+                }),
+              );
+              expect(extractTransactionMock).toHaveBeenCalledWith(
+                expect.objectContaining({
+                  input: {
+                    psbt: "Psbt",
+                    valueParser: "ValueParser",
+                  },
+                }),
+              );
+              resolve();
+            },
+            onError: reject,
           },
-        });
+        );
       }));
   });
 
@@ -161,7 +160,7 @@ describe("SignTransactionDeviceAction", () => {
       vi.resetAllMocks();
     });
     it("Error if sign psbt fails", () =>
-      new Promise((done) => {
+      new Promise<void>((resolve, reject) => {
         setupSignPsbtDAMock([], new UnknownDeviceExchangeError("Mocked error"));
 
         const expectedStates: Array<SignTransactionDAState> = [
@@ -199,12 +198,15 @@ describe("SignTransactionDeviceAction", () => {
           deviceAction,
           expectedStates,
           makeDeviceActionInternalApiMock(),
-          done,
+          {
+            onDone: resolve,
+            onError: reject,
+          },
         );
       }));
 
     it("Error if update psbt fails", () =>
-      new Promise((done) => {
+      new Promise<void>((resolve, reject) => {
         setupSignPsbtDAMock();
 
         const deviceAction = new SignTransactionDeviceAction({
@@ -258,12 +260,15 @@ describe("SignTransactionDeviceAction", () => {
           deviceAction,
           expectedStates,
           makeDeviceActionInternalApiMock(),
-          done,
+          {
+            onDone: resolve,
+            onError: reject,
+          },
         );
       }));
 
     it("Error if extract transaction fails", () =>
-      new Promise((done) => {
+      new Promise<void>((resolve, reject) => {
         setupSignPsbtDAMock();
 
         const deviceAction = new SignTransactionDeviceAction({
@@ -328,7 +333,10 @@ describe("SignTransactionDeviceAction", () => {
           deviceAction,
           expectedStates,
           makeDeviceActionInternalApiMock(),
-          done,
+          {
+            onDone: resolve,
+            onError: reject,
+          },
         );
       }));
   });

@@ -121,7 +121,7 @@ describe("SendCommandInAppDeviceAction", () => {
 
   describe("error cases", () => {
     it("should error and output the error if the open app fails", () =>
-      new Promise((done) => {
+      new Promise<void>((resolve, reject) => {
         setupOpenAppDAMock(new UnknownDAError("Mocked error"));
 
         const expectedStates: MyCommandSendCommandDAState[] = [
@@ -153,12 +153,15 @@ describe("SendCommandInAppDeviceAction", () => {
           }),
           expectedStates,
           makeDeviceActionInternalApiMock(),
-          done,
+          {
+            onDone: resolve,
+            onError: reject,
+          },
         );
       }));
 
     it("should error and output an error if the send command fails", () =>
-      new Promise((done) => {
+      new Promise<void>((resolve, reject) => {
         setupOpenAppDAMock();
 
         sendMyCommand.mockResolvedValue(
@@ -208,14 +211,17 @@ describe("SendCommandInAppDeviceAction", () => {
           deviceAction,
           expectedStates,
           makeDeviceActionInternalApiMock(),
-          done,
+          {
+            onDone: resolve,
+            onError: reject,
+          },
         );
       }));
   });
 
   describe("success cases", () => {
     it("should succeed and output the command result if the send command succeeds", () =>
-      new Promise((done) => {
+      new Promise<void>((resolve, reject) => {
         setupOpenAppDAMock();
 
         sendMyCommand.mockResolvedValue(
@@ -263,7 +269,10 @@ describe("SendCommandInAppDeviceAction", () => {
           deviceAction,
           expectedStates,
           makeDeviceActionInternalApiMock(),
-          done,
+          {
+            onDone: resolve,
+            onError: reject,
+          },
         );
       }));
   });

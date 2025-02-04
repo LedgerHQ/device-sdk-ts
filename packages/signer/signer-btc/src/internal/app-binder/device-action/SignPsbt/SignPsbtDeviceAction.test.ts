@@ -49,7 +49,7 @@ describe("SignPsbtDeviceAction", () => {
 
   describe("Success case", () => {
     it("should call external dependencies with the correct parameters", () =>
-      new Promise((done) => {
+      new Promise<void>((resolve, reject) => {
         setupOpenAppDAMock();
 
         const deviceAction = new SignPsbtDeviceAction({
@@ -135,43 +135,47 @@ describe("SignPsbtDeviceAction", () => {
           },
         ];
 
-        const { observable } = testDeviceActionStates(
+        testDeviceActionStates(
           deviceAction,
           expectedStates,
           makeDeviceActionInternalApiMock(),
-          done,
-        );
+          {
+            onDone: () => {
+              expect(prepareWalletPolicyMock).toHaveBeenCalledWith(
+                expect.objectContaining({
+                  input: {
+                    wallet: "ApiWallet",
+                    walletBuilder: "WalletBuilder",
+                  },
+                }),
+              );
 
-        // @todo Put this in a onDone handle of testDeviceActionStates
-        observable.subscribe({
-          complete: () => {
-            expect(prepareWalletPolicyMock).toHaveBeenCalledWith(
-              expect.objectContaining({
-                input: { wallet: "ApiWallet", walletBuilder: "WalletBuilder" },
-              }),
-            );
-            expect(buildPsbtMock).toHaveBeenCalledWith(
-              expect.objectContaining({
-                input: {
-                  psbt: "Hello world",
-                  wallet: "Wallet",
-                  dataStoreService: "DataStoreService",
-                  psbtMapper: "PsbtMapper",
-                },
-              }),
-            );
-            expect(signPsbtMock).toHaveBeenCalledWith(
-              expect.objectContaining({
-                input: {
-                  wallet: "Wallet",
-                  buildPsbtResult: "BuildPsbtResult",
-                  walletSerializer: "WalletSerializer",
-                  valueParser: "ValueParser",
-                },
-              }),
-            );
+              expect(buildPsbtMock).toHaveBeenCalledWith(
+                expect.objectContaining({
+                  input: {
+                    psbt: "Hello world",
+                    wallet: "Wallet",
+                    dataStoreService: "DataStoreService",
+                    psbtMapper: "PsbtMapper",
+                  },
+                }),
+              );
+
+              expect(signPsbtMock).toHaveBeenCalledWith(
+                expect.objectContaining({
+                  input: {
+                    wallet: "Wallet",
+                    buildPsbtResult: "BuildPsbtResult",
+                    walletSerializer: "WalletSerializer",
+                    valueParser: "ValueParser",
+                  },
+                }),
+              );
+              resolve();
+            },
+            onError: reject,
           },
-        });
+        );
       }));
   });
 
@@ -180,7 +184,7 @@ describe("SignPsbtDeviceAction", () => {
       vi.resetAllMocks();
     });
     it("Error if open app fails", () =>
-      new Promise((done) => {
+      new Promise<void>((resolve, reject) => {
         setupOpenAppDAMock(new UnknownDeviceExchangeError("Mocked error"));
 
         const expectedStates: Array<SignPsbtDAState> = [
@@ -218,12 +222,15 @@ describe("SignPsbtDeviceAction", () => {
           deviceAction,
           expectedStates,
           makeDeviceActionInternalApiMock(),
-          done,
+          {
+            onDone: resolve,
+            onError: reject,
+          },
         );
       }));
 
     it("Error if prepareWallet fails", () =>
-      new Promise((done) => {
+      new Promise<void>((resolve, reject) => {
         setupOpenAppDAMock();
 
         const deviceAction = new SignPsbtDeviceAction({
@@ -277,12 +284,15 @@ describe("SignPsbtDeviceAction", () => {
           deviceAction,
           expectedStates,
           makeDeviceActionInternalApiMock(),
-          done,
+          {
+            onDone: resolve,
+            onError: reject,
+          },
         );
       }));
 
     it("Error if buildPsbt fails", () =>
-      new Promise((done) => {
+      new Promise<void>((resolve, reject) => {
         setupOpenAppDAMock();
 
         const deviceAction = new SignPsbtDeviceAction({
@@ -347,12 +357,15 @@ describe("SignPsbtDeviceAction", () => {
           deviceAction,
           expectedStates,
           makeDeviceActionInternalApiMock(),
-          done,
+          {
+            onDone: resolve,
+            onError: reject,
+          },
         );
       }));
 
     it("Error if signPsbt fails", () =>
-      new Promise((done) => {
+      new Promise<void>((resolve, reject) => {
         setupOpenAppDAMock();
 
         const deviceAction = new SignPsbtDeviceAction({
@@ -428,12 +441,15 @@ describe("SignPsbtDeviceAction", () => {
           deviceAction,
           expectedStates,
           makeDeviceActionInternalApiMock(),
-          done,
+          {
+            onDone: resolve,
+            onError: reject,
+          },
         );
       }));
 
     it("Error if signPsbt throws an exception", () =>
-      new Promise((done) => {
+      new Promise<void>((resolve, reject) => {
         setupOpenAppDAMock();
 
         const deviceAction = new SignPsbtDeviceAction({
@@ -503,12 +519,15 @@ describe("SignPsbtDeviceAction", () => {
           deviceAction,
           expectedStates,
           makeDeviceActionInternalApiMock(),
-          done,
+          {
+            onDone: resolve,
+            onError: reject,
+          },
         );
       }));
 
     it("Return a Left if the final state has no signature", () =>
-      new Promise((done) => {
+      new Promise<void>((resolve, reject) => {
         setupOpenAppDAMock();
 
         const deviceAction = new SignPsbtDeviceAction({
@@ -584,7 +603,10 @@ describe("SignPsbtDeviceAction", () => {
           deviceAction,
           expectedStates,
           makeDeviceActionInternalApiMock(),
-          done,
+          {
+            onDone: resolve,
+            onError: reject,
+          },
         );
       }));
   });

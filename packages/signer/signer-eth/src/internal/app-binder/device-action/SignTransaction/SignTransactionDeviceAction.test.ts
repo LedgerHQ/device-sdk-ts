@@ -76,7 +76,7 @@ describe("SignTransactionDeviceAction", () => {
 
   describe("Happy path", () => {
     it("should call external dependencies with the correct parameters", () =>
-      new Promise((done) => {
+      new Promise<void>((resolve, reject) => {
         setupOpenAppDAMock();
 
         const deviceAction = new SignTransactionDeviceAction({
@@ -177,57 +177,59 @@ describe("SignTransactionDeviceAction", () => {
           },
         ];
 
-        const { observable } = testDeviceActionStates(
+        testDeviceActionStates(
           deviceAction,
           expectedStates,
           makeDeviceActionInternalApiMock(),
-          done,
-        );
+          {
+            onDone: () => {
+              // Verify mocks calls parameters
+              expect(getChallengeMock).toHaveBeenCalled();
+              expect(buildContextMock).toHaveBeenCalledWith(
+                expect.objectContaining({
+                  input: {
+                    challenge: "challenge",
+                    contextModule: contextModuleMock,
+                    mapper: mapperMock,
+                    options: defaultOptions,
+                    transaction: defaultTransaction,
+                  },
+                }),
+              );
 
-        // Verify mocks calls parameters
-        observable.subscribe({
-          complete: () => {
-            expect(getChallengeMock).toHaveBeenCalled();
-            expect(buildContextMock).toHaveBeenCalledWith(
-              expect.objectContaining({
-                input: {
-                  challenge: "challenge",
-                  contextModule: contextModuleMock,
-                  mapper: mapperMock,
-                  options: defaultOptions,
-                  transaction: defaultTransaction,
-                },
-              }),
-            );
-            expect(provideContextMock).toHaveBeenCalledWith(
-              expect.objectContaining({
-                input: {
-                  clearSignContexts: [
-                    {
-                      type: "token",
-                      payload: "payload-1",
-                    },
-                  ],
-                },
-              }),
-            );
-            expect(signTransactionMock).toHaveBeenCalledWith(
-              expect.objectContaining({
-                input: {
-                  derivationPath: "44'/60'/0'/0/0",
-                  serializedTransaction: new Uint8Array([0x01, 0x02, 0x03]),
-                  isLegacy: true,
-                  chainId: 1,
-                  transactionType: TransactionType.LEGACY,
-                },
-              }),
-            );
+              expect(provideContextMock).toHaveBeenCalledWith(
+                expect.objectContaining({
+                  input: {
+                    clearSignContexts: [
+                      {
+                        type: "token",
+                        payload: "payload-1",
+                      },
+                    ],
+                  },
+                }),
+              );
+
+              expect(signTransactionMock).toHaveBeenCalledWith(
+                expect.objectContaining({
+                  input: {
+                    derivationPath: "44'/60'/0'/0/0",
+                    serializedTransaction: new Uint8Array([0x01, 0x02, 0x03]),
+                    isLegacy: true,
+                    chainId: 1,
+                    transactionType: TransactionType.LEGACY,
+                  },
+                }),
+              );
+              resolve();
+            },
+            onError: reject,
           },
-        });
+        );
       }));
 
     it("should call external dependencies with the correct parameters with the generic parser", () =>
-      new Promise((done) => {
+      new Promise<void>((resolve, reject) => {
         setupOpenAppDAMock();
 
         const deviceAction = new SignTransactionDeviceAction({
@@ -331,65 +333,66 @@ describe("SignTransactionDeviceAction", () => {
           },
         ];
 
-        const { observable } = testDeviceActionStates(
+        testDeviceActionStates(
           deviceAction,
           expectedStates,
           makeDeviceActionInternalApiMock(),
-          done,
-        );
-
-        // Verify mocks calls parameters
-        observable.subscribe({
-          complete: () => {
-            expect(getChallengeMock).toHaveBeenCalled();
-            expect(buildContextMock).toHaveBeenCalledWith(
-              expect.objectContaining({
-                input: {
-                  challenge: "challenge",
-                  contextModule: contextModuleMock,
-                  mapper: mapperMock,
-                  options: defaultOptions,
-                  transaction: defaultTransaction,
-                },
-              }),
-            );
-            expect(provideGenericContextMock).toHaveBeenCalledWith(
-              expect.objectContaining({
-                input: {
-                  chainId: 7,
-                  context: {
-                    transactionInfo: "payload-1",
-                    transactionFields: [
-                      {
-                        type: "enum",
-                        payload: "payload-2",
-                      },
-                    ],
+          {
+            onError: reject,
+            onDone: () => {
+              // Verify mocks calls parameters
+              expect(getChallengeMock).toHaveBeenCalled();
+              expect(buildContextMock).toHaveBeenCalledWith(
+                expect.objectContaining({
+                  input: {
+                    challenge: "challenge",
+                    contextModule: contextModuleMock,
+                    mapper: mapperMock,
+                    options: defaultOptions,
+                    transaction: defaultTransaction,
                   },
-                  contextModule: contextModuleMock,
-                  derivationPath: "44'/60'/0'/0/0",
-                  serializedTransaction: new Uint8Array([0x01, 0x02, 0x03]),
-                  transactionParser: parserMock,
-                },
-              }),
-            );
-            expect(signTransactionMock).toHaveBeenCalledWith(
-              expect.objectContaining({
-                input: {
-                  derivationPath: "44'/60'/0'/0/0",
-                  serializedTransaction: new Uint8Array([0x01, 0x02, 0x03]),
-                  isLegacy: false,
-                  chainId: 7,
-                  transactionType: TransactionType.EIP1559,
-                },
-              }),
-            );
+                }),
+              );
+
+              expect(provideGenericContextMock).toHaveBeenCalledWith(
+                expect.objectContaining({
+                  input: {
+                    chainId: 7,
+                    context: {
+                      transactionInfo: "payload-1",
+                      transactionFields: [
+                        {
+                          type: "enum",
+                          payload: "payload-2",
+                        },
+                      ],
+                    },
+                    contextModule: contextModuleMock,
+                    derivationPath: "44'/60'/0'/0/0",
+                    serializedTransaction: new Uint8Array([0x01, 0x02, 0x03]),
+                    transactionParser: parserMock,
+                  },
+                }),
+              );
+              expect(signTransactionMock).toHaveBeenCalledWith(
+                expect.objectContaining({
+                  input: {
+                    derivationPath: "44'/60'/0'/0/0",
+                    serializedTransaction: new Uint8Array([0x01, 0x02, 0x03]),
+                    isLegacy: false,
+                    chainId: 7,
+                    transactionType: TransactionType.EIP1559,
+                  },
+                }),
+              );
+              resolve();
+            },
           },
-        });
+        );
       }));
 
     it("should fallback to blind signing if provideContext return an error", () =>
-      new Promise((done) => {
+      new Promise<void>((resolve, reject) => {
         setupOpenAppDAMock();
 
         const deviceAction = new SignTransactionDeviceAction({
@@ -496,57 +499,57 @@ describe("SignTransactionDeviceAction", () => {
           },
         ];
 
-        const { observable } = testDeviceActionStates(
+        testDeviceActionStates(
           deviceAction,
           expectedStates,
           makeDeviceActionInternalApiMock(),
-          done,
-        );
-
-        // Verify mocks calls parameters
-        observable.subscribe({
-          complete: () => {
-            expect(getChallengeMock).toHaveBeenCalled();
-            expect(buildContextMock).toHaveBeenCalledWith(
-              expect.objectContaining({
-                input: {
-                  challenge: "challenge",
-                  contextModule: contextModuleMock,
-                  mapper: mapperMock,
-                  options: defaultOptions,
-                  transaction: defaultTransaction,
-                },
-              }),
-            );
-            expect(provideContextMock).toHaveBeenCalledWith(
-              expect.objectContaining({
-                input: {
-                  clearSignContexts: [
-                    {
-                      type: "token",
-                      payload: "payload-1",
-                    },
-                  ],
-                },
-              }),
-            );
-            expect(signTransactionMock).toHaveBeenCalledWith(
-              expect.objectContaining({
-                input: {
-                  derivationPath: "44'/60'/0'/0/0",
-                  serializedTransaction: new Uint8Array([0x01, 0x02, 0x03]),
-                  isLegacy: true,
-                  chainId: 1,
-                  transactionType: TransactionType.LEGACY,
-                },
-              }),
-            );
+          {
+            onError: reject,
+            onDone: () => {
+              // Verify mocks calls parameters
+              expect(getChallengeMock).toHaveBeenCalled();
+              expect(buildContextMock).toHaveBeenCalledWith(
+                expect.objectContaining({
+                  input: {
+                    challenge: "challenge",
+                    contextModule: contextModuleMock,
+                    mapper: mapperMock,
+                    options: defaultOptions,
+                    transaction: defaultTransaction,
+                  },
+                }),
+              );
+              expect(provideContextMock).toHaveBeenCalledWith(
+                expect.objectContaining({
+                  input: {
+                    clearSignContexts: [
+                      {
+                        type: "token",
+                        payload: "payload-1",
+                      },
+                    ],
+                  },
+                }),
+              );
+              expect(signTransactionMock).toHaveBeenCalledWith(
+                expect.objectContaining({
+                  input: {
+                    derivationPath: "44'/60'/0'/0/0",
+                    serializedTransaction: new Uint8Array([0x01, 0x02, 0x03]),
+                    isLegacy: true,
+                    chainId: 1,
+                    transactionType: TransactionType.LEGACY,
+                  },
+                }),
+              );
+              resolve();
+            },
           },
-        });
+        );
       }));
 
     it("should fallback to blind signing if provideGenericContext return an error", () =>
-      new Promise((done) => {
+      new Promise<void>((resolve, reject) => {
         setupOpenAppDAMock();
 
         const deviceAction = new SignTransactionDeviceAction({
@@ -660,66 +663,66 @@ describe("SignTransactionDeviceAction", () => {
           },
         ];
 
-        const { observable } = testDeviceActionStates(
+        testDeviceActionStates(
           deviceAction,
           expectedStates,
           makeDeviceActionInternalApiMock(),
-          done,
-        );
-
-        // Verify mocks calls parameters
-        observable.subscribe({
-          complete: () => {
-            expect(getChallengeMock).toHaveBeenCalled();
-            expect(buildContextMock).toHaveBeenCalledWith(
-              expect.objectContaining({
-                input: {
-                  challenge: "challenge",
-                  contextModule: contextModuleMock,
-                  mapper: mapperMock,
-                  options: defaultOptions,
-                  transaction: defaultTransaction,
-                },
-              }),
-            );
-
-            expect(provideGenericContextMock).toHaveBeenCalledWith(
-              expect.objectContaining({
-                input: {
-                  chainId: 7,
-                  context: {
-                    transactionInfo: "payload-1",
-                    transactionFields: [
-                      {
-                        type: "enum",
-                        payload: "payload-2",
-                      },
-                    ],
+          {
+            onError: reject,
+            onDone: () => {
+              // Verify mocks calls parameters
+              expect(getChallengeMock).toHaveBeenCalled();
+              expect(buildContextMock).toHaveBeenCalledWith(
+                expect.objectContaining({
+                  input: {
+                    challenge: "challenge",
+                    contextModule: contextModuleMock,
+                    mapper: mapperMock,
+                    options: defaultOptions,
+                    transaction: defaultTransaction,
                   },
-                  contextModule: contextModuleMock,
-                  derivationPath: "44'/60'/0'/0/0",
-                  serializedTransaction: new Uint8Array([0x01, 0x02, 0x03]),
-                  transactionParser: parserMock,
-                },
-              }),
-            );
-            expect(signTransactionMock).toHaveBeenCalledWith(
-              expect.objectContaining({
-                input: {
-                  derivationPath: "44'/60'/0'/0/0",
-                  serializedTransaction: new Uint8Array([0x01, 0x02, 0x03]),
-                  isLegacy: false,
-                  chainId: 7,
-                  transactionType: TransactionType.EIP1559,
-                },
-              }),
-            );
+                }),
+              );
+
+              expect(provideGenericContextMock).toHaveBeenCalledWith(
+                expect.objectContaining({
+                  input: {
+                    chainId: 7,
+                    context: {
+                      transactionInfo: "payload-1",
+                      transactionFields: [
+                        {
+                          type: "enum",
+                          payload: "payload-2",
+                        },
+                      ],
+                    },
+                    contextModule: contextModuleMock,
+                    derivationPath: "44'/60'/0'/0/0",
+                    serializedTransaction: new Uint8Array([0x01, 0x02, 0x03]),
+                    transactionParser: parserMock,
+                  },
+                }),
+              );
+              expect(signTransactionMock).toHaveBeenCalledWith(
+                expect.objectContaining({
+                  input: {
+                    derivationPath: "44'/60'/0'/0/0",
+                    serializedTransaction: new Uint8Array([0x01, 0x02, 0x03]),
+                    isLegacy: false,
+                    chainId: 7,
+                    transactionType: TransactionType.EIP1559,
+                  },
+                }),
+              );
+              resolve();
+            },
           },
-        });
+        );
       }));
 
     it("should continue if getChallenge return an error 6d00 not supported", () =>
-      new Promise((done) => {
+      new Promise<void>((resolve, reject) => {
         setupOpenAppDAMock();
 
         const deviceAction = new SignTransactionDeviceAction({
@@ -822,47 +825,47 @@ describe("SignTransactionDeviceAction", () => {
           },
         ];
 
-        const { observable } = testDeviceActionStates(
+        testDeviceActionStates(
           deviceAction,
           expectedStates,
           makeDeviceActionInternalApiMock(),
-          done,
-        );
-
-        // Verify mocks calls parameters
-        observable.subscribe({
-          complete: () => {
-            expect(getChallengeMock).toHaveBeenCalled();
-            expect(buildContextMock).toHaveBeenCalledWith(
-              expect.objectContaining({
-                input: {
-                  challenge: null,
-                  contextModule: contextModuleMock,
-                  mapper: mapperMock,
-                  options: defaultOptions,
-                  transaction: defaultTransaction,
-                },
-              }),
-            );
-            expect(signTransactionMock).toHaveBeenCalledWith(
-              expect.objectContaining({
-                input: {
-                  derivationPath: "44'/60'/0'/0/0",
-                  serializedTransaction: new Uint8Array([0x01, 0x02, 0x03]),
-                  isLegacy: true,
-                  chainId: 7,
-                  transactionType: TransactionType.EIP1559,
-                },
-              }),
-            );
+          {
+            onError: reject,
+            onDone: () => {
+              // Verify mocks calls parameters
+              expect(getChallengeMock).toHaveBeenCalled();
+              expect(buildContextMock).toHaveBeenCalledWith(
+                expect.objectContaining({
+                  input: {
+                    challenge: null,
+                    contextModule: contextModuleMock,
+                    mapper: mapperMock,
+                    options: defaultOptions,
+                    transaction: defaultTransaction,
+                  },
+                }),
+              );
+              expect(signTransactionMock).toHaveBeenCalledWith(
+                expect.objectContaining({
+                  input: {
+                    derivationPath: "44'/60'/0'/0/0",
+                    serializedTransaction: new Uint8Array([0x01, 0x02, 0x03]),
+                    isLegacy: true,
+                    chainId: 7,
+                    transactionType: TransactionType.EIP1559,
+                  },
+                }),
+              );
+              resolve();
+            },
           },
-        });
+        );
       }));
   });
 
   describe("OpenApp errors", () => {
     it("should fail if OpenApp throw an error", () =>
-      new Promise((done) => {
+      new Promise<void>((resolve, reject) => {
         setupOpenAppDAMock(new UnknownDAError("OpenApp error"));
 
         const deviceAction = new SignTransactionDeviceAction({
@@ -906,14 +909,19 @@ describe("SignTransactionDeviceAction", () => {
           deviceAction,
           expectedStates,
           makeDeviceActionInternalApiMock(),
-          done,
+          {
+            onError: reject,
+            onDone: () => {
+              resolve();
+            },
+          },
         );
       }));
   });
 
   describe("GetChallenge errors", () => {
     it("should fail if getChallenge throws an error", () =>
-      new Promise((done) => {
+      new Promise<void>((resolve, reject) => {
         setupOpenAppDAMock();
 
         const deviceAction = new SignTransactionDeviceAction({
@@ -967,12 +975,15 @@ describe("SignTransactionDeviceAction", () => {
           deviceAction,
           expectedStates,
           makeDeviceActionInternalApiMock(),
-          done,
+          {
+            onError: reject,
+            onDone: resolve,
+          },
         );
       }));
 
     it("should fail if getChallenge return an error", () =>
-      new Promise((done) => {
+      new Promise<void>((resolve, reject) => {
         setupOpenAppDAMock();
 
         const deviceAction = new SignTransactionDeviceAction({
@@ -1028,14 +1039,17 @@ describe("SignTransactionDeviceAction", () => {
           deviceAction,
           expectedStates,
           makeDeviceActionInternalApiMock(),
-          done,
+          {
+            onError: reject,
+            onDone: resolve,
+          },
         );
       }));
   });
 
   describe("BuildContext errors", () => {
     it("should fail if buildContext throws an error", () =>
-      new Promise((done) => {
+      new Promise<void>((resolve, reject) => {
         setupOpenAppDAMock();
 
         const deviceAction = new SignTransactionDeviceAction({
@@ -1101,14 +1115,17 @@ describe("SignTransactionDeviceAction", () => {
           deviceAction,
           expectedStates,
           makeDeviceActionInternalApiMock(),
-          done,
+          {
+            onError: reject,
+            onDone: resolve,
+          },
         );
       }));
   });
 
   describe("ProvideContext errors", () => {
     it("should fail if provideContext throws an error", () =>
-      new Promise((done) => {
+      new Promise<void>((resolve, reject) => {
         setupOpenAppDAMock();
 
         const deviceAction = new SignTransactionDeviceAction({
@@ -1190,14 +1207,17 @@ describe("SignTransactionDeviceAction", () => {
           deviceAction,
           expectedStates,
           makeDeviceActionInternalApiMock(),
-          done,
+          {
+            onError: reject,
+            onDone: resolve,
+          },
         );
       }));
   });
 
   describe("SignTransaction errors", () => {
     it("should fail if signTransaction returns an error", () =>
-      new Promise((done) => {
+      new Promise<void>((resolve, reject) => {
         setupOpenAppDAMock();
 
         const deviceAction = new SignTransactionDeviceAction({
@@ -1289,7 +1309,10 @@ describe("SignTransactionDeviceAction", () => {
           deviceAction,
           expectedStates,
           makeDeviceActionInternalApiMock(),
-          done,
+          {
+            onError: reject,
+            onDone: resolve,
+          },
         );
       }));
   });

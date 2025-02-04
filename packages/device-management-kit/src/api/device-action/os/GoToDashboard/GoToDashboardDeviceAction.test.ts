@@ -45,7 +45,7 @@ describe("GoToDashboardDeviceAction", () => {
 
   describe("without overriding `extractDependencies`", () => {
     it("should run the device action with device already on dashboard", () =>
-      new Promise((done) => {
+      new Promise<void>((resolve, reject) => {
         setupGetDeviceStatusMock();
 
         const goToDashboardDeviceAction = new GoToDashboardDeviceAction({
@@ -83,12 +83,15 @@ describe("GoToDashboardDeviceAction", () => {
           goToDashboardDeviceAction,
           expectedStates,
           makeDeviceActionInternalApiMock(),
-          done,
+          {
+            onDone: resolve,
+            onError: reject,
+          },
         );
       }));
 
     it("should run the device action with device not on dashboard", () =>
-      new Promise((done) => {
+      new Promise<void>((resolve, reject) => {
         setupGetDeviceStatusMock([
           {
             currentApp: "Bitcoin",
@@ -154,14 +157,17 @@ describe("GoToDashboardDeviceAction", () => {
           goToDashboardDeviceAction,
           expectedStates,
           makeDeviceActionInternalApiMock(),
-          done,
+          {
+            onDone: resolve,
+            onError: reject,
+          },
         );
       }));
   });
 
   describe("success cases", () => {
     it("should success if the device is already on dashboard", () =>
-      new Promise((done) => {
+      new Promise<void>((resolve, reject) => {
         setupGetDeviceStatusMock();
 
         const goToDashboardDeviceAction = new GoToDashboardDeviceAction({
@@ -207,12 +213,15 @@ describe("GoToDashboardDeviceAction", () => {
           goToDashboardDeviceAction,
           expectedStates,
           makeDeviceActionInternalApiMock(),
-          done,
+          {
+            onDone: resolve,
+            onError: reject,
+          },
         );
       }));
 
     it("should success if the device is not on dashboard", () =>
-      new Promise((done) => {
+      new Promise<void>((resolve, reject) => {
         setupGetDeviceStatusMock();
 
         const goToDashboardDeviceAction = new GoToDashboardDeviceAction({
@@ -264,14 +273,17 @@ describe("GoToDashboardDeviceAction", () => {
           goToDashboardDeviceAction,
           expectedStates,
           makeDeviceActionInternalApiMock(),
-          done,
+          {
+            onDone: resolve,
+            onError: reject,
+          },
         );
       }));
   });
 
   describe("error cases", () => {
     it("should return an error if GetDeviceStatus return an error", () =>
-      new Promise((done) => {
+      new Promise<void>((resolve, reject) => {
         setupGetDeviceStatusMock([new UnknownDAError("Unknown error")]);
 
         const goToDashboardDeviceAction = new GoToDashboardDeviceAction({
@@ -309,13 +321,16 @@ describe("GoToDashboardDeviceAction", () => {
           goToDashboardDeviceAction,
           expectedStates,
           makeDeviceActionInternalApiMock(),
-          done,
+          {
+            onDone: resolve,
+            onError: reject,
+          },
         );
       }));
 
     describe("not on dashboard", () => {
       it("should return an error if closeApp fails", () =>
-        new Promise((done) => {
+        new Promise<void>((resolve, reject) => {
           setupGetDeviceStatusMock([
             {
               currentApp: "Bitcoin",
@@ -373,12 +388,15 @@ describe("GoToDashboardDeviceAction", () => {
             goToDashboardDeviceAction,
             expectedStates,
             makeDeviceActionInternalApiMock(),
-            done,
+            {
+              onDone: resolve,
+              onError: reject,
+            },
           );
         }));
 
       it("should return an error if getAppAndVersion fails", () =>
-        new Promise((done) => {
+        new Promise<void>((resolve, reject) => {
           setupGetDeviceStatusMock([
             {
               currentApp: "Bitcoin",
@@ -449,12 +467,15 @@ describe("GoToDashboardDeviceAction", () => {
             goToDashboardDeviceAction,
             expectedStates,
             makeDeviceActionInternalApiMock(),
-            done,
+            {
+              onDone: resolve,
+              onError: reject,
+            },
           );
         }));
 
       it("should return an error if getAppAndVersion does not return an app name", () =>
-        new Promise((done) => {
+        new Promise<void>((resolve, reject) => {
           setupGetDeviceStatusMock([
             {
               currentApp: "Bitcoin",
@@ -524,7 +545,10 @@ describe("GoToDashboardDeviceAction", () => {
             goToDashboardDeviceAction,
             expectedStates,
             makeDeviceActionInternalApiMock(),
-            done,
+            {
+              onDone: resolve,
+              onError: reject,
+            },
           );
         }));
     });

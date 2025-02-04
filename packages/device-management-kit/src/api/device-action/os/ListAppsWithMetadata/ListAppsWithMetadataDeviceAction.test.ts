@@ -46,7 +46,7 @@ describe("ListAppsWithMetadataDeviceAction", () => {
 
   describe("success case", () => {
     it("should run the device actions with no apps installed", () =>
-      new Promise((done) => {
+      new Promise<void>((resolve, reject) => {
         setupListAppsMock([]);
         const listAppsWithMetadataDeviceAction =
           new ListAppsWithMetadataDeviceAction({
@@ -80,12 +80,15 @@ describe("ListAppsWithMetadataDeviceAction", () => {
           listAppsWithMetadataDeviceAction,
           expectedStates,
           makeDeviceActionInternalApiMock(),
-          done,
+          {
+            onDone: resolve,
+            onError: reject,
+          },
         );
       }));
 
     it("should run the device actions with 1 app installed", () =>
-      new Promise((done) => {
+      new Promise<void>((resolve, reject) => {
         setupListAppsMock([BTC_APP]);
         const listAppsWithMetadataDeviceAction =
           new ListAppsWithMetadataDeviceAction({
@@ -131,12 +134,15 @@ describe("ListAppsWithMetadataDeviceAction", () => {
           listAppsWithMetadataDeviceAction,
           expectedStates,
           makeDeviceActionInternalApiMock(),
-          done,
+          {
+            onDone: resolve,
+            onError: reject,
+          },
         );
       }));
 
     it("should run the device actions with 2 apps installed", () =>
-      new Promise((done) => {
+      new Promise<void>((resolve, reject) => {
         setupListAppsMock([BTC_APP, ETH_APP]);
         const listAppsWithMetadataDeviceAction =
           new ListAppsWithMetadataDeviceAction({
@@ -184,12 +190,15 @@ describe("ListAppsWithMetadataDeviceAction", () => {
           listAppsWithMetadataDeviceAction,
           expectedStates,
           makeDeviceActionInternalApiMock(),
-          done,
+          {
+            onDone: resolve,
+            onError: reject,
+          },
         );
       }));
 
     it("should run the device actions with 1 app installed and a custom lock screen", () =>
-      new Promise((done) => {
+      new Promise<void>((resolve, reject) => {
         setupListAppsMock([BTC_APP, CUSTOM_LOCK_SCREEN_APP]);
         const listAppsWithMetadataDeviceAction =
           new ListAppsWithMetadataDeviceAction({
@@ -239,14 +248,17 @@ describe("ListAppsWithMetadataDeviceAction", () => {
           listAppsWithMetadataDeviceAction,
           expectedStates,
           makeDeviceActionInternalApiMock(),
-          done,
+          {
+            onDone: resolve,
+            onError: reject,
+          },
         );
       }));
   });
 
   describe("error case", () => {
     it("should error when ListApps fails", () =>
-      new Promise((done) => {
+      new Promise<void>((resolve, reject) => {
         setupListAppsMock([], true);
         const listAppsWithMetadataDeviceAction =
           new ListAppsWithMetadataDeviceAction({
@@ -276,12 +288,15 @@ describe("ListAppsWithMetadataDeviceAction", () => {
           listAppsWithMetadataDeviceAction,
           expectedStates,
           makeDeviceActionInternalApiMock(),
-          done,
+          {
+            onDone: resolve,
+            onError: reject,
+          },
         );
       }));
 
     it("should error when getAppsByHash rejects", () =>
-      new Promise((done) => {
+      new Promise<void>((resolve, reject) => {
         setupListAppsMock([BTC_APP]);
         const listAppsWithMetadataDeviceAction =
           new ListAppsWithMetadataDeviceAction({
@@ -323,12 +338,15 @@ describe("ListAppsWithMetadataDeviceAction", () => {
           listAppsWithMetadataDeviceAction,
           expectedStates,
           makeDeviceActionInternalApiMock(),
-          done,
+          {
+            onDone: resolve,
+            onError: reject,
+          },
         );
       }));
 
     it("should error when getAppsByHash fails but error is known", () =>
-      new Promise((done) => {
+      new Promise<void>((resolve, reject) => {
         setupListAppsMock([BTC_APP]);
         const listAppsWithMetadataDeviceAction =
           new ListAppsWithMetadataDeviceAction({
@@ -370,12 +388,15 @@ describe("ListAppsWithMetadataDeviceAction", () => {
           listAppsWithMetadataDeviceAction,
           expectedStates,
           makeDeviceActionInternalApiMock(),
-          done,
+          {
+            onDone: resolve,
+            onError: reject,
+          },
         );
       }));
 
     it("should error when SaveSession fails", () =>
-      new Promise((done) => {
+      new Promise<void>((resolve, reject) => {
         setupListAppsMock([BTC_APP]);
         const listAppsWithMetadataDeviceAction =
           new ListAppsWithMetadataDeviceAction({
@@ -437,7 +458,10 @@ describe("ListAppsWithMetadataDeviceAction", () => {
           listAppsWithMetadataDeviceAction,
           expectedStates,
           makeDeviceActionInternalApiMock(),
-          done,
+          {
+            onDone: resolve,
+            onError: reject,
+          },
         );
       }));
   });
