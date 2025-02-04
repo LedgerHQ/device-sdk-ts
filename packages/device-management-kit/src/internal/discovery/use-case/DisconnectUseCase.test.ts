@@ -12,6 +12,10 @@ import { AxiosManagerApiDataSource } from "@internal/manager-api/data/AxiosManag
 import { type ManagerApiDataSource } from "@internal/manager-api/data/ManagerApiDataSource";
 import { DefaultManagerApiService } from "@internal/manager-api/service/DefaultManagerApiService";
 import { type ManagerApiService } from "@internal/manager-api/service/ManagerApiService";
+import { DefaultSecureChannelDataSource } from "@internal/secure-channel/data/DefaultSecureChannelDataSource";
+import { type SecureChannelDataSource } from "@internal/secure-channel/data/SecureChannelDataSource";
+import { DefaultSecureChannelService } from "@internal/secure-channel/service/DefaultSecureChannelService";
+import { type SecureChannelService } from "@internal/secure-channel/service/SecureChannelService";
 import { DefaultTransportService } from "@internal/transport/service/DefaultTransportService";
 import { type TransportService } from "@internal/transport/service/TransportService";
 
@@ -31,6 +35,8 @@ const loggerFactory = jest
 let transportService: TransportService;
 let managerApi: ManagerApiService;
 let managerApiDataSource: ManagerApiDataSource;
+let secureChannelDataSource: SecureChannelDataSource;
+let secureChannel: SecureChannelService;
 
 const sessionId = "sessionId";
 
@@ -51,6 +57,10 @@ describe("DisconnectUseCase", () => {
     const connectedDevice = connectedDeviceStubBuilder();
     managerApiDataSource = new AxiosManagerApiDataSource({} as DmkConfig);
     managerApi = new DefaultManagerApiService(managerApiDataSource);
+    secureChannelDataSource = new DefaultSecureChannelDataSource(
+      {} as DmkConfig,
+    );
+    secureChannel = new DefaultSecureChannelService(secureChannelDataSource);
     const deviceSession = deviceSessionStubBuilder(
       {
         id: sessionId,
@@ -58,6 +68,7 @@ describe("DisconnectUseCase", () => {
       },
       loggerFactory,
       managerApi,
+      secureChannel,
     );
     jest
       .spyOn(sessionService, "getDeviceSessionById")
@@ -109,6 +120,7 @@ describe("DisconnectUseCase", () => {
             { id: sessionId },
             loggerFactory,
             managerApi,
+            secureChannel,
           ),
         ),
       );
