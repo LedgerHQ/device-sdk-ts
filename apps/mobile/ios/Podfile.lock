@@ -1267,7 +1267,7 @@ PODS:
     - Yoga
   - react-native-get-random-values (1.11.0):
     - React-Core
-  - react-native-safe-area-context (5.1.0):
+  - react-native-safe-area-context (5.2.0):
     - DoubleConversion
     - glog
     - hermes-engine
@@ -1280,8 +1280,8 @@ PODS:
     - React-featureflags
     - React-graphics
     - React-ImageManager
-    - react-native-safe-area-context/common (= 5.1.0)
-    - react-native-safe-area-context/fabric (= 5.1.0)
+    - react-native-safe-area-context/common (= 5.2.0)
+    - react-native-safe-area-context/fabric (= 5.2.0)
     - React-NativeModulesApple
     - React-RCTFabric
     - React-rendererdebug
@@ -1290,7 +1290,7 @@ PODS:
     - ReactCommon/turbomodule/bridging
     - ReactCommon/turbomodule/core
     - Yoga
-  - react-native-safe-area-context/common (5.1.0):
+  - react-native-safe-area-context/common (5.2.0):
     - DoubleConversion
     - glog
     - hermes-engine
@@ -1311,7 +1311,7 @@ PODS:
     - ReactCommon/turbomodule/bridging
     - ReactCommon/turbomodule/core
     - Yoga
-  - react-native-safe-area-context/fabric (5.1.0):
+  - react-native-safe-area-context/fabric (5.2.0):
     - DoubleConversion
     - glog
     - hermes-engine
@@ -1621,7 +1621,7 @@ PODS:
     - ReactCommon/turbomodule/bridging
     - ReactCommon/turbomodule/core
     - Yoga
-  - RNScreens (4.5.0):
+  - RNScreens (4.6.0):
     - DoubleConversion
     - glog
     - hermes-engine
@@ -1642,9 +1642,9 @@ PODS:
     - ReactCodegen
     - ReactCommon/turbomodule/bridging
     - ReactCommon/turbomodule/core
-    - RNScreens/common (= 4.5.0)
+    - RNScreens/common (= 4.6.0)
     - Yoga
-  - RNScreens/common (4.5.0):
+  - RNScreens/common (4.6.0):
     - DoubleConversion
     - glog
     - hermes-engine
@@ -1924,7 +1924,7 @@ SPEC CHECKSUMS:
   React-microtasksnativemodule: 36341e09dcd1df535503e6ed2ddf88f10da56d52
   react-native-ble-plx: 7a01a7e595504484789ddb1c94dd9643a03e6309
   react-native-get-random-values: d16467cf726c618e9c7a8c3c39c31faa2244bbba
-  react-native-safe-area-context: 0d8827b2420dfb4c8a8e27639585e61b912261be
+  react-native-safe-area-context: 5e53e2b0fc3a2994ad0c89a2486e545b6566d8c4
   React-nativeconfig: 539ff4de6ce3b694e8e751080568c281c84903ce
   React-NativeModulesApple: 702246817c286d057e23fe4b1302019796e62521
   React-perflogger: f260e2de95f9dbd002035251559c13bf1f0643d4
@@ -1953,7 +1953,7 @@ SPEC CHECKSUMS:
   ReactCodegen: 0a0eef9c8cd84c932ae1868832086c6441811e84
   ReactCommon: 3c1c8c6d777103c0e60e37c6c5f08e828e2a77c9
   RNGestureHandler: b9cd1bda1d2a95d390de0a88e1e41140a5a68e82
-  RNScreens: 4c7d5710e955dcf72c14a546e29744f9e591370b
+  RNScreens: 771cbeddcd8e11d1d176f1b637e8846a2036390e
   SocketRocket: d4aabe649be1e368d1318fdf28a022d714d65748
   Yoga: be6f55a028e86c83ae066f018e9b5d24ffc45436
 
