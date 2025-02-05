@@ -70,7 +70,7 @@ describe("ContextModuleBuilder", () => {
 
   it("should return a custom context module with a custom custom web3checks loader", () => {
     const contextModuleBuilder = new ContextModuleBuilder();
-    const customLoader = { load: jest.fn() };
+    const customLoader = { load: vi.fn() };
 
     const res = contextModuleBuilder
       .removeDefaultLoaders()
