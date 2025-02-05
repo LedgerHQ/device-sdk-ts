@@ -1,5 +1,6 @@
 import {
   type ClearSignContextSuccess,
+  type ClearSignContextType,
   type ContextModule,
 } from "@ledgerhq/context-module";
 import {
@@ -78,7 +79,7 @@ export type MachineDependencies = {
   readonly provideContext: (arg0: {
     input: {
       clearSignContexts: ClearSignContextSuccess[];
-      web3Check: ClearSignContextSuccess | null;
+      web3Check: ClearSignContextSuccess<ClearSignContextType.WEB3_CHECK> | null;
     };
   }) => Promise<Maybe<CommandErrorResult<EthErrorCodes>>>;
   readonly provideGenericContext: (arg0: {
@@ -89,6 +90,7 @@ export type MachineDependencies = {
       derivationPath: string;
       serializedTransaction: Uint8Array;
       context: GenericContext;
+      web3Check: ClearSignContextSuccess<ClearSignContextType.WEB3_CHECK> | null;
     };
   }) => Promise<
     Maybe<CommandErrorResult<ProvideTransactionGenericContextTaskErrorCodes>>
@@ -389,6 +391,7 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
                 context._internalState.serializedTransaction!,
               context: context._internalState
                 .clearSignContexts as GenericContext,
+              web3Check: context._internalState.web3Check,
             }),
             onDone: {
               actions: assign({
@@ -499,7 +502,7 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
     const provideContext = async (arg0: {
       input: {
         clearSignContexts: ClearSignContextSuccess[];
-        web3Check: ClearSignContextSuccess | null;
+        web3Check: ClearSignContextSuccess<ClearSignContextType.WEB3_CHECK> | null;
       };
     }) =>
       new ProvideTransactionContextTask(internalApi, {
@@ -515,6 +518,7 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
         derivationPath: string;
         serializedTransaction: Uint8Array;
         context: GenericContext;
+        web3Check: ClearSignContextSuccess<ClearSignContextType.WEB3_CHECK> | null;
       };
     }) =>
       new ProvideTransactionGenericContextTask(internalApi, {
@@ -524,6 +528,7 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
         derivationPath: arg0.input.derivationPath,
         serializedTransaction: arg0.input.serializedTransaction,
         context: arg0.input.context,
+        web3Check: arg0.input.web3Check,
       }).run();
 
     const signTransaction = async (arg0: {

@@ -31,7 +31,7 @@ export type ProvideTransactionContextTaskArgs = {
    * The valid clear sign contexts offerred by the `BuildTrancationContextTask`.
    */
   clearSignContexts: ClearSignContextSuccess[];
-  web3Check: ClearSignContextSuccess | null;
+  web3Check: ClearSignContextSuccess<ClearSignContextType.WEB3_CHECK> | null;
 };
 
 /**

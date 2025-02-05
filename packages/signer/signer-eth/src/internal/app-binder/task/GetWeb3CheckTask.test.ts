@@ -107,6 +107,36 @@ describe("GetWeb3CheckTask", () => {
           error: new InvalidStatusWordError("error"),
         });
       });
+
+      it("should return null if the type is not a ClearSignContextSuccess web3check", async () => {
+        // GIVEN
+        mapperMock.mapTransactionToSubset.mockReturnValue(
+          Right({ subset: {}, serializedTransaction: new Uint8Array() }),
+        );
+        apiMock.sendCommand.mockResolvedValueOnce(
+          CommandResultFactory({ data: { web3ChecksEnabled: true } }),
+        );
+        apiMock.sendCommand.mockResolvedValueOnce(
+          CommandResultFactory({ data: { address: "address" } }),
+        );
+        contextModuleMock.getWeb3Checks.mockResolvedValue({
+          type: "invalid-type",
+          id: 1,
+        });
+
+        // WHEN
+        const result = await new GetWeb3CheckTask(apiMock, {
+          contextModule: contextModuleMock as unknown as ContextModule,
+          mapper: mapperMock as unknown as TransactionMapperService,
+          transaction,
+          derivationPath,
+        }).run();
+
+        // THEN
+        expect(result).toEqual({
+          web3Check: null,
+        });
+      });
     });
 
     describe("success", () => {

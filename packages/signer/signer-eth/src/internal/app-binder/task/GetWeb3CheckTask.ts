@@ -18,7 +18,7 @@ import { type TransactionMapperService } from "@internal/transaction/service/map
 
 export type GetWeb3CheckTaskResult =
   | {
-      readonly web3Check: ClearSignContextSuccess | null;
+      readonly web3Check: ClearSignContextSuccess<ClearSignContextType.WEB3_CHECK> | null;
     }
   | {
       readonly web3Check: null;
@@ -90,7 +90,7 @@ export class GetWeb3CheckTask {
 
     if (
       web3CheckContext === null ||
-      web3CheckContext?.type === ClearSignContextType.ERROR
+      web3CheckContext?.type !== ClearSignContextType.WEB3_CHECK
     ) {
       return {
         web3Check: null,
