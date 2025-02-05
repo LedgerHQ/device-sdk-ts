@@ -68,7 +68,7 @@ export class HttpWeb3CheckDataSource implements Web3CheckDataSource {
 
     const certificate = await this._certificateLoader.loadCertificate({
       keyId: web3CheckDto.public_key_id,
-      keyUsage: "replace-me" as KeyUsage, // TODO: replace with the keyUsage given by the API
+      keyUsage: KeyUsage.TxSimulationSigner,
       targetDevice: deviceModelId,
     });
 
