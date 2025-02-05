@@ -26,6 +26,16 @@ export interface SecureChannelDataSource {
   ): Either<WebSocketConnectionError, WebSocket>;
 
   /**
+   * Installs applications on the device.
+   *
+   * @param params - The parameters required to install the applications.
+   * @returns Either containing a WebSocket connection or a WebSocketConnectionError.
+   */
+  installApp(
+    params: InstallAppsParams,
+  ): Either<WebSocketConnectionError, WebSocket>;
+
+  /**
    * Lists the installed applications on the device.
    *
    * @param params - The parameters required for the genuine check.
@@ -36,13 +46,13 @@ export interface SecureChannelDataSource {
   ): Either<WebSocketConnectionError, WebSocket>;
 
   /**
-   * Updates the MCU (Microcontroller Unit) of the device.
+   * Uninstalls applications from the device.
    *
-   * @param params - The parameters required to update the MCU.
+   * @param params - The parameters required to uninstall the applications.
    * @returns Either containing a WebSocket connection or a WebSocketConnectionError.
    */
-  updateMcu(
-    params: UpdateMcuParams,
+  uninstallApp(
+    params: UninstallAppsParams,
   ): Either<WebSocketConnectionError, WebSocket>;
 
   /**
@@ -56,22 +66,12 @@ export interface SecureChannelDataSource {
   ): Either<WebSocketConnectionError, WebSocket>;
 
   /**
-   * Installs applications on the device.
+   * Updates the MCU (Microcontroller Unit) of the device.
    *
-   * @param params - The parameters required to install the applications.
+   * @param params - The parameters required to update the MCU.
    * @returns Either containing a WebSocket connection or a WebSocketConnectionError.
    */
-  installApp(
-    params: InstallAppsParams,
-  ): Either<WebSocketConnectionError, WebSocket>;
-
-  /**
-   * Uninstalls applications from the device.
-   *
-   * @param params - The parameters required to uninstall the applications.
-   * @returns Either containing a WebSocket connection or a WebSocketConnectionError.
-   */
-  uninstallApp(
-    params: UninstallAppsParams,
+  updateMcu(
+    params: UpdateMcuParams,
   ): Either<WebSocketConnectionError, WebSocket>;
 }
