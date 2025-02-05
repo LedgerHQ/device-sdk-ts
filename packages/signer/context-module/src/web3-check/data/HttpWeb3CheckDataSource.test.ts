@@ -18,7 +18,7 @@ describe("HttpWeb3CheckDataSource", () => {
     },
   } as ContextModuleConfig;
   const certificateLoaderMock = {
-    loadCertificate: jest.fn(),
+    loadCertificate: vi.fn(),
   };
 
   beforeEach(() => {
@@ -39,10 +39,10 @@ describe("HttpWeb3CheckDataSource", () => {
         public_key_id: KeyId.Blockaid,
         descriptor: "descriptor",
       };
-      jest.spyOn(axios, "request").mockResolvedValueOnce({ data: dto });
-      jest
-        .spyOn(certificateLoaderMock, "loadCertificate")
-        .mockResolvedValueOnce(undefined);
+      vi.spyOn(axios, "request").mockResolvedValueOnce({ data: dto });
+      vi.spyOn(certificateLoaderMock, "loadCertificate").mockResolvedValueOnce(
+        undefined,
+      );
 
       // WHEN
       const dataSource = new HttpWeb3CheckDataSource(
@@ -73,13 +73,11 @@ describe("HttpWeb3CheckDataSource", () => {
         public_key_id: KeyId.Blockaid,
         descriptor: "descriptor",
       };
-      jest.spyOn(axios, "request").mockResolvedValueOnce({ data: dto });
-      jest
-        .spyOn(certificateLoaderMock, "loadCertificate")
-        .mockResolvedValueOnce({
-          keyUsageNumber: 11,
-          payload: new Uint8Array([0x01]),
-        });
+      vi.spyOn(axios, "request").mockResolvedValueOnce({ data: dto });
+      vi.spyOn(certificateLoaderMock, "loadCertificate").mockResolvedValueOnce({
+        keyUsageNumber: 11,
+        payload: new Uint8Array([0x01]),
+      });
 
       // WHEN
       const dataSource = new HttpWeb3CheckDataSource(
@@ -134,10 +132,10 @@ describe("HttpWeb3CheckDataSource", () => {
         chainId: 1,
       };
       const dto = {};
-      jest.spyOn(axios, "request").mockResolvedValue({ data: dto });
-      jest
-        .spyOn(certificateLoaderMock, "loadCertificate")
-        .mockResolvedValue(undefined);
+      vi.spyOn(axios, "request").mockResolvedValue({ data: dto });
+      vi.spyOn(certificateLoaderMock, "loadCertificate").mockResolvedValue(
+        undefined,
+      );
 
       // WHEN
       const dataSource = new HttpWeb3CheckDataSource(
