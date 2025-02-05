@@ -172,6 +172,9 @@ importers:
       react-native-svg:
         specifier: ^15.11.1
         version: 15.11.1(react-native@0.76.6(@babel/core@7.26.0)(@babel/preset-env@7.26.0(@babel/core@7.26.0))(@react-native-community/cli-server-api@15.0.1)(@types/react@18.3.12)(react@18.3.1))(react@18.3.1)
+      rxjs:
+        specifier: ^7.8.1
+        version: 7.8.1
       styled-components:
         specifier: ^5.3.3
         version: 5.3.11(@babel/core@7.26.0)(react-dom@18.3.1(react@18.3.1))(react-is@18.3.1)(react@18.3.1)
@@ -12091,9 +12094,7 @@ snapshots:
     transitivePeerDependencies:
       - '@babel/core'
       - '@babel/preset-env'
-      - bufferutil
       - supports-color
-      - utf-8-validate
 
   '@react-native/normalize-colors@0.76.6': {}
 
