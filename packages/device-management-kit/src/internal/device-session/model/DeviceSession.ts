@@ -31,6 +31,11 @@ export type SessionConstructorArgs = {
   id?: DeviceSessionId;
 };
 
+type SendApduOptions = {
+  isPolling?: boolean;
+  triggersDisconnection?: boolean;
+};
+
 /**
  * Represents a session with a device.
  */
@@ -103,10 +108,7 @@ export class DeviceSession {
 
   async sendApdu(
     rawApdu: Uint8Array,
-    options: {
-      isPolling: boolean;
-      triggersDisconnection: boolean;
-    } = {
+    options: SendApduOptions = {
       isPolling: false,
       triggersDisconnection: false,
     },
@@ -116,7 +118,9 @@ export class DeviceSession {
       return Left(new DeviceBusyError());
     }
 
-    if (!options.isPolling) this.updateDeviceStatus(DeviceStatus.BUSY);
+    if (!options.isPolling) {
+      this.updateDeviceStatus(DeviceStatus.BUSY);
+    }
 
     const errorOrResponse = await this._connectedDevice.sendApdu(
       rawApdu,
@@ -163,6 +167,7 @@ export class DeviceSession {
     deviceAction: DeviceAction<Output, Input, Error, IntermediateValue>,
   ): ExecuteDeviceActionReturnType<Output, Error, IntermediateValue> {
     const { observable, cancel } = deviceAction._execute({
+      sendApdu: async (apdu: Uint8Array) => this.sendApdu(apdu),
       sendCommand: async <Response, ErrorStatusCodes, Args>(
         command: Command<Response, ErrorStatusCodes, Args>,
       ) => this.sendCommand(command),
