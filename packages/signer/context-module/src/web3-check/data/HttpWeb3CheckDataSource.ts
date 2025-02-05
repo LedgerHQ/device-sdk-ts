@@ -4,6 +4,9 @@ import { Either, Left, Right } from "purify-ts";
 
 import { configTypes } from "@/config/di/configTypes";
 import type { ContextModuleConfig } from "@/config/model/ContextModuleConfig";
+import { pkiTypes } from "@/pki/di/pkiTypes";
+import { type PkiCertificateLoader } from "@/pki/domain/PkiCertificateLoader";
+import { KeyUsage } from "@/pki/model/KeyUsage";
 import {
   type Web3CheckContext,
   type Web3Checks,
@@ -17,20 +20,25 @@ import { GetWeb3ChecksRequestDto, Web3CheckDto } from "./Web3CheckDto";
 export class HttpWeb3CheckDataSource implements Web3CheckDataSource {
   constructor(
     @inject(configTypes.Config) private readonly config: ContextModuleConfig,
+    @inject(pkiTypes.PkiCertificateLoader)
+    private readonly _certificateLoader: PkiCertificateLoader,
   ) {}
 
-  async getWeb3Checks(
-    params: Web3CheckContext,
-  ): Promise<Either<Error, Web3Checks>> {
+  async getWeb3Checks({
+    chainId,
+    deviceModelId,
+    from,
+    rawTx,
+  }: Web3CheckContext): Promise<Either<Error, Web3Checks>> {
     let web3CheckDto: Web3CheckDto;
 
     try {
       const requestDto: GetWeb3ChecksRequestDto = {
         tx: {
-          from: params.from,
-          raw: params.rawTx,
+          from,
+          raw: rawTx,
         },
-        chain: params.chainId,
+        chain: chainId,
         preset: "blockaid",
       };
       const response = await axios.request<Web3CheckDto>({
@@ -59,9 +67,16 @@ export class HttpWeb3CheckDataSource implements Web3CheckDataSource {
       );
     }
 
+    const certificate = await this._certificateLoader.loadCertificate({
+      keyId: web3CheckDto.public_key_id,
+      keyUsage: "replace-me" as KeyUsage, // TODO: replace with the keyUsage given by the API
+      targetDevice: deviceModelId,
+    });
+
     const result: Web3Checks = {
       publicKeyId: web3CheckDto.public_key_id,
       descriptor: web3CheckDto.descriptor,
+      certificate,
     };
 
     return Right(result);

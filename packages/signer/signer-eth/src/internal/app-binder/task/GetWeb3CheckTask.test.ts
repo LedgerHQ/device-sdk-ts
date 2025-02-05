@@ -1,6 +1,9 @@
 import { type ContextModule } from "@ledgerhq/context-module";
 import {
   CommandResultFactory,
+  DeviceModelId,
+  DeviceSessionStateType,
+  DeviceStatus,
   InvalidStatusWordError,
 } from "@ledgerhq/device-management-kit";
 import { Left, Right } from "purify-ts";
@@ -22,7 +25,15 @@ describe("GetWeb3CheckTask", () => {
 
   describe("run", () => {
     beforeEach(() => {
-      vi.clearAllMocks();
+      jest.clearAllMocks();
+
+      apiMock.getDeviceSessionState.mockReturnValueOnce({
+        sessionStateType: DeviceSessionStateType.ReadyWithoutSecureChannel,
+        deviceStatus: DeviceStatus.CONNECTED,
+        installedApps: [],
+        currentApp: { name: "Ethereum", version: "1.15.0" },
+        deviceModelId: DeviceModelId.FLEX,
+      });
     });
 
     describe("errors", () => {
@@ -168,6 +179,39 @@ describe("GetWeb3CheckTask", () => {
         // THEN
         expect(result).toEqual({
           web3Check,
+        });
+      });
+
+      it("should call the context module with the right parameters", async () => {
+        // GIVEN
+        mapperMock.mapTransactionToSubset.mockReturnValue(
+          Right({
+            subset: { chainId: 15, from: "from" },
+            serializedTransaction: new Uint8Array([0x01, 0x02, 0x03]),
+          }),
+        );
+        apiMock.sendCommand.mockResolvedValueOnce(
+          CommandResultFactory({ data: { web3ChecksEnabled: true } }),
+        );
+        apiMock.sendCommand.mockResolvedValueOnce(
+          CommandResultFactory({ data: { address: "address" } }),
+        );
+        contextModuleMock.getWeb3Checks.mockResolvedValue(null);
+
+        // WHEN
+        await new GetWeb3CheckTask(apiMock, {
+          contextModule: contextModuleMock as unknown as ContextModule,
+          mapper: mapperMock as unknown as TransactionMapperService,
+          transaction,
+          derivationPath,
+        }).run();
+
+        // THEN
+        expect(contextModuleMock.getWeb3Checks).toHaveBeenCalledWith({
+          deviceModelId: DeviceModelId.FLEX,
+          from: "address",
+          rawTx: "0x010203",
+          chainId: 15,
         });
       });
     });

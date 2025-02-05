@@ -1,7 +1,10 @@
+import { DeviceModelId } from "@ledgerhq/device-management-kit";
 import axios from "axios";
 import { Left, Right } from "purify-ts";
 
 import { type ContextModuleConfig } from "@/config/model/ContextModuleConfig";
+import { type PkiCertificateLoader } from "@/pki/domain/PkiCertificateLoader";
+import { KeyId } from "@/pki/model/KeyId";
 import { HttpWeb3CheckDataSource } from "@/web3-check/data/HttpWeb3CheckDataSource";
 import { type Web3CheckDto } from "@/web3-check/data/Web3CheckDto";
 import { type Web3CheckContext } from "@/web3-check/domain/web3CheckTypes";
@@ -14,6 +17,9 @@ describe("HttpWeb3CheckDataSource", () => {
       url: "web3checksUrl",
     },
   } as ContextModuleConfig;
+  const certificateLoaderMock = {
+    loadCertificate: jest.fn(),
+  };
 
   beforeEach(() => {
     vi.resetAllMocks();
@@ -23,26 +29,71 @@ describe("HttpWeb3CheckDataSource", () => {
     it("should return an object if the request is successful", async () => {
       // GIVEN
       const params: Web3CheckContext = {
+        deviceModelId: DeviceModelId.FLEX,
         from: "from",
         rawTx: "rawTx",
         chainId: 1,
       };
       const dto: Web3CheckDto = {
         block: 1,
-        public_key_id: "publicKeyId",
+        public_key_id: KeyId.Blockaid,
         descriptor: "descriptor",
       };
-      vi.spyOn(axios, "request").mockResolvedValue({ data: dto });
+      jest.spyOn(axios, "request").mockResolvedValueOnce({ data: dto });
+      jest
+        .spyOn(certificateLoaderMock, "loadCertificate")
+        .mockResolvedValueOnce(undefined);
 
       // WHEN
-      const dataSource = new HttpWeb3CheckDataSource(config);
+      const dataSource = new HttpWeb3CheckDataSource(
+        config,
+        certificateLoaderMock as unknown as PkiCertificateLoader,
+      );
       const result = await dataSource.getWeb3Checks(params);
 
       // THEN
       expect(result).toEqual(
         Right({
-          publicKeyId: "publicKeyId",
+          publicKeyId: "blockaid",
           descriptor: "descriptor",
+        }),
+      );
+    });
+
+    it("should return an object with a certificate if the request is successful", async () => {
+      // GIVEN
+      const params: Web3CheckContext = {
+        deviceModelId: DeviceModelId.FLEX,
+        from: "from",
+        rawTx: "rawTx",
+        chainId: 1,
+      };
+      const dto: Web3CheckDto = {
+        block: 1,
+        public_key_id: KeyId.Blockaid,
+        descriptor: "descriptor",
+      };
+      jest.spyOn(axios, "request").mockResolvedValueOnce({ data: dto });
+      jest
+        .spyOn(certificateLoaderMock, "loadCertificate")
+        .mockResolvedValueOnce({
+          keyUsageNumber: 11,
+          payload: new Uint8Array([0x01]),
+        });
+
+      // WHEN
+      const dataSource = new HttpWeb3CheckDataSource(
+        config,
+        certificateLoaderMock as unknown as PkiCertificateLoader,
+      );
+      const result = await dataSource.getWeb3Checks(params);
+
+      // THEN
+      expect(result).toEqual(
+        Right({
+          publicKeyId: "blockaid",
+          descriptor: "descriptor",
+          certificate: { keyUsageNumber: 11, payload: new Uint8Array([0x01]) },
         }),
       );
     });
@@ -50,6 +101,7 @@ describe("HttpWeb3CheckDataSource", () => {
     it("should return an error if the request fails", async () => {
       // GIVEN
       const params: Web3CheckContext = {
+        deviceModelId: DeviceModelId.FLEX,
         from: "from",
         rawTx: "rawTx",
         chainId: 1,
@@ -57,7 +109,10 @@ describe("HttpWeb3CheckDataSource", () => {
       vi.spyOn(axios, "request").mockRejectedValue(new Error("error"));
 
       // WHEN
-      const dataSource = new HttpWeb3CheckDataSource(config);
+      const dataSource = new HttpWeb3CheckDataSource(
+        config,
+        certificateLoaderMock as unknown as PkiCertificateLoader,
+      );
       const result = await dataSource.getWeb3Checks(params);
 
       // THEN
@@ -73,15 +128,22 @@ describe("HttpWeb3CheckDataSource", () => {
     it("should return an error if the response is invalid", async () => {
       // GIVEN
       const params: Web3CheckContext = {
+        deviceModelId: DeviceModelId.FLEX,
         from: "from",
         rawTx: "rawTx",
         chainId: 1,
       };
       const dto = {};
-      vi.spyOn(axios, "request").mockResolvedValue({ data: dto });
+      jest.spyOn(axios, "request").mockResolvedValue({ data: dto });
+      jest
+        .spyOn(certificateLoaderMock, "loadCertificate")
+        .mockResolvedValue(undefined);
 
       // WHEN
-      const dataSource = new HttpWeb3CheckDataSource(config);
+      const dataSource = new HttpWeb3CheckDataSource(
+        config,
+        certificateLoaderMock as unknown as PkiCertificateLoader,
+      );
       const result = await dataSource.getWeb3Checks(params);
 
       // THEN

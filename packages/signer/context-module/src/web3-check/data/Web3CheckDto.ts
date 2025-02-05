@@ -1,3 +1,5 @@
+import { type KeyId } from "@/pki/model/KeyId";
+
 export type GetWeb3ChecksRequestDto = {
   tx: {
     from: string;
@@ -9,7 +11,7 @@ export type GetWeb3ChecksRequestDto = {
 };
 
 export type Web3CheckDto = {
-  public_key_id: string;
+  public_key_id: KeyId;
   descriptor: string;
   block: number;
 };

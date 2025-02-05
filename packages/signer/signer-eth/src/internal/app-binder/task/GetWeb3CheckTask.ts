@@ -40,6 +40,8 @@ export class GetWeb3CheckTask {
 
   async run(): Promise<GetWeb3CheckTaskResult> {
     const { contextModule, mapper, transaction } = this.args;
+    const { deviceModelId } = this.api.getDeviceSessionState();
+
     const parsed = mapper.mapTransactionToSubset(transaction);
     parsed.ifLeft((err) => {
       throw err;
@@ -78,6 +80,7 @@ export class GetWeb3CheckTask {
 
     const address = getAddressResult.data.address;
     const web3Params: Web3CheckContext = {
+      deviceModelId,
       from: address,
       rawTx: bufferToHexaString(serializedTransaction),
       chainId: subset.chainId,
