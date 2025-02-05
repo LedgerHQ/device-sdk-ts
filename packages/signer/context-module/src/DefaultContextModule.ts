@@ -13,6 +13,7 @@ import { type NftContextLoader } from "./nft/domain/NftContextLoader";
 import { type ContextLoader } from "./shared/domain/ContextLoader";
 import {
   type ClearSignContext,
+  type ClearSignContextSuccess,
   ClearSignContextType,
 } from "./shared/model/ClearSignContext";
 import {
@@ -111,7 +112,7 @@ export class DefaultContextModule implements ContextModule {
 
   public async getWeb3Checks(
     transactionContext: Web3CheckContext,
-  ): Promise<ClearSignContext | null> {
+  ): Promise<ClearSignContextSuccess<ClearSignContextType.WEB3_CHECK> | null> {
     const web3Checks = await this._web3CheckLoader.load(transactionContext);
 
     if (web3Checks.isLeft()) {
