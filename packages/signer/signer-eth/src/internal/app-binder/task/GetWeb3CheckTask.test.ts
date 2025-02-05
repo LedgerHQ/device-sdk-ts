@@ -25,7 +25,7 @@ describe("GetWeb3CheckTask", () => {
 
   describe("run", () => {
     beforeEach(() => {
-      jest.clearAllMocks();
+      vi.clearAllMocks();
 
       apiMock.getDeviceSessionState.mockReturnValueOnce({
         sessionStateType: DeviceSessionStateType.ReadyWithoutSecureChannel,
