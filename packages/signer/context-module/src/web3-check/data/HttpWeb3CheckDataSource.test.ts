@@ -4,7 +4,6 @@ import { Left, Right } from "purify-ts";
 
 import { type ContextModuleConfig } from "@/config/model/ContextModuleConfig";
 import { type PkiCertificateLoader } from "@/pki/domain/PkiCertificateLoader";
-import { KeyId } from "@/pki/model/KeyId";
 import { HttpWeb3CheckDataSource } from "@/web3-check/data/HttpWeb3CheckDataSource";
 import { type Web3CheckDto } from "@/web3-check/data/Web3CheckDto";
 import { type Web3CheckContext } from "@/web3-check/domain/web3CheckTypes";
@@ -36,7 +35,7 @@ describe("HttpWeb3CheckDataSource", () => {
       };
       const dto: Web3CheckDto = {
         block: 1,
-        public_key_id: KeyId.Blockaid,
+        public_key_id: "partner",
         descriptor: "descriptor",
       };
       vi.spyOn(axios, "request").mockResolvedValueOnce({ data: dto });
@@ -54,7 +53,7 @@ describe("HttpWeb3CheckDataSource", () => {
       // THEN
       expect(result).toEqual(
         Right({
-          publicKeyId: "blockaid",
+          publicKeyId: "partner",
           descriptor: "descriptor",
         }),
       );
@@ -70,7 +69,7 @@ describe("HttpWeb3CheckDataSource", () => {
       };
       const dto: Web3CheckDto = {
         block: 1,
-        public_key_id: KeyId.Blockaid,
+        public_key_id: "partner",
         descriptor: "descriptor",
       };
       vi.spyOn(axios, "request").mockResolvedValueOnce({ data: dto });
@@ -89,7 +88,7 @@ describe("HttpWeb3CheckDataSource", () => {
       // THEN
       expect(result).toEqual(
         Right({
-          publicKeyId: "blockaid",
+          publicKeyId: "partner",
           descriptor: "descriptor",
           certificate: { keyUsageNumber: 11, payload: new Uint8Array([0x01]) },
         }),
