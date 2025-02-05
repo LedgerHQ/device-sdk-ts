@@ -3,6 +3,7 @@ import { Left, Right } from "purify-ts";
 
 import { type ContextModuleConfig } from "@/config/model/ContextModuleConfig";
 import { HttpPkiCertificateDataSource } from "@/pki/data/HttpPkiCertificateDataSource";
+import { type KeyId } from "@/pki/model/KeyId";
 import { KeyUsage } from "@/pki/model/KeyUsage";
 import { type PkiCertificateInfo } from "@/pki/model/PkiCertificateInfo";
 
@@ -23,7 +24,7 @@ describe("HttpPkiCertificateDataSource", () => {
       const pkiCertificateInfo: PkiCertificateInfo = {
         targetDevice: "targetDevice",
         keyUsage: KeyUsage.Calldata,
-        keyId: "keyId",
+        keyId: "keyId" as KeyId,
       };
       vi.spyOn(axios, "request").mockResolvedValue({
         status: 200,
@@ -60,7 +61,7 @@ describe("HttpPkiCertificateDataSource", () => {
       const pkiCertificateInfo: PkiCertificateInfo = {
         targetDevice: "targetDevice",
         keyUsage: KeyUsage.Calldata,
-        keyId: "keyId",
+        keyId: "keyId" as KeyId,
       };
       vi.spyOn(axios, "request").mockResolvedValue({
         status: 200,
@@ -87,7 +88,7 @@ describe("HttpPkiCertificateDataSource", () => {
       const pkiCertificateInfo: PkiCertificateInfo = {
         targetDevice: "targetDevice",
         keyUsage: KeyUsage.Calldata,
-        keyId: "keyId",
+        keyId: "keyId" as KeyId,
       };
       vi.spyOn(axios, "request").mockRejectedValue(new Error("error"));
 
@@ -111,7 +112,7 @@ describe("HttpPkiCertificateDataSource", () => {
       const pkiCertificateInfo: PkiCertificateInfo = {
         targetDevice: "targetDevice",
         keyUsage: KeyUsage.Calldata,
-        keyId: "keyId",
+        keyId: "keyId" as KeyId,
       };
       vi.spyOn(axios, "request").mockResolvedValue({
         status: 200,

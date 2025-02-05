@@ -118,11 +118,10 @@ export class DefaultContextModule implements ContextModule {
       return null;
     } else {
       const web3ChecksValue = web3Checks.unsafeCoerce();
-      // add Nano PKI fetch here should looks like =>
-      // const web3CheckCertificate = await this._pkiCertificateLoader.fetchCertificate(...)
       return {
         type: ClearSignContextType.WEB3_CHECK,
         payload: web3ChecksValue.descriptor,
+        certificate: web3ChecksValue.certificate,
       };
     }
   }

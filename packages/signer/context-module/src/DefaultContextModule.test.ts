@@ -1,3 +1,4 @@
+import { DeviceModelId } from "@ledgerhq/device-management-kit";
 import { Left, Right } from "purify-ts";
 
 import { type ContextModuleConfig } from "./config/model/ContextModuleConfig";
@@ -126,6 +127,7 @@ describe("DefaultContextModule", () => {
     });
 
     const res = await contextModule.getWeb3Checks({
+      deviceModelId: DeviceModelId.FLEX,
       from: "from",
       rawTx: "rawTx",
       chainId: 1,
@@ -145,6 +147,7 @@ describe("DefaultContextModule", () => {
     });
 
     const res = await contextModule.getWeb3Checks({
+      deviceModelId: DeviceModelId.FLEX,
       from: "from",
       rawTx: "rawTx",
       chainId: 1,

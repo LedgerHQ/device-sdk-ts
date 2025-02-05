@@ -21,7 +21,7 @@ export class DefaultWeb3CheckContextLoader implements Web3CheckContextLoader {
   async load(
     web3CheckContext: Web3CheckContext,
   ): Promise<Either<Error, Web3Checks>> {
-    const { chainId, rawTx, from } = web3CheckContext;
+    const { rawTx, from } = web3CheckContext;
 
     if (rawTx == undefined || typeof rawTx != "string") {
       return Left(
@@ -40,10 +40,6 @@ export class DefaultWeb3CheckContextLoader implements Web3CheckContextLoader {
     }
 
     // Handle descritor payload
-    return await this._dataSource.getWeb3Checks({
-      chainId: chainId,
-      rawTx: rawTx,
-      from: from,
-    });
+    return await this._dataSource.getWeb3Checks(web3CheckContext);
   }
 }
