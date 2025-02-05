@@ -47,12 +47,12 @@ internal class FramerService(
                 buildList {
                     while (isBuildingFrames) {
                         if (counter == 0) {
-                            loggerService.log(
-                                info = buildSimpleInfoLogInfo(
-                                    tag = TAG,
-                                    message = "-- IF -- startIndex = $startIndex / endIndex = $endIndex",
-                                ),
-                            )
+//                            loggerService.log(
+//                                info = buildSimpleInfoLogInfo(
+//                                    tag = TAG,
+//                                    message = "-- IF -- startIndex = $startIndex / endIndex = $endIndex",
+//                                ),
+//                            )
                             add(
                                 ApduFrame(
                                     header = header,
@@ -63,12 +63,12 @@ internal class FramerService(
                         } else {
                             startIndex = endIndex
                             endIndex = (mtu - header.size()) + startIndex
-                            loggerService.log(
-                                info = buildSimpleInfoLogInfo(
-                                    tag = TAG,
-                                    message = "-- ELSE -- startIndex = $startIndex / endIndex = $endIndex",
-                                ),
-                            )
+//                            loggerService.log(
+//                                info = buildSimpleInfoLogInfo(
+//                                    tag = TAG,
+//                                    message = "-- ELSE -- startIndex = $startIndex / endIndex = $endIndex",
+//                                ),
+//                            )
                             if (endIndex <= rawApdu.size) {
                                 add(
                                     ApduFrame(
@@ -103,12 +103,12 @@ internal class FramerService(
                     }
                 }
             }
-        loggerService.log(
-            info = buildSimpleInfoLogInfo(
-                tag = TAG,
-                message = "APDU SERIALIZATION RESULT : \n${frames.toHexadecimalString()}",
-            ),
-        )
+//        loggerService.log(
+//            info = buildSimpleInfoLogInfo(
+//                tag = TAG,
+//                message = "APDU SERIALIZATION RESULT : \n${frames.toHexadecimalString()}",
+//            ),
+//        )
         return frames
     }
 
@@ -116,12 +116,12 @@ internal class FramerService(
         mtu: Int,
         frames: List<ApduFrame>,
     ): ByteArray {
-        loggerService.log(
-            info = buildSimpleInfoLogInfo(
-                tag = TAG,
-                message = "APDU DESERIALIZATION RESULT : \n",
-            ),
-        )
+//        loggerService.log(
+//            info = buildSimpleInfoLogInfo(
+//                tag = TAG,
+//                message = "APDU DESERIALIZATION RESULT : \n",
+//            ),
+//        )
         var payload = byteArrayOf()
         return if (frames.isEmpty()) {
             payload
@@ -129,14 +129,14 @@ internal class FramerService(
             var rawApdu: ByteArray
             var offset = mtu - MAXIMUM_HEADER_SIZE
             var apduSize = frames.first().apduSize!!.toIntOn2Bytes()
-            loggerService.log(
-                info = buildSimpleInfoLogInfo(
-                    tag = TAG,
-                    message =
-                    "Header: ${frames.first().header}\n" +
-                        "ApduSize : $apduSize",
-                ),
-            )
+//            loggerService.log(
+//                info = buildSimpleInfoLogInfo(
+//                    tag = TAG,
+//                    message =
+//                    "Header: ${frames.first().header}\n" +
+//                        "ApduSize : $apduSize",
+//                ),
+//            )
             for (apduFrame in frames) {
                 if (offset < apduSize) {
                     rawApdu = apduFrame.apdu.extractApdu(toExclusive = offset)
@@ -148,12 +148,12 @@ internal class FramerService(
                     payload += rawApdu
                     break
                 }
-                loggerService.log(
-                    info = buildSimpleInfoLogInfo(
-                        tag = TAG,
-                        message = "Apdu : ${rawApdu.toHexadecimalString()}",
-                    ),
-                )
+//                loggerService.log(
+//                    info = buildSimpleInfoLogInfo(
+//                        tag = TAG,
+//                        message = "Apdu : ${rawApdu.toHexadecimalString()}",
+//                    ),
+//                )
             }
             return payload
         }
@@ -194,12 +194,12 @@ internal class FramerService(
                         apdu = rawApdu,
                     ),
                 )
-                loggerService.log(
-                    buildSimpleInfoLogInfo(
-                        tag = TAG,
-                        message = "APDU received = ${rawApdu.toHexadecimalString()}",
-                    ),
-                )
+//                loggerService.log(
+//                    buildSimpleInfoLogInfo(
+//                        tag = TAG,
+//                        message = "APDU received = ${rawApdu.toHexadecimalString()}",
+//                    ),
+//                )
             } while (nbrDataRead < apduSizeInt)
         }
     }

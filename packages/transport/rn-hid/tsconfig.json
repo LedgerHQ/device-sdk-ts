@@ -11,7 +11,8 @@
       "@api/*": ["./src/api/*"]
     },
     "skipLibCheck": true,
-    "resolveJsonModule": true
+    "resolveJsonModule": true,
+    "types": ["vitest/globals"]
   },
-  "include": ["src", "jest.*.ts"]
+  "include": ["src", "vitest.*.mjs"]
 }
