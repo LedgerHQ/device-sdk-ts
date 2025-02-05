@@ -20,6 +20,12 @@ type RNBleDeviceConnectionConstructorArgs = {
   apduReceiverFactory: ApduReceiverServiceFactory;
 };
 
+enum ConnectionState {
+  Connected = "connected",
+  Disconnected = "disconnected",
+  Standby = "standby",
+}
+
 export class RNBleDeviceConnection implements DeviceConnection {
   private _writeCharacteristic: Characteristic;
   private _notifyCharacteristic: Characteristic;
@@ -28,6 +34,7 @@ export class RNBleDeviceConnection implements DeviceConnection {
   private _apduSender: Maybe<ApduSenderService>;
   private readonly _apduSenderFactory: ApduSenderServiceFactory;
   private readonly _apduReceiver: ApduReceiverService;
+  private _state: ConnectionState;
   private _sendApduPromiseResolver: Maybe<
     (value: Either<DmkError, ApduResponse>) => void
   >;
@@ -42,6 +49,7 @@ export class RNBleDeviceConnection implements DeviceConnection {
     }: RNBleDeviceConnectionConstructorArgs,
     loggerServiceFactory: (tag: string) => LoggerPublisherService,
   ) {
+    this._state = ConnectionState.Disconnected;
     this._writeCharacteristic = writeCharacteristic;
     this._notifyCharacteristic = notifyCharacteristic;
     this._isDeviceReady = false;
@@ -66,6 +74,7 @@ export class RNBleDeviceConnection implements DeviceConnection {
     if (frameSize) {
       this._apduSender = Maybe.of(this._apduSenderFactory({ frameSize }));
       this._isDeviceReady = true;
+      this._state = ConnectionState.Connected;
     }
   }
 
@@ -113,6 +122,15 @@ export class RNBleDeviceConnection implements DeviceConnection {
         Left(new DeviceNotInitializedError("Unknown MTU")),
       );
     }
+    if (this._state !== ConnectionState.Connected) {
+      return Promise.resolve(
+        Left(
+          new DeviceNotInitializedError(
+            `Connection state not ready [${this._state}]`,
+          ),
+        ),
+      );
+    }
     const resultPromise = new Promise<Either<DmkError, ApduResponse>>(
       (resolve) => {
         this._sendApduPromiseResolver = Maybe.of(resolve);
@@ -128,7 +146,9 @@ export class RNBleDeviceConnection implements DeviceConnection {
           Base64.fromUint8Array(frame.getRawData()),
         );
       } catch (error) {
-        this._logger.error("Error sending frame", { data: { error } });
+        this._logger.error("Error sending frame", {
+          data: { error, state: this._state },
+        });
       }
     }
     const response = await resultPromise;
@@ -145,12 +165,27 @@ export class RNBleDeviceConnection implements DeviceConnection {
     writeCharacteristic: Characteristic,
     notifyCharacteristic: Characteristic,
   ) {
+    this._state = ConnectionState.Standby;
+    this._logger.debug("Reconnecting device connection", {
+      data: { writeCharacteristic, notifyCharacteristic },
+    });
     this._writeCharacteristic = writeCharacteristic;
     this._notifyCharacteristic = notifyCharacteristic;
+    this._monitorSubscription = this._notifyCharacteristic.monitor(
+      (error, response) => {
+        if (response && !error) {
+          this.onMonitor(response);
+        }
+      },
+    );
+    this._logger.debug("Reconnection in progress", {
+      data: { state: this._state },
+    });
     await this.setup();
   }
 
   public disconnect() {
+    this._state = ConnectionState.Disconnected;
     this._monitorSubscription.remove();
   }
 }

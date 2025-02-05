@@ -1,8 +1,13 @@
-export const Screens = {
-  ROOT_SCREEN: 'ROOT_SCREEN',
-  COMMANDS_SCREEN: 'COMMANDS_SCREEN',
-};
+export enum Screens {
+  Home = 'HOME_SCREEN',
+  ConnectDevice = 'CONNECT_DEVICE_SCREEN',
+}
 
-export const Navigators = {
-  ROOT: 'ROOT_NAVIGATOR',
+export enum Navigators {
+  ROOT = 'ROOT_NAVIGATOR',
+}
+
+export type RootStackParamList = {
+  [Screens.Home]: undefined;
+  [Screens.ConnectDevice]: undefined;
 };

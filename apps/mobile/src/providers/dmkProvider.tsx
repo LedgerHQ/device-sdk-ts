@@ -15,7 +15,6 @@ const LogsExporterContext = createContext<WebLogsExporterLogger | null>(null);
 function buildDefaultDmk(logsExporter: WebLogsExporterLogger) {
   return new DeviceManagementKitBuilder()
     .addTransport(RNBleTransportFactory)
-    .addTransport(RNHidTransportFactory)
     .addLogger(new ConsoleLogger())
     .addLogger(logsExporter)
     .build();

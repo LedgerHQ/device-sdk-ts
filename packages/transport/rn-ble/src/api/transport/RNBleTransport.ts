@@ -35,14 +35,14 @@ import {
   Right,
 } from "purify-ts";
 import {
-  concat,
-  delay,
   from,
+  merge,
   Observable,
-  retry,
   type Subscriber,
   switchMap,
+  take,
   throwError,
+  timer,
 } from "rxjs";
 
 import { BLEService } from "@api/transport/BleServiceInstance";
@@ -86,10 +86,108 @@ export class RNBleTransport implements Transport {
     this.requestPermission();
   }
 
+  startDiscovering(): Observable<TransportDiscoveredDevice> {
+    const ledgerUuids = this._deviceModelDataSource.getBluetoothServices();
+    this._internalDevicesById.clear();
+    return from(this.requestPermission()).pipe(
+      switchMap((isSupported) => {
+        if (!isSupported) {
+          throw new Error("BLE not supported");
+        }
+        return merge(
+          this._discoverKnownDevices(ledgerUuids),
+          this._discoverNewDevices(ledgerUuids),
+        );
+      }),
+    );
+  }
+
+  async stopDiscovering(): Promise<void> {
+    await BLEService.manager.stopDeviceScan();
+  }
+
+  async connect(params: {
+    deviceId: DeviceId;
+    onDisconnect: DisconnectHandler;
+  }): Promise<Either<ConnectError, TransportConnectedDevice>> {
+    return EitherAsync<ConnectError, TransportConnectedDevice>(
+      async ({ liftEither, throwE }) => {
+        const internalDevice = await liftEither(
+          Maybe.fromNullable(
+            this._internalDevicesById.get(params.deviceId),
+          ).toEither(
+            new UnknownDeviceError(`Unknown device ${params.deviceId}`),
+          ),
+        );
+        let device = internalDevice.bleDevice;
+        try {
+          device = await device.connect();
+          device = await device.discoverAllServicesAndCharacteristics();
+        } catch (error) {
+          return throwE(new OpeningConnectionError(error));
+        }
+        const { notifyCharacteristic, writeCharacteristic } = await liftEither(
+          await this._getDeviceCharacteristics(
+            device,
+            internalDevice.bleDeviceInfos,
+          ),
+        );
+        const deviceConnection = new RNBleDeviceConnection(
+          {
+            writeCharacteristic,
+            notifyCharacteristic,
+            apduSenderFactory: this._apduSenderFactory,
+            apduReceiverFactory: this._apduReceiverFactory,
+          },
+          this._loggerServiceFactory,
+        );
+        await deviceConnection.setup();
+        this._deviceConnectionsById.set(internalDevice.id, deviceConnection);
+        internalDevice.disconnectionSubscription.remove();
+        internalDevice.disconnectionSubscription = device.onDisconnected(
+          (...args) => this._handleDeviceDisconnected(...args),
+        );
+        internalDevice.bleDevice = device;
+        internalDevice.lastDiscoveredTimeStamp = Maybe.zero();
+        return new TransportConnectedDevice({
+          id: internalDevice.id,
+          deviceModel: internalDevice.discoveredDevice.deviceModel,
+          type: "BLE",
+          sendApdu: (...args) => deviceConnection.sendApdu(...args),
+          transport: this.identifier,
+        });
+      },
+    ).run();
+  }
+
+  disconnect(_params: {
+    connectedDevice: TransportConnectedDevice;
+  }): Promise<Either<DmkError, void>> {
+    return EitherAsync<DmkError, void>(async ({ liftEither }) => {
+      const deviceConnection = await liftEither(
+        Maybe.fromNullable(
+          this._deviceConnectionsById.get(_params.connectedDevice.id),
+        ).toEither(new DisconnectError("device connection not found")),
+      );
+      deviceConnection.disconnect();
+      const internalDevice = await liftEither(
+        Maybe.fromNullable(
+          this._internalDevicesById.get(_params.connectedDevice.id),
+        ).toEither(new OpeningConnectionError("Device not found")),
+      );
+      if (internalDevice.disconnectionSubscription) {
+        internalDevice.disconnectionSubscription.remove();
+      }
+      await internalDevice.bleDevice.cancelConnection();
+      this._deviceConnectionsById.delete(_params.connectedDevice.id);
+      this._internalDevicesById.delete(_params.connectedDevice.id);
+    }).run();
+  }
+
   private _isDiscoveredDeviceLost(internalDevice: RNBleInternalDevice) {
     return internalDevice.lastDiscoveredTimeStamp.caseOf({
       Just: (lastDiscoveredTimeStamp) =>
-        Date.now() > lastDiscoveredTimeStamp + 10000,
+        Date.now() > lastDiscoveredTimeStamp + 5000,
       Nothing: () => {
         internalDevice.lastDiscoveredTimeStamp = Maybe.of(Date.now());
         return true;
@@ -179,12 +277,6 @@ export class RNBleTransport implements Transport {
       this._internalDevicesById.get(rnDevice.id),
     );
     if (existingInternalDevice.isJust()) {
-      this._logger.debug("device already known", {
-        data: {
-          id: rnDevice.id,
-          name: rnDevice.localName,
-        },
-      });
       return Nothing;
     }
 
@@ -211,13 +303,6 @@ export class RNBleTransport implements Transport {
     subscriber: Subscriber<TransportDiscoveredDevice>,
   ) {
     this._internalDevicesById.forEach((internalDevice) => {
-      this._logger.debug("discovered device lost ?", {
-        data: {
-          internalDevice,
-          now: Date.now(),
-          lost: this._isDiscoveredDeviceLost(internalDevice),
-        },
-      });
       if (this._isDiscoveredDeviceLost(internalDevice)) {
         this._internalDevicesById.delete(internalDevice.id);
         subscriber.next({
@@ -246,10 +331,7 @@ export class RNBleTransport implements Transport {
     this._internalDevicesById.set(discoveredDevice.id, {
       ...internalDevice,
       disconnectionSubscription: bleDevice.onDisconnected(() => {
-        this._logger.debug("discovered device disconnected", {
-          data: { discoveredDevice },
-        });
-        this._internalDevicesById.delete(discoveredDevice.id);
+        // this._internalDevicesById.delete(discoveredDevice.id);
         subscriber.next({ ...discoveredDevice, available: false });
       }),
     });
@@ -305,84 +387,94 @@ export class RNBleTransport implements Transport {
     );
   }
 
-  startDiscovering(): Observable<TransportDiscoveredDevice> {
-    const ledgerUuids = this._deviceModelDataSource.getBluetoothServices();
-    this._logger.info("StartDiscovering", { data: { ledgerUuids } });
-    this._internalDevicesById.clear();
-    return from(this.requestPermission()).pipe(
-      switchMap((isSupported) => {
-        if (!isSupported) {
-          throw new Error("BLE not supported");
-        }
-        return concat(
-          this._discoverNewDevices(ledgerUuids),
-          this._discoverKnownDevices(ledgerUuids),
-        );
-      }),
-    );
-  }
-
-  async stopDiscovering(): Promise<void> {
-    await BLEService.manager.stopDeviceScan();
-  }
-
-  private async _handleDeviceReconnected(device: Device) {
-    await EitherAsync<ReconnectionFailedError | OpeningConnectionError, void>(
-      async ({ liftEither }) => {
-        const internalDevice = await liftEither(
-          Maybe.fromNullable(
-            this._internalDevicesById.get(device.id),
-          ).toEither<ReconnectionFailedError>(
-            new ReconnectionFailedError("Internal device not found"),
-          ),
-        );
-        const deviceConnection = await liftEither(
-          Maybe.fromNullable(
-            this._deviceConnectionsById.get(device.id),
-          ).toEither(
-            new ReconnectionFailedError("Device connection not found"),
-          ),
-        );
-        const { writeCharacteristic, notifyCharacteristic } = await liftEither(
-          await this._getDeviceCharacteristics(
-            device,
-            internalDevice.bleDeviceInfos,
-          ),
-        );
-        internalDevice.bleDevice = device;
-        await deviceConnection.reconnect(
-          writeCharacteristic,
-          notifyCharacteristic,
-        );
-      },
-    ).run();
-  }
-
-  private _handleDeviceDisconnected(error: BleError | null, device: Device) {
+  private _handleDeviceDisconnected(
+    error: BleError | null,
+    device: Device | null,
+  ) {
     if (error) {
       this._logger.error("device disconnected error", {
         data: { error, device },
       });
+      return;
     }
-    from([0])
-      .pipe(
-        switchMap(async (count) => {
-          this._logger.debug("try reconnecting", { data: { count } });
+    if (!device) {
+      this._logger.info("disconnected handler didn't found device");
+      return;
+    }
+    return timer(0, 500)
+      .pipe(take(4))
+      .subscribe({
+        next: async (count) => {
           try {
-            await this._handleDeviceReconnected(await device.connect());
-            this._logger.debug("reconnected");
+            const connectedDevice = await device.connect();
+            const devices = await BLEService.manager.devices([
+              connectedDevice.id,
+            ]);
+            this._logger.debug("try reconnecting", {
+              data: { count, device: connectedDevice },
+            });
+            this._logger.debug("found devices", {
+              data: { devices },
+            });
+            const reconnectResult =
+              await this._handleDeviceReconnected(connectedDevice);
+            this._logger.debug("reconnected result", {
+              data: {
+                result: reconnectResult.extract(),
+              },
+            });
+            this._logger.debug("internal devices", {
+              data: { devices: this._internalDevicesById },
+            });
             return true;
           } catch (e) {
             throwError(() => e);
           }
           return false;
-        }),
-        delay(500),
-        retry(4),
-      )
-      .subscribe((connected) => {
-        this._logger.info("reconnecting", { data: { connected } });
+        },
+        complete: async () => {
+          if (!(await device.isConnected())) {
+            this._deviceConnectionsById.delete(device.id);
+            this._internalDevicesById.delete(device.id);
+          }
+        },
+        error: (e) => {
+          this._logger.error("reconnection error::", { data: { error: e } });
+          this._deviceConnectionsById.delete(device.id);
+          this._internalDevicesById.delete(device.id);
+        },
       });
+  }
+
+  private async _handleDeviceReconnected(device: Device) {
+    return await EitherAsync<
+      ReconnectionFailedError | OpeningConnectionError,
+      void
+    >(async ({ liftEither }) => {
+      const internalDevice = await liftEither(
+        Maybe.fromNullable(
+          this._internalDevicesById.get(device.id),
+        ).toEither<ReconnectionFailedError>(
+          new ReconnectionFailedError("Internal device not found"),
+        ),
+      );
+      const deviceConnection = await liftEither(
+        Maybe.fromNullable(this._deviceConnectionsById.get(device.id)).toEither(
+          new ReconnectionFailedError("Device connection not found"),
+        ),
+      );
+      const { writeCharacteristic, notifyCharacteristic } = await liftEither(
+        await this._getDeviceCharacteristics(
+          device,
+          internalDevice.bleDeviceInfos,
+        ),
+      );
+      // internalDevice.bleDevice = device;
+      await deviceConnection.reconnect(
+        writeCharacteristic,
+        notifyCharacteristic,
+      );
+    }).run();
   }
 
   private async _getDeviceCharacteristics(
@@ -402,84 +494,6 @@ export class RNBleTransport implements Transport {
       return Left(new OpeningConnectionError("Characteristics not found"));
     }
     return Right({ writeCharacteristic, notifyCharacteristic });
-  }
-
-  async connect(params: {
-    deviceId: DeviceId;
-    onDisconnect: DisconnectHandler;
-  }): Promise<Either<ConnectError, TransportConnectedDevice>> {
-    return EitherAsync<ConnectError, TransportConnectedDevice>(
-      async ({ liftEither, throwE }) => {
-        const internalDevice = await liftEither(
-          Maybe.fromNullable(
-            this._internalDevicesById.get(params.deviceId),
-          ).toEither(
-            new UnknownDeviceError(`Unknown device ${params.deviceId}`),
-          ),
-        );
-        let device = internalDevice.bleDevice;
-        try {
-          device = await device.connect();
-          device = await device.discoverAllServicesAndCharacteristics();
-        } catch (error) {
-          return throwE(new OpeningConnectionError(error));
-        }
-        const { notifyCharacteristic, writeCharacteristic } = await liftEither(
-          await this._getDeviceCharacteristics(
-            device,
-            internalDevice.bleDeviceInfos,
-          ),
-        );
-        const deviceConnection = new RNBleDeviceConnection(
-          {
-            writeCharacteristic,
-            notifyCharacteristic,
-            apduSenderFactory: this._apduSenderFactory,
-            apduReceiverFactory: this._apduReceiverFactory,
-          },
-          this._loggerServiceFactory,
-        );
-        await deviceConnection.setup();
-        this._deviceConnectionsById.set(internalDevice.id, deviceConnection);
-        internalDevice.disconnectionSubscription.remove();
-        internalDevice.disconnectionSubscription = device.onDisconnected(
-          (...args) => this._handleDeviceDisconnected(...args),
-        );
-        internalDevice.bleDevice = device;
-        internalDevice.lastDiscoveredTimeStamp = Maybe.zero();
-        return new TransportConnectedDevice({
-          id: internalDevice.id,
-          deviceModel: internalDevice.discoveredDevice.deviceModel,
-          type: "BLE",
-          sendApdu: (...args) => deviceConnection.sendApdu(...args),
-          transport: this.identifier,
-        });
-      },
-    ).run();
-  }
-
-  disconnect(_params: {
-    connectedDevice: TransportConnectedDevice;
-  }): Promise<Either<DmkError, void>> {
-    return EitherAsync<DmkError, void>(async ({ liftEither }) => {
-      const deviceConnection = await liftEither(
-        Maybe.fromNullable(
-          this._deviceConnectionsById.get(_params.connectedDevice.id),
-        ).toEither(new DisconnectError("device connection not found")),
-      );
-      deviceConnection.disconnect();
-      const internalDevice = await liftEither(
-        Maybe.fromNullable(
-          this._internalDevicesById.get(_params.connectedDevice.id),
-        ).toEither(new OpeningConnectionError("Device not found")),
-      );
-      if (internalDevice.disconnectionSubscription) {
-        internalDevice.disconnectionSubscription.remove();
-      }
-      await internalDevice.bleDevice.cancelConnection();
-      this._deviceConnectionsById.delete(_params.connectedDevice.id);
-      this._internalDevicesById.delete(_params.connectedDevice.id);
-    }).run();
   }
 }
 
