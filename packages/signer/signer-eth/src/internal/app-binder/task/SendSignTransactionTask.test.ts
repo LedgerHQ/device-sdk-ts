@@ -78,7 +78,7 @@ describe("SendSignTransactionTask", () => {
   const resultNothing = CommandResultFactory({ data: Nothing });
 
   beforeEach(() => {
-    jest.resetAllMocks();
+    vi.resetAllMocks();
   });
 
   describe("run", () => {

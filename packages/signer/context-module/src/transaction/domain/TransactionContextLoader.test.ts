@@ -6,14 +6,14 @@ import type { TransactionDataSource } from "@/transaction/data/TransactionDataSo
 import { TransactionContextLoader } from "@/transaction/domain/TransactionContextLoader";
 
 describe("TransactionContextLoader", () => {
-  const getTransactionDescriptorsMock = jest.fn();
+  const getTransactionDescriptorsMock = vi.fn();
   const mockTransactionDataSource: TransactionDataSource = {
     getTransactionDescriptors: getTransactionDescriptorsMock,
   };
   const loader = new TransactionContextLoader(mockTransactionDataSource);
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   it("should return an empty array if no destination address is provided", async () => {

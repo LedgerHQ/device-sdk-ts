@@ -16,10 +16,9 @@ describe("SignOffChainMessageCommand", () => {
   beforeEach(() => {
     command = new SignOffChainMessageCommand({
       message: MESSAGE,
-      derivationPath: "44'/501'/0'/0'",
     });
-    jest.clearAllMocks();
-    jest.requireActual("@ledgerhq/device-management-kit");
+    vi.clearAllMocks();
+    vi.importActual("@ledgerhq/device-management-kit");
   });
 
   describe("getApdu", () => {
@@ -53,7 +52,7 @@ describe("SignOffChainMessageCommand", () => {
       if (isSuccessCommandResult(parsed)) {
         expect(parsed.data).toEqual(signature);
       } else {
-        fail("Expected success result");
+        assert.fail("Expected success result");
       }
     });
 
@@ -76,7 +75,7 @@ describe("SignOffChainMessageCommand", () => {
             }),
           );
         } else {
-          fail("Expected error");
+          assert.fail("Expected error");
         }
       });
 
@@ -102,7 +101,7 @@ describe("SignOffChainMessageCommand", () => {
             );
           }
         } else {
-          fail("Expected error");
+          assert.fail("Expected error");
         }
       });
     });

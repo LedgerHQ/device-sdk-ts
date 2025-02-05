@@ -11,13 +11,19 @@ import { AxiosManagerApiDataSource } from "@internal/manager-api/data/AxiosManag
 import { type ManagerApiDataSource } from "@internal/manager-api/data/ManagerApiDataSource";
 import { DefaultManagerApiService } from "@internal/manager-api/service/DefaultManagerApiService";
 import { type ManagerApiService } from "@internal/manager-api/service/ManagerApiService";
+import { DefaultSecureChannelDataSource } from "@internal/secure-channel/data/DefaultSecureChannelDataSource";
+import { type SecureChannelDataSource } from "@internal/secure-channel/data/SecureChannelDataSource";
+import { DefaultSecureChannelService } from "@internal/secure-channel/service/DefaultSecureChannelService";
+import { type SecureChannelService } from "@internal/secure-channel/service/SecureChannelService";
 
-jest.mock("@internal/manager-api/data/AxiosManagerApiDataSource");
+vi.mock("@internal/manager-api/data/AxiosManagerApiDataSource");
 
 let logger: LoggerPublisherService;
 let sessionService: DeviceSessionService;
 let managerApiDataSource: ManagerApiDataSource;
 let managerApi: ManagerApiService;
+let secureChannelDataSource: SecureChannelDataSource;
+let secureChannel: SecureChannelService;
 
 const fakeSessionId = "test-list-connected-device-session-id";
 
@@ -29,44 +35,54 @@ describe("ListenToConnectedDevice", () => {
     );
     managerApiDataSource = new AxiosManagerApiDataSource({} as DmkConfig);
     managerApi = new DefaultManagerApiService(managerApiDataSource);
+    secureChannelDataSource = new DefaultSecureChannelDataSource(
+      {} as DmkConfig,
+    );
+    secureChannel = new DefaultSecureChannelService(secureChannelDataSource);
     sessionService = new DefaultDeviceSessionService(() => logger);
   });
 
-  it("should emit an instance of ConnectedDevice", (done) => {
-    // given
-    const connectedDevice = connectedDeviceStubBuilder({
-      id: "test-list-connected-device-id",
-    });
-    const deviceSession = deviceSessionStubBuilder(
-      { id: fakeSessionId, connectedDevice },
-      () => logger,
-      managerApi,
-    );
-    const observable = new ListenToConnectedDeviceUseCase(
-      sessionService,
-      () => logger,
-    ).execute();
+  it("should emit an instance of ConnectedDevice", () =>
+    new Promise<void>((resolve, reject) => {
+      // given
+      const connectedDevice = connectedDeviceStubBuilder({
+        id: "test-list-connected-device-id",
+      });
+      const deviceSession = deviceSessionStubBuilder(
+        { id: fakeSessionId, connectedDevice },
+        () => logger,
+        managerApi,
+        secureChannel,
+      );
+      const observable = new ListenToConnectedDeviceUseCase(
+        sessionService,
+        () => logger,
+      ).execute();
 
-    const subscription = observable.subscribe({
-      next(emittedConnectedDevice) {
-        // then
-        expect(emittedConnectedDevice).toEqual(
-          new ConnectedDevice({
-            transportConnectedDevice: connectedDevice,
-            sessionId: fakeSessionId,
-          }),
-        );
-        terminate();
-      },
-    });
+      const subscription = observable.subscribe({
+        next(emittedConnectedDevice) {
+          // then
+          try {
+            expect(emittedConnectedDevice).toEqual(
+              new ConnectedDevice({
+                transportConnectedDevice: connectedDevice,
+                sessionId: fakeSessionId,
+              }),
+            );
+            terminate();
+          } catch (error) {
+            reject(error);
+          }
+        },
+      });
 
-    function terminate() {
-      subscription.unsubscribe();
-      deviceSession.close();
-      done();
-    }
+      function terminate() {
+        subscription.unsubscribe();
+        deviceSession.close();
+        resolve();
+      }
 
-    // when
-    sessionService.addDeviceSession(deviceSession);
-  });
+      // when
+      sessionService.addDeviceSession(deviceSession);
+    }));
 });

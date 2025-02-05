@@ -34,6 +34,11 @@ export {
   type ListAppsResponse,
 } from "@api/command/os/ListAppsCommand";
 export {
+  type LoadCertificateArgs,
+  LoadCertificateCommand,
+  type LoadCertificateErrorCodes,
+} from "@api/command/os/LoadCertificateCommand";
+export {
   type OpenAppArgs,
   OpenAppCommand,
 } from "@api/command/os/OpenAppCommand";
@@ -55,6 +60,7 @@ export {
   DeviceActionStatus,
 } from "@api/device-action/model/DeviceActionState";
 export { UserInteractionRequired } from "@api/device-action/model/UserInteractionRequired";
+export { CallTaskInAppDeviceAction } from "@api/device-action/os/CallTaskInAppDeviceAction/CallTaskInAppDeviceAction";
 export { UnknownDAError } from "@api/device-action/os/Errors";
 export { GetDeviceStatusDeviceAction } from "@api/device-action/os/GetDeviceStatus/GetDeviceStatusDeviceAction";
 export { GoToDashboardDeviceAction } from "@api/device-action/os/GoToDashboard/GoToDashboardDeviceAction";

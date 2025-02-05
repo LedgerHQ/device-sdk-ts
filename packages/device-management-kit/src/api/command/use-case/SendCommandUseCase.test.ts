@@ -12,6 +12,10 @@ import { AxiosManagerApiDataSource } from "@internal/manager-api/data/AxiosManag
 import { type ManagerApiDataSource } from "@internal/manager-api/data/ManagerApiDataSource";
 import { DefaultManagerApiService } from "@internal/manager-api/service/DefaultManagerApiService";
 import { type ManagerApiService } from "@internal/manager-api/service/ManagerApiService";
+import { DefaultSecureChannelDataSource } from "@internal/secure-channel/data/DefaultSecureChannelDataSource";
+import { type SecureChannelDataSource } from "@internal/secure-channel/data/SecureChannelDataSource";
+import { DefaultSecureChannelService } from "@internal/secure-channel/service/DefaultSecureChannelService";
+import { type SecureChannelService } from "@internal/secure-channel/service/SecureChannelService";
 
 import { SendCommandUseCase } from "./SendCommandUseCase";
 
@@ -19,6 +23,8 @@ let logger: LoggerPublisherService;
 let sessionService: DeviceSessionService;
 let managerApi: ManagerApiService;
 let managerApiDataSource: ManagerApiDataSource;
+let secureChannel: SecureChannelService;
+let secureChannelDataSource: SecureChannelDataSource;
 const fakeSessionId = "fakeSessionId";
 let command: Command<{ status: string }>;
 
@@ -28,14 +34,18 @@ describe("SendCommandUseCase", () => {
     sessionService = new DefaultDeviceSessionService(() => logger);
     managerApiDataSource = new AxiosManagerApiDataSource({} as DmkConfig);
     managerApi = new DefaultManagerApiService(managerApiDataSource);
+    secureChannelDataSource = new DefaultSecureChannelDataSource(
+      {} as DmkConfig,
+    );
+    secureChannel = new DefaultSecureChannelService(secureChannelDataSource);
     command = {
-      getApdu: jest.fn(),
-      parseResponse: jest.fn(),
+      getApdu: vi.fn(),
+      parseResponse: vi.fn(),
     };
   });
 
   afterEach(() => {
-    jest.restoreAllMocks();
+    vi.restoreAllMocks();
   });
 
   it("should send a command to a connected device", async () => {
@@ -43,11 +53,12 @@ describe("SendCommandUseCase", () => {
       {},
       () => logger,
       managerApi,
+      secureChannel,
     );
     sessionService.addDeviceSession(deviceSession);
     const useCase = new SendCommandUseCase(sessionService, () => logger);
 
-    jest.spyOn(deviceSession, "sendCommand").mockResolvedValue({
+    vi.spyOn(deviceSession, "sendCommand").mockResolvedValue({
       status: CommandResultStatus.Success,
       data: undefined,
     });
@@ -67,9 +78,9 @@ describe("SendCommandUseCase", () => {
 
   it("should throw an error if the session is not found", async () => {
     const useCase = new SendCommandUseCase(sessionService, () => logger);
-    jest
-      .spyOn(sessionService, "getDeviceSessionById")
-      .mockReturnValue(Left({ _tag: "DeviceSessionNotFound" }));
+    vi.spyOn(sessionService, "getDeviceSessionById").mockReturnValue(
+      Left({ _tag: "DeviceSessionNotFound" }),
+    );
 
     const res = useCase.execute<{ status: string }, void, void>({
       sessionId: fakeSessionId,

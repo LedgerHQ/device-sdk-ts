@@ -1,5 +1,6 @@
 import { type DmkError } from "@ledgerhq/device-management-kit";
 import { Either, Just, Nothing } from "purify-ts";
+import { type Mock, type Mocked } from "vitest";
 
 import {
   ClientCommandCodes,
@@ -14,20 +15,20 @@ import { GetPreimageCommandHandler } from "./GetPreimageCommandHandler";
 
 const COMMAND_CODE = ClientCommandCodes.GET_PREIMAGE;
 
-jest.mock("@internal/utils/Varint", () => ({
-  encodeVarint: jest.fn(),
+vi.mock("@internal/utils/Varint", () => ({
+  encodeVarint: vi.fn(),
 }));
 
 describe("GetPreimageCommandHandler", () => {
   let commandHandlerContext: CommandHandlerContext;
-  let mockDataStore: jest.Mocked<DataStore>;
+  let mockDataStore: Mocked<DataStore>;
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
 
     mockDataStore = {
-      getPreimage: jest.fn(),
-    } as unknown as jest.Mocked<DataStore>;
+      getPreimage: vi.fn(),
+    } as unknown as Mocked<DataStore>;
 
     commandHandlerContext = {
       dataStore: mockDataStore,
@@ -43,7 +44,7 @@ describe("GetPreimageCommandHandler", () => {
     const preimageLength = preimage.length;
 
     // when
-    (encodeVarint as jest.Mock).mockReturnValue({
+    (encodeVarint as Mock).mockReturnValue({
       unsafeCoerce: () => new Uint8Array([0x03]), // varint for 3
     });
 
@@ -79,7 +80,7 @@ describe("GetPreimageCommandHandler", () => {
     const preimageLength = preimage.length;
 
     // when
-    (encodeVarint as jest.Mock).mockReturnValue({
+    (encodeVarint as Mock).mockReturnValue({
       unsafeCoerce: () => new Uint8Array([0xac, 0x02]),
     });
 
@@ -162,7 +163,7 @@ describe("GetPreimageCommandHandler", () => {
     preimage.fill(0x77);
 
     // when
-    (encodeVarint as jest.Mock).mockReturnValue({
+    (encodeVarint as Mock).mockReturnValue({
       unsafeCoerce: () => new Uint8Array([0xfc]),
     });
 

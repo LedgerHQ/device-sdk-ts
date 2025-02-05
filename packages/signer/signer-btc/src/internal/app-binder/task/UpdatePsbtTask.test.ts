@@ -47,7 +47,7 @@ describe("UpdatePsbtTask", () => {
     );
 
     const psbtMapperMock = {
-      map: jest.fn(() => Right(fakePsbt)),
+      map: vi.fn(() => Right(fakePsbt)),
     } as unknown as PsbtMapper;
 
     // when
@@ -127,7 +127,7 @@ describe("UpdatePsbtTask", () => {
     );
 
     const psbtMapperMock = {
-      map: jest.fn(() => Right(fakePsbt)),
+      map: vi.fn(() => Right(fakePsbt)),
     } as unknown as PsbtMapper;
 
     // when
@@ -207,7 +207,7 @@ describe("UpdatePsbtTask", () => {
     );
 
     const psbtMapperMock = {
-      map: jest.fn(() => Right(fakePsbt)),
+      map: vi.fn(() => Right(fakePsbt)),
     } as unknown as PsbtMapper;
 
     // when

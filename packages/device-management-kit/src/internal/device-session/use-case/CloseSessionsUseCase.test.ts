@@ -9,10 +9,16 @@ import { AxiosManagerApiDataSource } from "@internal/manager-api/data/AxiosManag
 import { type ManagerApiDataSource } from "@internal/manager-api/data/ManagerApiDataSource";
 import { DefaultManagerApiService } from "@internal/manager-api/service/DefaultManagerApiService";
 import { type ManagerApiService } from "@internal/manager-api/service/ManagerApiService";
+import { DefaultSecureChannelDataSource } from "@internal/secure-channel/data/DefaultSecureChannelDataSource";
+import { type SecureChannelDataSource } from "@internal/secure-channel/data/SecureChannelDataSource";
+import { DefaultSecureChannelService } from "@internal/secure-channel/service/DefaultSecureChannelService";
+import { type SecureChannelService } from "@internal/secure-channel/service/SecureChannelService";
 
 let logger: LoggerPublisherService;
 let managerApiDataSource: ManagerApiDataSource;
 let managerApi: ManagerApiService;
+let secureChannelDataSource: SecureChannelDataSource;
+let secureChannel: SecureChannelService;
 let sessionService: DeviceSessionService;
 
 describe("CloseSessionsUseCase", () => {
@@ -23,6 +29,10 @@ describe("CloseSessionsUseCase", () => {
     );
     managerApiDataSource = new AxiosManagerApiDataSource({} as DmkConfig);
     managerApi = new DefaultManagerApiService(managerApiDataSource);
+    secureChannelDataSource = new DefaultSecureChannelDataSource(
+      {} as DmkConfig,
+    );
+    secureChannel = new DefaultSecureChannelService(secureChannelDataSource);
     sessionService = new DefaultDeviceSessionService(() => logger);
   });
 
@@ -33,8 +43,9 @@ describe("CloseSessionsUseCase", () => {
         { id: id.toString() },
         () => logger,
         managerApi,
+        secureChannel,
       );
-      jest.spyOn(session, "close");
+      vi.spyOn(session, "close");
       return session;
     });
     sessions.forEach((session) => sessionService.addDeviceSession(session));

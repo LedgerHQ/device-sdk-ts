@@ -1,4 +1,5 @@
 import { Maybe } from "purify-ts";
+import { type MockInstance } from "vitest";
 
 import { type DeviceModelDataSource } from "@api/device-model/data/DeviceModelDataSource";
 import { StaticDeviceModelDataSource } from "@api/device-model/data/StaticDeviceModelDataSource";
@@ -17,6 +18,7 @@ import {
   type Transport,
   type TransportFactory,
 } from "@api/transport/model/Transport";
+import { type LogPublisherOptions } from "@internal/logger-publisher/model/LogPublisherOptions";
 import { DefaultLoggerPublisherService } from "@internal/logger-publisher/service/DefaultLoggerPublisherService";
 
 import { DefaultTransportService } from "./DefaultTransportService";
@@ -36,32 +38,34 @@ let loggerFactory: () => LoggerPublisherService;
 describe("TransportService", () => {
   beforeEach(() => {
     logger = new DefaultLoggerPublisherService([], "transport-service");
-    apduSenderService = jest.fn().mockImplementation(() => {
+    apduSenderService = vi.fn().mockImplementation(() => {
       return defaultApduSenderServiceStubBuilder(undefined, () => logger);
     });
-    apduReceiverService = jest.fn().mockImplementation(() => {
+    apduReceiverService = vi.fn().mockImplementation(() => {
       return defaultApduReceiverServiceStubBuilder(undefined, () => logger);
     });
     deviceModelDataSource = new StaticDeviceModelDataSource();
     config = {} as DmkConfig;
     transport = new TransportMock();
     transport2 = new TransportMock();
-    jest.spyOn(transport, "getIdentifier").mockReturnValue("transport");
-    jest.spyOn(transport2, "getIdentifier").mockReturnValue("transport2");
-    transportFactory = jest.fn().mockImplementation(() => transport);
-    transportFactory2 = jest.fn().mockImplementation(() => transport2);
-    loggerFactory = jest.fn().mockImplementation(() => logger);
+    vi.spyOn(transport, "getIdentifier").mockReturnValue("transport");
+    vi.spyOn(transport2, "getIdentifier").mockReturnValue("transport2");
+    transportFactory = vi.fn().mockImplementation(() => transport);
+    transportFactory2 = vi.fn().mockImplementation(() => transport2);
+    loggerFactory = vi.fn().mockImplementation(() => logger);
   });
 
   afterEach(() => {
-    jest.resetAllMocks();
+    vi.resetAllMocks();
   });
 
   describe("constructor", () => {
     describe("when no transports are provided", () => {
-      let spy: jest.SpyInstance;
+      let spy: MockInstance<
+        (message: string, options?: LogPublisherOptions) => void
+      >;
       beforeEach(() => {
-        spy = jest.spyOn(logger, "warn");
+        spy = vi.spyOn(logger, "warn");
       });
 
       it("should throw an error", () => {

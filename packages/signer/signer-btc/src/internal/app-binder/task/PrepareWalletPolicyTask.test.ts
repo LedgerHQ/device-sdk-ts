@@ -3,6 +3,7 @@ import {
   type InternalApi,
   UnknownDeviceExchangeError,
 } from "@ledgerhq/device-management-kit";
+import { type Mock } from "vitest";
 
 import {
   DefaultDescriptorTemplate,
@@ -12,22 +13,22 @@ import {
 } from "@api/model/Wallet";
 import { PrepareWalletPolicyTask } from "@internal/app-binder/task/PrepareWalletPolicyTask";
 import { type WalletBuilder } from "@internal/wallet/service/WalletBuilder";
-const fromDefaultWalletMock = jest.fn();
-const fromRegisteredWalletMock = jest.fn();
+const fromDefaultWalletMock = vi.fn();
+const fromRegisteredWalletMock = vi.fn();
 
 describe("PrepareWalletPolicyTask", () => {
-  let internalApi: { sendCommand: jest.Mock };
+  let internalApi: { sendCommand: Mock };
   const walletBuilder = {
     fromDefaultWallet: fromDefaultWalletMock,
     fromRegisteredWallet: fromRegisteredWalletMock,
   } as unknown as WalletBuilder;
   beforeEach(() => {
     internalApi = {
-      sendCommand: jest.fn(),
+      sendCommand: vi.fn(),
     };
   });
   afterEach(() => {
-    jest.resetAllMocks();
+    vi.resetAllMocks();
   });
 
   it("should return a builded wallet from a default one", async () => {

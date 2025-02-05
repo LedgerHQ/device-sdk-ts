@@ -8,7 +8,7 @@ import { Wallet } from "@internal/wallet/model/Wallet";
 import { DefaultWalletSerializer } from "./DefaultWalletSerializer";
 
 describe("DefaultWalletSerializer tests", () => {
-  const mockHash = jest.fn();
+  const mockHash = vi.fn();
   const mockHasherService: HasherService = {
     hash: mockHash,
   };

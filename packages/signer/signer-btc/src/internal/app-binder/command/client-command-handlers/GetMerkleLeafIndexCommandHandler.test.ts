@@ -1,4 +1,5 @@
 import { Just, Nothing } from "purify-ts";
+import { type Mocked } from "vitest";
 
 import {
   ClientCommandCodes,
@@ -14,14 +15,14 @@ const COMMAND_CODE = ClientCommandCodes.GET_MERKLE_LEAF_INDEX;
 
 describe("GetMerkleLeafIndexCommandHandler", () => {
   let commandHandlerContext: CommandHandlerContext;
-  let mockDataStore: jest.Mocked<DataStore>;
+  let mockDataStore: Mocked<DataStore>;
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
 
     mockDataStore = {
-      getMerkleLeafIndex: jest.fn(),
-    } as unknown as jest.Mocked<DataStore>;
+      getMerkleLeafIndex: vi.fn(),
+    } as unknown as Mocked<DataStore>;
 
     commandHandlerContext = {
       dataStore: mockDataStore,

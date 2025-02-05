@@ -1,4 +1,5 @@
 import { Either, Left } from "purify-ts";
+import { type Mocked } from "vitest";
 
 import { FileLocalConfigDataSource } from "@internal/config/data/LocalConfigDataSource";
 import { RestRemoteConfigDataSource } from "@internal/config/data/RemoteConfigDataSource";
@@ -8,26 +9,26 @@ import { DefaultLoggerPublisherService } from "@internal/logger-publisher/servic
 import { type ConfigService } from "./ConfigService";
 import { DefaultConfigService } from "./DefaultConfigService";
 
-jest.mock("@internal/config/data/LocalConfigDataSource");
-jest.mock("@internal/config/data/RemoteConfigDataSource");
+vi.mock("@internal/config/data/LocalConfigDataSource");
+vi.mock("@internal/config/data/RemoteConfigDataSource");
 
-let localDataSource: jest.Mocked<FileLocalConfigDataSource>;
-let remoteDataSource: jest.Mocked<RestRemoteConfigDataSource>;
-let loggerService: jest.Mocked<DefaultLoggerPublisherService>;
+let localDataSource: Mocked<FileLocalConfigDataSource>;
+let remoteDataSource: Mocked<RestRemoteConfigDataSource>;
+let loggerService: Mocked<DefaultLoggerPublisherService>;
 
 let service: ConfigService;
 describe("DefaultConfigService", () => {
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
     localDataSource =
-      new FileLocalConfigDataSource() as jest.Mocked<FileLocalConfigDataSource>;
+      new FileLocalConfigDataSource() as Mocked<FileLocalConfigDataSource>;
     remoteDataSource =
-      new RestRemoteConfigDataSource() as jest.Mocked<RestRemoteConfigDataSource>;
+      new RestRemoteConfigDataSource() as Mocked<RestRemoteConfigDataSource>;
 
     loggerService = new DefaultLoggerPublisherService(
       [],
       "config",
-    ) as jest.Mocked<DefaultLoggerPublisherService>;
+    ) as Mocked<DefaultLoggerPublisherService>;
 
     service = new DefaultConfigService(
       localDataSource,

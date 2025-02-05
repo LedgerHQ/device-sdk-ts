@@ -93,7 +93,7 @@ describe("ByteArrayParser", () => {
 
   describe("clean", () => {
     beforeEach(() => {
-      jest.resetAllMocks();
+      vi.resetAllMocks();
     });
 
     it("should create an instance", () => {

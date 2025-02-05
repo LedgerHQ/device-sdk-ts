@@ -7,4 +7,22 @@ export class HexStringUtils {
     }
     return hexString;
   }
+
+  static appendSignatureToPayload(
+    payload: string,
+    signature: string,
+    tag: string,
+  ): string {
+    // Ensure correct padding
+    if (signature.length % 2 !== 0) {
+      signature = "0" + signature;
+    }
+    // TLV encoding as according to trusted name documentation
+    let signatureLength = (signature.length / 2).toString(16);
+    if (signatureLength.length % 2 !== 0) {
+      signatureLength = "0" + signatureLength;
+    }
+
+    return `${payload}${tag}${signatureLength}${signature}`;
+  }
 }

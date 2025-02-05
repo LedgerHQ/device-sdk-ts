@@ -1,5 +1,6 @@
 import { APDU_MAX_PAYLOAD } from "@ledgerhq/device-management-kit";
 import { Just, Nothing } from "purify-ts";
+import { type Mocked } from "vitest";
 
 import {
   ClientCommandCodes,
@@ -16,14 +17,14 @@ const COMMAND_CODE = ClientCommandCodes.GET_MERKLE_LEAF_PROOF;
 
 describe("GetMerkleLeafProofCommandHandler", () => {
   let commandHandlerContext: CommandHandlerContext;
-  let mockDataStore: jest.Mocked<DataStore>;
+  let mockDataStore: Mocked<DataStore>;
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
 
     mockDataStore = {
-      getMerkleProof: jest.fn(),
-    } as unknown as jest.Mocked<DataStore>;
+      getMerkleProof: vi.fn(),
+    } as unknown as Mocked<DataStore>;
 
     commandHandlerContext = {
       dataStore: mockDataStore,
@@ -87,13 +88,9 @@ describe("GetMerkleLeafProofCommandHandler", () => {
     responseBufferOffset += SHA256_SIZE;
     expectedResponse[responseBufferOffset++] = proofElements.length; // total proof length
     expectedResponse[responseBufferOffset++] = proofElementsToInclude;
-    for (
-      let proofElementIndex = 0;
-      proofElementIndex < proofElementsToInclude;
-      proofElementIndex++
-    ) {
+    for (let index = 0; index < proofElementsToInclude; index++) {
       expectedResponse.set(
-        proofElements[proofElementIndex] as Uint8Array,
+        proofElements[index] as Uint8Array,
         responseBufferOffset,
       );
       responseBufferOffset += SHA256_SIZE;
@@ -152,13 +149,9 @@ describe("GetMerkleLeafProofCommandHandler", () => {
     responseBufferOffset += SHA256_SIZE;
     expectedResponse[responseBufferOffset++] = proofElements.length; // total proof length
     expectedResponse[responseBufferOffset++] = proofElementsToInclude;
-    for (
-      let proofElementIndex = 0;
-      proofElementIndex < proofElementsToInclude;
-      proofElementIndex++
-    ) {
+    for (let index = 0; index < proofElementsToInclude; index++) {
       expectedResponse.set(
-        proofElements[proofElementIndex] as Uint8Array,
+        proofElements[index] as Uint8Array,
         responseBufferOffset,
       );
       responseBufferOffset += SHA256_SIZE;
@@ -207,7 +200,7 @@ describe("GetMerkleLeafProofCommandHandler", () => {
 
     // then
     expect(handlerResponse.isLeft()).toBe(true);
-    //@ts-ignore
+    //@ts-expect-error purposedly use undefined insteal of a DMKError
     const errorResponse = handlerResponse.leftOrDefault(undefined);
     expect(errorResponse).toBeDefined();
     expect(errorResponse instanceof ClientCommandHandlerError).toBe(true);

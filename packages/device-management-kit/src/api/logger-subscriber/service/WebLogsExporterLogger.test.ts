@@ -2,6 +2,7 @@ import { deviceModelStubBuilder } from "@api/device-model/model/DeviceModel.stub
 import { type TransportConnectedDevice } from "@api/transport/model/TransportConnectedDevice";
 import { DeviceSession } from "@internal/device-session/model/DeviceSession";
 import { type ManagerApiService } from "@internal/manager-api/service/ManagerApiService";
+import { type SecureChannelService } from "@internal/secure-channel/service/SecureChannelService";
 
 import { getJSONStringifyReplacer } from "./WebLogsExporterLogger";
 
@@ -25,7 +26,7 @@ describe("getJSONStringifyReplacer", () => {
       deviceModel: deviceModelStubBuilder(),
       type: "USB",
       id: "mockedDeviceId",
-      sendApdu: jest.fn(),
+      sendApdu: vi.fn(),
       transport: "USB",
     };
 
@@ -34,8 +35,9 @@ describe("getJSONStringifyReplacer", () => {
         connectedDevice,
         id: "mockedSessionId",
       },
-      jest.fn(),
+      vi.fn(),
       {} as ManagerApiService,
+      {} as SecureChannelService,
     );
     const result = JSON.stringify(value, replacer);
     const expected = `{"id":"mockedSessionId","connectedDevice":{"deviceModel":${JSON.stringify(

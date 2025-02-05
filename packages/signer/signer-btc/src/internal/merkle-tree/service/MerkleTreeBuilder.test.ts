@@ -197,7 +197,7 @@ describe("MerkleTreeBuilder", () => {
   let builder: MerkleTreeBuilder;
 
   beforeEach(() => {
-    jest.resetAllMocks();
+    vi.resetAllMocks();
     builder = new MerkleTreeBuilder(new Sha256HasherService());
   });
 

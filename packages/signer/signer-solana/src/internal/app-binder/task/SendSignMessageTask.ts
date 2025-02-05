@@ -1,7 +1,10 @@
 import {
+  APDU_MAX_PAYLOAD,
   ByteArrayBuilder,
   type CommandResult,
+  CommandResultFactory,
   type InternalApi,
+  InvalidStatusWordError,
 } from "@ledgerhq/device-management-kit";
 import { DerivationPathUtils } from "@ledgerhq/signer-utils";
 
@@ -32,34 +35,29 @@ export class SendSignMessageTask {
       DerivationPathUtils.splitPath(derivationPath),
     );
 
+    if (commandBuffer.length > APDU_MAX_PAYLOAD) {
+      return CommandResultFactory({
+        error: new InvalidStatusWordError(
+          "The APDU command exceeds the maximum allowable size (255 bytes)",
+        ),
+      });
+    }
+
     return await this.api.sendCommand(
       new SignOffChainMessageCommand({
         message: commandBuffer,
-        derivationPath,
       }),
     );
   }
 
   private _buildFullMessage(sendingData: Uint8Array): Uint8Array {
-    const prefix = new TextEncoder().encode("solana offchain");
-    const msgLengthFieldSize = 4;
-
-    const lengthBytes = new Uint8Array(msgLengthFieldSize);
-    lengthBytes[2] = sendingData.length;
-
-    const fullMessage = new Uint8Array(
-      1 + prefix.length + lengthBytes.length + sendingData.length,
-    );
-
-    let offset = 0;
-    fullMessage[offset++] = 0xff;
-    fullMessage.set(prefix, offset);
-    offset += prefix.length;
-    fullMessage.set(lengthBytes, offset);
-    offset += lengthBytes.length;
-    fullMessage.set(sendingData, offset);
-
-    return fullMessage;
+    return new ByteArrayBuilder()
+      .add8BitUIntToData(0xff)
+      .addAsciiStringToData("solana offchain")
+      .add16BitUIntToData(0)
+      .add16BitUIntToData(sendingData.length, false)
+      .addBufferToData(sendingData)
+      .build();
   }
 
   private _buildApduCommand(

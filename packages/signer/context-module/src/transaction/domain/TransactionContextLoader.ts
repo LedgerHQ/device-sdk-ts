@@ -34,6 +34,7 @@ export class TransactionContextLoader implements ContextLoader {
     }
 
     const result = await this.transactionDataSource.getTransactionDescriptors({
+      deviceModelId: transaction.deviceModelId,
       address: transaction.to,
       chainId: transaction.chainId,
       selector,

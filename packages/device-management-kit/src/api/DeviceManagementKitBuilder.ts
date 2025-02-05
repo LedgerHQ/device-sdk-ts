@@ -1,8 +1,8 @@
 import {
   DEFAULT_MANAGER_API_BASE_URL,
   DEFAULT_MOCK_SERVER_BASE_URL,
-  DEFAULT_WEB_SOCKET_BASE_URL,
 } from "@internal/manager-api/model/Const";
+import { DEFAULT_WEB_SOCKET_BASE_URL } from "@internal/secure-channel/model/Const";
 
 import { type LoggerSubscriberService } from "./logger-subscriber/service/LoggerSubscriberService";
 import { type TransportFactory } from "./transport/model/Transport";

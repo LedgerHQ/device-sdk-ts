@@ -1,7 +1,7 @@
 import { Container } from "inversify";
 
 import { TransportMock } from "@api/transport/model/__mocks__/TransportMock";
-import { type Transport } from "@api/types";
+import { type DmkConfig, type Transport } from "@api/types";
 import { deviceModelModuleFactory } from "@internal/device-model/di/deviceModelModule";
 import { deviceSessionModuleFactory } from "@internal/device-session/di/deviceSessionModule";
 import { ConnectUseCase } from "@internal/discovery/use-case/ConnectUseCase";
@@ -12,6 +12,7 @@ import { StartDiscoveringUseCase } from "@internal/discovery/use-case/StartDisco
 import { StopDiscoveringUseCase } from "@internal/discovery/use-case/StopDiscoveringUseCase";
 import { loggerModuleFactory } from "@internal/logger-publisher/di/loggerModule";
 import { managerApiModuleFactory } from "@internal/manager-api/di/managerApiModule";
+import { secureChannelModuleFactory } from "@internal/secure-channel/di/secureChannelModule";
 import { transportModuleFactory } from "@internal/transport/di/transportModule";
 
 import { discoveryModuleFactory } from "./discoveryModule";
@@ -33,18 +34,21 @@ describe("discoveryModuleFactory", () => {
       deviceModelModuleFactory({ stub: false }),
       deviceSessionModuleFactory(),
       transportModuleFactory({
-        transports: [jest.fn().mockImplementation(() => transport)],
+        transports: [vi.fn().mockImplementation(() => transport)],
       }),
       managerApiModuleFactory({
         config: {
           managerApiUrl: "http://fake.url",
           mockUrl: "http://fake-mock.url",
+        } as DmkConfig,
+      }),
+      secureChannelModuleFactory({
+        config: {
           webSocketUrl: "http://fake-websocket.url",
-        },
+        } as DmkConfig,
       }),
     );
   });
-
   it("should return the device module", () => {
     expect(mod).toBeDefined();
   });

@@ -13,17 +13,17 @@ import { type DataStore } from "@internal/data-store/model/DataStore";
 
 describe("ContinueTask", () => {
   const clientCommandInterpreter = {
-    getClientCommandPayload: jest.fn(
+    getClientCommandPayload: vi.fn(
       () => Right(Uint8Array.from([])) as Either<DmkError, Uint8Array>,
     ),
   };
   const api = {
-    sendCommand: jest.fn(),
+    sendCommand: vi.fn(),
   };
   const randomNumberOfClientCalls = Math.floor(Math.random() * 10 + 2);
 
   afterEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   it(`should call ${randomNumberOfClientCalls} times client interpreter and return success`, async () => {

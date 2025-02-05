@@ -17,13 +17,13 @@ describe("DefaultPsbtMapper tests", () => {
   const SERIALIZED_PSBT_V0 = hexaStringToBuffer(SERIALIZED_PSBT_V0_HEX)!;
 
   // Mock PsbtSerializer
-  const mockDeserialize = jest.fn();
+  const mockDeserialize = vi.fn();
   const mockSerializer: DefaultPsbtSerializer = {
     deserialize: mockDeserialize,
   } as unknown as DefaultPsbtSerializer;
 
   // Mock PsbtV2Normalizer
-  const mockNormalize = jest.fn();
+  const mockNormalize = vi.fn();
   const mockNormalizer: DefaultPsbtV2Normalizer = {
     normalize: mockNormalize,
   } as unknown as DefaultPsbtV2Normalizer;
@@ -32,7 +32,7 @@ describe("DefaultPsbtMapper tests", () => {
   const createPsbt = () => new Psbt();
 
   beforeEach(() => {
-    jest.resetAllMocks();
+    vi.resetAllMocks();
   });
 
   it("Map hex string", () => {

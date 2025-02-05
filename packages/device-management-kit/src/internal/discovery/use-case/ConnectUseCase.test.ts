@@ -14,17 +14,21 @@ import { AxiosManagerApiDataSource } from "@internal/manager-api/data/AxiosManag
 import { type ManagerApiDataSource } from "@internal/manager-api/data/ManagerApiDataSource";
 import { DefaultManagerApiService } from "@internal/manager-api/service/DefaultManagerApiService";
 import { type ManagerApiService } from "@internal/manager-api/service/ManagerApiService";
+import { DefaultSecureChannelDataSource } from "@internal/secure-channel/data/DefaultSecureChannelDataSource";
+import { type SecureChannelDataSource } from "@internal/secure-channel/data/SecureChannelDataSource";
+import { DefaultSecureChannelService } from "@internal/secure-channel/service/DefaultSecureChannelService";
+import { type SecureChannelService } from "@internal/secure-channel/service/SecureChannelService";
 import { DefaultTransportService } from "@internal/transport/service/DefaultTransportService";
 import { type TransportService } from "@internal/transport/service/TransportService";
 
 import { ConnectUseCase } from "./ConnectUseCase";
 
-jest.mock("uuid", () => ({
-  v4: jest.fn().mockReturnValue("fakeSessionId"),
+vi.mock("uuid", () => ({
+  v4: vi.fn().mockReturnValue("fakeSessionId"),
 }));
 
-jest.mock("@internal/manager-api/data/AxiosManagerApiDataSource");
-jest.mock("@internal/transport/service/DefaultTransportService");
+vi.mock("@internal/manager-api/data/AxiosManagerApiDataSource");
+vi.mock("@internal/transport/service/DefaultTransportService");
 
 // TODO test several transports
 // let transports: WebUsbHidTransport[];
@@ -34,7 +38,10 @@ let logger: LoggerPublisherService;
 let sessionService: DeviceSessionService;
 let managerApi: ManagerApiService;
 let managerApiDataSource: ManagerApiDataSource;
+let secureChannelDataSource: SecureChannelDataSource;
+let secureChannel: SecureChannelService;
 const fakeSessionId = "fakeSessionId";
+
 describe("ConnectUseCase", () => {
   const stubDiscoveredDevice: DiscoveredDevice = {
     id: "",
@@ -50,6 +57,10 @@ describe("ConnectUseCase", () => {
     sessionService = new DefaultDeviceSessionService(() => logger);
     managerApiDataSource = new AxiosManagerApiDataSource({} as DmkConfig);
     managerApi = new DefaultManagerApiService(managerApiDataSource);
+    secureChannelDataSource = new DefaultSecureChannelDataSource(
+      {} as DmkConfig,
+    );
+    secureChannel = new DefaultSecureChannelService(secureChannelDataSource);
     // @ts-expect-error mock
     transportService = new DefaultTransportService();
   });
@@ -61,23 +72,24 @@ describe("ConnectUseCase", () => {
   });
 
   afterAll(() => {
-    jest.restoreAllMocks();
+    vi.restoreAllMocks();
   });
 
   test("If connect use case encounter an error, return it", async () => {
-    jest
-      .spyOn(transport, "connect")
-      .mockResolvedValue(Left(new UnknownDeviceError()));
+    vi.spyOn(transport, "connect").mockResolvedValue(
+      Left(new UnknownDeviceError()),
+    );
 
-    jest
-      .spyOn(transportService, "getTransport")
-      .mockReturnValue(Maybe.of(transport));
+    vi.spyOn(transportService, "getTransport").mockReturnValue(
+      Maybe.of(transport),
+    );
 
     const usecase = new ConnectUseCase(
       transportService,
       sessionService,
       () => logger,
       managerApi,
+      secureChannel,
     );
 
     await expect(
@@ -86,19 +98,20 @@ describe("ConnectUseCase", () => {
   });
 
   test("If connect is in success, return a deviceSession id", async () => {
-    jest
-      .spyOn(transport, "connect")
-      .mockResolvedValue(Promise.resolve(Right(stubConnectedDevice)));
+    vi.spyOn(transport, "connect").mockResolvedValue(
+      Right(stubConnectedDevice),
+    );
 
-    jest
-      .spyOn(transportService, "getTransport")
-      .mockReturnValue(Maybe.of(transport));
+    vi.spyOn(transportService, "getTransport").mockReturnValue(
+      Maybe.of(transport),
+    );
 
     const usecase = new ConnectUseCase(
       transportService,
       sessionService,
       () => logger,
       managerApi,
+      secureChannel,
     );
 
     const sessionId = await usecase.execute({

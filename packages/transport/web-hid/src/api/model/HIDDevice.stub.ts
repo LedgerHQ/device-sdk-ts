@@ -1,4 +1,4 @@
-const oninputreport = jest.fn().mockResolvedValue(void 0);
+const oninputreport = vi.fn().mockResolvedValue(void 0);
 
 export const hidDeviceStubBuilder = (
   props: Partial<HIDDevice> = {},
@@ -8,15 +8,15 @@ export const hidDeviceStubBuilder = (
   vendorId: 0x2c97,
   productName: "Ledger Nano X",
   collections: [],
-  open: jest.fn().mockResolvedValue(undefined),
+  open: vi.fn().mockResolvedValue(undefined),
   oninputreport,
-  close: jest.fn().mockResolvedValue(undefined),
-  sendReport: jest.fn().mockResolvedValue(oninputreport()),
-  sendFeatureReport: jest.fn(),
-  forget: jest.fn(),
-  receiveFeatureReport: jest.fn(),
-  addEventListener: jest.fn(),
-  removeEventListener: jest.fn(),
-  dispatchEvent: jest.fn(),
+  close: vi.fn().mockResolvedValue(undefined),
+  sendReport: vi.fn().mockResolvedValue(oninputreport()),
+  sendFeatureReport: vi.fn(),
+  forget: vi.fn(),
+  receiveFeatureReport: vi.fn(),
+  addEventListener: vi.fn(),
+  removeEventListener: vi.fn(),
+  dispatchEvent: vi.fn(),
   ...props,
 });

@@ -1,7 +1,7 @@
 {
   "name": "@ledgerhq/device-management-kit",
   "version": "0.6.0",
-  "private": true,
+  "private": false,
   "license": "Apache-2.0",
   "exports": {
     ".": {
@@ -25,9 +25,9 @@
     "postpack": "find . -name '*.tgz' -exec cp {} ../../dist/ \\; ",
     "prettier": "prettier . --check",
     "prettier:fix": "prettier . --write",
-    "test": "jest",
-    "test:watch": "pnpm test -- --watch",
-    "test:coverage": "pnpm test -- --coverage",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
     "typecheck": "tsc --noEmit",
     "module:create": "pnpm hygen core-module with-prompt"
   },
@@ -35,7 +35,7 @@
     "@sentry/minimal": "^6.19.7",
     "@statelyai/inspect": "^0.4.0",
     "axios": "^1.7.9",
-    "inversify": "^6.2.1",
+    "inversify": "^6.2.2",
     "inversify-logger-middleware": "^3.1.0",
     "isomorphic-ws": "^5.0.0",
     "purify-ts": "^2.1.0",
@@ -51,9 +51,9 @@
   "devDependencies": {
     "@ledgerhq/esbuild-tools": "workspace:*",
     "@ledgerhq/eslint-config-dsdk": "workspace:*",
-    "@ledgerhq/jest-config-dsdk": "workspace:*",
     "@ledgerhq/prettier-config-dsdk": "workspace:*",
     "@ledgerhq/tsconfig-dsdk": "workspace:*",
+    "@ledgerhq/vitest-config-dmk": "workspace:*",
     "@types/semver": "^7.5.8",
     "@types/uuid": "^10.0.0",
     "@types/ws": "^8.5.13",

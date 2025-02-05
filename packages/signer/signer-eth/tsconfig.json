@@ -12,7 +12,8 @@
       "@internal/*": ["./src/internal/*"],
       "@root/*": ["./*"]
     },
-    "resolveJsonModule": true
+    "resolveJsonModule": true,
+    "types": ["vitest/globals", "node", "semver"]
   },
-  "include": ["src", "jest.*.ts"]
+  "include": ["src", "vitest.*.mjs"]
 }
