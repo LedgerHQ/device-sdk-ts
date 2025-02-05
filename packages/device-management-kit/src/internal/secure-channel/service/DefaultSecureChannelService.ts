@@ -37,41 +37,6 @@ export class DefaultSecureChannelService implements SecureChannelService {
     return this.dataSource.genuineCheck(params);
   }
 
-  listInstalledApps(
-    deviceInfo: GetOsVersionResponse,
-    finalFirmware: FinalFirmware,
-  ): Either<WebSocketConnectionError, WebSocket> {
-    const params: ListInstalledAppsParams = {
-      targetId: deviceInfo.targetId.toString(),
-      perso: finalFirmware.perso,
-    };
-    return this.dataSource.listInstalledApps(params);
-  }
-
-  updateMcu(
-    deviceInfo: GetOsVersionResponse,
-    param: { version: string },
-  ): Either<WebSocketConnectionError, WebSocket> {
-    const params: UpdateMcuParams = {
-      targetId: deviceInfo.targetId.toString(),
-      version: param.version,
-    };
-    return this.dataSource.updateMcu(params);
-  }
-
-  updateFirmware(
-    deviceInfo: GetOsVersionResponse,
-    finalFirmware: FinalFirmware,
-  ): Either<WebSocketConnectionError, WebSocket> {
-    const params: UpdateFirmwareParams = {
-      targetId: deviceInfo.targetId.toString(),
-      perso: finalFirmware.perso,
-      firmware: finalFirmware.firmware,
-      firmwareKey: finalFirmware.firmwareKey,
-    };
-    return this.dataSource.updateFirmware(params);
-  }
-
   installApp(
     deviceInfo: GetOsVersionResponse,
     app: Application,
@@ -88,6 +53,17 @@ export class DefaultSecureChannelService implements SecureChannelService {
     return this.dataSource.installApp(params);
   }
 
+  listInstalledApps(
+    deviceInfo: GetOsVersionResponse,
+    finalFirmware: FinalFirmware,
+  ): Either<WebSocketConnectionError, WebSocket> {
+    const params: ListInstalledAppsParams = {
+      targetId: deviceInfo.targetId.toString(),
+      perso: finalFirmware.perso,
+    };
+    return this.dataSource.listInstalledApps(params);
+  }
+
   uninstallApp(
     deviceInfo: GetOsVersionResponse,
     app: Application,
@@ -102,5 +78,29 @@ export class DefaultSecureChannelService implements SecureChannelService {
       hash,
     };
     return this.dataSource.uninstallApp(params);
+  }
+
+  updateFirmware(
+    deviceInfo: GetOsVersionResponse,
+    finalFirmware: FinalFirmware,
+  ): Either<WebSocketConnectionError, WebSocket> {
+    const params: UpdateFirmwareParams = {
+      targetId: deviceInfo.targetId.toString(),
+      perso: finalFirmware.perso,
+      firmware: finalFirmware.firmware,
+      firmwareKey: finalFirmware.firmwareKey,
+    };
+    return this.dataSource.updateFirmware(params);
+  }
+
+  updateMcu(
+    deviceInfo: GetOsVersionResponse,
+    param: { version: string },
+  ): Either<WebSocketConnectionError, WebSocket> {
+    const params: UpdateMcuParams = {
+      targetId: deviceInfo.targetId.toString(),
+      version: param.version,
+    };
+    return this.dataSource.updateMcu(params);
   }
 }

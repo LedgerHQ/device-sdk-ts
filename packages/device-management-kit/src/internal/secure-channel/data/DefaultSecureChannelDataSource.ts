@@ -38,6 +38,16 @@ export class DefaultSecureChannelDataSource implements SecureChannelDataSource {
     return this._connectWebSocket(address);
   }
 
+  installApp(
+    params: InstallAppsParams,
+  ): Either<WebSocketConnectionError, WebSocket> {
+    const address = URL.format({
+      pathname: `${this.webSocketBaseUrl}/install`,
+      query: params,
+    });
+    return this._connectWebSocket(address);
+  }
+
   listInstalledApps(
     params: ListInstalledAppsParams,
   ): Either<WebSocketConnectionError, WebSocket> {
@@ -48,11 +58,11 @@ export class DefaultSecureChannelDataSource implements SecureChannelDataSource {
     return this._connectWebSocket(address);
   }
 
-  updateMcu(
-    params: UpdateMcuParams,
+  uninstallApp(
+    params: UninstallAppsParams,
   ): Either<WebSocketConnectionError, WebSocket> {
     const address = URL.format({
-      pathname: `${this.webSocketBaseUrl}/mcu`,
+      pathname: `${this.webSocketBaseUrl}/install`,
       query: params,
     });
     return this._connectWebSocket(address);
@@ -68,21 +78,11 @@ export class DefaultSecureChannelDataSource implements SecureChannelDataSource {
     return this._connectWebSocket(address);
   }
 
-  installApp(
-    params: InstallAppsParams,
+  updateMcu(
+    params: UpdateMcuParams,
   ): Either<WebSocketConnectionError, WebSocket> {
     const address = URL.format({
-      pathname: `${this.webSocketBaseUrl}/install`,
-      query: params,
-    });
-    return this._connectWebSocket(address);
-  }
-
-  uninstallApp(
-    params: UninstallAppsParams,
-  ): Either<WebSocketConnectionError, WebSocket> {
-    const address = URL.format({
-      pathname: `${this.webSocketBaseUrl}/install`,
+      pathname: `${this.webSocketBaseUrl}/mcu`,
       query: params,
     });
     return this._connectWebSocket(address);
