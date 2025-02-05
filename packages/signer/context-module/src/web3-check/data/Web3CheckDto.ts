@@ -11,7 +11,7 @@ export type GetWeb3ChecksRequestDto = {
 };
 
 export type Web3CheckDto = {
-  public_key_id: KeyId;
+  public_key_id: string;
   descriptor: string;
   block: number;
 };
