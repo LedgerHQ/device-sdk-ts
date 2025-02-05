@@ -116,9 +116,9 @@ describe("DefaultContextModule", () => {
 
   it("should return a web3 check context", async () => {
     const loader = contextLoaderStubBuilder();
-    jest
-      .spyOn(loader, "load")
-      .mockResolvedValueOnce(Right({ descriptor: "payload" }));
+    vi.spyOn(loader, "load").mockResolvedValueOnce(
+      Right({ descriptor: "payload" }),
+    );
     const contextModule = new DefaultContextModule({
       ...defaultContextModuleConfig,
       customLoaders: [],
@@ -137,7 +137,7 @@ describe("DefaultContextModule", () => {
 
   it("should return null if no web3 check context", async () => {
     const loader = contextLoaderStubBuilder();
-    jest.spyOn(loader, "load").mockResolvedValue(Left(new Error("error")));
+    vi.spyOn(loader, "load").mockResolvedValue(Left(new Error("error")));
     const contextModule = new DefaultContextModule({
       ...defaultContextModuleConfig,
       customLoaders: [],

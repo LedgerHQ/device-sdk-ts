@@ -6,7 +6,7 @@ import { HttpWeb3CheckDataSource } from "@/web3-check/data/HttpWeb3CheckDataSour
 import { type Web3CheckDto } from "@/web3-check/data/Web3CheckDto";
 import { type Web3CheckContext } from "@/web3-check/domain/web3CheckTypes";
 
-jest.mock("axios");
+vi.mock("axios");
 
 describe("HttpWeb3CheckDataSource", () => {
   const config = {
@@ -16,7 +16,7 @@ describe("HttpWeb3CheckDataSource", () => {
   } as ContextModuleConfig;
 
   beforeEach(() => {
-    jest.resetAllMocks();
+    vi.resetAllMocks();
   });
 
   describe("getWeb3Checks", () => {
@@ -32,7 +32,7 @@ describe("HttpWeb3CheckDataSource", () => {
         public_key_id: "publicKeyId",
         descriptor: "descriptor",
       };
-      jest.spyOn(axios, "request").mockResolvedValue({ data: dto });
+      vi.spyOn(axios, "request").mockResolvedValue({ data: dto });
 
       // WHEN
       const dataSource = new HttpWeb3CheckDataSource(config);
@@ -54,7 +54,7 @@ describe("HttpWeb3CheckDataSource", () => {
         rawTx: "rawTx",
         chainId: 1,
       };
-      jest.spyOn(axios, "request").mockRejectedValue(new Error("error"));
+      vi.spyOn(axios, "request").mockRejectedValue(new Error("error"));
 
       // WHEN
       const dataSource = new HttpWeb3CheckDataSource(config);
@@ -78,7 +78,7 @@ describe("HttpWeb3CheckDataSource", () => {
         chainId: 1,
       };
       const dto = {};
-      jest.spyOn(axios, "request").mockResolvedValue({ data: dto });
+      vi.spyOn(axios, "request").mockResolvedValue({ data: dto });
 
       // WHEN
       const dataSource = new HttpWeb3CheckDataSource(config);

@@ -8,7 +8,7 @@ describe("DefaultWeb3CheckLoader", () => {
     it("should return an error if the rawTx is undefined", async () => {
       // GIVEN
       const dataSource = {
-        getWeb3Checks: jest.fn(),
+        getWeb3Checks: vi.fn(),
       };
       const web3CheckContext = {
         from: "from",
@@ -33,7 +33,7 @@ describe("DefaultWeb3CheckLoader", () => {
     it("should return an error if the from is undefined", async () => {
       // GIVEN
       const dataSource = {
-        getWeb3Checks: jest.fn(),
+        getWeb3Checks: vi.fn(),
       };
       const web3CheckContext = {
         from: undefined,
@@ -58,7 +58,7 @@ describe("DefaultWeb3CheckLoader", () => {
     it("should call the dataSource with the correct params", async () => {
       // GIVEN
       const dataSource = {
-        getWeb3Checks: jest.fn(),
+        getWeb3Checks: vi.fn(),
       };
       const web3CheckContext = {
         from: "from",
