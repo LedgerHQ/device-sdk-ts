@@ -40,7 +40,7 @@ describe("ProvideWeb3CheckCommand", () => {
       if (isSuccessCommandResult(result)) {
         expect(result.data).toBeUndefined();
       } else {
-        fail("Expected a success");
+        assert.fail("Expected a success");
       }
     });
 
@@ -59,7 +59,7 @@ describe("ProvideWeb3CheckCommand", () => {
 
       // THEN
       if (isSuccessCommandResult(result)) {
-        fail("Expected an error");
+        assert.fail("Expected an error");
       } else {
         expect(result.error).toEqual(
           expect.objectContaining({
@@ -85,7 +85,7 @@ describe("ProvideWeb3CheckCommand", () => {
 
       // THEN
       if (isSuccessCommandResult(result)) {
-        fail("Expected an error");
+        assert.fail("Expected an error");
       } else {
         expect(result.error).toEqual(
           expect.objectContaining({

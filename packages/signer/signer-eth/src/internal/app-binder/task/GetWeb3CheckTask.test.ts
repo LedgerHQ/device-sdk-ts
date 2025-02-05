@@ -12,21 +12,21 @@ import { type TransactionMapperService } from "@internal/transaction/service/map
 describe("GetWeb3CheckTask", () => {
   const apiMock = makeDeviceActionInternalApiMock();
   const contextModuleMock = {
-    getWeb3Checks: jest.fn(),
+    getWeb3Checks: vi.fn(),
   };
   const mapperMock = {
-    mapTransactionToSubset: jest.fn(),
+    mapTransactionToSubset: vi.fn(),
   };
   const transaction = new Uint8Array([0x01, 0x02, 0x03, 0x04]);
   const derivationPath = "44'/60'/0'/0/0";
 
   describe("run", () => {
     beforeEach(() => {
-      jest.clearAllMocks();
+      vi.clearAllMocks();
     });
 
     describe("errors", () => {
-      it("should throw an error if mapTransactionToSubset fails", async () => {
+      it("should throw an error if mapTransactionToSubset assert.fails", async () => {
         // GIVEN
         const error = new Error("error");
         mapperMock.mapTransactionToSubset.mockReturnValue(Left(error));
@@ -39,14 +39,14 @@ describe("GetWeb3CheckTask", () => {
             transaction,
             derivationPath,
           }).run();
-          fail("should throw an error");
+          assert.fail("should throw an error");
         } catch (e) {
           // THEN
           expect(e).toEqual(error);
         }
       });
 
-      it("should return a context error if GetAppConfiguration fails", async () => {
+      it("should return a context error if GetAppConfiguration assert.fails", async () => {
         // GIVEN
         mapperMock.mapTransactionToSubset.mockReturnValue(
           Right({ subset: {}, serializedTransaction: new Uint8Array() }),
@@ -70,7 +70,7 @@ describe("GetWeb3CheckTask", () => {
         });
       });
 
-      it("should return a context error if GetAddressCommand fails", async () => {
+      it("should return a context error if GetAddressCommand assert.fails", async () => {
         // GIVEN
         mapperMock.mapTransactionToSubset.mockReturnValue(
           Right({ subset: {}, serializedTransaction: new Uint8Array() }),

@@ -43,7 +43,7 @@ describe("GetConfigCommand", () => {
           version: "1.2.3",
         });
       } else {
-        fail("Expected a success");
+        assert.fail("Expected a success");
       }
     });
 
@@ -65,7 +65,7 @@ describe("GetConfigCommand", () => {
           version: "1.2.3",
         });
       } else {
-        fail("Expected a success");
+        assert.fail("Expected a success");
       }
     });
 
@@ -81,7 +81,7 @@ describe("GetConfigCommand", () => {
 
       // THEN
       if (isSuccessCommandResult(result)) {
-        fail("Expected an error");
+        assert.fail("Expected an error");
       } else {
         expect(result.error).toEqual(
           expect.objectContaining({
@@ -104,7 +104,7 @@ describe("GetConfigCommand", () => {
 
       // THEN
       if (isSuccessCommandResult(result)) {
-        fail("Expected an error");
+        assert.fail("Expected an error");
       } else {
         expect(result.error).toEqual(
           expect.objectContaining({
@@ -127,7 +127,7 @@ describe("GetConfigCommand", () => {
 
       // THEN
       if (isSuccessCommandResult(result)) {
-        fail("Expected an error");
+        assert.fail("Expected an error");
       } else {
         expect(result.error).toBeInstanceOf(InvalidStatusWordError);
         expect(result.error).toEqual(
@@ -150,7 +150,7 @@ describe("GetConfigCommand", () => {
 
       // THEN
       if (isSuccessCommandResult(result)) {
-        fail("Expected an error");
+        assert.fail("Expected an error");
       } else {
         expect(result.error).toBeInstanceOf(InvalidStatusWordError);
         expect(result.error).toEqual(
