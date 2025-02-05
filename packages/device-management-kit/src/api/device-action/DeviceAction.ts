@@ -1,7 +1,9 @@
+import { type Either } from "purify-ts";
 import { type Observable } from "rxjs";
 
 import { type Command } from "@api/command/Command";
 import { type CommandResult } from "@api/command/model/CommandResult";
+import { type ApduResponse } from "@api/device-session/ApduResponse";
 import { type DeviceSessionState } from "@api/device-session/DeviceSessionState";
 import { type DmkError } from "@api/Error";
 import { type ManagerApiService } from "@internal/manager-api/service/ManagerApiService";
@@ -10,6 +12,9 @@ import { type SecureChannelService } from "@internal/secure-channel/service/Secu
 import { type DeviceActionState } from "./model/DeviceActionState";
 
 export type InternalApi = {
+  readonly sendApdu: (
+    apdu: Uint8Array,
+  ) => Promise<Either<DmkError, ApduResponse>>;
   readonly sendCommand: <Response, Args, ErrorStatusCodes>(
     command: Command<Response, Args, ErrorStatusCodes>,
   ) => Promise<CommandResult<Response, ErrorStatusCodes>>;
