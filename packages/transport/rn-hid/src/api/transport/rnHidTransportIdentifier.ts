@@ -1,0 +1,1 @@
+export const TRANSPORT_IDENTIFIER = "RN_HID";

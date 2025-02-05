@@ -3,6 +3,7 @@
   "version": "0.0.1",
   "license": "Apache-2.0",
   "private": true,
+  "react-native": "src/index.ts",
   "nativePackage": true,
   "exports": {
     ".": {
@@ -31,9 +32,9 @@
     "prettier": "prettier . --check",
     "prettier:fix": "prettier . --write",
     "typecheck": "tsc --noEmit",
-    "test": "jest --passWithNoTests",
-    "test:watch": "pnpm test -- --watch",
-    "test:coverage": "pnpm test -- --coverage"
+    "test": "vitest run --passWithNoTests",
+    "test:watch": "vitest --passWithNoTests",
+    "test:coverage": "vitest run --coverage --passWithNoTests"
   },
   "dependencies": {
     "@sentry/minimal": "^6.19.7",
@@ -44,7 +45,7 @@
     "@ledgerhq/device-management-kit": "workspace:*",
     "@ledgerhq/esbuild-tools": "workspace:*",
     "@ledgerhq/eslint-config-dsdk": "workspace:*",
-    "@ledgerhq/jest-config-dsdk": "workspace:*",
+    "@ledgerhq/vitest-config-dmk": "workspace:*",
     "@ledgerhq/prettier-config-dsdk": "workspace:*",
     "@ledgerhq/tsconfig-dsdk": "workspace:*",
     "@types/uuid": "^10.0.0",
@@ -53,7 +54,7 @@
   },
   "peerDependencies": {
     "@ledgerhq/device-management-kit": "workspace:*",
-    "react-native": ">0.70",
+    "react-native": ">0.72",
     "rxjs": "^7.8.1"
   }
 }
