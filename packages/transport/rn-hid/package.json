@@ -3,6 +3,7 @@
   "version": "0.0.1",
   "license": "Apache-2.0",
   "private": true,
+  "react-native": "src/index.ts",
   "nativePackage": true,
   "exports": {
     ".": {
@@ -53,7 +54,7 @@
   },
   "peerDependencies": {
     "@ledgerhq/device-management-kit": "workspace:*",
-    "react-native": ">0.70",
+    "react-native": ">0.72",
     "rxjs": "^7.8.1"
   }
 }
