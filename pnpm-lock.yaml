@@ -129,6 +129,9 @@ importers:
       '@ledgerhq/device-transport-kit-react-native-ble':
         specifier: workspace:*
         version: link:../../packages/transport/rn-ble
+      '@ledgerhq/device-transport-kit-react-native-hid':
+        specifier: workspace:*
+        version: link:../../packages/transport/rn-hid
       '@ledgerhq/native-ui':
         specifier: ^0.27.1
         version: 0.27.1(@types/react@18.3.12)(react-native-reanimated@3.16.1(@babel/core@7.26.9)(react-native@0.76.6(@babel/core@7.26.9)(@babel/preset-env@7.26.9(@babel/core@7.26.9))(@react-native-community/cli-server-api@15.0.1)(@types/react@18.3.12)(react@18.3.1))(react@18.3.1))(react-native-svg@15.11.1(react-native@0.76.6(@babel/core@7.26.9)(@babel/preset-env@7.26.9(@babel/core@7.26.9))(@react-native-community/cli-server-api@15.0.1)(@types/react@18.3.12)(react@18.3.1))(react@18.3.1))(react-native@0.76.6(@babel/core@7.26.9)(@babel/preset-env@7.26.9(@babel/core@7.26.9))(@react-native-community/cli-server-api@15.0.1)(@types/react@18.3.12)(react@18.3.1))(react@18.3.1)(styled-components@5.3.11(@babel/core@7.26.9)(react-dom@18.3.1(react@18.3.1))(react-is@18.3.1)(react@18.3.1))
@@ -862,21 +865,21 @@ importers:
       '@ledgerhq/eslint-config-dsdk':
         specifier: workspace:*
         version: link:../../config/eslint
-      '@ledgerhq/jest-config-dsdk':
-        specifier: workspace:*
-        version: link:../../config/jest
       '@ledgerhq/prettier-config-dsdk':
         specifier: workspace:*
         version: link:../../config/prettier
       '@ledgerhq/tsconfig-dsdk':
         specifier: workspace:*
         version: link:../../config/typescript
+      '@ledgerhq/vitest-config-dmk':
+        specifier: workspace:*
+        version: link:../../config/vitest
       '@types/uuid':
         specifier: ^10.0.0
         version: 10.0.0
       react-native:
         specifier: ^0.76.3
-        version: 0.76.6(@babel/core@7.26.0)(@babel/preset-env@7.26.0(@babel/core@7.26.0))(@react-native-community/cli-server-api@15.0.1)(@types/react@18.3.12)(react@18.3.1)
+        version: 0.76.6(@babel/core@7.26.8)(@babel/preset-env@7.26.8(@babel/core@7.26.8))(@react-native-community/cli-server-api@15.0.1)(@types/react@18.3.12)(react@18.3.1)
       rxjs:
         specifier: ^7.8.1
         version: 7.8.1
