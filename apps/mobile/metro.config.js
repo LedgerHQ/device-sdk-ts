@@ -1,8 +1,8 @@
-const {getDefaultConfig, mergeConfig} = require('@react-native/metro-config');
+const { getDefaultConfig, mergeConfig } = require("@react-native/metro-config");
 const {
   wrapWithReanimatedMetroConfig,
-} = require('react-native-reanimated/metro-config');
-const path = require('path');
+} = require("react-native-reanimated/metro-config");
+const path = require("path");
 
 const nodeModulesPaths = [
   path.resolve(__dirname, "node_modules"),
