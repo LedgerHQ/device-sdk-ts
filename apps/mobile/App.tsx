@@ -6,32 +6,32 @@
  */
 
 import React from "react";
-import { StatusBar, useColorScheme, View } from "react-native";
+import { StatusBar, useColorScheme } from "react-native";
 import { NavigationContainer } from "@react-navigation/native";
+import { StyleProvider } from "@ledgerhq/native-ui";
 
 import { RootNavigator } from "_navigators/RootNavigator";
 import { DmkProvider } from "_providers/dmkProvider";
+import styled from "styled-components/native";
+
+const Container = styled.SafeAreaView`
+  flex: 1;
+`;
 
 function App(): React.JSX.Element {
   const isDarkMode = useColorScheme() === "dark";
 
-  const backgroundStyle = {
-    backgroundColor: isDarkMode ? "white" : "black",
-    flex: 1,
-  };
-
   return (
-    <View style={backgroundStyle}>
-      <StatusBar
-        barStyle={isDarkMode ? "light-content" : "dark-content"}
-        backgroundColor={backgroundStyle.backgroundColor}
-      />
-      <NavigationContainer>
-        <DmkProvider>
-          <RootNavigator />
-        </DmkProvider>
-      </NavigationContainer>
-    </View>
+    <Container>
+      <StatusBar barStyle={isDarkMode ? "light-content" : "dark-content"} />
+      <StyleProvider selectedPalette={isDarkMode ? "dark" : "light"}>
+        <NavigationContainer>
+          <DmkProvider>
+            <RootNavigator />
+          </DmkProvider>
+        </NavigationContainer>
+      </StyleProvider>
+    </Container>
   );
 }
 

@@ -1,15 +1,11 @@
-export const Screens = {
-  ROOT_SCREEN: "ROOT_SCREEN",
-  COMMANDS_SCREEN: "COMMANDS_SCREEN",
-} as const;
-
-export const Navigators = {
-  ROOT: "ROOT_NAVIGATOR",
-} as const;
+export enum Screens {
+  Home = "HOME_SCREEN",
+  ConnectDevice = "CONNECT_DEVICE_SCREEN",
+}
 
 export type RootStackParamList = {
-  ROOT_SCREEN: undefined;
-  COMMANDS_SCREEN: undefined;
+  [Screens.Home]: undefined;
+  [Screens.ConnectDevice]: undefined;
 };
 
 declare global {
