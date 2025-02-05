@@ -1,54 +1,99 @@
 buildscript {
-  repositories {
-    mavenCentral()
-    google()
-    maven { url "https://oss.sonatype.org/content/repositories/snapshots/" }
-  }
+    ext {
+        // Kotlin and JVM Versions
+        kotlin_version = '2.0.20'
+        coroutines_version = '1.7.3'
+        jvmTargetVersion = "17"
 
-  dependencies {
-    classpath 'com.android.tools.build:gradle:3.5.1'
-  }
+        // Libraries Versions
+        androidCoreKtx_version = '1.13.1'
+        kotlin_stdlib_version = kotlin_version
+        kotlin_coroutines_version = coroutines_version
+        kotlinx_datetime_version = '0.6.1'
+        mockk_version = '1.13.5'
+        kotlin_junit_test_version = kotlin_version
+        kotlin_coroutines_test_version = coroutines_version
+        timber_version = '5.0.1'
+        buffer_version = '1.4.2'
+    }
+    repositories {
+        mavenCentral()
+        google()
+        maven { url "https://oss.sonatype.org/content/repositories/snapshots/" }
+    }
+
+    dependencies {
+        // Android Gradle Plugin
+        classpath "com.android.tools.build:gradle:8.3.2"
+        
+        // Kotlin Gradle Plugin
+        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
+    }
 }
 
 allprojects {
-  repositories {
-    mavenCentral()
-    google()
-    maven { url "https://oss.sonatype.org/content/repositories/snapshots/" }
-  }
+    repositories {
+        mavenCentral()
+        google()
+        maven { url "https://oss.sonatype.org/content/repositories/snapshots/" }
+        maven {
+            // React Native Android binaries
+            url "$rootDir/../node_modules/react-native/android"
+        }
+    }
 }
 
 apply plugin: 'com.android.library'
+apply plugin: 'org.jetbrains.kotlin.android'
 
 def safeExtGet(prop, fallback) {
-  rootProject.ext.has(prop) ? rootProject.ext.get(prop) : fallback
+    rootProject.ext.has(prop) ? rootProject.ext.get(prop) : fallback
 }
 
 android {
-  compileSdkVersion safeExtGet("compileSdkVersion", 29)
+    namespace "com.ledger.androidtransporthid"
+    compileSdkVersion safeExtGet("compileSdkVersion", 34)
 
-  defaultConfig {
-    minSdkVersion safeExtGet("minSdkVersion", 24)
-    targetSdkVersion safeExtGet("targetSdkVersion", 29)
-    versionCode 1
-    versionName "1.0"
-  }
-  lintOptions {
-    abortOnError false
-    warning 'InvalidPackage'
-  }
+    defaultConfig {
+        minSdkVersion safeExtGet("minSdkVersion", 30)
+        targetSdkVersion safeExtGet("targetSdkVersion", 32)
+        versionCode 1
+        versionName "1.0"
+    }
+
+    compileOptions {
+        // Use JavaVersion enums for compatibility
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+
+    kotlinOptions {
+        jvmTarget = jvmTargetVersion
+    }
+
+    lintOptions {
+        abortOnError false
+        warning 'InvalidPackage'
+    }
 }
 
 repositories {
-  mavenCentral()
-  google()
-  maven { url "https://oss.sonatype.org/content/repositories/snapshots/" }
-  maven {
-    // All of React Native (JS, Obj-C sources, Android binaries) is installed from npm
-    url "$rootDir/../node_modules/react-native/android"
-  }
+    mavenCentral()
+    google()
+    maven { url "https://oss.sonatype.org/content/repositories/snapshots/" }
+    maven {
+        // React Native Android binaries
+        url "$rootDir/../node_modules/react-native/android"
+    }
 }
 
 dependencies {
-  implementation 'com.facebook.react:react-native:+'
+    implementation 'com.facebook.react:react-native:+'
+    implementation "androidx.core:core-ktx:$androidCoreKtx_version"
+    implementation "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_stdlib_version"
+    implementation "org.jetbrains.kotlinx:kotlinx-coroutines-core:$kotlin_coroutines_version"
+    implementation "org.jetbrains.kotlinx:kotlinx-datetime:$kotlinx_datetime_version"
+    implementation "org.jetbrains.kotlinx:kotlinx-coroutines-test:$kotlin_coroutines_test_version"
+    implementation "com.jakewharton.timber:timber:$timber_version"
+    implementation "com.ditchoom:buffer:$buffer_version"
 }
