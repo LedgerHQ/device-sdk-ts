@@ -34,7 +34,6 @@ import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.merge
-import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
@@ -70,8 +69,6 @@ internal class DefaultAndroidUsbTransport(
                                 usbConnections.filter { device == it.value.usbDevice }.isEmpty()
                             }.toUsbDevices()
 
-                    loggerService.log(info = buildSimpleInfoLogInfo(tag = "DefaultUsbTransport", message = "Usb devices: $devices"))
-
                     _scanStateFlow.value = devices.toScannedDevices()
 
                     delay(scanDelay)
@@ -106,29 +103,51 @@ internal class DefaultAndroidUsbTransport(
     override suspend fun connect(discoveryDevice: DiscoveryDevice): InternalConnectionResult {
         val device: android.hardware.usb.UsbDevice? =
             usbManager.deviceList.values.firstOrNull { it.deviceId == discoveryDevice.uid.toInt() }
+
         return if (device == null) {
             InternalConnectionResult.ConnectionError(error = InternalConnectionResult.Failure.DeviceNotFound)
         } else {
-            val result =
-                merge(
-                    internalUsbPermissionEventFlow,
-                    internalUsbEventFlow,
-                ).onStart {
-                    permissionRequester.requestPermission(
-                        context = application,
-                        manager = usbManager,
-                        device = device,
+
+            val establishConnectionFn = {
+                val sessionId = generateSessionId(id = device.deviceId.toString())
+                val newConnection =
+                    AndroidUsbDeviceConnection(
+                        usbManager = usbManager,
+                        usbDevice = device,
+                        ioDispatcher = Dispatchers.IO,
+                        framerService = FramerService(loggerService),
+                        request = UsbRequest(),
                     )
-                }.onEach {
-                    loggerService.log(info = buildSimpleInfoLogInfo(
-                        tag = "DefaultUsbTransport",
-                        message = "event received while connecting : $it")
+                val connectedDevice =
+                    InternalConnectedDevice(
+                        sessionId,
+                        discoveryDevice.name,
+                        discoveryDevice.ledgerDevice,
+                        discoveryDevice.connectivityType,
+                        sendApduFn = { apdu -> newConnection.send(apdu) },
                     )
-                }.first {
-                    it is UsbPermissionEvent.PermissionGranted ||
-                        it is UsbPermissionEvent.PermissionDenied ||
-                        it is UsbState.Detached
-                }
+                usbConnections[sessionId] = newConnection
+                InternalConnectionResult.Connected(device = connectedDevice, sessionId = sessionId)
+            }
+
+            if (usbManager.hasPermission(device)) {
+                return establishConnectionFn()
+            }
+
+            val result = merge(
+                internalUsbPermissionEventFlow,
+                internalUsbEventFlow,
+            ).onStart {
+                permissionRequester.requestPermission(
+                    context = application,
+                    manager = usbManager,
+                    device = device,
+                )
+            }.first {
+                it is UsbPermissionEvent.PermissionGranted ||
+                    it is UsbPermissionEvent.PermissionDenied ||
+                    it is UsbState.Detached
+            }
 
             when (result) {
                 is UsbPermissionEvent -> {
@@ -140,25 +159,7 @@ internal class DefaultAndroidUsbTransport(
                         }
 
                         is UsbPermissionEvent.PermissionGranted -> {
-                            val sessionId = generateSessionId(id = device.deviceId.toString())
-                            val newConnection =
-                                AndroidUsbDeviceConnection(
-                                    usbManager = usbManager,
-                                    usbDevice = device,
-                                    ioDispatcher = Dispatchers.IO,
-                                    framerService = FramerService(loggerService),
-                                    request = UsbRequest(),
-                                )
-                            val connectedDevice =
-                                InternalConnectedDevice(
-                                    sessionId,
-                                    discoveryDevice.name,
-                                    discoveryDevice.ledgerDevice,
-                                    discoveryDevice.connectivityType,
-                                    sendApduFn = { apdu -> newConnection.send(apdu) },
-                                )
-                            usbConnections[sessionId] = newConnection
-                            InternalConnectionResult.Connected(device = connectedDevice, sessionId = sessionId)
+                            establishConnectionFn()
                         }
                     }
                 }
@@ -171,10 +172,6 @@ internal class DefaultAndroidUsbTransport(
     }
 
     override suspend fun disconnect(deviceId: String) {
-        loggerService.log(info = buildSimpleInfoLogInfo(
-            tag = "DefaultUsbTransport",
-            message ="Called disconnect for id ; $deviceId")
-        )
         usbConnections[deviceId]?.let {
             usbConnections.remove(deviceId)
             eventDispatcher.dispatch(TransportEvent.DeviceConnectionLost(deviceId))
