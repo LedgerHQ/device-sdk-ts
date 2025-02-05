@@ -39,7 +39,6 @@ export class HttpWeb3CheckDataSource implements Web3CheckDataSource {
           raw: rawTx,
         },
         chain: chainId,
-        preset: "blockaid",
       };
       const response = await axios.request<Web3CheckDto>({
         method: "POST",
