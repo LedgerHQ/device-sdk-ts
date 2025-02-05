@@ -29,6 +29,7 @@ import {
 } from "@internal/app-binder/command/ProvideTokenInformationCommand";
 import { ProvideTransactionFieldDescriptionCommand } from "@internal/app-binder/command/ProvideTransactionFieldDescriptionCommand";
 import { ProvideTrustedNameCommand } from "@internal/app-binder/command/ProvideTrustedNameCommand";
+import { ProvideWeb3CheckCommand } from "@internal/app-binder/command/ProvideWeb3CheckCommand";
 import { type EthErrorCodes } from "@internal/app-binder/command/utils/ethAppErrors";
 import { type TransactionParserService } from "@internal/transaction/service/parser/TransactionParserService";
 
@@ -329,6 +330,10 @@ export class ProvideTransactionFieldDescriptionTask {
             `The context type [${type}] is not valid as a transaction field or metadata`,
           ),
         });
+      case ClearSignContextType.WEB3_CHECK:
+        return await this.api.sendCommand(
+          new ProvideWeb3CheckCommand({ payload }),
+        );
       default: {
         const uncoveredType: never = type;
         return CommandResultFactory({

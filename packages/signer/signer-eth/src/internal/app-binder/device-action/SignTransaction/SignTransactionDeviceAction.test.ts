@@ -1,6 +1,10 @@
 /* eslint @typescript-eslint/consistent-type-imports: 0 */
 import { type ContextModule } from "@ledgerhq/context-module";
 import {
+  ClearSignContextType,
+  type ContextModule,
+} from "@ledgerhq/context-module";
+import {
   CommandResultFactory,
   DeviceActionStatus,
   hexaStringToBuffer,
@@ -57,6 +61,7 @@ describe("SignTransactionDeviceAction", () => {
       provideContext: provideContextMock,
       provideGenericContext: provideGenericContextMock,
       signTransaction: signTransactionMock,
+      getWeb3Check: getWeb3CheckMock,
     };
   }
   const defaultOptions = {
@@ -1045,6 +1050,78 @@ describe("SignTransactionDeviceAction", () => {
           },
         );
       }));
+  });
+
+  describe("GetWeb3Checks errors", () => {
+    it("should fail if GetWeb3Checks throws an error", (done) => {
+      setupOpenAppDAMock();
+
+      const deviceAction = new SignTransactionDeviceAction({
+        input: {
+          derivationPath: "44'/60'/0'/0/0",
+          transaction: defaultTransaction,
+          options: defaultOptions,
+          contextModule: contextModuleMock,
+          mapper: mapperMock,
+          parser: parserMock,
+        },
+      });
+
+      getChallengeMock.mockResolvedValueOnce(
+        CommandResultFactory({
+          data: { challenge: "challenge" },
+        }),
+      );
+      getWeb3CheckMock.mockRejectedValueOnce(
+        new InvalidStatusWordError("getWeb3Checks error"),
+      );
+      jest
+        .spyOn(deviceAction, "extractDependencies")
+        .mockReturnValue(extractDependenciesMock());
+
+      const expectedStates: Array<SignTransactionDAState> = [
+        // Initial state
+        {
+          intermediateValue: {
+            requiredUserInteraction: UserInteractionRequired.None,
+          },
+          status: DeviceActionStatus.Pending,
+        },
+        // OpenApp interaction
+        {
+          intermediateValue: {
+            requiredUserInteraction: UserInteractionRequired.ConfirmOpenApp,
+          },
+          status: DeviceActionStatus.Pending,
+        },
+        // GetChallenge state
+        {
+          intermediateValue: {
+            requiredUserInteraction: UserInteractionRequired.None,
+          },
+          status: DeviceActionStatus.Pending,
+        },
+        // GetWeb3Checks state
+        {
+          intermediateValue: {
+            requiredUserInteraction: UserInteractionRequired.None,
+          },
+          status: DeviceActionStatus.Pending,
+        },
+        // GetWeb3Checks error
+        {
+          error: new InvalidStatusWordError("getWeb3Checks error"),
+          status: DeviceActionStatus.Error,
+        },
+      ];
+
+      testDeviceActionStates(
+        deviceAction,
+        expectedStates,
+        makeDeviceActionInternalApiMock(),
+        done,
+      );
+    });
   });
 
   describe("BuildContext errors", () => {
