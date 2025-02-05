@@ -88,7 +88,7 @@ internal class DefaultAndroidUsbTransport(
     override fun updateUsbState(state: UsbState) {
         when (state) {
             is UsbState.Detached -> {
-                val id = state.device.uid
+                val id = generateSessionId(state.device.uid) // TODO: backport this fix to DMK Mobile
                 if (usbConnections.containsKey(id)) {
                     usbConnections.remove(id)
                     eventDispatcher.dispatch(TransportEvent.DeviceConnectionLost(id))
