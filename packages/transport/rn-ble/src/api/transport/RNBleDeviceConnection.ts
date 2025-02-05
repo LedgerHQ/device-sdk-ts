@@ -1,4 +1,4 @@
-import { type Characteristic, type Subscription } from "react-native-ble-plx";
+import { type Characteristic } from "react-native-ble-plx";
 import {
   type ApduReceiverService,
   type ApduReceiverServiceFactory,
@@ -14,15 +14,12 @@ import { Base64 } from "js-base64";
 import { type Either, Left, Maybe, Nothing, Right } from "purify-ts";
 
 type RNBleDeviceConnectionConstructorArgs = {
-  writeCharacteristic: Characteristic;
-  notifyCharacteristic: Characteristic;
+  onWrite: (value: string) => void;
   apduSenderFactory: ApduSenderServiceFactory;
   apduReceiverFactory: ApduReceiverServiceFactory;
 };
 
 export class RNBleDeviceConnection implements DeviceConnection {
-  private _writeCharacteristic: Characteristic;
-  private _notifyCharacteristic: Characteristic;
   private _isDeviceReady: boolean;
   private _logger: LoggerPublisherService;
   private _apduSender: Maybe<ApduSenderService>;
@@ -31,32 +28,23 @@ export class RNBleDeviceConnection implements DeviceConnection {
   private _sendApduPromiseResolver: Maybe<
     (value: Either<DmkError, ApduResponse>) => void
   >;
-  private _monitorSubscription: Subscription;
+  private _onWrite: (value: string) => void;
 
   constructor(
     {
-      writeCharacteristic,
-      notifyCharacteristic,
+      onWrite,
       apduSenderFactory,
       apduReceiverFactory,
     }: RNBleDeviceConnectionConstructorArgs,
     loggerServiceFactory: (tag: string) => LoggerPublisherService,
   ) {
-    this._writeCharacteristic = writeCharacteristic;
-    this._notifyCharacteristic = notifyCharacteristic;
     this._isDeviceReady = false;
     this._logger = loggerServiceFactory("RNBleDeviceConnection");
-    this._monitorSubscription = this._notifyCharacteristic.monitor(
-      (error, response) => {
-        if (response && !error) {
-          this.onMonitor(response);
-        }
-      },
-    );
     this._apduSenderFactory = apduSenderFactory;
     this._apduSender = Nothing;
     this._apduReceiver = apduReceiverFactory();
     this._sendApduPromiseResolver = Nothing;
+    this._onWrite = onWrite;
   }
 
   private onReceiveSetupApduResponse(value: Uint8Array) {
@@ -84,7 +72,7 @@ export class RNBleDeviceConnection implements DeviceConnection {
     });
   }
 
-  private onMonitor(characteristic: Characteristic) {
+  onMonitor(characteristic: Characteristic) {
     if (!characteristic.value) {
       return;
     }
@@ -101,9 +89,7 @@ export class RNBleDeviceConnection implements DeviceConnection {
   public async setup() {
     const requestMtuApdu = Uint8Array.from([0x08, 0x00, 0x00, 0x00, 0x00]);
 
-    await this._writeCharacteristic.writeWithoutResponse(
-      Base64.fromUint8Array(requestMtuApdu),
-    );
+    await this._onWrite(Base64.fromUint8Array(requestMtuApdu));
   }
 
   async sendApdu(
@@ -128,9 +114,7 @@ export class RNBleDeviceConnection implements DeviceConnection {
 
     for (const frame of frames) {
       try {
-        await this._writeCharacteristic.writeWithoutResponse(
-          Base64.fromUint8Array(frame.getRawData()),
-        );
+        await this._onWrite(Base64.fromUint8Array(frame.getRawData()));
       } catch (error) {
         this._logger.error("Error sending frame", { data: { error } });
       }
@@ -146,19 +130,5 @@ export class RNBleDeviceConnection implements DeviceConnection {
       },
       Left: async (error) => Promise.resolve(Left(error)),
     });
-  }
-
-  public async reconnect(
-    writeCharacteristic: Characteristic,
-    notifyCharacteristic: Characteristic,
-  ) {
-    this._writeCharacteristic = writeCharacteristic;
-    this._notifyCharacteristic = notifyCharacteristic;
-
-    await this.setup();
-  }
-
-  public disconnect() {
-    this._monitorSubscription.remove();
   }
 }
