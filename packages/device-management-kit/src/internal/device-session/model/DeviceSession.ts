@@ -1,5 +1,5 @@
 import { type Either, Left } from "purify-ts";
-import { BehaviorSubject } from "rxjs";
+import { BehaviorSubject, type Subscription } from "rxjs";
 import { v4 as uuidv4 } from "uuid";
 
 import { type Command } from "@api/command/Command";
@@ -113,14 +113,27 @@ export class DeviceSession {
       triggersDisconnection: false,
     },
   ): Promise<Either<DmkError, ApduResponse>> {
+    // DONE
+    /**
+     * 1. Turn off the refresher
+     * 2. Wait for the state to be ready
+     * 3. Set the state to busy
+     * 4. Send apdu and wait for the response
+     * 5. Set the state to connected
+     * 6. Turn on the refresher
+     */
+
+    if (!options.isPolling) {
+      this.toggleRefresher(false);
+      await this.waitUntilReady();
+    }
+
     const sessionState = this._deviceState.getValue();
     if (sessionState.deviceStatus === DeviceStatus.BUSY) {
       return Left(new DeviceBusyError());
     }
 
-    if (!options.isPolling) {
-      this.updateDeviceStatus(DeviceStatus.BUSY);
-    }
+    this.updateDeviceStatus(DeviceStatus.BUSY);
 
     const errorOrResponse = await this._connectedDevice.sendApdu(
       rawApdu,
@@ -134,10 +147,31 @@ export class DeviceSession {
         } else {
           this.updateDeviceStatus(DeviceStatus.CONNECTED);
         }
+
+        if (!options.isPolling) {
+          this.toggleRefresher(true);
+        }
       })
       .ifLeft(() => {
         this.updateDeviceStatus(DeviceStatus.CONNECTED);
+
+        if (!options.isPolling) {
+          this.toggleRefresher(true);
+        }
       });
+  }
+
+  async waitUntilReady() {
+    let deviceStateSub: Subscription;
+
+    await new Promise<void>((resolve) => {
+      deviceStateSub = this._deviceState.subscribe((state) => {
+        if (state.deviceStatus === DeviceStatus.CONNECTED) {
+          deviceStateSub?.unsubscribe();
+          resolve();
+        }
+      });
+    });
   }
 
   async sendCommand<Response, Args, ErrorStatusCodes>(

@@ -1,4 +1,4 @@
-import { type Characteristic } from "react-native-ble-plx";
+import { type Characteristic, type Device } from "react-native-ble-plx";
 import {
   type ApduReceiverService,
   type ApduReceiverServiceFactory,
@@ -6,7 +6,7 @@ import {
   type ApduSenderService,
   type ApduSenderServiceFactory,
   CommandUtils,
-  type DeviceConnection,
+  type DeviceApduSender,
   DeviceNotInitializedError,
   type DmkError,
   type LoggerPublisherService,
@@ -16,13 +16,15 @@ import { Base64 } from "js-base64";
 import { type Either, Left, Maybe, Nothing, Right } from "purify-ts";
 
 type RNBleDeviceConnectionConstructorArgs = {
+  device: Device;
   onWrite: (value: string) => Promise<Characteristic>;
   apduSenderFactory: ApduSenderServiceFactory;
   apduReceiverFactory: ApduReceiverServiceFactory;
 };
 
-export class RNBleDeviceConnection implements DeviceConnection {
+export class RNBleDeviceConnection implements DeviceApduSender<Device> {
   private _isDeviceReady: boolean;
+  private _device: Device;
   private _logger: LoggerPublisherService;
   private _apduSender: Maybe<ApduSenderService>;
   private readonly _apduSenderFactory: ApduSenderServiceFactory;
@@ -41,9 +43,11 @@ export class RNBleDeviceConnection implements DeviceConnection {
       onWrite,
       apduSenderFactory,
       apduReceiverFactory,
+      device,
     }: RNBleDeviceConnectionConstructorArgs,
     loggerServiceFactory: (tag: string) => LoggerPublisherService,
   ) {
+    this._device = device;
     this._isDeviceReady = false;
     this._logger = loggerServiceFactory("RNBleDeviceConnection");
     this._apduSenderFactory = apduSenderFactory;
@@ -107,6 +111,19 @@ export class RNBleDeviceConnection implements DeviceConnection {
     } else {
       this.receiveApdu(apdu);
     }
+  }
+
+  public getDevice() {
+    return this._device;
+  }
+
+  public setDevice(device: Device) {
+    this._device = device;
+  }
+
+  public closeConnection() {
+    // TODO: cancel connection
+    this._device.cancelConnection();
   }
 
   public async setup() {

@@ -129,16 +129,21 @@ export class RNBleTransport implements Transport {
             new UnknownDeviceError(`Unknown device ${params.deviceId}`),
           ),
         );
+
+        let device: Device;
+
         try {
-          await this._manager.connectToDevice(params.deviceId);
+          device = await this._manager.connectToDevice(params.deviceId);
           await this._manager.discoverAllServicesAndCharacteristicsForDevice(
             params.deviceId,
           );
         } catch (error) {
           return throwE(new OpeningConnectionError(error));
         }
+
         const { serviceUuid, writeCmdUuid, notifyUuid } =
           internalDevice.bleDeviceInfos;
+
         const deviceConnection = new RNBleDeviceConnection(
           {
             onWrite: (value) =>
@@ -150,9 +155,11 @@ export class RNBleTransport implements Transport {
               ),
             apduSenderFactory: this._apduSenderFactory,
             apduReceiverFactory: this._apduReceiverFactory,
+            device,
           },
           this._loggerServiceFactory,
         );
+
         this._manager.monitorCharacteristicForDevice(
           params.deviceId,
           serviceUuid,
@@ -163,14 +170,20 @@ export class RNBleTransport implements Transport {
             }
           },
         );
+
         await deviceConnection.setup();
+
         this._deviceConnectionsById.set(internalDevice.id, deviceConnection);
+        // internalDevice.disconnectionSubscription.remove();
+
         internalDevice.disconnectionSubscription =
           this._manager.onDeviceDisconnected(internalDevice.id, (...args) => {
             this._handleDeviceDisconnected(...args, params.onDisconnect);
             // params.onDisconnect(internalDevice.id);
           });
+
         internalDevice.lastDiscoveredTimeStamp = Maybe.zero();
+
         return new TransportConnectedDevice({
           id: internalDevice.id,
           deviceModel: internalDevice.discoveredDevice.deviceModel,
@@ -193,8 +206,10 @@ export class RNBleTransport implements Transport {
     connectedDevice: TransportConnectedDevice;
   }): Promise<Either<DmkError, void>> {
     await this._manager.cancelDeviceConnection(_params.connectedDevice.id);
+
     this._deviceConnectionsById.delete(_params.connectedDevice.id);
     this._internalDevicesById.delete(_params.connectedDevice.id);
+
     return Right(void 0);
   }
 
@@ -322,9 +337,11 @@ export class RNBleTransport implements Transport {
     const maybeUuid = Maybe.fromNullable(
       rnDevice?.serviceUUIDs?.find((uuid) => ledgerUuids.includes(uuid)),
     );
+
     const existingInternalDevice = Maybe.fromNullable(
       this._internalDevicesById.get(rnDevice.id),
     );
+
     if (existingInternalDevice.isJust()) {
       return Nothing;
     }
@@ -333,6 +350,7 @@ export class RNBleTransport implements Transport {
       const serviceToBleInfos =
         this._deviceModelDataSource.getBluetoothServicesInfos();
       const maybeBleDeviceInfos = Maybe.fromNullable(serviceToBleInfos[uuid]);
+
       return maybeBleDeviceInfos.map((bleDeviceInfos) => {
         const discoveredDevice: TransportDiscoveredDevice = {
           id: rnDevice.id,
@@ -340,6 +358,7 @@ export class RNBleTransport implements Transport {
           deviceModel: bleDeviceInfos.deviceModel,
           transport: this.identifier,
         };
+
         return {
           discoveredDevice,
           bleDeviceInfos,
@@ -484,15 +503,19 @@ export class RNBleTransport implements Transport {
         data: { error, device },
       });
     }
+
     if (!device) {
       this._logger.info("disconnected handler didn't found device");
       return;
     }
+
     this._logger.info("new disconnected handler");
+
     from([0])
       .pipe(
         switchMap(async (count) => {
           this._logger.info("new call subscriber next");
+
           try {
             await device.connect();
             await device.discoverAllServicesAndCharacteristics();
@@ -503,6 +526,7 @@ export class RNBleTransport implements Transport {
               onDisconnect(device.id);
             }
           }
+
           return device;
         }),
         retry({
