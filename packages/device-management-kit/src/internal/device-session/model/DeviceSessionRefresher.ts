@@ -151,6 +151,7 @@ export class DeviceSessionRefresher {
       ),
       switchMap(async () => {
         const rawApdu = this._getAppAndVersionCommand.getApdu().getRawApdu();
+        console.log("Refresher sending getAppAndVersion", rawApdu);
         return await this._sendApduFn(rawApdu);
       }),
       map((resp) =>
