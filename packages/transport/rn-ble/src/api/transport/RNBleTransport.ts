@@ -28,10 +28,9 @@ import {
   from,
   merge,
   Observable,
+  retry,
   type Subscriber,
   switchMap,
-  take,
-  timer,
 } from "rxjs";
 
 import { RNBleDeviceConnection } from "@api/transport/RNBleDeviceConnection";
@@ -139,11 +138,12 @@ export class RNBleTransport implements Transport {
         );
         await deviceConnection.setup();
         this._deviceConnectionsById.set(internalDevice.id, deviceConnection);
-        internalDevice.disconnectionSubscription.remove();
+        // internalDevice.disconnectionSubscription.remove();
         internalDevice.disconnectionSubscription =
-          this._manager.onDeviceDisconnected(internalDevice.id, (...args) =>
-            this._handleDeviceDisconnected(...args),
-          );
+          this._manager.onDeviceDisconnected(internalDevice.id, (...args) => {
+            this._handleDeviceDisconnected(...args);
+            // params.onDisconnect(internalDevice.id);
+          });
         internalDevice.lastDiscoveredTimeStamp = Maybe.zero();
         return new TransportConnectedDevice({
           id: internalDevice.id,
@@ -384,39 +384,53 @@ export class RNBleTransport implements Transport {
       return;
     }
     this._logger.info("new disconnected handler");
-    let finalDevice = device;
-    return timer(0, 500)
-      .pipe(take(4))
-      .subscribe({
-        next: async (count) => {
+    from([0])
+      .pipe(
+        switchMap(async () => {
           this._logger.info("new call subscriber next");
-          finalDevice = device;
           try {
-            await this._manager.connectToDevice(finalDevice.id);
-            await this._manager.discoverAllServicesAndCharacteristicsForDevice(
-              finalDevice.id,
-            );
-            this._logger.debug("try reconnecting", {
-              data: { count, finalDevice: await finalDevice.isConnected() },
-            });
-            // const reconnectResult =
-            //   await this._handleDeviceReconnected(finalDevice);
+            await device.connect({ timeout: 800 });
+            await device.discoverAllServicesAndCharacteristics();
+            this._handleDeviceReconnected(device);
           } catch (e) {
             this._logger.error("Reconnecting failed", { data: { e } });
           }
-        },
-        complete: async () => {
-          if (!(await finalDevice.isConnected())) {
-            this._deviceConnectionsById.delete(device.id);
-            this._internalDevicesById.delete(device.id);
-          }
-        },
-        error: (e) => {
-          this._logger.error("reconnection error::", { data: { error: e } });
-          this._deviceConnectionsById.delete(device.id);
-          this._internalDevicesById.delete(device.id);
-        },
+          return device;
+        }),
+        retry({
+          count: 4,
+          delay: 500,
+        }),
+      )
+      .subscribe({
+        next: (value) => this._logger.debug("value", { data: { value } }),
       });
+  }
+
+  private _handleDeviceReconnected(device: Device) {
+    const deviceConnection = this._deviceConnectionsById.get(
+      device.id,
+    ) as RNBleDeviceConnection;
+    const internalDevice = this._internalDevicesById.get(
+      device.id,
+    ) as RNBleInternalDevice;
+    deviceConnection.onWrite = (value) =>
+      this._manager.writeCharacteristicWithoutResponseForDevice(
+        device.id,
+        internalDevice.bleDeviceInfos.serviceUuid,
+        internalDevice.bleDeviceInfos.writeCmdUuid,
+        value,
+      );
+    this._manager.monitorCharacteristicForDevice(
+      device.id,
+      internalDevice.bleDeviceInfos.serviceUuid,
+      internalDevice.bleDeviceInfos.notifyUuid,
+      (error, characteristic) => {
+        if (!error && characteristic) {
+          deviceConnection.onMonitor(characteristic);
+        }
+      },
+    );
   }
 }
 
