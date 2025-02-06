@@ -1,3 +1,6 @@
+import { DeviceModelId } from "@ledgerhq/device-management-kit";
+import { Left, Right } from "purify-ts";
+
 import { type ContextModuleConfig } from "./config/model/ContextModuleConfig";
 import {
   type TransactionContext,
@@ -18,9 +21,12 @@ describe("DefaultContextModule", () => {
     defaultLoaders: false,
     customTypedDataLoader: typedDataLoader,
     cal: {
-      url: "https://crypto-assets-service.api.ledger.com/v1",
+      url: "https://cal/v1",
       mode: "prod",
       branch: "main",
+    },
+    web3checks: {
+      url: "https://web3checks/v3",
     },
   };
 
@@ -107,6 +113,48 @@ describe("DefaultContextModule", () => {
 
     expect(loader.loadField).toHaveBeenCalledTimes(2);
     expect(res).toEqual({ type: "token", payload: "payload" });
+  });
+
+  it("should return a web3 check context", async () => {
+    const loader = contextLoaderStubBuilder();
+    vi.spyOn(loader, "load").mockResolvedValueOnce(
+      Right({ descriptor: "payload" }),
+    );
+    const contextModule = new DefaultContextModule({
+      ...defaultContextModuleConfig,
+      customLoaders: [],
+      customWeb3CheckLoader: loader,
+    });
+
+    const res = await contextModule.getWeb3Checks({
+      deviceModelId: DeviceModelId.FLEX,
+      from: "from",
+      rawTx: "rawTx",
+      chainId: 1,
+    });
+
+    expect(loader.load).toHaveBeenCalledTimes(1);
+    expect(res).toEqual({ type: "web3Check", payload: "payload" });
+  });
+
+  it("should return null if no web3 check context", async () => {
+    const loader = contextLoaderStubBuilder();
+    vi.spyOn(loader, "load").mockResolvedValue(Left(new Error("error")));
+    const contextModule = new DefaultContextModule({
+      ...defaultContextModuleConfig,
+      customLoaders: [],
+      customWeb3CheckLoader: loader,
+    });
+
+    const res = await contextModule.getWeb3Checks({
+      deviceModelId: DeviceModelId.FLEX,
+      from: "from",
+      rawTx: "rawTx",
+      chainId: 1,
+    });
+
+    expect(loader.load).toHaveBeenCalledTimes(1);
+    expect(res).toBeNull();
   });
 
   it("context field not supported", async () => {

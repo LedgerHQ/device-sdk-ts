@@ -18,3 +18,5 @@ export * from "./shared/model/TypedDataClearSignContext";
 export * from "./shared/model/TypedDataContext";
 export * from "./token/domain/TokenContextLoader";
 export * from "./trusted-name/domain/TrustedNameContextLoader";
+export * from "./web3-check/domain/Web3CheckContextLoader";
+export * from "./web3-check/domain/web3CheckTypes";
