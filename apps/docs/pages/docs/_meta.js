@@ -1,8 +1,11 @@
 export default {
-  docs: "Ledger Device Management Kits",
-  explanations: "Explanations",
+  "---": {
+    title: "Ledger Device Management Kits",
+    type: "separator",
+  },
   beginners: "Beginner's guide",
   integration_walkthroughs: "Integration Walkthrough",
-  migrations: "Migrations",
   references: "References (TSDoc)",
+  explanations: "Explanations",
+  ledgerjs: "LedgerJS: Soon deprecated",
 };
