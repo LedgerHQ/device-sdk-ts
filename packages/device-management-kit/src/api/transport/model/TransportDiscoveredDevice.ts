@@ -20,5 +20,4 @@ export type TransportDiscoveredDevice = {
   transport: TransportIdentifier;
   name?: string;
   available?: boolean;
-  isNew?: boolean;
 };

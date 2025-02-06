@@ -28,10 +28,9 @@ import {
   from,
   merge,
   Observable,
+  retry,
   type Subscriber,
   switchMap,
-  take,
-  timer,
 } from "rxjs";
 
 import { RNBleDeviceConnection } from "@api/transport/RNBleDeviceConnection";
@@ -70,6 +69,16 @@ export class RNBleTransport implements Transport {
     this.requestPermission();
   }
 
+  /**
+   * Starts the discovery process to find Bluetooth devices that match specific criteria.
+   *
+   * This method clears the internal device cache and requests necessary permissions
+   * before initiating the discovery of both known and new devices. If the Bluetooth
+   * Low Energy (BLE) feature is not supported, an error is thrown.
+   *
+   * @return {Observable<TransportDiscoveredDevice>} An observable emitting discovered devices
+   * that match the specified Bluetooth services.
+   */
   startDiscovering(): Observable<TransportDiscoveredDevice> {
     const ledgerUuids = this._deviceModelDataSource.getBluetoothServices();
     this._internalDevicesById.clear();
@@ -86,10 +95,23 @@ export class RNBleTransport implements Transport {
     );
   }
 
+  /**
+   * Stops the device scanning operation currently in progress.
+   *
+   * @return {Promise<void>} A promise that resolves once the device scanning has been successfully stopped.
+   */
   async stopDiscovering(): Promise<void> {
     await this._manager.stopDeviceScan();
   }
 
+  /**
+   * Establishes a connection to a device and configures the necessary parameters for communication.
+   *
+   * @param {Object} params - An object containing parameters required for the connection.
+   * @param {DeviceId} params.deviceId - The unique identifier of the device to connect to.
+   * @param {DisconnectHandler} params.onDisconnect - A callback function to handle device disconnection.
+   * @returns {Promise<Either<ConnectError, TransportConnectedDevice>>} A promise resolving to either a connection error or a successfully connected device.
+   */
   async connect(params: {
     deviceId: DeviceId;
     onDisconnect: DisconnectHandler;
@@ -139,11 +161,11 @@ export class RNBleTransport implements Transport {
         );
         await deviceConnection.setup();
         this._deviceConnectionsById.set(internalDevice.id, deviceConnection);
-        internalDevice.disconnectionSubscription.remove();
         internalDevice.disconnectionSubscription =
-          this._manager.onDeviceDisconnected(internalDevice.id, (...args) =>
-            this._handleDeviceDisconnected(...args),
-          );
+          this._manager.onDeviceDisconnected(internalDevice.id, (...args) => {
+            this._handleDeviceDisconnected(...args, params.onDisconnect);
+            // params.onDisconnect(internalDevice.id);
+          });
         internalDevice.lastDiscoveredTimeStamp = Maybe.zero();
         return new TransportConnectedDevice({
           id: internalDevice.id,
@@ -156,12 +178,16 @@ export class RNBleTransport implements Transport {
     ).run();
   }
 
+  /**
+   * Terminates the connection with the connected device and cleans up related resources.
+   *
+   * @param {Object} _params - The parameters for disconnecting the device.
+   * @param {TransportConnectedDevice} _params.connectedDevice - The connected device to be disconnected.
+   * @return {Promise<Either<DmkError, void>>} A promise resolving to either a success (void) or a failure (DmkError) value.
+   */
   async disconnect(_params: {
     connectedDevice: TransportConnectedDevice;
   }): Promise<Either<DmkError, void>> {
-    // if (internalDevice.disconnectionSubscription) {
-    //   internalDevice.disconnectionSubscription.remove();
-    // }
     await this._manager.cancelDeviceConnection(_params.connectedDevice.id);
     this._deviceConnectionsById.delete(_params.connectedDevice.id);
     this._internalDevicesById.delete(_params.connectedDevice.id);
@@ -179,10 +205,25 @@ export class RNBleTransport implements Transport {
     });
   }
 
+  /**
+   * Listens to known devices and emits updates when new devices are discovered or when properties of existing devices are updated.
+   *
+   * @return {Observable<TransportDiscoveredDevice[]>} An observable stream of discovered devices, containing device information as an array of TransportDiscoveredDevice objects.
+   */
   listenToKnownDevices(): Observable<TransportDiscoveredDevice[]> {
     return from([]);
   }
 
+  /**
+   * Determines if the feature or permission is supported.
+   *
+   * This method evaluates the current state of the `_isSupported` property to determine
+   * whether the relevant feature is supported or throws an error if its state has
+   * not been initialized properly.
+   *
+   * @return {boolean} Returns `true` if the feature is supported, otherwise `false`.
+   * Throws an error if the `_isSupported` property has not been initialized.
+   */
   isSupported(): boolean {
     return this._isSupported.caseOf({
       Just: (isSupported) => isSupported,
@@ -192,10 +233,23 @@ export class RNBleTransport implements Transport {
     });
   }
 
+  /**
+   * Retrieves the transport identifier associated with the object.
+   *
+   * @return {TransportIdentifier} The transport identifier.
+   */
   getIdentifier(): TransportIdentifier {
     return this.identifier;
   }
 
+  /**
+   * Requests the necessary permissions based on the operating system.
+   * For iOS, it automatically sets the permissions as granted.
+   * For Android, it checks and requests location, Bluetooth scan, and Bluetooth connect permissions, depending on the API level.
+   * If permissions are granted, updates the internal support state and logs the result.
+   *
+   * @return {Promise<boolean>} A promise that resolves to true if the required permissions are granted, otherwise false.
+   */
   async requestPermission(): Promise<boolean> {
     if (Platform.OS === "ios") {
       this._isSupported = Maybe.of(true);
@@ -247,6 +301,13 @@ export class RNBleTransport implements Transport {
     return false;
   }
 
+  /**
+   * Retrieves a discovered device and its BLE device information, if available, from the provided input.
+   *
+   * @param {Device} rnDevice - The Bluetooth device to analyze for discovery.
+   * @param {string[]} ledgerUuids - A list of UUIDs associated with the target Ledger devices.
+   * @return {Maybe<{ bleDeviceInfos: BleDeviceInfos; discoveredDevice: TransportDiscoveredDevice }>} A Maybe object containing the discovered device and its BLE information, or Nothing if the device or information cannot be determined.
+   */
   private _getDiscoveredDeviceFrom(
     rnDevice: Device,
     ledgerUuids: string[],
@@ -283,6 +344,15 @@ export class RNBleTransport implements Transport {
     }, Nothing);
   }
 
+  /**
+   * Handles the processing of devices that have been determined to be "lost" by iterating
+   * through a collection of internal devices, identifying lost devices, updating their status,
+   * and notifying a subscriber about the change.
+   *
+   * @param {Subscriber<TransportDiscoveredDevice>} subscriber - The observer that will be notified
+   *     when a device is marked as lost, including updated device information with its availability set to false.
+   * @return {void} This method does not return a value.
+   */
   private _handleLostDiscoveredDevices(
     subscriber: Subscriber<TransportDiscoveredDevice>,
   ) {
@@ -297,6 +367,14 @@ export class RNBleTransport implements Transport {
     });
   }
 
+  /**
+   * Emits a discovered device to the provided subscriber and manages internal state
+   * for the discovered device, including handling its availability status and disconnection events.
+   *
+   * @param {Subscriber<TransportDiscoveredDevice>} subscriber The subscriber to emit the discovered device to.
+   * @param {BleDeviceInfos} bleDeviceInfos The BLE device information associated with the discovered device.
+   * @param {TransportDiscoveredDevice} discoveredDevice The newly discovered device to be emitted.
+   * @return {void} Does*/
   private _emitDiscoveredDevice(
     subscriber: Subscriber<TransportDiscoveredDevice>,
     bleDeviceInfos: BleDeviceInfos,
@@ -322,6 +400,12 @@ export class RNBleTransport implements Transport {
     });
   }
 
+  /**
+   * Discovers new devices by scanning for BLE devices and filtering them based on the provided ledger UUIDs.
+   *
+   * @param {string[]} ledgerUuids - An array of UUIDs used to identify relevant ledger devices.
+   * @return {Observable<TransportDiscoveredDevice>} An observable that emits discovered devices matching the provided UUIDs.
+   */
   private _discoverNewDevices(
     ledgerUuids: string[],
   ): Observable<TransportDiscoveredDevice> {
@@ -347,6 +431,12 @@ export class RNBleTransport implements Transport {
     });
   }
 
+  /**
+   * Discovers and emits known ledger devices based on the provided UUIDs.
+   *
+   * @param {string[]} ledgerUuids - An array of UUIDs representing the target ledger devices to discover.
+   * @return {Observable<TransportDiscoveredDevice>} An Observable that emits discovered devices matching the provided UUIDs.
+   */
   private _discoverKnownDevices(
     ledgerUuids: string[],
   ): Observable<TransportDiscoveredDevice> {
@@ -370,9 +460,20 @@ export class RNBleTransport implements Transport {
     );
   }
 
+  /**
+   * Handles the event when a Bluetooth device gets disconnected. This method attempts
+   * to reconnect to the device, retries a certain number of times on failure, and
+   * invokes a callback if the reconnection does not succeed.
+   *
+   * @param {BleError | null} error - The error object representing the reason for the disconnection, or null if no error occurred.
+   * @param {Device | null} device - The Bluetooth device that was disconnected, or null if no device is provided.
+   * @param {DisconnectHandler} onDisconnect - A callback function to be called if the reconnection attempts fail completely.
+   * @return {void}
+   */
   private _handleDeviceDisconnected(
     error: BleError | null,
     device: Device | null,
+    onDisconnect: DisconnectHandler,
   ) {
     if (error) {
       this._logger.error("device disconnected error", {
@@ -384,39 +485,63 @@ export class RNBleTransport implements Transport {
       return;
     }
     this._logger.info("new disconnected handler");
-    let finalDevice = device;
-    return timer(0, 500)
-      .pipe(take(4))
-      .subscribe({
-        next: async (count) => {
+    from([0])
+      .pipe(
+        switchMap(async (count) => {
           this._logger.info("new call subscriber next");
-          finalDevice = device;
           try {
-            await this._manager.connectToDevice(finalDevice.id);
-            await this._manager.discoverAllServicesAndCharacteristicsForDevice(
-              finalDevice.id,
-            );
-            this._logger.debug("try reconnecting", {
-              data: { count, finalDevice: await finalDevice.isConnected() },
-            });
-            // const reconnectResult =
-            //   await this._handleDeviceReconnected(finalDevice);
+            await device.connect();
+            await device.discoverAllServicesAndCharacteristics();
+            this._handleDeviceReconnected(device);
           } catch (e) {
             this._logger.error("Reconnecting failed", { data: { e } });
+            if (count === 4) {
+              onDisconnect(device.id);
+            }
           }
-        },
-        complete: async () => {
-          if (!(await finalDevice.isConnected())) {
-            this._deviceConnectionsById.delete(device.id);
-            this._internalDevicesById.delete(device.id);
-          }
-        },
-        error: (e) => {
-          this._logger.error("reconnection error::", { data: { error: e } });
-          this._deviceConnectionsById.delete(device.id);
-          this._internalDevicesById.delete(device.id);
-        },
+          return device;
+        }),
+        retry({
+          count: 4,
+          delay: 500,
+        }),
+      )
+      .subscribe({
+        next: (value) => this._logger.debug("value", { data: { value } }),
       });
+  }
+
+  /**
+   * Handles the logic for when a device is reconnected.
+   * This includes setting up the onWrite and monitoring behavior for the reconnected device.
+   *
+   * @param {Device} device - The device that has reconnected.
+   * @return {void} This method does not return a value.
+   */
+  private _handleDeviceReconnected(device: Device) {
+    const deviceConnection = this._deviceConnectionsById.get(
+      device.id,
+    ) as RNBleDeviceConnection;
+    const internalDevice = this._internalDevicesById.get(
+      device.id,
+    ) as RNBleInternalDevice;
+    deviceConnection.onWrite = (value) =>
+      this._manager.writeCharacteristicWithoutResponseForDevice(
+        device.id,
+        internalDevice.bleDeviceInfos.serviceUuid,
+        internalDevice.bleDeviceInfos.writeCmdUuid,
+        value,
+      );
+    this._manager.monitorCharacteristicForDevice(
+      device.id,
+      internalDevice.bleDeviceInfos.serviceUuid,
+      internalDevice.bleDeviceInfos.notifyUuid,
+      (error, characteristic) => {
+        if (!error && characteristic) {
+          deviceConnection.onMonitor(characteristic);
+        }
+      },
+    );
   }
 }
 
