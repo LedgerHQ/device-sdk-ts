@@ -14,7 +14,7 @@ import { Base64 } from "js-base64";
 import { type Either, Left, Maybe, Nothing, Right } from "purify-ts";
 
 type RNBleDeviceConnectionConstructorArgs = {
-  onWrite: (value: string) => void;
+  onWrite: (value: string) => Promise<Characteristic>;
   apduSenderFactory: ApduSenderServiceFactory;
   apduReceiverFactory: ApduReceiverServiceFactory;
 };
@@ -28,7 +28,7 @@ export class RNBleDeviceConnection implements DeviceConnection {
   private _sendApduPromiseResolver: Maybe<
     (value: Either<DmkError, ApduResponse>) => void
   >;
-  private _onWrite: (value: string) => void;
+  private _onWrite: (value: string) => Promise<Characteristic>;
 
   constructor(
     {
@@ -62,14 +62,15 @@ export class RNBleDeviceConnection implements DeviceConnection {
 
     response.map((maybeApduResponse) => {
       maybeApduResponse.map((apduResponse) => {
-        this._logger.debug("Received APDU Response", {
-          data: { response: apduResponse },
-        });
         this._sendApduPromiseResolver.map((resolve) =>
           resolve(Right(apduResponse)),
         );
       });
     });
+  }
+
+  set onWrite(onWrite: (value: string) => Promise<Characteristic>) {
+    this._onWrite = onWrite;
   }
 
   onMonitor(characteristic: Characteristic) {
