@@ -35,14 +35,36 @@
     "test:coverage": "vitest run --coverage --passWithNoTests"
   },
   "dependencies": {
-    "inversify": "^6.2.2",
-    "reflect-metadata": "^0.2.2"
+    "styled-components": "^5.3.11"
   },
   "devDependencies": {
+    "@ledgerhq/device-management-kit": "workspace:*",
+    "@ledgerhq/native-ui": "^0.27.1",
+    "@ledgerhq/react-ui": "^0.17.0",
     "@ledgerhq/esbuild-tools": "workspace:*",
     "@ledgerhq/eslint-config-dsdk": "workspace:*",
     "@ledgerhq/prettier-config-dsdk": "workspace:*",
     "@ledgerhq/tsconfig-dsdk": "workspace:*",
-    "@ledgerhq/vitest-config-dmk": "workspace:*"
+    "@ledgerhq/vitest-config-dmk": "workspace:*",
+    "@types/react": "^18.3.12",
+    "@types/styled-components": "^5.1.25"
+  },
+  "peerDependencies": {
+    "@ledgerhq/device-management-kit": "workspace:*",
+    "@ledgerhq/native-ui": "^0.27.1",
+    "@ledgerhq/react-ui": "^0.17.0",
+    "react": "18.3.1",
+    "react-native": "0.76.6"
+  },
+  "peerDependenciesMeta": {
+    "@ledgerhq/native-ui": {
+      "optional": true
+    },
+    "@ledgerhq/react-ui": {
+      "optional": true
+    },
+    "react-native": {
+      "optional": true
+    }
   }
 }

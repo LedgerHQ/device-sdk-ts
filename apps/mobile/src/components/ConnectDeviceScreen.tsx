@@ -1,11 +1,5 @@
 import React, { useCallback, useEffect } from "react";
-import {
-  ActivityIndicator,
-  FlatList,
-  FlatListProps,
-  Text,
-  View,
-} from "react-native";
+import { ActivityIndicator, FlatList, FlatListProps, View } from "react-native";
 import { useDmk } from "_providers/dmkProvider.tsx";
 import { DiscoveredDevice } from "@ledgerhq/device-management-kit";
 import styled, { DefaultTheme } from "styled-components/native";
@@ -20,6 +14,19 @@ const Container = styled.SafeAreaView`
     flex: 1;
     background-color: ${({ theme }: ThemeProps) =>
       theme.colors.background.main};}
+`;
+
+const DeviceListHeader = styled(Flex).attrs({
+  flex: 1,
+  justifyContent: "center",
+  alignItems: "center",
+  flexDirection: "row",
+})`
+  padding: 10px;
+`;
+
+const DeviceListSeparator = styled.View`
+  height: 10px;
 `;
 
 const DeviceList = styled(
@@ -59,16 +66,15 @@ export const ConnectDeviceScreen: React.FC = () => {
     };
   }, [dmk]);
 
-  const onStop = () => {
+  const onStopScan = () => {
     setIsScanningDevices(false);
     dmk.stopDiscovering();
   };
 
   const onConnect = async (device: DiscoveredDevice) => {
     try {
+      onStopScan();
       const id = await dmk.connect({ device });
-      dmk.stopDiscovering();
-      setIsScanningDevices(false);
       setSessionId(id);
     } catch (error) {
       console.error(error);
@@ -82,47 +88,22 @@ export const ConnectDeviceScreen: React.FC = () => {
         keyExtractor={item => item.id}
         extraData={{ isScanningDevices }}
         ListHeaderComponent={
-          <View style={{ padding: 10 }}>
-            {!sessionId ? (
-              <>
-                <View
-                  style={{
-                    flex: 1,
-                    flexDirection: "row",
-                    justifyContent: "center",
-                    alignItems: "center",
-                    padding: 10,
-                  }}>
-                  {!isScanningDevices ? (
-                    <Button type="color" onPress={onScan} title="Start scan">
-                      Start scan
-                    </Button>
-                  ) : (
-                    <Button type="color" onPress={onStop}>
-                      Stop scan
-                    </Button>
-                  )}
-                </View>
-              </>
+          <DeviceListHeader>
+            {!isScanningDevices ? (
+              <Button type="color" onPress={onScan} title="Start scan">
+                Start scan
+              </Button>
             ) : (
-              <>
-                <Text>Connected to device</Text>
-                <Button
-                  type="color"
-                  onPress={async () => {
-                    await dmk.disconnect({ sessionId });
-                    setSessionId(null);
-                  }}>
-                  Disconnect
-                </Button>
-              </>
+              <Button type="color" onPress={onStopScan}>
+                Stop scan
+              </Button>
             )}
-          </View>
+          </DeviceListHeader>
         }
         ListFooterComponent={
           isScanningDevices ? <ActivityIndicator animating /> : null
         }
-        ItemSeparatorComponent={() => <View style={{ height: 10 }} />}
+        ItemSeparatorComponent={DeviceListSeparator}
         renderItem={({ item }) => (
           <DiscoveredDeviceItem
             device={item}
