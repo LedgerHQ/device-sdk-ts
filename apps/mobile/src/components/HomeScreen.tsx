@@ -4,7 +4,7 @@ import { Image, Platform } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import {
   RootStackParamList,
-  Screens,
+  RootScreens,
 } from "_navigators/RootNavigator.constants";
 import { StackNavigationProp } from "@react-navigation/stack";
 import styled from "styled-components";
@@ -50,7 +50,7 @@ export const HomeScreen = () => {
         <CtaButton
           size="medium"
           type="color"
-          onPress={() => navigate(Screens.ConnectDevice)}>
+          onPress={() => navigate(RootScreens.ConnectDevice)}>
           Select a BLE device
         </CtaButton>
       </Flex>

@@ -8,9 +8,11 @@
       "_hooks/*": ["./src/hooks/*"],
       "_navigators/*": ["./src/navigators/*"],
       "_reducers/*": ["./src/reducers/*"],
-      "_services/*": ["./src/services/*"]
+      "_services/*": ["./src/services/*"],
+      "_common/*": ["./src/common/*"]
     },
     "experimentalDecorators": true,
-    "resolveJsonModule": true
+    "resolveJsonModule": true,
+    "moduleSuffixes": [".ios", ".android", ""]
   }
 }
