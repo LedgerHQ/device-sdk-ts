@@ -29,7 +29,7 @@ import {
   OpenAppDeviceAction,
 } from "@ledgerhq/device-management-kit";
 import { DeviceActionProps } from "_common/types";
-import { BaseInput, Flex } from "@ledgerhq/native-ui";
+import { Flex, LegendInput } from "@ledgerhq/native-ui";
 
 const UNLOCK_TIMEOUT = 60 * 1000; // 1 minute
 
@@ -70,21 +70,18 @@ export const getDeviceActions = (
     },
     deviceModelId,
     FormComponent: ({ values, setValue }) => (
-      <Flex flex={1}>
-        <BaseInput
+      <Flex>
+        <LegendInput
+          legend="App name"
           value={values.appName}
           onChange={appName => setValue("appName", appName)}
         />
-        <BaseInput
+        <LegendInput
+          legend="Compatible app names"
           value={values.compatibleAppNames}
           onChange={compatibleAppNames =>
             setValue("compatibleAppNames", compatibleAppNames)
           }
-        />
-        <BaseInput
-          keyboardType="numeric"
-          value={values.unlockTimeout as number}
-          onChange={unlockTimeout => setValue("unlockTimeout", unlockTimeout)}
         />
       </Flex>
     ),
@@ -112,15 +109,7 @@ export const getDeviceActions = (
     },
     initialValues: { unlockTimeout: UNLOCK_TIMEOUT },
     deviceModelId,
-    FormComponent: ({ values, setValue }) => (
-      <Flex flex={1}>
-        <BaseInput
-          keyboardType="numeric"
-          value={values.unlockTimeout as number}
-          onChange={unlockTimeout => setValue("unlockTimeout", unlockTimeout)}
-        />
-      </Flex>
-    ),
+    FormComponent: () => null,
   } satisfies DeviceActionProps<
     GetDeviceStatusDAOutput,
     GetDeviceStatusDAInput,
@@ -143,15 +132,7 @@ export const getDeviceActions = (
     },
     initialValues: { unlockTimeout: UNLOCK_TIMEOUT },
     deviceModelId,
-    FormComponent: ({ values, setValue }) => (
-      <Flex flex={1}>
-        <BaseInput
-          keyboardType="numeric"
-          value={values.unlockTimeout as number}
-          onChange={unlockTimeout => setValue("unlockTimeout", unlockTimeout)}
-        />
-      </Flex>
-    ),
+    FormComponent: () => null,
   } satisfies DeviceActionProps<
     GoToDashboardDAOutput,
     GoToDashboardDAInput,
@@ -174,15 +155,7 @@ export const getDeviceActions = (
     },
     initialValues: { unlockTimeout: UNLOCK_TIMEOUT },
     deviceModelId,
-    FormComponent: ({ values, setValue }) => (
-      <Flex flex={1}>
-        <BaseInput
-          keyboardType="numeric"
-          value={values.unlockTimeout as number}
-          onChange={unlockTimeout => setValue("unlockTimeout", unlockTimeout)}
-        />
-      </Flex>
-    ),
+    FormComponent: () => null,
   } satisfies DeviceActionProps<
     ListAppsDAOutput,
     ListAppsDAInput,
@@ -206,15 +179,7 @@ export const getDeviceActions = (
     },
     initialValues: { unlockTimeout: UNLOCK_TIMEOUT },
     deviceModelId,
-    FormComponent: ({ values, setValue }) => (
-      <Flex flex={1}>
-        <BaseInput
-          keyboardType="numeric"
-          value={values.unlockTimeout as number}
-          onChange={unlockTimeout => setValue("unlockTimeout", unlockTimeout)}
-        />
-      </Flex>
-    ),
+    FormComponent: () => null,
   } satisfies DeviceActionProps<
     ListAppsWithMetadataDAOutput,
     ListAppsWithMetadataDAInput,

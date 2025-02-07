@@ -37,13 +37,15 @@ export const ConnectDeviceScreen: React.FC = () => {
     Record<string, DiscoveredDevice>
   >({});
   const [isScanningDevices, setIsScanningDevices] = React.useState(false);
-  const [sessionId, setSessionId] = React.useState<string | null>(null);
-  const { dispatch } = useDeviceSessionsContext();
+  const {
+    state: { selectedId: deviceSessionId },
+    dispatch,
+  } = useDeviceSessionsContext();
   const { navigate } = useNavigation();
 
   useEffect(() => {
     setDevices({});
-  }, [sessionId]);
+  }, [deviceSessionId]);
 
   const onScan = useCallback(() => {
     const obs = dmk.startDiscovering({});
@@ -79,7 +81,9 @@ export const ConnectDeviceScreen: React.FC = () => {
           connectedDevice: dmk.getConnectedDevice({ sessionId: id }),
         },
       });
-      navigate(RootScreens.Command, { screen: CommandsScreens.CommandTester });
+      navigate(RootScreens.Command, {
+        screen: CommandsScreens.DeviceActionTester,
+      });
     } catch (error) {
       console.error(error);
     }
@@ -93,7 +97,7 @@ export const ConnectDeviceScreen: React.FC = () => {
         extraData={{ isScanningDevices }}
         ListHeaderComponent={
           <View style={{ padding: 10 }}>
-            {!sessionId ? (
+            {!deviceSessionId ? (
               <>
                 <View
                   style={{
@@ -120,8 +124,11 @@ export const ConnectDeviceScreen: React.FC = () => {
                 <Button
                   type="color"
                   onPress={async () => {
-                    await dmk.disconnect({ sessionId });
-                    setSessionId(null);
+                    await dmk.disconnect({ sessionId: deviceSessionId });
+                    dispatch({
+                      type: "remove_session",
+                      payload: { sessionId: deviceSessionId },
+                    });
                   }}>
                   Disconnect
                 </Button>

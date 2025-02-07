@@ -3,6 +3,8 @@ import { Icons, InfiniteLoader, Popin, Text } from "@ledgerhq/native-ui";
 import { useForm } from "_hooks/useForm";
 import { View } from "react-native";
 import { CommandProps } from "_common/types.ts";
+import { inspect } from "util";
+import { CommandResultStatus } from "@ledgerhq/device-management-kit";
 
 type SendCommandModalProps = {
   command?: CommandProps<any, any, any>;
@@ -15,25 +17,33 @@ export const SendCommandModal: React.FC<SendCommandModalProps> = ({
   onClose,
   isOpen,
 }) => {
-  const { formValues, setFormValue } = useForm(command?.initialValues);
+  const { formValues, setFormValue } = useForm(command?.initialValues || {});
   const [loading, setLoading] = useState(false);
   const [output, setOutput] = useState("");
 
   useEffect(() => {
     setOutput("");
+  }, [isOpen]);
+
+  useEffect(() => {
     if (command && command.initialValues) {
       Object.keys(command.initialValues).forEach(key => {
         setFormValue(key, command.initialValues[key]);
       });
     }
   }, [command, setFormValue]);
+
   const onSend = useCallback(async () => {
-    setOutput("");
     if (command) {
+      setOutput("");
       setLoading(true);
       const response = await command.sendCommand(formValues);
-      setOutput(JSON.stringify(response));
       setLoading(false);
+      if (response.status === CommandResultStatus.Error) {
+        setOutput(inspect(response, { depth: null })); // Same output as console.log plus it works as well for objects with many nested properties.
+      } else {
+        setOutput(JSON.stringify(response, null, 2));
+      }
     }
   }, [command, formValues]);
 
