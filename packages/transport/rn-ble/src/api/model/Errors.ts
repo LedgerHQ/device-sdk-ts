@@ -12,3 +12,15 @@ export class BleDeviceGattServerError extends GeneralDmkError {
     super(err);
   }
 }
+export class DeviceConnectionNotFound extends GeneralDmkError {
+  override readonly _tag = "DeviceConnectionNotFound";
+  constructor(readonly err?: unknown) {
+    super(err);
+  }
+}
+export class InternalDeviceNotFound extends GeneralDmkError {
+  override readonly _tag = "InternalDeviceNotFound";
+  constructor(readonly err?: unknown) {
+    super(err);
+  }
+}
