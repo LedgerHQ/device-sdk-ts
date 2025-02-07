@@ -8,13 +8,14 @@ import {
 } from "react-native";
 import { useDmk } from "_providers/dmkProvider.tsx";
 import { DiscoveredDevice } from "@ledgerhq/device-management-kit";
-import styled, { DefaultTheme } from "styled-components/native";
+import styled from "styled-components/native";
 import { Button } from "@ledgerhq/native-ui";
 import { DiscoveredDeviceItem } from "./DiscoveredDeviceItem";
-
-type ThemeProps = {
-  theme: DefaultTheme;
-};
+import { useDeviceSessionsContext } from "_providers/deviceSessionsProvider.tsx";
+import { useNavigation } from "@react-navigation/native";
+import { ThemeProps } from "_common/types.ts";
+import { CommandsScreens } from "_navigators/CommandNavigator.constants.ts";
+import { RootScreens } from "_navigators/RootNavigator.constants.ts";
 
 const Container = styled.SafeAreaView`
     flex: 1;
@@ -37,6 +38,8 @@ export const ConnectDeviceScreen: React.FC = () => {
   >({});
   const [isScanningDevices, setIsScanningDevices] = React.useState(false);
   const [sessionId, setSessionId] = React.useState<string | null>(null);
+  const { dispatch } = useDeviceSessionsContext();
+  const { navigate } = useNavigation();
 
   useEffect(() => {
     setDevices({});
@@ -69,7 +72,14 @@ export const ConnectDeviceScreen: React.FC = () => {
       const id = await dmk.connect({ device });
       dmk.stopDiscovering();
       setIsScanningDevices(false);
-      setSessionId(id);
+      dispatch({
+        type: "add_session",
+        payload: {
+          sessionId: id,
+          connectedDevice: dmk.getConnectedDevice({ sessionId: id }),
+        },
+      });
+      navigate(RootScreens.Command, { screen: CommandsScreens.CommandTester });
     } catch (error) {
       console.error(error);
     }

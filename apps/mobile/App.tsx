@@ -7,12 +7,12 @@
 
 import React from "react";
 import { StatusBar, useColorScheme } from "react-native";
-import { NavigationContainer } from "@react-navigation/native";
 import { StyleProvider } from "@ledgerhq/native-ui";
 
 import { RootNavigator } from "_navigators/RootNavigator";
 import { DmkProvider } from "_providers/dmkProvider";
 import styled from "styled-components/native";
+import { DeviceSessionsProvider } from "_providers/deviceSessionsProvider.tsx";
 
 const Container = styled.SafeAreaView`
   flex: 1;
@@ -25,11 +25,11 @@ function App(): React.JSX.Element {
     <Container>
       <StatusBar barStyle={isDarkMode ? "light-content" : "dark-content"} />
       <StyleProvider selectedPalette={isDarkMode ? "dark" : "light"}>
-        <NavigationContainer>
-          <DmkProvider>
+        <DmkProvider>
+          <DeviceSessionsProvider>
             <RootNavigator />
-          </DmkProvider>
-        </NavigationContainer>
+          </DeviceSessionsProvider>
+        </DmkProvider>
       </StyleProvider>
     </Container>
   );
