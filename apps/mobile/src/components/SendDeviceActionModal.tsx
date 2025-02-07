@@ -4,6 +4,8 @@ import { useForm } from "_hooks/useForm";
 import { View } from "react-native";
 import { DeviceActionProps } from "_common/types.ts";
 import { lastValueFrom } from "rxjs";
+import { inspect } from "util";
+import { DeviceActionStatus } from "@ledgerhq/device-management-kit";
 
 type SendDeviceActionModalProps = {
   deviceAction?: DeviceActionProps<any, any, any, any>;
@@ -24,6 +26,9 @@ export const SendDeviceActionModal: React.FC<SendDeviceActionModalProps> = ({
 
   useEffect(() => {
     setOutput("");
+  }, [isOpen]);
+
+  useEffect(() => {
     if (deviceAction && deviceAction.initialValues) {
       Object.keys(deviceAction.initialValues).forEach(key => {
         setFormValue(key, deviceAction.initialValues[key]);
@@ -31,12 +36,16 @@ export const SendDeviceActionModal: React.FC<SendDeviceActionModalProps> = ({
     }
   }, [deviceAction, setFormValue]);
   const onSend = useCallback(async () => {
-    setOutput("");
     if (deviceAction) {
+      setOutput("");
       setLoading(true);
       const { observable } = deviceAction.executeDeviceAction(formValues);
       const response = await lastValueFrom(observable);
-      setOutput(JSON.stringify(response));
+      if (response.status === DeviceActionStatus.Error) {
+        setOutput(inspect(response, { depth: null }));
+      } else {
+        setOutput(JSON.stringify(response, null, 2));
+      }
       setLoading(false);
     }
   }, [deviceAction, formValues]);
@@ -52,7 +61,7 @@ export const SendDeviceActionModal: React.FC<SendDeviceActionModalProps> = ({
       onLeftButtonPress={onClose}
       leftButtonText="Cancel"
       onRightButtonPress={onSend}
-      rightButtonText="Send device action">
+      rightButtonText="Send">
       {loading && <InfiniteLoader />}
       {deviceAction && !loading && (
         <deviceAction.FormComponent

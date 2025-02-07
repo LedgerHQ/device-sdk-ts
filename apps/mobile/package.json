@@ -28,10 +28,11 @@
     "react-native-pager-view": "^6.7.0",
     "react-native-reanimated": "3.16.1",
     "react-native-safe-area-context": "^5.1.0",
-    "react-native-screens": "^4.5.0",
+    "react-native-screens": "4.4.0",
     "react-native-svg": "^15.11.1",
     "rxjs": "^7.8.1",
-    "styled-components": "^5.3.3"
+    "styled-components": "^5.3.3",
+    "util": "^0.12.5"
   },
   "devDependencies": {
     "@babel/core": "^7.25.2",

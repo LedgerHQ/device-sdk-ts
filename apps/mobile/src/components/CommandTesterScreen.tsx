@@ -45,6 +45,10 @@ export const CommandTesterScreen: React.FC = () => {
     [commands],
   );
   const [isCommandModalVisible, setCommandModalVisibility] = useState(false);
+  const onClose = useCallback(() => {
+    setCommandModalVisibility(false);
+    selectCommand(undefined);
+  }, []);
 
   return (
     <Container>
@@ -57,7 +61,7 @@ export const CommandTesterScreen: React.FC = () => {
       </SelectableList>
       <SendCommandModal
         command={selectedCommand}
-        onClose={() => setCommandModalVisibility(false)}
+        onClose={onClose}
         isOpen={isCommandModalVisible}
       />
     </Container>
