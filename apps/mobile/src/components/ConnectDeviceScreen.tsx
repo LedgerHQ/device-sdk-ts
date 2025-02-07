@@ -79,7 +79,9 @@ export const ConnectDeviceScreen: React.FC = () => {
           connectedDevice: dmk.getConnectedDevice({ sessionId: id }),
         },
       });
-      navigate(RootScreens.Command, { screen: CommandsScreens.CommandTester });
+      navigate(RootScreens.Command, {
+        screen: CommandsScreens.DeviceActionTester,
+      });
     } catch (error) {
       console.error(error);
     }
