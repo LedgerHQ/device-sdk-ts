@@ -5,7 +5,17 @@ import { DeviceActionTesterScreen } from "_components/DeviceActionTesterScreen.t
 
 export const CommandNavigator = createBottomTabNavigator({
   screens: {
-    [CommandsScreens.CommandTester]: CommandTesterScreen,
-    [CommandsScreens.DeviceActionTester]: DeviceActionTesterScreen,
+    [CommandsScreens.DeviceActionTester]: {
+      screen: DeviceActionTesterScreen,
+      options: {
+        tabBarLabel: "Device actions",
+      },
+    },
+    [CommandsScreens.CommandTester]: {
+      screen: CommandTesterScreen,
+      options: {
+        tabBarLabel: "Commands",
+      },
+    },
   },
 });

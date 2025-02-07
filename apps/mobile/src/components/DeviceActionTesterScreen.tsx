@@ -51,6 +51,10 @@ export const DeviceActionTesterScreen = () => {
   );
   const [isDeviceActionModalVisible, setDeviceActionModalVisibility] =
     useState(false);
+  const onClose = useCallback(() => {
+    setDeviceActionModalVisibility(false);
+    selectDeviceAction(undefined);
+  }, []);
 
   return (
     <Container>
@@ -65,7 +69,7 @@ export const DeviceActionTesterScreen = () => {
       </SelectableList>
       <SendDeviceActionModal
         deviceAction={selectedDeviceAction}
-        onClose={() => setDeviceActionModalVisibility(false)}
+        onClose={onClose}
         isOpen={isDeviceActionModalVisible}
       />
     </Container>
