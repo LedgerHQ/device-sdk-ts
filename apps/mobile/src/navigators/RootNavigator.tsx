@@ -1,22 +1,19 @@
-import React from "react";
-import { Screens } from "./RootNavigator.constants";
-import { createStackNavigator } from "@react-navigation/stack";
 import { HomeScreen } from "_components/HomeScreen";
 import { ConnectDeviceScreen } from "_components/ConnectDeviceScreen.tsx";
+import { RootScreens } from "_navigators/RootNavigator.constants.ts";
+import { CommandNavigator } from "./CommandNavigator";
+import { createNativeStackNavigator } from "@react-navigation/native-stack";
+import { createStaticNavigation } from "@react-navigation/native";
 
-const RootStackNavigator = createStackNavigator();
+const RootNavigationStack = createNativeStackNavigator({
+  screens: {
+    [RootScreens.Home]: HomeScreen,
+    [RootScreens.ConnectDevice]: ConnectDeviceScreen,
+    [RootScreens.Command]: CommandNavigator,
+  },
+  screenOptions: {
+    headerShown: false,
+  },
+});
 
-export const RootNavigator = () => (
-  <RootStackNavigator.Navigator>
-    <RootStackNavigator.Screen
-      name={Screens.Home}
-      component={HomeScreen}
-      options={{ header: () => null }}
-    />
-    <RootStackNavigator.Screen
-      name={Screens.ConnectDevice}
-      component={ConnectDeviceScreen}
-      options={{ header: () => null }}
-    />
-  </RootStackNavigator.Navigator>
-);
+export const RootNavigator = createStaticNavigation(RootNavigationStack);
