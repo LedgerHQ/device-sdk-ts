@@ -33,6 +33,10 @@ import {
   switchMap,
 } from "rxjs";
 
+import {
+  DeviceConnectionNotFound,
+  InternalDeviceNotFound,
+} from "@api/model/Errors";
 import { RNBleDeviceConnection } from "@api/transport/RNBleDeviceConnection";
 
 type RNBleInternalDevice = {
@@ -492,7 +496,7 @@ export class RNBleTransport implements Transport {
           try {
             await device.connect();
             await device.discoverAllServicesAndCharacteristics();
-            this._handleDeviceReconnected(device);
+            await this._handleDeviceReconnected(device);
           } catch (e) {
             this._logger.error("Reconnecting failed", { data: { e } });
             if (count === 4) {
@@ -512,36 +516,47 @@ export class RNBleTransport implements Transport {
   }
 
   /**
-   * Handles the logic for when a device is reconnected.
-   * This includes setting up the onWrite and monitoring behavior for the reconnected device.
+   * Handles the reconnection of a device. Configures the device connection and its corresponding
+   * internal device upon reconnection, including updating the connection state, registering
+   * callbacks for write and monitor operations, and initiating a reconnect operation.
    *
-   * @param {Device} device - The device that has reconnected.
-   * @return {void} This method does not return a value.
+   * @param {Device} device - The device object that has been reconnected. Contains device details,
+   *                          such as the device ID.
+   * @return {Promise<Either<DeviceConnectionNotFound | InternalDeviceNotFound, void>>} A promise that completes when the device reconnection has been fully
+   *                         configured. Resolves with no value or rejects if an error occurs during
+   *                         the reconnection process.
    */
-  private _handleDeviceReconnected(device: Device) {
-    const deviceConnection = this._deviceConnectionsById.get(
-      device.id,
-    ) as RNBleDeviceConnection;
-    const internalDevice = this._internalDevicesById.get(
-      device.id,
-    ) as RNBleInternalDevice;
-    deviceConnection.onWrite = (value) =>
-      this._manager.writeCharacteristicWithoutResponseForDevice(
+  private async _handleDeviceReconnected(device: Device) {
+    const errorOrDeviceConnection = Maybe.fromNullable(
+      this._deviceConnectionsById.get(device.id),
+    ).toEither(new DeviceConnectionNotFound());
+    const errorOrInternalDevice = Maybe.fromNullable(
+      this._internalDevicesById.get(device.id),
+    ).toEither(new InternalDeviceNotFound());
+
+    return EitherAsync(async ({ liftEither }) => {
+      const deviceConnection = await liftEither(errorOrDeviceConnection);
+      const internalDevice = await liftEither(errorOrInternalDevice);
+      deviceConnection.isDeviceReady = false;
+      deviceConnection.onWrite = (value) =>
+        this._manager.writeCharacteristicWithoutResponseForDevice(
+          device.id,
+          internalDevice.bleDeviceInfos.serviceUuid,
+          internalDevice.bleDeviceInfos.writeCmdUuid,
+          value,
+        );
+      this._manager.monitorCharacteristicForDevice(
         device.id,
         internalDevice.bleDeviceInfos.serviceUuid,
-        internalDevice.bleDeviceInfos.writeCmdUuid,
-        value,
+        internalDevice.bleDeviceInfos.notifyUuid,
+        (error, characteristic) => {
+          if (!error && characteristic) {
+            deviceConnection.onMonitor(characteristic);
+          }
+        },
       );
-    this._manager.monitorCharacteristicForDevice(
-      device.id,
-      internalDevice.bleDeviceInfos.serviceUuid,
-      internalDevice.bleDeviceInfos.notifyUuid,
-      (error, characteristic) => {
-        if (!error && characteristic) {
-          deviceConnection.onMonitor(characteristic);
-        }
-      },
-    );
+      await deviceConnection.reconnect();
+    }).run();
   }
 }
 

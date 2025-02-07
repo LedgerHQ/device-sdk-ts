@@ -5,10 +5,12 @@ import {
   type ApduResponse,
   type ApduSenderService,
   type ApduSenderServiceFactory,
+  CommandUtils,
   type DeviceConnection,
   DeviceNotInitializedError,
   type DmkError,
   type LoggerPublisherService,
+  ReconnectionFailedError,
 } from "@ledgerhq/device-management-kit";
 import { Base64 } from "js-base64";
 import { type Either, Left, Maybe, Nothing, Right } from "purify-ts";
@@ -29,6 +31,10 @@ export class RNBleDeviceConnection implements DeviceConnection {
     (value: Either<DmkError, ApduResponse>) => void
   >;
   private _onWrite: (value: string) => Promise<Characteristic>;
+  private _settleReconnectionPromiseResolvers: Maybe<{
+    resolve(): void;
+    reject(err: DmkError): void;
+  }>;
 
   constructor(
     {
@@ -44,6 +50,7 @@ export class RNBleDeviceConnection implements DeviceConnection {
     this._apduSender = Nothing;
     this._apduReceiver = apduReceiverFactory();
     this._sendApduPromiseResolver = Nothing;
+    this._settleReconnectionPromiseResolvers = Maybe.zero();
     this._onWrite = onWrite;
   }
 
@@ -53,20 +60,35 @@ export class RNBleDeviceConnection implements DeviceConnection {
     const [frameSize] = mtuResponse.slice(5);
     if (frameSize) {
       this._apduSender = Maybe.of(this._apduSenderFactory({ frameSize }));
+      this._settleReconnectionPromiseResolvers.ifJust((promise) => {
+        promise.resolve();
+        this._settleReconnectionPromiseResolvers = Maybe.zero();
+      });
       this._isDeviceReady = true;
     }
+  }
+
+  set isDeviceReady(value: boolean) {
+    this._isDeviceReady = value;
   }
 
   private receiveApdu(apdu: Uint8Array) {
     const response = this._apduReceiver.handleFrame(apdu);
 
-    response.map((maybeApduResponse) => {
-      maybeApduResponse.map((apduResponse) => {
-        this._sendApduPromiseResolver.map((resolve) =>
-          resolve(Right(apduResponse)),
-        );
+    response
+      .map((maybeApduResponse) => {
+        maybeApduResponse.map((apduResponse) => {
+          this._logger.debug("Received APDU Response", {
+            data: { response: apduResponse },
+          });
+          this._sendApduPromiseResolver.map((resolve) =>
+            resolve(Right(apduResponse)),
+          );
+        });
+      })
+      .mapLeft((error) => {
+        this._sendApduPromiseResolver.map((resolve) => resolve(Left(error)));
       });
-    });
   }
 
   set onWrite(onWrite: (value: string) => Promise<Characteristic>) {
@@ -95,7 +117,7 @@ export class RNBleDeviceConnection implements DeviceConnection {
 
   async sendApdu(
     apdu: Uint8Array,
-    _triggersDisconnection?: boolean,
+    triggersDisconnection?: boolean,
   ): Promise<Either<DmkError, ApduResponse>> {
     if (!this._isDeviceReady) {
       return Promise.resolve(
@@ -126,10 +148,45 @@ export class RNBleDeviceConnection implements DeviceConnection {
     this._sendApduPromiseResolver = Maybe.zero();
 
     return response.caseOf({
-      Right: (apduResponse) => {
-        return Promise.resolve(Right(apduResponse));
+      Right: async (apduResponse) => {
+        if (
+          triggersDisconnection &&
+          CommandUtils.isSuccessResponse(apduResponse)
+        ) {
+          const reconnectionRes = await this.setupWaitForReconnection();
+          return reconnectionRes.map(() => apduResponse);
+        } else {
+          return Right(apduResponse);
+        }
       },
       Left: async (error) => Promise.resolve(Left(error)),
+    });
+  }
+
+  public async reconnect() {
+    await this.setup();
+  }
+
+  public disconnect() {
+    // if a reconnection promise is pending, reject it
+    this._settleReconnectionPromiseResolvers.ifJust((promise) => {
+      promise.reject(new ReconnectionFailedError());
+      this._settleReconnectionPromiseResolvers = Maybe.zero();
+    });
+    this._isDeviceReady = false;
+  }
+
+  /**
+   * Setup a promise that would be resolved once the device is reconnected
+   *
+   * @private
+   */
+  private setupWaitForReconnection(): Promise<Either<DmkError, void>> {
+    return new Promise<Either<DmkError, void>>((resolve) => {
+      this._settleReconnectionPromiseResolvers = Maybe.of({
+        resolve: () => resolve(Right(undefined)),
+        reject: (error: DmkError) => resolve(Left(error)),
+      });
     });
   }
 }
