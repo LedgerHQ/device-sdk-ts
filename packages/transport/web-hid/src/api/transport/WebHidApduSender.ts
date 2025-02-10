@@ -41,10 +41,9 @@ export class WebHidApduSender implements DeviceApduSender<HIDDevice> {
     this._logger.info("🔌 Connected to device");
   }
 
-  public async setupConnection(dependencies: HIDDevice) {
-    await dependencies.open();
-    dependencies.oninputreport = (event) => this.receiveHidInputReport(event);
-    this.setDependencies(dependencies);
+  public async setupConnection() {
+    await this._device.open();
+    this._device.oninputreport = (event) => this.receiveHidInputReport(event);
   }
 
   public get device() {

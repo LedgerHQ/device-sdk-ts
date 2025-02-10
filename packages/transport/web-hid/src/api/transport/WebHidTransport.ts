@@ -363,7 +363,7 @@ export class WebHidTransport implements Transport {
     const channel = Maybe.of(
       FramerUtils.numberToByteArray(Math.floor(Math.random() * 0xffff), 2),
     );
-    const deviceConnection = new WebHidApduSender(
+    const webHidApduSender = new WebHidApduSender(
       {
         device: matchingInternalDevice.hidDevice,
         apduSender: this._apduSenderFactory({
@@ -379,7 +379,7 @@ export class WebHidTransport implements Transport {
     const deviceConnectionStateMachine =
       new DeviceConnectionStateMachine<HIDDevice>({
         deviceId,
-        deviceApduSender: deviceConnection,
+        deviceApduSender: webHidApduSender,
         timeoutDuration: RECONNECT_DEVICE_TIMEOUT,
         onTerminated: () => {
           onDisconnect(deviceId);
@@ -515,7 +515,8 @@ export class WebHidTransport implements Transport {
     this._deviceConnectionsByHidDevice.set(hidDevice, deviceConnection);
 
     try {
-      await deviceConnection.setupConnection(hidDevice);
+      deviceConnection.setDependencies(hidDevice);
+      await deviceConnection.setupConnection();
       deviceConnection.eventDeviceAttached();
     } catch (error) {
       this._logger.error("Error while reconnecting to device", {

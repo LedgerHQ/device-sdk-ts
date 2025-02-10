@@ -255,8 +255,12 @@ function makeStateMachine({
       signalTermination: () => {
         onTerminated();
       },
-      closeConnection: () => {
-        closeConnection();
+      closeConnection: async () => {
+        try {
+          await closeConnection(); // ASK: how do we handle errors ?
+        } catch (e) {
+          console.error("Error closing connection", e);
+        }
       },
     },
     guards: {

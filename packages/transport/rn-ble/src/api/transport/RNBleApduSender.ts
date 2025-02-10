@@ -2,7 +2,7 @@ import {
   type BleManager,
   type Characteristic,
   type Device,
-  type Subscription,
+  type Subscription as RNBleSubscription,
 } from "react-native-ble-plx";
 import {
   type ApduReceiverService,
@@ -11,23 +11,22 @@ import {
   type ApduSenderService,
   type ApduSenderServiceFactory,
   type BleDeviceInfos,
-  // CommandUtils,
   type DeviceApduSender,
   type DeviceId,
   DeviceNotInitializedError,
   type DmkError,
   type LoggerPublisherService,
-  // ReconnectionFailedError,
   type TransportDiscoveredDevice,
 } from "@ledgerhq/device-management-kit";
 import { Base64 } from "js-base64";
 import { type Either, Left, Maybe, Nothing, Right } from "purify-ts";
+import { BehaviorSubject, type Subscription } from "rxjs";
 
 export type RNBleInternalDevice = {
   id: DeviceId;
   bleDeviceInfos: BleDeviceInfos;
   discoveredDevice: TransportDiscoveredDevice;
-  disconnectionSubscription: Subscription;
+  disconnectionSubscription: RNBleSubscription;
   lastDiscoveredTimeStamp: Maybe<number>;
 };
 
@@ -47,7 +46,7 @@ export class RNBleApduSender
   implements DeviceApduSender<RNBleApduSenderDependencies>
 {
   private _dependencies: RNBleApduSenderDependencies;
-  private _isDeviceReady: boolean;
+  private _isDeviceReady: BehaviorSubject<boolean>;
   private _logger: LoggerPublisherService;
   private _apduSender: Maybe<ApduSenderService>;
   private readonly _apduSenderFactory: ApduSenderServiceFactory;
@@ -65,7 +64,7 @@ export class RNBleApduSender
     loggerServiceFactory: (tag: string) => LoggerPublisherService,
   ) {
     this._dependencies = dependencies;
-    this._isDeviceReady = false;
+    this._isDeviceReady = new BehaviorSubject<boolean>(false);
     this._logger = loggerServiceFactory("RNBleDeviceConnection");
     this._apduSenderFactory = apduSenderFactory;
     this._apduSender = Nothing;
@@ -79,12 +78,8 @@ export class RNBleApduSender
     const [frameSize] = mtuResponse.slice(5);
     if (frameSize) {
       this._apduSender = Maybe.of(this._apduSenderFactory({ frameSize }));
-      this._isDeviceReady = true;
+      this._isDeviceReady.next(true);
     }
-  }
-
-  set isDeviceReady(value: boolean) {
-    this._isDeviceReady = value;
   }
 
   private receiveApdu(apdu: Uint8Array) {
@@ -106,7 +101,21 @@ export class RNBleApduSender
       });
   }
 
-  onWrite(value: string) {
+  private onMonitor(characteristic: Characteristic) {
+    if (!characteristic.value) {
+      return;
+    }
+
+    const apdu = Base64.toUint8Array(characteristic.value);
+
+    if (!this._isDeviceReady.value) {
+      this.onReceiveSetupApduResponse(apdu);
+    } else {
+      this.receiveApdu(apdu);
+    }
+  }
+
+  private write(value: string) {
     return this._dependencies.manager.writeCharacteristicWithoutResponseForDevice(
       this._dependencies.device.id,
       this._dependencies.internalDevice.bleDeviceInfos.serviceUuid,
@@ -115,31 +124,12 @@ export class RNBleApduSender
     );
   }
 
-  private onMonitor(characteristic: Characteristic) {
-    if (!characteristic.value) {
-      return;
-    }
-
-    const apdu = Base64.toUint8Array(characteristic.value);
-
-    if (!this._isDeviceReady) {
-      this.onReceiveSetupApduResponse(apdu);
-    } else {
-      this.receiveApdu(apdu);
-    }
-  }
-
   public getDependencies() {
     return this._dependencies;
   }
 
   public setDependencies(dependencies: RNBleApduSenderDependencies) {
     this._dependencies = dependencies;
-    this._isDeviceReady = false;
-  }
-
-  public closeConnection() {
-    this._dependencies.device.cancelConnection();
   }
 
   public async setupConnection() {
@@ -153,13 +143,22 @@ export class RNBleApduSender
         }
       },
     );
-
+    this._isDeviceReady.next(false);
     const requestMtuApdu = Uint8Array.from([0x08, 0x00, 0x00, 0x00, 0x00]);
-    await this.onWrite(Base64.fromUint8Array(requestMtuApdu));
+    await this.write(Base64.fromUint8Array(requestMtuApdu));
+    let sub: Subscription;
+    await new Promise<void>((resolve) => {
+      sub = this._isDeviceReady.subscribe((isReady) => {
+        if (isReady) {
+          resolve();
+          sub.unsubscribe();
+        }
+      });
+    });
   }
 
   async sendApdu(apdu: Uint8Array): Promise<Either<DmkError, ApduResponse>> {
-    if (!this._isDeviceReady) {
+    if (!this._isDeviceReady.value) {
       return Promise.resolve(
         Left(new DeviceNotInitializedError("Unknown MTU")),
       );
@@ -178,7 +177,7 @@ export class RNBleApduSender
 
     for (const frame of frames) {
       try {
-        await this.onWrite(Base64.fromUint8Array(frame.getRawData()));
+        await this.write(Base64.fromUint8Array(frame.getRawData()));
       } catch (error) {
         this._logger.error("Error sending frame", { data: { error } });
       }
@@ -187,11 +186,7 @@ export class RNBleApduSender
     return resultPromise;
   }
 
-  public async reconnect() {
-    await this.setupConnection();
-  }
-
-  public disconnect() {
-    this._isDeviceReady = false;
+  public closeConnection() {
+    this._dependencies.device.cancelConnection();
   }
 }

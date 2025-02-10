@@ -193,12 +193,18 @@ export class RNBleTransport implements Transport {
   async disconnect(_params: {
     connectedDevice: TransportConnectedDevice;
   }): Promise<Either<DmkError, void>> {
-    await this._manager.cancelDeviceConnection(_params.connectedDevice.id);
+    const deviceConnection = Maybe.fromNullable(
+      this._deviceConnectionsById.get(_params.connectedDevice.id),
+    );
+
+    deviceConnection.map((d) => {
+      d.closeConnection();
+    });
 
     this._deviceConnectionsById.delete(_params.connectedDevice.id);
     this._internalDevicesById.delete(_params.connectedDevice.id);
 
-    return Right(void 0);
+    return Promise.resolve(Right(undefined));
   }
 
   private _isDiscoveredDeviceLost(internalDevice: RNBleInternalDevice) {
@@ -484,16 +490,7 @@ export class RNBleTransport implements Transport {
   private _handleDeviceDisconnected(
     error: BleError | null,
     device: Device | null,
-    // onDisconnect: DisconnectHandler,
   ) {
-    const errorOrDeviceConnection = Maybe.fromNullable(
-      this._deviceConnectionsById.get(device?.id ?? ""),
-    );
-
-    errorOrDeviceConnection.map((deviceConnection) => {
-      deviceConnection.closeConnection();
-    });
-
     if (error) {
       this._logger.error("device disconnected error", {
         data: { error, device },
@@ -504,6 +501,14 @@ export class RNBleTransport implements Transport {
       this._logger.info("disconnected handler didn't found device");
       return;
     }
+
+    const errorOrDeviceConnection = Maybe.fromNullable(
+      this._deviceConnectionsById.get(device.id),
+    );
+
+    errorOrDeviceConnection.map((deviceConnection) => {
+      deviceConnection.eventDeviceDetached();
+    });
 
     this._logger.info("new disconnected handler");
 
@@ -518,9 +523,6 @@ export class RNBleTransport implements Transport {
             await this._handleDeviceReconnected(device);
           } catch (e) {
             this._logger.error("Reconnecting failed", { data: { e } });
-            // if (count === 4) {
-            //   onDisconnect(device.id);
-            // }
           }
 
           return device;
