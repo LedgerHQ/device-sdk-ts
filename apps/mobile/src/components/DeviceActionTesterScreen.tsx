@@ -8,6 +8,7 @@ import styled from "styled-components/native";
 import { getDeviceActions } from "_components/DeviceActions.tsx";
 import { SendDeviceActionModal } from "_components/SendDeviceActionModal.tsx";
 import { useNavigation } from "@react-navigation/native";
+import { DeviceStateView } from "./DeviceStateView";
 
 const Container = styled.SafeAreaView<ThemeProps>`
   background-color: ${({ theme }) => theme.colors.background.main};
@@ -56,6 +57,10 @@ export const DeviceActionTesterScreen = () => {
     selectDeviceAction(undefined);
   }, []);
 
+  if (!deviceSessionId) {
+    return null;
+  }
+
   return (
     <Container>
       <SelectableList
@@ -72,6 +77,7 @@ export const DeviceActionTesterScreen = () => {
         onClose={onClose}
         isOpen={isDeviceActionModalVisible}
       />
+      <DeviceStateView sessionId={deviceSessionId} />
     </Container>
   );
 };

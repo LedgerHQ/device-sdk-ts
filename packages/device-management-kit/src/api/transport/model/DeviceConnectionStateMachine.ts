@@ -1,4 +1,4 @@
-import { createBrowserInspector } from "@statelyai/inspect";
+// import { createBrowserInspector } from "@statelyai/inspect";
 import { type Either, Left, Maybe, Nothing, Right } from "purify-ts";
 import { type Actor, assign, createActor, emit, setup } from "xstate";
 
@@ -14,7 +14,7 @@ import {
   DeviceDisconnectedWhileSendingError,
 } from "./Errors";
 
-const { inspect } = createBrowserInspector();
+// const { inspect } = createBrowserInspector();
 
 type DeviceDetachedEvent = {
   type: "DeviceDetached";
@@ -98,9 +98,9 @@ export class DeviceConnectionStateMachine<Dependencies> {
           this.deviceAdpuSender.closeConnection();
         },
       }),
-      {
-        inspect,
-      },
+      // {
+      //   // inspect,
+      // },
     );
     this.machineActor.start();
   }

@@ -515,14 +515,20 @@ export class RNBleTransport implements Transport {
     from([0])
       .pipe(
         switchMap(async () => {
-          this._logger.info("new call subscriber next");
+          this._logger.info(
+            `[_handleDeviceDisconnected] retrying to connect to device (${device.id})`,
+          );
 
           try {
             await device.connect();
             await device.discoverAllServicesAndCharacteristics();
             await this._handleDeviceReconnected(device);
           } catch (e) {
-            this._logger.error("Reconnecting failed", { data: { e } });
+            this._logger.error(
+              "[_handleDeviceDisconnected] Reconnecting failed",
+              { data: { e } },
+            );
+            throw e;
           }
 
           return device;
@@ -533,7 +539,17 @@ export class RNBleTransport implements Transport {
         }),
       )
       .subscribe({
-        next: (value) => this._logger.debug("value", { data: { value } }),
+        next: (value) =>
+          this._logger.info(
+            "[_handleDeviceDisconnected] Got new device after reconnection",
+            { data: { value } },
+          ),
+        error: (e) => {
+          this._logger.error(
+            "[_handleDeviceDisconnected] Reconnection failed after all retries",
+            { data: { e } },
+          );
+        },
       });
   }
 
