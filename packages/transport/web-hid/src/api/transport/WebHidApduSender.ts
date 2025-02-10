@@ -22,7 +22,7 @@ type WebHidDeviceConnectionConstructorArgs = {
  * It sends APDU commands to the device and receives the responses.
  * It handles temporary disconnections and reconnections.
  */
-export class WebHidDeviceConnection implements DeviceApduSender<HIDDevice> {
+export class WebHidApduSender implements DeviceApduSender<HIDDevice> {
   private _device: HIDDevice;
   private readonly _apduSender: ApduSenderService;
   private readonly _apduReceiver: ApduReceiverService;
@@ -41,23 +41,25 @@ export class WebHidDeviceConnection implements DeviceApduSender<HIDDevice> {
     this._logger.info("🔌 Connected to device");
   }
 
+  public async setupConnection(dependencies: HIDDevice) {
+    await dependencies.open();
+    dependencies.oninputreport = (event) => this.receiveHidInputReport(event);
+    this.setDependencies(dependencies);
+  }
+
   public get device() {
     return this._device;
   }
 
-  public getDevice() {
+  public getDependencies() {
     return this._device;
   }
 
-  public setDevice(device: HIDDevice) {
+  public setDependencies(device: HIDDevice) {
     this._device = device;
-    this._device.oninputreport = (event) => this.receiveHidInputReport(event);
   }
 
-  async sendApdu(
-    apdu: Uint8Array,
-    _triggersDisconnection?: boolean,
-  ): Promise<Either<DmkError, ApduResponse>> {
+  async sendApdu(apdu: Uint8Array): Promise<Either<DmkError, ApduResponse>> {
     this._sendApduSubject = new Subject();
     this._logger.debug("Sending APDU", {
       data: { apdu },
@@ -78,6 +80,7 @@ export class WebHidDeviceConnection implements DeviceApduSender<HIDDevice> {
     );
 
     const frames = this._apduSender.getFrames(apdu);
+
     for (const frame of frames) {
       this._logger.debug("Sending Frame", {
         data: { frame: frame.getRawData() },

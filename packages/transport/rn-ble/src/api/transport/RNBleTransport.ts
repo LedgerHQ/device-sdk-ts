@@ -1,15 +1,11 @@
 import { PermissionsAndroid, Platform } from "react-native";
-import {
-  type BleError,
-  BleManager,
-  type Device,
-  type Subscription,
-} from "react-native-ble-plx";
+import { type BleError, BleManager, type Device } from "react-native-ble-plx";
 import {
   type ApduReceiverServiceFactory,
   type ApduSenderServiceFactory,
   type BleDeviceInfos,
   type ConnectError,
+  DeviceConnectionStateMachine,
   type DeviceId,
   type DeviceModelDataSource,
   type DisconnectHandler,
@@ -33,19 +29,16 @@ import {
   switchMap,
 } from "rxjs";
 
+import { BLE_DISCONNECT_TIMEOUT } from "@api/model/Const";
 import {
   DeviceConnectionNotFound,
   InternalDeviceNotFound,
 } from "@api/model/Errors";
-import { RNBleDeviceConnection } from "@api/transport/RNBleDeviceConnection";
-
-type RNBleInternalDevice = {
-  id: DeviceId;
-  bleDeviceInfos: BleDeviceInfos;
-  discoveredDevice: TransportDiscoveredDevice;
-  disconnectionSubscription: Subscription;
-  lastDiscoveredTimeStamp: Maybe<number>;
-};
+import {
+  RNBleApduSender,
+  type RNBleApduSenderDependencies,
+  type RNBleInternalDevice,
+} from "@api/transport/RNBleApduSender";
 
 export const rnBleTransportIdentifier = "RN_BLE";
 
@@ -53,7 +46,10 @@ export class RNBleTransport implements Transport {
   private _logger: LoggerPublisherService;
   private _isSupported: Maybe<boolean>;
   private _internalDevicesById: Map<DeviceId, RNBleInternalDevice>;
-  private _deviceConnectionsById: Map<DeviceId, RNBleDeviceConnection>;
+  private _deviceConnectionsById: Map<
+    DeviceId,
+    DeviceConnectionStateMachine<RNBleApduSenderDependencies>
+  >;
   private readonly _manager: BleManager;
   private readonly identifier: TransportIdentifier = "RN_BLE";
 
@@ -141,45 +137,37 @@ export class RNBleTransport implements Transport {
           return throwE(new OpeningConnectionError(error));
         }
 
-        const { serviceUuid, writeCmdUuid, notifyUuid } =
-          internalDevice.bleDeviceInfos;
-
-        const deviceConnection = new RNBleDeviceConnection(
+        const deviceApduSender = new RNBleApduSender(
           {
-            onWrite: (value) =>
-              this._manager.writeCharacteristicWithoutResponseForDevice(
-                params.deviceId,
-                serviceUuid,
-                writeCmdUuid,
-                value,
-              ),
             apduSenderFactory: this._apduSenderFactory,
             apduReceiverFactory: this._apduReceiverFactory,
-            device,
+            dependencies: {
+              device,
+              internalDevice,
+              manager: this._manager,
+            },
           },
           this._loggerServiceFactory,
         );
 
-        this._manager.monitorCharacteristicForDevice(
-          params.deviceId,
-          serviceUuid,
-          notifyUuid,
-          (error, characteristic) => {
-            if (!error && characteristic) {
-              deviceConnection.onMonitor(characteristic);
-            }
-          },
+        const deviceConnectionStateMachine =
+          new DeviceConnectionStateMachine<RNBleApduSenderDependencies>({
+            deviceId: params.deviceId,
+            deviceApduSender,
+            timeoutDuration: BLE_DISCONNECT_TIMEOUT,
+            onTerminated: () => params.onDisconnect(params.deviceId),
+          });
+
+        await deviceApduSender.setupConnection();
+
+        this._deviceConnectionsById.set(
+          internalDevice.id,
+          deviceConnectionStateMachine,
         );
-
-        await deviceConnection.setup();
-
-        this._deviceConnectionsById.set(internalDevice.id, deviceConnection);
-        // internalDevice.disconnectionSubscription.remove();
 
         internalDevice.disconnectionSubscription =
           this._manager.onDeviceDisconnected(internalDevice.id, (...args) => {
-            this._handleDeviceDisconnected(...args, params.onDisconnect);
-            // params.onDisconnect(internalDevice.id);
+            this._handleDeviceDisconnected(...args);
           });
 
         internalDevice.lastDiscoveredTimeStamp = Maybe.zero();
@@ -188,7 +176,7 @@ export class RNBleTransport implements Transport {
           id: internalDevice.id,
           deviceModel: internalDevice.discoveredDevice.deviceModel,
           type: "BLE",
-          sendApdu: (...args) => deviceConnection.sendApdu(...args),
+          sendApdu: (...args) => deviceConnectionStateMachine.sendApdu(...args),
           transport: this.identifier,
         });
       },
@@ -496,8 +484,16 @@ export class RNBleTransport implements Transport {
   private _handleDeviceDisconnected(
     error: BleError | null,
     device: Device | null,
-    onDisconnect: DisconnectHandler,
+    // onDisconnect: DisconnectHandler,
   ) {
+    const errorOrDeviceConnection = Maybe.fromNullable(
+      this._deviceConnectionsById.get(device?.id ?? ""),
+    );
+
+    errorOrDeviceConnection.map((deviceConnection) => {
+      deviceConnection.closeConnection();
+    });
+
     if (error) {
       this._logger.error("device disconnected error", {
         data: { error, device },
@@ -513,7 +509,7 @@ export class RNBleTransport implements Transport {
 
     from([0])
       .pipe(
-        switchMap(async (count) => {
+        switchMap(async () => {
           this._logger.info("new call subscriber next");
 
           try {
@@ -522,16 +518,16 @@ export class RNBleTransport implements Transport {
             await this._handleDeviceReconnected(device);
           } catch (e) {
             this._logger.error("Reconnecting failed", { data: { e } });
-            if (count === 4) {
-              onDisconnect(device.id);
-            }
+            // if (count === 4) {
+            //   onDisconnect(device.id);
+            // }
           }
 
           return device;
         }),
         retry({
-          count: 4,
-          delay: 500,
+          count: 5,
+          delay: BLE_DISCONNECT_TIMEOUT / 5,
         }),
       )
       .subscribe({
@@ -554,32 +550,26 @@ export class RNBleTransport implements Transport {
     const errorOrDeviceConnection = Maybe.fromNullable(
       this._deviceConnectionsById.get(device.id),
     ).toEither(new DeviceConnectionNotFound());
+
     const errorOrInternalDevice = Maybe.fromNullable(
       this._internalDevicesById.get(device.id),
     ).toEither(new InternalDeviceNotFound());
 
     return EitherAsync(async ({ liftEither }) => {
-      const deviceConnection = await liftEither(errorOrDeviceConnection);
-      const internalDevice = await liftEither(errorOrInternalDevice);
-      deviceConnection.isDeviceReady = false;
-      deviceConnection.onWrite = (value) =>
-        this._manager.writeCharacteristicWithoutResponseForDevice(
-          device.id,
-          internalDevice.bleDeviceInfos.serviceUuid,
-          internalDevice.bleDeviceInfos.writeCmdUuid,
-          value,
-        );
-      this._manager.monitorCharacteristicForDevice(
-        device.id,
-        internalDevice.bleDeviceInfos.serviceUuid,
-        internalDevice.bleDeviceInfos.notifyUuid,
-        (error, characteristic) => {
-          if (!error && characteristic) {
-            deviceConnection.onMonitor(characteristic);
-          }
-        },
+      const deviceConnectionStateMachine = await liftEither(
+        errorOrDeviceConnection,
       );
-      await deviceConnection.reconnect();
+      const internalDevice = await liftEither(errorOrInternalDevice);
+
+      deviceConnectionStateMachine.setDependencies({
+        device,
+        manager: this._manager,
+        internalDevice,
+      });
+
+      await deviceConnectionStateMachine.setupConnection();
+
+      deviceConnectionStateMachine.eventDeviceAttached();
     }).run();
   }
 }

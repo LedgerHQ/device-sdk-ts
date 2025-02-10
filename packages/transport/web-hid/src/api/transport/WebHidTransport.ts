@@ -29,7 +29,7 @@ import { v4 as uuid } from "uuid";
 
 import { FRAME_SIZE, RECONNECT_DEVICE_TIMEOUT } from "@api/data/WebHidConfig";
 import { WebHidTransportNotSupportedError } from "@api/model/Errors";
-import { WebHidDeviceConnection } from "@api/transport/WebHidDeviceConnection";
+import { WebHidApduSender } from "@api/transport/WebHidApduSender";
 
 type PromptDeviceAccessError =
   | NoAccessibleDeviceError
@@ -363,7 +363,7 @@ export class WebHidTransport implements Transport {
     const channel = Maybe.of(
       FramerUtils.numberToByteArray(Math.floor(Math.random() * 0xffff), 2),
     );
-    const deviceConnection = new WebHidDeviceConnection(
+    const deviceConnection = new WebHidApduSender(
       {
         device: matchingInternalDevice.hidDevice,
         apduSender: this._apduSenderFactory({
@@ -379,7 +379,7 @@ export class WebHidTransport implements Transport {
     const deviceConnectionStateMachine =
       new DeviceConnectionStateMachine<HIDDevice>({
         deviceId,
-        deviceConnection,
+        deviceApduSender: deviceConnection,
         timeoutDuration: RECONNECT_DEVICE_TIMEOUT,
         onTerminated: () => {
           onDisconnect(deviceId);
@@ -515,8 +515,8 @@ export class WebHidTransport implements Transport {
     this._deviceConnectionsByHidDevice.set(hidDevice, deviceConnection);
 
     try {
-      await hidDevice.open();
-      deviceConnection.eventDeviceAttached(hidDevice);
+      await deviceConnection.setupConnection(hidDevice);
+      deviceConnection.eventDeviceAttached();
     } catch (error) {
       this._logger.error("Error while reconnecting to device", {
         data: { event, error },
@@ -543,7 +543,7 @@ export class WebHidTransport implements Transport {
       this._deviceConnectionsPendingReconnection,
     ).find(
       (deviceConnection) =>
-        this.getHidUsbProductId(deviceConnection.getDevice()) ===
+        this.getHidUsbProductId(deviceConnection.getDependencies()) ===
         this.getHidUsbProductId(event.device),
     );
 

@@ -9,6 +9,7 @@
     "build:libs": "turbo run build --filter=./packages/**",
     "dev": "turbo run dev  --concurrency 20 --filter=!./apps/docs",
     "dev:doc": "turbo run dev  --concurrency 20 --filter=!./apps/sample",
+    "dev:libs": "turbo run dev --concurrency 20 --filter=./packages/**",
     "lint": "turbo run lint",
     "lint:fix": "turbo run lint:fix",
     "prettier": "turbo run prettier",

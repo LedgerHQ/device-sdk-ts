@@ -1,30 +1,53 @@
-import { type Characteristic, type Device } from "react-native-ble-plx";
+import {
+  type BleManager,
+  type Characteristic,
+  type Device,
+  type Subscription,
+} from "react-native-ble-plx";
 import {
   type ApduReceiverService,
   type ApduReceiverServiceFactory,
   type ApduResponse,
   type ApduSenderService,
   type ApduSenderServiceFactory,
-  CommandUtils,
+  type BleDeviceInfos,
+  // CommandUtils,
   type DeviceApduSender,
+  type DeviceId,
   DeviceNotInitializedError,
   type DmkError,
   type LoggerPublisherService,
-  ReconnectionFailedError,
+  // ReconnectionFailedError,
+  type TransportDiscoveredDevice,
 } from "@ledgerhq/device-management-kit";
 import { Base64 } from "js-base64";
 import { type Either, Left, Maybe, Nothing, Right } from "purify-ts";
 
-type RNBleDeviceConnectionConstructorArgs = {
-  device: Device;
-  onWrite: (value: string) => Promise<Characteristic>;
+export type RNBleInternalDevice = {
+  id: DeviceId;
+  bleDeviceInfos: BleDeviceInfos;
+  discoveredDevice: TransportDiscoveredDevice;
+  disconnectionSubscription: Subscription;
+  lastDiscoveredTimeStamp: Maybe<number>;
+};
+
+type RNBleApduSenderConstructorArgs = {
+  dependencies: RNBleApduSenderDependencies;
   apduSenderFactory: ApduSenderServiceFactory;
   apduReceiverFactory: ApduReceiverServiceFactory;
 };
 
-export class RNBleDeviceConnection implements DeviceApduSender<Device> {
+export type RNBleApduSenderDependencies = {
+  device: Device;
+  internalDevice: RNBleInternalDevice;
+  manager: BleManager;
+};
+
+export class RNBleApduSender
+  implements DeviceApduSender<RNBleApduSenderDependencies>
+{
+  private _dependencies: RNBleApduSenderDependencies;
   private _isDeviceReady: boolean;
-  private _device: Device;
   private _logger: LoggerPublisherService;
   private _apduSender: Maybe<ApduSenderService>;
   private readonly _apduSenderFactory: ApduSenderServiceFactory;
@@ -32,30 +55,22 @@ export class RNBleDeviceConnection implements DeviceApduSender<Device> {
   private _sendApduPromiseResolver: Maybe<
     (value: Either<DmkError, ApduResponse>) => void
   >;
-  private _onWrite: (value: string) => Promise<Characteristic>;
-  private _settleReconnectionPromiseResolvers: Maybe<{
-    resolve(): void;
-    reject(err: DmkError): void;
-  }>;
 
   constructor(
     {
-      onWrite,
       apduSenderFactory,
       apduReceiverFactory,
-      device,
-    }: RNBleDeviceConnectionConstructorArgs,
+      dependencies,
+    }: RNBleApduSenderConstructorArgs,
     loggerServiceFactory: (tag: string) => LoggerPublisherService,
   ) {
-    this._device = device;
+    this._dependencies = dependencies;
     this._isDeviceReady = false;
     this._logger = loggerServiceFactory("RNBleDeviceConnection");
     this._apduSenderFactory = apduSenderFactory;
     this._apduSender = Nothing;
     this._apduReceiver = apduReceiverFactory();
     this._sendApduPromiseResolver = Nothing;
-    this._settleReconnectionPromiseResolvers = Maybe.zero();
-    this._onWrite = onWrite;
   }
 
   private onReceiveSetupApduResponse(value: Uint8Array) {
@@ -64,10 +79,6 @@ export class RNBleDeviceConnection implements DeviceApduSender<Device> {
     const [frameSize] = mtuResponse.slice(5);
     if (frameSize) {
       this._apduSender = Maybe.of(this._apduSenderFactory({ frameSize }));
-      this._settleReconnectionPromiseResolvers.ifJust((promise) => {
-        promise.resolve();
-        this._settleReconnectionPromiseResolvers = Maybe.zero();
-      });
       this._isDeviceReady = true;
     }
   }
@@ -95,11 +106,16 @@ export class RNBleDeviceConnection implements DeviceApduSender<Device> {
       });
   }
 
-  set onWrite(onWrite: (value: string) => Promise<Characteristic>) {
-    this._onWrite = onWrite;
+  onWrite(value: string) {
+    return this._dependencies.manager.writeCharacteristicWithoutResponseForDevice(
+      this._dependencies.device.id,
+      this._dependencies.internalDevice.bleDeviceInfos.serviceUuid,
+      this._dependencies.internalDevice.bleDeviceInfos.writeCmdUuid,
+      value,
+    );
   }
 
-  onMonitor(characteristic: Characteristic) {
+  private onMonitor(characteristic: Characteristic) {
     if (!characteristic.value) {
       return;
     }
@@ -113,34 +129,42 @@ export class RNBleDeviceConnection implements DeviceApduSender<Device> {
     }
   }
 
-  public getDevice() {
-    return this._device;
+  public getDependencies() {
+    return this._dependencies;
   }
 
-  public setDevice(device: Device) {
-    this._device = device;
+  public setDependencies(dependencies: RNBleApduSenderDependencies) {
+    this._dependencies = dependencies;
+    this._isDeviceReady = false;
   }
 
   public closeConnection() {
-    // TODO: cancel connection
-    this._device.cancelConnection();
+    this._dependencies.device.cancelConnection();
   }
 
-  public async setup() {
+  public async setupConnection() {
+    this._dependencies.manager.monitorCharacteristicForDevice(
+      this._dependencies.device.id,
+      this._dependencies.internalDevice.bleDeviceInfos.serviceUuid,
+      this._dependencies.internalDevice.bleDeviceInfos.notifyUuid,
+      (error, characteristic) => {
+        if (!error && characteristic) {
+          this.onMonitor(characteristic);
+        }
+      },
+    );
+
     const requestMtuApdu = Uint8Array.from([0x08, 0x00, 0x00, 0x00, 0x00]);
-
-    await this._onWrite(Base64.fromUint8Array(requestMtuApdu));
+    await this.onWrite(Base64.fromUint8Array(requestMtuApdu));
   }
 
-  async sendApdu(
-    apdu: Uint8Array,
-    triggersDisconnection?: boolean,
-  ): Promise<Either<DmkError, ApduResponse>> {
+  async sendApdu(apdu: Uint8Array): Promise<Either<DmkError, ApduResponse>> {
     if (!this._isDeviceReady) {
       return Promise.resolve(
         Left(new DeviceNotInitializedError("Unknown MTU")),
       );
     }
+
     const resultPromise = new Promise<Either<DmkError, ApduResponse>>(
       (resolve) => {
         this._sendApduPromiseResolver = Maybe.of(resolve);
@@ -154,56 +178,20 @@ export class RNBleDeviceConnection implements DeviceApduSender<Device> {
 
     for (const frame of frames) {
       try {
-        await this._onWrite(Base64.fromUint8Array(frame.getRawData()));
+        await this.onWrite(Base64.fromUint8Array(frame.getRawData()));
       } catch (error) {
         this._logger.error("Error sending frame", { data: { error } });
       }
     }
 
-    const response = await resultPromise;
-
-    this._sendApduPromiseResolver = Maybe.zero();
-
-    return response.caseOf({
-      Right: async (apduResponse) => {
-        if (
-          triggersDisconnection &&
-          CommandUtils.isSuccessResponse(apduResponse)
-        ) {
-          const reconnectionRes = await this.setupWaitForReconnection();
-          return reconnectionRes.map(() => apduResponse);
-        } else {
-          return Right(apduResponse);
-        }
-      },
-      Left: async (error) => Promise.resolve(Left(error)),
-    });
+    return resultPromise;
   }
 
   public async reconnect() {
-    await this.setup();
+    await this.setupConnection();
   }
 
   public disconnect() {
-    // if a reconnection promise is pending, reject it
-    this._settleReconnectionPromiseResolvers.ifJust((promise) => {
-      promise.reject(new ReconnectionFailedError());
-      this._settleReconnectionPromiseResolvers = Maybe.zero();
-    });
     this._isDeviceReady = false;
-  }
-
-  /**
-   * Setup a promise that would be resolved once the device is reconnected
-   *
-   * @private
-   */
-  private setupWaitForReconnection(): Promise<Either<DmkError, void>> {
-    return new Promise<Either<DmkError, void>>((resolve) => {
-      this._settleReconnectionPromiseResolvers = Maybe.of({
-        resolve: () => resolve(Right(undefined)),
-        reject: (error: DmkError) => resolve(Left(error)),
-      });
-    });
   }
 }

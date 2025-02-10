@@ -58,6 +58,143 @@ export type DeviceConnectionEvent =
   | CloseConnectionCalled
   | ReconnectionTimedOut;
 
+export class DeviceConnectionStateMachine<Dependencies> {
+  private deviceId: DeviceId;
+  private deviceAdpuSender: DeviceApduSender<Dependencies>;
+
+  private machineActor: Actor<ReturnType<typeof makeStateMachine>>;
+
+  private timeoutDuration: number;
+  private timeout: ReturnType<typeof setTimeout> | null = null;
+
+  startReconnectionTimeout() {
+    this.timeout = setTimeout(() => {
+      this.machineActor.send({ type: "ReconnectionTimedOut" });
+    }, this.timeoutDuration);
+  }
+
+  constructor(params: {
+    deviceId: DeviceId;
+    deviceApduSender: DeviceApduSender<Dependencies>;
+    timeoutDuration: number;
+    onTerminated: () => void;
+  }) {
+    this.deviceId = params.deviceId;
+    this.deviceAdpuSender = params.deviceApduSender;
+    this.timeoutDuration = params.timeoutDuration;
+    this.machineActor = createActor(
+      makeStateMachine({
+        sendApduFn: (apdu, triggersDisconnection) =>
+          this.sendApduToDeviceConnection(apdu, triggersDisconnection),
+        startReconnectionTimeout: () => this.startReconnectionTimeout(),
+        cancelReconnectionTimeout: () => {
+          if (this.timeout) {
+            clearTimeout(this.timeout);
+            this.timeout = null;
+          }
+        },
+        onTerminated: params.onTerminated,
+        closeConnection: () => {
+          this.deviceAdpuSender.closeConnection();
+        },
+      }),
+      {
+        inspect,
+      },
+    );
+    this.machineActor.start();
+  }
+
+  private sendApduToDeviceConnection(
+    apdu: Uint8Array,
+    triggersDisconnection?: boolean,
+  ) {
+    console.log(
+      "[sendApduToDeviceConnection] called",
+      apdu,
+      triggersDisconnection,
+    );
+    this.deviceAdpuSender
+      .sendApdu(apdu, triggersDisconnection)
+      .then((response) => {
+        response.caseOf({
+          Left: (error) => {
+            console.log(
+              "[sendApduToDeviceConnection] got error response",
+              error,
+            );
+            this.machineActor.send({ type: "ApduSendingError", error });
+          },
+          Right: (apduResponse) => {
+            console.log(
+              "[sendApduToDeviceConnection] got successful response",
+              apduResponse,
+            );
+            this.machineActor.send({
+              type: "ApduResponseReceived",
+              apduResponse,
+            });
+          },
+        });
+      })
+      .catch((error) => {
+        console.log("[sendApduToDeviceConnection] caught error", error);
+        this.machineActor.send({
+          type: "ApduSendingError",
+          error: new UnknownDeviceExchangeError(error),
+        });
+      });
+  }
+
+  /**
+   * Called by the transport
+   */
+
+  public getDependencies(): Dependencies {
+    return this.deviceAdpuSender.getDependencies();
+  }
+
+  public setDependencies(dependencies: Dependencies) {
+    this.deviceAdpuSender.setDependencies(dependencies);
+  }
+
+  public getDeviceId() {
+    return this.deviceId;
+  }
+
+  public sendApdu(
+    apdu: Uint8Array,
+    triggersDisconnection?: boolean,
+  ): Promise<Either<DmkError, ApduResponse>> {
+    return new Promise((responseCallback) => {
+      this.machineActor.send({
+        type: "SendApduCalled",
+        apdu,
+        triggersDisconnection: !!triggersDisconnection,
+        responseCallback,
+      });
+    });
+  }
+
+  public async setupConnection() {
+    await this.deviceAdpuSender.setupConnection();
+  }
+
+  // State Machine Events
+
+  public eventDeviceAttached() {
+    this.machineActor.send({ type: "DeviceAttached" });
+  }
+
+  public eventDeviceDetached() {
+    this.machineActor.send({ type: "DeviceDetached" });
+  }
+
+  public closeConnection() {
+    this.machineActor.send({ type: "CloseConnectionCalled" });
+  }
+}
+
 function makeStateMachine({
   sendApduFn,
   startReconnectionTimeout,
@@ -333,132 +470,4 @@ function makeStateMachine({
       },
     },
   });
-}
-
-export class DeviceConnectionStateMachine<DeviceType> {
-  private deviceId: DeviceId;
-  private deviceConnection: DeviceApduSender<DeviceType>;
-
-  private machineActor: Actor<ReturnType<typeof makeStateMachine>>;
-
-  private timeoutDuration: number;
-  private timeout: ReturnType<typeof setTimeout> | null = null;
-
-  startReconnectionTimeout() {
-    this.timeout = setTimeout(() => {
-      this.machineActor.send({ type: "ReconnectionTimedOut" });
-    }, this.timeoutDuration);
-  }
-
-  constructor(params: {
-    deviceId: DeviceId;
-    deviceConnection: DeviceApduSender<DeviceType>;
-    timeoutDuration: number;
-    onTerminated: () => void;
-  }) {
-    this.deviceId = params.deviceId;
-    this.deviceConnection = params.deviceConnection;
-    this.timeoutDuration = params.timeoutDuration;
-    this.machineActor = createActor(
-      makeStateMachine({
-        sendApduFn: (apdu, triggersDisconnection) =>
-          this.sendApduToDeviceConnection(apdu, triggersDisconnection),
-        startReconnectionTimeout: () => this.startReconnectionTimeout(),
-        cancelReconnectionTimeout: () => {
-          if (this.timeout) {
-            clearTimeout(this.timeout);
-            this.timeout = null;
-          }
-        },
-        onTerminated: params.onTerminated,
-        closeConnection: () => {
-          this.deviceConnection.closeConnection();
-        },
-      }),
-      {
-        inspect,
-      },
-    );
-    this.machineActor.start();
-  }
-
-  private sendApduToDeviceConnection(
-    apdu: Uint8Array,
-    triggersDisconnection?: boolean,
-  ) {
-    console.log(
-      "[sendApduToDeviceConnection] called",
-      apdu,
-      triggersDisconnection,
-    );
-    this.deviceConnection
-      .sendApdu(apdu, triggersDisconnection)
-      .then((response) => {
-        response.caseOf({
-          Left: (error) => {
-            console.log(
-              "[sendApduToDeviceConnection] got error response",
-              error,
-            );
-            this.machineActor.send({ type: "ApduSendingError", error });
-          },
-          Right: (apduResponse) => {
-            console.log(
-              "[sendApduToDeviceConnection] got successful response",
-              apduResponse,
-            );
-            this.machineActor.send({
-              type: "ApduResponseReceived",
-              apduResponse,
-            });
-          },
-        });
-      })
-      .catch((error) => {
-        console.log("[sendApduToDeviceConnection] caught error", error);
-        this.machineActor.send({
-          type: "ApduSendingError",
-          error: new UnknownDeviceExchangeError(error),
-        });
-      });
-  }
-
-  /**
-   * Called by the transport
-   */
-
-  public getDevice(): DeviceType {
-    return this.deviceConnection.getDevice();
-  }
-
-  public getDeviceId() {
-    return this.deviceId;
-  }
-
-  public sendApdu(
-    apdu: Uint8Array,
-    triggersDisconnection?: boolean,
-  ): Promise<Either<DmkError, ApduResponse>> {
-    return new Promise((responseCallback) => {
-      this.machineActor.send({
-        type: "SendApduCalled",
-        apdu,
-        triggersDisconnection: !!triggersDisconnection,
-        responseCallback,
-      });
-    });
-  }
-
-  public eventDeviceAttached(device: DeviceType) {
-    this.deviceConnection.setDevice(device);
-    this.machineActor.send({ type: "DeviceAttached" });
-  }
-
-  public eventDeviceDetached() {
-    this.machineActor.send({ type: "DeviceDetached" });
-  }
-
-  public closeConnection() {
-    this.machineActor.send({ type: "CloseConnectionCalled" });
-  }
 }
