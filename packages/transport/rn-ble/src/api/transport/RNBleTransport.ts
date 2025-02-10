@@ -189,12 +189,21 @@ export class RNBleTransport implements Transport {
    * @param {TransportConnectedDevice} _params.connectedDevice - The connected device to be disconnected.
    * @return {Promise<Either<DmkError, void>>} A promise resolving to either a success (void) or a failure (DmkError) value.
    */
-  async disconnect(_params: {
+  async disconnect(params: {
     connectedDevice: TransportConnectedDevice;
   }): Promise<Either<DmkError, void>> {
-    await this._manager.cancelDeviceConnection(_params.connectedDevice.id);
-    this._deviceConnectionsById.delete(_params.connectedDevice.id);
-    this._internalDevicesById.delete(_params.connectedDevice.id);
+    Maybe.fromNullable(
+      this._internalDevicesById.get(params.connectedDevice.id),
+    ).map((internalDevice) => {
+      internalDevice.disconnectionSubscription.remove();
+    });
+
+    const device = await this._manager.cancelDeviceConnection(
+      params.connectedDevice.id,
+    );
+    this._logger.info("Device disconnected", { data: { device } });
+    this._deviceConnectionsById.delete(params.connectedDevice.id);
+    this._internalDevicesById.delete(params.connectedDevice.id);
     return Right(void 0);
   }
 
@@ -489,6 +498,7 @@ export class RNBleTransport implements Transport {
       return;
     }
     this._logger.info("new disconnected handler");
+    // timer(0, 500).pipe(take(4), switchMap());
     from([0])
       .pipe(
         switchMap(async (count) => {
@@ -500,6 +510,12 @@ export class RNBleTransport implements Transport {
           } catch (e) {
             this._logger.error("Reconnecting failed", { data: { e } });
             if (count === 4) {
+              // await device.cancelConnection();
+              Maybe.fromNullable(
+                this._deviceConnectionsById.get(device.id),
+              ).map((deviceConnection) => {
+                deviceConnection.disconnect();
+              });
               onDisconnect(device.id);
             }
           }
@@ -537,7 +553,6 @@ export class RNBleTransport implements Transport {
     return EitherAsync(async ({ liftEither }) => {
       const deviceConnection = await liftEither(errorOrDeviceConnection);
       const internalDevice = await liftEither(errorOrInternalDevice);
-      deviceConnection.isDeviceReady = false;
       deviceConnection.onWrite = (value) =>
         this._manager.writeCharacteristicWithoutResponseForDevice(
           device.id,
