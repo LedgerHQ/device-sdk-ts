@@ -26,7 +26,6 @@ export const DmkProvider: React.FC<PropsWithChildren> = ({ children }) => {
   useEffect(() => {
     const dmkRef = dmk.current;
     return () => {
-      console.log("close dmk");
       dmkRef.close();
     };
   }, []);

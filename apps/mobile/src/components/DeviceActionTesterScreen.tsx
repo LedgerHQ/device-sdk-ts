@@ -43,7 +43,6 @@ export const DeviceActionTesterScreen = () => {
   const onSelect = useCallback(
     (deviceActionId: string) => {
       const deviceAction = deviceActions.find(da => da.id === deviceActionId);
-      console.log("set device action", deviceAction);
       selectDeviceAction(deviceAction);
       setDeviceActionModalVisibility(true);
     },

@@ -18,4 +18,9 @@ export const CommandNavigator = createMaterialTopTabNavigator({
       },
     },
   },
+  screenOptions: ({ theme }) => ({
+    tabBarStyle: {
+      backgroundColor: theme.colors.background,
+    },
+  }),
 });
