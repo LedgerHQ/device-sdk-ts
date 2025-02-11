@@ -1,14 +1,14 @@
-import theme from "@ledgerhq/native-ui/styles/theme";
+import { DefaultTheme } from "styled-components/native";
 
 export const getNavigationTheme: (
-  isDarkMode: boolean,
-) => ReactNavigation.Theme = isDarkMode => ({
-  dark: isDarkMode,
+  theme: DefaultTheme,
+) => ReactNavigation.Theme = theme => ({
+  dark: theme.theme === "dark",
   colors: {
-    primary: theme.colors.primary.c40,
+    primary: theme.colors.primary.c10,
     background: theme.colors.background.main,
     card: theme.colors.background.main,
-    text: theme.colors.primary.c80,
+    text: theme.colors.neutral.c100,
     border: theme.colors.constant.purple,
     notification: theme.colors.warning.c70,
   },
