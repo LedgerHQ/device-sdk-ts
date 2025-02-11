@@ -1,17 +1,21 @@
 import React, { useCallback, useEffect, useState } from "react";
 import { Icons, InfiniteLoader, Popin, Text } from "@ledgerhq/native-ui";
 import { useForm } from "_hooks/useForm";
-import { View } from "react-native";
 import { DeviceActionProps } from "_common/types.ts";
 import { lastValueFrom } from "rxjs";
 import { inspect } from "util";
 import { DeviceActionStatus } from "@ledgerhq/device-management-kit";
+import styled from "styled-components/native";
 
 type SendDeviceActionModalProps = {
   deviceAction?: DeviceActionProps<any, any, any, any>;
   onClose: () => void;
   isOpen: boolean;
 };
+
+const OutputScrollView = styled.ScrollView`
+  max-height: 300px;
+`;
 
 export const SendDeviceActionModal: React.FC<SendDeviceActionModalProps> = ({
   deviceAction,
@@ -70,9 +74,9 @@ export const SendDeviceActionModal: React.FC<SendDeviceActionModalProps> = ({
         />
       )}
       {output && (
-        <View>
+        <OutputScrollView>
           <Text>{output}</Text>
-        </View>
+        </OutputScrollView>
       )}
     </Popin>
   );

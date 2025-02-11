@@ -5,7 +5,7 @@ export const getNavigationTheme: (
 ) => ReactNavigation.Theme = theme => ({
   dark: theme.theme === "dark",
   colors: {
-    primary: theme.colors.primary.c10,
+    primary: theme.colors.primary.c100,
     background: theme.colors.background.main,
     card: theme.colors.background.main,
     text: theme.colors.neutral.c100,
