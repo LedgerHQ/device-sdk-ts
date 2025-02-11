@@ -49,6 +49,8 @@ type RNBleInternalDevice = {
 
 export const rnBleTransportIdentifier = "RN_BLE";
 
+const CONNECTION_LOST_DELAY = 5e3; // 5s;
+
 export class RNBleTransport implements Transport {
   private _logger: LoggerPublisherService;
   private _isSupported: Maybe<boolean>;
@@ -168,7 +170,6 @@ export class RNBleTransport implements Transport {
         internalDevice.disconnectionSubscription =
           this._manager.onDeviceDisconnected(internalDevice.id, (...args) => {
             this._handleDeviceDisconnected(...args, params.onDisconnect);
-            // params.onDisconnect(internalDevice.id);
           });
         internalDevice.lastDiscoveredTimeStamp = Maybe.zero();
         return new TransportConnectedDevice({
@@ -185,8 +186,7 @@ export class RNBleTransport implements Transport {
   /**
    * Terminates the connection with the connected device and cleans up related resources.
    *
-   * @param {Object} _params - The parameters for disconnecting the device.
-   * @param {TransportConnectedDevice} _params.connectedDevice - The connected device to be disconnected.
+   * @param {TransportConnectedDevice} params.connectedDevice - The connected device to be disconnected.
    * @return {Promise<Either<DmkError, void>>} A promise resolving to either a success (void) or a failure (DmkError) value.
    */
   async disconnect(params: {
@@ -198,10 +198,7 @@ export class RNBleTransport implements Transport {
       internalDevice.disconnectionSubscription.remove();
     });
 
-    const device = await this._manager.cancelDeviceConnection(
-      params.connectedDevice.id,
-    );
-    this._logger.info("Device disconnected", { data: { device } });
+    await this._manager.cancelDeviceConnection(params.connectedDevice.id);
     this._deviceConnectionsById.delete(params.connectedDevice.id);
     this._internalDevicesById.delete(params.connectedDevice.id);
     return Right(void 0);
@@ -210,7 +207,7 @@ export class RNBleTransport implements Transport {
   private _isDiscoveredDeviceLost(internalDevice: RNBleInternalDevice) {
     return internalDevice.lastDiscoveredTimeStamp.caseOf({
       Just: (lastDiscoveredTimeStamp) =>
-        Date.now() > lastDiscoveredTimeStamp + 5000,
+        Date.now() > lastDiscoveredTimeStamp + CONNECTION_LOST_DELAY,
       Nothing: () => {
         internalDevice.lastDiscoveredTimeStamp = Maybe.of(Date.now());
         return true;
@@ -497,20 +494,15 @@ export class RNBleTransport implements Transport {
       this._logger.info("disconnected handler didn't found device");
       return;
     }
-    this._logger.info("new disconnected handler");
-    // timer(0, 500).pipe(take(4), switchMap());
     from([0])
       .pipe(
         switchMap(async (count) => {
-          this._logger.info("new call subscriber next");
           try {
             await device.connect();
             await device.discoverAllServicesAndCharacteristics();
             await this._handleDeviceReconnected(device);
-          } catch (e) {
-            this._logger.error("Reconnecting failed", { data: { e } });
+          } catch {
             if (count === 4) {
-              // await device.cancelConnection();
               Maybe.fromNullable(
                 this._deviceConnectionsById.get(device.id),
               ).map((deviceConnection) => {
@@ -527,7 +519,8 @@ export class RNBleTransport implements Transport {
         }),
       )
       .subscribe({
-        next: (value) => this._logger.debug("value", { data: { value } }),
+        next: (value) =>
+          this._logger.debug("Device reconnected", { data: { value } }),
       });
   }
 
