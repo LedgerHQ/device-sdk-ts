@@ -8,6 +8,7 @@ import styled from "styled-components/native";
 import { getDeviceActions } from "_components/DeviceActions.tsx";
 import { SendDeviceActionModal } from "_components/SendDeviceActionModal.tsx";
 import { useNavigation } from "@react-navigation/native";
+import { DeviceStateView } from "./DeviceStateView";
 
 const SafeView = styled.SafeAreaView`
   flex: 1;
@@ -58,6 +59,10 @@ export const DeviceActionTesterScreen = () => {
     selectDeviceAction(undefined);
   }, []);
 
+  if (!deviceSessionId) {
+    return null;
+  }
+
   return (
     <SafeView>
       <Container>
@@ -77,6 +82,7 @@ export const DeviceActionTesterScreen = () => {
           onClose={onClose}
           isOpen={isDeviceActionModalVisible}
         />
+        <DeviceStateView sessionId={deviceSessionId} />
       </Container>
     </SafeView>
   );

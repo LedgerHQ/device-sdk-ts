@@ -3,6 +3,7 @@ import {
   type ApduSenderServiceFactory,
   type ConnectError,
   type ConnectionType,
+  DeviceConnectionStateMachine,
   type DeviceId,
   type DeviceModelDataSource,
   DeviceNotRecognizedError,
@@ -26,9 +27,9 @@ import { type Either, EitherAsync, Left, Maybe, Right } from "purify-ts";
 import { BehaviorSubject, from, map, type Observable, switchMap } from "rxjs";
 import { v4 as uuid } from "uuid";
 
-import { FRAME_SIZE } from "@api/data/WebHidConfig";
+import { FRAME_SIZE, RECONNECT_DEVICE_TIMEOUT } from "@api/data/WebHidConfig";
 import { WebHidTransportNotSupportedError } from "@api/model/Errors";
-import { WebHidDeviceConnection } from "@api/transport/WebHidDeviceConnection";
+import { WebHidApduSender } from "@api/transport/WebHidApduSender";
 
 type PromptDeviceAccessError =
   | NoAccessibleDeviceError
@@ -49,15 +50,16 @@ export class WebHidTransport implements Transport {
   /** Map of *connected* HIDDevice to their WebHidDeviceConnection */
   private _deviceConnectionsByHidDevice: Map<
     HIDDevice,
-    WebHidDeviceConnection
+    DeviceConnectionStateMachine<HIDDevice>
   > = new Map();
 
   /**
    * Set of WebHidDeviceConnection for which the HIDDevice has been
    * disconnected, so they are waiting for a reconnection
    */
-  private _deviceConnectionsPendingReconnection: Set<WebHidDeviceConnection> =
-    new Set();
+  private _deviceConnectionsPendingReconnection: Set<
+    DeviceConnectionStateMachine<HIDDevice>
+  > = new Set();
 
   /** AbortController to stop listening to HID connection events */
   private _connectionListenersAbortController: AbortController =
@@ -150,7 +152,7 @@ export class WebHidTransport implements Transport {
     const maybeDeviceModel = this.getDeviceModel(hidDevice);
     return maybeDeviceModel.caseOf({
       Just: (deviceModel) => {
-        const id = existingDeviceConnection?.deviceId ?? uuid();
+        const id = existingDeviceConnection?.getDeviceId() ?? uuid();
 
         const discoveredDevice = {
           id,
@@ -361,36 +363,43 @@ export class WebHidTransport implements Transport {
     const channel = Maybe.of(
       FramerUtils.numberToByteArray(Math.floor(Math.random() * 0xffff), 2),
     );
-    const deviceConnection = new WebHidDeviceConnection(
+    const webHidApduSender = new WebHidApduSender(
       {
         device: matchingInternalDevice.hidDevice,
-        deviceId,
         apduSender: this._apduSenderFactory({
           frameSize: FRAME_SIZE,
           channel,
           padding: true,
         }),
         apduReceiver: this._apduReceiverFactory({ channel }),
-        onConnectionTerminated: () => {
-          onDisconnect(deviceId);
-          this._deviceConnectionsPendingReconnection.delete(deviceConnection);
-          this._deviceConnectionsByHidDevice.delete(
-            matchingInternalDevice.hidDevice,
-          );
-          deviceConnection.device.close();
-        },
       },
       this._loggerServiceFactory,
     );
 
+    const deviceConnectionStateMachine =
+      new DeviceConnectionStateMachine<HIDDevice>({
+        deviceId,
+        deviceApduSender: webHidApduSender,
+        timeoutDuration: RECONNECT_DEVICE_TIMEOUT,
+        onTerminated: () => {
+          onDisconnect(deviceId);
+          this._deviceConnectionsPendingReconnection.delete(
+            deviceConnectionStateMachine,
+          );
+          this._deviceConnectionsByHidDevice.delete(
+            matchingInternalDevice.hidDevice,
+          );
+        },
+      });
+
     this._deviceConnectionsByHidDevice.set(
       matchingInternalDevice.hidDevice,
-      deviceConnection,
+      deviceConnectionStateMachine,
     );
 
     const connectedDevice = new TransportConnectedDevice({
       sendApdu: (apdu, triggersDisconnection) =>
-        deviceConnection.sendApdu(apdu, triggersDisconnection),
+        deviceConnectionStateMachine.sendApdu(apdu, triggersDisconnection),
       deviceModel,
       id: deviceId,
       type: this.connectionType,
@@ -430,7 +439,7 @@ export class WebHidTransport implements Transport {
       this._deviceConnectionsByHidDevice.values(),
     ).find(
       (deviceConnection) =>
-        deviceConnection.deviceId === params.connectedDevice.id,
+        deviceConnection.getDeviceId() === params.connectedDevice.id,
     );
 
     if (!matchingDeviceConnection) {
@@ -444,7 +453,7 @@ export class WebHidTransport implements Transport {
       );
     }
 
-    matchingDeviceConnection.disconnect();
+    matchingDeviceConnection.closeConnection();
     return Promise.resolve(Right(undefined));
   }
 
@@ -492,26 +501,28 @@ export class WebHidTransport implements Transport {
     );
 
     if (matchingDeviceConnection) {
-      matchingDeviceConnection.lostConnection();
+      matchingDeviceConnection.eventDeviceDetached();
       this._deviceConnectionsPendingReconnection.add(matchingDeviceConnection);
       this._deviceConnectionsByHidDevice.delete(event.device);
     }
   }
 
-  private handleDeviceReconnection(
-    deviceConnection: WebHidDeviceConnection,
+  private async handleDeviceReconnection(
+    deviceConnection: DeviceConnectionStateMachine<HIDDevice>,
     hidDevice: HIDDevice,
   ) {
     this._deviceConnectionsPendingReconnection.delete(deviceConnection);
     this._deviceConnectionsByHidDevice.set(hidDevice, deviceConnection);
 
     try {
-      deviceConnection.reconnectHidDevice(hidDevice);
+      deviceConnection.setDependencies(hidDevice);
+      await deviceConnection.setupConnection();
+      deviceConnection.eventDeviceAttached();
     } catch (error) {
       this._logger.error("Error while reconnecting to device", {
         data: { event, error },
       });
-      deviceConnection.disconnect();
+      deviceConnection.closeConnection();
     }
   }
 
@@ -533,7 +544,7 @@ export class WebHidTransport implements Transport {
       this._deviceConnectionsPendingReconnection,
     ).find(
       (deviceConnection) =>
-        this.getHidUsbProductId(deviceConnection.device) ===
+        this.getHidUsbProductId(deviceConnection.getDependencies()) ===
         this.getHidUsbProductId(event.device),
     );
 
@@ -552,7 +563,7 @@ export class WebHidTransport implements Transport {
   public destroy() {
     this.stopListeningToConnectionEvents();
     this._deviceConnectionsByHidDevice.forEach((connection) => {
-      connection.disconnect();
+      connection.closeConnection();
     });
     this._deviceConnectionsPendingReconnection.clear();
   }

@@ -84,6 +84,7 @@ export type {
   LogParams,
 } from "@api/logger-subscriber/service/LoggerSubscriberService";
 export {
+  type DeviceApduSender,
   type DeviceConnection,
   type DisconnectHandler,
   type SendApduFnType,
