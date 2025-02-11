@@ -1,16 +1,20 @@
 import React, { useCallback, useEffect, useState } from "react";
 import { Icons, InfiniteLoader, Popin, Text } from "@ledgerhq/native-ui";
 import { useForm } from "_hooks/useForm";
-import { View } from "react-native";
 import { CommandProps } from "_common/types.ts";
 import { inspect } from "util";
 import { CommandResultStatus } from "@ledgerhq/device-management-kit";
+import styled from "styled-components/native";
 
 type SendCommandModalProps = {
   command?: CommandProps<any, any, any>;
   onClose: () => void;
   isOpen: boolean;
 };
+
+const OutputScrollView = styled.ScrollView`
+  max-height: 300px;
+`;
 
 export const SendCommandModal: React.FC<SendCommandModalProps> = ({
   command,
@@ -64,9 +68,9 @@ export const SendCommandModal: React.FC<SendCommandModalProps> = ({
         <command.FormComponent values={formValues} setValue={setFormValue} />
       )}
       {output && (
-        <View>
+        <OutputScrollView>
           <Text>{output}</Text>
-        </View>
+        </OutputScrollView>
       )}
     </Popin>
   );

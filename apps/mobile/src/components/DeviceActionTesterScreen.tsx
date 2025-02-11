@@ -3,13 +3,16 @@ import { useDeviceSessionsContext } from "_providers/deviceSessionsProvider.tsx"
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { RootScreens } from "_navigators/RootNavigator.constants.ts";
 import { DeviceActionProps, ThemeProps } from "_common/types.ts";
-import { SelectableList } from "@ledgerhq/native-ui";
+import { Flex, SelectableList } from "@ledgerhq/native-ui";
 import styled from "styled-components/native";
 import { getDeviceActions } from "_components/DeviceActions.tsx";
 import { SendDeviceActionModal } from "_components/SendDeviceActionModal.tsx";
 import { useNavigation } from "@react-navigation/native";
 
-const Container = styled.SafeAreaView<ThemeProps>`
+const SafeView = styled.SafeAreaView`
+  flex: 1;
+`;
+const Container = styled(Flex)<ThemeProps>`
   background-color: ${({ theme }) => theme.colors.background.main};
   flex: 1;
   padding: 16px;
@@ -56,21 +59,25 @@ export const DeviceActionTesterScreen = () => {
   }, []);
 
   return (
-    <Container>
-      <SelectableList
-        currentValue={selectedDeviceAction?.id}
-        onChange={onSelect}>
-        {deviceActions.map(deviceAction => (
-          <SelectableList.Element key={deviceAction.id} value={deviceAction.id}>
-            {deviceAction.title}
-          </SelectableList.Element>
-        ))}
-      </SelectableList>
-      <SendDeviceActionModal
-        deviceAction={selectedDeviceAction}
-        onClose={onClose}
-        isOpen={isDeviceActionModalVisible}
-      />
-    </Container>
+    <SafeView>
+      <Container>
+        <SelectableList
+          currentValue={selectedDeviceAction?.id}
+          onChange={onSelect}>
+          {deviceActions.map(deviceAction => (
+            <SelectableList.Element
+              key={deviceAction.id}
+              value={deviceAction.id}>
+              {deviceAction.title}
+            </SelectableList.Element>
+          ))}
+        </SelectableList>
+        <SendDeviceActionModal
+          deviceAction={selectedDeviceAction}
+          onClose={onClose}
+          isOpen={isDeviceActionModalVisible}
+        />
+      </Container>
+    </SafeView>
   );
 };

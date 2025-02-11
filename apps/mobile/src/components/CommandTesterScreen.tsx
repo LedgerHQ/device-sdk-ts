@@ -2,14 +2,17 @@ import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { useDmk } from "_providers/dmkProvider.tsx";
 import { useDeviceSessionsContext } from "_providers/deviceSessionsProvider.tsx";
 import { useNavigation } from "@react-navigation/native";
-import { SelectableList } from "@ledgerhq/native-ui";
+import { Flex, SelectableList } from "@ledgerhq/native-ui";
 import { getCommands } from "_components/Commands.tsx";
 import styled from "styled-components/native";
 import { CommandProps, ThemeProps } from "_common/types.ts";
 import { SendCommandModal } from "_components/SendCommandModal.tsx";
 import { RootScreens } from "_navigators/RootNavigator.constants.ts";
 
-const Container = styled.SafeAreaView<ThemeProps>`
+const SafeView = styled.SafeAreaView`
+  flex: 1;
+`;
+const Container = styled(Flex)<ThemeProps>`
   background-color: ${({ theme }) => theme.colors.background.main};
   flex: 1;
   padding: 16px;
@@ -51,19 +54,21 @@ export const CommandTesterScreen: React.FC = () => {
   }, []);
 
   return (
-    <Container>
-      <SelectableList currentValue={selectedCommand?.id} onChange={onSelect}>
-        {commands.map(command => (
-          <SelectableList.Element key={command.id} value={command.id}>
-            {command.title}
-          </SelectableList.Element>
-        ))}
-      </SelectableList>
-      <SendCommandModal
-        command={selectedCommand}
-        onClose={onClose}
-        isOpen={isCommandModalVisible}
-      />
-    </Container>
+    <SafeView>
+      <Container>
+        <SelectableList currentValue={selectedCommand?.id} onChange={onSelect}>
+          {commands.map(command => (
+            <SelectableList.Element key={command.id} value={command.id}>
+              {command.title}
+            </SelectableList.Element>
+          ))}
+        </SelectableList>
+        <SendCommandModal
+          command={selectedCommand}
+          onClose={onClose}
+          isOpen={isCommandModalVisible}
+        />
+      </Container>
+    </SafeView>
   );
 };
