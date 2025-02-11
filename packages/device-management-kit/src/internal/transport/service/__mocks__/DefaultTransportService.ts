@@ -19,4 +19,5 @@ export class DefaultTransportService implements TransportService {
   addTransportInternal = vi.fn();
   getTransport = vi.fn();
   getAllTransports = vi.fn();
+  closeAllTransports = vi.fn();
 }
