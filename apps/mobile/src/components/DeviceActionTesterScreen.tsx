@@ -7,6 +7,7 @@ import { Flex, SelectableList } from "@ledgerhq/native-ui";
 import styled from "styled-components/native";
 import { getDeviceActions } from "_components/DeviceActions.tsx";
 import { SendDeviceActionModal } from "_components/SendDeviceActionModal.tsx";
+import { DeviceStateView } from "_components/DeviceStateView.tsx";
 import { useNavigation } from "@react-navigation/native";
 
 const SafeView = styled.SafeAreaView`
@@ -58,6 +59,10 @@ export const DeviceActionTesterScreen = () => {
     selectDeviceAction(undefined);
   }, []);
 
+  if (!deviceSessionId) {
+    return null;
+  }
+
   return (
     <SafeView>
       <Container>
@@ -77,6 +82,7 @@ export const DeviceActionTesterScreen = () => {
           onClose={onClose}
           isOpen={isDeviceActionModalVisible}
         />
+        <DeviceStateView sessionId={deviceSessionId} />
       </Container>
     </SafeView>
   );

@@ -7,6 +7,7 @@ import { getCommands } from "_components/Commands.tsx";
 import styled from "styled-components/native";
 import { CommandProps, ThemeProps } from "_common/types.ts";
 import { SendCommandModal } from "_components/SendCommandModal.tsx";
+import { DeviceStateView } from "_components/DeviceStateView.tsx";
 import { RootScreens } from "_navigators/RootNavigator.constants.ts";
 
 const SafeView = styled.SafeAreaView`
@@ -53,6 +54,10 @@ export const CommandTesterScreen: React.FC = () => {
     selectCommand(undefined);
   }, []);
 
+  if (!deviceSessionId) {
+    return null;
+  }
+
   return (
     <SafeView>
       <Container>
@@ -68,6 +73,7 @@ export const CommandTesterScreen: React.FC = () => {
           onClose={onClose}
           isOpen={isCommandModalVisible}
         />
+        <DeviceStateView sessionId={deviceSessionId} />
       </Container>
     </SafeView>
   );
