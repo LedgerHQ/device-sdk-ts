@@ -1,0 +1,1 @@
+export const BLE_DISCONNECT_TIMEOUT = 10000;
