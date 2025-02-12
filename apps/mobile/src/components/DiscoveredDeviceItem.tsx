@@ -1,7 +1,10 @@
-import React, {useMemo} from 'react';
-import {Text, Flex, IconsLegacy, Icons} from '@ledgerhq/native-ui';
-import {DeviceModelId, DiscoveredDevice} from '@ledgerhq/device-management-kit';
-import {TouchableOpacity} from 'react-native';
+import React, { useMemo } from "react";
+import { Text, Flex, IconsLegacy, Icons } from "@ledgerhq/native-ui";
+import {
+  DeviceModelId,
+  DiscoveredDevice,
+} from "@ledgerhq/device-management-kit";
+import { TouchableOpacity } from "react-native";
 
 type Props = {
   device: DiscoveredDevice;
@@ -9,11 +12,11 @@ type Props = {
   onPress: (_: DiscoveredDevice) => void;
 };
 
-export const DiscoveredDeviceItem = ({device, onPress}: Props) => {
-  const {available} = device;
+export const DiscoveredDeviceItem = ({ device, onPress }: Props) => {
+  const { available } = device;
 
-  const wording = available ? 'available' : 'unavailable';
-  const color = wording === 'unavailable' ? 'neutral.c60' : 'primary.c80';
+  const wording = available ? "available" : "unavailable";
+  const color = wording === "unavailable" ? "neutral.c60" : "primary.c80";
 
   const deviceIcon = useMemo(() => {
     switch (device.deviceModel.model) {

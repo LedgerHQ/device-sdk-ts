@@ -32,7 +32,7 @@ export function useDeviceSessionState(sessionId: DeviceSessionId) {
         subscription.unsubscribe();
       };
     }
-  }, [sessionId, dmk]);
+  }, [sessionId, dmk, dispatch]);
 
   return deviceSessionState;
 }
