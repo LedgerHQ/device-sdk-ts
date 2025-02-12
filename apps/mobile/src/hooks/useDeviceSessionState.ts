@@ -6,13 +6,13 @@ import {
 } from "@ledgerhq/device-management-kit";
 
 import { useDmk } from "_providers/dmkProvider";
-// import { useDeviceSessionsContext } from "@/providers/DeviceSessionsProvider";
+import { useDeviceSessionsContext } from "_providers/deviceSessionsProvider.tsx";
 
 export function useDeviceSessionState(sessionId: DeviceSessionId) {
   const dmk = useDmk();
   const [deviceSessionState, setDeviceSessionState] =
     useState<DeviceSessionState>();
-  // const { dispatch } = useDeviceSessionsContext();
+  const { dispatch } = useDeviceSessionsContext();
 
   useEffect(() => {
     if (sessionId) {
@@ -22,7 +22,7 @@ export function useDeviceSessionState(sessionId: DeviceSessionId) {
         })
         .subscribe(state => {
           if (state.deviceStatus === DeviceStatus.NOT_CONNECTED) {
-            // dispatch({ type: "remove_session", payload: { sessionId } });
+            dispatch({ type: "remove_session", payload: { sessionId } });
           } else {
             setDeviceSessionState(state);
           }
