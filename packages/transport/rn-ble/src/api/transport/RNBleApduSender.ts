@@ -22,6 +22,8 @@ import { Base64 } from "js-base64";
 import { type Either, Left, Maybe, Nothing, Right } from "purify-ts";
 import { BehaviorSubject, type Subscription } from "rxjs";
 
+const FRAME_HEADER_SIZE = 3;
+
 export type RNBleInternalDevice = {
   id: DeviceId;
   bleDeviceInfos: BleDeviceInfos;
@@ -74,14 +76,17 @@ export class RNBleApduSender
 
   private onReceiveSetupApduResponse(value: Uint8Array) {
     const mtuResponse = new Uint8Array(value);
-    console.log("onReceiveSetupApduResponse:mtuResponse", mtuResponse);
-    // the mtu is the 5th byte of the response
-    const [frameSize] = mtuResponse.slice(5);
-    console.log("onReceiveSetupApduResponse:frameSize", frameSize);
-    if (frameSize) {
-      this._apduSender = Maybe.of(this._apduSenderFactory({ frameSize }));
-      this._isDeviceReady.next(true);
+    const { device } = this._dependencies;
+    // ledger mtu is the 5th byte of the response
+    const [ledgerMtu] = mtuResponse.slice(5);
+    let frameSize = device.mtu;
+
+    if (ledgerMtu && ledgerMtu > device.mtu + FRAME_HEADER_SIZE) {
+      // should never happen since ble mtu is negotiated on device connect with 156 bytes and ledger should return mtu size minus header size
+      frameSize = ledgerMtu;
     }
+    this._apduSender = Maybe.of(this._apduSenderFactory({ frameSize }));
+    this._isDeviceReady.next(true);
   }
 
   private receiveApdu(apdu: Uint8Array) {
@@ -104,8 +109,6 @@ export class RNBleApduSender
   }
 
   private onMonitor(characteristic: Characteristic) {
-    console.log("onMonitor:characteristic", characteristic);
-    console.log("onMonitor:value", characteristic.value);
     if (!characteristic.value) {
       return;
     }
