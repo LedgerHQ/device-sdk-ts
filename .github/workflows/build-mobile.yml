@@ -1,0 +1,36 @@
+name: "[Release] Build mobile sample app"
+
+on:
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: The base branch to build mobile app from
+        required: false
+        default: "develop"
+
+env:
+  FORCE_COLOR: "1"
+  REF: ${{ inputs.ref }}
+  TAG: ${{ inputs.tag }}
+
+permissions:
+  id-token: write
+  contents: write
+
+jobs:
+  build-android:
+    name: Build android app
+    runs-on: ledgerhq-device-sdk
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.inputs.ref }}
+
+      - uses: LedgerHQ/device-sdk-ts/.github/actions/setup-toolchain-composite@develop
+
+      - name: Build
+        id: build-smpl
+        uses: maierj/fastlane-action@v3.1.0
+        with:
+          lane: build
+          subdirectory: 'apps/mobile/android/'
