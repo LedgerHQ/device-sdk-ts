@@ -1,9 +1,4 @@
-import {
-  AppState,
-  type AppStateStatus,
-  PermissionsAndroid,
-  Platform,
-} from "react-native";
+import { PermissionsAndroid, Platform } from "react-native";
 import { type BleError, BleManager, type Device } from "react-native-ble-plx";
 import {
   type ApduReceiverServiceFactory,
@@ -34,7 +29,11 @@ import {
   switchMap,
 } from "rxjs";
 
-import { BLE_DISCONNECT_TIMEOUT } from "@api/model/Const";
+import {
+  BLE_DISCONNECT_TIMEOUT,
+  CONNECTION_LOST_DELAY,
+  DEFAULT_MTU,
+} from "@api/model/Const";
 import {
   DeviceConnectionNotFound,
   InternalDeviceNotFound,
@@ -46,8 +45,6 @@ import {
 } from "@api/transport/RNBleApduSender";
 
 export const rnBleTransportIdentifier = "RN_BLE";
-
-const CONNECTION_LOST_DELAY = 5e3; // 5s;
 
 export class RNBleTransport implements Transport {
   private _logger: LoggerPublisherService;
@@ -74,31 +71,6 @@ export class RNBleTransport implements Transport {
     this._internalDevicesById = new Map();
     this._deviceConnectionsById = new Map();
     this.requestPermission();
-
-    AppState.addEventListener("change", (nextState) => {
-      const isBackground = (s: AppStateStatus) =>
-        ["background", "inactive"].includes(s);
-
-      if (
-        isBackground(nextState) ||
-        (isBackground(AppState.currentState) && nextState === "active")
-      ) {
-        // TODO: Test if devices are still connected, if not try a reconnection with a timeout
-        // if timeout, close connection and remove device from internalDevicesById and deviceConnectionsById
-
-        // FIX: Temporary solution while we implement a reconnection logic after app state change
-        this._deviceConnectionsById.forEach((deviceConnection) => {
-          try {
-            deviceConnection.closeConnection();
-          } catch (error) {
-            console.error(
-              "error trying to close connection after app state changex",
-              error,
-            );
-          }
-        });
-      }
-    });
   }
 
   /**
@@ -161,7 +133,9 @@ export class RNBleTransport implements Transport {
         let device: Device;
 
         try {
-          device = await this._manager.connectToDevice(params.deviceId);
+          device = await this._manager.connectToDevice(params.deviceId, {
+            requestMTU: DEFAULT_MTU,
+          });
           await this._manager.discoverAllServicesAndCharacteristicsForDevice(
             params.deviceId,
           );
@@ -548,21 +522,18 @@ export class RNBleTransport implements Transport {
       deviceConnection.eventDeviceDetached();
     });
 
-    // TODO: Remove this when ready
-    this._logger.info("new disconnected handler");
+    let reconnectedDevice: Device;
 
     from([0])
       .pipe(
         switchMap(async () => {
-          // TODO: Remove this when ready
-          this._logger.info(
-            `[_handleDeviceDisconnected] retrying to connect to device (${device.id})`,
-          );
-
           try {
-            await device.connect();
-            await device.discoverAllServicesAndCharacteristics();
-            await this._handleDeviceReconnected(device);
+            reconnectedDevice = await device.connect({
+              requestMTU: DEFAULT_MTU,
+            });
+            reconnectedDevice =
+              await device.discoverAllServicesAndCharacteristics();
+            await this._handleDeviceReconnected(reconnectedDevice);
           } catch (e) {
             this._logger.error(
               "[_handleDeviceDisconnected] Reconnecting failed",
