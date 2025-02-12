@@ -1,5 +1,5 @@
 import React from "react";
-import { Flex, Text } from "@ledgerhq/native-ui";
+import { Text } from "@ledgerhq/native-ui";
 import { useDeviceSessionState } from "_hooks/useDeviceSessionState";
 
 export const DeviceStateView: React.FC<{ sessionId: string }> = ({
@@ -7,9 +7,5 @@ export const DeviceStateView: React.FC<{ sessionId: string }> = ({
 }) => {
   const state = useDeviceSessionState(sessionId);
 
-  return (
-    <Flex flexDirection="row">
-      <Text>Device state: {state?.deviceStatus}</Text>;
-    </Flex>
-  );
+  return <Text fontWeight="semiBold">Device state: {state?.deviceStatus}</Text>;
 };

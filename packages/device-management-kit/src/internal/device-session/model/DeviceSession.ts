@@ -113,16 +113,6 @@ export class DeviceSession {
       triggersDisconnection: false,
     },
   ): Promise<Either<DmkError, ApduResponse>> {
-    // DONE
-    /**
-     * 1. Turn off the refresher
-     * 2. Wait for the state to be ready
-     * 3. Set the state to busy
-     * 4. Send apdu and wait for the response
-     * 5. Set the state to connected
-     * 6. Turn on the refresher
-     */
-
     if (!options.isPolling) {
       this.toggleRefresher(false);
       await this.waitUntilReady();
