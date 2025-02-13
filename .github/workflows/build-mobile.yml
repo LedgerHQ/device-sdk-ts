@@ -28,9 +28,34 @@ jobs:
 
       - uses: LedgerHQ/device-sdk-ts/.github/actions/setup-toolchain-composite@develop
 
-      - name: Build
-        id: build-smpl
-        uses: maierj/fastlane-action@v3.1.0
+      - name: Set Up JDK
+        uses: actions/setup-java@v4
         with:
-          lane: build
-          subdirectory: 'apps/mobile/android/'
+          distribution: 'zulu' # See 'Supported distributions' for available options
+          java-version: '20'
+          cache: 'gradle'
+
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Build libs
+        run: pnpm build:libs
+
+      - name: Build APK
+        run: ./gradlew assembleRelease
+        working-directory: ./apps/mobile/android
+
+      - name: Upload APK to github
+        uses: actions/upload-artifact@v4
+        with:
+          name: dmk-sample.apk
+          path: ./apps/mobile/android/app/build/outputs/apk/release/app-release.apk
+
+      - name: Upload APK to firebase
+        uses: wzieba/Firebase-Distribution-Github-Action@v1
+        with:
+          appId: ${{secrets.FIREBASE_APP_ID}}
+          serviceCredentialsFileContent: ${{ secrets.FIREBASE_CREDENTIAL_FILE_CONTENT }}
+          groups: dxp
+          file: ./apps/mobile/android/app/build/outputs/apk/release/app-release.apk
+
