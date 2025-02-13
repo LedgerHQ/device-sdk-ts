@@ -1,6 +1,6 @@
 import { Subject } from "rxjs";
 
-import { type DeviceId, type DeviceModel } from "@api/device/DeviceModel";
+import { type DeviceId, DeviceModel } from "@api/device/DeviceModel";
 import { deviceModelStubBuilder } from "@api/device-model/model/DeviceModel.stub";
 import { type TransportDiscoveredDevice } from "@api/transport/model/TransportDiscoveredDevice";
 import { type DiscoveredDevice, type Transport } from "@api/types";
@@ -27,11 +27,11 @@ function makeMockTransport(props: Partial<Transport>): Transport {
 
 const mockInternalDeviceModel = deviceModelStubBuilder();
 function makeMockDeviceModel(id: DeviceId): DeviceModel {
-  return {
+  return new DeviceModel({
     id,
     model: mockInternalDeviceModel.id,
     name: mockInternalDeviceModel.productName,
-  };
+  });
 }
 
 function setup2MockTransports() {
@@ -123,7 +123,9 @@ describe("ListenToKnownDevicesUseCase", () => {
       expect(observedDiscoveredDevices[0]).toEqual([
         {
           id: "transportA-device1",
+          available: true,
           deviceModel: makeMockDeviceModel("transportA-device1"),
+          name: "Ledger Nano X",
           transport: "mock",
         },
       ]);
@@ -139,11 +141,15 @@ describe("ListenToKnownDevicesUseCase", () => {
           id: "transportA-device1",
           deviceModel: makeMockDeviceModel("transportA-device1"),
           transport: "mock",
+          available: true,
+          name: "Ledger Nano X",
         },
         {
           id: "transportA-device2",
           deviceModel: makeMockDeviceModel("transportA-device2"),
           transport: "mock",
+          available: true,
+          name: "Ledger Nano X",
         },
       ]);
 
@@ -157,6 +163,8 @@ describe("ListenToKnownDevicesUseCase", () => {
           id: "transportA-device2",
           deviceModel: makeMockDeviceModel("transportA-device2"),
           transport: "mock",
+          available: true,
+          name: "Ledger Nano X",
         },
       ]);
 
@@ -198,8 +206,10 @@ describe("ListenToKnownDevicesUseCase", () => {
       expect(observedDiscoveredDevices[0]).toEqual([
         {
           id: "transportA-device1",
+          available: true,
           deviceModel: makeMockDeviceModel("transportA-device1"),
           transport: "mock",
+          name: "Ledger Nano X",
         },
       ]);
 
@@ -245,6 +255,8 @@ describe("ListenToKnownDevicesUseCase", () => {
           id: "transportA-device1",
           deviceModel: makeMockDeviceModel("transportA-device1"),
           transport: "mock",
+          available: true,
+          name: "Ledger Nano X",
         },
       ]);
 
@@ -258,11 +270,15 @@ describe("ListenToKnownDevicesUseCase", () => {
           id: "transportA-device1",
           deviceModel: makeMockDeviceModel("transportA-device1"),
           transport: "mock",
+          available: true,
+          name: "Ledger Nano X",
         },
         {
           id: "transportB-device1",
           deviceModel: makeMockDeviceModel("transportB-device1"),
           transport: "mock",
+          available: true,
+          name: "Ledger Nano X",
         },
       ]);
 
@@ -277,16 +293,22 @@ describe("ListenToKnownDevicesUseCase", () => {
           id: "transportA-device1",
           deviceModel: makeMockDeviceModel("transportA-device1"),
           transport: "mock",
+          available: true,
+          name: "Ledger Nano X",
         },
         {
           id: "transportB-device1",
           deviceModel: makeMockDeviceModel("transportB-device1"),
           transport: "mock",
+          available: true,
+          name: "Ledger Nano X",
         },
         {
           id: "transportB-device2",
           deviceModel: makeMockDeviceModel("transportB-device2"),
           transport: "mock",
+          available: true,
+          name: "Ledger Nano X",
         },
       ]);
 
@@ -298,11 +320,15 @@ describe("ListenToKnownDevicesUseCase", () => {
           id: "transportB-device1",
           deviceModel: makeMockDeviceModel("transportB-device1"),
           transport: "mock",
+          available: true,
+          name: "Ledger Nano X",
         },
         {
           id: "transportB-device2",
           deviceModel: makeMockDeviceModel("transportB-device2"),
           transport: "mock",
+          available: true,
+          name: "Ledger Nano X",
         },
       ]);
 

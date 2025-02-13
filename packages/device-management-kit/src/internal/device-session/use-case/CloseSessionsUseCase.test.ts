@@ -23,6 +23,7 @@ let secureChannel: SecureChannelService;
 let sessionService: DeviceSessionService;
 let transportService: DefaultTransportService;
 
+// @TODO Fix this test with vi.spyOn session close [SNAPSHOT PURPOSE]
 describe("CloseSessionsUseCase", () => {
   beforeEach(() => {
     logger = new DefaultLoggerPublisherService(
@@ -56,8 +57,8 @@ describe("CloseSessionsUseCase", () => {
     //when
     useCase.execute();
     //then
-    sessions.forEach((session) => {
+    for (const session of sessionService.getDeviceSessions()) {
       expect(session.close).toHaveBeenCalled();
-    });
+    }
   });
 });

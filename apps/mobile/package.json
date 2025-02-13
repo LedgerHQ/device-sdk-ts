@@ -8,8 +8,7 @@
     "ios:setup": "bundle install && pnpm pod",
     "pod": "cd ios && bundle exec pod install --repo-update",
     "lint": "eslint .",
-    "start": "react-native start",
-    "test": "jest"
+    "start": "react-native start"
   },
   "dependencies": {
     "@ledgerhq/device-management-kit": "workspace:*",
@@ -48,15 +47,12 @@
     "@react-native/metro-config": "0.76.6",
     "@react-native/typescript-config": "0.76.6",
     "@tsconfig/react-native": "^3.0.5",
-    "@types/jest": "^29.5.14",
     "@types/react": "^18.2.6",
     "@types/react-test-renderer": "^18.0.0",
     "@types/styled-components": "^5.1.25",
     "@types/styled-components-react-native": "^5.2.5",
-    "babel-jest": "^29.6.3",
     "babel-plugin-module-resolver": "^5.0.2",
     "eslint": "^8.19.0",
-    "jest": "^29.6.3",
     "prettier": "2.8.8",
     "react-native-get-random-values": "^1.11.0",
     "react-test-renderer": "18.3.1",

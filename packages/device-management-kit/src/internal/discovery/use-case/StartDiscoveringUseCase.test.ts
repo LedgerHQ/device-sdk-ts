@@ -65,6 +65,8 @@ describe("StartDiscoveringUseCase", () => {
             expect(discoveredDevice).toStrictEqual({
               id: "internal-discovered-device-id",
               transport: "USB",
+              available: true,
+              name: "productName",
               deviceModel: new DeviceModel({
                 id: "internal-discovered-device-id",
                 model: "nanoSP" as DeviceModelId,
