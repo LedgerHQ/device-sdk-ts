@@ -107,7 +107,6 @@ internal class DefaultAndroidUsbTransport(
         return if (device == null) {
             InternalConnectionResult.ConnectionError(error = InternalConnectionResult.Failure.DeviceNotFound)
         } else {
-
             val establishConnectionFn = {
                 val sessionId = generateSessionId(id = device.deviceId.toString())
                 val newConnection =
