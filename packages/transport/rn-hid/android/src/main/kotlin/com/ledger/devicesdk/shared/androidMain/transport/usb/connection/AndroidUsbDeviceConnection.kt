@@ -14,7 +14,7 @@ import android.hardware.usb.UsbManager
 import android.hardware.usb.UsbRequest
 import com.ledger.devicesdk.shared.api.apdu.SendApduFailureReason
 import com.ledger.devicesdk.shared.api.apdu.SendApduResult
-import com.ledger.devicesdk.shared.androidMainInternal.transport.deviceconnection.DeviceConnection
+import com.ledger.devicesdk.shared.androidMainInternal.transport.deviceconnection.DeviceApduSender
 import com.ledger.devicesdk.shared.api.utils.toHexadecimalString
 import com.ledger.devicesdk.shared.androidMainInternal.transport.USB_MTU
 import com.ledger.devicesdk.shared.internal.transport.framer.FramerService
@@ -29,13 +29,20 @@ private const val USB_TIMEOUT = 500
 
 private const val DEFAULT_USB_INTERFACE = 0
 
+data class AndroidUsbDeviceApduSenderDependencies(
+    val usbManager: UsbManager,
+    val usbDevice: UsbDevice,
+    val request: UsbRequest,
+    val ioDispatcher: CoroutineDispatcher,
+)
+
 internal class AndroidUsbDeviceConnection(
     private val usbManager: UsbManager,
     internal val usbDevice: UsbDevice,
     private val framerService: FramerService,
     private val request: UsbRequest,
     private val ioDispatcher: CoroutineDispatcher,
-) : DeviceConnection {
+) : DeviceApduSender<AndroidUsbDeviceApduSenderDependencies> {
     override suspend fun send(apdu: ByteArray): SendApduResult =
         try {
             withContext(context = ioDispatcher) {
@@ -115,4 +122,20 @@ internal class AndroidUsbDeviceConnection(
     }
 
     private fun generateChannelId(): ByteArray = Random.nextInt(0, until = Int.MAX_VALUE).to2BytesArray()
+
+    override fun setDependencies(dependencies: AndroidUsbDeviceApduSenderDependencies) {
+        TODO("Not yet implemented")
+    }
+
+    override fun getDependencies(): AndroidUsbDeviceApduSenderDependencies {
+        TODO("Not yet implemented")
+    }
+
+    override suspend fun setupConnection() {
+        TODO("Not yet implemented")
+    }
+
+    override suspend fun closeConnection() {
+        TODO("Not yet implemented")
+    }
 }
