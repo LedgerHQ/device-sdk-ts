@@ -15,7 +15,7 @@ import androidx.core.content.ContextCompat
 import com.ledger.devicesdk.shared.androidMain.transport.usb.AndroidUsbTransport
 import com.ledger.devicesdk.shared.androidMain.transport.usb.model.UsbPermissionEvent
 import com.ledger.devicesdk.shared.androidMain.transport.usb.utils.getAndroidUsbDevice
-import com.ledger.devicesdk.shared.androidMain.transport.usb.utils.toUsbDevice
+import com.ledger.devicesdk.shared.androidMain.transport.usb.utils.toLedgerUsbDevice
 import com.ledger.devicesdk.shared.internal.utils.Controller
 import timber.log.Timber
 
@@ -60,7 +60,7 @@ internal class UsbPermissionReceiver(
         if (ACTION_USB_PERMISSION == intent.action) {
             synchronized(this) {
                 val androidUsbDevice = intent.getAndroidUsbDevice()
-                val device = androidUsbDevice.toUsbDevice()
+                val device = androidUsbDevice.toLedgerUsbDevice()
                 if (device != null) {
                     if (intent.getBooleanExtra(UsbManager.EXTRA_PERMISSION_GRANTED, false)) {
                         Timber.d("permission granted")

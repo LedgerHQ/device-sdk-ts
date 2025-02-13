@@ -7,7 +7,7 @@ package com.ledger.devicesdk.shared.androidMain.transport.usb.model
 
 import com.ledger.devicesdk.shared.api.device.LedgerDevice
 
-internal class UsbDevice(
+internal class LedgerUsbDevice(
     val uid: String,
     val name: String,
     val vendorId: VendorId,

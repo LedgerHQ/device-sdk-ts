@@ -12,11 +12,15 @@ import android.hardware.usb.UsbEndpoint
 import android.hardware.usb.UsbInterface
 import android.hardware.usb.UsbManager
 import android.hardware.usb.UsbRequest
+import com.ledger.devicesdk.shared.androidMain.transport.usb.model.LedgerUsbDevice
 import com.ledger.devicesdk.shared.api.apdu.SendApduFailureReason
 import com.ledger.devicesdk.shared.api.apdu.SendApduResult
-import com.ledger.devicesdk.shared.androidMainInternal.transport.deviceconnection.DeviceConnection
+import com.ledger.devicesdk.shared.androidMainInternal.transport.deviceconnection.DeviceApduSender
 import com.ledger.devicesdk.shared.api.utils.toHexadecimalString
 import com.ledger.devicesdk.shared.androidMainInternal.transport.USB_MTU
+import com.ledger.devicesdk.shared.internal.service.logger.LoggerService
+import com.ledger.devicesdk.shared.internal.service.logger.buildSimpleErrorLogInfo
+import com.ledger.devicesdk.shared.internal.service.logger.buildSimpleInfoLogInfo
 import com.ledger.devicesdk.shared.internal.transport.framer.FramerService
 import com.ledger.devicesdk.shared.internal.transport.framer.to2BytesArray
 import java.nio.ByteBuffer
@@ -29,15 +33,23 @@ private const val USB_TIMEOUT = 500
 
 private const val DEFAULT_USB_INTERFACE = 0
 
-internal class AndroidUsbDeviceConnection(
+internal class AndroidUsbApduSender(
+    override val dependencies: Dependencies,
     private val usbManager: UsbManager,
-    internal val usbDevice: UsbDevice,
     private val framerService: FramerService,
     private val request: UsbRequest,
     private val ioDispatcher: CoroutineDispatcher,
-) : DeviceConnection {
+    private val loggerService: LoggerService,
+) : DeviceApduSender<AndroidUsbApduSender.Dependencies> {
+
+    data class Dependencies(
+        val usbDevice: UsbDevice,
+        val ledgerUsbDevice: LedgerUsbDevice,
+    )
+
     override suspend fun send(apdu: ByteArray): SendApduResult =
         try {
+            val usbDevice = dependencies.usbDevice
             withContext(context = ioDispatcher) {
                 val usbInterface = usbDevice.getInterface(DEFAULT_USB_INTERFACE)
                 val androidToUsbEndpoint = usbInterface.firstEndpointOrThrow { it == UsbConstants.USB_DIR_OUT }
@@ -62,6 +74,9 @@ internal class AndroidUsbDeviceConnection(
             }
         } catch (e: NoSuchElementException) {
             SendApduResult.Failure(reason = SendApduFailureReason.NoUsbEndpointFound)
+        } catch (e: Exception) {
+            loggerService.log(buildSimpleErrorLogInfo("AndroidUsbApduSender", "error in send: $e"))
+            SendApduResult.Failure(reason = SendApduFailureReason.Unknown)
         }
 
     private fun transmitApdu(
@@ -115,4 +130,12 @@ internal class AndroidUsbDeviceConnection(
     }
 
     private fun generateChannelId(): ByteArray = Random.nextInt(0, until = Int.MAX_VALUE).to2BytesArray()
+
+    override suspend fun setupConnection() {
+        // Nothing to do here
+    }
+
+    override suspend fun closeConnection() {
+        // Nothing to do here
+    }
 }

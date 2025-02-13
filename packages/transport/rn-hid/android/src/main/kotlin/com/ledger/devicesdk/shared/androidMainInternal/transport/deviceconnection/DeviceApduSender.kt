@@ -7,6 +7,10 @@ package com.ledger.devicesdk.shared.androidMainInternal.transport.deviceconnecti
 
 import com.ledger.devicesdk.shared.api.apdu.SendApduResult
 
-internal interface DeviceConnection {
+internal interface DeviceApduSender<Dependencies> {
     suspend fun send(apdu: ByteArray): SendApduResult
+    suspend fun setupConnection()
+    suspend fun closeConnection()
+
+    val dependencies: Dependencies
 }
