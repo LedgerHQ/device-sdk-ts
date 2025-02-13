@@ -1,0 +1,18 @@
+{
+  "extends": "@react-native/typescript-config/tsconfig.json",
+  "compilerOptions": {
+    "baseUrl": ".",
+    "paths": {
+      "_providers/*": ["./src/providers/*"],
+      "_components/*": ["./src/components/*"],
+      "_hooks/*": ["./src/hooks/*"],
+      "_navigators/*": ["./src/navigators/*"],
+      "_reducers/*": ["./src/reducers/*"],
+      "_services/*": ["./src/services/*"],
+      "_common/*": ["./src/common/*"]
+    },
+    "experimentalDecorators": true,
+    "resolveJsonModule": true,
+    "moduleSuffixes": [".ios", ".android", ""]
+  }
+}

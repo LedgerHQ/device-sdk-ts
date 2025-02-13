@@ -83,6 +83,7 @@ export type {
   LoggerSubscriberService,
   LogParams,
 } from "@api/logger-subscriber/service/LoggerSubscriberService";
+export { type DeviceApduSender } from "@api/transport/model/DeviceApduSender";
 export {
   type DeviceConnection,
   type DisconnectHandler,

@@ -18,4 +18,6 @@ export type TransportDiscoveredDevice = {
   id: DeviceId;
   deviceModel: TransportDeviceModel;
   transport: TransportIdentifier;
+  name?: string;
+  available?: boolean;
 };
