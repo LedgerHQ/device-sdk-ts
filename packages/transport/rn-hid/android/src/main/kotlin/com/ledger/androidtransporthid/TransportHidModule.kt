@@ -21,11 +21,11 @@ import com.ledger.devicesdk.shared.api.discovery.DiscoveryDevice
 import com.ledger.devicesdk.shared.internal.connection.InternalConnectedDevice
 import com.ledger.devicesdk.shared.internal.connection.InternalConnectionResult
 import com.ledger.devicesdk.shared.internal.event.SdkEventDispatcher
-import com.ledger.devicesdk.shared.internal.service.logger.LogInfo
 import com.ledger.devicesdk.shared.internal.service.logger.LoggerService
 import com.ledger.devicesdk.shared.internal.transport.TransportEvent
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
@@ -33,7 +33,10 @@ import timber.log.Timber
 import kotlin.random.Random
 import kotlin.time.Duration.Companion.milliseconds
 
-class TransportHidModule(private val reactContext: ReactApplicationContext) :
+class TransportHidModule(
+    private val reactContext: ReactApplicationContext,
+    private val coroutineScope: CoroutineScope
+) :
     ReactContextBaseJavaModule(reactContext), LifecycleEventListener {
     override fun getName(): String = "RCTTransportHIDModule"
 
@@ -41,6 +44,7 @@ class TransportHidModule(private val reactContext: ReactApplicationContext) :
     private var usbAttachedReceiverController: UsbAttachedReceiverController? = null
     private var usbDetachedReceiverController: UsbDetachedReceiverController? = null
     private var sdkEventDispatcher: SdkEventDispatcher = SdkEventDispatcher()
+    private var eventDispatcherListeningJob: Job
     private val loggerService: LoggerService =
         LoggerService { info ->
             Timber.tag("RNHIDModule " + info.tag).d(info.message)
@@ -97,17 +101,18 @@ class TransportHidModule(private val reactContext: ReactApplicationContext) :
     init {
         reactContext.addLifecycleEventListener(this)
         Timber.plant(Timber.DebugTree())
-        sdkEventDispatcher.listen().onEach {
-            when(it) {
+        eventDispatcherListeningJob = sdkEventDispatcher.listen().onEach {
+            when (it) {
                 is TransportEvent.DeviceConnectionLost -> {
                     Timber.tag("RNHIDModule")
                     Timber.i("TransportEvent.DeviceConnectionLost ${it.id}")
                     connectedDevices.removeIf { device -> device.id == it.id }
                     sendEvent(reactContext, BridgeEvents.DeviceDisconnected(it))
                 }
+
                 else -> {}
             }
-        }.launchIn(CoroutineScope(Dispatchers.Default))
+        }.launchIn(scope = coroutineScope)
     }
 
     override fun onHostResume() {}
@@ -118,9 +123,12 @@ class TransportHidModule(private val reactContext: ReactApplicationContext) :
         usbPermissionReceiver?.stop()
         usbAttachedReceiverController?.stop()
         usbDetachedReceiverController?.stop()
+        eventDispatcherListeningJob.cancel()
+        transport?.stopScan()
     }
 
     private var discoveryCount = 0
+
     @ReactMethod
     fun startScan(promise: Promise) {
         discoveryCount += 1
@@ -133,7 +141,7 @@ class TransportHidModule(private val reactContext: ReactApplicationContext) :
                 discoveryDevices.clear()
                 discoveryDevices += it
                 sendEvent(reactContext, BridgeEvents.DiscoveredDevices(it))
-            }.launchIn(CoroutineScope(Dispatchers.Default))
+            }.launchIn(scope = coroutineScope)
             promise.resolve(null)
         } catch (e: Exception) {
             promise.reject(e);
@@ -163,13 +171,14 @@ class TransportHidModule(private val reactContext: ReactApplicationContext) :
             return
         }
 
-        CoroutineScope(Dispatchers.Default).launch {
+        coroutineScope.launch {
             try {
                 val connectionResult = transport!!.connect(device)
-                when(connectionResult) {
+                when (connectionResult) {
                     is InternalConnectionResult.Connected -> {
                         connectedDevices.add(connectionResult.device)
                     }
+
                     else -> {}
                 }
                 promise.resolve(connectionResult.toWritableMap())
@@ -181,7 +190,7 @@ class TransportHidModule(private val reactContext: ReactApplicationContext) :
 
     @ReactMethod
     fun disconnectDevice(sessionId: String, promise: Promise) {
-        CoroutineScope(Dispatchers.Default).launch {
+        coroutineScope.launch {
             try {
                 transport!!.disconnect(sessionId)
                 promise.resolve(null);
@@ -199,7 +208,7 @@ class TransportHidModule(private val reactContext: ReactApplicationContext) :
                 promise.reject(Exception("[TransportHidModule][sendApdu] Device not found"))
                 return
             }
-            CoroutineScope(Dispatchers.Default).launch {
+            coroutineScope.launch {
                 try {
                     val apdu: ByteArray = Base64.decode(apduBase64, Base64.DEFAULT)
                     val res = device.sendApduFn(apdu)
