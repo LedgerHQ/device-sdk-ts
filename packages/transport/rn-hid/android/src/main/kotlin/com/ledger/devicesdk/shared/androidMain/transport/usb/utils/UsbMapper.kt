@@ -13,9 +13,9 @@ import com.ledger.devicesdk.shared.api.discovery.ConnectivityType
 import com.ledger.devicesdk.shared.api.discovery.DiscoveryDevice
 import com.ledger.devicesdk.shared.androidMain.transport.usb.model.VendorId
 import com.ledger.devicesdk.shared.androidMain.transport.usb.model.ProductId
-import com.ledger.devicesdk.shared.androidMain.transport.usb.model.UsbDevice
+import com.ledger.devicesdk.shared.androidMain.transport.usb.model.LedgerUsbDevice
 
-internal fun UsbDevice.toScannedDevice() =
+internal fun LedgerUsbDevice.toScannedDevice() =
    DiscoveryDevice(
         uid = this.uid,
         name = this.name,
@@ -23,15 +23,15 @@ internal fun UsbDevice.toScannedDevice() =
         connectivityType = ConnectivityType.Usb,
     )
 
-internal fun List<android.hardware.usb.UsbDevice>.toUsbDevices(): List<UsbDevice> = mapNotNull { it.toUsbDevice() }
+internal fun List<android.hardware.usb.UsbDevice>.toUsbDevices(): List<LedgerUsbDevice> = mapNotNull { it.toLedgerUsbDevice() }
 
-internal fun android.hardware.usb.UsbDevice.toUsbDevice(): UsbDevice? {
+internal fun android.hardware.usb.UsbDevice.toLedgerUsbDevice(): LedgerUsbDevice? {
     val productId = ProductId(this.productId)
     val vendorId = VendorId(this.vendorId)
 
     val ledgerDevice = productId.toLedgerDevice()
     return if (vendorId.id == LedgerDevice.LEDGER_USB_VENDOR_ID.toProductIdInt() && ledgerDevice != null) {
-        return UsbDevice(
+        return LedgerUsbDevice(
             uid = this.deviceId.toString(),
             name = ledgerDevice.name,
             vendorId = vendorId,
