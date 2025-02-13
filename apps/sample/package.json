@@ -25,6 +25,7 @@
     "@ledgerhq/device-transport-kit-mockserver": "workspace:*",
     "@ledgerhq/device-transport-kit-web-ble": "workspace:*",
     "@ledgerhq/device-transport-kit-web-hid": "workspace:*",
+    "@ledgerhq/device-transport-kit-speculos": "workspace:*",
     "@ledgerhq/react-ui": "^0.17.0",
     "@playwright/test": "^1.49.0",
     "@sentry/nextjs": "^8.42.0",
