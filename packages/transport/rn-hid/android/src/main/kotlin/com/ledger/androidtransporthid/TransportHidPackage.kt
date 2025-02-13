@@ -6,11 +6,16 @@ import com.facebook.react.bridge.NativeModule
 import com.facebook.react.bridge.ReactApplicationContext
 import com.facebook.react.uimanager.ReactShadowNode
 import com.facebook.react.uimanager.ViewManager
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 
-class TransportHidPackage(): ReactPackage {
-    override fun createNativeModules(context: ReactApplicationContext): MutableList<NativeModule> {
+class TransportHidPackage() : ReactPackage {
+    override fun createNativeModules(reactContext: ReactApplicationContext): MutableList<NativeModule> {
         return mutableListOf(
-            TransportHidModule(context)
+            TransportHidModule(
+                reactContext = reactContext,
+                coroutineScope = CoroutineScope(Dispatchers.Default)
+            )
         )
     }
 
