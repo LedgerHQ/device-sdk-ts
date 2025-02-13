@@ -45,4 +45,5 @@ export const ETHEREUM_PLUGINS: string[] = [
   "Swell",
   "Thales",
   "Yearn",
+  "Uniswap",
 ];

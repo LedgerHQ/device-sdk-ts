@@ -25,6 +25,8 @@ import { type TransactionContextLoader } from "./transaction/domain/TransactionC
 import { type TrustedNameContextLoader } from "./trusted-name/domain/TrustedNameContextLoader";
 import { typedDataTypes } from "./typed-data/di/typedDataTypes";
 import type { TypedDataContextLoader } from "./typed-data/domain/TypedDataContextLoader";
+import { uniswapTypes } from "./uniswap/di/uniswapTypes";
+import { type UniswapContextLoader } from "./uniswap/domain/UniswapContextLoader";
 import { type ContextModule } from "./ContextModule";
 import { makeContainer } from "./di";
 
@@ -53,6 +55,9 @@ export class DefaultContextModule implements ContextModule {
       this._container.get<TokenContextLoader>(tokenTypes.TokenContextLoader),
       this._container.get<TransactionContextLoader>(
         transactionTypes.TransactionContextLoader,
+      ),
+      this._container.get<UniswapContextLoader>(
+        uniswapTypes.UniswapContextLoader,
       ),
     ];
   }
