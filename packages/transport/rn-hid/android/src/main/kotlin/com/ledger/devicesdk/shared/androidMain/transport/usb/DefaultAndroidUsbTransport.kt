@@ -6,6 +6,7 @@
 package com.ledger.devicesdk.shared.androidMain.transport.usb
 
 import android.app.Application
+import android.hardware.usb.UsbDevice
 import android.hardware.usb.UsbManager
 import android.hardware.usb.UsbRequest
 import com.ledger.devicesdk.shared.api.discovery.DiscoveryDevice
@@ -13,15 +14,19 @@ import com.ledger.devicesdk.shared.internal.connection.InternalConnectedDevice
 import com.ledger.devicesdk.shared.internal.connection.InternalConnectionResult
 import com.ledger.devicesdk.shared.internal.event.SdkEventDispatcher
 import com.ledger.devicesdk.shared.internal.service.logger.LoggerService
-import com.ledger.devicesdk.shared.internal.service.logger.buildSimpleInfoLogInfo
 import com.ledger.devicesdk.shared.internal.transport.TransportEvent
 import com.ledger.devicesdk.shared.internal.transport.framer.FramerService
-import com.ledger.devicesdk.shared.androidMain.transport.usb.connection.AndroidUsbDeviceConnection
-import com.ledger.devicesdk.shared.androidMain.transport.usb.model.UsbDevice
+import com.ledger.devicesdk.shared.androidMain.transport.usb.connection.AndroidUsbApduSender
+import com.ledger.devicesdk.shared.androidMain.transport.usb.model.LedgerUsbDevice
 import com.ledger.devicesdk.shared.androidMain.transport.usb.model.UsbPermissionEvent
 import com.ledger.devicesdk.shared.androidMain.transport.usb.model.UsbState
+import com.ledger.devicesdk.shared.androidMain.transport.usb.utils.toLedgerUsbDevice
 import com.ledger.devicesdk.shared.androidMain.transport.usb.utils.toScannedDevice
 import com.ledger.devicesdk.shared.androidMain.transport.usb.utils.toUsbDevices
+import com.ledger.devicesdk.shared.androidMainInternal.transport.deviceconnection.DeviceConnection
+import com.ledger.devicesdk.shared.internal.service.logger.buildSimpleErrorLogInfo
+import com.ledger.devicesdk.shared.internal.service.logger.buildSimpleInfoLogInfo
+import com.ledger.devicesdk.shared.internal.service.logger.buildSimpleWarningLogInfo
 import kotlin.time.Duration
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
@@ -32,11 +37,15 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.flow.onStart
+import kotlinx.coroutines.flow.shareIn
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
+import kotlin.math.log
+import kotlin.time.Duration.Companion.seconds
 
 internal class DefaultAndroidUsbTransport(
     private val application: Application,
@@ -49,12 +58,17 @@ internal class DefaultAndroidUsbTransport(
 ) : AndroidUsbTransport {
     private val scope = CoroutineScope(coroutineDispatcher + SupervisorJob())
     private val internalUsbEventFlow: MutableSharedFlow<UsbState> = MutableSharedFlow()
-    private val internalUsbPermissionEventFlow: MutableSharedFlow<UsbPermissionEvent> = MutableSharedFlow()
+    private val internalUsbPermissionEventFlow: MutableSharedFlow<UsbPermissionEvent> =
+        MutableSharedFlow()
 
     @Suppress("BackingPropertyName")
-    private var _scanStateFlow: MutableStateFlow<List<DiscoveryDevice>> = MutableStateFlow(emptyList())
+    private var _scanStateFlow: MutableStateFlow<List<DiscoveryDevice>> =
+        MutableStateFlow(emptyList())
     private var discoveryJob: Job? = null
-    private val usbConnections: MutableMap<String, AndroidUsbDeviceConnection> = mutableMapOf()
+    private val usbConnections: MutableMap<String, DeviceConnection<AndroidUsbApduSender.Dependencies>> =
+        mutableMapOf()
+    private val usbConnectionsPendingReconnection: MutableSet<DeviceConnection<AndroidUsbApduSender.Dependencies>> =
+        mutableSetOf()
 
     override fun startScan(): Flow<List<DiscoveryDevice>> {
         discoveryJob?.cancel()
@@ -66,7 +80,9 @@ internal class DefaultAndroidUsbTransport(
                     val devices =
                         usbDevices
                             .filter { device ->
-                                usbConnections.filter { device == it.value.usbDevice }.isEmpty()
+                                usbConnections.filter {
+                                    device == it.value.getApduSender().dependencies.usbDevice
+                                }.isEmpty()
                             }.toUsbDevices()
 
                     _scanStateFlow.value = devices.toScannedDevices()
@@ -85,10 +101,62 @@ internal class DefaultAndroidUsbTransport(
     override fun updateUsbState(state: UsbState) {
         when (state) {
             is UsbState.Detached -> {
-                val id = generateSessionId(state.device.uid) // TODO: backport this fix to DMK Mobile
-                if (usbConnections.containsKey(id)) {
-                    usbConnections.remove(id)
-                    eventDispatcher.dispatch(TransportEvent.DeviceConnectionLost(id))
+                loggerService.log(buildSimpleInfoLogInfo("AndroidUsbTransport", "Detached ${state.usbDevice.deviceId}"))
+                usbConnections.entries.find {
+                    it.value.getApduSender().dependencies.usbDevice == state.usbDevice
+                }.let { item ->
+                    scope.launch {
+                        if (item == null) {
+                            loggerService.log(buildSimpleWarningLogInfo("AndroidUsbTransport", "No connection found"))
+                            return@launch
+                        }
+                        val (key, deviceConnection) = item
+                        deviceConnection.handleDeviceDisconnected()
+                        usbConnections.remove(key)
+                        usbConnectionsPendingReconnection.add(deviceConnection)
+                    }
+                }
+            }
+
+            is UsbState.Attached -> {
+                loggerService.log(buildSimpleInfoLogInfo("AndroidUsbTransport", "Attached ${state.usbDevice.deviceId}, pendingReconnections=${usbConnectionsPendingReconnection}"))
+                usbConnectionsPendingReconnection.firstOrNull {
+                    it.getApduSender()
+                        .dependencies.ledgerUsbDevice.ledgerDevice == state.ledgerUsbDevice.ledgerDevice
+                }.let { deviceConnection ->
+                    scope.launch {
+                        if (deviceConnection == null) {
+                            loggerService.log(
+                                buildSimpleWarningLogInfo(
+                                    "AndroidUsbTransport",
+                                    "No pending connection found"
+                                )
+                            )
+                            return@launch
+                        }
+                        val permissionResult = checkOrRequestPermission(state.usbDevice)
+                        if (permissionResult is PermissionResult.Denied) {
+                            loggerService.log(buildSimpleErrorLogInfo("AndroidUsbTransport", "Permission denied"))
+                            return@launch
+                        }
+                        deviceConnection.setApduSender(
+                            AndroidUsbApduSender(
+                                dependencies = AndroidUsbApduSender.Dependencies(
+                                    usbDevice = state.usbDevice,
+                                    ledgerUsbDevice = state.ledgerUsbDevice,
+                                ),
+                                usbManager = usbManager,
+                                ioDispatcher = Dispatchers.IO,
+                                framerService = FramerService(loggerService),
+                                request = UsbRequest(),
+                                loggerService = loggerService
+                            )
+                        )
+                        deviceConnection.handleDeviceConnected()
+                        usbConnectionsPendingReconnection.remove(deviceConnection)
+                        usbConnections[deviceConnection.sessionId] = deviceConnection
+                        // TODO: put deviceConnection back in map
+                    }
                 }
             }
         }
@@ -100,87 +168,122 @@ internal class DefaultAndroidUsbTransport(
         }
     }
 
-    override suspend fun connect(discoveryDevice: DiscoveryDevice): InternalConnectionResult {
-        val device: android.hardware.usb.UsbDevice? =
-            usbManager.deviceList.values.firstOrNull { it.deviceId == discoveryDevice.uid.toInt() }
+    sealed class PermissionResult {
+        data object Granted : PermissionResult()
+        data class Denied(val connectionError: InternalConnectionResult.ConnectionError) :
+            PermissionResult()
+    }
 
-        return if (device == null) {
-            InternalConnectionResult.ConnectionError(error = InternalConnectionResult.Failure.DeviceNotFound)
-        } else {
-            val establishConnectionFn = {
-                val sessionId = generateSessionId(id = device.deviceId.toString())
-                val newConnection =
-                    AndroidUsbDeviceConnection(
-                        usbManager = usbManager,
-                        usbDevice = device,
-                        ioDispatcher = Dispatchers.IO,
-                        framerService = FramerService(loggerService),
-                        request = UsbRequest(),
-                    )
-                val connectedDevice =
-                    InternalConnectedDevice(
-                        sessionId,
-                        discoveryDevice.name,
-                        discoveryDevice.ledgerDevice,
-                        discoveryDevice.connectivityType,
-                        sendApduFn = { apdu -> newConnection.send(apdu) },
-                    )
-                usbConnections[sessionId] = newConnection
-                InternalConnectionResult.Connected(device = connectedDevice, sessionId = sessionId)
-            }
+    private suspend fun checkOrRequestPermission(usbDevice: UsbDevice): PermissionResult {
+        if (usbManager.hasPermission(usbDevice)) {
+            return PermissionResult.Granted
+        }
 
-            if (usbManager.hasPermission(device)) {
-                return establishConnectionFn()
-            }
+        val eventsFlow = merge(
+            internalUsbPermissionEventFlow,
+            internalUsbEventFlow,
+        ).shareIn(scope = scope, started = SharingStarted.Eagerly)
 
-            val result = merge(
-                internalUsbPermissionEventFlow,
-                internalUsbEventFlow,
-            ).onStart {
-                permissionRequester.requestPermission(
-                    context = application,
-                    manager = usbManager,
-                    device = device,
-                )
-            }.first {
-                it is UsbPermissionEvent.PermissionGranted ||
+        permissionRequester.requestPermission(
+            context = application,
+            manager = usbManager,
+            device = usbDevice,
+        )
+
+        val result = eventsFlow.first {
+            it is UsbPermissionEvent.PermissionGranted ||
                     it is UsbPermissionEvent.PermissionDenied ||
                     it is UsbState.Detached
-            }
+        }
 
-            when (result) {
-                is UsbPermissionEvent -> {
-                    when (result) {
-                        is UsbPermissionEvent.PermissionDenied -> {
+        return when (result) {
+            is UsbPermissionEvent -> {
+                return when (result) {
+                    is UsbPermissionEvent.PermissionDenied -> {
+                        PermissionResult.Denied(
                             InternalConnectionResult.ConnectionError(
                                 error = InternalConnectionResult.Failure.PermissionNotGranted,
                             )
-                        }
+                        )
+                    }
 
-                        is UsbPermissionEvent.PermissionGranted -> {
-                            establishConnectionFn()
-                        }
+                    is UsbPermissionEvent.PermissionGranted -> {
+                        PermissionResult.Granted
                     }
                 }
-
-                else -> {
-                    InternalConnectionResult.ConnectionError(error = InternalConnectionResult.Failure.DeviceNotFound)
-                }
             }
+
+            else -> {
+                PermissionResult.Denied(InternalConnectionResult.ConnectionError(error = InternalConnectionResult.Failure.DeviceNotFound))
+            }
+        }
+    }
+
+    override suspend fun connect(discoveryDevice: DiscoveryDevice): InternalConnectionResult {
+        val usbDevice: UsbDevice? =
+            usbManager.deviceList.values.firstOrNull { it.deviceId == discoveryDevice.uid.toInt() }
+
+        val ledgerUsbDevice = usbDevice?.toLedgerUsbDevice()
+
+        return if (usbDevice == null || ledgerUsbDevice == null) {
+            InternalConnectionResult.ConnectionError(error = InternalConnectionResult.Failure.DeviceNotFound)
+        } else {
+            val permissionResult = checkOrRequestPermission(usbDevice)
+            if (permissionResult is PermissionResult.Denied) {
+                return permissionResult.connectionError
+            }
+
+            val sessionId = generateSessionId(usbDevice)
+            val apduSender =
+                AndroidUsbApduSender(
+                    dependencies = AndroidUsbApduSender.Dependencies(
+                        usbDevice = usbDevice,
+                        ledgerUsbDevice = ledgerUsbDevice,
+                    ),
+                    usbManager = usbManager,
+                    ioDispatcher = Dispatchers.IO,
+                    framerService = FramerService(loggerService),
+                    request = UsbRequest(),
+                    loggerService = loggerService,
+                )
+
+            val deviceConnection = DeviceConnection(
+                sessionId = sessionId,
+                deviceApduSender = apduSender,
+                isFatalSendApduFailure = { false }, // TODO: refine this
+                reconnectionTimeoutDuration = 5.seconds,
+                onTerminated = {
+                    usbConnections.remove(sessionId)
+                    usbConnectionsPendingReconnection.remove(it)
+                    eventDispatcher.dispatch(TransportEvent.DeviceConnectionLost(sessionId))
+                },
+                coroutineScope = scope,
+                loggerService = loggerService,
+            )
+
+            val connectedDevice =
+                InternalConnectedDevice(
+                    sessionId,
+                    discoveryDevice.name,
+                    discoveryDevice.ledgerDevice,
+                    discoveryDevice.connectivityType,
+                    sendApduFn = { apdu -> deviceConnection.requestSendApdu(apdu) },
+                )
+
+            usbConnections[sessionId] = deviceConnection
+
+            InternalConnectionResult.Connected(device = connectedDevice, sessionId = sessionId)
         }
     }
 
     override suspend fun disconnect(deviceId: String) {
-        usbConnections[deviceId]?.let {
-            usbConnections.remove(deviceId)
-            eventDispatcher.dispatch(TransportEvent.DeviceConnectionLost(deviceId))
-        }
+        usbConnections[deviceId]?.requestCloseConnection()
     }
 
-    private fun generateSessionId(id: String): String = "usb_$id"
+    private fun generateSessionId(usbDevice: UsbDevice): String = "usb_${usbDevice.deviceId}"
 }
 
-private fun List<UsbDevice>.toScannedDevices(): List<DiscoveryDevice> =
+private fun List<LedgerUsbDevice>.toScannedDevices(): List<DiscoveryDevice> =
     this.map {
         it.toScannedDevice()
     }

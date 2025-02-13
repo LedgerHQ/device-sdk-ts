@@ -101,6 +101,7 @@ internal fun SendApduResult.toWritableMap(): WritableMap {
                     SendApduFailureReason.DeviceNotFound -> "DeviceNotFound"
                     SendApduFailureReason.NoResponse -> "NoResponse"
                     SendApduFailureReason.NoUsbEndpointFound -> "NoUsbEndpointFound"
+                    SendApduFailureReason.DeviceDisconnected -> "DeviceDisconnected"
                     SendApduFailureReason.Unknown -> "Unknown"
                 })
             }
