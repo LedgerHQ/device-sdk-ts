@@ -56,7 +56,7 @@
     "@ledgerhq/vitest-config-dmk": "workspace:*",
     "@types/semver": "^7.5.8",
     "@types/uuid": "^10.0.0",
-    "@types/ws": "^8.5.13",
+    "@types/ws": "^8.5.14",
     "rxjs": "^7.8.1",
     "ts-node": "^10.9.2"
   }
