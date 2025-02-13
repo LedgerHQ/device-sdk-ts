@@ -7,6 +7,12 @@ package com.ledger.devicesdk.shared.androidMain.transport.usb.model
 
 internal sealed class UsbState {
     data class Detached(
-        val device: UsbDevice,
+        val ledgerUsbDevice: LedgerUsbDevice,
+        val usbDevice: android.hardware.usb.UsbDevice,
     ) : UsbState()
+
+    data class Attached(
+        val ledgerUsbDevice: LedgerUsbDevice,
+        val usbDevice: android.hardware.usb.UsbDevice,
+    ): UsbState()
 }
