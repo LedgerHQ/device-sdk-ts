@@ -16,5 +16,9 @@
   "bumpVersionsWithWorkspaceProtocolOnly": true,
   "baseBranch": "develop",
   "updateInternalDependencies": "patch",
-  "ignore": []
+  "ignore": [
+    "@ledgerhq/device-signer-kit-bitcoin",
+    "@ledgerhq/device-signer-kit-solana",
+    "@ledgerhq/signer-utils"
+  ]
 }
