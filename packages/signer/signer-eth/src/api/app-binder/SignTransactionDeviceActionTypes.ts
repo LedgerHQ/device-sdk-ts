@@ -1,5 +1,6 @@
 import {
   type ClearSignContextSuccess,
+  type ClearSignContextType,
   type ContextModule,
 } from "@ledgerhq/context-module";
 import {
@@ -52,6 +53,7 @@ export type SignTransactionDAInternalState = {
   readonly error: SignTransactionDAError | null;
   readonly challenge: string | null;
   readonly clearSignContexts: ClearSignContextSuccess[] | GenericContext | null;
+  readonly web3Check: ClearSignContextSuccess<ClearSignContextType.WEB3_CHECK> | null;
   readonly serializedTransaction: Uint8Array | null;
   readonly chainId: number | null;
   readonly transactionType: TransactionType | null;

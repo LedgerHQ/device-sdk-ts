@@ -97,6 +97,7 @@ describe("SignTypedDataDeviceAction", () => {
     getContext: vi.fn(),
     getContexts: vi.fn(),
     getTypedDataFilters: vi.fn(),
+    getWeb3Checks: vi.fn(),
   };
   const buildContextMock = vi.fn();
   const provideContextMock = vi.fn();
