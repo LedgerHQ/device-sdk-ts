@@ -52,7 +52,7 @@
     "danger": "^12.3.3",
     "esbuild": "^0.24.0",
     "esbuild-node-externals": "^1.14.0",
-    "eslint": "9.19.0",
+    "eslint": "9.20.1",
     "gitmoji-cli": "^9.5.0",
     "hygen": "^6.2.11",
     "jsdom": "^26.0.0",
