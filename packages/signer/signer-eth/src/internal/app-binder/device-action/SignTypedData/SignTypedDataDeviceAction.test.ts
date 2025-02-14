@@ -10,6 +10,7 @@ import {
 import { Just, Nothing } from "purify-ts";
 
 import { type SignTypedDataDAState } from "@api/app-binder/SignTypedDataDeviceActionTypes";
+import { EthAppCommandErrorFactory } from "@internal/app-binder/command/utils/ethAppErrors";
 import { makeDeviceActionInternalApiMock } from "@internal/app-binder/device-action/__test-utils__/makeInternalApi";
 import { setupOpenAppDAMock } from "@internal/app-binder/device-action/__test-utils__/setupOpenAppDAMock";
 import { testDeviceActionStates } from "@internal/app-binder/device-action/__test-utils__/testDeviceActionStates";
@@ -249,7 +250,10 @@ describe("SignTypedDataDeviceAction", () => {
         buildContextMock.mockResolvedValueOnce(TEST_BUILT_CONTEXT);
         provideContextMock.mockResolvedValueOnce(
           CommandResultFactory({
-            error: new UnknownDeviceExchangeError("instruction not supported"),
+            error: EthAppCommandErrorFactory({
+              errorCode: "6a80",
+              message: "",
+            }),
           }),
         );
         signTypedDataLegacyMock.mockResolvedValueOnce(
@@ -300,6 +304,87 @@ describe("SignTypedDataDeviceAction", () => {
               s: "0x64a0de235b270fbe81e8e40688f4a9f9ad9d283d690552c9331d7773ceafa513",
             },
             status: DeviceActionStatus.Completed,
+          },
+        ];
+
+        testDeviceActionStates(
+          deviceAction,
+          expectedStates,
+          makeDeviceActionInternalApiMock(),
+          {
+            onError: reject,
+            onDone: resolve,
+          },
+        );
+      }));
+
+    it("should not fallback to legacy signing if rejected by the user during streaming", () =>
+      new Promise<void>((resolve, reject) => {
+        setupOpenAppDAMock();
+
+        const deviceAction = new SignTypedDataDeviceAction({
+          input: {
+            derivationPath: "44'/60'/0'/0/0",
+            data: TEST_MESSAGE,
+            contextModule: mockContextModule,
+            parser: mockParser,
+          },
+        });
+
+        // Mock the providing error
+        vi.spyOn(deviceAction, "extractDependencies").mockReturnValue(
+          extractDependenciesMock(),
+        );
+        buildContextMock.mockResolvedValueOnce(TEST_BUILT_CONTEXT);
+        provideContextMock.mockResolvedValueOnce(
+          CommandResultFactory({
+            error: EthAppCommandErrorFactory({
+              errorCode: "6985",
+              message: "",
+            }),
+          }),
+        );
+        signTypedDataLegacyMock.mockResolvedValueOnce(
+          CommandResultFactory({
+            data: {
+              v: 0x1c,
+              r: "0x8a540510e13b0f2b11a451275716d29e08caad07e89a1c84964782fb5e1ad788",
+              s: "0x64a0de235b270fbe81e8e40688f4a9f9ad9d283d690552c9331d7773ceafa513",
+            },
+          }),
+        );
+
+        const expectedStates: Array<SignTypedDataDAState> = [
+          {
+            intermediateValue: {
+              requiredUserInteraction: UserInteractionRequired.None,
+            },
+            status: DeviceActionStatus.Pending,
+          },
+          {
+            intermediateValue: {
+              requiredUserInteraction: UserInteractionRequired.ConfirmOpenApp,
+            },
+            status: DeviceActionStatus.Pending,
+          },
+          {
+            intermediateValue: {
+              requiredUserInteraction: UserInteractionRequired.None,
+            },
+            status: DeviceActionStatus.Pending,
+          },
+          {
+            intermediateValue: {
+              requiredUserInteraction: UserInteractionRequired.SignTypedData,
+            },
+            status: DeviceActionStatus.Pending,
+          },
+          {
+            error: EthAppCommandErrorFactory({
+              errorCode: "6985",
+              message: "",
+            }),
+            status: DeviceActionStatus.Error,
           },
         ];
 
