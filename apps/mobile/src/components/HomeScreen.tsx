@@ -43,7 +43,10 @@ export const HomeScreen = () => {
         justifyContent="center"
         alignItems="space-between">
         {Platform.OS === "android" && (
-          <CtaButton size="medium" type="color" onPress={() => {}}>
+          <CtaButton
+            size="medium"
+            type="color"
+            onPress={() => navigate(RootScreens.ConnectDevice)}>
             Select a USB device
           </CtaButton>
         )}
