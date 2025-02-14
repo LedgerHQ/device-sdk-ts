@@ -32,7 +32,7 @@ describe("SignerEthBuilder", () => {
     expect(
       (builder["_contextModule"] as unknown as { _loaders: ContextLoader[] })
         ._loaders,
-    ).toHaveLength(5);
+    ).toHaveLength(6);
   });
 
   test("should instanciate with custom context module", () => {

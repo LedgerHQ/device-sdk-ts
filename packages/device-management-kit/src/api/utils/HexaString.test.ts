@@ -60,6 +60,17 @@ describe("HexaString", () => {
       // THEN
       expect(result).toBeFalsy();
     });
+
+    it.each([123, [], {}, null, undefined, true])(
+      "should return false for invalid input %p",
+      (value) => {
+        // WHEN
+        const result = isHexaString(value);
+
+        // THEN
+        expect(result).toBeFalsy();
+      },
+    );
   });
 
   describe("hexaStringToBuffer function", () => {
