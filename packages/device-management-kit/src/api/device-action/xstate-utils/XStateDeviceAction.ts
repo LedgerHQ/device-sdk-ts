@@ -1,4 +1,4 @@
-import { createBrowserInspector } from "@statelyai/inspect";
+// import { createBrowserInspector } from "@statelyai/inspect";
 import { Observable, ReplaySubject, share } from "rxjs";
 import {
   createActor,
@@ -114,7 +114,7 @@ export abstract class XStateDeviceAction<
     const actor = createActor(stateMachine, {
       input: this.input,
       // optional inspector for debugging
-      inspect: this.inspect ? createBrowserInspector().inspect : undefined,
+      // inspect: this.inspect ? createBrowserInspector().inspect : undefined,
     });
 
     /**
