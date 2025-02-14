@@ -33,7 +33,6 @@
   },
   "dependencies": {
     "@sentry/minimal": "^6.19.7",
-    "@statelyai/inspect": "^0.4.0",
     "axios": "^1.7.9",
     "inversify": "^6.2.2",
     "inversify-logger-middleware": "^3.1.0",
@@ -54,6 +53,7 @@
     "@ledgerhq/prettier-config-dsdk": "workspace:*",
     "@ledgerhq/tsconfig-dsdk": "workspace:*",
     "@ledgerhq/vitest-config-dmk": "workspace:*",
+    "@statelyai/inspect": "^0.4.0",
     "@types/semver": "^7.5.8",
     "@types/uuid": "^10.0.0",
     "@types/ws": "^8.5.14",
