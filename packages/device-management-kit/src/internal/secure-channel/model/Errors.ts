@@ -10,7 +10,7 @@ export class WebSocketConnectionError implements DmkError {
 }
 
 export class SecureChannelError implements DmkError {
-  _tag = "WebSocketConnectionError";
+  _tag = "SecureChannelError";
   originalError?: unknown;
 
   constructor(public readonly error: unknown) {

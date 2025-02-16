@@ -9,7 +9,15 @@ import {
 import { CommandUtils } from "@api/command/utils/CommandUtils";
 import { GlobalCommandErrorHandler } from "@api/command/utils/GlobalCommandError";
 import { DeviceModelId } from "@api/device/DeviceModel";
+import {
+  type DeviceGeneralState,
+  type EndorsementInformation,
+  type OnboardingStatus,
+  type WordsInformation,
+} from "@api/device/SecureElementFlags";
 import { type ApduResponse } from "@api/device-session/ApduResponse";
+
+import { SecureElementFlagsParser } from "./SecureElementFlagsParser";
 
 /**
  * Response of the GetOsVersionCommand.
@@ -30,7 +38,7 @@ export type GetOsVersionResponse = {
    * Secure element flags.
    * Used to represent the current state of the secure element.
    */
-  readonly seFlags: number;
+  readonly seFlags: Uint8Array;
 
   /**
    * Version of the microcontroller unit (MCU) SEPH, which is the SE-MCU link protocol.
@@ -62,6 +70,14 @@ export type GetOsVersionResponse = {
    * State for Ledger Recover. // [SHOULD] Add more information about this field
    */
   readonly recoverState: string;
+
+  /**
+   * The parsed secure element flags.
+   */
+  readonly secureElementFlags: DeviceGeneralState &
+    EndorsementInformation &
+    WordsInformation &
+    OnboardingStatus;
 };
 
 export type GetOsVersionCommandResult = CommandResult<GetOsVersionResponse>;
@@ -98,10 +114,11 @@ export class GetOsVersionCommand implements Command<GetOsVersionResponse> {
       16,
     );
     const seVersion = parser.encodeToString(parser.extractFieldLVEncoded());
-    const seFlags = parseInt(
-      parser.encodeToHexaString(parser.extractFieldLVEncoded()).toString(),
-      16,
-    );
+    const seFlags = parser.extractFieldLVEncoded() ?? new Uint8Array(0);
+    const seFlagsParser = new SecureElementFlagsParser(seFlags);
+    // This is the parsed secure element flags.
+    const secureElementFlags = { ...seFlagsParser.generalDeviceState() };
+
     const mcuSephVersion = parser.encodeToString(
       parser.extractFieldLVEncoded(),
     );
@@ -129,6 +146,7 @@ export class GetOsVersionCommand implements Command<GetOsVersionResponse> {
         hwVersion,
         langId,
         recoverState: recoverState ? recoverState : "0",
+        secureElementFlags,
       },
     });
   }

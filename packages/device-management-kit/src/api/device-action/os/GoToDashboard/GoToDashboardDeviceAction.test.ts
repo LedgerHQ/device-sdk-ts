@@ -58,6 +58,7 @@ describe("GoToDashboardDeviceAction", () => {
           currentApp: { name: "BOLOS", version: "1.5.0" },
           installedApps: [],
           deviceModelId: DeviceModelId.NANO_X,
+          isSecureConnectionAllowed: false,
         });
 
         const expectedStates: Array<GoToDashboardDAState> = [
@@ -109,6 +110,7 @@ describe("GoToDashboardDeviceAction", () => {
           currentApp: { name: "Bitcoin", version: "1.0.0" },
           installedApps: [],
           deviceModelId: DeviceModelId.NANO_X,
+          isSecureConnectionAllowed: false,
         });
 
         sendCommandMock
@@ -296,6 +298,7 @@ describe("GoToDashboardDeviceAction", () => {
           currentApp: { name: "BOLOS", version: "1.5.0" },
           installedApps: [],
           deviceModelId: DeviceModelId.NANO_X,
+          isSecureConnectionAllowed: false,
         });
 
         const expectedStates: Array<GoToDashboardDAState> = [

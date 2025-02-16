@@ -39,20 +39,18 @@ describe("ConnectToSecureChannelTask", () => {
   const sendApduFn = vi.fn();
 
   beforeEach(() => {
-    vi.useFakeTimers({ shouldAdvanceTime: true });
+    // vi.useFakeTimers({ shouldAdvanceTime: true });
 
     mockWebSocket = new WebSocket("wss://test-host.com");
     mockInternalApi = {
       sendApdu: sendApduFn,
+      toggleRefresher: vi.fn(),
     } as unknown as InternalApi;
     taskArgs = { connection: Right(mockWebSocket) };
     task = new ConnectToSecureChannelTask(mockInternalApi, taskArgs);
   });
 
   afterEach(() => {
-    vi.runOnlyPendingTimers();
-    vi.useRealTimers();
-
     vi.resetAllMocks();
   });
 
@@ -73,22 +71,15 @@ describe("ConnectToSecureChannelTask", () => {
   });
 
   it("should handle incoming EXCHANGE message including reequestng user permission", async () => {
-    sendApduFn.mockImplementationOnce(
-      () =>
-        new Promise((r) =>
-          setTimeout(
-            () =>
-              r(
-                Right({
-                  data: new Uint8Array([0x90, 0x00]),
-                  statusCode: new Uint8Array([0x90, 0x00]),
-                }),
-              ),
-            500 + 1,
-          ),
-        ),
+    sendApduFn.mockResolvedValue(
+      Right({
+        data: new Uint8Array([0x90, 0x00]),
+        statusCode: new Uint8Array([0x90, 0x00]),
+      }),
     );
+
     const sendSpy = vi.spyOn(mockWebSocket, "send");
+    vi.spyOn(task, "isSecureConnectionAllowed").mockReturnValueOnce(false);
 
     const events: SecureChannelEvent[] = [];
     const obs = task.run();
@@ -108,8 +99,6 @@ describe("ConnectToSecureChannelTask", () => {
       type: "",
       target: {} as WebSocket,
     });
-
-    vi.advanceTimersByTime(500);
 
     await new Promise((resolve) => setTimeout(resolve, TEST_DELAY));
 

@@ -2,13 +2,9 @@ import WebSocket from "isomorphic-ws";
 import { type Either } from "purify-ts";
 import { Observable } from "rxjs";
 
-import {
-  type ApduResponse,
-  bufferToHexaString,
-  CommandUtils,
-  hexaStringToBuffer,
-  type InternalApi,
-} from "@api/index";
+import { CommandUtils } from "@api/command/utils/CommandUtils";
+import { type InternalApi } from "@api/device-action/DeviceAction";
+import { type ApduResponse } from "@api/device-session/ApduResponse";
 import {
   InMessageQueryEnum,
   type InMessageType,
@@ -21,12 +17,11 @@ import {
   isRefusedByUser,
   willRequestPermission,
 } from "@api/secure-channel/utils";
+import { bufferToHexaString, hexaStringToBuffer } from "@api/utils/HexaString";
 import {
   SecureChannelError,
   type WebSocketConnectionError,
 } from "@internal/secure-channel/model/Errors";
-
-const USER_ACTION_TIMEOUT = 500;
 
 export type ConnectToSecureChannelTaskArgs = {
   connection: Either<WebSocketConnectionError, WebSocket>;
@@ -49,10 +44,9 @@ export class ConnectToSecureChannelTask {
 
   run(): Observable<SecureChannelEvent> {
     const obs = new Observable<SecureChannelEvent>((subscriber) => {
-      let unsubscirbed: boolean = false;
+      let unsubscribed: boolean = false;
       let inBulkMode = false;
       let communicationFinished = false;
-      let userActionTimeout: NodeJS.Timeout | null = null;
       let deviceError: SecureChannelError | null = null;
       let waitingForUserAction = false;
 
@@ -101,7 +95,7 @@ export class ConnectToSecureChannelTask {
 
       this._connection.onmessage = async (event) => {
         // When unsubscribed, ignore the message
-        if (unsubscirbed) {
+        if (unsubscribed) {
           return;
         }
         deviceError = null;
@@ -139,26 +133,19 @@ export class ConnectToSecureChannelTask {
                 payload: { nonce, apdu },
               });
 
-              if (willRequestPermission(apdu)) {
+              if (
+                willRequestPermission(apdu) &&
+                !this.isSecureConnectionAllowed()
+              ) {
                 waitingForUserAction = true;
-                userActionTimeout = setTimeout(() => {
-                  if (unsubscirbed) {
-                    return;
-                  }
-                  subscriber.next({
-                    type: SecureChannelEventType.PermissionRequested,
-                  });
-                }, USER_ACTION_TIMEOUT);
+                subscriber.next({
+                  type: SecureChannelEventType.PermissionRequested,
+                });
               }
 
               const response = await this._api.sendApdu(apdu);
 
-              if (userActionTimeout && response) {
-                clearTimeout(userActionTimeout);
-                userActionTimeout = null;
-              }
-
-              if (unsubscirbed) {
+              if (unsubscribed) {
                 return;
               }
 
@@ -264,7 +251,7 @@ export class ConnectToSecureChannelTask {
 
               for (let i = 0, len = apdus.length; i < len; i++) {
                 await this._api.sendApdu(apdus[i]!);
-                if (unsubscirbed) {
+                if (unsubscribed) {
                   subscriber.error(
                     new SecureChannelError(
                       "Bulk sending cancelled by unsubscribing",
@@ -331,13 +318,28 @@ export class ConnectToSecureChannelTask {
         }
       };
       return () => {
-        unsubscirbed = true;
+        this._api.toggleRefresher(true);
+        unsubscribed = true;
         // Close the connection if it is open when unsubscribing
         if (this._connection.readyState === WebSocket.OPEN) {
           this._connection.close();
         }
       };
     });
+    this._api.toggleRefresher(false);
     return obs;
+  }
+
+  /**
+   * Determines if a secure connection is already allowed based on the current device session state.
+   *
+   * @returns {boolean} `true` if a secure connection is allowed, otherwise `false`.
+   */
+  isSecureConnectionAllowed(): boolean {
+    const deviceSessionState = this._api.getDeviceSessionState();
+    return (
+      "isSecureConnectionAllowed" in deviceSessionState &&
+      deviceSessionState.isSecureConnectionAllowed
+    );
   }
 }

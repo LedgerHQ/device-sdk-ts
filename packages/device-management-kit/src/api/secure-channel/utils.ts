@@ -1,3 +1,6 @@
+import { type SecureChannelEventPayload } from "./task/types";
+import { GENUINE_DEVICE_RESULT } from "./constants";
+
 /**
  * Checks if the given APDU command will request permission.
  *
@@ -26,4 +29,15 @@ export function isRefusedByUser(statusCode: Uint8Array): boolean {
     ((statusCode[0] === 0x55 && statusCode[1] === 0x01) ||
       (statusCode[0] === 0x69 && statusCode[1] === 0x85))
   );
+}
+
+/**
+ * Checks if the device is genuine.
+ *
+ * @param payload - The payload of the result secure channel event.
+ * The payload has already been stringified, so that the type check is not necessary.
+ * @returns `true` if the device is genuine, otherwise `false`.
+ */
+export function isDeviceGenuine(payload: SecureChannelEventPayload["Result"]) {
+  return payload === GENUINE_DEVICE_RESULT;
 }

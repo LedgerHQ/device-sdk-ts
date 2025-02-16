@@ -201,6 +201,7 @@ export class DeviceSession {
         this.setDeviceSessionState(state);
         return this._deviceState.getValue();
       },
+      toggleRefresher: (enabled: boolean) => this.toggleRefresher(enabled),
       getManagerApiService: () => this._managerApiService,
       getSecureChannelService: () => this._secureChannelService,
     });
