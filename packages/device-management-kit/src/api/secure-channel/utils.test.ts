@@ -1,4 +1,8 @@
-import { isRefusedByUser, willRequestPermission } from "./utils";
+import {
+  isDeviceGenuine,
+  isRefusedByUser,
+  willRequestPermission,
+} from "./utils";
 
 describe("willRequestPermission", () => {
   it("should return true if the APDU is a permission request", () => {
@@ -24,3 +28,16 @@ describe("isRefusedByUser", () => {
     expect(isRefusedByUser(statusCode)).toBe(false);
   });
 });
+
+describe("isDeviceGenuine", () => {
+  it("should return true if the device is genuine", () => {
+    const payload = "0000";
+    expect(isDeviceGenuine(payload)).toBe(true);
+  });
+  it("should return false if the device is not genuine", () => {
+    const payload = "not genuine";
+    expect(isDeviceGenuine(payload)).toBe(false);
+  });
+});
+
+describe.todo("SecureElementFlags");

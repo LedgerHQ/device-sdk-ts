@@ -4,6 +4,13 @@ import { type DeviceModelId } from "@api/device/DeviceModel";
 import { type DeviceStatus } from "@api/device/DeviceStatus";
 import { type Application } from "@internal/manager-api/model/Application";
 
+import {
+  type DeviceGeneralState,
+  type EndorsementInformation,
+  type OnboardingStatus,
+  type WordsInformation,
+} from "./types";
+
 /**
  * The battery status of a device.
  */
@@ -68,7 +75,7 @@ type DeviceSessionBaseState = {
   readonly deviceName?: string;
 };
 
-type DeviceSessionReadyState = {
+export type DeviceSessionReadyState = {
   /**
    * The battery status of the device.
    * TODO: This should not be optional, but it is not in the current implementation.
@@ -90,6 +97,14 @@ type DeviceSessionReadyState = {
    * The current applications installed on the device.
    */
   readonly installedApps: Application[];
+
+  /**
+   * The device current state, it comes from the secure element flags(seFlags) in the response of the GetOsVersionCommand.
+   */
+  readonly deviceState?: DeviceGeneralState &
+    EndorsementInformation &
+    WordsInformation &
+    OnboardingStatus;
 };
 
 /**

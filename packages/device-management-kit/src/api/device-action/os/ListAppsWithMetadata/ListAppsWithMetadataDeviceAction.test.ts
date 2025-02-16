@@ -28,7 +28,7 @@ describe("ListAppsWithMetadataDeviceAction", () => {
   const { getManagerApiService: getManagerApiServiceMock } =
     makeDeviceActionInternalApiMock();
 
-  const saveSessionStateMock = vi.fn();
+  const setDeviceSessionStateMock = vi.fn();
   const getDeviceSessionStateMock = vi.fn();
   const getAppsByHashMock = vi.fn();
 
@@ -36,7 +36,7 @@ describe("ListAppsWithMetadataDeviceAction", () => {
     return {
       getAppsByHash: getAppsByHashMock,
       getDeviceSessionState: getDeviceSessionStateMock,
-      saveSessionState: saveSessionStateMock,
+      setDeviceSessionState: setDeviceSessionStateMock,
     };
   }
 
@@ -419,7 +419,7 @@ describe("ListAppsWithMetadataDeviceAction", () => {
           installedApps: [],
         });
 
-        saveSessionStateMock.mockImplementation(() => {
+        setDeviceSessionStateMock.mockImplementation(() => {
           throw new UnknownDAError("SaveSession failed");
         });
 
