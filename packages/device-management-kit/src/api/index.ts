@@ -81,6 +81,7 @@ export {
   type DeviceSessionState,
   DeviceSessionStateType,
 } from "@api/device-session/DeviceSessionState";
+export { GenuineCheckDeviceAction } from "@api/secure-channel/device-action/GenuineCheck/GenuineCheckDeviceAction";
 // TODO: remove from exported
 export { defaultApduReceiverServiceStubBuilder } from "@api/device-session/service/DefaultApduReceiverService.stub";
 export { defaultApduSenderServiceStubBuilder } from "@api/device-session/service/DefaultApduSenderService.stub";

@@ -2,13 +2,9 @@ import WebSocket from "isomorphic-ws";
 import { type Either } from "purify-ts";
 import { Observable } from "rxjs";
 
-import {
-  type ApduResponse,
-  bufferToHexaString,
-  CommandUtils,
-  hexaStringToBuffer,
-  type InternalApi,
-} from "@api/index";
+import { CommandUtils } from "@api/command/utils/CommandUtils";
+import { type InternalApi } from "@api/device-action/DeviceAction";
+import { type ApduResponse } from "@api/device-session/ApduResponse";
 import {
   InMessageQueryEnum,
   type InMessageType,
@@ -21,6 +17,7 @@ import {
   isRefusedByUser,
   willRequestPermission,
 } from "@api/secure-channel/utils";
+import { bufferToHexaString, hexaStringToBuffer } from "@api/utils/HexaString";
 import {
   SecureChannelError,
   type WebSocketConnectionError,
@@ -49,7 +46,7 @@ export class ConnectToSecureChannelTask {
 
   run(): Observable<SecureChannelEvent> {
     const obs = new Observable<SecureChannelEvent>((subscriber) => {
-      let unsubscirbed: boolean = false;
+      let unsubscribed: boolean = false;
       let inBulkMode = false;
       let communicationFinished = false;
       let userActionTimeout: NodeJS.Timeout | null = null;
@@ -101,7 +98,7 @@ export class ConnectToSecureChannelTask {
 
       this._connection.onmessage = async (event) => {
         // When unsubscribed, ignore the message
-        if (unsubscirbed) {
+        if (unsubscribed) {
           return;
         }
         deviceError = null;
@@ -142,7 +139,7 @@ export class ConnectToSecureChannelTask {
               if (willRequestPermission(apdu)) {
                 waitingForUserAction = true;
                 userActionTimeout = setTimeout(() => {
-                  if (unsubscirbed) {
+                  if (unsubscribed) {
                     return;
                   }
                   subscriber.next({
@@ -158,7 +155,7 @@ export class ConnectToSecureChannelTask {
                 userActionTimeout = null;
               }
 
-              if (unsubscirbed) {
+              if (unsubscribed) {
                 return;
               }
 
@@ -264,7 +261,7 @@ export class ConnectToSecureChannelTask {
 
               for (let i = 0, len = apdus.length; i < len; i++) {
                 await this._api.sendApdu(apdus[i]!);
-                if (unsubscirbed) {
+                if (unsubscribed) {
                   subscriber.error(
                     new SecureChannelError(
                       "Bulk sending cancelled by unsubscribing",
@@ -331,7 +328,7 @@ export class ConnectToSecureChannelTask {
         }
       };
       return () => {
-        unsubscirbed = true;
+        unsubscribed = true;
         // Close the connection if it is open when unsubscribing
         if (this._connection.readyState === WebSocket.OPEN) {
           this._connection.close();
