@@ -1,5 +1,49 @@
 # @ledgerhq/device-signer-kit-ethereum
 
+## 1.2.0
+
+### Minor Changes
+
+- [#645](https://github.com/LedgerHQ/device-sdk-ts/pull/645) [`57ec9e4`](https://github.com/LedgerHQ/device-sdk-ts/commit/57ec9e4fc75add88a9330128db07cdb486f10b0a) Thanks [@aussedatlo](https://github.com/aussedatlo)! - Support prod signature and pki certificates for generic parser CS context
+
+- [#623](https://github.com/LedgerHQ/device-sdk-ts/pull/623) [`5c5c92b`](https://github.com/LedgerHQ/device-sdk-ts/commit/5c5c92b469dca1b3ef478a8fb3a2d94951c88035) Thanks [@fAnselmi-Ledger](https://github.com/fAnselmi-Ledger)! - Improve error handling
+
+- [#591](https://github.com/LedgerHQ/device-sdk-ts/pull/591) [`79f8ff4`](https://github.com/LedgerHQ/device-sdk-ts/commit/79f8ff4d3e3689c256833cd2eefa3ebf9db52b90) Thanks [@aussedatlo](https://github.com/aussedatlo)! - Breaking change: remove ethers from api dependency and use only raw tx for signTransaction
+
+- [#622](https://github.com/LedgerHQ/device-sdk-ts/pull/622) [`6ab16b3`](https://github.com/LedgerHQ/device-sdk-ts/commit/6ab16b3ced261500c4e6486dc305de2ae73753ec) Thanks [@paoun-ledger](https://github.com/paoun-ledger)! - Allow to slice static leafs
+
+### Patch Changes
+
+- [#546](https://github.com/LedgerHQ/device-sdk-ts/pull/546) [`8eb2622`](https://github.com/LedgerHQ/device-sdk-ts/commit/8eb26229ad3b12b6b42e154b61dcb199bd36caa4) Thanks [@aussedatlo](https://github.com/aussedatlo)! - Add generic parser enums support
+
+- [#599](https://github.com/LedgerHQ/device-sdk-ts/pull/599) [`7149c61`](https://github.com/LedgerHQ/device-sdk-ts/commit/7149c617af2fd05983a2fc0322c3ce5494d5d9f3) Thanks [@fAnselmi-Ledger](https://github.com/fAnselmi-Ledger)! - Polish readme
+
+- [#573](https://github.com/LedgerHQ/device-sdk-ts/pull/573) [`fb54a15`](https://github.com/LedgerHQ/device-sdk-ts/commit/fb54a15f64fda2b4f6812cd2ec820728dbcef1c4) Thanks [@aussedatlo](https://github.com/aussedatlo)! - Add eip7730 constant support
+
+- [#613](https://github.com/LedgerHQ/device-sdk-ts/pull/613) [`9a1b180`](https://github.com/LedgerHQ/device-sdk-ts/commit/9a1b180885732692e944762fe68c9407b1303c84) Thanks [@aussedatlo](https://github.com/aussedatlo)! - Add user interaction for sign typed object device action that was removed before
+
+- [#609](https://github.com/LedgerHQ/device-sdk-ts/pull/609) [`5aaf664`](https://github.com/LedgerHQ/device-sdk-ts/commit/5aaf664c9edfcca5ddb0cb9bdc97eed1e3b89cca) Thanks [@aussedatlo](https://github.com/aussedatlo)! - Use clear signing with Nano S
+
+- [#645](https://github.com/LedgerHQ/device-sdk-ts/pull/645) [`4d2261d`](https://github.com/LedgerHQ/device-sdk-ts/commit/4d2261d3b9186334866d7acc66bb4d80493bbdda) Thanks [@aussedatlo](https://github.com/aussedatlo)! - Fix generic parser support for plugins
+
+- [#566](https://github.com/LedgerHQ/device-sdk-ts/pull/566) [`2bcb40d`](https://github.com/LedgerHQ/device-sdk-ts/commit/2bcb40d4a252b956908c78ecae283ed5b39a6ae2) Thanks [@aussedatlo](https://github.com/aussedatlo)! - Fallback to blind sign if provide in error
+
+- [#649](https://github.com/LedgerHQ/device-sdk-ts/pull/649) [`1364525`](https://github.com/LedgerHQ/device-sdk-ts/commit/1364525e1092b69700e83819d00df1222dc32dc1) Thanks [@paoun-ledger](https://github.com/paoun-ledger)! - Factorize device actions calling a task in an app
+
+- [#604](https://github.com/LedgerHQ/device-sdk-ts/pull/604) [`adb430e`](https://github.com/LedgerHQ/device-sdk-ts/commit/adb430e541f4bd9ab99a7deb3a1232c0436680e6) Thanks [@aussedatlo](https://github.com/aussedatlo)! - Fallback to blind signing if commands are not supported
+
+- [#621](https://github.com/LedgerHQ/device-sdk-ts/pull/621) [`8799e83`](https://github.com/LedgerHQ/device-sdk-ts/commit/8799e83c92baeb5ccba53546a3d59867d3d6185c) Thanks [@aussedatlo](https://github.com/aussedatlo)! - Don't open Ethereum app if a plugin is already active
+
+- [#663](https://github.com/LedgerHQ/device-sdk-ts/pull/663) [`5c4a2d6`](https://github.com/LedgerHQ/device-sdk-ts/commit/5c4a2d624a4196f62051514ec211dca4c618023e) Thanks [@jiyuzhuang](https://github.com/jiyuzhuang)! - Add sendApdu in internal API interface
+
+- [#679](https://github.com/LedgerHQ/device-sdk-ts/pull/679) [`2766934`](https://github.com/LedgerHQ/device-sdk-ts/commit/276693468f79160cb8212071c1bc6cbc48a12517) Thanks [@paoun-ledger](https://github.com/paoun-ledger)! - Don't fallback on blind signing if signature was explicitly rejected
+
+- [#591](https://github.com/LedgerHQ/device-sdk-ts/pull/591) [`79f8ff4`](https://github.com/LedgerHQ/device-sdk-ts/commit/79f8ff4d3e3689c256833cd2eefa3ebf9db52b90) Thanks [@aussedatlo](https://github.com/aussedatlo)! - Update signTransaction transaction parameter with new api
+
+- Updated dependencies [[`8eb2622`](https://github.com/LedgerHQ/device-sdk-ts/commit/8eb26229ad3b12b6b42e154b61dcb199bd36caa4), [`62d0721`](https://github.com/LedgerHQ/device-sdk-ts/commit/62d0721256db88faa6d7155a3e2445d7c80219fa), [`90e20e7`](https://github.com/LedgerHQ/device-sdk-ts/commit/90e20e74422b1c178cf82c459ad32e2bff6221da), [`5c4a2d6`](https://github.com/LedgerHQ/device-sdk-ts/commit/5c4a2d624a4196f62051514ec211dca4c618023e), [`3c202be`](https://github.com/LedgerHQ/device-sdk-ts/commit/3c202be9cbd5e85eefbe4298d0f66adc8d239f8f), [`060fe45`](https://github.com/LedgerHQ/device-sdk-ts/commit/060fe45e60fd58b792f3cc1c9c4313415ef729ee), [`fb54a15`](https://github.com/LedgerHQ/device-sdk-ts/commit/fb54a15f64fda2b4f6812cd2ec820728dbcef1c4), [`f53bd4a`](https://github.com/LedgerHQ/device-sdk-ts/commit/f53bd4a2ce7deff3117965957c33bc0ee0789e98), [`5aaf664`](https://github.com/LedgerHQ/device-sdk-ts/commit/5aaf664c9edfcca5ddb0cb9bdc97eed1e3b89cca), [`e695ae3`](https://github.com/LedgerHQ/device-sdk-ts/commit/e695ae3bffca7c3cde5499582aa0aa370d201314), [`2f952cc`](https://github.com/LedgerHQ/device-sdk-ts/commit/2f952cc68ab37b49a04d1219f90b0e60d4fd0726), [`70b7d2c`](https://github.com/LedgerHQ/device-sdk-ts/commit/70b7d2c6fe4ebfcf72b52d050db9f3f113deaef3), [`1364525`](https://github.com/LedgerHQ/device-sdk-ts/commit/1364525e1092b69700e83819d00df1222dc32dc1), [`f53bd4a`](https://github.com/LedgerHQ/device-sdk-ts/commit/f53bd4a2ce7deff3117965957c33bc0ee0789e98)]:
+  - @ledgerhq/context-module@1.2.0
+  - @ledgerhq/device-management-kit@0.6.1
+
 ## 1.1.0
 
 ### Minor Changes
