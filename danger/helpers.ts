@@ -5,7 +5,6 @@ import {
   type DangerDSLType,
   type MarkdownString,
 } from "danger";
-import { exit } from "process";
 import { execSync } from "child_process";
 
 type FailFn = (message: MarkdownString, file?: string, line?: number) => void;
