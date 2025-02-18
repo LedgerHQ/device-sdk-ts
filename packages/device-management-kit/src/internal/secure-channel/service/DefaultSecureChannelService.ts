@@ -3,6 +3,7 @@ import WebSocket from "isomorphic-ws";
 import { Either } from "purify-ts";
 
 import { GetOsVersionResponse } from "@api/index";
+import { Application } from "@internal/manager-api/model/Application";
 import { FinalFirmware } from "@internal/manager-api/model/Firmware";
 import { type SecureChannelDataSource } from "@internal/secure-channel/data/SecureChannelDataSource";
 import { secureChannelTypes } from "@internal/secure-channel/di/secureChannelTypes";
@@ -73,12 +74,9 @@ export class DefaultSecureChannelService implements SecureChannelService {
 
   installApp(
     deviceInfo: GetOsVersionResponse,
-    perso: string,
-    firmware: string,
-    firmwareKey: string,
-    deleteKey: string,
-    hash: string,
+    app: Application,
   ): Either<WebSocketConnectionError, WebSocket> {
+    const { perso, firmware, firmwareKey, deleteKey, hash } = app;
     const params: InstallAppsParams = {
       targetId: deviceInfo.targetId.toString(),
       perso,
@@ -92,12 +90,9 @@ export class DefaultSecureChannelService implements SecureChannelService {
 
   uninstallApp(
     deviceInfo: GetOsVersionResponse,
-    perso: string,
-    firmware: string,
-    firmwareKey: string,
-    deleteKey: string,
-    hash: string,
+    app: Application,
   ): Either<WebSocketConnectionError, WebSocket> {
+    const { perso, firmware, firmwareKey, deleteKey, hash } = app;
     const params: UninstallAppsParams = {
       targetId: deviceInfo.targetId.toString(),
       perso,
