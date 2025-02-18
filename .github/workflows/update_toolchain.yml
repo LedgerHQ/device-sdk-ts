@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
 
 env:
-  BRANCH_NAME: chore/update-toolchain
+  BRANCH_NAME: chore/no-issue-update-toolchain
 
 jobs:
   update-toolchain:
@@ -45,22 +45,12 @@ jobs:
         run: |
           jq '.packageManager = "pnpm@${{ steps.new-versions.outputs.version }}"' package.json > tmp.json && mv tmp.json package.json
 
-      - name: Health check
-        if: steps.changes.outputs.status > 0
-        id: health-check
-        run: pnpm health-check
-
-      - name: Tests
-        id: unit-tests
-        if: steps.changes.outputs.status > 0 && success()
-        run: pnpm test:coverage -- --maxWorkers=50%
-
       - name: Create PR
         if: steps.changes.outputs.status > 0 && success()
         run: |
           git add .prototools
           git add package.json
-          git commit -m "🔧 (repo) [NO-ISSUE]: Update toolchain"
+          git commit -m "🔧 (repo): Update toolchain"
           git push origin ${{ env.BRANCH_NAME }}
           gh pr create \
           --title "🔧 (repo) [NO-ISSUE]: Update toolchain" \
@@ -68,4 +58,4 @@ jobs:
           --base develop \
           --head ${{ env.BRANCH_NAME }}
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.DEVICE_SDK_TS_CI }}

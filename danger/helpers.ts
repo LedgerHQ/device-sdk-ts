@@ -5,7 +5,6 @@ import {
   type DangerDSLType,
   type MarkdownString,
 } from "danger";
-import { exit } from "process";
 import { execSync } from "child_process";
 
 type FailFn = (message: MarkdownString, file?: string, line?: number) => void;
@@ -49,7 +48,7 @@ const Branch = (
   regex: isFork
     ? new RegExp(`^(${BRANCH_PREFIX.join("|")})\/.+`, "i")
     : new RegExp(
-        `^(${BRANCH_PREFIX.join("|")})\/((dsdk)-[0-9]+|no-issue|issue-[0-9]+)\-.+`,
+        `^(release|chore\/backmerge(-.+){0,}|(${BRANCH_PREFIX.join("|")})\/((dsdk)-[0-9]+|no-issue|issue-[0-9]+)\-.+)`,
         "i"
       ),
 
@@ -117,7 +116,7 @@ const Commits = (
   fail: FailFn,
   fork: boolean = false
 ) => ({
-  regex: /^.+\(([a-z]+\-?){1,}\): [A-Z].*/,
+  regex: /^.+\s\(([a-z]+\-?){1,}\)(\s\[(NO-ISSUE|([A-Z]+\-\d+))\])?: [A-Z].*/,
 
   fail(wrongCommits: string[]) {
     fail(`\
@@ -129,13 +128,20 @@ ${wrongCommits.map((commit) => `• \`${commit}\``).join("\n")}
 ℹ️ Regex to match: \`${this.regex}\`
 
 - Rules:
-  - Must start with a word (usually an emoji)
+  - Must start with a word (a gitmoji compliant emoji)
   - Followed by a SPACE
   - Followed by a scope in parentheses and in LOWERCASE
+  - _Optional_
+    - Followed by a SPACE
+    - Followed by a JIRA issue number in brackets [DSDK-1234] or [NO-ISSUE]
   - Followed by a colon (":") and a SPACE
   - Followed by a <ins>C</ins>apitalized message
 
 Example: \`💚 (scope): My feature\`\
+
+Special case for commit messages coming from a pull request merge:
+ - \`💚 (scope) [DSDK-1234]: My feature\`\
+ - \`💚 (scope) [NO-ISSUE]: My title\`\
 `);
   },
 
@@ -174,7 +180,11 @@ export const checkCommits = (
   return true;
 };
 
-const Title = (danger: DangerDSLType, fail: FailFn, fork: boolean = false) => ({
+const Title = (
+  _danger: DangerDSLType,
+  fail: FailFn,
+  fork: boolean = false
+) => ({
   regex: fork
     ? /^.+ \(([a-z]+\-?){1,}\): [A-Z].*/
     : /^.+ \(([a-z]+\-?){1,}\) \[(DSDK-[0-9]+|NO-ISSUE|ISSUE-[0-9]+)\]: [A-Z].*/,
