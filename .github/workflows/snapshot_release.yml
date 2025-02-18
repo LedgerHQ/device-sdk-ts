@@ -15,8 +15,8 @@ on:
 
 env:
   FORCE_COLOR: "1"
-  REF: ${{ inputs.ref }}
-  TAG: ${{ inputs.tag }}
+  REF: ${{ inputs.ref || 'develop' }}
+  TAG: ${{ inputs.tag || 'develop' }}
   # NPM_REGISTRY: jfrog.ledgerlabs.net/artifactory/api/npm/ldk-npm-prod-public
 
 permissions:
