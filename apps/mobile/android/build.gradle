@@ -3,7 +3,7 @@ buildscript {
         buildToolsVersion = "35.0.0"
         minSdkVersion = 24
         compileSdkVersion = 35
-        targetSdkVersion = 33 // NB : 34 breaks for the USB permission request intent
+        targetSdkVersion = 34 // NB : 34 breaks for the USB permission request intent
         ndkVersion = "26.1.10909125"
         kotlinVersion = "1.9.24"
     }
