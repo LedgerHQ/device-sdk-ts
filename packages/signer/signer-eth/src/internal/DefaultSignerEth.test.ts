@@ -15,8 +15,8 @@ import { DefaultSignerEth } from "./DefaultSignerEth";
 describe("DefaultSignerEth", () => {
   let signer: DefaultSignerEth;
   const mock: Container = {
-    get: jest.fn((id: symbol) => ({
-      execute: jest.fn(() => {
+    get: vi.fn((id: symbol) => ({
+      execute: vi.fn(() => {
         if (id === transactionTypes.SignTransactionUseCase) {
           return "transaction-result";
         } else if (id === messageTypes.SignMessageUseCase) {
@@ -33,7 +33,7 @@ describe("DefaultSignerEth", () => {
   } as unknown as Container;
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
 
     const dmk = {} as DeviceManagementKit;
     const sessionId = "" as DeviceSessionId;

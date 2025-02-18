@@ -12,18 +12,22 @@ import { AxiosManagerApiDataSource } from "@internal/manager-api/data/AxiosManag
 import { type ManagerApiDataSource } from "@internal/manager-api/data/ManagerApiDataSource";
 import { DefaultManagerApiService } from "@internal/manager-api/service/DefaultManagerApiService";
 import { type ManagerApiService } from "@internal/manager-api/service/ManagerApiService";
+import { DefaultSecureChannelDataSource } from "@internal/secure-channel/data/DefaultSecureChannelDataSource";
+import { type SecureChannelDataSource } from "@internal/secure-channel/data/SecureChannelDataSource";
+import { DefaultSecureChannelService } from "@internal/secure-channel/service/DefaultSecureChannelService";
+import { type SecureChannelService } from "@internal/secure-channel/service/SecureChannelService";
 import { DefaultTransportService } from "@internal/transport/service/DefaultTransportService";
 import { type TransportService } from "@internal/transport/service/TransportService";
 
 import { DisconnectUseCase } from "./DisconnectUseCase";
 
-jest.mock("@internal/transport/service/DefaultTransportService");
+vi.mock("@internal/transport/service/DefaultTransportService");
 
 let sessionService: DefaultDeviceSessionService;
 // TODO test several transports
 let transport: Transport;
 let transports: Transport[] = [];
-const loggerFactory = jest
+const loggerFactory = vi
   .fn()
   .mockReturnValue(
     new DefaultLoggerPublisherService([], "DisconnectUseCaseTest"),
@@ -31,6 +35,8 @@ const loggerFactory = jest
 let transportService: TransportService;
 let managerApi: ManagerApiService;
 let managerApiDataSource: ManagerApiDataSource;
+let secureChannelDataSource: SecureChannelDataSource;
+let secureChannel: SecureChannelService;
 
 const sessionId = "sessionId";
 
@@ -41,9 +47,9 @@ describe("DisconnectUseCase", () => {
     sessionService = new DefaultDeviceSessionService(loggerFactory);
     // @ts-expect-error mock
     transportService = new DefaultTransportService();
-    jest
-      .spyOn(transportService, "getTransport")
-      .mockReturnValue(Maybe.of(transport));
+    vi.spyOn(transportService, "getTransport").mockReturnValue(
+      Maybe.of(transport),
+    );
   });
 
   it("should disconnect from a device", async () => {
@@ -51,6 +57,10 @@ describe("DisconnectUseCase", () => {
     const connectedDevice = connectedDeviceStubBuilder();
     managerApiDataSource = new AxiosManagerApiDataSource({} as DmkConfig);
     managerApi = new DefaultManagerApiService(managerApiDataSource);
+    secureChannelDataSource = new DefaultSecureChannelDataSource(
+      {} as DmkConfig,
+    );
+    secureChannel = new DefaultSecureChannelService(secureChannelDataSource);
     const deviceSession = deviceSessionStubBuilder(
       {
         id: sessionId,
@@ -58,15 +68,16 @@ describe("DisconnectUseCase", () => {
       },
       loggerFactory,
       managerApi,
+      secureChannel,
     );
-    jest
-      .spyOn(sessionService, "getDeviceSessionById")
-      .mockImplementation(() => Right(deviceSession));
-    jest.spyOn(deviceSession, "close");
-    jest.spyOn(sessionService, "removeDeviceSession");
-    jest
-      .spyOn(transports[0]!, "disconnect")
-      .mockImplementation(() => Promise.resolve(Right(void 0)));
+    vi.spyOn(sessionService, "getDeviceSessionById").mockImplementation(() =>
+      Right(deviceSession),
+    );
+    vi.spyOn(deviceSession, "close");
+    vi.spyOn(sessionService, "removeDeviceSession");
+    vi.spyOn(transports[0]!, "disconnect").mockImplementation(() =>
+      Promise.resolve(Right(void 0)),
+    );
     const disconnectUseCase = new DisconnectUseCase(
       transportService,
       sessionService,
@@ -90,6 +101,7 @@ describe("DisconnectUseCase", () => {
       sessionService,
       loggerFactory,
     );
+
     // When
     try {
       await disconnectUseCase.execute({ sessionId });
@@ -101,20 +113,21 @@ describe("DisconnectUseCase", () => {
 
   it("should throw an error if usb hid disconnection fails", async () => {
     // Given
-    jest
-      .spyOn(sessionService, "getDeviceSessionById")
-      .mockImplementation(() =>
-        Right(
-          deviceSessionStubBuilder(
-            { id: sessionId },
-            loggerFactory,
-            managerApi,
-          ),
+    vi.spyOn(sessionService, "getDeviceSessionById").mockImplementation(() =>
+      Right(
+        deviceSessionStubBuilder(
+          { id: sessionId },
+          loggerFactory,
+          managerApi,
+          secureChannel,
         ),
-      );
-    jest
-      .spyOn(transports[0]!, "disconnect")
-      .mockResolvedValue(Promise.resolve(Left(new DisconnectError())));
+      ),
+    );
+
+    vi.spyOn(transports[0]!, "disconnect").mockResolvedValue(
+      Left(new DisconnectError()),
+    );
+
     const disconnectUseCase = new DisconnectUseCase(
       transportService,
       sessionService,

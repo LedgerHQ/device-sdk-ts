@@ -17,7 +17,7 @@ export function connectedDeviceStubBuilder(
     id: "42",
     type: "MOCK",
     transport: "USB",
-    sendApdu: jest.fn(async () =>
+    sendApdu: vi.fn(async () =>
       Promise.resolve(Right(defaultApduResponseStubBuilder())),
     ),
     ...props,

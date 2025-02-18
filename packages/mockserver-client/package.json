@@ -31,15 +31,16 @@
     "prettier": "prettier . --check",
     "prettier:fix": "prettier . --write",
     "typecheck": "tsc --noEmit",
-    "test": "jest --passWithNoTests",
-    "test:coverage": "pnpm test -- --coverage"
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage"
   },
   "dependencies": {},
   "devDependencies": {
     "@ledgerhq/esbuild-tools": "workspace:*",
-    "@ledgerhq/tsconfig-dsdk": "workspace:*",
     "@ledgerhq/eslint-config-dsdk": "workspace:*",
-    "@ledgerhq/jest-config-dsdk": "workspace:*",
-    "@ledgerhq/prettier-config-dsdk": "workspace:*"
+    "@ledgerhq/prettier-config-dsdk": "workspace:*",
+    "@ledgerhq/tsconfig-dsdk": "workspace:*",
+    "@ledgerhq/vitest-config-dmk": "workspace:*"
   }
 }

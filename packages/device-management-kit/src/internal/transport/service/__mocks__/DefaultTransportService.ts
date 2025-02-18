@@ -11,12 +11,12 @@ export class DefaultTransportService implements TransportService {
   _loggerModuleFactory = loggerFactory;
   _config = {} as DmkConfig;
   _deviceModelDataSource = {} as DeviceModelDataSource;
-  _apduSenderServiceFactory = jest.fn();
-  _apduReceiverServiceFactory = jest.fn();
+  _apduSenderServiceFactory = vi.fn();
+  _apduReceiverServiceFactory = vi.fn();
   _logger = loggerFactory("TransportServiceMock");
 
-  addTransport = jest.fn();
-  addTransportInternal = jest.fn();
-  getTransport = jest.fn();
-  getAllTransports = jest.fn();
+  addTransport = vi.fn();
+  addTransportInternal = vi.fn();
+  getTransport = vi.fn();
+  getAllTransports = vi.fn();
 }

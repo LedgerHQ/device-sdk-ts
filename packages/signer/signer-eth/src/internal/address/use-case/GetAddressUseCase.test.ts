@@ -12,7 +12,7 @@ describe("GetAddressUseCase", () => {
       checkOnDevice,
       returnChainCode,
     };
-    const getAddress = jest.fn();
+    const getAddress = vi.fn();
     const appBinder = {
       getAddress,
     };

@@ -10,7 +10,8 @@
     "paths": {
       "@api/*": ["./src/api/*"]
     },
-    "resolveJsonModule": true
+    "resolveJsonModule": true,
+    "types": ["node", "vitest/globals", "web-bluetooth", "uuid"]
   },
-  "include": ["src", "jest.*.ts"]
+  "include": ["src", "vitest.*.mjs"]
 }

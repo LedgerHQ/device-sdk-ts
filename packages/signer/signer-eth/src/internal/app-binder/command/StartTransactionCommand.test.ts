@@ -34,7 +34,7 @@ describe("StartTransactionCommand", () => {
 
       // THEN
       if (isSuccessCommandResult(result)) {
-        fail("Expected an error");
+        assert.fail("Expected an error");
       } else {
         expect(result.error).toBeInstanceOf(EthAppCommandError);
       }
@@ -63,7 +63,7 @@ describe("StartTransactionCommand", () => {
           v: 1,
         });
       } else {
-        fail("Expected a success");
+        assert.fail("Expected a success");
       }
     });
 
@@ -80,7 +80,7 @@ describe("StartTransactionCommand", () => {
 
       // THEN
       if (isSuccessCommandResult(result)) {
-        fail("Expected an error");
+        assert.fail("Expected an error");
       } else {
         expect(result.error).toBeInstanceOf(InvalidStatusWordError);
         expect(result.error.originalError).toEqual(new Error("V is missing"));
@@ -100,7 +100,7 @@ describe("StartTransactionCommand", () => {
 
       // THEN
       if (isSuccessCommandResult(result)) {
-        fail("Expected an error");
+        assert.fail("Expected an error");
       } else {
         expect(result.error).toBeInstanceOf(InvalidStatusWordError);
         expect(result.error.originalError).toEqual(new Error("R is missing"));
@@ -124,7 +124,7 @@ describe("StartTransactionCommand", () => {
 
       // THEN
       if (isSuccessCommandResult(result)) {
-        fail("Expected an error");
+        assert.fail("Expected an error");
       } else {
         expect(result.error).toBeInstanceOf(InvalidStatusWordError);
         expect(result.error.originalError).toEqual(new Error("S is missing"));

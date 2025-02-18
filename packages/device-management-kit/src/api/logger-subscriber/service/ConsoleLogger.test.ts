@@ -3,11 +3,11 @@ import { type LogSubscriberOptions } from "@api/logger-subscriber/model/LogSubsc
 
 import { ConsoleLogger } from "./ConsoleLogger";
 
-const warn = jest.spyOn(console, "warn").mockImplementation(jest.fn());
-const info = jest.spyOn(console, "info").mockImplementation(jest.fn());
-const debug = jest.spyOn(console, "debug").mockImplementation(jest.fn());
-const error = jest.spyOn(console, "error").mockImplementation(jest.fn());
-const log = jest.spyOn(console, "log").mockImplementation(jest.fn());
+const warn = vi.spyOn(console, "warn").mockImplementation(vi.fn());
+const info = vi.spyOn(console, "info").mockImplementation(vi.fn());
+const debug = vi.spyOn(console, "debug").mockImplementation(vi.fn());
+const error = vi.spyOn(console, "error").mockImplementation(vi.fn());
+const log = vi.spyOn(console, "log").mockImplementation(vi.fn());
 
 let logger: ConsoleLogger;
 const options: LogSubscriberOptions = {
@@ -19,12 +19,12 @@ const message = "message";
 
 describe("ConsoleLogger", () => {
   afterAll(() => {
-    jest.restoreAllMocks();
+    vi.restoreAllMocks();
   });
 
   describe("default level (LogLevel.DEBUG)", () => {
     beforeEach(() => {
-      jest.clearAllMocks();
+      vi.clearAllMocks();
       logger = new ConsoleLogger();
     });
 
@@ -93,7 +93,7 @@ describe("ConsoleLogger", () => {
 
   describe("custom level (LogLevel.Info)", () => {
     beforeEach(() => {
-      jest.clearAllMocks();
+      vi.clearAllMocks();
       logger = new ConsoleLogger(LogLevel.Info);
     });
 
@@ -158,7 +158,7 @@ describe("ConsoleLogger", () => {
 
   describe("custom level (LogLevel.Warning)", () => {
     beforeEach(() => {
-      jest.clearAllMocks();
+      vi.clearAllMocks();
       logger = new ConsoleLogger(LogLevel.Warning);
     });
 
@@ -213,7 +213,7 @@ describe("ConsoleLogger", () => {
 
   describe("custom level (LogLevel.Error)", () => {
     beforeEach(() => {
-      jest.clearAllMocks();
+      vi.clearAllMocks();
       logger = new ConsoleLogger(LogLevel.Error);
     });
 
@@ -264,7 +264,7 @@ describe("ConsoleLogger", () => {
 
   describe("custom level (LogLevel.Fatal)", () => {
     beforeEach(() => {
-      jest.clearAllMocks();
+      vi.clearAllMocks();
       logger = new ConsoleLogger(LogLevel.Fatal);
     });
 

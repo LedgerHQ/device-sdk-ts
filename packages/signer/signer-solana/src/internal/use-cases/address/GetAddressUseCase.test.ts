@@ -5,14 +5,14 @@ import { GetAddressUseCase } from "./GetAddressUseCase";
 describe("GetAddressUseCase", () => {
   const derivationPath = "44'/501'";
   const address = "some-address";
-  const getAddressMock = jest.fn().mockReturnValue(address);
+  const getAddressMock = vi.fn().mockReturnValue(address);
   const appBinderMock = {
     getAddress: getAddressMock,
   } as unknown as SolanaAppBinder;
   let useCase: GetAddressUseCase;
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
     useCase = new GetAddressUseCase(appBinderMock);
   });
 

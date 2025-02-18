@@ -3,12 +3,14 @@ import {
   type ClearSignContextSuccessType,
   type ClearSignContextType,
   type ContextModule,
+  type PkiCertificate,
 } from "@ledgerhq/context-module";
 import {
   ByteArrayBuilder,
   type CommandErrorResult,
   type InternalApi,
   isSuccessCommandResult,
+  LoadCertificateCommand,
 } from "@ledgerhq/device-management-kit";
 import { DerivationPathUtils } from "@ledgerhq/signer-utils";
 import { Just, type Maybe, Nothing } from "purify-ts";
@@ -24,6 +26,7 @@ import { SendPayloadInChunksTask } from "./SendPayloadInChunksTask";
 
 export type GenericContext = {
   readonly transactionInfo: string;
+  readonly transactionInfoCertificate: PkiCertificate;
   readonly transactionFields: ClearSignContextSuccess<
     Exclude<ClearSignContextSuccessType, ClearSignContextType.ENUM>
   >[];
@@ -70,6 +73,17 @@ export class ProvideTransactionGenericContextTask {
 
     if (!isSuccessCommandResult(storeTransactionResult)) {
       return Just(storeTransactionResult);
+    }
+
+    if (this.args.context.transactionInfoCertificate) {
+      const { keyUsageNumber: keyUsage, payload: certificate } =
+        this.args.context.transactionInfoCertificate;
+      await this.api.sendCommand(
+        new LoadCertificateCommand({
+          keyUsage,
+          certificate,
+        }),
+      );
     }
 
     // Provide the transaction information

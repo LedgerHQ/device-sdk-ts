@@ -1,4 +1,5 @@
 import {
+  CallTaskInAppDeviceAction,
   DeviceManagementKit,
   type DeviceSessionId,
   SendCommandInAppDeviceAction,
@@ -12,11 +13,11 @@ import { SignMessageDAReturnType } from "@api/app-binder/SignMessageDeviceAction
 import { SignTransactionDAReturnType } from "@api/app-binder/SignTransactionDeviceActionTypes";
 import { Transaction } from "@api/model/Transaction";
 import { TransactionOptions } from "@api/model/TransactionOptions";
+import { SendSignMessageTask } from "@internal/app-binder/task/SendSignMessageTask";
 import { externalTypes } from "@internal/externalTypes";
 
 import { GetAppConfigurationCommand } from "./command/GetAppConfigurationCommand";
 import { GetPubKeyCommand } from "./command/GetPubKeyCommand";
-import { SignMessageDeviceAction } from "./device-action/SignMessage/SignMessageDeviceAction";
 import { SignTransactionDeviceAction } from "./device-action/SignTransactionDeviceAction";
 
 @injectable()
@@ -67,10 +68,15 @@ export class SolanaAppBinder {
   }): SignMessageDAReturnType {
     return this.dmk.executeDeviceAction({
       sessionId: this.sessionId,
-      deviceAction: new SignMessageDeviceAction({
+      deviceAction: new CallTaskInAppDeviceAction({
         input: {
-          derivationPath: args.derivationPath,
-          message: args.message,
+          task: async (internalApi) =>
+            new SendSignMessageTask(internalApi, {
+              derivationPath: args.derivationPath,
+              sendingData: new TextEncoder().encode(args.message),
+            }).run(),
+          appName: "Solana",
+          requiredUserInteraction: UserInteractionRequired.SignPersonalMessage,
         },
       }),
     });

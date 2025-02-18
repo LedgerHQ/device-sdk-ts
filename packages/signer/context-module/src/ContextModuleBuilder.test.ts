@@ -18,7 +18,7 @@ describe("ContextModuleBuilder", () => {
 
   it("should return a custom context module", () => {
     const contextModuleBuilder = new ContextModuleBuilder();
-    const customLoader = { load: jest.fn() };
+    const customLoader = { load: vi.fn() };
 
     const res = contextModuleBuilder
       .removeDefaultLoaders()
@@ -30,7 +30,7 @@ describe("ContextModuleBuilder", () => {
 
   it("should return a custom context module with a custom typed data loader", () => {
     const contextModuleBuilder = new ContextModuleBuilder();
-    const customLoader = { load: jest.fn() };
+    const customLoader = { load: vi.fn() };
 
     const res = contextModuleBuilder
       .removeDefaultLoaders()

@@ -12,7 +12,7 @@ describe("CommandErrorHelper", () => {
     const errors = {
       "4224": { message: "An error occurred" },
     };
-    const errorFactory = jest.fn();
+    const errorFactory = vi.fn();
     const helper = new CommandErrorHelper(errors, errorFactory);
     const apduResponse = new ApduResponse({
       statusCode: Uint8Array.from([0x42, 0x24]),
@@ -29,7 +29,7 @@ describe("CommandErrorHelper", () => {
   it("should return a global error when no error is found", () => {
     // given
     const errors = {};
-    const errorFactory = jest.fn();
+    const errorFactory = vi.fn();
     const helper = new CommandErrorHelper(errors, errorFactory);
     const apduResponse = new ApduResponse({
       statusCode: Uint8Array.from([0x55, 0x15]),
@@ -48,7 +48,7 @@ describe("CommandErrorHelper", () => {
   it("should return undefined if success apdu response", () => {
     // given
     const errors = {};
-    const errorFactory = jest.fn();
+    const errorFactory = vi.fn();
     const helper = new CommandErrorHelper(errors, errorFactory);
     const apduResponse = new ApduResponse({
       statusCode: Uint8Array.from([0x90, 0x00]),

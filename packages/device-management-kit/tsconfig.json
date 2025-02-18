@@ -1,6 +1,6 @@
 {
   "extends": "@ledgerhq/tsconfig-dsdk/tsconfig.sdk",
-  "include": ["src", "index.ts", "jest.*.ts"],
+  "include": ["src", "index.ts", "vitest.*.mjs"],
   "compilerOptions": {
     "baseUrl": ".",
     "outDir": "./lib/types",
@@ -13,6 +13,7 @@
       "@internal/*": ["src/internal/*"],
       "@root/*": ["./*"]
     },
-    "resolveJsonModule": true
+    "resolveJsonModule": true,
+    "types": ["vitest/globals"]
   }
 }

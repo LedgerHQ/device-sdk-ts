@@ -16,9 +16,7 @@ export class DefaultManagerApiService implements ManagerApiService {
   constructor(
     @inject(managerApiTypes.ManagerApiDataSource)
     private readonly dataSource: ManagerApiDataSource,
-  ) {
-    this.dataSource = dataSource;
-  }
+  ) {}
 
   getDeviceVersion(deviceInfo: GetOsVersionResponse, provider: number) {
     return this.dataSource.getDeviceVersion(

@@ -83,7 +83,7 @@ describe("GetMasterFingerprintCommand", () => {
           new InvalidStatusWordError("Master fingerprint is missing"),
         );
       } else {
-        fail("Expected an error, but the result was successful");
+        assert.fail("Expected an error, but the result was successful");
       }
     });
   });

@@ -82,7 +82,7 @@ describe("Base64String", () => {
 
   describe("base64StringToBuffer function", () => {
     beforeEach(() => {
-      jest.resetAllMocks();
+      vi.resetAllMocks();
     });
 
     it("should convert empty input to empty buffer", () => {
@@ -125,7 +125,7 @@ describe("Base64String", () => {
 
     it("should convert a base64 string to a buffer using Buffer", () => {
       // GIVEN
-      jest.spyOn(global, "atob").mockImplementation(() => {
+      vi.spyOn(global, "atob").mockImplementation(() => {
         throw new Error("atob is not defined");
       });
       const value = "Zmlyc3QgdGVzdCBzdHJpbmc=";

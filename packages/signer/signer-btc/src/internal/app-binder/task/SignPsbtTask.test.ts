@@ -62,7 +62,7 @@ describe("SignPsbtTask", () => {
     it("should return partial signatures", async () => {
       // given
       const api = {
-        sendCommand: jest.fn(),
+        sendCommand: vi.fn(),
       } as unknown as InternalApi;
       const psbt = {
         getGlobalValue: () => Maybe.of(Uint8Array.from([0x03])),
@@ -77,14 +77,14 @@ describe("SignPsbtTask", () => {
       } as PsbtCommitment;
       const dataStore = {} as DataStore;
       const walletSerializer = {
-        getId: jest.fn(() => Uint8Array.from([0x05])),
+        getId: vi.fn(() => Uint8Array.from([0x05])),
       } as unknown as WalletSerializer;
       const valueParser = {
-        getVarint: jest.fn(() => Maybe.of(42)),
+        getVarint: vi.fn(() => Maybe.of(42)),
       } as unknown as ValueParser;
       const continueTaskFactory = () =>
         ({
-          run: jest.fn().mockResolvedValue(
+          run: vi.fn().mockResolvedValue(
             CommandResultFactory({
               data: [],
             }),
@@ -145,7 +145,7 @@ describe("SignPsbtTask", () => {
     it("should return musig partial signatures", async () => {
       // given
       const api = {
-        sendCommand: jest.fn(),
+        sendCommand: vi.fn(),
       } as unknown as InternalApi;
       const psbt = {
         getGlobalValue: () => Maybe.of(Uint8Array.from([0x03])),
@@ -160,14 +160,14 @@ describe("SignPsbtTask", () => {
       } as PsbtCommitment;
       const dataStore = {} as DataStore;
       const walletSerializer = {
-        getId: jest.fn(() => Uint8Array.from([0x05])),
+        getId: vi.fn(() => Uint8Array.from([0x05])),
       } as unknown as WalletSerializer;
       const valueParser = {
-        getVarint: jest.fn(() => Maybe.of(42)),
+        getVarint: vi.fn(() => Maybe.of(42)),
       } as unknown as ValueParser;
       const continueTaskFactory = () =>
         ({
-          run: jest.fn().mockResolvedValue(
+          run: vi.fn().mockResolvedValue(
             CommandResultFactory({
               data: [],
             }),
@@ -237,7 +237,7 @@ describe("SignPsbtTask", () => {
     it("should return musig pub nonce", async () => {
       // given
       const api = {
-        sendCommand: jest.fn(),
+        sendCommand: vi.fn(),
       } as unknown as InternalApi;
       const psbt = {
         getGlobalValue: () => Maybe.of(Uint8Array.from([0x03])),
@@ -252,14 +252,14 @@ describe("SignPsbtTask", () => {
       } as PsbtCommitment;
       const dataStore = {} as DataStore;
       const walletSerializer = {
-        getId: jest.fn(() => Uint8Array.from([0x05])),
+        getId: vi.fn(() => Uint8Array.from([0x05])),
       } as unknown as WalletSerializer;
       const valueParser = {
-        getVarint: jest.fn(() => Maybe.of(42)),
+        getVarint: vi.fn(() => Maybe.of(42)),
       } as unknown as ValueParser;
       const continueTaskFactory = () =>
         ({
-          run: jest.fn().mockResolvedValue(
+          run: vi.fn().mockResolvedValue(
             CommandResultFactory({
               data: [],
             }),
@@ -334,23 +334,23 @@ describe("SignPsbtTask", () => {
     it("should return an error if continue task fails", async () => {
       // given
       const api = {
-        sendCommand: jest.fn(),
+        sendCommand: vi.fn(),
       } as unknown as InternalApi;
       const psbt = {
-        getGlobalValue: jest.fn(() => Nothing),
+        getGlobalValue: vi.fn(() => Nothing),
       } as unknown as Psbt;
       const wallet = {} as Wallet;
       const psbtCommitment = {} as PsbtCommitment;
       const dataStore = {} as DataStore;
       const walletSerializer = {
-        getId: jest.fn(() => Uint8Array.from([0x05])),
+        getId: vi.fn(() => Uint8Array.from([0x05])),
       } as unknown as WalletSerializer;
       const valueParser = {
-        getVarint: jest.fn(() => Maybe.of(42)),
+        getVarint: vi.fn(() => Maybe.of(42)),
       } as unknown as ValueParser;
       const continueTaskFactory = () =>
         ({
-          run: jest.fn().mockResolvedValue(
+          run: vi.fn().mockResolvedValue(
             CommandResultFactory({
               error: new UnknownDeviceExchangeError("Failed"),
             }),

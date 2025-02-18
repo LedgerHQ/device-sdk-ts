@@ -1,13 +1,15 @@
+import { type Mocked } from "vitest";
+
 import { LogLevel } from "@api/logger-subscriber/model/LogLevel";
 import { ConsoleLogger } from "@api/logger-subscriber/service/ConsoleLogger";
 
 import { DefaultLoggerPublisherService } from "./DefaultLoggerPublisherService";
 
-jest.mock("@api/logger-subscriber/service/ConsoleLogger");
-jest.useFakeTimers().setSystemTime(new Date("2024-01-01"));
+vi.mock("@api/logger-subscriber/service/ConsoleLogger");
+vi.useFakeTimers().setSystemTime(new Date("2024-01-01"));
 
 let service: DefaultLoggerPublisherService;
-let subscriber: jest.Mocked<ConsoleLogger>;
+let subscriber: Mocked<ConsoleLogger>;
 const message = "message";
 const tag = "logger-tag";
 const options = { data: { key: "value" } };
@@ -15,8 +17,8 @@ const generatedOptions = { tag, timestamp: Date.now(), ...options };
 
 describe("LoggerPublisherService", () => {
   beforeEach(() => {
-    jest.clearAllMocks();
-    subscriber = new ConsoleLogger() as jest.Mocked<ConsoleLogger>;
+    vi.clearAllMocks();
+    subscriber = new ConsoleLogger() as Mocked<ConsoleLogger>;
     service = new DefaultLoggerPublisherService([subscriber], tag);
   });
 
@@ -48,28 +50,28 @@ describe("LoggerPublisherService", () => {
   });
 
   it("should call _log with the correct LogLevel", () => {
-    const spy = jest.spyOn(service, "_log").mockImplementation(jest.fn());
+    const spy = vi.spyOn(service, "_log").mockImplementation(vi.fn());
 
     service.info(message, options);
     expect(spy).toHaveBeenCalledWith(LogLevel.Info, message, options);
   });
 
   it("should have the correct LogLevel", () => {
-    const spy = jest.spyOn(service, "_log").mockImplementation(jest.fn());
+    const spy = vi.spyOn(service, "_log").mockImplementation(vi.fn());
 
     service.debug(message, options);
     expect(spy).toHaveBeenCalledWith(LogLevel.Debug, message, options);
   });
 
   it("should have the correct LogLevel", () => {
-    const spy = jest.spyOn(service, "_log").mockImplementation(jest.fn());
+    const spy = vi.spyOn(service, "_log").mockImplementation(vi.fn());
 
     service.warn(message, options);
     expect(spy).toHaveBeenCalledWith(LogLevel.Warning, message, options);
   });
 
   it("should have the correct LogLevel", () => {
-    const spy = jest.spyOn(service, "_log").mockImplementation(jest.fn());
+    const spy = vi.spyOn(service, "_log").mockImplementation(vi.fn());
 
     service.error(message, options);
     expect(spy).toHaveBeenCalledWith(LogLevel.Error, message, options);

@@ -13,11 +13,11 @@ let datasource: RemoteConfigDataSource;
 
 // Necessary to use `any` on the prototype to be able to spy on private methods
 /* eslint-disable @typescript-eslint/no-explicit-any */
-const callApiSpy = jest.spyOn(
+const callApiSpy = vi.spyOn(
   RestRemoteConfigDataSource.prototype as any,
   "_callApi",
 );
-const parseResponseSpy = jest.spyOn(
+const parseResponseSpy = vi.spyOn(
   RestRemoteConfigDataSource.prototype as any,
   "_parseResponse",
 );

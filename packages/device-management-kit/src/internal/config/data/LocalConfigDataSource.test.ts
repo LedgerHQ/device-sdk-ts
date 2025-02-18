@@ -8,21 +8,20 @@ import * as LocalConfig from "./LocalConfigDataSource";
 
 const { FileLocalConfigDataSource } = LocalConfig;
 
-const readFileSyncSpy = jest.spyOn(LocalConfig, "stubFsReadFile");
-const jsonParse = jest.spyOn(JSON, "parse");
+const readFileSyncSpy = vi.spyOn(LocalConfig, "stubFsReadFile");
+const jsonParse = vi.spyOn(JSON, "parse");
+const jsonStringify = vi.spyOn(JSON, "stringify");
 
 let datasource: LocalConfigDataSource;
 describe("LocalConfigDataSource", () => {
   describe("FileLocalConfigDataSource", () => {
     beforeEach(() => {
-      readFileSyncSpy.mockClear();
-      jsonParse.mockClear();
+      vi.resetAllMocks();
       datasource = new FileLocalConfigDataSource();
     });
 
     afterAll(() => {
-      readFileSyncSpy.mockRestore();
-      jsonParse.mockRestore();
+      vi.resetAllMocks();
     });
 
     it("should return an Either<never, Config>", () => {
@@ -45,7 +44,7 @@ describe("LocalConfigDataSource", () => {
 
     it("should return an Either<ReadFileError, never> if readFileSync throws", () => {
       const err = new Error("readFileSync error");
-      readFileSyncSpy.mockImplementation(() => {
+      jsonStringify.mockImplementation(() => {
         throw err;
       });
 

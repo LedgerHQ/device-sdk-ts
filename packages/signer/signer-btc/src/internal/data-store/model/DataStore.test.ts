@@ -46,15 +46,15 @@ const BIG_TREE = {
 describe("DataStore", () => {
   // Mocked merkle tree
   const createMerkletree = () => ({
-    size: jest.fn(),
-    getRoot: jest.fn(),
-    getLeaves: jest.fn(),
-    getLeafHash: jest.fn(),
-    getProof: jest.fn(),
+    size: vi.fn(),
+    getRoot: vi.fn(),
+    getLeaves: vi.fn(),
+    getLeafHash: vi.fn(),
+    getProof: vi.fn(),
   });
 
   beforeEach(() => {
-    jest.resetAllMocks();
+    vi.resetAllMocks();
   });
 
   it("Add preimages, then get it", () => {

@@ -104,6 +104,10 @@ export class SignTypedDataDeviceAction extends XStateDeviceAction<
       },
       guards: {
         noInternalError: ({ context }) => context._internalState.error === null,
+        notRefusedByUser: ({ context }) =>
+          context._internalState.error !== null &&
+          (!("errorCode" in context._internalState.error) ||
+            context._internalState.error.errorCode !== "6985"),
       },
       actions: {
         assignErrorFromEvent: assign({
@@ -240,7 +244,8 @@ export class SignTypedDataDeviceAction extends XStateDeviceAction<
         ProvideContextResultCheck: {
           always: [
             { guard: "noInternalError", target: "SignTypedData" },
-            { target: "SignTypedDataLegacy" },
+            { guard: "notRefusedByUser", target: "SignTypedDataLegacy" },
+            { target: "Error" },
           ],
         },
         SignTypedData: {
