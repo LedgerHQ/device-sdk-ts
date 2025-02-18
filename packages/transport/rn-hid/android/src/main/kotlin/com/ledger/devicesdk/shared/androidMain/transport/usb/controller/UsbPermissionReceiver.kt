@@ -14,8 +14,9 @@ import android.os.Build
 import androidx.core.content.ContextCompat
 import com.ledger.devicesdk.shared.androidMain.transport.usb.AndroidUsbTransport
 import com.ledger.devicesdk.shared.androidMain.transport.usb.model.UsbPermissionEvent
-import com.ledger.devicesdk.shared.androidMain.transport.usb.utils.getAndroidUsbDevice
 import com.ledger.devicesdk.shared.androidMain.transport.usb.utils.toLedgerUsbDevice
+import com.ledger.devicesdk.shared.internal.service.logger.LoggerService
+import com.ledger.devicesdk.shared.internal.service.logger.buildSimpleDebugLogInfo
 import com.ledger.devicesdk.shared.internal.utils.Controller
 import timber.log.Timber
 
@@ -24,6 +25,7 @@ internal const val ACTION_USB_PERMISSION = "com.android.example.USB_PERMISSION"
 internal class UsbPermissionReceiver(
     private val context: Context,
     private val androidUsbTransport: AndroidUsbTransport,
+    private val loggerService: LoggerService,
 ) : BroadcastReceiver(),
     Controller {
     override fun start() {
@@ -59,17 +61,33 @@ internal class UsbPermissionReceiver(
         Timber.i("UsbPermissionReceiver:onReceive")
         if (ACTION_USB_PERMISSION == intent.action) {
             synchronized(this) {
-                val androidUsbDevice = intent.getAndroidUsbDevice()
-                val device = androidUsbDevice.toLedgerUsbDevice()
-                if (device != null) {
-                    if (intent.getBooleanExtra(UsbManager.EXTRA_PERMISSION_GRANTED, false)) {
-                        Timber.d("permission granted")
-                        androidUsbTransport.updateUsbEvent(UsbPermissionEvent.PermissionGranted(device = device))
-                    } else {
-                        Timber.d("permission denied")
-                        androidUsbTransport.updateUsbEvent(UsbPermissionEvent.PermissionDenied(device = device))
-                    }
+                val usbManager = context.getSystemService(Context.USB_SERVICE) as UsbManager
+                val androidUsbDevice = usbManager.deviceList.values.firstOrNull {
+                    usbManager.hasPermission(it) && it.toLedgerUsbDevice() != null
                 }
+                val ledgerUsbDevice = androidUsbDevice?.toLedgerUsbDevice()
+                if (ledgerUsbDevice != null) {
+                    loggerService.log(
+                        buildSimpleDebugLogInfo(
+                            "UsbPermissionReceiver:onReceive",
+                            "permission granted"
+                        )
+                    )
+                    androidUsbTransport.updateUsbEvent(
+                        UsbPermissionEvent.PermissionGranted(ledgerUsbDevice = ledgerUsbDevice)
+                    )
+                } else {
+                    loggerService.log(
+                        buildSimpleDebugLogInfo(
+                            "UsbPermissionReceiver:onReceive",
+                            "permission denied"
+                        )
+                    )
+                    androidUsbTransport.updateUsbEvent(
+                        UsbPermissionEvent.PermissionDenied
+                    )
+                }
+
             }
         }
     }

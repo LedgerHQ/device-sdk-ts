@@ -66,8 +66,10 @@ class TransportHidModule(
                         PendingIntent.getBroadcast(
                             context,
                             Random.nextInt(),
-                            Intent(ACTION_USB_PERMISSION),
-                            PendingIntent.FLAG_MUTABLE, // TODO: this breaks
+                            Intent(ACTION_USB_PERMISSION).apply {
+                                setPackage(context.packageName)
+                            },
+                            PendingIntent.FLAG_IMMUTABLE,
                         ),
                     )
                 },
@@ -79,6 +81,7 @@ class TransportHidModule(
             usbPermissionReceiver = UsbPermissionReceiver(
                 context = reactContext,
                 androidUsbTransport = transport,
+                loggerService = loggerService
             )
             usbDetachedReceiverController = UsbDetachedReceiverController(
                 context = reactContext,
