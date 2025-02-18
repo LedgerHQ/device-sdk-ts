@@ -14,7 +14,7 @@
   ],
   "type": "module",
   "devDependencies": {
-    "esbuild": "^0.24.0",
+    "esbuild": "^0.25.0",
     "esbuild-node-externals": "^1.14.0"
   }
 }
