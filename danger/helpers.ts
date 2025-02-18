@@ -103,11 +103,6 @@ export const checkBranches = (
   const config = Branch(danger, fail, fork);
   const currentBranch = config.getBranch();
   console.log("Current branch:", currentBranch);
-
-  if (currentBranch.startsWith("release")) {
-    return true;
-  }
-
   if (!config.regex.test(currentBranch)) {
     config.fail(currentBranch);
     return false;
