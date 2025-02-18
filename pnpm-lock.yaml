@@ -482,8 +482,8 @@ importers:
   packages/signer/signer-eth:
     dependencies:
       '@ledgerhq/signer-utils':
-        specifier: 1.0.3
-        version: 1.0.3(@ledgerhq/device-management-kit@packages+device-management-kit)
+        specifier: workspace:*
+        version: link:../signer-utils
       ethers:
         specifier: 6.13.4
         version: 6.13.4
@@ -2428,11 +2428,6 @@ packages:
     peerDependenciesMeta:
       '@types/react':
         optional: true
-
-  '@ledgerhq/signer-utils@1.0.3':
-    resolution: {integrity: sha512-GJhj9q9lOvfIdRDV0zWST6VvppAr86891GCl/ZuF1YzZeuaK5FzPaBs01LbNrukVosgAWbtW/KKixrQ95X6BlQ==}
-    peerDependencies:
-      '@ledgerhq/device-management-kit': 0.6.0
 
   '@ledgerhq/ui-shared@0.3.0':
     resolution: {integrity: sha512-QSu+yRnt/WbGCfHZ9oi6oZ3JnauS/xglG68Wg0k1xCqgO/VvqUiluHpQSZqXFaBA11sFbMyMWA3E3h5gwVyPwA==}
@@ -11092,10 +11087,6 @@ snapshots:
       - '@emotion/is-prop-valid'
       - react-native-svg
       - supports-color
-
-  '@ledgerhq/signer-utils@1.0.3(@ledgerhq/device-management-kit@packages+device-management-kit)':
-    dependencies:
-      '@ledgerhq/device-management-kit': link:packages/device-management-kit
 
   '@ledgerhq/ui-shared@0.3.0': {}
 
