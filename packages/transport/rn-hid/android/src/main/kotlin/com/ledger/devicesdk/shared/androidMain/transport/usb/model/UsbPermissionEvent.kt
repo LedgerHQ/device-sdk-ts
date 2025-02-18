@@ -7,10 +7,8 @@ package com.ledger.devicesdk.shared.androidMain.transport.usb.model
 
 internal sealed class UsbPermissionEvent {
     data class PermissionGranted(
-        val device: LedgerUsbDevice,
+        val ledgerUsbDevice: LedgerUsbDevice,
     ) : UsbPermissionEvent()
 
-    data class PermissionDenied(
-        val device: LedgerUsbDevice,
-    ) : UsbPermissionEvent()
+    data object PermissionDenied : UsbPermissionEvent()
 }

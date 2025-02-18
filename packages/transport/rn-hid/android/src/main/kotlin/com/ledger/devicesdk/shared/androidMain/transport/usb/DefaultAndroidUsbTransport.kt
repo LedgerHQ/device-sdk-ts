@@ -119,7 +119,7 @@ internal class DefaultAndroidUsbTransport(
             }
 
             is UsbState.Attached -> {
-                loggerService.log(buildSimpleInfoLogInfo("AndroidUsbTransport", "Attached ${state.usbDevice.deviceId}, pendingReconnections=${usbConnectionsPendingReconnection}"))
+                loggerService.log(buildSimpleInfoLogInfo("AndroidUsbTransport", "Attached deviceId=${state.usbDevice.deviceId}, pendingReconnections=${usbConnectionsPendingReconnection}"))
                 usbConnectionsPendingReconnection.firstOrNull {
                     it.getApduSender()
                         .dependencies.ledgerUsbDevice.ledgerDevice == state.ledgerUsbDevice.ledgerDevice
@@ -134,6 +134,7 @@ internal class DefaultAndroidUsbTransport(
                             )
                             return@launch
                         }
+                        loggerService.log(buildSimpleInfoLogInfo("AndroidUsbTransport", "Found matching device connection $deviceConnection"))
                         val permissionResult = checkOrRequestPermission(state.usbDevice)
                         if (permissionResult is PermissionResult.Denied) {
                             loggerService.log(buildSimpleErrorLogInfo("AndroidUsbTransport", "Permission denied"))
@@ -190,11 +191,15 @@ internal class DefaultAndroidUsbTransport(
             device = usbDevice,
         )
 
+        loggerService.log(buildSimpleInfoLogInfo("AndroidUsbTransport", "Waiting for permission result"))
+
         val result = eventsFlow.first {
             it is UsbPermissionEvent.PermissionGranted ||
                     it is UsbPermissionEvent.PermissionDenied ||
                     it is UsbState.Detached
         }
+
+        loggerService.log(buildSimpleInfoLogInfo("AndroidUsbTransport", "Got permission result"))
 
         return when (result) {
             is UsbPermissionEvent -> {
