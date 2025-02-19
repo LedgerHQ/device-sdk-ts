@@ -64,6 +64,8 @@ export type GetOsVersionResponse = {
   readonly recoverState: string;
 };
 
+export type GetOsVersionCommandResult = CommandResult<GetOsVersionResponse>;
+
 /**
  * Command to get information about the device firmware.
  */
@@ -83,7 +85,7 @@ export class GetOsVersionCommand implements Command<GetOsVersionResponse> {
   parseResponse(
     apduResponse: ApduResponse,
     deviceModelId: DeviceModelId,
-  ): CommandResult<GetOsVersionResponse> {
+  ): GetOsVersionCommandResult {
     if (!CommandUtils.isSuccessResponse(apduResponse)) {
       return CommandResultFactory({
         error: GlobalCommandErrorHandler.handle(apduResponse),

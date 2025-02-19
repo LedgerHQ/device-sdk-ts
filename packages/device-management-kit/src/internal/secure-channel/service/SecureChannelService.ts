@@ -31,7 +31,11 @@ export interface SecureChannelService {
     deviceInfo: GetOsVersionResponse,
     finalFirmware: FinalFirmware,
   ): Either<WebSocketConnectionError, WebSocket>;
-  // TODO: Update `param` type with defined type when it's ready
+  updateFirmware(
+    deviceInfo: GetOsVersionResponse,
+    finalFirmware: FinalFirmware,
+  ): Either<WebSocketConnectionError, WebSocket>;
+  // TODO: Update the parameters
   updateMcu(
     deviceInfo: GetOsVersionResponse,
     param: { version: string },
