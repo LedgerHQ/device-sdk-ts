@@ -15,6 +15,5 @@
   },
   "bumpVersionsWithWorkspaceProtocolOnly": true,
   "baseBranch": "develop",
-  "updateInternalDependencies": "patch",
-  "ignore": []
+  "updateInternalDependencies": "patch"
 }

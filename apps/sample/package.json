@@ -1,7 +1,7 @@
 {
   "name": "@ledgerhq/device-management-kit-sample",
   "version": "0.1.3",
-  "private": true,
+  "private": false,
   "scripts": {
     "dev": "next dev",
     "dev:default-mock": "next dev",

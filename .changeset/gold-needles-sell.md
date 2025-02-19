@@ -1,5 +1,5 @@
 ---
-"@ledgerhq/device-signer-kit-bitcoin": minor
+"@ledgerhq/device-signer-kit-bitcoin": patch
 ---
 
 Add sendApdu in internal API interface

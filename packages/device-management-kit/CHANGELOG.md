@@ -1,5 +1,21 @@
 # @ledgerhq/device-management-kit
 
+## 0.6.1
+
+### Patch Changes
+
+- [#675](https://github.com/LedgerHQ/device-sdk-ts/pull/675) [`90e20e7`](https://github.com/LedgerHQ/device-sdk-ts/commit/90e20e74422b1c178cf82c459ad32e2bff6221da) Thanks [@aussedatlo](https://github.com/aussedatlo)! - Use unknown type for HexaString typeguard
+
+- [#663](https://github.com/LedgerHQ/device-sdk-ts/pull/663) [`5c4a2d6`](https://github.com/LedgerHQ/device-sdk-ts/commit/5c4a2d624a4196f62051514ec211dca4c618023e) Thanks [@jiyuzhuang](https://github.com/jiyuzhuang)! - Add sendApdu in internal API interface
+
+- [#645](https://github.com/LedgerHQ/device-sdk-ts/pull/645) [`3c202be`](https://github.com/LedgerHQ/device-sdk-ts/commit/3c202be9cbd5e85eefbe4298d0f66adc8d239f8f) Thanks [@aussedatlo](https://github.com/aussedatlo)! - Add LoadCertificateCommand
+
+- [#680](https://github.com/LedgerHQ/device-sdk-ts/pull/680) [`060fe45`](https://github.com/LedgerHQ/device-sdk-ts/commit/060fe45e60fd58b792f3cc1c9c4313415ef729ee) Thanks [@aussedatlo](https://github.com/aussedatlo)! - Move statelyai/inspect to devDependencies
+
+- [#657](https://github.com/LedgerHQ/device-sdk-ts/pull/657) [`2f952cc`](https://github.com/LedgerHQ/device-sdk-ts/commit/2f952cc68ab37b49a04d1219f90b0e60d4fd0726) Thanks [@jiyuzhuang](https://github.com/jiyuzhuang)! - Separate WebSocket connections from manager API
+
+- [#649](https://github.com/LedgerHQ/device-sdk-ts/pull/649) [`1364525`](https://github.com/LedgerHQ/device-sdk-ts/commit/1364525e1092b69700e83819d00df1222dc32dc1) Thanks [@paoun-ledger](https://github.com/paoun-ledger)! - Factorize device actions calling a task in an app
+
 ## 0.6.0
 
 ### Minor Changes
