@@ -13,9 +13,9 @@ type Props = {
 };
 
 export const DiscoveredDeviceItem = ({ device, onPress }: Props) => {
-  const { available } = device;
+  const { rssi } = device;
 
-  const wording = available ? "available" : "unavailable";
+  const wording = rssi !== null ? "available" : "unavailable";
   const color = wording === "unavailable" ? "neutral.c60" : "primary.c80";
 
   const deviceIcon = useMemo(() => {

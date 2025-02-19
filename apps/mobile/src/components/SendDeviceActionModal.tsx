@@ -2,7 +2,6 @@ import React, { useCallback, useEffect, useState } from "react";
 import { Icons, InfiniteLoader, Popin, Text } from "@ledgerhq/native-ui";
 import { useForm } from "_hooks/useForm";
 import { DeviceActionProps } from "_common/types.ts";
-import { lastValueFrom } from "rxjs";
 import { inspect } from "util";
 import { DeviceActionStatus } from "@ledgerhq/device-management-kit";
 import styled from "styled-components/native";
@@ -40,18 +39,29 @@ export const SendDeviceActionModal: React.FC<SendDeviceActionModalProps> = ({
     }
   }, [deviceAction, setFormValue]);
   const onSend = useCallback(async () => {
+    let subscription = null;
     if (deviceAction) {
       setOutput("");
       setLoading(true);
       const { observable } = deviceAction.executeDeviceAction(formValues);
-      const response = await lastValueFrom(observable);
-      if (response.status === DeviceActionStatus.Error) {
-        setOutput(inspect(response, { depth: null }));
-      } else {
-        setOutput(JSON.stringify(response, null, 2));
-      }
-      setLoading(false);
+      subscription = observable.subscribe({
+        next: response => {
+          if (response.status === DeviceActionStatus.Error) {
+            setOutput(inspect(response, { depth: null }));
+          } else {
+            setOutput(JSON.stringify(response, null, 2));
+          }
+        },
+        complete: () => {
+          setLoading(false);
+        },
+      });
     }
+    return () => {
+      if (subscription) {
+        subscription.unsubscribe();
+      }
+    };
   }, [deviceAction, formValues]);
 
   return (

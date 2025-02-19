@@ -42,7 +42,7 @@ export class StartDiscoveringUseCase {
       deviceModel,
       transport: device.transport,
       name: device.name || deviceModel.name,
-      available: device.available === undefined ? true : device.available,
+      rssi: device.rssi,
     };
   }
 
