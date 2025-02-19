@@ -73,17 +73,7 @@ export class RNBleTransport implements Transport {
     this.requestPermission();
   }
 
-  /**
-   * Starts the discovery process to find Bluetooth devices that match specific criteria.
-   *
-   * This method clears the internal device cache and requests necessary permissions
-   * before initiating the discovery of both known and new devices. If the Bluetooth
-   * Low Energy (BLE) feature is not supported, an error is thrown.
-   *
-   * @return {Observable<TransportDiscoveredDevice>} An observable emitting discovered devices
-   * that match the specified Bluetooth services.
-   */
-  startDiscovering(): Observable<TransportDiscoveredDevice> {
+  private _scan() {
     const ledgerUuids = this._deviceModelDataSource.getBluetoothServices();
     this._internalDevicesById.clear();
     return from(this.requestPermission()).pipe(
@@ -97,6 +87,20 @@ export class RNBleTransport implements Transport {
         );
       }),
     );
+  }
+
+  /**
+   * Starts the discovery process to find Bluetooth devices that match specific criteria.
+   *
+   * This method clears the internal device cache and requests necessary permissions
+   * before initiating the discovery of both known and new devices. If the Bluetooth
+   * Low Energy (BLE) feature is not supported, an error is thrown.
+   *
+   * @return {Observable<TransportDiscoveredDevice>} An observable emitting discovered devices
+   * that match the specified Bluetooth services.
+   */
+  startDiscovering(): Observable<TransportDiscoveredDevice> {
+    return this._scan();
   }
 
   /**
@@ -219,24 +223,23 @@ export class RNBleTransport implements Transport {
     return Promise.resolve(Right(undefined));
   }
 
-  private _isDiscoveredDeviceLost(internalDevice: RNBleInternalDevice) {
-    return internalDevice.lastDiscoveredTimeStamp.caseOf({
-      Just: (lastDiscoveredTimeStamp) =>
-        Date.now() > lastDiscoveredTimeStamp + CONNECTION_LOST_DELAY,
-      Nothing: () => {
-        internalDevice.lastDiscoveredTimeStamp = Maybe.of(Date.now());
-        return true;
-      },
-    });
-  }
-
   /**
    * Listens to known devices and emits updates when new devices are discovered or when properties of existing devices are updated.
    *
    * @return {Observable<TransportDiscoveredDevice[]>} An observable stream of discovered devices, containing device information as an array of TransportDiscoveredDevice objects.
    */
-  listenToKnownDevices(): Observable<TransportDiscoveredDevice[]> {
-    return from([]);
+  listenToAvailableDevices(): Observable<TransportDiscoveredDevice[]> {
+    const scannedDeviceMap: Record<DeviceId, TransportDiscoveredDevice> = {};
+    return new Observable((subscriber) => {
+      this._scan().subscribe({
+        next: (discoveredDevice) => {
+          scannedDeviceMap[discoveredDevice.id] = discoveredDevice;
+          subscriber.next(
+            Object.values(scannedDeviceMap).filter((device) => !!device.rssi),
+          );
+        },
+      });
+    });
   }
 
   /**
@@ -349,7 +352,13 @@ export class RNBleTransport implements Transport {
     );
 
     if (existingInternalDevice.isJust()) {
-      return Nothing;
+      return existingInternalDevice.map((internalDevice) => ({
+        bleDeviceInfos: internalDevice.bleDeviceInfos,
+        discoveredDevice: {
+          ...internalDevice.discoveredDevice,
+          rssi: rnDevice.rssi || undefined,
+        },
+      }));
     }
 
     return maybeUuid.mapOrDefault((uuid) => {
@@ -363,6 +372,7 @@ export class RNBleTransport implements Transport {
           name: rnDevice.localName || bleDeviceInfos.deviceModel.productName,
           deviceModel: bleDeviceInfos.deviceModel,
           transport: this.identifier,
+          rssi: rnDevice.rssi || undefined,
         };
 
         return {
@@ -371,6 +381,22 @@ export class RNBleTransport implements Transport {
         };
       });
     }, Nothing);
+  }
+
+  /**
+   * Determines whether the delay since the device was last discovered has exceeded a predefined threshold.
+   *
+   * @param {RNBleInternalDevice} internalDevice - The internal device object containing the last discovered timestamp.
+   * @return {boolean} - Returns true if the delay is over, otherwise false.
+   */
+  private _isDiscoveredDeviceDelayOver(internalDevice: RNBleInternalDevice) {
+    return internalDevice.lastDiscoveredTimeStamp.caseOf({
+      Just: (lastDiscoveredTimeStamp) =>
+        Date.now() > lastDiscoveredTimeStamp + CONNECTION_LOST_DELAY,
+      Nothing: () => {
+        return false;
+      },
+    });
   }
 
   /**
@@ -386,11 +412,11 @@ export class RNBleTransport implements Transport {
     subscriber: Subscriber<TransportDiscoveredDevice>,
   ) {
     this._internalDevicesById.forEach((internalDevice) => {
-      if (this._isDiscoveredDeviceLost(internalDevice)) {
+      if (this._isDiscoveredDeviceDelayOver(internalDevice)) {
         this._internalDevicesById.delete(internalDevice.id);
         subscriber.next({
           ...internalDevice.discoveredDevice,
-          available: false,
+          rssi: null,
         });
       }
     });
@@ -403,7 +429,7 @@ export class RNBleTransport implements Transport {
    * @param {Subscriber<TransportDiscoveredDevice>} subscriber The subscriber to emit the discovered device to.
    * @param {BleDeviceInfos} bleDeviceInfos The BLE device information associated with the discovered device.
    * @param {TransportDiscoveredDevice} discoveredDevice The newly discovered device to be emitted.
-   * @return {void} Does*/
+   * @return {void} */
   private _emitDiscoveredDevice(
     subscriber: Subscriber<TransportDiscoveredDevice>,
     bleDeviceInfos: BleDeviceInfos,
@@ -414,7 +440,6 @@ export class RNBleTransport implements Transport {
       id: discoveredDevice.id,
       bleDeviceInfos,
       discoveredDevice,
-      available: true,
       lastDiscoveredTimeStamp: Maybe.of(Date.now()),
     };
     this._internalDevicesById.set(discoveredDevice.id, {
@@ -422,8 +447,10 @@ export class RNBleTransport implements Transport {
       disconnectionSubscription: this._manager.onDeviceDisconnected(
         discoveredDevice.id,
         () => {
-          // this._internalDevicesById.delete(discoveredDevice.id);
-          subscriber.next({ ...discoveredDevice, available: false });
+          subscriber.next({
+            ...discoveredDevice,
+            rssi: null,
+          });
         },
       ),
     });
@@ -440,8 +467,6 @@ export class RNBleTransport implements Transport {
   ): Observable<TransportDiscoveredDevice> {
     return new Observable<TransportDiscoveredDevice>((subscriber) => {
       this._manager.startDeviceScan(null, null, (error, device) => {
-        this._handleLostDiscoveredDevices(subscriber);
-
         if (error || !device) {
           subscriber.error(error);
           return;
@@ -456,6 +481,7 @@ export class RNBleTransport implements Transport {
             );
           },
         );
+        this._handleLostDiscoveredDevices(subscriber);
       });
     });
   }
@@ -496,7 +522,6 @@ export class RNBleTransport implements Transport {
    *
    * @param {BleError | null} error - The error object representing the reason for the disconnection, or null if no error occurred.
    * @param {Device | null} device - The Bluetooth device that was disconnected, or null if no device is provided.
-   * @param {DisconnectHandler} onDisconnect - A callback function to be called if the reconnection attempts fail completely.
    * @return {void}
    */
   private _handleDeviceDisconnected(
