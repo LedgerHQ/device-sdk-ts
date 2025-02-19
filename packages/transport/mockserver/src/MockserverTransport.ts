@@ -48,7 +48,7 @@ export class MockTransport implements Transport {
     return this.identifier;
   }
 
-  listenToKnownDevices(): Observable<TransportDiscoveredDevice[]> {
+  listenToAvailableDevices(): Observable<TransportDiscoveredDevice[]> {
     return from([]);
   }
 

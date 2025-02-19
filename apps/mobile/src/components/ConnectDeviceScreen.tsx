@@ -33,9 +33,7 @@ const DeviceList = styled(
 
 export const ConnectDeviceScreen: React.FC = () => {
   const dmk = useDmk();
-  const [devices, setDevices] = React.useState<
-    Record<string, DiscoveredDevice>
-  >({});
+  const [devices, setDevices] = React.useState<DiscoveredDevice[]>([]);
   const [isScanningDevices, setIsScanningDevices] = React.useState(false);
   const {
     state: { selectedId: deviceSessionId },
@@ -44,15 +42,16 @@ export const ConnectDeviceScreen: React.FC = () => {
   const { navigate } = useNavigation();
 
   useEffect(() => {
-    setDevices({});
+    setDevices([]);
   }, [deviceSessionId]);
 
   const onScan = useCallback(() => {
-    const obs = dmk.startDiscovering({});
+    const obs = dmk.listenToAvailableDevices();
     setIsScanningDevices(true);
     const subscription = obs.subscribe({
-      next: async device =>
-        setDevices(prevDevices => ({ ...prevDevices, [device.id]: device })),
+      next: async devices => {
+        setDevices(devices);
+      },
       error: err => {
         console.log("error discovered", err);
       },
@@ -92,7 +91,7 @@ export const ConnectDeviceScreen: React.FC = () => {
   return (
     <Container>
       <DeviceList
-        data={Object.values(devices).filter(device => device.available)}
+        data={devices}
         keyExtractor={item => item.id}
         extraData={{ isScanningDevices }}
         ListHeaderComponent={

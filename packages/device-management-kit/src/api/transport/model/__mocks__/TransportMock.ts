@@ -6,7 +6,7 @@ export class TransportMock implements Transport {
   isSupported = vi.fn();
   startDiscovering = vi.fn();
   stopDiscovering = vi.fn();
-  listenToKnownDevices = vi.fn();
+  listenToAvailableDevices = vi.fn();
   connect = vi.fn();
   disconnect = vi.fn();
 }
