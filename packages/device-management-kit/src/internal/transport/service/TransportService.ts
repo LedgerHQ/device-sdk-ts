@@ -1,8 +1,8 @@
 import { type Either, type Maybe } from "purify-ts";
 
-import { type TransportAlreadyExistsError } from "@api/index";
+import { type TransportAlreadyExistsError } from "@api/transport/model/Errors";
+import { type TransportConnectedDevice } from "@api/transport/model/TransportConnectedDevice";
 import { type Transport, type TransportFactory } from "@api/types";
-import { type DeviceSession } from "@internal/device-session/model/DeviceSession";
 
 export interface TransportService {
   getTransport(transportId: string): Maybe<Transport>;
@@ -10,5 +10,5 @@ export interface TransportService {
   addTransport(
     factory: TransportFactory,
   ): Either<TransportAlreadyExistsError, void>;
-  closeAllTransports(deviceSessions: DeviceSession[]): Promise<void>;
+  closeConnection(connectedDevice: TransportConnectedDevice): void;
 }

@@ -174,9 +174,6 @@ importers:
       react-native-svg:
         specifier: ^15.11.1
         version: 15.11.1(react-native@0.76.6(@babel/core@7.26.9)(@babel/preset-env@7.26.9(@babel/core@7.26.9))(@react-native-community/cli-server-api@15.0.1)(@types/react@18.3.12)(react@18.3.1))(react@18.3.1)
-      rxjs:
-        specifier: ^7.8.1
-        version: 7.8.1
       styled-components:
         specifier: ^5.3.3
         version: 5.3.11(@babel/core@7.26.9)(react-dom@18.3.1(react@18.3.1))(react-is@18.3.1)(react@18.3.1)
@@ -17474,10 +17471,10 @@ snapshots:
   jest-snapshot@29.7.0:
     dependencies:
       '@babel/core': 7.26.9
-      '@babel/generator': 7.26.8
+      '@babel/generator': 7.26.9
       '@babel/plugin-syntax-jsx': 7.25.9(@babel/core@7.26.9)
       '@babel/plugin-syntax-typescript': 7.25.9(@babel/core@7.26.9)
-      '@babel/types': 7.26.8
+      '@babel/types': 7.26.9
       '@jest/expect-utils': 29.7.0
       '@jest/transform': 29.7.0
       '@jest/types': 29.6.3

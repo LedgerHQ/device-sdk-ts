@@ -1,27 +1,23 @@
-import React, { useCallback, useEffect, useRef } from "react";
+import React, { useEffect, useRef } from "react";
 import { createContext, type PropsWithChildren, useContext } from "react";
 import {
   ConsoleLogger,
   type DeviceManagementKit,
   DeviceManagementKitBuilder,
-  WebLogsExporterLogger,
 } from "@ledgerhq/device-management-kit";
 import { RNBleTransportFactory } from "@ledgerhq/device-transport-kit-react-native-ble";
 
 const DmkContext = createContext<DeviceManagementKit | null>(null);
-const LogsExporterContext = createContext<WebLogsExporterLogger | null>(null);
 
-function buildDefaultDmk(logsExporter: WebLogsExporterLogger) {
+function buildDefaultDmk() {
   return new DeviceManagementKitBuilder()
     .addTransport(RNBleTransportFactory)
     .addLogger(new ConsoleLogger())
-    .addLogger(logsExporter)
     .build();
 }
-const logsExporter = new WebLogsExporterLogger();
 
 export const DmkProvider: React.FC<PropsWithChildren> = ({ children }) => {
-  const dmk = useRef(buildDefaultDmk(new WebLogsExporterLogger()));
+  const dmk = useRef(buildDefaultDmk());
 
   useEffect(() => {
     const dmkRef = dmk.current;
@@ -31,11 +27,7 @@ export const DmkProvider: React.FC<PropsWithChildren> = ({ children }) => {
   }, []);
 
   return (
-    <DmkContext.Provider value={dmk.current}>
-      <LogsExporterContext.Provider value={logsExporter}>
-        {children}
-      </LogsExporterContext.Provider>
-    </DmkContext.Provider>
+    <DmkContext.Provider value={dmk.current}>{children}</DmkContext.Provider>
   );
 };
 
@@ -46,15 +38,3 @@ export const useDmk = (): DeviceManagementKit => {
   }
   return dmk;
 };
-
-export function useExportLogsCallback() {
-  const logsExp = useContext(LogsExporterContext);
-  if (logsExp === null) {
-    throw new Error(
-      "useExportLogsCallback must be used within LogsExporterContext.Provider",
-    );
-  }
-  return useCallback(() => {
-    logsExp.exportLogsToJSON();
-  }, [logsExp]);
-}

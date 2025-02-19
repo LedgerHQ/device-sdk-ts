@@ -11,10 +11,10 @@ import {
   TransportAlreadyExistsError,
 } from "@api/transport/model/Errors";
 import { TransportFactory } from "@api/transport/model/Transport";
+import { TransportConnectedDevice } from "@api/transport/model/TransportConnectedDevice";
 import { Transport } from "@api/types";
 import { deviceModelTypes } from "@internal/device-model/di/deviceModelTypes";
 import { deviceSessionTypes } from "@internal/device-session/di/deviceSessionTypes";
-import { DeviceSession } from "@internal/device-session/model/DeviceSession";
 import { loggerTypes } from "@internal/logger-publisher/di/loggerTypes";
 import { transportDiTypes } from "@internal/transport/di/transportDiTypes";
 
@@ -105,14 +105,12 @@ export class DefaultTransportService implements TransportService {
     return Array.from(this._transports.values());
   }
 
-  async closeAllTransports(deviceSessions: DeviceSession[]): Promise<void> {
-    const transports = this.getAllTransports();
-    for (const deviceSession of deviceSessions) {
-      for (const transport of transports) {
-        await transport.disconnect({
-          connectedDevice: deviceSession.connectedDevice,
-        });
-      }
-    }
+  closeConnection(connectedDevice: TransportConnectedDevice) {
+    const transport = this.getTransport(connectedDevice.transport);
+    transport.map((t) =>
+      t.disconnect({
+        connectedDevice,
+      }),
+    );
   }
 }

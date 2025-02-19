@@ -19,11 +19,11 @@ export class CloseSessionsUseCase {
     this._transportService = transportService;
   }
 
-  async execute() {
+  execute() {
     const deviceSessions = this._sessionService.getDeviceSessions();
 
-    await this._transportService.closeAllTransports(deviceSessions);
     for (const dSession of deviceSessions) {
+      this._transportService.closeConnection(dSession.connectedDevice);
       this._sessionService.removeDeviceSession(dSession.id);
     }
   }

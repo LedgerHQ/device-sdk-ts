@@ -114,8 +114,6 @@ export class RNBleApduSender
     }
 
     const apdu = Base64.toUint8Array(characteristic.value);
-    console.log("onMonitor:apdu", apdu);
-
     if (!this._isDeviceReady.value) {
       this.onReceiveSetupApduResponse(apdu);
     } else {
