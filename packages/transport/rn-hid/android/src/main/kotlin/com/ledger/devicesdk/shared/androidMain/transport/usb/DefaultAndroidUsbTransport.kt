@@ -102,9 +102,9 @@ internal class DefaultAndroidUsbTransport(
     override fun updateUsbState(state: UsbState) {
         when (state) {
             is UsbState.Detached -> {
-                loggerService.log(buildSimpleDebugLogInfo("AndroidUsbTransport", "Detached deviceId=${state.usbDevice.deviceId}"))
+                loggerService.log(buildSimpleDebugLogInfo("AndroidUsbTransport", "Detached deviceId=${state.ledgerUsbDevice.uid}"))
                 usbConnections.entries.find {
-                    it.value.getApduSender().dependencies.usbDevice == state.usbDevice
+                    it.value.getApduSender().dependencies.ledgerUsbDevice.uid == state.ledgerUsbDevice.uid
                 }.let { item ->
                     scope.launch {
                         if (item == null) {
@@ -121,10 +121,17 @@ internal class DefaultAndroidUsbTransport(
             }
 
             is UsbState.Attached -> {
-                loggerService.log(buildSimpleDebugLogInfo("AndroidUsbTransport", "Attached deviceId=${state.usbDevice.deviceId}, pendingReconnections=${usbConnectionsPendingReconnection}"))
+                loggerService.log(buildSimpleDebugLogInfo("AndroidUsbTransport", "Attached deviceId=${state.ledgerUsbDevice.uid}, pendingReconnections=${usbConnectionsPendingReconnection}"))
+                val usbDevice = usbManager.deviceList.values.firstOrNull {
+                    it.toLedgerUsbDevice()?.uid == state.ledgerUsbDevice.uid
+                }
+                if (usbDevice == null) {
+                    loggerService.log(buildSimpleWarningLogInfo("AndroidUsbTransport", "No UsbDevice found"))
+                    return
+                }
                 usbConnectionsPendingReconnection.firstOrNull {
                     it.getApduSender()
-                        .dependencies.ledgerUsbDevice.ledgerDevice == state.ledgerUsbDevice.ledgerDevice
+                        .dependencies.ledgerUsbDevice.ledgerDevice == state.ledgerUsbDevice.ledgerDevice // we just find a similar device model since there is no way to uniquely identify a device between 2 connections
                 }.let { deviceConnection ->
                     scope.launch {
                         if (deviceConnection == null) {
@@ -137,7 +144,8 @@ internal class DefaultAndroidUsbTransport(
                             return@launch
                         }
                         loggerService.log(buildSimpleDebugLogInfo("AndroidUsbTransport", "Found matching device connection $deviceConnection"))
-                        val permissionResult = checkOrRequestPermission(state.usbDevice)
+
+                        val permissionResult = checkOrRequestPermission(usbDevice)
                         if (permissionResult is PermissionResult.Denied) {
                             loggerService.log(buildSimpleDebugLogInfo("AndroidUsbTransport", "Permission denied"))
                             return@launch
@@ -146,7 +154,7 @@ internal class DefaultAndroidUsbTransport(
                         deviceConnection.setApduSender(
                             AndroidUsbApduSender(
                                 dependencies = AndroidUsbApduSender.Dependencies(
-                                    usbDevice = state.usbDevice,
+                                    usbDevice = usbDevice,
                                     ledgerUsbDevice = state.ledgerUsbDevice,
                                 ),
                                 usbManager = usbManager,
