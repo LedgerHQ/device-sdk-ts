@@ -1,5 +1,10 @@
-import React, { useEffect, useRef } from "react";
-import { createContext, type PropsWithChildren, useContext } from "react";
+import React, {
+  useEffect,
+  useRef,
+  createContext,
+  type PropsWithChildren,
+  useContext,
+} from "react";
 import {
   ConsoleLogger,
   type DeviceManagementKit,

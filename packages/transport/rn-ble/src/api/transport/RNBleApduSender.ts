@@ -150,8 +150,8 @@ export class RNBleApduSender
       },
     );
     this._isDeviceReady.next(false);
-    const requestMtuApdu = Uint8Array.from([0x08, 0x00, 0x00, 0x00, 0x00]);
-    await this.write(Base64.fromUint8Array(requestMtuApdu));
+    const requestMtuFrame = Uint8Array.from([0x08, 0x00, 0x00, 0x00, 0x00]);
+    await this.write(Base64.fromUint8Array(requestMtuFrame));
     let sub: Subscription;
     await new Promise<void>((resolve) => {
       sub = this._isDeviceReady.subscribe((isReady) => {
