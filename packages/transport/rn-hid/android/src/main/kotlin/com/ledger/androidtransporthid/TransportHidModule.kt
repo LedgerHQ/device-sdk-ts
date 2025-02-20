@@ -57,9 +57,10 @@ class TransportHidModule(
 
         var transport: AndroidUsbTransport? = null
         if (currentApplication != null) {
+            val usbManager = reactContext.getSystemService(Context.USB_SERVICE) as UsbManager
             transport = DefaultAndroidUsbTransport(
                 application = currentApplication,
-                usbManager = reactContext.getSystemService(Context.USB_SERVICE) as UsbManager,
+                usbManager = usbManager,
                 permissionRequester = { context, manager, device ->
                     manager.requestPermission(
                         device,
@@ -81,6 +82,7 @@ class TransportHidModule(
             usbPermissionReceiver = UsbPermissionReceiver(
                 context = reactContext,
                 androidUsbTransport = transport,
+                usbManager = usbManager,
                 loggerService = loggerService
             )
             usbDetachedReceiverController = UsbDetachedReceiverController(
