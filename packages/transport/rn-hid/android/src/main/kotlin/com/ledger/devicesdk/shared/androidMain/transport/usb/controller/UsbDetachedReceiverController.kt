@@ -51,7 +51,6 @@ internal class UsbDetachedReceiverController(
             androidUsbTransport.updateUsbState(
                 state = UsbState.Detached(
                     ledgerUsbDevice = ledgerUsbDevice,
-                    usbDevice = usbDevice,
                 )
             )
         }
