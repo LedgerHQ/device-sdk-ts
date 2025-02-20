@@ -31,11 +31,6 @@ internal class DeviceConnection<Dependencies>(
             onTerminated = {
                 onTerminated(this)
             },
-            closeConnection = {
-                coroutineScope.launch {
-                    deviceApduSender.closeConnection()
-                }
-            },
             isFatalSendApduFailure = isFatalSendApduFailure,
             reconnectionTimeoutDuration = reconnectionTimeoutDuration,
             coroutineScope = coroutineScope,

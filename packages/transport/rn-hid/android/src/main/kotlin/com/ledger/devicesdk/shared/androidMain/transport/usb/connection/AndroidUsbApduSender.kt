@@ -130,12 +130,4 @@ internal class AndroidUsbApduSender(
     }
 
     private fun generateChannelId(): ByteArray = Random.nextInt(0, until = Int.MAX_VALUE).to2BytesArray()
-
-    override suspend fun setupConnection() {
-        // Nothing to do here
-    }
-
-    override suspend fun closeConnection() {
-        // Nothing to do here
-    }
 }
