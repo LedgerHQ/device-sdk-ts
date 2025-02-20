@@ -4,8 +4,8 @@ import { ConnectUseCase } from "@internal/discovery/use-case/ConnectUseCase";
 import { DisconnectUseCase } from "@internal/discovery/use-case/DisconnectUseCase";
 import { GetConnectedDeviceUseCase } from "@internal/discovery/use-case/GetConnectedDeviceUseCase";
 import { ListConnectedDevicesUseCase } from "@internal/discovery/use-case/ListConnectedDevicesUseCase";
+import { ListenToAvailableDevicesUseCase } from "@internal/discovery/use-case/ListenToAvailableDevicesUseCase";
 import { ListenToConnectedDeviceUseCase } from "@internal/discovery/use-case/ListenToConnectedDeviceUseCase";
-import { ListenToKnownDevicesUseCase } from "@internal/discovery/use-case/ListenToKnownDevicesUseCase";
 import { StartDiscoveringUseCase } from "@internal/discovery/use-case/StartDiscoveringUseCase";
 import { StopDiscoveringUseCase } from "@internal/discovery/use-case/StopDiscoveringUseCase";
 import { StubUseCase } from "@root/src/di.stub";
@@ -25,8 +25,8 @@ export const discoveryModuleFactory = ({ stub = false }: FactoryProps) =>
     bind(discoveryTypes.GetConnectedDeviceUseCase).to(
       GetConnectedDeviceUseCase,
     );
-    bind(discoveryTypes.ListenToKnownDevicesUseCase).to(
-      ListenToKnownDevicesUseCase,
+    bind(discoveryTypes.ListenToAvailableDevicesUseCase).to(
+      ListenToAvailableDevicesUseCase,
     );
     bind(discoveryTypes.ListenToConnectedDeviceUseCase).to(
       ListenToConnectedDeviceUseCase,
@@ -41,7 +41,7 @@ export const discoveryModuleFactory = ({ stub = false }: FactoryProps) =>
       rebind(discoveryTypes.ConnectUseCase).to(StubUseCase);
       rebind(discoveryTypes.DisconnectUseCase).to(StubUseCase);
       rebind(discoveryTypes.GetConnectedDeviceUseCase).to(StubUseCase);
-      rebind(discoveryTypes.ListenToKnownDevicesUseCase).to(StubUseCase);
+      rebind(discoveryTypes.ListenToAvailableDevicesUseCase).to(StubUseCase);
       rebind(discoveryTypes.ListenToConnectedDeviceUseCase).to(StubUseCase);
       rebind(discoveryTypes.ListConnectedDevicesUseCase).to(StubUseCase);
     }

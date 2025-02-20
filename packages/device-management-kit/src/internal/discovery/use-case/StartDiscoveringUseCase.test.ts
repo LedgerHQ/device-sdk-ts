@@ -28,6 +28,7 @@ describe("StartDiscoveringUseCase", () => {
       productName: "productName",
     } as TransportDeviceModel,
     transport: "USB",
+    rssi: undefined,
   };
 
   beforeEach(() => {
@@ -65,11 +66,13 @@ describe("StartDiscoveringUseCase", () => {
             expect(discoveredDevice).toStrictEqual({
               id: "internal-discovered-device-id",
               transport: "USB",
+              name: "productName",
               deviceModel: new DeviceModel({
                 id: "internal-discovered-device-id",
                 model: "nanoSP" as DeviceModelId,
                 name: "productName",
               }),
+              rssi: undefined,
             } as DiscoveredDevice);
             resolve();
           } catch (error) {
