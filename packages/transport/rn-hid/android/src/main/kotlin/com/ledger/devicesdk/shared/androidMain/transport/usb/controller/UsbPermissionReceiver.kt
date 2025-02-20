@@ -25,6 +25,7 @@ internal const val ACTION_USB_PERMISSION = "com.android.example.USB_PERMISSION"
 internal class UsbPermissionReceiver(
     private val context: Context,
     private val androidUsbTransport: AndroidUsbTransport,
+    private val usbManager: UsbManager,
     private val loggerService: LoggerService,
 ) : BroadcastReceiver(),
     Controller {
@@ -59,7 +60,6 @@ internal class UsbPermissionReceiver(
         Timber.i("UsbPermissionReceiver:onReceive")
         if (ACTION_USB_PERMISSION == intent.action) {
             synchronized(this) {
-                val usbManager = context.getSystemService(Context.USB_SERVICE) as UsbManager
                 val androidUsbDevice = usbManager.deviceList.values.firstOrNull {
                     usbManager.hasPermission(it) && it.toLedgerUsbDevice() != null
                 }
