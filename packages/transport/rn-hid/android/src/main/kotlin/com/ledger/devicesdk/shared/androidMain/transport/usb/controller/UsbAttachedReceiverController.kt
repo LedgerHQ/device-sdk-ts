@@ -51,7 +51,6 @@ internal class UsbAttachedReceiverController(
             androidUsbTransport.updateUsbState(
                 state = UsbState.Attached(
                     ledgerUsbDevice = ledgerUsbDevice,
-                    usbDevice = androidUsbDevice,
                 )
             )
         }
