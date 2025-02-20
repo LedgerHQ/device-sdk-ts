@@ -12,7 +12,6 @@ import kotlin.time.Duration
 
 internal class DeviceConnectionStateMachine(
     private val sendApduFn: (apdu: ByteArray) -> Unit,
-    private val closeConnection: () -> Unit,
     private val onTerminated: () -> Unit,
     private val isFatalSendApduFailure: (SendApduResult.Failure) -> Boolean,
     private val reconnectionTimeoutDuration: Duration,
@@ -37,7 +36,6 @@ internal class DeviceConnectionStateMachine(
             is State.WaitingForReconnectionWithQueuedApdu -> {}
             is State.Terminated -> {
                 onTerminated()
-                closeConnection()
             }
         }
         this.state = newState
