@@ -680,21 +680,21 @@ importers:
       '@ledgerhq/eslint-config-dsdk':
         specifier: workspace:*
         version: link:../../config/eslint
-      '@ledgerhq/jest-config-dsdk':
-        specifier: workspace:*
-        version: link:../../config/jest
       '@ledgerhq/prettier-config-dsdk':
         specifier: workspace:*
         version: link:../../config/prettier
       '@ledgerhq/tsconfig-dsdk':
         specifier: workspace:*
         version: link:../../config/typescript
+      '@ledgerhq/vitest-config-dmk':
+        specifier: workspace:*
+        version: link:../../config/vitest
       rxjs:
         specifier: ^7.8.1
         version: 7.8.1
       ts-node:
         specifier: ^10.9.2
-        version: 10.9.2(@types/node@22.10.5)(typescript@5.7.2)
+        version: 10.9.2(@types/node@22.13.4)(typescript@5.7.3)
 
   packages/transport/web-ble:
     dependencies:
