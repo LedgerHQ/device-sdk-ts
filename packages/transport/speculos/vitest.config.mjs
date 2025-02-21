@@ -1,25 +1,23 @@
-/* eslint no-restricted-syntax: 0 */
-import { type JestConfigWithTsJest, pathsToModuleNameMapper } from "ts-jest";
+import baseConfig from "@ledgerhq/vitest-config-dmk";
+import { defineConfig } from "vitest/config";
+import path from "path";
 
-import { compilerOptions } from "./tsconfig.json";
-
-const paths = pathsToModuleNameMapper(compilerOptions.paths, {
-  prefix: "<rootDir>/",
-});
-
-const config: JestConfigWithTsJest = {
-  preset: "@ledgerhq/jest-config-dsdk",
-  // setupFiles: ["<rootDir>/jest.setup.ts"],
-  testPathIgnorePatterns: ["<rootDir>/lib/esm/", "<rootDir>/lib/cjs/"],
-  collectCoverageFrom: [
-    "src/**/*.ts",
-    "!src/**/*.stub.ts",
-    "!src/index.ts",
-    "!src/api/index.ts",
-  ],
-  moduleNameMapper: {
-    ...paths,
+export default defineConfig({
+  ...baseConfig,
+  test: {
+    ...baseConfig.test,
+    environment: "jsdom",
+    include: ["src/**/*.test.ts"],
+    coverage: {
+      reporter: ["lcov"],
+      provider: "istanbul",
+      include: ["src/**/*.ts"],
+      exclude: ["src/**/*.stub.ts", "src/index.ts", "src/api/index.ts"],
+    },
   },
-};
-
-export default config;
+  resolve: {
+    alias: {
+      "@api": path.resolve(__dirname, "src/api"),
+    },
+  },
+});
