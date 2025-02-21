@@ -35,7 +35,6 @@
             <action android:name="android.intent.action.MAIN" />
             <category android:name="android.intent.category.LAUNCHER" />
         </intent-filter>
-        <!-- TODO: add in the RN HID package documentation that this needs to be added as well as the usb_device_filter file-->
         <intent-filter>
             <!-- http://developer.android.com/guide/topics/connectivity/usb/accessory.html -->
             <action android:name="android.hardware.usb.action.USB_DEVICE_ATTACHED" />
