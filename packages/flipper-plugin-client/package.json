@@ -37,7 +37,7 @@
   },
   "dependencies": {
     "js-flipper": "^0.270.0",
-    "rxjs": "^7.8.1"
+    "rxjs": "^7.8.2"
   },
   "devDependencies": {
     "@ledgerhq/device-management-kit": "workspace:*",
