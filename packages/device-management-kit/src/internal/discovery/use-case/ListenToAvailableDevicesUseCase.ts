@@ -12,7 +12,7 @@ import { type TransportService } from "@internal/transport/service/TransportServ
  * Listen to list of known discovered devices (and later BLE).
  */
 @injectable()
-export class ListenToKnownDevicesUseCase {
+export class ListenToAvailableDevicesUseCase {
   private readonly _transports: Transport[];
   constructor(
     @inject(transportDiTypes.TransportService)
@@ -24,14 +24,17 @@ export class ListenToKnownDevicesUseCase {
   private mapTransportDiscoveredDeviceToDiscoveredDevice(
     discoveredDevice: TransportDiscoveredDevice,
   ): DiscoveredDevice {
+    const deviceModel = new DeviceModel({
+      id: discoveredDevice.id,
+      model: discoveredDevice.deviceModel.id,
+      name: discoveredDevice.deviceModel.productName,
+    });
     return {
       id: discoveredDevice.id,
-      deviceModel: new DeviceModel({
-        id: discoveredDevice.id,
-        model: discoveredDevice.deviceModel.id,
-        name: discoveredDevice.deviceModel.productName,
-      }),
+      deviceModel,
       transport: discoveredDevice.transport,
+      name: discoveredDevice.name || deviceModel.name,
+      rssi: discoveredDevice.rssi,
     };
   }
 
@@ -49,7 +52,7 @@ export class ListenToKnownDevicesUseCase {
      */
 
     const observablesWithIndex = this._transports.map((transport, index) =>
-      transport.listenToKnownDevices().pipe(
+      transport.listenToAvailableDevices().pipe(
         map((arr) => ({
           index,
           arr,
