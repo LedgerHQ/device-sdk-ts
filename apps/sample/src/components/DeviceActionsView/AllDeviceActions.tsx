@@ -1,6 +1,11 @@
 import React from "react";
 import { useMemo } from "react";
 import {
+  type GenuineCheckDAError,
+  type GenuineCheckDAInput,
+  type GenuineCheckDAIntermediateValue,
+  type GenuineCheckDAOutput,
+  GenuineCheckDeviceAction,
   type GetDeviceStatusDAError,
   type GetDeviceStatusDAInput,
   type GetDeviceStatusDAIntermediateValue,
@@ -168,6 +173,28 @@ export const AllDeviceActions: React.FC<{ sessionId: string }> = ({
         ListAppsWithMetadataDAInput,
         ListAppsWithMetadataDAError,
         ListAppsWithMetadataDAIntermediateValue
+      >,
+      {
+        title: "Genuine Check",
+        description:
+          "Perform all the actions necessary to check the device's genuineness",
+        executeDeviceAction: ({ unlockTimeout }, inspect) => {
+          const deviceAction = new GenuineCheckDeviceAction({
+            input: { unlockTimeout },
+            inspect,
+          });
+          return dmk.executeDeviceAction({
+            sessionId,
+            deviceAction,
+          });
+        },
+        initialValues: { unlockTimeout: UNLOCK_TIMEOUT },
+        deviceModelId,
+      } satisfies DeviceActionProps<
+        GenuineCheckDAOutput,
+        GenuineCheckDAInput,
+        GenuineCheckDAError,
+        GenuineCheckDAIntermediateValue
       >,
     ],
     [deviceModelId, dmk, sessionId],
