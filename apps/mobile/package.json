@@ -14,6 +14,7 @@
     "@ledgerhq/device-management-kit": "workspace:*",
     "@ledgerhq/device-mockserver-client": "workspace:*",
     "@ledgerhq/device-transport-kit-react-native-ble": "workspace:*",
+    "@ledgerhq/device-transport-kit-react-native-hid": "workspace:*",
     "@ledgerhq/native-ui": "^0.27.1",
     "@react-navigation/bottom-tabs": "^7.2.0",
     "@react-navigation/material-top-tabs": "^7.1.0",
