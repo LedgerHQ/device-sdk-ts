@@ -26,6 +26,45 @@ const mockGetFirmwareVersion = {
 };
 
 describe("AxiosManagerApiDataSource", () => {
+  describe("getAppList", () => {
+    let api: ManagerApiDataSource;
+    beforeEach(() => {
+      api = new AxiosManagerApiDataSource({} as DmkConfig);
+    });
+    afterEach(() => {
+      vi.clearAllMocks();
+    });
+    it("should return a list of applications", () => {
+      // given
+      const apps = [BTC_APP_METADATA, CUSTOM_LOCK_SCREEN_APP_METADATA];
+      vi.spyOn(axios, "get").mockResolvedValue({ data: apps });
+
+      // when
+      const response = api.getAppList({
+        targetId: "targetId",
+        provider: 42,
+        firmwareVersionName: "firmwareVersionName",
+      });
+
+      // then
+      expect(response).resolves.toEqual(Right(apps));
+    });
+    it("should return an error if the request fails", () => {
+      // given
+      const error = new Error("fetch error");
+      vi.spyOn(axios, "get").mockRejectedValue(error);
+
+      // when
+      const response = api.getAppList({
+        targetId: "targetId",
+        provider: 42,
+        firmwareVersionName: "firmwareVersionName",
+      });
+
+      // then
+      expect(response).resolves.toEqual(Left(new HttpFetchApiError(error)));
+    });
+  });
   describe("getAppsByHash", () => {
     describe("success cases", () => {
       let api: ManagerApiDataSource;
@@ -42,7 +81,7 @@ describe("AxiosManagerApiDataSource", () => {
 
         const hashes = [BTC_APP.appFullHash];
 
-        const apps = await api.getAppsByHash(hashes);
+        const apps = await api.getAppsByHash({ hashes });
 
         expect(apps).toEqual(Right([BTC_APP_METADATA]));
       });
@@ -54,7 +93,7 @@ describe("AxiosManagerApiDataSource", () => {
 
         const hashes: string[] = [];
 
-        const apps = await api.getAppsByHash(hashes);
+        const apps = await api.getAppsByHash({ hashes });
 
         expect(apps).toEqual(Right([]));
       });
@@ -69,7 +108,7 @@ describe("AxiosManagerApiDataSource", () => {
           CUSTOM_LOCK_SCREEN_APP.appFullHash,
         ];
 
-        const apps = await api.getAppsByHash(hashes);
+        const apps = await api.getAppsByHash({ hashes });
 
         expect(apps).toEqual(
           Right([BTC_APP_METADATA, CUSTOM_LOCK_SCREEN_APP_METADATA]),
@@ -91,7 +130,7 @@ describe("AxiosManagerApiDataSource", () => {
         const hashes = [BTC_APP.appFullHash];
 
         // when
-        const response = api.getAppsByHash(hashes);
+        const response = api.getAppsByHash({ hashes });
 
         // then
         expect(response).resolves.toEqual(Left(new HttpFetchApiError(err)));
@@ -112,7 +151,10 @@ describe("AxiosManagerApiDataSource", () => {
       vi.spyOn(axios, "get").mockResolvedValue({ data: mockGetDeviceVersion });
 
       // when
-      const response = api.getDeviceVersion("targetId", 42);
+      const response = api.getDeviceVersion({
+        targetId: "targetId",
+        provider: 42,
+      });
 
       // then
       expect(response).resolves.toEqual(Right(mockGetDeviceVersion));
@@ -124,7 +166,10 @@ describe("AxiosManagerApiDataSource", () => {
       vi.spyOn(axios, "get").mockRejectedValue(error);
 
       // when
-      const response = api.getDeviceVersion("targetId", 42);
+      const response = api.getDeviceVersion({
+        targetId: "targetId",
+        provider: 42,
+      });
 
       // then
       expect(response).resolves.toEqual(Left(new HttpFetchApiError(error)));
@@ -146,7 +191,11 @@ describe("AxiosManagerApiDataSource", () => {
       });
 
       // when
-      const response = api.getFirmwareVersion("versionName", 42, 21);
+      const response = api.getFirmwareVersion({
+        version: "versionName",
+        deviceId: 42,
+        provider: 21,
+      });
 
       // then
       expect(response).resolves.toEqual(Right(mockGetFirmwareVersion));
@@ -157,7 +206,11 @@ describe("AxiosManagerApiDataSource", () => {
       vi.spyOn(axios, "get").mockRejectedValue(error);
 
       // when
-      const response = api.getFirmwareVersion("versionName", 42, 21);
+      const response = api.getFirmwareVersion({
+        version: "versionName",
+        deviceId: 42,
+        provider: 21,
+      });
 
       // then
       expect(response).resolves.toEqual(Left(new HttpFetchApiError(error)));

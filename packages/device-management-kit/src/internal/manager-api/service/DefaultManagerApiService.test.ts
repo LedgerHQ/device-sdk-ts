@@ -27,6 +27,24 @@ describe("ManagerApiService", () => {
     service = new DefaultManagerApiService(dataSource);
   });
 
+  describe("getAppList", () => {
+    it("should call api with the correct parameters", () => {
+      // given
+      const deviceInfo = getOsVersionCommandResponseMockBuilder(
+        DeviceModelId.STAX,
+      );
+      const provider = 42;
+      // when
+      service.getAppList(deviceInfo, provider);
+      // then
+      expect(dataSource.getAppList).toHaveBeenCalledWith({
+        targetId: "857735172",
+        provider: 42,
+        firmwareVersionName: "1.3.0",
+      });
+    });
+  });
+
   describe("getAppsByHash", () => {
     describe("success cases", () => {
       it("with no apps, should return an empty list", async () => {
@@ -86,7 +104,10 @@ describe("ManagerApiService", () => {
       // when
       service.getDeviceVersion(deviceInfo, provider);
       // then
-      expect(dataSource.getDeviceVersion).toHaveBeenCalledWith("857735172", 42);
+      expect(dataSource.getDeviceVersion).toHaveBeenCalledWith({
+        targetId: "857735172",
+        provider: 42,
+      });
     });
   });
   describe("getFirmwareVersion", () => {
@@ -103,11 +124,11 @@ describe("ManagerApiService", () => {
       // when
       service.getFirmwareVersion(deviceInfo, mockGetDeviceVersion, provider);
       // then
-      expect(dataSource.getFirmwareVersion).toHaveBeenCalledWith(
-        "1.3.0",
-        17,
-        42,
-      );
+      expect(dataSource.getFirmwareVersion).toHaveBeenCalledWith({
+        deviceId: 17,
+        provider: 42,
+        version: "1.3.0",
+      });
     });
   });
 });
