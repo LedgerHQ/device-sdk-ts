@@ -25,11 +25,11 @@ import {
   type GenuineCheckDAIntermediateValue,
   type GenuineCheckDAOutput,
   type GenuineCheckStateMachineInternalState,
-  type Input,
   type MachineDependencies,
 } from "@api/secure-channel/device-action/GenuineCheck/types";
 import { ConnectToSecureChannelTask } from "@api/secure-channel/task/ConnectToSecureChannelTask";
 import { SecureChannelEventType } from "@api/secure-channel/task/types";
+import { type Input } from "@api/secure-channel/types";
 import { isDeviceGenuine } from "@api/secure-channel/utils";
 import { type DeviceVersion } from "@internal/manager-api/model/Device";
 import { type FinalFirmware } from "@internal/manager-api/model/Firmware";

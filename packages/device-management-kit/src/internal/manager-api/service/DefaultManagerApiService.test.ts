@@ -27,6 +27,24 @@ describe("ManagerApiService", () => {
     service = new DefaultManagerApiService(dataSource);
   });
 
+  describe("getAppList", () => {
+    it("should call api with the correct parameters", () => {
+      // given
+      const deviceInfo = getOsVersionCommandResponseMockBuilder(
+        DeviceModelId.STAX,
+      );
+      const provider = 42;
+      // when
+      service.getAppList(deviceInfo, provider);
+      // then
+      expect(dataSource.getAppList).toHaveBeenCalledWith({
+        targetId: "857735172",
+        provider: 42,
+        firmwareVersionName: "1.3.0",
+      });
+    });
+  });
+
   describe("getAppsByHash", () => {
     describe("success cases", () => {
       it("with no apps, should return an empty list", async () => {
@@ -36,7 +54,7 @@ describe("ManagerApiService", () => {
 
       it("with one app, should return the metadata", async () => {
         dataSource.getAppsByHash.mockResolvedValue(Right([BTC_APP_METADATA]));
-        expect(await service.getAppsByHash([BTC_APP])).toEqual(
+        expect(await service.getAppsByHash([BTC_APP.appFullHash])).toEqual(
           Right([BTC_APP_METADATA]),
         );
       });
@@ -45,16 +63,20 @@ describe("ManagerApiService", () => {
         dataSource.getAppsByHash.mockResolvedValue(
           Right([BTC_APP_METADATA, ETH_APP_METADATA]),
         );
-        expect(await service.getAppsByHash([BTC_APP, ETH_APP])).toEqual(
-          Right([BTC_APP_METADATA, ETH_APP_METADATA]),
-        );
+        expect(
+          await service.getAppsByHash(
+            [BTC_APP, ETH_APP].map((app) => app.appFullHash),
+          ),
+        ).toEqual(Right([BTC_APP_METADATA, ETH_APP_METADATA]));
       });
 
       it("with one app and one without `appFullHash`, should return the metadata of the correct app", async () => {
         dataSource.getAppsByHash.mockResolvedValue(Right([BTC_APP_METADATA]));
         const APP_WITH_NO_HASH = { ...ETH_APP, appFullHash: "" };
         expect(
-          await service.getAppsByHash([BTC_APP, APP_WITH_NO_HASH]),
+          await service.getAppsByHash(
+            [BTC_APP, APP_WITH_NO_HASH].map((app) => app.appFullHash),
+          ),
         ).toEqual(Right([BTC_APP_METADATA]));
       });
     });
@@ -63,13 +85,15 @@ describe("ManagerApiService", () => {
       it("should return an error when the data source fails with a known error", async () => {
         const error = new HttpFetchApiError(new Error("Failed to fetch data"));
         dataSource.getAppsByHash.mockRejectedValue(error);
-        expect(await service.getAppsByHash([BTC_APP])).toEqual(Left(error));
+        expect(await service.getAppsByHash([BTC_APP.appFullHash])).toEqual(
+          Left(error),
+        );
       });
 
       it("should return an error when the data source fails with an unknown error", async () => {
         const error = new Error("unkown error");
         dataSource.getAppsByHash.mockRejectedValue(error);
-        expect(await service.getAppsByHash([BTC_APP])).toEqual(
+        expect(await service.getAppsByHash([BTC_APP.appFullHash])).toEqual(
           Left(new HttpFetchApiError(error)),
         );
       });
@@ -86,7 +110,10 @@ describe("ManagerApiService", () => {
       // when
       service.getDeviceVersion(deviceInfo, provider);
       // then
-      expect(dataSource.getDeviceVersion).toHaveBeenCalledWith("857735172", 42);
+      expect(dataSource.getDeviceVersion).toHaveBeenCalledWith({
+        targetId: "857735172",
+        provider: 42,
+      });
     });
   });
   describe("getFirmwareVersion", () => {
@@ -103,11 +130,11 @@ describe("ManagerApiService", () => {
       // when
       service.getFirmwareVersion(deviceInfo, mockGetDeviceVersion, provider);
       // then
-      expect(dataSource.getFirmwareVersion).toHaveBeenCalledWith(
-        "1.3.0",
-        17,
-        42,
-      );
+      expect(dataSource.getFirmwareVersion).toHaveBeenCalledWith({
+        deviceId: 17,
+        provider: 42,
+        version: "1.3.0",
+      });
     });
   });
 });

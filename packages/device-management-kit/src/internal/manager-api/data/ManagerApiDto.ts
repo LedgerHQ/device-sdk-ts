@@ -21,9 +21,9 @@ export type ApplicationDto = {
   supportURL: string;
   contactURL: string;
   sourceURL: string;
+  compatibleWallets: string;
   hash: string;
   perso: string;
-  parentName: string | null;
   firmware: string;
   firmwareKey: string;
   delete: string;
@@ -31,4 +31,7 @@ export type ApplicationDto = {
   bytes: number;
   warning: string | null;
   isDevTools: boolean;
+  category: number;
+  parent: number | null;
+  parentName: string | null;
 };

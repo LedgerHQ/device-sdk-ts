@@ -9,6 +9,7 @@ import { type DeviceActionState } from "@api/device-action/model/DeviceActionSta
 import { type UserInteractionRequired } from "@api/device-action/model/UserInteractionRequired";
 import { type UnknownDAError } from "@api/device-action/os/Errors";
 import { type SecureChannelEvent } from "@api/secure-channel/task/types";
+import { type Input } from "@api/secure-channel/types";
 import {
   type CommandErrorResult,
   type DeviceSessionState,
@@ -18,8 +19,6 @@ import {
 import { type DeviceVersion } from "@internal/manager-api/model/Device";
 import { type HttpFetchApiError } from "@internal/manager-api/model/Errors";
 import { type FinalFirmware } from "@internal/manager-api/model/Firmware";
-
-export type Input<T> = { input: T };
 
 export type GenuineCheckDAOutput = { isGenuine: boolean };
 
@@ -47,8 +46,8 @@ export type GenuineCheckDAState = DeviceActionState<
 >;
 
 export type GenuineCheckStateMachineInternalState = {
-  result: { isGenuine: boolean };
   error: GenuineCheckDAError | null;
+  result: { isGenuine: boolean };
   getOsVersionResponse: GetOsVersionResponse | null;
   deviceVersion: DeviceVersion | null;
   firmwareVersion: FinalFirmware | null;
@@ -56,24 +55,21 @@ export type GenuineCheckStateMachineInternalState = {
 
 export type MachineDependencies = {
   getOsVersion: () => Promise<GetOsVersionCommandResult>;
-  getDeviceVersion: ({
-    input,
-  }: Input<{ deviceInfo: GetOsVersionResponse }>) => EitherAsync<
-    HttpFetchApiError,
-    DeviceVersion
-  >;
-  getFirmwareVersion: ({
-    input,
-  }: Input<{
-    deviceInfo: GetOsVersionResponse;
-    deviceVersion: DeviceVersion;
-  }>) => EitherAsync<HttpFetchApiError, FinalFirmware>;
-  genuineCheck: ({
-    input,
-  }: Input<{
-    deviceInfo: GetOsVersionResponse;
-    finalFirmware: FinalFirmware;
-  }>) => Observable<SecureChannelEvent>;
+  getDeviceVersion: (
+    args: Input<{ deviceInfo: GetOsVersionResponse }>,
+  ) => EitherAsync<HttpFetchApiError, DeviceVersion>;
+  getFirmwareVersion: (
+    args: Input<{
+      deviceInfo: GetOsVersionResponse;
+      deviceVersion: DeviceVersion;
+    }>,
+  ) => EitherAsync<HttpFetchApiError, FinalFirmware>;
+  genuineCheck: (
+    args: Input<{
+      deviceInfo: GetOsVersionResponse;
+      finalFirmware: FinalFirmware;
+    }>,
+  ) => Observable<SecureChannelEvent>;
   getDeviceSessionState: () => DeviceSessionState;
   setDeviceSessionState: (state: DeviceSessionState) => DeviceSessionState;
 };
