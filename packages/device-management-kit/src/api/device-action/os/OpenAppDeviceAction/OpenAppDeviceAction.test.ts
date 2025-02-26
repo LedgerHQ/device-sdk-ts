@@ -57,6 +57,7 @@ describe("OpenAppDeviceAction", () => {
           currentApp: { name: "Bitcoin", version: "1.0.0" },
           installedApps: [],
           deviceModelId: DeviceModelId.NANO_X,
+          isSecureConnectionAllowed: false,
         });
         setupGetDeviceStatusMock([
           {

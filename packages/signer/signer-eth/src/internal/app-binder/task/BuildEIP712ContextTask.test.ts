@@ -156,6 +156,7 @@ describe("BuildEIP712ContextTask", () => {
       installedApps: [],
       currentApp: { name: "Bitcoin", version: "1.0" },
       deviceModelId: DeviceModelId.FLEX,
+      isSecureConnectionAllowed: false,
     });
     // WHEN
     const builtContext = await task.run();
@@ -193,6 +194,7 @@ describe("BuildEIP712ContextTask", () => {
       installedApps: [],
       currentApp: { name: "Ethereum", version: "1.12.0" },
       deviceModelId: DeviceModelId.FLEX,
+      isSecureConnectionAllowed: false,
     });
     contextMouleMock.getTypedDataFilters.mockResolvedValueOnce({
       type: "error",
@@ -234,6 +236,7 @@ describe("BuildEIP712ContextTask", () => {
       installedApps: [],
       currentApp: { name: "Ethereum", version: "1.12.0" },
       deviceModelId: DeviceModelId.FLEX,
+      isSecureConnectionAllowed: false,
     });
     contextMouleMock.getTypedDataFilters.mockResolvedValueOnce(
       TEST_CLEAR_SIGN_CONTEXT,
@@ -291,6 +294,7 @@ describe("BuildEIP712ContextTask", () => {
       installedApps: [],
       currentApp: { name: "Ethereum", version: "1.11.0" },
       deviceModelId: DeviceModelId.FLEX,
+      isSecureConnectionAllowed: false,
     });
     contextMouleMock.getTypedDataFilters.mockResolvedValueOnce(
       TEST_CLEAR_SIGN_CONTEXT,

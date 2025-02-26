@@ -84,6 +84,14 @@ export type {
   LogParams,
 } from "@api/logger-subscriber/service/LoggerSubscriberService";
 export {
+  type GenuineCheckDAError,
+  type GenuineCheckDAInput,
+  type GenuineCheckDAIntermediateValue,
+  type GenuineCheckDAOutput,
+  type GenuineCheckDARequiredInteraction,
+  type GenuineCheckDAState,
+} from "@api/secure-channel/device-action/GenuineCheck/types";
+export {
   type DeviceConnection,
   type DisconnectHandler,
   type SendApduFnType,
