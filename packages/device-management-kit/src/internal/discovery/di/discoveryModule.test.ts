@@ -7,7 +7,7 @@ import { deviceSessionModuleFactory } from "@internal/device-session/di/deviceSe
 import { ConnectUseCase } from "@internal/discovery/use-case/ConnectUseCase";
 import { DisconnectUseCase } from "@internal/discovery/use-case/DisconnectUseCase";
 import { ListConnectedDevicesUseCase } from "@internal/discovery/use-case/ListConnectedDevicesUseCase";
-import { ListenToKnownDevicesUseCase } from "@internal/discovery/use-case/ListenToKnownDevicesUseCase";
+import { ListenToAvailableDevicesUseCase } from "@internal/discovery/use-case/ListenToAvailableDevicesUseCase";
 import { StartDiscoveringUseCase } from "@internal/discovery/use-case/StartDiscoveringUseCase";
 import { StopDiscoveringUseCase } from "@internal/discovery/use-case/StopDiscoveringUseCase";
 import { loggerModuleFactory } from "@internal/logger-publisher/di/loggerModule";
@@ -70,11 +70,11 @@ describe("discoveryModuleFactory", () => {
     const connectUseCase = container.get(discoveryTypes.ConnectUseCase);
     expect(connectUseCase).toBeInstanceOf(ConnectUseCase);
 
-    const listenToKnownDevicesUseCase = container.get(
-      discoveryTypes.ListenToKnownDevicesUseCase,
+    const listenToAvailableDevicesUseCase = container.get(
+      discoveryTypes.ListenToAvailableDevicesUseCase,
     );
-    expect(listenToKnownDevicesUseCase).toBeInstanceOf(
-      ListenToKnownDevicesUseCase,
+    expect(listenToAvailableDevicesUseCase).toBeInstanceOf(
+      ListenToAvailableDevicesUseCase,
     );
     const listConnectedDevicesUseCase = container.get(
       discoveryTypes.ListConnectedDevicesUseCase,

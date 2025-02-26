@@ -6,8 +6,6 @@ import { type TransportIdentifier } from "@api/transport/model/TransportIdentifi
  * A discovered / scanned (not yet connected to) device.
  */
 export type TransportDiscoveredDevice = {
-  // type: "web-hid", // "node-hid" in the future -> no need as we will only have 1 USB transport implementation running
-
   /**
    * Unique identifier for the device.
    * NB: This identifier is generated at runtime and is not persisted.
@@ -18,4 +16,6 @@ export type TransportDiscoveredDevice = {
   id: DeviceId;
   deviceModel: TransportDeviceModel;
   transport: TransportIdentifier;
+  name?: string;
+  rssi?: number | null;
 };

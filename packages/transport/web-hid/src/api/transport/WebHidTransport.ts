@@ -180,7 +180,7 @@ export class WebHidTransport implements Transport {
   /**
    * Listen to known devices (devices to which the user has granted access)
    */
-  public listenToKnownDevices(): Observable<TransportDiscoveredDevice[]> {
+  public listenToAvailableDevices(): Observable<TransportDiscoveredDevice[]> {
     this.updateTransportDiscoveredDevices();
     return this._transportDiscoveredDevices.pipe(
       map((devices) => devices.map(({ hidDevice, ...device }) => device)),

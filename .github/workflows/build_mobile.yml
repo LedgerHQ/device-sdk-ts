@@ -1,0 +1,61 @@
+name: "[Release] Build mobile sample app"
+
+on:
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: The base branch to build mobile app from
+        required: false
+        default: "develop"
+
+env:
+  FORCE_COLOR: "1"
+  REF: ${{ inputs.ref }}
+  TAG: ${{ inputs.tag }}
+
+permissions:
+  id-token: write
+  contents: write
+
+jobs:
+  build-android:
+    name: Build android app
+    runs-on: ledgerhq-device-sdk
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.inputs.ref }}
+
+      - uses: LedgerHQ/device-sdk-ts/.github/actions/setup-toolchain-composite@develop
+
+      - name: Set Up JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'zulu' # See 'Supported distributions' for available options
+          java-version: '20'
+          cache: 'gradle'
+
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Build libs
+        run: pnpm build:libs
+
+      - name: Build APK
+        run: ./gradlew assembleRelease
+        working-directory: ./apps/mobile/android
+
+      - name: Upload APK to github
+        uses: actions/upload-artifact@v4
+        with:
+          name: dmk-sample.apk
+          path: ./apps/mobile/android/app/build/outputs/apk/release/app-release.apk
+
+      - name: Upload APK to firebase
+        uses: wzieba/Firebase-Distribution-Github-Action@v1
+        with:
+          appId: ${{secrets.FIREBASE_APP_ID}}
+          serviceCredentialsFileContent: ${{ secrets.FIREBASE_CREDENTIAL_FILE_CONTENT }}
+          groups: dxp
+          file: ./apps/mobile/android/app/build/outputs/apk/release/app-release.apk
+

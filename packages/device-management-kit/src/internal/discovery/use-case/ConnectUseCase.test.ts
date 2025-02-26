@@ -47,6 +47,7 @@ describe("ConnectUseCase", () => {
     id: "",
     deviceModel: {} as DeviceModel,
     transport: "USB",
+    name: "TEST",
   };
   const stubConnectedDevice = connectedDeviceStubBuilder({ id: "1" });
   const tag = "logger-tag";
