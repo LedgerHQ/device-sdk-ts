@@ -33,7 +33,10 @@ import { type ConnectUseCase } from "@internal/discovery/use-case/ConnectUseCase
 import { type DisconnectUseCase } from "@internal/discovery/use-case/DisconnectUseCase";
 import { type GetConnectedDeviceUseCase } from "@internal/discovery/use-case/GetConnectedDeviceUseCase";
 import { type ListConnectedDevicesUseCase } from "@internal/discovery/use-case/ListConnectedDevicesUseCase";
-import { type ListenToAvailableDevicesUseCase } from "@internal/discovery/use-case/ListenToAvailableDevicesUseCase";
+import {
+  type ListenToAvailableDevicesUseCase,
+  type ListenToAvailableDevicesUseCaseArgs,
+} from "@internal/discovery/use-case/ListenToAvailableDevicesUseCase";
 import { type ListenToConnectedDeviceUseCase } from "@internal/discovery/use-case/ListenToConnectedDeviceUseCase";
 import type { StartDiscoveringUseCase } from "@internal/discovery/use-case/StartDiscoveringUseCase";
 import type { StopDiscoveringUseCase } from "@internal/discovery/use-case/StopDiscoveringUseCase";
@@ -111,15 +114,17 @@ export class DeviceManagementKit {
 
   /**
    * Listen to list of known discovered devices (and later BLE).
-   *
+   * @param {ListenToAvailableDevicesUseCaseArgs} args - The transport to use for discover, or undefined to discover from all transports.
    * @returns {Observable<DiscoveredDevice[]>} An observable of known discovered devices.
    */
-  listenToAvailableDevices(): Observable<DiscoveredDevice[]> {
+  listenToAvailableDevices(
+    args: ListenToAvailableDevicesUseCaseArgs,
+  ): Observable<DiscoveredDevice[]> {
     return this.container
       .get<ListenToAvailableDevicesUseCase>(
         discoveryTypes.ListenToAvailableDevicesUseCase,
       )
-      .execute();
+      .execute(args);
   }
 
   /**
