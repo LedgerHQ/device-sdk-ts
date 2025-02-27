@@ -9,7 +9,7 @@ const apiGetDeviceSessionStateObservableMock = vi.fn();
 const setDeviceSessionStateMock = vi.fn();
 const getManagerApiServiceMock = vi.fn();
 const getSecureChannelServiceMock = vi.fn();
-const toggleRefresherMock = vi.fn();
+const disableRefresherMock = vi.fn();
 
 export function makeDeviceActionInternalApiMock(): Mocked<InternalApi> {
   return {
@@ -20,6 +20,6 @@ export function makeDeviceActionInternalApiMock(): Mocked<InternalApi> {
     setDeviceSessionState: setDeviceSessionStateMock,
     getManagerApiService: getManagerApiServiceMock,
     getSecureChannelService: getSecureChannelServiceMock,
-    toggleRefresher: toggleRefresherMock,
+    disableRefresher: disableRefresherMock,
   };
 }

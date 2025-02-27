@@ -13,15 +13,19 @@ import { DefaultSecureChannelDataSource } from "@internal/secure-channel/data/De
 import { DefaultSecureChannelService } from "@internal/secure-channel/service/DefaultSecureChannelService";
 import { type SecureChannelService } from "@internal/secure-channel/service/SecureChannelService";
 
-import { ToggleDeviceSessionRefresherUseCase } from "./ToggleDeviceSessionRefresher";
+import { DisableDeviceSessionRefresherUseCase } from "./DisableDeviceSessionRefresher";
+
+vi.mock("uuid", () => ({
+  v4: () => "fakeUuid",
+}));
 
 let logger: LoggerPublisherService;
 let sessionService: DeviceSessionService;
-let useCase: ToggleDeviceSessionRefresherUseCase;
+let useCase: DisableDeviceSessionRefresherUseCase;
 let deviceSession: DeviceSession;
 let managerApi: ManagerApiService;
 let secureChannel: SecureChannelService;
-describe("ToggleDeviceSessionRefresherUseCase", () => {
+describe("DisableDeviceSessionRefresherUseCase", () => {
   beforeEach(() => {
     logger = new DefaultLoggerPublisherService(
       [],
@@ -41,7 +45,7 @@ describe("ToggleDeviceSessionRefresherUseCase", () => {
   });
 
   describe("execute", () => {
-    it("should toggle the device session refresher", () => {
+    it("should disable the device session refresher and return a function to reenable it", () => {
       // given
       deviceSession = deviceSessionStubBuilder(
         { id: "fakeSessionId" },
@@ -50,31 +54,38 @@ describe("ToggleDeviceSessionRefresherUseCase", () => {
         secureChannel,
       );
       sessionService.addDeviceSession(deviceSession);
-      useCase = new ToggleDeviceSessionRefresherUseCase(
+      useCase = new DisableDeviceSessionRefresherUseCase(
         sessionService,
         () => logger,
       );
 
-      const spy = vi.spyOn(deviceSession, "toggleRefresher");
+      const spy = vi.spyOn(deviceSession, "disableRefresher");
 
       // when
-      useCase.execute({ sessionId: "fakeSessionId", enabled: false });
+      const reenableRefresher = useCase.execute({
+        sessionId: "fakeSessionId",
+        blockerId: "fakeBlockerId",
+      });
 
       // then
-      expect(spy).toHaveBeenCalledWith(false);
+      expect(spy).toHaveBeenCalledWith("fakeBlockerId");
+      reenableRefresher();
       deviceSession.close();
     });
 
     it("should throw error when deviceSession is not found", () => {
       // given
-      useCase = new ToggleDeviceSessionRefresherUseCase(
+      useCase = new DisableDeviceSessionRefresherUseCase(
         sessionService,
         () => logger,
       );
 
       // when
       try {
-        useCase.execute({ sessionId: "fakeSessionId", enabled: false });
+        useCase.execute({
+          sessionId: "fakeSessionId",
+          blockerId: "fakeBlockerId",
+        });
       } catch (error) {
         // then
         expect(error).toBeInstanceOf(DeviceSessionNotFound);

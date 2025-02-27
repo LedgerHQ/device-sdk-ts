@@ -44,7 +44,7 @@ describe("ConnectToSecureChannelTask", () => {
     mockWebSocket = new WebSocket("wss://test-host.com");
     mockInternalApi = {
       sendApdu: sendApduFn,
-      toggleRefresher: vi.fn(),
+      disableRefresher: vi.fn(),
     } as unknown as InternalApi;
     taskArgs = { connection: Right(mockWebSocket) };
     task = new ConnectToSecureChannelTask(mockInternalApi, taskArgs);
@@ -70,7 +70,7 @@ describe("ConnectToSecureChannelTask", () => {
     expect(events).toStrictEqual([{ type: SecureChannelEventType.Opened }]);
   });
 
-  it("should handle incoming EXCHANGE message including reequestng user permission", async () => {
+  it("should handle incoming EXCHANGE message including requesting user permission", async () => {
     sendApduFn.mockResolvedValue(
       Right({
         data: new Uint8Array([0x90, 0x00]),

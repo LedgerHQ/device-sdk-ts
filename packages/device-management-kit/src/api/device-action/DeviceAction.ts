@@ -23,7 +23,7 @@ export type InternalApi = {
   readonly setDeviceSessionState: (
     state: DeviceSessionState,
   ) => DeviceSessionState;
-  readonly toggleRefresher: (enabled: boolean) => void;
+  readonly disableRefresher: (blockerId: string) => () => void;
   readonly getManagerApiService: () => ManagerApiService;
   readonly getSecureChannelService: () => SecureChannelService;
 };
