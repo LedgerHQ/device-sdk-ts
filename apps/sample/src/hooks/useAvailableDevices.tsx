@@ -18,7 +18,7 @@ export function useAvailableDevices(): AvailableDevice[] {
   useEffect(() => {
     if (!subscription.current) {
       subscription.current = dmk
-        .listenToAvailableDevices()
+        .listenToAvailableDevices({})
         .subscribe((devices) => {
           setDiscoveredDevices(devices);
         });
