@@ -49,7 +49,7 @@ import {
   type ExecuteDeviceActionReturnType,
 } from "./device-action/DeviceAction";
 import { deviceActionTypes } from "./device-action/di/deviceActionTypes";
-import { type ToggleDeviceSessionRefresherUseCase } from "./device-session/use-case/ToggleDeviceSessionRefresher";
+import { type DisableDeviceSessionRefresherUseCase } from "./device-session/use-case/DisableDeviceSessionRefresher";
 import { type DmkError } from "./Error";
 
 /**
@@ -215,7 +215,7 @@ export class DeviceManagementKit {
   /**
    * Gets the device state of a session.
    *
-   * @param {{DeviceSessionId}} args - The device session ID.
+   * @param {{ sessionId: DeviceSessionId }} args - The device session ID.
    * @returns {Observable<DeviceSessionState>} An observable of the session device state.
    */
   getDeviceSessionState(args: {
@@ -265,17 +265,18 @@ export class DeviceManagementKit {
   }
 
   /**
-   * Toggle the device session refresher.
+   * Disable the device session refresher.
    *
-   * @param {DeviceSessionId} args - The device session ID.
+   * @param {DisableDeviceSessionRefresherUseCaseArgs} args - The device session ID and a string to identify the blocker.
+   * @returns {() => void} A function to reenable the device session refresher.
    */
-  toggleDeviceSessionRefresher(args: {
+  disableDeviceSessionRefresher(args: {
     sessionId: DeviceSessionId;
-    enabled: boolean;
+    blockerId: string;
   }) {
     return this.container
-      .get<ToggleDeviceSessionRefresherUseCase>(
-        deviceSessionTypes.ToggleDeviceSessionRefresherUseCase,
+      .get<DisableDeviceSessionRefresherUseCase>(
+        deviceSessionTypes.DisableDeviceSessionRefresherUseCase,
       )
       .execute(args);
   }

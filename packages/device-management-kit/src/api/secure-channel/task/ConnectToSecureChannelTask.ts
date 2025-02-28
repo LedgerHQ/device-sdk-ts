@@ -43,6 +43,10 @@ export class ConnectToSecureChannelTask {
   }
 
   run(): Observable<SecureChannelEvent> {
+    const reenableRefresher = this._api.disableRefresher(
+      "connectToSecureChannel",
+    );
+
     const obs = new Observable<SecureChannelEvent>((subscriber) => {
       let unsubscribed: boolean = false;
       let inBulkMode = false;
@@ -317,8 +321,9 @@ export class ConnectToSecureChannelTask {
           subscriber.error(deviceError);
         }
       };
+
       return () => {
-        this._api.toggleRefresher(true);
+        reenableRefresher();
         unsubscribed = true;
         // Close the connection if it is open when unsubscribing
         if (this._connection.readyState === WebSocket.OPEN) {
@@ -326,7 +331,7 @@ export class ConnectToSecureChannelTask {
         }
       };
     });
-    this._api.toggleRefresher(false);
+
     return obs;
   }
 

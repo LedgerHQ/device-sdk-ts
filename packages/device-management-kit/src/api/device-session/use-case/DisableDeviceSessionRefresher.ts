@@ -6,16 +6,16 @@ import { deviceSessionTypes } from "@internal/device-session/di/deviceSessionTyp
 import { type DeviceSessionService } from "@internal/device-session/service/DeviceSessionService";
 import { loggerTypes } from "@internal/logger-publisher/di/loggerTypes";
 
-export type ToggleDeviceSessionRefresherUseCaseArgs = {
+export type DisableDeviceSessionRefresherUseCaseArgs = {
   sessionId: DeviceSessionId;
-  enabled: boolean;
+  blockerId: string;
 };
 
 /**
- * Toggle the device session refresher.
+ * Disable the device session refresher.
  */
 @injectable()
-export class ToggleDeviceSessionRefresherUseCase {
+export class DisableDeviceSessionRefresherUseCase {
   private readonly _logger: LoggerPublisherService;
   constructor(
     @inject(deviceSessionTypes.DeviceSessionService)
@@ -23,10 +23,10 @@ export class ToggleDeviceSessionRefresherUseCase {
     @inject(loggerTypes.LoggerPublisherServiceFactory)
     loggerFactory: (tag: string) => LoggerPublisherService,
   ) {
-    this._logger = loggerFactory("ToggleDeviceSessionRefresherUseCase");
+    this._logger = loggerFactory("DisableDeviceSessionRefresherUseCase");
   }
 
-  execute({ sessionId, enabled }: ToggleDeviceSessionRefresherUseCaseArgs) {
+  execute({ sessionId, blockerId }: DisableDeviceSessionRefresherUseCaseArgs) {
     const errorOrDeviceSession =
       this._sessionService.getDeviceSessionById(sessionId);
 
@@ -35,7 +35,8 @@ export class ToggleDeviceSessionRefresherUseCase {
         this._logger.error("Error getting device session", { data: { error } });
         throw error;
       },
-      Right: (deviceSession) => deviceSession.toggleRefresher(enabled),
+      // Return a function that can be used to reenable the refresher
+      Right: (deviceSession) => deviceSession.disableRefresher(blockerId),
     });
   }
 }
