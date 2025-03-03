@@ -138,7 +138,6 @@ export class DeviceConnectionStateMachine<Dependencies> {
         });
       })
       .catch((error) => {
-        console.log("[sendApduToDeviceConnection] caught error", error);
         this.machineActor.send({
           type: "ApduSendingError",
           error: new UnknownDeviceExchangeError(error),
@@ -274,7 +273,6 @@ function makeStateMachine({
               (triggersDisconnection ||
                 CommandUtils.isApduThatTriggersDisconnection(apdu)) &&
               CommandUtils.isSuccessResponse(params.apduResponse);
-            console.log("isApduThatTriggersDisconnection", res, apdu);
             return res;
           },
           Nothing: () => false,

@@ -67,7 +67,7 @@ export class RNBleApduSender
   ) {
     this._dependencies = dependencies;
     this._isDeviceReady = new BehaviorSubject<boolean>(false);
-    this._logger = loggerServiceFactory("RNBleDeviceConnection");
+    this._logger = loggerServiceFactory("RNBleApduSender");
     this._apduSenderFactory = apduSenderFactory;
     this._apduSender = Nothing;
     this._apduReceiver = apduReceiverFactory();
@@ -185,7 +185,7 @@ export class RNBleApduSender
       try {
         await this.write(Base64.fromUint8Array(frame.getRawData()));
       } catch (error) {
-        this._logger.error("Error sending frame", { data: { error } });
+        this._logger.info("Error sending frame", { data: { error } });
       }
     }
 

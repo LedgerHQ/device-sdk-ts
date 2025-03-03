@@ -22,11 +22,13 @@ import {
 import { type Either, EitherAsync, Maybe, Nothing, Right } from "purify-ts";
 import {
   from,
+  map,
   mergeWith,
   Observable,
   repeat,
   retry,
   type Subscriber,
+  type Subscription,
   switchMap,
   throwError,
 } from "rxjs";
@@ -58,6 +60,7 @@ export class RNBleTransport implements Transport {
   >;
   private readonly _manager: BleManager;
   private readonly identifier: TransportIdentifier = "RN_BLE";
+  private _reconnectionSubscription: Maybe<Subscription>;
 
   constructor(
     private readonly _deviceModelDataSource: DeviceModelDataSource,
@@ -73,6 +76,7 @@ export class RNBleTransport implements Transport {
     this._internalDevicesById = new Map();
     this._deviceConnectionsById = new Map();
     this.requestPermission();
+    this._reconnectionSubscription = Maybe.zero();
   }
 
   private _startDiscovering() {
@@ -229,18 +233,14 @@ export class RNBleTransport implements Transport {
    */
   listenToAvailableDevices(): Observable<TransportDiscoveredDevice[]> {
     const scannedDeviceMap: Record<DeviceId, TransportDiscoveredDevice> = {};
-    return new Observable((subscriber) => {
-      return this._startDiscovering().subscribe({
-        next: (discoveredDevice) => {
-          scannedDeviceMap[discoveredDevice.id] = discoveredDevice;
-          subscriber.next(
-            Object.values(scannedDeviceMap).filter(
-              (device) => device.rssi !== null,
-            ),
-          );
-        },
-      });
-    });
+    return this._startDiscovering().pipe(
+      map((discoveredDevice) => {
+        scannedDeviceMap[discoveredDevice.id] = discoveredDevice;
+        return Object.values(scannedDeviceMap).filter(
+          (device) => device.rssi !== null,
+        );
+      }),
+    );
   }
 
   /**
@@ -412,18 +412,21 @@ export class RNBleTransport implements Transport {
   private async _handleLostDiscoveredDevices(
     subscriber: Subscriber<TransportDiscoveredDevice>,
   ) {
-    for (const internalDevice of this._internalDevicesById.values()) {
-      if (
-        this._isDiscoveredDeviceDelayOver(internalDevice) &&
-        !(await this._manager.isDeviceConnected(internalDevice.id))
-      ) {
-        this._internalDevicesById.delete(internalDevice.id);
-        subscriber.next({
-          ...internalDevice.discoveredDevice,
-          rssi: null,
-        });
-      }
-    }
+    const promises = this._internalDevicesById
+      .values()
+      .map((internalDevice) => async () => {
+        if (
+          this._isDiscoveredDeviceDelayOver(internalDevice) &&
+          !(await this._manager.isDeviceConnected(internalDevice.id))
+        ) {
+          this._internalDevicesById.delete(internalDevice.id);
+          subscriber.next({
+            ...internalDevice.discoveredDevice,
+            rssi: null,
+          });
+        }
+      });
+    await Promise.all(promises);
   }
 
   /**
@@ -545,10 +548,15 @@ export class RNBleTransport implements Transport {
       this._logger.error("device disconnected error", {
         data: { error, device },
       });
+      return;
     }
 
     if (!device) {
-      this._logger.info("disconnected handler didn't found device");
+      this._logger.debug("disconnected handler didn't found device");
+      return;
+    }
+
+    if (this._reconnectionSubscription.isJust()) {
       return;
     }
 
@@ -562,55 +570,54 @@ export class RNBleTransport implements Transport {
 
     let reconnectedDevice: Device;
 
-    from([0])
-      .pipe(
-        switchMap(async () => {
-          try {
-            reconnectedDevice = await device.connect({
-              requestMTU: DEFAULT_MTU,
-            });
-            reconnectedDevice =
-              await device.discoverAllServicesAndCharacteristics();
-            await this._handleDeviceReconnected(reconnectedDevice);
-          } catch (e) {
+    this._reconnectionSubscription = Maybe.of(
+      from([0])
+        .pipe(
+          switchMap(async () => {
+            try {
+              reconnectedDevice = await device.connect({
+                requestMTU: DEFAULT_MTU,
+              });
+              reconnectedDevice =
+                await device.discoverAllServicesAndCharacteristics();
+              await this._handleDeviceReconnected(reconnectedDevice);
+            } catch (e) {
+              this._logger.error(
+                "[_handleDeviceDisconnected] Reconnecting failed",
+                { data: { e } },
+              );
+
+              throwError(() => e);
+              return;
+            }
+            return reconnectedDevice;
+          }),
+          retry({
+            count: 5,
+            delay: BLE_DISCONNECT_TIMEOUT / 5,
+          }),
+        )
+        .subscribe({
+          next: (value) =>
+            this._logger.debug(
+              "[_handleDeviceDisconnected] Got new device after reconnection",
+              { data: { value } },
+            ),
+          complete: () => {
+            this._reconnectionSubscription = Maybe.zero();
+          },
+          error: (e) => {
             this._logger.error(
-              "[_handleDeviceDisconnected] Reconnecting failed",
+              "[_handleDeviceDisconnected] Reconnection failed after all retries",
               { data: { e } },
             );
-
-            Maybe.fromNullable(this._deviceConnectionsById.get(device.id)).map(
-              (deviceConnection) => {
-                deviceConnection.closeConnection();
-              },
-            );
-
-            if (await reconnectedDevice.isConnected()) {
-              await this._manager.cancelDeviceConnection(reconnectedDevice.id);
-            }
-
-            throwError(() => e);
-            return;
-          }
-          return device;
+            this._reconnectionSubscription = Maybe.zero();
+            errorOrDeviceConnection.map((deviceConnection) => {
+              deviceConnection.closeConnection();
+            });
+          },
         }),
-        retry({
-          count: 5,
-          delay: BLE_DISCONNECT_TIMEOUT / 5,
-        }),
-      )
-      .subscribe({
-        next: (value) =>
-          this._logger.info(
-            "[_handleDeviceDisconnected] Got new device after reconnection",
-            { data: { value } },
-          ),
-        error: (e) => {
-          this._logger.error(
-            "[_handleDeviceDisconnected] Reconnection failed after all retries",
-            { data: { e } },
-          );
-        },
-      });
+    );
   }
 
   /**
