@@ -3,6 +3,7 @@ package com.ledger.devicesdk.shared.androidMainInternal.transport.deviceconnecti
 import com.ledger.devicesdk.shared.api.apdu.SendApduResult
 import com.ledger.devicesdk.shared.internal.service.logger.LoggerService
 import com.ledger.devicesdk.shared.internal.service.logger.buildSimpleErrorLogInfo
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import kotlin.coroutines.resume
@@ -14,11 +15,12 @@ internal class DeviceConnection<Dependencies>(
     private var deviceApduSender: DeviceApduSender<Dependencies>,
     isFatalSendApduFailure: (SendApduResult.Failure) -> Boolean,
     reconnectionTimeoutDuration: Duration,
+    coroutineDispatcher: CoroutineDispatcher,
     private val onTerminated: (DeviceConnection<Dependencies>) -> Unit,
-    private val coroutineScope: CoroutineScope,
     private val loggerService: LoggerService,
 ) {
     private val stateMachine: DeviceConnectionStateMachine
+    private val coroutineScope = CoroutineScope(coroutineDispatcher)
 
     init {
         stateMachine = DeviceConnectionStateMachine(

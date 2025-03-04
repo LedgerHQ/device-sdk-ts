@@ -5,4 +5,4 @@
 
 package com.ledger.devicesdk.shared.androidMainInternal.transport
 
-internal val USB_MTU: Int = 64
+internal const val USB_MTU: Int = 64

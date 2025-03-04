@@ -55,7 +55,7 @@ internal class DefaultAndroidUsbTransport(
     private val eventDispatcher: SdkEventDispatcher,
     private val loggerService: LoggerService,
     private val scanDelay: Duration,
-    coroutineDispatcher: CoroutineDispatcher,
+    private val coroutineDispatcher: CoroutineDispatcher,
 ) : AndroidUsbTransport {
     private val scope = CoroutineScope(coroutineDispatcher + SupervisorJob())
     private val internalUsbEventFlow: MutableSharedFlow<UsbState> = MutableSharedFlow()
@@ -272,7 +272,7 @@ internal class DefaultAndroidUsbTransport(
                     usbConnectionsPendingReconnection.remove(it)
                     eventDispatcher.dispatch(TransportEvent.DeviceConnectionLost(sessionId))
                 },
-                coroutineScope = scope,
+                coroutineDispatcher = coroutineDispatcher,
                 loggerService = loggerService,
             )
 
