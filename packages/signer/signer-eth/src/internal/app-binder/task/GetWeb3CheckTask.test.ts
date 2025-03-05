@@ -33,6 +33,7 @@ describe("GetWeb3CheckTask", () => {
         installedApps: [],
         currentApp: { name: "Ethereum", version: "1.15.0" },
         deviceModelId: DeviceModelId.FLEX,
+        isSecureConnectionAllowed: true,
       });
     });
 
