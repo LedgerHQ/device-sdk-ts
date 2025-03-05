@@ -17,7 +17,8 @@ import {
 } from "@internal/app-binder/command/utils/ethAppErrors";
 
 export type ProvideWeb3CheckCommandArgs = {
-  payload: string;
+  readonly payload: Uint8Array;
+  readonly isFirstChunk: boolean;
 };
 
 /**
@@ -38,11 +39,11 @@ export class ProvideWeb3CheckCommand
       cla: 0xe0,
       ins: 0x32,
       p1: 0x00,
-      p2: 0x00,
+      p2: this.args.isFirstChunk ? 0x01 : 0x00,
     };
 
     return new ApduBuilder(apduBuilderArgs)
-      .addHexaStringToData(this.args.payload)
+      .addBufferToData(this.args.payload)
       .build();
   }
 

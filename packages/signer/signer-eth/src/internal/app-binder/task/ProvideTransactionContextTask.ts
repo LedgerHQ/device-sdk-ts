@@ -130,9 +130,14 @@ export class ProvideTransactionContextTask {
         });
       }
       case ClearSignContextType.WEB3_CHECK:
-        return await this.api.sendCommand(
-          new ProvideWeb3CheckCommand({ payload }),
-        );
+        return new SendPayloadInChunksTask(this.api, {
+          payload,
+          commandFactory: (args) =>
+            new ProvideWeb3CheckCommand({
+              payload: args.chunkedData,
+              isFirstChunk: args.isFirstChunk,
+            }),
+        }).run();
       default: {
         const uncoveredType: never = type;
         return CommandResultFactory({

@@ -42,6 +42,8 @@ import {
   TypedDataValueRoot,
 } from "@internal/typed-data/model/Types";
 
+import { SendPayloadInChunksTask } from "./SendPayloadInChunksTask";
+
 type AllSuccessTypes = void | { tokenIndex: number };
 
 export type ProvideEIP712ContextTaskReturnType = Promise<
@@ -82,9 +84,14 @@ export class ProvideEIP712ContextTask {
           }),
         );
       }
-      await this.api.sendCommand(
-        new ProvideWeb3CheckCommand({ payload: this.args.web3Check.payload }),
-      );
+      await new SendPayloadInChunksTask(this.api, {
+        payload: this.args.web3Check.payload,
+        commandFactory: (args) =>
+          new ProvideWeb3CheckCommand({
+            payload: args.chunkedData,
+            isFirstChunk: args.isFirstChunk,
+          }),
+      }).run();
     }
 
     const result: CommandResult<AllSuccessTypes, EthErrorCodes> =

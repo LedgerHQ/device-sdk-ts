@@ -1,7 +1,7 @@
-import { type TypedDataClearSignContextSuccess } from "@ledgerhq/context-module";
 import {
   type ClearSignContextSuccess,
   ClearSignContextType,
+  type TypedDataClearSignContextSuccess,
 } from "@ledgerhq/context-module";
 import {
   CommandResultFactory,
@@ -675,7 +675,7 @@ describe("ProvideEIP712ContextTask", () => {
     const web3Check: ClearSignContextSuccess<ClearSignContextType.WEB3_CHECK> =
       {
         type: ClearSignContextType.WEB3_CHECK,
-        payload: "payload",
+        payload: "0x010203",
       };
     const args: ProvideEIP712ContextTaskArgs = {
       web3Check,
@@ -696,7 +696,8 @@ describe("ProvideEIP712ContextTask", () => {
     // THEN
     expect(apiMock.sendCommand).toHaveBeenCalledWith(
       new ProvideWeb3CheckCommand({
-        payload: "payload",
+        payload: hexaStringToBuffer("0x0003010203")!,
+        isFirstChunk: true,
       }),
     );
   });
@@ -710,7 +711,7 @@ describe("ProvideEIP712ContextTask", () => {
           keyUsageNumber: 3,
           payload: new Uint8Array(3).fill(42),
         },
-        payload: "payload",
+        payload: "0x010203",
       };
     const args: ProvideEIP712ContextTaskArgs = {
       web3Check,
@@ -737,7 +738,8 @@ describe("ProvideEIP712ContextTask", () => {
     );
     expect(apiMock.sendCommand).toHaveBeenCalledWith(
       new ProvideWeb3CheckCommand({
-        payload: "payload",
+        payload: hexaStringToBuffer("0x0003010203")!,
+        isFirstChunk: true,
       }),
     );
   });
