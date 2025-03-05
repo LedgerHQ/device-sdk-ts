@@ -21,11 +21,11 @@ import {
 } from "@api/device-session/DeviceSessionState";
 import { ConnectToSecureChannelTask } from "@api/secure-channel/task/ConnectToSecureChannelTask";
 import { SecureChannelEventType } from "@api/secure-channel/task/types";
+import { type Input } from "@api/secure-channel/types";
 import { type DeviceVersion } from "@internal/manager-api/model/Device";
 import { type FinalFirmware } from "@internal/manager-api/model/Firmware";
 
 import {
-  type Input,
   installedAppResultGuard,
   type ListInstalledAppsDAError,
   type ListInstalledAppsDAInput,
