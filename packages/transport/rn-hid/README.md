@@ -35,7 +35,7 @@ The transport itself is only compatible with Android devices but there is no add
 
 ### Pre-requisites
 
-To use this transport, ensure you have the Device Magement Kit installed in your project.
+To use this transport, ensure you have the Device Management Kit installed in your project.
 
 #### AndroidManifest.xml
 
