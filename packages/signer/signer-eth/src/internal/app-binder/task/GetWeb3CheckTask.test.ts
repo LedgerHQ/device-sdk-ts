@@ -8,6 +8,7 @@ import {
 } from "@ledgerhq/device-management-kit";
 import { Left, Right } from "purify-ts";
 
+import { type TypedData } from "@api/model/TypedData";
 import { makeDeviceActionInternalApiMock } from "@internal/app-binder/device-action/__test-utils__/makeInternalApi";
 import { GetWeb3CheckTask } from "@internal/app-binder/task/GetWeb3CheckTask";
 import { type TransactionMapperService } from "@internal/transaction/service/mapper/TransactionMapperService";
@@ -41,6 +42,12 @@ describe("GetWeb3CheckTask", () => {
       it("should throw an error if mapTransactionToSubset assert.fails", async () => {
         // GIVEN
         const error = new Error("error");
+        apiMock.sendCommand.mockResolvedValueOnce(
+          CommandResultFactory({ data: { web3ChecksEnabled: true } }),
+        );
+        apiMock.sendCommand.mockResolvedValueOnce(
+          CommandResultFactory({ data: { address: "address" } }),
+        );
         mapperMock.mapTransactionToSubset.mockReturnValue(Left(error));
 
         // WHEN
@@ -204,6 +211,27 @@ describe("GetWeb3CheckTask", () => {
           contextModule: contextModuleMock as unknown as ContextModule,
           mapper: mapperMock as unknown as TransactionMapperService,
           transaction,
+          derivationPath,
+        }).run();
+
+        // THEN
+        expect(result).toEqual({
+          web3Check,
+        });
+      });
+
+      it("should return a web3 check for typed data", async () => {
+        // GIVEN
+        const web3Check = { type: "web3Check", id: 1 };
+        apiMock.sendCommand.mockResolvedValue(
+          CommandResultFactory({ data: { web3ChecksEnabled: true } }),
+        );
+        contextModuleMock.getWeb3Checks.mockResolvedValue(web3Check);
+
+        // WHEN
+        const result = await new GetWeb3CheckTask(apiMock, {
+          contextModule: contextModuleMock as unknown as ContextModule,
+          data: "typed data" as unknown as TypedData,
           derivationPath,
         }).run();
 

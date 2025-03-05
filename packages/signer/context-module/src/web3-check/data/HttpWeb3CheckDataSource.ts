@@ -24,31 +24,41 @@ export class HttpWeb3CheckDataSource implements Web3CheckDataSource {
     private readonly _certificateLoader: PkiCertificateLoader,
   ) {}
 
-  async getWeb3Checks({
-    chainId,
-    deviceModelId,
-    from,
-    rawTx,
-  }: Web3CheckContext): Promise<Either<Error, Web3Checks>> {
+  async getWeb3Checks(
+    context: Web3CheckContext,
+  ): Promise<Either<Error, Web3Checks>> {
+    const { from, deviceModelId } = context;
     let web3CheckDto: Web3CheckDto;
-
-    try {
-      const requestDto: GetWeb3ChecksRequestDto = {
+    let requestDto: GetWeb3ChecksRequestDto;
+    let url: string;
+    if ("data" in context) {
+      requestDto = {
+        msg: {
+          from,
+          data: context.data,
+        },
+      };
+      url = `${this.config.web3checks.url}/ethereum/scan/eip-712`;
+    } else {
+      requestDto = {
         tx: {
           from,
-          raw: rawTx,
+          raw: context.rawTx,
         },
-        chain: chainId,
+        chain: context.chainId,
       };
+      url = `${this.config.web3checks.url}/ethereum/scan/tx`;
+    }
+
+    try {
       const response = await axios.request<Web3CheckDto>({
         method: "POST",
-        url: `${this.config.web3checks.url}/ethereum/scan/tx`,
+        url,
         data: requestDto,
         headers: {
           "X-Ledger-Client-Version": `context-module/${PACKAGE.version}`,
         },
       });
-
       web3CheckDto = response.data;
     } catch (_error) {
       return Left(

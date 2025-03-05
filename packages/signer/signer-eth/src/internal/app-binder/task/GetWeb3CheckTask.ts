@@ -12,6 +12,7 @@ import {
   isSuccessCommandResult,
 } from "@ledgerhq/device-management-kit";
 
+import { type TypedData } from "@api/model/TypedData";
 import { GetAddressCommand } from "@internal/app-binder/command/GetAddressCommand";
 import { GetAppConfiguration } from "@internal/app-binder/command/GetAppConfigurationCommand";
 import { type TransactionMapperService } from "@internal/transaction/service/mapper/TransactionMapperService";
@@ -25,12 +26,18 @@ export type GetWeb3CheckTaskResult =
       error: DmkError;
     };
 
-export type GetWeb3CheckTaskArgs = {
-  readonly contextModule: ContextModule;
-  readonly mapper: TransactionMapperService;
-  readonly transaction: Uint8Array;
-  readonly derivationPath: string;
-};
+export type GetWeb3CheckTaskArgs =
+  | {
+      readonly contextModule: ContextModule;
+      readonly derivationPath: string;
+      readonly mapper: TransactionMapperService;
+      readonly transaction: Uint8Array;
+    }
+  | {
+      readonly contextModule: ContextModule;
+      readonly derivationPath: string;
+      readonly data: TypedData;
+    };
 
 export class GetWeb3CheckTask {
   constructor(
@@ -39,17 +46,8 @@ export class GetWeb3CheckTask {
   ) {}
 
   async run(): Promise<GetWeb3CheckTaskResult> {
-    const { contextModule, mapper, transaction } = this.args;
-    const { deviceModelId } = this.api.getDeviceSessionState();
-
-    const parsed = mapper.mapTransactionToSubset(transaction);
-    parsed.ifLeft((err) => {
-      throw err;
-    });
-    const { subset, serializedTransaction } = parsed.unsafeCoerce();
-
     const configResult = await this.api.sendCommand(new GetAppConfiguration());
-    //check error
+    // Check error
     if (!isSuccessCommandResult(configResult)) {
       return {
         web3Check: null,
@@ -57,13 +55,14 @@ export class GetWeb3CheckTask {
       };
     }
 
-    //Only do Web3 Check if it is activated
+    // Only do Web3 Check if it is activated
     if (!configResult.data.web3ChecksEnabled) {
       return {
         web3Check: null,
       };
     }
 
+    // Get sender address
     const getAddressResult = await this.api.sendCommand(
       new GetAddressCommand({
         derivationPath: this.args.derivationPath,
@@ -79,14 +78,35 @@ export class GetWeb3CheckTask {
     }
 
     const address = getAddressResult.data.address;
-    const web3Params: Web3CheckContext = {
-      deviceModelId,
-      from: address,
-      rawTx: bufferToHexaString(serializedTransaction),
-      chainId: subset.chainId,
-    };
-    const web3CheckContext: ClearSignContext | null =
-      await contextModule.getWeb3Checks(web3Params);
+    const { deviceModelId } = this.api.getDeviceSessionState();
+    const { contextModule } = this.args;
+    let web3CheckContext: ClearSignContext | null;
+
+    if ("transaction" in this.args) {
+      // Transaction simulation
+      const parsed = this.args.mapper.mapTransactionToSubset(
+        this.args.transaction,
+      );
+      parsed.ifLeft((err) => {
+        throw err;
+      });
+      const { subset, serializedTransaction } = parsed.unsafeCoerce();
+      const web3Params: Web3CheckContext = {
+        deviceModelId,
+        from: address,
+        rawTx: bufferToHexaString(serializedTransaction),
+        chainId: subset.chainId,
+      };
+      web3CheckContext = await contextModule.getWeb3Checks(web3Params);
+    } else {
+      // Typed data simulation
+      const web3Params: Web3CheckContext = {
+        deviceModelId,
+        from: address,
+        data: this.args.data,
+      };
+      web3CheckContext = await contextModule.getWeb3Checks(web3Params);
+    }
 
     if (
       web3CheckContext === null ||

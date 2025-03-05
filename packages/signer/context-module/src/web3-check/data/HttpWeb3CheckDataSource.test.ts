@@ -6,6 +6,7 @@ import { type ContextModuleConfig } from "@/config/model/ContextModuleConfig";
 import { type PkiCertificateLoader } from "@/pki/domain/PkiCertificateLoader";
 import { HttpWeb3CheckDataSource } from "@/web3-check/data/HttpWeb3CheckDataSource";
 import { type Web3CheckDto } from "@/web3-check/data/Web3CheckDto";
+import type { Web3CheckTypedData } from "@/web3-check/domain/web3CheckTypes";
 import { type Web3CheckContext } from "@/web3-check/domain/web3CheckTypes";
 
 vi.mock("axios");
@@ -34,7 +35,38 @@ describe("HttpWeb3CheckDataSource", () => {
         chainId: 1,
       };
       const dto: Web3CheckDto = {
-        block: 1,
+        public_key_id: "partner",
+        descriptor: "descriptor",
+      };
+      vi.spyOn(axios, "request").mockResolvedValueOnce({ data: dto });
+      vi.spyOn(certificateLoaderMock, "loadCertificate").mockResolvedValueOnce(
+        undefined,
+      );
+
+      // WHEN
+      const dataSource = new HttpWeb3CheckDataSource(
+        config,
+        certificateLoaderMock as unknown as PkiCertificateLoader,
+      );
+      const result = await dataSource.getWeb3Checks(params);
+
+      // THEN
+      expect(result).toEqual(
+        Right({
+          publicKeyId: "partner",
+          descriptor: "descriptor",
+        }),
+      );
+    });
+
+    it("should return an object if the typed data request is successful", async () => {
+      // GIVEN
+      const params: Web3CheckContext = {
+        deviceModelId: DeviceModelId.FLEX,
+        from: "from",
+        data: "typed data" as unknown as Web3CheckTypedData,
+      };
+      const dto: Web3CheckDto = {
         public_key_id: "partner",
         descriptor: "descriptor",
       };
@@ -68,7 +100,6 @@ describe("HttpWeb3CheckDataSource", () => {
         chainId: 1,
       };
       const dto: Web3CheckDto = {
-        block: 1,
         public_key_id: "partner",
         descriptor: "descriptor",
       };
