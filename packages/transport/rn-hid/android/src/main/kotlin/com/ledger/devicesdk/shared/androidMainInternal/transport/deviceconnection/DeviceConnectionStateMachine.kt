@@ -5,6 +5,7 @@ import com.ledger.devicesdk.shared.api.apdu.SendApduResult
 import com.ledger.devicesdk.shared.internal.service.logger.LoggerService
 import com.ledger.devicesdk.shared.internal.service.logger.buildSimpleDebugLogInfo
 import com.ledger.devicesdk.shared.internal.service.logger.buildSimpleInfoLogInfo
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
@@ -15,12 +16,14 @@ internal class DeviceConnectionStateMachine(
     private val onTerminated: () -> Unit,
     private val isFatalSendApduFailure: (SendApduResult.Failure) -> Boolean,
     private val reconnectionTimeoutDuration: Duration,
-    private val coroutineScope: CoroutineScope,
     private val onError: (Throwable) -> Unit,
     private val loggerService: LoggerService,
+    coroutineDispatcher: CoroutineDispatcher,
 ) {
-
+    private val coroutineScope = CoroutineScope(coroutineDispatcher)
     private var state: State = State.Connected
+
+    fun getState() = state
 
     private fun pushState(newState: State) {
         when (newState) {

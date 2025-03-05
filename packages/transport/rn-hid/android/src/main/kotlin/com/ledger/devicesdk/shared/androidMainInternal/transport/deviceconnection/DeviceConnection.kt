@@ -35,7 +35,7 @@ internal class DeviceConnection<Dependencies>(
             },
             isFatalSendApduFailure = isFatalSendApduFailure,
             reconnectionTimeoutDuration = reconnectionTimeoutDuration,
-            coroutineScope = coroutineScope,
+            coroutineDispatcher = coroutineDispatcher,
             onError = {
                 loggerService.log(
                     buildSimpleErrorLogInfo(
@@ -53,15 +53,12 @@ internal class DeviceConnection<Dependencies>(
         stateMachine.handleApduResult(result)
     }
 
-    public fun setApduSender(apduSender: DeviceApduSender<Dependencies>) {
-        deviceApduSender = apduSender
-    }
-
     public fun getApduSender(): DeviceApduSender<Dependencies> {
         return deviceApduSender
     }
 
-    public fun handleDeviceConnected() {
+    public fun handleDeviceConnected(apduSender: DeviceApduSender<Dependencies>) {
+        deviceApduSender = apduSender
         stateMachine.handleDeviceConnected()
     }
 
