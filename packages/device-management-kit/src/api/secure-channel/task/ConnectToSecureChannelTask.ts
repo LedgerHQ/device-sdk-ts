@@ -286,7 +286,7 @@ export class ConnectToSecureChannelTask {
               if (payload) {
                 subscriber.next({
                   type: SecureChannelEventType.Result,
-                  payload: String(payload ?? ""),
+                  payload: payload ?? "",
                 });
               }
               communicationFinished = true;
