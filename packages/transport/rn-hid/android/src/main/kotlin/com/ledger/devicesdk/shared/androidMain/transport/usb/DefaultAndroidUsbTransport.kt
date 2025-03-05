@@ -151,7 +151,7 @@ internal class DefaultAndroidUsbTransport(
                             return@launch
                         }
                         loggerService.log(buildSimpleInfoLogInfo("AndroidUsbTransport", "Reconnecting device (sessionId=${deviceConnection.sessionId})"))
-                        deviceConnection.setApduSender(
+                        deviceConnection.handleDeviceConnected(
                             AndroidUsbApduSender(
                                 dependencies = AndroidUsbApduSender.Dependencies(
                                     usbDevice = usbDevice,
@@ -164,7 +164,6 @@ internal class DefaultAndroidUsbTransport(
                                 loggerService = loggerService
                             )
                         )
-                        deviceConnection.handleDeviceConnected()
                         usbConnectionsPendingReconnection.remove(deviceConnection)
                         usbConnections[deviceConnection.sessionId] = deviceConnection
                     }
