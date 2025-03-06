@@ -15,6 +15,7 @@ import {
 import { type TypedData } from "@api/model/TypedData";
 import { GetAddressCommand } from "@internal/app-binder/command/GetAddressCommand";
 import { GetAppConfiguration } from "@internal/app-binder/command/GetAppConfigurationCommand";
+import { Web3CheckOptInCommand } from "@internal/app-binder/command/Web3CheckOptInCommand";
 import { type TransactionMapperService } from "@internal/transaction/service/mapper/TransactionMapperService";
 
 export type GetWeb3CheckTaskResult =
@@ -46,17 +47,32 @@ export class GetWeb3CheckTask {
   ) {}
 
   async run(): Promise<GetWeb3CheckTaskResult> {
+    // Get app configuration
     const configResult = await this.api.sendCommand(new GetAppConfiguration());
-    // Check error
     if (!isSuccessCommandResult(configResult)) {
       return {
         web3Check: null,
         error: configResult.error,
       };
     }
+    let web3ChecksEnabled = configResult.data.web3ChecksEnabled;
+
+    // If feature is disabled and opt-in was not done, trigger it on the device
+    if (!web3ChecksEnabled && !configResult.data.web3ChecksOptIn) {
+      const web3CheckStatus = await this.api.sendCommand(
+        new Web3CheckOptInCommand(),
+      );
+      if (!isSuccessCommandResult(web3CheckStatus)) {
+        return {
+          web3Check: null,
+          error: web3CheckStatus.error,
+        };
+      }
+      web3ChecksEnabled = web3CheckStatus.data.enabled;
+    }
 
     // Only do Web3 Check if it is activated
-    if (!configResult.data.web3ChecksEnabled) {
+    if (!web3ChecksEnabled) {
       return {
         web3Check: null,
       };

@@ -29,7 +29,7 @@ describe("GetConfigCommand", () => {
       // GIVEN
       const response = {
         statusCode: Uint8Array.from([0x90, 0x00]),
-        data: new Uint8Array([0x11, 0x01, 0x02, 0x03]),
+        data: new Uint8Array([0x31, 0x01, 0x02, 0x03]),
       };
 
       // WHEN
@@ -40,6 +40,7 @@ describe("GetConfigCommand", () => {
         expect(result.data).toEqual({
           blindSigningEnabled: true,
           web3ChecksEnabled: true,
+          web3ChecksOptIn: true,
           version: "1.2.3",
         });
       } else {
@@ -62,6 +63,7 @@ describe("GetConfigCommand", () => {
         expect(result.data).toEqual({
           blindSigningEnabled: false,
           web3ChecksEnabled: false,
+          web3ChecksOptIn: false,
           version: "1.2.3",
         });
       } else {
