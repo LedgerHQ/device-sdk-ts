@@ -24,7 +24,7 @@ describe("GetWeb3CheckTask", () => {
   const transaction = new Uint8Array([0x01, 0x02, 0x03, 0x04]);
   const derivationPath = "44'/60'/0'/0/0";
 
-  describe("run", () => {
+  describe("old apps", () => {
     beforeEach(() => {
       vi.clearAllMocks();
 
@@ -33,6 +33,50 @@ describe("GetWeb3CheckTask", () => {
         deviceStatus: DeviceStatus.CONNECTED,
         installedApps: [],
         currentApp: { name: "Ethereum", version: "1.15.0" },
+        deviceModelId: DeviceModelId.FLEX,
+        isSecureConnectionAllowed: true,
+      });
+    });
+
+    it("should return null on old applications", async () => {
+      // GIVEN
+      mapperMock.mapTransactionToSubset.mockReturnValue(
+        Right({ subset: {}, serializedTransaction: new Uint8Array() }),
+      );
+      apiMock.sendCommand.mockResolvedValue(
+        CommandResultFactory({
+          data: { web3ChecksEnabled: true, web3ChecksOptIn: true },
+        }),
+      );
+      contextModuleMock.getWeb3Checks.mockResolvedValue({
+        type: "web3Check",
+        id: 1,
+      });
+
+      // WHEN
+      const result = await new GetWeb3CheckTask(apiMock, {
+        contextModule: contextModuleMock as unknown as ContextModule,
+        mapper: mapperMock as unknown as TransactionMapperService,
+        transaction,
+        derivationPath,
+      }).run();
+
+      // THEN
+      expect(result).toEqual({
+        web3Check: null,
+      });
+    });
+  });
+
+  describe("run", () => {
+    beforeEach(() => {
+      vi.clearAllMocks();
+
+      apiMock.getDeviceSessionState.mockReturnValueOnce({
+        sessionStateType: DeviceSessionStateType.ReadyWithoutSecureChannel,
+        deviceStatus: DeviceStatus.CONNECTED,
+        installedApps: [],
+        currentApp: { name: "Ethereum", version: "1.16.0" },
         deviceModelId: DeviceModelId.FLEX,
         isSecureConnectionAllowed: true,
       });

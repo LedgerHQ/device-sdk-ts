@@ -7,10 +7,13 @@ import {
 } from "@ledgerhq/context-module";
 import {
   bufferToHexaString,
+  type DeviceSessionState,
+  DeviceSessionStateType,
   type DmkError,
   type InternalApi,
   isSuccessCommandResult,
 } from "@ledgerhq/device-management-kit";
+import { gte } from "semver";
 
 import { type TypedData } from "@api/model/TypedData";
 import { GetAddressCommand } from "@internal/app-binder/command/GetAddressCommand";
@@ -27,18 +30,20 @@ export type GetWeb3CheckTaskResult =
       error: DmkError;
     };
 
+export type GetWeb3CheckTypedDataTaskArgs = {
+  readonly contextModule: ContextModule;
+  readonly derivationPath: string;
+  readonly data: TypedData;
+};
+export type GetWeb3CheckRawTxTaskArgs = {
+  readonly contextModule: ContextModule;
+  readonly derivationPath: string;
+  readonly mapper: TransactionMapperService;
+  readonly transaction: Uint8Array;
+};
 export type GetWeb3CheckTaskArgs =
-  | {
-      readonly contextModule: ContextModule;
-      readonly derivationPath: string;
-      readonly mapper: TransactionMapperService;
-      readonly transaction: Uint8Array;
-    }
-  | {
-      readonly contextModule: ContextModule;
-      readonly derivationPath: string;
-      readonly data: TypedData;
-    };
+  | GetWeb3CheckTypedDataTaskArgs
+  | GetWeb3CheckRawTxTaskArgs;
 
 export class GetWeb3CheckTask {
   constructor(
@@ -47,6 +52,14 @@ export class GetWeb3CheckTask {
   ) {}
 
   async run(): Promise<GetWeb3CheckTaskResult> {
+    // Early return on old applications
+    const sessionState = this.api.getDeviceSessionState();
+    if (!this.isSupported(sessionState)) {
+      return {
+        web3Check: null,
+      };
+    }
+
     // Get app configuration
     const configResult = await this.api.sendCommand(new GetAppConfiguration());
     if (!isSuccessCommandResult(configResult)) {
@@ -94,26 +107,27 @@ export class GetWeb3CheckTask {
     }
 
     const address = getAddressResult.data.address;
-    const { deviceModelId } = this.api.getDeviceSessionState();
+    const { deviceModelId } = sessionState;
     const { contextModule } = this.args;
     let web3CheckContext: ClearSignContext | null;
 
-    if ("transaction" in this.args) {
+    if (this.isRawTx(this.args)) {
       // Transaction simulation
       const parsed = this.args.mapper.mapTransactionToSubset(
         this.args.transaction,
       );
-      parsed.ifLeft((err) => {
-        throw err;
-      });
-      const { subset, serializedTransaction } = parsed.unsafeCoerce();
-      const web3Params: Web3CheckContext = {
-        deviceModelId,
-        from: address,
-        rawTx: bufferToHexaString(serializedTransaction),
-        chainId: subset.chainId,
-      };
-      web3CheckContext = await contextModule.getWeb3Checks(web3Params);
+      if (parsed.isRight()) {
+        const { subset, serializedTransaction } = parsed.extract();
+        const web3Params: Web3CheckContext = {
+          deviceModelId,
+          from: address,
+          rawTx: bufferToHexaString(serializedTransaction),
+          chainId: subset.chainId,
+        };
+        web3CheckContext = await contextModule.getWeb3Checks(web3Params);
+      } else {
+        throw parsed.extract();
+      }
     } else {
       // Typed data simulation
       const web3Params: Web3CheckContext = {
@@ -136,5 +150,19 @@ export class GetWeb3CheckTask {
     return {
       web3Check: web3CheckContext,
     };
+  }
+
+  private isRawTx(
+    args: GetWeb3CheckTaskArgs,
+  ): args is GetWeb3CheckRawTxTaskArgs {
+    return "transaction" in args;
+  }
+
+  private isSupported(deviceState: DeviceSessionState): boolean {
+    return (
+      deviceState.sessionStateType !== DeviceSessionStateType.Connected &&
+      deviceState.currentApp.name === "Ethereum" &&
+      gte(deviceState.currentApp.version, "1.16.0")
+    );
   }
 }

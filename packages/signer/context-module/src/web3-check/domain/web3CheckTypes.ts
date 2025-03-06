@@ -15,18 +15,22 @@ export type Web3CheckTypedData = {
   message: Record<string, unknown>;
 };
 
+export type Web3CheckTypedDataContext = {
+  from: string;
+  deviceModelId: DeviceModelId;
+  data: Web3CheckTypedData;
+};
+
+export type Web3CheckRawTxContext = {
+  from: string;
+  deviceModelId: DeviceModelId;
+  rawTx: string;
+  chainId: number;
+};
+
 export type Web3CheckContext =
-  | {
-      from: string;
-      deviceModelId: DeviceModelId;
-      data: Web3CheckTypedData;
-    }
-  | {
-      from: string;
-      deviceModelId: DeviceModelId;
-      rawTx: string;
-      chainId: number;
-    };
+  | Web3CheckTypedDataContext
+  | Web3CheckRawTxContext;
 
 export type Web3Checks = {
   publicKeyId: string;

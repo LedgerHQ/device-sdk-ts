@@ -10,6 +10,7 @@ import { KeyUsage } from "@/pki/model/KeyUsage";
 import {
   type Web3CheckContext,
   type Web3Checks,
+  type Web3CheckTypedDataContext,
 } from "@/web3-check/domain/web3CheckTypes";
 import PACKAGE from "@root/package.json";
 
@@ -31,7 +32,7 @@ export class HttpWeb3CheckDataSource implements Web3CheckDataSource {
     let web3CheckDto: Web3CheckDto;
     let requestDto: GetWeb3ChecksRequestDto;
     let url: string;
-    if ("data" in context) {
+    if (this.isTypedDataContext(context)) {
       requestDto = {
         msg: {
           from,
@@ -89,6 +90,12 @@ export class HttpWeb3CheckDataSource implements Web3CheckDataSource {
     };
 
     return Right(result);
+  }
+
+  private isTypedDataContext(
+    context: Web3CheckContext,
+  ): context is Web3CheckTypedDataContext {
+    return "data" in context;
   }
 
   private isWeb3CheckDto(dto: unknown): dto is Web3CheckDto {
