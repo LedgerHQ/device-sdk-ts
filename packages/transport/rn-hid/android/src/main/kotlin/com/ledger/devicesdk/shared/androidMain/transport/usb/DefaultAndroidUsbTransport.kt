@@ -9,13 +9,6 @@ import android.app.Application
 import android.hardware.usb.UsbDevice
 import android.hardware.usb.UsbManager
 import android.hardware.usb.UsbRequest
-import com.ledger.devicesdk.shared.api.discovery.DiscoveryDevice
-import com.ledger.devicesdk.shared.internal.connection.InternalConnectedDevice
-import com.ledger.devicesdk.shared.internal.connection.InternalConnectionResult
-import com.ledger.devicesdk.shared.internal.event.SdkEventDispatcher
-import com.ledger.devicesdk.shared.internal.service.logger.LoggerService
-import com.ledger.devicesdk.shared.internal.transport.TransportEvent
-import com.ledger.devicesdk.shared.internal.transport.framer.FramerService
 import com.ledger.devicesdk.shared.androidMain.transport.usb.connection.AndroidUsbApduSender
 import com.ledger.devicesdk.shared.androidMain.transport.usb.model.LedgerUsbDevice
 import com.ledger.devicesdk.shared.androidMain.transport.usb.model.UsbPermissionEvent
@@ -24,11 +17,16 @@ import com.ledger.devicesdk.shared.androidMain.transport.usb.utils.toLedgerUsbDe
 import com.ledger.devicesdk.shared.androidMain.transport.usb.utils.toScannedDevice
 import com.ledger.devicesdk.shared.androidMain.transport.usb.utils.toUsbDevices
 import com.ledger.devicesdk.shared.androidMainInternal.transport.deviceconnection.DeviceConnection
+import com.ledger.devicesdk.shared.api.discovery.DiscoveryDevice
+import com.ledger.devicesdk.shared.internal.connection.InternalConnectedDevice
+import com.ledger.devicesdk.shared.internal.connection.InternalConnectionResult
+import com.ledger.devicesdk.shared.internal.event.SdkEventDispatcher
+import com.ledger.devicesdk.shared.internal.service.logger.LoggerService
 import com.ledger.devicesdk.shared.internal.service.logger.buildSimpleDebugLogInfo
-import com.ledger.devicesdk.shared.internal.service.logger.buildSimpleErrorLogInfo
 import com.ledger.devicesdk.shared.internal.service.logger.buildSimpleInfoLogInfo
 import com.ledger.devicesdk.shared.internal.service.logger.buildSimpleWarningLogInfo
-import kotlin.time.Duration
+import com.ledger.devicesdk.shared.internal.transport.TransportEvent
+import com.ledger.devicesdk.shared.internal.transport.framer.FramerService
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -41,11 +39,10 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.merge
-import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.shareIn
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
-import kotlin.math.log
+import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
 
 internal class DefaultAndroidUsbTransport(
