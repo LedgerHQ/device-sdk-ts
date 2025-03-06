@@ -20,7 +20,7 @@ import kotlin.time.Duration.Companion.milliseconds
  */
 class DeviceConnectionTest {
     @Test
-    fun `When requestSendApdu is called, apduSender is used and result is obtained`() = runTest {
+    fun `GIVEN a device connection with an APDU sender WHEN requestSendApdu is called THEN the apduSender is used and the result is obtained`() = runTest {
         val apduSender = MockedApduSender()
 
         val deviceConnection = DeviceConnection(
@@ -42,7 +42,7 @@ class DeviceConnectionTest {
     }
 
     @Test
-    fun `When requestSendApdu is called with an APDU that triggers disconnection, then after a reconnection, the 2nd apduSender is used and the result obtained`() =
+    fun `GIVEN a device connection with an initial APDU sender and an APDU that triggers disconnection WHEN requestSendApdu is called and a reconnection occurs THEN the second apduSender is used and the result is obtained`() =
         runTest {
             apdusTriggeringDisconnection.forEach { apduTriggeringDisconnection ->
                 val apduSender1 = MockedApduSender()
@@ -92,7 +92,7 @@ class DeviceConnectionTest {
 
     @OptIn(ExperimentalCoroutinesApi::class)
     @Test
-    fun `When handleDeviceDisconnected is called, onTerminated is triggered after a timeout`() =
+    fun `GIVEN a device connection WHEN handleDeviceDisconnected is called and the timeout elapses THEN onTerminated is triggered`() =
         runTest {
             var terminated = false
             val apduSender = MockedApduSender()
@@ -120,7 +120,7 @@ class DeviceConnectionTest {
         }
 
     @Test
-    fun `When a device gets reconnected, the correct apduSender is used and the result is obtained`() =
+    fun `GIVEN a disconnected device connection WHEN a device gets reconnected and an APDU is requested THEN the correct apduSender is used and the result is obtained`() =
         runTest {
             val apduSender1 = MockedApduSender()
 
@@ -158,7 +158,7 @@ class DeviceConnectionTest {
         }
 
     @Test
-    fun `When requestCloseConnection is called, onTerminated is triggered`() = runTest {
+    fun `GIVEN a device connection WHEN requestCloseConnection is called THEN onTerminated is triggered`() = runTest {
         var terminated = false
 
         val deviceConnection = DeviceConnection(
