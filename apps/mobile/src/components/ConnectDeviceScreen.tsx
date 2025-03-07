@@ -46,7 +46,7 @@ export const ConnectDeviceScreen: React.FC = () => {
   }, [deviceSessionId]);
 
   const onScan = useCallback(() => {
-    const obs = dmk.listenToAvailableDevices();
+    const obs = dmk.listenToAvailableDevices({});
     setIsScanningDevices(true);
     const subscription = obs.subscribe({
       next: async devices => {
