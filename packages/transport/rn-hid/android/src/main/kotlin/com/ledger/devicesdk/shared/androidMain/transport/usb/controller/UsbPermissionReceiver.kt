@@ -42,7 +42,7 @@ internal class UsbPermissionReceiver(
                 context,
                 this,
                 IntentFilter(ACTION_USB_PERMISSION),
-                ACTION_USB_PERMISSION,
+                null,
                 null,
                 ContextCompat.RECEIVER_NOT_EXPORTED,
             )
