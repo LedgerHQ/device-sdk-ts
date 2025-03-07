@@ -9,6 +9,7 @@ import { getDeviceActions } from "_components/DeviceActions.tsx";
 import { SendDeviceActionModal } from "_components/SendDeviceActionModal.tsx";
 import { DeviceStateView } from "_components/DeviceStateView.tsx";
 import { useNavigation } from "@react-navigation/native";
+import { DisconnectButton } from "./DisconnectButton";
 
 const SafeView = styled.SafeAreaView`
   flex: 1;
@@ -82,7 +83,10 @@ export const DeviceActionTesterScreen = () => {
           onClose={onClose}
           isOpen={isDeviceActionModalVisible}
         />
-        <DeviceStateView sessionId={deviceSessionId} />
+        <Flex rowGap={6}>
+          <DeviceStateView sessionId={deviceSessionId} />
+          <DisconnectButton sessionId={deviceSessionId} />
+        </Flex>
       </Container>
     </SafeView>
   );
