@@ -26,6 +26,11 @@ import {
   type ListAppsWithMetadataDAIntermediateValue,
   type ListAppsWithMetadataDAOutput,
   ListAppsWithMetadataDeviceAction,
+  type ListInstalledAppsDAError,
+  type ListInstalledAppsDAInput,
+  type ListInstalledAppsDAIntermediateValue,
+  type ListInstalledAppsDAOutput,
+  ListInstalledAppsDeviceAction,
   type OpenAppDAError,
   type OpenAppDAInput,
   type OpenAppDAIntermediateValue,
@@ -37,6 +42,8 @@ import { useDmk } from "@/providers/DeviceManagementKitProvider";
 
 import { DeviceActionsList, UNLOCK_TIMEOUT } from "./DeviceActionsList";
 import { type DeviceActionProps } from "./DeviceActionTester";
+
+const SECURE_CHANNEL_SIGN = "🔒";
 
 export const AllDeviceActions: React.FC<{ sessionId: string }> = ({
   sessionId,
@@ -175,7 +182,7 @@ export const AllDeviceActions: React.FC<{ sessionId: string }> = ({
         ListAppsWithMetadataDAIntermediateValue
       >,
       {
-        title: "Genuine Check",
+        title: `Genuine Check ${SECURE_CHANNEL_SIGN}`,
         description:
           "Perform all the actions necessary to check the device's genuineness",
         executeDeviceAction: ({ unlockTimeout }, inspect) => {
@@ -195,6 +202,28 @@ export const AllDeviceActions: React.FC<{ sessionId: string }> = ({
         GenuineCheckDAInput,
         GenuineCheckDAError,
         GenuineCheckDAIntermediateValue
+      >,
+      {
+        title: `List Installed App ${SECURE_CHANNEL_SIGN}`,
+        description:
+          "Perform all the actions necessary to list installed apps on the device",
+        executeDeviceAction: ({ unlockTimeout }, inspect) => {
+          const deviceAction = new ListInstalledAppsDeviceAction({
+            input: { unlockTimeout },
+            inspect,
+          });
+          return dmk.executeDeviceAction({
+            sessionId,
+            deviceAction,
+          });
+        },
+        initialValues: { unlockTimeout: UNLOCK_TIMEOUT },
+        deviceModelId,
+      } satisfies DeviceActionProps<
+        ListInstalledAppsDAOutput,
+        ListInstalledAppsDAInput,
+        ListInstalledAppsDAError,
+        ListInstalledAppsDAIntermediateValue
       >,
     ],
     [deviceModelId, dmk, sessionId],

@@ -70,7 +70,7 @@ export type SecureChannelEventPayload = {
   };
   Progress: { progress: number; index: number; total: number };
   Warning: { message: string };
-  Result: string | Record<string, unknown>;
+  Result: unknown;
 };
 
 /**
