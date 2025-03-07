@@ -30,7 +30,10 @@ import { uniswapTypes } from "./uniswap/di/uniswapTypes";
 import { type UniswapContextLoader } from "./uniswap/domain/UniswapContextLoader";
 import { web3CheckTypes } from "./web3-check/di/web3CheckTypes";
 import { type Web3CheckContextLoader } from "./web3-check/domain/Web3CheckContextLoader";
-import { type Web3CheckContext } from "./web3-check/domain/web3CheckTypes";
+import {
+  type Web3CheckContext,
+  type Web3Checks,
+} from "./web3-check/domain/web3CheckTypes";
 import { type ContextModule } from "./ContextModule";
 import { makeContainer } from "./di";
 
@@ -115,15 +118,13 @@ export class DefaultContextModule implements ContextModule {
   ): Promise<ClearSignContextSuccess<ClearSignContextType.WEB3_CHECK> | null> {
     const web3Checks = await this._web3CheckLoader.load(transactionContext);
 
-    if (web3Checks.isLeft()) {
-      return null;
-    } else {
-      const web3ChecksValue = web3Checks.unsafeCoerce();
-      return {
+    return web3Checks.caseOf({
+      Right: (checks: Web3Checks) => ({
         type: ClearSignContextType.WEB3_CHECK,
-        payload: web3ChecksValue.descriptor,
-        certificate: web3ChecksValue.certificate,
-      };
-    }
+        payload: checks.descriptor,
+        certificate: checks.certificate,
+      }),
+      Left: () => null,
+    });
   }
 }
