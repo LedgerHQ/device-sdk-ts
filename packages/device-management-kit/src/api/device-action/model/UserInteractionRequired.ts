@@ -1,6 +1,6 @@
 /**
  * The user interaction required on the device to move further in a device action.
- * This is used to inform the user about the action they need to take on the device.
+ * This is used to inform the users about the action they need to take on the device.
  */
 export enum UserInteractionRequired {
   None = "none",

@@ -289,9 +289,17 @@ export class ListAppsWithMetadataDeviceAction extends XStateDeviceAction<
   }
 
   extractDependencies(internalApi: InternalApi): MachineDependencies {
+    const getAppsByHash = ({ input }: { input: ListAppsDAOutput }) => {
+      const appHashes = input.reduce<string[]>((acc, app) => {
+        if (app.appFullHash) {
+          return acc.concat(app.appFullHash);
+        }
+        return acc;
+      }, []);
+      return internalApi.getManagerApiService().getAppsByHash(appHashes);
+    };
     return {
-      getAppsByHash: ({ input }) =>
-        internalApi.getManagerApiService().getAppsByHash(input),
+      getAppsByHash,
       getDeviceSessionState: () => internalApi.getDeviceSessionState(),
       setDeviceSessionState: (state: DeviceSessionState) =>
         internalApi.setDeviceSessionState(state),
