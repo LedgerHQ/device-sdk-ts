@@ -79,9 +79,9 @@ export class RNBleApduSender
     const { device } = this._dependencies;
     // ledger mtu is the 5th byte of the response
     const [ledgerMtu] = mtuResponse.slice(5);
-    let frameSize = device.mtu;
+    let frameSize = device.mtu - FRAME_HEADER_SIZE;
 
-    if (ledgerMtu && ledgerMtu + FRAME_HEADER_SIZE > device.mtu) {
+    if (ledgerMtu && ledgerMtu !== frameSize) {
       // should never happen since ble mtu is negotiated on device connect with 156 bytes and ledger should return mtu size minus header size
       frameSize = ledgerMtu;
     }
