@@ -55,7 +55,7 @@ export class DefaultApduSenderService implements ApduSenderService {
     this._frameSize = frameSize;
     this._channel = channel;
     this._padding = padding;
-    this._logger = loggerServiceFactory("framer");
+    this._logger = loggerServiceFactory("DefaultApduSenderService");
   }
 
   /**
