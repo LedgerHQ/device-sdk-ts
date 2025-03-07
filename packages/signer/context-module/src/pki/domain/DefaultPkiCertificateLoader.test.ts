@@ -1,6 +1,7 @@
 import { Right } from "purify-ts";
 
 import { DefaultPkiCertificateLoader } from "@/pki/domain/DefaultPkiCertificateLoader";
+import { KeyId } from "@/pki/model/KeyId";
 import { KeyUsage } from "@/pki/model/KeyUsage";
 import { type PkiCertificateInfo } from "@/pki/model/PkiCertificateInfo";
 
@@ -11,7 +12,7 @@ describe("DefaultPkiCertificateLoader", () => {
       const certificateInfos: PkiCertificateInfo = {
         targetDevice: "targetDevice",
         keyUsage: KeyUsage.Calldata,
-        keyId: "keyId",
+        keyId: KeyId.CalNetwork,
       };
       const certificate = {
         keyUsageNumber: 11,

@@ -9,6 +9,7 @@ import {
   type InternalApi,
   InvalidStatusWordError,
   isSuccessCommandResult,
+  LoadCertificateCommand,
 } from "@ledgerhq/device-management-kit";
 import { Just, type Maybe, Nothing } from "purify-ts";
 
@@ -18,6 +19,7 @@ import {
   type ProvideTokenInformationCommandResponse,
 } from "@internal/app-binder/command/ProvideTokenInformationCommand";
 import { ProvideTrustedNameCommand } from "@internal/app-binder/command/ProvideTrustedNameCommand";
+import { ProvideWeb3CheckCommand } from "@internal/app-binder/command/ProvideWeb3CheckCommand";
 import { SetExternalPluginCommand } from "@internal/app-binder/command/SetExternalPluginCommand";
 import { SetPluginCommand } from "@internal/app-binder/command/SetPluginCommand";
 import { type EthErrorCodes } from "@internal/app-binder/command/utils/ethAppErrors";
@@ -29,6 +31,7 @@ export type ProvideTransactionContextTaskArgs = {
    * The valid clear sign contexts offerred by the `BuildTrancationContextTask`.
    */
   clearSignContexts: ClearSignContextSuccess[];
+  web3Check: ClearSignContextSuccess<ClearSignContextType.WEB3_CHECK> | null;
 };
 
 /**
@@ -55,6 +58,12 @@ export class ProvideTransactionContextTask {
         return Just(res);
       }
     }
+    if (this.args.web3Check) {
+      const res = await this.provideContext(this.args.web3Check);
+      if (!isSuccessCommandResult(res)) {
+        return Just(res);
+      }
+    }
     return Nothing;
   }
 
@@ -68,9 +77,20 @@ export class ProvideTransactionContextTask {
   async provideContext({
     type,
     payload,
+    certificate,
   }: ClearSignContextSuccess): Promise<
     CommandResult<void | ProvideTokenInformationCommandResponse, EthErrorCodes>
   > {
+    // if a certificate is provided, we load it before sending the command
+    if (certificate) {
+      await this.api.sendCommand(
+        new LoadCertificateCommand({
+          keyUsage: certificate.keyUsageNumber,
+          certificate: certificate.payload,
+        }),
+      );
+    }
+
     switch (type) {
       case ClearSignContextType.PLUGIN: {
         return await this.api.sendCommand(new SetPluginCommand({ payload }));
@@ -109,6 +129,15 @@ export class ProvideTransactionContextTask {
           ),
         });
       }
+      case ClearSignContextType.WEB3_CHECK:
+        return new SendPayloadInChunksTask(this.api, {
+          payload,
+          commandFactory: (args) =>
+            new ProvideWeb3CheckCommand({
+              payload: args.chunkedData,
+              isFirstChunk: args.isFirstChunk,
+            }),
+        }).run();
       default: {
         const uncoveredType: never = type;
         return CommandResultFactory({

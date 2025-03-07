@@ -10,6 +10,7 @@ import { transactionModuleFactory } from "@/transaction/di/transactionModuleFact
 import { trustedNameModuleFactory } from "@/trusted-name/di/trustedNameModuleFactory";
 import { typedDataModuleFactory } from "@/typed-data/di/typedDataModuleFactory";
 import { uniswapModuleFactory } from "@/uniswap/di/uniswapModuleFactory";
+import { web3CheckModuleFactory } from "@/web3-check/di/web3CheckModuleFactory";
 
 type MakeContainerArgs = {
   config: ContextModuleConfig;
@@ -28,6 +29,7 @@ export const makeContainer = ({ config }: MakeContainerArgs) => {
     typedDataModuleFactory(),
     nanoPkiModuleFactory(),
     uniswapModuleFactory(),
+    web3CheckModuleFactory(),
   );
 
   return container;

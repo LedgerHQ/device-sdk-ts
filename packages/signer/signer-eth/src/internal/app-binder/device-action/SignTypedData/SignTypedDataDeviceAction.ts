@@ -39,6 +39,7 @@ export type MachineDependencies = {
       contextModule: ContextModule;
       parser: TypedDataParserService;
       data: TypedData;
+      derivationPath: string;
     };
   }) => Promise<ProvideEIP712ContextTaskArgs>;
   readonly provideContext: (arg0: {
@@ -186,6 +187,7 @@ export class SignTypedDataDeviceAction extends XStateDeviceAction<
               contextModule: context.input.contextModule,
               parser: context.input.parser,
               data: context.input.data,
+              derivationPath: context.input.derivationPath,
             }),
             onDone: {
               target: "ProvideContext",
@@ -363,6 +365,7 @@ export class SignTypedDataDeviceAction extends XStateDeviceAction<
         contextModule: ContextModule;
         parser: TypedDataParserService;
         data: TypedData;
+        derivationPath: string;
       };
     }) =>
       new BuildEIP712ContextTask(
@@ -370,6 +373,7 @@ export class SignTypedDataDeviceAction extends XStateDeviceAction<
         arg0.input.contextModule,
         arg0.input.parser,
         arg0.input.data,
+        arg0.input.derivationPath,
       ).run();
 
     const provideContext = async (arg0: {

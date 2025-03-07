@@ -40,6 +40,7 @@ export type ProvideTransactionGenericContextTaskArgs = {
   readonly derivationPath: string;
   readonly serializedTransaction: Uint8Array;
   readonly context: GenericContext;
+  readonly web3Check: ClearSignContextSuccess<ClearSignContextType.WEB3_CHECK> | null;
 };
 
 export type ProvideTransactionGenericContextTaskErrorCodes =
@@ -100,8 +101,13 @@ export class ProvideTransactionGenericContextTask {
       return Just(transactionInfoResult);
     }
 
+    // If there is a web3 check, add it to the transactionField array
+    const fields = this.args.web3Check
+      ? [...this.args.context.transactionFields, this.args.web3Check]
+      : this.args.context.transactionFields;
+
     // Provide the transaction field description and according metadata reference
-    for (const field of this.args.context.transactionFields) {
+    for (const field of fields) {
       const result = await new ProvideTransactionFieldDescriptionTask(
         this.api,
         {
