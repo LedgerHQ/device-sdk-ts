@@ -83,7 +83,6 @@ export type {
   LoggerSubscriberService,
   LogParams,
 } from "@api/logger-subscriber/service/LoggerSubscriberService";
-export { type DeviceApduSender } from "@api/transport/model/DeviceApduSender";
 export {
   type GenuineCheckDAError,
   type GenuineCheckDAInput,
@@ -92,6 +91,7 @@ export {
   type GenuineCheckDARequiredInteraction,
   type GenuineCheckDAState,
 } from "@api/secure-channel/device-action/GenuineCheck/types";
+export { type DeviceApduSender } from "@api/transport/model/DeviceApduSender";
 export {
   type InstallAppDAError,
   type InstallAppDAInput,

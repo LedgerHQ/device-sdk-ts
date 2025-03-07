@@ -109,27 +109,14 @@ export class DeviceConnectionStateMachine<Dependencies> {
     apdu: Uint8Array,
     triggersDisconnection?: boolean,
   ) {
-    console.log(
-      "[sendApduToDeviceConnection] called",
-      apdu,
-      triggersDisconnection,
-    );
     this.deviceAdpuSender
       .sendApdu(apdu, triggersDisconnection)
       .then((response) => {
         response.caseOf({
           Left: (error) => {
-            console.log(
-              "[sendApduToDeviceConnection] got error response",
-              error,
-            );
             this.machineActor.send({ type: "ApduSendingError", error });
           },
           Right: (apduResponse) => {
-            console.log(
-              "[sendApduToDeviceConnection] got successful response",
-              apduResponse,
-            );
             this.machineActor.send({
               type: "ApduResponseReceived",
               apduResponse,
@@ -228,38 +215,24 @@ function makeStateMachine({
       },
       reconnectionTimeoutEvent: emit({ type: "ReconnectionTimedOut" }),
       sendApdu: ({ context }) => {
-        context.apduInProgress.caseOf({
-          Just: ({ apdu }) => {
-            sendApduFn(apdu, false);
-          },
-          Nothing: () => {
-            console.error("sendApdu called while no apdu in progress");
-          },
+        context.apduInProgress.map(({ apdu }) => {
+          sendApduFn(apdu, false);
         });
       },
       sendApduResponse: (
         { context },
         params: { response: Either<DmkError, ApduResponse> },
       ) => {
-        context.apduInProgress.caseOf({
-          Just: ({ responseCallback }) => {
-            responseCallback(params.response);
-          },
-          Nothing: () => {
-            console.error("sendApduResponse called while no apdu in progress");
-          },
-        });
+        context.apduInProgress.map(({ responseCallback }) =>
+          responseCallback(params.response),
+        );
       },
       cleanupContext: assign({ apduInProgress: Nothing }),
       signalTermination: () => {
         onTerminated();
       },
-      closeConnection: async () => {
-        try {
-          await closeConnection(); // ASK: how do we handle errors ?
-        } catch (e) {
-          console.error("Error closing connection", e);
-        }
+      closeConnection: () => {
+        closeConnection(); // ASK: how do we handle errors ?
       },
     },
     guards: {
@@ -389,9 +362,6 @@ function makeStateMachine({
           },
           SendApduCalled: {
             actions: ({ event }) => {
-              console.log(
-                "EXTRA SendApduCalled while in state: SendingApdu state",
-              );
               event.responseCallback(Left(new AlreadySendingApduError()));
             },
           },
@@ -458,9 +428,6 @@ function makeStateMachine({
           },
           SendApduCalled: {
             actions: ({ event }) => {
-              console.log(
-                "EXTRA SendApduCalled while in state:WaitingForReconnectionWithQueuedSendApdu",
-              );
               event.responseCallback(Left(new AlreadySendingApduError()));
             },
           },
