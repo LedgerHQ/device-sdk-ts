@@ -20,7 +20,7 @@
     "autoprefixer": "^10.4.17",
     "next": "^14.2.21",
     "nextra": "^3.0.13",
-    "nextra-theme-blog": "^3.0.13",
+    "nextra-theme-blog": "^4.2.16",
     "nextra-theme-docs": "^3.0.15",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
