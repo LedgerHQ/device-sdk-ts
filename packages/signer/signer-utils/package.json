@@ -1,7 +1,7 @@
 {
   "name": "@ledgerhq/signer-utils",
   "version": "1.0.3",
-  "private": false,
+  "private": true,
   "license": "Apache-2.0",
   "exports": {
     ".": {
