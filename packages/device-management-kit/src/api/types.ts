@@ -91,6 +91,7 @@ export {
   type GenuineCheckDARequiredInteraction,
   type GenuineCheckDAState,
 } from "@api/secure-channel/device-action/GenuineCheck/types";
+export { type DeviceApduSender } from "@api/transport/model/DeviceApduSender";
 export {
   type ListInstalledAppsDAError,
   type ListInstalledAppsDAInput,
