@@ -1,5 +1,5 @@
 {
-  "name": "@ledgerhq/device-sdk",
+  "name": "@ledgerhq/ldmk",
   "version": "1.0.0",
   "private": true,
   "license": "Apache-2.0",
@@ -37,6 +37,7 @@
     "mobile": "pnpm --filter @ledgerhq/device-management-kit-mobile-sample",
     "doc": "pnpm --filter @ledgerhq/ledger-dmk-docs",
     "bump": "changeset version",
+    "prepare-release": "pnpm lmdk-release",
     "prerelease": "pnpm recursive exec -- pnpm pack",
     "release": "changeset publish",
     "changelog": "changeset add",
@@ -49,6 +50,7 @@
   "devDependencies": {
     "@changesets/changelog-github": "^0.5.0",
     "@changesets/cli": "^2.27.12",
+    "@ledgerhq/release-scripts": "workspace:*",
     "@types/node": "^22.10.1",
     "@vitest/coverage-istanbul": "^3.0.4",
     "concurrently": "^9.1.0",
