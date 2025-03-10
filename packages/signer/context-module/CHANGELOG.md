@@ -1,5 +1,16 @@
 # @ledgerhq/context-module
 
+## 2.0.0
+
+### Minor Changes
+
+- [#656](https://github.com/LedgerHQ/device-sdk-ts/pull/656) [`0f02334`](https://github.com/LedgerHQ/device-sdk-ts/commit/0f02334cf402f140bfe4166def7ff1a97774a636) Thanks [@aussedatlo](https://github.com/aussedatlo)! - Add web3checks loader
+
+### Patch Changes
+
+- Updated dependencies [[`06084eb`](https://github.com/LedgerHQ/device-sdk-ts/commit/06084ebebda43b039ad591607634474bc345a09c), [`7bbba9f`](https://github.com/LedgerHQ/device-sdk-ts/commit/7bbba9fe7112e351654765e67dbfc4d082711b0c), [`6b821aa`](https://github.com/LedgerHQ/device-sdk-ts/commit/6b821aa84936472fd74c32dd226323db005f39aa), [`814d452`](https://github.com/LedgerHQ/device-sdk-ts/commit/814d452170395337554d27ba9aaa84f96f9bee6f), [`61b17b3`](https://github.com/LedgerHQ/device-sdk-ts/commit/61b17b3df1946b0f3f9370d7bacc243fdfd7880c)]:
+  - @ledgerhq/device-management-kit@0.7.0
+
 ## 1.2.0
 
 ### Minor Changes
