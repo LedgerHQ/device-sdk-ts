@@ -3,6 +3,7 @@ import WebSocket from "isomorphic-ws";
 import { Either } from "purify-ts";
 
 import { GetOsVersionResponse } from "@api/index";
+import { Application } from "@internal/manager-api/model/Application";
 import { FinalFirmware } from "@internal/manager-api/model/Firmware";
 import { type SecureChannelDataSource } from "@internal/secure-channel/data/SecureChannelDataSource";
 import { secureChannelTypes } from "@internal/secure-channel/di/secureChannelTypes";
@@ -36,6 +37,22 @@ export class DefaultSecureChannelService implements SecureChannelService {
     return this.dataSource.genuineCheck(params);
   }
 
+  installApp(
+    deviceInfo: GetOsVersionResponse,
+    app: Application,
+  ): Either<WebSocketConnectionError, WebSocket> {
+    const { perso, firmware, firmwareKey, deleteKey, hash } = app;
+    const params: InstallAppsParams = {
+      targetId: deviceInfo.targetId.toString(),
+      perso,
+      firmware,
+      firmwareKey,
+      deleteKey,
+      hash,
+    };
+    return this.dataSource.installApp(params);
+  }
+
   listInstalledApps(
     deviceInfo: GetOsVersionResponse,
     finalFirmware: FinalFirmware,
@@ -47,15 +64,20 @@ export class DefaultSecureChannelService implements SecureChannelService {
     return this.dataSource.listInstalledApps(params);
   }
 
-  updateMcu(
+  uninstallApp(
     deviceInfo: GetOsVersionResponse,
-    param: { version: string },
+    app: Application,
   ): Either<WebSocketConnectionError, WebSocket> {
-    const params: UpdateMcuParams = {
+    const { perso, firmware, firmwareKey, deleteKey, hash } = app;
+    const params: UninstallAppsParams = {
       targetId: deviceInfo.targetId.toString(),
-      version: param.version,
+      perso,
+      firmware,
+      firmwareKey,
+      deleteKey,
+      hash,
     };
-    return this.dataSource.updateMcu(params);
+    return this.dataSource.uninstallApp(params);
   }
 
   updateFirmware(
@@ -71,41 +93,14 @@ export class DefaultSecureChannelService implements SecureChannelService {
     return this.dataSource.updateFirmware(params);
   }
 
-  installApp(
+  updateMcu(
     deviceInfo: GetOsVersionResponse,
-    perso: string,
-    firmware: string,
-    firmwareKey: string,
-    deleteKey: string,
-    hash: string,
+    param: { version: string },
   ): Either<WebSocketConnectionError, WebSocket> {
-    const params: InstallAppsParams = {
+    const params: UpdateMcuParams = {
       targetId: deviceInfo.targetId.toString(),
-      perso,
-      firmware,
-      firmwareKey,
-      deleteKey,
-      hash,
+      version: param.version,
     };
-    return this.dataSource.installApp(params);
-  }
-
-  uninstallApp(
-    deviceInfo: GetOsVersionResponse,
-    perso: string,
-    firmware: string,
-    firmwareKey: string,
-    deleteKey: string,
-    hash: string,
-  ): Either<WebSocketConnectionError, WebSocket> {
-    const params: UninstallAppsParams = {
-      targetId: deviceInfo.targetId.toString(),
-      perso,
-      firmware,
-      firmwareKey,
-      deleteKey,
-      hash,
-    };
-    return this.dataSource.uninstallApp(params);
+    return this.dataSource.updateMcu(params);
   }
 }

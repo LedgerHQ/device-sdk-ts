@@ -129,6 +129,10 @@ export class DeviceSessionRefresher {
         deviceStatus: this._deviceStatus,
         currentApp: parsedResponse.data,
         installedApps: "installedApps" in state ? state.installedApps : [],
+        isSecureConnectionAllowed:
+          "isSecureConnectionAllowed" in state
+            ? state.isSecureConnectionAllowed
+            : false,
       }));
     });
   }

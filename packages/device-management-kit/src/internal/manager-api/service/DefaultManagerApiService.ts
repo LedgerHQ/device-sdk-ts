@@ -1,15 +1,20 @@
 import { inject, injectable } from "inversify";
 import { EitherAsync } from "purify-ts";
 
-import { GetOsVersionResponse } from "@api/command/os/GetOsVersionCommand";
-import { ListAppsResponse } from "@api/command/os/ListAppsCommand";
+import { type GetOsVersionResponse } from "@api/command/os/GetOsVersionCommand";
 import { type ManagerApiDataSource } from "@internal/manager-api/data/ManagerApiDataSource";
 import { managerApiTypes } from "@internal/manager-api/di/managerApiTypes";
 import { type Application } from "@internal/manager-api/model/Application";
-import { DeviceVersion } from "@internal/manager-api/model/Device";
+import { type DeviceVersion } from "@internal/manager-api/model/Device";
 import { HttpFetchApiError } from "@internal/manager-api/model/Errors";
+import {
+  type GetAppByHashParams,
+  type GetAppListParams,
+  type GetDeviceVersionParams,
+  type GetFirmwareVersionParams,
+} from "@internal/manager-api/model/Params";
 
-import { ManagerApiService } from "./ManagerApiService";
+import { type ManagerApiService } from "./ManagerApiService";
 
 @injectable()
 export class DefaultManagerApiService implements ManagerApiService {
@@ -18,11 +23,24 @@ export class DefaultManagerApiService implements ManagerApiService {
     private readonly dataSource: ManagerApiDataSource,
   ) {}
 
-  getDeviceVersion(deviceInfo: GetOsVersionResponse, provider: number) {
-    return this.dataSource.getDeviceVersion(
-      deviceInfo.targetId.toString(),
+  getAppList(
+    deviceInfo: GetOsVersionResponse,
+    provider: number,
+  ): EitherAsync<HttpFetchApiError, Array<Application>> {
+    const params: GetAppListParams = {
+      targetId: deviceInfo.targetId.toString(),
       provider,
-    );
+      firmwareVersionName: deviceInfo.seVersion,
+    };
+    return this.dataSource.getAppList(params);
+  }
+
+  getDeviceVersion(deviceInfo: GetOsVersionResponse, provider: number) {
+    const params: GetDeviceVersionParams = {
+      targetId: deviceInfo.targetId.toString(),
+      provider,
+    };
+    return this.dataSource.getDeviceVersion(params);
   }
 
   getFirmwareVersion(
@@ -30,37 +48,32 @@ export class DefaultManagerApiService implements ManagerApiService {
     deviceVersion: DeviceVersion,
     provider: number,
   ) {
-    return this.dataSource.getFirmwareVersion(
-      deviceInfo.seVersion,
-      deviceVersion.id,
+    const params: GetFirmwareVersionParams = {
+      version: deviceInfo.seVersion,
+      deviceId: deviceVersion.id,
       provider,
-    );
+    };
+    return this.dataSource.getFirmwareVersion(params);
   }
 
-  getAppsByHash(apps: ListAppsResponse) {
-    const hashes = apps.reduce<string[]>((acc, app) => {
-      if (app.appFullHash) {
-        return acc.concat(app.appFullHash);
-      }
-
-      return acc;
-    }, []);
-
+  getAppsByHash(appHashes: Array<string>) {
+    const params: GetAppByHashParams = {
+      hashes: appHashes,
+    };
     return EitherAsync<HttpFetchApiError, Array<Application | null>>(
       async ({ fromPromise, throwE }) => {
-        if (hashes.length === 0) {
+        if (params.hashes.length === 0) {
           return [];
         }
         try {
           const response = await fromPromise(
-            this.dataSource.getAppsByHash(hashes),
+            this.dataSource.getAppsByHash(params),
           );
           return response;
         } catch (error) {
           if (error instanceof HttpFetchApiError) {
             return throwE(error);
           }
-
           return throwE(new HttpFetchApiError(error));
         }
       },

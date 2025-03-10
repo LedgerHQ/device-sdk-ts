@@ -2,6 +2,7 @@ import type WebSocket from "isomorphic-ws";
 import { type Either } from "purify-ts";
 
 import { type GetOsVersionResponse } from "@api/index";
+import { type Application } from "@internal/manager-api/model/Application";
 import { type FinalFirmware } from "@internal/manager-api/model/Firmware";
 import { type WebSocketConnectionError } from "@internal/secure-channel/model/Errors";
 
@@ -14,35 +15,29 @@ export interface SecureChannelService {
     deviceInfo: GetOsVersionResponse,
     finalFirmware: FinalFirmware,
   ): Either<WebSocketConnectionError, WebSocket>;
+  installApp(
+    deviceInfo: GetOsVersionResponse,
+    app: Application,
+  ): Either<WebSocketConnectionError, WebSocket>;
   listInstalledApps(
     deviceInfo: GetOsVersionResponse,
     finalFirmware: FinalFirmware,
   ): Either<WebSocketConnectionError, WebSocket>;
-  // TODO: Update this parameter when ready
-  updateMcu(
+  uninstallApp(
     deviceInfo: GetOsVersionResponse,
-    param: { version: string },
+    app: Application,
   ): Either<WebSocketConnectionError, WebSocket>;
   updateFirmware(
     deviceInfo: GetOsVersionResponse,
     finalFirmware: FinalFirmware,
   ): Either<WebSocketConnectionError, WebSocket>;
-  // TODO: Update the parameters when ready.
-  installApp(
+  updateFirmware(
     deviceInfo: GetOsVersionResponse,
-    perso: string,
-    firmware: string,
-    firmwareKey: string,
-    deleteKey: string,
-    hash: string,
+    finalFirmware: FinalFirmware,
   ): Either<WebSocketConnectionError, WebSocket>;
-  // TODO: Update the parameters when ready.
-  uninstallApp(
+  // TODO: Update the parameters
+  updateMcu(
     deviceInfo: GetOsVersionResponse,
-    perso: string,
-    firmware: string,
-    firmwareKey: string,
-    deleteKey: string,
-    hash: string,
+    param: { version: string },
   ): Either<WebSocketConnectionError, WebSocket>;
 }

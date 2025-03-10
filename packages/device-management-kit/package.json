@@ -1,6 +1,6 @@
 {
   "name": "@ledgerhq/device-management-kit",
-  "version": "0.6.1",
+  "version": "0.6.2",
   "private": false,
   "license": "Apache-2.0",
   "exports": {
@@ -40,12 +40,13 @@
     "purify-ts": "^2.1.0",
     "reflect-metadata": "^0.2.2",
     "semver": "^7.6.3",
+    "url": "^0.11.4",
     "uuid": "^11.0.3",
     "ws": "^8.18.0",
     "xstate": "^5.19.2"
   },
   "peerDependencies": {
-    "rxjs": "^7.8.1"
+    "rxjs": "^7.8.2"
   },
   "devDependencies": {
     "@ledgerhq/esbuild-tools": "workspace:*",
@@ -57,7 +58,7 @@
     "@types/semver": "^7.5.8",
     "@types/uuid": "^10.0.0",
     "@types/ws": "^8.5.14",
-    "rxjs": "^7.8.1",
+    "rxjs": "^7.8.2",
     "ts-node": "^10.9.2"
   }
 }

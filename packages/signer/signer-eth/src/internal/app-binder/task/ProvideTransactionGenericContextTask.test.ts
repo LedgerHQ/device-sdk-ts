@@ -52,6 +52,7 @@ describe("ProvideTransactionGenericContextTask", () => {
     chainId,
     transactionParser,
     contextModule,
+    web3Check: null,
   };
 
   const apiMock = makeDeviceActionInternalApiMock();

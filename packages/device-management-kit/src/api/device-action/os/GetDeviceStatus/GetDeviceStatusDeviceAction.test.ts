@@ -109,6 +109,7 @@ describe("GetDeviceStatusDeviceAction", () => {
           currentApp: { name: "mockedCurrentApp", version: "1.0.0" },
           installedApps: [],
           deviceModelId: DeviceModelId.NANO_X,
+          isSecureConnectionAllowed: false,
         });
 
         apiGetDeviceSessionStateObservableMock.mockImplementation(
@@ -127,6 +128,7 @@ describe("GetDeviceStatusDeviceAction", () => {
                       },
                       installedApps: [],
                       deviceModelId: DeviceModelId.NANO_X,
+                      isSecureConnectionAllowed: false,
                     });
                     o.complete();
                   } else {
@@ -140,6 +142,7 @@ describe("GetDeviceStatusDeviceAction", () => {
                       },
                       installedApps: [],
                       deviceModelId: DeviceModelId.NANO_X,
+                      isSecureConnectionAllowed: false,
                     });
                   }
                 },
@@ -401,6 +404,7 @@ describe("GetDeviceStatusDeviceAction", () => {
                     currentApp: { name: "mockedCurrentApp", version: "1.0.0" },
                     installedApps: [],
                     deviceModelId: DeviceModelId.NANO_X,
+                    isSecureConnectionAllowed: false,
                   });
                 },
               });
@@ -601,6 +605,7 @@ describe("GetDeviceStatusDeviceAction", () => {
         currentApp: { name: "mockedCurrentApp", version: "1.0.0" },
         installedApps: [],
         deviceModelId: DeviceModelId.NANO_X,
+        isSecureConnectionAllowed: false,
       });
 
       sendCommandMock.mockResolvedValue(

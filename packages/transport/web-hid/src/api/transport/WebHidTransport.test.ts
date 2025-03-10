@@ -738,7 +738,7 @@ describe("WebHidTransport", () => {
       });
     });
 
-    describe("listenToKnownDevices", () => {
+    describe("listenToAvailableDevices", () => {
       it("should emit the devices already connected before listening", async () => {
         // given
         const hidDevice = hidDeviceStubBuilder();
@@ -749,7 +749,7 @@ describe("WebHidTransport", () => {
 
         let observedDevices: TransportDiscoveredDevice[] = [];
         // when
-        transport.listenToKnownDevices().subscribe({
+        transport.listenToAvailableDevices().subscribe({
           next: (knownDevices) => {
             observedDevices = knownDevices;
           },
@@ -791,7 +791,7 @@ describe("WebHidTransport", () => {
 
         let observedDevices: TransportDiscoveredDevice[] = [];
         // when
-        transport.listenToKnownDevices().subscribe({
+        transport.listenToAvailableDevices().subscribe({
           next: (knownDevices) => {
             observedDevices = knownDevices;
           },
@@ -854,7 +854,7 @@ describe("WebHidTransport", () => {
         const onError = vi.fn();
         let observedDevices: TransportDiscoveredDevice[] = [];
         // when
-        transport.listenToKnownDevices().subscribe({
+        transport.listenToAvailableDevices().subscribe({
           next: (knownDevices) => {
             observedDevices = knownDevices;
           },

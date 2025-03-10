@@ -27,6 +27,7 @@ describe("BuildTransactionContextTask", () => {
     getContext: vi.fn(),
     getContexts: vi.fn(),
     getTypedDataFilters: vi.fn(),
+    getWeb3Checks: vi.fn(),
   };
   const mapperMock = {
     mapTransactionToSubset: vi.fn(),
@@ -78,6 +79,7 @@ describe("BuildTransactionContextTask", () => {
       installedApps: [],
       currentApp: { name: "Ethereum", version: "1.12.0" },
       deviceModelId: DeviceModelId.FLEX,
+      isSecureConnectionAllowed: false,
     });
 
     // WHEN
@@ -121,6 +123,7 @@ describe("BuildTransactionContextTask", () => {
       installedApps: [],
       currentApp: { name: "Ethereum", version: "1.12.0" },
       deviceModelId: DeviceModelId.FLEX,
+      isSecureConnectionAllowed: false,
     });
 
     // WHEN
@@ -176,6 +179,7 @@ describe("BuildTransactionContextTask", () => {
       installedApps: [],
       currentApp: { name: "Ethereum", version: "1.15.0" },
       deviceModelId: DeviceModelId.FLEX,
+      isSecureConnectionAllowed: false,
     });
 
     // WHEN
@@ -236,6 +240,7 @@ describe("BuildTransactionContextTask", () => {
       installedApps: [],
       currentApp: { name: ETHEREUM_PLUGINS[0]!, version: "1.15.0" },
       deviceModelId: DeviceModelId.FLEX,
+      isSecureConnectionAllowed: false,
     });
 
     // WHEN
@@ -275,6 +280,7 @@ describe("BuildTransactionContextTask", () => {
       installedApps: [],
       currentApp: { name: "Ethereum", version: "1.12.0" },
       deviceModelId: DeviceModelId.FLEX,
+      isSecureConnectionAllowed: false,
     });
 
     // WHEN
@@ -303,6 +309,7 @@ describe("BuildTransactionContextTask", () => {
       installedApps: [],
       currentApp: { name: "Ethereum", version: "1.12.0" },
       deviceModelId: DeviceModelId.FLEX,
+      isSecureConnectionAllowed: false,
     });
 
     // WHEN
@@ -327,6 +334,7 @@ describe("BuildTransactionContextTask", () => {
       installedApps: [],
       currentApp: { name: "Ethereum", version: "1.12.0" },
       deviceModelId: DeviceModelId.FLEX,
+      isSecureConnectionAllowed: false,
     });
 
     // WHEN
@@ -370,6 +378,7 @@ describe("BuildTransactionContextTask", () => {
       installedApps: [],
       currentApp: { name: "Ethereum", version: "1.12.0" },
       deviceModelId: DeviceModelId.FLEX,
+      isSecureConnectionAllowed: false,
     });
 
     // WHEN
@@ -429,6 +438,7 @@ describe("BuildTransactionContextTask", () => {
       installedApps: [],
       currentApp: { name: "Ethereum", version: "1.12.0" },
       deviceModelId: DeviceModelId.FLEX,
+      isSecureConnectionAllowed: false,
     });
 
     // WHEN
@@ -482,6 +492,7 @@ describe("BuildTransactionContextTask", () => {
       installedApps: [],
       currentApp: { name: "Ethereum", version: "1.14.0" },
       deviceModelId: DeviceModelId.FLEX,
+      isSecureConnectionAllowed: false,
     });
 
     // WHEN
@@ -541,6 +552,7 @@ describe("BuildTransactionContextTask", () => {
       installedApps: [],
       currentApp: { name: "Ethereum", version: "1.15.0" },
       deviceModelId: DeviceModelId.FLEX,
+      isSecureConnectionAllowed: false,
     });
 
     // WHEN
@@ -601,6 +613,7 @@ describe("BuildTransactionContextTask", () => {
       installedApps: [],
       currentApp: { name: "Ethereum", version: "1.14.0" },
       deviceModelId: DeviceModelId.NANO_S,
+      isSecureConnectionAllowed: false,
     });
 
     // WHEN
@@ -656,6 +669,7 @@ describe("BuildTransactionContextTask", () => {
       installedApps: [],
       currentApp: { name: "Ethereum", version: "1.12.0" },
       deviceModelId: DeviceModelId.FLEX,
+      isSecureConnectionAllowed: false,
     });
 
     // WHEN
@@ -760,6 +774,7 @@ describe("BuildTransactionContextTask", () => {
       installedApps: [],
       currentApp: { name: "Not Ethereum Compatible", version: "1.14.0" },
       deviceModelId: DeviceModelId.FLEX,
+      isSecureConnectionAllowed: false,
     });
 
     // WHEN
@@ -801,6 +816,7 @@ describe("BuildTransactionContextTask", () => {
       installedApps: [],
       currentApp: { name: "Ethereum", version: "1.14.0" },
       deviceModelId: DeviceModelId.FLEX,
+      isSecureConnectionAllowed: false,
     });
 
     // WHEN

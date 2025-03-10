@@ -3,6 +3,7 @@ import { type Mocked } from "vitest";
 import { getOsVersionCommandResponseMockBuilder } from "@api/command/os/__mocks__/GetOsVersionCommand";
 import { type DmkConfig } from "@api/DmkConfig";
 import { DeviceModelId } from "@api/index";
+import { type Application } from "@internal/manager-api/model/Application";
 import { type FinalFirmware } from "@internal/manager-api/model/Firmware";
 import { DefaultSecureChannelDataSource } from "@internal/secure-channel/data/DefaultSecureChannelDataSource";
 
@@ -124,14 +125,13 @@ describe("SecureChannelService", () => {
       const hash = "hash";
 
       // when
-      service.installApp(
-        deviceInfo,
+      service.installApp(deviceInfo, {
         perso,
         firmware,
         firmwareKey,
         deleteKey,
         hash,
-      );
+      } as Application);
 
       // then
       expect(dataSource.installApp).toHaveBeenCalledWith({
@@ -158,14 +158,13 @@ describe("SecureChannelService", () => {
       const hash = "hash";
 
       // when
-      service.uninstallApp(
-        deviceInfo,
+      service.uninstallApp(deviceInfo, {
         perso,
         firmware,
         firmwareKey,
         deleteKey,
         hash,
-      );
+      } as Application);
 
       // then
       expect(dataSource.uninstallApp).toHaveBeenCalledWith({

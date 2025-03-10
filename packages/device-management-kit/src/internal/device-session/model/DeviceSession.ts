@@ -1,5 +1,5 @@
 import { type Either, Left } from "purify-ts";
-import { BehaviorSubject } from "rxjs";
+import { BehaviorSubject, type Subscription } from "rxjs";
 import { v4 as uuidv4 } from "uuid";
 
 import { type Command } from "@api/command/Command";
@@ -21,6 +21,7 @@ import { DeviceBusyError, type DmkError } from "@api/Error";
 import { type LoggerPublisherService } from "@api/logger-publisher/service/LoggerPublisherService";
 import { type TransportConnectedDevice } from "@api/transport/model/TransportConnectedDevice";
 import { DEVICE_SESSION_REFRESH_INTERVAL } from "@internal/device-session/data/DeviceSessionRefresherConst";
+import { RefresherService } from "@internal/device-session/service/RefresherService";
 import { type ManagerApiService } from "@internal/manager-api/service/ManagerApiService";
 import { type SecureChannelService } from "@internal/secure-channel/service/SecureChannelService";
 
@@ -44,6 +45,7 @@ export class DeviceSession {
   private readonly _connectedDevice: TransportConnectedDevice;
   private readonly _deviceState: BehaviorSubject<DeviceSessionState>;
   private readonly _refresher: DeviceSessionRefresher;
+  private readonly _refresherService: RefresherService;
   private readonly _managerApiService: ManagerApiService;
   private readonly _secureChannelService: SecureChannelService;
 
@@ -77,6 +79,7 @@ export class DeviceSession {
       },
       loggerModuleFactory("device-session-refresher"),
     );
+    this._refresherService = new RefresherService(this._refresher);
     this._managerApiService = managerApiService;
     this._secureChannelService = secureChannelService;
   }
@@ -97,30 +100,25 @@ export class DeviceSession {
     this._deviceState.next(state);
   }
 
-  private updateDeviceStatus(deviceStatus: DeviceStatus) {
-    const sessionState = this._deviceState.getValue();
-    this._refresher.setDeviceStatus(deviceStatus);
-    this._deviceState.next({
-      ...sessionState,
-      deviceStatus,
-    });
-  }
-
-  async sendApdu(
+  public async sendApdu(
     rawApdu: Uint8Array,
     options: SendApduOptions = {
       isPolling: false,
       triggersDisconnection: false,
     },
   ): Promise<Either<DmkError, ApduResponse>> {
+    let reenableRefresher: () => void;
+    if (!options.isPolling) {
+      reenableRefresher = this._refresherService.disableRefresher("sendApdu");
+      await this.waitUntilReady();
+    }
+
     const sessionState = this._deviceState.getValue();
     if (sessionState.deviceStatus === DeviceStatus.BUSY) {
       return Left(new DeviceBusyError());
     }
 
-    if (!options.isPolling) {
-      this.updateDeviceStatus(DeviceStatus.BUSY);
-    }
+    this.updateDeviceStatus(DeviceStatus.BUSY);
 
     const errorOrResponse = await this._connectedDevice.sendApdu(
       rawApdu,
@@ -134,13 +132,21 @@ export class DeviceSession {
         } else {
           this.updateDeviceStatus(DeviceStatus.CONNECTED);
         }
+
+        if (!options.isPolling && reenableRefresher) {
+          reenableRefresher();
+        }
       })
       .ifLeft(() => {
         this.updateDeviceStatus(DeviceStatus.CONNECTED);
+
+        if (!options.isPolling && reenableRefresher) {
+          reenableRefresher();
+        }
       });
   }
 
-  async sendCommand<Response, Args, ErrorStatusCodes>(
+  public async sendCommand<Response, Args, ErrorStatusCodes>(
     command: Command<Response, Args, ErrorStatusCodes>,
   ): Promise<CommandResult<Response, ErrorStatusCodes>> {
     const apdu = command.getApdu();
@@ -158,7 +164,7 @@ export class DeviceSession {
     });
   }
 
-  executeDeviceAction<
+  public executeDeviceAction<
     Output,
     Input,
     Error extends DmkError,
@@ -177,6 +183,8 @@ export class DeviceSession {
         this.setDeviceSessionState(state);
         return this._deviceState.getValue();
       },
+      disableRefresher: (blockerId: string) =>
+        this._refresherService.disableRefresher(blockerId),
       getManagerApiService: () => this._managerApiService,
       getSecureChannelService: () => this._secureChannelService,
     });
@@ -187,17 +195,35 @@ export class DeviceSession {
     };
   }
 
-  close() {
+  public close() {
     this.updateDeviceStatus(DeviceStatus.NOT_CONNECTED);
     this._deviceState.complete();
     this._refresher.stop();
   }
 
-  toggleRefresher(enabled: boolean) {
-    if (enabled) {
-      this._refresher.start();
-    } else {
-      this._refresher.stop();
-    }
+  public disableRefresher(id: string): () => void {
+    return this._refresherService.disableRefresher(id);
+  }
+
+  private updateDeviceStatus(deviceStatus: DeviceStatus) {
+    const sessionState = this._deviceState.getValue();
+    this._refresher.setDeviceStatus(deviceStatus);
+    this._deviceState.next({
+      ...sessionState,
+      deviceStatus,
+    });
+  }
+
+  private async waitUntilReady() {
+    let deviceStateSub: Subscription;
+
+    await new Promise<void>((resolve) => {
+      deviceStateSub = this._deviceState.subscribe((state) => {
+        if (state.deviceStatus === DeviceStatus.CONNECTED) {
+          deviceStateSub?.unsubscribe();
+          resolve();
+        }
+      });
+    });
   }
 }

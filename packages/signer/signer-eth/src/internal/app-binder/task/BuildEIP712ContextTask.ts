@@ -1,4 +1,6 @@
 import {
+  type ClearSignContextSuccess,
+  type ClearSignContextType,
   type ContextModule,
   type TypedDataClearSignContextSuccess,
 } from "@ledgerhq/context-module";
@@ -11,6 +13,10 @@ import { Just, type Maybe, Nothing } from "purify-ts";
 import { gte } from "semver";
 
 import { type TypedData } from "@api/model/TypedData";
+import {
+  GetWeb3CheckTask,
+  type GetWeb3CheckTaskArgs,
+} from "@internal/app-binder/task/GetWeb3CheckTask";
 import { type ProvideEIP712ContextTaskArgs } from "@internal/app-binder/task/ProvideEIP712ContextTask";
 import { TypedDataValueField } from "@internal/typed-data/model/Types";
 import { type TypedDataParserService } from "@internal/typed-data/service/TypedDataParserService";
@@ -23,9 +29,24 @@ export class BuildEIP712ContextTask {
     private contextModule: ContextModule,
     private parser: TypedDataParserService,
     private data: TypedData,
+    private derivationPath: string,
+    private getWeb3ChecksFactory = (
+      api: InternalApi,
+      args: GetWeb3CheckTaskArgs,
+    ) => new GetWeb3CheckTask(api, args),
   ) {}
 
   async run(): Promise<ProvideEIP712ContextTaskArgs> {
+    // Run the web3checks if needed
+    const web3Check: ClearSignContextSuccess<ClearSignContextType.WEB3_CHECK> | null =
+      (
+        await this.getWeb3ChecksFactory(this.api, {
+          contextModule: this.contextModule,
+          derivationPath: this.derivationPath,
+          data: this.data,
+        }).run()
+      ).web3Check;
+
     // Legacy blind signing context
     const domainHash = TypedDataEncoder.hashDomain(this.data.domain);
 
@@ -78,6 +99,7 @@ export class BuildEIP712ContextTask {
 
     // Return the args for provide context task
     const provideTaskArgs: ProvideEIP712ContextTaskArgs = {
+      web3Check,
       types,
       domain,
       message,

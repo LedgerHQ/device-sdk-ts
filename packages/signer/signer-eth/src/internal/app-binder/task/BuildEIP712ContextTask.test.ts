@@ -1,4 +1,8 @@
-import { type TypedDataClearSignContextSuccess } from "@ledgerhq/context-module";
+import type {
+  ClearSignContextSuccess,
+  ClearSignContextType,
+  TypedDataClearSignContextSuccess,
+} from "@ledgerhq/context-module";
 import {
   DeviceModelId,
   DeviceSessionStateType,
@@ -22,10 +26,12 @@ describe("BuildEIP712ContextTask", () => {
     getContext: vi.fn(),
     getContexts: vi.fn(),
     getTypedDataFilters: vi.fn(),
+    getWeb3Checks: vi.fn(),
   };
   const parserMock = {
     parse: vi.fn(),
   };
+  const getWeb3ChecksFactoryMock = vi.fn();
 
   const TEST_DATA = {
     domain: {
@@ -133,6 +139,9 @@ describe("BuildEIP712ContextTask", () => {
 
   beforeEach(() => {
     vi.resetAllMocks();
+    getWeb3ChecksFactoryMock.mockReturnValue({
+      run: async () => ({ web3Check: null }),
+    });
   });
 
   it("Build context with clear signing context not supported by the device", async () => {
@@ -142,6 +151,8 @@ describe("BuildEIP712ContextTask", () => {
       contextMouleMock,
       parserMock,
       TEST_DATA,
+      "44'/60'/0'/0/0",
+      getWeb3ChecksFactoryMock,
     );
     parserMock.parse.mockReturnValueOnce(
       Right({
@@ -156,11 +167,13 @@ describe("BuildEIP712ContextTask", () => {
       installedApps: [],
       currentApp: { name: "Bitcoin", version: "1.0" },
       deviceModelId: DeviceModelId.FLEX,
+      isSecureConnectionAllowed: false,
     });
     // WHEN
     const builtContext = await task.run();
     // THEN
     expect(builtContext).toStrictEqual({
+      web3Check: null,
       types: TEST_TYPES,
       domain: TEST_DOMAIN_VALUES,
       message: TEST_MESSAGE_VALUES,
@@ -179,6 +192,8 @@ describe("BuildEIP712ContextTask", () => {
       contextMouleMock,
       parserMock,
       TEST_DATA,
+      "44'/60'/0'/0/0",
+      getWeb3ChecksFactoryMock,
     );
     parserMock.parse.mockReturnValueOnce(
       Right({
@@ -193,6 +208,7 @@ describe("BuildEIP712ContextTask", () => {
       installedApps: [],
       currentApp: { name: "Ethereum", version: "1.12.0" },
       deviceModelId: DeviceModelId.FLEX,
+      isSecureConnectionAllowed: false,
     });
     contextMouleMock.getTypedDataFilters.mockResolvedValueOnce({
       type: "error",
@@ -202,6 +218,7 @@ describe("BuildEIP712ContextTask", () => {
     const builtContext = await task.run();
     // THEN
     expect(builtContext).toStrictEqual({
+      web3Check: null,
       types: TEST_TYPES,
       domain: TEST_DOMAIN_VALUES,
       message: TEST_MESSAGE_VALUES,
@@ -220,6 +237,8 @@ describe("BuildEIP712ContextTask", () => {
       contextMouleMock,
       parserMock,
       TEST_DATA,
+      "44'/60'/0'/0/0",
+      getWeb3ChecksFactoryMock,
     );
     parserMock.parse.mockReturnValueOnce(
       Right({
@@ -234,6 +253,7 @@ describe("BuildEIP712ContextTask", () => {
       installedApps: [],
       currentApp: { name: "Ethereum", version: "1.12.0" },
       deviceModelId: DeviceModelId.FLEX,
+      isSecureConnectionAllowed: false,
     });
     contextMouleMock.getTypedDataFilters.mockResolvedValueOnce(
       TEST_CLEAR_SIGN_CONTEXT,
@@ -242,6 +262,7 @@ describe("BuildEIP712ContextTask", () => {
     const builtContext = await task.run();
     // THEN
     expect(builtContext).toStrictEqual({
+      web3Check: null,
       types: TEST_TYPES,
       domain: TEST_DOMAIN_VALUES,
       message: TEST_MESSAGE_VALUES,
@@ -270,6 +291,60 @@ describe("BuildEIP712ContextTask", () => {
     });
   });
 
+  it("Build context with clear signing context and web3Check", async () => {
+    // GIVEN
+    const expectedWeb3Check =
+      "web3Check" as unknown as ClearSignContextSuccess<ClearSignContextType.WEB3_CHECK>;
+    const task = new BuildEIP712ContextTask(
+      apiMock,
+      contextMouleMock,
+      parserMock,
+      TEST_DATA,
+      "44'/60'/0'/0/0",
+      getWeb3ChecksFactoryMock,
+    );
+    getWeb3ChecksFactoryMock.mockReturnValueOnce({
+      run: async () => ({ web3Check: expectedWeb3Check }),
+    });
+    parserMock.parse.mockReturnValueOnce(
+      Right({
+        types: TEST_TYPES,
+        domain: TEST_DOMAIN_VALUES,
+        message: TEST_MESSAGE_VALUES,
+      }),
+    );
+    apiMock.getDeviceSessionState.mockReturnValueOnce({
+      sessionStateType: DeviceSessionStateType.ReadyWithoutSecureChannel,
+      deviceStatus: DeviceStatus.CONNECTED,
+      installedApps: [],
+      currentApp: { name: "Ethereum", version: "1.12.0" },
+      deviceModelId: DeviceModelId.FLEX,
+      isSecureConnectionAllowed: false,
+    });
+    contextMouleMock.getTypedDataFilters.mockResolvedValueOnce(
+      TEST_CLEAR_SIGN_CONTEXT,
+    );
+    // WHEN
+    const builtContext = await task.run();
+    // THEN
+    expect(builtContext).toStrictEqual({
+      web3Check: expectedWeb3Check,
+      types: TEST_TYPES,
+      domain: TEST_DOMAIN_VALUES,
+      message: TEST_MESSAGE_VALUES,
+      clearSignContext: Just(TEST_CLEAR_SIGN_CONTEXT),
+      domainHash:
+        "0xf033048cb2764f596bc4d98e089fa38bb84b4be3d5da2e77f9bfac0e4d6c68ca",
+      messageHash:
+        "0x1087495b5e10337738059920fe1de8216235299745e8c97e21b409009a4c362a",
+    });
+    expect(getWeb3ChecksFactoryMock).toHaveBeenCalledWith(apiMock, {
+      contextModule: contextMouleMock,
+      derivationPath: "44'/60'/0'/0/0",
+      data: TEST_DATA,
+    });
+  });
+
   it("Build context with clear signing context V1", async () => {
     // GIVEN
     const task = new BuildEIP712ContextTask(
@@ -277,6 +352,8 @@ describe("BuildEIP712ContextTask", () => {
       contextMouleMock,
       parserMock,
       TEST_DATA,
+      "44'/60'/0'/0/0",
+      getWeb3ChecksFactoryMock,
     );
     parserMock.parse.mockReturnValueOnce(
       Right({
@@ -291,6 +368,7 @@ describe("BuildEIP712ContextTask", () => {
       installedApps: [],
       currentApp: { name: "Ethereum", version: "1.11.0" },
       deviceModelId: DeviceModelId.FLEX,
+      isSecureConnectionAllowed: false,
     });
     contextMouleMock.getTypedDataFilters.mockResolvedValueOnce(
       TEST_CLEAR_SIGN_CONTEXT,
@@ -326,6 +404,8 @@ describe("BuildEIP712ContextTask", () => {
         ...TEST_DATA,
         primaryType: "",
       },
+      "44'/60'/0'/0/0",
+      getWeb3ChecksFactoryMock,
     );
     parserMock.parse.mockReturnValueOnce(
       Right({
@@ -352,6 +432,8 @@ describe("BuildEIP712ContextTask", () => {
       contextMouleMock,
       parserMock,
       TEST_DATA,
+      "44'/60'/0'/0/0",
+      getWeb3ChecksFactoryMock,
     );
     parserMock.parse.mockReturnValueOnce(Left(new Error("Parsing error")));
     // WHEN

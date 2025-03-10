@@ -1,19 +1,26 @@
 import {
   type ContextModuleCalConfig,
   type ContextModuleConfig,
+  type ContextModuleWeb3ChecksConfig,
 } from "./config/model/ContextModuleConfig";
 import { type ContextLoader } from "./shared/domain/ContextLoader";
 import { type TypedDataContextLoader } from "./typed-data/domain/TypedDataContextLoader";
+import { type Web3CheckContextLoader } from "./web3-check/domain/Web3CheckContextLoader";
 import { type ContextModule } from "./ContextModule";
 import { DefaultContextModule } from "./DefaultContextModule";
 
 const DEFAULT_CAL_URL = "https://crypto-assets-service.api.ledger.com/v1";
+const DEFAULT_WEB3_CHECKS_URL =
+  "https://web3checks-backend.api.aws.prd.ldg-tech.com/v3";
 
 export const DEFAULT_CONFIG: ContextModuleConfig = {
   cal: {
     url: DEFAULT_CAL_URL,
     mode: "prod",
     branch: "main",
+  },
+  web3checks: {
+    url: DEFAULT_WEB3_CHECKS_URL,
   },
   defaultLoaders: true,
   customLoaders: [],
@@ -58,6 +65,17 @@ export class ContextModuleBuilder {
   }
 
   /**
+   * Replace the default loader for web3 checks
+   *
+   * @param loader loader to use for web3 checks
+   * @returns this
+   */
+  addWeb3CheckLoader(loader: Web3CheckContextLoader) {
+    this.config.customWeb3CheckLoader = loader;
+    return this;
+  }
+
+  /**
    * Add a custom CAL configuration
    *
    * @param calConfig
@@ -65,6 +83,20 @@ export class ContextModuleBuilder {
    */
   addCalConfig(calConfig: ContextModuleCalConfig) {
     this.config.cal = { ...DEFAULT_CONFIG.cal, ...calConfig };
+    return this;
+  }
+
+  /**
+   * Add a custom web3 checks configuration
+   *
+   * @param web3ChecksConfig
+   * @returns this
+   */
+  addWeb3ChecksConfig(web3ChecksConfig: ContextModuleWeb3ChecksConfig) {
+    this.config.web3checks = {
+      ...DEFAULT_CONFIG.web3checks,
+      ...web3ChecksConfig,
+    };
     return this;
   }
 

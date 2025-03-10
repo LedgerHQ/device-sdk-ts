@@ -90,6 +90,11 @@ type DeviceSessionReadyState = {
    * The current applications installed on the device.
    */
   readonly installedApps: Application[];
+
+  /**
+   * The device is allowed to establish a secure connection.
+   */
+  readonly isSecureConnectionAllowed: boolean;
 };
 
 /**

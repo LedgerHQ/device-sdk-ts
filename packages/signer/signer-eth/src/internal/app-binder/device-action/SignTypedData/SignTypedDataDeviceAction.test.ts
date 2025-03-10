@@ -43,6 +43,7 @@ describe("SignTypedDataDeviceAction", () => {
     types: {},
   };
   const TEST_BUILT_CONTEXT: ProvideEIP712ContextTaskArgs = {
+    web3Check: null,
     messageHash:
       "0x8887109c22cd7358af93c04b5397e91b1331e0c389951542e11af4b227a4aa1d",
     domainHash:
@@ -97,6 +98,7 @@ describe("SignTypedDataDeviceAction", () => {
     getContext: vi.fn(),
     getContexts: vi.fn(),
     getTypedDataFilters: vi.fn(),
+    getWeb3Checks: vi.fn(),
   };
   const buildContextMock = vi.fn();
   const provideContextMock = vi.fn();
@@ -204,6 +206,7 @@ describe("SignTypedDataDeviceAction", () => {
                     contextModule: mockContextModule,
                     parser: mockParser,
                     data: TEST_MESSAGE,
+                    derivationPath: "44'/60'/0'/0/0",
                   },
                 }),
               );

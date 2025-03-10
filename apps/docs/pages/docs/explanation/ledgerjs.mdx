@@ -1,0 +1,33 @@
+# Differences with LedgerJS
+
+The Device Management Kit (DMK) is designed to replace the existing LedgerJS libraries, including the `hw-app-XXX` and `hw-transport-XXX` series.
+
+## Legacy Challenges
+
+The LedgerJS libraries were originally developed to support **Ledger Live** applications. Given that Ledger Live has been evolving for over seven years, the libraries have accumulated technical debt over this extensive period. Consequently, some components of the libraries have grown more complex, making them challenging to maintain and extend.
+
+A few behaviors in the device libraries do not align perfectly with expected outcomes. For example, the act of opening an application on the device might lead to unanticipated disconnections.
+
+Additionally, feedback from our partners, including software wallet developers, indicates that the libraries could benefit from enhanced simplicity and a reduction in the need for low-level programming knowledge (such as understanding the APDU communication protocol).
+
+## Target Audience
+
+While LedgerJS was primarily designed for use with Ledger Live, the Device Management Kit is specifically tailored to prioritize the needs of **third-party developers**.
+
+## Simplifying Interactions
+
+Our goal with the DMK is to significantly lower the barrier for developers interacting with Ledger devices.
+By abstracting much of the underlying complexity, the DMK provides a straightforward and user-friendly API, facilitating easier integration.
+
+## Support for Multiple Devices
+
+LedgerJS restricted simultaneous connections to multiple devices. In contrast, the DMK introduces the ability to connect and interact with multiple devices concurrently, enhancing multi-device management capabilities.
+
+## When to Use LedgerJS Instead of DMK
+
+While the DMK offers advanced features, there are certain scenarios where LedgerJS may still be necessary due to current feature gaps in the DMK.
+For example, the DMK is still expanding its support for signers specific to certain blockchains. In such cases, continuing to use LedgerJS for transaction signing might be beneficial.
+We are actively working on solutions to bridge these gaps and improve compatibility between the DMK and LedgerJS.
+
+In summary, the DMK represents a modern solution tailored to current development needs, with a focus on ease of use and expanded functionality.
+As we continue to enhance its features, we are committed to maintaining compatibility with existing solutions.

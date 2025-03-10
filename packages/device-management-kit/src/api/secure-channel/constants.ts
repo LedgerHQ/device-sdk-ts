@@ -1,0 +1,1 @@
+export const GENUINE_DEVICE_RESULT = "0000";

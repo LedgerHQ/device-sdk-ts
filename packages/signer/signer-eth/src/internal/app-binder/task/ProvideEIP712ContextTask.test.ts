@@ -1,12 +1,18 @@
-import { type TypedDataClearSignContextSuccess } from "@ledgerhq/context-module";
+import {
+  type ClearSignContextSuccess,
+  ClearSignContextType,
+  type TypedDataClearSignContextSuccess,
+} from "@ledgerhq/context-module";
 import {
   CommandResultFactory,
   hexaStringToBuffer,
+  LoadCertificateCommand,
   UnknownDeviceExchangeError,
 } from "@ledgerhq/device-management-kit";
 import { Just, Nothing } from "purify-ts";
 
 import { ProvideTokenInformationCommand } from "@internal/app-binder/command/ProvideTokenInformationCommand";
+import { ProvideWeb3CheckCommand } from "@internal/app-binder/command/ProvideWeb3CheckCommand";
 import {
   Eip712FilterType,
   SendEIP712FilteringCommand,
@@ -210,6 +216,7 @@ describe("ProvideEIP712ContextTask", () => {
   it("Send context with no clear signing context", async () => {
     // GIVEN
     const args: ProvideEIP712ContextTaskArgs = {
+      web3Check: null,
       types: TEST_TYPES,
       domain: TEST_DOMAIN_VALUES,
       message: TEST_MESSAGE_VALUES,
@@ -322,6 +329,7 @@ describe("ProvideEIP712ContextTask", () => {
   it("Send context with clear signing", async () => {
     // GIVEN
     const args: ProvideEIP712ContextTaskArgs = {
+      web3Check: null,
       types: TEST_TYPES,
       domain: TEST_DOMAIN_VALUES,
       message: TEST_MESSAGE_VALUES,
@@ -520,6 +528,7 @@ describe("ProvideEIP712ContextTask", () => {
   it("Both tokens unavailable", async () => {
     // GIVEN
     const args: ProvideEIP712ContextTaskArgs = {
+      web3Check: null,
       types: TEST_TYPES,
       domain: TEST_DOMAIN_VALUES,
       message: TEST_MESSAGE_VALUES,
@@ -574,6 +583,7 @@ describe("ProvideEIP712ContextTask", () => {
   it("First token unavailable", async () => {
     // GIVEN
     const args: ProvideEIP712ContextTaskArgs = {
+      web3Check: null,
       types: TEST_TYPES,
       domain: TEST_DOMAIN_VALUES,
       message: TEST_MESSAGE_VALUES,
@@ -618,6 +628,7 @@ describe("ProvideEIP712ContextTask", () => {
   it("Second token unavailable", async () => {
     // GIVEN
     const args: ProvideEIP712ContextTaskArgs = {
+      web3Check: null,
       types: TEST_TYPES,
       domain: TEST_DOMAIN_VALUES,
       message: TEST_MESSAGE_VALUES,
@@ -659,9 +670,84 @@ describe("ProvideEIP712ContextTask", () => {
     );
   });
 
+  it("Provide Web3Check", async () => {
+    // GIVEN
+    const web3Check: ClearSignContextSuccess<ClearSignContextType.WEB3_CHECK> =
+      {
+        type: ClearSignContextType.WEB3_CHECK,
+        payload: "0x010203",
+      };
+    const args: ProvideEIP712ContextTaskArgs = {
+      web3Check,
+      types: TEST_TYPES,
+      domain: TEST_DOMAIN_VALUES,
+      message: TEST_MESSAGE_VALUES,
+      clearSignContext: Nothing,
+      domainHash: "0x",
+      messageHash: "0x",
+    };
+
+    // WHEN
+    apiMock.sendCommand.mockResolvedValue(
+      CommandResultFactory({ data: undefined }),
+    );
+    await new ProvideEIP712ContextTask(apiMock, args).run();
+
+    // THEN
+    expect(apiMock.sendCommand).toHaveBeenCalledWith(
+      new ProvideWeb3CheckCommand({
+        payload: hexaStringToBuffer("0x0003010203")!,
+        isFirstChunk: true,
+      }),
+    );
+  });
+
+  it("Provide Web3Check and certificate", async () => {
+    // GIVEN
+    const web3Check: ClearSignContextSuccess<ClearSignContextType.WEB3_CHECK> =
+      {
+        type: ClearSignContextType.WEB3_CHECK,
+        certificate: {
+          keyUsageNumber: 3,
+          payload: new Uint8Array(3).fill(42),
+        },
+        payload: "0x010203",
+      };
+    const args: ProvideEIP712ContextTaskArgs = {
+      web3Check,
+      types: TEST_TYPES,
+      domain: TEST_DOMAIN_VALUES,
+      message: TEST_MESSAGE_VALUES,
+      clearSignContext: Nothing,
+      domainHash: "0x",
+      messageHash: "0x",
+    };
+
+    // WHEN
+    apiMock.sendCommand.mockResolvedValue(
+      CommandResultFactory({ data: undefined }),
+    );
+    await new ProvideEIP712ContextTask(apiMock, args).run();
+
+    // THEN
+    expect(apiMock.sendCommand).toHaveBeenCalledWith(
+      new LoadCertificateCommand({
+        keyUsage: 3,
+        certificate: web3Check.certificate!.payload,
+      }),
+    );
+    expect(apiMock.sendCommand).toHaveBeenCalledWith(
+      new ProvideWeb3CheckCommand({
+        payload: hexaStringToBuffer("0x0003010203")!,
+        isFirstChunk: true,
+      }),
+    );
+  });
+
   it("Error when providing tokens", async () => {
     // GIVEN
     const args: ProvideEIP712ContextTaskArgs = {
+      web3Check: null,
       types: TEST_TYPES,
       domain: TEST_DOMAIN_VALUES,
       message: TEST_MESSAGE_VALUES,
@@ -688,6 +774,7 @@ describe("ProvideEIP712ContextTask", () => {
   it("Error when sending struct definitions", async () => {
     // GIVEN
     const args: ProvideEIP712ContextTaskArgs = {
+      web3Check: null,
       types: TEST_TYPES,
       domain: TEST_DOMAIN_VALUES,
       message: TEST_MESSAGE_VALUES,
@@ -716,6 +803,7 @@ describe("ProvideEIP712ContextTask", () => {
   it("Error when sending struct implementations", async () => {
     // GIVEN
     const args: ProvideEIP712ContextTaskArgs = {
+      web3Check: null,
       types: TEST_TYPES,
       domain: TEST_DOMAIN_VALUES,
       message: TEST_MESSAGE_VALUES,
@@ -757,6 +845,7 @@ describe("ProvideEIP712ContextTask", () => {
   it("Send struct array", async () => {
     // GIVEN
     const args: ProvideEIP712ContextTaskArgs = {
+      web3Check: null,
       domainHash: "0x",
       messageHash: "0x",
       types: {},

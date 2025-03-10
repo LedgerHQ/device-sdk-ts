@@ -58,7 +58,6 @@ export class TransportNotSupportedError extends GeneralDmkError {
     super(err);
   }
 }
-
 export class SendApduConcurrencyError extends GeneralDmkError {
   override readonly _tag = "SendApduConcurrencyError";
   constructor(readonly err?: unknown) {

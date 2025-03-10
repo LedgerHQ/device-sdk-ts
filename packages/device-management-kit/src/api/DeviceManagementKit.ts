@@ -33,8 +33,11 @@ import { type ConnectUseCase } from "@internal/discovery/use-case/ConnectUseCase
 import { type DisconnectUseCase } from "@internal/discovery/use-case/DisconnectUseCase";
 import { type GetConnectedDeviceUseCase } from "@internal/discovery/use-case/GetConnectedDeviceUseCase";
 import { type ListConnectedDevicesUseCase } from "@internal/discovery/use-case/ListConnectedDevicesUseCase";
+import {
+  type ListenToAvailableDevicesUseCase,
+  type ListenToAvailableDevicesUseCaseArgs,
+} from "@internal/discovery/use-case/ListenToAvailableDevicesUseCase";
 import { type ListenToConnectedDeviceUseCase } from "@internal/discovery/use-case/ListenToConnectedDeviceUseCase";
-import { type ListenToKnownDevicesUseCase } from "@internal/discovery/use-case/ListenToKnownDevicesUseCase";
 import type { StartDiscoveringUseCase } from "@internal/discovery/use-case/StartDiscoveringUseCase";
 import type { StopDiscoveringUseCase } from "@internal/discovery/use-case/StopDiscoveringUseCase";
 import { sendTypes } from "@internal/send/di/sendTypes";
@@ -46,7 +49,7 @@ import {
   type ExecuteDeviceActionReturnType,
 } from "./device-action/DeviceAction";
 import { deviceActionTypes } from "./device-action/di/deviceActionTypes";
-import { type ToggleDeviceSessionRefresherUseCase } from "./device-session/use-case/ToggleDeviceSessionRefresher";
+import { type DisableDeviceSessionRefresherUseCase } from "./device-session/use-case/DisableDeviceSessionRefresher";
 import { type DmkError } from "./Error";
 
 /**
@@ -111,15 +114,17 @@ export class DeviceManagementKit {
 
   /**
    * Listen to list of known discovered devices (and later BLE).
-   *
+   * @param {ListenToAvailableDevicesUseCaseArgs} args - The transport to use for discover, or undefined to discover from all transports.
    * @returns {Observable<DiscoveredDevice[]>} An observable of known discovered devices.
    */
-  listenToKnownDevices(): Observable<DiscoveredDevice[]> {
+  listenToAvailableDevices(
+    args: ListenToAvailableDevicesUseCaseArgs,
+  ): Observable<DiscoveredDevice[]> {
     return this.container
-      .get<ListenToKnownDevicesUseCase>(
-        discoveryTypes.ListenToKnownDevicesUseCase,
+      .get<ListenToAvailableDevicesUseCase>(
+        discoveryTypes.ListenToAvailableDevicesUseCase,
       )
-      .execute();
+      .execute(args);
   }
 
   /**
@@ -210,7 +215,7 @@ export class DeviceManagementKit {
   /**
    * Gets the device state of a session.
    *
-   * @param {{DeviceSessionId}} args - The device session ID.
+   * @param {{ sessionId: DeviceSessionId }} args - The device session ID.
    * @returns {Observable<DeviceSessionState>} An observable of the session device state.
    */
   getDeviceSessionState(args: {
@@ -260,17 +265,18 @@ export class DeviceManagementKit {
   }
 
   /**
-   * Toggle the device session refresher.
+   * Disable the device session refresher.
    *
-   * @param {DeviceSessionId} args - The device session ID.
+   * @param {DisableDeviceSessionRefresherUseCaseArgs} args - The device session ID and a string to identify the blocker.
+   * @returns {() => void} A function to reenable the device session refresher.
    */
-  toggleDeviceSessionRefresher(args: {
+  disableDeviceSessionRefresher(args: {
     sessionId: DeviceSessionId;
-    enabled: boolean;
+    blockerId: string;
   }) {
     return this.container
-      .get<ToggleDeviceSessionRefresherUseCase>(
-        deviceSessionTypes.ToggleDeviceSessionRefresherUseCase,
+      .get<DisableDeviceSessionRefresherUseCase>(
+        deviceSessionTypes.DisableDeviceSessionRefresherUseCase,
       )
       .execute(args);
   }

@@ -4,6 +4,10 @@ import {
   type TypedDataTokenIndex,
   VERIFYING_CONTRACT_TOKEN_INDEX,
 } from "@ledgerhq/context-module";
+import {
+  type ClearSignContextSuccess,
+  type ClearSignContextType,
+} from "@ledgerhq/context-module";
 import type {
   CommandResult,
   InternalApi,
@@ -12,10 +16,12 @@ import {
   CommandResultFactory,
   InvalidStatusWordError,
   isSuccessCommandResult,
+  LoadCertificateCommand,
 } from "@ledgerhq/device-management-kit";
 import { Maybe, Nothing } from "purify-ts";
 
 import { ProvideTokenInformationCommand } from "@internal/app-binder/command/ProvideTokenInformationCommand";
+import { ProvideWeb3CheckCommand } from "@internal/app-binder/command/ProvideWeb3CheckCommand";
 import {
   Eip712FilterType,
   SendEIP712FilteringCommand,
@@ -36,6 +42,8 @@ import {
   TypedDataValueRoot,
 } from "@internal/typed-data/model/Types";
 
+import { SendPayloadInChunksTask } from "./SendPayloadInChunksTask";
+
 type AllSuccessTypes = void | { tokenIndex: number };
 
 export type ProvideEIP712ContextTaskReturnType = Promise<
@@ -49,6 +57,7 @@ export type ProvideEIP712ContextTaskArgs = {
   clearSignContext: Maybe<TypedDataClearSignContextSuccess>;
   domainHash: string;
   messageHash: string;
+  web3Check: ClearSignContextSuccess<ClearSignContextType.WEB3_CHECK> | null;
 };
 
 const DEVICE_ASSETS_MAX = 5;
@@ -65,6 +74,26 @@ export class ProvideEIP712ContextTask {
   ) {}
 
   async run(): ProvideEIP712ContextTaskReturnType {
+    // Send message simulation first
+    if (this.args.web3Check) {
+      if (this.args.web3Check.certificate) {
+        await this.api.sendCommand(
+          new LoadCertificateCommand({
+            keyUsage: this.args.web3Check.certificate.keyUsageNumber,
+            certificate: this.args.web3Check.certificate.payload,
+          }),
+        );
+      }
+      await new SendPayloadInChunksTask(this.api, {
+        payload: this.args.web3Check.payload,
+        commandFactory: (args) =>
+          new ProvideWeb3CheckCommand({
+            payload: args.chunkedData,
+            isFirstChunk: args.isFirstChunk,
+          }),
+      }).run();
+    }
+
     const result: CommandResult<AllSuccessTypes, EthErrorCodes> =
       CommandResultFactory<AllSuccessTypes, EthErrorCodes>({ data: undefined });
 

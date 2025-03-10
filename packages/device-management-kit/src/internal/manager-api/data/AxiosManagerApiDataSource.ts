@@ -11,6 +11,12 @@ import {
 import { type DeviceVersion } from "@internal/manager-api/model/Device";
 import { HttpFetchApiError } from "@internal/manager-api/model/Errors";
 import { type FinalFirmware } from "@internal/manager-api/model/Firmware";
+import {
+  type GetAppByHashParams,
+  type GetAppListParams,
+  type GetDeviceVersionParams,
+  type GetFirmwareVersionParams,
+} from "@internal/manager-api/model/Params";
 
 import { ManagerApiDataSource } from "./ManagerApiDataSource";
 import { ApplicationDto, AppTypeDto } from "./ManagerApiDto";
@@ -18,21 +24,35 @@ import { ApplicationDto, AppTypeDto } from "./ManagerApiDto";
 @injectable()
 export class AxiosManagerApiDataSource implements ManagerApiDataSource {
   private readonly managerApiBaseUrl: string;
-  private readonly webSocketBaseUrl: string;
 
   constructor(
     @inject(managerApiTypes.DmkConfig)
-    { managerApiUrl, webSocketUrl }: DmkConfig,
+    { managerApiUrl }: DmkConfig,
   ) {
     this.managerApiBaseUrl = managerApiUrl;
-    this.webSocketBaseUrl = webSocketUrl;
-    console.log(this.webSocketBaseUrl);
+  }
+
+  getAppList(
+    params: GetAppListParams,
+  ): EitherAsync<HttpFetchApiError, Application[]> {
+    const { targetId, provider, firmwareVersionName } = params;
+    return EitherAsync(() =>
+      axios.get<Application[]>(`${this.managerApiBaseUrl}/v2/apps/by-target`, {
+        params: {
+          target_id: targetId,
+          provider,
+          firmware_version_name: firmwareVersionName,
+        },
+      }),
+    )
+      .map((res) => res.data)
+      .mapLeft((error) => new HttpFetchApiError(error));
   }
 
   getDeviceVersion(
-    targetId: string,
-    provider: number,
+    params: GetDeviceVersionParams,
   ): EitherAsync<HttpFetchApiError, DeviceVersion> {
+    const { targetId, provider } = params;
     return EitherAsync(() =>
       axios.get<DeviceVersion>(`${this.managerApiBaseUrl}/get_device_version`, {
         params: {
@@ -46,10 +66,9 @@ export class AxiosManagerApiDataSource implements ManagerApiDataSource {
   }
 
   getFirmwareVersion(
-    version: string,
-    deviceId: number,
-    provider: number,
+    params: GetFirmwareVersionParams,
   ): EitherAsync<HttpFetchApiError, FinalFirmware> {
+    const { deviceId, version, provider } = params;
     return EitherAsync(() =>
       axios.get<FinalFirmware>(
         `${this.managerApiBaseUrl}/get_firmware_version`,
@@ -67,8 +86,9 @@ export class AxiosManagerApiDataSource implements ManagerApiDataSource {
   }
 
   getAppsByHash(
-    hashes: string[],
+    params: GetAppByHashParams,
   ): EitherAsync<HttpFetchApiError, Array<Application | null>> {
+    const { hashes } = params;
     return EitherAsync(() =>
       axios.post<Array<ApplicationDto | null>>(
         `${this.managerApiBaseUrl}/v2/apps/hash`,
@@ -100,9 +120,7 @@ export class AxiosManagerApiDataSource implements ManagerApiDataSource {
       if (app === null) {
         return null;
       }
-
       const { applicationType, ...rest } = app;
-
       return {
         ...rest,
         applicationType: this.mapAppTypeDtoToAppType(applicationType),

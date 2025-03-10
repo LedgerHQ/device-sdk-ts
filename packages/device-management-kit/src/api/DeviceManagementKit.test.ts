@@ -73,8 +73,8 @@ describe("DeviceManagementKit", () => {
       expect(dmk.listenToConnectedDevice).toBeDefined();
     });
 
-    it("should have toggleDeviceSessionRefresher method", () => {
-      expect(dmk.toggleDeviceSessionRefresher).toBeDefined();
+    it("should have disableDeviceSessionRefresher method", () => {
+      expect(dmk.disableDeviceSessionRefresher).toBeDefined();
     });
   });
 

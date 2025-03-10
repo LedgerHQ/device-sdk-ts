@@ -42,7 +42,7 @@ export type MachineDependencies = {
     input: ListAppsDAOutput;
   }) => EitherAsync<HttpFetchApiError, Array<Application | null>>;
   getDeviceSessionState: () => DeviceSessionState;
-  saveSessionState: (state: DeviceSessionState) => DeviceSessionState;
+  setDeviceSessionState: (state: DeviceSessionState) => DeviceSessionState;
 };
 
 export class ListAppsWithMetadataDeviceAction extends XStateDeviceAction<
@@ -69,7 +69,7 @@ export class ListAppsWithMetadataDeviceAction extends XStateDeviceAction<
       ListAppsWithMetadataMachineInternalState
     >;
 
-    const { getAppsByHash, saveSessionState, getDeviceSessionState } =
+    const { getAppsByHash, setDeviceSessionState, getDeviceSessionState } =
       this.extractDependencies(internalAPI);
 
     const unlockTimeout = this.input.unlockTimeout ?? DEFAULT_UNLOCK_TIMEOUT_MS;
@@ -91,7 +91,7 @@ export class ListAppsWithMetadataDeviceAction extends XStateDeviceAction<
       actors: {
         listApps: listAppsMachine,
         getAppsByHash: fromPromise(getAppsByHash),
-        saveSessionState: fromCallback(
+        updateDeviceSessionState: fromCallback(
           ({
             input,
             sendBack,
@@ -111,7 +111,7 @@ export class ListAppsWithMetadataDeviceAction extends XStateDeviceAction<
               installedApps: filterted,
             };
             try {
-              saveSessionState(updatedState);
+              setDeviceSessionState(updatedState);
               sendBack({ type: "done" });
             } catch (error) {
               sendBack({ type: "error", error });
@@ -256,7 +256,7 @@ export class ListAppsWithMetadataDeviceAction extends XStateDeviceAction<
         },
         SaveSession: {
           invoke: {
-            src: "saveSessionState",
+            src: "updateDeviceSessionState",
             input: (_) => ({
               appsWithMetadata: _.context._internalState.appsWithMetadata,
             }),
@@ -289,11 +289,19 @@ export class ListAppsWithMetadataDeviceAction extends XStateDeviceAction<
   }
 
   extractDependencies(internalApi: InternalApi): MachineDependencies {
+    const getAppsByHash = ({ input }: { input: ListAppsDAOutput }) => {
+      const appHashes = input.reduce<string[]>((acc, app) => {
+        if (app.appFullHash) {
+          return acc.concat(app.appFullHash);
+        }
+        return acc;
+      }, []);
+      return internalApi.getManagerApiService().getAppsByHash(appHashes);
+    };
     return {
-      getAppsByHash: ({ input }) =>
-        internalApi.getManagerApiService().getAppsByHash(input),
+      getAppsByHash,
       getDeviceSessionState: () => internalApi.getDeviceSessionState(),
-      saveSessionState: (state: DeviceSessionState) =>
+      setDeviceSessionState: (state: DeviceSessionState) =>
         internalApi.setDeviceSessionState(state),
     };
   }
