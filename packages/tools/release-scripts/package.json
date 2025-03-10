@@ -1,0 +1,17 @@
+{
+  "name": "@ledgerhq/release-scripts",
+  "license": "Apache-2.0",
+  "version": "0.0.1",
+  "private": true,
+  "description": "Release scripts for Ledger Device Management Kit",
+  "bin": {
+    "lmdk-release": "./release.mjs"
+  },
+  "files": [
+    "release.mjs"
+  ],
+  "type": "module",
+  "dependencies": {
+    "@inquirer/prompts": "^7.3.3"
+  }
+}
