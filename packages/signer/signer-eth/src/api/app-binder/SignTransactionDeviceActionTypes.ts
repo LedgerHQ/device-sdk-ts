@@ -51,7 +51,6 @@ export type SignTransactionDAState = DeviceActionState<
 
 export type SignTransactionDAInternalState = {
   readonly error: SignTransactionDAError | null;
-  readonly challenge: string | null;
   readonly clearSignContexts: ClearSignContextSuccess[] | GenericContext | null;
   readonly web3Check: ClearSignContextSuccess<ClearSignContextType.WEB3_CHECK> | null;
   readonly serializedTransaction: Uint8Array | null;

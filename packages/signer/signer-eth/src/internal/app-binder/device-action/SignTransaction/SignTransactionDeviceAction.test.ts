@@ -8,7 +8,6 @@ import {
   DeviceActionStatus,
   hexaStringToBuffer,
   UnknownDAError,
-  UnknownDeviceExchangeError,
   UserInteractionRequired,
 } from "@ledgerhq/device-management-kit";
 import { InvalidStatusWordError } from "@ledgerhq/device-management-kit";
@@ -49,20 +48,16 @@ describe("SignTransactionDeviceAction", () => {
   const parserMock: TransactionParserService = {
     extractValue: vi.fn(),
   } as unknown as TransactionParserService;
-  const getChallengeMock = vi.fn();
   const buildContextMock = vi.fn();
   const provideContextMock = vi.fn();
   const provideGenericContextMock = vi.fn();
   const signTransactionMock = vi.fn();
-  const getWeb3CheckMock = vi.fn();
   function extractDependenciesMock() {
     return {
-      getChallenge: getChallengeMock,
       buildContext: buildContextMock,
       provideContext: provideContextMock,
       provideGenericContext: provideGenericContextMock,
       signTransaction: signTransactionMock,
-      getWeb3Check: getWeb3CheckMock,
     };
   }
   const defaultOptions = {
@@ -97,14 +92,6 @@ describe("SignTransactionDeviceAction", () => {
         });
 
         // Mock the dependencies to return some sample data
-        getChallengeMock.mockResolvedValueOnce(
-          CommandResultFactory({
-            data: { challenge: "challenge" },
-          }),
-        );
-        getWeb3CheckMock.mockResolvedValueOnce({
-          web3Check: null,
-        });
         buildContextMock.mockResolvedValueOnce({
           clearSignContexts: [
             {
@@ -115,6 +102,7 @@ describe("SignTransactionDeviceAction", () => {
           serializedTransaction: new Uint8Array([0x01, 0x02, 0x03]),
           chainId: 1,
           transactionType: TransactionType.LEGACY,
+          web3Check: null,
         });
         provideContextMock.mockResolvedValueOnce(Nothing);
         signTransactionMock.mockResolvedValueOnce(
@@ -131,7 +119,7 @@ describe("SignTransactionDeviceAction", () => {
         );
 
         // Expected intermediate values for the following state sequence:
-        //   Initial -> OpenApp -> GetChallenge -> BuildContext -> ProvideContext -> SignTransaction
+        //   Initial -> OpenApp -> BuildContext -> ProvideContext -> SignTransaction
         const expectedStates: Array<SignTransactionDAState> = [
           // Initial state
           {
@@ -144,20 +132,6 @@ describe("SignTransactionDeviceAction", () => {
           {
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.ConfirmOpenApp,
-            },
-            status: DeviceActionStatus.Pending,
-          },
-          // GetChallenge state
-          {
-            intermediateValue: {
-              requiredUserInteraction: UserInteractionRequired.None,
-            },
-            status: DeviceActionStatus.Pending,
-          },
-          // GetWeb3Check state
-          {
-            intermediateValue: {
-              requiredUserInteraction: UserInteractionRequired.None,
             },
             status: DeviceActionStatus.Pending,
           },
@@ -200,15 +174,14 @@ describe("SignTransactionDeviceAction", () => {
           {
             onDone: () => {
               // Verify mocks calls parameters
-              expect(getChallengeMock).toHaveBeenCalled();
               expect(buildContextMock).toHaveBeenCalledWith(
                 expect.objectContaining({
                   input: {
-                    challenge: "challenge",
                     contextModule: contextModuleMock,
                     mapper: mapperMock,
                     options: defaultOptions,
                     transaction: defaultTransaction,
+                    derivationPath: "44'/60'/0'/0/0",
                   },
                 }),
               );
@@ -261,14 +234,6 @@ describe("SignTransactionDeviceAction", () => {
         });
 
         // Mock the dependencies to return some sample data
-        getChallengeMock.mockResolvedValueOnce(
-          CommandResultFactory({
-            data: { challenge: "challenge" },
-          }),
-        );
-        getWeb3CheckMock.mockResolvedValueOnce({
-          web3Check: null,
-        });
         buildContextMock.mockResolvedValueOnce({
           clearSignContexts: {
             transactionInfo: "payload-1",
@@ -282,6 +247,7 @@ describe("SignTransactionDeviceAction", () => {
           serializedTransaction: new Uint8Array([0x01, 0x02, 0x03]),
           chainId: 7,
           transactionType: TransactionType.EIP1559,
+          web3Check: null,
         });
         provideGenericContextMock.mockResolvedValueOnce(Nothing);
         signTransactionMock.mockResolvedValueOnce(
@@ -298,7 +264,7 @@ describe("SignTransactionDeviceAction", () => {
         );
 
         // Expected intermediate values for the following state sequence:
-        //   Initial -> OpenApp -> GetChallenge -> BuildContext -> ProvideGenericContext -> SignTransaction
+        //   Initial -> OpenApp -> BuildContext -> ProvideGenericContext -> SignTransaction
         const expectedStates: Array<SignTransactionDAState> = [
           // Initial state
           {
@@ -311,20 +277,6 @@ describe("SignTransactionDeviceAction", () => {
           {
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.ConfirmOpenApp,
-            },
-            status: DeviceActionStatus.Pending,
-          },
-          // GetChallenge state
-          {
-            intermediateValue: {
-              requiredUserInteraction: UserInteractionRequired.None,
-            },
-            status: DeviceActionStatus.Pending,
-          },
-          // GetWeb3Checks state
-          {
-            intermediateValue: {
-              requiredUserInteraction: UserInteractionRequired.None,
             },
             status: DeviceActionStatus.Pending,
           },
@@ -368,15 +320,14 @@ describe("SignTransactionDeviceAction", () => {
             onError: reject,
             onDone: () => {
               // Verify mocks calls parameters
-              expect(getChallengeMock).toHaveBeenCalled();
               expect(buildContextMock).toHaveBeenCalledWith(
                 expect.objectContaining({
                   input: {
-                    challenge: "challenge",
                     contextModule: contextModuleMock,
                     mapper: mapperMock,
                     options: defaultOptions,
                     transaction: defaultTransaction,
+                    derivationPath: "44'/60'/0'/0/0",
                   },
                 }),
               );
@@ -435,14 +386,6 @@ describe("SignTransactionDeviceAction", () => {
         });
 
         // Mock the dependencies to return some sample data
-        getChallengeMock.mockResolvedValueOnce(
-          CommandResultFactory({
-            data: { challenge: "challenge" },
-          }),
-        );
-        getWeb3CheckMock.mockResolvedValueOnce({
-          web3Check: null,
-        });
         buildContextMock.mockResolvedValueOnce({
           clearSignContexts: [
             {
@@ -453,6 +396,7 @@ describe("SignTransactionDeviceAction", () => {
           serializedTransaction: new Uint8Array([0x01, 0x02, 0x03]),
           chainId: 1,
           transactionType: TransactionType.LEGACY,
+          web3Check: null,
         });
         provideContextMock.mockResolvedValueOnce(
           Just(
@@ -475,7 +419,7 @@ describe("SignTransactionDeviceAction", () => {
         );
 
         // Expected intermediate values for the following state sequence:
-        //   Initial -> OpenApp -> GetChallenge -> BuildContext -> ProvideContext -> SignTransaction
+        //   Initial -> OpenApp -> BuildContext -> ProvideContext -> SignTransaction
         const expectedStates: Array<SignTransactionDAState> = [
           // Initial state
           {
@@ -488,20 +432,6 @@ describe("SignTransactionDeviceAction", () => {
           {
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.ConfirmOpenApp,
-            },
-            status: DeviceActionStatus.Pending,
-          },
-          // GetChallenge state
-          {
-            intermediateValue: {
-              requiredUserInteraction: UserInteractionRequired.None,
-            },
-            status: DeviceActionStatus.Pending,
-          },
-          // GetWeb3Checks state
-          {
-            intermediateValue: {
-              requiredUserInteraction: UserInteractionRequired.None,
             },
             status: DeviceActionStatus.Pending,
           },
@@ -545,15 +475,14 @@ describe("SignTransactionDeviceAction", () => {
             onError: reject,
             onDone: () => {
               // Verify mocks calls parameters
-              expect(getChallengeMock).toHaveBeenCalled();
               expect(buildContextMock).toHaveBeenCalledWith(
                 expect.objectContaining({
                   input: {
-                    challenge: "challenge",
                     contextModule: contextModuleMock,
                     mapper: mapperMock,
                     options: defaultOptions,
                     transaction: defaultTransaction,
+                    derivationPath: "44'/60'/0'/0/0",
                   },
                 }),
               );
@@ -603,14 +532,6 @@ describe("SignTransactionDeviceAction", () => {
         });
 
         // Mock the dependencies to return some sample data
-        getChallengeMock.mockResolvedValueOnce(
-          CommandResultFactory({
-            data: { challenge: "challenge" },
-          }),
-        );
-        getWeb3CheckMock.mockResolvedValueOnce({
-          web3Check: null,
-        });
         buildContextMock.mockResolvedValueOnce({
           clearSignContexts: {
             transactionInfo: "payload-1",
@@ -624,6 +545,7 @@ describe("SignTransactionDeviceAction", () => {
           serializedTransaction: new Uint8Array([0x01, 0x02, 0x03]),
           chainId: 7,
           transactionType: TransactionType.EIP1559,
+          web3Check: null,
         });
 
         provideGenericContextMock.mockResolvedValueOnce(
@@ -649,7 +571,7 @@ describe("SignTransactionDeviceAction", () => {
         );
 
         // Expected intermediate values for the following state sequence:
-        //   Initial -> OpenApp -> GetChallenge -> BuildContext -> ProvideGenericContext -> SignTransaction
+        //   Initial -> OpenApp -> BuildContext -> ProvideGenericContext -> SignTransaction
         const expectedStates: Array<SignTransactionDAState> = [
           // Initial state
           {
@@ -662,20 +584,6 @@ describe("SignTransactionDeviceAction", () => {
           {
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.ConfirmOpenApp,
-            },
-            status: DeviceActionStatus.Pending,
-          },
-          // GetChallenge state
-          {
-            intermediateValue: {
-              requiredUserInteraction: UserInteractionRequired.None,
-            },
-            status: DeviceActionStatus.Pending,
-          },
-          // GetWeb3Checks state
-          {
-            intermediateValue: {
-              requiredUserInteraction: UserInteractionRequired.None,
             },
             status: DeviceActionStatus.Pending,
           },
@@ -719,15 +627,14 @@ describe("SignTransactionDeviceAction", () => {
             onError: reject,
             onDone: () => {
               // Verify mocks calls parameters
-              expect(getChallengeMock).toHaveBeenCalled();
               expect(buildContextMock).toHaveBeenCalledWith(
                 expect.objectContaining({
                   input: {
-                    challenge: "challenge",
                     contextModule: contextModuleMock,
                     mapper: mapperMock,
                     options: defaultOptions,
                     transaction: defaultTransaction,
+                    derivationPath: "44'/60'/0'/0/0",
                   },
                 }),
               );
@@ -770,156 +677,6 @@ describe("SignTransactionDeviceAction", () => {
         );
       }));
 
-    it("should continue if getChallenge return an error 6d00 not supported", () =>
-      new Promise<void>((resolve, reject) => {
-        setupOpenAppDAMock();
-
-        const deviceAction = new SignTransactionDeviceAction({
-          input: {
-            derivationPath: "44'/60'/0'/0/0",
-            transaction: defaultTransaction,
-            options: defaultOptions,
-            contextModule: contextModuleMock,
-            mapper: mapperMock,
-            parser: parserMock,
-          },
-        });
-
-        // Mock the dependencies to return some sample data
-        getChallengeMock.mockResolvedValueOnce(
-          CommandResultFactory({
-            error: new UnknownDeviceExchangeError({
-              message: "UnknownError",
-              errorCode: "6d00",
-            }),
-          }),
-        );
-        getWeb3CheckMock.mockResolvedValueOnce({
-          web3Check: null,
-        });
-        buildContextMock.mockResolvedValueOnce({
-          clearSignContexts: [],
-          serializedTransaction: new Uint8Array([0x01, 0x02, 0x03]),
-          chainId: 7,
-          transactionType: TransactionType.EIP1559,
-        });
-
-        provideGenericContextMock.mockResolvedValueOnce(Nothing);
-
-        signTransactionMock.mockResolvedValueOnce(
-          CommandResultFactory({
-            data: {
-              v: 0x1c,
-              r: "0x8a540510e13b0f2b11a451275716d29e08caad07e89a1c84964782fb5e1ad788",
-              s: "0x64a0de235b270fbe81e8e40688f4a9f9ad9d283d690552c9331d7773ceafa513",
-            },
-          }),
-        );
-
-        vi.spyOn(deviceAction, "extractDependencies").mockReturnValue(
-          extractDependenciesMock(),
-        );
-
-        // Expected intermediate values for the following state sequence:
-        //   Initial -> OpenApp -> GetChallenge -> BuildContext -> ProvideGenericContext -> SignTransaction
-        const expectedStates: Array<SignTransactionDAState> = [
-          // Initial state
-          {
-            intermediateValue: {
-              requiredUserInteraction: UserInteractionRequired.None,
-            },
-            status: DeviceActionStatus.Pending,
-          },
-          // OpenApp interaction
-          {
-            intermediateValue: {
-              requiredUserInteraction: UserInteractionRequired.ConfirmOpenApp,
-            },
-            status: DeviceActionStatus.Pending,
-          },
-          // GetChallenge state
-          {
-            intermediateValue: {
-              requiredUserInteraction: UserInteractionRequired.None,
-            },
-            status: DeviceActionStatus.Pending,
-          },
-          // GetWeb3Checks state
-          {
-            intermediateValue: {
-              requiredUserInteraction: UserInteractionRequired.None,
-            },
-            status: DeviceActionStatus.Pending,
-          },
-          // BuildContext state
-          {
-            intermediateValue: {
-              requiredUserInteraction: UserInteractionRequired.None,
-            },
-            status: DeviceActionStatus.Pending,
-          },
-          // ProvideContext state
-          {
-            intermediateValue: {
-              requiredUserInteraction: UserInteractionRequired.None,
-            },
-            status: DeviceActionStatus.Pending,
-          },
-          // SignTransaction state
-          {
-            intermediateValue: {
-              requiredUserInteraction: UserInteractionRequired.SignTransaction,
-            },
-            status: DeviceActionStatus.Pending,
-          },
-          // Final state
-          {
-            output: {
-              v: 0x1c,
-              r: "0x8a540510e13b0f2b11a451275716d29e08caad07e89a1c84964782fb5e1ad788",
-              s: "0x64a0de235b270fbe81e8e40688f4a9f9ad9d283d690552c9331d7773ceafa513",
-            },
-            status: DeviceActionStatus.Completed,
-          },
-        ];
-
-        testDeviceActionStates(
-          deviceAction,
-          expectedStates,
-          makeDeviceActionInternalApiMock(),
-          {
-            onError: reject,
-            onDone: () => {
-              // Verify mocks calls parameters
-              expect(getChallengeMock).toHaveBeenCalled();
-              expect(buildContextMock).toHaveBeenCalledWith(
-                expect.objectContaining({
-                  input: {
-                    challenge: null,
-                    contextModule: contextModuleMock,
-                    mapper: mapperMock,
-                    options: defaultOptions,
-                    transaction: defaultTransaction,
-                  },
-                }),
-              );
-              expect(signTransactionMock).toHaveBeenCalledWith(
-                expect.objectContaining({
-                  input: {
-                    derivationPath: "44'/60'/0'/0/0",
-                    serializedTransaction: new Uint8Array([0x01, 0x02, 0x03]),
-                    isLegacy: true,
-                    chainId: 7,
-                    transactionType: TransactionType.EIP1559,
-                  },
-                }),
-              );
-              resolve();
-            },
-          },
-        );
-      }));
-
     it("should provide web3checks context if getWeb3Check return a value", () =>
       new Promise<void>((resolve, reject) => {
         setupOpenAppDAMock();
@@ -936,20 +693,6 @@ describe("SignTransactionDeviceAction", () => {
         });
 
         // Mock the dependencies to return some sample data
-        getChallengeMock.mockResolvedValueOnce(
-          CommandResultFactory({
-            data: { challenge: "challenge" },
-          }),
-        );
-        getWeb3CheckMock.mockResolvedValueOnce({
-          web3Check: {
-            type: ClearSignContextType.ENUM,
-            id: 1,
-            payload: "0x01020304",
-            value: 1,
-            certificate: undefined,
-          },
-        });
         buildContextMock.mockResolvedValueOnce({
           clearSignContexts: [
             {
@@ -960,6 +703,13 @@ describe("SignTransactionDeviceAction", () => {
           serializedTransaction: new Uint8Array([0x01, 0x02, 0x03]),
           chainId: 1,
           transactionType: TransactionType.LEGACY,
+          web3Check: {
+            type: ClearSignContextType.ENUM,
+            id: 1,
+            payload: "0x01020304",
+            value: 1,
+            certificate: undefined,
+          },
         });
         provideContextMock.mockResolvedValueOnce(Nothing);
         signTransactionMock.mockResolvedValueOnce(
@@ -976,7 +726,7 @@ describe("SignTransactionDeviceAction", () => {
         );
 
         // Expected intermediate values for the following state sequence:
-        //   Initial -> OpenApp -> GetChallenge -> BuildContext -> ProvideContext -> SignTransaction
+        //   Initial -> OpenApp -> BuildContext -> ProvideContext -> SignTransaction
         const expectedStates: Array<SignTransactionDAState> = [
           // Initial state
           {
@@ -989,20 +739,6 @@ describe("SignTransactionDeviceAction", () => {
           {
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.ConfirmOpenApp,
-            },
-            status: DeviceActionStatus.Pending,
-          },
-          // GetChallenge state
-          {
-            intermediateValue: {
-              requiredUserInteraction: UserInteractionRequired.None,
-            },
-            status: DeviceActionStatus.Pending,
-          },
-          // GetWeb3Checks state
-          {
-            intermediateValue: {
-              requiredUserInteraction: UserInteractionRequired.None,
             },
             status: DeviceActionStatus.Pending,
           },
@@ -1046,15 +782,14 @@ describe("SignTransactionDeviceAction", () => {
             onError: reject,
             onDone: () => {
               // Verify mocks calls parameters
-              expect(getChallengeMock).toHaveBeenCalled();
               expect(buildContextMock).toHaveBeenCalledWith(
                 expect.objectContaining({
                   input: {
-                    challenge: "challenge",
                     contextModule: contextModuleMock,
                     mapper: mapperMock,
                     options: defaultOptions,
                     transaction: defaultTransaction,
+                    derivationPath: "44'/60'/0'/0/0",
                   },
                 }),
               );
@@ -1074,169 +809,6 @@ describe("SignTransactionDeviceAction", () => {
                       value: 1,
                       certificate: undefined,
                     },
-                  },
-                }),
-              );
-              expect(signTransactionMock).toHaveBeenCalledWith(
-                expect.objectContaining({
-                  input: {
-                    derivationPath: "44'/60'/0'/0/0",
-                    serializedTransaction: new Uint8Array([0x01, 0x02, 0x03]),
-                    isLegacy: true,
-                    chainId: 1,
-                    transactionType: TransactionType.LEGACY,
-                  },
-                }),
-              );
-              resolve();
-            },
-          },
-        );
-      }));
-
-    it("should ignore web3checks errors", () =>
-      new Promise<void>((resolve, reject) => {
-        setupOpenAppDAMock();
-
-        const deviceAction = new SignTransactionDeviceAction({
-          input: {
-            derivationPath: "44'/60'/0'/0/0",
-            transaction: defaultTransaction,
-            options: defaultOptions,
-            contextModule: contextModuleMock,
-            mapper: mapperMock,
-            parser: parserMock,
-          },
-        });
-
-        // Mock the dependencies to return some sample data
-        getChallengeMock.mockResolvedValueOnce(
-          CommandResultFactory({
-            data: { challenge: "challenge" },
-          }),
-        );
-        getWeb3CheckMock.mockResolvedValueOnce({
-          web3Check: null,
-          error: new InvalidStatusWordError("getWeb3Check error"),
-        });
-        buildContextMock.mockResolvedValueOnce({
-          clearSignContexts: [
-            {
-              type: "token",
-              payload: "payload-1",
-            },
-          ],
-          serializedTransaction: new Uint8Array([0x01, 0x02, 0x03]),
-          chainId: 1,
-          transactionType: TransactionType.LEGACY,
-        });
-        provideContextMock.mockResolvedValueOnce(Nothing);
-        signTransactionMock.mockResolvedValueOnce(
-          CommandResultFactory({
-            data: {
-              v: 0x1c,
-              r: "0x8a540510e13b0f2b11a451275716d29e08caad07e89a1c84964782fb5e1ad788",
-              s: "0x64a0de235b270fbe81e8e40688f4a9f9ad9d283d690552c9331d7773ceafa513",
-            },
-          }),
-        );
-        vi.spyOn(deviceAction, "extractDependencies").mockReturnValue(
-          extractDependenciesMock(),
-        );
-
-        // Expected intermediate values for the following state sequence:
-        //   Initial -> OpenApp -> GetChallenge -> BuildContext -> ProvideContext -> SignTransaction
-        const expectedStates: Array<SignTransactionDAState> = [
-          // Initial state
-          {
-            intermediateValue: {
-              requiredUserInteraction: UserInteractionRequired.None,
-            },
-            status: DeviceActionStatus.Pending,
-          },
-          // OpenApp interaction
-          {
-            intermediateValue: {
-              requiredUserInteraction: UserInteractionRequired.ConfirmOpenApp,
-            },
-            status: DeviceActionStatus.Pending,
-          },
-          // GetChallenge state
-          {
-            intermediateValue: {
-              requiredUserInteraction: UserInteractionRequired.None,
-            },
-            status: DeviceActionStatus.Pending,
-          },
-          // GetWeb3Checks state
-          {
-            intermediateValue: {
-              requiredUserInteraction: UserInteractionRequired.None,
-            },
-            status: DeviceActionStatus.Pending,
-          },
-          // BuildContext state
-          {
-            intermediateValue: {
-              requiredUserInteraction: UserInteractionRequired.None,
-            },
-            status: DeviceActionStatus.Pending,
-          },
-          // ProvideContext state
-          {
-            intermediateValue: {
-              requiredUserInteraction: UserInteractionRequired.None,
-            },
-            status: DeviceActionStatus.Pending,
-          },
-          // SignTransaction state
-          {
-            intermediateValue: {
-              requiredUserInteraction: UserInteractionRequired.SignTransaction,
-            },
-            status: DeviceActionStatus.Pending,
-          },
-          // Final state
-          {
-            output: {
-              v: 0x1c,
-              r: "0x8a540510e13b0f2b11a451275716d29e08caad07e89a1c84964782fb5e1ad788",
-              s: "0x64a0de235b270fbe81e8e40688f4a9f9ad9d283d690552c9331d7773ceafa513",
-            },
-            status: DeviceActionStatus.Completed,
-          },
-        ];
-
-        testDeviceActionStates(
-          deviceAction,
-          expectedStates,
-          makeDeviceActionInternalApiMock(),
-          {
-            onError: reject,
-            onDone: () => {
-              // Verify mocks calls parameters
-              expect(getChallengeMock).toHaveBeenCalled();
-              expect(buildContextMock).toHaveBeenCalledWith(
-                expect.objectContaining({
-                  input: {
-                    challenge: "challenge",
-                    contextModule: contextModuleMock,
-                    mapper: mapperMock,
-                    options: defaultOptions,
-                    transaction: defaultTransaction,
-                  },
-                }),
-              );
-              expect(provideContextMock).toHaveBeenCalledWith(
-                expect.objectContaining({
-                  input: {
-                    clearSignContexts: [
-                      {
-                        type: "token",
-                        payload: "payload-1",
-                      },
-                    ],
-                    web3Check: null,
                   },
                 }),
               );
@@ -1314,212 +886,6 @@ describe("SignTransactionDeviceAction", () => {
       }));
   });
 
-  describe("GetChallenge errors", () => {
-    it("should fail if getChallenge throws an error", () =>
-      new Promise<void>((resolve, reject) => {
-        setupOpenAppDAMock();
-
-        const deviceAction = new SignTransactionDeviceAction({
-          input: {
-            derivationPath: "44'/60'/0'/0/0",
-            transaction: defaultTransaction,
-            options: defaultOptions,
-            contextModule: contextModuleMock,
-            mapper: mapperMock,
-            parser: parserMock,
-          },
-        });
-
-        getChallengeMock.mockRejectedValueOnce(
-          new InvalidStatusWordError("getChallenge error"),
-        );
-        vi.spyOn(deviceAction, "extractDependencies").mockReturnValue(
-          extractDependenciesMock(),
-        );
-
-        const expectedStates: Array<SignTransactionDAState> = [
-          // Initial state
-          {
-            intermediateValue: {
-              requiredUserInteraction: UserInteractionRequired.None,
-            },
-            status: DeviceActionStatus.Pending,
-          },
-          // OpenApp interaction
-          {
-            intermediateValue: {
-              requiredUserInteraction: UserInteractionRequired.ConfirmOpenApp,
-            },
-            status: DeviceActionStatus.Pending,
-          },
-          // GetChallenge state
-          {
-            intermediateValue: {
-              requiredUserInteraction: UserInteractionRequired.None,
-            },
-            status: DeviceActionStatus.Pending,
-          },
-          // GetChallenge error
-          {
-            error: new InvalidStatusWordError("getChallenge error"),
-            status: DeviceActionStatus.Error,
-          },
-        ];
-
-        testDeviceActionStates(
-          deviceAction,
-          expectedStates,
-          makeDeviceActionInternalApiMock(),
-          {
-            onError: reject,
-            onDone: resolve,
-          },
-        );
-      }));
-
-    it("should fail if getChallenge return an error", () =>
-      new Promise<void>((resolve, reject) => {
-        setupOpenAppDAMock();
-
-        const deviceAction = new SignTransactionDeviceAction({
-          input: {
-            derivationPath: "44'/60'/0'/0/0",
-            transaction: defaultTransaction,
-            options: defaultOptions,
-            contextModule: contextModuleMock,
-            mapper: mapperMock,
-            parser: parserMock,
-          },
-        });
-
-        getChallengeMock.mockResolvedValueOnce(
-          CommandResultFactory({
-            error: new InvalidStatusWordError("getChallenge error"),
-          }),
-        );
-        vi.spyOn(deviceAction, "extractDependencies").mockReturnValue(
-          extractDependenciesMock(),
-        );
-
-        const expectedStates: Array<SignTransactionDAState> = [
-          // Initial state
-          {
-            intermediateValue: {
-              requiredUserInteraction: UserInteractionRequired.None,
-            },
-            status: DeviceActionStatus.Pending,
-          },
-          // OpenApp interaction
-          {
-            intermediateValue: {
-              requiredUserInteraction: UserInteractionRequired.ConfirmOpenApp,
-            },
-            status: DeviceActionStatus.Pending,
-          },
-          // GetChallenge state
-          {
-            intermediateValue: {
-              requiredUserInteraction: UserInteractionRequired.None,
-            },
-            status: DeviceActionStatus.Pending,
-          },
-          // GetChallenge error
-          {
-            error: new InvalidStatusWordError("getChallenge error"),
-            status: DeviceActionStatus.Error,
-          },
-        ];
-
-        testDeviceActionStates(
-          deviceAction,
-          expectedStates,
-          makeDeviceActionInternalApiMock(),
-          {
-            onError: reject,
-            onDone: resolve,
-          },
-        );
-      }));
-  });
-
-  describe("GetWeb3Checks errors", () => {
-    it("should fail if GetWeb3Checks throws an error", () =>
-      new Promise<void>((resolve, reject) => {
-        setupOpenAppDAMock();
-
-        const deviceAction = new SignTransactionDeviceAction({
-          input: {
-            derivationPath: "44'/60'/0'/0/0",
-            transaction: defaultTransaction,
-            options: defaultOptions,
-            contextModule: contextModuleMock,
-            mapper: mapperMock,
-            parser: parserMock,
-          },
-        });
-
-        getChallengeMock.mockResolvedValueOnce(
-          CommandResultFactory({
-            data: { challenge: "challenge" },
-          }),
-        );
-        getWeb3CheckMock.mockRejectedValueOnce(
-          new InvalidStatusWordError("getWeb3Checks error"),
-        );
-        vi.spyOn(deviceAction, "extractDependencies").mockReturnValue(
-          extractDependenciesMock(),
-        );
-
-        const expectedStates: Array<SignTransactionDAState> = [
-          // Initial state
-          {
-            intermediateValue: {
-              requiredUserInteraction: UserInteractionRequired.None,
-            },
-            status: DeviceActionStatus.Pending,
-          },
-          // OpenApp interaction
-          {
-            intermediateValue: {
-              requiredUserInteraction: UserInteractionRequired.ConfirmOpenApp,
-            },
-            status: DeviceActionStatus.Pending,
-          },
-          // GetChallenge state
-          {
-            intermediateValue: {
-              requiredUserInteraction: UserInteractionRequired.None,
-            },
-            status: DeviceActionStatus.Pending,
-          },
-          // GetWeb3Checks state
-          {
-            intermediateValue: {
-              requiredUserInteraction: UserInteractionRequired.None,
-            },
-            status: DeviceActionStatus.Pending,
-          },
-          // GetWeb3Checks error
-          {
-            error: new InvalidStatusWordError("getWeb3Checks error"),
-            status: DeviceActionStatus.Error,
-          },
-        ];
-
-        testDeviceActionStates(
-          deviceAction,
-          expectedStates,
-          makeDeviceActionInternalApiMock(),
-          {
-            onError: reject,
-            onDone: () => {
-              resolve();
-            },
-          },
-        );
-      }));
-  });
-
   describe("BuildContext errors", () => {
     it("should fail if buildContext throws an error", () =>
       new Promise<void>((resolve, reject) => {
@@ -1536,14 +902,6 @@ describe("SignTransactionDeviceAction", () => {
           },
         });
 
-        getChallengeMock.mockResolvedValueOnce(
-          CommandResultFactory({
-            data: { challenge: "challenge" },
-          }),
-        );
-        getWeb3CheckMock.mockResolvedValueOnce({
-          web3Check: null,
-        });
         buildContextMock.mockRejectedValueOnce(
           new InvalidStatusWordError("buildContext error"),
         );
@@ -1563,20 +921,6 @@ describe("SignTransactionDeviceAction", () => {
           {
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.ConfirmOpenApp,
-            },
-            status: DeviceActionStatus.Pending,
-          },
-          // GetChallenge state
-          {
-            intermediateValue: {
-              requiredUserInteraction: UserInteractionRequired.None,
-            },
-            status: DeviceActionStatus.Pending,
-          },
-          // GetWeb3Check state
-          {
-            intermediateValue: {
-              requiredUserInteraction: UserInteractionRequired.None,
             },
             status: DeviceActionStatus.Pending,
           },
@@ -1622,14 +966,6 @@ describe("SignTransactionDeviceAction", () => {
           },
         });
 
-        getChallengeMock.mockResolvedValueOnce(
-          CommandResultFactory({
-            data: { challenge: "challenge" },
-          }),
-        );
-        getWeb3CheckMock.mockResolvedValueOnce({
-          web3Check: null,
-        });
         buildContextMock.mockResolvedValueOnce({
           clearSignContexts: [
             {
@@ -1638,6 +974,7 @@ describe("SignTransactionDeviceAction", () => {
             },
           ],
           serializedTransaction: new Uint8Array([0x01, 0x02, 0x03]),
+          web3Check: null,
         });
         provideContextMock.mockRejectedValueOnce(
           new InvalidStatusWordError("provideContext error"),
@@ -1658,20 +995,6 @@ describe("SignTransactionDeviceAction", () => {
           {
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.ConfirmOpenApp,
-            },
-            status: DeviceActionStatus.Pending,
-          },
-          // GetChallenge state
-          {
-            intermediateValue: {
-              requiredUserInteraction: UserInteractionRequired.None,
-            },
-            status: DeviceActionStatus.Pending,
-          },
-          // GetWeb3Check state
-          {
-            intermediateValue: {
-              requiredUserInteraction: UserInteractionRequired.None,
             },
             status: DeviceActionStatus.Pending,
           },
@@ -1724,14 +1047,6 @@ describe("SignTransactionDeviceAction", () => {
           },
         });
 
-        getChallengeMock.mockResolvedValueOnce(
-          CommandResultFactory({
-            data: { challenge: "challenge" },
-          }),
-        );
-        getWeb3CheckMock.mockResolvedValueOnce({
-          web3Check: null,
-        });
         buildContextMock.mockResolvedValueOnce({
           clearSignContexts: [
             {
@@ -1740,6 +1055,7 @@ describe("SignTransactionDeviceAction", () => {
             },
           ],
           serializedTransaction: new Uint8Array([0x01, 0x02, 0x03]),
+          web3Check: null,
         });
         provideContextMock.mockResolvedValueOnce(Nothing);
         signTransactionMock.mockResolvedValueOnce(
@@ -1763,20 +1079,6 @@ describe("SignTransactionDeviceAction", () => {
           {
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.ConfirmOpenApp,
-            },
-            status: DeviceActionStatus.Pending,
-          },
-          // GetChallenge state
-          {
-            intermediateValue: {
-              requiredUserInteraction: UserInteractionRequired.None,
-            },
-            status: DeviceActionStatus.Pending,
-          },
-          // GetWeb3Check state
-          {
-            intermediateValue: {
-              requiredUserInteraction: UserInteractionRequired.None,
             },
             status: DeviceActionStatus.Pending,
           },

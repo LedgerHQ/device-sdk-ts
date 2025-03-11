@@ -1,13 +1,16 @@
 import {
   type ClearSignContext,
+  type ClearSignContextSuccess,
   ClearSignContextType,
   type PkiCertificate,
 } from "@ledgerhq/context-module";
 import {
+  CommandResultFactory,
   DeviceModelId,
   DeviceSessionStateType,
   DeviceStatus,
   hexaStringToBuffer,
+  UnknownDeviceExchangeError,
 } from "@ledgerhq/device-management-kit";
 import { Transaction } from "ethers";
 import { Left, Right } from "purify-ts";
@@ -49,16 +52,23 @@ describe("BuildTransactionContextTask", () => {
 
   let defaultArgs: BuildTransactionContextTaskArgs;
   const apiMock = makeDeviceActionInternalApiMock();
+  const getWeb3ChecksFactoryMock = vi.fn();
 
   beforeEach(() => {
     vi.resetAllMocks();
+    apiMock.sendCommand.mockResolvedValue(
+      CommandResultFactory({ data: { challenge: "challenge" } }),
+    );
+    getWeb3ChecksFactoryMock.mockReturnValue({
+      run: async () => ({ web3Check: null }),
+    });
 
     defaultArgs = {
       contextModule: contextModuleMock,
       mapper: mapperMock as unknown as TransactionMapperService,
       transaction: defaultTransaction,
       options: defaultOptions,
-      challenge: "challenge",
+      derivationPath: "44'/60'/0'/0/0",
     };
   });
 
@@ -86,6 +96,7 @@ describe("BuildTransactionContextTask", () => {
     const result = await new BuildTransactionContextTask(
       apiMock,
       defaultArgs,
+      getWeb3ChecksFactoryMock,
     ).run();
 
     // THEN
@@ -94,6 +105,49 @@ describe("BuildTransactionContextTask", () => {
       serializedTransaction,
       chainId: 1,
       transactionType: 0,
+      web3Check: null,
+    });
+  });
+
+  it("should build the transaction context with web3checks", async () => {
+    // GIVEN
+    const serializedTransaction = new Uint8Array([0x01, 0x02, 0x03]);
+    const clearSignContexts: ClearSignContext[] = [];
+    const mapperResult: TransactionMapperResult = {
+      subset: { chainId: 1, to: undefined, data: "0x" },
+      serializedTransaction,
+      type: 0,
+    };
+    const expectedWeb3Check =
+      "web3Check" as unknown as ClearSignContextSuccess<ClearSignContextType.WEB3_CHECK>;
+    getWeb3ChecksFactoryMock.mockReturnValueOnce({
+      run: async () => ({ web3Check: expectedWeb3Check }),
+    });
+    mapperMock.mapTransactionToSubset.mockReturnValueOnce(Right(mapperResult));
+    contextModuleMock.getContexts.mockResolvedValueOnce(clearSignContexts);
+    apiMock.getDeviceSessionState.mockReturnValueOnce({
+      sessionStateType: DeviceSessionStateType.ReadyWithoutSecureChannel,
+      deviceStatus: DeviceStatus.CONNECTED,
+      installedApps: [],
+      currentApp: { name: "Ethereum", version: "1.12.0" },
+      deviceModelId: DeviceModelId.FLEX,
+      isSecureConnectionAllowed: false,
+    });
+
+    // WHEN
+    const result = await new BuildTransactionContextTask(
+      apiMock,
+      defaultArgs,
+      getWeb3ChecksFactoryMock,
+    ).run();
+
+    // THEN
+    expect(result).toEqual({
+      clearSignContexts,
+      serializedTransaction,
+      chainId: 1,
+      transactionType: 0,
+      web3Check: expectedWeb3Check,
     });
   });
 
@@ -130,6 +184,7 @@ describe("BuildTransactionContextTask", () => {
     const result = await new BuildTransactionContextTask(
       apiMock,
       defaultArgs,
+      getWeb3ChecksFactoryMock,
     ).run();
 
     // THEN
@@ -138,6 +193,7 @@ describe("BuildTransactionContextTask", () => {
       serializedTransaction,
       chainId: 1,
       transactionType: 2,
+      web3Check: null,
     });
   });
 
@@ -186,6 +242,7 @@ describe("BuildTransactionContextTask", () => {
     const result = await new BuildTransactionContextTask(
       apiMock,
       defaultArgs,
+      getWeb3ChecksFactoryMock,
     ).run();
 
     // THEN
@@ -199,6 +256,7 @@ describe("BuildTransactionContextTask", () => {
       serializedTransaction,
       chainId: 1,
       transactionType: 2,
+      web3Check: null,
     });
   });
 
@@ -247,6 +305,7 @@ describe("BuildTransactionContextTask", () => {
     const result = await new BuildTransactionContextTask(
       apiMock,
       defaultArgs,
+      getWeb3ChecksFactoryMock,
     ).run();
 
     // THEN
@@ -260,6 +319,7 @@ describe("BuildTransactionContextTask", () => {
       serializedTransaction,
       chainId: 1,
       transactionType: 2,
+      web3Check: null,
     });
   });
 
@@ -284,12 +344,52 @@ describe("BuildTransactionContextTask", () => {
     });
 
     // WHEN
-    await new BuildTransactionContextTask(apiMock, defaultArgs).run();
+    await new BuildTransactionContextTask(
+      apiMock,
+      defaultArgs,
+      getWeb3ChecksFactoryMock,
+    ).run();
 
     // THEN
     expect(mapperMock.mapTransactionToSubset).toHaveBeenCalledWith(
       defaultTransaction,
     );
+  });
+
+  it("should call the web3checks factory with correct parameters", async () => {
+    // GIVEN
+    const serializedTransaction = new Uint8Array([0x01, 0x02, 0x03]);
+    const clearSignContexts: ClearSignContext[] = [];
+    const mapperResult: TransactionMapperResult = {
+      subset: { chainId: 1, to: undefined, data: "0x" },
+      serializedTransaction,
+      type: 0,
+    };
+    mapperMock.mapTransactionToSubset.mockReturnValueOnce(Right(mapperResult));
+    contextModuleMock.getContexts.mockResolvedValueOnce(clearSignContexts);
+    apiMock.getDeviceSessionState.mockReturnValueOnce({
+      sessionStateType: DeviceSessionStateType.ReadyWithoutSecureChannel,
+      deviceStatus: DeviceStatus.CONNECTED,
+      installedApps: [],
+      currentApp: { name: "Ethereum", version: "1.12.0" },
+      deviceModelId: DeviceModelId.FLEX,
+      isSecureConnectionAllowed: false,
+    });
+
+    // WHEN
+    await new BuildTransactionContextTask(
+      apiMock,
+      defaultArgs,
+      getWeb3ChecksFactoryMock,
+    ).run();
+
+    // THEN
+    expect(getWeb3ChecksFactoryMock).toHaveBeenCalledWith(apiMock, {
+      contextModule: contextModuleMock,
+      derivationPath: "44'/60'/0'/0/0",
+      mapper: mapperMock,
+      transaction: defaultTransaction,
+    });
   });
 
   it("should call the context module with the correct parameters", async () => {
@@ -313,12 +413,55 @@ describe("BuildTransactionContextTask", () => {
     });
 
     // WHEN
-    await new BuildTransactionContextTask(apiMock, defaultArgs).run();
+    await new BuildTransactionContextTask(
+      apiMock,
+      defaultArgs,
+      getWeb3ChecksFactoryMock,
+    ).run();
 
     // THEN
     expect(contextModuleMock.getContexts).toHaveBeenCalledWith({
       deviceModelId: DeviceModelId.FLEX,
       challenge: "challenge",
+      domain: "domain-name.eth",
+      ...mapperResult.subset,
+    });
+  });
+
+  it("should call the context module without context on error", async () => {
+    // GIVEN
+    const serializedTransaction = new Uint8Array([0x01, 0x02, 0x03]);
+    const clearSignContexts: ClearSignContext[] = [];
+    const mapperResult: TransactionMapperResult = {
+      subset: { chainId: 1, to: undefined, data: "0x" },
+      serializedTransaction,
+      type: 0,
+    };
+    mapperMock.mapTransactionToSubset.mockReturnValueOnce(Right(mapperResult));
+    contextModuleMock.getContexts.mockResolvedValueOnce(clearSignContexts);
+    apiMock.getDeviceSessionState.mockReturnValueOnce({
+      sessionStateType: DeviceSessionStateType.ReadyWithoutSecureChannel,
+      deviceStatus: DeviceStatus.CONNECTED,
+      installedApps: [],
+      currentApp: { name: "Ethereum", version: "1.12.0" },
+      deviceModelId: DeviceModelId.FLEX,
+      isSecureConnectionAllowed: false,
+    });
+    apiMock.sendCommand.mockResolvedValueOnce(
+      CommandResultFactory({ error: new UnknownDeviceExchangeError() }),
+    );
+
+    // WHEN
+    await new BuildTransactionContextTask(
+      apiMock,
+      defaultArgs,
+      getWeb3ChecksFactoryMock,
+    ).run();
+
+    // THEN
+    expect(contextModuleMock.getContexts).toHaveBeenCalledWith({
+      deviceModelId: DeviceModelId.FLEX,
+      challenge: undefined,
       domain: "domain-name.eth",
       ...mapperResult.subset,
     });
@@ -338,7 +481,11 @@ describe("BuildTransactionContextTask", () => {
     });
 
     // WHEN
-    const task = new BuildTransactionContextTask(apiMock, defaultArgs);
+    const task = new BuildTransactionContextTask(
+      apiMock,
+      defaultArgs,
+      getWeb3ChecksFactoryMock,
+    );
 
     // THEN
     await expect(task.run()).rejects.toThrow(error);
@@ -385,6 +532,7 @@ describe("BuildTransactionContextTask", () => {
     const result = await new BuildTransactionContextTask(
       apiMock,
       defaultArgs,
+      getWeb3ChecksFactoryMock,
     ).run();
 
     // THEN
@@ -393,6 +541,7 @@ describe("BuildTransactionContextTask", () => {
       serializedTransaction,
       chainId: 1,
       transactionType: 0,
+      web3Check: null,
     });
   });
 
@@ -445,6 +594,7 @@ describe("BuildTransactionContextTask", () => {
     const result = await new BuildTransactionContextTask(
       apiMock,
       defaultArgs,
+      getWeb3ChecksFactoryMock,
     ).run();
 
     // THEN
@@ -453,6 +603,7 @@ describe("BuildTransactionContextTask", () => {
       serializedTransaction,
       chainId: 1,
       transactionType: 0,
+      web3Check: null,
     });
   });
 
@@ -499,6 +650,7 @@ describe("BuildTransactionContextTask", () => {
     const result = await new BuildTransactionContextTask(
       apiMock,
       defaultArgs,
+      getWeb3ChecksFactoryMock,
     ).run();
 
     // THEN
@@ -507,6 +659,7 @@ describe("BuildTransactionContextTask", () => {
       serializedTransaction,
       chainId: 1,
       transactionType: 0,
+      web3Check: null,
     });
   });
 
@@ -559,6 +712,7 @@ describe("BuildTransactionContextTask", () => {
     const result = await new BuildTransactionContextTask(
       apiMock,
       defaultArgs,
+      getWeb3ChecksFactoryMock,
     ).run();
 
     // THEN
@@ -572,6 +726,7 @@ describe("BuildTransactionContextTask", () => {
       serializedTransaction,
       chainId: 1,
       transactionType: 2,
+      web3Check: null,
     });
   });
 
@@ -617,10 +772,11 @@ describe("BuildTransactionContextTask", () => {
     });
 
     // WHEN
-    const result = await new BuildTransactionContextTask(apiMock, {
-      ...defaultArgs,
-      challenge: null,
-    }).run();
+    const result = await new BuildTransactionContextTask(
+      apiMock,
+      defaultArgs,
+      getWeb3ChecksFactoryMock,
+    ).run();
 
     // THEN
     expect(result).toEqual({
@@ -628,6 +784,7 @@ describe("BuildTransactionContextTask", () => {
       serializedTransaction,
       chainId: 1,
       transactionType: 2,
+      web3Check: null,
     });
   });
 
@@ -673,10 +830,11 @@ describe("BuildTransactionContextTask", () => {
     });
 
     // WHEN
-    const result = await new BuildTransactionContextTask(apiMock, {
-      ...defaultArgs,
-      challenge: null,
-    }).run();
+    const result = await new BuildTransactionContextTask(
+      apiMock,
+      defaultArgs,
+      getWeb3ChecksFactoryMock,
+    ).run();
 
     // THEN
     expect(result).toEqual({
@@ -684,6 +842,7 @@ describe("BuildTransactionContextTask", () => {
       serializedTransaction,
       chainId: 1,
       transactionType: 2,
+      web3Check: null,
     });
   });
 
@@ -726,10 +885,11 @@ describe("BuildTransactionContextTask", () => {
     });
 
     // WHEN
-    const result = await new BuildTransactionContextTask(apiMock, {
-      ...defaultArgs,
-      challenge: null,
-    }).run();
+    const result = await new BuildTransactionContextTask(
+      apiMock,
+      defaultArgs,
+      getWeb3ChecksFactoryMock,
+    ).run();
 
     // THEN
     expect(result).toEqual({
@@ -737,6 +897,7 @@ describe("BuildTransactionContextTask", () => {
       serializedTransaction,
       chainId: 1,
       transactionType: 2,
+      web3Check: null,
     });
   });
 
@@ -778,7 +939,11 @@ describe("BuildTransactionContextTask", () => {
     });
 
     // WHEN
-    const task = new BuildTransactionContextTask(apiMock, defaultArgs);
+    const task = new BuildTransactionContextTask(
+      apiMock,
+      defaultArgs,
+      getWeb3ChecksFactoryMock,
+    );
 
     // THEN
     await expect(task.run()).rejects.toThrow("Unsupported app");
@@ -820,7 +985,11 @@ describe("BuildTransactionContextTask", () => {
     });
 
     // WHEN
-    const task = new BuildTransactionContextTask(apiMock, defaultArgs);
+    const task = new BuildTransactionContextTask(
+      apiMock,
+      defaultArgs,
+      getWeb3ChecksFactoryMock,
+    );
 
     // THEN
     await expect(task.run()).rejects.toThrow(
