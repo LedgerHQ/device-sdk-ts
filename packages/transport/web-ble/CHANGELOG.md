@@ -1,5 +1,11 @@
 # @ledgerhq/device-transport-kit-web-ble
 
+## 1.1.0
+
+### Minor Changes
+
+- [#697](https://github.com/LedgerHQ/device-sdk-ts/pull/697) [`6b821aa`](https://github.com/LedgerHQ/device-sdk-ts/commit/6b821aa84936472fd74c32dd226323db005f39aa) Thanks [@valpinkman](https://github.com/valpinkman)! - Rename listenToKnownDevices to listenToAvailableDevices
+
 ## 1.0.0
 
 ### Major Changes
