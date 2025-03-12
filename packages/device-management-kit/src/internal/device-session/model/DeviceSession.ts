@@ -219,7 +219,11 @@ export class DeviceSession {
 
     await new Promise<void>((resolve) => {
       deviceStateSub = this._deviceState.subscribe((state) => {
-        if (state.deviceStatus === DeviceStatus.CONNECTED) {
+        if (
+          [DeviceStatus.LOCKED, DeviceStatus.CONNECTED].includes(
+            state.deviceStatus,
+          )
+        ) {
           deviceStateSub?.unsubscribe();
           resolve();
         }

@@ -1,5 +1,11 @@
 # @ledgerhq/device-management-kit
 
+## 0.6.3
+
+### Patch Changes
+
+- [#732](https://github.com/LedgerHQ/device-sdk-ts/pull/732) [`4c42b21`](https://github.com/LedgerHQ/device-sdk-ts/commit/4c42b214e90096d86883c6faedca02d0ee0b6c64) Thanks [@valpinkman](https://github.com/valpinkman)! - Fix condition in DeviceSession to handle locked device
+
 ## 0.6.2
 
 ### Minor Changes
