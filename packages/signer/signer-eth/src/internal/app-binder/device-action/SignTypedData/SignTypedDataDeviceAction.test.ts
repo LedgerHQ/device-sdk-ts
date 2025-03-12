@@ -3,6 +3,10 @@ import { type ContextModule } from "@ledgerhq/context-module";
 import {
   CommandResultFactory,
   DeviceActionStatus,
+  DeviceModelId,
+  DeviceSessionStateType,
+  DeviceStatus,
+  InvalidStatusWordError,
   UnknownDAError,
   UnknownDeviceExchangeError,
   UserInteractionRequired,
@@ -100,17 +104,33 @@ describe("SignTypedDataDeviceAction", () => {
     getTypedDataFilters: vi.fn(),
     getWeb3Checks: vi.fn(),
   };
+  const apiMock = makeDeviceActionInternalApiMock();
+  const getAppConfigMock = vi.fn();
+  const web3CheckOptInMock = vi.fn();
   const buildContextMock = vi.fn();
   const provideContextMock = vi.fn();
   const signTypedDataMock = vi.fn();
   const signTypedDataLegacyMock = vi.fn();
   function extractDependenciesMock() {
     return {
+      getAppConfig: getAppConfigMock,
+      web3CheckOptIn: web3CheckOptInMock,
       buildContext: buildContextMock,
       provideContext: provideContextMock,
       signTypedData: signTypedDataMock,
       signTypedDataLegacy: signTypedDataLegacyMock,
     };
+  }
+
+  function setupAppVersion(version: string) {
+    apiMock.getDeviceSessionState.mockReturnValueOnce({
+      sessionStateType: DeviceSessionStateType.ReadyWithoutSecureChannel,
+      deviceStatus: DeviceStatus.CONNECTED,
+      installedApps: [],
+      currentApp: { name: "Ethereum", version },
+      deviceModelId: DeviceModelId.FLEX,
+      isSecureConnectionAllowed: false,
+    });
   }
 
   beforeEach(() => {
@@ -121,6 +141,7 @@ describe("SignTypedDataDeviceAction", () => {
     it("should call external dependencies with the correct parameters", () =>
       new Promise<void>((resolve, reject) => {
         setupOpenAppDAMock();
+        setupAppVersion("1.15.0");
 
         const deviceAction = new SignTypedDataDeviceAction({
           input: {
@@ -192,50 +213,47 @@ describe("SignTypedDataDeviceAction", () => {
           },
         ];
 
-        testDeviceActionStates(
-          deviceAction,
-          expectedStates,
-          makeDeviceActionInternalApiMock(),
-          {
-            onError: reject,
-            onDone: () => {
-              // Verify mocks calls parameters
-              expect(buildContextMock).toHaveBeenCalledWith(
-                expect.objectContaining({
-                  input: {
-                    contextModule: mockContextModule,
-                    parser: mockParser,
-                    data: TEST_MESSAGE,
-                    derivationPath: "44'/60'/0'/0/0",
-                  },
-                }),
-              );
+        testDeviceActionStates(deviceAction, expectedStates, apiMock, {
+          onError: reject,
+          onDone: () => {
+            // Verify mocks calls parameters
+            expect(buildContextMock).toHaveBeenCalledWith(
+              expect.objectContaining({
+                input: {
+                  contextModule: mockContextModule,
+                  parser: mockParser,
+                  data: TEST_MESSAGE,
+                  web3ChecksEnabled: false,
+                  derivationPath: "44'/60'/0'/0/0",
+                },
+              }),
+            );
 
-              expect(provideContextMock).toHaveBeenCalledWith(
-                expect.objectContaining({
-                  input: {
-                    taskArgs: TEST_BUILT_CONTEXT,
-                  },
-                }),
-              );
+            expect(provideContextMock).toHaveBeenCalledWith(
+              expect.objectContaining({
+                input: {
+                  taskArgs: TEST_BUILT_CONTEXT,
+                },
+              }),
+            );
 
-              expect(signTypedDataMock).toHaveBeenCalledWith(
-                expect.objectContaining({
-                  input: {
-                    derivationPath: "44'/60'/0'/0/0",
-                  },
-                }),
-              );
+            expect(signTypedDataMock).toHaveBeenCalledWith(
+              expect.objectContaining({
+                input: {
+                  derivationPath: "44'/60'/0'/0/0",
+                },
+              }),
+            );
 
-              resolve();
-            },
+            resolve();
           },
-        );
+        });
       }));
 
     it("should fallback to legacy signing if the new one fails", () =>
       new Promise<void>((resolve, reject) => {
         setupOpenAppDAMock();
+        setupAppVersion("1.15.0");
 
         const deviceAction = new SignTypedDataDeviceAction({
           input: {
@@ -310,20 +328,16 @@ describe("SignTypedDataDeviceAction", () => {
           },
         ];
 
-        testDeviceActionStates(
-          deviceAction,
-          expectedStates,
-          makeDeviceActionInternalApiMock(),
-          {
-            onError: reject,
-            onDone: resolve,
-          },
-        );
+        testDeviceActionStates(deviceAction, expectedStates, apiMock, {
+          onError: reject,
+          onDone: resolve,
+        });
       }));
 
     it("should not fallback to legacy signing if rejected by the user during streaming", () =>
       new Promise<void>((resolve, reject) => {
         setupOpenAppDAMock();
+        setupAppVersion("1.15.0");
 
         const deviceAction = new SignTypedDataDeviceAction({
           input: {
@@ -391,15 +405,376 @@ describe("SignTypedDataDeviceAction", () => {
           },
         ];
 
-        testDeviceActionStates(
-          deviceAction,
-          expectedStates,
-          makeDeviceActionInternalApiMock(),
-          {
-            onError: reject,
-            onDone: resolve,
+        testDeviceActionStates(deviceAction, expectedStates, apiMock, {
+          onError: reject,
+          onDone: resolve,
+        });
+      }));
+  });
+
+  describe("Web3Checks", () => {
+    it("should call external dependencies with web3Checks enabled and supported", () =>
+      new Promise<void>((resolve, reject) => {
+        setupOpenAppDAMock();
+        setupAppVersion("1.16.0");
+
+        const deviceAction = new SignTypedDataDeviceAction({
+          input: {
+            derivationPath: "44'/60'/0'/0/0",
+            data: TEST_MESSAGE,
+            contextModule: mockContextModule,
+            parser: mockParser,
           },
+        });
+
+        // Mock the dependencies to return some sample data
+        vi.spyOn(deviceAction, "extractDependencies").mockReturnValue(
+          extractDependenciesMock(),
         );
+        getAppConfigMock.mockResolvedValue(
+          CommandResultFactory({
+            data: {
+              blindSigningEnabled: false,
+              web3ChecksEnabled: true,
+              web3ChecksOptIn: true,
+              version: "1.16.0",
+            },
+          }),
+        );
+        buildContextMock.mockRejectedValueOnce(
+          new InvalidStatusWordError("buildContext error"),
+        );
+
+        // Expected intermediate values for the following state sequence:
+        //   Initial -> OpenApp -> GetAppConfiguration -> BuildContext
+        const expectedStates: Array<SignTypedDataDAState> = [
+          {
+            intermediateValue: {
+              requiredUserInteraction: UserInteractionRequired.None,
+            },
+            status: DeviceActionStatus.Pending,
+          },
+          {
+            intermediateValue: {
+              requiredUserInteraction: UserInteractionRequired.ConfirmOpenApp,
+            },
+            status: DeviceActionStatus.Pending,
+          },
+          {
+            intermediateValue: {
+              requiredUserInteraction: UserInteractionRequired.None,
+            },
+            status: DeviceActionStatus.Pending,
+          },
+          {
+            intermediateValue: {
+              requiredUserInteraction: UserInteractionRequired.None,
+            },
+            status: DeviceActionStatus.Pending,
+          },
+          {
+            error: new InvalidStatusWordError("buildContext error"),
+            status: DeviceActionStatus.Error,
+          },
+        ];
+
+        testDeviceActionStates(deviceAction, expectedStates, apiMock, {
+          onError: reject,
+          onDone: () => {
+            // Verify mocks calls parameters
+            expect(getAppConfigMock).toHaveBeenCalled();
+            expect(buildContextMock).toHaveBeenCalledWith(
+              expect.objectContaining({
+                input: {
+                  contextModule: mockContextModule,
+                  parser: mockParser,
+                  data: TEST_MESSAGE,
+                  web3ChecksEnabled: true,
+                  derivationPath: "44'/60'/0'/0/0",
+                },
+              }),
+            );
+            resolve();
+          },
+        });
+      }));
+
+    it("should call external dependencies with web3Checks supported but disabled", () =>
+      new Promise<void>((resolve, reject) => {
+        setupOpenAppDAMock();
+        setupAppVersion("1.16.0");
+
+        const deviceAction = new SignTypedDataDeviceAction({
+          input: {
+            derivationPath: "44'/60'/0'/0/0",
+            data: TEST_MESSAGE,
+            contextModule: mockContextModule,
+            parser: mockParser,
+          },
+        });
+
+        // Mock the dependencies to return some sample data
+        vi.spyOn(deviceAction, "extractDependencies").mockReturnValue(
+          extractDependenciesMock(),
+        );
+        getAppConfigMock.mockResolvedValue(
+          CommandResultFactory({
+            data: {
+              blindSigningEnabled: false,
+              web3ChecksEnabled: false,
+              web3ChecksOptIn: true,
+              version: "1.16.0",
+            },
+          }),
+        );
+        buildContextMock.mockRejectedValueOnce(
+          new InvalidStatusWordError("buildContext error"),
+        );
+
+        // Expected intermediate values for the following state sequence:
+        //   Initial -> OpenApp -> GetAppConfiguration -> BuildContext
+        const expectedStates: Array<SignTypedDataDAState> = [
+          {
+            intermediateValue: {
+              requiredUserInteraction: UserInteractionRequired.None,
+            },
+            status: DeviceActionStatus.Pending,
+          },
+          {
+            intermediateValue: {
+              requiredUserInteraction: UserInteractionRequired.ConfirmOpenApp,
+            },
+            status: DeviceActionStatus.Pending,
+          },
+          {
+            intermediateValue: {
+              requiredUserInteraction: UserInteractionRequired.None,
+            },
+            status: DeviceActionStatus.Pending,
+          },
+          {
+            intermediateValue: {
+              requiredUserInteraction: UserInteractionRequired.None,
+            },
+            status: DeviceActionStatus.Pending,
+          },
+          {
+            error: new InvalidStatusWordError("buildContext error"),
+            status: DeviceActionStatus.Error,
+          },
+        ];
+
+        testDeviceActionStates(deviceAction, expectedStates, apiMock, {
+          onError: reject,
+          onDone: () => {
+            // Verify mocks calls parameters
+            expect(getAppConfigMock).toHaveBeenCalled();
+            expect(buildContextMock).toHaveBeenCalledWith(
+              expect.objectContaining({
+                input: {
+                  contextModule: mockContextModule,
+                  parser: mockParser,
+                  data: TEST_MESSAGE,
+                  web3ChecksEnabled: false,
+                  derivationPath: "44'/60'/0'/0/0",
+                },
+              }),
+            );
+            resolve();
+          },
+        });
+      }));
+
+    it("should call external dependencies with web3Checks opt-in, then enabled", () =>
+      new Promise<void>((resolve, reject) => {
+        setupOpenAppDAMock();
+        setupAppVersion("1.16.0");
+
+        const deviceAction = new SignTypedDataDeviceAction({
+          input: {
+            derivationPath: "44'/60'/0'/0/0",
+            data: TEST_MESSAGE,
+            contextModule: mockContextModule,
+            parser: mockParser,
+          },
+        });
+
+        // Mock the dependencies to return some sample data
+        vi.spyOn(deviceAction, "extractDependencies").mockReturnValue(
+          extractDependenciesMock(),
+        );
+        getAppConfigMock.mockResolvedValue(
+          CommandResultFactory({
+            data: {
+              blindSigningEnabled: false,
+              web3ChecksEnabled: false,
+              web3ChecksOptIn: false,
+              version: "1.16.0",
+            },
+          }),
+        );
+        web3CheckOptInMock.mockResolvedValueOnce(
+          CommandResultFactory({ data: { enabled: true } }),
+        );
+        buildContextMock.mockRejectedValueOnce(
+          new InvalidStatusWordError("buildContext error"),
+        );
+
+        // Expected intermediate values for the following state sequence:
+        //   Initial -> OpenApp -> GetAppConfiguration -> Web3ChecksOptIn -> BuildContext
+        const expectedStates: Array<SignTypedDataDAState> = [
+          {
+            intermediateValue: {
+              requiredUserInteraction: UserInteractionRequired.None,
+            },
+            status: DeviceActionStatus.Pending,
+          },
+          {
+            intermediateValue: {
+              requiredUserInteraction: UserInteractionRequired.ConfirmOpenApp,
+            },
+            status: DeviceActionStatus.Pending,
+          },
+          {
+            intermediateValue: {
+              requiredUserInteraction: UserInteractionRequired.None,
+            },
+            status: DeviceActionStatus.Pending,
+          },
+          {
+            intermediateValue: {
+              requiredUserInteraction: UserInteractionRequired.Web3ChecksOptIn,
+            },
+            status: DeviceActionStatus.Pending,
+          },
+          {
+            intermediateValue: {
+              requiredUserInteraction: UserInteractionRequired.None,
+            },
+            status: DeviceActionStatus.Pending,
+          },
+          {
+            error: new InvalidStatusWordError("buildContext error"),
+            status: DeviceActionStatus.Error,
+          },
+        ];
+
+        testDeviceActionStates(deviceAction, expectedStates, apiMock, {
+          onError: reject,
+          onDone: () => {
+            // Verify mocks calls parameters
+            expect(getAppConfigMock).toHaveBeenCalled();
+            expect(web3CheckOptInMock).toHaveBeenCalled();
+            expect(buildContextMock).toHaveBeenCalledWith(
+              expect.objectContaining({
+                input: {
+                  contextModule: mockContextModule,
+                  parser: mockParser,
+                  data: TEST_MESSAGE,
+                  web3ChecksEnabled: true,
+                  derivationPath: "44'/60'/0'/0/0",
+                },
+              }),
+            );
+            resolve();
+          },
+        });
+      }));
+
+    it("should call external dependencies with web3Checks opt-in, then enabled", () =>
+      new Promise<void>((resolve, reject) => {
+        setupOpenAppDAMock();
+        setupAppVersion("1.16.0");
+
+        const deviceAction = new SignTypedDataDeviceAction({
+          input: {
+            derivationPath: "44'/60'/0'/0/0",
+            data: TEST_MESSAGE,
+            contextModule: mockContextModule,
+            parser: mockParser,
+          },
+        });
+
+        // Mock the dependencies to return some sample data
+        vi.spyOn(deviceAction, "extractDependencies").mockReturnValue(
+          extractDependenciesMock(),
+        );
+        getAppConfigMock.mockResolvedValue(
+          CommandResultFactory({
+            data: {
+              blindSigningEnabled: false,
+              web3ChecksEnabled: false,
+              web3ChecksOptIn: false,
+              version: "1.16.0",
+            },
+          }),
+        );
+        web3CheckOptInMock.mockResolvedValueOnce(
+          CommandResultFactory({ data: { enabled: true } }),
+        );
+        buildContextMock.mockRejectedValueOnce(
+          new InvalidStatusWordError("buildContext error"),
+        );
+
+        // Expected intermediate values for the following state sequence:
+        //   Initial -> OpenApp -> GetAppConfiguration -> Web3ChecksOptIn -> BuildContext
+        const expectedStates: Array<SignTypedDataDAState> = [
+          {
+            intermediateValue: {
+              requiredUserInteraction: UserInteractionRequired.None,
+            },
+            status: DeviceActionStatus.Pending,
+          },
+          {
+            intermediateValue: {
+              requiredUserInteraction: UserInteractionRequired.ConfirmOpenApp,
+            },
+            status: DeviceActionStatus.Pending,
+          },
+          {
+            intermediateValue: {
+              requiredUserInteraction: UserInteractionRequired.None,
+            },
+            status: DeviceActionStatus.Pending,
+          },
+          {
+            intermediateValue: {
+              requiredUserInteraction: UserInteractionRequired.Web3ChecksOptIn,
+            },
+            status: DeviceActionStatus.Pending,
+          },
+          {
+            intermediateValue: {
+              requiredUserInteraction: UserInteractionRequired.None,
+            },
+            status: DeviceActionStatus.Pending,
+          },
+          {
+            error: new InvalidStatusWordError("buildContext error"),
+            status: DeviceActionStatus.Error,
+          },
+        ];
+
+        testDeviceActionStates(deviceAction, expectedStates, apiMock, {
+          onError: reject,
+          onDone: () => {
+            // Verify mocks calls parameters
+            expect(getAppConfigMock).toHaveBeenCalled();
+            expect(web3CheckOptInMock).toHaveBeenCalled();
+            expect(buildContextMock).toHaveBeenCalledWith(
+              expect.objectContaining({
+                input: {
+                  contextModule: mockContextModule,
+                  parser: mockParser,
+                  data: TEST_MESSAGE,
+                  web3ChecksEnabled: true,
+                  derivationPath: "44'/60'/0'/0/0",
+                },
+              }),
+            );
+            resolve();
+          },
+        });
       }));
   });
 
@@ -436,20 +811,16 @@ describe("SignTypedDataDeviceAction", () => {
           },
         });
 
-        testDeviceActionStates(
-          deviceAction,
-          expectedStates,
-          makeDeviceActionInternalApiMock(),
-          {
-            onError: reject,
-            onDone: resolve,
-          },
-        );
+        testDeviceActionStates(deviceAction, expectedStates, apiMock, {
+          onError: reject,
+          onDone: resolve,
+        });
       }));
 
     it("Error while building context", () =>
       new Promise<void>((resolve, reject) => {
         setupOpenAppDAMock();
+        setupAppVersion("1.15.0");
 
         const deviceAction = new SignTypedDataDeviceAction({
           input: {
@@ -491,20 +862,16 @@ describe("SignTypedDataDeviceAction", () => {
           },
         ];
 
-        testDeviceActionStates(
-          deviceAction,
-          expectedStates,
-          makeDeviceActionInternalApiMock(),
-          {
-            onError: reject,
-            onDone: resolve,
-          },
-        );
+        testDeviceActionStates(deviceAction, expectedStates, apiMock, {
+          onError: reject,
+          onDone: resolve,
+        });
       }));
 
     it("Error thrown while providing context", () =>
       new Promise<void>((resolve, reject) => {
         setupOpenAppDAMock();
+        setupAppVersion("1.15.0");
 
         const deviceAction = new SignTypedDataDeviceAction({
           input: {
@@ -553,20 +920,16 @@ describe("SignTypedDataDeviceAction", () => {
           },
         ];
 
-        testDeviceActionStates(
-          deviceAction,
-          expectedStates,
-          makeDeviceActionInternalApiMock(),
-          {
-            onError: reject,
-            onDone: resolve,
-          },
-        );
+        testDeviceActionStates(deviceAction, expectedStates, apiMock, {
+          onError: reject,
+          onDone: resolve,
+        });
       }));
 
     it("Error while signing", () =>
       new Promise<void>((resolve, reject) => {
         setupOpenAppDAMock();
+        setupAppVersion("1.15.0");
 
         const deviceAction = new SignTypedDataDeviceAction({
           input: {
@@ -632,15 +995,10 @@ describe("SignTypedDataDeviceAction", () => {
           },
         ];
 
-        testDeviceActionStates(
-          deviceAction,
-          expectedStates,
-          makeDeviceActionInternalApiMock(),
-          {
-            onError: reject,
-            onDone: resolve,
-          },
-        );
+        testDeviceActionStates(deviceAction, expectedStates, apiMock, {
+          onError: reject,
+          onDone: resolve,
+        });
       }));
   });
 });

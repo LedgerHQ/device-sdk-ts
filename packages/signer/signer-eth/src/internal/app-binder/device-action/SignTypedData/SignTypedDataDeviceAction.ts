@@ -2,6 +2,7 @@ import { type ContextModule } from "@ledgerhq/context-module";
 import {
   type CommandResult,
   type DeviceActionStateMachine,
+  DeviceModelId,
   type InternalApi,
   isSuccessCommandResult,
   OpenAppDeviceAction,
@@ -11,8 +12,9 @@ import {
   XStateDeviceAction,
 } from "@ledgerhq/device-management-kit";
 import { Just, Left, Nothing, Right } from "purify-ts";
-import { assign, fromPromise, setup } from "xstate";
+import { and, assign, fromPromise, setup } from "xstate";
 
+import { type GetConfigCommandResponse } from "@api/app-binder/GetConfigCommandTypes";
 import {
   type SignTypedDataDAError,
   type SignTypedDataDAInput,
@@ -22,8 +24,13 @@ import {
 } from "@api/app-binder/SignTypedDataDeviceActionTypes";
 import { type Signature } from "@api/model/Signature";
 import { type TypedData } from "@api/model/TypedData";
+import { GetAppConfiguration } from "@internal/app-binder/command/GetAppConfigurationCommand";
 import { SignEIP712Command } from "@internal/app-binder/command/SignEIP712Command";
 import { type EthErrorCodes } from "@internal/app-binder/command/utils/ethAppErrors";
+import {
+  Web3CheckOptInCommand,
+  type Web3CheckOptInCommandResponse,
+} from "@internal/app-binder/command/Web3CheckOptInCommand";
 import { ETHEREUM_PLUGINS } from "@internal/app-binder/constant/plugins";
 import { BuildEIP712ContextTask } from "@internal/app-binder/task/BuildEIP712ContextTask";
 import {
@@ -31,14 +38,22 @@ import {
   type ProvideEIP712ContextTaskArgs,
   type ProvideEIP712ContextTaskReturnType,
 } from "@internal/app-binder/task/ProvideEIP712ContextTask";
+import { ApplicationChecker } from "@internal/shared/utils/ApplicationChecker";
 import { type TypedDataParserService } from "@internal/typed-data/service/TypedDataParserService";
 
 export type MachineDependencies = {
+  readonly getAppConfig: () => Promise<
+    CommandResult<GetConfigCommandResponse, EthErrorCodes>
+  >;
+  readonly web3CheckOptIn: () => Promise<
+    CommandResult<Web3CheckOptInCommandResponse, EthErrorCodes>
+  >;
   readonly buildContext: (arg0: {
     input: {
       contextModule: ContextModule;
       parser: TypedDataParserService;
       data: TypedData;
+      web3ChecksEnabled: boolean;
       derivationPath: string;
     };
   }) => Promise<ProvideEIP712ContextTaskArgs>;
@@ -85,8 +100,14 @@ export class SignTypedDataDeviceAction extends XStateDeviceAction<
       SignTypedDataDAInternalState
     >;
 
-    const { buildContext, provideContext, signTypedData, signTypedDataLegacy } =
-      this.extractDependencies(internalApi);
+    const {
+      getAppConfig,
+      web3CheckOptIn,
+      buildContext,
+      provideContext,
+      signTypedData,
+      signTypedDataLegacy,
+    } = this.extractDependencies(internalApi);
 
     return setup({
       types: {
@@ -98,6 +119,8 @@ export class SignTypedDataDeviceAction extends XStateDeviceAction<
         openAppStateMachine: new OpenAppDeviceAction({
           input: { appName: "Ethereum" },
         }).makeStateMachine(internalApi),
+        getAppConfig: fromPromise(getAppConfig),
+        web3CheckOptIn: fromPromise(web3CheckOptIn),
         buildContext: fromPromise(buildContext),
         provideContext: fromPromise(provideContext),
         signTypedData: fromPromise(signTypedData),
@@ -109,6 +132,14 @@ export class SignTypedDataDeviceAction extends XStateDeviceAction<
           context._internalState.error !== null &&
           (!("errorCode" in context._internalState.error) ||
             context._internalState.error.errorCode !== "6985"),
+        isWeb3ChecksSupported: () =>
+          new ApplicationChecker(internalApi.getDeviceSessionState())
+            .withMinVersionExclusive("1.15.0")
+            .excludeDeviceModel(DeviceModelId.NANO_S)
+            .check(),
+        shouldOptIn: ({ context }) =>
+          !context._internalState.web3ChecksEnabled &&
+          !context._internalState.web3ChecksOptIn,
       },
       actions: {
         assignErrorFromEvent: assign({
@@ -129,6 +160,8 @@ export class SignTypedDataDeviceAction extends XStateDeviceAction<
           },
           _internalState: {
             error: null,
+            web3ChecksOptIn: false,
+            web3ChecksEnabled: false,
             typedDataContext: null,
             signature: null,
           },
@@ -173,11 +206,91 @@ export class SignTypedDataDeviceAction extends XStateDeviceAction<
         CheckOpenAppDeviceActionResult: {
           always: [
             {
+              target: "GetAppConfig",
+              guard: and(["noInternalError", "isWeb3ChecksSupported"]),
+            },
+            {
               target: "BuildContext",
               guard: "noInternalError",
             },
             "Error",
           ],
+        },
+        GetAppConfig: {
+          invoke: {
+            id: "getAppConfig",
+            src: "getAppConfig",
+            onDone: {
+              target: "GetAppConfigResultCheck",
+              actions: [
+                assign({
+                  _internalState: ({ event, context }) => {
+                    if (isSuccessCommandResult(event.output)) {
+                      return {
+                        ...context._internalState,
+                        web3ChecksOptIn: event.output.data.web3ChecksOptIn,
+                        web3ChecksEnabled: event.output.data.web3ChecksEnabled,
+                      };
+                    } else {
+                      return context._internalState;
+                    }
+                  },
+                }),
+              ],
+            },
+            onError: {
+              target: "Error",
+              actions: "assignErrorFromEvent",
+            },
+          },
+        },
+        GetAppConfigResultCheck: {
+          always: [
+            {
+              target: "Web3ChecksOptIn",
+              guard: "shouldOptIn",
+            },
+            {
+              target: "BuildContext",
+            },
+          ],
+        },
+        Web3ChecksOptIn: {
+          entry: assign({
+            intermediateValue: {
+              requiredUserInteraction: UserInteractionRequired.Web3ChecksOptIn,
+            },
+          }),
+          exit: assign({
+            intermediateValue: {
+              requiredUserInteraction: UserInteractionRequired.None,
+            },
+          }),
+          invoke: {
+            id: "web3CheckOptIn",
+            src: "web3CheckOptIn",
+            onDone: {
+              target: "BuildContext",
+              actions: [
+                assign({
+                  _internalState: ({ event, context }) => {
+                    if (isSuccessCommandResult(event.output)) {
+                      return {
+                        ...context._internalState,
+                        web3ChecksEnabled: event.output.data.enabled,
+                      };
+                    } else {
+                      return context._internalState;
+                    }
+                  },
+                }),
+              ],
+            },
+            onError: {
+              target: "Error",
+              actions: "assignErrorFromEvent",
+            },
+          },
         },
         BuildContext: {
           invoke: {
@@ -187,6 +300,7 @@ export class SignTypedDataDeviceAction extends XStateDeviceAction<
               contextModule: context.input.contextModule,
               parser: context.input.parser,
               data: context.input.data,
+              web3ChecksEnabled: context._internalState.web3ChecksEnabled,
               derivationPath: context.input.derivationPath,
             }),
             onDone: {
@@ -360,11 +474,16 @@ export class SignTypedDataDeviceAction extends XStateDeviceAction<
   }
 
   extractDependencies(internalApi: InternalApi): MachineDependencies {
+    const getAppConfig = async () =>
+      internalApi.sendCommand(new GetAppConfiguration());
+    const web3CheckOptIn = async () =>
+      internalApi.sendCommand(new Web3CheckOptInCommand());
     const buildContext = async (arg0: {
       input: {
         contextModule: ContextModule;
         parser: TypedDataParserService;
         data: TypedData;
+        web3ChecksEnabled: boolean;
         derivationPath: string;
       };
     }) =>
@@ -374,6 +493,7 @@ export class SignTypedDataDeviceAction extends XStateDeviceAction<
         arg0.input.parser,
         arg0.input.data,
         arg0.input.derivationPath,
+        arg0.input.web3ChecksEnabled,
       ).run();
 
     const provideContext = async (arg0: {
@@ -412,6 +532,8 @@ export class SignTypedDataDeviceAction extends XStateDeviceAction<
       );
 
     return {
+      getAppConfig,
+      web3CheckOptIn,
       buildContext,
       provideContext,
       signTypedData,

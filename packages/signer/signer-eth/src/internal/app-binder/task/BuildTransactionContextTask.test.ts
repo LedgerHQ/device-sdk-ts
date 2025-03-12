@@ -15,7 +15,6 @@ import {
 import { Transaction } from "ethers";
 import { Left, Right } from "purify-ts";
 
-import { ETHEREUM_PLUGINS } from "@internal/app-binder/constant/plugins";
 import { makeDeviceActionInternalApiMock } from "@internal/app-binder/device-action/__test-utils__/makeInternalApi";
 import { type TransactionMapperResult } from "@internal/transaction/service/mapper/model/TransactionMapperResult";
 import { type TransactionMapperService } from "@internal/transaction/service/mapper/TransactionMapperService";
@@ -68,6 +67,7 @@ describe("BuildTransactionContextTask", () => {
       mapper: mapperMock as unknown as TransactionMapperService,
       transaction: defaultTransaction,
       options: defaultOptions,
+      web3ChecksEnabled: false,
       derivationPath: "44'/60'/0'/0/0",
     };
   });
@@ -95,7 +95,7 @@ describe("BuildTransactionContextTask", () => {
     // WHEN
     const result = await new BuildTransactionContextTask(
       apiMock,
-      defaultArgs,
+      { ...defaultArgs, web3ChecksEnabled: true },
       getWeb3ChecksFactoryMock,
     ).run();
 
@@ -137,7 +137,7 @@ describe("BuildTransactionContextTask", () => {
     // WHEN
     const result = await new BuildTransactionContextTask(
       apiMock,
-      defaultArgs,
+      { ...defaultArgs, web3ChecksEnabled: true },
       getWeb3ChecksFactoryMock,
     ).run();
 
@@ -169,6 +169,11 @@ describe("BuildTransactionContextTask", () => {
       serializedTransaction,
       type: 2,
     };
+    const expectedWeb3Check =
+      "web3Check" as unknown as ClearSignContextSuccess<ClearSignContextType.WEB3_CHECK>;
+    getWeb3ChecksFactoryMock.mockReturnValueOnce({
+      run: async () => ({ web3Check: expectedWeb3Check }),
+    });
     mapperMock.mapTransactionToSubset.mockReturnValueOnce(Right(mapperResult));
     contextModuleMock.getContexts.mockResolvedValueOnce(clearSignContexts);
     apiMock.getDeviceSessionState.mockReturnValueOnce({
@@ -260,69 +265,6 @@ describe("BuildTransactionContextTask", () => {
     });
   });
 
-  it("should build the transaction context with generic-parser context and a plugin instead of Ethereum app", async () => {
-    // GIVEN
-    const serializedTransaction = new Uint8Array([0x01, 0x02, 0x03]);
-    const clearSignContexts: ClearSignContext[] = [
-      {
-        type: ClearSignContextType.TRANSACTION_INFO,
-        payload: "payload-1",
-        certificate: defaultCertificate,
-      },
-      {
-        type: ClearSignContextType.TRANSACTION_FIELD_DESCRIPTION,
-        payload: "payload-2",
-      },
-      {
-        type: ClearSignContextType.ENUM,
-        payload: "payload-3",
-        id: 1,
-        value: 2,
-        certificate: defaultCertificate,
-      },
-      {
-        type: ClearSignContextType.TRANSACTION_FIELD_DESCRIPTION,
-        payload: "payload-4",
-      },
-    ];
-    const mapperResult: TransactionMapperResult = {
-      subset: { chainId: 1, to: undefined, data: "0x" },
-      serializedTransaction,
-      type: 2,
-    };
-    mapperMock.mapTransactionToSubset.mockReturnValueOnce(Right(mapperResult));
-    contextModuleMock.getContexts.mockResolvedValueOnce(clearSignContexts);
-    apiMock.getDeviceSessionState.mockReturnValueOnce({
-      sessionStateType: DeviceSessionStateType.ReadyWithoutSecureChannel,
-      deviceStatus: DeviceStatus.CONNECTED,
-      installedApps: [],
-      currentApp: { name: ETHEREUM_PLUGINS[0]!, version: "1.15.0" },
-      deviceModelId: DeviceModelId.FLEX,
-      isSecureConnectionAllowed: false,
-    });
-
-    // WHEN
-    const result = await new BuildTransactionContextTask(
-      apiMock,
-      defaultArgs,
-      getWeb3ChecksFactoryMock,
-    ).run();
-
-    // THEN
-    expect(result).toEqual({
-      clearSignContexts: {
-        transactionInfo: "payload-1",
-        transactionInfoCertificate: defaultCertificate,
-        transactionFields: [clearSignContexts[1], clearSignContexts[3]],
-        transactionEnums: [clearSignContexts[2]],
-      },
-      serializedTransaction,
-      chainId: 1,
-      transactionType: 2,
-      web3Check: null,
-    });
-  });
-
   it("should call the mapper with the transaction", async () => {
     // GIVEN
     const serializedTransaction = new Uint8Array([0x01, 0x02, 0x03]);
@@ -379,7 +321,7 @@ describe("BuildTransactionContextTask", () => {
     // WHEN
     await new BuildTransactionContextTask(
       apiMock,
-      defaultArgs,
+      { ...defaultArgs, web3ChecksEnabled: true },
       getWeb3ChecksFactoryMock,
     ).run();
 
@@ -899,54 +841,6 @@ describe("BuildTransactionContextTask", () => {
       transactionType: 2,
       web3Check: null,
     });
-  });
-
-  it("should throw an error if the app is not ethereum compatible", async () => {
-    // GIVEN
-    const serializedTransaction = new Uint8Array([0x01, 0x02, 0x03]);
-    const clearSignContexts: ClearSignContext[] = [
-      {
-        type: ClearSignContextType.TRANSACTION_INFO,
-        payload: "payload-1",
-        certificate: defaultCertificate,
-      },
-      {
-        type: ClearSignContextType.TRANSACTION_FIELD_DESCRIPTION,
-        payload: "payload-2",
-      },
-      {
-        type: ClearSignContextType.ENUM,
-        payload: "payload-3",
-        id: 1,
-        value: 2,
-        certificate: defaultCertificate,
-      },
-    ];
-    const mapperResult: TransactionMapperResult = {
-      subset: { chainId: 1, to: undefined, data: "0x" },
-      serializedTransaction,
-      type: 2,
-    };
-    mapperMock.mapTransactionToSubset.mockReturnValueOnce(Right(mapperResult));
-    contextModuleMock.getContexts.mockResolvedValueOnce(clearSignContexts);
-    apiMock.getDeviceSessionState.mockReturnValueOnce({
-      sessionStateType: DeviceSessionStateType.ReadyWithoutSecureChannel,
-      deviceStatus: DeviceStatus.CONNECTED,
-      installedApps: [],
-      currentApp: { name: "Not Ethereum Compatible", version: "1.14.0" },
-      deviceModelId: DeviceModelId.FLEX,
-      isSecureConnectionAllowed: false,
-    });
-
-    // WHEN
-    const task = new BuildTransactionContextTask(
-      apiMock,
-      defaultArgs,
-      getWeb3ChecksFactoryMock,
-    );
-
-    // THEN
-    await expect(task.run()).rejects.toThrow("Unsupported app");
   });
 
   it("should return an error if the transaction info certificate is missing", async () => {

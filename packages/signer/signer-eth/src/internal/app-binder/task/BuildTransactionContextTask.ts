@@ -7,20 +7,18 @@ import {
 import {
   DeviceModelId,
   type DeviceSessionState,
-  DeviceSessionStateType,
   type InternalApi,
   isSuccessCommandResult,
 } from "@ledgerhq/device-management-kit";
-import { gte } from "semver";
 
 import { type TransactionOptions } from "@api/model/TransactionOptions";
 import { type TransactionType } from "@api/model/TransactionType";
 import { GetChallengeCommand } from "@internal/app-binder/command/GetChallengeCommand";
-import { ETHEREUM_PLUGINS } from "@internal/app-binder/constant/plugins";
 import {
   GetWeb3CheckTask,
   type GetWeb3CheckTaskArgs,
 } from "@internal/app-binder/task/GetWeb3CheckTask";
+import { ApplicationChecker } from "@internal/shared/utils/ApplicationChecker";
 import { type TransactionMapperService } from "@internal/transaction/service/mapper/TransactionMapperService";
 
 import { type GenericContext } from "./ProvideTransactionGenericContextTask";
@@ -38,6 +36,7 @@ export type BuildTransactionContextTaskArgs = {
   readonly mapper: TransactionMapperService;
   readonly transaction: Uint8Array;
   readonly options: TransactionOptions;
+  readonly web3ChecksEnabled: boolean;
   readonly derivationPath: string;
 };
 
@@ -45,15 +44,21 @@ export class BuildTransactionContextTask {
   constructor(
     private readonly api: InternalApi,
     private readonly args: BuildTransactionContextTaskArgs,
-    private getWeb3ChecksFactory = (
+    private readonly getWeb3ChecksFactory = (
       api: InternalApi,
       args: GetWeb3CheckTaskArgs,
     ) => new GetWeb3CheckTask(api, args),
   ) {}
 
   async run(): Promise<BuildTransactionTaskResult> {
-    const { contextModule, mapper, transaction, options, derivationPath } =
-      this.args;
+    const {
+      contextModule,
+      mapper,
+      transaction,
+      options,
+      web3ChecksEnabled,
+      derivationPath,
+    } = this.args;
     const deviceState = this.api.getDeviceSessionState();
 
     // Parse transaction
@@ -64,8 +69,10 @@ export class BuildTransactionContextTask {
     const { subset, serializedTransaction, type } = parsed.unsafeCoerce();
 
     // Run the web3checks if needed
-    const web3Check: ClearSignContextSuccess<ClearSignContextType.WEB3_CHECK> | null =
-      (
+    let web3Check: ClearSignContextSuccess<ClearSignContextType.WEB3_CHECK> | null =
+      null;
+    if (web3ChecksEnabled) {
+      web3Check = (
         await this.getWeb3ChecksFactory(this.api, {
           contextModule,
           derivationPath,
@@ -73,6 +80,7 @@ export class BuildTransactionContextTask {
           transaction,
         }).run()
       ).web3Check;
+    }
 
     // Get challenge
     let challenge: string | undefined = undefined;
@@ -150,21 +158,9 @@ export class BuildTransactionContextTask {
   }
 
   private supportsGenericParser(deviceState: DeviceSessionState): boolean {
-    if (deviceState.sessionStateType === DeviceSessionStateType.Connected) {
-      return false;
-    }
-
-    if (
-      deviceState.currentApp.name !== "Ethereum" &&
-      !ETHEREUM_PLUGINS.includes(deviceState.currentApp.name)
-    ) {
-      // Sanity check, should never happen as open app is called before this task
-      throw new Error("Unsupported app");
-    }
-
-    if (deviceState.deviceModelId === DeviceModelId.NANO_S) {
-      return false;
-    }
-    return gte(deviceState.currentApp.version, "1.15.0");
+    return new ApplicationChecker(deviceState)
+      .withMinVersionExclusive("1.14.0")
+      .excludeDeviceModel(DeviceModelId.NANO_S)
+      .check();
   }
 }

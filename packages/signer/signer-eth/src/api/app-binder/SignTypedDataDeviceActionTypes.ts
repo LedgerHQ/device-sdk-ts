@@ -29,6 +29,7 @@ export type SignTypedDataDAError =
 
 type SignTypedDataDARequiredInteraction =
   | OpenAppDARequiredInteraction
+  | UserInteractionRequired.Web3ChecksOptIn
   | UserInteractionRequired.SignTypedData;
 
 export type SignTypedDataDAIntermediateValue = {
@@ -43,6 +44,8 @@ export type SignTypedDataDAState = DeviceActionState<
 
 export type SignTypedDataDAInternalState = {
   readonly error: SignTypedDataDAError | null;
+  web3ChecksOptIn: boolean;
+  web3ChecksEnabled: boolean;
   readonly typedDataContext: ProvideEIP712ContextTaskArgs | null;
   readonly signature: Signature | null;
 };

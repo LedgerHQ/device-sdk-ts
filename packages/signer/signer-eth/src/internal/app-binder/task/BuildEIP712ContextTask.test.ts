@@ -152,6 +152,7 @@ describe("BuildEIP712ContextTask", () => {
       parserMock,
       TEST_DATA,
       "44'/60'/0'/0/0",
+      false,
       getWeb3ChecksFactoryMock,
     );
     parserMock.parse.mockReturnValueOnce(
@@ -165,8 +166,8 @@ describe("BuildEIP712ContextTask", () => {
       sessionStateType: DeviceSessionStateType.ReadyWithoutSecureChannel,
       deviceStatus: DeviceStatus.CONNECTED,
       installedApps: [],
-      currentApp: { name: "Bitcoin", version: "1.0" },
-      deviceModelId: DeviceModelId.FLEX,
+      currentApp: { name: "Ethereum", version: "1.11.0" },
+      deviceModelId: DeviceModelId.NANO_S,
       isSecureConnectionAllowed: false,
     });
     // WHEN
@@ -193,6 +194,7 @@ describe("BuildEIP712ContextTask", () => {
       parserMock,
       TEST_DATA,
       "44'/60'/0'/0/0",
+      false,
       getWeb3ChecksFactoryMock,
     );
     parserMock.parse.mockReturnValueOnce(
@@ -232,14 +234,20 @@ describe("BuildEIP712ContextTask", () => {
 
   it("Build context with clear signing context", async () => {
     // GIVEN
+    const expectedWeb3Check =
+      "web3Check" as unknown as ClearSignContextSuccess<ClearSignContextType.WEB3_CHECK>;
     const task = new BuildEIP712ContextTask(
       apiMock,
       contextMouleMock,
       parserMock,
       TEST_DATA,
       "44'/60'/0'/0/0",
+      false,
       getWeb3ChecksFactoryMock,
     );
+    getWeb3ChecksFactoryMock.mockReturnValueOnce({
+      run: async () => ({ web3Check: expectedWeb3Check }),
+    });
     parserMock.parse.mockReturnValueOnce(
       Right({
         types: TEST_TYPES,
@@ -301,6 +309,7 @@ describe("BuildEIP712ContextTask", () => {
       parserMock,
       TEST_DATA,
       "44'/60'/0'/0/0",
+      true,
       getWeb3ChecksFactoryMock,
     );
     getWeb3ChecksFactoryMock.mockReturnValueOnce({
@@ -353,6 +362,7 @@ describe("BuildEIP712ContextTask", () => {
       parserMock,
       TEST_DATA,
       "44'/60'/0'/0/0",
+      false,
       getWeb3ChecksFactoryMock,
     );
     parserMock.parse.mockReturnValueOnce(
@@ -405,6 +415,7 @@ describe("BuildEIP712ContextTask", () => {
         primaryType: "",
       },
       "44'/60'/0'/0/0",
+      false,
       getWeb3ChecksFactoryMock,
     );
     parserMock.parse.mockReturnValueOnce(
@@ -433,6 +444,7 @@ describe("BuildEIP712ContextTask", () => {
       parserMock,
       TEST_DATA,
       "44'/60'/0'/0/0",
+      false,
       getWeb3ChecksFactoryMock,
     );
     parserMock.parse.mockReturnValueOnce(Left(new Error("Parsing error")));

@@ -37,6 +37,7 @@ export type SignTransactionDAError =
 
 type SignTransactionDARequiredInteraction =
   | OpenAppDARequiredInteraction
+  | UserInteractionRequired.Web3ChecksOptIn
   | UserInteractionRequired.SignTransaction;
 
 export type SignTransactionDAIntermediateValue = {
@@ -52,6 +53,8 @@ export type SignTransactionDAState = DeviceActionState<
 export type SignTransactionDAInternalState = {
   readonly error: SignTransactionDAError | null;
   readonly clearSignContexts: ClearSignContextSuccess[] | GenericContext | null;
+  readonly web3ChecksOptIn: boolean;
+  readonly web3ChecksEnabled: boolean;
   readonly web3Check: ClearSignContextSuccess<ClearSignContextType.WEB3_CHECK> | null;
   readonly serializedTransaction: Uint8Array | null;
   readonly chainId: number | null;
