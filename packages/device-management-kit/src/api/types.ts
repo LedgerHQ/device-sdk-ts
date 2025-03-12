@@ -91,7 +91,6 @@ export {
   type GenuineCheckDARequiredInteraction,
   type GenuineCheckDAState,
 } from "@api/secure-channel/device-action/GenuineCheck/types";
-export { type DeviceApduSender } from "@api/transport/model/DeviceApduSender";
 export {
   type ListInstalledAppsDAError,
   type ListInstalledAppsDAInput,
@@ -100,6 +99,7 @@ export {
   type ListInstalledAppsDARequiredInteraction,
   type ListInstalledAppsDAState,
 } from "@api/secure-channel/device-action/ListInstalledApps/types";
+export { type DeviceApduSender } from "@api/transport/model/DeviceApduSender";
 export {
   type DeviceConnection,
   type DisconnectHandler,
