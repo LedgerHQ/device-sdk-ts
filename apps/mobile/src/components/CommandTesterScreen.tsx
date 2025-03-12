@@ -9,6 +9,7 @@ import { CommandProps, ThemeProps } from "_common/types.ts";
 import { SendCommandModal } from "_components/SendCommandModal.tsx";
 import { DeviceStateView } from "_components/DeviceStateView.tsx";
 import { RootScreens } from "_navigators/RootNavigator.constants.ts";
+import { DisconnectButton } from "./DisconnectButton";
 
 const SafeView = styled.SafeAreaView`
   flex: 1;
@@ -73,7 +74,10 @@ export const CommandTesterScreen: React.FC = () => {
           onClose={onClose}
           isOpen={isCommandModalVisible}
         />
-        <DeviceStateView sessionId={deviceSessionId} />
+        <Flex rowGap={6}>
+          <DeviceStateView sessionId={deviceSessionId} />
+          <DisconnectButton sessionId={deviceSessionId} />
+        </Flex>
       </Container>
     </SafeView>
   );

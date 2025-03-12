@@ -13,7 +13,7 @@ type Props = {
 };
 
 export const DiscoveredDeviceItem = ({ device, onPress }: Props) => {
-  const { rssi } = device;
+  const { rssi, transport } = device;
 
   const wording = rssi !== null ? "available" : "unavailable";
   const color = wording === "unavailable" ? "neutral.c60" : "primary.c80";
@@ -48,7 +48,7 @@ export const DiscoveredDeviceItem = ({ device, onPress }: Props) => {
         {deviceIcon}
         <Flex ml={5} flex={1}>
           <Text color="neutral.c100" fontWeight="semiBold" fontSize="16px">
-            {device.name}
+            {device.name} ({transport})
           </Text>
           <Text color={color} fontSize="12px">
             Select device
