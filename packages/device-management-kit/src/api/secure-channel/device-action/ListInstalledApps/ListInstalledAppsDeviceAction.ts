@@ -25,7 +25,7 @@ import { type DeviceVersion } from "@internal/manager-api/model/Device";
 import { type FinalFirmware } from "@internal/manager-api/model/Firmware";
 
 import {
-  Input,
+  type Input,
   installedAppResultGuard,
   type ListInstalledAppsDAError,
   type ListInstalledAppsDAInput,
