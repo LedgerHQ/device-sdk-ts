@@ -1,5 +1,11 @@
 # @ledgerhq/device-management-kit
 
+## 0.7.0
+
+### Minor Changes
+
+- [#709](https://github.com/LedgerHQ/device-sdk-ts/pull/709) [`e3d6744`](https://github.com/LedgerHQ/device-sdk-ts/commit/e3d6744336d45840a9715e48c319cdf4ce77bb4f) Thanks [@jiyuzhuang](https://github.com/jiyuzhuang)! - Add ListInstalledApps device action
+
 ## 0.6.3
 
 ### Patch Changes
