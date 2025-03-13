@@ -7,6 +7,7 @@ import {
   type CommandErrorResult,
   type CommandResult,
   type DeviceActionStateMachine,
+  DeviceModelId,
   type InternalApi,
   isSuccessCommandResult,
   OpenAppDeviceAction,
@@ -16,8 +17,9 @@ import {
   XStateDeviceAction,
 } from "@ledgerhq/device-management-kit";
 import { Left, type Maybe, Right } from "purify-ts";
-import { assign, fromPromise, setup } from "xstate";
+import { and, assign, fromPromise, setup } from "xstate";
 
+import { type GetConfigCommandResponse } from "@api/app-binder/GetConfigCommandTypes";
 import {
   type SignTransactionDAError,
   type SignTransactionDAInput,
@@ -28,22 +30,18 @@ import {
 import { type Signature } from "@api/model/Signature";
 import { type TransactionOptions } from "@api/model/TransactionOptions";
 import { type TransactionType } from "@api/model/TransactionType";
-import {
-  GetChallengeCommand,
-  type GetChallengeCommandResponse,
-} from "@internal/app-binder/command/GetChallengeCommand";
+import { GetAppConfiguration } from "@internal/app-binder/command/GetAppConfigurationCommand";
 import { type EthErrorCodes } from "@internal/app-binder/command/utils/ethAppErrors";
+import {
+  Web3CheckOptInCommand,
+  type Web3CheckOptInCommandResponse,
+} from "@internal/app-binder/command/Web3CheckOptInCommand";
 import { ETHEREUM_PLUGINS } from "@internal/app-binder/constant/plugins";
 import {
   BuildTransactionContextTask,
   type BuildTransactionContextTaskArgs,
   type BuildTransactionTaskResult,
 } from "@internal/app-binder/task/BuildTransactionContextTask";
-import {
-  GetWeb3CheckTask,
-  type GetWeb3CheckTaskArgs,
-  type GetWeb3CheckTaskResult,
-} from "@internal/app-binder/task/GetWeb3CheckTask";
 import { ProvideTransactionContextTask } from "@internal/app-binder/task/ProvideTransactionContextTask";
 import {
   type GenericContext,
@@ -51,12 +49,16 @@ import {
   type ProvideTransactionGenericContextTaskErrorCodes,
 } from "@internal/app-binder/task/ProvideTransactionGenericContextTask";
 import { SendSignTransactionTask } from "@internal/app-binder/task/SendSignTransactionTask";
+import { ApplicationChecker } from "@internal/shared/utils/ApplicationChecker";
 import { type TransactionMapperService } from "@internal/transaction/service/mapper/TransactionMapperService";
 import { type TransactionParserService } from "@internal/transaction/service/parser/TransactionParserService";
 
 export type MachineDependencies = {
-  readonly getChallenge: () => Promise<
-    CommandResult<GetChallengeCommandResponse, EthErrorCodes>
+  readonly getAppConfig: () => Promise<
+    CommandResult<GetConfigCommandResponse, EthErrorCodes>
+  >;
+  readonly web3CheckOptIn: () => Promise<
+    CommandResult<Web3CheckOptInCommandResponse, EthErrorCodes>
   >;
   readonly buildContext: (arg0: {
     input: {
@@ -64,18 +66,10 @@ export type MachineDependencies = {
       mapper: TransactionMapperService;
       transaction: Uint8Array;
       options: TransactionOptions;
-      challenge: string | null;
-    };
-  }) => Promise<BuildTransactionTaskResult>;
-  readonly getWeb3Check: (arg0: {
-    input: {
-      contextModule: ContextModule;
-      mapper: TransactionMapperService;
-      transaction: Uint8Array;
-      options: TransactionOptions;
+      web3ChecksEnabled: boolean;
       derivationPath: string;
     };
-  }) => Promise<GetWeb3CheckTaskResult>;
+  }) => Promise<BuildTransactionTaskResult>;
   readonly provideContext: (arg0: {
     input: {
       clearSignContexts: ClearSignContextSuccess[];
@@ -131,8 +125,8 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
     >;
 
     const {
-      getChallenge,
-      getWeb3Check,
+      getAppConfig,
+      web3CheckOptIn,
       buildContext,
       provideContext,
       provideGenericContext,
@@ -149,8 +143,8 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
         openAppStateMachine: new OpenAppDeviceAction({
           input: { appName: "Ethereum" },
         }).makeStateMachine(internalApi),
-        getChallenge: fromPromise(getChallenge),
-        getWeb3Check: fromPromise(getWeb3Check),
+        getAppConfig: fromPromise(getAppConfig),
+        web3CheckOptIn: fromPromise(web3CheckOptIn),
         buildContext: fromPromise(buildContext),
         provideContext: fromPromise(provideContext),
         provideGenericContext: fromPromise(provideGenericContext),
@@ -162,6 +156,14 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
           context._internalState.clearSignContexts !== null &&
           typeof (context._internalState.clearSignContexts as GenericContext)
             .transactionInfo === "string",
+        isWeb3ChecksSupported: () =>
+          new ApplicationChecker(internalApi.getDeviceSessionState())
+            .withMinVersionExclusive("1.15.0")
+            .excludeDeviceModel(DeviceModelId.NANO_S)
+            .check(),
+        shouldOptIn: ({ context }) =>
+          !context._internalState.web3ChecksEnabled &&
+          !context._internalState.web3ChecksOptIn,
       },
       actions: {
         assignErrorFromEvent: assign({
@@ -186,9 +188,10 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
             clearSignContexts: null,
             serializedTransaction: null,
             chainId: null,
+            web3ChecksOptIn: false,
+            web3ChecksEnabled: false,
             web3Check: null,
             transactionType: null,
-            challenge: null,
             isLegacy: true,
             signature: null,
           },
@@ -233,42 +236,34 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
         CheckOpenAppDeviceActionResult: {
           always: [
             {
-              target: "GetChallenge",
+              target: "GetAppConfig",
+              guard: and(["noInternalError", "isWeb3ChecksSupported"]),
+            },
+            {
+              target: "BuildContext",
               guard: "noInternalError",
             },
             "Error",
           ],
         },
-        GetChallenge: {
+        GetAppConfig: {
           invoke: {
-            id: "getChallenge",
-            src: "getChallenge",
+            id: "getAppConfig",
+            src: "getAppConfig",
             onDone: {
-              target: "GetChallengeResultCheck",
+              target: "GetAppConfigResultCheck",
               actions: [
                 assign({
                   _internalState: ({ event, context }) => {
                     if (isSuccessCommandResult(event.output)) {
                       return {
                         ...context._internalState,
-                        challenge: event.output.data.challenge,
+                        web3ChecksOptIn: event.output.data.web3ChecksOptIn,
+                        web3ChecksEnabled: event.output.data.web3ChecksEnabled,
                       };
-                    }
-
-                    // if the command is not supported, we can skip the error
-                    if (
-                      typeof event.output.error.originalError === "object" &&
-                      event.output.error.originalError !== null &&
-                      "errorCode" in event.output.error.originalError &&
-                      event.output.error.originalError.errorCode === "6d00"
-                    ) {
+                    } else {
                       return context._internalState;
                     }
-
-                    return {
-                      ...context._internalState,
-                      error: event.output.error,
-                    };
                   },
                 }),
               ],
@@ -279,35 +274,44 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
             },
           },
         },
-        GetChallengeResultCheck: {
+        GetAppConfigResultCheck: {
           always: [
             {
-              target: "GetWeb3Check",
-              guard: "noInternalError",
+              target: "Web3ChecksOptIn",
+              guard: "shouldOptIn",
             },
-            "Error",
+            {
+              target: "BuildContext",
+            },
           ],
         },
-        GetWeb3Check: {
+        Web3ChecksOptIn: {
+          entry: assign({
+            intermediateValue: {
+              requiredUserInteraction: UserInteractionRequired.Web3ChecksOptIn,
+            },
+          }),
+          exit: assign({
+            intermediateValue: {
+              requiredUserInteraction: UserInteractionRequired.None,
+            },
+          }),
           invoke: {
-            id: "getWeb3Check",
-            src: "getWeb3Check",
-            input: ({ context }) => ({
-              contextModule: context.input.contextModule,
-              mapper: context.input.mapper,
-              transaction: context.input.transaction,
-              options: context.input.options,
-              derivationPath: context.input.derivationPath,
-            }),
+            id: "web3CheckOptIn",
+            src: "web3CheckOptIn",
             onDone: {
               target: "BuildContext",
               actions: [
                 assign({
                   _internalState: ({ event, context }) => {
-                    return {
-                      ...context._internalState,
-                      web3Check: event.output.web3Check,
-                    };
+                    if (isSuccessCommandResult(event.output)) {
+                      return {
+                        ...context._internalState,
+                        web3ChecksEnabled: event.output.data.enabled,
+                      };
+                    } else {
+                      return context._internalState;
+                    }
                   },
                 }),
               ],
@@ -327,7 +331,8 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
               mapper: context.input.mapper,
               transaction: context.input.transaction,
               options: context.input.options,
-              challenge: context._internalState.challenge,
+              web3ChecksEnabled: context._internalState.web3ChecksEnabled,
+              derivationPath: context.input.derivationPath,
             }),
             onDone: {
               target: "BuildContextResultCheck",
@@ -336,6 +341,7 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
                   _internalState: ({ event, context }) => ({
                     ...context._internalState,
                     clearSignContexts: event.output.clearSignContexts!,
+                    web3Check: event.output.web3Check,
                     serializedTransaction: event.output.serializedTransaction,
                     chainId: event.output.chainId,
                     transactionType: event.output.transactionType,
@@ -489,12 +495,10 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
   }
 
   extractDependencies(internalApi: InternalApi): MachineDependencies {
-    const getChallenge = async () =>
-      internalApi.sendCommand(new GetChallengeCommand());
-
-    const getWeb3Check = async (arg0: { input: GetWeb3CheckTaskArgs }) =>
-      new GetWeb3CheckTask(internalApi, arg0.input).run();
-
+    const getAppConfig = async () =>
+      internalApi.sendCommand(new GetAppConfiguration());
+    const web3CheckOptIn = async () =>
+      internalApi.sendCommand(new Web3CheckOptInCommand());
     const buildContext = async (arg0: {
       input: BuildTransactionContextTaskArgs;
     }) => new BuildTransactionContextTask(internalApi, arg0.input).run();
@@ -542,9 +546,9 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
     }) => new SendSignTransactionTask(internalApi, arg0.input).run();
 
     return {
-      getChallenge,
+      getAppConfig,
+      web3CheckOptIn,
       buildContext,
-      getWeb3Check,
       provideContext,
       provideGenericContext,
       signTransaction,
