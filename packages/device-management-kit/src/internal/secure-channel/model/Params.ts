@@ -30,11 +30,9 @@ type FirmwareSubParams = {
 /**
  * Parameters specific to app operations.
  *
- * @property deleteKey - The key used to delete the app.
  * @property hash - The hash of the app.
  */
-type AppSubParams = {
-  deleteKey: string;
+type AppHash = {
   hash: string;
 };
 
@@ -76,7 +74,7 @@ export type UpdateFirmwareParams = BaseParams & FirmwareSubParams;
  * @property deleteKey - The key used to delete the app.
  * @property hash - The hash of the app.
  */
-export type InstallAppsParams = BaseParams & FirmwareSubParams & AppSubParams;
+export type InstallAppsParams = BaseParams & FirmwareSubParams & AppHash;
 
 /**
  * Parameters for uninstalling apps.
@@ -88,4 +86,4 @@ export type InstallAppsParams = BaseParams & FirmwareSubParams & AppSubParams;
  * @property deleteKey - The key used to delete the app.
  * @property hash - The hash of the app.
  */
-export type UninstallAppsParams = BaseParams & FirmwareSubParams & AppSubParams;
+export type UninstallAppsParams = BaseParams & FirmwareSubParams & AppHash;

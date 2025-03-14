@@ -121,7 +121,6 @@ describe("SecureChannelService", () => {
       const perso = "perso";
       const firmware = "firmware";
       const firmwareKey = "firmwareKey";
-      const deleteKey = "deleteKey";
       const hash = "hash";
 
       // when
@@ -129,7 +128,6 @@ describe("SecureChannelService", () => {
         perso,
         firmware,
         firmwareKey,
-        deleteKey,
         hash,
       } as Application);
 
@@ -139,7 +137,6 @@ describe("SecureChannelService", () => {
         perso,
         firmware,
         firmwareKey,
-        deleteKey,
         hash,
       });
     });
@@ -152,16 +149,14 @@ describe("SecureChannelService", () => {
         DeviceModelId.NANO_SP,
       );
       const perso = "perso";
-      const firmware = "firmware";
-      const firmwareKey = "firmwareKey";
+      const appDelete = "delete";
       const deleteKey = "deleteKey";
       const hash = "hash";
 
       // when
       service.uninstallApp(deviceInfo, {
         perso,
-        firmware,
-        firmwareKey,
+        delete: appDelete,
         deleteKey,
         hash,
       } as Application);
@@ -170,9 +165,8 @@ describe("SecureChannelService", () => {
       expect(dataSource.uninstallApp).toHaveBeenCalledWith({
         targetId: deviceInfo.targetId.toString(),
         perso,
-        firmware,
-        firmwareKey,
-        deleteKey,
+        firmware: appDelete,
+        firmwareKey: deleteKey,
         hash,
       });
     });
