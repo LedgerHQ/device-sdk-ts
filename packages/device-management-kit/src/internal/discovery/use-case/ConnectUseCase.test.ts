@@ -1,6 +1,7 @@
 import { Left, Maybe, Right } from "purify-ts";
 
 import { type DeviceModel } from "@api/device/DeviceModel";
+import { type DeviceSessionState } from "@api/device-session/DeviceSessionState";
 import { type LoggerPublisherService } from "@api/logger-publisher/service/LoggerPublisherService";
 import { TransportMock } from "@api/transport/model/__mocks__/TransportMock";
 import { type DiscoveredDevice } from "@api/transport/model/DiscoveredDevice";
@@ -102,9 +103,14 @@ describe("ConnectUseCase", () => {
     vi.spyOn(transport, "connect").mockResolvedValue(
       Right(stubConnectedDevice),
     );
-
     vi.spyOn(transportService, "getTransport").mockReturnValue(
       Maybe.of(transport),
+    );
+    vi.spyOn(sessionService, "addDeviceSession").mockImplementation(
+      (deviceSession) => {
+        deviceSession.setDeviceSessionState({} as DeviceSessionState);
+        return sessionService;
+      },
     );
 
     const usecase = new ConnectUseCase(

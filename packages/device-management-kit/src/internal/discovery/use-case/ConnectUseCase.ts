@@ -86,7 +86,7 @@ export class ConnectUseCase {
           data: { deviceId: device.id, error },
         });
       })
-      .map((connectedDevice) => {
+      .map(async (connectedDevice) => {
         const deviceSession = new DeviceSession(
           { connectedDevice },
           this._loggerFactory,
@@ -94,6 +94,7 @@ export class ConnectUseCase {
           this._secureChannel,
         );
         this._sessionService.addDeviceSession(deviceSession);
+        await deviceSession.waitIsReady();
         return deviceSession.id;
       })
       .caseOf({

@@ -48,6 +48,8 @@ export class DeviceSession {
   private readonly _refresherService: RefresherService;
   private readonly _managerApiService: ManagerApiService;
   private readonly _secureChannelService: SecureChannelService;
+  private readonly _readyPromise: Promise<void>;
+  private _resolveReady!: () => void;
 
   constructor(
     { connectedDevice, id = uuidv4() }: SessionConstructorArgs,
@@ -82,6 +84,14 @@ export class DeviceSession {
     this._refresherService = new RefresherService(this._refresher);
     this._managerApiService = managerApiService;
     this._secureChannelService = secureChannelService;
+    this._readyPromise = new Promise<void>((resolve) => {
+      this._resolveReady = resolve;
+    });
+    this._refresher.start();
+  }
+
+  public async waitIsReady() {
+    await this._readyPromise;
   }
 
   public get id() {
@@ -98,6 +108,7 @@ export class DeviceSession {
 
   public setDeviceSessionState(state: DeviceSessionState) {
     this._deviceState.next(state);
+    this._resolveReady();
   }
 
   public async sendApdu(
