@@ -404,8 +404,8 @@ importers:
         specifier: ^1.8.2
         version: 1.8.2
       inversify:
-        specifier: ^6.2.2
-        version: 6.2.2(reflect-metadata@0.2.2)
+        specifier: ^7.1.0
+        version: 7.1.0(reflect-metadata@0.2.2)
       inversify-logger-middleware:
         specifier: ^3.1.0
         version: 3.1.0
@@ -526,8 +526,8 @@ importers:
         specifier: 6.13.4
         version: 6.13.4
       inversify:
-        specifier: ^6.2.2
-        version: 6.2.2(reflect-metadata@0.2.2)
+        specifier: ^7.1.0
+        version: 7.1.0(reflect-metadata@0.2.2)
       purify-ts:
         specifier: ^2.1.0
         version: 2.1.0
@@ -569,8 +569,8 @@ importers:
         specifier: ^4.2.0
         version: 4.2.0
       inversify:
-        specifier: ^6.2.2
-        version: 6.2.2(reflect-metadata@0.2.2)
+        specifier: ^7.1.0
+        version: 7.1.0(reflect-metadata@0.2.2)
       inversify-logger-middleware:
         specifier: ^3.1.0
         version: 3.1.0
@@ -624,8 +624,8 @@ importers:
         specifier: 6.13.4
         version: 6.13.4
       inversify:
-        specifier: ^6.2.2
-        version: 6.2.2(reflect-metadata@0.2.2)
+        specifier: ^7.1.0
+        version: 7.1.0(reflect-metadata@0.2.2)
       inversify-logger-middleware:
         specifier: ^3.1.0
         version: 3.1.0
@@ -682,8 +682,8 @@ importers:
         specifier: ^6.0.0
         version: 6.0.0
       inversify:
-        specifier: ^6.2.2
-        version: 6.2.2(reflect-metadata@0.2.2)
+        specifier: ^7.1.0
+        version: 7.1.0(reflect-metadata@0.2.2)
       inversify-logger-middleware:
         specifier: ^3.1.0
         version: 3.1.0
@@ -887,8 +887,8 @@ importers:
   packages/trusted-apps:
     dependencies:
       inversify:
-        specifier: ^6.2.2
-        version: 6.2.2(reflect-metadata@0.2.2)
+        specifier: ^7.1.0
+        version: 7.1.0(reflect-metadata@0.2.2)
       reflect-metadata:
         specifier: ^0.2.2
         version: 0.2.2
@@ -912,8 +912,8 @@ importers:
   packages/ui:
     dependencies:
       inversify:
-        specifier: ^6.2.2
-        version: 6.2.2(reflect-metadata@0.2.2)
+        specifier: ^7.1.0
+        version: 7.1.0(reflect-metadata@0.2.2)
       reflect-metadata:
         specifier: ^0.2.2
         version: 0.2.2
@@ -2516,14 +2516,22 @@ packages:
       '@types/node':
         optional: true
 
-  '@inversifyjs/common@1.4.0':
-    resolution: {integrity: sha512-qfRJ/3iOlCL/VfJq8+4o5X4oA14cZSBbpAmHsYj8EsIit1xDndoOl0xKOyglKtQD4u4gdNVxMHx4RWARk/I4QA==}
+  '@inversifyjs/common@1.5.0':
+    resolution: {integrity: sha512-Qj5BELk11AfI2rgZEAaLPmOftmQRLLmoCXgAjmaF0IngQN5vHomVT5ML7DZ3+CA5fgGcEVMcGbUDAun+Rz+oNg==}
 
-  '@inversifyjs/core@1.3.5':
-    resolution: {integrity: sha512-B4MFXabhNTAmrfgB+yeD6wd/GIvmvWC6IQ8Rh/j2C3Ix69kmqwz9pr8Jt3E+Nho9aEHOQCZaGmrALgtqRd+oEQ==}
+  '@inversifyjs/container@1.5.4':
+    resolution: {integrity: sha512-mHAaWjAQb8m6TJksm5EJXW/kPcZFVEc1UKkWv5OnLbwbU0QvxM2UbEsuXzusGVHcrNY4TQp9Uh2wkRY6TN2WJg==}
+    peerDependencies:
+      reflect-metadata: ~0.2.2
 
-  '@inversifyjs/reflect-metadata-utils@0.2.4':
-    resolution: {integrity: sha512-u95rV3lKfG+NT2Uy/5vNzoDujos8vN8O18SSA5UyhxsGYd4GLQn/eUsGXfOsfa7m34eKrDelTKRUX1m/BcNX5w==}
+  '@inversifyjs/core@5.0.0':
+    resolution: {integrity: sha512-axOl+VZFGVA3nAMbs6RuHhQ8HvgO6/tKjlWJk4Nt0rUqed+1ksak4p5yZNtown1Kdm0GV2Oc57qLqqWd943hgA==}
+
+  '@inversifyjs/prototype-utils@0.1.0':
+    resolution: {integrity: sha512-lNz1yyajMRDXBHLvJsYYX81FcmeD15e5Qz1zAZ/3zeYTl+u7ZF/GxNRKJzNOloeMPMtuR8BnvzHA1SZxjR+J9w==}
+
+  '@inversifyjs/reflect-metadata-utils@1.1.0':
+    resolution: {integrity: sha512-jmuAuC3eL1GnFAYfJGJOMKRDL9q1mgzOyrban6zxfM8Yg1FUHsj25h27bW2G7p8X1Amvhg3MLkaOuogszkrofA==}
     peerDependencies:
       reflect-metadata: 0.2.2
 
@@ -6545,8 +6553,8 @@ packages:
   inversify-logger-middleware@3.1.0:
     resolution: {integrity: sha512-jKwwuQ3cDwCasgSdgUyF3DTlIvcfAVqcs3ViMXrKj5L7AqVP5hd2dnrHr3v8XZf984t6fsj+1Wic43A5WDtkEA==}
 
-  inversify@6.2.2:
-    resolution: {integrity: sha512-KB836KHbZ9WrUnB8ax5MtadOwnqQYa+ZJO3KWbPFgcr4RIEnHM621VaqFZzOZd9+U7ln6upt9n0wJei7x2BNqw==}
+  inversify@7.1.0:
+    resolution: {integrity: sha512-f8SlUTgecMZGr/rsFK36PD84/mH0+sp0/P/TuiGo3CcJywmF5kgoXeE2RW5IjaIt1SlqS5c5V9RuQc1+B8mw4Q==}
     peerDependencies:
       reflect-metadata: ~0.2.2
 
@@ -12624,16 +12632,28 @@ snapshots:
     optionalDependencies:
       '@types/node': 22.13.10
 
-  '@inversifyjs/common@1.4.0': {}
+  '@inversifyjs/common@1.5.0': {}
 
-  '@inversifyjs/core@1.3.5(reflect-metadata@0.2.2)':
+  '@inversifyjs/container@1.5.4(reflect-metadata@0.2.2)':
     dependencies:
-      '@inversifyjs/common': 1.4.0
-      '@inversifyjs/reflect-metadata-utils': 0.2.4(reflect-metadata@0.2.2)
+      '@inversifyjs/common': 1.5.0
+      '@inversifyjs/core': 5.0.0(reflect-metadata@0.2.2)
+      '@inversifyjs/reflect-metadata-utils': 1.1.0(reflect-metadata@0.2.2)
+      reflect-metadata: 0.2.2
+
+  '@inversifyjs/core@5.0.0(reflect-metadata@0.2.2)':
+    dependencies:
+      '@inversifyjs/common': 1.5.0
+      '@inversifyjs/prototype-utils': 0.1.0
+      '@inversifyjs/reflect-metadata-utils': 1.1.0(reflect-metadata@0.2.2)
     transitivePeerDependencies:
       - reflect-metadata
 
-  '@inversifyjs/reflect-metadata-utils@0.2.4(reflect-metadata@0.2.2)':
+  '@inversifyjs/prototype-utils@0.1.0':
+    dependencies:
+      '@inversifyjs/common': 1.5.0
+
+  '@inversifyjs/reflect-metadata-utils@1.1.0(reflect-metadata@0.2.2)':
     dependencies:
       reflect-metadata: 0.2.2
 
@@ -13948,9 +13968,7 @@ snapshots:
     transitivePeerDependencies:
       - '@babel/core'
       - '@babel/preset-env'
-      - bufferutil
       - supports-color
-      - utf-8-validate
 
   '@react-native/normalize-colors@0.76.6': {}
 
@@ -14529,16 +14547,16 @@ snapshots:
 
   '@types/babel__generator@7.6.8':
     dependencies:
-      '@babel/types': 7.26.10
+      '@babel/types': 7.26.8
 
   '@types/babel__template@7.4.4':
     dependencies:
-      '@babel/parser': 7.26.10
-      '@babel/types': 7.26.10
+      '@babel/parser': 7.26.8
+      '@babel/types': 7.26.8
 
   '@types/babel__traverse@7.20.6':
     dependencies:
-      '@babel/types': 7.26.10
+      '@babel/types': 7.26.8
 
   '@types/connect@3.4.36':
     dependencies:
@@ -18082,10 +18100,11 @@ snapshots:
     dependencies:
       chalk: 2.3.0
 
-  inversify@6.2.2(reflect-metadata@0.2.2):
+  inversify@7.1.0(reflect-metadata@0.2.2):
     dependencies:
-      '@inversifyjs/common': 1.4.0
-      '@inversifyjs/core': 1.3.5(reflect-metadata@0.2.2)
+      '@inversifyjs/common': 1.5.0
+      '@inversifyjs/container': 1.5.4(reflect-metadata@0.2.2)
+      '@inversifyjs/core': 5.0.0(reflect-metadata@0.2.2)
       reflect-metadata: 0.2.2
 
   ip-address@9.0.5:
@@ -19435,8 +19454,8 @@ snapshots:
   metro-transform-plugins@0.81.1:
     dependencies:
       '@babel/core': 7.26.9
-      '@babel/generator': 7.26.10
-      '@babel/template': 7.26.9
+      '@babel/generator': 7.26.8
+      '@babel/template': 7.26.8
       '@babel/traverse': 7.26.8
       flow-enums-runtime: 0.0.6
       nullthrows: 1.1.1
@@ -19446,9 +19465,9 @@ snapshots:
   metro-transform-worker@0.81.1:
     dependencies:
       '@babel/core': 7.26.9
-      '@babel/generator': 7.26.10
-      '@babel/parser': 7.26.10
-      '@babel/types': 7.26.10
+      '@babel/generator': 7.26.8
+      '@babel/parser': 7.26.9
+      '@babel/types': 7.26.8
       flow-enums-runtime: 0.0.6
       metro: 0.81.1
       metro-babel-transformer: 0.81.1
