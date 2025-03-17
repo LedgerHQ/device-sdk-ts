@@ -2,22 +2,22 @@ import { inject, injectable } from "inversify";
 import WebSocket from "isomorphic-ws";
 import { Either } from "purify-ts";
 
-import { GetOsVersionResponse } from "@api/index";
-import { Application } from "@internal/manager-api/model/Application";
-import { FinalFirmware } from "@internal/manager-api/model/Firmware";
+import { type GetOsVersionResponse } from "@api/index";
+import { type Application } from "@internal/manager-api/model/Application";
+import { type FinalFirmware } from "@internal/manager-api/model/Firmware";
 import { type SecureChannelDataSource } from "@internal/secure-channel/data/SecureChannelDataSource";
 import { secureChannelTypes } from "@internal/secure-channel/di/secureChannelTypes";
 import { WebSocketConnectionError } from "@internal/secure-channel/model/Errors";
 import {
-  GenuineCheckParams,
-  InstallAppsParams,
-  ListInstalledAppsParams,
-  UninstallAppsParams,
-  UpdateFirmwareParams,
-  UpdateMcuParams,
+  type GenuineCheckParams,
+  type InstallAppsParams,
+  type ListInstalledAppsParams,
+  type UninstallAppsParams,
+  type UpdateFirmwareParams,
+  type UpdateMcuParams,
 } from "@internal/secure-channel/model/Params";
 
-import { SecureChannelService } from "./SecureChannelService";
+import { type SecureChannelService } from "./SecureChannelService";
 
 @injectable()
 export class DefaultSecureChannelService implements SecureChannelService {
@@ -39,15 +39,14 @@ export class DefaultSecureChannelService implements SecureChannelService {
 
   installApp(
     deviceInfo: GetOsVersionResponse,
-    app: Application,
+    app: Pick<Application, "perso" | "firmware" | "firmwareKey" | "hash">,
   ): Either<WebSocketConnectionError, WebSocket> {
-    const { perso, firmware, firmwareKey, deleteKey, hash } = app;
+    const { perso, firmware, firmwareKey, hash } = app;
     const params: InstallAppsParams = {
       targetId: deviceInfo.targetId.toString(),
       perso,
       firmware,
       firmwareKey,
-      deleteKey,
       hash,
     };
     return this.dataSource.installApp(params);
@@ -66,15 +65,14 @@ export class DefaultSecureChannelService implements SecureChannelService {
 
   uninstallApp(
     deviceInfo: GetOsVersionResponse,
-    app: Application,
+    app: Pick<Application, "perso" | "delete" | "deleteKey" | "hash">,
   ): Either<WebSocketConnectionError, WebSocket> {
-    const { perso, firmware, firmwareKey, deleteKey, hash } = app;
+    const { perso, delete: appDelete, deleteKey, hash } = app;
     const params: UninstallAppsParams = {
       targetId: deviceInfo.targetId.toString(),
       perso,
-      firmware,
-      firmwareKey,
-      deleteKey,
+      firmware: appDelete,
+      firmwareKey: deleteKey,
       hash,
     };
     return this.dataSource.uninstallApp(params);
