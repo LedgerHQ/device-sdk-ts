@@ -24,50 +24,6 @@ describe("GetWeb3CheckTask", () => {
   const transaction = new Uint8Array([0x01, 0x02, 0x03, 0x04]);
   const derivationPath = "44'/60'/0'/0/0";
 
-  describe("old apps", () => {
-    beforeEach(() => {
-      vi.clearAllMocks();
-
-      apiMock.getDeviceSessionState.mockReturnValueOnce({
-        sessionStateType: DeviceSessionStateType.ReadyWithoutSecureChannel,
-        deviceStatus: DeviceStatus.CONNECTED,
-        installedApps: [],
-        currentApp: { name: "Ethereum", version: "1.15.0" },
-        deviceModelId: DeviceModelId.FLEX,
-        isSecureConnectionAllowed: true,
-      });
-    });
-
-    it("should return null on old applications", async () => {
-      // GIVEN
-      mapperMock.mapTransactionToSubset.mockReturnValue(
-        Right({ subset: {}, serializedTransaction: new Uint8Array() }),
-      );
-      apiMock.sendCommand.mockResolvedValue(
-        CommandResultFactory({
-          data: { web3ChecksEnabled: true, web3ChecksOptIn: true },
-        }),
-      );
-      contextModuleMock.getWeb3Checks.mockResolvedValue({
-        type: "web3Check",
-        id: 1,
-      });
-
-      // WHEN
-      const result = await new GetWeb3CheckTask(apiMock, {
-        contextModule: contextModuleMock as unknown as ContextModule,
-        mapper: mapperMock as unknown as TransactionMapperService,
-        transaction,
-        derivationPath,
-      }).run();
-
-      // THEN
-      expect(result).toEqual({
-        web3Check: null,
-      });
-    });
-  });
-
   describe("run", () => {
     beforeEach(() => {
       vi.clearAllMocks();
@@ -86,11 +42,6 @@ describe("GetWeb3CheckTask", () => {
       it("should throw an error if mapTransactionToSubset assert.fails", async () => {
         // GIVEN
         const error = new Error("error");
-        apiMock.sendCommand.mockResolvedValueOnce(
-          CommandResultFactory({
-            data: { web3ChecksEnabled: true, web3ChecksOptIn: true },
-          }),
-        );
         apiMock.sendCommand.mockResolvedValueOnce(
           CommandResultFactory({ data: { address: "address" } }),
         );
@@ -111,68 +62,10 @@ describe("GetWeb3CheckTask", () => {
         }
       });
 
-      it("should return a context error if GetAppConfiguration assert.fails", async () => {
-        // GIVEN
-        mapperMock.mapTransactionToSubset.mockReturnValue(
-          Right({ subset: {}, serializedTransaction: new Uint8Array() }),
-        );
-        apiMock.sendCommand.mockResolvedValue(
-          CommandResultFactory({ error: new InvalidStatusWordError("error") }),
-        );
-
-        // WHEN
-        const result = await new GetWeb3CheckTask(apiMock, {
-          contextModule: contextModuleMock as unknown as ContextModule,
-          mapper: mapperMock as unknown as TransactionMapperService,
-          transaction,
-          derivationPath,
-        }).run();
-
-        // THEN
-        expect(result).toEqual({
-          web3Check: null,
-          error: new InvalidStatusWordError("error"),
-        });
-      });
-
-      it("should return a context error if Web3CheckOptInCommand assert.fails", async () => {
-        // GIVEN
-        mapperMock.mapTransactionToSubset.mockReturnValue(
-          Right({ subset: {}, serializedTransaction: new Uint8Array() }),
-        );
-        apiMock.sendCommand.mockResolvedValueOnce(
-          CommandResultFactory({
-            data: { web3ChecksEnabled: false, web3ChecksOptIn: false },
-          }),
-        );
-        apiMock.sendCommand.mockResolvedValue(
-          CommandResultFactory({ error: new InvalidStatusWordError("error") }),
-        );
-
-        // WHEN
-        const result = await new GetWeb3CheckTask(apiMock, {
-          contextModule: contextModuleMock as unknown as ContextModule,
-          mapper: mapperMock as unknown as TransactionMapperService,
-          transaction,
-          derivationPath,
-        }).run();
-
-        // THEN
-        expect(result).toEqual({
-          web3Check: null,
-          error: new InvalidStatusWordError("error"),
-        });
-      });
-
       it("should return a context error if GetAddressCommand assert.fails", async () => {
         // GIVEN
         mapperMock.mapTransactionToSubset.mockReturnValue(
           Right({ subset: {}, serializedTransaction: new Uint8Array() }),
-        );
-        apiMock.sendCommand.mockResolvedValueOnce(
-          CommandResultFactory({
-            data: { web3ChecksEnabled: true, web3ChecksOptIn: true },
-          }),
         );
         apiMock.sendCommand.mockResolvedValueOnce(
           CommandResultFactory({ error: new InvalidStatusWordError("error") }),
@@ -199,11 +92,6 @@ describe("GetWeb3CheckTask", () => {
           Right({ subset: {}, serializedTransaction: new Uint8Array() }),
         );
         apiMock.sendCommand.mockResolvedValueOnce(
-          CommandResultFactory({
-            data: { web3ChecksEnabled: true, web3ChecksOptIn: true },
-          }),
-        );
-        apiMock.sendCommand.mockResolvedValueOnce(
           CommandResultFactory({ data: { address: "address" } }),
         );
         contextModuleMock.getWeb3Checks.mockResolvedValue({
@@ -227,40 +115,13 @@ describe("GetWeb3CheckTask", () => {
     });
 
     describe("success", () => {
-      it("should return null if web3ChecksEnabled is false", async () => {
-        // GIVEN
-        mapperMock.mapTransactionToSubset.mockReturnValue(
-          Right({ subset: {}, serializedTransaction: new Uint8Array() }),
-        );
-        apiMock.sendCommand.mockResolvedValue(
-          CommandResultFactory({
-            data: { web3ChecksEnabled: false, web3ChecksOptIn: true },
-          }),
-        );
-
-        // WHEN
-        const result = await new GetWeb3CheckTask(apiMock, {
-          contextModule: contextModuleMock as unknown as ContextModule,
-          mapper: mapperMock as unknown as TransactionMapperService,
-          transaction,
-          derivationPath,
-        }).run();
-
-        // THEN
-        expect(result).toEqual({
-          web3Check: null,
-        });
-      });
-
       it("should return null if the context module does not have a web3 check", async () => {
         // GIVEN
         mapperMock.mapTransactionToSubset.mockReturnValue(
           Right({ subset: {}, serializedTransaction: new Uint8Array() }),
         );
-        apiMock.sendCommand.mockResolvedValue(
-          CommandResultFactory({
-            data: { web3ChecksEnabled: true, web3ChecksOptIn: true },
-          }),
+        apiMock.sendCommand.mockResolvedValueOnce(
+          CommandResultFactory({ data: { address: "address" } }),
         );
         contextModuleMock.getWeb3Checks.mockResolvedValue(null);
 
@@ -284,10 +145,8 @@ describe("GetWeb3CheckTask", () => {
         mapperMock.mapTransactionToSubset.mockReturnValue(
           Right({ subset: {}, serializedTransaction: new Uint8Array() }),
         );
-        apiMock.sendCommand.mockResolvedValue(
-          CommandResultFactory({
-            data: { web3ChecksEnabled: true, web3ChecksOptIn: true },
-          }),
+        apiMock.sendCommand.mockResolvedValueOnce(
+          CommandResultFactory({ data: { address: "address" } }),
         );
         contextModuleMock.getWeb3Checks.mockResolvedValue(web3Check);
 
@@ -302,76 +161,14 @@ describe("GetWeb3CheckTask", () => {
         // THEN
         expect(result).toEqual({
           web3Check,
-        });
-      });
-
-      it("should opt-in and then return the web3check", async () => {
-        // GIVEN
-        const web3Check = { type: "web3Check", id: 1 };
-        mapperMock.mapTransactionToSubset.mockReturnValue(
-          Right({ subset: {}, serializedTransaction: new Uint8Array() }),
-        );
-        apiMock.sendCommand.mockResolvedValueOnce(
-          CommandResultFactory({
-            data: { web3ChecksEnabled: false, web3ChecksOptIn: false },
-          }),
-        );
-        apiMock.sendCommand.mockResolvedValueOnce(
-          CommandResultFactory({ data: { enabled: true } }),
-        );
-        contextModuleMock.getWeb3Checks.mockResolvedValue(web3Check);
-
-        // WHEN
-        const result = await new GetWeb3CheckTask(apiMock, {
-          contextModule: contextModuleMock as unknown as ContextModule,
-          mapper: mapperMock as unknown as TransactionMapperService,
-          transaction,
-          derivationPath,
-        }).run();
-
-        // THEN
-        expect(result).toEqual({
-          web3Check,
-        });
-      });
-
-      it("should opt-in and then return a null if disabled", async () => {
-        // GIVEN
-        const web3Check = { type: "web3Check", id: 1 };
-        mapperMock.mapTransactionToSubset.mockReturnValue(
-          Right({ subset: {}, serializedTransaction: new Uint8Array() }),
-        );
-        apiMock.sendCommand.mockResolvedValueOnce(
-          CommandResultFactory({
-            data: { web3ChecksEnabled: false, web3ChecksOptIn: false },
-          }),
-        );
-        apiMock.sendCommand.mockResolvedValueOnce(
-          CommandResultFactory({ data: { enabled: false } }),
-        );
-        contextModuleMock.getWeb3Checks.mockResolvedValue(web3Check);
-
-        // WHEN
-        const result = await new GetWeb3CheckTask(apiMock, {
-          contextModule: contextModuleMock as unknown as ContextModule,
-          mapper: mapperMock as unknown as TransactionMapperService,
-          transaction,
-          derivationPath,
-        }).run();
-
-        // THEN
-        expect(result).toEqual({
-          web3Check: null,
         });
       });
 
       it("should return a web3 check for typed data", async () => {
         // GIVEN
         const web3Check = { type: "web3Check", id: 1 };
-        apiMock.sendCommand.mockResolvedValue(
-          CommandResultFactory({
-            data: { web3ChecksEnabled: true, web3ChecksOptIn: true },
-          }),
+        apiMock.sendCommand.mockResolvedValueOnce(
+          CommandResultFactory({ data: { address: "address" } }),
         );
         contextModuleMock.getWeb3Checks.mockResolvedValue(web3Check);
 
@@ -394,11 +191,6 @@ describe("GetWeb3CheckTask", () => {
           Right({
             subset: { chainId: 15, from: "from" },
             serializedTransaction: new Uint8Array([0x01, 0x02, 0x03]),
-          }),
-        );
-        apiMock.sendCommand.mockResolvedValueOnce(
-          CommandResultFactory({
-            data: { web3ChecksEnabled: true, web3ChecksOptIn: true },
           }),
         );
         apiMock.sendCommand.mockResolvedValueOnce(

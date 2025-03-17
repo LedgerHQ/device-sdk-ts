@@ -4,13 +4,13 @@ import {
   delay,
   filter,
   from,
-  interval,
   map,
   Observable,
   of,
   race,
   Subscription,
   switchMap,
+  timer,
 } from "rxjs";
 
 import { isSuccessCommandResult } from "@api/command/model/CommandResult";
@@ -98,8 +98,6 @@ export class DeviceSessionRefresher {
     this._updateStateFn = updateStateFn;
     this._refreshInterval = refreshInterval;
     this._deviceModelId = deviceModelId;
-
-    this.start();
   }
 
   /**
@@ -116,7 +114,7 @@ export class DeviceSessionRefresher {
     const refreshObservable =
       this._deviceModelId === DeviceModelId.NANO_S
         ? this._getNanoSRefreshObservable(this._refreshInterval * 2)
-        : this._getDefaultRefreshObservable(interval(this._refreshInterval));
+        : this._getDefaultRefreshObservable(timer(0, this._refreshInterval));
 
     this._subscription = refreshObservable.subscribe((parsedResponse) => {
       if (!parsedResponse || !isSuccessCommandResult(parsedResponse)) {
@@ -209,7 +207,7 @@ export class DeviceSessionRefresher {
         }));
       }),
     );
-    return interval(refreshInterval + 100).pipe(
+    return timer(0, refreshInterval + 100).pipe(
       switchMap(() => race(nanoSRefreshObservable, timeoutObservable)),
     );
   }

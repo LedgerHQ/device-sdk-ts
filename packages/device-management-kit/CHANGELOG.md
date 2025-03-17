@@ -1,5 +1,11 @@
 # @ledgerhq/device-management-kit
 
+## 0.6.4
+
+### Patch Changes
+
+- [#738](https://github.com/LedgerHQ/device-sdk-ts/pull/738) [`ce144ac`](https://github.com/LedgerHQ/device-sdk-ts/commit/ce144ac42f307d3d6d65813cd27326da8fc5b7fe) Thanks [@paoun-ledger](https://github.com/paoun-ledger)! - Ensure device session is ready after device connection
+
 ## 0.6.3
 
 ### Patch Changes

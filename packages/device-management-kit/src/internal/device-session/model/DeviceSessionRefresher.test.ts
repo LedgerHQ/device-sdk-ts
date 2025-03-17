@@ -20,18 +20,16 @@ import { DefaultLoggerPublisherService } from "@internal/logger-publisher/servic
 
 import { DeviceSessionRefresher } from "./DeviceSessionRefresher";
 
-const mockSendApduFn = vi
-  .fn()
-  .mockResolvedValue(Promise.resolve(Right({} as ApduResponse)));
-const mockUpdateStateFn = vi.fn().mockImplementation(() => undefined);
-
-vi.useFakeTimers();
-
 describe("DeviceSessionRefresher", () => {
+  const mockSendApduFn = vi.fn();
+  const mockUpdateStateFn = vi.fn();
+
   let deviceSessionRefresher: DeviceSessionRefresher;
   let logger: LoggerPublisherService;
 
   beforeEach(() => {
+    vi.clearAllMocks();
+    vi.useFakeTimers();
     vi.spyOn(
       GetAppAndVersionCommand.prototype,
       "parseResponse",
@@ -50,6 +48,8 @@ describe("DeviceSessionRefresher", () => {
         data: {} as GetOsVersionResponse,
       }),
     );
+    mockSendApduFn.mockResolvedValue(Right({} as ApduResponse));
+    mockUpdateStateFn.mockImplementation(() => undefined);
     logger = new DefaultLoggerPublisherService(
       [],
       "DeviceSessionRefresherTest",
@@ -72,16 +72,16 @@ describe("DeviceSessionRefresher", () => {
         },
         logger,
       );
+      deviceSessionRefresher.start();
     });
 
     afterEach(() => {
       deviceSessionRefresher.stop();
-      vi.clearAllMocks();
     });
 
-    it("should poll by calling sendApduFn 2 times", () => {
+    it("should poll by calling sendApduFn 3 times", () => {
       vi.advanceTimersByTime(DEVICE_SESSION_REFRESH_INTERVAL * 2);
-      expect(mockSendApduFn).toHaveBeenCalledTimes(2);
+      expect(mockSendApduFn).toHaveBeenCalledTimes(3);
     });
 
     it("should not poll when device is busy", () => {
@@ -103,20 +103,20 @@ describe("DeviceSessionRefresher", () => {
     it("should update device session state by calling updateStateFn", async () => {
       vi.advanceTimersByTime(DEVICE_SESSION_REFRESH_INTERVAL);
 
-      await expect(mockSendApduFn()).resolves.toEqual(Right({}));
+      await Promise.resolve();
       expect(mockSendApduFn).toHaveBeenCalled();
+      await Promise.resolve();
       expect(mockUpdateStateFn).toHaveBeenCalled();
     });
 
     it("should not update device session state with failed polling response", async () => {
-      mockSendApduFn.mockResolvedValueOnce(Promise.resolve(Left("error")));
-      const spy = vi.spyOn(logger, "error");
-
+      mockSendApduFn.mockResolvedValue(Left("error"));
       vi.advanceTimersByTime(DEVICE_SESSION_REFRESH_INTERVAL);
-      await mockSendApduFn();
 
-      await expect(mockUpdateStateFn).not.toHaveBeenCalled();
-      expect(spy).toHaveBeenCalled();
+      await Promise.resolve();
+      expect(mockSendApduFn).toHaveBeenCalled();
+      await Promise.resolve();
+      expect(mockUpdateStateFn).not.toHaveBeenCalled();
     });
 
     it("should stop the refresher when device is disconnected", () => {
@@ -139,10 +139,9 @@ describe("DeviceSessionRefresher", () => {
   describe("With a NanoS device", () => {
     afterEach(() => {
       deviceSessionRefresher.stop();
-      vi.clearAllMocks();
     });
 
-    it("should call sendApduFn 2 times and update state 1 time for a single interval", async () => {
+    it("should call sendApduFn 3 times and update state 2 time for a single interval", async () => {
       deviceSessionRefresher = new DeviceSessionRefresher(
         {
           refreshInterval: DEVICE_SESSION_REFRESH_INTERVAL,
@@ -153,6 +152,7 @@ describe("DeviceSessionRefresher", () => {
         },
         logger,
       );
+      deviceSessionRefresher.start();
       vi.advanceTimersByTime(DEVICE_SESSION_REFRESH_INTERVAL * 2 + 100);
 
       await Promise.resolve();
@@ -165,9 +165,9 @@ describe("DeviceSessionRefresher", () => {
         new GetOsVersionCommand().getApdu().getRawApdu(),
       );
       await Promise.resolve();
-      expect(mockSendApduFn).toHaveBeenCalledTimes(2);
+      expect(mockSendApduFn).toHaveBeenCalledTimes(3);
       await Promise.resolve();
-      expect(mockUpdateStateFn).toHaveBeenCalledTimes(1);
+      expect(mockUpdateStateFn).toHaveBeenCalledTimes(2);
     });
 
     it("should set device locked when get os version times out", async () => {
@@ -200,6 +200,7 @@ describe("DeviceSessionRefresher", () => {
         },
         logger,
       );
+      deviceSessionRefresher.start();
       vi.spyOn(deviceSessionRefresher, "setDeviceStatus");
       vi.advanceTimersByTime(DEVICE_SESSION_REFRESH_INTERVAL * 5 + 100);
       await Promise.resolve();

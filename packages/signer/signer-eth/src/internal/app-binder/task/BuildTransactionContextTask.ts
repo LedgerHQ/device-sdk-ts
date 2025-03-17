@@ -7,14 +7,18 @@ import {
 import {
   DeviceModelId,
   type DeviceSessionState,
-  DeviceSessionStateType,
   type InternalApi,
+  isSuccessCommandResult,
 } from "@ledgerhq/device-management-kit";
-import { gte } from "semver";
 
 import { type TransactionOptions } from "@api/model/TransactionOptions";
 import { type TransactionType } from "@api/model/TransactionType";
-import { ETHEREUM_PLUGINS } from "@internal/app-binder/constant/plugins";
+import { GetChallengeCommand } from "@internal/app-binder/command/GetChallengeCommand";
+import {
+  GetWeb3CheckTask,
+  type GetWeb3CheckTaskArgs,
+} from "@internal/app-binder/task/GetWeb3CheckTask";
+import { ApplicationChecker } from "@internal/shared/utils/ApplicationChecker";
 import { type TransactionMapperService } from "@internal/transaction/service/mapper/TransactionMapperService";
 
 import { type GenericContext } from "./ProvideTransactionGenericContextTask";
@@ -24,6 +28,7 @@ export type BuildTransactionTaskResult = {
   readonly serializedTransaction: Uint8Array;
   readonly chainId: number;
   readonly transactionType: TransactionType;
+  readonly web3Check: ClearSignContextSuccess<ClearSignContextType.WEB3_CHECK> | null;
 };
 
 export type BuildTransactionContextTaskArgs = {
@@ -31,28 +36,62 @@ export type BuildTransactionContextTaskArgs = {
   readonly mapper: TransactionMapperService;
   readonly transaction: Uint8Array;
   readonly options: TransactionOptions;
-  readonly challenge: string | null;
+  readonly web3ChecksEnabled: boolean;
+  readonly derivationPath: string;
 };
 
 export class BuildTransactionContextTask {
   constructor(
     private readonly api: InternalApi,
     private readonly args: BuildTransactionContextTaskArgs,
+    private readonly getWeb3ChecksFactory = (
+      api: InternalApi,
+      args: GetWeb3CheckTaskArgs,
+    ) => new GetWeb3CheckTask(api, args),
   ) {}
 
   async run(): Promise<BuildTransactionTaskResult> {
-    const { contextModule, mapper, transaction, options, challenge } =
-      this.args;
+    const {
+      contextModule,
+      mapper,
+      transaction,
+      options,
+      web3ChecksEnabled,
+      derivationPath,
+    } = this.args;
     const deviceState = this.api.getDeviceSessionState();
 
+    // Parse transaction
     const parsed = mapper.mapTransactionToSubset(transaction);
     parsed.ifLeft((err) => {
       throw err;
     });
     const { subset, serializedTransaction, type } = parsed.unsafeCoerce();
 
+    // Run the web3checks if needed
+    let web3Check: ClearSignContextSuccess<ClearSignContextType.WEB3_CHECK> | null =
+      null;
+    if (web3ChecksEnabled) {
+      web3Check = (
+        await this.getWeb3ChecksFactory(this.api, {
+          contextModule,
+          derivationPath,
+          mapper,
+          transaction,
+        }).run()
+      ).web3Check;
+    }
+
+    // Get challenge
+    let challenge: string | undefined = undefined;
+    const challengeRes = await this.api.sendCommand(new GetChallengeCommand());
+    if (isSuccessCommandResult(challengeRes)) {
+      challenge = challengeRes.data.challenge;
+    }
+
+    // Get the clear sign contexts
     const clearSignContexts = await contextModule.getContexts({
-      challenge: challenge ?? undefined,
+      challenge: challenge,
       domain: options.domain,
       deviceModelId: deviceState.deviceModelId,
       ...subset,
@@ -114,25 +153,14 @@ export class BuildTransactionContextTask {
       serializedTransaction,
       chainId: subset.chainId,
       transactionType: type,
+      web3Check,
     };
   }
 
   private supportsGenericParser(deviceState: DeviceSessionState): boolean {
-    if (deviceState.sessionStateType === DeviceSessionStateType.Connected) {
-      return false;
-    }
-
-    if (
-      deviceState.currentApp.name !== "Ethereum" &&
-      !ETHEREUM_PLUGINS.includes(deviceState.currentApp.name)
-    ) {
-      // Sanity check, should never happen as open app is called before this task
-      throw new Error("Unsupported app");
-    }
-
-    if (deviceState.deviceModelId === DeviceModelId.NANO_S) {
-      return false;
-    }
-    return gte(deviceState.currentApp.version, "1.15.0");
+    return new ApplicationChecker(deviceState)
+      .withMinVersionExclusive("1.14.0")
+      .excludeDeviceModel(DeviceModelId.NANO_S)
+      .check();
   }
 }

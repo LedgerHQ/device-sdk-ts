@@ -1,0 +1,17 @@
+{
+  "name": "@ledgerhq/ldmk-cli",
+  "license": "Apache-2.0",
+  "version": "0.0.1",
+  "private": true,
+  "description": "A collection of scripts and utilities for Ledger Device Management Kit monorepo",
+  "bin": {
+    "lmdk-cli": "./cli.mjs"
+  },
+  "files": [
+    "*.mjs"
+  ],
+  "type": "module",
+  "dependencies": {
+    "@inquirer/prompts": "^7.3.3"
+  }
+}
