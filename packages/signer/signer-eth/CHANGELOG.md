@@ -1,5 +1,15 @@
 # @ledgerhq/device-signer-kit-ethereum
 
+## 1.3.1
+
+### Patch Changes
+
+- [#736](https://github.com/LedgerHQ/device-sdk-ts/pull/736) [`3a1cac0`](https://github.com/LedgerHQ/device-sdk-ts/commit/3a1cac08353d6806027bc297ec008e4449631692) Thanks [@paoun-ledger](https://github.com/paoun-ledger)! - Add a user interaction for web3checks opt-in in device actions
+
+- Updated dependencies [[`ce144ac`](https://github.com/LedgerHQ/device-sdk-ts/commit/ce144ac42f307d3d6d65813cd27326da8fc5b7fe)]:
+  - @ledgerhq/device-management-kit@0.6.4
+  - @ledgerhq/context-module@1.3.0
+
 ## 2.0.0
 
 ### Minor Changes
