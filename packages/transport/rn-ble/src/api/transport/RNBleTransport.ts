@@ -412,21 +412,18 @@ export class RNBleTransport implements Transport {
   private async _handleLostDiscoveredDevices(
     subscriber: Subscriber<TransportDiscoveredDevice>,
   ) {
-    const promises = this._internalDevicesById
-      .values()
-      .map((internalDevice) => async () => {
-        if (
-          this._isDiscoveredDeviceDelayOver(internalDevice) &&
-          !(await this._manager.isDeviceConnected(internalDevice.id))
-        ) {
-          this._internalDevicesById.delete(internalDevice.id);
-          subscriber.next({
-            ...internalDevice.discoveredDevice,
-            rssi: null,
-          });
-        }
-      });
-    await Promise.all(promises);
+    for (const internalDevice of this._internalDevicesById.values()) {
+      if (
+        this._isDiscoveredDeviceDelayOver(internalDevice) &&
+        !(await this._manager.isDeviceConnected(internalDevice.id))
+      ) {
+        this._internalDevicesById.delete(internalDevice.id);
+        subscriber.next({
+          ...internalDevice.discoveredDevice,
+          rssi: null,
+        });
+      }
+    }
   }
 
   /**
@@ -525,6 +522,7 @@ export class RNBleTransport implements Transport {
                 );
               });
             }
+            this._handleLostDiscoveredDevices(subscriber);
           }),
       ),
       repeat({ delay: BLE_DISCONNECT_TIMEOUT / 5 }),

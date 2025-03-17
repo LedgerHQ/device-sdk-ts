@@ -20,7 +20,7 @@ import {
 } from "@ledgerhq/device-management-kit";
 import { Base64 } from "js-base64";
 import { type Either, Left, Maybe, Nothing, Right } from "purify-ts";
-import { BehaviorSubject, type Subscription } from "rxjs";
+import { BehaviorSubject } from "rxjs";
 
 const FRAME_HEADER_SIZE = 3;
 
@@ -152,9 +152,8 @@ export class RNBleApduSender
     this._isDeviceReady.next(false);
     const requestMtuFrame = Uint8Array.from([0x08, 0x00, 0x00, 0x00, 0x00]);
     await this.write(Base64.fromUint8Array(requestMtuFrame));
-    let sub: Subscription;
     await new Promise<void>((resolve) => {
-      sub = this._isDeviceReady.subscribe((isReady) => {
+      const sub = this._isDeviceReady.subscribe((isReady) => {
         if (isReady) {
           resolve();
           sub.unsubscribe();
