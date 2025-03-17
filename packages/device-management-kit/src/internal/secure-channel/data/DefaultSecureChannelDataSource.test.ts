@@ -164,7 +164,6 @@ describe("Secure Channel Data Source", () => {
         perso: "perso",
         firmware: "firmware",
         firmwareKey: "firmwareKey",
-        deleteKey: "deleteKey",
         hash: "hash",
       });
 
@@ -172,7 +171,7 @@ describe("Secure Channel Data Source", () => {
       expect(
         (api as DefaultSecureChannelDataSource)._connectWebSocket,
       ).toHaveBeenCalledWith(
-        "wss://test-websocket-url/install?targetId=targetId&perso=perso&firmware=firmware&firmwareKey=firmwareKey&deleteKey=deleteKey&hash=hash",
+        "wss://test-websocket-url/install?targetId=targetId&perso=perso&firmware=firmware&firmwareKey=firmwareKey&hash=hash",
       );
     });
 
@@ -189,7 +188,6 @@ describe("Secure Channel Data Source", () => {
         perso: "perso",
         firmware: "firmware",
         firmwareKey: "firmwareKey",
-        deleteKey: "deleteKey",
         hash: "hash",
       });
 
@@ -197,7 +195,7 @@ describe("Secure Channel Data Source", () => {
       expect(
         (api as DefaultSecureChannelDataSource)._connectWebSocket,
       ).toHaveBeenCalledWith(
-        "wss://test-websocket-url/install?targetId=targetId&perso=perso&firmware=firmware&firmwareKey=firmwareKey&deleteKey=deleteKey&hash=hash",
+        "wss://test-websocket-url/install?targetId=targetId&perso=perso&firmware=firmware&firmwareKey=firmwareKey&hash=hash",
       );
     });
   });

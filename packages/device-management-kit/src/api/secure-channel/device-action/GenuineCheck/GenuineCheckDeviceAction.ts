@@ -41,7 +41,7 @@ export class GenuineCheckDeviceAction extends XStateDeviceAction<
   GenuineCheckDAIntermediateValue,
   GenuineCheckStateMachineInternalState
 > {
-  protected override makeStateMachine(
+  override makeStateMachine(
     internalApi: InternalApi,
   ): DeviceActionStateMachine<
     GenuineCheckDAOutput,
@@ -392,7 +392,7 @@ export class GenuineCheckDeviceAction extends XStateDeviceAction<
     });
   }
 
-  private extractDependencies(internalApi: InternalApi): MachineDependencies {
+  extractDependencies(internalApi: InternalApi): MachineDependencies {
     const provider = 1; // TODO: get the provider from user configuration
 
     const getOsVersion = () =>

@@ -82,7 +82,9 @@ export {
   DeviceSessionStateType,
 } from "@api/device-session/DeviceSessionState";
 export { GenuineCheckDeviceAction } from "@api/secure-channel/device-action/GenuineCheck/GenuineCheckDeviceAction";
+export { InstallAppDeviceAction } from "@api/secure-channel/device-action/InstallApp/InstallAppDeviceAction";
 export { ListInstalledAppsDeviceAction } from "@api/secure-channel/device-action/ListInstalledApps/ListInstalledAppsDeviceAction";
+export { UninstallAppDeviceAction } from "@api/secure-channel/device-action/UninstallApp/UninstallAppDeviceAction";
 // TODO: remove from exported
 export { defaultApduReceiverServiceStubBuilder } from "@api/device-session/service/DefaultApduReceiverService.stub";
 export { defaultApduSenderServiceStubBuilder } from "@api/device-session/service/DefaultApduSenderService.stub";
