@@ -10,6 +10,7 @@ export type {
   SignTransactionDAIntermediateValue,
   SignTransactionDAOutput,
   SignTransactionDAState,
+  SignTransactionDAStep,
 } from "@api/app-binder/SignTransactionDeviceActionTypes";
 export {
   type SignTypedDataDAError,
