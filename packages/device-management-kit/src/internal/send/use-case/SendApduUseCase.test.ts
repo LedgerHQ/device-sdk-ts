@@ -3,6 +3,7 @@ import { Left } from "purify-ts";
 import { type DmkConfig } from "@api/DmkConfig";
 import { type LoggerPublisherService } from "@api/logger-publisher/service/LoggerPublisherService";
 import { connectedDeviceStubBuilder } from "@api/transport/model/TransportConnectedDevice.stub";
+import { DEVICE_SESSION_REFRESHER_DEFAULT_OPTIONS } from "@internal/device-session/data/DeviceSessionRefresherConst";
 import { deviceSessionStubBuilder } from "@internal/device-session/model/DeviceSession.stub";
 import {
   DeviceSessionNotFound,
@@ -50,6 +51,7 @@ describe("SendApduUseCase", () => {
       () => logger,
       managerApi,
       secureChannel,
+      DEVICE_SESSION_REFRESHER_DEFAULT_OPTIONS,
     );
     sessionService.addDeviceSession(deviceSession);
     const useCase = new SendApduUseCase(sessionService, () => logger);
@@ -92,6 +94,7 @@ describe("SendApduUseCase", () => {
       () => logger,
       managerApi,
       secureChannel,
+      DEVICE_SESSION_REFRESHER_DEFAULT_OPTIONS,
     );
     sessionService.addDeviceSession(deviceSession);
     const useCase = new SendApduUseCase(sessionService, () => logger);

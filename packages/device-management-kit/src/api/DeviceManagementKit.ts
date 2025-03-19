@@ -135,7 +135,11 @@ export class DeviceManagementKit {
    * - Exposes the device state through an observable (see `DeviceManagementKit.getDeviceSessionState`)
    * - Should be used for all subsequent communication with the device.
    *
-   * @param {ConnectUseCaseArgs} args - The device ID (obtained in discovery) to connect to.
+   * @param {ConnectUseCaseArgs} args - The arguments for connecting to the device.
+   *   - `device`: The discovered device obtained from `StartDiscoveringUseCase`.
+   *   - `sessionRefresherOptions` (optional): Configuration for session refreshing.
+   *     - `isRefresherDisabled`: Whether the refresher is disabled.
+   *     - `pollingInterval`: The refresh interval in milliseconds
    * @returns The session ID to use for further communication with the device.
    */
   connect(args: ConnectUseCaseArgs): Promise<DeviceSessionId> {

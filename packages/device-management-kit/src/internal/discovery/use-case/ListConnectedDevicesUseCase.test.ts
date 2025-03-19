@@ -1,4 +1,6 @@
 import { type LoggerPublisherService } from "@api/logger-publisher/service/LoggerPublisherService";
+import { ConnectedDevice } from "@api/transport/model/ConnectedDevice";
+import { DEVICE_SESSION_REFRESHER_DEFAULT_OPTIONS } from "@internal/device-session/data/DeviceSessionRefresherConst";
 import { deviceSessionStubBuilder } from "@internal/device-session/model/DeviceSession.stub";
 import { DefaultDeviceSessionService } from "@internal/device-session/service/DefaultDeviceSessionService";
 import { type DeviceSessionService } from "@internal/device-session/service/DeviceSessionService";
@@ -12,7 +14,7 @@ import { DefaultSecureChannelDataSource } from "@internal/secure-channel/data/De
 import { type SecureChannelDataSource } from "@internal/secure-channel/data/SecureChannelDataSource";
 import { DefaultSecureChannelService } from "@internal/secure-channel/service/DefaultSecureChannelService";
 import { type SecureChannelService } from "@internal/secure-channel/service/SecureChannelService";
-import { ConnectedDevice, type DmkConfig } from "@root/src";
+import { type DmkConfig } from "@root/src";
 
 let logger: LoggerPublisherService;
 let sessionService: DeviceSessionService;
@@ -43,12 +45,14 @@ describe("ListDeviceSessionsUseCase", () => {
       () => logger,
       managerApi,
       secureChannel,
+      DEVICE_SESSION_REFRESHER_DEFAULT_OPTIONS,
     );
     const deviceSession2 = deviceSessionStubBuilder(
       { id: "2" },
       () => logger,
       managerApi,
       secureChannel,
+      DEVICE_SESSION_REFRESHER_DEFAULT_OPTIONS,
     );
     sessionService.addDeviceSession(deviceSession1);
     sessionService.addDeviceSession(deviceSession2);
