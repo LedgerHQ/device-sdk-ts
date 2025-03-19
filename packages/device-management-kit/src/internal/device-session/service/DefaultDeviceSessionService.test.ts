@@ -2,6 +2,7 @@ import { Either, Left } from "purify-ts";
 import { Observable } from "rxjs";
 
 import { type DmkConfig } from "@api/DmkConfig";
+import { DEVICE_SESSION_REFRESHER_DEFAULT_OPTIONS } from "@internal/device-session/data/DeviceSessionRefresherConst";
 import { type DeviceSession } from "@internal/device-session/model/DeviceSession";
 import { deviceSessionStubBuilder } from "@internal/device-session/model/DeviceSession.stub";
 import { DeviceSessionNotFound } from "@internal/device-session/model/Errors";
@@ -45,6 +46,7 @@ describe("DefaultDeviceSessionService", () => {
       () => loggerService,
       managerApi,
       secureChannel,
+      DEVICE_SESSION_REFRESHER_DEFAULT_OPTIONS,
     );
   });
 
@@ -124,6 +126,7 @@ describe("DefaultDeviceSessionService", () => {
       () => loggerService,
       managerApi,
       secureChannel,
+      DEVICE_SESSION_REFRESHER_DEFAULT_OPTIONS,
     );
     const emittedSessions: DeviceSession[] = [];
     sessionService.addDeviceSession(deviceSession);
