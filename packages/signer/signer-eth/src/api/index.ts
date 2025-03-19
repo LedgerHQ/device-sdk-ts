@@ -18,6 +18,7 @@ export {
   type SignTypedDataDAIntermediateValue,
   type SignTypedDataDAOutput,
   type SignTypedDataDAState,
+  SignTypedDataDAStateStep,
 } from "@api/app-binder/SignTypedDataDeviceActionTypes";
 export * from "@api/model/Address";
 export * from "@api/model/AddressOptions";
