@@ -1,4 +1,5 @@
 import { type LoggerPublisherService } from "@api/logger-publisher/service/LoggerPublisherService";
+import { DEVICE_SESSION_REFRESHER_DEFAULT_OPTIONS } from "@internal/device-session/data/DeviceSessionRefresherConst";
 import { deviceSessionStubBuilder } from "@internal/device-session/model/DeviceSession.stub";
 import { DefaultDeviceSessionService } from "@internal/device-session/service/DefaultDeviceSessionService";
 import { type DeviceSessionService } from "@internal/device-session/service/DeviceSessionService";
@@ -43,12 +44,14 @@ describe("ListDeviceSessionsUseCase", () => {
       () => logger,
       managerApi,
       secureChannel,
+      DEVICE_SESSION_REFRESHER_DEFAULT_OPTIONS,
     );
     const deviceSession2 = deviceSessionStubBuilder(
       { id: "2" },
       () => logger,
       managerApi,
       secureChannel,
+      DEVICE_SESSION_REFRESHER_DEFAULT_OPTIONS,
     );
     sessionService.addDeviceSession(deviceSession1);
     sessionService.addDeviceSession(deviceSession2);

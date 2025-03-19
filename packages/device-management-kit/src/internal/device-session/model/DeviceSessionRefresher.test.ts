@@ -15,7 +15,7 @@ import { DeviceStatus } from "@api/device/DeviceStatus";
 import { type ApduResponse } from "@api/device-session/ApduResponse";
 import { type DeviceSessionState } from "@api/device-session/DeviceSessionState";
 import { type LoggerPublisherService } from "@api/logger-publisher/service/LoggerPublisherService";
-import { DEVICE_SESSION_REFRESH_INTERVAL } from "@internal/device-session/data/DeviceSessionRefresherConst";
+import { DEVICE_SESSION_REFRESHER_POLLING_INTERVAL } from "@internal/device-session/data/DeviceSessionRefresherConst";
 import { DefaultLoggerPublisherService } from "@internal/logger-publisher/service/DefaultLoggerPublisherService";
 
 import { DeviceSessionRefresher } from "./DeviceSessionRefresher";
@@ -63,7 +63,8 @@ describe("DeviceSessionRefresher", () => {
       );
       deviceSessionRefresher = new DeviceSessionRefresher(
         {
-          refreshInterval: DEVICE_SESSION_REFRESH_INTERVAL,
+          isRefresherDisabled: false,
+          pollingInterval: DEVICE_SESSION_REFRESHER_POLLING_INTERVAL,
           deviceStatus: DeviceStatus.CONNECTED,
           sendApduFn: mockSendApduFn,
           updateStateFn: mockUpdateStateFn,
@@ -80,14 +81,14 @@ describe("DeviceSessionRefresher", () => {
     });
 
     it("should poll by calling sendApduFn 3 times", () => {
-      vi.advanceTimersByTime(DEVICE_SESSION_REFRESH_INTERVAL * 2);
+      vi.advanceTimersByTime(DEVICE_SESSION_REFRESHER_POLLING_INTERVAL * 2);
       expect(mockSendApduFn).toHaveBeenCalledTimes(3);
     });
 
     it("should not poll when device is busy", () => {
       deviceSessionRefresher.setDeviceStatus(DeviceStatus.BUSY);
 
-      vi.advanceTimersByTime(DEVICE_SESSION_REFRESH_INTERVAL);
+      vi.advanceTimersByTime(DEVICE_SESSION_REFRESHER_POLLING_INTERVAL);
 
       expect(mockSendApduFn).not.toHaveBeenCalled();
     });
@@ -95,13 +96,13 @@ describe("DeviceSessionRefresher", () => {
     it("should not poll when device is disconnected", () => {
       deviceSessionRefresher.setDeviceStatus(DeviceStatus.NOT_CONNECTED);
 
-      vi.advanceTimersByTime(DEVICE_SESSION_REFRESH_INTERVAL);
+      vi.advanceTimersByTime(DEVICE_SESSION_REFRESHER_POLLING_INTERVAL);
 
       expect(mockSendApduFn).not.toHaveBeenCalled();
     });
 
     it("should update device session state by calling updateStateFn", async () => {
-      vi.advanceTimersByTime(DEVICE_SESSION_REFRESH_INTERVAL);
+      vi.advanceTimersByTime(DEVICE_SESSION_REFRESHER_POLLING_INTERVAL);
 
       await Promise.resolve();
       expect(mockSendApduFn).toHaveBeenCalled();
@@ -111,7 +112,7 @@ describe("DeviceSessionRefresher", () => {
 
     it("should not update device session state with failed polling response", async () => {
       mockSendApduFn.mockResolvedValue(Left("error"));
-      vi.advanceTimersByTime(DEVICE_SESSION_REFRESH_INTERVAL);
+      vi.advanceTimersByTime(DEVICE_SESSION_REFRESHER_POLLING_INTERVAL);
 
       await Promise.resolve();
       expect(mockSendApduFn).toHaveBeenCalled();
@@ -144,7 +145,8 @@ describe("DeviceSessionRefresher", () => {
     it("should call sendApduFn 3 times and update state 2 time for a single interval", async () => {
       deviceSessionRefresher = new DeviceSessionRefresher(
         {
-          refreshInterval: DEVICE_SESSION_REFRESH_INTERVAL,
+          isRefresherDisabled: false,
+          pollingInterval: DEVICE_SESSION_REFRESHER_POLLING_INTERVAL,
           deviceStatus: DeviceStatus.CONNECTED,
           sendApduFn: mockSendApduFn,
           updateStateFn: mockUpdateStateFn,
@@ -153,7 +155,9 @@ describe("DeviceSessionRefresher", () => {
         logger,
       );
       deviceSessionRefresher.start();
-      vi.advanceTimersByTime(DEVICE_SESSION_REFRESH_INTERVAL * 2 + 100);
+      vi.advanceTimersByTime(
+        DEVICE_SESSION_REFRESHER_POLLING_INTERVAL * 2 + 100,
+      );
 
       await Promise.resolve();
       expect(mockSendApduFn).toHaveBeenNthCalledWith(
@@ -179,7 +183,7 @@ describe("DeviceSessionRefresher", () => {
           return new Promise((resolve) =>
             setTimeout(
               () => resolve(Left("timeout")),
-              DEVICE_SESSION_REFRESH_INTERVAL * 10,
+              DEVICE_SESSION_REFRESHER_POLLING_INTERVAL * 10,
             ),
           );
         }
@@ -192,7 +196,8 @@ describe("DeviceSessionRefresher", () => {
       );
       deviceSessionRefresher = new DeviceSessionRefresher(
         {
-          refreshInterval: DEVICE_SESSION_REFRESH_INTERVAL,
+          isRefresherDisabled: false,
+          pollingInterval: DEVICE_SESSION_REFRESHER_POLLING_INTERVAL,
           deviceStatus: DeviceStatus.CONNECTED,
           sendApduFn: mockSendApduFn,
           updateStateFn: mockUpdateStateFn,
@@ -202,7 +207,9 @@ describe("DeviceSessionRefresher", () => {
       );
       deviceSessionRefresher.start();
       vi.spyOn(deviceSessionRefresher, "setDeviceStatus");
-      vi.advanceTimersByTime(DEVICE_SESSION_REFRESH_INTERVAL * 5 + 100);
+      vi.advanceTimersByTime(
+        DEVICE_SESSION_REFRESHER_POLLING_INTERVAL * 5 + 100,
+      );
       await Promise.resolve();
       expect(mockSendApduFn).toHaveBeenNthCalledWith(
         1,
@@ -212,6 +219,39 @@ describe("DeviceSessionRefresher", () => {
       expect(deviceSessionRefresher.setDeviceStatus).toHaveBeenCalledWith(
         DeviceStatus.LOCKED,
       );
+    });
+  });
+
+  describe("When refresher is disabled", () => {
+    beforeEach(() => {
+      const deviceIds = Object.values(DeviceModelId).filter(
+        (id) => id !== DeviceModelId.NANO_S,
+      );
+
+      deviceSessionRefresher = new DeviceSessionRefresher(
+        {
+          isRefresherDisabled: true,
+          pollingInterval: DEVICE_SESSION_REFRESHER_POLLING_INTERVAL,
+          deviceStatus: DeviceStatus.CONNECTED,
+          sendApduFn: mockSendApduFn,
+          updateStateFn: mockUpdateStateFn,
+          deviceModelId:
+            deviceIds[Math.floor(Math.random() * deviceIds.length)]!,
+        },
+        logger,
+      );
+      deviceSessionRefresher.start();
+    });
+
+    afterEach(() => {
+      deviceSessionRefresher.stop();
+    });
+
+    it("should only poll once", () => {
+      // if we advance the timers multiple intervals,
+      // the refresher should only call sendApduFn once.
+      vi.advanceTimersByTime(DEVICE_SESSION_REFRESHER_POLLING_INTERVAL * 2);
+      expect(mockSendApduFn).toHaveBeenCalledTimes(1);
     });
   });
 });

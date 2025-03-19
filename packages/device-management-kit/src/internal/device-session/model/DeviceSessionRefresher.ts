@@ -4,12 +4,14 @@ import {
   delay,
   filter,
   from,
+  iif,
   map,
   Observable,
   of,
   race,
   Subscription,
   switchMap,
+  take,
   timer,
 } from "rxjs";
 
@@ -29,6 +31,10 @@ import {
 import { DmkError } from "@api/Error";
 import { type LoggerPublisherService } from "@api/logger-publisher/service/LoggerPublisherService";
 import { SendApduFnType } from "@api/transport/model/DeviceConnection";
+import {
+  DEVICE_SESSION_REFRESHER_MINIMUM_POLLING_INTERVAL,
+  DEVICE_SESSION_REFRESHER_POLLING_INTERVAL,
+} from "@internal/device-session/data/DeviceSessionRefresherConst";
 
 type UpdateStateFnType = (
   callback: (state: DeviceSessionState) => DeviceSessionState,
@@ -39,9 +45,14 @@ type UpdateStateFnType = (
  */
 export type DeviceSessionRefresherArgs = {
   /**
+   * Whether the refresher is disabled.
+   */
+  isRefresherDisabled: boolean;
+
+  /**
    * The refresh interval in milliseconds.
    */
-  refreshInterval: number;
+  pollingInterval: number;
 
   /**
    * The current device status when the refresher is created.
@@ -77,6 +88,7 @@ export class DeviceSessionRefresher {
   private readonly _getOsVersionCommand = new GetOsVersionCommand();
   private _deviceStatus: DeviceStatus;
   private _subscription?: Subscription;
+  private readonly _isRefresherDisabled: boolean;
   private readonly _refreshInterval: number;
   private readonly _deviceModelId: DeviceModelId;
   private readonly _sendApduFn: SendApduFnType;
@@ -84,7 +96,8 @@ export class DeviceSessionRefresher {
 
   constructor(
     {
-      refreshInterval,
+      isRefresherDisabled,
+      pollingInterval,
       deviceStatus,
       sendApduFn,
       updateStateFn,
@@ -96,7 +109,11 @@ export class DeviceSessionRefresher {
     this._logger = logger;
     this._sendApduFn = sendApduFn;
     this._updateStateFn = updateStateFn;
-    this._refreshInterval = refreshInterval;
+    this._isRefresherDisabled = isRefresherDisabled;
+    this._refreshInterval =
+      pollingInterval < DEVICE_SESSION_REFRESHER_MINIMUM_POLLING_INTERVAL
+        ? DEVICE_SESSION_REFRESHER_MINIMUM_POLLING_INTERVAL
+        : pollingInterval;
     this._deviceModelId = deviceModelId;
   }
 
@@ -116,7 +133,11 @@ export class DeviceSessionRefresher {
         ? this._getNanoSRefreshObservable(this._refreshInterval * 2)
         : this._getDefaultRefreshObservable(timer(0, this._refreshInterval));
 
-    this._subscription = refreshObservable.subscribe((parsedResponse) => {
+    this._subscription = iif(
+      () => this._isRefresherDisabled,
+      refreshObservable.pipe(take(1)), // if _isRefresherDisabled is true, apply take(1)
+      refreshObservable, // otherwise, use the original observable
+    ).subscribe((parsedResponse) => {
       if (!parsedResponse || !isSuccessCommandResult(parsedResponse)) {
         return;
       }
@@ -182,11 +203,11 @@ export class DeviceSessionRefresher {
   /**
    * Creates an observable that emits events to refresh the NanoS device state.
    *
-   * @param {number} refreshInterval - The interval, in milliseconds, at which the NanoS state should be refreshed.
+   * @param {number} pollingInterval - The interval, in milliseconds, at which the NanoS state should be refreshed.
    * @return {Observable<GetAppAndVersionCommandResult | void>} An observable that emits events to refresh the NanoS device state and handle timeout scenarios.
    */
   private _getNanoSRefreshObservable(
-    refreshInterval: number,
+    pollingInterval: number,
   ): Observable<GetAppAndVersionCommandResult | void> {
     const nanoSRefreshObservable = this._getDefaultRefreshObservable().pipe(
       switchMap(async (resp) => {
@@ -196,7 +217,7 @@ export class DeviceSessionRefresher {
       }),
     );
     const timeoutObservable = of(null).pipe(
-      delay(refreshInterval),
+      delay(pollingInterval),
       map((_) => {
         this._logger.warn(
           "Nanos refresh timeout, setting device status to LOCKED",
@@ -207,7 +228,7 @@ export class DeviceSessionRefresher {
         }));
       }),
     );
-    return timer(0, refreshInterval + 100).pipe(
+    return timer(0, pollingInterval + 100).pipe(
       switchMap(() => race(nanoSRefreshObservable, timeoutObservable)),
     );
   }
