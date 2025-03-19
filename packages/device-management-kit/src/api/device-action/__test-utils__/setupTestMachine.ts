@@ -8,6 +8,8 @@ import { GetDeviceStatusDeviceAction } from "@api/device-action/os/GetDeviceStat
 import { GoToDashboardDeviceAction } from "@api/device-action/os/GoToDashboard/GoToDashboardDeviceAction";
 import { ListAppsDeviceAction } from "@api/device-action/os/ListApps/ListAppsDeviceAction";
 import { type DmkError } from "@api/Error";
+import { ListInstalledAppsDeviceAction } from "@api/secure-channel/device-action/ListInstalledApps/ListInstalledAppsDeviceAction";
+import { type InstalledApp } from "@api/secure-channel/device-action/ListInstalledApps/types";
 
 import { type BTC_APP } from "./data";
 
@@ -113,6 +115,43 @@ export const setupGetDeviceStatusMock = (
           },
         },
         output: outputFn,
+      }),
+    ),
+  }));
+};
+
+export const setupListInstalledAppsMock = (
+  outputs: Array<{ installedApps: InstalledApp[] } | DmkError> = [],
+) => {
+  (ListInstalledAppsDeviceAction as Mock).mockImplementation(() => ({
+    makeStateMachine: vi.fn().mockImplementation(() =>
+      createMachine({
+        id: "MockListInstalledAppsDeviceAction",
+        initial: "ready",
+        states: {
+          ready: {
+            after: {
+              0: "done",
+            },
+            entry: assign({
+              intermediateValue: () => ({
+                requiredUserInteraction: UserInteractionRequired.None,
+              }),
+            }),
+          },
+          done: {
+            type: "final",
+          },
+        },
+        output: outputs
+          .reduce(
+            (mockFn, output) =>
+              mockFn.mockImplementationOnce(() =>
+                "installedApps" in output ? Right(output) : Left(output),
+              ),
+            vi.fn(),
+          )
+          .mockImplementation(() => Right([])),
       }),
     ),
   }));

@@ -181,20 +181,18 @@ export class UninstallAppDeviceAction extends XStateDeviceAction<
             onDone: {
               target: "ListInstalledAppsCheck",
               actions: assign({
-                _internalState: (_) => {
-                  return _.event.output.caseOf<UninstallAppStateMachineInternalState>(
-                    {
-                      Right: ({ installedApps }) => ({
-                        ..._.context._internalState,
-                        installedApps,
-                      }),
-                      Left: (error) => ({
-                        ..._.context._internalState,
-                        error,
-                      }),
-                    },
-                  );
-                },
+                _internalState: (_) =>
+                  _.event.output.caseOf<UninstallAppStateMachineInternalState>({
+                    Right: ({ installedApps }) => ({
+                      ..._.context._internalState,
+                      installedApps,
+                      hasCheckedInstalledApps: true,
+                    }),
+                    Left: (error) => ({
+                      ..._.context._internalState,
+                      error,
+                    }),
+                  }),
               }),
             },
             onError: {
@@ -226,8 +224,8 @@ export class UninstallAppDeviceAction extends XStateDeviceAction<
             onDone: {
               target: "GetAppsByHashCheck",
               actions: assign({
-                _internalState: (_) => {
-                  return _.event.output.caseOf({
+                _internalState: (_) =>
+                  _.event.output.caseOf({
                     Right: (apps) => ({
                       ..._.context._internalState,
                       appList: apps,
@@ -236,8 +234,7 @@ export class UninstallAppDeviceAction extends XStateDeviceAction<
                       ..._.context._internalState,
                       error,
                     }),
-                  });
-                },
+                  }),
               }),
             },
             onError: {
@@ -287,17 +284,14 @@ export class UninstallAppDeviceAction extends XStateDeviceAction<
             onDone: {
               target: "GoToDashboardCheck",
               actions: assign({
-                _internalState: (_) => {
-                  return _.event.output.caseOf<UninstallAppStateMachineInternalState>(
-                    {
-                      Right: () => _.context._internalState,
-                      Left: (error) => ({
-                        ..._.context._internalState,
-                        error,
-                      }),
-                    },
-                  );
-                },
+                _internalState: (_) =>
+                  _.event.output.caseOf<UninstallAppStateMachineInternalState>({
+                    Right: () => _.context._internalState,
+                    Left: (error) => ({
+                      ..._.context._internalState,
+                      error,
+                    }),
+                  }),
               }),
             },
             onError: {

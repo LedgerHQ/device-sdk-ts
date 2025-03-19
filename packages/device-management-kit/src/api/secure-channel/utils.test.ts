@@ -39,5 +39,3 @@ describe("isDeviceGenuine", () => {
     expect(isDeviceGenuine(payload)).toBe(false);
   });
 });
-
-describe.todo("SecureElementFlags");

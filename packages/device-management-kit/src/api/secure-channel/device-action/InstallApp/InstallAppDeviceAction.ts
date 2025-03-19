@@ -141,27 +141,25 @@ export class InstallAppDeviceAction extends XStateDeviceAction<
         }),
       },
     }).createMachine({
-      /** @xstate-layout N4IgpgJg5mDOIC5QEkB2sAuBDANjgggA6EAiYAbgJYDGY+1GlA9qgHRlW0BKYWEAngGIA2gAYAuolCEmsSoxZSQAD0QBGAJyjWADgDsAFg0A2HSb2iArMbUBmADQh+iAExrjrS6KuWNtte7Glga2AL6hjmiYuATEHDR0DMxsAOJMACpMJFiwABYARkxYAE4QghAsYKyUqORMANZVUBlZOQVFpWKSSCAycgqoSqoIxi6WrKJq1rYGNgaiBrOOzgi2th5qonouorYuo9YBBuGR6Nh4RKQUCfQDrGmZ2XmFJWVgxcVMxayEOFgYADMvgBbVjNR5tF6dCRKPryZJDRAHCZTYwzOYLJZOdR6DSeFy2MwBPaaXzGE4gKLnWJXTiJO4PVrPDoQADCuTA1HqIhhPThA0RCE2XlY+0semMomMBgsOjMyyRoh0E28BmClhc+0mxwilLOMUu8Vot2S9xaT3ar3ZnO5wjU3Wksnhih6w2F2jFEqlMqV8uxq0stlYgTlGg02wJOjCuqpBri12NSRY9zAGAA8rAAGrvOQscqVaq1BpNVMZ7PFXOoLqwp0C13qDVqVhaIK+HSifazNQK1YuPHGLTWQxabaLSwU2MXeN0k3JlKlrM55LWrk8h29WsI+tCjRqAysebSvY6TWagw6HvnvFeDsaGX6UR+Wx6Cf6qe0m5J1IL8uVle2+0a36LdQDdXd90PEIXBPU9zx7dFWD0LwxgMHYFkmckYzfGkjXpU15wwS4ABlKEwfNUCqGo6kaFNCOIEjMGrPlNxdUDXFscVRR0VFxXDJCL39PYgxcPRbD8NQ9DUOV9BfLDonfXDZ2-OjCAYjB-zXIDnUGbcRIkxDNEfEIwwCFx4MDYNjFMMxw01Qlo1OeScITPC51TYjSPUjlVztdd+RAlRXEkvQDK0O8xN3NQzP9HR9xvKxCT0E9Jj0WTdVQJgIDgJRJ2cmcvy0us2IQABaYwezK18nMNFylPYFyeD4FZHWA1jAoQVCezccYb02JDDPcQkqupGr8oZc1IRZQqAuGaDxhMfQxjsKMlQcf1NBcFVdlmPs9wJNVhrjD9E3GiFmStbz6mmtrhijTaFu4tZRJMSZzJCqNnyS9x5m2DRDoU2qv1osslza-ybvUNwg02DRLFi+YZnbSx4JE5sJO8Xc3CsWZMMckbp0-Bkf1B1B-2unTiokuxWGlJULHWWwOzGcymwMKnULEuzRn+vLCfw9z6M88nBR2VLRWQ6xxR0GxRhRpsb2fNYjDcXFZLxo7FKBgiPMwMnmNain2rGDiD01PdUs0NVu0EtUtq8KydginV1YBsbTQAZQAV2oWhYHgfXtJFsxtGsXbuMsCPdh7bjPG8AkNFi70-B50a+eTABRD4vmF3Tg88UZd3DyO1pWDj9wlCwLFMDQ+1xcdwlCIA */
+      /** @xstate-layout N4IgpgJg5mDOIC5QEkB2sAuBDANjgggA6EAiYAbgJYDGY+1GlA9qgHRlW0BKYWEAngGIA2gAYAuolCEmsSoxZSQAD0QBGAJyjWADgDsAFg0A2HSb2iArMbUBmADQh+iAExrjrS6KuWNtte7Glga2AL6hjmiYuATEHDR0DMxsADKUmFHYeJBEhLCCECxgrJSo5EwA1sU46RiZMTnEsGKSSCAycgqoSqoIBgaWrC6i-i6Wjs4ItqJqnt62BsYuGmoGLguW4ZHoWbGkFAn0XaxpGTsNELmwAMIAFmDUFSISSh3yyT2Ituu6vrZ64yciB0djmogGAxcLmMMwMWxA9TwuXitCOyROtUROEaeTuDyewjUrWksneijavW+tl+fgBE2BelmXnBwUsUJhq3hWORB1RSRYGLO0WylyaeMeIhcxPapK6nymPx0fzpQIQGmWYIhbOhsK55yRcV5iWOAHEmAAVJgkLCwW4AIyYWAAThACkUSmVKsUoBarTb7Y6XS1XrKPhTEEtBjNrAsbAZwYt6VNbB41KI9MNvpGbJyIgj9XsUcb0WbLdbbQ7na6wE6nUwnaxCDgsBgAGb1gC2rB9Zf9laDLzabzl4YQkdY0eMsdWCeMSbUeg0nnWZgC300vmMeuFhaNaIFpb9FcDEHFBMHJM6YdAvTTXiGQT0MOMBgsOjMSZhOgn3i17N1ebcoanDFgevrlgGVZniIRIhle5I3uoVjaNClhPqIL5vh+qq2JY1KBO+GgaBmK5hIBBY8iB+5sCaYAYAA8rAABqNZyCwbqoMUpTlFU3Z0YxLFOmxqDBkOoYISo6hsrMWhBL4OiiNCixqEm3xLsYWjWIYWgZv0mzkTulGHPyNH8cxrHJNBomXmS3SjpoqysPGL7fDoUJQgYOhJp5S7Mssr76KIfj-NuuxGXyppmYJwlWbBYnwXZiEIA5BhORhIQuG57meapiysACinBMM4IzFuBlhcBxmRRguSnBgHFcZ6vEwDVxB1dZMoJfKLgQvlsb+GhOg2Es3npmCXjGEsIxEXC5UxOFoGma1hB1VZF6dbZ3WMno+WaEFIREQELiqXhrAEWYxFQrYOhkdshmVRFJZ0bVtSxdKw7XpJCBjFoTkBTYjKmENc6qjCrDEY+Gj6E+-lPqF80PYtrC0ctq33BKwhSnBm2jplaiDLYWhmHojIaAMKmqgYmj5cYFgWKY6rERo+l3RV+xUSZyPPW1r3owStjveJiVfXjBNE8RpPk0mbLUhsG4M8sOjwwa7NVeiQGEA1Ho8Y192EB1H0SZSQSsP8gKTFDO3Mn+Oq5qzCOq49Aoa4INZ1g2TYtu2TpdqUesG0L8opgTKqTGmr4-iykK22VeaoEwEBwEoGtFtR2MjklAC0OWqpn0LLgsAwrIYaZ2Mru4c8cRY8Hwkw2RnX1rEmbiDMyaYAnt7jXeXC3UYKdQFji8DxTjSWiEmFipd4Ufahys32yrqec3VWJD2e6efb04+qu+re-qy-52-metL6a4F9ieG9G64Srg6YGaWHYN2iDd87qpHsbLKs6wDD3iN94eCC-ZTx8yvsLXoN0XB33fHYf4hMOQnR2jdf4egQQvnTMsP+jskYowEhZCShtwHqDcPhIKlgdD9BGJ5KwqkXA7WLt4FYbgrCLDKgvCuasDxRXwagdeI8G63kZNSdBgUUzTChObL4j8nILm-oTK6SwsGnyeqjWoYDurph2mMQqj4hruGOjhNwYI4ELHVAuYiSi9ycxRi9TAfD66b1cJNbQpivCeXjERSRCBUGzGUjCTKj8oSKUsZXdWFFiDqNHNvMOiltDTxtnPEJnC2AAGUACu1BaCwGHg46+30zDaGsF-EElhSkjCTCCME6wobOSMLdY+bNlECgAKK1nrJEpKmVfpFJWCUspDgcLBBpnTDCZhliLn0uEIAA */
       id: "InstallAppDeviceAction",
       initial: "DeviceReady",
-      context: (_) => {
-        return {
-          input: {
-            unlockTimeout: _.input.unlockTimeout,
-            appName: _.input.appName,
-          },
-          intermediateValue: {
-            requiredUserInteraction: UserInteractionRequired.None,
-            progress: 0,
-          },
-          _internalState: {
-            error: null,
-            installedApps: [],
-            getOsVersionResponse: null,
-            appList: [],
-          },
-        };
-      },
+      context: (_) => ({
+        input: {
+          unlockTimeout: _.input.unlockTimeout,
+          appName: _.input.appName,
+        },
+        intermediateValue: {
+          requiredUserInteraction: UserInteractionRequired.None,
+          progress: 0,
+        },
+        _internalState: {
+          error: null,
+          installedApps: [],
+          getOsVersionResponse: null,
+          appList: [],
+        },
+      }),
       states: {
         DeviceReady: {
           always: {
@@ -169,6 +167,7 @@ export class InstallAppDeviceAction extends XStateDeviceAction<
           },
         },
         ListInstalledApps: {
+          value: "ListInstalledApps",
           invoke: {
             id: "listInstalledApps",
             src: "listInstalledApps",
@@ -188,20 +187,17 @@ export class InstallAppDeviceAction extends XStateDeviceAction<
             onDone: {
               target: "ListInstalledAppsCheck",
               actions: assign({
-                _internalState: (_) => {
-                  return _.event.output.caseOf<InstallAppStateMachineInternalState>(
-                    {
-                      Right: ({ installedApps }) => ({
-                        ..._.context._internalState,
-                        installedApps,
-                      }),
-                      Left: (error) => ({
-                        ..._.context._internalState,
-                        error,
-                      }),
-                    },
-                  );
-                },
+                _internalState: (_) =>
+                  _.event.output.caseOf<InstallAppStateMachineInternalState>({
+                    Right: ({ installedApps }) => ({
+                      ..._.context._internalState,
+                      installedApps,
+                    }),
+                    Left: (error) => ({
+                      ..._.context._internalState,
+                      error,
+                    }),
+                  }),
               }),
             },
           },
@@ -241,17 +237,14 @@ export class InstallAppDeviceAction extends XStateDeviceAction<
             onDone: {
               target: "GoToDashboardCheck",
               actions: assign({
-                _internalState: (_) => {
-                  return _.event.output.caseOf<InstallAppStateMachineInternalState>(
-                    {
-                      Right: () => _.context._internalState,
-                      Left: (error) => ({
-                        ..._.context._internalState,
-                        error,
-                      }),
-                    },
-                  );
-                },
+                _internalState: (_) =>
+                  _.event.output.caseOf<InstallAppStateMachineInternalState>({
+                    Right: () => _.context._internalState,
+                    Left: (error) => ({
+                      ..._.context._internalState,
+                      error,
+                    }),
+                  }),
               }),
             },
             onError: {
@@ -330,20 +323,17 @@ export class InstallAppDeviceAction extends XStateDeviceAction<
             onDone: {
               target: "GetAppListCheck",
               actions: assign({
-                _internalState: (_) => {
-                  return _.event.output.caseOf<InstallAppStateMachineInternalState>(
-                    {
-                      Right: (appList) => ({
-                        ..._.context._internalState,
-                        appList,
-                      }),
-                      Left: (error) => ({
-                        ..._.context._internalState,
-                        error,
-                      }),
-                    },
-                  );
-                },
+                _internalState: (_) =>
+                  _.event.output.caseOf<InstallAppStateMachineInternalState>({
+                    Right: (appList) => ({
+                      ..._.context._internalState,
+                      appList,
+                    }),
+                    Left: (error) => ({
+                      ..._.context._internalState,
+                      error,
+                    }),
+                  }),
               }),
             },
           },
