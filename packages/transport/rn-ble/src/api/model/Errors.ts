@@ -24,3 +24,10 @@ export class InternalDeviceNotFound extends GeneralDmkError {
     super(err);
   }
 }
+
+export class BleNotSupported extends GeneralDmkError {
+  override readonly _tag = "BleNotSupported";
+  constructor(readonly err?: unknown) {
+    super(err);
+  }
+}
