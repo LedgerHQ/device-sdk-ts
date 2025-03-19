@@ -39,6 +39,7 @@ import {
   DEFAULT_MTU,
 } from "@api/model/Const";
 import {
+  BleNotSupported,
   DeviceConnectionNotFound,
   InternalDeviceNotFound,
 } from "@api/model/Errors";
@@ -69,9 +70,12 @@ export class RNBleTransport implements Transport {
     ) => LoggerPublisherService,
     private readonly _apduSenderFactory: ApduSenderServiceFactory,
     private readonly _apduReceiverFactory: ApduReceiverServiceFactory,
+    private readonly _platform: Platform = Platform,
+    private readonly _permissionsAndroid: PermissionsAndroid = PermissionsAndroid,
+    _bleManagerFactory: () => BleManager = () => new BleManager(),
   ) {
     this._logger = _loggerServiceFactory("ReactNativeBleTransport");
-    this._manager = new BleManager();
+    this._manager = _bleManagerFactory();
     this._isSupported = Maybe.zero();
     this._internalDevicesById = new Map();
     this._deviceConnectionsById = new Map();
@@ -84,7 +88,7 @@ export class RNBleTransport implements Transport {
     return from(this.requestPermission()).pipe(
       switchMap((isSupported) => {
         if (!isSupported) {
-          throw new Error("BLE not supported");
+          throw new BleNotSupported("BLE not supported");
         }
         return this._discoverKnownDevices(ledgerUuids);
       }),
@@ -280,42 +284,42 @@ export class RNBleTransport implements Transport {
    * @return {Promise<boolean>} A promise that resolves to true if the required permissions are granted, otherwise false.
    */
   async requestPermission(): Promise<boolean> {
-    if (Platform.OS === "ios") {
+    if (this._platform.OS === "ios") {
       this._isSupported = Maybe.of(true);
       return true;
     }
 
     if (
-      Platform.OS === "android" &&
-      PermissionsAndroid.PERMISSIONS["ACCESS_FINE_LOCATION"]
+      this._platform.OS === "android" &&
+      this._permissionsAndroid.PERMISSIONS["ACCESS_FINE_LOCATION"]
     ) {
-      const apiLevel = parseInt(Platform.Version.toString(), 10);
+      const apiLevel = parseInt(this._platform.Version.toString(), 10);
 
       if (apiLevel < 31) {
-        const granted = await PermissionsAndroid.request(
-          PermissionsAndroid.PERMISSIONS["ACCESS_FINE_LOCATION"],
+        const granted = await this._permissionsAndroid.request(
+          this._permissionsAndroid.PERMISSIONS["ACCESS_FINE_LOCATION"],
         );
         this._isSupported = Maybe.of(
-          granted === PermissionsAndroid.RESULTS["GRANTED"],
+          granted === this._permissionsAndroid.RESULTS["GRANTED"],
         );
       }
       if (
-        PermissionsAndroid.PERMISSIONS["BLUETOOTH_SCAN"] &&
-        PermissionsAndroid.PERMISSIONS["BLUETOOTH_CONNECT"]
+        this._permissionsAndroid.PERMISSIONS["BLUETOOTH_SCAN"] &&
+        this._permissionsAndroid.PERMISSIONS["BLUETOOTH_CONNECT"]
       ) {
-        const result = await PermissionsAndroid.requestMultiple([
-          PermissionsAndroid.PERMISSIONS["BLUETOOTH_SCAN"],
-          PermissionsAndroid.PERMISSIONS["BLUETOOTH_CONNECT"],
-          PermissionsAndroid.PERMISSIONS["ACCESS_FINE_LOCATION"],
+        const result = await this._permissionsAndroid.requestMultiple([
+          this._permissionsAndroid.PERMISSIONS["BLUETOOTH_SCAN"],
+          this._permissionsAndroid.PERMISSIONS["BLUETOOTH_CONNECT"],
+          this._permissionsAndroid.PERMISSIONS["ACCESS_FINE_LOCATION"],
         ]);
 
         this._isSupported = Maybe.of(
           result["android.permission.BLUETOOTH_CONNECT"] ===
-            PermissionsAndroid.RESULTS["GRANTED"] &&
+            this._permissionsAndroid.RESULTS["GRANTED"] &&
             result["android.permission.BLUETOOTH_SCAN"] ===
-              PermissionsAndroid.RESULTS["GRANTED"] &&
+              this._permissionsAndroid.RESULTS["GRANTED"] &&
             result["android.permission.ACCESS_FINE_LOCATION"] ===
-              PermissionsAndroid.RESULTS["GRANTED"],
+              this._permissionsAndroid.RESULTS["GRANTED"],
         );
 
         return true;
@@ -323,7 +327,7 @@ export class RNBleTransport implements Transport {
     }
 
     this._logger.error("Permission have not been granted", {
-      data: { isSupported: this.isSupported() },
+      data: { isSupported: this._isSupported.extract() },
     });
 
     this._isSupported = Maybe.of(false);
