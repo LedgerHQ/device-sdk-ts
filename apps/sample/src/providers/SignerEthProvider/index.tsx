@@ -36,7 +36,7 @@ const initialState: SignerEthContextType = {
     branch: "main",
   },
   web3ChecksConfig: {
-    url: "https://web3checks-backend.api.aws.prd.ldg-tech.com/v3",
+    url: "https://web3checks-backend.api.ledger.com/v3",
   },
   setCalConfig: () => {},
   setWeb3ChecksConfig: () => {},
