@@ -10,8 +10,9 @@
     "paths": {
       "@api/*": ["./src/api/*"]
     },
+    "types": ["node", "vitest/globals", "uuid"],
     "skipLibCheck": true,
     "resolveJsonModule": true
   },
-  "include": ["src", "jest.*.ts"]
+  "include": ["src", "vitest.*.mjs"]
 }
