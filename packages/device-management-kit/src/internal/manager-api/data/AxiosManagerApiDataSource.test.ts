@@ -34,35 +34,35 @@ describe("AxiosManagerApiDataSource", () => {
     afterEach(() => {
       vi.clearAllMocks();
     });
-    it("should return a list of applications", () => {
+    it("should return a list of applications", async () => {
       // given
       const apps = [BTC_APP_METADATA, CUSTOM_LOCK_SCREEN_APP_METADATA];
       vi.spyOn(axios, "get").mockResolvedValue({ data: apps });
 
       // when
-      const response = api.getAppList({
+      const response = await api.getAppList({
         targetId: "targetId",
         provider: 42,
         firmwareVersionName: "firmwareVersionName",
       });
 
       // then
-      expect(response).resolves.toEqual(Right(apps));
+      expect(response).toEqual(Right(apps));
     });
-    it("should return an error if the request fails", () => {
+    it("should return an error if the request fails", async () => {
       // given
       const error = new Error("fetch error");
       vi.spyOn(axios, "get").mockRejectedValue(error);
 
       // when
-      const response = api.getAppList({
+      const response = await api.getAppList({
         targetId: "targetId",
         provider: 42,
         firmwareVersionName: "firmwareVersionName",
       });
 
       // then
-      expect(response).resolves.toEqual(Left(new HttpFetchApiError(error)));
+      expect(response).toEqual(Left(new HttpFetchApiError(error)));
     });
   });
   describe("getAppsByHash", () => {
@@ -120,7 +120,7 @@ describe("AxiosManagerApiDataSource", () => {
       afterEach(() => {
         vi.clearAllMocks();
       });
-      it("should throw an error if the request fails", () => {
+      it("should throw an error if the request fails", async () => {
         // given
         const api = new AxiosManagerApiDataSource({} as DmkConfig);
 
@@ -130,10 +130,10 @@ describe("AxiosManagerApiDataSource", () => {
         const hashes = [BTC_APP.appFullHash];
 
         // when
-        const response = api.getAppsByHash({ hashes });
+        const response = await api.getAppsByHash({ hashes });
 
         // then
-        expect(response).resolves.toEqual(Left(new HttpFetchApiError(err)));
+        expect(response).toEqual(Left(new HttpFetchApiError(err)));
       });
     });
   });
@@ -146,33 +146,33 @@ describe("AxiosManagerApiDataSource", () => {
     afterEach(() => {
       vi.clearAllMocks();
     });
-    it("should return a complete device version", () => {
+    it("should return a complete device version", async () => {
       // given
       vi.spyOn(axios, "get").mockResolvedValue({ data: mockGetDeviceVersion });
 
       // when
-      const response = api.getDeviceVersion({
+      const response = await api.getDeviceVersion({
         targetId: "targetId",
         provider: 42,
       });
 
       // then
-      expect(response).resolves.toEqual(Right(mockGetDeviceVersion));
+      expect(response).toEqual(Right(mockGetDeviceVersion));
     });
-    it("should return an error if the request fails", () => {
+    it("should return an error if the request fails", async () => {
       // given
 
       const error = new Error("fetch error");
       vi.spyOn(axios, "get").mockRejectedValue(error);
 
       // when
-      const response = api.getDeviceVersion({
+      const response = await api.getDeviceVersion({
         targetId: "targetId",
         provider: 42,
       });
 
       // then
-      expect(response).resolves.toEqual(Left(new HttpFetchApiError(error)));
+      expect(response).toEqual(Left(new HttpFetchApiError(error)));
     });
   });
 
@@ -184,36 +184,36 @@ describe("AxiosManagerApiDataSource", () => {
     afterEach(() => {
       vi.clearAllMocks();
     });
-    it("should return a complete firmware version", () => {
+    it("should return a complete firmware version", async () => {
       // given
       vi.spyOn(axios, "get").mockResolvedValue({
         data: mockGetFirmwareVersion,
       });
 
       // when
-      const response = api.getFirmwareVersion({
+      const response = await api.getFirmwareVersion({
         version: "versionName",
         deviceId: 42,
         provider: 21,
       });
 
       // then
-      expect(response).resolves.toEqual(Right(mockGetFirmwareVersion));
+      expect(response).toEqual(Right(mockGetFirmwareVersion));
     });
-    it("should return an error if the request fails", () => {
+    it("should return an error if the request fails", async () => {
       // given
       const error = new Error("fetch error");
       vi.spyOn(axios, "get").mockRejectedValue(error);
 
       // when
-      const response = api.getFirmwareVersion({
+      const response = await api.getFirmwareVersion({
         version: "versionName",
         deviceId: 42,
         provider: 21,
       });
 
       // then
-      expect(response).resolves.toEqual(Left(new HttpFetchApiError(error)));
+      expect(response).toEqual(Left(new HttpFetchApiError(error)));
     });
   });
 });
