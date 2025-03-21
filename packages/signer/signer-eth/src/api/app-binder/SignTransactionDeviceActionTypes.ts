@@ -20,6 +20,16 @@ import { type GenericContext } from "@internal/app-binder/task/ProvideTransactio
 import { type TransactionMapperService } from "@internal/transaction/service/mapper/TransactionMapperService";
 import { type TransactionParserService } from "@internal/transaction/service/parser/TransactionParserService";
 
+export enum SignTransactionDAStep {
+  OPEN_APP = "signer.eth.steps.openApp",
+  GET_APP_CONFIG = "signer.eth.steps.getAppConfig",
+  WEB3_CHECKS_OPT_IN = "signer.eth.steps.web3ChecksOptIn",
+  BUILD_CONTEXT = "signer.eth.steps.buildContext",
+  PROVIDE_CONTEXT = "signer.eth.steps.provideContext",
+  PROVIDE_GENERIC_CONTEXT = "signer.eth.steps.provideGenericContext",
+  SIGN_TRANSACTION = "signer.eth.steps.signTransaction",
+}
+
 export type SignTransactionDAOutput = Signature;
 
 export type SignTransactionDAInput = {
@@ -42,6 +52,7 @@ type SignTransactionDARequiredInteraction =
 
 export type SignTransactionDAIntermediateValue = {
   requiredUserInteraction: SignTransactionDARequiredInteraction;
+  step: SignTransactionDAStep;
 };
 
 export type SignTransactionDAState = DeviceActionState<

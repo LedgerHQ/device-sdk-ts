@@ -14,6 +14,17 @@ import { type EthErrorCodes } from "@internal/app-binder/command/utils/ethAppErr
 import type { ProvideEIP712ContextTaskArgs } from "@internal/app-binder/task/ProvideEIP712ContextTask";
 import { type TypedDataParserService } from "@internal/typed-data/service/TypedDataParserService";
 
+export enum SignTypedDataDAStateStep {
+  OPEN_APP = "signer.eth.steps.openApp",
+  GET_APP_CONFIG = "signer.eth.steps.getAppConfig",
+  WEB3_CHECKS_OPT_IN = "signer.eth.steps.web3ChecksOptIn",
+  BUILD_CONTEXT = "signer.eth.steps.buildContext",
+  PROVIDE_CONTEXT = "signer.eth.steps.provideContext",
+  PROVIDE_GENERIC_CONTEXT = "signer.eth.steps.provideGenericContext",
+  SIGN_TYPED_DATA = "signer.eth.steps.signTypedData",
+  SIGN_TYPED_DATA_LEGACY = "signer.eth.steps.signTypedDataLegacy",
+}
+
 export type SignTypedDataDAOutput = Signature;
 
 export type SignTypedDataDAInput = {
@@ -34,6 +45,7 @@ type SignTypedDataDARequiredInteraction =
 
 export type SignTypedDataDAIntermediateValue = {
   requiredUserInteraction: SignTypedDataDARequiredInteraction;
+  step: SignTypedDataDAStateStep;
 };
 
 export type SignTypedDataDAState = DeviceActionState<

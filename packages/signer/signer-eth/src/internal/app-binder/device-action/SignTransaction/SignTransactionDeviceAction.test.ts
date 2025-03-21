@@ -17,7 +17,10 @@ import { InvalidStatusWordError } from "@ledgerhq/device-management-kit";
 import { Transaction } from "ethers";
 import { Just, Nothing } from "purify-ts";
 
-import { type SignTransactionDAState } from "@api/app-binder/SignTransactionDeviceActionTypes";
+import {
+  type SignTransactionDAState,
+  SignTransactionDAStep,
+} from "@api/app-binder/SignTransactionDeviceActionTypes";
 import { TransactionType } from "@api/model/TransactionType";
 import { makeDeviceActionInternalApiMock } from "@internal/app-binder/device-action/__test-utils__/makeInternalApi";
 import { setupOpenAppDAMock } from "@internal/app-binder/device-action/__test-utils__/setupOpenAppDAMock";
@@ -145,6 +148,7 @@ describe("SignTransactionDeviceAction", () => {
           {
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
+              step: SignTransactionDAStep.OPEN_APP,
             },
             status: DeviceActionStatus.Pending,
           },
@@ -152,6 +156,7 @@ describe("SignTransactionDeviceAction", () => {
           {
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.ConfirmOpenApp,
+              step: SignTransactionDAStep.OPEN_APP,
             },
             status: DeviceActionStatus.Pending,
           },
@@ -159,6 +164,7 @@ describe("SignTransactionDeviceAction", () => {
           {
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
+              step: SignTransactionDAStep.BUILD_CONTEXT,
             },
             status: DeviceActionStatus.Pending,
           },
@@ -166,6 +172,7 @@ describe("SignTransactionDeviceAction", () => {
           {
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
+              step: SignTransactionDAStep.PROVIDE_CONTEXT,
             },
             status: DeviceActionStatus.Pending,
           },
@@ -173,6 +180,7 @@ describe("SignTransactionDeviceAction", () => {
           {
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.SignTransaction,
+              step: SignTransactionDAStep.SIGN_TRANSACTION,
             },
             status: DeviceActionStatus.Pending,
           },
@@ -287,6 +295,7 @@ describe("SignTransactionDeviceAction", () => {
           {
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
+              step: SignTransactionDAStep.OPEN_APP,
             },
             status: DeviceActionStatus.Pending,
           },
@@ -294,6 +303,7 @@ describe("SignTransactionDeviceAction", () => {
           {
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.ConfirmOpenApp,
+              step: SignTransactionDAStep.OPEN_APP,
             },
             status: DeviceActionStatus.Pending,
           },
@@ -301,6 +311,7 @@ describe("SignTransactionDeviceAction", () => {
           {
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
+              step: SignTransactionDAStep.BUILD_CONTEXT,
             },
             status: DeviceActionStatus.Pending,
           },
@@ -308,6 +319,7 @@ describe("SignTransactionDeviceAction", () => {
           {
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
+              step: SignTransactionDAStep.PROVIDE_GENERIC_CONTEXT,
             },
             status: DeviceActionStatus.Pending,
           },
@@ -315,6 +327,7 @@ describe("SignTransactionDeviceAction", () => {
           {
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.SignTransaction,
+              step: SignTransactionDAStep.SIGN_TRANSACTION,
             },
             status: DeviceActionStatus.Pending,
           },
@@ -439,6 +452,7 @@ describe("SignTransactionDeviceAction", () => {
           {
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
+              step: SignTransactionDAStep.OPEN_APP,
             },
             status: DeviceActionStatus.Pending,
           },
@@ -446,6 +460,7 @@ describe("SignTransactionDeviceAction", () => {
           {
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.ConfirmOpenApp,
+              step: SignTransactionDAStep.OPEN_APP,
             },
             status: DeviceActionStatus.Pending,
           },
@@ -453,6 +468,7 @@ describe("SignTransactionDeviceAction", () => {
           {
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
+              step: SignTransactionDAStep.BUILD_CONTEXT,
             },
             status: DeviceActionStatus.Pending,
           },
@@ -460,6 +476,7 @@ describe("SignTransactionDeviceAction", () => {
           {
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
+              step: SignTransactionDAStep.PROVIDE_CONTEXT,
             },
             status: DeviceActionStatus.Pending,
           },
@@ -467,6 +484,7 @@ describe("SignTransactionDeviceAction", () => {
           {
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.SignTransaction,
+              step: SignTransactionDAStep.SIGN_TRANSACTION,
             },
             status: DeviceActionStatus.Pending,
           },
@@ -588,6 +606,7 @@ describe("SignTransactionDeviceAction", () => {
           {
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
+              step: SignTransactionDAStep.OPEN_APP,
             },
             status: DeviceActionStatus.Pending,
           },
@@ -595,6 +614,7 @@ describe("SignTransactionDeviceAction", () => {
           {
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.ConfirmOpenApp,
+              step: SignTransactionDAStep.OPEN_APP,
             },
             status: DeviceActionStatus.Pending,
           },
@@ -602,6 +622,7 @@ describe("SignTransactionDeviceAction", () => {
           {
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
+              step: SignTransactionDAStep.BUILD_CONTEXT,
             },
             status: DeviceActionStatus.Pending,
           },
@@ -609,6 +630,7 @@ describe("SignTransactionDeviceAction", () => {
           {
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
+              step: SignTransactionDAStep.PROVIDE_GENERIC_CONTEXT,
             },
             status: DeviceActionStatus.Pending,
           },
@@ -616,6 +638,7 @@ describe("SignTransactionDeviceAction", () => {
           {
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.SignTransaction,
+              step: SignTransactionDAStep.SIGN_TRANSACTION,
             },
             status: DeviceActionStatus.Pending,
           },
@@ -727,6 +750,7 @@ describe("SignTransactionDeviceAction", () => {
           {
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
+              step: SignTransactionDAStep.OPEN_APP,
             },
             status: DeviceActionStatus.Pending,
           },
@@ -734,6 +758,7 @@ describe("SignTransactionDeviceAction", () => {
           {
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.ConfirmOpenApp,
+              step: SignTransactionDAStep.OPEN_APP,
             },
             status: DeviceActionStatus.Pending,
           },
@@ -741,6 +766,7 @@ describe("SignTransactionDeviceAction", () => {
           {
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
+              step: SignTransactionDAStep.GET_APP_CONFIG,
             },
             status: DeviceActionStatus.Pending,
           },
@@ -748,6 +774,7 @@ describe("SignTransactionDeviceAction", () => {
           {
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
+              step: SignTransactionDAStep.BUILD_CONTEXT,
             },
             status: DeviceActionStatus.Pending,
           },
@@ -821,6 +848,7 @@ describe("SignTransactionDeviceAction", () => {
           {
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
+              step: SignTransactionDAStep.OPEN_APP,
             },
             status: DeviceActionStatus.Pending,
           },
@@ -828,6 +856,7 @@ describe("SignTransactionDeviceAction", () => {
           {
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.ConfirmOpenApp,
+              step: SignTransactionDAStep.OPEN_APP,
             },
             status: DeviceActionStatus.Pending,
           },
@@ -835,6 +864,7 @@ describe("SignTransactionDeviceAction", () => {
           {
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
+              step: SignTransactionDAStep.GET_APP_CONFIG,
             },
             status: DeviceActionStatus.Pending,
           },
@@ -842,6 +872,7 @@ describe("SignTransactionDeviceAction", () => {
           {
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
+              step: SignTransactionDAStep.BUILD_CONTEXT,
             },
             status: DeviceActionStatus.Pending,
           },
@@ -918,6 +949,7 @@ describe("SignTransactionDeviceAction", () => {
           {
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
+              step: SignTransactionDAStep.OPEN_APP,
             },
             status: DeviceActionStatus.Pending,
           },
@@ -925,6 +957,7 @@ describe("SignTransactionDeviceAction", () => {
           {
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.ConfirmOpenApp,
+              step: SignTransactionDAStep.OPEN_APP,
             },
             status: DeviceActionStatus.Pending,
           },
@@ -932,6 +965,7 @@ describe("SignTransactionDeviceAction", () => {
           {
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
+              step: SignTransactionDAStep.GET_APP_CONFIG,
             },
             status: DeviceActionStatus.Pending,
           },
@@ -939,6 +973,7 @@ describe("SignTransactionDeviceAction", () => {
           {
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.Web3ChecksOptIn,
+              step: SignTransactionDAStep.WEB3_CHECKS_OPT_IN,
             },
             status: DeviceActionStatus.Pending,
           },
@@ -946,6 +981,7 @@ describe("SignTransactionDeviceAction", () => {
           {
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
+              step: SignTransactionDAStep.BUILD_CONTEXT,
             },
             status: DeviceActionStatus.Pending,
           },
@@ -1023,6 +1059,7 @@ describe("SignTransactionDeviceAction", () => {
           {
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
+              step: SignTransactionDAStep.OPEN_APP,
             },
             status: DeviceActionStatus.Pending,
           },
@@ -1030,6 +1067,7 @@ describe("SignTransactionDeviceAction", () => {
           {
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.ConfirmOpenApp,
+              step: SignTransactionDAStep.OPEN_APP,
             },
             status: DeviceActionStatus.Pending,
           },
@@ -1037,6 +1075,7 @@ describe("SignTransactionDeviceAction", () => {
           {
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
+              step: SignTransactionDAStep.GET_APP_CONFIG,
             },
             status: DeviceActionStatus.Pending,
           },
@@ -1044,6 +1083,7 @@ describe("SignTransactionDeviceAction", () => {
           {
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.Web3ChecksOptIn,
+              step: SignTransactionDAStep.WEB3_CHECKS_OPT_IN,
             },
             status: DeviceActionStatus.Pending,
           },
@@ -1051,6 +1091,7 @@ describe("SignTransactionDeviceAction", () => {
           {
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
+              step: SignTransactionDAStep.BUILD_CONTEXT,
             },
             status: DeviceActionStatus.Pending,
           },
@@ -1140,6 +1181,7 @@ describe("SignTransactionDeviceAction", () => {
           {
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
+              step: SignTransactionDAStep.OPEN_APP,
             },
             status: DeviceActionStatus.Pending,
           },
@@ -1147,6 +1189,7 @@ describe("SignTransactionDeviceAction", () => {
           {
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.ConfirmOpenApp,
+              step: SignTransactionDAStep.OPEN_APP,
             },
             status: DeviceActionStatus.Pending,
           },
@@ -1154,6 +1197,7 @@ describe("SignTransactionDeviceAction", () => {
           {
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
+              step: SignTransactionDAStep.BUILD_CONTEXT,
             },
             status: DeviceActionStatus.Pending,
           },
@@ -1161,6 +1205,7 @@ describe("SignTransactionDeviceAction", () => {
           {
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
+              step: SignTransactionDAStep.PROVIDE_CONTEXT,
             },
             status: DeviceActionStatus.Pending,
           },
@@ -1168,6 +1213,7 @@ describe("SignTransactionDeviceAction", () => {
           {
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.SignTransaction,
+              step: SignTransactionDAStep.SIGN_TRANSACTION,
             },
             status: DeviceActionStatus.Pending,
           },
@@ -1259,6 +1305,7 @@ describe("SignTransactionDeviceAction", () => {
           {
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
+              step: SignTransactionDAStep.OPEN_APP,
             },
             status: DeviceActionStatus.Pending,
           },
@@ -1266,6 +1313,7 @@ describe("SignTransactionDeviceAction", () => {
           {
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.ConfirmOpenApp,
+              step: SignTransactionDAStep.OPEN_APP,
             },
             status: DeviceActionStatus.Pending,
           },
@@ -1314,6 +1362,7 @@ describe("SignTransactionDeviceAction", () => {
           {
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
+              step: SignTransactionDAStep.OPEN_APP,
             },
             status: DeviceActionStatus.Pending,
           },
@@ -1321,6 +1370,7 @@ describe("SignTransactionDeviceAction", () => {
           {
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.ConfirmOpenApp,
+              step: SignTransactionDAStep.OPEN_APP,
             },
             status: DeviceActionStatus.Pending,
           },
@@ -1328,6 +1378,7 @@ describe("SignTransactionDeviceAction", () => {
           {
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
+              step: SignTransactionDAStep.BUILD_CONTEXT,
             },
             status: DeviceActionStatus.Pending,
           },
@@ -1384,6 +1435,7 @@ describe("SignTransactionDeviceAction", () => {
           {
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
+              step: SignTransactionDAStep.OPEN_APP,
             },
             status: DeviceActionStatus.Pending,
           },
@@ -1391,6 +1443,7 @@ describe("SignTransactionDeviceAction", () => {
           {
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.ConfirmOpenApp,
+              step: SignTransactionDAStep.OPEN_APP,
             },
             status: DeviceActionStatus.Pending,
           },
@@ -1398,6 +1451,7 @@ describe("SignTransactionDeviceAction", () => {
           {
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
+              step: SignTransactionDAStep.BUILD_CONTEXT,
             },
             status: DeviceActionStatus.Pending,
           },
@@ -1405,6 +1459,7 @@ describe("SignTransactionDeviceAction", () => {
           {
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
+              step: SignTransactionDAStep.PROVIDE_CONTEXT,
             },
             status: DeviceActionStatus.Pending,
           },
@@ -1464,6 +1519,7 @@ describe("SignTransactionDeviceAction", () => {
           {
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
+              step: SignTransactionDAStep.OPEN_APP,
             },
             status: DeviceActionStatus.Pending,
           },
@@ -1471,6 +1527,7 @@ describe("SignTransactionDeviceAction", () => {
           {
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.ConfirmOpenApp,
+              step: SignTransactionDAStep.OPEN_APP,
             },
             status: DeviceActionStatus.Pending,
           },
@@ -1478,6 +1535,7 @@ describe("SignTransactionDeviceAction", () => {
           {
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
+              step: SignTransactionDAStep.BUILD_CONTEXT,
             },
             status: DeviceActionStatus.Pending,
           },
@@ -1485,6 +1543,7 @@ describe("SignTransactionDeviceAction", () => {
           {
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
+              step: SignTransactionDAStep.PROVIDE_CONTEXT,
             },
             status: DeviceActionStatus.Pending,
           },
@@ -1492,6 +1551,7 @@ describe("SignTransactionDeviceAction", () => {
           {
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.SignTransaction,
+              step: SignTransactionDAStep.SIGN_TRANSACTION,
             },
             status: DeviceActionStatus.Pending,
           },
