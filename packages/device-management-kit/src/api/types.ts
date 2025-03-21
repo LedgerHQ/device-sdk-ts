@@ -99,6 +99,7 @@ export {
   type ListInstalledAppsDARequiredInteraction,
   type ListInstalledAppsDAState,
 } from "@api/secure-channel/device-action/ListInstalledApps/types";
+export { type DeviceApduSender } from "@api/transport/model/DeviceApduSender";
 export {
   type DeviceConnection,
   type DisconnectHandler,
