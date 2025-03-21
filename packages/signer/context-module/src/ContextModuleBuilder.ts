@@ -10,8 +10,7 @@ import { type ContextModule } from "./ContextModule";
 import { DefaultContextModule } from "./DefaultContextModule";
 
 const DEFAULT_CAL_URL = "https://crypto-assets-service.api.ledger.com/v1";
-const DEFAULT_WEB3_CHECKS_URL =
-  "https://web3checks-backend.api.aws.prd.ldg-tech.com/v3";
+const DEFAULT_WEB3_CHECKS_URL = "https://web3checks-backend.api.ledger.com/v3";
 
 export const DEFAULT_CONFIG: ContextModuleConfig = {
   cal: {
