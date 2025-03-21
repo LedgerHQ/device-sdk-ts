@@ -6,8 +6,12 @@ import { LoggerPublisherService } from "@api/logger-publisher/service/LoggerPubl
 import { DiscoveredDevice } from "@api/transport/model/DiscoveredDevice";
 import { TransportNotSupportedError } from "@api/transport/model/Errors";
 import { DeviceId } from "@api/types";
+import { DEVICE_SESSION_REFRESHER_DEFAULT_OPTIONS } from "@internal/device-session/data/DeviceSessionRefresherConst";
 import { deviceSessionTypes } from "@internal/device-session/di/deviceSessionTypes";
-import { DeviceSession } from "@internal/device-session/model/DeviceSession";
+import {
+  DeviceSession,
+  DeviceSessionRefresherOptions,
+} from "@internal/device-session/model/DeviceSession";
 import type { DeviceSessionService } from "@internal/device-session/service/DeviceSessionService";
 import { loggerTypes } from "@internal/logger-publisher/di/loggerTypes";
 import { managerApiTypes } from "@internal/manager-api/di/managerApiTypes";
@@ -25,6 +29,13 @@ export type ConnectUseCaseArgs = {
    * UUID of the device got from device discovery `StartDiscoveringUseCase`
    */
   device: DiscoveredDevice;
+
+  /**
+   * sessionRefresherOptions - optional
+   * isRefresherDisabled - whether the refresher is disabled
+   * pollingInterval - the refresh interval in milliseconds
+   */
+  sessionRefresherOptions?: DeviceSessionRefresherOptions;
 };
 
 /**
@@ -67,7 +78,10 @@ export class ConnectUseCase {
     });
   }
 
-  async execute({ device }: ConnectUseCaseArgs): Promise<DeviceSessionId> {
+  async execute({
+    device,
+    sessionRefresherOptions = DEVICE_SESSION_REFRESHER_DEFAULT_OPTIONS,
+  }: ConnectUseCaseArgs): Promise<DeviceSessionId> {
     const transport = this._transportService.getTransport(device.transport);
 
     return EitherAsync.liftEither(
@@ -92,6 +106,7 @@ export class ConnectUseCase {
           this._loggerFactory,
           this._managerApi,
           this._secureChannel,
+          sessionRefresherOptions,
         );
         this._sessionService.addDeviceSession(deviceSession);
         await deviceSession.waitIsReady();

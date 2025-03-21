@@ -2,6 +2,7 @@ import { type LoggerPublisherService } from "@api/logger-publisher/service/Logge
 import { connectedDeviceStubBuilder } from "@api/transport/model/TransportConnectedDevice.stub";
 import {
   DeviceSession,
+  type DeviceSessionRefresherOptions,
   type SessionConstructorArgs,
 } from "@internal/device-session/model/DeviceSession";
 import type { ManagerApiService } from "@internal/manager-api/service/ManagerApiService";
@@ -12,6 +13,7 @@ export const deviceSessionStubBuilder = (
   loggerFactory: (tag: string) => LoggerPublisherService,
   managerApi: ManagerApiService,
   secureChannel: SecureChannelService,
+  deviceSessionRefresherOptions: DeviceSessionRefresherOptions,
 ) =>
   new DeviceSession(
     {
@@ -22,4 +24,5 @@ export const deviceSessionStubBuilder = (
     loggerFactory,
     managerApi,
     secureChannel,
+    deviceSessionRefresherOptions,
   );

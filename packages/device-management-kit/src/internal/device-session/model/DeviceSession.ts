@@ -20,7 +20,7 @@ import { type DeviceSessionId } from "@api/device-session/types";
 import { DeviceBusyError, type DmkError } from "@api/Error";
 import { type LoggerPublisherService } from "@api/logger-publisher/service/LoggerPublisherService";
 import { type TransportConnectedDevice } from "@api/transport/model/TransportConnectedDevice";
-import { DEVICE_SESSION_REFRESH_INTERVAL } from "@internal/device-session/data/DeviceSessionRefresherConst";
+import { DEVICE_SESSION_REFRESHER_POLLING_INTERVAL } from "@internal/device-session/data/DeviceSessionRefresherConst";
 import { RefresherService } from "@internal/device-session/service/RefresherService";
 import { type ManagerApiService } from "@internal/manager-api/service/ManagerApiService";
 import { type SecureChannelService } from "@internal/secure-channel/service/SecureChannelService";
@@ -30,6 +30,11 @@ import { DeviceSessionRefresher } from "./DeviceSessionRefresher";
 export type SessionConstructorArgs = {
   connectedDevice: TransportConnectedDevice;
   id?: DeviceSessionId;
+};
+
+export type DeviceSessionRefresherOptions = {
+  isRefresherDisabled: boolean;
+  pollingInterval?: number;
 };
 
 type SendApduOptions = {
@@ -56,6 +61,7 @@ export class DeviceSession {
     loggerModuleFactory: (tag: string) => LoggerPublisherService,
     managerApiService: ManagerApiService,
     secureChannelService: SecureChannelService,
+    deviceSessionRefresherOptions: DeviceSessionRefresherOptions,
   ) {
     this._id = id;
     this._connectedDevice = connectedDevice;
@@ -66,7 +72,10 @@ export class DeviceSession {
     });
     this._refresher = new DeviceSessionRefresher(
       {
-        refreshInterval: DEVICE_SESSION_REFRESH_INTERVAL,
+        isRefresherDisabled: deviceSessionRefresherOptions.isRefresherDisabled,
+        pollingInterval:
+          deviceSessionRefresherOptions.pollingInterval ||
+          DEVICE_SESSION_REFRESHER_POLLING_INTERVAL,
         deviceStatus: DeviceStatus.CONNECTED,
         deviceModelId: this._connectedDevice.deviceModel.id,
         sendApduFn: (rawApdu: Uint8Array) =>
