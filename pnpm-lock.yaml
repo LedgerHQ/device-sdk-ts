@@ -760,6 +760,9 @@ importers:
       '@inquirer/prompts':
         specifier: ^7.3.3
         version: 7.3.3(@types/node@22.13.10)
+      '@ledgerhq/device-management-kit':
+        specifier: workspace:*
+        version: link:../../device-management-kit
       semver:
         specifier: ^7.6.3
         version: 7.7.1
@@ -13953,7 +13956,9 @@ snapshots:
     transitivePeerDependencies:
       - '@babel/core'
       - '@babel/preset-env'
+      - bufferutil
       - supports-color
+      - utf-8-validate
 
   '@react-native/normalize-colors@0.76.6': {}
 

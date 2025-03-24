@@ -5,14 +5,15 @@
   "private": true,
   "description": "A collection of scripts and utilities for Ledger Device Management Kit monorepo",
   "bin": {
-    "lmdk-cli": "./cli.mjs"
+    "lmdk-cli": "./cli.cjs"
   },
   "files": [
-    "*.mjs"
+    "*.cjs",
+    "!.prettierrc.cjs"
   ],
-  "type": "module",
   "dependencies": {
     "@inquirer/prompts": "^7.3.3",
+    "@ledgerhq/device-management-kit": "workspace:*",
     "semver": "^7.6.3"
   },
   "devDependencies": {

@@ -1,8 +1,14 @@
 #!/usr/bin/env zx
 
-import "zx/globals";
-import { checkbox, Separator, confirm, input, select } from "@inquirer/prompts";
-import semver from "semver";
+require("zx/globals");
+const {
+  checkbox,
+  Separator,
+  confirm,
+  input,
+  select,
+} = require("@inquirer/prompts");
+const semver = require("semver");
 
 const GLOB = [
   // Grab all the package.json files except the ones in node_modules
@@ -113,7 +119,7 @@ async function resetPrivatePackagesDependencies(pkgs) {
   }
 }
 
-export async function enterRelease() {
+async function enterRelease() {
   try {
     const { groups, pkgs } = await getPackages();
     const choices = await getOptions({ groups, pkgs });
@@ -288,7 +294,7 @@ export async function enterRelease() {
   }
 }
 
-export async function exitRelease() {
+async function exitRelease() {
   try {
     const { pkgs } = await getPackages();
 
@@ -342,3 +348,8 @@ export async function exitRelease() {
     process.exit(1);
   }
 }
+
+module.exports = {
+  enterRelease,
+  exitRelease,
+};
