@@ -12,6 +12,11 @@
   ],
   "type": "module",
   "dependencies": {
-    "@inquirer/prompts": "^7.3.3"
+    "@inquirer/prompts": "^7.3.3",
+    "semver": "^7.6.3"
+  },
+  "devDependencies": {
+    "@ledgerhq/eslint-config-dsdk": "workspace:*",
+    "@ledgerhq/prettier-config-dsdk": "workspace:*"
   }
 }

@@ -15,8 +15,8 @@ export const help = (commands, danger = false) => {
       for (const flag of command.flags) {
         console.log(
           color(
-            `     --${flag.name}${flag.short ? `, -${flag.short}` : ""}: ${flag.description}`
-          )
+            `     --${flag.name}${flag.short ? `, -${flag.short}` : ""}: ${flag.description}`,
+          ),
         );
       }
     }
