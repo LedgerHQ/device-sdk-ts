@@ -62,6 +62,7 @@ export class RNBleTransport implements Transport {
   private readonly _manager: BleManager;
   private readonly identifier: TransportIdentifier = "RN_BLE";
   private _reconnectionSubscription: Maybe<Subscription>;
+  private _lastScanTimestamp: Maybe<number>;
 
   constructor(
     private readonly _deviceModelDataSource: DeviceModelDataSource,
@@ -81,6 +82,7 @@ export class RNBleTransport implements Transport {
     this._deviceConnectionsById = new Map();
     this.requestPermission();
     this._reconnectionSubscription = Maybe.zero();
+    this._lastScanTimestamp = Maybe.zero();
   }
 
   private _startDiscovering() {
@@ -180,8 +182,6 @@ export class RNBleTransport implements Transport {
               if (iDevice) {
                 iDevice.disconnectionSubscription.remove();
               }
-
-              this._internalDevicesById.delete(params.deviceId);
             },
           });
 
@@ -224,6 +224,8 @@ export class RNBleTransport implements Transport {
     );
 
     deviceConnection.map((d) => {
+      const deviceId = d.getDeviceId();
+      this._manager.onDeviceDisconnected(deviceId, () => null);
       d.closeConnection();
     });
 
@@ -349,7 +351,13 @@ export class RNBleTransport implements Transport {
     discoveredDevice: TransportDiscoveredDevice;
   }> {
     const maybeUuid = Maybe.fromNullable(
-      rnDevice?.serviceUUIDs?.find((uuid) => ledgerUuids.includes(uuid)),
+      Maybe.fromNullable(
+        rnDevice?.serviceUUIDs?.find((uuid) => ledgerUuids.includes(uuid)),
+      ).orDefaultLazy(() =>
+        Maybe.fromNullable(
+          this._internalDevicesById.get(rnDevice.id),
+        ).mapOrDefault((iDevice) => iDevice.bleDeviceInfos.serviceUuid, ""),
+      ),
     );
 
     const existingInternalDevice = Maybe.fromNullable(
@@ -473,7 +481,20 @@ export class RNBleTransport implements Transport {
   private _discoverNewDevices(
     ledgerUuids: string[],
   ): Observable<TransportDiscoveredDevice> {
+    if (
+      this._lastScanTimestamp.mapOrDefault(
+        (lastScanTimestamp) => Date.now() - lastScanTimestamp < 5000,
+        false,
+      )
+    ) {
+      return from(
+        [...this._internalDevicesById.values()].map(
+          (iDevice) => iDevice.discoveredDevice,
+        ),
+      );
+    }
     return new Observable<TransportDiscoveredDevice>((subscriber) => {
+      this._lastScanTimestamp = Maybe.of(Date.now());
       this._manager.startDeviceScan(null, null, (error, device) => {
         if (error || !device) {
           subscriber.error(error);
@@ -514,19 +535,24 @@ export class RNBleTransport implements Transport {
         (devices) =>
           new Observable<TransportDiscoveredDevice>((subscriber) => {
             for (const fromDevice of devices) {
-              fromDevice.readRSSI().then((device) => {
-                this._getDiscoveredDeviceFrom(device, ledgerUuids).map(
-                  ({ bleDeviceInfos, discoveredDevice }) => {
-                    this._emitDiscoveredDevice(
-                      subscriber,
-                      bleDeviceInfos,
-                      discoveredDevice,
-                    );
-                  },
-                );
+              fromDevice.readRSSI().then((deviceWithRssi) => {
+                deviceWithRssi
+                  .discoverAllServicesAndCharacteristics()
+                  .then((device) => {
+                    device.services().then(() => {
+                      this._getDiscoveredDeviceFrom(device, ledgerUuids).map(
+                        ({ bleDeviceInfos, discoveredDevice }) => {
+                          this._emitDiscoveredDevice(
+                            subscriber,
+                            bleDeviceInfos,
+                            discoveredDevice,
+                          );
+                        },
+                      );
+                    });
+                  });
               });
             }
-            this._handleLostDiscoveredDevices(subscriber);
           }),
       ),
       repeat({ delay: BLE_DISCONNECT_TIMEOUT / 5 }),
