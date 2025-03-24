@@ -36,7 +36,7 @@
     "test:coverage": "vitest run --coverage"
   },
   "dependencies": {
-    "js-flipper": "^0.270.0",
+    "js-flipper": "^0.273.0",
     "rxjs": "^7.8.2"
   },
   "devDependencies": {
