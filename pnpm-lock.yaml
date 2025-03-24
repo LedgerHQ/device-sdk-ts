@@ -471,8 +471,8 @@ importers:
   packages/flipper-plugin-client:
     dependencies:
       js-flipper:
-        specifier: ^0.270.0
-        version: 0.270.0
+        specifier: ^0.273.0
+        version: 0.273.0
       rxjs:
         specifier: ^7.8.2
         version: 7.8.2
@@ -7019,8 +7019,8 @@ packages:
   joi@17.13.3:
     resolution: {integrity: sha512-otDA4ldcIx+ZXsKHWmp0YizCweVRZG96J10b0FevjfuncLO1oX59THoAmHkNubYJ+9gWsYsp5k8v4ib6oDv1fA==}
 
-  js-flipper@0.270.0:
-    resolution: {integrity: sha512-JZ3Of9/gPSnnCxkf9ugyzoSS5bG50qytliiCQdYph/lcKuMRbU5bF2ThKqSBlolKlntUNmB1KwMKe7onnK+Big==}
+  js-flipper@0.273.0:
+    resolution: {integrity: sha512-pu18GxLTTWnrgfSVuQsztTMZ24APWkKvG+70by1UFIl88a6IengSYLorSJDipypReB20jYQ+bj2jIhhP/9bERQ==}
 
   js-tokens@4.0.0:
     resolution: {integrity: sha512-RdJUflcE3cUzKiMqQgsCu06FPu9UdIJO0beYbPhHN4k6apgJtifcoCtT9bcxOpYBtpD2kCM6Sbzg4CausW/PKQ==}
@@ -18747,7 +18747,7 @@ snapshots:
       '@sideway/formula': 3.0.1
       '@sideway/pinpoint': 2.0.0
 
-  js-flipper@0.270.0: {}
+  js-flipper@0.273.0: {}
 
   js-tokens@4.0.0: {}
 
