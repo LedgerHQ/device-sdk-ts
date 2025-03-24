@@ -22,6 +22,7 @@ import type {
   InstructionFieldV1,
   InstructionFieldV2,
   InstructionFieldV2WithCoinRef,
+  InstructionFieldV2WithName,
 } from "./FiltersDto";
 import {
   GetTypedDataFiltersParams,
@@ -122,6 +123,19 @@ export class HttpTypedDataDataSource implements TypedDataDataSource {
             signature: field.signatures[this.config.cal.mode],
             tokenIndex: field.coin_ref,
           });
+        } else if (
+          this.isInstructionFieldV2WithName(field, this.config.cal.mode)
+        ) {
+          filters.push({
+            type: field.format,
+            displayName: field.display_name,
+            path: field.field_path,
+            signature: field.signatures[this.config.cal.mode],
+            types: field.name_types,
+            sources: field.name_sources,
+            typesAndSourcesPayload:
+              this.formatTrustedNameTypesAndSources(field),
+          });
         } else {
           return Left(
             new Error(
@@ -147,6 +161,28 @@ export class HttpTypedDataDataSource implements TypedDataDataSource {
         ),
       );
     }
+  }
+
+  private formatTrustedNameTypesAndSources(
+    field: InstructionFieldV2WithName,
+  ): string {
+    // Get number of types and sources
+    const typesCount = field.name_types.length;
+    const sourcesCount = field.name_sources.length;
+
+    // Extract types and sources from the descriptor
+    const types = field.descriptor.slice(
+      (typesCount + sourcesCount) * 2 * -1,
+      sourcesCount * 2 * -1,
+    );
+    const sources = field.descriptor.slice(sourcesCount * 2 * -1);
+
+    // Convert counts into hex strings
+    const typesCountHex = typesCount.toString(16).padStart(2, "0");
+    const sourcesCountHex = sourcesCount.toString(16).padStart(2, "0");
+
+    // Return the payload
+    return typesCountHex + types + sourcesCountHex + sources;
   }
 
   private isInstructionFieldV1(
@@ -199,6 +235,28 @@ export class HttpTypedDataDataSource implements TypedDataDataSource {
       typeof data.format === "string" &&
       ["token", "amount"].includes(data.format) &&
       typeof data.coin_ref === "number"
+    );
+  }
+
+  private isInstructionFieldV2WithName(
+    data: InstructionField,
+    mode: ContextModuleCalMode,
+  ): data is InstructionFieldV2WithName & {
+    signatures: { [key in ContextModuleCalMode]: string };
+  } {
+    return (
+      typeof data === "object" &&
+      typeof data.display_name === "string" &&
+      typeof data.field_path === "string" &&
+      typeof data.signatures === "object" &&
+      typeof data.signatures[mode] === "string" &&
+      typeof data.format === "string" &&
+      data.format === "trusted-name" &&
+      data.coin_ref === undefined &&
+      Array.isArray(data.name_types) &&
+      Array.isArray(data.name_sources) &&
+      data.name_types.every((t) => typeof t === "string") &&
+      data.name_sources.every((s) => typeof s === "string")
     );
   }
 

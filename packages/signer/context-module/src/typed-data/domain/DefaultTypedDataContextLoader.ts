@@ -47,15 +47,30 @@ export class DefaultTypedDataContextLoader implements TypedDataContextLoader {
 
     // Loop through the typed data filters to extract informations
     const mappedFilters: Record<TypedDataFilterPath, TypedDataFilter> = {};
+    const mappedTrustedNames: Record<TypedDataFilterPath, HexaString> = {};
     const mappedTokens: Record<TypedDataTokenIndex, TypedDataToken> = {};
     for (const filter of filters) {
       // Add the filter to the clear signing context
       mappedFilters[filter.path] = filter;
-      if (filter.type !== "token" && filter.type !== "amount") {
-        continue; // no token reference
+
+      // If the filter is a trusted name, get the according address from typed message values.
+      // don't fetch the descriptor yet since a device challenge will be needed.
+      if (filter.type === "trusted-name") {
+        const values = typedData.fieldsValues.filter(
+          (entry) => entry.path === filter.path,
+        );
+        if (values.length !== 0) {
+          const value = values[0]!;
+          const address = this.convertAddressToHexaString(value.value);
+          mappedTrustedNames[filter.path] = address;
+        }
+        continue;
       }
 
       // If the filter references a token, retrieve its descriptor from the tokens data source
+      if (filter.type !== "token" && filter.type !== "amount") {
+        continue; // no token reference
+      }
       const tokenIndex = filter.tokenIndex;
       if (mappedTokens[tokenIndex] !== undefined) {
         continue; // Already fetched for a previous filter
@@ -115,6 +130,7 @@ export class DefaultTypedDataContextLoader implements TypedDataContextLoader {
       type: "success",
       messageInfo,
       filters: mappedFilters,
+      trustedNamesAddresses: mappedTrustedNames,
       tokens: mappedTokens,
     };
   }

@@ -265,6 +265,19 @@ describe("HttpTypedDataDataSource", () => {
         type: "field",
       },
       {
+        display_name: "Spender name",
+        format: "trusted-name",
+        field_path: "details.spender",
+        name_types: ["contract"],
+        name_sources: ["cal", "local", "ens"],
+        descriptor:
+          "2c000000000000a4b1ff970a61a04b1ca14834a43f5de4533ebddb5cc8d4dd8410bdcf861c48d353f8e3a9b738282a0fd9ba7239f59baa90997370656e6465725370656e64657202010002",
+        signatures: {
+          prod: "30440220238723d4ddd47baf829d547802a2017476bf68e03d0b920fd46aa543de81d5b902206123218eae82c5f898454c45262e5b0b839dc9d84b2b0926fe14e8218b5b0d54",
+        },
+        type: "field",
+      },
+      {
         display_name: "Amount allowance",
         format: "amount",
         field_path: "details.amount",
@@ -326,6 +339,16 @@ describe("HttpTypedDataDataSource", () => {
             tokenIndex: 0,
             signature:
               "30440220238723d4ddd47baf829d547802a2017476bf68e03d0b920fd46aa543de81d5b902206123218eae82c5f898454c45262e5b0b839dc9d84b2b0926fe14e8218b5b0d53",
+          },
+          {
+            type: "trusted-name",
+            displayName: "Spender name",
+            path: "details.spender",
+            signature:
+              "30440220238723d4ddd47baf829d547802a2017476bf68e03d0b920fd46aa543de81d5b902206123218eae82c5f898454c45262e5b0b839dc9d84b2b0926fe14e8218b5b0d54",
+            types: ["contract"],
+            sources: ["cal", "local", "ens"],
+            typesAndSourcesPayload: "010203010002",
           },
           {
             type: "amount",
@@ -716,6 +739,40 @@ describe("HttpTypedDataDataSource", () => {
         coin_ref: null,
         descriptor:
           "48000000000000a4b1000000000022d473030f116ddee9f6b43ac78ba34d593149e876e739220f3b5ede1b38a0213d76c4705b1547c4323df364657461696c732e746f6b656e416d6f756e7420616c6c6f77616e6365",
+        signatures: {
+          prod: "30440220238723d4ddd47baf829d547802a2017476bf68e03d0b920fd46aa543de81d5b902206123218eae82c5f898454c45262e5b0b839dc9d84b2b0926fe14e8218b5b0d53",
+        },
+        type: "field",
+      } as unknown as InstructionField,
+    ]);
+    // GIVEN
+    vi.spyOn(axios, "request").mockResolvedValue({ data: filtersDTO });
+
+    // WHEN
+    const result = await datasource.getTypedDataFilters({
+      chainId: 1,
+      address: "0x000000000022d473030f116ddee9f6b43ac78ba3",
+      version: "v2",
+      schema: TEST_TYPES,
+    });
+
+    // THEN
+    expect(result.isLeft()).toEqual(true);
+    expect(result.extract()).toEqual(
+      new Error(
+        `[ContextModule] HttpTypedDataDataSource: invalid typed data field for address 0x000000000022d473030f116ddee9f6b43ac78ba3 on chain 1 for schema 4d593149e876e739220f3b5ede1b38a0213d76c4705b1547c4323df3`,
+      ),
+    );
+  });
+
+  it("should return an error on trusted names without sources and types", async () => {
+    const filtersDTO = buildDescriptor([
+      {
+        display_name: "Amount allowance",
+        format: "trusted-name",
+        field_path: "details.token",
+        descriptor:
+          "2c000000000000a4b1ff970a61a04b1ca14834a43f5de4533ebddb5cc8d4dd8410bdcf861c48d353f8e3a9b738282a0fd9ba7239f59baa90997370656e6465725370656e64657202010002",
         signatures: {
           prod: "30440220238723d4ddd47baf829d547802a2017476bf68e03d0b920fd46aa543de81d5b902206123218eae82c5f898454c45262e5b0b839dc9d84b2b0926fe14e8218b5b0d53",
         },

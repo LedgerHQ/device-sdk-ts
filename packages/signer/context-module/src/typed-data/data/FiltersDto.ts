@@ -25,6 +25,8 @@ export type InstructionFieldV2 = {
   signatures: InstructionSignatures;
   format: "raw" | "datetime";
   coin_ref?: never;
+  name_types?: never;
+  name_sources?: never;
   type: "field" | "message";
 };
 
@@ -34,6 +36,21 @@ export type InstructionFieldV2WithCoinRef = {
   format: "token" | "amount";
   field_path: string;
   coin_ref: number;
+  name_types?: never;
+  name_sources?: never;
+  descriptor: string;
+  signatures: InstructionSignatures;
+  type: "field";
+};
+
+export type InstructionFieldV2WithName = {
+  display_name: string;
+  field_mappers_count?: never;
+  format: "trusted-name";
+  field_path: string;
+  coin_ref?: never;
+  name_types: string[];
+  name_sources: string[];
   descriptor: string;
   signatures: InstructionSignatures;
   type: "field";
@@ -52,6 +69,7 @@ export type InstructionField =
   | InstructionFieldV1
   | InstructionFieldV2
   | InstructionFieldV2WithCoinRef
+  | InstructionFieldV2WithName
   | InstructionContractInfo;
 
 export type FiltersDto = {

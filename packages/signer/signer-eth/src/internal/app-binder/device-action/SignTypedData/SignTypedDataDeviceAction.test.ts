@@ -81,6 +81,7 @@ describe("SignTypedDataDeviceAction", () => {
         signature:
           "3045022100e3c597d13d28a87a88b0239404c668373cf5063362f2a81d09eed4582941dfe802207669aabb504fd5b95b2734057f6b8bbf51f14a69a5f9bdf658a5952cefbf44d3",
       },
+      trustedNamesAddresses: {},
       tokens: {},
       filters: {
         "details.amount": {
@@ -232,6 +233,7 @@ describe("SignTypedDataDeviceAction", () => {
             expect(provideContextMock).toHaveBeenCalledWith(
               expect.objectContaining({
                 input: {
+                  contextModule: mockContextModule,
                   taskArgs: TEST_BUILT_CONTEXT,
                 },
               }),
