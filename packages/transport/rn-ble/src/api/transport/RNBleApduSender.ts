@@ -156,7 +156,9 @@ export class RNBleApduSender
       const sub = this._isDeviceReady.subscribe((isReady) => {
         if (isReady) {
           resolve();
-          sub.unsubscribe();
+          if (sub) {
+            sub.unsubscribe();
+          }
         }
       });
     });
