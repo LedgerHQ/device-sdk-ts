@@ -93,7 +93,8 @@ describe("RNBleTransportFactory", () => {
     const fakeArgs = {
       deviceModelDataSource:
         "DeviceModelDataSource" as unknown as DeviceModelDataSource,
-      loggerServiceFactory: () => "logger" as unknown as LoggerPublisherService,
+      loggerServiceFactory: () =>
+        fakeLogger as unknown as LoggerPublisherService,
       apduSenderServiceFactory:
         (() => {}) as unknown as ApduSenderServiceFactory,
       apduReceiverServiceFactory:
@@ -310,10 +311,15 @@ describe("RNBleTransport", () => {
           connectedDevices: vi.fn().mockResolvedValueOnce([
             {
               readRSSI: vi.fn().mockResolvedValueOnce({
-                serviceUUIDs: ["ledgerId"],
-                rssi: 42,
-                id: "id",
-                localName: "name",
+                discoverAllServicesAndCharacteristics: vi
+                  .fn()
+                  .mockResolvedValueOnce({
+                    services: vi.fn().mockResolvedValue({}),
+                    serviceUUIDs: ["ledgerId"],
+                    rssi: 42,
+                    id: "id",
+                    localName: "name",
+                  }),
               }),
             },
           ]),
@@ -457,10 +463,15 @@ describe("RNBleTransport", () => {
         const fakeConnectedDevices = vi.fn().mockResolvedValueOnce([
           {
             readRSSI: vi.fn().mockResolvedValueOnce({
-              id: "knownDeviceId",
-              localName: "knownDeviceName",
-              serviceUUIDs: ["ledgerId"],
-              rssi: 64,
+              discoverAllServicesAndCharacteristics: vi
+                .fn()
+                .mockResolvedValueOnce({
+                  services: vi.fn().mockResolvedValueOnce({}),
+                  serviceUUIDs: ["ledgerId"],
+                  rssi: 64,
+                  id: "knownDeviceId",
+                  localName: "knownDeviceName",
+                }),
             }),
           },
         ]);
