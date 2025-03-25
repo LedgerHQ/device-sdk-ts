@@ -12,6 +12,7 @@ In this guide, you'll learn how to send commands to a connected Ledger device an
 ## Prerequisites
 
 Before starting this tutorial, make sure you've completed:
+
 - [Setting up your environment](/docs/beginner/setup)
 - [Initializing the DMK](/docs/beginner/init_dmk)
 - [Connecting to a Device](/docs/beginner/discover_and_connect)
@@ -63,6 +64,7 @@ For most common operations, the DMK provides pre-defined commands that are easie
 > ## ❗️ Error Handling
 >
 > Most commands will reject with an error if:
+>
 > - The device is locked - check the device session state with `dmk.getDeviceSessionState({ sessionId })` first
 > - The response status word is not `0x9000` (success)
 
@@ -192,7 +194,7 @@ observable.subscribe({
   },
   complete: () => {
     console.log("Device action complete");
-  }
+  },
 });
 
 // If you need to cancel the action
@@ -202,6 +204,7 @@ observable.subscribe({
 ## What you've learned
 
 In this tutorial, you've learned how to:
+
 - Send low-level APDU commands to a Ledger device
 - Use pre-defined commands for common operations
 - Work with device actions for complex flows

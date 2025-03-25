@@ -24,14 +24,14 @@ The DMK uses [RxJS](https://rxjs.dev/) to handle asynchronous operations. If you
 2. **Subscription**: You need to "subscribe" to an Observable to get its data
 
 Basic example:
+
 ```ts
 dmk.someFunction().subscribe({
   next: (data) => console.log("Data received:", data),
   error: (error) => console.error("Error:", error),
-  complete: () => console.log("Operation completed")
+  complete: () => console.log("Operation completed"),
 });
 ```
-
 
 ## What's Next?
 

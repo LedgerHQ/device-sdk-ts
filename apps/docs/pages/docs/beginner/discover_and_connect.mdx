@@ -33,7 +33,7 @@ export const dmk = new DeviceManagementKitBuilder()
 Now, let's import the DMK instance and start the discovery process:
 
 ```ts
-import { dmk } from './dmk';
+import { dmk } from "./dmk";
 
 // Start discovering devices
 const discoverySubscription = dmk.startDiscovering({}).subscribe({
@@ -41,7 +41,7 @@ const discoverySubscription = dmk.startDiscovering({}).subscribe({
     // This function is called whenever a new device is found
     console.log(`Found device: ${device.id}`);
     console.log(`Device model: ${device.deviceModel.model}`);
-    
+
     // At this point, you could:
     // - Connect to the device automatically
     // - Add it to a list of available devices for the user to choose from
@@ -68,12 +68,12 @@ async function connectToDevice(device) {
     // Connect to the device by passing the full device object
     const sessionId = await dmk.connect({ device });
     console.log(`Connected! Session ID: ${sessionId}`);
-    
+
     // Get information about the connected device
     const connectedDevice = dmk.getConnectedDevice({ sessionId });
     console.log(`Device name: ${connectedDevice.name}`);
     console.log(`Device model: ${connectedDevice.modelId}`);
-    
+
     return sessionId;
   } catch (error) {
     console.error("Connection failed:", error);
@@ -98,26 +98,26 @@ function monitorDeviceState(sessionId) {
       // - BUSY: device is processing a command
       // - CONNECTED: device is connected and available
       // - NOT_CONNECTED: device is disconnected
-      
+
       // Battery information might not always be available
       if (state.batteryStatus) {
         console.log(`Battery level: ${state.batteryStatus.level}%`);
       }
-      
+
       // Information about the current running app
       if (state.currentApp) {
         console.log(`Current app: ${state.currentApp.name}`);
         console.log(`App version: ${state.currentApp.version}`);
       }
-      
+
       // Basic device information is always available
       console.log(`Device model: ${state.deviceModelId}`);
     },
     error: (error) => {
       console.error("State monitoring error:", error);
-    }
+    },
   });
-  
+
   return stateSubscription;
 }
 ```
@@ -142,8 +142,8 @@ async function disconnectDevice(sessionId) {
 Here's a complete example that combines all the steps:
 
 ```ts
-import { dmk } from './dmk';
-import { DeviceStatus } from '@ledgerhq/device-management-kit';
+import { dmk } from "./dmk";
+import { DeviceStatus } from "@ledgerhq/device-management-kit";
 
 // Global variables to store subscriptions and session info
 let discoverySubscription;
@@ -155,28 +155,32 @@ function startDiscoveryAndConnect() {
   if (discoverySubscription) {
     discoverySubscription.unsubscribe();
   }
-  
+
   console.log("Starting device discovery...");
-  
+
   // Start discovering - this will scan for any connected devices
   discoverySubscription = dmk.startDiscovering({}).subscribe({
     next: async (device) => {
-      console.log(`Found device: ${device.id}, model: ${device.deviceModel.model}`);
-      
+      console.log(
+        `Found device: ${device.id}, model: ${device.deviceModel.model}`,
+      );
+
       // Connect to the first device we find
       try {
         // Pass the full device object, not just the ID
         currentSessionId = await dmk.connect({ device });
         console.log(`Connected! Session ID: ${currentSessionId}`);
-        
+
         // Stop discovering once we connect
         discoverySubscription.unsubscribe();
-        
+
         // Get device information
-        const connectedDevice = dmk.getConnectedDevice({ sessionId: currentSessionId });
+        const connectedDevice = dmk.getConnectedDevice({
+          sessionId: currentSessionId,
+        });
         console.log(`Device name: ${connectedDevice.name}`);
         console.log(`Device model: ${connectedDevice.modelId}`);
-        
+
         // Start monitoring device state
         stateSubscription = monitorDeviceState(currentSessionId);
       } catch (error) {
@@ -185,7 +189,7 @@ function startDiscoveryAndConnect() {
     },
     error: (error) => {
       console.error("Discovery error:", error);
-    }
+    },
   });
 }
 
@@ -193,29 +197,29 @@ function monitorDeviceState(sessionId) {
   return dmk.getDeviceSessionState({ sessionId }).subscribe({
     next: (state) => {
       console.log(`Device status: ${state.deviceStatus}`);
-      
+
       // Check for specific status conditions
       if (state.deviceStatus === DeviceStatus.LOCKED) {
         console.log("Device is locked - please enter your PIN");
       }
-      
+
       // Show battery level if available
       if (state.batteryStatus) {
         console.log(`Battery level: ${state.batteryStatus.level}%`);
       }
-      
+
       // Show app information if available
       if (state.currentApp) {
         console.log(`Current app: ${state.currentApp.name}`);
         console.log(`App version: ${state.currentApp.version}`);
       }
-      
+
       // Basic device model info
       console.log(`Device model: ${state.deviceModelId}`);
     },
     error: (error) => {
       console.error("State monitoring error:", error);
-    }
+    },
   });
 }
 
@@ -225,11 +229,11 @@ async function cleanup() {
   if (discoverySubscription) {
     discoverySubscription.unsubscribe();
   }
-  
+
   if (stateSubscription) {
     stateSubscription.unsubscribe();
   }
-  
+
   // Disconnect from device if connected
   if (currentSessionId) {
     try {

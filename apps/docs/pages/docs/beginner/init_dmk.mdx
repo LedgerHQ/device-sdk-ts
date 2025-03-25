@@ -8,10 +8,10 @@ In this guide, you'll learn how to initialize and configure the Device Managemen
 - How to configure loggers and transports
 - How to maintain the DMK instance as a singleton
 
-
 ## Step 1: Install the required packages
 
 First, you'll need to install the Device Management Kit and related packages:
+
 ```bash
 npm install @ledgerhq/device-management-kit @ledgerhq/device-transport-kit-web-hid
 ```
@@ -19,6 +19,7 @@ npm install @ledgerhq/device-management-kit @ledgerhq/device-transport-kit-web-h
 ## Step 2: Create the DMK configuration
 
 Now, let's create a file to initialize the DMK. Create a new file called dmk.ts in your project:
+
 ```ts
 import {
   ConsoleLogger,
@@ -34,6 +35,7 @@ export const dmk = new DeviceManagementKitBuilder()
 ```
 
 This code sets up the DMK with:
+
 - A console logger that will output information to your browser's console
 - The WebHID transport, which allows communication with hardware devices via the browser's WebHID API
 
@@ -42,7 +44,7 @@ This code sets up the DMK with:
 Import the DMK instance in any file where you need to interact with devices:
 
 ```ts
-import { dmk } from './dmk';
+import { dmk } from "./dmk";
 
 // Now you can use the DMK for device operations
 async function connectToDevice() {
@@ -56,11 +58,8 @@ async function connectToDevice() {
 ## What you've learned
 
 Congratulations! You've now:
+
 - Set up a working DMK instance
 - Configured it with a logger and transport
 - Learned how to maintain it as a singleton
 - Know how to import and use it in your application
-
-
-
-
