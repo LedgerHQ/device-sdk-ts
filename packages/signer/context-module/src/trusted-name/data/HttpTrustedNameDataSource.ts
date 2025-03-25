@@ -20,6 +20,7 @@ export class HttpTrustedNameDataSource implements TrustedNameDataSource {
   ) {}
 
   public async getDomainNamePayload({
+    chainId,
     domain,
     challenge,
   }: GetDomainNameInfosParams): Promise<Either<Error, string>> {
@@ -28,7 +29,7 @@ export class HttpTrustedNameDataSource implements TrustedNameDataSource {
       const source = "ens"; // Ethereum name service
       const response = await axios.request<TrustedNameDto>({
         method: "GET",
-        url: `https://nft.api.live.ledger.com/v2/names/ethereum/1/forward/${domain}?types=${type}&sources=${source}&challenge=${challenge}`,
+        url: `https://nft.api.live.ledger.com/v2/names/ethereum/${chainId}/forward/${domain}?types=${type}&sources=${source}&challenge=${challenge}`,
         headers: {
           "X-Ledger-Client-Version": `context-module/${PACKAGE.version}`,
         },
@@ -51,6 +52,7 @@ export class HttpTrustedNameDataSource implements TrustedNameDataSource {
   }
 
   public async getTrustedNamePayload({
+    chainId,
     address,
     challenge,
     sources,
@@ -61,11 +63,11 @@ export class HttpTrustedNameDataSource implements TrustedNameDataSource {
       // For now we have to filter or trusted names won't work with the generic parser, because transaction
       // fields descriptors can contain unsupported sources.
       sources = sources.filter(
-        (source) => source === "ens" || source === "crypto_assets_list",
+        (source) => source === "ens" || source === "crypto_asset_list",
       );
       const response = await axios.request<TrustedNameDto>({
         method: "GET",
-        url: `https://nft.api.live.ledger.com/v2/names/ethereum/1/reverse/${address}?types=${types.join(",")}&sources=${sources.join(",")}&challenge=${challenge}`,
+        url: `https://nft.api.live.ledger.com/v2/names/ethereum/${chainId}/reverse/${address}?types=${types.join(",")}&sources=${sources.join(",")}&challenge=${challenge}`,
         headers: {
           "X-Ledger-Client-Version": `context-module/${PACKAGE.version}`,
         },
