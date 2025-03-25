@@ -26,6 +26,7 @@ import {
   type SignTransactionDAIntermediateValue,
   type SignTransactionDAInternalState,
   type SignTransactionDAOutput,
+  SignTransactionDAStep,
 } from "@api/app-binder/SignTransactionDeviceActionTypes";
 import { type Signature } from "@api/model/Signature";
 import { type TransactionOptions } from "@api/model/TransactionOptions";
@@ -182,6 +183,7 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
           input,
           intermediateValue: {
             requiredUserInteraction: UserInteractionRequired.None,
+            step: SignTransactionDAStep.OPEN_APP,
           },
           _internalState: {
             error: null,
@@ -202,6 +204,7 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
           exit: assign({
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
+              step: SignTransactionDAStep.OPEN_APP,
             },
           }),
           invoke: {
@@ -213,8 +216,10 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
             src: "openAppStateMachine",
             onSnapshot: {
               actions: assign({
-                intermediateValue: (_) =>
-                  _.event.snapshot.context.intermediateValue,
+                intermediateValue: (_) => ({
+                  ..._.event.snapshot.context.intermediateValue,
+                  step: SignTransactionDAStep.OPEN_APP,
+                }),
               }),
             },
             onDone: {
@@ -247,6 +252,12 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
           ],
         },
         GetAppConfig: {
+          entry: assign({
+            intermediateValue: {
+              requiredUserInteraction: UserInteractionRequired.None,
+              step: SignTransactionDAStep.GET_APP_CONFIG,
+            },
+          }),
           invoke: {
             id: "getAppConfig",
             src: "getAppConfig",
@@ -289,11 +300,13 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
           entry: assign({
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.Web3ChecksOptIn,
+              step: SignTransactionDAStep.WEB3_CHECKS_OPT_IN,
             },
           }),
           exit: assign({
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
+              step: SignTransactionDAStep.WEB3_CHECKS_OPT_IN,
             },
           }),
           invoke: {
@@ -323,6 +336,12 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
           },
         },
         BuildContext: {
+          entry: assign({
+            intermediateValue: {
+              requiredUserInteraction: UserInteractionRequired.None,
+              step: SignTransactionDAStep.BUILD_CONTEXT,
+            },
+          }),
           invoke: {
             id: "buildContext",
             src: "buildContext",
@@ -367,6 +386,12 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
           ],
         },
         ProvideContext: {
+          entry: assign({
+            intermediateValue: {
+              requiredUserInteraction: UserInteractionRequired.None,
+              step: SignTransactionDAStep.PROVIDE_CONTEXT,
+            },
+          }),
           invoke: {
             id: "provideContext",
             src: "provideContext",
@@ -385,6 +410,12 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
           },
         },
         ProvideGenericContext: {
+          entry: assign({
+            intermediateValue: {
+              requiredUserInteraction: UserInteractionRequired.None,
+              step: SignTransactionDAStep.PROVIDE_GENERIC_CONTEXT,
+            },
+          }),
           invoke: {
             id: "provideGenericContext",
             src: "provideGenericContext",
@@ -428,11 +459,13 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
           entry: assign({
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.SignTransaction,
+              step: SignTransactionDAStep.SIGN_TRANSACTION,
             },
           }),
           exit: assign({
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
+              step: SignTransactionDAStep.SIGN_TRANSACTION,
             },
           }),
           invoke: {
