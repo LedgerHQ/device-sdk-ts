@@ -11,30 +11,13 @@ In this guide, you'll learn how to discover and connect to hardware devices usin
 
 ## Prerequisites
 
-Before starting this tutorial, make sure you've completed the [Initializing the DMK](/docs/beginner/init_dmk) tutorial and have created a `dmk.ts` file that exports a configured DMK instance. Your file should look something like this:
-
-```ts
-// dmk.ts
-import {
-  ConsoleLogger,
-  DeviceManagementKitBuilder,
-} from "@ledgerhq/device-management-kit";
-import { webHidTransportFactory } from "@ledgerhq/device-transport-kit-web-hid";
-
-// Initialize the DMK with a console logger and WebHID transport
-export const dmk = new DeviceManagementKitBuilder()
-  .addLogger(new ConsoleLogger())
-  .addTransport(webHidTransportFactory)
-  .build();
-```
+Before starting this tutorial, make sure you have initialized the DMK instance and imported it in your project. If you haven't done so, please refer to the [Initializing the DMK](/docs/beginner/init_dmk) tutorial.
 
 ## Step 1: Initialize device discovery
 
-Now, let's import the DMK instance and start the discovery process:
+Let's start the discovery process:
 
 ```ts
-import { dmk } from "./dmk";
-
 // Start discovering devices
 const discoverySubscription = dmk.startDiscovering({}).subscribe({
   next: (device) => {
@@ -142,7 +125,6 @@ async function disconnectDevice(sessionId) {
 Here's a complete example that combines all the steps:
 
 ```ts
-import { dmk } from "./dmk";
 import { DeviceStatus } from "@ledgerhq/device-management-kit";
 
 // Global variables to store subscriptions and session info
