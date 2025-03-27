@@ -24,7 +24,7 @@ describe("HttpTrustedNameDataSource", () => {
   });
 
   describe("getDomainNamePayload", () => {
-    it("should call axios with the ledger client version header", async () => {
+    it("should call axios with the correct url and ledger client version header", async () => {
       // GIVEN
       const version = `context-module/${PACKAGE.version}`;
       const requestSpy = vi.fn(() => Promise.resolve({ data: [] }));
@@ -32,13 +32,15 @@ describe("HttpTrustedNameDataSource", () => {
 
       // WHEN
       await datasource.getDomainNamePayload({
-        challenge: "",
+        chainId: 137,
+        challenge: "9876",
         domain: "hello.eth",
       });
 
       // THEN
       expect(requestSpy).toHaveBeenCalledWith(
         expect.objectContaining({
+          url: `https://nft.api.live.ledger.com/v2/names/ethereum/137/forward/hello.eth?types=eoa&sources=ens&challenge=9876`,
           headers: { "X-Ledger-Client-Version": version },
         }),
       );
@@ -50,6 +52,7 @@ describe("HttpTrustedNameDataSource", () => {
 
       // WHEN
       const result = await datasource.getDomainNamePayload({
+        chainId: 137,
         challenge: "",
         domain: "hello.eth",
       });
@@ -71,6 +74,7 @@ describe("HttpTrustedNameDataSource", () => {
 
       // WHEN
       const result = await datasource.getDomainNamePayload({
+        chainId: 137,
         challenge: "",
         domain: "hello.eth",
       });
@@ -92,6 +96,7 @@ describe("HttpTrustedNameDataSource", () => {
 
       // WHEN
       const result = await datasource.getDomainNamePayload({
+        chainId: 137,
         challenge: "challenge",
         domain: "hello.eth",
       });
@@ -102,7 +107,7 @@ describe("HttpTrustedNameDataSource", () => {
   });
 
   describe("getTrustedNamePayload", () => {
-    it("should call axios with the ledger client version header", async () => {
+    it("should call axios with the correct url and ledger client version header", async () => {
       // GIVEN
       const version = `context-module/${PACKAGE.version}`;
       const requestSpy = vi.fn(() => Promise.resolve({ data: [] }));
@@ -110,15 +115,17 @@ describe("HttpTrustedNameDataSource", () => {
 
       // WHEN
       await datasource.getTrustedNamePayload({
+        chainId: 137,
         address: "0x1234",
-        challenge: "",
-        sources: ["ens"],
+        challenge: "5678",
+        sources: ["ens", "crypto_asset_list"],
         types: ["eoa"],
       });
 
       // THEN
       expect(requestSpy).toHaveBeenCalledWith(
         expect.objectContaining({
+          url: `https://nft.api.live.ledger.com/v2/names/ethereum/137/reverse/0x1234?types=eoa&sources=ens,crypto_asset_list&challenge=5678`,
           headers: { "X-Ledger-Client-Version": version },
         }),
       );
@@ -130,6 +137,7 @@ describe("HttpTrustedNameDataSource", () => {
 
       // WHEN
       const result = await datasource.getTrustedNamePayload({
+        chainId: 137,
         address: "0x1234",
         challenge: "",
         sources: ["ens"],
@@ -153,6 +161,7 @@ describe("HttpTrustedNameDataSource", () => {
 
       // WHEN
       const result = await datasource.getTrustedNamePayload({
+        chainId: 137,
         address: "0x1234",
         challenge: "",
         sources: ["ens"],
@@ -180,6 +189,7 @@ describe("HttpTrustedNameDataSource", () => {
 
       // WHEN
       const result = await datasource.getTrustedNamePayload({
+        chainId: 137,
         address: "0x1234",
         challenge: "",
         sources: ["ens"],
@@ -201,6 +211,7 @@ describe("HttpTrustedNameDataSource", () => {
 
       // WHEN
       const result = await datasource.getTrustedNamePayload({
+        chainId: 137,
         address: "0x1234",
         challenge: "",
         sources: ["ens"],

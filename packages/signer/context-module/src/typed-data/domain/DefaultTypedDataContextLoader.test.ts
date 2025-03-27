@@ -164,6 +164,7 @@ describe("TokenContextLoader", () => {
           signature:
             "3045022100e3c597d13d28a87a88b0239404c668373cf5063362f2a81d09eed4582941dfe802207669aabb504fd5b95b2734057f6b8bbf51f14a69a5f9bdf658a5952cefbf44d3",
         },
+        trustedNamesAddresses: {},
         tokens: {
           0: "payload-0x7ceb23fd6bc0add59e62ac25578270cff1b9f619",
         },
@@ -257,6 +258,7 @@ describe("TokenContextLoader", () => {
           signature:
             "3045022100e3c597d13d28a87a88b0239404c668373cf5063362f2a81d09eed4582941dfe802207669aabb504fd5b95b2734057f6b8bbf51f14a69a5f9bdf658a5952cefbf44d3",
         },
+        trustedNamesAddresses: {},
         tokens: {
           0: "payload-0x7ceb23fd6bc0add59e62ac25578270cff1b9f619",
           255: "payload-0x000000000022d473030f116ddee9f6b43ac78ba3",
@@ -303,6 +305,74 @@ describe("TokenContextLoader", () => {
       expect(result).toEqual({
         type: "error",
         error: new Error("error"),
+      });
+    });
+
+    it("success with a trusted name", async () => {
+      // GIVEN
+      const ctx = {
+        verifyingContract: "0x000000000022d473030f116ddee9f6b43ac78ba3",
+        chainId: 1,
+        version: "v2",
+        schema: TEST_TYPES,
+        fieldsValues: TEST_VALUES,
+      } as TypedDataContext;
+      vi.spyOn(
+        mockTypedDataDataSource,
+        "getTypedDataFilters",
+      ).mockImplementation(() =>
+        Promise.resolve(
+          Right({
+            messageInfo: {
+              displayName: "Permit2",
+              filtersCount: 2,
+              signature:
+                "3045022100e3c597d13d28a87a88b0239404c668373cf5063362f2a81d09eed4582941dfe802207669aabb504fd5b95b2734057f6b8bbf51f14a69a5f9bdf658a5952cefbf44d3",
+            },
+            filters: [
+              {
+                type: "trusted-name",
+                displayName: "Amount allowance",
+                path: "details.token.[]",
+                signature:
+                  "3044022075103b38995e031d1ebbfe38ac6603bec32854b5146a664e49b4cc4f460c1da6022029f4b0fd1f3b7995ffff1627d4b57f27888a2dcc9b3a4e85c37c67571092c733",
+                types: ["contract"],
+                sources: ["local", "ens"],
+                typesAndSourcesPayload: "010203010002",
+              },
+            ],
+          }),
+        ),
+      );
+
+      // WHEN
+      const result = await loader.load(ctx);
+
+      // THEN
+      expect(result).toEqual({
+        type: "success",
+        messageInfo: {
+          displayName: "Permit2",
+          filtersCount: 2,
+          signature:
+            "3045022100e3c597d13d28a87a88b0239404c668373cf5063362f2a81d09eed4582941dfe802207669aabb504fd5b95b2734057f6b8bbf51f14a69a5f9bdf658a5952cefbf44d3",
+        },
+        trustedNamesAddresses: {
+          "details.token.[]": "0x7ceb23fd6bc0add59e62ac25578270cff1b9f619",
+        },
+        tokens: {},
+        filters: {
+          "details.token.[]": {
+            displayName: "Amount allowance",
+            path: "details.token.[]",
+            signature:
+              "3044022075103b38995e031d1ebbfe38ac6603bec32854b5146a664e49b4cc4f460c1da6022029f4b0fd1f3b7995ffff1627d4b57f27888a2dcc9b3a4e85c37c67571092c733",
+            types: ["contract"],
+            sources: ["local", "ens"],
+            typesAndSourcesPayload: "010203010002",
+            type: "trusted-name",
+          },
+        },
       });
     });
 
@@ -356,6 +426,7 @@ describe("TokenContextLoader", () => {
           signature:
             "3045022100e3c597d13d28a87a88b0239404c668373cf5063362f2a81d09eed4582941dfe802207669aabb504fd5b95b2734057f6b8bbf51f14a69a5f9bdf658a5952cefbf44d3",
         },
+        trustedNamesAddresses: {},
         tokens: {},
         filters: {
           "details.token.[]": {

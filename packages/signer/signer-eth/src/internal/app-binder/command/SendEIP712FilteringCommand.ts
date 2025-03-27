@@ -25,6 +25,7 @@ export enum Eip712FilterType {
   Raw = "raw",
   Amount = "amount",
   Token = "token",
+  TrustedName = "trusted-name",
 }
 
 export type SendEIP712FilteringCommandArgs =
@@ -40,6 +41,13 @@ export type SendEIP712FilteringCommandArgs =
       type: Eip712FilterType.Datetime;
       discarded: boolean;
       displayName: string;
+      signature: string;
+    }
+  | {
+      type: Eip712FilterType.TrustedName;
+      discarded: boolean;
+      displayName: string;
+      typesAndSourcesPayload: string;
       signature: string;
     }
   | {
@@ -66,6 +74,7 @@ const FILTER_TO_P2: Record<Eip712FilterType, number> = {
   [Eip712FilterType.Activation]: 0x00,
   [Eip712FilterType.DiscardedPath]: 0x01,
   [Eip712FilterType.MessageInfo]: 0x0f,
+  [Eip712FilterType.TrustedName]: 0xfb,
   [Eip712FilterType.Datetime]: 0xfc,
   [Eip712FilterType.Token]: 0xfd,
   [Eip712FilterType.Amount]: 0xfe,
@@ -91,32 +100,38 @@ export class SendEIP712FilteringCommand
     };
     const builder = new ApduBuilder(filteringArgs);
 
-    if (this.args.type === Eip712FilterType.MessageInfo) {
-      builder
-        .encodeInLVFromAscii(this.args.displayName)
-        .add8BitUIntToData(this.args.filtersCount)
-        .encodeInLVFromHexa(this.args.signature);
-    } else if (this.args.type === Eip712FilterType.DiscardedPath) {
-      builder.encodeInLVFromAscii(this.args.path);
-    } else if (
-      this.args.type === Eip712FilterType.Datetime ||
-      this.args.type === Eip712FilterType.Raw
-    ) {
-      builder
-        .encodeInLVFromAscii(this.args.displayName)
-        .encodeInLVFromHexa(this.args.signature);
-    } else if (
-      this.args.type === Eip712FilterType.Token ||
-      this.args.type === Eip712FilterType.Amount
-    ) {
-      if (this.args.type === Eip712FilterType.Amount) {
-        builder.encodeInLVFromAscii(this.args.displayName);
-      }
-      builder
-        .add8BitUIntToData(this.args.tokenIndex)
-        .encodeInLVFromHexa(this.args.signature);
+    switch (this.args.type) {
+      case Eip712FilterType.MessageInfo:
+        builder
+          .encodeInLVFromAscii(this.args.displayName)
+          .add8BitUIntToData(this.args.filtersCount)
+          .encodeInLVFromHexa(this.args.signature);
+        break;
+      case Eip712FilterType.DiscardedPath:
+        builder.encodeInLVFromAscii(this.args.path);
+        break;
+      case Eip712FilterType.Datetime:
+      case Eip712FilterType.Raw:
+        builder
+          .encodeInLVFromAscii(this.args.displayName)
+          .encodeInLVFromHexa(this.args.signature);
+        break;
+      case Eip712FilterType.TrustedName:
+        builder
+          .encodeInLVFromAscii(this.args.displayName)
+          .addHexaStringToData(this.args.typesAndSourcesPayload)
+          .encodeInLVFromHexa(this.args.signature);
+        break;
+      case Eip712FilterType.Token:
+      case Eip712FilterType.Amount:
+        if (this.args.type === Eip712FilterType.Amount) {
+          builder.encodeInLVFromAscii(this.args.displayName);
+        }
+        builder
+          .add8BitUIntToData(this.args.tokenIndex)
+          .encodeInLVFromHexa(this.args.signature);
+        break;
     }
-
     return builder.build();
   }
 

@@ -60,6 +60,7 @@ export type MachineDependencies = {
   }) => Promise<ProvideEIP712ContextTaskArgs>;
   readonly provideContext: (arg0: {
     input: {
+      contextModule: ContextModule;
       taskArgs: ProvideEIP712ContextTaskArgs;
     };
   }) => ProvideEIP712ContextTaskReturnType;
@@ -356,6 +357,7 @@ export class SignTypedDataDeviceAction extends XStateDeviceAction<
             id: "provideContext",
             src: "provideContext",
             input: ({ context }) => ({
+              contextModule: context.input.contextModule,
               taskArgs: context._internalState.typedDataContext!,
             }),
             onDone: {
@@ -523,9 +525,15 @@ export class SignTypedDataDeviceAction extends XStateDeviceAction<
 
     const provideContext = async (arg0: {
       input: {
+        contextModule: ContextModule;
         taskArgs: ProvideEIP712ContextTaskArgs;
       };
-    }) => new ProvideEIP712ContextTask(internalApi, arg0.input.taskArgs).run();
+    }) =>
+      new ProvideEIP712ContextTask(
+        internalApi,
+        arg0.input.contextModule,
+        arg0.input.taskArgs,
+      ).run();
 
     const signTypedData = async (arg0: {
       input: {

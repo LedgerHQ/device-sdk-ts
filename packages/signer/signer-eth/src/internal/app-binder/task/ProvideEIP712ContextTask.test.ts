@@ -11,6 +11,7 @@ import {
 } from "@ledgerhq/device-management-kit";
 import { Just, Nothing } from "purify-ts";
 
+import { GetChallengeCommand } from "@internal/app-binder/command/GetChallengeCommand";
 import { ProvideTokenInformationCommand } from "@internal/app-binder/command/ProvideTokenInformationCommand";
 import { ProvideWeb3CheckCommand } from "@internal/app-binder/command/ProvideWeb3CheckCommand";
 import {
@@ -42,6 +43,12 @@ import {
 
 describe("ProvideEIP712ContextTask", () => {
   const apiMock = makeDeviceActionInternalApiMock();
+  const contextModuleMock = {
+    getContext: vi.fn(),
+    getContexts: vi.fn(),
+    getTypedDataFilters: vi.fn(),
+    getWeb3Checks: vi.fn(),
+  };
 
   const TEST_TYPES = {
     EIP712Domain: {
@@ -134,6 +141,7 @@ describe("ProvideEIP712ContextTask", () => {
       signature:
         "3045022100e3c597d13d28a87a88b0239404c668373cf5063362f2a81d09eed4582941dfe802207669aabb504fd5b95b2734057f6b8bbf51f14a69a5f9bdf658a5952cefbf44d3",
     },
+    trustedNamesAddresses: {},
     tokens: {
       0: "payload-0x7ceb23fd6bc0add59e62ac25578270cff1b9f619",
       255: "payload-0x000000000022d473030f116ddee9f6b43ac78ba3",
@@ -228,7 +236,7 @@ describe("ProvideEIP712ContextTask", () => {
     apiMock.sendCommand.mockResolvedValue(
       CommandResultFactory({ data: undefined }),
     );
-    await new ProvideEIP712ContextTask(apiMock, args).run();
+    await new ProvideEIP712ContextTask(apiMock, contextModuleMock, args).run();
 
     // THEN
     expect(apiMock.sendCommand.mock.calls).toHaveLength(24);
@@ -366,7 +374,7 @@ describe("ProvideEIP712ContextTask", () => {
     apiMock.sendCommand.mockResolvedValue(
       CommandResultFactory({ data: undefined }),
     );
-    await new ProvideEIP712ContextTask(apiMock, args).run();
+    await new ProvideEIP712ContextTask(apiMock, contextModuleMock, args).run();
 
     // THEN
     expect(apiMock.sendCommand.mock.calls).toHaveLength(32);
@@ -536,6 +544,7 @@ describe("ProvideEIP712ContextTask", () => {
         type: "success",
         messageInfo: TEST_CLEAR_SIGN_CONTEXT.messageInfo,
         filters: TEST_CLEAR_SIGN_CONTEXT.filters,
+        trustedNamesAddresses: {},
         tokens: {},
       }),
       domainHash: "0x",
@@ -546,7 +555,7 @@ describe("ProvideEIP712ContextTask", () => {
     apiMock.sendCommand.mockResolvedValue(
       CommandResultFactory({ data: undefined }),
     );
-    await new ProvideEIP712ContextTask(apiMock, args).run();
+    await new ProvideEIP712ContextTask(apiMock, contextModuleMock, args).run();
 
     // THEN
     expect(apiMock.sendCommand).not.toHaveBeenCalledWith(
@@ -591,6 +600,7 @@ describe("ProvideEIP712ContextTask", () => {
         type: "success",
         messageInfo: TEST_CLEAR_SIGN_CONTEXT.messageInfo,
         filters: TEST_CLEAR_SIGN_CONTEXT.filters,
+        trustedNamesAddresses: {},
         tokens: { 255: "payload-0x000000000022d473030f116ddee9f6b43ac78ba3" },
       }),
       domainHash: "0x",
@@ -601,7 +611,7 @@ describe("ProvideEIP712ContextTask", () => {
     apiMock.sendCommand.mockResolvedValue(
       CommandResultFactory({ data: { tokenIndex: 4 } }),
     );
-    await new ProvideEIP712ContextTask(apiMock, args).run();
+    await new ProvideEIP712ContextTask(apiMock, contextModuleMock, args).run();
 
     // THEN
     expect(apiMock.sendCommand).toHaveBeenCalledWith(
@@ -636,6 +646,7 @@ describe("ProvideEIP712ContextTask", () => {
         type: "success",
         messageInfo: TEST_CLEAR_SIGN_CONTEXT.messageInfo,
         filters: TEST_CLEAR_SIGN_CONTEXT.filters,
+        trustedNamesAddresses: {},
         tokens: { 0: "payload-0x7ceb23fd6bc0add59e62ac25578270cff1b9f619" },
       }),
       domainHash: "0x",
@@ -646,7 +657,7 @@ describe("ProvideEIP712ContextTask", () => {
     apiMock.sendCommand.mockResolvedValue(
       CommandResultFactory({ data: { tokenIndex: 4 } }),
     );
-    await new ProvideEIP712ContextTask(apiMock, args).run();
+    await new ProvideEIP712ContextTask(apiMock, contextModuleMock, args).run();
 
     // THEN
     expect(apiMock.sendCommand).toHaveBeenCalledWith(
@@ -666,6 +677,142 @@ describe("ProvideEIP712ContextTask", () => {
         tokenIndex: 0,
         signature:
           "304402201a46e6b4ef89eaf9fcf4945d053bfc5616a826400fd758312fbbe976bafc07ec022025a9b408722baf983ee053f90179c75b0c55bb0668f437d55493e36069bbd5a3",
+      }),
+    );
+  });
+
+  it("Filter with trusted name", async () => {
+    // GIVEN
+    const args: ProvideEIP712ContextTaskArgs = {
+      web3Check: null,
+      types: TEST_TYPES,
+      domain: TEST_DOMAIN_VALUES,
+      message: TEST_MESSAGE_VALUES,
+      clearSignContext: Just({
+        type: "success",
+        messageInfo: TEST_CLEAR_SIGN_CONTEXT.messageInfo,
+        filters: {
+          "details.token": {
+            displayName: "Amount allowance",
+            path: "details.token",
+            signature:
+              "3044022075103b38995e031d1ebbfe38ac6603bec32854b5146a664e49b4cc4f460c1da6022029f4b0fd1f3b7995ffff1627d4b57f27888a2dcc9b3a4e85c37c67571092c733",
+            types: ["contract"],
+            sources: ["local", "ens"],
+            typesAndSourcesPayload: "010203010002",
+            type: "trusted-name",
+          },
+        },
+        trustedNamesAddresses: {
+          "details.token": "0x7ceb23fd6bc0add59e62ac25578270cff1b9f619",
+        },
+        tokens: {},
+      }),
+      domainHash: "0x",
+      messageHash: "0x",
+    };
+
+    // WHEN
+    apiMock.sendCommand.mockResolvedValue(
+      CommandResultFactory({ data: { challenge: "0x42" } }),
+    );
+    contextModuleMock.getContext.mockResolvedValue({
+      type: ClearSignContextType.TRUSTED_NAME,
+      payload: "0x01020304",
+    });
+    await new ProvideEIP712ContextTask(apiMock, contextModuleMock, args).run();
+
+    // THEN
+    expect(apiMock.sendCommand).toHaveBeenCalledWith(new GetChallengeCommand());
+    expect(contextModuleMock.getContext).toHaveBeenCalledWith({
+      type: ClearSignContextType.TRUSTED_NAME,
+      chainId: 137,
+      address: "0x7ceb23fd6bc0add59e62ac25578270cff1b9f619",
+      types: ["contract"],
+      sources: ["local", "ens"],
+      challenge: "0x42",
+    });
+    expect(apiMock.sendCommand).toHaveBeenCalledWith(
+      new SendEIP712FilteringCommand({
+        type: Eip712FilterType.TrustedName,
+        discarded: false,
+        displayName: "Amount allowance",
+        typesAndSourcesPayload: "010203010002",
+        signature:
+          "3044022075103b38995e031d1ebbfe38ac6603bec32854b5146a664e49b4cc4f460c1da6022029f4b0fd1f3b7995ffff1627d4b57f27888a2dcc9b3a4e85c37c67571092c733",
+      }),
+    );
+  });
+
+  it("Filter with trusted name and certificate", async () => {
+    // GIVEN
+    const args: ProvideEIP712ContextTaskArgs = {
+      web3Check: null,
+      types: TEST_TYPES,
+      domain: TEST_DOMAIN_VALUES,
+      message: TEST_MESSAGE_VALUES,
+      clearSignContext: Just({
+        type: "success",
+        messageInfo: TEST_CLEAR_SIGN_CONTEXT.messageInfo,
+        filters: {
+          "details.token": {
+            displayName: "Amount allowance",
+            path: "details.token",
+            signature:
+              "3044022075103b38995e031d1ebbfe38ac6603bec32854b5146a664e49b4cc4f460c1da6022029f4b0fd1f3b7995ffff1627d4b57f27888a2dcc9b3a4e85c37c67571092c733",
+            types: ["contract"],
+            sources: ["local", "ens"],
+            typesAndSourcesPayload: "010203010002",
+            type: "trusted-name",
+          },
+        },
+        trustedNamesAddresses: {
+          "details.token": "0x7ceb23fd6bc0add59e62ac25578270cff1b9f619",
+        },
+        tokens: {},
+      }),
+      domainHash: "0x",
+      messageHash: "0x",
+    };
+
+    // WHEN
+    apiMock.sendCommand.mockResolvedValue(
+      CommandResultFactory({ data: { challenge: "0x42" } }),
+    );
+    contextModuleMock.getContext.mockResolvedValue({
+      type: ClearSignContextType.TRUSTED_NAME,
+      certificate: {
+        keyUsageNumber: 7,
+        payload: new Uint8Array(3).fill(42),
+      },
+      payload: "0x01020304",
+    });
+    await new ProvideEIP712ContextTask(apiMock, contextModuleMock, args).run();
+
+    // THEN
+    expect(apiMock.sendCommand).toHaveBeenCalledWith(new GetChallengeCommand());
+    expect(contextModuleMock.getContext).toHaveBeenCalledWith({
+      type: ClearSignContextType.TRUSTED_NAME,
+      chainId: 137,
+      address: "0x7ceb23fd6bc0add59e62ac25578270cff1b9f619",
+      types: ["contract"],
+      sources: ["local", "ens"],
+      challenge: "0x42",
+    });
+    expect(apiMock.sendCommand).toHaveBeenCalledWith(
+      new LoadCertificateCommand({
+        keyUsage: 7,
+        certificate: new Uint8Array(3).fill(42),
+      }),
+    );
+    expect(apiMock.sendCommand).toHaveBeenCalledWith(
+      new SendEIP712FilteringCommand({
+        type: Eip712FilterType.TrustedName,
+        discarded: false,
+        displayName: "Amount allowance",
+        typesAndSourcesPayload: "010203010002",
+        signature:
+          "3044022075103b38995e031d1ebbfe38ac6603bec32854b5146a664e49b4cc4f460c1da6022029f4b0fd1f3b7995ffff1627d4b57f27888a2dcc9b3a4e85c37c67571092c733",
       }),
     );
   });
@@ -691,7 +838,7 @@ describe("ProvideEIP712ContextTask", () => {
     apiMock.sendCommand.mockResolvedValue(
       CommandResultFactory({ data: undefined }),
     );
-    await new ProvideEIP712ContextTask(apiMock, args).run();
+    await new ProvideEIP712ContextTask(apiMock, contextModuleMock, args).run();
 
     // THEN
     expect(apiMock.sendCommand).toHaveBeenCalledWith(
@@ -727,7 +874,7 @@ describe("ProvideEIP712ContextTask", () => {
     apiMock.sendCommand.mockResolvedValue(
       CommandResultFactory({ data: undefined }),
     );
-    await new ProvideEIP712ContextTask(apiMock, args).run();
+    await new ProvideEIP712ContextTask(apiMock, contextModuleMock, args).run();
 
     // THEN
     expect(apiMock.sendCommand).toHaveBeenCalledWith(
@@ -761,7 +908,11 @@ describe("ProvideEIP712ContextTask", () => {
       }),
     );
     // WHEN
-    const promise = new ProvideEIP712ContextTask(apiMock, args).run();
+    const promise = new ProvideEIP712ContextTask(
+      apiMock,
+      contextModuleMock,
+      args,
+    ).run();
 
     // THEN
     await expect(promise).resolves.toStrictEqual(
@@ -792,7 +943,11 @@ describe("ProvideEIP712ContextTask", () => {
         }),
       );
     // WHEN
-    const promise = new ProvideEIP712ContextTask(apiMock, args).run();
+    const promise = new ProvideEIP712ContextTask(
+      apiMock,
+      contextModuleMock,
+      args,
+    ).run();
 
     // THEN
     await expect(promise).resolves.toStrictEqual(
@@ -834,7 +989,11 @@ describe("ProvideEIP712ContextTask", () => {
         }),
       )
       .mockResolvedValue(CommandResultFactory({ data: undefined }));
-    const promise = new ProvideEIP712ContextTask(apiMock, args).run();
+    const promise = new ProvideEIP712ContextTask(
+      apiMock,
+      contextModuleMock,
+      args,
+    ).run();
 
     // THEN
     await expect(promise).resolves.toStrictEqual(
@@ -878,6 +1037,7 @@ describe("ProvideEIP712ContextTask", () => {
           filtersCount: 2,
           signature: "sig",
         },
+        trustedNamesAddresses: {},
         tokens: {},
         filters: {
           "spenders.[]": {
@@ -899,7 +1059,7 @@ describe("ProvideEIP712ContextTask", () => {
     apiMock.sendCommand.mockResolvedValue(
       CommandResultFactory({ data: undefined }),
     );
-    await new ProvideEIP712ContextTask(apiMock, args).run();
+    await new ProvideEIP712ContextTask(apiMock, contextModuleMock, args).run();
 
     // THEN
     // Activate the filtering
