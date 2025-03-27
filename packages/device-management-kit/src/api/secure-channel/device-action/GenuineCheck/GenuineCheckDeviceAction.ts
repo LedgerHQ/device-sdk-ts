@@ -146,17 +146,14 @@ export class GenuineCheckDeviceAction extends XStateDeviceAction<
             onDone: {
               target: "GoToDashboardCheck",
               actions: assign({
-                _internalState: (_) => {
-                  return _.event.output.caseOf<GenuineCheckStateMachineInternalState>(
-                    {
-                      Right: () => _.context._internalState,
-                      Left: (error) => ({
-                        ..._.context._internalState,
-                        error,
-                      }),
-                    },
-                  );
-                },
+                _internalState: (_) =>
+                  _.event.output.caseOf<GenuineCheckStateMachineInternalState>({
+                    Right: () => _.context._internalState,
+                    Left: (error) => ({
+                      ..._.context._internalState,
+                      error,
+                    }),
+                  }),
               }),
             },
             onError: {
@@ -235,20 +232,17 @@ export class GenuineCheckDeviceAction extends XStateDeviceAction<
             onDone: {
               target: "GetDeviceVersionCheck",
               actions: assign({
-                _internalState: (_) => {
-                  return _.event.output.caseOf<GenuineCheckStateMachineInternalState>(
-                    {
-                      Right: (deviceVersion) => ({
-                        ..._.context._internalState,
-                        deviceVersion,
-                      }),
-                      Left: (error) => ({
-                        ..._.context._internalState,
-                        error,
-                      }),
-                    },
-                  );
-                },
+                _internalState: (_) =>
+                  _.event.output.caseOf<GenuineCheckStateMachineInternalState>({
+                    Right: (deviceVersion) => ({
+                      ..._.context._internalState,
+                      deviceVersion,
+                    }),
+                    Left: (error) => ({
+                      ..._.context._internalState,
+                      error,
+                    }),
+                  }),
               }),
             },
             onError: {
@@ -277,20 +271,17 @@ export class GenuineCheckDeviceAction extends XStateDeviceAction<
             onDone: {
               target: "GetFirmwareVersionCheck",
               actions: assign({
-                _internalState: (_) => {
-                  return _.event.output.caseOf<GenuineCheckStateMachineInternalState>(
-                    {
-                      Right: (firmwareVersion) => ({
-                        ..._.context._internalState,
-                        firmwareVersion,
-                      }),
-                      Left: (error) => ({
-                        ..._.context._internalState,
-                        error,
-                      }),
-                    },
-                  );
-                },
+                _internalState: (_) =>
+                  _.event.output.caseOf<GenuineCheckStateMachineInternalState>({
+                    Right: (firmwareVersion) => ({
+                      ..._.context._internalState,
+                      firmwareVersion,
+                    }),
+                    Left: (error) => ({
+                      ..._.context._internalState,
+                      error,
+                    }),
+                  }),
               }),
             },
             onError: {
@@ -392,7 +383,7 @@ export class GenuineCheckDeviceAction extends XStateDeviceAction<
     });
   }
 
-  private extractDependencies(internalApi: InternalApi): MachineDependencies {
+  extractDependencies(internalApi: InternalApi): MachineDependencies {
     const provider = 1; // TODO: get the provider from user configuration
 
     const getOsVersion = () =>
