@@ -47,6 +47,7 @@ export type DeviceSessionRefresherOptions = {
 type SendApduOptions = {
   isPolling?: boolean;
   triggersDisconnection?: boolean;
+  abortTimeout?: number;
 };
 
 /**
@@ -150,6 +151,7 @@ export class DeviceSession {
     options: SendApduOptions = {
       isPolling: false,
       triggersDisconnection: false,
+      abortTimeout: 0,
     },
   ): Promise<Either<DmkError, ApduResponse>> {
     const release = await this._commandMutex.lock();

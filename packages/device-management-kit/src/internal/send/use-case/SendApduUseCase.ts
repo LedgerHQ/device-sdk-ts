@@ -19,6 +19,10 @@ export type SendApduUseCaseArgs = {
    * Raw APDU to send to the device.
    */
   apdu: Uint8Array;
+  /**
+   * The time, in milliseconds, to wait before aborting an operation.
+   */
+  abortTimeout?: number;
 };
 
 /**
@@ -42,6 +46,7 @@ export class SendApduUseCase {
   async execute({
     sessionId,
     apdu,
+    abortTimeout,
   }: SendApduUseCaseArgs): Promise<ApduResponse> {
     const deviceSessionOrError =
       this._sessionService.getDeviceSessionById(sessionId);
@@ -49,7 +54,7 @@ export class SendApduUseCase {
     return deviceSessionOrError.caseOf({
       // Case device session found
       Right: async (deviceSession) => {
-        const response = await deviceSession.sendApdu(apdu);
+        const response = await deviceSession.sendApdu(apdu, { abortTimeout });
         return response.caseOf({
           // Case APDU sent and response received successfully
           Right: (data) => data,
