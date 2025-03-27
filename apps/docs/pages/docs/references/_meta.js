@@ -1,4 +1,5 @@
 export default {
   signers: "Signers",
-  "ts-doc": "TS Doc",
+  "device-management-kit": "Device Management Kit",
+  "ts-doc": "TS Doc", 
 };
