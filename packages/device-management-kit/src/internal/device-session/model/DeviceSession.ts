@@ -35,6 +35,7 @@ export type SessionConstructorArgs = {
 type SendApduOptions = {
   isPolling?: boolean;
   triggersDisconnection?: boolean;
+  abortTimeout?: number;
 };
 
 /**
@@ -116,12 +117,13 @@ export class DeviceSession {
     options: SendApduOptions = {
       isPolling: false,
       triggersDisconnection: false,
+      abortTimeout: 0,
     },
   ): Promise<Either<DmkError, ApduResponse>> {
     let reenableRefresher: () => void;
     if (!options.isPolling) {
       reenableRefresher = this._refresherService.disableRefresher("sendApdu");
-      await this.waitUntilReady();
+      await this.waitUntilReady(options.abortTimeout);
     }
 
     const sessionState = this._deviceState.getValue();
@@ -225,10 +227,10 @@ export class DeviceSession {
     });
   }
 
-  private async waitUntilReady() {
+  private async waitUntilReady(abortTimeout: number = 0) {
     let deviceStateSub: Subscription;
 
-    await new Promise<void>((resolve) => {
+    const deviceStatusPromise = new Promise<void>((resolve) => {
       deviceStateSub = this._deviceState.subscribe((state) => {
         if (
           [DeviceStatus.LOCKED, DeviceStatus.CONNECTED].includes(
@@ -240,5 +242,17 @@ export class DeviceSession {
         }
       });
     });
+    const waitPromises = [deviceStatusPromise];
+    if (abortTimeout > 0) {
+      waitPromises.push(
+        new Promise<void>((resolve) => {
+          setTimeout(() => {
+            this.updateDeviceStatus(DeviceStatus.CONNECTED);
+            resolve();
+          }, abortTimeout);
+        }),
+      );
+    }
+    await Promise.race(waitPromises);
   }
 }

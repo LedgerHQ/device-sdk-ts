@@ -605,20 +605,36 @@ describe("RNBleTransport", () => {
       () =>
         new Promise((done) => {
           // given
-          const fakeStartScan = vi.fn();
-          const fakeStopScan = vi.fn();
-          const fakeConnectedDevices = vi.fn(() =>
-            Promise.resolve([
-              {
-                readRSSI: () => Promise.resolve({}),
-              },
-            ]),
-          );
+          const startScan = vi.fn((_uuids, _options, listener) => {
+            listener(null, {
+              id: "id",
+              localName: "name",
+              serviceUUIDs: ["ledgerId"],
+              rssi: 42,
+            });
+          });
+          const stopScan = vi.fn();
+          const fakeConnectedDevices = vi.fn().mockResolvedValueOnce([
+            {
+              readRSSI: vi.fn().mockResolvedValueOnce({
+                discoverAllServicesAndCharacteristics: vi
+                  .fn()
+                  .mockResolvedValueOnce({
+                    services: vi.fn().mockResolvedValueOnce({}),
+                    serviceUUIDs: ["ledgerId"],
+                    rssi: 64,
+                    id: "knownDeviceId",
+                    localName: "knownDeviceName",
+                  }),
+              }),
+            },
+          ]);
           const bleManager = {
             connectedDevices: fakeConnectedDevices,
-            startDeviceScan: fakeStartScan,
-            stopDeviceScan: fakeStopScan,
+            startDeviceScan: startScan,
+            stopDeviceScan: stopScan,
             onDeviceDisconnected: vi.fn(),
+            isDeviceConnected: vi.fn(),
           } as unknown as BleManager;
           const transport = new RNBleTransport(
             fakeDataSource as unknown as DeviceModelDataSource,
@@ -631,20 +647,48 @@ describe("RNBleTransport", () => {
           );
 
           // when
-          const sub = transport.listenToAvailableDevices().subscribe();
-          vi.waitFor(() => fakeStartScan.mock.calls.length === 1);
-          vi.waitFor(() => fakeConnectedDevices.mock.calls.length === 1).then(
-            () => {
-              sub.unsubscribe();
-              expect(bleManager.connectedDevices).toHaveBeenCalled();
-              expect(bleManager.startDeviceScan).toHaveBeenCalled();
-              expect(bleManager.stopDeviceScan).toHaveBeenCalled();
-              done(void 0);
+          const sub = transport.listenToAvailableDevices().subscribe({
+            next: (devices) => {
+              // then
+              if (devices.length === 2) {
+                console.log("expect", devices);
+                console.log("to equal", [
+                  {
+                    id: "id",
+                    localName: "name",
+                    deviceModel: fakeDeviceModel,
+                    transport: "RN_BLE",
+                    rssi: 42,
+                  },
+                  {
+                    id: "knownDeviceId",
+                    name: "knownDeviceName",
+                    deviceModel: fakeDeviceModel,
+                    transport: "RN_BLE",
+                    rssi: 64,
+                  },
+                ]);
+                expect(devices).toEqual([
+                  {
+                    id: "id",
+                    localName: "name",
+                    deviceModel: fakeDeviceModel,
+                    transport: "RN_BLE",
+                    rssi: 42,
+                  },
+                  {
+                    id: "knownDeviceId",
+                    name: "knownDeviceName",
+                    deviceModel: fakeDeviceModel,
+                    transport: "RN_BLE",
+                    rssi: 64,
+                  },
+                ]);
+                sub.unsubscribe();
+                done(void 0);
+              }
             },
-          );
-          sub.unsubscribe();
-
-          // then
+          });
         }),
     );
   });
