@@ -41,7 +41,7 @@ export class GenuineCheckDeviceAction extends XStateDeviceAction<
   GenuineCheckDAIntermediateValue,
   GenuineCheckStateMachineInternalState
 > {
-  protected override makeStateMachine(
+  override makeStateMachine(
     internalApi: InternalApi,
   ): DeviceActionStateMachine<
     GenuineCheckDAOutput,

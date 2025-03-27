@@ -7,35 +7,70 @@ import { type FinalFirmware } from "@internal/manager-api/model/Firmware";
 import { type WebSocketConnectionError } from "@internal/secure-channel/model/Errors";
 
 /**
- * Interface representing the Secure Channel Service.
- * Some parameters are placeholders and will be updated when relative HTTP requests are ready.
+ * Interface representing a secure channel service for device management.
  */
 export interface SecureChannelService {
+  /**
+   * Construct a WebSocket connection for genuine check.
+   * @param deviceInfo - Response of the GetOsVersionCommand.
+   * @param finalFirmware - Response of the GetFirmwareVersion HTTP request in manager API.
+   * @returns Either a WebSocketConnectionError or a WebSocket.
+   */
   genuineCheck(
     deviceInfo: GetOsVersionResponse,
     finalFirmware: FinalFirmware,
   ): Either<WebSocketConnectionError, WebSocket>;
+
+  /**
+   * Construct a WebSocket connection for installing an application.
+   * @param deviceInfo - Response of the GetOsVersionCommand.
+   * @param app - The application to be installed, must have perso, firmware, firmwareKey, and hash properties.
+   * @returns Either a WebSocketConnectionError or a WebSocket.
+   */
   installApp(
     deviceInfo: GetOsVersionResponse,
-    app: Application,
+    app: Pick<Application, "perso" | "firmware" | "firmwareKey" | "hash">,
   ): Either<WebSocketConnectionError, WebSocket>;
+
+  /**
+   * Construct a WebSocket connection for listing installed applications.
+   * @param deviceInfo - Response of the GetOsVersionCommand.
+   * @param finalFirmware - Response of the GetFirmwareVersion HTTP request in manager API.
+   * @returns Either a WebSocketConnectionError or a WebSocket.
+   */
   listInstalledApps(
     deviceInfo: GetOsVersionResponse,
     finalFirmware: FinalFirmware,
   ): Either<WebSocketConnectionError, WebSocket>;
+
+  /**
+   * Construct a WebSocket connection for uninstalling an application.
+   * @param deviceInfo - Response of the GetOsVersionCommand.
+   * @param app - The application to be uninstalled, must have perso, delete, deleteKey, and hash properties.
+   * @returns Either a WebSocketConnectionError or a WebSocket.
+   */
   uninstallApp(
     deviceInfo: GetOsVersionResponse,
-    app: Application,
+    app: Pick<Application, "perso" | "delete" | "deleteKey" | "hash">,
   ): Either<WebSocketConnectionError, WebSocket>;
+
+  /**
+   * Construct a WebSocket connection for updating the firmware of the device.
+   * @param deviceInfo - Response of the GetOsVersionCommand.
+   * @param finalFirmware - The final firmware to be updated.
+   * @returns Either a WebSocketConnectionError or a WebSocket.
+   */
   updateFirmware(
     deviceInfo: GetOsVersionResponse,
     finalFirmware: FinalFirmware,
   ): Either<WebSocketConnectionError, WebSocket>;
-  updateFirmware(
-    deviceInfo: GetOsVersionResponse,
-    finalFirmware: FinalFirmware,
-  ): Either<WebSocketConnectionError, WebSocket>;
-  // TODO: Update the parameters
+
+  /**
+   * Construct a WebSocket connection for updating the MCU (Microcontroller Unit) of the device.
+   * @param deviceInfo -  Response of the GetOsVersionCommand.
+   * @param param - Parameters for the MCU update, including the version.
+   * @returns Either a WebSocketConnectionError or a WebSocket.
+   */
   updateMcu(
     deviceInfo: GetOsVersionResponse,
     param: { version: string },

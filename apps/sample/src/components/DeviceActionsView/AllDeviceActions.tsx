@@ -16,6 +16,11 @@ import {
   type GoToDashboardDAIntermediateValue,
   type GoToDashboardDAOutput,
   GoToDashboardDeviceAction,
+  type InstallAppDAError,
+  type InstallAppDAInput,
+  type InstallAppDAIntermediateValue,
+  type InstallAppDAOutput,
+  InstallAppDeviceAction,
   type ListAppsDAError,
   type ListAppsDAInput,
   type ListAppsDAIntermediateValue,
@@ -36,6 +41,11 @@ import {
   type OpenAppDAIntermediateValue,
   type OpenAppDAOutput,
   OpenAppDeviceAction,
+  type UninstallAppDAError,
+  type UninstallAppDAInput,
+  type UninstallAppDAIntermediateValue,
+  type UninstallAppDAOutput,
+  UninstallAppDeviceAction,
 } from "@ledgerhq/device-management-kit";
 
 import { useDmk } from "@/providers/DeviceManagementKitProvider";
@@ -224,6 +234,50 @@ export const AllDeviceActions: React.FC<{ sessionId: string }> = ({
         ListInstalledAppsDAInput,
         ListInstalledAppsDAError,
         ListInstalledAppsDAIntermediateValue
+      >,
+      {
+        title: `Install App ${SECURE_CHANNEL_SIGN}`,
+        description:
+          "Perform all the actions necessary to install an app on the device by name",
+        executeDeviceAction: ({ appName, unlockTimeout }, inspect) => {
+          const deviceAction = new InstallAppDeviceAction({
+            input: { appName, unlockTimeout },
+            inspect,
+          });
+          return dmk.executeDeviceAction({
+            sessionId,
+            deviceAction,
+          });
+        },
+        initialValues: { appName: "", unlockTimeout: UNLOCK_TIMEOUT },
+        deviceModelId,
+      } satisfies DeviceActionProps<
+        InstallAppDAOutput,
+        InstallAppDAInput,
+        InstallAppDAError,
+        InstallAppDAIntermediateValue
+      >,
+      {
+        title: `Uninstall App ${SECURE_CHANNEL_SIGN}`,
+        description:
+          "Perform all the actions necessary to uninstall an app on the device by name",
+        executeDeviceAction: ({ appName, unlockTimeout }, inspect) => {
+          const deviceAction = new UninstallAppDeviceAction({
+            input: { appName, unlockTimeout },
+            inspect,
+          });
+          return dmk.executeDeviceAction({
+            sessionId,
+            deviceAction,
+          });
+        },
+        initialValues: { appName: "", unlockTimeout: UNLOCK_TIMEOUT },
+        deviceModelId,
+      } satisfies DeviceActionProps<
+        UninstallAppDAOutput,
+        UninstallAppDAInput,
+        UninstallAppDAError,
+        UninstallAppDAIntermediateValue
       >,
     ],
     [deviceModelId, dmk, sessionId],
