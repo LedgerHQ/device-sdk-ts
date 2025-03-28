@@ -4,6 +4,7 @@ import { TransportMock } from "@api/transport/model/__mocks__/TransportMock";
 import { DisconnectError } from "@api/transport/model/Errors";
 import { connectedDeviceStubBuilder } from "@api/transport/model/TransportConnectedDevice.stub";
 import type { DmkConfig, Transport } from "@api/types";
+import { DEVICE_SESSION_REFRESHER_DEFAULT_OPTIONS } from "@internal/device-session/data/DeviceSessionRefresherConst";
 import { deviceSessionStubBuilder } from "@internal/device-session/model/DeviceSession.stub";
 import { DeviceSessionNotFound } from "@internal/device-session/model/Errors";
 import { DefaultDeviceSessionService } from "@internal/device-session/service/DefaultDeviceSessionService";
@@ -69,6 +70,7 @@ describe("DisconnectUseCase", () => {
       loggerFactory,
       managerApi,
       secureChannel,
+      DEVICE_SESSION_REFRESHER_DEFAULT_OPTIONS,
     );
     vi.spyOn(sessionService, "getDeviceSessionById").mockImplementation(() =>
       Right(deviceSession),
@@ -120,6 +122,7 @@ describe("DisconnectUseCase", () => {
           loggerFactory,
           managerApi,
           secureChannel,
+          DEVICE_SESSION_REFRESHER_DEFAULT_OPTIONS,
         ),
       ),
     );
