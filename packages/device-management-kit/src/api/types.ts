@@ -119,6 +119,7 @@ export {
   type DeviceConnection,
   type DisconnectHandler,
   type SendApduFnType,
+  type SendApduResult,
 } from "@api/transport/model/DeviceConnection";
 export { type TransportDiscoveredDevice } from "@api/transport/model/TransportDiscoveredDevice";
 export type { HexaString } from "@api/utils/HexaString";
