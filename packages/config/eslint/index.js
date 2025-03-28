@@ -29,9 +29,9 @@ export default [
   // Prettier recommended
   eslintPluginPrettierRecommended,
 
-  // MJS files in scripts folder (have access to ZX globals)
+  // MJS, CJS files have access to ZX globals
   {
-    files: ["**/*.mjs"],
+    files: ["**/*.mjs", "**/*.cjs"],
     languageOptions: {
       globals: {
         ...globals.node,

@@ -4,12 +4,13 @@ export type {
   SignPersonalMessageDAIntermediateValue,
   SignPersonalMessageDAOutput,
 } from "@api/app-binder/SignPersonalMessageDeviceActionTypes";
-export type {
-  SignTransactionDAError,
-  SignTransactionDAInput,
-  SignTransactionDAIntermediateValue,
-  SignTransactionDAOutput,
-  SignTransactionDAState,
+export {
+  type SignTransactionDAError,
+  type SignTransactionDAInput,
+  type SignTransactionDAIntermediateValue,
+  type SignTransactionDAOutput,
+  type SignTransactionDAState,
+  SignTransactionDAStep,
 } from "@api/app-binder/SignTransactionDeviceActionTypes";
 export {
   type SignTypedDataDAError,
@@ -17,6 +18,7 @@ export {
   type SignTypedDataDAIntermediateValue,
   type SignTypedDataDAOutput,
   type SignTypedDataDAState,
+  SignTypedDataDAStateStep,
 } from "@api/app-binder/SignTypedDataDeviceActionTypes";
 export * from "@api/model/Address";
 export * from "@api/model/AddressOptions";

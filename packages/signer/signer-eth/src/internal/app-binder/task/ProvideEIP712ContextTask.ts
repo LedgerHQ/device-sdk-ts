@@ -1,4 +1,5 @@
 import {
+  type ContextModule,
   type TypedDataClearSignContextSuccess,
   type TypedDataFilter,
   type TypedDataTokenIndex,
@@ -6,21 +7,24 @@ import {
 } from "@ledgerhq/context-module";
 import {
   type ClearSignContextSuccess,
-  type ClearSignContextType,
+  ClearSignContextType,
 } from "@ledgerhq/context-module";
 import type {
   CommandResult,
   InternalApi,
 } from "@ledgerhq/device-management-kit";
 import {
+  bufferToHexaString,
   CommandResultFactory,
   InvalidStatusWordError,
   isSuccessCommandResult,
   LoadCertificateCommand,
 } from "@ledgerhq/device-management-kit";
-import { Maybe, Nothing } from "purify-ts";
+import { Just, Maybe, Nothing } from "purify-ts";
 
+import { GetChallengeCommand } from "@internal/app-binder/command/GetChallengeCommand";
 import { ProvideTokenInformationCommand } from "@internal/app-binder/command/ProvideTokenInformationCommand";
+import { ProvideTrustedNameCommand } from "@internal/app-binder/command/ProvideTrustedNameCommand";
 import { ProvideWeb3CheckCommand } from "@internal/app-binder/command/ProvideWeb3CheckCommand";
 import {
   Eip712FilterType,
@@ -33,6 +37,7 @@ import {
 import { StructImplemType } from "@internal/app-binder/command/SendEIP712StructImplemCommand";
 import { type EthErrorCodes } from "@internal/app-binder/command/utils/ethAppErrors";
 import { SendEIP712StructImplemTask } from "@internal/app-binder/task/SendEIP712StructImplemTask";
+import { TypedDataValueField } from "@internal/typed-data/model/Types";
 import {
   type FieldName,
   type FieldType,
@@ -68,10 +73,26 @@ type DeviceAssetIndexes = {
 };
 
 export class ProvideEIP712ContextTask {
+  private chainId: Maybe<number> = Nothing;
+
   constructor(
     private api: InternalApi,
+    private contextModule: ContextModule,
     private args: ProvideEIP712ContextTaskArgs,
-  ) {}
+  ) {
+    for (const domainValue of this.args.domain) {
+      if (
+        domainValue.path === "chainId" &&
+        domainValue.value instanceof TypedDataValueField
+      ) {
+        const val = BigInt(bufferToHexaString(domainValue.value.data));
+        if (val <= Number.MAX_SAFE_INTEGER) {
+          this.chainId = Just(Number(val));
+        }
+        break;
+      }
+    }
+  }
 
   async run(): ProvideEIP712ContextTaskReturnType {
     // Send message simulation first
@@ -174,12 +195,18 @@ export class ProvideEIP712ContextTask {
     for (const value of this.args.message) {
       // 5.1 Provide token descriptors, if any
       // Keep a map of all device indexes for those provided tokens.
-      const maybeError = await this.provideTokenInformation(
+      const maybeTokenError = await this.provideTokenInformation(
         value,
         deviceIndexes,
       );
-      if (maybeError.isJust()) {
-        return maybeError.extract();
+      if (maybeTokenError.isJust()) {
+        return maybeTokenError.extract();
+      }
+
+      // Provide trusted name descriptors, if any
+      const maybeNameError = await this.provideTrustedName(value);
+      if (maybeNameError.isJust()) {
+        return maybeNameError.extract();
       }
 
       // if there's a filter, send it
@@ -298,6 +325,62 @@ export class ProvideEIP712ContextTask {
     return Nothing;
   }
 
+  private async provideTrustedName(
+    value: TypedDataValue,
+  ): Promise<Maybe<CommandResult<AllSuccessTypes, EthErrorCodes>>> {
+    if (this.args.clearSignContext.isJust() && this.chainId.isJust()) {
+      const context = this.args.clearSignContext.extract();
+      const filter = context.filters[value.path];
+      const address = context.trustedNamesAddresses[value.path];
+      if (
+        filter !== undefined &&
+        filter.type === "trusted-name" &&
+        address !== undefined
+      ) {
+        const getChallengeResult = await this.api.sendCommand(
+          new GetChallengeCommand(),
+        );
+        if (!isSuccessCommandResult(getChallengeResult)) {
+          return Just(getChallengeResult);
+        }
+
+        const context = await this.contextModule.getContext({
+          type: ClearSignContextType.TRUSTED_NAME,
+          chainId: this.chainId.extract(),
+          address,
+          challenge: getChallengeResult.data.challenge,
+          types: filter.types,
+          sources: filter.sources,
+        });
+        if (context.type === ClearSignContextType.TRUSTED_NAME) {
+          if (context.certificate) {
+            await this.api.sendCommand(
+              new LoadCertificateCommand({
+                keyUsage: context.certificate.keyUsageNumber,
+                certificate: context.certificate.payload,
+              }),
+            );
+          }
+          const provideNameResult = await new SendPayloadInChunksTask(
+            this.api,
+            {
+              payload: context.payload,
+              commandFactory: (args) =>
+                new ProvideTrustedNameCommand({
+                  data: args.chunkedData,
+                  isFirstChunk: args.isFirstChunk,
+                }),
+            },
+          ).run();
+          if (!isSuccessCommandResult(provideNameResult)) {
+            return Just(provideNameResult);
+          }
+        }
+      }
+    }
+    return Nothing;
+  }
+
   async filterValue(
     value: TypedDataValue,
     deviceIndexes: DeviceAssetIndexes,
@@ -324,6 +407,16 @@ export class ProvideEIP712ContextTask {
     discarded: boolean,
   ): Promise<CommandResult<AllSuccessTypes, EthErrorCodes>> {
     switch (filter.type) {
+      case "trusted-name":
+        return await this.api.sendCommand(
+          new SendEIP712FilteringCommand({
+            type: Eip712FilterType.TrustedName,
+            discarded,
+            displayName: filter.displayName,
+            typesAndSourcesPayload: filter.typesAndSourcesPayload,
+            signature: filter.signature,
+          }),
+        );
       case "datetime":
         return await this.api.sendCommand(
           new SendEIP712FilteringCommand({

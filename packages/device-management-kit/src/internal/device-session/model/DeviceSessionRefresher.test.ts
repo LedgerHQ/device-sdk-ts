@@ -1,217 +1,248 @@
-import { Left, Right } from "purify-ts";
+import { Subject } from "rxjs";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import { type Apdu } from "@api/apdu/model/Apdu";
-import { CommandResultFactory } from "@api/command/model/CommandResult";
-import {
-  GetAppAndVersionCommand,
-  type GetAppAndVersionResponse,
-} from "@api/command/os/GetAppAndVersionCommand";
-import {
-  GetOsVersionCommand,
-  type GetOsVersionResponse,
-} from "@api/command/os/GetOsVersionCommand";
 import { DeviceModelId } from "@api/device/DeviceModel";
-import { DeviceStatus } from "@api/device/DeviceStatus";
-import { type ApduResponse } from "@api/device-session/ApduResponse";
-import { type DeviceSessionState } from "@api/device-session/DeviceSessionState";
-import { type LoggerPublisherService } from "@api/logger-publisher/service/LoggerPublisherService";
-import { DEVICE_SESSION_REFRESH_INTERVAL } from "@internal/device-session/data/DeviceSessionRefresherConst";
-import { DefaultLoggerPublisherService } from "@internal/logger-publisher/service/DefaultLoggerPublisherService";
+import { type TransportConnectedDevice } from "@api/transport/model/TransportConnectedDevice";
+import type { LoggerPublisherService } from "@api/types";
+import {
+  DEVICE_SESSION_REFRESHER_MINIMUM_POLLING_INTERVAL,
+  DEVICE_SESSION_REFRESHER_POLLING_INTERVAL,
+} from "@internal/device-session/data/DeviceSessionRefresherConst";
+import type {
+  DeviceSessionEventDispatcher,
+  NewEvent,
+} from "@internal/device-session/model/DeviceSessionEventDispatcher";
+import { SessionEvents } from "@internal/device-session/model/DeviceSessionEventDispatcher";
 
-import { DeviceSessionRefresher } from "./DeviceSessionRefresher";
+import {
+  DeviceSessionRefresher,
+  type DeviceSessionRefresherOptions,
+} from "./DeviceSessionRefresher";
 
 describe("DeviceSessionRefresher", () => {
-  const mockSendApduFn = vi.fn();
-  const mockUpdateStateFn = vi.fn();
+  let subject: Subject<NewEvent>;
+  let mockSessionEventDispatcher: DeviceSessionEventDispatcher;
+  let mockLogger: LoggerPublisherService & {
+    info: ReturnType<typeof vi.fn>;
+    warn: ReturnType<typeof vi.fn>;
+    error: ReturnType<typeof vi.fn>;
+    debug: ReturnType<typeof vi.fn>;
+    subscribers?: unknown[];
+  };
 
-  let deviceSessionRefresher: DeviceSessionRefresher;
-  let logger: LoggerPublisherService;
+  const stubDefaultDevice = {
+    deviceModel: {
+      id: DeviceModelId.FLEX,
+    },
+  } as TransportConnectedDevice;
+
+  const stubNanoSDevice = {
+    deviceModel: {
+      id: DeviceModelId.NANO_S,
+    },
+  } as TransportConnectedDevice;
+
+  const mockedLoggerModuleFactory = vi.fn(() => mockLogger);
+  let refresher: DeviceSessionRefresher;
 
   beforeEach(() => {
-    vi.clearAllMocks();
     vi.useFakeTimers();
-    vi.spyOn(
-      GetAppAndVersionCommand.prototype,
-      "parseResponse",
-    ).mockReturnValueOnce(
-      CommandResultFactory({
-        data: {
-          name: "testAppName",
-        } as GetAppAndVersionResponse,
-      }),
-    );
-    vi.spyOn(
-      GetOsVersionCommand.prototype,
-      "parseResponse",
-    ).mockReturnValueOnce(
-      CommandResultFactory({
-        data: {} as GetOsVersionResponse,
-      }),
-    );
-    mockSendApduFn.mockResolvedValue(Right({} as ApduResponse));
-    mockUpdateStateFn.mockImplementation(() => undefined);
-    logger = new DefaultLoggerPublisherService(
-      [],
-      "DeviceSessionRefresherTest",
-    );
+    subject = new Subject<NewEvent>();
+    mockSessionEventDispatcher = {
+      listen: () => subject.asObservable(),
+      dispatch: vi.fn(),
+    } as unknown as DeviceSessionEventDispatcher;
+    mockLogger = {
+      info: vi.fn(),
+      warn: vi.fn(),
+      error: vi.fn(),
+      debug: vi.fn(),
+      subscribers: [],
+    };
   });
 
-  describe("With a modern device", () => {
-    beforeEach(() => {
-      const deviceIds = Object.values(DeviceModelId).filter(
-        (id) => id !== DeviceModelId.NANO_S,
-      );
-      deviceSessionRefresher = new DeviceSessionRefresher(
-        {
-          refreshInterval: DEVICE_SESSION_REFRESH_INTERVAL,
-          deviceStatus: DeviceStatus.CONNECTED,
-          sendApduFn: mockSendApduFn,
-          updateStateFn: mockUpdateStateFn,
-          deviceModelId:
-            deviceIds[Math.floor(Math.random() * deviceIds.length)]!,
-        },
-        logger,
-      );
-      deviceSessionRefresher.start();
-    });
+  afterEach(() => {
+    refresher?.destroy();
+    vi.useRealTimers();
+    vi.restoreAllMocks();
+  });
 
-    afterEach(() => {
-      deviceSessionRefresher.stop();
-    });
+  it("should not start refresher if disabled", () => {
+    const options: DeviceSessionRefresherOptions = {
+      isRefresherDisabled: true,
+      pollingInterval: 1000,
+    };
 
-    it("should poll by calling sendApduFn 3 times", () => {
-      vi.advanceTimersByTime(DEVICE_SESSION_REFRESH_INTERVAL * 2);
-      expect(mockSendApduFn).toHaveBeenCalledTimes(3);
-    });
+    refresher = new DeviceSessionRefresher(
+      mockedLoggerModuleFactory,
+      options,
+      mockSessionEventDispatcher,
+      stubDefaultDevice,
+    );
+    refresher.startRefresher();
+    vi.advanceTimersByTime(2000);
 
-    it("should not poll when device is busy", () => {
-      deviceSessionRefresher.setDeviceStatus(DeviceStatus.BUSY);
+    expect(mockSessionEventDispatcher.dispatch).not.toHaveBeenCalled();
+  });
 
-      vi.advanceTimersByTime(DEVICE_SESSION_REFRESH_INTERVAL);
+  it("should warn and use minimum polling interval for default device when provided interval is too low", () => {
+    const lowInterval = DEVICE_SESSION_REFRESHER_MINIMUM_POLLING_INTERVAL - 100;
+    const options: DeviceSessionRefresherOptions = {
+      isRefresherDisabled: false,
+      pollingInterval: lowInterval,
+    };
 
-      expect(mockSendApduFn).not.toHaveBeenCalled();
-    });
+    refresher = new DeviceSessionRefresher(
+      mockedLoggerModuleFactory,
+      options,
+      mockSessionEventDispatcher,
+      stubDefaultDevice,
+    );
+    refresher.startRefresher();
 
-    it("should not poll when device is disconnected", () => {
-      deviceSessionRefresher.setDeviceStatus(DeviceStatus.NOT_CONNECTED);
+    const expectedMessage = `Polling interval of ${lowInterval} is too low, setting to minimum as ${DEVICE_SESSION_REFRESHER_MINIMUM_POLLING_INTERVAL}`;
+    expect(mockLogger.warn).toHaveBeenCalledWith(expectedMessage);
+  });
 
-      vi.advanceTimersByTime(DEVICE_SESSION_REFRESH_INTERVAL);
+  it("should warn and use minimum polling interval for NANO_S device when provided interval is too low", () => {
+    const defaultNanoPollingInterval =
+      DEVICE_SESSION_REFRESHER_POLLING_INTERVAL * 2;
+    const lowInterval = defaultNanoPollingInterval - 100;
+    const options: DeviceSessionRefresherOptions = {
+      isRefresherDisabled: false,
+      pollingInterval: lowInterval,
+    };
 
-      expect(mockSendApduFn).not.toHaveBeenCalled();
-    });
+    refresher = new DeviceSessionRefresher(
+      mockedLoggerModuleFactory,
+      options,
+      mockSessionEventDispatcher,
+      stubNanoSDevice,
+    );
+    refresher.startRefresher();
 
-    it("should update device session state by calling updateStateFn", async () => {
-      vi.advanceTimersByTime(DEVICE_SESSION_REFRESH_INTERVAL);
+    const expectedMessage = `Polling interval of ${lowInterval} is too low, setting to minimum as ${defaultNanoPollingInterval}`;
+    expect(mockLogger.warn).toHaveBeenCalledWith(expectedMessage);
+  });
 
-      await Promise.resolve();
-      expect(mockSendApduFn).toHaveBeenCalled();
-      await Promise.resolve();
-      expect(mockUpdateStateFn).toHaveBeenCalled();
-    });
+  it("should not warn when provided polling interval is valid for default device", () => {
+    const validInterval =
+      DEVICE_SESSION_REFRESHER_MINIMUM_POLLING_INTERVAL + 100;
+    const options: DeviceSessionRefresherOptions = {
+      isRefresherDisabled: false,
+      pollingInterval: validInterval,
+    };
 
-    it("should not update device session state with failed polling response", async () => {
-      mockSendApduFn.mockResolvedValue(Left("error"));
-      vi.advanceTimersByTime(DEVICE_SESSION_REFRESH_INTERVAL);
+    refresher = new DeviceSessionRefresher(
+      mockedLoggerModuleFactory,
+      options,
+      mockSessionEventDispatcher,
+      stubDefaultDevice,
+    );
+    refresher.startRefresher();
 
-      await Promise.resolve();
-      expect(mockSendApduFn).toHaveBeenCalled();
-      await Promise.resolve();
-      expect(mockUpdateStateFn).not.toHaveBeenCalled();
-    });
+    expect(mockLogger.warn).not.toHaveBeenCalled();
+  });
 
-    it("should stop the refresher when device is disconnected", () => {
-      const spy = vi.spyOn(deviceSessionRefresher, "stop");
-      deviceSessionRefresher.setDeviceStatus(DeviceStatus.NOT_CONNECTED);
-      expect(spy).toHaveBeenCalledTimes(1);
-    });
+  it("should dispatch refresh event on timer ticks", () => {
+    const validInterval =
+      DEVICE_SESSION_REFRESHER_MINIMUM_POLLING_INTERVAL + 100;
+    const options: DeviceSessionRefresherOptions = {
+      isRefresherDisabled: false,
+      pollingInterval: validInterval,
+    };
 
-    it("should not throw error if stop is called on a stopped refresher", () => {
-      deviceSessionRefresher.stop();
-      expect(() => deviceSessionRefresher.stop()).not.toThrow();
-    });
+    refresher = new DeviceSessionRefresher(
+      mockedLoggerModuleFactory,
+      options,
+      mockSessionEventDispatcher,
+      stubDefaultDevice,
+    );
+    refresher.startRefresher();
 
-    it("should not throw error if start is called on a started refresher", () => {
-      deviceSessionRefresher.start();
-      expect(() => deviceSessionRefresher.start()).not.toThrow();
+    const timerInterval = validInterval * 2;
+
+    vi.advanceTimersByTime(timerInterval * 3);
+
+    expect(
+      (mockSessionEventDispatcher.dispatch as ReturnType<typeof vi.fn>).mock
+        .calls.length,
+    ).toBe(4);
+    expect(
+      (mockSessionEventDispatcher.dispatch as ReturnType<typeof vi.fn>).mock
+        .calls[0]![0],
+    ).toEqual({
+      eventName: SessionEvents.REFRESH_NEEDED,
     });
   });
 
-  describe("With a NanoS device", () => {
-    afterEach(() => {
-      deviceSessionRefresher.stop();
-    });
+  it("should stop refresher", () => {
+    const options: DeviceSessionRefresherOptions = {
+      isRefresherDisabled: false,
+      pollingInterval: 1000,
+    };
+    refresher = new DeviceSessionRefresher(
+      mockedLoggerModuleFactory,
+      options,
+      mockSessionEventDispatcher,
+      stubDefaultDevice,
+    );
+    refresher.startRefresher();
+    (
+      mockSessionEventDispatcher.dispatch as ReturnType<typeof vi.fn>
+    ).mockClear();
 
-    it("should call sendApduFn 3 times and update state 2 time for a single interval", async () => {
-      deviceSessionRefresher = new DeviceSessionRefresher(
-        {
-          refreshInterval: DEVICE_SESSION_REFRESH_INTERVAL,
-          deviceStatus: DeviceStatus.CONNECTED,
-          sendApduFn: mockSendApduFn,
-          updateStateFn: mockUpdateStateFn,
-          deviceModelId: DeviceModelId.NANO_S,
-        },
-        logger,
-      );
-      deviceSessionRefresher.start();
-      vi.advanceTimersByTime(DEVICE_SESSION_REFRESH_INTERVAL * 2 + 100);
+    refresher.stopRefresher();
+    vi.advanceTimersByTime(2000);
 
-      await Promise.resolve();
-      expect(mockSendApduFn).toHaveBeenNthCalledWith(
-        1,
-        new GetAppAndVersionCommand().getApdu().getRawApdu(),
-      );
-      await Promise.resolve();
-      expect(mockSendApduFn).toHaveBeenLastCalledWith(
-        new GetOsVersionCommand().getApdu().getRawApdu(),
-      );
-      await Promise.resolve();
-      expect(mockSendApduFn).toHaveBeenCalledTimes(3);
-      await Promise.resolve();
-      expect(mockUpdateStateFn).toHaveBeenCalledTimes(2);
-    });
+    expect(mockSessionEventDispatcher.dispatch).not.toHaveBeenCalled();
+    expect(mockLogger.info).toHaveBeenCalledWith("Refresher stopped.");
+  });
 
-    it("should set device locked when get os version times out", async () => {
-      mockSendApduFn.mockImplementation((apdu: Apdu) => {
-        if (
-          apdu.toString() ===
-          new GetOsVersionCommand().getApdu().getRawApdu().toString()
-        ) {
-          return new Promise((resolve) =>
-            setTimeout(
-              () => resolve(Left("timeout")),
-              DEVICE_SESSION_REFRESH_INTERVAL * 10,
-            ),
-          );
-        }
-        return Promise.resolve(Right({}));
-      });
-      mockUpdateStateFn.mockImplementation(
-        (getState: () => DeviceSessionState) => {
-          deviceSessionRefresher.setDeviceStatus(getState().deviceStatus);
-        },
-      );
-      deviceSessionRefresher = new DeviceSessionRefresher(
-        {
-          refreshInterval: DEVICE_SESSION_REFRESH_INTERVAL,
-          deviceStatus: DeviceStatus.CONNECTED,
-          sendApduFn: mockSendApduFn,
-          updateStateFn: mockUpdateStateFn,
-          deviceModelId: DeviceModelId.NANO_S,
-        },
-        logger,
-      );
-      deviceSessionRefresher.start();
-      vi.spyOn(deviceSessionRefresher, "setDeviceStatus");
-      vi.advanceTimersByTime(DEVICE_SESSION_REFRESH_INTERVAL * 5 + 100);
-      await Promise.resolve();
-      expect(mockSendApduFn).toHaveBeenNthCalledWith(
-        1,
-        new GetAppAndVersionCommand().getApdu().getRawApdu(),
-      );
-      await Promise.resolve();
-      expect(deviceSessionRefresher.setDeviceStatus).toHaveBeenCalledWith(
-        DeviceStatus.LOCKED,
-      );
-    });
+  it("should restart refresher", () => {
+    const options: DeviceSessionRefresherOptions = {
+      isRefresherDisabled: false,
+      pollingInterval: 1000,
+    };
+    refresher = new DeviceSessionRefresher(
+      mockedLoggerModuleFactory,
+      options,
+      mockSessionEventDispatcher,
+      stubDefaultDevice,
+    );
+    refresher.startRefresher();
+    (
+      mockSessionEventDispatcher.dispatch as ReturnType<typeof vi.fn>
+    ).mockClear();
+    vi.clearAllTimers();
+
+    refresher.restartRefresher();
+    expect(mockLogger.info).toHaveBeenCalledWith("Refresher stopped.");
+    expect(mockLogger.info).toHaveBeenCalledWith("Refresher restarted.");
+
+    vi.advanceTimersByTime(2000);
+    expect(
+      (mockSessionEventDispatcher.dispatch as ReturnType<typeof vi.fn>).mock
+        .calls.length,
+    ).toBeGreaterThan(0);
+  });
+
+  it("should destroy refresher", () => {
+    const options: DeviceSessionRefresherOptions = {
+      isRefresherDisabled: false,
+      pollingInterval: 1000,
+    };
+    refresher = new DeviceSessionRefresher(
+      mockedLoggerModuleFactory,
+      options,
+      mockSessionEventDispatcher,
+      stubDefaultDevice,
+    );
+    refresher.startRefresher();
+
+    refresher.destroy();
+    vi.advanceTimersByTime(2000);
+
+    expect(mockSessionEventDispatcher.dispatch).not.toHaveBeenCalled();
   });
 });

@@ -1,5 +1,5 @@
-import { type Either, Left } from "purify-ts";
-import { BehaviorSubject, type Subscription } from "rxjs";
+import { type Either } from "purify-ts";
+import { BehaviorSubject, type Observable } from "rxjs";
 import { v4 as uuidv4 } from "uuid";
 
 import { type Command } from "@api/command/Command";
@@ -17,19 +17,31 @@ import {
   DeviceSessionStateType,
 } from "@api/device-session/DeviceSessionState";
 import { type DeviceSessionId } from "@api/device-session/types";
-import { DeviceBusyError, type DmkError } from "@api/Error";
+import { type DmkError } from "@api/Error";
 import { type LoggerPublisherService } from "@api/logger-publisher/service/LoggerPublisherService";
 import { type TransportConnectedDevice } from "@api/transport/model/TransportConnectedDevice";
-import { DEVICE_SESSION_REFRESH_INTERVAL } from "@internal/device-session/data/DeviceSessionRefresherConst";
+import { DEVICE_SESSION_REFRESHER_DEFAULT_OPTIONS } from "@internal/device-session/data/DeviceSessionRefresherConst";
+import { MutexService } from "@internal/device-session/service/MutexService";
 import { RefresherService } from "@internal/device-session/service/RefresherService";
 import { type ManagerApiService } from "@internal/manager-api/service/ManagerApiService";
 import { type SecureChannelService } from "@internal/secure-channel/service/SecureChannelService";
 
+import { DevicePinger } from "./DevicePinger";
+import {
+  DeviceSessionEventDispatcher,
+  SessionEvents,
+} from "./DeviceSessionEventDispatcher";
 import { DeviceSessionRefresher } from "./DeviceSessionRefresher";
+import { DeviceSessionStateHandler } from "./DeviceSessionStateHandler";
 
 export type SessionConstructorArgs = {
   connectedDevice: TransportConnectedDevice;
   id?: DeviceSessionId;
+};
+
+export type DeviceSessionRefresherOptions = {
+  isRefresherDisabled: boolean;
+  pollingInterval?: number;
 };
 
 type SendApduOptions = {
@@ -44,71 +56,93 @@ export class DeviceSession {
   private readonly _id: DeviceSessionId;
   private readonly _connectedDevice: TransportConnectedDevice;
   private readonly _deviceState: BehaviorSubject<DeviceSessionState>;
-  private readonly _refresher: DeviceSessionRefresher;
-  private readonly _refresherService: RefresherService;
   private readonly _managerApiService: ManagerApiService;
   private readonly _secureChannelService: SecureChannelService;
-  private readonly _readyPromise: Promise<void>;
-  private _resolveReady!: () => void;
+  private readonly _logger: LoggerPublisherService;
+  private readonly _refresherOptions: DeviceSessionRefresherOptions;
+  private _pinger: DevicePinger;
+  private _deviceSessionRefresher: DeviceSessionRefresher;
+  private readonly _refresherService: RefresherService;
+  private _commandMutex = new MutexService();
+  private _sessionEventDispatcher = new DeviceSessionEventDispatcher();
 
   constructor(
     { connectedDevice, id = uuidv4() }: SessionConstructorArgs,
     loggerModuleFactory: (tag: string) => LoggerPublisherService,
     managerApiService: ManagerApiService,
     secureChannelService: SecureChannelService,
+    deviceSessionRefresherOptions: DeviceSessionRefresherOptions | undefined,
   ) {
     this._id = id;
     this._connectedDevice = connectedDevice;
+    this._logger = loggerModuleFactory("device-session");
+    this._managerApiService = managerApiService;
+    this._secureChannelService = secureChannelService;
+    this._refresherOptions = {
+      ...DEVICE_SESSION_REFRESHER_DEFAULT_OPTIONS,
+      ...deviceSessionRefresherOptions,
+    };
     this._deviceState = new BehaviorSubject<DeviceSessionState>({
       sessionStateType: DeviceSessionStateType.Connected,
       deviceStatus: DeviceStatus.CONNECTED,
       deviceModelId: this._connectedDevice.deviceModel.id,
     });
-    this._refresher = new DeviceSessionRefresher(
-      {
-        refreshInterval: DEVICE_SESSION_REFRESH_INTERVAL,
-        deviceStatus: DeviceStatus.CONNECTED,
-        deviceModelId: this._connectedDevice.deviceModel.id,
-        sendApduFn: (rawApdu: Uint8Array) =>
-          this.sendApdu(rawApdu, {
-            isPolling: true,
-            triggersDisconnection: false,
-          }),
-        updateStateFn: (callback) => {
-          const state = this._deviceState.getValue();
-          this.setDeviceSessionState(callback(state));
-        },
-      },
-      loggerModuleFactory("device-session-refresher"),
+
+    this._pinger = new DevicePinger(
+      loggerModuleFactory,
+      connectedDevice,
+      this._sessionEventDispatcher,
+      (command) => this.sendCommand(command),
     );
-    this._refresherService = new RefresherService(this._refresher);
-    this._managerApiService = managerApiService;
-    this._secureChannelService = secureChannelService;
-    this._readyPromise = new Promise<void>((resolve) => {
-      this._resolveReady = resolve;
+    this._deviceSessionRefresher = new DeviceSessionRefresher(
+      loggerModuleFactory,
+      this._refresherOptions,
+      this._sessionEventDispatcher,
+      this._connectedDevice,
+    );
+    new DeviceSessionStateHandler(
+      loggerModuleFactory,
+      this._sessionEventDispatcher,
+      this._connectedDevice,
+      this._deviceState,
+      (state) => this.setDeviceSessionState(state),
+    );
+
+    this._refresherService = new RefresherService(loggerModuleFactory, {
+      start: () => this._deviceSessionRefresher.restartRefresher(),
+      stop: () => this._deviceSessionRefresher.stopRefresher(),
     });
-    this._refresher.start();
   }
 
-  public async waitIsReady() {
-    await this._readyPromise;
+  public async initialiseSession(): Promise<void> {
+    try {
+      await this._pinger.ping();
+    } catch (error) {
+      this._logger.error("Error while initialising session", {
+        data: { error },
+      });
+      throw error;
+    } finally {
+      if (!this._refresherOptions.isRefresherDisabled) {
+        this._deviceSessionRefresher.startRefresher();
+      }
+    }
   }
 
-  public get id() {
+  public get id(): DeviceSessionId {
     return this._id;
   }
 
-  public get connectedDevice() {
+  public get connectedDevice(): TransportConnectedDevice {
     return this._connectedDevice;
   }
 
-  public get state() {
+  public get state(): Observable<DeviceSessionState> {
     return this._deviceState.asObservable();
   }
 
-  public setDeviceSessionState(state: DeviceSessionState) {
+  public setDeviceSessionState(state: DeviceSessionState): void {
     this._deviceState.next(state);
-    this._resolveReady();
   }
 
   public async sendApdu(
@@ -118,49 +152,45 @@ export class DeviceSession {
       triggersDisconnection: false,
     },
   ): Promise<Either<DmkError, ApduResponse>> {
-    let reenableRefresher: () => void;
-    if (!options.isPolling) {
-      reenableRefresher = this._refresherService.disableRefresher("sendApdu");
-      await this.waitUntilReady();
-    }
+    const release = await this._commandMutex.lock();
 
-    const sessionState = this._deviceState.getValue();
-    if (sessionState.deviceStatus === DeviceStatus.BUSY) {
-      return Left(new DeviceBusyError());
-    }
-
-    this.updateDeviceStatus(DeviceStatus.BUSY);
-
-    const errorOrResponse = await this._connectedDevice.sendApdu(
-      rawApdu,
-      options.triggersDisconnection,
-    );
-
-    return errorOrResponse
-      .ifRight((response: ApduResponse) => {
-        if (CommandUtils.isLockedDeviceResponse(response)) {
-          this.updateDeviceStatus(DeviceStatus.LOCKED);
-        } else {
-          this.updateDeviceStatus(DeviceStatus.CONNECTED);
-        }
-
-        if (!options.isPolling && reenableRefresher) {
-          reenableRefresher();
-        }
-      })
-      .ifLeft(() => {
-        this.updateDeviceStatus(DeviceStatus.CONNECTED);
-
-        if (!options.isPolling && reenableRefresher) {
-          reenableRefresher();
-        }
+    try {
+      this._sessionEventDispatcher.dispatch({
+        eventName: SessionEvents.DEVICE_STATE_UPDATE_BUSY,
       });
+      const result = await this._connectedDevice.sendApdu(
+        rawApdu,
+        options.triggersDisconnection,
+      );
+
+      result
+        .ifRight((response: ApduResponse) => {
+          if (CommandUtils.isLockedDeviceResponse(response)) {
+            this._sessionEventDispatcher.dispatch({
+              eventName: SessionEvents.DEVICE_STATE_UPDATE_LOCKED,
+            });
+          } else {
+            this._sessionEventDispatcher.dispatch({
+              eventName: SessionEvents.DEVICE_STATE_UPDATE_CONNECTED,
+            });
+          }
+        })
+        .ifLeft(() => {
+          this._sessionEventDispatcher.dispatch({
+            eventName: SessionEvents.DEVICE_STATE_UPDATE_CONNECTED,
+          });
+        });
+      return result;
+    } finally {
+      release();
+    }
   }
 
   public async sendCommand<Response, Args, ErrorStatusCodes>(
     command: Command<Response, Args, ErrorStatusCodes>,
   ): Promise<CommandResult<Response, ErrorStatusCodes>> {
     const apdu = command.getApdu();
+
     const response = await this.sendApdu(apdu.getRawApdu(), {
       isPolling: false,
       triggersDisconnection: command.triggersDisconnection ?? false,
@@ -178,11 +208,11 @@ export class DeviceSession {
   public executeDeviceAction<
     Output,
     Input,
-    Error extends DmkError,
+    E extends DmkError,
     IntermediateValue extends DeviceActionIntermediateValue,
   >(
-    deviceAction: DeviceAction<Output, Input, Error, IntermediateValue>,
-  ): ExecuteDeviceActionReturnType<Output, Error, IntermediateValue> {
+    deviceAction: DeviceAction<Output, Input, E, IntermediateValue>,
+  ): ExecuteDeviceActionReturnType<Output, E, IntermediateValue> {
     const { observable, cancel } = deviceAction._execute({
       sendApdu: async (apdu: Uint8Array) => this.sendApdu(apdu),
       sendCommand: async <Response, ErrorStatusCodes, Args>(
@@ -199,46 +229,21 @@ export class DeviceSession {
       getManagerApiService: () => this._managerApiService,
       getSecureChannelService: () => this._secureChannelService,
     });
-
-    return {
-      observable,
-      cancel,
-    };
+    return { observable, cancel };
   }
 
-  public close() {
-    this.updateDeviceStatus(DeviceStatus.NOT_CONNECTED);
+  public close(): void {
+    this._updateDeviceStatus(DeviceStatus.NOT_CONNECTED);
     this._deviceState.complete();
-    this._refresher.stop();
+    this._deviceSessionRefresher.stopRefresher();
   }
 
   public disableRefresher(id: string): () => void {
     return this._refresherService.disableRefresher(id);
   }
 
-  private updateDeviceStatus(deviceStatus: DeviceStatus) {
-    const sessionState = this._deviceState.getValue();
-    this._refresher.setDeviceStatus(deviceStatus);
-    this._deviceState.next({
-      ...sessionState,
-      deviceStatus,
-    });
-  }
-
-  private async waitUntilReady() {
-    let deviceStateSub: Subscription;
-
-    await new Promise<void>((resolve) => {
-      deviceStateSub = this._deviceState.subscribe((state) => {
-        if (
-          [DeviceStatus.LOCKED, DeviceStatus.CONNECTED].includes(
-            state.deviceStatus,
-          )
-        ) {
-          deviceStateSub?.unsubscribe();
-          resolve();
-        }
-      });
-    });
+  private _updateDeviceStatus(deviceStatus: DeviceStatus): void {
+    const state = this._deviceState.getValue();
+    this._deviceState.next({ ...state, deviceStatus });
   }
 }

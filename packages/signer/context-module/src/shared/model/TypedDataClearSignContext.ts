@@ -1,3 +1,5 @@
+import type { HexaString } from "@ledgerhq/device-management-kit";
+
 // The general informations for a typed message
 export type TypedDataMessageInfo = {
   displayName: string;
@@ -13,6 +15,22 @@ export const VERIFYING_CONTRACT_TOKEN_INDEX = 255;
 
 // Typed message filters, to select fields to display, and provide formatting informations
 export type TypedDataFilterPath = string;
+export type TypedDataFilterWithToken = {
+  type: "amount" | "token";
+  displayName: string;
+  tokenIndex: TypedDataTokenIndex;
+  path: TypedDataFilterPath;
+  signature: string;
+};
+export type TypedDataFilterWithTrustedName = {
+  type: "trusted-name";
+  displayName: string;
+  types: string[];
+  sources: string[];
+  typesAndSourcesPayload: string;
+  path: TypedDataFilterPath;
+  signature: string;
+};
 export type TypedDataFilter =
   | {
       type: "datetime" | "raw";
@@ -20,19 +38,15 @@ export type TypedDataFilter =
       path: TypedDataFilterPath;
       signature: string;
     }
-  | {
-      type: "amount" | "token";
-      displayName: string;
-      tokenIndex: TypedDataTokenIndex;
-      path: TypedDataFilterPath;
-      signature: string;
-    };
+  | TypedDataFilterWithToken
+  | TypedDataFilterWithTrustedName;
 
 // Clear signing context for a typed message
 export type TypedDataClearSignContextSuccess = {
   type: "success";
   messageInfo: TypedDataMessageInfo;
   filters: Record<TypedDataFilterPath, TypedDataFilter>;
+  trustedNamesAddresses: Record<TypedDataFilterPath, HexaString>;
   tokens: Record<TypedDataTokenIndex, TypedDataToken>;
 };
 export type TypedDataClearSignContextError = {

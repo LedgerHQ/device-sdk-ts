@@ -21,6 +21,7 @@ import {
   type SignTypedDataDAIntermediateValue,
   type SignTypedDataDAInternalState,
   type SignTypedDataDAOutput,
+  SignTypedDataDAStateStep,
 } from "@api/app-binder/SignTypedDataDeviceActionTypes";
 import { type Signature } from "@api/model/Signature";
 import { type TypedData } from "@api/model/TypedData";
@@ -59,6 +60,7 @@ export type MachineDependencies = {
   }) => Promise<ProvideEIP712ContextTaskArgs>;
   readonly provideContext: (arg0: {
     input: {
+      contextModule: ContextModule;
       taskArgs: ProvideEIP712ContextTaskArgs;
     };
   }) => ProvideEIP712ContextTaskReturnType;
@@ -157,6 +159,7 @@ export class SignTypedDataDeviceAction extends XStateDeviceAction<
           input,
           intermediateValue: {
             requiredUserInteraction: UserInteractionRequired.None,
+            step: SignTypedDataDAStateStep.OPEN_APP,
           },
           _internalState: {
             error: null,
@@ -172,6 +175,7 @@ export class SignTypedDataDeviceAction extends XStateDeviceAction<
           exit: assign({
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
+              step: SignTypedDataDAStateStep.OPEN_APP,
             },
           }),
           invoke: {
@@ -183,8 +187,10 @@ export class SignTypedDataDeviceAction extends XStateDeviceAction<
             src: "openAppStateMachine",
             onSnapshot: {
               actions: assign({
-                intermediateValue: (_) =>
-                  _.event.snapshot.context.intermediateValue,
+                intermediateValue: (_) => ({
+                  ..._.event.snapshot.context.intermediateValue,
+                  step: SignTypedDataDAStateStep.OPEN_APP,
+                }),
               }),
             },
             onDone: {
@@ -217,6 +223,12 @@ export class SignTypedDataDeviceAction extends XStateDeviceAction<
           ],
         },
         GetAppConfig: {
+          entry: assign({
+            intermediateValue: {
+              requiredUserInteraction: UserInteractionRequired.None,
+              step: SignTypedDataDAStateStep.GET_APP_CONFIG,
+            },
+          }),
           invoke: {
             id: "getAppConfig",
             src: "getAppConfig",
@@ -259,11 +271,13 @@ export class SignTypedDataDeviceAction extends XStateDeviceAction<
           entry: assign({
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.Web3ChecksOptIn,
+              step: SignTypedDataDAStateStep.WEB3_CHECKS_OPT_IN,
             },
           }),
           exit: assign({
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
+              step: SignTypedDataDAStateStep.WEB3_CHECKS_OPT_IN,
             },
           }),
           invoke: {
@@ -293,6 +307,12 @@ export class SignTypedDataDeviceAction extends XStateDeviceAction<
           },
         },
         BuildContext: {
+          entry: assign({
+            intermediateValue: {
+              requiredUserInteraction: UserInteractionRequired.None,
+              step: SignTypedDataDAStateStep.BUILD_CONTEXT,
+            },
+          }),
           invoke: {
             id: "buildContext",
             src: "buildContext",
@@ -324,17 +344,20 @@ export class SignTypedDataDeviceAction extends XStateDeviceAction<
           entry: assign({
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.SignTypedData,
+              step: SignTypedDataDAStateStep.PROVIDE_CONTEXT,
             },
           }),
           exit: assign({
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
+              step: SignTypedDataDAStateStep.PROVIDE_CONTEXT,
             },
           }),
           invoke: {
             id: "provideContext",
             src: "provideContext",
             input: ({ context }) => ({
+              contextModule: context.input.contextModule,
               taskArgs: context._internalState.typedDataContext!,
             }),
             onDone: {
@@ -368,11 +391,13 @@ export class SignTypedDataDeviceAction extends XStateDeviceAction<
           entry: assign({
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.SignTypedData,
+              step: SignTypedDataDAStateStep.SIGN_TYPED_DATA,
             },
           }),
           exit: assign({
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
+              step: SignTypedDataDAStateStep.SIGN_TYPED_DATA,
             },
           }),
           invoke: {
@@ -410,11 +435,13 @@ export class SignTypedDataDeviceAction extends XStateDeviceAction<
           entry: assign({
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.SignTypedData,
+              step: SignTypedDataDAStateStep.SIGN_TYPED_DATA_LEGACY,
             },
           }),
           exit: assign({
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
+              step: SignTypedDataDAStateStep.SIGN_TYPED_DATA_LEGACY,
             },
           }),
           invoke: {
@@ -498,9 +525,15 @@ export class SignTypedDataDeviceAction extends XStateDeviceAction<
 
     const provideContext = async (arg0: {
       input: {
+        contextModule: ContextModule;
         taskArgs: ProvideEIP712ContextTaskArgs;
       };
-    }) => new ProvideEIP712ContextTask(internalApi, arg0.input.taskArgs).run();
+    }) =>
+      new ProvideEIP712ContextTask(
+        internalApi,
+        arg0.input.contextModule,
+        arg0.input.taskArgs,
+      ).run();
 
     const signTypedData = async (arg0: {
       input: {

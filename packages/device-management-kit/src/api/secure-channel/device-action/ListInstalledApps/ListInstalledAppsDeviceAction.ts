@@ -21,11 +21,11 @@ import {
 } from "@api/device-session/DeviceSessionState";
 import { ConnectToSecureChannelTask } from "@api/secure-channel/task/ConnectToSecureChannelTask";
 import { SecureChannelEventType } from "@api/secure-channel/task/types";
+import { type Input } from "@api/secure-channel/types";
 import { type DeviceVersion } from "@internal/manager-api/model/Device";
 import { type FinalFirmware } from "@internal/manager-api/model/Firmware";
 
 import {
-  Input,
   installedAppResultGuard,
   type ListInstalledAppsDAError,
   type ListInstalledAppsDAInput,
@@ -42,7 +42,7 @@ export class ListInstalledAppsDeviceAction extends XStateDeviceAction<
   ListInstalledAppsDAIntermediateValue,
   ListInstalledAppsStateMachineInternalState
 > {
-  protected override makeStateMachine(
+  override makeStateMachine(
     internalApi: InternalApi,
   ): DeviceActionStateMachine<
     ListInstalledAppsDAOutput,
@@ -147,8 +147,8 @@ export class ListInstalledAppsDeviceAction extends XStateDeviceAction<
             onDone: {
               target: "GoToDashboardCheck",
               actions: assign({
-                _internalState: (_) => {
-                  return _.event.output.caseOf<ListInstalledAppsStateMachineInternalState>(
+                _internalState: (_) =>
+                  _.event.output.caseOf<ListInstalledAppsStateMachineInternalState>(
                     {
                       Right: () => _.context._internalState,
                       Left: (error) => ({
@@ -156,8 +156,7 @@ export class ListInstalledAppsDeviceAction extends XStateDeviceAction<
                         error,
                       }),
                     },
-                  );
-                },
+                  ),
               }),
             },
             onError: {
@@ -236,8 +235,8 @@ export class ListInstalledAppsDeviceAction extends XStateDeviceAction<
             onDone: {
               target: "GetDeviceVersionCheck",
               actions: assign({
-                _internalState: (_) => {
-                  return _.event.output.caseOf<ListInstalledAppsStateMachineInternalState>(
+                _internalState: (_) =>
+                  _.event.output.caseOf<ListInstalledAppsStateMachineInternalState>(
                     {
                       Right: (deviceVersion) => ({
                         ..._.context._internalState,
@@ -248,8 +247,7 @@ export class ListInstalledAppsDeviceAction extends XStateDeviceAction<
                         error,
                       }),
                     },
-                  );
-                },
+                  ),
               }),
             },
             onError: {
@@ -278,8 +276,8 @@ export class ListInstalledAppsDeviceAction extends XStateDeviceAction<
             onDone: {
               target: "GetFirmwareVersionCheck",
               actions: assign({
-                _internalState: (_) => {
-                  return _.event.output.caseOf<ListInstalledAppsStateMachineInternalState>(
+                _internalState: (_) =>
+                  _.event.output.caseOf<ListInstalledAppsStateMachineInternalState>(
                     {
                       Right: (firmwareVersion) => ({
                         ..._.context._internalState,
@@ -290,8 +288,7 @@ export class ListInstalledAppsDeviceAction extends XStateDeviceAction<
                         error,
                       }),
                     },
-                  );
-                },
+                  ),
               }),
             },
             onError: {
@@ -398,7 +395,7 @@ export class ListInstalledAppsDeviceAction extends XStateDeviceAction<
     });
   }
 
-  private extractDependencies(internalApi: InternalApi): MachineDependencies {
+  extractDependencies(internalApi: InternalApi): MachineDependencies {
     const provider = 1; // TODO: get the provider from user configuration
 
     const getOsVersion = () =>

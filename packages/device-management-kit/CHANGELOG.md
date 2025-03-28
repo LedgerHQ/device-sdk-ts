@@ -1,5 +1,19 @@
 # @ledgerhq/device-management-kit
 
+## 0.6.5
+
+### Minor Changes
+
+- [#709](https://github.com/LedgerHQ/device-sdk-ts/pull/709) [`e3d6744`](https://github.com/LedgerHQ/device-sdk-ts/commit/e3d6744336d45840a9715e48c319cdf4ce77bb4f) Thanks [@jiyuzhuang](https://github.com/jiyuzhuang)! - Add ListInstalledApps device action
+
+- [#737](https://github.com/LedgerHQ/device-sdk-ts/pull/737) [`d93a602`](https://github.com/LedgerHQ/device-sdk-ts/commit/d93a602d1ee161d6d8da4e0e40690a4273a813e0) Thanks [@jiyuzhuang](https://github.com/jiyuzhuang)! - Add install and uninstall app device actions
+
+- [#746](https://github.com/LedgerHQ/device-sdk-ts/pull/746) [`29242d5`](https://github.com/LedgerHQ/device-sdk-ts/commit/29242d51c79d9043c3a6160d897b4938f044b7c4) Thanks [@fAnselmi-Ledger](https://github.com/fAnselmi-Ledger)! - Add config options for device session refresher and refactored DeviceSession
+
+### Patch Changes
+
+- [#755](https://github.com/LedgerHQ/device-sdk-ts/pull/755) [`da9d303`](https://github.com/LedgerHQ/device-sdk-ts/commit/da9d303e53790159e6d22f3f366f71314eef5752) Thanks [@jiyuzhuang](https://github.com/jiyuzhuang)! - Add unit tests for genuine check and list installed apps device actions.
+
 ## 0.6.4
 
 ### Patch Changes

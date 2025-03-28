@@ -92,6 +92,14 @@ export {
   type GenuineCheckDAState,
 } from "@api/secure-channel/device-action/GenuineCheck/types";
 export {
+  type InstallAppDAError,
+  type InstallAppDAInput,
+  type InstallAppDAIntermediateValue,
+  type InstallAppDAOutput,
+  type InstallAppDARequiredInteraction,
+  type InstallAppDAState,
+} from "@api/secure-channel/device-action/InstallApp/types";
+export {
   type ListInstalledAppsDAError,
   type ListInstalledAppsDAInput,
   type ListInstalledAppsDAIntermediateValue,
@@ -99,6 +107,14 @@ export {
   type ListInstalledAppsDARequiredInteraction,
   type ListInstalledAppsDAState,
 } from "@api/secure-channel/device-action/ListInstalledApps/types";
+export {
+  type UninstallAppDAError,
+  type UninstallAppDAInput,
+  type UninstallAppDAIntermediateValue,
+  type UninstallAppDAOutput,
+  type UninstallAppDARequiredInteraction,
+  type UninstallAppDAState,
+} from "@api/secure-channel/device-action/UninstallApp/types";
 export {
   type DeviceConnection,
   type DisconnectHandler,

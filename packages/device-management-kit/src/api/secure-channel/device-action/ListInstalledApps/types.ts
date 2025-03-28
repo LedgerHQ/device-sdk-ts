@@ -15,11 +15,10 @@ import {
 } from "@api/device-action/os/GoToDashboard/types";
 import { type DeviceSessionState } from "@api/device-session/DeviceSessionState";
 import { type SecureChannelEvent } from "@api/secure-channel/task/types";
+import { type Input } from "@api/secure-channel/types";
 import { type DeviceVersion } from "@internal/manager-api/model/Device";
 import { type HttpFetchApiError } from "@internal/manager-api/model/Errors";
 import { type FinalFirmware } from "@internal/manager-api/model/Firmware";
-
-export type Input<T> = { input: T };
 
 export type ListInstalledAppsDAOutput = {
   installedApps: Array<InstalledApp>;

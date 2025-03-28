@@ -34,6 +34,7 @@ Pull Requests must pass CI checks and undergo code review. Set the PR as Draft i
 
 - [ ] **Covered by automatic tests** <!-- if not, please explain. (Feature must be tested / Bugfix must bring non-regression) -->
 - [ ] **Changeset is provided** <!-- Please provide a changeset -->
+- [ ] **Documentation is up-to-date** <!-- Please ensure all relevant documentation (README, API docs, etc.) has been updated -->
 - [ ] **Impact of the changes:** <!-- Please take some time to list the impact & what specific areas Quality Assurance (QA) should focus on -->
   - _list of the changes_
 
