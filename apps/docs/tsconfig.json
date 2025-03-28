@@ -6,7 +6,8 @@
         "name": "next"
       }
     ],
-    "forceConsistentCasingInFileNames": true
+    "forceConsistentCasingInFileNames": true,
+    "module": "esnext"
   },
   "include": [
     "next-env.d.ts",
