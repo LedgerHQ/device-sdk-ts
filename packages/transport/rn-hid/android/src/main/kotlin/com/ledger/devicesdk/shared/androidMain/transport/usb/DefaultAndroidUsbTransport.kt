@@ -59,18 +59,16 @@ internal class DefaultAndroidUsbTransport(
     private val internalUsbPermissionEventFlow: MutableSharedFlow<UsbPermissionEvent> =
         MutableSharedFlow()
 
-    @Suppress("BackingPropertyName")
-    private var _scanStateFlow: MutableStateFlow<List<DiscoveryDevice>> =
-        MutableStateFlow(emptyList())
-    private var discoveryJob: Job? = null
     private val usbConnections: MutableMap<String, DeviceConnection<AndroidUsbApduSender.Dependencies>> =
         mutableMapOf()
     private val usbConnectionsPendingReconnection: MutableSet<DeviceConnection<AndroidUsbApduSender.Dependencies>> =
         mutableSetOf()
 
+    private var discoveryJob: Job? = null
+
     override fun startScan(): Flow<List<DiscoveryDevice>> {
+        val scanStateFlow = MutableStateFlow<List<DiscoveryDevice>>(emptyList())
         discoveryJob?.cancel()
-        _scanStateFlow.value = emptyList()
         discoveryJob =
             scope.launch {
                 while (isActive) {
@@ -83,12 +81,12 @@ internal class DefaultAndroidUsbTransport(
                                 }.isEmpty()
                             }.toUsbDevices()
 
-                    _scanStateFlow.value = devices.toScannedDevices()
+                    scanStateFlow.value = devices.toScannedDevices()
 
                     delay(scanDelay)
                 }
             }
-        return _scanStateFlow
+        return scanStateFlow
     }
 
     override fun stopScan() {
