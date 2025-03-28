@@ -19,18 +19,38 @@ Before starting this tutorial, make sure you have initialized the DMK instance a
 
 Let's start the discovery process:
 
+- **Discovery**: `dmk.startDiscovering()`
+  - Returns an observable which will emit a new `DiscoveredDevice` for every scanned device.
+  - The `DiscoveredDevice` objects contain information about the device model.
+  - Use one of these values to connect to a given discovered device.
+- **Connection**:
+
+```ts
+dmk.connect({
+  deviceId: device.id,
+  {
+    isRefresherDisabled: boolean;
+    pollingInterval?: number;
+  }
+})
+```
+
+- Returns a Promise resolving in a device session identifier `DeviceSessionId`.
+- **Keep this device session identifier to further interact with the device.**
+- Then, `dmk.getConnectedDevice({ sessionId })` returns the `ConnectedDevice`, which contains information about the device model and its name.
+
 ```ts
 // Start discovering devices
 const discoverySubscription = dmk.startDiscovering({}).subscribe({
   next: (device) => {
-    // This function is called whenever a new device is found
-    console.log(`Found device: ${device.id}`);
-    console.log(`Device model: ${device.deviceModel.model}`);
-
-    // At this point, you could:
-    // - Connect to the device automatically
-    // - Add it to a list of available devices for the user to choose from
-    // - Filter devices based on model or other criteria
+    dmk
+    .connect({
+      deviceId: device.id,
+      { isRefresherDisabled: true }
+    })
+    .then((sessionId) => {
+      const connectedDevice = dmk.getConnectedDevice({ sessionId });
+    });
   },
   error: (error) => {
     console.error("Discovery error:", error);
