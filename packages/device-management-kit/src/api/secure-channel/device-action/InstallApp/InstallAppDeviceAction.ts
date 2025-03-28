@@ -410,8 +410,6 @@ export class InstallAppDeviceAction extends XStateDeviceAction<
   }
 
   extractDependencies(internalApi: InternalApi): MachineDependencies {
-    const provider = 1;
-
     const getOsVersion = () =>
       internalApi.sendCommand(new GetOsVersionCommand());
 
@@ -421,9 +419,7 @@ export class InstallAppDeviceAction extends XStateDeviceAction<
       deviceInfo: GetOsVersionResponse;
     }>) => {
       const { deviceInfo } = input;
-      return internalApi
-        .getManagerApiService()
-        .getAppList(deviceInfo, provider);
+      return internalApi.getManagerApiService().getAppList(deviceInfo);
     };
 
     const installApp = ({

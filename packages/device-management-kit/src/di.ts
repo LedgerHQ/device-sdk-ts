@@ -16,6 +16,7 @@ import { managerApiModuleFactory } from "@internal/manager-api/di/managerApiModu
 import {
   DEFAULT_MANAGER_API_BASE_URL,
   DEFAULT_MOCK_SERVER_BASE_URL,
+  DEFAULT_PROVIDER,
 } from "@internal/manager-api/model/Const";
 import { secureChannelModuleFactory } from "@internal/secure-channel/di/secureChannelModule";
 import { DEFAULT_WEB_SOCKET_BASE_URL } from "@internal/secure-channel/model/Const";
@@ -40,6 +41,7 @@ export const makeContainer = ({
     mockUrl: DEFAULT_MOCK_SERVER_BASE_URL,
     managerApiUrl: DEFAULT_MANAGER_API_BASE_URL,
     webSocketUrl: DEFAULT_WEB_SOCKET_BASE_URL,
+    provider: DEFAULT_PROVIDER,
   },
 }: Partial<MakeContainerProps>) => {
   const container = new Container();
