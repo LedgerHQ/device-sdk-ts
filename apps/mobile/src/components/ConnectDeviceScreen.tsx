@@ -1,18 +1,12 @@
 import React, { useEffect } from "react";
-import {
-  ActivityIndicator,
-  FlatList,
-  FlatListProps,
-  Text,
-  View,
-} from "react-native";
+import { ActivityIndicator, FlatList, FlatListProps, View } from "react-native";
 import { useDmk } from "_providers/dmkProvider.tsx";
 import { DiscoveredDevice } from "@ledgerhq/device-management-kit";
 import styled from "styled-components/native";
-import { Button } from "@ledgerhq/native-ui";
+import { Button, Text } from "@ledgerhq/native-ui";
 import { DiscoveredDeviceItem } from "./DiscoveredDeviceItem";
 import { useDeviceSessionsContext } from "_providers/deviceSessionsProvider.tsx";
-import { useNavigation } from "@react-navigation/native";
+import { useIsFocused, useNavigation } from "@react-navigation/native";
 import { ThemeProps } from "_common/types.ts";
 import { CommandsScreens } from "_navigators/CommandNavigator.constants.ts";
 import { RootScreens } from "_navigators/RootNavigator.constants.ts";
@@ -41,12 +35,14 @@ export const ConnectDeviceScreen: React.FC = () => {
   } = useDeviceSessionsContext();
   const { navigate } = useNavigation();
 
+  const isFocused = useIsFocused();
+
   useEffect(() => {
     setDevices([]);
   }, [deviceSessionId]);
 
   useEffect(() => {
-    if (isScanningDevices) {
+    if (isScanningDevices && isFocused) {
       const subscription = dmk.listenToAvailableDevices({}).subscribe({
         next: async devices => {
           setDevices(devices);
@@ -58,9 +54,10 @@ export const ConnectDeviceScreen: React.FC = () => {
 
       return () => {
         subscription.unsubscribe();
+        setDevices([]);
       };
     }
-  }, [dmk, isScanningDevices]);
+  }, [dmk, isScanningDevices, isFocused]);
 
   const startScanning = () => {
     setIsScanningDevices(true);
@@ -71,16 +68,9 @@ export const ConnectDeviceScreen: React.FC = () => {
   };
 
   const onConnect = async (device: DiscoveredDevice) => {
+    setIsScanningDevices(false);
     try {
-      const id = await dmk.connect({ device });
-      setIsScanningDevices(false);
-      dispatch({
-        type: "add_session",
-        payload: {
-          sessionId: id,
-          connectedDevice: dmk.getConnectedDevice({ sessionId: id }),
-        },
-      });
+      await dmk.connect({ device });
       navigate(RootScreens.Command, {
         screen: CommandsScreens.DeviceActionTester,
       });
