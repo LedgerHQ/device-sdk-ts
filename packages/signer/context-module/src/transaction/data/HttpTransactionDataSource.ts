@@ -254,7 +254,7 @@ export class HttpTransactionDataSource implements TransactionDataSource {
   ): data is CalldataDescriptorV1 & {
     transaction_info: {
       descriptor: {
-        signatures: { [key in ContextModuleCalMode]: string };
+        signatures: { [_key in ContextModuleCalMode]: string };
       };
     };
   } {
@@ -274,7 +274,7 @@ export class HttpTransactionDataSource implements TransactionDataSource {
     mode: ContextModuleCalMode,
   ): data is CalldataTransactionInfoV1 & {
     descriptor: {
-      signatures: { [key in ContextModuleCalMode]: string };
+      signatures: { [_key in ContextModuleCalMode]: string };
     };
   } {
     return (
@@ -311,7 +311,7 @@ export class HttpTransactionDataSource implements TransactionDataSource {
   private isCalldataSignatures(
     data: CalldataSignatures,
     mode: ContextModuleCalMode,
-  ): data is CalldataSignatures & { [key in ContextModuleCalMode]: string } {
+  ): data is CalldataSignatures & { [_key in ContextModuleCalMode]: string } {
     return typeof data === "object" && typeof data[mode] === "string";
   }
 

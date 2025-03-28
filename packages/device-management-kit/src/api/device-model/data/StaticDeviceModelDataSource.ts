@@ -11,7 +11,7 @@ import { TransportDeviceModel } from "@api/device-model/model/DeviceModel";
 @injectable()
 export class StaticDeviceModelDataSource implements DeviceModelDataSource {
   private static deviceModelByIds: {
-    [key in DeviceModelId]: TransportDeviceModel;
+    [_key in DeviceModelId]: TransportDeviceModel;
   } = {
     [DeviceModelId.NANO_S]: new TransportDeviceModel({
       id: DeviceModelId.NANO_S,
