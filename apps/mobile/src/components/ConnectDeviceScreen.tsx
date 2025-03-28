@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect } from "react";
+import React, { useEffect } from "react";
 import {
   ActivityIndicator,
   FlatList,
@@ -45,33 +45,34 @@ export const ConnectDeviceScreen: React.FC = () => {
     setDevices([]);
   }, [deviceSessionId]);
 
-  const onScan = useCallback(() => {
-    const obs = dmk.listenToAvailableDevices({});
+  useEffect(() => {
+    if (isScanningDevices) {
+      const subscription = dmk.listenToAvailableDevices({}).subscribe({
+        next: async devices => {
+          setDevices(devices);
+        },
+        error: err => {
+          console.log("error discovered", err);
+        },
+      });
+
+      return () => {
+        subscription.unsubscribe();
+      };
+    }
+  }, [dmk, isScanningDevices]);
+
+  const startScanning = () => {
     setIsScanningDevices(true);
-    const subscription = obs.subscribe({
-      next: async devices => {
-        setDevices(devices);
-      },
-      error: err => {
-        console.log("error discovered", err);
-      },
-    });
+  };
 
-    return () => {
-      subscription.unsubscribe();
-      dmk.stopDiscovering();
-    };
-  }, [dmk]);
-
-  const onStop = () => {
+  const stopScanning = () => {
     setIsScanningDevices(false);
-    dmk.stopDiscovering();
   };
 
   const onConnect = async (device: DiscoveredDevice) => {
     try {
       const id = await dmk.connect({ device });
-      dmk.stopDiscovering();
       setIsScanningDevices(false);
       dispatch({
         type: "add_session",
@@ -107,11 +108,14 @@ export const ConnectDeviceScreen: React.FC = () => {
                     padding: 10,
                   }}>
                   {!isScanningDevices ? (
-                    <Button type="color" onPress={onScan} title="Start scan">
+                    <Button
+                      type="color"
+                      onPress={startScanning}
+                      title="Start scan">
                       Start scan
                     </Button>
                   ) : (
-                    <Button type="color" onPress={onStop}>
+                    <Button type="color" onPress={stopScanning}>
                       Stop scan
                     </Button>
                   )}
