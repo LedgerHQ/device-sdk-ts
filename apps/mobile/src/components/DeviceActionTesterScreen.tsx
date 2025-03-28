@@ -1,7 +1,6 @@
 import { useDmk } from "_providers/dmkProvider.tsx";
 import { useDeviceSessionsContext } from "_providers/deviceSessionsProvider.tsx";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
-import { RootScreens } from "_navigators/RootNavigator.constants.ts";
 import { DeviceActionProps, ThemeProps } from "_common/types.ts";
 import { Flex, SelectableList } from "@ledgerhq/native-ui";
 import styled from "styled-components/native";
@@ -26,13 +25,13 @@ export const DeviceActionTesterScreen = () => {
   const {
     state: { selectedId: deviceSessionId, deviceById },
   } = useDeviceSessionsContext();
-  const { navigate } = useNavigation();
+  const navigation = useNavigation();
 
   useEffect(() => {
     if (!deviceSessionId) {
-      navigate(RootScreens.Home);
+      navigation.goBack();
     }
-  }, [deviceSessionId, navigate]);
+  }, [deviceSessionId, navigation]);
   const deviceActions = useMemo(() => {
     if (deviceSessionId) {
       return getDeviceActions(
