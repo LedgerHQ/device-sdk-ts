@@ -42,8 +42,8 @@ internal fun ProductId.toLedgerDevice(): LedgerDevice? =
 
 private fun Int.isLedgerDeviceProductId(device: LedgerDevice): Boolean {
     val productId = device.usbInfo.productIdMask.sdkHexToInt()
-    val shiftedId = this shr 8
-    return shiftedId == productId
+    val bootloaderProductId = productId shr 4
+    return ((this shr 8) == productId) || ((this) == bootloaderProductId)
 }
 
 @OptIn(ExperimentalStdlibApi::class)
