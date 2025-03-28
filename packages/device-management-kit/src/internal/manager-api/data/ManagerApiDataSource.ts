@@ -54,4 +54,11 @@ export interface ManagerApiDataSource {
   getFirmwareVersion(
     params: GetFirmwareVersionParams,
   ): EitherAsync<HttpFetchApiError, FinalFirmware>;
+
+  /**
+   * Sets the provider identifier.
+   *
+   * @param provider - The provider identifier.
+   */
+  setProvider(provider: number): void;
 }

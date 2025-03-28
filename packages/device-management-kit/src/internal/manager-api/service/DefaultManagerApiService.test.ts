@@ -33,13 +33,11 @@ describe("ManagerApiService", () => {
       const deviceInfo = getOsVersionCommandResponseMockBuilder(
         DeviceModelId.STAX,
       );
-      const provider = 42;
       // when
-      service.getAppList(deviceInfo, provider);
+      service.getAppList(deviceInfo);
       // then
       expect(dataSource.getAppList).toHaveBeenCalledWith({
         targetId: "857735172",
-        provider: 42,
         firmwareVersionName: "1.3.0",
       });
     });
@@ -106,13 +104,11 @@ describe("ManagerApiService", () => {
       const deviceInfo = getOsVersionCommandResponseMockBuilder(
         DeviceModelId.STAX,
       );
-      const provider = 42;
       // when
-      service.getDeviceVersion(deviceInfo, provider);
+      service.getDeviceVersion(deviceInfo);
       // then
       expect(dataSource.getDeviceVersion).toHaveBeenCalledWith({
         targetId: "857735172",
-        provider: 42,
       });
     });
   });
@@ -126,13 +122,11 @@ describe("ManagerApiService", () => {
       const deviceInfo = getOsVersionCommandResponseMockBuilder(
         DeviceModelId.STAX,
       );
-      const provider = 42;
       // when
-      service.getFirmwareVersion(deviceInfo, mockGetDeviceVersion, provider);
+      service.getFirmwareVersion(deviceInfo, mockGetDeviceVersion);
       // then
       expect(dataSource.getFirmwareVersion).toHaveBeenCalledWith({
         deviceId: 17,
-        provider: 42,
         version: "1.3.0",
       });
     });

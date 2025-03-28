@@ -384,8 +384,6 @@ export class GenuineCheckDeviceAction extends XStateDeviceAction<
   }
 
   extractDependencies(internalApi: InternalApi): MachineDependencies {
-    const provider = 1; // TODO: get the provider from user configuration
-
     const getOsVersion = () =>
       internalApi.sendCommand(new GetOsVersionCommand());
 
@@ -393,9 +391,7 @@ export class GenuineCheckDeviceAction extends XStateDeviceAction<
       input,
     }: Input<{ deviceInfo: GetOsVersionResponse }>) => {
       const { deviceInfo } = input;
-      return internalApi
-        .getManagerApiService()
-        .getDeviceVersion(deviceInfo, provider);
+      return internalApi.getManagerApiService().getDeviceVersion(deviceInfo);
     };
 
     const getFirmwareVersion = ({
@@ -407,7 +403,7 @@ export class GenuineCheckDeviceAction extends XStateDeviceAction<
       const { deviceInfo, deviceVersion } = input;
       return internalApi
         .getManagerApiService()
-        .getFirmwareVersion(deviceInfo, deviceVersion, provider);
+        .getFirmwareVersion(deviceInfo, deviceVersion);
     };
 
     const genuineCheck = ({

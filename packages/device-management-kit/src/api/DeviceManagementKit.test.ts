@@ -5,6 +5,7 @@ import { StubLocalConfigDataSource } from "@internal/config/data/LocalConfigData
 import { configTypes } from "@internal/config/di/configTypes";
 import { deviceSessionTypes } from "@internal/device-session/di/deviceSessionTypes";
 import { discoveryTypes } from "@internal/discovery/di/discoveryTypes";
+import { managerApiTypes } from "@internal/manager-api/di/managerApiTypes";
 import { sendTypes } from "@internal/send/di/sendTypes";
 import pkg from "@root/package.json";
 import { StubUseCase } from "@root/src/di.stub";
@@ -12,6 +13,7 @@ import { StubUseCase } from "@root/src/di.stub";
 import { commandTypes } from "./command/di/commandTypes";
 import { ConsoleLogger } from "./logger-subscriber/service/ConsoleLogger";
 import { DeviceManagementKit } from "./DeviceManagementKit";
+import { type DmkConfig } from "./DmkConfig";
 
 vi.mock("./logger-subscriber/service/ConsoleLogger");
 
@@ -28,7 +30,7 @@ describe("DeviceManagementKit", () => {
           managerApiUrl: "http://fake.url",
           mockUrl: "http://fake-mock.url",
           webSocketUrl: "http://fake-websocket.url",
-        },
+        } as DmkConfig,
       });
     });
 
@@ -76,6 +78,10 @@ describe("DeviceManagementKit", () => {
     it("should have disableDeviceSessionRefresher method", () => {
       expect(dmk.disableDeviceSessionRefresher).toBeDefined();
     });
+
+    it("should have setProvider method", () => {
+      expect(dmk.setProvider).toBeDefined();
+    });
   });
 
   describe("stubbed", () => {
@@ -87,7 +93,7 @@ describe("DeviceManagementKit", () => {
           managerApiUrl: "http://fake.url",
           mockUrl: "http://fake-mock.url",
           webSocketUrl: "http://fake-websocket.url",
-        },
+        } as DmkConfig,
       });
     });
 
@@ -119,6 +125,7 @@ describe("DeviceManagementKit", () => {
       [deviceSessionTypes.GetDeviceSessionStateUseCase],
       [discoveryTypes.ListConnectedDevicesUseCase],
       [discoveryTypes.ListenToConnectedDeviceUseCase],
+      [managerApiTypes.SetProviderUseCase],
     ])(
       "should have %s use case",
       (diSymbol: interfaces.ServiceIdentifier<StubUseCase>) => {

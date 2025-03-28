@@ -42,7 +42,6 @@ describe("AxiosManagerApiDataSource", () => {
       // when
       const response = await api.getAppList({
         targetId: "targetId",
-        provider: 42,
         firmwareVersionName: "firmwareVersionName",
       });
 
@@ -57,7 +56,6 @@ describe("AxiosManagerApiDataSource", () => {
       // when
       const response = await api.getAppList({
         targetId: "targetId",
-        provider: 42,
         firmwareVersionName: "firmwareVersionName",
       });
 
@@ -153,7 +151,6 @@ describe("AxiosManagerApiDataSource", () => {
       // when
       const response = await api.getDeviceVersion({
         targetId: "targetId",
-        provider: 42,
       });
 
       // then
@@ -168,7 +165,6 @@ describe("AxiosManagerApiDataSource", () => {
       // when
       const response = await api.getDeviceVersion({
         targetId: "targetId",
-        provider: 42,
       });
 
       // then
@@ -194,7 +190,6 @@ describe("AxiosManagerApiDataSource", () => {
       const response = await api.getFirmwareVersion({
         version: "versionName",
         deviceId: 42,
-        provider: 21,
       });
 
       // then
@@ -209,7 +204,6 @@ describe("AxiosManagerApiDataSource", () => {
       const response = await api.getFirmwareVersion({
         version: "versionName",
         deviceId: 42,
-        provider: 21,
       });
 
       // then

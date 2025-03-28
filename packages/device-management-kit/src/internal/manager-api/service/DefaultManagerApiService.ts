@@ -25,20 +25,17 @@ export class DefaultManagerApiService implements ManagerApiService {
 
   getAppList(
     deviceInfo: GetOsVersionResponse,
-    provider: number,
   ): EitherAsync<HttpFetchApiError, Array<Application>> {
     const params: GetAppListParams = {
       targetId: deviceInfo.targetId.toString(),
-      provider,
       firmwareVersionName: deviceInfo.seVersion,
     };
     return this.dataSource.getAppList(params);
   }
 
-  getDeviceVersion(deviceInfo: GetOsVersionResponse, provider: number) {
+  getDeviceVersion(deviceInfo: GetOsVersionResponse) {
     const params: GetDeviceVersionParams = {
       targetId: deviceInfo.targetId.toString(),
-      provider,
     };
     return this.dataSource.getDeviceVersion(params);
   }
@@ -46,12 +43,10 @@ export class DefaultManagerApiService implements ManagerApiService {
   getFirmwareVersion(
     deviceInfo: GetOsVersionResponse,
     deviceVersion: DeviceVersion,
-    provider: number,
   ) {
     const params: GetFirmwareVersionParams = {
       version: deviceInfo.seVersion,
       deviceId: deviceVersion.id,
-      provider,
     };
     return this.dataSource.getFirmwareVersion(params);
   }
