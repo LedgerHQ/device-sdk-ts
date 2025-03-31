@@ -600,56 +600,94 @@ describe("RNBleTransport", () => {
   });
 
   describe("listenToAvailableDevices", () => {
-    it.todo(
-      "should call startScan and connectedDevices from ble manager",
-      () =>
-        new Promise((done) => {
-          // given
-          const fakeStartScan = vi.fn();
-          const fakeStopScan = vi.fn();
-          const fakeConnectedDevices = vi.fn(() =>
-            Promise.resolve([
-              {
-                readRSSI: () => Promise.resolve({}),
-              },
-            ]),
-          );
-          const bleManager = {
-            connectedDevices: fakeConnectedDevices,
-            startDeviceScan: fakeStartScan,
-            stopDeviceScan: fakeStopScan,
-            onDeviceDisconnected: vi.fn(),
-          } as unknown as BleManager;
-          const transport = new RNBleTransport(
-            fakeDataSource as unknown as DeviceModelDataSource,
-            () => fakeLogger as unknown as LoggerPublisherService,
-            (() => {}) as unknown as ApduSenderServiceFactory,
-            (() => {}) as unknown as ApduReceiverServiceFactory,
-            fakePlaftorm as Platform,
-            {} as unknown as PermissionsAndroid,
-            () => bleManager,
-          );
+    it("should call startScan and connectedDevices from ble manager", () =>
+      new Promise((done) => {
+        // given
+        let scanInterval: NodeJS.Timeout | undefined;
+        const startScan = vi.fn((_uuids, _options, listener) => {
+          scanInterval = setInterval(() => {
+            listener(null, {
+              id: "id",
+              localName: "name",
+              serviceUUIDs: ["ledgerId"],
+              rssi: 42,
+            });
+          }, 500);
+          listener(null, {
+            id: "43",
+            localName: "name43",
+            serviceUUIDs: ["notLedgerId"],
+            rssi: 43,
+          });
+        });
+        const stopScan = vi.fn(() => {
+          clearInterval(scanInterval);
+          scanInterval = undefined;
+        });
+        const fakeConnectedDevices = vi.fn().mockResolvedValueOnce([
+          {
+            readRSSI: vi.fn().mockResolvedValueOnce({
+              discoverAllServicesAndCharacteristics: vi
+                .fn()
+                .mockResolvedValueOnce({
+                  services: vi.fn().mockResolvedValueOnce({}),
+                  serviceUUIDs: ["ledgerId"],
+                  rssi: 64,
+                  id: "knownDeviceId",
+                  localName: "knownDeviceName",
+                }),
+            }),
+          },
+        ]);
+        const bleManager = {
+          connectedDevices: fakeConnectedDevices,
+          startDeviceScan: startScan,
+          stopDeviceScan: stopScan,
+          onDeviceDisconnected: vi.fn(),
+          isDeviceConnected: vi.fn(),
+        } as unknown as BleManager;
+        const transport = new RNBleTransport(
+          fakeDataSource as unknown as DeviceModelDataSource,
+          () => fakeLogger as unknown as LoggerPublisherService,
+          (() => {}) as unknown as ApduSenderServiceFactory,
+          (() => {}) as unknown as ApduReceiverServiceFactory,
+          fakePlaftorm as Platform,
+          {} as unknown as PermissionsAndroid,
+          () => bleManager,
+        );
 
-          // when
-          const sub = transport.listenToAvailableDevices().subscribe();
-          vi.waitFor(() => fakeStartScan.mock.calls.length === 1);
-          vi.waitFor(() => fakeConnectedDevices.mock.calls.length === 1).then(
-            () => {
+        // when
+        const sub = transport.listenToAvailableDevices().subscribe({
+          next: (devices) => {
+            if (devices.length === 2) {
+              // then
+              expect(devices).toEqual([
+                {
+                  id: "knownDeviceId",
+                  name: "knownDeviceName",
+                  deviceModel: fakeDeviceModel,
+                  transport: "RN_BLE",
+                  rssi: 64,
+                },
+                {
+                  id: "id",
+                  name: "name",
+                  deviceModel: fakeDeviceModel,
+                  transport: "RN_BLE",
+                  rssi: 42,
+                },
+              ]);
               sub.unsubscribe();
-              expect(bleManager.connectedDevices).toHaveBeenCalled();
-              expect(bleManager.startDeviceScan).toHaveBeenCalled();
-              expect(bleManager.stopDeviceScan).toHaveBeenCalled();
               done(void 0);
-            },
-          );
-          sub.unsubscribe();
-
-          // then
-        }),
-    );
+            }
+          },
+        });
+      }));
   });
 
-  describe.todo("connect", () => {});
+  describe.todo("connect", () => {
+    it("should throw error if transport is not supported", () => {});
+  });
 
   describe.todo("disconnect", () => {});
 });
