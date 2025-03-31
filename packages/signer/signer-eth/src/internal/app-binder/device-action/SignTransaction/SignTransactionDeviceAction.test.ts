@@ -82,7 +82,24 @@ describe("SignTransactionDeviceAction", () => {
     }).unsignedSerialized,
   )!;
 
-  function setupAppVersion(version: string) {
+  function createAppConfig(
+    version: string,
+    web3ChecksEnabled: boolean,
+    web3ChecksOptIn: boolean,
+  ) {
+    return {
+      blindSigningEnabled: false,
+      web3ChecksEnabled,
+      web3ChecksOptIn,
+      version,
+    };
+  }
+
+  function setupAppConfig(
+    version: string,
+    web3ChecksEnabled: boolean,
+    web3ChecksOptIn: boolean,
+  ) {
     apiMock.getDeviceSessionState.mockReturnValueOnce({
       sessionStateType: DeviceSessionStateType.ReadyWithoutSecureChannel,
       deviceStatus: DeviceStatus.CONNECTED,
@@ -91,6 +108,11 @@ describe("SignTransactionDeviceAction", () => {
       deviceModelId: DeviceModelId.FLEX,
       isSecureConnectionAllowed: false,
     });
+    getAppConfigMock.mockResolvedValue(
+      CommandResultFactory({
+        data: createAppConfig(version, web3ChecksEnabled, web3ChecksOptIn),
+      }),
+    );
   }
 
   beforeEach(() => {
@@ -101,7 +123,7 @@ describe("SignTransactionDeviceAction", () => {
     it("should call external dependencies with the correct parameters", () =>
       new Promise<void>((resolve, reject) => {
         setupOpenAppDAMock();
-        setupAppVersion("1.15.0");
+        setupAppConfig("1.15.0", false, false);
 
         const deviceAction = new SignTransactionDeviceAction({
           input: {
@@ -160,6 +182,14 @@ describe("SignTransactionDeviceAction", () => {
             },
             status: DeviceActionStatus.Pending,
           },
+          // GetAppConfig state
+          {
+            intermediateValue: {
+              requiredUserInteraction: UserInteractionRequired.None,
+              step: SignTransactionDAStep.GET_APP_CONFIG,
+            },
+            status: DeviceActionStatus.Pending,
+          },
           // BuildContext state
           {
             intermediateValue: {
@@ -205,7 +235,7 @@ describe("SignTransactionDeviceAction", () => {
                   mapper: mapperMock,
                   options: defaultOptions,
                   transaction: defaultTransaction,
-                  web3ChecksEnabled: false,
+                  appConfig: createAppConfig("1.15.0", false, false),
                   derivationPath: "44'/60'/0'/0/0",
                 },
               }),
@@ -245,7 +275,7 @@ describe("SignTransactionDeviceAction", () => {
     it("should call external dependencies with the correct parameters with the generic parser", () =>
       new Promise<void>((resolve, reject) => {
         setupOpenAppDAMock();
-        setupAppVersion("1.15.0");
+        setupAppConfig("1.15.0", false, false);
 
         const deviceAction = new SignTransactionDeviceAction({
           input: {
@@ -307,6 +337,14 @@ describe("SignTransactionDeviceAction", () => {
             },
             status: DeviceActionStatus.Pending,
           },
+          // GetAppConfig state
+          {
+            intermediateValue: {
+              requiredUserInteraction: UserInteractionRequired.None,
+              step: SignTransactionDAStep.GET_APP_CONFIG,
+            },
+            status: DeviceActionStatus.Pending,
+          },
           // BuildContext state
           {
             intermediateValue: {
@@ -353,7 +391,7 @@ describe("SignTransactionDeviceAction", () => {
                   mapper: mapperMock,
                   options: defaultOptions,
                   transaction: defaultTransaction,
-                  web3ChecksEnabled: false,
+                  appConfig: createAppConfig("1.15.0", false, false),
                   derivationPath: "44'/60'/0'/0/0",
                 },
               }),
@@ -399,7 +437,7 @@ describe("SignTransactionDeviceAction", () => {
     it("should fallback to blind signing if provideContext return an error", () =>
       new Promise<void>((resolve, reject) => {
         setupOpenAppDAMock();
-        setupAppVersion("1.15.0");
+        setupAppConfig("1.15.0", false, false);
 
         const deviceAction = new SignTransactionDeviceAction({
           input: {
@@ -464,6 +502,14 @@ describe("SignTransactionDeviceAction", () => {
             },
             status: DeviceActionStatus.Pending,
           },
+          // GetAppConfig state
+          {
+            intermediateValue: {
+              requiredUserInteraction: UserInteractionRequired.None,
+              step: SignTransactionDAStep.GET_APP_CONFIG,
+            },
+            status: DeviceActionStatus.Pending,
+          },
           // BuildContext state
           {
             intermediateValue: {
@@ -510,7 +556,7 @@ describe("SignTransactionDeviceAction", () => {
                   mapper: mapperMock,
                   options: defaultOptions,
                   transaction: defaultTransaction,
-                  web3ChecksEnabled: false,
+                  appConfig: createAppConfig("1.15.0", false, false),
                   derivationPath: "44'/60'/0'/0/0",
                 },
               }),
@@ -547,7 +593,7 @@ describe("SignTransactionDeviceAction", () => {
     it("should fallback to blind signing if provideGenericContext return an error", () =>
       new Promise<void>((resolve, reject) => {
         setupOpenAppDAMock();
-        setupAppVersion("1.15.0");
+        setupAppConfig("1.15.0", false, false);
 
         const deviceAction = new SignTransactionDeviceAction({
           input: {
@@ -618,6 +664,14 @@ describe("SignTransactionDeviceAction", () => {
             },
             status: DeviceActionStatus.Pending,
           },
+          // GetAppConfig state
+          {
+            intermediateValue: {
+              requiredUserInteraction: UserInteractionRequired.None,
+              step: SignTransactionDAStep.GET_APP_CONFIG,
+            },
+            status: DeviceActionStatus.Pending,
+          },
           // BuildContext state
           {
             intermediateValue: {
@@ -664,7 +718,7 @@ describe("SignTransactionDeviceAction", () => {
                   mapper: mapperMock,
                   options: defaultOptions,
                   transaction: defaultTransaction,
-                  web3ChecksEnabled: false,
+                  appConfig: createAppConfig("1.15.0", false, false),
                   derivationPath: "44'/60'/0'/0/0",
                 },
               }),
@@ -712,7 +766,7 @@ describe("SignTransactionDeviceAction", () => {
     it("should call external dependencies with web3Checks enabled and supported", () =>
       new Promise<void>((resolve, reject) => {
         setupOpenAppDAMock();
-        setupAppVersion("1.16.0");
+        setupAppConfig("1.16.0", true, true);
 
         const deviceAction = new SignTransactionDeviceAction({
           input: {
@@ -726,16 +780,6 @@ describe("SignTransactionDeviceAction", () => {
         });
 
         // Mock the dependencies to return some sample data
-        getAppConfigMock.mockResolvedValue(
-          CommandResultFactory({
-            data: {
-              blindSigningEnabled: false,
-              web3ChecksEnabled: true,
-              web3ChecksOptIn: true,
-              version: "1.16.0",
-            },
-          }),
-        );
         buildContextMock.mockRejectedValueOnce(
           new InvalidStatusWordError("buildContext error"),
         );
@@ -796,7 +840,7 @@ describe("SignTransactionDeviceAction", () => {
                   mapper: mapperMock,
                   options: defaultOptions,
                   transaction: defaultTransaction,
-                  web3ChecksEnabled: true,
+                  appConfig: createAppConfig("1.16.0", true, true),
                   derivationPath: "44'/60'/0'/0/0",
                 },
               }),
@@ -810,7 +854,7 @@ describe("SignTransactionDeviceAction", () => {
     it("should call external dependencies with web3Checks supported but disabled", () =>
       new Promise<void>((resolve, reject) => {
         setupOpenAppDAMock();
-        setupAppVersion("1.16.0");
+        setupAppConfig("1.16.0", false, true);
 
         const deviceAction = new SignTransactionDeviceAction({
           input: {
@@ -824,16 +868,6 @@ describe("SignTransactionDeviceAction", () => {
         });
 
         // Mock the dependencies to return some sample data
-        getAppConfigMock.mockResolvedValue(
-          CommandResultFactory({
-            data: {
-              blindSigningEnabled: false,
-              web3ChecksEnabled: false,
-              web3ChecksOptIn: true,
-              version: "1.16.0",
-            },
-          }),
-        );
         buildContextMock.mockRejectedValueOnce(
           new InvalidStatusWordError("buildContext error"),
         );
@@ -894,7 +928,7 @@ describe("SignTransactionDeviceAction", () => {
                   mapper: mapperMock,
                   options: defaultOptions,
                   transaction: defaultTransaction,
-                  web3ChecksEnabled: false,
+                  appConfig: createAppConfig("1.16.0", false, true),
                   derivationPath: "44'/60'/0'/0/0",
                 },
               }),
@@ -908,7 +942,7 @@ describe("SignTransactionDeviceAction", () => {
     it("should call external dependencies with web3Checks opt-in, then enabled", () =>
       new Promise<void>((resolve, reject) => {
         setupOpenAppDAMock();
-        setupAppVersion("1.16.0");
+        setupAppConfig("1.16.0", false, false);
 
         const deviceAction = new SignTransactionDeviceAction({
           input: {
@@ -922,16 +956,6 @@ describe("SignTransactionDeviceAction", () => {
         });
 
         // Mock the dependencies to return some sample data
-        getAppConfigMock.mockResolvedValue(
-          CommandResultFactory({
-            data: {
-              blindSigningEnabled: false,
-              web3ChecksEnabled: false,
-              web3ChecksOptIn: false,
-              version: "1.16.0",
-            },
-          }),
-        );
         web3CheckOptInMock.mockResolvedValueOnce(
           CommandResultFactory({ data: { enabled: true } }),
         );
@@ -1004,7 +1028,7 @@ describe("SignTransactionDeviceAction", () => {
                   mapper: mapperMock,
                   options: defaultOptions,
                   transaction: defaultTransaction,
-                  web3ChecksEnabled: true,
+                  appConfig: createAppConfig("1.16.0", true, false),
                   derivationPath: "44'/60'/0'/0/0",
                 },
               }),
@@ -1018,7 +1042,7 @@ describe("SignTransactionDeviceAction", () => {
     it("should call external dependencies with web3Checks opt-in, then disabled", () =>
       new Promise<void>((resolve, reject) => {
         setupOpenAppDAMock();
-        setupAppVersion("1.16.0");
+        setupAppConfig("1.16.0", false, false);
 
         const deviceAction = new SignTransactionDeviceAction({
           input: {
@@ -1032,16 +1056,6 @@ describe("SignTransactionDeviceAction", () => {
         });
 
         // Mock the dependencies to return some sample data
-        getAppConfigMock.mockResolvedValue(
-          CommandResultFactory({
-            data: {
-              blindSigningEnabled: false,
-              web3ChecksEnabled: false,
-              web3ChecksOptIn: false,
-              version: "1.16.0",
-            },
-          }),
-        );
         web3CheckOptInMock.mockResolvedValueOnce(
           CommandResultFactory({ data: { enabled: false } }),
         );
@@ -1114,7 +1128,7 @@ describe("SignTransactionDeviceAction", () => {
                   mapper: mapperMock,
                   options: defaultOptions,
                   transaction: defaultTransaction,
-                  web3ChecksEnabled: false,
+                  appConfig: createAppConfig("1.16.0", false, false),
                   derivationPath: "44'/60'/0'/0/0",
                 },
               }),
@@ -1128,7 +1142,7 @@ describe("SignTransactionDeviceAction", () => {
     it("should provide web3Checks context if getWeb3Check return a value", () =>
       new Promise<void>((resolve, reject) => {
         setupOpenAppDAMock();
-        setupAppVersion("1.15.0");
+        setupAppConfig("1.15.0", false, false);
 
         const deviceAction = new SignTransactionDeviceAction({
           input: {
@@ -1193,6 +1207,14 @@ describe("SignTransactionDeviceAction", () => {
             },
             status: DeviceActionStatus.Pending,
           },
+          // GetAppConfig state
+          {
+            intermediateValue: {
+              requiredUserInteraction: UserInteractionRequired.None,
+              step: SignTransactionDAStep.GET_APP_CONFIG,
+            },
+            status: DeviceActionStatus.Pending,
+          },
           // BuildContext state
           {
             intermediateValue: {
@@ -1239,7 +1261,7 @@ describe("SignTransactionDeviceAction", () => {
                   mapper: mapperMock,
                   options: defaultOptions,
                   transaction: defaultTransaction,
-                  web3ChecksEnabled: false,
+                  appConfig: createAppConfig("1.15.0", false, false),
                   derivationPath: "44'/60'/0'/0/0",
                 },
               }),
@@ -1337,7 +1359,7 @@ describe("SignTransactionDeviceAction", () => {
     it("should fail if buildContext throws an error", () =>
       new Promise<void>((resolve, reject) => {
         setupOpenAppDAMock();
-        setupAppVersion("1.15.0");
+        setupAppConfig("1.15.0", false, false);
 
         const deviceAction = new SignTransactionDeviceAction({
           input: {
@@ -1374,6 +1396,14 @@ describe("SignTransactionDeviceAction", () => {
             },
             status: DeviceActionStatus.Pending,
           },
+          // GetAppConfig state
+          {
+            intermediateValue: {
+              requiredUserInteraction: UserInteractionRequired.None,
+              step: SignTransactionDAStep.GET_APP_CONFIG,
+            },
+            status: DeviceActionStatus.Pending,
+          },
           // BuildContext state
           {
             intermediateValue: {
@@ -1400,7 +1430,7 @@ describe("SignTransactionDeviceAction", () => {
     it("should fail if provideContext throws an error", () =>
       new Promise<void>((resolve, reject) => {
         setupOpenAppDAMock();
-        setupAppVersion("1.15.0");
+        setupAppConfig("1.15.0", false, false);
 
         const deviceAction = new SignTransactionDeviceAction({
           input: {
@@ -1447,6 +1477,14 @@ describe("SignTransactionDeviceAction", () => {
             },
             status: DeviceActionStatus.Pending,
           },
+          // GetAppConfig state
+          {
+            intermediateValue: {
+              requiredUserInteraction: UserInteractionRequired.None,
+              step: SignTransactionDAStep.GET_APP_CONFIG,
+            },
+            status: DeviceActionStatus.Pending,
+          },
           // BuildContext state
           {
             intermediateValue: {
@@ -1481,7 +1519,7 @@ describe("SignTransactionDeviceAction", () => {
     it("should fail if signTransaction returns an error", () =>
       new Promise<void>((resolve, reject) => {
         setupOpenAppDAMock();
-        setupAppVersion("1.15.0");
+        setupAppConfig("1.15.0", false, false);
 
         const deviceAction = new SignTransactionDeviceAction({
           input: {
@@ -1528,6 +1566,14 @@ describe("SignTransactionDeviceAction", () => {
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.ConfirmOpenApp,
               step: SignTransactionDAStep.OPEN_APP,
+            },
+            status: DeviceActionStatus.Pending,
+          },
+          // GetAppConfig state
+          {
+            intermediateValue: {
+              requiredUserInteraction: UserInteractionRequired.None,
+              step: SignTransactionDAStep.GET_APP_CONFIG,
             },
             status: DeviceActionStatus.Pending,
           },

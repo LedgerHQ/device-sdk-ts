@@ -15,6 +15,7 @@ import {
 import { Transaction } from "ethers";
 import { Left, Right } from "purify-ts";
 
+import type { GetConfigCommandResponse } from "@api/app-binder/GetConfigCommandTypes";
 import { makeDeviceActionInternalApiMock } from "@internal/app-binder/device-action/__test-utils__/makeInternalApi";
 import { type TransactionMapperResult } from "@internal/transaction/service/mapper/model/TransactionMapperResult";
 import { type TransactionMapperService } from "@internal/transaction/service/mapper/TransactionMapperService";
@@ -53,6 +54,17 @@ describe("BuildTransactionContextTask", () => {
   const apiMock = makeDeviceActionInternalApiMock();
   const getWeb3ChecksFactoryMock = vi.fn();
 
+  function createAppConfig(
+    web3ChecksEnabled: boolean,
+  ): GetConfigCommandResponse {
+    return {
+      blindSigningEnabled: false,
+      web3ChecksEnabled,
+      web3ChecksOptIn: false,
+      version: "1.13.0",
+    };
+  }
+
   beforeEach(() => {
     vi.resetAllMocks();
     apiMock.sendCommand.mockResolvedValue(
@@ -67,7 +79,7 @@ describe("BuildTransactionContextTask", () => {
       mapper: mapperMock as unknown as TransactionMapperService,
       transaction: defaultTransaction,
       options: defaultOptions,
-      web3ChecksEnabled: false,
+      appConfig: createAppConfig(false),
       derivationPath: "44'/60'/0'/0/0",
     };
   });
@@ -95,7 +107,7 @@ describe("BuildTransactionContextTask", () => {
     // WHEN
     const result = await new BuildTransactionContextTask(
       apiMock,
-      { ...defaultArgs, web3ChecksEnabled: true },
+      { ...defaultArgs, appConfig: createAppConfig(true) },
       getWeb3ChecksFactoryMock,
     ).run();
 
@@ -137,7 +149,7 @@ describe("BuildTransactionContextTask", () => {
     // WHEN
     const result = await new BuildTransactionContextTask(
       apiMock,
-      { ...defaultArgs, web3ChecksEnabled: true },
+      { ...defaultArgs, appConfig: createAppConfig(true) },
       getWeb3ChecksFactoryMock,
     ).run();
 
@@ -321,7 +333,7 @@ describe("BuildTransactionContextTask", () => {
     // WHEN
     await new BuildTransactionContextTask(
       apiMock,
-      { ...defaultArgs, web3ChecksEnabled: true },
+      { ...defaultArgs, appConfig: createAppConfig(true) },
       getWeb3ChecksFactoryMock,
     ).run();
 

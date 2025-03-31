@@ -67,7 +67,7 @@ export type MachineDependencies = {
       mapper: TransactionMapperService;
       transaction: Uint8Array;
       options: TransactionOptions;
-      web3ChecksEnabled: boolean;
+      appConfig: GetConfigCommandResponse;
       derivationPath: string;
     };
   }) => Promise<BuildTransactionTaskResult>;
@@ -157,14 +157,17 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
           context._internalState.clearSignContexts !== null &&
           typeof (context._internalState.clearSignContexts as GenericContext)
             .transactionInfo === "string",
-        isWeb3ChecksSupported: () =>
-          new ApplicationChecker(internalApi.getDeviceSessionState())
+        isWeb3ChecksSupported: ({ context }) =>
+          new ApplicationChecker(
+            internalApi.getDeviceSessionState(),
+            context._internalState.appConfig!,
+          )
             .withMinVersionExclusive("1.15.0")
             .excludeDeviceModel(DeviceModelId.NANO_S)
             .check(),
         shouldOptIn: ({ context }) =>
-          !context._internalState.web3ChecksEnabled &&
-          !context._internalState.web3ChecksOptIn,
+          !context._internalState.appConfig!.web3ChecksEnabled &&
+          !context._internalState.appConfig!.web3ChecksOptIn,
       },
       actions: {
         assignErrorFromEvent: assign({
@@ -187,11 +190,10 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
           },
           _internalState: {
             error: null,
+            appConfig: null,
             clearSignContexts: null,
             serializedTransaction: null,
             chainId: null,
-            web3ChecksOptIn: false,
-            web3ChecksEnabled: false,
             web3Check: null,
             transactionType: null,
             isLegacy: true,
@@ -242,10 +244,6 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
           always: [
             {
               target: "GetAppConfig",
-              guard: and(["noInternalError", "isWeb3ChecksSupported"]),
-            },
-            {
-              target: "BuildContext",
               guard: "noInternalError",
             },
             "Error",
@@ -269,11 +267,13 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
                     if (isSuccessCommandResult(event.output)) {
                       return {
                         ...context._internalState,
-                        web3ChecksOptIn: event.output.data.web3ChecksOptIn,
-                        web3ChecksEnabled: event.output.data.web3ChecksEnabled,
+                        appConfig: event.output.data,
                       };
                     } else {
-                      return context._internalState;
+                      return {
+                        ...context._internalState,
+                        error: event.output.error,
+                      };
                     }
                   },
                 }),
@@ -289,10 +289,18 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
           always: [
             {
               target: "Web3ChecksOptIn",
-              guard: "shouldOptIn",
+              guard: and([
+                "noInternalError",
+                "isWeb3ChecksSupported",
+                "shouldOptIn",
+              ]),
             },
             {
               target: "BuildContext",
+              guard: "noInternalError",
+            },
+            {
+              target: "Error",
             },
           ],
         },
@@ -320,7 +328,10 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
                     if (isSuccessCommandResult(event.output)) {
                       return {
                         ...context._internalState,
-                        web3ChecksEnabled: event.output.data.enabled,
+                        appConfig: {
+                          ...context._internalState.appConfig!,
+                          web3ChecksEnabled: event.output.data.enabled,
+                        },
                       };
                     } else {
                       return context._internalState;
@@ -350,7 +361,7 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
               mapper: context.input.mapper,
               transaction: context.input.transaction,
               options: context.input.options,
-              web3ChecksEnabled: context._internalState.web3ChecksEnabled,
+              appConfig: context._internalState.appConfig!,
               derivationPath: context.input.derivationPath,
             }),
             onDone: {
