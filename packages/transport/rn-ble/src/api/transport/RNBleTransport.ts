@@ -495,23 +495,27 @@ export class RNBleTransport implements Transport {
     }
     return new Observable<TransportDiscoveredDevice>((subscriber) => {
       this._lastScanTimestamp = Maybe.of(Date.now());
-      this._manager.startDeviceScan(null, null, (error, device) => {
-        if (error || !device) {
-          subscriber.error(error);
-          return;
-        }
+      this._manager.startDeviceScan(
+        null,
+        { allowDuplicates: true },
+        (error, device) => {
+          if (error || !device) {
+            subscriber.error(error);
+            return;
+          }
 
-        this._getDiscoveredDeviceFrom(device, ledgerUuids).map(
-          ({ discoveredDevice, bleDeviceInfos }) => {
-            this._emitDiscoveredDevice(
-              subscriber,
-              bleDeviceInfos,
-              discoveredDevice,
-            );
-          },
-        );
-        this._handleLostDiscoveredDevices(subscriber);
-      });
+          this._getDiscoveredDeviceFrom(device, ledgerUuids).map(
+            ({ discoveredDevice, bleDeviceInfos }) => {
+              this._emitDiscoveredDevice(
+                subscriber,
+                bleDeviceInfos,
+                discoveredDevice,
+              );
+            },
+          );
+          this._handleLostDiscoveredDevices(subscriber);
+        },
+      );
       return {
         unsubscribe: async () => {
           await this._manager.stopDeviceScan();
