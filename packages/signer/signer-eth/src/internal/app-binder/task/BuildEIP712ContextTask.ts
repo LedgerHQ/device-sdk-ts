@@ -11,6 +11,7 @@ import {
 import { TypedDataEncoder, type TypedDataField } from "ethers";
 import { Just, type Maybe, Nothing } from "purify-ts";
 
+import { type GetConfigCommandResponse } from "@api/app-binder/GetConfigCommandTypes";
 import { type TypedData } from "@api/model/TypedData";
 import {
   GetWeb3CheckTask,
@@ -30,7 +31,7 @@ export class BuildEIP712ContextTask {
     private readonly parser: TypedDataParserService,
     private readonly data: TypedData,
     private readonly derivationPath: string,
-    private readonly web3ChecksEnabled: boolean,
+    private readonly appConfig: GetConfigCommandResponse,
     private readonly getWeb3ChecksFactory = (
       api: InternalApi,
       args: GetWeb3CheckTaskArgs,
@@ -41,7 +42,7 @@ export class BuildEIP712ContextTask {
     // Run the web3checks if needed
     let web3Check: ClearSignContextSuccess<ClearSignContextType.WEB3_CHECK> | null =
       null;
-    if (this.web3ChecksEnabled) {
+    if (this.appConfig.web3ChecksEnabled) {
       web3Check = (
         await this.getWeb3ChecksFactory(this.api, {
           contextModule: this.contextModule,
@@ -117,7 +118,7 @@ export class BuildEIP712ContextTask {
   private getClearSignVersion(): Maybe<"v1" | "v2"> {
     const deviceState = this.api.getDeviceSessionState();
     if (
-      !new ApplicationChecker(deviceState)
+      !new ApplicationChecker(deviceState, this.appConfig)
         .withMinVersionInclusive("1.10.0")
         .excludeDeviceModel(DeviceModelId.NANO_S)
         .check()
@@ -133,7 +134,10 @@ export class BuildEIP712ContextTask {
     // * Trusted name filters not yet released
     // Therefore it's safer and easier to use V1 filters before 1.12.0:
     // https://github.com/LedgerHQ/app-ethereum/blob/develop/doc/ethapp.adoc#1120
-    const shouldUseV2Filters = new ApplicationChecker(deviceState)
+    const shouldUseV2Filters = new ApplicationChecker(
+      deviceState,
+      this.appConfig,
+    )
       .withMinVersionInclusive("1.12.0")
       .check();
     return shouldUseV2Filters ? Just("v2") : Just("v1");
