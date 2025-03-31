@@ -1,5 +1,11 @@
 # @ledgerhq/device-signer-kit-ethereum
 
+## 1.3.3
+
+### Patch Changes
+
+- [#768](https://github.com/LedgerHQ/device-sdk-ts/pull/768) [`c8dd446`](https://github.com/LedgerHQ/device-sdk-ts/commit/c8dd44678ef27402f136d7ca8796b05ebcc2a330) Thanks [@paoun-ledger](https://github.com/paoun-ledger)! - Fix version compatibility checker for plugins
+
 ## 1.3.2
 
 ### Patch Changes
