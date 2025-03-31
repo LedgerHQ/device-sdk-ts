@@ -1,5 +1,14 @@
 # @ledgerhq/context-module
 
+## 1.3.1
+
+### Patch Changes
+
+- [#743](https://github.com/LedgerHQ/device-sdk-ts/pull/743) [`42d675f`](https://github.com/LedgerHQ/device-sdk-ts/commit/42d675f9f9be9a83c1f9b682a5bd182711feaae5) Thanks [@aussedatlo](https://github.com/aussedatlo)! - update transaction check backend url
+
+- Updated dependencies [[`e3d6744`](https://github.com/LedgerHQ/device-sdk-ts/commit/e3d6744336d45840a9715e48c319cdf4ce77bb4f), [`da9d303`](https://github.com/LedgerHQ/device-sdk-ts/commit/da9d303e53790159e6d22f3f366f71314eef5752), [`d93a602`](https://github.com/LedgerHQ/device-sdk-ts/commit/d93a602d1ee161d6d8da4e0e40690a4273a813e0), [`29242d5`](https://github.com/LedgerHQ/device-sdk-ts/commit/29242d51c79d9043c3a6160d897b4938f044b7c4)]:
+  - @ledgerhq/device-management-kit@0.7.0
+
 ## 1.3.0
 
 ### Minor Changes
