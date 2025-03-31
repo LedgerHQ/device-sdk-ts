@@ -8,6 +8,7 @@ import {
   type UserInteractionRequired,
 } from "@ledgerhq/device-management-kit";
 
+import { type GetConfigCommandResponse } from "@api/app-binder/GetConfigCommandTypes";
 import { type Signature } from "@api/model/Signature";
 import { type TypedData } from "@api/model/TypedData";
 import { type EthErrorCodes } from "@internal/app-binder/command/utils/ethAppErrors";
@@ -56,8 +57,7 @@ export type SignTypedDataDAState = DeviceActionState<
 
 export type SignTypedDataDAInternalState = {
   readonly error: SignTypedDataDAError | null;
-  web3ChecksOptIn: boolean;
-  web3ChecksEnabled: boolean;
+  readonly appConfig: GetConfigCommandResponse | null;
   readonly typedDataContext: ProvideEIP712ContextTaskArgs | null;
   readonly signature: Signature | null;
 };

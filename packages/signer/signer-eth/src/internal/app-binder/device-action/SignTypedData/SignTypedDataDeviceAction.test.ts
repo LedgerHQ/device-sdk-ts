@@ -124,7 +124,24 @@ describe("SignTypedDataDeviceAction", () => {
     };
   }
 
-  function setupAppVersion(version: string) {
+  function createAppConfig(
+    version: string,
+    web3ChecksEnabled: boolean,
+    web3ChecksOptIn: boolean,
+  ) {
+    return {
+      blindSigningEnabled: false,
+      web3ChecksEnabled,
+      web3ChecksOptIn,
+      version,
+    };
+  }
+
+  function setupAppConfig(
+    version: string,
+    web3ChecksEnabled: boolean,
+    web3ChecksOptIn: boolean,
+  ) {
     apiMock.getDeviceSessionState.mockReturnValueOnce({
       sessionStateType: DeviceSessionStateType.ReadyWithoutSecureChannel,
       deviceStatus: DeviceStatus.CONNECTED,
@@ -133,6 +150,11 @@ describe("SignTypedDataDeviceAction", () => {
       deviceModelId: DeviceModelId.FLEX,
       isSecureConnectionAllowed: false,
     });
+    getAppConfigMock.mockResolvedValue(
+      CommandResultFactory({
+        data: createAppConfig(version, web3ChecksEnabled, web3ChecksOptIn),
+      }),
+    );
   }
 
   beforeEach(() => {
@@ -143,7 +165,7 @@ describe("SignTypedDataDeviceAction", () => {
     it("should call external dependencies with the correct parameters", () =>
       new Promise<void>((resolve, reject) => {
         setupOpenAppDAMock();
-        setupAppVersion("1.15.0");
+        setupAppConfig("1.15.0", false, false);
 
         const deviceAction = new SignTypedDataDeviceAction({
           input: {
@@ -192,6 +214,13 @@ describe("SignTypedDataDeviceAction", () => {
           {
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
+              step: SignTypedDataDAStateStep.GET_APP_CONFIG,
+            },
+            status: DeviceActionStatus.Pending,
+          },
+          {
+            intermediateValue: {
+              requiredUserInteraction: UserInteractionRequired.None,
               step: SignTypedDataDAStateStep.BUILD_CONTEXT,
             },
             status: DeviceActionStatus.Pending,
@@ -230,7 +259,7 @@ describe("SignTypedDataDeviceAction", () => {
                   contextModule: mockContextModule,
                   parser: mockParser,
                   data: TEST_MESSAGE,
-                  web3ChecksEnabled: false,
+                  appConfig: createAppConfig("1.15.0", false, false),
                   derivationPath: "44'/60'/0'/0/0",
                 },
               }),
@@ -261,7 +290,7 @@ describe("SignTypedDataDeviceAction", () => {
     it("should fallback to legacy signing if the new one fails", () =>
       new Promise<void>((resolve, reject) => {
         setupOpenAppDAMock();
-        setupAppVersion("1.15.0");
+        setupAppConfig("1.15.0", false, false);
 
         const deviceAction = new SignTypedDataDeviceAction({
           input: {
@@ -313,6 +342,13 @@ describe("SignTypedDataDeviceAction", () => {
           {
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
+              step: SignTypedDataDAStateStep.GET_APP_CONFIG,
+            },
+            status: DeviceActionStatus.Pending,
+          },
+          {
+            intermediateValue: {
+              requiredUserInteraction: UserInteractionRequired.None,
               step: SignTypedDataDAStateStep.BUILD_CONTEXT,
             },
             status: DeviceActionStatus.Pending,
@@ -350,7 +386,7 @@ describe("SignTypedDataDeviceAction", () => {
     it("should not fallback to legacy signing if rejected by the user during streaming", () =>
       new Promise<void>((resolve, reject) => {
         setupOpenAppDAMock();
-        setupAppVersion("1.15.0");
+        setupAppConfig("1.15.0", false, false);
 
         const deviceAction = new SignTypedDataDeviceAction({
           input: {
@@ -402,6 +438,13 @@ describe("SignTypedDataDeviceAction", () => {
           {
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
+              step: SignTypedDataDAStateStep.GET_APP_CONFIG,
+            },
+            status: DeviceActionStatus.Pending,
+          },
+          {
+            intermediateValue: {
+              requiredUserInteraction: UserInteractionRequired.None,
               step: SignTypedDataDAStateStep.BUILD_CONTEXT,
             },
             status: DeviceActionStatus.Pending,
@@ -433,7 +476,7 @@ describe("SignTypedDataDeviceAction", () => {
     it("should call external dependencies with web3Checks enabled and supported", () =>
       new Promise<void>((resolve, reject) => {
         setupOpenAppDAMock();
-        setupAppVersion("1.16.0");
+        setupAppConfig("1.16.0", true, true);
 
         const deviceAction = new SignTypedDataDeviceAction({
           input: {
@@ -447,16 +490,6 @@ describe("SignTypedDataDeviceAction", () => {
         // Mock the dependencies to return some sample data
         vi.spyOn(deviceAction, "extractDependencies").mockReturnValue(
           extractDependenciesMock(),
-        );
-        getAppConfigMock.mockResolvedValue(
-          CommandResultFactory({
-            data: {
-              blindSigningEnabled: false,
-              web3ChecksEnabled: true,
-              web3ChecksOptIn: true,
-              version: "1.16.0",
-            },
-          }),
         );
         buildContextMock.mockRejectedValueOnce(
           new InvalidStatusWordError("buildContext error"),
@@ -510,7 +543,7 @@ describe("SignTypedDataDeviceAction", () => {
                   contextModule: mockContextModule,
                   parser: mockParser,
                   data: TEST_MESSAGE,
-                  web3ChecksEnabled: true,
+                  appConfig: createAppConfig("1.16.0", true, true),
                   derivationPath: "44'/60'/0'/0/0",
                 },
               }),
@@ -523,7 +556,7 @@ describe("SignTypedDataDeviceAction", () => {
     it("should call external dependencies with web3Checks supported but disabled", () =>
       new Promise<void>((resolve, reject) => {
         setupOpenAppDAMock();
-        setupAppVersion("1.16.0");
+        setupAppConfig("1.16.0", false, true);
 
         const deviceAction = new SignTypedDataDeviceAction({
           input: {
@@ -537,16 +570,6 @@ describe("SignTypedDataDeviceAction", () => {
         // Mock the dependencies to return some sample data
         vi.spyOn(deviceAction, "extractDependencies").mockReturnValue(
           extractDependenciesMock(),
-        );
-        getAppConfigMock.mockResolvedValue(
-          CommandResultFactory({
-            data: {
-              blindSigningEnabled: false,
-              web3ChecksEnabled: false,
-              web3ChecksOptIn: true,
-              version: "1.16.0",
-            },
-          }),
         );
         buildContextMock.mockRejectedValueOnce(
           new InvalidStatusWordError("buildContext error"),
@@ -600,7 +623,7 @@ describe("SignTypedDataDeviceAction", () => {
                   contextModule: mockContextModule,
                   parser: mockParser,
                   data: TEST_MESSAGE,
-                  web3ChecksEnabled: false,
+                  appConfig: createAppConfig("1.16.0", false, true),
                   derivationPath: "44'/60'/0'/0/0",
                 },
               }),
@@ -613,7 +636,7 @@ describe("SignTypedDataDeviceAction", () => {
     it("should call external dependencies with web3Checks opt-in, then enabled", () =>
       new Promise<void>((resolve, reject) => {
         setupOpenAppDAMock();
-        setupAppVersion("1.16.0");
+        setupAppConfig("1.16.0", false, false);
 
         const deviceAction = new SignTypedDataDeviceAction({
           input: {
@@ -627,16 +650,6 @@ describe("SignTypedDataDeviceAction", () => {
         // Mock the dependencies to return some sample data
         vi.spyOn(deviceAction, "extractDependencies").mockReturnValue(
           extractDependenciesMock(),
-        );
-        getAppConfigMock.mockResolvedValue(
-          CommandResultFactory({
-            data: {
-              blindSigningEnabled: false,
-              web3ChecksEnabled: false,
-              web3ChecksOptIn: false,
-              version: "1.16.0",
-            },
-          }),
         );
         web3CheckOptInMock.mockResolvedValueOnce(
           CommandResultFactory({ data: { enabled: true } }),
@@ -701,7 +714,7 @@ describe("SignTypedDataDeviceAction", () => {
                   contextModule: mockContextModule,
                   parser: mockParser,
                   data: TEST_MESSAGE,
-                  web3ChecksEnabled: true,
+                  appConfig: createAppConfig("1.16.0", true, false),
                   derivationPath: "44'/60'/0'/0/0",
                 },
               }),
@@ -711,10 +724,10 @@ describe("SignTypedDataDeviceAction", () => {
         });
       }));
 
-    it("should call external dependencies with web3Checks opt-in, then enabled", () =>
+    it("should call external dependencies with web3Checks opt-in, then disabled", () =>
       new Promise<void>((resolve, reject) => {
         setupOpenAppDAMock();
-        setupAppVersion("1.16.0");
+        setupAppConfig("1.16.0", false, false);
 
         const deviceAction = new SignTypedDataDeviceAction({
           input: {
@@ -729,18 +742,8 @@ describe("SignTypedDataDeviceAction", () => {
         vi.spyOn(deviceAction, "extractDependencies").mockReturnValue(
           extractDependenciesMock(),
         );
-        getAppConfigMock.mockResolvedValue(
-          CommandResultFactory({
-            data: {
-              blindSigningEnabled: false,
-              web3ChecksEnabled: false,
-              web3ChecksOptIn: false,
-              version: "1.16.0",
-            },
-          }),
-        );
         web3CheckOptInMock.mockResolvedValueOnce(
-          CommandResultFactory({ data: { enabled: true } }),
+          CommandResultFactory({ data: { enabled: false } }),
         );
         buildContextMock.mockRejectedValueOnce(
           new InvalidStatusWordError("buildContext error"),
@@ -802,7 +805,7 @@ describe("SignTypedDataDeviceAction", () => {
                   contextModule: mockContextModule,
                   parser: mockParser,
                   data: TEST_MESSAGE,
-                  web3ChecksEnabled: true,
+                  appConfig: createAppConfig("1.16.0", false, false),
                   derivationPath: "44'/60'/0'/0/0",
                 },
               }),
@@ -857,7 +860,7 @@ describe("SignTypedDataDeviceAction", () => {
     it("Error while building context", () =>
       new Promise<void>((resolve, reject) => {
         setupOpenAppDAMock();
-        setupAppVersion("1.15.0");
+        setupAppConfig("1.15.0", false, false);
 
         const deviceAction = new SignTypedDataDeviceAction({
           input: {
@@ -892,6 +895,13 @@ describe("SignTypedDataDeviceAction", () => {
           {
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
+              step: SignTypedDataDAStateStep.GET_APP_CONFIG,
+            },
+            status: DeviceActionStatus.Pending,
+          },
+          {
+            intermediateValue: {
+              requiredUserInteraction: UserInteractionRequired.None,
               step: SignTypedDataDAStateStep.BUILD_CONTEXT,
             },
             status: DeviceActionStatus.Pending,
@@ -911,7 +921,7 @@ describe("SignTypedDataDeviceAction", () => {
     it("Error thrown while providing context", () =>
       new Promise<void>((resolve, reject) => {
         setupOpenAppDAMock();
-        setupAppVersion("1.15.0");
+        setupAppConfig("1.15.0", false, false);
 
         const deviceAction = new SignTypedDataDeviceAction({
           input: {
@@ -947,6 +957,13 @@ describe("SignTypedDataDeviceAction", () => {
           {
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
+              step: SignTypedDataDAStateStep.GET_APP_CONFIG,
+            },
+            status: DeviceActionStatus.Pending,
+          },
+          {
+            intermediateValue: {
+              requiredUserInteraction: UserInteractionRequired.None,
               step: SignTypedDataDAStateStep.BUILD_CONTEXT,
             },
             status: DeviceActionStatus.Pending,
@@ -973,7 +990,7 @@ describe("SignTypedDataDeviceAction", () => {
     it("Error while signing", () =>
       new Promise<void>((resolve, reject) => {
         setupOpenAppDAMock();
-        setupAppVersion("1.15.0");
+        setupAppConfig("1.15.0", false, false);
 
         const deviceAction = new SignTypedDataDeviceAction({
           input: {
@@ -1012,6 +1029,13 @@ describe("SignTypedDataDeviceAction", () => {
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.ConfirmOpenApp,
               step: SignTypedDataDAStateStep.OPEN_APP,
+            },
+            status: DeviceActionStatus.Pending,
+          },
+          {
+            intermediateValue: {
+              requiredUserInteraction: UserInteractionRequired.None,
+              step: SignTypedDataDAStateStep.GET_APP_CONFIG,
             },
             status: DeviceActionStatus.Pending,
           },

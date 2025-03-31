@@ -5,6 +5,7 @@ import {
 } from "@ledgerhq/device-management-kit";
 import { gt, gte } from "semver";
 
+import { type GetConfigCommandResponse } from "@api/app-binder/GetConfigCommandTypes";
 import { ETHEREUM_PLUGINS } from "@internal/app-binder/constant/plugins";
 
 export class ApplicationChecker {
@@ -12,7 +13,10 @@ export class ApplicationChecker {
   private version: string = "0.0.1";
   private modelId: DeviceModelId;
 
-  constructor(deviceState: DeviceSessionState) {
+  constructor(
+    deviceState: DeviceSessionState,
+    appConfig: GetConfigCommandResponse,
+  ) {
     this.modelId = deviceState.deviceModelId;
 
     // If device is not ready or app is unexpected, checker cannot be successful
@@ -27,7 +31,13 @@ export class ApplicationChecker {
       this.isCompatible = false;
       return;
     }
-    this.version = deviceState.currentApp.version;
+    if (deviceState.currentApp.name === "Ethereum") {
+      this.version = deviceState.currentApp.version;
+    } else {
+      // Fallback on appConfig version if a plugin is running.
+      // It won't contain release candidate suffix but it should be enough for that edge case.
+      this.version = appConfig.version;
+    }
   }
 
   withMinVersionInclusive(version: string): ApplicationChecker {

@@ -10,6 +10,7 @@ import {
 } from "@ledgerhq/device-management-kit";
 import { Just, Left, Nothing, Right } from "purify-ts";
 
+import type { GetConfigCommandResponse } from "@api/app-binder/GetConfigCommandTypes";
 import { makeDeviceActionInternalApiMock } from "@internal/app-binder/device-action/__test-utils__/makeInternalApi";
 import {
   PrimitiveType,
@@ -32,6 +33,17 @@ describe("BuildEIP712ContextTask", () => {
     parse: vi.fn(),
   };
   const getWeb3ChecksFactoryMock = vi.fn();
+
+  function createAppConfig(
+    web3ChecksEnabled: boolean,
+  ): GetConfigCommandResponse {
+    return {
+      blindSigningEnabled: false,
+      web3ChecksEnabled,
+      web3ChecksOptIn: false,
+      version: "1.13.0",
+    };
+  }
 
   const TEST_DATA = {
     domain: {
@@ -153,7 +165,7 @@ describe("BuildEIP712ContextTask", () => {
       parserMock,
       TEST_DATA,
       "44'/60'/0'/0/0",
-      false,
+      createAppConfig(false),
       getWeb3ChecksFactoryMock,
     );
     parserMock.parse.mockReturnValueOnce(
@@ -195,7 +207,7 @@ describe("BuildEIP712ContextTask", () => {
       parserMock,
       TEST_DATA,
       "44'/60'/0'/0/0",
-      false,
+      createAppConfig(false),
       getWeb3ChecksFactoryMock,
     );
     parserMock.parse.mockReturnValueOnce(
@@ -243,7 +255,7 @@ describe("BuildEIP712ContextTask", () => {
       parserMock,
       TEST_DATA,
       "44'/60'/0'/0/0",
-      false,
+      createAppConfig(false),
       getWeb3ChecksFactoryMock,
     );
     getWeb3ChecksFactoryMock.mockReturnValueOnce({
@@ -310,7 +322,7 @@ describe("BuildEIP712ContextTask", () => {
       parserMock,
       TEST_DATA,
       "44'/60'/0'/0/0",
-      true,
+      createAppConfig(true),
       getWeb3ChecksFactoryMock,
     );
     getWeb3ChecksFactoryMock.mockReturnValueOnce({
@@ -363,7 +375,7 @@ describe("BuildEIP712ContextTask", () => {
       parserMock,
       TEST_DATA,
       "44'/60'/0'/0/0",
-      false,
+      createAppConfig(false),
       getWeb3ChecksFactoryMock,
     );
     parserMock.parse.mockReturnValueOnce(
@@ -416,7 +428,7 @@ describe("BuildEIP712ContextTask", () => {
         primaryType: "",
       },
       "44'/60'/0'/0/0",
-      false,
+      createAppConfig(false),
       getWeb3ChecksFactoryMock,
     );
     parserMock.parse.mockReturnValueOnce(
@@ -445,7 +457,7 @@ describe("BuildEIP712ContextTask", () => {
       parserMock,
       TEST_DATA,
       "44'/60'/0'/0/0",
-      false,
+      createAppConfig(false),
       getWeb3ChecksFactoryMock,
     );
     parserMock.parse.mockReturnValueOnce(Left(new Error("Parsing error")));

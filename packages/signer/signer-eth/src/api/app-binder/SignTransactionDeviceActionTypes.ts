@@ -12,6 +12,7 @@ import {
   type UserInteractionRequired,
 } from "@ledgerhq/device-management-kit";
 
+import { type GetConfigCommandResponse } from "@api/app-binder/GetConfigCommandTypes";
 import { type Signature } from "@api/model/Signature";
 import { type TransactionOptions } from "@api/model/TransactionOptions";
 import { type TransactionType } from "@api/model/TransactionType";
@@ -63,9 +64,8 @@ export type SignTransactionDAState = DeviceActionState<
 
 export type SignTransactionDAInternalState = {
   readonly error: SignTransactionDAError | null;
+  readonly appConfig: GetConfigCommandResponse | null;
   readonly clearSignContexts: ClearSignContextSuccess[] | GenericContext | null;
-  readonly web3ChecksOptIn: boolean;
-  readonly web3ChecksEnabled: boolean;
   readonly web3Check: ClearSignContextSuccess<ClearSignContextType.WEB3_CHECK> | null;
   readonly serializedTransaction: Uint8Array | null;
   readonly chainId: number | null;

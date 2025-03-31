@@ -11,6 +11,7 @@ import {
   isSuccessCommandResult,
 } from "@ledgerhq/device-management-kit";
 
+import { type GetConfigCommandResponse } from "@api/app-binder/GetConfigCommandTypes";
 import { type TransactionOptions } from "@api/model/TransactionOptions";
 import { type TransactionType } from "@api/model/TransactionType";
 import { GetChallengeCommand } from "@internal/app-binder/command/GetChallengeCommand";
@@ -36,7 +37,7 @@ export type BuildTransactionContextTaskArgs = {
   readonly mapper: TransactionMapperService;
   readonly transaction: Uint8Array;
   readonly options: TransactionOptions;
-  readonly web3ChecksEnabled: boolean;
+  readonly appConfig: GetConfigCommandResponse;
   readonly derivationPath: string;
 };
 
@@ -56,7 +57,7 @@ export class BuildTransactionContextTask {
       mapper,
       transaction,
       options,
-      web3ChecksEnabled,
+      appConfig,
       derivationPath,
     } = this.args;
     const deviceState = this.api.getDeviceSessionState();
@@ -71,7 +72,7 @@ export class BuildTransactionContextTask {
     // Run the web3checks if needed
     let web3Check: ClearSignContextSuccess<ClearSignContextType.WEB3_CHECK> | null =
       null;
-    if (web3ChecksEnabled) {
+    if (appConfig.web3ChecksEnabled) {
       web3Check = (
         await this.getWeb3ChecksFactory(this.api, {
           contextModule,
@@ -127,7 +128,7 @@ export class BuildTransactionContextTask {
     // we need to filter out the transaction info and transaction field description
     // as they are not supported by the device
     if (
-      !this.supportsGenericParser(deviceState) ||
+      !this.supportsGenericParser(deviceState, appConfig) ||
       transactionInfo === undefined
     ) {
       filteredContexts = clearSignContextsSuccess.filter(
@@ -157,8 +158,11 @@ export class BuildTransactionContextTask {
     };
   }
 
-  private supportsGenericParser(deviceState: DeviceSessionState): boolean {
-    return new ApplicationChecker(deviceState)
+  private supportsGenericParser(
+    deviceState: DeviceSessionState,
+    appConfig: GetConfigCommandResponse,
+  ): boolean {
+    return new ApplicationChecker(deviceState, appConfig)
       .withMinVersionExclusive("1.14.0")
       .excludeDeviceModel(DeviceModelId.NANO_S)
       .check();
