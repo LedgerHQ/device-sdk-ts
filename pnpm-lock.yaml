@@ -618,8 +618,8 @@ importers:
   packages/signer/signer-eth:
     dependencies:
       '@ledgerhq/signer-utils':
-        specifier: workspace:*
-        version: link:../signer-utils
+        specifier: ^1.0.4
+        version: 1.0.4(@ledgerhq/device-management-kit@packages+device-management-kit)
       ethers:
         specifier: 6.13.4
         version: 6.13.4
@@ -2716,6 +2716,11 @@ packages:
     peerDependenciesMeta:
       '@types/react':
         optional: true
+
+  '@ledgerhq/signer-utils@1.0.4':
+    resolution: {integrity: sha512-74b0x/DW4DIE3dbAc/SYyL/wGtUQl74/7Ap0kNg2oTuAW3H2iLqfgOzatcUiyvn9qPmDFa72eAkgGLU7LLbJ5A==}
+    peerDependencies:
+      '@ledgerhq/device-management-kit': 0.6.2
 
   '@ledgerhq/ui-shared@0.3.0':
     resolution: {integrity: sha512-QSu+yRnt/WbGCfHZ9oi6oZ3JnauS/xglG68Wg0k1xCqgO/VvqUiluHpQSZqXFaBA11sFbMyMWA3E3h5gwVyPwA==}
@@ -12963,6 +12968,10 @@ snapshots:
       - react-native-svg
       - supports-color
 
+  '@ledgerhq/signer-utils@1.0.4(@ledgerhq/device-management-kit@packages+device-management-kit)':
+    dependencies:
+      '@ledgerhq/device-management-kit': link:packages/device-management-kit
+
   '@ledgerhq/ui-shared@0.3.0': {}
 
   '@manypkg/find-root@1.1.0':
@@ -13956,7 +13965,9 @@ snapshots:
     transitivePeerDependencies:
       - '@babel/core'
       - '@babel/preset-env'
+      - bufferutil
       - supports-color
+      - utf-8-validate
 
   '@react-native/normalize-colors@0.76.6': {}
 
