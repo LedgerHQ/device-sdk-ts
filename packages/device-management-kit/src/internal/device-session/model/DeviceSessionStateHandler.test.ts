@@ -1,7 +1,5 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-/* eslint-disable @typescript-eslint/no-unsafe-assignment */
-
 import { BehaviorSubject, Subject } from "rxjs";
+import { expect, type Mock } from "vitest";
 
 import { type DeviceSessionState } from "@api/device-session/DeviceSessionState";
 import {
@@ -16,7 +14,10 @@ import {
   SessionEvents,
 } from "@internal/device-session/model/DeviceSessionEventDispatcher";
 
-import { DeviceSessionStateHandler } from "./DeviceSessionStateHandler";
+import {
+  DeviceSessionStateHandler,
+  type SetDeviceSessionStateFn,
+} from "./DeviceSessionStateHandler";
 
 describe("DeviceSessionStateHandler", () => {
   let fakeEventSubject: Subject<NewEvent>;
@@ -27,7 +28,7 @@ describe("DeviceSessionStateHandler", () => {
   const mockLoggerModuleFactory = vi.fn(() => mockLogger);
   let fakeConnectedDevice: { deviceModel: { id: string } };
   let deviceState: BehaviorSubject<DeviceSessionState>;
-  let setDeviceSessionState: any;
+  let setDeviceSessionState: Mock<SetDeviceSessionStateFn>;
   let handler: DeviceSessionStateHandler;
 
   beforeEach(() => {
@@ -110,9 +111,9 @@ describe("DeviceSessionStateHandler", () => {
     });
 
     // Then
-    expect(setDeviceSessionState).toHaveBeenCalled();
-    const callArg = setDeviceSessionState.mock.calls[0][0];
-    expect(callArg.deviceStatus).toBe(DeviceStatus.BUSY);
+    expect(setDeviceSessionState).toHaveBeenCalledWith(
+      expect.objectContaining({ deviceStatus: DeviceStatus.BUSY }),
+    );
   });
 
   it("updates device state on DEVICE_STATE_UPDATE_CONNECTED event", () => {
@@ -122,9 +123,9 @@ describe("DeviceSessionStateHandler", () => {
     });
 
     // Then
-    expect(setDeviceSessionState).toHaveBeenCalled();
-    const callArg = setDeviceSessionState.mock.calls[0][0];
-    expect(callArg.deviceStatus).toBe(DeviceStatus.CONNECTED);
+    expect(setDeviceSessionState).toHaveBeenCalledWith(
+      expect.objectContaining({ deviceStatus: DeviceStatus.CONNECTED }),
+    );
   });
 
   it("logs error and does not update state if command result is unsuccessful", () => {

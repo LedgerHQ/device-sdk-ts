@@ -151,10 +151,27 @@ export class DeviceSession {
     options: SendApduOptions = {
       isPolling: false,
       triggersDisconnection: false,
-      abortTimeout: 0,
+      abortTimeout: undefined,
     },
   ): Promise<Either<DmkError, ApduResponse>> {
+    let abortSendApduTimeout: NodeJS.Timeout | undefined = undefined;
     const release = await this._commandMutex.lock();
+
+    if (options.abortTimeout) {
+      abortSendApduTimeout = setTimeout(() => {
+        if (this._deviceState.getValue().deviceStatus !== DeviceStatus.BUSY) {
+          return;
+        }
+        this._logger.warn(
+          `Aborting command execution due to timeout of ${options.abortTimeout}ms`,
+          { data: { mutex: this._commandMutex } },
+        );
+        this._sessionEventDispatcher.dispatch({
+          eventName: SessionEvents.DEVICE_STATE_UPDATE_CONNECTED,
+        });
+        this._commandMutex.clear();
+      }, options.abortTimeout);
+    }
 
     try {
       this._sessionEventDispatcher.dispatch({
@@ -184,6 +201,9 @@ export class DeviceSession {
         });
       return result;
     } finally {
+      if (abortSendApduTimeout) {
+        clearTimeout(abortSendApduTimeout);
+      }
       release();
     }
   }

@@ -107,7 +107,6 @@ export {
   type ListInstalledAppsDARequiredInteraction,
   type ListInstalledAppsDAState,
 } from "@api/secure-channel/device-action/ListInstalledApps/types";
-export { type DeviceApduSender } from "@api/transport/model/DeviceApduSender";
 export {
   type UninstallAppDAError,
   type UninstallAppDAInput,
@@ -116,6 +115,7 @@ export {
   type UninstallAppDARequiredInteraction,
   type UninstallAppDAState,
 } from "@api/secure-channel/device-action/UninstallApp/types";
+export { type DeviceApduSender } from "@api/transport/model/DeviceApduSender";
 export {
   type DeviceConnection,
   type DisconnectHandler,
