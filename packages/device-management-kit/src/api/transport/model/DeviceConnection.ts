@@ -9,6 +9,7 @@ export type DisconnectHandler = (deviceId: DeviceId) => void;
 export type SendApduFnType = (
   apdu: Uint8Array,
   triggersDisconnection?: boolean,
+  abortTimeout?: number,
 ) => Promise<Either<DmkError, ApduResponse>>;
 
 export interface DeviceConnection {

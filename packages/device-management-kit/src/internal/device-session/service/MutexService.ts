@@ -21,9 +21,4 @@ export class MutexService {
       }
     });
   }
-
-  clear() {
-    this._queue = [];
-    this._locked = false;
-  }
 }

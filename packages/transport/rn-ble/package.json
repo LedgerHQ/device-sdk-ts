@@ -50,7 +50,7 @@
     "@types/uuid": "^10.0.0",
     "@vitejs/plugin-react": "^4.3.4",
     "react-native": "^0.76.3",
-    "react-native-ble-plx": "^3.2.1",
+    "react-native-ble-plx": "3.4.0",
     "rxjs": "^7.8.1",
     "ts-node": "^10.9.2",
     "vitest-react-native": "^0.1.5"
@@ -58,7 +58,7 @@
   "peerDependencies": {
     "@ledgerhq/device-management-kit": "workspace:*",
     "react-native": ">0.70",
-    "react-native-ble-plx": "^3.2.1",
+    "react-native-ble-plx": "3.4.0",
     "rxjs": "^7.8.1"
   }
 }
