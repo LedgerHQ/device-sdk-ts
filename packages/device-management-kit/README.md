@@ -80,6 +80,32 @@ export const sdk = new DeviceManagementKitBuilder()
   .build();
 ```
 
+### Add a custom Manager API Provider
+
+Custom providers can be set in two ways:
+
+- At build time:
+
+```ts
+import {
+  ConsoleLogger,
+  DeviceManagementKitBuilder,
+} from "@ledgerhq/device-management-kit";
+import { webHidTransportFactory } from "@ledgerhq/device-transport-kit-web-hid";
+
+export const sdk = new DeviceManagementKitBuilder()
+  .addLogger(new ConsoleLogger())
+  .addTransport(webHidTransportFactory)
+  .addConfig({ provider: 123 }) // using provider key in the addConfig obj
+  .build();
+```
+
+- At runtime:
+
+```ts
+dmk.setProvider(123); // using the setProvider from DMK
+```
+
 ### Connecting to a Device
 
 There are two steps to connecting to a device:

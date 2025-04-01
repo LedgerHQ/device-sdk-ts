@@ -14,12 +14,10 @@ export interface ManagerApiService {
    * Retrieves the list of applications for a given device.
    *
    * @param deviceInfo - Response of the GetOsVersionCommand.
-   * @param provider - The provider identifier.
    * @returns An `EitherAsync` containing either an `HttpFetchApiError` or an array of `Application` objects.
    */
   getAppList(
     deviceInfo: GetOsVersionResponse,
-    provider: number,
   ): EitherAsync<HttpFetchApiError, Array<Application>>;
 
   /**
@@ -36,12 +34,10 @@ export interface ManagerApiService {
    * Retrieves the device version for a given device.
    *
    * @param deviceInfo - Response of the GetOsVersionCommand.
-   * @param provider - The provider identifier.
    * @returns An `EitherAsync` containing either an `HttpFetchApiError` or a `DeviceVersion` object.
    */
   getDeviceVersion(
     deviceInfo: GetOsVersionResponse,
-    provider: number,
   ): EitherAsync<HttpFetchApiError, DeviceVersion>;
 
   /**
@@ -49,12 +45,10 @@ export interface ManagerApiService {
    *
    * @param deviceInfo - Response of the GetOsVersionCommand.
    * @param deviceVersion - Response of the GetDeviceVersion HTTP request.
-   * @param provider - The provider identifier.
    * @returns An `EitherAsync` containing either an `HttpFetchApiError` or a `FinalFirmware` object.
    */
   getFirmwareVersion(
     deviceInfo: GetOsVersionResponse,
     deviceVersion: DeviceVersion,
-    provider: number,
   ): EitherAsync<HttpFetchApiError, FinalFirmware>;
 }

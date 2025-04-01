@@ -1,6 +1,7 @@
 import {
   DEFAULT_MANAGER_API_BASE_URL,
   DEFAULT_MOCK_SERVER_BASE_URL,
+  DEFAULT_PROVIDER,
 } from "@internal/manager-api/model/Const";
 import { DEFAULT_WEB_SOCKET_BASE_URL } from "@internal/secure-channel/model/Const";
 
@@ -30,6 +31,7 @@ export class DeviceManagementKitBuilder {
     managerApiUrl: DEFAULT_MANAGER_API_BASE_URL,
     mockUrl: DEFAULT_MOCK_SERVER_BASE_URL,
     webSocketUrl: DEFAULT_WEB_SOCKET_BASE_URL,
+    provider: DEFAULT_PROVIDER,
   };
 
   build(): DeviceManagementKit {
