@@ -133,6 +133,18 @@ export class UninstallAppDeviceAction extends XStateDeviceAction<
             ),
           }),
         }),
+        cleanupDeviceState: () => {
+          // After app successful uninstallation, cleanup the device session state
+          // to force fetching the new device state when required
+          const state = getDeviceSessionState();
+          if (state.sessionStateType !== DeviceSessionStateType.Connected) {
+            setDeviceSessionState({
+              ...state,
+              installedApps: [],
+              appsUpdates: undefined,
+            });
+          }
+        },
       },
     }).createMachine({
       /** @xstate-layout N4IgpgJg5mDOIC5QEkB2sAuBDANjgggA6EAiYAbgJYDGY+1GlA9qgHRlW0BKYWEAngGIA2gAYAuolCEmsSoxZSQAD0QBGAJyjWADgDsAFg0A2HSb2iArMbUBmADQh+iAExrjrS6KuWNtte7Glga2AL6hjmiYuATEHDR0DMxsAOJMACpMJFiwABYARkxYAE4QghAsYKyUqORMANZVUBlZOQVFpWKSSCAycgqoSqoIxi6WrKJq1rYGNgaiBrOOzgi2th5qonouorYuo9YBBuGR6Nh4RKQUCfQDrGmZ2XmFJWVgxcVMxayEOFgYADMvgBbVjNR5tF6dCRKPryZJDRAHCZTYwzOYLJZOdR6DSeFy2MwBPaaXzGE4gKLnWJXTiJO4PVrPDoQADCuTA1HqIhhPThA0RCE2XlY+0semMomMBgsOjMyyRoh0E28BmClhc+0mxwilLOMUu8Vot2S9xaT3ar3ZnO5wjU3Wksnhih6w2F2jFEqlMqV8uxq0stlYgTlGg02wJOjCuqpBri12NSRY9zAGAA8rAAGrvOQscqVaq1BpNVMZ7PFXOoLqwp0C13qDVqVhaIK+HSifazNQK1YuPHGLTWQxabaLSwU2MXeN0k3JlKlrM55LWrk8h29WsI+tCjRqAysebSvY6TWagw6HvnvFeDsaGX6UR+Wx6Cf6qe0m5J1IL8uVle2+0a36LdQDdXd90PEIXBPU9zx7dFWD0LwxgMHYFkmckYzfGkjXpU15wwS4ABlKEwfNUCqGo6kaFNCOIEjMGrPlNxdUDXFscVRR0VFxXDJCL39PYgxcPRbD8NQ9DUOV9BfLDonfXDZ2-OjCAYjB-zXIDnUGbcRIkxDNEfEIwwCFx4MDYNjFMMxw01Qlo1OeScITPC51TYjSPUjlVztdd+RAlRXEkvQDK0O8xN3NQzP9HR9xvKxCT0E9Jj0WTdVQJgIDgJRJ2cmcvy0us2IQABaYwezK18nMNFylPYFyeD4FZHWA1jAoQVCezccYb02JDDPcQkqupGr8oZc1IRZQqAuGaDxhMfQxjsKMlQcf1NBcFVdlmPs9wJNVhrjD9E3GiFmStbz6mmtrhijTaFu4tZRJMSZzJCqNnyS9x5m2DRDoU2qv1osslza-ybvUNwg02DRLFi+YZnbSx4JE5sJO8Xc3CsWZMMckbp0-Bkf1B1B-2unTiokuxWGlJULHWWwOzGcymwMKnULEuzRn+vLCfw9z6M88nBR2VLRWQ6xxR0GxRhRpsb2fNYjDcXFZLxo7FKBgiPMwMnmNain2rGDiD01PdUs0NVu0EtUtq8KydginV1YBsbTQAZQAV2oWhYHgfXtJFsxtGsXbuMsCPdh7bjPG8AkNFi70-B50a+eTABRD4vmF3Tg88UZd3DyO1pWDj9wlCwLFMDQ+1xcdwlCIA */
@@ -395,6 +407,7 @@ export class UninstallAppDeviceAction extends XStateDeviceAction<
             },
             onDone: {
               target: "ListInstalledApps",
+              actions: "cleanupDeviceState",
             },
             onError: {
               target: "Error",

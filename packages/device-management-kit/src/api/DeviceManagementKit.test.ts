@@ -30,6 +30,7 @@ describe("DeviceManagementKit", () => {
           managerApiUrl: "http://fake.url",
           mockUrl: "http://fake-mock.url",
           webSocketUrl: "http://fake-websocket.url",
+          firmwareDistributionSalt: "salt",
         } as DmkConfig,
       });
     });
@@ -93,6 +94,7 @@ describe("DeviceManagementKit", () => {
           managerApiUrl: "http://fake.url",
           mockUrl: "http://fake-mock.url",
           webSocketUrl: "http://fake-websocket.url",
+          firmwareDistributionSalt: "salt",
         } as DmkConfig,
       });
     });
