@@ -261,6 +261,12 @@ async function enterRelease() {
     }
 
     // =======================
+    // Update lock file
+    // =======================
+
+    await spinner("Updating lock file", () => $`pnpm i`);
+
+    // =======================
     // Commit the changes
     // =======================
 
@@ -318,6 +324,16 @@ async function exitRelease() {
 
     const { pkgs: updatedPkgs } = await getPackages();
     await resetPrivatePackagesDependencies(updatedPkgs);
+
+    // =======================
+    // Update lock file
+    // =======================
+
+    await spinner("Updating lock file", () => $`pnpm i`);
+
+    // =======================
+    // Commit the changes
+    // =======================
 
     const res = await $`git status`;
     console.log(chalk.blue(res.stdout));
