@@ -16,6 +16,7 @@ import {
   DeviceNotInitializedError,
   type DmkError,
   type LoggerPublisherService,
+  SendApduTimeoutError,
   type TransportDiscoveredDevice,
 } from "@ledgerhq/device-management-kit";
 import { Base64 } from "js-base64";
@@ -80,7 +81,6 @@ export class RNBleApduSender
     // ledger mtu is the 5th byte of the response
     const [ledgerMtu] = mtuResponse.slice(5);
     let frameSize = device.mtu - FRAME_HEADER_SIZE;
-
     if (ledgerMtu && ledgerMtu !== frameSize) {
       // should never happen since ble mtu is negotiated on device connect with 156 bytes and ledger should return mtu size minus header size
       frameSize = ledgerMtu;
@@ -90,11 +90,11 @@ export class RNBleApduSender
   }
 
   private receiveApdu(apdu: Uint8Array) {
-    const response = this._apduReceiver.handleFrame(apdu);
+    const maybeApduResponse = this._apduReceiver.handleFrame(apdu);
 
-    response
-      .map((maybeApduResponse) => {
-        maybeApduResponse.map((apduResponse) => {
+    maybeApduResponse
+      .map((response) => {
+        response.map((apduResponse) => {
           this._logger.debug("Received APDU Response", {
             data: { response: apduResponse },
           });
@@ -164,16 +164,27 @@ export class RNBleApduSender
     });
   }
 
-  async sendApdu(apdu: Uint8Array): Promise<Either<DmkError, ApduResponse>> {
+  async sendApdu(
+    apdu: Uint8Array,
+    _triggersDisconnection?: boolean,
+    abortTimeout?: number,
+  ): Promise<Either<DmkError, ApduResponse>> {
     if (!this._isDeviceReady.value) {
       return Promise.resolve(
         Left(new DeviceNotInitializedError("Unknown MTU")),
       );
     }
 
+    let timeout: ReturnType<typeof setTimeout> | undefined;
+
     const resultPromise = new Promise<Either<DmkError, ApduResponse>>(
       (resolve) => {
-        this._sendApduPromiseResolver = Maybe.of(resolve);
+        this._sendApduPromiseResolver = Maybe.of((...args) => {
+          if (timeout) {
+            clearTimeout(timeout);
+          }
+          return resolve(...args);
+        });
       },
     );
 
@@ -188,6 +199,14 @@ export class RNBleApduSender
       } catch (error) {
         this._logger.info("Error sending frame", { data: { error } });
       }
+    }
+
+    if (abortTimeout) {
+      timeout = setTimeout(() => {
+        this._sendApduPromiseResolver.map((resolve) =>
+          resolve(Left(new SendApduTimeoutError("Abort timeout"))),
+        );
+      }, abortTimeout);
     }
 
     return resultPromise;

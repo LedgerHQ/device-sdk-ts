@@ -38,6 +38,7 @@ type SendApduCalled = {
   type: "SendApduCalled";
   apdu: Uint8Array;
   triggersDisconnection: boolean;
+  abortTimeout?: number;
   responseCallback: (response: Either<DmkError, ApduResponse>) => void;
 };
 
@@ -151,12 +152,14 @@ export class DeviceConnectionStateMachine<Dependencies> {
   public sendApdu(
     apdu: Uint8Array,
     triggersDisconnection?: boolean,
+    abortTimeout?: number,
   ): Promise<Either<DmkError, ApduResponse>> {
     return new Promise((responseCallback) => {
       this.machineActor.send({
         type: "SendApduCalled",
         apdu,
         triggersDisconnection: !!triggersDisconnection,
+        abortTimeout,
         responseCallback,
       });
     });
@@ -188,7 +191,11 @@ function makeStateMachine({
   onTerminated,
   closeConnection,
 }: {
-  sendApduFn: (apdu: Uint8Array, triggersDisconnection: boolean) => void;
+  sendApduFn: (
+    apdu: Uint8Array,
+    triggersDisconnection: boolean,
+    abortTimeout?: number,
+  ) => void;
   startReconnectionTimeout: () => void;
   cancelReconnectionTimeout: () => void;
   onTerminated: () => void;
@@ -200,6 +207,7 @@ function makeStateMachine({
         apduInProgress: Maybe<{
           apdu: Uint8Array;
           triggersDisconnection: boolean;
+          abortTimeout?: number;
           responseCallback: (response: Either<DmkError, ApduResponse>) => void;
         }>;
       };
@@ -215,8 +223,8 @@ function makeStateMachine({
       },
       reconnectionTimeoutEvent: emit({ type: "ReconnectionTimedOut" }),
       sendApdu: ({ context }) => {
-        context.apduInProgress.map(({ apdu }) => {
-          sendApduFn(apdu, false);
+        context.apduInProgress.map(({ apdu, abortTimeout }) => {
+          sendApduFn(apdu, false, abortTimeout);
         });
       },
       sendApduResponse: (
@@ -272,6 +280,7 @@ function makeStateMachine({
                 return Maybe.of({
                   apdu: event.apdu,
                   triggersDisconnection: event.triggersDisconnection,
+                  abortTimeout: event.abortTimeout,
                   responseCallback: event.responseCallback,
                 });
               },
@@ -381,6 +390,7 @@ function makeStateMachine({
                 return Maybe.of({
                   apdu: event.apdu,
                   triggersDisconnection: event.triggersDisconnection,
+                  abortTimeout: event.abortTimeout,
                   responseCallback: event.responseCallback,
                 });
               },

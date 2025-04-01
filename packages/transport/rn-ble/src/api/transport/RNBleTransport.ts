@@ -404,8 +404,9 @@ export class RNBleTransport implements Transport {
    */
   private _isDiscoveredDeviceDelayOver(internalDevice: RNBleInternalDevice) {
     return internalDevice.lastDiscoveredTimeStamp.caseOf({
-      Just: (lastDiscoveredTimeStamp) =>
-        Date.now() > lastDiscoveredTimeStamp + CONNECTION_LOST_DELAY,
+      Just: (lastDiscoveredTimeStamp) => {
+        return Date.now() > lastDiscoveredTimeStamp + CONNECTION_LOST_DELAY;
+      },
       Nothing: () => {
         return false;
       },
@@ -493,6 +494,7 @@ export class RNBleTransport implements Transport {
         ),
       );
     }
+
     return new Observable<TransportDiscoveredDevice>((subscriber) => {
       this._lastScanTimestamp = Maybe.of(Date.now());
       this._manager.startDeviceScan(
@@ -513,9 +515,11 @@ export class RNBleTransport implements Transport {
               );
             },
           );
+
           this._handleLostDiscoveredDevices(subscriber);
         },
       );
+
       return {
         unsubscribe: async () => {
           await this._manager.stopDeviceScan();
