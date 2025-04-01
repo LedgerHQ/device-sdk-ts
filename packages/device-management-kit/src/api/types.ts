@@ -26,6 +26,13 @@ export {
   type ExecuteDeviceActionReturnType,
 } from "@api/device-action/DeviceAction";
 export {
+  type GetDeviceMetadataDAError,
+  type GetDeviceMetadataDAInput,
+  type GetDeviceMetadataDAIntermediateValue,
+  type GetDeviceMetadataDAOutput,
+  type GetDeviceMetadataDAState,
+} from "@api/device-action/os/GetDeviceMetadata/types";
+export {
   type GetDeviceStatusDAError,
   type GetDeviceStatusDAInput,
   type GetDeviceStatusDAIntermediateValue,

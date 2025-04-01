@@ -3,7 +3,10 @@ import { type Either } from "purify-ts";
 
 import { type GetOsVersionResponse } from "@api/index";
 import { type Application } from "@internal/manager-api/model/Application";
-import { type FinalFirmware } from "@internal/manager-api/model/Firmware";
+import {
+  type FinalFirmware,
+  type OsuFirmware,
+} from "@internal/manager-api/model/Firmware";
 import { type WebSocketConnectionError } from "@internal/secure-channel/model/Errors";
 
 /**
@@ -57,12 +60,12 @@ export interface SecureChannelService {
   /**
    * Construct a WebSocket connection for updating the firmware of the device.
    * @param deviceInfo - Response of the GetOsVersionCommand.
-   * @param finalFirmware - The final firmware to be updated.
+   * @param osuFirmware - The osu firmware to be updated.
    * @returns Either a WebSocketConnectionError or a WebSocket.
    */
   updateFirmware(
     deviceInfo: GetOsVersionResponse,
-    finalFirmware: FinalFirmware,
+    osuFirmware: OsuFirmware,
   ): Either<WebSocketConnectionError, WebSocket>;
 
   /**

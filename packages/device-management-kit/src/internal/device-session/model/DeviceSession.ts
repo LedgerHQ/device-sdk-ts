@@ -142,6 +142,10 @@ export class DeviceSession {
     return this._deviceState.asObservable();
   }
 
+  public getDeviceSessionState(): DeviceSessionState {
+    return this._deviceState.getValue();
+  }
+
   public setDeviceSessionState(state: DeviceSessionState): void {
     this._deviceState.next(state);
   }

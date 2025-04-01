@@ -4,7 +4,10 @@ import { getOsVersionCommandResponseMockBuilder } from "@api/command/os/__mocks_
 import { type DmkConfig } from "@api/DmkConfig";
 import { DeviceModelId } from "@api/index";
 import { type Application } from "@internal/manager-api/model/Application";
-import { type FinalFirmware } from "@internal/manager-api/model/Firmware";
+import {
+  type FinalFirmware,
+  type OsuFirmware,
+} from "@internal/manager-api/model/Firmware";
 import { DefaultSecureChannelDataSource } from "@internal/secure-channel/data/DefaultSecureChannelDataSource";
 
 import { DefaultSecureChannelService } from "./DefaultSecureChannelService";
@@ -93,14 +96,14 @@ describe("SecureChannelService", () => {
         DeviceModelId.NANO_SP,
       );
 
-      const finalFirmware = {
+      const osuFirmware = {
         perso: "perso",
         firmware: "firmware",
         firmwareKey: "firmwareKey",
-      } as FinalFirmware;
+      } as OsuFirmware;
 
       // when
-      service.updateFirmware(deviceInfo, finalFirmware);
+      service.updateFirmware(deviceInfo, osuFirmware);
 
       // then
       expect(dataSource.updateFirmware).toHaveBeenCalledWith({

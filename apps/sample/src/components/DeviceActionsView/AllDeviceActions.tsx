@@ -6,6 +6,11 @@ import {
   type GenuineCheckDAIntermediateValue,
   type GenuineCheckDAOutput,
   GenuineCheckDeviceAction,
+  type GetDeviceMetadataDAError,
+  type GetDeviceMetadataDAInput,
+  type GetDeviceMetadataDAIntermediateValue,
+  type GetDeviceMetadataDAOutput,
+  GetDeviceMetadataDeviceAction,
   type GetDeviceStatusDAError,
   type GetDeviceStatusDAInput,
   type GetDeviceStatusDAIntermediateValue,
@@ -190,6 +195,34 @@ export const AllDeviceActions: React.FC<{ sessionId: string }> = ({
         ListAppsWithMetadataDAInput,
         ListAppsWithMetadataDAError,
         ListAppsWithMetadataDAIntermediateValue
+      >,
+      {
+        title: "Get device metadata",
+        description: "Fetch lazily all the device metadata",
+        executeDeviceAction: (
+          { useSecureChannel, forceUpdate, unlockTimeout },
+          inspect,
+        ) => {
+          const deviceAction = new GetDeviceMetadataDeviceAction({
+            input: { useSecureChannel, forceUpdate, unlockTimeout },
+            inspect,
+          });
+          return dmk.executeDeviceAction({
+            sessionId,
+            deviceAction,
+          });
+        },
+        initialValues: {
+          useSecureChannel: false,
+          forceUpdate: false,
+          unlockTimeout: UNLOCK_TIMEOUT,
+        },
+        deviceModelId,
+      } satisfies DeviceActionProps<
+        GetDeviceMetadataDAOutput,
+        GetDeviceMetadataDAInput,
+        GetDeviceMetadataDAError,
+        GetDeviceMetadataDAIntermediateValue
       >,
       {
         title: `Genuine Check ${SECURE_CHANNEL_SIGN}`,

@@ -8,10 +8,17 @@ import { type Application } from "@internal/manager-api/model/Application";
 import { type DeviceVersion } from "@internal/manager-api/model/Device";
 import { HttpFetchApiError } from "@internal/manager-api/model/Errors";
 import {
+  type FinalFirmware,
+  type McuFirmware,
+  type OsuFirmware,
+} from "@internal/manager-api/model/Firmware";
+import {
   type GetAppByHashParams,
   type GetAppListParams,
   type GetDeviceVersionParams,
   type GetFirmwareVersionParams,
+  type GetLanguagePackagesParams,
+  type GetLatestFirmwareVersionParams,
 } from "@internal/manager-api/model/Params";
 
 import { type ManagerApiService } from "./ManagerApiService";
@@ -49,6 +56,49 @@ export class DefaultManagerApiService implements ManagerApiService {
       deviceId: deviceVersion.id,
     };
     return this.dataSource.getFirmwareVersion(params);
+  }
+
+  getOsuFirmwareVersion(
+    deviceInfo: GetOsVersionResponse,
+    deviceVersion: DeviceVersion,
+  ) {
+    const params: GetFirmwareVersionParams = {
+      version: deviceInfo.seVersion,
+      deviceId: deviceVersion.id,
+    };
+    return this.dataSource.getOsuFirmwareVersion(params);
+  }
+
+  getLatestFirmwareVersion(
+    currentFirmware: FinalFirmware,
+    deviceVersion: DeviceVersion,
+  ) {
+    const params: GetLatestFirmwareVersionParams = {
+      currentFinalFirmwareId: currentFirmware.id,
+      deviceId: deviceVersion.id,
+    };
+    return this.dataSource.getLatestFirmwareVersion(params);
+  }
+
+  getNextFirmwareVersion(osuFirmware: OsuFirmware) {
+    return this.dataSource.getFirmwareVersionById(
+      osuFirmware.nextFinalFirmware,
+    );
+  }
+
+  getLanguagePackages(
+    deviceVersion: DeviceVersion,
+    currentFirmware: FinalFirmware,
+  ) {
+    const params: GetLanguagePackagesParams = {
+      deviceId: deviceVersion.id,
+      currentFinalFirmwareId: currentFirmware.id,
+    };
+    return this.dataSource.getLanguagePackages(params);
+  }
+
+  getMcuList(): EitherAsync<HttpFetchApiError, Array<McuFirmware>> {
+    return this.dataSource.getMcuList();
   }
 
   getAppsByHash(appHashes: Array<string>) {
