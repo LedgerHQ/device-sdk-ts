@@ -210,4 +210,55 @@ describe("AxiosManagerApiDataSource", () => {
       expect(response).toEqual(Left(new HttpFetchApiError(error)));
     });
   });
+  describe("setProvider", () => {
+    let api: AxiosManagerApiDataSource;
+    beforeEach(() => {
+      api = new AxiosManagerApiDataSource({
+        managerApiUrl: "http://fake-url.com",
+        provider: 1,
+      } as DmkConfig);
+    });
+
+    it("should not change the provider if the new value is the same", () => {
+      // given
+      const initialProvider = (api as unknown as { _provider: number })
+        ._provider;
+
+      // when
+      api.setProvider(initialProvider);
+
+      // then
+      expect((api as unknown as { _provider: number })._provider).toBe(
+        initialProvider,
+      );
+    });
+
+    it("should not change the provider if the new value is less than 1", () => {
+      // given
+      const initialProvider = (api as unknown as { _provider: number })
+        ._provider;
+
+      // when
+      api.setProvider(0); // invalid
+      api.setProvider(-5); // invalid
+
+      // then
+      expect((api as unknown as { _provider: number })._provider).toBe(
+        initialProvider,
+      );
+    });
+
+    it("should update the provider if a valid and different value is provided", () => {
+      // given
+      const newProvider = 2;
+
+      // when
+      api.setProvider(newProvider);
+
+      // then
+      expect((api as unknown as { _provider: number })._provider).toBe(
+        newProvider,
+      );
+    });
+  });
 });
