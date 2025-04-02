@@ -106,6 +106,14 @@ export const sdk = new DeviceManagementKitBuilder()
 dmk.setProvider(123); // using the setProvider from DMK
 ```
 
+### Get the current provider
+
+getProvider function will return the current provider set within the Device Management Kit, whether it has been set at build or run time:
+
+```ts
+dmk.getProvider();
+```
+
 ### Connecting to a Device
 
 There are two steps to connecting to a device:

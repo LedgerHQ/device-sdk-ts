@@ -5,6 +5,7 @@ import { ClickableListItem } from "@/components/ClickableListItem";
 import { PageWithHeader } from "@/components/PageWithHeader";
 import { StyledDrawer } from "@/components/StyledDrawer";
 
+import { AppProviderDrawer } from "./AppProviderDrawer";
 import { CalCheckDappDrawer } from "./CalCheckDappDrawer";
 import { CalSettingsDrawer } from "./CalSettingsDrawer";
 import { Web3ChecksDrawer } from "./Web3ChecksDrawer";
@@ -13,11 +14,13 @@ export const CalView = () => {
   const [isCheckDappOpen, setIsCheckDappOpen] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isWeb3ChecksOpen, setIsWeb3ChecksOpen] = useState(false);
+  const [isAppProviderOpen, setIsAppProviderOpen] = useState(false);
 
   const closeDrawers = useCallback(() => {
     setIsCheckDappOpen(false);
     setIsSettingsOpen(false);
     setIsWeb3ChecksOpen(false);
+    setIsAppProviderOpen(false);
   }, []);
 
   const entries = [
@@ -35,6 +38,11 @@ export const CalView = () => {
       title: "Web3Checks Settings",
       description: "Settings for the Web3Checks provider",
       onClick: () => setIsWeb3ChecksOpen(true),
+    },
+    {
+      title: "App Provider",
+      description: "Settings for custom app provider",
+      onClick: () => setIsAppProviderOpen(true),
     },
   ];
 
@@ -88,6 +96,15 @@ export const CalView = () => {
         description="Settings for the Web3Checks provider"
       >
         <Web3ChecksDrawer onClose={closeDrawers} />
+      </StyledDrawer>
+      <StyledDrawer
+        isOpen={isAppProviderOpen}
+        onClose={closeDrawers}
+        big
+        title="App Provider"
+        description="Settings for custom app provider"
+      >
+        <AppProviderDrawer onClose={closeDrawers} />
       </StyledDrawer>
     </PageWithHeader>
   );

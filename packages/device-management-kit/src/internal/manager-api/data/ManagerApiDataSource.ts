@@ -61,4 +61,9 @@ export interface ManagerApiDataSource {
    * @param provider - The provider identifier.
    */
   setProvider(provider: number): void;
+
+  /**
+   * Returns the current provider.
+   */
+  getProvider(): number;
 }
