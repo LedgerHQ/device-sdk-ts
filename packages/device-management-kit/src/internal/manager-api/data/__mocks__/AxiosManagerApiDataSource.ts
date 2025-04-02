@@ -6,4 +6,5 @@ export class AxiosManagerApiDataSource implements ManagerApiDataSource {
   getFirmwareVersion = vi.fn();
   getAppsByHash = vi.fn();
   setProvider = vi.fn();
+  getProvider = vi.fn();
 }
