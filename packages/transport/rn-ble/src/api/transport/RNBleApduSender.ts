@@ -33,7 +33,7 @@ export type RNBleInternalDevice = {
   lastDiscoveredTimeStamp: Maybe<number>;
 };
 
-type RNBleApduSenderConstructorArgs = {
+export type RNBleApduSenderConstructorArgs = {
   dependencies: RNBleApduSenderDependencies;
   apduSenderFactory: ApduSenderServiceFactory;
   apduReceiverFactory: ApduReceiverServiceFactory;

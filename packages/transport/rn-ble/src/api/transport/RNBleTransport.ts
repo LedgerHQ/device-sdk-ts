@@ -6,6 +6,7 @@ import {
   type BleDeviceInfos,
   type ConnectError,
   DeviceConnectionStateMachine,
+  type DeviceConnectionStateMachineParams,
   type DeviceId,
   type DeviceModelDataSource,
   type DisconnectHandler,
@@ -45,6 +46,7 @@ import {
 } from "@api/model/Errors";
 import {
   RNBleApduSender,
+  type RNBleApduSenderConstructorArgs,
   type RNBleApduSenderDependencies,
   type RNBleInternalDevice,
 } from "@api/transport/RNBleApduSender";
@@ -74,6 +76,15 @@ export class RNBleTransport implements Transport {
     private readonly _platform: Platform = Platform,
     private readonly _permissionsAndroid: PermissionsAndroid = PermissionsAndroid,
     _bleManagerFactory: () => BleManager = () => new BleManager(),
+    private readonly _deviceConnectionStateMachineFactory: (
+      args: DeviceConnectionStateMachineParams<RNBleApduSenderDependencies>,
+    ) => DeviceConnectionStateMachine<RNBleApduSenderDependencies> = (args) =>
+      new DeviceConnectionStateMachine(args),
+    private readonly _deviceApduSenderFactory: (
+      args: RNBleApduSenderConstructorArgs,
+      loggerFactory: (tag: string) => LoggerPublisherService,
+    ) => RNBleApduSender = (args, loggerFactory) =>
+      new RNBleApduSender(args, loggerFactory),
   ) {
     this._logger = _loggerServiceFactory("ReactNativeBleTransport");
     this._manager = _bleManagerFactory();
@@ -156,7 +167,7 @@ export class RNBleTransport implements Transport {
           return throwE(new OpeningConnectionError(error));
         }
 
-        const deviceApduSender = new RNBleApduSender(
+        const deviceApduSender = this._deviceApduSenderFactory(
           {
             apduSenderFactory: this._apduSenderFactory,
             apduReceiverFactory: this._apduReceiverFactory,
@@ -170,7 +181,7 @@ export class RNBleTransport implements Transport {
         );
 
         const deviceConnectionStateMachine =
-          new DeviceConnectionStateMachine<RNBleApduSenderDependencies>({
+          this._deviceConnectionStateMachineFactory({
             deviceId: params.deviceId,
             deviceApduSender,
             timeoutDuration: BLE_DISCONNECT_TIMEOUT,

@@ -59,6 +59,13 @@ export type DeviceConnectionEvent =
   | CloseConnectionCalled
   | ReconnectionTimedOut;
 
+export type DeviceConnectionStateMachineParams<Dependencies> = {
+  deviceId: DeviceId;
+  deviceApduSender: DeviceApduSender<Dependencies>;
+  timeoutDuration: number;
+  onTerminated: () => void;
+};
+
 export class DeviceConnectionStateMachine<Dependencies> {
   private deviceId: DeviceId;
   private deviceAdpuSender: DeviceApduSender<Dependencies>;
@@ -74,12 +81,7 @@ export class DeviceConnectionStateMachine<Dependencies> {
     }, this.timeoutDuration);
   }
 
-  constructor(params: {
-    deviceId: DeviceId;
-    deviceApduSender: DeviceApduSender<Dependencies>;
-    timeoutDuration: number;
-    onTerminated: () => void;
-  }) {
+  constructor(params: DeviceConnectionStateMachineParams<Dependencies>) {
     this.deviceId = params.deviceId;
     this.deviceAdpuSender = params.deviceApduSender;
     this.timeoutDuration = params.timeoutDuration;
