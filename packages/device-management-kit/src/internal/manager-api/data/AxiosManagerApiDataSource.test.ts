@@ -261,4 +261,25 @@ describe("AxiosManagerApiDataSource", () => {
       );
     });
   });
+  describe("getProvider", () => {
+    let api: AxiosManagerApiDataSource;
+    beforeEach(() => {
+      api = new AxiosManagerApiDataSource({
+        managerApiUrl: "http://fake-url.com",
+        provider: 123,
+      } as DmkConfig);
+    });
+    afterEach(() => {
+      vi.clearAllMocks();
+    });
+
+    it("should return the initial provider", () => {
+      expect(api.getProvider()).toBe(123);
+    });
+
+    it("should return the updated provider after setProvider is called", () => {
+      api.setProvider(321);
+      expect(api.getProvider()).toBe(321);
+    });
+  });
 });

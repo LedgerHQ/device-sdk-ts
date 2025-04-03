@@ -42,6 +42,10 @@ export class AxiosManagerApiDataSource implements ManagerApiDataSource {
     this._provider = provider;
   }
 
+  getProvider(): number {
+    return this._provider;
+  }
+
   getAppList(
     params: GetAppListParams,
   ): EitherAsync<HttpFetchApiError, Application[]> {
