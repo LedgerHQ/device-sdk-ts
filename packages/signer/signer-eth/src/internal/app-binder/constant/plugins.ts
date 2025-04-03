@@ -46,4 +46,5 @@ export const ETHEREUM_PLUGINS: string[] = [
   "Thales",
   "Yearn",
   "Uniswap",
+  "Exchange", // Not a plugin, but a compatible app during exchange flows
 ];
