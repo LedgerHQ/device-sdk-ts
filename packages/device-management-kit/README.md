@@ -7,9 +7,9 @@
   - [Description](#description)
   - [Installation](#installation)
   - [Usage](#usage)
-    - [Compatibility](#compatibility)
+    - [Prerequisites](#prerequisites)
     - [Main Features](#main-features)
-    - [Setting up the SDK](#setting-up-the-sdk)
+    - [Setting up the Device Management Kit](#setting-up-the-device-management-kit)
     - [Connecting to a Device](#connecting-to-a-device)
     - [Sending an APDU](#sending-an-apdu)
     - [Sending a Pre-defined Command](#sending-a-pre-defined-command)
@@ -36,7 +36,7 @@ npm install @ledgerhq/device-management-kit
 
 ## Usage
 
-### Pre-requisites
+### Prerequisites
 
 Some of the APIs exposed return objects of type `Observable` from RxJS. Ensure you are familiar with the basics of the Observer pattern and RxJS before using this Device Management Kit. You can refer to [RxJS documentation](https://rxjs.dev/guide/overview) for more information.
 
