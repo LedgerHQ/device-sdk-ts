@@ -4,7 +4,10 @@ import { Either } from "purify-ts";
 
 import { type GetOsVersionResponse } from "@api/index";
 import { type Application } from "@internal/manager-api/model/Application";
-import { type FinalFirmware } from "@internal/manager-api/model/Firmware";
+import {
+  type FinalFirmware,
+  type OsuFirmware,
+} from "@internal/manager-api/model/Firmware";
 import { type SecureChannelDataSource } from "@internal/secure-channel/data/SecureChannelDataSource";
 import { secureChannelTypes } from "@internal/secure-channel/di/secureChannelTypes";
 import { WebSocketConnectionError } from "@internal/secure-channel/model/Errors";
@@ -80,13 +83,13 @@ export class DefaultSecureChannelService implements SecureChannelService {
 
   updateFirmware(
     deviceInfo: GetOsVersionResponse,
-    finalFirmware: FinalFirmware,
+    osuFirmware: OsuFirmware,
   ): Either<WebSocketConnectionError, WebSocket> {
     const params: UpdateFirmwareParams = {
       targetId: deviceInfo.targetId.toString(),
-      perso: finalFirmware.perso,
-      firmware: finalFirmware.firmware,
-      firmwareKey: finalFirmware.firmwareKey,
+      perso: osuFirmware.perso,
+      firmware: osuFirmware.firmware,
+      firmwareKey: osuFirmware.firmwareKey,
     };
     return this.dataSource.updateFirmware(params);
   }

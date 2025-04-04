@@ -15,6 +15,7 @@ import {
   type NewEvent,
   SessionEvents,
 } from "@internal/device-session/model/DeviceSessionEventDispatcher";
+import { type Application } from "@internal/manager-api/model/Application";
 
 import { DeviceSessionStateHandler } from "./DeviceSessionStateHandler";
 
@@ -49,12 +50,9 @@ describe("DeviceSessionStateHandler", () => {
     };
 
     deviceState = new BehaviorSubject<DeviceSessionState>({
-      sessionStateType: DeviceSessionStateType.ReadyWithoutSecureChannel,
+      sessionStateType: DeviceSessionStateType.Connected,
       deviceStatus: DeviceStatus.CONNECTED,
       deviceModelId: DeviceModelId.NANO_X,
-      currentApp: { name: "", version: "" },
-      installedApps: [],
-      isSecureConnectionAllowed: false,
     });
 
     setDeviceSessionState = vi.fn();
@@ -100,6 +98,42 @@ describe("DeviceSessionStateHandler", () => {
       currentApp: { name: "TestApp", version: "1.0.0" },
       installedApps: [],
       isSecureConnectionAllowed: false,
+    });
+  });
+
+  it("updates device state on COMMAND_SUCCEEDED event when device is ready", () => {
+    // Given
+    deviceState.next({
+      sessionStateType: DeviceSessionStateType.ReadyWithoutSecureChannel,
+      deviceStatus: DeviceStatus.CONNECTED,
+      deviceModelId: DeviceModelId.NANO_X,
+      currentApp: { name: "", version: "" },
+      installedApps: ["Bitcoin", "Ethereum"] as unknown as Application[],
+      isSecureConnectionAllowed: true,
+    });
+    const fakeCommandResult = {
+      data: {
+        name: "TestApp",
+        version: "1.0.0",
+      },
+      status: CommandResultStatus.Success,
+    };
+
+    // When
+    fakeEventSubject.next({
+      eventName: SessionEvents.COMMAND_SUCCEEDED,
+      //@ts-expect-error mock
+      eventData: fakeCommandResult,
+    });
+
+    // Then
+    expect(setDeviceSessionState).toHaveBeenCalledWith({
+      sessionStateType: DeviceSessionStateType.ReadyWithoutSecureChannel,
+      deviceStatus: DeviceStatus.CONNECTED,
+      deviceModelId: "device-model-1",
+      currentApp: { name: "TestApp", version: "1.0.0" },
+      installedApps: ["Bitcoin", "Ethereum"] as unknown as Application[],
+      isSecureConnectionAllowed: true,
     });
   });
 

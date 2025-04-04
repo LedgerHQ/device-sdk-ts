@@ -37,3 +37,25 @@ export type GetFirmwareVersionParams = {
   version: string;
   deviceId: number;
 };
+
+/**
+ * Parameters required to get the latest firmware available of a device.
+ *
+ * @property currentFinalFirmwareId - The ID of the current firmware. Can be retrieved through getFirmwareVersion.
+ * @property deviceId - The unique identifier of the device, can be got from the GetOsVersionCommand response.
+ */
+export type GetLatestFirmwareVersionParams = {
+  currentFinalFirmwareId: number;
+  deviceId: number;
+};
+
+/**
+ * Parameters required to get the available language packages for a device.
+ *
+ * @property deviceId - The unique identifier of the device, can be got from the GetOsVersionCommand response.
+ * @property currentFinalFirmwareId - The ID of the current firmware. Can be retrieved through getFirmwareVersion.
+ */
+export type GetLanguagePackagesParams = {
+  deviceId: number;
+  currentFinalFirmwareId: number;
+};

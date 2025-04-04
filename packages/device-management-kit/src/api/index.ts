@@ -62,6 +62,7 @@ export {
 export { UserInteractionRequired } from "@api/device-action/model/UserInteractionRequired";
 export { CallTaskInAppDeviceAction } from "@api/device-action/os/CallTaskInAppDeviceAction/CallTaskInAppDeviceAction";
 export { UnknownDAError } from "@api/device-action/os/Errors";
+export { GetDeviceMetadataDeviceAction } from "@api/device-action/os/GetDeviceMetadata/GetDeviceMetadataDeviceAction";
 export { GetDeviceStatusDeviceAction } from "@api/device-action/os/GetDeviceStatus/GetDeviceStatusDeviceAction";
 export { GoToDashboardDeviceAction } from "@api/device-action/os/GoToDashboard/GoToDashboardDeviceAction";
 export { ListAppsDeviceAction } from "@api/device-action/os/ListApps/ListAppsDeviceAction";
