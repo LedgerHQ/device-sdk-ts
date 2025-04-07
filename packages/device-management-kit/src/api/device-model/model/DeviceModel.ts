@@ -12,6 +12,7 @@ export class TransportDeviceModel {
   bootloaderUsbProductId: number;
   usbOnly: boolean;
   memorySize: number;
+  blockSize: number;
   masks: number[];
   bluetoothSpec?: {
     serviceUuid: string;
@@ -27,6 +28,7 @@ export class TransportDeviceModel {
     bootloaderUsbProductId: number;
     usbOnly: boolean;
     memorySize: number;
+    blockSize: number;
     masks: number[];
 
     bluetoothSpec?: {
@@ -42,6 +44,7 @@ export class TransportDeviceModel {
     this.bootloaderUsbProductId = props.bootloaderUsbProductId;
     this.usbOnly = props.usbOnly;
     this.memorySize = props.memorySize;
+    this.blockSize = props.blockSize;
     this.masks = props.masks;
     this.bluetoothSpec = props.bluetoothSpec;
   }

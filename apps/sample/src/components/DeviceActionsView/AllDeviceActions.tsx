@@ -26,6 +26,10 @@ import {
   type InstallAppDAIntermediateValue,
   type InstallAppDAOutput,
   InstallAppDeviceAction,
+  type InstallOrUpdateAppsDAError,
+  type InstallOrUpdateAppsDAIntermediateValue,
+  type InstallOrUpdateAppsDAOutput,
+  InstallOrUpdateAppsDeviceAction,
   type ListAppsDAError,
   type ListAppsDAInput,
   type ListAppsDAIntermediateValue,
@@ -267,6 +271,44 @@ export const AllDeviceActions: React.FC<{ sessionId: string }> = ({
         ListInstalledAppsDAInput,
         ListInstalledAppsDAError,
         ListInstalledAppsDAIntermediateValue
+      >,
+      {
+        title: `Install or update applications ${SECURE_CHANNEL_SIGN}`,
+        description:
+          "Perform all the actions necessary to install or update a list of apps on the device by name",
+        executeDeviceAction: (
+          { applications, allowMissingApplication, unlockTimeout },
+          inspect,
+        ) => {
+          const apps = applications.split(",").map((app) => ({ name: app }));
+          const deviceAction = new InstallOrUpdateAppsDeviceAction({
+            input: {
+              applications: apps,
+              allowMissingApplication,
+              unlockTimeout,
+            },
+            inspect,
+          });
+          return dmk.executeDeviceAction({
+            sessionId,
+            deviceAction,
+          });
+        },
+        initialValues: {
+          applications: "Bitcoin,Ethereum,Solana",
+          allowMissingApplication: false,
+          unlockTimeout: UNLOCK_TIMEOUT,
+        },
+        deviceModelId,
+      } satisfies DeviceActionProps<
+        InstallOrUpdateAppsDAOutput,
+        {
+          applications: string;
+          allowMissingApplication: boolean;
+          unlockTimeout: number;
+        },
+        InstallOrUpdateAppsDAError,
+        InstallOrUpdateAppsDAIntermediateValue
       >,
       {
         title: `Install App ${SECURE_CHANNEL_SIGN}`,

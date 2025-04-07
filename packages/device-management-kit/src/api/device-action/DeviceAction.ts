@@ -3,6 +3,7 @@ import { type Observable } from "rxjs";
 
 import { type Command } from "@api/command/Command";
 import { type CommandResult } from "@api/command/model/CommandResult";
+import { type TransportDeviceModel } from "@api/device-model/model/DeviceModel";
 import { type ApduResponse } from "@api/device-session/ApduResponse";
 import { type DeviceSessionState } from "@api/device-session/DeviceSessionState";
 import { type DmkError } from "@api/Error";
@@ -19,6 +20,7 @@ export type InternalApi = {
     command: Command<Response, Args, ErrorStatusCodes>,
     abortTimeout?: number,
   ) => Promise<CommandResult<Response, ErrorStatusCodes>>;
+  readonly getDeviceModel: () => TransportDeviceModel;
   readonly getDeviceSessionState: () => DeviceSessionState;
   readonly getDeviceSessionStateObservable: () => Observable<DeviceSessionState>;
   readonly setDeviceSessionState: (

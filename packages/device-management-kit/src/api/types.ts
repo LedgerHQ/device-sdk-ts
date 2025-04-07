@@ -47,6 +47,13 @@ export {
   type GoToDashboardDAState,
 } from "@api/device-action/os/GoToDashboard/types";
 export {
+  type InstallOrUpdateAppsDAError,
+  type InstallOrUpdateAppsDAInput,
+  type InstallOrUpdateAppsDAIntermediateValue,
+  type InstallOrUpdateAppsDAOutput,
+  type InstallOrUpdateAppsDAState,
+} from "@api/device-action/os/InstallOrUpdateApps/types";
+export {
   type ListAppsDAError,
   type ListAppsDAInput,
   type ListAppsDAIntermediateValue,
