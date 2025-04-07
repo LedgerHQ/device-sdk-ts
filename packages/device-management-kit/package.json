@@ -34,7 +34,7 @@
   "dependencies": {
     "@sentry/minimal": "^6.19.7",
     "axios": "^1.8.2",
-    "inversify": "^6.2.2",
+    "inversify": "^7.5.0",
     "inversify-logger-middleware": "^3.1.0",
     "isomorphic-ws": "^5.0.0",
     "purify-ts": "^2.1.0",
