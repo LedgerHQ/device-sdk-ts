@@ -1,7 +1,9 @@
 packages:
-  - "apps/*"
-  - "packages/*"
-  - "packages/config/*"
-  - "packages/signer/*"
-  - "packages/tools/*"
-  - "packages/transport/*"
+  - apps/*
+  - packages/*
+  - packages/config/*
+  - packages/signer/*
+  - packages/tools/*
+  - packages/transport/*
+onlyBuiltDependencies:
+  - esbuild
