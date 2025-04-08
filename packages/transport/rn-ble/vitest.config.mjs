@@ -8,7 +8,7 @@ export default defineConfig({
     ...baseConfig.test,
     include: ["src/**/*.test.ts"],
     coverage: {
-      reporter: ["lcov"],
+      reporter: ["lcov", "text"],
       provider: "istanbul",
       include: ["src/**/*.ts"],
       exclude: ["src/**/*.stub.ts", "src/index.ts", "src/api/index.ts"],
