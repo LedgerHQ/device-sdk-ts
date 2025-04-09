@@ -5,6 +5,8 @@ import {
   type ApduReceiverServiceFactory,
   type ApduSenderServiceFactory,
   BleDeviceInfos,
+  DeviceConnectionStateMachine,
+  type DeviceConnectionStateMachineParams,
   type DeviceModelDataSource,
   DeviceModelId,
   type DmkConfig,
@@ -20,6 +22,7 @@ import { beforeEach, expect, type Mock } from "vitest";
 
 import { BleNotSupported } from "@api/model/Errors";
 
+import { type RNBleApduSenderDependencies } from "./RNBleApduSender";
 import { RNBleTransport, RNBleTransportFactory } from "./RNBleTransport";
 
 const fakeLogger = {
@@ -33,6 +36,7 @@ vi.mock("react-native", () => ({
   Platform: {},
   PermissionsAndroid: {},
 }));
+
 vi.mock("react-native-ble-plx", () => ({
   BleManager: vi.fn(),
 }));
@@ -292,6 +296,7 @@ describe("RNBleTransport", () => {
     it("should throw error if transport is not supported", () => {
       // given
       const platform = { OS: "windows" };
+
       const transport = new RNBleTransport(
         fakeDataSource as unknown as DeviceModelDataSource,
         () => fakeLogger as unknown as LoggerPublisherService,
@@ -372,12 +377,15 @@ describe("RNBleTransport", () => {
           },
         });
       }));
+
     it("should emit discovered new device", () =>
       new Promise((done) => {
         // given
         let scanInterval: NodeJS.Timeout;
+
         const startScan = vi.fn((_uuids, _options, listener) => {
           scanInterval = setInterval(() => {
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-call
             listener(null, {
               id: "id",
               localName: "name",
@@ -385,6 +393,8 @@ describe("RNBleTransport", () => {
               rssi: 42,
             });
           }, 500);
+
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-call
           listener(null, {
             id: "43",
             localName: "name43",
@@ -392,15 +402,18 @@ describe("RNBleTransport", () => {
             rssi: 43,
           });
         });
+
         const stopScan = vi.fn(() => {
           clearInterval(scanInterval);
         });
+
         const bleManager = {
           connectedDevices: vi.fn().mockResolvedValueOnce([]),
           startDeviceScan: startScan,
           stopDeviceScan: stopScan,
           onDeviceDisconnected: vi.fn(),
         } as unknown as BleManager;
+
         const transport = new RNBleTransport(
           fakeDataSource as unknown as DeviceModelDataSource,
           () => fakeLogger as unknown as LoggerPublisherService,
@@ -448,6 +461,7 @@ describe("RNBleTransport", () => {
         let scanInterval: NodeJS.Timeout;
         const startScan = vi.fn((_uuids, _options, listener) => {
           scanInterval = setInterval(() => {
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-call
             listener(null, {
               id: "newDeviceId",
               localName: "newDeviceName",
@@ -455,6 +469,7 @@ describe("RNBleTransport", () => {
               rssi: 42,
             });
           }, 500);
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-call
           listener(null, {
             id: "43",
             localName: "name43",
@@ -462,9 +477,11 @@ describe("RNBleTransport", () => {
             rssi: 43,
           });
         });
+
         const stopScan = vi.fn(() => {
           clearInterval(scanInterval);
         });
+
         const fakeConnectedDevices = vi.fn().mockResolvedValueOnce([
           {
             readRSSI: vi.fn().mockResolvedValueOnce({
@@ -480,12 +497,14 @@ describe("RNBleTransport", () => {
             }),
           },
         ]);
+
         const bleManager = {
           connectedDevices: fakeConnectedDevices,
           startDeviceScan: startScan,
           stopDeviceScan: stopScan,
           onDeviceDisconnected: vi.fn(),
         } as unknown as BleManager;
+
         const transport = new RNBleTransport(
           fakeDataSource as unknown as DeviceModelDataSource,
           () => fakeLogger as unknown as LoggerPublisherService,
@@ -559,8 +578,10 @@ describe("RNBleTransport", () => {
     it("should call ble manager stop scan when unsubscribe startDiscovering obs", () => {
       // given
       let scanInterval: NodeJS.Timeout | undefined;
+
       const startScan = vi.fn((_uuids, _options, listener) => {
         scanInterval = setInterval(() => {
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-call
           listener(null, {
             id: "id",
             localName: "name",
@@ -568,6 +589,7 @@ describe("RNBleTransport", () => {
             rssi: 42,
           });
         }, 500);
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-call
         listener(null, {
           id: "43",
           localName: "name43",
@@ -575,10 +597,12 @@ describe("RNBleTransport", () => {
           rssi: 43,
         });
       });
+
       const stopScan = vi.fn(() => {
         clearInterval(scanInterval);
         scanInterval = undefined;
       });
+
       const bleManager = {
         connectedDevices: vi.fn().mockResolvedValueOnce([]),
         startDeviceScan: startScan,
@@ -609,8 +633,10 @@ describe("RNBleTransport", () => {
       new Promise((done) => {
         // given
         let scanInterval: NodeJS.Timeout | undefined;
+
         const startScan = vi.fn((_uuids, _options, listener) => {
           scanInterval = setInterval(() => {
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-call
             listener(null, {
               id: "id",
               localName: "name",
@@ -618,6 +644,7 @@ describe("RNBleTransport", () => {
               rssi: 42,
             });
           }, 500);
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-call
           listener(null, {
             id: "43",
             localName: "name43",
@@ -720,6 +747,7 @@ describe("RNBleTransport", () => {
         onDeviceDisconnected: vi.fn(),
         isDeviceConnected: vi.fn(),
       } as unknown as BleManager;
+
       const transport = new RNBleTransport(
         fakeDataSource as unknown as DeviceModelDataSource,
         () => fakeLogger as unknown as LoggerPublisherService,
@@ -729,11 +757,13 @@ describe("RNBleTransport", () => {
         {} as unknown as PermissionsAndroid,
         () => bleManager,
       );
+
       // when
       const result = await transport.connect({
         deviceId: "42",
         onDisconnect: vi.fn(),
       });
+
       // then
       expect(result).toEqual(Left(new UnknownDeviceError(`Unknown device 42`)));
     });
@@ -754,6 +784,7 @@ describe("RNBleTransport", () => {
         }),
         discoverAllServicesAndCharacteristicsForDevice: vi.fn(),
       } as unknown as BleManager;
+
       const fakeSetupConnection = vi.fn();
       const deviceConnectionStateMachineFactory = vi.fn().mockReturnValue({
         sendApdu: vi.fn(),
@@ -761,6 +792,7 @@ describe("RNBleTransport", () => {
       const deviceApduSenderFactory = vi.fn().mockReturnValue({
         setupConnection: fakeSetupConnection,
       });
+
       const transport = new RNBleTransport(
         fakeDataSource as unknown as DeviceModelDataSource,
         () => fakeLogger as unknown as LoggerPublisherService,
@@ -772,12 +804,14 @@ describe("RNBleTransport", () => {
         deviceConnectionStateMachineFactory,
         deviceApduSenderFactory,
       );
+
       // when
       const device = await firstValueFrom(transport.startDiscovering());
       const result = await transport.connect({
         deviceId: device.id,
         onDisconnect: vi.fn(),
       });
+
       // then
       expect(result.isRight()).toBe(true);
       expect(bleManager.connectToDevice).toHaveBeenCalledWith("deviceId", {
@@ -805,6 +839,7 @@ describe("RNBleTransport", () => {
         }),
         discoverAllServicesAndCharacteristicsForDevice: vi.fn(),
       } as unknown as BleManager;
+
       const fakeSendApdu = vi.fn();
       const deviceConnectionStateMachineFactory = vi.fn().mockReturnValue({
         sendApdu: fakeSendApdu,
@@ -812,6 +847,7 @@ describe("RNBleTransport", () => {
       const deviceApduSenderFactory = vi.fn().mockReturnValue({
         setupConnection: vi.fn(),
       });
+
       const transport = new RNBleTransport(
         fakeDataSource as unknown as DeviceModelDataSource,
         () => fakeLogger as unknown as LoggerPublisherService,
@@ -823,12 +859,14 @@ describe("RNBleTransport", () => {
         deviceConnectionStateMachineFactory,
         deviceApduSenderFactory,
       );
+
       // when
       const device = await firstValueFrom(transport.startDiscovering());
       const result = await transport.connect({
         deviceId: device.id,
         onDisconnect: vi.fn(),
       });
+
       const connectedDevice = result.extract() as TransportConnectedDevice;
       connectedDevice.sendApdu(Uint8Array.from([0x43, 0x32]));
       // then
@@ -839,6 +877,7 @@ describe("RNBleTransport", () => {
             deviceModel: fakeDeviceModel,
             type: "BLE",
             transport: "RN_BLE",
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
             sendApdu: expect.any(Function),
           }),
         ),
@@ -847,7 +886,7 @@ describe("RNBleTransport", () => {
     });
   });
 
-  describe.todo("disconnect", () => {
+  describe("disconnect", () => {
     let fakeConnectedDevices: Mock;
 
     beforeEach(() => {
@@ -868,13 +907,37 @@ describe("RNBleTransport", () => {
       ]);
     });
 
-    it("should call disconnect on ble manager", async () => {
+    it("should disconnect gracefully", async () => {
+      const onDeviceDisconnected = vi
+        .fn()
+        .mockImplementation((_id, callback) => {
+          callback(null, {
+            deviceId: "deviceId",
+            connect: vi.fn().mockResolvedValue({
+              services: vi.fn().mockResolvedValueOnce({}),
+              serviceUUIDs: ["ledgerId"],
+              rssi: 64,
+              id: "deviceId",
+              localName: "knownDeviceName",
+            }),
+            discoverAllServicesAndCharacteristics: vi
+              .fn()
+              .mockResolvedValueOnce({
+                services: vi.fn().mockResolvedValueOnce({}),
+                serviceUUIDs: ["ledgerId"],
+                rssi: 64,
+                id: "deviceId",
+                localName: "knownDeviceName",
+              }),
+          });
+          return { remove: vi.fn() };
+        });
       // given
       const bleManager = {
         connectedDevices: fakeConnectedDevices,
         startDeviceScan: vi.fn(),
         stopDeviceScan: vi.fn(),
-        onDeviceDisconnected: vi.fn(),
+        onDeviceDisconnected: onDeviceDisconnected,
         isDeviceConnected: vi.fn(),
         monitorCharacteristicForDevice: vi.fn(),
         writeCharacteristicWithoutResponseForDevice: vi.fn(),
@@ -884,15 +947,25 @@ describe("RNBleTransport", () => {
         }),
         discoverAllServicesAndCharacteristicsForDevice: vi.fn(),
       } as unknown as BleManager;
+
       const fakeCloseConnection = vi.fn();
-      const deviceConnectionStateMachineFactory = vi.fn().mockReturnValue({
-        sendApdu: vi.fn(),
-        getDeviceId: vi.fn().mockReturnValueOnce("deviceId"),
-        closeConnection: fakeCloseConnection,
-      });
+
+      const deviceConnectionStateMachineFactory = (
+        _args: DeviceConnectionStateMachineParams<RNBleApduSenderDependencies>,
+      ) => {
+        return new DeviceConnectionStateMachine({
+          deviceId: "deviceId",
+          deviceApduSender: _args.deviceApduSender,
+          timeoutDuration: 1000,
+          onTerminated: _args.onTerminated,
+        });
+      };
+
       const deviceApduSenderFactory = vi.fn().mockReturnValue({
         setupConnection: vi.fn(),
+        closeConnection: fakeCloseConnection,
       });
+
       const transport = new RNBleTransport(
         fakeDataSource as unknown as DeviceModelDataSource,
         () => fakeLogger as unknown as LoggerPublisherService,
@@ -904,6 +977,7 @@ describe("RNBleTransport", () => {
         deviceConnectionStateMachineFactory,
         deviceApduSenderFactory,
       );
+
       const fakeOnDisconnect = vi.fn();
 
       // when
@@ -912,10 +986,85 @@ describe("RNBleTransport", () => {
         deviceId: device.id,
         onDisconnect: fakeOnDisconnect,
       });
-      await transport.disconnect({
+
+      const res = await transport.disconnect({
         connectedDevice: result.extract() as TransportConnectedDevice,
       });
+
       // then
+      expect(res).toEqual(Right(undefined));
+      expect(fakeOnDisconnect).toHaveBeenCalled();
+      expect(fakeCloseConnection).toHaveBeenCalled();
+    });
+
+    it("should handle error while disconnecting", async () => {
+      const onDeviceDisconnected = vi
+        .fn()
+        .mockImplementation((_id, callback) => {
+          callback(new Error("yolo"), null);
+          return { remove: vi.fn() };
+        });
+      // given
+      const bleManager = {
+        connectedDevices: fakeConnectedDevices,
+        startDeviceScan: vi.fn(),
+        stopDeviceScan: vi.fn(),
+        onDeviceDisconnected: onDeviceDisconnected,
+        isDeviceConnected: vi.fn(),
+        monitorCharacteristicForDevice: vi.fn(),
+        writeCharacteristicWithoutResponseForDevice: vi.fn(),
+        connectToDevice: vi.fn().mockResolvedValueOnce({
+          id: "deviceId",
+          rssi: 64,
+        }),
+        discoverAllServicesAndCharacteristicsForDevice: vi.fn(),
+      } as unknown as BleManager;
+
+      const fakeCloseConnection = vi.fn();
+
+      const deviceConnectionStateMachineFactory = (
+        _args: DeviceConnectionStateMachineParams<RNBleApduSenderDependencies>,
+      ) => {
+        return new DeviceConnectionStateMachine({
+          deviceId: "deviceId",
+          deviceApduSender: _args.deviceApduSender,
+          timeoutDuration: 1000,
+          onTerminated: _args.onTerminated,
+        });
+      };
+
+      const deviceApduSenderFactory = vi.fn().mockReturnValue({
+        setupConnection: vi.fn(),
+        closeConnection: fakeCloseConnection,
+      });
+
+      const transport = new RNBleTransport(
+        fakeDataSource as unknown as DeviceModelDataSource,
+        () => fakeLogger as unknown as LoggerPublisherService,
+        (() => {}) as unknown as ApduSenderServiceFactory,
+        (() => {}) as unknown as ApduReceiverServiceFactory,
+        fakePlaftorm as Platform,
+        {} as unknown as PermissionsAndroid,
+        () => bleManager,
+        deviceConnectionStateMachineFactory,
+        deviceApduSenderFactory,
+      );
+
+      const fakeOnDisconnect = vi.fn();
+
+      // when
+      const device = await firstValueFrom(transport.startDiscovering());
+      const result = await transport.connect({
+        deviceId: device.id,
+        onDisconnect: fakeOnDisconnect,
+      });
+
+      const res = await transport.disconnect({
+        connectedDevice: result.extract() as TransportConnectedDevice,
+      });
+
+      // then
+      expect(res).toEqual(Right(undefined));
       expect(fakeOnDisconnect).toHaveBeenCalled();
     });
   });
