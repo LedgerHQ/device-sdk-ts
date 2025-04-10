@@ -50,6 +50,10 @@ import {
   type OpenAppDAIntermediateValue,
   type OpenAppDAOutput,
   OpenAppDeviceAction,
+  type OpenAppWithDependenciesDAError,
+  type OpenAppWithDependenciesDAIntermediateValue,
+  type OpenAppWithDependenciesDAOutput,
+  OpenAppWithDependenciesDeviceAction,
   type UninstallAppDAError,
   type UninstallAppDAInput,
   type UninstallAppDAIntermediateValue,
@@ -113,6 +117,62 @@ export const AllDeviceActions: React.FC<{ sessionId: string }> = ({
         },
         OpenAppDAError,
         OpenAppDAIntermediateValue
+      >,
+      {
+        title: `Open app with dependencies ${SECURE_CHANNEL_SIGN}`,
+        description:
+          "Perform all the actions necessary to open an app on the device and install its dependencies",
+        executeDeviceAction: (
+          {
+            appName,
+            dependencies,
+            compatibleAppNames,
+            requireLatestFirmware,
+            unlockTimeout,
+          },
+          inspect,
+        ) => {
+          const application = { name: appName };
+          const dependenciesArray = dependencies
+            .split(",")
+            .map((app) => ({ name: app.trim() }));
+          const compatibleAppNamesArray = compatibleAppNames
+            .split(",")
+            .map((app) => app.trim());
+          const deviceAction = new OpenAppWithDependenciesDeviceAction({
+            input: {
+              application,
+              dependencies: dependenciesArray,
+              compatibleAppNames: compatibleAppNamesArray,
+              requireLatestFirmware,
+              unlockTimeout,
+            },
+            inspect,
+          });
+          return dmk.executeDeviceAction({
+            sessionId,
+            deviceAction,
+          });
+        },
+        initialValues: {
+          appName: "Ethereum",
+          dependencies: "Uniswap,1inch",
+          compatibleAppNames: "",
+          requireLatestFirmware: false,
+          unlockTimeout: UNLOCK_TIMEOUT,
+        },
+        deviceModelId,
+      } satisfies DeviceActionProps<
+        OpenAppWithDependenciesDAOutput,
+        {
+          appName: string;
+          dependencies: string;
+          compatibleAppNames: string;
+          requireLatestFirmware: boolean;
+          unlockTimeout: number;
+        },
+        OpenAppWithDependenciesDAError,
+        OpenAppWithDependenciesDAIntermediateValue
       >,
       {
         title: "Get device status",

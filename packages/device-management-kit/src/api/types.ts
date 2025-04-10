@@ -47,11 +47,15 @@ export {
   type GoToDashboardDAState,
 } from "@api/device-action/os/GoToDashboard/types";
 export {
+  type ApplicationConstraint,
+  type ApplicationDependency,
+  type ApplicationVersionConstraint,
   type InstallOrUpdateAppsDAError,
   type InstallOrUpdateAppsDAInput,
   type InstallOrUpdateAppsDAIntermediateValue,
   type InstallOrUpdateAppsDAOutput,
   type InstallOrUpdateAppsDAState,
+  type InstallPlan,
 } from "@api/device-action/os/InstallOrUpdateApps/types";
 export {
   type ListAppsDAError,
@@ -76,6 +80,14 @@ export {
   type OpenAppDAState,
 } from "@api/device-action/os/OpenAppDeviceAction/types";
 export {
+  type OpenAppWithDependenciesDAError,
+  type OpenAppWithDependenciesDAInput,
+  type OpenAppWithDependenciesDAIntermediateValue,
+  type OpenAppWithDependenciesDAOutput,
+  type OpenAppWithDependenciesDARequiredInteraction,
+  type OpenAppWithDependenciesDAState,
+} from "@api/device-action/os/OpenAppWithDependencies/types";
+export {
   type SendCommandInAppDAError,
   type SendCommandInAppDAInput,
   type SendCommandInAppDAIntermediateValue,
@@ -84,7 +96,16 @@ export {
 export type { ExecuteDeviceActionUseCaseArgs } from "@api/device-action/use-case/ExecuteDeviceActionUseCase";
 export { type StateMachineTypes } from "@api/device-action/xstate-utils/StateMachineTypes";
 export { type DeviceModelDataSource } from "@api/device-model/data/DeviceModelDataSource";
-export type { DeviceSessionState } from "@api/device-session/DeviceSessionState";
+export type {
+  Catalog,
+  CustomImage,
+  DeviceSessionState,
+  FirmwareUpdate,
+  FirmwareUpdateContext,
+  FirmwareVersion,
+  InstalledLanguagePackage,
+  RunningApp,
+} from "@api/device-session/DeviceSessionState";
 export { type ApduReceiverService } from "@api/device-session/service/ApduReceiverService";
 export { type ApduReceiverServiceFactory } from "@api/device-session/service/ApduReceiverService";
 export { type ApduSenderServiceFactory } from "@api/device-session/service/ApduSenderService";
