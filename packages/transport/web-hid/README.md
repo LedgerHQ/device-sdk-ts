@@ -32,7 +32,7 @@ This library works in [any browser supporting the WebHID API](https://developer.
 
 ### Pre-requisites
 
-To use this transport, ensure you have the Device Magement Kit installed in your project.
+To use this transport, ensure you have the Device Management Kit installed in your project.
 
 ### Main Features
 

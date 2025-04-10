@@ -57,7 +57,7 @@
   },
   "peerDependencies": {
     "@ledgerhq/device-management-kit": "workspace:*",
-    "react-native": ">0.70",
+    "react-native": ">0.74.1",
     "react-native-ble-plx": "3.4.0",
     "rxjs": "^7.8.1"
   }

@@ -32,7 +32,7 @@ This library works in [any browser supporting the Web Bluetooth API](https://dev
 
 ### Pre-requisites
 
-To use this transport, ensure you have the Device Magement Kit installed in your project.
+To use this transport, ensure you have the Device Management Kit installed in your project.
 
 ### Main Features
 
@@ -41,7 +41,7 @@ To use this transport, ensure you have the Device Magement Kit installed in your
 
 ### How To
 
-To use the transport, you need to inject it in the DeviceManagementKitBuilder before the build. This will allow the Device Managment Kit to find and interact with devices on the Web BLE protocol.
+To use the transport, you need to inject it in the DeviceManagementKitBuilder before the build. This will allow the Device Management Kit to find and interact with devices on the Web BLE protocol.
 
 ```typescript
 import { DeviceManagementKitBuilder } from "@ledgerhq/device-management-kit"
