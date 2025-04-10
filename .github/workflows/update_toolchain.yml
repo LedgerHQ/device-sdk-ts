@@ -22,7 +22,7 @@ jobs:
           git config user.name 'github-actions[bot]'
           git config user.email 'github-actions[bot]@users.noreply.github.com'
           git checkout -b ${{ env.BRANCH_NAME }}
-          git push --set-upstream origin ${{ env.BRANCH_NAME }}
+          git push --set-upstream origin ${{ env.BRANCH_NAME }} --force
 
       - name: Update toolchain
         run: |
@@ -46,11 +46,16 @@ jobs:
         run: |
           jq '.packageManager = "pnpm@${{ steps.new-versions.outputs.version }}"' package.json > tmp.json && mv tmp.json package.json
 
+      - name: Deduplicate
+        run: |
+          pnpm dedupe
+
       - name: Add changes to commit
         if: steps.changes.outputs.status > 0 && success()
         run: |
           git add .prototools
           git add package.json
+          git add pnpm-lock.yaml
 
       - name: Commit and sign
         if: steps.changes.outputs.status > 0 && success()
