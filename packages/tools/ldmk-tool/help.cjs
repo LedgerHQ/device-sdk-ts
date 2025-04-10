@@ -4,15 +4,25 @@ require("zx/globals");
 
 const defaultHeader = (color) => {
   console.log(color("Usage:"));
-  console.log(color("  lmdk-cli <command> [flags]"));
+  console.log(color("  ldmk-tool <command> [flags]"));
   console.log(color(""));
   console.log(color("Available commands"));
 };
 
 const help = (commands, danger = false, header = defaultHeader) => {
-  const color = danger ? chalk.red : chalk.blue;
-  header(color);
+  const getColor = (command) => {
+    if (!!command?.internal) {
+      return chalk.gray;
+    }
+
+    if (danger) {
+      return chalk.red;
+    }
+    return chalk.blue;
+  };
+  header(getColor());
   for (const command of commands) {
+    const color = getColor(command);
     console.log(color(`▶︎  ${command.name}: ${command.description}`));
     if (command.flags.length > 0) {
       console.log(color("   > flags:"));
@@ -25,7 +35,7 @@ const help = (commands, danger = false, header = defaultHeader) => {
       }
     }
   }
-  console.log(color(""));
+  console.log(getColor()(""));
 };
 
 module.exports = {
