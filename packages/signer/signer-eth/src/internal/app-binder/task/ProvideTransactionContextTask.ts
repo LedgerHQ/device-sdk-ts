@@ -52,14 +52,14 @@ export class ProvideTransactionContextTask {
   ) {}
 
   async run(): Promise<Maybe<CommandErrorResult<EthErrorCodes>>> {
-    for (const context of this.args.clearSignContexts) {
-      const res = await this.provideContext(context);
+    if (this.args.web3Check) {
+      const res = await this.provideContext(this.args.web3Check);
       if (!isSuccessCommandResult(res)) {
         return Just(res);
       }
     }
-    if (this.args.web3Check) {
-      const res = await this.provideContext(this.args.web3Check);
+    for (const context of this.args.clearSignContexts) {
+      const res = await this.provideContext(context);
       if (!isSuccessCommandResult(res)) {
         return Just(res);
       }
