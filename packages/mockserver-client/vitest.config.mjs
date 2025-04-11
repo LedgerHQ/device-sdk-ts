@@ -9,7 +9,7 @@ export default defineConfig({
     include: ["src/**/*.test.ts"],
     coverage: {
       provider: "istanbul",
-      reporter: ["lcov"],
+      reporter: ["lcov", "text"],
       include: ["src/**/*.ts"],
       exclude: ["src/**/*.stub.ts", "src/index.ts", "index.ts"],
     },

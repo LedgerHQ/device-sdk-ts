@@ -96,6 +96,10 @@ export { LogLevel } from "@api/logger-subscriber/model/LogLevel";
 export { ConsoleLogger } from "@api/logger-subscriber/service/ConsoleLogger";
 export { WebLogsExporterLogger } from "@api/logger-subscriber/service/WebLogsExporterLogger";
 export { ConnectedDevice } from "@api/transport/model/ConnectedDevice";
+export {
+  DeviceConnectionStateMachine,
+  type DeviceConnectionStateMachineParams,
+} from "@api/transport/model/DeviceConnectionStateMachine";
 export * from "@api/transport/model/Errors";
 export { TransportConnectedDevice } from "@api/transport/model/TransportConnectedDevice";
 export { connectedDeviceStubBuilder } from "@api/transport/model/TransportConnectedDevice.stub";

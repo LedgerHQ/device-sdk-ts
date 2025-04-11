@@ -1,3 +1,6 @@
+import { CloseAppCommand } from "@api/command/os/CloseAppCommand";
+import { GetAppAndVersionCommand } from "@api/command/os/GetAppAndVersionCommand";
+import { OpenAppCommand } from "@api/command/os/OpenAppCommand";
 import { ApduResponse } from "@api/device-session/ApduResponse";
 
 import { CommandUtils } from "./CommandUtils";
@@ -72,6 +75,28 @@ describe("CommandUtils", () => {
       });
 
       expect(CommandUtils.isLockedDeviceResponse(response)).toBe(false);
+    });
+  });
+
+  describe("static isApduThatTriggersDisconnection", () => {
+    it("should return true if the APDU is openApp", () => {
+      const apdu = new OpenAppCommand({ appName: "test" })
+        .getApdu()
+        .getRawApdu();
+
+      expect(CommandUtils.isApduThatTriggersDisconnection(apdu)).toBe(true);
+    });
+
+    it("should return true if the APDU is closeApp", () => {
+      const apdu = new CloseAppCommand().getApdu().getRawApdu();
+
+      expect(CommandUtils.isApduThatTriggersDisconnection(apdu)).toBe(true);
+    });
+
+    it("should return false if the APDU is not a known one", () => {
+      const apdu = new GetAppAndVersionCommand().getApdu().getRawApdu();
+
+      expect(CommandUtils.isApduThatTriggersDisconnection(apdu)).toBe(false);
     });
   });
 });
