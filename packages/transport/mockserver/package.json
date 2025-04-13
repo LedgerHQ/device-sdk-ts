@@ -36,7 +36,7 @@
   },
   "dependencies": {
     "@sentry/minimal": "^6.19.7",
-    "purify-ts": "^2.1.0"
+    "purify-ts": "^2.1.1"
   },
   "devDependencies": {
     "@ledgerhq/device-management-kit": "workspace:*",

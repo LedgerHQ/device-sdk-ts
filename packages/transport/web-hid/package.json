@@ -31,7 +31,7 @@
   },
   "dependencies": {
     "@sentry/minimal": "^6.19.7",
-    "purify-ts": "^2.1.0",
+    "purify-ts": "^2.1.1",
     "uuid": "^11.0.3"
   },
   "devDependencies": {
