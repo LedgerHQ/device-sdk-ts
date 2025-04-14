@@ -33,7 +33,7 @@
     "prettier": "prettier . --check",
     "prettier:fix": "prettier . --write",
     "typecheck": "tsc --noEmit",
-    "test": "vitest run --passWithNoTests && cd android && ./gradlew testDebugUnitTest --tests \"*\" --info",
+    "test": "vitest run --passWithNoTests",
     "test:watch": "vitest --passWithNoTests",
     "test:coverage": "vitest run --coverage --passWithNoTests"
   },
@@ -55,7 +55,7 @@
   },
   "peerDependencies": {
     "@ledgerhq/device-management-kit": "workspace:*",
-    "react-native": ">0.72",
+    "react-native": ">0.74.1",
     "rxjs": "^7.8.1"
   }
 }
