@@ -8,7 +8,7 @@ import styled from "styled-components/native";
 import { CommandProps, ThemeProps } from "_common/types.ts";
 import { SendCommandModal } from "_components/SendCommandModal.tsx";
 import { DeviceStateView } from "_components/DeviceStateView.tsx";
-import { RootScreens } from "_navigators/RootNavigator.constants.ts";
+import { DisconnectButton } from "./DisconnectButton";
 
 const SafeView = styled.SafeAreaView`
   flex: 1;
@@ -25,13 +25,13 @@ export const CommandTesterScreen: React.FC = () => {
   const {
     state: { selectedId: deviceSessionId },
   } = useDeviceSessionsContext();
-  const { navigate } = useNavigation();
+  const navigation = useNavigation();
 
   useEffect(() => {
     if (!deviceSessionId) {
-      navigate(RootScreens.Home);
+      navigation.goBack();
     }
-  }, [deviceSessionId, navigate]);
+  }, [deviceSessionId, navigation]);
   const commands = useMemo(() => {
     if (deviceSessionId) {
       return getCommands(dmk, deviceSessionId);
@@ -73,7 +73,10 @@ export const CommandTesterScreen: React.FC = () => {
           onClose={onClose}
           isOpen={isCommandModalVisible}
         />
-        <DeviceStateView sessionId={deviceSessionId} />
+        <Flex rowGap={6}>
+          <DeviceStateView sessionId={deviceSessionId} />
+          <DisconnectButton sessionId={deviceSessionId} />
+        </Flex>
       </Container>
     </SafeView>
   );

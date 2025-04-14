@@ -12,7 +12,7 @@ concurrency:
 jobs:
   checks:
     name: Run health check and unit tests
-    runs-on: ubuntu-22.04
+    runs-on: "ledgerhq-device-sdk" # Use the custom runner for the merge queue #
     steps:
       - uses: actions/checkout@v4
 

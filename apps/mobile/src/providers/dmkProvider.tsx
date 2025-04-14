@@ -11,12 +11,14 @@ import {
   DeviceManagementKitBuilder,
 } from "@ledgerhq/device-management-kit";
 import { RNBleTransportFactory } from "@ledgerhq/device-transport-kit-react-native-ble";
+import { RNHidTransportFactory } from "@ledgerhq/device-transport-kit-react-native-hid";
 
 const DmkContext = createContext<DeviceManagementKit | null>(null);
 
 function buildDefaultDmk() {
   return new DeviceManagementKitBuilder()
     .addTransport(RNBleTransportFactory)
+    .addTransport(RNHidTransportFactory)
     .addLogger(new ConsoleLogger())
     .build();
 }
