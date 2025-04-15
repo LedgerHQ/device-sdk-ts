@@ -154,16 +154,31 @@ describe("GetDeviceStatusDeviceAction", () => {
             }),
         );
 
-        sendCommandMock.mockResolvedValue(
-          CommandResultFactory({
-            data: {
-              name: "BOLOS",
-              version: "1.0.0",
-            },
-          }),
-        );
+        sendCommandMock
+          .mockResolvedValueOnce(
+            CommandResultFactory({
+              error: new GlobalCommandError({
+                ...GLOBAL_ERRORS["5515"],
+                errorCode: "5515",
+              }),
+            }),
+          )
+          .mockResolvedValueOnce(
+            CommandResultFactory({
+              data: {
+                name: "BOLOS",
+                version: "1.0.0",
+              },
+            }),
+          );
 
         const expectedStates: Array<GetDeviceStatusDAState> = [
+          {
+            intermediateValue: {
+              requiredUserInteraction: UserInteractionRequired.None,
+            },
+            status: DeviceActionStatus.Pending,
+          },
           {
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.UnlockDevice,
@@ -259,14 +274,23 @@ describe("GetDeviceStatusDeviceAction", () => {
           currentApp: { name: "mockedCurrentApp", version: "1.0.0" },
         });
 
-        getAppAndVersionMock.mockResolvedValue(
-          CommandResultFactory({
-            data: {
-              name: "BOLOS",
-              version: "1.0.0",
-            },
-          }),
-        );
+        getAppAndVersionMock
+          .mockResolvedValueOnce(
+            CommandResultFactory({
+              error: new GlobalCommandError({
+                ...GLOBAL_ERRORS["5515"],
+                errorCode: "5515",
+              }),
+            }),
+          )
+          .mockResolvedValueOnce(
+            CommandResultFactory({
+              data: {
+                name: "BOLOS",
+                version: "1.0.0",
+              },
+            }),
+          );
 
         waitForDeviceUnlockMock.mockImplementation(
           () =>
@@ -314,6 +338,12 @@ describe("GetDeviceStatusDeviceAction", () => {
         ).mockReturnValue(extractDependenciesMock());
 
         const expectedStates: Array<GetDeviceStatusDAState> = [
+          {
+            intermediateValue: {
+              requiredUserInteraction: UserInteractionRequired.None,
+            },
+            status: DeviceActionStatus.Pending,
+          },
           {
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.UnlockDevice,
@@ -392,6 +422,15 @@ describe("GetDeviceStatusDeviceAction", () => {
           currentApp: { name: "mockedCurrentApp", version: "1.0.0" },
         });
 
+        getAppAndVersionMock.mockResolvedValue(
+          CommandResultFactory({
+            error: new GlobalCommandError({
+              ...GLOBAL_ERRORS["5515"],
+              errorCode: "5515",
+            }),
+          }),
+        );
+
         apiGetDeviceSessionStateObservableMock.mockImplementation(
           () =>
             new Observable((o) => {
@@ -425,6 +464,12 @@ describe("GetDeviceStatusDeviceAction", () => {
         ).mockReturnValue(extractDependenciesMock());
 
         const expectedStates: Array<GetDeviceStatusDAState> = [
+          {
+            intermediateValue: {
+              requiredUserInteraction: UserInteractionRequired.None,
+            },
+            status: DeviceActionStatus.Pending,
+          },
           {
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.UnlockDevice,
@@ -511,12 +556,6 @@ describe("GetDeviceStatusDeviceAction", () => {
         const expectedStates: Array<GetDeviceStatusDAState> = [
           {
             intermediateValue: {
-              requiredUserInteraction: UserInteractionRequired.UnlockDevice,
-            },
-            status: DeviceActionStatus.Pending,
-          },
-          {
-            intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
             },
             status: DeviceActionStatus.Pending,
@@ -567,12 +606,6 @@ describe("GetDeviceStatusDeviceAction", () => {
         ).mockReturnValue(extractDependenciesMock());
 
         const expectedStates: Array<GetDeviceStatusDAState> = [
-          {
-            intermediateValue: {
-              requiredUserInteraction: UserInteractionRequired.UnlockDevice,
-            },
-            status: DeviceActionStatus.Pending,
-          },
           {
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
