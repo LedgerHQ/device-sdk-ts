@@ -38,7 +38,7 @@ class TransportHidModule(
     private val coroutineScope: CoroutineScope
 ) :
     ReactContextBaseJavaModule(reactContext), LifecycleEventListener {
-    override fun getName(): String = "RCTTransportHIDModule"
+    override fun getName(): String = "LDMKTransportHIDModule"
 
     private var usbPermissionReceiver: UsbPermissionReceiver? = null
     private var usbAttachedReceiverController: UsbAttachedReceiverController? = null
@@ -47,7 +47,7 @@ class TransportHidModule(
     private var eventDispatcherListeningJob: Job
     private val loggerService: LoggerService =
         LoggerService { info ->
-            Timber.tag("RNHIDModule " + info.tag).d(info.message)
+            Timber.tag("LDMKTransportHIDModule " + info.tag).d(info.message)
             sendEvent(reactContext, BridgeEvents.TransportLog(info))
         }
 
