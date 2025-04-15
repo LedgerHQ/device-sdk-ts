@@ -34,11 +34,11 @@ jobs:
           echo "status=$(git status --porcelain | wc -l)" >> $GITHUB_OUTPUT
 
       - name: Set new versions
-        if: steps.changes.outputs.status > 0
         id: new-versions
         run: |
           proto use
           pnpm i
+          jq 'del(.packageManager)' package.json > tmp.json && mv tmp.json package.json
           echo "version=$(pnpm -v)" >> $GITHUB_OUTPUT
 
       - name: Update package.json
@@ -51,14 +51,13 @@ jobs:
           pnpm dedupe
 
       - name: Add changes to commit
-        if: steps.changes.outputs.status > 0 && success()
         run: |
+          git status
           git add .prototools
           git add package.json
           git add pnpm-lock.yaml
 
       - name: Commit and sign
-        if: steps.changes.outputs.status > 0 && success()
         uses: planetscale/ghcommit-action@v0.1.6
         with:
           commit_message: "🔧 (repo): Update toolchain"
@@ -69,7 +68,6 @@ jobs:
           GITHUB_TOKEN: ${{ github.token }}
 
       - name: Create PR
-        if: steps.changes.outputs.status > 0 && success()
         run: |
           gh pr create \
           --title "🔧 (repo) [NO-ISSUE]: Update toolchain" \
