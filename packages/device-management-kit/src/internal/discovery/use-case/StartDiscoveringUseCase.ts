@@ -48,7 +48,7 @@ export class StartDiscoveringUseCase {
 
   execute({
     transport,
-  }: StartDiscoveringUseCaseArgs): Observable<DiscoveredDevice> {
+  }: StartDiscoveringUseCaseArgs = {}): Observable<DiscoveredDevice> {
     if (!transport) {
       const transports = this._transportService.getAllTransports();
       return of(...transports).pipe(
