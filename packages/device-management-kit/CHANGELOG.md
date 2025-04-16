@@ -1,5 +1,23 @@
 # @ledgerhq/device-management-kit
 
+## 0.7.0
+
+### Minor Changes
+
+- [#765](https://github.com/LedgerHQ/device-sdk-ts/pull/765) [`44bb707`](https://github.com/LedgerHQ/device-sdk-ts/commit/44bb70728a15512ce08b3ec237c99ace74e0b0c4) Thanks [@jiyuzhuang](https://github.com/jiyuzhuang)! - Add set provider feature
+
+- [#760](https://github.com/LedgerHQ/device-sdk-ts/pull/760) [`5927cce`](https://github.com/LedgerHQ/device-sdk-ts/commit/5927ccedb34f930103d6d46651abe28c3eeb35c3) Thanks [@jiyuzhuang](https://github.com/jiyuzhuang)! - Add documentation for secure channel device actions
+
+### Patch Changes
+
+- [#800](https://github.com/LedgerHQ/device-sdk-ts/pull/800) [`34f8afb`](https://github.com/LedgerHQ/device-sdk-ts/commit/34f8afb5060dafde21dc42d9bc86d4571543ea77) Thanks [@paoun-ledger](https://github.com/paoun-ledger)! - Don't rely on refresher in GetDeviceStatus device action
+
+- [#666](https://github.com/LedgerHQ/device-sdk-ts/pull/666) [`7b6c72d`](https://github.com/LedgerHQ/device-sdk-ts/commit/7b6c72df76ee2cf4dd90057c5270834f4aa177b6) Thanks [@jdabbech-ledger](https://github.com/jdabbech-ledger)! - Add DeviceConnectionStateMachine
+
+- [#777](https://github.com/LedgerHQ/device-sdk-ts/pull/777) [`ccfc20f`](https://github.com/LedgerHQ/device-sdk-ts/commit/ccfc20f8f8d831b1ad9f756c682775f0f7da7130) Thanks [@fAnselmi-Ledger](https://github.com/fAnselmi-Ledger)! - Add getProvider method to DMK
+
+- [#795](https://github.com/LedgerHQ/device-sdk-ts/pull/795) [`8a9cde5`](https://github.com/LedgerHQ/device-sdk-ts/commit/8a9cde5304edcda0ca1e06452d743f642affb54c) Thanks [@jdabbech-ledger](https://github.com/jdabbech-ledger)! - Allow to use discover apis without param
+
 ## 0.6.5
 
 ### Minor Changes
