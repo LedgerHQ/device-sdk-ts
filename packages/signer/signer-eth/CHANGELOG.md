@@ -1,6 +1,6 @@
 # @ledgerhq/device-signer-kit-ethereum
 
-## 2.0.0
+## 1.3.4
 
 ### Patch Changes
 
@@ -9,7 +9,7 @@
 - [#778](https://github.com/LedgerHQ/device-sdk-ts/pull/778) [`115a753`](https://github.com/LedgerHQ/device-sdk-ts/commit/115a7531f12816618dfdcc5b863abd2c31fcc01a) Thanks [@paoun-ledger](https://github.com/paoun-ledger)! - SignerEth should be compatible with Exchange app flows
 
 - Updated dependencies [[`34f8afb`](https://github.com/LedgerHQ/device-sdk-ts/commit/34f8afb5060dafde21dc42d9bc86d4571543ea77), [`7b6c72d`](https://github.com/LedgerHQ/device-sdk-ts/commit/7b6c72df76ee2cf4dd90057c5270834f4aa177b6), [`44bb707`](https://github.com/LedgerHQ/device-sdk-ts/commit/44bb70728a15512ce08b3ec237c99ace74e0b0c4), [`ccfc20f`](https://github.com/LedgerHQ/device-sdk-ts/commit/ccfc20f8f8d831b1ad9f756c682775f0f7da7130), [`8a9cde5`](https://github.com/LedgerHQ/device-sdk-ts/commit/8a9cde5304edcda0ca1e06452d743f642affb54c), [`5927cce`](https://github.com/LedgerHQ/device-sdk-ts/commit/5927ccedb34f930103d6d46651abe28c3eeb35c3)]:
-  - @ledgerhq/device-management-kit@0.7.0
+  - @ledgerhq/device-management-kit@0.6.6
   - @ledgerhq/context-module@1.3.1
 
 ## 1.3.3
@@ -27,8 +27,8 @@
 - [#750](https://github.com/LedgerHQ/device-sdk-ts/pull/750) [`8578af9`](https://github.com/LedgerHQ/device-sdk-ts/commit/8578af98842d2fd01a76e0ab7e6fe302be11ef25) Thanks [@paoun-ledger](https://github.com/paoun-ledger)! - Add trusted names support for eip712 clear signing
 
 - Updated dependencies [[`e3d6744`](https://github.com/LedgerHQ/device-sdk-ts/commit/e3d6744336d45840a9715e48c319cdf4ce77bb4f), [`da9d303`](https://github.com/LedgerHQ/device-sdk-ts/commit/da9d303e53790159e6d22f3f366f71314eef5752), [`d93a602`](https://github.com/LedgerHQ/device-sdk-ts/commit/d93a602d1ee161d6d8da4e0e40690a4273a813e0), [`29242d5`](https://github.com/LedgerHQ/device-sdk-ts/commit/29242d51c79d9043c3a6160d897b4938f044b7c4), [`42d675f`](https://github.com/LedgerHQ/device-sdk-ts/commit/42d675f9f9be9a83c1f9b682a5bd182711feaae5)]:
-  - @ledgerhq/device-management-kit@0.7.0
-  - @ledgerhq/context-module@2.0.0
+  - @ledgerhq/device-management-kit@0.6.5
+  - @ledgerhq/context-module@1.3.1
 
 ## 1.3.1
 
@@ -40,7 +40,7 @@
   - @ledgerhq/device-management-kit@0.6.4
   - @ledgerhq/context-module@1.3.0
 
-## 2.0.0
+## 1.3.0
 
 ### Minor Changes
 
