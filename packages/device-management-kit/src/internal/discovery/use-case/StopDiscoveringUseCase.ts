@@ -13,9 +13,9 @@ export class StopDiscoveringUseCase {
     private transportService: TransportService,
   ) {}
 
-  execute(): void {
+  async execute(): Promise<void> {
     for (const transport of this.transportService.getAllTransports()) {
-      transport.stopDiscovering();
+      await transport.stopDiscovering();
     }
   }
 }

@@ -29,7 +29,7 @@ export interface Transport {
 
   startDiscovering(): Observable<TransportDiscoveredDevice>;
 
-  stopDiscovering(): void;
+  stopDiscovering(): void | Promise<void>;
 
   listenToAvailableDevices(): Observable<TransportDiscoveredDevice[]>;
 
