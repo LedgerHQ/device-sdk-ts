@@ -16,7 +16,7 @@
     }
   },
   "files": [
-    "./lib"
+    "lib"
   ],
   "scripts": {
     "prebuild": "rimraf lib",

@@ -186,6 +186,10 @@ export class RNBleApduSender
       );
     }
 
+    this._logger.debug("Sending APDU", {
+      data: { apdu },
+    });
+
     let timeout: ReturnType<typeof setTimeout> | undefined;
 
     const resultPromise = new Promise<Either<DmkError, ApduResponse>>(
@@ -205,6 +209,9 @@ export class RNBleApduSender
     });
 
     for (const frame of frames) {
+      this._logger.debug("Sending frame", {
+        data: { frame: Base64.fromUint8Array(frame.getRawData()) },
+      });
       try {
         await this.write(Base64.fromUint8Array(frame.getRawData()));
       } catch (error) {
