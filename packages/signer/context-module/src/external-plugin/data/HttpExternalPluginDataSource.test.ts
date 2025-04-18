@@ -10,6 +10,7 @@ import {
 } from "@/external-plugin/data/DAppDto";
 import { type ExternalPluginDataSource } from "@/external-plugin/data/ExternalPluginDataSource";
 import { HttpExternalPluginDataSource } from "@/external-plugin/data/HttpExternalPluginDataSource";
+import { LEDGER_CLIENT_VERSION_HEADER } from "@/shared/constant/HttpHeaders";
 import PACKAGE from "@root/package.json";
 
 vi.mock("axios");
@@ -93,7 +94,7 @@ describe("HttpExternalPuginDataSource", () => {
     // THEN
     expect(requestSpy).toHaveBeenCalledWith(
       expect.objectContaining({
-        headers: { "X-Ledger-Client-Version": version },
+        headers: { [LEDGER_CLIENT_VERSION_HEADER]: version },
       }),
     );
   });

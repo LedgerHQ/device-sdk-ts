@@ -5,6 +5,7 @@ import { Left } from "purify-ts";
 import type { ContextModuleConfig } from "@/config/model/ContextModuleConfig";
 import { type PkiCertificateLoader } from "@/pki/domain/PkiCertificateLoader";
 import { type PkiCertificate } from "@/pki/model/PkiCertificate";
+import { LEDGER_CLIENT_VERSION_HEADER } from "@/shared/constant/HttpHeaders";
 import type {
   CalldataEnumV1,
   CalldataFieldV1,
@@ -280,7 +281,7 @@ describe("HttpTransactionDataSource", () => {
     // THEN
     expect(requestSpy).toHaveBeenCalledWith(
       expect.objectContaining({
-        headers: { "X-Ledger-Client-Version": version },
+        headers: { [LEDGER_CLIENT_VERSION_HEADER]: version },
       }),
     );
   });

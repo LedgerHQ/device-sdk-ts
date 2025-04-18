@@ -11,6 +11,7 @@ import {
 } from "@/external-plugin/data/ExternalPluginDataSource";
 import { DappInfos } from "@/external-plugin/model/DappInfos";
 import { SelectorDetails } from "@/external-plugin/model/SelectorDetails";
+import { LEDGER_CLIENT_VERSION_HEADER } from "@/shared/constant/HttpHeaders";
 import PACKAGE from "@root/package.json";
 
 @injectable()
@@ -34,7 +35,7 @@ export class HttpExternalPluginDataSource implements ExternalPluginDataSource {
           contracts: address,
         },
         headers: {
-          "X-Ledger-Client-Version": `context-module/${PACKAGE.version}`,
+          [LEDGER_CLIENT_VERSION_HEADER]: `context-module/${PACKAGE.version}`,
         },
       });
 
