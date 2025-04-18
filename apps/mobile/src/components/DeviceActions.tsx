@@ -12,6 +12,11 @@ import {
   GoToDashboardDAIntermediateValue,
   GoToDashboardDAOutput,
   GoToDashboardDeviceAction,
+  InstallAppDAError,
+  InstallAppDAInput,
+  InstallAppDAIntermediateValue,
+  InstallAppDAOutput,
+  InstallAppDeviceAction,
   ListAppsDAError,
   ListAppsDAInput,
   ListAppsDAIntermediateValue,
@@ -185,5 +190,37 @@ export const getDeviceActions = (
     ListAppsWithMetadataDAInput,
     ListAppsWithMetadataDAError,
     ListAppsWithMetadataDAIntermediateValue
+  >,
+  {
+    id: "install_app",
+    title: "Install App",
+    description:
+      "Perform all the actions necessary to install an app on the device by name",
+    executeDeviceAction: ({ appName, unlockTimeout }, inspect) => {
+      const deviceAction = new InstallAppDeviceAction({
+        input: { appName, unlockTimeout },
+        inspect,
+      });
+      return dmk.executeDeviceAction({
+        sessionId,
+        deviceAction,
+      });
+    },
+    initialValues: { appName: "", unlockTimeout: UNLOCK_TIMEOUT },
+    deviceModelId,
+    FormComponent: ({ values, setValue }) => (
+      <Flex>
+        <LegendInput
+          legend="App name"
+          value={values.appName}
+          onChange={appName => setValue("appName", appName)}
+        />
+      </Flex>
+    ),
+  } satisfies DeviceActionProps<
+    InstallAppDAOutput,
+    InstallAppDAInput,
+    InstallAppDAError,
+    InstallAppDAIntermediateValue
   >,
 ];
