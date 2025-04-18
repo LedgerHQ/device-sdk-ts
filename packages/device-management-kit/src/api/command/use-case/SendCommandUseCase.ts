@@ -16,6 +16,10 @@ export type SendCommandUseCaseArgs<Response, ErrorStatusCodes, Args = void> = {
    * The command to send.
    */
   readonly command: Command<Response, ErrorStatusCodes, Args>;
+  /**
+   * The timeout to abort the command.
+   */
+  readonly abortTimeout?: number;
 };
 
 /**
@@ -45,6 +49,7 @@ export class SendCommandUseCase {
   async execute<Response, Args, ErrorStatusCodes>({
     sessionId,
     command,
+    abortTimeout,
   }: SendCommandUseCaseArgs<Response, Args, ErrorStatusCodes>): Promise<
     CommandResult<Response, ErrorStatusCodes>
   > {
@@ -56,6 +61,7 @@ export class SendCommandUseCase {
       Right: async (deviceSession) =>
         await deviceSession.sendCommand<Response, Args, ErrorStatusCodes>(
           command,
+          abortTimeout,
         ),
       // Case device session not found
       Left: (error) => {

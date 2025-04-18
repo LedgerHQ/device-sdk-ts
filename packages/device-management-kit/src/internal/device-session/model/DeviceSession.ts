@@ -93,7 +93,7 @@ export class DeviceSession {
       loggerModuleFactory,
       connectedDevice,
       this._sessionEventDispatcher,
-      (command) => this.sendCommand(command),
+      (command, abortTimeout) => this.sendCommand(command, abortTimeout),
     );
     this._deviceSessionRefresher = new DeviceSessionRefresher(
       loggerModuleFactory,
@@ -191,12 +191,14 @@ export class DeviceSession {
 
   public async sendCommand<Response, Args, ErrorStatusCodes>(
     command: Command<Response, Args, ErrorStatusCodes>,
+    abortTimeout?: number,
   ): Promise<CommandResult<Response, ErrorStatusCodes>> {
     const apdu = command.getApdu();
 
     const response = await this.sendApdu(apdu.getRawApdu(), {
       isPolling: false,
       triggersDisconnection: command.triggersDisconnection ?? false,
+      abortTimeout,
     });
 
     return response.caseOf({
@@ -220,7 +222,8 @@ export class DeviceSession {
       sendApdu: async (apdu: Uint8Array) => this.sendApdu(apdu),
       sendCommand: async <Response, ErrorStatusCodes, Args>(
         command: Command<Response, ErrorStatusCodes, Args>,
-      ) => this.sendCommand(command),
+        abortTimeout?: number,
+      ) => this.sendCommand(command, abortTimeout),
       getDeviceSessionState: () => this._deviceState.getValue(),
       getDeviceSessionStateObservable: () => this.state,
       setDeviceSessionState: (state: DeviceSessionState) => {

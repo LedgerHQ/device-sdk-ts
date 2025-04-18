@@ -238,6 +238,9 @@ import { OpenAppCommand } from "@ledgerhq/device-management-kit";
 const command = new OpenAppCommand("Bitcoin"); // Open the Bitcoin app
 
 await dmk.sendCommand({ sessionId, command });
+
+// Or with a timeout
+await dmk.sendCommand({ sessionId, command, abortTimeout: 2000 });
 ```
 
 #### Close App
