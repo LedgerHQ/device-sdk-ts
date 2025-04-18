@@ -17,6 +17,7 @@ export type InternalApi = {
   ) => Promise<Either<DmkError, ApduResponse>>;
   readonly sendCommand: <Response, Args, ErrorStatusCodes>(
     command: Command<Response, Args, ErrorStatusCodes>,
+    abortTimeout?: number,
   ) => Promise<CommandResult<Response, ErrorStatusCodes>>;
   readonly getDeviceSessionState: () => DeviceSessionState;
   readonly getDeviceSessionStateObservable: () => Observable<DeviceSessionState>;

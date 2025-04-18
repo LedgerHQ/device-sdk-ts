@@ -99,7 +99,7 @@ export class DeviceSessionStateHandler {
         },
       };
     } else {
-      this._logger.error("Error while parsing APDU response", {
+      this._logger.debug("Error while parsing APDU response", {
         data: { parsedResponse },
       });
       return null;

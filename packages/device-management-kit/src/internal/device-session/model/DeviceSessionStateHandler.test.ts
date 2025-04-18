@@ -24,6 +24,7 @@ describe("DeviceSessionStateHandler", () => {
   let fakeSessionEventDispatcher: DeviceSessionEventDispatcher;
   let mockLogger: {
     error: (message: string, meta?: Record<string, unknown>) => void;
+    debug: (message: string, meta?: Record<string, unknown>) => void;
   };
   const mockLoggerModuleFactory = vi.fn(() => mockLogger);
   let fakeConnectedDevice: { deviceModel: { id: string } };
@@ -41,6 +42,7 @@ describe("DeviceSessionStateHandler", () => {
 
     mockLogger = {
       error: vi.fn(),
+      debug: vi.fn(),
     };
 
     fakeConnectedDevice = {
@@ -143,7 +145,7 @@ describe("DeviceSessionStateHandler", () => {
     });
 
     // Then
-    expect(mockLogger.error).toHaveBeenCalledWith(
+    expect(mockLogger.debug).toHaveBeenCalledWith(
       "Error while parsing APDU response",
       { data: { parsedResponse: fakeErrorCommandResult } },
     );

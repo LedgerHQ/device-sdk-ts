@@ -12,6 +12,7 @@ import {
   type CommandResult,
   type LoggerPublisherService,
 } from "@api/types";
+import { PINGER_TIMEOUT } from "@internal/device-session/data/ApduResponseConst";
 import { DEVICE_SESSION_REFRESHER_POLLING_INTERVAL } from "@internal/device-session/data/DeviceSessionRefresherConst";
 import {
   type DeviceSessionEventDispatcher,
@@ -21,6 +22,7 @@ import {
 
 type SendCommandFunction = <Response, Args, ErrorStatusCodes>(
   command: Command<Response, Args, ErrorStatusCodes>,
+  abortTimeout?: number,
 ) => Promise<CommandResult<Response, ErrorStatusCodes>>;
 
 export class DevicePinger {
@@ -69,15 +71,17 @@ export class DevicePinger {
   private async mapDevicePingAction(deviceModelId: DeviceModelId) {
     switch (deviceModelId) {
       case DeviceModelId.NANO_S: {
-        const chainPromise: Promise<CommandResult<GetAppAndVersionResponse>> =
-          (async () => {
-            const appVersionResult = await this._sendCommandFunction(
-              new GetAppAndVersionCommand(),
-            );
+        const chainPromise: () => Promise<
+          CommandResult<GetAppAndVersionResponse>
+        > = async () => {
+          const appVersionResult = await this._sendCommandFunction(
+            new GetAppAndVersionCommand(),
+            PINGER_TIMEOUT,
+          );
 
-            this._sendCommandFunction(new GetOsVersionCommand());
-            return appVersionResult;
-          })();
+          this._sendCommandFunction(new GetOsVersionCommand(), PINGER_TIMEOUT);
+          return appVersionResult;
+        };
 
         const timeoutPromise: Promise<null> = new Promise((resolve) => {
           setTimeout(
@@ -87,7 +91,7 @@ export class DevicePinger {
         });
 
         const resultOrTimeout: CommandResult<GetAppAndVersionResponse> | null =
-          await Promise.race([chainPromise, timeoutPromise]);
+          await Promise.race([chainPromise(), timeoutPromise]);
 
         if (!resultOrTimeout) {
           this._sessionEventDispatcher.dispatch({
@@ -104,6 +108,7 @@ export class DevicePinger {
       default: {
         const result = await this._sendCommandFunction(
           new GetAppAndVersionCommand(),
+          PINGER_TIMEOUT,
         );
         this._sessionEventDispatcher.dispatch({
           eventName: SessionEvents.COMMAND_SUCCEEDED,
