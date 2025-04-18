@@ -1,6 +1,7 @@
 import { type Container } from "inversify";
 
 import { configTypes } from "./config/di/configTypes";
+import { type ContextModuleConstructorArgs } from "./config/model/ContextModuleBuildArgs";
 import {
   type ContextModuleCalConfig,
   type ContextModuleConfig,
@@ -17,8 +18,11 @@ describe("ContextModuleBuilder", () => {
   const defaultWeb3ChecksConfig = {
     url: "https://web3checks/v1",
   };
+  const defaultBuilderArgs: ContextModuleConstructorArgs = {
+    originToken: "test",
+  };
   it("should return a default context module", () => {
-    const contextModuleBuilder = new ContextModuleBuilder();
+    const contextModuleBuilder = new ContextModuleBuilder(defaultBuilderArgs);
 
     const res = contextModuleBuilder.build();
 
@@ -26,7 +30,7 @@ describe("ContextModuleBuilder", () => {
   });
 
   it("should return a custom context module", () => {
-    const contextModuleBuilder = new ContextModuleBuilder();
+    const contextModuleBuilder = new ContextModuleBuilder(defaultBuilderArgs);
     const customLoader = { load: vi.fn() };
 
     const res = contextModuleBuilder
@@ -38,7 +42,7 @@ describe("ContextModuleBuilder", () => {
   });
 
   it("should return a custom context module with a custom typed data loader", () => {
-    const contextModuleBuilder = new ContextModuleBuilder();
+    const contextModuleBuilder = new ContextModuleBuilder(defaultBuilderArgs);
     const customLoader = { load: vi.fn() };
 
     const res = contextModuleBuilder
@@ -52,7 +56,7 @@ describe("ContextModuleBuilder", () => {
   });
 
   it("should return a custom context module with a custom config", () => {
-    const contextModuleBuilder = new ContextModuleBuilder();
+    const contextModuleBuilder = new ContextModuleBuilder(defaultBuilderArgs);
 
     const res = contextModuleBuilder
       .addCalConfig(defaultCalConfig)
@@ -80,5 +84,27 @@ describe("ContextModuleBuilder", () => {
     expect(res).toBeInstanceOf(DefaultContextModule);
     // @ts-expect-error _web3CheckLoader is private
     expect(res["_web3CheckLoader"]).toBe(customLoader);
+  });
+
+  it("should throw an error if origin token is not provided", () => {
+    const contextModuleBuilder = new ContextModuleBuilder();
+
+    expect(() => contextModuleBuilder.build()).toThrow(
+      "Origin token is required",
+    );
+  });
+
+  it("should not throw an error if origin token is provided", () => {
+    const contextModuleBuilder = new ContextModuleBuilder(defaultBuilderArgs);
+
+    expect(() => contextModuleBuilder.build()).not.toThrow();
+  });
+
+  it("should not throw an error if origin token is not provided and addWeb3CheckLoader is called", () => {
+    const contextModuleBuilder = new ContextModuleBuilder();
+
+    expect(() =>
+      contextModuleBuilder.addWeb3CheckLoader({ load: vi.fn() }).build(),
+    ).not.toThrow();
   });
 });

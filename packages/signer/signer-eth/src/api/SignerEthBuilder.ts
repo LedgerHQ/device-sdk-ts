@@ -12,6 +12,7 @@ import { DefaultSignerEth } from "@internal/DefaultSignerEth";
 type SignerEthBuilderConstructorArgs = {
   dmk: DeviceManagementKit;
   sessionId: DeviceSessionId;
+  originToken?: string;
 };
 
 /**
@@ -26,13 +27,17 @@ type SignerEthBuilderConstructorArgs = {
 export class SignerEthBuilder {
   private _dmk: DeviceManagementKit;
   private _sessionId: DeviceSessionId;
-  private _contextModule: ContextModule;
+  private _customContextModule: ContextModule | undefined;
+  private _originToken: string | undefined;
 
-  constructor({ dmk, sessionId }: SignerEthBuilderConstructorArgs) {
+  constructor({
+    dmk,
+    sessionId,
+    originToken,
+  }: SignerEthBuilderConstructorArgs) {
     this._dmk = dmk;
     this._sessionId = sessionId;
-    // default context module for ETH
-    this._contextModule = new ContextModuleBuilder().build();
+    this._originToken = originToken;
   }
 
   /**
@@ -42,7 +47,7 @@ export class SignerEthBuilder {
    * @returns this
    */
   withContextModule(contextModule: ContextModule) {
-    this._contextModule = contextModule;
+    this._customContextModule = contextModule;
     return this;
   }
 
@@ -52,10 +57,14 @@ export class SignerEthBuilder {
    * @returns the ethereum signer
    */
   public build() {
+    const contextModule =
+      this._customContextModule ??
+      new ContextModuleBuilder({ originToken: this._originToken }).build();
+
     return new DefaultSignerEth({
       dmk: this._dmk,
       sessionId: this._sessionId,
-      contextModule: this._contextModule,
+      contextModule,
     });
   }
 }

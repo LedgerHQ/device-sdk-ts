@@ -56,7 +56,9 @@ It currently supports the following features:
 The context-module package exposes a builder `ContextModuleBuilder` which will be used to initialise the context module with your configuration.
 
 ```ts
-const contextModule = new ContextModuleBuilder().build();
+const contextModule = new ContextModuleBuilder({
+  originToken: "origin-token", // replace with your origin token
+}).build();
 ```
 
 You can use a custom configuration for your context module.
@@ -65,13 +67,21 @@ You can use a custom configuration for your context module.
 const config: ContextModuleCalConfig = {
   // config to use
 };
-const contextModule = new ContextModuleBuilder().addCalConfig(config).build();
+const contextModule = new ContextModuleBuilder({
+  originToken: "origin-token", // replace with your origin token
+})
+  .addCalConfig(config)
+  .build();
 ```
 
 It is also possible to instantiate the context module without the default loaders.
 
 ```ts
-const contextModule = new ContextModuleBuilder().removeDefaultLoaders().build();
+const contextModule = new ContextModuleBuilder({
+  originToken: "origin-token", // replace with your origin token
+})
+  .removeDefaultLoaders()
+  .build();
 ```
 
 > [!NOTE]
@@ -88,9 +98,11 @@ const myCustomLoader = new MyCustomLoader();
 
 // Custom datasource for a default Token Loader
 const myCustomTokenDataSource = new MyCustomTokenDataSource();
-const myTokenLoader = new TokenCOntextLoader();
+const myTokenLoader = new TokenContextLoader();
 
-const contextModule = new ContextModuleBuilder()
+const contextModule = new ContextModuleBuilder({
+  originToken: "origin-token", // replace with your origin token
+})
   .removeDefaultLoaders()
   .addLoader(tokenLoader)
   .addLoader(myTokenLoader)

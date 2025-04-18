@@ -8,6 +8,7 @@ import { HttpWeb3CheckDataSource } from "@/web3-check/data/HttpWeb3CheckDataSour
 import { type Web3CheckDto } from "@/web3-check/data/Web3CheckDto";
 import type { Web3CheckTypedData } from "@/web3-check/domain/web3CheckTypes";
 import { type Web3CheckContext } from "@/web3-check/domain/web3CheckTypes";
+import PACKAGE from "@root/package.json";
 
 vi.mock("axios");
 
@@ -16,6 +17,7 @@ describe("HttpWeb3CheckDataSource", () => {
     web3checks: {
       url: "web3checksUrl",
     },
+    originToken: "originToken",
   } as ContextModuleConfig;
   const certificateLoaderMock = {
     loadCertificate: vi.fn(),
@@ -181,6 +183,44 @@ describe("HttpWeb3CheckDataSource", () => {
             "[ContextModule] HttpWeb3CheckDataSource: Cannot exploit Web3 checks data received",
           ),
         ),
+      );
+    });
+
+    it("should throw an error if origin token is not provided", () => {
+      expect(
+        () =>
+          new HttpWeb3CheckDataSource(
+            { ...config, originToken: undefined },
+            certificateLoaderMock as unknown as PkiCertificateLoader,
+          ),
+      ).toThrow("Origin token is required");
+    });
+
+    it("should call axios with the correct headers", async () => {
+      // GIVEN
+      const params: Web3CheckContext = {
+        deviceModelId: DeviceModelId.FLEX,
+        from: "from",
+        rawTx: "rawTx",
+        chainId: 1,
+      };
+      vi.spyOn(axios, "request").mockResolvedValueOnce({ data: {} });
+
+      // WHEN
+      const dataSource = new HttpWeb3CheckDataSource(
+        config,
+        certificateLoaderMock as unknown as PkiCertificateLoader,
+      );
+      await dataSource.getWeb3Checks(params);
+
+      // THEN
+      expect(axios.request).toHaveBeenCalledWith(
+        expect.objectContaining({
+          headers: {
+            "X-Ledger-Client-Version": `context-module/${PACKAGE.version}`,
+            "X-Ledger-Client-Origin": config.originToken,
+          },
+        }),
       );
     });
   });

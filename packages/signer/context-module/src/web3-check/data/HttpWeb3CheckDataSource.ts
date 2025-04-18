@@ -23,7 +23,11 @@ export class HttpWeb3CheckDataSource implements Web3CheckDataSource {
     @inject(configTypes.Config) private readonly config: ContextModuleConfig,
     @inject(pkiTypes.PkiCertificateLoader)
     private readonly _certificateLoader: PkiCertificateLoader,
-  ) {}
+  ) {
+    if (!this.config.originToken) {
+      throw new Error("Origin token is required");
+    }
+  }
 
   async getWeb3Checks(
     context: Web3CheckContext,
@@ -58,6 +62,7 @@ export class HttpWeb3CheckDataSource implements Web3CheckDataSource {
         data: requestDto,
         headers: {
           "X-Ledger-Client-Version": `context-module/${PACKAGE.version}`,
+          "X-Ledger-Client-Origin": this.config.originToken,
         },
       });
       web3CheckDto = response.data;
