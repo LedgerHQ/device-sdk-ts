@@ -8,6 +8,7 @@ import type {
   ContextModuleCalMode,
   ContextModuleConfig,
 } from "@/config/model/ContextModuleConfig";
+import { LEDGER_CLIENT_VERSION_HEADER } from "@/shared/constant/HttpHeaders";
 import type {
   TypedDataFilter,
   TypedDataMessageInfo,
@@ -59,7 +60,7 @@ export class HttpTypedDataDataSource implements TypedDataDataSource {
           ref: `branch:${this.config.cal.branch}`,
         },
         headers: {
-          "X-Ledger-Client-Version": `context-module/${PACKAGE.version}`,
+          [LEDGER_CLIENT_VERSION_HEADER]: `context-module/${PACKAGE.version}`,
         },
       });
 

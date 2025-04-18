@@ -1,5 +1,6 @@
 import axios from "axios";
 
+import { LEDGER_CLIENT_VERSION_HEADER } from "@/shared/constant/HttpHeaders";
 import PACKAGE from "@root/package.json";
 
 import { HttpNftDataSource } from "./HttpNftDataSource";
@@ -33,13 +34,13 @@ describe("HttpNftDataSource", () => {
     expect(requestSpy).toHaveBeenNthCalledWith(
       1,
       expect.objectContaining({
-        headers: { "X-Ledger-Client-Version": version },
+        headers: { [LEDGER_CLIENT_VERSION_HEADER]: version },
       }),
     );
     expect(requestSpy).toHaveBeenNthCalledWith(
       2,
       expect.objectContaining({
-        headers: { "X-Ledger-Client-Version": version },
+        headers: { [LEDGER_CLIENT_VERSION_HEADER]: version },
       }),
     );
   });

@@ -2,6 +2,7 @@ import axios from "axios";
 import { Left, Right } from "purify-ts";
 
 import { type ContextModuleConfig } from "@/config/model/ContextModuleConfig";
+import { LEDGER_CLIENT_VERSION_HEADER } from "@/shared/constant/HttpHeaders";
 import { HttpTrustedNameDataSource } from "@/trusted-name/data/HttpTrustedNameDataSource";
 import { type TrustedNameDataSource } from "@/trusted-name/data/TrustedNameDataSource";
 import PACKAGE from "@root/package.json";
@@ -41,7 +42,7 @@ describe("HttpTrustedNameDataSource", () => {
       expect(requestSpy).toHaveBeenCalledWith(
         expect.objectContaining({
           url: `https://nft.api.live.ledger.com/v2/names/ethereum/137/forward/hello.eth?types=eoa&sources=ens&challenge=9876`,
-          headers: { "X-Ledger-Client-Version": version },
+          headers: { [LEDGER_CLIENT_VERSION_HEADER]: version },
         }),
       );
     });
@@ -126,7 +127,7 @@ describe("HttpTrustedNameDataSource", () => {
       expect(requestSpy).toHaveBeenCalledWith(
         expect.objectContaining({
           url: `https://nft.api.live.ledger.com/v2/names/ethereum/137/reverse/0x1234?types=eoa&sources=ens,crypto_asset_list&challenge=5678`,
-          headers: { "X-Ledger-Client-Version": version },
+          headers: { [LEDGER_CLIENT_VERSION_HEADER]: version },
         }),
       );
     });

@@ -10,6 +10,7 @@ import type {
 } from "@/config/model/ContextModuleConfig";
 import { PkiCertificate } from "@/pki/model/PkiCertificate";
 import { PkiCertificateInfo } from "@/pki/model/PkiCertificateInfo";
+import { LEDGER_CLIENT_VERSION_HEADER } from "@/shared/constant/HttpHeaders";
 import { SIGNATURE_TAG } from "@/shared/model/SignatureTags";
 import { HexStringUtils } from "@/shared/utils/HexStringUtils";
 import { KeyUsageMapper } from "@/shared/utils/KeyUsageMapper";
@@ -46,7 +47,7 @@ export class HttpPkiCertificateDataSource implements PkiCertificateDataSource {
         url: `${this.config.cal.url}/certificates`,
         params: requestDto,
         headers: {
-          "X-Ledger-Client-Version": `context-module/${PACKAGE.version}`,
+          [LEDGER_CLIENT_VERSION_HEADER]: `context-module/${PACKAGE.version}`,
         },
       });
 

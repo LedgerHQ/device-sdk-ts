@@ -1,3 +1,4 @@
+import { type ContextModuleConstructorArgs } from "./config/model/ContextModuleBuildArgs";
 import {
   type ContextModuleCalConfig,
   type ContextModuleConfig,
@@ -28,8 +29,12 @@ export const DEFAULT_CONFIG: ContextModuleConfig = {
 
 export class ContextModuleBuilder {
   private config: ContextModuleConfig = DEFAULT_CONFIG;
+  private needOriginToken: boolean = true;
+  private originToken?: string;
 
-  constructor() {}
+  constructor({ originToken }: ContextModuleConstructorArgs = {}) {
+    this.originToken = originToken;
+  }
 
   /**
    * Remove default loaders from the list of loaders
@@ -70,6 +75,7 @@ export class ContextModuleBuilder {
    * @returns this
    */
   addWeb3CheckLoader(loader: Web3CheckContextLoader) {
+    this.needOriginToken = false;
     this.config.customWeb3CheckLoader = loader;
     return this;
   }
@@ -105,6 +111,11 @@ export class ContextModuleBuilder {
    * @returns the context module
    */
   build(): ContextModule {
-    return new DefaultContextModule(this.config);
+    if (this.needOriginToken && !this.originToken) {
+      throw new Error("Origin token is required");
+    }
+
+    const config = { ...this.config, originToken: this.originToken };
+    return new DefaultContextModule(config);
   }
 }

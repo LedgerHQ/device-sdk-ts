@@ -2,6 +2,7 @@ import axios from "axios";
 import { Left } from "purify-ts";
 
 import { type ContextModuleConfig } from "@/config/model/ContextModuleConfig";
+import { LEDGER_CLIENT_VERSION_HEADER } from "@/shared/constant/HttpHeaders";
 import { HttpTokenDataSource } from "@/token/data/HttpTokenDataSource";
 import { type TokenDataSource } from "@/token/data/TokenDataSource";
 import { type TokenDto } from "@/token/data/TokenDto";
@@ -36,7 +37,7 @@ describe("HttpTokenDataSource", () => {
     // THEN
     expect(requestSpy).toHaveBeenCalledWith(
       expect.objectContaining({
-        headers: { "X-Ledger-Client-Version": version },
+        headers: { [LEDGER_CLIENT_VERSION_HEADER]: version },
       }),
     );
   });

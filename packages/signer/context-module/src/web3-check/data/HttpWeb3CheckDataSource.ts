@@ -7,6 +7,7 @@ import type { ContextModuleConfig } from "@/config/model/ContextModuleConfig";
 import { pkiTypes } from "@/pki/di/pkiTypes";
 import { type PkiCertificateLoader } from "@/pki/domain/PkiCertificateLoader";
 import { KeyUsage } from "@/pki/model/KeyUsage";
+import { LEDGER_CLIENT_VERSION_HEADER } from "@/shared/constant/HttpHeaders";
 import {
   type Web3CheckContext,
   type Web3Checks,
@@ -23,7 +24,11 @@ export class HttpWeb3CheckDataSource implements Web3CheckDataSource {
     @inject(configTypes.Config) private readonly config: ContextModuleConfig,
     @inject(pkiTypes.PkiCertificateLoader)
     private readonly _certificateLoader: PkiCertificateLoader,
-  ) {}
+  ) {
+    if (!this.config.originToken) {
+      throw new Error("Origin token is required");
+    }
+  }
 
   async getWeb3Checks(
     context: Web3CheckContext,
@@ -57,7 +62,8 @@ export class HttpWeb3CheckDataSource implements Web3CheckDataSource {
         url,
         data: requestDto,
         headers: {
-          "X-Ledger-Client-Version": `context-module/${PACKAGE.version}`,
+          [LEDGER_CLIENT_VERSION_HEADER]: `context-module/${PACKAGE.version}`,
+          "X-Ledger-Client-Origin": this.config.originToken,
         },
       });
       web3CheckDto = response.data;

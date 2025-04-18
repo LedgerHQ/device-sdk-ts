@@ -4,6 +4,7 @@ import { Either, Left, Right } from "purify-ts";
 
 import { configTypes } from "@/config/di/configTypes";
 import type { ContextModuleConfig } from "@/config/model/ContextModuleConfig";
+import { LEDGER_CLIENT_VERSION_HEADER } from "@/shared/constant/HttpHeaders";
 import PACKAGE from "@root/package.json";
 
 import { GetTokenInfosParams, TokenDataSource } from "./TokenDataSource";
@@ -29,7 +30,7 @@ export class HttpTokenDataSource implements TokenDataSource {
           ref: `branch:${this.config.cal.branch}`,
         },
         headers: {
-          "X-Ledger-Client-Version": `context-module/${PACKAGE.version}`,
+          [LEDGER_CLIENT_VERSION_HEADER]: `context-module/${PACKAGE.version}`,
         },
       });
       const tokenInfos = response.data?.[0];

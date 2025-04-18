@@ -13,6 +13,7 @@ import { KeyId } from "@/pki/model/KeyId";
 import { KeyUsage } from "@/pki/model/KeyUsage";
 import { PkiCertificate } from "@/pki/model/PkiCertificate";
 import { PkiCertificateInfo } from "@/pki/model/PkiCertificateInfo";
+import { LEDGER_CLIENT_VERSION_HEADER } from "@/shared/constant/HttpHeaders";
 import {
   ClearSignContextReference,
   ClearSignContextSuccess,
@@ -73,7 +74,7 @@ export class HttpTransactionDataSource implements TransactionDataSource {
           ref: `branch:${this.config.cal.branch}`,
         },
         headers: {
-          "X-Ledger-Client-Version": `context-module/${PACKAGE.version}`,
+          [LEDGER_CLIENT_VERSION_HEADER]: `context-module/${PACKAGE.version}`,
         },
       });
       dto = response.data;

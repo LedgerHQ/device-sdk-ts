@@ -28,6 +28,7 @@ describe("DefaultContextModule", () => {
     web3checks: {
       url: "https://web3checks/v3",
     },
+    originToken: "originToken",
   };
 
   beforeEach(() => {
@@ -193,5 +194,15 @@ describe("DefaultContextModule", () => {
       type: "error",
       error: new Error("Field type not supported: token"),
     });
+  });
+
+  it("should throw an error if origin token is not provided", () => {
+    expect(
+      () =>
+        new DefaultContextModule({
+          ...defaultContextModuleConfig,
+          originToken: undefined,
+        }),
+    ).toThrow("Origin token is required");
   });
 });
