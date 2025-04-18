@@ -22,6 +22,7 @@ import { transactionTypes } from "@internal/transaction/di/transactionTypes";
 import { type SignTransactionUseCase } from "@internal/transaction/use-case/SignTransactionUseCase";
 import { typedDataTypes } from "@internal/typed-data/di/typedDataTypes";
 import { type SignTypedDataUseCase } from "@internal/typed-data/use-case/SignTypedDataUseCase";
+import { SignDelegationAuthorizationDAReturnType } from "@api/app-binder/SignDelegationAuthorizationTypes";
 
 type DefaultSignerConstructorArgs = {
   dmk: DeviceManagementKit;
@@ -71,5 +72,24 @@ export class DefaultSignerEth implements SignerEth {
     return this._container
       .get<GetAddressUseCase>(addressTypes.GetAddressUseCase)
       .execute(_derivationPath, _options);
+  }
+
+  //WIP
+  signDelegationAuthorization(
+    // @ts-expect-error
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    derivationPath: string,
+    // @ts-expect-error
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    chainId: number,
+    // @ts-expect-error
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    contractAddress: string,
+    // @ts-expect-error
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    nonce: number,
+  ): SignDelegationAuthorizationDAReturnType {
+    //TBD
+    throw new Error("Not implemented");
   }
 }
