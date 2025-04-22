@@ -2,7 +2,6 @@ import {
   type BleManager,
   type Characteristic,
   type Device,
-  type Subscription as RNBleSubscription,
 } from "react-native-ble-plx";
 import {
   type ApduReceiverService,
@@ -17,7 +16,6 @@ import {
   type DmkError,
   type LoggerPublisherService,
   SendApduTimeoutError,
-  type TransportDiscoveredDevice,
 } from "@ledgerhq/device-management-kit";
 import { Base64 } from "js-base64";
 import { type Either, Left, Maybe, Nothing, Right } from "purify-ts";
@@ -28,9 +26,6 @@ const FRAME_HEADER_SIZE = 3;
 export type RNBleInternalDevice = {
   id: DeviceId;
   bleDeviceInfos: BleDeviceInfos;
-  discoveredDevice: TransportDiscoveredDevice;
-  disconnectionSubscription: RNBleSubscription;
-  lastDiscoveredTimeStamp: Maybe<number>;
 };
 
 export type RNBleApduSenderConstructorArgs = {
