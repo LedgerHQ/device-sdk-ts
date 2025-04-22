@@ -44,7 +44,6 @@ jobs:
           echo "version=$(pnpm -v)" >> $GITHUB_OUTPUT
 
       - name: Update package.json
-        if: steps.changes.outputs.status > 0
         run: |
           jq '.packageManager = "pnpm@${{ steps.new-versions.outputs.version }}"' package.json > tmp.json && mv tmp.json package.json
 
