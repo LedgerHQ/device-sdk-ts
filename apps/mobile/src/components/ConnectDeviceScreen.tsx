@@ -48,7 +48,7 @@ export const ConnectDeviceScreen: React.FC = () => {
           setDevices(devices);
         },
         error: err => {
-          console.log("error discovered", err);
+          console.log("[dmk.listenToAvailableDevices] error", err);
         },
       });
 
