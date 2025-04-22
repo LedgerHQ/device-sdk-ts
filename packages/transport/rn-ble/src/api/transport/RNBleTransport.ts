@@ -200,7 +200,19 @@ export class RNBleTransport implements Transport {
   listenToAvailableDevices(): Observable<TransportDiscoveredDevice[]> {
     return this._startScanning().pipe(
       map((internalScannedDevices) => {
-        return internalScannedDevices
+        const connectedDevices: TransportDiscoveredDevice[] = Array.from(
+          this._deviceConnectionsById.values(),
+        ).map((connection) =>
+          this._mapDeviceToTransportDiscoveredDevice(
+            connection.getDependencies().device,
+            [
+              connection.getDependencies().internalDevice.bleDeviceInfos
+                .serviceUuid,
+            ],
+          ),
+        );
+
+        const scannedDevices = internalScannedDevices
           .filter(
             ({ timestamp }) => timestamp > Date.now() - CONNECTION_LOST_DELAY,
           )
@@ -211,6 +223,7 @@ export class RNBleTransport implements Transport {
             ),
           )
           .filter((d) => !!d);
+        return [...connectedDevices, ...scannedDevices];
       }),
     );
   }
