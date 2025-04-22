@@ -1,3 +1,4 @@
+import { bufferToHexaString } from "@api/index";
 import { type FrameHeader } from "@internal/device-session/model/FrameHeader";
 
 type FrameConstructorArgs = {
@@ -18,7 +19,7 @@ export class Frame {
     return JSON.stringify(
       {
         header: this._header.toString(),
-        data: this._data.toString(),
+        data: bufferToHexaString(this._data),
       },
       null,
       2,

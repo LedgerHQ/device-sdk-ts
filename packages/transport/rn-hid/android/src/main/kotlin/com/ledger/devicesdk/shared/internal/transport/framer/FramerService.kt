@@ -186,7 +186,7 @@ internal class FramerService(
                     apduSize = null
                     rawApdu = parser.extractRemainingBytesValue()
                 }
-                nbrDataRead += mtu
+                nbrDataRead += rawApdu.size
                 add(
                     ApduFrame(
                         header = header,
