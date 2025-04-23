@@ -216,6 +216,10 @@ export class RNBleTransport implements Transport {
           .filter(
             ({ timestamp }) => timestamp > Date.now() - CONNECTION_LOST_DELAY,
           )
+          .sort(
+            (a, b) =>
+              (b.device.rssi ?? -Infinity) - (a.device.rssi ?? -Infinity), // RSSI is a negative value and the higher, the stronger the signal
+          )
           .map(({ device }) =>
             this._mapDeviceToTransportDiscoveredDevice(
               device,
@@ -408,7 +412,6 @@ export class RNBleTransport implements Transport {
 
     deviceConnection.closeConnection();
 
-    // TODO: is this useful ?? to be discussed
     if (this._reconnectionSubscription.isJust()) {
       this._reconnectionSubscription.map((sub) => sub.unsubscribe());
       this._reconnectionSubscription = Maybe.zero();
