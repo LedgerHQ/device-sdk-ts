@@ -56,6 +56,10 @@ export const ConnectDeviceScreen: React.FC = () => {
         subscription.unsubscribe();
         setDevices([]);
       };
+    } else {
+      dmk.stopDiscovering();
+      setDevices([]);
+      return () => {};
     }
   }, [dmk, isScanningDevices, isFocused]);
 

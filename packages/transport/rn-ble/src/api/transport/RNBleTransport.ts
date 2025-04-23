@@ -131,64 +131,95 @@ export class RNBleTransport implements Transport {
     BehaviorSubject<InternalScannedDevice[]>
   > = Nothing;
 
-  private _startScanning(): Observable<InternalScannedDevice[]> {
-    return from(this._bleStateSubject).pipe(
-      filter((state) => state === "PoweredOn"),
-      switchMap(() => this.requestPermission()),
-      switchMap((isSupported) => {
-        if (!isSupported) {
-          return throwError(() => new BleNotSupported("BLE not supported"));
-        }
+  private _scannedDevicesSubject: BehaviorSubject<InternalScannedDevice[]> =
+    new BehaviorSubject<InternalScannedDevice[]>([]);
+  private _startedScanningSubscriber: Subscription | undefined = undefined;
 
-        const subject = new BehaviorSubject<InternalScannedDevice[]>([]);
-        this._maybeScanningSubject = Maybe.of(subject);
-        const devicesById = new Map<string, InternalScannedDevice>();
+  private _startScanning() {
+    if (this._startedScanningSubscriber != undefined) {
+      return;
+    }
 
-        this._manager.startDeviceScan(
-          this._deviceModelDataSource.getBluetoothServices(),
-          { allowDuplicates: true },
-          (error, rnDevice) => {
-            if (error || !rnDevice) {
-              subject.error(error || new Error("scan error"));
-              return;
-            }
-            devicesById.set(rnDevice.id, {
-              device: rnDevice,
-              timestamp: Date.now(),
-            });
+    this._startedScanningSubscriber = from(this._bleStateSubject)
+      .pipe(
+        filter((state) => state === "PoweredOn"),
+        switchMap(() => this.requestPermission()),
+        switchMap((isSupported) => {
+          if (!isSupported) {
+            return throwError(() => new BleNotSupported("BLE not supported"));
+          }
+
+          const subject = new BehaviorSubject<InternalScannedDevice[]>([]);
+          this._maybeScanningSubject = Maybe.of(subject);
+          const devicesById = new Map<string, InternalScannedDevice>();
+
+          console.log("[RNBleTransport][startScanning] startDeviceScan");
+          this._manager.startDeviceScan(
+            this._deviceModelDataSource.getBluetoothServices(),
+            { allowDuplicates: true },
+            (error, rnDevice) => {
+              if (error || !rnDevice) {
+                subject.error(error || new Error("scan error"));
+                return;
+              }
+              devicesById.set(rnDevice.id, {
+                device: rnDevice,
+                timestamp: Date.now(),
+              });
+              subject.next(Array.from(devicesById.values()));
+            },
+          );
+
+          /**
+           * In case there is no update from startDeviceScan, we still emit the
+           * list of devices. This is useful for instance if there is only 1 device
+           * in the vicinity and it just got turned off. It will not "advertise"
+           * anymore so startDeviceScan won't trigger.
+           */
+          const interval = setInterval(() => {
             subject.next(Array.from(devicesById.values()));
-          },
-        );
+          }, 1000);
 
-        /**
-         * In case there is no update from startDeviceScan, we still emit the
-         * list of devices. This is useful for instance if there is only 1 device
-         * in the vicinity and it just got turned off. It will not "advertise"
-         * anymore so startDeviceScan won't trigger.
-         */
-        const interval = setInterval(() => {
-          subject.next(Array.from(devicesById.values()));
-        }, 1000);
-
-        return subject.asObservable().pipe(
-          finalize(() => {
-            subject.complete();
-            clearInterval(interval);
-            this._maybeScanningSubject = Nothing;
-            this._manager.stopDeviceScan();
-          }),
-        );
-      }),
-      throttleTime(1000),
-    );
+          return subject.asObservable().pipe(
+            finalize(() => {
+              console.log("[RNBleTransport][startScanning] finalize");
+              subject.complete();
+              clearInterval(interval);
+              this._maybeScanningSubject = Nothing;
+              this._manager.stopDeviceScan();
+            }),
+          );
+        }),
+        throttleTime(1000),
+      )
+      .subscribe({
+        next: (devices) => {
+          console.log(
+            "[RNBleTransport][startScanning] onNext called with devices",
+            devices,
+          );
+          this._scannedDevicesSubject.next(devices);
+        },
+        error: (error) => {
+          console.error("[RNBleTransport][startScanning] error", error);
+          this._logger.error("Error while scanning", { data: { error } });
+        },
+      });
   }
 
-  private _stopScanning(): Promise<void> {
+  private async _stopScanning(): Promise<void> {
     this._maybeScanningSubject.map((subject) => {
       subject.complete();
       this._maybeScanningSubject = Nothing;
     });
-    return this._manager.stopDeviceScan();
+
+    await this._manager.stopDeviceScan();
+    //Stop listening the observable from this._startScanning()
+    this._startedScanningSubscriber?.unsubscribe();
+    this._startedScanningSubscriber = undefined;
+    this._scannedDevicesSubject.next([]);
+
+    return;
   }
 
   /**
@@ -197,7 +228,9 @@ export class RNBleTransport implements Transport {
    * @return {Observable<TransportDiscoveredDevice[]>} An observable stream of discovered devices, containing device information as an array of TransportDiscoveredDevice objects.
    */
   listenToAvailableDevices(): Observable<TransportDiscoveredDevice[]> {
-    return this._startScanning().pipe(
+    this._startScanning();
+
+    return this._scannedDevicesSubject.asObservable().pipe(
       map((internalScannedDevices) => {
         const connectedDevices: TransportDiscoveredDevice[] = Array.from(
           this._deviceConnectionsById.values(),
@@ -666,11 +699,15 @@ export class RNBleTransport implements Transport {
   private async _safeCancel(deviceId: DeviceId) {
     // only invoke if the BleManager under test actually has it
     if (typeof this._manager.cancelDeviceConnection === "function") {
-      await this._manager.cancelDeviceConnection(deviceId).catch((e) =>
-        this._logger.warn("[_safeCancel] cancelDeviceConnection failed", {
-          data: { e },
-        }),
+      const connectedDevices = await this._manager.connectedDevices(
+        this._deviceModelDataSource.getBluetoothServices(),
       );
+
+      for (const device of connectedDevices) {
+        if (device.id === deviceId) {
+          await this._manager.cancelDeviceConnection(deviceId);
+        }
+      }
     }
   }
 }
