@@ -31,3 +31,17 @@ export class BleNotSupported extends GeneralDmkError {
     super(err);
   }
 }
+
+export class PairingRefusedError extends GeneralDmkError {
+  override readonly _tag = "PairingRefusedError";
+  constructor(readonly err?: unknown) {
+    super(err);
+  }
+}
+
+export class UnknownBleError extends GeneralDmkError {
+  override readonly _tag = "UnknownBleError";
+  constructor(readonly err?: unknown) {
+    super(err);
+  }
+}

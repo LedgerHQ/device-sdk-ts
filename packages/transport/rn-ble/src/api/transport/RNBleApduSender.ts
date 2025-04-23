@@ -21,6 +21,8 @@ import { Base64 } from "js-base64";
 import { type Either, Left, Maybe, Nothing, Right } from "purify-ts";
 import { BehaviorSubject, type Subscription } from "rxjs";
 
+import { PairingRefusedError, UnknownBleError } from "@api/model/Errors";
+
 const FRAME_HEADER_SIZE = 3;
 
 export type RNBleInternalDevice = {
@@ -139,6 +141,18 @@ export class RNBleApduSender
       this._dependencies.internalDevice.bleDeviceInfos.serviceUuid,
       this._dependencies.internalDevice.bleDeviceInfos.notifyUuid,
       (error, characteristic) => {
+        if (error?.message.includes("notify change failed")) {
+          this._isDeviceReady.error(new PairingRefusedError(error));
+          this._logger.error("Pairing failed", {
+            data: { error },
+          });
+          return;
+        } else if (error) {
+          this._isDeviceReady.error(new UnknownBleError(error));
+          this._logger.error("Error monitoring characteristic", {
+            data: { error },
+          });
+        }
         if (!error && characteristic) {
           this.onMonitor(characteristic);
         }
@@ -148,7 +162,7 @@ export class RNBleApduSender
     const requestMtuFrame = Uint8Array.from([0x08, 0x00, 0x00, 0x00, 0x00]);
     await this.write(Base64.fromUint8Array(requestMtuFrame));
     let sub: Subscription | undefined;
-    await new Promise<void>((resolve) => {
+    await new Promise<void>((resolve, reject) => {
       if (sub) {
         sub.unsubscribe();
       }
@@ -158,6 +172,9 @@ export class RNBleApduSender
           if (isReady) {
             resolve();
           }
+        },
+        error: (error) => {
+          reject(error);
         },
       });
     });

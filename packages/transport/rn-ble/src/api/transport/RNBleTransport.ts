@@ -367,7 +367,11 @@ export class RNBleTransport implements Transport {
             },
           });
 
-        await deviceApduSender.setupConnection();
+        await deviceApduSender.setupConnection().catch((e) => {
+          this._safeCancel(params.deviceId);
+          disconnectionSubscription.remove();
+          throw e;
+        });
 
         this._deviceConnectionsById.set(
           params.deviceId,
@@ -638,7 +642,10 @@ export class RNBleTransport implements Transport {
         internalDevice,
       });
 
-      await deviceConnectionStateMachine.setupConnection();
+      await deviceConnectionStateMachine.setupConnection().catch((e) => {
+        this._safeCancel(device.id);
+        throw e;
+      });
 
       deviceConnectionStateMachine.eventDeviceAttached();
     }).run();
