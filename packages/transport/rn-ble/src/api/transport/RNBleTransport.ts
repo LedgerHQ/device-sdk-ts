@@ -111,14 +111,8 @@ export class RNBleTransport implements Transport {
   }
 
   /**
-   * Starts the discovery process to find Bluetooth devices that match specific criteria.
-   *
-   * This method clears the internal device cache and requests necessary permissions
-   * before initiating the discovery of both known and new devices. If the Bluetooth
-   * Low Energy (BLE) feature is not supported, an error is thrown.
-   *
-   * @return {Observable<TransportDiscoveredDevice>} An observable emitting discovered devices
-   * that match the specified Bluetooth services.
+   * Not implemented for now as the return signature is not really usable.
+   * Use listenToAvailableDevices instead.
    */
   startDiscovering(): Observable<TransportDiscoveredDevice> {
     return from([]);
@@ -166,6 +160,12 @@ export class RNBleTransport implements Transport {
           },
         );
 
+        /**
+         * In case there is no update from startDeviceScan, we still emit the
+         * list of devices. This is useful for instance if there is only 1 device
+         * in the vicinity and it just got turned off. It will not "advertise"
+         * anymore so startDeviceScan won't trigger.
+         */
         const interval = setInterval(() => {
           subject.next(Array.from(devicesById.values()));
         }, 1000);
@@ -175,7 +175,7 @@ export class RNBleTransport implements Transport {
             subject.complete();
             clearInterval(interval);
             this._maybeScanningSubject = Nothing;
-            this._manager.stopDeviceScan().then();
+            this._manager.stopDeviceScan();
           }),
         );
       }),
