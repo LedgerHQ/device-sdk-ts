@@ -179,7 +179,7 @@ export class RNBleTransport implements Transport {
           }),
         );
       }),
-      throttleTime(500),
+      throttleTime(1000),
     );
   }
 
@@ -257,7 +257,7 @@ export class RNBleTransport implements Transport {
     const deviceModel = this._mapServicesUUIDsToDeviceModel(servicesUUIDs);
     return {
       id: device.id,
-      name: device.localName || "",
+      name: device.name || device.localName || "",
       deviceModel,
       transport: this.identifier,
       rssi: device.rssi || undefined,
