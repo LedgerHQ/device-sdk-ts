@@ -177,11 +177,11 @@ export class RNBleApduSender
       sub = this._isDeviceReady.subscribe({
         next: (isReady) => {
           if (isReady) {
-            resolve();
+            resolve(); // FIXME: we should instead return a Right
           }
         },
         error: (error) => {
-          reject(error);
+          reject(error); // FIXME: we should instead return a Left so it's properly typed
         },
       });
     });
