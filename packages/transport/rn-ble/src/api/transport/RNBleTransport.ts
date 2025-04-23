@@ -1,10 +1,5 @@
 import { PermissionsAndroid, Platform } from "react-native";
-import {
-  type BleError,
-  BleManager,
-  type Device,
-  State,
-} from "react-native-ble-plx";
+import { BleError, BleManager, type Device, State } from "react-native-ble-plx";
 import {
   type ApduReceiverServiceFactory,
   type ApduSenderServiceFactory,
@@ -51,7 +46,11 @@ import {
   CONNECTION_LOST_DELAY,
   DEFAULT_MTU,
 } from "@api/model/Const";
-import { BleNotSupported, DeviceConnectionNotFound } from "@api/model/Errors";
+import {
+  BleNotSupported,
+  DeviceConnectionNotFound,
+  PeerRemovedPairingError,
+} from "@api/model/Errors";
 import {
   RNBleApduSender,
   type RNBleApduSenderConstructorArgs,
@@ -312,6 +311,16 @@ export class RNBleTransport implements Transport {
 
           servicesUUIDs = (await device.services()).map((s) => s.uuid);
         } catch (error) {
+          if (
+            error instanceof BleError &&
+            (error.iosErrorCode as number) === 14
+          ) {
+            /**
+             * This happens when the Ledger device reset its pairing, but the
+             * iOS system still has that device paired.
+             */
+            return throwE(new PeerRemovedPairingError(error));
+          }
           return throwE(new OpeningConnectionError(error));
         }
 
