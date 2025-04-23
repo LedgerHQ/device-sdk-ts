@@ -2,6 +2,7 @@ import {
   type BleManager,
   type Characteristic,
   type Device,
+  type Subscription as BleCharacteristicSubscription,
 } from "react-native-ble-plx";
 import {
   type ApduReceiverService,
@@ -54,6 +55,10 @@ export class RNBleApduSender
   private _sendApduPromiseResolver: Maybe<
     (value: Either<DmkError, ApduResponse>) => void
   >;
+
+  private _characteristicSubscription:
+    | BleCharacteristicSubscription
+    | undefined = undefined;
 
   constructor(
     {
@@ -133,33 +138,41 @@ export class RNBleApduSender
 
   public setDependencies(dependencies: RNBleApduSenderDependencies) {
     this._dependencies = dependencies;
+
+    //Set dependencies mean we are reconnecting to a new device
+    // So we need to reset the state of the sender
+    this._isDeviceReady = new BehaviorSubject<boolean>(false);
+    if (this._characteristicSubscription) {
+      this._characteristicSubscription.remove();
+      this._characteristicSubscription = undefined;
+    }
   }
 
   public async setupConnection() {
-    this._dependencies.manager.monitorCharacteristicForDevice(
-      this._dependencies.device.id,
-      this._dependencies.internalDevice.bleDeviceInfos.serviceUuid,
-      this._dependencies.internalDevice.bleDeviceInfos.notifyUuid,
-      (error, characteristic) => {
-        if (error?.message.includes("notify change failed")) {
-          // iOS pairing refused error
-          this._isDeviceReady.error(new PairingRefusedError(error));
-          this._logger.error("Pairing failed", {
-            data: { error },
-          });
-          return;
-        } else if (error) {
-          this._isDeviceReady.error(new UnknownBleError(error));
-          this._logger.error("Error monitoring characteristic", {
-            data: { error },
-          });
-        }
-        if (!error && characteristic) {
-          this.onMonitor(characteristic);
-        }
-      },
-    );
-    this._isDeviceReady.next(false);
+    this._characteristicSubscription =
+      this._dependencies.device.monitorCharacteristicForService(
+        this._dependencies.internalDevice.bleDeviceInfos.serviceUuid,
+        this._dependencies.internalDevice.bleDeviceInfos.notifyUuid,
+        (error, characteristic) => {
+          if (error?.message.includes("notify change failed")) {
+            // iOS pairing refused error
+            this._isDeviceReady.error(new PairingRefusedError(error));
+            this._logger.error("Pairing failed", {
+              data: { error },
+            });
+            return;
+          } else if (error) {
+            this._isDeviceReady.error(new UnknownBleError(error));
+            this._logger.error("Error monitoring characteristic", {
+              data: { error },
+            });
+          }
+          if (!error && characteristic) {
+            this.onMonitor(characteristic);
+          }
+        },
+      );
+
     const requestMtuFrame = Uint8Array.from([0x08, 0x00, 0x00, 0x00, 0x00]);
     await this.write(Base64.fromUint8Array(requestMtuFrame)).catch((error) => {
       // Android pairing refused error
