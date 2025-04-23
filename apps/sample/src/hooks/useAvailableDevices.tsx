@@ -16,11 +16,11 @@ export function useAvailableDevices(): AvailableDevice[] {
 
   const subscription = useRef<Subscription | null>(null);
   useEffect(() => {
-    if (!subscription.current) {
-      subscription.current = dmk.listenToKnownDevices().subscribe((devices) => {
-        setDiscoveredDevices(devices);
-      });
-    }
+    // if (!subscription.current) {
+    //   subscription.current = dmk.listenToKnownDevices().subscribe((devices) => {
+    //     setDiscoveredDevices(devices);
+    //   });
+    // }
     return () => {
       if (subscription.current) {
         setDiscoveredDevices([]);

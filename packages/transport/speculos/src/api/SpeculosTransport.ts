@@ -19,6 +19,7 @@ import {
 } from "@ledgerhq/device-management-kit";
 import { type Either, Left, Right } from "purify-ts";
 import { from, type Observable } from "rxjs";
+import { of } from "rxjs";
 
 import { HttpSpeculosDatasource } from "@internal/datasource/HttpSpeculosDatasource";
 import { type SpeculosDatasource } from "@internal/datasource/SpeculosDatasource";
@@ -53,8 +54,13 @@ export class SpeculosTransport implements Transport {
   ) {
     this.logger = loggerServiceFactory("SpeculosTransport");
     this._speculosDataSource = new HttpSpeculosDatasource(
-      "http://127.0.0.1:5000",
+      "http://localhost:5001",
     ); // See how to pass properly speculos config.
+  }
+  listenToAvailableDevices(): Observable<TransportDiscoveredDevice[]> {
+    // In Speculos, the device is always available.
+    // In a more complex flow, this might poll or merge updates from multiple sources.
+    return of([this.speculosDevice]);
   }
 
   isSupported(): boolean {
