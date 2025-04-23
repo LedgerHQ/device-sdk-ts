@@ -142,6 +142,7 @@ export class RNBleApduSender
       this._dependencies.internalDevice.bleDeviceInfos.notifyUuid,
       (error, characteristic) => {
         if (error?.message.includes("notify change failed")) {
+          // iOS pairing refused error
           this._isDeviceReady.error(new PairingRefusedError(error));
           this._logger.error("Pairing failed", {
             data: { error },
@@ -160,7 +161,13 @@ export class RNBleApduSender
     );
     this._isDeviceReady.next(false);
     const requestMtuFrame = Uint8Array.from([0x08, 0x00, 0x00, 0x00, 0x00]);
-    await this.write(Base64.fromUint8Array(requestMtuFrame));
+    await this.write(Base64.fromUint8Array(requestMtuFrame)).catch((error) => {
+      // Android pairing refused error
+      this._logger.error("Pairing failed", {
+        data: { error },
+      });
+      throw new PairingRefusedError(error);
+    });
     let sub: Subscription | undefined;
     await new Promise<void>((resolve, reject) => {
       if (sub) {
