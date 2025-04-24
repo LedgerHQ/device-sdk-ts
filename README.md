@@ -95,6 +95,7 @@ A brief overview of this project's packages:
 
 | Name                                            | Path                        | Description                                   |
 | ----------------------------------------------- | --------------------------- | --------------------------------------------- |
+| @ledgerhq/device-transport-kit-node-hid          | packages/transport/node-hid  | Node HID transport implementation              |
 | @ledgerhq/device-transport-kit-web-hid          | packages/transport/web-hid  | Web HID transport implementation              |
 | @ledgerhq/device-transport-kit-web-ble          | packages/transport/web-ble  | Web BLE transport implementation              |
 | @ledgerhq/device-transport-kit-react-native-ble | packages/transport/rn-ble   | React Native BLE transport implementation     |
