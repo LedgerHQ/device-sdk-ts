@@ -140,6 +140,9 @@ export class RNBleTransport implements Transport {
       return;
     }
 
+    //Reset the scanned devices list as new scan will start
+    this._scannedDevicesSubject.next([]);
+
     this._startedScanningSubscriber = from(this._bleStateSubject)
       .pipe(
         filter((state) => state === "PoweredOn"),
@@ -217,7 +220,6 @@ export class RNBleTransport implements Transport {
     //Stop listening the observable from this._startScanning()
     this._startedScanningSubscriber?.unsubscribe();
     this._startedScanningSubscriber = undefined;
-    this._scannedDevicesSubject.next([]);
 
     return;
   }
@@ -324,9 +326,8 @@ export class RNBleTransport implements Transport {
       );
     }
 
+    await this._stopScanning();
     await this._safeCancel(params.deviceId);
-
-    await this._manager.stopDeviceScan();
 
     return EitherAsync<ConnectError, TransportConnectedDevice>(
       async ({ throwE }) => {
@@ -589,11 +590,10 @@ export class RNBleTransport implements Transport {
 
     const reconnect$ = from([0]).pipe(
       switchMap(async () => {
+        await this._stopScanning();
         await this._safeCancel(deviceId);
       }),
-      delay(1000),
       switchMap(async () => {
-        await this._manager.stopDeviceScan();
         this._logger.debug(
           "[_handleDeviceDisconnected] reconnecting to device",
           { data: { id: device.id } },
@@ -615,17 +615,7 @@ export class RNBleTransport implements Transport {
         await this._handleDeviceReconnected(reconnectedDeviceUsable);
         return reconnectedDeviceUsable;
       }),
-      retry({
-        delay: (err, retryCount) => {
-          if (err) {
-            return throwError(() => new ReconnectionFailedError(err));
-          }
-          if (retryCount === 5) {
-            return EMPTY;
-          }
-          return timer(0);
-        },
-      }),
+      retry(5),
     );
 
     this._reconnectionSubscription = Maybe.of(
