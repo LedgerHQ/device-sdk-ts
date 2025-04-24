@@ -288,7 +288,7 @@ export class RNBleTransport implements Transport {
     const deviceModel = this._mapServicesUUIDsToDeviceModel(servicesUUIDs);
     return {
       id: device.id,
-      name: device.name || device.localName || "",
+      name: device.localName || device.name || "",
       deviceModel,
       transport: this.identifier,
       rssi: device.rssi || undefined,
