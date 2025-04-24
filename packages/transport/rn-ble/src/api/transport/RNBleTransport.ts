@@ -13,7 +13,6 @@ import {
   type DmkError,
   type LoggerPublisherService,
   OpeningConnectionError,
-  ReconnectionFailedError,
   type Transport,
   TransportConnectedDevice,
   type TransportDeviceModel,
@@ -25,8 +24,6 @@ import {
 import { type Either, EitherAsync, Maybe, Nothing, Right } from "purify-ts";
 import {
   BehaviorSubject,
-  delay,
-  EMPTY,
   filter,
   finalize,
   from,
@@ -37,7 +34,6 @@ import {
   switchMap,
   throttleTime,
   throwError,
-  timer,
 } from "rxjs";
 
 import {
@@ -405,6 +401,12 @@ export class RNBleTransport implements Transport {
                 params.onDisconnect(params.deviceId);
                 this._deviceConnectionsById.delete(params.deviceId);
                 disconnectionSubscription.remove();
+                if (this._reconnectionSubscription.isJust()) {
+                  this._reconnectionSubscription.map((sub) =>
+                    sub.unsubscribe(),
+                  );
+                  this._reconnectionSubscription = Maybe.zero();
+                }
               } catch (e) {
                 this._logger.error(
                   "Error in termination of device connection",
@@ -454,11 +456,6 @@ export class RNBleTransport implements Transport {
     }
 
     deviceConnection.closeConnection();
-
-    if (this._reconnectionSubscription.isJust()) {
-      this._reconnectionSubscription.map((sub) => sub.unsubscribe());
-      this._reconnectionSubscription = Maybe.zero();
-    }
 
     return Promise.resolve(Right(undefined));
   }
@@ -600,7 +597,7 @@ export class RNBleTransport implements Transport {
         );
         const reconnectedDevice = await this._manager.connectToDevice(
           deviceId,
-          { requestMTU: DEFAULT_MTU },
+          { requestMTU: DEFAULT_MTU, timeout: 2000 },
         );
         this._logger.debug(
           "[_handleDeviceDisconnected] reconnected to device",
