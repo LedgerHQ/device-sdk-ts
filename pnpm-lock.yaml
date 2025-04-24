@@ -255,6 +255,9 @@ catalogs:
     nextra-theme-docs:
       specifier: ^3.0.15
       version: 3.2.4
+    node-hid:
+      specifier: ^3.2.0
+      version: 3.2.0
     postcss:
       specifier: ^8.5.6
       version: 8.5.6
@@ -1683,6 +1686,52 @@ importers:
       ts-node:
         specifier: 'catalog:'
         version: 10.9.2(@types/node@22.10.1)(typescript@5.9.2)
+
+  packages/transport/node-hid:
+    dependencies:
+      '@sentry/minimal':
+        specifier: 'catalog:'
+        version: 6.19.7
+      node-hid:
+        specifier: 'catalog:'
+        version: 3.2.0
+      purify-ts:
+        specifier: 'catalog:'
+        version: 2.1.0
+      uuid:
+        specifier: 'catalog:'
+        version: 11.0.3
+    devDependencies:
+      '@ledgerhq/device-management-kit':
+        specifier: workspace:*
+        version: link:../../device-management-kit
+      '@ledgerhq/eslint-config-dsdk':
+        specifier: workspace:*
+        version: link:../../config/eslint
+      '@ledgerhq/ldmk-tool':
+        specifier: workspace:^
+        version: link:../../tools/ldmk-tool
+      '@ledgerhq/prettier-config-dsdk':
+        specifier: workspace:*
+        version: link:../../config/prettier
+      '@ledgerhq/tsconfig-dsdk':
+        specifier: workspace:*
+        version: link:../../config/typescript
+      '@ledgerhq/vitest-config-dmk':
+        specifier: workspace:*
+        version: link:../../config/vitest
+      '@types/uuid':
+        specifier: 'catalog:'
+        version: 10.0.0
+      '@types/w3c-web-hid':
+        specifier: 'catalog:'
+        version: 1.0.6
+      rxjs:
+        specifier: 'catalog:'
+        version: 7.8.2
+      ts-node:
+        specifier: 'catalog:'
+        version: 10.9.2(@types/node@24.3.0)(typescript@5.9.2)
 
   packages/transport/rn-ble:
     dependencies:
@@ -9883,6 +9932,9 @@ packages:
   node-addon-api@1.7.2:
     resolution: {integrity: sha512-ibPK3iA+vaY1eEjESkQkM0BbCqFOaZMiXRTtdB0u7b4djtY6JnsjvPdUHVMg6xQt3B8fpTTWHI9A+ADjM9frzg==}
 
+  node-addon-api@3.2.1:
+    resolution: {integrity: sha512-mmcei9JghVNDYydghQmeDX8KoAm0FAiYyIcUt/N4nhyAipB17pllZQDOJD2fotxABnt4Mdz+dKTO7eftLg4d0A==}
+
   node-api-version@0.2.1:
     resolution: {integrity: sha512-2xP/IGGMmmSQpI1+O/k72jF/ykvZ89JeuKX3TLJAYPDVLUalrshrLHkeVcCCZqG/eEa635cr8IBYzgnDvM2O8Q==}
 
@@ -9922,6 +9974,11 @@ packages:
   node-gyp@9.4.1:
     resolution: {integrity: sha512-OQkWKbjQKbGkMf/xqI1jjy3oCTgMKJac58G2+bjZb3fza6gW2YrCSdMQYaoTb70crvE//Gngr4f0AgVHmqHvBQ==}
     engines: {node: ^12.13 || ^14.13 || >=16}
+    hasBin: true
+
+  node-hid@3.2.0:
+    resolution: {integrity: sha512-DJZcRV2QYboBay7AYNrtIdsKBOwInblf7fU7fuDmbxLecfKkMNy0hNUDx0gXtkndUV0DXP6hYL09IDrfYbh5pw==}
+    engines: {node: '>=10.16'}
     hasBin: true
 
   node-int64@0.4.0:
@@ -10304,6 +10361,17 @@ packages:
     resolution: {integrity: sha512-/E57AYkoeQ25qkxMj5PBOVgF8Kiu/h7cYS30Z5+R7WaiCCBfLq58ZI/dSeaEKb9WVJV5n/03QwrN3IeWIFllvw==}
     engines: {node: '>=6'}
 
+<<<<<<< HEAD
+=======
+  pkg-prebuilds@1.0.0:
+    resolution: {integrity: sha512-D9wlkXZCmjxj2kBHTw3fGSyjoahr33breGBoJcoezpi7ouYS59DJVOHMZ+dgqacSrZiJo4qtkXxLQTE+BqXJmQ==}
+    engines: {node: '>= 14.15.0'}
+    hasBin: true
+
+  pkg-types@1.2.1:
+    resolution: {integrity: sha512-sQoqa8alT3nHjGuTjuKgOnvjo4cljkufdtLMnO2LBP/wRwuDlo1tkaEdMxCRhyGRPacv/ztlZgDPm2b7FAmEvw==}
+
+>>>>>>> aca7e3ad (:sparkles: (node-hid): add node-hid transport management kit)
   pkg-types@1.3.1:
     resolution: {integrity: sha512-/Jm5M4RvtBFVkKWRu2BLUTNP8/M2a+UwuAX+ae4770q1qVGtfjG+WTCupoZixokjmHiry8uI+dlY8KXYV5HVVQ==}
 
@@ -22587,6 +22655,8 @@ snapshots:
   node-addon-api@1.7.2:
     optional: true
 
+  node-addon-api@3.2.1: {}
+
   node-api-version@0.2.1:
     dependencies:
       semver: 7.7.3
@@ -22632,6 +22702,11 @@ snapshots:
     transitivePeerDependencies:
       - bluebird
       - supports-color
+
+  node-hid@3.2.0:
+    dependencies:
+      node-addon-api: 3.2.1
+      pkg-prebuilds: 1.0.0
 
   node-int64@0.4.0: {}
 
@@ -23018,6 +23093,19 @@ snapshots:
     dependencies:
       find-up: 3.0.0
 
+<<<<<<< HEAD
+=======
+  pkg-prebuilds@1.0.0:
+    dependencies:
+      yargs: 17.7.2
+
+  pkg-types@1.2.1:
+    dependencies:
+      confbox: 0.1.8
+      mlly: 1.7.3
+      pathe: 1.1.2
+
+>>>>>>> aca7e3ad (:sparkles: (node-hid): add node-hid transport management kit)
   pkg-types@1.3.1:
     dependencies:
       confbox: 0.1.8
