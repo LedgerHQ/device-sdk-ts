@@ -50,11 +50,10 @@ export class SpeculosTransport implements Transport {
   constructor(
     loggerServiceFactory: (tag: string) => LoggerPublisherService,
     _config: DmkConfig,
+    speculosUrl: string,
   ) {
     this.logger = loggerServiceFactory("SpeculosTransport");
-    this._speculosDataSource = new HttpSpeculosDatasource(
-      "http://127.0.0.1:5000",
-    ); // See how to pass properly speculos config.
+    this._speculosDataSource = new HttpSpeculosDatasource(speculosUrl); // See how to pass properly speculos config.
   }
 
   isSupported(): boolean {
@@ -65,7 +64,7 @@ export class SpeculosTransport implements Transport {
     return this.identifier;
   }
 
-  listenToKnownDevices(): Observable<TransportDiscoveredDevice[]> {
+  listenToAvailableDevices(): Observable<TransportDiscoveredDevice[]> {
     return from([]);
   }
 
@@ -129,7 +128,7 @@ export class SpeculosTransport implements Transport {
     connectedDevice: TransportConnectedDevice;
   }): Promise<Either<DmkError, void>> {
     this.logger.debug("disconnect");
-    return Right(void 0);
+    return Promise.resolve(Right(undefined));
   }
 
   async sendApdu(
@@ -176,7 +175,9 @@ export class SpeculosTransport implements Transport {
   }
 }
 
-export const speculosTransportFactory: TransportFactory = ({
-  config,
-  loggerServiceFactory,
-}) => new SpeculosTransport(loggerServiceFactory, config);
+export const speculosTransportFactory: (
+  speculosUrl?: string,
+) => TransportFactory =
+  (speculosUrl = "http://127.0.0.1:5000") =>
+  ({ config, loggerServiceFactory }) =>
+    new SpeculosTransport(loggerServiceFactory, config, speculosUrl);

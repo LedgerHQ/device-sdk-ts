@@ -6,7 +6,7 @@ export default defineConfig({
   ...baseConfig,
   test: {
     ...baseConfig.test,
-    environment: "jsdom",
+    // environment: "jsdom",
     include: ["src/**/*.test.ts"],
     coverage: {
       reporter: ["lcov"],
