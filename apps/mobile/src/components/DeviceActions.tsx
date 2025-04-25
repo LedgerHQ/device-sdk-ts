@@ -2,6 +2,11 @@ import React from "react";
 import {
   DeviceManagementKit,
   DeviceModelId,
+  GenuineCheckDAError,
+  GenuineCheckDAInput,
+  GenuineCheckDAIntermediateValue,
+  GenuineCheckDAOutput,
+  GenuineCheckDeviceAction,
   GetDeviceStatusDAError,
   GetDeviceStatusDAInput,
   GetDeviceStatusDAIntermediateValue,
@@ -222,5 +227,28 @@ export const getDeviceActions = (
     InstallAppDAInput,
     InstallAppDAError,
     InstallAppDAIntermediateValue
+  >,
+  {
+    id: "genuine_check",
+    title: "Genuine check",
+    description: "Perform a genuine check on the device",
+    executeDeviceAction: ({ unlockTimeout }, inspect) => {
+      const deviceAction = new GenuineCheckDeviceAction({
+        input: { unlockTimeout },
+        inspect,
+      });
+      return dmk.executeDeviceAction({
+        sessionId,
+        deviceAction,
+      });
+    },
+    initialValues: { unlockTimeout: UNLOCK_TIMEOUT },
+    deviceModelId,
+    FormComponent: () => null,
+  } satisfies DeviceActionProps<
+    GenuineCheckDAOutput,
+    GenuineCheckDAInput,
+    GenuineCheckDAError,
+    GenuineCheckDAIntermediateValue
   >,
 ];
