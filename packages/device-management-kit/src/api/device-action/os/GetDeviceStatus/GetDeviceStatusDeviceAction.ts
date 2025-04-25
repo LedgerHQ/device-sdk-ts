@@ -234,14 +234,25 @@ export class GetDeviceStatusDeviceAction extends XStateDeviceAction<
                 _internalState: (_) => {
                   if (isSuccessCommandResult(_.event.output)) {
                     const state: DeviceSessionState = getDeviceSessionState();
-                    // Narrow the type to ReadyWithoutSecureChannelState or ReadyWithSecureChannelState
                     if (
                       state.sessionStateType !==
                       DeviceSessionStateType.Connected
                     ) {
+                      // Update the current app
                       setDeviceSessionState({
                         ...state,
                         currentApp: _.event.output.data,
+                      });
+                    } else {
+                      // The device can be set to Ready if GetAppAndVersionCommand was successful
+                      setDeviceSessionState({
+                        deviceModelId: state.deviceModelId,
+                        sessionStateType:
+                          DeviceSessionStateType.ReadyWithoutSecureChannel,
+                        deviceStatus: DeviceStatus.CONNECTED,
+                        currentApp: _.event.output.data,
+                        installedApps: [],
+                        isSecureConnectionAllowed: false,
                       });
                     }
                     return {
