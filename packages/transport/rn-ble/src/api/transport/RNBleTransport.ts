@@ -152,7 +152,7 @@ export class RNBleTransport implements Transport {
           this._maybeScanningSubject = Maybe.of(subject);
           const devicesById = new Map<string, InternalScannedDevice>();
 
-          console.log("[RNBleTransport][startScanning] startDeviceScan");
+          this._logger.info("[RNBleTransport][startScanning] startDeviceScan");
           this._manager.startDeviceScan(
             this._deviceModelDataSource.getBluetoothServices(),
             { allowDuplicates: true },
@@ -181,7 +181,7 @@ export class RNBleTransport implements Transport {
 
           return subject.asObservable().pipe(
             finalize(() => {
-              console.log("[RNBleTransport][startScanning] finalize");
+              this._logger.debug("[RNBleTransport][startScanning] finalize");
               subject.complete();
               clearInterval(interval);
               this._maybeScanningSubject = Nothing;
@@ -193,14 +193,13 @@ export class RNBleTransport implements Transport {
       )
       .subscribe({
         next: (devices) => {
-          console.log(
+          this._logger.debug(
             "[RNBleTransport][startScanning] onNext called with devices",
-            devices,
+            { data: { devices } },
           );
           this._scannedDevicesSubject.next(devices);
         },
         error: (error) => {
-          console.error("[RNBleTransport][startScanning] error", error);
           this._logger.error("Error while scanning", { data: { error } });
         },
       });
