@@ -4,6 +4,7 @@ import { mockserverIdentifier } from "@ledgerhq/device-transport-kit-mockserver"
 import { speculosIdentifier } from "@ledgerhq/device-transport-kit-speculos";
 import { webHidIdentifier } from "@ledgerhq/device-transport-kit-web-hid";
 import {
+  Box,
   Button,
   Divider,
   DropdownGeneric,
@@ -16,6 +17,7 @@ import {
 import styled, { type DefaultTheme } from "styled-components";
 
 import { useDmkConfigContext } from "@/providers/DmkConfig";
+import { DEFAULT_SPECULOS_URL } from "@/utils/const";
 
 const Root = styled(Flex).attrs({ py: 3, px: 10, gridGap: 8 })`
   color: ${({ theme }: { theme: DefaultTheme }) => theme.colors.neutral.c90};
@@ -56,6 +58,14 @@ export const Header = () => {
     });
   }, [dispatch, transport]);
 
+  const [mockServerStateUrl, setMockServerStateUrl] =
+    useState<string>(mockServerUrl);
+  const [speculosStateUrl, setSpeculosStateUrl] =
+    useState<string>(DEFAULT_SPECULOS_URL);
+
+  const mockServerEnabled = transport === mockserverIdentifier;
+  const speculosEnabled = transport === speculosIdentifier;
+
   const onToggleSpeculos = useCallback(() => {
     dispatch({
       type: "set_transport",
@@ -64,13 +74,10 @@ export const Header = () => {
           transport === speculosIdentifier
             ? webHidIdentifier
             : speculosIdentifier,
+        speculosUrl: speculosStateUrl,
       },
     });
-  }, [dispatch, transport]);
-  const [mockServerStateUrl, setMockServerStateUrl] =
-    useState<string>(mockServerUrl);
-  const mockServerEnabled = transport === mockserverIdentifier;
-  const speculosEnabled = transport === speculosIdentifier;
+  }, [dispatch, transport, speculosStateUrl]);
 
   const validateServerUrl = useCallback(
     () =>
@@ -126,14 +133,24 @@ export const Header = () => {
                 label="Enable Mock server"
               />
             </div>
+            <Divider />
+            <Text>Speculos settings:</Text>
             <div data-testid="switch_speculos">
-              <Switch
-                onChange={onToggleSpeculos}
-                checked={speculosEnabled}
-                name="switch-speculos"
-                label="Enable Speculos"
+              <Input
+                value={speculosStateUrl}
+                onChange={(url: string) => setSpeculosStateUrl(url)}
               />
+              <Box py={4}>
+                <Switch
+                  onChange={onToggleSpeculos}
+                  checked={speculosEnabled}
+                  name="switch-speculos"
+                  label="Enable Speculos"
+                />
+              </Box>
             </div>
+
+            <Divider />
             {mockServerEnabled && (
               <UrlInput
                 value={mockServerStateUrl}

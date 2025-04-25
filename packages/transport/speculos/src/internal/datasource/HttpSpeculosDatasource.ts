@@ -15,11 +15,28 @@ export class HttpSpeculosDatasource implements SpeculosDatasource {
       url: `${this.baseUrl}/apdu`,
       data: requestDto,
       headers: {
-        "X-Ledger-Client-Version": `lmdk-transport-speculos/${PACKAGE.version}`,
+        "X-Ledger-Client-Version": `ldmk-transport-speculos/${PACKAGE.version}`,
       },
     });
 
     return speculosResponse.data.data;
+  }
+
+  async ping(): Promise<boolean> {
+    try {
+      await axios.request({
+        method: "GET",
+        url: `${this.baseUrl}/apdu`,
+        timeout: 2000,
+        data: {
+          data: "0000",
+        },
+      });
+
+      return true;
+    } catch (_) {
+      return false;
+    }
   }
 }
 

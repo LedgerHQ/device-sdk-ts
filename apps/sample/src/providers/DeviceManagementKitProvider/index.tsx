@@ -35,9 +35,12 @@ function buildDefaultDmk(logsExporter: WebLogsExporterLogger) {
 }
 
 //TODO add speculos URL to config
-function buildSpeculosDmk(logsExporter: WebLogsExporterLogger) {
+function buildSpeculosDmk(
+  logsExporter: WebLogsExporterLogger,
+  speculosUrl?: string,
+) {
   return new DeviceManagementKitBuilder()
-    .addTransport(speculosTransportFactory)
+    .addTransport(speculosTransportFactory(speculosUrl))
     .addLogger(new ConsoleLogger())
     .addLogger(logsExporter)
     .addLogger(new FlipperDmkLogger())
@@ -56,7 +59,7 @@ function buildMockDmk(url: string, logsExporter: WebLogsExporterLogger) {
 
 export const DmkProvider: React.FC<PropsWithChildren> = ({ children }) => {
   const {
-    state: { transport, mockServerUrl },
+    state: { transport, mockServerUrl, speculosUrl },
   } = useDmkConfigContext();
 
   const mockServerEnabled = transport === mockserverIdentifier;
@@ -65,14 +68,13 @@ export const DmkProvider: React.FC<PropsWithChildren> = ({ children }) => {
   const [state, setState] = useState(() => {
     const logsExporter = new WebLogsExporterLogger();
     const dmk = speculosEnabled
-      ? buildSpeculosDmk(logsExporter)
+      ? buildSpeculosDmk(logsExporter, speculosUrl)
       : mockServerEnabled
         ? buildMockDmk(mockServerUrl, logsExporter)
         : buildDefaultDmk(logsExporter);
     return { dmk, logsExporter };
   });
 
-  console.log("transport changed", transport);
   const mockServerEnabledChanged = useHasChanged(mockServerEnabled);
   const mockServerUrlChanged = useHasChanged(mockServerUrl);
   const speculosEnabledChanged = useHasChanged(speculosEnabled);
@@ -85,7 +87,7 @@ export const DmkProvider: React.FC<PropsWithChildren> = ({ children }) => {
     setState(({ logsExporter }) => {
       return {
         dmk: speculosEnabled
-          ? buildSpeculosDmk(logsExporter)
+          ? buildSpeculosDmk(logsExporter, speculosUrl)
           : mockServerEnabled
             ? buildMockDmk(mockServerUrl, logsExporter)
             : buildDefaultDmk(logsExporter),

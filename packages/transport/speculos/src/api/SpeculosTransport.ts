@@ -30,6 +30,7 @@ export class SpeculosTransport implements Transport {
   private logger: LoggerPublisherService;
   private readonly identifier: TransportIdentifier = speculosIdentifier;
   private readonly _speculosDataSource: SpeculosDatasource;
+  private connectedDevice: TransportConnectedDevice | null = null;
   private readonly speculosDevice: TransportDiscoveredDevice = {
     id: "SpeculosID", //TODO make it dynamic at creation
     deviceModel: {
@@ -118,6 +119,8 @@ export class SpeculosTransport implements Transport {
         id: "SpeculosID", //TODO make it dynamic at creation
         type: "USB",
       };
+
+      this.connectedDevice = connectedDevice;
       return Right(connectedDevice);
     } catch (error) {
       return Left(new OpeningConnectionError(error as Error));
@@ -128,13 +131,14 @@ export class SpeculosTransport implements Transport {
     connectedDevice: TransportConnectedDevice;
   }): Promise<Either<DmkError, void>> {
     this.logger.debug("disconnect");
+    this.connectedDevice = null;
     return Promise.resolve(Right(undefined));
   }
 
   async sendApdu(
     _sessionId: string,
-    _deviceId: DeviceId,
-    _onDisconnect: DisconnectHandler,
+    deviceId: DeviceId,
+    onDisconnect: DisconnectHandler,
     apdu: Uint8Array,
   ): Promise<Either<DmkError, ApduResponse>> {
     try {
@@ -145,6 +149,13 @@ export class SpeculosTransport implements Transport {
       const apduResponse = this.createApduResponse(hexResponse);
       return Right(apduResponse);
     } catch (error) {
+      if (this.connectedDevice) {
+        this.logger.debug("disconnecting");
+        onDisconnect(deviceId);
+        this.disconnect({
+          connectedDevice: this.connectedDevice,
+        });
+      }
       return Left(new GeneralDmkError(error));
     }
   }
