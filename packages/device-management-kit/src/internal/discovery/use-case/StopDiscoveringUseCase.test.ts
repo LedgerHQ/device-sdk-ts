@@ -34,7 +34,7 @@ describe("StopDiscoveringUseCase", () => {
 
     vi.spyOn(transportService, "getAllTransports").mockReturnValue(transports);
 
-    const usecase = new StopDiscoveringUseCase(transportService);
+    const usecase = new StopDiscoveringUseCase(transportService, vi.fn());
 
     await usecase.execute();
 
