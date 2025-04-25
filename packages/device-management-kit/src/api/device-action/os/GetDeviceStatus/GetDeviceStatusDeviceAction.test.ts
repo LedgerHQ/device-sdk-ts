@@ -260,7 +260,85 @@ describe("GetDeviceStatusDeviceAction", () => {
           expectedStates,
           makeDeviceActionInternalApiMock(),
           {
-            onDone: resolve,
+            onDone: () => {
+              // Session should be updated with current app
+              expect(setDeviceSessionState).toHaveBeenCalledWith({
+                sessionStateType:
+                  DeviceSessionStateType.ReadyWithoutSecureChannel,
+                deviceStatus: DeviceStatus.CONNECTED,
+                currentApp: {
+                  name: "BOLOS",
+                  version: "1.0.0",
+                },
+              });
+              resolve();
+            },
+            onError: reject,
+          },
+        );
+      }));
+
+    it("should return the device status and update session if the device is not ready", () =>
+      new Promise<void>((resolve, reject) => {
+        getDeviceSessionStateMock.mockReturnValue({
+          sessionStateType: DeviceSessionStateType.Connected,
+          deviceStatus: DeviceStatus.CONNECTED,
+        });
+
+        getAppAndVersionMock.mockResolvedValue(
+          CommandResultFactory({
+            data: {
+              name: "BOLOS",
+              version: "1.0.0",
+            },
+          }),
+        );
+
+        const getDeviceStateDeviceAction = new GetDeviceStatusDeviceAction({
+          input: { unlockTimeout: undefined },
+        });
+
+        vi.spyOn(
+          getDeviceStateDeviceAction,
+          "extractDependencies",
+        ).mockReturnValue(extractDependenciesMock());
+
+        const expectedStates: Array<GetDeviceStatusDAState> = [
+          {
+            intermediateValue: {
+              requiredUserInteraction: UserInteractionRequired.None,
+            },
+            status: DeviceActionStatus.Pending,
+          },
+          {
+            status: DeviceActionStatus.Completed,
+            output: {
+              currentApp: "BOLOS",
+              currentAppVersion: "1.0.0",
+            },
+          },
+        ];
+
+        testDeviceActionStates(
+          getDeviceStateDeviceAction,
+          expectedStates,
+          makeDeviceActionInternalApiMock(),
+          {
+            onDone: () => {
+              // Session should be set as ready if GetAppAndVersionCommand was successful
+              expect(setDeviceSessionState).toHaveBeenCalledWith({
+                sessionStateType:
+                  DeviceSessionStateType.ReadyWithoutSecureChannel,
+                deviceStatus: DeviceStatus.CONNECTED,
+                currentApp: {
+                  name: "BOLOS",
+                  version: "1.0.0",
+                },
+                installedApps: [],
+                isSecureConnectionAllowed: false,
+              });
+              resolve();
+            },
             onError: reject,
           },
         );
