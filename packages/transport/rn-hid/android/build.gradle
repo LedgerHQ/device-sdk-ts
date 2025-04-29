@@ -60,6 +60,15 @@ android {
         versionCode 1
         versionName "1.0"
     }
+    
+    buildTypes {
+        release {
+            // Enable ProGuard for release builds
+            minifyEnabled false // TODO REMOVE
+            // Use ProGuard for code obfuscation and optimization
+            //proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        }
+    }
 
     compileOptions {
         // Use JavaVersion enums for compatibility
