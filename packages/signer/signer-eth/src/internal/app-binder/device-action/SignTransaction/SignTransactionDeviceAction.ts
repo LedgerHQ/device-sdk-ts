@@ -203,12 +203,6 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
       },
       states: {
         OpenAppDeviceAction: {
-          exit: assign({
-            intermediateValue: {
-              requiredUserInteraction: UserInteractionRequired.None,
-              step: SignTransactionDAStep.OPEN_APP,
-            },
-          }),
           invoke: {
             id: "openAppStateMachine",
             input: {
@@ -308,12 +302,6 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
           entry: assign({
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.Web3ChecksOptIn,
-              step: SignTransactionDAStep.WEB3_CHECKS_OPT_IN,
-            },
-          }),
-          exit: assign({
-            intermediateValue: {
-              requiredUserInteraction: UserInteractionRequired.None,
               step: SignTransactionDAStep.WEB3_CHECKS_OPT_IN,
             },
           }),
@@ -486,12 +474,6 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
           entry: assign({
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.SignTransaction,
-              step: SignTransactionDAStep.SIGN_TRANSACTION,
-            },
-          }),
-          exit: assign({
-            intermediateValue: {
-              requiredUserInteraction: UserInteractionRequired.None,
               step: SignTransactionDAStep.SIGN_TRANSACTION,
             },
           }),

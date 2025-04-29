@@ -174,12 +174,6 @@ export class SignTypedDataDeviceAction extends XStateDeviceAction<
       },
       states: {
         OpenAppDeviceAction: {
-          exit: assign({
-            intermediateValue: {
-              requiredUserInteraction: UserInteractionRequired.None,
-              step: SignTypedDataDAStateStep.OPEN_APP,
-            },
-          }),
           invoke: {
             id: "openAppStateMachine",
             input: {
@@ -282,12 +276,6 @@ export class SignTypedDataDeviceAction extends XStateDeviceAction<
               step: SignTypedDataDAStateStep.WEB3_CHECKS_OPT_IN,
             },
           }),
-          exit: assign({
-            intermediateValue: {
-              requiredUserInteraction: UserInteractionRequired.None,
-              step: SignTypedDataDAStateStep.WEB3_CHECKS_OPT_IN,
-            },
-          }),
           invoke: {
             id: "web3CheckOptIn",
             src: "web3CheckOptIn",
@@ -374,12 +362,6 @@ export class SignTypedDataDeviceAction extends XStateDeviceAction<
               step: SignTypedDataDAStateStep.PROVIDE_CONTEXT,
             },
           }),
-          exit: assign({
-            intermediateValue: {
-              requiredUserInteraction: UserInteractionRequired.None,
-              step: SignTypedDataDAStateStep.PROVIDE_CONTEXT,
-            },
-          }),
           invoke: {
             id: "provideContext",
             src: "provideContext",
@@ -421,12 +403,6 @@ export class SignTypedDataDeviceAction extends XStateDeviceAction<
               step: SignTypedDataDAStateStep.SIGN_TYPED_DATA,
             },
           }),
-          exit: assign({
-            intermediateValue: {
-              requiredUserInteraction: UserInteractionRequired.None,
-              step: SignTypedDataDAStateStep.SIGN_TYPED_DATA,
-            },
-          }),
           invoke: {
             id: "signTypedData",
             src: "signTypedData",
@@ -462,12 +438,6 @@ export class SignTypedDataDeviceAction extends XStateDeviceAction<
           entry: assign({
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.SignTypedData,
-              step: SignTypedDataDAStateStep.SIGN_TYPED_DATA_LEGACY,
-            },
-          }),
-          exit: assign({
-            intermediateValue: {
-              requiredUserInteraction: UserInteractionRequired.None,
               step: SignTypedDataDAStateStep.SIGN_TYPED_DATA_LEGACY,
             },
           }),
