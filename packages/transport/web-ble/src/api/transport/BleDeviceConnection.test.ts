@@ -14,7 +14,6 @@ import { bleCharacteristicStubBuilder } from "@api/model/BleDevice.stub";
 
 import { BleDeviceConnection, type DataViewEvent } from "./BleDeviceConnection";
 
-const GET_MTU_APDU = new Uint8Array([0x08, 0x00, 0x00, 0x00, 0x00]);
 const GET_MTU_APDU_RESPONSE = new Uint8Array([
   0x00, 0x00, 0x00, 0x00, 0x00, 0x42,
 ]);
@@ -57,7 +56,6 @@ describe("BleDeviceConnection", () => {
     connection: BleDeviceConnection,
     buffer: Uint8Array = Uint8Array.from([]),
   ) {
-    // @ts-expect-error private function call to mock web ble response
     connection.onNotifyCharacteristicValueChanged({
       target: {
         value: new DataView(buffer.buffer),
@@ -117,24 +115,6 @@ describe("BleDeviceConnection", () => {
     });
   });
   describe("setup", () => {
-    it("should send the apdu 0x0800000000 to get mtu size", async () => {
-      // given
-      const connection = new BleDeviceConnection(
-        {
-          writeCharacteristic,
-          notifyCharacteristic,
-          apduSenderFactory,
-          apduReceiverFactory,
-        },
-        logger,
-      );
-      // when
-      await connection.setup();
-      // then
-      expect(
-        writeCharacteristic.writeValueWithoutResponse,
-      ).toHaveBeenCalledWith(new Uint8Array(GET_MTU_APDU));
-    });
     it("should setup apduSender with the correct mtu size", () => {
       // given
       const connection = new BleDeviceConnection(

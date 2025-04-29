@@ -1,5 +1,4 @@
 import {
-  type ApduReceiverService,
   type ApduReceiverServiceFactory,
   type ApduResponse,
   type ApduSenderService,
@@ -10,37 +9,29 @@ import {
   type DmkError,
   type LoggerPublisherService,
   ReconnectionFailedError,
+  UnknownDeviceExchangeError,
 } from "@ledgerhq/device-management-kit";
 import { type Either, Left, Maybe, Nothing, Right } from "purify-ts";
 
-type BleDeviceConnectionConstructorArgs = {
-  writeCharacteristic: BluetoothRemoteGATTCharacteristic;
-  notifyCharacteristic: BluetoothRemoteGATTCharacteristic;
-  apduSenderFactory: ApduSenderServiceFactory;
-  apduReceiverFactory: ApduReceiverServiceFactory;
-};
+import { ApduExchange } from "./ApduExchange";
+import { CharacteristicIO } from "./CharacteristicIO";
+import { MtuNegotiator } from "./MtuNegotiator";
+import { ReconnectionGate } from "./ReconnectionGate";
 
-export type DataViewEvent = Event & {
-  target: {
-    value: DataView;
-  };
-};
+export type DataViewEvent = Event & { target: { value: DataView } };
 
 export class BleDeviceConnection implements DeviceConnection {
-  private _writeCharacteristic: BluetoothRemoteGATTCharacteristic;
-  private _notifyCharacteristic: BluetoothRemoteGATTCharacteristic;
-  private readonly _logger: LoggerPublisherService;
-  private _apduSender: Maybe<ApduSenderService>;
-  private readonly _apduSenderFactory: ApduSenderServiceFactory;
-  private readonly _apduReceiver: ApduReceiverService;
-  private _isDeviceReady: boolean;
-  private _sendApduPromiseResolver: Maybe<{
-    resolve(value: Either<DmkError, ApduResponse>): void;
-  }>;
-  private _settleReconnectionPromiseResolvers: Maybe<{
-    resolve(): void;
-    reject(err: DmkError): void;
-  }>;
+  private readonly io: CharacteristicIO;
+  private readonly mtu: MtuNegotiator;
+  private readonly ex: ApduExchange;
+  private readonly gate = new ReconnectionGate();
+  private _sender: Maybe<ApduSenderService> = Nothing;
+  private readonly log: LoggerPublisherService;
+
+  private readonly _serviceUuid: string;
+  private readonly _writeCmdUuid: string;
+  private readonly _notifyUuid: string;
+  private readonly apduSenderFactory: ApduSenderServiceFactory;
 
   constructor(
     {
@@ -48,240 +39,145 @@ export class BleDeviceConnection implements DeviceConnection {
       notifyCharacteristic,
       apduSenderFactory,
       apduReceiverFactory,
-    }: BleDeviceConnectionConstructorArgs,
-    loggerServiceFactory: (tag: string) => LoggerPublisherService,
+    }: {
+      writeCharacteristic: BluetoothRemoteGATTCharacteristic;
+      notifyCharacteristic: BluetoothRemoteGATTCharacteristic;
+      apduSenderFactory: ApduSenderServiceFactory;
+      apduReceiverFactory: ApduReceiverServiceFactory;
+    },
+    makeLogger: (t: string) => LoggerPublisherService,
   ) {
-    this._apduSenderFactory = apduSenderFactory;
-    this._apduSender = Nothing;
-    this._apduReceiver = apduReceiverFactory();
-    this._logger = loggerServiceFactory("BleDeviceConnection");
-    this._writeCharacteristic = writeCharacteristic;
-    this._notifyCharacteristic = notifyCharacteristic;
-    this._notifyCharacteristic.oncharacteristicvaluechanged =
-      this.onNotifyCharacteristicValueChanged;
-    this._isDeviceReady = false;
-    this._sendApduPromiseResolver = Maybe.zero();
-    this._settleReconnectionPromiseResolvers = Maybe.zero();
+    this.log = makeLogger("BleDeviceConnection");
+    this.apduSenderFactory = apduSenderFactory;
+    this.io = new CharacteristicIO(writeCharacteristic, notifyCharacteristic);
+
+    this.mtu = new MtuNegotiator(
+      this.io,
+      (s) => (this._sender = Maybe.of(apduSenderFactory({ frameSize: s }))),
+      this.log,
+      () => this.gate.resolve(),
+    );
+    this.ex = new ApduExchange(
+      () => this._sender,
+      apduReceiverFactory(),
+      this.io,
+      this.log,
+      () => this._sender.isJust(),
+    );
+
+    this._serviceUuid = notifyCharacteristic.service.uuid;
+    this._writeCmdUuid = writeCharacteristic.uuid;
+    this._notifyUuid = notifyCharacteristic.uuid;
   }
 
-  /**
-   * NotifyCharacteristic setter
-   * Register a listener on characteristic value change
-   * @param notifyCharacteristic
-   * @private
-   */
-  private set notifyCharacteristic(
-    notifyCharacteristic: BluetoothRemoteGATTCharacteristic,
-  ) {
-    this._notifyCharacteristic = notifyCharacteristic;
-    this._notifyCharacteristic.oncharacteristicvaluechanged =
-      this.onNotifyCharacteristicValueChanged;
-  }
+  async setup() {
+    const dev = this.io.notify.service.device;
+    const gatt = dev.gatt;
 
-  /**
-   * WriteCharacteristic setter
-   * @param writeCharacteristic
-   * @private
-   */
-  private set writeCharacteristic(
-    writeCharacteristic: BluetoothRemoteGATTCharacteristic,
-  ) {
-    this._writeCharacteristic = writeCharacteristic;
-  }
+    if (!gatt) {
+      throw new ReconnectionFailedError("Device has no GATT");
+    }
 
-  /**
-   * Event handler to setup the mtu size in response of 0x0800000000 APDU
-   * @param value
-   * @private
-   */
-  private onReceiveSetupApduResponse(value: ArrayBuffer) {
-    const mtuResponse = new Uint8Array(value);
-    // the mtu is the 5th byte of the response
-    const [frameSize] = mtuResponse.slice(5);
-    if (frameSize) {
-      this._apduSender = Maybe.of(this._apduSenderFactory({ frameSize }));
-      this._settleReconnectionPromiseResolvers.ifJust((promise) => {
-        promise.resolve();
-        this._settleReconnectionPromiseResolvers = Maybe.zero();
-      });
-      this._isDeviceReady = true;
+    if (!gatt.connected) {
+      await gatt.connect();
+    }
+
+    // 👇 Await MTU negotiation fully
+    try {
+      await this.mtu.negotiate();
+    } catch (e) {
+      this.log.error("MTU negotiation failed", { data: { e } });
+      throw e;
     }
   }
 
-  /**
-   * Main event handler for BLE notify characteristic
-   * Call _onReceiveSetupApduResponse if device mtu is not set
-   * Call receiveApdu otherwise
-   * @param event
-   */
-  private onNotifyCharacteristicValueChanged = (event: Event) => {
-    if (!this.isDataViewEvent(event)) {
-      return;
-    }
-    const {
-      target: {
-        value: { buffer },
-      },
-    } = event;
-    if (buffer instanceof ArrayBuffer) {
-      if (!this._isDeviceReady) {
-        this.onReceiveSetupApduResponse(buffer);
-      } else {
-        this.receiveApdu(buffer);
-      }
-    }
-  };
-
-  /**
-   * Setup BleDeviceConnection
-   *
-   * The device is considered as ready once the mtu had been set
-   * APDU 0x0800000000 is used to get this mtu size
-   */
-  public async setup() {
-    const requestMtuApdu = Uint8Array.from([0x08, 0x00, 0x00, 0x00, 0x00]);
-
-    await this._notifyCharacteristic.startNotifications();
-    await this._writeCharacteristic.writeValueWithoutResponse(requestMtuApdu);
-  }
-
-  /**
-   * Receive APDU response
-   * Resolve sendApdu promise once the framer receives all the frames of the response
-   * @param data
-   */
-  receiveApdu(data: ArrayBuffer) {
-    const response = this._apduReceiver.handleFrame(new Uint8Array(data));
-
-    response
-      .map((maybeApduResponse) => {
-        maybeApduResponse.map((apduResponse) => {
-          this._logger.debug("Received APDU Response", {
-            data: { response: apduResponse },
-          });
-          this._sendApduPromiseResolver.map(({ resolve }) =>
-            resolve(Right(apduResponse)),
-          );
-        });
-      })
-      .mapLeft((error) => {
-        this._sendApduPromiseResolver.map(({ resolve }) =>
-          resolve(Left(error)),
-        );
-      });
-  }
-
-  /**
-   * Send apdu if the mtu had been set
-   *
-   * Get all frames for a given APDU
-   * Save a promise that would be completed once the response had been received
-   * @param apdu
-   * @param triggersDisconnection
-   */
   async sendApdu(
     apdu: Uint8Array,
     triggersDisconnection?: boolean,
   ): Promise<Either<DmkError, ApduResponse>> {
-    if (!this._isDeviceReady) {
-      return Promise.resolve(
-        Left(new DeviceNotInitializedError("Unknown MTU")),
-      );
+    const MAX = 2;
+    let last: Either<DmkError, ApduResponse> = Left(
+      new UnknownDeviceExchangeError("init"),
+    );
+    let reran = false;
+
+    for (let i = 1; i <= MAX; i++) {
+      last = await this._sendOnce(apdu, triggersDisconnection);
+      if (last.isRight()) break;
+      const err = last.extract();
+      if (err instanceof UnknownDeviceExchangeError && i < MAX) {
+        await new Promise((r) => setTimeout(r, 100 * i));
+        continue;
+      }
+      if (err instanceof DeviceNotInitializedError && !reran) {
+        await this.setup();
+        await new Promise((r) => setTimeout(r, 50));
+        reran = true;
+        continue;
+      }
+      break;
     }
-    // Create a promise that would be resolved once the response had been received
-    const resultPromise = new Promise<Either<DmkError, ApduResponse>>(
-      (resolve) => {
-        this._sendApduPromiseResolver = Maybe.of({
-          resolve,
-        });
+    return last;
+  }
+
+  async reconnect() {
+    this._sender = Nothing;
+    this.ex.detach();
+
+    const dev = this.io.notify.service.device;
+    if (!dev.gatt?.connected) {
+      await dev.gatt!.connect();
+    }
+
+    const svc = await dev.gatt!.getPrimaryService(this._serviceUuid);
+    const wChr = await svc.getCharacteristic(this._writeCmdUuid);
+    const nChr = await svc.getCharacteristic(this._notifyUuid);
+
+    this.io.write = wChr;
+    this.io.notify = nChr;
+
+    this.ex.attach();
+    await this.io.startNotifications();
+    await this.setup();
+    // give the BLE stack a lil moment to think
+    await new Promise((r) => setTimeout(r, 1000));
+  }
+
+  disconnect() {
+    this.gate.reject(new ReconnectionFailedError());
+  }
+
+  private async _sendOnce(
+    apdu: Uint8Array,
+    reboot?: boolean,
+  ): Promise<Either<DmkError, ApduResponse>> {
+    const dev = this.io.notify.service.device;
+    if (!dev.gatt?.connected) return Left(new ReconnectionFailedError());
+    if (!this.mtu.readyState() && this._sender.isNothing())
+      return Left(new DeviceNotInitializedError("Unknown MTU"));
+
+    let recon: Promise<Either<DmkError, void>> | null = null;
+    if (reboot) recon = this.gate.wait();
+
+    const res = await this.ex.send(apdu);
+    return res.caseOf({
+      Right: async (resp) => {
+        if (reboot && CommandUtils.isSuccessResponse(resp)) await recon!;
+        return Right(resp);
       },
-    );
-    const frames = this._apduSender.mapOrDefault(
-      (apduSender) => apduSender.getFrames(apdu),
-      [],
-    );
-    for (const frame of frames) {
-      try {
-        this._logger.debug("Sending Frame", {
-          data: { frame: frame.getRawData() },
-        });
-        await this._writeCharacteristic.writeValueWithoutResponse(
-          frame.getRawData(),
-        );
-      } catch (error) {
-        this._logger.error("Error sending frame", { data: { error } });
+      Left: async (err) => Left(err),
+    });
+  }
+
+  public onNotifyCharacteristicValueChanged(e: DataViewEvent): void {
+    this.ex.onIncoming(e);
+    const buf = e.target.value;
+    if (buf && buf.byteLength === 6) {
+      const arr = new Uint8Array(buf.buffer);
+      const size = arr[5];
+      if (size) {
+        this._sender = Maybe.of(this.apduSenderFactory({ frameSize: size }));
       }
     }
-    const response = await resultPromise;
-    this._sendApduPromiseResolver = Maybe.zero();
-    return response.caseOf({
-      Right: async (apduResponse) => {
-        if (
-          triggersDisconnection &&
-          CommandUtils.isSuccessResponse(apduResponse)
-        ) {
-          const reconnectionRes = await this.setupWaitForReconnection();
-          return reconnectionRes.map(() => apduResponse);
-        } else {
-          return Right(apduResponse);
-        }
-      },
-      Left: async (error) => Promise.resolve(Left(error)),
-    });
-  }
-
-  /**
-   * Typeguard to check if an event contains target value of type DataView
-   *
-   * @param event
-   * @private
-   */
-  private isDataViewEvent(event: Event): event is DataViewEvent {
-    return (
-      event.target !== null &&
-      "value" in event.target &&
-      event.target.value instanceof DataView
-    );
-  }
-
-  /**
-   * Setup a promise that would be resolved once the device is reconnected
-   *
-   * @private
-   */
-  private setupWaitForReconnection(): Promise<Either<DmkError, void>> {
-    return new Promise<Either<DmkError, void>>((resolve) => {
-      this._settleReconnectionPromiseResolvers = Maybe.of({
-        resolve: () => resolve(Right(undefined)),
-        reject: (error: DmkError) => resolve(Left(error)),
-      });
-    });
-  }
-
-  /**
-   * Reconnect to the device by resetting new ble characteristics
-   * @param writeCharacteristic
-   * @param notifyCharacteristic
-   */
-  public async reconnect(
-    writeCharacteristic: BluetoothRemoteGATTCharacteristic,
-    notifyCharacteristic: BluetoothRemoteGATTCharacteristic,
-  ) {
-    this._isDeviceReady = false;
-    this.notifyCharacteristic = notifyCharacteristic;
-    this.writeCharacteristic = writeCharacteristic;
-    await this.setup();
-  }
-
-  /**
-   * Disconnect from the device
-   */
-  public disconnect() {
-    // if a reconnection promise is pending, reject it
-    this._settleReconnectionPromiseResolvers.ifJust((promise) => {
-      promise.reject(new ReconnectionFailedError());
-      this._settleReconnectionPromiseResolvers = Maybe.zero();
-    });
-    this._isDeviceReady = false;
   }
 }
