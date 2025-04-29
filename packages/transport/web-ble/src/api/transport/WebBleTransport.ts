@@ -54,6 +54,7 @@ export class WebBleTransport implements Transport {
   private _logger: LoggerPublisherService;
   private readonly connectionType: ConnectionType = "BLE";
   private readonly identifier: TransportIdentifier = webBleIdentifier;
+  private _reconnecting = false;
 
   constructor(
     private readonly _deviceModelDataSource: DeviceModelDataSource,
@@ -381,40 +382,79 @@ export class WebBleTransport implements Transport {
     deviceConnection: BleDeviceConnection,
   ) {
     return async () => {
-      // start a timer to disconnect the device if it does not reconnect
-      const disconnectObserver = timer(RECONNECT_DEVICE_TIMEOUT).subscribe(
-        () => {
-          this._logger.debug("disconnection timer over");
-          // retrieve the disconnect handler and call it
-          const disconnectHandler = Maybe.fromNullable(
-            this._disconnectionHandlersById.get(internalDevice.id),
+      if (this._reconnecting) return;
+      this._reconnecting = true;
+      this._logger.debug("Device disconnected, starting reconnect attempts");
+
+      // start a hard timeout in case all retries fail
+      let didReconnect = false;
+      const timeoutSub = timer(RECONNECT_DEVICE_TIMEOUT).subscribe(() => {
+        if (!didReconnect) {
+          this._logger.debug("Reconnection overall timeout, cleaning up");
+          deviceConnection.disconnect();
+          const handler = this._disconnectionHandlersById.get(
+            internalDevice.id,
           );
-          disconnectHandler.map((handler) => handler());
-        },
-      );
+          handler?.();
+        }
+        timeoutSub.unsubscribe();
+      });
 
-      // connect to the navigator device
-      await internalDevice.bleDevice.gatt?.connect();
+      // retry loop
+      const MAX_RETRIES = 3;
+      const BASE_DELAY_MS = 500;
+      for (
+        let attempt = 1;
+        attempt <= MAX_RETRIES && !didReconnect;
+        attempt++
+      ) {
+        try {
+          this._logger.debug(`Reconnect attempt #${attempt}`);
+          const gatt = internalDevice.bleDevice.gatt!;
 
-      // cancel disconnection timeout
-      disconnectObserver.unsubscribe();
+          // only call connect if needed
+          if (!gatt.connected && !(gatt as any).connecting) {
+            await gatt.connect();
+          }
+          if (!gatt.connected) {
+            throw new Error("GATT.connect() did not yield connected");
+          }
 
-      // retrieve new ble characteristics
-      const service = await this.getBleGattService(internalDevice.bleDevice);
+          // re-discover service & characteristics on fresh GATT
+          const freshService = await gatt.getPrimaryService(
+            internalDevice.bleDeviceInfos.serviceUuid,
+          );
+          internalDevice.bleGattService = freshService;
 
-      if (service.isRight()) {
-        const [writeC, notifyC] = await Promise.all([
-          service
-            .extract()
-            .getCharacteristic(internalDevice.bleDeviceInfos.writeCmdUuid),
-          service
-            .extract()
-            .getCharacteristic(internalDevice.bleDeviceInfos.notifyUuid),
-        ]);
+          // run MTU handshake & resolve the in-flight promise
+          await deviceConnection.reconnect();
 
-        // reconnect device connection
-        await deviceConnection.reconnect(writeC, notifyC);
+          didReconnect = true;
+          this._logger.debug("Reconnected successfully");
+        } catch (err) {
+          this._logger.error(`Reconnect attempt #${attempt} failed`, {
+            data: { err },
+          });
+          if (attempt < MAX_RETRIES) {
+            // back off before retrying
+            const delay = BASE_DELAY_MS * attempt;
+            this._logger.debug(`Waiting ${delay}ms before next attempt`);
+            await new Promise((res) => setTimeout(res, delay));
+          }
+        }
       }
+
+      // if we got back, cancel the overall timeout and exit
+      if (didReconnect) {
+        timeoutSub.unsubscribe();
+      } else {
+        // final cleanup
+        this._logger.debug("All reconnection attempts failed; final cleanup");
+        const handler = this._disconnectionHandlersById.get(internalDevice.id);
+        handler?.();
+      }
+
+      this._reconnecting = false;
     };
   }
 
@@ -453,21 +493,31 @@ export class WebBleTransport implements Transport {
         this._deviceConnectionById.get(device.id),
       );
 
-      maybeDeviceConnection.map((dConnection) => dConnection.disconnect());
+      // ensure proper cleanup of device connection
+      maybeDeviceConnection.map((dConnection) => {
+        dConnection.disconnect();
+        this._deviceConnectionById.delete(device.id);
+      });
 
       // disconnect device gatt server
       if (bleDevice.gatt?.connected) {
         bleDevice.gatt.disconnect();
       }
+
+      // Remove any gattserverdisconnected handlers
+      if (bleDevice.ongattserverdisconnected) {
+        bleDevice.ongattserverdisconnected = () => {};
+      }
+
       // clean up objects
       this._internalDevicesById.delete(device.id);
-      this._deviceConnectionById.delete(device.id);
       this._disconnectionHandlersById.delete(device.id);
 
       if (this._connectedDevices.includes(bleDevice)) {
-        delete this._connectedDevices[
-          this._connectedDevices.indexOf(bleDevice)
-        ];
+        const index = this._connectedDevices.indexOf(bleDevice);
+        if (index !== -1) {
+          this._connectedDevices.splice(index, 1);
+        }
       }
     });
 
