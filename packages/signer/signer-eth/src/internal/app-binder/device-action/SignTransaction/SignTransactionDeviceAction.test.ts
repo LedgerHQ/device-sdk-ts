@@ -1001,6 +1001,15 @@ describe("SignTransactionDeviceAction", () => {
             },
             status: DeviceActionStatus.Pending,
           },
+          // Web3ChecksOptInResultCheck state
+          {
+            intermediateValue: {
+              requiredUserInteraction: UserInteractionRequired.None,
+              step: SignTransactionDAStep.WEB3_CHECKS_OPT_IN_RESULT,
+              result: true,
+            },
+            status: DeviceActionStatus.Pending,
+          },
           // BuildContext state
           {
             intermediateValue: {
@@ -1098,6 +1107,15 @@ describe("SignTransactionDeviceAction", () => {
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.Web3ChecksOptIn,
               step: SignTransactionDAStep.WEB3_CHECKS_OPT_IN,
+            },
+            status: DeviceActionStatus.Pending,
+          },
+          // Web3ChecksOptInResultCheck state
+          {
+            intermediateValue: {
+              requiredUserInteraction: UserInteractionRequired.None,
+              step: SignTransactionDAStep.WEB3_CHECKS_OPT_IN_RESULT,
+              result: false,
             },
             status: DeviceActionStatus.Pending,
           },

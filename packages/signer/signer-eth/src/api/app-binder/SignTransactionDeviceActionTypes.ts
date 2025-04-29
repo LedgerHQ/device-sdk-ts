@@ -25,6 +25,7 @@ export enum SignTransactionDAStep {
   OPEN_APP = "signer.eth.steps.openApp",
   GET_APP_CONFIG = "signer.eth.steps.getAppConfig",
   WEB3_CHECKS_OPT_IN = "signer.eth.steps.web3ChecksOptIn",
+  WEB3_CHECKS_OPT_IN_RESULT = "signer.eth.steps.web3ChecksOptInResult",
   BUILD_CONTEXT = "signer.eth.steps.buildContext",
   PROVIDE_CONTEXT = "signer.eth.steps.provideContext",
   PROVIDE_GENERIC_CONTEXT = "signer.eth.steps.provideGenericContext",
@@ -51,10 +52,19 @@ type SignTransactionDARequiredInteraction =
   | UserInteractionRequired.Web3ChecksOptIn
   | UserInteractionRequired.SignTransaction;
 
-export type SignTransactionDAIntermediateValue = {
-  requiredUserInteraction: SignTransactionDARequiredInteraction;
-  step: SignTransactionDAStep;
-};
+export type SignTransactionDAIntermediateValue =
+  | {
+      requiredUserInteraction: SignTransactionDARequiredInteraction;
+      step: Exclude<
+        SignTransactionDAStep,
+        SignTransactionDAStep.WEB3_CHECKS_OPT_IN_RESULT
+      >;
+    }
+  | {
+      requiredUserInteraction: UserInteractionRequired.None;
+      step: SignTransactionDAStep.WEB3_CHECKS_OPT_IN_RESULT;
+      result: boolean;
+    };
 
 export type SignTransactionDAState = DeviceActionState<
   SignTransactionDAOutput,
