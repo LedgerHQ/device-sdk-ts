@@ -1,1 +1,3 @@
 export const RECONNECT_DEVICE_TIMEOUT = 6000;
+export const GET_HANDLER_MAX_RETRIES = 3;
+export const GET_HANDLER_BASE_DELAY_MS = 500;
