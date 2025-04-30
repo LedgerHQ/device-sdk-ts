@@ -61,7 +61,12 @@ export {
 } from "@api/device-action/model/DeviceActionState";
 export { UserInteractionRequired } from "@api/device-action/model/UserInteractionRequired";
 export { CallTaskInAppDeviceAction } from "@api/device-action/os/CallTaskInAppDeviceAction/CallTaskInAppDeviceAction";
-export { UnknownDAError } from "@api/device-action/os/Errors";
+export {
+  DeviceLockedError,
+  OutOfMemoryDAError,
+  UnknownDAError,
+  UnsupportedFirmwareDAError,
+} from "@api/device-action/os/Errors";
 export { GetDeviceMetadataDeviceAction } from "@api/device-action/os/GetDeviceMetadata/GetDeviceMetadataDeviceAction";
 export { GetDeviceStatusDeviceAction } from "@api/device-action/os/GetDeviceStatus/GetDeviceStatusDeviceAction";
 export { GoToDashboardDeviceAction } from "@api/device-action/os/GoToDashboard/GoToDashboardDeviceAction";
@@ -69,6 +74,7 @@ export { InstallOrUpdateAppsDeviceAction } from "@api/device-action/os/InstallOr
 export { ListAppsDeviceAction } from "@api/device-action/os/ListApps/ListAppsDeviceAction";
 export { ListAppsWithMetadataDeviceAction } from "@api/device-action/os/ListAppsWithMetadata/ListAppsWithMetadataDeviceAction";
 export { OpenAppDeviceAction } from "@api/device-action/os/OpenAppDeviceAction/OpenAppDeviceAction";
+export { OpenAppWithDependenciesDeviceAction } from "@api/device-action/os/OpenAppWithDependencies/OpenAppWithDependenciesDeviceAction";
 export { SendCommandInAppDeviceAction } from "@api/device-action/os/SendCommandInAppDeviceAction/SendCommandInAppDeviceAction";
 export {
   type DeviceActionStateMachine,
@@ -87,6 +93,7 @@ export { GenuineCheckDeviceAction } from "@api/secure-channel/device-action/Genu
 export { InstallAppDeviceAction } from "@api/secure-channel/device-action/InstallApp/InstallAppDeviceAction";
 export { ListInstalledAppsDeviceAction } from "@api/secure-channel/device-action/ListInstalledApps/ListInstalledAppsDeviceAction";
 export { UninstallAppDeviceAction } from "@api/secure-channel/device-action/UninstallApp/UninstallAppDeviceAction";
+export { SecureChannelError } from "@internal/secure-channel/model/Errors";
 // TODO: remove from exported
 export { defaultApduReceiverServiceStubBuilder } from "@api/device-session/service/DefaultApduReceiverService.stub";
 export { defaultApduSenderServiceStubBuilder } from "@api/device-session/service/DefaultApduSenderService.stub";

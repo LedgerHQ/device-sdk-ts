@@ -4,8 +4,9 @@ import type { DeviceActionState } from "@api/device-action/model/DeviceActionSta
 import type { OutOfMemoryDAError } from "@api/device-action/os/Errors";
 import type {
   GetDeviceMetadataDAError,
-  GetDeviceMetadataDAIntermediateValue,
+  GetDeviceMetadataDARequiredInteraction,
 } from "@api/device-action/os/GetDeviceMetadata/types";
+import type { GoToDashboardDARequiredInteraction } from "@api/device-action/os/GoToDashboard/types";
 import type { GoToDashboardDAInput } from "@api/device-action/os/GoToDashboard/types";
 import type { InstallAppDAError } from "@api/secure-channel/device-action/InstallApp/types";
 import type { Application } from "@internal/manager-api/model/Application";
@@ -77,10 +78,14 @@ export type InstallOrUpdateAppsDAError =
   | OutOfMemoryDAError
   | CommandErrorResult["error"];
 
-export type InstallOrUpdateAppsDAIntermediateValue =
-  GetDeviceMetadataDAIntermediateValue & {
-    installPlan: InstallPlan | null;
-  };
+export type InstallOrUpdateAppsDARequiredInteraction =
+  | GoToDashboardDARequiredInteraction
+  | GetDeviceMetadataDARequiredInteraction;
+
+export type InstallOrUpdateAppsDAIntermediateValue = {
+  requiredUserInteraction: InstallOrUpdateAppsDARequiredInteraction;
+  installPlan: InstallPlan | null;
+};
 
 export type InstallOrUpdateAppsDAState = DeviceActionState<
   InstallOrUpdateAppsDAOutput,

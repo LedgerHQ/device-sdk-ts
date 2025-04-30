@@ -1,14 +1,13 @@
 import { type CommandErrorResult } from "@api/command/model/CommandResult";
 import { type DeviceActionState } from "@api/device-action/model/DeviceActionState";
-import { type UserInteractionRequired } from "@api/device-action/model/UserInteractionRequired";
 import {
   type GoToDashboardDAError,
   type GoToDashboardDAInput,
-  type GoToDashboardDAIntermediateValue,
+  type GoToDashboardDARequiredInteraction,
 } from "@api/device-action/os/GoToDashboard/types";
 import {
   type ListAppsDAError,
-  type ListAppsDAIntermediateValue,
+  type ListAppsDARequiredInteraction,
 } from "@api/device-action/os/ListApps/types";
 import {
   type Catalog,
@@ -19,7 +18,7 @@ import {
 } from "@api/device-session/DeviceSessionState";
 import {
   type ListInstalledAppsDAError,
-  type ListInstalledAppsDAIntermediateValue,
+  type ListInstalledAppsDARequiredInteraction,
 } from "@api/secure-channel/device-action/ListInstalledApps/types";
 import { type Application } from "@internal/manager-api/model/Application";
 
@@ -45,15 +44,13 @@ export type GetDeviceMetadataDAError =
   | CommandErrorResult["error"];
 
 export type GetDeviceMetadataDARequiredInteraction =
-  UserInteractionRequired.None;
+  | GoToDashboardDARequiredInteraction
+  | ListAppsDARequiredInteraction
+  | ListInstalledAppsDARequiredInteraction;
 
-export type GetDeviceMetadataDAIntermediateValue =
-  | GoToDashboardDAIntermediateValue
-  | ListAppsDAIntermediateValue
-  | ListInstalledAppsDAIntermediateValue
-  | {
-      requiredUserInteraction: GetDeviceMetadataDARequiredInteraction;
-    };
+export type GetDeviceMetadataDAIntermediateValue = {
+  requiredUserInteraction: GetDeviceMetadataDARequiredInteraction;
+};
 
 export type GetDeviceMetadataDAState = DeviceActionState<
   GetDeviceMetadataDAOutput,
