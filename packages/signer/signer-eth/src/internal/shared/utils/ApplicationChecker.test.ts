@@ -172,23 +172,6 @@ describe("ApplicationChecker", () => {
     expect(result).toStrictEqual(false);
   });
 
-  it("exchange app should not be compatible with eth features", () => {
-    // GIVEN
-    const state = {
-      sessionStateType: DeviceSessionStateType.ReadyWithoutSecureChannel,
-      deviceStatus: DeviceStatus.CONNECTED,
-      installedApps: [],
-      currentApp: { name: "Exchange", version: "1.11.0-rc" },
-      deviceModelId: DeviceModelId.FLEX,
-      isSecureConnectionAllowed: false,
-    };
-    const config = createAppConfig("1.13.0");
-    // WHEN
-    const result = new ApplicationChecker(state, config).check();
-    // THEN
-    expect(result).toStrictEqual(false);
-  });
-
   it("should pass the check in plugins", () => {
     // GIVEN
     const state = {

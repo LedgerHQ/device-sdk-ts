@@ -43,6 +43,7 @@ export const SignerEthView: React.FC<{ sessionId: string }> = ({
           derivationPath,
           checkOnDevice,
           returnChainCode,
+          skipOpenApp,
         }) => {
           if (!signer) {
             throw new Error("Signer not initialized");
@@ -50,12 +51,14 @@ export const SignerEthView: React.FC<{ sessionId: string }> = ({
           return signer.getAddress(derivationPath, {
             checkOnDevice,
             returnChainCode,
+            skipOpenApp,
           });
         },
         initialValues: {
           derivationPath: "44'/60'/0'/0/0",
           checkOnDevice: false,
           returnChainCode: false,
+          skipOpenApp: false,
         },
         deviceModelId,
       } satisfies DeviceActionProps<
@@ -64,6 +67,7 @@ export const SignerEthView: React.FC<{ sessionId: string }> = ({
           derivationPath: string;
           checkOnDevice?: boolean;
           returnChainCode?: boolean;
+          skipOpenApp?: boolean;
         },
         GetAddressDAError,
         GetAddressDAIntermediateValue
@@ -72,15 +76,16 @@ export const SignerEthView: React.FC<{ sessionId: string }> = ({
         title: "Sign message",
         description:
           "Perform all the actions necessary to sign a message with the device",
-        executeDeviceAction: ({ derivationPath, message }) => {
+        executeDeviceAction: ({ derivationPath, message, skipOpenApp }) => {
           if (!signer) {
             throw new Error("Signer not initialized");
           }
-          return signer.signMessage(derivationPath, message);
+          return signer.signMessage(derivationPath, message, { skipOpenApp });
         },
         initialValues: {
           derivationPath: "44'/60'/0'/0/0",
           message: "Hello World",
+          skipOpenApp: false,
         },
         deviceModelId,
       } satisfies DeviceActionProps<
@@ -88,6 +93,7 @@ export const SignerEthView: React.FC<{ sessionId: string }> = ({
         {
           derivationPath: string;
           message: string;
+          skipOpenApp?: boolean;
         },
         SignPersonalMessageDAError,
         SignPersonalMessageDAIntermediateValue
@@ -100,6 +106,7 @@ export const SignerEthView: React.FC<{ sessionId: string }> = ({
           derivationPath,
           transaction,
           recipientDomain,
+          skipOpenApp,
         }) => {
           if (!signer) {
             throw new Error("Signer not initialized");
@@ -126,12 +133,14 @@ export const SignerEthView: React.FC<{ sessionId: string }> = ({
 
           return signer.signTransaction(derivationPath, tx, {
             domain: recipientDomain,
+            skipOpenApp,
           });
         },
         initialValues: {
           derivationPath: "44'/60'/0'/0/0",
           transaction: "",
           recipientDomain: "",
+          skipOpenApp: false,
         },
         deviceModelId,
       } satisfies DeviceActionProps<
@@ -140,6 +149,7 @@ export const SignerEthView: React.FC<{ sessionId: string }> = ({
           derivationPath: string;
           transaction: string;
           recipientDomain: string;
+          skipOpenApp?: boolean;
         },
         SignTransactionDAError,
         SignTransactionDAIntermediateValue
@@ -148,17 +158,20 @@ export const SignerEthView: React.FC<{ sessionId: string }> = ({
         title: "Sign typed message",
         description:
           "Perform all the actions necessary to sign a typed message on the device",
-        executeDeviceAction: ({ derivationPath, message }) => {
+        executeDeviceAction: ({ derivationPath, message, skipOpenApp }) => {
           const typedData = JSON.parse(message) as TypedData;
 
           if (!signer) {
             throw new Error("Signer not initialized");
           }
-          return signer.signTypedData(derivationPath, typedData);
+          return signer.signTypedData(derivationPath, typedData, {
+            skipOpenApp,
+          });
         },
         initialValues: {
           derivationPath: "44'/60'/0'/0/0",
           message: `{"domain":{"name":"USD Coin","verifyingContract":"0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48","chainId":1,"version":"2"},"primaryType":"Permit","message":{"deadline":1718992051,"nonce":0,"spender":"0x111111125421ca6dc452d289314280a0f8842a65","owner":"0x6cbcd73cd8e8a42844662f0a0e76d7f79afd933d","value":"115792089237316195423570985008687907853269984665640564039457584007913129639935"},"types":{"EIP712Domain":[{"name":"name","type":"string"},{"name":"version","type":"string"},{"name":"chainId","type":"uint256"},{"name":"verifyingContract","type":"address"}],"Permit":[{"name":"owner","type":"address"},{"name":"spender","type":"address"},{"name":"value","type":"uint256"},{"name":"nonce","type":"uint256"},{"name":"deadline","type":"uint256"}]}}`,
+          skipOpenApp: false,
         },
         validateValues: ({ message }) => {
           try {
@@ -187,6 +200,7 @@ export const SignerEthView: React.FC<{ sessionId: string }> = ({
         {
           derivationPath: string;
           message: string;
+          skipOpenApp?: boolean;
         },
         SignTypedDataDAError,
         SignTypedDataDAIntermediateValue
