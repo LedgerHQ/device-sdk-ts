@@ -692,6 +692,14 @@ describe("SignTypedDataDeviceAction", () => {
           {
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
+              step: SignTypedDataDAStateStep.WEB3_CHECKS_OPT_IN_RESULT,
+              result: true,
+            },
+            status: DeviceActionStatus.Pending,
+          },
+          {
+            intermediateValue: {
+              requiredUserInteraction: UserInteractionRequired.None,
               step: SignTypedDataDAStateStep.BUILD_CONTEXT,
             },
             status: DeviceActionStatus.Pending,
@@ -777,6 +785,14 @@ describe("SignTypedDataDeviceAction", () => {
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.Web3ChecksOptIn,
               step: SignTypedDataDAStateStep.WEB3_CHECKS_OPT_IN,
+            },
+            status: DeviceActionStatus.Pending,
+          },
+          {
+            intermediateValue: {
+              requiredUserInteraction: UserInteractionRequired.None,
+              step: SignTypedDataDAStateStep.WEB3_CHECKS_OPT_IN_RESULT,
+              result: false,
             },
             status: DeviceActionStatus.Pending,
           },

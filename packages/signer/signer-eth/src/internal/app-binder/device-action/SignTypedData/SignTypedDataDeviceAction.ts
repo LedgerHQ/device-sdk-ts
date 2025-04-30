@@ -174,12 +174,6 @@ export class SignTypedDataDeviceAction extends XStateDeviceAction<
       },
       states: {
         OpenAppDeviceAction: {
-          exit: assign({
-            intermediateValue: {
-              requiredUserInteraction: UserInteractionRequired.None,
-              step: SignTypedDataDAStateStep.OPEN_APP,
-            },
-          }),
           invoke: {
             id: "openAppStateMachine",
             input: {
@@ -282,17 +276,11 @@ export class SignTypedDataDeviceAction extends XStateDeviceAction<
               step: SignTypedDataDAStateStep.WEB3_CHECKS_OPT_IN,
             },
           }),
-          exit: assign({
-            intermediateValue: {
-              requiredUserInteraction: UserInteractionRequired.None,
-              step: SignTypedDataDAStateStep.WEB3_CHECKS_OPT_IN,
-            },
-          }),
           invoke: {
             id: "web3CheckOptIn",
             src: "web3CheckOptIn",
             onDone: {
-              target: "BuildContext",
+              target: "Web3ChecksOptInResult",
               actions: [
                 assign({
                   _internalState: ({ event, context }) => {
@@ -314,6 +302,22 @@ export class SignTypedDataDeviceAction extends XStateDeviceAction<
             onError: {
               target: "Error",
               actions: "assignErrorFromEvent",
+            },
+          },
+        },
+        Web3ChecksOptInResult: {
+          entry: assign(({ context }) => ({
+            intermediateValue: {
+              requiredUserInteraction: UserInteractionRequired.None,
+              step: SignTypedDataDAStateStep.WEB3_CHECKS_OPT_IN_RESULT,
+              result: context._internalState.appConfig!.web3ChecksEnabled,
+            },
+          })),
+          // Using after transition to force a snapshot of the state after the entry action
+          // This ensures the intermediateValue is captured before moving to BuildContext
+          after: {
+            0: {
+              target: "BuildContext",
             },
           },
         },
@@ -358,12 +362,6 @@ export class SignTypedDataDeviceAction extends XStateDeviceAction<
               step: SignTypedDataDAStateStep.PROVIDE_CONTEXT,
             },
           }),
-          exit: assign({
-            intermediateValue: {
-              requiredUserInteraction: UserInteractionRequired.None,
-              step: SignTypedDataDAStateStep.PROVIDE_CONTEXT,
-            },
-          }),
           invoke: {
             id: "provideContext",
             src: "provideContext",
@@ -405,12 +403,6 @@ export class SignTypedDataDeviceAction extends XStateDeviceAction<
               step: SignTypedDataDAStateStep.SIGN_TYPED_DATA,
             },
           }),
-          exit: assign({
-            intermediateValue: {
-              requiredUserInteraction: UserInteractionRequired.None,
-              step: SignTypedDataDAStateStep.SIGN_TYPED_DATA,
-            },
-          }),
           invoke: {
             id: "signTypedData",
             src: "signTypedData",
@@ -446,12 +438,6 @@ export class SignTypedDataDeviceAction extends XStateDeviceAction<
           entry: assign({
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.SignTypedData,
-              step: SignTypedDataDAStateStep.SIGN_TYPED_DATA_LEGACY,
-            },
-          }),
-          exit: assign({
-            intermediateValue: {
-              requiredUserInteraction: UserInteractionRequired.None,
               step: SignTypedDataDAStateStep.SIGN_TYPED_DATA_LEGACY,
             },
           }),
