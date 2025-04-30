@@ -48,7 +48,7 @@ export const ConnectDeviceScreen: React.FC = () => {
           setDevices(devices);
         },
         error: err => {
-          console.log("error discovered", err);
+          console.log("[dmk.listenToAvailableDevices] error", err);
         },
       });
 
@@ -56,6 +56,10 @@ export const ConnectDeviceScreen: React.FC = () => {
         subscription.unsubscribe();
         setDevices([]);
       };
+    } else {
+      dmk.stopDiscovering();
+      setDevices([]);
+      return () => {};
     }
   }, [dmk, isScanningDevices, isFocused]);
 

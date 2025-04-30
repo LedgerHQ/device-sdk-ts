@@ -1,4 +1,4 @@
-const oninputreport = vi.fn().mockResolvedValue(void 0);
+const oninputreport = vi.fn().mockResolvedValue(undefined);
 
 export const hidDeviceStubBuilder = (
   props: Partial<HIDDevice> = {},

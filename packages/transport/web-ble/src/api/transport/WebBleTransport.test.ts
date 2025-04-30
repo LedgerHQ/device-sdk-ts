@@ -345,7 +345,7 @@ describe("WebBleTransport", () => {
                     transport
                       .disconnect({ connectedDevice: device })
                       .then((value) => {
-                        expect(value).toStrictEqual(Right(void 0));
+                        expect(value).toStrictEqual(Right(undefined));
                         resolve();
                       })
                       .catch((error) => {

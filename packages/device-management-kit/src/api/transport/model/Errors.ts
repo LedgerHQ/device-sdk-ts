@@ -39,8 +39,8 @@ export class NoAccessibleDeviceError extends GeneralDmkError {
 }
 
 export class OpeningConnectionError extends GeneralDmkError {
-  override readonly _tag = "ConnectionOpeningError";
-  constructor(readonly err?: unknown) {
+  override _tag = "ConnectionOpeningError";
+  constructor(err?: unknown) {
     super(err);
   }
 }

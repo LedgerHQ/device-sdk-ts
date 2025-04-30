@@ -87,8 +87,12 @@ export class DeviceConnectionStateMachine<Dependencies> {
     this.timeoutDuration = params.timeoutDuration;
     this.machineActor = createActor(
       makeStateMachine({
-        sendApduFn: (apdu, triggersDisconnection) =>
-          this.sendApduToDeviceConnection(apdu, triggersDisconnection),
+        sendApduFn: (apdu, triggersDisconnection, abortTimeout) =>
+          this.sendApduToDeviceConnection(
+            apdu,
+            triggersDisconnection,
+            abortTimeout,
+          ),
         startReconnectionTimeout: () => this.startReconnectionTimeout(),
         cancelReconnectionTimeout: () => {
           if (this.timeout) {
@@ -111,9 +115,10 @@ export class DeviceConnectionStateMachine<Dependencies> {
   private sendApduToDeviceConnection(
     apdu: Uint8Array,
     triggersDisconnection?: boolean,
+    abortTimeout?: number,
   ) {
     this.deviceAdpuSender
-      .sendApdu(apdu, triggersDisconnection)
+      .sendApdu(apdu, triggersDisconnection, abortTimeout)
       .then((response) => {
         response.caseOf({
           Left: (error) => {

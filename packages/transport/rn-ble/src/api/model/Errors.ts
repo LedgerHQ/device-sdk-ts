@@ -1,4 +1,7 @@
-import { GeneralDmkError } from "@ledgerhq/device-management-kit";
+import {
+  GeneralDmkError,
+  OpeningConnectionError,
+} from "@ledgerhq/device-management-kit";
 
 export class BleTransportNotSupportedError extends GeneralDmkError {
   override readonly _tag = "BleTransportNotSupportedError";
@@ -27,6 +30,34 @@ export class InternalDeviceNotFound extends GeneralDmkError {
 
 export class BleNotSupported extends GeneralDmkError {
   override readonly _tag = "BleNotSupported";
+  constructor(readonly err?: unknown) {
+    super(err);
+  }
+}
+
+export class NoDeviceModelFoundError extends GeneralDmkError {
+  override readonly _tag = "NoDeviceModelFoundError";
+  constructor(readonly err?: unknown) {
+    super(err);
+  }
+}
+
+export class PairingRefusedError extends OpeningConnectionError {
+  override readonly _tag = "PairingRefusedError";
+  constructor(readonly err?: unknown) {
+    super(err);
+  }
+}
+
+export class UnknownBleError extends GeneralDmkError {
+  override readonly _tag = "UnknownBleError";
+  constructor(readonly err?: unknown) {
+    super(err);
+  }
+}
+
+export class PeerRemovedPairingError extends OpeningConnectionError {
+  override readonly _tag = "PeerRemovedPairingError";
   constructor(readonly err?: unknown) {
     super(err);
   }

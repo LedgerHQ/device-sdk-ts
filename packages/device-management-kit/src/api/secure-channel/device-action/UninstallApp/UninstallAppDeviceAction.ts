@@ -426,7 +426,7 @@ export class UninstallAppDeviceAction extends XStateDeviceAction<
       output: ({ context }) =>
         context._internalState.error
           ? Left(context._internalState.error)
-          : Right(void 0),
+          : Right(undefined),
     });
   }
 
