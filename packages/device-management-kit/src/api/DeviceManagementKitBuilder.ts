@@ -1,4 +1,5 @@
 import {
+  DEFAULT_FIRMWARE_DISTRIBUTION_SALT,
   DEFAULT_MANAGER_API_BASE_URL,
   DEFAULT_MOCK_SERVER_BASE_URL,
   DEFAULT_PROVIDER,
@@ -32,6 +33,7 @@ export class DeviceManagementKitBuilder {
     mockUrl: DEFAULT_MOCK_SERVER_BASE_URL,
     webSocketUrl: DEFAULT_WEB_SOCKET_BASE_URL,
     provider: DEFAULT_PROVIDER,
+    firmwareDistributionSalt: DEFAULT_FIRMWARE_DISTRIBUTION_SALT,
   };
 
   build(): DeviceManagementKit {

@@ -48,6 +48,7 @@ describe("transportModuleFactory", () => {
           managerApiUrl: "http://fake.url/api",
           mockUrl: "http://fake.url",
           webSocketUrl: "ws://fake.websocket.url",
+          firmwareDistributionSalt: "salt",
         } as DmkConfig,
       });
       container = new Container();

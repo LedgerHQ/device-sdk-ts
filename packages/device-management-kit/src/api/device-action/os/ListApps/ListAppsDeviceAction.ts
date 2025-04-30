@@ -203,7 +203,7 @@ export class ListAppsDeviceAction extends XStateDeviceAction<
                       apps: _.context._internalState.apps.concat(
                         _.event.output.data,
                       ),
-                      shouldContinue: _.event.output.data.length === 2,
+                      shouldContinue: _.event.output.data.length >= 2,
                     };
                   }
                   return {
@@ -246,7 +246,7 @@ export class ListAppsDeviceAction extends XStateDeviceAction<
                       apps: _.context._internalState.apps.concat(
                         _.event.output.data,
                       ),
-                      shouldContinue: _.event.output.data.length === 2,
+                      shouldContinue: _.event.output.data.length >= 2,
                     };
                   }
                   return {

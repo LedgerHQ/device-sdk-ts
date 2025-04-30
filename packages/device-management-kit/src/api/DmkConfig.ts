@@ -3,4 +3,5 @@ export type DmkConfig = {
   managerApiUrl: string;
   webSocketUrl: string;
   provider: number;
+  firmwareDistributionSalt: string;
 };

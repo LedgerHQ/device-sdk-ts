@@ -12,6 +12,10 @@ import {
 import { type DmkConfig } from "@api/DmkConfig";
 import { AxiosManagerApiDataSource } from "@internal/manager-api/data/AxiosManagerApiDataSource";
 import { HttpFetchApiError } from "@internal/manager-api/model/Errors";
+import {
+  type FinalFirmware,
+  type OsuFirmware,
+} from "@internal/manager-api/model/Firmware";
 
 import { DefaultManagerApiService } from "./DefaultManagerApiService";
 import { type ManagerApiService } from "./ManagerApiService";
@@ -112,6 +116,7 @@ describe("ManagerApiService", () => {
       });
     });
   });
+
   describe("getFirmwareVersion", () => {
     it("should call api with the correct parameters", () => {
       // given
@@ -129,6 +134,88 @@ describe("ManagerApiService", () => {
         deviceId: 17,
         version: "1.3.0",
       });
+    });
+  });
+
+  describe("getOsuFirmwareVersion", () => {
+    it("should call api with the correct parameters", () => {
+      // given
+      const mockGetDeviceVersion = {
+        id: 17,
+        target_id: "857735172",
+      };
+      const deviceInfo = getOsVersionCommandResponseMockBuilder(
+        DeviceModelId.STAX,
+      );
+      // when
+      service.getOsuFirmwareVersion(deviceInfo, mockGetDeviceVersion);
+      // then
+      expect(dataSource.getOsuFirmwareVersion).toHaveBeenCalledWith({
+        deviceId: 17,
+        version: "1.3.0",
+      });
+    });
+  });
+
+  describe("getLatestFirmwareVersion", () => {
+    it("should call api with the correct parameters", () => {
+      // given
+      const deviceVersion = {
+        id: 17,
+        target_id: "857735172",
+      };
+      const currentFirmware = {
+        id: 159,
+      } as FinalFirmware;
+      // when
+      service.getLatestFirmwareVersion(currentFirmware, deviceVersion);
+      // then
+      expect(dataSource.getLatestFirmwareVersion).toHaveBeenCalledWith({
+        currentFinalFirmwareId: 159,
+        deviceId: 17,
+      });
+    });
+  });
+
+  describe("getNextFirmwareVersion", () => {
+    it("should call api with the correct parameters", () => {
+      // given
+      const osuFirmware = {
+        nextFinalFirmware: 159,
+      } as OsuFirmware;
+      // when
+      service.getNextFirmwareVersion(osuFirmware);
+      // then
+      expect(dataSource.getFirmwareVersionById).toHaveBeenCalledWith(159);
+    });
+  });
+
+  describe("getLanguagePackages", () => {
+    it("should call api with the correct parameters", () => {
+      // given
+      const deviceVersion = {
+        id: 17,
+        target_id: "857735172",
+      };
+      const currentFirmware = {
+        id: 159,
+      } as FinalFirmware;
+      // when
+      service.getLanguagePackages(deviceVersion, currentFirmware);
+      // then
+      expect(dataSource.getLanguagePackages).toHaveBeenCalledWith({
+        deviceId: 17,
+        currentFinalFirmwareId: 159,
+      });
+    });
+  });
+
+  describe("getMcuList", () => {
+    it("should call api with the correct parameters", () => {
+      // when
+      service.getMcuList();
+      // then
+      expect(dataSource.getMcuList).toHaveBeenCalled();
     });
   });
 });
