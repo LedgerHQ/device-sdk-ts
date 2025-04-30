@@ -855,7 +855,7 @@ describe("BuildTransactionContextTask", () => {
     });
   });
 
-  it("should return an error if the transaction info certificate is missing", async () => {
+  it("should return no clear sign context if the transaction info certificate is missing", async () => {
     // GIVEN
     const serializedTransaction = new Uint8Array([0x01, 0x02, 0x03]);
     const clearSignContexts: ClearSignContext[] = [
@@ -885,21 +885,25 @@ describe("BuildTransactionContextTask", () => {
       sessionStateType: DeviceSessionStateType.ReadyWithoutSecureChannel,
       deviceStatus: DeviceStatus.CONNECTED,
       installedApps: [],
-      currentApp: { name: "Ethereum", version: "1.14.0" },
+      currentApp: { name: "Ethereum", version: "1.17.0" },
       deviceModelId: DeviceModelId.FLEX,
       isSecureConnectionAllowed: false,
     });
 
     // WHEN
-    const task = new BuildTransactionContextTask(
+    const result = await new BuildTransactionContextTask(
       apiMock,
       defaultArgs,
       getWeb3ChecksFactoryMock,
-    );
+    ).run();
 
     // THEN
-    await expect(task.run()).rejects.toThrow(
-      "Transaction info certificate is missing",
-    );
+    expect(result).toEqual({
+      clearSignContexts: [],
+      serializedTransaction,
+      chainId: 1,
+      transactionType: 2,
+      web3Check: null,
+    });
   });
 });
