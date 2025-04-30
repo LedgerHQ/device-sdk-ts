@@ -272,6 +272,104 @@ describe("SignTransactionDeviceAction", () => {
         });
       }));
 
+    it("should be successful whlie skipping OpenApp", () =>
+      new Promise<void>((resolve, reject) => {
+        setupOpenAppDAMock();
+        setupAppConfig("1.15.0", false, false);
+
+        const deviceAction = new SignTransactionDeviceAction({
+          input: {
+            derivationPath: "44'/60'/0'/0/0",
+            transaction: defaultTransaction,
+            options: {
+              ...defaultOptions,
+              skipOpenApp: true,
+            },
+            contextModule: contextModuleMock,
+            mapper: mapperMock,
+            parser: parserMock,
+          },
+        });
+
+        // Mock the dependencies to return some sample data
+        buildContextMock.mockResolvedValueOnce({
+          clearSignContexts: [
+            {
+              type: "token",
+              payload: "payload-1",
+            },
+          ],
+          serializedTransaction: new Uint8Array([0x01, 0x02, 0x03]),
+          chainId: 1,
+          transactionType: TransactionType.LEGACY,
+          web3Check: null,
+        });
+        provideContextMock.mockResolvedValueOnce(Nothing);
+        signTransactionMock.mockResolvedValueOnce(
+          CommandResultFactory({
+            data: {
+              v: 0x1c,
+              r: "0x8a540510e13b0f2b11a451275716d29e08caad07e89a1c84964782fb5e1ad788",
+              s: "0x64a0de235b270fbe81e8e40688f4a9f9ad9d283d690552c9331d7773ceafa513",
+            },
+          }),
+        );
+        vi.spyOn(deviceAction, "extractDependencies").mockReturnValue(
+          extractDependenciesMock(),
+        );
+
+        // Expected intermediate values for the following state sequence:
+        //   Initial -> BuildContext -> ProvideContext -> SignTransaction
+        const expectedStates: Array<SignTransactionDAState> = [
+          // GetAppConfig state
+          {
+            intermediateValue: {
+              requiredUserInteraction: UserInteractionRequired.None,
+              step: SignTransactionDAStep.GET_APP_CONFIG,
+            },
+            status: DeviceActionStatus.Pending,
+          },
+          // BuildContext state
+          {
+            intermediateValue: {
+              requiredUserInteraction: UserInteractionRequired.None,
+              step: SignTransactionDAStep.BUILD_CONTEXT,
+            },
+            status: DeviceActionStatus.Pending,
+          },
+          // ProvideContext state
+          {
+            intermediateValue: {
+              requiredUserInteraction: UserInteractionRequired.None,
+              step: SignTransactionDAStep.PROVIDE_CONTEXT,
+            },
+            status: DeviceActionStatus.Pending,
+          },
+          // SignTransaction state
+          {
+            intermediateValue: {
+              requiredUserInteraction: UserInteractionRequired.SignTransaction,
+              step: SignTransactionDAStep.SIGN_TRANSACTION,
+            },
+            status: DeviceActionStatus.Pending,
+          },
+          // Final state
+          {
+            output: {
+              v: 0x1c,
+              r: "0x8a540510e13b0f2b11a451275716d29e08caad07e89a1c84964782fb5e1ad788",
+              s: "0x64a0de235b270fbe81e8e40688f4a9f9ad9d283d690552c9331d7773ceafa513",
+            },
+            status: DeviceActionStatus.Completed,
+          },
+        ];
+
+        testDeviceActionStates(deviceAction, expectedStates, apiMock, {
+          onDone: resolve,
+          onError: reject,
+        });
+      }));
+
     it("should call external dependencies with the correct parameters with the generic parser", () =>
       new Promise<void>((resolve, reject) => {
         setupOpenAppDAMock();

@@ -21,6 +21,7 @@ export class GetAddressUseCase {
       derivationPath,
       checkOnDevice: options?.checkOnDevice,
       returnChainCode: options?.returnChainCode,
+      skipOpenApp: options?.skipOpenApp,
     });
   }
 }

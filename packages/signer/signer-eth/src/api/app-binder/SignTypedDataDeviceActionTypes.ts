@@ -33,6 +33,7 @@ export type SignTypedDataDAInput = {
   readonly data: TypedData;
   readonly parser: TypedDataParserService;
   readonly contextModule: ContextModule;
+  readonly skipOpenApp?: boolean;
 };
 
 export type SignTypedDataDAError =

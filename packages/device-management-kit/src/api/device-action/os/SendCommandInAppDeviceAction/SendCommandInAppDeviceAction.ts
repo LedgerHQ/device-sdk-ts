@@ -112,6 +112,7 @@ export class SendCommandInAppDeviceAction<
         }).makeStateMachine(internalAPI),
       },
       guards: {
+        skipOpenApp: () => !!this.input.skipOpenApp,
         noInternalError: ({ context }) => context._internalState.error === null,
       },
       actions: {
@@ -125,7 +126,7 @@ export class SendCommandInAppDeviceAction<
     }).createMachine({
       /** @xstate-layout N4IgpgJg5mDOIC5QFEAuALA0mAngJwEsA7KAcTFQEEII85YARMANwIGMxK3UCB7IgHQB5AA5gilESKasOXHvwDEEfmAHFmvANZreYiVIDKqAIaowAWRNt0xMAG0ADAF1EoEb1gEFRNyAAeiACMQQDsAgAcACwAzKEArABMUfGpEQCcEYkANCA4iFGO8QKhjokxERUpQenp8QC+9bloWLiEJORUNHSwjCzsnNx8ggDC6GBsWqLiktL9ckP8AEpwAK4ANqiKTq5IIB5ePn6BCEFR4YkAbKE1Zemh55URufkI8fcC8TGXl0EVoelHJcio1mhhsPhiGQKNRaPQZAN5MMBGMJlN9LMEQsfCtYBstvYgrt3J5vMNjgUQgJLokHlEgldko50rEXoh3uEvj8-hEAUCQU0QC0Ie1oV04b0sYMfAJOrCerARrwALbKkxECDKVTqIiaHQCGDihVK1XqiA7PwHMn8CmnRJBASOFIxKJXJ21GLpHJ5RARGoCEL3CKXDLpS4pCKgoXgtpQuXdeHzaXI+MSxUqtUaxRgPB4Xh4AQidZmABm+eVBphCd6Jsz5pcltJRz2Jyiv0dvIeNJi8UqoWePoQIccn3iId+sSqkajRF4EDgfmFsY6VbTUqRNr2VuboBOAFpLmzTpd0iV+0EkkEylcAVEo0vISujYnZMn+MIMVJ14tfFum+SWwKb1XkSMdIhuQFEidYNSjvQUH1FVMFW-GVUUmaYDDmV8NyIXF8UbQ4AN3X0ogEF17S9eJQhiJ0ojbI8khHc54mvRwGUBXl7xjR8xXlF9ER-WVV2NDMzQI61f2IhBXUdRw5NDX54gvXkjx+CIzxuMdfnKd44LBVoeKQ-jsWRQxVjYDhenEncAmCcMBHKBlqKyIEYivGIjzDGJqQSYMamDa4BX0kU42E4y30EZBc3zayiNshBSmKFjqn7GCMgHV57lIz0aT9P0lL+S5GkaIA */
       id: "SendCommandInAppDeviceAction",
-      initial: "OpenAppDeviceAction",
+      initial: "InitialState",
       context: ({ input }) => {
         return {
           input: input,
@@ -139,6 +140,15 @@ export class SendCommandInAppDeviceAction<
         };
       },
       states: {
+        InitialState: {
+          always: [
+            {
+              target: "SendCommand",
+              guard: "skipOpenApp",
+            },
+            "OpenAppDeviceAction",
+          ],
+        },
         OpenAppDeviceAction: {
           invoke: {
             id: "openAppStateMachine",
