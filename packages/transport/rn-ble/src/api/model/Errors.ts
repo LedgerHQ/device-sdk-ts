@@ -35,6 +35,13 @@ export class BleNotSupported extends GeneralDmkError {
   }
 }
 
+export class NoDeviceModelFoundError extends GeneralDmkError {
+  override readonly _tag = "NoDeviceModelFoundError";
+  constructor(readonly err?: unknown) {
+    super(err);
+  }
+}
+
 export class PairingRefusedError extends OpeningConnectionError {
   override readonly _tag = "PairingRefusedError";
   constructor(readonly err?: unknown) {

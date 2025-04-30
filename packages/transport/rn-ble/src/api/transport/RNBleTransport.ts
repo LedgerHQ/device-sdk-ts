@@ -21,7 +21,7 @@ import {
   type TransportIdentifier,
   UnknownDeviceError,
 } from "@ledgerhq/device-management-kit";
-import { type Either, EitherAsync, Maybe, Nothing, Right } from "purify-ts";
+import { Either, EitherAsync, Left, Maybe, Nothing, Right } from "purify-ts";
 import {
   BehaviorSubject,
   filter,
@@ -45,6 +45,7 @@ import {
 import {
   BleNotSupported,
   DeviceConnectionNotFound,
+  NoDeviceModelFoundError,
   PeerRemovedPairingError,
 } from "@api/model/Errors";
 import {
@@ -68,7 +69,7 @@ export class RNBleTransport implements Transport {
     DeviceId,
     DeviceConnectionStateMachine<RNBleApduSenderDependencies>
   >;
-  private readonly _manager: BleManager;
+  // private readonly _manager: BleManager;
   private readonly identifier: TransportIdentifier = "RN_BLE";
   private _reconnectionSubscription: Maybe<Subscription>;
   private readonly _bleStateSubject: BehaviorSubject<State> =
@@ -81,11 +82,9 @@ export class RNBleTransport implements Transport {
     ) => LoggerPublisherService,
     private readonly _apduSenderFactory: ApduSenderServiceFactory,
     private readonly _apduReceiverFactory: ApduReceiverServiceFactory,
+    private readonly _manager: BleManager,
     private readonly _platform: Platform = Platform,
     private readonly _permissionsAndroid: PermissionsAndroid = PermissionsAndroid,
-    _bleManagerFactory: () => BleManager = () => {
-      return new BleManager();
-    },
     private readonly _deviceConnectionStateMachineFactory: (
       args: DeviceConnectionStateMachineParams<RNBleApduSenderDependencies>,
     ) => DeviceConnectionStateMachine<RNBleApduSenderDependencies> = (args) =>
@@ -97,7 +96,6 @@ export class RNBleTransport implements Transport {
       new RNBleApduSender(args, loggerFactory),
   ) {
     this._logger = _loggerServiceFactory("ReactNativeBleTransport");
-    this._manager = _bleManagerFactory();
     this._isSupported = Maybe.zero();
     this._deviceConnectionsById = new Map();
     this._reconnectionSubscription = Maybe.zero();
@@ -229,7 +227,7 @@ export class RNBleTransport implements Transport {
 
     return this._scannedDevicesSubject.asObservable().pipe(
       map((internalScannedDevices) => {
-        const connectedDevices: TransportDiscoveredDevice[] = Array.from(
+        const eitherConnectedDevices = Array.from(
           this._deviceConnectionsById.values(),
         ).map((connection) =>
           this._mapDeviceToTransportDiscoveredDevice(
@@ -241,7 +239,9 @@ export class RNBleTransport implements Transport {
           ),
         );
 
-        const scannedDevices = internalScannedDevices
+        const connectedDevices = Either.rights(eitherConnectedDevices);
+
+        const eitherScannedDevices = internalScannedDevices
           .filter(
             ({ timestamp }) => timestamp > Date.now() - CONNECTION_LOST_DELAY,
           )
@@ -256,6 +256,9 @@ export class RNBleTransport implements Transport {
             ),
           )
           .filter((d) => !!d);
+
+        const scannedDevices = Either.rights(eitherScannedDevices);
+
         return [...connectedDevices, ...scannedDevices];
       }),
     );
@@ -263,35 +266,40 @@ export class RNBleTransport implements Transport {
 
   private _mapServicesUUIDsToBluetoothDeviceInfo(
     servicesUUIDs: string[] | null | undefined,
-  ) {
+  ): Either<NoDeviceModelFoundError, BleDeviceInfos> {
     for (const serviceUUID of servicesUUIDs || []) {
       const bluetoothServiceInfo =
         this._deviceModelDataSource.getBluetoothServicesInfos()[serviceUUID];
-      if (bluetoothServiceInfo) return bluetoothServiceInfo;
+      if (bluetoothServiceInfo) return Right(bluetoothServiceInfo);
     }
-    throw new Error(`No device model found for [uuids=${servicesUUIDs}]`);
+
+    return Left(
+      new NoDeviceModelFoundError(
+        `No device model found for [uuids=${servicesUUIDs}]`,
+      ),
+    );
   }
 
   private _mapServicesUUIDsToDeviceModel(
     servicesUUIDs: string[] | null | undefined,
-  ): TransportDeviceModel {
+  ): Either<NoDeviceModelFoundError, TransportDeviceModel> {
     const bluetoothServiceInfo =
       this._mapServicesUUIDsToBluetoothDeviceInfo(servicesUUIDs);
-    return bluetoothServiceInfo.deviceModel;
+    return bluetoothServiceInfo.map((info) => info.deviceModel);
   }
 
   private _mapDeviceToTransportDiscoveredDevice(
     device: Device,
     servicesUUIDs: string[] | null | undefined,
-  ): TransportDiscoveredDevice {
+  ): Either<NoDeviceModelFoundError, TransportDiscoveredDevice> {
     const deviceModel = this._mapServicesUUIDsToDeviceModel(servicesUUIDs);
-    return {
+    return deviceModel.map((model) => ({
       id: device.id,
       name: device.localName || device.name || "",
-      deviceModel,
+      deviceModel: model,
       transport: this.identifier,
       rssi: device.rssi || undefined,
-    };
+    }));
   }
 
   /**
@@ -360,15 +368,18 @@ export class RNBleTransport implements Transport {
           },
         );
 
-        let bleDeviceInfos: BleDeviceInfos;
-        let deviceModel: TransportDeviceModel;
-        try {
-          bleDeviceInfos =
-            this._mapServicesUUIDsToBluetoothDeviceInfo(servicesUUIDs);
-          deviceModel = bleDeviceInfos.deviceModel;
-        } catch (error) {
-          return throwE(new OpeningConnectionError(error));
-        }
+        const bleDeviceInfos = this._mapServicesUUIDsToBluetoothDeviceInfo(
+          servicesUUIDs,
+        ).caseOf({
+          Right: (info) => {
+            return info;
+          },
+          Left: (error) => {
+            return throwE(new OpeningConnectionError(error));
+          },
+        });
+
+        const deviceModel = bleDeviceInfos.deviceModel;
 
         const internalDevice: RNBleInternalDevice = {
           id: device.id,
@@ -654,18 +665,33 @@ export class RNBleTransport implements Transport {
       this._deviceConnectionsById.get(device.id),
     ).toEither(new DeviceConnectionNotFound());
 
-    return EitherAsync(async ({ liftEither }) => {
+    return EitherAsync(async ({ liftEither, throwE }) => {
       const deviceConnectionStateMachine = await liftEither(
         errorOrDeviceConnection,
       );
 
       const servicesUUIDs = (await device.services()).map((s) => s.uuid);
 
-      const internalDevice = {
-        id: device.id,
-        bleDeviceInfos:
-          this._mapServicesUUIDsToBluetoothDeviceInfo(servicesUUIDs),
-      };
+      const internalDevice = this._mapServicesUUIDsToBluetoothDeviceInfo(
+        servicesUUIDs,
+      ).caseOf({
+        Right: (info) => {
+          return {
+            id: device.id,
+            bleDeviceInfos: info,
+          };
+        },
+        Left: (error) => {
+          this._logger.error(
+            "Error in mapping services UUIDs to Bluetooth device info",
+            {
+              data: { error },
+            },
+          );
+
+          return throwE(error);
+        },
+      });
 
       deviceConnectionStateMachine.setDependencies({
         device,
@@ -709,4 +735,5 @@ export const RNBleTransportFactory: TransportFactory = ({
     loggerServiceFactory,
     apduSenderServiceFactory,
     apduReceiverServiceFactory,
+    new BleManager(),
   );

@@ -133,7 +133,7 @@ export class MockTransport implements Transport {
           new DisconnectError(new Error(`Failed to disconnect ${sessionId}`)),
         );
       }
-      return Right(void 0);
+      return Right(undefined);
     } catch (error) {
       return Left(new DisconnectError(error as Error));
     }
