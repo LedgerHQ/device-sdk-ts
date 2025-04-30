@@ -33,9 +33,6 @@ export class ApplicationChecker {
     }
     if (deviceState.currentApp.name === "Ethereum") {
       this.version = deviceState.currentApp.version;
-    } else if (deviceState.currentApp.name === "Exchange") {
-      // Exchanges flows are not compatibles with ethereum features appart from SignTx
-      this.isCompatible = false;
     } else {
       // Fallback on appConfig version if a plugin is running.
       // It won't contain release candidate suffix but it should be enough for that edge case.

@@ -2,6 +2,7 @@ import { inject, injectable } from "inversify";
 
 import { SignTypedDataDAReturnType } from "@api/app-binder/SignTypedDataDeviceActionTypes";
 import { type TypedData } from "@api/model/TypedData";
+import { TypedDataOptions } from "@api/model/TypedDataOptions";
 import { appBinderTypes } from "@internal/app-binder/di/appBinderTypes";
 import { EthAppBinder } from "@internal/app-binder/EthAppBinder";
 import { typedDataTypes } from "@internal/typed-data/di/typedDataTypes";
@@ -24,11 +25,13 @@ export class SignTypedDataUseCase {
   execute(
     derivationPath: string,
     typedData: TypedData,
+    options?: TypedDataOptions,
   ): SignTypedDataDAReturnType {
     return this._appBinding.signTypedData({
       derivationPath,
       parser: this._parser,
       data: typedData,
+      skipOpenApp: options?.skipOpenApp,
     });
   }
 }
