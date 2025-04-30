@@ -4,6 +4,8 @@ import { assign, createMachine } from "xstate";
 
 import { UserInteractionRequired } from "@api/device-action/model/UserInteractionRequired";
 import { UnknownDAError } from "@api/device-action/os/Errors";
+import { GetDeviceMetadataDeviceAction } from "@api/device-action/os/GetDeviceMetadata/GetDeviceMetadataDeviceAction";
+import { type GetDeviceMetadataDAOutput } from "@api/device-action/os/GetDeviceMetadata/types";
 import { GetDeviceStatusDeviceAction } from "@api/device-action/os/GetDeviceStatus/GetDeviceStatusDeviceAction";
 import { GoToDashboardDeviceAction } from "@api/device-action/os/GoToDashboard/GoToDashboardDeviceAction";
 import { ListAppsDeviceAction } from "@api/device-action/os/ListApps/ListAppsDeviceAction";
@@ -40,6 +42,40 @@ export const setupListAppsMock = (apps: App[], error = false) => {
           return error
             ? Left(new UnknownDAError("ListApps failed"))
             : Right(apps);
+        },
+      }),
+    ),
+  }));
+};
+
+export const setupGetDeviceMetadataMock = (
+  metadata: GetDeviceMetadataDAOutput,
+  error = false,
+) => {
+  (GetDeviceMetadataDeviceAction as Mock).mockImplementation(() => ({
+    makeStateMachine: vi.fn().mockImplementation(() =>
+      createMachine({
+        id: "MockGetDeviceMetadataDeviceAction",
+        initial: "ready",
+        states: {
+          ready: {
+            after: {
+              0: "done",
+            },
+            entry: assign({
+              intermediateValue: () => ({
+                requiredUserInteraction: UserInteractionRequired.None,
+              }),
+            }),
+          },
+          done: {
+            type: "final",
+          },
+        },
+        output: () => {
+          return error
+            ? Left(new UnknownDAError("GetDeviceMetadata failed"))
+            : Right(metadata);
         },
       }),
     ),

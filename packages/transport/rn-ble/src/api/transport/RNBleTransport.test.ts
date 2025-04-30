@@ -126,6 +126,7 @@ describe("RNBleTransport", () => {
     bootloaderUsbProductId: 0x0007,
     usbOnly: false,
     memorySize: 1533 * 1024,
+    blockSize: 32,
     masks: [0x33300000],
   });
   const getBluetoothServicesMock = vi.fn(() => ["ledgerId"]);

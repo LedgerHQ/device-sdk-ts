@@ -65,6 +65,7 @@ export { UnknownDAError } from "@api/device-action/os/Errors";
 export { GetDeviceMetadataDeviceAction } from "@api/device-action/os/GetDeviceMetadata/GetDeviceMetadataDeviceAction";
 export { GetDeviceStatusDeviceAction } from "@api/device-action/os/GetDeviceStatus/GetDeviceStatusDeviceAction";
 export { GoToDashboardDeviceAction } from "@api/device-action/os/GoToDashboard/GoToDashboardDeviceAction";
+export { InstallOrUpdateAppsDeviceAction } from "@api/device-action/os/InstallOrUpdateApps/InstallOrUpdateAppsDeviceAction";
 export { ListAppsDeviceAction } from "@api/device-action/os/ListApps/ListAppsDeviceAction";
 export { ListAppsWithMetadataDeviceAction } from "@api/device-action/os/ListAppsWithMetadata/ListAppsWithMetadataDeviceAction";
 export { OpenAppDeviceAction } from "@api/device-action/os/OpenAppDeviceAction/OpenAppDeviceAction";

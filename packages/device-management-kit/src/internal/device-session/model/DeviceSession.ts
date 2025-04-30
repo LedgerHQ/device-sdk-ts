@@ -228,6 +228,7 @@ export class DeviceSession {
         command: Command<Response, ErrorStatusCodes, Args>,
         abortTimeout?: number,
       ) => this.sendCommand(command, abortTimeout),
+      getDeviceModel: () => this._connectedDevice.deviceModel,
       getDeviceSessionState: () => this._deviceState.getValue(),
       getDeviceSessionStateObservable: () => this.state,
       setDeviceSessionState: (state: DeviceSessionState) => {
