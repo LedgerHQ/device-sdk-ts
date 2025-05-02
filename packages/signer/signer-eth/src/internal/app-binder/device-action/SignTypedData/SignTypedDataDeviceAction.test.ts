@@ -49,10 +49,6 @@ describe("SignTypedDataDeviceAction", () => {
   };
   const TEST_BUILT_CONTEXT: ProvideEIP712ContextTaskArgs = {
     web3Check: null,
-    messageHash:
-      "0x8887109c22cd7358af93c04b5397e91b1331e0c389951542e11af4b227a4aa1d",
-    domainHash:
-      "0x06c37168a7db5138defc7866392bb87a741f9b3d104deb5094588ce041cae335",
     types: {
       PermitSingle: {
         details: new StructType("PermitDetails"),
@@ -383,6 +379,87 @@ describe("SignTypedDataDeviceAction", () => {
         });
       }));
 
+    it("should fallback to legacy signing BuildContext fails", () =>
+      new Promise<void>((resolve, reject) => {
+        setupOpenAppDAMock();
+        setupAppConfig("1.15.0", false, false);
+
+        const deviceAction = new SignTypedDataDeviceAction({
+          input: {
+            derivationPath: "44'/60'/0'/0/0",
+            data: TEST_MESSAGE,
+            contextModule: mockContextModule,
+            parser: mockParser,
+          },
+        });
+
+        // Mock the providing error
+        vi.spyOn(deviceAction, "extractDependencies").mockReturnValue(
+          extractDependenciesMock(),
+        );
+        buildContextMock.mockRejectedValueOnce(new UnknownDAError("Error"));
+        signTypedDataLegacyMock.mockResolvedValueOnce(
+          CommandResultFactory({
+            data: {
+              v: 0x1c,
+              r: "0x8a540510e13b0f2b11a451275716d29e08caad07e89a1c84964782fb5e1ad788",
+              s: "0x64a0de235b270fbe81e8e40688f4a9f9ad9d283d690552c9331d7773ceafa513",
+            },
+          }),
+        );
+
+        const expectedStates: Array<SignTypedDataDAState> = [
+          {
+            intermediateValue: {
+              requiredUserInteraction: UserInteractionRequired.None,
+              step: SignTypedDataDAStateStep.OPEN_APP,
+            },
+            status: DeviceActionStatus.Pending,
+          },
+          {
+            intermediateValue: {
+              requiredUserInteraction: UserInteractionRequired.ConfirmOpenApp,
+              step: SignTypedDataDAStateStep.OPEN_APP,
+            },
+            status: DeviceActionStatus.Pending,
+          },
+          {
+            intermediateValue: {
+              requiredUserInteraction: UserInteractionRequired.None,
+              step: SignTypedDataDAStateStep.GET_APP_CONFIG,
+            },
+            status: DeviceActionStatus.Pending,
+          },
+          {
+            intermediateValue: {
+              requiredUserInteraction: UserInteractionRequired.None,
+              step: SignTypedDataDAStateStep.BUILD_CONTEXT,
+            },
+            status: DeviceActionStatus.Pending,
+          },
+          {
+            intermediateValue: {
+              requiredUserInteraction: UserInteractionRequired.SignTypedData,
+              step: SignTypedDataDAStateStep.SIGN_TYPED_DATA_LEGACY,
+            },
+            status: DeviceActionStatus.Pending,
+          },
+          {
+            output: {
+              v: 0x1c,
+              r: "0x8a540510e13b0f2b11a451275716d29e08caad07e89a1c84964782fb5e1ad788",
+              s: "0x64a0de235b270fbe81e8e40688f4a9f9ad9d283d690552c9331d7773ceafa513",
+            },
+            status: DeviceActionStatus.Completed,
+          },
+        ];
+
+        testDeviceActionStates(deviceAction, expectedStates, apiMock, {
+          onError: reject,
+          onDone: resolve,
+        });
+      }));
+
     it("should not fallback to legacy signing if rejected by the user during streaming", () =>
       new Promise<void>((resolve, reject) => {
         setupOpenAppDAMock();
@@ -494,6 +571,9 @@ describe("SignTypedDataDeviceAction", () => {
         buildContextMock.mockRejectedValueOnce(
           new InvalidStatusWordError("buildContext error"),
         );
+        signTypedDataLegacyMock.mockRejectedValueOnce(
+          new InvalidStatusWordError("signTypedDataLegacy error"),
+        );
 
         // Expected intermediate values for the following state sequence:
         //   Initial -> OpenApp -> GetAppConfiguration -> BuildContext
@@ -527,7 +607,14 @@ describe("SignTypedDataDeviceAction", () => {
             status: DeviceActionStatus.Pending,
           },
           {
-            error: new InvalidStatusWordError("buildContext error"),
+            intermediateValue: {
+              requiredUserInteraction: UserInteractionRequired.SignTypedData,
+              step: SignTypedDataDAStateStep.SIGN_TYPED_DATA_LEGACY,
+            },
+            status: DeviceActionStatus.Pending,
+          },
+          {
+            error: new InvalidStatusWordError("signTypedDataLegacy error"),
             status: DeviceActionStatus.Error,
           },
         ];
@@ -574,6 +661,9 @@ describe("SignTypedDataDeviceAction", () => {
         buildContextMock.mockRejectedValueOnce(
           new InvalidStatusWordError("buildContext error"),
         );
+        signTypedDataLegacyMock.mockRejectedValueOnce(
+          new InvalidStatusWordError("signTypedDataLegacy error"),
+        );
 
         // Expected intermediate values for the following state sequence:
         //   Initial -> OpenApp -> GetAppConfiguration -> BuildContext
@@ -607,7 +697,14 @@ describe("SignTypedDataDeviceAction", () => {
             status: DeviceActionStatus.Pending,
           },
           {
-            error: new InvalidStatusWordError("buildContext error"),
+            intermediateValue: {
+              requiredUserInteraction: UserInteractionRequired.SignTypedData,
+              step: SignTypedDataDAStateStep.SIGN_TYPED_DATA_LEGACY,
+            },
+            status: DeviceActionStatus.Pending,
+          },
+          {
+            error: new InvalidStatusWordError("signTypedDataLegacy error"),
             status: DeviceActionStatus.Error,
           },
         ];
@@ -657,6 +754,9 @@ describe("SignTypedDataDeviceAction", () => {
         buildContextMock.mockRejectedValueOnce(
           new InvalidStatusWordError("buildContext error"),
         );
+        signTypedDataLegacyMock.mockRejectedValueOnce(
+          new InvalidStatusWordError("signTypedDataLegacy error"),
+        );
 
         // Expected intermediate values for the following state sequence:
         //   Initial -> OpenApp -> GetAppConfiguration -> Web3ChecksOptIn -> BuildContext
@@ -705,7 +805,14 @@ describe("SignTypedDataDeviceAction", () => {
             status: DeviceActionStatus.Pending,
           },
           {
-            error: new InvalidStatusWordError("buildContext error"),
+            intermediateValue: {
+              requiredUserInteraction: UserInteractionRequired.SignTypedData,
+              step: SignTypedDataDAStateStep.SIGN_TYPED_DATA_LEGACY,
+            },
+            status: DeviceActionStatus.Pending,
+          },
+          {
+            error: new InvalidStatusWordError("signTypedDataLegacy error"),
             status: DeviceActionStatus.Error,
           },
         ];
@@ -756,6 +863,9 @@ describe("SignTypedDataDeviceAction", () => {
         buildContextMock.mockRejectedValueOnce(
           new InvalidStatusWordError("buildContext error"),
         );
+        signTypedDataLegacyMock.mockRejectedValueOnce(
+          new InvalidStatusWordError("signTypedDataLegacy error"),
+        );
 
         // Expected intermediate values for the following state sequence:
         //   Initial -> OpenApp -> GetAppConfiguration -> Web3ChecksOptIn -> BuildContext
@@ -804,7 +914,14 @@ describe("SignTypedDataDeviceAction", () => {
             status: DeviceActionStatus.Pending,
           },
           {
-            error: new InvalidStatusWordError("buildContext error"),
+            intermediateValue: {
+              requiredUserInteraction: UserInteractionRequired.SignTypedData,
+              step: SignTypedDataDAStateStep.SIGN_TYPED_DATA_LEGACY,
+            },
+            status: DeviceActionStatus.Pending,
+          },
+          {
+            error: new InvalidStatusWordError("signTypedDataLegacy error"),
             status: DeviceActionStatus.Error,
           },
         ];
@@ -866,67 +983,6 @@ describe("SignTypedDataDeviceAction", () => {
             parser: mockParser,
           },
         });
-
-        testDeviceActionStates(deviceAction, expectedStates, apiMock, {
-          onError: reject,
-          onDone: resolve,
-        });
-      }));
-
-    it("Error while building context", () =>
-      new Promise<void>((resolve, reject) => {
-        setupOpenAppDAMock();
-        setupAppConfig("1.15.0", false, false);
-
-        const deviceAction = new SignTypedDataDeviceAction({
-          input: {
-            derivationPath: "44'/60'/0'/0/0",
-            data: TEST_MESSAGE,
-            contextModule: mockContextModule,
-            parser: mockParser,
-          },
-        });
-
-        // Mock the parsing error
-        vi.spyOn(deviceAction, "extractDependencies").mockReturnValue(
-          extractDependenciesMock(),
-        );
-        buildContextMock.mockRejectedValueOnce(new UnknownDAError("Error"));
-
-        const expectedStates: Array<SignTypedDataDAState> = [
-          {
-            intermediateValue: {
-              requiredUserInteraction: UserInteractionRequired.None,
-              step: SignTypedDataDAStateStep.OPEN_APP,
-            },
-            status: DeviceActionStatus.Pending,
-          },
-          {
-            intermediateValue: {
-              requiredUserInteraction: UserInteractionRequired.ConfirmOpenApp,
-              step: SignTypedDataDAStateStep.OPEN_APP,
-            },
-            status: DeviceActionStatus.Pending,
-          },
-          {
-            intermediateValue: {
-              requiredUserInteraction: UserInteractionRequired.None,
-              step: SignTypedDataDAStateStep.GET_APP_CONFIG,
-            },
-            status: DeviceActionStatus.Pending,
-          },
-          {
-            intermediateValue: {
-              requiredUserInteraction: UserInteractionRequired.None,
-              step: SignTypedDataDAStateStep.BUILD_CONTEXT,
-            },
-            status: DeviceActionStatus.Pending,
-          },
-          {
-            error: new UnknownDAError("Error"),
-            status: DeviceActionStatus.Error,
-          },
-        ];
 
         testDeviceActionStates(deviceAction, expectedStates, apiMock, {
           onError: reject,

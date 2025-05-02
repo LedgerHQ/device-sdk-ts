@@ -11,7 +11,7 @@ import {
   UserInteractionRequired,
   XStateDeviceAction,
 } from "@ledgerhq/device-management-kit";
-import { Just, Left, Nothing, Right } from "purify-ts";
+import { Left, Nothing, Right } from "purify-ts";
 import { and, assign, fromPromise, setup } from "xstate";
 
 import { type GetConfigCommandResponse } from "@api/app-binder/GetConfigCommandTypes";
@@ -39,6 +39,7 @@ import {
   type ProvideEIP712ContextTaskArgs,
   type ProvideEIP712ContextTaskReturnType,
 } from "@internal/app-binder/task/ProvideEIP712ContextTask";
+import { SignTypedDataLegacyTask } from "@internal/app-binder/task/SignTypedDataLegacyTask";
 import { ApplicationChecker } from "@internal/shared/utils/ApplicationChecker";
 import { type TypedDataParserService } from "@internal/typed-data/service/TypedDataParserService";
 
@@ -72,8 +73,7 @@ export type MachineDependencies = {
   readonly signTypedDataLegacy: (arg0: {
     input: {
       derivationPath: string;
-      domainHash: string;
-      messageHash: string;
+      data: TypedData;
     };
   }) => Promise<CommandResult<Signature, EthErrorCodes>>;
 };
@@ -350,8 +350,7 @@ export class SignTypedDataDeviceAction extends XStateDeviceAction<
               ],
             },
             onError: {
-              target: "Error",
-              actions: "assignErrorFromEvent",
+              target: "SignTypedDataLegacy",
             },
           },
         },
@@ -446,8 +445,7 @@ export class SignTypedDataDeviceAction extends XStateDeviceAction<
             src: "signTypedDataLegacy",
             input: ({ context }) => ({
               derivationPath: context.input.derivationPath,
-              domainHash: context._internalState.typedDataContext!.domainHash,
-              messageHash: context._internalState.typedDataContext!.messageHash,
+              data: context.input.data,
             }),
             onDone: {
               target: "SignTypedDataResultCheck",
@@ -547,19 +545,14 @@ export class SignTypedDataDeviceAction extends XStateDeviceAction<
     const signTypedDataLegacy = async (arg0: {
       input: {
         derivationPath: string;
-        domainHash: string;
-        messageHash: string;
+        data: TypedData;
       };
     }) =>
-      internalApi.sendCommand(
-        new SignEIP712Command({
-          derivationPath: arg0.input.derivationPath,
-          legacyArgs: Just({
-            domainHash: arg0.input.domainHash,
-            messageHash: arg0.input.messageHash,
-          }),
-        }),
-      );
+      new SignTypedDataLegacyTask(
+        internalApi,
+        arg0.input.data,
+        arg0.input.derivationPath,
+      ).run();
 
     return {
       getAppConfig,
