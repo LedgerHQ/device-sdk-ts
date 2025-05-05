@@ -1,8 +1,5 @@
 # Transport Device Kit React Native BLE
 
-> [!CAUTION]
-> This is still under development and we are free to make new interfaces which may lead to breaking changes.
-
 - [Transport Device Kit React Native BLE Documentation](#transport-device-kit-react-native-ble)
   - [Description](#description)
   - [Installation](#installation)
@@ -51,13 +48,13 @@ To use the transport, you need to inject it in the DeviceManagementKitBuilder be
 ```typescript
 import { DeviceManagementKitBuilder } from "@ledgerhq/device-management-kit";
 import {
-  rnBleTransportIdentifier,
+  RNBleTransportFactory,
   RNBleTransport,
 } from "@ledgerhq/device-transport-kit-react-native-ble";
 
 // Easy setup with the factory
 const dmk = new DeviceManagementKitBuilder()
-  .addTransport(rnBleTransportIdentifier)
+  .addTransport(RNBleTransportFactory)
   .build();
 
 // With custom config
