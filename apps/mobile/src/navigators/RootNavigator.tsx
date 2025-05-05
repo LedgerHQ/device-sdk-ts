@@ -1,9 +1,10 @@
-import { HomeScreen } from "_components/HomeScreen";
 import { ConnectDeviceScreen } from "_components/ConnectDeviceScreen.tsx";
+import { HomeScreen } from "_components/HomeScreen";
 import { RootScreens } from "_navigators/RootNavigator.constants.ts";
-import { CommandNavigator } from "./CommandNavigator";
-import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { createStaticNavigation } from "@react-navigation/native";
+import { createNativeStackNavigator } from "@react-navigation/native-stack";
+
+import { CommandNavigator } from "./CommandNavigator";
 
 const RootNavigationStack = createNativeStackNavigator({
   screens: {

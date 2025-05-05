@@ -1,12 +1,11 @@
 import { useEffect, useState } from "react";
+import { useDeviceSessionsContext } from "_providers/deviceSessionsProvider.tsx";
+import { useDmk } from "_providers/dmkProvider";
 import {
-  DeviceSessionId,
-  DeviceSessionState,
+  type DeviceSessionId,
+  type DeviceSessionState,
   DeviceStatus,
 } from "@ledgerhq/device-management-kit";
-
-import { useDmk } from "_providers/dmkProvider";
-import { useDeviceSessionsContext } from "_providers/deviceSessionsProvider.tsx";
 
 export function useDeviceSessionState(sessionId: DeviceSessionId) {
   const dmk = useDmk();

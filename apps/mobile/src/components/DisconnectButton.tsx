@@ -1,6 +1,6 @@
 import React from "react";
-import { Button } from "@ledgerhq/native-ui";
 import { useDmk } from "_providers/dmkProvider";
+import { Button } from "@ledgerhq/native-ui";
 
 export const DisconnectButton: React.FC<{ sessionId: string }> = ({
   sessionId,

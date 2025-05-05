@@ -1,13 +1,13 @@
-import { DefaultTheme } from "styled-components/native";
-import { FieldType } from "_hooks/useForm.tsx";
-import React from "react";
+import type React from "react";
+import { type FieldType } from "_hooks/useForm.tsx";
 import {
-  CommandResult,
-  DeviceActionIntermediateValue,
-  DeviceModelId,
-  DmkError,
-  ExecuteDeviceActionReturnType,
+  type CommandResult,
+  type DeviceActionIntermediateValue,
+  type DeviceModelId,
+  type DmkError,
+  type ExecuteDeviceActionReturnType,
 } from "@ledgerhq/device-management-kit";
+import { type DefaultTheme } from "styled-components/native";
 
 export type ThemeProps = {
   theme: DefaultTheme;

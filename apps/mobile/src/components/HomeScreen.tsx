@@ -1,12 +1,12 @@
 import React from "react";
-import { Button, Flex, Text } from "@ledgerhq/native-ui";
 import { Image, Platform } from "react-native";
-import { useNavigation } from "@react-navigation/native";
 import {
-  RootStackParamList,
   RootScreens,
+  type RootStackParamList,
 } from "_navigators/RootNavigator.constants";
-import { StackNavigationProp } from "@react-navigation/stack";
+import { Button, Flex, Text } from "@ledgerhq/native-ui";
+import { useNavigation } from "@react-navigation/native";
+import { type StackNavigationProp } from "@react-navigation/stack";
 import styled from "styled-components";
 
 const Title = styled(Text)`

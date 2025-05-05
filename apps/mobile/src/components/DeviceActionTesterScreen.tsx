@@ -1,13 +1,14 @@
-import { useDmk } from "_providers/dmkProvider.tsx";
-import { useDeviceSessionsContext } from "_providers/deviceSessionsProvider.tsx";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
-import { DeviceActionProps, ThemeProps } from "_common/types.ts";
-import { Flex, SelectableList } from "@ledgerhq/native-ui";
-import styled from "styled-components/native";
+import { type DeviceActionProps, type ThemeProps } from "_common/types.ts";
 import { getDeviceActions } from "_components/DeviceActions.tsx";
-import { SendDeviceActionModal } from "_components/SendDeviceActionModal.tsx";
 import { DeviceStateView } from "_components/DeviceStateView.tsx";
+import { SendDeviceActionModal } from "_components/SendDeviceActionModal.tsx";
+import { useDeviceSessionsContext } from "_providers/deviceSessionsProvider.tsx";
+import { useDmk } from "_providers/dmkProvider.tsx";
+import { Flex, SelectableList } from "@ledgerhq/native-ui";
 import { useNavigation } from "@react-navigation/native";
+import styled from "styled-components/native";
+
 import { DisconnectButton } from "./DisconnectButton";
 
 const SafeView = styled.SafeAreaView`

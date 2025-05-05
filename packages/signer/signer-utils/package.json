@@ -41,7 +41,7 @@
     "@ledgerhq/prettier-config-dsdk": "workspace:*",
     "@ledgerhq/tsconfig-dsdk": "workspace:*",
     "@ledgerhq/vitest-config-dmk": "workspace:*",
-    "ts-node": "^10.9.2"
+    "ts-node": "catalog:"
   },
   "peerDependencies": {
     "@ledgerhq/device-management-kit": "workspace:*"

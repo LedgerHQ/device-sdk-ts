@@ -36,12 +36,12 @@
   },
   "dependencies": {
     "@ledgerhq/signer-utils": "workspace:*",
-    "bs58": "^6.0.0",
-    "inversify": "^6.2.2",
-    "inversify-logger-middleware": "^3.1.0",
-    "purify-ts": "^2.1.0",
-    "reflect-metadata": "^0.2.2",
-    "xstate": "^5.19.2"
+    "bs58": "catalog:",
+    "inversify": "catalog:",
+    "inversify-logger-middleware": "catalog:",
+    "purify-ts": "catalog:",
+    "reflect-metadata": "catalog:",
+    "xstate": "catalog:"
   },
   "devDependencies": {
     "@ledgerhq/device-management-kit": "workspace:*",
@@ -50,8 +50,8 @@
     "@ledgerhq/prettier-config-dsdk": "workspace:*",
     "@ledgerhq/tsconfig-dsdk": "workspace:*",
     "@ledgerhq/vitest-config-dmk": "workspace:*",
-    "rxjs": "^7.8.2",
-    "ts-node": "^10.9.2"
+    "rxjs": "catalog:",
+    "ts-node": "catalog:"
   },
   "peerDependencies": {
     "@ledgerhq/device-management-kit": "workspace:*"

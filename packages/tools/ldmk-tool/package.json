@@ -12,13 +12,13 @@
     "!.prettierrc.cjs"
   ],
   "dependencies": {
-    "@inquirer/prompts": "^7.3.3",
-    "semver": "^7.6.3"
+    "@inquirer/prompts": "catalog:",
+    "semver": "catalog:"
   },
   "devDependencies": {
     "@ledgerhq/eslint-config-dsdk": "workspace:*",
     "@ledgerhq/prettier-config-dsdk": "workspace:*",
-    "esbuild": "^0.25.0",
-    "esbuild-node-externals": "^1.14.0"
+    "esbuild": "catalog:",
+    "esbuild-node-externals": "catalog:"
   }
 }

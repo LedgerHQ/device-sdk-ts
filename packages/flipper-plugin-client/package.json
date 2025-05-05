@@ -36,8 +36,8 @@
     "test:coverage": "vitest run --coverage"
   },
   "dependencies": {
-    "js-flipper": "^0.273.0",
-    "rxjs": "^7.8.2"
+    "js-flipper": "catalog:",
+    "rxjs": "catalog:"
   },
   "devDependencies": {
     "@ledgerhq/device-management-kit": "workspace:*",

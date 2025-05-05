@@ -1,4 +1,4 @@
-import { CommandTabNavigatorParamList } from "_navigators/CommandNavigator.constants.ts";
+import { type CommandTabNavigatorParamList } from "_navigators/CommandNavigator.constants.ts";
 
 export enum RootScreens {
   Home = "HOME_SCREEN",
@@ -13,7 +13,9 @@ export type RootStackParamList = {
 };
 
 declare global {
+  // eslint-disable-next-line @typescript-eslint/no-namespace
   namespace ReactNavigation {
+    // eslint-disable-next-line @typescript-eslint/no-empty-object-type
     interface RootParamList extends RootStackParamList {}
   }
 }

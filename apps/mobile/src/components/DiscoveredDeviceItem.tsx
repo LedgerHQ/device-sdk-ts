@@ -1,10 +1,10 @@
 import React, { useMemo } from "react";
-import { Text, Flex, IconsLegacy, Icons } from "@ledgerhq/native-ui";
+import { TouchableOpacity } from "react-native";
 import {
   DeviceModelId,
-  DiscoveredDevice,
+  type DiscoveredDevice,
 } from "@ledgerhq/device-management-kit";
-import { TouchableOpacity } from "react-native";
+import { Flex, Icons, IconsLegacy, Text } from "@ledgerhq/native-ui";
 
 type Props = {
   device: DiscoveredDevice;
