@@ -294,6 +294,41 @@ export class ByteArrayBuilder {
   };
 
   /**
+   * Add a Tag-Length-Value encoded hexadecimal string to the data field if it has enough remaining space
+   * Length-Value encoding is a way to encode data in a binary format with the first byte
+   * being the length of the data and the following bytes being the data itself
+   * @param tag: number - The tag to add to the data
+   * @param value: string - The value to add to the data
+   * @returns {ByteArrayBuilder} - Returns the current instance of ByteArrayBuilder
+   */
+  encodeInTLVFromHexa = (tag: number, value: string): ByteArrayBuilder => {
+    this.add8BitUIntToData(tag);
+    return this.encodeInLVFromHexa(value);
+  };
+
+  /**
+   * Add a Tag-Length-Value encoded hexadecimal string to the data field if it has enough remaining space
+   * Length-Value encoding is a way to encode data in a binary format with the first byte
+   * being the length of the data and the following bytes being the data itself
+   * @param tag: number - The tag to add to the data
+   * @param value: Uint8Array - The buffer to add to the data
+   * @returns {ByteArrayBuilder} - Returns the current instance of ByteArrayBuilder
+   */
+  encodeInTLVFromBuffer = (
+    tag: number,
+    value: Uint8Array,
+  ): ByteArrayBuilder => {
+    this.add8BitUIntToData(tag);
+    return this.encodeInLVFromBuffer(value);
+  };
+
+  addTLVFromUInt64 = (tag: number, value: number): ByteArrayBuilder => {
+    this.add8BitUIntToData(tag);
+    this.add8BitUIntToData(8);
+    return this.add64BitUIntToData(value);
+  };
+
+  /**
    * Returns the remaining payload length
    * @returns {number}
    */
