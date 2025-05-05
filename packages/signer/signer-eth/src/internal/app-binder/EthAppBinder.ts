@@ -11,6 +11,7 @@ import { UserInteractionRequired } from "@ledgerhq/device-management-kit";
 import { inject, injectable } from "inversify";
 
 import { type GetAddressDAReturnType } from "@api/app-binder/GetAddressDeviceActionTypes";
+import { SignDelegationAuthorizationDAReturnType } from "@api/app-binder/SignDelegationAuthorizationTypes";
 import { type SignPersonalMessageDAReturnType } from "@api/app-binder/SignPersonalMessageDeviceActionTypes";
 import { type SignTransactionDAReturnType } from "@api/app-binder/SignTransactionDeviceActionTypes";
 import { type SignTypedDataDAReturnType } from "@api/app-binder/SignTypedDataDeviceActionTypes";
@@ -27,6 +28,7 @@ import { type TypedDataParserService } from "@internal/typed-data/service/TypedD
 import { GetAddressCommand } from "./command/GetAddressCommand";
 import { ETHEREUM_PLUGINS } from "./constant/plugins";
 import { SignTransactionDeviceAction } from "./device-action/SignTransaction/SignTransactionDeviceAction";
+import { SendSignAuthorizationDelegationTask } from "./task/SendSignAuthorizationDelegationTask";
 
 @injectable()
 export class EthAppBinder {
@@ -117,6 +119,26 @@ export class EthAppBinder {
           parser: args.parser,
           contextModule: this.contextModule,
           skipOpenApp: args.skipOpenApp,
+        },
+      }),
+    });
+  }
+
+  signDelegationAuthorization(args: {
+    derivationPath: string;
+    chainId: number;
+    address: string;
+    nonce: number;
+  }): SignDelegationAuthorizationDAReturnType {
+    return this.dmk.executeDeviceAction({
+      sessionId: this.sessionId,
+      deviceAction: new CallTaskInAppDeviceAction({
+        input: {
+          task: async (internalApi) =>
+            new SendSignAuthorizationDelegationTask(internalApi, args).run(),
+          appName: "Ethereum",
+          compatibleAppNames: ETHEREUM_PLUGINS,
+          requiredUserInteraction: UserInteractionRequired.SignEIP7702,
         },
       }),
     });

@@ -1,14 +1,14 @@
 import {
-  CommandErrorResult,
-  DeviceActionState,
-  ExecuteDeviceActionReturnType,
-  OpenAppDAError,
-  OpenAppDARequiredInteraction,
-  UserInteractionRequired,
+  type CommandErrorResult,
+  type DeviceActionState,
+  type ExecuteDeviceActionReturnType,
+  type OpenAppDAError,
+  type OpenAppDARequiredInteraction,
+  type UserInteractionRequired,
 } from "@ledgerhq/device-management-kit";
 
-import { Signature } from "@api/model/Signature";
-import { EthErrorCodes } from "@internal/app-binder/command/utils/ethAppErrors";
+import { type Signature } from "@api/model/Signature";
+import { type EthErrorCodes } from "@internal/app-binder/command/utils/ethAppErrors";
 
 export type SignDelegationAuthorizationDAOutput = Signature;
 
@@ -25,18 +25,11 @@ export type SignDelegationAuthorizationDAError =
 
 type SignDelegationAuthorizationDARequiredInteraction =
   | OpenAppDARequiredInteraction
-  | UserInteractionRequired.SignTransaction;
+  | UserInteractionRequired.SignEIP7702;
 
 export type SignDelegationAuthorizationDAIntermediateValue = {
   requiredUserInteraction: SignDelegationAuthorizationDARequiredInteraction;
-  step: SignDelegationAuthorizationDAStep;
 };
-
-export enum SignDelegationAuthorizationDAStep {
-  OPEN_APP = "signer.eth.steps.openApp",
-  GET_APP_CONFIG = "signer.eth.steps.getAppConfig",
-  SIGN_DELEGATION_AUTHORIZATION = "signer.eth.steps.signDelegationAuthorization",
-}
 
 export type SignDelegationAuthorizationDAState = DeviceActionState<
   SignDelegationAuthorizationDAOutput,
