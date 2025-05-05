@@ -4,6 +4,9 @@ import {
   type GetAddressDAError,
   type GetAddressDAIntermediateValue,
   type GetAddressDAOutput,
+  type SignDelegationAuthorizationDAError,
+  type SignDelegationAuthorizationDAIntermediateValue,
+  type SignDelegationAuthorizationDAOutput,
   type SignPersonalMessageDAError,
   type SignPersonalMessageDAIntermediateValue,
   type SignPersonalMessageDAOutput,
@@ -204,6 +207,44 @@ export const SignerEthView: React.FC<{ sessionId: string }> = ({
         },
         SignTypedDataDAError,
         SignTypedDataDAIntermediateValue
+      >,
+      {
+        title: "Sign Delegation Authorization",
+        description:
+          "Perform all the actions necessary to sign an EIP 7702 Delegation Authorization with the device",
+        executeDeviceAction: ({
+          derivationPath,
+          nonce,
+          contractAddress,
+          chainId,
+        }) => {
+          if (!signer) {
+            throw new Error("Signer not initialized");
+          }
+          return signer.signDelegationAuthorization(
+            derivationPath,
+            chainId,
+            contractAddress,
+            nonce,
+          );
+        },
+        initialValues: {
+          derivationPath: "44'/60'/0'/0/0",
+          nonce: 0,
+          contractAddress: "0x",
+          chainId: 1,
+        },
+        deviceModelId,
+      } satisfies DeviceActionProps<
+        SignDelegationAuthorizationDAOutput,
+        {
+          derivationPath: string;
+          nonce: number;
+          contractAddress: string;
+          chainId: number;
+        },
+        SignDelegationAuthorizationDAError,
+        SignDelegationAuthorizationDAIntermediateValue
       >,
     ],
     [deviceModelId, signer],
