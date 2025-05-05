@@ -102,6 +102,7 @@ describe("CallTaskInAppDeviceAction", () => {
             await internalApi.sendCommand(new TestCommand(commandParams)),
           appName: "MyApp",
           requiredUserInteraction: UserInteractionRequired.VerifyAddress,
+          skipOpenApp: false,
         },
       });
       await new Promise<void>((resolve, reject) => {
@@ -151,6 +152,7 @@ describe("CallTaskInAppDeviceAction", () => {
                 await internalApi.sendCommand(new TestCommand(commandParams)),
               appName: "MyApp",
               requiredUserInteraction: UserInteractionRequired.VerifyAddress,
+              skipOpenApp: false,
             },
           }),
           expectedStates,
@@ -178,6 +180,7 @@ describe("CallTaskInAppDeviceAction", () => {
               await internalApi.sendCommand(new TestCommand(commandParams)),
             appName: "MyApp",
             requiredUserInteraction: UserInteractionRequired.VerifyAddress,
+            skipOpenApp: false,
           },
         });
 
@@ -237,6 +240,7 @@ describe("CallTaskInAppDeviceAction", () => {
               await internalApi.sendCommand(new TestCommand(commandParams)),
             appName: "MyApp",
             requiredUserInteraction: UserInteractionRequired.VerifyAddress,
+            skipOpenApp: false,
           },
         });
 

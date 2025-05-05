@@ -31,7 +31,7 @@ export class SignTypedDataUseCase {
       derivationPath,
       parser: this._parser,
       data: typedData,
-      skipOpenApp: options?.skipOpenApp,
+      skipOpenApp: options?.skipOpenApp ?? false,
     });
   }
 }

@@ -155,6 +155,7 @@ describe("BtcAppBinder", () => {
               command: new GetExtendedPublicKeyCommand(params),
               appName: "Bitcoin",
               requiredUserInteraction: UserInteractionRequired.VerifyAddress,
+              skipOpenApp: false,
             },
           }),
         });
@@ -188,6 +189,7 @@ describe("BtcAppBinder", () => {
               command: new GetExtendedPublicKeyCommand(params),
               appName: "Bitcoin",
               requiredUserInteraction: UserInteractionRequired.None,
+              skipOpenApp: false,
             },
           }),
         });

@@ -129,6 +129,7 @@ describe("SolanaAppBinder", () => {
               command: new GetPubKeyCommand(params),
               appName: "Solana",
               requiredUserInteraction: UserInteractionRequired.VerifyAddress,
+              skipOpenApp: false,
             },
           }),
         });
@@ -154,6 +155,7 @@ describe("SolanaAppBinder", () => {
               command: new GetPubKeyCommand(params),
               appName: "Solana",
               requiredUserInteraction: UserInteractionRequired.None,
+              skipOpenApp: false,
             },
           }),
         });
@@ -367,6 +369,7 @@ describe("SolanaAppBinder", () => {
             command: new GetAppConfigurationCommand(), // Correct command
             appName: "Solana",
             requiredUserInteraction: UserInteractionRequired.None,
+            skipOpenApp: false,
           },
         }),
       });

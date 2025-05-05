@@ -101,6 +101,7 @@ describe("SendCommandInAppDeviceAction", () => {
           command: new TestCommand(commandParams),
           appName: "MyApp",
           requiredUserInteraction: UserInteractionRequired.VerifyAddress,
+          skipOpenApp: false,
         },
       });
       await new Promise<void>((resolve, reject) => {
@@ -149,6 +150,7 @@ describe("SendCommandInAppDeviceAction", () => {
               command: new TestCommand(commandParams),
               appName: "MyApp",
               requiredUserInteraction: UserInteractionRequired.VerifyAddress,
+              skipOpenApp: false,
             },
           }),
           expectedStates,
@@ -175,6 +177,7 @@ describe("SendCommandInAppDeviceAction", () => {
             command: new TestCommand(commandParams),
             appName: "MyApp",
             requiredUserInteraction: UserInteractionRequired.VerifyAddress,
+            skipOpenApp: false,
           },
         });
 
@@ -233,6 +236,7 @@ describe("SendCommandInAppDeviceAction", () => {
             command: new TestCommand(commandParams),
             appName: "MyApp",
             requiredUserInteraction: UserInteractionRequired.VerifyAddress,
+            skipOpenApp: false,
           },
         });
 

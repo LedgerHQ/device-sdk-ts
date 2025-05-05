@@ -64,6 +64,7 @@ export class BtcAppBinder {
           requiredUserInteraction: args.checkOnDevice
             ? UserInteractionRequired.VerifyAddress
             : UserInteractionRequired.None,
+          skipOpenApp: false,
         },
       }),
     });
@@ -85,6 +86,7 @@ export class BtcAppBinder {
             ).run(),
           appName: "Bitcoin",
           requiredUserInteraction: UserInteractionRequired.SignPersonalMessage,
+          skipOpenApp: false,
         },
       }),
     });

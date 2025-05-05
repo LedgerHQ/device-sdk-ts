@@ -40,6 +40,7 @@ export class SolanaAppBinder {
           requiredUserInteraction: args.checkOnDevice
             ? UserInteractionRequired.VerifyAddress
             : UserInteractionRequired.None,
+          skipOpenApp: false,
         },
       }),
     });
@@ -77,6 +78,7 @@ export class SolanaAppBinder {
             }).run(),
           appName: "Solana",
           requiredUserInteraction: UserInteractionRequired.SignPersonalMessage,
+          skipOpenApp: false,
         },
       }),
     });
@@ -90,6 +92,7 @@ export class SolanaAppBinder {
           command: new GetAppConfigurationCommand(),
           appName: "Solana",
           requiredUserInteraction: UserInteractionRequired.None,
+          skipOpenApp: false,
         },
       }),
     });

@@ -28,6 +28,7 @@ describe("GetAddressUseCase", () => {
       derivationPath,
       checkOnDevice,
       returnChainCode,
+      skipOpenApp: false,
     });
   });
 });

@@ -145,7 +145,7 @@ export class SignTypedDataDeviceAction extends XStateDeviceAction<
         shouldOptIn: ({ context }) =>
           !context._internalState.appConfig!.web3ChecksEnabled &&
           !context._internalState.appConfig!.web3ChecksOptIn,
-        skipOpenApp: ({ context }) => !!context.input.skipOpenApp,
+        skipOpenApp: ({ context }) => context.input.skipOpenApp,
       },
       actions: {
         assignErrorFromEvent: assign({

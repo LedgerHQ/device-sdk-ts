@@ -25,7 +25,7 @@ export class SignMessageUseCase {
     return this._appBinder.signPersonalMessage({
       derivationPath,
       message,
-      skipOpenApp: options?.skipOpenApp,
+      skipOpenApp: options?.skipOpenApp ?? false,
     });
   }
 }

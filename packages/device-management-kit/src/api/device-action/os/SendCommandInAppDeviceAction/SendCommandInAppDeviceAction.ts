@@ -112,7 +112,7 @@ export class SendCommandInAppDeviceAction<
         }).makeStateMachine(internalAPI),
       },
       guards: {
-        skipOpenApp: () => !!this.input.skipOpenApp,
+        skipOpenApp: () => this.input.skipOpenApp,
         noInternalError: ({ context }) => context._internalState.error === null,
       },
       actions: {

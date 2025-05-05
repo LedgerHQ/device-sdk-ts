@@ -19,9 +19,9 @@ export type CallTaskInAppDAInput<
     internalApi: InternalApi,
   ) => Promise<CommandResult<TaskResponse, TaskErrorCodes>>;
   readonly appName: string;
+  readonly skipOpenApp: boolean;
   readonly requiredUserInteraction: UserInteraction;
   readonly compatibleAppNames?: string[];
-  readonly skipOpenApp?: boolean;
 };
 
 export type CallTaskInAppDAError<TaskErrorCodes = void> =

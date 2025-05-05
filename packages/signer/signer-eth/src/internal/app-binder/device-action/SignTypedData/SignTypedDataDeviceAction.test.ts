@@ -169,6 +169,7 @@ describe("SignTypedDataDeviceAction", () => {
             data: TEST_MESSAGE,
             contextModule: mockContextModule,
             parser: mockParser,
+            skipOpenApp: false,
           },
         });
 
@@ -374,6 +375,7 @@ describe("SignTypedDataDeviceAction", () => {
             data: TEST_MESSAGE,
             contextModule: mockContextModule,
             parser: mockParser,
+            skipOpenApp: false,
           },
         });
 
@@ -470,6 +472,7 @@ describe("SignTypedDataDeviceAction", () => {
             data: TEST_MESSAGE,
             contextModule: mockContextModule,
             parser: mockParser,
+            skipOpenApp: false,
           },
         });
 
@@ -551,6 +554,7 @@ describe("SignTypedDataDeviceAction", () => {
             data: TEST_MESSAGE,
             contextModule: mockContextModule,
             parser: mockParser,
+            skipOpenApp: false,
           },
         });
 
@@ -641,6 +645,7 @@ describe("SignTypedDataDeviceAction", () => {
             data: TEST_MESSAGE,
             contextModule: mockContextModule,
             parser: mockParser,
+            skipOpenApp: false,
           },
         });
 
@@ -731,6 +736,7 @@ describe("SignTypedDataDeviceAction", () => {
             data: TEST_MESSAGE,
             contextModule: mockContextModule,
             parser: mockParser,
+            skipOpenApp: false,
           },
         });
 
@@ -821,6 +827,7 @@ describe("SignTypedDataDeviceAction", () => {
             data: TEST_MESSAGE,
             contextModule: mockContextModule,
             parser: mockParser,
+            skipOpenApp: false,
           },
         });
 
@@ -930,6 +937,7 @@ describe("SignTypedDataDeviceAction", () => {
             data: TEST_MESSAGE,
             contextModule: mockContextModule,
             parser: mockParser,
+            skipOpenApp: false,
           },
         });
 
@@ -1061,6 +1069,7 @@ describe("SignTypedDataDeviceAction", () => {
             data: TEST_MESSAGE,
             contextModule: mockContextModule,
             parser: mockParser,
+            skipOpenApp: false,
           },
         });
 
@@ -1081,6 +1090,7 @@ describe("SignTypedDataDeviceAction", () => {
             data: TEST_MESSAGE,
             contextModule: mockContextModule,
             parser: mockParser,
+            skipOpenApp: false,
           },
         });
 
@@ -1150,6 +1160,7 @@ describe("SignTypedDataDeviceAction", () => {
             data: TEST_MESSAGE,
             contextModule: mockContextModule,
             parser: mockParser,
+            skipOpenApp: false,
           },
         });
 

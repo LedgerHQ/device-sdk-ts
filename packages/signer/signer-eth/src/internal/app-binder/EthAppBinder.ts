@@ -42,9 +42,9 @@ export class EthAppBinder {
 
   getAddress(args: {
     derivationPath: string;
-    checkOnDevice?: boolean;
-    returnChainCode?: boolean;
-    skipOpenApp?: boolean;
+    checkOnDevice: boolean;
+    returnChainCode: boolean;
+    skipOpenApp: boolean;
   }): GetAddressDAReturnType {
     return this.dmk.executeDeviceAction({
       sessionId: this.sessionId,
@@ -65,7 +65,7 @@ export class EthAppBinder {
   signPersonalMessage(args: {
     derivationPath: string;
     message: string | Uint8Array;
-    skipOpenApp?: boolean;
+    skipOpenApp: boolean;
   }): SignPersonalMessageDAReturnType {
     return this.dmk.executeDeviceAction({
       sessionId: this.sessionId,
@@ -106,7 +106,7 @@ export class EthAppBinder {
     derivationPath: string;
     parser: TypedDataParserService;
     data: TypedData;
-    skipOpenApp?: boolean;
+    skipOpenApp: boolean;
   }): SignTypedDataDAReturnType {
     return this.dmk.executeDeviceAction({
       sessionId: this.sessionId,
