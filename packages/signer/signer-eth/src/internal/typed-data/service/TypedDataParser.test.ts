@@ -26,7 +26,7 @@ describe("TypedDataParser - types parsing", () => {
       ],
     };
     // WHEN
-    const parser = new TypedDataParser(types);
+    const parser = new TypedDataParser(types, {});
     // THEN
     const expected = {
       TestStruct: {
@@ -49,7 +49,7 @@ describe("TypedDataParser - types parsing", () => {
       ],
     };
     // WHEN
-    const parser = new TypedDataParser(types);
+    const parser = new TypedDataParser(types, {});
     // THEN
     const expected = {
       TestStruct: {
@@ -79,7 +79,7 @@ describe("TypedDataParser - types parsing", () => {
       ],
     };
     // WHEN
-    const parser = new TypedDataParser(types);
+    const parser = new TypedDataParser(types, {});
     // THEN
     const expected = {
       TestStruct: {
@@ -113,7 +113,7 @@ describe("TypedDataParser - types parsing", () => {
       ],
     };
     // WHEN
-    const parser = new TypedDataParser(types);
+    const parser = new TypedDataParser(types, {});
     // THEN
     const expected = {
       TestStruct: {
@@ -138,7 +138,7 @@ describe("TypedDataParser - types parsing", () => {
       ],
     };
     // WHEN
-    const parser = new TypedDataParser(types);
+    const parser = new TypedDataParser(types, {});
     // THEN
     const expected = {
       TestStruct: {
@@ -161,7 +161,7 @@ describe("TypedDataParser - types parsing", () => {
       ],
     };
     // WHEN
-    const parser = new TypedDataParser(types);
+    const parser = new TypedDataParser(types, {});
     // THEN
     const expected = {
       TestStruct: {
@@ -204,9 +204,89 @@ describe("TypedDataParser - types parsing", () => {
       TestStruct: [{ name: "test", type: "MyCustomStructure" }],
     };
     // WHEN
-    const parser = new TypedDataParser(types);
+    const parser = new TypedDataParser(types, {});
     // THEN
     const expected = {
+      TestStruct: {
+        test: new StructType("MyCustomStructure"),
+      },
+    };
+    expect(parser.getStructDefinitions()).toStrictEqual(expected);
+  });
+
+  it("Don't append domain default types if already present", () => {
+    // GIVEN
+    const types = {
+      EIP712Domain: [{ name: "name", type: "string" }],
+      TestStruct: [{ name: "test", type: "MyCustomStructure" }],
+    };
+    // WHEN
+    const parser = new TypedDataParser(types, {
+      name: "Seaport",
+      version: "1.5",
+      chainId: 1,
+      verifyingContract: "0x00000000000000ADc04C56Bf30aC9d3c0aAF14dC",
+      salt: "0x42",
+    });
+    // THEN
+    const expected = {
+      EIP712Domain: {
+        name: new PrimitiveType("string", "string", Nothing),
+      },
+      TestStruct: {
+        test: new StructType("MyCustomStructure"),
+      },
+    };
+    expect(parser.getStructDefinitions()).toStrictEqual(expected);
+  });
+
+  it("Append domain default types", () => {
+    // GIVEN
+    const types = {
+      TestStruct: [{ name: "test", type: "MyCustomStructure" }],
+    };
+    // WHEN
+    const parser = new TypedDataParser(types, {
+      name: "Seaport",
+      version: "1.5",
+      chainId: 1,
+      verifyingContract: "0x00000000000000ADc04C56Bf30aC9d3c0aAF14dC",
+      salt: "0x42",
+    });
+    // THEN
+    const expected = {
+      EIP712Domain: {
+        name: new PrimitiveType("string", "string", Nothing),
+        version: new PrimitiveType("string", "string", Nothing),
+        chainId: new PrimitiveType("uint256", "uint", Just(32)),
+        verifyingContract: new PrimitiveType("address", "address", Nothing),
+        salt: new PrimitiveType("bytes32", "bytes", Just(32)),
+      },
+      TestStruct: {
+        test: new StructType("MyCustomStructure"),
+      },
+    };
+    expect(parser.getStructDefinitions()).toStrictEqual(expected);
+  });
+
+  it("Append partial domain default types", () => {
+    // GIVEN
+    const types = {
+      TestStruct: [{ name: "test", type: "MyCustomStructure" }],
+    };
+    // WHEN
+    const parser = new TypedDataParser(types, {
+      name: "Seaport",
+      chainId: 1,
+      verifyingContract: "0x00000000000000ADc04C56Bf30aC9d3c0aAF14dC",
+    });
+    // THEN
+    const expected = {
+      EIP712Domain: {
+        name: new PrimitiveType("string", "string", Nothing),
+        chainId: new PrimitiveType("uint256", "uint", Just(32)),
+        verifyingContract: new PrimitiveType("address", "address", Nothing),
+      },
       TestStruct: {
         test: new StructType("MyCustomStructure"),
       },
@@ -269,7 +349,7 @@ describe("TypedDataParser - message parsing", () => {
     const primaryType = MESSAGE.primaryType;
     const message = MESSAGE.message;
     // WHEN
-    const parser = new TypedDataParser(types);
+    const parser = new TypedDataParser(types, {});
     // THEN
     const parsed = parser.parse(primaryType, message);
     const expected = [
@@ -349,7 +429,7 @@ describe("TypedDataParser - message parsing", () => {
     const primaryType = "EIP712Domain";
     const message = MESSAGE.domain;
     // WHEN
-    const parser = new TypedDataParser(types);
+    const parser = new TypedDataParser(types, {});
     // THEN
     const expected = [
       {
@@ -390,7 +470,7 @@ describe("TypedDataParser - message parsing", () => {
     const primaryType = "unknown";
     const message = MESSAGE.domain;
     // WHEN
-    const parser = new TypedDataParser(types);
+    const parser = new TypedDataParser(types, {});
     // THEN
     const parsed = parser.parse(primaryType, message);
     expect(parsed.isLeft()).toStrictEqual(true);
@@ -406,7 +486,7 @@ describe("TypedDataParser - message parsing", () => {
       from: "0xCD2a3d9F938E13CD947Ec05AbC7FE734Df8DD826",
     };
     // WHEN
-    const parser = new TypedDataParser(types);
+    const parser = new TypedDataParser(types, {});
     // THEN
     const parsed = parser.parse(primaryType, message);
     expect(parsed.isLeft()).toStrictEqual(true);
@@ -422,7 +502,7 @@ describe("TypedDataParser - message parsing", () => {
       from: ["0xCD2a3d9F938E13CD947Ec05AbC7FE734Df8DD826"],
     };
     // WHEN
-    const parser = new TypedDataParser(types);
+    const parser = new TypedDataParser(types, {});
     // THEN
     const parsed = parser.parse(primaryType, message);
     expect(parsed.isLeft()).toStrictEqual(true);
@@ -438,7 +518,7 @@ describe("TypedDataParser - message parsing", () => {
       from: 3000,
     };
     // WHEN
-    const parser = new TypedDataParser(types);
+    const parser = new TypedDataParser(types, {});
     // THEN
     const parsed = parser.parse(primaryType, message);
     expect(parsed.isLeft()).toStrictEqual(true);
@@ -454,7 +534,7 @@ describe("TypedDataParser - message parsing", () => {
       from: [42],
     };
     // WHEN
-    const parser = new TypedDataParser(types);
+    const parser = new TypedDataParser(types, {});
     // THEN
     const parsed = parser.parse(primaryType, message);
     expect(parsed.isLeft()).toStrictEqual(true);
@@ -470,7 +550,7 @@ describe("TypedDataParser - message parsing", () => {
       from: { data: 42 },
     };
     // WHEN
-    const parser = new TypedDataParser(types);
+    const parser = new TypedDataParser(types, {});
     // THEN
     const parsed = parser.parse(primaryType, message);
     expect(parsed.isLeft()).toStrictEqual(true);
@@ -487,7 +567,7 @@ describe("TypedDataParser - message parsing", () => {
       from: 42,
     };
     // WHEN
-    const parser = new TypedDataParser(types);
+    const parser = new TypedDataParser(types, {});
     // THEN
     const parsed = parser.parse(primaryType, message);
     expect(parsed.isLeft()).toStrictEqual(true);
@@ -503,7 +583,7 @@ describe("TypedDataParser - message parsing", () => {
       to: 42,
     };
     // WHEN
-    const parser = new TypedDataParser(types);
+    const parser = new TypedDataParser(types, {});
     // THEN
     const parsed = parser.parse(primaryType, message);
     expect(parsed.isLeft()).toStrictEqual(true);
@@ -519,7 +599,7 @@ describe("TypedDataParser - message parsing", () => {
       from: 42,
     };
     // WHEN
-    const parser = new TypedDataParser(types);
+    const parser = new TypedDataParser(types, {});
     // THEN
     const parsed = parser.parse(primaryType, message);
     expect(parsed.isLeft()).toStrictEqual(true);
@@ -535,7 +615,7 @@ describe("TypedDataParser - message parsing", () => {
       from: [42],
     };
     // WHEN
-    const parser = new TypedDataParser(types);
+    const parser = new TypedDataParser(types, {});
     // THEN
     const parsed = parser.parse(primaryType, message);
     expect(parsed.isLeft()).toStrictEqual(true);

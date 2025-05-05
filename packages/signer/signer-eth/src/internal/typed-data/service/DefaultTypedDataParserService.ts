@@ -12,7 +12,7 @@ import {
 @injectable()
 export class DefaultTypedDataParserService implements TypedDataParserService {
   parse(data: TypedData): Either<Error, ParsedTypedData> {
-    const parser = new TypedDataParser(data.types);
+    const parser = new TypedDataParser(data.types, data.domain);
     const types = parser.getStructDefinitions();
     const domainResult = parser.parse(
       "EIP712Domain",
