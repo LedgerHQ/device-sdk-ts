@@ -17,6 +17,7 @@ import {
   type TransportFactory,
   type TransportIdentifier,
 } from "@ledgerhq/device-management-kit";
+import { AxiosError } from "axios";
 import { type Either, Left, Right } from "purify-ts";
 import { from, type Observable } from "rxjs";
 
@@ -31,6 +32,7 @@ export class SpeculosTransport implements Transport {
   private readonly identifier: TransportIdentifier = speculosIdentifier;
   private readonly _speculosDataSource: SpeculosDatasource;
   private connectedDevice: TransportConnectedDevice | null = null;
+  private disconnectInterval: NodeJS.Timeout | null = null;
   private readonly speculosDevice: TransportDiscoveredDevice = {
     id: "SpeculosID", //TODO make it dynamic at creation
     deviceModel: {
@@ -41,6 +43,7 @@ export class SpeculosTransport implements Transport {
       getBlockSize() {
         return 32;
       },
+      blockSize: 32,
       usbOnly: true,
       memorySize: 320 * 1024,
       masks: [0x31100000],
@@ -66,7 +69,7 @@ export class SpeculosTransport implements Transport {
   }
 
   listenToAvailableDevices(): Observable<TransportDiscoveredDevice[]> {
-    return from([]);
+    return from([[this.speculosDevice]]);
   }
 
   startDiscovering(): Observable<TransportDiscoveredDevice> {
@@ -121,6 +124,7 @@ export class SpeculosTransport implements Transport {
       };
 
       this.connectedDevice = connectedDevice;
+      this.listenForDisconnect(params.onDisconnect, params.deviceId);
       return Right(connectedDevice);
     } catch (error) {
       return Left(new OpeningConnectionError(error as Error));
@@ -155,6 +159,10 @@ export class SpeculosTransport implements Transport {
         this.disconnect({
           connectedDevice: this.connectedDevice,
         });
+
+        if (this.disconnectInterval) {
+          clearInterval(this.disconnectInterval);
+        }
       }
       return Left(new GeneralDmkError(error));
     }
@@ -183,6 +191,34 @@ export class SpeculosTransport implements Transport {
     return new Uint8Array(
       hexString.match(/.{1,2}/g)!.map((byte) => parseInt(byte, 16)),
     );
+  }
+
+  private listenForDisconnect(
+    onDisconnect: DisconnectHandler,
+    deviceId: DeviceId,
+  ): void {
+    this.disconnectInterval = setInterval(async () => {
+      try {
+        await this._speculosDataSource.postAdpu("B0010000");
+      } catch (error) {
+        if (!(error instanceof AxiosError)) return;
+
+        this.logger.info(
+          `Network error, disconnecting speculos device ${deviceId}`,
+        );
+        onDisconnect(deviceId);
+
+        if (this.connectedDevice) {
+          await this.disconnect({
+            connectedDevice: this.connectedDevice,
+          });
+        }
+
+        if (this.disconnectInterval) {
+          clearInterval(this.disconnectInterval);
+        }
+      }
+    }, 2000);
   }
 }
 
