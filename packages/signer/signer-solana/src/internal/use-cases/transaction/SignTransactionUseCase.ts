@@ -20,7 +20,7 @@ export class SignTransactionUseCase {
     return this.appBinder.signTransaction({
       derivationPath,
       transaction,
-      options,
+      skipOpenApp: options?.skipOpenApp ?? false,
     });
   }
 }
