@@ -12,5 +12,6 @@ export enum UserInteractionRequired {
   AllowListApps = "allow-list-apps",
   VerifyAddress = "verify-address",
   SignPersonalMessage = "sign-personal-message",
+  SignEIP7702 = "sign-eip7702",
   Web3ChecksOptIn = "web3-checks-opt-in",
 }
