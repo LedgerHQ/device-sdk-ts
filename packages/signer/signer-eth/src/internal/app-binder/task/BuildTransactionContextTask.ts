@@ -120,10 +120,6 @@ export class BuildTransactionContextTask {
       (ctx) => ctx.type === ClearSignContextType.TRANSACTION_INFO,
     );
 
-    if (transactionInfo && !transactionInfo.certificate) {
-      throw new Error("Transaction info certificate is missing");
-    }
-
     // If the device does not support the generic parser,
     // we need to filter out the transaction info and transaction field description
     // as they are not supported by the device
@@ -136,7 +132,7 @@ export class BuildTransactionContextTask {
           ctx.type !== ClearSignContextType.TRANSACTION_INFO &&
           ctx.type !== ClearSignContextType.TRANSACTION_FIELD_DESCRIPTION,
       );
-    } else {
+    } else if (transactionInfo.certificate) {
       const transactionFields = clearSignContextsSuccess.filter(
         (ctx) =>
           ctx.type === ClearSignContextType.TRANSACTION_FIELD_DESCRIPTION,
