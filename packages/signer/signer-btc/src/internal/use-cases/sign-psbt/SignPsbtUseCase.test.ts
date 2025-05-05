@@ -11,6 +11,7 @@ describe("SignPsbtUseCase", () => {
       DefaultDescriptorTemplate.NATIVE_SEGWIT,
     );
     const psbt = "some-psbt";
+    const skipOpenApp = false;
     const appBinder = {
       signPsbt: vi.fn(),
     };
@@ -19,12 +20,13 @@ describe("SignPsbtUseCase", () => {
     );
 
     // When
-    signPsbtUseCase.execute(wallet, psbt);
+    signPsbtUseCase.execute(wallet, psbt, skipOpenApp);
 
     // Then
     expect(appBinder.signPsbt).toHaveBeenCalledWith({
       wallet,
       psbt,
+      skipOpenApp,
     });
   });
 });

@@ -94,6 +94,9 @@ describe("EthAppBinder", () => {
         );
         const { observable } = appBinder.getAddress({
           derivationPath: "44'/60'/3'/2/1",
+          checkOnDevice: false,
+          returnChainCode: false,
+          skipOpenApp: false,
         });
 
         // THEN
@@ -128,7 +131,9 @@ describe("EthAppBinder", () => {
     describe("calls of executeDeviceAction with the correct params", () => {
       const baseParams = {
         derivationPath: "44'/60'/3'/2/1",
+        checkOnDevice: false,
         returnChainCode: false,
+        skipOpenApp: false,
       };
 
       test("when checkOnDevice is true: UserInteractionRequired.VerifyAddress", () => {
@@ -158,6 +163,7 @@ describe("EthAppBinder", () => {
               appName: "Ethereum",
               requiredUserInteraction: UserInteractionRequired.VerifyAddress,
               compatibleAppNames: ETHEREUM_PLUGINS,
+              skipOpenApp: false,
             },
           }),
         });
@@ -190,6 +196,7 @@ describe("EthAppBinder", () => {
               appName: "Ethereum",
               requiredUserInteraction: UserInteractionRequired.None,
               compatibleAppNames: ETHEREUM_PLUGINS,
+              skipOpenApp: false,
             },
           }),
         });
@@ -380,6 +387,7 @@ describe("EthAppBinder", () => {
         const { observable } = appBinder.signPersonalMessage({
           derivationPath: "44'/60'/3'/2/1",
           message,
+          skipOpenApp: false,
         });
 
         // THEN
@@ -457,6 +465,7 @@ describe("EthAppBinder", () => {
           derivationPath: "44'/60'/3'/2/1",
           parser,
           data: typedData,
+          skipOpenApp: false,
         });
 
         // THEN

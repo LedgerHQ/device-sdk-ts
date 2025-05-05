@@ -19,15 +19,20 @@ describe("GetAddressUseCase", () => {
   it("should return the address from the appBinder's getAddress method", () => {
     // GIVEN
     const checkOnDevice = true;
+    const skipOpenApp = true;
 
     // WHEN
-    const result = useCase.execute(derivationPath, { checkOnDevice });
+    const result = useCase.execute(derivationPath, {
+      checkOnDevice,
+      skipOpenApp,
+    });
 
     // THEN
     expect(result).toEqual(address);
     expect(getAddressMock).toHaveBeenCalledWith({
       derivationPath,
       checkOnDevice,
+      skipOpenApp,
     });
   });
 
@@ -40,6 +45,7 @@ describe("GetAddressUseCase", () => {
     expect(getAddressMock).toHaveBeenCalledWith({
       derivationPath,
       checkOnDevice: false,
+      skipOpenApp: false,
     });
   });
 });

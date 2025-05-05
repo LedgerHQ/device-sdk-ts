@@ -10,6 +10,7 @@ describe("SignTransactionUseCase", () => {
       DefaultDescriptorTemplate.NATIVE_SEGWIT,
     );
     const psbt = "some-psbt";
+    const skipOpenApp = false;
     const appBinder = {
       signTransaction: vi.fn(),
     };
@@ -18,12 +19,13 @@ describe("SignTransactionUseCase", () => {
     );
 
     // When
-    signTransactionUseCase.execute(wallet, psbt);
+    signTransactionUseCase.execute(wallet, psbt, skipOpenApp);
 
     // Then
     expect(appBinder.signTransaction).toHaveBeenCalledWith({
       wallet,
       psbt,
+      skipOpenApp,
     });
   });
 });

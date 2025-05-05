@@ -90,6 +90,7 @@ describe("BtcAppBinder", () => {
         const { observable } = appBinder.getExtendedPublicKey({
           derivationPath: "44'/501'",
           checkOnDevice: false,
+          skipOpenApp: false,
         });
 
         // THEN
@@ -125,6 +126,7 @@ describe("BtcAppBinder", () => {
       const baseParams = {
         derivationPath: "44'/60'/3'/2/1",
         returnChainCode: false,
+        skipOpenApp: false,
       };
 
       it("when checkOnDevice is true: UserInteractionRequired.VerifyAddress", () => {
@@ -155,6 +157,7 @@ describe("BtcAppBinder", () => {
               command: new GetExtendedPublicKeyCommand(params),
               appName: "Bitcoin",
               requiredUserInteraction: UserInteractionRequired.VerifyAddress,
+              skipOpenApp: false,
             },
           }),
         });
@@ -188,6 +191,7 @@ describe("BtcAppBinder", () => {
               command: new GetExtendedPublicKeyCommand(params),
               appName: "Bitcoin",
               requiredUserInteraction: UserInteractionRequired.None,
+              skipOpenApp: false,
             },
           }),
         });
@@ -233,6 +237,7 @@ describe("BtcAppBinder", () => {
         const { observable } = appBinder.signMessage({
           derivationPath: "44'/60'/3'/2/1",
           message,
+          skipOpenApp: false,
         });
 
         // THEN

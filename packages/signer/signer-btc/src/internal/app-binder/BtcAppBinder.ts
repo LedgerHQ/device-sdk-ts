@@ -64,6 +64,7 @@ export class BtcAppBinder {
           requiredUserInteraction: args.checkOnDevice
             ? UserInteractionRequired.VerifyAddress
             : UserInteractionRequired.None,
+          skipOpenApp: args.skipOpenApp,
         },
       }),
     });
@@ -72,6 +73,7 @@ export class BtcAppBinder {
   signMessage(args: {
     derivationPath: string;
     message: string;
+    skipOpenApp: boolean;
   }): SignMessageDAReturnType {
     return this._dmk.executeDeviceAction({
       sessionId: this._sessionId,
@@ -85,12 +87,17 @@ export class BtcAppBinder {
             ).run(),
           appName: "Bitcoin",
           requiredUserInteraction: UserInteractionRequired.SignPersonalMessage,
+          skipOpenApp: args.skipOpenApp,
         },
       }),
     });
   }
 
-  signPsbt(args: { psbt: Psbt; wallet: Wallet }): SignPsbtDAReturnType {
+  signPsbt(args: {
+    psbt: Psbt;
+    wallet: Wallet;
+    skipOpenApp: boolean;
+  }): SignPsbtDAReturnType {
     return this._dmk.executeDeviceAction({
       sessionId: this._sessionId,
       deviceAction: new SignPsbtDeviceAction({
@@ -102,6 +109,7 @@ export class BtcAppBinder {
           dataStoreService: this._dataStoreService,
           psbtMapper: this._psbtMapper,
           valueParser: this._valueParser,
+          skipOpenApp: args.skipOpenApp,
         },
       }),
     });
@@ -112,12 +120,14 @@ export class BtcAppBinder {
     wallet: Wallet;
     change: boolean;
     addressIndex: number;
+    skipOpenApp: boolean;
   }): GetWalletAddressDAReturnType {
     return this._dmk.executeDeviceAction({
       sessionId: this._sessionId,
       deviceAction: new GetWalletAddressDeviceAction({
         input: {
           wallet: args.wallet,
+          skipOpenApp: args.skipOpenApp,
           checkOnDevice: args.checkOnDevice,
           change: args.change,
           addressIndex: args.addressIndex,
@@ -132,6 +142,7 @@ export class BtcAppBinder {
   signTransaction(args: {
     psbt: Psbt;
     wallet: Wallet;
+    skipOpenApp: boolean;
   }): SignTransactionDAReturnType {
     return this._dmk.executeDeviceAction({
       sessionId: this._sessionId,
@@ -144,6 +155,7 @@ export class BtcAppBinder {
           dataStoreService: this._dataStoreService,
           psbtMapper: this._psbtMapper,
           valueParser: this._valueParser,
+          skipOpenApp: args.skipOpenApp,
         },
       }),
     });

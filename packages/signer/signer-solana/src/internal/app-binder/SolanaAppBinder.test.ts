@@ -72,6 +72,7 @@ describe("SolanaAppBinder", () => {
         const { observable } = appBinder.getAddress({
           derivationPath: "44'/501'",
           checkOnDevice: false,
+          skipOpenApp: false,
         });
 
         // THEN
@@ -107,6 +108,7 @@ describe("SolanaAppBinder", () => {
       const baseParams = {
         derivationPath: "44'/60'/3'/2/1",
         returnChainCode: false,
+        skipOpenApp: false,
       };
 
       it("when checkOnDevice is true: UserInteractionRequired.VerifyAddress", () => {
@@ -129,6 +131,7 @@ describe("SolanaAppBinder", () => {
               command: new GetPubKeyCommand(params),
               appName: "Solana",
               requiredUserInteraction: UserInteractionRequired.VerifyAddress,
+              skipOpenApp: false,
             },
           }),
         });
@@ -154,6 +157,7 @@ describe("SolanaAppBinder", () => {
               command: new GetPubKeyCommand(params),
               appName: "Solana",
               requiredUserInteraction: UserInteractionRequired.None,
+              skipOpenApp: false,
             },
           }),
         });
@@ -186,6 +190,7 @@ describe("SolanaAppBinder", () => {
         const { observable } = appBinder.signTransaction({
           derivationPath: "44'/501'",
           transaction: new Uint8Array([0x01, 0x02, 0x03, 0x04]),
+          skipOpenApp: false,
         });
 
         // THEN
@@ -221,10 +226,11 @@ describe("SolanaAppBinder", () => {
       // GIVEN
       const derivationPath = "44'/60'/3'/2/1";
       const transaction = new Uint8Array([0x01, 0x02, 0x03, 0x04]);
+      const skipOpenApp = false;
 
       // WHEN
       const appBinder = new SolanaAppBinder(mockedDmk, "sessionId");
-      appBinder.signTransaction({ derivationPath, transaction });
+      appBinder.signTransaction({ derivationPath, transaction, skipOpenApp });
 
       // THEN
       expect(mockedDmk.executeDeviceAction).toHaveBeenCalledWith({
@@ -232,7 +238,7 @@ describe("SolanaAppBinder", () => {
           input: {
             derivationPath,
             transaction,
-            options: {},
+            skipOpenApp,
           },
         }),
         sessionId: "sessionId",
@@ -248,6 +254,7 @@ describe("SolanaAppBinder", () => {
         const signMessageArgs = {
           derivationPath: "44'/501'/0'/0'",
           message: "Hello world",
+          skipOpenApp: false,
         };
 
         vi.spyOn(mockedDmk, "executeDeviceAction").mockReturnValue({
@@ -367,6 +374,7 @@ describe("SolanaAppBinder", () => {
             command: new GetAppConfigurationCommand(), // Correct command
             appName: "Solana",
             requiredUserInteraction: UserInteractionRequired.None,
+            skipOpenApp: false,
           },
         }),
       });

@@ -9,6 +9,7 @@ import { type GetAppConfigurationDAReturnType } from "@api/app-binder/GetAppConf
 import { type SignMessageDAReturnType } from "@api/app-binder/SignMessageDeviceActionTypes";
 import { type SignTransactionDAReturnType } from "@api/app-binder/SignTransactionDeviceActionTypes";
 import { type AddressOptions } from "@api/model/AddressOption";
+import { type MessageOptions } from "@api/model/MessageOptions";
 import { type Transaction } from "@api/model/Transaction";
 import { type TransactionOptions } from "@api/model/TransactionOptions";
 import { type SignerSolana } from "@api/SignerSolana";
@@ -45,10 +46,11 @@ export class DefaultSignerSolana implements SignerSolana {
   signMessage(
     derivationPath: string,
     message: string,
+    options?: MessageOptions,
   ): SignMessageDAReturnType {
     return this._container
       .get<SignMessageUseCase>(useCasesTypes.SignMessageUseCase)
-      .execute(derivationPath, message);
+      .execute(derivationPath, message, options);
   }
 
   getAddress(

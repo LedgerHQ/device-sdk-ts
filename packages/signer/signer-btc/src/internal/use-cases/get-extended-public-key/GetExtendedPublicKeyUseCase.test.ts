@@ -19,15 +19,20 @@ describe("GetAddressUseCase", () => {
   it("should return the address from the appBinder's getExtendedPublicKey method", () => {
     // GIVEN
     const checkOnDevice = true;
+    const skipOpenApp = false;
 
     // WHEN
-    const result = useCase.execute(derivationPath, { checkOnDevice });
+    const result = useCase.execute(derivationPath, {
+      checkOnDevice,
+      skipOpenApp,
+    });
 
     // THEN
     expect(result).toEqual(address);
     expect(getExtendedPublicKeyMock).toHaveBeenCalledWith({
       derivationPath,
       checkOnDevice,
+      skipOpenApp,
     });
   });
 });

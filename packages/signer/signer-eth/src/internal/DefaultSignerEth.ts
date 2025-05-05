@@ -10,8 +10,10 @@ import { type SignPersonalMessageDAReturnType } from "@api/app-binder/SignPerson
 import { type SignTransactionDAReturnType } from "@api/app-binder/SignTransactionDeviceActionTypes";
 import { type SignTypedDataDAReturnType } from "@api/app-binder/SignTypedDataDeviceActionTypes";
 import { type AddressOptions } from "@api/model/AddressOptions";
+import { type MessageOptions } from "@api/model/MessageOptions";
 import { type TransactionOptions } from "@api/model/TransactionOptions";
 import { type TypedData } from "@api/model/TypedData";
+import { type TypedDataOptions } from "@api/model/TypedDataOptions";
 import { type SignerEth } from "@api/SignerEth";
 import { addressTypes } from "@internal/address/di/addressTypes";
 import { type GetAddressUseCase } from "@internal/address/use-case/GetAddressUseCase";
@@ -47,29 +49,31 @@ export class DefaultSignerEth implements SignerEth {
   }
 
   signMessage(
-    _derivationPath: string,
-    _message: string | Uint8Array,
+    derivationPath: string,
+    message: string | Uint8Array,
+    options?: MessageOptions,
   ): SignPersonalMessageDAReturnType {
     return this._container
       .get<SignMessageUseCase>(messageTypes.SignMessageUseCase)
-      .execute(_derivationPath, _message);
+      .execute(derivationPath, message, options);
   }
 
   signTypedData(
-    _derivationPath: string,
-    _typedData: TypedData,
+    derivationPath: string,
+    typedData: TypedData,
+    options?: TypedDataOptions,
   ): SignTypedDataDAReturnType {
     return this._container
       .get<SignTypedDataUseCase>(typedDataTypes.SignTypedDataUseCase)
-      .execute(_derivationPath, _typedData);
+      .execute(derivationPath, typedData, options);
   }
 
   getAddress(
-    _derivationPath: string,
-    _options?: AddressOptions,
+    derivationPath: string,
+    options?: AddressOptions,
   ): GetAddressDAReturnType {
     return this._container
       .get<GetAddressUseCase>(addressTypes.GetAddressUseCase)
-      .execute(_derivationPath, _options);
+      .execute(derivationPath, options);
   }
 }

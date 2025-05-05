@@ -9,7 +9,6 @@ import {
 
 import { type Signature } from "@api/model/Signature";
 import { type Transaction } from "@api/model/Transaction";
-import { type TransactionOptions } from "@api/model/TransactionOptions";
 import { type SolanaAppErrorCodes } from "@internal/app-binder/command/utils/SolanaApplicationErrors";
 
 export type SignTransactionDAOutput = Signature;
@@ -17,7 +16,7 @@ export type SignTransactionDAOutput = Signature;
 export type SignTransactionDAInput = {
   readonly derivationPath: string;
   readonly transaction: Transaction;
-  readonly options: TransactionOptions;
+  readonly skipOpenApp: boolean;
 };
 
 export type SignTransactionDAError =

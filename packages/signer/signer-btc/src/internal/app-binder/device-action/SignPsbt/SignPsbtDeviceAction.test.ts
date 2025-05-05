@@ -61,6 +61,7 @@ describe("SignPsbtDeviceAction", () => {
             dataStoreService: "DataStoreService" as unknown as DataStoreService,
             psbtMapper: "PsbtMapper" as unknown as PsbtMapper,
             valueParser: "ValueParser" as unknown as ValueParser,
+            skipOpenApp: false,
           },
         });
 
@@ -177,6 +178,93 @@ describe("SignPsbtDeviceAction", () => {
           },
         );
       }));
+
+    it("should be successful while skipping OpenApp", () =>
+      new Promise<void>((resolve, reject) => {
+        setupOpenAppDAMock();
+
+        const deviceAction = new SignPsbtDeviceAction({
+          input: {
+            wallet: "ApiWallet" as unknown as RegisteredWallet,
+            psbt: "Hello world",
+            walletBuilder: "WalletBuilder" as unknown as WalletBuilder,
+            walletSerializer: "WalletSerializer" as unknown as WalletSerializer,
+            dataStoreService: "DataStoreService" as unknown as DataStoreService,
+            psbtMapper: "PsbtMapper" as unknown as PsbtMapper,
+            valueParser: "ValueParser" as unknown as ValueParser,
+            skipOpenApp: true,
+          },
+        });
+
+        // Mock the dependencies to return some sample data
+        vi.spyOn(deviceAction, "extractDependencies").mockReturnValue(
+          extractDependenciesMock(),
+        );
+        prepareWalletPolicyMock.mockResolvedValueOnce(
+          CommandResultFactory({
+            data: "Wallet" as unknown as Wallet,
+          }),
+        );
+        buildPsbtMock.mockResolvedValueOnce(
+          CommandResultFactory({
+            data: "BuildPsbtResult" as unknown as BuildPsbtTaskResult,
+          }),
+        );
+        signPsbtMock.mockResolvedValueOnce(
+          CommandResultFactory({
+            data: [
+              {
+                inputIndex: 0,
+                pubkey: Uint8Array.from([0x04, 0x05, 0x06]),
+                signature: Uint8Array.from([0x01, 0x02, 0x03]),
+              },
+            ],
+          }),
+        );
+
+        // Expected intermediate values for the following state sequence:
+        //   Initial -> PrepareWalletPolicy -> BuildPsbt -> SignPsbt
+        const expectedStates: Array<SignPsbtDAState> = [
+          {
+            intermediateValue: {
+              requiredUserInteraction: UserInteractionRequired.None,
+            },
+            status: DeviceActionStatus.Pending,
+          },
+          {
+            intermediateValue: {
+              requiredUserInteraction: UserInteractionRequired.None,
+            },
+            status: DeviceActionStatus.Pending,
+          },
+          {
+            intermediateValue: {
+              requiredUserInteraction: UserInteractionRequired.SignTransaction,
+            },
+            status: DeviceActionStatus.Pending,
+          },
+          {
+            output: [
+              {
+                inputIndex: 0,
+                pubkey: Uint8Array.from([0x04, 0x05, 0x06]),
+                signature: Uint8Array.from([0x01, 0x02, 0x03]),
+              },
+            ],
+            status: DeviceActionStatus.Completed,
+          },
+        ];
+
+        testDeviceActionStates(
+          deviceAction,
+          expectedStates,
+          makeDeviceActionInternalApiMock(),
+          {
+            onDone: resolve,
+            onError: reject,
+          },
+        );
+      }));
   });
 
   describe("error cases", () => {
@@ -215,6 +303,7 @@ describe("SignPsbtDeviceAction", () => {
             dataStoreService: {} as DataStoreService,
             psbtMapper: {} as PsbtMapper,
             valueParser: {} as ValueParser,
+            skipOpenApp: false,
           },
         });
 
@@ -242,6 +331,7 @@ describe("SignPsbtDeviceAction", () => {
             dataStoreService: {} as DataStoreService,
             psbtMapper: {} as PsbtMapper,
             valueParser: {} as ValueParser,
+            skipOpenApp: false,
           },
         });
 
@@ -304,6 +394,7 @@ describe("SignPsbtDeviceAction", () => {
             dataStoreService: {} as DataStoreService,
             psbtMapper: {} as PsbtMapper,
             valueParser: {} as ValueParser,
+            skipOpenApp: false,
           },
         });
 
@@ -377,6 +468,7 @@ describe("SignPsbtDeviceAction", () => {
             dataStoreService: {} as DataStoreService,
             psbtMapper: {} as PsbtMapper,
             valueParser: {} as ValueParser,
+            skipOpenApp: false,
           },
         });
 
@@ -461,6 +553,7 @@ describe("SignPsbtDeviceAction", () => {
             dataStoreService: {} as DataStoreService,
             psbtMapper: {} as PsbtMapper,
             valueParser: {} as ValueParser,
+            skipOpenApp: false,
           },
         });
 
@@ -539,6 +632,7 @@ describe("SignPsbtDeviceAction", () => {
             dataStoreService: {} as DataStoreService,
             psbtMapper: {} as PsbtMapper,
             valueParser: {} as ValueParser,
+            skipOpenApp: false,
           },
         });
 

@@ -21,6 +21,7 @@ describe("SignMessageUseCase", () => {
     expect(appBinder.signMessage).toHaveBeenCalledWith({
       derivationPath,
       message,
+      skipOpenApp: false,
     });
   });
 });

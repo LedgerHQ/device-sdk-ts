@@ -18,6 +18,7 @@ import { type WalletSerializer } from "@internal/wallet/service/WalletSerializer
 export type GetWalletAddressDAOutput = WalletAddress;
 
 export type GetWalletAddressDAInput = {
+  readonly skipOpenApp: boolean;
   readonly checkOnDevice: boolean;
   readonly change: boolean;
   readonly addressIndex: number;

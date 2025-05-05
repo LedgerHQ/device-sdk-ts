@@ -18,6 +18,7 @@ export class GetAddressUseCase {
     return this.appBinder.getAddress({
       derivationPath,
       checkOnDevice: options?.checkOnDevice ?? false,
+      skipOpenApp: options?.skipOpenApp ?? false,
     });
   }
 }

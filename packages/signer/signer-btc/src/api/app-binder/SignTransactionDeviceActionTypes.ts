@@ -29,6 +29,7 @@ export type SignTransactionDAInput = {
   dataStoreService: DataStoreService;
   psbtMapper: PsbtMapper;
   valueParser: ValueParser;
+  skipOpenApp: boolean;
 };
 
 export type SignTransactionDAError =

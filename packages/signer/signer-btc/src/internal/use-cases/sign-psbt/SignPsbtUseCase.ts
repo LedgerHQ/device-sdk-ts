@@ -17,10 +17,15 @@ export class SignPsbtUseCase {
     this._appBinder = appBinding;
   }
 
-  execute(wallet: Wallet, psbt: Psbt): SignPsbtDAReturnType {
+  execute(
+    wallet: Wallet,
+    psbt: Psbt,
+    skipOpenApp: boolean,
+  ): SignPsbtDAReturnType {
     return this._appBinder.signPsbt({
       wallet,
       psbt,
+      skipOpenApp,
     });
   }
 }

@@ -15,11 +15,16 @@ export class SignMessageUseCase {
     this._appBinder = appBinding;
   }
 
-  execute(derivationPath: string, message: string): SignMessageDAReturnType {
+  execute(
+    derivationPath: string,
+    message: string,
+    skipOpenApp: boolean,
+  ): SignMessageDAReturnType {
     // 1- Sign msg using the app binding
     return this._appBinder.signMessage({
       derivationPath,
       message,
+      skipOpenApp,
     });
   }
 }

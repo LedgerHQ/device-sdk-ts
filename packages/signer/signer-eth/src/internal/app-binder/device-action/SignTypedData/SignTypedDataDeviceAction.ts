@@ -145,6 +145,7 @@ export class SignTypedDataDeviceAction extends XStateDeviceAction<
         shouldOptIn: ({ context }) =>
           !context._internalState.appConfig!.web3ChecksEnabled &&
           !context._internalState.appConfig!.web3ChecksOptIn,
+        skipOpenApp: ({ context }) => context.input.skipOpenApp,
       },
       actions: {
         assignErrorFromEvent: assign({
@@ -156,7 +157,7 @@ export class SignTypedDataDeviceAction extends XStateDeviceAction<
       },
     }).createMachine({
       id: "SignTypedDataDeviceAction",
-      initial: "OpenAppDeviceAction",
+      initial: "InitialState",
       context: ({ input }) => {
         return {
           input,
@@ -173,6 +174,15 @@ export class SignTypedDataDeviceAction extends XStateDeviceAction<
         };
       },
       states: {
+        InitialState: {
+          always: [
+            {
+              target: "GetAppConfig",
+              guard: "skipOpenApp",
+            },
+            "OpenAppDeviceAction",
+          ],
+        },
         OpenAppDeviceAction: {
           invoke: {
             id: "openAppStateMachine",

@@ -19,8 +19,9 @@ export class GetAddressUseCase {
   ): GetAddressDAReturnType {
     return this._appBinder.getAddress({
       derivationPath,
-      checkOnDevice: options?.checkOnDevice,
-      returnChainCode: options?.returnChainCode,
+      checkOnDevice: options?.checkOnDevice ?? false,
+      returnChainCode: options?.returnChainCode ?? false,
+      skipOpenApp: options?.skipOpenApp ?? false,
     });
   }
 }

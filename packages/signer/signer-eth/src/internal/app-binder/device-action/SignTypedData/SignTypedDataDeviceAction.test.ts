@@ -169,6 +169,7 @@ describe("SignTypedDataDeviceAction", () => {
             data: TEST_MESSAGE,
             contextModule: mockContextModule,
             parser: mockParser,
+            skipOpenApp: false,
           },
         });
 
@@ -283,6 +284,86 @@ describe("SignTypedDataDeviceAction", () => {
         });
       }));
 
+    it("should be successful whlie skipping OpenApp", () =>
+      new Promise<void>((resolve, reject) => {
+        setupOpenAppDAMock();
+        setupAppConfig("1.15.0", false, false);
+
+        const deviceAction = new SignTypedDataDeviceAction({
+          input: {
+            derivationPath: "44'/60'/0'/0/0",
+            data: TEST_MESSAGE,
+            contextModule: mockContextModule,
+            parser: mockParser,
+            skipOpenApp: true,
+          },
+        });
+
+        // Mock the dependencies to return some sample data
+        vi.spyOn(deviceAction, "extractDependencies").mockReturnValue(
+          extractDependenciesMock(),
+        );
+        buildContextMock.mockResolvedValueOnce(TEST_BUILT_CONTEXT);
+        provideContextMock.mockResolvedValueOnce(
+          CommandResultFactory({ data: undefined }),
+        );
+        signTypedDataMock.mockResolvedValueOnce(
+          CommandResultFactory({
+            data: {
+              v: 0x1c,
+              r: "0x8a540510e13b0f2b11a451275716d29e08caad07e89a1c84964782fb5e1ad788",
+              s: "0x64a0de235b270fbe81e8e40688f4a9f9ad9d283d690552c9331d7773ceafa513",
+            },
+          }),
+        );
+
+        // Expected intermediate values for the following state sequence:
+        //   Initial -> BuildContext -> ProvideContext -> SignTypedData
+        const expectedStates: Array<SignTypedDataDAState> = [
+          {
+            intermediateValue: {
+              requiredUserInteraction: UserInteractionRequired.None,
+              step: SignTypedDataDAStateStep.GET_APP_CONFIG,
+            },
+            status: DeviceActionStatus.Pending,
+          },
+          {
+            intermediateValue: {
+              requiredUserInteraction: UserInteractionRequired.None,
+              step: SignTypedDataDAStateStep.BUILD_CONTEXT,
+            },
+            status: DeviceActionStatus.Pending,
+          },
+          {
+            intermediateValue: {
+              requiredUserInteraction: UserInteractionRequired.SignTypedData,
+              step: SignTypedDataDAStateStep.PROVIDE_CONTEXT,
+            },
+            status: DeviceActionStatus.Pending,
+          },
+          {
+            intermediateValue: {
+              requiredUserInteraction: UserInteractionRequired.SignTypedData,
+              step: SignTypedDataDAStateStep.SIGN_TYPED_DATA,
+            },
+            status: DeviceActionStatus.Pending,
+          },
+          {
+            output: {
+              v: 0x1c,
+              r: "0x8a540510e13b0f2b11a451275716d29e08caad07e89a1c84964782fb5e1ad788",
+              s: "0x64a0de235b270fbe81e8e40688f4a9f9ad9d283d690552c9331d7773ceafa513",
+            },
+            status: DeviceActionStatus.Completed,
+          },
+        ];
+
+        testDeviceActionStates(deviceAction, expectedStates, apiMock, {
+          onError: reject,
+          onDone: resolve,
+        });
+      }));
+
     it("should fallback to legacy signing if the new one fails", () =>
       new Promise<void>((resolve, reject) => {
         setupOpenAppDAMock();
@@ -294,6 +375,7 @@ describe("SignTypedDataDeviceAction", () => {
             data: TEST_MESSAGE,
             contextModule: mockContextModule,
             parser: mockParser,
+            skipOpenApp: false,
           },
         });
 
@@ -390,6 +472,7 @@ describe("SignTypedDataDeviceAction", () => {
             data: TEST_MESSAGE,
             contextModule: mockContextModule,
             parser: mockParser,
+            skipOpenApp: false,
           },
         });
 
@@ -471,6 +554,7 @@ describe("SignTypedDataDeviceAction", () => {
             data: TEST_MESSAGE,
             contextModule: mockContextModule,
             parser: mockParser,
+            skipOpenApp: false,
           },
         });
 
@@ -561,6 +645,7 @@ describe("SignTypedDataDeviceAction", () => {
             data: TEST_MESSAGE,
             contextModule: mockContextModule,
             parser: mockParser,
+            skipOpenApp: false,
           },
         });
 
@@ -651,6 +736,7 @@ describe("SignTypedDataDeviceAction", () => {
             data: TEST_MESSAGE,
             contextModule: mockContextModule,
             parser: mockParser,
+            skipOpenApp: false,
           },
         });
 
@@ -741,6 +827,7 @@ describe("SignTypedDataDeviceAction", () => {
             data: TEST_MESSAGE,
             contextModule: mockContextModule,
             parser: mockParser,
+            skipOpenApp: false,
           },
         });
 
@@ -850,6 +937,7 @@ describe("SignTypedDataDeviceAction", () => {
             data: TEST_MESSAGE,
             contextModule: mockContextModule,
             parser: mockParser,
+            skipOpenApp: false,
           },
         });
 
@@ -981,6 +1069,7 @@ describe("SignTypedDataDeviceAction", () => {
             data: TEST_MESSAGE,
             contextModule: mockContextModule,
             parser: mockParser,
+            skipOpenApp: false,
           },
         });
 
@@ -1001,6 +1090,7 @@ describe("SignTypedDataDeviceAction", () => {
             data: TEST_MESSAGE,
             contextModule: mockContextModule,
             parser: mockParser,
+            skipOpenApp: false,
           },
         });
 
@@ -1070,6 +1160,7 @@ describe("SignTypedDataDeviceAction", () => {
             data: TEST_MESSAGE,
             contextModule: mockContextModule,
             parser: mockParser,
+            skipOpenApp: false,
           },
         });
 

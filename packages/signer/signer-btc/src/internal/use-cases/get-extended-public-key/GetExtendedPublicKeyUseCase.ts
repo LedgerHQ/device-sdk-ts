@@ -10,10 +10,14 @@ export class GetExtendedPublicKeyUseCase {
     private readonly _appBinder: BtcAppBinder,
   ) {}
 
-  execute(derivationPath: string, options: { checkOnDevice: boolean }) {
+  execute(
+    derivationPath: string,
+    options: { checkOnDevice: boolean; skipOpenApp: boolean },
+  ) {
     return this._appBinder.getExtendedPublicKey({
       derivationPath,
       checkOnDevice: options.checkOnDevice,
+      skipOpenApp: options.skipOpenApp,
     });
   }
 }
