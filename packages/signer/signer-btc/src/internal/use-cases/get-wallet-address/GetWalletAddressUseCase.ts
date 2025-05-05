@@ -21,12 +21,14 @@ export class GetWalletAddressUseCase {
     wallet: Wallet,
     change: boolean,
     addressIndex: number,
+    skipOpenApp: boolean,
   ): GetWalletAddressDAReturnType {
     return this._appBinder.getWalletAddress({
       wallet,
       checkOnDevice,
       change,
       addressIndex,
+      skipOpenApp,
     });
   }
 }

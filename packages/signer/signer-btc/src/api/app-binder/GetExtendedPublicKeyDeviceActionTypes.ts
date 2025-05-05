@@ -25,7 +25,9 @@ export type GetExtendedPublicKeyDAError =
 export type GetExtendedDAIntermediateValue =
   SendCommandInAppDAIntermediateValue<GetExtendedPublicKeyDARequiredInteraction>;
 
-export type GetExtendedPublicKeyDAInput = GetExtendedPublicKeyCommandArgs;
+export type GetExtendedPublicKeyDAInput = GetExtendedPublicKeyCommandArgs & {
+  skipOpenApp: boolean;
+};
 
 export type GetExtendedPublicKeyDAReturnType = ExecuteDeviceActionReturnType<
   GetExtendedPublicKeyDAOutput,

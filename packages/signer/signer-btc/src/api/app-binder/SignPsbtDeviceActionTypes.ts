@@ -29,6 +29,7 @@ export type SignPsbtDAInput = {
   dataStoreService: DataStoreService;
   psbtMapper: PsbtMapper;
   valueParser: ValueParser;
+  skipOpenApp: boolean;
 };
 
 export type SignPsbtDAError =

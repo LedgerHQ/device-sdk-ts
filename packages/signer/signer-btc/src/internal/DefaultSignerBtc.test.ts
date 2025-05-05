@@ -39,7 +39,7 @@ describe("DefaultSignerBtc", () => {
     const derivationPath = "44'/0'/0'/0/0";
     const message = "message";
     const signer = new DefaultSignerBtc({ dmk, sessionId });
-    signer.signMessage(derivationPath, message);
+    signer.signMessage(derivationPath, message, { skipOpenApp: false });
     expect(SignMessageUseCase.prototype.execute).toHaveBeenCalled();
   });
   it("should call signPsbtUseCase", () => {
@@ -52,6 +52,7 @@ describe("DefaultSignerBtc", () => {
     signer.signPsbt(
       new DefaultWallet("44'/0'/0'", DefaultDescriptorTemplate.NATIVE_SEGWIT),
       "",
+      { skipOpenApp: false },
     );
     expect(SignPsbtUseCase.prototype.execute).toHaveBeenCalled();
   });
@@ -65,6 +66,7 @@ describe("DefaultSignerBtc", () => {
     signer.signTransaction(
       new DefaultWallet("44'/0'/0'", DefaultDescriptorTemplate.NATIVE_SEGWIT),
       "",
+      { skipOpenApp: false },
     );
     expect(SignTransactionUseCase.prototype.execute).toHaveBeenCalled();
   });

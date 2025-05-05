@@ -51,6 +51,7 @@ describe("GetWalletAddressDeviceAction", () => {
             walletBuilder: "WalletBuilder" as unknown as WalletBuilder,
             walletSerializer: "WalletSerializer" as unknown as WalletSerializer,
             dataStoreService: "DataStoreService" as unknown as DataStoreService,
+            skipOpenApp: false,
             checkOnDevice: true,
             change: false,
             addressIndex: 1,
@@ -84,6 +85,69 @@ describe("GetWalletAddressDeviceAction", () => {
             },
             status: DeviceActionStatus.Pending,
           },
+          {
+            intermediateValue: {
+              requiredUserInteraction: UserInteractionRequired.None,
+            },
+            status: DeviceActionStatus.Pending,
+          },
+          {
+            intermediateValue: {
+              requiredUserInteraction: UserInteractionRequired.VerifyAddress,
+            },
+            status: DeviceActionStatus.Pending,
+          },
+          {
+            output: "WalletAddress" as unknown as WalletAddress,
+            status: DeviceActionStatus.Completed,
+          },
+        ];
+
+        // then
+        testDeviceActionStates(
+          deviceAction,
+          expectedStates,
+          makeDeviceActionInternalApiMock(),
+          {
+            onDone: resolve,
+            onError: reject,
+          },
+        );
+      }));
+
+    it("should be successful while skipping OpenApp", () =>
+      new Promise<void>((resolve, reject) => {
+        // given
+        setupOpenAppDAMock();
+
+        const deviceAction = new GetWalletAddressDeviceAction({
+          input: {
+            wallet: "ApiWallet" as unknown as RegisteredWallet,
+            walletBuilder: "WalletBuilder" as unknown as WalletBuilder,
+            walletSerializer: "WalletSerializer" as unknown as WalletSerializer,
+            dataStoreService: "DataStoreService" as unknown as DataStoreService,
+            skipOpenApp: true,
+            checkOnDevice: true,
+            change: false,
+            addressIndex: 1,
+          },
+        });
+
+        vi.spyOn(deviceAction, "extractDependencies").mockReturnValue(
+          extractDependenciesMock(),
+        );
+        prepareWalletPolicyMock.mockResolvedValueOnce(
+          CommandResultFactory({
+            data: "InternalWallet",
+          }),
+        );
+        getWalletAddressMock.mockResolvedValueOnce(
+          CommandResultFactory({
+            data: "WalletAddress",
+          }),
+        );
+
+        const expectedStates: Array<GetWalletAddressDAState> = [
           {
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
@@ -150,6 +214,7 @@ describe("GetWalletAddressDeviceAction", () => {
             walletBuilder: {} as WalletBuilder,
             walletSerializer: {} as WalletSerializer,
             dataStoreService: {} as DataStoreService,
+            skipOpenApp: false,
             checkOnDevice: true,
             change: false,
             addressIndex: 1,
@@ -185,6 +250,7 @@ describe("GetWalletAddressDeviceAction", () => {
             walletBuilder: {} as WalletBuilder,
             walletSerializer: {} as WalletSerializer,
             dataStoreService: {} as DataStoreService,
+            skipOpenApp: false,
             checkOnDevice: true,
             change: false,
             addressIndex: 1,
@@ -250,6 +316,7 @@ describe("GetWalletAddressDeviceAction", () => {
             walletBuilder: {} as WalletBuilder,
             walletSerializer: {} as WalletSerializer,
             dataStoreService: {} as DataStoreService,
+            skipOpenApp: false,
             checkOnDevice: true,
             change: false,
             addressIndex: 1,

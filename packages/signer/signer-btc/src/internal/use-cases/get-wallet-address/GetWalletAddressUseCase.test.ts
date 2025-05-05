@@ -21,6 +21,7 @@ describe("GetWalletAddressUseCase", () => {
     const checkOnDevice = false;
     const change = false;
     const addressIndex = 0;
+    const skipOpenApp = false;
 
     const appBinder = {
       getWalletAddress: vi.fn(),
@@ -35,6 +36,7 @@ describe("GetWalletAddressUseCase", () => {
       wallet,
       change,
       addressIndex,
+      skipOpenApp,
     );
 
     // then
@@ -43,6 +45,7 @@ describe("GetWalletAddressUseCase", () => {
       checkOnDevice,
       change,
       addressIndex,
+      skipOpenApp,
     });
   });
 });

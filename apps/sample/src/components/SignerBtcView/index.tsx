@@ -51,14 +51,20 @@ export const SignerBtcView: React.FC<{ sessionId: string }> = ({
         title: "Get extended public key",
         description:
           "Perform all the actions necessary to get a btc extended public key",
-        executeDeviceAction: ({ derivationPath, checkOnDevice }) => {
+        executeDeviceAction: ({
+          derivationPath,
+          checkOnDevice,
+          skipOpenApp,
+        }) => {
           return signer.getExtendedPublicKey(derivationPath, {
             checkOnDevice,
+            skipOpenApp,
           });
         },
         initialValues: {
           derivationPath: "84'/0'/0'",
           checkOnDevice: false,
+          skipOpenApp: false,
         },
         deviceModelId,
       } satisfies DeviceActionProps<
@@ -66,6 +72,7 @@ export const SignerBtcView: React.FC<{ sessionId: string }> = ({
         {
           derivationPath: string;
           checkOnDevice?: boolean;
+          skipOpenApp?: boolean;
         },
         GetExtendedPublicKeyDAError,
         GetExtendedDAIntermediateValue
@@ -80,6 +87,7 @@ export const SignerBtcView: React.FC<{ sessionId: string }> = ({
           addressIndex,
           derivationPath,
           descriptorTemplate,
+          skipOpenApp,
         }) => {
           if (!signer) {
             throw new Error("Signer not initialized");
@@ -88,7 +96,7 @@ export const SignerBtcView: React.FC<{ sessionId: string }> = ({
           return signer.getWalletAddress(
             new DefaultWallet(derivationPath, descriptorTemplate),
             Number(addressIndex),
-            { checkOnDevice, change },
+            { checkOnDevice, change, skipOpenApp },
           );
         },
         InputValuesComponent: GetWalletAddressInputValuesForm,
@@ -98,6 +106,7 @@ export const SignerBtcView: React.FC<{ sessionId: string }> = ({
           derivationPath: DEFAULT_DERIVATION_PATH,
           addressIndex: 0,
           descriptorTemplate: DefaultDescriptorTemplate.NATIVE_SEGWIT,
+          skipOpenApp: false,
         },
         validateValues: ({ addressIndex }) => !isNaN(Number(addressIndex)),
         deviceModelId,
@@ -109,6 +118,7 @@ export const SignerBtcView: React.FC<{ sessionId: string }> = ({
           addressIndex: number;
           derivationPath: string;
           descriptorTemplate: DefaultDescriptorTemplate;
+          skipOpenApp: boolean;
         },
         GetWalletAddressDAError,
         GetWalletAddressDAIntermediateValue
@@ -117,15 +127,16 @@ export const SignerBtcView: React.FC<{ sessionId: string }> = ({
         title: "Sign message",
         description:
           "Perform all the actions necessary to sign a message with the device",
-        executeDeviceAction: ({ derivationPath, message }) => {
+        executeDeviceAction: ({ derivationPath, message, skipOpenApp }) => {
           if (!signer) {
             throw new Error("Signer not initialized");
           }
-          return signer.signMessage(derivationPath, message);
+          return signer.signMessage(derivationPath, message, { skipOpenApp });
         },
         initialValues: {
           derivationPath: DEFAULT_DERIVATION_PATH,
           message: "Hello World",
+          skipOpenApp: false,
         },
         deviceModelId,
       } satisfies DeviceActionProps<
@@ -133,6 +144,7 @@ export const SignerBtcView: React.FC<{ sessionId: string }> = ({
         {
           derivationPath: string;
           message: string;
+          skipOpenApp: boolean;
         },
         SignMessageDAError,
         SignMessageDAIntermediateValue
@@ -141,7 +153,12 @@ export const SignerBtcView: React.FC<{ sessionId: string }> = ({
         title: "Sign psbt",
         description:
           "Perform all the actions necessary to sign a PSBT with the device",
-        executeDeviceAction: ({ descriptorTemplate, psbt, path }) => {
+        executeDeviceAction: ({
+          descriptorTemplate,
+          psbt,
+          path,
+          skipOpenApp,
+        }) => {
           if (!signer) {
             throw new Error("Signer not initialized");
           }
@@ -149,6 +166,7 @@ export const SignerBtcView: React.FC<{ sessionId: string }> = ({
           return signer.signPsbt(
             new DefaultWallet(path, descriptorTemplate),
             psbt,
+            { skipOpenApp },
           );
         },
         InputValuesComponent: SignPsbtDAInputValuesForm,
@@ -156,6 +174,7 @@ export const SignerBtcView: React.FC<{ sessionId: string }> = ({
           descriptorTemplate: DefaultDescriptorTemplate.NATIVE_SEGWIT,
           psbt: "",
           path: DEFAULT_DERIVATION_PATH,
+          skipOpenApp: false,
         },
         deviceModelId,
       } satisfies DeviceActionProps<
@@ -164,6 +183,7 @@ export const SignerBtcView: React.FC<{ sessionId: string }> = ({
           psbt: string;
           path: string;
           descriptorTemplate: DefaultDescriptorTemplate;
+          skipOpenApp: boolean;
         },
         SignPsbtDAError,
         SignPsbtDAIntermediateValue
@@ -172,7 +192,12 @@ export const SignerBtcView: React.FC<{ sessionId: string }> = ({
         title: "Sign transaction",
         description:
           "Perform all the actions necessary to sign a PSBT with the device and extract transaction",
-        executeDeviceAction: ({ descriptorTemplate, psbt, path }) => {
+        executeDeviceAction: ({
+          descriptorTemplate,
+          psbt,
+          path,
+          skipOpenApp,
+        }) => {
           if (!signer) {
             throw new Error("Signer not initialized");
           }
@@ -180,6 +205,7 @@ export const SignerBtcView: React.FC<{ sessionId: string }> = ({
           return signer.signTransaction(
             new DefaultWallet(path, descriptorTemplate),
             psbt,
+            { skipOpenApp },
           );
         },
         InputValuesComponent: SignPsbtDAInputValuesForm,
@@ -189,6 +215,7 @@ export const SignerBtcView: React.FC<{ sessionId: string }> = ({
           path: descriptorTemplateToDerivationPath[
             DefaultDescriptorTemplate.NATIVE_SEGWIT
           ],
+          skipOpenApp: false,
         },
         deviceModelId,
       } satisfies DeviceActionProps<
@@ -197,6 +224,7 @@ export const SignerBtcView: React.FC<{ sessionId: string }> = ({
           psbt: string;
           path: string;
           descriptorTemplate: DefaultDescriptorTemplate;
+          skipOpenApp: boolean;
         },
         SignTransactionDAError,
         SignTransactionDAIntermediateValue

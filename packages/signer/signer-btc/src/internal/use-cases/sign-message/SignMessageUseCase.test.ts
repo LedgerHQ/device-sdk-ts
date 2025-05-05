@@ -7,6 +7,7 @@ describe("SignMessageUseCase", () => {
     // Given
     const derivationPath = "44'/501'/0'/0'";
     const message = "Hello world";
+    const skipOpenApp = false;
     const appBinder = {
       signMessage: vi.fn(),
     };
@@ -15,12 +16,13 @@ describe("SignMessageUseCase", () => {
     );
 
     // When
-    signMessageUseCase.execute(derivationPath, message);
+    signMessageUseCase.execute(derivationPath, message, skipOpenApp);
 
     // Then
     expect(appBinder.signMessage).toHaveBeenCalledWith({
       derivationPath,
       message,
+      skipOpenApp,
     });
   });
 });
