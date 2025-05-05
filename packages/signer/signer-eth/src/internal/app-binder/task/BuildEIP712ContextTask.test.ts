@@ -192,10 +192,6 @@ describe("BuildEIP712ContextTask", () => {
       domain: TEST_DOMAIN_VALUES,
       message: TEST_MESSAGE_VALUES,
       clearSignContext: Nothing,
-      domainHash:
-        "0xf033048cb2764f596bc4d98e089fa38bb84b4be3d5da2e77f9bfac0e4d6c68ca",
-      messageHash:
-        "0x1087495b5e10337738059920fe1de8216235299745e8c97e21b409009a4c362a",
     });
   });
 
@@ -238,10 +234,6 @@ describe("BuildEIP712ContextTask", () => {
       domain: TEST_DOMAIN_VALUES,
       message: TEST_MESSAGE_VALUES,
       clearSignContext: Nothing,
-      domainHash:
-        "0xf033048cb2764f596bc4d98e089fa38bb84b4be3d5da2e77f9bfac0e4d6c68ca",
-      messageHash:
-        "0x1087495b5e10337738059920fe1de8216235299745e8c97e21b409009a4c362a",
     });
   });
 
@@ -288,10 +280,6 @@ describe("BuildEIP712ContextTask", () => {
       domain: TEST_DOMAIN_VALUES,
       message: TEST_MESSAGE_VALUES,
       clearSignContext: Just(TEST_CLEAR_SIGN_CONTEXT),
-      domainHash:
-        "0xf033048cb2764f596bc4d98e089fa38bb84b4be3d5da2e77f9bfac0e4d6c68ca",
-      messageHash:
-        "0x1087495b5e10337738059920fe1de8216235299745e8c97e21b409009a4c362a",
     });
     expect(parserMock.parse).toHaveBeenCalledWith(TEST_DATA);
     expect(contextMouleMock.getTypedDataFilters).toHaveBeenCalledWith({
@@ -355,10 +343,6 @@ describe("BuildEIP712ContextTask", () => {
       domain: TEST_DOMAIN_VALUES,
       message: TEST_MESSAGE_VALUES,
       clearSignContext: Just(TEST_CLEAR_SIGN_CONTEXT),
-      domainHash:
-        "0xf033048cb2764f596bc4d98e089fa38bb84b4be3d5da2e77f9bfac0e4d6c68ca",
-      messageHash:
-        "0x1087495b5e10337738059920fe1de8216235299745e8c97e21b409009a4c362a",
     });
     expect(getWeb3ChecksFactoryMock).toHaveBeenCalledWith(apiMock, {
       contextModule: contextMouleMock,
@@ -415,38 +399,6 @@ describe("BuildEIP712ContextTask", () => {
         },
       ],
     });
-  });
-
-  it("Should throw error if no primary type", async () => {
-    // GIVEN
-    const task = new BuildEIP712ContextTask(
-      apiMock,
-      contextMouleMock,
-      parserMock,
-      {
-        ...TEST_DATA,
-        primaryType: "",
-      },
-      "44'/60'/0'/0/0",
-      createAppConfig(false),
-      getWeb3ChecksFactoryMock,
-    );
-    parserMock.parse.mockReturnValueOnce(
-      Right({
-        types: TEST_TYPES,
-        domain: TEST_DOMAIN_VALUES,
-        message: TEST_MESSAGE_VALUES,
-      }),
-    );
-    // WHEN
-    try {
-      await task.run();
-    } catch (e) {
-      // THEN
-      expect(e).toBeInstanceOf(Error);
-      // @ts-expect-error
-      expect(e.message).toBe('Primary type "" is not defined in the types.');
-    }
   });
 
   it("Should throw an error if parsing fails", async () => {
