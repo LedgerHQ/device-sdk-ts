@@ -190,8 +190,8 @@ catalogs:
       specifier: 12.1.1
       version: 12.1.1
     ethers:
-      specifier: 6.13.4
-      version: 6.13.4
+      specifier: 6.14.1
+      version: 6.14.1
     gitmoji-cli:
       specifier: ^9.5.0
       version: 9.5.0
@@ -639,7 +639,7 @@ importers:
         version: 8.42.0(@opentelemetry/core@1.26.0(@opentelemetry/api@1.9.0))(@opentelemetry/instrumentation@0.54.2(@opentelemetry/api@1.9.0))(@opentelemetry/sdk-trace-base@1.26.0(@opentelemetry/api@1.9.0))(next@14.2.26(@babel/core@7.26.10)(@opentelemetry/api@1.9.0)(@playwright/test@1.49.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(react@18.3.1)(webpack@5.92.1(esbuild@0.25.4))
       ethers:
         specifier: 'catalog:'
-        version: 6.13.4
+        version: 6.14.1
       next:
         specifier: 'catalog:'
         version: 14.2.26(@babel/core@7.26.10)(@opentelemetry/api@1.9.0)(@playwright/test@1.49.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
@@ -866,7 +866,7 @@ importers:
         version: 4.2.0
       ethers:
         specifier: 'catalog:'
-        version: 6.13.4
+        version: 6.14.1
       inversify:
         specifier: 'catalog:'
         version: 7.5.1(reflect-metadata@0.2.2)
@@ -961,7 +961,7 @@ importers:
         version: link:../signer-utils
       ethers:
         specifier: 'catalog:'
-        version: 6.13.4
+        version: 6.14.1
       inversify:
         specifier: 'catalog:'
         version: 7.5.1(reflect-metadata@0.2.2)
@@ -6050,8 +6050,8 @@ packages:
     resolution: {integrity: sha512-aIL5Fx7mawVa300al2BnEE4iNvo1qETxLrPI/o05L7z6go7fCw1J6EQmbK4FmJ2AS7kgVF/KEZWufBfdClMcPg==}
     engines: {node: '>= 0.6'}
 
-  ethers@6.13.4:
-    resolution: {integrity: sha512-21YtnZVg4/zKkCQPjrDj38B1r4nQvTZLopUGMLQ1ePU2zV/joCfDC3t3iKQjWRzjjjbzR+mdAIoikeBRNkdllA==}
+  ethers@6.14.1:
+    resolution: {integrity: sha512-JnFiPFi3sK2Z6y7jZ3qrafDMwiXmU+6cNZ0M+kPq+mTy9skqEzwqAdFW3nb/em2xjlIVXX6Lz8ID6i3LmS4+fQ==}
     engines: {node: '>=14.0.0'}
 
   event-target-shim@5.0.1:
@@ -15653,7 +15653,7 @@ snapshots:
 
   etag@1.8.1: {}
 
-  ethers@6.13.4:
+  ethers@6.14.1:
     dependencies:
       '@adraffy/ens-normalize': 1.10.1
       '@noble/curves': 1.2.0
