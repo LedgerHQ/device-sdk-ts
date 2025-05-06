@@ -28,5 +28,6 @@ export const managerApiModuleFactory = ({ stub, config }: FactoryProps) =>
     if (stub) {
       rebindSync(managerApiTypes.ManagerApiDataSource).to(StubUseCase);
       rebindSync(managerApiTypes.ManagerApiService).to(StubUseCase);
+      rebindSync(managerApiTypes.SetProviderUseCase).to(StubUseCase);
     }
   });

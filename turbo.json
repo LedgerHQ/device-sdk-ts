@@ -8,10 +8,10 @@
       "inputs": ["src/**/*.ts", "index.ts"]
     },
     "lint": {
-      "dependsOn": ["^build"]
+      "dependsOn": ["build"]
     },
     "lint:fix": {
-      "dependsOn": ["^build"]
+      "dependsOn": ["build"]
     },
     "prettier": {
       "dependsOn": ["^prettier"]

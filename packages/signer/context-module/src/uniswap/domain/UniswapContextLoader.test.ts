@@ -147,15 +147,10 @@ describe("UniswapContextLoader", () => {
         vi.spyOn(Interface.prototype, "parseTransaction").mockReturnValue({
           args: [commands, ["0x0001", "0x0002"]],
         } as TransactionDescription);
-        vi.spyOn(commandDecoderMock, "decode").mockReturnValueOnce([
-          "0x01",
-          "0x04",
-          "0x02",
-        ]);
-        vi.spyOn(commandDecoderMock, "decode").mockReturnValueOnce([
-          "0x02",
-          "0x03",
-        ]);
+        vi.spyOn(commandDecoderMock, "decode")
+          .mockReturnValueOnce(["0x01", "0x04", "0x02"])
+          .mockReturnValueOnce(["0x02", "0x03"]);
+
         vi.spyOn(
           tokenDataSourceMock,
           "getTokenInfosPayload",
@@ -227,12 +222,10 @@ describe("UniswapContextLoader", () => {
         vi.spyOn(Interface.prototype, "parseTransaction").mockReturnValue({
           args: [commands, ["0x0001", "0x0002", "0x0003"]],
         } as TransactionDescription);
-        vi.spyOn(commandDecoderMock, "decode").mockReturnValueOnce(["0x01"]);
-        vi.spyOn(commandDecoderMock, "decode").mockReturnValueOnce([
-          "0x02",
-          "0x03",
-        ]);
-        vi.spyOn(commandDecoderMock, "decode").mockReturnValueOnce(["0x04"]);
+        vi.spyOn(commandDecoderMock, "decode")
+          .mockReturnValueOnce(["0x01"])
+          .mockReturnValueOnce(["0x02", "0x03"])
+          .mockReturnValueOnce(["0x04"]);
         vi.spyOn(
           tokenDataSourceMock,
           "getTokenInfosPayload",
@@ -298,24 +291,14 @@ describe("UniswapContextLoader", () => {
         vi.spyOn(Interface.prototype, "parseTransaction").mockReturnValue({
           args: [commands, ["0x0001", "0x0002"]],
         } as TransactionDescription);
-        vi.spyOn(commandDecoderMock, "decode").mockReturnValueOnce([
-          "0x01",
-          "0x02",
-        ]);
-        vi.spyOn(commandDecoderMock, "decode").mockReturnValueOnce([
-          "0x02",
-          "0x03",
-        ]);
-        vi.spyOn(
-          tokenDataSourceMock,
-          "getTokenInfosPayload",
-        ).mockResolvedValueOnce(Left("error"));
-        vi.spyOn(
-          tokenDataSourceMock,
-          "getTokenInfosPayload",
-        ).mockImplementation(({ address }) =>
-          Promise.resolve(Right(`payload-${address}`)),
-        );
+        vi.spyOn(commandDecoderMock, "decode")
+          .mockReturnValueOnce(["0x01", "0x02"])
+          .mockReturnValueOnce(["0x02", "0x03"]);
+        vi.spyOn(tokenDataSourceMock, "getTokenInfosPayload")
+          .mockResolvedValueOnce(Left("error"))
+          .mockImplementation(({ address }) =>
+            Promise.resolve(Right(`payload-${address}`)),
+          );
 
         // WHEN
         const result = await loader.load(transactionContext);

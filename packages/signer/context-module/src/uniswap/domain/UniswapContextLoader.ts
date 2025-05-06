@@ -138,6 +138,7 @@ export class UniswapContextLoader implements ContextLoader {
       );
 
       if (!this._isChainingSwapSupported(addressesByCommand)) {
+        console.log("Invalid chaining");
         return [];
       }
 
