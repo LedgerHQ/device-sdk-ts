@@ -16,7 +16,7 @@ type FactoryProps = {
 };
 
 export const configModuleFactory = ({ stub }: FactoryProps) =>
-  new ContainerModule((bind, _unbind, _isBound, rebind) => {
+  new ContainerModule(({ bind, rebindSync }) => {
     bind(configTypes.LocalConfigDataSource).to(FileLocalConfigDataSource);
     bind(configTypes.RemoteConfigDataSource).to(RestRemoteConfigDataSource);
     bind(configTypes.GetDmkVersionUseCase).to(GetDmkVersionUseCase);
@@ -24,7 +24,11 @@ export const configModuleFactory = ({ stub }: FactoryProps) =>
 
     if (stub) {
       // We can rebind our interfaces to their mock implementations
-      rebind(configTypes.LocalConfigDataSource).to(StubLocalConfigDataSource);
-      rebind(configTypes.RemoteConfigDataSource).to(StubRemoteConfigDataSource);
+      rebindSync(configTypes.LocalConfigDataSource).to(
+        StubLocalConfigDataSource,
+      );
+      rebindSync(configTypes.RemoteConfigDataSource).to(
+        StubRemoteConfigDataSource,
+      );
     }
   });

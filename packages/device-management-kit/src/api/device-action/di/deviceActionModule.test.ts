@@ -15,7 +15,11 @@ describe("deviceActionModule", () => {
     beforeEach(() => {
       mod = deviceActionModuleFactory();
       container = new Container();
-      container.load(mod, deviceSessionModuleFactory(), loggerModuleFactory());
+      container.loadSync(
+        mod,
+        deviceSessionModuleFactory(),
+        loggerModuleFactory(),
+      );
     });
 
     it("should return the config module", () => {
@@ -39,7 +43,7 @@ describe("deviceActionModule", () => {
     beforeEach(() => {
       mod = deviceActionModuleFactory({ stub: true });
       container = new Container();
-      container.load(mod);
+      container.loadSync(mod);
     });
 
     it("should return the config module", () => {

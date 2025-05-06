@@ -12,21 +12,11 @@ type DeviceActionModuleArgs = Partial<{
 export const deviceActionModuleFactory = ({
   stub = false,
 }: DeviceActionModuleArgs = {}) =>
-  new ContainerModule(
-    (
-      bind,
-      _unbind,
-      _isBound,
-      rebind,
-      _unbindAsync,
-      _onActivation,
-      _onDeactivation,
-    ) => {
-      bind(deviceActionTypes.ExecuteDeviceActionUseCase).to(
-        ExecuteDeviceActionUseCase,
-      );
-      if (stub) {
-        rebind(deviceActionTypes.ExecuteDeviceActionUseCase).to(StubUseCase);
-      }
-    },
-  );
+  new ContainerModule(({ bind, rebindSync }) => {
+    bind(deviceActionTypes.ExecuteDeviceActionUseCase).to(
+      ExecuteDeviceActionUseCase,
+    );
+    if (stub) {
+      rebindSync(deviceActionTypes.ExecuteDeviceActionUseCase).to(StubUseCase);
+    }
+  });

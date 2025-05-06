@@ -1,4 +1,4 @@
-import { ContainerModule, type interfaces } from "inversify";
+import { ContainerModule, type Factory } from "inversify";
 
 import { type ApduReceiverService } from "@api/device-session/service/ApduReceiverService";
 import { type ApduReceiverConstructorArgs } from "@api/device-session/service/ApduReceiverService";
@@ -23,57 +23,49 @@ export type DeviceSessionModuleArgs = Partial<{
 export const deviceSessionModuleFactory = (
   { stub }: DeviceSessionModuleArgs = { stub: false },
 ) =>
-  new ContainerModule(
-    (
-      bind,
-      _unbind,
-      _isBound,
-      rebind,
-      _unbindAsync,
-      _onActivation,
-      _onDeactivation,
-    ) => {
-      bind<interfaces.Factory<ApduSenderService>>(
-        deviceSessionTypes.ApduSenderServiceFactory,
-      ).toFactory((context) => {
-        const logger = context.container.get<
-          (name: string) => LoggerPublisherService
-        >(loggerTypes.LoggerPublisherServiceFactory);
-
-        return (args: ApduSenderServiceConstructorArgs) => {
-          return new DefaultApduSenderService(args, logger);
-        };
-      });
-
-      bind<interfaces.Factory<ApduReceiverService>>(
-        deviceSessionTypes.ApduReceiverServiceFactory,
-      ).toFactory((context) => {
-        const logger = context.container.get<
-          (name: string) => LoggerPublisherService
-        >(loggerTypes.LoggerPublisherServiceFactory);
-
-        return (args: ApduReceiverConstructorArgs = {}) => {
-          return new DefaultApduReceiverService(args, logger);
-        };
-      });
-
-      bind(deviceSessionTypes.DeviceSessionService)
-        .to(DefaultDeviceSessionService)
-        .inSingletonScope();
-
-      bind(deviceSessionTypes.GetDeviceSessionStateUseCase).to(
-        GetDeviceSessionStateUseCase,
-      );
-      bind(deviceSessionTypes.CloseSessionsUseCase).to(CloseSessionsUseCase);
-      bind(deviceSessionTypes.DisableDeviceSessionRefresherUseCase).to(
-        DisableDeviceSessionRefresherUseCase,
+  new ContainerModule(({ bind, rebindSync }) => {
+    bind<Factory<ApduSenderService>>(
+      deviceSessionTypes.ApduSenderServiceFactory,
+    ).toFactory((context) => {
+      const logger = context.get<(name: string) => LoggerPublisherService>(
+        loggerTypes.LoggerPublisherServiceFactory,
       );
 
-      if (stub) {
-        rebind(deviceSessionTypes.GetDeviceSessionStateUseCase).to(StubUseCase);
-        rebind(deviceSessionTypes.DisableDeviceSessionRefresherUseCase).to(
-          StubUseCase,
-        );
-      }
-    },
-  );
+      return (args: ApduSenderServiceConstructorArgs) => {
+        return new DefaultApduSenderService(args, logger);
+      };
+    });
+
+    bind<Factory<ApduReceiverService>>(
+      deviceSessionTypes.ApduReceiverServiceFactory,
+    ).toFactory((context) => {
+      const logger = context.get<(name: string) => LoggerPublisherService>(
+        loggerTypes.LoggerPublisherServiceFactory,
+      );
+
+      return (args: ApduReceiverConstructorArgs = {}) => {
+        return new DefaultApduReceiverService(args, logger);
+      };
+    });
+
+    bind(deviceSessionTypes.DeviceSessionService)
+      .to(DefaultDeviceSessionService)
+      .inSingletonScope();
+
+    bind(deviceSessionTypes.GetDeviceSessionStateUseCase).to(
+      GetDeviceSessionStateUseCase,
+    );
+    bind(deviceSessionTypes.CloseSessionsUseCase).to(CloseSessionsUseCase);
+    bind(deviceSessionTypes.DisableDeviceSessionRefresherUseCase).to(
+      DisableDeviceSessionRefresherUseCase,
+    );
+
+    if (stub) {
+      rebindSync(deviceSessionTypes.GetDeviceSessionStateUseCase).to(
+        StubUseCase,
+      );
+      rebindSync(deviceSessionTypes.DisableDeviceSessionRefresherUseCase).to(
+        StubUseCase,
+      );
+    }
+  });

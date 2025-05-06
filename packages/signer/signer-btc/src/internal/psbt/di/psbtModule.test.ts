@@ -9,7 +9,7 @@ describe("PsbtModuleFactory", () => {
     beforeEach(() => {
       mod = psbtModuleFactory();
       container = new Container();
-      container.load(mod);
+      container.loadSync(mod);
     });
 
     it("should return the psbt service module", () => {

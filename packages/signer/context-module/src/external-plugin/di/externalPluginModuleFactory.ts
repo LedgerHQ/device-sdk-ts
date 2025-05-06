@@ -5,7 +5,7 @@ import { externalPluginTypes } from "@/external-plugin/di/externalPluginTypes";
 import { ExternalPluginContextLoader } from "@/external-plugin/domain/ExternalPluginContextLoader";
 
 export const externalPluginModuleFactory = () =>
-  new ContainerModule((bind, _unbind, _isBound, _rebind) => {
+  new ContainerModule(({ bind }) => {
     bind(externalPluginTypes.ExternalPluginDataSource).to(
       HttpExternalPluginDataSource,
     );

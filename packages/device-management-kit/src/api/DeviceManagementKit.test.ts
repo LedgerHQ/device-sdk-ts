@@ -1,4 +1,4 @@
-import { type interfaces } from "inversify";
+import { type ServiceIdentifier } from "inversify";
 
 import { type LocalConfigDataSource } from "@internal/config/data/ConfigDataSource";
 import { StubLocalConfigDataSource } from "@internal/config/data/LocalConfigDataSource.stub";
@@ -130,7 +130,7 @@ describe("DeviceManagementKit", () => {
       [managerApiTypes.SetProviderUseCase],
     ])(
       "should have %s use case",
-      (diSymbol: interfaces.ServiceIdentifier<StubUseCase>) => {
+      (diSymbol: ServiceIdentifier<StubUseCase>) => {
         const uc = dmk.container.get<StubUseCase>(diSymbol);
         expect(uc).toBeInstanceOf(StubUseCase);
         expect(uc.execute()).toBe("stub");

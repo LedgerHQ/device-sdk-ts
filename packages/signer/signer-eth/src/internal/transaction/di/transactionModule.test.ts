@@ -10,7 +10,7 @@ describe("transactionModuleFactory", () => {
     beforeEach(() => {
       mod = transactionModuleFactory();
       container = new Container();
-      container.load(mod);
+      container.loadSync(mod);
     });
 
     it("should return the transaction module", () => {

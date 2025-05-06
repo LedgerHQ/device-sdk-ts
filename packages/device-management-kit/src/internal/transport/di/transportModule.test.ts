@@ -16,7 +16,7 @@ describe("transportModuleFactory", () => {
     beforeEach(() => {
       mod = transportModuleFactory();
       container = new Container();
-      container.load(mod);
+      container.loadSync(mod);
     });
 
     it("should create the transport module", () => {
@@ -52,7 +52,7 @@ describe("transportModuleFactory", () => {
         } as DmkConfig,
       });
       container = new Container();
-      container.load(logger, deviceModel, deviceSession, mod);
+      container.loadSync(logger, deviceModel, deviceSession, mod);
     });
 
     it("should bind the TransportService", () => {
@@ -72,7 +72,7 @@ describe("transportModuleFactory", () => {
         transports: [() => transport],
       });
       container = new Container();
-      container.load(mod);
+      container.loadSync(mod);
     });
 
     it("should create the transport module", () => {

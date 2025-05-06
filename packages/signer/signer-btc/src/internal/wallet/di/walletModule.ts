@@ -5,17 +5,7 @@ import { DefaultWalletBuilder } from "@internal/wallet/service/DefaultWalletBuil
 import { DefaultWalletSerializer } from "@internal/wallet/service/DefaultWalletSerializer";
 
 export const walletModuleFactory = () =>
-  new ContainerModule(
-    (
-      bind,
-      _unbind,
-      _isBound,
-      _rebind,
-      _unbindAsync,
-      _onActivation,
-      _onDeactivation,
-    ) => {
-      bind(walletTypes.WalletBuilder).to(DefaultWalletBuilder);
-      bind(walletTypes.WalletSerializer).to(DefaultWalletSerializer);
-    },
-  );
+  new ContainerModule(({ bind }) => {
+    bind(walletTypes.WalletBuilder).to(DefaultWalletBuilder);
+    bind(walletTypes.WalletSerializer).to(DefaultWalletSerializer);
+  });

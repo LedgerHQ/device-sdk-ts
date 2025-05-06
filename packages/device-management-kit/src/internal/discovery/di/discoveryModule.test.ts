@@ -27,7 +27,7 @@ describe("discoveryModuleFactory", () => {
     container = new Container();
     transport = new TransportMock();
 
-    container.load(
+    container.loadSync(
       mod,
       // The following modules are injected into discovery module
       loggerModuleFactory(),

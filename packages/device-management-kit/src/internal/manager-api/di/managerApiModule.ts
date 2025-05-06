@@ -14,7 +14,7 @@ type FactoryProps = {
 };
 
 export const managerApiModuleFactory = ({ stub, config }: FactoryProps) =>
-  new ContainerModule((bind, _unbind, _isBound, rebind) => {
+  new ContainerModule(({ bind, rebindSync }) => {
     bind(managerApiTypes.DmkConfig).toConstantValue(config);
 
     bind(managerApiTypes.ManagerApiDataSource)
@@ -26,8 +26,7 @@ export const managerApiModuleFactory = ({ stub, config }: FactoryProps) =>
     bind(managerApiTypes.SetProviderUseCase).to(SetProviderUseCase);
 
     if (stub) {
-      rebind(managerApiTypes.ManagerApiDataSource).to(StubUseCase);
-      rebind(managerApiTypes.ManagerApiService).to(StubUseCase);
-      rebind(managerApiTypes.SetProviderUseCase).to(StubUseCase);
+      rebindSync(managerApiTypes.ManagerApiDataSource).to(StubUseCase);
+      rebindSync(managerApiTypes.ManagerApiService).to(StubUseCase);
     }
   });

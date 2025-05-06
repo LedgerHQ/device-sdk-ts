@@ -9,7 +9,7 @@ describe("DataStoreModuleFactory", () => {
     beforeEach(() => {
       mod = dataStoreModuleFactory();
       container = new Container();
-      container.load(mod);
+      container.loadSync(mod);
     });
 
     it("should return the data store service module", () => {

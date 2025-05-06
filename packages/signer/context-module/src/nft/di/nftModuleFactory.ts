@@ -5,7 +5,7 @@ import { nftTypes } from "@/nft/di/nftTypes";
 import { NftContextLoader } from "@/nft/domain/NftContextLoader";
 
 export const nftModuleFactory = () =>
-  new ContainerModule((bind, _unbind, _isBound, _rebind) => {
+  new ContainerModule(({ bind }) => {
     bind(nftTypes.NftDataSource).to(HttpNftDataSource);
     bind(nftTypes.NftContextLoader).to(NftContextLoader);
   });
