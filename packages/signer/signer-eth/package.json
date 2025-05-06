@@ -36,7 +36,7 @@
   },
   "dependencies": {
     "@ledgerhq/signer-utils": "workspace:*",
-    "ethers": "6.13.4",
+    "ethers": "6.13.6-beta.1",
     "inversify": "^6.2.2",
     "inversify-logger-middleware": "^3.1.0",
     "purify-ts": "^2.1.0",
