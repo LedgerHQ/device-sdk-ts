@@ -78,7 +78,7 @@ describe("DisconnectUseCase", () => {
     vi.spyOn(deviceSession, "close");
     vi.spyOn(sessionService, "removeDeviceSession");
     vi.spyOn(transports[0]!, "disconnect").mockImplementation(() =>
-      Promise.resolve(Right(void 0)),
+      Promise.resolve(Right(undefined)),
     );
     const disconnectUseCase = new DisconnectUseCase(
       transportService,

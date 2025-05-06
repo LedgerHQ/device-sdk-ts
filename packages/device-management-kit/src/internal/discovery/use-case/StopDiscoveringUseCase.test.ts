@@ -1,5 +1,5 @@
 import { TransportMock } from "@api/transport/model/__mocks__/TransportMock";
-import { type Transport } from "@api/types";
+import { type LoggerPublisherService, type Transport } from "@api/types";
 import { DefaultTransportService } from "@internal/transport/service/DefaultTransportService";
 import { type TransportService } from "@internal/transport/service/TransportService";
 
@@ -12,12 +12,16 @@ let transport: Transport;
 let transport2: Transport;
 let transports: Transport[];
 let transportService: TransportService;
+let logger: LoggerPublisherService;
 
 describe("StopDiscoveringUseCase", () => {
   beforeEach(() => {
     transport = new TransportMock();
     transport2 = new TransportMock();
     transports = [transport, transport2];
+    logger = {
+      debug: vi.fn(),
+    } as unknown as LoggerPublisherService;
     // @ts-expect-error mock
     transportService = new DefaultTransportService(transports);
   });
@@ -34,7 +38,10 @@ describe("StopDiscoveringUseCase", () => {
 
     vi.spyOn(transportService, "getAllTransports").mockReturnValue(transports);
 
-    const usecase = new StopDiscoveringUseCase(transportService);
+    const usecase = new StopDiscoveringUseCase(
+      transportService,
+      vi.fn().mockImplementation(() => logger),
+    );
 
     await usecase.execute();
 
