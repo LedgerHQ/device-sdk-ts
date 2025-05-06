@@ -3,7 +3,7 @@ import { ContainerModule } from "inversify";
 import { eip7702Types } from "@internal/eip7702/di/eip7702Types";
 import { SignDelegationAuthorizationUseCase } from "@internal/eip7702/use-case/SignDelegationAuthorizationUseCase";
 
-export const messageModuleFactory = () =>
+export const eip7702ModuleFactory = () =>
   new ContainerModule(
     (
       bind,

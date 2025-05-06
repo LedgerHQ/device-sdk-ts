@@ -21,7 +21,6 @@ export class SignDelegationAuthorizationUseCase {
     address: string,
     chainId: number,
   ): SignDelegationAuthorizationDAReturnType {
-    // 1- Sign the transaction using the app binding
     return this._appBinder.signDelegationAuthorization({
       derivationPath,
       nonce,

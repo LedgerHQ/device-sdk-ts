@@ -25,7 +25,7 @@ export type SignDelegationAuthorizationDAError =
 
 type SignDelegationAuthorizationDARequiredInteraction =
   | OpenAppDARequiredInteraction
-  | UserInteractionRequired.SignEIP7702;
+  | UserInteractionRequired.SignDelegationAuthorization;
 
 export type SignDelegationAuthorizationDAIntermediateValue = {
   requiredUserInteraction: SignDelegationAuthorizationDARequiredInteraction;
