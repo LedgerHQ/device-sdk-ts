@@ -48,7 +48,7 @@
     "axios": "^1.8.2",
     "crypto-js": "^4.2.0",
     "ethers": "6.13.4",
-    "inversify": "^6.2.2",
+    "inversify": "^7.5.1",
     "purify-ts": "^2.1.0",
     "reflect-metadata": "^0.2.2"
   },
