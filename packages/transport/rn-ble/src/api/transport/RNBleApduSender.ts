@@ -185,7 +185,7 @@ export class RNBleApduSender
         characteristic.uuid ===
         this._dependencies.internalDevice.bleDeviceInfos.writeCmdUuid,
     );
-    if (tmpWriteCharacteristic !== undefined) {
+    if (tmpWriteCharacteristic) {
       this._writeCharacteristic = tmpWriteCharacteristic;
     } else {
       tmpWriteCharacteristic = characteristics.find(
@@ -195,11 +195,11 @@ export class RNBleApduSender
       );
 
       //This should never happen
-      if (tmpWriteCharacteristic === undefined) {
+      if (tmpWriteCharacteristic) {
+        this._writeCharacteristic = tmpWriteCharacteristic;
+      } else {
         this._logger.error("No write characteristic found");
         throw new Error("No write characteristic found");
-      } else {
-        this._writeCharacteristic = tmpWriteCharacteristic;
       }
     }
 
