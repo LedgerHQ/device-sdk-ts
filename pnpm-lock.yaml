@@ -283,6 +283,9 @@ importers:
       '@ledgerhq/device-transport-kit-mockserver':
         specifier: workspace:*
         version: link:../../packages/transport/mockserver
+      '@ledgerhq/device-transport-kit-speculos':
+        specifier: workspace:*
+        version: link:../../packages/transport/speculos
       '@ledgerhq/device-transport-kit-web-ble':
         specifier: workspace:*
         version: link:../../packages/transport/web-ble
@@ -911,6 +914,43 @@ importers:
       rxjs:
         specifier: ^7.8.1
         version: 7.8.2
+
+  packages/transport/speculos:
+    dependencies:
+      '@sentry/minimal':
+        specifier: ^6.19.7
+        version: 6.19.7
+      axios:
+        specifier: ^1.8.2
+        version: 1.8.2
+      purify-ts:
+        specifier: ^2.1.0
+        version: 2.1.0
+    devDependencies:
+      '@ledgerhq/device-management-kit':
+        specifier: workspace:*
+        version: link:../../device-management-kit
+      '@ledgerhq/esbuild-tools':
+        specifier: workspace:*
+        version: link:../../tools/esbuild-tools
+      '@ledgerhq/eslint-config-dsdk':
+        specifier: workspace:*
+        version: link:../../config/eslint
+      '@ledgerhq/prettier-config-dsdk':
+        specifier: workspace:*
+        version: link:../../config/prettier
+      '@ledgerhq/tsconfig-dsdk':
+        specifier: workspace:*
+        version: link:../../config/typescript
+      '@ledgerhq/vitest-config-dmk':
+        specifier: workspace:*
+        version: link:../../config/vitest
+      rxjs:
+        specifier: ^7.8.1
+        version: 7.8.2
+      ts-node:
+        specifier: ^10.9.2
+        version: 10.9.2(@types/node@22.13.14)(typescript@5.7.3)
 
   packages/transport/web-ble:
     dependencies:
@@ -13027,7 +13067,9 @@ snapshots:
     transitivePeerDependencies:
       - '@babel/core'
       - '@babel/preset-env'
+      - bufferutil
       - supports-color
+      - utf-8-validate
 
   '@react-native/normalize-colors@0.76.6': {}
 
