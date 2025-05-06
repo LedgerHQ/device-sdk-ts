@@ -6,6 +6,7 @@ import {
 import { type Container } from "inversify";
 
 import { addressTypes } from "./address/di/addressTypes";
+import { eip7702Types } from "./eip7702/di/eip7702Types";
 import { messageTypes } from "./message/di/messageTypes";
 import { transactionTypes } from "./transaction/di/transactionTypes";
 import { typedDataTypes } from "./typed-data/di/typedDataTypes";
@@ -19,6 +20,8 @@ describe("DefaultSignerEth", () => {
       execute: vi.fn(() => {
         if (id === transactionTypes.SignTransactionUseCase) {
           return "transaction-result";
+        } else if (id === eip7702Types.SignDelegationAuthorizationUseCase) {
+          return "delegation-result";
         } else if (id === messageTypes.SignMessageUseCase) {
           return "message-result";
         } else if (id === typedDataTypes.SignTypedDataUseCase) {
@@ -73,6 +76,31 @@ describe("DefaultSignerEth", () => {
       expect(result).toBeDefined();
       expect(result).toBe("message-result");
       expect(mock.get).toHaveBeenCalledWith(messageTypes.SignMessageUseCase);
+    });
+  });
+
+  describe("signDelegationAuthorization", () => {
+    it("should sign a delegation authorization", async () => {
+      // GIVEN
+      const derivationPath = "derivationPath";
+      const chainId = 2;
+      const nonce = 42;
+      const address = "0xaddress";
+
+      // WHEN
+      const result = await signer.signDelegationAuthorization(
+        derivationPath,
+        chainId,
+        address,
+        nonce,
+      );
+
+      // THEN
+      expect(result).toBeDefined();
+      expect(result).toBe("delegation-result");
+      expect(mock.get).toHaveBeenCalledWith(
+        eip7702Types.SignDelegationAuthorizationUseCase,
+      );
     });
   });
 

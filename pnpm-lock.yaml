@@ -305,8 +305,8 @@ importers:
         specifier: ^8.42.0
         version: 8.42.0(@opentelemetry/core@1.26.0(@opentelemetry/api@1.9.0))(@opentelemetry/instrumentation@0.54.2(@opentelemetry/api@1.9.0))(@opentelemetry/sdk-trace-base@1.26.0(@opentelemetry/api@1.9.0))(next@14.2.26(@babel/core@7.26.10)(@opentelemetry/api@1.9.0)(@playwright/test@1.49.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(react@18.3.1)(webpack@5.92.1(esbuild@0.25.0))
       ethers:
-        specifier: 6.13.4
-        version: 6.13.4
+        specifier: 6.13.6-beta.1
+        version: 6.13.6-beta.1
       next:
         specifier: 14.2.26
         version: 14.2.26(@babel/core@7.26.10)(@opentelemetry/api@1.9.0)(@playwright/test@1.49.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
@@ -535,8 +535,8 @@ importers:
         specifier: ^4.2.0
         version: 4.2.0
       ethers:
-        specifier: 6.13.4
-        version: 6.13.4
+        specifier: 6.13.6-beta.1
+        version: 6.13.6-beta.1
       inversify:
         specifier: ^6.2.2
         version: 6.2.2(reflect-metadata@0.2.2)
@@ -633,8 +633,8 @@ importers:
         specifier: workspace:*
         version: link:../signer-utils
       ethers:
-        specifier: 6.13.4
-        version: 6.13.4
+        specifier: 6.13.6-beta.1
+        version: 6.13.6-beta.1
       inversify:
         specifier: ^6.2.2
         version: 6.2.2(reflect-metadata@0.2.2)
@@ -5984,8 +5984,8 @@ packages:
     resolution: {integrity: sha512-aIL5Fx7mawVa300al2BnEE4iNvo1qETxLrPI/o05L7z6go7fCw1J6EQmbK4FmJ2AS7kgVF/KEZWufBfdClMcPg==}
     engines: {node: '>= 0.6'}
 
-  ethers@6.13.4:
-    resolution: {integrity: sha512-21YtnZVg4/zKkCQPjrDj38B1r4nQvTZLopUGMLQ1ePU2zV/joCfDC3t3iKQjWRzjjjbzR+mdAIoikeBRNkdllA==}
+  ethers@6.13.6-beta.1:
+    resolution: {integrity: sha512-sJZklf+m7QrlzYnOFbR0qHPqgYHeevbY98VIhzvnSdzhJVN/nNV/skKc/4wjyxbWRhK9t7r6ENcwUwLPjfxTLw==}
     engines: {node: '>=14.0.0'}
 
   event-target-shim@5.0.1:
@@ -16268,7 +16268,7 @@ snapshots:
 
   etag@1.8.1: {}
 
-  ethers@6.13.4:
+  ethers@6.13.6-beta.1:
     dependencies:
       '@adraffy/ens-normalize': 1.10.1
       '@noble/curves': 1.2.0
