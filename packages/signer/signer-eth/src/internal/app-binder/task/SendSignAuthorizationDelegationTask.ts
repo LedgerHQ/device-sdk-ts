@@ -92,13 +92,14 @@ export class SendSignAuthorizationDelegationTask {
       address,
     );
     // Add chainId
-    builderStruct.addTLVFromUInt64(TAG_STRUCT_EIP7702_CHAIN_ID, chainId);
+    builderStruct.encodeInTLVFromUInt64(TAG_STRUCT_EIP7702_CHAIN_ID, chainId);
     // Add nonce
-    builderStruct.addTLVFromUInt64(TAG_STRUCT_EIP7702_NONCE, nonce);
+    builderStruct.encodeInTLVFromUInt64(TAG_STRUCT_EIP7702_NONCE, nonce);
     const structBuffer = builderStruct.build();
 
-    builder.encodeInLVFromBuffer(structBuffer);
-
-    return builder.build();
+    return builder
+      .add16BitUIntToData(structBuffer.length)
+      .addBufferToData(structBuffer)
+      .build();
   }
 }

@@ -138,7 +138,9 @@ export class EthAppBinder {
             new SendSignAuthorizationDelegationTask(internalApi, args).run(),
           appName: "Ethereum",
           compatibleAppNames: ETHEREUM_PLUGINS,
-          requiredUserInteraction: UserInteractionRequired.SignEIP7702,
+          requiredUserInteraction:
+            UserInteractionRequired.SignDelegationAuthorization,
+          skipOpenApp: false,
         },
       }),
     });
