@@ -26,7 +26,7 @@ const S_LENGTH = 32;
 
 export type SignEIP7702AuthorizationCommandArgs = {
   /**
-   * The data to sign in max 150 bytes chunks
+   * The data to sign in max 255 bytes chunks
    * Data is a concatenation of the following:
    * - Derivation path length (1 byte)
    * - Derivation path (4 bytes per element)
@@ -66,7 +66,7 @@ export class SignEIP7702AuthorizationCommand
     const signEIP7702AuthorizationArgs: ApduBuilderArgs = {
       cla: 0xe0,
       ins: 0x34,
-      p1: isFirstChunk ? 0x00 : 0x01,
+      p1: isFirstChunk ? 0x01 : 0x00,
       p2: 0x00,
     };
 

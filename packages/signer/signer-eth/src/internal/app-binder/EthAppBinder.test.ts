@@ -16,6 +16,11 @@ import {
   type GetAddressDAOutput,
 } from "@api/app-binder/GetAddressDeviceActionTypes";
 import {
+  type SignDelegationAuthorizationDAError,
+  type SignDelegationAuthorizationDAIntermediateValue,
+  type SignDelegationAuthorizationDAOutput,
+} from "@api/app-binder/SignDelegationAuthorizationTypes";
+import {
   type SignPersonalMessageDAError,
   type SignPersonalMessageDAIntermediateValue,
   type SignPersonalMessageDAOutput,
@@ -395,6 +400,78 @@ describe("EthAppBinder", () => {
           SignPersonalMessageDAOutput,
           SignPersonalMessageDAError,
           SignPersonalMessageDAIntermediateValue
+        >[] = [];
+        observable.subscribe({
+          next: (state) => {
+            states.push(state);
+          },
+          error: (err) => {
+            reject(err);
+          },
+          complete: () => {
+            try {
+              expect(states).toEqual([
+                {
+                  status: DeviceActionStatus.Completed,
+                  output: signature,
+                },
+              ]);
+              resolve();
+            } catch (err) {
+              reject(err as Error);
+            }
+          },
+        });
+      }));
+  });
+
+  describe("signDelegationAuthorization", () => {
+    it("should return the signature", () =>
+      new Promise<void>((resolve, reject) => {
+        // GIVEN
+        const signature: Signature = {
+          r: `0xDEAD`,
+          s: `0xBEEF`,
+          v: 0,
+        };
+        const chainId = 2;
+        const nonce = 42;
+        const address = "0xaddress";
+
+        vi.spyOn(mockedDmk, "executeDeviceAction").mockReturnValue({
+          observable: from([
+            {
+              status: DeviceActionStatus.Completed,
+              output: signature,
+            } as DeviceActionState<
+              SignDelegationAuthorizationDAOutput,
+              SignDelegationAuthorizationDAError,
+              SignDelegationAuthorizationDAIntermediateValue
+            >,
+          ]),
+          cancel: vi.fn(),
+        });
+
+        // WHEN
+        const appBinder = new EthAppBinder(
+          mockedDmk,
+          mockedContextModule,
+          mockedMapper,
+          mockedParser,
+          "sessionId",
+        );
+        const { observable } = appBinder.signDelegationAuthorization({
+          derivationPath: "44'/60'/3'/2/1",
+          chainId,
+          address,
+          nonce,
+        });
+
+        // THEN
+        const states: DeviceActionState<
+          SignDelegationAuthorizationDAOutput,
+          SignDelegationAuthorizationDAError,
+          SignDelegationAuthorizationDAIntermediateValue
         >[] = [];
         observable.subscribe({
           next: (state) => {
