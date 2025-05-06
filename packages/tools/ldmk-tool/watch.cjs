@@ -1,13 +1,9 @@
 #!/usr/bin/env zx
-import "zx/globals";
-import { usePowerShell } from "zx";
-import esbuild from "esbuild";
-import { nodeExternalsPlugin } from "esbuild-node-externals";
-import { replaceTscAliasPaths } from "tsc-alias";
 
-if (process.platform === "win32") {
-  usePowerShell();
-}
+require("zx/globals");
+const esbuild = require("esbuild");
+const { nodeExternalsPlugin } = require("esbuild-node-externals");
+const { replaceTscAliasPaths } = require("tsc-alias");
 
 const config = {
   entryPoints: ["index.ts"],
@@ -21,23 +17,7 @@ const config = {
   // metafile: true,
 };
 
-const { entryPoints, tsconfig, platform } = argv;
-
-if (!entryPoints) {
-  console.error(chalk.red("Entry points are required"));
-  process.exit(1);
-}
-
-if (!tsconfig) {
-  console.error(chalk.red("TSConfig file is required"));
-  process.exit(1);
-}
-
-const entryPointsArray = entryPoints.includes(",")
-  ? entryPoints.split(",")
-  : [entryPoints];
-
-const getBrowserContext = async () => {
+const getBrowserContext = async (entryPoints, tsconfig) => {
   console.log(chalk.blue("Watching browser bundle..."));
 
   await replaceTscAliasPaths({
@@ -48,7 +28,7 @@ const getBrowserContext = async () => {
 
   return esbuild.context({
     ...config,
-    entryPoints: entryPointsArray,
+    entryPoints,
     outdir: "lib/esm",
     format: "esm",
     platform: "browser",
@@ -65,7 +45,7 @@ const getBrowserContext = async () => {
   });
 };
 
-const getNodeContext = async () => {
+const getNodeContext = async (entryPoints, tsconfig) => {
   console.log(chalk.blue("Watching node bundle..."));
 
   await replaceTscAliasPaths({
@@ -76,7 +56,7 @@ const getNodeContext = async () => {
 
   return esbuild.context({
     ...config,
-    entryPoints: entryPointsArray,
+    entryPoints,
     outdir: "lib/cjs",
     format: "cjs",
     platform: "node",
@@ -94,9 +74,13 @@ const getNodeContext = async () => {
   });
 };
 
-const watch = async () => {
-  const browserContext = await getBrowserContext();
-  const nodeContext = await getNodeContext();
+const watch = async (entryPoints, tsconfig, platform) => {
+  const entryPointsArray = entryPoints.includes(",")
+    ? entryPoints.split(",")
+    : [entryPoints];
+
+  const browserContext = await getBrowserContext(entryPointsArray, tsconfig);
+  const nodeContext = await getNodeContext(entryPointsArray, tsconfig);
   if (platform === "web") {
     await browserContext.watch();
   } else if (platform === "node") {
@@ -107,7 +91,6 @@ const watch = async () => {
   }
 };
 
-watch().catch((e) => {
-  console.error(e);
-  process.exitCode = e.exitCode;
-});
+module.exports = {
+  watch,
+};

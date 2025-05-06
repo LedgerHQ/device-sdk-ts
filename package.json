@@ -47,12 +47,14 @@
     "danger:local": "pnpm danger local --dangerfile danger/dangerfile-local.ts --base origin/develop",
     "danger:local:fork": "pnpm danger local --dangerfile danger/dangerfile-local-fork.ts --base origin/develop",
     "danger:ci": "pnpm danger ci --dangerfile danger/dangerfile-ci.ts --failOnErrors",
-    "cli": "pnpm lmdk-cli"
+    "cli": "pnpm ldmk-cli",
+    "tool": "pnpm ldmk-tool"
   },
   "devDependencies": {
     "@changesets/changelog-github": "^0.5.0",
     "@changesets/cli": "^2.27.12",
     "@ledgerhq/ldmk-cli": "workspace:*",
+    "@ledgerhq/ldmk-tool": "workspace:*",
     "@types/node": "^22.10.1",
     "@vitest/coverage-istanbul": "^3.0.4",
     "concurrently": "^9.1.0",

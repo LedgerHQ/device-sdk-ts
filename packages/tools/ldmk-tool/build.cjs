@@ -1,14 +1,9 @@
 #!/usr/bin/env zx
 
-import "zx/globals";
-import { usePowerShell } from "zx";
-import esbuild from "esbuild";
-import { nodeExternalsPlugin } from "esbuild-node-externals";
-import { replaceTscAliasPaths } from "tsc-alias";
-
-if (process.platform === "win32") {
-  usePowerShell();
-}
+require("zx/globals");
+const esbuild = require("esbuild");
+const { nodeExternalsPlugin } = require("esbuild-node-externals");
+const { replaceTscAliasPaths } = require("tsc-alias");
 
 const config = {
   minify: true,
@@ -21,27 +16,11 @@ const config = {
   // metafile: true,
 };
 
-const { entryPoints, tsconfig, platform } = argv;
-
-if (!entryPoints) {
-  console.error(chalk.red("Entry points are required"));
-  process.exit(1);
-}
-
-if (!tsconfig) {
-  console.error(chalk.red("TSConfig file is required"));
-  process.exit(1);
-}
-
-const entryPointsArray = entryPoints.includes(",")
-  ? entryPoints.split(",")
-  : [entryPoints];
-
-const buildBrowser = async () => {
+const buildBrowser = async (entryPoints, tsconfig) => {
   console.log(chalk.blue("Building browser bundle..."));
   return esbuild.build({
     ...config,
-    entryPoints: entryPointsArray,
+    entryPoints,
     outdir: "lib/esm",
     format: "esm",
     platform: "browser",
@@ -64,11 +43,11 @@ const buildBrowser = async () => {
   });
 };
 
-const buildNode = async () => {
+const buildNode = async (entryPoints, tsconfig) => {
   console.log(chalk.blue("Building node bundle..."));
   return esbuild.build({
     ...config,
-    entryPoints: entryPointsArray,
+    entryPoints,
     outdir: "lib/cjs",
     format: "cjs",
     platform: "node",
@@ -92,39 +71,35 @@ const buildNode = async () => {
   });
 };
 
-const buildTypes = async () => {
+const buildTypes = async (tsconfig) => {
   console.log(chalk.blue("Building types..."));
   await $`tsc --project ${tsconfig} --incremental`;
   await $`tsc-alias --project ${tsconfig}`;
 };
 
-const build = async () => {
+const build = async (entryPoints, tsconfig, platform) => {
+  const entryPointsArray = entryPoints.includes(",")
+    ? entryPoints.split(",")
+    : [entryPoints];
   const p = [];
   if (platform === "web") {
     console.log(chalk.magenta("Target:", platform));
-    p.push(buildBrowser());
-    p.push(buildTypes());
+    p.push(buildBrowser(entryPointsArray, tsconfig));
+    p.push(buildTypes(tsconfig));
   } else if (platform === "node") {
     console.log(chalk.magenta("Target:", platform));
-    p.push(buildNode());
-    p.push(buildTypes());
+    p.push(buildNode(entryPointsArray, tsconfig));
+    p.push(buildTypes(tsconfig));
   } else {
     console.log(chalk.magenta("Building for both web and node"));
-    p.push(buildBrowser());
-    p.push(buildNode());
-    p.push(buildTypes());
+    p.push(buildBrowser(entryPointsArray, tsconfig));
+    p.push(buildNode(entryPointsArray, tsconfig));
+    p.push(buildTypes(tsconfig));
   }
 
   return process.env.CI ? Promise.all(p) : spinner(() => Promise.all(p));
 };
 
-build()
-  .then(() => {
-    console.log(chalk.green("Build succeeded"));
-    process.exitCode = 0;
-  })
-  .catch((e) => {
-    console.error(chalk.red("Build failed"));
-    console.error(e);
-    process.exitCode = e.exitCode;
-  });
+module.exports = {
+  build,
+};
