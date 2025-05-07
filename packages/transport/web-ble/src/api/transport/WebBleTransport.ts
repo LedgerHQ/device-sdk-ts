@@ -1,477 +1,358 @@
 import {
   type ApduReceiverServiceFactory,
   type ApduSenderServiceFactory,
-  type BleDeviceInfos,
   type ConnectError,
-  type ConnectionType,
   DeviceAlreadyConnectedError,
-  type DeviceId,
   type DeviceModelDataSource,
-  DeviceNotRecognizedError,
-  type DisconnectHandler,
-  type DmkError,
   type LoggerPublisherService,
-  NoAccessibleDeviceError,
   OpeningConnectionError,
   type Transport,
   TransportConnectedDevice,
+  type TransportDeviceModel,
   type TransportDiscoveredDevice,
   type TransportFactory,
   type TransportIdentifier,
   UnknownDeviceError,
 } from "@ledgerhq/device-management-kit";
-import { type Either, EitherAsync, Left, Maybe, Right } from "purify-ts";
-import { from, type Observable, switchMap, timer } from "rxjs";
+import { DeviceConnectionStateMachine } from "@ledgerhq/device-management-kit";
+import { type Either, Left, Right } from "purify-ts";
+import { from, type Observable, Subject } from "rxjs";
+import { switchMap } from "rxjs/operators";
 import { v4 as uuid } from "uuid";
 
 import { RECONNECT_DEVICE_TIMEOUT } from "@api/data/WebBleConfig";
+
 import {
-  BleDeviceGattServerError,
-  BleTransportNotSupportedError,
-} from "@api/model/Errors";
-import { BleDeviceConnection } from "@api/transport/BleDeviceConnection";
-
-type PromptDeviceAccessError =
-  | NoAccessibleDeviceError
-  | BleTransportNotSupportedError;
-
-// An attempt to manage the state of several devices with one transport. Not final.
-type WebBleInternalDevice = {
-  id: DeviceId;
-  bleDevice: BluetoothDevice;
-  bleDeviceInfos: BleDeviceInfos;
-  bleGattService: BluetoothRemoteGATTService;
-  discoveredDevice: TransportDiscoveredDevice;
-};
+  WebBleApduSender,
+  type WebBleApduSenderDependencies,
+} from "./WebBleApduSender";
 
 export const webBleIdentifier: TransportIdentifier = "WEB-BLE";
 
 export class WebBleTransport implements Transport {
-  private readonly _connectedDevices: Array<BluetoothDevice>;
-  private readonly _internalDevicesById: Map<DeviceId, WebBleInternalDevice>;
-  private _deviceConnectionById: Map<DeviceId, BleDeviceConnection>;
-  private _disconnectionHandlersById: Map<DeviceId, () => void>;
   private _logger: LoggerPublisherService;
-  private readonly connectionType: ConnectionType = "BLE";
-  private readonly identifier: TransportIdentifier = webBleIdentifier;
+  private _deviceModelDataSource: DeviceModelDataSource;
+  private _apduSenderFactory: ApduSenderServiceFactory;
+  private _apduReceiverFactory: ApduReceiverServiceFactory;
+  private _deviceRegistry = new Map<
+    string,
+    {
+      device: BluetoothDevice;
+      service: BluetoothRemoteGATTService;
+      infos: {
+        writeCmdUuid: string;
+        notifyUuid: string;
+        deviceModel: TransportDeviceModel;
+      };
+      discovered: TransportDiscoveredDevice;
+    }
+  >();
+  private _connectionMachines = new Map<
+    string,
+    DeviceConnectionStateMachine<WebBleApduSenderDependencies>
+  >();
+  private _discoveredDevicesSubject = new Subject<
+    TransportDiscoveredDevice[]
+  >();
+  private _reconnectionPromises = new Map<
+    string,
+    { promise: Promise<void>; resolve: () => void }
+  >();
+  private _retryInFlight = new Map<string, boolean>();
 
   constructor(
-    private readonly _deviceModelDataSource: DeviceModelDataSource,
-    private readonly _loggerServiceFactory: (
-      tag: string,
-    ) => LoggerPublisherService,
-    private readonly _apduSenderFactory: ApduSenderServiceFactory,
-    private readonly _apduReceiverFactory: ApduReceiverServiceFactory,
+    deviceModelDataSource: DeviceModelDataSource,
+    private loggerFactory: (tag: string) => LoggerPublisherService,
+    apduSenderFactory: ApduSenderServiceFactory,
+    apduReceiverFactory: ApduReceiverServiceFactory,
   ) {
-    this._connectedDevices = [];
-    this._internalDevicesById = new Map();
-    this._deviceConnectionById = new Map();
-    this._disconnectionHandlersById = new Map();
-    this._logger = _loggerServiceFactory("WebBleTransport");
-  }
-
-  /**
-   * Get the Bluetooth API if supported or error
-   * @returns `Either<BleTransportNotSupportedError, Bluetooth>`
-   */
-  private getBluetoothApi(): Either<BleTransportNotSupportedError, Bluetooth> {
-    if (this.isSupported()) {
-      return Right(navigator.bluetooth);
-    }
-
-    return Left(new BleTransportNotSupportedError("WebBle not supported"));
+    this._deviceModelDataSource = deviceModelDataSource;
+    this._apduSenderFactory = apduSenderFactory;
+    this._apduReceiverFactory = apduReceiverFactory;
+    this._logger = loggerFactory("WebBleTransport");
   }
 
   isSupported(): boolean {
-    try {
-      const result = !!navigator?.bluetooth;
-      return result;
-    } catch {
-      return false;
-    }
+    return typeof navigator !== "undefined" && !!navigator.bluetooth;
   }
 
   getIdentifier(): TransportIdentifier {
-    return this.identifier;
+    return webBleIdentifier;
+  }
+
+  startDiscovering(): Observable<TransportDiscoveredDevice> {
+    const filters = this._deviceModelDataSource
+      .getBluetoothServices()
+      .map((s) => ({ services: [s] }));
+
+    return from(navigator.bluetooth.requestDevice({ filters })).pipe(
+      switchMap(async (device) => {
+        if (!device.gatt)
+          throw new OpeningConnectionError(
+            "No GATT server available on device",
+          );
+
+        const server = await device.gatt.connect();
+        const services = await server.getPrimaryServices();
+
+        if (services.length === 0)
+          throw new OpeningConnectionError("No GATT services found");
+
+        const service = services[0];
+
+        if (!service) throw new OpeningConnectionError("No GATT service found");
+
+        const infos =
+          this._deviceModelDataSource.getBluetoothServicesInfos()[service.uuid];
+
+        if (!infos) throw new UnknownDeviceError(device.name || "");
+
+        const id = uuid();
+        const discovered: TransportDiscoveredDevice = {
+          id,
+          deviceModel: infos.deviceModel,
+          transport: webBleIdentifier,
+        };
+
+        this._deviceRegistry.set(id, {
+          device,
+          service,
+          infos,
+          discovered,
+        });
+
+        return discovered;
+      }),
+    );
   }
 
   listenToAvailableDevices(): Observable<TransportDiscoveredDevice[]> {
-    return from([]);
-  }
-
-  /**
-   * Get Bluetooth GATT Primary service that is used to get writeCharacteristic and notifyCharacteristic
-   * @param bleDevice
-   * @private
-   */
-  private async getBleGattService(
-    bleDevice: BluetoothDevice,
-  ): Promise<Either<BleDeviceGattServerError, BluetoothRemoteGATTService>> {
-    if (!bleDevice.gatt) {
-      return Left(new BleDeviceGattServerError("Device gatt not found"));
-    }
-    try {
-      const [bleGattService] = await bleDevice.gatt.getPrimaryServices();
-      if (!bleGattService) {
-        return Left(
-          new BleDeviceGattServerError("bluetooth service not found"),
-        );
-      }
-      return Right(bleGattService);
-    } catch (e) {
-      return Left(new BleDeviceGattServerError(e));
-    }
-  }
-
-  /**
-   * BleDeviceInfos to map primary service uuid to device model & characteristics uuid
-   * @param bleGattService
-   * @private
-   */
-  private getBleDeviceInfos(
-    bleGattService: BluetoothRemoteGATTService,
-  ): Either<DeviceNotRecognizedError, BleDeviceInfos> {
-    const serviceToBleInfos =
-      this._deviceModelDataSource.getBluetoothServicesInfos();
-    const bleDeviceInfos = serviceToBleInfos[bleGattService.uuid];
-
-    if (!bleDeviceInfos) {
-      this._logger.error(
-        `Device not recognized: ${bleGattService.device.name}`,
-      );
-      return Left(
-        new DeviceNotRecognizedError(
-          `Device not recognized: ${bleGattService.device.name}`,
-        ),
-      );
-    }
-    return Right(bleDeviceInfos);
-  }
-
-  /**
-   * Prompt device selection in navigator
-   *
-   * @private
-   */
-  private promptDeviceAccess(): EitherAsync<
-    PromptDeviceAccessError,
-    BluetoothDevice
-  > {
-    return EitherAsync(async ({ liftEither, throwE }) => {
-      const bluetoothApi = await liftEither(this.getBluetoothApi());
-      let bleDevice: BluetoothDevice;
-
-      try {
-        bleDevice = await bluetoothApi.requestDevice({
-          filters: this._deviceModelDataSource
-            .getBluetoothServices()
-            .map((serviceUuid) => ({
-              services: [serviceUuid],
-            })),
-        });
-      } catch (error) {
-        return throwE(new NoAccessibleDeviceError(error));
-      }
-
-      return bleDevice;
+    this.startDiscovering().subscribe({
+      next: (d) => this._discoveredDevicesSubject.next([d]),
+      error: (e) => this._logger.error("Scan error", { data: { e } }),
     });
-  }
-
-  /**
-   * Generate a discovered device from BluetoothDevice, BleGATT primary service and BLE device infos
-   * @param bleDeviceInfos
-   * @private
-   */
-  private getDiscoveredDeviceFrom(
-    bleDeviceInfos: BleDeviceInfos,
-  ): TransportDiscoveredDevice {
-    return {
-      id: uuid(),
-      deviceModel: bleDeviceInfos.deviceModel,
-      transport: this.identifier,
-    };
-  }
-
-  /**
-   * Generate an InternalDevice from a unique id, a BluetoothDevice, BleGATT primary service and BLE device infos
-   * @param discoveredDevice
-   * @param bleDevice
-   * @param bleDeviceInfos
-   * @param bleGattService
-   * @private
-   */
-  private setInternalDeviceFrom(
-    discoveredDevice: TransportDiscoveredDevice,
-    bleDevice: BluetoothDevice,
-    bleDeviceInfos: BleDeviceInfos,
-    bleGattService: BluetoothRemoteGATTService,
-  ) {
-    const internalDevice: WebBleInternalDevice = {
-      id: discoveredDevice.id,
-      bleDevice,
-      bleGattService,
-      bleDeviceInfos,
-      discoveredDevice,
-    };
-
-    this._logger.debug(
-      `Discovered device ${internalDevice.id} ${discoveredDevice.deviceModel.productName}`,
-    );
-    this._internalDevicesById.set(internalDevice.id, internalDevice);
-  }
-
-  /**
-   * Main method to get a device from a button click handler
-   * The GATT connection is done here in order to populate TransportDiscoveredDevice with deviceModel
-   */
-  startDiscovering(): Observable<TransportDiscoveredDevice> {
-    this._logger.debug("startDiscovering");
-
-    return from(this.promptDeviceAccess()).pipe(
-      switchMap(async (errorOrBleDevice) =>
-        EitherAsync(async ({ liftEither, fromPromise }) => {
-          const bleDevice = await liftEither(errorOrBleDevice);
-          if (bleDevice.gatt) {
-            try {
-              await bleDevice.gatt.connect();
-            } catch (error) {
-              throw new OpeningConnectionError(error);
-            }
-          }
-          try {
-            const bleGattService = await fromPromise(
-              this.getBleGattService(bleDevice),
-            );
-            const bleDeviceInfos = await liftEither(
-              this.getBleDeviceInfos(bleGattService),
-            );
-            const discoveredDevice =
-              this.getDiscoveredDeviceFrom(bleDeviceInfos);
-            this.setInternalDeviceFrom(
-              discoveredDevice,
-              bleDevice,
-              bleDeviceInfos,
-              bleGattService,
-            );
-            return discoveredDevice;
-          } catch (error) {
-            this._logger.error("Error while discovering device", {
-              data: { error, bleDevice },
-            });
-            if (bleDevice.forget) {
-              await bleDevice.forget();
-            }
-            throw error;
-          }
-        }).caseOf({
-          Right: (discoveredDevice) => discoveredDevice,
-          Left: (error) => {
-            this._logger.error("Error while getting accessible device", {
-              data: { error },
-            });
-            throw error;
-          },
-        }),
-      ),
-    );
+    return this._discoveredDevicesSubject.asObservable();
   }
 
   stopDiscovering(): void {
-    this._logger.debug("stopDiscovering");
+    // browser prompt cannot be cancelled
   }
 
-  /**
-   * Connect to a BLE device and update the internal state of the associated device
-   * Handle ondisconnect event on the device in order to try a reconnection
-   */
-  async connect({
-    deviceId,
-    onDisconnect,
-  }: {
-    deviceId: DeviceId;
-    onDisconnect: DisconnectHandler;
+  async connect(params: {
+    deviceId: string;
+    onDisconnect: () => void;
   }): Promise<Either<ConnectError, TransportConnectedDevice>> {
-    const internalDevice = this._internalDevicesById.get(deviceId);
+    const deviceEntry = this._deviceRegistry.get(params.deviceId);
 
-    if (!internalDevice) {
-      this._logger.error(`Unknown device ${deviceId}`, {
-        data: { internalDevices: this._internalDevicesById },
-      });
-      this._logger.debug("Available devices", {
-        data: { devices: this._internalDevicesById },
-      });
-      return Left(new UnknownDeviceError(`Unknown device ${deviceId}`));
-    }
-    // if device already connected, remove device id from internal state and remove error
-    if (this._connectedDevices.includes(internalDevice.bleDevice)) {
-      this._internalDevicesById.delete(deviceId);
-      return Left(new DeviceAlreadyConnectedError("Device already connected"));
-    }
+    if (!deviceEntry)
+      return Left(new UnknownDeviceError(`Unknown device ${params.deviceId}`));
 
-    const {
-      discoveredDevice: { deviceModel },
-    } = internalDevice;
+    if (this._connectionMachines.has(params.deviceId))
+      return Left(new DeviceAlreadyConnectedError("Already connected"));
 
     try {
-      const [writeCharacteristic, notifyCharacteristic] = await Promise.all([
-        internalDevice.bleGattService.getCharacteristic(
-          internalDevice.bleDeviceInfos.writeCmdUuid,
-        ),
-        internalDevice.bleGattService.getCharacteristic(
-          internalDevice.bleDeviceInfos.notifyUuid,
-        ),
-      ]);
+      const { device, service, infos, discovered } = deviceEntry;
 
-      const deviceConnection = new BleDeviceConnection(
+      const apduSender = new WebBleApduSender(
         {
-          writeCharacteristic,
-          notifyCharacteristic,
-          apduReceiverFactory: this._apduReceiverFactory,
+          writeCharacteristic: await service.getCharacteristic(
+            infos.writeCmdUuid,
+          ),
+          notifyCharacteristic: await service.getCharacteristic(
+            infos.notifyUuid,
+          ),
           apduSenderFactory: this._apduSenderFactory,
+          apduReceiverFactory: this._apduReceiverFactory,
         },
-        this._loggerServiceFactory,
+        this.loggerFactory,
       );
 
-      await deviceConnection.setup();
+      const connectionMachine =
+        new DeviceConnectionStateMachine<WebBleApduSenderDependencies>({
+          deviceId: params.deviceId,
+          deviceApduSender: apduSender,
+          timeoutDuration: RECONNECT_DEVICE_TIMEOUT,
+          onTerminated: () => {
+            this._connectionMachines.delete(params.deviceId);
+            this._deviceRegistry.delete(params.deviceId);
+            params.onDisconnect();
+          },
+        });
 
-      const connectedDevice = new TransportConnectedDevice({
-        sendApdu: (apdu, triggersDisconnection) =>
-          deviceConnection.sendApdu(apdu, triggersDisconnection),
-        deviceModel,
-        id: deviceId,
-        type: this.connectionType,
-        transport: this.identifier,
-      });
+      await connectionMachine.setupConnection();
 
-      internalDevice.bleDevice.ongattserverdisconnected =
-        this._getDeviceDisconnectedHandler(internalDevice, deviceConnection);
+      this._connectionMachines.set(params.deviceId, connectionMachine);
 
-      this._deviceConnectionById.set(internalDevice.id, deviceConnection);
-      this._disconnectionHandlersById.set(internalDevice.id, () => {
-        this.disconnect({ connectedDevice }).then(() => onDisconnect(deviceId));
-      });
+      device.ongattserverdisconnected = this.handleDisconnect(
+        params.deviceId,
+        apduSender,
+      );
 
-      this._connectedDevices.push(internalDevice.bleDevice);
+      return Right(
+        new TransportConnectedDevice({
+          id: params.deviceId,
+          deviceModel: discovered.deviceModel,
+          type: "BLE",
+          transport: webBleIdentifier,
+          sendApdu: async (apdu, triggersDisconnection, abortTimeout) => {
+            const deviceId = params.deviceId;
+            const machine = this._connectionMachines.get(deviceId);
 
-      return Right(connectedDevice);
-    } catch (error) {
-      if (internalDevice.bleDevice.forget) {
-        await internalDevice.bleDevice.forget();
-      }
+            if (!machine)
+              return Left(new UnknownDeviceError(`Unknown device ${deviceId}`));
 
-      this._internalDevicesById.delete(deviceId);
+            // first shot
+            let result = await machine.sendApdu(
+              apdu,
+              triggersDisconnection,
+              abortTimeout,
+            );
 
-      this._logger.error("Error while getting characteristics", {
-        data: { error },
-      });
+            // if any error, and we haven't retried yet, do one more pass
+            if (result.isLeft() && !this._retryInFlight.get(deviceId)) {
+              this._retryInFlight.set(deviceId, true);
+              this._logger.info("APDU send failed, retrying one more time…");
 
-      return Left(new OpeningConnectionError(error));
+              // if there's a reconnection in flight, await, otherwise this is a no-op
+              const reconnectInfo = this._reconnectionPromises.get(deviceId);
+
+              if (reconnectInfo) await reconnectInfo.promise;
+
+              // get the freshest state‐machine and replay
+              const freshMachine = this._connectionMachines.get(deviceId);
+
+              if (freshMachine) {
+                result = await freshMachine.sendApdu(
+                  apdu,
+                  triggersDisconnection,
+                  abortTimeout,
+                );
+              }
+
+              this._retryInFlight.delete(deviceId);
+            }
+
+            return result;
+          },
+        }),
+      );
+    } catch (e) {
+      this._deviceRegistry.delete(params.deviceId);
+      this._logger.error("Connection error", { data: { error: e } });
+
+      return Left(new OpeningConnectionError(e));
     }
   }
 
-  /**
-   * Get the device disconnected handler
-   * @param internalDevice WebBleInternalDevice
-   * @param deviceConnection BleDeviceConnection
-   * @returns async () => void
-   * @private
-   */
-  private _getDeviceDisconnectedHandler(
-    internalDevice: WebBleInternalDevice,
-    deviceConnection: BleDeviceConnection,
-  ) {
-    return async () => {
-      // start a timer to disconnect the device if it does not reconnect
-      const disconnectObserver = timer(RECONNECT_DEVICE_TIMEOUT).subscribe(
-        () => {
-          this._logger.debug("disconnection timer over");
-          // retrieve the disconnect handler and call it
-          const disconnectHandler = Maybe.fromNullable(
-            this._disconnectionHandlersById.get(internalDevice.id),
-          );
-          disconnectHandler.map((handler) => handler());
-        },
-      );
+  private handleDisconnect(
+    deviceId: string,
+    apduSender: WebBleApduSender,
+  ): () => void {
+    return () => {
+      const connectionMachine = this._connectionMachines.get(deviceId);
+      const deviceEntry = this._deviceRegistry.get(deviceId);
 
-      // connect to the navigator device
-      await internalDevice.bleDevice.gatt?.connect();
+      if (!connectionMachine || !deviceEntry) return;
 
-      // cancel disconnection timeout
-      disconnectObserver.unsubscribe();
+      // prep a “reconnected” promise
+      const reconnectionPromise = {} as {
+        promise: Promise<void>;
+        resolve: () => void;
+      };
 
-      // retrieve new ble characteristics
-      const service = await this.getBleGattService(internalDevice.bleDevice);
+      reconnectionPromise.promise = new Promise<void>((resolve) => {
+        reconnectionPromise.resolve = resolve;
+      });
 
-      if (service.isRight()) {
-        const [writeC, notifyC] = await Promise.all([
-          service
-            .extract()
-            .getCharacteristic(internalDevice.bleDeviceInfos.writeCmdUuid),
-          service
-            .extract()
-            .getCharacteristic(internalDevice.bleDeviceInfos.notifyUuid),
-        ]);
+      this._reconnectionPromises.set(deviceId, reconnectionPromise);
 
-        // reconnect device connection
-        await deviceConnection.reconnect(writeC, notifyC);
-      }
+      connectionMachine.eventDeviceDetached();
+
+      const MAX_RETRIES = 5;
+
+      (async () => {
+        for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
+          try {
+            deviceEntry.device.gatt?.disconnect?.();
+
+            if (!deviceEntry.device.gatt)
+              throw new OpeningConnectionError(
+                "No GATT server available for reconnection",
+              );
+
+            const server = await deviceEntry.device.gatt.connect();
+            const services = await server.getPrimaryServices();
+
+            if (services.length === 0) throw new OpeningConnectionError();
+
+            const freshSvc = services[0];
+
+            if (!freshSvc) throw new OpeningConnectionError();
+
+            // rebind
+            deviceEntry.device.ongattserverdisconnected = this.handleDisconnect(
+              deviceId,
+              apduSender,
+            );
+            deviceEntry.service = freshSvc;
+
+            const newWrite = await freshSvc.getCharacteristic(
+              deviceEntry.infos.writeCmdUuid,
+            );
+            const newNotify = await freshSvc.getCharacteristic(
+              deviceEntry.infos.notifyUuid,
+            );
+
+            await apduSender.setDependencies({
+              writeCharacteristic: newWrite,
+              notifyCharacteristic: newNotify,
+            });
+
+            // re‐negotiate MTU & restart FSM
+            await connectionMachine.setupConnection();
+
+            connectionMachine.eventDeviceAttached();
+
+            // signal “we’re back”
+            const reconnectPromise = this._reconnectionPromises.get(deviceId);
+
+            if (reconnectPromise) {
+              reconnectPromise.resolve();
+              this._reconnectionPromises.delete(deviceId);
+            }
+
+            return;
+          } catch (_) {
+            await new Promise((r) => setTimeout(r, 1000 * attempt));
+          }
+        }
+        this._logger.error(`All reconnection attempts failed for ${deviceId}`);
+      })();
     };
   }
 
-  /**
-   * Disconnect from a BLE device and delete its handlers
-   *
-   * @param params { connectedDevice: TransportConnectedDevice }
-   */
-  async disconnect(params: {
+  public async disconnect(params: {
     connectedDevice: TransportConnectedDevice;
-  }): Promise<Either<DmkError, void>> {
-    // retrieve internal device
-    const maybeInternalDevice = Maybe.fromNullable(
-      this._internalDevicesById.get(params.connectedDevice.id),
-    );
+  }) {
+    const id = params.connectedDevice.id;
+    const connectionMachine = this._connectionMachines.get(id);
 
-    this._logger.debug("disconnect device", {
-      data: { connectedDevice: params.connectedDevice },
-    });
+    if (!connectionMachine)
+      return Left(new UnknownDeviceError(`Unknown device ${id}`));
 
-    if (maybeInternalDevice.isNothing()) {
-      this._logger.error(`Unknown device ${params.connectedDevice.id}`);
-
-      return Promise.resolve(
-        Left(
-          new UnknownDeviceError(`Unknown device ${params.connectedDevice.id}`),
-        ),
-      );
+    // cancel any pending reconnection
+    const reconnectInfo = this._reconnectionPromises.get(id);
+    if (reconnectInfo) {
+      reconnectInfo.resolve();
+      this._reconnectionPromises.delete(id);
     }
 
-    maybeInternalDevice.map((device) => {
-      const { bleDevice } = device;
+    // close and clean up
+    connectionMachine.closeConnection();
+    this._connectionMachines.delete(id);
+    this._deviceRegistry.delete(id);
 
-      // retrieve device connection and disconnect it
-      const maybeDeviceConnection = Maybe.fromNullable(
-        this._deviceConnectionById.get(device.id),
-      );
-
-      maybeDeviceConnection.map((dConnection) => dConnection.disconnect());
-
-      // disconnect device gatt server
-      if (bleDevice.gatt?.connected) {
-        bleDevice.gatt.disconnect();
-      }
-      // clean up objects
-      this._internalDevicesById.delete(device.id);
-      this._deviceConnectionById.delete(device.id);
-      this._disconnectionHandlersById.delete(device.id);
-
-      if (this._connectedDevices.includes(bleDevice)) {
-        delete this._connectedDevices[
-          this._connectedDevices.indexOf(bleDevice)
-        ];
-      }
-    });
-
-    return Promise.resolve(Right(undefined));
+    return Right(undefined);
   }
 }
 
