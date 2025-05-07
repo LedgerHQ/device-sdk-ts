@@ -1,13 +1,14 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
-import { useDmk } from "_providers/dmkProvider.tsx";
-import { useDeviceSessionsContext } from "_providers/deviceSessionsProvider.tsx";
-import { useNavigation } from "@react-navigation/native";
-import { Flex, SelectableList } from "@ledgerhq/native-ui";
+import { type CommandProps, type ThemeProps } from "_common/types.ts";
 import { getCommands } from "_components/Commands.tsx";
-import styled from "styled-components/native";
-import { CommandProps, ThemeProps } from "_common/types.ts";
-import { SendCommandModal } from "_components/SendCommandModal.tsx";
 import { DeviceStateView } from "_components/DeviceStateView.tsx";
+import { SendCommandModal } from "_components/SendCommandModal.tsx";
+import { useDeviceSessionsContext } from "_providers/deviceSessionsProvider.tsx";
+import { useDmk } from "_providers/dmkProvider.tsx";
+import { Flex, SelectableList } from "@ledgerhq/native-ui";
+import { useNavigation } from "@react-navigation/native";
+import styled from "styled-components/native";
+
 import { DisconnectButton } from "./DisconnectButton";
 
 const SafeView = styled.SafeAreaView`

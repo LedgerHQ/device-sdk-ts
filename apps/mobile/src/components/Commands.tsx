@@ -1,25 +1,25 @@
 import React from "react";
+import { type CommandProps } from "_common/types.ts";
 import {
   BatteryStatusType,
   CloseAppCommand,
-  DeviceManagementKit,
+  type DeviceManagementKit,
   GetAppAndVersionCommand,
-  GetAppAndVersionResponse,
-  GetBatteryStatusArgs,
+  type GetAppAndVersionResponse,
+  type GetBatteryStatusArgs,
   GetBatteryStatusCommand,
-  GetBatteryStatusResponse,
+  type GetBatteryStatusResponse,
   GetOsVersionCommand,
-  GetOsVersionResponse,
-  ListAppsArgs,
+  type GetOsVersionResponse,
+  type ListAppsArgs,
   ListAppsCommand,
-  ListAppsErrorCodes,
-  ListAppsResponse,
-  OpenAppArgs,
+  type ListAppsErrorCodes,
+  type ListAppsResponse,
+  type OpenAppArgs,
   OpenAppCommand,
-  OpenAppErrorCodes,
+  type OpenAppErrorCodes,
 } from "@ledgerhq/device-management-kit";
 import { BaseInput, SelectableList, Switch } from "@ledgerhq/native-ui";
-import { CommandProps } from "_common/types.ts";
 
 export const getCommands = (
   dmk: DeviceManagementKit,

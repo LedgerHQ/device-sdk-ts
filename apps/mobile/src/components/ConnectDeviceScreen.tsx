@@ -1,15 +1,21 @@
 import React, { useEffect } from "react";
-import { ActivityIndicator, FlatList, FlatListProps, View } from "react-native";
-import { useDmk } from "_providers/dmkProvider.tsx";
-import { DiscoveredDevice } from "@ledgerhq/device-management-kit";
-import styled from "styled-components/native";
-import { Button, Text } from "@ledgerhq/native-ui";
-import { DiscoveredDeviceItem } from "./DiscoveredDeviceItem";
-import { useDeviceSessionsContext } from "_providers/deviceSessionsProvider.tsx";
-import { useIsFocused, useNavigation } from "@react-navigation/native";
-import { ThemeProps } from "_common/types.ts";
+import {
+  ActivityIndicator,
+  FlatList,
+  type FlatListProps,
+  View,
+} from "react-native";
+import { type ThemeProps } from "_common/types.ts";
 import { CommandsScreens } from "_navigators/CommandNavigator.constants.ts";
 import { RootScreens } from "_navigators/RootNavigator.constants.ts";
+import { useDeviceSessionsContext } from "_providers/deviceSessionsProvider.tsx";
+import { useDmk } from "_providers/dmkProvider.tsx";
+import { type DiscoveredDevice } from "@ledgerhq/device-management-kit";
+import { Button, Text } from "@ledgerhq/native-ui";
+import { useIsFocused, useNavigation } from "@react-navigation/native";
+import styled from "styled-components/native";
+
+import { DiscoveredDeviceItem } from "./DiscoveredDeviceItem";
 
 const Container = styled.SafeAreaView`
     flex: 1;
@@ -44,8 +50,8 @@ export const ConnectDeviceScreen: React.FC = () => {
   useEffect(() => {
     if (isScanningDevices && isFocused) {
       const subscription = dmk.listenToAvailableDevices({}).subscribe({
-        next: async devices => {
-          setDevices(devices);
+        next: dvcs => {
+          setDevices(dvcs);
         },
         error: err => {
           console.log("[dmk.listenToAvailableDevices] error", err);

@@ -41,16 +41,16 @@
     "@ledgerhq/prettier-config-dsdk": "workspace:*",
     "@ledgerhq/tsconfig-dsdk": "workspace:*",
     "@ledgerhq/vitest-config-dmk": "workspace:*",
-    "@types/crypto-js": "^4.2.2",
-    "ts-node": "^10.9.2"
+    "@types/crypto-js": "catalog:",
+    "ts-node": "catalog:"
   },
   "dependencies": {
-    "axios": "^1.8.2",
-    "crypto-js": "^4.2.0",
-    "ethers": "6.13.4",
-    "inversify": "^6.2.2",
-    "purify-ts": "^2.1.0",
-    "reflect-metadata": "^0.2.2"
+    "axios": "catalog:",
+    "crypto-js": "catalog:",
+    "ethers": "catalog:",
+    "inversify": "catalog:",
+    "purify-ts": "catalog:",
+    "reflect-metadata": "catalog:"
   },
   "peerDependencies": {
     "@ledgerhq/device-management-kit": "workspace:*"

@@ -32,21 +32,21 @@
     "module:create": "pnpm hygen core-module with-prompt"
   },
   "dependencies": {
-    "@sentry/minimal": "^6.19.7",
-    "axios": "^1.8.2",
-    "inversify": "^6.2.2",
-    "inversify-logger-middleware": "^3.1.0",
-    "isomorphic-ws": "^5.0.0",
-    "purify-ts": "^2.1.0",
-    "reflect-metadata": "^0.2.2",
-    "semver": "^7.6.3",
-    "url": "^0.11.4",
-    "uuid": "^11.0.3",
-    "ws": "^8.18.0",
-    "xstate": "^5.19.2"
+    "@sentry/minimal": "catalog:",
+    "axios": "catalog:",
+    "inversify": "catalog:",
+    "inversify-logger-middleware": "catalog:",
+    "isomorphic-ws": "catalog:",
+    "purify-ts": "catalog:",
+    "reflect-metadata": "catalog:",
+    "semver": "catalog:",
+    "url": "catalog:",
+    "uuid": "catalog:",
+    "ws": "catalog:",
+    "xstate": "catalog:"
   },
   "peerDependencies": {
-    "rxjs": "^7.8.2"
+    "rxjs": "catalog:"
   },
   "devDependencies": {
     "@ledgerhq/ldmk-tool": "workspace:*",
@@ -54,11 +54,11 @@
     "@ledgerhq/prettier-config-dsdk": "workspace:*",
     "@ledgerhq/tsconfig-dsdk": "workspace:*",
     "@ledgerhq/vitest-config-dmk": "workspace:*",
-    "@statelyai/inspect": "^0.4.0",
-    "@types/semver": "^7.5.8",
-    "@types/uuid": "^10.0.0",
-    "@types/ws": "^8.5.14",
-    "rxjs": "^7.8.2",
-    "ts-node": "^10.9.2"
+    "@statelyai/inspect": "catalog:",
+    "@types/semver": "catalog:",
+    "@types/uuid": "catalog:",
+    "@types/ws": "catalog:",
+    "rxjs": "catalog:",
+    "ts-node": "catalog:"
   }
 }

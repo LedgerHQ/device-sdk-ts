@@ -1,8 +1,8 @@
 import React from "react";
-import { Flex, Text, AnimatedInput, Button, Box } from "@ledgerhq/native-ui";
-import { useDmk } from "_providers/dmkProvider.tsx";
 import { useDeviceSessionsContext } from "_providers/deviceSessionsProvider.tsx";
+import { useDmk } from "_providers/dmkProvider.tsx";
 import { hexaStringToBuffer } from "@ledgerhq/device-management-kit";
+import { AnimatedInput, Box, Button, Flex, Text } from "@ledgerhq/native-ui";
 import styled from "styled-components/native";
 
 const Container = styled(Flex)`

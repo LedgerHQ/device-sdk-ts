@@ -1,7 +1,7 @@
 import React from "react";
-import { Text } from "@ledgerhq/native-ui";
 import { useDeviceSessionState } from "_hooks/useDeviceSessionState";
 import useThrottle from "_hooks/useThrottle";
+import { Text } from "@ledgerhq/native-ui";
 
 export const DeviceStateView: React.FC<{ sessionId: string }> = ({
   sessionId,
