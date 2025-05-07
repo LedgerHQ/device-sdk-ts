@@ -331,8 +331,8 @@ catalogs:
       specifier: 5.19.2
       version: 5.19.2
     zx:
-      specifier: ^8.2.4
-      version: 8.2.4
+      specifier: 8.5.3
+      version: 8.5.3
 
 importers:
 
@@ -400,7 +400,7 @@ importers:
         version: 3.1.3(@types/debug@4.1.12)(@types/node@22.10.1)(jiti@1.21.6)(jsdom@26.0.0)(terser@5.39.0)(yaml@2.7.0)
       zx:
         specifier: 'catalog:'
-        version: 8.2.4
+        version: 8.5.3
 
   apps/docs:
     dependencies:
@@ -4307,9 +4307,6 @@ packages:
   '@types/estree@1.0.7':
     resolution: {integrity: sha512-w28IoSUCJpidD/TGviZwwMJckNESJZXFu7NBZ5YJ4mEUnNraUn9Pm8HSZm/jDF1pDWYKspWE7oVphigUPRakIQ==}
 
-  '@types/fs-extra@11.0.4':
-    resolution: {integrity: sha512-yTbItCNreRooED33qjunPthRcSjERP1r4MqCZc7wv0u2sUkzTFp45tgUfS5+r7FrZPdmCCNflLhVSP/o+SemsQ==}
-
   '@types/geojson@7946.0.14':
     resolution: {integrity: sha512-WCfD5Ht3ZesJUsONdhvm84dmzWOiOzOAqOncN0++w0lBw1o8OuDNJF2McvvCef/yBqb/HYRahp1BYtODFQ8bRg==}
 
@@ -4336,9 +4333,6 @@ packages:
 
   '@types/json-schema@7.0.15':
     resolution: {integrity: sha512-5+fP8P8MFNC+AyZCDxrB2pkZFPGzqQWUzpSeuuVLvm8VMcorNYavBqoFcxK8bQz4Qsbn4oUEEem4wDLfcysGHA==}
-
-  '@types/jsonfile@6.1.4':
-    resolution: {integrity: sha512-D5qGUYwjvnNNextdU59/+fI+spnwtTFmyQP0h+PfIOSkNfpU6AOICUOkm4i0OnSk+NyjdPJrxCDro0sJsWlRpQ==}
 
   '@types/katex@0.16.7':
     resolution: {integrity: sha512-HMwFiRujE5PjrgwHQ25+bsLJgowjGjm5Z8FVSf0N6PwgJrwxH0QxzHYDcKsTfV3wva0vzrpqMTJS2jXPr5BMEQ==}
@@ -10203,8 +10197,8 @@ packages:
   zwitch@2.0.4:
     resolution: {integrity: sha512-bXE4cR/kVZhKZX/RjPEflHaKVhUVl85noU3v6b8apfQEc1x4A+zBxjZ4lN8LqGd6WZ3dl98pY4o717VFmoPp+A==}
 
-  zx@8.2.4:
-    resolution: {integrity: sha512-g9wVU+5+M+zVen/3IyAZfsZFmeqb6vDfjqFggakviz5uLK7OAejOirX+jeTOkyvAh/OYRlCgw+SdqzN7F61QVQ==}
+  zx@8.5.3:
+    resolution: {integrity: sha512-TsGLAt8Ngr4wDXLZmN9BT+6FWVLFbqdQ0qpXkV3tIfH7F+MgN/WUeSY7W4nNqAntjWunmnRaznpyxtJRPhCbUQ==}
     engines: {node: '>= 12.17.0'}
     hasBin: true
 
@@ -13648,12 +13642,6 @@ snapshots:
 
   '@types/estree@1.0.7': {}
 
-  '@types/fs-extra@11.0.4':
-    dependencies:
-      '@types/jsonfile': 6.1.4
-      '@types/node': 22.14.0
-    optional: true
-
   '@types/geojson@7946.0.14': {}
 
   '@types/graceful-fs@4.1.9':
@@ -13682,11 +13670,6 @@ snapshots:
       '@types/istanbul-lib-report': 3.0.3
 
   '@types/json-schema@7.0.15': {}
-
-  '@types/jsonfile@6.1.4':
-    dependencies:
-      '@types/node': 22.14.0
-    optional: true
 
   '@types/katex@0.16.7': {}
 
@@ -20978,7 +20961,4 @@ snapshots:
 
   zwitch@2.0.4: {}
 
-  zx@8.2.4:
-    optionalDependencies:
-      '@types/fs-extra': 11.0.4
-      '@types/node': 22.14.0
+  zx@8.5.3: {}
