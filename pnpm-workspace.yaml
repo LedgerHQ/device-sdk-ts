@@ -86,7 +86,7 @@ catalog:
   nextra-theme-blog: ^3.0.13
   nextra-theme-docs: ^3.0.15
   postcss: ^8.4.47
-  prettier: 3.4.2
+  prettier: 3.5.3
   purify-ts: 2.1.0
   react: 18.3.1
   react-dom: 18.3.1
