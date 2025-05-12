@@ -1,8 +1,8 @@
 {
-  "name": "@ledgerhq/device-sdk-trusted-apps",
-  "version": "1.0.1",
+  "name": "@ledgerhq/device-app-kit-ledger-keyring-protocol",
+  "version": "0.0.0",
   "license": "Apache-2.0",
-  "private": true,
+  "private": false,
   "exports": {
     ".": {
       "types": "./lib/types/index.d.ts",
