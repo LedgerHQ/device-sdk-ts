@@ -1405,7 +1405,7 @@ importers:
         specifier: 'catalog:'
         version: 10.9.2(@types/node@22.14.0)(typescript@5.8.3)
 
-  packages/trusted-apps:
+  packages/trusted-apps/ledger-keyring-protocol:
     dependencies:
       inversify:
         specifier: 'catalog:'
@@ -1416,19 +1416,19 @@ importers:
     devDependencies:
       '@ledgerhq/eslint-config-dsdk':
         specifier: workspace:*
-        version: link:../config/eslint
+        version: link:../../config/eslint
       '@ledgerhq/ldmk-tool':
         specifier: workspace:*
-        version: link:../tools/ldmk-tool
+        version: link:../../tools/ldmk-tool
       '@ledgerhq/prettier-config-dsdk':
         specifier: workspace:*
-        version: link:../config/prettier
+        version: link:../../config/prettier
       '@ledgerhq/tsconfig-dsdk':
         specifier: workspace:*
-        version: link:../config/typescript
+        version: link:../../config/typescript
       '@ledgerhq/vitest-config-dmk':
         specifier: workspace:*
-        version: link:../config/vitest
+        version: link:../../config/vitest
 
   packages/ui:
     dependencies:

@@ -5,7 +5,7 @@ packages:
   - packages/signer/*
   - packages/tools/*
   - packages/transport/*
-
+  - packages/trusted-apps/*
 onlyBuiltDependencies:
   - esbuild
 
