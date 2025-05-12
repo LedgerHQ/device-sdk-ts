@@ -1,4 +1,4 @@
 // inversify requirement
 import "reflect-metadata";
 
-export const Hello = "World";
+export * from "@api/index";

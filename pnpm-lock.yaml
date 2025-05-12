@@ -1380,6 +1380,9 @@ importers:
 
   packages/trusted-apps/ledger-keyring-protocol:
     dependencies:
+      '@ledgerhq/device-management-kit':
+        specifier: workspace:*
+        version: link:../../device-management-kit
       inversify:
         specifier: 'catalog:'
         version: 7.5.1(reflect-metadata@0.2.2)
