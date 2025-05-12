@@ -1,8 +1,8 @@
 {
   "name": "@ledgerhq/device-transport-kit-mockserver",
-  "version": "0.0.1",
+  "version": "1.0.0",
   "license": "Apache-2.0",
-  "private": false,
+  "private": true,
   "exports": {
     ".": {
       "types": "./lib/types/index.d.ts",
