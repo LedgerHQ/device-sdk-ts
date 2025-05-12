@@ -7,8 +7,13 @@
     "target": "ES2022",
     "moduleResolution": "bundler",
     "emitDeclarationOnly": true,
+    "paths": {
+      "@api/*": ["./src/api/*"],
+      "@internal/*": ["./src/internal/*"],
+      "@root/*": ["./*"]
+    },
     "resolveJsonModule": true,
-    "types": ["vitest/globals"]
+    "types": ["vitest/globals"],
   },
   "include": ["src", "vitest.*.mjs"]
 }

@@ -35,6 +35,7 @@
     "test:coverage": "vitest run --coverage --passWithNoTests"
   },
   "dependencies": {
+    "@ledgerhq/device-management-kit": "workspace:*",
     "inversify": "catalog:",
     "reflect-metadata": "catalog:"
   },
