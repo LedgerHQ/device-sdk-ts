@@ -56,6 +56,7 @@ export class RNBleApduSender
     (value: Either<DmkError, ApduResponse>) => void
   >;
 
+  private _writeCharacteristic!: Characteristic;
   private _characteristicSubscription:
     | BleCharacteristicSubscription
     | undefined = undefined;
@@ -124,12 +125,11 @@ export class RNBleApduSender
   }
 
   private write(value: string) {
-    return this._dependencies.manager.writeCharacteristicWithoutResponseForDevice(
-      this._dependencies.device.id,
-      this._dependencies.internalDevice.bleDeviceInfos.serviceUuid,
-      this._dependencies.internalDevice.bleDeviceInfos.writeCmdUuid,
-      value,
-    );
+    if (this._writeCharacteristic.isWritableWithoutResponse) {
+      return this._writeCharacteristic.writeWithoutResponse(value);
+    }
+
+    return this._writeCharacteristic.writeWithResponse(value);
   }
 
   public getDependencies() {
@@ -172,6 +172,36 @@ export class RNBleApduSender
           }
         },
       );
+
+    // Setup Write characteristic
+    const characteristics =
+      await this._dependencies.manager.characteristicsForDevice(
+        this._dependencies.device.id,
+        this._dependencies.internalDevice.bleDeviceInfos.serviceUuid,
+      );
+
+    let tmpWriteCharacteristic = characteristics.find(
+      (characteristic) =>
+        characteristic.uuid ===
+        this._dependencies.internalDevice.bleDeviceInfos.writeCmdUuid,
+    );
+    if (tmpWriteCharacteristic) {
+      this._writeCharacteristic = tmpWriteCharacteristic;
+    } else {
+      tmpWriteCharacteristic = characteristics.find(
+        (characteristic) =>
+          characteristic.uuid ===
+          this._dependencies.internalDevice.bleDeviceInfos.writeUuid,
+      );
+
+      //This should never happen
+      if (tmpWriteCharacteristic) {
+        this._writeCharacteristic = tmpWriteCharacteristic;
+      } else {
+        this._logger.error("No write characteristic found");
+        throw new Error("No write characteristic found");
+      }
+    }
 
     const requestMtuFrame = Uint8Array.from([0x08, 0x00, 0x00, 0x00, 0x00]);
     await this.write(Base64.fromUint8Array(requestMtuFrame)).catch((error) => {
