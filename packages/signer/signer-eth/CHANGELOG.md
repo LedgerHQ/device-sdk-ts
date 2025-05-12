@@ -24,8 +24,8 @@
 
 - Updated dependencies [[`f0fea54`](https://github.com/LedgerHQ/device-sdk-ts/commit/f0fea54800fd17ed9fb4bd8c24703a6f543ea669), [`34f8afb`](https://github.com/LedgerHQ/device-sdk-ts/commit/34f8afb5060dafde21dc42d9bc86d4571543ea77), [`b1f9e00`](https://github.com/LedgerHQ/device-sdk-ts/commit/b1f9e00de477c5a390da6211ac15647bcbbcde4f), [`7b6c72d`](https://github.com/LedgerHQ/device-sdk-ts/commit/7b6c72df76ee2cf4dd90057c5270834f4aa177b6), [`44bb707`](https://github.com/LedgerHQ/device-sdk-ts/commit/44bb70728a15512ce08b3ec237c99ace74e0b0c4), [`ccfc20f`](https://github.com/LedgerHQ/device-sdk-ts/commit/ccfc20f8f8d831b1ad9f756c682775f0f7da7130), [`8e0d9ba`](https://github.com/LedgerHQ/device-sdk-ts/commit/8e0d9ba3b18c101edbe40b00f8f011812dc081d4), [`8a9cde5`](https://github.com/LedgerHQ/device-sdk-ts/commit/8a9cde5304edcda0ca1e06452d743f642affb54c), [`c7dc5c6`](https://github.com/LedgerHQ/device-sdk-ts/commit/c7dc5c63cfdd8f2bc429a694c8664de746a5fc30), [`4d969db`](https://github.com/LedgerHQ/device-sdk-ts/commit/4d969dbef608cc131bdbf4e06edd381f5c3dd591), [`212ce15`](https://github.com/LedgerHQ/device-sdk-ts/commit/212ce15c4d996576d32a302d843e821396a8ff2c), [`5927cce`](https://github.com/LedgerHQ/device-sdk-ts/commit/5927ccedb34f930103d6d46651abe28c3eeb35c3), [`d268b91`](https://github.com/LedgerHQ/device-sdk-ts/commit/d268b91ab063b58ab6c9497c14e05197f24a045f), [`c3c1f6b`](https://github.com/LedgerHQ/device-sdk-ts/commit/c3c1f6b0f264cd48ea0259a7b6e79c4a6597a87d)]:
   - @ledgerhq/device-management-kit@0.7.0
-  - @ledgerhq/context-module@2.0.0
-  - @ledgerhq/signer-utils@2.0.0
+  - @ledgerhq/context-module@1.4.0
+  - @ledgerhq/signer-utils@1.0.5
 
 ## 1.3.3
 
@@ -43,7 +43,7 @@
 
 - Updated dependencies [[`e3d6744`](https://github.com/LedgerHQ/device-sdk-ts/commit/e3d6744336d45840a9715e48c319cdf4ce77bb4f), [`da9d303`](https://github.com/LedgerHQ/device-sdk-ts/commit/da9d303e53790159e6d22f3f366f71314eef5752), [`d93a602`](https://github.com/LedgerHQ/device-sdk-ts/commit/d93a602d1ee161d6d8da4e0e40690a4273a813e0), [`29242d5`](https://github.com/LedgerHQ/device-sdk-ts/commit/29242d51c79d9043c3a6160d897b4938f044b7c4), [`42d675f`](https://github.com/LedgerHQ/device-sdk-ts/commit/42d675f9f9be9a83c1f9b682a5bd182711feaae5)]:
   - @ledgerhq/device-management-kit@0.7.0
-  - @ledgerhq/context-module@2.0.0
+  - @ledgerhq/context-module@1.4.0
 
 ## 1.3.1
 
