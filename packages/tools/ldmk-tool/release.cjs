@@ -153,37 +153,41 @@ async function enterRelease() {
       const dependencies = packageJson.dependencies;
       const peerDependencies = packageJson.peerDependencies;
 
-      for (const [dependency, value] of Object.entries(dependencies)) {
-        const included = packagesToBePublished.some(
-          (v) => v.name === dependency,
-        );
+      if (dependencies) {
+        for (const [dependency, value] of Object.entries(dependencies)) {
+          const included = packagesToBePublished.some(
+            (v) => v.name === dependency,
+          );
 
-        if (value.includes("workspace") && !included) {
-          linkedDependencies.push({
-            package: pkg.name,
-            path: pkg.path,
-            type: "dependency",
-            dependency,
-            version: value,
-            currentVersion: pkgs.find((p) => p.name === dependency)?.version,
-          });
+          if (value.includes("workspace") && !included) {
+            linkedDependencies.push({
+              package: pkg.name,
+              path: pkg.path,
+              type: "dependency",
+              dependency,
+              version: value,
+              currentVersion: pkgs.find((p) => p.name === dependency)?.version,
+            });
+          }
         }
       }
 
-      for (const [dependency, value] of Object.entries(peerDependencies)) {
-        const included = packagesToBePublished.some(
-          (v) => v.name === dependency,
-        );
+      if (peerDependencies) {
+        for (const [dependency, value] of Object.entries(peerDependencies)) {
+          const included = packagesToBePublished.some(
+            (v) => v.name === dependency,
+          );
 
-        if (value.includes("workspace") && !included) {
-          linkedDependencies.push({
-            package: pkg.name,
-            path: pkg.path,
-            type: "peerDependency",
-            dependency,
-            version: value,
-            currentVersion: pkgs.find((p) => p.name === dependency)?.version,
-          });
+          if (value.includes("workspace") && !included) {
+            linkedDependencies.push({
+              package: pkg.name,
+              path: pkg.path,
+              type: "peerDependency",
+              dependency,
+              version: value,
+              currentVersion: pkgs.find((p) => p.name === dependency)?.version,
+            });
+          }
         }
       }
     }
