@@ -57,7 +57,7 @@
     "ts-node": "catalog:"
   },
   "peerDependencies": {
-    "@ledgerhq/context-module": "workspace:*",
-    "@ledgerhq/device-management-kit": "workspace:*"
+    "@ledgerhq/context-module": "^1.4.0",
+    "@ledgerhq/device-management-kit": "^0.7.0"
   }
 }
