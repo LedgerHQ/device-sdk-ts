@@ -359,9 +359,7 @@ describe("SignTransactionDeviceAction", () => {
         }),
       );
 
-      const dependencies = deviceAction.extractDependencies(
-        makeDeviceActionInternalApiMock(),
-      );
+      const dependencies = deviceAction.extractDependencies(api);
       const signature = await dependencies.signTransaction({
         input: {
           derivationPath: "44'/501'/0'/0'",

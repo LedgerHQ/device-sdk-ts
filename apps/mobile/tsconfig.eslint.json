@@ -6,7 +6,6 @@
     "eslint.config.mjs",
     "babel.config.js",
     "index.js",
-    "jest.config.js",
     "metro.config.js",
     "react-native.config.js",
   ],

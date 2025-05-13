@@ -1,6 +1,7 @@
 {
   "extends": "@react-native/typescript-config/tsconfig.json",
   "compilerOptions": {
+    "types": ["react-native"],
     "baseUrl": ".",
     "paths": {
       "_providers/*": ["./src/providers/*"],

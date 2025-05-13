@@ -10,19 +10,9 @@ type FactoryProps = {
 };
 
 export const sendModuleFactory = ({ stub = false }: FactoryProps) =>
-  new ContainerModule(
-    (
-      bind,
-      _unbind,
-      _isBound,
-      rebind,
-      _unbindAsync,
-      _onActivation,
-      _onDeactivation,
-    ) => {
-      bind(sendTypes.SendApduUseCase).to(SendApduUseCase);
-      if (stub) {
-        rebind(sendTypes.SendApduUseCase).to(StubUseCase);
-      }
-    },
-  );
+  new ContainerModule(({ bind, rebindSync }) => {
+    bind(sendTypes.SendApduUseCase).to(SendApduUseCase);
+    if (stub) {
+      rebindSync(sendTypes.SendApduUseCase).to(StubUseCase);
+    }
+  });

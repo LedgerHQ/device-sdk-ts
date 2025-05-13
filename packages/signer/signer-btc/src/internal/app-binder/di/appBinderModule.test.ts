@@ -9,7 +9,7 @@ describe("appBinderModule", () => {
     beforeEach(() => {
       mod = appBinderModuleFactory();
       container = new Container();
-      container.load(mod);
+      container.loadSync(mod);
     });
 
     it("should return appBinder module", () => {

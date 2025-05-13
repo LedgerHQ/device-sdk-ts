@@ -15,7 +15,11 @@ describe("commandModuleFactory", () => {
     beforeEach(() => {
       mod = commandModuleFactory();
       container = new Container();
-      container.load(mod, deviceSessionModuleFactory(), loggerModuleFactory());
+      container.loadSync(
+        mod,
+        deviceSessionModuleFactory(),
+        loggerModuleFactory(),
+      );
     });
 
     it("should return the config module", () => {
@@ -36,7 +40,7 @@ describe("commandModuleFactory", () => {
     beforeEach(() => {
       mod = commandModuleFactory({ stub: true });
       container = new Container();
-      container.load(mod);
+      container.loadSync(mod);
     });
 
     it("should return the config module", () => {

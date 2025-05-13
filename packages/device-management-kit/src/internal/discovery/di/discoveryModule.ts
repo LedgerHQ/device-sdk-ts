@@ -17,7 +17,7 @@ type FactoryProps = {
 };
 
 export const discoveryModuleFactory = ({ stub = false }: FactoryProps) =>
-  new ContainerModule((bind, _unbind, _isBound, rebind) => {
+  new ContainerModule(({ bind, rebindSync }) => {
     bind(discoveryTypes.ConnectUseCase).to(ConnectUseCase);
     bind(discoveryTypes.DisconnectUseCase).to(DisconnectUseCase);
     bind(discoveryTypes.StartDiscoveringUseCase).to(StartDiscoveringUseCase);
@@ -36,13 +36,15 @@ export const discoveryModuleFactory = ({ stub = false }: FactoryProps) =>
     );
 
     if (stub) {
-      rebind(discoveryTypes.StartDiscoveringUseCase).to(StubUseCase);
-      rebind(discoveryTypes.StopDiscoveringUseCase).to(StubUseCase);
-      rebind(discoveryTypes.ConnectUseCase).to(StubUseCase);
-      rebind(discoveryTypes.DisconnectUseCase).to(StubUseCase);
-      rebind(discoveryTypes.GetConnectedDeviceUseCase).to(StubUseCase);
-      rebind(discoveryTypes.ListenToAvailableDevicesUseCase).to(StubUseCase);
-      rebind(discoveryTypes.ListenToConnectedDeviceUseCase).to(StubUseCase);
-      rebind(discoveryTypes.ListConnectedDevicesUseCase).to(StubUseCase);
+      rebindSync(discoveryTypes.ConnectUseCase).to(StubUseCase);
+      rebindSync(discoveryTypes.DisconnectUseCase).to(StubUseCase);
+      rebindSync(discoveryTypes.StartDiscoveringUseCase).to(StubUseCase);
+      rebindSync(discoveryTypes.StopDiscoveringUseCase).to(StubUseCase);
+      rebindSync(discoveryTypes.GetConnectedDeviceUseCase).to(StubUseCase);
+      rebindSync(discoveryTypes.ListenToAvailableDevicesUseCase).to(
+        StubUseCase,
+      );
+      rebindSync(discoveryTypes.ListenToConnectedDeviceUseCase).to(StubUseCase);
+      rebindSync(discoveryTypes.ListConnectedDevicesUseCase).to(StubUseCase);
     }
   });

@@ -9,7 +9,7 @@ describe("WalletModuleFactory", () => {
     beforeEach(() => {
       mod = walletModuleFactory();
       container = new Container();
-      container.load(mod);
+      container.loadSync(mod);
     });
 
     it("should return the wallet service module", () => {

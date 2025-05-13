@@ -35,7 +35,7 @@
     "react-dom": "catalog:",
     "react-lottie": "catalog:",
     "rxjs": "catalog:",
-    "styled-components": "^5.3.11"
+    "styled-components": "catalog:"
   },
   "devDependencies": {
     "@ledgerhq/eslint-config-dsdk": "workspace:*",
@@ -44,7 +44,7 @@
     "@types/react": "catalog:",
     "@types/react-lottie": "catalog:",
     "@types/styled-components": "catalog:",
-    "autoprefixer": "^10.4.20",
+    "autoprefixer": "catalog:",
     "globals": "catalog:",
     "postcss": "catalog:"
   }

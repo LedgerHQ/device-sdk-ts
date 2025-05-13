@@ -6,7 +6,7 @@ import { DefaultPkiCertificateLoader } from "@/pki/domain/DefaultPkiCertificateL
 import { pkiTypes } from "./pkiTypes";
 
 export const nanoPkiModuleFactory = () =>
-  new ContainerModule((bind, _unbind, _isBound, _rebind) => {
+  new ContainerModule(({ bind }) => {
     bind(pkiTypes.PkiCertificateDataSource).to(HttpPkiCertificateDataSource);
     bind(pkiTypes.PkiCertificateLoader).to(DefaultPkiCertificateLoader);
   });

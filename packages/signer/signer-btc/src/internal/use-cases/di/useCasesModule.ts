@@ -8,22 +8,12 @@ import { SignPsbtUseCase } from "@internal/use-cases/sign-psbt/SignPsbtUseCase";
 import { SignTransactionUseCase } from "@internal/use-cases/sign-transaction/SignTransactionUseCase";
 
 export const useCasesModuleFactory = () =>
-  new ContainerModule(
-    (
-      bind,
-      _unbind,
-      _isBound,
-      _rebind,
-      _unbindAsync,
-      _onActivation,
-      _onDeactivation,
-    ) => {
-      bind(useCasesTypes.GetExtendedPublicKeyUseCase).to(
-        GetExtendedPublicKeyUseCase,
-      );
-      bind(useCasesTypes.SignMessageUseCase).to(SignMessageUseCase);
-      bind(useCasesTypes.SignPsbtUseCase).to(SignPsbtUseCase);
-      bind(useCasesTypes.SignTransactionUseCase).to(SignTransactionUseCase);
-      bind(useCasesTypes.GetWalletAddressUseCase).to(GetWalletAddressUseCase);
-    },
-  );
+  new ContainerModule(({ bind }) => {
+    bind(useCasesTypes.GetExtendedPublicKeyUseCase).to(
+      GetExtendedPublicKeyUseCase,
+    );
+    bind(useCasesTypes.SignMessageUseCase).to(SignMessageUseCase);
+    bind(useCasesTypes.SignPsbtUseCase).to(SignPsbtUseCase);
+    bind(useCasesTypes.SignTransactionUseCase).to(SignTransactionUseCase);
+    bind(useCasesTypes.GetWalletAddressUseCase).to(GetWalletAddressUseCase);
+  });

@@ -9,7 +9,7 @@ describe("messageModuleFactory", () => {
     beforeEach(() => {
       mod = messageModuleFactory();
       container = new Container();
-      container.load(mod);
+      container.loadSync(mod);
     });
 
     it("should return the message module", () => {

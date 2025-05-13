@@ -7,7 +7,7 @@ import { UniswapContextLoader } from "@/uniswap/domain/UniswapContextLoader";
 import { uniswapTypes } from "./uniswapTypes";
 
 export const uniswapModuleFactory = () =>
-  new ContainerModule((bind, _unbind, _isBound, _rebind) => {
+  new ContainerModule(({ bind }) => {
     bind(uniswapTypes.AbiDecoderDataSource).to(EthersAbiDecoderDataSource);
     bind(uniswapTypes.CommandDecoderDataSource).to(
       DefaultCommandDecoderDataSource,

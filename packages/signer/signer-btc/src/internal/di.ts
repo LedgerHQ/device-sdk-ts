@@ -25,7 +25,7 @@ export const makeContainer = ({ dmk, sessionId }: MakeContainerProps) => {
     .bind<DeviceSessionId>(externalTypes.SessionId)
     .toConstantValue(sessionId);
 
-  container.load(
+  container.loadSync(
     appBinderModuleFactory(),
     useCasesModuleFactory(),
     walletModuleFactory(),

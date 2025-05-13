@@ -21,7 +21,7 @@ describe("secureChannelModuleFactory default use case", () => {
       config: mockDmkConfig,
     });
     container = new Container();
-    container.load(mod);
+    container.loadSync(mod);
   });
 
   it("the secure channel module should be defined", () => {

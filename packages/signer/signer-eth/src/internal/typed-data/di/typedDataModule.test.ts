@@ -9,7 +9,7 @@ describe("TypedDataModuleFactory", () => {
     beforeEach(() => {
       mod = typedDataModuleFactory();
       container = new Container();
-      container.load(mod);
+      container.loadSync(mod);
     });
 
     it("should return the typed data module", () => {

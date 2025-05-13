@@ -15,7 +15,7 @@ describe("configModuleFactory", () => {
     beforeEach(() => {
       mod = configModuleFactory({ stub: false });
       container = new Container();
-      container.load(mod);
+      container.loadSync(mod);
     });
 
     it("should return the config module", () => {
@@ -38,7 +38,7 @@ describe("configModuleFactory", () => {
     beforeEach(() => {
       mod = configModuleFactory({ stub: true });
       container = new Container();
-      container.load(mod);
+      container.loadSync(mod);
     });
 
     it("should return the config module", () => {

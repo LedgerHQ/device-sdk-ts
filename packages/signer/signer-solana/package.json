@@ -38,7 +38,6 @@
     "@ledgerhq/signer-utils": "workspace:*",
     "bs58": "catalog:",
     "inversify": "catalog:",
-    "inversify-logger-middleware": "catalog:",
     "purify-ts": "catalog:",
     "reflect-metadata": "catalog:",
     "xstate": "catalog:"

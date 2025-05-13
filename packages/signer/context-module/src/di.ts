@@ -19,7 +19,7 @@ type MakeContainerArgs = {
 export const makeContainer = ({ config }: MakeContainerArgs) => {
   const container = new Container();
 
-  container.load(
+  container.loadSync(
     configModuleFactory(config),
     externalPluginModuleFactory(),
     nftModuleFactory(),
