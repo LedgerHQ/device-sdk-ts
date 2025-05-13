@@ -2,4 +2,6 @@ export type DmkConfig = {
   mockUrl: string;
   managerApiUrl: string;
   webSocketUrl: string;
+  provider: number;
+  firmwareDistributionSalt: string;
 };

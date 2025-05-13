@@ -6,10 +6,13 @@ import { type DmkError } from "@api/Error";
 
 export type DisconnectHandler = (deviceId: DeviceId) => void;
 
+export type SendApduResult = Either<DmkError, ApduResponse>;
+
 export type SendApduFnType = (
   apdu: Uint8Array,
   triggersDisconnection?: boolean,
-) => Promise<Either<DmkError, ApduResponse>>;
+  abortTimeout?: number,
+) => Promise<SendApduResult>;
 
 export interface DeviceConnection {
   sendApdu: SendApduFnType;

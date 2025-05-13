@@ -1,5 +1,6 @@
 import { Container } from "inversify";
 
+import { type DmkConfig } from "@api/DmkConfig";
 import { AxiosManagerApiDataSource } from "@internal/manager-api/data/AxiosManagerApiDataSource";
 import { DefaultManagerApiService } from "@internal/manager-api/service/DefaultManagerApiService";
 import { StubUseCase } from "@root/src/di.stub";
@@ -18,7 +19,7 @@ describe("managerApiModuleFactory", () => {
           managerApiUrl: "http://fake.url",
           mockUrl: "http://fake-mock.url",
           webSocketUrl: "http://fake-websocket.url",
-        },
+        } as DmkConfig,
       });
       container = new Container();
       container.load(mod);
@@ -58,7 +59,7 @@ describe("managerApiModuleFactory", () => {
           managerApiUrl: "http://fake.url",
           mockUrl: "http://fake-mock.url",
           webSocketUrl: "http://fake-websocket.url",
-        },
+        } as DmkConfig,
       });
       container = new Container();
       container.load(mod);

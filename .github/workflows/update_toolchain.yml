@@ -14,6 +14,8 @@ jobs:
     runs-on: ["ledgerhq-device-sdk"]
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: develop
 
       - uses: LedgerHQ/device-sdk-ts/.github/actions/setup-toolchain-composite@develop
 
@@ -22,7 +24,7 @@ jobs:
           git config user.name 'github-actions[bot]'
           git config user.email 'github-actions[bot]@users.noreply.github.com'
           git checkout -b ${{ env.BRANCH_NAME }}
-          git push --set-upstream origin ${{ env.BRANCH_NAME }}
+          git push --set-upstream origin ${{ env.BRANCH_NAME }} --force
 
       - name: Update toolchain
         run: |
@@ -34,41 +36,44 @@ jobs:
           echo "status=$(git status --porcelain | wc -l)" >> $GITHUB_OUTPUT
 
       - name: Set new versions
-        if: steps.changes.outputs.status > 0
         id: new-versions
         run: |
           proto use
           pnpm i
+          jq 'del(.packageManager)' package.json > tmp.json && mv tmp.json package.json
           echo "version=$(pnpm -v)" >> $GITHUB_OUTPUT
 
       - name: Update package.json
-        if: steps.changes.outputs.status > 0
         run: |
           jq '.packageManager = "pnpm@${{ steps.new-versions.outputs.version }}"' package.json > tmp.json && mv tmp.json package.json
 
-      - name: Add changes to commit
-        if: steps.changes.outputs.status > 0 && success()
+      - name: Deduplicate
         run: |
+          pnpm dedupe
+
+      - name: Add changes to commit
+        run: |
+          git status
           git add .prototools
           git add package.json
+          git add pnpm-lock.yaml
 
       - name: Commit and sign
-        if: steps.changes.outputs.status > 0 && success()
         uses: planetscale/ghcommit-action@v0.1.6
         with:
           commit_message: "🔧 (repo): Update toolchain"
           repo: ${{ github.repository }}
           branch: ${{ env.BRANCH_NAME }}
-          file_pattern: '*'
+          file_pattern: '.'
         env:
           GITHUB_TOKEN: ${{ github.token }}
 
       - name: Create PR
-        if: steps.changes.outputs.status > 0 && success()
+        continue-on-error: true
         run: |
           gh pr create \
           --title "🔧 (repo) [NO-ISSUE]: Update toolchain" \
-          --body "This PR updates the toolchain (node, npm, pnpm) to the newest versions" \
+          --body "This PR updates the toolchain (node, npm, pnpm) to the newest versions and deduplicates packages" \
           --base develop \
           --head ${{ env.BRANCH_NAME }}
         env:

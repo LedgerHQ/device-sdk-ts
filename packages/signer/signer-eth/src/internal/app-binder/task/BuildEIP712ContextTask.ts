@@ -8,7 +8,6 @@ import {
   DeviceModelId,
   type InternalApi,
 } from "@ledgerhq/device-management-kit";
-import { TypedDataEncoder, type TypedDataField } from "ethers";
 import { Just, type Maybe, Nothing } from "purify-ts";
 
 import { type GetConfigCommandResponse } from "@api/app-binder/GetConfigCommandTypes";
@@ -52,23 +51,6 @@ export class BuildEIP712ContextTask {
       ).web3Check;
     }
 
-    // Legacy blind signing context
-    const domainHash = TypedDataEncoder.hashDomain(this.data.domain);
-
-    if (!this.data.types[this.data.primaryType]) {
-      throw new Error(
-        `Primary type "${this.data.primaryType}" is not defined in the types.`,
-      );
-    }
-
-    const typesRecord: Record<string, TypedDataField[]> = this.data.types;
-    const { EIP712Domain, ...rest } = typesRecord;
-    const messageHash = TypedDataEncoder.hashStruct(
-      this.data.primaryType,
-      rest,
-      this.data.message,
-    );
-
     // Clear signing context
     // Parse the message types and values
     const parsed = this.parser.parse(this.data);
@@ -109,8 +91,6 @@ export class BuildEIP712ContextTask {
       domain,
       message,
       clearSignContext,
-      domainHash,
-      messageHash,
     };
     return provideTaskArgs;
   }

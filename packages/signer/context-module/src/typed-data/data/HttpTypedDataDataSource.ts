@@ -8,6 +8,7 @@ import type {
   ContextModuleCalMode,
   ContextModuleConfig,
 } from "@/config/model/ContextModuleConfig";
+import { LEDGER_CLIENT_VERSION_HEADER } from "@/shared/constant/HttpHeaders";
 import type {
   TypedDataFilter,
   TypedDataMessageInfo,
@@ -59,7 +60,7 @@ export class HttpTypedDataDataSource implements TypedDataDataSource {
           ref: `branch:${this.config.cal.branch}`,
         },
         headers: {
-          "X-Ledger-Client-Version": `context-module/${PACKAGE.version}`,
+          [LEDGER_CLIENT_VERSION_HEADER]: `context-module/${PACKAGE.version}`,
         },
       });
 
@@ -189,7 +190,7 @@ export class HttpTypedDataDataSource implements TypedDataDataSource {
     data: InstructionField,
     mode: ContextModuleCalMode,
   ): data is InstructionFieldV1 & {
-    signatures: { [key in ContextModuleCalMode]: string };
+    signatures: { [_key in ContextModuleCalMode]: string };
   } {
     // NOTE: Currently the backend return the same structure for V1 and V2,
     // so we can't distinguish them here, but we can still check the required fields
@@ -206,7 +207,7 @@ export class HttpTypedDataDataSource implements TypedDataDataSource {
     data: InstructionField,
     mode: ContextModuleCalMode,
   ): data is InstructionFieldV2 & {
-    signatures: { [key in ContextModuleCalMode]: string };
+    signatures: { [_key in ContextModuleCalMode]: string };
   } {
     return (
       typeof data === "object" &&
@@ -224,7 +225,7 @@ export class HttpTypedDataDataSource implements TypedDataDataSource {
     data: InstructionField,
     mode: ContextModuleCalMode,
   ): data is InstructionFieldV2WithCoinRef & {
-    signatures: { [key in ContextModuleCalMode]: string };
+    signatures: { [_key in ContextModuleCalMode]: string };
   } {
     return (
       typeof data === "object" &&
@@ -242,7 +243,7 @@ export class HttpTypedDataDataSource implements TypedDataDataSource {
     data: InstructionField,
     mode: ContextModuleCalMode,
   ): data is InstructionFieldV2WithName & {
-    signatures: { [key in ContextModuleCalMode]: string };
+    signatures: { [_key in ContextModuleCalMode]: string };
   } {
     return (
       typeof data === "object" &&
@@ -264,7 +265,7 @@ export class HttpTypedDataDataSource implements TypedDataDataSource {
     data: InstructionField,
     mode: ContextModuleCalMode,
   ): data is InstructionContractInfo & {
-    signatures: { [key in ContextModuleCalMode]: string };
+    signatures: { [_key in ContextModuleCalMode]: string };
   } {
     return (
       typeof data === "object" &&

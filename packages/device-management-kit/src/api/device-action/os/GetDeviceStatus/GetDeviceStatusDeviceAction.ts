@@ -105,8 +105,7 @@ export class GetDeviceStatusDeviceAction extends XStateDeviceAction<
       },
       guards: {
         isDeviceOnboarded: () => isDeviceOnboarded(), // TODO: we don't have this info for now, this can be derived from the "flags" obtained in the getVersion command
-        isDeviceUnlocked: () =>
-          getDeviceSessionState().deviceStatus !== DeviceStatus.LOCKED,
+        isDeviceLocked: ({ context }) => context._internalState.locked,
         hasError: ({ context }) => context._internalState.error !== null,
       },
       actions: {
@@ -162,7 +161,7 @@ export class GetDeviceStatusDeviceAction extends XStateDeviceAction<
           },
           _internalState: {
             onboarded: false, // we don't know how to check yet
-            locked: sessionState.deviceStatus === DeviceStatus.LOCKED,
+            locked: false,
             currentApp:
               sessionStateType ===
               DeviceSessionStateType.ReadyWithoutSecureChannel
@@ -186,7 +185,7 @@ export class GetDeviceStatusDeviceAction extends XStateDeviceAction<
               guard: {
                 type: "isDeviceOnboarded",
               },
-              target: "LockingCheck",
+              target: "AppAndVersionCheck",
               actions: assign({
                 _internalState: (_) => ({
                   ..._.context._internalState,
@@ -197,26 +196,6 @@ export class GetDeviceStatusDeviceAction extends XStateDeviceAction<
             {
               target: "Error",
               actions: "assignErrorDeviceNotOnboarded",
-            },
-          ],
-        },
-        LockingCheck: {
-          // We check if the device is locked in the session state
-          always: [
-            {
-              target: "AppAndVersionCheck",
-              guard: {
-                type: "isDeviceUnlocked",
-              },
-              actions: assign({
-                _internalState: (_) => ({
-                  ..._.context._internalState,
-                  locked: false,
-                }),
-              }),
-            },
-            {
-              target: "UserActionUnlockDevice",
             },
           ],
         },
@@ -255,20 +234,41 @@ export class GetDeviceStatusDeviceAction extends XStateDeviceAction<
                 _internalState: (_) => {
                   if (isSuccessCommandResult(_.event.output)) {
                     const state: DeviceSessionState = getDeviceSessionState();
-                    // Narrow the type to ReadyWithoutSecureChannelState or ReadyWithSecureChannelState
                     if (
                       state.sessionStateType !==
                       DeviceSessionStateType.Connected
                     ) {
+                      // Update the current app
                       setDeviceSessionState({
                         ...state,
                         currentApp: _.event.output.data,
                       });
+                    } else {
+                      // The device can be set to Ready if GetAppAndVersionCommand was successful
+                      setDeviceSessionState({
+                        deviceModelId: state.deviceModelId,
+                        sessionStateType:
+                          DeviceSessionStateType.ReadyWithoutSecureChannel,
+                        deviceStatus: DeviceStatus.CONNECTED,
+                        currentApp: _.event.output.data,
+                        installedApps: [],
+                        isSecureConnectionAllowed: false,
+                      });
                     }
                     return {
                       ..._.context._internalState,
+                      locked: false,
                       currentApp: _.event.output.data.name,
                       currentAppVersion: _.event.output.data.version,
+                    };
+                  }
+                  if (
+                    "errorCode" in _.event.output.error &&
+                    _.event.output.error.errorCode === "5515"
+                  ) {
+                    return {
+                      ..._.context._internalState,
+                      locked: true,
                     };
                   }
                   return {
@@ -289,6 +289,10 @@ export class GetDeviceStatusDeviceAction extends XStateDeviceAction<
             {
               guard: "hasError",
               target: "Error",
+            },
+            {
+              target: "UserActionUnlockDevice",
+              guard: "isDeviceLocked",
             },
             {
               target: "Success",

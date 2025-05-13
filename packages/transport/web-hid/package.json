@@ -15,9 +15,9 @@
   ],
   "scripts": {
     "prebuild": "rimraf lib",
-    "build": "pnpm lmdk-build --entryPoints src/index.ts,src/**/*.ts --tsconfig tsconfig.prod.json --platform web",
+    "build": "pnpm ldmk-tool build --entryPoints src/index.ts,src/**/*.ts --tsconfig tsconfig.prod.json --platform web",
     "dev": "concurrently \"pnpm watch:builds\" \"pnpm watch:types\"",
-    "watch:builds": "pnpm lmdk-watch --entryPoints src/index.ts,src/**/*.ts --tsconfig tsconfig.prod.json --platform web",
+    "watch:builds": "pnpm ldmk-tool watch --entryPoints src/index.ts,src/**/*.ts --tsconfig tsconfig.prod.json --platform web",
     "watch:types": "concurrently \"tsc --watch -p tsconfig.prod.json\" \"tsc-alias --watch -p tsconfig.prod.json\"",
     "lint": "eslint",
     "lint:fix": "pnpm lint --fix",
@@ -30,24 +30,24 @@
     "test:coverage": "vitest run --coverage"
   },
   "dependencies": {
-    "@sentry/minimal": "^6.19.7",
-    "purify-ts": "^2.1.0",
-    "uuid": "^11.0.3"
+    "@sentry/minimal": "catalog:",
+    "purify-ts": "catalog:",
+    "uuid": "catalog:"
   },
   "devDependencies": {
     "@ledgerhq/device-management-kit": "workspace:*",
-    "@ledgerhq/esbuild-tools": "workspace:*",
+    "@ledgerhq/ldmk-tool": "workspace:*",
     "@ledgerhq/eslint-config-dsdk": "workspace:*",
     "@ledgerhq/prettier-config-dsdk": "workspace:*",
     "@ledgerhq/tsconfig-dsdk": "workspace:*",
     "@ledgerhq/vitest-config-dmk": "workspace:*",
-    "@types/uuid": "^10.0.0",
-    "@types/w3c-web-hid": "^1.0.6",
-    "rxjs": "^7.8.2",
-    "ts-node": "^10.9.2"
+    "@types/uuid": "catalog:",
+    "@types/w3c-web-hid": "catalog:",
+    "rxjs": "catalog:",
+    "ts-node": "catalog:"
   },
   "peerDependencies": {
     "@ledgerhq/device-management-kit": "workspace:*",
-    "rxjs": "^7.8.2"
+    "rxjs": "catalog:"
   }
 }

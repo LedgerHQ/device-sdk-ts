@@ -34,7 +34,6 @@ describe("SignTransactionDeviceAction", () => {
       signTransaction: signTransactionMock,
     };
   }
-  const defaultOptions = {};
   let defaultTransaction: Transaction;
 
   beforeEach(() => {
@@ -51,7 +50,7 @@ describe("SignTransactionDeviceAction", () => {
           input: {
             derivationPath: "44'/501'/0'/0'",
             transaction: defaultTransaction,
-            options: defaultOptions,
+            skipOpenApp: false,
           },
         });
 
@@ -117,6 +116,55 @@ describe("SignTransactionDeviceAction", () => {
           },
         );
       }));
+
+    it("should be successful while skipping OpenApp", () =>
+      new Promise<void>((resolve, reject) => {
+        setupOpenAppDAMock();
+
+        const deviceAction = new SignTransactionDeviceAction({
+          input: {
+            derivationPath: "44'/501'/0'/0'",
+            transaction: defaultTransaction,
+            skipOpenApp: true,
+          },
+        });
+
+        // Mock the dependencies to return some sample data
+        signTransactionMock.mockResolvedValueOnce(
+          CommandResultFactory({
+            data: Just(new Uint8Array([0x05, 0x06, 0x07])),
+          }),
+        );
+        vi.spyOn(deviceAction, "extractDependencies").mockReturnValue(
+          extractDependenciesMock(),
+        );
+
+        // Expected intermediate values for the following state sequence:
+        const expectedStates: Array<SignTransactionDAState> = [
+          // SignTransaction state
+          {
+            intermediateValue: {
+              requiredUserInteraction: UserInteractionRequired.SignTransaction,
+            },
+            status: DeviceActionStatus.Pending,
+          },
+          // Final state
+          {
+            output: new Uint8Array([0x05, 0x06, 0x07]),
+            status: DeviceActionStatus.Completed,
+          },
+        ];
+
+        testDeviceActionStates(
+          deviceAction,
+          expectedStates,
+          makeDeviceActionInternalApiMock(),
+          {
+            onError: reject,
+            onDone: resolve,
+          },
+        );
+      }));
   });
 
   describe("OpenApp errors", () => {
@@ -128,7 +176,7 @@ describe("SignTransactionDeviceAction", () => {
           input: {
             derivationPath: "44'/501'/0'/0'",
             transaction: defaultTransaction,
-            options: defaultOptions,
+            skipOpenApp: false,
           },
         });
 
@@ -179,7 +227,7 @@ describe("SignTransactionDeviceAction", () => {
           input: {
             derivationPath: "44'/501'/0'/0'",
             transaction: defaultTransaction,
-            options: defaultOptions,
+            skipOpenApp: false,
           },
         });
 
@@ -240,7 +288,7 @@ describe("SignTransactionDeviceAction", () => {
           input: {
             derivationPath: "44'/501'/0'/0'",
             transaction: defaultTransaction,
-            options: defaultOptions,
+            skipOpenApp: false,
           },
         });
 
@@ -300,7 +348,7 @@ describe("SignTransactionDeviceAction", () => {
         input: {
           derivationPath: "44'/501'/0'/0'",
           transaction: defaultTransaction,
-          options: defaultOptions,
+          skipOpenApp: false,
         },
       });
       // mock sendCommand to return a successful result

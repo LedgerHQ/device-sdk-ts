@@ -42,8 +42,9 @@ export class EthAppBinder {
 
   getAddress(args: {
     derivationPath: string;
-    checkOnDevice?: boolean;
-    returnChainCode?: boolean;
+    checkOnDevice: boolean;
+    returnChainCode: boolean;
+    skipOpenApp: boolean;
   }): GetAddressDAReturnType {
     return this.dmk.executeDeviceAction({
       sessionId: this.sessionId,
@@ -55,6 +56,7 @@ export class EthAppBinder {
           requiredUserInteraction: args.checkOnDevice
             ? UserInteractionRequired.VerifyAddress
             : UserInteractionRequired.None,
+          skipOpenApp: args.skipOpenApp,
         },
       }),
     });
@@ -63,6 +65,7 @@ export class EthAppBinder {
   signPersonalMessage(args: {
     derivationPath: string;
     message: string | Uint8Array;
+    skipOpenApp: boolean;
   }): SignPersonalMessageDAReturnType {
     return this.dmk.executeDeviceAction({
       sessionId: this.sessionId,
@@ -73,6 +76,7 @@ export class EthAppBinder {
           appName: "Ethereum",
           compatibleAppNames: ETHEREUM_PLUGINS,
           requiredUserInteraction: UserInteractionRequired.SignPersonalMessage,
+          skipOpenApp: args.skipOpenApp,
         },
       }),
     });
@@ -102,6 +106,7 @@ export class EthAppBinder {
     derivationPath: string;
     parser: TypedDataParserService;
     data: TypedData;
+    skipOpenApp: boolean;
   }): SignTypedDataDAReturnType {
     return this.dmk.executeDeviceAction({
       sessionId: this.sessionId,
@@ -111,6 +116,7 @@ export class EthAppBinder {
           data: args.data,
           parser: args.parser,
           contextModule: this.contextModule,
+          skipOpenApp: args.skipOpenApp,
         },
       }),
     });

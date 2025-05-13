@@ -101,6 +101,7 @@ describe("SendCommandInAppDeviceAction", () => {
           command: new TestCommand(commandParams),
           appName: "MyApp",
           requiredUserInteraction: UserInteractionRequired.VerifyAddress,
+          skipOpenApp: false,
         },
       });
       await new Promise<void>((resolve, reject) => {
@@ -149,6 +150,7 @@ describe("SendCommandInAppDeviceAction", () => {
               command: new TestCommand(commandParams),
               appName: "MyApp",
               requiredUserInteraction: UserInteractionRequired.VerifyAddress,
+              skipOpenApp: false,
             },
           }),
           expectedStates,
@@ -175,6 +177,7 @@ describe("SendCommandInAppDeviceAction", () => {
             command: new TestCommand(commandParams),
             appName: "MyApp",
             requiredUserInteraction: UserInteractionRequired.VerifyAddress,
+            skipOpenApp: false,
           },
         });
 
@@ -233,6 +236,7 @@ describe("SendCommandInAppDeviceAction", () => {
             command: new TestCommand(commandParams),
             appName: "MyApp",
             requiredUserInteraction: UserInteractionRequired.VerifyAddress,
+            skipOpenApp: false,
           },
         });
 
@@ -253,6 +257,51 @@ describe("SendCommandInAppDeviceAction", () => {
               requiredUserInteraction: UserInteractionRequired.ConfirmOpenApp,
             },
           },
+          {
+            status: DeviceActionStatus.Pending,
+            intermediateValue: {
+              requiredUserInteraction: UserInteractionRequired.VerifyAddress,
+            },
+          },
+          {
+            status: DeviceActionStatus.Completed,
+            output: mockedCommandResponse,
+          },
+        ];
+
+        testDeviceActionStates(
+          deviceAction,
+          expectedStates,
+          makeDeviceActionInternalApiMock(),
+          {
+            onDone: resolve,
+            onError: reject,
+          },
+        );
+      }));
+
+    it("should succeed while skipping OpenApp", () =>
+      new Promise<void>((resolve, reject) => {
+        setupOpenAppDAMock();
+
+        sendMyCommand.mockResolvedValue(
+          CommandResultFactory({ data: mockedCommandResponse }),
+        );
+
+        const deviceAction = new SendCommandInAppDeviceAction({
+          input: {
+            command: new TestCommand(commandParams),
+            appName: "MyApp",
+            requiredUserInteraction: UserInteractionRequired.VerifyAddress,
+            skipOpenApp: true,
+          },
+        });
+
+        vi.spyOn(deviceAction, "extractDependencies").mockImplementation(
+          extractDependenciesMock,
+        );
+
+        const expectedStates: MyCommandSendCommandDAState[] = [
           {
             status: DeviceActionStatus.Pending,
             intermediateValue: {

@@ -1,6 +1,6 @@
 {
   "name": "@ledgerhq/device-signer-kit-ethereum",
-  "version": "1.3.3",
+  "version": "1.4.0",
   "private": false,
   "license": "Apache-2.0",
   "exports": {
@@ -20,9 +20,9 @@
   ],
   "scripts": {
     "prebuild": "rimraf lib",
-    "build": "pnpm lmdk-build --entryPoints src/index.ts,src/**/*.ts --tsconfig tsconfig.prod.json",
+    "build": "pnpm ldmk-tool build --entryPoints src/index.ts,src/**/*.ts --tsconfig tsconfig.prod.json",
     "dev": "concurrently \"pnpm watch:builds\" \"pnpm watch:types\"",
-    "watch:builds": "pnpm lmdk-watch --entryPoints src/index.ts,src/**/*.ts --tsconfig tsconfig.prod.json",
+    "watch:builds": "pnpm ldmk-tool watch --entryPoints src/index.ts,src/**/*.ts --tsconfig tsconfig.prod.json",
     "watch:types": "concurrently \"tsc --watch -p tsconfig.prod.json\" \"tsc-alias --watch -p tsconfig.prod.json\"",
     "lint": "eslint",
     "lint:fix": "pnpm lint --fix",
@@ -35,29 +35,29 @@
     "test:coverage": "vitest run --coverage"
   },
   "dependencies": {
-    "@ledgerhq/signer-utils": "^1.0.4",
-    "ethers": "6.13.4",
-    "inversify": "^6.2.2",
-    "inversify-logger-middleware": "^3.1.0",
-    "purify-ts": "^2.1.0",
-    "reflect-metadata": "^0.2.2",
-    "semver": "^7.6.3",
-    "xstate": "^5.19.2"
+    "@ledgerhq/signer-utils": "workspace:*",
+    "ethers": "catalog:",
+    "inversify": "catalog:",
+    "inversify-logger-middleware": "catalog:",
+    "purify-ts": "catalog:",
+    "reflect-metadata": "catalog:",
+    "semver": "catalog:",
+    "xstate": "catalog:"
   },
   "devDependencies": {
     "@ledgerhq/context-module": "workspace:*",
     "@ledgerhq/device-management-kit": "workspace:*",
-    "@ledgerhq/esbuild-tools": "workspace:*",
+    "@ledgerhq/ldmk-tool": "workspace:*",
     "@ledgerhq/eslint-config-dsdk": "workspace:*",
     "@ledgerhq/prettier-config-dsdk": "workspace:*",
     "@ledgerhq/tsconfig-dsdk": "workspace:*",
     "@ledgerhq/vitest-config-dmk": "workspace:*",
-    "@types/semver": "^7.5.8",
-    "rxjs": "^7.8.2",
-    "ts-node": "^10.9.2"
+    "@types/semver": "catalog:",
+    "rxjs": "catalog:",
+    "ts-node": "catalog:"
   },
   "peerDependencies": {
-    "@ledgerhq/context-module": "^1.3.1",
-    "@ledgerhq/device-management-kit": "^0.6.5"
+    "@ledgerhq/context-module": "workspace:*",
+    "@ledgerhq/device-management-kit": "workspace:*"
   }
 }

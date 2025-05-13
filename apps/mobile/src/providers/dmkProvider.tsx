@@ -1,27 +1,26 @@
 import React, {
-  useEffect,
-  useRef,
   createContext,
   type PropsWithChildren,
   useContext,
+  useEffect,
+  useRef,
 } from "react";
 import {
   ConsoleLogger,
   type DeviceManagementKit,
   DeviceManagementKitBuilder,
 } from "@ledgerhq/device-management-kit";
-// import { RNBleTransportFactory } from "@ledgerhq/device-transport-kit-react-native-ble";
+import { RNBleTransportFactory } from "@ledgerhq/device-transport-kit-react-native-ble";
+import { RNHidTransportFactory } from "@ledgerhq/device-transport-kit-react-native-hid";
 
 const DmkContext = createContext<DeviceManagementKit | null>(null);
 
 function buildDefaultDmk() {
-  return (
-    new DeviceManagementKitBuilder()
-      // TODO: Reenable when transport is ready
-      // .addTransport(RNBleTransportFactory)
-      .addLogger(new ConsoleLogger())
-      .build()
-  );
+  return new DeviceManagementKitBuilder()
+    .addTransport(RNBleTransportFactory)
+    .addTransport(RNHidTransportFactory)
+    .addLogger(new ConsoleLogger())
+    .build();
 }
 
 export const DmkProvider: React.FC<PropsWithChildren> = ({ children }) => {

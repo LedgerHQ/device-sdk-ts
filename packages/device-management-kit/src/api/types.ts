@@ -26,6 +26,13 @@ export {
   type ExecuteDeviceActionReturnType,
 } from "@api/device-action/DeviceAction";
 export {
+  type GetDeviceMetadataDAError,
+  type GetDeviceMetadataDAInput,
+  type GetDeviceMetadataDAIntermediateValue,
+  type GetDeviceMetadataDAOutput,
+  type GetDeviceMetadataDAState,
+} from "@api/device-action/os/GetDeviceMetadata/types";
+export {
   type GetDeviceStatusDAError,
   type GetDeviceStatusDAInput,
   type GetDeviceStatusDAIntermediateValue,
@@ -39,6 +46,17 @@ export {
   type GoToDashboardDAOutput,
   type GoToDashboardDAState,
 } from "@api/device-action/os/GoToDashboard/types";
+export {
+  type ApplicationConstraint,
+  type ApplicationDependency,
+  type ApplicationVersionConstraint,
+  type InstallOrUpdateAppsDAError,
+  type InstallOrUpdateAppsDAInput,
+  type InstallOrUpdateAppsDAIntermediateValue,
+  type InstallOrUpdateAppsDAOutput,
+  type InstallOrUpdateAppsDAState,
+  type InstallPlan,
+} from "@api/device-action/os/InstallOrUpdateApps/types";
 export {
   type ListAppsDAError,
   type ListAppsDAInput,
@@ -62,6 +80,14 @@ export {
   type OpenAppDAState,
 } from "@api/device-action/os/OpenAppDeviceAction/types";
 export {
+  type OpenAppWithDependenciesDAError,
+  type OpenAppWithDependenciesDAInput,
+  type OpenAppWithDependenciesDAIntermediateValue,
+  type OpenAppWithDependenciesDAOutput,
+  type OpenAppWithDependenciesDARequiredInteraction,
+  type OpenAppWithDependenciesDAState,
+} from "@api/device-action/os/OpenAppWithDependencies/types";
+export {
   type SendCommandInAppDAError,
   type SendCommandInAppDAInput,
   type SendCommandInAppDAIntermediateValue,
@@ -70,7 +96,16 @@ export {
 export type { ExecuteDeviceActionUseCaseArgs } from "@api/device-action/use-case/ExecuteDeviceActionUseCase";
 export { type StateMachineTypes } from "@api/device-action/xstate-utils/StateMachineTypes";
 export { type DeviceModelDataSource } from "@api/device-model/data/DeviceModelDataSource";
-export type { DeviceSessionState } from "@api/device-session/DeviceSessionState";
+export type {
+  Catalog,
+  CustomImage,
+  DeviceSessionState,
+  FirmwareUpdate,
+  FirmwareUpdateContext,
+  FirmwareVersion,
+  InstalledLanguagePackage,
+  RunningApp,
+} from "@api/device-session/DeviceSessionState";
 export { type ApduReceiverService } from "@api/device-session/service/ApduReceiverService";
 export { type ApduReceiverServiceFactory } from "@api/device-session/service/ApduReceiverService";
 export { type ApduSenderServiceFactory } from "@api/device-session/service/ApduSenderService";
@@ -115,10 +150,12 @@ export {
   type UninstallAppDARequiredInteraction,
   type UninstallAppDAState,
 } from "@api/secure-channel/device-action/UninstallApp/types";
+export { type DeviceApduSender } from "@api/transport/model/DeviceApduSender";
 export {
   type DeviceConnection,
   type DisconnectHandler,
   type SendApduFnType,
+  type SendApduResult,
 } from "@api/transport/model/DeviceConnection";
 export { type TransportDiscoveredDevice } from "@api/transport/model/TransportDiscoveredDevice";
 export type { HexaString } from "@api/utils/HexaString";

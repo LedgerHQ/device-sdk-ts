@@ -1,10 +1,10 @@
 import React, { useCallback, useEffect, useState } from "react";
-import { Icons, InfiniteLoader, Popin, Text } from "@ledgerhq/native-ui";
+import { type CommandProps } from "_common/types.ts";
 import { useForm } from "_hooks/useForm";
-import { CommandProps } from "_common/types.ts";
-import { inspect } from "util";
 import { CommandResultStatus } from "@ledgerhq/device-management-kit";
+import { Icons, InfiniteLoader, Popin, Text } from "@ledgerhq/native-ui";
 import styled from "styled-components/native";
+import { inspect } from "util";
 
 type SendCommandModalProps = {
   command?: CommandProps<any, any, any>;

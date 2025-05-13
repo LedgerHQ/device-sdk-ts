@@ -13,6 +13,7 @@ import { KeyId } from "@/pki/model/KeyId";
 import { KeyUsage } from "@/pki/model/KeyUsage";
 import { PkiCertificate } from "@/pki/model/PkiCertificate";
 import { PkiCertificateInfo } from "@/pki/model/PkiCertificateInfo";
+import { LEDGER_CLIENT_VERSION_HEADER } from "@/shared/constant/HttpHeaders";
 import {
   ClearSignContextReference,
   ClearSignContextSuccess,
@@ -73,7 +74,7 @@ export class HttpTransactionDataSource implements TransactionDataSource {
           ref: `branch:${this.config.cal.branch}`,
         },
         headers: {
-          "X-Ledger-Client-Version": `context-module/${PACKAGE.version}`,
+          [LEDGER_CLIENT_VERSION_HEADER]: `context-module/${PACKAGE.version}`,
         },
       });
       dto = response.data;
@@ -254,7 +255,7 @@ export class HttpTransactionDataSource implements TransactionDataSource {
   ): data is CalldataDescriptorV1 & {
     transaction_info: {
       descriptor: {
-        signatures: { [key in ContextModuleCalMode]: string };
+        signatures: { [_key in ContextModuleCalMode]: string };
       };
     };
   } {
@@ -274,7 +275,7 @@ export class HttpTransactionDataSource implements TransactionDataSource {
     mode: ContextModuleCalMode,
   ): data is CalldataTransactionInfoV1 & {
     descriptor: {
-      signatures: { [key in ContextModuleCalMode]: string };
+      signatures: { [_key in ContextModuleCalMode]: string };
     };
   } {
     return (
@@ -311,7 +312,7 @@ export class HttpTransactionDataSource implements TransactionDataSource {
   private isCalldataSignatures(
     data: CalldataSignatures,
     mode: ContextModuleCalMode,
-  ): data is CalldataSignatures & { [key in ContextModuleCalMode]: string } {
+  ): data is CalldataSignatures & { [_key in ContextModuleCalMode]: string } {
     return typeof data === "object" && typeof data[mode] === "string";
   }
 

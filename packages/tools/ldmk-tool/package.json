@@ -1,0 +1,24 @@
+{
+  "name": "@ledgerhq/ldmk-tool",
+  "license": "Apache-2.0",
+  "version": "0.0.1",
+  "private": true,
+  "description": "A collection of scripts and utilities for Ledger Device Management Kit monorepo",
+  "bin": {
+    "ldmk-tool": "./cli.cjs"
+  },
+  "files": [
+    "*.cjs",
+    "!.prettierrc.cjs"
+  ],
+  "dependencies": {
+    "@inquirer/prompts": "catalog:",
+    "semver": "catalog:"
+  },
+  "devDependencies": {
+    "@ledgerhq/eslint-config-dsdk": "workspace:*",
+    "@ledgerhq/prettier-config-dsdk": "workspace:*",
+    "esbuild": "catalog:",
+    "esbuild-node-externals": "catalog:"
+  }
+}

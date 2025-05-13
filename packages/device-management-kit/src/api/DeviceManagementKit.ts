@@ -40,6 +40,9 @@ import {
 import { type ListenToConnectedDeviceUseCase } from "@internal/discovery/use-case/ListenToConnectedDeviceUseCase";
 import type { StartDiscoveringUseCase } from "@internal/discovery/use-case/StartDiscoveringUseCase";
 import type { StopDiscoveringUseCase } from "@internal/discovery/use-case/StopDiscoveringUseCase";
+import { type ManagerApiDataSource } from "@internal/manager-api/data/ManagerApiDataSource";
+import { managerApiTypes } from "@internal/manager-api/di/managerApiTypes";
+import { type SetProviderUseCase } from "@internal/manager-api/use-case/SetProviderUseCase";
 import { sendTypes } from "@internal/send/di/sendTypes";
 import { type SendApduUseCase } from "@internal/send/use-case/SendApduUseCase";
 import { makeContainer, type MakeContainerProps } from "@root/src/di";
@@ -277,11 +280,30 @@ export class DeviceManagementKit {
   disableDeviceSessionRefresher(args: {
     sessionId: DeviceSessionId;
     blockerId: string;
-  }) {
+  }): () => void {
     return this.container
       .get<DisableDeviceSessionRefresherUseCase>(
         deviceSessionTypes.DisableDeviceSessionRefresherUseCase,
       )
       .execute(args);
+  }
+  /**
+   * Sets the provider for the manager API.
+   *
+   * @param {number} provider - The provider to set.
+   */
+  setProvider(provider: number): void {
+    return this.container
+      .get<SetProviderUseCase>(managerApiTypes.SetProviderUseCase)
+      .execute(provider);
+  }
+
+  /**
+   * Returns the current provider value from the manager API data source.
+   */
+  getProvider(): number {
+    return this.container
+      .get<ManagerApiDataSource>(managerApiTypes.ManagerApiDataSource)
+      .getProvider();
   }
 }

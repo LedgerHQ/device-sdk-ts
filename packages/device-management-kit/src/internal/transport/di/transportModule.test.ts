@@ -1,5 +1,6 @@
 import { Container } from "inversify";
 
+import { type DmkConfig } from "@api/DmkConfig";
 import { TransportMock } from "@api/transport/model/__mocks__/TransportMock";
 import { deviceModelModuleFactory } from "@internal/device-model/di/deviceModelModule";
 import { deviceSessionModuleFactory } from "@internal/device-session/di/deviceSessionModule";
@@ -47,7 +48,8 @@ describe("transportModuleFactory", () => {
           managerApiUrl: "http://fake.url/api",
           mockUrl: "http://fake.url",
           webSocketUrl: "ws://fake.websocket.url",
-        },
+          firmwareDistributionSalt: "salt",
+        } as DmkConfig,
       });
       container = new Container();
       container.load(logger, deviceModel, deviceSession, mod);

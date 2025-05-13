@@ -4,6 +4,7 @@ import { Either, Left, Right } from "purify-ts";
 
 import { configTypes } from "@/config/di/configTypes";
 import type { ContextModuleConfig } from "@/config/model/ContextModuleConfig";
+import { LEDGER_CLIENT_VERSION_HEADER } from "@/shared/constant/HttpHeaders";
 import {
   GetDomainNameInfosParams,
   GetTrustedNameInfosParams,
@@ -31,7 +32,7 @@ export class HttpTrustedNameDataSource implements TrustedNameDataSource {
         method: "GET",
         url: `https://nft.api.live.ledger.com/v2/names/ethereum/${chainId}/forward/${domain}?types=${type}&sources=${source}&challenge=${challenge}`,
         headers: {
-          "X-Ledger-Client-Version": `context-module/${PACKAGE.version}`,
+          [LEDGER_CLIENT_VERSION_HEADER]: `context-module/${PACKAGE.version}`,
         },
       });
 
@@ -69,7 +70,7 @@ export class HttpTrustedNameDataSource implements TrustedNameDataSource {
         method: "GET",
         url: `https://nft.api.live.ledger.com/v2/names/ethereum/${chainId}/reverse/${address}?types=${types.join(",")}&sources=${sources.join(",")}&challenge=${challenge}`,
         headers: {
-          "X-Ledger-Client-Version": `context-module/${PACKAGE.version}`,
+          [LEDGER_CLIENT_VERSION_HEADER]: `context-module/${PACKAGE.version}`,
         },
       });
       const trustedName = response.data;

@@ -40,6 +40,25 @@ const STAX_RESPONSE_GOOD = new ApduResponse({
   data: STAX_RESPONSE_DATA_GOOD,
 });
 
+const BL_RESPONSE_DATA_GOOD = Uint8Array.from([
+  0x05, 0x01, 0x00, 0x03, 0x04, 0x31, 0x2e, 0x31, 0x36, 0x04, 0xf4, 0xd8, 0xaa,
+  0x43, 0x05, 0x32, 0x2e, 0x32, 0x2e, 0x33, 0x04, 0x33, 0x00, 0x00, 0x04, 0x90,
+  0x00,
+]);
+const BL_RESPONSE_GOOD = new ApduResponse({
+  statusCode: Uint8Array.from([0x90, 0x00]),
+  data: BL_RESPONSE_DATA_GOOD,
+});
+
+const OLD_FM_RESPONSE_DATA_GOOD = Uint8Array.from([
+  0x33, 0x00, 0x00, 0x04, 0x00, 0x04, 0xee, 0x00, 0x00, 0x00, 0x04, 0x32, 0x2e,
+  0x33, 0x30, 0x01, 0x01, 0x01, 0x00, 0x01, 0x00, 0x90, 0x00,
+]);
+const OLD_FM_RESPONSE_GOOD = new ApduResponse({
+  statusCode: Uint8Array.from([0x90, 0x00]),
+  data: OLD_FM_RESPONSE_DATA_GOOD,
+});
+
 describe("GetOsVersionCommand", () => {
   let command: GetOsVersionCommand;
 
@@ -94,6 +113,82 @@ describe("GetOsVersionCommand", () => {
 
         const expected = CommandResultFactory({
           data: getOsVersionCommandResponseMockBuilder(DeviceModelId.STAX),
+        });
+
+        expect(parsed).toStrictEqual(expected);
+      });
+    });
+
+    describe("Bootloader", () => {
+      it("should parse the bootloader response", () => {
+        const parsed = command.parseResponse(
+          BL_RESPONSE_GOOD,
+          DeviceModelId.STAX,
+        );
+
+        const expected = CommandResultFactory({
+          data: {
+            isBootloader: true,
+            isOsu: false,
+            targetId: 83951619,
+            seTargetId: 855638020,
+            seVersion: "2.2.3",
+            seFlags: new Uint8Array([0xf4, 0xd8, 0xaa, 0x43]),
+            mcuTargetId: 83951619,
+            mcuSephVersion: "",
+            mcuBootloaderVersion: "1.16",
+            hwVersion: "",
+            langId: undefined,
+            recoverState: undefined,
+            secureElementFlags: {
+              isPinValidated: true,
+              hasMcuSerialNumber: true,
+              hasValidCertificate: true,
+              isCustomAuthorityConnectionAllowed: true,
+              isSecureConnectionAllowed: false,
+              isOnboarded: true,
+              isMcuCodeSigned: false,
+              isInRecoveryMode: false,
+            },
+          },
+        });
+
+        expect(parsed).toStrictEqual(expected);
+      });
+    });
+
+    describe("Old firmware", () => {
+      it("should parse the old firmware response", () => {
+        const parsed = command.parseResponse(
+          OLD_FM_RESPONSE_GOOD,
+          DeviceModelId.NANO_X,
+        );
+
+        const expected = CommandResultFactory({
+          data: {
+            isBootloader: false,
+            isOsu: false,
+            targetId: 855638020,
+            seTargetId: 855638020,
+            seVersion: "0.0.0",
+            seFlags: new Uint8Array(),
+            mcuTargetId: undefined,
+            mcuSephVersion: "2.30",
+            mcuBootloaderVersion: "",
+            hwVersion: "00",
+            langId: undefined,
+            recoverState: undefined,
+            secureElementFlags: {
+              isPinValidated: true,
+              hasMcuSerialNumber: true,
+              hasValidCertificate: true,
+              isCustomAuthorityConnectionAllowed: false,
+              isSecureConnectionAllowed: true,
+              isOnboarded: true,
+              isMcuCodeSigned: true,
+              isInRecoveryMode: false,
+            },
+          },
         });
 
         expect(parsed).toStrictEqual(expected);

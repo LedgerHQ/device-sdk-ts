@@ -55,9 +55,9 @@ export class ListenToAvailableDevicesUseCase {
     };
   }
 
-  execute({
-    transport,
-  }: ListenToAvailableDevicesUseCaseArgs): Observable<DiscoveredDevice[]> {
+  execute({ transport }: ListenToAvailableDevicesUseCaseArgs = {}): Observable<
+    DiscoveredDevice[]
+  > {
     this._logger.info("Listening to available devices");
 
     if (this._transports.length === 0) {

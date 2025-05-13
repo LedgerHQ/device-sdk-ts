@@ -6,8 +6,8 @@ const {
   DeviceManagementKitBuilder,
   // ConsoleLogger,
 } = require("@ledgerhq/device-management-kit");
+const { help } = require("@ledgerhq/ldmk-tool/help.cjs");
 const { input } = require("@inquirer/prompts");
-const { help } = require("./help.cjs");
 
 const dmk = new DeviceManagementKitBuilder()
   // .addTransport(/* Node Transports (HID, BLE) */)

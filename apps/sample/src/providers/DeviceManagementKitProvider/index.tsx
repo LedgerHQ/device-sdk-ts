@@ -11,6 +11,10 @@ import {
   mockserverIdentifier,
   mockserverTransportFactory,
 } from "@ledgerhq/device-transport-kit-mockserver";
+import {
+  speculosIdentifier,
+  speculosTransportFactory,
+} from "@ledgerhq/device-transport-kit-speculos";
 import { webBleTransportFactory } from "@ledgerhq/device-transport-kit-web-ble";
 import { webHidTransportFactory } from "@ledgerhq/device-transport-kit-web-hid";
 
@@ -30,6 +34,19 @@ function buildDefaultDmk(logsExporter: WebLogsExporterLogger) {
     .build();
 }
 
+//TODO add speculos URL to config
+function buildSpeculosDmk(
+  logsExporter: WebLogsExporterLogger,
+  speculosUrl?: string,
+) {
+  return new DeviceManagementKitBuilder()
+    .addTransport(speculosTransportFactory(speculosUrl))
+    .addLogger(new ConsoleLogger())
+    .addLogger(logsExporter)
+    .addLogger(new FlipperDmkLogger())
+    .build();
+}
+
 function buildMockDmk(url: string, logsExporter: WebLogsExporterLogger) {
   return new DeviceManagementKitBuilder()
     .addTransport(mockserverTransportFactory)
@@ -42,27 +59,38 @@ function buildMockDmk(url: string, logsExporter: WebLogsExporterLogger) {
 
 export const DmkProvider: React.FC<PropsWithChildren> = ({ children }) => {
   const {
-    state: { transport, mockServerUrl },
+    state: { transport, mockServerUrl, speculosUrl },
   } = useDmkConfigContext();
 
   const mockServerEnabled = transport === mockserverIdentifier;
+  const speculosEnabled = transport === speculosIdentifier;
+
   const [state, setState] = useState(() => {
     const logsExporter = new WebLogsExporterLogger();
-    const dmk = mockServerEnabled
-      ? buildMockDmk(mockServerUrl, logsExporter)
-      : buildDefaultDmk(logsExporter);
+    const dmk = speculosEnabled
+      ? buildSpeculosDmk(logsExporter, speculosUrl)
+      : mockServerEnabled
+        ? buildMockDmk(mockServerUrl, logsExporter)
+        : buildDefaultDmk(logsExporter);
     return { dmk, logsExporter };
   });
 
   const mockServerEnabledChanged = useHasChanged(mockServerEnabled);
   const mockServerUrlChanged = useHasChanged(mockServerUrl);
+  const speculosEnabledChanged = useHasChanged(speculosEnabled);
 
-  if (mockServerEnabledChanged || mockServerUrlChanged) {
+  if (
+    mockServerEnabledChanged ||
+    mockServerUrlChanged ||
+    speculosEnabledChanged
+  ) {
     setState(({ logsExporter }) => {
       return {
-        dmk: mockServerEnabled
-          ? buildMockDmk(mockServerUrl, logsExporter)
-          : buildDefaultDmk(logsExporter),
+        dmk: speculosEnabled
+          ? buildSpeculosDmk(logsExporter, speculosUrl)
+          : mockServerEnabled
+            ? buildMockDmk(mockServerUrl, logsExporter)
+            : buildDefaultDmk(logsExporter),
         logsExporter,
       };
     });

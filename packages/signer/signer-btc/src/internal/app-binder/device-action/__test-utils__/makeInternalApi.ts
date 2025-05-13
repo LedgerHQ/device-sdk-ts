@@ -3,6 +3,7 @@ import { type Mocked } from "vitest";
 
 const sendApduMock = vi.fn();
 const sendCommandMock = vi.fn();
+const apiGetDeviceModelMock = vi.fn();
 const apiGetDeviceSessionStateMock = vi.fn();
 const apiGetDeviceSessionStateObservableMock = vi.fn();
 const setDeviceSessionStateMock = vi.fn();
@@ -14,6 +15,7 @@ export function makeDeviceActionInternalApiMock(): Mocked<InternalApi> {
   return {
     sendApdu: sendApduMock,
     sendCommand: sendCommandMock,
+    getDeviceModel: apiGetDeviceModelMock,
     getDeviceSessionState: apiGetDeviceSessionStateMock,
     getDeviceSessionStateObservable: apiGetDeviceSessionStateObservableMock,
     setDeviceSessionState: setDeviceSessionStateMock,

@@ -1,21 +1,21 @@
-import React, { useCallback, useEffect } from "react";
+import React, { useEffect } from "react";
 import {
   ActivityIndicator,
   FlatList,
-  FlatListProps,
-  Text,
+  type FlatListProps,
   View,
 } from "react-native";
-import { useDmk } from "_providers/dmkProvider.tsx";
-import { DiscoveredDevice } from "@ledgerhq/device-management-kit";
-import styled from "styled-components/native";
-import { Button } from "@ledgerhq/native-ui";
-import { DiscoveredDeviceItem } from "./DiscoveredDeviceItem";
-import { useDeviceSessionsContext } from "_providers/deviceSessionsProvider.tsx";
-import { useNavigation } from "@react-navigation/native";
-import { ThemeProps } from "_common/types.ts";
+import { type ThemeProps } from "_common/types.ts";
 import { CommandsScreens } from "_navigators/CommandNavigator.constants.ts";
 import { RootScreens } from "_navigators/RootNavigator.constants.ts";
+import { useDeviceSessionsContext } from "_providers/deviceSessionsProvider.tsx";
+import { useDmk } from "_providers/dmkProvider.tsx";
+import { type DiscoveredDevice } from "@ledgerhq/device-management-kit";
+import { Button, Text } from "@ledgerhq/native-ui";
+import { useIsFocused, useNavigation } from "@react-navigation/native";
+import styled from "styled-components/native";
+
+import { DiscoveredDeviceItem } from "./DiscoveredDeviceItem";
 
 const Container = styled.SafeAreaView`
     flex: 1;
@@ -41,45 +41,46 @@ export const ConnectDeviceScreen: React.FC = () => {
   } = useDeviceSessionsContext();
   const { navigate } = useNavigation();
 
+  const isFocused = useIsFocused();
+
   useEffect(() => {
     setDevices([]);
   }, [deviceSessionId]);
 
-  const onScan = useCallback(() => {
-    const obs = dmk.listenToAvailableDevices();
-    setIsScanningDevices(true);
-    const subscription = obs.subscribe({
-      next: async devices => {
-        setDevices(devices);
-      },
-      error: err => {
-        console.log("error discovered", err);
-      },
-    });
+  useEffect(() => {
+    if (isScanningDevices && isFocused) {
+      const subscription = dmk.listenToAvailableDevices({}).subscribe({
+        next: dvcs => {
+          setDevices(dvcs);
+        },
+        error: err => {
+          console.log("[dmk.listenToAvailableDevices] error", err);
+        },
+      });
 
-    return () => {
-      subscription.unsubscribe();
+      return () => {
+        subscription.unsubscribe();
+        setDevices([]);
+      };
+    } else {
       dmk.stopDiscovering();
-    };
-  }, [dmk]);
+      setDevices([]);
+      return () => {};
+    }
+  }, [dmk, isScanningDevices, isFocused]);
 
-  const onStop = () => {
+  const startScanning = () => {
+    setIsScanningDevices(true);
+  };
+
+  const stopScanning = () => {
     setIsScanningDevices(false);
-    dmk.stopDiscovering();
   };
 
   const onConnect = async (device: DiscoveredDevice) => {
+    setIsScanningDevices(false);
     try {
-      const id = await dmk.connect({ device });
-      dmk.stopDiscovering();
-      setIsScanningDevices(false);
-      dispatch({
-        type: "add_session",
-        payload: {
-          sessionId: id,
-          connectedDevice: dmk.getConnectedDevice({ sessionId: id }),
-        },
-      });
+      await dmk.connect({ device });
       navigate(RootScreens.Command, {
         screen: CommandsScreens.DeviceActionTester,
       });
@@ -107,11 +108,14 @@ export const ConnectDeviceScreen: React.FC = () => {
                     padding: 10,
                   }}>
                   {!isScanningDevices ? (
-                    <Button type="color" onPress={onScan} title="Start scan">
+                    <Button
+                      type="color"
+                      onPress={startScanning}
+                      title="Start scan">
                       Start scan
                     </Button>
                   ) : (
-                    <Button type="color" onPress={onStop}>
+                    <Button type="color" onPress={stopScanning}>
                       Stop scan
                     </Button>
                   )}

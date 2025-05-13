@@ -1,1 +1,2 @@
 export const APDU_RESPONSE_STATUS_CODE_LENGTH = 2;
+export const PINGER_TIMEOUT = 800;

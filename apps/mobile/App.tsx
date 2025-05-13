@@ -7,13 +7,12 @@
 
 import React, { useMemo } from "react";
 import { StatusBar, useColorScheme } from "react-native";
-import { StyleProvider } from "@ledgerhq/native-ui";
-
 import { RootNavigator } from "_navigators/RootNavigator";
-import { DmkProvider } from "_providers/dmkProvider";
-import styled, { useTheme } from "styled-components/native";
-import { DeviceSessionsProvider } from "_providers/deviceSessionsProvider.tsx";
 import { getNavigationTheme } from "_navigators/styles.ts";
+import { DeviceSessionsProvider } from "_providers/deviceSessionsProvider.tsx";
+import { DmkProvider } from "_providers/dmkProvider";
+import { StyleProvider } from "@ledgerhq/native-ui";
+import styled, { useTheme } from "styled-components/native";
 
 const Container = styled.SafeAreaView`
   flex: 1;

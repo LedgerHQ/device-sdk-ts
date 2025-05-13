@@ -5,12 +5,14 @@ import { webHidIdentifier } from "@ledgerhq/device-transport-kit-web-hid";
 export type DmkConfigState = {
   mockServerUrl: string;
   transport: TransportIdentifier;
+  speculosUrl?: string;
 };
 
 type SetTransportAction = {
   type: "set_transport";
   payload: {
     transport: string;
+    speculosUrl?: string;
   };
 };
 
@@ -37,6 +39,7 @@ export const dmkConfigReducer: Reducer<DmkConfigState, DmkConfigAction> = (
       return {
         ...state,
         transport: action.payload.transport,
+        speculosUrl: action.payload.speculosUrl,
       };
     case "set_mock_server_url":
       return {

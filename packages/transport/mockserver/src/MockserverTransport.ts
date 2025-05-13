@@ -68,6 +68,7 @@ export class MockTransport implements Transport {
             },
             usbOnly: true,
             memorySize: 320 * 1024,
+            blockSize: 32,
             masks: [0x31100000],
           },
           transport: this.identifier,
@@ -109,6 +110,7 @@ export class MockTransport implements Transport {
           },
           usbOnly: true,
           memorySize: 320 * 1024,
+          blockSize: 32,
           masks: [0x31100000],
         },
         id: params.deviceId,
@@ -133,7 +135,7 @@ export class MockTransport implements Transport {
           new DisconnectError(new Error(`Failed to disconnect ${sessionId}`)),
         );
       }
-      return Right(void 0);
+      return Right(undefined);
     } catch (error) {
       return Left(new DisconnectError(error as Error));
     }

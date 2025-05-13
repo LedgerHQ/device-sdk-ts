@@ -102,6 +102,7 @@ describe("CallTaskInAppDeviceAction", () => {
             await internalApi.sendCommand(new TestCommand(commandParams)),
           appName: "MyApp",
           requiredUserInteraction: UserInteractionRequired.VerifyAddress,
+          skipOpenApp: false,
         },
       });
       await new Promise<void>((resolve, reject) => {
@@ -151,6 +152,7 @@ describe("CallTaskInAppDeviceAction", () => {
                 await internalApi.sendCommand(new TestCommand(commandParams)),
               appName: "MyApp",
               requiredUserInteraction: UserInteractionRequired.VerifyAddress,
+              skipOpenApp: false,
             },
           }),
           expectedStates,
@@ -178,6 +180,7 @@ describe("CallTaskInAppDeviceAction", () => {
               await internalApi.sendCommand(new TestCommand(commandParams)),
             appName: "MyApp",
             requiredUserInteraction: UserInteractionRequired.VerifyAddress,
+            skipOpenApp: false,
           },
         });
 
@@ -237,6 +240,7 @@ describe("CallTaskInAppDeviceAction", () => {
               await internalApi.sendCommand(new TestCommand(commandParams)),
             appName: "MyApp",
             requiredUserInteraction: UserInteractionRequired.VerifyAddress,
+            skipOpenApp: false,
           },
         });
 
@@ -257,6 +261,52 @@ describe("CallTaskInAppDeviceAction", () => {
               requiredUserInteraction: UserInteractionRequired.ConfirmOpenApp,
             },
           },
+          {
+            status: DeviceActionStatus.Pending,
+            intermediateValue: {
+              requiredUserInteraction: UserInteractionRequired.VerifyAddress,
+            },
+          },
+          {
+            status: DeviceActionStatus.Completed,
+            output: mockedCommandResponse,
+          },
+        ];
+
+        testDeviceActionStates(
+          deviceAction,
+          expectedStates,
+          makeDeviceActionInternalApiMock(),
+          {
+            onDone: resolve,
+            onError: reject,
+          },
+        );
+      }));
+
+    it("should succeed while skipping OpenApp", () =>
+      new Promise<void>((resolve, reject) => {
+        setupOpenAppDAMock();
+
+        callMyTask.mockResolvedValue(
+          CommandResultFactory({ data: mockedCommandResponse }),
+        );
+
+        const deviceAction = new CallTaskInAppDeviceAction({
+          input: {
+            task: async (internalApi) =>
+              await internalApi.sendCommand(new TestCommand(commandParams)),
+            appName: "MyApp",
+            requiredUserInteraction: UserInteractionRequired.VerifyAddress,
+            skipOpenApp: true,
+          },
+        });
+
+        vi.spyOn(deviceAction, "extractDependencies").mockImplementation(
+          extractDependenciesMock,
+        );
+
+        const expectedStates: MyCommandCallTaskDAState[] = [
           {
             status: DeviceActionStatus.Pending,
             intermediateValue: {

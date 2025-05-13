@@ -64,23 +64,6 @@ export default [
   },
 
   {
-    files: ["**/*.tsx"],
-    plugins: {
-      react: eslintPluginReact,
-      "react-hooks": fixupPluginRules(eslintPluginReactHooks),
-    },
-    rules: {
-      ...eslintPluginReact.configs.flat.recommended.rules,
-      ...eslintPluginReactHooks.configs.recommended.rules,
-    },
-    settings: {
-      react: {
-        version: "detect",
-      },
-    },
-  },
-
-  {
     files: ["**/*.ts", "**/*.tsx"],
     plugins: {
       "simple-import-sort": simpleImportSort,
@@ -148,6 +131,23 @@ export default [
           ignoreRestSiblings: true,
         },
       ],
+    },
+  },
+
+  {
+    files: ["**/*.tsx"],
+    plugins: {
+      react: eslintPluginReact,
+      "react-hooks": fixupPluginRules(eslintPluginReactHooks),
+    },
+    rules: {
+      ...eslintPluginReact.configs.flat.recommended.rules,
+      ...eslintPluginReactHooks.configs.recommended.rules,
+    },
+    settings: {
+      react: {
+        version: "detect",
+      },
     },
   },
 ];

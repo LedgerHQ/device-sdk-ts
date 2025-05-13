@@ -39,8 +39,8 @@ export class NoAccessibleDeviceError extends GeneralDmkError {
 }
 
 export class OpeningConnectionError extends GeneralDmkError {
-  override readonly _tag = "ConnectionOpeningError";
-  constructor(readonly err?: unknown) {
+  override _tag = "ConnectionOpeningError";
+  constructor(err?: unknown) {
     super(err);
   }
 }
@@ -65,6 +65,12 @@ export class SendApduConcurrencyError extends GeneralDmkError {
   }
 }
 
+export class SendApduTimeoutError extends GeneralDmkError {
+  override readonly _tag = "SendApduTimeoutError";
+  constructor(readonly err?: unknown) {
+    super(err);
+  }
+}
 export class DisconnectError extends GeneralDmkError {
   override readonly _tag = "DisconnectError";
   constructor(readonly err?: unknown) {
@@ -95,6 +101,27 @@ export class NoTransportsProvidedError extends GeneralDmkError {
 
 export class TransportAlreadyExistsError extends GeneralDmkError {
   override readonly _tag = "TransportAlreadyExistsError";
+  constructor(readonly err?: unknown) {
+    super(err);
+  }
+}
+
+export class DeviceDisconnectedWhileSendingError extends GeneralDmkError {
+  override readonly _tag = "DeviceDisconnectedWhileSendingError";
+  constructor(readonly err?: unknown) {
+    super(err);
+  }
+}
+
+export class AlreadySendingApduError extends GeneralDmkError {
+  override readonly _tag = "AlreadySendingApduError";
+  constructor(readonly err?: unknown) {
+    super(err);
+  }
+}
+
+export class DeviceDisconnectedBeforeSendingApdu extends GeneralDmkError {
+  override readonly _tag = "DeviceDisconnectedBeforeSendingApdu";
   constructor(readonly err?: unknown) {
     super(err);
   }

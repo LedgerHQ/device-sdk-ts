@@ -4,9 +4,17 @@ import { assign, createMachine } from "xstate";
 
 import { UserInteractionRequired } from "@api/device-action/model/UserInteractionRequired";
 import { UnknownDAError } from "@api/device-action/os/Errors";
+import { GetDeviceMetadataDeviceAction } from "@api/device-action/os/GetDeviceMetadata/GetDeviceMetadataDeviceAction";
+import { type GetDeviceMetadataDAOutput } from "@api/device-action/os/GetDeviceMetadata/types";
 import { GetDeviceStatusDeviceAction } from "@api/device-action/os/GetDeviceStatus/GetDeviceStatusDeviceAction";
 import { GoToDashboardDeviceAction } from "@api/device-action/os/GoToDashboard/GoToDashboardDeviceAction";
+import { InstallOrUpdateAppsDeviceAction } from "@api/device-action/os/InstallOrUpdateApps/InstallOrUpdateAppsDeviceAction";
+import {
+  type InstallOrUpdateAppsDAIntermediateValue,
+  type InstallOrUpdateAppsDAOutput,
+} from "@api/device-action/os/InstallOrUpdateApps/types";
 import { ListAppsDeviceAction } from "@api/device-action/os/ListApps/ListAppsDeviceAction";
+import { OpenAppDeviceAction } from "@api/device-action/os/OpenAppDeviceAction/OpenAppDeviceAction";
 import { type DmkError } from "@api/Error";
 import { ListInstalledAppsDeviceAction } from "@api/secure-channel/device-action/ListInstalledApps/ListInstalledAppsDeviceAction";
 import { type InstalledApp } from "@api/secure-channel/device-action/ListInstalledApps/types";
@@ -40,6 +48,103 @@ export const setupListAppsMock = (apps: App[], error = false) => {
           return error
             ? Left(new UnknownDAError("ListApps failed"))
             : Right(apps);
+        },
+      }),
+    ),
+  }));
+};
+
+export const setupGetDeviceMetadataMock = (
+  metadata: GetDeviceMetadataDAOutput,
+  error = false,
+) => {
+  (GetDeviceMetadataDeviceAction as Mock).mockImplementation(() => ({
+    makeStateMachine: vi.fn().mockImplementation(() =>
+      createMachine({
+        id: "MockGetDeviceMetadataDeviceAction",
+        initial: "ready",
+        states: {
+          ready: {
+            after: {
+              0: "done",
+            },
+            entry: assign({
+              intermediateValue: () => ({
+                requiredUserInteraction: UserInteractionRequired.None,
+              }),
+            }),
+          },
+          done: {
+            type: "final",
+          },
+        },
+        output: () => {
+          return error
+            ? Left(new UnknownDAError("GetDeviceMetadata failed"))
+            : Right(metadata);
+        },
+      }),
+    ),
+  }));
+};
+
+export const setupInstallOrUpdateAppsMock = (
+  result: InstallOrUpdateAppsDAOutput,
+  intermediateValue: InstallOrUpdateAppsDAIntermediateValue,
+  error = false,
+) => {
+  (InstallOrUpdateAppsDeviceAction as Mock).mockImplementation(() => ({
+    makeStateMachine: vi.fn().mockImplementation(() =>
+      createMachine({
+        id: "MockInstallOrUpdateAppsDeviceAction",
+        initial: "ready",
+        states: {
+          ready: {
+            after: {
+              0: "done",
+            },
+            entry: assign({
+              intermediateValue: () => intermediateValue,
+            }),
+          },
+          done: {
+            type: "final",
+          },
+        },
+        output: () => {
+          return error
+            ? Left(new UnknownDAError("InstallOrUpdateApps failed"))
+            : Right(result);
+        },
+      }),
+    ),
+  }));
+};
+
+export const setupOpenAppMock = (error: boolean = false) => {
+  (OpenAppDeviceAction as Mock).mockImplementation(() => ({
+    makeStateMachine: vi.fn().mockImplementation(() =>
+      createMachine({
+        initial: "ready",
+        states: {
+          ready: {
+            entry: assign({
+              intermediateValue: {
+                requiredUserInteraction: UserInteractionRequired.ConfirmOpenApp,
+              },
+            }),
+            after: {
+              0: "done",
+            },
+          },
+          done: {
+            type: "final",
+          },
+        },
+        output: () => {
+          return error
+            ? Left(new UnknownDAError("OpenApp failed"))
+            : Right(undefined);
         },
       }),
     ),

@@ -67,6 +67,7 @@ describe("SignTransactionDeviceAction", () => {
             dataStoreService: "DataStoreService" as unknown as DataStoreService,
             psbtMapper: "PsbtMapper" as unknown as PsbtMapper,
             valueParser: "ValueParser" as unknown as ValueParser,
+            skipOpenApp: false,
           },
         });
 
@@ -191,6 +192,7 @@ describe("SignTransactionDeviceAction", () => {
             dataStoreService: {} as DataStoreService,
             psbtMapper: {} as PsbtMapper,
             valueParser: {} as ValueParser,
+            skipOpenApp: false,
           },
         });
 
@@ -218,6 +220,7 @@ describe("SignTransactionDeviceAction", () => {
             dataStoreService: {} as DataStoreService,
             psbtMapper: {} as PsbtMapper,
             valueParser: {} as ValueParser,
+            skipOpenApp: false,
           },
         });
 
@@ -280,6 +283,7 @@ describe("SignTransactionDeviceAction", () => {
             dataStoreService: {} as DataStoreService,
             psbtMapper: {} as PsbtMapper,
             valueParser: {} as ValueParser,
+            skipOpenApp: false,
           },
         });
 

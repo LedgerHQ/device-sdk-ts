@@ -95,6 +95,7 @@ export class CallTaskInAppDeviceAction<
         }).makeStateMachine(internalAPI),
       },
       guards: {
+        skipOpenApp: () => this.input.skipOpenApp,
         noInternalError: ({ context }) => context._internalState.error === null,
       },
       actions: {
@@ -107,7 +108,7 @@ export class CallTaskInAppDeviceAction<
       },
     }).createMachine({
       id: "CallTaskInAppDeviceAction",
-      initial: "OpenAppDeviceAction",
+      initial: "InitialState",
       context: ({ input }) => {
         return {
           input: input,
@@ -121,6 +122,15 @@ export class CallTaskInAppDeviceAction<
         };
       },
       states: {
+        InitialState: {
+          always: [
+            {
+              target: "CallTask",
+              guard: "skipOpenApp",
+            },
+            "OpenAppDeviceAction",
+          ],
+        },
         OpenAppDeviceAction: {
           invoke: {
             id: "openAppStateMachine",

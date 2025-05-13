@@ -1,34 +1,39 @@
 import React from "react";
+import { type DeviceActionProps } from "_common/types";
 import {
-  DeviceManagementKit,
-  DeviceModelId,
-  GetDeviceStatusDAError,
-  GetDeviceStatusDAInput,
-  GetDeviceStatusDAIntermediateValue,
-  GetDeviceStatusDAOutput,
+  type DeviceManagementKit,
+  type DeviceModelId,
+  type GetDeviceStatusDAError,
+  type GetDeviceStatusDAInput,
+  type GetDeviceStatusDAIntermediateValue,
+  type GetDeviceStatusDAOutput,
   GetDeviceStatusDeviceAction,
-  GoToDashboardDAError,
-  GoToDashboardDAInput,
-  GoToDashboardDAIntermediateValue,
-  GoToDashboardDAOutput,
+  type GoToDashboardDAError,
+  type GoToDashboardDAInput,
+  type GoToDashboardDAIntermediateValue,
+  type GoToDashboardDAOutput,
   GoToDashboardDeviceAction,
-  ListAppsDAError,
-  ListAppsDAInput,
-  ListAppsDAIntermediateValue,
-  ListAppsDAOutput,
+  type InstallAppDAError,
+  type InstallAppDAInput,
+  type InstallAppDAIntermediateValue,
+  type InstallAppDAOutput,
+  InstallAppDeviceAction,
+  type ListAppsDAError,
+  type ListAppsDAInput,
+  type ListAppsDAIntermediateValue,
+  type ListAppsDAOutput,
   ListAppsDeviceAction,
-  ListAppsWithMetadataDAError,
-  ListAppsWithMetadataDAInput,
-  ListAppsWithMetadataDAIntermediateValue,
-  ListAppsWithMetadataDAOutput,
+  type ListAppsWithMetadataDAError,
+  type ListAppsWithMetadataDAInput,
+  type ListAppsWithMetadataDAIntermediateValue,
+  type ListAppsWithMetadataDAOutput,
   ListAppsWithMetadataDeviceAction,
-  OpenAppDAError,
-  OpenAppDAInput,
-  OpenAppDAIntermediateValue,
-  OpenAppDAOutput,
+  type OpenAppDAError,
+  type OpenAppDAInput,
+  type OpenAppDAIntermediateValue,
+  type OpenAppDAOutput,
   OpenAppDeviceAction,
 } from "@ledgerhq/device-management-kit";
-import { DeviceActionProps } from "_common/types";
 import { Flex, LegendInput } from "@ledgerhq/native-ui";
 
 const UNLOCK_TIMEOUT = 60 * 1000; // 1 minute
@@ -185,5 +190,37 @@ export const getDeviceActions = (
     ListAppsWithMetadataDAInput,
     ListAppsWithMetadataDAError,
     ListAppsWithMetadataDAIntermediateValue
+  >,
+  {
+    id: "install_app",
+    title: "Install App",
+    description:
+      "Perform all the actions necessary to install an app on the device by name",
+    executeDeviceAction: ({ appName, unlockTimeout }, inspect) => {
+      const deviceAction = new InstallAppDeviceAction({
+        input: { appName, unlockTimeout },
+        inspect,
+      });
+      return dmk.executeDeviceAction({
+        sessionId,
+        deviceAction,
+      });
+    },
+    initialValues: { appName: "", unlockTimeout: UNLOCK_TIMEOUT },
+    deviceModelId,
+    FormComponent: ({ values, setValue }) => (
+      <Flex>
+        <LegendInput
+          legend="App name"
+          value={values.appName}
+          onChange={appName => setValue("appName", appName)}
+        />
+      </Flex>
+    ),
+  } satisfies DeviceActionProps<
+    InstallAppDAOutput,
+    InstallAppDAInput,
+    InstallAppDAError,
+    InstallAppDAIntermediateValue
   >,
 ];

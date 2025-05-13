@@ -139,6 +139,18 @@ export class InstallAppDeviceAction extends XStateDeviceAction<
             error: new UnknownDAError("Dep app is not installed on the device"),
           }),
         }),
+        cleanupDeviceState: () => {
+          // After app successful installation, cleanup the device session state
+          // to force fetching the new device state when required
+          const state = getDeviceSessionState();
+          if (state.sessionStateType !== DeviceSessionStateType.Connected) {
+            setDeviceSessionState({
+              ...state,
+              installedApps: [],
+              appsUpdates: undefined,
+            });
+          }
+        },
       },
     }).createMachine({
       /** @xstate-layout N4IgpgJg5mDOIC5QEkB2sAuBDANjgggA6EAiYAbgJYDGY+1GlA9qgHRlW0BKYWEAngGIA2gAYAuolCEmsSoxZSQAD0QBGAJyjWADgDsAFg0A2HSb2iArMbUBmADQh+iAExrjrS6KuWNtte7Glga2AL6hjmiYuATEHDR0DMxsADKUmFHYeJBEhLCCECxgrJSo5EwA1sU46RiZMTnEsGKSSCAycgqoSqoIBgaWrC6i-i6Wjs4ItqJqnt62BsYuGmoGLguW4ZHoWbGkFAn0XaxpGTsNELmwAMIAFmDUFSISSh3yyT2Ituu6vrZ64yciB0djmogGAxcLmMMwMWxA9TwuXitCOyROtUROEaeTuDyewjUrWksneijavW+tl+fgBE2BelmXnBwUsUJhq3hWORB1RSRYGLO0WylyaeMeIhcxPapK6nymPx0fzpQIQGmWYIhbOhsK55yRcV5iWOAHEmAAVJgkLCwW4AIyYWAAThACkUSmVKsUoBarTb7Y6XS1XrKPhTEEtBjNrAsbAZwYt6VNbB41KI9MNvpGbJyIgj9XsUcb0WbLdbbQ7na6wE6nUwnaxCDgsBgAGb1gC2rB9Zf9laDLzabzl4YQkdY0eMsdWCeMSbUeg0nnWZgC300vmMeuFhaNaIFpb9FcDEHFBMHJM6YdAvTTXiGQT0MOMBgsOjMSZhOgn3i17N1ebcoanDFgevrlgGVZniIRIhle5I3uoVjaNClhPqIL5vh+qq2JY1KBO+GgaBmK5hIBBY8iB+5sCaYAYAA8rAABqNZyCwbqoMUpTlFU3Z0YxLFOmxqDBkOoYISo6hsrMWhBL4OiiNCixqEm3xLsYWjWIYWgZv0mzkTulGHPyNH8cxrHJNBomXmS3SjpoqysPGL7fDoUJQgYOhJp5S7Mssr76KIfj-NuuxGXyppmYJwlWbBYnwXZiEIA5BhORhIQuG57meapiysACinBMM4IzFuBlhcBxmRRguSnBgHFcZ6vEwDVxB1dZMoJfKLgQvlsb+GhOg2Es3npmCXjGEsIxEXC5UxOFoGma1hB1VZF6dbZ3WMno+WaEFIREQELiqXhrAEWYxFQrYOhkdshmVRFJZ0bVtSxdKw7XpJCBjFoTkBTYjKmENc6qjCrDEY+Gj6E+-lPqF80PYtrC0ctq33BKwhSnBm2jplaiDLYWhmHojIaAMKmqgYmj5cYFgWKY6rERo+l3RV+xUSZyPPW1r3owStjveJiVfXjBNE8RpPk0mbLUhsG4M8sOjwwa7NVeiQGEA1Ho8Y192EB1H0SZSQSsP8gKTFDO3Mn+Oq5qzCOq49Aoa4INZ1g2TYtu2TpdqUesG0L8opgTKqTGmr4-iykK22VeaoEwEBwEoGtFtR2MjklAC0OWqpn0LLgsAwrIYaZ2Mru4c8cRY8Hwkw2RnX1rEmbiDMyaYAnt7jXeXC3UYKdQFji8DxTjSWiEmFipd4Ufahys32yrqec3VWJD2e6efb04+qu+re-qy-52-metL6a4F9ieG9G64Srg6YGaWHYN2iDd87qpHsbLKs6wDD3iN94eCC-ZTx8yvsLXoN0XB33fHYf4hMOQnR2jdf4egQQvnTMsP+jskYowEhZCShtwHqDcPhIKlgdD9BGJ5KwqkXA7WLt4FYbgrCLDKgvCuasDxRXwagdeI8G63kZNSdBgUUzTChObL4j8nILm-oTK6SwsGnyeqjWoYDurph2mMQqj4hruGOjhNwYI4ELHVAuYiSi9ycxRi9TAfD66b1cJNbQpivCeXjERSRCBUGzGUjCTKj8oSKUsZXdWFFiDqNHNvMOiltDTxtnPEJnC2AAGUACu1BaCwGHg46+30zDaGsF-EElhSkjCTCCME6wobOSMLdY+bNlECgAKK1nrJEpKmVfpFJWCUspDgcLBBpnTDCZhliLn0uEIAA */
@@ -387,6 +399,7 @@ export class InstallAppDeviceAction extends XStateDeviceAction<
             },
             onDone: {
               target: "ListInstalledApps",
+              actions: "cleanupDeviceState",
             },
             onError: {
               target: "Error",
@@ -405,13 +418,11 @@ export class InstallAppDeviceAction extends XStateDeviceAction<
       output: ({ context }) =>
         context._internalState.error
           ? Left(context._internalState.error)
-          : Right(void 0),
+          : Right(undefined),
     });
   }
 
   extractDependencies(internalApi: InternalApi): MachineDependencies {
-    const provider = 1;
-
     const getOsVersion = () =>
       internalApi.sendCommand(new GetOsVersionCommand());
 
@@ -421,9 +432,7 @@ export class InstallAppDeviceAction extends XStateDeviceAction<
       deviceInfo: GetOsVersionResponse;
     }>) => {
       const { deviceInfo } = input;
-      return internalApi
-        .getManagerApiService()
-        .getAppList(deviceInfo, provider);
+      return internalApi.getManagerApiService().getAppList(deviceInfo);
     };
 
     const installApp = ({

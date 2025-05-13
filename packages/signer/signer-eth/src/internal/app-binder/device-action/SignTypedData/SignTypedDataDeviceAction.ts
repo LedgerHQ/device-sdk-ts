@@ -11,7 +11,7 @@ import {
   UserInteractionRequired,
   XStateDeviceAction,
 } from "@ledgerhq/device-management-kit";
-import { Just, Left, Nothing, Right } from "purify-ts";
+import { Left, Nothing, Right } from "purify-ts";
 import { and, assign, fromPromise, setup } from "xstate";
 
 import { type GetConfigCommandResponse } from "@api/app-binder/GetConfigCommandTypes";
@@ -39,6 +39,7 @@ import {
   type ProvideEIP712ContextTaskArgs,
   type ProvideEIP712ContextTaskReturnType,
 } from "@internal/app-binder/task/ProvideEIP712ContextTask";
+import { SignTypedDataLegacyTask } from "@internal/app-binder/task/SignTypedDataLegacyTask";
 import { ApplicationChecker } from "@internal/shared/utils/ApplicationChecker";
 import { type TypedDataParserService } from "@internal/typed-data/service/TypedDataParserService";
 
@@ -72,8 +73,7 @@ export type MachineDependencies = {
   readonly signTypedDataLegacy: (arg0: {
     input: {
       derivationPath: string;
-      domainHash: string;
-      messageHash: string;
+      data: TypedData;
     };
   }) => Promise<CommandResult<Signature, EthErrorCodes>>;
 };
@@ -145,6 +145,7 @@ export class SignTypedDataDeviceAction extends XStateDeviceAction<
         shouldOptIn: ({ context }) =>
           !context._internalState.appConfig!.web3ChecksEnabled &&
           !context._internalState.appConfig!.web3ChecksOptIn,
+        skipOpenApp: ({ context }) => context.input.skipOpenApp,
       },
       actions: {
         assignErrorFromEvent: assign({
@@ -156,7 +157,7 @@ export class SignTypedDataDeviceAction extends XStateDeviceAction<
       },
     }).createMachine({
       id: "SignTypedDataDeviceAction",
-      initial: "OpenAppDeviceAction",
+      initial: "InitialState",
       context: ({ input }) => {
         return {
           input,
@@ -173,13 +174,16 @@ export class SignTypedDataDeviceAction extends XStateDeviceAction<
         };
       },
       states: {
-        OpenAppDeviceAction: {
-          exit: assign({
-            intermediateValue: {
-              requiredUserInteraction: UserInteractionRequired.None,
-              step: SignTypedDataDAStateStep.OPEN_APP,
+        InitialState: {
+          always: [
+            {
+              target: "GetAppConfig",
+              guard: "skipOpenApp",
             },
-          }),
+            "OpenAppDeviceAction",
+          ],
+        },
+        OpenAppDeviceAction: {
           invoke: {
             id: "openAppStateMachine",
             input: {
@@ -282,17 +286,11 @@ export class SignTypedDataDeviceAction extends XStateDeviceAction<
               step: SignTypedDataDAStateStep.WEB3_CHECKS_OPT_IN,
             },
           }),
-          exit: assign({
-            intermediateValue: {
-              requiredUserInteraction: UserInteractionRequired.None,
-              step: SignTypedDataDAStateStep.WEB3_CHECKS_OPT_IN,
-            },
-          }),
           invoke: {
             id: "web3CheckOptIn",
             src: "web3CheckOptIn",
             onDone: {
-              target: "BuildContext",
+              target: "Web3ChecksOptInResult",
               actions: [
                 assign({
                   _internalState: ({ event, context }) => {
@@ -314,6 +312,22 @@ export class SignTypedDataDeviceAction extends XStateDeviceAction<
             onError: {
               target: "Error",
               actions: "assignErrorFromEvent",
+            },
+          },
+        },
+        Web3ChecksOptInResult: {
+          entry: assign(({ context }) => ({
+            intermediateValue: {
+              requiredUserInteraction: UserInteractionRequired.None,
+              step: SignTypedDataDAStateStep.WEB3_CHECKS_OPT_IN_RESULT,
+              result: context._internalState.appConfig!.web3ChecksEnabled,
+            },
+          })),
+          // Using after transition to force a snapshot of the state after the entry action
+          // This ensures the intermediateValue is captured before moving to BuildContext
+          after: {
+            0: {
+              target: "BuildContext",
             },
           },
         },
@@ -346,8 +360,7 @@ export class SignTypedDataDeviceAction extends XStateDeviceAction<
               ],
             },
             onError: {
-              target: "Error",
-              actions: "assignErrorFromEvent",
+              target: "SignTypedDataLegacy",
             },
           },
         },
@@ -355,12 +368,6 @@ export class SignTypedDataDeviceAction extends XStateDeviceAction<
           entry: assign({
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.SignTypedData,
-              step: SignTypedDataDAStateStep.PROVIDE_CONTEXT,
-            },
-          }),
-          exit: assign({
-            intermediateValue: {
-              requiredUserInteraction: UserInteractionRequired.None,
               step: SignTypedDataDAStateStep.PROVIDE_CONTEXT,
             },
           }),
@@ -405,12 +412,6 @@ export class SignTypedDataDeviceAction extends XStateDeviceAction<
               step: SignTypedDataDAStateStep.SIGN_TYPED_DATA,
             },
           }),
-          exit: assign({
-            intermediateValue: {
-              requiredUserInteraction: UserInteractionRequired.None,
-              step: SignTypedDataDAStateStep.SIGN_TYPED_DATA,
-            },
-          }),
           invoke: {
             id: "signTypedData",
             src: "signTypedData",
@@ -449,19 +450,12 @@ export class SignTypedDataDeviceAction extends XStateDeviceAction<
               step: SignTypedDataDAStateStep.SIGN_TYPED_DATA_LEGACY,
             },
           }),
-          exit: assign({
-            intermediateValue: {
-              requiredUserInteraction: UserInteractionRequired.None,
-              step: SignTypedDataDAStateStep.SIGN_TYPED_DATA_LEGACY,
-            },
-          }),
           invoke: {
             id: "signTypedDataLegacy",
             src: "signTypedDataLegacy",
             input: ({ context }) => ({
               derivationPath: context.input.derivationPath,
-              domainHash: context._internalState.typedDataContext!.domainHash,
-              messageHash: context._internalState.typedDataContext!.messageHash,
+              data: context.input.data,
             }),
             onDone: {
               target: "SignTypedDataResultCheck",
@@ -561,19 +555,14 @@ export class SignTypedDataDeviceAction extends XStateDeviceAction<
     const signTypedDataLegacy = async (arg0: {
       input: {
         derivationPath: string;
-        domainHash: string;
-        messageHash: string;
+        data: TypedData;
       };
     }) =>
-      internalApi.sendCommand(
-        new SignEIP712Command({
-          derivationPath: arg0.input.derivationPath,
-          legacyArgs: Just({
-            domainHash: arg0.input.domainHash,
-            messageHash: arg0.input.messageHash,
-          }),
-        }),
-      );
+      new SignTypedDataLegacyTask(
+        internalApi,
+        arg0.input.data,
+        arg0.input.derivationPath,
+      ).run();
 
     return {
       getAppConfig,

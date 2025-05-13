@@ -2,6 +2,7 @@ import axios from "axios";
 import { Right } from "purify-ts";
 
 import { type ContextModuleConfig } from "@/config/model/ContextModuleConfig";
+import { LEDGER_CLIENT_VERSION_HEADER } from "@/shared/constant/HttpHeaders";
 import { HttpTypedDataDataSource } from "@/typed-data/data/HttpTypedDataDataSource";
 import { type TypedDataDataSource } from "@/typed-data/data/TypedDataDataSource";
 import PACKAGE from "@root/package.json";
@@ -234,7 +235,7 @@ describe("HttpTypedDataDataSource", () => {
     // THEN
     expect(requestSpy).toHaveBeenCalledWith(
       expect.objectContaining({
-        headers: { "X-Ledger-Client-Version": version },
+        headers: { [LEDGER_CLIENT_VERSION_HEADER]: version },
       }),
     );
   });

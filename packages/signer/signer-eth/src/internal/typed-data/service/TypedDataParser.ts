@@ -1,6 +1,6 @@
 import { type Either, Just, Left, Maybe, Nothing, Right } from "purify-ts";
 
-import { type TypedDataField } from "@api/model/TypedData";
+import type { TypedDataDomain, TypedDataField } from "@api/model/TypedData";
 import {
   ArrayType,
   type FieldName,
@@ -43,13 +43,40 @@ import { encodeTypedDataValue } from "./TypedDataEncoder";
  * ```
  */
 export class TypedDataParser {
+  // Domain types from EIP712 specification:
+  // https://eips.ethereum.org/EIPS/eip-712#definition-of-domainseparator
+  private readonly domainTypeName: string = "EIP712Domain";
+  private readonly domainDefaultTypes: Record<string, string> = {
+    name: "string",
+    version: "string",
+    chainId: "uint256",
+    verifyingContract: "address",
+    salt: "bytes32",
+  };
+
   private readonly structs: Record<StructName, Record<FieldName, FieldType>>;
 
   /**
    * Creates a new instance of the TypedDataParser class.
    * @param types The types to be used for parsing the message.
    */
-  constructor(types: Record<string, Array<TypedDataField>>) {
+  constructor(
+    types: Record<string, Array<TypedDataField>>,
+    domain: TypedDataDomain,
+  ) {
+    // Append EIP712Domain to types if missing
+    if (!(this.domainTypeName in types)) {
+      const domainTypes: Array<TypedDataField> = [];
+      Object.entries(this.domainDefaultTypes).forEach(([name, type]) => {
+        if (name in domain) {
+          domainTypes.push({ name, type });
+        }
+      });
+      if (domainTypes.length > 0) {
+        types[this.domainTypeName] = domainTypes;
+      }
+    }
+
     // Parse the types to be used later for parsing a message.
     const structs: Record<StructName, Record<FieldName, FieldType>> = {};
     for (const [typedName, typedData] of Object.entries(types)) {

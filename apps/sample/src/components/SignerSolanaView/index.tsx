@@ -42,14 +42,20 @@ export const SignerSolanaView: React.FC<{ sessionId: string }> = ({
         title: "Get address",
         description:
           "Perform all the actions necessary to get a Solana address from the device",
-        executeDeviceAction: ({ derivationPath, checkOnDevice }) => {
+        executeDeviceAction: ({
+          derivationPath,
+          checkOnDevice,
+          skipOpenApp,
+        }) => {
           return signer.getAddress(derivationPath, {
             checkOnDevice,
+            skipOpenApp,
           });
         },
         initialValues: {
           derivationPath: DEFAULT_DERIVATION_PATH,
           checkOnDevice: false,
+          skipOpenApp: false,
         },
         deviceModelId,
       } satisfies DeviceActionProps<
@@ -57,6 +63,7 @@ export const SignerSolanaView: React.FC<{ sessionId: string }> = ({
         {
           derivationPath: string;
           checkOnDevice?: boolean;
+          skipOpenApp?: boolean;
         },
         GetAddressDAError,
         GetAddressDAIntermediateValue
@@ -65,18 +72,17 @@ export const SignerSolanaView: React.FC<{ sessionId: string }> = ({
         title: "Sign Transaction",
         description:
           "Perform all the actions necessary to sign a Solana transaction with the device",
-        executeDeviceAction: ({ derivationPath, transaction }) => {
+        executeDeviceAction: ({ derivationPath, transaction, skipOpenApp }) => {
           const serializedTransaction =
             base64StringToBuffer(transaction) ?? new Uint8Array();
-          return signer.signTransaction(
-            derivationPath,
-            serializedTransaction,
-            {},
-          );
+          return signer.signTransaction(derivationPath, serializedTransaction, {
+            skipOpenApp,
+          });
         },
         initialValues: {
           derivationPath: DEFAULT_DERIVATION_PATH,
           transaction: "",
+          skipOpenApp: false,
         },
         deviceModelId,
         validateValues: ({ transaction }) =>
@@ -86,6 +92,7 @@ export const SignerSolanaView: React.FC<{ sessionId: string }> = ({
         {
           derivationPath: string;
           transaction: string;
+          skipOpenApp: boolean;
         },
         SignTransactionDAError,
         SignTransactionDAIntermediateValue
@@ -94,15 +101,16 @@ export const SignerSolanaView: React.FC<{ sessionId: string }> = ({
         title: "Sign off chain message",
         description:
           "Perform all the actions necessary to sign a solana off-chain message from the device",
-        executeDeviceAction: ({ derivationPath, message }) => {
+        executeDeviceAction: ({ derivationPath, message, skipOpenApp }) => {
           if (!signer) {
             throw new Error("Signer not initialized");
           }
-          return signer.signMessage(derivationPath, message);
+          return signer.signMessage(derivationPath, message, { skipOpenApp });
         },
         initialValues: {
           derivationPath: DEFAULT_DERIVATION_PATH,
           message: "Hello World",
+          skipOpenApp: false,
         },
         deviceModelId,
       } satisfies DeviceActionProps<
@@ -110,6 +118,7 @@ export const SignerSolanaView: React.FC<{ sessionId: string }> = ({
         {
           derivationPath: string;
           message: string;
+          skipOpenApp: boolean;
         },
         SignMessageDAError,
         SignMessageDAIntermediateValue

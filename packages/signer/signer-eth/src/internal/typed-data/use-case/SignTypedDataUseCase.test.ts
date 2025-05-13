@@ -33,6 +33,7 @@ describe("SignTypedDataUseCase", () => {
       derivationPath,
       parser,
       data: typedData,
+      skipOpenApp: false,
     });
   });
 });

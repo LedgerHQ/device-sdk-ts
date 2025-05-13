@@ -1,14 +1,15 @@
-import { useDmk } from "_providers/dmkProvider.tsx";
-import { useDeviceSessionsContext } from "_providers/deviceSessionsProvider.tsx";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
-import { RootScreens } from "_navigators/RootNavigator.constants.ts";
-import { DeviceActionProps, ThemeProps } from "_common/types.ts";
-import { Flex, SelectableList } from "@ledgerhq/native-ui";
-import styled from "styled-components/native";
+import { type DeviceActionProps, type ThemeProps } from "_common/types.ts";
 import { getDeviceActions } from "_components/DeviceActions.tsx";
-import { SendDeviceActionModal } from "_components/SendDeviceActionModal.tsx";
 import { DeviceStateView } from "_components/DeviceStateView.tsx";
+import { SendDeviceActionModal } from "_components/SendDeviceActionModal.tsx";
+import { useDeviceSessionsContext } from "_providers/deviceSessionsProvider.tsx";
+import { useDmk } from "_providers/dmkProvider.tsx";
+import { Flex, SelectableList } from "@ledgerhq/native-ui";
 import { useNavigation } from "@react-navigation/native";
+import styled from "styled-components/native";
+
+import { DisconnectButton } from "./DisconnectButton";
 
 const SafeView = styled.SafeAreaView`
   flex: 1;
@@ -25,13 +26,13 @@ export const DeviceActionTesterScreen = () => {
   const {
     state: { selectedId: deviceSessionId, deviceById },
   } = useDeviceSessionsContext();
-  const { navigate } = useNavigation();
+  const navigation = useNavigation();
 
   useEffect(() => {
     if (!deviceSessionId) {
-      navigate(RootScreens.Home);
+      navigation.goBack();
     }
-  }, [deviceSessionId, navigate]);
+  }, [deviceSessionId, navigation]);
   const deviceActions = useMemo(() => {
     if (deviceSessionId) {
       return getDeviceActions(
@@ -82,7 +83,10 @@ export const DeviceActionTesterScreen = () => {
           onClose={onClose}
           isOpen={isDeviceActionModalVisible}
         />
-        <DeviceStateView sessionId={deviceSessionId} />
+        <Flex rowGap={6}>
+          <DeviceStateView sessionId={deviceSessionId} />
+          <DisconnectButton sessionId={deviceSessionId} />
+        </Flex>
       </Container>
     </SafeView>
   );

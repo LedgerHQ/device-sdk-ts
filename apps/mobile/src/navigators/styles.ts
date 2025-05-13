@@ -1,4 +1,4 @@
-import { DefaultTheme } from "styled-components/native";
+import { type DefaultTheme } from "styled-components/native";
 
 export const getNavigationTheme: (
   theme: DefaultTheme,

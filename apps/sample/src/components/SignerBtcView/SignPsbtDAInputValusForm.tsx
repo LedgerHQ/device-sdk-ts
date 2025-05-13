@@ -8,6 +8,7 @@ type SignPsbtInputValuesType = {
   psbt: string;
   path: string;
   descriptorTemplate: DefaultDescriptorTemplate;
+  skipOpenApp: boolean;
 };
 
 type GetWalletAddressInputValuesType = {
@@ -16,6 +17,7 @@ type GetWalletAddressInputValuesType = {
   addressIndex: number;
   derivationPath: string;
   descriptorTemplate: DefaultDescriptorTemplate;
+  skipOpenApp: boolean;
 };
 
 export const descriptorTemplateToDerivationPath: Record<
@@ -103,6 +105,14 @@ export const SignPsbtDAInputValuesForm: React.FC<{
         disabled={disabled}
         data-testid="input-text_psbt"
       />
+
+      <Switch
+        label="Skip open app"
+        name="skipOpenApp"
+        checked={formValues.skipOpenApp}
+        disabled={disabled}
+        onChange={() => setFormValue("skipOpenApp", !formValues.skipOpenApp)}
+      />
     </Flex>
   );
 };
@@ -185,6 +195,14 @@ export const GetWalletAddressInputValuesForm: React.FC<{
         onChange={() =>
           setFormValue("checkOnDevice", !formValues.checkOnDevice)
         }
+      />
+
+      <Switch
+        label="Skip open app"
+        name="skipOpenApp"
+        checked={formValues.skipOpenApp}
+        disabled={disabled}
+        onChange={() => setFormValue("skipOpenApp", !formValues.skipOpenApp)}
       />
     </Flex>
   );

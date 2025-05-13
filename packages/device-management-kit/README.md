@@ -7,9 +7,9 @@
   - [Description](#description)
   - [Installation](#installation)
   - [Usage](#usage)
-    - [Compatibility](#compatibility)
+    - [Prerequisites](#prerequisites)
     - [Main Features](#main-features)
-    - [Setting up the SDK](#setting-up-the-sdk)
+    - [Setting up the Device Management Kit](#setting-up-the-device-management-kit)
     - [Connecting to a Device](#connecting-to-a-device)
     - [Sending an APDU](#sending-an-apdu)
     - [Sending a Pre-defined Command](#sending-a-pre-defined-command)
@@ -36,7 +36,7 @@ npm install @ledgerhq/device-management-kit
 
 ## Usage
 
-### Pre-requisites
+### Prerequisites
 
 Some of the APIs exposed return objects of type `Observable` from RxJS. Ensure you are familiar with the basics of the Observer pattern and RxJS before using this Device Management Kit. You can refer to [RxJS documentation](https://rxjs.dev/guide/overview) for more information.
 
@@ -78,6 +78,40 @@ export const sdk = new DeviceManagementKitBuilder()
   .addLogger(new ConsoleLogger())
   .addTransport(webHidTransportFactory)
   .build();
+```
+
+### Add a custom Manager API Provider
+
+Custom providers can be set in two ways:
+
+- At build time:
+
+```ts
+import {
+  ConsoleLogger,
+  DeviceManagementKitBuilder,
+} from "@ledgerhq/device-management-kit";
+import { webHidTransportFactory } from "@ledgerhq/device-transport-kit-web-hid";
+
+export const sdk = new DeviceManagementKitBuilder()
+  .addLogger(new ConsoleLogger())
+  .addTransport(webHidTransportFactory)
+  .addConfig({ provider: 123 }) // using provider key in the addConfig obj
+  .build();
+```
+
+- At runtime:
+
+```ts
+dmk.setProvider(123); // using the setProvider from DMK
+```
+
+### Get the current provider
+
+getProvider function will return the current provider set within the Device Management Kit, whether it has been set at build or run time:
+
+```ts
+dmk.getProvider();
 ```
 
 ### Connecting to a Device
@@ -204,6 +238,9 @@ import { OpenAppCommand } from "@ledgerhq/device-management-kit";
 const command = new OpenAppCommand("Bitcoin"); // Open the Bitcoin app
 
 await dmk.sendCommand({ sessionId, command });
+
+// Or with a timeout
+await dmk.sendCommand({ sessionId, command, abortTimeout: 2000 });
 ```
 
 #### Close App

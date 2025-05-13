@@ -12,7 +12,6 @@ import { GetAppConfigurationDAReturnType } from "@api/app-binder/GetAppConfigura
 import { SignMessageDAReturnType } from "@api/app-binder/SignMessageDeviceActionTypes";
 import { SignTransactionDAReturnType } from "@api/app-binder/SignTransactionDeviceActionTypes";
 import { Transaction } from "@api/model/Transaction";
-import { TransactionOptions } from "@api/model/TransactionOptions";
 import { SendSignMessageTask } from "@internal/app-binder/task/SendSignMessageTask";
 import { externalTypes } from "@internal/externalTypes";
 
@@ -30,6 +29,7 @@ export class SolanaAppBinder {
   getAddress(args: {
     derivationPath: string;
     checkOnDevice: boolean;
+    skipOpenApp: boolean;
   }): GetAddressDAReturnType {
     return this.dmk.executeDeviceAction({
       sessionId: this.sessionId,
@@ -40,6 +40,7 @@ export class SolanaAppBinder {
           requiredUserInteraction: args.checkOnDevice
             ? UserInteractionRequired.VerifyAddress
             : UserInteractionRequired.None,
+          skipOpenApp: args.skipOpenApp,
         },
       }),
     });
@@ -48,7 +49,7 @@ export class SolanaAppBinder {
   signTransaction(args: {
     derivationPath: string;
     transaction: Transaction;
-    options?: TransactionOptions;
+    skipOpenApp: boolean;
   }): SignTransactionDAReturnType {
     return this.dmk.executeDeviceAction({
       sessionId: this.sessionId,
@@ -56,7 +57,7 @@ export class SolanaAppBinder {
         input: {
           derivationPath: args.derivationPath,
           transaction: args.transaction,
-          options: args.options ?? {},
+          skipOpenApp: args.skipOpenApp,
         },
       }),
     });
@@ -65,6 +66,7 @@ export class SolanaAppBinder {
   signMessage(args: {
     derivationPath: string;
     message: string;
+    skipOpenApp: boolean;
   }): SignMessageDAReturnType {
     return this.dmk.executeDeviceAction({
       sessionId: this.sessionId,
@@ -77,6 +79,7 @@ export class SolanaAppBinder {
             }).run(),
           appName: "Solana",
           requiredUserInteraction: UserInteractionRequired.SignPersonalMessage,
+          skipOpenApp: args.skipOpenApp,
         },
       }),
     });
@@ -90,6 +93,7 @@ export class SolanaAppBinder {
           command: new GetAppConfigurationCommand(),
           appName: "Solana",
           requiredUserInteraction: UserInteractionRequired.None,
+          skipOpenApp: false,
         },
       }),
     });

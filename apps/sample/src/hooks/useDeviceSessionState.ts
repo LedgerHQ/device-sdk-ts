@@ -8,6 +8,8 @@ import {
 import { useDmk } from "@/providers/DeviceManagementKitProvider";
 import { useDeviceSessionsContext } from "@/providers/DeviceSessionsProvider";
 
+import { useThrottle } from "./useThrottle";
+
 export function useDeviceSessionState(sessionId: DeviceSessionId) {
   const dmk = useDmk();
   const [deviceSessionState, setDeviceSessionState] =
@@ -34,5 +36,5 @@ export function useDeviceSessionState(sessionId: DeviceSessionId) {
     }
   }, [sessionId, dmk, dispatch]);
 
-  return deviceSessionState;
+  return useThrottle(deviceSessionState, 500);
 }

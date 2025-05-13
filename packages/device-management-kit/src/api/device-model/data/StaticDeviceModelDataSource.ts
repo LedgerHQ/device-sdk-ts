@@ -11,7 +11,7 @@ import { TransportDeviceModel } from "@api/device-model/model/DeviceModel";
 @injectable()
 export class StaticDeviceModelDataSource implements DeviceModelDataSource {
   private static deviceModelByIds: {
-    [key in DeviceModelId]: TransportDeviceModel;
+    [_key in DeviceModelId]: TransportDeviceModel;
   } = {
     [DeviceModelId.NANO_S]: new TransportDeviceModel({
       id: DeviceModelId.NANO_S,
@@ -20,6 +20,7 @@ export class StaticDeviceModelDataSource implements DeviceModelDataSource {
       bootloaderUsbProductId: 0x0001,
       usbOnly: true,
       memorySize: 320 * 1024,
+      blockSize: 4 * 1024,
       masks: [0x31100000],
     }),
     [DeviceModelId.NANO_SP]: new TransportDeviceModel({
@@ -29,6 +30,7 @@ export class StaticDeviceModelDataSource implements DeviceModelDataSource {
       bootloaderUsbProductId: 0x0005,
       usbOnly: true,
       memorySize: 1533 * 1024,
+      blockSize: 32,
       masks: [0x33100000],
     }),
     [DeviceModelId.NANO_X]: new TransportDeviceModel({
@@ -38,6 +40,7 @@ export class StaticDeviceModelDataSource implements DeviceModelDataSource {
       bootloaderUsbProductId: 0x0004,
       usbOnly: false,
       memorySize: 2 * 1024 * 1024,
+      blockSize: 4 * 1024,
       masks: [0x33000000],
       bluetoothSpec: [
         {
@@ -55,6 +58,7 @@ export class StaticDeviceModelDataSource implements DeviceModelDataSource {
       bootloaderUsbProductId: 0x0006,
       usbOnly: false,
       memorySize: 1533 * 1024,
+      blockSize: 32,
       masks: [0x33200000],
       bluetoothSpec: [
         {
@@ -72,6 +76,7 @@ export class StaticDeviceModelDataSource implements DeviceModelDataSource {
       bootloaderUsbProductId: 0x0007,
       usbOnly: false,
       memorySize: 1533 * 1024,
+      blockSize: 32,
       masks: [0x33300000],
       bluetoothSpec: [
         {

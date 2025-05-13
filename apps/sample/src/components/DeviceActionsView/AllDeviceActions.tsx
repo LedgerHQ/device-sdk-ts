@@ -6,6 +6,11 @@ import {
   type GenuineCheckDAIntermediateValue,
   type GenuineCheckDAOutput,
   GenuineCheckDeviceAction,
+  type GetDeviceMetadataDAError,
+  type GetDeviceMetadataDAInput,
+  type GetDeviceMetadataDAIntermediateValue,
+  type GetDeviceMetadataDAOutput,
+  GetDeviceMetadataDeviceAction,
   type GetDeviceStatusDAError,
   type GetDeviceStatusDAInput,
   type GetDeviceStatusDAIntermediateValue,
@@ -21,6 +26,10 @@ import {
   type InstallAppDAIntermediateValue,
   type InstallAppDAOutput,
   InstallAppDeviceAction,
+  type InstallOrUpdateAppsDAError,
+  type InstallOrUpdateAppsDAIntermediateValue,
+  type InstallOrUpdateAppsDAOutput,
+  InstallOrUpdateAppsDeviceAction,
   type ListAppsDAError,
   type ListAppsDAInput,
   type ListAppsDAIntermediateValue,
@@ -41,6 +50,10 @@ import {
   type OpenAppDAIntermediateValue,
   type OpenAppDAOutput,
   OpenAppDeviceAction,
+  type OpenAppWithDependenciesDAError,
+  type OpenAppWithDependenciesDAIntermediateValue,
+  type OpenAppWithDependenciesDAOutput,
+  OpenAppWithDependenciesDeviceAction,
   type UninstallAppDAError,
   type UninstallAppDAInput,
   type UninstallAppDAIntermediateValue,
@@ -104,6 +117,62 @@ export const AllDeviceActions: React.FC<{ sessionId: string }> = ({
         },
         OpenAppDAError,
         OpenAppDAIntermediateValue
+      >,
+      {
+        title: `Open app with dependencies ${SECURE_CHANNEL_SIGN}`,
+        description:
+          "Perform all the actions necessary to open an app on the device and install its dependencies",
+        executeDeviceAction: (
+          {
+            appName,
+            dependencies,
+            compatibleAppNames,
+            requireLatestFirmware,
+            unlockTimeout,
+          },
+          inspect,
+        ) => {
+          const application = { name: appName };
+          const dependenciesArray = dependencies
+            .split(",")
+            .map((app) => ({ name: app.trim() }));
+          const compatibleAppNamesArray = compatibleAppNames
+            .split(",")
+            .map((app) => app.trim());
+          const deviceAction = new OpenAppWithDependenciesDeviceAction({
+            input: {
+              application,
+              dependencies: dependenciesArray,
+              compatibleAppNames: compatibleAppNamesArray,
+              requireLatestFirmware,
+              unlockTimeout,
+            },
+            inspect,
+          });
+          return dmk.executeDeviceAction({
+            sessionId,
+            deviceAction,
+          });
+        },
+        initialValues: {
+          appName: "Ethereum",
+          dependencies: "Uniswap,1inch",
+          compatibleAppNames: "",
+          requireLatestFirmware: false,
+          unlockTimeout: UNLOCK_TIMEOUT,
+        },
+        deviceModelId,
+      } satisfies DeviceActionProps<
+        OpenAppWithDependenciesDAOutput,
+        {
+          appName: string;
+          dependencies: string;
+          compatibleAppNames: string;
+          requireLatestFirmware: boolean;
+          unlockTimeout: number;
+        },
+        OpenAppWithDependenciesDAError,
+        OpenAppWithDependenciesDAIntermediateValue
       >,
       {
         title: "Get device status",
@@ -192,6 +261,34 @@ export const AllDeviceActions: React.FC<{ sessionId: string }> = ({
         ListAppsWithMetadataDAIntermediateValue
       >,
       {
+        title: "Get device metadata",
+        description: "Fetch lazily all the device metadata",
+        executeDeviceAction: (
+          { useSecureChannel, forceUpdate, unlockTimeout },
+          inspect,
+        ) => {
+          const deviceAction = new GetDeviceMetadataDeviceAction({
+            input: { useSecureChannel, forceUpdate, unlockTimeout },
+            inspect,
+          });
+          return dmk.executeDeviceAction({
+            sessionId,
+            deviceAction,
+          });
+        },
+        initialValues: {
+          useSecureChannel: false,
+          forceUpdate: false,
+          unlockTimeout: UNLOCK_TIMEOUT,
+        },
+        deviceModelId,
+      } satisfies DeviceActionProps<
+        GetDeviceMetadataDAOutput,
+        GetDeviceMetadataDAInput,
+        GetDeviceMetadataDAError,
+        GetDeviceMetadataDAIntermediateValue
+      >,
+      {
         title: `Genuine Check ${SECURE_CHANNEL_SIGN}`,
         description:
           "Perform all the actions necessary to check the device's genuineness",
@@ -234,6 +331,44 @@ export const AllDeviceActions: React.FC<{ sessionId: string }> = ({
         ListInstalledAppsDAInput,
         ListInstalledAppsDAError,
         ListInstalledAppsDAIntermediateValue
+      >,
+      {
+        title: `Install or update applications ${SECURE_CHANNEL_SIGN}`,
+        description:
+          "Perform all the actions necessary to install or update a list of apps on the device by name",
+        executeDeviceAction: (
+          { applications, allowMissingApplication, unlockTimeout },
+          inspect,
+        ) => {
+          const apps = applications.split(",").map((app) => ({ name: app }));
+          const deviceAction = new InstallOrUpdateAppsDeviceAction({
+            input: {
+              applications: apps,
+              allowMissingApplication,
+              unlockTimeout,
+            },
+            inspect,
+          });
+          return dmk.executeDeviceAction({
+            sessionId,
+            deviceAction,
+          });
+        },
+        initialValues: {
+          applications: "Bitcoin,Ethereum,Solana",
+          allowMissingApplication: false,
+          unlockTimeout: UNLOCK_TIMEOUT,
+        },
+        deviceModelId,
+      } satisfies DeviceActionProps<
+        InstallOrUpdateAppsDAOutput,
+        {
+          applications: string;
+          allowMissingApplication: boolean;
+          unlockTimeout: number;
+        },
+        InstallOrUpdateAppsDAError,
+        InstallOrUpdateAppsDAIntermediateValue
       >,
       {
         title: `Install App ${SECURE_CHANNEL_SIGN}`,

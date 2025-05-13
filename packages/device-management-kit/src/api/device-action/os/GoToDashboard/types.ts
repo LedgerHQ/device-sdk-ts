@@ -1,11 +1,10 @@
 import { type CommandErrorResult } from "@api/command/model/CommandResult";
 import { type DeviceActionState } from "@api/device-action/model/DeviceActionState";
-import { type UserInteractionRequired } from "@api/device-action/model/UserInteractionRequired";
 import { type UnknownDAError } from "@api/device-action/os/Errors";
 import {
   type GetDeviceStatusDAError,
   type GetDeviceStatusDAInput,
-  type GetDeviceStatusDAIntermediateValue,
+  type GetDeviceStatusDARequiredInteraction,
 } from "@api/device-action/os/GetDeviceStatus/types";
 
 export type GoToDashboardDAOutput = void;
@@ -16,13 +15,12 @@ export type GoToDashboardDAError =
   | UnknownDAError
   | CommandErrorResult["error"];
 
-export type GoToDashboardDARequiredInteraction = UserInteractionRequired.None;
+export type GoToDashboardDARequiredInteraction =
+  GetDeviceStatusDARequiredInteraction;
 
-export type GoToDashboardDAIntermediateValue =
-  | GetDeviceStatusDAIntermediateValue
-  | {
-      readonly requiredUserInteraction: GoToDashboardDARequiredInteraction;
-    };
+export type GoToDashboardDAIntermediateValue = {
+  readonly requiredUserInteraction: GoToDashboardDARequiredInteraction;
+};
 
 export type GoToDashboardDAState = DeviceActionState<
   GoToDashboardDAOutput,

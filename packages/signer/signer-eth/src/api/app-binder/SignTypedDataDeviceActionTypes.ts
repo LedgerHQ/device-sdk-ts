@@ -19,6 +19,7 @@ export enum SignTypedDataDAStateStep {
   OPEN_APP = "signer.eth.steps.openApp",
   GET_APP_CONFIG = "signer.eth.steps.getAppConfig",
   WEB3_CHECKS_OPT_IN = "signer.eth.steps.web3ChecksOptIn",
+  WEB3_CHECKS_OPT_IN_RESULT = "signer.eth.steps.web3ChecksOptInResult",
   BUILD_CONTEXT = "signer.eth.steps.buildContext",
   PROVIDE_CONTEXT = "signer.eth.steps.provideContext",
   PROVIDE_GENERIC_CONTEXT = "signer.eth.steps.provideGenericContext",
@@ -33,6 +34,7 @@ export type SignTypedDataDAInput = {
   readonly data: TypedData;
   readonly parser: TypedDataParserService;
   readonly contextModule: ContextModule;
+  readonly skipOpenApp: boolean;
 };
 
 export type SignTypedDataDAError =
@@ -44,10 +46,19 @@ type SignTypedDataDARequiredInteraction =
   | UserInteractionRequired.Web3ChecksOptIn
   | UserInteractionRequired.SignTypedData;
 
-export type SignTypedDataDAIntermediateValue = {
-  requiredUserInteraction: SignTypedDataDARequiredInteraction;
-  step: SignTypedDataDAStateStep;
-};
+export type SignTypedDataDAIntermediateValue =
+  | {
+      requiredUserInteraction: SignTypedDataDARequiredInteraction;
+      step: Exclude<
+        SignTypedDataDAStateStep,
+        SignTypedDataDAStateStep.WEB3_CHECKS_OPT_IN_RESULT
+      >;
+    }
+  | {
+      requiredUserInteraction: UserInteractionRequired.None;
+      step: SignTypedDataDAStateStep.WEB3_CHECKS_OPT_IN_RESULT;
+      result: boolean;
+    };
 
 export type SignTypedDataDAState = DeviceActionState<
   SignTypedDataDAOutput,

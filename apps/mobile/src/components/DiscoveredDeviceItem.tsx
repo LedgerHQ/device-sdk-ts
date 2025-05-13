@@ -1,10 +1,10 @@
 import React, { useMemo } from "react";
-import { Text, Flex, IconsLegacy, Icons } from "@ledgerhq/native-ui";
+import { TouchableOpacity } from "react-native";
 import {
   DeviceModelId,
-  DiscoveredDevice,
+  type DiscoveredDevice,
 } from "@ledgerhq/device-management-kit";
-import { TouchableOpacity } from "react-native";
+import { Flex, Icons, IconsLegacy, Text } from "@ledgerhq/native-ui";
 
 type Props = {
   device: DiscoveredDevice;
@@ -13,7 +13,7 @@ type Props = {
 };
 
 export const DiscoveredDeviceItem = ({ device, onPress }: Props) => {
-  const { rssi } = device;
+  const { rssi, transport } = device;
 
   const wording = rssi !== null ? "available" : "unavailable";
   const color = wording === "unavailable" ? "neutral.c60" : "primary.c80";
@@ -48,7 +48,7 @@ export const DiscoveredDeviceItem = ({ device, onPress }: Props) => {
         {deviceIcon}
         <Flex ml={5} flex={1}>
           <Text color="neutral.c100" fontWeight="semiBold" fontSize="16px">
-            {device.name}
+            {device.name} ({transport})
           </Text>
           <Text color={color} fontSize="12px">
             Select device

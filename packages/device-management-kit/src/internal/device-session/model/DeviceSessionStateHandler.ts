@@ -50,15 +50,27 @@ export class DeviceSessionStateHandler {
 
     if (newDeviceStatus) {
       const { sessionStateType, deviceStatus, currentApp } = newDeviceStatus;
-
-      this.setDeviceSessionState({
-        sessionStateType,
-        deviceStatus,
-        deviceModelId: this._connectedDevice.deviceModel.id,
-        currentApp,
-        installedApps: [],
-        isSecureConnectionAllowed: false,
-      });
+      const state = this._deviceState.getValue();
+      if (state.sessionStateType === DeviceSessionStateType.Connected) {
+        // When device is connected, initialize fields to default values
+        this.setDeviceSessionState({
+          sessionStateType,
+          deviceStatus,
+          deviceModelId: this._connectedDevice.deviceModel.id,
+          currentApp,
+          installedApps: [],
+          isSecureConnectionAllowed: false,
+        });
+      } else {
+        // When device is ready, keep un-modified state fields
+        this.setDeviceSessionState({
+          ...state,
+          sessionStateType,
+          deviceStatus,
+          deviceModelId: this._connectedDevice.deviceModel.id,
+          currentApp,
+        });
+      }
     }
   }
 
@@ -99,7 +111,7 @@ export class DeviceSessionStateHandler {
         },
       };
     } else {
-      this._logger.error("Error while parsing APDU response", {
+      this._logger.debug("Error while parsing APDU response", {
         data: { parsedResponse },
       });
       return null;

@@ -7,6 +7,7 @@ import {
   GetSetPluginPayloadParams,
   NftDataSource,
 } from "@/nft/data/NftDataSource";
+import { LEDGER_CLIENT_VERSION_HEADER } from "@/shared/constant/HttpHeaders";
 import PACKAGE from "@root/package.json";
 
 @injectable()
@@ -21,7 +22,7 @@ export class HttpNftDataSource implements NftDataSource {
         method: "GET",
         url: `https://nft.api.live.ledger.com/v1/ethereum/${chainId}/contracts/${address}/plugin-selector/${selector}`,
         headers: {
-          "X-Ledger-Client-Version": `context-module/${PACKAGE.version}`,
+          [LEDGER_CLIENT_VERSION_HEADER]: `context-module/${PACKAGE.version}`,
         },
       });
 
@@ -50,7 +51,7 @@ export class HttpNftDataSource implements NftDataSource {
         method: "GET",
         url: `https://nft.api.live.ledger.com/v1/ethereum/${chainId}/contracts/${address}`,
         headers: {
-          "X-Ledger-Client-Version": `context-module/${PACKAGE.version}`,
+          [LEDGER_CLIENT_VERSION_HEADER]: `context-module/${PACKAGE.version}`,
         },
       });
 

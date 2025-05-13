@@ -1,7 +1,5 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-/* eslint-disable @typescript-eslint/no-unsafe-assignment */
-
 import { BehaviorSubject, Subject } from "rxjs";
+import { expect, type Mock } from "vitest";
 
 import { type DeviceSessionState } from "@api/device-session/DeviceSessionState";
 import {
@@ -15,19 +13,24 @@ import {
   type NewEvent,
   SessionEvents,
 } from "@internal/device-session/model/DeviceSessionEventDispatcher";
+import { type Application } from "@internal/manager-api/model/Application";
 
-import { DeviceSessionStateHandler } from "./DeviceSessionStateHandler";
+import {
+  DeviceSessionStateHandler,
+  type SetDeviceSessionStateFn,
+} from "./DeviceSessionStateHandler";
 
 describe("DeviceSessionStateHandler", () => {
   let fakeEventSubject: Subject<NewEvent>;
   let fakeSessionEventDispatcher: DeviceSessionEventDispatcher;
   let mockLogger: {
     error: (message: string, meta?: Record<string, unknown>) => void;
+    debug: (message: string, meta?: Record<string, unknown>) => void;
   };
   const mockLoggerModuleFactory = vi.fn(() => mockLogger);
   let fakeConnectedDevice: { deviceModel: { id: string } };
   let deviceState: BehaviorSubject<DeviceSessionState>;
-  let setDeviceSessionState: any;
+  let setDeviceSessionState: Mock<SetDeviceSessionStateFn>;
   let handler: DeviceSessionStateHandler;
 
   beforeEach(() => {
@@ -40,6 +43,7 @@ describe("DeviceSessionStateHandler", () => {
 
     mockLogger = {
       error: vi.fn(),
+      debug: vi.fn(),
     };
 
     fakeConnectedDevice = {
@@ -49,12 +53,9 @@ describe("DeviceSessionStateHandler", () => {
     };
 
     deviceState = new BehaviorSubject<DeviceSessionState>({
-      sessionStateType: DeviceSessionStateType.ReadyWithoutSecureChannel,
+      sessionStateType: DeviceSessionStateType.Connected,
       deviceStatus: DeviceStatus.CONNECTED,
       deviceModelId: DeviceModelId.NANO_X,
-      currentApp: { name: "", version: "" },
-      installedApps: [],
-      isSecureConnectionAllowed: false,
     });
 
     setDeviceSessionState = vi.fn();
@@ -103,6 +104,42 @@ describe("DeviceSessionStateHandler", () => {
     });
   });
 
+  it("updates device state on COMMAND_SUCCEEDED event when device is ready", () => {
+    // Given
+    deviceState.next({
+      sessionStateType: DeviceSessionStateType.ReadyWithoutSecureChannel,
+      deviceStatus: DeviceStatus.CONNECTED,
+      deviceModelId: DeviceModelId.NANO_X,
+      currentApp: { name: "", version: "" },
+      installedApps: ["Bitcoin", "Ethereum"] as unknown as Application[],
+      isSecureConnectionAllowed: true,
+    });
+    const fakeCommandResult = {
+      data: {
+        name: "TestApp",
+        version: "1.0.0",
+      },
+      status: CommandResultStatus.Success,
+    };
+
+    // When
+    fakeEventSubject.next({
+      eventName: SessionEvents.COMMAND_SUCCEEDED,
+      //@ts-expect-error mock
+      eventData: fakeCommandResult,
+    });
+
+    // Then
+    expect(setDeviceSessionState).toHaveBeenCalledWith({
+      sessionStateType: DeviceSessionStateType.ReadyWithoutSecureChannel,
+      deviceStatus: DeviceStatus.CONNECTED,
+      deviceModelId: "device-model-1",
+      currentApp: { name: "TestApp", version: "1.0.0" },
+      installedApps: ["Bitcoin", "Ethereum"] as unknown as Application[],
+      isSecureConnectionAllowed: true,
+    });
+  });
+
   it("updates device state on DEVICE_STATE_UPDATE_BUSY event", () => {
     // When
     fakeEventSubject.next({
@@ -110,9 +147,9 @@ describe("DeviceSessionStateHandler", () => {
     });
 
     // Then
-    expect(setDeviceSessionState).toHaveBeenCalled();
-    const callArg = setDeviceSessionState.mock.calls[0][0];
-    expect(callArg.deviceStatus).toBe(DeviceStatus.BUSY);
+    expect(setDeviceSessionState).toHaveBeenCalledWith(
+      expect.objectContaining({ deviceStatus: DeviceStatus.BUSY }),
+    );
   });
 
   it("updates device state on DEVICE_STATE_UPDATE_CONNECTED event", () => {
@@ -122,9 +159,9 @@ describe("DeviceSessionStateHandler", () => {
     });
 
     // Then
-    expect(setDeviceSessionState).toHaveBeenCalled();
-    const callArg = setDeviceSessionState.mock.calls[0][0];
-    expect(callArg.deviceStatus).toBe(DeviceStatus.CONNECTED);
+    expect(setDeviceSessionState).toHaveBeenCalledWith(
+      expect.objectContaining({ deviceStatus: DeviceStatus.CONNECTED }),
+    );
   });
 
   it("logs error and does not update state if command result is unsuccessful", () => {
@@ -142,7 +179,7 @@ describe("DeviceSessionStateHandler", () => {
     });
 
     // Then
-    expect(mockLogger.error).toHaveBeenCalledWith(
+    expect(mockLogger.debug).toHaveBeenCalledWith(
       "Error while parsing APDU response",
       { data: { parsedResponse: fakeErrorCommandResult } },
     );

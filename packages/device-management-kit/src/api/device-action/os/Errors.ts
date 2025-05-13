@@ -18,6 +18,24 @@ export class DeviceLockedError implements DmkError {
   }
 }
 
+export class UnsupportedFirmwareDAError implements DmkError {
+  readonly _tag = "UnsupportedFirmwareDAError";
+  readonly originalError?: Error;
+
+  constructor(message?: string) {
+    this.originalError = new Error(message ?? "Unknown error.");
+  }
+}
+
+export class OutOfMemoryDAError implements DmkError {
+  readonly _tag = "OutOfMemoryDAError";
+  readonly originalError?: Error;
+
+  constructor(message?: string) {
+    this.originalError = new Error(message ?? "Unknown error.");
+  }
+}
+
 export class UnknownDAError implements DmkError {
   readonly _tag = "UnknownDAError";
   readonly originalError?: Error;

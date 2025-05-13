@@ -60,8 +60,6 @@ export type ProvideEIP712ContextTaskArgs = {
   domain: Array<TypedDataValue>;
   message: Array<TypedDataValue>;
   clearSignContext: Maybe<TypedDataClearSignContextSuccess>;
-  domainHash: string;
-  messageHash: string;
   web3Check: ClearSignContextSuccess<ClearSignContextType.WEB3_CHECK> | null;
 };
 

@@ -22,4 +22,5 @@ export type ContextModuleConfig = {
   customLoaders: ContextLoader[];
   customTypedDataLoader?: TypedDataContextLoader;
   customWeb3CheckLoader?: Web3CheckContextLoader;
+  originToken?: string;
 };

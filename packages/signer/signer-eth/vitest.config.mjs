@@ -9,7 +9,7 @@ export default defineConfig({
     include: ["src/**/*.test.ts"],
     setupFiles: ["./vitest.setup.mjs"],
     coverage: {
-      reporter: ["lcov"],
+      reporter: ["lcov", "text"],
       provider: "istanbul",
       include: ["src/**/*.ts"],
       exclude: [
