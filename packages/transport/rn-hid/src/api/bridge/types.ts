@@ -40,7 +40,7 @@ export type NativeSendApduResult =
     }
   | {
       success: false;
-      error: string;
+      error: string | "SendApduTimeout";
     };
 
 export type NativeDeviceConnectionLost = {
@@ -71,5 +71,10 @@ export type NativeTransportModuleType = {
   stopScan: () => Promise<void>;
   connectDevice: (uid: string) => Promise<NativeInternalConnectionResult>;
   disconnectDevice: (sessionId: string) => Promise<void>;
-  sendApdu: (sessionId: string, apdu: string) => Promise<NativeSendApduResult>;
+  sendApdu: (
+    sessionId: string,
+    apdu: string,
+    triggersDisconnection: boolean,
+    abortTimeout: number,
+  ) => Promise<NativeSendApduResult>;
 } & NativeModule;

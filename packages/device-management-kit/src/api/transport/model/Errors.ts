@@ -71,6 +71,14 @@ export class SendApduTimeoutError extends GeneralDmkError {
     super(err);
   }
 }
+
+export class SendApduEmptyResponseError extends GeneralDmkError {
+  override readonly _tag = "SendApduEmptyResponseError";
+  constructor(readonly err?: unknown) {
+    super(err);
+  }
+}
+
 export class DisconnectError extends GeneralDmkError {
   override readonly _tag = "DisconnectError";
   constructor(readonly err?: unknown) {

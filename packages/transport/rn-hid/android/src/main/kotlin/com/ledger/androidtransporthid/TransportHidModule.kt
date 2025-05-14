@@ -31,6 +31,7 @@ import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
 import timber.log.Timber
 import kotlin.random.Random
+import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
 
 class TransportHidModule(
@@ -206,7 +207,13 @@ class TransportHidModule(
     }
 
     @ReactMethod
-    fun sendApdu(sessionId: String, apduBase64: String, promise: Promise) {
+    fun sendApdu(
+        sessionId: String,
+        apduBase64: String,
+        triggersDisconnection: Boolean,
+        abortTimeout: Int,
+        promise: Promise
+    ) {
         try {
             val device = connectedDevices.firstOrNull() { it.id == sessionId }
             if (device == null) {
@@ -216,7 +223,9 @@ class TransportHidModule(
             coroutineScope.launch {
                 try {
                     val apdu: ByteArray = Base64.decode(apduBase64, Base64.DEFAULT)
-                    val res = device.sendApduFn(apdu)
+                    val abortTimeoutDuration = if (abortTimeout <= 0) Duration.INFINITE else abortTimeout.milliseconds
+                    val res =
+                        device.sendApduFn(apdu, triggersDisconnection, abortTimeoutDuration)
                     promise.resolve(res.toWritableMap())
                 } catch (e: Exception) {
                     Timber.i("$e, ${e.cause}")

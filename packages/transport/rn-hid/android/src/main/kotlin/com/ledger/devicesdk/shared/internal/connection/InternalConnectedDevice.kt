@@ -9,5 +9,5 @@ internal data class InternalConnectedDevice(
     val name: String,
     val ledgerDevice: LedgerDevice,
     val connectivity: ConnectivityType,
-    val sendApduFn: suspend (ByteArray) -> SendApduResult,
+    val sendApduFn: suspend (apdu: ByteArray, triggersDisconnection: Boolean, abortTimeoutDuration: kotlin.time.Duration) -> SendApduResult,
 )
