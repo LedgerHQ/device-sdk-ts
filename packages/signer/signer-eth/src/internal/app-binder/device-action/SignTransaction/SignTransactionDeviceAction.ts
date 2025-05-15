@@ -164,6 +164,8 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
           )
             .withMinVersionExclusive("1.15.0")
             .excludeDeviceModel(DeviceModelId.NANO_S)
+            .excludeDeviceModel(DeviceModelId.NANO_SP)
+            .excludeDeviceModel(DeviceModelId.NANO_X)
             .check(),
         shouldOptIn: ({ context }) =>
           !context._internalState.appConfig!.web3ChecksEnabled &&

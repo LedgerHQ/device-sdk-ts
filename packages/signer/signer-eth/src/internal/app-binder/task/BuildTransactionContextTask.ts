@@ -83,11 +83,15 @@ export class BuildTransactionContextTask {
       ).web3Check;
     }
 
-    // Get challenge
+    // Get challenge (not supported on Nano S)
     let challenge: string | undefined = undefined;
-    const challengeRes = await this.api.sendCommand(new GetChallengeCommand());
-    if (isSuccessCommandResult(challengeRes)) {
-      challenge = challengeRes.data.challenge;
+    if (deviceState.deviceModelId !== DeviceModelId.NANO_S) {
+      const challengeRes = await this.api.sendCommand(
+        new GetChallengeCommand(),
+      );
+      if (isSuccessCommandResult(challengeRes)) {
+        challenge = challengeRes.data.challenge;
+      }
     }
 
     // Get the clear sign contexts
