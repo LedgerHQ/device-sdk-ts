@@ -8,6 +8,9 @@ import {
   type CommandResult,
   type DeviceActionStateMachine,
   DeviceModelId,
+  type DeviceSessionState,
+  DeviceSessionStateType,
+  GetAppAndVersionCommand,
   type InternalApi,
   isSuccessCommandResult,
   OpenAppDeviceAction,
@@ -549,8 +552,22 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
   }
 
   extractDependencies(internalApi: InternalApi): MachineDependencies {
-    const getAppConfig = async () =>
-      internalApi.sendCommand(new GetAppConfiguration());
+    const getAppConfig = async () => {
+      const appAndVersion = await internalApi.sendCommand(
+        new GetAppAndVersionCommand(),
+      );
+      if (isSuccessCommandResult(appAndVersion)) {
+        const state: DeviceSessionState = internalApi.getDeviceSessionState();
+        if (state.sessionStateType !== DeviceSessionStateType.Connected) {
+          // The device can be set to Ready if GetAppAndVersionCommand was successful
+          internalApi.setDeviceSessionState({
+            ...state,
+            currentApp: appAndVersion.data,
+          });
+        }
+      }
+      return internalApi.sendCommand(new GetAppConfiguration());
+    };
     const web3CheckOptIn = async () =>
       internalApi.sendCommand(new Web3CheckOptInCommand());
     const buildContext = async (arg0: {
