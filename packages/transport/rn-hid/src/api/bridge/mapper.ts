@@ -5,7 +5,9 @@ import {
   LogLevel,
   type LogParams,
   OpeningConnectionError,
+  SendApduEmptyResponseError,
   type SendApduResult,
+  SendApduTimeoutError,
   type TransportDeviceModel,
   type TransportDiscoveredDevice,
 } from "@ledgerhq/device-management-kit";
@@ -125,6 +127,10 @@ export function mapNativeSendApduResultToSendApduResult(
     );
     const statusCode = FramerUtils.getLastBytesFrom(responseBytes, 2);
     return Right(new ApduResponse({ data, statusCode }));
+  } else if (result.error === "SendApduTimeout") {
+    return Left(new SendApduTimeoutError("Abort timeout"));
+  } else if (result.error === "EmptyResponse") {
+    return Left(new SendApduEmptyResponseError("Empty response"));
   } else {
     return Left(new SendApduError(result.error));
   }
