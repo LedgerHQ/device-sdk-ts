@@ -1,9 +1,9 @@
 import { ContainerModule } from "inversify";
 
 import { appBinderTypes } from "@internal/app-binder/di/appBinderTypes";
-import { LedgerKeyringProtocolBinder } from "@internal/app-binder/LedgerKeyringProtocolBinder";
+import { LedgerSyncBinder } from "@internal/app-binder/LedgerSyncBinder";
 
 export const appBindingModuleFactory = () =>
   new ContainerModule(({ bind }) => {
-    bind(appBinderTypes.AppBinding).to(LedgerKeyringProtocolBinder);
+    bind(appBinderTypes.AppBinding).to(LedgerSyncBinder);
   });

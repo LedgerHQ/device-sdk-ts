@@ -40,7 +40,7 @@ test.describe("ETH Signer: get address, happy paths", () => {
     });
 
     await test.step("When execute ETH: get address", async () => {
-      await whenNavigateTo(page, "/signer");
+      await whenNavigateTo(page, "/signers");
 
       await whenClicking(page, "CTA_command-Ethereum");
 
@@ -75,7 +75,7 @@ test.describe("ETH Signer: get address, happy paths", () => {
     });
 
     await test.step("When execute ETH: get address with checkOnDevice on", async () => {
-      await whenNavigateTo(page, "/signer");
+      await whenNavigateTo(page, "/signers");
 
       await whenClicking(page, "CTA_command-Ethereum");
 
@@ -125,7 +125,7 @@ test.describe("ETH Signer: get address, happy paths", () => {
     });
 
     await test.step("Then execute ETH: get address", async () => {
-      await whenNavigateTo(page, "/signer");
+      await whenNavigateTo(page, "/signers");
 
       await whenClicking(page, "CTA_command-Ethereum");
 
