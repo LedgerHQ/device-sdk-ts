@@ -56,21 +56,30 @@ export const Menu: React.FC = () => {
         </MenuTitle>
       </MenuItem>
       <MenuItem>
-        <Icons.Apps />
-        <MenuTitle>Install app</MenuTitle>
-      </MenuItem>
-      <MenuItem>
         <Icons.Signature />
         <MenuTitle
-          data-testid="CTA_route-to-/signer"
-          onClick={() => router.push("/signer")}
+          data-testid="CTA_route-to-/signers"
+          onClick={() => router.push("/signers")}
         >
           Signers
         </MenuTitle>
       </MenuItem>
       <MenuItem>
+        <Icons.Apps />
+        <MenuTitle
+          data-testid="CTA_route-to-/trusted-apps"
+          onClick={() => router.push("/trusted-apps")}
+        >
+          Trusted Apps
+        </MenuTitle>
+      </MenuItem>
+      <MenuItem>
         <Icons.SettingsAlt2 />
         <MenuTitle onClick={() => router.push("/cal")}>Crypto Assets</MenuTitle>
+      </MenuItem>
+      <MenuItem>
+        <Icons.Download />
+        <MenuTitle>Install app</MenuTitle>
       </MenuItem>
       {transport === mockserverIdentifier && (
         <MenuItem>

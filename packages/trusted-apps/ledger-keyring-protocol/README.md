@@ -20,7 +20,7 @@
 To install the `ledger-keyring-protocol` package, run the following command:
 
 ```sh
-npm install @ledgerhq/device-app-kit-ledger-keyring-protocol
+npm install @ledgerhq/device-trusted-app-kit-ledger-keyring-protocol
 ```
 
 ## 🔹 Initialisation

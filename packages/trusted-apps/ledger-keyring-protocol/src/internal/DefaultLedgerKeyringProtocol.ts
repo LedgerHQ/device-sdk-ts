@@ -4,21 +4,19 @@ import {
 } from "@ledgerhq/device-management-kit";
 import { type Container } from "inversify";
 
-import { type TrustedAppLedgerKeyringProtocol } from "@api/TrustedAppLedgerKeyringProtocol";
+import { type LedgerKeyringProtocol } from "@api/LedgerKeyringProtocol";
 import { makeContainer } from "@internal/di";
 
-type DefaultTrustedAppConstructorArgs = {
+type DefaultLedgerKeyringProtocolConstructorArgs = {
   dmk: DeviceManagementKit;
   sessionId: DeviceSessionId;
 };
 
-export class DefaultTrustedAppLedgerKeyringProtocol
-  implements TrustedAppLedgerKeyringProtocol
-{
+export class DefaultLedgerKeyringProtocol implements LedgerKeyringProtocol {
   name: string;
   private _container: Container;
 
-  constructor({ dmk, sessionId }: DefaultTrustedAppConstructorArgs) {
+  constructor({ dmk, sessionId }: DefaultLedgerKeyringProtocolConstructorArgs) {
     this.name = "Ledger Keyring Protocol";
     this._container = makeContainer({ dmk, sessionId });
     console.log(this._container);

@@ -34,11 +34,11 @@ export const SignerView = () => {
       >
         {SUPPORTED_SIGNERS.map(({ title, description, icon }) => (
           <ClickableListItem
-            key={`signer-${title}`}
+            key={`signers-${title}`}
             title={title}
             description={description}
             onClick={() => {
-              router.push(`/signer/${title.toLowerCase()}`);
+              router.push(`/signers/${title.toLowerCase()}`);
             }}
             icon={icon}
           />

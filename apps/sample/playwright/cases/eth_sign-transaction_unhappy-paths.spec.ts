@@ -37,7 +37,7 @@ test.describe("ETH Signer: sign transaction, unhappy paths", () => {
     });
 
     await test.step("When execute ETH: sign transaction with malformed derivation paths", async () => {
-      await whenNavigateTo(page, "/signer");
+      await whenNavigateTo(page, "/signers");
       await whenClicking(page, "CTA_command-Ethereum");
 
       const malformedDerivationPaths = [
