@@ -1,2 +1,3 @@
-export * from "@api/TrustedAppLedgerKeyringProtocol";
-export * from "@api/TrustedAppLedgerKeyringProtocolBuilder";
+export * from "@api/LedgerKeyringProtocol";
+export * from "@api/LedgerKeyringProtocolBuilder";
+export * from "@internal/externalTypes";

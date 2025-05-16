@@ -1,5 +1,5 @@
 {
-  "name": "@ledgerhq/device-app-kit-ledger-keyring-protocol",
+  "name": "@ledgerhq/device-trusted-app-kit-ledger-keyring-protocol",
   "version": "0.0.0",
   "license": "Apache-2.0",
   "private": false,
@@ -36,12 +36,14 @@
   },
   "dependencies": {
     "@ledgerhq/device-management-kit": "workspace:*",
+    "@ledgerhq/signer-utils": "workspace:*",
     "inversify": "catalog:",
+    "purify-ts": "catalog:",
     "reflect-metadata": "catalog:"
   },
   "devDependencies": {
-    "@ledgerhq/ldmk-tool": "workspace:*",
     "@ledgerhq/eslint-config-dsdk": "workspace:*",
+    "@ledgerhq/ldmk-tool": "workspace:*",
     "@ledgerhq/prettier-config-dsdk": "workspace:*",
     "@ledgerhq/tsconfig-dsdk": "workspace:*",
     "@ledgerhq/vitest-config-dmk": "workspace:*"
