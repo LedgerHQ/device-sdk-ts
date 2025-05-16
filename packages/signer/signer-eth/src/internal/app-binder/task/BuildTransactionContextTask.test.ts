@@ -382,6 +382,41 @@ describe("BuildTransactionContextTask", () => {
     });
   });
 
+  it("should call the context module without challenge for Nano S", async () => {
+    // GIVEN
+    const serializedTransaction = new Uint8Array([0x01, 0x02, 0x03]);
+    const clearSignContexts: ClearSignContext[] = [];
+    const mapperResult: TransactionMapperResult = {
+      subset: { chainId: 1, to: undefined, data: "0x" },
+      serializedTransaction,
+      type: 0,
+    };
+    mapperMock.mapTransactionToSubset.mockReturnValueOnce(Right(mapperResult));
+    contextModuleMock.getContexts.mockResolvedValueOnce(clearSignContexts);
+    apiMock.getDeviceSessionState.mockReturnValueOnce({
+      sessionStateType: DeviceSessionStateType.ReadyWithoutSecureChannel,
+      deviceStatus: DeviceStatus.CONNECTED,
+      installedApps: [],
+      currentApp: { name: "Ethereum", version: "1.12.0" },
+      deviceModelId: DeviceModelId.NANO_S,
+      isSecureConnectionAllowed: false,
+    });
+
+    // WHEN
+    await new BuildTransactionContextTask(
+      apiMock,
+      defaultArgs,
+      getWeb3ChecksFactoryMock,
+    ).run();
+
+    // THEN
+    expect(contextModuleMock.getContexts).toHaveBeenCalledWith({
+      deviceModelId: DeviceModelId.NANO_S,
+      domain: "domain-name.eth",
+      ...mapperResult.subset,
+    });
+  });
+
   it("should call the context module without context on error", async () => {
     // GIVEN
     const serializedTransaction = new Uint8Array([0x01, 0x02, 0x03]);
