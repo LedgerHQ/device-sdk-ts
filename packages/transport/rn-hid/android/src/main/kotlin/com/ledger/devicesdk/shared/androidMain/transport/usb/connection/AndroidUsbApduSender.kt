@@ -17,23 +17,16 @@ import com.ledger.devicesdk.shared.androidMainInternal.transport.USB_MTU
 import com.ledger.devicesdk.shared.androidMainInternal.transport.deviceconnection.DeviceApduSender
 import com.ledger.devicesdk.shared.api.apdu.SendApduFailureReason
 import com.ledger.devicesdk.shared.api.apdu.SendApduResult
-import com.ledger.devicesdk.shared.api.utils.toHexadecimalString
 import com.ledger.devicesdk.shared.internal.service.logger.LoggerService
-import com.ledger.devicesdk.shared.internal.service.logger.buildSimpleDebugLogInfo
 import com.ledger.devicesdk.shared.internal.service.logger.buildSimpleErrorLogInfo
 import com.ledger.devicesdk.shared.internal.transport.framer.FramerService
 import com.ledger.devicesdk.shared.internal.transport.framer.to2BytesArray
 import kotlinx.coroutines.CoroutineDispatcher
-import kotlinx.coroutines.TimeoutCancellationException
-import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withContext
-import kotlinx.coroutines.withTimeout
-import timber.log.Timber
 import java.nio.ByteBuffer
-import kotlin.coroutines.resume
 import kotlin.random.Random
 import kotlin.time.Duration
 
@@ -70,6 +63,7 @@ internal class AndroidUsbApduSender(
                     delay(abortTimeoutDuration)
                     usbConnection.releaseInterface(usbInterface)
                     usbConnection.close()
+                    cancel("Timeout")
                     throw SendApduTimeoutException
                 }
 
@@ -127,7 +121,6 @@ internal class AndroidUsbApduSender(
         framerService.serialize(mtu = USB_MTU, channelId = generateChannelId(), rawApdu = rawApdu)
             .forEach { apduFrame ->
                 val buffer = apduFrame.toByteArray()
-                Timber.i("APDU sent = ${buffer.toHexadecimalString()}")
                 usbConnection.bulkTransfer(
                     androidToUsbEndpoint,
                     buffer,

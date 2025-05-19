@@ -117,7 +117,6 @@ internal class DefaultAndroidUsbTransport(
                             return@launch
                         }
                         val (key, deviceConnection) = item
-//                        (deviceConnection.getApduSender() as AndroidUsbApduSender).clear()
                         loggerService.log(
                             buildSimpleInfoLogInfo(
                                 "AndroidUsbTransport",
@@ -308,7 +307,6 @@ internal class DefaultAndroidUsbTransport(
                 isFatalSendApduFailure = { false }, // TODO: refine this
                 reconnectionTimeoutDuration = 5.seconds,
                 onTerminated = {
-//                    (it.getApduSender() as AndroidUsbApduSender).clear()
                     usbConnections.remove(sessionId)
                     usbConnectionsPendingReconnection.remove(it)
                     eventDispatcher.dispatch(TransportEvent.DeviceConnectionLost(sessionId))
