@@ -10,5 +10,6 @@ export class DefaultLoggerPublisherServiceStub
   info = vi.fn();
   warn = vi.fn();
   debug = vi.fn();
+  verbose = vi.fn();
   error = vi.fn();
 }

@@ -51,7 +51,7 @@ export class DefaultApduReceiverService implements ApduReceiverService {
     const frame = this.getFrameFromBytes(frameBytes);
 
     return frame.map((value) => {
-      this._logger.debug("handle frame", {
+      this._logger.verbose("handle frame", {
         data: { frame: value.getRawData() },
       });
       this._pendingFrames.push(value);
@@ -73,7 +73,7 @@ export class DefaultApduReceiverService implements ApduReceiverService {
   private getCompleteFrame(dataSize: Maybe<number>): Maybe<ApduResponse> {
     return dataSize.chain((value) => {
       if (!this.isComplete(value)) {
-        this._logger.debug("frame is not complete, waiting for more");
+        this._logger.verbose("frame is not complete, waiting for more");
         return Nothing;
       }
 

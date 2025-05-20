@@ -8,4 +8,5 @@ export interface LoggerPublisherService {
   warn(message: string, options?: LogPublisherOptions): void;
   info(message: string, options?: LogPublisherOptions): void;
   debug(message: string, options?: LogPublisherOptions): void;
+  verbose(message: string, options?: LogPublisherOptions): void;
 }
