@@ -274,8 +274,17 @@ internal class DefaultAndroidUsbTransport(
     }
 
     override suspend fun connect(discoveryDevice: DiscoveryDevice): InternalConnectionResult {
-        val usbDevice: UsbDevice? =
-            usbManager.deviceList.values.firstOrNull { it.deviceId == discoveryDevice.uid.toInt() }
+
+        val usbDevices = usbManager.deviceList.values
+
+        var usbDevice: UsbDevice? =
+            usbDevices.firstOrNull { it.deviceId == discoveryDevice.uid.toInt() }
+
+        if (usbDevice == null) {
+            // This is useful for LL durin@g the OS update
+            usbDevice =
+                usbDevices.firstOrNull { it.toLedgerUsbDevice()?.ledgerDevice == discoveryDevice.ledgerDevice }
+        }
 
         val ledgerUsbDevice = usbDevice?.toLedgerUsbDevice()
 
