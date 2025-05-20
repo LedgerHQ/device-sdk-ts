@@ -63,7 +63,6 @@ internal class AndroidUsbApduSender(
                     delay(abortTimeoutDuration)
                     usbConnection.releaseInterface(usbInterface)
                     usbConnection.close()
-                    cancel("Timeout")
                     throw SendApduTimeoutException
                 }
 
