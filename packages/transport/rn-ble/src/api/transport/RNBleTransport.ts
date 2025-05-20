@@ -95,7 +95,7 @@ export class RNBleTransport implements Transport {
     ) => RNBleApduSender = (args, loggerFactory) =>
       new RNBleApduSender(args, loggerFactory),
   ) {
-    this._logger = _loggerServiceFactory("ReactNativeBleTransport");
+    this._logger = _loggerServiceFactory("RNBleTransport");
     this._isSupported = Maybe.zero();
     this._deviceConnectionsById = new Map();
     this._reconnectionSubscription = Maybe.zero();
@@ -150,7 +150,7 @@ export class RNBleTransport implements Transport {
           this._maybeScanningSubject = Maybe.of(subject);
           const devicesById = new Map<string, InternalScannedDevice>();
 
-          this._logger.info("[RNBleTransport][startScanning] startDeviceScan");
+          this._logger.info("[startScanning] startDeviceScan");
           this._manager.startDeviceScan(
             this._deviceModelDataSource.getBluetoothServices(),
             { allowDuplicates: true },
@@ -179,7 +179,7 @@ export class RNBleTransport implements Transport {
 
           return subject.asObservable().pipe(
             finalize(() => {
-              this._logger.debug("[RNBleTransport][startScanning] finalize");
+              this._logger.debug("[startScanning] finalize");
               subject.complete();
               clearInterval(interval);
               this._maybeScanningSubject = Nothing;
@@ -191,10 +191,9 @@ export class RNBleTransport implements Transport {
       )
       .subscribe({
         next: (devices) => {
-          this._logger.debug(
-            "[RNBleTransport][startScanning] onNext called with devices",
-            { data: { devices } },
-          );
+          this._logger.verbose("[startScanning] onNext called with devices", {
+            data: { devices },
+          });
           this._scannedDevicesSubject.next(devices);
         },
         error: (error) => {
@@ -570,7 +569,7 @@ export class RNBleTransport implements Transport {
     error: BleError | null,
     device: Device | null,
   ) {
-    this._logger.debug("[RNBLE][_handleDeviceDisconnected]", {
+    this._logger.debug("[_handleDeviceDisconnected]", {
       data: { error, device },
     });
     if (!device) {

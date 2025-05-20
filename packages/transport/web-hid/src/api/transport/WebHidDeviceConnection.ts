@@ -84,10 +84,6 @@ export class WebHidDeviceConnection implements DeviceConnection {
   ): Promise<Either<DmkError, ApduResponse>> {
     this._sendApduSubject = new Subject();
     this._pendingApdu = Maybe.of(apdu);
-    this._logger.debug("Sending APDU", {
-      data: { apdu },
-      tag: "apdu-sender",
-    });
 
     const resultPromise = new Promise<Either<DmkError, ApduResponse>>(
       (resolve) => {
@@ -126,10 +122,6 @@ export class WebHidDeviceConnection implements DeviceConnection {
 
     const frames = this._apduSender.getFrames(apdu);
     for (const frame of frames) {
-      this._logger.debug("Sending Frame", {
-        data: { frame: frame.getRawData() },
-      });
-
       try {
         await firstValueFrom(
           from(this._device.sendReport(0, frame.getRawData())).pipe(
@@ -150,17 +142,10 @@ export class WebHidDeviceConnection implements DeviceConnection {
 
   private receiveHidInputReport(event: HIDInputReportEvent) {
     const data = new Uint8Array(event.data.buffer);
-    this._logger.debug("Received Frame", {
-      data: { frame: data },
-      tag: "apdu-receiver",
-    });
     const response = this._apduReceiver.handleFrame(data);
     response.caseOf({
       Right: (maybeApduResponse) => {
         maybeApduResponse.map((apduResponse) => {
-          this._logger.debug("Received APDU Response", {
-            data: { response: apduResponse },
-          });
           this._sendApduSubject.next(apduResponse);
           this._sendApduSubject.complete();
         });

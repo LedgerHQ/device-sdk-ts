@@ -74,7 +74,7 @@ export class WebHidTransport implements Transport {
     private readonly _apduSenderFactory: ApduSenderServiceFactory,
     private readonly _apduReceiverFactory: ApduReceiverServiceFactory,
   ) {
-    this._logger = _loggerServiceFactory("WebWebHidTransport");
+    this._logger = _loggerServiceFactory("WebHidTransport");
 
     this.startListeningToConnectionEvents();
   }
