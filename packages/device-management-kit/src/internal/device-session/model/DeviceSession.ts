@@ -200,6 +200,7 @@ export class DeviceSession {
     const apdu = command.getApdu();
     this._logger.debug("Sending command", {
       data: {
+        name: command.name,
         args: command.args,
         apdu: apdu.getRawApdu(),
       },
@@ -222,6 +223,7 @@ export class DeviceSession {
         );
         this._logger.debug("Command response", {
           data: {
+            name: command.name,
             response: parsedResponse,
             apdu: Uint8Array.from([...r.data, ...r.statusCode]),
           },

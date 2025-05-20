@@ -27,6 +27,8 @@ export type ProvideNFTInformationCommandArgs = {
 export class ProvideNFTInformationCommand
   implements Command<void, ProvideNFTInformationCommandArgs, EthErrorCodes>
 {
+  readonly name = "ProvideNFTInformationCommand";
+
   private readonly errorHelper = new CommandErrorHelper<void, EthErrorCodes>(
     ETH_APP_ERRORS,
     EthAppCommandErrorFactory,

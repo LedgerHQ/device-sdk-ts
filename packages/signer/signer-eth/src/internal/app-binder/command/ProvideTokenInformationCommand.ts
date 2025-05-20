@@ -34,6 +34,8 @@ export class ProvideTokenInformationCommand
       EthErrorCodes
     >
 {
+  readonly name = "ProvideTokenInformationCommand";
+
   private readonly errorHelper = new CommandErrorHelper<
     ProvideTokenInformationCommandResponse,
     EthErrorCodes

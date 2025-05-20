@@ -59,6 +59,7 @@ export class ListLanguagePackCommand
       ListLanguagePackErrorCodes
     >
 {
+  readonly name = "ListLanguagePackCommand";
   readonly args: ListLanguagePackCommandArgs;
 
   constructor(args: ListLanguagePackCommandArgs) {

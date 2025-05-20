@@ -85,6 +85,7 @@ export type LoadCertificateCommandResult = CommandResult<
 export class LoadCertificateCommand
   implements Command<void, LoadCertificateArgs, LoadCertificateErrorCodes>
 {
+  readonly name = "LoadCertificateCommand";
   readonly args: LoadCertificateArgs;
   readonly triggersDisconnection = false;
 

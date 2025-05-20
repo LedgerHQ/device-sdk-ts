@@ -22,6 +22,8 @@ import {
 export class ProvideEnumCommand
   implements Command<void, ChunkableCommandArgs, EthErrorCodes>
 {
+  readonly name = "ProvideEnumCommand";
+
   private readonly errorHelper = new CommandErrorHelper<void, EthErrorCodes>(
     ETH_APP_ERRORS,
     EthAppCommandErrorFactory,

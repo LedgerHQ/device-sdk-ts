@@ -27,6 +27,8 @@ import {
 export class StoreTransactionCommand
   implements Command<void, ChunkableCommandArgs, EthErrorCodes>
 {
+  readonly name = "StoreTransactionCommand";
+
   private readonly errorHelper = new CommandErrorHelper<void, EthErrorCodes>(
     ETH_APP_ERRORS,
     EthAppCommandErrorFactory,

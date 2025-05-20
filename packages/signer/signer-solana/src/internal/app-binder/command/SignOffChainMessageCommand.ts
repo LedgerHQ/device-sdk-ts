@@ -34,6 +34,8 @@ export class SignOffChainMessageCommand
       SolanaAppErrorCodes
     >
 {
+  readonly name = "SignOffChainMessageCommand";
+
   private readonly errorHelper = new CommandErrorHelper<
     SignOffChainMessageCommandResponse,
     SolanaAppErrorCodes

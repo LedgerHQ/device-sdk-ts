@@ -37,6 +37,8 @@ export class RegisterWalletAddressCommand
       BtcErrorCodes
     >
 {
+  readonly name = "RegisterWalletAddressCommand";
+
   constructor(
     readonly args: RegisterWalletAddressCommandArgs,
     private readonly _errorHelper = new CommandErrorHelper<

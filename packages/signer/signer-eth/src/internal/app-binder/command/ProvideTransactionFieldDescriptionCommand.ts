@@ -22,6 +22,8 @@ import {
 export class ProvideTransactionFieldDescriptionCommand
   implements Command<void, ChunkableCommandArgs, EthErrorCodes>
 {
+  readonly name = "ProvideTransactionFieldDescriptionCommand";
+
   private readonly errorHelper = new CommandErrorHelper<void, EthErrorCodes>(
     ETH_APP_ERRORS,
     EthAppCommandErrorFactory,

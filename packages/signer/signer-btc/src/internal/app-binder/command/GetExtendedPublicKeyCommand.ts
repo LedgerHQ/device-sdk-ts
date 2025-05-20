@@ -40,6 +40,8 @@ export class GetExtendedPublicKeyCommand
       BtcErrorCodes
     >
 {
+  readonly name = "GetExtendedPublicKeyCommand";
+
   constructor(
     readonly args: GetExtendedPublicKeyCommandArgs,
     private readonly _errorHelper = new CommandErrorHelper<

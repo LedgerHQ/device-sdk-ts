@@ -33,6 +33,8 @@ export class SignPsbtCommand
   implements
     Command<SignPsbtCommandResponse, SignPsbtCommandArgs, BtcErrorCodes>
 {
+  readonly name = "SignPsbtCommand";
+
   constructor(
     readonly args: SignPsbtCommandArgs,
     private readonly _errorHelper = new CommandErrorHelper<

@@ -43,6 +43,8 @@ export class SignMessageCommand
   implements
     Command<SignMessageCommandResponse, SignMessageCommandArgs, BtcErrorCodes>
 {
+  readonly name = "SignMessageCommand";
+
   constructor(
     readonly args: SignMessageCommandArgs,
     private readonly _errorHelper = new CommandErrorHelper<

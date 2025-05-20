@@ -30,6 +30,8 @@ export class GetAppConfigurationCommand
       SolanaAppErrorCodes
     >
 {
+  readonly name = "GetAppConfigurationCommand";
+
   private readonly errorHelper = new CommandErrorHelper<
     AppConfiguration,
     SolanaAppErrorCodes

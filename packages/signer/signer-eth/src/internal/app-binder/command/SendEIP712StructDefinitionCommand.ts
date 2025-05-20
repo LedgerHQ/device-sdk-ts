@@ -57,6 +57,8 @@ enum Type {
 export class SendEIP712StructDefinitionCommand
   implements Command<void, SendEIP712StructDefinitionCommandArgs, EthErrorCodes>
 {
+  readonly name = "SendEIP712StructDefinitionCommand";
+
   private readonly errorHelper = new CommandErrorHelper<void, EthErrorCodes>(
     ETH_APP_ERRORS,
     EthAppCommandErrorFactory,

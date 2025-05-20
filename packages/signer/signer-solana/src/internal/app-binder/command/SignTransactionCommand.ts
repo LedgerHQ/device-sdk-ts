@@ -40,6 +40,8 @@ export class SignTransactionCommand
       SolanaAppErrorCodes
     >
 {
+  readonly name = "SignTransactionCommand";
+
   private readonly errorHelper = new CommandErrorHelper<
     SignTransactionCommandResponse,
     SolanaAppErrorCodes

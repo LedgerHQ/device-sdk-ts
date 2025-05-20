@@ -23,6 +23,8 @@ import { type ChunkableCommandArgs } from "@internal/app-binder/task/SendCommand
 export class ProvideWeb3CheckCommand
   implements Command<void, ChunkableCommandArgs, EthErrorCodes>
 {
+  readonly name = "ProvideWeb3CheckCommand";
+
   private readonly errorHelper = new CommandErrorHelper<void, EthErrorCodes>(
     ETH_APP_ERRORS,
     EthAppCommandErrorFactory,

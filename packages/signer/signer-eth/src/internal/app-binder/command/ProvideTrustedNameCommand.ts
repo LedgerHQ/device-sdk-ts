@@ -29,6 +29,8 @@ export const PAYLOAD_LENGTH_BYTES = 2;
 export class ProvideTrustedNameCommand
   implements Command<void, ChunkableCommandArgs, EthErrorCodes>
 {
+  readonly name = "ProvideTrustedNameCommand";
+
   private readonly errorHelper = new CommandErrorHelper<void, EthErrorCodes>(
     ETH_APP_ERRORS,
     EthAppCommandErrorFactory,

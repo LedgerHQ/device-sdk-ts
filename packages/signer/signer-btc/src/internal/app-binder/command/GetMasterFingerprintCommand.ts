@@ -29,6 +29,7 @@ type GetMasterFingerprintCommandResponse = {
 export class GetMasterFingerprintCommand
   implements Command<GetMasterFingerprintCommandResponse, void, BtcErrorCodes>
 {
+  readonly name = "GetMasterFingerprintCommand";
   readonly args = undefined;
 
   constructor(

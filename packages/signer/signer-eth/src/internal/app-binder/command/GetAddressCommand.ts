@@ -33,6 +33,8 @@ export class GetAddressCommand
   implements
     Command<GetAddressCommandResponse, GetAddressCommandArgs, EthErrorCodes>
 {
+  readonly name = "GetAddressCommand";
+
   private readonly errorHelper = new CommandErrorHelper<
     GetAddressCommandResponse,
     EthErrorCodes

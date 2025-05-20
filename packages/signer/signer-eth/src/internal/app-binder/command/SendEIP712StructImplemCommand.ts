@@ -47,6 +47,8 @@ export type SendEIP712StructImplemCommandArgs =
 export class SendEIP712StructImplemCommand
   implements Command<void, SendEIP712StructImplemCommandArgs, EthErrorCodes>
 {
+  readonly name = "SendEIP712StructImplemCommand";
+
   private readonly errorHelper = new CommandErrorHelper<void, EthErrorCodes>(
     ETH_APP_ERRORS,
     EthAppCommandErrorFactory,

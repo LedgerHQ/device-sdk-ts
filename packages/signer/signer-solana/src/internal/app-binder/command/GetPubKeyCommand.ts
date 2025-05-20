@@ -36,6 +36,8 @@ export class GetPubKeyCommand
   implements
     Command<GetPubKeyCommandResponse, GetPubKeyCommandArgs, SolanaAppErrorCodes>
 {
+  readonly name = "GetPubKeyCommand";
+
   private readonly errorHelper = new CommandErrorHelper<
     GetPubKeyCommandResponse,
     SolanaAppErrorCodes

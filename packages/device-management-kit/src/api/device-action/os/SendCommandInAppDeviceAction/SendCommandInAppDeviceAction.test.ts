@@ -338,6 +338,7 @@ type MyCommandParams = {
 };
 
 class TestCommand implements Command<MyCommandResponse, MyCommandParams> {
+  readonly name = "TestCommand";
   readonly args: MyCommandParams;
   constructor(args: MyCommandParams) {
     this.args = args;
