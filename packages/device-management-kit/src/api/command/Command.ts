@@ -18,6 +18,11 @@ export interface Command<Response, Args = void, ErrorCodes = void> {
   readonly triggersDisconnection?: boolean;
 
   /**
+   * The arguments for the command.
+   */
+  readonly args: Args;
+
+  /**
    * Gets the APDU (Application Protocol Data Unit) for the command.
    *
    * @returns The APDU for the command.

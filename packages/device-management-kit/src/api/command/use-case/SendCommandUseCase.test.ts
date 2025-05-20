@@ -42,6 +42,7 @@ describe("SendCommandUseCase", () => {
     command = {
       getApdu: vi.fn(),
       parseResponse: vi.fn(),
+      args: undefined,
     };
   });
 

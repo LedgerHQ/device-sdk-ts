@@ -198,6 +198,12 @@ export class DeviceSession {
     abortTimeout?: number,
   ): Promise<CommandResult<Response, ErrorStatusCodes>> {
     const apdu = command.getApdu();
+    this._logger.debug("Sending command", {
+      data: {
+        args: command.args,
+        apdu: apdu.getRawApdu(),
+      },
+    });
 
     const response = await this.sendApdu(apdu.getRawApdu(), {
       isPolling: false,
@@ -209,8 +215,19 @@ export class DeviceSession {
       Left: (err) => {
         throw err;
       },
-      Right: (r) =>
-        command.parseResponse(r, this._connectedDevice.deviceModel.id),
+      Right: (r) => {
+        const parsedResponse = command.parseResponse(
+          r,
+          this._connectedDevice.deviceModel.id,
+        );
+        this._logger.debug("Command response", {
+          data: {
+            response: parsedResponse,
+            apdu: Uint8Array.from([...r.data, ...r.statusCode]),
+          },
+        });
+        return parsedResponse;
+      },
     });
   }
 

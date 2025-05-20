@@ -33,7 +33,7 @@ const LNX_RESPONSE_TOO_SHORT = {
 };
 
 describe("GetChallengeCommand", () => {
-  let command: Command<GetChallengeCommandResponse, EthErrorCodes, string>;
+  let command: Command<GetChallengeCommandResponse, void, EthErrorCodes>;
 
   beforeEach(() => {
     command = new GetChallengeCommand();

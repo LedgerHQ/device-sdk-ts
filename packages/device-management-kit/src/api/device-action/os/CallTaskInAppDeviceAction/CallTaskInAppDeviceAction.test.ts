@@ -343,14 +343,14 @@ type MyCommandParams = {
 };
 
 class TestCommand implements Command<MyCommandResponse, MyCommandParams> {
-  params: MyCommandParams;
-  constructor(params: MyCommandParams) {
-    this.params = params;
+  readonly args: MyCommandParams;
+  constructor(args: MyCommandParams) {
+    this.args = args;
   }
   getApdu(): Apdu {
     return new ApduBuilder({ cla: 0x00, ins: 0x01, p1: 0x02, p2: 0x03 })
-      .add32BitUIntToData(this.params.paramNumber)
-      .addAsciiStringToData(this.params.paramString)
+      .add32BitUIntToData(this.args.paramNumber)
+      .addAsciiStringToData(this.args.paramString)
       .build();
   }
   parseResponse() {

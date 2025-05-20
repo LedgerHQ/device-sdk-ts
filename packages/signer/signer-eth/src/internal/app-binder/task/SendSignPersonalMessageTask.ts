@@ -59,11 +59,7 @@ export class SendSignPersonalMessageTask {
         this.api,
         {
           data: buffer,
-          commandFactory: (args) =>
-            new SignPersonalMessageCommand({
-              data: args.chunkedData,
-              isFirstChunk: args.isFirstChunk,
-            }),
+          commandFactory: (args) => new SignPersonalMessageCommand(args),
         },
       ).run();
 

@@ -6,14 +6,13 @@ import {
 } from "@ledgerhq/device-management-kit";
 import { Just, Nothing } from "purify-ts";
 
-import {
-  SignTransactionCommand,
-  type SignTransactionCommandArgs,
-} from "./SignTransactionCommand";
+import { type ChunkableCommandArgs } from "@internal/app-binder/task/SendCommandInChunksTask";
+
+import { SignTransactionCommand } from "./SignTransactionCommand";
 
 describe("SignTransactionCommand", () => {
-  const defaultArgs: SignTransactionCommandArgs = {
-    serializedTransaction: new Uint8Array(),
+  const defaultArgs: ChunkableCommandArgs = {
+    chunkedData: new Uint8Array(),
     more: false,
     extend: false,
   };
@@ -37,7 +36,7 @@ describe("SignTransactionCommand", () => {
     it("should return the correct APDU when the data is not empty", () => {
       // GIVEN
       const command = new SignTransactionCommand({
-        serializedTransaction: new Uint8Array([0x01, 0x02, 0x03]),
+        chunkedData: new Uint8Array([0x01, 0x02, 0x03]),
         more: false,
         extend: false,
       });
@@ -56,7 +55,7 @@ describe("SignTransactionCommand", () => {
     it("should return the correct APDU when the more flag is set", () => {
       // GIVEN
       const command = new SignTransactionCommand({
-        serializedTransaction: new Uint8Array([0x01, 0x02, 0x03]),
+        chunkedData: new Uint8Array([0x01, 0x02, 0x03]),
         more: true,
         extend: false,
       });
@@ -75,7 +74,7 @@ describe("SignTransactionCommand", () => {
     it("should return the correct APDU when the extend flag is set", () => {
       // GIVEN
       const command = new SignTransactionCommand({
-        serializedTransaction: new Uint8Array([0x01, 0x02, 0x03]),
+        chunkedData: new Uint8Array([0x01, 0x02, 0x03]),
         more: false,
         extend: true,
       });
@@ -94,7 +93,7 @@ describe("SignTransactionCommand", () => {
     it("should return the correct APDU when the more and extend flags are set", () => {
       // GIVEN
       const command = new SignTransactionCommand({
-        serializedTransaction: new Uint8Array([0x01, 0x02, 0x03]),
+        chunkedData: new Uint8Array([0x01, 0x02, 0x03]),
         more: true,
         extend: true,
       });

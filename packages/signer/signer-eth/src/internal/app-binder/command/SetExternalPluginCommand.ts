@@ -25,7 +25,8 @@ type SetExternalPluginCommandArgs = {
 export class SetExternalPluginCommand
   implements Command<void, SetExternalPluginCommandArgs, EthErrorCodes>
 {
-  constructor(private readonly args: SetExternalPluginCommandArgs) {}
+  constructor(readonly args: SetExternalPluginCommandArgs) {}
+
   private readonly errorHelper = new CommandErrorHelper<void, EthErrorCodes>(
     ETH_APP_ERRORS,
     EthAppCommandErrorFactory,

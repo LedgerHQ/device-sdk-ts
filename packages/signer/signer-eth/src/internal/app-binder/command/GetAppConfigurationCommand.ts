@@ -23,6 +23,7 @@ import {
 export class GetAppConfiguration
   implements Command<GetAppConfigurationCommandResponse, void, EthErrorCodes>
 {
+  readonly args = undefined;
   private readonly errorHelper = new CommandErrorHelper<
     GetAppConfigurationCommandResponse,
     EthErrorCodes

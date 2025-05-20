@@ -41,11 +41,7 @@ export class GetPubKeyCommand
     SolanaAppErrorCodes
   >(SOLANA_APP_ERRORS, SolanaAppCommandErrorFactory);
 
-  args: GetPubKeyCommandArgs;
-
-  constructor(args: GetPubKeyCommandArgs) {
-    this.args = args;
-  }
+  constructor(readonly args: GetPubKeyCommandArgs) {}
 
   getApdu(): Apdu {
     const getPubKeyArgs: ApduBuilderArgs = {

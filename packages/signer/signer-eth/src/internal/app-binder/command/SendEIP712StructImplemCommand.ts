@@ -51,7 +51,8 @@ export class SendEIP712StructImplemCommand
     ETH_APP_ERRORS,
     EthAppCommandErrorFactory,
   );
-  constructor(private readonly args: SendEIP712StructImplemCommandArgs) {}
+
+  constructor(readonly args: SendEIP712StructImplemCommandArgs) {}
 
   getApdu(): Apdu {
     const apduBuilderArgs: ApduBuilderArgs = {

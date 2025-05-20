@@ -48,12 +48,11 @@ export class SignTransactionCommand
       EthErrorCodes
     >
 {
+  readonly args: SignTransactionCommandArgs;
   private readonly errorHelper = new CommandErrorHelper<
     SignTransactionCommandResponse,
     EthErrorCodes
   >(ETH_APP_ERRORS, EthAppCommandErrorFactory);
-
-  args: SignTransactionCommandArgs;
 
   constructor(args: SignTransactionCommandArgs) {
     this.args = args;

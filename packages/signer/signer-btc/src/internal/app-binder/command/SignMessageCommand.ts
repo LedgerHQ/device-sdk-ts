@@ -44,7 +44,7 @@ export class SignMessageCommand
     Command<SignMessageCommandResponse, SignMessageCommandArgs, BtcErrorCodes>
 {
   constructor(
-    private readonly _args: SignMessageCommandArgs,
+    readonly args: SignMessageCommandArgs,
     private readonly _errorHelper = new CommandErrorHelper<
       SignMessageCommandResponse,
       BtcErrorCodes
@@ -56,7 +56,7 @@ export class SignMessageCommand
   ) {}
 
   getApdu(): Apdu {
-    const { derivationPath, messageLength, messageMerkleRoot } = this._args;
+    const { derivationPath, messageLength, messageMerkleRoot } = this.args;
 
     const builder = new ApduBuilder({
       cla: 0xe1,

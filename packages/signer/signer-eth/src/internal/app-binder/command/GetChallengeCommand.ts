@@ -28,6 +28,7 @@ export type GetChallengeCommandResponse = {
 export class GetChallengeCommand
   implements Command<GetChallengeCommandResponse, void, EthErrorCodes>
 {
+  readonly args = undefined;
   private readonly errorHelper = new CommandErrorHelper<
     GetChallengeCommandResponse,
     EthErrorCodes

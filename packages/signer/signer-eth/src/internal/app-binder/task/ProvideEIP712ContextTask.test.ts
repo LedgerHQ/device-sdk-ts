@@ -827,7 +827,7 @@ describe("ProvideEIP712ContextTask", () => {
     // THEN
     expect(apiMock.sendCommand).toHaveBeenCalledWith(
       new ProvideWeb3CheckCommand({
-        payload: hexaStringToBuffer("0x0003010203")!,
+        chunkedData: hexaStringToBuffer("0x0003010203")!,
         isFirstChunk: true,
       }),
     );
@@ -867,7 +867,7 @@ describe("ProvideEIP712ContextTask", () => {
     );
     expect(apiMock.sendCommand).toHaveBeenCalledWith(
       new ProvideWeb3CheckCommand({
-        payload: hexaStringToBuffer("0x0003010203")!,
+        chunkedData: hexaStringToBuffer("0x0003010203")!,
         isFirstChunk: true,
       }),
     );

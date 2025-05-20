@@ -35,11 +35,7 @@ export class GetAppConfigurationCommand
     SolanaAppErrorCodes
   >(SOLANA_APP_ERRORS, SolanaAppCommandErrorFactory);
 
-  args: GetAppConfigurationCommandArgs;
-
-  constructor(args: GetAppConfigurationCommandArgs) {
-    this.args = args;
-  }
+  constructor(readonly args: GetAppConfigurationCommandArgs) {}
 
   getApdu(): Apdu {
     return new ApduBuilder({

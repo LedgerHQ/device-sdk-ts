@@ -113,11 +113,7 @@ export class ProvideTransactionContextTask {
       case ClearSignContextType.TRUSTED_NAME: {
         return new SendPayloadInChunksTask(this.api, {
           payload,
-          commandFactory: (args) =>
-            new ProvideTrustedNameCommand({
-              data: args.chunkedData,
-              isFirstChunk: args.isFirstChunk,
-            }),
+          commandFactory: (args) => new ProvideTrustedNameCommand(args),
         }).run();
       }
       case ClearSignContextType.ENUM:
@@ -132,11 +128,7 @@ export class ProvideTransactionContextTask {
       case ClearSignContextType.WEB3_CHECK:
         return new SendPayloadInChunksTask(this.api, {
           payload,
-          commandFactory: (args) =>
-            new ProvideWeb3CheckCommand({
-              payload: args.chunkedData,
-              isFirstChunk: args.isFirstChunk,
-            }),
+          commandFactory: (args) => new ProvideWeb3CheckCommand(args),
         }).run();
       default: {
         const uncoveredType: never = type;

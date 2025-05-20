@@ -134,7 +134,7 @@ describe("ProvideTransactionFieldDescriptionTask", () => {
       expect(apiMock.sendCommand).toHaveBeenCalledTimes(2);
       expect(spy.mock.calls[0]![0]).toBeInstanceOf(ProvideEnumCommand);
       // @ts-expect-error args exists
-      expect(spy.mock.calls[0]![0].args.data).toEqual(
+      expect(spy.mock.calls[0]![0].args.chunkedData).toEqual(
         new Uint8Array([0x00, 0x03, 0x08, 0x07, 0x06]),
       ); // length + value of the enum with id 0x42 and value 0x04
       expect(spy.mock.calls[1]![0]).toBeInstanceOf(
@@ -306,14 +306,14 @@ describe("ProvideTransactionFieldDescriptionTask", () => {
       expect(apiMock.sendCommand).toHaveBeenNthCalledWith(
         2,
         new ProvideTrustedNameCommand({
-          data: new Uint8Array([0x00, 0x04, 0x05, 0x06, 0x07, 0x08]),
+          chunkedData: new Uint8Array([0x00, 0x04, 0x05, 0x06, 0x07, 0x08]),
           isFirstChunk: true,
         }),
       );
       expect(apiMock.sendCommand).toHaveBeenNthCalledWith(
         3,
         new ProvideTrustedNameCommand({
-          data: new Uint8Array([0x00, 0x04, 0x01, 0x02, 0x03, 0x04]),
+          chunkedData: new Uint8Array([0x00, 0x04, 0x01, 0x02, 0x03, 0x04]),
           isFirstChunk: true,
         }),
       );

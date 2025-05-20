@@ -15,12 +15,8 @@ import {
   ETH_APP_ERRORS,
   EthAppCommandErrorFactory,
   type EthErrorCodes,
-} from "./utils/ethAppErrors";
-
-export type ProvideTrustedNameCommandArgs = {
-  data: Uint8Array;
-  isFirstChunk: boolean;
-};
+} from "@internal/app-binder/command/utils/ethAppErrors";
+import { type ChunkableCommandArgs } from "@internal/app-binder/task/SendCommandInChunksTask";
 
 /**
  * The length of the payload will take 2 bytes in the APDU.
@@ -31,14 +27,14 @@ export const PAYLOAD_LENGTH_BYTES = 2;
  * The command that provides a chunk of the trusted name to the device.
  */
 export class ProvideTrustedNameCommand
-  implements Command<void, ProvideTrustedNameCommandArgs, EthErrorCodes>
+  implements Command<void, ChunkableCommandArgs, EthErrorCodes>
 {
   private readonly errorHelper = new CommandErrorHelper<void, EthErrorCodes>(
     ETH_APP_ERRORS,
     EthAppCommandErrorFactory,
   );
 
-  constructor(private readonly args: ProvideTrustedNameCommandArgs) {}
+  constructor(readonly args: ChunkableCommandArgs) {}
 
   getApdu(): Apdu {
     const apduBuilderArgs: ApduBuilderArgs = {
@@ -49,7 +45,7 @@ export class ProvideTrustedNameCommand
     };
 
     return new ApduBuilder(apduBuilderArgs)
-      .addBufferToData(this.args.data)
+      .addBufferToData(this.args.chunkedData)
       .build();
   }
 

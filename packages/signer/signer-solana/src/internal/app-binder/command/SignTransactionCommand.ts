@@ -13,13 +13,13 @@ import { CommandErrorHelper } from "@ledgerhq/signer-utils";
 import { Just, Maybe, Nothing } from "purify-ts";
 
 import { type Signature } from "@api/model/Signature";
+import { type ChunkableCommandArgs } from "@internal/app-binder/task/SendCommandInChunksTask";
 
 import {
   SOLANA_APP_ERRORS,
   SolanaAppCommandErrorFactory,
   type SolanaAppErrorCodes,
 } from "./utils/SolanaApplicationErrors";
-
 const SIGNATURE_LENGTH = 64;
 
 export type SignTransactionCommandResponse = Maybe<Signature>;
@@ -36,7 +36,7 @@ export class SignTransactionCommand
   implements
     Command<
       SignTransactionCommandResponse,
-      SignTransactionCommandArgs,
+      ChunkableCommandArgs,
       SolanaAppErrorCodes
     >
 {
@@ -45,14 +45,10 @@ export class SignTransactionCommand
     SolanaAppErrorCodes
   >(SOLANA_APP_ERRORS, SolanaAppCommandErrorFactory);
 
-  args: SignTransactionCommandArgs;
-
-  constructor(args: SignTransactionCommandArgs) {
-    this.args = args;
-  }
+  constructor(readonly args: ChunkableCommandArgs) {}
 
   getApdu(): Apdu {
-    const { more, extend, serializedTransaction } = this.args;
+    const { more, extend, chunkedData } = this.args;
     let p2 = 0x00;
     if (more) p2 |= 0x02;
     if (extend) p2 |= 0x01;
@@ -65,7 +61,7 @@ export class SignTransactionCommand
     };
 
     return new ApduBuilder(signTransactionArgs)
-      .addBufferToData(serializedTransaction)
+      .addBufferToData(chunkedData)
       .build();
   }
 

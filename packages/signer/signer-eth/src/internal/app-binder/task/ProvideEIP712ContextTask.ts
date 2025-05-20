@@ -105,11 +105,7 @@ export class ProvideEIP712ContextTask {
       }
       await new SendPayloadInChunksTask(this.api, {
         payload: this.args.web3Check.payload,
-        commandFactory: (args) =>
-          new ProvideWeb3CheckCommand({
-            payload: args.chunkedData,
-            isFirstChunk: args.isFirstChunk,
-          }),
+        commandFactory: (args) => new ProvideWeb3CheckCommand(args),
       }).run();
     }
 
@@ -363,11 +359,7 @@ export class ProvideEIP712ContextTask {
             this.api,
             {
               payload: context.payload,
-              commandFactory: (args) =>
-                new ProvideTrustedNameCommand({
-                  data: args.chunkedData,
-                  isFirstChunk: args.isFirstChunk,
-                }),
+              commandFactory: (args) => new ProvideTrustedNameCommand(args),
             },
           ).run();
           if (!isSuccessCommandResult(provideNameResult)) {

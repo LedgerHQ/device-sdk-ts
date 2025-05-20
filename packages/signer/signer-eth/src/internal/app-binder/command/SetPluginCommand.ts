@@ -32,7 +32,9 @@ export class SetPluginCommand
     EthAppCommandErrorFactory,
   );
 
-  constructor(private readonly args: SetPluginCommandArgs) {}
+  constructor(readonly args: SetPluginCommandArgs) {
+    this.args = args;
+  }
 
   getApdu(): Apdu {
     const apduBuilderArgs: ApduBuilderArgs = {

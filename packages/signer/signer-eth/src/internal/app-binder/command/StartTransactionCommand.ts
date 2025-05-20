@@ -32,6 +32,7 @@ const S_LENGTH = 32;
 export class StartTransactionCommand
   implements Command<SignTransactionCommandResponse, void, EthErrorCodes>
 {
+  readonly args = undefined;
   private readonly errorHelper = new CommandErrorHelper<
     SignTransactionCommandResponse,
     EthErrorCodes

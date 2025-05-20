@@ -89,7 +89,7 @@ export class SendEIP712FilteringCommand
     EthAppCommandErrorFactory,
   );
 
-  constructor(private readonly args: SendEIP712FilteringCommandArgs) {}
+  constructor(readonly args: SendEIP712FilteringCommandArgs) {}
 
   getApdu(): Apdu {
     const filteringArgs: ApduBuilderArgs = {

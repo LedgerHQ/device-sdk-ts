@@ -15,24 +15,20 @@ import {
   EthAppCommandErrorFactory,
   type EthErrorCodes,
 } from "@internal/app-binder/command/utils/ethAppErrors";
-
-export type ProvideWeb3CheckCommandArgs = {
-  readonly payload: Uint8Array;
-  readonly isFirstChunk: boolean;
-};
+import { type ChunkableCommandArgs } from "@internal/app-binder/task/SendCommandInChunksTask";
 
 /**
  * The command that provides a chunk of the trusted name to the device.
  */
 export class ProvideWeb3CheckCommand
-  implements Command<void, ProvideWeb3CheckCommandArgs, EthErrorCodes>
+  implements Command<void, ChunkableCommandArgs, EthErrorCodes>
 {
   private readonly errorHelper = new CommandErrorHelper<void, EthErrorCodes>(
     ETH_APP_ERRORS,
     EthAppCommandErrorFactory,
   );
 
-  constructor(private readonly args: ProvideWeb3CheckCommandArgs) {}
+  constructor(readonly args: ChunkableCommandArgs) {}
 
   getApdu(): Apdu {
     const apduBuilderArgs: ApduBuilderArgs = {
@@ -43,7 +39,7 @@ export class ProvideWeb3CheckCommand
     };
 
     return new ApduBuilder(apduBuilderArgs)
-      .addBufferToData(this.args.payload)
+      .addBufferToData(this.args.chunkedData)
       .build();
   }
 

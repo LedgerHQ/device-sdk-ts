@@ -38,7 +38,7 @@ export class RegisterWalletAddressCommand
     >
 {
   constructor(
-    private readonly _args: RegisterWalletAddressCommandArgs,
+    readonly args: RegisterWalletAddressCommandArgs,
     private readonly _errorHelper = new CommandErrorHelper<
       RegisterWalletAddressCommandResponse,
       BtcErrorCodes
@@ -56,7 +56,7 @@ export class RegisterWalletAddressCommand
       p1: 0x00,
       p2: PROTOCOL_VERSION,
     });
-    const { walletPolicy } = this._args;
+    const { walletPolicy } = this.args;
 
     return builder.addBufferToData(walletPolicy).build();
   }

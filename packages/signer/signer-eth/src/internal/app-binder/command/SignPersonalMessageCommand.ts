@@ -14,26 +14,15 @@ import { CommandErrorHelper } from "@ledgerhq/signer-utils";
 import { Just, Maybe, Nothing } from "purify-ts";
 
 import { type Signature } from "@api/model/Signature";
+import { type ChunkableCommandArgs } from "@internal/app-binder/task/SendCommandInChunksTask";
 
 import {
   ETH_APP_ERRORS,
   EthAppCommandErrorFactory,
   type EthErrorCodes,
 } from "./utils/ethAppErrors";
-
 const R_LENGTH = 32;
 const S_LENGTH = 32;
-
-export type SignPersonalMessageCommandArgs = {
-  /**
-   * The data to sign in max 150 bytes chunks
-   */
-  readonly data: Uint8Array;
-  /**
-   * If this is the first chunk of the message
-   */
-  readonly isFirstChunk: boolean;
-};
 
 export type SignPersonalMessageCommandResponse = Maybe<Signature>;
 
@@ -41,22 +30,19 @@ export class SignPersonalMessageCommand
   implements
     Command<
       SignPersonalMessageCommandResponse,
-      SignPersonalMessageCommandArgs,
+      ChunkableCommandArgs,
       EthErrorCodes
     >
 {
-  readonly args: SignPersonalMessageCommandArgs;
   private readonly errorHelper = new CommandErrorHelper<
     SignPersonalMessageCommandResponse,
     EthErrorCodes
   >(ETH_APP_ERRORS, EthAppCommandErrorFactory);
 
-  constructor(args: SignPersonalMessageCommandArgs) {
-    this.args = args;
-  }
+  constructor(readonly args: ChunkableCommandArgs) {}
 
   getApdu(): Apdu {
-    const { data, isFirstChunk } = this.args;
+    const { chunkedData, isFirstChunk } = this.args;
     const signPersonalMessageArgs: ApduBuilderArgs = {
       cla: 0xe0,
       ins: 0x08,
@@ -65,7 +51,7 @@ export class SignPersonalMessageCommand
     };
 
     return new ApduBuilder(signPersonalMessageArgs)
-      .addBufferToData(data)
+      .addBufferToData(chunkedData)
       .build();
   }
 

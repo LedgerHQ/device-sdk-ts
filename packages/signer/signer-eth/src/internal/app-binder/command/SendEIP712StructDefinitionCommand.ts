@@ -62,7 +62,7 @@ export class SendEIP712StructDefinitionCommand
     EthAppCommandErrorFactory,
   );
 
-  constructor(private args: SendEIP712StructDefinitionCommandArgs) {}
+  constructor(readonly args: SendEIP712StructDefinitionCommandArgs) {}
 
   getApdu(): Apdu {
     const SendEIP712StructDefinitionArgs: ApduBuilderArgs = {

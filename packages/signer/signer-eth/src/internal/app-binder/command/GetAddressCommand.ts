@@ -33,15 +33,12 @@ export class GetAddressCommand
   implements
     Command<GetAddressCommandResponse, GetAddressCommandArgs, EthErrorCodes>
 {
-  private readonly args: GetAddressCommandArgs;
   private readonly errorHelper = new CommandErrorHelper<
     GetAddressCommandResponse,
     EthErrorCodes
   >(ETH_APP_ERRORS, EthAppCommandErrorFactory);
 
-  constructor(args: GetAddressCommandArgs) {
-    this.args = args;
-  }
+  constructor(readonly args: GetAddressCommandArgs) {}
 
   getApdu(): Apdu {
     const getEthAddressArgs: ApduBuilderArgs = {

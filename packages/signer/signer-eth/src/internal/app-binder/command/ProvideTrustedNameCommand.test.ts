@@ -3,10 +3,9 @@ import {
   isSuccessCommandResult,
 } from "@ledgerhq/device-management-kit";
 
-import {
-  ProvideTrustedNameCommand,
-  type ProvideTrustedNameCommandArgs,
-} from "./ProvideTrustedNameCommand";
+import { type ChunkableCommandArgs } from "@internal/app-binder/task/SendCommandInChunksTask";
+
+import { ProvideTrustedNameCommand } from "./ProvideTrustedNameCommand";
 
 const FIRST_CHUNK_APDU = Uint8Array.from([
   0xe0, 0x22, 0x01, 0x00, 0x08, 0x00, 0x06, 0x4c, 0x65, 0x64, 0x67, 0x65, 0x72,
@@ -16,8 +15,8 @@ describe("ProvideTrustedNameCommand", () => {
   describe("getApdu", () => {
     it("should return the raw APDU", () => {
       // GIVEN
-      const args: ProvideTrustedNameCommandArgs = {
-        data: FIRST_CHUNK_APDU.slice(5),
+      const args: ChunkableCommandArgs = {
+        chunkedData: FIRST_CHUNK_APDU.slice(5),
         isFirstChunk: true,
       };
       // WHEN
@@ -37,7 +36,7 @@ describe("ProvideTrustedNameCommand", () => {
       };
       // WHEN
       const command = new ProvideTrustedNameCommand({
-        data: Uint8Array.from([]),
+        chunkedData: Uint8Array.from([]),
         isFirstChunk: true,
       });
       const result = command.parseResponse(response);
@@ -53,7 +52,7 @@ describe("ProvideTrustedNameCommand", () => {
       };
       // WHEN
       const command = new ProvideTrustedNameCommand({
-        data: Uint8Array.from([]),
+        chunkedData: Uint8Array.from([]),
         isFirstChunk: true,
       });
       const result = command.parseResponse(response);

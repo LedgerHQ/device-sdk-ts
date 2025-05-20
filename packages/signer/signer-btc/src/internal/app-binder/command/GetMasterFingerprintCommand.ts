@@ -29,6 +29,8 @@ type GetMasterFingerprintCommandResponse = {
 export class GetMasterFingerprintCommand
   implements Command<GetMasterFingerprintCommandResponse, void, BtcErrorCodes>
 {
+  readonly args = undefined;
+
   constructor(
     private readonly _errorHelper = new CommandErrorHelper<
       GetMasterFingerprintCommandResponse,

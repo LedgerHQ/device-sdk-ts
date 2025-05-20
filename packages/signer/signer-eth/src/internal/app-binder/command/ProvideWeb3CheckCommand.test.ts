@@ -10,7 +10,7 @@ describe("ProvideWeb3CheckCommand", () => {
     it("should return the raw APDU", () => {
       // GIVEN
       const args = {
-        payload: hexaStringToBuffer("0x010203")!,
+        chunkedData: hexaStringToBuffer("0x010203")!,
         isFirstChunk: true,
       };
       const command = new ProvideWeb3CheckCommand(args);
@@ -27,7 +27,7 @@ describe("ProvideWeb3CheckCommand", () => {
     it("should return the raw APDU for next chunk", () => {
       // GIVEN
       const args = {
-        payload: hexaStringToBuffer("0x010203")!,
+        chunkedData: hexaStringToBuffer("0x010203")!,
         isFirstChunk: false,
       };
       const command = new ProvideWeb3CheckCommand(args);
@@ -46,7 +46,7 @@ describe("ProvideWeb3CheckCommand", () => {
     it("should return undefined", () => {
       // GIVEN
       const args = {
-        payload: hexaStringToBuffer("0x010203")!,
+        chunkedData: hexaStringToBuffer("0x010203")!,
         isFirstChunk: true,
       };
       const response = {
@@ -68,7 +68,7 @@ describe("ProvideWeb3CheckCommand", () => {
     it("should return an error if the device is locked", () => {
       // GIVEN
       const args = {
-        payload: hexaStringToBuffer("0x010203")!,
+        chunkedData: hexaStringToBuffer("0x010203")!,
         isFirstChunk: true,
       };
       const response = {
@@ -95,7 +95,7 @@ describe("ProvideWeb3CheckCommand", () => {
     it("should return an error if data is invalid", () => {
       // GIVEN
       const args = {
-        payload: hexaStringToBuffer("0x010203")!,
+        chunkedData: hexaStringToBuffer("0x010203")!,
         isFirstChunk: true,
       };
       const response = {

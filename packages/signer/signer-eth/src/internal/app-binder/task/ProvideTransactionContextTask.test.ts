@@ -147,7 +147,7 @@ describe("ProvideTransactionContextTask", () => {
         2,
         expect.objectContaining(
           new ProvideWeb3CheckCommand({
-            payload: hexaStringToBuffer("0x000401020304")!,
+            chunkedData: hexaStringToBuffer("0x000401020304")!,
             isFirstChunk: true,
           }),
         ),

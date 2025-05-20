@@ -70,7 +70,7 @@ const SIGN_PERSONAL_LONG_MESSAGE_SUCCESS_RESPONSE = new Uint8Array([
 
 describe("SignPersonalMessageCommand", (): void => {
   const defaultArgs = {
-    data: new Uint8Array([]),
+    chunkedData: new Uint8Array([]),
     isFirstChunk: true,
   };
 
@@ -78,7 +78,7 @@ describe("SignPersonalMessageCommand", (): void => {
     it("should return correct apdu for an empty message", () => {
       // given
       const command = new SignPersonalMessageCommand({
-        data: SIGN_PERSONAL_EMPTY_MESSAGE_DATA,
+        chunkedData: SIGN_PERSONAL_EMPTY_MESSAGE_DATA,
         isFirstChunk: true,
       });
       // when
@@ -90,7 +90,7 @@ describe("SignPersonalMessageCommand", (): void => {
     it("should return correct apdu for a short message", () => {
       // given
       const command = new SignPersonalMessageCommand({
-        data: SIGN_PERSONAL_MESSAGE_SHORT_DATA,
+        chunkedData: SIGN_PERSONAL_MESSAGE_SHORT_DATA,
         isFirstChunk: true,
       });
       // when
@@ -102,7 +102,7 @@ describe("SignPersonalMessageCommand", (): void => {
     it("should return correct apdu for a not first chunk of a long message", () => {
       // given
       const command = new SignPersonalMessageCommand({
-        data: SIGN_PERSONAL_MESSAGE_NOT_FIRST_CHUNK_DATA,
+        chunkedData: SIGN_PERSONAL_MESSAGE_NOT_FIRST_CHUNK_DATA,
         isFirstChunk: false,
       });
       // when

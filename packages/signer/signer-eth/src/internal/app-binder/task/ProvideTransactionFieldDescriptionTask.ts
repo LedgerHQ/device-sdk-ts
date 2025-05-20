@@ -298,29 +298,18 @@ export class ProvideTransactionFieldDescriptionTask {
       case ClearSignContextType.TRUSTED_NAME:
         return new SendPayloadInChunksTask(this.api, {
           payload,
-          commandFactory: (args) =>
-            new ProvideTrustedNameCommand({
-              data: args.chunkedData,
-              isFirstChunk: args.isFirstChunk,
-            }),
+          commandFactory: (args) => new ProvideTrustedNameCommand(args),
         }).run();
       case ClearSignContextType.ENUM:
         return new SendPayloadInChunksTask(this.api, {
           payload,
-          commandFactory: (args) =>
-            new ProvideEnumCommand({
-              data: args.chunkedData,
-              isFirstChunk: args.isFirstChunk,
-            }),
+          commandFactory: (args) => new ProvideEnumCommand(args),
         }).run();
       case ClearSignContextType.TRANSACTION_FIELD_DESCRIPTION:
         return new SendPayloadInChunksTask(this.api, {
           payload,
           commandFactory: (args) =>
-            new ProvideTransactionFieldDescriptionCommand({
-              data: args.chunkedData,
-              isFirstChunk: args.isFirstChunk,
-            }),
+            new ProvideTransactionFieldDescriptionCommand(args),
         }).run();
       case ClearSignContextType.TRANSACTION_INFO:
       case ClearSignContextType.PLUGIN:
@@ -333,11 +322,7 @@ export class ProvideTransactionFieldDescriptionTask {
       case ClearSignContextType.WEB3_CHECK:
         return new SendPayloadInChunksTask(this.api, {
           payload,
-          commandFactory: (args) =>
-            new ProvideWeb3CheckCommand({
-              payload: args.chunkedData,
-              isFirstChunk: args.isFirstChunk,
-            }),
+          commandFactory: (args) => new ProvideWeb3CheckCommand(args),
         }).run();
       default: {
         const uncoveredType: never = type;

@@ -39,7 +39,7 @@ export class ProvideTokenInformationCommand
     EthErrorCodes
   >(ETH_APP_ERRORS, EthAppCommandErrorFactory);
 
-  constructor(private readonly args: ProvideTokenInformationCommandArgs) {}
+  constructor(readonly args: ProvideTokenInformationCommandArgs) {}
 
   getApdu(): Apdu {
     const getEthAddressArgs: ApduBuilderArgs = {

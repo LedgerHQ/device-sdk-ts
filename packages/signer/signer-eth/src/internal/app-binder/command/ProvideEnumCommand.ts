@@ -11,32 +11,23 @@ import {
 import { CommandErrorHelper } from "@ledgerhq/signer-utils";
 import { Maybe } from "purify-ts";
 
+import { type ChunkableCommandArgs } from "@internal/app-binder/task/SendCommandInChunksTask";
+
 import {
   ETH_APP_ERRORS,
   EthAppCommandErrorFactory,
   type EthErrorCodes,
 } from "./utils/ethAppErrors";
 
-export type ProvideEnumCommandArgs = {
-  /**
-   * The enum data to provide in chunks
-   */
-  readonly data: Uint8Array;
-  /**
-   * If this is the first chunk of the message
-   */
-  readonly isFirstChunk: boolean;
-};
-
 export class ProvideEnumCommand
-  implements Command<void, ProvideEnumCommandArgs, EthErrorCodes>
+  implements Command<void, ChunkableCommandArgs, EthErrorCodes>
 {
   private readonly errorHelper = new CommandErrorHelper<void, EthErrorCodes>(
     ETH_APP_ERRORS,
     EthAppCommandErrorFactory,
   );
 
-  constructor(private readonly args: ProvideEnumCommandArgs) {}
+  constructor(readonly args: ChunkableCommandArgs) {}
 
   getApdu(): Apdu {
     const ProvideEnumArgs: ApduBuilderArgs = {
@@ -47,7 +38,7 @@ export class ProvideEnumCommand
     };
 
     return new ApduBuilder(ProvideEnumArgs)
-      .addBufferToData(this.args.data)
+      .addBufferToData(this.args.chunkedData)
       .build();
   }
 

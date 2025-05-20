@@ -32,7 +32,7 @@ export class ProvideNFTInformationCommand
     EthAppCommandErrorFactory,
   );
 
-  constructor(private readonly args: ProvideNFTInformationCommandArgs) {}
+  constructor(readonly args: ProvideNFTInformationCommandArgs) {}
 
   getApdu(): Apdu {
     const apduBuilderArgs: ApduBuilderArgs = {

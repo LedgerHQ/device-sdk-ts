@@ -54,7 +54,7 @@ export class SignEIP712Command
     EthErrorCodes
   >(ETH_APP_ERRORS, EthAppCommandErrorFactory);
 
-  constructor(private readonly args: SignEIP712CommandArgs) {}
+  constructor(readonly args: SignEIP712CommandArgs) {}
 
   getApdu(): Apdu {
     const { derivationPath, legacyArgs } = this.args;

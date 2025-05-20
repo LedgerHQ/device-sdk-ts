@@ -8,6 +8,7 @@ import { Just, Nothing } from "purify-ts";
 import { type EthErrorCodes } from "./utils/ethAppErrors";
 import {
   SignEIP712Command,
+  type SignEIP712CommandArgs,
   type SignEIP712CommandResponse,
 } from "./SignEIP712Command";
 
@@ -52,7 +53,11 @@ const LNX_RESPONSE_TOO_SHORT = {
 };
 
 describe("SignEIP712Command", () => {
-  let command: Command<SignEIP712CommandResponse, void, EthErrorCodes>;
+  let command: Command<
+    SignEIP712CommandResponse,
+    SignEIP712CommandArgs,
+    EthErrorCodes
+  >;
 
   beforeEach(() => {
     command = new SignEIP712Command({

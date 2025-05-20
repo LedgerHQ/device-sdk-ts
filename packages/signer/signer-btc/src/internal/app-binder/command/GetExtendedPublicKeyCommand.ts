@@ -41,7 +41,7 @@ export class GetExtendedPublicKeyCommand
     >
 {
   constructor(
-    private readonly _args: GetExtendedPublicKeyCommandArgs,
+    readonly args: GetExtendedPublicKeyCommandArgs,
     private readonly _errorHelper = new CommandErrorHelper<
       GetExtendedPublicKeyCommandResponse,
       BtcErrorCodes
@@ -53,7 +53,7 @@ export class GetExtendedPublicKeyCommand
   ) {}
 
   getApdu(): Apdu {
-    const { checkOnDevice, derivationPath } = this._args;
+    const { checkOnDevice, derivationPath } = this.args;
 
     const getExtendedPublicKeyArgs: ApduBuilderArgs = {
       cla: 0xe1,

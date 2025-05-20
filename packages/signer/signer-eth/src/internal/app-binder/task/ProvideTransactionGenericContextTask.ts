@@ -65,11 +65,7 @@ export class ProvideTransactionGenericContextTask {
     builder.addBufferToData(this.args.serializedTransaction);
     const storeTransactionResult = await new SendCommandInChunksTask(this.api, {
       data: builder.build(),
-      commandFactory: (args) =>
-        new StoreTransactionCommand({
-          serializedTransaction: args.chunkedData,
-          isFirstChunk: args.isFirstChunk,
-        }),
+      commandFactory: (args) => new StoreTransactionCommand(args),
     }).run();
 
     if (!isSuccessCommandResult(storeTransactionResult)) {
@@ -90,11 +86,7 @@ export class ProvideTransactionGenericContextTask {
     // Provide the transaction information
     const transactionInfoResult = await new SendPayloadInChunksTask(this.api, {
       payload: this.args.context.transactionInfo,
-      commandFactory: (args) =>
-        new ProvideTransactionInformationCommand({
-          data: args.chunkedData,
-          isFirstChunk: args.isFirstChunk,
-        }),
+      commandFactory: (args) => new ProvideTransactionInformationCommand(args),
     }).run();
 
     if (!isSuccessCommandResult(transactionInfoResult)) {

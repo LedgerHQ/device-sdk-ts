@@ -1,4 +1,5 @@
 import {
+  type Command,
   type CommandResult,
   CommandResultFactory,
   type InternalApi,
@@ -9,13 +10,16 @@ import { type EthErrorCodes } from "@internal/app-binder/command/utils/ethAppErr
 import { PayloadUtils } from "@internal/shared/utils/PayloadUtils";
 
 import {
+  type ExtendedChunkableCommandArgs,
   SendCommandInChunksTask,
-  type SendCommandInChunksTaskArgs,
 } from "./SendCommandInChunksTask";
 
-type SendPayloadInChunksTaskArgs<T> = {
+type SendPayloadInChunksTaskArgs<
+  T,
+  V extends ExtendedChunkableCommandArgs = ExtendedChunkableCommandArgs,
+> = {
   payload: string;
-  commandFactory: SendCommandInChunksTaskArgs<T>["commandFactory"];
+  commandFactory: (args: V) => Command<T, V, EthErrorCodes>;
 };
 
 export class SendPayloadInChunksTask<T> {

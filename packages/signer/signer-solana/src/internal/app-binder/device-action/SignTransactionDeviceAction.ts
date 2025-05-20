@@ -236,12 +236,7 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
       };
     }) => {
       return new SignDataTask(internalApi, {
-        commandFactory: (args) =>
-          new SignTransactionCommand({
-            serializedTransaction: args.chunkedData,
-            more: args.more,
-            extend: args.extend,
-          }),
+        commandFactory: (args) => new SignTransactionCommand(args),
         derivationPath: arg0.input.derivationPath,
         sendingData: arg0.input.serializedTransaction,
       }).run();
