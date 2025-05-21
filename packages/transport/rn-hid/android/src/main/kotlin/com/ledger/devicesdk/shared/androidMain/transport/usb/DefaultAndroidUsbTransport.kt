@@ -275,20 +275,32 @@ internal class DefaultAndroidUsbTransport(
 
     override suspend fun connect(discoveryDevice: DiscoveryDevice): InternalConnectionResult {
 
+        loggerService.log(
+            buildSimpleDebugLogInfo(
+                "AndroidUsbTransport",
+                "[connect] discoveryDevice=$discoveryDevice"
+            )
+        )
+
         val usbDevices = usbManager.deviceList.values
 
         var usbDevice: UsbDevice? =
             usbDevices.firstOrNull { it.deviceId == discoveryDevice.uid.toInt() }
 
         if (usbDevice == null) {
-            // This is useful for LL durin@g the OS update
+            // This is useful for LL during the OS update
+            loggerService.log(buildSimpleDebugLogInfo("AndroidUsbTransport", "[connect] No device found with matching id, looking for device with matching model"))
             usbDevice =
                 usbDevices.firstOrNull { it.toLedgerUsbDevice()?.ledgerDevice == discoveryDevice.ledgerDevice }
+        } else {
+            loggerService.log(buildSimpleDebugLogInfo("AndroidUsbTransport", "[connect] Found device with matching id"))
         }
 
         val ledgerUsbDevice = usbDevice?.toLedgerUsbDevice()
 
         return if (usbDevice == null || ledgerUsbDevice == null) {
+            loggerService.log(
+                buildSimpleDebugLogInfo("AndroidUsbTransport", "[connect] No device found"))
             InternalConnectionResult.ConnectionError(error = InternalConnectionResult.Failure.DeviceNotFound)
         } else {
             val permissionResult = checkOrRequestPermission(usbDevice)

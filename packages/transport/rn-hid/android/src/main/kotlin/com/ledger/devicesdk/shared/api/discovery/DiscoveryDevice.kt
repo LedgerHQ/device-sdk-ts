@@ -8,7 +8,7 @@ package com.ledger.devicesdk.shared.api.discovery
 import com.ledger.devicesdk.shared.api.device.LedgerDevice
 import kotlinx.datetime.Clock
 
-public class DiscoveryDevice(
+public data class DiscoveryDevice(
     public val uid: String,
     public val name: String,
     public val ledgerDevice: LedgerDevice,
