@@ -3,8 +3,6 @@ package com.ledger.devicesdk.shared.androidMainInternal.transport.deviceconnecti
 import com.ledger.devicesdk.shared.api.apdu.SendApduFailureReason
 import com.ledger.devicesdk.shared.api.apdu.SendApduResult
 import com.ledger.devicesdk.shared.internal.service.logger.LoggerService
-import com.ledger.devicesdk.shared.internal.service.logger.buildSimpleDebugLogInfo
-import com.ledger.devicesdk.shared.internal.service.logger.buildSimpleInfoLogInfo
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
@@ -234,13 +232,6 @@ internal class DeviceConnectionStateMachine(
                 onError(Exception("Unhandled event: $event in state: $currentState"))
             }
         }
-        val logMessage = """
-            Received event:
-            In state:       $currentState
-            -> Event:       $event
-            -> New state:   $state
-        """.trimIndent()
-        loggerService.log(buildSimpleDebugLogInfo("DeviceConnectionStateMachine", logMessage))
     }
 
     private var timeoutJob: Job? = null
