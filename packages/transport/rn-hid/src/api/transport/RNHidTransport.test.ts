@@ -14,7 +14,7 @@ import { Subject } from "rxjs";
 
 import { TRANSPORT_IDENTIFIER } from "@api/transport/rnHidTransportIdentifier";
 
-import { SendApduError } from "./Errors";
+import { HidTransportSendApduUnknownError } from "./Errors";
 import { type NativeModuleWrapper } from "./NativeModuleWrapper";
 import { RNHidTransport } from "./RNHidTransport";
 import { type InternalDeviceDisconnected } from "./types";
@@ -511,7 +511,7 @@ describe("RNHidTransport", () => {
         const apduResult = await connectedDevice.sendApdu(new Uint8Array([]));
 
         // then
-        expect(apduResult).toEqual(Left(new SendApduError(apduError)));
+        expect(apduResult).toEqual(Left(new HidTransportSendApduUnknownError(apduError)));
       });
     });
 

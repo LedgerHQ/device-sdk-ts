@@ -13,7 +13,7 @@ import {
 } from "@ledgerhq/device-management-kit";
 import { Left, Right } from "purify-ts";
 
-import { SendApduError } from "@api/transport/Errors";
+import { HidTransportSendApduUnknownError } from "@api/transport/Errors";
 import { TRANSPORT_IDENTIFIER } from "@api/transport/rnHidTransportIdentifier";
 import { type InternalConnectionResult } from "@api/transport/types";
 
@@ -332,7 +332,7 @@ describe("mapper", () => {
         error: "error message",
       };
       const expectedSendApduResult: SendApduResult = Left(
-        new SendApduError("error message"),
+        new HidTransportSendApduUnknownError("error message"),
       );
       expect(
         mapNativeSendApduResultToSendApduResult(nativeSendApduResult),
