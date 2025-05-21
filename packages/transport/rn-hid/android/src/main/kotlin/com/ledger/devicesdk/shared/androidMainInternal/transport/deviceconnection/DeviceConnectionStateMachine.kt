@@ -240,7 +240,7 @@ internal class DeviceConnectionStateMachine(
             -> Event:       $event
             -> New state:   $state
         """.trimIndent()
-        loggerService.log(buildSimpleDebugLogInfo("DeviceConnectionStateMachine", logMessage))
+        // loggerService.log(buildSimpleDebugLogInfo("DeviceConnectionStateMachine", logMessage))
     }
 
     private var timeoutJob: Job? = null
