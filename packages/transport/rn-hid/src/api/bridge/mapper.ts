@@ -1,5 +1,6 @@
 import {
   ApduResponse,
+  DeviceDisconnectedWhileSendingError,
   type DeviceModelDataSource,
   FramerUtils,
   LogLevel,
@@ -14,7 +15,7 @@ import {
 import { Left, Right } from "purify-ts";
 
 import { base64ToUint8Array } from "@api/helpers/base64Utils";
-import { SendApduError } from "@api/transport/Errors";
+import { HidTransportSendApduUnknownError } from "@api/transport/Errors";
 import { TRANSPORT_IDENTIFIER } from "@api/transport/rnHidTransportIdentifier";
 import {
   type InternalConnectionResult,
@@ -131,8 +132,10 @@ export function mapNativeSendApduResultToSendApduResult(
     return Left(new SendApduTimeoutError("Abort timeout"));
   } else if (result.error === "EmptyResponse") {
     return Left(new SendApduEmptyResponseError("Empty response"));
+  } else if (result.error === "DeviceDisconnected") {
+    return Left(new DeviceDisconnectedWhileSendingError("Device disconnected"));
   } else {
-    return Left(new SendApduError(result.error));
+    return Left(new HidTransportSendApduUnknownError(result.error));
   }
 }
 
