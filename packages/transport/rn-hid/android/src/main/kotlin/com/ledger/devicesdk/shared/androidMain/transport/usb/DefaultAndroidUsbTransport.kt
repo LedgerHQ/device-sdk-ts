@@ -123,9 +123,10 @@ internal class DefaultAndroidUsbTransport(
                                 "Device disconnected (sessionId=${deviceConnection.sessionId})"
                             )
                         )
-                        deviceConnection.handleDeviceDisconnected()
                         usbConnections.remove(key)
                         usbConnectionsPendingReconnection.add(deviceConnection)
+                        deviceConnection.handleDeviceDisconnected()
+                        (deviceConnection.getApduSender() as AndroidUsbApduSender).release()
                     }
                 }
             }
@@ -325,9 +326,10 @@ internal class DefaultAndroidUsbTransport(
             val deviceConnection = DeviceConnection(
                 sessionId = sessionId,
                 deviceApduSender = apduSender,
-                isFatalSendApduFailure = { false }, // TODO: refine this
+                isFatalSendApduFailure = { false },
                 reconnectionTimeoutDuration = 5.seconds,
                 onTerminated = {
+                    (it.getApduSender() as AndroidUsbApduSender).release()
                     usbConnections.remove(sessionId)
                     usbConnectionsPendingReconnection.remove(it)
                     eventDispatcher.dispatch(TransportEvent.DeviceConnectionLost(sessionId))
