@@ -18,6 +18,7 @@ import com.ledger.devicesdk.shared.androidMainInternal.transport.deviceconnectio
 import com.ledger.devicesdk.shared.api.apdu.SendApduFailureReason
 import com.ledger.devicesdk.shared.api.apdu.SendApduResult
 import com.ledger.devicesdk.shared.internal.service.logger.LoggerService
+import com.ledger.devicesdk.shared.internal.service.logger.buildSimpleDebugLogInfo
 import com.ledger.devicesdk.shared.internal.service.logger.buildSimpleErrorLogInfo
 import com.ledger.devicesdk.shared.internal.transport.framer.FramerService
 import com.ledger.devicesdk.shared.internal.transport.framer.to2BytesArray
@@ -61,8 +62,9 @@ internal class AndroidUsbApduSender(
         usbConnection.close()
     }
 
-    override suspend fun send(apdu: ByteArray, abortTimeoutDuration: Duration): SendApduResult =
-        try {
+    override suspend fun send(apdu: ByteArray, abortTimeoutDuration: Duration): SendApduResult {
+        val t1 = System.currentTimeMillis()
+        return try {
             withContext(context = ioDispatcher) {
 
                 val timeoutJob = launch {
@@ -108,13 +110,18 @@ internal class AndroidUsbApduSender(
         } catch (e: Exception) {
             loggerService.log(buildSimpleErrorLogInfo("AndroidUsbApduSender", "error in send: $e"))
             SendApduResult.Failure(reason = SendApduFailureReason.Unknown)
+        } finally {
+            val t2 = System.currentTimeMillis()
+            loggerService.log(buildSimpleDebugLogInfo("AndroidUsbApduSender", "PERF: [native sendApdu total]: ${t2 - t1}"))
         }
+    }
 
     private fun transmitApdu(
         usbConnection: UsbDeviceConnection,
         androidToUsbEndpoint: UsbEndpoint,
         rawApdu: ByteArray,
     ) {
+        val t1 = System.currentTimeMillis()
         framerService.serialize(mtu = USB_MTU, channelId = generateChannelId(), rawApdu = rawApdu)
             .forEach { apduFrame ->
                 val buffer = apduFrame.toByteArray()
@@ -125,6 +132,8 @@ internal class AndroidUsbApduSender(
                     USB_TIMEOUT
                 )
             }
+        val t2 = System.currentTimeMillis()
+        loggerService.log(buildSimpleDebugLogInfo("AndroidUsbApduSender", "PERF: [transmitApdu]: ${t2 - t1}"))
     }
 
     private fun receiveApdu(
@@ -135,6 +144,7 @@ internal class AndroidUsbApduSender(
             request.close()
             byteArrayOf()
         } else {
+            val t1 = System.currentTimeMillis()
             val frames = framerService.createApduFrames(mtu = USB_MTU, isUsbTransport = true) {
                 val buffer = ByteArray(USB_MTU)
                 val responseBuffer = ByteBuffer.allocate(USB_MTU)
@@ -150,7 +160,10 @@ internal class AndroidUsbApduSender(
                     buffer
                 }
             }
-            framerService.deserialize(mtu = USB_MTU, frames)
+            val result = framerService.deserialize(mtu = USB_MTU, frames)
+            val t2 = System.currentTimeMillis()
+            loggerService.log(buildSimpleDebugLogInfo("AndroidUsbApduSender", "PERF: [receiveApdu]: ${t2 - t1}"))
+            result
         }
     }
 

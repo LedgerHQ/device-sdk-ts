@@ -22,6 +22,7 @@ import com.ledger.devicesdk.shared.internal.connection.InternalConnectedDevice
 import com.ledger.devicesdk.shared.internal.connection.InternalConnectionResult
 import com.ledger.devicesdk.shared.internal.event.SdkEventDispatcher
 import com.ledger.devicesdk.shared.internal.service.logger.LoggerService
+import com.ledger.devicesdk.shared.internal.service.logger.buildSimpleDebugLogInfo
 import com.ledger.devicesdk.shared.internal.transport.TransportEvent
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -49,7 +50,7 @@ class TransportHidModule(
     private val loggerService: LoggerService =
         LoggerService { info ->
             Timber.tag("LDMKTransportHIDModule " + info.tag).d(info.message)
-            sendEvent(reactContext, BridgeEvents.TransportLog(info))
+            // sendEvent(reactContext, BridgeEvents.TransportLog(info))
         }
 
     private val transport: AndroidUsbTransport? by lazy {
@@ -214,6 +215,22 @@ class TransportHidModule(
         abortTimeout: Int,
         promise: Promise
     ) {
+        // Log PERF: "Timestamp of the start of the function"
+        loggerService.log(
+            buildSimpleDebugLogInfo(
+                "AndroidUsbTransport",
+                "PERF: [@ReactMethod sendApdu] called at ${System.currentTimeMillis()}",
+            )
+        )
+        fun logEnd() = run {
+            loggerService.log(
+                buildSimpleDebugLogInfo(
+                    "AndroidUsbTransport",
+                    "PERF: [@ReactMethod sendApdu] finished at ${System.currentTimeMillis()}",
+                )
+            )
+        }
+
         try {
             val device = connectedDevices.firstOrNull() { it.id == sessionId }
             if (device == null) {
@@ -226,14 +243,17 @@ class TransportHidModule(
                     val abortTimeoutDuration = if (abortTimeout <= 0) Duration.INFINITE else abortTimeout.milliseconds
                     val res =
                         device.sendApduFn(apdu, triggersDisconnection, abortTimeoutDuration)
+                    logEnd()
                     promise.resolve(res.toWritableMap())
                 } catch (e: Exception) {
                     Timber.i("$e, ${e.cause}")
+                    logEnd()
                     promise.reject(e)
                 }
             }
         } catch (e: Exception) {
             Timber.i("$e, ${e.cause}")
+            logEnd()
             promise.reject(e)
         }
     }
