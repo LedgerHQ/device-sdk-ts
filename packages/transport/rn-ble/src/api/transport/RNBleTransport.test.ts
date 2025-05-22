@@ -30,6 +30,7 @@ const fakeLogger = {
   error: vi.fn(),
   info: vi.fn(),
   warn: vi.fn(),
+  verbose: vi.fn(),
   debug: vi.fn(),
 };
 
