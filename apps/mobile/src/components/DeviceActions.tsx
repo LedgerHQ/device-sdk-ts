@@ -18,6 +18,11 @@ import {
   type InstallAppDAIntermediateValue,
   type InstallAppDAOutput,
   InstallAppDeviceAction,
+  type UninstallAppDAError,
+  type UninstallAppDAInput,
+  type UninstallAppDAIntermediateValue,
+  type UninstallAppDAOutput,
+  UninstallAppDeviceAction,
   type ListAppsDAError,
   type ListAppsDAInput,
   type ListAppsDAIntermediateValue,
@@ -223,4 +228,36 @@ export const getDeviceActions = (
     InstallAppDAError,
     InstallAppDAIntermediateValue
   >,
+  {
+    id: "uninstall_app",
+    title: "Uninstall App",
+    description:
+      "Perform all the actions necessary to uninstall an app on the device by name",
+    executeDeviceAction: ({ appName, unlockTimeout }, inspect) => {
+      const deviceAction = new UninstallAppDeviceAction({
+        input: { appName, unlockTimeout },
+        inspect,
+      });
+      return dmk.executeDeviceAction({
+        sessionId,
+        deviceAction,
+      });
+    },
+    initialValues: { appName: "", unlockTimeout: UNLOCK_TIMEOUT },
+    deviceModelId,
+    FormComponent: ({ values, setValue }) => (
+      <Flex>
+        <LegendInput
+          legend="App name"
+          value={values.appName}
+          onChange={appName => setValue("appName", appName)}
+        />
+      </Flex>
+    ),
+  } satisfies DeviceActionProps<
+    UninstallAppDAOutput,
+    UninstallAppDAInput,
+    UninstallAppDAError,
+    UninstallAppDAIntermediateValue
+  >
 ];
