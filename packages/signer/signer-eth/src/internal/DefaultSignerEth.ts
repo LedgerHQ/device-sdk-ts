@@ -6,6 +6,7 @@ import {
 import { type Container } from "inversify";
 
 import { type GetAddressDAReturnType } from "@api/app-binder/GetAddressDeviceActionTypes";
+import { type SignDelegationAuthorizationDAReturnType } from "@api/app-binder/SignDelegationAuthorizationTypes";
 import { type SignPersonalMessageDAReturnType } from "@api/app-binder/SignPersonalMessageDeviceActionTypes";
 import { type SignTransactionDAReturnType } from "@api/app-binder/SignTransactionDeviceActionTypes";
 import { type SignTypedDataDAReturnType } from "@api/app-binder/SignTypedDataDeviceActionTypes";
@@ -24,6 +25,9 @@ import { transactionTypes } from "@internal/transaction/di/transactionTypes";
 import { type SignTransactionUseCase } from "@internal/transaction/use-case/SignTransactionUseCase";
 import { typedDataTypes } from "@internal/typed-data/di/typedDataTypes";
 import { type SignTypedDataUseCase } from "@internal/typed-data/use-case/SignTypedDataUseCase";
+
+import { eip7702Types } from "./eip7702/di/eip7702Types";
+import { type SignDelegationAuthorizationUseCase } from "./eip7702/use-case/SignDelegationAuthorizationUseCase";
 
 type DefaultSignerConstructorArgs = {
   dmk: DeviceManagementKit;
@@ -75,5 +79,18 @@ export class DefaultSignerEth implements SignerEth {
     return this._container
       .get<GetAddressUseCase>(addressTypes.GetAddressUseCase)
       .execute(derivationPath, options);
+  }
+
+  signDelegationAuthorization(
+    derivationPath: string,
+    chainId: number,
+    contractAddress: string,
+    nonce: number,
+  ): SignDelegationAuthorizationDAReturnType {
+    return this._container
+      .get<SignDelegationAuthorizationUseCase>(
+        eip7702Types.SignDelegationAuthorizationUseCase,
+      )
+      .execute(derivationPath, nonce, contractAddress, chainId);
   }
 }
