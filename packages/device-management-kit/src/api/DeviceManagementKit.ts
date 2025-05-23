@@ -54,6 +54,10 @@ import {
 import { deviceActionTypes } from "./device-action/di/deviceActionTypes";
 import { type DisableDeviceSessionRefresherUseCase } from "./device-session/use-case/DisableDeviceSessionRefresher";
 import { type DmkError } from "./Error";
+import {
+  ExchangeBulkApdusUseCase,
+  ExchangeBulkApdusUseCaseArgs,
+} from "@internal/send/use-case/ExchangeBulkApdusUseCase";
 
 /**
  * The main class to interact with the Device Management Kit.
@@ -172,6 +176,23 @@ export class DeviceManagementKit {
       sendTypes.SendApduUseCase,
     );
     return sendApduUseCase.execute(args);
+  }
+
+  /**
+   * Sends a bulk of APDU commands to a device through a device session.
+   *
+   * @param args - The device session ID and APDU commands to send.
+   * @param args.sessionId - The device session ID.
+   * @returns A promise resolving with an observable of the exchange bulk APDU result.
+   */
+  exchangeBulkApdus(
+    args: ExchangeBulkApdusUseCaseArgs,
+  ): Promise<Observable<{ currentIndex: number } | { result: ApduResponse }>> {
+    const exchangeBulkApdusUseCase =
+      this.container.get<ExchangeBulkApdusUseCase>(
+        sendTypes.ExchangeBulkApdusUseCase,
+      );
+    return exchangeBulkApdusUseCase.execute(args);
   }
 
   /**
