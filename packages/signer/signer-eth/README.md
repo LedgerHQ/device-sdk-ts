@@ -40,14 +40,14 @@ To initialise an Ethereum signer instance, you need a Ledger Device Management K
 
 ```typescript
 // Initialise an Ethereum signer instance using default context module
-const signerEth = new SignerEthBuilder({ sdk, sessionId }).build();
+const signerEth = new SignerEthBuilder({ dmk, sessionId }).build();
 ```
 
 You can also configure the context module yourself:
 
 ```typescript
 // Initialise an Ethereum signer instance using customized context module
-const signerEth = new SignerEthBuilder({ sdk, sessionId })
+const signerEth = new SignerEthBuilder({ dmk, sessionId })
   .withContextModule(customContextModule)
   .build();
 ```
