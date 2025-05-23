@@ -10,7 +10,7 @@ describe("useCasesModuleFactory", () => {
     beforeEach(() => {
       mod = useCasesModuleFactory();
       container = new Container();
-      container.load(mod);
+      container.loadSync(mod);
     });
 
     it("should return the address module", () => {

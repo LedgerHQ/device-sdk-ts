@@ -9,7 +9,7 @@ describe("MerkleTreeModuleFactory", () => {
     beforeEach(() => {
       mod = merkleTreeModuleFactory();
       container = new Container();
-      container.load(mod);
+      container.loadSync(mod);
     });
 
     it("should return the merkle tree service module", () => {

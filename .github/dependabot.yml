@@ -31,12 +31,6 @@ updates:
     commit-message:
       prefix: "⬆️ (repo) [NO-ISSUE]: "
     groups:
-      critical:
-        patterns:
-         - "xstate*"
-         - "rxjs*"
-         - "inversify*"
-         - "purify-ts*"
       eslint:
         patterns:
          - "eslint*"
@@ -54,3 +48,6 @@ updates:
          - "typescript*"
         exclude-patterns:
           - "typescript-eslint"
+    ignore:
+      - dependency-name: "purify-ts"
+        versions: [2.1.1] # https://github.com/gigobyte/purify/releases/tag/v2.1.1 Broken ESM build

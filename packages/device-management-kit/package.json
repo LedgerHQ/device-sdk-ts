@@ -35,7 +35,6 @@
     "@sentry/minimal": "catalog:",
     "axios": "catalog:",
     "inversify": "catalog:",
-    "inversify-logger-middleware": "catalog:",
     "isomorphic-ws": "catalog:",
     "purify-ts": "catalog:",
     "reflect-metadata": "catalog:",

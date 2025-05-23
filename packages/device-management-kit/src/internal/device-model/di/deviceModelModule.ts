@@ -9,7 +9,7 @@ type FactoryProps = {
 };
 
 export const deviceModelModuleFactory = ({ stub }: FactoryProps) =>
-  new ContainerModule((bind, _unbind, _isBound, _rebind) => {
+  new ContainerModule(({ bind }) => {
     bind(deviceModelTypes.DeviceModelDataSource).to(
       StaticDeviceModelDataSource,
     );

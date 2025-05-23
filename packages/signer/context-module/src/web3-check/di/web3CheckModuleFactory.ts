@@ -6,7 +6,7 @@ import { DefaultWeb3CheckContextLoader } from "@/web3-check/domain/DefaultWeb3Ch
 import { web3CheckTypes } from "./web3CheckTypes";
 
 export const web3CheckModuleFactory = () =>
-  new ContainerModule((bind, _unbind, _isBound, _rebind) => {
+  new ContainerModule(({ bind }) => {
     bind(web3CheckTypes.Web3CheckDataSource).to(HttpWeb3CheckDataSource);
     bind(web3CheckTypes.Web3CheckContextLoader).to(
       DefaultWeb3CheckContextLoader,

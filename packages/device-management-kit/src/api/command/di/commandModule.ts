@@ -12,19 +12,9 @@ type CommandModuleArgs = Partial<{
 export const commandModuleFactory = ({
   stub = false,
 }: CommandModuleArgs = {}) =>
-  new ContainerModule(
-    (
-      bind,
-      _unbind,
-      _isBound,
-      rebind,
-      _unbindAsync,
-      _onActivation,
-      _onDeactivation,
-    ) => {
-      bind(commandTypes.SendCommandUseCase).to(SendCommandUseCase);
-      if (stub) {
-        rebind(commandTypes.SendCommandUseCase).to(StubUseCase);
-      }
-    },
-  );
+  new ContainerModule(({ bind, rebindSync }) => {
+    bind(commandTypes.SendCommandUseCase).to(SendCommandUseCase);
+    if (stub) {
+      rebindSync(commandTypes.SendCommandUseCase).to(StubUseCase);
+    }
+  });

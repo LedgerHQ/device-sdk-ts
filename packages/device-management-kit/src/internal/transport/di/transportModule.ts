@@ -17,7 +17,7 @@ export const transportModuleFactory = ({
   transports = [],
   config,
 }: Partial<FactoryProps> = {}) =>
-  new ContainerModule((bind, _unbind, _isBound, _rebind) => {
+  new ContainerModule(({ bind }) => {
     bind(transportDiTypes.TransportsInput).toConstantValue(transports);
     bind(transportDiTypes.TransportService)
       .to(DefaultTransportService)

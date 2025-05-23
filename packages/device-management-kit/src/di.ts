@@ -1,7 +1,5 @@
 import { Container } from "inversify";
 
-// Uncomment this line to enable the logger middleware
-// import { makeLoggerMiddleware } from "inversify-logger-middleware";
 import { commandModuleFactory } from "@api/command/di/commandModule";
 import { deviceActionModuleFactory } from "@api/device-action/di/deviceActionModule";
 import { type DmkConfig } from "@api/DmkConfig";
@@ -24,9 +22,6 @@ import { DEFAULT_WEB_SOCKET_BASE_URL } from "@internal/secure-channel/model/Cons
 import { sendModuleFactory } from "@internal/send/di/sendModule";
 import { transportModuleFactory } from "@internal/transport//di/transportModule";
 
-// Uncomment this line to enable the logger middleware
-// const logger = makeLoggerMiddleware();
-
 export type MakeContainerProps = {
   stub: boolean;
   transports: TransportFactory[];
@@ -48,10 +43,7 @@ export const makeContainer = ({
 }: Partial<MakeContainerProps>) => {
   const container = new Container();
 
-  // Uncomment this line to enable the logger middleware
-  // container.applyMiddleware(logger);
-
-  container.load(
+  container.loadSync(
     configModuleFactory({ stub }),
     deviceModelModuleFactory({ stub }),
     transportModuleFactory({ stub, transports, config }),

@@ -331,6 +331,35 @@ describe("ByteArrayBuilder", () => {
       expect(builder.getErrors()).toEqual([]);
     });
 
+    it("should serialize with an TLV encoded from an hexastring", () => {
+      builder.encodeInTLVFromHexa(0x05, "0xA1A2A3");
+      expect(builder.build()).toEqual(
+        Uint8Array.from([0x05, 0x03, 0xa1, 0xa2, 0xa3]),
+      );
+      expect(builder.getErrors()).toEqual([]);
+    });
+
+    it("should serialize with an TLV encoded from a buffer", () => {
+      builder.encodeInTLVFromBuffer(
+        0x06,
+        Uint8Array.from([0xa1, 0xa2, 0xa3, 0xa4]),
+      );
+      expect(builder.build()).toEqual(
+        Uint8Array.from([0x06, 0x04, 0xa1, 0xa2, 0xa3, 0xa4]),
+      );
+      expect(builder.getErrors()).toEqual([]);
+    });
+
+    it("should serialize with an TLV encoded from an uint64", () => {
+      builder.encodeInTLVFromUInt64(0x06, 0x567890123456);
+      expect(builder.build()).toEqual(
+        Uint8Array.from([
+          0x06, 0x08, 0x00, 0x00, 0x56, 0x78, 0x90, 0x12, 0x34, 0x56,
+        ]),
+      );
+      expect(builder.getErrors()).toEqual([]);
+    });
+
     it("should serialize with an complete body of 0xAA", () => {
       const myarray = new Uint8Array(255).fill(0xaa, 0, 255);
       builder.addBufferToData(myarray);

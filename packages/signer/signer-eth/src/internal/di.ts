@@ -5,16 +5,13 @@ import {
 } from "@ledgerhq/device-management-kit";
 import { Container } from "inversify";
 
-// import { makeLoggerMiddleware } from "inversify-logger-middleware";
 import { addressModuleFactory } from "@internal/address/di/addressModule";
 import { appBindingModuleFactory } from "@internal/app-binder/di/appBinderModule";
+import { eip7702ModuleFactory } from "@internal/eip7702/di/eip7702Module";
 import { externalTypes } from "@internal/externalTypes";
 import { messageModuleFactory } from "@internal/message/di/messageModule";
 import { transactionModuleFactory } from "@internal/transaction/di/transactionModule";
 import { typedDataModuleFactory } from "@internal/typed-data/di/typedDataModule";
-
-// Uncomment this line to enable the logger middleware
-// const logger = makeLoggerMiddleware();
 
 export type MakeContainerProps = {
   dmk: DeviceManagementKit;
@@ -29,9 +26,6 @@ export const makeContainer = ({
 }: MakeContainerProps) => {
   const container = new Container();
 
-  // Uncomment this line to enable the logger middleware
-  // container.applyMiddleware(logger);
-
   container.bind<DeviceManagementKit>(externalTypes.Dmk).toConstantValue(dmk);
   container
     .bind<ContextModule>(externalTypes.ContextModule)
@@ -40,9 +34,10 @@ export const makeContainer = ({
     .bind<DeviceSessionId>(externalTypes.SessionId)
     .toConstantValue(sessionId);
 
-  container.load(
+  container.loadSync(
     addressModuleFactory(),
     appBindingModuleFactory(),
+    eip7702ModuleFactory(),
     messageModuleFactory(),
     transactionModuleFactory(),
     typedDataModuleFactory(),

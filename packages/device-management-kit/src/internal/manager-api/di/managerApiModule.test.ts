@@ -22,7 +22,7 @@ describe("managerApiModuleFactory", () => {
         } as DmkConfig,
       });
       container = new Container();
-      container.load(mod);
+      container.loadSync(mod);
     });
 
     it("should return the config module", () => {
@@ -62,7 +62,7 @@ describe("managerApiModuleFactory", () => {
         } as DmkConfig,
       });
       container = new Container();
-      container.load(mod);
+      container.loadSync(mod);
     });
 
     it("should return the config module", () => {

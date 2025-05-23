@@ -12,7 +12,7 @@ describe("<%= moduleName %>ModuleFactory", () => {
     beforeEach(() => {
       mod = <%= moduleName %>ModuleFactory();
       container = new Container();
-      container.load(mod);
+      container.loadSync(mod);
     });
 
     it("should return the config module", () => {

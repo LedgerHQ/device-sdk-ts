@@ -12,7 +12,7 @@ type FactoryProps = {
 };
 
 export const secureChannelModuleFactory = ({ stub, config }: FactoryProps) =>
-  new ContainerModule((bind, _unbind, _isBound, _rebind) => {
+  new ContainerModule(({ bind }) => {
     bind(secureChannelTypes.DmkConfig).toConstantValue(config);
 
     bind(secureChannelTypes.SecureChannelDataSource).to(

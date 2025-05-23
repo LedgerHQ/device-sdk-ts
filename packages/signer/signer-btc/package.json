@@ -1,10 +1,10 @@
 {
   "name": "@ledgerhq/device-signer-kit-bitcoin",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "license": "Apache-2.0",
   "main": "lib/cjs/index.js",
   "types": "lib/cjs/index.d.ts",
-  "private": true,
+  "private": false,
   "exports": {
     ".": {
       "types": "./lib/types/index.d.ts",
@@ -40,7 +40,6 @@
     "@types/crypto-js": "catalog:",
     "crypto-js": "catalog:",
     "inversify": "catalog:",
-    "inversify-logger-middleware": "catalog:",
     "purify-ts": "catalog:",
     "reflect-metadata": "catalog:",
     "xstate": "catalog:"

@@ -11,7 +11,7 @@ describe("deviceModelModuleFactory", () => {
   beforeEach(() => {
     mod = deviceModelModuleFactory({ stub: false });
     container = new Container();
-    container.load(mod);
+    container.loadSync(mod);
   });
 
   it("should return the device module", () => {
