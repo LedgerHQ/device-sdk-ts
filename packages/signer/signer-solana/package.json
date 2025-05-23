@@ -35,7 +35,7 @@
     "test:coverage": "vitest run --coverage"
   },
   "dependencies": {
-    "@ledgerhq/signer-utils": "^1.0.5",
+    "@ledgerhq/signer-utils": "workspace:*",
     "bs58": "catalog:",
     "inversify": "catalog:",
     "purify-ts": "catalog:",
