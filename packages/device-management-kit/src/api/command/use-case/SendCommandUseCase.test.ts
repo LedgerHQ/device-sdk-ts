@@ -40,8 +40,10 @@ describe("SendCommandUseCase", () => {
     );
     secureChannel = new DefaultSecureChannelService(secureChannelDataSource);
     command = {
+      name: "test",
       getApdu: vi.fn(),
       parseResponse: vi.fn(),
+      args: undefined,
     };
   });
 

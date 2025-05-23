@@ -42,4 +42,8 @@ export class DefaultLoggerPublisherService implements LoggerPublisherService {
   error(message: string, options?: LogPublisherOptions): void {
     this._log(LogLevel.Error, message, options);
   }
+
+  verbose(message: string, options?: LogPublisherOptions) {
+    this._log(LogLevel.Verbose, message, options);
+  }
 }

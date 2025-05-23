@@ -3,18 +3,17 @@ import {
   isSuccessCommandResult,
 } from "@ledgerhq/device-management-kit";
 
+import { type ChunkableCommandArgs } from "@internal/app-binder/task/SendCommandInChunksTask";
+
 import { EthAppCommandError } from "./utils/ethAppErrors";
-import {
-  ProvideEnumCommand,
-  type ProvideEnumCommandArgs,
-} from "./ProvideEnumCommand";
+import { ProvideEnumCommand } from "./ProvideEnumCommand";
 
 describe("ProvideEnumCommand", () => {
   describe("getApdu", () => {
     it("should return the raw APDU for the first chunk", () => {
       // GIVEN
-      const args: ProvideEnumCommandArgs = {
-        data: Uint8Array.from([0x01, 0x02, 0x03]),
+      const args: ChunkableCommandArgs = {
+        chunkedData: Uint8Array.from([0x01, 0x02, 0x03]),
         isFirstChunk: true,
       };
 
@@ -30,8 +29,8 @@ describe("ProvideEnumCommand", () => {
 
     it("should return the raw APDU for the subsequent chunk", () => {
       // GIVEN
-      const args: ProvideEnumCommandArgs = {
-        data: Uint8Array.from([0x04, 0x05, 0x06]),
+      const args: ChunkableCommandArgs = {
+        chunkedData: Uint8Array.from([0x04, 0x05, 0x06]),
         isFirstChunk: false,
       };
 
@@ -56,7 +55,7 @@ describe("ProvideEnumCommand", () => {
 
       // WHEN
       const command = new ProvideEnumCommand({
-        data: new Uint8Array(0),
+        chunkedData: new Uint8Array(0),
         isFirstChunk: true,
       });
       const result = command.parseResponse(response);
@@ -79,7 +78,7 @@ describe("ProvideEnumCommand", () => {
 
       // WHEN
       const command = new ProvideEnumCommand({
-        data: new Uint8Array(0),
+        chunkedData: new Uint8Array(0),
         isFirstChunk: true,
       });
       const result = command.parseResponse(response);

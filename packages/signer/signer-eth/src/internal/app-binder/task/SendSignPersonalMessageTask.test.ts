@@ -92,7 +92,7 @@ describe("SendSignPersonalMessageTask", () => {
       expect(apiMock.sendCommand.mock.calls).toHaveLength(1);
       expect(apiMock.sendCommand.mock.calls[0]![0]).toStrictEqual(
         new SignPersonalMessageCommand({
-          data: new Uint8Array(SEND_MESSAGE_HELLO_WORLD_DATA),
+          chunkedData: new Uint8Array(SEND_MESSAGE_HELLO_WORLD_DATA),
           isFirstChunk: true,
         }),
       );
@@ -116,7 +116,7 @@ describe("SendSignPersonalMessageTask", () => {
       expect(apiMock.sendCommand.mock.calls).toHaveLength(1);
       expect(apiMock.sendCommand.mock.calls[0]![0]).toStrictEqual(
         new SignPersonalMessageCommand({
-          data: new Uint8Array(SEND_MESSAGE_HELLO_WORLD_DATA),
+          chunkedData: new Uint8Array(SEND_MESSAGE_HELLO_WORLD_DATA),
           isFirstChunk: true,
         }),
       );
@@ -140,13 +140,13 @@ describe("SendSignPersonalMessageTask", () => {
       expect(apiMock.sendCommand.mock.calls).toHaveLength(2);
       expect(apiMock.sendCommand.mock.calls[0]![0]).toStrictEqual(
         new SignPersonalMessageCommand({
-          data: MESSAGE_LONG_DATA.slice(0, 255),
+          chunkedData: MESSAGE_LONG_DATA.slice(0, 255),
           isFirstChunk: true,
         }),
       );
       expect(apiMock.sendCommand.mock.calls[1]![0]).toStrictEqual(
         new SignPersonalMessageCommand({
-          data: MESSAGE_LONG_DATA.slice(255, 510),
+          chunkedData: MESSAGE_LONG_DATA.slice(255, 510),
           isFirstChunk: false,
         }),
       );

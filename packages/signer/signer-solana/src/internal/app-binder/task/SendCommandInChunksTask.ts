@@ -11,14 +11,18 @@ import {
 
 import { type SolanaAppErrorCodes } from "@internal/app-binder/command/utils/SolanaApplicationErrors";
 
-export type SendCommandInChunksTaskArgs<T> = {
+export type SendCommandInChunksTaskArgs<
+  T,
+  V extends ChunkableCommandArgs = ChunkableCommandArgs,
+> = {
   data: Uint8Array;
-  commandFactory: CommandFactory<T>;
+  commandFactory: CommandFactory<T, V>;
 };
 
-export type CommandFactory<T> = <V extends ChunkableCommandArgs>(
-  args: ChunkableCommandArgs,
-) => Command<T, V, SolanaAppErrorCodes>;
+export type CommandFactory<
+  T,
+  V extends ChunkableCommandArgs = ChunkableCommandArgs,
+> = (args: V) => Command<T, V, SolanaAppErrorCodes>;
 
 export type ChunkableCommandArgs = {
   chunkedData: Uint8Array;
