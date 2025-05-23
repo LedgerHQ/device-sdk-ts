@@ -4,6 +4,7 @@ import android.util.Base64
 import com.facebook.react.bridge.Arguments
 import com.facebook.react.bridge.WritableArray
 import com.facebook.react.bridge.WritableMap
+import com.ledger.androidtransporthid.TransportHidModule
 import com.ledger.devicesdk.shared.api.apdu.SendApduFailureReason
 import com.ledger.devicesdk.shared.api.apdu.SendApduResult
 import com.ledger.devicesdk.shared.api.device.LedgerDevice
@@ -115,6 +116,13 @@ internal fun TransportEvent.DeviceConnectionLost.toWritableMap(): WritableMap =
     Arguments.createMap().apply {
         putString("id", id)
     }
+
+internal fun TransportHidModule.ExchangeBulkProgressEvent.toWritableMap(): WritableMap =
+    Arguments.createMap().apply {
+        putInt("requestId", requestId)
+        putInt("index", index)
+    }
+
 
 /* lists */
 

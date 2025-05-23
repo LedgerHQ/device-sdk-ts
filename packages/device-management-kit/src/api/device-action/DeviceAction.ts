@@ -20,6 +20,13 @@ export type InternalApi = {
     command: Command<Response, Args, ErrorStatusCodes>,
     abortTimeout?: number,
   ) => Promise<CommandResult<Response, ErrorStatusCodes>>;
+  readonly exchangeBulkApdus: (
+    apdus: Uint8Array[],
+  ) => Promise<
+    Observable<
+      { currentIndex: number } | { result: Either<DmkError, ApduResponse> }
+    >
+  >;
   readonly getDeviceModel: () => TransportDeviceModel;
   readonly getDeviceSessionState: () => DeviceSessionState;
   readonly getDeviceSessionStateObservable: () => Observable<DeviceSessionState>;

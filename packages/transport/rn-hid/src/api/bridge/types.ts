@@ -46,7 +46,6 @@ export type NativeSendApduResult =
 export type NativeDeviceConnectionLost = {
   id: string;
 };
-
 /**
  * Events
  */
@@ -63,6 +62,13 @@ export type LogEventPayload = NativeLog;
 export const DEVICE_DISCONNECTED_EVENT = "DeviceDisconnected";
 export type DeviceDisconnectedEventPayload = NativeDeviceConnectionLost;
 
+/** ExchangeBulkApdus */
+export const EXCHANGE_BULK_APDUS_EVENT = "ExchangeBulkApdus";
+export type ExchangeBulkApdusEventPayload = {
+  requestId: number;
+  index: number;
+};
+
 /**
  * Signature of the native transport module.
  */
@@ -76,5 +82,10 @@ export type NativeTransportModuleType = {
     apdu: string,
     triggersDisconnection: boolean,
     abortTimeout: number,
+  ) => Promise<NativeSendApduResult>;
+  exchangeBulkApdus: (
+    sessionId: string,
+    apdus: string[],
+    requestId: number,
   ) => Promise<NativeSendApduResult>;
 } & NativeModule;

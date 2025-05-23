@@ -26,6 +26,7 @@ import {
   type DeviceDisconnectedEventPayload,
   DISCOVERED_DEVICES_EVENT,
   type DiscoveredDevicesEventPayload,
+  ExchangeBulkApdusEventPayload,
   type NativeLog,
   TRANSPORT_LOG_EVENT,
 } from "./types";
@@ -112,6 +113,26 @@ export class DefaultNativeModuleWrapper implements NativeModuleWrapper {
     });
   }
 
+  subscribeToExchangeBulkApdusEvents(
+    requestId: number,
+  ): Observable<ExchangeBulkApdusEventPayload> {
+    return new Observable((subscriber) => {
+      const eventEmitter = new NativeEventEmitter(this._nativeModule);
+      const eventListener = eventEmitter.addListener(
+        "ExchangeBulkApdus",
+        (event: ExchangeBulkApdusEventPayload) => {
+          if (event.requestId === requestId) {
+            subscriber.next(event);
+          }
+        },
+      );
+
+      return () => {
+        eventListener.remove();
+      };
+    });
+  }
+
   async connectDevice(uid: string): Promise<InternalConnectionResult> {
     const nConnectionResult = await this._nativeModule.connectDevice(uid);
     return mapNativeConnectionResultToConnectionResult(
@@ -130,24 +151,28 @@ export class DefaultNativeModuleWrapper implements NativeModuleWrapper {
     triggersDisconnection: boolean,
     abortTimeout: number,
   ): Promise<SendApduResult> {
-    console.log("______ PERF: _____ SEND APDU CALLED _____");
-    console.log("PERF: sendApdu START at ", Date.now());
-    const t0 = performance.now();
     const serializedApdu = uint8ArrayToBase64(apdu);
-    const t1 = performance.now();
-    console.log("PERF: sendApdu call to nativeModule at", t1);
     const nSendApduResult = await this._nativeModule.sendApdu(
       sessionId,
       serializedApdu,
       triggersDisconnection,
       abortTimeout,
     );
-    const t2 = performance.now();
-    console.log("PERF: sendApdu result from nativeModule at", t2);
-    const result = mapNativeSendApduResultToSendApduResult(nSendApduResult)
-    const t3 = performance.now();
-    console.log("PERF: TS sendApdu total", t3 - t0, "ms");
-    console.log("PERF: sendApdu END at   ", Date.now());
+    const result = mapNativeSendApduResultToSendApduResult(nSendApduResult);
     return result;
+  }
+
+  async exchangeBulkApdus(
+    sessionId: string,
+    apdus: Uint8Array[],
+    requestId: number,
+  ): Promise<SendApduResult> {
+    const serializedApdus = apdus.map((apdu) => uint8ArrayToBase64(apdu));
+    const nSendApduResult = await this._nativeModule.exchangeBulkApdus(
+      sessionId,
+      serializedApdus,
+      requestId,
+    );
+    return mapNativeSendApduResultToSendApduResult(nSendApduResult);
   }
 }

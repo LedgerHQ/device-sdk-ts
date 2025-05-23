@@ -253,27 +253,95 @@ export class ConnectToSecureChannelTask {
                 [],
               );
 
-              for (let i = 0, len = apdus.length; i < len; i++) {
-                await this._api.sendApdu(apdus[i]!);
-                if (unsubscribed) {
-                  subscriber.error(
-                    new SecureChannelError(
-                      "Bulk sending cancelled by unsubscribing",
-                    ),
-                  );
-                  break;
-                }
-                subscriber.next({
-                  type: SecureChannelEventType.Progress,
-                  payload: {
-                    progress: +Number((i + 1) / len).toFixed(2),
-                    index: i,
-                    total: len,
-                  },
+              const t1 = performance.now();
+              const enableNativeBulk = true;
+              console.log("PERF: exchangeBulkApdus call at", t1, {
+                enableNativeBulk,
+              });
+
+              if (enableNativeBulk) {
+                this._api.exchangeBulkApdus(apdus).then((observable) => {
+                  observable.subscribe({
+                    next: (result) => {
+                      if (unsubscribed) {
+                        return;
+                      }
+                      if ("currentIndex" in result) {
+                        subscriber.next({
+                          type: SecureChannelEventType.Progress,
+                          payload: {
+                            progress: +Number(
+                              (result.currentIndex + 1) / apdus.length,
+                            ).toFixed(2),
+                            index: result.currentIndex,
+                            total: apdus.length,
+                          },
+                        });
+                      } else {
+                        const payload = result.result;
+
+                        if (payload.isLeft()) {
+                          subscriber.error(
+                            new SecureChannelError(payload.extract()),
+                          );
+                        } else {
+                          subscriber.next({
+                            type: SecureChannelEventType.Result,
+                            payload: payload.extract(),
+                          });
+                        }
+                      }
+                    },
+                    error: (error) => {
+                      if (unsubscribed) {
+                        return;
+                      }
+                      subscriber.error(new SecureChannelError(error));
+                    },
+                    complete: () => {
+                      if (unsubscribed) {
+                        return;
+                      }
+                      communicationFinished = true;
+                      subscriber.complete();
+                      const t2 = performance.now();
+                      console.log(
+                        "PERF: exchangeBulkApdus result from nativeModule duration:",
+                        t2 - t1,
+                        "ms",
+                      );
+                    },
+                  });
                 });
+              } else {
+                for (let i = 0, len = apdus.length; i < len; i++) {
+                  await this._api.sendApdu(apdus[i]!);
+                  if (unsubscribed) {
+                    subscriber.error(
+                      new SecureChannelError(
+                        "Bulk sending cancelled by unsubscribing",
+                      ),
+                    );
+                    break;
+                  }
+                  subscriber.next({
+                    type: SecureChannelEventType.Progress,
+                    payload: {
+                      progress: +Number((i + 1) / len).toFixed(2),
+                      index: i,
+                      total: len,
+                    },
+                  });
+                }
+                const t2 = performance.now();
+                console.log(
+                  "PERF: exchangeBulkApdus result from TS implementation duration:",
+                  t2 - t1,
+                  "ms",
+                );
+                communicationFinished = true;
+                subscriber.complete();
               }
-              communicationFinished = true;
-              subscriber.complete();
               break;
             }
             case InMessageQueryEnum.SUCCESS: {

@@ -10,6 +10,7 @@ import com.facebook.react.bridge.Promise
 import com.facebook.react.bridge.ReactApplicationContext
 import com.facebook.react.bridge.ReactContextBaseJavaModule
 import com.facebook.react.bridge.ReactMethod
+import com.facebook.react.bridge.ReadableArray
 import com.ledger.androidtransporthid.bridge.toWritableMap
 import com.ledger.devicesdk.shared.androidMain.transport.usb.AndroidUsbTransport
 import com.ledger.devicesdk.shared.androidMain.transport.usb.DefaultAndroidUsbTransport
@@ -17,6 +18,7 @@ import com.ledger.devicesdk.shared.androidMain.transport.usb.controller.ACTION_U
 import com.ledger.devicesdk.shared.androidMain.transport.usb.controller.UsbAttachedReceiverController
 import com.ledger.devicesdk.shared.androidMain.transport.usb.controller.UsbDetachedReceiverController
 import com.ledger.devicesdk.shared.androidMain.transport.usb.controller.UsbPermissionReceiver
+import com.ledger.devicesdk.shared.api.apdu.SendApduResult
 import com.ledger.devicesdk.shared.api.discovery.DiscoveryDevice
 import com.ledger.devicesdk.shared.internal.connection.InternalConnectedDevice
 import com.ledger.devicesdk.shared.internal.connection.InternalConnectionResult
@@ -259,6 +261,37 @@ class TransportHidModule(
     }
 
     @ReactMethod
+    public fun exchangeBulkApdus(
+        sessionId: String,
+        apdus: ReadableArray,
+        requestId: Int,
+        promise: Promise,
+    ) {
+        // find connected device, loop over all apdus and send them to the device, and send back the last result
+        val device = connectedDevices.firstOrNull() { it.id == sessionId }
+        if (device == null) {
+            promise.reject(Exception("[TransportHidModule][exchangeBulkApdus] Device not found"))
+            return
+        }
+        coroutineScope.launch {
+            try {
+                val apdusList = apdus.toArrayList()
+                val apdusByteArray = apdusList.map { Base64.decode(it as String, Base64.DEFAULT) }
+                lateinit var lastResult: SendApduResult
+                apdusByteArray.forEachIndexed { index, apdu ->
+                    lastResult = device.sendApduFn(apdu, false, Duration.INFINITE)
+                    if (index == apdusByteArray.lastIndex || index % 20 == 0) {
+                        sendEvent(reactContext, BridgeEvents.ExchangeBulkApdusEvent(ExchangeBulkProgressEvent(requestId, index)))
+                    }
+                }
+                promise.resolve(lastResult.toWritableMap())
+            } catch (e: Exception) {
+                promise.reject(e)
+            }
+        }
+    }
+
+    @ReactMethod
     fun addListener(eventName: String) {
         // Nothing to do in our case, but React Native will issue a warning if this isn't implemented
     }
@@ -267,4 +300,9 @@ class TransportHidModule(
     fun removeListeners(count: Int) {
         // Nothing to do in our case, but React Native will issue a warning if this isn't implemented
     }
+
+    data class ExchangeBulkProgressEvent(
+        val requestId: Int,
+        val index: Int,
+    )
 }

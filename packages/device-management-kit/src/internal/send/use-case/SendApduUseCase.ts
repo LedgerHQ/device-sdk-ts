@@ -51,18 +51,14 @@ export class SendApduUseCase {
     const deviceSessionOrError =
       this._sessionService.getDeviceSessionById(sessionId);
 
-    console.log("PERF: [SendApduUseCase] execute called");
-
     return deviceSessionOrError.caseOf({
       // Case device session found
       Right: async (deviceSession) => {
-        console.log("PERF: [SendApduUseCase] calling deviceSession.sendApdu");
         const response = await deviceSession.sendApdu(apdu, { abortTimeout });
         return response.caseOf({
           // Case APDU sent and response received successfully
           Right: (data) => {
-            console.log("PERF: [SendApduUseCase] got response from [deviceSession.sendApdu], returning back data");
-            return data
+            return data;
           },
           // Case error sending or receiving APDU
           Left: (error) => {

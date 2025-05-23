@@ -11,6 +11,7 @@ import {
   TransportConnectedDevice,
   type TransportDiscoveredDevice,
   type TransportIdentifier,
+  type SendApduResult,
 } from "@ledgerhq/device-management-kit";
 import { type Either, Left, Right } from "purify-ts";
 import { Observable } from "rxjs";
@@ -104,6 +105,40 @@ export class RNHidTransport implements Transport {
     return observable;
   }
 
+  private exchangeBulkRequestId = 0;
+
+  private exchangeBulkApdus(
+    sessionId: string,
+    apdus: Uint8Array[],
+  ): Observable<{ currentIndex: number } | { result: SendApduResult }> {
+    return new Observable((subscriber) => {
+      const requestId = this.exchangeBulkRequestId;
+      this.exchangeBulkRequestId++;
+
+      const subscription = this._nativeModuleWrapper
+        .subscribeToExchangeBulkApdusEvents(requestId)
+        .subscribe((event) => {
+          if (event.requestId === requestId) {
+            subscriber.next({ currentIndex: event.index });
+          }
+        });
+
+      this._nativeModuleWrapper
+        .exchangeBulkApdus(sessionId, apdus, requestId)
+        .then((result) => {
+          subscriber.next({ result });
+          subscriber.complete();
+        })
+        .catch((error) => {
+          subscriber.error(error);
+        });
+
+      return () => {
+        subscription.unsubscribe();
+      };
+    });
+  }
+
   connect(_params: {
     deviceId: DeviceId;
     onDisconnect: DisconnectHandler;
@@ -138,6 +173,9 @@ export class RNHidTransport implements Transport {
                     abortTimeout,
                   )
                   .catch((e) => Left(new HidTransportSendApduUnknownError(e)));
+              },
+              exchangeBulkApdus: async (apdus) => {
+                return this.exchangeBulkApdus(sessionId, apdus);
               },
               transport: this.getIdentifier(),
               type: "USB",

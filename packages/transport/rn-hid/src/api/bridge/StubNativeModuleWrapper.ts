@@ -45,4 +45,13 @@ export class StubNativeModuleWrapper implements NativeModuleWrapper {
   subscribeToDeviceDisconnectedEvents(): Observable<InternalDeviceDisconnected> {
     return from([]);
   }
+
+  subscribeToExchangeBulkApdusEvents() // requestId: number,
+  : Observable<{ requestId: number; index: number }> {
+    return from([]);
+  }
+
+  exchangeBulkApdus(): Promise<SendApduResult> {
+    throw new Error("Method not implemented.");
+  }
 }

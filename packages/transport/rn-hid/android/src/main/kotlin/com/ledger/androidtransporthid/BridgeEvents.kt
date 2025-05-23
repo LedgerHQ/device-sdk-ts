@@ -26,6 +26,9 @@ internal sealed class BridgeEvents(val eventName: String, val params: EventParam
     data class DeviceDisconnected(
         val deviceConnectionLost: TransportEvent.DeviceConnectionLost,
     ): BridgeEvents("DeviceDisconnected", EventParams.WMap(deviceConnectionLost.toWritableMap()))
+    data class ExchangeBulkApdusEvent(
+        val exchangeBulkProgressEvent: TransportHidModule.ExchangeBulkProgressEvent
+    ): BridgeEvents("ExchangeBulkApdus", EventParams.WMap(exchangeBulkProgressEvent.toWritableMap()))
 }
 
 internal fun sendEvent(reactContext: ReactContext, bridgeEvent: BridgeEvents) {

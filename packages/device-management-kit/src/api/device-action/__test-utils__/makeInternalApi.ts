@@ -23,5 +23,6 @@ export function makeDeviceActionInternalApiMock(): Mocked<InternalApi> {
     getManagerApiService: getManagerApiServiceMock,
     getSecureChannelService: getSecureChannelServiceMock,
     disableRefresher: disableRefresherMock,
+    exchangeBulkApdus: vi.fn(),
   };
 }

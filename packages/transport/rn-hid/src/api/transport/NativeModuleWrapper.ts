@@ -9,6 +9,7 @@ import {
   type InternalConnectionResult,
   type InternalDeviceDisconnected,
 } from "./types";
+import { ExchangeBulkApdusEventPayload } from "@api/bridge/types";
 
 /**
  * Interface for the native module wrapper.
@@ -27,6 +28,9 @@ export interface NativeModuleWrapper {
   >;
   subscribeToDeviceDisconnectedEvents(): Observable<InternalDeviceDisconnected>;
   subscribeToTransportLogs(): Observable<LogParams>;
+  subscribeToExchangeBulkApdusEvents(
+    requestId: number,
+  ): Observable<ExchangeBulkApdusEventPayload>;
   connectDevice(uid: string): Promise<InternalConnectionResult>;
   disconnectDevice(uid: string): Promise<void>;
   sendApdu(
@@ -34,5 +38,10 @@ export interface NativeModuleWrapper {
     apdu: Uint8Array,
     triggersDisconnection: boolean,
     abortTimeout: number,
+  ): Promise<SendApduResult>;
+  exchangeBulkApdus(
+    sessionId: string,
+    apdus: Uint8Array[],
+    requestId: number,
   ): Promise<SendApduResult>;
 }

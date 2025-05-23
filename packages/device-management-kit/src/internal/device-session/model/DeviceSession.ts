@@ -33,6 +33,7 @@ import {
 } from "./DeviceSessionEventDispatcher";
 import { DeviceSessionRefresher } from "./DeviceSessionRefresher";
 import { DeviceSessionStateHandler } from "./DeviceSessionStateHandler";
+import { ExchangeBulkApdusFnType } from "@api/transport/model/DeviceConnection";
 
 export type SessionConstructorArgs = {
   connectedDevice: TransportConnectedDevice;
@@ -158,30 +159,17 @@ export class DeviceSession {
       abortTimeout: undefined,
     },
   ): Promise<Either<DmkError, ApduResponse>> {
-    console.log(
-      "PERF: [DeviceSession] [sendApdu] called",
-    );
     const release = await this._commandMutex.lock();
-
-    console.log(
-      "PERF: [DeviceSession] [sendApdu] acquired lock",
-    );
 
     try {
       this._sessionEventDispatcher.dispatch({
         eventName: SessionEvents.DEVICE_STATE_UPDATE_BUSY,
       });
-      console.log(
-        "PERF: [DeviceSession] [sendApdu] calling connectedDevice.sendApdu",
-      )
       const result = await this._connectedDevice.sendApdu(
         rawApdu,
         options.triggersDisconnection,
         options.abortTimeout,
       );
-      console.log(
-        "PERF: [DeviceSession] [sendApdu] got response from connectedDevice.sendApdu",
-      )
 
       result
         .ifRight((response: ApduResponse) => {
@@ -203,9 +191,22 @@ export class DeviceSession {
 
       return result;
     } finally {
-      console.log(
-        "PERF: [DeviceSession] [sendApdu] releasing lock",
-      );
+      release();
+    }
+  }
+
+  public async exchangeBulkApdus(
+    apdus: Uint8Array[],
+  ): ReturnType<ExchangeBulkApdusFnType> {
+    if (!this._connectedDevice.exchangeBulkApdus) {
+      // TODO: implement using sendApdu
+      throw new Error("Exchange bulk APDUs is not supported, use sendApdu");
+    }
+
+    const release = await this._commandMutex.lock();
+    try {
+      return this._connectedDevice.exchangeBulkApdus(apdus);
+    } finally {
       release();
     }
   }
@@ -256,6 +257,7 @@ export class DeviceSession {
         this._refresherService.disableRefresher(blockerId),
       getManagerApiService: () => this._managerApiService,
       getSecureChannelService: () => this._secureChannelService,
+      exchangeBulkApdus: this.exchangeBulkApdus.bind(this),
     });
     return { observable, cancel };
   }

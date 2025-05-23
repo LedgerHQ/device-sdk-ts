@@ -94,6 +94,8 @@ describe("RNHidTransport", () => {
       connectDevice: wrapperConnectDevice,
       disconnectDevice: wrapperDisconnectDevice,
       sendApdu: wrapperSendApdu,
+      exchangeBulkApdus: vi.fn(),
+      subscribeToExchangeBulkApdusEvents: vi.fn(),
     };
   });
 
@@ -511,7 +513,9 @@ describe("RNHidTransport", () => {
         const apduResult = await connectedDevice.sendApdu(new Uint8Array([]));
 
         // then
-        expect(apduResult).toEqual(Left(new HidTransportSendApduUnknownError(apduError)));
+        expect(apduResult).toEqual(
+          Left(new HidTransportSendApduUnknownError(apduError)),
+        );
       });
     });
 
