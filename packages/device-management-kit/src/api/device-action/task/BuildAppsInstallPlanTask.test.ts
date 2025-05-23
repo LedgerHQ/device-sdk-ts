@@ -1,7 +1,10 @@
 import { DeviceModelId } from "@api/device/DeviceModel";
 import { DeviceStatus } from "@api/device/DeviceStatus";
 import { makeDeviceActionInternalApiMock } from "@api/device-action/__test-utils__/makeInternalApi";
-import { UnknownDAError } from "@api/device-action/os/Errors";
+import {
+  UnknownDAError,
+  UnsupportedFirmwareDAError,
+} from "@api/device-action/os/Errors";
 import type { TransportDeviceModel } from "@api/device-model/model/DeviceModel";
 import type { DeviceSessionState } from "@api/device-session/DeviceSessionState";
 import { DeviceSessionStateType } from "@api/device-session/DeviceSessionState";
@@ -413,6 +416,39 @@ describe("BuildAppsInstallPlanTask", () => {
     // THEN
     expect(result).toStrictEqual({
       error: new UnknownDAError(
+        "Application Ethereum not found in the catalog",
+      ),
+    });
+  });
+
+  it("Error when an app version is not found in the catalog", () => {
+    // GIVEN
+    apiMock.getDeviceSessionState.mockReturnValueOnce({
+      sessionStateType: DeviceSessionStateType.ReadyWithoutSecureChannel,
+      deviceStatus: DeviceStatus.CONNECTED,
+      installedApps: [] as unknown as Application[],
+      catalog: {
+        applications: [
+          { versionName: "Ethereum", version: "1.5.0" },
+        ] as unknown as Application[],
+        languagePackages: [],
+      },
+    } as unknown as DeviceSessionState);
+
+    // WHEN
+    const result = new BuildAppsInstallPlanTask(apiMock, {
+      applications: [
+        {
+          name: "Ethereum",
+          constraints: [{ minVersion: "1.6.0" }],
+        },
+      ],
+      allowMissingApplication: false,
+    }).run();
+
+    // THEN
+    expect(result).toStrictEqual({
+      error: new UnsupportedFirmwareDAError(
         "Application Ethereum not found in the catalog",
       ),
     });
