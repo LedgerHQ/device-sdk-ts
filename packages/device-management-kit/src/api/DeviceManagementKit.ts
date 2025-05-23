@@ -168,9 +168,15 @@ export class DeviceManagementKit {
    * @param {SendApduUseCaseArgs} args - The device session ID and APDU command to send.
    */
   sendApdu(args: SendApduUseCaseArgs): Promise<ApduResponse> {
-    return this.container
-      .get<SendApduUseCase>(sendTypes.SendApduUseCase)
-      .execute(args);
+    console.log("PERF: [DeviceManagementKit] sendApdu called");
+    const sendApduUseCase = this.container.get<SendApduUseCase>(
+      sendTypes.SendApduUseCase,
+    );
+    console.log("PERF: [DeviceManagementKit] sendApdu got useCase, calling execute");
+    return sendApduUseCase.execute(args).then((response) => {
+      console.log("PERF: [DeviceManagementKit] execute got response, returning");
+      return response;
+    });
   }
 
   /**

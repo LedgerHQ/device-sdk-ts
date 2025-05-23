@@ -135,7 +135,6 @@ export class DefaultNativeModuleWrapper implements NativeModuleWrapper {
     const t0 = performance.now();
     const serializedApdu = uint8ArrayToBase64(apdu);
     const t1 = performance.now();
-    console.log("PERF: sendApdu serialization", t1 - t0, "ms");
     console.log("PERF: sendApdu call to nativeModule at", t1);
     const nSendApduResult = await this._nativeModule.sendApdu(
       sessionId,
@@ -147,7 +146,6 @@ export class DefaultNativeModuleWrapper implements NativeModuleWrapper {
     console.log("PERF: sendApdu result from nativeModule at", t2);
     const result = mapNativeSendApduResultToSendApduResult(nSendApduResult)
     const t3 = performance.now();
-    console.log("PERF: sendApdu deserialization", t3 - t2, "ms");
     console.log("PERF: TS sendApdu total", t3 - t0, "ms");
     console.log("PERF: sendApdu END at   ", Date.now());
     return result;

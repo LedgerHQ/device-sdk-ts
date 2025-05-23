@@ -158,17 +158,30 @@ export class DeviceSession {
       abortTimeout: undefined,
     },
   ): Promise<Either<DmkError, ApduResponse>> {
+    console.log(
+      "PERF: [DeviceSession] [sendApdu] called",
+    );
     const release = await this._commandMutex.lock();
+
+    console.log(
+      "PERF: [DeviceSession] [sendApdu] acquired lock",
+    );
 
     try {
       this._sessionEventDispatcher.dispatch({
         eventName: SessionEvents.DEVICE_STATE_UPDATE_BUSY,
       });
+      console.log(
+        "PERF: [DeviceSession] [sendApdu] calling connectedDevice.sendApdu",
+      )
       const result = await this._connectedDevice.sendApdu(
         rawApdu,
         options.triggersDisconnection,
         options.abortTimeout,
       );
+      console.log(
+        "PERF: [DeviceSession] [sendApdu] got response from connectedDevice.sendApdu",
+      )
 
       result
         .ifRight((response: ApduResponse) => {
@@ -187,8 +200,12 @@ export class DeviceSession {
             eventName: SessionEvents.DEVICE_STATE_UPDATE_CONNECTED,
           });
         });
+
       return result;
     } finally {
+      console.log(
+        "PERF: [DeviceSession] [sendApdu] releasing lock",
+      );
       release();
     }
   }
