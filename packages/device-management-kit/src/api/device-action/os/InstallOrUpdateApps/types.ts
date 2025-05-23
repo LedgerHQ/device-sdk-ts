@@ -1,7 +1,10 @@
 import type { CommandErrorResult } from "@api/command/model/CommandResult";
 import type { DeviceModelId } from "@api/device/DeviceModel";
 import type { DeviceActionState } from "@api/device-action/model/DeviceActionState";
-import type { OutOfMemoryDAError } from "@api/device-action/os/Errors";
+import type {
+  OutOfMemoryDAError,
+  UnsupportedFirmwareDAError,
+} from "@api/device-action/os/Errors";
 import type {
   GetDeviceMetadataDAError,
   GetDeviceMetadataDARequiredInteraction,
@@ -76,6 +79,7 @@ export type InstallOrUpdateAppsDAError =
   | GetDeviceMetadataDAError
   | InstallAppDAError
   | OutOfMemoryDAError
+  | UnsupportedFirmwareDAError
   | CommandErrorResult["error"];
 
 export type InstallOrUpdateAppsDARequiredInteraction =

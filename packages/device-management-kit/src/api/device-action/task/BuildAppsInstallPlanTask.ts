@@ -2,7 +2,10 @@ import { gte } from "semver";
 
 import type { DeviceModelId } from "@api/device/DeviceModel";
 import type { InternalApi } from "@api/device-action/DeviceAction";
-import { UnknownDAError } from "@api/device-action/os/Errors";
+import {
+  UnknownDAError,
+  UnsupportedFirmwareDAError,
+} from "@api/device-action/os/Errors";
 import type {
   ApplicationConstraint,
   ApplicationDependency,
@@ -29,7 +32,7 @@ export type BuildAppsInstallPlanTaskResult =
       missingApplications: string[];
     }
   | {
-      error: UnknownDAError;
+      error: UnknownDAError | UnsupportedFirmwareDAError;
     };
 
 export class BuildAppsInstallPlanTask {
@@ -78,18 +81,31 @@ export class BuildAppsInstallPlanTask {
       }
 
       // Handle the catalog application
-      if (catalogApp !== undefined) {
+      if (
+        catalogApp !== undefined &&
+        this.validateConstraint(catalogApp, undefined, app.constraints)
+      ) {
         // Add the catalog application to the install plan
         installPlan = [...installPlan, catalogApp];
       } else if (this.args.allowMissingApplication) {
         missingApplications = [...missingApplications, app.name];
       } else {
         // Fail immediately if missing application is not allowed
-        return {
-          error: new UnknownDAError(
-            `Application ${app.name} not found in the catalog`,
-          ),
-        };
+        if (catalogApp !== undefined) {
+          // Is application is found in the catalog in an old version,
+          // it usually means the firmware is also outdated.
+          return {
+            error: new UnsupportedFirmwareDAError(
+              `Application ${app.name} not found in the catalog`,
+            ),
+          };
+        } else {
+          return {
+            error: new UnknownDAError(
+              `Application ${app.name} not found in the catalog`,
+            ),
+          };
+        }
       }
     }
 
