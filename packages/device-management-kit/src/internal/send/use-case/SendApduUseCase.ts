@@ -23,6 +23,10 @@ export type SendApduUseCaseArgs = {
    * The time, in milliseconds, to wait before aborting an operation.
    */
   abortTimeout?: number;
+  /**
+   * Indicates if a device disconnection should be expected after sending the APDU.
+   */
+  triggersDisconnection?: boolean;
 };
 
 /**
@@ -47,6 +51,7 @@ export class SendApduUseCase {
     sessionId,
     apdu,
     abortTimeout,
+    triggersDisconnection,
   }: SendApduUseCaseArgs): Promise<ApduResponse> {
     const deviceSessionOrError =
       this._sessionService.getDeviceSessionById(sessionId);
@@ -54,7 +59,10 @@ export class SendApduUseCase {
     return deviceSessionOrError.caseOf({
       // Case device session found
       Right: async (deviceSession) => {
-        const response = await deviceSession.sendApdu(apdu, { abortTimeout });
+        const response = await deviceSession.sendApdu(apdu, {
+          abortTimeout,
+          triggersDisconnection,
+        });
         return response.caseOf({
           // Case APDU sent and response received successfully
           Right: (data) => data,
