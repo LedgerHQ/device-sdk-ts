@@ -10,7 +10,8 @@ import {
   ReconnectionFailedError,
 } from "@ledgerhq/device-management-kit";
 import { type Either, Left, Maybe, Nothing, Right } from "purify-ts";
-import { firstValueFrom, from, retry, Subject } from "rxjs";
+import { of, firstValueFrom, from, retry, Subject } from "rxjs";
+import { delay } from 'rxjs/operators';
 
 import { RECONNECT_DEVICE_TIMEOUT } from "@api/data/WebHidConfig";
 import { WebHidSendReportError } from "@api/model/Errors";
@@ -96,11 +97,12 @@ export class WebHidDeviceConnection implements DeviceConnection {
             this._pendingApdu = Nothing;
             if (triggersDisconnection && CommandUtils.isSuccessResponse(r)) {
               // Anticipate the disconnection and wait for the reconnection before resolving
-              const reconnectionRes = await this.waitForReconnection();
+              /*const reconnectionRes = await this.waitForReconnection();
               reconnectionRes.caseOf({
                 Left: (err) => resolve(Left(err)),
                 Right: () => resolve(Right(r)),
-              });
+              });*/
+              resolve(Right(r));
             } else {
               resolve(Right(r));
             }
@@ -232,8 +234,13 @@ export class WebHidDeviceConnection implements DeviceConnection {
     await device.open();
 
     this._logger.info("⏱️🔌 Device reconnected");
-    this.waitingForReconnection = false;
-    this.reconnectionSubject.next("success");
+    of(undefined).pipe(
+      delay(5000)
+    ).subscribe(_ => {
+      this._logger.info("⏱️🔌 Device reconnected after delay");
+      this.waitingForReconnection = false;
+      this.reconnectionSubject.next("success");
+    });
   }
 
   public disconnect() {
