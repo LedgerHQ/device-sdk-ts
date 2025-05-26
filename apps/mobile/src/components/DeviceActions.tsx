@@ -18,11 +18,6 @@ import {
   type InstallAppDAIntermediateValue,
   type InstallAppDAOutput,
   InstallAppDeviceAction,
-  type UninstallAppDAError,
-  type UninstallAppDAInput,
-  type UninstallAppDAIntermediateValue,
-  type UninstallAppDAOutput,
-  UninstallAppDeviceAction,
   type ListAppsDAError,
   type ListAppsDAInput,
   type ListAppsDAIntermediateValue,
@@ -38,6 +33,11 @@ import {
   type OpenAppDAIntermediateValue,
   type OpenAppDAOutput,
   OpenAppDeviceAction,
+  type UninstallAppDAError,
+  type UninstallAppDAInput,
+  type UninstallAppDAIntermediateValue,
+  type UninstallAppDAOutput,
+  UninstallAppDeviceAction,
 } from "@ledgerhq/device-management-kit";
 import { Flex, LegendInput } from "@ledgerhq/native-ui";
 
@@ -239,5 +239,5 @@ export const getDeviceActions = (
     UninstallAppDAInput,
     UninstallAppDAError,
     UninstallAppDAIntermediateValue
-  >
+  >,
 ];
