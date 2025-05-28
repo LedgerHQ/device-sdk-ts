@@ -1,4 +1,9 @@
 export * from "@api/app-binder/GetAddressDeviceActionTypes";
+export { type SignDelegationAuthorizationDAError } from "@api/app-binder/SignDelegationAuthorizationTypes";
+export { type SignDelegationAuthorizationDAInput } from "@api/app-binder/SignDelegationAuthorizationTypes";
+export { type SignDelegationAuthorizationDAOutput } from "@api/app-binder/SignDelegationAuthorizationTypes";
+export { type SignDelegationAuthorizationDAState } from "@api/app-binder/SignDelegationAuthorizationTypes";
+export { type SignDelegationAuthorizationDAIntermediateValue } from "@api/app-binder/SignDelegationAuthorizationTypes";
 export type {
   SignPersonalMessageDAError,
   SignPersonalMessageDAIntermediateValue,
