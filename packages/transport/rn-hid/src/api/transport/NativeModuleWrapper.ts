@@ -29,5 +29,10 @@ export interface NativeModuleWrapper {
   subscribeToTransportLogs(): Observable<LogParams>;
   connectDevice(uid: string): Promise<InternalConnectionResult>;
   disconnectDevice(uid: string): Promise<void>;
-  sendApdu(sessionId: string, apdu: Uint8Array): Promise<SendApduResult>;
+  sendApdu(
+    sessionId: string,
+    apdu: Uint8Array,
+    triggersDisconnection: boolean,
+    abortTimeout: number,
+  ): Promise<SendApduResult>;
 }
