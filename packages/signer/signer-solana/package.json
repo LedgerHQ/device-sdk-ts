@@ -1,6 +1,6 @@
 {
   "name": "@ledgerhq/device-signer-kit-solana",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "private": false,
   "license": "Apache-2.0",
   "exports": {
@@ -36,6 +36,8 @@
   },
   "dependencies": {
     "@ledgerhq/signer-utils": "workspace:*",
+    "@solana/spl-token": "catalog:",
+    "@solana/web3.js": "catalog:",
     "bs58": "catalog:",
     "inversify": "catalog:",
     "purify-ts": "catalog:",
@@ -44,8 +46,8 @@
   },
   "devDependencies": {
     "@ledgerhq/device-management-kit": "workspace:*",
-    "@ledgerhq/ldmk-tool": "workspace:*",
     "@ledgerhq/eslint-config-dsdk": "workspace:*",
+    "@ledgerhq/ldmk-tool": "workspace:*",
     "@ledgerhq/prettier-config-dsdk": "workspace:*",
     "@ledgerhq/tsconfig-dsdk": "workspace:*",
     "@ledgerhq/vitest-config-dmk": "workspace:*",

@@ -1,5 +1,17 @@
 # @ledgerhq/device-signer-kit-solana
 
+## 1.1.1
+
+### Patch Changes
+
+- [#649](https://github.com/LedgerHQ/device-sdk-ts/pull/649) [`1364525`](https://github.com/LedgerHQ/device-sdk-ts/commit/1364525e1092b69700e83819d00df1222dc32dc1) Thanks [@paoun-ledger](https://github.com/paoun-ledger)! - Factorize device actions calling a task in an app
+
+- [#663](https://github.com/LedgerHQ/device-sdk-ts/pull/663) [`5c4a2d6`](https://github.com/LedgerHQ/device-sdk-ts/commit/5c4a2d624a4196f62051514ec211dca4c618023e) Thanks [@jiyuzhuang](https://github.com/jiyuzhuang)! - Add sendApdu in internal API interface
+
+- [#828](https://github.com/LedgerHQ/device-sdk-ts/pull/828) [`f7e2ad2`](https://github.com/LedgerHQ/device-sdk-ts/commit/f7e2ad2ea1267ab0d868a0c353e21832b0c659f4) Thanks [@paoun-ledger](https://github.com/paoun-ledger)! - Allow to skip opening the application
+
+- [#700](https://github.com/LedgerHQ/device-sdk-ts/pull/700) [`61b17b3`](https://github.com/LedgerHQ/device-sdk-ts/commit/61b17b3df1946b0f3f9370d7bacc243fdfd7880c) Thanks [@valpinkman](https://github.com/valpinkman)! - Update internalApi interface
+
 ## 1.1.0
 
 ### Patch Changes
