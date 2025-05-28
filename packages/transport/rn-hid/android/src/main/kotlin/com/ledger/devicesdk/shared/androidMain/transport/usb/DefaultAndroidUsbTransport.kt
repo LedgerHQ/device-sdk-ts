@@ -187,19 +187,30 @@ internal class DefaultAndroidUsbTransport(
                                 "Reconnecting device (sessionId=${deviceConnection.sessionId})"
                             )
                         )
-                        deviceConnection.handleDeviceConnected(
-                            AndroidUsbApduSender(
-                                dependencies = AndroidUsbApduSender.Dependencies(
-                                    usbDevice = usbDevice,
-                                    ledgerUsbDevice = state.ledgerUsbDevice,
-                                ),
-                                usbManager = usbManager,
-                                ioDispatcher = Dispatchers.IO,
-                                framerService = FramerService(loggerService),
-                                request = UsbRequest(),
-                                loggerService = loggerService
-                            )
+
+                        val apduSender = AndroidUsbApduSender(
+                            dependencies = AndroidUsbApduSender.Dependencies(
+                                usbDevice = usbDevice,
+                                ledgerUsbDevice = state.ledgerUsbDevice,
+                            ),
+                            usbManager = usbManager,
+                            ioDispatcher = Dispatchers.IO,
+                            framerService = FramerService(loggerService),
+                            request = UsbRequest(),
+                            loggerService = loggerService
                         )
+
+                        if (!usbConnectionsPendingReconnection.contains(deviceConnection)) {
+                            /**
+                             * We check this because maybe by the time we get here,
+                             * the reconnection has timed out and the session has been terminated.
+                             * Easy to reproduce for instance if the permission request requires
+                             * a user interaction.
+                             */
+                            apduSender.release()
+                            return@launch
+                        }
+                        deviceConnection.handleDeviceConnected(apduSender)
                         usbConnectionsPendingReconnection.remove(deviceConnection)
                         usbConnections[deviceConnection.sessionId] = deviceConnection
                     }
@@ -335,7 +346,9 @@ internal class DefaultAndroidUsbTransport(
     }
 
     override suspend fun disconnect(deviceId: String) {
+        // The DeviceConnection is either in usbConnections or usbConnectionsPendingReconnection
         usbConnections[deviceId]?.requestCloseConnection()
+        usbConnectionsPendingReconnection.find { it.sessionId == deviceId }?.requestCloseConnection()
     }
 
     private fun generateSessionId(usbDevice: UsbDevice): String = "usb_${usbDevice.deviceId}"
