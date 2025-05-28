@@ -45,6 +45,7 @@ class LoggerPublisherServiceStub implements LoggerPublisherService {
   error = vi.fn();
   warn = vi.fn();
   debug = vi.fn();
+  verbose = vi.fn();
   info = vi.fn();
 }
 

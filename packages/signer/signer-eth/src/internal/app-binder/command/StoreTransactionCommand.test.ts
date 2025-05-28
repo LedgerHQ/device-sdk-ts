@@ -3,18 +3,16 @@ import {
   isSuccessCommandResult,
 } from "@ledgerhq/device-management-kit";
 
-import { EthAppCommandError } from "./utils/ethAppErrors";
-import {
-  StoreTransactionCommand,
-  type StoreTransactionCommandArgs,
-} from "./StoreTransactionCommand";
+import { type ChunkableCommandArgs } from "@internal/app-binder/task/SendCommandInChunksTask";
 
+import { EthAppCommandError } from "./utils/ethAppErrors";
+import { StoreTransactionCommand } from "./StoreTransactionCommand";
 describe("StoreTransactionCommand", () => {
   describe("getApdu", () => {
     it("should return the raw APDU for the first chunk", () => {
       // GIVEN
-      const args: StoreTransactionCommandArgs = {
-        serializedTransaction: Uint8Array.from([0x01, 0x02, 0x03]),
+      const args: ChunkableCommandArgs = {
+        chunkedData: Uint8Array.from([0x01, 0x02, 0x03]),
         isFirstChunk: true,
       };
 
@@ -30,8 +28,8 @@ describe("StoreTransactionCommand", () => {
 
     it("should return the raw APDU for the subsequent chunk", () => {
       // GIVEN
-      const args: StoreTransactionCommandArgs = {
-        serializedTransaction: Uint8Array.from([0x04, 0x05, 0x06]),
+      const args: ChunkableCommandArgs = {
+        chunkedData: Uint8Array.from([0x04, 0x05, 0x06]),
         isFirstChunk: false,
       };
 
@@ -56,7 +54,7 @@ describe("StoreTransactionCommand", () => {
 
       // WHEN
       const command = new StoreTransactionCommand({
-        serializedTransaction: new Uint8Array(0),
+        chunkedData: new Uint8Array(0),
         isFirstChunk: true,
       });
       const result = command.parseResponse(response);
@@ -78,7 +76,7 @@ describe("StoreTransactionCommand", () => {
 
       // WHEN
       const command = new StoreTransactionCommand({
-        serializedTransaction: new Uint8Array(0),
+        chunkedData: new Uint8Array(0),
         isFirstChunk: true,
       });
       const result = command.parseResponse(response);

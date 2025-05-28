@@ -37,6 +37,7 @@ export class RNHidTransport implements Transport {
         [LogLevel.Error]: this._loggerService.error.bind(this._loggerService),
         [LogLevel.Warning]: this._loggerService.warn.bind(this._loggerService),
         [LogLevel.Info]: this._loggerService.info.bind(this._loggerService),
+        [LogLevel.Verbose]: this._loggerService.debug.bind(this._loggerService),
         [LogLevel.Debug]: this._loggerService.debug.bind(this._loggerService),
       }[logLevel];
       logMethod(message, options);

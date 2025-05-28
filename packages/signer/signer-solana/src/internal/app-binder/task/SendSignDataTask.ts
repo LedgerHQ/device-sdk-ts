@@ -10,16 +10,20 @@ import { type Signature } from "@api/model/Signature";
 import { type SolanaAppErrorCodes } from "@internal/app-binder/command/utils/SolanaApplicationErrors";
 
 import {
-  type CommandFactory,
+  type ChunkableCommandArgs,
   SendCommandInChunksTask,
+  type SendCommandInChunksTaskArgs,
 } from "./SendCommandInChunksTask";
 
 const PATH_SIZE = 4;
 
-type SignDataTaskArgs = {
+type SignDataTaskArgs<V extends ChunkableCommandArgs = ChunkableCommandArgs> = {
   sendingData: Uint8Array;
   derivationPath: string;
-  commandFactory: CommandFactory<Maybe<Signature | SolanaAppErrorCodes>>;
+  commandFactory: SendCommandInChunksTaskArgs<
+    Maybe<Signature | SolanaAppErrorCodes>,
+    V
+  >["commandFactory"];
 };
 
 export class SignDataTask {

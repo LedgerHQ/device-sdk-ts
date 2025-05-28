@@ -57,12 +57,14 @@ enum Type {
 export class SendEIP712StructDefinitionCommand
   implements Command<void, SendEIP712StructDefinitionCommandArgs, EthErrorCodes>
 {
+  readonly name = "SendEIP712StructDefinitionCommand";
+
   private readonly errorHelper = new CommandErrorHelper<void, EthErrorCodes>(
     ETH_APP_ERRORS,
     EthAppCommandErrorFactory,
   );
 
-  constructor(private args: SendEIP712StructDefinitionCommandArgs) {}
+  constructor(readonly args: SendEIP712StructDefinitionCommandArgs) {}
 
   getApdu(): Apdu {
     const SendEIP712StructDefinitionArgs: ApduBuilderArgs = {

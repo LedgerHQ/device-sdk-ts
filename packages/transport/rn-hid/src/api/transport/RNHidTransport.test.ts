@@ -56,6 +56,7 @@ describe("RNHidTransport", () => {
     warn: vi.fn(),
     info: vi.fn(),
     debug: vi.fn(),
+    verbose: vi.fn(),
     subscribers: [],
   };
   const loggerServiceFactory = vi.fn(() => fakeLogger);

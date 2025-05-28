@@ -34,16 +34,14 @@ export class SignOffChainMessageCommand
       SolanaAppErrorCodes
     >
 {
+  readonly name = "SignOffChainMessageCommand";
+
   private readonly errorHelper = new CommandErrorHelper<
     SignOffChainMessageCommandResponse,
     SolanaAppErrorCodes
   >(SOLANA_APP_ERRORS, SolanaAppCommandErrorFactory);
 
-  args: SignOffChainMessageCommandArgs;
-
-  constructor(args: SignOffChainMessageCommandArgs) {
-    this.args = args;
-  }
+  constructor(readonly args: SignOffChainMessageCommandArgs) {}
 
   getApdu(): Apdu {
     return new ApduBuilder({

@@ -59,7 +59,12 @@ export class ListLanguagePackCommand
       ListLanguagePackErrorCodes
     >
 {
-  constructor(private args: ListLanguagePackCommandArgs) {}
+  readonly name = "ListLanguagePackCommand";
+  readonly args: ListLanguagePackCommandArgs;
+
+  constructor(args: ListLanguagePackCommandArgs) {
+    this.args = args;
+  }
 
   getApdu(): Apdu {
     const apduArgs: ApduBuilderArgs = {

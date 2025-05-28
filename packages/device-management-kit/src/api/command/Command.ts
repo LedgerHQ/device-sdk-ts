@@ -12,10 +12,20 @@ import { type ApduResponse } from "@api/device-session/ApduResponse";
  */
 export interface Command<Response, Args = void, ErrorCodes = void> {
   /**
+   * The name of the command.
+   */
+  readonly name: string;
+
+  /**
    * Indicates whether the command triggers a disconnection from the device when
    * it succeeds.
    */
   readonly triggersDisconnection?: boolean;
+
+  /**
+   * The arguments for the command.
+   */
+  readonly args: Args;
 
   /**
    * Gets the APDU (Application Protocol Data Unit) for the command.
