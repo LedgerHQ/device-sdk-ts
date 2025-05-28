@@ -38,6 +38,8 @@ catalog:
   "@react-navigation/stack": ^7.1.1
   "@sentry/minimal": 6.19.7
   "@sentry/nextjs": ^8.42.0
+  "@solana/spl-token": "^0.4.13"
+  "@solana/web3.js": "^1.98.2"
   "@statelyai/inspect": ^0.4.0
   "@tsconfig/react-native": ^3.0.5
   "@tsconfig/recommended": ^1.0.8
