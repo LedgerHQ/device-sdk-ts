@@ -22,7 +22,6 @@ import com.ledger.devicesdk.shared.internal.service.logger.buildSimpleErrorLogIn
 import com.ledger.devicesdk.shared.internal.transport.framer.FramerService
 import com.ledger.devicesdk.shared.internal.transport.framer.to2BytesArray
 import kotlinx.coroutines.CoroutineDispatcher
-import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -36,7 +35,7 @@ private const val DEFAULT_USB_INTERFACE = 0
 
 internal class AndroidUsbApduSender(
     override val dependencies: Dependencies,
-    private val usbManager: UsbManager,
+    usbManager: UsbManager,
     private val framerService: FramerService,
     private val request: UsbRequest,
     private val ioDispatcher: CoroutineDispatcher,
@@ -47,49 +46,48 @@ internal class AndroidUsbApduSender(
         val ledgerUsbDevice: LedgerUsbDevice,
     )
 
+    private val usbDevice = dependencies.usbDevice
+    private val usbInterface = usbDevice.getInterface(DEFAULT_USB_INTERFACE)
+    private val androidToUsbEndpoint =
+        usbInterface.firstEndpointOrThrow { it == UsbConstants.USB_DIR_OUT }
+    private val usbToAndroidEndpoint =
+        usbInterface.firstEndpointOrThrow { it == UsbConstants.USB_DIR_IN }
+    private val usbConnection = usbManager.openDevice(usbDevice)
+        .apply { claimInterface(usbInterface, true) }
+
+
+    fun release() {
+        usbConnection.releaseInterface(usbInterface)
+        usbConnection.close()
+    }
+
     override suspend fun send(apdu: ByteArray, abortTimeoutDuration: Duration): SendApduResult =
         try {
-            val usbDevice = dependencies.usbDevice
             withContext(context = ioDispatcher) {
-                val usbInterface = usbDevice.getInterface(DEFAULT_USB_INTERFACE)
-                val androidToUsbEndpoint =
-                    usbInterface.firstEndpointOrThrow { it == UsbConstants.USB_DIR_OUT }
-                val usbToAndroidEndpoint =
-                    usbInterface.firstEndpointOrThrow { it == UsbConstants.USB_DIR_IN }
-                val usbConnection = usbManager.openDevice(usbDevice)
-                    .apply { claimInterface(usbInterface, true) }
 
                 val timeoutJob = launch {
                     delay(abortTimeoutDuration)
-                    usbConnection.releaseInterface(usbInterface)
-                    usbConnection.close()
                     throw SendApduTimeoutException
                 }
 
-                try {
+                transmitApdu(
+                    usbConnection = usbConnection,
+                    androidToUsbEndpoint = androidToUsbEndpoint,
+                    rawApdu = apdu,
+                )
 
-                    transmitApdu(
+                val apduResponse =
+                    receiveApdu(
                         usbConnection = usbConnection,
-                        androidToUsbEndpoint = androidToUsbEndpoint,
-                        rawApdu = apdu,
+                        usbToAndroidEndpoint = usbToAndroidEndpoint,
                     )
+                timeoutJob.cancel()
 
-                    val apduResponse =
-                        receiveApdu(
-                            usbConnection = usbConnection,
-                            usbToAndroidEndpoint = usbToAndroidEndpoint,
-                        )
-                    timeoutJob.cancel()
-
-                    if (apduResponse.isEmpty()) {
-                        return@withContext SendApduResult.Failure(reason = SendApduFailureReason.EmptyResponse)
-                    }
-
-                    return@withContext SendApduResult.Success(apdu = apduResponse)
-                } finally {
-                    usbConnection.releaseInterface(usbInterface)
-                    usbConnection.close()
+                if (apduResponse.isEmpty()) {
+                    return@withContext SendApduResult.Failure(reason = SendApduFailureReason.EmptyResponse)
                 }
+
+                return@withContext SendApduResult.Success(apdu = apduResponse)
             }
         } catch (e: SendApduTimeoutException) {
             loggerService.log(
@@ -132,8 +130,8 @@ internal class AndroidUsbApduSender(
     private fun receiveApdu(
         usbConnection: UsbDeviceConnection,
         usbToAndroidEndpoint: UsbEndpoint,
-    ): ByteArray =
-        if (!request.initialize(usbConnection, usbToAndroidEndpoint)) {
+    ): ByteArray {
+        return if (!request.initialize(usbConnection, usbToAndroidEndpoint)) {
             request.close()
             byteArrayOf()
         } else {
@@ -154,6 +152,7 @@ internal class AndroidUsbApduSender(
             }
             framerService.deserialize(mtu = USB_MTU, frames)
         }
+    }
 
     private fun UsbInterface.firstEndpointOrThrow(predicate: (Int) -> Boolean): UsbEndpoint {
         for (endp in 0..this.endpointCount) {
@@ -169,7 +168,7 @@ internal class AndroidUsbApduSender(
     private fun generateChannelId(): ByteArray =
         Random.nextInt(0, until = Int.MAX_VALUE).to2BytesArray()
 
-    private data object SendApduTimeoutException: Exception() {
+    private data object SendApduTimeoutException : Exception() {
         private fun readResolve(): Any = SendApduTimeoutException
     }
 }
