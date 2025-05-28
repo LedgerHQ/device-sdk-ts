@@ -3,6 +3,7 @@ package com.ledger.devicesdk.shared.androidMainInternal.transport.deviceconnecti
 import com.ledger.devicesdk.shared.api.apdu.SendApduFailureReason
 import com.ledger.devicesdk.shared.api.apdu.SendApduResult
 import com.ledger.devicesdk.shared.internal.service.logger.LoggerService
+import com.ledger.devicesdk.shared.internal.service.logger.buildSimpleDebugLogInfo
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
@@ -40,11 +41,16 @@ internal class DeviceConnectionStateMachine(
             }
         }
         this.state = newState
+        loggerService.log(buildSimpleDebugLogInfo("DeviceConnectionStateMachine", "-> New state: $newState"))
     }
 
     private fun handleEvent(event: Event) {
-        val currentState = state
-        when (currentState) {
+        val logMessage = """
+            -> Event received: $event
+               In state: $state
+        """.trimIndent()
+        loggerService.log(buildSimpleDebugLogInfo("DeviceConnectionStateMachine", logMessage))
+        when (val currentState = state) {
             is State.Connected -> {
                 when (event) {
                     is Event.SendApduRequested -> {
