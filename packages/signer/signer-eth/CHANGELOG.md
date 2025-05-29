@@ -1,5 +1,15 @@
 # @ledgerhq/device-signer-kit-ethereum
 
+## 1.5.0
+
+### Minor Changes
+
+- [#835](https://github.com/LedgerHQ/device-sdk-ts/pull/835) [`a41b9d1`](https://github.com/LedgerHQ/device-sdk-ts/commit/a41b9d1f7f357f55bc21e2951f9d7ef2adb13535) Thanks [@paoun-ledger](https://github.com/paoun-ledger)! - Add new API for EIP7702 in signer kit ETH
+
+### Patch Changes
+
+- [#854](https://github.com/LedgerHQ/device-sdk-ts/pull/854) [`ca84a7e`](https://github.com/LedgerHQ/device-sdk-ts/commit/ca84a7ee07eb3d709058ca92fae60b352b1aa981) Thanks [@paoun-ledger](https://github.com/paoun-ledger)! - GetChallenge is not supported on Nano S
+
 ## 1.4.0
 
 ### Minor Changes
