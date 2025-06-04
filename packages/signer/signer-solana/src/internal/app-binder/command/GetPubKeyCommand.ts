@@ -36,16 +36,14 @@ export class GetPubKeyCommand
   implements
     Command<GetPubKeyCommandResponse, GetPubKeyCommandArgs, SolanaAppErrorCodes>
 {
+  readonly name = "GetPubKeyCommand";
+
   private readonly errorHelper = new CommandErrorHelper<
     GetPubKeyCommandResponse,
     SolanaAppErrorCodes
   >(SOLANA_APP_ERRORS, SolanaAppCommandErrorFactory);
 
-  args: GetPubKeyCommandArgs;
-
-  constructor(args: GetPubKeyCommandArgs) {
-    this.args = args;
-  }
+  constructor(readonly args: GetPubKeyCommandArgs) {}
 
   getApdu(): Apdu {
     const getPubKeyArgs: ApduBuilderArgs = {

@@ -3,18 +3,16 @@ import {
   isSuccessCommandResult,
 } from "@ledgerhq/device-management-kit";
 
-import { EthAppCommandError } from "./utils/ethAppErrors";
-import {
-  ProvideTransactionInformationCommand,
-  type ProvideTransactionInformationCommandArgs,
-} from "./ProvideTransactionInformationCommand";
+import { type ChunkableCommandArgs } from "@internal/app-binder/task/SendCommandInChunksTask";
 
+import { EthAppCommandError } from "./utils/ethAppErrors";
+import { ProvideTransactionInformationCommand } from "./ProvideTransactionInformationCommand";
 describe("ProvideTransactionInformationCommand", () => {
   describe("getApdu", () => {
     it("should return the raw APDU for the first chunk", () => {
       // GIVEN
-      const args: ProvideTransactionInformationCommandArgs = {
-        data: Uint8Array.from([0x01, 0x02, 0x03]),
+      const args: ChunkableCommandArgs = {
+        chunkedData: Uint8Array.from([0x01, 0x02, 0x03]),
         isFirstChunk: true,
       };
 
@@ -30,8 +28,8 @@ describe("ProvideTransactionInformationCommand", () => {
 
     it("should return the raw APDU for the subsequent chunk", () => {
       // GIVEN
-      const args: ProvideTransactionInformationCommandArgs = {
-        data: Uint8Array.from([0x04, 0x05, 0x06]),
+      const args: ChunkableCommandArgs = {
+        chunkedData: Uint8Array.from([0x04, 0x05, 0x06]),
         isFirstChunk: false,
       };
 
@@ -56,7 +54,7 @@ describe("ProvideTransactionInformationCommand", () => {
 
       // WHEN
       const command = new ProvideTransactionInformationCommand({
-        data: new Uint8Array(0),
+        chunkedData: new Uint8Array(0),
         isFirstChunk: true,
       });
       const result = command.parseResponse(response);
@@ -79,7 +77,7 @@ describe("ProvideTransactionInformationCommand", () => {
 
       // WHEN
       const command = new ProvideTransactionInformationCommand({
-        data: new Uint8Array(0),
+        chunkedData: new Uint8Array(0),
         isFirstChunk: true,
       });
       const result = command.parseResponse(response);

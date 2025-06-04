@@ -156,9 +156,6 @@ export class BleDeviceConnection implements DeviceConnection {
     response
       .map((maybeApduResponse) => {
         maybeApduResponse.map((apduResponse) => {
-          this._logger.debug("Received APDU Response", {
-            data: { response: apduResponse },
-          });
           this._sendApduPromiseResolver.map(({ resolve }) =>
             resolve(Right(apduResponse)),
           );
@@ -202,9 +199,6 @@ export class BleDeviceConnection implements DeviceConnection {
     );
     for (const frame of frames) {
       try {
-        this._logger.debug("Sending Frame", {
-          data: { frame: frame.getRawData() },
-        });
         await this._writeCharacteristic.writeValueWithoutResponse(
           frame.getRawData(),
         );

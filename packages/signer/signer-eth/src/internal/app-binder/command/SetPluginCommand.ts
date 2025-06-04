@@ -27,12 +27,16 @@ export type SetPluginCommandArgs = {
 export class SetPluginCommand
   implements Command<void, SetPluginCommandArgs, EthErrorCodes>
 {
+  readonly name = "SetPluginCommand";
+
   private readonly errorHelper = new CommandErrorHelper<void, EthErrorCodes>(
     ETH_APP_ERRORS,
     EthAppCommandErrorFactory,
   );
 
-  constructor(private readonly args: SetPluginCommandArgs) {}
+  constructor(readonly args: SetPluginCommandArgs) {
+    this.args = args;
+  }
 
   getApdu(): Apdu {
     const apduBuilderArgs: ApduBuilderArgs = {

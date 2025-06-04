@@ -11,35 +11,25 @@ import {
 import { CommandErrorHelper } from "@ledgerhq/signer-utils";
 import { Maybe } from "purify-ts";
 
+import { type ChunkableCommandArgs } from "@internal/app-binder/task/SendCommandInChunksTask";
+
 import {
   ETH_APP_ERRORS,
   EthAppCommandErrorFactory,
   type EthErrorCodes,
 } from "./utils/ethAppErrors";
 
-export type ProvideTransactionFieldDescriptionCommandArgs = {
-  /**
-   * The field description data to provide in chunks
-   */
-  readonly data: Uint8Array;
-  /**
-   * If this is the first chunk of the message
-   */
-  readonly isFirstChunk: boolean;
-};
-
 export class ProvideTransactionFieldDescriptionCommand
-  implements
-    Command<void, ProvideTransactionFieldDescriptionCommandArgs, EthErrorCodes>
+  implements Command<void, ChunkableCommandArgs, EthErrorCodes>
 {
+  readonly name = "ProvideTransactionFieldDescriptionCommand";
+
   private readonly errorHelper = new CommandErrorHelper<void, EthErrorCodes>(
     ETH_APP_ERRORS,
     EthAppCommandErrorFactory,
   );
 
-  constructor(
-    private readonly args: ProvideTransactionFieldDescriptionCommandArgs,
-  ) {}
+  constructor(readonly args: ChunkableCommandArgs) {}
 
   getApdu(): Apdu {
     const ProvideTransactionFieldDescriptionArgs: ApduBuilderArgs = {
@@ -50,7 +40,7 @@ export class ProvideTransactionFieldDescriptionCommand
     };
 
     return new ApduBuilder(ProvideTransactionFieldDescriptionArgs)
-      .addBufferToData(this.args.data)
+      .addBufferToData(this.args.chunkedData)
       .build();
   }
 

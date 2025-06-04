@@ -27,6 +27,8 @@ export type Web3CheckOptInCommandResponse = {
 export class Web3CheckOptInCommand
   implements Command<Web3CheckOptInCommandResponse, void, EthErrorCodes>
 {
+  readonly name = "Web3CheckOptInCommand";
+  readonly args = undefined;
   private readonly errorHelper = new CommandErrorHelper<
     Web3CheckOptInCommandResponse,
     EthErrorCodes

@@ -43,6 +43,9 @@ export class GetCustomImageSizeCommand
   implements
     Command<GetCustomImageSizeResponse, void, GetCustomImageSizeErrorCodes>
 {
+  readonly name = "GetCustomImageSizeCommand";
+  readonly args = undefined;
+
   getApdu(): Apdu {
     const apduArgs: ApduBuilderArgs = {
       cla: 0xe0,
