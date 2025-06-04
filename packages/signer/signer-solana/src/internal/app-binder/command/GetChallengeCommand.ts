@@ -2,7 +2,6 @@
 import {
   type Apdu,
   ApduBuilder,
-  type ApduBuilderArgs,
   ApduParser,
   type ApduResponse,
   type Command,
@@ -19,6 +18,10 @@ import {
   type SolanaAppErrorCodes,
 } from "./utils/SolanaApplicationErrors";
 
+const CLA = 0xe0;
+const INS = 0x20;
+const P1 = 0x00;
+const P2 = 0x00;
 const CHALLENGE_LENGTH = 4;
 
 export type GetChallengeCommandResponse = {
@@ -33,16 +36,13 @@ export class GetChallengeCommand
     SolanaAppErrorCodes
   >(SOLANA_APP_ERRORS, SolanaAppCommandErrorFactory);
 
-  constructor() {}
-
   getApdu(): Apdu {
-    const getChallengeArgs: ApduBuilderArgs = {
-      cla: 0xe0,
-      ins: 0x20,
-      p1: 0x00,
-      p2: 0x00,
-    };
-    return new ApduBuilder(getChallengeArgs).build();
+    return new ApduBuilder({
+      cla: CLA,
+      ins: INS,
+      p1: P1,
+      p2: P2,
+    }).build();
   }
 
   parseResponse(
