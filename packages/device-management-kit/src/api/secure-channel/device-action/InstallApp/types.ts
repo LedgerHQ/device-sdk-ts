@@ -23,6 +23,7 @@ import { type SecureChannelEvent } from "@api/secure-channel/task/types";
 import { type Input } from "@api/secure-channel/types";
 import { type Application } from "@internal/manager-api/model/Application";
 import { type HttpFetchApiError } from "@internal/manager-api/model/Errors";
+import type { SecureChannelInstallDAErrors } from "@internal/secure-channel/model/Errors";
 
 export type InstallAppDAOutput = void;
 
@@ -33,6 +34,7 @@ export type InstallAppDAError =
   | CommandErrorResult["error"]
   | GoToDashboardDAError
   | HttpFetchApiError
+  | SecureChannelInstallDAErrors
   | UnknownDAError;
 
 export type InstallAppDARequiredInteraction =

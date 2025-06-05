@@ -403,6 +403,18 @@ export class UninstallAppDeviceAction extends XStateDeviceAction<
                       };
                   }
                 },
+                _internalState: (_) => {
+                  if (
+                    _.event.snapshot.context?.type ===
+                    SecureChannelEventType.Error
+                  ) {
+                    return {
+                      ..._.context._internalState,
+                      error: _.event.snapshot.context.error.mapDAErrors(),
+                    };
+                  }
+                  return _.context._internalState;
+                },
               }),
             },
             onDone: {
