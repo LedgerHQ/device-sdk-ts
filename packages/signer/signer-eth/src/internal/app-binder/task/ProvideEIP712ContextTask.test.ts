@@ -48,6 +48,7 @@ describe("ProvideEIP712ContextTask", () => {
     getContexts: vi.fn(),
     getTypedDataFilters: vi.fn(),
     getWeb3Checks: vi.fn(),
+    getSolanaContext: vi.fn(),
   };
 
   const TEST_TYPES = {
