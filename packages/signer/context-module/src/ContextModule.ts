@@ -1,6 +1,10 @@
 import { type ClearSignContext } from "@/shared/model/ClearSignContext";
 
 import {
+  type SolanaTransactionContext,
+  type SolanaTransactionContextResult,
+} from "./shared/model/SolanaTransactionContext";
+import {
   type TransactionContext,
   type TransactionFieldContext,
 } from "./shared/model/TransactionContext";
@@ -17,4 +21,7 @@ export interface ContextModule {
   getWeb3Checks(
     transactionContext: Web3CheckContext,
   ): Promise<ClearSignContext | null>;
+  getSolanaContext(
+    transactionContext: SolanaTransactionContext,
+  ): Promise<SolanaTransactionContextResult | null>;
 }
