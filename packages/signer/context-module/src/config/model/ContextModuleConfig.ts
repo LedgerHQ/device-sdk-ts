@@ -1,4 +1,5 @@
 import { type ContextLoader } from "@/shared/domain/ContextLoader";
+import { type SolanaContextLoader } from "@/solana/domain/SolanaContextLoader";
 import { type TypedDataContextLoader } from "@/typed-data/domain/TypedDataContextLoader";
 import { type Web3CheckContextLoader } from "@/web3-check/domain/Web3CheckContextLoader";
 
@@ -27,5 +28,6 @@ export type ContextModuleConfig = {
   customLoaders: ContextLoader[];
   customTypedDataLoader?: TypedDataContextLoader;
   customWeb3CheckLoader?: Web3CheckContextLoader;
+  customSolanaLoader?: SolanaContextLoader;
   originToken?: string;
 };
