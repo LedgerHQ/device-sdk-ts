@@ -13,11 +13,11 @@ catalog:
   "@babel/core": ^7.25.2
   "@babel/preset-env": ^7.25.3
   "@babel/runtime": ^7.26.10
-  "@changesets/changelog-github": 0.5.1
-  "@changesets/cli": 2.29.4
+  "@changesets/changelog-github": ^0.5.0
+  "@changesets/cli": ^2.27.12
   "@eslint/compat": 1.2.9
   "@eslint/core": 0.14.0
-  "@eslint/js": 9.27.0
+  "@eslint/js": 9.28.0
   "@inquirer/prompts": ^7.3.3
   "@ledgerhq/native-ui": ^0.27.1
   "@ledgerhq/react-ui": ^0.17.0
@@ -67,12 +67,12 @@ catalog:
   danger: 13.0.4
   esbuild: 0.25.4
   esbuild-node-externals: 1.18.0
-  eslint: 9.27.0
-  eslint-plugin-prettier: 5.4.0
+  eslint: 9.28.0
+  eslint-plugin-prettier: 5.4.1
   eslint-plugin-react: 7.37.5
   eslint-plugin-react-hooks: 5.2.0
   eslint-plugin-simple-import-sort: 12.1.1
-  ethers: 6.14.1
+  ethers: 6.13.4
   gitmoji-cli: ^9.5.0
   globals: 16.0.0
   hygen: ^6.2.11
@@ -113,7 +113,7 @@ catalog:
   tsc-alias: ^1.8.10
   turbo: ^2.3.3
   typescript: 5.8.3
-  typescript-eslint: 8.32.1
+  typescript-eslint: 8.33.0
   url: ^0.11.4
   util: ^0.12.5
   uuid: 11.0.3
