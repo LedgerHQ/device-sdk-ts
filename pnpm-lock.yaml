@@ -1017,6 +1017,9 @@ importers:
 
   packages/signer/signer-solana:
     dependencies:
+      '@ledgerhq/context-module':
+        specifier: workspace:*
+        version: link:../context-module
       '@ledgerhq/signer-utils':
         specifier: workspace:*
         version: link:../signer-utils
