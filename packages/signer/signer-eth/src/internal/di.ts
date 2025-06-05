@@ -7,6 +7,7 @@ import { Container } from "inversify";
 
 import { addressModuleFactory } from "@internal/address/di/addressModule";
 import { appBindingModuleFactory } from "@internal/app-binder/di/appBinderModule";
+import { eip7702ModuleFactory } from "@internal/eip7702/di/eip7702Module";
 import { externalTypes } from "@internal/externalTypes";
 import { messageModuleFactory } from "@internal/message/di/messageModule";
 import { transactionModuleFactory } from "@internal/transaction/di/transactionModule";
@@ -36,6 +37,7 @@ export const makeContainer = ({
   container.loadSync(
     addressModuleFactory(),
     appBindingModuleFactory(),
+    eip7702ModuleFactory(),
     messageModuleFactory(),
     transactionModuleFactory(),
     typedDataModuleFactory(),
