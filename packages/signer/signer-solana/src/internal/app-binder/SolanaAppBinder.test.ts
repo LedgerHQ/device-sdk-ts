@@ -1,3 +1,4 @@
+import { type ContextModule } from "@ledgerhq/context-module";
 import {
   type DeviceActionIntermediateValue,
   type DeviceActionState,
@@ -30,6 +31,9 @@ import { SignTransactionDeviceAction } from "./device-action/SignTransactionDevi
 import { SolanaAppBinder } from "./SolanaAppBinder";
 
 describe("SolanaAppBinder", () => {
+  // stub ContextModule for tests
+  const contextModuleStub: ContextModule = {} as ContextModule;
+
   const mockedDmk: DeviceManagementKit = {
     sendCommand: vi.fn(),
     executeDeviceAction: vi.fn(),
@@ -43,6 +47,7 @@ describe("SolanaAppBinder", () => {
     const binder = new SolanaAppBinder(
       {} as DeviceManagementKit,
       {} as DeviceSessionId,
+      contextModuleStub,
     );
     expect(binder).toBeDefined();
   });
@@ -68,7 +73,11 @@ describe("SolanaAppBinder", () => {
         });
 
         // WHEN
-        const appBinder = new SolanaAppBinder(mockedDmk, "sessionId");
+        const appBinder = new SolanaAppBinder(
+          mockedDmk,
+          "sessionId",
+          contextModuleStub,
+        );
         const { observable } = appBinder.getAddress({
           derivationPath: "44'/501'",
           checkOnDevice: false,
@@ -120,7 +129,11 @@ describe("SolanaAppBinder", () => {
         };
 
         // WHEN
-        const appBinder = new SolanaAppBinder(mockedDmk, "sessionId");
+        const appBinder = new SolanaAppBinder(
+          mockedDmk,
+          "sessionId",
+          contextModuleStub,
+        );
         appBinder.getAddress(params);
 
         // THEN
@@ -146,7 +159,11 @@ describe("SolanaAppBinder", () => {
         };
 
         // WHEN
-        const appBinder = new SolanaAppBinder(mockedDmk, "sessionId");
+        const appBinder = new SolanaAppBinder(
+          mockedDmk,
+          "sessionId",
+          contextModuleStub,
+        );
         appBinder.getAddress(params);
 
         // THEN
@@ -186,7 +203,11 @@ describe("SolanaAppBinder", () => {
         });
 
         // WHEN
-        const appBinder = new SolanaAppBinder(mockedDmk, "sessionId");
+        const appBinder = new SolanaAppBinder(
+          mockedDmk,
+          "sessionId",
+          contextModuleStub,
+        );
         const { observable } = appBinder.signTransaction({
           derivationPath: "44'/501'",
           transaction: new Uint8Array([0x01, 0x02, 0x03, 0x04]),
@@ -229,19 +250,28 @@ describe("SolanaAppBinder", () => {
       const skipOpenApp = false;
 
       // WHEN
-      const appBinder = new SolanaAppBinder(mockedDmk, "sessionId");
-      appBinder.signTransaction({ derivationPath, transaction, skipOpenApp });
+      const appBinder = new SolanaAppBinder(
+        mockedDmk,
+        "sessionId",
+        contextModuleStub,
+      );
+      appBinder.signTransaction({
+        derivationPath,
+        transaction,
+        skipOpenApp,
+      });
 
       // THEN
       expect(mockedDmk.executeDeviceAction).toHaveBeenCalledWith({
+        sessionId: "sessionId",
         deviceAction: new SignTransactionDeviceAction({
           input: {
             derivationPath,
             transaction,
             skipOpenApp,
+            contextModule: contextModuleStub,
           },
         }),
-        sessionId: "sessionId",
       });
     });
   });
@@ -272,7 +302,11 @@ describe("SolanaAppBinder", () => {
         });
 
         // WHEN
-        const appBinder = new SolanaAppBinder(mockedDmk, "sessionId");
+        const appBinder = new SolanaAppBinder(
+          mockedDmk,
+          "sessionId",
+          contextModuleStub,
+        );
         const { observable } = appBinder.signMessage(signMessageArgs);
 
         // THEN
@@ -326,7 +360,11 @@ describe("SolanaAppBinder", () => {
         });
 
         // WHEN
-        const appBinder = new SolanaAppBinder(mockedDmk, "sessionId");
+        const appBinder = new SolanaAppBinder(
+          mockedDmk,
+          "sessionId",
+          contextModuleStub,
+        );
         const { observable } = appBinder.getAppConfiguration();
 
         // THEN
@@ -361,7 +399,11 @@ describe("SolanaAppBinder", () => {
 
     it("should call executeDeviceAction with the correct params", () => {
       // GIVEN
-      const appBinder = new SolanaAppBinder(mockedDmk, "sessionId");
+      const appBinder = new SolanaAppBinder(
+        mockedDmk,
+        "sessionId",
+        contextModuleStub,
+      );
 
       // WHEN
       appBinder.getAppConfiguration();
@@ -371,7 +413,7 @@ describe("SolanaAppBinder", () => {
         sessionId: "sessionId",
         deviceAction: new SendCommandInAppDeviceAction({
           input: {
-            command: new GetAppConfigurationCommand(), // Correct command
+            command: new GetAppConfigurationCommand(),
             appName: "Solana",
             requiredUserInteraction: UserInteractionRequired.None,
             skipOpenApp: false,

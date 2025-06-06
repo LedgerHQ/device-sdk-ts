@@ -21,11 +21,9 @@ const CLA = 0xb0;
 const INS = 0x06;
 const P1 = 0x04;
 const P2 = 0x00;
-const FIXED_LENGTH_BYTES = 0x15;
 
 export type ProvideTrustedNamePKICommandArgs = {
-  descriptor: Uint8Array; // raw certificate blob
-  signature: Uint8Array; // raw signature bytes
+  pkiBlob: Uint8Array;
 };
 
 export class ProvideTrustedNamePKICommand
@@ -44,18 +42,13 @@ export class ProvideTrustedNamePKICommand
   }
 
   getApdu(): Apdu {
-    const { descriptor, signature } = this.args;
-
     return new ApduBuilder({
       cla: CLA,
       ins: INS,
       p1: P1,
       p2: P2,
     })
-      .addBufferToData(descriptor)
-      .add8BitUIntToData(FIXED_LENGTH_BYTES)
-      .add8BitUIntToData(signature.length)
-      .addBufferToData(signature)
+      .addBufferToData(this.args.pkiBlob)
       .build();
   }
 

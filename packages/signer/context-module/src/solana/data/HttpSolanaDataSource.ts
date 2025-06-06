@@ -5,25 +5,22 @@ import { Either, Left, Right } from "purify-ts";
 
 import { configTypes } from "@/config/di/configTypes";
 import type { ContextModuleConfig } from "@/config/model/ContextModuleConfig";
-import { pkiTypes } from "@/pki/di/pkiTypes";
-import { type PkiCertificateLoader } from "@/pki/domain/PkiCertificateLoader";
-import { KeyUsage } from "@/pki/model/KeyUsage";
 import { LEDGER_CLIENT_VERSION_HEADER } from "@/shared/constant/HttpHeaders";
 import {
   SolanaSPLOwnerInfo,
   type SolanaTransactionContext,
-  type SolanaTransactionContextResult,
 } from "@/solana/domain/solanaContextTypes";
 import PACKAGE from "@root/package.json";
 
-import { SolanaDataSource } from "./SolanaDataSource";
+import {
+  HttpSolanaDataSourceResult,
+  SolanaDataSource,
+} from "./SolanaDataSource";
 
 @injectable()
 export class HttpSolanaDataSource implements SolanaDataSource {
   constructor(
     @inject(configTypes.Config) private readonly config: ContextModuleConfig,
-    @inject(pkiTypes.PkiCertificateLoader)
-    private readonly _certificateLoader: PkiCertificateLoader,
   ) {
     if (!this.config.originToken) {
       throw new Error(
@@ -32,99 +29,133 @@ export class HttpSolanaDataSource implements SolanaDataSource {
     }
   }
 
-  async getSolanaContext(
-    context: SolanaTransactionContext,
-  ): Promise<Either<Error, SolanaTransactionContextResult>> {
-    const { deviceModelId, tokenAddress, challenge, createATA } = context;
+  private isSolanaSPLOwnerInfo(data: {
+    tokenAccount?: unknown;
+    owner?: unknown;
+    contract?: unknown;
+    signedDescriptor?: unknown;
+  }): data is SolanaSPLOwnerInfo {
+    if (typeof data !== "object" || data === null) return false;
+    return (
+      typeof data.tokenAccount === "string" &&
+      typeof data.owner === "string" &&
+      typeof data.contract === "string" &&
+      typeof data.signedDescriptor === "string"
+    );
+  }
 
-    let responseData: SolanaSPLOwnerInfo;
-
-    try {
-      if (tokenAddress) {
-        // fetch address
-        responseData = await axios
-          .request<SolanaSPLOwnerInfo>({
-            method: "GET",
-            url: `${this.config.web3checks.url}/solana/owner/${tokenAddress}?challenge=${challenge}`,
-            headers: {
-              [LEDGER_CLIENT_VERSION_HEADER]: `context-module/${PACKAGE.version}`,
-              "X-Ledger-Client-Origin": this.config.originToken,
-            },
-          })
-          .then((res) => res.data);
-      } else if (createATA) {
-        if (!createATA.address || !createATA.mintAddress) {
+  async fetchAddressMetadata(
+    tokenAddress: string,
+    challenge: string,
+  ): Promise<Either<Error, SolanaSPLOwnerInfo>> {
+    return await axios
+      .request<SolanaSPLOwnerInfo>({
+        method: "GET",
+        url: `${this.config.web3checks.url}/solana/owner/${tokenAddress}?challenge=${challenge}`,
+        headers: {
+          [LEDGER_CLIENT_VERSION_HEADER]: `context-module/${PACKAGE.version}`,
+          "X-Ledger-Client-Origin": this.config.originToken,
+        },
+      })
+      .then((res) => {
+        if (!this.isSolanaSPLOwnerInfo(res.data))
           return Left(
             new Error(
-              "[ContextModule] - HttpSolanaDataSource: missing address or mintAddress for ATA computation",
+              "[ContextModule] - HttpSolanaDataSource: invalid fetchAddressMetadata response shape",
             ),
           );
-        }
-        // compute address
-        responseData = await axios
-          .request<SolanaSPLOwnerInfo>({
-            method: "GET",
-            url: `${this.config.web3checks.url}/solana/computed-token-account/${createATA.address}/${createATA.mintAddress}?challenge=${challenge}`,
-            headers: {
-              [LEDGER_CLIENT_VERSION_HEADER]: `context-module/${PACKAGE.version}`,
-              "X-Ledger-Client-Origin": this.config.originToken,
-            },
-          })
-          .then((res) => res.data);
-      } else {
-        return Left(
+        return Right(res.data);
+      })
+      .catch(() =>
+        Left(
           new Error(
-            "[ContextModule] - HttpSolanaDataSource: either tokenAddress or createATA must be provided",
+            "[ContextModule] - HttpSolanaDataSource: Failed to fetch address metadata",
           ),
-        );
-      }
-    } catch (_error) {
+        ),
+      );
+  }
+
+  async computeAddressMetadata(
+    address: string,
+    mintAddress: string,
+    challenge: string,
+  ): Promise<Either<Error, SolanaSPLOwnerInfo>> {
+    return await axios
+      .request<SolanaSPLOwnerInfo>({
+        method: "GET",
+        url: `${this.config.web3checks.url}/solana/computed-token-account/${address}/${mintAddress}?challenge=${challenge}`,
+        headers: {
+          [LEDGER_CLIENT_VERSION_HEADER]: `context-module/${PACKAGE.version}`,
+          "X-Ledger-Client-Origin": this.config.originToken,
+        },
+      })
+      .then((res) => {
+        if (!this.isSolanaSPLOwnerInfo(res.data))
+          return Left(
+            new Error(
+              "[ContextModule] - HttpSolanaDataSource: invalid computeAddressMetadata response shape",
+            ),
+          );
+        return Right(res.data);
+      })
+      .catch(() =>
+        Left(
+          new Error(
+            "[ContextModule] - HttpSolanaDataSource: Failed to compute address metadata",
+          ),
+        ),
+      );
+  }
+
+  async getSolanaContext(
+    context: SolanaTransactionContext,
+  ): Promise<Either<Error, HttpSolanaDataSourceResult>> {
+    const { tokenAddress, challenge, createATA } = context;
+
+    if (!challenge) {
       return Left(
         new Error(
-          "[ContextModule] - HttpSolanaDataSource: Failed to fetch Solana address metadata",
+          "[ContextModule] - HttpSolanaDataSource: challenge is required",
         ),
       );
     }
 
-    // parse signedDescriptor (Base64) into Uint8Array
-    const descriptor = base64StringToBuffer(responseData.signedDescriptor);
-    if (!descriptor) {
+    let ownerInfoResult: Either<Error, SolanaSPLOwnerInfo>;
+
+    if (tokenAddress) {
+      ownerInfoResult = await this.fetchAddressMetadata(
+        tokenAddress,
+        challenge,
+      );
+    } else if (createATA?.address && createATA?.mintAddress) {
+      ownerInfoResult = await this.computeAddressMetadata(
+        createATA.address,
+        createATA.mintAddress,
+        challenge,
+      );
+    } else {
       return Left(
         new Error(
-          "[ContextModule] - HttpSolanaDataSource: invalid base64 descriptor received",
+          "[ContextModule] - HttpSolanaDataSource: either tokenAddress or valid createATA must be provided",
         ),
       );
     }
 
-    // fetch CAL certificate for ProvideTrustedNamePKICommand
-    try {
-      const certificate = await this._certificateLoader.loadCertificate({
-        keyId: "domain_metadata_key",
-        keyUsage: KeyUsage.TxSimulationSigner,
-        targetDevice: deviceModelId,
-      });
-
-      if (!certificate) {
+    return ownerInfoResult.chain((ownerInfo) => {
+      const descriptor = base64StringToBuffer(ownerInfo.signedDescriptor);
+      if (!descriptor) {
         return Left(
           new Error(
-            "[ContextModule] - HttpSolanaDataSource: CAL certificate is undefined",
+            "[ContextModule] - HttpSolanaDataSource: invalid base64 descriptor received",
           ),
         );
       }
-
       return Right({
         descriptor,
-        certificate,
-        tokenAccount: responseData.tokenAccount,
-        owner: responseData.owner,
-        contract: responseData.contract,
+        tokenAccount: ownerInfo.tokenAccount,
+        owner: ownerInfo.owner,
+        contract: ownerInfo.contract,
       });
-    } catch {
-      return Left(
-        new Error(
-          "[ContextModule] - HttpSolanaDataSource: failed to load CAL certificate",
-        ),
-      );
-    }
+    });
   }
 }

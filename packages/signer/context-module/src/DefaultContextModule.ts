@@ -1,4 +1,5 @@
 import { type Container } from "inversify";
+import { Left } from "purify-ts";
 
 import type { TypedDataClearSignContext } from "@/shared/model/TypedDataClearSignContext";
 import type { TypedDataContext } from "@/shared/model/TypedDataContext";
@@ -16,16 +17,14 @@ import {
   type ClearSignContextSuccess,
   ClearSignContextType,
 } from "./shared/model/ClearSignContext";
-import {
-  type SolanaTransactionContext,
-  type SolanaTransactionContextResult,
-} from "./shared/model/SolanaTransactionContext";
+import { type SolanaTransactionContext } from "./shared/model/SolanaTransactionContext";
 import {
   type TransactionContext,
   type TransactionFieldContext,
 } from "./shared/model/TransactionContext";
 import { solanaContextTypes } from "./solana/di/solanaContextTypes";
 import { type SolanaContextLoader } from "./solana/domain/SolanaContextLoader";
+import { type SolanaTransactionContextResult } from "./solana/domain/solanaContextTypes";
 import { tokenTypes } from "./token/di/tokenTypes";
 import { type TokenContextLoader } from "./token/domain/TokenContextLoader";
 import { type TransactionContextLoader } from "./transaction/domain/TransactionContextLoader";
@@ -93,9 +92,20 @@ export class DefaultContextModule implements ContextModule {
   }
 
   private _getSolanaLoader(): SolanaContextLoader {
-    return this._container.get<SolanaContextLoader>(
-      solanaContextTypes.SolanaContextLoader,
-    );
+    try {
+      return this._container.get<SolanaContextLoader>(
+        solanaContextTypes.SolanaContextLoader,
+      );
+    } catch {
+      return {
+        load: async (_ctx) =>
+          Left(
+            new Error(
+              "[ContextModule] - DefaultContextModule: no SolanaContextLoader bound",
+            ),
+          ),
+      };
+    }
   }
 
   public async getContexts(
@@ -144,12 +154,7 @@ export class DefaultContextModule implements ContextModule {
 
   public async getSolanaContext(
     transactionContext: SolanaTransactionContext,
-  ): Promise<SolanaTransactionContextResult | null> {
-    const solanaContext = await this._solanaLoader.load(transactionContext);
-
-    return solanaContext.caseOf({
-      Right: (context: SolanaTransactionContextResult) => context,
-      Left: () => null,
-    });
+  ): Promise<SolanaTransactionContextResult> {
+    return await this._solanaLoader.load(transactionContext);
   }
 }

@@ -14,25 +14,11 @@ import PACKAGE from "@root/package.json";
 
 vi.mock("axios");
 
-const createCertificateLoaderMock = () => ({
-  loadCertificate: vi.fn().mockResolvedValue({
-    descriptor: "Y2VydC1ibG9i",
-    signature: "Y2VydC1zaWduYXR1cmU=",
-  }),
-});
-
 describe("HttpSolanaDataSource", () => {
   const config = {
-    web3checks: {
-      url: "https://some.doma.in",
-    },
+    web3checks: { url: "https://some.doma.in" },
     originToken: "mock-origin-token",
   } as ContextModuleConfig;
-
-  const certificate = {
-    descriptor: "Y2VydC1ibG9i",
-    signature: "Y2VydC1zaWduYXR1cmU=",
-  };
 
   const signedDescriptorBase64 = btoa("mock-descriptor");
   const responseData = {
@@ -47,25 +33,20 @@ describe("HttpSolanaDataSource", () => {
   });
 
   it("should fetch address metadata via tokenAddress", async () => {
-    // given
     const context: SolanaTransactionContext = {
       deviceModelId: DeviceModelId.FLEX,
       tokenAddress: "some-token",
       challenge: "random",
       createATA: undefined,
     };
-    const workingCertLoader = createCertificateLoaderMock();
     vi.spyOn(axios, "request").mockResolvedValueOnce({ data: responseData });
 
-    // when
-    const dataSource = new HttpSolanaDataSource(config, workingCertLoader);
+    const dataSource = new HttpSolanaDataSource(config);
     const result = await dataSource.getSolanaContext(context);
 
-    // then
     expect(result.isRight()).toBe(true);
     expect(result.extract()).toEqual({
       descriptor: base64StringToBuffer(signedDescriptorBase64),
-      certificate,
       tokenAccount: "token-account",
       owner: "owner-address",
       contract: "contract-address",
@@ -73,7 +54,6 @@ describe("HttpSolanaDataSource", () => {
   });
 
   it("should compute address when tokenAddress is not provided", async () => {
-    // given
     const context: SolanaTransactionContext = {
       deviceModelId: DeviceModelId.FLEX,
       tokenAddress: undefined,
@@ -83,20 +63,16 @@ describe("HttpSolanaDataSource", () => {
         mintAddress: "some-mint",
       },
     };
-    const workingCertLoader = createCertificateLoaderMock();
     vi.spyOn(axios, "request").mockResolvedValueOnce({ data: responseData });
 
-    // when
-    const dataSource = new HttpSolanaDataSource(config, workingCertLoader);
+    const dataSource = new HttpSolanaDataSource(config);
     const result = await dataSource.getSolanaContext(context);
 
-    // then
     expect(result.isRight()).toBe(true);
     expect((result.extract() as any).tokenAccount).toBe("token-account");
   });
 
-  it("should return an error if both tokenAddress and createATA are missing", async () => {
-    // given
+  it("should return an error if both tokenAddress and createATA are missing or invalid", async () => {
     const context: SolanaTransactionContext = {
       deviceModelId: DeviceModelId.FLEX,
       tokenAddress: undefined,
@@ -104,54 +80,39 @@ describe("HttpSolanaDataSource", () => {
       createATA: undefined,
     };
 
-    // when
-    const dataSource = new HttpSolanaDataSource(
-      config,
-      createCertificateLoaderMock(),
-    );
+    const dataSource = new HttpSolanaDataSource(config);
     const result = await dataSource.getSolanaContext(context);
 
-    // then
     expect(result).toEqual(
       Left(
         new Error(
-          "[ContextModule] - HttpSolanaDataSource: either tokenAddress or createATA must be provided",
+          "[ContextModule] - HttpSolanaDataSource: either tokenAddress or valid createATA must be provided",
         ),
       ),
     );
   });
 
-  it("should return an error if ATA inputs are incomplete", async () => {
-    // given
+  it("should return an error if challenge is missing", async () => {
     const context: SolanaTransactionContext = {
       deviceModelId: DeviceModelId.FLEX,
-      tokenAddress: undefined,
-      challenge: "random",
-      createATA: {
-        address: undefined as any,
-        mintAddress: undefined as any,
-      },
+      tokenAddress: "some-token",
+      challenge: undefined,
+      createATA: undefined,
     };
 
-    // when
-    const dataSource = new HttpSolanaDataSource(
-      config,
-      createCertificateLoaderMock(),
-    );
+    const dataSource = new HttpSolanaDataSource(config);
     const result = await dataSource.getSolanaContext(context);
 
-    // then
     expect(result).toEqual(
       Left(
         new Error(
-          "[ContextModule] - HttpSolanaDataSource: missing address or mintAddress for ATA computation",
+          "[ContextModule] - HttpSolanaDataSource: challenge is required",
         ),
       ),
     );
   });
 
   it("should return an error if the descriptor is not valid base64", async () => {
-    // given
     vi.spyOn(axios, "request").mockResolvedValueOnce({
       data: { ...responseData, signedDescriptor: "!!!not-valid-base64!!!" },
     });
@@ -162,14 +123,9 @@ describe("HttpSolanaDataSource", () => {
       createATA: undefined,
     };
 
-    // when
-    const dataSource = new HttpSolanaDataSource(
-      config,
-      createCertificateLoaderMock(),
-    );
+    const dataSource = new HttpSolanaDataSource(config);
     const result = await dataSource.getSolanaContext(context);
 
-    // then
     expect(result).toEqual(
       Left(
         new Error(
@@ -179,38 +135,7 @@ describe("HttpSolanaDataSource", () => {
     );
   });
 
-  it("should return an error if CAL certificate is undefined", async () => {
-    // given
-    vi.spyOn(axios, "request").mockResolvedValueOnce({ data: responseData });
-    const failingCertLoader = {
-      loadCertificate: vi.fn().mockResolvedValue(undefined),
-    };
-    const context: SolanaTransactionContext = {
-      deviceModelId: DeviceModelId.FLEX,
-      tokenAddress: "some-token",
-      challenge: "random",
-      createATA: undefined,
-    };
-
-    // when
-    const dataSource = new HttpSolanaDataSource(
-      config,
-      failingCertLoader as any,
-    );
-    const result = await dataSource.getSolanaContext(context);
-
-    // then
-    expect(result).toEqual(
-      Left(
-        new Error(
-          "[ContextModule] - HttpSolanaDataSource: CAL certificate is undefined",
-        ),
-      ),
-    );
-  });
-
   it("should return an error if the metadata request fails", async () => {
-    // given
     vi.spyOn(axios, "request").mockRejectedValueOnce(
       new Error("Network error"),
     );
@@ -221,29 +146,23 @@ describe("HttpSolanaDataSource", () => {
       createATA: undefined,
     };
 
-    // when
-    const dataSource = new HttpSolanaDataSource(
-      config,
-      createCertificateLoaderMock(),
-    );
+    const dataSource = new HttpSolanaDataSource(config);
     const result = await dataSource.getSolanaContext(context);
 
-    // then
     expect(result).toEqual(
       Left(
         new Error(
-          "[ContextModule] - HttpSolanaDataSource: Failed to fetch Solana address metadata",
+          "[ContextModule] - HttpSolanaDataSource: Failed to fetch address metadata",
         ),
       ),
     );
   });
 
-  it("should return an error if CAL certificate throws", async () => {
-    // given
-    vi.spyOn(axios, "request").mockResolvedValueOnce({ data: responseData });
-    const throwingCertLoader = {
-      loadCertificate: vi.fn().mockRejectedValue(new Error("CAL error")),
-    };
+  it("should return an error if axios request return wrong shape for fetchAddressMetadata", async () => {
+    vi.spyOn(axios, "request").mockResolvedValueOnce({
+      data: { wrong: "field" },
+    });
+
     const context: SolanaTransactionContext = {
       deviceModelId: DeviceModelId.FLEX,
       tokenAddress: "some-token",
@@ -251,37 +170,54 @@ describe("HttpSolanaDataSource", () => {
       createATA: undefined,
     };
 
-    // when
-    const dataSource = new HttpSolanaDataSource(
-      config,
-      throwingCertLoader as any,
-    );
+    const dataSource = new HttpSolanaDataSource(config);
     const result = await dataSource.getSolanaContext(context);
 
-    // then
     expect(result).toEqual(
       Left(
         new Error(
-          "[ContextModule] - HttpSolanaDataSource: failed to load CAL certificate",
+          "[ContextModule] - HttpSolanaDataSource: invalid fetchAddressMetadata response shape",
+        ),
+      ),
+    );
+  });
+
+  it("should return an error if axios request return wrong shape for computeAddressMetadata", async () => {
+    vi.spyOn(axios, "request").mockResolvedValueOnce({
+      data: { wrong: "field" },
+    });
+
+    const context: SolanaTransactionContext = {
+      deviceModelId: DeviceModelId.FLEX,
+      tokenAddress: undefined,
+      challenge: "random",
+      createATA: {
+        address: "some-address",
+        mintAddress: "some-mint",
+      },
+    };
+
+    const dataSource = new HttpSolanaDataSource(config);
+    const result = await dataSource.getSolanaContext(context);
+
+    expect(result).toEqual(
+      Left(
+        new Error(
+          "[ContextModule] - HttpSolanaDataSource: invalid computeAddressMetadata response shape",
         ),
       ),
     );
   });
 
   it("should throw if originToken is missing", () => {
-    // given / when / then
     expect(() => {
-      new HttpSolanaDataSource(
-        { ...config, originToken: undefined },
-        createCertificateLoaderMock(),
-      );
+      new HttpSolanaDataSource({ ...config, originToken: undefined } as any);
     }).toThrow(
       "[ContextModule] - HttpSolanaDataSource: origin token is required",
     );
   });
 
   it("should call axios with correct headers", async () => {
-    // given
     const context: SolanaTransactionContext = {
       deviceModelId: DeviceModelId.FLEX,
       tokenAddress: "some-token",
@@ -292,14 +228,9 @@ describe("HttpSolanaDataSource", () => {
       .spyOn(axios, "request")
       .mockResolvedValueOnce({ data: responseData });
 
-    // when
-    const dataSource = new HttpSolanaDataSource(
-      config,
-      createCertificateLoaderMock(),
-    );
+    const dataSource = new HttpSolanaDataSource(config);
     await dataSource.getSolanaContext(context);
 
-    // then
     expect(spy).toHaveBeenCalledWith(
       expect.objectContaining({
         headers: {

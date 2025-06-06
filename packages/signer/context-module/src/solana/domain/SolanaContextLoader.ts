@@ -1,5 +1,3 @@
-import { type Either } from "purify-ts";
-
 import {
   type SolanaTransactionContext,
   type SolanaTransactionContextResult,
@@ -8,5 +6,5 @@ import {
 export interface SolanaContextLoader {
   load(
     SolanaContext: SolanaTransactionContext,
-  ): Promise<Either<Error, SolanaTransactionContextResult>>;
+  ): Promise<SolanaTransactionContextResult>;
 }

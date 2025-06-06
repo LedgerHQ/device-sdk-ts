@@ -1,15 +1,13 @@
 import { type ClearSignContext } from "@/shared/model/ClearSignContext";
 
-import {
-  type SolanaTransactionContext,
-  type SolanaTransactionContextResult,
-} from "./shared/model/SolanaTransactionContext";
+import { type SolanaTransactionContext } from "./shared/model/SolanaTransactionContext";
 import {
   type TransactionContext,
   type TransactionFieldContext,
 } from "./shared/model/TransactionContext";
 import { type TypedDataClearSignContext } from "./shared/model/TypedDataClearSignContext";
 import { type TypedDataContext } from "./shared/model/TypedDataContext";
+import { type SolanaTransactionContextResult } from "./solana/domain/solanaContextTypes";
 import { type Web3CheckContext } from "./web3-check/domain/web3CheckTypes";
 
 export interface ContextModule {
@@ -23,5 +21,5 @@ export interface ContextModule {
   ): Promise<ClearSignContext | null>;
   getSolanaContext(
     transactionContext: SolanaTransactionContext,
-  ): Promise<SolanaTransactionContextResult | null>;
+  ): Promise<SolanaTransactionContextResult>;
 }

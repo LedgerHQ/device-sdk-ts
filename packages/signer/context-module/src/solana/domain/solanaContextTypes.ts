@@ -1,4 +1,5 @@
 import { type DeviceModelId } from "@ledgerhq/device-management-kit";
+import { type Either } from "purify-ts";
 
 import { type PkiCertificate } from "@/pki/model/PkiCertificate";
 
@@ -19,10 +20,15 @@ export type SolanaSPLOwnerInfo = {
   signedDescriptor: string;
 };
 
-export type SolanaTransactionContextResult = {
+export type SolanaTransactionContextResultSuccess = {
   descriptor: Uint8Array;
-  certificate: PkiCertificate;
   tokenAccount: string;
   owner: string;
   contract: string;
+  certificate: PkiCertificate;
 };
+
+export type SolanaTransactionContextResult = Either<
+  Error,
+  SolanaTransactionContextResultSuccess
+>;

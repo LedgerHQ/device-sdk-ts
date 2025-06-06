@@ -43,6 +43,7 @@
     "inversify": "catalog:",
     "purify-ts": "catalog:",
     "reflect-metadata": "catalog:",
+    "semver": "catalog:",
     "xstate": "catalog:"
   },
   "devDependencies": {
@@ -52,6 +53,7 @@
     "@ledgerhq/prettier-config-dsdk": "workspace:*",
     "@ledgerhq/tsconfig-dsdk": "workspace:*",
     "@ledgerhq/vitest-config-dmk": "workspace:*",
+    "@types/semver": "catalog:",
     "rxjs": "catalog:",
     "ts-node": "catalog:"
   },

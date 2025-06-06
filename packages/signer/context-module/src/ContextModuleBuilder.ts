@@ -6,6 +6,7 @@ import {
   type ContextModuleWeb3ChecksConfig,
 } from "./config/model/ContextModuleConfig";
 import { type ContextLoader } from "./shared/domain/ContextLoader";
+import { type SolanaContextLoader } from "./solana/domain/SolanaContextLoader";
 import { type TypedDataContextLoader } from "./typed-data/domain/TypedDataContextLoader";
 import { type Web3CheckContextLoader } from "./web3-check/domain/Web3CheckContextLoader";
 import { type ContextModule } from "./ContextModule";
@@ -30,6 +31,7 @@ export const DEFAULT_CONFIG: ContextModuleConfig = {
   defaultLoaders: true,
   customLoaders: [],
   customTypedDataLoader: undefined,
+  customSolanaLoader: undefined,
 };
 
 export class ContextModuleBuilder {
@@ -82,6 +84,17 @@ export class ContextModuleBuilder {
   addWeb3CheckLoader(loader: Web3CheckContextLoader) {
     this.needOriginToken = false;
     this.config.customWeb3CheckLoader = loader;
+    return this;
+  }
+
+  /**
+   * Replace the default loader for Solana context
+   *
+   * @param loader loader to use for Solana context
+   * @returns this
+   */
+  addSolanaLoader(loader: SolanaContextLoader) {
+    this.config.customSolanaLoader = loader;
     return this;
   }
 
