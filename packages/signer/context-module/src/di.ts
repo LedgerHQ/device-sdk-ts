@@ -3,6 +3,7 @@ import { Container } from "inversify";
 import { configModuleFactory } from "@/config/di/configModuleFactory";
 import { type ContextModuleConfig } from "@/config/model/ContextModuleConfig";
 import { externalPluginModuleFactory } from "@/external-plugin/di/externalPluginModuleFactory";
+import { networkModuleFactory } from "@/network/di/networkModuleFactory";
 import { nftModuleFactory } from "@/nft/di/nftModuleFactory";
 import { nanoPkiModuleFactory } from "@/pki/di/pkiModuleFactory";
 import { tokenModuleFactory } from "@/token/di/tokenModuleFactory";
@@ -22,6 +23,7 @@ export const makeContainer = ({ config }: MakeContainerArgs) => {
   container.loadSync(
     configModuleFactory(config),
     externalPluginModuleFactory(),
+    networkModuleFactory(),
     nftModuleFactory(),
     tokenModuleFactory(),
     transactionModuleFactory(),
