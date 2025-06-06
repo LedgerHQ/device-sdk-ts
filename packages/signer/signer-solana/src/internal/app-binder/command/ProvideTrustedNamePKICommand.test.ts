@@ -12,6 +12,10 @@ const INS = 0x06;
 const P1 = 0x04;
 const P2 = 0x00;
 
+const pkiBlob = Uint8Array.from([
+  0xde, 0xad, 0xbe, 0xef, 0x15, 0x02, 0x01, 0x02,
+]);
+
 const EXPECTED_APDU = Uint8Array.from([
   CLA,
   INS,
@@ -32,10 +36,7 @@ describe("ProvideTrustedNamePKICommand", () => {
   let command: ProvideTrustedNamePKICommand;
 
   beforeEach(() => {
-    command = new ProvideTrustedNamePKICommand({
-      descriptor: Uint8Array.from([0xde, 0xad, 0xbe, 0xef]),
-      signature: Uint8Array.from([0x01, 0x02]),
-    });
+    command = new ProvideTrustedNamePKICommand({ pkiBlob });
   });
 
   describe("getApdu", () => {
@@ -72,7 +73,7 @@ describe("ProvideTrustedNamePKICommand", () => {
     it("should return an error if response contains unexpected data", () => {
       const LNX_RESPONSE_EXTRA = {
         statusCode: Uint8Array.from([0x90, 0x00]),
-        data: Uint8Array.from([0x00]),
+        data: Uint8Array.from([0x00]), // extra byte
       };
 
       const result = command.parseResponse(LNX_RESPONSE_EXTRA);
