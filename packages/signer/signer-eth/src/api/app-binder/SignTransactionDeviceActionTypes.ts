@@ -2,6 +2,7 @@ import {
   type ClearSignContextSuccess,
   type ClearSignContextType,
   type ContextModule,
+  type NetworkConfigurationLoader,
 } from "@ledgerhq/context-module";
 import {
   type CommandErrorResult,
@@ -27,6 +28,7 @@ export enum SignTransactionDAStep {
   WEB3_CHECKS_OPT_IN = "signer.eth.steps.web3ChecksOptIn",
   WEB3_CHECKS_OPT_IN_RESULT = "signer.eth.steps.web3ChecksOptInResult",
   BUILD_CONTEXT = "signer.eth.steps.buildContext",
+  PROVIDE_NETWORK_CONFIGURATION = "signer.eth.steps.provideNetworkConfiguration",
   PROVIDE_CONTEXT = "signer.eth.steps.provideContext",
   PROVIDE_GENERIC_CONTEXT = "signer.eth.steps.provideGenericContext",
   SIGN_TRANSACTION = "signer.eth.steps.signTransaction",
@@ -40,6 +42,7 @@ export type SignTransactionDAInput = {
   readonly mapper: TransactionMapperService;
   readonly parser: TransactionParserService;
   readonly contextModule: ContextModule;
+  readonly networkConfigurationLoader?: NetworkConfigurationLoader;
   readonly options: TransactionOptions;
 };
 
