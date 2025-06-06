@@ -3,10 +3,10 @@ import {
   type PkiCertificate,
 } from "@ledgerhq/context-module";
 import {
-  DeviceModelId,
   type InternalApi,
   isSuccessCommandResult,
 } from "@ledgerhq/device-management-kit";
+import { type Either } from "purify-ts";
 
 import { type TransactionOptions } from "@api/model/TransactionOptions";
 import { GetChallengeCommand } from "@internal/app-binder/command/GetChallengeCommand";
@@ -33,46 +33,34 @@ export class BuildTransactionContextTask {
     private readonly args: BuildTransactionContextTaskArgs,
   ) {}
 
-  async run(): Promise<SolanaBuildContextResult> {
+  async run(): Promise<Either<Error, SolanaBuildContextResult>> {
     const { contextModule, options } = this.args;
     const deviceState = this.api.getDeviceSessionState();
 
-    let challenge: string | undefined = undefined;
-    if (deviceState.deviceModelId !== DeviceModelId.NANO_S) {
-      const challengeRes = await this.api.sendCommand(
-        new GetChallengeCommand(),
-      );
-
-      if (isSuccessCommandResult(challengeRes)) {
-        challenge = challengeRes.data.challenge;
-      } else {
-        throw new Error(
-          "[signer-solana] - BuildTransactionContextTask: Failed to get challenge from device.",
-        );
-      }
+    // get challenge
+    let challenge: string | undefined;
+    const challengeRes = await this.api.sendCommand(new GetChallengeCommand());
+    if (isSuccessCommandResult(challengeRes)) {
+      challenge = challengeRes.data.challenge;
     }
 
-    const contextResult = await contextModule.getSolanaContext({
+    // fetch the Solana context
+    const eitherContext = await contextModule.getSolanaContext({
       deviceModelId: deviceState.deviceModelId,
       tokenAddress: options.tokenAddress,
       challenge,
       createATA: options.createATA,
     });
 
-    if (contextResult === null) {
-      throw new Error(
-        "[signer-solana] - BuildTransactionContextTask: Solana context not available",
-      );
-    }
-
-    const { certificate, tokenAccount, owner, contract, descriptor } =
-      contextResult;
-
-    return {
+    return eitherContext.map((ctx) => ({
       challenge,
-      descriptor,
-      addressResult: { tokenAccount, owner, contract },
-      calCertificate: certificate,
-    };
+      descriptor: ctx.descriptor,
+      addressResult: {
+        tokenAccount: ctx.tokenAccount,
+        owner: ctx.owner,
+        contract: ctx.contract,
+      },
+      calCertificate: ctx.certificate,
+    }));
   }
 }

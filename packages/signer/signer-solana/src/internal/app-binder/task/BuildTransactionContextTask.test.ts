@@ -1,14 +1,19 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { type ContextModule } from "@ledgerhq/context-module";
 import {
   CommandResultStatus,
   DeviceModelId,
   type InternalApi,
 } from "@ledgerhq/device-management-kit";
-import { beforeEach, describe, expect, it, type Mock, vi } from "vitest";
+import { Left, Right } from "purify-ts";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { GetChallengeCommand } from "@internal/app-binder/command/GetChallengeCommand";
 
-import { BuildTransactionContextTask } from "./BuildTransactionContextTask";
+import {
+  BuildTransactionContextTask,
+  type SolanaBuildContextResult,
+} from "./BuildTransactionContextTask";
 
 const contextModuleMock: ContextModule = {
   getSolanaContext: vi.fn(),
@@ -26,16 +31,13 @@ const defaultArgs = {
   },
 };
 
-const solanaContextResult = {
+const domainSolanaPayload = {
   descriptor: new Uint8Array([1, 2, 3]),
-  certificate: {
-    payload: new Uint8Array([0xaa, 0xbb]),
-    keyUsageNumber: 1,
-  },
   tokenAccount: "someTokenAccount",
   owner: "someOwner",
   contract: "someContract",
-};
+  certificate: { payload: new Uint8Array([0xaa, 0xbb]), keyUsageNumber: 1 },
+} as const;
 
 let apiMock: InternalApi;
 
@@ -44,9 +46,9 @@ describe("BuildTransactionContextTask", () => {
     vi.resetAllMocks();
 
     apiMock = {
-      getDeviceSessionState: vi.fn().mockReturnValue({
-        deviceModelId: DeviceModelId.NANO_X,
-      }),
+      getDeviceSessionState: vi
+        .fn()
+        .mockReturnValue({ deviceModelId: DeviceModelId.NANO_X }),
       sendCommand: vi.fn().mockResolvedValue({
         status: CommandResultStatus.Success,
         data: { challenge: "someChallenge" },
@@ -54,23 +56,18 @@ describe("BuildTransactionContextTask", () => {
     } as unknown as InternalApi;
   });
 
-  it("should return a context with challenge and descriptor", async () => {
-    // GIVEN
-    (apiMock.sendCommand as Mock).mockResolvedValue({
-      status: CommandResultStatus.Success,
-      data: { challenge: "someChallenge" },
-    });
-
-    (contextModuleMock.getSolanaContext as Mock).mockResolvedValue(
-      solanaContextResult,
+  it("returns Right with context on success", async () => {
+    // given
+    (contextModuleMock.getSolanaContext as any).mockResolvedValue(
+      Right(domainSolanaPayload),
     );
 
     const task = new BuildTransactionContextTask(apiMock, defaultArgs);
 
-    // WHEN
+    // when
     const result = await task.run();
 
-    // THEN
+    // then
     expect(apiMock.sendCommand).toHaveBeenCalledWith(
       expect.any(GetChallengeCommand),
     );
@@ -81,67 +78,68 @@ describe("BuildTransactionContextTask", () => {
       createATA: undefined,
     });
 
-    expect(result).toEqual({
+    expect(result.isRight()).toBe(true);
+    expect(result.extract()).toEqual<SolanaBuildContextResult>({
       challenge: "someChallenge",
-      descriptor: solanaContextResult.descriptor,
-      calCertificate: solanaContextResult.certificate,
+      descriptor: domainSolanaPayload.descriptor,
+      calCertificate: domainSolanaPayload.certificate,
       addressResult: {
-        tokenAccount: "someTokenAccount",
-        owner: "someOwner",
-        contract: "someContract",
+        tokenAccount: domainSolanaPayload.tokenAccount,
+        owner: domainSolanaPayload.owner,
+        contract: domainSolanaPayload.contract,
       },
     });
   });
 
-  it("should skip challenge for Nano S", async () => {
-    // GIVEN
-    (apiMock.getDeviceSessionState as Mock).mockReturnValue({
-      deviceModelId: DeviceModelId.NANO_S,
-    });
-
-    (contextModuleMock.getSolanaContext as Mock).mockResolvedValue(
-      solanaContextResult,
-    );
-
-    const task = new BuildTransactionContextTask(apiMock, defaultArgs);
-
-    // WHEN
-    const result = await task.run();
-
-    // THEN
-    expect(apiMock.sendCommand).not.toHaveBeenCalled();
-    expect(result.challenge).toBeUndefined();
-  });
-
-  it("should throw if challenge command fails", async () => {
-    // GIVEN
-    (apiMock.sendCommand as Mock).mockResolvedValue({
+  it("skips setting challenge if challenge command fails and still calls getSolanaContext", async () => {
+    // given
+    (apiMock.sendCommand as any).mockResolvedValue({
       status: CommandResultStatus.Error,
       data: {},
     });
+    (contextModuleMock.getSolanaContext as any).mockResolvedValue(
+      Right(domainSolanaPayload),
+    );
 
     const task = new BuildTransactionContextTask(apiMock, defaultArgs);
 
-    // WHEN / THEN
-    await expect(task.run()).rejects.toThrow(
-      "[signer-solana] - BuildTransactionContextTask: Failed to get challenge from device.",
-    );
+    // when
+    const result = await task.run();
+
+    // then
+    expect(contextModuleMock.getSolanaContext).toHaveBeenCalledWith({
+      deviceModelId: DeviceModelId.NANO_X,
+      tokenAddress: "someAddress",
+      challenge: undefined,
+      createATA: undefined,
+    });
+    expect(result.isRight()).toBe(true);
+    expect(result.extract()).toEqual<SolanaBuildContextResult>({
+      challenge: undefined,
+      descriptor: domainSolanaPayload.descriptor,
+      calCertificate: domainSolanaPayload.certificate,
+      addressResult: {
+        tokenAccount: domainSolanaPayload.tokenAccount,
+        owner: domainSolanaPayload.owner,
+        contract: domainSolanaPayload.contract,
+      },
+    });
   });
 
-  it("should throw if solana context is null", async () => {
-    // GIVEN
-    (apiMock.sendCommand as Mock).mockResolvedValue({
-      status: CommandResultStatus.Success,
-      data: { challenge: "someChallenge" },
-    });
-
-    (contextModuleMock.getSolanaContext as Mock).mockResolvedValue(null);
+  it("returns Left if solana context returns Left", async () => {
+    // given
+    const dsError = new Error("Solana DS failure");
+    (contextModuleMock.getSolanaContext as any).mockResolvedValue(
+      Left(dsError),
+    );
 
     const task = new BuildTransactionContextTask(apiMock, defaultArgs);
 
-    // WHEN / THEN
-    await expect(task.run()).rejects.toThrow(
-      "[signer-solana] - BuildTransactionContextTask: Solana context not available",
-    );
+    // when
+    const result = await task.run();
+
+    // then
+    expect(result.isLeft()).toBe(true);
+    expect(result.extract()).toBe(dsError);
   });
 });
