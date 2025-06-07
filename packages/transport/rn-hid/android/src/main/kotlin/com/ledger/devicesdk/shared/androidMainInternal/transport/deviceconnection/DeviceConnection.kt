@@ -24,9 +24,9 @@ internal class DeviceConnection<Dependencies>(
 
     init {
         stateMachine = DeviceConnectionStateMachine(
-            sendApduFn = {
+            sendApduFn = { apdu, abortTimeoutDuration ->
                 coroutineScope.launch {
-                    val res = deviceApduSender.send(it)
+                    val res = deviceApduSender.send(apdu, abortTimeoutDuration)
                     handleApduResult(res)
                 }
             },
@@ -66,12 +66,13 @@ internal class DeviceConnection<Dependencies>(
         stateMachine.handleDeviceDisconnected()
     }
 
-    public suspend fun requestSendApdu(apdu: ByteArray): SendApduResult =
+    public suspend fun requestSendApdu(apdu: ByteArray, triggersDisconnection: Boolean, abortTimeoutDuration: Duration): SendApduResult =
         suspendCoroutine { cont ->
             stateMachine.requestSendApdu(
                 DeviceConnectionStateMachine.SendApduRequestContent(
                     apdu = apdu,
-                    triggersDisconnection = apduTriggersDisconnection(apdu),
+                    triggersDisconnection = apduTriggersDisconnection(apdu) || triggersDisconnection,
+                    abortTimeoutDuration = abortTimeoutDuration,
                     resultCallback = cont::resume
                 )
             )

@@ -11,6 +11,7 @@ import kotlinx.coroutines.test.runTest
 import kotlin.time.Duration.Companion.seconds
 import kotlin.test.Test
 import org.junit.Assert.*
+import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
 
 /**
@@ -34,7 +35,7 @@ class DeviceConnectionTest {
         )
 
         // Request sending an APDU
-        deviceConnection.requestSendApdu(mockedApdu)
+        deviceConnection.requestSendApdu(apdu=mockedApdu, triggersDisconnection = false, abortTimeoutDuration = Duration.INFINITE)
 
         // Send APDU should have been called once with the correct apdu
         assertEquals(1, apduSender.sendCalls.size)
@@ -59,7 +60,7 @@ class DeviceConnectionTest {
                 )
 
                 // Request sending an apdu
-                val result1 = deviceConnection.requestSendApdu(apduTriggeringDisconnection)
+                val result1 = deviceConnection.requestSendApdu(apdu=apduTriggeringDisconnection, triggersDisconnection = false, abortTimeoutDuration = Duration.INFINITE)
 
                 // apduSender1.sendApdu should have been called once with the correct apdu
                 assertEquals(1, apduSender1.sendCalls.size)
@@ -70,7 +71,7 @@ class DeviceConnectionTest {
 
                 // Request sending a second apdu
                 val result2 = async {
-                    deviceConnection.requestSendApdu(mockedApdu)
+                    deviceConnection.requestSendApdu(apdu = mockedApdu, triggersDisconnection = false, abortTimeoutDuration = Duration.INFINITE)
                 }
 
                 // apduSender1.sendApdu shouldn't have been called again
@@ -139,7 +140,7 @@ class DeviceConnectionTest {
 
             // Request sending an APDU
             val result = async {
-                deviceConnection.requestSendApdu(mockedApdu)
+                deviceConnection.requestSendApdu(apdu = mockedApdu, triggersDisconnection = false, abortTimeoutDuration = Duration.INFINITE)
             }
 
             // Simulate reconnection
@@ -202,7 +203,10 @@ class DeviceConnectionTest {
             val sendCalls: MutableList<ByteArray>
                 get() = _sendCalls
 
-            override suspend fun send(apdu: ByteArray): SendApduResult {
+            override suspend fun send(
+                apdu: ByteArray,
+                abortTimeoutDuration: Duration
+            ): SendApduResult {
                 _sendCalls += apdu
                 return nextResult
             }

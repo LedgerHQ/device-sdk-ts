@@ -12,7 +12,7 @@ import kotlinx.coroutines.launch
 import kotlin.time.Duration
 
 internal class DeviceConnectionStateMachine(
-    private val sendApduFn: (apdu: ByteArray) -> Unit,
+    private val sendApduFn: (apdu: ByteArray, abortTimeoutDuration: Duration) -> Unit,
     private val onTerminated: () -> Unit,
     private val isFatalSendApduFailure: (SendApduResult.Failure) -> Boolean,
     private val reconnectionTimeoutDuration: Duration,
@@ -29,7 +29,7 @@ internal class DeviceConnectionStateMachine(
         when (newState) {
             is State.Connected -> {}
             is State.SendingApdu -> {
-                sendApduFn(newState.requestContent.apdu)
+                sendApduFn(newState.requestContent.apdu, newState.requestContent.abortTimeoutDuration)
             }
 
             is State.WaitingForReconnection -> {
@@ -280,6 +280,7 @@ internal class DeviceConnectionStateMachine(
     data class SendApduRequestContent(
         val apdu: ByteArray,
         val triggersDisconnection: Boolean,
+        val abortTimeoutDuration: Duration,
         val resultCallback: (SendApduResult) -> Unit
     )
 
