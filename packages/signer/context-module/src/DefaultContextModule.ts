@@ -17,9 +17,15 @@ import {
   ClearSignContextType,
 } from "./shared/model/ClearSignContext";
 import {
+  type SolanaTransactionContext,
+  type SolanaTransactionContextResult,
+} from "./shared/model/SolanaTransactionContext";
+import {
   type TransactionContext,
   type TransactionFieldContext,
 } from "./shared/model/TransactionContext";
+import { solanaContextTypes } from "./solana/di/solanaContextTypes";
+import { type SolanaContextLoader } from "./solana/domain/SolanaContextLoader";
 import { tokenTypes } from "./token/di/tokenTypes";
 import { type TokenContextLoader } from "./token/domain/TokenContextLoader";
 import { type TransactionContextLoader } from "./transaction/domain/TransactionContextLoader";
@@ -42,6 +48,7 @@ export class DefaultContextModule implements ContextModule {
   private _loaders: ContextLoader[];
   private _typedDataLoader: TypedDataContextLoader;
   private _web3CheckLoader: Web3CheckContextLoader;
+  private _solanaLoader: SolanaContextLoader;
 
   constructor(args: ContextModuleConfig) {
     this._container = makeContainer({ config: args });
@@ -51,6 +58,7 @@ export class DefaultContextModule implements ContextModule {
       args.customTypedDataLoader ?? this._getDefaultTypedDataLoader();
     this._web3CheckLoader =
       args.customWeb3CheckLoader ?? this._getWeb3CheckLoader();
+    this._solanaLoader = args.customSolanaLoader ?? this._getSolanaLoader();
   }
 
   private _getDefaultLoaders(): ContextLoader[] {
@@ -81,6 +89,12 @@ export class DefaultContextModule implements ContextModule {
   private _getWeb3CheckLoader(): Web3CheckContextLoader {
     return this._container.get<Web3CheckContextLoader>(
       web3CheckTypes.Web3CheckContextLoader,
+    );
+  }
+
+  private _getSolanaLoader(): SolanaContextLoader {
+    return this._container.get<SolanaContextLoader>(
+      solanaContextTypes.SolanaContextLoader,
     );
   }
 
@@ -124,6 +138,17 @@ export class DefaultContextModule implements ContextModule {
         payload: checks.descriptor,
         certificate: checks.certificate,
       }),
+      Left: () => null,
+    });
+  }
+
+  public async getSolanaContext(
+    transactionContext: SolanaTransactionContext,
+  ): Promise<SolanaTransactionContextResult | null> {
+    const solanaContext = await this._solanaLoader.load(transactionContext);
+
+    return solanaContext.caseOf({
+      Right: (context: SolanaTransactionContextResult) => context,
       Left: () => null,
     });
   }

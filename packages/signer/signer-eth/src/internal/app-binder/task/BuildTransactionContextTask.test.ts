@@ -31,6 +31,7 @@ describe("BuildTransactionContextTask", () => {
     getContexts: vi.fn(),
     getTypedDataFilters: vi.fn(),
     getWeb3Checks: vi.fn(),
+    getSolanaContext: vi.fn(),
   };
   const mapperMock = {
     mapTransactionToSubset: vi.fn(),
