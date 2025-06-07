@@ -68,6 +68,7 @@ export const Sidebar: React.FC = () => {
         setVersion("");
       });
   }, [dmk]);
+
   const onDeviceDisconnect = useCallback(
     async (sessionId: string) => {
       try {

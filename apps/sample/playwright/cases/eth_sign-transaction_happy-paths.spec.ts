@@ -40,7 +40,7 @@ test.describe("ETH Signer: sign transaction, happy paths", () => {
     });
 
     await test.step("When execute ETH: sign transaction", async () => {
-      await whenNavigateTo(page, "/signer");
+      await whenNavigateTo(page, "/signers");
 
       await whenClicking(page, "CTA_command-Ethereum");
 
@@ -79,7 +79,7 @@ test.describe("ETH Signer: sign transaction, happy paths", () => {
     });
 
     await test.step("When execute ETH: sign transaction", async () => {
-      await whenNavigateTo(page, "/signer");
+      await whenNavigateTo(page, "/signers");
 
       await whenClicking(page, "CTA_command-Ethereum");
 

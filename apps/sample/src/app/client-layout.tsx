@@ -18,6 +18,7 @@ import { Sidebar } from "@/components/Sidebar";
 import { DmkProvider } from "@/providers/DeviceManagementKitProvider";
 import { DeviceSessionsProvider } from "@/providers/DeviceSessionsProvider";
 import { DmkConfigProvider } from "@/providers/DmkConfig";
+import { LedgerKeyringProtocolProvider } from "@/providers/LedgerKeyringProvider";
 import { SignerEthProvider } from "@/providers/SignerEthProvider";
 import { GlobalStyle } from "@/styles/globalstyles";
 
@@ -41,23 +42,25 @@ const ClientRootLayout: React.FC<PropsWithChildren> = ({ children }) => {
       <DmkConfigProvider>
         <DmkProvider>
           <DeviceSessionsProvider>
-            <SignerEthProvider>
-              <StyleProvider selectedPalette="dark" fontsPath="/fonts">
-                <GlobalStyle />
-                <head>
-                  <link rel="shortcut icon" href="../favicon.png" />
-                </head>
-                <body>
-                  <Root>
-                    <Sidebar />
-                    <PageContainer>
-                      <Header />
-                      {children}
-                    </PageContainer>
-                  </Root>
-                </body>
-              </StyleProvider>
-            </SignerEthProvider>
+            <LedgerKeyringProtocolProvider>
+              <SignerEthProvider>
+                <StyleProvider selectedPalette="dark" fontsPath="/fonts">
+                  <GlobalStyle />
+                  <head>
+                    <link rel="shortcut icon" href="../favicon.png" />
+                  </head>
+                  <body>
+                    <Root>
+                      <Sidebar />
+                      <PageContainer>
+                        <Header />
+                        {children}
+                      </PageContainer>
+                    </Root>
+                  </body>
+                </StyleProvider>
+              </SignerEthProvider>
+            </LedgerKeyringProtocolProvider>
           </DeviceSessionsProvider>
         </DmkProvider>
       </DmkConfigProvider>
