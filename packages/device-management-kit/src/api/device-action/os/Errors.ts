@@ -27,6 +27,24 @@ export class UnsupportedFirmwareDAError implements DmkError {
   }
 }
 
+export class RefusedByUserDAError implements DmkError {
+  readonly _tag = "RefusedByUserDAError";
+  readonly originalError?: Error;
+
+  constructor(message?: string) {
+    this.originalError = new Error(message ?? "Unknown error.");
+  }
+}
+
+export class AppAlreadyInstalledDAError implements DmkError {
+  readonly _tag = "AppAlreadyInstalledDAError";
+  readonly originalError?: Error;
+
+  constructor(message?: string) {
+    this.originalError = new Error(message ?? "Unknown error.");
+  }
+}
+
 export class OutOfMemoryDAError implements DmkError {
   readonly _tag = "OutOfMemoryDAError";
   readonly originalError?: Error;

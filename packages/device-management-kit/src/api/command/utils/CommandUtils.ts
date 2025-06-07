@@ -18,7 +18,48 @@ export class CommandUtils {
       return false;
     }
 
-    return statusCode[0] === 0x55 && statusCode[1] === 0x15;
+    return (
+      (statusCode[0] === 0x55 && statusCode[1] === 0x15) ||
+      (statusCode[0] === 0x69 && statusCode[1] === 0x82) ||
+      (statusCode[0] === 0x53 && statusCode[1] === 0x03)
+    );
+  }
+
+  static isRefusedByUser({ statusCode }: ApduResponse) {
+    if (!CommandUtils.isValidStatusCode(statusCode)) {
+      return false;
+    }
+
+    return (
+      (statusCode[0] === 0x55 && statusCode[1] === 0x01) ||
+      (statusCode[0] === 0x69 && statusCode[1] === 0x85)
+    );
+  }
+
+  static isAppAlreadyInstalled({ statusCode }: ApduResponse) {
+    if (!CommandUtils.isValidStatusCode(statusCode)) {
+      return false;
+    }
+
+    return (
+      (statusCode[0] === 0x6a && statusCode[1] === 0x80) ||
+      (statusCode[0] === 0x6a && statusCode[1] === 0x81) ||
+      (statusCode[0] === 0x6a && statusCode[1] === 0x8e) ||
+      (statusCode[0] === 0x6a && statusCode[1] === 0x8f)
+    );
+  }
+
+  static isOutOfMemory({ statusCode }: ApduResponse) {
+    if (!CommandUtils.isValidStatusCode(statusCode)) {
+      return false;
+    }
+
+    return (
+      (statusCode[0] === 0x6a && statusCode[1] === 0x84) ||
+      (statusCode[0] === 0x6a && statusCode[1] === 0x85) ||
+      (statusCode[0] === 0x51 && statusCode[1] === 0x02) ||
+      (statusCode[0] === 0x51 && statusCode[1] === 0x03)
+    );
   }
 
   static isApduThatTriggersDisconnection(apdu: Uint8Array) {

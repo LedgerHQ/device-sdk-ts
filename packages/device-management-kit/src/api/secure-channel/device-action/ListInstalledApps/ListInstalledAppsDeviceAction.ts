@@ -338,6 +338,14 @@ export class ListInstalledAppsDeviceAction extends XStateDeviceAction<
                 _internalState: (_) => {
                   if (
                     _.event.snapshot.context?.type ===
+                    SecureChannelEventType.Error
+                  ) {
+                    return {
+                      ..._.context._internalState,
+                      error: _.event.snapshot.context.error.mapDAErrors(),
+                    };
+                  } else if (
+                    _.event.snapshot.context?.type ===
                     SecureChannelEventType.Result
                   ) {
                     if (

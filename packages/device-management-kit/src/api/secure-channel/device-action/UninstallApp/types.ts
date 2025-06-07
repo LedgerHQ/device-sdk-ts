@@ -19,6 +19,7 @@ import { type SecureChannelEvent } from "@api/secure-channel/task/types";
 import { type Input } from "@api/secure-channel/types";
 import { type Application } from "@internal/manager-api/model/Application";
 import { type HttpFetchApiError } from "@internal/manager-api/model/Errors";
+import type { SecureChannelDAErrors } from "@internal/secure-channel/model/Errors";
 
 export type UninstallAppDAOutput = void;
 
@@ -28,7 +29,8 @@ export type UninstallAppDAError =
   | CommandErrorResult["error"]
   | GoToDashboardDAError
   | HttpFetchApiError
-  | UnknownDAError;
+  | UnknownDAError
+  | SecureChannelDAErrors;
 
 export type UninstallAppDARequiredInteraction =
   | UserInteractionRequired.None

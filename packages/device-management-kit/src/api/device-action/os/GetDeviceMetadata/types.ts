@@ -21,6 +21,7 @@ import {
   type ListInstalledAppsDARequiredInteraction,
 } from "@api/secure-channel/device-action/ListInstalledApps/types";
 import { type Application } from "@internal/manager-api/model/Application";
+import { type SecureChannelDAErrors } from "@internal/secure-channel/model/Errors";
 
 export type GetDeviceMetadataDAOutput = {
   readonly firmwareVersion: FirmwareVersion;
@@ -41,6 +42,7 @@ export type GetDeviceMetadataDAError =
   | GoToDashboardDAError
   | ListAppsDAError
   | ListInstalledAppsDAError
+  | SecureChannelDAErrors
   | CommandErrorResult["error"];
 
 export type GetDeviceMetadataDARequiredInteraction =

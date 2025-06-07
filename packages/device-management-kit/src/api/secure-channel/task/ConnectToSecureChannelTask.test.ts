@@ -7,7 +7,10 @@ import {
   type SecureChannelEvent,
   SecureChannelEventType,
 } from "@api/secure-channel/task/types";
-import { SecureChannelError } from "@internal/secure-channel/model/Errors";
+import {
+  SecureChannelError,
+  SecureChannelErrorType,
+} from "@internal/secure-channel/model/Errors";
 
 import {
   ConnectToSecureChannelTask,
@@ -37,6 +40,12 @@ describe("ConnectToSecureChannelTask", () => {
   let taskArgs: ConnectToSecureChannelTaskArgs;
   let task: ConnectToSecureChannelTask;
   const sendApduFn = vi.fn();
+  const mockMessage = {
+    uuid: "5b776c8d-8af2-48c0-8250-04edca2ef5e9",
+    session: "39ce749e-00a4-4c31-a697-1dc1a29e2cab",
+    query: "success",
+    nonce: 15,
+  };
 
   beforeEach(() => {
     // vi.useFakeTimers({ shouldAdvanceTime: true });
@@ -44,7 +53,7 @@ describe("ConnectToSecureChannelTask", () => {
     mockWebSocket = new WebSocket("wss://test-host.com");
     mockInternalApi = {
       sendApdu: sendApduFn,
-      disableRefresher: vi.fn(),
+      disableRefresher: (_: unknown) => vi.fn(),
     } as unknown as InternalApi;
     taskArgs = { connection: Right(mockWebSocket) };
     task = new ConnectToSecureChannelTask(mockInternalApi, taskArgs);
@@ -70,6 +79,35 @@ describe("ConnectToSecureChannelTask", () => {
     expect(events).toStrictEqual([{ type: SecureChannelEventType.Opened }]);
   });
 
+  it("Error on wrongly formatted message", async () => {
+    const events: SecureChannelEvent[] = [];
+    const obs = task.run();
+    obs.subscribe({
+      next: (event) => {
+        events.push(event);
+      },
+    });
+
+    expect(mockWebSocket.onmessage).toBeDefined();
+    mockWebSocket.onmessage!({
+      data: "invalidData",
+      type: "",
+      target: {} as WebSocket,
+    });
+
+    await new Promise((resolve) => setTimeout(resolve, TEST_DELAY));
+
+    expect(events).toStrictEqual([
+      {
+        type: SecureChannelEventType.Error,
+        error: new SecureChannelError({
+          url: "wss://test-host.com",
+          errorMessage: "Invalid message received: invalidData",
+        }),
+      },
+    ]);
+  });
+
   it("should handle incoming EXCHANGE message including requesting user permission", async () => {
     sendApduFn.mockResolvedValue(
       Right({
@@ -92,6 +130,7 @@ describe("ConnectToSecureChannelTask", () => {
     expect(mockWebSocket.onmessage).toBeDefined();
     mockWebSocket.onmessage!({
       data: JSON.stringify({
+        ...mockMessage,
         query: "exchange",
         nonce: 1,
         data: "e051000000",
@@ -135,6 +174,65 @@ describe("ConnectToSecureChannelTask", () => {
     ]);
   });
 
+  it("should handle incoming EXCHANGE message with a device error", async () => {
+    sendApduFn.mockResolvedValue(
+      Right({
+        data: new Uint8Array([]),
+        statusCode: new Uint8Array([0x55, 0x15]),
+      }),
+    );
+
+    const sendSpy = vi.spyOn(mockWebSocket, "send");
+    const events: SecureChannelEvent[] = [];
+    const obs = task.run();
+    obs.subscribe({
+      next: (event) => {
+        events.push(event);
+      },
+    });
+
+    expect(mockWebSocket.onmessage).toBeDefined();
+    mockWebSocket.onmessage!({
+      data: JSON.stringify({
+        ...mockMessage,
+        query: "exchange",
+        nonce: 1,
+        data: "e053000000",
+      }),
+      type: "",
+      target: {} as WebSocket,
+    });
+
+    await new Promise((resolve) => setTimeout(resolve, TEST_DELAY));
+
+    expect(sendSpy).toHaveBeenCalledExactlyOnceWith(
+      JSON.stringify({
+        nonce: 1,
+        response: "error",
+        data: "",
+      }),
+    );
+    expect(events).toStrictEqual([
+      {
+        type: SecureChannelEventType.PreExchange,
+        payload: {
+          nonce: 1,
+          apdu: new Uint8Array([0xe0, 0x53, 0x00, 0x00, 0x00]),
+        },
+      },
+      {
+        type: SecureChannelEventType.Error,
+        error: new SecureChannelError(
+          {
+            url: "wss://test-host.com",
+            errorMessage: "Device is locked",
+          },
+          SecureChannelErrorType.DeviceLocked,
+        ),
+      },
+    ]);
+  });
+
   it("should handle incoming BULK message", async () => {
     sendApduFn.mockResolvedValue(
       Right({
@@ -155,6 +253,7 @@ describe("ConnectToSecureChannelTask", () => {
     expect(mockWebSocket.onmessage).toBeDefined();
     mockWebSocket.onmessage!({
       data: JSON.stringify({
+        ...mockMessage,
         query: "bulk",
         nonce: 1,
         data: ["0000000100", "0000000200", "0000000300"],
@@ -183,6 +282,53 @@ describe("ConnectToSecureChannelTask", () => {
     expect(completeFn).toHaveBeenCalledOnce();
   });
 
+  it("should handle incoming BULK message with a device error", async () => {
+    sendApduFn.mockResolvedValue(
+      Right({
+        data: new Uint8Array([]),
+        statusCode: new Uint8Array([0x55, 0x01]),
+      }),
+    );
+    const completeFn: () => void = vi.fn();
+    const obs = task.run();
+    const events: SecureChannelEvent[] = [];
+    obs.subscribe({
+      next: (event: SecureChannelEvent) => {
+        events.push(event);
+      },
+      complete: () => completeFn(),
+    });
+
+    expect(mockWebSocket.onmessage).toBeDefined();
+    mockWebSocket.onmessage!({
+      data: JSON.stringify({
+        ...mockMessage,
+        query: "bulk",
+        nonce: 1,
+        data: ["0000000100", "0000000200", "0000000300"],
+      }),
+      type: "",
+      target: {} as WebSocket,
+    });
+
+    await new Promise((resolve) => setTimeout(resolve, TEST_DELAY));
+
+    expect(sendApduFn).toHaveBeenCalledTimes(1);
+    expect(events).toStrictEqual([
+      {
+        type: SecureChannelEventType.Error,
+        error: new SecureChannelError(
+          {
+            url: "wss://test-host.com",
+            errorMessage: "User refused on the device",
+          },
+          SecureChannelErrorType.RefusedByUser,
+        ),
+      },
+    ]);
+    expect(completeFn).toHaveBeenCalledOnce();
+  });
+
   it("should handle incoming SUCCESS message", () => {
     const completeFn: () => void = vi.fn();
     const events: SecureChannelEvent[] = [];
@@ -194,6 +340,7 @@ describe("ConnectToSecureChannelTask", () => {
 
     mockWebSocket.onmessage!({
       data: JSON.stringify({
+        ...mockMessage,
         query: "success",
         nonce: 1,
         result: "success result",
@@ -218,6 +365,7 @@ describe("ConnectToSecureChannelTask", () => {
     expect(mockWebSocket.onmessage).toBeDefined();
     mockWebSocket.onmessage!({
       data: JSON.stringify({
+        ...mockMessage,
         query: "warning",
         nonce: 1,
         data: "warning message",
@@ -235,24 +383,31 @@ describe("ConnectToSecureChannelTask", () => {
   });
 
   it("should handle incoming ERROR message", () => {
-    const errorFn = vi.fn();
+    const events: SecureChannelEvent[] = [];
     const observable = task.run();
     observable.subscribe({
-      error: (err) => {
-        expect(err).toBeInstanceOf(SecureChannelError);
-        errorFn(err);
-      },
+      next: (event: SecureChannelEvent) => events.push(event),
     });
 
     expect(mockWebSocket.onmessage).toBeDefined();
     mockWebSocket.onmessage!({
       data: JSON.stringify({
+        ...mockMessage,
         query: "error",
+        data: "My error",
       }),
       type: "",
       target: {} as WebSocket,
     });
 
-    expect(errorFn).toHaveBeenCalled();
+    expect(events).toStrictEqual([
+      {
+        type: SecureChannelEventType.Error,
+        error: new SecureChannelError({
+          url: "wss://test-host.com",
+          errorMessage: "My error",
+        }),
+      },
+    ]);
   });
 });

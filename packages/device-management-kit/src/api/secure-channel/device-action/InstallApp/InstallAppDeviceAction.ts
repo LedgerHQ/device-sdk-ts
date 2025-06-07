@@ -395,6 +395,19 @@ export class InstallAppDeviceAction extends XStateDeviceAction<
                   }
                   return { ..._.context.intermediateValue };
                 },
+                _internalState: (_) => {
+                  if (
+                    _.event.snapshot.context?.type ===
+                    SecureChannelEventType.Error
+                  ) {
+                    return {
+                      ..._.context._internalState,
+                      error:
+                        _.event.snapshot.context.error.mapInstallDAErrors(),
+                    };
+                  }
+                  return _.context._internalState;
+                },
               }),
             },
             onDone: {
