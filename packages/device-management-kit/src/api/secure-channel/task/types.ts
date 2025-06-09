@@ -1,3 +1,5 @@
+import { type SecureChannelError } from "@internal/secure-channel/model/Errors";
+
 export enum SecureChannelOperationEnum {
   GenuineCheck = "GenuineCheck",
   ListInstalledApps = "ListInstalledApps",
@@ -15,7 +17,7 @@ export type InMessageType = {
   session: string;
   query: InMessageQueryEnum;
   nonce: number;
-  data: string | Array<string>;
+  data: unknown;
   result?: unknown;
 };
 
@@ -54,6 +56,7 @@ export enum SecureChannelEventType {
   Exchange = "exchange",
   Progress = "progress",
   Warning = "warning",
+  Error = "error",
   Result = "result",
 }
 
@@ -104,6 +107,10 @@ export type SecureChannelEvent =
   | {
       type: SecureChannelEventType.Warning;
       payload: SecureChannelEventPayload["Warning"];
+    }
+  | {
+      type: SecureChannelEventType.Error;
+      error: SecureChannelError;
     }
   | {
       type: SecureChannelEventType.Result;

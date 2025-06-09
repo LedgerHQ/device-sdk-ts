@@ -19,6 +19,7 @@ import { type Input } from "@api/secure-channel/types";
 import { type DeviceVersion } from "@internal/manager-api/model/Device";
 import { type HttpFetchApiError } from "@internal/manager-api/model/Errors";
 import { type FinalFirmware } from "@internal/manager-api/model/Firmware";
+import type { SecureChannelDAErrors } from "@internal/secure-channel/model/Errors";
 
 export type ListInstalledAppsDAOutput = {
   installedApps: Array<InstalledApp>;
@@ -30,6 +31,7 @@ export type ListInstalledAppsDAError =
   | CommandErrorResult["error"]
   | GoToDashboardDAError
   | HttpFetchApiError
+  | SecureChannelDAErrors
   | UnknownDAError;
 
 export type ListInstalledAppsDARequiredInteraction =

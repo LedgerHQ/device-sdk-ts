@@ -13,6 +13,7 @@ import type { GoToDashboardDARequiredInteraction } from "@api/device-action/os/G
 import type { GoToDashboardDAInput } from "@api/device-action/os/GoToDashboard/types";
 import type { InstallAppDAError } from "@api/secure-channel/device-action/InstallApp/types";
 import type { Application } from "@internal/manager-api/model/Application";
+import type { SecureChannelInstallDAErrors } from "@internal/secure-channel/model/Errors";
 
 /**
  * An application version used as application constraint should either be a valid semantic versioning formatted
@@ -80,6 +81,7 @@ export type InstallOrUpdateAppsDAError =
   | InstallAppDAError
   | OutOfMemoryDAError
   | UnsupportedFirmwareDAError
+  | SecureChannelInstallDAErrors
   | CommandErrorResult["error"];
 
 export type InstallOrUpdateAppsDARequiredInteraction =
