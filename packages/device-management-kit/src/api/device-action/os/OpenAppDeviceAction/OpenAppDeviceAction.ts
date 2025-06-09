@@ -24,6 +24,7 @@ import {
   type DeviceSessionState,
   DeviceSessionStateType,
 } from "@api/device-session/DeviceSessionState";
+import { DeviceDisconnectedWhileSendingError } from "@api/transport/model/Errors";
 
 import {
   type OpenAppDAError,
@@ -123,8 +124,7 @@ export class OpenAppDeviceAction extends XStateDeviceAction<
       guards: {
         isDeviceOnboarded: () => isDeviceOnboarded(), // TODO: we don't have this info for now, this can be derived from the "flags" obtained in the getVersion command
         isRequestedAppOpen: ({ context }: { context: types["context"] }) => {
-          if (context._internalState.currentlyRunningApp === null)
-            throw new Error("context.currentlyRunningApp === null");
+          if (context._internalState.currentlyRunningApp === null) return false;
           return (
             context._internalState.currentlyRunningApp ===
               context.input.appName ||
@@ -139,6 +139,10 @@ export class OpenAppDeviceAction extends XStateDeviceAction<
             throw new Error("context.currentlyRunningApp === null");
           return context._internalState.currentlyRunningApp === "BOLOS";
         },
+        hasDisconnectedWhileSending: ({ context }) =>
+          context._internalState.error !== null &&
+          context._internalState.error instanceof
+            DeviceDisconnectedWhileSendingError,
         hasError: ({ context }) => context._internalState.error !== null,
       },
       actions: {
@@ -264,6 +268,7 @@ export class OpenAppDeviceAction extends XStateDeviceAction<
                       },
                       Left: (error) => ({
                         ..._.context._internalState,
+                        currentlyRunningApp: null,
                         error,
                       }),
                     },
@@ -271,23 +276,32 @@ export class OpenAppDeviceAction extends XStateDeviceAction<
                 },
               }),
             },
-            // NOTE: The way we handle our DeviceActions means that we should never as we return an Either
-            // onError: {
-            //   target: "Error",
-            //   actions: "assignGetDeviceStatusUnknownError",
-            // },
+            onError: {
+              target: "Error",
+              actions: [
+                assign({
+                  _internalState: (_) => ({
+                    ..._.context._internalState,
+                    currentlyRunningApp: null,
+                  }),
+                }),
+                "assignErrorFromEvent",
+              ],
+            },
           },
         },
         CheckDeviceStatus: {
           // We check the device status to see if we can have an error
           always: [
             {
-              target: "Error",
-              guard: "hasError",
-            },
-            {
               target: "ApplicationReady",
               guard: "isRequestedAppOpen",
+              // If target app is currently opened, we can ignore errors
+              actions: "assignNoError",
+            },
+            {
+              target: "Error",
+              guard: "hasError",
             },
             {
               target: "DashboardCheck",
@@ -332,7 +346,7 @@ export class OpenAppDeviceAction extends XStateDeviceAction<
               }),
             },
             onError: {
-              target: "Error",
+              target: "OpenApplicationResultCheck",
               actions: "assignErrorFromEvent",
             },
           },
@@ -340,6 +354,15 @@ export class OpenAppDeviceAction extends XStateDeviceAction<
 
         OpenApplicationResultCheck: {
           always: [
+            {
+              // When an APDU triggers a disconnection, some transports may possibly
+              // be closed on device side before the APDU response could be received,
+              // especially on BLE transports.
+              // Therefore when a disconnection occurs while sending, we should verify
+              // the device status because it may have been successfully executed.
+              target: "GetDeviceStatus",
+              guard: "hasDisconnectedWhileSending",
+            },
             {
               target: "Error",
               guard: "hasError",
@@ -382,17 +405,6 @@ export class OpenAppDeviceAction extends XStateDeviceAction<
               guard: "hasError",
             },
             { target: "OpenApplication" },
-          ],
-        },
-
-        ApplicationCheck: {
-          // Is the current application the requested one
-          always: [
-            {
-              target: "ApplicationReady",
-              guard: "isRequestedAppOpen",
-            },
-            "DashboardCheck",
           ],
         },
 
