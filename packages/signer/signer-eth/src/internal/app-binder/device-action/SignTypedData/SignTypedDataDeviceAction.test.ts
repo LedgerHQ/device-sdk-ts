@@ -101,6 +101,7 @@ describe("SignTypedDataDeviceAction", () => {
     getContexts: vi.fn(),
     getTypedDataFilters: vi.fn(),
     getWeb3Checks: vi.fn(),
+    getSolanaContext: vi.fn(),
   };
   const apiMock = makeDeviceActionInternalApiMock();
   const getAppConfigMock = vi.fn();
