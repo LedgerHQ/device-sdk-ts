@@ -25,7 +25,7 @@ class DeviceConnectionStateMachineTest {
             var sendApduResult: SendApduResult? = null
 
             val stateMachine = DeviceConnectionStateMachine(
-                sendApduFn = { apdu -> sendApduCalled = apdu },
+                sendApduFn = { apdu, _ -> sendApduCalled = apdu },
                 onTerminated = { terminated = true },
                 isFatalSendApduFailure = { false },
                 reconnectionTimeoutDuration = reconnectionTimeout,
@@ -38,7 +38,8 @@ class DeviceConnectionStateMachineTest {
             stateMachine.requestSendApdu(DeviceConnectionStateMachine.SendApduRequestContent(
                 apdu = mockedRequestApduA,
                 triggersDisconnection = false,
-                resultCallback = { result -> sendApduResult = result }
+                resultCallback = { result -> sendApduResult = result },
+                abortTimeoutDuration = Duration.INFINITE
             ))
             assertArrayEquals(mockedRequestApduA, sendApduCalled)
 
@@ -65,7 +66,7 @@ class DeviceConnectionStateMachineTest {
             var error: Throwable? = null
 
             val stateMachine = DeviceConnectionStateMachine(
-                sendApduFn = { },
+                sendApduFn = { _, _ -> },
                 onTerminated = { terminated = true },
                 isFatalSendApduFailure = { true }, // All failures are fatal
                 reconnectionTimeoutDuration = reconnectionTimeout,
@@ -77,7 +78,8 @@ class DeviceConnectionStateMachineTest {
             stateMachine.requestSendApdu(DeviceConnectionStateMachine.SendApduRequestContent(
                 apdu = mockedRequestApduA,
                 triggersDisconnection = false,
-                resultCallback = { result -> sendApduResult = result }
+                resultCallback = { result -> sendApduResult = result },
+                abortTimeoutDuration = Duration.INFINITE
             ))
 
             // Simulate a failure
@@ -99,7 +101,7 @@ class DeviceConnectionStateMachineTest {
             var error: Throwable? = null
 
             val stateMachine = DeviceConnectionStateMachine(
-                sendApduFn = { },
+                sendApduFn = { _, _ -> },
                 onTerminated = { terminated = true },
                 isFatalSendApduFailure = { false },
                 reconnectionTimeoutDuration = reconnectionTimeout,
@@ -112,7 +114,8 @@ class DeviceConnectionStateMachineTest {
             stateMachine.requestSendApdu(DeviceConnectionStateMachine.SendApduRequestContent(
                 apdu = mockedRequestApduA,
                 triggersDisconnection = false,
-                resultCallback = { result -> sendApduResult = result }
+                resultCallback = { result -> sendApduResult = result },
+                abortTimeoutDuration = Duration.INFINITE
             ))
 
             // Simulate a failure
@@ -140,7 +143,7 @@ class DeviceConnectionStateMachineTest {
 
             val dispatcher = StandardTestDispatcher(testScheduler)
             val stateMachine = DeviceConnectionStateMachine(
-                sendApduFn = { apdu -> sendApduCalled = apdu },
+                sendApduFn = { apdu, _ -> sendApduCalled = apdu },
                 onTerminated = { terminated = true },
                 isFatalSendApduFailure = { false },
                 reconnectionTimeoutDuration = reconnectionTimeout,
@@ -153,7 +156,8 @@ class DeviceConnectionStateMachineTest {
             stateMachine.requestSendApdu(DeviceConnectionStateMachine.SendApduRequestContent(
                 apdu = mockedRequestApduA,
                 triggersDisconnection = true,
-                resultCallback = { result -> sendApduResult = result }
+                resultCallback = { result -> sendApduResult = result },
+                abortTimeoutDuration = Duration.INFINITE
             ))
 
             // Send APDU should have been called
@@ -180,7 +184,8 @@ class DeviceConnectionStateMachineTest {
             stateMachine.requestSendApdu(DeviceConnectionStateMachine.SendApduRequestContent(
                 apdu = mockedRequestApduB,
                 triggersDisconnection = false,
-                resultCallback = { secondSendApduResult = it }
+                resultCallback = { secondSendApduResult = it },
+                abortTimeoutDuration = Duration.INFINITE
             ))
 
             // Send APDU should have been called
@@ -205,7 +210,7 @@ class DeviceConnectionStateMachineTest {
             var error: Throwable? = null
 
             val stateMachine = DeviceConnectionStateMachine(
-                sendApduFn = { apdu -> sendApduCalled += apdu },
+                sendApduFn = { apdu, _ -> sendApduCalled += apdu },
                 onTerminated = { terminated = true },
                 isFatalSendApduFailure = { false },
                 reconnectionTimeoutDuration = reconnectionTimeout,
@@ -218,7 +223,8 @@ class DeviceConnectionStateMachineTest {
             stateMachine.requestSendApdu(DeviceConnectionStateMachine.SendApduRequestContent(
                 apdu = mockedRequestApduA,
                 triggersDisconnection = true,
-                resultCallback = { }
+                resultCallback = { },
+                abortTimeoutDuration = Duration.INFINITE
             ))
 
             // Simulate a successful response
@@ -239,7 +245,8 @@ class DeviceConnectionStateMachineTest {
             stateMachine.requestSendApdu(DeviceConnectionStateMachine.SendApduRequestContent(
                 apdu = mockedRequestApduB,
                 triggersDisconnection = false,
-                resultCallback = { secondSendApduResult = it }
+                resultCallback = { secondSendApduResult = it },
+                abortTimeoutDuration = Duration.INFINITE
             ))
 
             // Should be in waiting state
@@ -289,7 +296,7 @@ class DeviceConnectionStateMachineTest {
             var error: Throwable? = null
 
             val stateMachine = DeviceConnectionStateMachine(
-                sendApduFn = { },
+                sendApduFn = { _, _ -> },
                 onTerminated = { terminated = true },
                 isFatalSendApduFailure = { false },
                 reconnectionTimeoutDuration = reconnectionTimeout,
@@ -302,7 +309,8 @@ class DeviceConnectionStateMachineTest {
             stateMachine.requestSendApdu(DeviceConnectionStateMachine.SendApduRequestContent(
                 apdu = mockedRequestApduA,
                 triggersDisconnection = false,
-                resultCallback = { result -> sendApduResult = result }
+                resultCallback = { result -> sendApduResult = result },
+                abortTimeoutDuration = Duration.INFINITE
             ))
 
             // Should be in sending state
@@ -331,7 +339,7 @@ class DeviceConnectionStateMachineTest {
             var error: Throwable? = null
 
             val stateMachine = DeviceConnectionStateMachine(
-                sendApduFn = { },
+                sendApduFn = { _,_ -> },
                 onTerminated = { terminated = true },
                 isFatalSendApduFailure = { false },
                 reconnectionTimeoutDuration = reconnectionTimeout,
@@ -344,7 +352,8 @@ class DeviceConnectionStateMachineTest {
             stateMachine.requestSendApdu(DeviceConnectionStateMachine.SendApduRequestContent(
                 apdu = mockedRequestApduA,
                 triggersDisconnection = false,
-                resultCallback = { result -> sendApduResult = result }
+                resultCallback = { result -> sendApduResult = result },
+                abortTimeoutDuration = Duration.INFINITE
             ))
 
             // Simulate a disconnection
@@ -384,7 +393,7 @@ class DeviceConnectionStateMachineTest {
             var error: Throwable? = null
 
             val stateMachine = DeviceConnectionStateMachine(
-                sendApduFn = { },
+                sendApduFn = { _,_ -> },
                 onTerminated = { terminated = true },
                 isFatalSendApduFailure = { false },
                 reconnectionTimeoutDuration = reconnectionTimeout,
@@ -397,7 +406,8 @@ class DeviceConnectionStateMachineTest {
             stateMachine.requestSendApdu(DeviceConnectionStateMachine.SendApduRequestContent(
                 apdu = mockedRequestApduA,
                 triggersDisconnection = false,
-                resultCallback = { firstSendApduResult = it }
+                resultCallback = { firstSendApduResult = it },
+                abortTimeoutDuration = Duration.INFINITE
             ))
 
             // Should be in sending state.
@@ -410,7 +420,8 @@ class DeviceConnectionStateMachineTest {
             stateMachine.requestSendApdu(DeviceConnectionStateMachine.SendApduRequestContent(
                 apdu = mockedRequestApduB,
                 triggersDisconnection = false,
-                resultCallback = { secondSendApduResult = it }
+                resultCallback = { secondSendApduResult = it },
+                abortTimeoutDuration = Duration.INFINITE
             ))
 
             assertEquals(
@@ -435,7 +446,7 @@ class DeviceConnectionStateMachineTest {
             var terminated = false
 
             val stateMachine = DeviceConnectionStateMachine(
-                sendApduFn = { },
+                sendApduFn = { _,_ -> },
                 onTerminated = { terminated = true },
                 isFatalSendApduFailure = { false },
                 reconnectionTimeoutDuration = reconnectionTimeout,
@@ -472,7 +483,7 @@ class DeviceConnectionStateMachineTest {
             var terminated = false
 
             val stateMachine = DeviceConnectionStateMachine(
-                sendApduFn = { },
+                sendApduFn = { _,_ -> },
                 onTerminated = { terminated = true },
                 isFatalSendApduFailure = { false },
                 reconnectionTimeoutDuration = 5.seconds,
@@ -507,7 +518,7 @@ class DeviceConnectionStateMachineTest {
             var error: Throwable? = null
 
             val stateMachine = DeviceConnectionStateMachine(
-                sendApduFn = { apdu -> sendApduCalled = apdu },
+                sendApduFn = { apdu, _ -> sendApduCalled = apdu },
                 onTerminated = { terminated = true },
                 isFatalSendApduFailure = { false },
                 reconnectionTimeoutDuration = 5.seconds,
@@ -523,7 +534,8 @@ class DeviceConnectionStateMachineTest {
             stateMachine.requestSendApdu(DeviceConnectionStateMachine.SendApduRequestContent(
                 apdu = mockedRequestApduA,
                 triggersDisconnection = false,
-                resultCallback = { sendApduResult = it }
+                resultCallback = { sendApduResult = it },
+                abortTimeoutDuration = Duration.INFINITE
             ))
 
             // Send APDU should not have been called
@@ -552,7 +564,7 @@ class DeviceConnectionStateMachineTest {
             var error: Throwable? = null
 
             val stateMachine = DeviceConnectionStateMachine(
-                sendApduFn = { },
+                sendApduFn = { _,_ -> },
                 onTerminated = { terminated = true },
                 isFatalSendApduFailure = { false },
                 reconnectionTimeoutDuration = 5.seconds,
@@ -568,7 +580,8 @@ class DeviceConnectionStateMachineTest {
             stateMachine.requestSendApdu(DeviceConnectionStateMachine.SendApduRequestContent(
                 apdu = mockedRequestApduA,
                 triggersDisconnection = false,
-                resultCallback = { result -> sendApduResult = result }
+                resultCallback = { result -> sendApduResult = result },
+                abortTimeoutDuration = Duration.INFINITE
             ))
 
             // Request closing the connection
@@ -592,7 +605,7 @@ class DeviceConnectionStateMachineTest {
             var error: Throwable? = null
 
             val stateMachine = DeviceConnectionStateMachine(
-                sendApduFn = { },
+                sendApduFn = { _,_ -> },
                 onTerminated = { terminated = true },
                 isFatalSendApduFailure = { false },
                 reconnectionTimeoutDuration = 5.seconds,
@@ -608,7 +621,8 @@ class DeviceConnectionStateMachineTest {
             stateMachine.requestSendApdu(DeviceConnectionStateMachine.SendApduRequestContent(
                 apdu = byteArrayOf(0x0A),
                 triggersDisconnection = false,
-                resultCallback = { result -> sendApduResult = result }
+                resultCallback = { result -> sendApduResult = result },
+                abortTimeoutDuration = Duration.INFINITE
             ))
 
             // Simulate timeout
@@ -631,7 +645,7 @@ class DeviceConnectionStateMachineTest {
             var error: Throwable? = null
 
             val stateMachine = DeviceConnectionStateMachine(
-                sendApduFn = { },
+                sendApduFn = { _,_ -> },
                 onTerminated = { terminated = true },
                 isFatalSendApduFailure = { false },
                 reconnectionTimeoutDuration = 5.seconds,
@@ -647,14 +661,16 @@ class DeviceConnectionStateMachineTest {
             stateMachine.requestSendApdu(DeviceConnectionStateMachine.SendApduRequestContent(
                 apdu = byteArrayOf(0x0A),
                 triggersDisconnection = false,
-                resultCallback = { firstSendApduResult = it }
+                resultCallback = { firstSendApduResult = it },
+                abortTimeoutDuration = Duration.INFINITE
             ))
 
             // Second APDU sending request
             stateMachine.requestSendApdu(DeviceConnectionStateMachine.SendApduRequestContent(
                 apdu = byteArrayOf(0x0B),
                 triggersDisconnection = false,
-                resultCallback = { secondSendApduResult = it }
+                resultCallback = { secondSendApduResult = it },
+                abortTimeoutDuration = Duration.INFINITE
             ))
 
             // Second request should immediately return busy.
@@ -683,7 +699,7 @@ class DeviceConnectionStateMachineTest {
             var errorCalled: Throwable? = null
 
             val stateMachine = DeviceConnectionStateMachine(
-                sendApduFn = { },
+                sendApduFn = { _,_ -> },
                 onTerminated = { },
                 isFatalSendApduFailure = { false },
                 reconnectionTimeoutDuration = reconnectionTimeout,
