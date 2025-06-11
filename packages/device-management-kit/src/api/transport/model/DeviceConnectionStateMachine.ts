@@ -2,6 +2,7 @@
 import { type Either, Left, Maybe, Nothing, Right } from "purify-ts";
 import { type Actor, assign, createActor, emit, setup } from "xstate";
 
+import { GetAppAndVersionCommand } from "@api/command/os/GetAppAndVersionCommand";
 import { CommandUtils } from "@api/command/utils/CommandUtils";
 import { type ApduResponse } from "@api/device-session/ApduResponse";
 import { type DmkError, UnknownDeviceExchangeError } from "@api/Error";
@@ -16,12 +17,12 @@ import {
 
 // const { inspect } = createBrowserInspector();
 
-type DeviceDetachedEvent = {
-  type: "DeviceDetached";
+type DeviceDisconnectedEvent = {
+  type: "DeviceDisconnected";
 };
 
-type DeviceAttachedEvent = {
-  type: "DeviceAttached";
+type DeviceConnectedEvent = {
+  type: "DeviceConnected";
 };
 
 type ApduResponseReceived = {
@@ -50,9 +51,9 @@ type CloseConnectionCalled = {
   type: "CloseConnectionCalled";
 };
 
-export type DeviceConnectionEvent =
-  | DeviceDetachedEvent
-  | DeviceAttachedEvent
+export type Events =
+  | DeviceDisconnectedEvent
+  | DeviceConnectedEvent
   | ApduResponseReceived
   | ApduSendingError
   | SendApduCalled
@@ -63,6 +64,7 @@ export type DeviceConnectionStateMachineParams<Dependencies> = {
   deviceId: DeviceId;
   deviceApduSender: DeviceApduSender<Dependencies>;
   timeoutDuration: number;
+  tryToReconnect: (timeoutDuration: number) => void;
   onTerminated: () => void;
 };
 
@@ -99,6 +101,9 @@ export class DeviceConnectionStateMachine<Dependencies> {
             clearTimeout(this.timeout);
             this.timeout = null;
           }
+        },
+        tryToReconnect: () => {
+          params.tryToReconnect(this.timeoutDuration);
         },
         onTerminated: params.onTerminated,
         closeConnection: () => {
@@ -178,12 +183,12 @@ export class DeviceConnectionStateMachine<Dependencies> {
 
   // State Machine Events
 
-  public eventDeviceAttached() {
-    this.machineActor.send({ type: "DeviceAttached" });
+  public eventDeviceConnected() {
+    this.machineActor.send({ type: "DeviceConnected" });
   }
 
-  public eventDeviceDetached() {
-    this.machineActor.send({ type: "DeviceDetached" });
+  public eventDeviceDisconnected() {
+    this.machineActor.send({ type: "DeviceDisconnected" });
   }
 
   public closeConnection() {
@@ -195,6 +200,7 @@ function makeStateMachine({
   sendApduFn,
   startReconnectionTimeout,
   cancelReconnectionTimeout,
+  tryToReconnect,
   onTerminated,
   closeConnection,
 }: {
@@ -205,6 +211,7 @@ function makeStateMachine({
   ) => void;
   startReconnectionTimeout: () => void;
   cancelReconnectionTimeout: () => void;
+  tryToReconnect: () => void;
   onTerminated: () => void;
   closeConnection: () => void;
 }) {
@@ -217,8 +224,9 @@ function makeStateMachine({
           abortTimeout?: number;
           responseCallback: (response: Either<DmkError, ApduResponse>) => void;
         }>;
+        apduResponse: Maybe<ApduResponse>;
       };
-      events: DeviceConnectionEvent;
+      events: Events;
     },
     actions: {
       // event transitions
@@ -241,6 +249,13 @@ function makeStateMachine({
         context.apduInProgress.map(({ responseCallback }) =>
           responseCallback(params.response),
         );
+      },
+      sendGetAppAndVersion: () => {
+        // TODO: not import the command like this, might cause circular dependencies
+        sendApduFn(new GetAppAndVersionCommand().getApdu().getRawApdu(), false);
+      },
+      tryToReconnect: () => {
+        tryToReconnect();
       },
       cleanupContext: assign({ apduInProgress: Nothing }),
       signalTermination: () => {
@@ -273,11 +288,12 @@ function makeStateMachine({
     initial: "Connected",
     context: {
       apduInProgress: Nothing,
+      apduResponse: Nothing,
     },
     states: {
       Connected: {
         on: {
-          DeviceDetached: {
+          DeviceDisconnected: {
             target: "WaitingForReconnection",
           },
           SendApduCalled: {
@@ -307,18 +323,11 @@ function makeStateMachine({
                 type: "isApduThatTriggersDisconnection",
                 params: ({ event }) => ({ apduResponse: event.apduResponse }),
               },
-              target: "WaitingForReconnection",
+              target: "WaitingForDisconnection",
               actions: [
-                {
-                  type: "sendApduResponse",
-                  // https://stately.ai/docs/actions#dynamic-action-parameters
-                  params: ({ event }) => {
-                    return {
-                      response: Right(event.apduResponse),
-                    };
-                  },
-                },
-                { type: "cleanupContext" },
+                assign({
+                  apduResponse: ({ event }) => Maybe.of(event.apduResponse),
+                }),
               ],
             },
             {
@@ -352,7 +361,7 @@ function makeStateMachine({
               "cleanupContext",
             ],
           },
-          DeviceDetached: {
+          DeviceDisconnected: {
             target: "WaitingForReconnection",
             actions: [
               {
@@ -383,10 +392,41 @@ function makeStateMachine({
           },
         },
       },
-      WaitingForReconnection: {
-        entry: "startTimer",
+      WaitingForDisconnection: {
+        entry: "sendGetAppAndVersion",
+        exit: [
+          {
+            type: "sendApduResponse",
+            params: ({ context }) => {
+              return {
+                response: context.apduResponse.caseOf({
+                  Just: (apduResponse) => Right(apduResponse),
+                  Nothing: () => Left(new UnknownDeviceExchangeError()),
+                }),
+              };
+            },
+          },
+          { type: "cleanupContext" },
+        ],
         on: {
-          DeviceAttached: {
+          ApduResponseReceived: {
+            target: "Connected",
+          },
+          ApduSendingError: {
+            target: "Connected",
+          },
+          DeviceDisconnected: {
+            target: "WaitingForReconnection",
+          },
+          CloseConnectionCalled: {
+            target: "Terminated",
+          },
+        },
+      },
+      WaitingForReconnection: {
+        entry: ["startTimer", "tryToReconnect"],
+        on: {
+          DeviceConnected: {
             target: "Connected",
             actions: "cancelTimer",
           },
@@ -413,7 +453,7 @@ function makeStateMachine({
       },
       WaitingForReconnectionWithQueuedSendApdu: {
         on: {
-          DeviceAttached: {
+          DeviceConnected: {
             target: "SendingApdu",
             actions: "cancelTimer",
           },
