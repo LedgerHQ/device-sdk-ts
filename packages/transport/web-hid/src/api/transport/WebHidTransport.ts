@@ -3,12 +3,13 @@ import {
   type ApduSenderServiceFactory,
   type ConnectError,
   type ConnectionType,
+  DeviceConnectionStateMachine,
+  type DeviceConnectionStateMachineParams,
   type DeviceId,
   type DeviceModelDataSource,
   DeviceNotRecognizedError,
   type DisconnectHandler,
   type DmkError,
-  FramerUtils,
   LEDGER_VENDOR_ID,
   type LoggerPublisherService,
   NoAccessibleDeviceError,
@@ -26,9 +27,14 @@ import { type Either, EitherAsync, Left, Maybe, Right } from "purify-ts";
 import { BehaviorSubject, from, map, type Observable, switchMap } from "rxjs";
 import { v4 as uuid } from "uuid";
 
-import { FRAME_SIZE } from "@api/data/WebHidConfig";
+import { RECONNECT_DEVICE_TIMEOUT } from "@api/data/WebHidConfig";
 import { WebHidTransportNotSupportedError } from "@api/model/Errors";
-import { WebHidDeviceConnection } from "@api/transport/WebHidDeviceConnection";
+
+import {
+  WebHidApduSender,
+  type WebHidApduSenderConstructorArgs,
+  type WebHidApduSenderDependencies,
+} from "./WebHidApduSender";
 
 type PromptDeviceAccessError =
   | NoAccessibleDeviceError
@@ -46,18 +52,19 @@ export class WebHidTransport implements Transport {
     Array<WebHidTransportDiscoveredDevice>
   > = new BehaviorSubject<Array<WebHidTransportDiscoveredDevice>>([]);
 
-  /** Map of *connected* HIDDevice to their WebHidDeviceConnection */
+  /** Map of *connected* HIDDevice to their device connection */
   private _deviceConnectionsByHidDevice: Map<
     HIDDevice,
-    WebHidDeviceConnection
+    DeviceConnectionStateMachine<WebHidApduSenderDependencies>
   > = new Map();
 
   /**
-   * Set of WebHidDeviceConnection for which the HIDDevice has been
+   * Set of device connections for which the HIDDevice has been
    * disconnected, so they are waiting for a reconnection
    */
-  private _deviceConnectionsPendingReconnection: Set<WebHidDeviceConnection> =
-    new Set();
+  private _deviceConnectionsPendingReconnection: Set<
+    DeviceConnectionStateMachine<WebHidApduSenderDependencies>
+  > = new Set();
 
   /** AbortController to stop listening to HID connection events */
   private _connectionListenersAbortController: AbortController =
@@ -73,6 +80,15 @@ export class WebHidTransport implements Transport {
     ) => LoggerPublisherService,
     private readonly _apduSenderFactory: ApduSenderServiceFactory,
     private readonly _apduReceiverFactory: ApduReceiverServiceFactory,
+    private readonly _deviceConnectionStateMachineFactory: (
+      args: DeviceConnectionStateMachineParams<WebHidApduSenderDependencies>,
+    ) => DeviceConnectionStateMachine<WebHidApduSenderDependencies> = (args) =>
+      new DeviceConnectionStateMachine(args),
+    private readonly _deviceApduSenderFactory: (
+      args: WebHidApduSenderConstructorArgs,
+      loggerFactory: (tag: string) => LoggerPublisherService,
+    ) => WebHidApduSender = (args, loggerFactory) =>
+      new WebHidApduSender(args, loggerFactory),
   ) {
     this._logger = _loggerServiceFactory("WebWebHidTransport");
 
@@ -150,7 +166,7 @@ export class WebHidTransport implements Transport {
     const maybeDeviceModel = this.getDeviceModel(hidDevice);
     return maybeDeviceModel.caseOf({
       Just: (deviceModel) => {
-        const id = existingDeviceConnection?.deviceId ?? uuid();
+        const id = existingDeviceConnection?.getDeviceId() ?? uuid();
 
         const discoveredDevice = {
           id,
@@ -336,61 +352,86 @@ export class WebHidTransport implements Transport {
       return Left(new UnknownDeviceError(`Unknown device ${deviceId}`));
     }
 
-    try {
-      if (
-        this._deviceConnectionsByHidDevice.get(matchingInternalDevice.hidDevice)
-      ) {
-        throw new Error("Device already opened");
-      }
-      await matchingInternalDevice.hidDevice.open();
-    } catch (error) {
-      if (error instanceof DOMException && error.name === "InvalidStateError") {
-        this._logger.debug(`Device ${deviceId} is already opened`);
-      } else {
-        const connectionError = new OpeningConnectionError(error);
-        this._logger.debug(`Error while opening device: ${deviceId}`, {
-          data: { error },
-        });
-        Sentry.captureException(connectionError);
-        return Left(connectionError);
-      }
+    const { deviceModel } = matchingInternalDevice;
+    const existing = this._deviceConnectionsByHidDevice.get(
+      matchingInternalDevice.hidDevice,
+    );
+    if (existing) {
+      return Right(
+        new TransportConnectedDevice({
+          id: deviceId,
+          deviceModel,
+          type: this.connectionType,
+          sendApdu: (...args) => existing.sendApdu(...args),
+          transport: this.identifier,
+        }),
+      );
     }
 
-    const { deviceModel } = matchingInternalDevice;
-
-    const channel = Maybe.of(
-      FramerUtils.numberToByteArray(Math.floor(Math.random() * 0xffff), 2),
-    );
-    const deviceConnection = new WebHidDeviceConnection(
+    const deviceApduSender = this._deviceApduSenderFactory(
       {
-        device: matchingInternalDevice.hidDevice,
-        deviceId,
-        apduSender: this._apduSenderFactory({
-          frameSize: FRAME_SIZE,
-          channel,
-          padding: true,
-        }),
-        apduReceiver: this._apduReceiverFactory({ channel }),
-        onConnectionTerminated: () => {
-          onDisconnect(deviceId);
-          this._deviceConnectionsPendingReconnection.delete(deviceConnection);
-          this._deviceConnectionsByHidDevice.delete(
-            matchingInternalDevice.hidDevice,
-          );
-          deviceConnection.device.close();
-        },
+        apduSenderFactory: this._apduSenderFactory,
+        apduReceiverFactory: this._apduReceiverFactory,
+        dependencies: { device: matchingInternalDevice.hidDevice },
       },
       this._loggerServiceFactory,
     );
+    const deviceConnectionStateMachine =
+      this._deviceConnectionStateMachineFactory({
+        deviceId,
+        deviceApduSender,
+        timeoutDuration: RECONNECT_DEVICE_TIMEOUT,
+        tryToReconnect: () => {
+          this._deviceConnectionsByHidDevice.forEach(
+            (deviceConnection, hidDevice) => {
+              if (deviceConnection.getDeviceId() === deviceId) {
+                this._deviceConnectionsPendingReconnection.add(
+                  deviceConnection,
+                );
+                this._deviceConnectionsByHidDevice.delete(hidDevice);
+              }
+            },
+          );
+        },
+        onTerminated: () => {
+          this._deviceConnectionsPendingReconnection.forEach(
+            (deviceConnection) => {
+              if (deviceConnection.getDeviceId() === deviceId) {
+                this._deviceConnectionsPendingReconnection.delete(
+                  deviceConnection,
+                );
+                onDisconnect(deviceConnection.getDeviceId());
+              }
+            },
+          );
+          this._deviceConnectionsByHidDevice.forEach(
+            (deviceConnection, hidDevice) => {
+              if (deviceConnection.getDeviceId() === deviceId) {
+                this._deviceConnectionsByHidDevice.delete(hidDevice);
+                onDisconnect(deviceConnection.getDeviceId());
+              }
+            },
+          );
+        },
+      });
+
+    try {
+      await deviceApduSender.setupConnection();
+    } catch (error) {
+      if (error instanceof OpeningConnectionError) {
+        return Left(error);
+      }
+      // Should not happen
+      return Left(new OpeningConnectionError(error));
+    }
 
     this._deviceConnectionsByHidDevice.set(
       matchingInternalDevice.hidDevice,
-      deviceConnection,
+      deviceConnectionStateMachine,
     );
 
     const connectedDevice = new TransportConnectedDevice({
-      sendApdu: (apdu, triggersDisconnection) =>
-        deviceConnection.sendApdu(apdu, triggersDisconnection),
+      sendApdu: (...args) => deviceConnectionStateMachine.sendApdu(...args),
       deviceModel,
       id: deviceId,
       type: this.connectionType,
@@ -430,7 +471,7 @@ export class WebHidTransport implements Transport {
       this._deviceConnectionsByHidDevice.values(),
     ).find(
       (deviceConnection) =>
-        deviceConnection.deviceId === params.connectedDevice.id,
+        deviceConnection.getDeviceId() === params.connectedDevice.id,
     );
 
     if (!matchingDeviceConnection) {
@@ -444,7 +485,7 @@ export class WebHidTransport implements Transport {
       );
     }
 
-    matchingDeviceConnection.disconnect();
+    matchingDeviceConnection.closeConnection();
     return Promise.resolve(Right(undefined));
   }
 
@@ -492,26 +533,28 @@ export class WebHidTransport implements Transport {
     );
 
     if (matchingDeviceConnection) {
-      matchingDeviceConnection.lostConnection();
-      this._deviceConnectionsPendingReconnection.add(matchingDeviceConnection);
-      this._deviceConnectionsByHidDevice.delete(event.device);
+      matchingDeviceConnection.eventDeviceDisconnected();
     }
   }
 
-  private handleDeviceReconnection(
-    deviceConnection: WebHidDeviceConnection,
+  private async handleDeviceReconnection(
+    deviceConnection: DeviceConnectionStateMachine<WebHidApduSenderDependencies>,
     hidDevice: HIDDevice,
   ) {
     this._deviceConnectionsPendingReconnection.delete(deviceConnection);
     this._deviceConnectionsByHidDevice.set(hidDevice, deviceConnection);
 
     try {
-      deviceConnection.reconnectHidDevice(hidDevice);
+      deviceConnection.setDependencies({
+        device: hidDevice,
+      });
+      await deviceConnection.setupConnection();
+      deviceConnection.eventDeviceConnected();
     } catch (error) {
       this._logger.error("Error while reconnecting to device", {
         data: { event, error },
       });
-      deviceConnection.disconnect();
+      deviceConnection.closeConnection();
     }
   }
 
@@ -519,7 +562,7 @@ export class WebHidTransport implements Transport {
    * Handle the connection event of a HID device
    * @param event
    */
-  private handleDeviceConnectionEvent(event: Event) {
+  private async handleDeviceConnectionEvent(event: Event) {
     if (!this.isHIDConnectionEvent(event)) {
       this._logger.error("Invalid event", { data: { event } });
       return;
@@ -533,12 +576,15 @@ export class WebHidTransport implements Transport {
       this._deviceConnectionsPendingReconnection,
     ).find(
       (deviceConnection) =>
-        this.getHidUsbProductId(deviceConnection.device) ===
+        this.getHidUsbProductId(deviceConnection.getDependencies().device) ===
         this.getHidUsbProductId(event.device),
     );
 
     if (matchingDeviceConnection) {
-      this.handleDeviceReconnection(matchingDeviceConnection, event.device);
+      await this.handleDeviceReconnection(
+        matchingDeviceConnection,
+        event.device,
+      );
     }
 
     /**
@@ -552,7 +598,7 @@ export class WebHidTransport implements Transport {
   public destroy() {
     this.stopListeningToConnectionEvents();
     this._deviceConnectionsByHidDevice.forEach((connection) => {
-      connection.disconnect();
+      connection.closeConnection();
     });
     this._deviceConnectionsPendingReconnection.clear();
   }
