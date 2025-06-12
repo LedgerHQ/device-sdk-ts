@@ -12,7 +12,7 @@ export type FlipperObjLog = {
   /** ISO 8601 timestamp */
   timestamp: string;
   tag: string;
-  verbosity: "debug" | "info" | "warning" | "error" | "fatal";
+  verbosity: "debug" | "verbose" | "info" | "warning" | "error" | "fatal";
   message: string;
   payloadJSON: string; // extra data, can be an empty string
 };
@@ -39,6 +39,7 @@ function mapDmkLogToFlipperObjLog(dmkLog: LogParams): FlipperObjLog {
 
   const verbosities: Record<LogLevel, FlipperObjLog["verbosity"]> = {
     [LogLevel.Debug]: "debug",
+    [LogLevel.Verbose]: "verbose",
     [LogLevel.Info]: "info",
     [LogLevel.Warning]: "warning",
     [LogLevel.Error]: "error",

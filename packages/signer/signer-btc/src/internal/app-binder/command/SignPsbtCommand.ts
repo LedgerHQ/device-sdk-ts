@@ -33,8 +33,10 @@ export class SignPsbtCommand
   implements
     Command<SignPsbtCommandResponse, SignPsbtCommandArgs, BtcErrorCodes>
 {
+  readonly name = "SignPsbtCommand";
+
   constructor(
-    private readonly _args: SignPsbtCommandArgs,
+    readonly args: SignPsbtCommandArgs,
     private readonly _errorHelper = new CommandErrorHelper<
       SignPsbtCommandResponse,
       BtcErrorCodes
@@ -60,7 +62,7 @@ export class SignPsbtCommand
       outputsRoot,
       walletHmac,
       walletId,
-    } = this._args;
+    } = this.args;
 
     return builder
       .addBufferToData(globalCommitment)

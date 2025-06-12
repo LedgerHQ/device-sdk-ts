@@ -34,12 +34,14 @@ export class ProvideTokenInformationCommand
       EthErrorCodes
     >
 {
+  readonly name = "ProvideTokenInformationCommand";
+
   private readonly errorHelper = new CommandErrorHelper<
     ProvideTokenInformationCommandResponse,
     EthErrorCodes
   >(ETH_APP_ERRORS, EthAppCommandErrorFactory);
 
-  constructor(private readonly args: ProvideTokenInformationCommandArgs) {}
+  constructor(readonly args: ProvideTokenInformationCommandArgs) {}
 
   getApdu(): Apdu {
     const getEthAddressArgs: ApduBuilderArgs = {

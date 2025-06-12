@@ -30,16 +30,14 @@ export class GetAppConfigurationCommand
       SolanaAppErrorCodes
     >
 {
+  readonly name = "GetAppConfigurationCommand";
+
   private readonly errorHelper = new CommandErrorHelper<
     AppConfiguration,
     SolanaAppErrorCodes
   >(SOLANA_APP_ERRORS, SolanaAppCommandErrorFactory);
 
-  args: GetAppConfigurationCommandArgs;
-
-  constructor(args: GetAppConfigurationCommandArgs) {
-    this.args = args;
-  }
+  constructor(readonly args: GetAppConfigurationCommandArgs) {}
 
   getApdu(): Apdu {
     return new ApduBuilder({

@@ -84,12 +84,14 @@ const FILTER_TO_P2: Record<Eip712FilterType, number> = {
 export class SendEIP712FilteringCommand
   implements Command<void, SendEIP712FilteringCommandArgs, EthErrorCodes>
 {
+  readonly name = "SendEIP712FilteringCommand";
+
   private readonly errorHelper = new CommandErrorHelper<void, EthErrorCodes>(
     ETH_APP_ERRORS,
     EthAppCommandErrorFactory,
   );
 
-  constructor(private readonly args: SendEIP712FilteringCommandArgs) {}
+  constructor(readonly args: SendEIP712FilteringCommandArgs) {}
 
   getApdu(): Apdu {
     const filteringArgs: ApduBuilderArgs = {

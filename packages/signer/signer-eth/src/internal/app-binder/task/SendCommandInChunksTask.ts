@@ -11,12 +11,16 @@ import {
 
 import { type EthErrorCodes } from "@internal/app-binder/command/utils/ethAppErrors";
 
-export type SendCommandInChunksTaskArgs<T> = {
+export type SendCommandInChunksTaskArgs<
+  T,
+  V extends ExtendedChunkableCommandArgs = ExtendedChunkableCommandArgs,
+> = {
   data: Uint8Array;
-  commandFactory: <V extends ChunkableCommandArgs & Record<string, unknown>>(
-    args: ChunkableCommandArgs,
-  ) => Command<T, V, EthErrorCodes>;
+  commandFactory: (args: V) => Command<T, V, EthErrorCodes>;
 };
+
+export type ExtendedChunkableCommandArgs = ChunkableCommandArgs &
+  Record<string, unknown>;
 
 export type ChunkableCommandArgs = {
   chunkedData: Uint8Array;

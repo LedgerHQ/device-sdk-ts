@@ -51,7 +51,7 @@ describe("SignDataTask", () => {
         sendingData: SIMPLE_TRANSACTION,
         commandFactory: (chunkArgs: ChunkableCommandArgs) =>
           new SignTransactionCommand({
-            serializedTransaction: chunkArgs.chunkedData,
+            chunkedData: chunkArgs.chunkedData,
             more: chunkArgs.more,
             extend: chunkArgs.extend,
           }),
@@ -68,7 +68,7 @@ describe("SignDataTask", () => {
       expect(
         Array.from(
           (apiMock.sendCommand.mock.calls[0]?.[0] as SignTransactionCommand)
-            ?.args?.serializedTransaction || [],
+            ?.args?.chunkedData || [],
         ),
       ).toEqual(Array.from(EXPECTED_SIMPLE_TRANSACTION));
 
@@ -112,7 +112,7 @@ describe("SignDataTask", () => {
         sendingData: BIG_TRANSACTION,
         commandFactory: (chunkArgs: ChunkableCommandArgs) =>
           new SignTransactionCommand({
-            serializedTransaction: chunkArgs.chunkedData,
+            chunkedData: chunkArgs.chunkedData,
             more: chunkArgs.more,
             extend: chunkArgs.extend,
           }),
@@ -133,7 +133,7 @@ describe("SignDataTask", () => {
         1,
         expect.objectContaining({
           args: {
-            serializedTransaction: EXPECTED_BIG_TRANSACTION_CHUNK_1,
+            chunkedData: EXPECTED_BIG_TRANSACTION_CHUNK_1,
             extend: false,
             more: true,
           },
@@ -143,7 +143,7 @@ describe("SignDataTask", () => {
         2,
         expect.objectContaining({
           args: {
-            serializedTransaction: EXPECTED_BIG_TRANSACTION_CHUNK_2,
+            chunkedData: EXPECTED_BIG_TRANSACTION_CHUNK_2,
             extend: true,
             more: true,
           },
@@ -154,7 +154,7 @@ describe("SignDataTask", () => {
         3,
         expect.objectContaining({
           args: {
-            serializedTransaction: EXPECTED_BIG_TRANSACTION_CHUNK_3,
+            chunkedData: EXPECTED_BIG_TRANSACTION_CHUNK_3,
             extend: true,
             more: false,
           },
@@ -187,7 +187,7 @@ describe("SignDataTask", () => {
         sendingData: SIMPLE_TRANSACTION,
         commandFactory: (chunkArgs: ChunkableCommandArgs) =>
           new SignTransactionCommand({
-            serializedTransaction: chunkArgs.chunkedData,
+            chunkedData: chunkArgs.chunkedData,
             more: chunkArgs.more,
             extend: chunkArgs.extend,
           }),
@@ -227,7 +227,7 @@ describe("SignDataTask", () => {
         sendingData: BIG_TRANSACTION,
         commandFactory: (chunkArgs: ChunkableCommandArgs) =>
           new SignTransactionCommand({
-            serializedTransaction: chunkArgs.chunkedData,
+            chunkedData: chunkArgs.chunkedData,
             more: chunkArgs.more,
             extend: chunkArgs.extend,
           }),

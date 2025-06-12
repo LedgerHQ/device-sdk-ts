@@ -164,6 +164,12 @@ export class DeviceSession {
       this._sessionEventDispatcher.dispatch({
         eventName: SessionEvents.DEVICE_STATE_UPDATE_BUSY,
       });
+
+      this._logger.debug("Sending APDU", {
+        data: {
+          apdu: rawApdu,
+        },
+      });
       const result = await this._connectedDevice.sendApdu(
         rawApdu,
         options.triggersDisconnection,
@@ -172,6 +178,11 @@ export class DeviceSession {
 
       result
         .ifRight((response: ApduResponse) => {
+          this._logger.debug("APDU response", {
+            data: {
+              apdu: Uint8Array.from([...response.data, ...response.statusCode]),
+            },
+          });
           if (CommandUtils.isLockedDeviceResponse(response)) {
             this._sessionEventDispatcher.dispatch({
               eventName: SessionEvents.DEVICE_STATE_UPDATE_LOCKED,
@@ -198,6 +209,12 @@ export class DeviceSession {
     abortTimeout?: number,
   ): Promise<CommandResult<Response, ErrorStatusCodes>> {
     const apdu = command.getApdu();
+    this._logger.debug("Sending command", {
+      data: {
+        name: command.name,
+        args: command.args,
+      },
+    });
 
     const response = await this.sendApdu(apdu.getRawApdu(), {
       isPolling: false,
@@ -209,8 +226,19 @@ export class DeviceSession {
       Left: (err) => {
         throw err;
       },
-      Right: (r) =>
-        command.parseResponse(r, this._connectedDevice.deviceModel.id),
+      Right: (r) => {
+        const parsedResponse = command.parseResponse(
+          r,
+          this._connectedDevice.deviceModel.id,
+        );
+        this._logger.debug("Command response", {
+          data: {
+            name: command.name,
+            response: parsedResponse,
+          },
+        });
+        return parsedResponse;
+      },
     });
   }
 
