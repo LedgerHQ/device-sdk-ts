@@ -6,6 +6,7 @@ import { type ContextModuleConfig } from "@/config/model/ContextModuleConfig";
 import { HttpNetworkDataSource } from "@/network/data/HttpNetworkDataSource";
 import { type NetworkDataSource } from "@/network/data/NetworkDataSource";
 import { DefaultNetworkConfigurationLoader } from "@/network/domain/DefaultNetworkConfigurationLoader";
+import { DynamicNetworkContextLoader } from "@/network/domain/DynamicNetworkContextLoader";
 import { type NetworkConfigurationLoader } from "@/network/domain/NetworkConfigurationLoader";
 
 import { networkTypes } from "./networkTypes";
@@ -29,5 +30,9 @@ export const networkModuleFactory = () =>
 
     bind<NetworkConfigurationLoader>(networkTypes.NetworkConfigurationLoader).to(
       DefaultNetworkConfigurationLoader,
+    );
+
+    bind<DynamicNetworkContextLoader>(networkTypes.DynamicNetworkContextLoader).to(
+      DynamicNetworkContextLoader,
     );
   });
