@@ -1398,6 +1398,9 @@ importers:
       reflect-metadata:
         specifier: 'catalog:'
         version: 0.2.2
+      xstate:
+        specifier: 'catalog:'
+        version: 5.19.2
     devDependencies:
       '@ledgerhq/eslint-config-dsdk':
         specifier: workspace:*

@@ -63,6 +63,8 @@ export { UserInteractionRequired } from "@api/device-action/model/UserInteractio
 export { CallTaskInAppDeviceAction } from "@api/device-action/os/CallTaskInAppDeviceAction/CallTaskInAppDeviceAction";
 export {
   DeviceLockedError,
+  InvalidLKRPCredentialsDAError,
+  MissingDataDAError,
   OutOfMemoryDAError,
   UnknownDAError,
   UnsupportedFirmwareDAError,

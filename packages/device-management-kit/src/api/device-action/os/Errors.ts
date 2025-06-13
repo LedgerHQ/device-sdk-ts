@@ -27,6 +27,28 @@ export class UnsupportedFirmwareDAError implements DmkError {
   }
 }
 
+export class MissingDataDAError implements DmkError {
+  readonly _tag = "MissingDataDAError";
+  readonly originalError?: Error;
+
+  constructor(message?: string) {
+    this.originalError = new Error(
+      message ?? "Missing data for device action.",
+    );
+  }
+}
+
+export class InvalidLKRPCredentialsDAError implements DmkError {
+  readonly _tag = "InvalidLKRPCredentialsDAError";
+  readonly originalError?: Error;
+
+  constructor() {
+    this.originalError = new Error(
+      "The public key doesn't match the provided trustchain Id.",
+    );
+  }
+}
+
 export class OutOfMemoryDAError implements DmkError {
   readonly _tag = "OutOfMemoryDAError";
   readonly originalError?: Error;
