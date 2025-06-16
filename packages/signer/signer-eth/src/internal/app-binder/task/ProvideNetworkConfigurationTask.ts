@@ -3,7 +3,10 @@ import {
   type InternalApi,
 } from "@ledgerhq/device-management-kit";
 
-import { ProvideNetworkConfigurationCommand } from "@internal/app-binder/command/ProvideNetworkConfigurationCommand";
+import { 
+  NetworkConfigurationType,
+  ProvideNetworkConfigurationCommand,
+} from "@internal/app-binder/command/ProvideNetworkConfigurationCommand";
 import { type EthErrorCodes } from "@internal/app-binder/command/utils/ethAppErrors";
 
 import { SendCommandInChunksTask } from "./SendCommandInChunksTask";
@@ -13,7 +16,13 @@ export type ProvideNetworkConfigurationTaskArgs = {
    * The network configuration data to provide
    */
   data: Uint8Array;
+  /**
+   * The type of network configuration being provided
+   */
+  configurationType: NetworkConfigurationType;
 };
+
+export { NetworkConfigurationType };
 
 /**
  * This task is responsible for providing network configuration to the device.
@@ -32,6 +41,7 @@ export class ProvideNetworkConfigurationTask {
         new ProvideNetworkConfigurationCommand({
           data: args.chunkedData,
           isFirstChunk: args.isFirstChunk,
+          configurationType: this.args.configurationType,
         }),
     }).run();
   }
