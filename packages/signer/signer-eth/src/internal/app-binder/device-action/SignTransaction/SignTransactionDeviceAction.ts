@@ -44,7 +44,7 @@ import {
   type BuildTransactionContextTaskArgs,
   type BuildTransactionTaskResult,
 } from "@internal/app-binder/task/BuildTransactionContextTask";
-import { ProvideNetworkConfigurationTask } from "@internal/app-binder/task/ProvideNetworkConfigurationTask";
+import { ProvideNetworkConfigurationTask, NetworkConfigurationType } from "@internal/app-binder/task/ProvideNetworkConfigurationTask";
 import { ProvideTransactionContextTask } from "@internal/app-binder/task/ProvideTransactionContextTask";
 import {
   type GenericContext,
@@ -687,6 +687,7 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
       
       return new ProvideNetworkConfigurationTask(internalApi, {
         data: encodedData,
+        configurationType: NetworkConfigurationType.CONFIGURATION,
       }).run();
     };
 

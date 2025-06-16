@@ -14,7 +14,10 @@ import {
 import { Just, type Maybe, Nothing } from "purify-ts";
 
 import { ProvideNFTInformationCommand } from "@internal/app-binder/command/ProvideNFTInformationCommand";
-import { ProvideNetworkConfigurationCommand } from "@internal/app-binder/command/ProvideNetworkConfigurationCommand";
+import { 
+  NetworkConfigurationType,
+  ProvideNetworkConfigurationCommand,
+} from "@internal/app-binder/command/ProvideNetworkConfigurationCommand";
 import {
   ProvideTokenInformationCommand,
   type ProvideTokenInformationCommandResponse,
@@ -148,6 +151,7 @@ export class ProvideTransactionContextTask {
             new ProvideNetworkConfigurationCommand({
               data: args.chunkedData,
               isFirstChunk: args.isFirstChunk,
+              configurationType: NetworkConfigurationType.CONFIGURATION,
             }),
         }).run();
       default: {
