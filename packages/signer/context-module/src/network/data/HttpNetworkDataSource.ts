@@ -28,15 +28,6 @@ type NetworkApiResponse = {
   }>;
 };
 
-const CHAIN_ID_TO_NETWORK_ID: Record<number, string> = {
-  1: "ethereum",
-  137: "polygon",
-  10: "optimism",
-  42161: "arbitrum",
-  8453: "base",
-  56: "binance_smart_chain",
-};
-
 @injectable()
 export class HttpNetworkDataSource implements NetworkDataSource {
   private readonly _api: AxiosInstance;
@@ -49,13 +40,8 @@ export class HttpNetworkDataSource implements NetworkDataSource {
     chainId: number,
   ): Promise<Either<Error, NetworkConfiguration>> {
     try {
-      const networkId = CHAIN_ID_TO_NETWORK_ID[chainId];
-      if (!networkId) {
-        return Left(new Error(`Unsupported chain ID: ${chainId}`));
-      }
-
       const response = await this._api.get<NetworkApiResponse>(
-        `/v1/networks?output=id,descriptors,icons&id=${networkId}`,
+        `/v1/networks?output=id,descriptors,icons&chain_id=${chainId}`,
       );
 
       const networkData = response.data.data?.[0];
