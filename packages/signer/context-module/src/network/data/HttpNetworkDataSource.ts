@@ -59,22 +59,7 @@ export class HttpNetworkDataSource implements NetworkDataSource {
       return Left(new Error(`Invalid network configuration response for chain ID: ${chainId}`));
     }
 
-    const descriptors = Object.entries(networkData.descriptors).reduce((acc, [deviceModel, descriptor]) => {
-      acc[deviceModel] = {
-        descriptorType: descriptor.descriptorType,
-        descriptorVersion: descriptor.descriptorVersion,
-        data: descriptor.data,
-        signatures: descriptor.signatures,
-        icon: networkData.icons?.[deviceModel],
-      };
-      return acc;
-    }, {} as Record<string, NetworkConfiguration["descriptors"][string]>);
-
-    const configuration: NetworkConfiguration = {
-      id: networkData.id,
-      descriptors,
-    };
-
+    const configuration = this.transformToNetworkConfiguration(networkData);
     return Right(configuration);
   }
 
@@ -137,5 +122,25 @@ export class HttpNetworkDataSource implements NetworkDataSource {
     }
 
     return true;
+  }
+
+  private transformToNetworkConfiguration(
+    networkData: NetworkApiResponse['data']['data'][0]
+  ): NetworkConfiguration {
+    const descriptors = Object.entries(networkData.descriptors).reduce((acc, [deviceModel, descriptor]) => {
+      acc[deviceModel] = {
+        descriptorType: descriptor.descriptorType,
+        descriptorVersion: descriptor.descriptorVersion,
+        data: descriptor.data,
+        signatures: descriptor.signatures,
+        icon: networkData.icons?.[deviceModel],
+      };
+      return acc;
+    }, {} as Record<string, NetworkConfiguration["descriptors"][string]>);
+
+    return {
+      id: networkData.id,
+      descriptors,
+    };
   }
 }
