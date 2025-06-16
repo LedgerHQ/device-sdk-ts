@@ -9,13 +9,10 @@ import { type NetworkDataSource } from "./NetworkDataSource";
 type NetworkApiResponse = {
   data: Array<{
     id: string;
-    descriptors: Array<{
-      device_model: string;
-      descriptor: {
-        type: string;
-        version: string;
-        data: string;
-      };
+    descriptors: Record<string, {
+      data: string;
+      descriptorType: string;
+      descriptorVersion: string;
       signatures: {
         prod: string;
         test: string;
@@ -46,13 +43,13 @@ export class HttpNetworkDataSource implements NetworkDataSource {
         return Left(new Error(`Network configuration not found for chain ID: ${chainId}`));
       }
 
-      const descriptors = networkData.descriptors.reduce((acc, desc) => {
-        acc[desc.device_model] = {
-          descriptorType: desc.descriptor.type,
-          descriptorVersion: desc.descriptor.version,
-          data: desc.descriptor.data,
-          signatures: desc.signatures,
-          icon: networkData.icons?.[desc.device_model],
+      const descriptors = Object.entries(networkData.descriptors).reduce((acc, [deviceModel, descriptor]) => {
+        acc[deviceModel] = {
+          descriptorType: descriptor.descriptorType,
+          descriptorVersion: descriptor.descriptorVersion,
+          data: descriptor.data,
+          signatures: descriptor.signatures,
+          icon: networkData.icons?.[deviceModel],
         };
         return acc;
       }, {} as Record<string, NetworkConfiguration["descriptors"][string]>);
