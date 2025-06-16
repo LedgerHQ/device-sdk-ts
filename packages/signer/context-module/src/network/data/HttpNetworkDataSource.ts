@@ -21,10 +21,7 @@ type NetworkApiResponse = {
         test: string;
       };
     }>;
-    icons: {
-      flex: string;
-      stax: string;
-    };
+    icons: Record<string, string>;
   }>;
 };
 
@@ -55,6 +52,7 @@ export class HttpNetworkDataSource implements NetworkDataSource {
           descriptorVersion: desc.descriptor.version,
           data: desc.descriptor.data,
           signatures: desc.signatures,
+          icon: networkData.icons?.[desc.device_model],
         };
         return acc;
       }, {} as Record<string, NetworkConfiguration["descriptors"][string]>);
@@ -62,7 +60,6 @@ export class HttpNetworkDataSource implements NetworkDataSource {
       const configuration: NetworkConfiguration = {
         id: networkData.id,
         descriptors,
-        icons: networkData.icons,
       };
 
       return Right(configuration);

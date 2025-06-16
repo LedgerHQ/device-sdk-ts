@@ -8,17 +8,12 @@ export type NetworkDescriptor = {
     prod: string;
     test: string;
   };
-};
-
-export type NetworkIcon = {
-  flex: string;
-  stax: string;
+  icon: string | undefined;
 };
 
 export type NetworkConfiguration = {
   id: string;
   descriptors: Record<DeviceModelId, NetworkDescriptor>;
-  icons: NetworkIcon;
 };
 
 export interface NetworkConfigurationLoader {
