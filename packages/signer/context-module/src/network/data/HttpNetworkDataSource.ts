@@ -7,19 +7,21 @@ import { type NetworkConfiguration } from "@/network/domain/NetworkConfiguration
 import { type NetworkDataSource } from "./NetworkDataSource";
 
 type NetworkApiResponse = {
-  data: Array<{
-    id: string;
-    descriptors: Record<string, {
-      data: string;
-      descriptorType: string;
-      descriptorVersion: string;
-      signatures: {
-        prod: string;
-        test: string;
-      };
+  data: {
+    data: Array<{
+      id: string;
+      descriptors: Record<string, {
+        data: string;
+        descriptorType: string;
+        descriptorVersion: string;
+        signatures: {
+          prod: string;
+          test: string;
+        };
+      }>;
+      icons: Record<string, string>;
     }>;
-    icons: Record<string, string>;
-  }>;
+  };
 };
 
 @injectable()
@@ -33,38 +35,12 @@ export class HttpNetworkDataSource implements NetworkDataSource {
   async getNetworkConfiguration(
     chainId: number,
   ): Promise<Either<Error, NetworkConfiguration>> {
+    let response: NetworkApiResponse;
+    
     try {
-      const response = await this._api.get<NetworkApiResponse>(
+      response = await this._api.get<NetworkApiResponse>(
         `/v1/networks?output=id,descriptors,icons&chain_id=${chainId}`,
       );
-
-      const networkData = response.data.data?.[0];
-      if (!networkData) {
-        return Left(new Error(`Network configuration not found for chain ID: ${chainId}`));
-      }
-
-      // Validate response structure
-      if (!this.isValidNetworkData(networkData)) {
-        return Left(new Error(`Invalid network configuration response for chain ID: ${chainId}`));
-      }
-
-      const descriptors = Object.entries(networkData.descriptors).reduce((acc, [deviceModel, descriptor]) => {
-        acc[deviceModel] = {
-          descriptorType: descriptor.descriptorType,
-          descriptorVersion: descriptor.descriptorVersion,
-          data: descriptor.data,
-          signatures: descriptor.signatures,
-          icon: networkData.icons?.[deviceModel],
-        };
-        return acc;
-      }, {} as Record<string, NetworkConfiguration["descriptors"][string]>);
-
-      const configuration: NetworkConfiguration = {
-        id: networkData.id,
-        descriptors,
-      };
-
-      return Right(configuration);
     } catch (error) {
       return Left(
         error instanceof Error
@@ -72,9 +48,37 @@ export class HttpNetworkDataSource implements NetworkDataSource {
           : new Error("Failed to fetch network configuration"),
       );
     }
+
+    const networkData = response.data.data?.[0];
+    if (!networkData) {
+      return Left(new Error(`Network configuration not found for chain ID: ${chainId}`));
+    }
+
+    // Validate response structure
+    if (!this.isValidNetworkData(networkData)) {
+      return Left(new Error(`Invalid network configuration response for chain ID: ${chainId}`));
+    }
+
+    const descriptors = Object.entries(networkData.descriptors).reduce((acc, [deviceModel, descriptor]) => {
+      acc[deviceModel] = {
+        descriptorType: descriptor.descriptorType,
+        descriptorVersion: descriptor.descriptorVersion,
+        data: descriptor.data,
+        signatures: descriptor.signatures,
+        icon: networkData.icons?.[deviceModel],
+      };
+      return acc;
+    }, {} as Record<string, NetworkConfiguration["descriptors"][string]>);
+
+    const configuration: NetworkConfiguration = {
+      id: networkData.id,
+      descriptors,
+    };
+
+    return Right(configuration);
   }
 
-  private isValidNetworkData(data: unknown): data is NetworkApiResponse['data'][0] {
+  private isValidNetworkData(data: unknown): data is NetworkApiResponse['data']['data'][0] {
     if (!data || typeof data !== 'object') {
       return false;
     }
@@ -106,7 +110,7 @@ export class HttpNetworkDataSource implements NetworkDataSource {
     return true;
   }
 
-  private isValidDescriptor(descriptor: unknown): descriptor is NetworkApiResponse['data'][0]['descriptors'][string] {
+  private isValidDescriptor(descriptor: unknown): descriptor is NetworkApiResponse['data']['data'][0]['descriptors'][string] {
     if (!descriptor || typeof descriptor !== 'object') {
       return false;
     }
