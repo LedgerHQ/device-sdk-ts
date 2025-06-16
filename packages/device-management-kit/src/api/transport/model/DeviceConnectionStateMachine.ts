@@ -257,7 +257,12 @@ function makeStateMachine({
       tryToReconnect: () => {
         tryToReconnect();
       },
-      cleanupContext: assign({ apduInProgress: Nothing }),
+      clearApduInProgress: assign({
+        apduInProgress: Nothing,
+      }),
+      clearApduResponse: assign({
+        apduResponse: Nothing,
+      }),
       signalTermination: () => {
         onTerminated();
       },
@@ -342,7 +347,7 @@ function makeStateMachine({
                     };
                   },
                 },
-                { type: "cleanupContext" },
+                { type: "clearApduInProgress" },
               ],
             },
           ],
@@ -358,7 +363,7 @@ function makeStateMachine({
                   };
                 },
               },
-              "cleanupContext",
+              "clearApduInProgress",
             ],
           },
           DeviceDisconnected: {
@@ -370,7 +375,7 @@ function makeStateMachine({
                   response: Left(new DeviceDisconnectedWhileSendingError()),
                 },
               },
-              "cleanupContext",
+              "clearApduInProgress",
             ],
           },
           CloseConnectionCalled: {
@@ -382,7 +387,7 @@ function makeStateMachine({
                   response: Left(new DeviceDisconnectedWhileSendingError()),
                 },
               },
-              "cleanupContext",
+              "clearApduInProgress",
             ],
           },
           SendApduCalled: {
@@ -406,7 +411,8 @@ function makeStateMachine({
               };
             },
           },
-          { type: "cleanupContext" },
+          { type: "clearApduInProgress" },
+          { type: "clearApduResponse" },
         ],
         on: {
           ApduResponseReceived: {
@@ -467,7 +473,7 @@ function makeStateMachine({
                 },
               },
               {
-                type: "cleanupContext",
+                type: "clearApduInProgress",
               },
             ],
           },
@@ -480,7 +486,7 @@ function makeStateMachine({
                   response: Left(new DeviceDisconnectedWhileSendingError()),
                 },
               },
-              "cleanupContext",
+              "clearApduInProgress",
             ],
           },
           SendApduCalled: {
