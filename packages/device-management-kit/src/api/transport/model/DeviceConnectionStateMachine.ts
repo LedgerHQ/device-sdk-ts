@@ -419,7 +419,7 @@ function makeStateMachine({
             target: "Connected",
           },
           ApduSendingError: {
-            target: "Connected",
+            target: "WaitingForReconnection",
           },
           DeviceDisconnected: {
             target: "WaitingForReconnection",
