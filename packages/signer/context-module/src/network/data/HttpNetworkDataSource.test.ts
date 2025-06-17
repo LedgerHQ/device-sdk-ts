@@ -72,7 +72,7 @@ describe("HttpNetworkDataSource", () => {
       const result = await datasource.getNetworkConfiguration(1);
 
       expect(axiosInstance.get).toHaveBeenCalledWith(
-        "/v1/networks?output=id,descriptors,icons&chain_id=1"
+        "/v1/networks?output=id,descriptors,icons&chain_id=1",
       );
 
       expect(result).toEqual(
@@ -100,7 +100,7 @@ describe("HttpNetworkDataSource", () => {
               icon: "https://example.com/stax-icon.svg",
             },
           },
-        })
+        }),
       );
     });
 
@@ -113,7 +113,7 @@ describe("HttpNetworkDataSource", () => {
       const result = await datasource.getNetworkConfiguration(1);
 
       expect(result).toEqual(
-        Left(new Error("Network configuration not found for chain ID: 1"))
+        Left(new Error("Network configuration not found for chain ID: 1")),
       );
     });
 
@@ -126,7 +126,7 @@ describe("HttpNetworkDataSource", () => {
       const result = await datasource.getNetworkConfiguration(1);
 
       expect(result).toEqual(
-        Left(new Error("Network configuration not found for chain ID: 1"))
+        Left(new Error("Network configuration not found for chain ID: 1")),
       );
     });
 
@@ -150,7 +150,7 @@ describe("HttpNetworkDataSource", () => {
       const result = await datasource.getNetworkConfiguration(1);
 
       expect(result).toEqual(
-        Left(new Error("Failed to fetch network configuration"))
+        Left(new Error("Failed to fetch network configuration")),
       );
     });
 
@@ -174,7 +174,9 @@ describe("HttpNetworkDataSource", () => {
       const result = await datasource.getNetworkConfiguration(1);
 
       expect(result).toEqual(
-        Left(new Error("Invalid network configuration response for chain ID: 1"))
+        Left(
+          new Error("Invalid network configuration response for chain ID: 1"),
+        ),
       );
     });
 
@@ -204,7 +206,9 @@ describe("HttpNetworkDataSource", () => {
       const result = await datasource.getNetworkConfiguration(1);
 
       expect(result).toEqual(
-        Left(new Error("Invalid network configuration response for chain ID: 1"))
+        Left(
+          new Error("Invalid network configuration response for chain ID: 1"),
+        ),
       );
     });
 
@@ -238,7 +242,9 @@ describe("HttpNetworkDataSource", () => {
       const result = await datasource.getNetworkConfiguration(1);
 
       expect(result).toEqual(
-        Left(new Error("Invalid network configuration response for chain ID: 1"))
+        Left(
+          new Error("Invalid network configuration response for chain ID: 1"),
+        ),
       );
     });
 
@@ -286,7 +292,7 @@ describe("HttpNetworkDataSource", () => {
               icon: undefined,
             },
           },
-        })
+        }),
       );
     });
 
@@ -299,7 +305,7 @@ describe("HttpNetworkDataSource", () => {
       const result = await datasource.getNetworkConfiguration(137);
 
       expect(axiosInstance.get).toHaveBeenCalledWith(
-        "/v1/networks?output=id,descriptors,icons&chain_id=137"
+        "/v1/networks?output=id,descriptors,icons&chain_id=137",
       );
 
       const configuration = result._tag === "Right" ? result.right : null;

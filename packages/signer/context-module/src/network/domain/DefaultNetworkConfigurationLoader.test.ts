@@ -46,7 +46,7 @@ describe("DefaultNetworkConfigurationLoader", () => {
   describe("load", () => {
     it("should return network configuration when data source returns success", async () => {
       vi.mocked(mockDataSource.getNetworkConfiguration).mockResolvedValue(
-        Right(mockNetworkConfiguration)
+        Right(mockNetworkConfiguration),
       );
 
       const result = await loader.load(1);
@@ -57,7 +57,7 @@ describe("DefaultNetworkConfigurationLoader", () => {
 
     it("should return null when data source returns error", async () => {
       vi.mocked(mockDataSource.getNetworkConfiguration).mockResolvedValue(
-        Left(new Error("Network not found"))
+        Left(new Error("Network not found")),
       );
 
       const result = await loader.load(999);
@@ -68,7 +68,7 @@ describe("DefaultNetworkConfigurationLoader", () => {
 
     it("should pass through different chain IDs correctly", async () => {
       vi.mocked(mockDataSource.getNetworkConfiguration).mockResolvedValue(
-        Right(mockNetworkConfiguration)
+        Right(mockNetworkConfiguration),
       );
 
       await loader.load(137); // Polygon
@@ -78,7 +78,9 @@ describe("DefaultNetworkConfigurationLoader", () => {
       expect(mockDataSource.getNetworkConfiguration).toHaveBeenCalledWith(10);
 
       await loader.load(42161); // Arbitrum
-      expect(mockDataSource.getNetworkConfiguration).toHaveBeenCalledWith(42161);
+      expect(mockDataSource.getNetworkConfiguration).toHaveBeenCalledWith(
+        42161,
+      );
     });
 
     it("should handle empty descriptors", async () => {
@@ -87,7 +89,7 @@ describe("DefaultNetworkConfigurationLoader", () => {
         descriptors: {},
       };
       vi.mocked(mockDataSource.getNetworkConfiguration).mockResolvedValue(
-        Right(emptyConfig)
+        Right(emptyConfig),
       );
 
       const result = await loader.load(1);
@@ -112,7 +114,7 @@ describe("DefaultNetworkConfigurationLoader", () => {
         },
       };
       vi.mocked(mockDataSource.getNetworkConfiguration).mockResolvedValue(
-        Right(configWithoutIcons)
+        Right(configWithoutIcons),
       );
 
       const result = await loader.load(1);
@@ -122,7 +124,7 @@ describe("DefaultNetworkConfigurationLoader", () => {
 
     it("should handle data source throwing error", async () => {
       vi.mocked(mockDataSource.getNetworkConfiguration).mockRejectedValue(
-        new Error("Network error")
+        new Error("Network error"),
       );
 
       await expect(loader.load(1)).rejects.toThrow("Network error");

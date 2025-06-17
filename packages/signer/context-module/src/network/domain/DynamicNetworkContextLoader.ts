@@ -1,5 +1,6 @@
 import { inject, injectable } from "inversify";
 
+import { networkTypes } from "@/network/di/networkTypes";
 import { ContextLoader } from "@/shared/domain/ContextLoader";
 import {
   ClearSignContext,
@@ -9,7 +10,6 @@ import {
   TransactionContext,
   TransactionFieldContext,
 } from "@/shared/model/TransactionContext";
-import { networkTypes } from "@/network/di/networkTypes";
 
 import { NetworkConfigurationLoader } from "./NetworkConfigurationLoader";
 
@@ -33,8 +33,7 @@ export class DynamicNetworkContextLoader implements ContextLoader {
       return [];
     }
 
-    const descriptor =
-      configuration.descriptors[transaction.deviceModelId];
+    const descriptor = configuration.descriptors[transaction.deviceModelId];
 
     if (!descriptor) {
       return [];

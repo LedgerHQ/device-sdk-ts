@@ -1,11 +1,11 @@
 import { type Container } from "inversify";
 
+import { networkTypes } from "@/network/di/networkTypes";
+import { type DynamicNetworkContextLoader } from "@/network/domain/DynamicNetworkContextLoader";
 import type { TypedDataClearSignContext } from "@/shared/model/TypedDataClearSignContext";
 import type { TypedDataContext } from "@/shared/model/TypedDataContext";
 import { transactionTypes } from "@/transaction/di/transactionTypes";
 import { trustedNameTypes } from "@/trusted-name/di/trustedNameTypes";
-import { networkTypes } from "@/network/di/networkTypes";
-import { type DynamicNetworkContextLoader } from "@/network/domain/DynamicNetworkContextLoader";
 
 import { type ContextModuleConfig } from "./config/model/ContextModuleConfig";
 import { externalPluginTypes } from "./external-plugin/di/externalPluginTypes";
