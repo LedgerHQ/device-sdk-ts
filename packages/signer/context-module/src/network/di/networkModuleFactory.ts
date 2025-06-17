@@ -8,6 +8,8 @@ import { type NetworkDataSource } from "@/network/data/NetworkDataSource";
 import { DefaultNetworkConfigurationLoader } from "@/network/domain/DefaultNetworkConfigurationLoader";
 import { DynamicNetworkContextLoader } from "@/network/domain/DynamicNetworkContextLoader";
 import { type NetworkConfigurationLoader } from "@/network/domain/NetworkConfigurationLoader";
+import { LEDGER_CLIENT_VERSION_HEADER } from "@/shared/constant/HttpHeaders";
+import PACKAGE from "@root/package.json";
 
 import { networkTypes } from "./networkTypes";
 
@@ -21,7 +23,7 @@ export const networkModuleFactory = () =>
         const api = axios.create({
           baseURL: config.cal.url,
           headers: {
-            "X-Ledger-Client-Version": config.cal.clientVersion,
+            [LEDGER_CLIENT_VERSION_HEADER]: `context-module/${PACKAGE.version}`,
           },
         });
         return new HttpNetworkDataSource(api);
