@@ -7,7 +7,6 @@ import { HttpNetworkDataSource } from "@/network/data/HttpNetworkDataSource";
 import { type NetworkDataSource } from "@/network/data/NetworkDataSource";
 import { DefaultNetworkConfigurationLoader } from "@/network/domain/DefaultNetworkConfigurationLoader";
 import { DynamicNetworkContextLoader } from "@/network/domain/DynamicNetworkContextLoader";
-import { type NetworkConfigurationLoader } from "@/network/domain/NetworkConfigurationLoader";
 import { LEDGER_CLIENT_VERSION_HEADER } from "@/shared/constant/HttpHeaders";
 import PACKAGE from "@root/package.json";
 
@@ -39,7 +38,7 @@ export const networkModuleFactory = () =>
         },
       );
 
-      bind<NetworkConfigurationLoader>(
+      bind<DefaultNetworkConfigurationLoader>(
         networkTypes.NetworkConfigurationLoader,
       ).to(DefaultNetworkConfigurationLoader);
 
