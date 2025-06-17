@@ -1,4 +1,8 @@
 import {
+  type ContextModule,
+  ContextModuleBuilder,
+} from "@ledgerhq/context-module";
+import {
   type DeviceManagementKit,
   type DeviceSessionId,
 } from "@ledgerhq/device-management-kit";
@@ -8,6 +12,7 @@ import { DefaultSignerSolana } from "@internal/DefaultSignerSolana";
 type SignerSolanaBuilderConstructorArgs = {
   dmk: DeviceManagementKit;
   sessionId: DeviceSessionId;
+  originToken?: string;
 };
 
 /**
@@ -22,10 +27,28 @@ type SignerSolanaBuilderConstructorArgs = {
 export class SignerSolanaBuilder {
   private _dmk: DeviceManagementKit;
   private _sessionId: DeviceSessionId;
+  private _customContextModule: ContextModule | undefined;
+  private _originToken: string | undefined;
 
-  constructor({ dmk, sessionId }: SignerSolanaBuilderConstructorArgs) {
+  constructor({
+    dmk,
+    sessionId,
+    originToken,
+  }: SignerSolanaBuilderConstructorArgs) {
     this._dmk = dmk;
     this._sessionId = sessionId;
+    this._originToken = originToken;
+  }
+
+  /**
+   * Override the default context module
+   *
+   * @param contextModule
+   * @returns this
+   */
+  withContextModule(contextModule: ContextModule) {
+    this._customContextModule = contextModule;
+    return this;
   }
 
   /**
@@ -37,6 +60,9 @@ export class SignerSolanaBuilder {
     return new DefaultSignerSolana({
       dmk: this._dmk,
       sessionId: this._sessionId,
+      contextModule:
+        this._customContextModule ??
+        new ContextModuleBuilder({ originToken: this._originToken }).build(),
     });
   }
 }
