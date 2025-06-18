@@ -1,7 +1,9 @@
 import axios from "axios";
-import { injectable } from "inversify";
+import { inject, injectable } from "inversify";
 import { Either, Left, Right } from "purify-ts";
 
+import { configTypes } from "@/config/di/configTypes";
+import { type ContextModuleConfig } from "@/config/model/ContextModuleConfig";
 import {
   GetNftInformationsParams,
   GetSetPluginPayloadParams,
@@ -12,6 +14,10 @@ import PACKAGE from "@root/package.json";
 
 @injectable()
 export class HttpNftDataSource implements NftDataSource {
+  constructor(
+    @inject(configTypes.Config) private readonly config: ContextModuleConfig,
+  ) {}
+
   public async getSetPluginPayload({
     chainId,
     address,
@@ -20,7 +26,7 @@ export class HttpNftDataSource implements NftDataSource {
     try {
       const response = await axios.request<{ payload: string }>({
         method: "GET",
-        url: `https://nft.api.live.ledger.com/v1/ethereum/${chainId}/contracts/${address}/plugin-selector/${selector}`,
+        url: `${this.config.metadataService.url}/v1/ethereum/${chainId}/contracts/${address}/plugin-selector/${selector}`,
         headers: {
           [LEDGER_CLIENT_VERSION_HEADER]: `context-module/${PACKAGE.version}`,
         },

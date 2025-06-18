@@ -28,6 +28,9 @@ describe("DefaultContextModule", () => {
     web3checks: {
       url: "https://web3checks/v3",
     },
+    metadataService: {
+      url: "https://metadata/v2",
+    },
     originToken: "originToken",
   };
 
