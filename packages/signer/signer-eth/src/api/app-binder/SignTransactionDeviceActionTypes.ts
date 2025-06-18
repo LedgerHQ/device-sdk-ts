@@ -2,7 +2,6 @@ import {
   type ClearSignContextSuccess,
   type ClearSignContextType,
   type ContextModule,
-  type NetworkConfigurationLoader,
 } from "@ledgerhq/context-module";
 import {
   type CommandErrorResult,
@@ -42,7 +41,6 @@ export type SignTransactionDAInput = {
   readonly mapper: TransactionMapperService;
   readonly parser: TransactionParserService;
   readonly contextModule: ContextModule;
-  readonly networkConfigurationLoader?: NetworkConfigurationLoader;
   readonly options: TransactionOptions;
 };
 

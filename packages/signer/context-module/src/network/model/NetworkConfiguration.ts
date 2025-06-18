@@ -15,7 +15,3 @@ export type NetworkConfiguration = {
   id: string;
   descriptors: Record<DeviceModelId, NetworkDescriptor>;
 };
-
-export interface NetworkConfigurationLoader {
-  load(chainId: number): Promise<NetworkConfiguration | null>;
-}

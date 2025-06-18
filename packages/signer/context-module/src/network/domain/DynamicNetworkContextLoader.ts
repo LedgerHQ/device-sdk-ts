@@ -1,5 +1,6 @@
 import { inject, injectable } from "inversify";
 
+import { type NetworkDataSource } from "@/network/data/NetworkDataSource";
 import { networkTypes } from "@/network/di/networkTypes";
 import { ContextLoader } from "@/shared/domain/ContextLoader";
 import {
@@ -11,46 +12,44 @@ import {
   TransactionFieldContext,
 } from "@/shared/model/TransactionContext";
 
-import { NetworkConfigurationLoader } from "./NetworkConfigurationLoader";
-
 @injectable()
 export class DynamicNetworkContextLoader implements ContextLoader {
-  private readonly _networkConfigurationLoader: NetworkConfigurationLoader;
+  private readonly _networkDataSource: NetworkDataSource;
 
   constructor(
-    @inject(networkTypes.NetworkConfigurationLoader)
-    networkConfigurationLoader: NetworkConfigurationLoader,
+    @inject(networkTypes.NetworkDataSource)
+    networkDataSource: NetworkDataSource,
   ) {
-    this._networkConfigurationLoader = networkConfigurationLoader;
+    this._networkDataSource = networkDataSource;
   }
 
   async load(transaction: TransactionContext): Promise<ClearSignContext[]> {
-    const configuration = await this._networkConfigurationLoader.load(
+    const result = await this._networkDataSource.getNetworkConfiguration(
       transaction.chainId,
     );
 
-    if (!configuration) {
-      return [];
-    }
+    return result.caseOf({
+      Left: () => [],
+      Right: (configuration) => {
+        const descriptor = configuration.descriptors[transaction.deviceModelId];
 
-    const descriptor = configuration.descriptors[transaction.deviceModelId];
+        if (!descriptor) {
+          return [];
+        }
 
-    if (!descriptor) {
-      return [];
-    }
-
-    // Return the dynamic network context with the descriptor data
-    return [
-      {
-        type: ClearSignContextType.DYNAMIC_NETWORK,
-        payload: descriptor.data,
+        return [
+          {
+            type: ClearSignContextType.DYNAMIC_NETWORK,
+            payload: descriptor.data,
+          },
+        ];
       },
-    ];
+    });
   }
 
   // Dynamic network context doesn't support field-level loading
   async loadField(
-    field: TransactionFieldContext,
+    _field: TransactionFieldContext,
   ): Promise<ClearSignContext | null> {
     return null;
   }

@@ -1,49 +1,41 @@
-import { type AxiosInstance } from "axios";
-import { injectable } from "inversify";
+import { type DeviceModelId } from "@ledgerhq/device-management-kit";
+import axios from "axios";
+import { inject, injectable } from "inversify";
 import { Either, Left, Right } from "purify-ts";
 
-import { type NetworkConfiguration } from "@/network/domain/NetworkConfigurationLoader";
+import { configTypes } from "@/config/di/configTypes";
+import { type ContextModuleConfig } from "@/config/model/ContextModuleConfig";
+import {
+  type NetworkConfiguration,
+  type NetworkDescriptor,
+} from "@/network/model/NetworkConfiguration";
+import { LEDGER_CLIENT_VERSION_HEADER } from "@/shared/constant/HttpHeaders";
+import PACKAGE from "@root/package.json";
 
+import { type NetworkApiResponseDto } from "./dto/NetworkApiResponseDto";
 import { type NetworkDataSource } from "./NetworkDataSource";
-
-type NetworkApiResponse = {
-  data: {
-    data: Array<{
-      id: string;
-      descriptors: Record<
-        string,
-        {
-          data: string;
-          descriptorType: string;
-          descriptorVersion: string;
-          signatures: {
-            prod: string;
-            test: string;
-          };
-        }
-      >;
-      icons: Record<string, string>;
-    }>;
-  };
-};
 
 @injectable()
 export class HttpNetworkDataSource implements NetworkDataSource {
-  private readonly _api: AxiosInstance;
-
-  constructor(api: AxiosInstance) {
-    this._api = api;
-  }
+  constructor(
+    @inject(configTypes.Config) private readonly config: ContextModuleConfig,
+  ) {}
 
   async getNetworkConfiguration(
     chainId: number,
   ): Promise<Either<Error, NetworkConfiguration>> {
-    let response: NetworkApiResponse;
+    let response: NetworkApiResponseDto;
 
     try {
-      response = await this._api.get<NetworkApiResponse>(
-        `/v1/networks?output=id,descriptors,icons&chain_id=${chainId}`,
+      const axiosResponse = await axios.get<NetworkApiResponseDto>(
+        `${this.config.cal.url}/v1/networks?output=id,descriptors,icons&chain_id=${chainId}`,
+        {
+          headers: {
+            [LEDGER_CLIENT_VERSION_HEADER]: `context-module/${PACKAGE.version}`,
+          },
+        },
       );
+      response = axiosResponse.data;
     } catch (error) {
       return Left(
         error instanceof Error
@@ -74,7 +66,7 @@ export class HttpNetworkDataSource implements NetworkDataSource {
 
   private isValidNetworkData(
     data: unknown,
-  ): data is NetworkApiResponse["data"]["data"][0] {
+  ): data is NetworkApiResponseDto["data"]["data"][0] {
     if (!data || typeof data !== "object") {
       return false;
     }
@@ -82,24 +74,24 @@ export class HttpNetworkDataSource implements NetworkDataSource {
     const obj = data as Record<string, unknown>;
 
     // Check required fields
-    if (typeof obj.id !== "string") {
+    if (typeof obj["id"] !== "string") {
       return false;
     }
 
     // Check descriptors structure
-    if (!obj.descriptors || typeof obj.descriptors !== "object") {
+    if (!obj["descriptors"] || typeof obj["descriptors"] !== "object") {
       return false;
     }
 
     // Validate each descriptor
-    for (const descriptor of Object.values(obj.descriptors)) {
+    for (const descriptor of Object.values(obj["descriptors"])) {
       if (!this.isValidDescriptor(descriptor)) {
         return false;
       }
     }
 
     // Icons are optional but if present, should be an object
-    if (obj.icons && typeof obj.icons !== "object") {
+    if (obj["icons"] && typeof obj["icons"] !== "object") {
       return false;
     }
 
@@ -108,7 +100,7 @@ export class HttpNetworkDataSource implements NetworkDataSource {
 
   private isValidDescriptor(
     descriptor: unknown,
-  ): descriptor is NetworkApiResponse["data"]["data"][0]["descriptors"][string] {
+  ): descriptor is NetworkApiResponseDto["data"]["data"][0]["descriptors"][string] {
     if (!descriptor || typeof descriptor !== "object") {
       return false;
     }
@@ -117,22 +109,22 @@ export class HttpNetworkDataSource implements NetworkDataSource {
 
     // Check required descriptor fields
     if (
-      typeof desc.data !== "string" ||
-      typeof desc.descriptorType !== "string" ||
-      typeof desc.descriptorVersion !== "string"
+      typeof desc["data"] !== "string" ||
+      typeof desc["descriptorType"] !== "string" ||
+      typeof desc["descriptorVersion"] !== "string"
     ) {
       return false;
     }
 
     // Check signatures structure
-    if (!desc.signatures || typeof desc.signatures !== "object") {
+    if (!desc["signatures"] || typeof desc["signatures"] !== "object") {
       return false;
     }
 
-    const signatures = desc.signatures as Record<string, unknown>;
+    const signatures = desc["signatures"] as Record<string, unknown>;
     if (
-      typeof signatures.prod !== "string" ||
-      typeof signatures.test !== "string"
+      typeof signatures["prod"] !== "string" ||
+      typeof signatures["test"] !== "string"
     ) {
       return false;
     }
@@ -141,11 +133,11 @@ export class HttpNetworkDataSource implements NetworkDataSource {
   }
 
   private transformToNetworkConfiguration(
-    networkData: NetworkApiResponse["data"]["data"][0],
+    networkData: NetworkApiResponseDto["data"]["data"][0],
   ): NetworkConfiguration {
     const descriptors = Object.entries(networkData.descriptors).reduce(
       (acc, [deviceModel, descriptor]) => {
-        acc[deviceModel] = {
+        acc[deviceModel as DeviceModelId] = {
           descriptorType: descriptor.descriptorType,
           descriptorVersion: descriptor.descriptorVersion,
           data: descriptor.data,
@@ -154,7 +146,7 @@ export class HttpNetworkDataSource implements NetworkDataSource {
         };
         return acc;
       },
-      {} as Record<string, NetworkConfiguration["descriptors"][string]>,
+      {} as Record<DeviceModelId, NetworkDescriptor>,
     );
 
     return {

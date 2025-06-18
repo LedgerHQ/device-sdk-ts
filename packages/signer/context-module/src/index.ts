@@ -4,7 +4,7 @@ export * from "./ContextModuleBuilder";
 export * from "./DefaultContextModule";
 export * from "./external-plugin/domain/ExternalPluginContextLoader";
 export * from "./network/domain/DynamicNetworkContextLoader";
-export * from "./network/domain/NetworkConfigurationLoader";
+export * from "./network/model/NetworkConfiguration";
 export * from "./nft/domain/NftContextLoader";
 export * from "./pki/domain/PkiCertificateLoader";
 export * from "./pki/model/KeyId";
