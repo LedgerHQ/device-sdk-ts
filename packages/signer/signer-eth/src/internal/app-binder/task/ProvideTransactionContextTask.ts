@@ -13,11 +13,11 @@ import {
 } from "@ledgerhq/device-management-kit";
 import { Just, type Maybe, Nothing } from "purify-ts";
 
-import { ProvideNFTInformationCommand } from "@internal/app-binder/command/ProvideNFTInformationCommand";
-import { 
+import {
   NetworkConfigurationType,
   ProvideNetworkConfigurationCommand,
 } from "@internal/app-binder/command/ProvideNetworkConfigurationCommand";
+import { ProvideNFTInformationCommand } from "@internal/app-binder/command/ProvideNFTInformationCommand";
 import {
   ProvideTokenInformationCommand,
   type ProvideTokenInformationCommandResponse,

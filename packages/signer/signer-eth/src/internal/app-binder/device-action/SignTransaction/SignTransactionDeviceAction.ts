@@ -2,7 +2,6 @@ import {
   type ClearSignContextSuccess,
   type ClearSignContextType,
   type ContextModule,
-  type NetworkConfigurationLoader,
 } from "@ledgerhq/context-module";
 import {
   type CommandErrorResult,
@@ -44,7 +43,6 @@ import {
   type BuildTransactionContextTaskArgs,
   type BuildTransactionTaskResult,
 } from "@internal/app-binder/task/BuildTransactionContextTask";
-import { ProvideNetworkConfigurationTask, NetworkConfigurationType } from "@internal/app-binder/task/ProvideNetworkConfigurationTask";
 import { ProvideTransactionContextTask } from "@internal/app-binder/task/ProvideTransactionContextTask";
 import {
   type GenericContext,
@@ -73,13 +71,6 @@ export type MachineDependencies = {
       derivationPath: string;
     };
   }) => Promise<BuildTransactionTaskResult>;
-  readonly provideNetworkConfiguration: (arg0: {
-    input: {
-      networkConfigurationLoader: NetworkConfigurationLoader;
-      chainId: number;
-      deviceModelId: DeviceModelId;
-    };
-  }) => Promise<CommandResult<void, EthErrorCodes>>;
   readonly provideContext: (arg0: {
     input: {
       clearSignContexts: ClearSignContextSuccess[];
@@ -138,7 +129,6 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
       getAppConfig,
       web3CheckOptIn,
       buildContext,
-      provideNetworkConfiguration,
       provideContext,
       provideGenericContext,
       signTransaction,
@@ -157,7 +147,6 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
         getAppConfig: fromPromise(getAppConfig),
         web3CheckOptIn: fromPromise(web3CheckOptIn),
         buildContext: fromPromise(buildContext),
-        provideNetworkConfiguration: fromPromise(provideNetworkConfiguration),
         provideContext: fromPromise(provideContext),
         provideGenericContext: fromPromise(provideGenericContext),
         signTransaction: fromPromise(signTransaction),
@@ -182,14 +171,6 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
           !context._internalState.appConfig!.web3ChecksEnabled &&
           !context._internalState.appConfig!.web3ChecksOptIn,
         skipOpenApp: ({ context }) => !!context.input.options.skipOpenApp,
-        shouldProvideNetworkConfiguration: ({ context }) =>
-          !!context.input.networkConfigurationLoader &&
-          new ApplicationChecker(
-            internalApi.getDeviceSessionState(),
-            context._internalState.appConfig!,
-          )
-            .withMinVersionExclusive("1.15.0")
-            .check(),
       },
       actions: {
         assignErrorFromEvent: assign({
@@ -423,45 +404,6 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
         BuildContextResultCheck: {
           always: [
             {
-              target: "ProvideNetworkConfiguration",
-              guard: "shouldProvideNetworkConfiguration",
-            },
-            {
-              target: "ProvideGenericContext",
-              guard: "isGenericContext",
-            },
-            {
-              target: "ProvideContext",
-            },
-          ],
-        },
-        ProvideNetworkConfiguration: {
-          entry: assign({
-            intermediateValue: {
-              requiredUserInteraction: UserInteractionRequired.None,
-              step: SignTransactionDAStep.PROVIDE_NETWORK_CONFIGURATION,
-            },
-          }),
-          invoke: {
-            id: "provideNetworkConfiguration",
-            src: "provideNetworkConfiguration",
-            input: ({ context }) => ({
-              networkConfigurationLoader: context.input.networkConfigurationLoader!,
-              chainId: context._internalState.chainId!,
-              deviceModelId: internalApi.getDeviceSessionState().deviceModelId,
-            }),
-            onDone: {
-              target: "ProvideNetworkConfigurationResultCheck",
-            },
-            onError: {
-              target: "Error",
-              actions: "assignErrorFromEvent",
-            },
-          },
-        },
-        ProvideNetworkConfigurationResultCheck: {
-          always: [
-            {
               target: "ProvideGenericContext",
               guard: "isGenericContext",
             },
@@ -657,45 +599,10 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
       };
     }) => new SendSignTransactionTask(internalApi, arg0.input).run();
 
-    const provideNetworkConfiguration = async (arg0: {
-      input: {
-        networkConfigurationLoader: NetworkConfigurationLoader;
-        chainId: number;
-        deviceModelId: DeviceModelId;
-      };
-    }) => {
-      const { networkConfigurationLoader, chainId, deviceModelId } = arg0.input;
-      const config = await networkConfigurationLoader.load(chainId);
-      
-      if (!config) {
-        return {
-          isSuccess: true,
-          data: undefined,
-        };
-      }
-
-      const descriptor = config.descriptors[deviceModelId];
-      if (!descriptor) {
-        return {
-          isSuccess: true,
-          data: undefined,
-        };
-      }
-
-      // Encode the network configuration data
-      const encodedData = new TextEncoder().encode(descriptor.data);
-      
-      return new ProvideNetworkConfigurationTask(internalApi, {
-        data: encodedData,
-        configurationType: NetworkConfigurationType.CONFIGURATION,
-      }).run();
-    };
-
     return {
       getAppConfig,
       web3CheckOptIn,
       buildContext,
-      provideNetworkConfiguration,
       provideContext,
       provideGenericContext,
       signTransaction,

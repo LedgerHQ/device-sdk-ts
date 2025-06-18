@@ -5,6 +5,7 @@ import {
 
 import { EthAppCommandError } from "./utils/ethAppErrors";
 import {
+  NetworkConfigurationType,
   ProvideNetworkConfigurationCommand,
   type ProvideNetworkConfigurationCommandArgs,
 } from "./ProvideNetworkConfigurationCommand";
@@ -16,6 +17,7 @@ describe("ProvideNetworkConfigurationCommand", () => {
       const args: ProvideNetworkConfigurationCommandArgs = {
         data: Uint8Array.from([0x01, 0x02, 0x03]),
         isFirstChunk: true,
+        configurationType: NetworkConfigurationType.CONFIGURATION,
       };
 
       // WHEN
@@ -33,6 +35,7 @@ describe("ProvideNetworkConfigurationCommand", () => {
       const args: ProvideNetworkConfigurationCommandArgs = {
         data: Uint8Array.from([0x04, 0x05, 0x06]),
         isFirstChunk: false,
+        configurationType: NetworkConfigurationType.CONFIGURATION,
       };
 
       // WHEN
@@ -58,6 +61,7 @@ describe("ProvideNetworkConfigurationCommand", () => {
       const command = new ProvideNetworkConfigurationCommand({
         data: new Uint8Array(0),
         isFirstChunk: true,
+        configurationType: NetworkConfigurationType.CONFIGURATION,
       });
       const result = command.parseResponse(response);
 
@@ -81,6 +85,7 @@ describe("ProvideNetworkConfigurationCommand", () => {
       const command = new ProvideNetworkConfigurationCommand({
         data: new Uint8Array(0),
         isFirstChunk: true,
+        configurationType: NetworkConfigurationType.CONFIGURATION,
       });
       const result = command.parseResponse(response);
 

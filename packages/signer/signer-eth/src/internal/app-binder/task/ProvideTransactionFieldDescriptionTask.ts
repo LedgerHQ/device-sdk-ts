@@ -325,6 +325,7 @@ export class ProvideTransactionFieldDescriptionTask {
       case ClearSignContextType.TRANSACTION_INFO:
       case ClearSignContextType.PLUGIN:
       case ClearSignContextType.EXTERNAL_PLUGIN:
+      case ClearSignContextType.DYNAMIC_NETWORK:
         return CommandResultFactory({
           error: new InvalidStatusWordError(
             `The context type [${type}] is not valid as a transaction field or metadata`,
