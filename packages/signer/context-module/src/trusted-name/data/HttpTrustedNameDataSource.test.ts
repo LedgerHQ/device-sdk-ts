@@ -19,6 +19,9 @@ describe("HttpTrustedNameDataSource", () => {
         mode: "prod",
         branch: "main",
       },
+      metadataService: {
+        url: "https://nft.api.live.ledger.com/v2",
+      },
     } as ContextModuleConfig;
     datasource = new HttpTrustedNameDataSource(config);
     vi.clearAllMocks();
