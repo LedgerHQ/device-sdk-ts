@@ -1,31 +1,40 @@
+/* eslint-disable @typescript-eslint/no-unsafe-member-access */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import {
-  base64StringToBuffer,
   DeviceModelId,
+  hexaStringToBuffer,
 } from "@ledgerhq/device-management-kit";
 import axios from "axios";
 import { Left } from "purify-ts";
 
 import type { ContextModuleConfig } from "@/config/model/ContextModuleConfig";
 import { LEDGER_CLIENT_VERSION_HEADER } from "@/shared/constant/HttpHeaders";
-import { HttpSolanaDataSource } from "@/solana/data/HttpSolanaDataSource";
+import { HttpSolanaOwnerInfoDataSource } from "@/solana/data/HttpSolanaOwnerInfoDataSource";
 import type { SolanaTransactionContext } from "@/solana/domain/solanaContextTypes";
 import PACKAGE from "@root/package.json";
 
 vi.mock("axios");
 
-describe("HttpSolanaDataSource", () => {
+function stringToHex(str: string): string {
+  const encoder = new TextEncoder();
+  const bytes = encoder.encode(str); // Uint8Array
+  return Array.from(bytes)
+    .map((byte) => byte.toString(16).padStart(2, "0"))
+    .join("");
+}
+
+describe("HttpSolanaOwnerInfoDataSource", () => {
   const config = {
-    web3checks: { url: "https://some.doma.in" },
+    metadataService: { url: "https://some.doma.in" },
     originToken: "mock-origin-token",
   } as ContextModuleConfig;
 
-  const signedDescriptorBase64 = btoa("mock-descriptor");
+  const signedDescriptorHex = stringToHex("mock-descriptor");
   const responseData = {
     tokenAccount: "token-account",
     owner: "owner-address",
     contract: "contract-address",
-    signedDescriptor: signedDescriptorBase64,
+    signedDescriptor: signedDescriptorHex,
   };
 
   beforeEach(() => {
@@ -41,12 +50,12 @@ describe("HttpSolanaDataSource", () => {
     };
     vi.spyOn(axios, "request").mockResolvedValueOnce({ data: responseData });
 
-    const dataSource = new HttpSolanaDataSource(config);
-    const result = await dataSource.getSolanaContext(context);
+    const dataSource = new HttpSolanaOwnerInfoDataSource(config);
+    const result = await dataSource.getOwnerInfo(context);
 
     expect(result.isRight()).toBe(true);
     expect(result.extract()).toEqual({
-      descriptor: base64StringToBuffer(signedDescriptorBase64),
+      descriptor: hexaStringToBuffer(signedDescriptorHex),
       tokenAccount: "token-account",
       owner: "owner-address",
       contract: "contract-address",
@@ -65,8 +74,8 @@ describe("HttpSolanaDataSource", () => {
     };
     vi.spyOn(axios, "request").mockResolvedValueOnce({ data: responseData });
 
-    const dataSource = new HttpSolanaDataSource(config);
-    const result = await dataSource.getSolanaContext(context);
+    const dataSource = new HttpSolanaOwnerInfoDataSource(config);
+    const result = await dataSource.getOwnerInfo(context);
 
     expect(result.isRight()).toBe(true);
     expect((result.extract() as any).tokenAccount).toBe("token-account");
@@ -80,13 +89,13 @@ describe("HttpSolanaDataSource", () => {
       createATA: undefined,
     };
 
-    const dataSource = new HttpSolanaDataSource(config);
-    const result = await dataSource.getSolanaContext(context);
+    const dataSource = new HttpSolanaOwnerInfoDataSource(config);
+    const result = await dataSource.getOwnerInfo(context);
 
     expect(result).toEqual(
       Left(
         new Error(
-          "[ContextModule] - HttpSolanaDataSource: either tokenAddress or valid createATA must be provided",
+          "[ContextModule] - HttpSolanaOwnerInfoDataSource: either tokenAddress or valid createATA must be provided",
         ),
       ),
     );
@@ -100,13 +109,13 @@ describe("HttpSolanaDataSource", () => {
       createATA: undefined,
     };
 
-    const dataSource = new HttpSolanaDataSource(config);
-    const result = await dataSource.getSolanaContext(context);
+    const dataSource = new HttpSolanaOwnerInfoDataSource(config);
+    const result = await dataSource.getOwnerInfo(context);
 
     expect(result).toEqual(
       Left(
         new Error(
-          "[ContextModule] - HttpSolanaDataSource: challenge is required",
+          "[ContextModule] - HttpSolanaOwnerInfoDataSource: challenge is required",
         ),
       ),
     );
@@ -123,13 +132,13 @@ describe("HttpSolanaDataSource", () => {
       createATA: undefined,
     };
 
-    const dataSource = new HttpSolanaDataSource(config);
-    const result = await dataSource.getSolanaContext(context);
+    const dataSource = new HttpSolanaOwnerInfoDataSource(config);
+    const result = await dataSource.getOwnerInfo(context);
 
     expect(result).toEqual(
       Left(
         new Error(
-          "[ContextModule] - HttpSolanaDataSource: invalid base64 descriptor received",
+          "[ContextModule] - HttpSolanaOwnerInfoDataSource: invalid base64 descriptor received",
         ),
       ),
     );
@@ -146,13 +155,13 @@ describe("HttpSolanaDataSource", () => {
       createATA: undefined,
     };
 
-    const dataSource = new HttpSolanaDataSource(config);
-    const result = await dataSource.getSolanaContext(context);
+    const dataSource = new HttpSolanaOwnerInfoDataSource(config);
+    const result = await dataSource.getOwnerInfo(context);
 
     expect(result).toEqual(
       Left(
         new Error(
-          "[ContextModule] - HttpSolanaDataSource: Failed to fetch address metadata",
+          "[ContextModule] - HttpSolanaOwnerInfoDataSource: Failed to fetch address metadata",
         ),
       ),
     );
@@ -170,13 +179,13 @@ describe("HttpSolanaDataSource", () => {
       createATA: undefined,
     };
 
-    const dataSource = new HttpSolanaDataSource(config);
-    const result = await dataSource.getSolanaContext(context);
+    const dataSource = new HttpSolanaOwnerInfoDataSource(config);
+    const result = await dataSource.getOwnerInfo(context);
 
     expect(result).toEqual(
       Left(
         new Error(
-          "[ContextModule] - HttpSolanaDataSource: invalid fetchAddressMetadata response shape",
+          "[ContextModule] - HttpSolanaOwnerInfoDataSource: invalid fetchAddressMetadata response shape",
         ),
       ),
     );
@@ -197,13 +206,13 @@ describe("HttpSolanaDataSource", () => {
       },
     };
 
-    const dataSource = new HttpSolanaDataSource(config);
-    const result = await dataSource.getSolanaContext(context);
+    const dataSource = new HttpSolanaOwnerInfoDataSource(config);
+    const result = await dataSource.getOwnerInfo(context);
 
     expect(result).toEqual(
       Left(
         new Error(
-          "[ContextModule] - HttpSolanaDataSource: invalid computeAddressMetadata response shape",
+          "[ContextModule] - HttpSolanaOwnerInfoDataSource: invalid computeAddressMetadata response shape",
         ),
       ),
     );
@@ -211,9 +220,12 @@ describe("HttpSolanaDataSource", () => {
 
   it("should throw if originToken is missing", () => {
     expect(() => {
-      new HttpSolanaDataSource({ ...config, originToken: undefined } as any);
+      new HttpSolanaOwnerInfoDataSource({
+        ...config,
+        originToken: undefined,
+      } as any);
     }).toThrow(
-      "[ContextModule] - HttpSolanaDataSource: origin token is required",
+      "[ContextModule] - HttpSolanaOwnerInfoDataSource: origin token is required",
     );
   });
 
@@ -228,8 +240,8 @@ describe("HttpSolanaDataSource", () => {
       .spyOn(axios, "request")
       .mockResolvedValueOnce({ data: responseData });
 
-    const dataSource = new HttpSolanaDataSource(config);
-    await dataSource.getSolanaContext(context);
+    const dataSource = new HttpSolanaOwnerInfoDataSource(config);
+    await dataSource.getOwnerInfo(context);
 
     expect(spy).toHaveBeenCalledWith(
       expect.objectContaining({

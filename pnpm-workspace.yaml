@@ -64,6 +64,7 @@ catalog:
   babel-plugin-module-resolver: ^5.0.2
   bitcoinjs-lib: ^6.1.6
   bs58: ^6.0.0
+  buffer: ^6.0.3
   concurrently: ^9.1.0
   crypto-js: ^4.2.0
   danger: 13.0.4

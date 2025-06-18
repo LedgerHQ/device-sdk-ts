@@ -1,7 +1,7 @@
 import {
   type Apdu,
   ApduBuilder,
-  ApduParser,
+  type ApduBuilderArgs,
   type ApduResponse,
   type Command,
   type CommandResult,
@@ -9,7 +9,6 @@ import {
   InvalidStatusWordError,
 } from "@ledgerhq/device-management-kit";
 import { CommandErrorHelper } from "@ledgerhq/signer-utils";
-import { Maybe } from "purify-ts";
 
 import {
   SOLANA_APP_ERRORS,
@@ -28,43 +27,41 @@ export type ProvideTrustedNamePKICommandArgs = {
 
 export class ProvideTrustedNamePKICommand
   implements
-    Command<Maybe<null>, ProvideTrustedNamePKICommandArgs, SolanaAppErrorCodes>
+    Command<void, ProvideTrustedNamePKICommandArgs, SolanaAppErrorCodes>
 {
   private readonly errorHelper = new CommandErrorHelper<
-    Maybe<null>,
+    void,
     SolanaAppErrorCodes
   >(SOLANA_APP_ERRORS, SolanaAppCommandErrorFactory);
 
-  args: ProvideTrustedNamePKICommandArgs;
-
-  constructor(args: ProvideTrustedNamePKICommandArgs) {
-    this.args = args;
-  }
+  constructor(readonly args: ProvideTrustedNamePKICommandArgs) {}
 
   getApdu(): Apdu {
-    return new ApduBuilder({
+    const apduBuilderArgs: ApduBuilderArgs = {
       cla: CLA,
       ins: INS,
       p1: P1,
       p2: P2,
-    })
+    };
+    return new ApduBuilder(apduBuilderArgs)
       .addBufferToData(this.args.pkiBlob)
       .build();
   }
 
   parseResponse(
     response: ApduResponse,
-  ): CommandResult<Maybe<null>, SolanaAppErrorCodes> {
-    return Maybe.fromNullable(
-      this.errorHelper.getError(response),
-    ).orDefaultLazy(() => {
-      const parser = new ApduParser(response);
-      if (parser.getUnparsedRemainingLength() !== 0) {
-        return CommandResultFactory({
-          error: new InvalidStatusWordError("Unexpected response data"),
-        });
-      }
-      return CommandResultFactory({ data: Maybe.of(null) });
-    });
+  ): CommandResult<void, SolanaAppErrorCodes> {
+    const error = this.errorHelper.getError(response);
+    if (error) {
+      return error;
+    }
+
+    if (response.data.length !== 0) {
+      return CommandResultFactory({
+        error: new InvalidStatusWordError("Unexpected data in response"),
+      });
+    }
+
+    return CommandResultFactory({ data: undefined });
   }
 }

@@ -1,4 +1,4 @@
-import { base64StringToBuffer } from "@ledgerhq/device-management-kit";
+import { hexaStringToBuffer } from "@ledgerhq/device-management-kit";
 import axios from "axios";
 import { inject, injectable } from "inversify";
 import { Either, Left, Right } from "purify-ts";
@@ -13,18 +13,18 @@ import {
 import PACKAGE from "@root/package.json";
 
 import {
-  HttpSolanaDataSourceResult,
+  HttpSolanaOwnerInfoDataSourceResult,
   SolanaDataSource,
 } from "./SolanaDataSource";
 
 @injectable()
-export class HttpSolanaDataSource implements SolanaDataSource {
+export class HttpSolanaOwnerInfoDataSource implements SolanaDataSource {
   constructor(
     @inject(configTypes.Config) private readonly config: ContextModuleConfig,
   ) {
     if (!this.config.originToken) {
       throw new Error(
-        "[ContextModule] - HttpSolanaDataSource: origin token is required",
+        "[ContextModule] - HttpSolanaOwnerInfoDataSource: origin token is required",
       );
     }
   }
@@ -51,7 +51,7 @@ export class HttpSolanaDataSource implements SolanaDataSource {
     return await axios
       .request<SolanaSPLOwnerInfo>({
         method: "GET",
-        url: `${this.config.web3checks.url}/solana/owner/${tokenAddress}?challenge=${challenge}`,
+        url: `${this.config.metadataService.url}/solana/owner/${tokenAddress}?challenge=${challenge}`,
         headers: {
           [LEDGER_CLIENT_VERSION_HEADER]: `context-module/${PACKAGE.version}`,
           "X-Ledger-Client-Origin": this.config.originToken,
@@ -61,7 +61,7 @@ export class HttpSolanaDataSource implements SolanaDataSource {
         if (!this.isSolanaSPLOwnerInfo(res.data))
           return Left(
             new Error(
-              "[ContextModule] - HttpSolanaDataSource: invalid fetchAddressMetadata response shape",
+              "[ContextModule] - HttpSolanaOwnerInfoDataSource: invalid fetchAddressMetadata response shape",
             ),
           );
         return Right(res.data);
@@ -69,7 +69,7 @@ export class HttpSolanaDataSource implements SolanaDataSource {
       .catch(() =>
         Left(
           new Error(
-            "[ContextModule] - HttpSolanaDataSource: Failed to fetch address metadata",
+            "[ContextModule] - HttpSolanaOwnerInfoDataSource: Failed to fetch address metadata",
           ),
         ),
       );
@@ -83,7 +83,7 @@ export class HttpSolanaDataSource implements SolanaDataSource {
     return await axios
       .request<SolanaSPLOwnerInfo>({
         method: "GET",
-        url: `${this.config.web3checks.url}/solana/computed-token-account/${address}/${mintAddress}?challenge=${challenge}`,
+        url: `${this.config.metadataService.url}/solana/computed-token-account/${address}/${mintAddress}?challenge=${challenge}`,
         headers: {
           [LEDGER_CLIENT_VERSION_HEADER]: `context-module/${PACKAGE.version}`,
           "X-Ledger-Client-Origin": this.config.originToken,
@@ -93,7 +93,7 @@ export class HttpSolanaDataSource implements SolanaDataSource {
         if (!this.isSolanaSPLOwnerInfo(res.data))
           return Left(
             new Error(
-              "[ContextModule] - HttpSolanaDataSource: invalid computeAddressMetadata response shape",
+              "[ContextModule] - HttpSolanaOwnerInfoDataSource: invalid computeAddressMetadata response shape",
             ),
           );
         return Right(res.data);
@@ -101,21 +101,21 @@ export class HttpSolanaDataSource implements SolanaDataSource {
       .catch(() =>
         Left(
           new Error(
-            "[ContextModule] - HttpSolanaDataSource: Failed to compute address metadata",
+            "[ContextModule] - HttpSolanaOwnerInfoDataSource: Failed to compute address metadata",
           ),
         ),
       );
   }
 
-  async getSolanaContext(
+  async getOwnerInfo(
     context: SolanaTransactionContext,
-  ): Promise<Either<Error, HttpSolanaDataSourceResult>> {
+  ): Promise<Either<Error, HttpSolanaOwnerInfoDataSourceResult>> {
     const { tokenAddress, challenge, createATA } = context;
 
     if (!challenge) {
       return Left(
         new Error(
-          "[ContextModule] - HttpSolanaDataSource: challenge is required",
+          "[ContextModule] - HttpSolanaOwnerInfoDataSource: challenge is required",
         ),
       );
     }
@@ -136,17 +136,17 @@ export class HttpSolanaDataSource implements SolanaDataSource {
     } else {
       return Left(
         new Error(
-          "[ContextModule] - HttpSolanaDataSource: either tokenAddress or valid createATA must be provided",
+          "[ContextModule] - HttpSolanaOwnerInfoDataSource: either tokenAddress or valid createATA must be provided",
         ),
       );
     }
 
     return ownerInfoResult.chain((ownerInfo) => {
-      const descriptor = base64StringToBuffer(ownerInfo.signedDescriptor);
+      const descriptor = hexaStringToBuffer(ownerInfo.signedDescriptor);
       if (!descriptor) {
         return Left(
           new Error(
-            "[ContextModule] - HttpSolanaDataSource: invalid base64 descriptor received",
+            "[ContextModule] - HttpSolanaOwnerInfoDataSource: invalid base64 descriptor received",
           ),
         );
       }

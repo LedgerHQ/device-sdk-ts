@@ -3,7 +3,6 @@ import {
   InvalidStatusWordError,
   isSuccessCommandResult,
 } from "@ledgerhq/device-management-kit";
-import { Maybe } from "purify-ts";
 
 import { ProvideTrustedNamePKICommand } from "./ProvideTrustedNamePKICommand";
 
@@ -54,9 +53,7 @@ describe("ProvideTrustedNamePKICommand", () => {
       };
 
       const parsed = command.parseResponse(LNX_RESPONSE_GOOD);
-      expect(parsed).toStrictEqual(
-        CommandResultFactory({ data: Maybe.of(null) }),
-      );
+      expect(parsed).toStrictEqual(CommandResultFactory({ data: undefined }));
       expect(isSuccessCommandResult(parsed)).toBe(true);
     });
 

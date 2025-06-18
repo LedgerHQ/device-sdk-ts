@@ -11,7 +11,7 @@ import type {
 
 describe("DefaultSolanaContextLoader", () => {
   let mockDataSource: {
-    getSolanaContext: any;
+    getOwnerInfo: any;
   };
   let mockCertLoader: {
     loadCertificate: any;
@@ -34,7 +34,7 @@ describe("DefaultSolanaContextLoader", () => {
   beforeEach(() => {
     vi.resetAllMocks();
     mockDataSource = {
-      getSolanaContext: vi.fn(),
+      getOwnerInfo: vi.fn(),
     };
     mockCertLoader = {
       loadCertificate: vi.fn(),
@@ -47,9 +47,9 @@ describe("DefaultSolanaContextLoader", () => {
   });
 
   it("should call dataSource.getSolanaContext and certificateLoader.loadCertificate with correct args", async () => {
-    // arrange
+    // given
     mockCertLoader.loadCertificate.mockResolvedValue(fakeCert);
-    mockDataSource.getSolanaContext.mockResolvedValue(
+    mockDataSource.getOwnerInfo.mockResolvedValue(
       Right({
         descriptor: Buffer.from("d"),
         tokenAccount: "tkn",
@@ -58,16 +58,16 @@ describe("DefaultSolanaContextLoader", () => {
       }),
     );
 
-    // act
+    // when
     await loader.load(context);
 
-    // assert
+    // then
     expect(mockCertLoader.loadCertificate).toHaveBeenCalledWith({
       keyId: "domain_metadata_key",
-      keyUsage: KeyUsage.TxSimulationSigner,
+      keyUsage: KeyUsage.TrustedName,
       targetDevice: context.deviceModelId,
     });
-    expect(mockDataSource.getSolanaContext).toHaveBeenCalledWith(context);
+    expect(mockDataSource.getOwnerInfo).toHaveBeenCalledWith(context);
   });
 
   it("should return Left if certificate loader returns undefined", async () => {
@@ -87,7 +87,7 @@ describe("DefaultSolanaContextLoader", () => {
   it("should propagate Left from dataSource.getSolanaContext", async () => {
     mockCertLoader.loadCertificate.mockResolvedValue(fakeCert);
     const dsError = new Error("DS failure");
-    mockDataSource.getSolanaContext.mockResolvedValue(Left(dsError));
+    mockDataSource.getOwnerInfo.mockResolvedValue(Left(dsError));
 
     const result = await loader.load(context);
 
@@ -97,7 +97,6 @@ describe("DefaultSolanaContextLoader", () => {
   it("should return Right with merged data and certificate on success", async () => {
     mockCertLoader.loadCertificate.mockResolvedValue(fakeCert);
 
-    // DataSource only returns the four fields
     const dsPayload: SolanaTransactionContextResultSuccess = {
       descriptor: Buffer.from("dd"),
       tokenAccount: "tokenAcct",
@@ -105,7 +104,7 @@ describe("DefaultSolanaContextLoader", () => {
       contract: "contractAddr",
       certificate: fakeCert,
     };
-    mockDataSource.getSolanaContext.mockResolvedValue(Right(dsPayload));
+    mockDataSource.getOwnerInfo.mockResolvedValue(Right(dsPayload));
 
     const result = await loader.load(context);
 

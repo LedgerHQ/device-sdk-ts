@@ -1,5 +1,5 @@
 import { inject, injectable } from "inversify";
-import { Left, Right } from "purify-ts";
+import { Left } from "purify-ts";
 
 import { pkiTypes } from "@/pki/di/pkiTypes";
 import { type PkiCertificateLoader } from "@/pki/domain/PkiCertificateLoader";
@@ -32,7 +32,7 @@ export class DefaultSolanaContextLoader implements SolanaContextLoader {
     // load the CAL certificate
     const certificate = await this._certificateLoader.loadCertificate({
       keyId: "domain_metadata_key",
-      keyUsage: KeyUsage.TxSimulationSigner,
+      keyUsage: KeyUsage.TrustedName,
       targetDevice: solanaContext.deviceModelId,
     });
     if (!certificate) {
@@ -44,20 +44,14 @@ export class DefaultSolanaContextLoader implements SolanaContextLoader {
     }
 
     // fetch the Solana context
-    const ctxResult = await this._dataSource.getSolanaContext(solanaContext);
-    if (ctxResult.isLeft()) {
-      return ctxResult;
-    }
-
-    const { descriptor, tokenAccount, owner, contract } =
-      ctxResult.unsafeCoerce();
-
-    return Right({
-      descriptor,
-      tokenAccount,
-      owner,
-      contract,
-      certificate,
-    });
+    return (await this._dataSource.getOwnerInfo(solanaContext)).map(
+      ({ descriptor, tokenAccount, owner, contract }) => ({
+        descriptor,
+        tokenAccount,
+        owner,
+        contract,
+        certificate,
+      }),
+    );
   }
 }

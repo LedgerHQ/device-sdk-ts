@@ -4,7 +4,7 @@ import {
   type InternalApi,
   isSuccessCommandResult,
 } from "@ledgerhq/device-management-kit";
-import { Just, type Maybe, Nothing } from "purify-ts";
+import { type Maybe, Nothing } from "purify-ts";
 
 import { ProvideTLVDescriptorCommand } from "@internal/app-binder/command/ProvideTLVDescriptorCommand";
 import { ProvideTrustedNamePKICommand } from "@internal/app-binder/command/ProvideTrustedNamePKICommand";
@@ -32,7 +32,7 @@ export class ProvideSolanaTransactionContextTask {
       }),
     );
     if (!isSuccessCommandResult(pkiResult)) {
-      return Just(pkiResult);
+      throw pkiResult;
     }
 
     // send signed TLV descriptor
@@ -40,7 +40,7 @@ export class ProvideSolanaTransactionContextTask {
       new ProvideTLVDescriptorCommand({ payload: descriptor }),
     );
     if (!isSuccessCommandResult(tlvResult)) {
-      return Just(tlvResult);
+      throw tlvResult;
     }
 
     return Nothing;

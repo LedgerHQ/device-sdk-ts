@@ -2,7 +2,7 @@ import { type Either } from "purify-ts";
 
 import type { SolanaTransactionContext } from "@/solana/domain/solanaContextTypes";
 
-export type HttpSolanaDataSourceResult = {
+export type HttpSolanaOwnerInfoDataSourceResult = {
   descriptor: Uint8Array;
   tokenAccount: string;
   owner: string;
@@ -10,7 +10,7 @@ export type HttpSolanaDataSourceResult = {
 };
 
 export interface SolanaDataSource {
-  getSolanaContext(
+  getOwnerInfo(
     params: SolanaTransactionContext,
-  ): Promise<Either<Error, HttpSolanaDataSourceResult>>;
+  ): Promise<Either<Error, HttpSolanaOwnerInfoDataSourceResult>>;
 }

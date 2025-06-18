@@ -1,8 +1,8 @@
 import { type DeviceModelId } from "@ledgerhq/device-management-kit";
 
 export type SolanaTransactionContext = {
-  challenge: string | undefined;
   deviceModelId: DeviceModelId;
+  challenge?: string;
   tokenAddress?: string;
   createATA?: {
     address: string;

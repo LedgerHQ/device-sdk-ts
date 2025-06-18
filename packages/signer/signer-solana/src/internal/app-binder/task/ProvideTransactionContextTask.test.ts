@@ -1,7 +1,8 @@
+/* eslint-disable @typescript-eslint/no-unsafe-member-access */
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { CommandResultFactory } from "@ledgerhq/device-management-kit";
-import { Just, Maybe, Nothing } from "purify-ts";
+import { Maybe, Nothing } from "purify-ts";
 import { beforeEach, describe, expect, it, type Mock, vi } from "vitest";
 
 import { ProvideTLVDescriptorCommand } from "@internal/app-binder/command/ProvideTLVDescriptorCommand";
@@ -67,11 +68,8 @@ describe("ProvideSolanaTransactionContextTask", () => {
     expect(result).toStrictEqual(Nothing);
   });
 
-  it("returns Just(error) if PKI command fails", async () => {
-    // given
-    const errorResult = CommandResultFactory({
-      error: mockError,
-    });
+  it("throws error if PKI command fails", async () => {
+    const errorResult = CommandResultFactory({ error: mockError });
     fakeApi.sendCommand.mockResolvedValueOnce(errorResult);
 
     const task = new ProvideSolanaTransactionContextTask(
@@ -79,20 +77,13 @@ describe("ProvideSolanaTransactionContextTask", () => {
       context,
     );
 
-    // when
-    const result = await task.run();
-
-    // then
+    await expect(task.run()).rejects.toBe(errorResult);
     expect(fakeApi.sendCommand).toHaveBeenCalledTimes(1);
-    expect(result).toStrictEqual(Just(errorResult));
   });
 
-  it("returns Just(error) if TLV command fails", async () => {
-    // given
+  it("throws error if TLV command fails", async () => {
     const successResult = CommandResultFactory({ data: Maybe.of(null) });
-    const tlvErrorResult = CommandResultFactory({
-      error: mockError,
-    });
+    const tlvErrorResult = CommandResultFactory({ error: mockError });
 
     fakeApi.sendCommand
       .mockResolvedValueOnce(successResult)
@@ -103,11 +94,7 @@ describe("ProvideSolanaTransactionContextTask", () => {
       context,
     );
 
-    // when
-    const result = await task.run();
-
-    // then
+    await expect(task.run()).rejects.toBe(tlvErrorResult);
     expect(fakeApi.sendCommand).toHaveBeenCalledTimes(2);
-    expect(result).toStrictEqual(Just(tlvErrorResult));
   });
 });

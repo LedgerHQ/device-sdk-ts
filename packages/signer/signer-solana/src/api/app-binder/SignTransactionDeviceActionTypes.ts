@@ -4,6 +4,7 @@ import {
   type DeviceActionState,
   type ExecuteDeviceActionReturnType,
   type OpenAppDAError,
+  type OpenAppDARequiredInteraction,
   type SendCommandInAppDAError,
   type UserInteractionRequired,
 } from "@ledgerhq/device-management-kit";
@@ -27,7 +28,9 @@ export type SignTransactionDAError =
   | OpenAppDAError
   | SendCommandInAppDAError<SolanaAppErrorCodes>;
 
-type SignTransactionDARequiredInteraction = UserInteractionRequired | "OpenApp";
+type SignTransactionDARequiredInteraction =
+  | UserInteractionRequired
+  | OpenAppDARequiredInteraction;
 
 export type SignTransactionDAIntermediateValue = {
   requiredUserInteraction: SignTransactionDARequiredInteraction;

@@ -4,8 +4,8 @@ import { type Either } from "purify-ts";
 import { type PkiCertificate } from "@/pki/model/PkiCertificate";
 
 export type SolanaTransactionContext = {
-  challenge: string | undefined;
   deviceModelId: DeviceModelId;
+  challenge?: string;
   tokenAddress?: string;
   createATA?: {
     address: string;

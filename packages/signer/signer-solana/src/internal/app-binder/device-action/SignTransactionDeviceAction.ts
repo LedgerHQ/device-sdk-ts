@@ -1,5 +1,4 @@
 import {
-  bufferToHexaString,
   type CommandErrorResult,
   type CommandResult,
   type DeviceActionStateMachine,
@@ -13,7 +12,7 @@ import {
   XStateDeviceAction,
 } from "@ledgerhq/device-management-kit";
 import { Left, type Maybe, Right } from "purify-ts";
-import { and, assign, fromPromise, setup } from "xstate";
+import { assign, fromPromise, setup } from "xstate";
 
 import {
   type SignTransactionDAError,
@@ -146,7 +145,7 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
         }),
       },
     }).createMachine({
-      /** @xstate-layout N4IgpgJg5mDOIC5QGUCWUB2AVATgQw1jwGMAXVAewwBEwA3VYsAQTMowDoBJDVcvADbJSeUmADEAbQAMAXUSgADhVh92CkAA9EARgDsAZg4AOAJzSAbBZ2mATAb3SALIYA0IAJ67pO6R1PGTta2AKwGTk7GoQC+0e5omLgERGxUtAxMrORU3Lz8QiJiUjrySCDKqtkYGtoI+kZmltZ2Ds5unoiBIRyGTiHSPj7GIU62sfHo2PiEJFXpjCypnADyimAYzIqK85lL4hBUYByoGHQUANZHFGsbW8KiYACyJAAWJ2AypUoqalQ1iHoQrYOPYnAYQhYXMY9KY9Hp3F4EFFgaEYQZoUE9LZbBZxiAElNkrN2DtFlUOABhF5gYjnVbrTbbegLLLsABKcAArgJSFI5BoKr9qmVajoDGKOOEHMYzKMgViEZ0gRwdCEdDphuLpKYQrq8QSkjMlqTWTkqTS6TdGSalhzYNzeZISgKflV-nVxUYpXoZaY5bYFR0kToOP0BhZAo4ArYgvrJoaUnNmbtyQBxMCkRkUqgAM3Q+0Ox1OFyOMEzW2zGDzUE+Lsq6hFumMNlDpgMFnMhls0l1xkVCACFg4Fj0Ln0gQsPkBccS00TJOTZPYHHT5cUler4jAOBwFBwHEUAlEOb3AFsOGWs7n0LWyoK3Y26s3TK3252DN3e-3u34BgNoToLhOOYqozoSRpJhkS45KuV5VugdoOuatJ8l85Sug2oC1Ni0KSqOdhiuqQEGP2xjtiqapONIMLqrYMp6GBCbEmki6mpwsEVteUCITyyHnMUaH3phWiIDheh4cBtiEYBo4kUGvgtnCFgGNRPiRD4jFzsxNCsUsK4ZnB1Y8aQfFSLYgkYX8j5iRJBHijJYL9uEIawlYI76KYOi2G2mlEsaunkgAQpyqACBAlZiJovIHBgRwnGclwcAARiFYURWAUW3t89ZWVhonIiqMZtqOIQyjoFghKRVGhsBzbefYph+ricT4vGWn+VBbEcMFoXhVQkXRYW8UlslqV9RgA1OhZOXCnlCB0dihXAQ4fRlRV-ZBH4LhWMMwwQg4vkQQunV6T1aX9RlvLbru+6HseZ6jb16WZfyd6WbNInzQVXnLSVa2VUGupGKMAR9J5Ziqk4h3zixJ3kgACruDAQGAz2DbFRYJUcihI6gKNo1l6Eze64SlRwPi6iOEYET2pHNiYISmB2ljgk1OjQ9pNoI7j+MXVFW47nuB5HqQJ44OeOMUMjqN86QhNCbln2k8Y5OqhCejU1JtNBh23RUZCoQ6j2IwhBzHUsnpBrtVUBYY8NiWqLOflVPL73ulRzgglKESSXY-aNXrVhOF5H7Ke27MtVbzvHRb5JR0dVACzdwv3eLHCO+BMMYK7xOPh7The2CPt2H7QZkeJ6IqT20Y2AdkdtdHsOx8u8dZ8Zpk50K7suN0k5tlYqJWHJiK+KEkqMxY9jthGkRjPXTsJzpcMtw3i-t9SKFTXWXd5z3w7atPg-Kf7MLjzqxiTmKZHebELUYBQKPwGUrecwFwkKx9tQALQWP2X-dI1QBQDgEGDNpBZuOQeBqEEPcMQ28HxzVGP2Xw0hgTNmMNID8QQmrNjATHFMy56S3CZMvRWH8SYQkLuCaQ0JlJWFMP2GE4lQb61JoYcEeCm4ELNBvS0DIthc3ZFyHk8DhKigGMCCmylARyiiFVIwLDlKql8KVThS8IHsQMpxeCUBRGK1FP0AuOIISYLMCMSS-swiSg8l5MUQJqJqMETBLR64uLrwtHoz+olUHiRGBGCEdEPz6HhPJf8HAqI-WxP0cEN956Z1fqQzgZ1xoDU8e6UIvhwlhG1KEGhI4nCMNhP4NSbZhhSSks1CYC8s5OM4IjKWeMZYTUumkx84oYzk0nkEfodg1SWFImPJSm0pIB1MI4t+OQX5LFaXNaeACIzsJjJgrEw9EB+gLkMoIkQRhMzGXEpi5tuGcCmVUdxtIZmfVGF5FU0I+nOConI0J+gVRtmcAYFSGp3nGHGYkjgyBOTECYLAJ+2Ud6II7EOMI6o6oqOGMg1BwJWbWA-PKEuPyNEcAAKKCxwBc2o2DIX2RhT2OFgM9AhmoWRQIPZIjAVvtEIAA */
+      /** @xstate-layout N4IgpgJg5mDOIC5QGUCWUB2AVATgQw1jwGMAXVAewwBEwA3VYsAQTMowDoBJDVcvADbJSeUmADEAbQAMAXUSgADhVh92CkAA9EARgDsAZg4AOPdL37pAFj1WArACYANCACeuh4Y46dxgGzSBnZ6AQZ6dgC+ES5omLgERGxUtAxMrORU3Lz8QiJiUjrySCDKqhkYGtoI+kam5pY29s5uujrSxhzSAJw+AcZWplZ+BlEx6Nj4hCTlKYwsSZwA8opgGMyKirNpC+IQVGAcqBh0FADWBxQraxvComAAsiQAFkdgMkVKKmpUlYjhOhw7F0bAYrAN9HZrC53NV2lZAV1AnYrGEul0wpFoiBYhMEtN2Ft5uUOABhJ5gYinZardabehzdLsABKcAArgJSFI5BpSt8KsUqjoDDoHJ0ug5jAY6jowbZoa0ZYDpHYfA59A47H4BqNseN4lMFoTGZkyRSqVdaUaFizYOzOZJCjyvuVftVhaLuhKpWYZY15QhjADpH4HAMQ0FzOEujqcfrEjN6dtiQBxMCkWkkqgAM3Qu32h2OZwOMHTG0zGBzUHeTrK6gFukDeg4fj04Slwbavis-pFAw4en6wSGfmRXWMMb1k3jBMTRPYHFTpcU5cr4jAOBwFBwHEUAlEWa3AFsOCWM9n0NXiryXfXqo3m627O2-J3+j20RwHIjhiHPAOrIEE5xFO+LJLOxqcIuZ4VugNp2qalJch8JTOnWoBVA4njwv0OiOFYaohNIwY9p4HR+GiGrGNYAEOEEQG4gaCapHOmRQWW55QHBHIIacBTIdeaFaIgmG2CYVi4aGBEBMRLQIKCQY6F0QIigY0iKdGWKxiBhrgQsWSwCsZBxqBGB5hgBxHCc5wFgZFKkMZCyXp8tY-LeEr4f2yKmGOwyGF0JHkRwYQGORxj+C2fgtvRDlMQyek8LZRnaeUa4bluO57qQB44MeRyJfZyXsE5KEufy6HCf0orhAMeg+cF-myfYXSfjYtgiphiLIn40WFWBzEQRwzBZmIOAJYZ9rcleqGueVcmYUYtFdC2spSphPYih0QxLX4gbCqCdiYmMwF4jp-V6UNI1jXZfE1nyroGPNn4GEttggsYa2yUK0iilYSkorRaqqQYIyaZOJ2xUm84XeuV1kFIDj8dNZVCXNtFPS9K3vc0MLSRwXQhFqkZKYpOg9eDM5ncSABCrKoAIEDlmImicns5kFlZBwAEa0-TjNgMzxUCTNKNhDYn5jqpA6guJB3rWjNiOARX74-YZOMRTcXUzzDNUEznLrpu267vuR4cNzdM6xgeuC0j922E2X6SuYkpgrhdj+hYzUONY-QK8Y4o7Wr059Zr84AAqbgwEBgHzzNmRZhbWYokeoNHsekDbpWuvhYWAp4in9Pj4r2OtWr9p4yIE-0YXjqDx3qyHkOZBHFBRzHuv8-raVG5l2XHsnrep+3Vud5nd23jnHSOJ7he1aG7uyf40h48Dr3CgdAGHbq9fBzQunEi3bfp1xpA8Uht03rNCvYQO3T+IMIbrRYJhLUC3syvtQcmVaB8p2nHfMxPmfB0iMs4T2qiYW+PkH7Y10ERUUkUHBam9GqZEIMjoMV3j-ecWlyZUHjuzIsHBVA7xMmPS+KNHCSiCsCMEAQfRjhIgObwL4vwahJqwr+p1Q6ZFwQ3UyBt0rGyyqbEhmCyGTWcuPWaVCjDPTBEMcwalGGfRFMvf2cIBwqk1L4LhEMWKcD4bvIB5JELkMElUYIyJvDBEijYF8wweyqQ6OYAIkJhT6DClvIx39944LBvwkxZobpTTATIiBuECb2J0I4z6SCEEFzsO9NErZAxRCxBgCg0d4DFB8dwpuyMhbIyqAAWj8P6Epdg8ZohqbUmpX49EawKVkNQghbhiAvhYxA+EArwnIm0b6SC1JmG8QErBfjMjUmuHSSmgkin3QOs2bo5hHDbXEjoHswZl5fkUphAZ-gkGNMbgY0kpjzQ0g2NgqgJ9OnC0FERZerZES7X2Z4dawZOiPjaMYTUoUjl71maxNM0FKy3OKboSEP0RQ+HCFY-GsDqioI4DVAI3skn-FGaQ-JJy2LLg4kEykYLXTew1J0B6L5HCr1qgYJh2yLAqnaL4XCwN-lXM4LDAqeDCm2zckMKpMSVK-RbCFZUJEnzIuGe-GqIRSZ13Ediga0NRqEHGkS28qkdotQOWGQMxgSKIhMH0A6oIgieAcKyiZnAaYW3Tmq2a0sqnkWRJqAYalgx6E2QazxIq1IDCBhawFnBD5D1taE6RIs-rNlWU+HwQRIrlNUe0Zs1cJTKk1GYbqcqYpNJOcG-+I9AFsm4mcu1KMwRKRMFjcILZgw-NLkYIYpgQqBkhHoUMAaeGGLGSZUtVRfr2G8PjKiwIwiYQRe1JsT4-rPVwuib6Hbml5PKAS04vbECjkeb9SlkklINRhCKD8Wpfb+13WqTNGDs3HIGsgVkxAmCwByVIihlixzwlahiFUQo926FUthX0iJ8K-Xmguk5ABRbua6EBAn6Mi1sH7Y3foQIYJsQR1n42VEKRw6SIhAA */
       id: "SignTransactionDeviceAction",
       initial: "InitialState",
       context: ({ input }) => ({
@@ -235,11 +234,7 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
         },
         GetAppConfigResultCheck: {
           always: [
-            {
-              target: "InspectTransaction",
-              guard: and(["noInternalError", "isSPLSupported"]),
-            },
-            { target: "SignTransaction", guard: "noInternalError" },
+            { target: "InspectTransaction", guard: "noInternalError" },
             { target: "Error" },
           ],
         },
@@ -254,13 +249,16 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
             onDone: {
               target: "AfterInspect",
               actions: assign({
-                _internalState: (ctx) => ({
-                  ...ctx.context._internalState,
-                  inspectorResult: ctx.event.output,
+                _internalState: ({ context, event }) => ({
+                  ...context._internalState,
+                  inspectorResult: event.output,
                 }),
               }),
             },
-            onError: "Error",
+            onError: {
+              target: "Error",
+              actions: "assignErrorFromEvent",
+            },
           },
         },
         AfterInspect: {
@@ -322,10 +320,16 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
           invoke: {
             id: "provideContext",
             src: "provideContext",
-            input: ({ context }) =>
-              context._internalState.solanaTransactionContext!,
+            input: ({ context }) => {
+              if (!context._internalState.solanaTransactionContext) {
+                throw new UnknownDAError(
+                  "Solana transaction context is not available",
+                );
+              }
+              return context._internalState.solanaTransactionContext;
+            },
             onDone: {
-              target: "SignTransaction",
+              target: "ProvideContextResultCheck",
             },
             onError: {
               target: "Error",
@@ -333,16 +337,22 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
             },
           },
         },
+        ProvideContextResultCheck: {
+          always: [
+            { target: "SignTransaction", guard: "noInternalError" },
+            { target: "Error" },
+          ],
+        },
         SignTransaction: {
           entry: assign({
-            intermediateValue: () => ({
+            intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.SignTransaction,
-            }),
+            },
           }),
           exit: assign({
-            intermediateValue: () => ({
+            intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
-            }),
+            },
           }),
           invoke: {
             id: "signTransaction",
@@ -355,30 +365,32 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
             },
             onDone: {
               target: "SignTransactionResultCheck",
-              actions: assign({
-                _internalState: ({ event, context }) => {
-                  if (!isSuccessCommandResult(event.output)) {
-                    return {
-                      ...context._internalState,
-                      error: event.output.error,
-                    };
-                  }
-                  const maybeSig = event.output.data;
-                  if (maybeSig.isJust()) {
-                    const sig = maybeSig.extract();
-                    if (sig instanceof Uint8Array) {
+              actions: [
+                assign({
+                  _internalState: ({ event, context }) => {
+                    if (!isSuccessCommandResult(event.output))
                       return {
                         ...context._internalState,
-                        signature: sig as Signature,
+                        error: event.output.error,
                       };
-                    }
-                  }
-                  return {
-                    ...context._internalState,
-                    error: new UnknownDAError("No Signature available"),
-                  };
-                },
-              }),
+
+                    const data = event.output.data.extract();
+                    if (
+                      event.output.data.isJust() &&
+                      data instanceof Uint8Array
+                    )
+                      return {
+                        ...context._internalState,
+                        signature: data,
+                      };
+
+                    return {
+                      ...context._internalState,
+                      error: new UnknownDAError("No Signature available"),
+                    };
+                  },
+                }),
+              ],
             },
             onError: {
               target: "Error",
@@ -400,7 +412,7 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
           ? Right(context._internalState.signature)
           : Left(
               context._internalState.error ||
-                new UnknownDAError("No error or signature available"),
+                new UnknownDAError(`No error or signature available`),
             ),
     });
   }
@@ -420,8 +432,8 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
       serializedTransaction: Uint8Array;
     }) =>
       new TransactionInspector(
-        bufferToHexaString(arg0.serializedTransaction),
-      ).run();
+        arg0.serializedTransaction,
+      ).inspectTransactionType();
 
     const signTransaction = async (arg0: {
       input: {

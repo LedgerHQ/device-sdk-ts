@@ -3,7 +3,6 @@ import {
   InvalidStatusWordError,
   isSuccessCommandResult,
 } from "@ledgerhq/device-management-kit";
-import { Maybe } from "purify-ts";
 
 import { ProvideTLVDescriptorCommand } from "./ProvideTLVDescriptorCommand";
 
@@ -48,9 +47,7 @@ describe("ProvideTLVDescriptorCommand", () => {
       };
 
       const parsed = command.parseResponse(LNX_RESPONSE_GOOD);
-      expect(parsed).toStrictEqual(
-        CommandResultFactory({ data: Maybe.of(null) }),
-      );
+      expect(parsed).toStrictEqual(CommandResultFactory({ data: undefined }));
       expect(isSuccessCommandResult(parsed)).toBe(true);
     });
 
@@ -72,7 +69,7 @@ describe("ProvideTLVDescriptorCommand", () => {
 
       const result = command.parseResponse(LNX_RESPONSE_EXTRA);
       expect(isSuccessCommandResult(result)).toBe(false);
-      // @ts-ignore
+      // @ts-expect-error response is not typed
       expect(result.error).toBeInstanceOf(InvalidStatusWordError);
     });
   });
