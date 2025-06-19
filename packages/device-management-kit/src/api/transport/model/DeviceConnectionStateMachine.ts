@@ -2,7 +2,6 @@
 import { type Either, Left, Maybe, Nothing, Right } from "purify-ts";
 import { type Actor, assign, createActor, emit, setup } from "xstate";
 
-import { GetAppAndVersionCommand } from "@api/command/os/GetAppAndVersionCommand";
 import { CommandUtils } from "@api/command/utils/CommandUtils";
 import { type ApduResponse } from "@api/device-session/ApduResponse";
 import { type DmkError, UnknownDeviceExchangeError } from "@api/Error";
@@ -251,8 +250,11 @@ function makeStateMachine({
         );
       },
       sendGetAppAndVersion: () => {
-        // TODO: not import the command like this, might cause circular dependencies
-        sendApduFn(new GetAppAndVersionCommand().getApdu().getRawApdu(), false);
+        sendApduFn(
+          Uint8Array.from([0xb0, 0x01, 0x00, 0x00, 0x00]),
+          false,
+          1000,
+        );
       },
       tryToReconnect: () => {
         tryToReconnect();
