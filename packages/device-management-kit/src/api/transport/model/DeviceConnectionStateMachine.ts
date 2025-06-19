@@ -11,7 +11,6 @@ import { type DeviceId } from "@api/types";
 import { type DeviceApduSender } from "./DeviceApduSender";
 import {
   AlreadySendingApduError,
-  DeviceDisconnectedBeforeSendingApdu,
   DeviceDisconnectedWhileSendingError,
 } from "./Errors";
 
@@ -399,6 +398,43 @@ function makeStateMachine({
       },
       WaitingForDisconnection: {
         entry: "sendGetAppAndVersion",
+        on: {
+          ApduResponseReceived: {
+            target: "Connected",
+            actions: [
+              {
+                type: "sendApduResponse",
+                params: ({ context }) => {
+                  return {
+                    response: context.apduResponse.caseOf({
+                      Just: (apduResponse) => Right(apduResponse),
+                      Nothing: () => Left(new UnknownDeviceExchangeError()),
+                    }),
+                  };
+                },
+              },
+              { type: "clearApduInProgress" },
+              { type: "clearApduResponse" },
+            ],
+          },
+          ApduSendingError: {
+            target: "WaitingForReconnection",
+          },
+          DeviceDisconnected: {
+            target: "WaitingForReconnection",
+          },
+          CloseConnectionCalled: {
+            target: "Terminated",
+          },
+          SendApduCalled: {
+            actions: ({ event }) => {
+              event.responseCallback(Left(new AlreadySendingApduError()));
+            },
+          },
+        },
+      },
+      WaitingForReconnection: {
+        entry: ["startTimer", "tryToReconnect"],
         exit: [
           {
             type: "sendApduResponse",
@@ -415,84 +451,20 @@ function makeStateMachine({
           { type: "clearApduResponse" },
         ],
         on: {
-          ApduResponseReceived: {
-            target: "Connected",
-          },
-          ApduSendingError: {
-            target: "WaitingForReconnection",
-          },
-          DeviceDisconnected: {
-            target: "WaitingForReconnection",
-          },
-          CloseConnectionCalled: {
-            target: "Terminated",
-          },
-        },
-      },
-      WaitingForReconnection: {
-        entry: ["startTimer", "tryToReconnect"],
-        on: {
           DeviceConnected: {
             target: "Connected",
             actions: "cancelTimer",
-          },
-          SendApduCalled: {
-            target: "WaitingForReconnectionWithQueuedSendApdu",
-            actions: assign({
-              apduInProgress: ({ event }) => {
-                return Maybe.of({
-                  apdu: event.apdu,
-                  triggersDisconnection: event.triggersDisconnection,
-                  abortTimeout: event.abortTimeout,
-                  responseCallback: event.responseCallback,
-                });
-              },
-            }),
-          },
-          ReconnectionTimedOut: {
-            target: "Terminated",
-          },
-          CloseConnectionCalled: {
-            target: "Terminated",
-          },
-        },
-      },
-      WaitingForReconnectionWithQueuedSendApdu: {
-        on: {
-          DeviceConnected: {
-            target: "SendingApdu",
-            actions: "cancelTimer",
-          },
-          ReconnectionTimedOut: {
-            target: "Terminated",
-            actions: [
-              {
-                type: "sendApduResponse",
-                params: {
-                  response: Left(new DeviceDisconnectedBeforeSendingApdu()),
-                },
-              },
-              {
-                type: "clearApduInProgress",
-              },
-            ],
-          },
-          CloseConnectionCalled: {
-            target: "Terminated",
-            actions: [
-              {
-                type: "sendApduResponse",
-                params: {
-                  response: Left(new DeviceDisconnectedWhileSendingError()),
-                },
-              },
-              "clearApduInProgress",
-            ],
           },
           SendApduCalled: {
             actions: ({ event }) => {
               event.responseCallback(Left(new AlreadySendingApduError()));
             },
+          },
+          ReconnectionTimedOut: {
+            target: "Terminated",
+          },
+          CloseConnectionCalled: {
+            target: "Terminated",
           },
         },
       },
