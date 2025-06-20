@@ -30,7 +30,7 @@ export class HttpTrustedNameDataSource implements TrustedNameDataSource {
       const source = "ens"; // Ethereum name service
       const response = await axios.request<TrustedNameDto>({
         method: "GET",
-        url: `https://nft.api.live.ledger.com/v2/names/ethereum/${chainId}/forward/${domain}?types=${type}&sources=${source}&challenge=${challenge}`,
+        url: `${this.config.metadataService.url}/names/ethereum/${chainId}/forward/${domain}?types=${type}&sources=${source}&challenge=${challenge}`,
         headers: {
           [LEDGER_CLIENT_VERSION_HEADER]: `context-module/${PACKAGE.version}`,
         },
@@ -68,7 +68,7 @@ export class HttpTrustedNameDataSource implements TrustedNameDataSource {
       );
       const response = await axios.request<TrustedNameDto>({
         method: "GET",
-        url: `https://nft.api.live.ledger.com/v2/names/ethereum/${chainId}/reverse/${address}?types=${types.join(",")}&sources=${sources.join(",")}&challenge=${challenge}`,
+        url: `${this.config.metadataService.url}/names/ethereum/${chainId}/reverse/${address}?types=${types.join(",")}&sources=${sources.join(",")}&challenge=${challenge}`,
         headers: {
           [LEDGER_CLIENT_VERSION_HEADER]: `context-module/${PACKAGE.version}`,
         },

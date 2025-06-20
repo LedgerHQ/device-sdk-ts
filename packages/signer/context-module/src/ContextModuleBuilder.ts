@@ -2,6 +2,7 @@ import { type ContextModuleConstructorArgs } from "./config/model/ContextModuleB
 import {
   type ContextModuleCalConfig,
   type ContextModuleConfig,
+  type ContextModuleMetadataServiceConfig,
   type ContextModuleWeb3ChecksConfig,
 } from "./config/model/ContextModuleConfig";
 import { type ContextLoader } from "./shared/domain/ContextLoader";
@@ -12,6 +13,7 @@ import { DefaultContextModule } from "./DefaultContextModule";
 
 const DEFAULT_CAL_URL = "https://crypto-assets-service.api.ledger.com/v1";
 const DEFAULT_WEB3_CHECKS_URL = "https://web3checks-backend.api.ledger.com/v3";
+const DEFAULT_METADATA_SERVICE_URL = "https://nft.api.live.ledger.com/v2";
 
 export const DEFAULT_CONFIG: ContextModuleConfig = {
   cal: {
@@ -21,6 +23,9 @@ export const DEFAULT_CONFIG: ContextModuleConfig = {
   },
   web3checks: {
     url: DEFAULT_WEB3_CHECKS_URL,
+  },
+  metadataService: {
+    url: DEFAULT_METADATA_SERVICE_URL,
   },
   defaultLoaders: true,
   customLoaders: [],
@@ -86,8 +91,21 @@ export class ContextModuleBuilder {
    * @param calConfig
    * @returns this
    */
-  addCalConfig(calConfig: ContextModuleCalConfig) {
-    this.config.cal = { ...DEFAULT_CONFIG.cal, ...calConfig };
+  setCalConfig(calConfig: ContextModuleCalConfig) {
+    this.config.cal = calConfig;
+    return this;
+  }
+
+  /**
+   * Add a custom metadata service configuration
+   *
+   * @param metadataServiceConfig
+   * @returns this
+   */
+  setMetadataServiceConfig(
+    metadataServiceConfig: ContextModuleMetadataServiceConfig,
+  ) {
+    this.config.metadataService = metadataServiceConfig;
     return this;
   }
 
@@ -97,11 +115,8 @@ export class ContextModuleBuilder {
    * @param web3ChecksConfig
    * @returns this
    */
-  addWeb3ChecksConfig(web3ChecksConfig: ContextModuleWeb3ChecksConfig) {
-    this.config.web3checks = {
-      ...DEFAULT_CONFIG.web3checks,
-      ...web3ChecksConfig,
-    };
+  setWeb3ChecksConfig(web3ChecksConfig: ContextModuleWeb3ChecksConfig) {
+    this.config.web3checks = web3ChecksConfig;
     return this;
   }
 

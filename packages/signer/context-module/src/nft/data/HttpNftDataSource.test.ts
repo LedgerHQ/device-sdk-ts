@@ -1,5 +1,6 @@
 import axios from "axios";
 
+import { type ContextModuleConfig } from "@/config/model/ContextModuleConfig";
 import { LEDGER_CLIENT_VERSION_HEADER } from "@/shared/constant/HttpHeaders";
 import PACKAGE from "@root/package.json";
 
@@ -12,7 +13,11 @@ describe("HttpNftDataSource", () => {
   let datasource: NftDataSource;
 
   beforeAll(() => {
-    datasource = new HttpNftDataSource();
+    datasource = new HttpNftDataSource({
+      metadataService: {
+        url: "https://nft.api.live.ledger.com/v1",
+      },
+    } as ContextModuleConfig);
     vi.clearAllMocks();
   });
 
