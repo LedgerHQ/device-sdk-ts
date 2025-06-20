@@ -272,9 +272,7 @@ export class RNBleApduSender
 
     if (abortTimeout) {
       timeout = setTimeout(() => {
-        this._logger.debug("[sendApdu] Abort timeout", {
-          data: { abortTimeout },
-        });
+        this._logger.debug("[sendApdu] Abort timeout triggered");
         this._sendApduPromiseResolver.map((resolve) =>
           resolve(Left(new SendApduTimeoutError("Abort timeout"))),
         );

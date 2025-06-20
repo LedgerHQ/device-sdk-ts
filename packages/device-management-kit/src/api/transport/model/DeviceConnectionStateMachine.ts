@@ -196,7 +196,12 @@ export class DeviceConnectionStateMachine<Dependencies> {
   }
 }
 
-const MAX_GET_APP_AND_VERSION_ATTEMPTS = 5;
+/**
+ * The total timeout must be superior to 5s because on Android,
+ * we take 5s to detect a disconnection.
+ */
+const MAX_GET_APP_AND_VERSION_ATTEMPTS = 6;
+const GET_APP_AND_VERSION_TIMEOUT = 1000;
 
 function makeStateMachine({
   sendApduFn,
@@ -254,7 +259,11 @@ function makeStateMachine({
         );
       },
       sendGetAppAndVersion: () => {
-        sendApduFn(Uint8Array.from([0xb0, 0x01, 0x00, 0x00, 0x00]), false, 500);
+        sendApduFn(
+          Uint8Array.from([0xb0, 0x01, 0x00, 0x00, 0x00]),
+          false,
+          GET_APP_AND_VERSION_TIMEOUT,
+        );
       },
       incrementGetAppAndVersionAttempts: assign({
         getAppAndVersionAttempts: ({ context }) =>
@@ -457,6 +466,11 @@ function makeStateMachine({
               target: "WaitingForReconnection",
             },
           ],
+          SendApduCalled: {
+            actions: ({ event }) => {
+              event.responseCallback(Left(new AlreadySendingApduError()));
+            },
+          },
           DeviceDisconnected: {
             target: "WaitingForReconnection",
           },
