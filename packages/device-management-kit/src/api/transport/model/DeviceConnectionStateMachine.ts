@@ -1,6 +1,6 @@
 // import { createBrowserInspector } from "@statelyai/inspect";
 import { type Either, Left, Maybe, Nothing, Right } from "purify-ts";
-import { type Actor, assign, createActor, emit, setup } from "xstate";
+import { type Actor, and, assign, createActor, emit, setup } from "xstate";
 
 import { CommandUtils } from "@api/command/utils/CommandUtils";
 import { type ApduResponse } from "@api/device-session/ApduResponse";
@@ -12,6 +12,7 @@ import {
   AlreadySendingApduError,
   DeviceDisconnectedBeforeSendingApdu,
   DeviceDisconnectedWhileSendingError,
+  SendApduTimeoutError,
 } from "./Errors";
 
 // const { inspect } = createBrowserInspector();
@@ -195,6 +196,8 @@ export class DeviceConnectionStateMachine<Dependencies> {
   }
 }
 
+const MAX_GET_APP_AND_VERSION_ATTEMPTS = 5;
+
 function makeStateMachine({
   sendApduFn,
   startReconnectionTimeout,
@@ -224,6 +227,7 @@ function makeStateMachine({
           responseCallback: (response: Either<DmkError, ApduResponse>) => void;
         }>;
         apduResponse: Maybe<ApduResponse>;
+        getAppAndVersionAttempts: number;
       };
       events: Events;
     },
@@ -250,12 +254,15 @@ function makeStateMachine({
         );
       },
       sendGetAppAndVersion: () => {
-        sendApduFn(
-          Uint8Array.from([0xb0, 0x01, 0x00, 0x00, 0x00]),
-          false,
-          1000,
-        );
+        sendApduFn(Uint8Array.from([0xb0, 0x01, 0x00, 0x00, 0x00]), false, 500);
       },
+      incrementGetAppAndVersionAttempts: assign({
+        getAppAndVersionAttempts: ({ context }) =>
+          context.getAppAndVersionAttempts + 1,
+      }),
+      resetGetAppAndVersionAttempts: assign({
+        getAppAndVersionAttempts: 0,
+      }),
       tryToReconnect: () => {
         tryToReconnect();
       },
@@ -273,20 +280,31 @@ function makeStateMachine({
       },
     },
     guards: {
-      isApduThatTriggersDisconnection: (
-        { context },
-        params: { apduResponse: ApduResponse },
-      ) => {
+      isApduThatTriggersDisconnection: ({ context, event }) => {
+        if (event.type !== "ApduResponseReceived") {
+          return false;
+        }
         return context.apduInProgress.caseOf({
           Just: ({ triggersDisconnection, apdu }) => {
             const res =
               (triggersDisconnection ||
                 CommandUtils.isApduThatTriggersDisconnection(apdu)) &&
-              CommandUtils.isSuccessResponse(params.apduResponse);
+              CommandUtils.isSuccessResponse(event.apduResponse);
             return res;
           },
           Nothing: () => false,
         });
+      },
+      isSendApduTimeoutError: ({ event }) => {
+        if (event.type !== "ApduSendingError") {
+          return false;
+        }
+        return event.error instanceof SendApduTimeoutError;
+      },
+      hasReachedGetAppAndVersionMaxAttempts: ({ context }) => {
+        return (
+          context.getAppAndVersionAttempts >= MAX_GET_APP_AND_VERSION_ATTEMPTS
+        );
       },
     },
   }).createMachine({
@@ -296,6 +314,7 @@ function makeStateMachine({
     context: {
       apduInProgress: Nothing,
       apduResponse: Nothing,
+      getAppAndVersionAttempts: 0,
     },
     states: {
       Connected: {
@@ -326,10 +345,7 @@ function makeStateMachine({
         on: {
           ApduResponseReceived: [
             {
-              guard: {
-                type: "isApduThatTriggersDisconnection",
-                params: ({ event }) => ({ apduResponse: event.apduResponse }),
-              },
+              guard: "isApduThatTriggersDisconnection",
               target: "WaitingForDisconnection",
               actions: [
                 assign({
@@ -400,8 +416,9 @@ function makeStateMachine({
         },
       },
       WaitingForDisconnection: {
-        entry: "sendGetAppAndVersion",
+        entry: ["sendGetAppAndVersion", "incrementGetAppAndVersionAttempts"],
         exit: [
+          "resetGetAppAndVersionAttempts",
           {
             type: "sendApduResponse",
             params: ({ context }) => {
@@ -420,9 +437,26 @@ function makeStateMachine({
           ApduResponseReceived: {
             target: "Connected",
           },
-          ApduSendingError: {
-            target: "WaitingForReconnection",
-          },
+          ApduSendingError: [
+            {
+              guard: and([
+                "isSendApduTimeoutError",
+                "hasReachedGetAppAndVersionMaxAttempts",
+              ]),
+              target: "Terminated",
+            },
+            {
+              guard: "isSendApduTimeoutError",
+              actions: [
+                "sendGetAppAndVersion",
+                "incrementGetAppAndVersionAttempts",
+              ],
+              target: "WaitingForDisconnection",
+            },
+            {
+              target: "WaitingForReconnection",
+            },
+          ],
           DeviceDisconnected: {
             target: "WaitingForReconnection",
           },
