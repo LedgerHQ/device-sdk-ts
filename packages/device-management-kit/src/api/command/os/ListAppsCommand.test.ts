@@ -14,7 +14,7 @@ import {
 // [NOTE] EXAMPLES CREATED USING A NANO X
 
 const LIST_APP_APDU = Uint8Array.from([0xe0, 0xde, 0x00, 0x00, 0x00]);
-const CONTINUE_LIST_APP_ADPU = Uint8Array.from([0xe0, 0xdf, 0x00, 0x00, 0x00]);
+const CONTINUE_LIST_APP_APDU = Uint8Array.from([0xe0, 0xdf, 0x00, 0x00, 0x00]);
 
 // only BITCOIN installed
 const LIST_APP_RESPONSE_1_APP = Uint8Array.from([
@@ -214,7 +214,7 @@ describe("ListAppCommand", () => {
     describe("getApdu", () => {
       it("should return the Continue ListApp APDU", () => {
         const apdu = command.getApdu();
-        expect(apdu.getRawApdu()).toStrictEqual(CONTINUE_LIST_APP_ADPU);
+        expect(apdu.getRawApdu()).toStrictEqual(CONTINUE_LIST_APP_APDU);
       });
     });
 
