@@ -124,10 +124,17 @@ export class DefaultNativeModuleWrapper implements NativeModuleWrapper {
     return this._nativeModule.disconnectDevice(sessionId);
   }
 
-  async sendApdu(sessionId: string, apdu: Uint8Array): Promise<SendApduResult> {
+  async sendApdu(
+    sessionId: string,
+    apdu: Uint8Array,
+    triggersDisconnection: boolean,
+    abortTimeout: number,
+  ): Promise<SendApduResult> {
     const nSendApduResult = await this._nativeModule.sendApdu(
       sessionId,
       uint8ArrayToBase64(apdu),
+      triggersDisconnection,
+      abortTimeout,
     );
     return mapNativeSendApduResultToSendApduResult(nSendApduResult);
   }

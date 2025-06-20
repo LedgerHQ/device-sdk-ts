@@ -4,7 +4,9 @@ import {
   LogLevel,
   type LogParams,
   OpeningConnectionError,
+  SendApduEmptyResponseError,
   type SendApduResult,
+  SendApduTimeoutError,
   StaticDeviceModelDataSource,
   type TransportDeviceModel,
   type TransportDiscoveredDevice,
@@ -331,6 +333,32 @@ describe("mapper", () => {
       };
       const expectedSendApduResult: SendApduResult = Left(
         new SendApduError("error message"),
+      );
+      expect(
+        mapNativeSendApduResultToSendApduResult(nativeSendApduResult),
+      ).toEqual(expectedSendApduResult);
+    });
+
+    test("timeout error", () => {
+      const nativeSendApduResult: NativeSendApduResult = {
+        success: false,
+        error: "SendApduTimeout",
+      };
+      const expectedSendApduResult: SendApduResult = Left(
+        new SendApduTimeoutError("Abort timeout"),
+      );
+      expect(
+        mapNativeSendApduResultToSendApduResult(nativeSendApduResult),
+      ).toEqual(expectedSendApduResult);
+    });
+
+    test("empty response error", () => {
+      const nativeSendApduResult: NativeSendApduResult = {
+        success: false,
+        error: "EmptyResponse",
+      };
+      const expectedSendApduResult: SendApduResult = Left(
+        new SendApduEmptyResponseError("Empty response"),
       );
       expect(
         mapNativeSendApduResultToSendApduResult(nativeSendApduResult),
