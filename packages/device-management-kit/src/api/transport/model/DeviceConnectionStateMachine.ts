@@ -1,6 +1,6 @@
 // import { createBrowserInspector } from "@statelyai/inspect";
 import { type Either, Left, Maybe, Nothing, Right } from "purify-ts";
-import { type Actor, and, assign, createActor, emit, setup } from "xstate";
+import { type Actor, assign, createActor, emit, setup } from "xstate";
 
 import { CommandUtils } from "@api/command/utils/CommandUtils";
 import { type ApduResponse } from "@api/device-session/ApduResponse";
@@ -196,13 +196,6 @@ export class DeviceConnectionStateMachine<Dependencies> {
   }
 }
 
-/**
- * The total timeout must be superior to 5s because on Android,
- * we take 5s to detect a disconnection.
- */
-const MAX_GET_APP_AND_VERSION_ATTEMPTS = 6;
-const GET_APP_AND_VERSION_TIMEOUT = 1000;
-
 function makeStateMachine({
   sendApduFn,
   startReconnectionTimeout,
@@ -232,7 +225,6 @@ function makeStateMachine({
           responseCallback: (response: Either<DmkError, ApduResponse>) => void;
         }>;
         apduResponse: Maybe<ApduResponse>;
-        getAppAndVersionAttempts: number;
       };
       events: Events;
     },
@@ -259,19 +251,8 @@ function makeStateMachine({
         );
       },
       sendGetAppAndVersion: () => {
-        sendApduFn(
-          Uint8Array.from([0xb0, 0x01, 0x00, 0x00, 0x00]),
-          false,
-          GET_APP_AND_VERSION_TIMEOUT,
-        );
+        sendApduFn(Uint8Array.from([0xb0, 0x01, 0x00, 0x00, 0x00]), false);
       },
-      incrementGetAppAndVersionAttempts: assign({
-        getAppAndVersionAttempts: ({ context }) =>
-          context.getAppAndVersionAttempts + 1,
-      }),
-      resetGetAppAndVersionAttempts: assign({
-        getAppAndVersionAttempts: 0,
-      }),
       tryToReconnect: () => {
         tryToReconnect();
       },
@@ -310,11 +291,6 @@ function makeStateMachine({
         }
         return event.error instanceof SendApduTimeoutError;
       },
-      hasReachedGetAppAndVersionMaxAttempts: ({ context }) => {
-        return (
-          context.getAppAndVersionAttempts >= MAX_GET_APP_AND_VERSION_ATTEMPTS
-        );
-      },
     },
   }).createMachine({
     /** @xstate-layout N4IgpgJg5mDOIC5QTANwJYGMwGED2AdgWJgC7qEB0+RJpkAxACJpZgukCGmAFpANoAGALqJQABzyx05QmJAAPRAA4A7AGZKywQEYAnAFYATMoAsBg6fUA2ADQgAnolUnKBjUdXXVpnUb0aAL6B9igY2DTEZBQE1IRR9BAMAMpgBBAAguIQAK44nAA2BQIi8pLSsgTySgjW6oKU6uo61kbWyh06Vsr2TgjqAZR6HUaWXcrqBmrBoawR8XQxcbRkjDgFUrgL0YT5RSWiSCDlMjHVKnrWjaO6ev6qlnp6vYim1qaN9YLqGuPKOjpVDMQGE2JFFlRUul0AQoFlcgx4TkAEpwSQEWBgVHYdCoA5lKSnORHGpNVSUPwGXQDQSmNTDF4IZTWPRDJotUw+HwAnTA0HzFaVShQiAwuHZHKIiWo2DozHYsC4gQ6Q4SQmVc79TxDIzqG6eJq+VSM94NPQ6CYuUzmQGCax8uZbQVLEVipFS3Ku2EAUQATr68L6hKrjuqziTEJNNHrTG1dIIDE8jLTGVTlJQboI2i56QZeSEQY7wTtYl7xQiWOF2GAuLx8UcThqIwh-OmdBZPF0qQCBoydIJlAZKK0jP4bHntBaHVXi0Ky+71ptZzE9sUIMGCRVw6Aau2dJQ6WZlMM-D9+89HIh++mbndVHpdNYLAnp2DtnO0qLYe6RUjV-W1S3Ykd0QABac1KFpbx3kHCxumNS9ak5SDTHNax0NUDRfFMV8BQSJYAHVOFOWEADFA2xd8YmYR0MlIWs+HXUoGzDYDFEQQx90mVozABJ9BAvPo6iuFpRgtQRdDUWNcKdfCqCIkioHI31KOdQgUk-P9CjXDcWKAqpmx0dR-gpCTaXNUxvh7RkvCHWlaWM9RfC6dCZOXeTiPIMiKJIKj1NUuSCAAFXQABbSAAHkclIXTAKJAyQIQLpBHJAEXB8AS1HvdRGT0a0D2ZZpBxjSc3L82IFK8pSfMwcqGEXTF3IIf8mJDRtt3YpLLPJZMWkmTtzJyxD+1UBofifVQOm8YyWjKtSKs8sVlICiECAImQeAARRyMAdogX8JRoqs6IYgDQ30zUjJ8CkWQmYZbOsFLGWzUyzE5bssx8ObAsoSqlpq8r1tILadr2g6ERWksQvCiAopi5i4qbRKjH7Bo4N1dsvFjOxEIeIwUPQ9o9AGSYvG+1bfsW7yVN8+agZB3bIHByUGtk1aWti874s1FGJOHYy6gTLo3lMVN7wPBNVAtbRRg0IEC35NmS0pxTltpwL6e2xn9s0w7mY5hGuaRzrAWZIYBJpc0pd1E18tNMZLOMAwnOCAsCDwFB4CORWms3bnm1AozWSgrHYMsYyEL6FGKXcDleMMO5rXJ5XZ0gP3jZqB4evaLwXEeqwnJNKYDypWlzHePwcIVotyuFT83QldOOpqWNU30A8rEmrMjPcAJk6FP7qch432rY3dxnN1onlaZ9idy5NILuCxl+UEwrH7wiqeqmnarpjatbB3Xcibser3eckfmd3xOkrnpce0DMjHMeoAgLjeqCCsBfVCmFOESE+EqdSfnmNwLJjBPBSs0QwuV3CQWPN3AwT4LTtldoEIAA */
@@ -323,7 +299,6 @@ function makeStateMachine({
     context: {
       apduInProgress: Nothing,
       apduResponse: Nothing,
-      getAppAndVersionAttempts: 0,
     },
     states: {
       Connected: {
@@ -425,9 +400,8 @@ function makeStateMachine({
         },
       },
       WaitingForDisconnection: {
-        entry: ["sendGetAppAndVersion", "incrementGetAppAndVersionAttempts"],
+        entry: ["sendGetAppAndVersion"],
         exit: [
-          "resetGetAppAndVersionAttempts",
           {
             type: "sendApduResponse",
             params: ({ context }) => {
@@ -448,18 +422,8 @@ function makeStateMachine({
           },
           ApduSendingError: [
             {
-              guard: and([
-                "isSendApduTimeoutError",
-                "hasReachedGetAppAndVersionMaxAttempts",
-              ]),
-              target: "Terminated",
-            },
-            {
               guard: "isSendApduTimeoutError",
-              actions: [
-                "sendGetAppAndVersion",
-                "incrementGetAppAndVersionAttempts",
-              ],
+              actions: ["sendGetAppAndVersion"],
               target: "WaitingForDisconnection",
             },
             {
