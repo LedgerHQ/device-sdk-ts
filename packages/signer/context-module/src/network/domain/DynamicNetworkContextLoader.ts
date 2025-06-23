@@ -48,9 +48,7 @@ export class DynamicNetworkContextLoader implements ContextLoader {
   }
 
   // Dynamic network context doesn't support field-level loading
-  async loadField(
-    _field: TransactionFieldContext,
-  ): Promise<ClearSignContext | null> {
-    return null;
+  loadField(_field: TransactionFieldContext): Promise<ClearSignContext | null> {
+    return Promise.resolve(null);
   }
 }

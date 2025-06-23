@@ -65,7 +65,7 @@ describe("HttpNetworkDataSource", () => {
       expect(axios.get).toHaveBeenCalledWith(
         "https://crypto-assets-service.api.ledger.com/v1/networks?output=id,descriptors,icons&chain_id=1",
         expect.objectContaining({
-          headers: expect.any(Object),
+          headers: expect.any(Object) as Record<string, string>,
         }),
       );
 
@@ -322,7 +322,7 @@ describe("HttpNetworkDataSource", () => {
       expect(axios.get).toHaveBeenCalledWith(
         "https://crypto-assets-service.api.ledger.com/v1/networks?output=id,descriptors,icons&chain_id=137",
         expect.objectContaining({
-          headers: expect.any(Object),
+          headers: expect.any(Object) as Record<string, string>,
         }),
       );
 
