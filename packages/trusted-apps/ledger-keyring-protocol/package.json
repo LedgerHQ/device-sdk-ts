@@ -37,6 +37,7 @@
   "dependencies": {
     "@ledgerhq/device-management-kit": "workspace:*",
     "@ledgerhq/signer-utils": "workspace:*",
+    "@types/jsonwebtoken": "9.0.2",
     "inversify": "catalog:",
     "purify-ts": "catalog:",
     "reflect-metadata": "catalog:"
