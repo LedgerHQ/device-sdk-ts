@@ -12,7 +12,6 @@ import {
   AlreadySendingApduError,
   DeviceDisconnectedBeforeSendingApdu,
   DeviceDisconnectedWhileSendingError,
-  SendApduTimeoutError,
 } from "./Errors";
 
 // const { inspect } = createBrowserInspector();
@@ -285,11 +284,14 @@ function makeStateMachine({
           Nothing: () => false,
         });
       },
-      isSendApduTimeoutError: ({ event }) => {
-        if (event.type !== "ApduSendingError") {
+      isSendApduBusyError: ({ event }) => {
+        if (event.type !== "ApduResponseReceived") {
           return false;
         }
-        return event.error instanceof SendApduTimeoutError;
+        return (
+          event.apduResponse.statusCode[0] === 0x66 &&
+          event.apduResponse.statusCode[1] === 0x01
+        );
       },
     },
   }).createMachine({
@@ -417,15 +419,17 @@ function makeStateMachine({
           { type: "clearApduResponse" },
         ],
         on: {
-          ApduResponseReceived: {
-            target: "Connected",
-          },
-          ApduSendingError: [
+          ApduResponseReceived: [
             {
-              guard: "isSendApduTimeoutError",
+              guard: "isSendApduBusyError",
               actions: ["sendGetAppAndVersion"],
               target: "WaitingForDisconnection",
             },
+            {
+              target: "Connected",
+            },
+          ],
+          ApduSendingError: [
             {
               target: "WaitingForReconnection",
             },

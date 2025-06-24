@@ -20,6 +20,15 @@ describe("DeviceConnectionStateMachine", () => {
     setupConnection: vi.fn(),
   };
 
+  const apduResponse = new ApduResponse({
+    statusCode: Uint8Array.from([0x90, 0x00]),
+    data: new Uint8Array(),
+  });
+  const apduResponseErrorBusy = new ApduResponse({
+    statusCode: Uint8Array.from([0x66, 0x01]),
+    data: new Uint8Array(),
+  });
+
   beforeEach(() => {
     vi.useFakeTimers();
     machine = new DeviceConnectionStateMachine<void>({
@@ -40,10 +49,6 @@ describe("DeviceConnectionStateMachine", () => {
     it("should send APDU successfully", async () => {
       // GIVEN
       const apdu = Uint8Array.from([1, 2, 3, 4]);
-      const apduResponse = new ApduResponse({
-        statusCode: Uint8Array.from([0x90, 0x00]),
-        data: new Uint8Array(),
-      });
       mockApduSender.sendApdu.mockResolvedValue(Right(apduResponse));
 
       // WHEN
@@ -58,10 +63,6 @@ describe("DeviceConnectionStateMachine", () => {
       // GIVEN
       const apdu = Uint8Array.from([1, 2, 3, 4]);
       const apdu2 = Uint8Array.from([9, 2, 3, 4]);
-      const apduResponse = new ApduResponse({
-        statusCode: Uint8Array.from([0x90, 0x00]),
-        data: new Uint8Array(),
-      });
       mockApduSender.sendApdu.mockResolvedValue(Right(apduResponse));
 
       // WHEN
@@ -78,10 +79,6 @@ describe("DeviceConnectionStateMachine", () => {
       // GIVEN
       const apdu = Uint8Array.from([1, 2, 3, 4]);
       const apdu2 = Uint8Array.from([9, 2, 3, 4]);
-      const apduResponse = new ApduResponse({
-        statusCode: Uint8Array.from([0x90, 0x00]),
-        data: new Uint8Array(),
-      });
       mockApduSender.sendApdu.mockResolvedValue(Right(apduResponse));
 
       // WHEN
@@ -98,10 +95,6 @@ describe("DeviceConnectionStateMachine", () => {
     it("Disconnected while sending APDU", async () => {
       // GIVEN
       const apdu = Uint8Array.from([1, 2, 3, 4]);
-      const apduResponse = new ApduResponse({
-        statusCode: Uint8Array.from([0x90, 0x00]),
-        data: new Uint8Array(),
-      });
       mockApduSender.sendApdu.mockResolvedValue(Right(apduResponse));
 
       // WHEN
@@ -119,10 +112,6 @@ describe("DeviceConnectionStateMachine", () => {
     it("Request disconnection while sending APDU", async () => {
       // GIVEN
       const apdu = Uint8Array.from([1, 2, 3, 4]);
-      const apduResponse = new ApduResponse({
-        statusCode: Uint8Array.from([0x90, 0x00]),
-        data: new Uint8Array(),
-      });
       mockApduSender.sendApdu.mockResolvedValue(Right(apduResponse));
 
       // WHEN
@@ -142,10 +131,6 @@ describe("DeviceConnectionStateMachine", () => {
     it("should send one APDU successfully", async () => {
       // GIVEN
       const apdu = Uint8Array.from([1, 2, 3, 4]);
-      const apduResponse = new ApduResponse({
-        statusCode: Uint8Array.from([0x90, 0x00]),
-        data: new Uint8Array(),
-      });
       mockApduSender.sendApdu.mockResolvedValue(Right(apduResponse));
 
       // WHEN
@@ -164,11 +149,10 @@ describe("DeviceConnectionStateMachine", () => {
       // GIVEN
       const apdu = Uint8Array.from([1, 2, 3, 4]);
       const apdu2 = Uint8Array.from([9, 2, 3, 4]);
-      const apduResponse = new ApduResponse({
-        statusCode: Uint8Array.from([0x90, 0x00]),
-        data: new Uint8Array(),
-      });
-      mockApduSender.sendApdu.mockResolvedValue(Right(apduResponse));
+      mockApduSender.sendApdu
+        .mockResolvedValueOnce(Right(apduResponse))
+        .mockRejectedValueOnce(new Error("Transport error"))
+        .mockResolvedValueOnce(Right(apduResponse));
 
       // WHEN
       const promise1 = machine.sendApdu(apdu, true);
@@ -195,11 +179,10 @@ describe("DeviceConnectionStateMachine", () => {
       // GIVEN
       const apdu = Uint8Array.from([1, 2, 3, 4]);
       const apdu2 = Uint8Array.from([9, 2, 3, 4]);
-      const apduResponse = new ApduResponse({
-        statusCode: Uint8Array.from([0x90, 0x00]),
-        data: new Uint8Array(),
-      });
-      mockApduSender.sendApdu.mockResolvedValue(Right(apduResponse));
+      mockApduSender.sendApdu
+        .mockResolvedValueOnce(Right(apduResponse))
+        .mockRejectedValueOnce(new Error("Transport error"))
+        .mockResolvedValueOnce(Right(apduResponse));
 
       // WHEN
       const result = await machine.sendApdu(apdu, true);
@@ -218,14 +201,62 @@ describe("DeviceConnectionStateMachine", () => {
       expect(result2).toStrictEqual(Right(apduResponse));
     });
 
+    it("should send a second APDU without reconnection, after GetAppAndVersion response", async () => {
+      // GIVEN
+      const apdu = Uint8Array.from([1, 2, 3, 4]);
+      const apdu2 = Uint8Array.from([9, 2, 3, 4]);
+      mockApduSender.sendApdu
+        .mockResolvedValueOnce(Right(apduResponse))
+        .mockResolvedValueOnce(Right(apduResponse))
+        .mockResolvedValueOnce(Right(apduResponse));
+
+      // WHEN
+      const result = await machine.sendApdu(apdu, true);
+      const result2 = await machine.sendApdu(apdu2);
+
+      // THEN
+      expect(mockApduSender.sendApdu).toHaveBeenCalledTimes(3);
+      expect(mockApduSender.sendApdu.mock.calls).toEqual([
+        [apdu, false, undefined],
+        [Uint8Array.from([0xb0, 0x01, 0x00, 0x00, 0x00]), false, undefined], // GetAppAndVersion APDU sent after a successful result from an APDU that triggers disconnection
+        [apdu2, false, undefined],
+      ]);
+      expect(result).toStrictEqual(Right(apduResponse));
+      expect(result2).toStrictEqual(Right(apduResponse));
+    });
+
+    it("should send a second APDU without reconnection, after GetAppAndVersion retries", async () => {
+      // GIVEN
+      const apdu = Uint8Array.from([1, 2, 3, 4]);
+      const apdu2 = Uint8Array.from([9, 2, 3, 4]);
+      mockApduSender.sendApdu
+        .mockResolvedValueOnce(Right(apduResponse))
+        .mockResolvedValueOnce(Right(apduResponseErrorBusy))
+        .mockResolvedValueOnce(Right(apduResponseErrorBusy))
+        .mockResolvedValueOnce(Right(apduResponse))
+        .mockResolvedValueOnce(Right(apduResponse));
+
+      // WHEN
+      const result = await machine.sendApdu(apdu, true);
+      const result2 = await machine.sendApdu(apdu2);
+
+      // THEN
+      expect(mockApduSender.sendApdu).toHaveBeenCalledTimes(5);
+      expect(mockApduSender.sendApdu.mock.calls).toEqual([
+        [apdu, false, undefined],
+        [Uint8Array.from([0xb0, 0x01, 0x00, 0x00, 0x00]), false, undefined],
+        [Uint8Array.from([0xb0, 0x01, 0x00, 0x00, 0x00]), false, undefined],
+        [Uint8Array.from([0xb0, 0x01, 0x00, 0x00, 0x00]), false, undefined],
+        [apdu2, false, undefined],
+      ]);
+      expect(result).toStrictEqual(Right(apduResponse));
+      expect(result2).toStrictEqual(Right(apduResponse));
+    });
+
     it("should not send several APDUs in parallel", async () => {
       // GIVEN
       const apdu = Uint8Array.from([1, 2, 3, 4]);
       const apdu2 = Uint8Array.from([9, 2, 3, 4]);
-      const apduResponse = new ApduResponse({
-        statusCode: Uint8Array.from([0x90, 0x00]),
-        data: new Uint8Array(),
-      });
       mockApduSender.sendApdu.mockResolvedValue(Right(apduResponse));
 
       // WHEN
@@ -247,10 +278,6 @@ describe("DeviceConnectionStateMachine", () => {
       // GIVEN
       const apdu = Uint8Array.from([1, 2, 3, 4]);
       const apdu2 = Uint8Array.from([9, 2, 3, 4]);
-      const apduResponse = new ApduResponse({
-        statusCode: Uint8Array.from([0x90, 0x00]),
-        data: new Uint8Array(),
-      });
       mockApduSender.sendApdu.mockResolvedValue(Right(apduResponse));
 
       // WHEN
@@ -277,10 +304,6 @@ describe("DeviceConnectionStateMachine", () => {
     it("send an APDU while device is reconnecting", async () => {
       // GIVEN
       const apdu = Uint8Array.from([1, 2, 3, 4]);
-      const apduResponse = new ApduResponse({
-        statusCode: Uint8Array.from([0x90, 0x00]),
-        data: new Uint8Array(),
-      });
       mockApduSender.sendApdu.mockResolvedValue(Right(apduResponse));
 
       // WHEN
@@ -302,10 +325,6 @@ describe("DeviceConnectionStateMachine", () => {
       // GIVEN
       const apdu = Uint8Array.from([1, 2, 3, 4]);
       const apdu2 = Uint8Array.from([9, 2, 3, 4]);
-      const apduResponse = new ApduResponse({
-        statusCode: Uint8Array.from([0x90, 0x00]),
-        data: new Uint8Array(),
-      });
       mockApduSender.sendApdu.mockResolvedValue(Right(apduResponse));
 
       // WHEN
