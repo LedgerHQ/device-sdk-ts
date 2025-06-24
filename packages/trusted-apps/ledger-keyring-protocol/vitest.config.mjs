@@ -1,5 +1,6 @@
-import baseConfig from "@ledgerhq/vitest-config-dmk";
+import path from "path";
 import { defineConfig } from "vitest/config";
+import baseConfig from "@ledgerhq/vitest-config-dmk";
 
 export default defineConfig({
   ...baseConfig,
