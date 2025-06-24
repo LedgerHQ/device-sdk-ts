@@ -1,9 +1,8 @@
+import { type Jwt } from "jsonwebtoken";
+
 export type Keypair = {
-  publicKey: ArrayBuffer;
-  privateKey: ArrayBuffer;
+  publicKey: Uint8Array;
+  privateKey: Uint8Array;
 };
 
-export type JWT = {
-  token: string;
-  expiresAt: number;
-};
+export type JWT = Jwt & { token: string };
