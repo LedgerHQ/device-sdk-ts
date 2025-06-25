@@ -5,6 +5,9 @@ import {
   isBase64String,
 } from "@ledgerhq/device-management-kit";
 import {
+  type GenerateTransactionDAError,
+  type GenerateTransactionDAIntermediateValue,
+  type GenerateTransactionDAOutput,
   type GetAddressDAError,
   type GetAddressDAIntermediateValue,
   type GetAddressDAOutput,
@@ -137,6 +140,27 @@ export const SignerSolanaView: React.FC<{ sessionId: string }> = ({
         Record<string, never>,
         GetAppConfigurationDAError,
         GetAppConfigurationDAIntermediateValue
+      >,
+      {
+        title: "Generate Transaction",
+        description:
+          "Perform all the actions necessary to generate a transaction to test the Solana signer",
+        executeDeviceAction: ({ derivationPath }) => {
+          return signer.generateTransaction(derivationPath);
+        },
+        initialValues: {
+          derivationPath: DEFAULT_DERIVATION_PATH,
+          skipOpenApp: false,
+        },
+        deviceModelId,
+      } satisfies DeviceActionProps<
+        GenerateTransactionDAOutput,
+        {
+          derivationPath: string;
+          skipOpenApp: boolean;
+        },
+        GenerateTransactionDAError,
+        GenerateTransactionDAIntermediateValue
       >,
     ],
     [deviceModelId, signer],
