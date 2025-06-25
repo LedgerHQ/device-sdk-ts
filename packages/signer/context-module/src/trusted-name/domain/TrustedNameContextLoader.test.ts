@@ -22,7 +22,7 @@ describe("TrustedNameContextLoader", () => {
     ).mockResolvedValue(Right("payload"));
   });
 
-  describe("load function", async () => {
+  describe("load function", () => {
     it("should return an empty array when no domain or registry", async () => {
       const transaction = {} as TransactionContext;
       const loader = new TrustedNameContextLoader(mockTrustedNameDataSource);
