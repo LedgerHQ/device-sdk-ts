@@ -431,9 +431,11 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
     const inspectTransaction = async (arg0: {
       serializedTransaction: Uint8Array;
     }) =>
-      new TransactionInspector(
-        arg0.serializedTransaction,
-      ).inspectTransactionType();
+      Promise.resolve(
+        new TransactionInspector(
+          arg0.serializedTransaction,
+        ).inspectTransactionType(),
+      );
 
     const signTransaction = async (arg0: {
       input: {

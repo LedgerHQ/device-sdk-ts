@@ -3,6 +3,7 @@ import { ContainerModule } from "inversify";
 import { GetAddressUseCase } from "@internal/use-cases/address/GetAddressUseCase";
 import { GetAppConfigurationUseCase } from "@internal/use-cases/app-configuration/GetAppConfigurationUseCase";
 import { useCasesTypes } from "@internal/use-cases/di/useCasesTypes";
+import { GenerateTransactionUseCase } from "@internal/use-cases/generateTransaction/GenerateTransactionUseCase";
 import { SignMessageUseCase } from "@internal/use-cases/message/SignMessageUseCase";
 import { SignTransactionUseCase } from "@internal/use-cases/transaction/SignTransactionUseCase";
 
@@ -14,4 +15,7 @@ export const useCasesModuleFactory = () =>
     );
     bind(useCasesTypes.SignTransactionUseCase).to(SignTransactionUseCase);
     bind(useCasesTypes.SignMessageUseCase).to(SignMessageUseCase);
+    bind(useCasesTypes.GenerateTransactionUseCase).to(
+      GenerateTransactionUseCase,
+    );
   });

@@ -5,6 +5,9 @@ import {
   isBase64String,
 } from "@ledgerhq/device-management-kit";
 import {
+  type GenerateTransactionDAError,
+  type GenerateTransactionDAIntermediateValue,
+  type GenerateTransactionDAOutput,
   type GetAddressDAError,
   type GetAddressDAIntermediateValue,
   type GetAddressDAOutput,
@@ -18,6 +21,7 @@ import {
   type SignTransactionDAError,
   type SignTransactionDAIntermediateValue,
   type SignTransactionDAOutput,
+  SolanaToolsBuilder,
 } from "@ledgerhq/device-signer-kit-solana";
 
 import { DeviceActionsList } from "@/components/DeviceActionsView/DeviceActionsList";
@@ -31,6 +35,11 @@ export const SignerSolanaView: React.FC<{ sessionId: string }> = ({
 }) => {
   const dmk = useDmk();
   const signer = new SignerSolanaBuilder({
+    dmk,
+    sessionId,
+    originToken: "Solana",
+  }).build();
+  const solanaTools = new SolanaToolsBuilder({
     dmk,
     sessionId,
     originToken: "Solana",
@@ -138,8 +147,29 @@ export const SignerSolanaView: React.FC<{ sessionId: string }> = ({
         GetAppConfigurationDAError,
         GetAppConfigurationDAIntermediateValue
       >,
+      {
+        title: "Generate Transaction",
+        description:
+          "Perform all the actions necessary to generate a transaction to test the Solana signer",
+        executeDeviceAction: ({ derivationPath }) => {
+          return solanaTools.generateTransaction(derivationPath);
+        },
+        initialValues: {
+          derivationPath: DEFAULT_DERIVATION_PATH,
+          skipOpenApp: false,
+        },
+        deviceModelId,
+      } satisfies DeviceActionProps<
+        GenerateTransactionDAOutput,
+        {
+          derivationPath: string;
+          skipOpenApp: boolean;
+        },
+        GenerateTransactionDAError,
+        GenerateTransactionDAIntermediateValue
+      >,
     ],
-    [deviceModelId, signer],
+    [deviceModelId, solanaTools, signer],
   );
 
   return (
