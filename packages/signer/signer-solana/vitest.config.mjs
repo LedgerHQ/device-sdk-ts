@@ -9,22 +9,17 @@ export default defineConfig({
     include: ["src/**/*.test.ts"],
     setupFiles: ["./vitest.setup.mjs"],
     coverage: {
-      reporter: ["lcov", "text"],
       provider: "istanbul",
+      reporter: ["lcov", "text"],
       include: ["src/**/*.ts"],
-      exclude: [
-        "src/**/*.stub.ts",
-        "src/index.ts",
-        "src/api/index.ts",
-        "src/**/__test-utils__/*",
-      ],
+      exclude: ["src/**/*.stub.ts", "src/index.ts", "src/api/index.ts"],
     },
   },
   resolve: {
     alias: {
+      "@root": path.resolve(__dirname),
       "@api": path.resolve(__dirname, "src/api"),
       "@internal": path.resolve(__dirname, "src/internal"),
-      "@root": path.resolve(__dirname, "."),
     },
   },
 });

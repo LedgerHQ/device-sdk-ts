@@ -1,15 +1,20 @@
+import { type ContextModule } from "@ledgerhq/context-module";
 import {
   type DeviceManagementKit,
   type DeviceSessionId,
 } from "@ledgerhq/device-management-kit";
+import { vi } from "vitest";
 
 import { DefaultSignerSolana } from "./DefaultSignerSolana";
 
 describe("DefaultSignerSolana", () => {
+  const contextModuleStub: ContextModule = {} as ContextModule;
+
   it("should be defined", () => {
     const signer = new DefaultSignerSolana({
       dmk: {} as DeviceManagementKit,
       sessionId: {} as DeviceSessionId,
+      contextModule: contextModuleStub,
     });
     expect(signer).toBeDefined();
   });
@@ -19,7 +24,11 @@ describe("DefaultSignerSolana", () => {
       executeDeviceAction: vi.fn(),
     } as unknown as DeviceManagementKit;
     const sessionId = {} as DeviceSessionId;
-    const signer = new DefaultSignerSolana({ dmk, sessionId });
+    const signer = new DefaultSignerSolana({
+      dmk,
+      sessionId,
+      contextModule: contextModuleStub,
+    });
     signer.getAddress("derivationPath", {});
     expect(dmk.executeDeviceAction).toHaveBeenCalled();
   });
@@ -29,8 +38,12 @@ describe("DefaultSignerSolana", () => {
       executeDeviceAction: vi.fn(),
     } as unknown as DeviceManagementKit;
     const sessionId = {} as DeviceSessionId;
-    const signer = new DefaultSignerSolana({ dmk, sessionId });
-    signer.signTransaction("derivationPath", new Uint8Array(), {});
+    const signer = new DefaultSignerSolana({
+      dmk,
+      sessionId,
+      contextModule: contextModuleStub,
+    });
+    signer.signTransaction("derivationPath", new Uint8Array());
     expect(dmk.executeDeviceAction).toHaveBeenCalled();
   });
 
@@ -39,7 +52,11 @@ describe("DefaultSignerSolana", () => {
       executeDeviceAction: vi.fn(),
     } as unknown as DeviceManagementKit;
     const sessionId = {} as DeviceSessionId;
-    const signer = new DefaultSignerSolana({ dmk, sessionId });
+    const signer = new DefaultSignerSolana({
+      dmk,
+      sessionId,
+      contextModule: contextModuleStub,
+    });
     signer.signMessage("44'/501'/0'/0'", "Hello world");
     expect(dmk.executeDeviceAction).toHaveBeenCalled();
   });
@@ -49,7 +66,11 @@ describe("DefaultSignerSolana", () => {
       executeDeviceAction: vi.fn(),
     } as unknown as DeviceManagementKit;
     const sessionId = {} as DeviceSessionId;
-    const signer = new DefaultSignerSolana({ dmk, sessionId });
+    const signer = new DefaultSignerSolana({
+      dmk,
+      sessionId,
+      contextModule: contextModuleStub,
+    });
     signer.getAppConfiguration();
     expect(dmk.executeDeviceAction).toHaveBeenCalled();
   });

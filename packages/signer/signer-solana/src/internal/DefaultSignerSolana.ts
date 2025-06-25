@@ -1,3 +1,4 @@
+import { type ContextModule } from "@ledgerhq/context-module";
 import {
   type DeviceManagementKit,
   type DeviceSessionId,
@@ -11,7 +12,6 @@ import { type SignTransactionDAReturnType } from "@api/app-binder/SignTransactio
 import { type AddressOptions } from "@api/model/AddressOption";
 import { type MessageOptions } from "@api/model/MessageOptions";
 import { type Transaction } from "@api/model/Transaction";
-import { type TransactionOptions } from "@api/model/TransactionOptions";
 import { type SignerSolana } from "@api/SignerSolana";
 
 import { type GetAddressUseCase } from "./use-cases/address/GetAddressUseCase";
@@ -24,23 +24,27 @@ import { makeContainer } from "./di";
 export type DefaultSignerSolanaConstructorArgs = {
   dmk: DeviceManagementKit;
   sessionId: DeviceSessionId;
+  contextModule: ContextModule;
 };
 
 export class DefaultSignerSolana implements SignerSolana {
   private _container: Container;
 
-  constructor({ dmk, sessionId }: DefaultSignerSolanaConstructorArgs) {
-    this._container = makeContainer({ dmk, sessionId });
+  constructor({
+    dmk,
+    sessionId,
+    contextModule,
+  }: DefaultSignerSolanaConstructorArgs) {
+    this._container = makeContainer({ dmk, sessionId, contextModule });
   }
 
   signTransaction(
     derivationPath: string,
     transaction: Transaction,
-    options?: TransactionOptions,
   ): SignTransactionDAReturnType {
     return this._container
       .get<SignTransactionUseCase>(useCasesTypes.SignTransactionUseCase)
-      .execute(derivationPath, transaction, options);
+      .execute(derivationPath, transaction);
   }
 
   signMessage(

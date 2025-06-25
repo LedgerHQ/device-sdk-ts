@@ -35,20 +35,26 @@
     "test:coverage": "vitest run --coverage"
   },
   "dependencies": {
+    "@ledgerhq/context-module": "workspace:*",
     "@ledgerhq/signer-utils": "workspace:*",
+    "@solana/spl-token": "catalog:",
+    "@solana/web3.js": "catalog:",
     "bs58": "catalog:",
+    "buffer": "catalog:",
     "inversify": "catalog:",
     "purify-ts": "catalog:",
     "reflect-metadata": "catalog:",
+    "semver": "catalog:",
     "xstate": "catalog:"
   },
   "devDependencies": {
     "@ledgerhq/device-management-kit": "workspace:*",
-    "@ledgerhq/ldmk-tool": "workspace:*",
     "@ledgerhq/eslint-config-dsdk": "workspace:*",
+    "@ledgerhq/ldmk-tool": "workspace:*",
     "@ledgerhq/prettier-config-dsdk": "workspace:*",
     "@ledgerhq/tsconfig-dsdk": "workspace:*",
     "@ledgerhq/vitest-config-dmk": "workspace:*",
+    "@types/semver": "catalog:",
     "rxjs": "catalog:",
     "ts-node": "catalog:"
   },

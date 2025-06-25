@@ -1,3 +1,4 @@
+import { type ContextModule } from "@ledgerhq/context-module";
 import {
   CallTaskInAppDeviceAction,
   DeviceManagementKit,
@@ -24,6 +25,7 @@ export class SolanaAppBinder {
   constructor(
     @inject(externalTypes.Dmk) private dmk: DeviceManagementKit,
     @inject(externalTypes.SessionId) private sessionId: DeviceSessionId,
+    @inject(externalTypes.ContextModule) private contextModule: ContextModule,
   ) {}
 
   getAddress(args: {
@@ -58,6 +60,7 @@ export class SolanaAppBinder {
           derivationPath: args.derivationPath,
           transaction: args.transaction,
           skipOpenApp: args.skipOpenApp,
+          contextModule: this.contextModule,
         },
       }),
     });
