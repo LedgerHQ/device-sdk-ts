@@ -637,6 +637,9 @@ importers:
       '@ledgerhq/device-transport-kit-web-hid':
         specifier: workspace:*
         version: link:../../packages/transport/web-hid
+      '@ledgerhq/device-trusted-app-kit-ledger-keyring-protocol':
+        specifier: workspace:*
+        version: link:../../packages/trusted-apps/ledger-keyring-protocol
       '@ledgerhq/react-ui':
         specifier: 'catalog:'
         version: 0.17.0(@emotion/is-prop-valid@1.2.1)(@types/react@18.3.12)(react-dom@18.3.1(react@18.3.1))(react-native-svg@15.11.1(react-native@0.76.6(@babel/core@7.26.10)(@babel/preset-env@7.26.9(@babel/core@7.26.10))(@react-native-community/cli-server-api@15.0.1(bufferutil@4.0.9)(utf-8-validate@5.0.10))(@types/react@18.3.12)(bufferutil@4.0.9)(react@18.3.1)(utf-8-validate@5.0.10))(react@18.3.1))(react@18.3.1)(styled-components@5.3.11(@babel/core@7.26.10)(react-dom@18.3.1(react@18.3.1))(react-is@18.3.1)(react@18.3.1))
@@ -1405,30 +1408,42 @@ importers:
         specifier: 'catalog:'
         version: 10.9.2(@types/node@22.14.0)(typescript@5.8.3)
 
-  packages/trusted-apps:
+  packages/trusted-apps/ledger-keyring-protocol:
     dependencies:
+      '@ledgerhq/device-management-kit':
+        specifier: workspace:*
+        version: link:../../device-management-kit
+      '@ledgerhq/signer-utils':
+        specifier: workspace:*
+        version: link:../../signer/signer-utils
+      '@types/jsonwebtoken':
+        specifier: 9.0.2
+        version: 9.0.2
       inversify:
         specifier: 'catalog:'
         version: 7.5.1(reflect-metadata@0.2.2)
+      purify-ts:
+        specifier: 'catalog:'
+        version: 2.1.0
       reflect-metadata:
         specifier: 'catalog:'
         version: 0.2.2
     devDependencies:
       '@ledgerhq/eslint-config-dsdk':
         specifier: workspace:*
-        version: link:../config/eslint
+        version: link:../../config/eslint
       '@ledgerhq/ldmk-tool':
         specifier: workspace:*
-        version: link:../tools/ldmk-tool
+        version: link:../../tools/ldmk-tool
       '@ledgerhq/prettier-config-dsdk':
         specifier: workspace:*
-        version: link:../config/prettier
+        version: link:../../config/prettier
       '@ledgerhq/tsconfig-dsdk':
         specifier: workspace:*
-        version: link:../config/typescript
+        version: link:../../config/typescript
       '@ledgerhq/vitest-config-dmk':
         specifier: workspace:*
-        version: link:../config/vitest
+        version: link:../../config/vitest
 
   packages/ui:
     dependencies:
@@ -4465,6 +4480,9 @@ packages:
 
   '@types/json-schema@7.0.15':
     resolution: {integrity: sha512-5+fP8P8MFNC+AyZCDxrB2pkZFPGzqQWUzpSeuuVLvm8VMcorNYavBqoFcxK8bQz4Qsbn4oUEEem4wDLfcysGHA==}
+
+  '@types/jsonwebtoken@9.0.2':
+    resolution: {integrity: sha512-drE6uz7QBKq1fYqqoFKTDRdFCPHd5TCub75BM+D+cMx7NU9hUz7SESLfC2fSCXVFMO5Yj8sOWHuGqPgjc+fz0Q==}
 
   '@types/katex@0.16.7':
     resolution: {integrity: sha512-HMwFiRujE5PjrgwHQ25+bsLJgowjGjm5Z8FVSf0N6PwgJrwxH0QxzHYDcKsTfV3wva0vzrpqMTJS2jXPr5BMEQ==}
@@ -13919,6 +13937,10 @@ snapshots:
       '@types/istanbul-lib-report': 3.0.3
 
   '@types/json-schema@7.0.15': {}
+
+  '@types/jsonwebtoken@9.0.2':
+    dependencies:
+      '@types/node': 22.15.29
 
   '@types/katex@0.16.7': {}
 
