@@ -1,7 +1,7 @@
 "use client";
 import React from "react";
 
-import { LedgerKeyringProtocolView } from "@/components/LedgerProtocolKeyringView";
+import { LedgerKeyringProtocolView } from "@/components/LedgerKeyringProtocolView";
 import { SessionIdWrapper } from "@/components/SessionIdWrapper";
 
 const LedgerKeyringProtocol: React.FC = () => {
