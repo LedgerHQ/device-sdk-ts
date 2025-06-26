@@ -53,7 +53,6 @@ describe("ProvideTransactionContextTask", () => {
           payload: "746f6b656e", // "token"
         },
       ],
-      web3Check: null,
     };
 
     beforeEach(() => {
@@ -120,15 +119,17 @@ describe("ProvideTransactionContextTask", () => {
       api.sendCommand.mockResolvedValue(successResult);
       // GIVEN
       const task = new ProvideTransactionContextTask(api, {
-        ...args,
-        web3Check: {
-          type: ClearSignContextType.WEB3_CHECK,
-          payload: "0x01020304",
-          certificate: {
-            payload: new Uint8Array(),
-            keyUsageNumber: 1,
+        clearSignContexts: [
+          {
+            type: ClearSignContextType.WEB3_CHECK,
+            payload: "0x01020304",
+            certificate: {
+              payload: new Uint8Array(),
+              keyUsageNumber: 1,
+            },
           },
-        },
+          ...args.clearSignContexts,
+        ],
       });
       // WHEN
       const result = await task.run();

@@ -20,7 +20,10 @@ import { StoreTransactionCommand } from "@internal/app-binder/command/StoreTrans
 import { type EthErrorCodes } from "@internal/app-binder/command/utils/ethAppErrors";
 import { type TransactionParserService } from "@internal/transaction/service/parser/TransactionParserService";
 
-import { ProvideTransactionFieldDescriptionTask } from "./ProvideTransactionFieldDescriptionTask";
+import {
+  ProvideTransactionFieldDescriptionTask,
+  type ProvideTransactionFieldDescriptionTaskArgs,
+} from "./ProvideTransactionFieldDescriptionTask";
 import { SendCommandInChunksTask } from "./SendCommandInChunksTask";
 import { SendPayloadInChunksTask } from "./SendPayloadInChunksTask";
 
@@ -31,6 +34,7 @@ export type GenericContext = {
     Exclude<ClearSignContextSuccessType, ClearSignContextType.ENUM>
   >[];
   readonly transactionEnums: ClearSignContextSuccess<ClearSignContextType.ENUM>[];
+  readonly web3Check: ClearSignContextSuccess<ClearSignContextType.WEB3_CHECK> | null;
 };
 
 export type ProvideTransactionGenericContextTaskArgs = {
@@ -40,7 +44,6 @@ export type ProvideTransactionGenericContextTaskArgs = {
   readonly derivationPath: string;
   readonly serializedTransaction: Uint8Array;
   readonly context: GenericContext;
-  readonly web3Check: ClearSignContextSuccess<ClearSignContextType.WEB3_CHECK> | null;
 };
 
 export type ProvideTransactionGenericContextTaskErrorCodes =
@@ -48,38 +51,45 @@ export type ProvideTransactionGenericContextTaskErrorCodes =
 
 export class ProvideTransactionGenericContextTask {
   constructor(
-    private api: InternalApi,
-    private args: ProvideTransactionGenericContextTaskArgs,
+    private _api: InternalApi,
+    private _args: ProvideTransactionGenericContextTaskArgs,
+    private _provideTransactionFieldDescriptionTaskFactory = (
+      api: InternalApi,
+      args: ProvideTransactionFieldDescriptionTaskArgs,
+    ) => new ProvideTransactionFieldDescriptionTask(api, args),
   ) {}
 
   async run(): Promise<
     Maybe<CommandErrorResult<ProvideTransactionGenericContextTaskErrorCodes>>
   > {
     // Store the transaction in the device memory
-    const paths = DerivationPathUtils.splitPath(this.args.derivationPath);
+    const paths = DerivationPathUtils.splitPath(this._args.derivationPath);
     const builder = new ByteArrayBuilder();
     builder.add8BitUIntToData(paths.length);
     paths.forEach((path) => {
       builder.add32BitUIntToData(path);
     });
-    builder.addBufferToData(this.args.serializedTransaction);
-    const storeTransactionResult = await new SendCommandInChunksTask(this.api, {
-      data: builder.build(),
-      commandFactory: (args) =>
-        new StoreTransactionCommand({
-          serializedTransaction: args.chunkedData,
-          isFirstChunk: args.isFirstChunk,
-        }),
-    }).run();
+    builder.addBufferToData(this._args.serializedTransaction);
+    const storeTransactionResult = await new SendCommandInChunksTask(
+      this._api,
+      {
+        data: builder.build(),
+        commandFactory: (args) =>
+          new StoreTransactionCommand({
+            serializedTransaction: args.chunkedData,
+            isFirstChunk: args.isFirstChunk,
+          }),
+      },
+    ).run();
 
     if (!isSuccessCommandResult(storeTransactionResult)) {
       return Just(storeTransactionResult);
     }
 
-    if (this.args.context.transactionInfoCertificate) {
+    if (this._args.context.transactionInfoCertificate) {
       const { keyUsageNumber: keyUsage, payload: certificate } =
-        this.args.context.transactionInfoCertificate;
-      await this.api.sendCommand(
+        this._args.context.transactionInfoCertificate;
+      await this._api.sendCommand(
         new LoadCertificateCommand({
           keyUsage,
           certificate,
@@ -88,8 +98,8 @@ export class ProvideTransactionGenericContextTask {
     }
 
     // Provide the transaction information
-    const transactionInfoResult = await new SendPayloadInChunksTask(this.api, {
-      payload: this.args.context.transactionInfo,
+    const transactionInfoResult = await new SendPayloadInChunksTask(this._api, {
+      payload: this._args.context.transactionInfo,
       commandFactory: (args) =>
         new ProvideTransactionInformationCommand({
           data: args.chunkedData,
@@ -102,21 +112,21 @@ export class ProvideTransactionGenericContextTask {
     }
 
     // If there is a web3 check, add it to the transactionField array
-    const fields = this.args.web3Check
-      ? [...this.args.context.transactionFields, this.args.web3Check]
-      : this.args.context.transactionFields;
+    const fields = this._args.context.web3Check
+      ? [...this._args.context.transactionFields, this._args.context.web3Check]
+      : this._args.context.transactionFields;
 
     // Provide the transaction field description and according metadata reference
     for (const field of fields) {
-      const result = await new ProvideTransactionFieldDescriptionTask(
-        this.api,
+      const result = await this._provideTransactionFieldDescriptionTaskFactory(
+        this._api,
         {
           field,
-          serializedTransaction: this.args.serializedTransaction,
-          chainId: this.args.chainId,
-          transactionParser: this.args.transactionParser,
-          contextModule: this.args.contextModule,
-          transactionEnums: this.args.context.transactionEnums,
+          serializedTransaction: this._args.serializedTransaction,
+          chainId: this._args.chainId,
+          transactionParser: this._args.transactionParser,
+          contextModule: this._args.contextModule,
+          transactionEnums: this._args.context.transactionEnums,
         },
       ).run();
 
