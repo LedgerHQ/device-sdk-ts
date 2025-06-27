@@ -6,7 +6,7 @@ import { type SpeculosDatasource } from "./SpeculosDatasource";
 export class HttpSpeculosDatasource implements SpeculosDatasource {
   constructor(private readonly baseUrl: string) {}
 
-  async postAdpu(apdu: string): Promise<string> {
+  async postApdu(apdu: string): Promise<string> {
     const requestDto = {
       data: apdu,
     };

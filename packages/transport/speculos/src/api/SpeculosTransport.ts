@@ -88,7 +88,7 @@ export class SpeculosTransport implements Transport {
   }): Promise<Either<ConnectError, TransportConnectedDevice>> {
     this.logger.debug("connect");
 
-    const hexResponse = await this._speculosDataSource.postAdpu("B0010000");
+    const hexResponse = await this._speculosDataSource.postApdu("B0010000");
     this.logger.debug(`Hex Response: ${hexResponse}`);
     const apduResponse = this.createApduResponse(hexResponse);
     const parser = new ApduParser(apduResponse);
@@ -149,7 +149,7 @@ export class SpeculosTransport implements Transport {
       const hexApdu = bufferToHexaString(apdu).substring(2);
       this.logger.debug(`send APDU:  ${hexApdu}`);
       const hexResponse: string =
-        await this._speculosDataSource.postAdpu(hexApdu);
+        await this._speculosDataSource.postApdu(hexApdu);
       const apduResponse = this.createApduResponse(hexResponse);
       return Right(apduResponse);
     } catch (error) {
@@ -199,7 +199,7 @@ export class SpeculosTransport implements Transport {
   ): void {
     this.disconnectInterval = setInterval(async () => {
       try {
-        await this._speculosDataSource.postAdpu("B0010000");
+        await this._speculosDataSource.postApdu("B0010000");
       } catch (error) {
         if (!(error instanceof AxiosError)) return;
 
