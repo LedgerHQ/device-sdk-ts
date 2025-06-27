@@ -26,8 +26,9 @@ import {
 
 const PUBKEY_LENGTH = 32;
 
-type GetPubKeyCommandResponse = PublicKey;
-type GetPubKeyCommandArgs = {
+export type GetPubKeyCommandResponse = PublicKey;
+
+export type GetPubKeyCommandArgs = {
   derivationPath: string;
   checkOnDevice: boolean;
 };

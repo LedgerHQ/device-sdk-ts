@@ -8,6 +8,7 @@ import {
 } from "@ledgerhq/device-management-kit";
 import { inject, injectable } from "inversify";
 
+import { GenerateTransactionDAReturnType } from "@api/app-binder/GenerateTransactionDeviceActionTypes";
 import { GetAddressDAReturnType } from "@api/app-binder/GetAddressDeviceActionTypes";
 import { GetAppConfigurationDAReturnType } from "@api/app-binder/GetAppConfigurationDeviceActionTypes";
 import { SignMessageDAReturnType } from "@api/app-binder/SignMessageDeviceActionTypes";
@@ -18,6 +19,7 @@ import { externalTypes } from "@internal/externalTypes";
 
 import { GetAppConfigurationCommand } from "./command/GetAppConfigurationCommand";
 import { GetPubKeyCommand } from "./command/GetPubKeyCommand";
+import { GenerateTransactionDeviceAction } from "./device-action/GenerateTransactionDeviceAction";
 import { SignTransactionDeviceAction } from "./device-action/SignTransactionDeviceAction";
 
 @injectable()
@@ -59,6 +61,22 @@ export class SolanaAppBinder {
         input: {
           derivationPath: args.derivationPath,
           transaction: args.transaction,
+          skipOpenApp: args.skipOpenApp,
+          contextModule: this.contextModule,
+        },
+      }),
+    });
+  }
+
+  generateTransaction(args: {
+    derivationPath: string;
+    skipOpenApp: boolean;
+  }): GenerateTransactionDAReturnType {
+    return this.dmk.executeDeviceAction({
+      sessionId: this.sessionId,
+      deviceAction: new GenerateTransactionDeviceAction({
+        input: {
+          derivationPath: args.derivationPath,
           skipOpenApp: args.skipOpenApp,
           contextModule: this.contextModule,
         },

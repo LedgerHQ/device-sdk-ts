@@ -1,10 +1,12 @@
 import {
-  decodeInstruction,
-  getAssociatedTokenAddress,
+  decodeInitializeAccountInstruction,
+  decodeTransferCheckedInstruction,
+  decodeTransferInstruction,
   TOKEN_PROGRAM_ID,
+  TokenInstruction,
 } from "@solana/spl-token";
 import {
-  PublicKey,
+  type PublicKey,
   Transaction,
   TransactionInstruction,
   VersionedMessage,
@@ -16,7 +18,6 @@ export enum SolanaTransactionTypes {
   STANDARD = "Standard",
   SPL = "SPL",
 }
-
 export interface TxInspectorResult {
   transactionType: SolanaTransactionTypes;
   data: {
@@ -28,181 +29,156 @@ export interface TxInspectorResult {
   };
 }
 
-interface ParsedSplInstruction {
-  programIdIndex: number;
-  accountIndexes: number[];
-  data: Uint8Array;
+export enum SPLTransferType {
+  Transfer = "Transfer",
+  TransferChecked = "TransferChecked",
+  InitializeAccount = "InitializeAccount",
+  Other = "Other",
 }
-
-type TransferCheckedData = {
-  mint: PublicKey;
-  authority: PublicKey;
-  source: PublicKey;
-  destination: PublicKey;
-};
 
 export class TransactionInspector {
   constructor(private readonly rawTransactionBytes: Uint8Array) {}
 
-  public async inspectTransactionType(): Promise<TxInspectorResult> {
+  public inspectTransactionType(): TxInspectorResult {
     try {
       const message = this.extractMessage(this.rawTransactionBytes);
 
-      const splInstructions: ParsedSplInstruction[] =
-        message.compiledInstructions
-          .filter((instruction) => {
-            const programId =
-              message.staticAccountKeys[instruction.programIdIndex];
-            return programId?.equals(TOKEN_PROGRAM_ID);
-          })
-          .map((instruction) => ({
-            programIdIndex: instruction.programIdIndex,
-            accountIndexes: instruction.accountKeyIndexes,
-            data:
-              instruction.data instanceof Uint8Array
-                ? instruction.data
-                : new Uint8Array(instruction.data),
-          }));
+      for (const ixMeta of message.compiledInstructions) {
+        const programId = message.staticAccountKeys[ixMeta.programIdIndex]!;
+        if (!programId.equals(TOKEN_PROGRAM_ID)) continue;
 
-      if (splInstructions.length === 0) {
-        return { transactionType: SolanaTransactionTypes.STANDARD, data: {} };
-      }
-
-      for (const { programIdIndex, accountIndexes, data } of splInstructions) {
         const instruction = new TransactionInstruction({
-          programId: message.staticAccountKeys[programIdIndex]!,
-          keys: accountIndexes.map((index) => ({
-            pubkey: message.staticAccountKeys[index]!,
-            isSigner: message.isAccountSigner(index),
-            isWritable: message.isAccountWritable(index),
+          programId,
+          keys: ixMeta.accountKeyIndexes.map((i) => ({
+            pubkey: message.staticAccountKeys[i]!,
+            isSigner: message.isAccountSigner(i),
+            isWritable: message.isAccountWritable(i),
           })),
-          data: Buffer.from(data),
+          data: Buffer.from(ixMeta.data),
         });
 
-        const decodedInstruction = decodeInstruction(instruction);
-        if (decodedInstruction instanceof Error) continue;
-
-        const decodedData = decodedInstruction.data;
-
-        // transfer without mint info (likely a direct SPL transfer)
-        if ("amount" in decodedData && !("mint" in decodedData)) {
-          const destinationAccount = instruction.keys[2]?.pubkey;
-          if (!destinationAccount) {
-            throw new Error(
-              "Transfer instruction does not have a destination key",
-            );
-          }
-          return {
-            transactionType: SolanaTransactionTypes.SPL,
-            data: { tokenAddress: destinationAccount.toBase58() },
-          };
-        }
-
-        // transferChecked or CreateAssociatedTokenAccount
-        if (this.isTransferCheckedData(decodedData)) {
-          const { mint, authority, source, destination } = decodedData;
-
-          const associatedTokenAccount = await getAssociatedTokenAddress(
-            mint,
-            authority,
-          );
-          const isATAUsed =
-            source.equals(associatedTokenAccount) ||
-            destination.equals(associatedTokenAccount);
-
-          if (isATAUsed) {
+        switch (this.getSPLTransferType(instruction)) {
+          case SPLTransferType.Transfer: {
+            const {
+              keys: { destination },
+            } = decodeTransferInstruction(instruction);
             return {
               transactionType: SolanaTransactionTypes.SPL,
-              data: { tokenAddress: associatedTokenAccount.toBase58() },
+              data: { tokenAddress: destination.pubkey.toBase58() },
             };
-          } else {
+          }
+          case SPLTransferType.TransferChecked: {
+            const {
+              keys: { destination },
+            } = decodeTransferCheckedInstruction(instruction);
+            return {
+              transactionType: SolanaTransactionTypes.SPL,
+              data: { tokenAddress: destination.pubkey.toBase58() },
+            };
+          }
+          case SPLTransferType.InitializeAccount: {
+            const {
+              keys: { account, mint },
+            } = decodeInitializeAccountInstruction(instruction);
             return {
               transactionType: SolanaTransactionTypes.SPL,
               data: {
                 createATA: {
-                  address: associatedTokenAccount.toBase58(),
-                  mintAddress: mint.toBase58(),
+                  address: account.pubkey.toBase58(),
+                  mintAddress: mint.pubkey.toBase58(),
                 },
               },
             };
           }
+          default:
+            // not one of the SPL transfers we care about
+            continue;
         }
       }
-
-      throw new Error(
-        "Found SPL-token instructions, but none decoded as Transfer or TransferChecked",
-      );
-    } catch (_e) {
+      // fallback to standard transaction type if no SPL transfers found
       return {
         transactionType: SolanaTransactionTypes.STANDARD,
-        data: {}, // Fallback to standard if any error occurs
+        data: {},
+      };
+    } catch (_e) {
+      // failed to parse transaction or no SPL transfers found
+      // fallback to standard transaction type
+      return {
+        transactionType: SolanaTransactionTypes.STANDARD,
+        data: {},
       };
     }
   }
 
-  private isTransferCheckedData(data: unknown): data is TransferCheckedData {
-    if (data === null || typeof data !== "object") return false;
-    const d = data as Record<string, unknown>;
-    return (
-      "mint" in d &&
-      d["mint"] instanceof PublicKey &&
-      "authority" in d &&
-      d["authority"] instanceof PublicKey &&
-      "source" in d &&
-      d["source"] instanceof PublicKey &&
-      "destination" in d &&
-      d["destination"] instanceof PublicKey
-    );
+  private getSPLTransferType(ix: TransactionInstruction): SPLTransferType {
+    if (!ix.programId.equals(TOKEN_PROGRAM_ID)) return SPLTransferType.Other;
+    if (ix.data.length === 0) return SPLTransferType.Other;
+
+    // data[0] is the instruction tag as per SPL-Token spec
+    switch (ix.data[0] as TokenInstruction) {
+      case TokenInstruction.Transfer:
+        return SPLTransferType.Transfer;
+      case TokenInstruction.TransferChecked:
+        return SPLTransferType.TransferChecked;
+      case TokenInstruction.InitializeAccount:
+        return SPLTransferType.InitializeAccount;
+      default:
+        return SPLTransferType.Other;
+    }
   }
 
   private extractMessage(rawBytes: Uint8Array): VersionedMessage {
     const errors: string[] = [];
-
     try {
       return VersionedTransaction.deserialize(rawBytes).message;
-    } catch (err) {
-      errors.push(err instanceof Error ? err.message : String(err));
+    } catch (e) {
+      errors.push((e as Error).message);
     }
-
     try {
       return VersionedMessage.deserialize(rawBytes);
-    } catch (err) {
-      errors.push(err instanceof Error ? err.message : String(err));
+    } catch (e) {
+      errors.push((e as Error).message);
     }
-
     try {
-      const legacyTx = Transaction.from(rawBytes);
-      const accountKeys = legacyTx.instructions.flatMap((ix) =>
-        ix.keys.map((k) => k.pubkey),
+      const tx = Transaction.from(rawBytes);
+      const allKeys = [
+        tx.feePayer,
+        ...tx.instructions.flatMap((ix) => ix.keys.map((k) => k.pubkey)),
+      ];
+      const staticAccountKeys = Array.from(
+        new Set(allKeys.filter(Boolean) as PublicKey[]),
       );
-      const staticAccountKeys = [
-        ...new Set([legacyTx.feePayer, ...accountKeys]),
-      ].filter(Boolean) as PublicKey[];
+      interface CustomCompiledInstruction {
+        programIdIndex: number;
+        accountKeyIndexes: number[];
+        data: Uint8Array;
+      }
 
       return {
-        compiledInstructions: legacyTx.instructions.map((ix) => ({
-          programIdIndex: staticAccountKeys.findIndex((k) =>
-            k.equals(ix.programId),
-          ),
-          accountKeyIndexes: ix.keys.map((k) =>
-            staticAccountKeys.findIndex((key) => key.equals(k.pubkey)),
-          ),
-          data: ix.data,
-        })),
-        staticAccountKeys,
-        isAccountSigner: (i: number) =>
-          legacyTx.signatures.some((sig) =>
+        compiledInstructions: tx.instructions.map(
+          (ix): CustomCompiledInstruction => ({
+            programIdIndex: staticAccountKeys.findIndex((k: PublicKey) =>
+              k.equals(ix.programId),
+            ),
+            accountKeyIndexes: ix.keys.map((k: { pubkey: PublicKey }): number =>
+              staticAccountKeys.findIndex((s: PublicKey) => s.equals(k.pubkey)),
+            ),
+            data: ix.data,
+          }),
+        ),
+        staticAccountKeys: staticAccountKeys,
+        isAccountSigner: (i: number): boolean =>
+          tx.signatures.some((sig: { publicKey: PublicKey }): boolean =>
             sig.publicKey.equals(staticAccountKeys[i]!),
           ),
-        isAccountWritable: (_: number) => true,
+        isAccountWritable: (_i: number): boolean => true,
       } as unknown as VersionedMessage;
-    } catch (err) {
-      errors.push(err instanceof Error ? err.message : String(err));
+    } catch (e) {
+      errors.push((e as Error).message);
     }
-
     throw new Error(
       "Invalid transaction payload – all deserializers failed:\n" +
-        errors.map((msg, i) => `${i + 1}) ${msg}`).join("\n"),
+        errors.map((m, i) => `${i + 1}) ${m}`).join("\n"),
     );
   }
 }

@@ -1,4 +1,10 @@
 export type {
+  GenerateTransactionDAError,
+  GenerateTransactionDAIntermediateValue,
+  GenerateTransactionDAOutput,
+  GenerateTransactionDAReturnType,
+} from "@api/app-binder/GenerateTransactionDeviceActionTypes";
+export type {
   GetAddressDAError,
   GetAddressDAIntermediateValue,
   GetAddressDAOutput,
