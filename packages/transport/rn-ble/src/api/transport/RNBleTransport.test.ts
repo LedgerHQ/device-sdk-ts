@@ -1171,6 +1171,7 @@ describe("RNBleTransport", () => {
           deviceApduSender: _args.deviceApduSender,
           timeoutDuration: 1000,
           onTerminated: _args.onTerminated,
+          tryToReconnect: _args.tryToReconnect,
         });
       };
 
@@ -1304,6 +1305,7 @@ describe("RNBleTransport", () => {
           deviceApduSender: _args.deviceApduSender,
           timeoutDuration: 1000,
           onTerminated: _args.onTerminated,
+          tryToReconnect: _args.tryToReconnect,
         });
       };
 
