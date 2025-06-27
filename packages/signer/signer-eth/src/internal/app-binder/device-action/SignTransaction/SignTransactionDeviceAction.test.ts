@@ -148,7 +148,6 @@ describe("SignTransactionDeviceAction", () => {
           serializedTransaction: new Uint8Array([0x01, 0x02, 0x03]),
           chainId: 1,
           transactionType: TransactionType.LEGACY,
-          web3Check: null,
         });
         provideContextMock.mockResolvedValueOnce(Nothing);
         signTransactionMock.mockResolvedValueOnce(
@@ -251,7 +250,6 @@ describe("SignTransactionDeviceAction", () => {
                       payload: "payload-1",
                     },
                   ],
-                  web3Check: null,
                 },
               }),
             );
@@ -303,7 +301,6 @@ describe("SignTransactionDeviceAction", () => {
           serializedTransaction: new Uint8Array([0x01, 0x02, 0x03]),
           chainId: 1,
           transactionType: TransactionType.LEGACY,
-          web3Check: null,
         });
         provideContextMock.mockResolvedValueOnce(Nothing);
         signTransactionMock.mockResolvedValueOnce(
@@ -401,7 +398,6 @@ describe("SignTransactionDeviceAction", () => {
           serializedTransaction: new Uint8Array([0x01, 0x02, 0x03]),
           chainId: 7,
           transactionType: TransactionType.EIP1559,
-          web3Check: null,
         });
         provideGenericContextMock.mockResolvedValueOnce(Nothing);
         signTransactionMock.mockResolvedValueOnce(
@@ -560,7 +556,6 @@ describe("SignTransactionDeviceAction", () => {
           serializedTransaction: new Uint8Array([0x01, 0x02, 0x03]),
           chainId: 1,
           transactionType: TransactionType.LEGACY,
-          web3Check: null,
         });
         provideContextMock.mockResolvedValueOnce(
           Just(
@@ -669,7 +664,6 @@ describe("SignTransactionDeviceAction", () => {
                       payload: "payload-1",
                     },
                   ],
-                  web3Check: null,
                 },
               }),
             );
@@ -1279,6 +1273,14 @@ describe("SignTransactionDeviceAction", () => {
               type: "token",
               payload: "payload-1",
             },
+            {
+              type: "web3Check",
+              payload: "0x01020304",
+              certificate: {
+                payload: new Uint8Array(),
+                keyUsageNumber: 1,
+              },
+            },
           ],
           serializedTransaction: new Uint8Array([0x01, 0x02, 0x03]),
           chainId: 1,
@@ -1391,14 +1393,15 @@ describe("SignTransactionDeviceAction", () => {
                       type: "token",
                       payload: "payload-1",
                     },
+                    {
+                      type: "web3Check",
+                      payload: "0x01020304",
+                      certificate: {
+                        payload: new Uint8Array(),
+                        keyUsageNumber: 1,
+                      },
+                    },
                   ],
-                  web3Check: {
-                    type: ClearSignContextType.ENUM,
-                    id: 1,
-                    payload: "0x01020304",
-                    value: 1,
-                    certificate: undefined,
-                  },
                 },
               }),
             );

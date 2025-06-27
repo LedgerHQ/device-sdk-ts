@@ -29,7 +29,6 @@ export type BuildTransactionTaskResult = {
   readonly serializedTransaction: Uint8Array;
   readonly chainId: number;
   readonly transactionType: TransactionType;
-  readonly web3Check: ClearSignContextSuccess<ClearSignContextType.WEB3_CHECK> | null;
 };
 
 export type BuildTransactionContextTaskArgs = {
@@ -43,8 +42,8 @@ export type BuildTransactionContextTaskArgs = {
 
 export class BuildTransactionContextTask {
   constructor(
-    private readonly api: InternalApi,
-    private readonly args: BuildTransactionContextTaskArgs,
+    private readonly _api: InternalApi,
+    private readonly _args: BuildTransactionContextTaskArgs,
     private readonly getWeb3ChecksFactory = (
       api: InternalApi,
       args: GetWeb3CheckTaskArgs,
@@ -59,8 +58,8 @@ export class BuildTransactionContextTask {
       options,
       appConfig,
       derivationPath,
-    } = this.args;
-    const deviceState = this.api.getDeviceSessionState();
+    } = this._args;
+    const deviceState = this._api.getDeviceSessionState();
 
     // Parse transaction
     const parsed = mapper.mapTransactionToSubset(transaction);
@@ -74,7 +73,7 @@ export class BuildTransactionContextTask {
       null;
     if (appConfig.web3ChecksEnabled) {
       web3Check = (
-        await this.getWeb3ChecksFactory(this.api, {
+        await this.getWeb3ChecksFactory(this._api, {
           contextModule,
           derivationPath,
           mapper,
@@ -86,7 +85,7 @@ export class BuildTransactionContextTask {
     // Get challenge (not supported on Nano S)
     let challenge: string | undefined = undefined;
     if (deviceState.deviceModelId !== DeviceModelId.NANO_S) {
-      const challengeRes = await this.api.sendCommand(
+      const challengeRes = await this._api.sendCommand(
         new GetChallengeCommand(),
       );
       if (isSuccessCommandResult(challengeRes)) {
@@ -136,16 +135,23 @@ export class BuildTransactionContextTask {
           ctx.type !== ClearSignContextType.TRANSACTION_INFO &&
           ctx.type !== ClearSignContextType.TRANSACTION_FIELD_DESCRIPTION,
       );
+
+      // If the device supports the web3 check, we need to add it to the list of contexts
+      if (web3Check) {
+        filteredContexts = [web3Check, ...filteredContexts];
+      }
     } else if (transactionInfo.certificate) {
       const transactionFields = clearSignContextsSuccess.filter(
         (ctx) =>
           ctx.type === ClearSignContextType.TRANSACTION_FIELD_DESCRIPTION,
       );
+
       filteredContexts = {
         transactionInfo: transactionInfo.payload,
         transactionInfoCertificate: transactionInfo.certificate!,
         transactionFields,
         transactionEnums,
+        web3Check,
       };
     }
 
@@ -154,7 +160,6 @@ export class BuildTransactionContextTask {
       serializedTransaction,
       chainId: subset.chainId,
       transactionType: type,
-      web3Check,
     };
   }
 

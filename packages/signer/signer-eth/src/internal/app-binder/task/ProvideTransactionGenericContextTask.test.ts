@@ -1,7 +1,7 @@
 import {
   type ClearSignContextSuccess,
   type ClearSignContextSuccessType,
-  type ClearSignContextType,
+  ClearSignContextType,
   type ContextModule,
   type PkiCertificate,
 } from "@ledgerhq/context-module";
@@ -48,18 +48,21 @@ describe("ProvideTransactionGenericContextTask", () => {
       transactionInfoCertificate,
       transactionFields,
       transactionEnums,
+      web3Check: null,
     },
     chainId,
     transactionParser,
     contextModule,
-    web3Check: null,
   };
 
   const apiMock = makeDeviceActionInternalApiMock();
+  const taskFactoryMock = vi
+    .fn()
+    .mockReturnValue({ run: vi.fn().mockResolvedValue(Nothing) });
 
   describe("run", () => {
     beforeEach(() => {
-      vi.resetAllMocks();
+      vi.clearAllMocks();
     });
 
     describe("should return an error", () => {
@@ -173,6 +176,7 @@ describe("ProvideTransactionGenericContextTask", () => {
               {} as ClearSignContextSuccess<ClearSignContextType.TRANSACTION_INFO>,
             ],
             transactionEnums,
+            web3Check: null,
           },
         }).run();
 
@@ -196,42 +200,37 @@ describe("ProvideTransactionGenericContextTask", () => {
           "field-1" as unknown as ClearSignContextSuccess<ClearSignContextType.TRANSACTION_FIELD_DESCRIPTION>,
           "field-2" as unknown as ClearSignContextSuccess<ClearSignContextType.TRANSACTION_FIELD_DESCRIPTION>,
         ];
-      vi.spyOn(SendCommandInChunksTask.prototype, "run").mockResolvedValue(
-        CommandResultFactory({
-          data: "0x1234",
-        }),
-      );
-      vi.spyOn(SendPayloadInChunksTask.prototype, "run").mockResolvedValue(
-        CommandResultFactory({
-          data: "0x5678",
-        }),
-      );
-      vi.spyOn(
-        ProvideTransactionFieldDescriptionTask.prototype,
-        "run",
-      ).mockResolvedValue(Nothing);
-      // loadCertificateCommand
-      vi.spyOn(apiMock, "sendCommand").mockResolvedValueOnce(
-        CommandResultFactory({
-          data: undefined,
-        }),
-      );
 
       // WHEN
-      await new ProvideTransactionGenericContextTask(apiMock, {
-        ...defaultArgs,
-        context: {
-          transactionInfo,
-          transactionInfoCertificate,
-          transactionFields: fields,
-          transactionEnums,
+      await new ProvideTransactionGenericContextTask(
+        apiMock,
+        {
+          ...defaultArgs,
+          context: {
+            transactionInfo,
+            transactionInfoCertificate,
+            transactionFields: fields,
+            transactionEnums,
+            web3Check: null,
+          },
         },
-      }).run();
+        taskFactoryMock,
+      ).run();
 
       // THEN
-      expect(
-        ProvideTransactionFieldDescriptionTask.prototype.run,
-      ).toHaveBeenCalledTimes(2);
+      expect(taskFactoryMock).toHaveBeenCalledTimes(2);
+      expect(taskFactoryMock).toHaveBeenCalledWith(
+        expect.any(Object),
+        expect.objectContaining({
+          field: fields[0],
+        }),
+      );
+      expect(taskFactoryMock).toHaveBeenCalledWith(
+        expect.any(Object),
+        expect.objectContaining({
+          field: fields[1],
+        }),
+      );
     });
 
     it("should return Nothing when all fields are provided", async () => {
@@ -267,6 +266,45 @@ describe("ProvideTransactionGenericContextTask", () => {
       expect(result).toEqual(Nothing);
     });
 
+    it("should return Nothing when web3 check is provided", async () => {
+      // WHEN
+      const result = await new ProvideTransactionGenericContextTask(
+        apiMock,
+        {
+          ...defaultArgs,
+          context: {
+            ...defaultArgs.context,
+            web3Check: {
+              type: ClearSignContextType.WEB3_CHECK,
+              payload: "0x1234",
+              certificate: {
+                payload: new Uint8Array(),
+                keyUsageNumber: 1,
+              },
+            },
+          },
+        },
+        taskFactoryMock,
+      ).run();
+
+      // THEN
+      expect(result).toEqual(Nothing);
+      expect(taskFactoryMock).toHaveBeenCalledTimes(1);
+      expect(taskFactoryMock).toHaveBeenCalledWith(
+        expect.any(Object),
+        expect.objectContaining({
+          field: {
+            type: ClearSignContextType.WEB3_CHECK,
+            payload: "0x1234",
+            certificate: {
+              payload: new Uint8Array(),
+              keyUsageNumber: 1,
+            },
+          },
+        }),
+      );
+    });
+
     it("should load the transaction info certificate", async () => {
       // GIVEN
       vi.spyOn(SendCommandInChunksTask.prototype, "run").mockResolvedValue(
@@ -292,6 +330,7 @@ describe("ProvideTransactionGenericContextTask", () => {
           transactionInfoCertificate,
           transactionFields,
           transactionEnums,
+          web3Check: null,
         },
       }).run();
 

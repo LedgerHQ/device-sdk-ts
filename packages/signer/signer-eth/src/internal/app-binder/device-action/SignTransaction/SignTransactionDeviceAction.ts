@@ -1,6 +1,5 @@
 import {
   type ClearSignContextSuccess,
-  type ClearSignContextType,
   type ContextModule,
 } from "@ledgerhq/context-module";
 import {
@@ -74,7 +73,6 @@ export type MachineDependencies = {
   readonly provideContext: (arg0: {
     input: {
       clearSignContexts: ClearSignContextSuccess[];
-      web3Check: ClearSignContextSuccess<ClearSignContextType.WEB3_CHECK> | null;
     };
   }) => Promise<Maybe<CommandErrorResult<EthErrorCodes>>>;
   readonly provideGenericContext: (arg0: {
@@ -85,7 +83,6 @@ export type MachineDependencies = {
       derivationPath: string;
       serializedTransaction: Uint8Array;
       context: GenericContext;
-      web3Check: ClearSignContextSuccess<ClearSignContextType.WEB3_CHECK> | null;
     };
   }) => Promise<
     Maybe<CommandErrorResult<ProvideTransactionGenericContextTaskErrorCodes>>
@@ -387,7 +384,6 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
                   _internalState: ({ event, context }) => ({
                     ...context._internalState,
                     clearSignContexts: event.output.clearSignContexts!,
-                    web3Check: event.output.web3Check,
                     serializedTransaction: event.output.serializedTransaction,
                     chainId: event.output.chainId,
                     transactionType: event.output.transactionType,
@@ -425,7 +421,6 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
             input: ({ context }) => ({
               clearSignContexts: context._internalState
                 .clearSignContexts as ClearSignContextSuccess[],
-              web3Check: context._internalState.web3Check,
             }),
             onDone: {
               target: "SignTransaction",
@@ -560,12 +555,10 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
     const provideContext = async (arg0: {
       input: {
         clearSignContexts: ClearSignContextSuccess[];
-        web3Check: ClearSignContextSuccess<ClearSignContextType.WEB3_CHECK> | null;
       };
     }) =>
       new ProvideTransactionContextTask(internalApi, {
         clearSignContexts: arg0.input.clearSignContexts,
-        web3Check: arg0.input.web3Check,
       }).run();
 
     const provideGenericContext = async (arg0: {
@@ -576,7 +569,6 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
         derivationPath: string;
         serializedTransaction: Uint8Array;
         context: GenericContext;
-        web3Check: ClearSignContextSuccess<ClearSignContextType.WEB3_CHECK> | null;
       };
     }) =>
       new ProvideTransactionGenericContextTask(internalApi, {
@@ -586,7 +578,6 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
         derivationPath: arg0.input.derivationPath,
         serializedTransaction: arg0.input.serializedTransaction,
         context: arg0.input.context,
-        web3Check: arg0.input.web3Check,
       }).run();
 
     const signTransaction = async (arg0: {
