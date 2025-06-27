@@ -28,7 +28,7 @@ export class HttpNetworkDataSource implements NetworkDataSource {
 
     try {
       const axiosResponse = await axios.get<NetworkApiResponseDto>(
-        `${this.config.cal.url}/v1/networks?output=id,descriptors,icons&chain_id=${chainId}`,
+        `${this.config.cal.url}/networks?output=id,descriptors,icons&chain_id=${chainId}`,
         {
           headers: {
             [LEDGER_CLIENT_VERSION_HEADER]: `context-module/${PACKAGE.version}`,
