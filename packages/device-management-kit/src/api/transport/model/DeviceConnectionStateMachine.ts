@@ -109,9 +109,6 @@ export class DeviceConnectionStateMachine<Dependencies> {
           this.deviceAdpuSender.closeConnection();
         },
       }),
-      // {
-      //   // inspect,
-      // },
     );
     this.machineActor.start();
   }
@@ -402,6 +399,39 @@ function makeStateMachine({
         },
       },
       WaitingForDisconnection: {
+        after: {
+          1500: "WaitingForDisconnectionOrAppVersion",
+        },
+        on: {
+          DeviceDisconnected: {
+            target: "WaitingForReconnection",
+            actions: [
+              {
+                type: "sendApduResponse",
+                params: ({ context }) => {
+                  return {
+                    response: context.apduResponse.caseOf({
+                      Just: (apduResponse) => Right(apduResponse),
+                      Nothing: () => Left(new UnknownDeviceExchangeError()),
+                    }),
+                  };
+                },
+              },
+              { type: "clearApduInProgress" },
+              { type: "clearApduResponse" },
+            ],
+          },
+          SendApduCalled: {
+            actions: ({ event }) => {
+              event.responseCallback(Left(new AlreadySendingApduError()));
+            },
+          },
+          CloseConnectionCalled: {
+            target: "Terminated",
+          },
+        },
+      },
+      WaitingForDisconnectionOrAppVersion: {
         entry: ["sendGetAppAndVersion"],
         exit: [
           {
@@ -423,7 +453,7 @@ function makeStateMachine({
             {
               guard: "isSendApduBusyError",
               actions: ["sendGetAppAndVersion"],
-              target: "WaitingForDisconnection",
+              target: "WaitingForDisconnectionOrAppVersion",
             },
             {
               target: "Connected",
