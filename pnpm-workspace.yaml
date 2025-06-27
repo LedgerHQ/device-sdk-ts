@@ -84,7 +84,7 @@ catalog:
   js-base64: ^3.7.7
   js-flipper: ^0.273.0
   jsdom: ^26.0.0
-  next: 14.2.26
+  next: 15.3.4
   nextra: ^3.0.13
   nextra-theme-blog: ^3.0.13
   nextra-theme-docs: ^3.0.15
