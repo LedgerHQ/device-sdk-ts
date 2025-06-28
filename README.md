@@ -239,7 +239,7 @@ To kickly scaffold part of our code, we use `hygen` to help us kickstart our dev
 Each project can have it's own `_templates` folder, so **generators** are scoped.
 The `_templates` folder contains the basic generators to create new ones.
 
-[Hygen documentation](https://www.hygen.io/docs/quick-start/)
+[Hygen documentation](https://github.com/jondot/hygen)
 
 ### Process for adding a new generator
 
