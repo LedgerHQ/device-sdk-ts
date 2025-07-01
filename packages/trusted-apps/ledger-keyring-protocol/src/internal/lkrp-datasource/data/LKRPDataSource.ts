@@ -1,4 +1,4 @@
-import { type Either } from "purify-ts";
+import { type Either, type Maybe } from "purify-ts";
 
 import {
   type JWT,
@@ -11,9 +11,12 @@ export interface LKRPDataSource {
 
   authenticate(payload: AuthenticationPayload): Promise<Either<Error, JWT>>;
 
-  listTrustchains(jwt: JWT): Promise<Either<Error, ListTrustchainsResponse>>;
+  getTruschainId(jwt: JWT): Promise<Either<Error, Maybe<string>>>;
 
-  getTrustchainById(id: string, jwt: JWT): Promise<Either<Error, Trustchain>>;
+  getTrustchainById(
+    id: string,
+    jwt: JWT,
+  ): Promise<Either<Error, Maybe<Trustchain>>>;
 
   postDerivation(id: string, stream: LKRPBlock[]): Promise<Either<Error, void>>;
 
