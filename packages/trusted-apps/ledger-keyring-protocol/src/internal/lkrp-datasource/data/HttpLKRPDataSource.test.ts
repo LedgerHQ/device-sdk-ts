@@ -1,5 +1,7 @@
 import { Just, Left, Nothing, Right } from "purify-ts";
 
+import { LKRPHttpRequestError } from "@api/app-binder/Errors";
+
 import { HttpLKRPDataSource } from "./HttpLKRPDataSource";
 
 const mockJwt = {
@@ -83,7 +85,7 @@ describe("HttpLKRPDataSource", () => {
       const result = await dataSource.getChallenge();
 
       // THEN
-      expect(result).toEqual(Left(error));
+      expect(result).toEqual(Left(new LKRPHttpRequestError(error)));
     });
   });
 
@@ -160,7 +162,7 @@ describe("HttpLKRPDataSource", () => {
       // THEN
       expect(result).toEqual(
         Left(
-          new Error(
+          new LKRPHttpRequestError(
             `Failed to fetch ${baseUrl}/authenticate: [401] Unauthorized`,
           ),
         ),
