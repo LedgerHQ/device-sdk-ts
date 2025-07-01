@@ -9,9 +9,9 @@ import {
 export interface LKRPDataSource {
   getChallenge(): Promise<Either<Error, Challenge>>;
 
-  authenticate(payload: AuthenticationPayload): Promise<Either<Error, JWT>>;
-
-  getTruschainId(jwt: JWT): Promise<Either<Error, Maybe<string>>>;
+  authenticate(
+    payload: AuthenticationPayload,
+  ): Promise<Either<Error, { jwt: JWT; trustchainId: Maybe<string> }>>;
 
   getTrustchainById(
     id: string,
@@ -33,12 +33,6 @@ export type Challenge = { json: ChallengeJSON; tlv: string };
 export type AuthenticationPayload = {
   challenge: ChallengeJSON;
   signature: ChallengeSignature;
-};
-
-export type ListTrustchainsResponse = {
-  [trustchainId: string]: {
-    [path: string]: string[]; // list of permissions
-  };
 };
 
 type ChallengeJSON = {
