@@ -1,10 +1,10 @@
 import { ContainerModule } from "inversify";
 
+import { type MakeContainerProps } from "@internal/di";
 import { HttpLKRPDataSource } from "@internal/lkrp-datasource/data/HttpLKRPDataSource";
 import { type LKRPDataSource } from "@internal/lkrp-datasource/data/LKRPDataSource";
 
 import { lkrpDatasourceTypes } from "./lkrpDatasourceTypes";
-import { MakeContainerProps } from "@internal/di";
 
 export const lkrpDatasourceModuleFactory = ({
   baseUrl,

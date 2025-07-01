@@ -1,5 +1,6 @@
 import { type Either, type Maybe } from "purify-ts";
 
+import { type LKRPHttpRequestError } from "@api/app-binder/Errors";
 import {
   type JWT,
   type LKRPBlock,
@@ -7,25 +8,30 @@ import {
 } from "@api/app-binder/LKRPTypes";
 
 export interface LKRPDataSource {
-  getChallenge(): Promise<Either<Error, Challenge>>;
+  getChallenge(): Promise<Either<LKRPHttpRequestError, Challenge>>;
 
   authenticate(
     payload: AuthenticationPayload,
-  ): Promise<Either<Error, { jwt: JWT; trustchainId: Maybe<string> }>>;
+  ): Promise<
+    Either<LKRPHttpRequestError, { jwt: JWT; trustchainId: Maybe<string> }>
+  >;
 
   getTrustchainById(
     id: string,
     jwt: JWT,
-  ): Promise<Either<Error, Maybe<Trustchain>>>;
+  ): Promise<Either<LKRPHttpRequestError, Maybe<Trustchain>>>;
 
-  postDerivation(id: string, stream: LKRPBlock[]): Promise<Either<Error, void>>;
+  postDerivation(
+    id: string,
+    stream: LKRPBlock[],
+  ): Promise<Either<LKRPHttpRequestError, void>>;
 
   putCommands(
     id: string,
     path: string,
     blocks: LKRPBlock[], // In practice, this should be a single block
     jwt: JWT,
-  ): Promise<Either<Error, void>>;
+  ): Promise<Either<LKRPHttpRequestError, void>>;
 }
 
 export type Challenge = { json: ChallengeJSON; tlv: string };
