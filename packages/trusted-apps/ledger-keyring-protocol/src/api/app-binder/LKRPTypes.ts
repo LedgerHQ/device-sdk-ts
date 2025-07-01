@@ -4,7 +4,7 @@ export type Keypair = {
 };
 
 export type JWT = {
-  accessToken: string;
+  access_token: string;
   permissions: {
     [trustchainId: string]: {
       [path: string]: string[];
