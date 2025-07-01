@@ -1,6 +1,11 @@
-import { Left, Right } from "purify-ts";
+import { Just, Left, Nothing, Right } from "purify-ts";
 
 import { HttpLKRPDataSource } from "./HttpLKRPDataSource";
+
+const mockJwt = {
+  access_token: "ACCESS TOKEN",
+  permissions: { "TRUSTCHAIN ID": { "m/": ["owner"] } },
+};
 
 const mockChallengeJSON = {
   version: 0,
@@ -85,13 +90,6 @@ describe("HttpLKRPDataSource", () => {
   describe("authenticate", () => {
     it("should fetch a JWT when the authentication is successful", async () => {
       // GIVEN
-      const mockJwt = {
-        access_token:
-          "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiYWRtaW4iOnRydWUsImlhdCI6MTUxNjIzOTAyMn0.KMUFsIDTnFmyG3nMiGM6H9FNFUROf3wh7SmqJp-QV30",
-        permissions: {
-          "0fedcba987654321": { "m/": ["owner"] },
-        },
-      };
       fetchSpy.mockResolvedValueOnce({
         ok: true,
         json: () => Promise.resolve(mockJwt),
@@ -115,7 +113,33 @@ describe("HttpLKRPDataSource", () => {
           signature: mockSignature,
         }),
       });
-      expect(result).toEqual(Right(mockJwt));
+      expect(result).toEqual(
+        Right({ jwt: mockJwt, trustchainId: Just("TRUSTCHAIN ID") }),
+      );
+    });
+
+    it("should return no trustchainId the returned JWT does not contain one", async () => {
+      // GIVEN
+      const jwtWithoutTrustchainId = {
+        access_token: "ACCESS TOKEN",
+        permissions: {},
+      };
+      fetchSpy.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve(jwtWithoutTrustchainId),
+      } as Response);
+
+      // WHEN
+      const dataSource = new HttpLKRPDataSource(baseUrl);
+      const result = await dataSource.authenticate({
+        challenge: mockChallengeJSON,
+        signature: mockSignature,
+      });
+
+      // THEN
+      expect(result).toEqual(
+        Right({ jwt: jwtWithoutTrustchainId, trustchainId: Nothing }),
+      );
     });
 
     it("should handle authentication error", async () => {

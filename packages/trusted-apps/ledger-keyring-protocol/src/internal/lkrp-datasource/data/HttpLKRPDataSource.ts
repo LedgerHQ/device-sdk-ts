@@ -3,12 +3,10 @@ import { Either, Left, Maybe, Right } from "purify-ts";
 
 import { JWT } from "@api/app-binder/LKRPTypes";
 import { lkrpDatasourceTypes } from "@internal/lkrp-datasource/di/lkrpDatasourceTypes";
-import { Block } from "@internal/utils/Block";
 
 import {
   AuthenticationPayload,
   Challenge,
-  ListTrustchainsResponse,
   LKRPDataSource,
 } from "./LKRPDataSource";
 
@@ -58,39 +56,23 @@ export class HttpLKRPDataSource implements LKRPDataSource {
     return this.request<Challenge>("/challenge", undefined);
   }
 
-  authenticate(payload: AuthenticationPayload) {
-    return this.request<JWT>("/authenticate", undefined, {
+  async authenticate(payload: AuthenticationPayload) {
+    const response = await this.request<JWT>("/authenticate", undefined, {
       method: "POST",
       body: JSON.stringify(payload),
     });
-  }
 
-  async getTruschainId(jwt: JWT) {
-    const trustchains = await this.request<ListTrustchainsResponse>(
-      "/trustchains",
+    return response.map((jwt) => ({
       jwt,
-    );
-    return trustchains.map((data) =>
-      Maybe.fromNullable(
-        Object.keys(data).find((id) => Boolean(data[id]?.["m/"])),
+      trustchainId: Maybe.fromNullable(
+        Object.keys(jwt.permissions).find((id) =>
+          Boolean(jwt.permissions[id]?.["m/"]),
+        ),
       ),
-    );
+    }));
   }
 
-  async getTrustchainById(id: string, jwt: JWT) {
-    // const response = await this.request<{ [path: string]: string }>(
-    //   `/trustchain/${id}`,
-    //   jwt,
-    // );
-    // const trustchain = response.map((serialized) =>
-    //   Object.fromEntries(
-    //     Object.entries(serialized).map(([path, stream]) => [
-    //       path,
-    //       Block.fromHex(stream),
-    //     ]),
-    //   ),
-    // );
-    // return Promise.resolve(trustchain);
+  async getTrustchainById() {
     return Promise.resolve(Left(Error("Method not implemented.")));
   }
 
