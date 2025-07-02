@@ -1,5 +1,5 @@
-import { AuthenticateDAReturnType } from "./app-binder/AuthenticateDeviceActionTypes";
-import { JWT, Keypair } from "./app-binder/LKRPTypes";
+import { type AuthenticateDAReturnType } from "./app-binder/AuthenticateDeviceActionTypes";
+import { type JWT, type Keypair } from "./app-binder/LKRPTypes";
 
 export interface LedgerKeyringProtocol {
   athenticate: (
