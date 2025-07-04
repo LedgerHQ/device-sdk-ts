@@ -1,5 +1,7 @@
 import { Left, Right } from "purify-ts";
 
+import { LKRPParsingError } from "@api/app-binder/Errors";
+
 import { TLVParser } from "./TLVParser";
 import { GeneralTags } from "./TLVTags";
 
@@ -32,13 +34,17 @@ describe("TLVParser", () => {
         const value3 = parser3.parse();
         // THEN
         expect(value1).toEqual(
-          Left(new Error("No more data to parse at offset 0")),
+          Left(new LKRPParsingError("No more data to parse at offset 0")),
         );
         expect(value2).toEqual(
-          Left(new Error("Invalid end of TLV, expected length at offset 1")),
+          Left(
+            new LKRPParsingError(
+              "Invalid end of TLV, expected length at offset 1",
+            ),
+          ),
         );
         expect(value3).toEqual(
-          Left(new Error("Invalid end of TLV value at offset 2")),
+          Left(new LKRPParsingError("Invalid end of TLV value at offset 2")),
         );
       });
     });
@@ -61,7 +67,7 @@ describe("TLVParser", () => {
         // WHEN
         const value = parser.parseNull();
         // THEN
-        expect(value).toEqual(Left(new Error("Expected null")));
+        expect(value).toEqual(Left(new LKRPParsingError("Expected null")));
       });
 
       it("should fail if the format is invalid", () => {
@@ -72,7 +78,9 @@ describe("TLVParser", () => {
         // WHEN
         const value = parser.parseNull();
         // THEN
-        expect(value).toEqual(Left(new Error("Invalid null length")));
+        expect(value).toEqual(
+          Left(new LKRPParsingError("Invalid null length")),
+        );
       });
     });
 
@@ -104,7 +112,7 @@ describe("TLVParser", () => {
         // WHEN
         const value = parser.parseInt();
         // THEN
-        expect(value).toEqual(Left(new Error("Expected a number")));
+        expect(value).toEqual(Left(new LKRPParsingError("Expected a number")));
       });
 
       it("should fail if the integer is not 1, 2, or 4 bytes", () => {
@@ -115,7 +123,9 @@ describe("TLVParser", () => {
         // WHEN
         const value = parser.parseInt();
         // THEN
-        expect(value).toEqual(Left(new Error("Unsupported integer length")));
+        expect(value).toEqual(
+          Left(new LKRPParsingError("Unsupported integer length")),
+        );
       });
     });
 
@@ -139,7 +149,7 @@ describe("TLVParser", () => {
         // WHEN
         const value = parser.parseHash();
         // THEN
-        expect(value).toEqual(Left(new Error("Expected a hash")));
+        expect(value).toEqual(Left(new LKRPParsingError("Expected a hash")));
       });
     });
 
@@ -163,7 +173,9 @@ describe("TLVParser", () => {
         // WHEN
         const value = parser.parseSignature();
         // THEN
-        expect(value).toEqual(Left(new Error("Expected a signature")));
+        expect(value).toEqual(
+          Left(new LKRPParsingError("Expected a signature")),
+        );
       });
     });
 
@@ -187,7 +199,7 @@ describe("TLVParser", () => {
         // WHEN
         const value = parser.parseString();
         // THEN
-        expect(value).toEqual(Left(new Error("Expected a string")));
+        expect(value).toEqual(Left(new LKRPParsingError("Expected a string")));
       });
     });
 
@@ -211,7 +223,7 @@ describe("TLVParser", () => {
         // WHEN
         const value = parser.parseBytes();
         // THEN
-        expect(value).toEqual(Left(new Error("Expected bytes")));
+        expect(value).toEqual(Left(new LKRPParsingError("Expected bytes")));
       });
     });
 
@@ -235,7 +247,9 @@ describe("TLVParser", () => {
         // WHEN
         const value = parser.parsePublicKey();
         // THEN
-        expect(value).toEqual(Left(new Error("Expected a public key")));
+        expect(value).toEqual(
+          Left(new LKRPParsingError("Expected a public key")),
+        );
       });
     });
   });

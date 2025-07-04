@@ -1,9 +1,10 @@
 import { type Either, Left, Right } from "purify-ts";
 
+import { LKRPParsingError } from "@api/app-binder/Errors";
 import { type CommandTags, GeneralTags } from "./TLVTags";
 
 type ParserValue = Either<
-  Error,
+  LKRPParsingError,
   | { tag: GeneralTags.Null; value: null }
   | { tag: GeneralTags.Int; value: number }
   | { tag: GeneralTags.Hash; value: Uint8Array }
@@ -41,58 +42,58 @@ export class TLVParser {
     return this.parser.next().value;
   }
 
-  parseNull(): Either<Error, null> {
+  parseNull(): Either<LKRPParsingError, null> {
     return this.parse().chain((next) =>
       next.tag !== GeneralTags.Null
-        ? Left(new Error("Expected null"))
+        ? Left(new LKRPParsingError("Expected null"))
         : Right(next.value),
     );
   }
 
-  parseInt(): Either<Error, number> {
+  parseInt(): Either<LKRPParsingError, number> {
     return this.parse().chain((next) =>
       next.tag !== GeneralTags.Int
-        ? Left(new Error("Expected a number"))
+        ? Left(new LKRPParsingError("Expected a number"))
         : Right(next.value),
     );
   }
 
-  parseHash(): Either<Error, Uint8Array> {
+  parseHash(): Either<LKRPParsingError, Uint8Array> {
     return this.parse().chain((next) =>
       next.tag !== GeneralTags.Hash
-        ? Left(new Error("Expected a hash"))
+        ? Left(new LKRPParsingError("Expected a hash"))
         : Right(next.value),
     );
   }
 
-  parseSignature(): Either<Error, Uint8Array> {
+  parseSignature(): Either<LKRPParsingError, Uint8Array> {
     return this.parse().chain((next) =>
       next.tag !== GeneralTags.Signature
-        ? Left(new Error("Expected a signature"))
+        ? Left(new LKRPParsingError("Expected a signature"))
         : Right(next.value),
     );
   }
 
-  parseString(): Either<Error, string> {
+  parseString(): Either<LKRPParsingError, string> {
     return this.parse().chain((next) =>
       next.tag !== GeneralTags.String
-        ? Left(new Error("Expected a string"))
+        ? Left(new LKRPParsingError("Expected a string"))
         : Right(next.value),
     );
   }
 
-  parseBytes(): Either<Error, Uint8Array> {
+  parseBytes(): Either<LKRPParsingError, Uint8Array> {
     return this.parse().chain((next) =>
       next.tag !== GeneralTags.Bytes
-        ? Left(new Error("Expected bytes"))
+        ? Left(new LKRPParsingError("Expected bytes"))
         : Right(next.value),
     );
   }
 
-  parsePublicKey(): Either<Error, Uint8Array> {
+  parsePublicKey(): Either<LKRPParsingError, Uint8Array> {
     return this.parse().chain((next) =>
       next.tag !== GeneralTags.PublicKey
-        ? Left(new Error("Expected a public key"))
+        ? Left(new LKRPParsingError("Expected a public key"))
         : Right(next.value),
     );
   }
@@ -102,14 +103,16 @@ export class TLVParser {
       const tag = bytes[this.offset];
       if (typeof tag === "undefined") {
         return Left(
-          new Error("No more data to parse at offset " + this.offset),
+          new LKRPParsingError(
+            "No more data to parse at offset " + this.offset,
+          ),
         );
       }
       this.offset++;
       const length = bytes[this.offset];
       if (typeof length === "undefined") {
         return Left(
-          new Error(
+          new LKRPParsingError(
             "Invalid end of TLV, expected length at offset " + this.offset,
           ),
         );
@@ -119,7 +122,9 @@ export class TLVParser {
       const value = bytes.slice(this.offset, valueEnd);
       if (valueEnd > bytes.length) {
         return Left(
-          new Error("Invalid end of TLV value at offset " + this.offset),
+          new LKRPParsingError(
+            "Invalid end of TLV value at offset " + this.offset,
+          ),
         );
       }
       this.offset = valueEnd;
@@ -127,7 +132,7 @@ export class TLVParser {
       switch (tag) {
         case GeneralTags.Null:
           yield length > 0
-            ? Left(new Error("Invalid null length"))
+            ? Left(new LKRPParsingError("Invalid null length"))
             : Right({ tag, value: null });
           break;
 
@@ -145,14 +150,14 @@ export class TLVParser {
                 yield Right({ tag, value: dataView.getUint32(0, false) }); // Big-endian
                 break;
               default:
-                yield Left(new Error("Unsupported integer length"));
+                yield Left(new LKRPParsingError("Unsupported integer length"));
             }
           }
           break;
 
         case GeneralTags.String:
           yield value.length === 0
-            ? Left(new Error("Empty string value"))
+            ? Left(new LKRPParsingError("Empty string value"))
             : Right({ tag, value: new TextDecoder().decode(value) });
           break;
 
