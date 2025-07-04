@@ -50,8 +50,7 @@ export class BuildSubContextTask {
       context.type === ClearSignContextType.ENUM ||
       context.type === ClearSignContextType.WEB3_CHECK ||
       context.type === ClearSignContextType.PLUGIN ||
-      context.type === ClearSignContextType.EXTERNAL_PLUGIN ||
-      context.type === ClearSignContextType.TRANSACTION_FIELD_DESCRIPTION
+      context.type === ClearSignContextType.EXTERNAL_PLUGIN
     ) {
       return Right({
         context,

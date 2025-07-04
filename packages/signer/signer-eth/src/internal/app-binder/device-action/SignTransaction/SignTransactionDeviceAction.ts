@@ -15,7 +15,7 @@ import {
   UserInteractionRequired,
   XStateDeviceAction,
 } from "@ledgerhq/device-management-kit";
-import { Left, type Maybe, Right } from "purify-ts";
+import { type Either, Left, Right } from "purify-ts";
 import { and, assign, fromPromise, setup } from "xstate";
 
 import { type GetConfigCommandResponse } from "@api/app-binder/GetConfigCommandTypes";
@@ -37,17 +37,13 @@ import {
   type Web3CheckOptInCommandResponse,
 } from "@internal/app-binder/command/Web3CheckOptInCommand";
 import { ETHEREUM_PLUGINS } from "@internal/app-binder/constant/plugins";
+import { BuildSubContextTask } from "@internal/app-binder/task/BuildSubContextTask";
 import {
   BuildTransactionContextTask,
   type BuildTransactionContextTaskArgs,
   type BuildTransactionTaskResult,
 } from "@internal/app-binder/task/BuildTransactionContextTask";
 import { ProvideTransactionContextTask } from "@internal/app-binder/task/ProvideTransactionContextTask";
-import {
-  type GenericContext,
-  ProvideTransactionGenericContextTask,
-  type ProvideTransactionGenericContextTaskErrorCodes,
-} from "@internal/app-binder/task/ProvideTransactionGenericContextTask";
 import { SendSignTransactionTask } from "@internal/app-binder/task/SendSignTransactionTask";
 import { ApplicationChecker } from "@internal/shared/utils/ApplicationChecker";
 import { type TransactionMapperService } from "@internal/transaction/service/mapper/TransactionMapperService";
@@ -70,23 +66,17 @@ export type MachineDependencies = {
       derivationPath: string;
     };
   }) => Promise<BuildTransactionTaskResult>;
-  readonly provideContext: (arg0: {
+  readonly buildSubContextAndProvide: (arg0: {
     input: {
-      clearSignContexts: ClearSignContextSuccess[];
-    };
-  }) => Promise<Maybe<CommandErrorResult<EthErrorCodes>>>;
-  readonly provideGenericContext: (arg0: {
-    input: {
-      contextModule: ContextModule;
+      context: ClearSignContextSuccess;
+      contextOptional: ClearSignContextSuccess[];
       transactionParser: TransactionParserService;
+      serializedTransaction: Uint8Array;
+      contextModule: ContextModule;
       chainId: number;
       derivationPath: string;
-      serializedTransaction: Uint8Array;
-      context: GenericContext;
     };
-  }) => Promise<
-    Maybe<CommandErrorResult<ProvideTransactionGenericContextTaskErrorCodes>>
-  >;
+  }) => Promise<Either<CommandErrorResult<EthErrorCodes>, void>>;
   readonly signTransaction: (arg0: {
     input: {
       derivationPath: string;
@@ -126,9 +116,8 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
       getAppConfig,
       web3CheckOptIn,
       buildContext,
-      provideContext,
-      provideGenericContext,
       signTransaction,
+      buildSubContextAndProvide,
     } = this.extractDependencies(internalApi);
 
     return setup({
@@ -144,16 +133,11 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
         getAppConfig: fromPromise(getAppConfig),
         web3CheckOptIn: fromPromise(web3CheckOptIn),
         buildContext: fromPromise(buildContext),
-        provideContext: fromPromise(provideContext),
-        provideGenericContext: fromPromise(provideGenericContext),
         signTransaction: fromPromise(signTransaction),
+        buildSubContextAndProvide: fromPromise(buildSubContextAndProvide),
       },
       guards: {
         noInternalError: ({ context }) => context._internalState.error === null,
-        isGenericContext: ({ context }) =>
-          context._internalState.clearSignContexts !== null &&
-          typeof (context._internalState.clearSignContexts as GenericContext)
-            .transactionInfo === "string",
         isWeb3ChecksSupported: ({ context }) =>
           new ApplicationChecker(
             internalApi.getDeviceSessionState(),
@@ -168,6 +152,9 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
           !context._internalState.appConfig!.web3ChecksEnabled &&
           !context._internalState.appConfig!.web3ChecksOptIn,
         skipOpenApp: ({ context }) => !!context.input.options.skipOpenApp,
+        hasContextToProvide: ({ context }) =>
+          context._internalState.clearSignContexts !== null &&
+          context._internalState.clearSignContexts.length > 0,
       },
       actions: {
         assignErrorFromEvent: assign({
@@ -192,6 +179,7 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
             error: null,
             appConfig: null,
             clearSignContexts: null,
+            clearSignContextsOptional: null,
             serializedTransaction: null,
             chainId: null,
             web3Check: null,
@@ -384,6 +372,8 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
                   _internalState: ({ event, context }) => ({
                     ...context._internalState,
                     clearSignContexts: event.output.clearSignContexts!,
+                    clearSignContextsOptional:
+                      event.output.clearSignContextsOptional!,
                     serializedTransaction: event.output.serializedTransaction,
                     chainId: event.output.chainId,
                     transactionType: event.output.transactionType,
@@ -400,76 +390,45 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
         BuildContextResultCheck: {
           always: [
             {
-              target: "ProvideGenericContext",
-              guard: "isGenericContext",
+              target: "BuildSubContextAndProvide",
+              guard: "hasContextToProvide",
             },
             {
-              target: "ProvideContext",
+              target: "SignTransaction",
             },
           ],
         },
-        ProvideContext: {
+        BuildSubContextAndProvide: {
           entry: assign({
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
-              step: SignTransactionDAStep.PROVIDE_CONTEXT,
+              step: SignTransactionDAStep.BUILD_SUB_CONTEXT_AND_PROVIDE,
             },
           }),
-          invoke: {
-            id: "provideContext",
-            src: "provideContext",
-            input: ({ context }) => ({
-              clearSignContexts: context._internalState
-                .clearSignContexts as ClearSignContextSuccess[],
+          exit: assign({
+            // remove the first context as it has been consumed
+            _internalState: ({ context }) => ({
+              ...context._internalState,
+              clearSignContexts:
+                context._internalState.clearSignContexts!.slice(1),
             }),
-            onDone: {
-              target: "SignTransaction",
-            },
-            onError: {
-              target: "Error",
-              actions: "assignErrorFromEvent",
-            },
-          },
-        },
-        ProvideGenericContext: {
-          entry: assign({
-            intermediateValue: {
-              requiredUserInteraction: UserInteractionRequired.None,
-              step: SignTransactionDAStep.PROVIDE_GENERIC_CONTEXT,
-            },
           }),
           invoke: {
-            id: "provideGenericContext",
-            src: "provideGenericContext",
+            id: "buildSubContextAndProvide",
+            src: "buildSubContextAndProvide",
             input: ({ context }) => ({
-              contextModule: context.input.contextModule,
+              context: context._internalState.clearSignContexts![0]!,
+              contextOptional:
+                context._internalState.clearSignContextsOptional!,
               transactionParser: context.input.parser,
-              chainId: context._internalState.chainId!,
-              derivationPath: context.input.derivationPath,
               serializedTransaction:
                 context._internalState.serializedTransaction!,
-              context: context._internalState
-                .clearSignContexts as GenericContext,
-              web3Check: context._internalState.web3Check,
+              contextModule: context.input.contextModule,
+              chainId: context._internalState.chainId!,
+              derivationPath: context.input.derivationPath,
             }),
             onDone: {
-              actions: assign({
-                _internalState: ({ event, context }) => {
-                  const { isLegacy: _, ...rest } = context._internalState;
-                  return event.output.caseOf({
-                    Just: () => ({
-                      ...rest,
-                      isLegacy: false,
-                    }),
-                    Nothing: () => ({
-                      ...rest,
-                      isLegacy: false,
-                    }),
-                  });
-                },
-              }),
-              // NOTE: don't check errors to fallback to blind signing
-              target: "SignTransaction",
+              target: "BuildContextResultCheck",
             },
             onError: {
               target: "Error",
@@ -552,33 +511,36 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
       input: BuildTransactionContextTaskArgs;
     }) => new BuildTransactionContextTask(internalApi, arg0.input).run();
 
-    const provideContext = async (arg0: {
+    const buildSubContextAndProvide = async (arg0: {
       input: {
-        clearSignContexts: ClearSignContextSuccess[];
-      };
-    }) =>
-      new ProvideTransactionContextTask(internalApi, {
-        clearSignContexts: arg0.input.clearSignContexts,
-      }).run();
-
-    const provideGenericContext = async (arg0: {
-      input: {
-        contextModule: ContextModule;
+        context: ClearSignContextSuccess;
+        contextOptional: ClearSignContextSuccess[];
         transactionParser: TransactionParserService;
+        serializedTransaction: Uint8Array;
+        contextModule: ContextModule;
         chainId: number;
         derivationPath: string;
-        serializedTransaction: Uint8Array;
-        context: GenericContext;
       };
-    }) =>
-      new ProvideTransactionGenericContextTask(internalApi, {
-        contextModule: arg0.input.contextModule,
-        transactionParser: arg0.input.transactionParser,
-        chainId: arg0.input.chainId,
-        derivationPath: arg0.input.derivationPath,
-        serializedTransaction: arg0.input.serializedTransaction,
+    }) => {
+      console.log("buildSubContextAndProvide", arg0.input);
+      const either = new BuildSubContextTask(internalApi, {
         context: arg0.input.context,
+        contextOptional: arg0.input.contextOptional,
+        transactionParser: arg0.input.transactionParser,
+        serializedTransaction: arg0.input.serializedTransaction,
+        contextModule: arg0.input.contextModule,
+        chainId: arg0.input.chainId,
       }).run();
+      const { context, subcontextCallbacks } = either.unsafeCoerce(); // TODO: refacto task to remove either
+      console.log("context", context);
+      console.log("subcontextCallbacks", subcontextCallbacks);
+      return new ProvideTransactionContextTask(internalApi, {
+        context,
+        subcontextsCallbacks: subcontextCallbacks,
+        serializedTransaction: arg0.input.serializedTransaction,
+        derivationPath: arg0.input.derivationPath,
+      }).run();
+    };
 
     const signTransaction = async (arg0: {
       input: {
@@ -588,14 +550,17 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
         transactionType: TransactionType;
         isLegacy: boolean;
       };
-    }) => new SendSignTransactionTask(internalApi, arg0.input).run();
+    }) =>
+      new SendSignTransactionTask(internalApi, {
+        ...arg0.input,
+        isLegacy: false,
+      }).run();
 
     return {
       getAppConfig,
       web3CheckOptIn,
       buildContext,
-      provideContext,
-      provideGenericContext,
+      buildSubContextAndProvide,
       signTransaction,
     };
   }
