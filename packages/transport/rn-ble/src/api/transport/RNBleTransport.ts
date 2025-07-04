@@ -405,6 +405,9 @@ export class RNBleTransport implements Transport {
             deviceId: params.deviceId,
             deviceApduSender,
             timeoutDuration: reconnectionTimeout,
+            tryToReconnect: () => {
+              this.tryToReconnect(params.deviceId);
+            },
             onTerminated: () => {
               try {
                 this._safeCancel(params.deviceId);
@@ -592,9 +595,11 @@ export class RNBleTransport implements Transport {
     }
 
     Maybe.fromNullable(this._deviceConnectionsById.get(deviceId)).map(
-      (deviceConnection) => deviceConnection.eventDeviceDetached(),
+      (deviceConnection) => deviceConnection.eventDeviceDisconnected(),
     );
+  }
 
+  private tryToReconnect(deviceId: DeviceId) {
     const reconnect$ = from([0]).pipe(
       switchMap(async () => {
         await this._stopScanning();
@@ -603,7 +608,7 @@ export class RNBleTransport implements Transport {
       switchMap(async () => {
         this._logger.debug(
           "[_handleDeviceDisconnected] reconnecting to device",
-          { data: { id: device.id } },
+          { data: { id: deviceId } },
         );
         const reconnectedDevice = await this._manager.connectToDevice(
           deviceId,
@@ -611,7 +616,7 @@ export class RNBleTransport implements Transport {
         );
         this._logger.debug(
           "[_handleDeviceDisconnected] reconnected to device",
-          { data: { id: device.id } },
+          { data: { id: deviceId } },
         );
         const reconnectedDeviceUsable =
           await reconnectedDevice.discoverAllServicesAndCharacteristics();
@@ -704,7 +709,7 @@ export class RNBleTransport implements Transport {
         throw e;
       });
 
-      deviceConnectionStateMachine.eventDeviceAttached();
+      deviceConnectionStateMachine.eventDeviceConnected();
     }).run();
   }
 
