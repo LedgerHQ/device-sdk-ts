@@ -3,10 +3,277 @@ import { Left, Right } from "purify-ts";
 import { LKRPParsingError } from "@api/app-binder/Errors";
 
 import { TLVParser } from "./TLVParser";
-import { GeneralTags } from "./TLVTags";
+import { CommandTags, GeneralTags } from "./TLVTags";
 
 describe("TLVParser", () => {
-  describe("GeneralTags", () => {
+  describe("Command Data Parsing", () => {
+    describe("parseCommandBytes", () => {
+      it("should parse a valid command bytes", () => {
+        // GIVEN
+        const parser = new TLVParser(
+          new Uint8Array([CommandTags.AddMember, 3, 0x01, 0x02, 0x03]),
+        );
+        // WHEN
+        const value = parser.parseCommandBytes();
+        // THEN
+        expect(value).toEqual(
+          Right(new Uint8Array([CommandTags.AddMember, 3, 0x01, 0x02, 0x03])),
+        );
+      });
+
+      it("should fail if the tag is not a command", () => {
+        // GIVEN
+        const parser = new TLVParser(
+          new Uint8Array([GeneralTags.Int, 1, 0x01]),
+        );
+        // WHEN
+        const value = parser.parseCommandBytes();
+        // THEN
+        expect(value).toEqual(
+          Left(new LKRPParsingError(`Invalid command type: 0x01`)),
+        );
+      });
+    });
+
+    describe("Parse Seed Command Data", () => {
+      it("should parse a valid seed command data", () => {
+        // GIVEN
+        const value = new Uint8Array([
+          ...[GeneralTags.Bytes, 3, 0x01, 0x02, 0x03], // Topic
+          ...[GeneralTags.Int, 2, 0x01, 0x02], // Protocol Version
+          ...[GeneralTags.PublicKey, 3, 0x02, 0x04, 0x06], // Group Key
+          ...[GeneralTags.Bytes, 3, 0x03, 0x05, 0x07], // Initialization Vector
+          ...[GeneralTags.Bytes, 3, 0x04, 0x08, 0x10], // Encrypted xpriv
+          ...[GeneralTags.PublicKey, 3, 0x0a, 0x0b, 0x0c], // Ephemeral Public Key
+        ]);
+        const parser = new TLVParser(
+          new Uint8Array([CommandTags.Seed, value.length, ...value]),
+        );
+
+        // WHEN
+        const parsed = parser.parseCommandData();
+
+        // THEN
+        expect(parsed).toStrictEqual(
+          Right({
+            type: CommandTags.Seed,
+            topic: new Uint8Array([0x01, 0x02, 0x03]),
+            protocolVersion: 258, // 0x0102 in big-endian
+            groupKey: new Uint8Array([0x02, 0x04, 0x06]),
+            initializationVector: new Uint8Array([0x03, 0x05, 0x07]),
+            encryptedXpriv: new Uint8Array([0x04, 0x08, 0x10]),
+            ephemeralPublicKey: new Uint8Array([0x0a, 0x0b, 0x0c]),
+          }),
+        );
+      });
+
+      it("should fail if the command data is invalid", () => {
+        // GIVEN
+        const value1 = new Uint8Array([
+          ...[GeneralTags.Signature, 3, 0x01, 0x02, 0x03], // Wrong type for Topic
+        ]);
+        const value2 = new Uint8Array([
+          ...[GeneralTags.Bytes, 3, 0x01, 0x02, 0x03], // Correct type but the other fields are missing
+        ]);
+        const parser1 = new TLVParser(
+          new Uint8Array([CommandTags.Seed, value1.length, ...value1]),
+        );
+        const parser2 = new TLVParser(
+          new Uint8Array([CommandTags.Seed, value2.length, ...value2]),
+        );
+
+        // WHEN
+        const parsed1 = parser1.parseCommandData();
+        const parsed2 = parser2.parseCommandData();
+
+        // THEN
+        expect(parsed1).toEqual(Left(new LKRPParsingError("Expected bytes")));
+        expect(parsed2).toEqual(
+          Left(new LKRPParsingError("Unexpected end of TLV")),
+        );
+      });
+    });
+
+    describe("Parse AddMember Command Data", () => {
+      it("should parse a valid add member command data", () => {
+        // GIVEN
+        const value = new Uint8Array([
+          ...[GeneralTags.String, 5, 0x41, 0x6c, 0x69, 0x63, 0x65], // Name "Alice"
+          ...[GeneralTags.PublicKey, 3, 0x01, 0x02, 0x03], // Public Key
+          ...[GeneralTags.Int, 1, 0x01], // Permissions
+        ]);
+        const parser = new TLVParser(
+          new Uint8Array([CommandTags.AddMember, value.length, ...value]),
+        );
+
+        // WHEN
+        const parsed = parser.parseCommandData();
+
+        // THEN
+        expect(parsed).toStrictEqual(
+          Right({
+            type: CommandTags.AddMember,
+            name: "Alice",
+            publicKey: new Uint8Array([0x01, 0x02, 0x03]),
+            permissions: 1,
+          }),
+        );
+      });
+
+      it("should fail if the command data is invalid", () => {
+        // GIVEN
+        const value1 = new Uint8Array([
+          ...[GeneralTags.Bytes, 3, 0x01, 0x02, 0x03], // Wrong type for Name
+        ]);
+        const value2 = new Uint8Array([
+          ...[GeneralTags.String, 5, 0x41, 0x6c, 0x69, 0x63, 0x65], // Correct type but the other fields are missing
+        ]);
+        const parser1 = new TLVParser(
+          new Uint8Array([CommandTags.AddMember, value1.length, ...value1]),
+        );
+        const parser2 = new TLVParser(
+          new Uint8Array([CommandTags.AddMember, value2.length, ...value2]),
+        );
+
+        // WHEN
+        const parsed1 = parser1.parseCommandData();
+        const parsed2 = parser2.parseCommandData();
+
+        // THEN
+        expect(parsed1).toEqual(
+          Left(new LKRPParsingError("Expected a string")),
+        );
+        expect(parsed2).toEqual(
+          Left(new LKRPParsingError("Unexpected end of TLV")),
+        );
+      });
+    });
+
+    describe("Parse PublishKey Command Data", () => {
+      it("should parse a valid publish key command data", () => {
+        // GIVEN
+        const value = new Uint8Array([
+          ...[GeneralTags.Bytes, 3, 0x01, 0x02, 0x03], // Initialization Vector
+          ...[GeneralTags.Bytes, 3, 0x04, 0x05, 0x06], // Encrypted xpriv
+          ...[GeneralTags.PublicKey, 3, 0x03, 0x05, 0x07], // Recipient Public Key
+          ...[GeneralTags.PublicKey, 3, 0x08, 0x09, 0x0a], // Ephemeral Public Key
+        ]);
+        const parser = new TLVParser(
+          new Uint8Array([CommandTags.PublishKey, value.length, ...value]),
+        );
+
+        // WHEN
+        const parsed = parser.parseCommandData();
+
+        // THEN
+        expect(parsed).toStrictEqual(
+          Right({
+            type: CommandTags.PublishKey,
+            initializationVector: new Uint8Array([0x01, 0x02, 0x03]),
+            encryptedXpriv: new Uint8Array([0x04, 0x05, 0x06]),
+            recipient: new Uint8Array([0x03, 0x05, 0x07]),
+            ephemeralPublicKey: new Uint8Array([0x08, 0x09, 0x0a]),
+          }),
+        );
+      });
+
+      it("should fail if the command data is invalid", () => {
+        // GIVEN
+        const value1 = new Uint8Array([
+          ...[GeneralTags.Int, 2, 0x01, 0x02], // Wrong type for Initialization Vector
+        ]);
+        const value2 = new Uint8Array([
+          ...[GeneralTags.Bytes, 3, 0x01, 0x02, 0x03], // Correct type but the other fields are missing
+        ]);
+        const parser1 = new TLVParser(
+          new Uint8Array([CommandTags.PublishKey, value1.length, ...value1]),
+        );
+        const parser2 = new TLVParser(
+          new Uint8Array([CommandTags.PublishKey, value2.length, ...value2]),
+        );
+
+        // WHEN
+        const parsed1 = parser1.parseCommandData();
+        const parsed2 = parser2.parseCommandData();
+
+        // THEN
+        expect(parsed1).toEqual(Left(new LKRPParsingError("Expected bytes")));
+        expect(parsed2).toEqual(
+          Left(new LKRPParsingError("Unexpected end of TLV")),
+        );
+      });
+    });
+
+    describe("Parse Derive Command Data", () => {
+      it("should parse a valid derive command data", () => {
+        // GIVEN
+        const value = new Uint8Array([
+          ...[GeneralTags.Bytes, 3, 0x01, 0x02, 0x03], // Path
+          ...[GeneralTags.PublicKey, 3, 0x04, 0x05, 0x06], // Group Key
+          ...[GeneralTags.Bytes, 3, 0x03, 0x05, 0x07], // Initialization Vector
+          ...[GeneralTags.Bytes, 3, 0x08, 0x09, 0x0a], // Encrypted xpriv
+          ...[GeneralTags.PublicKey, 3, 0x0a, 0x0b, 0x0c], // Ephemeral Public Key
+        ]);
+        const parser = new TLVParser(
+          new Uint8Array([CommandTags.Derive, value.length, ...value]),
+        );
+
+        // WHEN
+        const parsed = parser.parseCommandData();
+
+        // THEN
+        expect(parsed).toStrictEqual(
+          Right({
+            type: CommandTags.Derive,
+            path: new Uint8Array([0x01, 0x02, 0x03]),
+            groupKey: new Uint8Array([0x04, 0x05, 0x06]),
+            initializationVector: new Uint8Array([0x03, 0x05, 0x07]),
+            encryptedXpriv: new Uint8Array([0x08, 0x09, 0x0a]),
+            ephemeralPublicKey: new Uint8Array([0x0a, 0x0b, 0x0c]),
+          }),
+        );
+      });
+
+      it("should fail if the command data is invalid", () => {
+        // GIVEN
+        const value1 = new Uint8Array([
+          ...[GeneralTags.Int, 2, 0x01, 0x02], // Wrong type for Path
+        ]);
+        const value2 = new Uint8Array([
+          ...[GeneralTags.Bytes, 3, 0x01, 0x02, 0x03], // Correct type but the other fields are missing
+        ]);
+        const parser1 = new TLVParser(
+          new Uint8Array([CommandTags.Derive, value1.length, ...value1]),
+        );
+        const parser2 = new TLVParser(
+          new Uint8Array([CommandTags.Derive, value2.length, ...value2]),
+        );
+
+        // WHEN
+        const parsed1 = parser1.parseCommandData();
+        const parsed2 = parser2.parseCommandData();
+
+        // THEN
+        expect(parsed1).toEqual(Left(new LKRPParsingError("Expected bytes")));
+        expect(parsed2).toEqual(
+          Left(new LKRPParsingError("Unexpected end of TLV")),
+        );
+      });
+    });
+
+    it("should fail on unsupported command type", () => {
+      // GIVEN
+      const parser = new TLVParser(new Uint8Array([0x3f, 1, 0x01]));
+      // WHEN
+      const parsed = parser.parseCommandData();
+      // THEN
+      expect(parsed).toEqual(
+        Left(new LKRPParsingError("Unsupported command type: 0x3f")),
+      );
+    });
+  });
+
+  describe("General Types Parsing", () => {
     describe("parse", () => {
       it("should parse a valid TLV structure", () => {
         // GIVEN
@@ -34,17 +301,13 @@ describe("TLVParser", () => {
         const value3 = parser3.parse();
         // THEN
         expect(value1).toEqual(
-          Left(new LKRPParsingError("No more data to parse at offset 0")),
+          Left(new LKRPParsingError("Unexpected end of TLV")),
         );
         expect(value2).toEqual(
-          Left(
-            new LKRPParsingError(
-              "Invalid end of TLV, expected length at offset 1",
-            ),
-          ),
+          Left(new LKRPParsingError("Invalid end of TLV, expected length")),
         );
         expect(value3).toEqual(
-          Left(new LKRPParsingError("Invalid end of TLV value at offset 2")),
+          Left(new LKRPParsingError("Invalid end of TLV value")),
         );
       });
     });
