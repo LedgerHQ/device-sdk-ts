@@ -1,3 +1,5 @@
+import { type CommandTags } from "@internal/utils/TLVTags";
+
 export type Keypair = {
   publicKey: Uint8Array;
   privateKey: Uint8Array;
@@ -18,31 +20,32 @@ export type Trustchain = {
 
 export interface LKRPBlock {
   toString(): string;
+  toHuman(): string;
   toU8A(): Uint8Array;
-  toHex(): string;
   parse(): LKRPBlockData;
   hash(): Uint8Array;
 }
 
 export interface LKRPCommand {
   toString(): string;
+  toHuman(): string;
   toU8A(): Uint8Array;
-  toHex(): string;
+  getType(): CommandTags;
   parse(): LKRPCommandData;
-  getTrustedMember(): Uint8Array;
+  getTrustedMember(): Uint8Array | undefined;
 }
 
 export type LKRPBlockData = {
-  parent: Uint8Array;
+  parent: string;
   issuer: Uint8Array;
   commands: LKRPCommand[];
   signature: Uint8Array;
 };
 
-type LKRPCommandData = Seed | Derive | AddMember | PublishKey;
+export type LKRPCommandData = Seed | Derive | AddMember | PublishKey;
 
 type Seed = {
-  type: "seed";
+  type: CommandTags.Seed;
   topic: Uint8Array | null;
   protocolVersion: number;
   groupKey: Uint8Array;
@@ -51,26 +54,26 @@ type Seed = {
   ephemeralPublicKey: Uint8Array;
 };
 
-type Derive = {
-  type: "derive";
-  path: number[];
-  groupKey: Uint8Array;
-  initializationVector: Uint8Array;
-  encryptedXpriv: Uint8Array;
-  ephemeralPublicKey: Uint8Array;
-};
-
 type AddMember = {
-  type: "addMember";
+  type: CommandTags.AddMember;
   name: string;
   publicKey: Uint8Array;
   permissions: number;
 };
 
 type PublishKey = {
-  type: "publishKey";
+  type: CommandTags.PublishKey;
   initializationVector: Uint8Array;
   encryptedXpriv: Uint8Array;
   recipient: Uint8Array;
+  ephemeralPublicKey: Uint8Array;
+};
+
+type Derive = {
+  type: CommandTags.Derive;
+  path: Uint8Array;
+  groupKey: Uint8Array;
+  initializationVector: Uint8Array;
+  encryptedXpriv: Uint8Array;
   ephemeralPublicKey: Uint8Array;
 };
