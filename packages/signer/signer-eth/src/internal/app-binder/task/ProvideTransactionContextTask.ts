@@ -13,6 +13,10 @@ import {
 } from "@ledgerhq/device-management-kit";
 import { Just, type Maybe, Nothing } from "purify-ts";
 
+import {
+  NetworkConfigurationType,
+  ProvideNetworkConfigurationCommand,
+} from "@internal/app-binder/command/ProvideNetworkConfigurationCommand";
 import { ProvideNFTInformationCommand } from "@internal/app-binder/command/ProvideNFTInformationCommand";
 import {
   ProvideTokenInformationCommand,
@@ -129,6 +133,18 @@ export class ProvideTransactionContextTask {
             new ProvideWeb3CheckCommand({
               payload: args.chunkedData,
               isFirstChunk: args.isFirstChunk,
+            }),
+        }).run();
+      case ClearSignContextType.DYNAMIC_NETWORK:
+        // Dynamic network configuration uses the existing ProvideNetworkConfiguration command
+        // but is provided as part of the context flow
+        return new SendPayloadInChunksTask(this.api, {
+          payload,
+          commandFactory: (args) =>
+            new ProvideNetworkConfigurationCommand({
+              data: args.chunkedData,
+              isFirstChunk: args.isFirstChunk,
+              configurationType: NetworkConfigurationType.CONFIGURATION,
             }),
         }).run();
       default: {

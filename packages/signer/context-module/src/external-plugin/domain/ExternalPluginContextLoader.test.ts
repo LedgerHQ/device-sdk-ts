@@ -62,7 +62,7 @@ describe("ExternalPluginContextLoader", () => {
     );
   });
 
-  describe("load function", async () => {
+  describe("load function", () => {
     it("should return an empty array if no destination address is provided", async () => {
       // GIVEN
       const transaction = {} as TransactionContext;
