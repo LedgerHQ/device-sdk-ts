@@ -1,8 +1,5 @@
 /* eslint @typescript-eslint/consistent-type-imports: 0 */
-import {
-  ClearSignContextType,
-  type ContextModule,
-} from "@ledgerhq/context-module";
+import { type ContextModule } from "@ledgerhq/context-module";
 import {
   CommandResultFactory,
   DeviceActionStatus,
@@ -1284,13 +1281,6 @@ describe("SignTransactionDeviceAction", () => {
           serializedTransaction: new Uint8Array([0x01, 0x02, 0x03]),
           chainId: 1,
           transactionType: TransactionType.LEGACY,
-          web3Check: {
-            type: ClearSignContextType.ENUM,
-            id: 1,
-            payload: "0x01020304",
-            value: 1,
-            certificate: undefined,
-          },
         });
         provideContextMock.mockResolvedValueOnce(Nothing);
         signTransactionMock.mockResolvedValueOnce(
