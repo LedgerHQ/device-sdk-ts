@@ -2,10 +2,103 @@ import { Left, Right } from "purify-ts";
 
 import { LKRPParsingError } from "@api/app-binder/Errors";
 
+import { Command } from "./Command";
 import { TLVParser } from "./TLVParser";
 import { CommandTags, GeneralTags } from "./TLVTags";
 
 describe("TLVParser", () => {
+  describe("Block Data Parsing", () => {
+    describe("parseCommands", () => {
+      it("should parse has many commands has specified by the command count value", () => {
+        // GIVEN
+        const parser = new TLVParser(
+          new Uint8Array([
+            ...[GeneralTags.Int, 1, 0x02], // Command count: 2
+            ...[CommandTags.AddMember, 3, ...[GeneralTags.Int, 1, 0x01]], // First command
+            ...[CommandTags.Seed, 3, ...[GeneralTags.Int, 1, 0x02]], // Second command
+          ]),
+        );
+        // WHEN
+        const commands = parser.parseCommands();
+
+        // THEN
+        expect(commands).toStrictEqual(
+          Right([
+            new Command(
+              new Uint8Array([
+                CommandTags.AddMember,
+                3,
+                ...[GeneralTags.Int, 1, 0x01],
+              ]),
+            ),
+            new Command(
+              new Uint8Array([
+                CommandTags.Seed,
+                3,
+                ...[GeneralTags.Int, 1, 0x02],
+              ]),
+            ),
+          ]),
+        );
+      });
+    });
+
+    describe("parseBlockData", () => {
+      it("should parse a valid block data", () => {
+        // GIVEN
+        const parser = new TLVParser(
+          new Uint8Array([
+            ...[GeneralTags.Int, 1, 0x01], // Version
+            ...[GeneralTags.Hash, 3, 0x01, 0x02, 0x03], // Parent
+            ...[GeneralTags.PublicKey, 3, 0x04, 0x05, 0x06], // Issuer
+            ...[GeneralTags.Int, 1, 0x02], // Command count: 2
+            ...[CommandTags.AddMember, 3, ...[GeneralTags.Int, 1, 0x01]], // First command
+            ...[CommandTags.Seed, 3, ...[GeneralTags.Int, 1, 0x02]], // Second command
+            ...[GeneralTags.Signature, 3, 0x07, 0x08, 0x09], // Signature
+          ]),
+        );
+        // WHEN
+        const blockData = parser.parseBlockData();
+
+        // THEN
+        expect(blockData).toStrictEqual(
+          Right({
+            parent: "010203",
+            issuer: new Uint8Array([0x04, 0x05, 0x06]),
+            commands: [
+              new Command(
+                new Uint8Array([
+                  CommandTags.AddMember,
+                  3,
+                  ...[GeneralTags.Int, 1, 0x01],
+                ]),
+              ),
+              new Command(
+                new Uint8Array([
+                  CommandTags.Seed,
+                  3,
+                  ...[GeneralTags.Int, 1, 0x02],
+                ]),
+              ),
+            ],
+            signature: new Uint8Array([0x07, 0x08, 0x09]),
+          }),
+        );
+      });
+
+      it("should fail if the block data is invalid", () => {
+        // GIVEN
+        const parser = new TLVParser(new Uint8Array([]));
+        // WHEN
+        const blockData = parser.parseBlockData();
+        // THEN
+        expect(blockData).toEqual(
+          Left(new LKRPParsingError("Unexpected end of TLV")),
+        );
+      });
+    });
+  });
+
   describe("Command Data Parsing", () => {
     describe("parseCommandBytes", () => {
       it("should parse a valid command bytes", () => {

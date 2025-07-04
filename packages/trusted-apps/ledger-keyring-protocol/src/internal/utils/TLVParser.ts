@@ -1,9 +1,14 @@
 import { type Either, Left, Right } from "purify-ts";
 
 import { LKRPParsingError } from "@api/app-binder/Errors";
-import { type LKRPCommandData } from "@api/app-binder/LKRPTypes";
+import {
+  type LKRPBlockData,
+  type LKRPCommandData,
+} from "@api/app-binder/LKRPTypes";
 
+import { Command } from "./Command";
 import { eitherSeqRecord } from "./eitherSeqRecord";
+import { bytesToHex } from "./hex";
 import { CommandTags, GeneralTags } from "./TLVTags";
 
 type ParserValue = Either<
@@ -178,6 +183,36 @@ export class TLVParser {
           ? Right(data)
           : Left(new LKRPParsingError("Command was parsed incorrectly")),
       );
+  }
+
+  parseCommands(): Either<LKRPParsingError, Command[]> {
+    return this.parse()
+      .chain((next) =>
+        next.tag !== GeneralTags.Int
+          ? Left(new LKRPParsingError("Expected a command count"))
+          : Right(next.value),
+      )
+      .chain((count) => {
+        const commands: Command[] = [];
+        for (let i = 0; i < count; i++) {
+          const command = this.parseCommandBytes();
+          if (command.isLeft()) return command;
+          command.ifRight((value) => commands.push(new Command(value)));
+        }
+        return Right(commands);
+      });
+  }
+
+  // https://ledgerhq.atlassian.net/wiki/spaces/TA/pages/4105207815/ARCH+LKRP+-+v1+specifications#Block
+  parseBlockData(): Either<LKRPParsingError, LKRPBlockData> {
+    return this.parseInt().chain((_version) =>
+      eitherSeqRecord({
+        parent: () => this.parseHash().map(bytesToHex),
+        issuer: () => this.parsePublicKey(),
+        commands: () => this.parseCommands(),
+        signature: () => this.parseSignature(),
+      }),
+    );
   }
 
   private *parseTLV(bytes: Uint8Array): Parser {
