@@ -31,7 +31,6 @@ export type ProvideTransactionContextTaskArgs = {
    * The valid clear sign contexts offerred by the `BuildTrancationContextTask`.
    */
   clearSignContexts: ClearSignContextSuccess[];
-  web3Check: ClearSignContextSuccess<ClearSignContextType.WEB3_CHECK> | null;
 };
 
 /**
@@ -52,12 +51,6 @@ export class ProvideTransactionContextTask {
   ) {}
 
   async run(): Promise<Maybe<CommandErrorResult<EthErrorCodes>>> {
-    if (this.args.web3Check) {
-      const res = await this.provideContext(this.args.web3Check);
-      if (!isSuccessCommandResult(res)) {
-        return Just(res);
-      }
-    }
     for (const context of this.args.clearSignContexts) {
       const res = await this.provideContext(context);
       if (!isSuccessCommandResult(res)) {
