@@ -1,7 +1,10 @@
 import { type Either, Left, Right } from "purify-ts";
 
 import { LKRPParsingError } from "@api/app-binder/Errors";
-import { type CommandTags, GeneralTags } from "./TLVTags";
+import { type LKRPCommandData } from "@api/app-binder/LKRPTypes";
+
+import { eitherSeqRecord } from "./eitherSeqRecord";
+import { CommandTags, GeneralTags } from "./TLVTags";
 
 type ParserValue = Either<
   LKRPParsingError,
@@ -98,34 +101,103 @@ export class TLVParser {
     );
   }
 
+  parseCommandBytes(): Either<LKRPParsingError, Uint8Array> {
+    return this.parse().chain(({ tag, value }) =>
+      tag < 0x10 || tag > 0x3f || !(value instanceof Uint8Array)
+        ? Left(
+            new LKRPParsingError(
+              `Invalid command type: 0x${tag.toString(16).padStart(2, "0")}`,
+            ),
+          )
+        : Right(value),
+    );
+  }
+
+  // https://ledgerhq.atlassian.net/wiki/spaces/TA/pages/4105207815/ARCH+LKRP+-+v1+specifications#Commands
+  parseCommandData(): Either<LKRPParsingError, LKRPCommandData> {
+    const bytes = this.parseCommandBytes();
+    const end = this.offset;
+
+    return bytes
+      .chain<LKRPParsingError, LKRPCommandData>((value) => {
+        const type = value[0];
+        this.offset -= value.length - 2; // Adjust offset to the start of the command
+        switch (type) {
+          // https://ledgerhq.atlassian.net/wiki/spaces/TA/pages/4105207815/ARCH+LKRP+-+v1+specifications#Seed-(0x10)
+          case CommandTags.Seed:
+            return eitherSeqRecord({
+              type,
+              topic: () => this.parseBytes(),
+              protocolVersion: () => this.parseInt(),
+              groupKey: () => this.parsePublicKey(),
+              initializationVector: () => this.parseBytes(),
+              encryptedXpriv: () => this.parseBytes(),
+              ephemeralPublicKey: () => this.parsePublicKey(),
+            });
+
+          // https://ledgerhq.atlassian.net/wiki/spaces/TA/pages/4105207815/ARCH+LKRP+-+v1+specifications#AddMember-(0x11)
+          case CommandTags.AddMember:
+            return eitherSeqRecord({
+              type,
+              name: () => this.parseString(),
+              publicKey: () => this.parsePublicKey(),
+              permissions: () => this.parseInt(),
+            });
+
+          // https://ledgerhq.atlassian.net/wiki/spaces/TA/pages/4105207815/ARCH+LKRP+-+v1+specifications#PublishKey-(0x12)
+          case CommandTags.PublishKey:
+            return eitherSeqRecord({
+              type,
+              initializationVector: () => this.parseBytes(),
+              encryptedXpriv: () => this.parseBytes(),
+              recipient: () => this.parsePublicKey(),
+              ephemeralPublicKey: () => this.parsePublicKey(),
+            });
+
+          // https://ledgerhq.atlassian.net/wiki/spaces/TA/pages/4105207815/ARCH+LKRP+-+v1+specifications#Derive-(0x15)
+          case CommandTags.Derive:
+            return eitherSeqRecord({
+              type,
+              path: () => this.parseBytes(),
+              groupKey: () => this.parsePublicKey(),
+              initializationVector: () => this.parseBytes(),
+              encryptedXpriv: () => this.parseBytes(),
+              ephemeralPublicKey: () => this.parsePublicKey(),
+            });
+
+          default:
+            return Left(
+              new LKRPParsingError(
+                `Unsupported command type: 0x${type?.toString(16).padStart(2, "0")}`,
+              ),
+            );
+        }
+      })
+      .chain((data) =>
+        this.offset === end
+          ? Right(data)
+          : Left(new LKRPParsingError("Command was parsed incorrectly")),
+      );
+  }
+
   private *parseTLV(bytes: Uint8Array): Parser {
     while (true) {
       const tag = bytes[this.offset];
       if (typeof tag === "undefined") {
-        return Left(
-          new LKRPParsingError(
-            "No more data to parse at offset " + this.offset,
-          ),
-        );
+        return Left(new LKRPParsingError("Unexpected end of TLV"));
       }
       this.offset++;
       const length = bytes[this.offset];
       if (typeof length === "undefined") {
         return Left(
-          new LKRPParsingError(
-            "Invalid end of TLV, expected length at offset " + this.offset,
-          ),
+          new LKRPParsingError("Invalid end of TLV, expected length"),
         );
       }
       this.offset++;
       const valueEnd = this.offset + length;
       const value = bytes.slice(this.offset, valueEnd);
       if (valueEnd > bytes.length) {
-        return Left(
-          new LKRPParsingError(
-            "Invalid end of TLV value at offset " + this.offset,
-          ),
-        );
+        return Left(new LKRPParsingError("Invalid end of TLV value"));
       }
       this.offset = valueEnd;
 
