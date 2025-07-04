@@ -68,7 +68,7 @@ export type DeviceConnectionStateMachineParams<Dependencies> = {
 
 export class DeviceConnectionStateMachine<Dependencies> {
   private deviceId: DeviceId;
-  private deviceAdpuSender: DeviceApduSender<Dependencies>;
+  private deviceApduSender: DeviceApduSender<Dependencies>;
 
   private machineActor: Actor<ReturnType<typeof makeStateMachine>>;
 
@@ -83,7 +83,7 @@ export class DeviceConnectionStateMachine<Dependencies> {
 
   constructor(params: DeviceConnectionStateMachineParams<Dependencies>) {
     this.deviceId = params.deviceId;
-    this.deviceAdpuSender = params.deviceApduSender;
+    this.deviceApduSender = params.deviceApduSender;
     this.timeoutDuration = params.timeoutDuration;
     this.machineActor = createActor(
       makeStateMachine({
@@ -102,7 +102,7 @@ export class DeviceConnectionStateMachine<Dependencies> {
         },
         onTerminated: params.onTerminated,
         closeConnection: () => {
-          this.deviceAdpuSender.closeConnection();
+          this.deviceApduSender.closeConnection();
         },
       }),
       // {
@@ -117,7 +117,7 @@ export class DeviceConnectionStateMachine<Dependencies> {
     triggersDisconnection?: boolean,
     abortTimeout?: number,
   ) {
-    this.deviceAdpuSender
+    this.deviceApduSender
       .sendApdu(apdu, triggersDisconnection, abortTimeout)
       .then((response) => {
         response.caseOf({
@@ -145,11 +145,11 @@ export class DeviceConnectionStateMachine<Dependencies> {
    */
 
   public getDependencies(): Dependencies {
-    return this.deviceAdpuSender.getDependencies();
+    return this.deviceApduSender.getDependencies();
   }
 
   public setDependencies(dependencies: Dependencies) {
-    this.deviceAdpuSender.setDependencies(dependencies);
+    this.deviceApduSender.setDependencies(dependencies);
   }
 
   public getDeviceId() {
@@ -173,7 +173,7 @@ export class DeviceConnectionStateMachine<Dependencies> {
   }
 
   public async setupConnection() {
-    await this.deviceAdpuSender.setupConnection();
+    await this.deviceApduSender.setupConnection();
   }
 
   // State Machine Events
