@@ -1,4 +1,4 @@
-import { CommandTags } from "@internal/utils/TLVTags";
+import { type CommandTags } from "@internal/utils/TLVTags";
 
 export type Keypair = {
   publicKey: Uint8Array;
@@ -20,18 +20,19 @@ export type Trustchain = {
 
 export interface LKRPBlock {
   toString(): string;
+  toHuman(): string;
   toU8A(): Uint8Array;
-  toHex(): string;
   parse(): LKRPBlockData;
   hash(): Uint8Array;
 }
 
 export interface LKRPCommand {
   toString(): string;
+  toHuman(): string;
   toU8A(): Uint8Array;
-  toHex(): string;
+  getType(): CommandTags;
   parse(): LKRPCommandData;
-  getTrustedMember(): Uint8Array;
+  getTrustedMember(): Uint8Array | undefined;
 }
 
 export type LKRPBlockData = {
