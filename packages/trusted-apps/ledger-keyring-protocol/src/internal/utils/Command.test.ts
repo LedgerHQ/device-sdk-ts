@@ -143,11 +143,11 @@ describe("Command", () => {
       // THEN
       expect(command.toHuman()).toBe(
         [
-          `type: 0x12`,
-          `initializationVector: 010203`,
-          `encryptedXpriv: 040506`,
-          `recipient: 070809`,
-          `ephemeralPublicKey: 0a0b0c`,
+          `PublishKey(0x12):`,
+          `  initializationVector: 010203`,
+          `  encryptedXpriv: 040506`,
+          `  recipient: 070809`,
+          `  ephemeralPublicKey: 0a0b0c`,
         ].join("\n"),
       );
     });

@@ -7,6 +7,7 @@ import {
 } from "@api/app-binder/LKRPTypes";
 
 import { Command } from "./Command";
+import { derivationPathAsString } from "./derivationPath";
 import { eitherSeqRecord } from "./eitherSeqRecord";
 import { bytesToHex } from "./hex";
 import { CommandTags, GeneralTags } from "./TLVTags";
@@ -163,7 +164,7 @@ export class TLVParser {
           case CommandTags.Derive:
             return eitherSeqRecord({
               type,
-              path: () => this.parseBytes(),
+              path: () => this.parseBytes().map(derivationPathAsString),
               groupKey: () => this.parsePublicKey(),
               initializationVector: () => this.parseBytes(),
               encryptedXpriv: () => this.parseBytes(),

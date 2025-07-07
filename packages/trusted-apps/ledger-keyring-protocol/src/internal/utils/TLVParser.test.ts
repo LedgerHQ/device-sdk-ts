@@ -301,7 +301,7 @@ describe("TLVParser", () => {
       it("should parse a valid derive command data", () => {
         // GIVEN
         const value = new Uint8Array([
-          ...[GeneralTags.Bytes, 3, 0x01, 0x02, 0x03], // Path
+          ...[GeneralTags.Bytes, 4, 0x00, 0x00, 0x00, 0x01], // Path
           ...[GeneralTags.PublicKey, 3, 0x04, 0x05, 0x06], // Group Key
           ...[GeneralTags.Bytes, 3, 0x03, 0x05, 0x07], // Initialization Vector
           ...[GeneralTags.Bytes, 3, 0x08, 0x09, 0x0a], // Encrypted xpriv
@@ -318,7 +318,7 @@ describe("TLVParser", () => {
         expect(parsed).toStrictEqual(
           Right({
             type: CommandTags.Derive,
-            path: new Uint8Array([0x01, 0x02, 0x03]),
+            path: "m/1",
             groupKey: new Uint8Array([0x04, 0x05, 0x06]),
             initializationVector: new Uint8Array([0x03, 0x05, 0x07]),
             encryptedXpriv: new Uint8Array([0x08, 0x09, 0x0a]),

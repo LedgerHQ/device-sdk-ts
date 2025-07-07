@@ -53,12 +53,12 @@ export class Command implements LKRPCommand {
     return Object.entries(data)
       .map(([key, value]) => {
         if (key === "type") {
-          return `type: 0x${value?.toString(16).padStart(2, "0")}`;
+          return `${CommandTags[value as CommandTags]}(0x${value?.toString(16).padStart(2, "0")}):`;
         }
         if (value instanceof Uint8Array) {
-          return `${key}: ${bytesToHex(value)}`;
+          return `  ${key}: ${bytesToHex(value)}`;
         }
-        return `${key}: ${value}`;
+        return `  ${key}: ${value}`;
       })
       .join("\n");
   }
