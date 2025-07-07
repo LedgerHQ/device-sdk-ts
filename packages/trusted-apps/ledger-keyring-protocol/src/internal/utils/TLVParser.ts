@@ -1,16 +1,13 @@
 import { type Either, Left, Right } from "purify-ts";
 
 import { LKRPParsingError } from "@api/app-binder/Errors";
-import {
-  type LKRPBlockData,
-  type LKRPCommandData,
-} from "@api/app-binder/LKRPTypes";
 
-import { Command } from "./Command";
 import { derivationPathAsString } from "./derivationPath";
 import { eitherSeqRecord } from "./eitherSeqRecord";
 import { bytesToHex } from "./hex";
+import { LKRPCommand } from "./LKRPCommand";
 import { CommandTags, GeneralTags } from "./TLVTags";
+import { type LKRPBlockData, type LKRPCommandData } from "./types";
 
 type ParserValue = Either<
   LKRPParsingError,
@@ -186,7 +183,7 @@ export class TLVParser {
       );
   }
 
-  parseCommands(): Either<LKRPParsingError, Command[]> {
+  parseCommands(): Either<LKRPParsingError, LKRPCommand[]> {
     return this.parse()
       .chain((next) =>
         next.tag !== GeneralTags.Int
@@ -194,11 +191,11 @@ export class TLVParser {
           : Right(next.value),
       )
       .chain((count) => {
-        const commands: Command[] = [];
+        const commands: LKRPCommand[] = [];
         for (let i = 0; i < count; i++) {
           const command = this.parseCommandBytes();
           if (command.isLeft()) return command;
-          command.ifRight((value) => commands.push(new Command(value)));
+          command.ifRight((value) => commands.push(new LKRPCommand(value)));
         }
         return Right(commands);
       });

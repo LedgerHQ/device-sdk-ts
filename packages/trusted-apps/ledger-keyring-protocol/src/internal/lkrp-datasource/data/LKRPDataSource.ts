@@ -1,11 +1,11 @@
 import { type Either, type Maybe } from "purify-ts";
 
 import { type LKRPHttpRequestError } from "@api/app-binder/Errors";
-import {
-  type JWT,
-  type LKRPBlock,
-  type Trustchain,
-} from "@api/app-binder/LKRPTypes";
+import { type JWT } from "@api/app-binder/LKRPTypes";
+import { type Trustchain } from "@internal/utils/types";
+
+type LKRPBlock = object; // TODO: Replace with actual type
+type LKRPBlockStream = object; // TODO: Replace with actual type
 
 export interface LKRPDataSource {
   getChallenge(): Promise<Either<LKRPHttpRequestError, Challenge>>;
@@ -23,13 +23,13 @@ export interface LKRPDataSource {
 
   postDerivation(
     id: string,
-    stream: LKRPBlock[],
+    stream: LKRPBlockStream,
   ): Promise<Either<LKRPHttpRequestError, void>>;
 
   putCommands(
     id: string,
     path: string,
-    blocks: LKRPBlock[], // In practice, this should be a single block
+    block: LKRPBlock,
     jwt: JWT,
   ): Promise<Either<LKRPHttpRequestError, void>>;
 }
