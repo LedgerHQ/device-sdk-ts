@@ -2,7 +2,7 @@ import { Left, Right } from "purify-ts";
 
 import { LKRPParsingError } from "@api/app-binder/Errors";
 
-import { Command } from "./Command";
+import { LKRPCommand } from "./LKRPCommand";
 import { TLVParser } from "./TLVParser";
 import { CommandTags, GeneralTags } from "./TLVTags";
 
@@ -24,14 +24,14 @@ describe("TLVParser", () => {
         // THEN
         expect(commands).toStrictEqual(
           Right([
-            new Command(
+            new LKRPCommand(
               new Uint8Array([
                 CommandTags.AddMember,
                 3,
                 ...[GeneralTags.Int, 1, 0x01],
               ]),
             ),
-            new Command(
+            new LKRPCommand(
               new Uint8Array([
                 CommandTags.Seed,
                 3,
@@ -66,14 +66,14 @@ describe("TLVParser", () => {
             parent: "010203",
             issuer: new Uint8Array([0x04, 0x05, 0x06]),
             commands: [
-              new Command(
+              new LKRPCommand(
                 new Uint8Array([
                   CommandTags.AddMember,
                   3,
                   ...[GeneralTags.Int, 1, 0x01],
                 ]),
               ),
-              new Command(
+              new LKRPCommand(
                 new Uint8Array([
                   CommandTags.Seed,
                   3,

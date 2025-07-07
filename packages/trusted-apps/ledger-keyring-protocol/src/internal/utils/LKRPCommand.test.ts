@@ -1,12 +1,16 @@
-import { Command } from "./Command";
+import { Just, Left, Nothing, Right } from "purify-ts";
+
+import { LKRPParsingError } from "@api/app-binder/Errors";
+
+import { LKRPCommand } from "./LKRPCommand";
 import { CommandTags, GeneralTags } from "./TLVTags";
 
-describe("Command", () => {
+describe("LKRPCommand", () => {
   describe("toString", () => {
     it("should return the hex of the bytes of the command", () => {
       // WHEN
       const hex = "0102030405060708";
-      const command = Command.fromHex(hex);
+      const command = LKRPCommand.fromHex(hex);
       // THEN
       expect(command.toString()).toBe(hex);
     });
@@ -16,25 +20,9 @@ describe("Command", () => {
     it("should return the bytes of the command", () => {
       // WHEN
       const bytes = new Uint8Array([1, 2, 3, 4, 5, 6, 7, 8]);
-      const command = new Command(bytes);
+      const command = new LKRPCommand(bytes);
       // THEN
       expect(command.toU8A()).toBe(bytes);
-    });
-  });
-
-  describe("getType", () => {
-    it("should return the type of the command", () => {
-      // WHEN
-      const command = new Command(new Uint8Array([CommandTags.Seed, 1, 0x01]));
-      // THEN
-      expect(command.getType()).toBe(CommandTags.Seed);
-    });
-
-    it("should throw an error for invalid command type", () => {
-      // WHEN
-      const command = new Command(new Uint8Array([0xff, 1, 0x01]));
-      // THEN
-      expect(() => command.getType()).toThrow("Invalid command type: 0xff");
     });
   });
 
@@ -50,26 +38,32 @@ describe("Command", () => {
         ...[GeneralTags.PublicKey, 3, 0x0a, 0x0b, 0x0c], // Ephemeral Public Key
       ]);
       // WHEN
-      const command = new Command(
+      const command = new LKRPCommand(
         new Uint8Array([CommandTags.Seed, value.length, ...value]),
       );
       // THEN
-      expect(command.parse<CommandTags.Seed>()).toEqual({
-        type: CommandTags.Seed,
-        topic: new Uint8Array([0x01, 0x02, 0x03]),
-        protocolVersion: 258,
-        groupKey: new Uint8Array([0x02, 0x04, 0x06]),
-        initializationVector: new Uint8Array([0x03, 0x05, 0x07]),
-        encryptedXpriv: new Uint8Array([0x04, 0x08, 0x10]),
-        ephemeralPublicKey: new Uint8Array([0x0a, 0x0b, 0x0c]),
-      });
+      expect(command.parse()).toStrictEqual(
+        Right({
+          type: CommandTags.Seed,
+          topic: new Uint8Array([0x01, 0x02, 0x03]),
+          protocolVersion: 258,
+          groupKey: new Uint8Array([0x02, 0x04, 0x06]),
+          initializationVector: new Uint8Array([0x03, 0x05, 0x07]),
+          encryptedXpriv: new Uint8Array([0x04, 0x08, 0x10]),
+          ephemeralPublicKey: new Uint8Array([0x0a, 0x0b, 0x0c]),
+        }),
+      );
     });
 
-    it("should throw an error for invalid command bytes", () => {
+    it("should fail with invalid command bytes", () => {
       // WHEN
-      const command = new Command(new Uint8Array([CommandTags.Seed, 1, 0x01]));
+      const command = new LKRPCommand(
+        new Uint8Array([CommandTags.Seed, 1, ...[0x01]]),
+      );
       // THEN
-      expect(() => command.parse<CommandTags.Seed>()).toThrow(); // Can't check for the specific error because GeneralDmkError does not extends Error
+      expect(command.parse()).toStrictEqual(
+        Left(new LKRPParsingError("Invalid end of TLV, expected length")),
+      );
     });
   });
 
@@ -83,7 +77,7 @@ describe("Command", () => {
       ]);
 
       // WHEN
-      const addMemberCmd = new Command(
+      const addMemberCmd = new LKRPCommand(
         new Uint8Array([
           CommandTags.AddMember,
           addMemberValue.length,
@@ -92,8 +86,8 @@ describe("Command", () => {
       );
 
       // THEN
-      expect(addMemberCmd.getTrustedMember()).toEqual(
-        new Uint8Array([0x04, 0x05, 0x06]),
+      expect(addMemberCmd.getTrustedMember()).toStrictEqual(
+        Just(new Uint8Array([0x04, 0x05, 0x06])),
       );
     });
 
@@ -106,7 +100,7 @@ describe("Command", () => {
         ...[GeneralTags.PublicKey, 3, 0x0a, 0x0b, 0x0c], // Ephemeral Public Key
       ]);
       // WHEN
-      const publishKeyCmd = new Command(
+      const publishKeyCmd = new LKRPCommand(
         new Uint8Array([
           CommandTags.PublishKey,
           publishKeyValue.length,
@@ -115,15 +109,15 @@ describe("Command", () => {
       );
       // THEN
       expect(publishKeyCmd.getTrustedMember()).toEqual(
-        new Uint8Array([0x07, 0x08, 0x09]),
+        Just(new Uint8Array([0x07, 0x08, 0x09])),
       );
     });
 
     it("should return undefined for other command types", () => {
       // WHEN
-      const command = new Command(new Uint8Array([CommandTags.Seed]));
+      const command = new LKRPCommand(new Uint8Array([CommandTags.Seed]));
       // THEN
-      expect(command.getTrustedMember()).toBeUndefined();
+      expect(command.getTrustedMember()).toEqual(Nothing);
     });
   });
 
@@ -137,26 +131,32 @@ describe("Command", () => {
         ...[GeneralTags.PublicKey, 3, 0x0a, 0x0b, 0x0c], // Ephemeral Public Key
       ]);
       // WHEN
-      const command = new Command(
+      const command = new LKRPCommand(
         new Uint8Array([CommandTags.PublishKey, value.length, ...value]),
       );
       // THEN
-      expect(command.toHuman()).toBe(
-        [
-          `PublishKey(0x12):`,
-          `  initializationVector: 010203`,
-          `  encryptedXpriv: 040506`,
-          `  recipient: 070809`,
-          `  ephemeralPublicKey: 0a0b0c`,
-        ].join("\n"),
+      expect(command.toHuman()).toStrictEqual(
+        Right(
+          [
+            `PublishKey(0x12):`,
+            `  initializationVector: 010203`,
+            `  encryptedXpriv: 040506`,
+            `  recipient: 070809`,
+            `  ephemeralPublicKey: 0a0b0c`,
+          ].join("\n"),
+        ),
       );
     });
 
-    it("should throw an error for invalid command bytes format", () => {
+    it("should fail for invalid command bytes format", () => {
       // WHEN
-      const command = new Command(new Uint8Array([CommandTags.Seed, 1, 0x01]));
+      const command = new LKRPCommand(
+        new Uint8Array([CommandTags.Seed, 1, ...[0x01]]),
+      );
       // THEN
-      expect(() => command.toHuman()).toThrow(); // Can't check for the specific error because GeneralDmkError does not extends Error
+      expect(command.toHuman()).toStrictEqual(
+        Left(new LKRPParsingError("Invalid end of TLV, expected length")),
+      );
     });
   });
 });
