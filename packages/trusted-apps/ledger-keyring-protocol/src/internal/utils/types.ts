@@ -1,7 +1,6 @@
+import { type LKRPBlockStream } from "./LKRPBlockStream";
 import { type LKRPCommand } from "./LKRPCommand";
 import { type CommandTags } from "./TLVTags";
-
-type LKRPBlockStream = object; // TODO: Replace with actual type
 
 export type Trustchain = {
   [path: string]: LKRPBlockStream;
