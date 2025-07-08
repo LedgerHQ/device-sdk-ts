@@ -6,3 +6,10 @@ export class LKRPHttpRequestError extends GeneralDmkError {
     super(err);
   }
 }
+
+export class LKRPParsingError extends GeneralDmkError {
+  override readonly _tag = "LKRPParsingError";
+  constructor(readonly err?: unknown) {
+    super(err);
+  }
+}
