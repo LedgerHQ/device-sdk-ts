@@ -14,11 +14,11 @@ export type LKRPBlockData = {
   signature: Uint8Array;
 };
 
-export type LKRPCommandData = Seed | Derive | AddMember | PublishKey;
+export type LKRPCommandData = Seed | AddMember | PublishKey | Derive;
 
 type Seed = {
   type: CommandTags.Seed;
-  topic: Uint8Array | null;
+  topic: Uint8Array;
   protocolVersion: number;
   groupKey: Uint8Array;
   initializationVector: Uint8Array;
