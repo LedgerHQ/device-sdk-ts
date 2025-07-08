@@ -1,17 +1,23 @@
 import { bufferToHexaString } from "@ledgerhq/device-management-kit";
 import { ethers, getBytes } from "ethers";
 import { injectable } from "inversify";
-import { Just, Maybe, Nothing } from "purify-ts";
+import { Either, Left, Right } from "purify-ts";
 
 import { TransactionMapperResult } from "./model/TransactionMapperResult";
-import { TransactionMapper } from "./TransactionMapper";
+import { TransactionMapperService } from "./TransactionMapperService";
 
 @injectable()
-export class EthersRawTransactionMapper implements TransactionMapper {
-  map(transaction: Uint8Array): Maybe<TransactionMapperResult> {
+export class EthersTransactionMapperService
+  implements TransactionMapperService
+{
+  constructor() {}
+
+  mapTransactionToSubset(
+    transaction: Uint8Array,
+  ): Either<Error, TransactionMapperResult> {
     try {
       const tx = ethers.Transaction.from(bufferToHexaString(transaction));
-      return Just({
+      return Right({
         subset: {
           chainId: Number(tx.chainId.toString()),
           to: tx.to ?? undefined,
@@ -21,7 +27,7 @@ export class EthersRawTransactionMapper implements TransactionMapper {
         type: tx.type || 0,
       });
     } catch (_error) {
-      return Nothing;
+      return Left(new Error("Invalid transaction"));
     }
   }
 }
