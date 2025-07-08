@@ -1,9 +1,10 @@
 import { inject, injectable } from "inversify";
-import { Either, Left, Maybe, Nothing, Right } from "purify-ts";
+import { Either, Just, Left, Maybe, Nothing, Right } from "purify-ts";
 
 import { LKRPHttpRequestError } from "@api/app-binder/Errors";
 import { JWT } from "@api/app-binder/LKRPTypes";
 import { lkrpDatasourceTypes } from "@internal/lkrp-datasource/di/lkrpDatasourceTypes";
+import { LKRPBlockStream } from "@internal/utils/LKRPBlockStream";
 
 import {
   AuthenticationPayload,
@@ -37,9 +38,18 @@ export class HttpLKRPDataSource implements LKRPDataSource {
     }));
   }
 
-  async getTrustchainById() {
-    return Promise.resolve(
-      Left(new LKRPHttpRequestError("Method not implemented.")),
+  async getTrustchainById(id: string, jwt: JWT) {
+    const response = await this.request<{ [path: string]: string }>(
+      `/trustchain/${id}`,
+      Just(jwt),
+    );
+    return response.map((serialized) =>
+      Object.fromEntries(
+        Object.entries(serialized).map(([path, stream]) => [
+          path,
+          LKRPBlockStream.fromHex(stream),
+        ]),
+      ),
     );
   }
 
