@@ -17,9 +17,15 @@ export class EthersTransactionMapperService
   ): Either<Error, TransactionMapperResult> {
     try {
       const tx = ethers.Transaction.from(bufferToHexaString(transaction));
+      const chainId = Number(tx.chainId.toString());
+
+      if (chainId <= 0) {
+        return Left(new Error("Pre-EIP-155 transactions are not supported"));
+      }
+
       return Right({
         subset: {
-          chainId: Number(tx.chainId.toString()),
+          chainId,
           to: tx.to ?? undefined,
           data: tx.data,
         },

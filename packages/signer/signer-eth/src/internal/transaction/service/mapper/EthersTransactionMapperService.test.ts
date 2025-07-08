@@ -126,4 +126,22 @@ describe("RawTransactionMapper", () => {
     });
     expect(type).toEqual(1);
   });
+
+  it("should return a Left when the chainId is 0", () => {
+    // GIVEN
+    const transaction = hexaStringToBuffer(
+      Transaction.from({
+        chainId: 0,
+      }).unsignedSerialized,
+    )!;
+
+    // WHEN
+    const result = mapper.mapTransactionToSubset(transaction);
+
+    // THEN
+    expect(result.isLeft()).toBeTruthy();
+    expect(result.extract()).toEqual(
+      new Error("Pre-EIP-155 transactions are not supported"),
+    );
+  });
 });
