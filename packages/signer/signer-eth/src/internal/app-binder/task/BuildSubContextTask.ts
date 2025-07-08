@@ -8,14 +8,11 @@ import {
 } from "@ledgerhq/context-module";
 import {
   bufferToHexaString,
-  type CommandErrorResult,
   type InternalApi,
   isSuccessCommandResult,
 } from "@ledgerhq/device-management-kit";
-import { type Either, Right } from "purify-ts";
 
 import { GetChallengeCommand } from "@internal/app-binder/command/GetChallengeCommand";
-import { type EthErrorCodes } from "@internal/app-binder/command/utils/ethAppErrors";
 import { type TransactionParserService } from "@internal/transaction/service/parser/TransactionParserService";
 
 export type BuildSubContextTaskArgs = {
@@ -27,12 +24,7 @@ export type BuildSubContextTaskArgs = {
   readonly chainId: number;
 };
 
-export type BuildSubContextTaskErrorCodes =
-  | CommandErrorResult<EthErrorCodes>
-  | Error;
-
 export type BuildSubContextTaskResult = {
-  context: ClearSignContextSuccess;
   subcontextCallbacks: (() => Promise<ClearSignContext>)[];
 };
 
@@ -42,7 +34,7 @@ export class BuildSubContextTask {
     private readonly args: BuildSubContextTaskArgs,
   ) {}
 
-  run(): Either<BuildSubContextTaskErrorCodes, BuildSubContextTaskResult> {
+  run(): BuildSubContextTaskResult {
     const context = this.args.context;
 
     if (
@@ -50,13 +42,11 @@ export class BuildSubContextTask {
       context.type === ClearSignContextType.ENUM ||
       context.type === ClearSignContextType.WEB3_CHECK ||
       context.type === ClearSignContextType.PLUGIN ||
-      context.type === ClearSignContextType.EXTERNAL_PLUGIN ||
-      context.type === ClearSignContextType.TRANSACTION_FIELD_DESCRIPTION
+      context.type === ClearSignContextType.EXTERNAL_PLUGIN
     ) {
-      return Right({
-        context,
+      return {
         subcontextCallbacks: [],
-      });
+      };
     }
 
     // if the reference is a string, it means it is a direct address
@@ -73,12 +63,11 @@ export class BuildSubContextTask {
         address: context.reference.value,
       };
 
-      return Right({
-        context,
+      return {
         subcontextCallbacks: [
           () => this.args.contextModule.getContext(transactionFieldContext),
         ],
-      });
+      };
     }
 
     // if the reference is a path, it means we need to extract the value
@@ -171,16 +160,14 @@ export class BuildSubContextTask {
           }
         }
 
-        return Right({
-          context,
+        return {
           subcontextCallbacks,
-        });
+        };
       }
     }
 
-    return Right({
-      context,
+    return {
       subcontextCallbacks: [],
-    });
+    };
   }
 }

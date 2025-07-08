@@ -1,4 +1,5 @@
 import {
+  type ClearSignContext,
   type ClearSignContextSuccess,
   ClearSignContextType,
 } from "@ledgerhq/context-module";
@@ -19,6 +20,7 @@ import { ProvideEnumCommand } from "@internal/app-binder/command/ProvideEnumComm
 import { ProvideNFTInformationCommand } from "@internal/app-binder/command/ProvideNFTInformationCommand";
 import { ProvideTokenInformationCommand } from "@internal/app-binder/command/ProvideTokenInformationCommand";
 import { ProvideTransactionFieldDescriptionCommand } from "@internal/app-binder/command/ProvideTransactionFieldDescriptionCommand";
+import { ProvideTransactionInformationCommand } from "@internal/app-binder/command/ProvideTransactionInformationCommand";
 import { ProvideTrustedNameCommand } from "@internal/app-binder/command/ProvideTrustedNameCommand";
 import { ProvideWeb3CheckCommand } from "@internal/app-binder/command/ProvideWeb3CheckCommand";
 import { SetExternalPluginCommand } from "@internal/app-binder/command/SetExternalPluginCommand";
@@ -43,7 +45,7 @@ export type ProvideTransactionContextTaskArgs = {
   /**
    * The subcontexts callbacks to provide.
    */
-  subcontextsCallbacks: (() => Promise<ClearSignContextSuccess>)[];
+  subcontextsCallbacks: (() => Promise<ClearSignContext>)[];
   /**
    * The serialized transaction to provide.
    */
@@ -75,6 +77,12 @@ export class ProvideTransactionContextTask {
   async run(): Promise<Either<CommandErrorResult<EthErrorCodes>, void>> {
     for (const callback of this._args.subcontextsCallbacks) {
       const subcontext = await callback();
+
+      if (subcontext.type === ClearSignContextType.ERROR) {
+        // silently ignore error subcontexts
+        continue;
+      }
+
       const res = await this.provideContext(subcontext);
       if (!isSuccessCommandResult(res)) {
         return Left(res);
@@ -101,7 +109,7 @@ export class ProvideTransactionContextTask {
     certificate,
   }: ClearSignContextSuccess): Promise<CommandResult<unknown, EthErrorCodes>> {
     // if a certificate is provided, we load it before sending the command
-    if (certificate) {
+    if (certificate && type !== ClearSignContextType.TRANSACTION_INFO) {
       await this._api.sendCommand(
         new LoadCertificateCommand({
           keyUsage: certificate.keyUsageNumber,
@@ -137,16 +145,36 @@ export class ProvideTransactionContextTask {
           builder.add32BitUIntToData(path);
         });
         builder.addBufferToData(this._args.serializedTransaction);
-        const task = this._sendCommandInChunksTaskFactory(this._api, {
+        await this._sendCommandInChunksTaskFactory(this._api, {
           data: builder.build(),
           commandFactory: (args) =>
             new StoreTransactionCommand({
               serializedTransaction: args.chunkedData,
               isFirstChunk: args.isFirstChunk,
             }),
-        });
-        const result = await task.run();
-        return result;
+        }).run();
+
+        // TODO: What happens if the certificate is not provided?
+        if (certificate) {
+          await this._api.sendCommand(
+            new LoadCertificateCommand({
+              keyUsage: certificate.keyUsageNumber,
+              certificate: certificate.payload,
+            }),
+          );
+        }
+
+        const transactionInfoResult =
+          await this._sendPayloadInChunksTaskFactory(this._api, {
+            payload: this._args.context.payload,
+            commandFactory: (args) =>
+              new ProvideTransactionInformationCommand({
+                data: args.chunkedData,
+                isFirstChunk: args.isFirstChunk,
+              }),
+          }).run();
+
+        return transactionInfoResult;
       }
       case ClearSignContextType.TRUSTED_NAME: {
         return this._sendPayloadInChunksTaskFactory(this._api, {

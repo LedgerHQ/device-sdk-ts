@@ -16,6 +16,7 @@ import { Transaction } from "ethers";
 import { Left, Right } from "purify-ts";
 
 import type { GetConfigCommandResponse } from "@api/app-binder/GetConfigCommandTypes";
+import { ClearSigningType } from "@api/model/ClearSigningType";
 import { makeDeviceActionInternalApiMock } from "@internal/app-binder/device-action/__test-utils__/makeInternalApi";
 import { type TransactionMapperResult } from "@internal/transaction/service/mapper/model/TransactionMapperResult";
 import { type TransactionMapperService } from "@internal/transaction/service/mapper/TransactionMapperService";
@@ -24,6 +25,7 @@ import {
   BuildTransactionContextTask,
   type BuildTransactionContextTaskArgs,
 } from "./BuildTransactionContextTask";
+import { GetWeb3CheckTask } from "./GetWeb3CheckTask";
 
 describe("BuildTransactionContextTask", () => {
   const contextModuleMock = {
@@ -85,6 +87,22 @@ describe("BuildTransactionContextTask", () => {
     };
   });
 
+  it("should init with a default GetWeb3CheckTaskFactory", () => {
+    // GIVEN
+    const task = new BuildTransactionContextTask(apiMock, defaultArgs);
+
+    // THEN
+    expect(task["getWeb3ChecksFactory"]).toBeDefined();
+    expect(
+      task["getWeb3ChecksFactory"](apiMock, {
+        contextModule: defaultArgs.contextModule,
+        derivationPath: defaultArgs.derivationPath,
+        mapper: defaultArgs.mapper,
+        transaction: defaultArgs.transaction,
+      }),
+    ).toBeInstanceOf(GetWeb3CheckTask);
+  });
+
   it("should build the transaction context without clear sign contexts", async () => {
     // GIVEN
     const serializedTransaction = new Uint8Array([0x01, 0x02, 0x03]);
@@ -120,6 +138,7 @@ describe("BuildTransactionContextTask", () => {
       serializedTransaction,
       chainId: 1,
       transactionType: 0,
+      clearSigningType: ClearSigningType.BASIC,
     });
   });
 
@@ -163,6 +182,7 @@ describe("BuildTransactionContextTask", () => {
       serializedTransaction,
       chainId: 1,
       transactionType: 0,
+      clearSigningType: ClearSigningType.BASIC,
     });
   });
 
@@ -231,6 +251,7 @@ describe("BuildTransactionContextTask", () => {
       serializedTransaction,
       chainId: 1,
       transactionType: 2,
+      clearSigningType: ClearSigningType.EIP7730,
     });
   });
 
@@ -299,6 +320,7 @@ describe("BuildTransactionContextTask", () => {
       serializedTransaction,
       chainId: 1,
       transactionType: 2,
+      clearSigningType: ClearSigningType.EIP7730,
     });
   });
 
@@ -350,6 +372,7 @@ describe("BuildTransactionContextTask", () => {
       serializedTransaction,
       chainId: 1,
       transactionType: 2,
+      clearSigningType: ClearSigningType.BASIC,
     });
   });
 
@@ -412,6 +435,7 @@ describe("BuildTransactionContextTask", () => {
       serializedTransaction,
       chainId: 1,
       transactionType: 2,
+      clearSigningType: ClearSigningType.EIP7730,
     });
   });
 
@@ -669,6 +693,7 @@ describe("BuildTransactionContextTask", () => {
       serializedTransaction,
       chainId: 1,
       transactionType: 0,
+      clearSigningType: ClearSigningType.BASIC,
     });
   });
 
@@ -731,6 +756,7 @@ describe("BuildTransactionContextTask", () => {
       serializedTransaction,
       chainId: 1,
       transactionType: 0,
+      clearSigningType: ClearSigningType.BASIC,
     });
   });
 
@@ -787,6 +813,7 @@ describe("BuildTransactionContextTask", () => {
       serializedTransaction,
       chainId: 1,
       transactionType: 0,
+      clearSigningType: ClearSigningType.BASIC,
     });
   });
 
@@ -849,6 +876,7 @@ describe("BuildTransactionContextTask", () => {
       serializedTransaction,
       chainId: 1,
       transactionType: 2,
+      clearSigningType: ClearSigningType.EIP7730,
     });
   });
 
@@ -907,6 +935,7 @@ describe("BuildTransactionContextTask", () => {
       serializedTransaction,
       chainId: 1,
       transactionType: 2,
+      clearSigningType: ClearSigningType.BASIC,
     });
   });
 
@@ -965,6 +994,7 @@ describe("BuildTransactionContextTask", () => {
       serializedTransaction,
       chainId: 1,
       transactionType: 2,
+      clearSigningType: ClearSigningType.BASIC,
     });
   });
 
@@ -1020,6 +1050,7 @@ describe("BuildTransactionContextTask", () => {
       serializedTransaction,
       chainId: 1,
       transactionType: 2,
+      clearSigningType: ClearSigningType.BASIC,
     });
   });
 
@@ -1072,6 +1103,7 @@ describe("BuildTransactionContextTask", () => {
       serializedTransaction,
       chainId: 1,
       transactionType: 2,
+      clearSigningType: ClearSigningType.BASIC,
     });
   });
 });

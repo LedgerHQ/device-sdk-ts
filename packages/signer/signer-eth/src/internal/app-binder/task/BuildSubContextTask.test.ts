@@ -70,10 +70,7 @@ describe("BuildSubContextTask", () => {
         const result = new BuildSubContextTask(apiMock, args).run();
 
         // THEN
-        expect(result.isRight()).toBe(true);
-        const extracted = result.unsafeCoerce();
-        expect(extracted.context).toEqual(context);
-        expect(extracted.subcontextCallbacks).toHaveLength(0);
+        expect(result.subcontextCallbacks).toHaveLength(0);
       },
     );
   });
@@ -100,29 +97,22 @@ describe("BuildSubContextTask", () => {
       const result = new BuildSubContextTask(apiMock, args).run();
 
       // THEN
-      expect(result.isRight()).toBe(true);
-      const extracted = result.unsafeCoerce();
-      expect(extracted.context).toEqual(context);
-      expect(extracted.subcontextCallbacks).toHaveLength(1);
+      expect(result.subcontextCallbacks).toHaveLength(1);
 
       // Verify the callback calls getContext with correct parameters
-      expect(extracted.subcontextCallbacks).toHaveLength(1);
-      const callback = extracted.subcontextCallbacks[0]!;
+      const callback = result.subcontextCallbacks[0]!;
       await callback();
       expect(contextModuleMock.getContext).toHaveBeenCalledWith(
         expectedContext,
       );
     });
 
-    it.skip("should handle undefined value in reference", () => {
+    it("should handle undefined value in reference", () => {
       // GIVEN
       const context: ClearSignContextSuccess = {
         type: ClearSignContextType.TOKEN,
         payload: "test payload",
-        reference: {
-          type: ClearSignContextType.TOKEN,
-          valuePath: [{ type: "TUPLE", offset: 0 }],
-        },
+        reference: undefined as unknown as ClearSignContextReference,
       };
       const args = { ...defaultArgs, context };
 
@@ -130,10 +120,7 @@ describe("BuildSubContextTask", () => {
       const result = new BuildSubContextTask(apiMock, args).run();
 
       // THEN
-      expect(result.isRight()).toBe(true);
-      const extracted = result.unsafeCoerce();
-      expect(extracted.context).toEqual(context);
-      expect(extracted.subcontextCallbacks).toHaveLength(0);
+      expect(result.subcontextCallbacks).toHaveLength(0);
     });
   });
 
@@ -164,10 +151,7 @@ describe("BuildSubContextTask", () => {
         const result = new BuildSubContextTask(apiMock, args).run();
 
         // THEN
-        expect(result.isRight()).toBe(true);
-        const extracted = result.unsafeCoerce();
-        expect(extracted.context).toEqual(context);
-        expect(extracted.subcontextCallbacks).toHaveLength(0);
+        expect(result.subcontextCallbacks).toHaveLength(0);
       });
     });
 
@@ -219,11 +203,8 @@ describe("BuildSubContextTask", () => {
           const result = new BuildSubContextTask(apiMock, args).run();
 
           // THEN
-          expect(result.isRight()).toBe(true);
-          const extracted = result.unsafeCoerce();
-          expect(extracted.context).toEqual(context);
-          expect(extracted.subcontextCallbacks).toHaveLength(1);
-          const callback = extracted.subcontextCallbacks[0]!;
+          expect(result.subcontextCallbacks).toHaveLength(1);
+          const callback = result.subcontextCallbacks[0]!;
           const callbackResult = await callback();
           expect(callbackResult).toEqual(enumContext2);
         });
@@ -277,12 +258,9 @@ describe("BuildSubContextTask", () => {
           const result = new BuildSubContextTask(apiMock, args).run();
 
           // THEN
-          expect(result.isRight()).toBe(true);
-          const extracted = result.unsafeCoerce();
-          expect(extracted.context).toEqual(context);
-          expect(extracted.subcontextCallbacks).toHaveLength(2);
-          const callback1 = extracted.subcontextCallbacks[0]!;
-          const callback2 = extracted.subcontextCallbacks[1]!;
+          expect(result.subcontextCallbacks).toHaveLength(2);
+          const callback1 = result.subcontextCallbacks[0]!;
+          const callback2 = result.subcontextCallbacks[1]!;
           const callbackResult1 = await callback1();
           const callbackResult2 = await callback2();
           expect(callbackResult1).toEqual(enumContext2);
@@ -310,10 +288,7 @@ describe("BuildSubContextTask", () => {
           const result = new BuildSubContextTask(apiMock, args).run();
 
           // THEN
-          expect(result.isRight()).toBe(true);
-          const extracted = result.unsafeCoerce();
-          expect(extracted.context).toEqual(context);
-          expect(extracted.subcontextCallbacks).toHaveLength(0);
+          expect(result.subcontextCallbacks).toHaveLength(0);
         });
 
         it("should skip when no matching enum context found", () => {
@@ -347,10 +322,7 @@ describe("BuildSubContextTask", () => {
           const result = new BuildSubContextTask(apiMock, args).run();
 
           // THEN
-          expect(result.isRight()).toBe(true);
-          const extracted = result.unsafeCoerce();
-          expect(extracted.context).toEqual(context);
-          expect(extracted.subcontextCallbacks).toHaveLength(0);
+          expect(result.subcontextCallbacks).toHaveLength(0);
         });
       });
 
@@ -384,13 +356,8 @@ describe("BuildSubContextTask", () => {
           const result = new BuildSubContextTask(apiMock, args).run();
 
           // THEN
-          expect(result.isRight()).toBe(true);
-          const extracted = result.unsafeCoerce();
-          expect(extracted.context).toEqual(context);
-
-          // Verify the callback calls getContext with correct parameters
-          expect(extracted.subcontextCallbacks).toHaveLength(1);
-          const callback = extracted.subcontextCallbacks[0]!;
+          expect(result.subcontextCallbacks).toHaveLength(1);
+          const callback = result.subcontextCallbacks[0]!;
           const callbackResult = await callback();
           expect(callbackResult).toEqual({
             type: ClearSignContextType.TOKEN,
@@ -434,13 +401,8 @@ describe("BuildSubContextTask", () => {
           const result = new BuildSubContextTask(apiMock, args).run();
 
           // THEN
-          expect(result.isRight()).toBe(true);
-          const extracted = result.unsafeCoerce();
-          expect(extracted.context).toEqual(context);
-
-          // Verify the callback calls getContext with correct parameters
-          expect(extracted.subcontextCallbacks).toHaveLength(1);
-          const callback = extracted.subcontextCallbacks[0]!;
+          expect(result.subcontextCallbacks).toHaveLength(1);
+          const callback = result.subcontextCallbacks[0]!;
           const callbackResult = await callback();
           expect(callbackResult).toEqual({
             type: ClearSignContextType.NFT,
@@ -486,14 +448,8 @@ describe("BuildSubContextTask", () => {
           const result = new BuildSubContextTask(apiMock, args).run();
 
           // THEN
-          expect(result.isRight()).toBe(true);
-          const extracted = result.unsafeCoerce();
-          expect(extracted.context).toEqual(context);
-          expect(extracted.subcontextCallbacks).toHaveLength(1);
-
-          // Verify the callback calls sendCommand and getContext with correct parameters
-          expect(extracted.subcontextCallbacks).toHaveLength(1);
-          const callback = extracted.subcontextCallbacks[0]!;
+          expect(result.subcontextCallbacks).toHaveLength(1);
+          const callback = result.subcontextCallbacks[0]!;
           const callbackResult = await callback();
           expect(callbackResult).toEqual({
             type: ClearSignContextType.TRUSTED_NAME,
@@ -545,11 +501,8 @@ describe("BuildSubContextTask", () => {
           const result = new BuildSubContextTask(apiMock, args).run();
 
           // THEN
-          expect(result.isRight()).toBe(true);
-          const extracted = result.unsafeCoerce();
-          expect(extracted.context).toEqual(context);
-          expect(extracted.subcontextCallbacks).toHaveLength(1);
-          const callback = extracted.subcontextCallbacks[0]!;
+          expect(result.subcontextCallbacks).toHaveLength(1);
+          const callback = result.subcontextCallbacks[0]!;
           const callbackResult = await callback();
           expect(callbackResult).toEqual({
             error: new Error("Failed to get challenge"),
@@ -596,14 +549,9 @@ describe("BuildSubContextTask", () => {
           const result = new BuildSubContextTask(apiMock, args).run();
 
           // THEN
-          expect(result.isRight()).toBe(true);
-          const extracted = result.unsafeCoerce();
-          expect(extracted.context).toEqual(context);
-          expect(extracted.subcontextCallbacks).toHaveLength(2);
-
-          // Verify both callbacks call getContext with correct parameters
-          const callback1 = extracted.subcontextCallbacks[0]!;
-          const callback2 = extracted.subcontextCallbacks[1]!;
+          expect(result.subcontextCallbacks).toHaveLength(2);
+          const callback1 = result.subcontextCallbacks[0]!;
+          const callback2 = result.subcontextCallbacks[1]!;
           const callbackResult1 = await callback1();
           const callbackResult2 = await callback2();
           expect(callbackResult1).toEqual({
@@ -643,10 +591,7 @@ describe("BuildSubContextTask", () => {
       const result = new BuildSubContextTask(apiMock, args).run();
 
       // THEN
-      expect(result.isRight()).toBe(true);
-      const extracted = result.unsafeCoerce();
-      expect(extracted.context).toEqual(context);
-      expect(extracted.subcontextCallbacks).toHaveLength(0);
+      expect(result.subcontextCallbacks).toHaveLength(0);
     });
   });
 
@@ -666,10 +611,7 @@ describe("BuildSubContextTask", () => {
       const result = new BuildSubContextTask(apiMock, args).run();
 
       // THEN
-      expect(result.isRight()).toBe(true);
-      const extracted = result.unsafeCoerce();
-      expect(extracted.context).toEqual(context);
-      expect(extracted.subcontextCallbacks).toHaveLength(0);
+      expect(result.subcontextCallbacks).toHaveLength(0);
     });
   });
 
@@ -698,12 +640,8 @@ describe("BuildSubContextTask", () => {
       const result = new BuildSubContextTask(apiMock, args).run();
 
       // THEN
-      expect(result.isRight()).toBe(true);
-      const extracted = result.unsafeCoerce();
-      expect(extracted.context).toEqual(context);
-      expect(extracted.subcontextCallbacks).toHaveLength(1);
-
-      const callback = extracted.subcontextCallbacks[0]!;
+      expect(result.subcontextCallbacks).toHaveLength(1);
+      const callback = result.subcontextCallbacks[0]!;
       const callbackResult = await callback();
       expect(callbackResult).toEqual({
         type: ClearSignContextType.ERROR,
@@ -740,13 +678,10 @@ describe("BuildSubContextTask", () => {
       const result = new BuildSubContextTask(apiMock, args).run();
 
       // THEN
-      expect(result.isRight()).toBe(true);
-      const extracted = result.unsafeCoerce();
-      expect(extracted.context).toEqual(context);
-      expect(extracted.subcontextCallbacks).toHaveLength(1);
+      expect(result.subcontextCallbacks).toHaveLength(1);
 
       // Verify the callback calls getContext with empty address
-      const callback = extracted.subcontextCallbacks[0]!;
+      const callback = result.subcontextCallbacks[0]!;
       const callbackResult = await callback();
       expect(callbackResult).toEqual({
         type: ClearSignContextType.TOKEN,

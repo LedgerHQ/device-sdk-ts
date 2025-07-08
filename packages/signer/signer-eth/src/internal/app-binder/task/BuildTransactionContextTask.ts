@@ -12,6 +12,7 @@ import {
 } from "@ledgerhq/device-management-kit";
 
 import { type GetConfigCommandResponse } from "@api/app-binder/GetConfigCommandTypes";
+import { ClearSigningType } from "@api/model/ClearSigningType";
 import { type TransactionOptions } from "@api/model/TransactionOptions";
 import { type TransactionType } from "@api/model/TransactionType";
 import { GetChallengeCommand } from "@internal/app-binder/command/GetChallengeCommand";
@@ -28,6 +29,7 @@ export type BuildTransactionTaskResult = {
   readonly serializedTransaction: Uint8Array;
   readonly chainId: number;
   readonly transactionType: TransactionType;
+  readonly clearSigningType: ClearSigningType;
 };
 
 export type BuildTransactionContextTaskArgs = {
@@ -61,6 +63,7 @@ export class BuildTransactionContextTask {
     const deviceState = this._api.getDeviceSessionState();
     let filteredContexts: ClearSignContextSuccess[] = [];
     let filteredContextOptional: ClearSignContextSuccess[] = [];
+    let clearSigningType: ClearSigningType = ClearSigningType.BASIC;
 
     // Parse transaction
     const parsed = mapper.mapTransactionToSubset(transaction);
@@ -152,6 +155,7 @@ export class BuildTransactionContextTask {
         ...(web3Check ? [web3Check] : []),
       ];
       filteredContextOptional = [...transactionEnums];
+      clearSigningType = ClearSigningType.EIP7730;
     }
 
     return {
@@ -160,6 +164,7 @@ export class BuildTransactionContextTask {
       serializedTransaction,
       chainId: subset.chainId,
       transactionType: type,
+      clearSigningType,
     };
   }
 
