@@ -9,7 +9,7 @@ import { useDeviceSessionsContext } from "@/providers/DeviceSessionsProvider";
  * If there is no selected sessionId, it renders a message and a button to go to the home page.
  */
 export const SessionIdWrapper: React.FC<{
-  ChildComponent: React.ComponentType<{ sessionId: string }>;
+  ChildComponent: React.FC<{ sessionId: string }>;
 }> = ({ ChildComponent }) => {
   const {
     state: { selectedId: sessionId },
