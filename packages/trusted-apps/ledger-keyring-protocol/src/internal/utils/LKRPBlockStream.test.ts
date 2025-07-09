@@ -1,4 +1,4 @@
-import { Left, Right } from "purify-ts";
+import { Just, Left, Right } from "purify-ts";
 
 import { LKRPParsingError } from "@api/app-binder/Errors";
 
@@ -176,6 +176,19 @@ describe("LKRPBlockStream", () => {
       // THEN
       expect(wrongBlock1).toBe(false);
       expect(wrongBlock2).toBe(false);
+    });
+  });
+
+  describe("getPath", () => {
+    it("should return the path of the block stream", () => {
+      // GIVEN
+      const stream = LKRPBlockStream.fromHex(mockedHex);
+
+      // WHEN
+      const path = stream.getPath();
+
+      // THEN
+      expect(path).toEqual(Just("m/0'/16'/0'"));
     });
   });
 });

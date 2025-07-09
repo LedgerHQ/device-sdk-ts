@@ -1,9 +1,11 @@
 import { inject, injectable } from "inversify";
-import { Either, Left, Maybe, Nothing, Right } from "purify-ts";
+import { Either, Just, Left, Maybe, Nothing, Right } from "purify-ts";
 
 import { LKRPHttpRequestError } from "@api/app-binder/Errors";
 import { JWT } from "@api/app-binder/LKRPTypes";
 import { lkrpDatasourceTypes } from "@internal/lkrp-datasource/di/lkrpDatasourceTypes";
+import { LKRPBlock } from "@internal/utils/LKRPBlock";
+import { LKRPBlockStream } from "@internal/utils/LKRPBlockStream";
 
 import {
   AuthenticationPayload,
@@ -37,22 +39,33 @@ export class HttpLKRPDataSource implements LKRPDataSource {
     }));
   }
 
-  async getTrustchainById() {
-    return Promise.resolve(
-      Left(new LKRPHttpRequestError("Method not implemented.")),
+  async getTrustchainById(id: string, jwt: JWT) {
+    const response = await this.request<{ [path: string]: string }>(
+      `/trustchain/${id}`,
+      Just(jwt),
+    );
+    return response.map((serialized) =>
+      Object.fromEntries(
+        Object.entries(serialized).map(([path, stream]) => [
+          path,
+          LKRPBlockStream.fromHex(stream),
+        ]),
+      ),
     );
   }
 
-  async postDerivation() {
-    return Promise.resolve(
-      Left(new LKRPHttpRequestError("Method not implemented.")),
-    );
+  async postDerivation(id: string, stream: LKRPBlockStream, jwt: JWT) {
+    return this.request<void>(`/trustchain/${id}/derivation`, Just(jwt), {
+      method: "POST",
+      body: JSON.stringify(stream.toString()),
+    });
   }
 
-  async putCommands() {
-    return Promise.resolve(
-      Left(new LKRPHttpRequestError("Method not implemented.")),
-    );
+  async putCommands(id: string, path: string, block: LKRPBlock, jwt: JWT) {
+    return this.request<void>(`/trustchain/${id}/commands`, Just(jwt), {
+      method: "PUT",
+      body: JSON.stringify({ path, blocks: [block.toString()] }),
+    });
   }
 
   private async request<Res>(
@@ -82,8 +95,8 @@ export class HttpLKRPDataSource implements LKRPDataSource {
           ),
         );
       }
-      const data: Res = (await response.json()) as Res;
-      return Promise.resolve(Right(data));
+      if (response.status === 204) return Right(undefined as Res);
+      return Right((await response.json()) as Res);
     } catch (error) {
       if (error instanceof Error) {
         return Promise.resolve(Left(new LKRPHttpRequestError(error)));

@@ -23,6 +23,7 @@ export interface LKRPDataSource {
   postDerivation(
     id: string,
     stream: LKRPBlockStream,
+    jwt: JWT,
   ): Promise<Either<LKRPHttpRequestError, void>>;
 
   putCommands(
