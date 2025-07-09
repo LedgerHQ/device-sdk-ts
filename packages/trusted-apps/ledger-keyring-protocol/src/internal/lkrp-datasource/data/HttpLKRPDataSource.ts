@@ -4,6 +4,7 @@ import { Either, Just, Left, Maybe, Nothing, Right } from "purify-ts";
 import { LKRPHttpRequestError } from "@api/app-binder/Errors";
 import { JWT } from "@api/app-binder/LKRPTypes";
 import { lkrpDatasourceTypes } from "@internal/lkrp-datasource/di/lkrpDatasourceTypes";
+import { LKRPBlock } from "@internal/utils/LKRPBlock";
 import { LKRPBlockStream } from "@internal/utils/LKRPBlockStream";
 
 import {
@@ -60,10 +61,11 @@ export class HttpLKRPDataSource implements LKRPDataSource {
     });
   }
 
-  async putCommands() {
-    return Promise.resolve(
-      Left(new LKRPHttpRequestError("Method not implemented.")),
-    );
+  async putCommands(id: string, path: string, block: LKRPBlock, jwt: JWT) {
+    return this.request<void>(`/trustchain/${id}/commands`, Just(jwt), {
+      method: "PUT",
+      body: JSON.stringify({ path, blocks: [block.toString()] }),
+    });
   }
 
   private async request<Res>(
