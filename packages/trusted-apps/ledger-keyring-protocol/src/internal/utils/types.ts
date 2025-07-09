@@ -1,7 +1,6 @@
+import { type LKRPBlockStream } from "./LKRPBlockStream";
 import { type LKRPCommand } from "./LKRPCommand";
 import { type CommandTags } from "./TLVTags";
-
-type LKRPBlockStream = object; // TODO: Replace with actual type
 
 export type Trustchain = {
   [path: string]: LKRPBlockStream;
@@ -14,11 +13,11 @@ export type LKRPBlockData = {
   signature: Uint8Array;
 };
 
-export type LKRPCommandData = Seed | Derive | AddMember | PublishKey;
+export type LKRPCommandData = Seed | AddMember | PublishKey | Derive;
 
 type Seed = {
   type: CommandTags.Seed;
-  topic: Uint8Array | null;
+  topic: Uint8Array;
   protocolVersion: number;
   groupKey: Uint8Array;
   initializationVector: Uint8Array;

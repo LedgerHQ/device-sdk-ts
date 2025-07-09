@@ -1,19 +1,71 @@
-import { type Either, Just, type Maybe, Nothing } from "purify-ts";
+import { type Either, Just, type Maybe, Nothing, Right } from "purify-ts";
 
 import { type LKRPParsingError } from "@api/app-binder/Errors";
 
+import { derivationPathAsBytes } from "./derivationPath";
 import { bytesToHex, hexToBytes } from "./hex";
+import { TLVBuilder } from "./TLVBuilder";
 import { TLVParser } from "./TLVParser";
 import { CommandTags } from "./TLVTags";
 import { type LKRPCommandData } from "./types";
 
 export class LKRPCommand {
-  private data: Maybe<Either<LKRPParsingError, LKRPCommandData>> = Nothing;
+  private data: Maybe<Either<LKRPParsingError, LKRPCommandData>>;
 
-  constructor(private bytes: Uint8Array) {}
+  constructor(
+    private bytes: Uint8Array,
+    data?: LKRPCommandData,
+  ) {
+    this.data = data ? Just(Right(data)) : Nothing;
+  }
 
   static fromHex(hex: string): LKRPCommand {
     return new LKRPCommand(hexToBytes(hex));
+  }
+
+  static fromData(data: LKRPCommandData): LKRPCommand {
+    const tlv = new TLVBuilder();
+    switch (data.type) {
+      case CommandTags.Seed:
+        tlv
+          .addBytes(data.topic)
+          .addInt(data.protocolVersion, 2)
+          .addPublicKey(data.groupKey)
+          .addBytes(data.initializationVector)
+          .addBytes(data.encryptedXpriv)
+          .addPublicKey(data.ephemeralPublicKey);
+        break;
+
+      case CommandTags.AddMember:
+        tlv
+          .addString(data.name)
+          .addPublicKey(data.publicKey)
+          .addInt(data.permissions, 4);
+        break;
+
+      case CommandTags.PublishKey:
+        tlv
+          .addBytes(data.initializationVector)
+          .addBytes(data.encryptedXpriv)
+          .addPublicKey(data.recipient)
+          .addPublicKey(data.ephemeralPublicKey);
+        break;
+
+      case CommandTags.Derive:
+        tlv
+          .addBytes(derivationPathAsBytes(data.path))
+          .addPublicKey(data.groupKey)
+          .addBytes(data.initializationVector)
+          .addBytes(data.encryptedXpriv)
+          .addPublicKey(data.ephemeralPublicKey);
+        break;
+    }
+
+    const bytes = tlv.build();
+    return new LKRPCommand(
+      new Uint8Array([data.type, bytes.length, ...bytes]),
+      data,
+    );
   }
 
   toString(): string {
