@@ -38,40 +38,17 @@ export class GetSeedIdCommand
 
   constructor(private readonly args: GetSeedIdCommandArgs) {}
   getApdu(): Apdu {
-    // NOTE: Do we want to get every single field here?
-    // Or should we just get an already formatted Uint8Array?
-    const {
-      structureType,
-      version,
-      challenge,
-      signerAlgo,
-      derSignature,
-      validUntil,
-      trustedName,
-      pubKeyCurve,
-      pubKey,
-      protocolVersion,
-    } = this.args;
+    const { challengeTLV } = this.args;
     const getSeedIdArgs: ApduBuilderArgs = {
       cla: 0xe0,
-      ins: 0x03,
+      ins: 0x05,
       p1: 0x00,
       p2: 0x00,
     };
 
-    const builder = new ApduBuilder(getSeedIdArgs);
-    builder.add8BitUIntToData(structureType);
-    builder.add8BitUIntToData(version);
-    builder.addHexaStringToData(challenge);
-    builder.add8BitUIntToData(signerAlgo);
-    builder.addHexaStringToData(derSignature);
-    builder.addHexaStringToData(validUntil);
-    builder.addHexaStringToData(trustedName);
-    builder.add8BitUIntToData(pubKeyCurve);
-    builder.addHexaStringToData(pubKey);
-    builder.add32BitUIntToData(protocolVersion);
-
-    return builder.build();
+    return new ApduBuilder(getSeedIdArgs)
+      .addHexaStringToData(challengeTLV)
+      .build();
   }
 
   parseResponse(
@@ -156,12 +133,10 @@ export class GetSeedIdCommand
         data: {
           pubKeyHeader,
           pubKey,
-          pubKeySigLength,
           pubKeySig,
           attestationId,
           attestationHeader,
           attestationKey,
-          attestationSigLength,
           attestationSig,
         },
       });
