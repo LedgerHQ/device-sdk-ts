@@ -237,4 +237,38 @@ describe("HttpLKRPDataSource", () => {
       );
     });
   });
+
+  describe("postDerivation", () => {
+    it("should post derivation successfully", async () => {
+      // GIVEN
+      const hex = "0102030405060708090a0b0c0d0e0f";
+      const mockStream = LKRPBlockStream.fromHex(hex);
+      fetchSpy.mockResolvedValueOnce({
+        ok: true,
+        status: 204,
+      } as Response);
+
+      // WHEN
+      const dataSource = new HttpLKRPDataSource(baseUrl);
+      const result = await dataSource.postDerivation(
+        "TRUSTCHAIN_ID",
+        mockStream,
+        mockJwt,
+      );
+
+      // THEN
+      expect(fetchSpy).toHaveBeenCalledWith(
+        `${baseUrl}/trustchain/TRUSTCHAIN_ID/derivation`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${mockJwt.access_token}`,
+          },
+          body: JSON.stringify(hex),
+        },
+      );
+      expect(result).toEqual(Right(undefined));
+    });
+  });
 });

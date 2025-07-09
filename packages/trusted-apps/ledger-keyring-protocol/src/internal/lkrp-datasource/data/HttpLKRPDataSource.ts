@@ -53,10 +53,11 @@ export class HttpLKRPDataSource implements LKRPDataSource {
     );
   }
 
-  async postDerivation() {
-    return Promise.resolve(
-      Left(new LKRPHttpRequestError("Method not implemented.")),
-    );
+  async postDerivation(id: string, stream: LKRPBlockStream, jwt: JWT) {
+    return this.request<void>(`/trustchain/${id}/derivation`, Just(jwt), {
+      method: "POST",
+      body: JSON.stringify(stream.toString()),
+    });
   }
 
   async putCommands() {
@@ -92,8 +93,8 @@ export class HttpLKRPDataSource implements LKRPDataSource {
           ),
         );
       }
-      const data: Res = (await response.json()) as Res;
-      return Promise.resolve(Right(data));
+      if (response.status === 204) return Right(undefined as Res);
+      return Right((await response.json()) as Res);
     } catch (error) {
       if (error instanceof Error) {
         return Promise.resolve(Left(new LKRPHttpRequestError(error)));
