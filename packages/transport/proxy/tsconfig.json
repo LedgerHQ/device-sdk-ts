@@ -1,0 +1,17 @@
+{
+  "extends": "@ledgerhq/tsconfig-dsdk/tsconfig.sdk",
+  "compilerOptions": {
+    "baseUrl": ".",
+    "outDir": "./lib/types",
+    "module": "ES2022",
+    "target": "ES2022",
+    "moduleResolution": "bundler",
+    "emitDeclarationOnly": true,
+    "paths": {
+      "@api/*": ["./src/api/*"]
+    },
+    "resolveJsonModule": true,
+    "types": ["node", "vitest/globals", "web-bluetooth", "uuid"]
+  },
+  "include": ["src", "vitest.*.mjs"]
+}
