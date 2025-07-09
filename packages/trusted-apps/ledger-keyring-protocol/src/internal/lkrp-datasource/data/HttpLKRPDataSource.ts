@@ -11,6 +11,7 @@ import {
   Challenge,
   LKRPDataSource,
 } from "./LKRPDataSource";
+import { LKRPBlock } from "@internal/utils/LKRPBlock";
 
 @injectable()
 export class HttpLKRPDataSource implements LKRPDataSource {
@@ -60,10 +61,11 @@ export class HttpLKRPDataSource implements LKRPDataSource {
     });
   }
 
-  async putCommands() {
-    return Promise.resolve(
-      Left(new LKRPHttpRequestError("Method not implemented.")),
-    );
+  async putCommands(id: string, path: string, block: LKRPBlock, jwt: JWT) {
+    return this.request<void>(`/trustchain/${id}/commands`, Just(jwt), {
+      method: "PUT",
+      body: JSON.stringify({ path, blocks: [block.toString()] }),
+    });
   }
 
   private async request<Res>(

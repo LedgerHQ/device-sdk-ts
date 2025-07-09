@@ -4,6 +4,7 @@ import { LKRPHttpRequestError } from "@api/app-binder/Errors";
 import { LKRPBlockStream } from "@internal/utils/LKRPBlockStream";
 
 import { HttpLKRPDataSource } from "./HttpLKRPDataSource";
+import { LKRPBlock } from "@internal/utils/LKRPBlock";
 
 const mockJwt = {
   access_token: "ACCESS TOKEN",
@@ -266,6 +267,41 @@ describe("HttpLKRPDataSource", () => {
             Authorization: `Bearer ${mockJwt.access_token}`,
           },
           body: JSON.stringify(hex),
+        },
+      );
+      expect(result).toEqual(Right(undefined));
+    });
+  });
+
+  describe("putCommands", () => {
+    it("should put commands successfully", async () => {
+      // GIVEN
+      const hex = "0102030405060708090a0b0c0d0e0f";
+      const mockBlock = LKRPBlock.fromHex(hex);
+      fetchSpy.mockResolvedValueOnce({
+        ok: true,
+        status: 204,
+      } as Response);
+
+      // WHEN
+      const dataSource = new HttpLKRPDataSource(baseUrl);
+      const result = await dataSource.putCommands(
+        "TRUSTCHAIN_ID",
+        "m/0'/16'/0'",
+        mockBlock,
+        mockJwt,
+      );
+
+      // THEN
+      expect(fetchSpy).toHaveBeenCalledWith(
+        `${baseUrl}/trustchain/TRUSTCHAIN_ID/commands`,
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${mockJwt.access_token}`,
+          },
+          body: JSON.stringify({ path: "m/0'/16'/0'", blocks: [hex] }),
         },
       );
       expect(result).toEqual(Right(undefined));

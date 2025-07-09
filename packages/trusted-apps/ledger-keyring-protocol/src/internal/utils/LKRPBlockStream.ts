@@ -1,10 +1,11 @@
-import { Either, Just, type Maybe, Nothing, Right } from "purify-ts";
+import { Either, Just, Maybe, Nothing, Right } from "purify-ts";
 
 import { type LKRPParsingError } from "@api/app-binder/Errors";
 
 import { bytesToHex, hexToBytes } from "./hex";
 import { LKRPBlock } from "./LKRPBlock";
 import { TLVParser } from "./TLVParser";
+import { CommandTags } from "./TLVTags";
 import { type LKRPBlockData } from "./types";
 
 export class LKRPBlockStream {
@@ -112,5 +113,24 @@ export class LKRPBlockStream {
 
       return validation;
     });
+  }
+
+  getPath(): Maybe<string> {
+    return this.parse()
+      .toMaybe()
+      .chain((blocks) => Maybe.fromNullable(blocks[0]))
+      .chain((block) => block.parse().toMaybe())
+      .chain(({ commands }) => Maybe.fromNullable(commands[0]))
+      .chain((command) => command.parse().toMaybe())
+      .chain((data) => {
+        switch (data.type) {
+          case CommandTags.Derive:
+            return Just(data.path);
+          case CommandTags.Seed:
+            return Just("m/0'");
+          default:
+            return Nothing;
+        }
+      });
   }
 }
