@@ -13,3 +13,10 @@ export class LKRPParsingError extends GeneralDmkError {
     super(err);
   }
 }
+
+export class LKRPMissingDataError extends GeneralDmkError {
+  override readonly _tag = "LKRPMissingDataError";
+  constructor(readonly err?: unknown) {
+    super(err);
+  }
+}

@@ -1,5 +1,11 @@
 import { type ExecuteDeviceActionReturnType } from "@ledgerhq/device-management-kit";
+import { type Either } from "purify-ts";
 
+import {
+  type LKRPHttpRequestError,
+  type LKRPMissingDataError,
+  type LKRPParsingError,
+} from "./Errors";
 import { type JWT, type Keypair } from "./LKRPTypes";
 
 export type AuthenticateDAReturnType = ExecuteDeviceActionReturnType<
@@ -22,12 +28,21 @@ export type AuthenticateDAOutput = {
   readonly encryptionKey: Uint8Array | null;
 };
 
-export type AuthenticateDAError = {
-  readonly _tag: string;
-  readonly originalError?: unknown;
-  message?: string;
-};
+export type AuthenticateDAError =
+  | LKRPHttpRequestError
+  | LKRPParsingError
+  | LKRPMissingDataError;
 
 export type AuthenticateDAIntermediateValue = {
   readonly requiredUserInteraction: string;
 };
+
+export type AuthenticateDAInternalState = Either<
+  AuthenticateDAError,
+  {
+    readonly trustchainId: string | null;
+    readonly jwt: JWT | null;
+    readonly applicationPath: string | null;
+    readonly encryptionKey: Uint8Array | null;
+  }
+>;
