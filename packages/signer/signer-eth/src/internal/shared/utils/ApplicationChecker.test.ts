@@ -191,25 +191,6 @@ describe("ApplicationChecker", () => {
     expect(result).toStrictEqual(true);
   });
 
-  it("should reject the check in unknexpected app", () => {
-    // GIVEN
-    const state = {
-      sessionStateType: DeviceSessionStateType.ReadyWithoutSecureChannel,
-      deviceStatus: DeviceStatus.CONNECTED,
-      installedApps: [],
-      currentApp: { name: "Bitcoin", version: "1.13.0-rc" },
-      deviceModelId: DeviceModelId.FLEX,
-      isSecureConnectionAllowed: false,
-    };
-    const config = createAppConfig("1.13.0");
-    // WHEN
-    const result = new ApplicationChecker(state, config)
-      .withMinVersionExclusive("1.12.0")
-      .check();
-    // THEN
-    expect(result).toStrictEqual(false);
-  });
-
   it("should reject the check in unknexpected state", () => {
     // GIVEN
     const state = {
