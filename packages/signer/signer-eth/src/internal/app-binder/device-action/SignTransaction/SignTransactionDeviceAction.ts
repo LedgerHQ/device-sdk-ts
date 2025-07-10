@@ -40,7 +40,6 @@ import {
   Web3CheckOptInCommand,
   type Web3CheckOptInCommandResponse,
 } from "@internal/app-binder/command/Web3CheckOptInCommand";
-import { ETHEREUM_PLUGINS } from "@internal/app-binder/constant/plugins";
 import {
   BuildTransactionContextTask,
   type BuildTransactionContextTaskArgs,
@@ -222,7 +221,6 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
             id: "openAppStateMachine",
             input: {
               appName: "Ethereum",
-              compatibleAppNames: ETHEREUM_PLUGINS,
             },
             src: "openAppStateMachine",
             onSnapshot: {
