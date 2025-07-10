@@ -32,7 +32,6 @@ import {
   Web3CheckOptInCommand,
   type Web3CheckOptInCommandResponse,
 } from "@internal/app-binder/command/Web3CheckOptInCommand";
-import { ETHEREUM_PLUGINS } from "@internal/app-binder/constant/plugins";
 import { BuildEIP712ContextTask } from "@internal/app-binder/task/BuildEIP712ContextTask";
 import {
   ProvideEIP712ContextTask,
@@ -190,7 +189,6 @@ export class SignTypedDataDeviceAction extends XStateDeviceAction<
             id: "openAppStateMachine",
             input: {
               appName: "Ethereum",
-              compatibleAppNames: ETHEREUM_PLUGINS,
             },
             src: "openAppStateMachine",
             onSnapshot: {
