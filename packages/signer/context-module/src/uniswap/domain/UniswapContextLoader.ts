@@ -42,7 +42,7 @@ export class UniswapContextLoader implements ContextLoader {
   ) {}
 
   async load(transaction: TransactionContext): Promise<ClearSignContext[]> {
-    if (!transaction.data || !isHexaString(transaction.data)) {
+    if (!isHexaString(transaction.data)) {
       return [];
     }
 

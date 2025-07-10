@@ -43,7 +43,7 @@ export class NftContextLoader implements ContextLoader {
   async load(transaction: TransactionContext): Promise<ClearSignContext[]> {
     const responses: ClearSignContext[] = [];
 
-    if (!transaction.to || !transaction.data || transaction.data === "0x") {
+    if (!transaction.to || transaction.data === "0x") {
       return [];
     }
 

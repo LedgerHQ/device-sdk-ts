@@ -32,17 +32,6 @@ describe("NftContextLoader", () => {
       expect(result).toEqual([]);
     });
 
-    it("should return an empty array if undefined data", async () => {
-      const transaction = {
-        to: "0xdAC17F958D2ee523a2206206994597C13D831ec7",
-        data: undefined,
-      } as unknown as TransactionContext;
-
-      const result = await loader.load(transaction);
-
-      expect(result).toEqual([]);
-    });
-
     it("should return an empty array if empty data", async () => {
       const transaction = {
         to: "0xdAC17F958D2ee523a2206206994597C13D831ec7",
