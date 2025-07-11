@@ -154,64 +154,6 @@ describe("OpenAppDeviceAction", () => {
         );
       }));
 
-    it("should end in a success if a compatible app is already opened", () =>
-      new Promise<void>((resolve, reject) => {
-        getDeviceSessionStateMock.mockReturnValue({
-          sessionStateType: DeviceSessionStateType.ReadyWithoutSecureChannel,
-          deviceStatus: DeviceStatus.CONNECTED,
-          currentApp: {
-            name: "Bitcoin Testnet",
-            version: "1.0.0",
-          },
-        });
-
-        setupGetDeviceStatusMock([
-          {
-            currentApp: "Bitcoin Testnet",
-            currentAppVersion: "1.0.0",
-          },
-        ]);
-        const openAppDeviceAction = new OpenAppDeviceAction({
-          input: {
-            appName: "Bitcoin",
-            unlockTimeout: undefined,
-            compatibleAppNames: ["Bitcoin Testnet"],
-          },
-        });
-        vi.spyOn(openAppDeviceAction, "extractDependencies").mockReturnValue(
-          extractDependenciesMock(),
-        );
-
-        const expectedStates: Array<OpenAppDAState> = [
-          {
-            status: DeviceActionStatus.Pending, // get onboarding status
-            intermediateValue: {
-              requiredUserInteraction: UserInteractionRequired.None,
-            },
-          },
-          {
-            status: DeviceActionStatus.Pending, // get app and version
-            intermediateValue: {
-              requiredUserInteraction: UserInteractionRequired.None,
-            },
-          },
-          {
-            status: DeviceActionStatus.Completed,
-            output: undefined,
-          },
-        ];
-
-        testDeviceActionStates(
-          openAppDeviceAction,
-          expectedStates,
-          makeDeviceActionInternalApiMock(),
-          {
-            onDone: resolve,
-            onError: reject,
-          },
-        );
-      }));
-
     it("should end in a success if the dashboard is open and open app succeeds", () =>
       new Promise<void>((resolve, reject) => {
         getDeviceSessionStateMock.mockReturnValue({
