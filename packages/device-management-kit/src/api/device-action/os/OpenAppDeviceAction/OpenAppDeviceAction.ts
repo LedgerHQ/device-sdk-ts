@@ -126,12 +126,7 @@ export class OpenAppDeviceAction extends XStateDeviceAction<
         isRequestedAppOpen: ({ context }: { context: types["context"] }) => {
           if (context._internalState.currentlyRunningApp === null) return false;
           return (
-            context._internalState.currentlyRunningApp ===
-              context.input.appName ||
-            (context.input.compatibleAppNames !== undefined &&
-              context.input.compatibleAppNames.includes(
-                context._internalState.currentlyRunningApp,
-              ))
+            context._internalState.currentlyRunningApp === context.input.appName
           );
         },
         isDashboardOpen: ({ context }: { context: types["context"] }) => {

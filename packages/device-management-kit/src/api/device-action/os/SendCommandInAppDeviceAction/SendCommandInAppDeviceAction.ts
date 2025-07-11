@@ -107,7 +107,6 @@ export class SendCommandInAppDeviceAction<
         openAppStateMachine: new OpenAppDeviceAction({
           input: {
             appName: this.input.appName,
-            compatibleAppNames: this.input.compatibleAppNames,
           },
         }).makeStateMachine(internalAPI),
       },
@@ -154,7 +153,6 @@ export class SendCommandInAppDeviceAction<
             id: "openAppStateMachine",
             input: {
               appName: this.input.appName,
-              compatibleAppNames: this.input.compatibleAppNames,
             },
             src: "openAppStateMachine",
             onSnapshot: {
