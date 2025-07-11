@@ -16,6 +16,8 @@ import {
   type GetSeedIdCommandArgs,
   type GetSeedIdCommandResponse,
 } from "@api/app-binder/GetSeedIdCommandTypes";
+import { eitherSeqRecord } from "@internal/utils/eitherSeqRecord";
+import { bytesToHex } from "@internal/utils/hex";
 
 import {
   LEDGER_SYNC_ERRORS,
@@ -59,86 +61,100 @@ export class GetSeedIdCommand
     ).orDefaultLazy(() => {
       const parser = new ApduParser(apduResponse);
 
-      const pubKeyHeader = parser.extractFieldByLength(0x04);
-      if (!pubKeyHeader) {
-        return CommandResultFactory({
-          error: new InvalidStatusWordError(`Pub key header is missing`),
-        });
-      }
+      const required = <T>(value: T | undefined, errorMsg: string) =>
+        Maybe.fromNullable(value).toEither(
+          new InvalidStatusWordError(errorMsg),
+        );
 
-      const pubKey = parser.extractFieldByLength(0x21);
+      return eitherSeqRecord({
+        credential: () =>
+          eitherSeqRecord({
+            version: () =>
+              required(parser.extract8BitUInt(), "Version is missing"),
+            curveId: () =>
+              required(parser.extract8BitUInt(), "Curve ID is missing"),
+            signAlgorithm: () =>
+              required(parser.extract8BitUInt(), "Sign algorithm is missing"),
+            publicKey: () =>
+              required(parser.extract8BitUInt(), "Public key length is missing")
+                .chain((length) =>
+                  required(
+                    parser.extractFieldByLength(length),
+                    "Public key is missing",
+                  ),
+                )
+                .map(bytesToHex),
+          }),
 
-      if (!pubKey) {
-        return CommandResultFactory({
-          error: new InvalidStatusWordError(`Pub key is missing`),
-        });
-      }
+        signature: () =>
+          required(parser.extract8BitUInt(), "Signature length is missing")
+            .chain((length) =>
+              required(
+                parser.extractFieldByLength(length),
+                "Signature is missing",
+              ),
+            )
+            .map(bytesToHex),
 
-      const pubKeySigLength = parser.extract8BitUInt();
-
-      if (!pubKeySigLength) {
-        return CommandResultFactory({
-          error: new InvalidStatusWordError(`Pub key sig length is missing`),
-        });
-      }
-
-      const pubKeySig = parser.extractFieldByLength(pubKeySigLength);
-
-      if (!pubKeySig) {
-        return CommandResultFactory({
-          error: new InvalidStatusWordError(`Pub key sig is missing`),
-        });
-      }
-
-      const attestationId = parser.extractFieldByLength(0x01);
-
-      if (!attestationId) {
-        return CommandResultFactory({
-          error: new InvalidStatusWordError(`Attestation id is missing`),
-        });
-      }
-
-      const attestationHeader = parser.extractFieldByLength(0x04);
-
-      if (!attestationHeader) {
-        return CommandResultFactory({
-          error: new InvalidStatusWordError(`Attestation header is missing`),
-        });
-      }
-      const attestationKey = parser.extractFieldByLength(0x21);
-
-      if (!attestationKey) {
-        return CommandResultFactory({
-          error: new InvalidStatusWordError(`Attestation key is missing`),
-        });
-      }
-
-      const attestationSigLength = parser.extract8BitUInt();
-      if (!attestationSigLength) {
-        return CommandResultFactory({
-          error: new InvalidStatusWordError(
-            `Attestation sig length is missing`,
+        attestation: () =>
+          eitherSeqRecord({
+            id: () =>
+              required(
+                parser.extractFieldByLength(0x01),
+                "Attestation Id is missing",
+              ),
+            version: () =>
+              required(
+                parser.extract8BitUInt(),
+                "Attestation version is missing",
+              ),
+            curveId: () =>
+              required(
+                parser.extract8BitUInt(),
+                "Attestation curve ID is missing",
+              ),
+            signAlgorithm: () =>
+              required(
+                parser.extract8BitUInt(),
+                "Attestation sign algorithm is missing",
+              ),
+            publicKey: () =>
+              required(
+                parser.extract8BitUInt(),
+                "Attestation key length is missing",
+              ).chain((length) =>
+                required(
+                  parser.extractFieldByLength(length),
+                  "Attestation key is missing",
+                ),
+              ),
+            signature: () =>
+              required(
+                parser.extract8BitUInt(),
+                "Attestation signature length is missing",
+              ).chain((length) =>
+                required(
+                  parser.extractFieldByLength(length),
+                  "Attestation signature is missing",
+                ),
+              ),
+          }).map((attestation) =>
+            bytesToHex(
+              Uint8Array.from([
+                ...attestation.id,
+                attestation.version,
+                attestation.curveId,
+                attestation.signAlgorithm,
+                attestation.publicKey.length,
+                ...attestation.publicKey,
+                attestation.signature.length,
+                ...attestation.signature,
+              ]),
+            ),
           ),
-        });
-      }
-      const attestationSig = parser.extractFieldByLength(attestationSigLength);
-
-      if (!attestationSig) {
-        return CommandResultFactory({
-          error: new InvalidStatusWordError(`Attestation sig is missing`),
-        });
-      }
-
-      return CommandResultFactory({
-        data: {
-          pubKeyHeader,
-          pubKey,
-          pubKeySig,
-          attestationId,
-          attestationHeader,
-          attestationKey,
-          attestationSig,
-        },
+      }).caseOf({
+        Left: (error) => CommandResultFactory({ error }),
+        Right: (data) => CommandResultFactory({ data }),
       });
     });
   }
