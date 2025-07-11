@@ -7,7 +7,7 @@ import type { ContextModuleConfig } from "@/config/model/ContextModuleConfig";
 import { pkiTypes } from "@/pki/di/pkiTypes";
 import { type PkiCertificateLoader } from "@/pki/domain/PkiCertificateLoader";
 import { KeyUsage } from "@/pki/model/KeyUsage";
-import { LEDGER_CLIENT_VERSION_HEADER } from "@/shared/constant/HttpHeaders";
+import { LEDGER_CLIENT_VERSION_HEADER, LEDGER_ORIGIN_TOKEN_HEADER } from "@/shared/constant/HttpHeaders";
 import {
   type Web3CheckContext,
   type Web3Checks,
@@ -63,7 +63,7 @@ export class HttpWeb3CheckDataSource implements Web3CheckDataSource {
         data: requestDto,
         headers: {
           [LEDGER_CLIENT_VERSION_HEADER]: `context-module/${PACKAGE.version}`,
-          "X-Ledger-Client-Origin": this.config.originToken,
+          [LEDGER_ORIGIN_TOKEN_HEADER]: this.config.originToken,
         },
       });
       web3CheckDto = response.data;

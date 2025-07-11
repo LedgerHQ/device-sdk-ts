@@ -4,7 +4,10 @@ import { Left, Right } from "purify-ts";
 
 import { type ContextModuleConfig } from "@/config/model/ContextModuleConfig";
 import { type PkiCertificateLoader } from "@/pki/domain/PkiCertificateLoader";
-import { LEDGER_CLIENT_VERSION_HEADER } from "@/shared/constant/HttpHeaders";
+import {
+  LEDGER_CLIENT_VERSION_HEADER,
+  LEDGER_ORIGIN_TOKEN_HEADER,
+} from "@/shared/constant/HttpHeaders";
 import { HttpWeb3CheckDataSource } from "@/web3-check/data/HttpWeb3CheckDataSource";
 import { type Web3CheckDto } from "@/web3-check/data/Web3CheckDto";
 import type { Web3CheckTypedData } from "@/web3-check/domain/web3CheckTypes";
@@ -219,7 +222,7 @@ describe("HttpWeb3CheckDataSource", () => {
         expect.objectContaining({
           headers: {
             [LEDGER_CLIENT_VERSION_HEADER]: `context-module/${PACKAGE.version}`,
-            "X-Ledger-Client-Origin": config.originToken,
+            [LEDGER_ORIGIN_TOKEN_HEADER]: config.originToken,
           },
         }),
       );

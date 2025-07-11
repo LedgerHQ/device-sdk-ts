@@ -10,7 +10,10 @@ import {
 } from "@/external-plugin/data/DAppDto";
 import { type ExternalPluginDataSource } from "@/external-plugin/data/ExternalPluginDataSource";
 import { HttpExternalPluginDataSource } from "@/external-plugin/data/HttpExternalPluginDataSource";
-import { LEDGER_CLIENT_VERSION_HEADER } from "@/shared/constant/HttpHeaders";
+import {
+  LEDGER_CLIENT_VERSION_HEADER,
+  LEDGER_ORIGIN_TOKEN_HEADER,
+} from "@/shared/constant/HttpHeaders";
 import PACKAGE from "@root/package.json";
 
 vi.mock("axios");
@@ -18,6 +21,16 @@ vi.mock("axios");
 const axiosResponseBuilder = (dto: Partial<DAppDto>[]) => {
   return { data: dto };
 };
+
+const config = {
+  web3checks: {
+    url: "web3checksUrl",
+  },
+  cal: {
+    url: "https://crypto-assets-service.api.ledger.com/v1",
+  },
+  originToken: "originToken",
+} as ContextModuleConfig;
 
 describe("HttpExternalPuginDataSource", () => {
   let datasource: ExternalPluginDataSource;
@@ -69,11 +82,6 @@ describe("HttpExternalPuginDataSource", () => {
   };
 
   beforeAll(() => {
-    const config = {
-      cal: {
-        url: "https://crypto-assets-service.api.ledger.com/v1",
-      },
-    } as ContextModuleConfig;
     datasource = new HttpExternalPluginDataSource(config);
     vi.clearAllMocks();
   });
@@ -94,7 +102,10 @@ describe("HttpExternalPuginDataSource", () => {
     // THEN
     expect(requestSpy).toHaveBeenCalledWith(
       expect.objectContaining({
-        headers: { [LEDGER_CLIENT_VERSION_HEADER]: version },
+        headers: {
+          [LEDGER_CLIENT_VERSION_HEADER]: version,
+          [LEDGER_ORIGIN_TOKEN_HEADER]: config.originToken,
+        },
       }),
     );
   });

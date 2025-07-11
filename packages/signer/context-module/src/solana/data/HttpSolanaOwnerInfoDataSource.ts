@@ -5,7 +5,10 @@ import { Either, Left, Right } from "purify-ts";
 
 import { configTypes } from "@/config/di/configTypes";
 import type { ContextModuleConfig } from "@/config/model/ContextModuleConfig";
-import { LEDGER_CLIENT_VERSION_HEADER } from "@/shared/constant/HttpHeaders";
+import {
+  LEDGER_CLIENT_VERSION_HEADER,
+  LEDGER_ORIGIN_TOKEN_HEADER,
+} from "@/shared/constant/HttpHeaders";
 import {
   SolanaSPLOwnerInfo,
   type SolanaTransactionContext,
@@ -54,7 +57,7 @@ export class HttpSolanaOwnerInfoDataSource implements SolanaDataSource {
         url: `${this.config.metadataService.url}/solana/owner/${tokenAddress}?challenge=${challenge}`,
         headers: {
           [LEDGER_CLIENT_VERSION_HEADER]: `context-module/${PACKAGE.version}`,
-          "X-Ledger-Client-Origin": this.config.originToken,
+          [LEDGER_ORIGIN_TOKEN_HEADER]: this.config.originToken,
         },
       })
       .then((res) => {

@@ -4,7 +4,10 @@ import { Either, Left, Right } from "purify-ts";
 
 import { configTypes } from "@/config/di/configTypes";
 import type { ContextModuleConfig } from "@/config/model/ContextModuleConfig";
-import { LEDGER_CLIENT_VERSION_HEADER } from "@/shared/constant/HttpHeaders";
+import {
+  LEDGER_CLIENT_VERSION_HEADER,
+  LEDGER_ORIGIN_TOKEN_HEADER,
+} from "@/shared/constant/HttpHeaders";
 import {
   GetDomainNameInfosParams,
   GetTrustedNameInfosParams,
@@ -33,6 +36,7 @@ export class HttpTrustedNameDataSource implements TrustedNameDataSource {
         url: `${this.config.metadataService.url}/names/ethereum/${chainId}/forward/${domain}?types=${type}&sources=${source}&challenge=${challenge}`,
         headers: {
           [LEDGER_CLIENT_VERSION_HEADER]: `context-module/${PACKAGE.version}`,
+          [LEDGER_ORIGIN_TOKEN_HEADER]: this.config.originToken,
         },
       });
 
@@ -71,6 +75,7 @@ export class HttpTrustedNameDataSource implements TrustedNameDataSource {
         url: `${this.config.metadataService.url}/names/ethereum/${chainId}/reverse/${address}?types=${types.join(",")}&sources=${sources.join(",")}&challenge=${challenge}`,
         headers: {
           [LEDGER_CLIENT_VERSION_HEADER]: `context-module/${PACKAGE.version}`,
+          [LEDGER_ORIGIN_TOKEN_HEADER]: this.config.originToken,
         },
       });
       const trustedName = response.data;
