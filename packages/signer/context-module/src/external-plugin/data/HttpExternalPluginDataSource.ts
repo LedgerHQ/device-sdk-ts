@@ -11,7 +11,10 @@ import {
 } from "@/external-plugin/data/ExternalPluginDataSource";
 import { DappInfos } from "@/external-plugin/model/DappInfos";
 import { SelectorDetails } from "@/external-plugin/model/SelectorDetails";
-import { LEDGER_CLIENT_VERSION_HEADER, LEDGER_ORIGIN_TOKEN_HEADER } from "@/shared/constant/HttpHeaders";
+import {
+  LEDGER_CLIENT_VERSION_HEADER,
+  LEDGER_ORIGIN_TOKEN_HEADER,
+} from "@/shared/constant/HttpHeaders";
 import PACKAGE from "@root/package.json";
 
 @injectable()

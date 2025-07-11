@@ -8,7 +8,10 @@ import type {
   ContextModuleCalMode,
   ContextModuleConfig,
 } from "@/config/model/ContextModuleConfig";
-import { LEDGER_CLIENT_VERSION_HEADER, LEDGER_ORIGIN_TOKEN_HEADER } from "@/shared/constant/HttpHeaders";
+import {
+  LEDGER_CLIENT_VERSION_HEADER,
+  LEDGER_ORIGIN_TOKEN_HEADER,
+} from "@/shared/constant/HttpHeaders";
 import type {
   TypedDataFilter,
   TypedDataMessageInfo,

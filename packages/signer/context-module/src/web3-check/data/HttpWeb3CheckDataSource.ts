@@ -7,7 +7,10 @@ import type { ContextModuleConfig } from "@/config/model/ContextModuleConfig";
 import { pkiTypes } from "@/pki/di/pkiTypes";
 import { type PkiCertificateLoader } from "@/pki/domain/PkiCertificateLoader";
 import { KeyUsage } from "@/pki/model/KeyUsage";
-import { LEDGER_CLIENT_VERSION_HEADER, LEDGER_ORIGIN_TOKEN_HEADER } from "@/shared/constant/HttpHeaders";
+import {
+  LEDGER_CLIENT_VERSION_HEADER,
+  LEDGER_ORIGIN_TOKEN_HEADER,
+} from "@/shared/constant/HttpHeaders";
 import {
   type Web3CheckContext,
   type Web3Checks,
