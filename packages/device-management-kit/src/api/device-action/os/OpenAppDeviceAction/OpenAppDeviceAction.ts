@@ -25,6 +25,7 @@ import {
   DeviceSessionStateType,
 } from "@api/device-session/DeviceSessionState";
 import { DeviceDisconnectedWhileSendingError } from "@api/transport/model/Errors";
+import { isDashboardName } from "@api/utils/AppName";
 
 import {
   type OpenAppDAError,
@@ -137,7 +138,7 @@ export class OpenAppDeviceAction extends XStateDeviceAction<
         isDashboardOpen: ({ context }: { context: types["context"] }) => {
           if (context._internalState.currentlyRunningApp === null)
             throw new Error("context.currentlyRunningApp === null");
-          return context._internalState.currentlyRunningApp === "BOLOS";
+          return isDashboardName(context._internalState.currentlyRunningApp);
         },
         hasDisconnectedWhileSending: ({ context }) =>
           context._internalState.error !== null &&

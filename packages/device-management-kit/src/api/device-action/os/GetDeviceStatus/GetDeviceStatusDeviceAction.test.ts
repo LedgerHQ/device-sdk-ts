@@ -210,6 +210,54 @@ describe("GetDeviceStatusDeviceAction", () => {
           },
         );
       }));
+
+    it("should run the device action with an old firmware not supporting GetAppAndVersion", () =>
+      new Promise<void>((resolve, reject) => {
+        const getDeviceStateDeviceAction = new GetDeviceStatusDeviceAction({
+          input: { unlockTimeout: 500 },
+        });
+
+        apiGetDeviceSessionStateMock.mockReturnValue({
+          sessionStateType: DeviceSessionStateType.Connected,
+          deviceStatus: DeviceStatus.CONNECTED,
+          deviceModelId: DeviceModelId.NANO_X,
+        });
+
+        sendCommandMock.mockResolvedValue(
+          CommandResultFactory({
+            error: new GlobalCommandError({
+              ...GLOBAL_ERRORS["6e00"],
+              errorCode: "6e00",
+            }),
+          }),
+        );
+
+        const expectedStates: Array<GetDeviceStatusDAState> = [
+          {
+            intermediateValue: {
+              requiredUserInteraction: UserInteractionRequired.None,
+            },
+            status: DeviceActionStatus.Pending,
+          },
+          {
+            output: {
+              currentApp: "BOLOS",
+              currentAppVersion: "0.0.0",
+            },
+            status: DeviceActionStatus.Completed,
+          },
+        ];
+
+        testDeviceActionStates(
+          getDeviceStateDeviceAction,
+          expectedStates,
+          makeDeviceActionInternalApiMock(),
+          {
+            onDone: resolve,
+            onError: reject,
+          },
+        );
+      }));
   });
 
   describe("success cases", () => {
