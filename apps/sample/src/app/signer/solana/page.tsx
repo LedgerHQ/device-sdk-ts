@@ -1,23 +1,11 @@
 "use client";
 import React from "react";
-import dynamic from "next/dynamic";
 
 import { SessionIdWrapper } from "@/components/SessionIdWrapper";
-
-const NoSSRSignerSolanaView = dynamic(
-  () =>
-    import("@/components/SignerSolanaView").then((mod) => mod.SignerSolanaView),
-  {
-    ssr: false,
-  },
-);
+import { SignerSolanaView } from "@/components/SignerSolanaView";
 
 const Signer: React.FC = () => {
-  return (
-    <SessionIdWrapper
-      ChildComponent={(props) => <NoSSRSignerSolanaView {...props} />}
-    />
-  );
+  return <SessionIdWrapper ChildComponent={SignerSolanaView} />;
 };
 
 export default Signer;
