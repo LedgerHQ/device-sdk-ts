@@ -1,0 +1,180 @@
+/* eslint-disable @typescript-eslint/no-unsafe-call */
+/* eslint-disable @typescript-eslint/no-unsafe-member-access */
+/* eslint-disable @typescript-eslint/no-unsafe-assignment */
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import type { LoggerPublisherService } from "@ledgerhq/device-management-kit";
+import {
+  GeneralDmkError,
+  OpeningConnectionError,
+} from "@ledgerhq/device-management-kit";
+import { firstValueFrom } from "rxjs";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+
+import { WebSocketProxyDataSource } from "@api/data/WebsocketProxyDataSource";
+
+import {
+  speculosProxyWsIdentifier,
+  WsProxyTransport,
+} from "./WebsocketProxyTransport";
+
+class LoggerStub implements LoggerPublisherService {
+  error = vi.fn();
+  warn = vi.fn();
+  info = vi.fn();
+  debug = vi.fn();
+  tag = "";
+  subscribers = [];
+}
+const loggerFactory = () => new LoggerStub();
+const config = {} as any;
+
+class MockWebSocket {
+  public onmessage: ((evt: { data: string }) => void) | null = null;
+  public onclose: (() => void) | null = null;
+  constructor(public url: string) {}
+  send = vi.fn();
+  close = vi.fn();
+}
+// @ts-expect-error: globalThis.WebSocket is not assignable to MockWebSocket
+global.WebSocket = MockWebSocket;
+
+const toHex = (arr: Uint8Array): string =>
+  Array.from(arr)
+    .map((b) => b.toString(16).padStart(2, "0"))
+    .join("");
+
+describe("WsProxyTransport", () => {
+  let transport: WsProxyTransport;
+
+  beforeEach(() => {
+    vi.restoreAllMocks();
+    transport = new WsProxyTransport(loggerFactory, config, "ws://test");
+  });
+
+  it("isSupported returns true", () => {
+    expect(transport.isSupported()).toBe(true);
+  });
+
+  it("getIdentifier returns the correct identifier", () => {
+    expect(transport.getIdentifier()).toBe(speculosProxyWsIdentifier);
+  });
+
+  it("listenToAvailableDevices starts empty", async () => {
+    const devices = await firstValueFrom(transport.listenToAvailableDevices());
+    expect(devices).toEqual([]);
+  });
+
+  it("connect returns Left<UnknownDeviceError> for unknown deviceId", async () => {
+    const result = await transport.connect({
+      deviceId: "ws://test#nope",
+      onDisconnect: vi.fn(),
+    });
+    expect(result.isLeft()).toBe(true);
+    result.ifLeft((err) => {
+      expect(err._tag).toBe("UnknownDeviceError");
+    });
+  });
+
+  it("connect returns Left<OpeningConnectionError> on handshake failure", async () => {
+    (transport as any).seenDevices.set("ws://test#dev", {
+      id: "ws://test#dev",
+      deviceModel: { blockSize: 64, masks: [], memorySize: 0 } as any,
+      transport: speculosProxyWsIdentifier,
+    });
+    vi.spyOn(WebSocketProxyDataSource.prototype, "postAdpu").mockRejectedValue(
+      new Error("fail"),
+    );
+
+    const result = await transport.connect({
+      deviceId: "ws://test#dev",
+      onDisconnect: vi.fn(),
+    });
+    expect(result.isLeft()).toBe(true);
+    result.ifLeft((err) => {
+      expect(err).toBeInstanceOf(OpeningConnectionError);
+    });
+  });
+
+  it("connect returns Right<TransportConnectedDevice> with correct productName on success", async () => {
+    (transport as any).seenDevices.set("ws://test#dev", {
+      id: "ws://test#dev",
+      deviceModel: { blockSize: 32, masks: [], memorySize: 0 } as any,
+      transport: speculosProxyWsIdentifier,
+    });
+    const name = "app";
+    const version = "v1";
+    const nameHex = toHex(new TextEncoder().encode(name));
+    const versionHex = toHex(new TextEncoder().encode(version));
+    const nameLenHex = (nameHex.length / 2).toString(16).padStart(2, "0");
+    const versionLenHex = (versionHex.length / 2).toString(16).padStart(2, "0");
+
+    const handshake =
+      "01" + nameLenHex + nameHex + versionLenHex + versionHex + "9000";
+
+    vi.spyOn(
+      WebSocketProxyDataSource.prototype,
+      "postAdpu",
+    ).mockResolvedValueOnce(handshake);
+
+    const result = await transport.connect({
+      deviceId: "ws://test#dev",
+      onDisconnect: vi.fn(),
+    });
+    expect(result.isRight()).toBe(true);
+    result.ifRight((dev) => {
+      expect(dev.deviceModel.productName).toBe(`Proxy – ${name} – ${version}`);
+      expect(typeof dev.sendApdu).toBe("function");
+    });
+  });
+
+  it("sendApdu returns Right<ApduResponse> on success", async () => {
+    (transport as any).connectedDevice = { id: "ws://test#dev" } as any;
+    const dataHex = "deadbeef";
+    const statusHex = "9000";
+    vi.spyOn(WebSocketProxyDataSource.prototype, "postAdpu").mockResolvedValue(
+      dataHex + statusHex,
+    );
+
+    const result = await (transport as any).sendApdu(
+      Uint8Array.from([0x01]),
+      vi.fn(),
+    );
+    expect(result.isRight()).toBe(true);
+    result.ifRight(
+      ({ data, statusCode }: { data: Uint8Array; statusCode: Uint8Array }) => {
+        const dataHexResult = toHex(data);
+        const statusHexResult = toHex(statusCode);
+        expect(dataHexResult).toBe(dataHex);
+        expect(statusHexResult).toBe(statusHex);
+      },
+    );
+  });
+
+  it("sendApdu on error triggers onDisconnect and clears connectedDevice", async () => {
+    const onDisconnect = vi.fn();
+    (transport as any).activeDeviceConnection = { id: "ws://test#dev" } as any;
+    vi.spyOn(WebSocketProxyDataSource.prototype, "postAdpu").mockRejectedValue(
+      new Error("error"),
+    );
+
+    const result = await (transport as any).sendApdu(
+      Uint8Array.of(0xff),
+      onDisconnect,
+    );
+    expect(onDisconnect).toHaveBeenCalledWith("ws://test#dev");
+    expect((transport as any).activeDeviceConnection).toBeNull();
+    expect(result.isLeft()).toBe(true);
+    result.ifLeft((err: any) => expect(err).toBeInstanceOf(GeneralDmkError));
+  });
+
+  it("disconnect clears connectedDevice and closes socket", async () => {
+    (transport as any).activeDeviceConnection = { id: "ws://test#dev" } as any;
+    const mockSocket = (transport as any).discoveryWebSocket as any;
+    const res = await transport.disconnect({
+      connectedDevice: { id: "ws://test#dev" } as any,
+    });
+    expect(res.isRight()).toBe(true);
+    expect((transport as any).activeDeviceConnection).toBeNull();
+    expect(mockSocket.close).toHaveBeenCalled();
+  });
+});

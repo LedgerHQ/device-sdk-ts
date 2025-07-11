@@ -11,7 +11,7 @@
       "@api/*": ["./src/api/*"]
     },
     "resolveJsonModule": true,
-    "types": ["node", "vitest/globals", "web-bluetooth", "uuid"]
+    "types": ["vitest/globals"]
   },
   "include": ["src", "vitest.*.mjs"]
 }

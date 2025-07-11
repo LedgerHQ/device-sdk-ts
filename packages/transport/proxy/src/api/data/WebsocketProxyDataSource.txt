@@ -1,0 +1,141 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
+/* eslint-disable @typescript-eslint/no-unsafe-return */
+/* eslint-disable @typescript-eslint/no-unsafe-member-access */
+/* eslint-disable @typescript-eslint/no-unsafe-call */
+/* eslint-disable @typescript-eslint/no-unsafe-assignment */
+
+import { createWebSocketDataSource } from "./WebsocketProxyDataSource";
+
+type EventHandler = (event?: any) => void;
+interface MockListenerMap {
+  [key: string]: EventHandler[];
+}
+
+class MockWebSocket {
+  static OPEN = 1;
+  static CLOSING = 2;
+  readyState = 0;
+  send = vi.fn();
+  onmessage: ((evt: { data: string }) => void) | null = null;
+  onclose: (() => void) | null = null;
+  private listeners: MockListenerMap = {};
+
+  constructor(public url: string) {}
+
+  addEventListener(event: string, handler: EventHandler) {
+    (this.listeners[event] ||= []).push(handler);
+  }
+  removeEventListener(event: string, handler: EventHandler) {
+    this.listeners[event] =
+      this.listeners[event]?.filter((h) => h !== handler) ?? [];
+  }
+  triggerOpen() {
+    this.readyState = MockWebSocket.OPEN;
+    (this.listeners["open"] || []).forEach((h) => h());
+  }
+  triggerError() {
+    (this.listeners["error"] || []).forEach((h) => h(new Event("error")));
+  }
+  triggerMessage(data: string) {
+    this.onmessage?.({ data } as MessageEvent);
+  }
+  close() {
+    this.readyState = 3;
+    this.onclose?.();
+  }
+}
+
+describe("WebSocketProxyDataSource", () => {
+  let WebSocketProxyDataSource: { new (url: string): any };
+
+  beforeEach(() => {
+    vi.stubGlobal("WebSocket", MockWebSocket as any);
+    vi.spyOn(Date, "now").mockReturnValue(1620000000000);
+    vi.spyOn(Math, "random").mockReturnValue(0.123456);
+    WebSocketProxyDataSource = createWebSocketDataSource(MockWebSocket as any);
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  it("should open WebSocket and send payload", async () => {
+    // given
+    const dataSource = new WebSocketProxyDataSource("ws://test");
+    const ws = (dataSource as any).ws as MockWebSocket;
+
+    // when
+    const promise = dataSource.postAdpu("f0cacc1a");
+    ws.triggerOpen();
+    await Promise.resolve();
+    const id = `ws-1620000000000-123456`;
+
+    // then
+    expect(ws.send).toHaveBeenCalledWith(
+      JSON.stringify({ id, data: "f0cacc1a" }),
+    );
+    ws.triggerMessage(JSON.stringify({ id, data: "abadbeef" }));
+    await expect(promise).resolves.toBe("abadbeef");
+  });
+
+  it("should reject when response contains error", async () => {
+    // given
+    const dataSource = new WebSocketProxyDataSource("ws://test");
+    const ws = (dataSource as any).ws as MockWebSocket;
+
+    // when
+    const promise = dataSource.postAdpu("abadc0de");
+    ws.triggerOpen();
+    await Promise.resolve();
+    const id = `ws-1620000000000-123456`;
+    ws.triggerMessage(JSON.stringify({ id, error: "fail" }));
+
+    // then
+    await expect(promise).rejects.toThrow("fail");
+  });
+
+  it("should ignore malformed JSON messages", async () => {
+    // given
+    const dataSource = new WebSocketProxyDataSource("ws://test");
+    const ws = (dataSource as any).ws as MockWebSocket;
+
+    // when
+    const promise = dataSource.postAdpu("abadc0de");
+    ws.triggerOpen();
+    await Promise.resolve();
+    ws.triggerMessage("not json");
+    await Promise.resolve(); // flush malformed§
+    const id = `ws-1620000000000-123456`;
+    ws.triggerMessage(JSON.stringify({ id, data: "f0cacc1a" }));
+
+    // then
+    await expect(promise).resolves.toBe("f0cacc1a");
+  });
+
+  it("should reject if WebSocket fails to open", async () => {
+    // given
+    const dataSource = new WebSocketProxyDataSource("ws://test");
+    const ws = (dataSource as any).ws as MockWebSocket;
+
+    // when
+    const promise = dataSource.postAdpu("abadc0de");
+    ws.triggerError();
+
+    // then
+    await expect(promise).rejects.toThrow("WebSocket failed to open");
+  });
+
+  it("close should not throw when already closing or closed", () => {
+    // given
+    const dataSource = new WebSocketProxyDataSource("ws://test");
+    const ws = (dataSource as any).ws as MockWebSocket;
+
+    // when
+    ws.readyState = MockWebSocket.CLOSING;
+
+    // then
+    expect(() => dataSource.close()).not.toThrow();
+    ws.readyState = 3;
+    expect(() => dataSource.close()).not.toThrow();
+  });
+});

@@ -4,7 +4,6 @@ import {
   bufferToHexaString,
   type ConnectError,
   type DeviceId,
-  DeviceModelId,
   type DisconnectHandler,
   type DmkConfig,
   type DmkError,
@@ -16,101 +15,175 @@ import {
   type TransportDiscoveredDevice,
   type TransportFactory,
   type TransportIdentifier,
+  UnknownDeviceError,
 } from "@ledgerhq/device-management-kit";
 import { type Either, Left, Right } from "purify-ts";
-import { from, type Observable } from "rxjs";
+import {
+  BehaviorSubject,
+  from,
+  interval,
+  type Observable,
+  of,
+  Subject,
+  type Subscription,
+} from "rxjs";
+import { catchError, filter, map, mergeMap } from "rxjs/operators";
 
-import { HttpProxyDataSource } from "@api/data/HttpProxyDataSource";
-import { type ProxyDataSource } from "@api/data/ProxyDataSource";
+import {
+  HttpProxyDataSource,
+  type HttpProxyDataSourceInstance,
+} from "@api/data/HttpProxyDataSource";
+import { type DescriptorEvent, diffAndEmit } from "@api/utils/diffAndEmit";
 
-export const speculosIdentifier: TransportIdentifier =
-  "SPECULOS_HTTP_TRANSPORT";
+export const speculosProxyHttpIdentifier: TransportIdentifier =
+  "PROXY_HTTP_TRANSPORT";
 
+/**
+ * HTTP-based DMK transport
+ */
 export class HttpProxyTransport implements Transport {
-  private readonly identifier: TransportIdentifier = speculosIdentifier;
-  private readonly proxyDataSource: ProxyDataSource;
+  private readonly transportIdentifier: TransportIdentifier =
+    speculosProxyHttpIdentifier;
   private readonly logger: LoggerPublisherService;
-  private connectedDevice: TransportConnectedDevice | null = null;
-  private readonly speculosDevice: TransportDiscoveredDevice;
+  private readonly httpDataSource: HttpProxyDataSourceInstance;
+  private readonly discoveredDevicesSubject = new BehaviorSubject<
+    TransportDiscoveredDevice[]
+  >([]);
+  private readonly deviceEventsSubject = new Subject<
+    DescriptorEvent<TransportDiscoveredDevice>
+  >();
+  private readonly seenDevices = new Map<string, TransportDiscoveredDevice>();
+  private discoverySubscription?: Subscription;
+  private activeDeviceConnection: TransportConnectedDevice | null = null;
 
   constructor(
     loggerFactory: (tag: string) => LoggerPublisherService,
     _config: DmkConfig,
-    url: string,
+    private readonly baseUrl: string,
   ) {
-    this.logger = loggerFactory("HttpProxyTransport");
-    this.proxyDataSource = new HttpProxyDataSource(url);
-    const generatedId = `Speculos-${Date.now()}-${Math.floor(
-      Math.random() * 1e6,
-    )}`;
-    this.speculosDevice = {
-      id: generatedId,
-      transport: this.identifier,
-      deviceModel: {
-        id: DeviceModelId.STAX,
-        productName: `Speculos (${generatedId})`,
-        usbProductId: 0x10,
-        bootloaderUsbProductId: 0x0001,
-        getBlockSize: () => 32,
-        blockSize: 32,
-        usbOnly: true,
-        memorySize: 320 * 1024,
-        masks: [0x31100000],
-      },
-    };
+    this.httpDataSource = new HttpProxyDataSource(baseUrl);
+    this.logger = loggerFactory("ProxyHttpTransport");
+    this.logger.debug("Starting HTTP proxy transport");
   }
 
   isSupported(): boolean {
     return true;
   }
-
   getIdentifier(): TransportIdentifier {
-    return this.identifier;
+    return this.transportIdentifier;
   }
 
   listenToAvailableDevices(): Observable<TransportDiscoveredDevice[]> {
-    return from([[this.speculosDevice]]);
+    return this.discoveredDevicesSubject.asObservable();
   }
 
   startDiscovering(): Observable<TransportDiscoveredDevice> {
-    this.logger.debug("startDiscovering");
-    return from([this.speculosDevice]);
+    this.logger.debug("startDiscovering — polling HTTP /devices every 5s");
+
+    this.discoverySubscription = interval(5_000)
+      .pipe(
+        mergeMap(() =>
+          from(this.fetchDevices()).pipe(
+            // catches any fetch error and recover by returning an empty array
+            catchError((err) => {
+              this.logger.debug("fetchDevices failed, retrying…", err);
+              return of<TransportDiscoveredDevice[]>([]);
+            }),
+          ),
+        ),
+      )
+      .subscribe((rawDeviceList) => {
+        const prefixedDevices = rawDeviceList.map((device) => ({
+          ...device,
+          id: `${this.baseUrl}#${device.id}`,
+        }));
+        diffAndEmit(prefixedDevices, this.seenDevices, (event) =>
+          this.deviceEventsSubject.next(event),
+        );
+        this.discoveredDevicesSubject.next(
+          Array.from(this.seenDevices.values()),
+        );
+      });
+
+    // initial fetch
+    from(this.fetchDevices())
+      .pipe(
+        catchError((err) => {
+          this.logger.debug("initial fetch failed, continuing…", err);
+          return of<TransportDiscoveredDevice[]>([]);
+        }),
+      )
+      .subscribe((rawDeviceList) => {
+        const prefixedDevices = rawDeviceList.map((device) => ({
+          ...device,
+          id: `${this.baseUrl}#${device.id}`,
+        }));
+        diffAndEmit(prefixedDevices, this.seenDevices, (event) =>
+          this.deviceEventsSubject.next(event),
+        );
+        this.discoveredDevicesSubject.next(
+          Array.from(this.seenDevices.values()),
+        );
+      });
+
+    // only emit additions to callers
+    return this.deviceEventsSubject.pipe(
+      filter((evt) => evt.type === "add"),
+      map((evt) => evt.descriptor as TransportDiscoveredDevice),
+    );
   }
 
   stopDiscovering(): void {
     this.logger.debug("stopDiscovering");
+    this.discoverySubscription?.unsubscribe();
+    this.discoverySubscription = undefined;
   }
 
-  async connect(params: {
+  async connect({
+    deviceId,
+    onDisconnect,
+  }: {
     deviceId: DeviceId;
     onDisconnect: DisconnectHandler;
   }): Promise<Either<ConnectError, TransportConnectedDevice>> {
-    this.logger.debug("connect");
+    this.logger.debug(`connect to ${deviceId}`);
+    const [urlPrefix] = deviceId.split("#");
+    if (urlPrefix !== this.baseUrl) {
+      return Left(new UnknownDeviceError(`Invalid device ${deviceId}`));
+    }
+    const deviceInfo = this.seenDevices.get(deviceId);
+    if (!deviceInfo) {
+      return Left(new UnknownDeviceError(`Unknown device ${deviceId}`));
+    }
     try {
-      const hexResponse = await this.proxyDataSource.postAdpu("B0010000");
-      const apduRes = this.parseResponse(hexResponse);
-      const parser = new ApduParser(apduRes);
-      const appName = parser.encodeToString(parser.extractFieldLVEncoded());
-      const appVersion = parser.encodeToString(parser.extractFieldLVEncoded());
+      const hexAppAndVersion = await this.httpDataSource.postAdpu("B0010000");
+      this.logger.debug(`Hex Response: ${hexAppAndVersion}`);
+      const apduAppAndVersion = this.parse(hexAppAndVersion);
+      const parserAppAndVersion = new ApduParser(apduAppAndVersion);
+      parserAppAndVersion.extract8BitUInt();
+      const appName = parserAppAndVersion.encodeToString(
+        parserAppAndVersion.extractFieldLVEncoded(),
+      );
+      const appVersion = parserAppAndVersion.encodeToString(
+        parserAppAndVersion.extractFieldLVEncoded(),
+      );
+      this.logger.debug(`App Name: ${appName}, Version: ${appVersion}`);
 
-      const sessionId = params.deviceId;
-      const connectedDevice: TransportConnectedDevice = {
-        id: this.speculosDevice.id,
-        transport: this.identifier,
-        deviceModel: {
-          ...this.speculosDevice.deviceModel,
-          productName: `Speculos - ${appName} - ${appVersion}`,
-          getBlockSize: () => 32,
-        },
+      const connection: TransportConnectedDevice = {
+        id: deviceId,
+        transport: this.transportIdentifier,
         type: "USB",
-        sendApdu: (apdu) =>
-          this.sendApdu(sessionId, params.deviceId, params.onDisconnect, apdu),
+        deviceModel: {
+          ...deviceInfo.deviceModel,
+          productName: `Proxy – ${appName} – ${appVersion}`,
+          getBlockSize: () => deviceInfo.deviceModel.blockSize,
+        },
+        sendApdu: (bytes) => this.sendApdu(bytes, onDisconnect),
       };
-
-      this.connectedDevice = connectedDevice;
-      return Right(connectedDevice);
+      this.activeDeviceConnection = connection;
+      return Right(connection);
     } catch (error) {
-      return Left(new OpeningConnectionError(error as Error));
+      return Left(new OpeningConnectionError(error));
     }
   }
 
@@ -118,36 +191,34 @@ export class HttpProxyTransport implements Transport {
     connectedDevice: TransportConnectedDevice;
   }): Promise<Either<DmkError, void>> {
     this.logger.debug("disconnect");
-    this.connectedDevice = null;
-    return Right(undefined);
+    this.httpDataSource.close();
+    this.activeDeviceConnection = null;
+    return Promise.resolve(Right(undefined));
   }
 
-  async sendApdu(
-    _sessionId: string,
-    deviceId: DeviceId,
+  private async sendApdu(
+    bytes: Uint8Array,
     onDisconnect: DisconnectHandler,
-    apdu: Uint8Array,
   ): Promise<Either<DmkError, ApduResponse>> {
-    const hex = bufferToHexaString(apdu).substring(2);
-    this.logger.debug(`sendApdu => ${hex}`);
+    const hex = bufferToHexaString(bytes).substring(2);
     try {
-      const hexResponse = await this.proxyDataSource.postAdpu(hex);
-      const apduRes = this.parseResponse(hexResponse);
-      return Right(apduRes);
-    } catch (error) {
-      if (this.connectedDevice) {
-        onDisconnect(deviceId);
-        await this.disconnect({
-          connectedDevice: this.connectedDevice,
-        });
+      this.logger.debug(`send APDU => ${hex}`);
+      const responseHex = await this.httpDataSource.postAdpu(hex);
+      this.logger.debug(`receive APDU <= ${responseHex}`);
+      return Right(this.parse(responseHex));
+    } catch (err) {
+      this.logger.debug("APDU failed, disconnecting");
+      if (this.activeDeviceConnection) {
+        onDisconnect(this.activeDeviceConnection.id);
+        await this.disconnect({ connectedDevice: this.activeDeviceConnection });
       }
-      return Left(new GeneralDmkError(error as Error));
+      return Left(new GeneralDmkError(err));
     }
   }
 
-  private parseResponse(hexData: string): ApduResponse {
-    const statusHex = hexData.slice(-4);
-    const dataHex = hexData.slice(0, -4);
+  private parse(hex: string): ApduResponse {
+    const statusHex = hex.slice(-4);
+    const dataHex = hex.slice(0, -4);
     return {
       statusCode: this.hexToBytes(statusHex),
       data: this.hexToBytes(dataHex),
@@ -155,14 +226,19 @@ export class HttpProxyTransport implements Transport {
   }
 
   private hexToBytes(hex: string): Uint8Array {
-    if (!hex) return new Uint8Array();
-    return new Uint8Array(hex.match(/.{1,2}/g)!.map((b) => parseInt(b, 16)));
+    const match = hex.match(/.{1,2}/g);
+    return match
+      ? new Uint8Array(match.map((b) => parseInt(b, 16)))
+      : new Uint8Array();
+  }
+
+  private async fetchDevices(): Promise<TransportDiscoveredDevice[]> {
+    const response = await fetch(`${this.baseUrl}/devices`);
+    return (await response.json()) as TransportDiscoveredDevice[];
   }
 }
 
-export const speculosTransportFactory: (
-  speculosUrl?: string,
-) => TransportFactory =
-  (speculosUrl = "http://127.0.0.1:5000") =>
+export const HttpProxyTransportFactory =
+  (url: string = "http://127.0.0.1:5000"): TransportFactory =>
   ({ config, loggerServiceFactory }) =>
-    new HttpProxyTransport(loggerServiceFactory, config, speculosUrl);
+    new HttpProxyTransport(loggerServiceFactory, config, url);

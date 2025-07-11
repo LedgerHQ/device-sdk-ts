@@ -1,6 +1,6 @@
 {
   "name": "@ledgerhq/device-transport-kit-proxy",
-  "version": "0.0.1",
+  "version": "0.0.0",
   "license": "Apache-2.0",
   "private": false,
   "exports": {
@@ -20,7 +20,7 @@
   ],
   "scripts": {
     "prebuild": "rimraf lib",
-    "build": "pnpm ldmk-tool build --entryPoints index.ts,src/**/*.ts --tsconfig tsconfig.prod.json",
+    "build": "pnpm ldmk-tool build --entryPoints src/index.ts,src/**/*.ts --tsconfig tsconfig.prod.json",
     "dev": "concurrently \"pnpm watch:builds\" \"pnpm watch:types\"",
     "watch:builds": "pnpm ldmk-tool watch --entryPoints index.ts,src/**/*.ts --tsconfig tsconfig.prod.json",
     "watch:types": "concurrently \"tsc --watch -p tsconfig.prod.json\" \"tsc-alias --watch -p tsconfig.prod.json\"",
@@ -36,8 +36,8 @@
   },
   "dependencies": {
     "@sentry/minimal": "catalog:",
-    "purify-ts": "catalog:",
-    "axios": "catalog:"
+    "axios": "catalog:",
+    "purify-ts": "catalog:"
   },
   "devDependencies": {
     "@ledgerhq/device-management-kit": "workspace:*",
@@ -47,6 +47,8 @@
     "@ledgerhq/tsconfig-dsdk": "workspace:*",
     "@ledgerhq/vitest-config-dmk": "workspace:*",
     "rxjs": "catalog:",
+    "ws": "catalog:",
+    "@types/ws": "catalog:",
     "ts-node": "catalog:"
   },
   "peerDependencies": {
