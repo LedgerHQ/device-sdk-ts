@@ -1,5 +1,6 @@
 import {
   type CommandErrorArgs,
+  type CommandErrorResult,
   type CommandErrors,
   DeviceExchangeError,
 } from "@ledgerhq/device-management-kit";
@@ -17,6 +18,9 @@ export type LedgerKeyringProtocolErrorCodes =
   | "b00a"
   | "b00b"
   | "b00c";
+
+export type LKKPDeviceCommandError =
+  CommandErrorResult<LedgerKeyringProtocolErrorCodes>["error"];
 
 export const LEDGER_SYNC_ERRORS: CommandErrors<LedgerKeyringProtocolErrorCodes> =
   {

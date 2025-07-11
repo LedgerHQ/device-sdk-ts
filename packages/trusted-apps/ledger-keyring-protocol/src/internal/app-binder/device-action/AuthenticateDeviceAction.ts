@@ -5,8 +5,8 @@ import {
   UserInteractionRequired,
   XStateDeviceAction,
 } from "@ledgerhq/device-management-kit";
-import { Left, Maybe, Right } from "purify-ts";
-import { assign, setup } from "xstate";
+import { type Either, Left, Maybe, Right } from "purify-ts";
+import { assign, fromPromise, setup } from "xstate";
 
 import {
   type AuthenticateDAError,
@@ -16,6 +16,11 @@ import {
   type AuthenticateDAOutput,
 } from "@api/app-binder/AuthenticateDeviceActionTypes";
 import { LKRPMissingDataError } from "@api/app-binder/Errors";
+import { SignChallengeWithDeviceTask } from "@internal/app-binder/task/SignChallengeWithDeviceTask";
+import {
+  type AuthenticationPayload,
+  type Challenge,
+} from "@internal/lkrp-datasource/data/LKRPDataSource";
 import { eitherSeqRecord } from "@internal/utils/eitherSeqRecord";
 
 export class AuthenticateDeviceAction extends XStateDeviceAction<
@@ -25,7 +30,9 @@ export class AuthenticateDeviceAction extends XStateDeviceAction<
   AuthenticateDAIntermediateValue,
   AuthenticateDAInternalState
 > {
-  makeStateMachine(): DeviceActionStateMachine<
+  makeStateMachine(
+    internalApi: InternalApi,
+  ): DeviceActionStateMachine<
     AuthenticateDAOutput,
     AuthenticateDAInput,
     AuthenticateDAError,
@@ -43,6 +50,8 @@ export class AuthenticateDeviceAction extends XStateDeviceAction<
     const required = <T>(prop: T | undefined | null, errorMsg: string) =>
       Maybe.fromNullable(prop).toEither(new LKRPMissingDataError(errorMsg));
 
+    const { deviceAuth } = this.extractDependencies(internalApi);
+
     return setup({
       types: {
         input: {} as types["input"],
@@ -50,7 +59,9 @@ export class AuthenticateDeviceAction extends XStateDeviceAction<
         output: {} as types["output"],
       },
 
-      actors: {},
+      actors: {
+        deviceAuth: fromPromise(deviceAuth),
+      },
 
       actions: {
         assignErrorFromEvent: assign({
@@ -76,8 +87,8 @@ export class AuthenticateDeviceAction extends XStateDeviceAction<
       states: {
         CheckCredentials: {
           always: [
-            { target: "DeviceAuth", guard: () => !!this.input.trustchainId },
-            { target: "WebAuth", guard: () => !!this.input.jwt },
+            { target: "DeviceAuth", guard: () => !this.input.trustchainId },
+            { target: "WebAuth", guard: () => !this.input.jwt },
             { target: "EnsureIsMember" },
           ],
         },
@@ -92,8 +103,23 @@ export class AuthenticateDeviceAction extends XStateDeviceAction<
         },
 
         DeviceAuth: {
-          on: { success: "GetTrustchainId", error: "Error" },
-          // TODO: Implement device authentication
+          on: { success: "EnsureIsMember", error: "Error" },
+          invoke: {
+            id: "deviceAuth",
+            src: "deviceAuth",
+            onDone: {
+              actions: ({ event }) => {
+                // TODO: replace by actual logic
+                console.log(
+                  "Device Auth",
+                  ...event.output.caseOf<[string, unknown]>({
+                    Left: (error) => ["Error", error],
+                    Right: (response) => ["Success", response],
+                  }),
+                );
+              },
+            },
+          },
         },
 
         EnsureIsMember: {
@@ -139,6 +165,21 @@ export class AuthenticateDeviceAction extends XStateDeviceAction<
   }
 
   extractDependencies(_internalApi: InternalApi) {
-    return {};
+    return {
+      deviceAuth: () =>
+        this.auth(new SignChallengeWithDeviceTask(_internalApi)),
+    };
+  }
+
+  private auth(signerTask: {
+    run: (
+      challenge: Challenge,
+    ) => Promise<Either<AuthenticateDAError, AuthenticationPayload>>;
+  }) {
+    return this.input.lkrpDataSource
+      .getChallenge()
+      .chain((challenge) => signerTask.run(challenge))
+      .chain((payload) => this.input.lkrpDataSource.authenticate(payload))
+      .run();
   }
 }
