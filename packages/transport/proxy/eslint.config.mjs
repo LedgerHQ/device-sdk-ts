@@ -9,5 +9,11 @@ export default [
         project: "./tsconfig.json",
       },
     },
+    settings: {
+      "import/core-modules": ["ws"],
+    },
+    rules: {
+      "import/no-unresolved": ["error", { ignore: ["^ws$"] }],
+    },
   },
 ];

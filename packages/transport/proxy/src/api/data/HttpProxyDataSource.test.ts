@@ -1,71 +1,115 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-/* eslint-disable @typescript-eslint/no-unsafe-call */
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
+/* eslint-disable @typescript-eslint/no-explicit-any */
 // tests/HttpProxyDataSource.test.ts
-import axios, { type AxiosResponse } from "axios";
+import type { AxiosRequestConfig, AxiosResponse } from "axios";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import { HttpProxyDataSource } from "@api/data/HttpProxyDataSource";
+import { createHttpProxyDataSource } from "@api/data/HttpProxyDataSource";
 
-vi.mock("axios");
-describe("HttpProxyDataSource", () => {
+class MockAxios {
+  post =
+    vi.fn<
+      (
+        url: string,
+        data: { data: string },
+        config?: AxiosRequestConfig,
+      ) => Promise<AxiosResponse<{ data: string }>>
+    >();
+}
+
+describe("HttpProxyDataSource (injected)", () => {
   const mockUrl = "http://example.com/proxy";
-  let dataSource: HttpProxyDataSource;
+  let mockAxios: MockAxios;
+  let HttpProxyDataSource: ReturnType<typeof createHttpProxyDataSource>;
 
   beforeEach(() => {
-    vi.resetAllMocks();
-    dataSource = new HttpProxyDataSource(mockUrl);
+    mockAxios = new MockAxios();
+    HttpProxyDataSource = createHttpProxyDataSource(mockAxios as any);
   });
 
-  it("should POST the APDU hex and return the inner data string", async () => {
+  it("POSTs the APDU hex and returns the inner data string", async () => {
     // given
     const apduHex = "f0cacc1a";
-    const responseData = "deadbeef";
+    const responseData = "abadbeef";
     const fakeResponse: AxiosResponse<{ data: string }> = {
       data: { data: responseData },
       status: 200,
       statusText: "OK",
       headers: {},
-      config: { headers: {} } as any,
+      config: {} as any,
     };
-
-    // @ts-expect-error mock
-    axios.post.mockResolvedValue(fakeResponse);
+    mockAxios.post.mockResolvedValue(fakeResponse);
+    const ds = new HttpProxyDataSource(mockUrl);
 
     // when
-    const result = await dataSource.postAdpu(apduHex);
+    const result = await ds.postAdpu(apduHex);
 
     // then
     expect(result).toBe(responseData);
-    expect(axios.post).toHaveBeenCalledWith(
+    expect(mockAxios.post).toHaveBeenCalledWith(
       mockUrl,
       { data: apduHex },
-      {
+      expect.objectContaining({
         headers: {
           Accept: "application/json",
           "Content-Type": "application/json",
         },
         timeout: 5000,
-      },
+        signal: expect.any(AbortSignal),
+      }),
     );
+
+    expect(ds.controllers).toHaveLength(0);
   });
 
-  it("should throw if axios.post rejects", async () => {
+  it("forwards errors from axios.post", async () => {
     // given
     const apduHex = "f0cacc1a";
     const networkError = new Error("network failure");
-
-    // @ts-expect-error mock
-    axios.post.mockRejectedValue(networkError);
-
-    // when
-    await expect(dataSource.postAdpu(apduHex)).rejects.toThrow(networkError);
+    mockAxios.post.mockRejectedValue(networkError);
+    const ds = new HttpProxyDataSource(mockUrl);
 
     // then
-    expect(axios.post).toHaveBeenCalledWith(
+    await expect(ds.postAdpu(apduHex)).rejects.toThrow(networkError);
+    expect(mockAxios.post).toHaveBeenCalledWith(
       mockUrl,
       { data: apduHex },
       expect.any(Object),
     );
+    expect(ds.controllers).toHaveLength(0);
+  });
+
+  it("should abort in-flight requests and reject promises when close() is called", async () => {
+    // given
+    const apduHex = "f0cacc1a";
+    let capturedSignal: AbortSignal;
+    mockAxios.post.mockImplementation((_url, _data, config) => {
+      capturedSignal = config!.signal as AbortSignal;
+      return new Promise((_resolve, reject) => {
+        capturedSignal.addEventListener("abort", () => {
+          reject(new Error("canceled by close()"));
+        });
+      });
+    });
+    const ds = new HttpProxyDataSource(mockUrl);
+
+    // when
+    const promise = ds.postAdpu(apduHex);
+
+    // then
+    expect(ds.controllers).toHaveLength(1);
+    ds.close();
+    await expect(promise).rejects.toThrow("canceled by close()");
+    expect(ds.controllers).toHaveLength(0);
+  });
+
+  it("close() should not throw when there are no pending controllers", () => {
+    // given
+    const ds = new HttpProxyDataSource(mockUrl);
+
+    // then
+    expect(() => ds.close()).not.toThrow();
+    expect(ds.controllers).toHaveLength(0);
+    expect(() => ds.close()).not.toThrow();
   });
 });

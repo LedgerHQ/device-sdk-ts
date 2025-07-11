@@ -1,99 +1,139 @@
+/* eslint-disable @typescript-eslint/require-await */
+/* eslint-disable @typescript-eslint/no-unsafe-call */
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import {
-  type ApduResponse,
-  GeneralDmkError,
-  type LoggerPublisherService,
-  type LoggerSubscriberService,
-  OpeningConnectionError,
-  type TransportArgs,
-  type TransportConnectedDevice,
+import type {
+  TransportConnectedDevice,
+  TransportDiscoveredDevice,
 } from "@ledgerhq/device-management-kit";
-import { lastValueFrom } from "rxjs";
+import {
+  GeneralDmkError,
+  OpeningConnectionError,
+  UnknownDeviceError,
+} from "@ledgerhq/device-management-kit";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { HttpProxyDataSource } from "@api/data/HttpProxyDataSource";
+
 import {
   HttpProxyTransport,
-  speculosIdentifier,
-  speculosTransportFactory,
-} from "@api/transport/HttpProxyTransport";
+  speculosProxyHttpIdentifier,
+} from "./HttpProxyTransport";
 
-class LoggerPublisherServiceStub implements LoggerPublisherService {
-  constructor(subscribers: LoggerSubscriberService[], tag: string) {
-    this.subscribers = subscribers;
-    this.tag = tag;
-  }
-  subscribers: LoggerSubscriberService[] = [];
-  tag: string = "";
+class LoggerStub {
   error = vi.fn();
   warn = vi.fn();
   info = vi.fn();
   debug = vi.fn();
+  tag = "";
+  subscribers: any[] = [];
 }
+const loggerFactory = () => new LoggerStub();
+const config = {} as any;
 
 describe("HttpProxyTransport", () => {
-  const logger = new LoggerPublisherServiceStub([], "proxy");
-  let loggerFactory: (tag: string) => typeof logger;
-  const config = {} as any;
+  let transport: HttpProxyTransport;
 
   beforeEach(() => {
+    vi.useFakeTimers();
     vi.restoreAllMocks();
-    loggerFactory = () => logger;
+    global.fetch = vi.fn().mockResolvedValue({
+      json: async () => [],
+    } as any);
+    transport = new HttpProxyTransport(loggerFactory, config, "http://test");
   });
 
-  it("isSupported should return true", () => {
-    // given
-    const transport = new HttpProxyTransport(
-      loggerFactory,
-      config,
-      "http://test",
-    );
+  afterEach(() => {
+    vi.useRealTimers();
+  });
 
-    // then
+  it("isSupported returns true", () => {
     expect(transport.isSupported()).toBe(true);
   });
 
-  it("getIdentifier should return speculosIdentifier", () => {
-    // given
-    const transport = new HttpProxyTransport(
-      loggerFactory,
-      config,
-      "http://test",
-    );
-
-    // then
-    expect(transport.getIdentifier()).toBe(speculosIdentifier);
+  it("getIdentifier returns the correct identifier", () => {
+    expect(transport.getIdentifier()).toBe(speculosProxyHttpIdentifier);
   });
 
-  it("listenToAvailableDevices emits a device with dynamic id", async () => {
-    // given
-    const t1 = new HttpProxyTransport(loggerFactory, config, "http://a");
-    const t2 = new HttpProxyTransport(loggerFactory, config, "http://b");
-    const d1 = (await lastValueFrom(t1.listenToAvailableDevices())) || [];
-    const d2 = (await lastValueFrom(t2.listenToAvailableDevices())) || [];
-
-    // then
-    expect(d1[0]!.id).not.toBe(d2[0]!.id);
-    expect(d1[0]!.transport).toBe(speculosIdentifier);
+  it("listenToAvailableDevices starts empty", async () => {
+    await new Promise<void>((resolve) => {
+      transport.listenToAvailableDevices().subscribe((devices) => {
+        expect(devices).toEqual([]);
+        resolve();
+      });
+    });
   });
 
-  it("connect returns Left on handshake failure", async () => {
+  it("startDiscovering emits added devices and stopDiscovering unsubscribes", async () => {
     // given
+    const rawDevices = [
+      { id: "dev1", deviceModel: { blockSize: 32, masks: [], memorySize: 0 } },
+    ];
+    (global.fetch as any)
+      .mockResolvedValueOnce({ json: async () => rawDevices } as any)
+      .mockResolvedValue({ json: async () => rawDevices } as any);
+    const added: TransportDiscoveredDevice[] = [];
+
+    // when
+    transport.startDiscovering().subscribe((dev) => added.push(dev));
+
+    // then
+    await vi.advanceTimersByTimeAsync(0);
+    expect(added).toHaveLength(1);
+    expect(added[0]!.id).toBe("http://test#dev1");
+
+    added.length = 0;
+    await vi.advanceTimersByTimeAsync(5000);
+    expect(added).toHaveLength(0);
+
+    transport.stopDiscovering();
+    await vi.advanceTimersByTimeAsync(5000);
+    expect(added).toHaveLength(0);
+  });
+
+  it("connect returns Left<UnknownDeviceError> for invalid URL", async () => {
+    // given
+    const result = await transport.connect({
+      deviceId: "http://wrong#dev",
+      onDisconnect: vi.fn(),
+    });
+
+    // then
+    expect(result.isLeft()).toBe(true);
+    result.ifLeft((err) => {
+      expect(err).toBeInstanceOf(UnknownDeviceError);
+    });
+  });
+
+  it("connect returns Left<UnknownDeviceError> for unseen device", async () => {
+    // given
+    const result = await transport.connect({
+      deviceId: "http://test#nope",
+      onDisconnect: vi.fn(),
+    });
+
+    // then
+    expect(result.isLeft()).toBe(true);
+    result.ifLeft((err) => {
+      expect(err).toBeInstanceOf(UnknownDeviceError);
+    });
+  });
+
+  it("connect returns Left<OpeningConnectionError> on handshake failure", async () => {
+    // given
+    const deviceId = "http://test#dev";
+    (transport as any).seenDevices.set(deviceId, {
+      id: deviceId,
+      deviceModel: { blockSize: 64, masks: [], memorySize: 0 },
+      transport: speculosProxyHttpIdentifier,
+    });
     vi.spyOn(HttpProxyDataSource.prototype, "postAdpu").mockRejectedValue(
-      new Error("meh"),
-    );
-    const transport = new HttpProxyTransport(
-      loggerFactory,
-      config,
-      "http://test",
+      new Error("fail"),
     );
 
     // when
-    const result = await transport.connect({
-      deviceId: "dev1",
-      onDisconnect: vi.fn(),
-    });
+    const result = await transport.connect({ deviceId, onDisconnect: vi.fn() });
 
     // then
     expect(result.isLeft()).toBe(true);
@@ -102,128 +142,111 @@ describe("HttpProxyTransport", () => {
     });
   });
 
-  it("connect returns Right with correct productName on handshake success", async () => {
+  it("connect returns Right<TransportConnectedDevice> with correct productName on success", async () => {
     // given
+    const deviceId = "http://test#dev";
+    const baseDevice = {
+      id: deviceId,
+      deviceModel: { blockSize: 16, masks: [], memorySize: 0 },
+      transport: speculosProxyHttpIdentifier,
+    };
+    (transport as any).seenDevices.set(deviceId, baseDevice);
     const name = "app";
-    const version = "1.2.3";
-    const nameHex = Buffer.from(name).toString("hex");
-    const versionHex = Buffer.from(version).toString("hex");
-    const handshakeHex = `03${nameHex}05${versionHex}9000`;
+    const version = "v1";
+    const encoder = new TextEncoder();
+    const toHex = (arr: Uint8Array) =>
+      Array.from(arr)
+        .map((b) => b.toString(16).padStart(2, "0"))
+        .join("");
+    const nameHex = toHex(encoder.encode(name));
+    const versionHex = toHex(encoder.encode(version));
+    const nameLen = (nameHex.length / 2).toString(16).padStart(2, "0");
+    const versionLen = (versionHex.length / 2).toString(16).padStart(2, "0");
+    const handshake = `01${nameLen}${nameHex}${versionLen}${versionHex}9000`;
     vi.spyOn(HttpProxyDataSource.prototype, "postAdpu").mockResolvedValueOnce(
-      handshakeHex,
-    );
-
-    const transport = new HttpProxyTransport(
-      loggerFactory,
-      config,
-      "http://test",
+      handshake,
     );
 
     // when
-    const result = await transport.connect({
-      deviceId: "dev1",
-      onDisconnect: vi.fn(),
-    });
+    const result = await transport.connect({ deviceId, onDisconnect: vi.fn() });
 
     // then
     expect(result.isRight()).toBe(true);
-    const dev = result.extract() as TransportConnectedDevice;
-    expect(dev.deviceModel.productName).toBe(`Speculos - ${name} - ${version}`);
-    expect(dev.id).toMatch(/^Speculos-/);
-    expect(typeof dev.sendApdu).toBe("function");
+    result.ifRight((dev: TransportConnectedDevice) => {
+      expect(dev.deviceModel.productName).toBe(`Proxy – ${name} – ${version}`);
+      expect(typeof dev.sendApdu).toBe("function");
+    });
   });
 
-  it("sendApdu returns Right on success", async () => {
+  it("sendApdu returns Right<ApduResponse> on success", async () => {
     // given
-    const transport = new HttpProxyTransport(
-      loggerFactory,
-      config,
-      "http://test",
-    );
-    (transport as any).connectedDevice = {
-      id: "dummy",
-      transport: "",
-      deviceModel: {} as any,
-      type: "USB",
-    };
+    const deviceId = "http://test#dev";
+    (transport as any).activeDeviceConnection = { id: deviceId } as any;
     const dataHex = "f0cacc1a";
     const statusHex = "9000";
     vi.spyOn(HttpProxyDataSource.prototype, "postAdpu").mockResolvedValue(
-      `${dataHex}${statusHex}`,
-    );
-    const apdu = new Uint8Array([0x00]);
-
-    // when
-    const result = await transport.sendApdu("sess", "dev1", vi.fn(), apdu);
-
-    // then
-    expect(result.isRight()).toBe(true);
-    const { data, statusCode } = result.extract() as ApduResponse;
-    expect(Array.from(data)).toEqual([0xf0, 0xca, 0xcc, 0x1a]);
-    expect(Array.from(statusCode)).toEqual([0x90, 0x00]);
-  });
-
-  it("sendApdu returns Left and calls onDisconnect on failure", async () => {
-    // given
-    const transport = new HttpProxyTransport(
-      loggerFactory,
-      config,
-      "http://test",
-    );
-    (transport as any).connectedDevice = {
-      id: "x",
-      transport: "",
-      deviceModel: {} as any,
-      type: "USB",
-    };
-    vi.spyOn(HttpProxyDataSource.prototype, "postAdpu").mockRejectedValue(
-      new Error("err"),
+      dataHex + statusHex,
     );
     const onDisconnect = vi.fn();
 
     // when
-    const result = await transport.sendApdu(
-      "sess",
-      "dev1",
+    const result = await (transport as any).sendApdu(
+      new Uint8Array([0x01]),
       onDisconnect,
-      new Uint8Array(),
     );
-
-    // then
-    expect(onDisconnect).toHaveBeenCalledWith("dev1");
-    expect(result.isLeft()).toBe(true);
-    result.ifLeft((err) => {
-      expect(err).toBeInstanceOf(GeneralDmkError);
-    });
-  });
-
-  it("disconnect clears connectedDevice", async () => {
-    // given
-    const transport = new HttpProxyTransport(
-      loggerFactory,
-      config,
-      "http://test",
-    );
-    (transport as any).connectedDevice = {} as any;
-
-    // when
-    const result = await transport.disconnect({ connectedDevice: {} as any });
 
     // then
     expect(result.isRight()).toBe(true);
-    expect((transport as any).connectedDevice).toBeNull();
+    result.ifRight(
+      ({ data, statusCode }: { data: Uint8Array; statusCode: Uint8Array }) => {
+        const toHex = (arr: Uint8Array) =>
+          Array.from(arr)
+            .map((b) => b.toString(16).padStart(2, "0"))
+            .join("");
+        expect(toHex(data)).toBe(dataHex);
+        expect(toHex(statusCode)).toBe(statusHex);
+      },
+    );
   });
 
-  it("speculosTransportFactory creates transport with given URL", () => {
+  it("sendApdu on error triggers onDisconnect and clears activeDeviceConnection", async () => {
     // given
-    const factory = speculosTransportFactory("http://xyz");
-    const transport = factory({
-      config,
-      loggerServiceFactory: loggerFactory,
-    } as unknown as TransportArgs);
+    const deviceId = "http://test#dev";
+    const onDisconnect = vi.fn();
+    (transport as any).activeDeviceConnection = { id: deviceId } as any;
+    vi.spyOn(HttpProxyDataSource.prototype, "postAdpu").mockRejectedValue(
+      new Error("err"),
+    );
+
+    // when
+    const result = await (transport as any).sendApdu(
+      new Uint8Array([0xff]),
+      onDisconnect,
+    );
 
     // then
-    expect(transport.isSupported()).toBe(true);
-    expect(transport.getIdentifier()).toBe(speculosIdentifier);
+    expect(onDisconnect).toHaveBeenCalledWith(deviceId);
+    expect((transport as any).activeDeviceConnection).toBeNull();
+    expect(result.isLeft()).toBe(true);
+    result.ifLeft((err: GeneralDmkError): void =>
+      expect(err).toBeInstanceOf(GeneralDmkError),
+    );
+  });
+
+  it("disconnect closes dataSource and clears activeDeviceConnection", async () => {
+    // given
+    const deviceId = "http://test#dev";
+    (transport as any).activeDeviceConnection = { id: deviceId } as any;
+    const spyClose = vi.spyOn(HttpProxyDataSource.prototype, "close");
+
+    // when
+    const res = await transport.disconnect({
+      connectedDevice: { id: deviceId } as any,
+    });
+
+    // then
+    expect(res.isRight()).toBe(true);
+    expect((transport as any).activeDeviceConnection).toBeNull();
+    expect(spyClose).toHaveBeenCalled();
   });
 });
