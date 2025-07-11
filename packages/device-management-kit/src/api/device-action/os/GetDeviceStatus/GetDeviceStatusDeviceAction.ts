@@ -262,14 +262,28 @@ export class GetDeviceStatusDeviceAction extends XStateDeviceAction<
                       currentAppVersion: _.event.output.data.version,
                     };
                   }
-                  if (
-                    "errorCode" in _.event.output.error &&
-                    _.event.output.error.errorCode === "5515"
-                  ) {
-                    return {
-                      ..._.context._internalState,
-                      locked: true,
-                    };
+                  if ("errorCode" in _.event.output.error) {
+                    if (_.event.output.error.errorCode === "5515") {
+                      // Locked device error
+                      return {
+                        ..._.context._internalState,
+                        locked: true,
+                      };
+                    } else if (_.event.output.error.errorCode === "6e00") {
+                      // CLA not supported
+                      // GetAppAndVersion should always be supported by the firmware or any app.
+                      // But on old firmware versions, that APDU was not supported in the dashboard.
+                      // On those firmwares, it fails with CLA_NOT_SUPPORTED in BOLOS, and INS_NOT_SUPPORTED
+                      // in applications. Therefore if CLA is not supported, we can consider we're on the
+                      // dashboard on an old firmware. We should therefore return that information to
+                      // ensure the user can still update his firmware and is not blocked at this step.
+                      return {
+                        ..._.context._internalState,
+                        locked: false,
+                        currentApp: "BOLOS",
+                        currentAppVersion: "0.0.0",
+                      };
+                    }
                   }
                   return {
                     ..._.context._internalState,

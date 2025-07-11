@@ -11,7 +11,13 @@ import { type CommandErrors, isCommandErrorCode } from "./CommandErrors";
 /**
  * Status word list of global errors that any command could result
  */
-export type GlobalCommandErrorStatusCode = "5515" | "5501" | "5502" | "5223";
+export type GlobalCommandErrorStatusCode =
+  | "5515"
+  | "5501"
+  | "5502"
+  | "5223"
+  | "6e00"
+  | "6d00";
 
 /**
  * Global command error class
@@ -30,6 +36,8 @@ export const GLOBAL_ERRORS: CommandErrors<GlobalCommandErrorStatusCode> = {
   "5501": { message: "Action refused on device.", tag: "ActionRefusedError" },
   "5502": { message: "Pin is not set", tag: "PinNotSetError" },
   "5223": { message: "Device internal error", tag: "DeviceInternalError" },
+  "6e00": { message: "CLA not supported", tag: "DeviceInternalError" },
+  "6d00": { message: "INS not supported", tag: "DeviceInternalError" },
 };
 
 /**
