@@ -1,5 +1,5 @@
 import { inject, injectable } from "inversify";
-import { Either, Just, Left, Maybe, Nothing, Right } from "purify-ts";
+import { EitherAsync, Just, Maybe, Nothing, Right } from "purify-ts";
 
 import { LKRPHttpRequestError } from "@api/app-binder/Errors";
 import { JWT } from "@api/app-binder/LKRPTypes";
@@ -23,13 +23,11 @@ export class HttpLKRPDataSource implements LKRPDataSource {
     return this.request<Challenge>("/challenge", Nothing);
   }
 
-  async authenticate(payload: AuthenticationPayload) {
-    const response = await this.request<JWT>("/authenticate", Nothing, {
+  authenticate(payload: AuthenticationPayload) {
+    return this.request<JWT>("/authenticate", Nothing, {
       method: "POST",
       body: JSON.stringify(payload),
-    });
-
-    return response.map((jwt) => ({
+    }).map((jwt) => ({
       jwt,
       trustchainId: Maybe.fromNullable(
         Object.keys(jwt.permissions).find((id) =>
@@ -39,12 +37,11 @@ export class HttpLKRPDataSource implements LKRPDataSource {
     }));
   }
 
-  async getTrustchainById(id: string, jwt: JWT) {
-    const response = await this.request<{ [path: string]: string }>(
+  getTrustchainById(id: string, jwt: JWT) {
+    return this.request<{ [path: string]: string }>(
       `/trustchain/${id}`,
       Just(jwt),
-    );
-    return response.map((serialized) =>
+    ).map((serialized) =>
       Object.fromEntries(
         Object.entries(serialized).map(([path, stream]) => [
           path,
@@ -54,27 +51,28 @@ export class HttpLKRPDataSource implements LKRPDataSource {
     );
   }
 
-  async postDerivation(id: string, stream: LKRPBlockStream, jwt: JWT) {
+  postDerivation(id: string, stream: LKRPBlockStream, jwt: JWT) {
     return this.request<void>(`/trustchain/${id}/derivation`, Just(jwt), {
       method: "POST",
       body: JSON.stringify(stream.toString()),
     });
   }
 
-  async putCommands(id: string, path: string, block: LKRPBlock, jwt: JWT) {
+  putCommands(id: string, path: string, block: LKRPBlock, jwt: JWT) {
     return this.request<void>(`/trustchain/${id}/commands`, Just(jwt), {
       method: "PUT",
       body: JSON.stringify({ path, blocks: [block.toString()] }),
     });
   }
 
-  private async request<Res>(
+  private request<Res>(
     endpoint: `/${string}`,
     jwt: Maybe<{ access_token: string }>,
     init?: RequestInit,
-  ): Promise<Either<LKRPHttpRequestError, Res>> {
+  ): EitherAsync<LKRPHttpRequestError, Res> {
     const href = this.baseUrl + endpoint;
-    try {
+
+    return EitherAsync.fromPromise(async () => {
       const response = await fetch(href, {
         ...init,
         headers: {
@@ -87,25 +85,16 @@ export class HttpLKRPDataSource implements LKRPDataSource {
         },
       });
       if (!response.ok) {
-        return Promise.resolve(
-          Left(
-            new LKRPHttpRequestError(
-              `Failed to fetch ${href}: [${response.status}] ${response.statusText}`,
-            ),
-          ),
+        throw new LKRPHttpRequestError(
+          `Failed to fetch ${href}: [${response.status}] ${response.statusText}`,
         );
       }
       if (response.status === 204) return Right(undefined as Res);
       return Right((await response.json()) as Res);
-    } catch (error) {
-      if (error instanceof Error) {
-        return Promise.resolve(Left(new LKRPHttpRequestError(error)));
-      }
-      return Promise.resolve(
-        Left(
-          new LKRPHttpRequestError(`Failed to fetch ${href}: ${String(error)}`),
-        ),
-      );
-    }
+    }).mapLeft((error: unknown) =>
+      error instanceof LKRPHttpRequestError
+        ? error
+        : new LKRPHttpRequestError(error),
+    );
   }
 }
