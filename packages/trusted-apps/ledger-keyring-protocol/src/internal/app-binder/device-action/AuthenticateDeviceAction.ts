@@ -1,6 +1,7 @@
 import {
   type DeviceActionStateMachine,
   type InternalApi,
+  OpenAppDeviceAction,
   type StateMachineTypes,
   UserInteractionRequired,
   XStateDeviceAction,
@@ -22,6 +23,10 @@ import {
   type Challenge,
 } from "@internal/lkrp-datasource/data/LKRPDataSource";
 import { eitherSeqRecord } from "@internal/utils/eitherSeqRecord";
+
+import { raiseAndAssign } from "./utils/raiseAndAssign";
+
+const APP_NAME = "Ledger Sync";
 
 export class AuthenticateDeviceAction extends XStateDeviceAction<
   AuthenticateDAOutput,
@@ -60,6 +65,9 @@ export class AuthenticateDeviceAction extends XStateDeviceAction<
       },
 
       actors: {
+        openAppStateMachine: new OpenAppDeviceAction({
+          input: { appName: APP_NAME },
+        }).makeStateMachine(internalApi),
         deviceAuth: fromPromise(deviceAuth),
       },
 
@@ -89,13 +97,13 @@ export class AuthenticateDeviceAction extends XStateDeviceAction<
           always: [
             { target: "DeviceAuth", guard: () => !this.input.trustchainId },
             { target: "WebAuth", guard: () => !this.input.jwt },
-            { target: "EnsureIsMember" },
+            { target: "GetEncryptionKey" },
           ],
         },
 
         WebAuth: {
           on: {
-            success: "EnsureIsMember",
+            success: "GetEncryptionKey",
             invalidCredentials: "DeviceAuth",
             error: "Error",
           },
@@ -103,32 +111,51 @@ export class AuthenticateDeviceAction extends XStateDeviceAction<
         },
 
         DeviceAuth: {
-          on: { success: "EnsureIsMember", error: "Error" },
-          invoke: {
-            id: "deviceAuth",
-            src: "deviceAuth",
-            onDone: {
-              actions: ({ event }) => {
-                // TODO: replace by actual logic
-                console.log(
-                  "Device Auth",
-                  ...event.output.caseOf<[string, unknown]>({
-                    Left: (error) => ["Error", error],
-                    Right: (response) => ["Success", response],
-                  }),
-                );
+          on: { success: "GetEncryptionKey", error: "Error" },
+          initial: "OpenApp",
+          states: {
+            OpenApp: {
+              on: { success: "Auth" },
+              invoke: {
+                id: "openApp",
+                src: "openAppStateMachine",
+                input: { appName: APP_NAME },
+                onDone: {
+                  actions: raiseAndAssign(({ event }) =>
+                    event.output.map(() => ({ raise: "success" })),
+                  ),
+                },
+              },
+            },
+
+            Auth: {
+              invoke: {
+                id: "deviceAuth",
+                src: "deviceAuth",
+                onDone: {
+                  actions: ({ event }) => {
+                    // TODO: replace by actual logic
+                    console.log(
+                      "Device Auth",
+                      ...event.output.caseOf<[string, unknown]>({
+                        Left: (error) => ["Error", error],
+                        Right: (response) => ["Success", response],
+                      }),
+                    );
+                  },
+                },
               },
             },
           },
         },
 
-        EnsureIsMember: {
+        GetEncryptionKey: {
           on: {
             success: "Success",
             invalidCredentials: "WebAuth",
             error: "Error",
           },
-          // TODO: Implement ensure is member
+          // TODO: Implement get encryption key
         },
 
         Success: { type: "final" },
