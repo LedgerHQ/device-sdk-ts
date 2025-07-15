@@ -109,7 +109,7 @@ export class ProvideTransactionContextTask {
     certificate,
   }: ClearSignContextSuccess): Promise<CommandResult<unknown, EthErrorCodes>> {
     // if a certificate is provided, we load it before sending the command
-    if (certificate && type !== ClearSignContextType.TRANSACTION_INFO) {
+    if (certificate) {
       await this._api.sendCommand(
         new LoadCertificateCommand({
           keyUsage: certificate.keyUsageNumber,
@@ -153,16 +153,6 @@ export class ProvideTransactionContextTask {
               isFirstChunk: args.isFirstChunk,
             }),
         }).run();
-
-        // TODO: What happens if the certificate is not provided?
-        if (certificate) {
-          await this._api.sendCommand(
-            new LoadCertificateCommand({
-              keyUsage: certificate.keyUsageNumber,
-              certificate: certificate.payload,
-            }),
-          );
-        }
 
         const transactionInfoResult =
           await this._sendPayloadInChunksTaskFactory(this._api, {
