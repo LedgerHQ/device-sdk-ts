@@ -13,7 +13,10 @@ import { KeyId } from "@/pki/model/KeyId";
 import { KeyUsage } from "@/pki/model/KeyUsage";
 import { PkiCertificate } from "@/pki/model/PkiCertificate";
 import { PkiCertificateInfo } from "@/pki/model/PkiCertificateInfo";
-import { LEDGER_CLIENT_VERSION_HEADER } from "@/shared/constant/HttpHeaders";
+import {
+  LEDGER_CLIENT_VERSION_HEADER,
+  LEDGER_ORIGIN_TOKEN_HEADER,
+} from "@/shared/constant/HttpHeaders";
 import {
   ClearSignContextReference,
   ClearSignContextSuccess,
@@ -40,7 +43,7 @@ import {
   CalldataSignatures,
   CalldataTransactionDescriptor,
   CalldataTransactionInfoV1,
-} from "./CalldataDto";
+} from "./dto/CalldataDto";
 import {
   GetTransactionDescriptorsParams,
   TransactionDataSource,
@@ -75,6 +78,7 @@ export class HttpTransactionDataSource implements TransactionDataSource {
         },
         headers: {
           [LEDGER_CLIENT_VERSION_HEADER]: `context-module/${PACKAGE.version}`,
+          [LEDGER_ORIGIN_TOKEN_HEADER]: this.config.originToken,
         },
       });
       dto = response.data;

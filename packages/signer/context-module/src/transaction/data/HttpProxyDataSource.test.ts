@@ -2,22 +2,32 @@ import axios from "axios";
 import { Left, Right } from "purify-ts";
 
 import { type ContextModuleConfig } from "@/config/model/ContextModuleConfig";
-import { LEDGER_CLIENT_VERSION_HEADER } from "@/shared/constant/HttpHeaders";
+import {
+  LEDGER_CLIENT_VERSION_HEADER,
+  LEDGER_ORIGIN_TOKEN_HEADER,
+} from "@/shared/constant/HttpHeaders";
 import type { ProxyDelegateCall } from "@/transaction/model/ProxyDelegateCall";
 import type { ProxyImplementationAddress } from "@/transaction/model/ProxyImplementationAddress";
 import PACKAGE from "@root/package.json";
 
+import { type ProxyImplementationAddressDto } from "./dto/ProxyImplementationAddressDto";
 import type {
   GetProxyDelegateCallParam,
   GetProxyImplementationAddressParam,
   ProxyDataSource,
 } from "./HttpProxyDataSource";
 import { HttpProxyDataSource } from "./HttpProxyDataSource";
-import { type ProxyImplementationAddressDto } from "./ProxyImplementationAddressDto";
 
 vi.mock("axios");
 
 describe("HttpProxyDataSource", () => {
+  const config = {
+    web3checks: {
+      url: "web3checksUrl",
+    },
+    originToken: "originToken",
+  } as ContextModuleConfig;
+
   let datasource: ProxyDataSource;
   const defaultParams: GetProxyDelegateCallParam = {
     proxyAddress: "0x72CBdEaAdddD14Ec95b92995933CeC69566650f0",
@@ -48,6 +58,7 @@ describe("HttpProxyDataSource", () => {
       metadataService: {
         url: "https://nft.api.live.ledger.com/v2",
       },
+      originToken: "originToken",
     } as ContextModuleConfig);
   });
 
@@ -66,7 +77,10 @@ describe("HttpProxyDataSource", () => {
       // THEN
       expect(requestSpy).toHaveBeenCalledWith(
         expect.objectContaining({
-          headers: { [LEDGER_CLIENT_VERSION_HEADER]: version },
+          headers: {
+            [LEDGER_CLIENT_VERSION_HEADER]: version,
+            [LEDGER_ORIGIN_TOKEN_HEADER]: config.originToken,
+          },
         }),
       );
     });
@@ -181,7 +195,10 @@ describe("HttpProxyDataSource", () => {
       // THEN
       expect(requestSpy).toHaveBeenCalledWith(
         expect.objectContaining({
-          headers: { [LEDGER_CLIENT_VERSION_HEADER]: version },
+          headers: {
+            [LEDGER_CLIENT_VERSION_HEADER]: version,
+            [LEDGER_ORIGIN_TOKEN_HEADER]: config.originToken,
+          },
         }),
       );
     });

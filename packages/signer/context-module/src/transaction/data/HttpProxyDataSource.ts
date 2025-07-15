@@ -4,13 +4,16 @@ import { Either, Left, Right } from "purify-ts";
 
 import { configTypes } from "@/config/di/configTypes";
 import { type ContextModuleConfig } from "@/config/model/ContextModuleConfig";
-import { LEDGER_CLIENT_VERSION_HEADER } from "@/shared/constant/HttpHeaders";
+import {
+  LEDGER_CLIENT_VERSION_HEADER,
+  LEDGER_ORIGIN_TOKEN_HEADER,
+} from "@/shared/constant/HttpHeaders";
 import { type ProxyDelegateCall } from "@/transaction/model/ProxyDelegateCall";
 import { type ProxyImplementationAddress } from "@/transaction/model/ProxyImplementationAddress";
 import PACKAGE from "@root/package.json";
 
-import { type ProxyDelegateCallDto } from "./ProxyDelegateCallDto";
-import { type ProxyImplementationAddressDto } from "./ProxyImplementationAddressDto";
+import { type ProxyDelegateCallDto } from "./dto/ProxyDelegateCallDto";
+import { type ProxyImplementationAddressDto } from "./dto/ProxyImplementationAddressDto";
 
 export type GetProxyDelegateCallParam = {
   proxyAddress: string;
@@ -50,6 +53,7 @@ export class HttpProxyDataSource implements ProxyDataSource {
         url: `${this.config.metadataService.url}/ethereum/${chainId}/contract/proxy/delegate`,
         headers: {
           [LEDGER_CLIENT_VERSION_HEADER]: `context-module/${PACKAGE.version}`,
+          [LEDGER_ORIGIN_TOKEN_HEADER]: this.config.originToken,
         },
         data: {
           proxy: proxyAddress,
@@ -97,6 +101,7 @@ export class HttpProxyDataSource implements ProxyDataSource {
         url: `${this.config.metadataService.url}/ethereum/${chainId}/contract/proxy/${proxyAddress}`,
         headers: {
           [LEDGER_CLIENT_VERSION_HEADER]: `context-module/${PACKAGE.version}`,
+          [LEDGER_ORIGIN_TOKEN_HEADER]: this.config.originToken,
         },
       });
       dto = response.data;
