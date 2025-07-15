@@ -23,7 +23,12 @@ export class ApplicationChecker {
       this.isCompatible = false;
       return;
     }
-    if (deviceState.currentApp.name === "Ethereum") {
+    if (deviceState.currentApp.name === "Exchange") {
+      // Advanced clear signing is not supported in exchange flows, only basic loaders
+      // such as token should be provided.
+      this.isCompatible = false;
+      return;
+    } else if (deviceState.currentApp.name === "Ethereum") {
       this.version = deviceState.currentApp.version;
     } else {
       // Fallback on appConfig version if a plugin is running.
