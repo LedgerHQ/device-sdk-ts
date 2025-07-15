@@ -1,5 +1,6 @@
 import {
   type ExecuteDeviceActionReturnType,
+  type OpenAppDAError,
   type UnknownDAError,
 } from "@ledgerhq/device-management-kit";
 import { type Either } from "purify-ts";
@@ -40,6 +41,7 @@ export type AuthenticateDAError =
   | LKRPHttpRequestError
   | LKRPParsingError
   | LKRPMissingDataError
+  | OpenAppDAError
   | UnknownDAError;
 
 export type AuthenticateDAIntermediateValue = {
