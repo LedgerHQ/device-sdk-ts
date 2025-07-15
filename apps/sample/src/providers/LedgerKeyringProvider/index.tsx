@@ -43,7 +43,9 @@ export const LedgerKeyringProtocolProvider: React.FC<PropsWithChildren> = ({
     const newApp = new LedgerKeyringProtocolBuilder({
       dmk,
       sessionId,
-      baseUrl: "https://trustchain-backend.api.aws.stg.ldg-tech.com/v1",
+      baseUrl:
+        process.env.TRUSTCHAIN_BACKEND_URL ||
+        "https://trustchain-backend.api.aws.stg.ldg-tech.com/v1",
     }).build();
 
     setApp(newApp);

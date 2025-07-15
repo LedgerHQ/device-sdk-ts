@@ -137,9 +137,8 @@ export class AuthenticateDeviceAction extends XStateDeviceAction<
                 src: "deviceAuth",
                 onDone: {
                   actions: raiseAndAssign(({ event }) =>
-                    event.output.chain((payload) => {
-                      console.log(payload);
-                      return payload.trustchainId.caseOf({
+                    event.output.chain((payload) =>
+                      payload.trustchainId.caseOf({
                         Nothing: () =>
                           Left(
                             new LKRPUnhandledState("The trustchain is empty"),
@@ -149,8 +148,8 @@ export class AuthenticateDeviceAction extends XStateDeviceAction<
                             raise: "success",
                             assign: { jwt: payload.jwt, trustchainId },
                           }),
-                      });
-                    }),
+                      }),
+                    ),
                   ),
                 },
               },
