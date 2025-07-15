@@ -7,6 +7,7 @@ import { Container } from "inversify";
 import { appBindingModuleFactory } from "@internal/app-binder/di/appBinderModule";
 
 import { lkrpDatasourceModuleFactory } from "./lkrp-datasource/di/lkrpDatasourceModuleFactory";
+import { useCasesModuleFactory } from "./use-cases/di/useCasesModule";
 import { externalTypes } from "./externalTypes";
 
 export type MakeContainerProps = {
@@ -32,6 +33,7 @@ export const makeContainer = ({
   container.loadSync(
     appBindingModuleFactory(),
     lkrpDatasourceModuleFactory({ baseUrl, stub }),
+    useCasesModuleFactory(),
   );
 
   return container;
