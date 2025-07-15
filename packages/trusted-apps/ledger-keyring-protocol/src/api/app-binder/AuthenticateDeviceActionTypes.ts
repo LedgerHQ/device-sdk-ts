@@ -12,6 +12,7 @@ import {
   type LKRPHttpRequestError,
   type LKRPMissingDataError,
   type LKRPParsingError,
+  type LKRPUnhandledState,
 } from "./Errors";
 import { type JWT, type Keypair } from "./LKRPTypes";
 
@@ -41,6 +42,7 @@ export type AuthenticateDAError =
   | LKRPHttpRequestError
   | LKRPParsingError
   | LKRPMissingDataError
+  | LKRPUnhandledState
   | OpenAppDAError
   | UnknownDAError;
 

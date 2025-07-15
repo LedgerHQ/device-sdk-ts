@@ -16,7 +16,10 @@ import {
   type AuthenticateDAInternalState,
   type AuthenticateDAOutput,
 } from "@api/app-binder/AuthenticateDeviceActionTypes";
-import { LKRPMissingDataError } from "@api/app-binder/Errors";
+import {
+  LKRPMissingDataError,
+  LKRPUnhandledState,
+} from "@api/app-binder/Errors";
 import { SignChallengeWithDeviceTask } from "@internal/app-binder/task/SignChallengeWithDeviceTask";
 import {
   type AuthenticationPayload,
@@ -133,16 +136,22 @@ export class AuthenticateDeviceAction extends XStateDeviceAction<
                 id: "deviceAuth",
                 src: "deviceAuth",
                 onDone: {
-                  actions: ({ event }) => {
-                    // TODO: replace by actual logic
-                    console.log(
-                      "Device Auth",
-                      ...event.output.caseOf<[string, unknown]>({
-                        Left: (error) => ["Error", error],
-                        Right: (response) => ["Success", response],
-                      }),
-                    );
-                  },
+                  actions: raiseAndAssign(({ event }) =>
+                    event.output.chain((payload) => {
+                      console.log(payload);
+                      return payload.trustchainId.caseOf({
+                        Nothing: () =>
+                          Left(
+                            new LKRPUnhandledState("The trustchain is empty"),
+                          ),
+                        Just: (trustchainId) =>
+                          Right({
+                            raise: "success",
+                            assign: { jwt: payload.jwt, trustchainId },
+                          }),
+                      });
+                    }),
+                  ),
                 },
               },
             },
@@ -155,7 +164,10 @@ export class AuthenticateDeviceAction extends XStateDeviceAction<
             invalidCredentials: "WebAuth",
             error: "Error",
           },
-          // TODO: Implement get encryption key
+          entry: ({ context }) =>
+            context._internalState.ifRight((state) =>
+              console.log("State:", state),
+            ), // TODO: Implement get encryption key
         },
 
         Success: { type: "final" },
