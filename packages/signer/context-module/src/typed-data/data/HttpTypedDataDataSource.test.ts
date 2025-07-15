@@ -2,7 +2,10 @@ import axios from "axios";
 import { Right } from "purify-ts";
 
 import { type ContextModuleConfig } from "@/config/model/ContextModuleConfig";
-import { LEDGER_CLIENT_VERSION_HEADER } from "@/shared/constant/HttpHeaders";
+import {
+  LEDGER_CLIENT_VERSION_HEADER,
+  LEDGER_ORIGIN_TOKEN_HEADER,
+} from "@/shared/constant/HttpHeaders";
 import { HttpTypedDataDataSource } from "@/typed-data/data/HttpTypedDataDataSource";
 import { type TypedDataDataSource } from "@/typed-data/data/TypedDataDataSource";
 import PACKAGE from "@root/package.json";
@@ -155,6 +158,16 @@ export const buildDescriptor = (
   },
 ];
 
+const config = {
+  web3checks: {
+    url: "web3checksUrl",
+  },
+  cal: {
+    url: "https://crypto-assets-service.api.ledger.com/v1",
+    mode: "prod",
+  },
+  originToken: "originToken",
+} as ContextModuleConfig;
 describe("HttpTypedDataDataSource", () => {
   let datasource: TypedDataDataSource;
 
@@ -208,12 +221,6 @@ describe("HttpTypedDataDataSource", () => {
   };
 
   beforeAll(() => {
-    const config = {
-      cal: {
-        url: "https://crypto-assets-service.api.ledger.com/v1",
-        mode: "prod",
-      },
-    } as ContextModuleConfig;
     datasource = new HttpTypedDataDataSource(config);
     vi.clearAllMocks();
   });
@@ -235,7 +242,10 @@ describe("HttpTypedDataDataSource", () => {
     // THEN
     expect(requestSpy).toHaveBeenCalledWith(
       expect.objectContaining({
-        headers: { [LEDGER_CLIENT_VERSION_HEADER]: version },
+        headers: {
+          [LEDGER_CLIENT_VERSION_HEADER]: version,
+          [LEDGER_ORIGIN_TOKEN_HEADER]: config.originToken,
+        },
       }),
     );
   });
