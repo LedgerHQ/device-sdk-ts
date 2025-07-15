@@ -22,7 +22,7 @@ export class LKRPMissingDataError extends GeneralDmkError {
 }
 
 export class LKRPUnhandledState extends GeneralDmkError {
-  override readonly _tag = "LKRPUnhandledState ";
+  override readonly _tag = "LKRPUnhandledState";
   constructor(readonly err?: unknown) {
     super(err);
   }

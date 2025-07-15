@@ -3,8 +3,8 @@ import {
   type AuthenticateDAError,
   type AuthenticateDAIntermediateValue,
   type AuthenticateDAOutput,
-} from "@ledgerhq/device-trusted-app-kit-ledger-keyring-protocol/api/app-binder/AuthenticateDeviceActionTypes.js";
-import { type JWT } from "@ledgerhq/device-trusted-app-kit-ledger-keyring-protocol/api/app-binder/LKRPTypes.js";
+  type JWT,
+} from "@ledgerhq/device-trusted-app-kit-ledger-keyring-protocol";
 
 import { DeviceActionsList } from "@/components/DeviceActionsView/DeviceActionsList";
 import { type DeviceActionProps } from "@/components/DeviceActionsView/DeviceActionTester";
