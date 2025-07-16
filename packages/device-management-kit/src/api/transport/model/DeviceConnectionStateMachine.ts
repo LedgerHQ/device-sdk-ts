@@ -2,6 +2,7 @@
 import { type Either, Left, Maybe, Nothing, Right } from "purify-ts";
 import { type Actor, assign, createActor, emit, setup } from "xstate";
 
+import { GetAppAndVersionCommand } from "@api/command/os/GetAppAndVersionCommand";
 import { CommandUtils } from "@api/command/utils/CommandUtils";
 import { type ApduResponse } from "@api/device-session/ApduResponse";
 import { type DmkError, UnknownDeviceExchangeError } from "@api/Error";
@@ -250,7 +251,7 @@ function makeStateMachine({
         );
       },
       sendGetAppAndVersion: () => {
-        sendApduFn(Uint8Array.from([0xb0, 0x01, 0x00, 0x00, 0x00]), false);
+        sendApduFn(new GetAppAndVersionCommand().getApdu().getRawApdu(), false);
       },
       tryToReconnect: () => {
         tryToReconnect();
@@ -274,13 +275,15 @@ function makeStateMachine({
           return false;
         }
         return context.apduInProgress.caseOf({
-          Just: ({ triggersDisconnection, apdu }) => {
-            const res =
-              (triggersDisconnection ||
-                CommandUtils.isApduThatTriggersDisconnection(apdu)) &&
-              CommandUtils.isSuccessResponse(event.apduResponse);
-            return res;
-          },
+          /**
+           * If the apdu is known as one that triggers a disconnection,
+           * and if it's a success response,
+           * then will trigger a disconnection (on Ledger OS prior to the IO revamp).
+           */
+          Just: ({ triggersDisconnection, apdu }) =>
+            (triggersDisconnection ||
+              CommandUtils.isApduThatTriggersDisconnection(apdu)) &&
+            CommandUtils.isSuccessResponse(event.apduResponse),
           Nothing: () => false,
         });
       },
