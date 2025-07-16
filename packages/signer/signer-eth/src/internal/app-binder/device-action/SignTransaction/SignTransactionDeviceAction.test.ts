@@ -1,5 +1,8 @@
 /* eslint @typescript-eslint/consistent-type-imports: 0 */
-import { type ContextModule } from "@ledgerhq/context-module";
+import {
+  ClearSignContextType,
+  type ContextModule,
+} from "@ledgerhq/context-module";
 import {
   CommandResultFactory,
   DeviceActionStatus,
@@ -12,12 +15,13 @@ import {
 } from "@ledgerhq/device-management-kit";
 import { InvalidStatusWordError } from "@ledgerhq/device-management-kit";
 import { Transaction } from "ethers";
-import { Just, Nothing } from "purify-ts";
+import { Just, Left } from "purify-ts";
 
 import {
   type SignTransactionDAState,
   SignTransactionDAStep,
 } from "@api/app-binder/SignTransactionDeviceActionTypes";
+import { ClearSigningType } from "@api/model/ClearSigningType";
 import { TransactionType } from "@api/model/TransactionType";
 import { makeDeviceActionInternalApiMock } from "@internal/app-binder/device-action/__test-utils__/makeInternalApi";
 import { setupOpenAppDAMock } from "@internal/app-binder/device-action/__test-utils__/setupOpenAppDAMock";
@@ -55,16 +59,14 @@ describe("SignTransactionDeviceAction", () => {
   const getAppConfigMock = vi.fn();
   const web3CheckOptInMock = vi.fn();
   const buildContextMock = vi.fn();
-  const provideContextMock = vi.fn();
-  const provideGenericContextMock = vi.fn();
+  const buildSubContextAndProvideMock = vi.fn();
   const signTransactionMock = vi.fn();
   function extractDependenciesMock() {
     return {
       getAppConfig: getAppConfigMock,
       web3CheckOptIn: web3CheckOptInMock,
       buildContext: buildContextMock,
-      provideContext: provideContextMock,
-      provideGenericContext: provideGenericContextMock,
+      buildSubContextAndProvide: buildSubContextAndProvideMock,
       signTransaction: signTransactionMock,
     };
   }
@@ -142,11 +144,13 @@ describe("SignTransactionDeviceAction", () => {
               payload: "payload-1",
             },
           ],
+          clearSignContextsOptional: [],
           serializedTransaction: new Uint8Array([0x01, 0x02, 0x03]),
           chainId: 1,
           transactionType: TransactionType.LEGACY,
+          clearSigningType: ClearSigningType.BASIC,
         });
-        provideContextMock.mockResolvedValueOnce(Nothing);
+        buildSubContextAndProvideMock.mockResolvedValueOnce(Just(void 0));
         signTransactionMock.mockResolvedValueOnce(
           CommandResultFactory({
             data: {
@@ -199,7 +203,7 @@ describe("SignTransactionDeviceAction", () => {
           {
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
-              step: SignTransactionDAStep.PROVIDE_CONTEXT,
+              step: SignTransactionDAStep.BUILD_SUB_CONTEXT_AND_PROVIDE,
             },
             status: DeviceActionStatus.Pending,
           },
@@ -238,16 +242,21 @@ describe("SignTransactionDeviceAction", () => {
               }),
             );
 
-            expect(provideContextMock).toHaveBeenCalledWith(
+            expect(buildSubContextAndProvideMock).toHaveBeenCalledWith(
               expect.objectContaining({
-                input: {
-                  clearSignContexts: [
-                    {
-                      type: "token",
-                      payload: "payload-1",
-                    },
-                  ],
-                },
+                // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+                input: expect.objectContaining({
+                  context: {
+                    type: "token",
+                    payload: "payload-1",
+                  },
+                  contextOptional: [],
+                  transactionParser: parserMock,
+                  serializedTransaction: new Uint8Array([0x01, 0x02, 0x03]),
+                  contextModule: contextModuleMock,
+                  chainId: 1,
+                  derivationPath: "44'/60'/0'/0/0",
+                }),
               }),
             );
 
@@ -256,9 +265,9 @@ describe("SignTransactionDeviceAction", () => {
                 input: {
                   derivationPath: "44'/60'/0'/0/0",
                   serializedTransaction: new Uint8Array([0x01, 0x02, 0x03]),
-                  isLegacy: true,
                   chainId: 1,
                   transactionType: TransactionType.LEGACY,
+                  clearSigningType: ClearSigningType.BASIC,
                 },
               }),
             );
@@ -268,7 +277,7 @@ describe("SignTransactionDeviceAction", () => {
         });
       }));
 
-    it("should be successful whlie skipping OpenApp", () =>
+    it("should be successful while skipping OpenApp", () =>
       new Promise<void>((resolve, reject) => {
         setupOpenAppDAMock();
         setupAppConfig("1.15.0", false, false);
@@ -298,8 +307,9 @@ describe("SignTransactionDeviceAction", () => {
           serializedTransaction: new Uint8Array([0x01, 0x02, 0x03]),
           chainId: 1,
           transactionType: TransactionType.LEGACY,
+          clearSigningType: ClearSigningType.BASIC,
         });
-        provideContextMock.mockResolvedValueOnce(Nothing);
+        buildSubContextAndProvideMock.mockResolvedValueOnce(Just(void 0));
         signTransactionMock.mockResolvedValueOnce(
           CommandResultFactory({
             data: {
@@ -336,7 +346,7 @@ describe("SignTransactionDeviceAction", () => {
           {
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
-              step: SignTransactionDAStep.PROVIDE_CONTEXT,
+              step: SignTransactionDAStep.BUILD_SUB_CONTEXT_AND_PROVIDE,
             },
             status: DeviceActionStatus.Pending,
           },
@@ -383,20 +393,23 @@ describe("SignTransactionDeviceAction", () => {
 
         // Mock the dependencies to return some sample data
         buildContextMock.mockResolvedValueOnce({
-          clearSignContexts: {
-            transactionInfo: "payload-1",
-            transactionFields: [
-              {
-                type: "enum",
-                payload: "payload-2",
-              },
-            ],
-          },
+          clearSignContexts: [
+            {
+              type: ClearSignContextType.TRANSACTION_INFO,
+              payload: "payload-1",
+            },
+            {
+              type: ClearSignContextType.TRANSACTION_FIELD_DESCRIPTION,
+              payload: "payload-2",
+            },
+          ],
           serializedTransaction: new Uint8Array([0x01, 0x02, 0x03]),
           chainId: 7,
           transactionType: TransactionType.EIP1559,
+          clearSigningType: ClearSigningType.EIP7730,
+          clearSignContextsOptional: [],
         });
-        provideGenericContextMock.mockResolvedValueOnce(Nothing);
+        buildSubContextAndProvideMock.mockResolvedValueOnce(Just(void 0));
         signTransactionMock.mockResolvedValueOnce(
           CommandResultFactory({
             data: {
@@ -449,7 +462,14 @@ describe("SignTransactionDeviceAction", () => {
           {
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
-              step: SignTransactionDAStep.PROVIDE_GENERIC_CONTEXT,
+              step: SignTransactionDAStep.BUILD_SUB_CONTEXT_AND_PROVIDE,
+            },
+            status: DeviceActionStatus.Pending,
+          },
+          {
+            intermediateValue: {
+              requiredUserInteraction: UserInteractionRequired.None,
+              step: SignTransactionDAStep.BUILD_SUB_CONTEXT_AND_PROVIDE,
             },
             status: DeviceActionStatus.Pending,
           },
@@ -489,24 +509,38 @@ describe("SignTransactionDeviceAction", () => {
               }),
             );
 
-            expect(provideGenericContextMock).toHaveBeenCalledWith(
+            expect(buildSubContextAndProvideMock).toHaveBeenCalledTimes(2);
+            expect(buildSubContextAndProvideMock).toHaveBeenNthCalledWith(
+              1,
               expect.objectContaining({
                 input: {
                   chainId: 7,
                   context: {
-                    transactionInfo: "payload-1",
-                    transactionFields: [
-                      {
-                        type: "enum",
-                        payload: "payload-2",
-                      },
-                    ],
+                    type: ClearSignContextType.TRANSACTION_INFO,
+                    payload: "payload-1",
                   },
                   contextModule: contextModuleMock,
                   derivationPath: "44'/60'/0'/0/0",
                   serializedTransaction: new Uint8Array([0x01, 0x02, 0x03]),
                   transactionParser: parserMock,
-                  web3Check: null,
+                  contextOptional: [],
+                },
+              }),
+            );
+            expect(buildSubContextAndProvideMock).toHaveBeenNthCalledWith(
+              2,
+              expect.objectContaining({
+                input: {
+                  chainId: 7,
+                  context: {
+                    type: ClearSignContextType.TRANSACTION_FIELD_DESCRIPTION,
+                    payload: "payload-2",
+                  },
+                  contextModule: contextModuleMock,
+                  derivationPath: "44'/60'/0'/0/0",
+                  serializedTransaction: new Uint8Array([0x01, 0x02, 0x03]),
+                  transactionParser: parserMock,
+                  contextOptional: [],
                 },
               }),
             );
@@ -515,9 +549,9 @@ describe("SignTransactionDeviceAction", () => {
                 input: {
                   derivationPath: "44'/60'/0'/0/0",
                   serializedTransaction: new Uint8Array([0x01, 0x02, 0x03]),
-                  isLegacy: false,
                   chainId: 7,
                   transactionType: TransactionType.EIP1559,
+                  clearSigningType: ClearSigningType.EIP7730,
                 },
               }),
             );
@@ -546,20 +580,18 @@ describe("SignTransactionDeviceAction", () => {
         buildContextMock.mockResolvedValueOnce({
           clearSignContexts: [
             {
-              type: "token",
+              type: ClearSignContextType.TRANSACTION_INFO,
               payload: "payload-1",
             },
           ],
           serializedTransaction: new Uint8Array([0x01, 0x02, 0x03]),
           chainId: 1,
           transactionType: TransactionType.LEGACY,
+          clearSigningType: ClearSigningType.EIP7730,
+          clearSignContextsOptional: [],
         });
-        provideContextMock.mockResolvedValueOnce(
-          Just(
-            CommandResultFactory({
-              error: new InvalidStatusWordError("provideContext error"),
-            }),
-          ),
+        buildSubContextAndProvideMock.mockResolvedValueOnce(
+          Left(new Error("provideContext error")),
         );
         signTransactionMock.mockResolvedValueOnce(
           CommandResultFactory({
@@ -613,7 +645,7 @@ describe("SignTransactionDeviceAction", () => {
           {
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
-              step: SignTransactionDAStep.PROVIDE_CONTEXT,
+              step: SignTransactionDAStep.BUILD_SUB_CONTEXT_AND_PROVIDE,
             },
             status: DeviceActionStatus.Pending,
           },
@@ -652,15 +684,19 @@ describe("SignTransactionDeviceAction", () => {
                 },
               }),
             );
-            expect(provideContextMock).toHaveBeenCalledWith(
+            expect(buildSubContextAndProvideMock).toHaveBeenCalledWith(
               expect.objectContaining({
                 input: {
-                  clearSignContexts: [
-                    {
-                      type: "token",
-                      payload: "payload-1",
-                    },
-                  ],
+                  context: {
+                    type: ClearSignContextType.TRANSACTION_INFO,
+                    payload: "payload-1",
+                  },
+                  contextOptional: [],
+                  transactionParser: parserMock,
+                  serializedTransaction: new Uint8Array([0x01, 0x02, 0x03]),
+                  contextModule: contextModuleMock,
+                  chainId: 1,
+                  derivationPath: "44'/60'/0'/0/0",
                 },
               }),
             );
@@ -669,180 +705,9 @@ describe("SignTransactionDeviceAction", () => {
                 input: {
                   derivationPath: "44'/60'/0'/0/0",
                   serializedTransaction: new Uint8Array([0x01, 0x02, 0x03]),
-                  isLegacy: true,
                   chainId: 1,
                   transactionType: TransactionType.LEGACY,
-                },
-              }),
-            );
-            resolve();
-          },
-        });
-      }));
-
-    it("should fallback to blind signing if provideGenericContext return an error", () =>
-      new Promise<void>((resolve, reject) => {
-        setupOpenAppDAMock();
-        setupAppConfig("1.15.0", false, false);
-
-        const deviceAction = new SignTransactionDeviceAction({
-          input: {
-            derivationPath: "44'/60'/0'/0/0",
-            transaction: defaultTransaction,
-            options: defaultOptions,
-            contextModule: contextModuleMock,
-            mapper: mapperMock,
-            parser: parserMock,
-          },
-        });
-
-        // Mock the dependencies to return some sample data
-        buildContextMock.mockResolvedValueOnce({
-          clearSignContexts: {
-            transactionInfo: "payload-1",
-            transactionFields: [
-              {
-                type: "enum",
-                payload: "payload-2",
-              },
-            ],
-          },
-          serializedTransaction: new Uint8Array([0x01, 0x02, 0x03]),
-          chainId: 7,
-          transactionType: TransactionType.EIP1559,
-          web3Check: null,
-        });
-
-        provideGenericContextMock.mockResolvedValueOnce(
-          Just(
-            CommandResultFactory({
-              error: new InvalidStatusWordError("provideGenericContext error"),
-            }),
-          ),
-        );
-
-        signTransactionMock.mockResolvedValueOnce(
-          CommandResultFactory({
-            data: {
-              v: 0x1c,
-              r: "0x8a540510e13b0f2b11a451275716d29e08caad07e89a1c84964782fb5e1ad788",
-              s: "0x64a0de235b270fbe81e8e40688f4a9f9ad9d283d690552c9331d7773ceafa513",
-            },
-          }),
-        );
-
-        vi.spyOn(deviceAction, "extractDependencies").mockReturnValue(
-          extractDependenciesMock(),
-        );
-
-        // Expected intermediate values for the following state sequence:
-        //   Initial -> OpenApp -> BuildContext -> ProvideGenericContext -> SignTransaction
-        const expectedStates: Array<SignTransactionDAState> = [
-          // Initial state
-          {
-            intermediateValue: {
-              requiredUserInteraction: UserInteractionRequired.None,
-              step: SignTransactionDAStep.OPEN_APP,
-            },
-            status: DeviceActionStatus.Pending,
-          },
-          // OpenApp interaction
-          {
-            intermediateValue: {
-              requiredUserInteraction: UserInteractionRequired.ConfirmOpenApp,
-              step: SignTransactionDAStep.OPEN_APP,
-            },
-            status: DeviceActionStatus.Pending,
-          },
-          // GetAppConfig state
-          {
-            intermediateValue: {
-              requiredUserInteraction: UserInteractionRequired.None,
-              step: SignTransactionDAStep.GET_APP_CONFIG,
-            },
-            status: DeviceActionStatus.Pending,
-          },
-          // BuildContext state
-          {
-            intermediateValue: {
-              requiredUserInteraction: UserInteractionRequired.None,
-              step: SignTransactionDAStep.BUILD_CONTEXT,
-            },
-            status: DeviceActionStatus.Pending,
-          },
-          // ProvideContext state
-          {
-            intermediateValue: {
-              requiredUserInteraction: UserInteractionRequired.None,
-              step: SignTransactionDAStep.PROVIDE_GENERIC_CONTEXT,
-            },
-            status: DeviceActionStatus.Pending,
-          },
-          // SignTransaction state
-          {
-            intermediateValue: {
-              requiredUserInteraction: UserInteractionRequired.SignTransaction,
-              step: SignTransactionDAStep.SIGN_TRANSACTION,
-            },
-            status: DeviceActionStatus.Pending,
-          },
-          // Final state
-          {
-            output: {
-              v: 0x1c,
-              r: "0x8a540510e13b0f2b11a451275716d29e08caad07e89a1c84964782fb5e1ad788",
-              s: "0x64a0de235b270fbe81e8e40688f4a9f9ad9d283d690552c9331d7773ceafa513",
-            },
-            status: DeviceActionStatus.Completed,
-          },
-        ];
-
-        testDeviceActionStates(deviceAction, expectedStates, apiMock, {
-          onError: reject,
-          onDone: () => {
-            // Verify mocks calls parameters
-            expect(buildContextMock).toHaveBeenCalledWith(
-              expect.objectContaining({
-                input: {
-                  contextModule: contextModuleMock,
-                  mapper: mapperMock,
-                  options: defaultOptions,
-                  transaction: defaultTransaction,
-                  appConfig: createAppConfig("1.15.0", false, false),
-                  derivationPath: "44'/60'/0'/0/0",
-                },
-              }),
-            );
-
-            expect(provideGenericContextMock).toHaveBeenCalledWith(
-              expect.objectContaining({
-                input: {
-                  chainId: 7,
-                  context: {
-                    transactionInfo: "payload-1",
-                    transactionFields: [
-                      {
-                        type: "enum",
-                        payload: "payload-2",
-                      },
-                    ],
-                  },
-                  contextModule: contextModuleMock,
-                  derivationPath: "44'/60'/0'/0/0",
-                  serializedTransaction: new Uint8Array([0x01, 0x02, 0x03]),
-                  transactionParser: parserMock,
-                  web3Check: null,
-                },
-              }),
-            );
-            expect(signTransactionMock).toHaveBeenCalledWith(
-              expect.objectContaining({
-                input: {
-                  derivationPath: "44'/60'/0'/0/0",
-                  serializedTransaction: new Uint8Array([0x01, 0x02, 0x03]),
-                  isLegacy: false,
-                  chainId: 7,
-                  transactionType: TransactionType.EIP1559,
+                  clearSigningType: ClearSigningType.EIP7730, // TODO: should be standard
                 },
               }),
             );
@@ -1267,11 +1132,11 @@ describe("SignTransactionDeviceAction", () => {
         buildContextMock.mockResolvedValueOnce({
           clearSignContexts: [
             {
-              type: "token",
+              type: ClearSignContextType.TRANSACTION_INFO,
               payload: "payload-1",
             },
             {
-              type: "web3Check",
+              type: ClearSignContextType.WEB3_CHECK,
               payload: "0x01020304",
               certificate: {
                 payload: new Uint8Array(),
@@ -1282,8 +1147,10 @@ describe("SignTransactionDeviceAction", () => {
           serializedTransaction: new Uint8Array([0x01, 0x02, 0x03]),
           chainId: 1,
           transactionType: TransactionType.LEGACY,
+          clearSigningType: ClearSigningType.EIP7730,
+          clearSignContextsOptional: [],
         });
-        provideContextMock.mockResolvedValueOnce(Nothing);
+        buildSubContextAndProvideMock.mockResolvedValueOnce(Just(void 0));
         signTransactionMock.mockResolvedValueOnce(
           CommandResultFactory({
             data: {
@@ -1336,7 +1203,15 @@ describe("SignTransactionDeviceAction", () => {
           {
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
-              step: SignTransactionDAStep.PROVIDE_CONTEXT,
+              step: SignTransactionDAStep.BUILD_SUB_CONTEXT_AND_PROVIDE,
+            },
+            status: DeviceActionStatus.Pending,
+          },
+          // ProvideContext state
+          {
+            intermediateValue: {
+              requiredUserInteraction: UserInteractionRequired.None,
+              step: SignTransactionDAStep.BUILD_SUB_CONTEXT_AND_PROVIDE,
             },
             status: DeviceActionStatus.Pending,
           },
@@ -1375,23 +1250,42 @@ describe("SignTransactionDeviceAction", () => {
                 },
               }),
             );
-            expect(provideContextMock).toHaveBeenCalledWith(
+            expect(buildSubContextAndProvideMock).toHaveBeenCalledTimes(2);
+            expect(buildSubContextAndProvideMock).toHaveBeenNthCalledWith(
+              1,
               expect.objectContaining({
                 input: {
-                  clearSignContexts: [
-                    {
-                      type: "token",
-                      payload: "payload-1",
+                  context: {
+                    type: ClearSignContextType.TRANSACTION_INFO,
+                    payload: "payload-1",
+                  },
+                  contextOptional: [],
+                  transactionParser: parserMock,
+                  serializedTransaction: new Uint8Array([0x01, 0x02, 0x03]),
+                  contextModule: contextModuleMock,
+                  chainId: 1,
+                  derivationPath: "44'/60'/0'/0/0",
+                },
+              }),
+            );
+            expect(buildSubContextAndProvideMock).toHaveBeenNthCalledWith(
+              2,
+              expect.objectContaining({
+                input: {
+                  context: {
+                    type: ClearSignContextType.WEB3_CHECK,
+                    payload: "0x01020304",
+                    certificate: {
+                      payload: new Uint8Array(),
+                      keyUsageNumber: 1,
                     },
-                    {
-                      type: "web3Check",
-                      payload: "0x01020304",
-                      certificate: {
-                        payload: new Uint8Array(),
-                        keyUsageNumber: 1,
-                      },
-                    },
-                  ],
+                  },
+                  contextOptional: [],
+                  transactionParser: parserMock,
+                  serializedTransaction: new Uint8Array([0x01, 0x02, 0x03]),
+                  contextModule: contextModuleMock,
+                  chainId: 1,
+                  derivationPath: "44'/60'/0'/0/0",
                 },
               }),
             );
@@ -1400,9 +1294,9 @@ describe("SignTransactionDeviceAction", () => {
                 input: {
                   derivationPath: "44'/60'/0'/0/0",
                   serializedTransaction: new Uint8Array([0x01, 0x02, 0x03]),
-                  isLegacy: true,
                   chainId: 1,
                   transactionType: TransactionType.LEGACY,
+                  clearSigningType: ClearSigningType.EIP7730,
                 },
               }),
             );
@@ -1536,95 +1430,6 @@ describe("SignTransactionDeviceAction", () => {
       }));
   });
 
-  describe("ProvideContext errors", () => {
-    it("should fail if provideContext throws an error", () =>
-      new Promise<void>((resolve, reject) => {
-        setupOpenAppDAMock();
-        setupAppConfig("1.15.0", false, false);
-
-        const deviceAction = new SignTransactionDeviceAction({
-          input: {
-            derivationPath: "44'/60'/0'/0/0",
-            transaction: defaultTransaction,
-            options: defaultOptions,
-            contextModule: contextModuleMock,
-            mapper: mapperMock,
-            parser: parserMock,
-          },
-        });
-
-        buildContextMock.mockResolvedValueOnce({
-          clearSignContexts: [
-            {
-              type: "token",
-              payload: "payload-1",
-            },
-          ],
-          serializedTransaction: new Uint8Array([0x01, 0x02, 0x03]),
-          web3Check: null,
-        });
-        provideContextMock.mockRejectedValueOnce(
-          new InvalidStatusWordError("provideContext error"),
-        );
-        vi.spyOn(deviceAction, "extractDependencies").mockReturnValue(
-          extractDependenciesMock(),
-        );
-
-        const expectedStates: Array<SignTransactionDAState> = [
-          // Initial state
-          {
-            intermediateValue: {
-              requiredUserInteraction: UserInteractionRequired.None,
-              step: SignTransactionDAStep.OPEN_APP,
-            },
-            status: DeviceActionStatus.Pending,
-          },
-          // OpenApp interaction
-          {
-            intermediateValue: {
-              requiredUserInteraction: UserInteractionRequired.ConfirmOpenApp,
-              step: SignTransactionDAStep.OPEN_APP,
-            },
-            status: DeviceActionStatus.Pending,
-          },
-          // GetAppConfig state
-          {
-            intermediateValue: {
-              requiredUserInteraction: UserInteractionRequired.None,
-              step: SignTransactionDAStep.GET_APP_CONFIG,
-            },
-            status: DeviceActionStatus.Pending,
-          },
-          // BuildContext state
-          {
-            intermediateValue: {
-              requiredUserInteraction: UserInteractionRequired.None,
-              step: SignTransactionDAStep.BUILD_CONTEXT,
-            },
-            status: DeviceActionStatus.Pending,
-          },
-          // ProvideContext state
-          {
-            intermediateValue: {
-              requiredUserInteraction: UserInteractionRequired.None,
-              step: SignTransactionDAStep.PROVIDE_CONTEXT,
-            },
-            status: DeviceActionStatus.Pending,
-          },
-          // ProvideContext error
-          {
-            error: new InvalidStatusWordError("provideContext error"),
-            status: DeviceActionStatus.Error,
-          },
-        ];
-
-        testDeviceActionStates(deviceAction, expectedStates, apiMock, {
-          onError: reject,
-          onDone: resolve,
-        });
-      }));
-  });
-
   describe("SignTransaction errors", () => {
     it("should fail if signTransaction returns an error", () =>
       new Promise<void>((resolve, reject) => {
@@ -1645,14 +1450,14 @@ describe("SignTransactionDeviceAction", () => {
         buildContextMock.mockResolvedValueOnce({
           clearSignContexts: [
             {
-              type: "token",
+              type: ClearSignContextType.TRANSACTION_INFO,
               payload: "payload-1",
             },
           ],
           serializedTransaction: new Uint8Array([0x01, 0x02, 0x03]),
           web3Check: null,
         });
-        provideContextMock.mockResolvedValueOnce(Nothing);
+        buildSubContextAndProvideMock.mockResolvedValueOnce(Just(void 0));
         signTransactionMock.mockResolvedValueOnce(
           CommandResultFactory({
             error: new InvalidStatusWordError("signTransaction error"),
@@ -1699,7 +1504,7 @@ describe("SignTransactionDeviceAction", () => {
           {
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
-              step: SignTransactionDAStep.PROVIDE_CONTEXT,
+              step: SignTransactionDAStep.BUILD_SUB_CONTEXT_AND_PROVIDE,
             },
             status: DeviceActionStatus.Pending,
           },

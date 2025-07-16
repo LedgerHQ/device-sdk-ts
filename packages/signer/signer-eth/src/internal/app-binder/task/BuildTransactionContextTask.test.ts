@@ -16,6 +16,7 @@ import { Transaction } from "ethers";
 import { Left, Right } from "purify-ts";
 
 import type { GetConfigCommandResponse } from "@api/app-binder/GetConfigCommandTypes";
+import { ClearSigningType } from "@api/model/ClearSigningType";
 import { makeDeviceActionInternalApiMock } from "@internal/app-binder/device-action/__test-utils__/makeInternalApi";
 import { type TransactionMapperResult } from "@internal/transaction/service/mapper/model/TransactionMapperResult";
 import { type TransactionMapperService } from "@internal/transaction/service/mapper/TransactionMapperService";
@@ -24,6 +25,7 @@ import {
   BuildTransactionContextTask,
   type BuildTransactionContextTaskArgs,
 } from "./BuildTransactionContextTask";
+import { GetWeb3CheckTask } from "./GetWeb3CheckTask";
 
 describe("BuildTransactionContextTask", () => {
   const contextModuleMock = {
@@ -72,7 +74,7 @@ describe("BuildTransactionContextTask", () => {
       CommandResultFactory({ data: { challenge: "challenge" } }),
     );
     getWeb3ChecksFactoryMock.mockReturnValue({
-      run: async () => ({ web3Check: null }),
+      run: async () => Promise.resolve({ web3Check: null }),
     });
 
     defaultArgs = {
@@ -85,10 +87,27 @@ describe("BuildTransactionContextTask", () => {
     };
   });
 
+  it("should init with a default GetWeb3CheckTaskFactory", () => {
+    // GIVEN
+    const task = new BuildTransactionContextTask(apiMock, defaultArgs);
+
+    // THEN
+    expect(task["getWeb3ChecksFactory"]).toBeDefined();
+    expect(
+      task["getWeb3ChecksFactory"](apiMock, {
+        contextModule: defaultArgs.contextModule,
+        derivationPath: defaultArgs.derivationPath,
+        mapper: defaultArgs.mapper,
+        transaction: defaultArgs.transaction,
+      }),
+    ).toBeInstanceOf(GetWeb3CheckTask);
+  });
+
   it("should build the transaction context without clear sign contexts", async () => {
     // GIVEN
     const serializedTransaction = new Uint8Array([0x01, 0x02, 0x03]);
     const clearSignContexts: ClearSignContext[] = [];
+    const clearSignContextsOptional: ClearSignContext[] = [];
     const mapperResult: TransactionMapperResult = {
       subset: { chainId: 1, to: undefined, data: "0x" },
       serializedTransaction,
@@ -115,9 +134,11 @@ describe("BuildTransactionContextTask", () => {
     // THEN
     expect(result).toEqual({
       clearSignContexts,
+      clearSignContextsOptional,
       serializedTransaction,
       chainId: 1,
       transactionType: 0,
+      clearSigningType: ClearSigningType.BASIC,
     });
   });
 
@@ -125,6 +146,7 @@ describe("BuildTransactionContextTask", () => {
     // GIVEN
     const serializedTransaction = new Uint8Array([0x01, 0x02, 0x03]);
     const clearSignContexts: ClearSignContext[] = [];
+    const clearSignContextsOptional: ClearSignContext[] = [];
     const mapperResult: TransactionMapperResult = {
       subset: { chainId: 1, to: undefined, data: "0x" },
       serializedTransaction,
@@ -133,7 +155,7 @@ describe("BuildTransactionContextTask", () => {
     const expectedWeb3Check =
       "web3Check" as unknown as ClearSignContextSuccess<ClearSignContextType.WEB3_CHECK>;
     getWeb3ChecksFactoryMock.mockReturnValueOnce({
-      run: async () => ({ web3Check: expectedWeb3Check }),
+      run: async () => Promise.resolve({ web3Check: expectedWeb3Check }),
     });
     mapperMock.mapTransactionToSubset.mockReturnValueOnce(Right(mapperResult));
     contextModuleMock.getContexts.mockResolvedValueOnce(clearSignContexts);
@@ -156,9 +178,11 @@ describe("BuildTransactionContextTask", () => {
     // THEN
     expect(result).toEqual({
       clearSignContexts: [expectedWeb3Check, ...clearSignContexts],
+      clearSignContextsOptional,
       serializedTransaction,
       chainId: 1,
       transactionType: 0,
+      clearSigningType: ClearSigningType.BASIC,
     });
   });
 
@@ -195,7 +219,7 @@ describe("BuildTransactionContextTask", () => {
     const expectedWeb3Check =
       "web3Check" as unknown as ClearSignContextSuccess<ClearSignContextType.WEB3_CHECK>;
     getWeb3ChecksFactoryMock.mockReturnValueOnce({
-      run: async () => ({ web3Check: expectedWeb3Check }),
+      run: async () => Promise.resolve({ web3Check: expectedWeb3Check }),
     });
     mapperMock.mapTransactionToSubset.mockReturnValueOnce(Right(mapperResult));
     contextModuleMock.getContexts.mockResolvedValueOnce(clearSignContexts);
@@ -217,16 +241,86 @@ describe("BuildTransactionContextTask", () => {
 
     // THEN
     expect(result).toEqual({
-      clearSignContexts: {
-        transactionInfo: "payload-1",
-        transactionInfoCertificate: defaultCertificate,
-        transactionFields: [clearSignContexts[1], clearSignContexts[3]],
-        transactionEnums: [clearSignContexts[2]],
-        web3Check: expectedWeb3Check,
-      },
+      clearSignContexts: [
+        clearSignContexts[0],
+        clearSignContexts[1],
+        clearSignContexts[3],
+        expectedWeb3Check,
+      ],
+      clearSignContextsOptional: [clearSignContexts[2]],
       serializedTransaction,
       chainId: 1,
       transactionType: 2,
+      clearSigningType: ClearSigningType.EIP7730,
+    });
+  });
+
+  it("should build the transaction context with web3checks and generic-parser clear sign contexts in the correct order", async () => {
+    // GIVEN
+    const serializedTransaction = new Uint8Array([0x01, 0x02, 0x03]);
+    const clearSignContexts: ClearSignContext[] = [
+      {
+        type: ClearSignContextType.ENUM,
+        payload: "payload-3",
+        id: 1,
+        value: 2,
+        certificate: defaultCertificate,
+      },
+      {
+        type: ClearSignContextType.TRANSACTION_FIELD_DESCRIPTION,
+        payload: "payload-4",
+      },
+      {
+        type: ClearSignContextType.TRANSACTION_FIELD_DESCRIPTION,
+        payload: "payload-2",
+      },
+      {
+        type: ClearSignContextType.TRANSACTION_INFO,
+        payload: "payload-1",
+        certificate: defaultCertificate,
+      },
+    ];
+    const mapperResult: TransactionMapperResult = {
+      subset: { chainId: 1, to: undefined, data: "0x" },
+      serializedTransaction,
+      type: 2,
+    };
+    const expectedWeb3Check =
+      "web3Check" as unknown as ClearSignContextSuccess<ClearSignContextType.WEB3_CHECK>;
+    getWeb3ChecksFactoryMock.mockReturnValueOnce({
+      run: async () => Promise.resolve({ web3Check: expectedWeb3Check }),
+    });
+    mapperMock.mapTransactionToSubset.mockReturnValueOnce(Right(mapperResult));
+    contextModuleMock.getContexts.mockResolvedValueOnce(clearSignContexts);
+    apiMock.getDeviceSessionState.mockReturnValueOnce({
+      sessionStateType: DeviceSessionStateType.ReadyWithoutSecureChannel,
+      deviceStatus: DeviceStatus.CONNECTED,
+      installedApps: [],
+      currentApp: { name: "Ethereum", version: "1.15.0" },
+      deviceModelId: DeviceModelId.FLEX,
+      isSecureConnectionAllowed: false,
+    });
+
+    // WHEN
+    const result = await new BuildTransactionContextTask(
+      apiMock,
+      { ...defaultArgs, appConfig: createAppConfig(true) },
+      getWeb3ChecksFactoryMock,
+    ).run();
+
+    // THEN
+    expect(result).toEqual({
+      clearSignContexts: [
+        clearSignContexts[3], // transaction info
+        clearSignContexts[1], // transaction field description
+        clearSignContexts[2], // transaction field description
+        expectedWeb3Check, // web3 check
+      ],
+      clearSignContextsOptional: [clearSignContexts[0]], // enum
+      serializedTransaction,
+      chainId: 1,
+      transactionType: 2,
+      clearSigningType: ClearSigningType.EIP7730,
     });
   });
 
@@ -251,7 +345,7 @@ describe("BuildTransactionContextTask", () => {
     const expectedWeb3Check =
       "web3Check" as unknown as ClearSignContextSuccess<ClearSignContextType.WEB3_CHECK>;
     getWeb3ChecksFactoryMock.mockReturnValueOnce({
-      run: async () => ({ web3Check: expectedWeb3Check }),
+      run: async () => Promise.resolve({ web3Check: expectedWeb3Check }),
     });
     mapperMock.mapTransactionToSubset.mockReturnValueOnce(Right(mapperResult));
     contextModuleMock.getContexts.mockResolvedValueOnce(clearSignContexts);
@@ -274,9 +368,11 @@ describe("BuildTransactionContextTask", () => {
     // THEN
     expect(result).toEqual({
       clearSignContexts,
+      clearSignContextsOptional: [],
       serializedTransaction,
       chainId: 1,
       transactionType: 2,
+      clearSigningType: ClearSigningType.BASIC,
     });
   });
 
@@ -330,16 +426,16 @@ describe("BuildTransactionContextTask", () => {
 
     // THEN
     expect(result).toEqual({
-      clearSignContexts: {
-        transactionInfo: "payload-1",
-        transactionInfoCertificate: defaultCertificate,
-        transactionFields: [clearSignContexts[1], clearSignContexts[3]],
-        transactionEnums: [clearSignContexts[2]],
-        web3Check: null,
-      },
+      clearSignContexts: [
+        clearSignContexts[0],
+        clearSignContexts[1],
+        clearSignContexts[3],
+      ],
+      clearSignContextsOptional: [clearSignContexts[2]],
       serializedTransaction,
       chainId: 1,
       transactionType: 2,
+      clearSigningType: ClearSigningType.EIP7730,
     });
   });
 
@@ -593,9 +689,11 @@ describe("BuildTransactionContextTask", () => {
     // THEN
     expect(result).toEqual({
       clearSignContexts: [clearSignContexts[1], clearSignContexts[3]],
+      clearSignContextsOptional: [],
       serializedTransaction,
       chainId: 1,
       transactionType: 0,
+      clearSigningType: ClearSigningType.BASIC,
     });
   });
 
@@ -654,9 +752,11 @@ describe("BuildTransactionContextTask", () => {
     // THEN
     expect(result).toEqual({
       clearSignContexts: [clearSignContexts[1], clearSignContexts[3]],
+      clearSignContextsOptional: [],
       serializedTransaction,
       chainId: 1,
       transactionType: 0,
+      clearSigningType: ClearSigningType.BASIC,
     });
   });
 
@@ -709,9 +809,11 @@ describe("BuildTransactionContextTask", () => {
     // THEN
     expect(result).toEqual({
       clearSignContexts: [clearSignContexts[1], clearSignContexts[3]],
+      clearSignContextsOptional: [],
       serializedTransaction,
       chainId: 1,
       transactionType: 0,
+      clearSigningType: ClearSigningType.BASIC,
     });
   });
 
@@ -769,16 +871,12 @@ describe("BuildTransactionContextTask", () => {
 
     // THEN
     expect(result).toEqual({
-      clearSignContexts: {
-        transactionInfo: "payload-2",
-        transactionInfoCertificate: defaultCertificate,
-        transactionFields: [clearSignContexts[3]],
-        transactionEnums: [clearSignContexts[4]],
-        web3Check: null,
-      },
+      clearSignContexts: [clearSignContexts[1], clearSignContexts[3]],
+      clearSignContextsOptional: [clearSignContexts[4]],
       serializedTransaction,
       chainId: 1,
       transactionType: 2,
+      clearSigningType: ClearSigningType.EIP7730,
     });
   });
 
@@ -833,9 +931,11 @@ describe("BuildTransactionContextTask", () => {
     // THEN
     expect(result).toEqual({
       clearSignContexts: [clearSignContexts[0]],
+      clearSignContextsOptional: [],
       serializedTransaction,
       chainId: 1,
       transactionType: 2,
+      clearSigningType: ClearSigningType.BASIC,
     });
   });
 
@@ -890,9 +990,11 @@ describe("BuildTransactionContextTask", () => {
     // THEN
     expect(result).toEqual({
       clearSignContexts: [clearSignContexts[0]],
+      clearSignContextsOptional: [],
       serializedTransaction,
       chainId: 1,
       transactionType: 2,
+      clearSigningType: ClearSigningType.BASIC,
     });
   });
 
@@ -944,9 +1046,11 @@ describe("BuildTransactionContextTask", () => {
     // THEN
     expect(result).toEqual({
       clearSignContexts: [clearSignContexts[0]],
+      clearSignContextsOptional: [],
       serializedTransaction,
       chainId: 1,
       transactionType: 2,
+      clearSigningType: ClearSigningType.BASIC,
     });
   });
 
@@ -995,9 +1099,11 @@ describe("BuildTransactionContextTask", () => {
     // THEN
     expect(result).toEqual({
       clearSignContexts: [],
+      clearSignContextsOptional: [],
       serializedTransaction,
       chainId: 1,
       transactionType: 2,
+      clearSigningType: ClearSigningType.BASIC,
     });
   });
 });

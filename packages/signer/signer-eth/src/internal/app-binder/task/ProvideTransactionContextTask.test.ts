@@ -1,16 +1,26 @@
-import { ClearSignContextType } from "@ledgerhq/context-module";
+import {
+  type ClearSignContextSuccess,
+  ClearSignContextType,
+} from "@ledgerhq/context-module";
 import {
   CommandResultFactory,
-  hexaStringToBuffer,
+  type InternalApi,
+  InvalidStatusWordError,
   LoadCertificateCommand,
   type UnknownDeviceExchangeError,
 } from "@ledgerhq/device-management-kit";
+import { Left, Right } from "purify-ts";
 
+import { ProvideEnumCommand } from "@internal/app-binder/command/ProvideEnumCommand";
 import { ProvideNFTInformationCommand } from "@internal/app-binder/command/ProvideNFTInformationCommand";
 import { ProvideTokenInformationCommand } from "@internal/app-binder/command/ProvideTokenInformationCommand";
+import { ProvideTransactionFieldDescriptionCommand } from "@internal/app-binder/command/ProvideTransactionFieldDescriptionCommand";
+import { ProvideTransactionInformationCommand } from "@internal/app-binder/command/ProvideTransactionInformationCommand";
+import { ProvideTrustedNameCommand } from "@internal/app-binder/command/ProvideTrustedNameCommand";
 import { ProvideWeb3CheckCommand } from "@internal/app-binder/command/ProvideWeb3CheckCommand";
 import { SetExternalPluginCommand } from "@internal/app-binder/command/SetExternalPluginCommand";
 import { SetPluginCommand } from "@internal/app-binder/command/SetPluginCommand";
+import { StoreTransactionCommand } from "@internal/app-binder/command/StoreTransactionCommand";
 import { type EthErrorCodes } from "@internal/app-binder/command/utils/ethAppErrors";
 import { makeDeviceActionInternalApiMock } from "@internal/app-binder/device-action/__test-utils__/makeInternalApi";
 
@@ -18,6 +28,14 @@ import {
   ProvideTransactionContextTask,
   type ProvideTransactionContextTaskArgs,
 } from "./ProvideTransactionContextTask";
+import {
+  SendCommandInChunksTask,
+  type SendCommandInChunksTaskArgs,
+} from "./SendCommandInChunksTask";
+import {
+  SendPayloadInChunksTask,
+  type SendPayloadInChunksTaskArgs,
+} from "./SendPayloadInChunksTask";
 
 describe("ProvideTransactionContextTask", () => {
   const api = makeDeviceActionInternalApiMock();
@@ -34,126 +52,648 @@ describe("ProvideTransactionContextTask", () => {
   });
 
   describe("run", () => {
-    const args: ProvideTransactionContextTaskArgs = {
-      clearSignContexts: [
-        {
-          type: ClearSignContextType.PLUGIN,
-          payload: "706c7567696e", // "plugin"
-        },
-        {
-          type: ClearSignContextType.EXTERNAL_PLUGIN,
-          payload: "65787465726e616c506c7567696e", // "externalPlugin"
-        },
-        {
-          type: ClearSignContextType.NFT,
-          payload: "6e6674", // "nft"
-        },
-        {
-          type: ClearSignContextType.TOKEN,
-          payload: "746f6b656e", // "token"
-        },
-      ],
-    };
+    const sendPayloadInChunksRunMock = vi.fn();
+    const sendCommandInChunksTaskRunMock = vi.fn();
+    const sendCommandInChunksTaskMockFactory = vi.fn();
+    const sendPayloadInChunksTaskMockFactory = vi.fn();
 
     beforeEach(() => {
-      vi.resetAllMocks();
-    });
-
-    it("should send relative commands when receiving ClearSignContexts of type not trustedName", async () => {
-      api.sendCommand.mockResolvedValue(successResult);
-      // GIVEN
-      const task = new ProvideTransactionContextTask(api, args);
-      // WHEN
-      await task.run();
-      // THEN
-      expect(api.sendCommand).toHaveBeenCalledTimes(4);
-      expect(api.sendCommand).toHaveBeenNthCalledWith(
-        args.clearSignContexts.findIndex(
-          (c) => c.type === ClearSignContextType.PLUGIN,
-        ) + 1,
-        expect.objectContaining(
-          new SetPluginCommand({ payload: "706c7567696e" }),
-        ),
+      vi.clearAllMocks();
+      sendCommandInChunksTaskMockFactory.mockImplementation(
+        (a: InternalApi, args: SendCommandInChunksTaskArgs<unknown>) =>
+          ({
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+            run: () => sendCommandInChunksTaskRunMock(a, args),
+          }) as unknown as SendCommandInChunksTask<unknown>,
       );
-      expect(api.sendCommand).toHaveBeenNthCalledWith(
-        args.clearSignContexts.findIndex(
-          (c) => c.type === ClearSignContextType.EXTERNAL_PLUGIN,
-        ) + 1,
-        expect.objectContaining(
-          new SetExternalPluginCommand({
-            payload: "65787465726e616c506c7567696e",
-          }),
-        ),
-      );
-      expect(api.sendCommand).toHaveBeenNthCalledWith(
-        args.clearSignContexts.findIndex(
-          (c) => c.type === ClearSignContextType.NFT,
-        ) + 1,
-        expect.objectContaining(
-          new ProvideNFTInformationCommand({ payload: "6e6674" }),
-        ),
-      );
-      expect(api.sendCommand).toHaveBeenNthCalledWith(
-        args.clearSignContexts.findIndex(
-          (c) => c.type === ClearSignContextType.TOKEN,
-        ) + 1,
-        expect.objectContaining(
-          new ProvideTokenInformationCommand({ payload: "746f6b656e" }),
-        ),
+      sendPayloadInChunksTaskMockFactory.mockImplementation(
+        (a: InternalApi, args: SendPayloadInChunksTaskArgs<unknown>) =>
+          ({
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+            run: () => sendPayloadInChunksRunMock(a, args),
+          }) as unknown as SendPayloadInChunksTask<unknown>,
       );
     });
 
-    it("should return the command error result and stop when the command fails", async () => {
-      api.sendCommand.mockResolvedValueOnce(errorResult);
-      // GIVEN
-      const task = new ProvideTransactionContextTask(api, args);
-      // WHEN
-      const result = await task.run();
-      // THEN
-      expect(api.sendCommand).toHaveBeenCalledTimes(1);
-      expect(result.isJust()).toBe(true);
-      expect(result.extract()).toStrictEqual(errorResult);
-    });
-
-    it("should send the web3Check command when it is provided", async () => {
-      api.sendCommand.mockResolvedValue(successResult);
-      // GIVEN
-      const task = new ProvideTransactionContextTask(api, {
-        clearSignContexts: [
-          {
-            type: ClearSignContextType.WEB3_CHECK,
-            payload: "0x01020304",
+    describe("with no subcontexts", () => {
+      it("should provide the transaction context for a TRANSACTION_INFO context", async () => {
+        // GIVEN
+        const args: ProvideTransactionContextTaskArgs = {
+          context: {
+            type: ClearSignContextType.TRANSACTION_INFO,
+            payload: "0x00",
             certificate: {
-              payload: new Uint8Array(),
               keyUsageNumber: 1,
+              payload: new Uint8Array([1, 2, 3]),
             },
           },
-          ...args.clearSignContexts,
-        ],
+          subcontextsCallbacks: [],
+          serializedTransaction: new Uint8Array(),
+          derivationPath: "44'/60'/0'/0/0",
+        };
+        sendCommandInChunksTaskRunMock.mockResolvedValue(successResult);
+        sendPayloadInChunksRunMock.mockResolvedValue(successResult);
+        api.sendCommand.mockResolvedValue(successResult);
+
+        // WHEN
+        const task = new ProvideTransactionContextTask(
+          api,
+          args,
+          sendPayloadInChunksTaskMockFactory,
+          sendCommandInChunksTaskMockFactory,
+        );
+        const result = await task.run();
+
+        // THEN
+        expect(result).toEqual(Right(void 0));
+
+        // StoreTransactionCommand
+        expect(sendCommandInChunksTaskRunMock).toHaveBeenCalledTimes(1);
+        expect(sendCommandInChunksTaskMockFactory).toHaveBeenCalledWith(api, {
+          data: new Uint8Array([
+            0x05, 0x80, 0x00, 0x00, 0x2c, 0x80, 0x00, 0x00, 0x3c, 0x80, 0x00,
+            0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+          ]),
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+          commandFactory: expect.any(Function),
+        });
+        // Test that the commandFactory returns a StoreTransactionCommand
+        const factoryCall = sendCommandInChunksTaskMockFactory.mock.calls[0]!;
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
+        const commandFactory = factoryCall[1].commandFactory;
+        // arbitrary data to test the commandFactory
+        const mockArgs = {
+          chunkedData: new Uint8Array([1, 2, 3, 4]),
+          isFirstChunk: true,
+        };
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call
+        const command = commandFactory(mockArgs);
+        expect(command).toBeInstanceOf(StoreTransactionCommand);
+
+        // LoadCertificateCommand
+        expect(api.sendCommand).toHaveBeenCalledTimes(1);
+        expect(api.sendCommand).toHaveBeenCalledWith(
+          expect.any(LoadCertificateCommand),
+        );
+
+        // ProvideTransactionInformationCommand
+        expect(sendPayloadInChunksRunMock).toHaveBeenCalledTimes(1);
+        expect(sendPayloadInChunksRunMock).toHaveBeenCalledWith(api, {
+          payload: "0x00",
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+          commandFactory: expect.any(Function),
+        });
+        // Test that the commandFactory returns a ProvideTransactionInformationCommand
+        const factoryCall2 = sendPayloadInChunksRunMock.mock.calls[0]!;
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
+        const commandFactory2 = factoryCall2[1].commandFactory;
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call
+        const command2 = commandFactory2(mockArgs);
+        expect(command2).toBeInstanceOf(ProvideTransactionInformationCommand);
       });
-      // WHEN
-      const result = await task.run();
-      // THEN
-      expect(api.sendCommand).toHaveBeenCalledTimes(6);
-      expect(api.sendCommand).toHaveBeenNthCalledWith(
-        1,
-        expect.objectContaining(
-          new LoadCertificateCommand({
-            certificate: new Uint8Array(),
-            keyUsage: 1,
-          }),
-        ),
+
+      it("should provide the transaction context for a TRANSACTION_INFO context without certificate", async () => {
+        // GIVEN
+        const args: ProvideTransactionContextTaskArgs = {
+          context: {
+            type: ClearSignContextType.TRANSACTION_INFO,
+            payload: "0x00",
+          },
+          subcontextsCallbacks: [],
+          serializedTransaction: new Uint8Array(),
+          derivationPath: "44'/60'/0'/0/0",
+        };
+        sendCommandInChunksTaskRunMock.mockResolvedValue(successResult);
+        sendPayloadInChunksRunMock.mockResolvedValue(successResult);
+        api.sendCommand.mockResolvedValue(successResult);
+
+        // WHEN
+        const task = new ProvideTransactionContextTask(
+          api,
+          args,
+          sendPayloadInChunksTaskMockFactory,
+          sendCommandInChunksTaskMockFactory,
+        );
+        const result = await task.run();
+
+        // THEN
+        expect(result).toEqual(Right(void 0));
+
+        // StoreTransactionCommand
+        expect(sendCommandInChunksTaskRunMock).toHaveBeenCalledTimes(1);
+        expect(sendCommandInChunksTaskMockFactory).toHaveBeenCalledWith(api, {
+          data: new Uint8Array([
+            0x05, 0x80, 0x00, 0x00, 0x2c, 0x80, 0x00, 0x00, 0x3c, 0x80, 0x00,
+            0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+          ]),
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+          commandFactory: expect.any(Function),
+        });
+        // Test that the commandFactory returns a StoreTransactionCommand
+        const factoryCall = sendCommandInChunksTaskMockFactory.mock.calls[0]!;
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
+        const commandFactory = factoryCall[1].commandFactory;
+        // arbitrary data to test the commandFactory
+        const mockArgs = {
+          chunkedData: new Uint8Array([1, 2, 3, 4]),
+          isFirstChunk: true,
+        };
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call
+        const command = commandFactory(mockArgs);
+        expect(command).toBeInstanceOf(StoreTransactionCommand);
+
+        // LoadCertificateCommand
+        expect(api.sendCommand).toHaveBeenCalledTimes(0);
+
+        // ProvideTransactionInformationCommand
+        expect(sendPayloadInChunksRunMock).toHaveBeenCalledTimes(1);
+        expect(sendPayloadInChunksRunMock).toHaveBeenCalledWith(api, {
+          payload: "0x00",
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+          commandFactory: expect.any(Function),
+        });
+        // Test that the commandFactory returns a ProvideTransactionInformationCommand
+        const factoryCall2 = sendPayloadInChunksRunMock.mock.calls[0]!;
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
+        const commandFactory2 = factoryCall2[1].commandFactory;
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call
+        const command2 = commandFactory2(mockArgs);
+        expect(command2).toBeInstanceOf(ProvideTransactionInformationCommand);
+      });
+
+      it.each([
+        [ClearSignContextType.PLUGIN, SetPluginCommand],
+        [ClearSignContextType.EXTERNAL_PLUGIN, SetExternalPluginCommand],
+        [ClearSignContextType.NFT, ProvideNFTInformationCommand],
+        [ClearSignContextType.TOKEN, ProvideTokenInformationCommand],
+      ] as const)(
+        "should provide the transaction context by calling sendCommand for a %s context",
+        async (contextType, commandClass) => {
+          // GIVEN
+          const args: ProvideTransactionContextTaskArgs = {
+            context: {
+              type: contextType,
+              payload: "payload",
+            },
+            subcontextsCallbacks: [],
+            serializedTransaction: new Uint8Array(),
+            derivationPath: "44'/60'/0'/0/0",
+          };
+          api.sendCommand.mockResolvedValue(successResult);
+
+          // WHEN
+          const task = new ProvideTransactionContextTask(
+            api,
+            args,
+            sendPayloadInChunksTaskMockFactory,
+            sendCommandInChunksTaskMockFactory,
+          );
+          const result = await task.run();
+
+          // THEN
+          expect(result).toEqual(Right(void 0));
+          expect(api.sendCommand).toHaveBeenCalledTimes(1);
+          expect(api.sendCommand).toHaveBeenCalledWith(
+            expect.any(commandClass),
+          );
+        },
       );
-      expect(api.sendCommand).toHaveBeenNthCalledWith(
-        2,
-        expect.objectContaining(
-          new ProvideWeb3CheckCommand({
-            payload: hexaStringToBuffer("0x000401020304")!,
+
+      it.each([
+        [ClearSignContextType.ENUM, ProvideEnumCommand],
+        [ClearSignContextType.TRUSTED_NAME, ProvideTrustedNameCommand],
+        [ClearSignContextType.WEB3_CHECK, ProvideWeb3CheckCommand],
+        [
+          ClearSignContextType.TRANSACTION_FIELD_DESCRIPTION,
+          ProvideTransactionFieldDescriptionCommand,
+        ],
+      ] as const)(
+        "should provide the transaction context by calling sendPayloadInChunksTask for a %s context",
+        async (contextType, commandClass) => {
+          // GIVEN
+          const args: ProvideTransactionContextTaskArgs = {
+            context: {
+              type: contextType,
+              payload: "payload",
+            } as ClearSignContextSuccess,
+            subcontextsCallbacks: [],
+            serializedTransaction: new Uint8Array(),
+            derivationPath: "44'/60'/0'/0/0",
+          };
+          sendPayloadInChunksRunMock.mockResolvedValue(successResult);
+
+          // WHEN
+          const task = new ProvideTransactionContextTask(
+            api,
+            args,
+            sendPayloadInChunksTaskMockFactory,
+            sendCommandInChunksTaskMockFactory,
+          );
+          const result = await task.run();
+
+          // THEN
+          expect(result).toEqual(Right(void 0));
+          expect(sendPayloadInChunksRunMock).toHaveBeenCalledTimes(1);
+          expect(sendPayloadInChunksRunMock).toHaveBeenCalledWith(api, {
+            payload: "payload",
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+            commandFactory: expect.any(Function),
+          });
+
+          // Test that the commandFactory returns a commandClass
+          const factoryCall = sendPayloadInChunksTaskMockFactory.mock.calls[0]!;
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
+          const commandFactory = factoryCall[1].commandFactory;
+          const mockArgs = {
+            chunkedData: new Uint8Array([1, 2, 3]),
             isFirstChunk: true,
-          }),
-        ),
+          };
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call
+          const command = commandFactory(mockArgs);
+          expect(command).toBeInstanceOf(commandClass);
+        },
       );
-      expect(result.isJust()).toBe(false);
+
+      it("should skip the subcontexts if the context is an error", async () => {
+        // GIVEN
+        const args: ProvideTransactionContextTaskArgs = {
+          context: {
+            type: ClearSignContextType.TOKEN,
+            payload: "payload",
+            certificate: {
+              keyUsageNumber: 1,
+              payload: new Uint8Array([1, 2, 3]),
+            },
+          },
+          subcontextsCallbacks: [
+            () =>
+              Promise.resolve({
+                type: ClearSignContextType.ERROR,
+                error: new Error("error"),
+              }),
+          ],
+          serializedTransaction: new Uint8Array(),
+          derivationPath: "44'/60'/0'/0/0",
+        };
+        sendPayloadInChunksRunMock.mockResolvedValue(successResult);
+        api.sendCommand.mockResolvedValue(successResult);
+
+        // WHEN
+        const task = new ProvideTransactionContextTask(
+          api,
+          args,
+          sendPayloadInChunksTaskMockFactory,
+          sendCommandInChunksTaskMockFactory,
+        );
+        const result = await task.run();
+
+        // THEN
+        expect(result).toEqual(Right(void 0));
+        expect(sendPayloadInChunksRunMock).toHaveBeenCalledTimes(0);
+        expect(sendCommandInChunksTaskRunMock).toHaveBeenCalledTimes(0);
+        expect(api.sendCommand).toHaveBeenCalledTimes(2);
+        expect(api.sendCommand).toHaveBeenNthCalledWith(
+          1,
+          expect.any(LoadCertificateCommand),
+        );
+        expect(api.sendCommand).toHaveBeenNthCalledWith(
+          2,
+          expect.any(ProvideTokenInformationCommand),
+        );
+      });
+    });
+
+    describe("with subcontexts", () => {
+      it("should provide the transaction context and subcontext for a TRANSACTION_FIELD_DESCRIPTION context", async () => {
+        // GIVEN
+        const args: ProvideTransactionContextTaskArgs = {
+          context: {
+            type: ClearSignContextType.TRANSACTION_FIELD_DESCRIPTION,
+            payload: "payload",
+          },
+          subcontextsCallbacks: [
+            () =>
+              Promise.resolve({
+                type: ClearSignContextType.TOKEN,
+                payload: "payload",
+              }),
+          ],
+          serializedTransaction: new Uint8Array(),
+          derivationPath: "44'/60'/0'/0/0",
+        };
+        sendPayloadInChunksRunMock.mockResolvedValue(successResult);
+        api.sendCommand.mockResolvedValue(successResult);
+
+        // WHEN
+        const task = new ProvideTransactionContextTask(
+          api,
+          args,
+          sendPayloadInChunksTaskMockFactory,
+          sendCommandInChunksTaskMockFactory,
+        );
+        const result = await task.run();
+
+        // THEN
+        expect(result).toEqual(Right(void 0));
+        expect(sendPayloadInChunksRunMock).toHaveBeenCalledTimes(1);
+        expect(sendPayloadInChunksRunMock).toHaveBeenCalledWith(api, {
+          payload: "payload",
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+          commandFactory: expect.any(Function),
+        });
+
+        // Test that the commandFactory returns a commandClass
+        const factoryCall = sendPayloadInChunksTaskMockFactory.mock.calls[0]!;
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
+        const commandFactory = factoryCall[1].commandFactory;
+        const mockArgs = {
+          chunkedData: new Uint8Array([1, 2, 3]),
+          isFirstChunk: true,
+        };
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call
+        const command = commandFactory(mockArgs);
+        expect(command).toBeInstanceOf(
+          ProvideTransactionFieldDescriptionCommand,
+        );
+
+        expect(api.sendCommand).toHaveBeenCalledTimes(1);
+        expect(api.sendCommand).toHaveBeenCalledWith(
+          expect.any(ProvideTokenInformationCommand),
+        );
+      });
+
+      it("should provide the transaction context and subcontexts for a TRUSTED_NAME context", async () => {
+        // GIVEN
+        const args: ProvideTransactionContextTaskArgs = {
+          context: {
+            type: ClearSignContextType.TRUSTED_NAME,
+            payload: "payload",
+          },
+          subcontextsCallbacks: [
+            () =>
+              Promise.resolve({
+                type: ClearSignContextType.NFT,
+                payload: "payload1",
+              }),
+
+            () =>
+              Promise.resolve({
+                type: ClearSignContextType.TOKEN,
+                payload: "payload2",
+              }),
+          ],
+          serializedTransaction: new Uint8Array(),
+          derivationPath: "44'/60'/0'/0/0",
+        };
+        sendPayloadInChunksRunMock.mockResolvedValue(successResult);
+        api.sendCommand.mockResolvedValue(successResult);
+
+        // WHEN
+        const task = new ProvideTransactionContextTask(
+          api,
+          args,
+          sendPayloadInChunksTaskMockFactory,
+          sendCommandInChunksTaskMockFactory,
+        );
+        const result = await task.run();
+
+        // THEN
+        expect(result).toEqual(Right(void 0));
+        expect(sendPayloadInChunksRunMock).toHaveBeenCalledTimes(1);
+        expect(sendPayloadInChunksRunMock).toHaveBeenCalledWith(api, {
+          payload: "payload",
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+          commandFactory: expect.any(Function),
+        });
+
+        // Test that the commandFactory returns a commandClass
+        const factoryCall = sendPayloadInChunksTaskMockFactory.mock.calls[0]!;
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
+        const commandFactory = factoryCall[1].commandFactory;
+        const mockArgs = {
+          chunkedData: new Uint8Array([1, 2, 3]),
+          isFirstChunk: true,
+        };
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call
+        const command = commandFactory(mockArgs);
+        expect(command).toBeInstanceOf(ProvideTrustedNameCommand);
+
+        expect(api.sendCommand).toHaveBeenCalledTimes(2);
+        expect(api.sendCommand).toHaveBeenNthCalledWith(
+          1,
+          expect.any(ProvideNFTInformationCommand),
+        );
+        expect(api.sendCommand).toHaveBeenNthCalledWith(
+          2,
+          expect.any(ProvideTokenInformationCommand),
+        );
+      });
+    });
+
+    describe("with subcontexts and certificate", () => {
+      it("should provide the transaction context and subcontexts for a TRUSTED_NAME context", async () => {
+        // GIVEN
+        const args: ProvideTransactionContextTaskArgs = {
+          context: {
+            type: ClearSignContextType.TRUSTED_NAME,
+            payload: "payload",
+            certificate: {
+              keyUsageNumber: 1,
+              payload: new Uint8Array([1, 2, 3]),
+            },
+          },
+          subcontextsCallbacks: [
+            () =>
+              Promise.resolve({
+                type: ClearSignContextType.NFT,
+                payload: "payload1",
+                certificate: {
+                  keyUsageNumber: 2,
+                  payload: new Uint8Array([4, 5, 6]),
+                },
+              }),
+          ],
+          serializedTransaction: new Uint8Array(),
+          derivationPath: "44'/60'/0'/0/0",
+        };
+        sendPayloadInChunksRunMock.mockResolvedValue(successResult);
+        api.sendCommand.mockResolvedValue(successResult);
+
+        // WHEN
+        const task = new ProvideTransactionContextTask(
+          api,
+          args,
+          sendPayloadInChunksTaskMockFactory,
+          sendCommandInChunksTaskMockFactory,
+        );
+        await task.run();
+
+        // THEN
+        expect(api.sendCommand).toHaveBeenCalledTimes(3);
+        expect(api.sendCommand).toHaveBeenNthCalledWith(
+          1,
+          expect.any(LoadCertificateCommand),
+        );
+        expect(api.sendCommand).toHaveBeenNthCalledWith(
+          2,
+          expect.any(ProvideNFTInformationCommand),
+        );
+        expect(api.sendCommand).toHaveBeenNthCalledWith(
+          3,
+          expect.any(LoadCertificateCommand),
+        );
+      });
+    });
+
+    describe("with error", () => {
+      it("should return an error if the provideContext fails", async () => {
+        // GIVEN
+        const args: ProvideTransactionContextTaskArgs = {
+          context: {
+            type: ClearSignContextType.TOKEN,
+            payload: "payload",
+          },
+          subcontextsCallbacks: [],
+          serializedTransaction: new Uint8Array(),
+          derivationPath: "44'/60'/0'/0/0",
+        };
+        api.sendCommand.mockResolvedValue(errorResult);
+
+        // WHEN
+        const task = new ProvideTransactionContextTask(
+          api,
+          args,
+          sendPayloadInChunksTaskMockFactory,
+          sendCommandInChunksTaskMockFactory,
+        );
+        const result = await task.run();
+
+        // THEN
+        expect(result).toEqual(Left(errorResult));
+      });
+
+      it("should return an error if the provide subcontext fails", async () => {
+        // GIVEN
+        const args: ProvideTransactionContextTaskArgs = {
+          context: {
+            type: ClearSignContextType.TOKEN,
+            payload: "payload",
+          },
+          subcontextsCallbacks: [
+            () =>
+              Promise.resolve({
+                type: ClearSignContextType.TOKEN,
+                payload: "payload",
+              }),
+          ],
+          serializedTransaction: new Uint8Array(),
+          derivationPath: "44'/60'/0'/0/0",
+        };
+        api.sendCommand.mockResolvedValue(errorResult);
+
+        // WHEN
+        const task = new ProvideTransactionContextTask(
+          api,
+          args,
+          sendPayloadInChunksTaskMockFactory,
+          sendCommandInChunksTaskMockFactory,
+        );
+        const result = await task.run();
+
+        // THEN
+        expect(result).toEqual(Left(errorResult));
+      });
+
+      it("should return an error if the type is not supported", async () => {
+        // GIVEN
+        const args: ProvideTransactionContextTaskArgs = {
+          context: {
+            type: "unsupported" as unknown as ClearSignContextType.TOKEN,
+            payload: "payload",
+          },
+          subcontextsCallbacks: [],
+          serializedTransaction: new Uint8Array(),
+          derivationPath: "44'/60'/0'/0/0",
+        };
+
+        // WHEN
+        const task = new ProvideTransactionContextTask(
+          api,
+          args,
+          sendPayloadInChunksTaskMockFactory,
+          sendCommandInChunksTaskMockFactory,
+        );
+        const result = await task.run();
+
+        // THEN
+        expect(result).toEqual(
+          Left(
+            CommandResultFactory({
+              error: new InvalidStatusWordError(
+                `The context type [unsupported] is not covered`,
+              ),
+            }),
+          ),
+        );
+      });
+    });
+
+    describe("factory types", () => {
+      it("should have a sendPayloadInChunksTaskFactory by default", () => {
+        // GIVEN
+        const task = new ProvideTransactionContextTask(api, {
+          context: {
+            type: ClearSignContextType.TOKEN,
+            payload: "payload",
+          },
+          subcontextsCallbacks: [],
+          serializedTransaction: new Uint8Array(),
+          derivationPath: "44'/60'/0'/0/0",
+        });
+
+        // THEN
+        expect(task["_sendPayloadInChunksTaskFactory"]).toBeDefined();
+        const sendPayloadInChunksTask = task["_sendPayloadInChunksTaskFactory"](
+          api,
+          {
+            payload: "payload",
+            commandFactory: () =>
+              new ProvideTransactionFieldDescriptionCommand({
+                data: new Uint8Array(),
+                isFirstChunk: true,
+              }),
+          },
+        );
+        expect(sendPayloadInChunksTask).toBeInstanceOf(SendPayloadInChunksTask);
+      });
+
+      it("should have a sendCommandInChunksTaskFactory by default", () => {
+        // GIVEN
+        const task = new ProvideTransactionContextTask(api, {
+          context: {
+            type: ClearSignContextType.TOKEN,
+            payload: "payload",
+          },
+          subcontextsCallbacks: [],
+          serializedTransaction: new Uint8Array(),
+          derivationPath: "44'/60'/0'/0/0",
+        });
+
+        // THEN
+        expect(task["_sendCommandInChunksTaskFactory"]).toBeDefined();
+        const sendCommandInChunksTask = task["_sendCommandInChunksTaskFactory"](
+          api,
+          {
+            data: new Uint8Array(),
+            commandFactory: () =>
+              new StoreTransactionCommand({
+                serializedTransaction: new Uint8Array(),
+                isFirstChunk: true,
+              }),
+          },
+        );
+        expect(sendCommandInChunksTask).toBeInstanceOf(SendCommandInChunksTask);
+      });
     });
   });
 });

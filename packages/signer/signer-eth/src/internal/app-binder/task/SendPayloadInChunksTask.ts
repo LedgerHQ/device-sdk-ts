@@ -13,7 +13,7 @@ import {
   type SendCommandInChunksTaskArgs,
 } from "./SendCommandInChunksTask";
 
-type SendPayloadInChunksTaskArgs<T> = {
+export type SendPayloadInChunksTaskArgs<T> = {
   payload: string;
   commandFactory: SendCommandInChunksTaskArgs<T>["commandFactory"];
 };

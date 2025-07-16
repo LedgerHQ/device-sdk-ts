@@ -13,6 +13,7 @@ import { decodeRlp, encodeRlp } from "ethers";
 import { Nothing } from "purify-ts";
 
 import { type Signature } from "@api/index";
+import { ClearSigningType } from "@api/model/ClearSigningType";
 import { TransactionType } from "@api/model/TransactionType";
 import {
   SignTransactionCommand,
@@ -28,7 +29,7 @@ type SendSignTransactionTaskArgs = {
   serializedTransaction: Uint8Array;
   chainId: number;
   transactionType: TransactionType;
-  isLegacy: boolean;
+  clearSigningType: ClearSigningType;
 };
 
 export class SendSignTransactionTask {
@@ -39,7 +40,7 @@ export class SendSignTransactionTask {
 
   async run(): Promise<CommandResult<Signature, EthErrorCodes>> {
     // For generic-parser transactions, the derivation path and transaction were previously sent
-    if (!this.args.isLegacy) {
+    if (this.args.clearSigningType === ClearSigningType.EIP7730) {
       const signature = await this.api.sendCommand(
         new StartTransactionCommand(),
       );

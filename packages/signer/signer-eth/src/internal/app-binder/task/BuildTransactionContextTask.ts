@@ -12,6 +12,7 @@ import {
 } from "@ledgerhq/device-management-kit";
 
 import { type GetConfigCommandResponse } from "@api/app-binder/GetConfigCommandTypes";
+import { ClearSigningType } from "@api/model/ClearSigningType";
 import { type TransactionOptions } from "@api/model/TransactionOptions";
 import { type TransactionType } from "@api/model/TransactionType";
 import { GetChallengeCommand } from "@internal/app-binder/command/GetChallengeCommand";
@@ -22,13 +23,13 @@ import {
 import { ApplicationChecker } from "@internal/shared/utils/ApplicationChecker";
 import { type TransactionMapperService } from "@internal/transaction/service/mapper/TransactionMapperService";
 
-import { type GenericContext } from "./ProvideTransactionGenericContextTask";
-
 export type BuildTransactionTaskResult = {
-  readonly clearSignContexts: ClearSignContextSuccess[] | GenericContext;
+  readonly clearSignContexts: ClearSignContextSuccess[];
+  readonly clearSignContextsOptional: ClearSignContextSuccess[];
   readonly serializedTransaction: Uint8Array;
   readonly chainId: number;
   readonly transactionType: TransactionType;
+  readonly clearSigningType: ClearSigningType;
 };
 
 export type BuildTransactionContextTaskArgs = {
@@ -60,6 +61,9 @@ export class BuildTransactionContextTask {
       derivationPath,
     } = this._args;
     const deviceState = this._api.getDeviceSessionState();
+    let filteredContexts: ClearSignContextSuccess[] = [];
+    let filteredContextOptional: ClearSignContextSuccess[] = [];
+    let clearSigningType: ClearSigningType = ClearSigningType.BASIC;
 
     // Parse transaction
     const parsed = mapper.mapTransactionToSubset(transaction);
@@ -118,7 +122,6 @@ export class BuildTransactionContextTask {
         (context) => context.type === ClearSignContextType.ENUM,
       );
 
-    let filteredContexts: ClearSignContextSuccess[] | GenericContext = [];
     const transactionInfo = clearSignContextsSuccess.find(
       (ctx) => ctx.type === ClearSignContextType.TRANSACTION_INFO,
     );
@@ -146,20 +149,22 @@ export class BuildTransactionContextTask {
           ctx.type === ClearSignContextType.TRANSACTION_FIELD_DESCRIPTION,
       );
 
-      filteredContexts = {
-        transactionInfo: transactionInfo.payload,
-        transactionInfoCertificate: transactionInfo.certificate!,
-        transactionFields,
-        transactionEnums,
-        web3Check,
-      };
+      filteredContexts = [
+        transactionInfo,
+        ...transactionFields,
+        ...(web3Check ? [web3Check] : []),
+      ];
+      filteredContextOptional = [...transactionEnums];
+      clearSigningType = ClearSigningType.EIP7730;
     }
 
     return {
       clearSignContexts: filteredContexts,
+      clearSignContextsOptional: filteredContextOptional,
       serializedTransaction,
       chainId: subset.chainId,
       transactionType: type,
+      clearSigningType,
     };
   }
 
