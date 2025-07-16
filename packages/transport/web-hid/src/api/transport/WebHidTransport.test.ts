@@ -1,8 +1,11 @@
 /* eslint @typescript-eslint/consistent-type-imports: off */
 import {
   type ApduReceiverServiceFactory,
+  type ApduResponse,
   type ApduSenderServiceFactory,
   connectedDeviceStubBuilder,
+  DeviceConnectionStateMachine,
+  type DeviceConnectionStateMachineParams,
   type DeviceModel,
   DeviceModelId,
   DeviceNotRecognizedError,
@@ -16,12 +19,13 @@ import {
   UnknownDeviceError,
 } from "@ledgerhq/device-management-kit";
 import { Left, Right } from "purify-ts";
-import { Subject } from "rxjs";
+import { lastValueFrom, Subject, toArray } from "rxjs";
 
 import { RECONNECT_DEVICE_TIMEOUT } from "@api/data/WebHidConfig";
 import { WebHidTransportNotSupportedError } from "@api/model/Errors";
 import { hidDeviceStubBuilder } from "@api/model/HIDDevice.stub";
 
+import { WebHidApduSender } from "./WebHidApduSender";
 import { WebHidTransport } from "./WebHidTransport";
 
 class LoggerPublisherServiceStub implements LoggerPublisherService {
@@ -56,14 +60,61 @@ describe("WebHidTransport", () => {
   let apduReceiverServiceFactoryStub: ApduReceiverServiceFactory;
   let apduSenderServiceFactoryStub: ApduSenderServiceFactory;
 
+  let mockDeviceConnectionStateMachineFactory = vi.fn();
+  const mockEventDeviceConnected = vi.fn();
+  const mockEventDeviceDisconnected = vi.fn();
+
+  const mockDeviceApduSender = {
+    sendApdu: vi
+      .fn()
+      .mockResolvedValue(Right({ data: new Uint8Array() } as ApduResponse)),
+    getDependencies: vi.fn().mockReturnValue({ device: stubDevice }),
+    setDependencies: vi.fn(),
+    closeConnection: vi.fn(),
+    setupConnection: vi.fn(),
+  };
+
+  const mockDeviceConnectionStateMachine = {
+    getDependencies: vi.fn().mockReturnValue({ device: stubDevice }),
+    setDependencies: vi.fn(),
+    getDeviceId: vi.fn(),
+    sendApdu: vi
+      .fn()
+      .mockResolvedValue(Right({ data: new Uint8Array() } as ApduResponse)),
+    setupConnection: vi.fn(),
+    eventDeviceConnected: mockEventDeviceConnected,
+    eventDeviceDisconnected: mockEventDeviceDisconnected,
+    closeConnection: vi.fn(),
+  };
+
   function initializeTransport() {
     apduReceiverServiceFactoryStub = vi.fn();
     apduSenderServiceFactoryStub = vi.fn();
+    mockDeviceConnectionStateMachineFactory = vi.fn(
+      (params: DeviceConnectionStateMachineParams<{ device: HIDDevice }>) => {
+        return {
+          ...mockDeviceConnectionStateMachine,
+          getDeviceId: vi.fn().mockReturnValue(params.deviceId),
+          getDependencies: params.deviceApduSender.getDependencies,
+          setDependencies: params.deviceApduSender.setDependencies,
+        } as unknown as DeviceConnectionStateMachine<{ device: HIDDevice }>;
+      },
+    );
+    const mockDeviceApduSenderFactory = vi.fn((params) => {
+      return {
+        ...mockDeviceApduSender,
+        getDependencies: () => params.dependencies,
+        setDependencies: (dependencies: { device: HIDDevice }) =>
+          (params.dependencies = dependencies),
+      } as unknown as WebHidApduSender;
+    });
     transport = new WebHidTransport(
       usbDeviceModelDataSource,
       () => logger,
       apduSenderServiceFactoryStub,
       apduReceiverServiceFactoryStub,
+      mockDeviceConnectionStateMachineFactory,
+      mockDeviceApduSenderFactory,
     );
   }
 
@@ -375,130 +426,63 @@ describe("WebHidTransport", () => {
         );
       });
 
-      it("should throw OpeningConnectionError if the device is already opened", async () => {
-        const device = {
-          deviceId: "fake",
+      it("should throw OpeningConnectionError if the device cannot be opened", async () => {
+        const message = "cannot be opened";
+        mockDeviceApduSender.setupConnection.mockRejectedValue(
+          new OpeningConnectionError(message),
+        );
+        mockedRequestDevice.mockResolvedValueOnce([stubDevice]);
+        mockedGetDevices.mockResolvedValue([stubDevice]);
+
+        const discoveredDevice = await lastValueFrom(
+          transport.startDiscovering(),
+        );
+        const connected = await transport.connect({
+          deviceId: discoveredDevice.id,
           onDisconnect: vi.fn(),
-        };
-
-        const connect = await transport.connect(device);
-
-        expect(connect).toStrictEqual(
-          Left(new UnknownDeviceError("Unknown device fake")),
+        });
+        expect(connected).toStrictEqual(
+          Left(new OpeningConnectionError(message)),
         );
       });
 
-      it("should throw OpeningConnectionError if the device cannot be opened", () =>
-        new Promise<void>((resolve, reject) => {
-          const message = "cannot be opened";
-          const mockedDevice = {
-            ...stubDevice,
-            open: () => {
-              throw new Error(message);
-            },
-          };
-          mockedRequestDevice.mockResolvedValueOnce([mockedDevice]);
-          mockedGetDevices.mockResolvedValue([mockedDevice]);
+      it("should return a device if available", async () => {
+        mockedRequestDevice.mockResolvedValueOnce([stubDevice]);
+        mockedGetDevices.mockResolvedValue([stubDevice]);
 
-          discoverDevice(
-            (discoveredDevice) => {
-              transport
-                .connect({
-                  deviceId: discoveredDevice.id,
-                  onDisconnect: vi.fn(),
-                })
-                .then((value) => {
-                  expect(value).toStrictEqual(
-                    Left(new OpeningConnectionError(new Error(message))),
-                  );
-                  resolve();
-                })
-                .catch((error) => {
-                  reject(error);
-                });
-            },
-            (error) => {
-              reject(error as Error);
-            },
-          );
-        }));
+        const discoveredDevice = await lastValueFrom(
+          transport.startDiscovering(),
+        );
+        const connected = await transport.connect({
+          deviceId: discoveredDevice.id,
+          onDisconnect: vi.fn(),
+        });
+        expect(connected.isRight()).toStrictEqual(true);
+        expect(connected.extract()).toEqual(
+          expect.objectContaining({ id: discoveredDevice.id }),
+        );
+      });
 
-      it("should return the opened device", () =>
-        new Promise<void>((resolve, reject) => {
-          const mockedDevice = {
-            ...stubDevice,
-            opened: false,
-            open: () => {
-              mockedDevice.opened = true;
-              return Promise.resolve();
-            },
-          };
+      it("should return an existing connected device", async () => {
+        mockedRequestDevice.mockResolvedValueOnce([stubDevice]);
+        mockedGetDevices.mockResolvedValue([stubDevice]);
 
-          mockedRequestDevice.mockResolvedValue([mockedDevice]);
-          mockedGetDevices.mockResolvedValue([mockedDevice]);
-
-          discoverDevice(
-            (discoveredDevice) => {
-              transport
-                .connect({
-                  deviceId: discoveredDevice.id,
-                  onDisconnect: vi.fn(),
-                })
-                .then((connectedDevice) => {
-                  connectedDevice
-                    .ifRight((device) => {
-                      expect(device).toEqual(
-                        expect.objectContaining({ id: discoveredDevice.id }),
-                      );
-                      resolve();
-                    })
-                    .ifLeft(() => {
-                      reject(connectedDevice);
-                    });
-                })
-                .catch((error) => {
-                  reject(error);
-                });
-            },
-            (error) => {
-              reject(error as Error);
-            },
-          );
-        }));
-
-      it("should return a device if available", () =>
-        new Promise<void>((resolve, reject) => {
-          mockedRequestDevice.mockResolvedValueOnce([stubDevice]);
-          mockedGetDevices.mockResolvedValue([stubDevice]);
-
-          discoverDevice(
-            (discoveredDevice) => {
-              transport
-                .connect({
-                  deviceId: discoveredDevice.id,
-                  onDisconnect: vi.fn(),
-                })
-                .then((connectedDevice) => {
-                  connectedDevice
-                    .ifRight((device) => {
-                      expect(device).toEqual(
-                        expect.objectContaining({ id: discoveredDevice.id }),
-                      );
-                      resolve();
-                    })
-                    .ifLeft(() => {
-                      reject(connectedDevice);
-                    });
-                })
-                .catch((error) => {
-                  reject(error);
-                });
-            },
-            (error) => {
-              reject(error as Error);
-            },
-          );
-        }));
+        const discoveredDevice = await lastValueFrom(
+          transport.startDiscovering(),
+        );
+        await transport.connect({
+          deviceId: discoveredDevice.id,
+          onDisconnect: vi.fn(),
+        });
+        const connected = await transport.connect({
+          deviceId: discoveredDevice.id,
+          onDisconnect: vi.fn(),
+        });
+        expect(connected.isRight()).toStrictEqual(true);
+        expect(connected.extract()).toEqual(
+          expect.objectContaining({ id: discoveredDevice.id }),
+        );
+      });
     });
 
     describe("disconnect", () => {
@@ -516,90 +500,114 @@ describe("WebHidTransport", () => {
         );
       });
 
-      it("should disconnect if the device is connected", () =>
-        new Promise<void>((resolve, reject) => {
-          mockedRequestDevice.mockResolvedValueOnce([stubDevice]);
-          mockedGetDevices.mockResolvedValue([stubDevice]);
+      it("should disconnect if the device is connected", async () => {
+        mockedRequestDevice.mockResolvedValueOnce([stubDevice]);
+        mockedGetDevices.mockResolvedValue([stubDevice]);
 
-          discoverDevice(
-            (discoveredDevice) => {
-              transport
-                .connect({
-                  deviceId: discoveredDevice.id,
-                  onDisconnect: vi.fn(),
-                })
-                .then((connectedDevice) => {
-                  connectedDevice
-                    .ifRight((device) => {
-                      transport
-                        .disconnect({ connectedDevice: device })
-                        .then((value) => {
-                          expect(value).toStrictEqual(Right(undefined));
-                          resolve();
-                        })
-                        .catch((error) => {
-                          reject(error);
-                        });
-                    })
-                    .ifLeft(() => {
-                      reject(connectedDevice);
-                    });
-                })
-                .catch((error) => {
-                  reject(error);
-                });
-            },
-            (error) => {
-              reject(error as Error);
-            },
-          );
-        }));
+        const discoveredDevice = await lastValueFrom(
+          transport.startDiscovering(),
+        );
+        const connected = await transport.connect({
+          deviceId: discoveredDevice.id,
+          onDisconnect: vi.fn(),
+        });
+        expect(connected.isRight()).toStrictEqual(true);
+        const result = await transport.disconnect({
+          connectedDevice: connected.unsafeCoerce(),
+        });
+        expect(result).toStrictEqual(Right(undefined));
+      });
 
-      it("should call disconnect handler if a connected device is unplugged", () =>
-        new Promise<void>((resolve, reject) => {
-          // given
-          const onDisconnect = vi.fn();
-          mockedRequestDevice.mockResolvedValueOnce([stubDevice]);
-          mockedGetDevices.mockResolvedValue([stubDevice]);
+      it("should call disconnect handler if a connected device is unplugged", async () => {
+        // Get onTerminated for the first connection only
+        let onTerminated1 = vi.fn();
+        mockDeviceConnectionStateMachineFactory.mockImplementationOnce(
+          (params) => {
+            onTerminated1 = params.onTerminated;
+            return {
+              ...mockDeviceConnectionStateMachine,
+              getDeviceId: vi.fn().mockReturnValue(params.deviceId),
+            } as unknown as DeviceConnectionStateMachine<{ device: HIDDevice }>;
+          },
+        );
 
-          // when
-          transport.startDiscovering().subscribe({
-            next: (discoveredDevice) => {
-              const mock = {
-                sendApdu: vi.fn(),
-                device: stubDevice,
-                deviceId: discoveredDevice.id,
-                disconnect: onDisconnect,
-                lostConnection: vi.fn().mockImplementation(() => {
-                  setTimeout(() => {
-                    mock.disconnect();
-                  }, RECONNECT_DEVICE_TIMEOUT);
-                }),
-              };
+        // Add 2 discoverable devices
+        const hidDevice1 = hidDeviceStubBuilder();
+        const hidDevice2 = hidDeviceStubBuilder();
+        mockedRequestDevice.mockResolvedValueOnce([hidDevice1, hidDevice2]);
+        mockedGetDevices.mockResolvedValue([hidDevice1, hidDevice2]);
 
-              transport
-                .connect({
-                  deviceId: discoveredDevice.id,
-                  onDisconnect,
-                })
-                .then(async () => {
-                  emitHIDDisconnectionEvent(stubDevice);
+        // Connect the 2 devices
+        const discoveredDevices = await lastValueFrom(
+          transport.startDiscovering().pipe(toArray()),
+        );
+        expect(discoveredDevices.length).toStrictEqual(2);
+        const onDisconnect1 = vi.fn();
+        const connected1 = await transport.connect({
+          deviceId: discoveredDevices[0]!.id,
+          onDisconnect: onDisconnect1,
+        });
+        const onDisconnect2 = vi.fn();
+        const connected2 = await transport.connect({
+          deviceId: discoveredDevices[1]!.id,
+          onDisconnect: onDisconnect2,
+        });
+        expect(connected1.isRight()).toStrictEqual(true);
+        expect(connected2.isRight()).toStrictEqual(true);
 
-                  expect(stubDevice.close).toHaveBeenCalled();
-                  await Promise.resolve(); // wait for the next tick so the stubDevice.close promise is resolved
-                  expect(onDisconnect).not.toHaveBeenCalled();
-                  vi.advanceTimersByTime(RECONNECT_DEVICE_TIMEOUT / 2);
-                  expect(onDisconnect).not.toHaveBeenCalled();
-                  vi.advanceTimersByTime(RECONNECT_DEVICE_TIMEOUT / 2);
-                  expect(onDisconnect).toHaveBeenCalled();
-                  resolve();
-                })
-                .catch((error) => {
-                  reject(error);
-                });
-            },
-          });
-        }));
+        // unplug the first device
+        onTerminated1();
+        expect(onDisconnect1).toHaveBeenCalled();
+        expect(onDisconnect2).not.toHaveBeenCalled();
+      });
+
+      it("should call disconnect handler if a connected device is unplugged while reconnecting", async () => {
+        // Get onTerminated for the first connection only
+        let onTerminated1 = vi.fn();
+        let tryToReconnect1 = vi.fn();
+        mockDeviceConnectionStateMachineFactory.mockImplementationOnce(
+          (params) => {
+            onTerminated1 = params.onTerminated;
+            tryToReconnect1 = params.tryToReconnect;
+            return {
+              ...mockDeviceConnectionStateMachine,
+              getDeviceId: vi.fn().mockReturnValue(params.deviceId),
+            } as unknown as DeviceConnectionStateMachine<{ device: HIDDevice }>;
+          },
+        );
+
+        // Add 2 discoverable devices
+        const hidDevice1 = hidDeviceStubBuilder();
+        const hidDevice2 = hidDeviceStubBuilder();
+        mockedRequestDevice.mockResolvedValueOnce([hidDevice1, hidDevice2]);
+        mockedGetDevices.mockResolvedValue([hidDevice1, hidDevice2]);
+
+        // Connect the 2 devices
+        const discoveredDevices = await lastValueFrom(
+          transport.startDiscovering().pipe(toArray()),
+        );
+        expect(discoveredDevices.length).toStrictEqual(2);
+        const onDisconnect1 = vi.fn();
+        const connected1 = await transport.connect({
+          deviceId: discoveredDevices[0]!.id,
+          onDisconnect: onDisconnect1,
+        });
+        const onDisconnect2 = vi.fn();
+        const connected2 = await transport.connect({
+          deviceId: discoveredDevices[1]!.id,
+          onDisconnect: onDisconnect2,
+        });
+        expect(connected1.isRight()).toStrictEqual(true);
+        expect(connected2.isRight()).toStrictEqual(true);
+
+        // Try to reconnect the first device
+        tryToReconnect1();
+
+        // unplug the first device
+        onTerminated1();
+        expect(onDisconnect1).toHaveBeenCalled();
+        expect(onDisconnect2).not.toHaveBeenCalled();
+      });
     });
 
     describe("reconnect", () => {
@@ -607,26 +615,28 @@ describe("WebHidTransport", () => {
         new Promise<void>((resolve, reject) => {
           // given
           const onDisconnect = vi.fn();
+          let tryToReconnect = vi.fn();
 
           const hidDevice1 = hidDeviceStubBuilder();
           const hidDevice2 = hidDeviceStubBuilder();
 
           mockedRequestDevice.mockResolvedValueOnce([hidDevice1]);
           mockedGetDevices.mockResolvedValue([hidDevice1, hidDevice2]);
+          mockDeviceConnectionStateMachineFactory.mockImplementationOnce(
+            (params) => {
+              tryToReconnect = params.tryToReconnect;
+              return {
+                ...mockDeviceConnectionStateMachine,
+                getDeviceId: vi.fn().mockReturnValue(params.deviceId),
+                getDependencies: params.deviceApduSender.getDependencies,
+                setDependencies: params.deviceApduSender.setDependencies,
+              } as unknown as DeviceConnectionStateMachine<{
+                device: HIDDevice;
+              }>;
+            },
+          );
 
           discoverDevice(async (discoveredDevice) => {
-            const mock = {
-              sendApdu: vi.fn(),
-              device: hidDevice2,
-              deviceId: discoveredDevice.id,
-              disconnect: onDisconnect,
-              lostConnection: vi.fn().mockImplementation(() => {
-                setTimeout(() => {
-                  mock.disconnect();
-                }, RECONNECT_DEVICE_TIMEOUT);
-              }),
-            };
-
             try {
               await transport.connect({
                 deviceId: discoveredDevice.id,
@@ -637,14 +647,16 @@ describe("WebHidTransport", () => {
               emitHIDDisconnectionEvent(hidDevice1);
               expect(hidDevice1.close).toHaveBeenCalled();
               await Promise.resolve(); // wait for the next tick so the hidDevice1.close promise is resolved
+              expect(mockEventDeviceDisconnected).toHaveBeenCalled();
 
+              tryToReconnect();
               vi.advanceTimersByTime(RECONNECT_DEVICE_TIMEOUT / 3);
 
               /* Reconnection */
               emitHIDConnectionEvent(hidDevice2);
 
-              expect(hidDevice2.open).toHaveBeenCalled();
               await Promise.resolve(); // wait for the next tick so the hidDevice2.open promise is resolved
+              expect(mockEventDeviceConnected).toHaveBeenCalled();
 
               vi.advanceTimersByTime(RECONNECT_DEVICE_TIMEOUT);
               expect(onDisconnect).not.toHaveBeenCalled();
@@ -659,6 +671,7 @@ describe("WebHidTransport", () => {
         new Promise<void>((resolve, reject) => {
           // given
           const onDisconnect = vi.fn();
+          let tryToReconnect = vi.fn();
 
           const hidDevice1 = hidDeviceStubBuilder();
           const hidDevice2 = hidDeviceStubBuilder();
@@ -670,6 +683,19 @@ describe("WebHidTransport", () => {
             hidDevice2,
             hidDevice3,
           ]);
+          mockDeviceConnectionStateMachineFactory.mockImplementationOnce(
+            (params) => {
+              tryToReconnect = params.tryToReconnect;
+              return {
+                ...mockDeviceConnectionStateMachine,
+                getDeviceId: vi.fn().mockReturnValue(params.deviceId),
+                getDependencies: params.deviceApduSender.getDependencies,
+                setDependencies: params.deviceApduSender.setDependencies,
+              } as unknown as DeviceConnectionStateMachine<{
+                device: HIDDevice;
+              }>;
+            },
+          );
 
           // when
           discoverDevice(async (discoveredDevice) => {
@@ -682,13 +708,15 @@ describe("WebHidTransport", () => {
               emitHIDDisconnectionEvent(hidDevice1);
               expect(hidDevice1.close).toHaveBeenCalled();
               await Promise.resolve(); // wait for the next tick so the hidDevice1.close promise is resolved
+              expect(mockEventDeviceDisconnected).toHaveBeenCalled();
+              tryToReconnect();
               vi.advanceTimersByTime(RECONNECT_DEVICE_TIMEOUT / 3);
 
               /* First reconnection */
               emitHIDConnectionEvent(hidDevice2);
 
-              expect(hidDevice2.open).toHaveBeenCalled();
               await Promise.resolve(); // wait for the next tick so the hidDevice2.open promise is resolved
+              expect(mockEventDeviceConnected).toHaveBeenCalled();
               vi.advanceTimersByTime(RECONNECT_DEVICE_TIMEOUT);
               expect(onDisconnect).not.toHaveBeenCalled();
 
@@ -696,13 +724,15 @@ describe("WebHidTransport", () => {
               emitHIDDisconnectionEvent(hidDevice2);
               expect(hidDevice2.close).toHaveBeenCalled();
               await Promise.resolve(); // wait for the next tick so the hidDevice2.close promise is resolved
+              expect(mockEventDeviceDisconnected).toHaveBeenCalled();
+              tryToReconnect();
               vi.advanceTimersByTime(RECONNECT_DEVICE_TIMEOUT / 3);
 
               /* Second reconnection */
               emitHIDConnectionEvent(hidDevice3);
 
-              expect(hidDevice3.open).toHaveBeenCalled();
               await Promise.resolve(); // wait for the next tick so the hidDevice3.open promise is resolved
+              expect(mockEventDeviceConnected).toHaveBeenCalled();
               vi.advanceTimersByTime(RECONNECT_DEVICE_TIMEOUT);
               expect(onDisconnect).not.toHaveBeenCalled();
 
