@@ -1,20 +1,20 @@
 import { hexaStringToBuffer } from "@ledgerhq/device-management-kit";
 import { getBytes, Transaction } from "ethers";
 
-import { EthersRawTransactionMapper } from "./EthersRawTransactionMapper";
+import { EthersTransactionMapperService } from "./EthersTransactionMapperService";
 
 describe("RawTransactionMapper", () => {
-  const mapper = new EthersRawTransactionMapper();
+  const mapper = new EthersTransactionMapperService();
 
   it("should return Nothing when empty raw transaction", () => {
     // GIVEN
     const transaction = new Uint8Array(0);
 
     // WHEN
-    const result = mapper.map(transaction);
+    const result = mapper.mapTransactionToSubset(transaction);
 
     // THEN
-    expect(result.isNothing()).toBeTruthy();
+    expect(result.isLeft()).toBeTruthy();
   });
 
   it("should return Nothing when invalid raw transaction", () => {
@@ -22,10 +22,10 @@ describe("RawTransactionMapper", () => {
     const transaction = new Uint8Array(1);
 
     // WHEN
-    const result = mapper.map(transaction);
+    const result = mapper.mapTransactionToSubset(transaction);
 
     // THEN
-    expect(result.isNothing()).toBeTruthy();
+    expect(result.isLeft()).toBeTruthy();
   });
 
   it("should return a TransactionMapperResult", () => {
@@ -39,19 +39,18 @@ describe("RawTransactionMapper", () => {
     )!;
 
     // WHEN
-    const result = mapper.map(transaction);
+    const result = mapper.mapTransactionToSubset(transaction);
 
     // THEN
-    expect(result.isJust()).toBeTruthy();
-    expect(result.extract()?.serializedTransaction).toEqual(
-      getBytes(transaction),
-    );
-    expect(result.extract()?.subset).toEqual({
+    expect(result.isRight()).toBeTruthy();
+    const { serializedTransaction, subset, type } = result.unsafeCoerce();
+    expect(serializedTransaction).toEqual(getBytes(transaction));
+    expect(subset).toEqual({
       chainId: 1,
       to: "0x1234567890123456789012345678901234567890",
       data: "0x123456",
     });
-    expect(result.extract()?.type).toEqual(2);
+    expect(type).toEqual(2);
   });
 
   it("should return a TransactionMapperResult with undefined to", () => {
@@ -64,19 +63,18 @@ describe("RawTransactionMapper", () => {
     )!;
 
     // WHEN
-    const result = mapper.map(transaction);
+    const result = mapper.mapTransactionToSubset(transaction);
 
     // THEN
-    expect(result.isJust()).toBeTruthy();
-    expect(result.extract()?.serializedTransaction).toEqual(
-      getBytes(transaction),
-    );
-    expect(result.extract()?.subset).toEqual({
+    expect(result.isRight()).toBeTruthy();
+    const { serializedTransaction, subset, type } = result.unsafeCoerce();
+    expect(serializedTransaction).toEqual(getBytes(transaction));
+    expect(subset).toEqual({
       chainId: 1,
       to: undefined,
       data: "0x123456",
     });
-    expect(result.extract()?.type).toEqual(2);
+    expect(type).toEqual(2);
   });
 
   it("should return a TransactionMapperResult with empty data", () => {
@@ -89,19 +87,18 @@ describe("RawTransactionMapper", () => {
     )!;
 
     // WHEN
-    const result = mapper.map(transaction);
+    const result = mapper.mapTransactionToSubset(transaction);
 
     // THEN
-    expect(result.isJust()).toBeTruthy();
-    expect(result.extract()?.serializedTransaction).toEqual(
-      getBytes(transaction),
-    );
-    expect(result.extract()?.subset).toEqual({
+    expect(result.isRight()).toBeTruthy();
+    const { serializedTransaction, subset, type } = result.unsafeCoerce();
+    expect(serializedTransaction).toEqual(getBytes(transaction));
+    expect(subset).toEqual({
       chainId: 1,
       to: "0x1234567890123456789012345678901234567890",
       data: "0x",
     });
-    expect(result.extract()?.type).toEqual(2);
+    expect(type).toEqual(2);
   });
 
   it("should return a TransactionMapperResult with a custom type", () => {
@@ -116,18 +113,35 @@ describe("RawTransactionMapper", () => {
     )!;
 
     // WHEN
-    const result = mapper.map(transaction);
+    const result = mapper.mapTransactionToSubset(transaction);
 
     // THEN
-    expect(result.isJust()).toBeTruthy();
-    expect(result.extract()?.serializedTransaction).toEqual(
-      getBytes(transaction),
-    );
-    expect(result.extract()?.subset).toEqual({
+    expect(result.isRight()).toBeTruthy();
+    const { serializedTransaction, subset, type } = result.unsafeCoerce();
+    expect(serializedTransaction).toEqual(getBytes(transaction));
+    expect(subset).toEqual({
       chainId: 1,
       to: "0x1234567890123456789012345678901234567890",
       data: "0x123456",
     });
-    expect(result.extract()?.type).toEqual(1);
+    expect(type).toEqual(1);
+  });
+
+  it("should return a Left when the chainId is 0", () => {
+    // GIVEN
+    const transaction = hexaStringToBuffer(
+      Transaction.from({
+        chainId: 0,
+      }).unsignedSerialized,
+    )!;
+
+    // WHEN
+    const result = mapper.mapTransactionToSubset(transaction);
+
+    // THEN
+    expect(result.isLeft()).toBeTruthy();
+    expect(result.extract()).toEqual(
+      new Error("Pre-EIP-155 transactions are not supported"),
+    );
   });
 });
