@@ -74,17 +74,6 @@ describe("ExternalPluginContextLoader", () => {
       await expect(promise()).resolves.toEqual([]);
     });
 
-    it("should return an empty array if data is undefined", async () => {
-      // GIVEN
-      const transaction = { to: "0x0" } as TransactionContext;
-
-      // WHEN
-      const result = await loader.load(transaction);
-
-      // THEN
-      expect(result).toEqual([]);
-    });
-
     it("should return an empty array if no data provided", async () => {
       // GIVEN
       const transaction = { to: "0x0", data: "0x" } as TransactionContext;

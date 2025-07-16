@@ -33,20 +33,6 @@ describe("TokenContextLoader", () => {
       expect(result).toEqual([]);
     });
 
-    it("should return an empty array if transaction data is undefined", async () => {
-      // GIVEN
-      const transaction = {
-        to: "0xdAC17F958D2ee523a2206206994597C13D831ec7",
-        data: undefined,
-      } as TransactionContext;
-
-      // WHEN
-      const result = await loader.load(transaction);
-
-      // THEN
-      expect(result).toEqual([]);
-    });
-
     it("should return an empty array if transaction data is empty", async () => {
       // GIVEN
       const transaction = {

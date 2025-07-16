@@ -182,7 +182,6 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
             clearSignContextsOptional: null,
             serializedTransaction: null,
             chainId: null,
-            web3Check: null,
             transactionType: null,
             clearSigningType: null,
             signature: null,
