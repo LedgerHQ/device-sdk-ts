@@ -1,7 +1,10 @@
 import { inject, injectable } from "inversify";
 import { EitherAsync, Just, Maybe, Nothing, Right } from "purify-ts";
 
-import { LKRPHttpRequestError } from "@api/app-binder/Errors";
+import {
+  LKRPHttpRequestError,
+  LKRPUnauthorizedError,
+} from "@api/app-binder/Errors";
 import { JWT } from "@api/app-binder/LKRPTypes";
 import { lkrpDatasourceTypes } from "@internal/lkrp-datasource/di/lkrpDatasourceTypes";
 import { LKRPBlock } from "@internal/utils/LKRPBlock";
@@ -84,13 +87,23 @@ export class HttpLKRPDataSource implements LKRPDataSource {
           ),
         },
       });
-      if (!response.ok) {
-        throw new LKRPHttpRequestError(
-          `Failed to fetch ${href}: [${response.status}] ${response.statusText}`,
-        );
+      switch (response.status) {
+        case 204:
+          return Right(undefined as Res);
+
+        case 401:
+          throw new LKRPUnauthorizedError(
+            `Unauthorized request to ${href}: [${response.status}] ${response.statusText}`,
+          );
+
+        default:
+          if (!response.ok) {
+            throw new LKRPHttpRequestError(
+              `Failed to fetch ${href}: [${response.status}] ${response.statusText}`,
+            );
+          }
+          return Right((await response.json()) as Res);
       }
-      if (response.status === 204) return Right(undefined as Res);
-      return Right((await response.json()) as Res);
     }).mapLeft((error: unknown) =>
       error instanceof LKRPHttpRequestError
         ? error

@@ -1,6 +1,9 @@
 import { Just, Left, Nothing, Right } from "purify-ts";
 
-import { LKRPHttpRequestError } from "@api/app-binder/Errors";
+import {
+  LKRPHttpRequestError,
+  LKRPUnauthorizedError,
+} from "@api/app-binder/Errors";
 import { LKRPBlock } from "@internal/utils/LKRPBlock";
 import { LKRPBlockStream } from "@internal/utils/LKRPBlockStream";
 
@@ -164,8 +167,8 @@ describe("HttpLKRPDataSource", () => {
       // THEN
       expect(result).toEqual(
         Left(
-          new LKRPHttpRequestError(
-            `Failed to fetch ${baseUrl}/authenticate: [401] Unauthorized`,
+          new LKRPUnauthorizedError(
+            `Unauthorized request to ${baseUrl}/authenticate: [401] Unauthorized`,
           ),
         ),
       );
