@@ -2,6 +2,7 @@ import { Either, Just, type Maybe, Nothing, Right } from "purify-ts";
 
 import { type LKRPParsingError } from "@api/app-binder/Errors";
 
+import { CryptoUtils } from "./crypto";
 import { bytesToHex, hexToBytes } from "./hex";
 import { TLVBuilder } from "./TLVBuilder";
 import { TLVParser } from "./TLVParser";
@@ -74,9 +75,7 @@ export class LKRPBlock {
 
   hash(): Promise<string> {
     return this.hashValue.orDefaultLazy(() => {
-      const hashValue = crypto.subtle
-        .digest("SHA-256", this.bytes)
-        .then((buffer) => bytesToHex(new Uint8Array(buffer)));
+      const hashValue = CryptoUtils.hash(this.bytes).then(bytesToHex);
       this.hashValue = Just(hashValue);
       return hashValue;
     });
