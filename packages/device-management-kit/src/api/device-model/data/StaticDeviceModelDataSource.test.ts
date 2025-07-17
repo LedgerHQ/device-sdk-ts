@@ -9,8 +9,10 @@ describe("StaticDeviceModelDataSource", () => {
       const dataSource = new StaticDeviceModelDataSource();
       const deviceModels = dataSource.getAllDeviceModels();
 
-      // Currently supporting 4 device models
-      expect(deviceModels.length).toEqual(5);
+      expect(deviceModels.length).toEqual(6);
+      expect(deviceModels).toContainEqual(
+        expect.objectContaining({ id: DeviceModelId.APEX }),
+      );
       expect(deviceModels).toContainEqual(
         expect.objectContaining({ id: DeviceModelId.NANO_S }),
       );
@@ -190,6 +192,7 @@ describe("StaticDeviceModelDataSource", () => {
       const bleServices = dataSource.getBluetoothServices();
       // then
       expect(bleServices).toStrictEqual([
+        "13d63400-2c97-6004-0000-4c6564676572",
         "13d63400-2c97-0004-0000-4c6564676572",
         "13d63400-2c97-6004-0000-4c6564676572",
         "13d63400-2c97-3004-0000-4c6564676572",
