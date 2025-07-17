@@ -58,6 +58,7 @@ describe("SignTransactionDeviceAction", () => {
   } as unknown as TransactionParserService;
   const getAppConfigMock = vi.fn();
   const web3CheckOptInMock = vi.fn();
+  const preBuildContextMock = vi.fn();
   const buildContextMock = vi.fn();
   const buildSubContextAndProvideMock = vi.fn();
   const signTransactionMock = vi.fn();
@@ -65,6 +66,7 @@ describe("SignTransactionDeviceAction", () => {
     return {
       getAppConfig: getAppConfigMock,
       web3CheckOptIn: web3CheckOptInMock,
+      preBuildContext: preBuildContextMock,
       buildContext: buildContextMock,
       buildSubContextAndProvide: buildSubContextAndProvideMock,
       signTransaction: signTransactionMock,

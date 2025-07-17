@@ -19,7 +19,6 @@ import type { GetConfigCommandResponse } from "@api/app-binder/GetConfigCommandT
 import { ClearSigningType } from "@api/model/ClearSigningType";
 import { makeDeviceActionInternalApiMock } from "@internal/app-binder/device-action/__test-utils__/makeInternalApi";
 import { type TransactionMapperResult } from "@internal/transaction/service/mapper/model/TransactionMapperResult";
-import { type TransactionMapperService } from "@internal/transaction/service/mapper/TransactionMapperService";
 
 import {
   BuildTransactionContextTask,
@@ -79,7 +78,7 @@ describe("BuildTransactionContextTask", () => {
 
     defaultArgs = {
       contextModule: contextModuleMock,
-      mapper: mapperMock as unknown as TransactionMapperService,
+      subset: { chainId: 1, to: undefined, data: "0x", selector: "0x" },
       transaction: defaultTransaction,
       options: defaultOptions,
       appConfig: createAppConfig(false),
@@ -97,7 +96,7 @@ describe("BuildTransactionContextTask", () => {
       task["getWeb3ChecksFactory"](apiMock, {
         contextModule: defaultArgs.contextModule,
         derivationPath: defaultArgs.derivationPath,
-        mapper: defaultArgs.mapper,
+        subset: defaultArgs.subset,
         transaction: defaultArgs.transaction,
       }),
     ).toBeInstanceOf(GetWeb3CheckTask);
@@ -108,12 +107,6 @@ describe("BuildTransactionContextTask", () => {
     const serializedTransaction = new Uint8Array([0x01, 0x02, 0x03]);
     const clearSignContexts: ClearSignContext[] = [];
     const clearSignContextsOptional: ClearSignContext[] = [];
-    const mapperResult: TransactionMapperResult = {
-      subset: { chainId: 1, to: undefined, data: "0x" },
-      serializedTransaction,
-      type: 0,
-    };
-    mapperMock.mapTransactionToSubset.mockReturnValueOnce(Right(mapperResult));
     contextModuleMock.getContexts.mockResolvedValueOnce(clearSignContexts);
     apiMock.getDeviceSessionState.mockReturnValueOnce({
       sessionStateType: DeviceSessionStateType.ReadyWithoutSecureChannel,
@@ -148,7 +141,7 @@ describe("BuildTransactionContextTask", () => {
     const clearSignContexts: ClearSignContext[] = [];
     const clearSignContextsOptional: ClearSignContext[] = [];
     const mapperResult: TransactionMapperResult = {
-      subset: { chainId: 1, to: undefined, data: "0x" },
+      subset: { chainId: 1, to: undefined, data: "0x", selector: "0x" },
       serializedTransaction,
       type: 0,
     };
@@ -212,7 +205,7 @@ describe("BuildTransactionContextTask", () => {
       },
     ];
     const mapperResult: TransactionMapperResult = {
-      subset: { chainId: 1, to: undefined, data: "0x" },
+      subset: { chainId: 1, to: undefined, data: "0x", selector: "0x" },
       serializedTransaction,
       type: 2,
     };
@@ -281,7 +274,7 @@ describe("BuildTransactionContextTask", () => {
       },
     ];
     const mapperResult: TransactionMapperResult = {
-      subset: { chainId: 1, to: undefined, data: "0x" },
+      subset: { chainId: 1, to: undefined, data: "0x", selector: "0x" },
       serializedTransaction,
       type: 2,
     };
@@ -338,7 +331,7 @@ describe("BuildTransactionContextTask", () => {
       },
     ];
     const mapperResult: TransactionMapperResult = {
-      subset: { chainId: 1, to: undefined, data: "0x" },
+      subset: { chainId: 1, to: undefined, data: "0x", selector: "0x" },
       serializedTransaction,
       type: 2,
     };
@@ -402,7 +395,7 @@ describe("BuildTransactionContextTask", () => {
       },
     ];
     const mapperResult: TransactionMapperResult = {
-      subset: { chainId: 1, to: undefined, data: "0x" },
+      subset: { chainId: 1, to: undefined, data: "0x", selector: "0x" },
       serializedTransaction,
       type: 2,
     };
@@ -444,7 +437,7 @@ describe("BuildTransactionContextTask", () => {
     const serializedTransaction = new Uint8Array([0x01, 0x02, 0x03]);
     const clearSignContexts: ClearSignContext[] = [];
     const mapperResult: TransactionMapperResult = {
-      subset: { chainId: 1, to: undefined, data: "0x" },
+      subset: { chainId: 1, to: undefined, data: "0x", selector: "0x" },
       serializedTransaction,
       type: 0,
     };
@@ -477,7 +470,7 @@ describe("BuildTransactionContextTask", () => {
     const serializedTransaction = new Uint8Array([0x01, 0x02, 0x03]);
     const clearSignContexts: ClearSignContext[] = [];
     const mapperResult: TransactionMapperResult = {
-      subset: { chainId: 1, to: undefined, data: "0x" },
+      subset: { chainId: 1, to: undefined, data: "0x", selector: "0x" },
       serializedTransaction,
       type: 0,
     };
@@ -513,7 +506,7 @@ describe("BuildTransactionContextTask", () => {
     const serializedTransaction = new Uint8Array([0x01, 0x02, 0x03]);
     const clearSignContexts: ClearSignContext[] = [];
     const mapperResult: TransactionMapperResult = {
-      subset: { chainId: 1, to: undefined, data: "0x" },
+      subset: { chainId: 1, to: undefined, data: "0x", selector: "0x" },
       serializedTransaction,
       type: 0,
     };
@@ -549,7 +542,7 @@ describe("BuildTransactionContextTask", () => {
     const serializedTransaction = new Uint8Array([0x01, 0x02, 0x03]);
     const clearSignContexts: ClearSignContext[] = [];
     const mapperResult: TransactionMapperResult = {
-      subset: { chainId: 1, to: undefined, data: "0x" },
+      subset: { chainId: 1, to: undefined, data: "0x", selector: "0x" },
       serializedTransaction,
       type: 0,
     };
@@ -584,7 +577,7 @@ describe("BuildTransactionContextTask", () => {
     const serializedTransaction = new Uint8Array([0x01, 0x02, 0x03]);
     const clearSignContexts: ClearSignContext[] = [];
     const mapperResult: TransactionMapperResult = {
-      subset: { chainId: 1, to: undefined, data: "0x" },
+      subset: { chainId: 1, to: undefined, data: "0x", selector: "0x" },
       serializedTransaction,
       type: 0,
     };
@@ -664,7 +657,7 @@ describe("BuildTransactionContextTask", () => {
       },
     ];
     const mapperResult: TransactionMapperResult = {
-      subset: { chainId: 1, to: undefined, data: "0x" },
+      subset: { chainId: 1, to: undefined, data: "0x", selector: "0x" },
       serializedTransaction,
       type: 0,
     };
@@ -727,7 +720,7 @@ describe("BuildTransactionContextTask", () => {
       },
     ];
     const mapperResult: TransactionMapperResult = {
-      subset: { chainId: 1, to: undefined, data: "0x" },
+      subset: { chainId: 1, to: undefined, data: "0x", selector: "0x" },
       serializedTransaction,
       type: 0,
     };
@@ -784,7 +777,7 @@ describe("BuildTransactionContextTask", () => {
       },
     ];
     const mapperResult: TransactionMapperResult = {
-      subset: { chainId: 1, to: undefined, data: "0x" },
+      subset: { chainId: 1, to: undefined, data: "0x", selector: "0x" },
       serializedTransaction,
       type: 0,
     };
@@ -847,7 +840,7 @@ describe("BuildTransactionContextTask", () => {
       },
     ];
     const mapperResult: TransactionMapperResult = {
-      subset: { chainId: 1, to: undefined, data: "0x" },
+      subset: { chainId: 1, to: undefined, data: "0x", selector: "0x" },
       serializedTransaction,
       type: 2,
     };
@@ -906,7 +899,7 @@ describe("BuildTransactionContextTask", () => {
       },
     ];
     const mapperResult: TransactionMapperResult = {
-      subset: { chainId: 1, to: undefined, data: "0x" },
+      subset: { chainId: 1, to: undefined, data: "0x", selector: "0x" },
       serializedTransaction,
       type: 2,
     };
@@ -965,7 +958,7 @@ describe("BuildTransactionContextTask", () => {
       },
     ];
     const mapperResult: TransactionMapperResult = {
-      subset: { chainId: 1, to: undefined, data: "0x" },
+      subset: { chainId: 1, to: undefined, data: "0x", selector: "0x" },
       serializedTransaction,
       type: 2,
     };
@@ -1024,7 +1017,7 @@ describe("BuildTransactionContextTask", () => {
       },
     ];
     const mapperResult: TransactionMapperResult = {
-      subset: { chainId: 1, to: undefined, data: "0x" },
+      subset: { chainId: 1, to: undefined, data: "0x", selector: "0x" },
       serializedTransaction,
       type: 2,
     };
@@ -1074,7 +1067,7 @@ describe("BuildTransactionContextTask", () => {
       },
     ];
     const mapperResult: TransactionMapperResult = {
-      subset: { chainId: 1, to: undefined, data: "0x" },
+      subset: { chainId: 1, to: undefined, data: "0x", selector: "0x" },
       serializedTransaction,
       type: 2,
     };

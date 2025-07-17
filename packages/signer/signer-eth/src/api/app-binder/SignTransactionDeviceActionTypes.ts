@@ -1,6 +1,7 @@
 import {
   type ClearSignContextSuccess,
   type ContextModule,
+  type TransactionSubset,
 } from "@ledgerhq/context-module";
 import {
   type CommandErrorResult,
@@ -25,6 +26,7 @@ export enum SignTransactionDAStep {
   GET_APP_CONFIG = "signer.eth.steps.getAppConfig",
   WEB3_CHECKS_OPT_IN = "signer.eth.steps.web3ChecksOptIn",
   WEB3_CHECKS_OPT_IN_RESULT = "signer.eth.steps.web3ChecksOptInResult",
+  PRE_BUILD_CONTEXT = "signer.eth.steps.preBuildContext",
   BUILD_CONTEXT = "signer.eth.steps.buildContext",
   BUILD_SUB_CONTEXT_AND_PROVIDE = "signer.eth.steps.buildSubContextAndProvide",
   SIGN_TRANSACTION = "signer.eth.steps.signTransaction",
@@ -75,8 +77,7 @@ export type SignTransactionDAInternalState = {
   readonly appConfig: GetConfigCommandResponse | null;
   readonly clearSignContexts: ClearSignContextSuccess[] | null;
   readonly clearSignContextsOptional: ClearSignContextSuccess[] | null;
-  readonly serializedTransaction: Uint8Array | null;
-  readonly chainId: number | null;
+  readonly subset: TransactionSubset | null;
   readonly transactionType: TransactionType | null;
   readonly clearSigningType: ClearSigningType | null;
   readonly signature: Signature | null;

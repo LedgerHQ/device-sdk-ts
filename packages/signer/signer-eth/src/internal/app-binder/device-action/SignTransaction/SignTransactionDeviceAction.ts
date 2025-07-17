@@ -1,8 +1,4 @@
 import {
-  type ClearSignContextSuccess,
-  type ContextModule,
-} from "@ledgerhq/context-module";
-import {
   type CommandErrorResult,
   type CommandResult,
   type DeviceActionStateMachine,
@@ -29,7 +25,6 @@ import {
 } from "@api/app-binder/SignTransactionDeviceActionTypes";
 import { type ClearSigningType } from "@api/model/ClearSigningType";
 import { type Signature } from "@api/model/Signature";
-import { type TransactionOptions } from "@api/model/TransactionOptions";
 import { type TransactionType } from "@api/model/TransactionType";
 import { GetAppConfiguration } from "@internal/app-binder/command/GetAppConfigurationCommand";
 import { type EthErrorCodes } from "@internal/app-binder/command/utils/ethAppErrors";
@@ -37,17 +32,23 @@ import {
   Web3CheckOptInCommand,
   type Web3CheckOptInCommandResponse,
 } from "@internal/app-binder/command/Web3CheckOptInCommand";
-import { BuildSubContextTask } from "@internal/app-binder/task/BuildSubContextTask";
+import {
+  BuildSubContextTask,
+  type BuildSubContextTaskArgs,
+} from "@internal/app-binder/task/BuildSubContextTask";
 import {
   BuildTransactionContextTask,
   type BuildTransactionContextTaskArgs,
   type BuildTransactionTaskResult,
 } from "@internal/app-binder/task/BuildTransactionContextTask";
+import {
+  PreBuildContextTask,
+  type PreBuildContextTaskArgs,
+  type PreBuildContextTaskResult,
+} from "@internal/app-binder/task/PreBuildContextTask";
 import { ProvideTransactionContextTask } from "@internal/app-binder/task/ProvideTransactionContextTask";
 import { SendSignTransactionTask } from "@internal/app-binder/task/SendSignTransactionTask";
 import { ApplicationChecker } from "@internal/shared/utils/ApplicationChecker";
-import { type TransactionMapperService } from "@internal/transaction/service/mapper/TransactionMapperService";
-import { type TransactionParserService } from "@internal/transaction/service/parser/TransactionParserService";
 
 export type MachineDependencies = {
   readonly getAppConfig: () => Promise<
@@ -56,26 +57,14 @@ export type MachineDependencies = {
   readonly web3CheckOptIn: () => Promise<
     CommandResult<Web3CheckOptInCommandResponse, EthErrorCodes>
   >;
+  readonly preBuildContext: (arg0: {
+    input: PreBuildContextTaskArgs;
+  }) => Promise<PreBuildContextTaskResult>;
   readonly buildContext: (arg0: {
-    input: {
-      contextModule: ContextModule;
-      mapper: TransactionMapperService;
-      transaction: Uint8Array;
-      options: TransactionOptions;
-      appConfig: GetConfigCommandResponse;
-      derivationPath: string;
-    };
+    input: BuildTransactionContextTaskArgs;
   }) => Promise<BuildTransactionTaskResult>;
   readonly buildSubContextAndProvide: (arg0: {
-    input: {
-      context: ClearSignContextSuccess;
-      contextOptional: ClearSignContextSuccess[];
-      transactionParser: TransactionParserService;
-      serializedTransaction: Uint8Array;
-      contextModule: ContextModule;
-      chainId: number;
-      derivationPath: string;
-    };
+    input: BuildSubContextTaskArgs & { derivationPath: string };
   }) => Promise<Either<CommandErrorResult<EthErrorCodes>, void>>;
   readonly signTransaction: (arg0: {
     input: {
@@ -115,6 +104,7 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
     const {
       getAppConfig,
       web3CheckOptIn,
+      preBuildContext,
       buildContext,
       signTransaction,
       buildSubContextAndProvide,
@@ -132,6 +122,7 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
         }).makeStateMachine(internalApi),
         getAppConfig: fromPromise(getAppConfig),
         web3CheckOptIn: fromPromise(web3CheckOptIn),
+        preBuildContext: fromPromise(preBuildContext),
         buildContext: fromPromise(buildContext),
         signTransaction: fromPromise(signTransaction),
         buildSubContextAndProvide: fromPromise(buildSubContextAndProvide),
@@ -180,8 +171,7 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
             appConfig: null,
             clearSignContexts: null,
             clearSignContextsOptional: null,
-            serializedTransaction: null,
-            chainId: null,
+            subset: null,
             transactionType: null,
             clearSigningType: null,
             signature: null,
@@ -285,7 +275,7 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
               ]),
             },
             {
-              target: "BuildContext",
+              target: "PreBuildContext",
               guard: "noInternalError",
             },
             {
@@ -341,7 +331,37 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
           // This ensures the intermediateValue is captured before moving to BuildContext
           after: {
             0: {
+              target: "PreBuildContext",
+            },
+          },
+        },
+        PreBuildContext: {
+          entry: assign({
+            intermediateValue: {
+              requiredUserInteraction: UserInteractionRequired.None,
+              step: SignTransactionDAStep.PRE_BUILD_CONTEXT,
+            },
+          }),
+          invoke: {
+            id: "preBuildContext",
+            src: "preBuildContext",
+            input: ({ context }) => ({
+              mapper: context.input.mapper,
+              transaction: context.input.transaction,
+            }),
+            onDone: {
               target: "BuildContext",
+              actions: assign({
+                _internalState: ({ event, context }) => ({
+                  ...context._internalState,
+                  transactionType: event.output.type,
+                  subset: event.output.subset,
+                }),
+              }),
+            },
+            onError: {
+              target: "Error",
+              actions: "assignErrorFromEvent",
             },
           },
         },
@@ -357,11 +377,11 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
             src: "buildContext",
             input: ({ context }) => ({
               contextModule: context.input.contextModule,
-              mapper: context.input.mapper,
-              transaction: context.input.transaction,
               options: context.input.options,
               appConfig: context._internalState.appConfig!,
               derivationPath: context.input.derivationPath,
+              transaction: context.input.transaction,
+              subset: context._internalState.subset!,
             }),
             onDone: {
               target: "HasContextToProvideCheck",
@@ -372,9 +392,6 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
                     clearSignContexts: event.output.clearSignContexts!,
                     clearSignContextsOptional:
                       event.output.clearSignContextsOptional!,
-                    serializedTransaction: event.output.serializedTransaction,
-                    chainId: event.output.chainId,
-                    transactionType: event.output.transactionType,
                     clearSigningType: event.output.clearSigningType,
                   }),
                 }),
@@ -420,10 +437,9 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
               contextOptional:
                 context._internalState.clearSignContextsOptional!,
               transactionParser: context.input.parser,
-              serializedTransaction:
-                context._internalState.serializedTransaction!,
+              serializedTransaction: context.input.transaction,
               contextModule: context.input.contextModule,
-              chainId: context._internalState.chainId!,
+              chainId: context._internalState.subset!.chainId,
               derivationPath: context.input.derivationPath,
             }),
             onDone: {
@@ -447,9 +463,8 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
             src: "signTransaction",
             input: ({ context }) => ({
               derivationPath: context.input.derivationPath,
-              serializedTransaction:
-                context._internalState.serializedTransaction!,
-              chainId: context._internalState.chainId!,
+              serializedTransaction: context.input.transaction,
+              chainId: context._internalState.subset!.chainId,
               transactionType: context._internalState.transactionType!,
               clearSigningType: context._internalState.clearSigningType!,
             }),
@@ -506,20 +521,19 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
       internalApi.sendCommand(new GetAppConfiguration());
     const web3CheckOptIn = async () =>
       internalApi.sendCommand(new Web3CheckOptInCommand());
+    const preBuildContext = async (arg0: { input: PreBuildContextTaskArgs }) =>
+      Promise.resolve(
+        new PreBuildContextTask({
+          mapper: arg0.input.mapper,
+          transaction: arg0.input.transaction,
+        }).run(),
+      );
     const buildContext = async (arg0: {
       input: BuildTransactionContextTaskArgs;
     }) => new BuildTransactionContextTask(internalApi, arg0.input).run();
 
     const buildSubContextAndProvide = async (arg0: {
-      input: {
-        context: ClearSignContextSuccess;
-        contextOptional: ClearSignContextSuccess[];
-        transactionParser: TransactionParserService;
-        serializedTransaction: Uint8Array;
-        contextModule: ContextModule;
-        chainId: number;
-        derivationPath: string;
-      };
+      input: BuildSubContextTaskArgs & { derivationPath: string };
     }) => {
       const { subcontextCallbacks } = new BuildSubContextTask(internalApi, {
         context: arg0.input.context,
@@ -553,6 +567,7 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
     return {
       getAppConfig,
       web3CheckOptIn,
+      preBuildContext,
       buildContext,
       buildSubContextAndProvide,
       signTransaction,

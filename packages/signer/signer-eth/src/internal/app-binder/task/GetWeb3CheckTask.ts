@@ -3,6 +3,7 @@ import {
   type ClearSignContextSuccess,
   ClearSignContextType,
   type ContextModule,
+  type TransactionSubset,
   type Web3CheckContext,
 } from "@ledgerhq/context-module";
 import {
@@ -14,7 +15,6 @@ import {
 
 import { type TypedData } from "@api/model/TypedData";
 import { GetAddressCommand } from "@internal/app-binder/command/GetAddressCommand";
-import { type TransactionMapperService } from "@internal/transaction/service/mapper/TransactionMapperService";
 
 export type GetWeb3CheckTaskResult =
   | {
@@ -33,7 +33,7 @@ export type GetWeb3CheckTypedDataTaskArgs = {
 export type GetWeb3CheckRawTxTaskArgs = {
   readonly contextModule: ContextModule;
   readonly derivationPath: string;
-  readonly mapper: TransactionMapperService;
+  readonly subset: TransactionSubset;
   readonly transaction: Uint8Array;
 };
 export type GetWeb3CheckTaskArgs =
@@ -47,6 +47,7 @@ export class GetWeb3CheckTask {
   ) {}
 
   async run(): Promise<GetWeb3CheckTaskResult> {
+    console.log("GetWeb3CheckTask", this.args);
     // Get sender address
     const getAddressResult = await this.api.sendCommand(
       new GetAddressCommand({
@@ -69,21 +70,14 @@ export class GetWeb3CheckTask {
 
     if (this.isRawTx(this.args)) {
       // Transaction simulation
-      const parsed = this.args.mapper.mapTransactionToSubset(
-        this.args.transaction,
-      );
-      if (parsed.isRight()) {
-        const { subset, serializedTransaction } = parsed.extract();
-        const web3Params: Web3CheckContext = {
-          deviceModelId,
-          from: address,
-          rawTx: bufferToHexaString(serializedTransaction),
-          chainId: subset.chainId,
-        };
-        web3CheckContext = await contextModule.getWeb3Checks(web3Params);
-      } else {
-        throw parsed.extract();
-      }
+      const { subset, transaction } = this.args;
+      const web3Params: Web3CheckContext = {
+        deviceModelId,
+        from: address,
+        rawTx: bufferToHexaString(transaction),
+        chainId: subset.chainId,
+      };
+      web3CheckContext = await contextModule.getWeb3Checks(web3Params);
     } else {
       // Typed data simulation
       const web3Params: Web3CheckContext = {

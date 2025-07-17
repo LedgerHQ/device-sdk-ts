@@ -11,7 +11,6 @@ import { Left, Right } from "purify-ts";
 import { type TypedData } from "@api/model/TypedData";
 import { makeDeviceActionInternalApiMock } from "@internal/app-binder/device-action/__test-utils__/makeInternalApi";
 import { GetWeb3CheckTask } from "@internal/app-binder/task/GetWeb3CheckTask";
-import { type TransactionMapperService } from "@internal/transaction/service/mapper/TransactionMapperService";
 
 describe("GetWeb3CheckTask", () => {
   const apiMock = makeDeviceActionInternalApiMock();
@@ -51,7 +50,12 @@ describe("GetWeb3CheckTask", () => {
         try {
           await new GetWeb3CheckTask(apiMock, {
             contextModule: contextModuleMock as unknown as ContextModule,
-            mapper: mapperMock as unknown as TransactionMapperService,
+            subset: {
+              chainId: 15,
+              to: "to",
+              data: "data",
+              selector: "selector",
+            },
             transaction,
             derivationPath,
           }).run();
@@ -74,7 +78,12 @@ describe("GetWeb3CheckTask", () => {
         // WHEN
         const result = await new GetWeb3CheckTask(apiMock, {
           contextModule: contextModuleMock as unknown as ContextModule,
-          mapper: mapperMock as unknown as TransactionMapperService,
+          subset: {
+            chainId: 15,
+            to: "to",
+            data: "data",
+            selector: "selector",
+          },
           transaction,
           derivationPath,
         }).run();
@@ -102,7 +111,12 @@ describe("GetWeb3CheckTask", () => {
         // WHEN
         const result = await new GetWeb3CheckTask(apiMock, {
           contextModule: contextModuleMock as unknown as ContextModule,
-          mapper: mapperMock as unknown as TransactionMapperService,
+          subset: {
+            chainId: 15,
+            to: "to",
+            data: "data",
+            selector: "selector",
+          },
           transaction,
           derivationPath,
         }).run();
@@ -128,7 +142,12 @@ describe("GetWeb3CheckTask", () => {
         // WHEN
         const result = await new GetWeb3CheckTask(apiMock, {
           contextModule: contextModuleMock as unknown as ContextModule,
-          mapper: mapperMock as unknown as TransactionMapperService,
+          subset: {
+            chainId: 15,
+            to: "to",
+            data: "data",
+            selector: "selector",
+          },
           transaction,
           derivationPath,
         }).run();
@@ -153,7 +172,12 @@ describe("GetWeb3CheckTask", () => {
         // WHEN
         const result = await new GetWeb3CheckTask(apiMock, {
           contextModule: contextModuleMock as unknown as ContextModule,
-          mapper: mapperMock as unknown as TransactionMapperService,
+          subset: {
+            chainId: 15,
+            to: "to",
+            data: "data",
+            selector: "selector",
+          },
           transaction,
           derivationPath,
         }).run();
@@ -201,7 +225,7 @@ describe("GetWeb3CheckTask", () => {
         // WHEN
         await new GetWeb3CheckTask(apiMock, {
           contextModule: contextModuleMock as unknown as ContextModule,
-          mapper: mapperMock as unknown as TransactionMapperService,
+          subset: { chainId: 15, to: "to", data: "data", selector: "selector" },
           transaction,
           derivationPath,
         }).run();
