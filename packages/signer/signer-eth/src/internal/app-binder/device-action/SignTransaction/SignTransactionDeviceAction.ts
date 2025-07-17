@@ -64,7 +64,10 @@ export type MachineDependencies = {
     input: BuildTransactionContextTaskArgs;
   }) => Promise<BuildTransactionTaskResult>;
   readonly buildSubContextAndProvide: (arg0: {
-    input: BuildSubContextTaskArgs & { derivationPath: string };
+    input: BuildSubContextTaskArgs & {
+      derivationPath: string;
+      transaction: Uint8Array;
+    };
   }) => Promise<Either<CommandErrorResult<EthErrorCodes>, void>>;
   readonly signTransaction: (arg0: {
     input: {
@@ -437,9 +440,9 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
               contextOptional:
                 context._internalState.clearSignContextsOptional!,
               transactionParser: context.input.parser,
-              serializedTransaction: context.input.transaction,
+              transaction: context.input.transaction!,
               contextModule: context.input.contextModule,
-              chainId: context._internalState.subset!.chainId,
+              subset: context._internalState.subset!,
               derivationPath: context.input.derivationPath,
             }),
             onDone: {
@@ -533,20 +536,22 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
     }) => new BuildTransactionContextTask(internalApi, arg0.input).run();
 
     const buildSubContextAndProvide = async (arg0: {
-      input: BuildSubContextTaskArgs & { derivationPath: string };
+      input: BuildSubContextTaskArgs & {
+        derivationPath: string;
+        transaction: Uint8Array;
+      };
     }) => {
       const { subcontextCallbacks } = new BuildSubContextTask(internalApi, {
         context: arg0.input.context,
         contextOptional: arg0.input.contextOptional,
         transactionParser: arg0.input.transactionParser,
-        serializedTransaction: arg0.input.serializedTransaction,
+        subset: arg0.input.subset,
         contextModule: arg0.input.contextModule,
-        chainId: arg0.input.chainId,
       }).run();
       return new ProvideTransactionContextTask(internalApi, {
         context: arg0.input.context,
         subcontextsCallbacks: subcontextCallbacks,
-        serializedTransaction: arg0.input.serializedTransaction,
+        serializedTransaction: arg0.input.transaction,
         derivationPath: arg0.input.derivationPath,
       }).run();
     };

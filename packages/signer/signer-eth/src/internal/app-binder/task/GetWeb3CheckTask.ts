@@ -47,7 +47,6 @@ export class GetWeb3CheckTask {
   ) {}
 
   async run(): Promise<GetWeb3CheckTaskResult> {
-    console.log("GetWeb3CheckTask", this.args);
     // Get sender address
     const getAddressResult = await this.api.sendCommand(
       new GetAddressCommand({
