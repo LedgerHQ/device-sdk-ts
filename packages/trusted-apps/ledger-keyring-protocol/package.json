@@ -39,7 +39,8 @@
     "@ledgerhq/signer-utils": "workspace:*",
     "inversify": "catalog:",
     "purify-ts": "catalog:",
-    "reflect-metadata": "catalog:"
+    "reflect-metadata": "catalog:",
+    "xstate": "catalog:"
   },
   "devDependencies": {
     "@ledgerhq/eslint-config-dsdk": "workspace:*",

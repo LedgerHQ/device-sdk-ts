@@ -23,7 +23,7 @@ const initialState: LedgerKeyringProtocolContextType = {
   app: null,
 };
 
-const LedgerKeyringProtocol =
+const LedgerKeyringProtocolContext =
   createContext<LedgerKeyringProtocolContextType>(initialState);
 
 export const LedgerKeyringProtocolProvider: React.FC<PropsWithChildren> = ({
@@ -43,22 +43,25 @@ export const LedgerKeyringProtocolProvider: React.FC<PropsWithChildren> = ({
     const newApp = new LedgerKeyringProtocolBuilder({
       dmk,
       sessionId,
+      baseUrl:
+        process.env.TRUSTCHAIN_BACKEND_URL ||
+        "https://trustchain-backend.api.aws.stg.ldg-tech.com/v1",
     }).build();
 
     setApp(newApp);
   }, [dmk, sessionId]);
 
   return (
-    <LedgerKeyringProtocol.Provider
+    <LedgerKeyringProtocolContext.Provider
       value={{
         app,
       }}
     >
       {children}
-    </LedgerKeyringProtocol.Provider>
+    </LedgerKeyringProtocolContext.Provider>
   );
 };
 
-export const useLedgerKeyringProtocol = (): unknown | null => {
-  return useContext(LedgerKeyringProtocol).app;
+export const useLedgerKeyringProtocol = (): LedgerKeyringProtocol | null => {
+  return useContext(LedgerKeyringProtocolContext).app;
 };

@@ -1,4 +1,4 @@
-import { type Either, type Maybe } from "purify-ts";
+import { type EitherAsync, type Maybe } from "purify-ts";
 
 import { type LKRPHttpRequestError } from "@api/app-binder/Errors";
 import { type JWT } from "@api/app-binder/LKRPTypes";
@@ -7,34 +7,37 @@ import { type LKRPBlockStream } from "@internal/utils/LKRPBlockStream";
 import { type Trustchain } from "@internal/utils/types";
 
 export interface LKRPDataSource {
-  getChallenge(): Promise<Either<LKRPHttpRequestError, Challenge>>;
+  getChallenge(): EitherAsync<LKRPHttpRequestError, Challenge>;
 
   authenticate(
     payload: AuthenticationPayload,
-  ): Promise<
-    Either<LKRPHttpRequestError, { jwt: JWT; trustchainId: Maybe<string> }>
-  >;
+  ): EitherAsync<LKRPHttpRequestError, AuthenticationResponse>;
 
   getTrustchainById(
     id: string,
     jwt: JWT,
-  ): Promise<Either<LKRPHttpRequestError, Trustchain>>;
+  ): EitherAsync<LKRPHttpRequestError, Trustchain>;
 
   postDerivation(
     id: string,
     stream: LKRPBlockStream,
     jwt: JWT,
-  ): Promise<Either<LKRPHttpRequestError, void>>;
+  ): EitherAsync<LKRPHttpRequestError, void>;
 
   putCommands(
     id: string,
     path: string,
     block: LKRPBlock,
     jwt: JWT,
-  ): Promise<Either<LKRPHttpRequestError, void>>;
+  ): EitherAsync<LKRPHttpRequestError, void>;
 }
 
 export type Challenge = { json: ChallengeJSON; tlv: string };
+
+export type AuthenticationResponse = {
+  jwt: JWT;
+  trustchainId: Maybe<string>;
+};
 
 export type AuthenticationPayload = {
   challenge: ChallengeJSON;

@@ -9,22 +9,27 @@ import { DefaultLedgerKeyringProtocol } from "@internal/DefaultLedgerKeyringProt
 export class LedgerKeyringProtocolBuilder {
   private readonly dmk: DeviceManagementKit;
   private readonly sessionId: DeviceSessionId;
+  private readonly baseUrl: string;
 
   constructor({
     dmk,
     sessionId,
+    baseUrl,
   }: {
     dmk: DeviceManagementKit;
     sessionId: DeviceSessionId;
+    baseUrl: string;
   }) {
     this.dmk = dmk;
     this.sessionId = sessionId;
+    this.baseUrl = baseUrl;
   }
 
   build(): LedgerKeyringProtocol {
     return new DefaultLedgerKeyringProtocol({
       dmk: this.dmk,
       sessionId: this.sessionId,
+      baseUrl: this.baseUrl,
     });
   }
 }

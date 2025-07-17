@@ -9,32 +9,37 @@ import { type JWT, type Keypair } from "@api/app-binder/LKRPTypes";
 import { type LedgerKeyringProtocol } from "@api/LedgerKeyringProtocol";
 import { makeContainer } from "@internal/di";
 
+import { type AuthenticateUseCase } from "./use-cases/authentication/AuthenticateUseCase";
+import { useCasesTypes } from "./use-cases/di/useCasesTypes";
+
 type DefaultLedgerKeyringProtocolConstructorArgs = {
   dmk: DeviceManagementKit;
   sessionId: DeviceSessionId;
+  baseUrl: string;
 };
 
 export class DefaultLedgerKeyringProtocol implements LedgerKeyringProtocol {
   name: string;
   private _container: Container;
 
-  constructor({ dmk, sessionId }: DefaultLedgerKeyringProtocolConstructorArgs) {
+  constructor({
+    dmk,
+    sessionId,
+    baseUrl,
+  }: DefaultLedgerKeyringProtocolConstructorArgs) {
     this.name = "Ledger Keyring Protocol";
-    this._container = makeContainer({ dmk, sessionId });
+    this._container = makeContainer({ dmk, sessionId, baseUrl });
   }
 
-  athenticate(
+  authenticate(
     keypair: Keypair,
     applicationId: number,
     trustchainId?: string,
-    JWT?: JWT,
+    jwt?: JWT,
   ): AuthenticateDAReturnType {
-    throw new Error("Method not implemented.", {
-      cause: {
-        container: this._container,
-        args: { keypair, applicationId, trustchainId, JWT },
-      },
-    });
+    return this._container
+      .get<AuthenticateUseCase>(useCasesTypes.AuthenticateUseCase)
+      .execute(keypair, applicationId, trustchainId, jwt);
   }
 
   encryptData(encryptionKey: Uint8Array, data: Uint8Array): Uint8Array {
