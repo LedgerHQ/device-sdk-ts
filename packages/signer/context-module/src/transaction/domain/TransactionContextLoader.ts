@@ -17,12 +17,11 @@ export class TransactionContextLoader implements ContextLoader {
     private transactionDataSource: TransactionDataSource,
   ) {}
 
-  async load(transaction: TransactionContext): Promise<ClearSignContext[]> {
-    if (!transaction.to || transaction.data === "0x") {
+  async load(ctx: TransactionContext): Promise<ClearSignContext[]> {
+    const { to, data, selector, chainId, deviceModelId } = ctx;
+    if (to === undefined || data === "0x") {
       return [];
     }
-
-    const selector = transaction.data.slice(0, 10);
 
     if (!isHexaString(selector)) {
       return [
@@ -34,9 +33,9 @@ export class TransactionContextLoader implements ContextLoader {
     }
 
     const result = await this.transactionDataSource.getTransactionDescriptors({
-      deviceModelId: transaction.deviceModelId,
-      address: transaction.to,
-      chainId: transaction.chainId,
+      deviceModelId,
+      address: to,
+      chainId,
       selector,
     });
 

@@ -28,6 +28,8 @@ export class EthersTransactionMapperService
           chainId,
           to: tx.to ?? undefined,
           data: tx.data,
+          selector: tx.data.length >= 10 ? tx.data.slice(0, 10) : tx.data,
+          value: tx.value,
         },
         serializedTransaction: getBytes(tx.unsignedSerialized),
         type: tx.type || 0,
