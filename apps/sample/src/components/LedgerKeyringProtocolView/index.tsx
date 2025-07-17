@@ -10,6 +10,7 @@ import { DeviceActionsList } from "@/components/DeviceActionsView/DeviceActionsL
 import { type DeviceActionProps } from "@/components/DeviceActionsView/DeviceActionTester";
 import { useDmk } from "@/providers/DeviceManagementKitProvider";
 import { useLedgerKeyringProtocol } from "@/providers/LedgerKeyringProvider";
+import { getPublicKey, hexToBytes, randomPrivateKey } from "@/utils/crypto";
 
 export const LedgerKeyringProtocolView: React.FC<{ sessionId: string }> = ({
   sessionId,
@@ -29,7 +30,6 @@ export const LedgerKeyringProtocolView: React.FC<{ sessionId: string }> = ({
         description:
           "Authenticate as an LKRP member. Without a trustchainId, the device will be used. For the web authentication a valid trustchainId and the keypair of a previouly added member is required.",
         executeDeviceAction: ({
-          publicKey,
           privateKey,
           applicationId,
           trustchainId,
@@ -38,21 +38,19 @@ export const LedgerKeyringProtocolView: React.FC<{ sessionId: string }> = ({
           if (!app) {
             throw new Error("Ledger Keyring Protocol app not initialized");
           }
-          const keypair = {
-            publicKey: Uint8Array.from(Buffer.from(publicKey, "hex")),
-            privateKey: Uint8Array.from(Buffer.from(privateKey, "hex")),
-          };
           const jwt = JSON.parse(serializedJwt) as JWT;
           return app.authenticate(
-            keypair,
+            {
+              publicKey: getPublicKey(privateKey),
+              privateKey: hexToBytes(privateKey),
+            },
             applicationId,
             trustchainId || undefined,
             jwt ?? undefined,
           );
         },
         initialValues: {
-          publicKey: "",
-          privateKey: "",
+          privateKey: randomPrivateKey(),
           applicationId: 16,
           trustchainId: "",
           jwt: "null",
@@ -61,7 +59,6 @@ export const LedgerKeyringProtocolView: React.FC<{ sessionId: string }> = ({
       } satisfies DeviceActionProps<
         AuthenticateDAOutput,
         {
-          publicKey: string;
           privateKey: string;
           applicationId: number;
           trustchainId: string;
