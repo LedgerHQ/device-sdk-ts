@@ -37,6 +37,7 @@
   "dependencies": {
     "@ledgerhq/device-management-kit": "workspace:*",
     "@ledgerhq/signer-utils": "workspace:*",
+    "@noble/secp256k1": "^2.3.0",
     "inversify": "catalog:",
     "purify-ts": "catalog:",
     "reflect-metadata": "catalog:",
