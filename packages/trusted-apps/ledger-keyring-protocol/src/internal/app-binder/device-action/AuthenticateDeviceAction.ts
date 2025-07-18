@@ -3,11 +3,12 @@ import {
   type InternalApi,
   OpenAppDeviceAction,
   type StateMachineTypes,
+  UnknownDAError,
   UserInteractionRequired,
   XStateDeviceAction,
 } from "@ledgerhq/device-management-kit";
-import { type Either, EitherAsync, Left, Maybe, Right } from "purify-ts";
-import { assign, fromPromise, setup } from "xstate";
+import { type Either, EitherAsync, Left, Right } from "purify-ts";
+import { fromPromise, setup } from "xstate";
 
 import {
   type AuthenticateDAError,
@@ -22,17 +23,17 @@ import {
   LKRPUnhandledState,
 } from "@api/app-binder/Errors";
 import { SignChallengeWithDeviceTask } from "@internal/app-binder/task/SignChallengeWithDeviceTask";
-import {
-  SignChallengeWithKeypairTask,
-  type SignChallengeWithKeypairTaskInput,
-} from "@internal/app-binder/task/SignChallengeWithKeypairTask";
+import { SignChallengeWithKeypairTask } from "@internal/app-binder/task/SignChallengeWithKeypairTask";
 import {
   type AuthenticationPayload,
   type Challenge,
+  type LKRPDataSource,
 } from "@internal/lkrp-datasource/data/LKRPDataSource";
 import { eitherSeqRecord } from "@internal/utils/eitherSeqRecord";
 
 import { raiseAndAssign } from "./utils/raiseAndAssign";
+import { required } from "./utils/required";
+import { GetEncryptionKeyDeviceAction } from "./GetEncryptionKeyDeviceAction";
 
 const APP_NAME = "Ledger Sync";
 
@@ -60,9 +61,6 @@ export class AuthenticateDeviceAction extends XStateDeviceAction<
       AuthenticateDAInternalState
     >;
 
-    const required = <T>(prop: T | undefined | null, errorMsg: string) =>
-      Maybe.fromNullable(prop).toEither(new LKRPMissingDataError(errorMsg));
-
     const { deviceAuth, keypairAuth } = this.extractDependencies(internalApi);
 
     return setup({
@@ -76,19 +74,34 @@ export class AuthenticateDeviceAction extends XStateDeviceAction<
         openAppStateMachine: new OpenAppDeviceAction({
           input: { appName: APP_NAME },
         }).makeStateMachine(internalApi),
+
         deviceAuth: fromPromise(deviceAuth),
         keypairAuth: fromPromise(keypairAuth),
+
+        getEncryptionKeyStateMachine: new GetEncryptionKeyDeviceAction({
+          input: Left(
+            new LKRPMissingDataError("Missing input for GetEncryptionKey"),
+          ),
+        }).makeStateMachine(internalApi),
       },
 
       actions: {
-        assignErrorFromEvent: assign({
-          _internalState: (_): AuthenticateDAInternalState =>
-            Left((_.event as unknown as { error: AuthenticateDAError }).error), // NOTE: it should never happen, the error is not typed anymore here
-        }),
+        assignErrorFromEvent: raiseAndAssign(
+          ({ event }) =>
+            Left(
+              new UnknownDAError(String((event as { error?: unknown }).error)),
+            ), // NOTE: it should never happen, the error is not typed anymore here
+        ),
+      },
+
+      guards: {
+        hasNoTrustchainId: ({ context }) => !context.input.trustchainId,
+        hasNoJwt: ({ context }) => !context.input.jwt,
       },
     }).createMachine({
+      /** @xstate-layout N4IgpgJg5mDOIC5QEECuAXAFmAduglgMYCG6YAImAG5FjKEED2OAdAMLaEDWbATpLgLEANrADEAbQAMAXUSgADo1j4mOeSAAeiAMxSALC30BOHfoDsAJinGAHADYp94wBoQAT0QBaAKwsf9lYBAIzB9jrm5vr6OgC+sW5oWIJEpBTUtPRq7Jw8-BApIuISwXJIIEoqahraCDrBOizG+pb2tq06PlJStvo+bp4IPsZSLBHBprZWnVI+tvGJGNh4qWSUNIR0DPjMOWDcfAIrRZKWZYrKqjvq5bU6lsZGkbY+ATbmtk79Hoi2f0+WT7hfT2HyA8wLEBJZYEEhrDKbLLXFgAaTA7gUxHwvGhYggzDALHwOCojC4hPJGKxOKW0nOFUu1VuiHs0RYlhMYOewWGHIGiB8+mCRh0nWsnR0bRakOhKTh6Q2W2yaKp2NxYF4vEYvBYCmEpAAZtqALYsSmYtW02QaSpXZg1Fn1fwtfS2YyBVm2YKWfkIaLmJqfGKs0F2czumVLOVpdaZba7FUWmlYMSwVCETawWB0m2M64OhDGSx+QLGcxdcxSYIggy+yvCv6s4zNKTl17zBJQqMreWxxHx1iJ6m44lUET4CCHArHUQ58q2pmgWpu0ZCoUPIuWKJmX0+SssWb2Cb3IWRAyR5I9mMIpXIoeWlMarW8OcXKr55mFiJNNfRYJSSxq3MHRfVBAMgJ8HQi3-UFAQvGFVgVONsj7OgllTdNM2za15zze1PwacMWH-MIwXqWYqxAn4EEA2wjBid0rHMexAJ0DtFkvWFr0VJFdlQ9VNW1V8GXffCl0QBpjGFSVRUgiJw0g31q0MUUDC3YZKz0Np4OjeEeIHFh+KWFgAHkFFwZAFAUPECSJEkyUJRhzJwSyFGEhcP3EhB7FBJpIgeb1LAiL0fWo4JgOI+o91ZILjEFD4dKvPTkORIysFM5zXLEJ9tV1fV0CNXhTSciyrPcvCbi81lDFeQUgrMe5bHuOtHkCXobAmF5mImRKuOS-sUJvaEMtK6y0wzOBsPpDyxK0RApPsA9zH-V0+h8as2l9B4at6bqYpeOJO1lJKkIG1KhuM3F8RwQlRwclgCh4q1poqgt-1MFh2i6CYPh6DolP+QDXXLRwej+EFesQ-iDLSzAWAE588sNE0HourBytEyq5oQf8iKghoTBGcJXiowZmhYbrKyatsbDsSHeyGgyAHEwHQABRHBCF4DE1BVGybrs0lyRYGB2c57mFF59EMbtLHanCyUjHCQInDBk9fSaxpPlo0itweex6e4lLdhZsWuZ564+ZynU9WRoqRdZjnzcly3pZwt9Zbe4DwPqStBWcI9bDrfRRjMEZlK3TpgkN-rbxNx3xYt5g+fGrCZcXbHgj+AMOTikPojsTbqLLOjWndX22Ozg2ju7PrTrj1hTadiWpfcMRR3HSd8kKWd3ZEz3Px8xaQxY102p5cwlNmQxCfuKRVPLCEa84qHGeyJvE5d5P0WywSXz7ma5Ykt1HnW70hXW4CJn0X0i0aHk2I3OLYo7TscEYAp4HKY66+hjPD4LJ8Yi-4piBAmGERwk9qJeDimMQCcw5gNHWi0HwMd668VYBwfYeQjhCFELmTGb1ATAJ6MxZaC1IG+i8AGL0VgTCUUBHFJqaC-53nREmaEBCB5eS5BTUUboYJdHnt8QY4RHiNkcC6BonxUHLwQgzfSg0npYC4RnWovDmwPEBDIr0QdoE0Pgb0LcPI5igJYWvc6yi4ZmVGqozy2M9x+E0UWP4sxdFbWWv4XawYTCijMOYxRljMiXSWHY2a8t56PFCFWVkkFlbRC2g4FgPkgyAlaK0ZaATjaNwTs7VuYSj442+k8Uw8VOhj2CLfe47ISauimF6HoWSzq7AAMqYUmgUgs1gIpNUsFuRw7oVw32LpEA8P0oLrVmKYppDcWBsz3p0z83TFrX29I4b04ZQpk0Ak0eegQhRTA+IBeI8QgA */
+
       id: "AuthenticateDeviceAction",
-      initial: "CheckCredentials",
       context: ({ input }): types["context"] => ({
         input,
         intermediateValue: {
@@ -101,11 +114,13 @@ export class AuthenticateDeviceAction extends XStateDeviceAction<
           encryptionKey: null,
         }),
       }),
+
+      initial: "CheckCredentials",
       states: {
         CheckCredentials: {
           always: [
-            { target: "DeviceAuth", guard: () => !this.input.trustchainId },
-            { target: "KeypairAuth", guard: () => !this.input.jwt },
+            { target: "DeviceAuth", guard: "hasNoTrustchainId" },
+            { target: "KeypairAuth", guard: "hasNoJwt" },
             { target: "GetEncryptionKey" },
           ],
         },
@@ -119,14 +134,15 @@ export class AuthenticateDeviceAction extends XStateDeviceAction<
           invoke: {
             id: "keypairAuth",
             src: "keypairAuth",
-            input: eitherSeqRecord({
-              keypair: this.input.keypair,
-              trustchainId: () =>
-                required(
-                  this.input.trustchainId,
-                  "Missing Trustchain ID in the input",
-                ),
+            input: ({ context }) => ({
+              lkrpDataSource: context.input.lkrpDataSource,
+              keypair: context.input.keypair,
+              trustchainId: required(
+                context.input.trustchainId,
+                "Missing Trustchain ID in the input",
+              ),
             }),
+            onError: { actions: "assignErrorFromEvent" },
             onDone: {
               actions: raiseAndAssign(({ event }) =>
                 event.output
@@ -154,6 +170,7 @@ export class AuthenticateDeviceAction extends XStateDeviceAction<
                 id: "openApp",
                 src: "openAppStateMachine",
                 input: { appName: APP_NAME },
+                onError: { actions: "assignErrorFromEvent" },
                 onDone: {
                   actions: raiseAndAssign(({ event }) =>
                     event.output.map(() => ({ raise: "success" })),
@@ -166,6 +183,8 @@ export class AuthenticateDeviceAction extends XStateDeviceAction<
               invoke: {
                 id: "deviceAuth",
                 src: "deviceAuth",
+                input: ({ context }) => context.input,
+                onError: { actions: "assignErrorFromEvent" },
                 onDone: {
                   actions: raiseAndAssign(({ event }) =>
                     event.output.chain((payload) =>
@@ -194,10 +213,46 @@ export class AuthenticateDeviceAction extends XStateDeviceAction<
             invalidCredentials: "KeypairAuth",
             error: "Error",
           },
-          entry: ({ context }) =>
-            context._internalState.ifRight((state) =>
-              console.log("State:", state),
-            ), // TODO: Implement get encryption key
+          invoke: {
+            id: "getEncryptionKey",
+            src: "getEncryptionKeyStateMachine",
+            input: ({ context }) =>
+              eitherSeqRecord({
+                lkrpDataSource: context.input.lkrpDataSource,
+                applicationId: context.input.applicationId,
+                keypair: context.input.keypair,
+                trustchainId: () =>
+                  context._internalState
+                    .toMaybe()
+                    .chainNullable(
+                      ({ trustchainId }) =>
+                        trustchainId ?? context.input.trustchainId,
+                    )
+                    .toEither(
+                      new LKRPMissingDataError(
+                        "Missing Trustchain ID in the input for GetEncryptionKey",
+                      ),
+                    ),
+                jwt: () =>
+                  context._internalState
+                    .toMaybe()
+                    .chainNullable(({ jwt }) => jwt ?? context.input.jwt)
+                    .toEither(
+                      new LKRPMissingDataError(
+                        "Missing JWT in the input for GetEncryptionKey",
+                      ),
+                    ),
+              }),
+            onError: { actions: "assignErrorFromEvent" },
+            onDone: {
+              actions: raiseAndAssign(({ event }) =>
+                event.output.map((output) => ({
+                  raise: "success",
+                  assign: output,
+                })),
+              ),
+            },
+          },
         },
 
         Success: { type: "final" },
@@ -210,12 +265,12 @@ export class AuthenticateDeviceAction extends XStateDeviceAction<
           eitherSeqRecord({
             trustchainId: () =>
               required(
-                state.trustchainId ?? this.input.trustchainId,
+                state.trustchainId ?? context.input.trustchainId,
                 "Missing Trustchain ID in the output",
               ),
             jwt: () =>
               required(
-                state.jwt ?? this.input.jwt,
+                state.jwt ?? context.input.jwt,
                 "Missing JWT in the output",
               ),
             applicationPath: () =>
@@ -233,28 +288,43 @@ export class AuthenticateDeviceAction extends XStateDeviceAction<
     });
   }
 
-  extractDependencies(_internalApi: InternalApi) {
+  extractDependencies(internalApi: InternalApi) {
     return {
-      deviceAuth: () =>
-        this.auth(new SignChallengeWithDeviceTask(_internalApi)).run(),
+      deviceAuth: (args: { input: { lkrpDataSource: LKRPDataSource } }) =>
+        this.auth(
+          args.input.lkrpDataSource,
+          new SignChallengeWithDeviceTask(internalApi),
+        ).run(),
 
       keypairAuth: (args: {
-        input: Either<LKRPMissingDataError, SignChallengeWithKeypairTaskInput>;
-      }) =>
-        EitherAsync.liftEither(args.input)
-          .chain((input) => this.auth(new SignChallengeWithKeypairTask(input)))
-          .run(),
+        input: Pick<AuthenticateDAInput, "lkrpDataSource" | "keypair"> & {
+          trustchainId: Either<LKRPMissingDataError, string>;
+        };
+      }) => {
+        const { lkrpDataSource, keypair } = args.input;
+        return EitherAsync.liftEither(args.input.trustchainId)
+          .chain((trustchainId) =>
+            this.auth(
+              lkrpDataSource,
+              new SignChallengeWithKeypairTask(keypair, trustchainId),
+            ),
+          )
+          .run();
+      },
     };
   }
 
-  private auth(signerTask: {
-    run: (
-      challenge: Challenge,
-    ) => PromiseLike<Either<AuthenticateDAError, AuthenticationPayload>>;
-  }) {
-    return this.input.lkrpDataSource
+  private auth(
+    lkrpDataSource: LKRPDataSource,
+    signerTask: {
+      run: (
+        challenge: Challenge,
+      ) => PromiseLike<Either<AuthenticateDAError, AuthenticationPayload>>;
+    },
+  ) {
+    return lkrpDataSource
       .getChallenge()
       .chain((challenge) => signerTask.run(challenge))
-      .chain((payload) => this.input.lkrpDataSource.authenticate(payload));
+      .chain((payload) => lkrpDataSource.authenticate(payload));
   }
 }

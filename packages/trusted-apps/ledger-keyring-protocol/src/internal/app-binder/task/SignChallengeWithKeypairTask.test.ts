@@ -12,7 +12,7 @@ describe("SignChallengeWithKeypairTask", () => {
     const { challenge, keypair, trustchainId } = getParameters();
 
     // WHEN
-    const task = new SignChallengeWithKeypairTask({ keypair, trustchainId });
+    const task = new SignChallengeWithKeypairTask(keypair, trustchainId);
     const result = await task.run(challenge).run();
 
     // THEN
@@ -42,7 +42,7 @@ describe("SignChallengeWithKeypairTask", () => {
     });
 
     // WHEN
-    const task = new SignChallengeWithKeypairTask({ keypair, trustchainId });
+    const task = new SignChallengeWithKeypairTask(keypair, trustchainId);
     const result = await task.run(challenge).run();
 
     // THEN
@@ -57,7 +57,7 @@ describe("SignChallengeWithKeypairTask", () => {
     });
 
     // WHEN
-    const task = new SignChallengeWithKeypairTask({ keypair, trustchainId });
+    const task = new SignChallengeWithKeypairTask(keypair, trustchainId);
     const result = await task.run(challenge).run();
 
     // THEN
