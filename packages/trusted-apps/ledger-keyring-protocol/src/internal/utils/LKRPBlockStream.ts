@@ -133,4 +133,8 @@ export class LKRPBlockStream {
         }
       });
   }
+
+  hasMember(member: Uint8Array): boolean {
+    return ([] as Uint8Array[]).includes(member); // TODO: Implement
+  }
 }
