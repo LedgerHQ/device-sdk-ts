@@ -12,9 +12,9 @@ import { CommandErrorHelper } from "@ledgerhq/signer-utils";
 import { Maybe } from "purify-ts";
 
 import {
-  type SetTrustedMemberCommandArgs,
-  type SetTrustedMemberCommandResponse,
-} from "@api/app-binder/SetTrustedMemberTypes";
+  type ParseBlockSignatureCommandArgs,
+  type ParseBlockSignatureCommandResponse,
+} from "@api/app-binder/ParseStreamBlockSignatureTypes";
 
 import {
   LEDGER_SYNC_ERRORS,
@@ -22,37 +22,32 @@ import {
   LedgerKeyringProtocolErrorFactory,
 } from "./utils/ledgerKeyringProtocolErrors";
 
-export class SetTrustedMemberCommand
+export class ParseBlockSignatureCommand
   implements
     Command<
-      SetTrustedMemberCommandResponse,
-      SetTrustedMemberCommandArgs,
+      ParseBlockSignatureCommandResponse,
+      ParseBlockSignatureCommandArgs,
       LedgerKeyringProtocolErrorCodes
     >
 {
   private readonly errorHelper = new CommandErrorHelper<
-    SetTrustedMemberCommandResponse,
+    ParseBlockSignatureCommandResponse,
     LedgerKeyringProtocolErrorCodes
   >(LEDGER_SYNC_ERRORS, LedgerKeyringProtocolErrorFactory);
 
-  constructor(private readonly args: SetTrustedMemberCommandArgs) {}
+  constructor(private readonly args: ParseBlockSignatureCommandArgs) {}
 
   getApdu(): Apdu {
-    const { iv, trustedMember } = this.args;
+    const { signature } = this.args;
     return (
-      new ApduBuilder({ cla: 0xe0, ins: 0x09, p1: 0x00, p2: 0x00 })
-        // tag for IV
-        .add8BitUIntToData(0x00)
-        // IV length
-        .add8BitUIntToData(iv.length)
-        // IV bytes
-        .addBufferToData(iv)
-        // tag for TrustedMember
-        .add8BitUIntToData(0x06)
-        // TrustedMember data length
-        .add8BitUIntToData(trustedMember.length)
-        // TrustedMember bytes
-        .addBufferToData(trustedMember)
+      new ApduBuilder({
+        cla: 0xe0,
+        ins: 0x08,
+        p1: 0x02,
+        p2: 0x00,
+      })
+        // raw signature chunk
+        .addBufferToData(signature)
         .build()
     );
   }
@@ -60,21 +55,23 @@ export class SetTrustedMemberCommand
   parseResponse(
     apduResponse: ApduResponse,
   ): CommandResult<
-    SetTrustedMemberCommandResponse,
+    ParseBlockSignatureCommandResponse,
     LedgerKeyringProtocolErrorCodes
   > {
     return Maybe.fromNullable(
       this.errorHelper.getError(apduResponse),
     ).orDefaultLazy(() => {
       const parser = new ApduParser(apduResponse);
-      if (parser.getUnparsedRemainingLength() !== 0) {
+      const remaining = parser.getUnparsedRemainingLength();
+      const payload = parser.extractFieldByLength(remaining);
+      if (!payload) {
         return CommandResultFactory({
           error: new InvalidStatusWordError(
-            "Unexpected response data for SetTrustedMemberCommand",
+            "No data returned by ParseBlockSignatureCommand",
           ),
         });
       }
-      return CommandResultFactory({ data: undefined });
+      return CommandResultFactory({ data: payload });
     });
   }
 }
