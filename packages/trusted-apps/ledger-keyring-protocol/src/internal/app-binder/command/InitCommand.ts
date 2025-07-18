@@ -1,16 +1,20 @@
 import {
   type Apdu,
   ApduBuilder,
-  type ApduBuilderArgs,
+  ApduParser,
   type ApduResponse,
   type Command,
   type CommandResult,
   CommandResultFactory,
+  InvalidStatusWordError,
 } from "@ledgerhq/device-management-kit";
 import { CommandErrorHelper } from "@ledgerhq/signer-utils";
 import { Maybe } from "purify-ts";
 
-import { type InitCommandArgs } from "@api/app-binder/InitCommandTypes";
+import {
+  type InitCommandArgs,
+  type InitCommandResponse,
+} from "@api/app-binder/InitCommandTypes";
 
 import {
   LEDGER_SYNC_ERRORS,
@@ -19,7 +23,12 @@ import {
 } from "./utils/ledgerKeyringProtocolErrors";
 
 export class InitCommand
-  implements Command<void, InitCommandArgs, LedgerKeyringProtocolErrorCodes>
+  implements
+    Command<
+      InitCommandResponse,
+      InitCommandArgs,
+      LedgerKeyringProtocolErrorCodes
+    >
 {
   constructor(private readonly args: InitCommandArgs) {}
 
@@ -30,23 +39,27 @@ export class InitCommand
 
   getApdu(): Apdu {
     const { pubKey } = this.args;
-    const initArgs: ApduBuilderArgs = {
-      cla: 0xe0,
-      ins: 0x06,
-      p1: 0x00,
-      p2: 0x00,
-    };
 
-    const builder = new ApduBuilder(initArgs);
-    builder.addHexaStringToData(pubKey);
-    return builder.build();
+    return new ApduBuilder({ cla: 0xe0, ins: 0x06, p1: 0x00, p2: 0x00 })
+      .addHexaStringToData(pubKey)
+      .build();
   }
 
   parseResponse(
     apduResponse: ApduResponse,
-  ): CommandResult<void, LedgerKeyringProtocolErrorCodes> {
+  ): CommandResult<InitCommandResponse, LedgerKeyringProtocolErrorCodes> {
     return Maybe.fromNullable(
       this.errorHelper.getError(apduResponse),
-    ).orDefault(CommandResultFactory({ data: undefined }));
+    ).orDefaultLazy(() => {
+      const parser = new ApduParser(apduResponse);
+      if (parser.getUnparsedRemainingLength() !== 0) {
+        return CommandResultFactory({
+          error: new InvalidStatusWordError(
+            "Unexpected response data for SetTrustedMemberCommand",
+          ),
+        });
+      }
+      return CommandResultFactory({ data: undefined });
+    });
   }
 }
