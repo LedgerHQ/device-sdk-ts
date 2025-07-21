@@ -10,10 +10,10 @@ import type { InitCommandArgs } from "@api/app-binder/InitCommandTypes";
 
 import { InitCommand } from "./InitCommand";
 
-const DUMMY_PUBKEY_HEX = "02" + "00".repeat(32);
+const DUMMY_PUBKEY_HEX = Uint8Array.from([0x02, ...Array(32).fill(0x00)]);
 const PLACEHOLDER_BYTES = Uint8Array.from([0xf0, 0xca, 0xcc, 0x1a]);
 
-const makeArgs = (): InitCommandArgs => ({ pubKey: DUMMY_PUBKEY_HEX });
+const makeArgs = (): InitCommandArgs => ({ publicKey: DUMMY_PUBKEY_HEX });
 
 describe("InitCommand", () => {
   describe("getApdu()", () => {

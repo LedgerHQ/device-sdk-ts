@@ -1,4 +1,6 @@
-import { etc, signAsync } from "@noble/secp256k1";
+import { etc, getPublicKey, signAsync, utils } from "@noble/secp256k1";
+
+import { type Keypair } from "@api/index";
 
 export class CryptoUtils {
   static async hash(bytes: Uint8Array): Promise<Uint8Array> {
@@ -9,6 +11,12 @@ export class CryptoUtils {
   static async sign(msg: Uint8Array, priv: Uint8Array): Promise<Uint8Array> {
     const { r, s } = await signAsync(msg, priv);
     return this.derEncode(r, s);
+  }
+
+  static randomKeypair(): Keypair {
+    const privateKey = utils.randomPrivateKey();
+    const publicKey = getPublicKey(privateKey);
+    return { privateKey, publicKey };
   }
 
   /**

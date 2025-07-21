@@ -50,6 +50,7 @@ export type GetEncryptionKeyDAInternalState = Either<
   {
     readonly trustchain: Trustchain | null;
     readonly applicationStream: LKRPBlockStream | null;
+    readonly sessionKeypair: Keypair | null;
     readonly signedBlock: LKRPBlock | null;
     readonly encryptionKey: Uint8Array | null;
   }

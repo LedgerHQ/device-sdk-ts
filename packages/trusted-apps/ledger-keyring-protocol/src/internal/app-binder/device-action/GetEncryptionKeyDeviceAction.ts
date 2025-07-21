@@ -7,7 +7,7 @@ import {
   UserInteractionRequired,
   XStateDeviceAction,
 } from "@ledgerhq/device-management-kit";
-import { EitherAsync, Left, Right } from "purify-ts";
+import { type Either, EitherAsync, Left, Right } from "purify-ts";
 import { fromPromise, setup } from "xstate";
 
 import {
@@ -17,6 +17,9 @@ import {
   type GetEncryptionKeyDAInternalState,
   type GetEncryptionKeyDAOutput,
 } from "@api/app-binder/GetEncryptionKeyDeviceActionTypes";
+import { type Keypair } from "@api/index";
+import { type LKKPDeviceCommandError } from "@internal/app-binder/command/utils/ledgerKeyringProtocolErrors";
+import { InitTask } from "@internal/app-binder/task/InitTask";
 import { eitherSeqRecord } from "@internal/utils/eitherSeqRecord";
 
 import { raiseAndAssign } from "./utils/raiseAndAssign";
@@ -48,7 +51,8 @@ export class GetEncryptionKeyDeviceAction extends XStateDeviceAction<
       GetEncryptionKeyDAInternalState
     >;
 
-    const { getTrustchain } = this.extractDependencies(internalApi);
+    const { getTrustchain, initCommand } =
+      this.extractDependencies(internalApi);
 
     return setup({
       types: {
@@ -59,9 +63,12 @@ export class GetEncryptionKeyDeviceAction extends XStateDeviceAction<
 
       actors: {
         getTrustchain: fromPromise(getTrustchain),
+
         openAppStateMachine: new OpenAppDeviceAction({
           input: { appName: APP_NAME },
         }).makeStateMachine(internalApi),
+
+        initCommand: fromPromise(initCommand),
       },
 
       actions: {
@@ -94,6 +101,7 @@ export class GetEncryptionKeyDeviceAction extends XStateDeviceAction<
         _internalState: Right({
           applicationStream: null,
           trustchain: null,
+          sessionKeypair: null,
           signedBlock: null,
           encryptionKey: null,
         }),
@@ -154,7 +162,19 @@ export class GetEncryptionKeyDeviceAction extends XStateDeviceAction<
 
         Init: {
           on: { success: "ParseStream", error: "Error" },
-          // TODO: Implement Init
+          invoke: {
+            id: "initCommand",
+            src: "initCommand",
+            onError: { actions: "assignErrorFromEvent" },
+            onDone: {
+              actions: raiseAndAssign(({ event }) =>
+                event.output.map((sessionKeypair) => ({
+                  raise: "success",
+                  assign: { sessionKeypair },
+                })),
+              ),
+            },
+          },
         },
 
         ParseStream: {
@@ -207,7 +227,7 @@ export class GetEncryptionKeyDeviceAction extends XStateDeviceAction<
     });
   }
 
-  extractDependencies(_internalApi: InternalApi) {
+  extractDependencies(internalApi: InternalApi) {
     return {
       getTrustchain: (args: { input: GetEncryptionKeyDAInput }) =>
         EitherAsync.liftEither(args.input)
@@ -220,6 +240,9 @@ export class GetEncryptionKeyDeviceAction extends XStateDeviceAction<
             ),
           )
           .run(),
+
+      initCommand: (): Promise<Either<LKKPDeviceCommandError, Keypair>> =>
+        new InitTask(internalApi).run(),
     };
   }
 }
