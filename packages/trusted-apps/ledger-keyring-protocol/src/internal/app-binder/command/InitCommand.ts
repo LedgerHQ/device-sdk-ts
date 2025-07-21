@@ -38,10 +38,10 @@ export class InitCommand
   >(LEDGER_SYNC_ERRORS, LedgerKeyringProtocolErrorFactory);
 
   getApdu(): Apdu {
-    const { pubKey } = this.args;
+    const { publicKey } = this.args;
 
     return new ApduBuilder({ cla: 0xe0, ins: 0x06, p1: 0x00, p2: 0x00 })
-      .addHexaStringToData(pubKey)
+      .addBufferToData(publicKey)
       .build();
   }
 

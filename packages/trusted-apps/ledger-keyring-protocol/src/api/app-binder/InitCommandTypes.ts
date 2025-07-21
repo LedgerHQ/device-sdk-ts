@@ -1,5 +1,5 @@
 export type InitCommandResponse = void;
 
 export type InitCommandArgs = {
-  pubKey: string;
+  publicKey: Uint8Array;
 };
