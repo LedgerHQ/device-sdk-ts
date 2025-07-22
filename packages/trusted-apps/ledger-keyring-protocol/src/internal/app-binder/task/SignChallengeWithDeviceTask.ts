@@ -5,7 +5,7 @@ import {
 import { type Either, Left, Right } from "purify-ts";
 
 import { GetSeedIdCommand } from "@internal/app-binder/command/GetSeedIdCommand";
-import { type LKKPDeviceCommandError } from "@internal/app-binder/command/utils/ledgerKeyringProtocolErrors";
+import { type LKRPDeviceCommandError } from "@internal/app-binder/command/utils/ledgerKeyringProtocolErrors";
 import {
   type AuthenticationPayload,
   type Challenge,
@@ -16,7 +16,7 @@ export class SignChallengeWithDeviceTask {
 
   async run(
     challenge: Challenge,
-  ): Promise<Either<LKKPDeviceCommandError, AuthenticationPayload>> {
+  ): Promise<Either<LKRPDeviceCommandError, AuthenticationPayload>> {
     const response = await this.api.sendCommand(
       new GetSeedIdCommand({ challengeTLV: challenge.tlv }),
     );

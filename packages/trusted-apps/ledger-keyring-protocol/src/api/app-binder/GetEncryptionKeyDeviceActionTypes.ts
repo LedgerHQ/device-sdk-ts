@@ -4,7 +4,7 @@ import {
 } from "@ledgerhq/device-management-kit";
 import { type Either } from "purify-ts";
 
-import { type LKKPDeviceCommandError } from "@internal/app-binder/command/utils/ledgerKeyringProtocolErrors";
+import { type LKRPDeviceCommandError } from "@internal/app-binder/command/utils/ledgerKeyringProtocolErrors";
 import { type LKRPDataSource } from "@internal/lkrp-datasource/data/LKRPDataSource";
 import { type LKRPBlock } from "@internal/utils/LKRPBlock";
 import { type LKRPBlockStream } from "@internal/utils/LKRPBlockStream";
@@ -34,7 +34,7 @@ export type GetEncryptionKeyDAInput = Either<
 >;
 
 export type GetEncryptionKeyDAError =
-  | LKKPDeviceCommandError
+  | LKRPDeviceCommandError
   | LKRPHttpRequestError
   | LKRPParsingError
   | LKRPMissingDataError
