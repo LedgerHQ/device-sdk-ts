@@ -18,7 +18,7 @@ import {
   type GetEncryptionKeyDAOutput,
 } from "@api/app-binder/GetEncryptionKeyDeviceActionTypes";
 import { type Keypair } from "@api/index";
-import { type LKKPDeviceCommandError } from "@internal/app-binder/command/utils/ledgerKeyringProtocolErrors";
+import { type LKRPDeviceCommandError } from "@internal/app-binder/command/utils/ledgerKeyringProtocolErrors";
 import { InitTask } from "@internal/app-binder/task/InitTask";
 import { eitherSeqRecord } from "@internal/utils/eitherSeqRecord";
 
@@ -241,7 +241,7 @@ export class GetEncryptionKeyDeviceAction extends XStateDeviceAction<
           )
           .run(),
 
-      initCommand: (): Promise<Either<LKKPDeviceCommandError, Keypair>> =>
+      initCommand: (): Promise<Either<LKRPDeviceCommandError, Keypair>> =>
         new InitTask(internalApi).run(),
     };
   }
