@@ -1,8 +1,15 @@
 import { GeneralDmkError } from "@ledgerhq/device-management-kit";
 
 export class LKRPHttpRequestError extends GeneralDmkError {
-  override readonly _tag = "LKRPHttpRequestError";
+  override _tag = "LKRPHttpRequestError";
   constructor(readonly err?: unknown) {
+    super(err);
+  }
+}
+
+export class LKRPUnauthorizedError extends LKRPHttpRequestError {
+  override _tag = "LKRPUnauthorizedError";
+  constructor(override err?: unknown) {
     super(err);
   }
 }

@@ -6,7 +6,7 @@ import {
   UserInteractionRequired,
   XStateDeviceAction,
 } from "@ledgerhq/device-management-kit";
-import { type Either, Left, Maybe, Right } from "purify-ts";
+import { type Either, EitherAsync, Left, Maybe, Right } from "purify-ts";
 import { assign, fromPromise, setup } from "xstate";
 
 import {
@@ -18,9 +18,14 @@ import {
 } from "@api/app-binder/AuthenticateDeviceActionTypes";
 import {
   LKRPMissingDataError,
+  LKRPUnauthorizedError,
   LKRPUnhandledState,
 } from "@api/app-binder/Errors";
 import { SignChallengeWithDeviceTask } from "@internal/app-binder/task/SignChallengeWithDeviceTask";
+import {
+  SignChallengeWithKeypairTask,
+  type SignChallengeWithKeypairTaskInput,
+} from "@internal/app-binder/task/SignChallengeWithKeypairTask";
 import {
   type AuthenticationPayload,
   type Challenge,
@@ -58,7 +63,7 @@ export class AuthenticateDeviceAction extends XStateDeviceAction<
     const required = <T>(prop: T | undefined | null, errorMsg: string) =>
       Maybe.fromNullable(prop).toEither(new LKRPMissingDataError(errorMsg));
 
-    const { deviceAuth } = this.extractDependencies(internalApi);
+    const { deviceAuth, keypairAuth } = this.extractDependencies(internalApi);
 
     return setup({
       types: {
@@ -72,6 +77,7 @@ export class AuthenticateDeviceAction extends XStateDeviceAction<
           input: { appName: APP_NAME },
         }).makeStateMachine(internalApi),
         deviceAuth: fromPromise(deviceAuth),
+        keypairAuth: fromPromise(keypairAuth),
       },
 
       actions: {
@@ -99,18 +105,43 @@ export class AuthenticateDeviceAction extends XStateDeviceAction<
         CheckCredentials: {
           always: [
             { target: "DeviceAuth", guard: () => !this.input.trustchainId },
-            { target: "WebAuth", guard: () => !this.input.jwt },
+            { target: "KeypairAuth", guard: () => !this.input.jwt },
             { target: "GetEncryptionKey" },
           ],
         },
 
-        WebAuth: {
+        KeypairAuth: {
           on: {
             success: "GetEncryptionKey",
             invalidCredentials: "DeviceAuth",
             error: "Error",
           },
-          // TODO: Implement web authentication
+          invoke: {
+            id: "keypairAuth",
+            src: "keypairAuth",
+            input: eitherSeqRecord({
+              keypair: this.input.keypair,
+              trustchainId: () =>
+                required(
+                  this.input.trustchainId,
+                  "Missing Trustchain ID in the input",
+                ),
+            }),
+            onDone: {
+              actions: raiseAndAssign(({ event }) =>
+                event.output
+                  .map(({ jwt }) => ({
+                    raise: "success",
+                    assign: { jwt },
+                  }))
+                  .chainLeft((error) =>
+                    error instanceof LKRPUnauthorizedError
+                      ? Right({ raise: "invalidCredentials" })
+                      : Left(error),
+                  ),
+              ),
+            },
+          },
         },
 
         DeviceAuth: {
@@ -160,7 +191,7 @@ export class AuthenticateDeviceAction extends XStateDeviceAction<
         GetEncryptionKey: {
           on: {
             success: "Success",
-            invalidCredentials: "WebAuth",
+            invalidCredentials: "KeypairAuth",
             error: "Error",
           },
           entry: ({ context }) =>
@@ -205,19 +236,25 @@ export class AuthenticateDeviceAction extends XStateDeviceAction<
   extractDependencies(_internalApi: InternalApi) {
     return {
       deviceAuth: () =>
-        this.auth(new SignChallengeWithDeviceTask(_internalApi)),
+        this.auth(new SignChallengeWithDeviceTask(_internalApi)).run(),
+
+      keypairAuth: (args: {
+        input: Either<LKRPMissingDataError, SignChallengeWithKeypairTaskInput>;
+      }) =>
+        EitherAsync.liftEither(args.input)
+          .chain((input) => this.auth(new SignChallengeWithKeypairTask(input)))
+          .run(),
     };
   }
 
   private auth(signerTask: {
     run: (
       challenge: Challenge,
-    ) => Promise<Either<AuthenticateDAError, AuthenticationPayload>>;
+    ) => PromiseLike<Either<AuthenticateDAError, AuthenticationPayload>>;
   }) {
     return this.input.lkrpDataSource
       .getChallenge()
       .chain((challenge) => signerTask.run(challenge))
-      .chain((payload) => this.input.lkrpDataSource.authenticate(payload))
-      .run();
+      .chain((payload) => this.input.lkrpDataSource.authenticate(payload));
   }
 }
