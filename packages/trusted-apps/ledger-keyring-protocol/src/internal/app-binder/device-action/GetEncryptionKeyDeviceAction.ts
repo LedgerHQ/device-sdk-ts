@@ -232,10 +232,11 @@ export class GetEncryptionKeyDeviceAction extends XStateDeviceAction<
       getTrustchain: (args: { input: GetEncryptionKeyDAInput }) =>
         EitherAsync.liftEither(args.input)
           .chain(({ applicationId, lkrpDataSource, trustchainId, jwt }) =>
-            lkrpDataSource.getTrustchainById(trustchainId, jwt).then((res) =>
-              res.map((trustchain) => ({
+            lkrpDataSource
+              .getTrustchainById(trustchainId, jwt)
+              .map((trustchain) => ({
                 trustchain,
-                applicationStream: trustchain[`m/${applicationId}`],
+                applicationStream: trustchain[`m/${applicationId}'`] ?? null,
               })),
             ),
           )
