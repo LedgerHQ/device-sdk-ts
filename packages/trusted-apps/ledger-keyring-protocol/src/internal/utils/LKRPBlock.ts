@@ -6,15 +6,15 @@ import { CryptoUtils } from "./crypto";
 import { bytesToHex, hexToBytes } from "./hex";
 import { TLVBuilder } from "./TLVBuilder";
 import { TLVParser } from "./TLVParser";
-import { type LKRPBlockData } from "./types";
+import { type LKRPBlockData, type LKRPBlockParsedData } from "./types";
 
 export class LKRPBlock {
-  private hashValue: Maybe<Promise<string>> = Nothing; // Cached hash value for performance
-  private data: Maybe<Either<LKRPParsingError, LKRPBlockData>>;
+  private hashValue: Maybe<Promise<string>> = Nothing; // Cache hash value for performance
+  private data: Maybe<Either<LKRPParsingError, LKRPBlockParsedData>>;
 
   public constructor(
     private readonly bytes: Uint8Array,
-    data?: LKRPBlockData,
+    data?: LKRPBlockParsedData,
   ) {
     this.data = data ? Just(Right(data)) : Nothing;
   }
@@ -24,18 +24,21 @@ export class LKRPBlock {
   }
 
   static fromData(data: LKRPBlockData): LKRPBlock {
-    const bytes = new TLVBuilder()
+    const builder = new TLVBuilder()
       .addInt(1, 1) // Version 1
       .addHash(hexToBytes(data.parent))
       .addPublicKey(data.issuer)
-      .addInt(data.commands.length, 1)
-      .with((builder) =>
-        data.commands.forEach((cmd) => builder.push(cmd.toU8A())),
-      )
-      .addSignature(data.signature)
-      .build();
+      .addInt(data.commands.length, 1);
 
-    return new LKRPBlock(bytes, data);
+    const header = builder.build();
+
+    data.commands.forEach((cmd) => builder.push(cmd.toU8A()));
+
+    const sigStart = builder.build().length;
+    const bytes = builder.addSignature(data.signature).build();
+    const signature = bytes.slice(sigStart, bytes.length);
+
+    return new LKRPBlock(bytes, { ...data, header, signature });
   }
 
   toString(): string {
@@ -46,7 +49,7 @@ export class LKRPBlock {
     return this.bytes;
   }
 
-  parse(): Either<LKRPParsingError, LKRPBlockData> {
+  parse(): Either<LKRPParsingError, LKRPBlockParsedData> {
     return this.data.orDefaultLazy(() => {
       const data = new TLVParser(this.bytes).parseBlockData();
       this.data = Just(data);
@@ -68,7 +71,7 @@ export class LKRPBlock {
           `Commands:${data.commands
             .flatMap((cmd) => cmd.split("\n").map((l) => `\n  ${l}`))
             .join("")}`,
-          `Signature: ${bytesToHex(data.signature)}`,
+          `Signature: ${bytesToHex(data.signature.slice(2))}`,
         ].join("\n"),
       );
   }
