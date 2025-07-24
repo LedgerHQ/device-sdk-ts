@@ -21,9 +21,9 @@ import { type Keypair } from "@api/index";
 import { type LKRPDeviceCommandError } from "@internal/app-binder/command/utils/ledgerKeyringProtocolErrors";
 import { InitTask } from "@internal/app-binder/task/InitTask";
 import { eitherSeqRecord } from "@internal/utils/eitherSeqRecord";
+import { required } from "@internal/utils/required";
 
 import { raiseAndAssign } from "./utils/raiseAndAssign";
-import { required } from "./utils/required";
 
 const APP_NAME = "Ledger Sync";
 
