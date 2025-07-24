@@ -20,6 +20,10 @@ import {
 import { type Keypair } from "@api/index";
 import { type LKRPDeviceCommandError } from "@internal/app-binder/command/utils/ledgerKeyringProtocolErrors";
 import { InitTask } from "@internal/app-binder/task/InitTask";
+import {
+  ParseStreamToDeviceTask,
+  type ParseStreamToDeviceTaskInput,
+} from "@internal/app-binder/task/ParseStreamToDeviceTask";
 import { eitherSeqRecord } from "@internal/utils/eitherSeqRecord";
 import { required } from "@internal/utils/required";
 
@@ -51,7 +55,7 @@ export class GetEncryptionKeyDeviceAction extends XStateDeviceAction<
       GetEncryptionKeyDAInternalState
     >;
 
-    const { getTrustchain, initCommand } =
+    const { getTrustchain, initCommand, parseStream } =
       this.extractDependencies(internalApi);
 
     return setup({
@@ -69,6 +73,8 @@ export class GetEncryptionKeyDeviceAction extends XStateDeviceAction<
         }).makeStateMachine(internalApi),
 
         initCommand: fromPromise(initCommand),
+
+        parseStream: fromPromise(parseStream),
       },
 
       actions: {
@@ -179,7 +185,32 @@ export class GetEncryptionKeyDeviceAction extends XStateDeviceAction<
 
         ParseStream: {
           on: { success: "CheckApplicationStreamExist", error: "Error" },
-          // TODO: Implement ParseStream
+          invoke: {
+            id: "parseStream",
+            src: "parseStream",
+            input: ({ context }) =>
+              context._internalState.chain((state) =>
+                required(state.trustchain?.["m/"], "Missing root stream")
+                  .chain((rootStream) => rootStream.parse())
+                  .chain((blocks) => required(blocks[0], "Missing seed block"))
+                  .map((seedBlock) => ({
+                    seedBlock,
+                    applicationStream: state.applicationStream,
+                  })),
+              ),
+            onError: { actions: "assignErrorFromEvent" },
+            onDone: {
+              actions: raiseAndAssign(({ event, context }) =>
+                event.output
+                  .map(() => ({ raise: "success" }))
+                  .ifRight(() => {
+                    context._internalState.ifRight((state) => {
+                      console.log("Stream parsed successfully!!!", state);
+                    });
+                  }),
+              ),
+            },
+          },
         },
 
         CheckApplicationStreamExist: {
@@ -238,12 +269,20 @@ export class GetEncryptionKeyDeviceAction extends XStateDeviceAction<
                 trustchain,
                 applicationStream: trustchain[`m/${applicationId}'`] ?? null,
               })),
-            ),
           )
           .run(),
 
       initCommand: (): Promise<Either<LKRPDeviceCommandError, Keypair>> =>
         new InitTask(internalApi).run(),
+
+      parseStream: async (args: {
+        input: Either<GetEncryptionKeyDAError, ParseStreamToDeviceTaskInput>;
+      }) =>
+        EitherAsync.liftEither(args.input)
+          .chain<GetEncryptionKeyDAError, unknown>((input) =>
+            new ParseStreamToDeviceTask(internalApi).run(input),
+          )
+          .run(),
     };
   }
 }
