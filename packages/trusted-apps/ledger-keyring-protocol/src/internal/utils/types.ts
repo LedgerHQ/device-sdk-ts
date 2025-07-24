@@ -13,6 +13,8 @@ export type LKRPBlockData = {
   signature: Uint8Array;
 };
 
+export type LKRPBlockParsedData = LKRPBlockData & { header: Uint8Array };
+
 export type LKRPCommandData = Seed | AddMember | PublishKey | Derive;
 
 type Seed = {

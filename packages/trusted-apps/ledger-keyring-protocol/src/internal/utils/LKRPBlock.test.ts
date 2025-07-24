@@ -2,25 +2,39 @@ import { Left, Right } from "purify-ts";
 
 import { LKRPParsingError } from "@api/app-binder/Errors";
 
+import { hexToBytes } from "./hex";
 import { LKRPBlock } from "./LKRPBlock";
 import { LKRPCommand } from "./LKRPCommand";
+import { GeneralTags } from "./TLVTags";
 
+// Mocked data for testing
 const mockedBlockData = {
   parent: "0000",
   issuer: new Uint8Array([1, 2, 3]),
   commands: [LKRPCommand.fromHex("10020102"), LKRPCommand.fromHex("11020304")],
   signature: new Uint8Array([4, 5, 6]),
 };
-
-const mockedBlockHex = [
+const mockedHeaderHex = [
   "010101", // Version: 1
   "02020000", // Parent hash: 00 00 00
   "0603010203", // Issuer: 01 02 03
   "010102", // Command Count: 2
+].join("");
+const mockedBlockHex = [
+  ...mockedHeaderHex, // Header
   "10020102", // Command 1
   "11020304", // Command 2
   "0303040506", // Signature: 04 05 06
 ].join("");
+const parsedMockedBlockData = {
+  ...mockedBlockData,
+  header: hexToBytes(mockedHeaderHex),
+  signature: Uint8Array.from([
+    GeneralTags.Signature,
+    3,
+    ...mockedBlockData.signature,
+  ]),
+};
 
 describe("LKRPBlock", () => {
   describe("fromData", () => {
@@ -28,7 +42,7 @@ describe("LKRPBlock", () => {
       // WHEN
       const block = LKRPBlock.fromData(mockedBlockData);
       // THEN
-      expect(block.parse()).toStrictEqual(Right(mockedBlockData));
+      expect(block.parse()).toStrictEqual(Right(parsedMockedBlockData));
       expect(block.toString()).toBe(mockedBlockHex);
     });
   });
@@ -60,7 +74,7 @@ describe("LKRPBlock", () => {
       // WHEN
       const parsedData = block.parse();
       // THEN
-      expect(parsedData).toStrictEqual(Right(mockedBlockData));
+      expect(parsedData).toStrictEqual(Right(parsedMockedBlockData));
     });
 
     it("should fail if the block data is invalid", () => {
