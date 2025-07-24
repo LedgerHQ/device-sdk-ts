@@ -30,9 +30,9 @@ import {
   type LKRPDataSource,
 } from "@internal/lkrp-datasource/data/LKRPDataSource";
 import { eitherSeqRecord } from "@internal/utils/eitherSeqRecord";
+import { required } from "@internal/utils/required";
 
 import { raiseAndAssign } from "./utils/raiseAndAssign";
-import { required } from "./utils/required";
 import { GetEncryptionKeyDeviceAction } from "./GetEncryptionKeyDeviceAction";
 
 const APP_NAME = "Ledger Sync";
