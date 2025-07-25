@@ -1,71 +1,73 @@
 import {
   type Apdu,
   ApduBuilder,
-  type ApduBuilderArgs,
   ApduParser,
   type ApduResponse,
   type Command,
   type CommandResult,
   CommandResultFactory,
+  InvalidStatusWordError,
 } from "@ledgerhq/device-management-kit";
 import { CommandErrorHelper } from "@ledgerhq/signer-utils";
 import { Maybe } from "purify-ts";
 
 import {
-  type SignBlockCommandArgs,
-  type SignBlockCommandResponse,
-} from "@api/app-binder/SignBlockCommandTypes";
+  type SignBlockHeaderCommandArgs,
+  type SignBlockHeaderCommandResponse,
+} from "@api/app-binder/SignBlockHeaderCommandTypes";
 
-import { extractTrustedProperty } from "./utils/extractTrustedProperty";
 import {
   LEDGER_SYNC_ERRORS,
   type LedgerKeyringProtocolErrorCodes,
   LedgerKeyringProtocolErrorFactory,
 } from "./utils/ledgerKeyringProtocolErrors";
 
-export class SignBlockCommand
+export class SignBlockHeaderCommand
   implements
     Command<
-      SignBlockCommandResponse,
-      SignBlockCommandArgs,
+      SignBlockHeaderCommandResponse,
+      SignBlockHeaderCommandArgs,
       LedgerKeyringProtocolErrorCodes
     >
 {
   private readonly errorHelper = new CommandErrorHelper<
-    SignBlockCommandResponse,
+    SignBlockHeaderCommandResponse,
     LedgerKeyringProtocolErrorCodes
   >(LEDGER_SYNC_ERRORS, LedgerKeyringProtocolErrorFactory);
-  constructor(private readonly args: SignBlockCommandArgs) {}
+
+  constructor(private readonly args: SignBlockHeaderCommandArgs) {}
 
   getApdu(): Apdu {
-    const { p1, payload } = this.args;
-    const signCommandArgs: ApduBuilderArgs = {
+    return new ApduBuilder({
       cla: 0xe0,
       ins: 0x07,
-      p1,
+      p1: 0x00,
       p2: 0x00,
-    };
-
-    const builder = new ApduBuilder(signCommandArgs);
-    builder.addBufferToData(payload);
-    return builder.build();
+    })
+      .addBufferToData(this.args.header)
+      .build();
   }
 
   parseResponse(
     apduResponse: ApduResponse,
-  ): CommandResult<SignBlockCommandResponse, LedgerKeyringProtocolErrorCodes> {
+  ): CommandResult<
+    SignBlockHeaderCommandResponse,
+    LedgerKeyringProtocolErrorCodes
+  > {
     return Maybe.fromNullable(
       this.errorHelper.getError(apduResponse),
     ).orDefaultLazy(() => {
       const parser = new ApduParser(apduResponse);
-
-      const trustedProperty = extractTrustedProperty(parser);
-
-      return CommandResultFactory({
-        data: {
-          trustedProperty,
-        },
-      });
+      const remaining = parser.getUnparsedRemainingLength();
+      const payload = parser.extractFieldByLength(remaining);
+      if (!payload) {
+        return CommandResultFactory({
+          error: new InvalidStatusWordError(
+            "No data returned by SignBlockHeaderCommand",
+          ),
+        });
+      }
+      return CommandResultFactory({ data: payload });
     });
   }
 }
