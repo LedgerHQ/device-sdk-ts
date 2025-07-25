@@ -7,7 +7,7 @@ import { eitherSeqRecord } from "./eitherSeqRecord";
 import { bytesToHex } from "./hex";
 import { LKRPCommand } from "./LKRPCommand";
 import { CommandTags, GeneralTags } from "./TLVTags";
-import { type LKRPBlockData, type LKRPCommandData } from "./types";
+import { type LKRPBlockParsedData, type LKRPCommandData } from "./types";
 
 type ParserValue = Either<
   LKRPParsingError,
@@ -26,6 +26,8 @@ type ParserValue = Either<
 >;
 
 type Parser = Generator<ParserValue, ParserValue, void>;
+
+const COMMAND_COUNT_LENGTH = 3;
 
 export class TLVParser {
   private readonly bytes: Uint8Array;
@@ -46,6 +48,13 @@ export class TLVParser {
 
   parse(): ParserValue {
     return this.parser.next().value;
+  }
+
+  tlvEncoded(
+    fn: () => Either<LKRPParsingError, unknown>,
+  ): Either<LKRPParsingError, Uint8Array> {
+    const start = this.offset;
+    return fn().map(() => this.bytes.slice(start, this.offset));
   }
 
   parseNull(): Either<LKRPParsingError, null> {
@@ -202,13 +211,18 @@ export class TLVParser {
   }
 
   // https://ledgerhq.atlassian.net/wiki/spaces/TA/pages/4105207815/ARCH+LKRP+-+v1+specifications#Block
-  parseBlockData(): Either<LKRPParsingError, LKRPBlockData> {
+  parseBlockData(): Either<LKRPParsingError, LKRPBlockParsedData> {
+    const startOffset = this.offset;
     return this.parseInt().chain((_version) =>
       eitherSeqRecord({
         parent: () => this.parseHash().map(bytesToHex),
         issuer: () => this.parsePublicKey(),
+        header: () =>
+          Right(
+            this.bytes.slice(startOffset, this.offset + COMMAND_COUNT_LENGTH),
+          ),
         commands: () => this.parseCommands(),
-        signature: () => this.parseSignature(),
+        signature: () => this.tlvEncoded(() => this.parseSignature()),
       }),
     );
   }

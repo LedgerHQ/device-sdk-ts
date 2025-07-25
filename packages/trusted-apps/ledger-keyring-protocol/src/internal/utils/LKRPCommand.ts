@@ -97,25 +97,26 @@ export class LKRPCommand {
     );
   }
 
-  getTrustedMember(): Maybe<Uint8Array> {
-    if (
-      ![CommandTags.AddMember, CommandTags.PublishKey].includes(
-        this.bytes[0] ?? NaN,
-      )
-    ) {
-      return Nothing;
+  getPublicKey(): Maybe<string> {
+    switch (this.bytes[0]) {
+      case CommandTags.AddMember:
+      case CommandTags.PublishKey:
+        return this.parse()
+          .toMaybe()
+          .chain((data) => {
+            switch (data.type) {
+              case CommandTags.AddMember:
+                return Just(data.publicKey);
+              case CommandTags.PublishKey:
+                return Just(data.recipient);
+              default:
+                return Nothing;
+            }
+          })
+          .map(bytesToHex);
+
+      default:
+        return Nothing;
     }
-    return this.parse()
-      .toMaybe()
-      .chain((data) => {
-        switch (data.type) {
-          case CommandTags.AddMember:
-            return Just(data.publicKey);
-          case CommandTags.PublishKey:
-            return Just(data.recipient);
-          default:
-            return Nothing;
-        }
-      });
   }
 }

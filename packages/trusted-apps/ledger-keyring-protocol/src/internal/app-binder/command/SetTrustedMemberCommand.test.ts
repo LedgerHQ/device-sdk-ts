@@ -14,7 +14,7 @@ const PLACEHOLDER_BYTES = Uint8Array.from([0xf0, 0xca, 0xcc, 0x1a]);
 describe("SetTrustedMemberCommand", () => {
   const makeArgs = (): SetTrustedMemberCommandArgs => ({
     iv: PLACEHOLDER_BYTES,
-    trustedMember: PLACEHOLDER_BYTES,
+    memberTlv: PLACEHOLDER_BYTES,
   });
 
   describe("getApdu()", () => {
@@ -24,10 +24,13 @@ describe("SetTrustedMemberCommand", () => {
 
       // when
       const apdu = cmd.getApdu();
-      const expected = Uint8Array.from([
-        0xe0, 0x09, 0x00, 0x00, 0x0c, 0x00, 0x04, 0xf0, 0xca, 0xcc, 0x1a, 0x06,
-        0x04, 0xf0, 0xca, 0xcc, 0x1a,
-      ]);
+      const expected = Uint8Array.from(
+        [
+          [0xe0, 0x09, 0x00, 0x00, 0x0a], // CLA, INS, P1, P2, Lc
+          [0x00, 0x04, 0xf0, 0xca, 0xcc, 0x1a], // IV
+          [0xf0, 0xca, 0xcc, 0x1a], // Member
+        ].flat(),
+      );
 
       // then
       expect(apdu.getRawApdu()).toEqual(expected);

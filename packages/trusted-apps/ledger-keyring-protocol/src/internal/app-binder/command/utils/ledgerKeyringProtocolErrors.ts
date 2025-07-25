@@ -19,7 +19,7 @@ export type LedgerKeyringProtocolErrorCodes =
   | "b00b"
   | "b00c";
 
-export type LKKPDeviceCommandError =
+export type LKRPDeviceCommandError =
   CommandErrorResult<LedgerKeyringProtocolErrorCodes>["error"];
 
 export const LEDGER_SYNC_ERRORS: CommandErrors<LedgerKeyringProtocolErrorCodes> =

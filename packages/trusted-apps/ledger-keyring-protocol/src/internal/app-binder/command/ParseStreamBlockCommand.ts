@@ -38,7 +38,7 @@ export class ParseSingleCommand
   constructor(private readonly args: ParseSingleCommandArgs) {}
 
   getApdu(): Apdu {
-    const { command, outputTrustedParam = false } = this.args;
+    const { command, outputTrustedParam = true } = this.args;
     return (
       new ApduBuilder({
         cla: 0xe0,

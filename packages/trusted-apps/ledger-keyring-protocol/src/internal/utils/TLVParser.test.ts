@@ -47,15 +47,17 @@ describe("TLVParser", () => {
       it("should parse a valid block data", () => {
         // GIVEN
         const parser = new TLVParser(
-          new Uint8Array([
-            ...[GeneralTags.Int, 1, 0x01], // Version
-            ...[GeneralTags.Hash, 3, 0x01, 0x02, 0x03], // Parent
-            ...[GeneralTags.PublicKey, 3, 0x04, 0x05, 0x06], // Issuer
-            ...[GeneralTags.Int, 1, 0x02], // Command count: 2
-            ...[CommandTags.AddMember, 3, ...[GeneralTags.Int, 1, 0x01]], // First command
-            ...[CommandTags.Seed, 3, ...[GeneralTags.Int, 1, 0x02]], // Second command
-            ...[GeneralTags.Signature, 3, 0x07, 0x08, 0x09], // Signature
-          ]),
+          Uint8Array.from(
+            [
+              [GeneralTags.Int, 1, 0x01], // Version
+              [GeneralTags.Hash, 3, 0x01, 0x02, 0x03], // Parent
+              [GeneralTags.PublicKey, 3, 0x04, 0x05, 0x06], // Issuer
+              [GeneralTags.Int, 1, 0x02], // Command count: 2
+              [CommandTags.AddMember, 3, ...[GeneralTags.Int, 1, 0x01]], // First command
+              [CommandTags.Seed, 3, ...[GeneralTags.Int, 1, 0x02]], // Second command
+              [GeneralTags.Signature, 3, 0x07, 0x08, 0x09], // Signature
+            ].flat(),
+          ),
         );
         // WHEN
         const blockData = parser.parseBlockData();
@@ -65,6 +67,15 @@ describe("TLVParser", () => {
           Right({
             parent: "010203",
             issuer: new Uint8Array([0x04, 0x05, 0x06]),
+            header: Uint8Array.from(
+              [
+                [GeneralTags.Int, 1, 0x01], // Version
+                [GeneralTags.Hash, 3, 0x01, 0x02, 0x03], // Parent
+                [GeneralTags.PublicKey, 3, 0x04, 0x05, 0x06], // Issuer
+                [GeneralTags.Int, 1, 0x02], // Command count: 2
+              ].flat(),
+            ),
+
             commands: [
               new LKRPCommand(
                 new Uint8Array([
@@ -81,7 +92,13 @@ describe("TLVParser", () => {
                 ]),
               ),
             ],
-            signature: new Uint8Array([0x07, 0x08, 0x09]),
+            signature: Uint8Array.from([
+              GeneralTags.Signature,
+              3,
+              0x07,
+              0x08,
+              0x09,
+            ]),
           }),
         );
       });

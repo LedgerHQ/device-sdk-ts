@@ -67,8 +67,8 @@ describe("LKRPCommand", () => {
     });
   });
 
-  describe("getTrustedMember", () => {
-    it("should return the trusted member for AddMember command", () => {
+  describe("getPublicKey", () => {
+    it("should return the public key for AddMember command", () => {
       // GIVEN
       const addMemberValue = new Uint8Array([
         ...[GeneralTags.String, 3, 0x41, 0x42, 0x43], // Name "ABC"
@@ -86,12 +86,10 @@ describe("LKRPCommand", () => {
       );
 
       // THEN
-      expect(addMemberCmd.getTrustedMember()).toStrictEqual(
-        Just(new Uint8Array([0x04, 0x05, 0x06])),
-      );
+      expect(addMemberCmd.getPublicKey()).toStrictEqual(Just("040506"));
     });
 
-    it("should return the trusted member for PublishKey commands", () => {
+    it("should return the public key for PublishKey commands", () => {
       // GIVEN
       const publishKeyValue = new Uint8Array([
         ...[GeneralTags.Bytes, 3, 0x01, 0x02, 0x03], // Initialization Vector
@@ -108,16 +106,14 @@ describe("LKRPCommand", () => {
         ]),
       );
       // THEN
-      expect(publishKeyCmd.getTrustedMember()).toEqual(
-        Just(new Uint8Array([0x07, 0x08, 0x09])),
-      );
+      expect(publishKeyCmd.getPublicKey()).toEqual(Just("070809"));
     });
 
     it("should return undefined for other command types", () => {
       // WHEN
       const command = new LKRPCommand(new Uint8Array([CommandTags.Seed]));
       // THEN
-      expect(command.getTrustedMember()).toEqual(Nothing);
+      expect(command.getPublicKey()).toEqual(Nothing);
     });
   });
 

@@ -15,6 +15,7 @@ import {
   type SetTrustedMemberCommandArgs,
   type SetTrustedMemberCommandResponse,
 } from "@api/app-binder/SetTrustedMemberTypes";
+import { TPTags } from "@internal/utils/TLVTags";
 
 import {
   LEDGER_SYNC_ERRORS,
@@ -38,21 +39,17 @@ export class SetTrustedMemberCommand
   constructor(private readonly args: SetTrustedMemberCommandArgs) {}
 
   getApdu(): Apdu {
-    const { iv, trustedMember } = this.args;
+    const { iv, memberTlv } = this.args;
     return (
       new ApduBuilder({ cla: 0xe0, ins: 0x09, p1: 0x00, p2: 0x00 })
         // tag for IV
-        .add8BitUIntToData(0x00)
+        .add8BitUIntToData(TPTags.IV)
         // IV length
         .add8BitUIntToData(iv.length)
         // IV bytes
         .addBufferToData(iv)
-        // tag for TrustedMember
-        .add8BitUIntToData(0x06)
-        // TrustedMember data length
-        .add8BitUIntToData(trustedMember.length)
         // TrustedMember bytes
-        .addBufferToData(trustedMember)
+        .addBufferToData(memberTlv)
         .build()
     );
   }

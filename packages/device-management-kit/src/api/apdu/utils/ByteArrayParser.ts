@@ -3,6 +3,7 @@ import { bufferToHexaString, type HexaString } from "@api/utils/HexaString";
 export type TaggedField = {
   readonly tag: number;
   readonly value: Uint8Array;
+  readonly tlv: Uint8Array;
 };
 
 /**
@@ -173,6 +174,7 @@ export class ByteArrayParser {
   extractFieldTLVEncoded(): TaggedField | undefined {
     if (this.outOfRange(2)) return;
 
+    const startIndex = this.index;
     const tag = this.extract8BitUInt();
     const value = this.extractFieldLVEncoded();
 
@@ -180,7 +182,8 @@ export class ByteArrayParser {
       this.index--;
       return;
     }
-    return { tag, value };
+    const endIndex = this.index;
+    return { tag, value, tlv: this.buffer.slice(startIndex, endIndex) };
   }
 
   /**

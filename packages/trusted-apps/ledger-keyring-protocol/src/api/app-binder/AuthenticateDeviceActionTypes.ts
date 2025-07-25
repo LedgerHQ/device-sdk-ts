@@ -5,7 +5,7 @@ import {
 } from "@ledgerhq/device-management-kit";
 import { type Either } from "purify-ts";
 
-import { type LKKPDeviceCommandError } from "@internal/app-binder/command/utils/ledgerKeyringProtocolErrors";
+import { type LKRPDeviceCommandError } from "@internal/app-binder/command/utils/ledgerKeyringProtocolErrors";
 import { type LKRPDataSource } from "@internal/lkrp-datasource/data/LKRPDataSource";
 
 import {
@@ -38,7 +38,7 @@ export type AuthenticateDAOutput = {
 };
 
 export type AuthenticateDAError =
-  | LKKPDeviceCommandError
+  | LKRPDeviceCommandError
   | LKRPHttpRequestError
   | LKRPParsingError
   | LKRPMissingDataError

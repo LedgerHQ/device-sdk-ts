@@ -16,3 +16,13 @@ export enum CommandTags {
   EditMember = 0x14,
   Derive = 0x15,
 }
+
+export enum TPTags {
+  IV = 0x00,
+  ISSUER = 0x01 | 0x80,
+  XPRIV = 0x02 | 0x80,
+  EPHEMERAL_PUBLIC_KEY = 0x03 | 0x80,
+  COMMAND_IV = 0x04 | 0x80,
+  GROUPKEY = 0x05 | 0x80,
+  NEW_MEMBER = 0x06 | 0x80,
+}
