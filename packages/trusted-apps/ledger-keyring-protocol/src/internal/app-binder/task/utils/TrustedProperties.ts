@@ -65,7 +65,7 @@ function* parseTPs(
     const field = parser.extractFieldTLVEncoded();
     if (!field) return;
 
-    if (field.tag <= TPTags.IV || field.tag > TPTags.NEW_MEMBER) {
+    if (field.tag < TPTags.ISSUER || field.tag > TPTags.NEW_MEMBER) {
       yield Left(
         new LKRPParsingError(`Invalid trusted property tag: ${field.tag}`),
       );

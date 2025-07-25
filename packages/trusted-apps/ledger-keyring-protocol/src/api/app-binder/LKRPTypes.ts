@@ -1,7 +1,8 @@
-export type Keypair = {
-  publicKey: Uint8Array;
-  privateKey: Uint8Array;
-};
+export interface Keypair {
+  pubKeyToU8a(): Uint8Array;
+  pubKeyToHex(): string;
+  sign(message: Uint8Array): Promise<Uint8Array>;
+}
 
 export type JWT = {
   access_token: string;

@@ -144,7 +144,7 @@ export class GetEncryptionKeyDeviceAction extends XStateDeviceAction<
               stream: () =>
                 context._internalState.map((state) => state.applicationStream),
               member: () =>
-                context.input.map(({ keypair }) => keypair.publicKey),
+                context.input.map(({ keypair }) => keypair.pubKeyToHex()),
             }).map(({ stream, member }) => ({
               raise: stream?.hasMember(member) ? "is member" : "is not member",
             })),

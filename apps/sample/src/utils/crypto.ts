@@ -4,10 +4,6 @@ export function randomPrivateKey() {
   return bytesToHex(secp.utils.randomPrivateKey());
 }
 
-export function getPublicKey(privateKey: string) {
-  return secp.getPublicKey(privateKey);
-}
-
 export function hexToBytes(hex: string): Uint8Array {
   return Uint8Array.from(Buffer.from(hex, "hex"));
 }
