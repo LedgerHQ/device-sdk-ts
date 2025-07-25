@@ -34,6 +34,54 @@ export class TrustedProperties {
     return Right(this.iv);
   }
 
+  getIssuer(): Either<LKRPParsingError | LKRPMissingDataError, Uint8Array> {
+    return this.parseEncryptedProps().chain((props) =>
+      required(
+        props.get(TPTags.ISSUER)?.value,
+        "Missing issuer in trusted properties",
+      ),
+    );
+  }
+
+  getXPriv(): Either<LKRPParsingError | LKRPMissingDataError, Uint8Array> {
+    return this.parseEncryptedProps().chain((props) =>
+      required(
+        props.get(TPTags.XPRIV)?.value,
+        "Missing xpriv in trusted properties",
+      ),
+    );
+  }
+
+  getEphemeralPublicKey(): Either<
+    LKRPParsingError | LKRPMissingDataError,
+    Uint8Array
+  > {
+    return this.parseEncryptedProps().chain((props) =>
+      required(
+        props.get(TPTags.EPHEMERAL_PUBLIC_KEY)?.value,
+        "Missing ephemeral public key in trusted properties",
+      ),
+    );
+  }
+
+  getCommandIv(): Either<LKRPParsingError | LKRPMissingDataError, Uint8Array> {
+    return this.parseEncryptedProps().chain((props) =>
+      required(
+        props.get(TPTags.COMMAND_IV)?.value,
+        "Missing command IV in trusted properties",
+      ),
+    );
+  }
+
+  getGroupKey(): Either<LKRPParsingError | LKRPMissingDataError, Uint8Array> {
+    return this.parseEncryptedProps().chain((props) =>
+      required(
+        props.get(TPTags.GROUPKEY)?.value,
+        "Missing group key in trusted properties",
+      ),
+    );
+  }
+
   getNewMember(): Either<LKRPParsingError | LKRPMissingDataError, Uint8Array> {
     return this.parseEncryptedProps().chain((props) =>
       required(

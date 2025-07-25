@@ -50,3 +50,38 @@ type Derive = {
   encryptedXpriv: Uint8Array;
   ephemeralPublicKey: Uint8Array;
 };
+
+export type UnsignedCommandData =
+  | AddMemberUnsignedData
+  | PublishKeyUnsignedData
+  | DeriveUnsignedData;
+
+export type AddMemberUnsignedData = AddMember;
+type PublishKeyUnsignedData = Pick<PublishKey, "type" | "recipient">;
+type DeriveUnsignedData = Pick<Derive, "type" | "path">;
+
+export type ParsedTrustedProperties = {
+  iv: Uint8Array;
+  issuer: Uint8Array;
+  xpriv: Uint8Array;
+  ephemeralPublicKey: Uint8Array;
+  commandIv: Uint8Array;
+  groupKey: Uint8Array;
+  newMember: Uint8Array;
+};
+
+export type EncryptedCommand =
+  | EncryptedDeriveCommand
+  | AddMemberUnsignedData
+  | EncryptedPublishKeyCommand;
+
+export type EncryptedDeriveCommand = DeriveUnsignedData &
+  Pick<
+    ParsedTrustedProperties,
+    "iv" | "xpriv" | "ephemeralPublicKey" | "commandIv" | "groupKey"
+  >;
+export type EncryptedPublishKeyCommand = PublishKeyUnsignedData &
+  Pick<
+    ParsedTrustedProperties,
+    "iv" | "xpriv" | "ephemeralPublicKey" | "commandIv"
+  >;

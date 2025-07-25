@@ -3,7 +3,6 @@ import { type EitherAsync, type Maybe } from "purify-ts";
 import { type LKRPHttpRequestError } from "@api/app-binder/Errors";
 import { type JWT } from "@api/app-binder/LKRPTypes";
 import { type LKRPBlock } from "@internal/utils/LKRPBlock";
-import { type LKRPBlockStream } from "@internal/utils/LKRPBlockStream";
 import { type Trustchain } from "@internal/utils/types";
 
 export interface LKRPDataSource {
@@ -20,7 +19,7 @@ export interface LKRPDataSource {
 
   postDerivation(
     id: string,
-    stream: LKRPBlockStream,
+    blocks: LKRPBlock,
     jwt: JWT,
   ): EitherAsync<LKRPHttpRequestError, void>;
 

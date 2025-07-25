@@ -246,7 +246,7 @@ describe("HttpLKRPDataSource", () => {
     it("should post derivation successfully", async () => {
       // GIVEN
       const hex = "0102030405060708090a0b0c0d0e0f";
-      const mockStream = LKRPBlockStream.fromHex(hex);
+      const mockBlock = LKRPBlock.fromHex(hex);
       fetchSpy.mockResolvedValueOnce({
         ok: true,
         status: 204,
@@ -256,7 +256,7 @@ describe("HttpLKRPDataSource", () => {
       const dataSource = new HttpLKRPDataSource(baseUrl);
       const result = await dataSource.postDerivation(
         "TRUSTCHAIN_ID",
-        mockStream,
+        mockBlock,
         mockJwt,
       );
 
