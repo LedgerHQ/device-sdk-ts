@@ -91,9 +91,9 @@ export class SignBlockSignatureCommand
       }
 
       const signature = data.slice(1, 1 + sigLen);
-      const sessionKey = data.slice(1 + sigLen + 1);
+      const deviceSessionKey = data.slice(1 + sigLen + 1);
 
-      return CommandResultFactory({ data: { signature, sessionKey } });
+      return CommandResultFactory({ data: { signature, deviceSessionKey } });
     });
   }
 }

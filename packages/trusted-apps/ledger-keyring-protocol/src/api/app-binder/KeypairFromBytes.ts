@@ -22,4 +22,8 @@ export class KeypairFromBytes implements Keypair {
     const { r, s } = await signAsync(message, this.privateKey);
     return CryptoUtils.derEncode(r, s);
   }
+
+  edch(_key: Uint8Array): Uint8Array {
+    throw new Error("Method not implemented.");
+  }
 }

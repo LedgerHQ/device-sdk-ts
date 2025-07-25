@@ -54,10 +54,10 @@ export class HttpLKRPDataSource implements LKRPDataSource {
     );
   }
 
-  postDerivation(id: string, stream: LKRPBlockStream, jwt: JWT) {
+  postDerivation(id: string, block: LKRPBlock, jwt: JWT) {
     return this.request<void>(`/trustchain/${id}/derivation`, Just(jwt), {
       method: "POST",
-      body: JSON.stringify(stream.toString()),
+      body: JSON.stringify(block.toString()),
     });
   }
 

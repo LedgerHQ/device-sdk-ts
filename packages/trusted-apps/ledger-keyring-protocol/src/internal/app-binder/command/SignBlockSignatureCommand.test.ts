@@ -47,7 +47,7 @@ describe("SignBlockSignatureCommand", () => {
       if (isSuccessCommandResult(result)) {
         const res: SignBlockSignatureCommandResponse = result.data;
         expect(res.signature).toEqual(SIG_AND_KEY);
-        expect(res.sessionKey).toEqual(SIG_AND_KEY);
+        expect(res.deviceSessionKey).toEqual(SIG_AND_KEY);
       }
     });
 

@@ -1,4 +1,4 @@
-import { Either, Right } from "purify-ts";
+import { Either, EitherAsync, Right } from "purify-ts";
 
 /**
  * Like a lazy version of [Either.sequence](https://gigobyte.github.io/purify/adts/Either#static-sequence) but for records.
@@ -42,6 +42,40 @@ type RecordOfNonLeft<T extends object> = {
 type UnionOfLeft<T extends object> =
   T extends Record<string, infer U>
     ? U extends () => Either<infer L, unknown>
+      ? L
+      : never
+    : never;
+
+/**
+ * eitherSeqRecordAsync: like eitherSeqRecord but for EitherAsync.
+ * (but not wrapped in a function as EitherAsync are already lazy).
+ * E.g.:
+ * eitherSeqRecordAsync({ a: EitherAsync<ErrA, 1>, b: EitherAsync<ErrB, "a"> }) -> EitherAsync(ErrA | ErrB, { a: 1, b: "a" }>
+ */
+export function eitherSeqRecordAsync<T extends object>(
+  record: T,
+): EitherAsyncSeqRecord<T> {
+  return EitherAsync.sequence(
+    Object.entries(record).map(([key, value]) =>
+      value instanceof EitherAsync
+        ? (value as EitherAsync<unknown, unknown>).map((v) => [key, v])
+        : EitherAsync.liftEither(Right([key, value])),
+    ),
+  ).map(Object.fromEntries) as EitherAsyncSeqRecord<T>;
+}
+
+type EitherAsyncSeqRecord<T extends object> = EitherAsync<
+  UnionOfLeftAsync<T>,
+  RecordOfNonLeftAsync<T>
+>;
+
+type RecordOfNonLeftAsync<T extends object> = {
+  [K in keyof T]: T[K] extends EitherAsync<unknown, infer R> ? R : T[K];
+};
+
+type UnionOfLeftAsync<T extends object> =
+  T extends Record<string, infer U>
+    ? U extends EitherAsync<infer L, unknown>
       ? L
       : never
     : never;

@@ -7,7 +7,7 @@ import { bytesToHex, hexToBytes } from "./hex";
 import { TLVBuilder } from "./TLVBuilder";
 import { TLVParser } from "./TLVParser";
 import { CommandTags } from "./TLVTags";
-import { type LKRPCommandData } from "./types";
+import { UnsignedCommandData, type LKRPCommandData } from "./types";
 
 export class LKRPCommand {
   private data: Maybe<Either<LKRPParsingError, LKRPCommandData>>;
@@ -66,6 +66,29 @@ export class LKRPCommand {
       new Uint8Array([data.type, bytes.length, ...bytes]),
       data,
     );
+  }
+
+  static bytesFromUnsignedData(data: UnsignedCommandData): Uint8Array {
+    const tlv = new TLVBuilder();
+    switch (data.type) {
+      case CommandTags.AddMember:
+        tlv
+          .addString(data.name)
+          .addPublicKey(data.publicKey)
+          .addInt(data.permissions, 4);
+        break;
+
+      case CommandTags.PublishKey:
+        tlv.addPublicKey(data.recipient);
+        break;
+
+      case CommandTags.Derive:
+        tlv.addBytes(derivationPathAsBytes(data.path));
+        break;
+    }
+
+    const bytes = tlv.build();
+    return new Uint8Array([data.type, bytes.length, ...bytes]);
   }
 
   toString(): string {
