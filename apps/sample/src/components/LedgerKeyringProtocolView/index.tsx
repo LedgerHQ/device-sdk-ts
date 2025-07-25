@@ -4,13 +4,14 @@ import {
   type AuthenticateDAIntermediateValue,
   type AuthenticateDAOutput,
   type JWT,
+  KeypairFromBytes,
 } from "@ledgerhq/device-trusted-app-kit-ledger-keyring-protocol";
 
 import { DeviceActionsList } from "@/components/DeviceActionsView/DeviceActionsList";
 import { type DeviceActionProps } from "@/components/DeviceActionsView/DeviceActionTester";
 import { useDmk } from "@/providers/DeviceManagementKitProvider";
 import { useLedgerKeyringProtocol } from "@/providers/LedgerKeyringProvider";
-import { getPublicKey, hexToBytes, randomPrivateKey } from "@/utils/crypto";
+import { hexToBytes, randomPrivateKey } from "@/utils/crypto";
 
 export const LedgerKeyringProtocolView: React.FC<{ sessionId: string }> = ({
   sessionId,
@@ -40,10 +41,7 @@ export const LedgerKeyringProtocolView: React.FC<{ sessionId: string }> = ({
           }
           const jwt = JSON.parse(serializedJwt) as JWT;
           return app.authenticate(
-            {
-              publicKey: getPublicKey(privateKey),
-              privateKey: hexToBytes(privateKey),
-            },
+            new KeypairFromBytes(hexToBytes(privateKey)),
             applicationId,
             trustchainId || undefined,
             jwt ?? undefined,

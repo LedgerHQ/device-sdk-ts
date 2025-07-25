@@ -15,7 +15,7 @@ export class InitTask {
   async run(): Promise<Either<LKRPDeviceCommandError, Keypair>> {
     const sessionKeypair = CryptoUtils.randomKeypair();
     const response = await this.api.sendCommand(
-      new InitCommand(sessionKeypair),
+      new InitCommand({ publicKey: sessionKeypair.pubKeyToU8a() }),
     );
 
     return response.status !== CommandResultStatus.Success

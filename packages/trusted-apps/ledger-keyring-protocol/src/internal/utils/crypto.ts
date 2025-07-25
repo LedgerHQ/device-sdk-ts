@@ -1,5 +1,6 @@
-import { etc, getPublicKey, signAsync, utils } from "@noble/secp256k1";
+import { etc, utils } from "@noble/secp256k1";
 
+import { KeypairFromBytes } from "@api/app-binder/KeypairFromBytes";
 import { type Keypair } from "@api/index";
 
 export class CryptoUtils {
@@ -8,15 +9,8 @@ export class CryptoUtils {
     return new Uint8Array(buffer);
   }
 
-  static async sign(msg: Uint8Array, priv: Uint8Array): Promise<Uint8Array> {
-    const { r, s } = await signAsync(msg, priv);
-    return this.derEncode(r, s);
-  }
-
   static randomKeypair(): Keypair {
-    const privateKey = utils.randomPrivateKey();
-    const publicKey = getPublicKey(privateKey);
-    return { privateKey, publicKey };
+    return new KeypairFromBytes(utils.randomPrivateKey());
   }
 
   /**
@@ -25,7 +19,7 @@ export class CryptoUtils {
    * signature(r,s) = 0x30 & var(L,u8(~)) & sized(8*L, sig_components(r,s)); # DER encoding of the two 32 bytes signature components r & s
    * sig_components(r,s) = 0x02 & var(Lr,u8(~)) & sized(8*Lr, r) & 0x02 & var(Ls,u8(~)) & sized(8*Ls, s);
    */
-  private static derEncode(r: bigint, s: bigint): Uint8Array {
+  public static derEncode(r: bigint, s: bigint): Uint8Array {
     const rBytes = this.encodeSigComponent(r);
     const sBytes = this.encodeSigComponent(s);
     const length = rBytes.length + sBytes.length;

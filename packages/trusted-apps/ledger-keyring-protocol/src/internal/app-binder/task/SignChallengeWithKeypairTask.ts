@@ -24,11 +24,11 @@ export class SignChallengeWithKeypairTask {
     challenge: Challenge,
   ): EitherAsync<LKRPMissingDataError | UnknownDAError, AuthenticationPayload> {
     const attestation = this.getAttestation();
-    const credential = this.getCredential(this.keypair.publicKey);
+    const credential = this.getCredential(this.keypair.pubKeyToHex());
 
     return EitherAsync.liftEither(this.getUnsignedChallengeTLV(challenge.tlv))
       .map(CryptoUtils.hash)
-      .map((hash) => CryptoUtils.sign(hash, this.keypair.privateKey))
+      .map((hash) => this.keypair.sign(hash))
       .map(bytesToHex)
       .map((signature) => ({
         challenge: challenge.json,
@@ -48,8 +48,7 @@ export class SignChallengeWithKeypairTask {
     return bytesToHex(attestation);
   }
 
-  private getCredential(pubKeyBytes: Uint8Array) {
-    const publicKey = bytesToHex(pubKeyBytes);
+  private getCredential(publicKey: string) {
     return { version: 0, curveId: 33, signAlgorithm: 1, publicKey };
   }
 
