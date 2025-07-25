@@ -14,19 +14,11 @@ import { CryptoUtils } from "@internal/utils/crypto";
 import { eitherSeqRecord } from "@internal/utils/eitherSeqRecord";
 import { bytesToHex, hexToBytes } from "@internal/utils/hex";
 
-export type SignChallengeWithKeypairTaskInput = {
-  keypair: Keypair;
-  trustchainId: string;
-};
-
 export class SignChallengeWithKeypairTask {
-  private readonly keypair: Keypair;
-  private readonly trustchainId: string;
-
-  constructor({ keypair, trustchainId }: SignChallengeWithKeypairTaskInput) {
-    this.keypair = keypair;
-    this.trustchainId = trustchainId;
-  }
+  constructor(
+    private readonly keypair: Keypair,
+    private readonly trustchainId: string,
+  ) {}
 
   run(
     challenge: Challenge,
