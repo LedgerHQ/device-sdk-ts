@@ -6,7 +6,6 @@ import { type Either } from "purify-ts";
 
 import { type LKRPDeviceCommandError } from "@internal/app-binder/command/utils/ledgerKeyringProtocolErrors";
 import { type LKRPDataSource } from "@internal/lkrp-datasource/data/LKRPDataSource";
-import { type LKRPBlock } from "@internal/utils/LKRPBlock";
 import { type LKRPBlockStream } from "@internal/utils/LKRPBlockStream";
 import { type Trustchain } from "@internal/utils/types";
 
@@ -17,23 +16,23 @@ import {
 } from "./Errors";
 import { type JWT, type Keypair } from "./LKRPTypes";
 
-export type GetEncryptionKeyDAOutput = {
-  readonly applicationPath: string;
-  readonly encryptionKey: Uint8Array;
+export type AddToTrustchainDAOutput = {
+  readonly trustchain: Trustchain;
+  readonly applicationStream: LKRPBlockStream;
 };
 
-export type GetEncryptionKeyDAInput = Either<
+export type AddToTrustchainDAInput = Either<
   LKRPMissingDataError,
   {
     readonly lkrpDataSource: LKRPDataSource;
-    readonly applicationId: number;
     readonly keypair: Keypair;
     readonly jwt: JWT;
-    readonly trustchainId: string;
+    readonly trustchain: Trustchain;
+    readonly applicationStream: LKRPBlockStream;
   }
 >;
 
-export type GetEncryptionKeyDAError =
+export type AddToTrustchainDAError =
   | LKRPDeviceCommandError
   | LKRPHttpRequestError
   | LKRPParsingError
@@ -41,17 +40,15 @@ export type GetEncryptionKeyDAError =
   | OpenAppDAError
   | UnknownDAError;
 
-export type GetEncryptionKeyDAIntermediateValue = {
+export type AddToTrustchainDAIntermediateValue = {
   readonly requiredUserInteraction: string;
 };
 
-export type GetEncryptionKeyDAInternalState = Either<
-  GetEncryptionKeyDAError,
+export type AddToTrustchainDAInternalState = Either<
+  AddToTrustchainDAError,
   {
     readonly trustchain: Trustchain | null;
     readonly applicationStream: LKRPBlockStream | null;
     readonly sessionKeypair: Keypair | null;
-    readonly signedBlock: LKRPBlock | null;
-    readonly encryptionKey: Uint8Array | null;
   }
 >;
