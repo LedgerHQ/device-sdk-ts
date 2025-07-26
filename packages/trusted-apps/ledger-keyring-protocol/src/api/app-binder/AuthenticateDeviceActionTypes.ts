@@ -7,6 +7,8 @@ import { type Either } from "purify-ts";
 
 import { type LKRPDeviceCommandError } from "@internal/app-binder/command/utils/ledgerKeyringProtocolErrors";
 import { type LKRPDataSource } from "@internal/lkrp-datasource/data/LKRPDataSource";
+import { type LKRPBlockStream } from "@internal/utils/LKRPBlockStream";
+import { type Trustchain } from "@internal/utils/types";
 
 import {
   type LKRPHttpRequestError,
@@ -55,7 +57,8 @@ export type AuthenticateDAInternalState = Either<
   {
     readonly trustchainId: string | null;
     readonly jwt: JWT | null;
-    readonly applicationPath: string | null;
+    readonly trustchain: Trustchain | null;
+    readonly applicationStream: LKRPBlockStream | null;
     readonly encryptionKey: Uint8Array | null;
   }
 >;

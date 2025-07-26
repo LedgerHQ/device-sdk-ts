@@ -22,6 +22,7 @@ import {
   LKRPUnauthorizedError,
   LKRPUnhandledState,
 } from "@api/app-binder/Errors";
+import { type JWT } from "@api/index";
 import { SignChallengeWithDeviceTask } from "@internal/app-binder/task/SignChallengeWithDeviceTask";
 import { SignChallengeWithKeypairTask } from "@internal/app-binder/task/SignChallengeWithKeypairTask";
 import {
@@ -33,7 +34,7 @@ import { eitherSeqRecord } from "@internal/utils/eitherSeqRecord";
 import { required } from "@internal/utils/required";
 
 import { raiseAndAssign } from "./utils/raiseAndAssign";
-import { GetEncryptionKeyDeviceAction } from "./GetEncryptionKeyDeviceAction";
+import { AddToTrustchainDeviceAction } from "./AddToTrustchainDeviceAction";
 
 const APP_NAME = "Ledger Sync";
 
@@ -61,7 +62,8 @@ export class AuthenticateDeviceAction extends XStateDeviceAction<
       AuthenticateDAInternalState
     >;
 
-    const { deviceAuth, keypairAuth } = this.extractDependencies(internalApi);
+    const { deviceAuth, keypairAuth, getTrustchain } =
+      this.extractDependencies(internalApi);
 
     return setup({
       types: {
@@ -78,7 +80,9 @@ export class AuthenticateDeviceAction extends XStateDeviceAction<
         deviceAuth: fromPromise(deviceAuth),
         keypairAuth: fromPromise(keypairAuth),
 
-        getEncryptionKeyStateMachine: new GetEncryptionKeyDeviceAction({
+        getTrustchain: fromPromise(getTrustchain),
+
+        getEncryptionKeyStateMachine: new AddToTrustchainDeviceAction({
           input: Left(
             new LKRPMissingDataError("Missing input for GetEncryptionKey"),
           ),
@@ -99,7 +103,7 @@ export class AuthenticateDeviceAction extends XStateDeviceAction<
         hasNoJwt: ({ context }) => !context.input.jwt,
       },
     }).createMachine({
-      /** @xstate-layout N4IgpgJg5mDOIC5QEECuAXAFmAduglgMYCG6YAImAG5FjKEED2OAdAMLaEDWbATpLgLEANrADEAbQAMAXUSgADo1j4mOeSAAeiAMxSALC30BOHfoDsAJinGAHADYp94wBoQAT0QBaAKwsf9lYBAIzB9jrm5vr6OgC+sW5oWIJEpBTUtPRq7Jw8-BApIuISwXJIIEoqahraCDrBOizG+pb2tq06PlJStvo+bp4IPsZSLBHBprZWnVI+tvGJGNh4qWSUNIR0DPjMOWDcfAIrRZKWZYrKqjvq5bU6lsZGkbY+ATbmtk79Hoi2f0+WT7hfT2HyA8wLEBJZYEEhrDKbLLXFgAaTA7gUxHwvGhYggzDALHwOCojC4hPJGKxOKW0nOFUu1VuiHs0RYlhMYOewWGHIGiB8+mCRh0nWsnR0bRakOhKTh6Q2W2yaKp2NxYF4vEYvBYCmEpAAZtqALYsSmYtW02QaSpXZg1Fn1fwtfS2YyBVm2YKWfkIaLmJqfGKs0F2czumVLOVpdaZba7FUWmlYMSwVCETawWB0m2M64OhDGSx+QLGcxdcxSYIggy+yvCv6s4zNKTl17zBJQqMreWxxHx1iJ6m44lUET4CCHArHUQ58q2pmgWpu0ZCoUPIuWKJmX0+SssWb2Cb3IWRAyR5I9mMIpXIoeWlMarW8OcXKr55mFiJNNfRYJSSxq3MHRfVBAMgJ8HQi3-UFAQvGFVgVONsj7OgllTdNM2za15zze1PwacMWH-MIwXqWYqxAn4EEA2wjBid0rHMexAJ0DtFkvWFr0VJFdlQ9VNW1V8GXffCl0QBpjGFSVRUgiJw0g31q0MUUDC3YZKz0Np4OjeEeIHFh+KWFgAHkFFwZAFAUPECSJEkyUJRhzJwSyFGEhcP3EhB7FBJpIgeb1LAiL0fWo4JgOI+o91ZILjEFD4dKvPTkORIysFM5zXLEJ9tV1fV0CNXhTSciyrPcvCbi81lDFeQUgrMe5bHuOtHkCXobAmF5mImRKuOS-sUJvaEMtK6y0wzOBsPpDyxK0RApPsA9zH-V0+h8as2l9B4at6bqYpeOJO1lJKkIG1KhuM3F8RwQlRwclgCh4q1poqgt-1MFh2i6CYPh6DolP+QDXXLRwej+EFesQ-iDLSzAWAE588sNE0HourBytEyq5oQf8iKghoTBGcJXiowZmhYbrKyatsbDsSHeyGgyAHEwHQABRHBCF4DE1BVGybrs0lyRYGB2c57mFF59EMbtLHanCyUjHCQInDBk9fSaxpPlo0itweex6e4lLdhZsWuZ564+ZynU9WRoqRdZjnzcly3pZwt9Zbe4DwPqStBWcI9bDrfRRjMEZlK3TpgkN-rbxNx3xYt5g+fGrCZcXbHgj+AMOTikPojsTbqLLOjWndX22Ozg2ju7PrTrj1hTadiWpfcMRR3HSd8kKWd3ZEz3Px8xaQxY102p5cwlNmQxCfuKRVPLCEa84qHGeyJvE5d5P0WywSXz7ma5Ykt1HnW70hXW4CJn0X0i0aHk2I3OLYo7TscEYAp4HKY66+hjPD4LJ8Yi-4piBAmGERwk9qJeDimMQCcw5gNHWi0HwMd668VYBwfYeQjhCFELmTGb1ATAJ6MxZaC1IG+i8AGL0VgTCUUBHFJqaC-53nREmaEBCB5eS5BTUUboYJdHnt8QY4RHiNkcC6BonxUHLwQgzfSg0npYC4RnWovDmwPEBDIr0QdoE0Pgb0LcPI5igJYWvc6yi4ZmVGqozy2M9x+E0UWP4sxdFbWWv4XawYTCijMOYxRljMiXSWHY2a8t56PFCFWVkkFlbRC2g4FgPkgyAlaK0ZaATjaNwTs7VuYSj442+k8Uw8VOhj2CLfe47ISauimF6HoWSzq7AAMqYUmgUgs1gIpNUsFuRw7oVw32LpEA8P0oLrVmKYppDcWBsz3p0z83TFrX29I4b04ZQpk0Ak0eegQhRTA+IBeI8QgA */
+      /** @xstate-layout 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-S-AQzrICE+phjxgmoQUeA5QInP0MbneRuY-Q4vmlMQIEwwiOErKRLw+Yxg0VLJEAGYpwn7UZXUvYBxu4Tjpf3X2Cttrsp6Cpbl7kKy8i8D6d0VgTA1lqvmJee0n4MyZbGK8-Yljorga5dkPoR7OnmkGCp4dBjhEeODTVjp2GzChbDdGWBbVKsQA6poq5Vzg1mO6fx-LdXCudN9dyJM6zRRNqec10q4YDXsqZENudagFj8N4g50bQlxsGByAUcwLAxCZOXMwAbEpBvhhCAtu8RIUtVWEPo4ryqrQcIBfWLRfpgWCM2hEzcpn8w7Qoj0DExj0XxSTcqAL8aLlHhYRwTJd1HNNZmpO4zWBiM-j-SRCrYGhpem0A+1gGw0VmH8d12tvFNACNEfMdZgIQQPVBFePVJnpIJHOtxu5ZpRBaiYLyGztZlgprRJNURVFNr-XFKJuxzmXOuegW59zHnXEVKBtpM0Qx7kog4RwHp-pAq6K6fW4rKL6EnbsAAyshUaxHMWuksEK9R312j4xo0KFkBYmQ7JGN0cwLHWCnMdlx56HJ6IshLNtcC3ogz9MMOECwxYnTAn3fEIAA */
 
       id: "AuthenticateDeviceAction",
       context: ({ input }): types["context"] => ({
@@ -110,7 +114,8 @@ export class AuthenticateDeviceAction extends XStateDeviceAction<
         _internalState: Right({
           trustchainId: null,
           jwt: null,
-          applicationPath: null,
+          trustchain: null,
+          applicationStream: null,
           encryptionKey: null,
         }),
       }),
@@ -121,13 +126,13 @@ export class AuthenticateDeviceAction extends XStateDeviceAction<
           always: [
             { target: "DeviceAuth", guard: "hasNoTrustchainId" },
             { target: "KeypairAuth", guard: "hasNoJwt" },
-            { target: "GetEncryptionKey" },
+            { target: "GetTrustchain" },
           ],
         },
 
         KeypairAuth: {
           on: {
-            success: "GetEncryptionKey",
+            success: "GetTrustchain",
             invalidCredentials: "DeviceAuth",
             error: "Error",
           },
@@ -161,7 +166,7 @@ export class AuthenticateDeviceAction extends XStateDeviceAction<
         },
 
         DeviceAuth: {
-          on: { success: "GetEncryptionKey", error: "Error" },
+          on: { success: "GetTrustchain", error: "Error" },
           initial: "OpenApp",
           states: {
             OpenApp: {
@@ -207,42 +212,98 @@ export class AuthenticateDeviceAction extends XStateDeviceAction<
           },
         },
 
-        GetEncryptionKey: {
+        GetTrustchain: {
           on: {
-            success: "Success",
+            success: "CheckIsMembers",
             invalidCredentials: "KeypairAuth",
             error: "Error",
           },
           invoke: {
-            id: "getEncryptionKey",
+            id: "getTrustchain",
+            src: "getTrustchain",
+            input: ({ context }) =>
+              context._internalState.chain((state) =>
+                eitherSeqRecord({
+                  lkrpDataSource: context.input.lkrpDataSource,
+                  applicationId: context.input.applicationId,
+                  trustchainId: () =>
+                    required(
+                      state.trustchainId ?? context.input.trustchainId,
+                      "Missing Trustchain ID in the input for GetTrustchain",
+                    ),
+                  jwt: () =>
+                    required(
+                      state.jwt ?? context.input.jwt,
+                      "Missing JWT in the input for GetTrustchain",
+                    ),
+                }),
+              ),
+            onError: { actions: "assignErrorFromEvent" },
+            onDone: {
+              actions: raiseAndAssign(({ event }) =>
+                event.output.map(({ trustchain, applicationStream }) => ({
+                  raise: "success",
+                  assign: { trustchain, applicationStream },
+                })),
+              ),
+            },
+          },
+        },
+
+        CheckIsMembers: {
+          on: {
+            "is member": "ExtractEncryptionKey",
+            "is not member": "AddToTrustchain",
+            error: "Error",
+          },
+          entry: raiseAndAssign(({ context }) =>
+            context._internalState.map((state) => ({
+              raise: state.applicationStream?.hasMember(
+                context.input.keypair.pubKeyToHex(),
+              )
+                ? "is member"
+                : "is not member",
+            })),
+          ),
+        },
+
+        AddToTrustchain: {
+          on: {
+            success: "ExtractEncryptionKey",
+            error: "Error",
+          },
+          invoke: {
+            id: "AddToTrustchain",
             src: "getEncryptionKeyStateMachine",
             input: ({ context }) =>
-              eitherSeqRecord({
-                lkrpDataSource: context.input.lkrpDataSource,
-                applicationId: context.input.applicationId,
-                keypair: context.input.keypair,
-                trustchainId: () =>
-                  context._internalState
-                    .toMaybe()
-                    .chainNullable(
-                      ({ trustchainId }) =>
-                        trustchainId ?? context.input.trustchainId,
-                    )
-                    .toEither(
-                      new LKRPMissingDataError(
-                        "Missing Trustchain ID in the input for GetEncryptionKey",
-                      ),
+              context._internalState
+                .mapLeft(
+                  () =>
+                    new LKRPMissingDataError(
+                      "Missing data in the input for AddToTrustchain",
                     ),
-                jwt: () =>
-                  context._internalState
-                    .toMaybe()
-                    .chainNullable(({ jwt }) => jwt ?? context.input.jwt)
-                    .toEither(
-                      new LKRPMissingDataError(
-                        "Missing JWT in the input for GetEncryptionKey",
+                )
+                .chain((state) =>
+                  eitherSeqRecord({
+                    lkrpDataSource: context.input.lkrpDataSource,
+                    keypair: context.input.keypair,
+                    jwt: () =>
+                      required(
+                        state.jwt ?? context.input.jwt,
+                        "Missing JWT in the input for AddToTrustchain",
                       ),
-                    ),
-              }),
+                    trustchain: () =>
+                      required(
+                        state.trustchain,
+                        "Missing Trustchain in the input for AddToTrustchain",
+                      ),
+                    applicationStream: () =>
+                      required(
+                        state.applicationStream,
+                        "Missing application stream in the input for AddToTrustchain",
+                      ),
+                  }),
+                ),
             onError: { actions: "assignErrorFromEvent" },
             onDone: {
               actions: raiseAndAssign(({ event }) =>
@@ -253,6 +314,11 @@ export class AuthenticateDeviceAction extends XStateDeviceAction<
               ),
             },
           },
+        },
+
+        ExtractEncryptionKey: {
+          on: { success: "Success", error: "Error" },
+          // TODO: Implement ExtractEncryptionKey
         },
 
         Success: { type: "final" },
@@ -275,7 +341,7 @@ export class AuthenticateDeviceAction extends XStateDeviceAction<
               ),
             applicationPath: () =>
               required(
-                state.applicationPath,
+                state.applicationStream?.getPath().extract(),
                 "Missing application path in the output",
               ),
             encryptionKey: () =>
@@ -311,6 +377,28 @@ export class AuthenticateDeviceAction extends XStateDeviceAction<
           )
           .run();
       },
+
+      getTrustchain: (args: {
+        input: Either<
+          AuthenticateDAError,
+          {
+            applicationId: number;
+            lkrpDataSource: LKRPDataSource;
+            trustchainId: string;
+            jwt: JWT;
+          }
+        >;
+      }) =>
+        EitherAsync.liftEither(args.input)
+          .chain(({ applicationId, lkrpDataSource, trustchainId, jwt }) =>
+            lkrpDataSource
+              .getTrustchainById(trustchainId, jwt)
+              .map((trustchain) => ({
+                trustchain,
+                applicationStream: trustchain[`m/${applicationId}'`] ?? null,
+              })),
+          )
+          .run(),
     };
   }
 
