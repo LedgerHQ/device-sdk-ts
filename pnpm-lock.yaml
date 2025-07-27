@@ -55,8 +55,8 @@ catalogs:
       specifier: 0.76.6
       version: 0.76.6
     '@react-native/codegen':
-      specifier: ^0.76.6
-      version: 0.76.6
+      specifier: ^0.80.2
+      version: 0.80.2
     '@react-native/gradle-plugin':
       specifier: ^0.76.6
       version: 0.76.6
@@ -561,7 +561,7 @@ importers:
         version: 0.76.6(@babel/core@7.26.10)(@babel/preset-env@7.26.9(@babel/core@7.26.10))
       '@react-native/codegen':
         specifier: 'catalog:'
-        version: 0.76.6(@babel/preset-env@7.26.9(@babel/core@7.26.10))
+        version: 0.80.2(@babel/core@7.26.10)
       '@react-native/gradle-plugin':
         specifier: 'catalog:'
         version: 0.76.6
@@ -3686,6 +3686,12 @@ packages:
     peerDependencies:
       '@babel/preset-env': ^7.1.6
 
+  '@react-native/codegen@0.80.2':
+    resolution: {integrity: sha512-eYad9ex9/RS6oFbbpu6LxsczktbhfJbJlTvtRlcWLJjJbFTeNr5Q7CgBT2/m5VtpxnJ/0YdmZ9vdazsJ2yp9kw==}
+    engines: {node: '>=18'}
+    peerDependencies:
+      '@babel/core': '*'
+
   '@react-native/community-cli-plugin@0.76.6':
     resolution: {integrity: sha512-nETlc/+U5cESVluzzgN0OcVfcoMijGBaDWzOaJhoYUodcuqnqtu75XsSEc7yzlYjwNQG+vF83mu9CQGezruNMA==}
     engines: {node: '>=18'}
@@ -6803,6 +6809,9 @@ packages:
   hermes-estree@0.28.0:
     resolution: {integrity: sha512-M5IFfnP4RCA2/Hv7VTIlZ1FV4qW33gresbv0SDaSBS/6lax23oV2sg4iE0fhYnpMeQL7Inob+jAeO+mV2T3bKA==}
 
+  hermes-estree@0.28.1:
+    resolution: {integrity: sha512-w3nxl/RGM7LBae0v8LH2o36+8VqwOZGv9rX1wyoWT6YaKZLqpJZ0YQ5P0LVr3tuRpf7vCx0iIG4i/VmBJejxTQ==}
+
   hermes-parser@0.23.1:
     resolution: {integrity: sha512-oxl5h2DkFW83hT4DAUJorpah8ou4yvmweUzLJmmr6YV2cezduCdlil1AvU/a/xSsAFo4WUcNA4GoV5Bvq6JffA==}
 
@@ -6811,6 +6820,9 @@ packages:
 
   hermes-parser@0.28.0:
     resolution: {integrity: sha512-PPtmoqyz4vv5SqVCYuvJLPKZt+SqCMviICVEygi6jHyfAvDd0cQTV2MfikDd8YXPOszR/9QvauWcGyluxej+rg==}
+
+  hermes-parser@0.28.1:
+    resolution: {integrity: sha512-nf8o+hE8g7UJWParnccljHumE9Vlq8F7MqIdeahl+4x0tvCUJYRrT0L7h0MMg/X9YJmkNwsfbaNNrzPtFXOscg==}
 
   hoist-non-react-statics@3.3.2:
     resolution: {integrity: sha512-/gGivxi8JPKWNm/W0jSmzcMPpfpPLc3dY/6GxhX2hQ9iGj3aDfklV4ET7NjKpSinLpJ5vafa9iiGIEZg10SfBw==}
@@ -12985,6 +12997,15 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
+  '@react-native/codegen@0.80.2(@babel/core@7.26.10)':
+    dependencies:
+      '@babel/core': 7.26.10
+      glob: 7.2.3
+      hermes-parser: 0.28.1
+      invariant: 2.2.4
+      nullthrows: 1.1.1
+      yargs: 17.7.2
+
   '@react-native/community-cli-plugin@0.76.6(@babel/core@7.26.10)(@babel/preset-env@7.26.9(@babel/core@7.26.10))(@react-native-community/cli-server-api@15.0.1(bufferutil@4.0.9)(utf-8-validate@5.0.10))(bufferutil@4.0.9)(utf-8-validate@5.0.10)':
     dependencies:
       '@react-native/dev-middleware': 0.76.6(bufferutil@4.0.9)(utf-8-validate@5.0.10)
@@ -16823,6 +16844,8 @@ snapshots:
 
   hermes-estree@0.28.0: {}
 
+  hermes-estree@0.28.1: {}
+
   hermes-parser@0.23.1:
     dependencies:
       hermes-estree: 0.23.1
@@ -16834,6 +16857,10 @@ snapshots:
   hermes-parser@0.28.0:
     dependencies:
       hermes-estree: 0.28.0
+
+  hermes-parser@0.28.1:
+    dependencies:
+      hermes-estree: 0.28.1
 
   hoist-non-react-statics@3.3.2:
     dependencies:
