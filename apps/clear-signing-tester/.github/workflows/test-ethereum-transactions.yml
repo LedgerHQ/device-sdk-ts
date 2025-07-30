@@ -1,0 +1,75 @@
+name: Test Ethereum Transactions
+
+on:
+  push:
+    branches: [ main, develop ]
+    paths:
+      - 'scripts/**'
+      - 'packages/signer/signer-eth/**'
+      - 'packages/transport/speculos/**'
+  pull_request:
+    branches: [ main, develop ]
+    paths:
+      - 'scripts/**'
+      - 'packages/signer/signer-eth/**'
+      - 'packages/transport/speculos/**'
+
+jobs:
+  test-ethereum-transactions:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+        cache: 'pnpm'
+        
+    - name: Install pnpm
+      uses: pnpm/action-setup@v2
+      with:
+        version: 10.12.1
+        
+    - name: Install dependencies
+      run: |
+        pnpm install
+        cd scripts && pnpm install
+        
+    - name: Build packages
+      run: pnpm build:libs
+      
+    - name: Start Speculos
+      run: |
+        # Install Speculos if not available
+        if ! command -v speculos &> /dev/null; then
+          pip install speculos
+        fi
+        
+        # Start Speculos in background
+        speculos --model nanos --seed "secret" --display headless &
+        sleep 10
+        
+    - name: Test Raw Transactions
+      env:
+        ETHERSCAN_API_KEY: ${{ secrets.ETHERSCAN_API_KEY }}
+      run: |
+        cd scripts
+        npm run test:eth --raw examples/raw-transactions.json
+        
+    - name: Test dApp Transactions
+      env:
+        ETHERSCAN_API_KEY: ${{ secrets.ETHERSCAN_API_KEY }}
+      run: |
+        cd scripts
+        npm run test:eth --dapps examples/dapps.json
+        
+    - name: Upload test results
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: ethereum-test-results
+        path: scripts/*-results-*.json
+        retention-days: 7 

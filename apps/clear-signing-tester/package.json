@@ -1,0 +1,38 @@
+{
+  "name": "@ledgerhq/ethereum-clear-signing-tester",
+  "version": "1.0.0",
+  "description": "TypeScript script for testing Ethereum transactions using Ledger Device Management Kit",
+  "main": "test-ethereum-transactions.ts",
+  "exports": {
+    ".": {
+      "types": "./lib/types/index.d.ts",
+      "import": "./lib/esm/index.js",
+      "require": "./lib/cjs/index.js"
+    }
+  },
+  "scripts": {
+    "test:eth": "tsx index.ts",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "build": "tsc",
+    "dev": "tsx --watch index.ts"
+  },
+  "dependencies": {
+    "@ledgerhq/context-module": "workspace:*",
+    "@ledgerhq/device-signer-kit-ethereum": "workspace:*",
+    "@ledgerhq/device-management-kit": "workspace:*",
+    "@ledgerhq/device-transport-kit-speculos": "workspace:*",
+    "axios": "^1.6.0",
+    "ethers": "^6.8.0",
+    "rxjs": "^7.8.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "tsx": "^4.0.0",
+    "@ledgerhq/tsconfig-dsdk": "workspace:*",
+    "typescript": "^5.0.0"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+} 

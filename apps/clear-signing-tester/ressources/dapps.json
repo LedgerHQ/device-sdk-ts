@@ -1,0 +1,9 @@
+[
+  {
+    "name": "1inch",
+    "contracts": [
+      {"name": "Aggregation Router V6", "address": "0x111111125421cA6dc452d289314280a0f8842A65"},
+      {"name": "Aggregation Router V5", "address": "0x1111111254EEB25477B68fb85Ed929f73A960582"}
+    ]
+  }
+] 

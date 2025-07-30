@@ -79,7 +79,8 @@ export const SignerEthProvider: React.FC<PropsWithChildren> = ({
     }
 
     const contextModule = new ContextModuleBuilder({
-      originToken: "origin-token", // TODO: replace with your origin token
+      originToken:
+        "1e55ba3959f4543af24809d9066a2120bd2ac9246e626e26a1ff77eb109ca0e5", // TODO: replace with your origin token
     })
       .setCalConfig(calConfig)
       .setWeb3ChecksConfig(web3ChecksConfig)
@@ -88,6 +89,8 @@ export const SignerEthProvider: React.FC<PropsWithChildren> = ({
     const newSigner = new SignerEthBuilder({
       dmk,
       sessionId,
+      originToken:
+        "1e55ba3959f4543af24809d9066a2120bd2ac9246e626e26a1ff77eb109ca0e5", // TODO: replace with your origin token
     })
       .withContextModule(contextModule)
       .build();

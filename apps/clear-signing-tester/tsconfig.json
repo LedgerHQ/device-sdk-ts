@@ -1,0 +1,23 @@
+{
+  "extends": "@ledgerhq/tsconfig-dsdk/tsconfig.sdk",
+  "compilerOptions": {
+    "baseUrl": ".",
+    "outDir": "./lib/types",
+    "module": "esnext",
+    "target": "esnext",
+    "moduleResolution": "bundler",
+    "paths": {
+      "@root/*": ["./*"],
+      "@api/*": ["./src/api/*"],
+      "@internal/*": ["./src/internal/*"]
+    },
+    "resolveJsonModule": true
+  },
+  "include": [
+    "index.ts",
+    "src",
+    "jest.*.ts",
+    "vitest.config.mjs",
+    "eslint.config.mjs"
+  ]
+}
