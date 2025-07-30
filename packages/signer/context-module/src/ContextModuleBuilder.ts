@@ -14,7 +14,7 @@ import { DefaultContextModule } from "./DefaultContextModule";
 
 const DEFAULT_CAL_URL = "https://crypto-assets-service.api.ledger.com/v1";
 const DEFAULT_WEB3_CHECKS_URL = "https://web3checks-backend.api.ledger.com/v3";
-const DEFAULT_METADATA_SERVICE_URL = "https://nft.api.live.ledger.com/v2";
+const DEFAULT_METADATA_SERVICE_URL = "https://nft.api.live.ledger.com/v1";
 
 export const DEFAULT_CONFIG: ContextModuleConfig = {
   cal: {

@@ -44,7 +44,7 @@ const initialState: SignerEthContextType = {
     url: "https://web3checks-backend.api.ledger.com/v3",
   },
   metadataServiceConfig: {
-    url: "https://nft.api.live.ledger.com/v2",
+    url: "https://nft.api.live.ledger.com/v1",
   },
   setCalConfig: () => {},
   setWeb3ChecksConfig: () => {},
