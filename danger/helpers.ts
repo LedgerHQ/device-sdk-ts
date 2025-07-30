@@ -48,7 +48,7 @@ const Branch = (
   regex: isFork
     ? new RegExp(`^(${BRANCH_PREFIX.join("|")})\/.+`, "i")
     : new RegExp(
-        `^(release|chore\/backmerge(-.+){0,}|(${BRANCH_PREFIX.join("|")})\/((dsdk)-[0-9]+|no-issue|issue-[0-9]+)\-.+)`,
+        `^(release|chore\/backmerge(-.+){0,}|(${BRANCH_PREFIX.join("|")})\/((dsdk)-[0-9]+|no-issue|NOISSUE|issue-[0-9]+)\-.+)`,
         "i"
       ),
 
