@@ -361,8 +361,10 @@ export class RNBleTransport implements Transport {
             this._logger.error("Peer removed pairing error", {
               data: { error },
             });
+            await this._safeCancel(params.deviceId);
             return throwE(new PeerRemovedPairingError(error));
           }
+          await this._safeCancel(params.deviceId);
           return throwE(new OpeningConnectionError(error));
         }
 
