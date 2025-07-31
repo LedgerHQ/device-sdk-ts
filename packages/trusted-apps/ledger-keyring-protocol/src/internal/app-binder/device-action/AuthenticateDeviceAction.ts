@@ -287,10 +287,17 @@ export class AuthenticateDeviceAction extends XStateDeviceAction<
                   eitherSeqRecord({
                     lkrpDataSource: context.input.lkrpDataSource,
                     keypair: context.input.keypair,
+                    clientName: context.input.clientName,
+                    permissions: context.input.permissions,
                     jwt: () =>
                       required(
                         state.jwt ?? context.input.jwt,
                         "Missing JWT in the input for AddToTrustchain",
+                      ),
+                    trustchainId: () =>
+                      required(
+                        state.trustchainId ?? context.input.trustchainId,
+                        "Missing Trustchain ID in the input for GetTrustchain",
                       ),
                     trustchain: () =>
                       required(

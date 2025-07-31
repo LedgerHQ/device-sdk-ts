@@ -8,7 +8,7 @@ import { inject, injectable } from "inversify";
 
 import { AuthenticateDAReturnType } from "@api/app-binder/AuthenticateDeviceActionTypes";
 import { GetVersionDAReturnType } from "@api/app-binder/GetVersionDeviceActionTypes";
-import { JWT, Keypair } from "@api/app-binder/LKRPTypes";
+import { JWT, Keypair, Permissions } from "@api/app-binder/LKRPTypes";
 import { externalTypes } from "@internal/externalTypes";
 import { type LKRPDataSource } from "@internal/lkrp-datasource/data/LKRPDataSource";
 import { lkrpDatasourceTypes } from "@internal/lkrp-datasource/di/lkrpDatasourceTypes";
@@ -31,6 +31,8 @@ export class LedgerKeyringProtocolBinder {
   authenticate(args: {
     keypair: Keypair;
     applicationId: number;
+    clientName: string;
+    permissions: Permissions;
     trustchainId?: string;
     jwt?: JWT;
   }): AuthenticateDAReturnType {
@@ -40,6 +42,8 @@ export class LedgerKeyringProtocolBinder {
         input: {
           lkrpDataSource: this.lkrpDataSource,
           applicationId: args.applicationId,
+          clientName: args.clientName,
+          permissions: args.permissions,
           keypair: args.keypair,
           trustchainId: args.trustchainId ?? null,
           jwt: args.jwt ?? null,

@@ -1,4 +1,4 @@
-import { getPublicKey, signAsync } from "@noble/secp256k1";
+import { getPublicKey, getSharedSecret, signAsync } from "@noble/secp256k1";
 
 import { type Keypair } from "@api/index";
 import { CryptoUtils } from "@internal/utils/crypto";
@@ -23,7 +23,7 @@ export class KeypairFromBytes implements Keypair {
     return CryptoUtils.derEncode(r, s);
   }
 
-  edch(_key: Uint8Array): Uint8Array {
-    throw new Error("Method not implemented.");
+  ecdh(publicKey: Uint8Array, isCompressed = true): Uint8Array {
+    return getSharedSecret(this.privateKey, publicKey, isCompressed);
   }
 }

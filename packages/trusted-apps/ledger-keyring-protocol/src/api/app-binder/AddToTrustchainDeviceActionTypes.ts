@@ -14,12 +14,9 @@ import {
   type LKRPMissingDataError,
   type LKRPParsingError,
 } from "./Errors";
-import { type JWT, type Keypair } from "./LKRPTypes";
+import { type JWT, type Keypair, type Permissions } from "./LKRPTypes";
 
-export type AddToTrustchainDAOutput = {
-  readonly trustchain: Trustchain;
-  readonly applicationStream: LKRPBlockStream;
-};
+export type AddToTrustchainDAOutput = undefined;
 
 export type AddToTrustchainDAInput = Either<
   LKRPMissingDataError,
@@ -27,8 +24,11 @@ export type AddToTrustchainDAInput = Either<
     readonly lkrpDataSource: LKRPDataSource;
     readonly keypair: Keypair;
     readonly jwt: JWT;
+    readonly trustchainId: string;
     readonly trustchain: Trustchain;
     readonly applicationStream: LKRPBlockStream;
+    readonly clientName: string;
+    readonly permissions: Permissions;
   }
 >;
 

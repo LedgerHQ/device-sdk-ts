@@ -16,7 +16,7 @@ import {
   type LKRPParsingError,
   type LKRPUnhandledState,
 } from "./Errors";
-import { type JWT, type Keypair } from "./LKRPTypes";
+import { type JWT, type Keypair, type Permissions } from "./LKRPTypes";
 
 export type AuthenticateDAReturnType = ExecuteDeviceActionReturnType<
   AuthenticateDAOutput,
@@ -28,6 +28,8 @@ export type AuthenticateDAInput = {
   readonly lkrpDataSource: LKRPDataSource;
   readonly applicationId: number;
   readonly keypair: Keypair;
+  readonly clientName: string;
+  readonly permissions: Permissions;
   readonly trustchainId: string | null;
   readonly jwt: JWT | null;
 };

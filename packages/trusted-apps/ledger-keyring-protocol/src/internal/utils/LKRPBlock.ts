@@ -1,9 +1,13 @@
+import {
+  bufferToHexaString,
+  hexaStringToBuffer,
+} from "@ledgerhq/device-management-kit";
+import { sha256 } from "@noble/hashes/sha256";
 import { Either, Just, type Maybe, Nothing, Right } from "purify-ts";
 
 import { type LKRPParsingError } from "@api/app-binder/Errors";
 
 import { CryptoUtils } from "./crypto";
-import { bytesToHex, hexToBytes } from "./hex";
 import { TLVBuilder } from "./TLVBuilder";
 import { TLVParser } from "./TLVParser";
 import { type LKRPBlockData, type LKRPBlockParsedData } from "./types";
@@ -20,13 +24,13 @@ export class LKRPBlock {
   }
 
   static fromHex(hex: string): LKRPBlock {
-    return new LKRPBlock(hexToBytes(hex));
+    return new LKRPBlock(hexaStringToBuffer(hex) ?? new Uint8Array());
   }
 
   static fromData(data: LKRPBlockData): LKRPBlock {
     const builder = new TLVBuilder()
       .addInt(1, 1) // Version 1
-      .addHash(hexToBytes(data.parent))
+      .addHash(hexaStringToBuffer(data.parent) ?? new Uint8Array())
       .addPublicKey(data.issuer)
       .addInt(data.commands.length, 1);
 
@@ -42,7 +46,7 @@ export class LKRPBlock {
   }
 
   toString(): string {
-    return bytesToHex(this.bytes);
+    return bufferToHexaString(this.bytes).slice(2);
   }
 
   toU8A(): Uint8Array {
@@ -67,19 +71,24 @@ export class LKRPBlock {
       .map((data) =>
         [
           `Parent: ${data.parent}`,
-          `Issuer: ${bytesToHex(data.issuer)}`,
+          `Issuer: ${bufferToHexaString(data.issuer).slice(2)}`,
           `Commands:${data.commands
             .flatMap((cmd) => cmd.split("\n").map((l) => `\n  ${l}`))
             .join("")}`,
-          `Signature: ${bytesToHex(data.signature.slice(2))}`,
+          `Signature: ${bufferToHexaString(data.signature.slice(2)).slice(2)}`,
         ].join("\n"),
       );
   }
 
+  hashSync(): Uint8Array {
+    return sha256(this.bytes);
+  }
+
   hash(): Promise<string> {
     return this.hashValue.orDefaultLazy(() => {
-      const hashValue = CryptoUtils.hash(this.bytes).then(bytesToHex);
-      this.hashValue = Just(hashValue);
+      const hashValue = CryptoUtils.hash(this.bytes).then((val) =>
+        bufferToHexaString(val).slice(2),
+      );
       return hashValue;
     });
   }

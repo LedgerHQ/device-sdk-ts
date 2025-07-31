@@ -7,7 +7,7 @@ import { bytesToHex, hexToBytes } from "./hex";
 import { TLVBuilder } from "./TLVBuilder";
 import { TLVParser } from "./TLVParser";
 import { CommandTags } from "./TLVTags";
-import { UnsignedCommandData, type LKRPCommandData } from "./types";
+import { type LKRPCommandData, type UnsignedCommandData } from "./types";
 
 export class LKRPCommand {
   private data: Maybe<Either<LKRPParsingError, LKRPCommandData>>;
@@ -79,7 +79,10 @@ export class LKRPCommand {
         break;
 
       case CommandTags.PublishKey:
+        tlv.addBytes(new Uint8Array()); // Empty IV
+        tlv.addBytes(new Uint8Array()); // Empty encryptedXpriv
         tlv.addPublicKey(data.recipient);
+        tlv.addPublicKey(new Uint8Array()); // Empty ephemeralPublicKey
         break;
 
       case CommandTags.Derive:

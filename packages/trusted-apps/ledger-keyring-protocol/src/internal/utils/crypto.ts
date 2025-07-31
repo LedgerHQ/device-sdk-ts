@@ -1,7 +1,10 @@
+import { gcm } from "@noble/ciphers/aes";
 import { etc, utils } from "@noble/secp256k1";
 
 import { KeypairFromBytes } from "@api/app-binder/KeypairFromBytes";
 import { type Keypair } from "@api/index";
+
+const AES_BLOCK_SIZE = 16;
 
 export class CryptoUtils {
   static async hash(bytes: Uint8Array): Promise<Uint8Array> {
@@ -11,6 +14,16 @@ export class CryptoUtils {
 
   static randomKeypair(): Keypair {
     return new KeypairFromBytes(utils.randomPrivateKey());
+  }
+
+  static decrypt(
+    secret: Uint8Array,
+    iv: Uint8Array,
+    ciphertext: Uint8Array,
+  ): Uint8Array {
+    const key = secret;
+    const cipher = gcm(key, iv.slice(0, AES_BLOCK_SIZE));
+    return cipher.decrypt(ciphertext);
   }
 
   /**
