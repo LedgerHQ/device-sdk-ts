@@ -11,7 +11,7 @@ import { RootScreens } from "_navigators/RootNavigator.constants.ts";
 import { useDeviceSessionsContext } from "_providers/deviceSessionsProvider.tsx";
 import { useDmk } from "_providers/dmkProvider.tsx";
 import { type DiscoveredDevice } from "@ledgerhq/device-management-kit";
-import { Button, Text } from "@ledgerhq/native-ui";
+import { BottomDrawer, Button, Flex, Text } from "@ledgerhq/native-ui";
 import { useIsFocused, useNavigation } from "@react-navigation/native";
 import styled from "styled-components/native";
 
@@ -40,6 +40,7 @@ export const ConnectDeviceScreen: React.FC = () => {
     dispatch,
   } = useDeviceSessionsContext();
   const { navigate } = useNavigation();
+  const [connectError, setConnectError] = React.useState<unknown | null>(null);
 
   const isFocused = useIsFocused();
 
@@ -86,11 +87,22 @@ export const ConnectDeviceScreen: React.FC = () => {
       });
     } catch (error) {
       console.error(error);
+      setConnectError(error);
     }
   };
 
   return (
     <Container>
+      <BottomDrawer
+        isOpen={!!connectError}
+        onClose={() => setConnectError(null)}>
+        <Flex flexDirection="column">
+          <Text variant="h1Inter">Connection error</Text>
+          <Text style={{ textAlign: "left" }}>
+            {JSON.stringify(connectError, null, 2)}
+          </Text>
+        </Flex>
+      </BottomDrawer>
       <DeviceList
         data={devices}
         keyExtractor={item => item.id}
