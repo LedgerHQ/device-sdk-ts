@@ -24,11 +24,13 @@ import {
 import { Either, EitherAsync, Left, Maybe, Nothing, Right } from "purify-ts";
 import {
   BehaviorSubject,
+  catchError,
   filter,
   finalize,
   from,
   map,
   type Observable,
+  of,
   retry,
   type Subscription,
   switchMap,
@@ -356,6 +358,9 @@ export class RNBleTransport implements Transport {
              * This happens when the Ledger device reset its pairing, but the
              * iOS system still has that device paired.
              */
+            this._logger.error("Peer removed pairing error", {
+              data: { error },
+            });
             return throwE(new PeerRemovedPairingError(error));
           }
           return throwE(new OpeningConnectionError(error));
@@ -409,6 +414,9 @@ export class RNBleTransport implements Transport {
               this.tryToReconnect(params.deviceId);
             },
             onTerminated: () => {
+              this._logger.debug("[RNBLE][onTerminated] onTerminated called", {
+                data: { deviceId: params.deviceId },
+              });
               try {
                 this._safeCancel(params.deviceId);
                 params.onDisconnect(params.deviceId);
@@ -606,28 +614,53 @@ export class RNBleTransport implements Transport {
         await this._safeCancel(deviceId);
       }),
       switchMap(async () => {
-        this._logger.debug(
-          "[_handleDeviceDisconnected] reconnecting to device",
-          { data: { id: deviceId } },
-        );
+        this._logger.debug("[tryToReconnect] reconnecting to device", {
+          data: { id: deviceId },
+        });
         const reconnectedDevice = await this._manager.connectToDevice(
           deviceId,
           { requestMTU: DEFAULT_MTU, timeout: 2000 },
         );
-        this._logger.debug(
-          "[_handleDeviceDisconnected] reconnected to device",
-          { data: { id: deviceId } },
-        );
+        this._logger.debug("[tryToReconnect] reconnected to device", {
+          data: { id: deviceId },
+        });
         const reconnectedDeviceUsable =
           await reconnectedDevice.discoverAllServicesAndCharacteristics();
         this._logger.debug(
-          "[_handleDeviceDisconnected] discovered all services and characteristics",
+          "[tryToReconnect] discovered all services and characteristics",
           { data: { reconnectedDeviceUsable } },
         );
         await this._handleDeviceReconnected(reconnectedDeviceUsable);
         return reconnectedDeviceUsable;
       }),
-      retry(5),
+      catchError(async (error: unknown) => {
+        this._logger.error("[tryToReconnect] error", {
+          data: { error },
+        });
+        await this._safeCancel(deviceId);
+        throw error;
+      }),
+      retry({
+        delay: (error, attempt) => {
+          this._logger.debug("[tryToReconnect] retrying to reconnect", {
+            data: { error, attempt },
+          });
+          if (
+            error instanceof BleError &&
+            (error.iosErrorCode as number) === 14
+          ) {
+            this._logger.error(
+              "[tryToReconnect] Peer removed pairing error, stopping reconnection",
+              {
+                data: { error },
+              },
+            );
+            return throwError(() => new PeerRemovedPairingError(error));
+          }
+          return of(0); // just emit anything to trigger the retry
+        },
+        count: 5,
+      }),
     );
 
     this._reconnectionSubscription = Maybe.of(
