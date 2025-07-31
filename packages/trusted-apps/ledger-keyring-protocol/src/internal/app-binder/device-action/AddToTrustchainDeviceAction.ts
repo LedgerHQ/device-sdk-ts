@@ -16,6 +16,7 @@ import {
   type AddToTrustchainDAInternalState,
   type AddToTrustchainDAOutput,
 } from "@api/app-binder/AddToTrustchainDeviceActionTypes";
+import { LKRPMissingDataError } from "@api/app-binder/Errors";
 import { type Keypair } from "@api/index";
 import { type LKRPDeviceCommandError } from "@internal/app-binder/command/utils/ledgerKeyringProtocolErrors";
 import { InitTask } from "@internal/app-binder/task/InitTask";
@@ -23,7 +24,12 @@ import {
   ParseStreamToDeviceTask,
   type ParseStreamToDeviceTaskInput,
 } from "@internal/app-binder/task/ParseStreamToDeviceTask";
-import { eitherSeqRecord } from "@internal/utils/eitherSeqRecord";
+import {
+  type SignBlockError,
+  SignBlockTask,
+  type SignBlockTaskInput,
+} from "@internal/app-binder/task/SignBlockTask";
+import { type LKRPBlock } from "@internal/utils/LKRPBlock";
 import { required } from "@internal/utils/required";
 
 import { raiseAndAssign } from "./utils/raiseAndAssign";
@@ -52,7 +58,8 @@ export class AddToTrustchainDeviceAction extends XStateDeviceAction<
       AddToTrustchainDAInternalState
     >;
 
-    const { initCommand, parseStream } = this.extractDependencies(internalApi);
+    const { initCommand, parseStream, signBlock } =
+      this.extractDependencies(internalApi);
 
     return setup({
       types: {
@@ -63,8 +70,8 @@ export class AddToTrustchainDeviceAction extends XStateDeviceAction<
 
       actors: {
         initCommand: fromPromise(initCommand),
-
         parseStream: fromPromise(parseStream),
+        signBlock: fromPromise(signBlock),
       },
 
       actions: {
@@ -78,7 +85,7 @@ export class AddToTrustchainDeviceAction extends XStateDeviceAction<
 
       guards: {
         isTustchainEmpty: ({ context }) =>
-          context._internalState
+          context.input
             .toMaybe()
             .chainNullable((state) => state.applicationStream)
             .chain((stream) => stream.parse().toMaybe())
@@ -139,14 +146,8 @@ export class AddToTrustchainDeviceAction extends XStateDeviceAction<
               ),
             onError: { actions: "assignErrorFromEvent" },
             onDone: {
-              actions: raiseAndAssign(({ event, context }) =>
-                event.output
-                  .map(() => ({ raise: "success" }))
-                  .ifRight(() => {
-                    context._internalState.ifRight((state) => {
-                      console.log("Stream parsed successfully!!!", state);
-                    });
-                  }),
+              actions: raiseAndAssign(({ event }) =>
+                event.output.map(() => ({ raise: "success" })),
               ),
             },
           },
@@ -161,7 +162,54 @@ export class AddToTrustchainDeviceAction extends XStateDeviceAction<
 
         AddToExistingStream: {
           on: { success: "Success", error: "Error" },
-          // TODO: Implement AddToExistingStream
+          invoke: {
+            id: "signBlock",
+            src: "signBlock",
+            input: ({ context }) =>
+              context.input.chain((input) =>
+                context._internalState.chain((internal) =>
+                  required(
+                    internal.sessionKeypair,
+                    "Missing session keypair",
+                  ).chain((sessionKeypair) =>
+                    input.applicationStream
+                      .getPath()
+                      .toEither(
+                        new LKRPMissingDataError("Missing application path"),
+                      )
+                      .chain((applicationPath) =>
+                        input.applicationStream
+                          .parse()
+                          .chain((blocks) =>
+                            required(blocks.at(-1), "Missing block"),
+                          )
+                          .map((parentBlock) => ({
+                            lkrpDataSource: input.lkrpDataSource,
+                            trustchainId: input.trustchainId,
+                            applicationPath,
+                            jwt: input.jwt,
+                            parent: parentBlock.hashSync(),
+                            blockFlow: {
+                              type: "addMember",
+                              data: {
+                                name: input.clientName,
+                                publicKey: input.keypair.pubKeyToU8a(),
+                                permissions: input.permissions,
+                              },
+                            },
+                            sessionKeypair,
+                          })),
+                      ),
+                  ),
+                ),
+              ),
+            onError: { actions: "assignErrorFromEvent" },
+            onDone: {
+              actions: raiseAndAssign(({ event }) =>
+                event.output.map(() => ({ raise: "success" })),
+              ),
+            },
+          },
         },
 
         AddToNewStream: {
@@ -174,18 +222,7 @@ export class AddToTrustchainDeviceAction extends XStateDeviceAction<
         Error: { type: "final" },
       },
 
-      output: ({ context }) =>
-        context._internalState.chain((state) =>
-          eitherSeqRecord({
-            trustchain: () =>
-              required(state.trustchain, "Missing trustchain in the output"),
-            applicationStream: () =>
-              required(
-                state.applicationStream,
-                "Missing application path in the output",
-              ),
-          }),
-        ),
+      output: ({ context }) => context._internalState.map((_) => undefined),
     });
   }
 
@@ -200,6 +237,15 @@ export class AddToTrustchainDeviceAction extends XStateDeviceAction<
         EitherAsync.liftEither(args.input)
           .chain<AddToTrustchainDAError, unknown>((input) =>
             new ParseStreamToDeviceTask(internalApi).run(input),
+          )
+          .run(),
+
+      signBlock: (args: {
+        input: Either<AddToTrustchainDAError, SignBlockTaskInput>;
+      }): Promise<Either<SignBlockError, LKRPBlock>> =>
+        EitherAsync.liftEither(args.input)
+          .chain<AddToTrustchainDAError, LKRPBlock>((input) =>
+            new SignBlockTask(internalApi).run(input),
           )
           .run(),
     };

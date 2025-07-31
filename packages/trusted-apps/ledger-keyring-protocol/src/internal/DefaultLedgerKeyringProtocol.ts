@@ -5,7 +5,11 @@ import {
 import { type Container } from "inversify";
 
 import { type AuthenticateDAReturnType } from "@api/app-binder/AuthenticateDeviceActionTypes";
-import { type JWT, type Keypair } from "@api/app-binder/LKRPTypes";
+import {
+  type JWT,
+  type Keypair,
+  type Permissions,
+} from "@api/app-binder/LKRPTypes";
 import { type LedgerKeyringProtocol } from "@api/LedgerKeyringProtocol";
 import { makeContainer } from "@internal/di";
 
@@ -34,12 +38,21 @@ export class DefaultLedgerKeyringProtocol implements LedgerKeyringProtocol {
   authenticate(
     keypair: Keypair,
     applicationId: number,
+    clientName: string,
+    permissions: Permissions,
     trustchainId?: string,
     jwt?: JWT,
   ): AuthenticateDAReturnType {
     return this._container
       .get<AuthenticateUseCase>(useCasesTypes.AuthenticateUseCase)
-      .execute(keypair, applicationId, trustchainId, jwt);
+      .execute(
+        keypair,
+        applicationId,
+        clientName,
+        permissions,
+        trustchainId,
+        jwt,
+      );
   }
 
   encryptData(encryptionKey: Uint8Array, data: Uint8Array): Uint8Array {

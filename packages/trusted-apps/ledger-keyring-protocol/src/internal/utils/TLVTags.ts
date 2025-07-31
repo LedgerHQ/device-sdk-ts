@@ -17,12 +17,14 @@ export enum CommandTags {
   Derive = 0x15,
 }
 
+const TP_ENCRYPT = 1 << 7;
+
 export enum TPTags {
   IV = 0x00,
-  ISSUER = 0x01 | 0x80,
-  XPRIV = 0x02 | 0x80,
-  EPHEMERAL_PUBLIC_KEY = 0x03 | 0x80,
-  COMMAND_IV = 0x04 | 0x80,
-  GROUPKEY = 0x05 | 0x80,
-  NEW_MEMBER = 0x06 | 0x80,
+  ISSUER = 0x01 | TP_ENCRYPT,
+  XPRIV = 0x02 | TP_ENCRYPT,
+  EPHEMERAL_PUBLIC_KEY = 0x03,
+  COMMAND_IV = 0x04,
+  GROUPKEY = 0x05,
+  NEW_MEMBER = 0x06 | TP_ENCRYPT,
 }
