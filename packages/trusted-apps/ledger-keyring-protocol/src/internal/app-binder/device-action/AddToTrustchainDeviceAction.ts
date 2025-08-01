@@ -1,5 +1,6 @@
 import {
   type DeviceActionStateMachine,
+  hexaStringToBuffer,
   type InternalApi,
   type StateMachineTypes,
   UnknownDAError,
@@ -198,7 +199,7 @@ export class AddToTrustchainDeviceAction extends XStateDeviceAction<
                             trustchainId: input.trustchainId,
                             applicationPath,
                             jwt: input.jwt,
-                            parent: parentBlock.hashSync(),
+                            parent: hexaStringToBuffer(parentBlock.hash())!,
                             blockFlow: {
                               type: "addMember",
                               data: {

@@ -2,7 +2,6 @@ import {
   bufferToHexaString,
   hexaStringToBuffer,
 } from "@ledgerhq/device-management-kit";
-import { sha256 } from "@noble/hashes/sha256";
 import { Either, Just, type Maybe, Nothing, Right } from "purify-ts";
 
 import { type LKRPParsingError } from "@api/app-binder/Errors";
@@ -13,7 +12,7 @@ import { TLVParser } from "./TLVParser";
 import { type LKRPBlockData, type LKRPBlockParsedData } from "./types";
 
 export class LKRPBlock {
-  private hashValue: Maybe<Promise<string>> = Nothing; // Cache hash value for performance
+  private hashValue: Maybe<string> = Nothing; // Cache hash value for performance
   private data: Maybe<Either<LKRPParsingError, LKRPBlockParsedData>>;
 
   public constructor(
@@ -80,16 +79,10 @@ export class LKRPBlock {
       );
   }
 
-  hashSync(): Uint8Array {
-    return sha256(this.bytes);
-  }
-
-  hash(): Promise<string> {
+  hash(): string {
     return this.hashValue.orDefaultLazy(() => {
-      const hashValue = CryptoUtils.hash(this.bytes).then((val) =>
-        bufferToHexaString(val).slice(2),
-      );
-      return hashValue;
+      const hashValue = CryptoUtils.hash(this.bytes);
+      return bufferToHexaString(hashValue).slice(2);
     });
   }
 }

@@ -139,7 +139,7 @@ describe("LKRPBlockStream", () => {
       const stream = await LKRPBlockStream.fromData(mockedBlockData);
       const hash = await stream
         .parse()
-        .map(async (blocks) => blocks[0]?.hash())
+        .map((blocks) => blocks[0]?.hash())
         .caseOf({ Left: () => undefined, Right: (h) => h });
 
       // THEN

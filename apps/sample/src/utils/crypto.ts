@@ -1,5 +1,6 @@
 import * as secp from "@noble/secp256k1";
 
+// TODO remove that file
 export function randomPrivateKey() {
   return bytesToHex(secp.utils.randomPrivateKey());
 }

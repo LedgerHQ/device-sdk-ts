@@ -1,29 +1,47 @@
 import { gcm } from "@noble/ciphers/aes";
+import { randomBytes } from "@noble/ciphers/webcrypto";
+import { hmac } from "@noble/hashes/hmac";
+import { sha256 } from "@noble/hashes/sha256";
 import { etc, utils } from "@noble/secp256k1";
 
 import { KeypairFromBytes } from "@api/app-binder/KeypairFromBytes";
 import { type Keypair } from "@api/index";
 
-const AES_BLOCK_SIZE = 16;
+export const AES_BLOCK_SIZE = 16;
 
 export class CryptoUtils {
-  static async hash(bytes: Uint8Array): Promise<Uint8Array> {
-    const buffer = await crypto.subtle.digest("SHA-256", bytes);
-    return new Uint8Array(buffer);
+  static randomBytes(len: number): Uint8Array {
+    return randomBytes(len);
   }
 
   static randomKeypair(): Keypair {
     return new KeypairFromBytes(utils.randomPrivateKey());
   }
 
+  static encrypt(
+    key: Uint8Array,
+    iv: Uint8Array,
+    cleartext: Uint8Array,
+  ): Uint8Array {
+    const cipher = gcm(key, iv.slice(0, AES_BLOCK_SIZE));
+    return cipher.encrypt(cleartext);
+  }
+
   static decrypt(
-    secret: Uint8Array,
+    key: Uint8Array,
     iv: Uint8Array,
     ciphertext: Uint8Array,
   ): Uint8Array {
-    const key = secret;
     const cipher = gcm(key, iv.slice(0, AES_BLOCK_SIZE));
     return cipher.decrypt(ciphertext);
+  }
+
+  static hash(bytes: Uint8Array): Uint8Array {
+    return sha256(bytes);
+  }
+
+  static hmac(key: Uint8Array, message: Uint8Array): Uint8Array {
+    return hmac(sha256, key, message);
   }
 
   /**
