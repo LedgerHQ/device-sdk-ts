@@ -1,12 +1,23 @@
+/* eslint-disable @typescript-eslint/no-unsafe-call */
+/* eslint-disable @typescript-eslint/no-unsafe-assignment */
+/* eslint-disable @typescript-eslint/no-unsafe-member-access */
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import {
   CommandResultFactory,
   InvalidStatusWordError,
 } from "@ledgerhq/device-management-kit";
+import bs58 from "bs58";
 
 import { makeDeviceActionInternalApiMock } from "@internal/app-binder/device-action/__test-utils__/makeInternalApi";
-import { SendSignMessageTask } from "@internal/app-binder/task/SendSignMessageTask";
+import {
+  MAX_MESSAGE_LENGTH,
+  SendSignMessageTask,
+} from "@internal/app-binder/task/SendSignMessageTask";
 
 const DERIVATION_PATH = "44'/501'/0'/0'";
+const PUBKEY = new Uint8Array(32).fill(0x00);
+const PUBKEY_BASE58 = bs58.encode(PUBKEY);
+const MESSAGE = new Uint8Array([0xf0, 0xca, 0xcc, 0x1a]);
 
 describe("SendSignMessageTask", () => {
   const apiMock = makeDeviceActionInternalApiMock();
@@ -15,209 +26,156 @@ describe("SendSignMessageTask", () => {
     vi.resetAllMocks();
   });
 
-  const SIMPLE_MESSAGE = new Uint8Array([0x01, 0x02, 0x03, 0x04]);
-
-  describe("run with SignOffChainMessageCommand", () => {
-    it("should return an error if the command fails", async () => {
-      // GIVEN-------------------------------
-      //-------------------------------------
+  describe("run()", () => {
+    it("should error on empty message before any device call", async () => {
+      // given
       const args = {
         derivationPath: DERIVATION_PATH,
-        sendingData: SIMPLE_MESSAGE,
+        sendingData: new Uint8Array([]),
       };
-      apiMock.sendCommand.mockResolvedValueOnce(
-        CommandResultFactory({
-          error: new InvalidStatusWordError("no signature returned"),
-        }),
-      );
 
-      // WHEN--------------------------------
-      //-------------------------------------
+      // when
       const result = await new SendSignMessageTask(apiMock, args).run();
 
-      // THEN--------------------------------
-      //-------------------------------------
-      expect(apiMock.sendCommand).toHaveBeenCalledTimes(1);
-      expect(result).toMatchObject({
-        error: new InvalidStatusWordError("no signature returned"),
-      });
-    });
-
-    it("should return success when the command executes successfully", async () => {
-      // GIVEN-------------------------------
-      //-------------------------------------
-      const args = {
-        derivationPath: DERIVATION_PATH,
-        sendingData: SIMPLE_MESSAGE,
-      };
-      const expectedSignature = new Uint8Array([0xaa, 0xbb, 0xcc, 0xdd]);
-      apiMock.sendCommand.mockResolvedValueOnce(
-        CommandResultFactory({
-          data: expectedSignature,
-        }),
-      );
-
-      // WHEN--------------------------------
-      //-------------------------------------
-      const result = await new SendSignMessageTask(apiMock, args).run();
-
-      // THEN--------------------------------
-      //-------------------------------------
-      expect(apiMock.sendCommand).toHaveBeenCalledTimes(1);
-      expect(result).toMatchObject({
-        data: expectedSignature,
-      });
-    });
-
-    it("should handle invalid derivation paths", async () => {
-      // GIVEN-------------------------------
-      //-------------------------------------
-      const invalidDerivationPath = "invalid/path";
-      const args = {
-        derivationPath: invalidDerivationPath,
-        sendingData: SIMPLE_MESSAGE,
-      };
-
-      // WHEN--------------------------------
-      //-------------------------------------
-      const task = new SendSignMessageTask(apiMock, args);
-
-      // THEN--------------------------------
-      //-------------------------------------
-      await expect(task.run()).rejects.toThrowError();
-    });
-
-    it("should handle empty message data", async () => {
-      // GIVEN-------------------------------
-      //-------------------------------------
-      const emptyMessage = new Uint8Array([]);
-      const args = {
-        derivationPath: DERIVATION_PATH,
-        sendingData: emptyMessage,
-      };
-      apiMock.sendCommand.mockResolvedValueOnce(
-        CommandResultFactory({
-          data: new Uint8Array([]),
-        }),
-      );
-
-      // WHEN--------------------------------
-      //-------------------------------------
-      const result = await new SendSignMessageTask(apiMock, args).run();
-
-      // THEN--------------------------------
-      //-------------------------------------
-      expect(apiMock.sendCommand).toHaveBeenCalledTimes(1);
-      if ("data" in result) {
-        expect(result.data).toEqual(new Uint8Array([]));
-      } else {
-        throw new Error("Expected result to have data property");
-      }
-    });
-
-    it("should correctly build the APDU command", () => {
-      // GIVEN-------------------------------
-      //-------------------------------------
-      const args = {
-        derivationPath: DERIVATION_PATH,
-        sendingData: SIMPLE_MESSAGE,
-      };
-      const task = new SendSignMessageTask(apiMock, args);
-      const fullMessage = task["_buildFullMessage"](SIMPLE_MESSAGE);
-      const paths = [44 | 0x80000000, 501 | 0x80000000, 0 | 0x80000000, 0];
-      const commandBuffer = task["_buildApduCommand"](fullMessage, paths);
-
-      // WHEN--------------------------------
-      //-------------------------------------
-      const expectedCommandLength =
-        1 + // numberOfSigners
-        1 + // numberOfDerivations
-        paths.length * 4 + // paths
-        fullMessage.length; // message
-
-      // THEN--------------------------------
-      //-------------------------------------
-      expect(commandBuffer.length).toEqual(expectedCommandLength);
-    });
-
-    it("should handle messages with maximum allowed length", async () => {
-      // GIVEN-------------------------------
-      //-------------------------------------
-      const headerSize =
-        1 + // numberOfSigners
-        1 + // numberOfDerivations
-        4 * 4; // paths
-      const fullMessageHeaderSize =
-        1 +
-        15 + // prefix
-        4; // length
-      const maxLengthMessage = new Uint8Array(
-        255 - headerSize - fullMessageHeaderSize,
-      ).fill(0x01);
-      const args = {
-        derivationPath: DERIVATION_PATH,
-        sendingData: maxLengthMessage,
-      };
-      apiMock.sendCommand.mockResolvedValueOnce(
-        CommandResultFactory({
-          data: new Uint8Array([0x99, 0x88, 0x77]),
-        }),
-      );
-
-      // WHEN--------------------------------
-      //-------------------------------------
-      const result = await new SendSignMessageTask(apiMock, args).run();
-
-      // THEN--------------------------------
-      //-------------------------------------
-      expect(apiMock.sendCommand).toHaveBeenCalledTimes(1);
-      if ("data" in result) {
-        expect(result.data).toEqual(new Uint8Array([0x99, 0x88, 0x77]));
-      } else {
-        throw new Error("Expected result to have data property");
-      }
-    });
-
-    it("should fail messages if too big", async () => {
-      // GIVEN-------------------------------
-      //-------------------------------------
-      const headerSize =
-        1 + // numberOfSigners
-        1 + // numberOfDerivations
-        4 * 4; // paths
-      const fullMessageHeaderSize =
-        1 +
-        15 + // prefix
-        4; // length
-      const maxLengthMessage = new Uint8Array(
-        256 - headerSize - fullMessageHeaderSize,
-      ).fill(0x01);
-      const args = {
-        derivationPath: DERIVATION_PATH,
-        sendingData: maxLengthMessage,
-      };
-      apiMock.sendCommand.mockResolvedValueOnce(
-        CommandResultFactory({
-          data: new Uint8Array([0x99, 0x88, 0x77]),
-        }),
-      );
-
-      // WHEN--------------------------------
-      //-------------------------------------
-      const result = await new SendSignMessageTask(apiMock, args).run();
-
-      // THEN--------------------------------
-      //-------------------------------------
+      // then
       expect(apiMock.sendCommand).toHaveBeenCalledTimes(0);
-      if ("error" in result) {
-        expect(result.error).toEqual(
-          new InvalidStatusWordError(
-            "The APDU command exceeds the maximum allowable size (255 bytes)",
-          ),
+      expect((result as any).error).toEqual(
+        new InvalidStatusWordError("Message cannot be empty"),
+      );
+    });
+
+    it("should return error if GET_PUBKEY fails", async () => {
+      // given
+      apiMock.sendCommand.mockResolvedValueOnce(
+        CommandResultFactory({
+          error: new InvalidStatusWordError("pubkey error"),
+        }),
+      );
+      const args = {
+        derivationPath: DERIVATION_PATH,
+        sendingData: MESSAGE,
+      };
+
+      // when
+      const result = await new SendSignMessageTask(apiMock, args).run();
+
+      // then
+      expect(apiMock.sendCommand).toHaveBeenCalledTimes(1);
+      expect((result as any).error).toEqual(
+        new InvalidStatusWordError("Error getting public key from device"),
+      );
+    });
+
+    it("should return error if SignOffChainMessageCommand fails", async () => {
+      // given
+      apiMock.sendCommand
+        .mockResolvedValueOnce(CommandResultFactory({ data: PUBKEY_BASE58 }))
+        .mockResolvedValueOnce(
+          CommandResultFactory({
+            error: new InvalidStatusWordError("no signature returned"),
+          }),
         );
-      } else {
-        throw new Error("Expected result to have error property");
-      }
+      const args = {
+        derivationPath: DERIVATION_PATH,
+        sendingData: MESSAGE,
+      };
+
+      // when
+      const result = await new SendSignMessageTask(apiMock, args).run();
+
+      // then
+      expect(apiMock.sendCommand).toHaveBeenCalledTimes(2);
+      expect((result as any).error).toEqual(
+        new InvalidStatusWordError("no signature returned"),
+      );
+    });
+
+    it("should return success when signing succeeds", async () => {
+      // given
+      const mockSig = new Uint8Array([0xf0, 0xca, 0xcc, 0x1a]);
+      apiMock.sendCommand
+        .mockResolvedValueOnce(CommandResultFactory({ data: PUBKEY_BASE58 }))
+        .mockResolvedValueOnce(CommandResultFactory({ data: mockSig }));
+      const args = {
+        derivationPath: DERIVATION_PATH,
+        sendingData: MESSAGE,
+      };
+
+      // when
+      const result = await new SendSignMessageTask(apiMock, args).run();
+
+      // then
+      expect(apiMock.sendCommand).toHaveBeenCalledTimes(2);
+      expect((result as any).data).toEqual(mockSig);
+    });
+
+    it("should reject invalid derivation path", async () => {
+      const args = {
+        derivationPath: "not/a/path",
+        sendingData: MESSAGE,
+      };
+      await expect(
+        new SendSignMessageTask(apiMock, args).run(),
+      ).rejects.toThrow();
+    });
+
+    it("should correctly build APDU command lengths", () => {
+      // given
+      const task: any = new SendSignMessageTask(apiMock, {
+        derivationPath: DERIVATION_PATH,
+        sendingData: MESSAGE,
+      });
+
+      // when
+      const fullMsg = task._buildFullMessage(MESSAGE, PUBKEY);
+      const paths = [44 | 0x80000000, 501 | 0x80000000, 0 | 0x80000000, 0];
+      const apdu = task._buildApduCommand(fullMsg, paths);
+      const expectedLen = 1 + 1 + paths.length * 4 + fullMsg.length;
+
+      // then
+      expect(apdu.length).toBe(expectedLen);
+    });
+
+    it("should handle maximum allowed message length", async () => {
+      // given
+      const headerAPDU = 1 + 1 + 4 * 4;
+      const fullMsgHeader = 1 + 15 + 1 + 32 + 1 + 1 + 32 + 2;
+      const maxBody = 255 - headerAPDU - fullMsgHeader;
+      const bigMsg = new Uint8Array(maxBody).fill(0x01);
+      const mockSig = new Uint8Array([0xf0, 0xca, 0xcc, 0x1a]);
+      apiMock.sendCommand
+        .mockResolvedValueOnce(CommandResultFactory({ data: PUBKEY_BASE58 }))
+        .mockResolvedValueOnce(CommandResultFactory({ data: mockSig }));
+
+      // when
+      const result = await new SendSignMessageTask(apiMock, {
+        derivationPath: DERIVATION_PATH,
+        sendingData: bigMsg,
+      }).run();
+
+      // then
+      expect(apiMock.sendCommand).toHaveBeenCalledTimes(2);
+      expect((result as any).data).toEqual(mockSig);
+    });
+
+    it("should error on message exceeding 16-bit length (65535)", async () => {
+      // given
+      const tooBig = new Uint8Array(MAX_MESSAGE_LENGTH + 1).fill(0xaa);
+      const args = {
+        derivationPath: DERIVATION_PATH,
+        sendingData: tooBig,
+      };
+
+      // when
+      const result = await new SendSignMessageTask(apiMock, args).run();
+
+      // then
+      expect(apiMock.sendCommand).toHaveBeenCalledTimes(0);
+      expect((result as any).error).toEqual(
+        new InvalidStatusWordError(
+          `Message too long: ${tooBig.length} bytes (max is 65535)`,
+        ),
+      );
     });
   });
 });
