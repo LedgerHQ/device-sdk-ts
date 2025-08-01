@@ -174,6 +174,7 @@ export class AuthenticateDeviceAction extends XStateDeviceAction<
           initial: "OpenApp",
           states: {
             OpenApp: {
+              // TODO snapshot for intermediateValue
               on: { success: "Auth" },
               invoke: {
                 id: "openApp",
@@ -282,6 +283,7 @@ export class AuthenticateDeviceAction extends XStateDeviceAction<
         },
 
         AddToTrustchain: {
+          // TODO snapshot for intermediateValue
           on: {
             // TODO avoid infinite loop here
             success: "GetTrustchain",
@@ -459,8 +461,13 @@ export class AuthenticateDeviceAction extends XStateDeviceAction<
           }
         >;
       }) => {
+        // TODO additional derivations should be supported:
+        // https://github.com/LedgerHQ/ledger-live/blob/develop/libs/hw-ledger-key-ring-protocol/src/Device.ts#L216...L226
+        // Probably not needed for Ledger Sync
         return args.input.map(({ applicationStream, keypair }) =>
-          applicationStream.getPublishedKey(keypair),
+          applicationStream
+            .getPublishedKey(keypair)
+            .map((key) => key.privateKey),
         );
       },
     };

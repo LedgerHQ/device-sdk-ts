@@ -9,7 +9,7 @@ import { LKRPBlock } from "./LKRPBlock";
 import { TLVParser } from "./TLVParser";
 import { CommandTags } from "./TLVTags";
 import { type LKRPBlockData } from "./types";
-import { type EncryptedPublishedKey } from "./types";
+import { type EncryptedPublishedKey, type PublishedKey } from "./types";
 
 export class LKRPBlockStream {
   private validation: Maybe<Promise<boolean>> = Nothing;
@@ -39,7 +39,7 @@ export class LKRPBlockStream {
         ...blockData,
         parent: hash,
       });
-      hash = await block.hash();
+      hash = block.hash();
       blocks.push(block);
     }
     const bytes = blocks.reduce(
@@ -106,7 +106,7 @@ export class LKRPBlockStream {
 
           for await (const [index, block] of blocks.entries()) {
             const nextBlock = blocks[index + 1];
-            if (nextBlock && (await block.hash()) !== nextBlock.parent) {
+            if (nextBlock && block.hash() !== nextBlock.parent) {
               return false;
             }
           }
@@ -161,7 +161,7 @@ export class LKRPBlockStream {
     return this.getMemberBlock(member).isJust();
   }
 
-  getPublishedKey(keypair: Keypair): Maybe<Uint8Array> {
+  getPublishedKey(keypair: Keypair): Maybe<PublishedKey> {
     return this.getMemberBlock(keypair.pubKeyToHex())
       .chain((block): Maybe<EncryptedPublishedKey> => {
         for (const command of block.commands) {
@@ -179,7 +179,7 @@ export class LKRPBlockStream {
           published.initializationVector,
           published.encryptedXpriv,
         );
-        return xpriv;
+        return { privateKey: xpriv.slice(0, 32), chainCode: xpriv.slice(32) };
       });
   }
 }

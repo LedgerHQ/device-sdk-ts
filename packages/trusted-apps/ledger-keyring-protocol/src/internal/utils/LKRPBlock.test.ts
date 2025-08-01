@@ -147,11 +147,11 @@ describe("LKRPBlock", () => {
   });
 
   describe("hash", () => {
-    it("should return the hash of the block", async () => {
+    it("should return the hash of the block", () => {
       // GIVEN
       const block = LKRPBlock.fromHex(mockedBlockHex);
       // WHEN
-      const hash = await block.hash();
+      const hash = block.hash();
       // THEN
       expect(hash).toBe(
         "7cf783bc15c062242ab92796237da3b192361da7645c488d5023698d4f9cc952",
