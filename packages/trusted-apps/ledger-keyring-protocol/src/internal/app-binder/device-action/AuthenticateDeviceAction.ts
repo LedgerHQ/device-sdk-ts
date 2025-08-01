@@ -8,7 +8,7 @@ import {
   XStateDeviceAction,
 } from "@ledgerhq/device-management-kit";
 import { type Either, EitherAsync, Left, Right } from "purify-ts";
-import { fromPromise, setup } from "xstate";
+import { assign, fromPromise, setup } from "xstate";
 
 import {
   type AuthenticateDAError,
@@ -22,6 +22,7 @@ import {
   LKRPUnauthorizedError,
   LKRPUnhandledState,
 } from "@api/app-binder/Errors";
+import { type Keypair } from "@api/app-binder/LKRPTypes";
 import { type JWT } from "@api/index";
 import { SignChallengeWithDeviceTask } from "@internal/app-binder/task/SignChallengeWithDeviceTask";
 import { SignChallengeWithKeypairTask } from "@internal/app-binder/task/SignChallengeWithKeypairTask";
@@ -31,6 +32,7 @@ import {
   type LKRPDataSource,
 } from "@internal/lkrp-datasource/data/LKRPDataSource";
 import { eitherSeqRecord } from "@internal/utils/eitherSeqRecord";
+import { type LKRPBlockStream } from "@internal/utils/LKRPBlockStream";
 import { required } from "@internal/utils/required";
 
 import { raiseAndAssign } from "./utils/raiseAndAssign";
@@ -62,7 +64,7 @@ export class AuthenticateDeviceAction extends XStateDeviceAction<
       AuthenticateDAInternalState
     >;
 
-    const { deviceAuth, keypairAuth, getTrustchain } =
+    const { deviceAuth, keypairAuth, getTrustchain, extractEncryptionKey } =
       this.extractDependencies(internalApi);
 
     return setup({
@@ -82,11 +84,13 @@ export class AuthenticateDeviceAction extends XStateDeviceAction<
 
         getTrustchain: fromPromise(getTrustchain),
 
-        getEncryptionKeyStateMachine: new AddToTrustchainDeviceAction({
+        addToTrustchainStateMachine: new AddToTrustchainDeviceAction({
           input: Left(
             new LKRPMissingDataError("Missing input for GetEncryptionKey"),
           ),
         }).makeStateMachine(internalApi),
+
+        extractEncryptionKey: fromPromise(extractEncryptionKey),
       },
 
       actions: {
@@ -185,6 +189,16 @@ export class AuthenticateDeviceAction extends XStateDeviceAction<
             },
 
             Auth: {
+              entry: assign({
+                intermediateValue: {
+                  requiredUserInteraction: "connect-ledger-sync",
+                },
+              }),
+              exit: assign({
+                intermediateValue: {
+                  requiredUserInteraction: UserInteractionRequired.None,
+                },
+              }),
               invoke: {
                 id: "deviceAuth",
                 src: "deviceAuth",
@@ -269,12 +283,13 @@ export class AuthenticateDeviceAction extends XStateDeviceAction<
 
         AddToTrustchain: {
           on: {
-            success: "ExtractEncryptionKey",
+            // TODO avoid infinite loop here
+            success: "GetTrustchain",
             error: "Error",
           },
           invoke: {
             id: "AddToTrustchain",
-            src: "getEncryptionKeyStateMachine",
+            src: "addToTrustchainStateMachine",
             input: ({ context }) =>
               context._internalState
                 .mapLeft(
@@ -325,7 +340,35 @@ export class AuthenticateDeviceAction extends XStateDeviceAction<
 
         ExtractEncryptionKey: {
           on: { success: "Success", error: "Error" },
-          // TODO: Implement ExtractEncryptionKey
+          invoke: {
+            id: "ExtractEncryptionKey",
+            src: "extractEncryptionKey",
+            input: ({ context }) =>
+              context._internalState.chain((state) =>
+                required(
+                  state.applicationStream,
+                  "Missing application stream",
+                ).map((applicationStream) => ({
+                  applicationStream,
+                  keypair: context.input.keypair,
+                })),
+              ),
+            onError: { actions: "assignErrorFromEvent" },
+            onDone: {
+              actions: raiseAndAssign(({ event }) =>
+                event.output.map((output) => {
+                  if (output.isJust()) {
+                    return {
+                      raise: "success",
+                      assign: { encryptionKey: output.extract() },
+                    };
+                  } else {
+                    return { raise: "error" };
+                  }
+                }),
+              ),
+            },
+          },
         },
 
         Success: { type: "final" },
@@ -406,6 +449,20 @@ export class AuthenticateDeviceAction extends XStateDeviceAction<
               })),
           )
           .run(),
+
+      extractEncryptionKey: async (args: {
+        input: Either<
+          AuthenticateDAError,
+          {
+            applicationStream: LKRPBlockStream;
+            keypair: Keypair;
+          }
+        >;
+      }) => {
+        return args.input.map(({ applicationStream, keypair }) =>
+          applicationStream.getPublishedKey(keypair),
+        );
+      },
     };
   }
 
