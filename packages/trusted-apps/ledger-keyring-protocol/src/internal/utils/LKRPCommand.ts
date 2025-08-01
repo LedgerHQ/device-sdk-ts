@@ -1,4 +1,4 @@
-import { type Either, Just, type Maybe, Nothing, Right } from "purify-ts";
+import { type Either, Just, Maybe, Nothing, Right } from "purify-ts";
 
 import { type LKRPParsingError } from "@api/app-binder/Errors";
 
@@ -7,7 +7,11 @@ import { bytesToHex, hexToBytes } from "./hex";
 import { TLVBuilder } from "./TLVBuilder";
 import { TLVParser } from "./TLVParser";
 import { CommandTags } from "./TLVTags";
-import { type LKRPCommandData, type UnsignedCommandData } from "./types";
+import {
+  type EncryptedPublishedKey,
+  type LKRPCommandData,
+  type UnsignedCommandData,
+} from "./types";
 
 export class LKRPCommand {
   private data: Maybe<Either<LKRPParsingError, LKRPCommandData>>;
@@ -141,6 +145,28 @@ export class LKRPCommand {
           })
           .map(bytesToHex);
 
+      default:
+        return Nothing;
+    }
+  }
+
+  getEncryptedPublichedKey(): Maybe<EncryptedPublishedKey> {
+    switch (this.bytes[0]) {
+      case CommandTags.Seed:
+      case CommandTags.Derive:
+      case CommandTags.PublishKey:
+        return this.parse()
+          .toMaybe()
+          .chain((data) => {
+            switch (data.type) {
+              case CommandTags.Seed:
+              case CommandTags.Derive:
+              case CommandTags.PublishKey:
+                return Maybe.of({ ...data });
+              default:
+                return Nothing;
+            }
+          });
       default:
         return Nothing;
     }

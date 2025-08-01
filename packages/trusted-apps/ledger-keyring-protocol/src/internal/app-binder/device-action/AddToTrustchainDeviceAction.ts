@@ -7,7 +7,7 @@ import {
   XStateDeviceAction,
 } from "@ledgerhq/device-management-kit";
 import { type Either, EitherAsync, Left, Right } from "purify-ts";
-import { fromPromise, setup } from "xstate";
+import { assign, fromPromise, setup } from "xstate";
 
 import {
   type AddToTrustchainDAError,
@@ -162,6 +162,16 @@ export class AddToTrustchainDeviceAction extends XStateDeviceAction<
 
         AddToExistingStream: {
           on: { success: "Success", error: "Error" },
+          entry: assign({
+            intermediateValue: {
+              requiredUserInteraction: "add-ledger-sync",
+            },
+          }),
+          exit: assign({
+            intermediateValue: {
+              requiredUserInteraction: UserInteractionRequired.None,
+            },
+          }),
           invoke: {
             id: "signBlock",
             src: "signBlock",

@@ -1,12 +1,15 @@
 import { Either, Just, Maybe, Nothing, Right } from "purify-ts";
 
 import { type LKRPParsingError } from "@api/app-binder/Errors";
+import { type Keypair } from "@api/app-binder/LKRPTypes";
+import { CryptoUtils } from "@internal/utils/crypto";
 
 import { bytesToHex, hexToBytes } from "./hex";
 import { LKRPBlock } from "./LKRPBlock";
 import { TLVParser } from "./TLVParser";
 import { CommandTags } from "./TLVTags";
 import { type LKRPBlockData } from "./types";
+import { type EncryptedPublishedKey } from "./types";
 
 export class LKRPBlockStream {
   private validation: Maybe<Promise<boolean>> = Nothing;
@@ -134,7 +137,49 @@ export class LKRPBlockStream {
       });
   }
 
+  getMemberBlock(member: string): Maybe<LKRPBlockData> {
+    return this.parse()
+      .toMaybe()
+      .chain((blocks) => {
+        for (const block of blocks) {
+          const parsedBlock = block.parse();
+          if (parsedBlock.isRight()) {
+            const blockData = parsedBlock.extract();
+            for (const command of blockData.commands) {
+              const pubkey = command.getPublicKey();
+              if (pubkey.isJust() && pubkey.extract() === member) {
+                return Maybe.of(blockData);
+              }
+            }
+          }
+        }
+        return Nothing;
+      });
+  }
+
   hasMember(member: string): boolean {
-    return ([] as string[]).includes(member); // TODO: Implement
+    return this.getMemberBlock(member).isJust();
+  }
+
+  getPublishedKey(keypair: Keypair): Maybe<Uint8Array> {
+    return this.getMemberBlock(keypair.pubKeyToHex())
+      .chain((block): Maybe<EncryptedPublishedKey> => {
+        for (const command of block.commands) {
+          const key = command.getEncryptedPublichedKey();
+          if (key.isJust()) {
+            return key;
+          }
+        }
+        return Nothing;
+      })
+      .map((published) => {
+        const secret = keypair.ecdh(published.ephemeralPublicKey).slice(1);
+        const xpriv = CryptoUtils.decrypt(
+          secret,
+          published.initializationVector,
+          published.encryptedXpriv,
+        );
+        return xpriv;
+      });
   }
 }

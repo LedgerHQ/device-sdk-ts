@@ -6,6 +6,12 @@ export type Trustchain = {
   [path: string]: LKRPBlockStream;
 };
 
+export type EncryptedPublishedKey = {
+  encryptedXpriv: Uint8Array;
+  initializationVector: Uint8Array;
+  ephemeralPublicKey: Uint8Array;
+};
+
 export type LKRPBlockData = {
   parent: string;
   issuer: Uint8Array;
