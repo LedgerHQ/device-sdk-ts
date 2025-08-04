@@ -88,8 +88,7 @@ export class AddToTrustchainDeviceAction extends XStateDeviceAction<
         isTustchainEmpty: ({ context }) =>
           context.input
             .toMaybe()
-            .chainNullable((state) => state.applicationStream)
-            .chain((stream) => stream.parse().toMaybe())
+            .chain((input) => input.applicationStream.parse().toMaybe())
             .map((blocks) => blocks.length === 0)
             .orDefault(true),
       },
@@ -103,11 +102,7 @@ export class AddToTrustchainDeviceAction extends XStateDeviceAction<
           requiredUserInteraction: UserInteractionRequired.None,
         },
         _internalState: Right({
-          applicationStream: null,
-          trustchain: null,
           sessionKeypair: null,
-          signedBlock: null,
-          encryptionKey: null,
         }),
       }),
 

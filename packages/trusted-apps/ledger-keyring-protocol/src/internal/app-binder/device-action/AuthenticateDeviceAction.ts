@@ -105,6 +105,17 @@ export class AuthenticateDeviceAction extends XStateDeviceAction<
       guards: {
         hasNoTrustchainId: ({ context }) => !context.input.trustchainId,
         hasNoJwt: ({ context }) => !context.input.jwt,
+        isTrustchainMember: ({ context }) =>
+          context._internalState
+            .toMaybe()
+            .map(
+              (state) =>
+                state.wasAddedToTrustchain ||
+                state.applicationStream?.hasMember(
+                  context.input.keypair.pubKeyToHex(),
+                ),
+            )
+            .extract() ?? false,
       },
     }).createMachine({
       /** @xstate-layout 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-S-AQzrICE+phjxgmoQUeA5QInP0MbneRuY-Q4vmlMQIEwwiOErKRLw+Yxg0VLJEAGYpwn7UZXUvYBxu4Tjpf3X2Cttrsp6Cpbl7kKy8i8D6d0VgTA1lqvmJee0n4MyZbGK8-Yljorga5dkPoR7OnmkGCp4dBjhEeODTVjp2GzChbDdGWBbVKsQA6poq5Vzg1mO6fx-LdXCudN9dyJM6zRRNqec10q4YDXsqZENudagFj8N4g50bQlxsGByAUcwLAxCZOXMwAbEpBvhhCAtu8RIUtVWEPo4ryqrQcIBfWLRfpgWCM2hEzcpn8w7Qoj0DExj0XxSTcqAL8aLlHhYRwTJd1HNNZmpO4zWBiM-j-SRCrYGhpem0A+1gGw0VmH8d12tvFNACNEfMdZgIQQPVBFePVJnpIJHOtxu5ZpRBaiYLyGztZlgprRJNURVFNr-XFKJuxzmXOuegW59zHnXEVKBtpM0Qx7kog4RwHp-pAq6K6fW4rKL6EnbsAAyshUaxHMWuksEK9R312j4xo0KFkBYmQ7JGN0cwLHWCnMdlx56HJ6IshLNtcC3ogz9MMOECwxYnTAn3fEIAA */
@@ -121,6 +132,7 @@ export class AuthenticateDeviceAction extends XStateDeviceAction<
           trustchain: null,
           applicationStream: null,
           encryptionKey: null,
+          wasAddedToTrustchain: false,
         }),
       }),
 
@@ -266,26 +278,15 @@ export class AuthenticateDeviceAction extends XStateDeviceAction<
         },
 
         CheckIsMembers: {
-          on: {
-            "is member": "ExtractEncryptionKey",
-            "is not member": "AddToTrustchain",
-            error: "Error",
-          },
-          entry: raiseAndAssign(({ context }) =>
-            context._internalState.map((state) => ({
-              raise: state.applicationStream?.hasMember(
-                context.input.keypair.pubKeyToHex(),
-              )
-                ? "is member"
-                : "is not member",
-            })),
-          ),
+          always: [
+            { target: "ExtractEncryptionKey", guard: "isTrustchainMember" },
+            { target: "AddToTrustchain" },
+          ],
         },
 
         AddToTrustchain: {
           // TODO snapshot for intermediateValue
           on: {
-            // TODO avoid infinite loop here
             success: "GetTrustchain",
             error: "Error",
           },
@@ -331,9 +332,9 @@ export class AuthenticateDeviceAction extends XStateDeviceAction<
             onError: { actions: "assignErrorFromEvent" },
             onDone: {
               actions: raiseAndAssign(({ event }) =>
-                event.output.map((output) => ({
+                event.output.map(() => ({
                   raise: "success",
-                  assign: output,
+                  assign: { wasAddedToTrustchain: true },
                 })),
               ),
             },
@@ -358,16 +359,10 @@ export class AuthenticateDeviceAction extends XStateDeviceAction<
             onError: { actions: "assignErrorFromEvent" },
             onDone: {
               actions: raiseAndAssign(({ event }) =>
-                event.output.map((output) => {
-                  if (output.isJust()) {
-                    return {
-                      raise: "success",
-                      assign: { encryptionKey: output.extract() },
-                    };
-                  } else {
-                    return { raise: "error" };
-                  }
-                }),
+                event.output.map((encryptionKey) => ({
+                  raise: "success",
+                  assign: { encryptionKey },
+                })),
               ),
             },
           },
@@ -464,9 +459,17 @@ export class AuthenticateDeviceAction extends XStateDeviceAction<
         // TODO additional derivations should be supported:
         // https://github.com/LedgerHQ/ledger-live/blob/develop/libs/hw-ledger-key-ring-protocol/src/Device.ts#L216...L226
         // Probably not needed for Ledger Sync
-        return args.input.map(({ applicationStream, keypair }) =>
-          applicationStream
-            .getPublishedKey(keypair)
+        return Promise.resolve(
+          args.input
+            .chain(({ applicationStream, keypair }) =>
+              applicationStream
+                .getPublishedKey(keypair)
+                .toEither(
+                  new UnknownDAError(
+                    "There is no encryption key for the current member in the application stream.",
+                  ),
+                ),
+            )
             .map((key) => key.privateKey),
         );
       },
