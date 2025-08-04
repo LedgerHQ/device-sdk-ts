@@ -7,7 +7,7 @@ import {
   UserInteractionRequired,
   XStateDeviceAction,
 } from "@ledgerhq/device-management-kit";
-import { type Either, EitherAsync, Left, Right } from "purify-ts";
+import { type Either, EitherAsync, Left, Maybe, Right } from "purify-ts";
 import { assign, fromPromise, setup } from "xstate";
 
 import {
@@ -17,7 +17,6 @@ import {
   type AddToTrustchainDAInternalState,
   type AddToTrustchainDAOutput,
 } from "@api/app-binder/AddToTrustchainDeviceActionTypes";
-import { LKRPMissingDataError } from "@api/app-binder/Errors";
 import { type Keypair } from "@api/index";
 import { type LKRPDeviceCommandError } from "@internal/app-binder/command/utils/ledgerKeyringProtocolErrors";
 import { InitTask } from "@internal/app-binder/task/InitTask";
@@ -30,6 +29,7 @@ import {
   SignBlockTask,
   type SignBlockTaskInput,
 } from "@internal/app-binder/task/SignBlockTask";
+import { eitherSeqRecord } from "@internal/utils/eitherSeqRecord";
 import { type LKRPBlock } from "@internal/utils/LKRPBlock";
 import { required } from "@internal/utils/required";
 
@@ -173,41 +173,39 @@ export class AddToTrustchainDeviceAction extends XStateDeviceAction<
             src: "signBlock",
             input: ({ context }) =>
               context.input.chain((input) =>
-                context._internalState.chain((internal) =>
-                  required(
-                    internal.sessionKeypair,
-                    "Missing session keypair",
-                  ).chain((sessionKeypair) =>
-                    input.applicationStream
-                      .getPath()
-                      .toEither(
-                        new LKRPMissingDataError("Missing application path"),
-                      )
-                      .chain((applicationPath) =>
-                        input.applicationStream
-                          .parse()
-                          .chain((blocks) =>
-                            required(blocks.at(-1), "Missing block"),
-                          )
-                          .map((parentBlock) => ({
-                            lkrpDataSource: input.lkrpDataSource,
-                            trustchainId: input.trustchainId,
-                            applicationPath,
-                            jwt: input.jwt,
-                            parent: hexaStringToBuffer(parentBlock.hash())!,
-                            blockFlow: {
-                              type: "addMember",
-                              data: {
-                                name: input.clientName,
-                                publicKey: input.keypair.pubKeyToU8a(),
-                                permissions: input.permissions,
-                              },
-                            },
-                            sessionKeypair,
-                          })),
-                      ),
-                  ),
-                ),
+                eitherSeqRecord({
+                  lkrpDataSource: input.lkrpDataSource,
+                  trustchainId: input.trustchainId,
+                  jwt: input.jwt,
+                  clientName: input.clientName,
+                  sessionKeypair: () =>
+                    context._internalState.chain(({ sessionKeypair }) =>
+                      required(sessionKeypair, "Missing session keypair"),
+                    ),
+                  applicationPath: () =>
+                    required(
+                      input.applicationStream.getPath().extract(),
+                      "Missing application path",
+                    ),
+                  parent: () =>
+                    required(
+                      input.applicationStream
+                        .parse()
+                        .toMaybe()
+                        .chainNullable((blocks) => blocks.at(-1)?.hash())
+                        .chainNullable(hexaStringToBuffer)
+                        .extract(),
+                      "Missing parent block",
+                    ),
+                  blockFlow: {
+                    type: "addMember",
+                    data: {
+                      name: input.clientName,
+                      publicKey: input.keypair.pubKeyToU8a(),
+                      permissions: input.permissions,
+                    },
+                  },
+                }),
               ),
             onError: { actions: "assignErrorFromEvent" },
             onDone: {
@@ -220,7 +218,61 @@ export class AddToTrustchainDeviceAction extends XStateDeviceAction<
 
         AddToNewStream: {
           on: { success: "Success", error: "Error" },
-          // TODO: Implement AddToNewStream
+          entry: assign({
+            intermediateValue: {
+              requiredUserInteraction: "add-ledger-sync",
+            },
+          }),
+          exit: assign({
+            intermediateValue: {
+              requiredUserInteraction: UserInteractionRequired.None,
+            },
+          }),
+          invoke: {
+            id: "signBlock",
+            src: "signBlock",
+            input: ({ context }) =>
+              context.input.chain((input) =>
+                eitherSeqRecord({
+                  lkrpDataSource: input.lkrpDataSource,
+                  trustchainId: input.trustchainId,
+                  jwt: input.jwt,
+                  clientName: input.clientName,
+                  sessionKeypair: () =>
+                    context._internalState.chain(({ sessionKeypair }) =>
+                      required(sessionKeypair, "Missing session keypair"),
+                    ),
+                  applicationPath: () =>
+                    required(
+                      input.applicationStream.getPath().extract(),
+                      "Missing application path",
+                    ),
+                  parent: () =>
+                    required(
+                      Maybe.fromNullable(input.trustchain["m/"])
+                        .chain((rootStream) => rootStream.parse().toMaybe())
+                        .chainNullable((blocks) => blocks[0]?.hash())
+                        .chainNullable(hexaStringToBuffer)
+                        .extract(),
+                      "Missing init block",
+                    ),
+                  blockFlow: {
+                    type: "derive",
+                    data: {
+                      name: input.clientName,
+                      publicKey: input.keypair.pubKeyToU8a(),
+                      permissions: input.permissions,
+                    },
+                  },
+                }),
+              ),
+            onError: { actions: "assignErrorFromEvent" },
+            onDone: {
+              actions: raiseAndAssign(({ event }) =>
+                event.output.map(() => ({ raise: "success" })),
+              ),
+            },
+          },
         },
 
         Success: { type: "final" },

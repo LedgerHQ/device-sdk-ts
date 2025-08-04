@@ -14,16 +14,23 @@ import { type EncryptedPublishedKey, type PublishedKey } from "./types";
 export class LKRPBlockStream {
   private validation: Maybe<Promise<boolean>> = Nothing;
   private blocks: Maybe<Either<LKRPParsingError, LKRPBlock[]>> = Nothing;
+  private path: Maybe<string> = Nothing;
 
   constructor(
     private readonly bytes: Uint8Array,
     blocks?: LKRPBlock[],
+    path?: string,
   ) {
     this.blocks = blocks ? Just(Right(blocks)) : Nothing;
+    this.path = Maybe.fromNullable(path);
   }
 
   static fromHex(hex: string): LKRPBlockStream {
     return new LKRPBlockStream(hexToBytes(hex));
+  }
+
+  static fromPath(path: string): LKRPBlockStream {
+    return new LKRPBlockStream(new Uint8Array(), [], path);
   }
 
   static async fromData(
@@ -119,22 +126,25 @@ export class LKRPBlockStream {
   }
 
   getPath(): Maybe<string> {
-    return this.parse()
-      .toMaybe()
-      .chain((blocks) => Maybe.fromNullable(blocks[0]))
-      .chain((block) => block.parse().toMaybe())
-      .chain(({ commands }) => Maybe.fromNullable(commands[0]))
-      .chain((command) => command.parse().toMaybe())
-      .chain((data) => {
-        switch (data.type) {
-          case CommandTags.Derive:
-            return Just(data.path);
-          case CommandTags.Seed:
-            return Just("m/0'");
-          default:
-            return Nothing;
-        }
-      });
+    this.path.ifNothing(() => {
+      this.path = this.parse()
+        .toMaybe()
+        .chain((blocks) => Maybe.fromNullable(blocks[0]))
+        .chain((block) => block.parse().toMaybe())
+        .chain(({ commands }) => Maybe.fromNullable(commands[0]))
+        .chain((command) => command.parse().toMaybe())
+        .chain((data) => {
+          switch (data.type) {
+            case CommandTags.Derive:
+              return Just(data.path);
+            case CommandTags.Seed:
+              return Just("m/0'");
+            default:
+              return Nothing;
+          }
+        });
+    });
+    return this.path;
   }
 
   getMemberBlock(member: string): Maybe<LKRPBlockData> {
