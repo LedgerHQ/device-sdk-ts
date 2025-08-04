@@ -47,17 +47,19 @@ type UnionOfLeft<T extends object> =
     : never;
 
 /**
- * eitherSeqRecordAsync: like eitherSeqRecord but for EitherAsync.
+ * eitherAsyncSeqRecord: like eitherSeqRecord but for EitherAsync.
  * (but not wrapped in a function as EitherAsync are already lazy).
  * E.g.:
  * eitherSeqRecordAsync({ a: EitherAsync<ErrA, 1>, b: EitherAsync<ErrB, "a"> }) -> EitherAsync(ErrA | ErrB, { a: 1, b: "a" }>
  */
-export function eitherSeqRecordAsync<T extends object>(
+export function eitherAsyncSeqRecord<T extends object>(
   record: T,
 ): EitherAsyncSeqRecord<T> {
   return EitherAsync.sequence(
     Object.entries(record).map(([key, value]) =>
-      value instanceof EitherAsync
+      value &&
+      typeof value === "object" &&
+      (value as object).constructor === EitherAsync
         ? (value as EitherAsync<unknown, unknown>).map((v) => [key, v])
         : EitherAsync.liftEither(Right([key, value])),
     ),

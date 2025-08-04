@@ -62,5 +62,6 @@ export type AuthenticateDAInternalState = Either<
     readonly trustchain: Trustchain | null;
     readonly applicationStream: LKRPBlockStream | null;
     readonly encryptionKey: Uint8Array | null;
+    readonly wasAddedToTrustchain: boolean;
   }
 >;

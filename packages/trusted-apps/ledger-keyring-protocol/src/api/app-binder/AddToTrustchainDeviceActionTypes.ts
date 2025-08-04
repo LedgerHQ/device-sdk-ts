@@ -47,8 +47,6 @@ export type AddToTrustchainDAIntermediateValue = {
 export type AddToTrustchainDAInternalState = Either<
   AddToTrustchainDAError,
   {
-    readonly trustchain: Trustchain | null;
-    readonly applicationStream: LKRPBlockStream | null;
     readonly sessionKeypair: Keypair | null;
   }
 >;

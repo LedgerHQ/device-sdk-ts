@@ -18,7 +18,10 @@ import { SignBlockSingleCommand } from "@internal/app-binder/command/SignBlockSi
 import { type LKRPDeviceCommandError } from "@internal/app-binder/command/utils/ledgerKeyringProtocolErrors";
 import { type LKRPDataSource } from "@internal/lkrp-datasource/data/LKRPDataSource";
 import { CryptoUtils } from "@internal/utils/crypto";
-import { eitherSeqRecord } from "@internal/utils/eitherSeqRecord";
+import {
+  eitherAsyncSeqRecord,
+  eitherSeqRecord,
+} from "@internal/utils/eitherSeqRecord";
 import { LKRPBlock } from "@internal/utils/LKRPBlock";
 import { LKRPCommand } from "@internal/utils/LKRPCommand";
 import { CommandTags, GeneralTags } from "@internal/utils/TLVTags";
@@ -85,27 +88,7 @@ export class SignBlockTask {
     sessionKeypair,
   }: SignBlockTaskInput): EitherAsync<SignBlockError, LKRPBlock> {
     const commands = this.signCommands(applicationPath, blockFlow);
-    return this.signBlockHeader(parent, commands.length).chain((header) =>
-      EitherAsync.sequence(commands).chain((commands) =>
-        this.signBlockSignature(sessionKeypair)
-          .chain((signature) =>
-            this.decryptBlock(parent, { header, commands, signature }),
-          )
-          .chain((block) => {
-            switch (blockFlow.type) {
-              case "derive":
-                return lkrpDataSource
-                  .postDerivation(trustchainId, block, jwt)
-                  .map(() => block);
-              default:
-                return lkrpDataSource
-                  .putCommands(trustchainId, applicationPath, block, jwt)
-                  .map(() => block);
-            }
-          }),
-      ),
-    );
-    /*return eitherSeqRecordAsync({
+    return eitherAsyncSeqRecord({
       header: this.signBlockHeader(parent, commands.length),
       commands: EitherAsync.sequence(commands),
       signature: this.signBlockSignature(sessionKeypair),
@@ -122,7 +105,7 @@ export class SignBlockTask {
               .putCommands(trustchainId, applicationPath, block, jwt)
               .map(() => block);
         }
-      });*/
+      });
   }
 
   signBlockHeader(
