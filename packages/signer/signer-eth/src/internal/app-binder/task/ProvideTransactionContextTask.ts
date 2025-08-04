@@ -18,6 +18,7 @@ import { type Either, Left, Right } from "purify-ts";
 
 import { ProvideEnumCommand } from "@internal/app-binder/command/ProvideEnumCommand";
 import { ProvideNFTInformationCommand } from "@internal/app-binder/command/ProvideNFTInformationCommand";
+import { ProvideProxyInfoCommand } from "@internal/app-binder/command/ProvideProxyInfoCommand";
 import { ProvideTokenInformationCommand } from "@internal/app-binder/command/ProvideTokenInformationCommand";
 import { ProvideTransactionFieldDescriptionCommand } from "@internal/app-binder/command/ProvideTransactionFieldDescriptionCommand";
 import { ProvideTransactionInformationCommand } from "@internal/app-binder/command/ProvideTransactionInformationCommand";
@@ -108,6 +109,9 @@ export class ProvideTransactionContextTask {
     payload,
     certificate,
   }: ClearSignContextSuccess): Promise<CommandResult<unknown, EthErrorCodes>> {
+    console.log("LAU: provideContext", type, payload);
+    console.log("LAU: certificate", certificate);
+
     // if a certificate is provided, we load it before sending the command
     if (certificate) {
       await this._api.sendCommand(
@@ -200,6 +204,15 @@ export class ProvideTransactionContextTask {
           commandFactory: (args) =>
             new ProvideWeb3CheckCommand({
               payload: args.chunkedData,
+              isFirstChunk: args.isFirstChunk,
+            }),
+        }).run();
+      case ClearSignContextType.PROXY_DELEGATE_CALL:
+        return this._sendPayloadInChunksTaskFactory(this._api, {
+          payload,
+          commandFactory: (args) =>
+            new ProvideProxyInfoCommand({
+              data: args.chunkedData,
               isFirstChunk: args.isFirstChunk,
             }),
         }).run();

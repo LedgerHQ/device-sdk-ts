@@ -373,6 +373,45 @@ describe("BuildTransactionContextTask", () => {
     });
   });
 
+  it("should build the transaction context with proxy delegate call context", async () => {
+    // GIVEN
+    const clearSignContexts: ClearSignContext[] = [
+      {
+        type: ClearSignContextType.TRANSACTION_INFO,
+        payload: "payload-1",
+        certificate: defaultCertificate,
+      },
+      {
+        type: ClearSignContextType.PROXY_DELEGATE_CALL,
+        payload: "payload-2",
+      },
+    ];
+    const clearSignContextsOptional: ClearSignContext[] = [];
+    contextModuleMock.getContexts.mockResolvedValueOnce(clearSignContexts);
+    apiMock.getDeviceSessionState.mockReturnValueOnce({
+      sessionStateType: DeviceSessionStateType.ReadyWithoutSecureChannel,
+      deviceStatus: DeviceStatus.CONNECTED,
+      installedApps: [],
+      currentApp: { name: "Ethereum", version: "1.15.0" },
+      deviceModelId: DeviceModelId.FLEX,
+      isSecureConnectionAllowed: false,
+    });
+
+    // WHEN
+    const result = await new BuildTransactionContextTask(
+      apiMock,
+      defaultArgs,
+      getWeb3ChecksFactoryMock,
+    ).run();
+
+    // THEN
+    expect(result).toEqual({
+      clearSignContexts: [clearSignContexts[1], clearSignContexts[0]],
+      clearSignContextsOptional,
+      clearSigningType: ClearSigningType.EIP7730,
+    });
+  });
+
   it("should call the web3checks factory with correct parameters", async () => {
     // GIVEN
     const clearSignContexts: ClearSignContext[] = [];

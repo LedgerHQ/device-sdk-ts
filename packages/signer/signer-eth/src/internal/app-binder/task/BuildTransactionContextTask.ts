@@ -1,4 +1,5 @@
 import {
+  type ClearSignContext,
   type ClearSignContextSuccess,
   type ClearSignContextSuccessType,
   ClearSignContextType,
@@ -87,12 +88,13 @@ export class BuildTransactionContextTask {
     }
 
     // Get the clear sign contexts
-    const clearSignContexts = await contextModule.getContexts({
-      challenge: challenge,
-      domain: options.domain,
-      deviceModelId: deviceState.deviceModelId,
-      ...subset,
-    });
+    const clearSignContexts: ClearSignContext[] =
+      await contextModule.getContexts({
+        challenge: challenge,
+        domain: options.domain,
+        deviceModelId: deviceState.deviceModelId,
+        ...subset,
+      });
 
     // NOTE: we need to filter out the ENUM and ERROR types
     // ENUM are handled differently
@@ -137,8 +139,12 @@ export class BuildTransactionContextTask {
         (ctx) =>
           ctx.type === ClearSignContextType.TRANSACTION_FIELD_DESCRIPTION,
       );
+      const proxyContexts = clearSignContextsSuccess.filter(
+        (ctx) => ctx.type === ClearSignContextType.PROXY_DELEGATE_CALL,
+      );
 
       filteredContexts = [
+        ...proxyContexts,
         transactionInfo,
         ...transactionFields,
         ...(web3Check ? [web3Check] : []),

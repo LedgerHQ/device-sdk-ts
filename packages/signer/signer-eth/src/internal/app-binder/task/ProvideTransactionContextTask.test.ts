@@ -13,6 +13,7 @@ import { Left, Right } from "purify-ts";
 
 import { ProvideEnumCommand } from "@internal/app-binder/command/ProvideEnumCommand";
 import { ProvideNFTInformationCommand } from "@internal/app-binder/command/ProvideNFTInformationCommand";
+import { ProvideProxyInfoCommand } from "@internal/app-binder/command/ProvideProxyInfoCommand";
 import { ProvideTokenInformationCommand } from "@internal/app-binder/command/ProvideTokenInformationCommand";
 import { ProvideTransactionFieldDescriptionCommand } from "@internal/app-binder/command/ProvideTransactionFieldDescriptionCommand";
 import { ProvideTransactionInformationCommand } from "@internal/app-binder/command/ProvideTransactionInformationCommand";
@@ -267,6 +268,7 @@ describe("ProvideTransactionContextTask", () => {
           ClearSignContextType.TRANSACTION_FIELD_DESCRIPTION,
           ProvideTransactionFieldDescriptionCommand,
         ],
+        [ClearSignContextType.PROXY_DELEGATE_CALL, ProvideProxyInfoCommand],
       ] as const)(
         "should provide the transaction context by calling sendPayloadInChunksTask for a %s context",
         async (contextType, commandClass) => {
