@@ -32,7 +32,7 @@ import {
   type LKRPDataSource,
 } from "@internal/lkrp-datasource/data/LKRPDataSource";
 import { eitherSeqRecord } from "@internal/utils/eitherSeqRecord";
-import { type LKRPBlockStream } from "@internal/utils/LKRPBlockStream";
+import { LKRPBlockStream } from "@internal/utils/LKRPBlockStream";
 import { required } from "@internal/utils/required";
 
 import { raiseAndAssign } from "./utils/raiseAndAssign";
@@ -442,7 +442,9 @@ export class AuthenticateDeviceAction extends XStateDeviceAction<
               .getTrustchainById(trustchainId, jwt)
               .map((trustchain) => ({
                 trustchain,
-                applicationStream: trustchain[`m/${applicationId}'`] ?? null,
+                applicationStream:
+                  trustchain[`m/${applicationId}'`] ??
+                  LKRPBlockStream.fromPath(`m/0'/${applicationId}'/0'`),
               })),
           )
           .run(),
