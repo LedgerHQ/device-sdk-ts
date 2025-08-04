@@ -1,6 +1,11 @@
 import { isHexaString } from "@ledgerhq/device-management-kit";
 import { inject, injectable } from "inversify";
 
+import { pkiTypes } from "@/pki/di/pkiTypes";
+import type { PkiCertificateLoader } from "@/pki/domain/PkiCertificateLoader";
+import { KeyId } from "@/pki/model/KeyId";
+import { KeyUsage } from "@/pki/model/KeyUsage";
+import { PkiCertificate } from "@/pki/model/PkiCertificate";
 import { ContextLoader } from "@/shared/domain/ContextLoader";
 import {
   ClearSignContext,
@@ -19,6 +24,8 @@ export class TransactionContextLoader implements ContextLoader {
     private transactionDataSource: TransactionDataSource,
     @inject(transactionTypes.ProxyDataSource)
     private proxyDataSource: ProxyDataSource,
+    @inject(pkiTypes.PkiCertificateLoader)
+    private certificateLoader: PkiCertificateLoader,
   ) {}
 
   async load(ctx: TransactionContext): Promise<ClearSignContext[]> {
@@ -54,7 +61,7 @@ export class TransactionContextLoader implements ContextLoader {
       string,
       string | undefined,
     ] = proxyDelegateCall.caseOf({
-      Left: () => [to, undefined],
+      Left: () => [to!, undefined],
       Right: (proxyData: ProxyDelegateCall): [string, string | undefined] => {
         return [
           proxyData.delegateAddresses.find((address) => address === to) ||
@@ -64,12 +71,22 @@ export class TransactionContextLoader implements ContextLoader {
       },
     });
 
+    let certificate: PkiCertificate | undefined = undefined;
+    if (proxyDelegateCallDescriptor) {
+      certificate = await this.certificateLoader.loadCertificate({
+        keyId: KeyId.CalCalldataKey,
+        keyUsage: KeyUsage.Calldata,
+        targetDevice: ctx.deviceModelId,
+      });
+    }
+
     const proxyDelegateCallContext: ClearSignContext[] =
       proxyDelegateCallDescriptor
         ? [
             {
               type: ClearSignContextType.PROXY_DELEGATE_CALL,
               payload: proxyDelegateCallDescriptor,
+              certificate: certificate,
             },
           ]
         : [];
