@@ -14,15 +14,12 @@ export type JWT = {
   };
 };
 
+/**
+ * https://ledgerhq.atlassian.net/wiki/spaces/TA/pages/5865144361/ARCH+LKRP+-+v2+specifications#Member-permissions
+ */
 export enum Permissions {
-  KEY_READER = 0x01,
-  KEY_CREATOR = 0x02,
-  KEY_REVOKER = 0x04,
-  ADD_MEMBER = 0x08,
-  REMOVE_MEMBER = 0x16,
-  CHANGE_MEMBER_PERMISSIONS = 0x32,
-  CHANGE_MEMBER_NAME = 0x64,
-
-  MEMBER = 0,
-  OWNER = 0xffffffff,
+  OWNER = 0xffffffff, // Owners of the stream have access to everything
+  CAN_ENCRYPT = 1, // The member can have access to the stream private key
+  CAN_DERIVE = 1 << 1, // The member can have access to the stream chain code (if a member have access to the private key and the chain code it is able to derive sub-streams)
+  CAN_ADD_BLOCK = 1 << 2, // The member is authorized to issue blocks in the current stream
 }
