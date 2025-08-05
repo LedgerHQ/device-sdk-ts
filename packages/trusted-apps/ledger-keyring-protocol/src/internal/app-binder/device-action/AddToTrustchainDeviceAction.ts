@@ -30,7 +30,6 @@ import {
   type SignBlockTaskInput,
 } from "@internal/app-binder/task/SignBlockTask";
 import { eitherSeqRecord } from "@internal/utils/eitherSeqRecord";
-import { type LKRPBlock } from "@internal/utils/LKRPBlock";
 import { required } from "@internal/utils/required";
 
 import { raiseAndAssign } from "./utils/raiseAndAssign";
@@ -93,7 +92,7 @@ export class AddToTrustchainDeviceAction extends XStateDeviceAction<
             .orDefault(true),
       },
     }).createMachine({
-      /** @xstate-layout N4IgpgJg5mDOIC5QEEIQCoHt0CcCusALgMYAWAhgJYB2AImAG6XFjLGGWbUB0AktZUIBlOLE7UAxBC5huNBpgDWsmoIDCmALaby1CAG0ADAF1EoAA6YxHLmZAAPRAEZDAdm6unAFgAcAJi9PLwA2PycAVmCAGhAAT0QAZhDucJDXAE5XcO9wsOCAX3yY1AxsfCIyKjpGZlZ2cT4BYVFxCTAcHEwcbnMAG3JCADMuzTkmjW1dAxM7S2txO0cEdPTuMMN0hKcEnycMwx9ouMQ-cITuDYTg1wOb4PScwuK0LFwCEgoaeiYWNhsefiCESwMRcCSwPDEFggoymJAgOaCBbwpYJVLcBKuLwrQx+dJnbZeGLxBAJALcLxOYLhHGGFx+BJPEAlV7lD5Vb61P4NQHNEGtdqdHCw2ZWJG2FGJdGY7HpXH4rZJYmIXx+NaywKbBk3VyMorMl5ld6VL41X71LjcAAK5BwsDAQkIODA5E0UhkYwUyh6tvtjudrpF8MR-0WiDOwW4wT2ex8CTJ122yoQYR8FzSPkyEWyXiuTJZRoqn2qPzq-2tvodTpdbsFXR6-SGIx9dqrAc0QYsYtDkoQuUjNNcwUC4V2up8yac5JpV2CCTcVJ8XgZ+cNbyLHLNZYaNtb-pr4Mh0NgnYR3eRoCWrlcad1udcpxWu0xyb8fkM3CpwWCBzlSR8o5eKupTruypqltylq7n61aum0HRdKeIYXg4iDXreSSYo+6TPq4yZoucWIrF4dLxlcaLAayxrFpy5rlmopBgMQijIOYfTMAM4j7q6ACi9iUEQEhIeeEqXs4exqus+J4k4AHYpOfjuHG8YMl42Iyv4lGFmBJZchaPAMUxLFsb0HH-Nxmh8QJhBCU4cJdvMomoQgTgSWsLjSQ8cnpK+fhpspeJuF4ZyRHOWmgSaul0Q0BZWUQNBQBZh5QqIwmOdQYYuaE4QpCRITpMOhg0nSk67Nwz6+BsATeHKPjhWykW0dulqxfx8XUIlsG1ghwozMGIkZb2eyGOc-hkti-gjeEhhEscKaKRccaBVOBXBaO9XUZuEH6dwBYAHJgAA7klEIpTCfUOeKg1iS5kRqkV77ZJsuyqfh7iufcGybGiOSGAU+oFhFNFbpBPD7UdSV1r19lnulmURFiGLbNeRXZaEeFzVOkYHCpfnxt+mJOIU+rUJgEBwHYgMNcD209pddPOQAtE4yaM9GHg3IYdJZCOninBtG7gXp5a8sCoLXbDV2ZYEyZqV43ArCs1Wjj9WQCzpTWgxWe5daKcO9oE7iUiR00bGc6SzSSWyRrKDxzjOanhOrjUgzthnMax7HEJxXAWXFhB61LvZyk4HOYQyT4Wwkvkft+1LhDc2Jc2ErjOzTwsxYa-sJRZgcM0syNpqbU22yRfi+e4OPzli3iBEkQEA2u1NbRnLWGgdx26-1+s3dsmweCN2wjYcw7Xgp2PKSRrlLnb-3PCBzdC9FlpCEeoh5yhBf+JGmxx5iPj7K5r45bqXOD349zhIOdWNwvm1L81PA8T1G9OVv84YlfP7I4EuY+ZjWxPzflzNGXErlPDE3yEAA */
+      /** @xstate-layout N4IgpgJg5mDOIC5QEEIQCoHt0CcCusALgMYAWAhgJYB2AImAG6XFjLGGWbUB0AktZUIBlOLE7UAxBC5huNBpgDWsmoIDCmALaby1CAG0ADAF1EoAA6YxHLmZAAPRAEZDAdm6unAFgAcAJi9PLwA2PycAVmCAGhAAT0QAZhDucJDXAE5XcO9wsOCAX3yY1AxsfCIyKjpGZlZ2cT4BYVFxCTAcHEwcbnMAG3JCADMuzTkmjW1dAxM7S2txO0cEdPTuMMN0hKcEnycMwx9ouMQ-cITuDYTg1wOb4PScwuK0LFwCEgoaeiYWNhsefiCESwMRcCSwPDEFggoymJAgOaCBbwpYJVLcBKuLwrQx+dJnbZeGLxBAJALcLxOYLhHGGFx+BJPEAlV7lD5Vb61P4NQHNEGtdqdHCw2ZWJG2FGJdGY7HpXH4rZJYmIXx+NaywKbBk3VyMorMl5ld6VL41X71LjcAAK5BwsDAQkIODA5E0UhkYwUyh6tvtjudrpF8MR-0WiDOwW4wT2ex8CTJ122yoQYR8FzSPkyEWyXiuTJZRoqn2qPzq-2tvodTpdbsFXR6-SGIx9dqrAc0QYsYtDkoQuUjNNcwUC4V2up8yac5JpV2CCTcVJ8XgZ+cNbyLHLNZYaNtb-pr4Mh0NgnYR3eRoCWrlcad1udcpxWu0xyb8fkM3CpwWCBzlSR8o5eKupTruypqltylq7n61aum0HRdKeIYXg4iDXreSSYo+6TPq4yZoucWIrF4dLxlcaLAayxrFpy5rlmopBgMQijIOYfTMAM4j7q6ACi9iUEQEhIeeEqXs4VJeCkN5+D4D4-ocESvm+3APNSP6+GSETpAU+oFqBJollyFo8AxTEsWxvQcf83GaHxAmEEJThwl28yiahCBOE4hwYoYvi+D4dIHLiyYALRTu4bh4mcN43psAGUYWYGGXRDQFnZRA0FANnutQKjUF6shiFA1AAEK9JgzHCa51Bhh5XjLtwAWBIYwQARJU6hXikm5CEnleOEWSUk4CX6TRW6QTwaX8Rl1BZbBtYId0fQDMMOCjEVpXlZVMzBiJNW9t4DKfpEpy7JEmbaaFOxqgk6Tvp5A1-vVerPCBbIGbR26WlN9mZdlEJQqIVXivtYkecOapZD4sleYYhgDd+nUZBSlKpNDWG5CN71jRBxncD9M1ze28FCsDPZg1S4ThBc773IE843IpxwIGFBweLdGyyZhByyVj1Gbrj5YFgAcmAADu2XSLlnpKIVlDFWVFWKGTKFLIdkZDjs2ZtS+zOYh4NxwxkAXpNicZ8xu4FGULhqixL80k-Wy1Nmt3AbYr23OWe1W1d4ewYps0ZTpsmxZKFvhrOEdLXg8LgtbdFtJZ9E347b4v-UeQM7S5IO+xDHijtpgR+PciPM94kZuLieK3XiRvpInH3jXjIvpw7dbCtn3u5wd1LU7iLWm7qVdMySYSSZSpzeDsngl1OhT6tQmAQHAdh6djAvWyhyFuUsYXh-cjUPE+ThxW+w26WuG9Wyllq8sCoKg935PuYEyb1ZJKwrAEERxtkWSNxxlvKClYbKih9r2QI7hKQkSjhsM4pt8JUgpF-KkaJNj1XCIAzet8TKMWYqxdixBOJcBsulQg4Ce5gzlE4A2mEGRPlNgkJSH5vx9xuNiOGYRXDYJvl9SahpyF-XmpQl+atMSRm2KmNwAFUhlxJCFd85x4yjnHpPQIvheHJX4anUodswG7QgRTK4qxoyGB2GbN8qZJzkgeLsH80ZNjw2hlo5OeMhCZxBKI1Wzg4yrBajSe6A1erhE6gFKMDwBrbHxP1O8rjm7lh4otbxu9fEDRSFqUcUNIgHFCi4VYOE5Q4RahsRcOlChAA */
 
       id: "AddToTrustchainDeviceAction",
       context: ({ input }) => ({
@@ -182,7 +181,7 @@ export class AddToTrustchainDeviceAction extends XStateDeviceAction<
                     context._internalState.chain(({ sessionKeypair }) =>
                       required(sessionKeypair, "Missing session keypair"),
                     ),
-                  applicationPath: () =>
+                  path: () =>
                     required(
                       input.applicationStream.getPath().extract(),
                       "Missing application path",
@@ -242,7 +241,7 @@ export class AddToTrustchainDeviceAction extends XStateDeviceAction<
                     context._internalState.chain(({ sessionKeypair }) =>
                       required(sessionKeypair, "Missing session keypair"),
                     ),
-                  applicationPath: () =>
+                  path: () =>
                     required(
                       input.applicationStream.getPath().extract(),
                       "Missing application path",
@@ -300,11 +299,9 @@ export class AddToTrustchainDeviceAction extends XStateDeviceAction<
 
       signBlock: (args: {
         input: Either<AddToTrustchainDAError, SignBlockTaskInput>;
-      }): Promise<Either<SignBlockError, LKRPBlock>> =>
+      }): Promise<Either<SignBlockError, void>> =>
         EitherAsync.liftEither(args.input)
-          .chain<AddToTrustchainDAError, LKRPBlock>((input) =>
-            new SignBlockTask(internalApi).run(input),
-          )
+          .chain((input) => new SignBlockTask(internalApi).run(input))
           .run(),
     };
   }

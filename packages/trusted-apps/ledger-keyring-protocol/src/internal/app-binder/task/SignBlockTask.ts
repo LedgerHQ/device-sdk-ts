@@ -4,7 +4,7 @@ import {
   type InternalApi,
   UnknownDAError,
 } from "@ledgerhq/device-management-kit";
-import { type Either, EitherAsync, Left, Right } from "purify-ts";
+import { Either, EitherAsync, Left, Right } from "purify-ts";
 
 import {
   type LKRPHttpRequestError,
@@ -53,6 +53,12 @@ type SignaturePayload = {
   signature: Uint8Array;
 };
 
+type EncryptedBlock = {
+  header: HeaderPayload;
+  commands: EncryptedCommand[];
+  signature: SignaturePayload;
+};
+
 export type SignBlockError =
   | LKRPDeviceCommandError
   | LKRPParsingError
@@ -63,7 +69,7 @@ export type SignBlockError =
 export type SignBlockTaskInput = {
   lkrpDataSource: LKRPDataSource;
   trustchainId: string;
-  applicationPath: string;
+  path: string;
   jwt: JWT;
   parent: Uint8Array;
   blockFlow: BlockFlow;
@@ -81,29 +87,27 @@ export class SignBlockTask {
   run({
     lkrpDataSource,
     trustchainId,
-    applicationPath,
+    path,
     jwt,
     parent,
     blockFlow,
     sessionKeypair,
-  }: SignBlockTaskInput): EitherAsync<SignBlockError, LKRPBlock> {
-    const commands = this.signCommands(applicationPath, blockFlow);
+  }: SignBlockTaskInput): EitherAsync<SignBlockError, void> {
+    const commands = this.signCommands(path, blockFlow);
     return eitherAsyncSeqRecord({
       header: this.signBlockHeader(parent, commands.length),
       commands: EitherAsync.sequence(commands),
       signature: this.signBlockSignature(sessionKeypair),
     })
-      .chain((encryptedBlock) => this.decryptBlock(parent, encryptedBlock))
+      .chain((encryptedBlock) =>
+        EitherAsync.liftEither(this.decryptBlock(parent, encryptedBlock)),
+      )
       .chain((block) => {
         switch (blockFlow.type) {
           case "derive":
-            return lkrpDataSource
-              .postDerivation(trustchainId, block, jwt)
-              .map(() => block);
-          default:
-            return lkrpDataSource
-              .putCommands(trustchainId, applicationPath, block, jwt)
-              .map(() => block);
+            return lkrpDataSource.postDerivation(trustchainId, block, jwt);
+          case "addMember":
+            return lkrpDataSource.putCommands(trustchainId, path, block, jwt);
         }
       });
   }
@@ -268,63 +272,49 @@ export class SignBlockTask {
 
   decryptBlock(
     parent: Uint8Array,
-    {
-      header,
-      commands,
-      signature,
-    }: {
-      header: HeaderPayload;
-      commands: EncryptedCommand[];
-      signature: SignaturePayload;
-    },
-  ): EitherAsync<SignBlockError, LKRPBlock> {
-    return EitherAsync(async () => {
-      const decryptedIssuer = CryptoUtils.decrypt(
-        signature.secret,
-        header.iv,
-        header.issuer,
-      );
-      const decryptedCommands: LKRPCommand[] = [];
-      for (const command of commands) {
-        const decryptedCommand = await this.decryptCommand(
-          signature.secret,
-          command,
-        ).run();
-        decryptedCommands.push(decryptedCommand.unsafeCoerce());
-      }
-      return LKRPBlock.fromData({
+    { header, commands, signature }: EncryptedBlock,
+  ): Either<SignBlockError, LKRPBlock> {
+    const decryptedIssuer = CryptoUtils.decrypt(
+      signature.secret,
+      header.iv,
+      header.issuer,
+    );
+    return Either.sequence(
+      commands.map((command) => this.decryptCommand(signature.secret, command)),
+    ).map((decryptedCommands) =>
+      LKRPBlock.fromData({
         parent: bufferToHexaString(parent),
         issuer: decryptedIssuer,
         commands: decryptedCommands,
         signature: signature.signature,
-      });
-    });
+      }),
+    );
   }
 
   decryptCommand(
     secret: Uint8Array,
     command: EncryptedCommand,
-  ): EitherAsync<UnknownDAError, LKRPCommand> {
-    return EitherAsync(async () => {
-      switch (command.type) {
-        case CommandTags.Derive:
-        case CommandTags.PublishKey: {
-          const encryptedXpriv = CryptoUtils.decrypt(
-            secret,
-            command.iv,
-            command.xpriv,
-          );
-          return LKRPCommand.fromData({
+  ): Either<UnknownDAError, LKRPCommand> {
+    switch (command.type) {
+      case CommandTags.Derive:
+      case CommandTags.PublishKey: {
+        const encryptedXpriv = CryptoUtils.decrypt(
+          secret,
+          command.iv,
+          command.xpriv,
+        );
+        return Right(
+          LKRPCommand.fromData({
             ...command,
             initializationVector: command.commandIv,
             encryptedXpriv,
-          });
-        }
-        case CommandTags.AddMember:
-          return LKRPCommand.fromData({ ...command });
-        default:
-          throw new UnknownDAError("Unsupported command type");
+          }),
+        );
       }
-    });
+      case CommandTags.AddMember:
+        return Right(LKRPCommand.fromData({ ...command }));
+      default:
+        return Left(new UnknownDAError("Unsupported command type"));
+    }
   }
 }
