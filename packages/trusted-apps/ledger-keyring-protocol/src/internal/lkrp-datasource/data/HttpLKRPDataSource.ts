@@ -1,9 +1,9 @@
 import { inject, injectable } from "inversify";
-import { EitherAsync, Just, Maybe, Nothing, Right } from "purify-ts";
+import { EitherAsync, Just, Left, Maybe, Nothing, Right } from "purify-ts";
 
 import {
-  LKRPHttpRequestError,
-  LKRPUnauthorizedError,
+  LKRPDataSourceError,
+  LKRPDataSourceErrorStatus,
 } from "@api/app-binder/Errors";
 import { JWT } from "@api/app-binder/LKRPTypes";
 import { lkrpDatasourceTypes } from "@internal/lkrp-datasource/di/lkrpDatasourceTypes";
@@ -72,42 +72,53 @@ export class HttpLKRPDataSource implements LKRPDataSource {
     endpoint: `/${string}`,
     jwt: Maybe<{ access_token: string }>,
     init?: RequestInit,
-  ): EitherAsync<LKRPHttpRequestError, Res> {
+  ): EitherAsync<LKRPDataSourceError, Res> {
     const href = this.baseUrl + endpoint;
+    const headers = {
+      ...init?.headers,
+      "Content-Type": "application/json",
+      ...jwt.mapOrDefault<{ Authorization?: string }>(
+        ({ access_token }) => ({ Authorization: `Bearer ${access_token}` }),
+        {},
+      ),
+    };
 
-    return EitherAsync.fromPromise(async () => {
-      const response = await fetch(href, {
-        ...init,
-        headers: {
-          ...init?.headers,
-          "Content-Type": "application/json",
-          ...jwt.mapOrDefault<{ Authorization?: string }>(
-            ({ access_token }) => ({ Authorization: `Bearer ${access_token}` }),
-            {},
-          ),
-        },
-      });
-      switch (response.status) {
-        case 204:
-          return Right(undefined as Res);
+    return EitherAsync(() => fetch(href, { ...init, headers }))
+      .mapLeft((err) => ({
+        status: "UNKNOWN" as const,
+        message: (err as Partial<Error>).message || "Unknown error",
+      }))
+      .chain(async (response) => {
+        switch (response.status) {
+          case 204:
+            return Right(undefined as Res);
 
-        case 401:
-          throw new LKRPUnauthorizedError(
-            `Unauthorized request to ${href}: [${response.status}] ${response.statusText}`,
-          );
-
-        default:
-          if (!response.ok) {
-            throw new LKRPHttpRequestError(
-              `Failed to fetch ${href}: [${response.status}] ${response.statusText}`,
-            );
-          }
-          return Right((await response.json()) as Res);
-      }
-    }).mapLeft((error: unknown) =>
-      error instanceof LKRPHttpRequestError
-        ? error
-        : new LKRPHttpRequestError(error),
-    );
+          default:
+            return EitherAsync(() => response.json())
+              .mapLeft((err) => (err as Partial<Error>).message)
+              .map((data) =>
+                response.ok
+                  ? Right(data as Res)
+                  : Left((data as { message?: string }).message),
+              )
+              .chain(EitherAsync.liftEither)
+              .mapLeft((message) => ({
+                status: statusMap.get(response.status) ?? "UNKNOWN",
+                message: `[${response.status}] ${message || response.statusText}`,
+              }));
+        }
+      })
+      .mapLeft(
+        ({ status, message }) =>
+          new LKRPDataSourceError({
+            status,
+            message: `${message ?? "Unknown error"} (from: ${href})`,
+          }),
+      );
   }
 }
+
+const statusMap = new Map<unknown, LKRPDataSourceErrorStatus>([
+  [400, "BAD_REQUEST"],
+  [401, "UNAUTHORIZED"],
+]);

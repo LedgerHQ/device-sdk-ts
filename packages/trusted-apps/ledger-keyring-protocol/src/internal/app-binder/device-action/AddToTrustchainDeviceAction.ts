@@ -3,7 +3,6 @@ import {
   hexaStringToBuffer,
   type InternalApi,
   type StateMachineTypes,
-  UnknownDAError,
   UserInteractionRequired,
   XStateDeviceAction,
 } from "@ledgerhq/device-management-kit";
@@ -17,6 +16,10 @@ import {
   type AddToTrustchainDAInternalState,
   type AddToTrustchainDAOutput,
 } from "@api/app-binder/AddToTrustchainDeviceActionTypes";
+import {
+  LKRPTrustchainNotReady,
+  LKRPUnknownError,
+} from "@api/app-binder/Errors";
 import { type Keypair } from "@api/index";
 import { type LKRPDeviceCommandError } from "@internal/app-binder/command/utils/ledgerKeyringProtocolErrors";
 import { InitTask } from "@internal/app-binder/task/InitTask";
@@ -25,7 +28,6 @@ import {
   type ParseStreamToDeviceTaskInput,
 } from "@internal/app-binder/task/ParseStreamToDeviceTask";
 import {
-  type SignBlockError,
   SignBlockTask,
   type SignBlockTaskInput,
 } from "@internal/app-binder/task/SignBlockTask";
@@ -78,7 +80,9 @@ export class AddToTrustchainDeviceAction extends XStateDeviceAction<
         assignErrorFromEvent: raiseAndAssign(
           ({ event }) =>
             Left(
-              new UnknownDAError(String((event as { error?: unknown }).error)),
+              new LKRPUnknownError(
+                String((event as { error?: unknown }).error),
+              ),
             ), // NOTE: it should never happen, the error is not typed anymore here
         ),
       },
@@ -263,7 +267,7 @@ export class AddToTrustchainDeviceAction extends XStateDeviceAction<
                       permissions: input.permissions,
                     },
                   },
-                }),
+                }).chain(() => Left(new LKRPTrustchainNotReady())),
               ),
             onError: { actions: "assignErrorFromEvent" },
             onDone: {
@@ -299,7 +303,7 @@ export class AddToTrustchainDeviceAction extends XStateDeviceAction<
 
       signBlock: (args: {
         input: Either<AddToTrustchainDAError, SignBlockTaskInput>;
-      }): Promise<Either<SignBlockError, void>> =>
+      }): Promise<Either<AddToTrustchainDAError, void>> =>
         EitherAsync.liftEither(args.input)
           .chain((input) => new SignBlockTask(internalApi).run(input))
           .run(),

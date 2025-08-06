@@ -2,14 +2,16 @@ import {
   bufferToHexaString,
   CommandResultStatus,
   type InternalApi,
-  UnknownDAError,
 } from "@ledgerhq/device-management-kit";
 import { Either, EitherAsync, Left, Right } from "purify-ts";
 
 import {
-  type LKRPHttpRequestError,
+  LKRPDataSourceError,
   type LKRPMissingDataError,
+  LKRPOutdatedTrustchainError,
   type LKRPParsingError,
+  LKRPUnknownError,
+  LKRPUnsupportedCommandError,
 } from "@api/app-binder/Errors";
 import { type JWT, type Keypair } from "@api/index";
 import { SignBlockHeaderCommand } from "@internal/app-binder/command/SignBlockHeader";
@@ -59,12 +61,13 @@ type EncryptedBlock = {
   signature: SignaturePayload;
 };
 
-export type SignBlockError =
+type SignBlockError =
   | LKRPDeviceCommandError
   | LKRPParsingError
   | LKRPMissingDataError
-  | LKRPHttpRequestError
-  | UnknownDAError;
+  | LKRPDataSourceError
+  | LKRPOutdatedTrustchainError
+  | LKRPUnknownError;
 
 export type SignBlockTaskInput = {
   lkrpDataSource: LKRPDataSource;
@@ -109,7 +112,12 @@ export class SignBlockTask {
           case "addMember":
             return lkrpDataSource.putCommands(trustchainId, path, block, jwt);
         }
-      });
+      })
+      .mapLeft((error) =>
+        error instanceof LKRPDataSourceError && error.status === "BAD_REQUEST"
+          ? new LKRPOutdatedTrustchainError()
+          : error,
+      );
   }
 
   signBlockHeader(
@@ -142,7 +150,7 @@ export class SignBlockTask {
           issuer: () => trustedProps.getIssuer(),
         }) as Either<SignBlockError, HeaderPayload>;
       } catch (error) {
-        return Left(new UnknownDAError(String(error)));
+        return Left(new LKRPUnknownError(String(error)));
       }
     });
   }
@@ -163,7 +171,7 @@ export class SignBlockTask {
         const secret = sessionKeypair.ecdh(deviceSessionKey).slice(1);
         return Right({ signature, secret });
       } catch (error) {
-        return Left(new UnknownDAError(String(error)));
+        return Left(new LKRPUnknownError(String(error)));
       }
     });
   }
@@ -199,7 +207,7 @@ export class SignBlockTask {
           }
           return Right(new TrustedProperties(response.data));
         } catch (error) {
-          return Left(new UnknownDAError(String(error)));
+          return Left(new LKRPUnknownError(String(error)));
         }
       },
     );
@@ -294,7 +302,7 @@ export class SignBlockTask {
   decryptCommand(
     secret: Uint8Array,
     command: EncryptedCommand,
-  ): Either<UnknownDAError, LKRPCommand> {
+  ): Either<LKRPUnknownError, LKRPCommand> {
     switch (command.type) {
       case CommandTags.Derive:
       case CommandTags.PublishKey: {
@@ -314,7 +322,7 @@ export class SignBlockTask {
       case CommandTags.AddMember:
         return Right(LKRPCommand.fromData({ ...command }));
       default:
-        return Left(new UnknownDAError("Unsupported command type"));
+        return Left(new LKRPUnsupportedCommandError(command));
     }
   }
 }

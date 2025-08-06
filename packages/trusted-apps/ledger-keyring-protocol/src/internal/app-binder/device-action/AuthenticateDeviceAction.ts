@@ -3,7 +3,6 @@ import {
   type InternalApi,
   OpenAppDeviceAction,
   type StateMachineTypes,
-  UnknownDAError,
   UserInteractionRequired,
   XStateDeviceAction,
 } from "@ledgerhq/device-management-kit";
@@ -18,9 +17,11 @@ import {
   type AuthenticateDAOutput,
 } from "@api/app-binder/AuthenticateDeviceActionTypes";
 import {
+  LKRPDataSourceError,
   LKRPMissingDataError,
+  LKRPTrustchainNotReady,
   LKRPUnauthorizedError,
-  LKRPUnhandledState,
+  LKRPUnknownError,
 } from "@api/app-binder/Errors";
 import { type Keypair } from "@api/app-binder/LKRPTypes";
 import { type JWT } from "@api/index";
@@ -97,7 +98,9 @@ export class AuthenticateDeviceAction extends XStateDeviceAction<
         assignErrorFromEvent: raiseAndAssign(
           ({ event }) =>
             Left(
-              new UnknownDAError(String((event as { error?: unknown }).error)),
+              new LKRPUnknownError(
+                String((event as { error?: unknown }).error),
+              ),
             ), // NOTE: it should never happen, the error is not typed anymore here
         ),
       },
@@ -165,16 +168,14 @@ export class AuthenticateDeviceAction extends XStateDeviceAction<
             }),
             onError: { actions: "assignErrorFromEvent" },
             onDone: {
-              actions: raiseAndAssign(({ event }) =>
+              actions: raiseAndAssign(({ context, event }) =>
                 event.output
-                  .map(({ jwt }) => ({
-                    raise: "success",
-                    assign: { jwt },
-                  }))
-                  .chainLeft((error) =>
-                    error instanceof LKRPUnauthorizedError
-                      ? Right({ raise: "invalidCredentials" })
-                      : Left(error),
+                  .map(({ jwt }) => ({ raise: "success", assign: { jwt } }))
+                  .mapLeft((error) =>
+                    error instanceof LKRPDataSourceError &&
+                    error.status === "UNAUTHORIZED"
+                      ? new LKRPUnauthorizedError(context.input.trustchainId)
+                      : error,
                   ),
               ),
             },
@@ -221,10 +222,7 @@ export class AuthenticateDeviceAction extends XStateDeviceAction<
                   actions: raiseAndAssign(({ event }) =>
                     event.output.chain((payload) =>
                       payload.trustchainId.caseOf({
-                        Nothing: () =>
-                          Left(
-                            new LKRPUnhandledState("The trustchain is empty"),
-                          ),
+                        Nothing: () => Left(new LKRPTrustchainNotReady()),
                         Just: (trustchainId) =>
                           Right({
                             raise: "success",
@@ -467,7 +465,7 @@ export class AuthenticateDeviceAction extends XStateDeviceAction<
               applicationStream
                 .getPublishedKey(keypair)
                 .toEither(
-                  new UnknownDAError(
+                  new LKRPUnknownError(
                     "There is no encryption key for the current member in the application stream.",
                   ),
                 ),

@@ -1,7 +1,6 @@
 import {
   type ExecuteDeviceActionReturnType,
   type OpenAppDAError,
-  type UnknownDAError,
 } from "@ledgerhq/device-management-kit";
 import { type Either } from "purify-ts";
 
@@ -10,11 +9,14 @@ import { type LKRPDataSource } from "@internal/lkrp-datasource/data/LKRPDataSour
 import { type LKRPBlockStream } from "@internal/utils/LKRPBlockStream";
 import { type Trustchain } from "@internal/utils/types";
 
+import { type AddToTrustchainDAError } from "./AddToTrustchainDeviceActionTypes";
 import {
-  type LKRPHttpRequestError,
+  type LKRPDataSourceError,
   type LKRPMissingDataError,
   type LKRPParsingError,
-  type LKRPUnhandledState,
+  type LKRPTrustchainNotReady,
+  type LKRPUnauthorizedError,
+  type LKRPUnknownError,
 } from "./Errors";
 import { type JWT, type Keypair, type Permissions } from "./LKRPTypes";
 
@@ -42,13 +44,15 @@ export type AuthenticateDAOutput = {
 };
 
 export type AuthenticateDAError =
+  | LKRPUnauthorizedError
+  | AddToTrustchainDAError
   | LKRPDeviceCommandError
-  | LKRPHttpRequestError
+  | LKRPDataSourceError
   | LKRPParsingError
   | LKRPMissingDataError
-  | LKRPUnhandledState
+  | LKRPTrustchainNotReady
   | OpenAppDAError
-  | UnknownDAError;
+  | LKRPUnknownError;
 
 export type AuthenticateDAIntermediateValue = {
   readonly requiredUserInteraction: string;

@@ -1,13 +1,13 @@
 import {
   CommandResultStatus,
   type InternalApi,
-  UnknownDAError,
 } from "@ledgerhq/device-management-kit";
 import { type Either, EitherAsync, Left, Right } from "purify-ts";
 
 import {
   type LKRPMissingDataError,
   type LKRPParsingError,
+  LKRPUnknownError,
 } from "@api/app-binder/Errors";
 import { type SetTrustedMemberCommandArgs } from "@api/app-binder/SetTrustedMemberTypes";
 import { ParseBlockSignatureCommand } from "@internal/app-binder/command/ParseBlockSignatureCommand";
@@ -33,7 +33,7 @@ type ParseStreamTaskError =
   | LKRPDeviceCommandError
   | LKRPParsingError
   | LKRPMissingDataError
-  | UnknownDAError;
+  | LKRPUnknownError;
 
 export class ParseStreamToDeviceTask {
   private lastTrustedMember: string | null = null;
@@ -77,7 +77,7 @@ export class ParseStreamToDeviceTask {
               return Left(response.error);
             }
           } catch (error) {
-            return Left(new UnknownDAError(String(error)));
+            return Left(new LKRPUnknownError(String(error)));
           }
           return Right(data);
         })
@@ -101,7 +101,7 @@ export class ParseStreamToDeviceTask {
               return Left(response.error);
             }
           } catch (error) {
-            return Left(new UnknownDAError(String(error)));
+            return Left(new LKRPUnknownError(String(error)));
           }
           return Right(undefined);
         })
@@ -125,7 +125,7 @@ export class ParseStreamToDeviceTask {
         }
         return this.recordTrustedMembers(publicKey, response.data);
       } catch (error) {
-        return Left(new UnknownDAError(String(error)));
+        return Left(new LKRPUnknownError(String(error)));
       }
     });
   }
@@ -149,7 +149,7 @@ export class ParseStreamToDeviceTask {
           return Left(response.error);
         }
       } catch (error) {
-        return Left(new UnknownDAError(String(error)));
+        return Left(new LKRPUnknownError(String(error)));
       }
       return Right(undefined);
     });
