@@ -175,7 +175,7 @@ export class LKRPBlockStream {
     return this.getMemberBlock(keypair.pubKeyToHex())
       .chain((block): Maybe<EncryptedPublishedKey> => {
         for (const command of block.commands) {
-          const key = command.getEncryptedPublichedKey();
+          const key = command.getEncryptedPublishedKey();
           if (key.isJust()) {
             return key;
           }

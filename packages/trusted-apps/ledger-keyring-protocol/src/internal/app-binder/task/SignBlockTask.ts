@@ -26,7 +26,7 @@ import {
 } from "@internal/utils/eitherSeqRecord";
 import { LKRPBlock } from "@internal/utils/LKRPBlock";
 import { LKRPCommand } from "@internal/utils/LKRPCommand";
-import { CommandTags, GeneralTags } from "@internal/utils/TLVTags";
+import { CommandTags } from "@internal/utils/TLVTags";
 import {
   type AddMemberUnsignedData,
   type EncryptedCommand,
@@ -79,11 +79,6 @@ export type SignBlockTaskInput = {
   sessionKeypair: Keypair;
 };
 
-export const ISSUER_PLACEHOLDER = new Uint8Array([
-  3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-  0, 0, 0, 0, 0, 0, 0,
-]);
-
 export class SignBlockTask {
   constructor(private readonly api: InternalApi) {}
 
@@ -125,21 +120,9 @@ export class SignBlockTask {
     commandCount: number,
   ): EitherAsync<SignBlockError, HeaderPayload> {
     return EitherAsync.fromPromise(async () => {
-      const header = Uint8Array.from(
-        [
-          [GeneralTags.Int, 1, 1], // Version 1
-          [GeneralTags.Hash, parent.length, ...parent], // Parent block hash
-          [
-            GeneralTags.PublicKey,
-            ISSUER_PLACEHOLDER.length,
-            ...ISSUER_PLACEHOLDER,
-          ], // Placeholder for issuer public key (will be replaced by the device)
-          [GeneralTags.Int, 1, commandCount],
-        ].flat(),
-      );
       try {
         const response = await this.api.sendCommand(
-          new SignBlockHeaderCommand({ header }),
+          new SignBlockHeaderCommand({ parent, commandCount }),
         );
         if (response.status !== CommandResultStatus.Success) {
           return Left(response.error);

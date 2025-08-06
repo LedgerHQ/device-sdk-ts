@@ -1,5 +1,6 @@
 export interface SignBlockHeaderCommandArgs {
-  header: Uint8Array;
+  parent: Uint8Array;
+  commandCount: number;
 }
 
 export type SignBlockHeaderCommandResponse = Uint8Array;
