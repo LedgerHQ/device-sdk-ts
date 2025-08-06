@@ -448,12 +448,14 @@ describe("RNHidTransport", () => {
         // when
         wrapperSendApdu.mockResolvedValueOnce(Right("apduResponse"));
         const apdu = new Uint8Array([1, 2, 3]);
-        const apduResult = await connectedDevice.sendApdu(apdu);
+        const apduResult = await connectedDevice.sendApdu(apdu, false, 0);
 
         // then
         expect(nativeModuleWrapper.sendApdu).toHaveBeenCalledWith(
           sessionId,
           apdu,
+          false,
+          0,
         );
         expect(apduResult).toEqual(Right("apduResponse"));
       });

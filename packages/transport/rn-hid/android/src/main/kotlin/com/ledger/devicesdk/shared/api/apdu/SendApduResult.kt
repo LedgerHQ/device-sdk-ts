@@ -44,4 +44,8 @@ public sealed class SendApduFailureReason {
     public data object DeviceDisconnected : SendApduFailureReason()
 
     public data object Unknown : SendApduFailureReason()
+
+    public data object AbortTimeout : SendApduFailureReason()
+
+    public data object EmptyResponse : SendApduFailureReason()
 }

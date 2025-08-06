@@ -125,9 +125,18 @@ export class RNHidTransport implements Transport {
             return new TransportConnectedDevice({
               id: sessionId,
               deviceModel,
-              sendApdu: async (apdu) => {
+              sendApdu: async (
+                apdu,
+                triggersDisconnection = false,
+                abortTimeout = -1,
+              ) => {
                 return this._nativeModuleWrapper
-                  .sendApdu(sessionId, apdu)
+                  .sendApdu(
+                    sessionId,
+                    apdu,
+                    triggersDisconnection,
+                    abortTimeout,
+                  )
                   .catch((e) => Left(new SendApduError(e)));
               },
               transport: this.getIdentifier(),

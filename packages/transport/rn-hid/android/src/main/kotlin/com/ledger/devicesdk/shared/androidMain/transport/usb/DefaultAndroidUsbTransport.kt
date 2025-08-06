@@ -97,17 +97,32 @@ internal class DefaultAndroidUsbTransport(
     override fun updateUsbState(state: UsbState) {
         when (state) {
             is UsbState.Detached -> {
-                loggerService.log(buildSimpleDebugLogInfo("AndroidUsbTransport", "Detached deviceId=${state.ledgerUsbDevice.uid}"))
+                loggerService.log(
+                    buildSimpleDebugLogInfo(
+                        "AndroidUsbTransport",
+                        "Detached deviceId=${state.ledgerUsbDevice.uid}"
+                    )
+                )
                 usbConnections.entries.find {
                     it.value.getApduSender().dependencies.ledgerUsbDevice.uid == state.ledgerUsbDevice.uid
                 }.let { item ->
                     scope.launch {
                         if (item == null) {
-                            loggerService.log(buildSimpleWarningLogInfo("AndroidUsbTransport", "No connection found"))
+                            loggerService.log(
+                                buildSimpleWarningLogInfo(
+                                    "AndroidUsbTransport",
+                                    "No connection found"
+                                )
+                            )
                             return@launch
                         }
                         val (key, deviceConnection) = item
-                        loggerService.log(buildSimpleInfoLogInfo("AndroidUsbTransport", "Device disconnected (sessionId=${deviceConnection.sessionId})"))
+                        loggerService.log(
+                            buildSimpleInfoLogInfo(
+                                "AndroidUsbTransport",
+                                "Device disconnected (sessionId=${deviceConnection.sessionId})"
+                            )
+                        )
                         deviceConnection.handleDeviceDisconnected()
                         usbConnections.remove(key)
                         usbConnectionsPendingReconnection.add(deviceConnection)
@@ -116,12 +131,22 @@ internal class DefaultAndroidUsbTransport(
             }
 
             is UsbState.Attached -> {
-                loggerService.log(buildSimpleDebugLogInfo("AndroidUsbTransport", "Attached deviceId=${state.ledgerUsbDevice.uid}, pendingReconnections=${usbConnectionsPendingReconnection}"))
+                loggerService.log(
+                    buildSimpleDebugLogInfo(
+                        "AndroidUsbTransport",
+                        "Attached deviceId=${state.ledgerUsbDevice.uid}, pendingReconnections=${usbConnectionsPendingReconnection}"
+                    )
+                )
                 val usbDevice = usbManager.deviceList.values.firstOrNull {
                     it.toLedgerUsbDevice()?.uid == state.ledgerUsbDevice.uid
                 }
                 if (usbDevice == null) {
-                    loggerService.log(buildSimpleWarningLogInfo("AndroidUsbTransport", "No UsbDevice found"))
+                    loggerService.log(
+                        buildSimpleWarningLogInfo(
+                            "AndroidUsbTransport",
+                            "No UsbDevice found"
+                        )
+                    )
                     return
                 }
                 usbConnectionsPendingReconnection.firstOrNull {
@@ -138,14 +163,29 @@ internal class DefaultAndroidUsbTransport(
                             )
                             return@launch
                         }
-                        loggerService.log(buildSimpleDebugLogInfo("AndroidUsbTransport", "Found matching device connection $deviceConnection"))
+                        loggerService.log(
+                            buildSimpleDebugLogInfo(
+                                "AndroidUsbTransport",
+                                "Found matching device connection $deviceConnection"
+                            )
+                        )
 
                         val permissionResult = checkOrRequestPermission(usbDevice)
                         if (permissionResult is PermissionResult.Denied) {
-                            loggerService.log(buildSimpleDebugLogInfo("AndroidUsbTransport", "Permission denied"))
+                            loggerService.log(
+                                buildSimpleDebugLogInfo(
+                                    "AndroidUsbTransport",
+                                    "Permission denied"
+                                )
+                            )
                             return@launch
                         }
-                        loggerService.log(buildSimpleInfoLogInfo("AndroidUsbTransport", "Reconnecting device (sessionId=${deviceConnection.sessionId})"))
+                        loggerService.log(
+                            buildSimpleInfoLogInfo(
+                                "AndroidUsbTransport",
+                                "Reconnecting device (sessionId=${deviceConnection.sessionId})"
+                            )
+                        )
                         deviceConnection.handleDeviceConnected(
                             AndroidUsbApduSender(
                                 dependencies = AndroidUsbApduSender.Dependencies(
@@ -195,7 +235,12 @@ internal class DefaultAndroidUsbTransport(
             device = usbDevice,
         )
 
-        loggerService.log(buildSimpleDebugLogInfo("AndroidUsbTransport", "Waiting for permission result"))
+        loggerService.log(
+            buildSimpleDebugLogInfo(
+                "AndroidUsbTransport",
+                "Waiting for permission result"
+            )
+        )
 
         val result = eventsFlow.first {
             it is UsbPermissionEvent.PermissionGranted ||
@@ -276,7 +321,9 @@ internal class DefaultAndroidUsbTransport(
                     discoveryDevice.name,
                     discoveryDevice.ledgerDevice,
                     discoveryDevice.connectivityType,
-                    sendApduFn = { apdu -> deviceConnection.requestSendApdu(apdu) },
+                    sendApduFn = { apdu: ByteArray, triggersDisconnection: Boolean, abortTimeoutDuration: Duration ->
+                        deviceConnection.requestSendApdu(apdu, triggersDisconnection, abortTimeoutDuration)
+                    }
                 )
 
             usbConnections[sessionId] = deviceConnection
