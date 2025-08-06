@@ -7,7 +7,9 @@ import {
   KeypairFromBytes,
   Permissions,
 } from "@ledgerhq/device-trusted-app-kit-ledger-keyring-protocol";
+import styled from "styled-components";
 
+import { CommandForm } from "@/components//CommandsView/CommandForm";
 import { DeviceActionsList } from "@/components/DeviceActionsView/DeviceActionsList";
 import { type DeviceActionProps } from "@/components/DeviceActionsView/DeviceActionTester";
 import { useDmk } from "@/providers/DeviceManagementKitProvider";
@@ -51,6 +53,7 @@ export const LedgerKeyringProtocolView: React.FC<{ sessionId: string }> = ({
             jwt ?? undefined,
           );
         },
+        InputValuesComponent: RowCommandForm as typeof CommandForm<AuthInput>,
         initialValues: {
           privateKey: randomPrivateKey(),
           applicationId: 16,
@@ -61,13 +64,7 @@ export const LedgerKeyringProtocolView: React.FC<{ sessionId: string }> = ({
         deviceModelId,
       } satisfies DeviceActionProps<
         AuthenticateDAOutput,
-        {
-          privateKey: string;
-          applicationId: number;
-          clientName: string;
-          trustchainId: string;
-          jwt: string;
-        },
+        AuthInput,
         AuthenticateDAError,
         AuthenticateDAIntermediateValue
       >,
@@ -82,3 +79,15 @@ export const LedgerKeyringProtocolView: React.FC<{ sessionId: string }> = ({
     />
   );
 };
+
+type AuthInput = {
+  privateKey: string;
+  applicationId: number;
+  clientName: string;
+  trustchainId: string;
+  jwt: string;
+};
+
+const RowCommandForm = styled(CommandForm)`
+  flex-direction: row;
+`;
