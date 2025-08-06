@@ -15,7 +15,7 @@ import {
   type SetTrustedMemberCommandArgs,
   type SetTrustedMemberCommandResponse,
 } from "@api/app-binder/SetTrustedMemberTypes";
-import { TPTags } from "@internal/utils/TLVTags";
+import { TPTags } from "@internal/models/Tags";
 
 import {
   LEDGER_SYNC_ERRORS,

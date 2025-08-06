@@ -15,12 +15,12 @@ import { ParseSingleCommand } from "@internal/app-binder/command/ParseStreamBloc
 import { ParseBlockHeaderCommand } from "@internal/app-binder/command/ParseStreamBlockHeader";
 import { SetTrustedMemberCommand } from "@internal/app-binder/command/SetTrustedMemberCommand";
 import { type LKRPDeviceCommandError } from "@internal/app-binder/command/utils/ledgerKeyringProtocolErrors";
+import { type LKRPBlockParsedData } from "@internal/models/LKRPBlockTypes";
 import { eitherSeqRecord } from "@internal/utils/eitherSeqRecord";
 import { bytesToHex } from "@internal/utils/hex";
 import { type LKRPBlock } from "@internal/utils/LKRPBlock";
 import { type LKRPBlockStream } from "@internal/utils/LKRPBlockStream";
 import { type LKRPCommand } from "@internal/utils/LKRPCommand";
-import { type LKRPBlockParsedData } from "@internal/utils/types";
 
 import { TrustedProperties } from "./utils/TrustedProperties";
 

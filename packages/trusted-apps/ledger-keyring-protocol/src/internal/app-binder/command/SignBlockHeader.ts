@@ -15,7 +15,7 @@ import {
   type SignBlockHeaderCommandArgs,
   type SignBlockHeaderCommandResponse,
 } from "@api/app-binder/SignBlockHeaderCommandTypes";
-import { GeneralTags } from "@internal/utils/TLVTags";
+import { GeneralTags } from "@internal/models/Tags";
 
 import {
   LEDGER_SYNC_ERRORS,

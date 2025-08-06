@@ -1,12 +1,12 @@
 import { Just, Left, Right } from "purify-ts";
 
 import { LKRPParsingError } from "@api/app-binder/Errors";
+import { CommandTags } from "@internal/models/Tags";
 
 import { hexToBytes } from "./hex";
 import { LKRPBlock } from "./LKRPBlock";
 import { LKRPBlockStream } from "./LKRPBlockStream";
 import { LKRPCommand } from "./LKRPCommand";
-import { CommandTags } from "./TLVTags";
 
 describe("LKRPBlockStream", () => {
   describe("toString", () => {

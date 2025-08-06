@@ -5,8 +5,8 @@ import {
   type LKRPMissingDataError,
   LKRPParsingError,
 } from "@api/app-binder/Errors";
+import { TPTags } from "@internal/models/Tags";
 import { required } from "@internal/utils/required";
-import { TPTags } from "@internal/utils/TLVTags";
 
 type EncryptedTPTag = Exclude<TPTags, TPTags.IV>;
 type EncryptedTP = { tag: EncryptedTPTag; value: Uint8Array; tlv: Uint8Array };

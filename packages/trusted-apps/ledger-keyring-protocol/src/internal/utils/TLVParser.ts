@@ -1,13 +1,14 @@
 import { type Either, Left, Right } from "purify-ts";
 
 import { LKRPParsingError } from "@api/app-binder/Errors";
+import { type LKRPBlockParsedData } from "@internal/models/LKRPBlockTypes";
+import { type LKRPCommandData } from "@internal/models/LKRPCommandTypes";
+import { CommandTags, GeneralTags } from "@internal/models/Tags";
 
 import { derivationPathAsString } from "./derivationPath";
 import { eitherSeqRecord } from "./eitherSeqRecord";
 import { bytesToHex } from "./hex";
 import { LKRPCommand } from "./LKRPCommand";
-import { CommandTags, GeneralTags } from "./TLVTags";
-import { type LKRPBlockParsedData, type LKRPCommandData } from "./types";
 
 type ParserValue = Either<
   LKRPParsingError,
