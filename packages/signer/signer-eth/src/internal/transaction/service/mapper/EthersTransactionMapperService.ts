@@ -6,6 +6,8 @@ import { Either, Left, Right } from "purify-ts";
 import { TransactionMapperResult } from "./model/TransactionMapperResult";
 import { TransactionMapperService } from "./TransactionMapperService";
 
+const SELECTOR_LENGTH = 10; // 0x prefix + 4 bytes for the selector
+
 @injectable()
 export class EthersTransactionMapperService
   implements TransactionMapperService
@@ -28,7 +30,10 @@ export class EthersTransactionMapperService
           chainId,
           to: tx.to ?? undefined,
           data: tx.data,
-          selector: tx.data.length >= 10 ? tx.data.slice(0, 10) : tx.data,
+          selector:
+            tx.data.length >= SELECTOR_LENGTH
+              ? tx.data.slice(0, SELECTOR_LENGTH)
+              : tx.data,
           value: tx.value,
         },
         serializedTransaction: getBytes(tx.unsignedSerialized),
