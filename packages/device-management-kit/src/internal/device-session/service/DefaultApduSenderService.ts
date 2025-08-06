@@ -96,9 +96,11 @@ export class DefaultApduSenderService implements ApduSenderService {
   ): Either<DmkError, Frame> {
     const header = this.getFrameHeaderFrom(frameIndex, apdu.length);
     const frameOffset =
-      frameIndex * this._frameSize - this.getHeaderSizeSumFrom(frameIndex);
+      frameIndex === 0
+        ? 0
+        : frameIndex * this._frameSize - this.getHeaderSizeSumFrom(frameIndex);
 
-    if (frameOffset > apdu.length) {
+    if (frameOffset >= apdu.length) {
       return Left(new FramerOverflowError());
     }
     if (header.getLength() > this._frameSize) {
@@ -106,10 +108,8 @@ export class DefaultApduSenderService implements ApduSenderService {
     }
     const dataMaxSize = this._frameSize - header.getLength();
     const data = apdu.slice(
-      frameIndex === 0 ? 0 : frameOffset,
-      frameIndex === 0
-        ? dataMaxSize
-        : frameOffset + this._frameSize - header.getLength(),
+      frameOffset,
+      frameOffset + this._frameSize - header.getLength(),
     );
     const frameData = this._padding
       ? new Uint8Array(dataMaxSize).fill(0)

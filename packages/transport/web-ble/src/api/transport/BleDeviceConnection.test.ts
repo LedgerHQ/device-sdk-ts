@@ -79,7 +79,7 @@ describe("BleDeviceConnection", () => {
       );
       // when
       const errorOrApduResponse = await connection.sendApdu(
-        Uint8Array.from([]),
+        Uint8Array.from([0x42]),
       );
       // then
       expect(errorOrApduResponse).toStrictEqual(
@@ -100,7 +100,7 @@ describe("BleDeviceConnection", () => {
       );
       // when
       receiveApdu(connection, GET_MTU_APDU_RESPONSE);
-      const response = connection.sendApdu(new Uint8Array([]));
+      const response = connection.sendApdu(new Uint8Array([0x42]));
       receiveApdu(connection, EMPTY_APDU_RESPONSE);
       // then
       expect(
