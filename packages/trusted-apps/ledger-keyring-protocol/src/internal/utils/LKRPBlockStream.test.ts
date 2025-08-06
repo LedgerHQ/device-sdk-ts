@@ -112,7 +112,7 @@ describe("LKRPBlockStream", () => {
   });
 
   describe("fromData", () => {
-    it("should create a BlockStream from data", async () => {
+    it("should create a BlockStream from data", () => {
       // GIVEN
       const mockedBlockData = [
         { ...mockedBlockData1, parent: undefined },
@@ -120,7 +120,7 @@ describe("LKRPBlockStream", () => {
       ];
 
       // WHEN
-      const stream = await LKRPBlockStream.fromData(
+      const stream = LKRPBlockStream.fromData(
         mockedBlockData,
         mockedBlockData1.parent,
       );
@@ -129,15 +129,15 @@ describe("LKRPBlockStream", () => {
       expect(stream.toString()).toBe(mockedHex);
     });
 
-    it("should assign a random parent hash if not provided", async () => {
+    it("should assign a random parent hash if not provided", () => {
       // GIVEN
       const mockedBlockData = [
         { ...mockedBlockData1, parent: undefined },
         { ...mockedBlockData2, parent: undefined },
       ];
       // WHEN
-      const stream = await LKRPBlockStream.fromData(mockedBlockData);
-      const hash = await stream
+      const stream = LKRPBlockStream.fromData(mockedBlockData);
+      const hash = stream
         .parse()
         .map((blocks) => blocks[0]?.hash())
         .caseOf({ Left: () => undefined, Right: (h) => h });
