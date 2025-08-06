@@ -5,6 +5,7 @@ import {
   ClearSignContextType,
   type ContextModule,
   type TransactionFieldContext,
+  type TransactionSubset,
 } from "@ledgerhq/context-module";
 import {
   bufferToHexaString,
@@ -19,9 +20,8 @@ export type BuildSubContextTaskArgs = {
   readonly context: ClearSignContextSuccess;
   readonly contextOptional: ClearSignContextSuccess[];
   readonly transactionParser: TransactionParserService;
-  readonly serializedTransaction: Uint8Array;
+  readonly subset: TransactionSubset;
   readonly contextModule: ContextModule;
-  readonly chainId: number;
 };
 
 export type BuildSubContextTaskResult = {
@@ -59,7 +59,7 @@ export class BuildSubContextTask {
     ) {
       const transactionFieldContext: TransactionFieldContext = {
         type: context.reference.type,
-        chainId: this.args.chainId,
+        chainId: this.args.subset.chainId,
         address: context.reference.value,
       };
 
@@ -78,7 +78,7 @@ export class BuildSubContextTask {
     ) {
       // iterate on each reference and provide the context
       const referenceValues = this.args.transactionParser.extractValue(
-        this.args.serializedTransaction,
+        this.args.subset,
         context.reference.valuePath,
       );
 
@@ -121,7 +121,7 @@ export class BuildSubContextTask {
             subcontextCallbacks.push(() =>
               this.args.contextModule.getContext({
                 type: reference.type,
-                chainId: this.args.chainId,
+                chainId: this.args.subset.chainId,
                 address,
               }),
             );
@@ -148,7 +148,7 @@ export class BuildSubContextTask {
 
               const subcontext = await this.args.contextModule.getContext({
                 type: reference.type,
-                chainId: this.args.chainId,
+                chainId: this.args.subset.chainId,
                 address,
                 challenge: getChallengeResult.data.challenge,
                 types: reference.types,

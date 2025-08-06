@@ -67,6 +67,7 @@ describe("TransactionContextLoader", () => {
       to: "0x7",
       chainId: 3,
       data: "0xaf68b302000000000000000000000000000000000000000000000000000000000002",
+      selector: "0xaf68b302",
     } as TransactionContext;
 
     // WHEN
@@ -104,6 +105,7 @@ describe("TransactionContextLoader", () => {
       to: "0x7",
       chainId: 3,
       data: "0xaf68b302000000000000000000000000000000000000000000000000000000000002",
+      selector: "0xaf68b302",
     } as TransactionContext;
 
     // WHEN

@@ -40,6 +40,7 @@ const transactionBuilder = (
   return {
     to: "0x0",
     data,
+    selector: data.slice(0, 10),
   } as TransactionContext;
 };
 
@@ -76,7 +77,11 @@ describe("ExternalPluginContextLoader", () => {
 
     it("should return an empty array if no data provided", async () => {
       // GIVEN
-      const transaction = { to: "0x0", data: "0x" } as TransactionContext;
+      const transaction = {
+        to: "0x0",
+        data: "0x",
+        selector: "0x0",
+      } as TransactionContext;
 
       // WHEN
       const result = await loader.load(transaction);

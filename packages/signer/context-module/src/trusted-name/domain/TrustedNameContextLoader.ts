@@ -23,10 +23,8 @@ export class TrustedNameContextLoader implements ContextLoader {
     this._dataSource = dataSource;
   }
 
-  async load(
-    transactionContext: TransactionContext,
-  ): Promise<ClearSignContext[]> {
-    const { chainId, domain, challenge } = transactionContext;
+  async load(ctx: TransactionContext): Promise<ClearSignContext[]> {
+    const { chainId, domain, challenge } = ctx;
 
     if (!domain || !challenge) {
       return [];
@@ -42,9 +40,9 @@ export class TrustedNameContextLoader implements ContextLoader {
     }
 
     const payload = await this._dataSource.getDomainNamePayload({
-      chainId: chainId,
-      domain: domain,
-      challenge: challenge,
+      chainId,
+      domain,
+      challenge,
     });
 
     return [

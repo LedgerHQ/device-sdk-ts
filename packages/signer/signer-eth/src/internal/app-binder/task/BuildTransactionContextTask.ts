@@ -3,6 +3,7 @@ import {
   type ClearSignContextSuccessType,
   ClearSignContextType,
   type ContextModule,
+  type TransactionSubset,
 } from "@ledgerhq/context-module";
 import {
   DeviceModelId,
@@ -14,31 +15,26 @@ import {
 import { type GetConfigCommandResponse } from "@api/app-binder/GetConfigCommandTypes";
 import { ClearSigningType } from "@api/model/ClearSigningType";
 import { type TransactionOptions } from "@api/model/TransactionOptions";
-import { type TransactionType } from "@api/model/TransactionType";
 import { GetChallengeCommand } from "@internal/app-binder/command/GetChallengeCommand";
 import {
   GetWeb3CheckTask,
   type GetWeb3CheckTaskArgs,
 } from "@internal/app-binder/task/GetWeb3CheckTask";
 import { ApplicationChecker } from "@internal/shared/utils/ApplicationChecker";
-import { type TransactionMapperService } from "@internal/transaction/service/mapper/TransactionMapperService";
 
 export type BuildTransactionTaskResult = {
   readonly clearSignContexts: ClearSignContextSuccess[];
   readonly clearSignContextsOptional: ClearSignContextSuccess[];
-  readonly serializedTransaction: Uint8Array;
-  readonly chainId: number;
-  readonly transactionType: TransactionType;
   readonly clearSigningType: ClearSigningType;
 };
 
 export type BuildTransactionContextTaskArgs = {
   readonly contextModule: ContextModule;
-  readonly mapper: TransactionMapperService;
-  readonly transaction: Uint8Array;
   readonly options: TransactionOptions;
   readonly appConfig: GetConfigCommandResponse;
   readonly derivationPath: string;
+  readonly transaction: Uint8Array;
+  readonly subset: TransactionSubset;
 };
 
 export class BuildTransactionContextTask {
@@ -54,23 +50,16 @@ export class BuildTransactionContextTask {
   async run(): Promise<BuildTransactionTaskResult> {
     const {
       contextModule,
-      mapper,
-      transaction,
       options,
       appConfig,
       derivationPath,
+      transaction,
+      subset,
     } = this._args;
     const deviceState = this._api.getDeviceSessionState();
     let filteredContexts: ClearSignContextSuccess[] = [];
     let filteredContextOptional: ClearSignContextSuccess[] = [];
     let clearSigningType: ClearSigningType = ClearSigningType.BASIC;
-
-    // Parse transaction
-    const parsed = mapper.mapTransactionToSubset(transaction);
-    parsed.ifLeft((err) => {
-      throw err;
-    });
-    const { subset, serializedTransaction, type } = parsed.unsafeCoerce();
 
     // Run the web3checks if needed
     let web3Check: ClearSignContextSuccess<ClearSignContextType.WEB3_CHECK> | null =
@@ -80,7 +69,7 @@ export class BuildTransactionContextTask {
         await this.getWeb3ChecksFactory(this._api, {
           contextModule,
           derivationPath,
-          mapper,
+          subset,
           transaction,
         }).run()
       ).web3Check;
@@ -161,9 +150,6 @@ export class BuildTransactionContextTask {
     return {
       clearSignContexts: filteredContexts,
       clearSignContextsOptional: filteredContextOptional,
-      serializedTransaction,
-      chainId: subset.chainId,
-      transactionType: type,
       clearSigningType,
     };
   }

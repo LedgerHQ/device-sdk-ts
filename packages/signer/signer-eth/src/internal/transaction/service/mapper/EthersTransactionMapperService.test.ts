@@ -34,7 +34,7 @@ describe("RawTransactionMapper", () => {
       Transaction.from({
         chainId: 1,
         to: "0x1234567890123456789012345678901234567890",
-        data: "0x123456",
+        data: "0x1234567890",
       }).unsignedSerialized,
     )!;
 
@@ -48,7 +48,9 @@ describe("RawTransactionMapper", () => {
     expect(subset).toEqual({
       chainId: 1,
       to: "0x1234567890123456789012345678901234567890",
-      data: "0x123456",
+      data: "0x1234567890",
+      value: 0n,
+      selector: "0x12345678",
     });
     expect(type).toEqual(2);
   });
@@ -58,7 +60,7 @@ describe("RawTransactionMapper", () => {
     const transaction = hexaStringToBuffer(
       Transaction.from({
         chainId: 1,
-        data: "0x123456",
+        data: "0x1234567890",
       }).unsignedSerialized,
     )!;
 
@@ -72,7 +74,9 @@ describe("RawTransactionMapper", () => {
     expect(subset).toEqual({
       chainId: 1,
       to: undefined,
-      data: "0x123456",
+      data: "0x1234567890",
+      value: 0n,
+      selector: "0x12345678",
     });
     expect(type).toEqual(2);
   });
@@ -97,6 +101,8 @@ describe("RawTransactionMapper", () => {
       chainId: 1,
       to: "0x1234567890123456789012345678901234567890",
       data: "0x",
+      value: 0n,
+      selector: "0x",
     });
     expect(type).toEqual(2);
   });
@@ -123,6 +129,8 @@ describe("RawTransactionMapper", () => {
       chainId: 1,
       to: "0x1234567890123456789012345678901234567890",
       data: "0x123456",
+      value: 0n,
+      selector: "0x123456",
     });
     expect(type).toEqual(1);
   });

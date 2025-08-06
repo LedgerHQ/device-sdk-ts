@@ -30,12 +30,11 @@ export class TokenContextLoader implements ContextLoader {
     this._dataSource = dataSource;
   }
 
-  async load(transaction: TransactionContext): Promise<ClearSignContext[]> {
-    if (!transaction.to || transaction.data === "0x") {
+  async load(ctx: TransactionContext): Promise<ClearSignContext[]> {
+    const { to, selector, chainId } = ctx;
+    if (!to) {
       return [];
     }
-
-    const selector = transaction.data.slice(0, 10);
 
     if (!isHexaString(selector)) {
       return [
@@ -51,8 +50,8 @@ export class TokenContextLoader implements ContextLoader {
     }
 
     const payload = await this._dataSource.getTokenInfosPayload({
-      address: transaction.to,
-      chainId: transaction.chainId,
+      address: to,
+      chainId,
     });
 
     return [

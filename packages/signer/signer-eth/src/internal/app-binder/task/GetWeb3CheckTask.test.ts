@@ -6,23 +6,25 @@ import {
   DeviceStatus,
   InvalidStatusWordError,
 } from "@ledgerhq/device-management-kit";
-import { Left, Right } from "purify-ts";
 
 import { type TypedData } from "@api/model/TypedData";
 import { makeDeviceActionInternalApiMock } from "@internal/app-binder/device-action/__test-utils__/makeInternalApi";
 import { GetWeb3CheckTask } from "@internal/app-binder/task/GetWeb3CheckTask";
-import { type TransactionMapperService } from "@internal/transaction/service/mapper/TransactionMapperService";
 
 describe("GetWeb3CheckTask", () => {
   const apiMock = makeDeviceActionInternalApiMock();
   const contextModuleMock = {
     getWeb3Checks: vi.fn(),
   };
-  const mapperMock = {
-    mapTransactionToSubset: vi.fn(),
-  };
   const transaction = new Uint8Array([0x01, 0x02, 0x03, 0x04]);
   const derivationPath = "44'/60'/0'/0/0";
+  const defaultSubset = {
+    chainId: 15,
+    to: "to",
+    data: "0x060708090A",
+    selector: "0x06070809",
+    value: 0n,
+  };
 
   describe("run", () => {
     beforeEach(() => {
@@ -39,34 +41,8 @@ describe("GetWeb3CheckTask", () => {
     });
 
     describe("errors", () => {
-      it("should throw an error if mapTransactionToSubset assert.fails", async () => {
-        // GIVEN
-        const error = new Error("error");
-        apiMock.sendCommand.mockResolvedValueOnce(
-          CommandResultFactory({ data: { address: "address" } }),
-        );
-        mapperMock.mapTransactionToSubset.mockReturnValue(Left(error));
-
-        // WHEN
-        try {
-          await new GetWeb3CheckTask(apiMock, {
-            contextModule: contextModuleMock as unknown as ContextModule,
-            mapper: mapperMock as unknown as TransactionMapperService,
-            transaction,
-            derivationPath,
-          }).run();
-          assert.fail("should throw an error");
-        } catch (e) {
-          // THEN
-          expect(e).toEqual(error);
-        }
-      });
-
       it("should return a context error if GetAddressCommand assert.fails", async () => {
         // GIVEN
-        mapperMock.mapTransactionToSubset.mockReturnValue(
-          Right({ subset: {}, serializedTransaction: new Uint8Array() }),
-        );
         apiMock.sendCommand.mockResolvedValueOnce(
           CommandResultFactory({ error: new InvalidStatusWordError("error") }),
         );
@@ -74,7 +50,7 @@ describe("GetWeb3CheckTask", () => {
         // WHEN
         const result = await new GetWeb3CheckTask(apiMock, {
           contextModule: contextModuleMock as unknown as ContextModule,
-          mapper: mapperMock as unknown as TransactionMapperService,
+          subset: defaultSubset,
           transaction,
           derivationPath,
         }).run();
@@ -88,9 +64,6 @@ describe("GetWeb3CheckTask", () => {
 
       it("should return null if the type is not a ClearSignContextSuccess web3check", async () => {
         // GIVEN
-        mapperMock.mapTransactionToSubset.mockReturnValue(
-          Right({ subset: {}, serializedTransaction: new Uint8Array() }),
-        );
         apiMock.sendCommand.mockResolvedValueOnce(
           CommandResultFactory({ data: { address: "address" } }),
         );
@@ -102,7 +75,7 @@ describe("GetWeb3CheckTask", () => {
         // WHEN
         const result = await new GetWeb3CheckTask(apiMock, {
           contextModule: contextModuleMock as unknown as ContextModule,
-          mapper: mapperMock as unknown as TransactionMapperService,
+          subset: defaultSubset,
           transaction,
           derivationPath,
         }).run();
@@ -117,9 +90,6 @@ describe("GetWeb3CheckTask", () => {
     describe("success", () => {
       it("should return null if the context module does not have a web3 check", async () => {
         // GIVEN
-        mapperMock.mapTransactionToSubset.mockReturnValue(
-          Right({ subset: {}, serializedTransaction: new Uint8Array() }),
-        );
         apiMock.sendCommand.mockResolvedValueOnce(
           CommandResultFactory({ data: { address: "address" } }),
         );
@@ -128,7 +98,7 @@ describe("GetWeb3CheckTask", () => {
         // WHEN
         const result = await new GetWeb3CheckTask(apiMock, {
           contextModule: contextModuleMock as unknown as ContextModule,
-          mapper: mapperMock as unknown as TransactionMapperService,
+          subset: defaultSubset,
           transaction,
           derivationPath,
         }).run();
@@ -142,9 +112,6 @@ describe("GetWeb3CheckTask", () => {
       it("should return a web3 check", async () => {
         // GIVEN
         const web3Check = { type: "web3Check", id: 1 };
-        mapperMock.mapTransactionToSubset.mockReturnValue(
-          Right({ subset: {}, serializedTransaction: new Uint8Array() }),
-        );
         apiMock.sendCommand.mockResolvedValueOnce(
           CommandResultFactory({ data: { address: "address" } }),
         );
@@ -153,7 +120,7 @@ describe("GetWeb3CheckTask", () => {
         // WHEN
         const result = await new GetWeb3CheckTask(apiMock, {
           contextModule: contextModuleMock as unknown as ContextModule,
-          mapper: mapperMock as unknown as TransactionMapperService,
+          subset: defaultSubset,
           transaction,
           derivationPath,
         }).run();
@@ -187,12 +154,6 @@ describe("GetWeb3CheckTask", () => {
 
       it("should call the context module with the right parameters", async () => {
         // GIVEN
-        mapperMock.mapTransactionToSubset.mockReturnValue(
-          Right({
-            subset: { chainId: 15, from: "from" },
-            serializedTransaction: new Uint8Array([0x01, 0x02, 0x03]),
-          }),
-        );
         apiMock.sendCommand.mockResolvedValueOnce(
           CommandResultFactory({ data: { address: "address" } }),
         );
@@ -201,7 +162,7 @@ describe("GetWeb3CheckTask", () => {
         // WHEN
         await new GetWeb3CheckTask(apiMock, {
           contextModule: contextModuleMock as unknown as ContextModule,
-          mapper: mapperMock as unknown as TransactionMapperService,
+          subset: defaultSubset,
           transaction,
           derivationPath,
         }).run();
@@ -210,7 +171,7 @@ describe("GetWeb3CheckTask", () => {
         expect(contextModuleMock.getWeb3Checks).toHaveBeenCalledWith({
           deviceModelId: DeviceModelId.FLEX,
           from: "address",
-          rawTx: "0x010203",
+          rawTx: "0x01020304",
           chainId: 15,
         });
       });

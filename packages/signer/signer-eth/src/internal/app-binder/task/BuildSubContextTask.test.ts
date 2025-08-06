@@ -41,9 +41,14 @@ describe("BuildSubContextTask", () => {
       contextOptional: [],
       transactionParser:
         transactionParserMock as unknown as TransactionParserService,
-      serializedTransaction: new Uint8Array([0x01, 0x02, 0x03]),
+      subset: {
+        chainId: 1,
+        data: "0x",
+        selector: "0x",
+        to: "0x",
+        value: BigInt(0),
+      },
       contextModule: contextModuleMock as unknown as ContextModule,
-      chainId: 1,
     };
   });
 
