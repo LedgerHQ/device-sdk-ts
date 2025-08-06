@@ -36,10 +36,10 @@ export class LKRPBlockStream {
     return new LKRPBlockStream(new Uint8Array(), [], path);
   }
 
-  static async fromData(
+  static fromData(
     blocksData: Omit<LKRPBlockData, "parent">[],
     parentHash?: string,
-  ): Promise<LKRPBlockStream> {
+  ): LKRPBlockStream {
     const blocks: LKRPBlock[] = [];
     let hash =
       parentHash ?? bytesToHex(crypto.getRandomValues(new Uint8Array(32)));

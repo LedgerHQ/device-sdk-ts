@@ -34,7 +34,7 @@ export class LKRPUnauthorizedError extends GeneralDmkError {
 
 export class LKRPOutdatedTrustchainError extends GeneralDmkError {
   override _tag = "LedgerKeyringProtocolError";
-  constructor(readonly message = "The trustchain is oudated.") {
+  constructor(readonly message = "The trustchain is outdated.") {
     super(message);
   }
 }
