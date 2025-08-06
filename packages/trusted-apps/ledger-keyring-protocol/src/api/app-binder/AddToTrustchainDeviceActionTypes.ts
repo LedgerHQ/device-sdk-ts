@@ -3,8 +3,8 @@ import { type Either } from "purify-ts";
 
 import { type LKRPDeviceCommandError } from "@internal/app-binder/command/utils/ledgerKeyringProtocolErrors";
 import { type LKRPDataSource } from "@internal/lkrp-datasource/data/LKRPDataSource";
+import { type Trustchain } from "@internal/models/Types";
 import { type LKRPBlockStream } from "@internal/utils/LKRPBlockStream";
-import { type Trustchain } from "@internal/utils/types";
 
 import {
   type LKRPDataSourceError,

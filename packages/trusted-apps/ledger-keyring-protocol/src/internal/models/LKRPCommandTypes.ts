@@ -1,30 +1,4 @@
-import { type LKRPBlockStream } from "./LKRPBlockStream";
-import { type LKRPCommand } from "./LKRPCommand";
-import { type CommandTags } from "./TLVTags";
-
-export type Trustchain = {
-  [path: string]: LKRPBlockStream;
-};
-
-export type PublishedKey = {
-  privateKey: Uint8Array;
-  chainCode: Uint8Array;
-};
-
-export type EncryptedPublishedKey = {
-  encryptedXpriv: Uint8Array;
-  initializationVector: Uint8Array;
-  ephemeralPublicKey: Uint8Array;
-};
-
-export type LKRPBlockData = {
-  parent: string;
-  issuer: Uint8Array;
-  commands: LKRPCommand[];
-  signature: Uint8Array;
-};
-
-export type LKRPBlockParsedData = LKRPBlockData & { header: Uint8Array };
+import { type CommandTags } from "./Tags";
 
 export type LKRPCommandData = Seed | AddMember | PublishKey | Derive;
 
@@ -71,16 +45,6 @@ export type AddMemberUnsignedData = AddMember;
 type PublishKeyUnsignedData = Pick<PublishKey, "type" | "recipient">;
 type DeriveUnsignedData = Pick<Derive, "type" | "path">;
 
-export type ParsedTrustedProperties = {
-  iv: Uint8Array;
-  issuer: Uint8Array;
-  xpriv: Uint8Array;
-  ephemeralPublicKey: Uint8Array;
-  commandIv: Uint8Array;
-  groupKey: Uint8Array;
-  newMember: Uint8Array;
-};
-
 export type EncryptedCommand =
   | EncryptedDeriveCommand
   | AddMemberUnsignedData
@@ -96,3 +60,13 @@ export type EncryptedPublishKeyCommand = PublishKeyUnsignedData &
     ParsedTrustedProperties,
     "iv" | "xpriv" | "ephemeralPublicKey" | "commandIv"
   >;
+
+type ParsedTrustedProperties = {
+  iv: Uint8Array;
+  issuer: Uint8Array;
+  xpriv: Uint8Array;
+  ephemeralPublicKey: Uint8Array;
+  commandIv: Uint8Array;
+  groupKey: Uint8Array;
+  newMember: Uint8Array;
+};

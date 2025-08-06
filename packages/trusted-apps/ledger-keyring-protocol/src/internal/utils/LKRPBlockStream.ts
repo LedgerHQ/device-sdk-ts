@@ -2,14 +2,17 @@ import { Either, Just, Maybe, Nothing, Right } from "purify-ts";
 
 import { type LKRPParsingError } from "@api/app-binder/Errors";
 import { type Keypair } from "@api/app-binder/LKRPTypes";
+import { type LKRPBlockData } from "@internal/models/LKRPBlockTypes";
+import { CommandTags } from "@internal/models/Tags";
+import {
+  type EncryptedPublishedKey,
+  type PublishedKey,
+} from "@internal/models/Types";
 import { CryptoUtils } from "@internal/utils/crypto";
 
 import { bytesToHex, hexToBytes } from "./hex";
 import { LKRPBlock } from "./LKRPBlock";
 import { TLVParser } from "./TLVParser";
-import { CommandTags } from "./TLVTags";
-import { type LKRPBlockData } from "./types";
-import { type EncryptedPublishedKey, type PublishedKey } from "./types";
 
 export class LKRPBlockStream {
   private validation: Maybe<Promise<boolean>> = Nothing;

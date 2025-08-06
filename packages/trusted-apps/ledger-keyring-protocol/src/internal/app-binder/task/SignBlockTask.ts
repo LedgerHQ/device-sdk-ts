@@ -19,6 +19,13 @@ import { SignBlockSignatureCommand } from "@internal/app-binder/command/SignBloc
 import { SignBlockSingleCommand } from "@internal/app-binder/command/SignBlockSingleCommand";
 import { type LKRPDeviceCommandError } from "@internal/app-binder/command/utils/ledgerKeyringProtocolErrors";
 import { type LKRPDataSource } from "@internal/lkrp-datasource/data/LKRPDataSource";
+import {
+  type AddMemberUnsignedData,
+  type EncryptedCommand,
+  type EncryptedDeriveCommand,
+  type EncryptedPublishKeyCommand,
+} from "@internal/models/LKRPCommandTypes";
+import { CommandTags } from "@internal/models/Tags";
 import { CryptoUtils } from "@internal/utils/crypto";
 import {
   eitherAsyncSeqRecord,
@@ -26,13 +33,6 @@ import {
 } from "@internal/utils/eitherSeqRecord";
 import { LKRPBlock } from "@internal/utils/LKRPBlock";
 import { LKRPCommand } from "@internal/utils/LKRPCommand";
-import { CommandTags } from "@internal/utils/TLVTags";
-import {
-  type AddMemberUnsignedData,
-  type EncryptedCommand,
-  type EncryptedDeriveCommand,
-  type EncryptedPublishKeyCommand,
-} from "@internal/utils/types";
 
 import { TrustedProperties } from "./utils/TrustedProperties";
 

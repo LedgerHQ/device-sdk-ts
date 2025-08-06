@@ -1,10 +1,10 @@
 import { Left, Right } from "purify-ts";
 
 import { LKRPParsingError } from "@api/app-binder/Errors";
+import { CommandTags, GeneralTags } from "@internal/models/Tags";
 
 import { LKRPCommand } from "./LKRPCommand";
 import { TLVParser } from "./TLVParser";
-import { CommandTags, GeneralTags } from "./TLVTags";
 
 describe("TLVParser", () => {
   describe("Block Data Parsing", () => {

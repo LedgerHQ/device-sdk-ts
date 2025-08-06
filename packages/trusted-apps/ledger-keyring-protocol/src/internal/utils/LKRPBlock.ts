@@ -5,11 +5,14 @@ import {
 import { Either, Just, type Maybe, Nothing, Right } from "purify-ts";
 
 import { type LKRPParsingError } from "@api/app-binder/Errors";
+import {
+  type LKRPBlockData,
+  type LKRPBlockParsedData,
+} from "@internal/models/LKRPBlockTypes";
 
 import { CryptoUtils } from "./crypto";
 import { TLVBuilder } from "./TLVBuilder";
 import { TLVParser } from "./TLVParser";
-import { type LKRPBlockData, type LKRPBlockParsedData } from "./types";
 
 export class LKRPBlock {
   private hashValue: Maybe<string> = Nothing; // Cache hash value for performance
