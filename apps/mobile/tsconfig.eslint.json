@@ -3,10 +3,10 @@
   "include": [
     "**/*.ts",
     "**/*.tsx",
-    "eslint.config.mjs",
     "babel.config.js",
     "index.js",
     "metro.config.js",
-    "react-native.config.js",
+    "react-native.config.js"
   ],
+  "exclude": ["eslint.config.mjs"]
 }

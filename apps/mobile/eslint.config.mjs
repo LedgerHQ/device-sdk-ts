@@ -14,6 +14,14 @@ export default [
     },
   },
   {
+    files: ["eslint.config.mjs"],
+    languageOptions: {
+      parserOptions: {
+        project: null,
+      },
+    },
+  },
+  {
     files: ["**/*.tsx"],
     rules: {
       "react/prop-types": 1,
