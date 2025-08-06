@@ -1,5 +1,3 @@
-import { type Maybe } from "purify-ts";
-
 import { type AuthenticateDAReturnType } from "./app-binder/AuthenticateDeviceActionTypes";
 import {
   type JWT,
@@ -19,5 +17,5 @@ export interface LedgerKeyringProtocol {
 
   encryptData: (xpriv: Uint8Array, data: Uint8Array) => Uint8Array;
 
-  decryptData: (xpriv: Uint8Array, data: Uint8Array) => Maybe<Uint8Array>;
+  decryptData: (xpriv: Uint8Array, data: Uint8Array) => Uint8Array;
 }

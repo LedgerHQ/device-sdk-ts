@@ -150,7 +150,7 @@ export class LKRPCommand {
     }
   }
 
-  getEncryptedPublichedKey(): Maybe<EncryptedPublishedKey> {
+  getEncryptedPublishedKey(): Maybe<EncryptedPublishedKey> {
     switch (this.bytes[0]) {
       case CommandTags.Seed:
       case CommandTags.Derive:
