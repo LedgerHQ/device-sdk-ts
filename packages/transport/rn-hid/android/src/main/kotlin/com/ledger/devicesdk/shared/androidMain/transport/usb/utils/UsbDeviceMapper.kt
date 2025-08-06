@@ -25,6 +25,9 @@ internal fun ProductId.toLedgerDevice(): LedgerDevice? =
             this.id.isLedgerDeviceProductId(LedgerDevice.Flex) -> {
                 LedgerDevice.Flex
             }
+            this.id.isLedgerDeviceProductId(LedgerDevice.Apex) -> {
+                LedgerDevice.Apex
+            }
             else -> {
                 null
             }
