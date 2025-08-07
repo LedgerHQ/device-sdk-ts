@@ -1,6 +1,7 @@
 import {
   type ClearSignContext,
   type ClearSignContextReference,
+  ClearSignContextReferenceType,
   type ClearSignContextSuccess,
   ClearSignContextType,
   type ContextModule,
@@ -16,7 +17,7 @@ import {
 import { GetChallengeCommand } from "@internal/app-binder/command/GetChallengeCommand";
 import { type TransactionParserService } from "@internal/transaction/service/parser/TransactionParserService";
 
-export type BuildSubContextTaskArgs = {
+export type BuildSubcontextsTaskArgs = {
   readonly context: ClearSignContextSuccess;
   readonly contextOptional: ClearSignContextSuccess[];
   readonly transactionParser: TransactionParserService;
@@ -24,17 +25,17 @@ export type BuildSubContextTaskArgs = {
   readonly contextModule: ContextModule;
 };
 
-export type BuildSubContextTaskResult = {
+export type BuildSubcontextsTaskResult = {
   subcontextCallbacks: (() => Promise<ClearSignContext>)[];
 };
 
-export class BuildSubContextTask {
+export class BuildSubcontextsTask {
   constructor(
     private readonly api: InternalApi,
-    private readonly args: BuildSubContextTaskArgs,
+    private readonly args: BuildSubcontextsTaskArgs,
   ) {}
 
-  run(): BuildSubContextTaskResult {
+  run(): BuildSubcontextsTaskResult {
     const context = this.args.context;
 
     if (
@@ -58,7 +59,10 @@ export class BuildSubContextTask {
       context.reference.value !== undefined
     ) {
       const transactionFieldContext: TransactionFieldContext = {
-        type: context.reference.type,
+        type:
+          context.reference.type === ClearSignContextReferenceType.TOKEN
+            ? ClearSignContextType.TOKEN
+            : ClearSignContextType.NFT,
         chainId: this.args.subset.chainId,
         address: context.reference.value,
       };
@@ -86,8 +90,8 @@ export class BuildSubContextTask {
         const subcontextCallbacks: (() => Promise<ClearSignContext>)[] = [];
 
         for (const value of referenceValues.extract()) {
-          if (context.reference.type === ClearSignContextType.ENUM) {
-            const reference: ClearSignContextReference<ClearSignContextType.ENUM> =
+          if (context.reference.type === ClearSignContextReferenceType.ENUM) {
+            const reference: ClearSignContextReference<ClearSignContextReferenceType.ENUM> =
               context.reference;
             const enumValue = value[value.length - 1];
             if (!enumValue) continue;
@@ -108,11 +112,12 @@ export class BuildSubContextTask {
           }
 
           if (
-            context.reference.type === ClearSignContextType.TOKEN ||
-            context.reference.type === ClearSignContextType.NFT
+            context.reference.type === ClearSignContextReferenceType.TOKEN ||
+            context.reference.type === ClearSignContextReferenceType.NFT
           ) {
             const reference: ClearSignContextReference<
-              ClearSignContextType.TOKEN | ClearSignContextType.NFT
+              | ClearSignContextReferenceType.TOKEN
+              | ClearSignContextReferenceType.NFT
             > = context.reference;
             const address = bufferToHexaString(
               value.slice(Math.max(0, value.length - 20)),
@@ -120,15 +125,21 @@ export class BuildSubContextTask {
 
             subcontextCallbacks.push(() =>
               this.args.contextModule.getContext({
-                type: reference.type,
+                type:
+                  reference.type === ClearSignContextReferenceType.TOKEN
+                    ? ClearSignContextType.TOKEN
+                    : ClearSignContextType.NFT,
                 chainId: this.args.subset.chainId,
                 address,
               }),
             );
           }
 
-          if (context.reference.type === ClearSignContextType.TRUSTED_NAME) {
-            const reference: ClearSignContextReference<ClearSignContextType.TRUSTED_NAME> =
+          if (
+            context.reference.type ===
+            ClearSignContextReferenceType.TRUSTED_NAME
+          ) {
+            const reference: ClearSignContextReference<ClearSignContextReferenceType.TRUSTED_NAME> =
               context.reference;
             subcontextCallbacks.push(async () => {
               const address = bufferToHexaString(
@@ -147,7 +158,7 @@ export class BuildSubContextTask {
               }
 
               const subcontext = await this.args.contextModule.getContext({
-                type: reference.type,
+                type: ClearSignContextType.TRUSTED_NAME,
                 chainId: this.args.subset.chainId,
                 address,
                 challenge: getChallengeResult.data.challenge,

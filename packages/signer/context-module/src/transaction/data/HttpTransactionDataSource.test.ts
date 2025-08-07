@@ -40,6 +40,7 @@ describe("HttpTransactionDataSource", () => {
   let fieldUnit: CalldataFieldV1;
   let fieldDuration: CalldataFieldV1;
   let fieldEnum: CalldataFieldV1;
+  let fieldCalldata: CalldataFieldV1;
   const certificateLoaderMock = {
     loadCertificate: vi.fn(),
   };
@@ -98,17 +99,19 @@ describe("HttpTransactionDataSource", () => {
             type: "DATA",
             elements: [
               {
-                type: "TUPLE",
-                offset: 0,
+                type: "ARRAY",
+                start: 0,
+                end: 5,
+                weight: 1,
               },
               {
                 type: "LEAF",
-                leaf_type: "STATIC_LEAF",
+                leaf_type: "DYNAMIC_LEAF",
               },
             ],
           },
-          type_family: "UINT",
-          type_size: 32,
+          type_family: "ADDRESS",
+          type_size: 20,
         },
         type: "TOKEN_AMOUNT",
         token: {
@@ -219,6 +222,94 @@ describe("HttpTransactionDataSource", () => {
       },
       descriptor:
         "000100010c546f20726563697069656e7402010803230001000115000100010105020112",
+    };
+    fieldCalldata = {
+      param: {
+        value: {
+          type: "path",
+          binary_path: {
+            type: "DATA",
+            elements: [
+              {
+                type: "TUPLE",
+                offset: 0,
+              },
+              {
+                type: "LEAF",
+                leaf_type: "STATIC_LEAF",
+              },
+            ],
+          },
+          type_family: "BYTES",
+          type_size: 32,
+        },
+        callee: {
+          type: "path",
+          binary_path: {
+            type: "DATA",
+            elements: [
+              {
+                type: "ARRAY",
+                weight: 1,
+              },
+              {
+                type: "LEAF",
+                leaf_type: "DYNAMIC_LEAF",
+              },
+            ],
+          },
+          type_family: "ADDRESS",
+          type_size: 20,
+        },
+        selector: {
+          type: "path",
+          binary_path: {
+            type: "CONTAINER",
+            value: "FROM",
+          },
+          type_family: "BYTES",
+          type_size: 4,
+        },
+        amount: {
+          type: "path",
+          binary_path: {
+            type: "DATA",
+            elements: [
+              {
+                type: "REF",
+              },
+              {
+                type: "LEAF",
+                leaf_type: "TUPLE_LEAF",
+              },
+            ],
+          },
+          type_family: "UINT",
+          type_size: 32,
+        },
+        spender: {
+          type: "path",
+          binary_path: {
+            type: "DATA",
+            elements: [
+              {
+                type: "SLICE",
+                start: 0,
+                end: 20,
+              },
+              {
+                type: "LEAF",
+                leaf_type: "ARRAY_LEAF",
+              },
+            ],
+          },
+          type_family: "ADDRESS",
+          type_size: 20,
+        },
+        type: "CALLDATA",
+      },
+      descriptor:
+        "000100010c43616c6c64617461207465737402010803230001000115000100010105020114",
     };
   });
 
@@ -929,6 +1020,156 @@ describe("HttpTransactionDataSource", () => {
     ]);
   });
 
+  it("Calldata with CALLDATA fields references", async () => {
+    // GIVEN
+    const calldataDTO = createCalldata(transactionInfo, [], [fieldCalldata]);
+    vi.spyOn(axios, "request").mockResolvedValue({ data: [calldataDTO] });
+    vi.spyOn(certificateLoaderMock, "loadCertificate").mockResolvedValue(
+      undefined,
+    );
+
+    // WHEN
+    const result = await datasource.getTransactionDescriptors({
+      deviceModelId: DeviceModelId.FLEX,
+      chainId: 1,
+      address: "0x7d2768de32b0b80b7a3454c06bdac94a69ddc7a9",
+      selector: "0x69328dec",
+    });
+
+    // THEN
+    expect(result.extract()).toEqual([
+      {
+        payload:
+          "0001000108000000000000000102147d2768de32b0b80b7a3454c06bdac94a69ddc7a9030469328dec04207d5e9ed0004b8035b164edd9d78c37415ad6b1d123be4943d0abd5a50035cae3050857697468647261770604416176650708416176652044414f081068747470733a2f2f616176652e636f6d0a045fc4ba9c81ff473045022100eb67599abfd9c7360b07599a2a2cb769c6e3f0f74e1e52444d788c8f577a16d20220402e92b0adbf97d890fa2f9654bc30c7bd70dacabe870f160e6842d9eb73d36f",
+        type: "transactionInfo",
+      },
+      {
+        payload: fieldCalldata.descriptor,
+        type: "transactionFieldDescription",
+        reference: {
+          type: "calldata",
+          valuePath: [
+            {
+              type: "TUPLE",
+              offset: 0,
+            },
+            {
+              type: "LEAF",
+              leafType: "STATIC_LEAF",
+            },
+          ],
+          callee: [
+            {
+              type: "ARRAY",
+              itemSize: 1,
+            },
+            {
+              type: "LEAF",
+              leafType: "DYNAMIC_LEAF",
+            },
+          ],
+          selector: "FROM",
+          amount: [
+            {
+              type: "REF",
+            },
+            {
+              type: "LEAF",
+              leafType: "TUPLE_LEAF",
+            },
+          ],
+          spender: [
+            {
+              type: "SLICE",
+              start: 0,
+              end: 20,
+            },
+            {
+              type: "LEAF",
+              leafType: "ARRAY_LEAF",
+            },
+          ],
+        },
+      },
+    ]);
+  });
+
+  it("Calldata with CALLDATA fields references without optional properties", async () => {
+    // GIVEN
+    const fieldCalldataMinimal = {
+      param: {
+        value: {
+          type: "path",
+          binary_path: {
+            type: "DATA",
+            elements: [
+              {
+                type: "TUPLE",
+                offset: 0,
+              },
+              {
+                type: "LEAF",
+                leaf_type: "STATIC_LEAF",
+              },
+            ],
+          },
+          type_family: "BYTES",
+          type_size: 32,
+        },
+        type: "CALLDATA",
+      },
+      descriptor:
+        "000100010c43616c6c64617461207465737402010803230001000115000100010105020114",
+    };
+    const calldataDTO = createCalldata(
+      transactionInfo,
+      [],
+      [fieldCalldataMinimal],
+    );
+    vi.spyOn(axios, "request").mockResolvedValue({ data: [calldataDTO] });
+    vi.spyOn(certificateLoaderMock, "loadCertificate").mockResolvedValue(
+      undefined,
+    );
+
+    // WHEN
+    const result = await datasource.getTransactionDescriptors({
+      deviceModelId: DeviceModelId.FLEX,
+      chainId: 1,
+      address: "0x7d2768de32b0b80b7a3454c06bdac94a69ddc7a9",
+      selector: "0x69328dec",
+    });
+
+    // THEN
+    expect(result.extract()).toEqual([
+      {
+        payload:
+          "0001000108000000000000000102147d2768de32b0b80b7a3454c06bdac94a69ddc7a9030469328dec04207d5e9ed0004b8035b164edd9d78c37415ad6b1d123be4943d0abd5a50035cae3050857697468647261770604416176650708416176652044414f081068747470733a2f2f616176652e636f6d0a045fc4ba9c81ff473045022100eb67599abfd9c7360b07599a2a2cb769c6e3f0f74e1e52444d788c8f577a16d20220402e92b0adbf97d890fa2f9654bc30c7bd70dacabe870f160e6842d9eb73d36f",
+        type: "transactionInfo",
+      },
+      {
+        payload: fieldCalldataMinimal.descriptor,
+        type: "transactionFieldDescription",
+        reference: {
+          type: "calldata",
+          valuePath: [
+            {
+              type: "TUPLE",
+              offset: 0,
+            },
+            {
+              type: "LEAF",
+              leafType: "STATIC_LEAF",
+            },
+          ],
+          callee: undefined,
+          selector: undefined,
+          amount: undefined,
+          spender: undefined,
+        },
+      },
+    ]);
+  });
+
   it("should return an error when calldata is not correctly formatted", async () => {
     // GIVEN
     const calldataDTO = {
@@ -1286,6 +1527,7 @@ describe("HttpTransactionDataSource", () => {
       ),
     );
   });
+
   it("should call axios with the correct headers", async () => {
     // GIVEN
     vi.spyOn(axios, "request").mockResolvedValueOnce({ data: {} });
