@@ -1,7 +1,4 @@
-import {
-  type ClearSignContextSuccess,
-  ClearSignContextType,
-} from "@ledgerhq/context-module";
+import { ClearSignContextType } from "@ledgerhq/context-module";
 import {
   CommandResultFactory,
   type InternalApi,
@@ -27,9 +24,9 @@ import { type EthErrorCodes } from "@internal/app-binder/command/utils/ethAppErr
 import { makeDeviceActionInternalApiMock } from "@internal/app-binder/device-action/__test-utils__/makeInternalApi";
 
 import {
-  ProvideTransactionContextTask,
-  type ProvideTransactionContextTaskArgs,
-} from "./ProvideTransactionContextTask";
+  ProvideContextsTask,
+  type ProvideContextsTaskArgs,
+} from "./ProvideContextsTask";
 import {
   SendCommandInChunksTask,
   type SendCommandInChunksTaskArgs,
@@ -39,7 +36,7 @@ import {
   type SendPayloadInChunksTaskArgs,
 } from "./SendPayloadInChunksTask";
 
-describe("ProvideTransactionContextTask", () => {
+describe("ProvideContextsTask", () => {
   const api = makeDeviceActionInternalApiMock();
   const successResult = CommandResultFactory<void, EthErrorCodes>({
     data: undefined,
@@ -80,16 +77,20 @@ describe("ProvideTransactionContextTask", () => {
     describe("with no subcontexts", () => {
       it("should provide the transaction context for a TRANSACTION_INFO context", async () => {
         // GIVEN
-        const args: ProvideTransactionContextTaskArgs = {
-          context: {
-            type: ClearSignContextType.TRANSACTION_INFO,
-            payload: "0x00",
-            certificate: {
-              keyUsageNumber: 1,
-              payload: new Uint8Array([1, 2, 3]),
+        const args: ProvideContextsTaskArgs = {
+          contexts: [
+            {
+              context: {
+                type: ClearSignContextType.TRANSACTION_INFO,
+                payload: "0x00",
+                certificate: {
+                  keyUsageNumber: 1,
+                  payload: new Uint8Array([1, 2, 3]),
+                },
+              },
+              subcontextCallbacks: [],
             },
-          },
-          subcontextsCallbacks: [],
+          ],
           serializedTransaction: new Uint8Array(),
           derivationPath: "44'/60'/0'/0/0",
         };
@@ -98,7 +99,7 @@ describe("ProvideTransactionContextTask", () => {
         api.sendCommand.mockResolvedValue(successResult);
 
         // WHEN
-        const task = new ProvideTransactionContextTask(
+        const task = new ProvideContextsTask(
           api,
           args,
           sendPayloadInChunksTaskMockFactory,
@@ -156,12 +157,16 @@ describe("ProvideTransactionContextTask", () => {
 
       it("should provide the transaction context for a TRANSACTION_INFO context without certificate", async () => {
         // GIVEN
-        const args: ProvideTransactionContextTaskArgs = {
-          context: {
-            type: ClearSignContextType.TRANSACTION_INFO,
-            payload: "0x00",
-          },
-          subcontextsCallbacks: [],
+        const args: ProvideContextsTaskArgs = {
+          contexts: [
+            {
+              context: {
+                type: ClearSignContextType.TRANSACTION_INFO,
+                payload: "0x00",
+              },
+              subcontextCallbacks: [],
+            },
+          ],
           serializedTransaction: new Uint8Array(),
           derivationPath: "44'/60'/0'/0/0",
         };
@@ -170,7 +175,7 @@ describe("ProvideTransactionContextTask", () => {
         api.sendCommand.mockResolvedValue(successResult);
 
         // WHEN
-        const task = new ProvideTransactionContextTask(
+        const task = new ProvideContextsTask(
           api,
           args,
           sendPayloadInChunksTaskMockFactory,
@@ -232,19 +237,23 @@ describe("ProvideTransactionContextTask", () => {
         "should provide the transaction context by calling sendCommand for a %s context",
         async (contextType, commandClass) => {
           // GIVEN
-          const args: ProvideTransactionContextTaskArgs = {
-            context: {
-              type: contextType,
-              payload: "payload",
-            },
-            subcontextsCallbacks: [],
+          const args: ProvideContextsTaskArgs = {
+            contexts: [
+              {
+                context: {
+                  type: contextType,
+                  payload: "payload",
+                },
+                subcontextCallbacks: [],
+              },
+            ],
             serializedTransaction: new Uint8Array(),
             derivationPath: "44'/60'/0'/0/0",
           };
           api.sendCommand.mockResolvedValue(successResult);
 
           // WHEN
-          const task = new ProvideTransactionContextTask(
+          const task = new ProvideContextsTask(
             api,
             args,
             sendPayloadInChunksTaskMockFactory,
@@ -283,19 +292,25 @@ describe("ProvideTransactionContextTask", () => {
         "should provide the transaction context by calling sendPayloadInChunksTask for a %s context",
         async (contextType, commandClass, withPayloadLength = undefined) => {
           // GIVEN
-          const args: ProvideTransactionContextTaskArgs = {
-            context: {
-              type: contextType,
-              payload: "payload",
-            } as ClearSignContextSuccess,
-            subcontextsCallbacks: [],
+          const args: ProvideContextsTaskArgs = {
+            contexts: [
+              {
+                context: {
+                  type: contextType,
+                  payload: "payload",
+                  id: 1,
+                  value: 1,
+                },
+                subcontextCallbacks: [],
+              },
+            ],
             serializedTransaction: new Uint8Array(),
             derivationPath: "44'/60'/0'/0/0",
           };
           sendPayloadInChunksRunMock.mockResolvedValue(successResult);
 
           // WHEN
-          const task = new ProvideTransactionContextTask(
+          const task = new ProvideContextsTask(
             api,
             args,
             sendPayloadInChunksTaskMockFactory,
@@ -337,21 +352,25 @@ describe("ProvideTransactionContextTask", () => {
 
       it("should skip the subcontexts if the context is an error", async () => {
         // GIVEN
-        const args: ProvideTransactionContextTaskArgs = {
-          context: {
-            type: ClearSignContextType.TOKEN,
-            payload: "payload",
-            certificate: {
-              keyUsageNumber: 1,
-              payload: new Uint8Array([1, 2, 3]),
+        const args: ProvideContextsTaskArgs = {
+          contexts: [
+            {
+              context: {
+                type: ClearSignContextType.TOKEN,
+                payload: "payload",
+                certificate: {
+                  keyUsageNumber: 1,
+                  payload: new Uint8Array([1, 2, 3]),
+                },
+              },
+              subcontextCallbacks: [
+                () =>
+                  Promise.resolve({
+                    type: ClearSignContextType.ERROR,
+                    error: new Error("error"),
+                  }),
+              ],
             },
-          },
-          subcontextsCallbacks: [
-            () =>
-              Promise.resolve({
-                type: ClearSignContextType.ERROR,
-                error: new Error("error"),
-              }),
           ],
           serializedTransaction: new Uint8Array(),
           derivationPath: "44'/60'/0'/0/0",
@@ -360,7 +379,7 @@ describe("ProvideTransactionContextTask", () => {
         api.sendCommand.mockResolvedValue(successResult);
 
         // WHEN
-        const task = new ProvideTransactionContextTask(
+        const task = new ProvideContextsTask(
           api,
           args,
           sendPayloadInChunksTaskMockFactory,
@@ -387,17 +406,21 @@ describe("ProvideTransactionContextTask", () => {
     describe("with subcontexts", () => {
       it("should provide the transaction context and subcontext for a TRANSACTION_FIELD_DESCRIPTION context", async () => {
         // GIVEN
-        const args: ProvideTransactionContextTaskArgs = {
-          context: {
-            type: ClearSignContextType.TRANSACTION_FIELD_DESCRIPTION,
-            payload: "payload",
-          },
-          subcontextsCallbacks: [
-            () =>
-              Promise.resolve({
-                type: ClearSignContextType.TOKEN,
+        const args: ProvideContextsTaskArgs = {
+          contexts: [
+            {
+              context: {
+                type: ClearSignContextType.TRANSACTION_FIELD_DESCRIPTION,
                 payload: "payload",
-              }),
+              },
+              subcontextCallbacks: [
+                () =>
+                  Promise.resolve({
+                    type: ClearSignContextType.TOKEN,
+                    payload: "payload",
+                  }),
+              ],
+            },
           ],
           serializedTransaction: new Uint8Array(),
           derivationPath: "44'/60'/0'/0/0",
@@ -406,7 +429,7 @@ describe("ProvideTransactionContextTask", () => {
         api.sendCommand.mockResolvedValue(successResult);
 
         // WHEN
-        const task = new ProvideTransactionContextTask(
+        const task = new ProvideContextsTask(
           api,
           args,
           sendPayloadInChunksTaskMockFactory,
@@ -445,23 +468,27 @@ describe("ProvideTransactionContextTask", () => {
 
       it("should provide the transaction context and subcontexts for a TRUSTED_NAME context", async () => {
         // GIVEN
-        const args: ProvideTransactionContextTaskArgs = {
-          context: {
-            type: ClearSignContextType.TRUSTED_NAME,
-            payload: "payload",
-          },
-          subcontextsCallbacks: [
-            () =>
-              Promise.resolve({
-                type: ClearSignContextType.NFT,
-                payload: "payload1",
-              }),
+        const args: ProvideContextsTaskArgs = {
+          contexts: [
+            {
+              context: {
+                type: ClearSignContextType.TRUSTED_NAME,
+                payload: "payload",
+              },
+              subcontextCallbacks: [
+                () =>
+                  Promise.resolve({
+                    type: ClearSignContextType.NFT,
+                    payload: "payload1",
+                  }),
 
-            () =>
-              Promise.resolve({
-                type: ClearSignContextType.TOKEN,
-                payload: "payload2",
-              }),
+                () =>
+                  Promise.resolve({
+                    type: ClearSignContextType.TOKEN,
+                    payload: "payload2",
+                  }),
+              ],
+            },
           ],
           serializedTransaction: new Uint8Array(),
           derivationPath: "44'/60'/0'/0/0",
@@ -470,7 +497,7 @@ describe("ProvideTransactionContextTask", () => {
         api.sendCommand.mockResolvedValue(successResult);
 
         // WHEN
-        const task = new ProvideTransactionContextTask(
+        const task = new ProvideContextsTask(
           api,
           args,
           sendPayloadInChunksTaskMockFactory,
@@ -514,25 +541,29 @@ describe("ProvideTransactionContextTask", () => {
     describe("with subcontexts and certificate", () => {
       it("should provide the transaction context and subcontexts for a TRUSTED_NAME context", async () => {
         // GIVEN
-        const args: ProvideTransactionContextTaskArgs = {
-          context: {
-            type: ClearSignContextType.TRUSTED_NAME,
-            payload: "payload",
-            certificate: {
-              keyUsageNumber: 1,
-              payload: new Uint8Array([1, 2, 3]),
-            },
-          },
-          subcontextsCallbacks: [
-            () =>
-              Promise.resolve({
-                type: ClearSignContextType.NFT,
-                payload: "payload1",
+        const args: ProvideContextsTaskArgs = {
+          contexts: [
+            {
+              context: {
+                type: ClearSignContextType.TRUSTED_NAME,
+                payload: "payload",
                 certificate: {
-                  keyUsageNumber: 2,
-                  payload: new Uint8Array([4, 5, 6]),
+                  keyUsageNumber: 1,
+                  payload: new Uint8Array([1, 2, 3]),
                 },
-              }),
+              },
+              subcontextCallbacks: [
+                () =>
+                  Promise.resolve({
+                    type: ClearSignContextType.NFT,
+                    payload: "payload1",
+                    certificate: {
+                      keyUsageNumber: 2,
+                      payload: new Uint8Array([4, 5, 6]),
+                    },
+                  }),
+              ],
+            },
           ],
           serializedTransaction: new Uint8Array(),
           derivationPath: "44'/60'/0'/0/0",
@@ -541,7 +572,7 @@ describe("ProvideTransactionContextTask", () => {
         api.sendCommand.mockResolvedValue(successResult);
 
         // WHEN
-        const task = new ProvideTransactionContextTask(
+        const task = new ProvideContextsTask(
           api,
           args,
           sendPayloadInChunksTaskMockFactory,
@@ -569,19 +600,23 @@ describe("ProvideTransactionContextTask", () => {
     describe("with error", () => {
       it("should return an error if the provideContext fails", async () => {
         // GIVEN
-        const args: ProvideTransactionContextTaskArgs = {
-          context: {
-            type: ClearSignContextType.TOKEN,
-            payload: "payload",
-          },
-          subcontextsCallbacks: [],
+        const args: ProvideContextsTaskArgs = {
+          contexts: [
+            {
+              context: {
+                type: ClearSignContextType.TOKEN,
+                payload: "payload",
+              },
+              subcontextCallbacks: [],
+            },
+          ],
           serializedTransaction: new Uint8Array(),
           derivationPath: "44'/60'/0'/0/0",
         };
         api.sendCommand.mockResolvedValue(errorResult);
 
         // WHEN
-        const task = new ProvideTransactionContextTask(
+        const task = new ProvideContextsTask(
           api,
           args,
           sendPayloadInChunksTaskMockFactory,
@@ -595,17 +630,21 @@ describe("ProvideTransactionContextTask", () => {
 
       it("should return an error if the provide subcontext fails", async () => {
         // GIVEN
-        const args: ProvideTransactionContextTaskArgs = {
-          context: {
-            type: ClearSignContextType.TOKEN,
-            payload: "payload",
-          },
-          subcontextsCallbacks: [
-            () =>
-              Promise.resolve({
+        const args: ProvideContextsTaskArgs = {
+          contexts: [
+            {
+              context: {
                 type: ClearSignContextType.TOKEN,
                 payload: "payload",
-              }),
+              },
+              subcontextCallbacks: [
+                () =>
+                  Promise.resolve({
+                    type: ClearSignContextType.TOKEN,
+                    payload: "payload",
+                  }),
+              ],
+            },
           ],
           serializedTransaction: new Uint8Array(),
           derivationPath: "44'/60'/0'/0/0",
@@ -613,7 +652,7 @@ describe("ProvideTransactionContextTask", () => {
         api.sendCommand.mockResolvedValue(errorResult);
 
         // WHEN
-        const task = new ProvideTransactionContextTask(
+        const task = new ProvideContextsTask(
           api,
           args,
           sendPayloadInChunksTaskMockFactory,
@@ -627,18 +666,22 @@ describe("ProvideTransactionContextTask", () => {
 
       it("should return an error if the type is not supported", async () => {
         // GIVEN
-        const args: ProvideTransactionContextTaskArgs = {
-          context: {
-            type: "unsupported" as unknown as ClearSignContextType.TOKEN,
-            payload: "payload",
-          },
-          subcontextsCallbacks: [],
+        const args: ProvideContextsTaskArgs = {
+          contexts: [
+            {
+              context: {
+                type: "unsupported" as unknown as ClearSignContextType.TOKEN,
+                payload: "payload",
+              },
+              subcontextCallbacks: [],
+            },
+          ],
           serializedTransaction: new Uint8Array(),
           derivationPath: "44'/60'/0'/0/0",
         };
 
         // WHEN
-        const task = new ProvideTransactionContextTask(
+        const task = new ProvideContextsTask(
           api,
           args,
           sendPayloadInChunksTaskMockFactory,
@@ -662,12 +705,16 @@ describe("ProvideTransactionContextTask", () => {
     describe("factory types", () => {
       it("should have a sendPayloadInChunksTaskFactory by default", () => {
         // GIVEN
-        const task = new ProvideTransactionContextTask(api, {
-          context: {
-            type: ClearSignContextType.TOKEN,
-            payload: "payload",
-          },
-          subcontextsCallbacks: [],
+        const task = new ProvideContextsTask(api, {
+          contexts: [
+            {
+              context: {
+                type: ClearSignContextType.TOKEN,
+                payload: "payload",
+              },
+              subcontextCallbacks: [],
+            },
+          ],
           serializedTransaction: new Uint8Array(),
           derivationPath: "44'/60'/0'/0/0",
         });
@@ -690,12 +737,16 @@ describe("ProvideTransactionContextTask", () => {
 
       it("should have a sendCommandInChunksTaskFactory by default", () => {
         // GIVEN
-        const task = new ProvideTransactionContextTask(api, {
-          context: {
-            type: ClearSignContextType.TOKEN,
-            payload: "payload",
-          },
-          subcontextsCallbacks: [],
+        const task = new ProvideContextsTask(api, {
+          contexts: [
+            {
+              context: {
+                type: ClearSignContextType.TOKEN,
+                payload: "payload",
+              },
+              subcontextCallbacks: [],
+            },
+          ],
           serializedTransaction: new Uint8Array(),
           derivationPath: "44'/60'/0'/0/0",
         });

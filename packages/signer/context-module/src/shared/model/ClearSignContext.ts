@@ -18,38 +18,50 @@ export enum ClearSignContextType {
   ERROR = "error",
 }
 
-export type ClearSignContextReferenceType =
-  | ClearSignContextType.TOKEN
-  | ClearSignContextType.NFT
-  | ClearSignContextType.ENUM
-  | ClearSignContextType.TRUSTED_NAME;
+export enum ClearSignContextReferenceType {
+  TOKEN = ClearSignContextType.TOKEN,
+  NFT = ClearSignContextType.NFT,
+  TRUSTED_NAME = ClearSignContextType.TRUSTED_NAME,
+  ENUM = ClearSignContextType.ENUM,
+  CALLDATA = "calldata",
+}
 
 export type ClearSignContextReference<
   Type extends ClearSignContextReferenceType = ClearSignContextReferenceType,
-> = Type extends ClearSignContextType.ENUM
+> = Type extends ClearSignContextReferenceType.ENUM
   ? {
-      type: ClearSignContextType.ENUM;
+      type: ClearSignContextReferenceType.ENUM;
       valuePath: GenericPath;
       id: number; // enum id to reference
     }
-  : Type extends ClearSignContextType.TRUSTED_NAME
+  : Type extends ClearSignContextReferenceType.TRUSTED_NAME
     ? {
-        type: ClearSignContextType.TRUSTED_NAME;
+        type: ClearSignContextReferenceType.TRUSTED_NAME;
         valuePath: GenericPath;
         types: string[];
         sources: string[];
       }
-    :
-        | {
-            type: Type;
-            valuePath: GenericPath;
-            value?: never;
-          }
-        | {
-            type: Type;
-            valuePath?: never;
-            value: string;
-          };
+    : Type extends ClearSignContextReferenceType.CALLDATA
+      ? {
+          type: ClearSignContextReferenceType.CALLDATA;
+          callee: GenericPath;
+          valuePath: GenericPath;
+          selector?: GenericPath;
+          amount?: GenericPath;
+          spender?: GenericPath;
+          chainId?: GenericPath;
+        }
+      :
+          | {
+              type: Type;
+              valuePath: GenericPath;
+              value?: never;
+            }
+          | {
+              type: Type;
+              valuePath?: never;
+              value: string;
+            };
 
 export type ClearSignContextSuccessType = Exclude<
   ClearSignContextType,

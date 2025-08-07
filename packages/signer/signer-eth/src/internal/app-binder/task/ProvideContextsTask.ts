@@ -1,5 +1,4 @@
 import {
-  type ClearSignContext,
   type ClearSignContextSuccess,
   ClearSignContextType,
 } from "@ledgerhq/context-module";
@@ -33,6 +32,7 @@ import { SetPluginCommand } from "@internal/app-binder/command/SetPluginCommand"
 import { StoreTransactionCommand } from "@internal/app-binder/command/StoreTransactionCommand";
 import { type EthErrorCodes } from "@internal/app-binder/command/utils/ethAppErrors";
 
+import { type ContextWithSubContexts } from "./BuildFullContextsTask";
 import {
   SendCommandInChunksTask,
   type SendCommandInChunksTaskArgs,
@@ -42,33 +42,34 @@ import {
   type SendPayloadInChunksTaskArgs,
 } from "./SendPayloadInChunksTask";
 
-export type ProvideTransactionContextTaskArgs = {
+export type ProvideContextsTaskArgs = {
   /**
-   * The clear sign context to provide.
+   * The list of clear sign context with subcontexts callback to provide.
    */
-  context: ClearSignContextSuccess;
-  /**
-   * The subcontexts callbacks to provide.
-   */
-  subcontextsCallbacks: (() => Promise<ClearSignContext>)[];
-  /**
-   * The serialized transaction to provide.
-   */
-  serializedTransaction: Uint8Array;
+  contexts: ContextWithSubContexts[];
   /**
    * The derivation path to provide.
    */
   derivationPath: string;
+  /**
+   * The serialized transaction to provide.
+   */
+  serializedTransaction: Uint8Array;
 };
+
+export type ProvideContextsTaskResult = Either<
+  CommandErrorResult<EthErrorCodes>,
+  void
+>;
 
 /**
  * This task is responsible for providing the transaction context to the device.
  * It will send the subcontexts callbacks in order and finish with the context.
  */
-export class ProvideTransactionContextTask {
+export class ProvideContextsTask {
   constructor(
     private _api: InternalApi,
-    private _args: ProvideTransactionContextTaskArgs,
+    private _args: ProvideContextsTaskArgs,
     private _sendPayloadInChunksTaskFactory = (
       api: InternalApi,
       args: SendPayloadInChunksTaskArgs<unknown>,
@@ -79,24 +80,53 @@ export class ProvideTransactionContextTask {
     ) => new SendCommandInChunksTask(api, args),
   ) {}
 
-  async run(): Promise<Either<CommandErrorResult<EthErrorCodes>, void>> {
-    for (const callback of this._args.subcontextsCallbacks) {
-      const subcontext = await callback();
+  async run(): Promise<ProvideContextsTaskResult> {
+    let transactionInfoProvided = false;
 
-      if (subcontext.type === ClearSignContextType.ERROR) {
-        // silently ignore error subcontexts
-        continue;
+    for (const { context, subcontextCallbacks } of this._args.contexts) {
+      for (const callback of subcontextCallbacks) {
+        const subcontext = await callback();
+
+        if (subcontext.type === ClearSignContextType.ERROR) {
+          // silently ignore error subcontexts
+          continue;
+        }
+
+        const res = await this.provideContext(subcontext);
+        if (!isSuccessCommandResult(res)) {
+          return Left(res);
+        }
       }
 
-      const res = await this.provideContext(subcontext);
+      if (
+        !transactionInfoProvided &&
+        context.type === ClearSignContextType.TRANSACTION_INFO
+      ) {
+        // Send the serialized transaction for the first TRANSACTION_INFO.
+        // All other TRANSACTION_INFO contexts will be ignored as it will be for nested calldata.
+        transactionInfoProvided = true;
+
+        const paths = DerivationPathUtils.splitPath(this._args.derivationPath);
+        const builder = new ByteArrayBuilder();
+        builder.add8BitUIntToData(paths.length);
+        paths.forEach((path) => {
+          builder.add32BitUIntToData(path);
+        });
+        builder.addBufferToData(this._args.serializedTransaction);
+        await this._sendCommandInChunksTaskFactory(this._api, {
+          data: builder.build(),
+          commandFactory: (args) =>
+            new StoreTransactionCommand({
+              serializedTransaction: args.chunkedData,
+              isFirstChunk: args.isFirstChunk,
+            }),
+        }).run();
+      }
+
+      const res = await this.provideContext(context);
       if (!isSuccessCommandResult(res)) {
         return Left(res);
       }
-    }
-
-    const res = await this.provideContext(this._args.context);
-    if (!isSuccessCommandResult(res)) {
-      return Left(res);
     }
 
     return Right(void 0);
@@ -143,25 +173,9 @@ export class ProvideTransactionContextTask {
         );
       }
       case ClearSignContextType.TRANSACTION_INFO: {
-        const paths = DerivationPathUtils.splitPath(this._args.derivationPath);
-        const builder = new ByteArrayBuilder();
-        builder.add8BitUIntToData(paths.length);
-        paths.forEach((path) => {
-          builder.add32BitUIntToData(path);
-        });
-        builder.addBufferToData(this._args.serializedTransaction);
-        await this._sendCommandInChunksTaskFactory(this._api, {
-          data: builder.build(),
-          commandFactory: (args) =>
-            new StoreTransactionCommand({
-              serializedTransaction: args.chunkedData,
-              isFirstChunk: args.isFirstChunk,
-            }),
-        }).run();
-
         const transactionInfoResult =
           await this._sendPayloadInChunksTaskFactory(this._api, {
-            payload: this._args.context.payload,
+            payload,
             commandFactory: (args) =>
               new ProvideTransactionInformationCommand({
                 data: args.chunkedData,

@@ -4,4 +4,5 @@ export type TransactionSubset = {
   selector: string;
   to?: string;
   value?: bigint;
+  from?: string;
 };

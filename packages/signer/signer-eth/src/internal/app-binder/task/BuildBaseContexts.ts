@@ -23,32 +23,40 @@ import {
 } from "@internal/app-binder/task/GetWeb3CheckTask";
 import { ApplicationChecker } from "@internal/shared/utils/ApplicationChecker";
 
-export type BuildTransactionTaskResult = {
+export type BuildBaseContextsResult = {
   readonly clearSignContexts: ClearSignContextSuccess[];
   readonly clearSignContextsOptional: ClearSignContextSuccess[];
   readonly clearSigningType: ClearSigningType;
 };
 
-export type BuildTransactionContextTaskArgs = {
+export type BuildBaseContextsArgs = {
   readonly contextModule: ContextModule;
   readonly options: TransactionOptions;
   readonly appConfig: GetConfigCommandResponse;
   readonly derivationPath: string;
-  readonly transaction: Uint8Array;
   readonly subset: TransactionSubset;
+  readonly transaction?: Uint8Array;
 };
 
-export class BuildTransactionContextTask {
+/**
+ * Builds the base contexts for a transaction
+ * @param api - The internal API
+ * @param args - The arguments for the build
+ * @param getWeb3ChecksFactory - The factory for the web3 checks
+ *
+ * returns the base contexts for a transaction, without subcontexts or nested call data contexts
+ */
+export class BuildBaseContexts {
   constructor(
     private readonly _api: InternalApi,
-    private readonly _args: BuildTransactionContextTaskArgs,
+    private readonly _args: BuildBaseContextsArgs,
     private readonly getWeb3ChecksFactory = (
       api: InternalApi,
       args: GetWeb3CheckTaskArgs,
     ) => new GetWeb3CheckTask(api, args),
   ) {}
 
-  async run(): Promise<BuildTransactionTaskResult> {
+  async run(): Promise<BuildBaseContextsResult> {
     const {
       contextModule,
       options,
@@ -61,19 +69,21 @@ export class BuildTransactionContextTask {
     let filteredContexts: ClearSignContextSuccess[] = [];
     let filteredContextOptional: ClearSignContextSuccess[] = [];
     let clearSigningType: ClearSigningType = ClearSigningType.BASIC;
-
-    // Run the web3checks if needed
     let web3Check: ClearSignContextSuccess<ClearSignContextType.WEB3_CHECK> | null =
       null;
-    if (appConfig.web3ChecksEnabled) {
-      web3Check = (
-        await this.getWeb3ChecksFactory(this._api, {
-          contextModule,
-          derivationPath,
-          subset,
-          transaction,
-        }).run()
-      ).web3Check;
+
+    // Run the web3checks if needed
+    if (transaction) {
+      if (appConfig.web3ChecksEnabled) {
+        web3Check = (
+          await this.getWeb3ChecksFactory(this._api, {
+            contextModule,
+            derivationPath,
+            subset,
+            transaction,
+          }).run()
+        ).web3Check;
+      }
     }
 
     // Get challenge (not supported on Nano S)

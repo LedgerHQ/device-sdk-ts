@@ -19,12 +19,12 @@ import { ClearSigningType } from "@api/model/ClearSigningType";
 import { makeDeviceActionInternalApiMock } from "@internal/app-binder/device-action/__test-utils__/makeInternalApi";
 
 import {
-  BuildTransactionContextTask,
-  type BuildTransactionContextTaskArgs,
-} from "./BuildTransactionContextTask";
+  BuildBaseContexts,
+  type BuildBaseContextsArgs,
+} from "./BuildBaseContexts";
 import { GetWeb3CheckTask } from "./GetWeb3CheckTask";
 
-describe("BuildTransactionContextTask", () => {
+describe("BuildBaseContexts", () => {
   const contextModuleMock = {
     getContext: vi.fn(),
     getContexts: vi.fn(),
@@ -47,7 +47,7 @@ describe("BuildTransactionContextTask", () => {
     payload: new Uint8Array([0x01, 0x02, 0x03]),
   };
 
-  let defaultArgs: BuildTransactionContextTaskArgs;
+  let defaultArgs: BuildBaseContextsArgs;
   const apiMock = makeDeviceActionInternalApiMock();
   const getWeb3ChecksFactoryMock = vi.fn();
 
@@ -83,7 +83,7 @@ describe("BuildTransactionContextTask", () => {
 
   it("should init with a default GetWeb3CheckTaskFactory", () => {
     // GIVEN
-    const task = new BuildTransactionContextTask(apiMock, defaultArgs);
+    const task = new BuildBaseContexts(apiMock, defaultArgs);
 
     // THEN
     expect(task["getWeb3ChecksFactory"]).toBeDefined();
@@ -92,7 +92,7 @@ describe("BuildTransactionContextTask", () => {
         contextModule: defaultArgs.contextModule,
         derivationPath: defaultArgs.derivationPath,
         subset: defaultArgs.subset,
-        transaction: defaultArgs.transaction,
+        transaction: defaultArgs.transaction!,
       }),
     ).toBeInstanceOf(GetWeb3CheckTask);
   });
@@ -112,7 +112,7 @@ describe("BuildTransactionContextTask", () => {
     });
 
     // WHEN
-    const result = await new BuildTransactionContextTask(
+    const result = await new BuildBaseContexts(
       apiMock,
       { ...defaultArgs, appConfig: createAppConfig(true) },
       getWeb3ChecksFactoryMock,
@@ -146,7 +146,7 @@ describe("BuildTransactionContextTask", () => {
     });
 
     // WHEN
-    const result = await new BuildTransactionContextTask(
+    const result = await new BuildBaseContexts(
       apiMock,
       { ...defaultArgs, appConfig: createAppConfig(true) },
       getWeb3ChecksFactoryMock,
@@ -200,7 +200,7 @@ describe("BuildTransactionContextTask", () => {
     });
 
     // WHEN
-    const result = await new BuildTransactionContextTask(
+    const result = await new BuildBaseContexts(
       apiMock,
       { ...defaultArgs, appConfig: createAppConfig(true) },
       getWeb3ChecksFactoryMock,
@@ -259,7 +259,7 @@ describe("BuildTransactionContextTask", () => {
     });
 
     // WHEN
-    const result = await new BuildTransactionContextTask(
+    const result = await new BuildBaseContexts(
       apiMock,
       { ...defaultArgs, appConfig: createAppConfig(true) },
       getWeb3ChecksFactoryMock,
@@ -306,7 +306,7 @@ describe("BuildTransactionContextTask", () => {
     });
 
     // WHEN
-    const result = await new BuildTransactionContextTask(
+    const result = await new BuildBaseContexts(
       apiMock,
       defaultArgs,
       getWeb3ChecksFactoryMock,
@@ -355,7 +355,7 @@ describe("BuildTransactionContextTask", () => {
     });
 
     // WHEN
-    const result = await new BuildTransactionContextTask(
+    const result = await new BuildBaseContexts(
       apiMock,
       defaultArgs,
       getWeb3ChecksFactoryMock,
@@ -398,7 +398,7 @@ describe("BuildTransactionContextTask", () => {
     });
 
     // WHEN
-    const result = await new BuildTransactionContextTask(
+    const result = await new BuildBaseContexts(
       apiMock,
       defaultArgs,
       getWeb3ChecksFactoryMock,
@@ -426,7 +426,7 @@ describe("BuildTransactionContextTask", () => {
     });
 
     // WHEN
-    await new BuildTransactionContextTask(
+    await new BuildBaseContexts(
       apiMock,
       { ...defaultArgs, appConfig: createAppConfig(true) },
       getWeb3ChecksFactoryMock,
@@ -455,7 +455,7 @@ describe("BuildTransactionContextTask", () => {
     });
 
     // WHEN
-    await new BuildTransactionContextTask(
+    await new BuildBaseContexts(
       apiMock,
       defaultArgs,
       getWeb3ChecksFactoryMock,
@@ -484,7 +484,7 @@ describe("BuildTransactionContextTask", () => {
     });
 
     // WHEN
-    await new BuildTransactionContextTask(
+    await new BuildBaseContexts(
       apiMock,
       defaultArgs,
       getWeb3ChecksFactoryMock,
@@ -515,7 +515,7 @@ describe("BuildTransactionContextTask", () => {
     );
 
     // WHEN
-    await new BuildTransactionContextTask(
+    await new BuildBaseContexts(
       apiMock,
       defaultArgs,
       getWeb3ChecksFactoryMock,
@@ -561,7 +561,7 @@ describe("BuildTransactionContextTask", () => {
     });
 
     // WHEN
-    const result = await new BuildTransactionContextTask(
+    const result = await new BuildBaseContexts(
       apiMock,
       defaultArgs,
       getWeb3ChecksFactoryMock,
@@ -614,7 +614,7 @@ describe("BuildTransactionContextTask", () => {
     });
 
     // WHEN
-    const result = await new BuildTransactionContextTask(
+    const result = await new BuildBaseContexts(
       apiMock,
       defaultArgs,
       getWeb3ChecksFactoryMock,
@@ -661,7 +661,7 @@ describe("BuildTransactionContextTask", () => {
     });
 
     // WHEN
-    const result = await new BuildTransactionContextTask(
+    const result = await new BuildBaseContexts(
       apiMock,
       defaultArgs,
       getWeb3ChecksFactoryMock,
@@ -714,7 +714,7 @@ describe("BuildTransactionContextTask", () => {
     });
 
     // WHEN
-    const result = await new BuildTransactionContextTask(
+    const result = await new BuildBaseContexts(
       apiMock,
       defaultArgs,
       getWeb3ChecksFactoryMock,
@@ -763,7 +763,7 @@ describe("BuildTransactionContextTask", () => {
     });
 
     // WHEN
-    const result = await new BuildTransactionContextTask(
+    const result = await new BuildBaseContexts(
       apiMock,
       defaultArgs,
       getWeb3ChecksFactoryMock,
@@ -812,7 +812,7 @@ describe("BuildTransactionContextTask", () => {
     });
 
     // WHEN
-    const result = await new BuildTransactionContextTask(
+    const result = await new BuildBaseContexts(
       apiMock,
       defaultArgs,
       getWeb3ChecksFactoryMock,
@@ -858,7 +858,7 @@ describe("BuildTransactionContextTask", () => {
     });
 
     // WHEN
-    const result = await new BuildTransactionContextTask(
+    const result = await new BuildBaseContexts(
       apiMock,
       defaultArgs,
       getWeb3ChecksFactoryMock,
@@ -901,7 +901,7 @@ describe("BuildTransactionContextTask", () => {
     });
 
     // WHEN
-    const result = await new BuildTransactionContextTask(
+    const result = await new BuildBaseContexts(
       apiMock,
       defaultArgs,
       getWeb3ChecksFactoryMock,
@@ -913,5 +913,29 @@ describe("BuildTransactionContextTask", () => {
       clearSignContextsOptional: [],
       clearSigningType: ClearSigningType.BASIC,
     });
+  });
+
+  it("should not return web3check if the transaction is undefined", async () => {
+    // GIVEN
+    const clearSignContexts: ClearSignContext[] = [];
+    contextModuleMock.getContexts.mockResolvedValueOnce(clearSignContexts);
+    apiMock.getDeviceSessionState.mockReturnValueOnce({
+      sessionStateType: DeviceSessionStateType.ReadyWithoutSecureChannel,
+      deviceStatus: DeviceStatus.CONNECTED,
+      installedApps: [],
+      currentApp: { name: "Ethereum", version: "1.17.0" },
+      deviceModelId: DeviceModelId.FLEX,
+      isSecureConnectionAllowed: false,
+    });
+
+    // WHEN
+    await new BuildBaseContexts(
+      apiMock,
+      { ...defaultArgs, transaction: undefined },
+      getWeb3ChecksFactoryMock,
+    ).run();
+
+    // THEN
+    expect(getWeb3ChecksFactoryMock).not.toHaveBeenCalled();
   });
 });

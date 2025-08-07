@@ -1,8 +1,10 @@
 import {
   type ClearSignContextReference,
+  ClearSignContextReferenceType,
   type ClearSignContextSuccess,
   ClearSignContextType,
   type ContextModule,
+  type GenericPath,
   type TransactionFieldContext,
 } from "@ledgerhq/context-module";
 import {
@@ -16,11 +18,11 @@ import { makeDeviceActionInternalApiMock } from "@internal/app-binder/device-act
 import { type TransactionParserService } from "@internal/transaction/service/parser/TransactionParserService";
 
 import {
-  BuildSubContextTask,
-  type BuildSubContextTaskArgs,
-} from "./BuildSubContextTask";
+  BuildSubcontextsTask,
+  type BuildSubcontextsTaskArgs,
+} from "./BuildSubcontextsTask";
 
-describe("BuildSubContextTask", () => {
+describe("BuildSubcontextsTask", () => {
   const contextModuleMock = {
     getContext: vi.fn(),
   };
@@ -29,7 +31,7 @@ describe("BuildSubContextTask", () => {
   };
   const apiMock = makeDeviceActionInternalApiMock();
 
-  let defaultArgs: BuildSubContextTaskArgs;
+  let defaultArgs: BuildSubcontextsTaskArgs;
 
   beforeEach(() => {
     vi.resetAllMocks();
@@ -72,7 +74,7 @@ describe("BuildSubContextTask", () => {
         const args = { ...defaultArgs, context };
 
         // WHEN
-        const result = new BuildSubContextTask(apiMock, args).run();
+        const result = new BuildSubcontextsTask(apiMock, args).run();
 
         // THEN
         expect(result.subcontextCallbacks).toHaveLength(0);
@@ -87,7 +89,7 @@ describe("BuildSubContextTask", () => {
         type: ClearSignContextType.TOKEN,
         payload: "test payload",
         reference: {
-          type: ClearSignContextType.TOKEN,
+          type: ClearSignContextReferenceType.TOKEN,
           value: "0x1234567890123456789012345678901234567890",
         },
       };
@@ -99,7 +101,7 @@ describe("BuildSubContextTask", () => {
       };
 
       // WHEN
-      const result = new BuildSubContextTask(apiMock, args).run();
+      const result = new BuildSubcontextsTask(apiMock, args).run();
 
       // THEN
       expect(result.subcontextCallbacks).toHaveLength(1);
@@ -122,7 +124,7 @@ describe("BuildSubContextTask", () => {
       const args = { ...defaultArgs, context };
 
       // WHEN
-      const result = new BuildSubContextTask(apiMock, args).run();
+      const result = new BuildSubcontextsTask(apiMock, args).run();
 
       // THEN
       expect(result.subcontextCallbacks).toHaveLength(0);
@@ -143,7 +145,7 @@ describe("BuildSubContextTask", () => {
           type: ClearSignContextType.TOKEN,
           payload: "test payload",
           reference: {
-            type: ClearSignContextType.TOKEN,
+            type: ClearSignContextReferenceType.TOKEN,
             valuePath: [{ type: "SLICE", start: 0, end: 20 }],
           },
         };
@@ -153,7 +155,7 @@ describe("BuildSubContextTask", () => {
         );
 
         // WHEN
-        const result = new BuildSubContextTask(apiMock, args).run();
+        const result = new BuildSubcontextsTask(apiMock, args).run();
 
         // THEN
         expect(result.subcontextCallbacks).toHaveLength(0);
@@ -168,7 +170,7 @@ describe("BuildSubContextTask", () => {
             type: ClearSignContextType.TOKEN,
             payload: "test payload",
             reference: {
-              type: ClearSignContextType.ENUM,
+              type: ClearSignContextReferenceType.ENUM,
               id: 1,
               valuePath: [{ type: "TUPLE", offset: 0 }],
             },
@@ -205,7 +207,7 @@ describe("BuildSubContextTask", () => {
           );
 
           // WHEN
-          const result = new BuildSubContextTask(apiMock, args).run();
+          const result = new BuildSubcontextsTask(apiMock, args).run();
 
           // THEN
           expect(result.subcontextCallbacks).toHaveLength(1);
@@ -220,7 +222,7 @@ describe("BuildSubContextTask", () => {
             type: ClearSignContextType.TOKEN,
             payload: "test payload",
             reference: {
-              type: ClearSignContextType.ENUM,
+              type: ClearSignContextReferenceType.ENUM,
               id: 1,
               valuePath: [{ type: "TUPLE", offset: 0 }],
             },
@@ -260,7 +262,7 @@ describe("BuildSubContextTask", () => {
           );
 
           // WHEN
-          const result = new BuildSubContextTask(apiMock, args).run();
+          const result = new BuildSubcontextsTask(apiMock, args).run();
 
           // THEN
           expect(result.subcontextCallbacks).toHaveLength(2);
@@ -278,7 +280,7 @@ describe("BuildSubContextTask", () => {
             type: ClearSignContextType.TOKEN,
             payload: "test payload",
             reference: {
-              type: ClearSignContextType.ENUM,
+              type: ClearSignContextReferenceType.ENUM,
               id: 1,
               valuePath: [{ type: "TUPLE", offset: 0 }],
             },
@@ -290,7 +292,7 @@ describe("BuildSubContextTask", () => {
           );
 
           // WHEN
-          const result = new BuildSubContextTask(apiMock, args).run();
+          const result = new BuildSubcontextsTask(apiMock, args).run();
 
           // THEN
           expect(result.subcontextCallbacks).toHaveLength(0);
@@ -302,7 +304,7 @@ describe("BuildSubContextTask", () => {
             type: ClearSignContextType.NFT,
             payload: "test payload",
             reference: {
-              type: ClearSignContextType.ENUM,
+              type: ClearSignContextReferenceType.ENUM,
               id: 1,
               valuePath: [{ type: "TUPLE", offset: 0 }],
             },
@@ -324,7 +326,7 @@ describe("BuildSubContextTask", () => {
           );
 
           // WHEN
-          const result = new BuildSubContextTask(apiMock, args).run();
+          const result = new BuildSubcontextsTask(apiMock, args).run();
 
           // THEN
           expect(result.subcontextCallbacks).toHaveLength(0);
@@ -338,7 +340,7 @@ describe("BuildSubContextTask", () => {
             type: ClearSignContextType.TOKEN,
             payload: "test payload",
             reference: {
-              type: ClearSignContextType.TOKEN,
+              type: ClearSignContextReferenceType.TOKEN,
               valuePath: [{ type: "TUPLE", offset: 0 }],
             },
           };
@@ -358,7 +360,41 @@ describe("BuildSubContextTask", () => {
           });
 
           // WHEN
-          const result = new BuildSubContextTask(apiMock, args).run();
+          const result = new BuildSubcontextsTask(apiMock, args).run();
+
+          // THEN
+          expect(result.subcontextCallbacks).toHaveLength(1);
+          const callback = result.subcontextCallbacks[0]!;
+          const callbackResult = await callback();
+          expect(callbackResult).toEqual({
+            type: ClearSignContextType.TOKEN,
+            payload: "token result",
+          });
+          expect(contextModuleMock.getContext).toHaveBeenCalledWith({
+            type: ClearSignContextType.TOKEN,
+            chainId: 1,
+            address: "0x030405060708090a0b0c0d0e0f10111213141516",
+          });
+        });
+
+        it("should create callbacks to get token as constant", async () => {
+          // GIVEN
+          const context: ClearSignContextSuccess = {
+            type: ClearSignContextType.TRANSACTION_FIELD_DESCRIPTION,
+            payload: "test payload",
+            reference: {
+              type: ClearSignContextReferenceType.TOKEN,
+              value: "0x030405060708090a0b0c0d0e0f10111213141516",
+            },
+          };
+          const args = { ...defaultArgs, context };
+          contextModuleMock.getContext.mockResolvedValue({
+            type: ClearSignContextType.TOKEN,
+            payload: "token result",
+          });
+
+          // WHEN
+          const result = new BuildSubcontextsTask(apiMock, args).run();
 
           // THEN
           expect(result.subcontextCallbacks).toHaveLength(1);
@@ -383,7 +419,7 @@ describe("BuildSubContextTask", () => {
             type: ClearSignContextType.NFT,
             payload: "test payload",
             reference: {
-              type: ClearSignContextType.NFT,
+              type: ClearSignContextReferenceType.NFT,
               valuePath: [{ type: "TUPLE", offset: 0 }],
             },
           };
@@ -403,7 +439,41 @@ describe("BuildSubContextTask", () => {
           });
 
           // WHEN
-          const result = new BuildSubContextTask(apiMock, args).run();
+          const result = new BuildSubcontextsTask(apiMock, args).run();
+
+          // THEN
+          expect(result.subcontextCallbacks).toHaveLength(1);
+          const callback = result.subcontextCallbacks[0]!;
+          const callbackResult = await callback();
+          expect(callbackResult).toEqual({
+            type: ClearSignContextType.NFT,
+            payload: "nft result",
+          });
+          expect(contextModuleMock.getContext).toHaveBeenCalledWith({
+            type: ClearSignContextType.NFT,
+            chainId: 1,
+            address: "0x030405060708090a0b0c0d0e0f10111213141516",
+          });
+        });
+
+        it("should create callbacks to get NFT as constant", async () => {
+          // GIVEN
+          const context: ClearSignContextSuccess = {
+            type: ClearSignContextType.TRANSACTION_FIELD_DESCRIPTION,
+            payload: "test payload",
+            reference: {
+              type: ClearSignContextReferenceType.NFT,
+              value: "0x030405060708090a0b0c0d0e0f10111213141516",
+            },
+          };
+          const args = { ...defaultArgs, context };
+          contextModuleMock.getContext.mockResolvedValue({
+            type: ClearSignContextType.NFT,
+            payload: "nft result",
+          });
+
+          // WHEN
+          const result = new BuildSubcontextsTask(apiMock, args).run();
 
           // THEN
           expect(result.subcontextCallbacks).toHaveLength(1);
@@ -428,7 +498,7 @@ describe("BuildSubContextTask", () => {
             type: ClearSignContextType.TRUSTED_NAME,
             payload: "test payload",
             reference: {
-              type: ClearSignContextType.TRUSTED_NAME,
+              type: ClearSignContextReferenceType.TRUSTED_NAME,
               valuePath: [{ type: "TUPLE", offset: 0 }],
               types: ["type1", "type2"],
               sources: ["source1", "source2"],
@@ -450,7 +520,7 @@ describe("BuildSubContextTask", () => {
           });
 
           // WHEN
-          const result = new BuildSubContextTask(apiMock, args).run();
+          const result = new BuildSubcontextsTask(apiMock, args).run();
 
           // THEN
           expect(result.subcontextCallbacks).toHaveLength(1);
@@ -479,7 +549,7 @@ describe("BuildSubContextTask", () => {
             type: ClearSignContextType.TRUSTED_NAME,
             payload: "test payload",
             reference: {
-              type: ClearSignContextType.TRUSTED_NAME,
+              type: ClearSignContextReferenceType.TRUSTED_NAME,
               valuePath: [{ type: "TUPLE", offset: 0 }],
               types: ["type1"],
               sources: ["source1"],
@@ -503,7 +573,7 @@ describe("BuildSubContextTask", () => {
           );
 
           // WHEN
-          const result = new BuildSubContextTask(apiMock, args).run();
+          const result = new BuildSubcontextsTask(apiMock, args).run();
 
           // THEN
           expect(result.subcontextCallbacks).toHaveLength(1);
@@ -523,7 +593,7 @@ describe("BuildSubContextTask", () => {
             type: ClearSignContextType.TOKEN,
             payload: "test payload",
             reference: {
-              type: ClearSignContextType.TOKEN,
+              type: ClearSignContextReferenceType.TOKEN,
               valuePath: [{ type: "TUPLE", offset: 0 }],
             },
           };
@@ -551,7 +621,7 @@ describe("BuildSubContextTask", () => {
           });
 
           // WHEN
-          const result = new BuildSubContextTask(apiMock, args).run();
+          const result = new BuildSubcontextsTask(apiMock, args).run();
 
           // THEN
           expect(result.subcontextCallbacks).toHaveLength(2);
@@ -593,7 +663,7 @@ describe("BuildSubContextTask", () => {
       const args = { ...defaultArgs, context };
 
       // WHEN
-      const result = new BuildSubContextTask(apiMock, args).run();
+      const result = new BuildSubcontextsTask(apiMock, args).run();
 
       // THEN
       expect(result.subcontextCallbacks).toHaveLength(0);
@@ -607,13 +677,14 @@ describe("BuildSubContextTask", () => {
         type: ClearSignContextType.TOKEN,
         payload: "test payload",
         reference: {
-          type: ClearSignContextType.TOKEN,
-        } as ClearSignContextReference<ClearSignContextType.TOKEN>,
+          type: ClearSignContextReferenceType.TOKEN,
+          valuePath: undefined as unknown as GenericPath,
+        },
       };
       const args = { ...defaultArgs, context };
 
       // WHEN
-      const result = new BuildSubContextTask(apiMock, args).run();
+      const result = new BuildSubcontextsTask(apiMock, args).run();
 
       // THEN
       expect(result.subcontextCallbacks).toHaveLength(0);
@@ -627,7 +698,7 @@ describe("BuildSubContextTask", () => {
         type: ClearSignContextType.TOKEN,
         payload: "test payload",
         reference: {
-          type: ClearSignContextType.TOKEN,
+          type: ClearSignContextReferenceType.TOKEN,
           valuePath: [{ type: "TUPLE", offset: 0 }],
         },
       };
@@ -642,7 +713,7 @@ describe("BuildSubContextTask", () => {
       });
 
       // WHEN
-      const result = new BuildSubContextTask(apiMock, args).run();
+      const result = new BuildSubcontextsTask(apiMock, args).run();
 
       // THEN
       expect(result.subcontextCallbacks).toHaveLength(1);
@@ -665,7 +736,7 @@ describe("BuildSubContextTask", () => {
         type: ClearSignContextType.TOKEN,
         payload: "test payload",
         reference: {
-          type: ClearSignContextType.TOKEN,
+          type: ClearSignContextReferenceType.TOKEN,
           valuePath: [{ type: "TUPLE", offset: 0 }],
         },
       };
@@ -680,7 +751,7 @@ describe("BuildSubContextTask", () => {
       });
 
       // WHEN
-      const result = new BuildSubContextTask(apiMock, args).run();
+      const result = new BuildSubcontextsTask(apiMock, args).run();
 
       // THEN
       expect(result.subcontextCallbacks).toHaveLength(1);

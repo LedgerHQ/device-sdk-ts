@@ -96,12 +96,12 @@ export class TransactionParserService {
         .map((str) => hexaStringToBuffer(str))
         .filter((bytes) => bytes !== null)
         .map((bytes) => [bytes])
-        .toEither(new Error("Faild to extract TO field of transaction"));
+        .toEither(new Error("Failed to extract TO field of transaction"));
     } else if (path === ContainerPath.VALUE) {
       return Maybe.fromNullable(value)
         .map((num) => new ByteArrayBuilder().add256BitUIntToData(num).build())
         .map((bytes) => [bytes])
-        .toEither(new Error("Faild to extract VALUE field of transaction"));
+        .toEither(new Error("Failed to extract VALUE field of transaction"));
     }
 
     /**
