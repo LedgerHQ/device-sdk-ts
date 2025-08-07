@@ -142,7 +142,7 @@ describe("WebBleTransport", () => {
       // then
       expect(device).toEqual(
         expect.objectContaining({
-          deviceModel: expect.objectContaining({ id: "nanoX" }),
+          deviceModel: expect.objectContaining({ id: "stax" }),
           transport: transport.getIdentifier(),
         }),
       );
