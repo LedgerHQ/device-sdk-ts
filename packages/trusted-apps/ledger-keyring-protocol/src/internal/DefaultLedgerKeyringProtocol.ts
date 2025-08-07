@@ -13,8 +13,8 @@ import { type AuthenticateDAReturnType } from "@api/app-binder/AuthenticateDevic
 import { LKRPParsingError } from "@api/app-binder/Errors";
 import { KeypairFromBytes } from "@api/app-binder/KeypairFromBytes";
 import {
-  type JWT,
   type Keypair,
+  type LKRPEnv,
   type Permissions,
 } from "@api/app-binder/LKRPTypes";
 import { type LedgerKeyringProtocol } from "@api/LedgerKeyringProtocol";
@@ -28,7 +28,9 @@ import { eitherSeqRecord } from "./utils/eitherSeqRecord";
 type DefaultLedgerKeyringProtocolConstructorArgs = {
   dmk: DeviceManagementKit;
   sessionId: DeviceSessionId;
-  baseUrl: string;
+  applicationId: number;
+  env?: LKRPEnv;
+  baseUrl?: string;
 };
 
 export class DefaultLedgerKeyringProtocol implements LedgerKeyringProtocol {
@@ -38,30 +40,29 @@ export class DefaultLedgerKeyringProtocol implements LedgerKeyringProtocol {
   constructor({
     dmk,
     sessionId,
+    applicationId,
+    env,
     baseUrl,
   }: DefaultLedgerKeyringProtocolConstructorArgs) {
     this.name = "Ledger Keyring Protocol";
-    this._container = makeContainer({ dmk, sessionId, baseUrl });
+    this._container = makeContainer({
+      dmk,
+      sessionId,
+      applicationId,
+      env,
+      baseUrl,
+    });
   }
 
   authenticate(
     keypair: Keypair,
-    applicationId: number,
     clientName: string,
     permissions: Permissions,
     trustchainId?: string,
-    jwt?: JWT,
   ): AuthenticateDAReturnType {
     return this._container
       .get<AuthenticateUseCase>(useCasesTypes.AuthenticateUseCase)
-      .execute(
-        keypair,
-        applicationId,
-        clientName,
-        permissions,
-        trustchainId,
-        jwt,
-      );
+      .execute(keypair, clientName, permissions, trustchainId);
   }
 
   // TODO Better return type for error management instead of exceptions

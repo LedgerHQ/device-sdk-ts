@@ -5,6 +5,11 @@ export interface Keypair {
   ecdh(publicKey: Uint8Array): Uint8Array;
 }
 
+export enum LKRPEnv {
+  PROD = "prod",
+  STAGING = "staging",
+}
+
 export type JWT = {
   access_token: string;
   permissions: {

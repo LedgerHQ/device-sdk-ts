@@ -107,7 +107,6 @@ export class AuthenticateDeviceAction extends XStateDeviceAction<
 
       guards: {
         hasNoTrustchainId: ({ context }) => !context.input.trustchainId,
-        hasNoJwt: ({ context }) => !context.input.jwt,
         isTrustchainMember: ({ context }) =>
           context._internalState
             .toMaybe()
@@ -144,8 +143,7 @@ export class AuthenticateDeviceAction extends XStateDeviceAction<
         CheckCredentials: {
           always: [
             { target: "DeviceAuth", guard: "hasNoTrustchainId" },
-            { target: "KeypairAuth", guard: "hasNoJwt" },
-            { target: "GetTrustchain" },
+            { target: "KeypairAuth" },
           ],
         },
 
@@ -254,13 +252,10 @@ export class AuthenticateDeviceAction extends XStateDeviceAction<
                   trustchainId: () =>
                     required(
                       state.trustchainId ?? context.input.trustchainId,
-                      "Missing Trustchain ID in the input for GetTrustchain",
+                      "Missing Trustchain ID for GetTrustchain",
                     ),
                   jwt: () =>
-                    required(
-                      state.jwt ?? context.input.jwt,
-                      "Missing JWT in the input for GetTrustchain",
-                    ),
+                    required(state.jwt, "Missing JWT for GetTrustchain"),
                 }),
               ),
             onError: { actions: "assignErrorFromEvent" },
@@ -306,24 +301,21 @@ export class AuthenticateDeviceAction extends XStateDeviceAction<
                     clientName: context.input.clientName,
                     permissions: context.input.permissions,
                     jwt: () =>
-                      required(
-                        state.jwt ?? context.input.jwt,
-                        "Missing JWT in the input for AddToTrustchain",
-                      ),
+                      required(state.jwt, "Missing JWT for AddToTrustchain"),
                     trustchainId: () =>
                       required(
                         state.trustchainId ?? context.input.trustchainId,
-                        "Missing Trustchain ID in the input for GetTrustchain",
+                        "Missing Trustchain ID for AddToTrustchain",
                       ),
                     trustchain: () =>
                       required(
                         state.trustchain,
-                        "Missing Trustchain in the input for AddToTrustchain",
+                        "Missing Trustchain for AddToTrustchain",
                       ),
                     applicationStream: () =>
                       required(
                         state.applicationStream,
-                        "Missing application stream in the input for AddToTrustchain",
+                        "Missing application stream for AddToTrustchain",
                       ),
                   }),
                 ),
@@ -348,7 +340,7 @@ export class AuthenticateDeviceAction extends XStateDeviceAction<
               context._internalState.chain((state) =>
                 required(
                   state.applicationStream,
-                  "Missing application stream",
+                  "Missing application stream for ExtractEncryptionKey",
                 ).map((applicationStream) => ({
                   applicationStream,
                   keypair: context.input.keypair,
@@ -379,11 +371,7 @@ export class AuthenticateDeviceAction extends XStateDeviceAction<
                 state.trustchainId ?? context.input.trustchainId,
                 "Missing Trustchain ID in the output",
               ),
-            jwt: () =>
-              required(
-                state.jwt ?? context.input.jwt,
-                "Missing JWT in the output",
-              ),
+            jwt: () => required(state.jwt, "Missing JWT in the output"),
             applicationPath: () =>
               required(
                 state.applicationStream?.getPath().extract(),

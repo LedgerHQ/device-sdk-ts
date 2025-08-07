@@ -33,7 +33,6 @@ export type AuthenticateDAInput = {
   readonly clientName: string;
   readonly permissions: Permissions;
   readonly trustchainId: string | null;
-  readonly jwt: JWT | null;
 };
 
 export type AuthenticateDAOutput = {
