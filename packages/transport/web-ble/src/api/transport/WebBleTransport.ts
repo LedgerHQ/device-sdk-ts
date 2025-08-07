@@ -52,6 +52,7 @@ export class WebBleTransport implements Transport {
       };
       discovered: TransportDiscoveredDevice;
       onDisconnect?: () => void;
+      onReconnect?: () => void;
       listener?: (ev: Event) => void;
     }
   >();
@@ -67,7 +68,6 @@ export class WebBleTransport implements Transport {
     string,
     { promise: Promise<void>; resolve: () => void }
   >();
-
   private _reconnectionTimers = new Map<
     string,
     ReturnType<typeof setTimeout>
@@ -107,7 +107,6 @@ export class WebBleTransport implements Transport {
 
         const server = await device.gatt.connect();
         const services = await server.getPrimaryServices();
-
         if (services.length === 0)
           throw new OpeningConnectionError("No GATT services found");
 
@@ -144,24 +143,22 @@ export class WebBleTransport implements Transport {
   }
 
   stopDiscovering(): void {
-    /* browser prompt cannot be cancelled */
+    //browser prompt cannot be cancelled
   }
 
   async connect(params: {
     deviceId: string;
     onDisconnect: (deviceId: string) => void;
+    onReconnect?: (deviceId: string) => void;
   }): Promise<Either<ConnectError, TransportConnectedDevice>> {
     const deviceEntry = this._deviceRegistry.get(params.deviceId);
 
     if (this._connectionMachines.has(params.deviceId)) {
       return Left(new DeviceAlreadyConnectedError("Device already connected"));
     }
-
-    if (!deviceEntry)
+    if (!deviceEntry) {
       return Left(new UnknownDeviceError(`Unknown device ${params.deviceId}`));
-
-    if (this._connectionMachines.has(params.deviceId))
-      return Left(new DeviceAlreadyConnectedError("Already connected"));
+    }
 
     try {
       const { device, service, infos, discovered } = deviceEntry;
@@ -180,19 +177,27 @@ export class WebBleTransport implements Transport {
         this.loggerFactory,
       );
 
+      const disconnectHandler = this.handleDisconnect(
+        params.deviceId,
+        apduSender,
+      );
+
       const connectionMachine =
         new DeviceConnectionStateMachine<WebBleApduSenderDependencies>({
           deviceId: params.deviceId,
           deviceApduSender: apduSender,
           timeoutDuration: RECONNECT_DEVICE_TIMEOUT,
+          tryToReconnect: () => {
+            disconnectHandler();
+          },
           onTerminated: () => {
             try {
               params.onDisconnect(params.deviceId);
-
               this._connectionMachines.delete(params.deviceId);
-
-              if (this._reconnectionTimers.has(params.deviceId)) {
-                clearTimeout(this._reconnectionTimers.get(params.deviceId)!);
+              // clear any leftover timer
+              const t = this._reconnectionTimers.get(params.deviceId);
+              if (t) {
+                clearTimeout(t);
                 this._reconnectionTimers.delete(params.deviceId);
               }
             } catch (e) {
@@ -204,16 +209,15 @@ export class WebBleTransport implements Transport {
         });
 
       await connectionMachine.setupConnection();
+
       deviceEntry.onDisconnect = () => params.onDisconnect(params.deviceId);
+      deviceEntry.onReconnect =
+        params.onReconnect && (() => params.onReconnect!(params.deviceId));
       this._connectionMachines.set(params.deviceId, connectionMachine);
 
-      const disconnectHandler = this.handleDisconnect(
-        params.deviceId,
-        apduSender,
-      );
-
-      device.addEventListener("gattserverdisconnected", disconnectHandler);
-      deviceEntry.listener = disconnectHandler;
+      device.addEventListener("gattserverdisconnected", () => {
+        connectionMachine.eventDeviceDisconnected();
+      });
 
       return Right(
         new TransportConnectedDevice({
@@ -222,6 +226,7 @@ export class WebBleTransport implements Transport {
           type: "BLE",
           transport: webBleIdentifier,
           sendApdu: async (apdu, triggersDisconnection, abortTimeout) => {
+            // waiting for any ongoing reconnect
             const pending = this._reconnectionPromises.get(params.deviceId);
             if (pending) {
               try {
@@ -243,7 +248,6 @@ export class WebBleTransport implements Transport {
               triggersDisconnection,
               abortTimeout,
             );
-
             return res.chainLeft((err) => {
               if (
                 err instanceof DeviceDisconnectedWhileSendingError &&
@@ -260,9 +264,9 @@ export class WebBleTransport implements Transport {
         }),
       );
     } catch (e) {
+      // drop the registry entry so next time we re-scan
       this._deviceRegistry.delete(params.deviceId);
       this._logger.error("Connection error", { data: { error: e } });
-
       return Left(new OpeningConnectionError(e));
     }
   }
@@ -270,51 +274,31 @@ export class WebBleTransport implements Transport {
   private handleDisconnect(
     deviceId: string,
     apduSender: WebBleApduSender,
-  ): (ev: Event) => void {
+  ): (ev?: Event) => void {
     return () => {
       const machine = this._connectionMachines.get(deviceId);
       const entry = this._deviceRegistry.get(deviceId);
-
       if (!machine || !entry) return;
-
       if (this._reconnectionPromises.has(deviceId)) {
         this._logger.debug("reconnection already in flight, ignoring");
         return;
       }
-
       const pending = {} as { promise: Promise<void>; resolve: () => void };
       pending.promise = new Promise<void>((res) => (pending.resolve = res));
       this._reconnectionPromises.set(deviceId, pending);
-
-      machine.eventDeviceDetached();
-
+      machine.eventDeviceDisconnected();
       if (this._reconnectionTimers.has(deviceId))
         clearTimeout(this._reconnectionTimers.get(deviceId)!);
-
       const disconnectTimer = setTimeout(() => {
-        if (entry.onDisconnect) {
-          try {
-            entry.onDisconnect();
-          } catch (e) {
-            this._logger.error("Error in onDisconnect callback", {
-              data: { error: e },
-            });
-          }
-        }
-
-        this._cleanupDevice(deviceId);
+        entry.onDisconnect?.();
+        this._cleanupConnection(deviceId);
       }, RECONNECT_DEVICE_TIMEOUT);
-
       this._reconnectionTimers.set(deviceId, disconnectTimer);
-
       const reconnectionSubject = defer(() => {
         this._logger.debug("attempt gatt.connect()");
-
         if (entry.device.gatt?.connected) entry.device.gatt.disconnect();
-
-        return from(entry.device.gatt!.connect()); // Promise → Observable
+        return from(entry.device.gatt!.connect());
       }).pipe(
-        // hard timeout for each attempt
         timeout({
           first: SINGLE_RECONNECTION_TIMEOUT,
           with: () =>
@@ -325,7 +309,6 @@ export class WebBleTransport implements Transport {
                 ),
             ),
         }),
-        // once connected, grab first service
         concatMap((server) => from(server.getPrimaryServices())),
         concatMap((services) => {
           if (!services.length) {
@@ -333,7 +316,6 @@ export class WebBleTransport implements Transport {
           }
           return of(services[0]!);
         }),
-        // rebind characteristics & rearm state-machine
         concatMap((svc) =>
           from(
             this._rebindCharacteristics(
@@ -345,7 +327,6 @@ export class WebBleTransport implements Transport {
             ),
           ),
         ),
-        // retry logic
         retryWhen((err$) =>
           err$.pipe(
             tap((err) =>
@@ -362,40 +343,21 @@ export class WebBleTransport implements Transport {
           ),
         ),
       );
-
       const reconnectionSub = reconnectionSubject.subscribe({
-        // back online, nothing else to do
         next: () => {
           this._logger.debug(`reconnect SUCCESS for ${deviceId}`);
-
-          if (this._reconnectionTimers.has(deviceId)) {
-            clearTimeout(this._reconnectionTimers.get(deviceId)!);
-            this._reconnectionTimers.delete(deviceId);
-          }
-
+          clearTimeout(this._reconnectionTimers.get(deviceId)!);
           pending.resolve();
           this._reconnectionPromises.delete(deviceId);
+          // fire onReconnect if provided
+          const entry = this._deviceRegistry.get(deviceId);
+          entry?.onReconnect?.();
           reconnectionSub.unsubscribe();
         },
-        // failure after MAX_RETRIES drop everything
         error: () => {
-          if (this._reconnectionTimers.has(deviceId)) {
-            clearTimeout(this._reconnectionTimers.get(deviceId)!);
-            this._reconnectionTimers.delete(deviceId);
-          }
-
-          if (entry.onDisconnect) {
-            try {
-              entry.onDisconnect();
-            } catch (cbErr) {
-              this._logger.error("Error in onDisconnect callback", {
-                data: { error: cbErr },
-              });
-            }
-          }
-
+          clearTimeout(this._reconnectionTimers.get(deviceId)!);
           this._cleanupDevice(deviceId);
-
+          this._cleanupConnection(deviceId);
           reconnectionSub.unsubscribe();
         },
       });
@@ -410,7 +372,7 @@ export class WebBleTransport implements Transport {
 
       if (machine) {
         try {
-          machine.eventDeviceDetached();
+          machine.eventDeviceDisconnected();
           machine.closeConnection();
         } catch (e) {
           this._logger.error("Error closing state machine", {
@@ -420,62 +382,28 @@ export class WebBleTransport implements Transport {
       }
 
       if (entry) {
-        try {
-          // remove event listener
-          if (entry.listener) {
-            try {
-              entry.device.removeEventListener(
-                "gattserverdisconnected",
-                entry.listener,
-              );
-            } catch (e) {
-              this._logger.error("Error removing event listener", {
-                data: { error: e },
-              });
-            }
-          }
-
-          // force disconnect GATT
-          if (entry.device.gatt) {
-            try {
-              if (entry.device.gatt.connected) {
-                entry.device.gatt.disconnect();
-              }
-            } catch (e) {
-              this._logger.error("Error disconnecting GATT", {
-                data: { error: e },
-              });
-            }
-          }
-
-          // try to forget the device if the browser supports it
-          try {
-            if (typeof entry.device.forget === "function") {
-              entry.device.forget();
-            }
-          } catch (e) {
-            this._logger.error("Error forgetting device", {
-              data: { error: e },
-            });
-          }
-        } catch (e) {
-          this._logger.error("Error cleaning up device", {
-            data: { error: e },
-          });
+        if (entry.listener) {
+          entry.device.removeEventListener(
+            "gattserverdisconnected",
+            entry.listener,
+          );
+        }
+        if (entry.device.gatt?.connected) {
+          entry.device.gatt.disconnect();
+        }
+        if (typeof entry.device.forget === "function") {
+          entry.device.forget();
         }
       }
 
-      // clean up all internal references
       this._connectionMachines.delete(deviceId);
       this._deviceRegistry.delete(deviceId);
 
-      // resolve any pending promises
       if (pending) {
         pending.resolve();
         this._reconnectionPromises.delete(deviceId);
       }
 
-      // clear any timeouts
       if (this._reconnectionTimers.has(deviceId)) {
         clearTimeout(this._reconnectionTimers.get(deviceId)!);
         this._reconnectionTimers.delete(deviceId);
@@ -484,6 +412,31 @@ export class WebBleTransport implements Transport {
       this._logger.error("Unexpected error during device cleanup", {
         data: { error: e },
       });
+    }
+  }
+
+  private _cleanupConnection(deviceId: string): void {
+    const machine = this._connectionMachines.get(deviceId);
+    if (machine) {
+      try {
+        machine.closeConnection();
+      } catch (e) {
+        this._logger.error("Error closing state machine", {
+          data: { error: e },
+        });
+      }
+      this._connectionMachines.delete(deviceId);
+    }
+
+    const pending = this._reconnectionPromises.get(deviceId);
+    if (pending) {
+      pending.resolve();
+      this._reconnectionPromises.delete(deviceId);
+    }
+
+    if (this._reconnectionTimers.has(deviceId)) {
+      clearTimeout(this._reconnectionTimers.get(deviceId)!);
+      this._reconnectionTimers.delete(deviceId);
     }
   }
 
@@ -496,14 +449,12 @@ export class WebBleTransport implements Transport {
   ) {
     const deviceEntry = this._deviceRegistry.get(deviceId)!;
 
-    // detach old listener
     if (deviceEntry.listener)
       deviceEntry.device.removeEventListener(
         "gattserverdisconnected",
         deviceEntry.listener,
       );
 
-    // attach new listener
     deviceEntry.listener = this.handleDisconnect(deviceId, apduSender);
     deviceEntry.device.addEventListener(
       "gattserverdisconnected",
@@ -522,7 +473,7 @@ export class WebBleTransport implements Transport {
     });
 
     await connectionMachine.setupConnection();
-    connectionMachine.eventDeviceAttached();
+    connectionMachine.eventDeviceConnected();
 
     reconnectInfo.resolve();
   }
@@ -549,7 +500,7 @@ export class WebBleTransport implements Transport {
 
     this._cleanupDevice(id);
 
-    return Right(undefined);
+    return Promise.resolve(Right(undefined));
   }
 }
 
