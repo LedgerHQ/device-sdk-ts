@@ -17,6 +17,10 @@ import { DerivationPathUtils } from "@ledgerhq/signer-utils";
 import { type Either, Left, Right } from "purify-ts";
 
 import { ProvideEnumCommand } from "@internal/app-binder/command/ProvideEnumCommand";
+import {
+  NetworkConfigurationType,
+  ProvideNetworkConfigurationCommand,
+} from "@internal/app-binder/command/ProvideNetworkConfigurationCommand";
 import { ProvideNFTInformationCommand } from "@internal/app-binder/command/ProvideNFTInformationCommand";
 import { ProvideProxyInfoCommand } from "@internal/app-binder/command/ProvideProxyInfoCommand";
 import { ProvideTokenInformationCommand } from "@internal/app-binder/command/ProvideTokenInformationCommand";
@@ -213,6 +217,29 @@ export class ProvideTransactionContextTask {
               isFirstChunk: args.isFirstChunk,
             }),
         }).run();
+      case ClearSignContextType.DYNAMIC_NETWORK:
+        // Dynamic network configuration uses the existing ProvideNetworkConfiguration command
+        // but is provided as part of the context flow
+        return new SendPayloadInChunksTask(this._api, {
+          payload,
+          commandFactory: (args) =>
+            new ProvideNetworkConfigurationCommand({
+              data: args.chunkedData,
+              isFirstChunk: args.isFirstChunk,
+              configurationType: NetworkConfigurationType.CONFIGURATION,
+            }),
+        }).run();
+      case ClearSignContextType.DYNAMIC_NETWORK_ICON: {
+        return new SendPayloadInChunksTask(this._api, {
+          payload,
+          commandFactory: (args) =>
+            new ProvideNetworkConfigurationCommand({
+              data: args.chunkedData,
+              isFirstChunk: args.isFirstChunk,
+              configurationType: NetworkConfigurationType.ICON,
+            }),
+        }).run();
+      }
       default: {
         const uncoveredType: never = type;
         return CommandResultFactory({
