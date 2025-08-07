@@ -10,6 +10,7 @@ import React, {
 import {
   type LedgerKeyringProtocol,
   LedgerKeyringProtocolBuilder,
+  LKRPEnv,
 } from "@ledgerhq/device-trusted-app-kit-ledger-keyring-protocol";
 
 import { useDmk } from "@/providers/DeviceManagementKitProvider";
@@ -18,6 +19,8 @@ import { useDeviceSessionsContext } from "@/providers/DeviceSessionsProvider";
 type LedgerKeyringProtocolContextType = {
   app: LedgerKeyringProtocol | null;
 };
+
+const LEDGER_SYNC_APPID = 16;
 
 const initialState: LedgerKeyringProtocolContextType = {
   app: null,
@@ -43,9 +46,8 @@ export const LedgerKeyringProtocolProvider: React.FC<PropsWithChildren> = ({
     const newApp = new LedgerKeyringProtocolBuilder({
       dmk,
       sessionId,
-      baseUrl:
-        process.env.TRUSTCHAIN_BACKEND_URL ||
-        "https://trustchain-backend.api.aws.stg.ldg-tech.com/v1",
+      applicationId: LEDGER_SYNC_APPID,
+      env: LKRPEnv.STAGING,
     }).build();
 
     setApp(newApp);
