@@ -181,6 +181,13 @@ describe("StaticDeviceModelDataSource", () => {
           "13d63400-2c97-3004-0003-4c6564676572",
           "13d63400-2c97-3004-0001-4c6564676572",
         ),
+        "13d63400-2c97-8004-0000-4c6564676572": new BleDeviceInfos(
+          dataSource.getDeviceModel({ id: DeviceModelId.APEX }),
+          "13d63400-2c97-8004-0000-4c6564676572",
+          "13d63400-2c97-8004-0002-4c6564676572",
+          "13d63400-2c97-8004-0003-4c6564676572",
+          "13d63400-2c97-8004-0001-4c6564676572",
+        ),
       });
     });
   });
@@ -192,10 +199,10 @@ describe("StaticDeviceModelDataSource", () => {
       const bleServices = dataSource.getBluetoothServices();
       // then
       expect(bleServices).toStrictEqual([
-        "13d63400-2c97-6004-0000-4c6564676572",
         "13d63400-2c97-0004-0000-4c6564676572",
         "13d63400-2c97-6004-0000-4c6564676572",
         "13d63400-2c97-3004-0000-4c6564676572",
+        "13d63400-2c97-8004-0000-4c6564676572",
       ]);
     });
   });
