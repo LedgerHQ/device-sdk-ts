@@ -86,7 +86,7 @@ export class HttpLKRPDataSource implements LKRPDataSource {
     return EitherAsync(() => fetch(href, { ...init, headers }))
       .mapLeft((err) => ({
         status: "UNKNOWN" as const,
-        message: (err as Partial<Error>).message || "Unknown error",
+        message: errToString(err),
       }))
       .chain(async (response) => {
         switch (response.status) {
@@ -95,11 +95,9 @@ export class HttpLKRPDataSource implements LKRPDataSource {
 
           default:
             return EitherAsync(() => response.json())
-              .mapLeft((err) => (err as Partial<Error>).message)
+              .mapLeft(errToString)
               .map((data) =>
-                response.ok
-                  ? Right(data as Res)
-                  : Left((data as { message?: string }).message),
+                response.ok ? Right(data as Res) : Left(errToString(data)),
               )
               .chain(EitherAsync.liftEither)
               .mapLeft((message) => ({
@@ -112,7 +110,7 @@ export class HttpLKRPDataSource implements LKRPDataSource {
         ({ status, message }) =>
           new LKRPDataSourceError({
             status,
-            message: `${message ?? "Unknown error"} (from: ${href})`,
+            message: `${message || "Unknown error"} (from: ${href})`,
           }),
       );
   }
@@ -122,3 +120,10 @@ const statusMap = new Map<unknown, LKRPDataSourceErrorStatus>([
   [400, "BAD_REQUEST"],
   [401, "UNAUTHORIZED"],
 ]);
+
+function errToString(error: unknown): string | void {
+  if (!error) return undefined;
+  if (typeof error !== "object") return String(error);
+  if (error.toString !== {}.toString) return String(error);
+  if ("message" in error) return String(error.message);
+}
