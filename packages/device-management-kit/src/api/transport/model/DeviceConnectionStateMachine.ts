@@ -238,11 +238,9 @@ function makeStateMachine({
       },
       reconnectionTimeoutEvent: emit({ type: "ReconnectionTimedOut" }),
       sendApdu: ({ context }) => {
-        context.apduInProgress.ifJust(
-          ({ apdu, triggersDisconnection, abortTimeout }) => {
-            sendApduFn(apdu, triggersDisconnection, abortTimeout);
-          },
-        );
+        context.apduInProgress.map(({ apdu, abortTimeout }) => {
+          sendApduFn(apdu, false, abortTimeout);
+        });
       },
       sendApduResponse: (
         { context },

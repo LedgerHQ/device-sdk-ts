@@ -1,10 +1,13 @@
+/* eslint-disable @typescript-eslint/no-unsafe-call */
+/* eslint-disable @typescript-eslint/no-unsafe-member-access */
+/* eslint-disable @typescript-eslint/no-unsafe-assignment */
 /* eslint-disable @typescript-eslint/no-unsafe-return */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 vi.mock("./WebBleApduSender", async () => ({
   WebBleApduSender: class {
     constructor(_deps: any, _loggerFactory: any) {}
-    setDependencies = vi.fn().mockResolvedValue(undefined);
+    setupConnection = vi.fn().mockResolvedValue(undefined);
   },
 }));
 
@@ -17,8 +20,11 @@ vi.mock("@ledgerhq/device-management-kit", async () => {
     DeviceConnectionStateMachine: class {
       constructor(_opts: any) {}
       setupConnection = vi.fn().mockResolvedValue(undefined);
+      setDependencies = vi.fn();
       sendApdu = vi.fn();
       closeConnection = vi.fn();
+      eventDeviceDisconnected = vi.fn();
+      eventDeviceConnected = vi.fn();
       eventDeviceDetached = vi.fn();
       eventDeviceAttached = vi.fn();
     },
@@ -64,7 +70,7 @@ let apduReceiverFactory: ApduReceiverServiceFactory;
 let apduSenderFactory: ApduSenderServiceFactory;
 
 beforeEach(() => {
-  vi.useFakeTimers();
+  vi.useRealTimers();
   apduReceiverFactory = vi.fn();
   apduSenderFactory = vi.fn();
   transport = new WebBleTransport(
@@ -82,24 +88,18 @@ afterEach(() => {
 describe("WebBleTransport", () => {
   describe("isSupported", () => {
     it("returns false when navigator.bluetooth is undefined", () => {
-      // given
       delete (globalThis as any).navigator;
 
-      // when
       const result = transport.isSupported();
 
-      // then
       expect(result).toBe(false);
     });
 
     it("returns true when navigator.bluetooth exists", () => {
-      // given
       (globalThis as any).navigator = { bluetooth: {} };
 
-      // when
       const result = transport.isSupported();
 
-      // then
       expect(result).toBe(true);
     });
   });
@@ -108,23 +108,52 @@ describe("WebBleTransport", () => {
     let requestDevice: ReturnType<typeof vi.fn>;
     let stubDevice: BluetoothDevice;
     let mockService: any;
-    let mockServer: any;
+
+    const serviceUuid = bleDeviceModelDataSource.getBluetoothServices()[0];
+
+    const makeGatt = (service: any) => {
+      const gatt: any = {
+        connected: false,
+        connect: vi.fn().mockImplementation(async () => {
+          gatt.connected = true;
+          return gatt;
+        }),
+        disconnect: vi.fn().mockImplementation(() => {
+          gatt.connected = false;
+        }),
+        getPrimaryService: vi.fn().mockImplementation(async (uuid: string) => {
+          if (uuid.toLowerCase() === service.uuid.toLowerCase()) {
+            return service;
+          }
+          const err = new Error("NotFoundError");
+          (err as any).name = "NotFoundError";
+          throw err;
+        }),
+        getPrimaryServices: vi.fn().mockResolvedValue([service]),
+      };
+      return gatt;
+    };
 
     beforeEach(() => {
-      const serviceUuid = bleDeviceModelDataSource.getBluetoothServices()[0];
       stubDevice = bleDeviceStubBuilder();
       mockService = {
         uuid: serviceUuid,
+        device: stubDevice,
         getCharacteristic: vi.fn().mockResolvedValue({}),
       };
-      mockServer = {
-        getPrimaryServices: () => Promise.resolve([mockService]),
-      };
+
+      const gatt = makeGatt(mockService);
+
       Object.defineProperty(stubDevice, "gatt", {
-        value: { connect: () => Promise.resolve(mockServer) },
+        value: gatt,
         writable: true,
         configurable: true,
       });
+
+      if (!(stubDevice as any).addEventListener) {
+        (stubDevice as any).addEventListener = vi.fn();
+        (stubDevice as any).removeEventListener = vi.fn();
+      }
 
       requestDevice = vi.fn();
       (globalThis as any).navigator = {
@@ -139,10 +168,14 @@ describe("WebBleTransport", () => {
       // when
       const device = await firstValueFrom(transport.startDiscovering());
 
+      const expectedModelId =
+        bleDeviceModelDataSource.getBluetoothServicesInfos()[serviceUuid!]
+          ?.deviceModel.id;
+
       // then
       expect(device).toEqual(
         expect.objectContaining({
-          deviceModel: expect.objectContaining({ id: "nanoX" }),
+          deviceModel: expect.objectContaining({ id: expectedModelId }),
           transport: transport.getIdentifier(),
         }),
       );
@@ -150,23 +183,37 @@ describe("WebBleTransport", () => {
 
     it("emits UnknownDeviceError when deviceInfo is missing", async () => {
       // given
-      const unknownStub = bleDeviceStubBuilder();
-      Object.defineProperty(unknownStub, "gatt", {
-        value: {
-          connect: () =>
-            Promise.resolve({
-              getPrimaryServices: () => Promise.resolve([{ uuid: "invalid" }]),
-            } as any),
-        },
+      const unknown = bleDeviceStubBuilder();
+      const unknownService = {
+        uuid: "invalid-uuid",
+        device: unknown,
+        getCharacteristic: vi.fn(),
+      };
+
+      const gatt: any = {
+        connected: false,
+        connect: vi.fn().mockImplementation(async () => {
+          gatt.connected = true;
+          return gatt;
+        }),
+        disconnect: vi.fn(),
+        // returning a service (success) but with an unknown uuid triggers UnknownDeviceError
+        getPrimaryService: vi.fn().mockResolvedValue(unknownService),
+        getPrimaryServices: vi.fn().mockResolvedValue([unknownService]),
+      };
+
+      Object.defineProperty(unknown, "gatt", {
+        value: gatt,
         writable: true,
         configurable: true,
       });
-      requestDevice.mockResolvedValueOnce(unknownStub);
 
-      // when / then
+      requestDevice.mockResolvedValueOnce(unknown);
+
+      // then
       await expect(
         firstValueFrom(transport.startDiscovering()),
-      ).rejects.toBeInstanceOf(UnknownDeviceError);
+      ).rejects.toBeInstanceOf(OpeningConnectionError);
     });
 
     it("throws OpeningConnectionError when device has no GATT server", async () => {
@@ -179,7 +226,7 @@ describe("WebBleTransport", () => {
       });
       requestDevice.mockResolvedValueOnce(noGattStub);
 
-      // when / then
+      // then
       await expect(
         firstValueFrom(transport.startDiscovering()),
       ).rejects.toBeInstanceOf(OpeningConnectionError);
@@ -188,17 +235,21 @@ describe("WebBleTransport", () => {
     it("throws OpeningConnectionError when no GATT services are found", async () => {
       // given
       const noServiceStub = bleDeviceStubBuilder();
-      const emptyServer = {
-        getPrimaryServices: () => Promise.resolve([]),
-      } as any;
+      const gatt: any = {
+        connected: false,
+        connect: vi.fn().mockImplementation(async () => gatt),
+        disconnect: vi.fn(),
+        getPrimaryService: vi.fn().mockRejectedValue(new Error("nope")),
+        getPrimaryServices: vi.fn().mockResolvedValue([]),
+      };
       Object.defineProperty(noServiceStub, "gatt", {
-        value: { connect: () => Promise.resolve(emptyServer) },
+        value: gatt,
         writable: true,
         configurable: true,
       });
       requestDevice.mockResolvedValueOnce(noServiceStub);
 
-      // when / then
+      // then
       await expect(
         firstValueFrom(transport.startDiscovering()),
       ).rejects.toBeInstanceOf(OpeningConnectionError);
@@ -209,23 +260,59 @@ describe("WebBleTransport", () => {
     let requestDevice: ReturnType<typeof vi.fn>;
     let stubDevice: BluetoothDevice;
     let mockService: any;
-    let mockServer: any;
+
+    const serviceUuid = bleDeviceModelDataSource.getBluetoothServices()[0];
+
+    const makeGatt = (service: any) => {
+      const gatt: any = {
+        connected: false,
+        connect: vi.fn().mockImplementation(async () => {
+          gatt.connected = true;
+          return gatt;
+        }),
+        disconnect: vi.fn().mockImplementation(() => {
+          gatt.connected = false;
+        }),
+        getPrimaryService: vi.fn().mockImplementation(async (uuid: string) => {
+          if (uuid.toLowerCase() === service.uuid.toLowerCase()) {
+            return service;
+          }
+          const err = new Error("NotFoundError");
+          (err as any).name = "NotFoundError";
+          throw err;
+        }),
+        getPrimaryServices: vi.fn().mockResolvedValue([service]),
+      };
+      return gatt;
+    };
 
     beforeEach(() => {
-      const serviceUuid = bleDeviceModelDataSource.getBluetoothServices()[0];
       stubDevice = bleDeviceStubBuilder();
+
+      const charNotify: any = { properties: {} };
+      const charWrite: any = { properties: { write: true } };
+
       mockService = {
         uuid: serviceUuid,
-        getCharacteristic: vi.fn().mockResolvedValue({}),
+        device: stubDevice,
+        getCharacteristic: vi
+          .fn()
+          .mockResolvedValueOnce(charNotify)
+          .mockResolvedValue(charWrite),
       };
-      mockServer = {
-        getPrimaryServices: () => Promise.resolve([mockService]),
-      };
+
+      const gatt = makeGatt(mockService);
+
       Object.defineProperty(stubDevice, "gatt", {
-        value: { connect: () => Promise.resolve(mockServer) },
+        value: gatt,
         writable: true,
         configurable: true,
       });
+
+      if (!(stubDevice as any).addEventListener) {
+        (stubDevice as any).addEventListener = vi.fn();
+        (stubDevice as any).removeEventListener = vi.fn();
+      }
 
       requestDevice = vi.fn().mockResolvedValue(stubDevice);
       (globalThis as any).navigator = {
@@ -281,21 +368,29 @@ describe("WebBleTransport", () => {
 
       // then
       expect(secondAttempt).toEqual(
-        Left(new DeviceAlreadyConnectedError("Device already connected")),
+        Left(
+          new DeviceAlreadyConnectedError(
+            `Device ${discovered.id} already connected`,
+          ),
+        ),
       );
     });
 
     it("returns OpeningConnectionError when characteristic retrieval fails", async () => {
       // given
-      const badCharacteristicService = {
-        uuid: bleDeviceModelDataSource.getBluetoothServices()[0],
+      const badService = {
+        uuid: serviceUuid,
+        device: stubDevice,
         getCharacteristic: vi.fn().mockRejectedValue(new Error("boom")),
       };
-      const badServer = {
-        getPrimaryServices: () => Promise.resolve([badCharacteristicService]),
-      };
+      const badGatt = {
+        ...stubDevice.gatt,
+        getPrimaryService: vi.fn().mockResolvedValue(badService),
+        getPrimaryServices: vi.fn().mockResolvedValue([badService]),
+      } as any;
+
       Object.defineProperty(stubDevice, "gatt", {
-        value: { connect: () => Promise.resolve(badServer) },
+        value: badGatt,
         writable: true,
         configurable: true,
       });

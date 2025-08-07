@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-unsafe-assignment */
+/* eslint-disable @typescript-eslint/no-unsafe-member-access */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import {
   type ApduReceiverServiceFactory,
@@ -8,7 +10,7 @@ import {
 import { Maybe, Right } from "purify-ts";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import { WebBleApduSender } from "./WebBleApduSender";
+import { MTU_OP, WebBleApduSender } from "./WebBleApduSender";
 
 type EventListener = (event: Event) => void;
 class LoggerStub implements LoggerPublisherService {
@@ -65,15 +67,18 @@ let sender: WebBleApduSender;
 
 const flushPromises = () =>
   new Promise<void>((resolve) => setImmediate(resolve));
+const wait = (ms: number) => new Promise<void>((r) => setTimeout(r, ms));
 
 beforeEach(() => {
   writeChar = makeCharacteristic();
   notifyChar = makeCharacteristic();
 
+  // it requires the characteristic to advertise "write" or "writeWithoutResponse" to pick a write mode
+  writeChar.properties.write = true;
+
+  // class calls getRawData().slice().buffer, return a Uint8Array
   apduSenderFactory = vi.fn().mockReturnValue({
-    getFrames: (apdu: Uint8Array) => [
-      { getRawData: () => new DataView(apdu.buffer) },
-    ],
+    getFrames: (apdu: Uint8Array) => [{ getRawData: () => apdu }],
   });
 
   apduReceiverFactory = vi.fn().mockReturnValue({
@@ -101,10 +106,7 @@ afterEach(() => {
 
 describe("WebBleApduSender", () => {
   it("getDependencies returns initial chars", () => {
-    // when
     const deps = sender.getDependencies();
-
-    // then
     expect(deps.writeCharacteristic).toBe(writeChar);
     expect(deps.notifyCharacteristic).toBe(notifyChar);
   });
@@ -122,20 +124,18 @@ describe("WebBleApduSender", () => {
     ).filter(([event]) => event === "characteristicvaluechanged");
 
     const firstCall = filteredCalls[0];
-
     if (!firstCall) {
       throw new Error("No event registered for 'characteristicvaluechanged'");
     }
-
     const handler = firstCall[1];
 
-    // given
-    const mtuBuf = new Uint8Array([0, 0, 0, 0, 0, 0x20]).buffer;
+    // wait for the internal sleep so the handshake flag is set
+    await wait(150);
 
-    // when
+    const mtuBuf = new Uint8Array([MTU_OP, 0, 0, 0, 0, 0x20]).buffer;
+
     handler({ target: { value: { buffer: mtuBuf } } } as unknown as Event);
 
-    // then
     await expect(promise).resolves.toBeUndefined();
   });
 
@@ -147,15 +147,16 @@ describe("WebBleApduSender", () => {
     const mtuCall = (
       notifyChar.addEventListener.mock.calls as [string, EventListener][]
     ).find(([event]) => event === "characteristicvaluechanged");
-
     if (!mtuCall)
       throw new Error("No event registered for 'characteristicvaluechanged'");
 
     const mtuHandler = mtuCall[1];
 
+    // wait past the handshake delay, then send the proper MTU frame
+    await wait(150);
     mtuHandler({
       target: {
-        value: { buffer: new Uint8Array([0, 0, 0, 0, 0, 0x20]).buffer },
+        value: { buffer: new Uint8Array([MTU_OP, 0, 0, 0, 0, 0x20]).buffer },
       },
     } as unknown as Event);
 
@@ -166,16 +167,19 @@ describe("WebBleApduSender", () => {
     // when
     const promise = sender.sendApdu(apduCmd);
 
-    // then
-    expect(writeChar.writeValueWithResponse).toHaveBeenCalledWith(
-      apduCmd.buffer,
-    );
+    // then check that the last write matches the APDU bytes
     await flushPromises();
+    expect(writeChar.writeValueWithResponse).toHaveBeenCalled();
+
+    const lastArg = writeChar.writeValueWithResponse.mock.calls.at(
+      -1,
+    )?.[0] as ArrayBuffer;
+    expect(lastArg).toBeInstanceOf(ArrayBuffer);
+    expect(Array.from(new Uint8Array(lastArg))).toEqual(Array.from(apduCmd));
 
     const filteredCalls = (
       notifyChar.addEventListener.mock.calls as [string, EventListener][]
     ).filter(([event]) => event === "characteristicvaluechanged");
-
     const lastCall = filteredCalls[filteredCalls.length - 1];
     if (!lastCall) throw new Error("No APDU handler registered.");
 
@@ -187,29 +191,45 @@ describe("WebBleApduSender", () => {
 
     // then
     const result = await promise;
-
     expect(result.isRight()).toBe(true);
-    expect((result.extract() as ApduResponse).data).toEqual(
+    const extractedResult = result.extract();
+    expect(extractedResult).toHaveProperty("data");
+    expect((extractedResult as ApduResponse).data).toEqual(
       new Uint8Array([0x90, 0x00]),
     );
   });
 
   it("closeConnection calls disconnect", () => {
-    // when
     sender.closeConnection();
-
-    // then
     expect(notifyChar.service.device.gatt.disconnect).toHaveBeenCalled();
   });
 
-  it("setDependencies swaps characteristics", async () => {
+  it("setDependencies swaps characteristics and resets link (does not arm)", async () => {
     // given
+    const setupPromise = sender.setupConnection();
+    await flushPromises();
+
+    const mtuCall = (
+      notifyChar.addEventListener.mock.calls as [string, EventListener][]
+    ).find(([event]) => event === "characteristicvaluechanged");
+    if (!mtuCall)
+      throw new Error("No event registered for 'characteristicvaluechanged'");
+    const mtuHandler = mtuCall[1];
+
+    await wait(150);
+    mtuHandler({
+      target: {
+        value: { buffer: new Uint8Array([MTU_OP, 0, 0, 0, 0, 0x20]).buffer },
+      },
+    } as unknown as Event);
+    await setupPromise;
+
     const newNotify = makeCharacteristic();
     const newWrite = makeCharacteristic();
-    notifyChar.service.device.gatt.connected = true;
+    newWrite.properties.write = true;
 
     // when
-    await sender.setDependencies({
+    sender.setDependencies({
       writeCharacteristic:
         newWrite as unknown as BluetoothRemoteGATTCharacteristic,
       notifyCharacteristic:
@@ -217,12 +237,12 @@ describe("WebBleApduSender", () => {
     });
 
     // then
-    expect(notifyChar.removeEventListener).toHaveBeenCalled();
-    expect(newNotify.startNotifications).toHaveBeenCalled();
-    expect(newNotify.addEventListener).toHaveBeenCalledWith(
+    expect(notifyChar.removeEventListener).toHaveBeenCalledWith(
       "characteristicvaluechanged",
       expect.any(Function),
     );
+    expect(newNotify.startNotifications).not.toHaveBeenCalled();
+    expect(newNotify.addEventListener).not.toHaveBeenCalled();
 
     const deps = sender.getDependencies();
     expect(deps.notifyCharacteristic).toBe(newNotify);
