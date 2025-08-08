@@ -43,7 +43,7 @@ export class SignChallengeWithKeypairTask {
 
   // Spec https://ledgerhq.atlassian.net/wiki/spaces/TA/pages/4335960138/ARCH+LedgerLive+Auth+specifications
   private getAttestation() {
-    const bytes = new TextEncoder().encode(this.trustchainId);
+    const bytes = hexToBytes(this.trustchainId);
     const attestation = Uint8Array.from([0x02, bytes.length, ...bytes]);
     return bytesToHex(attestation);
   }
