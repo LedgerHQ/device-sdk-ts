@@ -1,6 +1,7 @@
 import {
   DeviceManagementKit,
   type DeviceSessionId,
+  InternalApi,
   SendCommandInAppDeviceAction,
   UserInteractionRequired,
 } from "@ledgerhq/device-management-kit";
@@ -21,9 +22,6 @@ export class LedgerKeyringProtocolBinder {
   constructor(
     @inject(externalTypes.Dmk) private readonly dmk: DeviceManagementKit,
 
-    @inject(externalTypes.SessionId)
-    private readonly sessionId: DeviceSessionId,
-
     @inject(externalTypes.ApplicationId)
     private readonly applicationId: number,
 
@@ -31,14 +29,34 @@ export class LedgerKeyringProtocolBinder {
     private readonly lkrpDataSource: LKRPDataSource,
   ) {}
 
-  authenticate(args: {
+  authenticateWithKeypair(args: {
     keypair: Keypair;
     clientName: string;
     permissions: Permissions;
-    trustchainId?: string;
+    trustchainId: string;
+  }): AuthenticateDAReturnType {
+    return new AuthenticateDeviceAction({
+      input: {
+        lkrpDataSource: this.lkrpDataSource,
+        applicationId: this.applicationId,
+        clientName: args.clientName,
+        permissions: args.permissions,
+        keypair: args.keypair,
+        trustchainId: args.trustchainId ?? null,
+      },
+    })._execute(
+      {} as InternalApi, // TODO: Remove this parameter when the device actions are split
+    );
+  }
+
+  authenticateWithDevice(args: {
+    keypair: Keypair;
+    clientName: string;
+    permissions: Permissions;
+    sessionId: DeviceSessionId;
   }): AuthenticateDAReturnType {
     return this.dmk.executeDeviceAction({
-      sessionId: this.sessionId,
+      sessionId: args.sessionId,
       deviceAction: new AuthenticateDeviceAction({
         input: {
           lkrpDataSource: this.lkrpDataSource,
@@ -46,15 +64,18 @@ export class LedgerKeyringProtocolBinder {
           clientName: args.clientName,
           permissions: args.permissions,
           keypair: args.keypair,
-          trustchainId: args.trustchainId ?? null,
+          trustchainId: null, // TODO remove this when the device action are split
         },
       }),
     });
   }
 
-  getVersion(args: { skipOpenApp: boolean }): GetVersionDAReturnType {
+  getVersion(args: {
+    skipOpenApp: boolean;
+    sessionId: DeviceSessionId;
+  }): GetVersionDAReturnType {
     return this.dmk.executeDeviceAction({
-      sessionId: this.sessionId,
+      sessionId: args.sessionId,
       deviceAction: new SendCommandInAppDeviceAction({
         input: {
           command: new GetVersionCommand(),

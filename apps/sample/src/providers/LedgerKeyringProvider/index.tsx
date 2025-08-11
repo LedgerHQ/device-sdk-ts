@@ -39,13 +39,12 @@ export const LedgerKeyringProtocolProvider: React.FC<PropsWithChildren> = ({
 
   const [app, setApp] = useState<LedgerKeyringProtocol | null>(null);
   useEffect(() => {
-    if (!sessionId || !dmk) {
+    if (!dmk) {
       setApp(null);
       return;
     }
     const newApp = new LedgerKeyringProtocolBuilder({
       dmk,
-      sessionId,
       applicationId: LEDGER_SYNC_APPID,
       env: LKRPEnv.STAGING,
     }).build();
