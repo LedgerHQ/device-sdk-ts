@@ -2,6 +2,7 @@ package com.ledger.devicesdk.shared.androidMainInternal.transport.deviceconnecti
 
 import com.ledger.devicesdk.shared.api.apdu.SendApduFailureReason
 import com.ledger.devicesdk.shared.api.apdu.SendApduResult
+import com.ledger.devicesdk.shared.api.utils.fromHexStringToBytesOrThrow
 import com.ledger.devicesdk.shared.internal.service.logger.LoggerService
 import com.ledger.devicesdk.shared.internal.service.logger.buildSimpleDebugLogInfo
 import kotlinx.coroutines.CoroutineDispatcher
@@ -25,10 +26,29 @@ internal class DeviceConnectionStateMachine(
     fun getState() = state
 
     private fun pushState(newState: State) {
+
+        val currentState = state
+
+        /* STATE EXIT EFFECTS */
+        if (newState != currentState) {
+            when (currentState) {
+                is State.WaitingForDisconnection -> {
+                    currentState.requestContent.resultCallback(currentState.result)
+                }
+                else -> {}
+            }
+        }
+
+        /* STATE ENTRY EFFECTS */
         when (newState) {
             is State.Connected -> {}
             is State.SendingApdu -> {
                 sendApduFn(newState.requestContent.apdu, newState.requestContent.abortTimeoutDuration)
+            }
+
+            is State.WaitingForDisconnection -> {
+                // TODO: send getAppAndVersion
+                sendApduFn ("b0010000".fromHexStringToBytesOrThrow(), Duration.INFINITE)
             }
 
             is State.WaitingForReconnection -> {
@@ -75,31 +95,27 @@ internal class DeviceConnectionStateMachine(
                 when (event) {
                     is Event.ApduResultReceived -> {
                         when (event.result) {
+                            is SendApduResult.Success -> {
+                                // check if last 2 bytes of APDU are [0x90,OxO0]
+                                val apdu = event.result.apdu
+
+
+                                if (isSuccessApdu(apdu) && currentState.requestContent.triggersDisconnection) {
+                                    pushState(State.WaitingForDisconnection(requestContent = currentState.requestContent, result = event.result))
+                                } else {
+                                    pushState(State.Connected)
+                                    currentState.requestContent.resultCallback(event.result)
+                                }
+                            }
                             is SendApduResult.Failure -> {
                                 if (isFatalSendApduFailure(event.result)) {
                                     pushState(State.Terminated)
                                 } else {
                                     pushState(State.Connected)
                                 }
-                            }
-
-                            is SendApduResult.Success -> {
-                                // check if last 2 bytes of APDU are [0x90,OxO0]
-                                val apdu = event.result.apdu
-                                val apduSize = apdu.size
-                                val isSuccessApdu =
-                                    apdu.size >= 2 &&
-                                            apdu[apduSize - 2] == 0x90.toByte() &&
-                                            apdu[apduSize - 1] == 0x00.toByte()
-
-                                if (isSuccessApdu && currentState.requestContent.triggersDisconnection) {
-                                    pushState(State.WaitingForReconnection)
-                                } else {
-                                    pushState(State.Connected)
-                                }
+                                currentState.requestContent.resultCallback(event.result)
                             }
                         }
-                        currentState.requestContent.resultCallback(event.result)
                     }
 
                     is Event.CloseConnectionRequested -> {
@@ -128,6 +144,42 @@ internal class DeviceConnectionStateMachine(
                         )
                     }
 
+                    else -> {
+                        onError(Exception("Unhandled event: $event in state: $currentState"))
+                    }
+                }
+            }
+
+            is State.WaitingForDisconnection -> {
+                when (event) {
+                    is Event.ApduResultReceived -> {
+                        when (event.result) {
+                            is SendApduResult.Success -> {
+                                val apdu = event.result.apdu
+                                if (isSendApduBusyError(apdu)) {
+                                    pushState(state) // Loop on same state, will trigger a new send of GetAppAndVersion (entry effect)
+                                } else {
+                                    pushState(State.Connected)
+                                }
+                            }
+                            is SendApduResult.Failure -> {
+                                pushState(State.WaitingForReconnection)
+                            }
+                        }
+                    }
+                    is Event.SendApduRequested -> {
+                        event.requestContent.resultCallback(
+                            SendApduResult.Failure(
+                                SendApduFailureReason.DeviceBusy
+                            )
+                        )
+                    }
+                    is Event.DeviceDisconnected -> {
+                        pushState(State.WaitingForReconnection)
+                    }
+                    is Event.CloseConnectionRequested -> {
+                        pushState(State.Terminated)
+                    }
                     else -> {
                         onError(Exception("Unhandled event: $event in state: $currentState"))
                     }
@@ -240,6 +292,24 @@ internal class DeviceConnectionStateMachine(
         }
     }
 
+    private fun  isSuccessApdu(apdu: ByteArray): Boolean {
+        val apduSize = apdu.size
+        return apduSize >= 2 &&
+                apdu[apduSize - 2] == 0x90.toByte() &&
+                apdu[apduSize - 1] == 0x00.toByte()
+    }
+
+    private fun isSendApduBusyError(apdu: ByteArray): Boolean {
+        val apduSize = apdu.size
+        return apduSize >= 2 &&
+                apdu[apduSize - 2] == 0x66.toByte() &&
+                apdu[apduSize - 1] == 0x01.toByte()
+    }
+
+    private fun sendGetAppAndVersionApdu() {
+        sendApduFn("b0010000".fromHexStringToBytesOrThrow(), Duration.INFINITE)
+    }
+
     private var timeoutJob: Job? = null
     private fun startReconnectionTimeout() {
         // start a timeout and at the end, emit a WaitingForReconnectionTimedOut event
@@ -254,23 +324,23 @@ internal class DeviceConnectionStateMachine(
         timeoutJob = null
     }
 
-    public fun requestSendApdu(requestContent: SendApduRequestContent) {
+    fun requestSendApdu(requestContent: SendApduRequestContent) {
         handleEvent(Event.SendApduRequested(requestContent))
     }
 
-    public fun requestCloseConnection() {
+    fun requestCloseConnection() {
         handleEvent(Event.CloseConnectionRequested)
     }
 
-    public fun handleApduResult(result: SendApduResult) {
+    fun handleApduResult(result: SendApduResult) {
         handleEvent(Event.ApduResultReceived(result))
     }
 
-    public fun handleDeviceConnected() {
+    fun handleDeviceConnected() {
         handleEvent(Event.DeviceConnected)
     }
 
-    public fun handleDeviceDisconnected() {
+    fun handleDeviceDisconnected() {
         handleEvent(Event.DeviceDisconnected)
     }
 
@@ -303,6 +373,8 @@ internal class DeviceConnectionStateMachine(
         data class SendingApdu(val requestContent: SendApduRequestContent) : State()
 
         data object WaitingForReconnection : State()
+
+        data class WaitingForDisconnection(val requestContent: SendApduRequestContent, val result: SendApduResult): State()
 
         data class WaitingForReconnectionWithQueuedApdu(val requestContent: SendApduRequestContent) :
             State()
