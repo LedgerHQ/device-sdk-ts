@@ -31,6 +31,9 @@ describe("DefaultContextModule", () => {
     metadataService: {
       url: "https://metadata/v2",
     },
+    solanaMetadataService: {
+      url: "https://metadata/v2",
+    },
     originToken: "originToken",
   };
 

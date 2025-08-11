@@ -24,6 +24,7 @@ export type ContextModuleConfig = {
   cal: ContextModuleCalConfig;
   web3checks: ContextModuleWeb3ChecksConfig;
   metadataService: ContextModuleMetadataServiceConfig;
+  solanaMetadataService: ContextModuleMetadataServiceConfig;
   defaultLoaders: boolean;
   customLoaders: ContextLoader[];
   customTypedDataLoader?: TypedDataContextLoader;
