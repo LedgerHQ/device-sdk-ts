@@ -10,10 +10,21 @@ import {
   type SignBlockHeaderCommandArgs,
   type SignBlockHeaderCommandResponse,
 } from "@api/app-binder/SignBlockHeaderCommandTypes";
+import { GeneralTags } from "@internal/models/Tags";
 
-import { SignBlockHeaderCommand } from "./SignBlockHeader";
+import {
+  ISSUER_PLACEHOLDER_TLV,
+  SignBlockHeaderCommand,
+} from "./SignBlockHeader";
 
-const HEADER_BYTES = Uint8Array.from([0xf0, 0xca, 0xcc, 0x1a]);
+const COMMAND_COUNT = 3;
+const PARENT_BYTES = Uint8Array.from([0xf0, 0xca, 0xcc, 0x1a]);
+const HEADER_BYTES = Uint8Array.from([
+  ...[GeneralTags.Int, 1, 1], // version 1
+  ...[GeneralTags.Hash, 4, ...PARENT_BYTES], // Parent hash
+  ...ISSUER_PLACEHOLDER_TLV,
+  ...[GeneralTags.Int, 1, COMMAND_COUNT], // command count
+]);
 const TLV_VALUE = Uint8Array.from([0xf0, 0xca, 0xcc, 0x1a]);
 const IV_TLV = Uint8Array.from([0x00, TLV_VALUE.length, ...TLV_VALUE]);
 const ISSUER_TLV = Uint8Array.from([0x81, TLV_VALUE.length, ...TLV_VALUE]);
@@ -21,9 +32,12 @@ const FULL_TLV_PAYLOAD = new Uint8Array([...IV_TLV, ...ISSUER_TLV]);
 
 describe("SignBlockHeaderCommand", () => {
   describe("getApdu()", () => {
-    it("should build the correct APDU for a given header", () => {
+    it("should build the correct APDU for a parent hash and a commands count", () => {
       // given
-      const args: SignBlockHeaderCommandArgs = { header: HEADER_BYTES };
+      const args: SignBlockHeaderCommandArgs = {
+        parent: PARENT_BYTES,
+        commandCount: COMMAND_COUNT,
+      };
       const cmd = new SignBlockHeaderCommand(args);
 
       // when
@@ -45,7 +59,10 @@ describe("SignBlockHeaderCommand", () => {
   describe("parseResponse()", () => {
     it("should return raw payload on success", () => {
       // given
-      const args: SignBlockHeaderCommandArgs = { header: HEADER_BYTES };
+      const args: SignBlockHeaderCommandArgs = {
+        parent: PARENT_BYTES,
+        commandCount: COMMAND_COUNT,
+      };
       const cmd = new SignBlockHeaderCommand(args);
       const response = new ApduResponse({
         statusCode: Uint8Array.from([0x90, 0x00]),
@@ -65,7 +82,10 @@ describe("SignBlockHeaderCommand", () => {
 
     it("should map SW errors to CommandResult errors", () => {
       // given
-      const args: SignBlockHeaderCommandArgs = { header: HEADER_BYTES };
+      const args: SignBlockHeaderCommandArgs = {
+        parent: PARENT_BYTES,
+        commandCount: COMMAND_COUNT,
+      };
       const cmd = new SignBlockHeaderCommand(args);
       const response = new ApduResponse({
         statusCode: Uint8Array.from([0x6a, 0x86]),
@@ -84,7 +104,10 @@ describe("SignBlockHeaderCommand", () => {
 
     it("should error if no data is returned", () => {
       // given
-      const args: SignBlockHeaderCommandArgs = { header: HEADER_BYTES };
+      const args: SignBlockHeaderCommandArgs = {
+        parent: PARENT_BYTES,
+        commandCount: COMMAND_COUNT,
+      };
       const cmd = new SignBlockHeaderCommand(args);
       const response = new ApduResponse({
         statusCode: Uint8Array.from([0x90, 0x00]),

@@ -1,11 +1,11 @@
 import { Left, Right } from "purify-ts";
 
 import { LKRPParsingError } from "@api/app-binder/Errors";
+import { GeneralTags } from "@internal/models/Tags";
 
 import { hexToBytes } from "./hex";
 import { LKRPBlock } from "./LKRPBlock";
 import { LKRPCommand } from "./LKRPCommand";
-import { GeneralTags } from "./TLVTags";
 
 // Mocked data for testing
 const mockedBlockData = {

@@ -1,9 +1,9 @@
 import { Just, Left, Nothing, Right } from "purify-ts";
 
 import { LKRPParsingError } from "@api/app-binder/Errors";
+import { CommandTags, GeneralTags } from "@internal/models/Tags";
 
 import { LKRPCommand } from "./LKRPCommand";
-import { CommandTags, GeneralTags } from "./TLVTags";
 
 describe("LKRPCommand", () => {
   describe("toString", () => {

@@ -3,7 +3,6 @@ import {
   type InternalApi,
   OpenAppDeviceAction,
   type StateMachineTypes,
-  UnknownDAError,
   UserInteractionRequired,
   XStateDeviceAction,
 } from "@ledgerhq/device-management-kit";
@@ -18,9 +17,11 @@ import {
   type AuthenticateDAOutput,
 } from "@api/app-binder/AuthenticateDeviceActionTypes";
 import {
+  LKRPDataSourceError,
   LKRPMissingDataError,
+  LKRPTrustchainNotReady,
   LKRPUnauthorizedError,
-  LKRPUnhandledState,
+  LKRPUnknownError,
 } from "@api/app-binder/Errors";
 import { type Keypair } from "@api/app-binder/LKRPTypes";
 import { type JWT } from "@api/index";
@@ -97,14 +98,15 @@ export class AuthenticateDeviceAction extends XStateDeviceAction<
         assignErrorFromEvent: raiseAndAssign(
           ({ event }) =>
             Left(
-              new UnknownDAError(String((event as { error?: unknown }).error)),
+              new LKRPUnknownError(
+                String((event as { error?: unknown }).error),
+              ),
             ), // NOTE: it should never happen, the error is not typed anymore here
         ),
       },
 
       guards: {
         hasNoTrustchainId: ({ context }) => !context.input.trustchainId,
-        hasNoJwt: ({ context }) => !context.input.jwt,
         isTrustchainMember: ({ context }) =>
           context._internalState
             .toMaybe()
@@ -141,8 +143,7 @@ export class AuthenticateDeviceAction extends XStateDeviceAction<
         CheckCredentials: {
           always: [
             { target: "DeviceAuth", guard: "hasNoTrustchainId" },
-            { target: "KeypairAuth", guard: "hasNoJwt" },
-            { target: "GetTrustchain" },
+            { target: "KeypairAuth" },
           ],
         },
 
@@ -165,16 +166,14 @@ export class AuthenticateDeviceAction extends XStateDeviceAction<
             }),
             onError: { actions: "assignErrorFromEvent" },
             onDone: {
-              actions: raiseAndAssign(({ event }) =>
+              actions: raiseAndAssign(({ context, event }) =>
                 event.output
-                  .map(({ jwt }) => ({
-                    raise: "success",
-                    assign: { jwt },
-                  }))
-                  .chainLeft((error) =>
-                    error instanceof LKRPUnauthorizedError
-                      ? Right({ raise: "invalidCredentials" })
-                      : Left(error),
+                  .map(({ jwt }) => ({ raise: "success", assign: { jwt } }))
+                  .mapLeft((error) =>
+                    error instanceof LKRPDataSourceError &&
+                    error.status === "UNAUTHORIZED"
+                      ? new LKRPUnauthorizedError(context.input.trustchainId)
+                      : error,
                   ),
               ),
             },
@@ -221,10 +220,7 @@ export class AuthenticateDeviceAction extends XStateDeviceAction<
                   actions: raiseAndAssign(({ event }) =>
                     event.output.chain((payload) =>
                       payload.trustchainId.caseOf({
-                        Nothing: () =>
-                          Left(
-                            new LKRPUnhandledState("The trustchain is empty"),
-                          ),
+                        Nothing: () => Left(new LKRPTrustchainNotReady()),
                         Just: (trustchainId) =>
                           Right({
                             raise: "success",
@@ -256,13 +252,10 @@ export class AuthenticateDeviceAction extends XStateDeviceAction<
                   trustchainId: () =>
                     required(
                       state.trustchainId ?? context.input.trustchainId,
-                      "Missing Trustchain ID in the input for GetTrustchain",
+                      "Missing Trustchain ID for GetTrustchain",
                     ),
                   jwt: () =>
-                    required(
-                      state.jwt ?? context.input.jwt,
-                      "Missing JWT in the input for GetTrustchain",
-                    ),
+                    required(state.jwt, "Missing JWT for GetTrustchain"),
                 }),
               ),
             onError: { actions: "assignErrorFromEvent" },
@@ -308,24 +301,21 @@ export class AuthenticateDeviceAction extends XStateDeviceAction<
                     clientName: context.input.clientName,
                     permissions: context.input.permissions,
                     jwt: () =>
-                      required(
-                        state.jwt ?? context.input.jwt,
-                        "Missing JWT in the input for AddToTrustchain",
-                      ),
+                      required(state.jwt, "Missing JWT for AddToTrustchain"),
                     trustchainId: () =>
                       required(
                         state.trustchainId ?? context.input.trustchainId,
-                        "Missing Trustchain ID in the input for GetTrustchain",
+                        "Missing Trustchain ID for AddToTrustchain",
                       ),
                     trustchain: () =>
                       required(
                         state.trustchain,
-                        "Missing Trustchain in the input for AddToTrustchain",
+                        "Missing Trustchain for AddToTrustchain",
                       ),
                     applicationStream: () =>
                       required(
                         state.applicationStream,
-                        "Missing application stream in the input for AddToTrustchain",
+                        "Missing application stream for AddToTrustchain",
                       ),
                   }),
                 ),
@@ -350,7 +340,7 @@ export class AuthenticateDeviceAction extends XStateDeviceAction<
               context._internalState.chain((state) =>
                 required(
                   state.applicationStream,
-                  "Missing application stream",
+                  "Missing application stream for ExtractEncryptionKey",
                 ).map((applicationStream) => ({
                   applicationStream,
                   keypair: context.input.keypair,
@@ -381,11 +371,7 @@ export class AuthenticateDeviceAction extends XStateDeviceAction<
                 state.trustchainId ?? context.input.trustchainId,
                 "Missing Trustchain ID in the output",
               ),
-            jwt: () =>
-              required(
-                state.jwt ?? context.input.jwt,
-                "Missing JWT in the output",
-              ),
+            jwt: () => required(state.jwt, "Missing JWT in the output"),
             applicationPath: () =>
               required(
                 state.applicationStream?.getPath().extract(),
@@ -467,7 +453,7 @@ export class AuthenticateDeviceAction extends XStateDeviceAction<
               applicationStream
                 .getPublishedKey(keypair)
                 .toEither(
-                  new UnknownDAError(
+                  new LKRPUnknownError(
                     "There is no encryption key for the current member in the application stream.",
                   ),
                 ),

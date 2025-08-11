@@ -3,16 +3,17 @@ import {
   type AuthenticateDAError,
   type AuthenticateDAIntermediateValue,
   type AuthenticateDAOutput,
-  type JWT,
   KeypairFromBytes,
   Permissions,
 } from "@ledgerhq/device-trusted-app-kit-ledger-keyring-protocol";
+import styled from "styled-components";
 
+import { CommandForm } from "@/components//CommandsView/CommandForm";
 import { DeviceActionsList } from "@/components/DeviceActionsView/DeviceActionsList";
 import { type DeviceActionProps } from "@/components/DeviceActionsView/DeviceActionTester";
 import { useDmk } from "@/providers/DeviceManagementKitProvider";
 import { useLedgerKeyringProtocol } from "@/providers/LedgerKeyringProvider";
-import { hexToBytes, randomPrivateKey } from "@/utils/crypto";
+import { genIdentity, hexToBytes } from "@/utils/crypto";
 
 export const LedgerKeyringProtocolView: React.FC<{ sessionId: string }> = ({
   sessionId,
@@ -31,43 +32,23 @@ export const LedgerKeyringProtocolView: React.FC<{ sessionId: string }> = ({
         title: "Authenticate",
         description:
           "Authenticate as an LKRP member. Without a trustchainId, the device will be used. For the web authentication a valid trustchainId and the keypair of a previouly added member is required.",
-        executeDeviceAction: ({
-          privateKey,
-          applicationId,
-          clientName,
-          trustchainId,
-          jwt: serializedJwt,
-        }) => {
+        executeDeviceAction: ({ privateKey, clientName, trustchainId }) => {
           if (!app) {
             throw new Error("Ledger Keyring Protocol app not initialized");
           }
-          const jwt = JSON.parse(serializedJwt) as JWT;
           return app.authenticate(
             new KeypairFromBytes(hexToBytes(privateKey)),
-            applicationId,
             clientName,
             Permissions.OWNER,
             trustchainId || undefined,
-            jwt ?? undefined,
           );
         },
-        initialValues: {
-          privateKey: randomPrivateKey(),
-          applicationId: 16,
-          clientName: "DMK test client",
-          trustchainId: "",
-          jwt: "null",
-        },
+        InputValuesComponent: RowCommandForm as typeof CommandForm<AuthInput>,
+        initialValues: { ...genIdentity(), trustchainId: "" },
         deviceModelId,
       } satisfies DeviceActionProps<
         AuthenticateDAOutput,
-        {
-          privateKey: string;
-          applicationId: number;
-          clientName: string;
-          trustchainId: string;
-          jwt: string;
-        },
+        AuthInput,
         AuthenticateDAError,
         AuthenticateDAIntermediateValue
       >,
@@ -82,3 +63,13 @@ export const LedgerKeyringProtocolView: React.FC<{ sessionId: string }> = ({
     />
   );
 };
+
+type AuthInput = {
+  privateKey: string;
+  clientName: string;
+  trustchainId: string;
+};
+
+const RowCommandForm = styled(CommandForm)`
+  flex-direction: row;
+`;

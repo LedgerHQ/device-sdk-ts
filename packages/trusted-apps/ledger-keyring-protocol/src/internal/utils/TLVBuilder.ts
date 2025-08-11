@@ -1,4 +1,4 @@
-import { GeneralTags } from "@internal/utils/TLVTags";
+import { GeneralTags } from "@internal/models/Tags";
 
 export class TLVBuilder {
   private items: Uint8Array[] = [];

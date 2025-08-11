@@ -1,9 +1,6 @@
 import { Just, Left, Nothing, Right } from "purify-ts";
 
-import {
-  LKRPHttpRequestError,
-  LKRPUnauthorizedError,
-} from "@api/app-binder/Errors";
+import { LKRPDataSourceError } from "@api/app-binder/Errors";
 import { LKRPBlock } from "@internal/utils/LKRPBlock";
 import { LKRPBlockStream } from "@internal/utils/LKRPBlockStream";
 
@@ -82,7 +79,7 @@ describe("HttpLKRPDataSource", () => {
 
     it("should handle fetch error", async () => {
       // GIVEN
-      const error = new Error("Random error");
+      const error = { status: "UNKNOWN", message: "Random error" } as const;
       fetchSpy.mockRejectedValueOnce(error);
 
       // WHEN
@@ -90,7 +87,14 @@ describe("HttpLKRPDataSource", () => {
       const result = await dataSource.getChallenge();
 
       // THEN
-      expect(result).toEqual(Left(new LKRPHttpRequestError(error)));
+      expect(result).toEqual(
+        Left(
+          new LKRPDataSourceError({
+            status: "UNKNOWN",
+            message: `Random error (from: ${baseUrl}/challenge)`,
+          }),
+        ),
+      );
     });
   });
 
@@ -155,6 +159,7 @@ describe("HttpLKRPDataSource", () => {
         ok: false,
         status: 401,
         statusText: "Unauthorized",
+        json: () => Promise.resolve({ message: "Unauthorized access" }),
       } as Response);
 
       // WHEN
@@ -167,9 +172,10 @@ describe("HttpLKRPDataSource", () => {
       // THEN
       expect(result).toEqual(
         Left(
-          new LKRPUnauthorizedError(
-            `Unauthorized request to ${baseUrl}/authenticate: [401] Unauthorized`,
-          ),
+          new LKRPDataSourceError({
+            status: "UNAUTHORIZED",
+            message: `[401] Unauthorized access (from: ${baseUrl}/authenticate)`,
+          }),
         ),
       );
     });
@@ -222,6 +228,7 @@ describe("HttpLKRPDataSource", () => {
         ok: false,
         status: 500,
         statusText: "Internal Server Error",
+        json: () => Promise.resolve({}),
       } as Response);
 
       // WHEN
@@ -234,9 +241,10 @@ describe("HttpLKRPDataSource", () => {
       // THEN
       expect(result).toEqual(
         Left(
-          new LKRPHttpRequestError(
-            `Failed to fetch ${baseUrl}/trustchain/TRUSTCHAIN_ID: [500] Internal Server Error`,
-          ),
+          new LKRPDataSourceError({
+            status: "UNKNOWN",
+            message: `[500] Internal Server Error (from: ${baseUrl}/trustchain/TRUSTCHAIN_ID)`,
+          }),
         ),
       );
     });

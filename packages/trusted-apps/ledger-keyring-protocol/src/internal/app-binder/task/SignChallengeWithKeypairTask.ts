@@ -1,10 +1,7 @@
-import {
-  ByteArrayParser,
-  UnknownDAError,
-} from "@ledgerhq/device-management-kit";
+import { ByteArrayParser } from "@ledgerhq/device-management-kit";
 import { type Either, EitherAsync, Left, Maybe } from "purify-ts";
 
-import { LKRPMissingDataError } from "@api/app-binder/Errors";
+import { LKRPMissingDataError, LKRPUnknownError } from "@api/app-binder/Errors";
 import { type Keypair } from "@api/app-binder/LKRPTypes";
 import {
   type AuthenticationPayload,
@@ -22,7 +19,10 @@ export class SignChallengeWithKeypairTask {
 
   run(
     challenge: Challenge,
-  ): EitherAsync<LKRPMissingDataError | UnknownDAError, AuthenticationPayload> {
+  ): EitherAsync<
+    LKRPMissingDataError | LKRPUnknownError,
+    AuthenticationPayload
+  > {
     const attestation = this.getAttestation();
     const credential = this.getCredential(this.keypair.pubKeyToHex());
 
@@ -37,7 +37,7 @@ export class SignChallengeWithKeypairTask {
       .mapLeft((error) =>
         error instanceof LKRPMissingDataError
           ? error
-          : new UnknownDAError(String(error)),
+          : new LKRPUnknownError(String(error)),
       );
   }
 
