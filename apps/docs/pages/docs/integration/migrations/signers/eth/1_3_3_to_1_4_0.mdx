@@ -1,29 +1,95 @@
 # Migration from 1.3.3 to 1.4.0
 
-We made some breaking changes to the Ethereum Signer in 1.4.0 which are detailed below.
+This guide walks you through migrating your Ethereum Signer integration from version 1.3.3 to 1.4.0.
 
-## ContextModuleBuilder
+## What changed
 
-The `ContextModuleBuilder` now has a new optional `originToken` parameter that is required by the default loaders to work.
+Version 1.4.0 introduces a **breaking change**: the `originToken` parameter is now required for the default context module to enable transaction security features like Web3 checks, trusted names, and Solana owner information.
 
-You can use the `SignerEthBuilder` with the default loaders by passing the `originToken` parameter.
+## Before you start
 
+Ensure you have an origin token from Ledger. This token identifies your application when making requests to Ledger's security services.
+
+## Step 1: Update your SignerEthBuilder usage
+
+If you're using `SignerEthBuilder` with the default context module, add the `originToken` parameter to the constructor.
+
+### Before (v1.3.3)
 ```typescript
 const signer = new SignerEthBuilder({
   dmk,
   sessionId,
-  originToken: "origin-token", // replace with your origin token
 }).build();
 ```
 
-If you are using the `ContextModuleBuilder` to build your context module, you need to pass the `originToken` parameter.
+### After (v1.4.0)
+```typescript
+const signer = new SignerEthBuilder({
+  dmk,
+  sessionId,
+  originToken: "your-origin-token", // Replace with your actual token
+}).build();
+```
 
+## Step 2: Update custom ContextModuleBuilder usage
+
+If you're building a custom context module with `ContextModuleBuilder`, you must now provide the `originToken` parameter.
+
+### Before (v1.3.3)
+```typescript
+const contextModule = new ContextModuleBuilder().build();
+
+const signer = new SignerEthBuilder({ dmk, sessionId })
+  .withContextModule(contextModule)
+  .build();
+```
+
+### After (v1.4.0)
 ```typescript
 const contextModule = new ContextModuleBuilder({
-  originToken: "origin-token", // replace with your origin token
+  originToken: "your-origin-token", // Required for security features
 }).build();
 
 const signer = new SignerEthBuilder({ dmk, sessionId })
   .withContextModule(contextModule)
   .build();
 ```
+
+## Step 3: Update your package.json
+
+Update your Ethereum Signer dependency to version 1.4.0 or higher:
+
+```json
+{
+  "dependencies": {
+    "@ledgerhq/device-signer-kit-ethereum": "^1.4.0"
+  }
+}
+```
+
+## What the origin token enables
+
+The `originToken` parameter enables several security features:
+
+- **Web3 checks**: Transaction simulation and security analysis
+- **Trusted names**: Display of verified contract and address names  
+- **Solana owner information**: Enhanced Solana transaction context
+- **Request authentication**: Identifies your application to Ledger services
+
+## Troubleshooting
+
+### "Origin token is required" error
+
+This error occurs when you try to build a context module without providing the `originToken` parameter. Make sure you:
+
+1. Have obtained an origin token from Ledger
+2. Pass it to either `SignerEthBuilder` or `ContextModuleBuilder`
+3. Replace placeholder values like `"your-origin-token"` with your actual token
+
+### Features not working as expected
+
+If transaction security features aren't working:
+
+1. Verify your origin token is valid and active
+2. Check that you're passing the token to the correct constructor
+3. Ensure your token has the necessary permissions for the features you're using

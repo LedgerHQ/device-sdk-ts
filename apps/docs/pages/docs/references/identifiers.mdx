@@ -1,42 +1,75 @@
-# Device and transport identifiers
+# Device and Transport Identifiers
 
-In case of a custom integration (not using the DMK or LedgerJS), use the following identifiers to enable USB and BLE communication.
+Technical identifiers for Ledger devices when implementing custom USB and Bluetooth integrations outside of DMK or LedgerJS.
 
-## Ledger Nano S Plus
+## Common Identifiers
 
-- **USB Identifiers**:
-  - `usbProductId`: `0x50`
-  - `bootloaderUsbProductId`: `0x0005`
+- **USB Vendor ID**: `0x2c97` (Ledger)
+- **Bluetooth Service Name**: `Ledger`
 
-## Ledger Nano X
+## Device-Specific Identifiers
 
-- **USB Identifiers**:
-  - `usbProductId`: `0x40`
-  - `bootloaderUsbProductId`: `0x0004`
-- **Bluetooth Identifiers**:
-  - `serviceUuid`: `13d63400-2c97-0004-0000-4c6564676572`
-  - `notifyUuid`: `13d63400-2c97-0004-0001-4c6564676572`
-  - `writeUuid`: `13d63400-2c97-0004-0002-4c6564676572`
-  - `writeCmdUuid`: `13d63400-2c97-0004-0003-4c6564676572`
+### Ledger Nano S Plus
 
-## Ledger Stax
+| Identifier Type | Mode | Value |
+|-----------------|------|-------|
+| USB Product ID | Normal | `0x50` |
+| USB Product ID | Bootloader | `0x0005` |
 
-- **USB Identifiers**:
-  - `usbProductId`: `0x60`
-  - `bootloaderUsbProductId`: `0x0006`
-- **Bluetooth Identifiers**:
-  - `serviceUuid`: `13d63400-2c97-6004-0000-4c6564676572`
-  - `notifyUuid`: `13d63400-2c97-6004-0001-4c6564676572`
-  - `writeUuid`: `13d63400-2c97-6004-0002-4c6564676572`
-  - `writeCmdUuid`: `13d63400-2c97-6004-0003-4c6564676572`
+**Bluetooth**: Not supported
 
-## Ledger Flex
+---
 
-- **USB Identifiers**:
-  - `usbProductId`: `0x70`
-  - `bootloaderUsbProductId`: `0x0007`
-- **Bluetooth Identifiers**:
-  - `serviceUuid`: `13d63400-2c97-3004-0000-4c6564676572`
-  - `notifyUuid`: `13d63400-2c97-3004-0001-4c6564676572`
-  - `writeUuid`: `13d63400-2c97-3004-0002-4c6564676572`
-  - `writeCmdUuid`: `13d63400-2c97-3004-0003-4c6564676572`
+### Ledger Nano X
+
+| Identifier Type | Mode/Service | Value |
+|-----------------|-------------|--------|
+| USB Product ID | Normal | `0x40` |
+| USB Product ID | Bootloader | `0x0004` |
+| BLE Service UUID | Main | `13d63400-2c97-0004-0000-4c6564676572` |
+| BLE Characteristic UUID | Notify | `13d63400-2c97-0004-0001-4c6564676572` |
+| BLE Characteristic UUID | Write | `13d63400-2c97-0004-0002-4c6564676572` |
+| BLE Characteristic UUID | Write Command | `13d63400-2c97-0004-0003-4c6564676572` |
+
+---
+
+### Ledger Stax
+
+| Identifier Type | Mode/Service | Value |
+|-----------------|-------------|--------|
+| USB Product ID | Normal | `0x60` |
+| USB Product ID | Bootloader | `0x0006` |
+| BLE Service UUID | Main | `13d63400-2c97-6004-0000-4c6564676572` |
+| BLE Characteristic UUID | Notify | `13d63400-2c97-6004-0001-4c6564676572` |
+| BLE Characteristic UUID | Write | `13d63400-2c97-6004-0002-4c6564676572` |
+| BLE Characteristic UUID | Write Command | `13d63400-2c97-6004-0003-4c6564676572` |
+
+---
+
+### Ledger Flex
+
+| Identifier Type | Mode/Service | Value |
+|-----------------|-------------|--------|
+| USB Product ID | Normal | `0x70` |
+| USB Product ID | Bootloader | `0x0007` |
+| BLE Service UUID | Main | `13d63400-2c97-3004-0000-4c6564676572` |
+| BLE Characteristic UUID | Notify | `13d63400-2c97-3004-0001-4c6564676572` |
+| BLE Characteristic UUID | Write | `13d63400-2c97-3004-0002-4c6564676572` |
+| BLE Characteristic UUID | Write Command | `13d63400-2c97-3004-0003-4c6564676572` |
+
+## Usage Notes
+
+- **Normal Mode**: Standard device operation
+- **Bootloader Mode**: Device firmware update mode
+- **Notify Characteristic**: Receives data from device
+- **Write Characteristic**: Sends data with response
+- **Write Command Characteristic**: Sends data without response
+
+## Device Support Matrix
+
+| Device | USB | Bluetooth |
+|--------|-----|-----------|
+| Nano S Plus | ✅ | ❌ |
+| Nano X | ✅ | ✅ |
+| Stax | ✅ | ✅ |
+| Flex | ✅ | ✅ |
