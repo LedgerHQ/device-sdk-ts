@@ -2,8 +2,48 @@
   {
     "name": "1inch",
     "contracts": [
-      {"name": "Aggregation Router V6", "address": "0x111111125421cA6dc452d289314280a0f8842A65"},
-      {"name": "Aggregation Router V5", "address": "0x1111111254EEB25477B68fb85Ed929f73A960582"}
+      {
+        "name": "Aggregation Router V6", 
+        "address": "0x111111125421cA6dc452d289314280a0f8842A65", 
+        "supportedMethods": [
+          {"methodId": "0x07ed2379", "functionName": "swap(address executor,tuple desc,bytes data)"},
+          {"methodId": "0xa76dfc3b", "functionName": "ethUnoswap(uint256 minReturn,uint256 dex)"},
+          {"methodId": "0x8770ba91", "functionName": "unoswap2(uint256 token,uint256 amount,uint256 minReturn,uint256 dex,uint256 dex2)"}
+        ],
+        "unsupportedMethods": [
+          {"methodId": "0xcc713a04", "functionName": "fillContractOrder(tuple order,bytes signature,uint256 amount,uint256 takerTraits)"}
+        ]
+      },
+      {
+        "name": "Aggregation Router V5",
+        "address": "0x1111111254EEB25477B68fb85Ed929f73A960582",
+        "supportedMethods": [
+          {"methodId": "0x12aa3caf", "functionName": "swap(address executor,tuple desc,bytes permit,bytes data)"}
+        ]
+      },
+      {
+        "name": "Aggregation Router V4", 
+        "address": "0x1111111254fb6c44bAC0beD2854e76F90643097d", 
+        "supportedMethods": [
+          {"methodId": "0x7ff36ab5", "functionName": "swapExactETHForTokens(uint256 amountOutMin, address[] path, address to, uint256 deadline)"},
+          {"methodId": "0x2e95b6c8", "functionName": "unoswap(address srcToken, uint256 amount, uint256 minReturn, bytes32[])"}
+        ]
+      }
+    ]
+  },
+  {
+    "name": "Aave",
+    "contracts": [
+      {
+        "name": "LP V3", 
+        "address": "0x87870Bca3F3fD6335C3F4ce8392D69350B4fA4E2",
+        "supportedMethods": [
+          {"methodId": "0x69328dec", "functionName": "withdraw(address token, uint256 amount, address destination)"},
+          {"methodId": "0x573ade81", "functionName": "repay(address _owner, uint256 _pid, uint256 _amount, address _payer)"},
+          {"methodId": "0xa415bcad", "functionName": "borrow(address asset, uint256 amount, uint256 interestRateMode, uint16 referralCode, address onBehalfOf)"},
+          {"methodId": "0x617ba037", "functionName": "supply(address asset, uint256 amount, address onBehalfOf, uint16 referralCode)"}
+        ]
+      }
     ]
   }
 ] 

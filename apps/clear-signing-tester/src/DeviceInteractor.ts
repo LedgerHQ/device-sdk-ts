@@ -4,7 +4,7 @@ import axios from 'axios';
 const SPECULOS_URL = process.env['SPECULOS_URL'] || 'http://localhost:5001';
 
 export async function rejectTxOnDevice() {
-  console.log('Rejecting transaction on device');
+  console.log('👆(touch) : Rejecting transaction on device');
   await new Promise(resolve => setTimeout(resolve, 1000));
 
    //Touch Reject button on device
@@ -27,7 +27,7 @@ export async function rejectTxOnDevice() {
 }
 
 export async function rejectTxCheck() {
-  console.log('Rejecting tx checks optin');
+  console.log('👆(touch) : Rejecting tx checks optin');
   await new Promise(resolve => setTimeout(resolve, 1000));
 
   //Confirm on device
@@ -41,7 +41,7 @@ export async function rejectTxCheck() {
 }
 
 export async function ackBlindSignOnDevice(){
-  console.log('Acknowledging blind sign');
+  console.log('👆(touch) : Acknowledging blind sign');
   await new Promise(resolve => setTimeout(resolve, 2000));
 
   //Confirm on device

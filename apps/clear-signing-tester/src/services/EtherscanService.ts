@@ -13,6 +13,8 @@ export type EtherscanTransaction = {
   transactionIndex: string;
   input: string;
   raw: string;
+  methodId: string;
+  functionName: string;
 }
 
 export interface EtherscanResponse {

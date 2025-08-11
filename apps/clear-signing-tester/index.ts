@@ -39,6 +39,14 @@ interface DAppConfig {
 interface DAppContract {
     name: string;
     address: string;
+    supportedMethods: {
+        methodId: string;
+        functionName: string;
+    }[];
+    unsupportedMethods: {
+        methodId: string;
+        functionName: string;
+    }[];
 }
 
 interface RawTransactionResult {
@@ -225,19 +233,19 @@ class EthereumTransactionTester {
 
                             try {
                                 console.log(
-                                    `🔍 Transaction data: ${JSON.stringify(tx)}`,
+                                    `\n🔍 Transaction data: ${JSON.stringify(tx)}\n`,
                                 );
 
                                 // Use the sanitizeTransaction method
                                 const sanitizedTx =
                                     this.sanitizeTransaction(tx);
-                                console.log(
-                                    `🔍 Sanitized transaction: ${JSON.stringify(sanitizedTx)}`,
-                                );
-                                const rawTx =
+                                
+                                const ethersTx =
                                     ethers.Transaction.from(
                                         sanitizedTx,
-                                    ).unsignedSerialized;
+                                    );
+                                    ethersTx.data
+                                const rawTx = ethersTx.unsignedSerialized;
                                 const result = await this.signTransaction(
                                     DERIVATION_PATH,
                                     rawTx,
@@ -253,7 +261,7 @@ class EthereumTransactionTester {
                                 });
 
                                 console.log(
-                                    `    ✅ Transaction ${tx.hash} is successfully cleared signed`,
+                                    `    ✅ Transaction ${tx.hash} is successfully cleared signed\n\n\n`,
                                 );
                             } catch (error) {
                                 console.error(
@@ -316,16 +324,6 @@ class EthereumTransactionTester {
         return new Promise((resolve, reject) => {
             observable.subscribe({
                 next: async (state: any) => {
-                    if (state.status === "pending") {
-                        console.log(
-                            `📊 Device action state: ${state.status} ${JSON.stringify(state.intermediateValue)}`,
-                        );
-                    } else if (state.status === "error") {
-                        console.log(
-                            `📊 Device action state: ${state.status} ${JSON.stringify(state.error)}`,
-                        );
-                    }
-
                     if (
                         state.status === "pending" &&
                         state.intermediateValue?.requiredUserInteraction ===
