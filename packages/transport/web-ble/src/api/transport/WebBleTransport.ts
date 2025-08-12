@@ -17,7 +17,7 @@ import {
 } from "@ledgerhq/device-management-kit";
 import { DeviceConnectionStateMachine } from "@ledgerhq/device-management-kit";
 import { type Either, Left, Right } from "purify-ts";
-import { defer, from, type Observable, of, Subject, throwError } from "rxjs";
+import { defer, from, type Observable, Subject, throwError } from "rxjs";
 import { concatMap, retryWhen, scan, tap, timeout } from "rxjs/operators";
 import { switchMap } from "rxjs/operators";
 
@@ -52,7 +52,7 @@ export class WebBleTransport implements Transport {
       };
       discovered: TransportDiscoveredDevice;
       onDisconnect?: () => void;
-      onReconnect?: () => void;
+      onReconnect?: () => Promise<void> | void;
       listener?: (ev: Event) => void;
     }
   >();
@@ -106,11 +106,22 @@ export class WebBleTransport implements Transport {
           );
 
         const server = await device.gatt.connect();
-        const services = await server.getPrimaryServices();
-        if (services.length === 0)
-          throw new OpeningConnectionError("No GATT services found");
+        const knownUuids = this._deviceModelDataSource.getBluetoothServices();
+        let service: BluetoothRemoteGATTService | null = null;
 
-        const service = services[0]!;
+        for (const uuid of knownUuids) {
+          try {
+            service = await server.getPrimaryService(uuid);
+            break;
+          } catch {
+            this._logger.warn(
+              `Service ${uuid} not found on device ${device.name}`,
+            );
+          }
+        }
+        if (!service)
+          throw new OpeningConnectionError("Ledger GATT service not found");
+
         const infos =
           this._deviceModelDataSource.getBluetoothServicesInfos()[service.uuid];
         if (!infos) throw new UnknownDeviceError(device.name || "");
@@ -122,13 +133,7 @@ export class WebBleTransport implements Transport {
           transport: webBleIdentifier,
         };
 
-        this._deviceRegistry.set(id, {
-          device,
-          service,
-          infos,
-          discovered,
-        });
-
+        this._deviceRegistry.set(id, { device, service, infos, discovered });
         return discovered;
       }),
     );
@@ -143,13 +148,13 @@ export class WebBleTransport implements Transport {
   }
 
   stopDiscovering(): void {
-    //browser prompt cannot be cancelled
+    // browser prompt cannot be cancelled
   }
 
   async connect(params: {
     deviceId: string;
     onDisconnect: (deviceId: string) => void;
-    onReconnect?: (deviceId: string) => void;
+    onReconnect?: (deviceId: string) => Promise<void> | void;
   }): Promise<Either<ConnectError, TransportConnectedDevice>> {
     const deviceEntry = this._deviceRegistry.get(params.deviceId);
 
@@ -194,7 +199,6 @@ export class WebBleTransport implements Transport {
             try {
               params.onDisconnect(params.deviceId);
               this._connectionMachines.delete(params.deviceId);
-              // clear any leftover timer
               const t = this._reconnectionTimers.get(params.deviceId);
               if (t) {
                 clearTimeout(t);
@@ -215,9 +219,8 @@ export class WebBleTransport implements Transport {
         params.onReconnect && (() => params.onReconnect!(params.deviceId));
       this._connectionMachines.set(params.deviceId, connectionMachine);
 
-      device.addEventListener("gattserverdisconnected", () => {
-        connectionMachine.eventDeviceDisconnected();
-      });
+      deviceEntry.listener = disconnectHandler;
+      device.addEventListener("gattserverdisconnected", deviceEntry.listener);
 
       return Right(
         new TransportConnectedDevice({
@@ -226,12 +229,11 @@ export class WebBleTransport implements Transport {
           type: "BLE",
           transport: webBleIdentifier,
           sendApdu: async (apdu, triggersDisconnection, abortTimeout) => {
-            // waiting for any ongoing reconnect
             const pending = this._reconnectionPromises.get(params.deviceId);
             if (pending) {
               try {
                 await pending.promise;
-              } catch (_) {
+              } catch {
                 this._logger.error("Reconnection failed");
               }
             }
@@ -264,7 +266,6 @@ export class WebBleTransport implements Transport {
         }),
       );
     } catch (e) {
-      // drop the registry entry so next time we re-scan
       this._deviceRegistry.delete(params.deviceId);
       this._logger.error("Connection error", { data: { error: e } });
       return Left(new OpeningConnectionError(e));
@@ -283,17 +284,22 @@ export class WebBleTransport implements Transport {
         this._logger.debug("reconnection already in flight, ignoring");
         return;
       }
+
       const pending = {} as { promise: Promise<void>; resolve: () => void };
       pending.promise = new Promise<void>((res) => (pending.resolve = res));
       this._reconnectionPromises.set(deviceId, pending);
+
       machine.eventDeviceDisconnected();
+
       if (this._reconnectionTimers.has(deviceId))
         clearTimeout(this._reconnectionTimers.get(deviceId)!);
+
       const disconnectTimer = setTimeout(() => {
         entry.onDisconnect?.();
         this._cleanupConnection(deviceId);
       }, RECONNECT_DEVICE_TIMEOUT);
       this._reconnectionTimers.set(deviceId, disconnectTimer);
+
       const reconnectionSubject = defer(() => {
         this._logger.debug("attempt gatt.connect()");
         if (entry.device.gatt?.connected) entry.device.gatt.disconnect();
@@ -309,29 +315,36 @@ export class WebBleTransport implements Transport {
                 ),
             ),
         }),
-        concatMap((server) => from(server.getPrimaryServices())),
-        concatMap((services) => {
-          if (!services.length) {
-            throw new OpeningConnectionError("No GATT services");
+        concatMap(async () => {
+          try {
+            return await entry.device.gatt!.getPrimaryService(
+              entry.service.uuid,
+            );
+          } catch {
+            for (const uuid of this._deviceModelDataSource.getBluetoothServices()) {
+              try {
+                return await entry.device.gatt!.getPrimaryService(uuid);
+              } catch {
+                this._logger.warn(
+                  `Service ${uuid} not found on device ${entry.device.name}`,
+                );
+              }
+            }
+            throw new OpeningConnectionError(
+              "Ledger GATT service not found on reconnect",
+            );
           }
-          return of(services[0]!);
         }),
         concatMap((svc) =>
-          from(
-            this._rebindCharacteristics(
-              deviceId,
-              svc,
-              apduSender,
-              machine,
-              pending,
-            ),
-          ),
+          from(this._rebindCharacteristics(deviceId, svc, apduSender, machine)),
         ),
         retryWhen((err$) =>
           err$.pipe(
             tap((err) =>
               this._logger.warn(
-                `retrying #${deviceId} (${err instanceof Error ? err.message : err})`,
+                `retrying #${deviceId} (${
+                  err instanceof Error ? err.message : err
+                })`,
               ),
             ),
             scan((count) => {
@@ -343,21 +356,43 @@ export class WebBleTransport implements Transport {
           ),
         ),
       );
+
       const reconnectionSub = reconnectionSubject.subscribe({
-        next: () => {
+        next: async () => {
           this._logger.debug(`reconnect SUCCESS for ${deviceId}`);
-          clearTimeout(this._reconnectionTimers.get(deviceId)!);
-          pending.resolve();
+
+          const t = this._reconnectionTimers.get(deviceId);
+          if (t) {
+            clearTimeout(t);
+            this._reconnectionTimers.delete(deviceId);
+          }
+
+          this._connectionMachines.get(deviceId)?.eventDeviceConnected();
+
+          try {
+            if (entry?.onReconnect) {
+              await entry.onReconnect(); // wait for SCP reset
+            }
+          } catch (e) {
+            this._logger.error("onReconnect callback threw", {
+              data: { error: e },
+            });
+          }
+
+          // Unblock pending sends *after* SCP reset
+          const pendingSenders = this._reconnectionPromises.get(deviceId);
+          pendingSenders?.resolve();
           this._reconnectionPromises.delete(deviceId);
-          // fire onReconnect if provided
-          const entry = this._deviceRegistry.get(deviceId);
-          entry?.onReconnect?.();
+
           reconnectionSub.unsubscribe();
         },
         error: () => {
-          clearTimeout(this._reconnectionTimers.get(deviceId)!);
+          const t = this._reconnectionTimers.get(deviceId);
+          if (t) {
+            clearTimeout(t);
+            this._reconnectionTimers.delete(deviceId);
+          }
           this._cleanupDevice(deviceId);
-          this._cleanupConnection(deviceId);
           reconnectionSub.unsubscribe();
         },
       });
@@ -390,9 +425,6 @@ export class WebBleTransport implements Transport {
         }
         if (entry.device.gatt?.connected) {
           entry.device.gatt.disconnect();
-        }
-        if (typeof entry.device.forget === "function") {
-          entry.device.forget();
         }
       }
 
@@ -445,7 +477,6 @@ export class WebBleTransport implements Transport {
     freshSvc: BluetoothRemoteGATTService,
     apduSender: WebBleApduSender,
     connectionMachine: DeviceConnectionStateMachine<WebBleApduSenderDependencies>,
-    reconnectInfo: { resolve: () => void },
   ) {
     const deviceEntry = this._deviceRegistry.get(deviceId)!;
 
@@ -473,9 +504,6 @@ export class WebBleTransport implements Transport {
     });
 
     await connectionMachine.setupConnection();
-    connectionMachine.eventDeviceConnected();
-
-    reconnectInfo.resolve();
   }
 
   public async disconnect(params: {
@@ -499,7 +527,6 @@ export class WebBleTransport implements Transport {
     }
 
     this._cleanupDevice(id);
-
     return Promise.resolve(Right(undefined));
   }
 }
