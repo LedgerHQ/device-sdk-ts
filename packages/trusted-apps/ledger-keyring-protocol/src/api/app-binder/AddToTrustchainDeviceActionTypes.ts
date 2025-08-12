@@ -3,8 +3,7 @@ import { type Either } from "purify-ts";
 
 import { type LKRPDeviceCommandError } from "@internal/app-binder/command/utils/ledgerKeyringProtocolErrors";
 import { type LKRPDataSource } from "@internal/lkrp-datasource/data/LKRPDataSource";
-import { type Trustchain } from "@internal/models/Types";
-import { type LKRPBlockStream } from "@internal/utils/LKRPBlockStream";
+import { type Trustchain } from "@internal/utils/Trustchain";
 
 import {
   type LKRPDataSourceError,
@@ -24,9 +23,8 @@ export type AddToTrustchainDAInput = Either<
     readonly lkrpDataSource: LKRPDataSource;
     readonly keypair: Keypair;
     readonly jwt: JWT;
-    readonly trustchainId: string;
+    readonly appId: number;
     readonly trustchain: Trustchain;
-    readonly applicationStream: LKRPBlockStream;
     readonly clientName: string;
     readonly permissions: Permissions;
   }

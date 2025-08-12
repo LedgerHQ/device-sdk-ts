@@ -1,7 +1,6 @@
 import {
   DeviceManagementKit,
   type DeviceSessionId,
-  InternalApi,
   SendCommandInAppDeviceAction,
   UserInteractionRequired,
 } from "@ledgerhq/device-management-kit";
@@ -15,7 +14,8 @@ import { type LKRPDataSource } from "@internal/lkrp-datasource/data/LKRPDataSour
 import { lkrpDatasourceTypes } from "@internal/lkrp-datasource/di/lkrpDatasourceTypes";
 
 import { GetVersionCommand } from "./command/GetVersionCommand";
-import { AuthenticateDeviceAction } from "./device-action/AuthenticateDeviceAction";
+import { AuthenticateWithDeviceDeviceAction } from "./device-action/AuthenticateWithDeviceDeviceAction";
+import { AuthenticateWithKeypairDeviceAction } from "./device-action/AuthenticateWithKeypairDeviceAction";
 
 @injectable()
 export class LedgerKeyringProtocolBinder {
@@ -31,22 +31,16 @@ export class LedgerKeyringProtocolBinder {
 
   authenticateWithKeypair(args: {
     keypair: Keypair;
-    clientName: string;
-    permissions: Permissions;
     trustchainId: string;
   }): AuthenticateDAReturnType {
-    return new AuthenticateDeviceAction({
+    return new AuthenticateWithKeypairDeviceAction({
       input: {
         lkrpDataSource: this.lkrpDataSource,
-        applicationId: this.applicationId,
-        clientName: args.clientName,
-        permissions: args.permissions,
+        appId: this.applicationId,
         keypair: args.keypair,
-        trustchainId: args.trustchainId ?? null,
+        trustchainId: args.trustchainId,
       },
-    })._execute(
-      {} as InternalApi, // TODO: Remove this parameter when the device actions are split
-    );
+    }).execute();
   }
 
   authenticateWithDevice(args: {
@@ -57,14 +51,13 @@ export class LedgerKeyringProtocolBinder {
   }): AuthenticateDAReturnType {
     return this.dmk.executeDeviceAction({
       sessionId: args.sessionId,
-      deviceAction: new AuthenticateDeviceAction({
+      deviceAction: new AuthenticateWithDeviceDeviceAction({
         input: {
           lkrpDataSource: this.lkrpDataSource,
-          applicationId: this.applicationId,
+          appId: this.applicationId,
           clientName: args.clientName,
           permissions: args.permissions,
           keypair: args.keypair,
-          trustchainId: null, // TODO remove this when the device action are split
         },
       }),
     });

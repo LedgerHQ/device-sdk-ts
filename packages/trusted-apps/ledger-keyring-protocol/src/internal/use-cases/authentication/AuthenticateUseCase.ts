@@ -37,7 +37,7 @@ export class AuthenticateUseCase {
       return this.appBinder.authenticateWithDevice({ ...input, sessionId });
     }
 
-    // The AuthenticateUsecaseInput should prevent this case
+    // The AuthenticateUsecaseInput type should prevent this case
     return {
       observable: of({
         status: DeviceActionStatus.Error,

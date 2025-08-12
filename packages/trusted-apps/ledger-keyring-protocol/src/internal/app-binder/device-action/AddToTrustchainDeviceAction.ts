@@ -6,7 +6,7 @@ import {
   UserInteractionRequired,
   XStateDeviceAction,
 } from "@ledgerhq/device-management-kit";
-import { type Either, EitherAsync, Left, Maybe, Right } from "purify-ts";
+import { type Either, EitherAsync, Left, Right } from "purify-ts";
 import { assign, fromPromise, setup } from "xstate";
 
 import {
@@ -91,12 +91,13 @@ export class AddToTrustchainDeviceAction extends XStateDeviceAction<
         isTustchainEmpty: ({ context }) =>
           context.input
             .toMaybe()
-            .chain((input) => input.applicationStream.parse().toMaybe())
+            .chain((input) => input.trustchain.getAppStream(input.appId))
+            .chain((appStream) => appStream.parse().toMaybe())
             .map((blocks) => blocks.length === 0)
             .orDefault(true),
       },
     }).createMachine({
-      /** @xstate-layout N4IgpgJg5mDOIC5QEEIQCoHt0CcCusALgMYAWAhgJYB2AImAG6XFjLGGWbUB0AktZUIBlOLE7UAxBC5huNBpgDWsmoIDCmALaby1CAG0ADAF1EoAA6YxHLmZAAPRAEZDAdm6unAFgAcAJi9PLwA2PycAVmCAGhAAT0QAZhDucJDXAE5XcO9wsOCAX3yY1AxsfCIyKjpGZlZ2cT4BYVFxCTAcHEwcbnMAG3JCADMuzTkmjW1dAxM7S2txO0cEdPTuMMN0hKcEnycMwx9ouMQ-cITuDYTg1wOb4PScwuK0LFwCEgoaeiYWNhsefiCESwMRcCSwPDEFggoymJAgOaCBbwpYJVLcBKuLwrQx+dJnbZeGLxBAJALcLxOYLhHGGFx+BJPEAlV7lD5Vb61P4NQHNEGtdqdHCw2ZWJG2FGJdGY7HpXH4rZJYmIXx+NaywKbBk3VyMorMl5ld6VL41X71LjcAAK5BwsDAQkIODA5E0UhkYwUyh6tvtjudrpF8MR-0WiDOwW4wT2ex8CTJ122yoQYR8FzSPkyEWyXiuTJZRoqn2qPzq-2tvodTpdbsFXR6-SGIx9dqrAc0QYsYtDkoQuUjNNcwUC4V2up8yac5JpV2CCTcVJ8XgZ+cNbyLHLNZYaNtb-pr4Mh0NgnYR3eRoCWrlcad1udcpxWu0xyb8fkM3CpwWCBzlSR8o5eKupTruypqltylq7n61aum0HRdKeIYXg4iDXreSSYo+6TPq4yZoucWIrF4dLxlcaLAayxrFpy5rlmopBgMQijIOYfTMAM4j7q6ACi9iUEQEhIeeEqXs4VJeCkN5+D4D4-ocESvm+3APNSP6+GSETpAU+oFqBJollyFo8AxTEsWxvQcf83GaHxAmEEJThwl28yiahCBOE4hwYoYvi+D4dIHLiyYALRTu4bh4mcN43psAGUYWYGGXRDQFnZRA0FANnutQKjUF6shiFA1AAEK9JgzHCa51Bhh5XjLtwAWBIYwQARJU6hXikm5CEnleOEWSUk4CX6TRW6QTwaX8Rl1BZbBtYId0fQDMMOCjEVpXlZVMzBiJNW9t4DKfpEpy7JEmbaaFOxqgk6Tvp5A1-vVerPCBbIGbR26WlN9mZdlEJQqIVXivtYkecOapZD4sleYYhgDd+nUZBSlKpNDWG5CN71jRBxncD9M1ze28FCsDPZg1S4ThBc773IE843IpxwIGFBweLdGyyZhByyVj1Gbrj5YFgAcmAADu2XSLlnpKIVlDFWVFWKGTKFLIdkZDjs2ZtS+zOYh4NxwxkAXpNicZ8xu4FGULhqixL80k-Wy1Nmt3AbYr23OWe1W1d4ewYps0ZTpsmxZKFvhrOEdLXg8LgtbdFtJZ9E347b4v-UeQM7S5IO+xDHijtpgR+PciPM94kZuLieK3XiRvpInH3jXjIvpw7dbCtn3u5wd1LU7iLWm7qVdMySYSSZSpzeDsngl1OhT6tQmAQHAdh6djAvWyhyFuUsYXh-cjUPE+ThxW+w26WuG9Wyllq8sCoKg935PuYEyb1ZJKwrAEERxtkWSNxxlvKClYbKih9r2QI7hKQkSjhsM4pt8JUgpF-KkaJNj1XCIAzet8TKMWYqxdixBOJcBsulQg4Ce5gzlE4A2mEGRPlNgkJSH5vx9xuNiOGYRXDYJvl9SahpyF-XmpQl+atMSRm2KmNwAFUhlxJCFd85x4yjnHpPQIvheHJX4anUodswG7QgRTK4qxoyGB2GbN8qZJzkgeLsH80ZNjw2hlo5OeMhCZxBKI1Wzg4yrBajSe6A1erhE6gFKMDwBrbHxP1O8rjm7lh4otbxu9fEDRSFqUcUNIgHFCi4VYOE5Q4RahsRcOlChAA */
+      /** @xstate-layout N4IgpgJg5mDOIC5QEEIQCoHt0CcCusALgMYAWAhgJYB2AImAG6XFjLGGWbUB0AktZUIBlOLE7UAxBC5huNBpgDWsmoIDCmALaby1CAG0ADAF1EoAA6YxHLmZAAPRAEZDAdm6unAFgAcAJi9PLwA2PycAVmCAGhAAT0QAZhDucJDXAE5XcO9wsOCAX3yY1AxsfCIyKjpGZlZ2cT4BYVFxCTAcHEwcbnMAG3JCADMuzTkmjW1dAxM7S2txO0cEdPTuMMN0hKcEnycMwx9ouMQ-cITuDYTg1wOb4PScwuK0LFwCEgoaeiYWNhsefiCESwMRcCSwPDEFggoymJAgOaCBbwpZJVbBYLZMJeQJ+HwPGLxBAJM4eLwrLyGbYJK5JcJPEAlV7lD5Vb61P4NQHNEGtdqdHCw2ZWJG2FGJVLcBKucnpQx+dJnbZeQmIXx+NaywKbPzStwJBlMsrvSpfGq-epcbgABXIOFgYCEhBwYHImikMjGCmUPTtDqdLrdQvhiP+i0QZ2C3GCez2Phpfmu21VCDCPguaXxnnC2S8V0NL2NFU+1R+dX+Nr9judrvd-K6PX6QxGvvt1cDmmDFhFYfFCFyUfCmWCgXCu1cOxTTgCKU2GISbicwR8Xl1BdKb2LbPN5YatrbAdr4Mh0NgXYRPeRoCWrlc6YnedcpxWu2lKb8fkM3CXGIOcqSPhjl467MiaJbshaFb7v6NZum0HRdOeoZXg4iC3veSTSs+6Svq4KYkucMoUlSNK0vSRSMoWm6smaZaclaaikGAxCKMg5h9MwAziIeboAKL2JQRASEhl5itezhLl4KR3niT7BAcMbhO+H7cA8mLyb4CRhEOBQUUa1GmqWHKWjwjHMax7G9Jx-w8Zo-GCYQwlOHC3bzGJqEIE4TiHFKhi+L4PhUgc8opgAtNO7huAqZx3nemyASBRY0UZkENEa9lEDQUC2R61AqNQ3qyGIUDUAAQr0mAsSJbnUOGnk4hqgWBIYy7ZCO05hQqUm5CEXleOEWReF5iUGeBO70Tw6UCZl1DZbBdYId0fQDMMOCjMVZUVVVMwhqJtV9t4urfpEpy7JE+LpEcRKhTsGoJOkn5eQN-44gaelUSyhkQbuVpTQ5WU5RCUKiNVor7eJnkjhqWQ+D4niBYYA0Yp1GTcDiEQBVhuQjZ9Y10SZ3B-TNc0dvBAqg72ENLjmFyfvcgQLjcERhS4GFyjhD4LrDrg42B274xWRoAHJgAA7jl0h5V6ShFZQJXlZVigUyhSyHVGrjBDsERjtkb7HMS7i3oYxsZIF6TkvGvNbrRxmC4WIvi-NZMNstzZrdwG0K9tLkXjVdXeHsUpzl5Cr3dKSn66FvhrOEVK3g8LgtfdVvJd9E2E-bYuAyeIM7a5YP+1DHhjpduL3Mj+veFGbjyqHD1ym46Qp1940E8LWdO-Wgp577BcHZi4S0y15sTjXzP69iaPTrmOyeIm06FBR1CYBAcB2PpuP87bKHIe5SzhWFISrPij2M4YAEjs3ePb1a3LAqC4O95THmBCmOJSSsKwBBE8bZFkV9b1SlaaC7ZazCj9n2QI7ghqUljhsM45t8JLjRp-JcJJNg4nIs8Dcm8bZANMkxFibEOLEC4lwWyGVCDgL7hDOUTgPCc11C+c2CRlJfgxAPG45JjZhB5u9HBfM8E-UmoWShAN5rUOfqraUUZthpjcIBVIFdrqfnODSMc2IhoBBlD4ABQj07t0dh2SRKtnBXHRC4HYFsPxpinDOB4ux5Ixk2IjWGeiUrCO4EIHOIITF72cLebq3kbj+BakOFUkc8TsIeEjKKWQwjuLTgTXii0-GP1Vv4ehklKSUkRojPCkcXCrBwg8Z89xAr4l0YvIAA */
 
       id: "AddToTrustchainDeviceAction",
       context: ({ input }) => ({
@@ -135,13 +136,21 @@ export class AddToTrustchainDeviceAction extends XStateDeviceAction<
             src: "parseStream",
             input: ({ context }) =>
               context.input.chain((input) =>
-                required(input.trustchain?.["m/"], "Missing root stream")
-                  .chain((rootStream) => rootStream.parse())
-                  .chain((blocks) => required(blocks[0], "Missing seed block"))
-                  .map((seedBlock) => ({
-                    seedBlock,
-                    applicationStream: input.applicationStream,
-                  })),
+                eitherSeqRecord({
+                  seedBlock: () =>
+                    required(
+                      input.trustchain
+                        .getRootStream()
+                        .chain((stream) => stream.parse().toMaybe())
+                        .extract()?.[0],
+                      "Missing seed block to parse",
+                    ),
+                  applicationStream: () =>
+                    required(
+                      input.trustchain.getAppStream(input.appId).extract(),
+                      "Missing application stream to parse",
+                    ),
+                }),
               ),
             onError: { actions: "assignErrorFromEvent" },
             onDone: {
@@ -175,10 +184,11 @@ export class AddToTrustchainDeviceAction extends XStateDeviceAction<
             id: "signBlock",
             src: "signBlock",
             input: ({ context }) =>
-              context.input.chain((input) =>
-                eitherSeqRecord({
+              context.input.chain((input) => {
+                const appStream = input.trustchain.getAppStream(input.appId);
+                return eitherSeqRecord({
                   lkrpDataSource: input.lkrpDataSource,
-                  trustchainId: input.trustchainId,
+                  trustchainId: input.trustchain.getId(),
                   jwt: input.jwt,
                   clientName: input.clientName,
                   sessionKeypair: () =>
@@ -187,14 +197,13 @@ export class AddToTrustchainDeviceAction extends XStateDeviceAction<
                     ),
                   path: () =>
                     required(
-                      input.applicationStream.getPath().extract(),
+                      appStream.chain((stream) => stream.getPath()).extract(),
                       "Missing application path",
                     ),
                   parent: () =>
                     required(
-                      input.applicationStream
-                        .parse()
-                        .toMaybe()
+                      appStream
+                        .chain((stream) => stream.parse().toMaybe())
                         .chainNullable((blocks) => blocks.at(-1)?.hash())
                         .chainNullable(hexaStringToBuffer)
                         .extract(),
@@ -208,8 +217,8 @@ export class AddToTrustchainDeviceAction extends XStateDeviceAction<
                       permissions: input.permissions,
                     },
                   },
-                }),
-              ),
+                });
+              }),
             onError: { actions: "assignErrorFromEvent" },
             onDone: {
               actions: raiseAndAssign(({ event }) =>
@@ -238,22 +247,19 @@ export class AddToTrustchainDeviceAction extends XStateDeviceAction<
               context.input.chain((input) =>
                 eitherSeqRecord({
                   lkrpDataSource: input.lkrpDataSource,
-                  trustchainId: input.trustchainId,
+                  trustchainId: input.trustchain.getId(),
                   jwt: input.jwt,
                   clientName: input.clientName,
                   sessionKeypair: () =>
                     context._internalState.chain(({ sessionKeypair }) =>
                       required(sessionKeypair, "Missing session keypair"),
                     ),
-                  path: () =>
-                    required(
-                      input.applicationStream.getPath().extract(),
-                      "Missing application path",
-                    ),
+                  path: `m/0'/${input.appId}'/0'`,
                   parent: () =>
                     required(
-                      Maybe.fromNullable(input.trustchain["m/"])
-                        .chain((rootStream) => rootStream.parse().toMaybe())
+                      input.trustchain
+                        .getRootStream()
+                        .chain((stream) => stream.parse().toMaybe())
                         .chainNullable((blocks) => blocks[0]?.hash())
                         .chainNullable(hexaStringToBuffer)
                         .extract(),

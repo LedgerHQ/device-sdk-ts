@@ -2,12 +2,8 @@ import {
   type ExecuteDeviceActionReturnType,
   type OpenAppDAError,
 } from "@ledgerhq/device-management-kit";
-import { type Either } from "purify-ts";
 
 import { type LKRPDeviceCommandError } from "@internal/app-binder/command/utils/ledgerKeyringProtocolErrors";
-import { type LKRPDataSource } from "@internal/lkrp-datasource/data/LKRPDataSource";
-import { type Trustchain } from "@internal/models/Types";
-import { type LKRPBlockStream } from "@internal/utils/LKRPBlockStream";
 
 import { type AddToTrustchainDAError } from "./AddToTrustchainDeviceActionTypes";
 import {
@@ -18,7 +14,7 @@ import {
   type LKRPUnauthorizedError,
   type LKRPUnknownError,
 } from "./Errors";
-import { type JWT, type Keypair, type Permissions } from "./LKRPTypes";
+import { type JWT } from "./LKRPTypes";
 
 export type AuthenticateDAReturnType = ExecuteDeviceActionReturnType<
   AuthenticateDAOutput,
@@ -26,20 +22,11 @@ export type AuthenticateDAReturnType = ExecuteDeviceActionReturnType<
   AuthenticateDAIntermediateValue
 >;
 
-export type AuthenticateDAInput = {
-  readonly lkrpDataSource: LKRPDataSource;
-  readonly applicationId: number;
-  readonly keypair: Keypair;
-  readonly clientName: string;
-  readonly permissions: Permissions;
-  readonly trustchainId: string | null;
-};
-
 export type AuthenticateDAOutput = {
-  readonly jwt: JWT | null;
-  readonly trustchainId: string | null;
-  readonly applicationPath: string | null;
-  readonly encryptionKey: Uint8Array | null;
+  readonly jwt: JWT;
+  readonly trustchainId: string;
+  readonly applicationPath: string;
+  readonly encryptionKey: Uint8Array;
 };
 
 export type AuthenticateDAError =
@@ -56,15 +43,3 @@ export type AuthenticateDAError =
 export type AuthenticateDAIntermediateValue = {
   readonly requiredUserInteraction: string;
 };
-
-export type AuthenticateDAInternalState = Either<
-  AuthenticateDAError,
-  {
-    readonly trustchainId: string | null;
-    readonly jwt: JWT | null;
-    readonly trustchain: Trustchain | null;
-    readonly applicationStream: LKRPBlockStream | null;
-    readonly encryptionKey: Uint8Array | null;
-    readonly wasAddedToTrustchain: boolean;
-  }
->;
