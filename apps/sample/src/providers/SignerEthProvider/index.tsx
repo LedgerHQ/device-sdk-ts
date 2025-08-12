@@ -27,7 +27,7 @@ type SignerEthContextType = {
   web3ChecksConfig: ContextModuleWeb3ChecksConfig;
   setCalConfig: (cal: ContextModuleCalConfig) => void;
   setWeb3ChecksConfig: (web3Checks: ContextModuleWeb3ChecksConfig) => void;
-  metadataServiceConfig: ContextModuleMetadataServiceConfig;
+  metadataServiceDomain: ContextModuleMetadataServiceConfig;
   setMetadataServiceConfig: (
     metadataService: ContextModuleMetadataServiceConfig,
   ) => void;
@@ -43,8 +43,8 @@ const initialState: SignerEthContextType = {
   web3ChecksConfig: {
     url: "https://web3checks-backend.api.ledger.com/v3",
   },
-  metadataServiceConfig: {
-    url: "https://nft.api.live.ledger.com/v1",
+  metadataServiceDomain: {
+    url: "https://nft.api.live.ledger.com",
   },
   setCalConfig: () => {},
   setWeb3ChecksConfig: () => {},
@@ -67,9 +67,9 @@ export const SignerEthProvider: React.FC<PropsWithChildren> = ({
   );
   const [web3ChecksConfig, setWeb3ChecksConfig] =
     useState<ContextModuleWeb3ChecksConfig>(initialState.web3ChecksConfig);
-  const [metadataServiceConfig, setMetadataServiceConfig] =
+  const [metadataServiceDomain, setMetadataServiceConfig] =
     useState<ContextModuleMetadataServiceConfig>(
-      initialState.metadataServiceConfig,
+      initialState.metadataServiceDomain,
     );
 
   useEffect(() => {
@@ -83,7 +83,7 @@ export const SignerEthProvider: React.FC<PropsWithChildren> = ({
     })
       .setCalConfig(calConfig)
       .setWeb3ChecksConfig(web3ChecksConfig)
-      .setMetadataServiceConfig(metadataServiceConfig)
+      .setMetadataServiceConfig(metadataServiceDomain)
       .build();
     const newSigner = new SignerEthBuilder({
       dmk,
@@ -92,7 +92,7 @@ export const SignerEthProvider: React.FC<PropsWithChildren> = ({
       .withContextModule(contextModule)
       .build();
     setSigner(newSigner);
-  }, [calConfig, dmk, sessionId, web3ChecksConfig, metadataServiceConfig]);
+  }, [calConfig, dmk, sessionId, web3ChecksConfig, metadataServiceDomain]);
 
   return (
     <SignerEthContext.Provider
@@ -102,7 +102,7 @@ export const SignerEthProvider: React.FC<PropsWithChildren> = ({
         setCalConfig,
         web3ChecksConfig,
         setWeb3ChecksConfig,
-        metadataServiceConfig,
+        metadataServiceDomain,
         setMetadataServiceConfig,
       }}
     >
@@ -127,7 +127,7 @@ export const useWeb3ChecksConfig = () => {
 };
 
 export const useMetadataServiceConfig = () => {
-  const { metadataServiceConfig, setMetadataServiceConfig } =
+  const { metadataServiceDomain, setMetadataServiceConfig } =
     useContext(SignerEthContext);
-  return { metadataServiceConfig, setMetadataServiceConfig };
+  return { metadataServiceDomain, setMetadataServiceConfig };
 };

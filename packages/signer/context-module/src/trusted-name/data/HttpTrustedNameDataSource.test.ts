@@ -18,8 +18,8 @@ const config = {
     mode: "prod",
     branch: "main",
   },
-  metadataService: {
-    url: "https://nft.api.live.ledger.com/v2",
+  metadataServiceDomain: {
+    url: "https://nft.api.live.ledger.com",
   },
   originToken: "originToken",
 } as ContextModuleConfig;
@@ -48,7 +48,7 @@ describe("HttpTrustedNameDataSource", () => {
       // THEN
       expect(requestSpy).toHaveBeenCalledWith(
         expect.objectContaining({
-          url: `https://nft.api.live.ledger.com/v2/names/ethereum/137/forward/hello.eth?types=eoa&sources=ens&challenge=9876`,
+          url: `https://nft.api.live.ledger.com/v1/names/ethereum/137/forward/hello.eth?types=eoa&sources=ens&challenge=9876`,
           headers: {
             [LEDGER_CLIENT_VERSION_HEADER]: version,
             [LEDGER_ORIGIN_TOKEN_HEADER]: config.originToken,
@@ -136,7 +136,7 @@ describe("HttpTrustedNameDataSource", () => {
       // THEN
       expect(requestSpy).toHaveBeenCalledWith(
         expect.objectContaining({
-          url: `https://nft.api.live.ledger.com/v2/names/ethereum/137/reverse/0x1234?types=eoa&sources=ens,crypto_asset_list&challenge=5678`,
+          url: `https://nft.api.live.ledger.com/v1/names/ethereum/137/reverse/0x1234?types=eoa&sources=ens,crypto_asset_list&challenge=5678`,
           headers: {
             [LEDGER_CLIENT_VERSION_HEADER]: version,
             [LEDGER_ORIGIN_TOKEN_HEADER]: config.originToken,

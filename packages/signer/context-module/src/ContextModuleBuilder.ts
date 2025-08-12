@@ -14,7 +14,7 @@ import { DefaultContextModule } from "./DefaultContextModule";
 
 const DEFAULT_CAL_URL = "https://crypto-assets-service.api.ledger.com/v1";
 const DEFAULT_WEB3_CHECKS_URL = "https://web3checks-backend.api.ledger.com/v3";
-const DEFAULT_METADATA_SERVICE_URL = "https://nft.api.live.ledger.com/v1";
+const DEFAULT_METADATA_SERVICE_DOMAIN = "https://nft.api.live.ledger.com";
 
 export const DEFAULT_CONFIG: ContextModuleConfig = {
   cal: {
@@ -25,8 +25,8 @@ export const DEFAULT_CONFIG: ContextModuleConfig = {
   web3checks: {
     url: DEFAULT_WEB3_CHECKS_URL,
   },
-  metadataService: {
-    url: DEFAULT_METADATA_SERVICE_URL,
+  metadataServiceDomain: {
+    url: DEFAULT_METADATA_SERVICE_DOMAIN,
   },
   defaultLoaders: true,
   customLoaders: [],
@@ -118,7 +118,7 @@ export class ContextModuleBuilder {
   setMetadataServiceConfig(
     metadataServiceConfig: ContextModuleMetadataServiceConfig,
   ) {
-    this.config.metadataService = metadataServiceConfig;
+    this.config.metadataServiceDomain = metadataServiceConfig;
     return this;
   }
 
