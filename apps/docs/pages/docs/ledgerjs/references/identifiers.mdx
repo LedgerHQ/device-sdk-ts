@@ -9,12 +9,14 @@ USB identifiers are essential for applications that need to detect and communica
 ## What are USB identifiers?
 
 USB identifiers are standardized codes used by the USB protocol to identify connected devices:
+
 - **Vendor ID (VID)**: Identifies the manufacturer (Ledger uses `0x2c97`)
 - **Product ID (PID)**: Identifies the specific device model within that vendor's product line
 
 ## When do you need them?
 
 You'll need these identifiers when:
+
 - Building applications that detect Ledger devices automatically
 - Implementing device filtering in transport layers
 - Setting up USB permissions for desktop applications
@@ -25,6 +27,7 @@ You'll need these identifiers when:
 The complete list of Devices USB identifiers can be found in the [ledger-live repository](https://github.com/LedgerHQ/ledger-live/blob/develop/libs/ledgerjs/packages/devices/src/index.ts).
 
 This file contains:
+
 - **Device descriptors** for all Ledger hardware wallet models (Nano S, Nano S Plus, Nano X, Flex, Stax, etc.)
 - **USB product IDs** for each device variant
 - **Device capabilities** and supported communication protocols

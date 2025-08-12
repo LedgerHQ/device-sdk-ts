@@ -14,6 +14,7 @@ Ensure you have the following minimum transport versions:
 The `listenToKnownDevices` method has been replaced with `listenToAvailableDevices`, which now includes additional functionality like RSSI field support and transport scoping.
 
 ### Before (v0.6.1)
+
 ```typescript
 // This method no longer exists
 dmk.listenToKnownDevices().subscribe((devices) => {
@@ -22,6 +23,7 @@ dmk.listenToKnownDevices().subscribe((devices) => {
 ```
 
 ### After (v0.6.2)
+
 ```typescript
 // Listen to all available devices from all transports
 dmk.listenToAvailableDevices({}).subscribe((devices) => {
@@ -40,17 +42,19 @@ dmk.listenToAvailableDevices({ transport: "web-hid" }).subscribe((devices) => {
 The `toggleDeviceSessionRefresher` method has been replaced with `disableDeviceSessionRefresher`, which provides more granular control and returns a function to re-enable the refresher.
 
 ### Before (v0.6.1)
+
 ```typescript
 // This method no longer exists
 dmk.toggleDeviceSessionRefresher(sessionId, isDisabled);
 ```
 
 ### After (v0.6.2)
+
 ```typescript
 // Disable the refresher and get a function to re-enable it
 const enableRefresher = dmk.disableDeviceSessionRefresher({
   sessionId: "your-session-id",
-  blockerId: "your-unique-blocker-id" // Used to identify this specific disable request
+  blockerId: "your-unique-blocker-id", // Used to identify this specific disable request
 });
 
 // Later, re-enable the refresher when done
@@ -58,14 +62,15 @@ enableRefresher();
 ```
 
 ### Example usage
+
 ```typescript
 async function performLongRunningOperation(sessionId: string) {
   // Disable refresher during the operation
   const enableRefresher = dmk.disableDeviceSessionRefresher({
     sessionId,
-    blockerId: "long-operation"
+    blockerId: "long-operation",
   });
-  
+
   try {
     // Perform your operation that requires the refresher to be disabled
     await someDeviceOperation();
@@ -93,12 +98,14 @@ Update your transport dependencies to the minimum required versions:
 ## What changed
 
 ### Enhanced device discovery
+
 - **New method name**: `listenToAvailableDevices` replaces `listenToKnownDevices`
 - **Transport scoping**: You can now limit discovery to specific transports
 - **RSSI support**: BLE devices now include signal strength information
 - **Improved reliability**: Better handling of multiple transport scenarios
 
 ### Improved refresher control
+
 - **New method name**: `disableDeviceSessionRefresher` replaces `toggleDeviceSessionRefresher`
 - **Blocker ID system**: Multiple components can disable the refresher independently
 - **Automatic cleanup**: The returned function ensures proper re-enabling
@@ -107,10 +114,13 @@ Update your transport dependencies to the minimum required versions:
 ## Troubleshooting
 
 ### "listenToKnownDevices is not a function"
+
 Replace all instances of `listenToKnownDevices` with `listenToAvailableDevices({})`.
 
 ### "toggleDeviceSessionRefresher is not a function"
+
 Replace `toggleDeviceSessionRefresher` calls with `disableDeviceSessionRefresher` and handle the returned re-enable function.
 
 ### Transport compatibility issues
+
 Ensure your transport packages are updated to the minimum required versions listed above.

@@ -15,6 +15,7 @@ Ensure you have an origin token from Ledger. This token identifies your applicat
 If you're using `SignerEthBuilder` with the default context module, add the `originToken` parameter to the constructor.
 
 ### Before (v1.3.3)
+
 ```typescript
 const signer = new SignerEthBuilder({
   dmk,
@@ -23,6 +24,7 @@ const signer = new SignerEthBuilder({
 ```
 
 ### After (v1.4.0)
+
 ```typescript
 const signer = new SignerEthBuilder({
   dmk,
@@ -36,6 +38,7 @@ const signer = new SignerEthBuilder({
 If you're building a custom context module with `ContextModuleBuilder`, you must now provide the `originToken` parameter.
 
 ### Before (v1.3.3)
+
 ```typescript
 const contextModule = new ContextModuleBuilder().build();
 
@@ -45,6 +48,7 @@ const signer = new SignerEthBuilder({ dmk, sessionId })
 ```
 
 ### After (v1.4.0)
+
 ```typescript
 const contextModule = new ContextModuleBuilder({
   originToken: "your-origin-token", // Required for security features
@@ -72,7 +76,7 @@ Update your Ethereum Signer dependency to version 1.4.0 or higher:
 The `originToken` parameter enables several security features:
 
 - **Web3 checks**: Transaction simulation and security analysis
-- **Trusted names**: Display of verified contract and address names  
+- **Trusted names**: Display of verified contract and address names
 - **Solana owner information**: Enhanced Solana transaction context
 - **Request authentication**: Identifies your application to Ledger services
 

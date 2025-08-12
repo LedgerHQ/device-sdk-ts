@@ -9,6 +9,7 @@ This is strongly recommended over direct usage of `sendApdu`.
 ## Prerequisites
 
 Before building custom commands, ensure you have:
+
 - Device Management Kit v1.0.0 or higher
 - Understanding of APDU protocol basics
 - A connected device session (see [Getting Started](../../getting-started))
@@ -61,13 +62,11 @@ export class MyCustomCommand
     // Add the data attached to the APDU with the builder
     const builder = new ApduBuilder(apduArgs);
     builder.add32BitUIntToData(this.args.customParam);
-    
+
     return builder.build();
   }
 
-  parseResponse(
-    response: ApduResponse,
-  ): CommandResult<MyCustomResponse> {
+  parseResponse(response: ApduResponse): CommandResult<MyCustomResponse> {
     // Create Apdu Parser
     const parser = new ApduParser(response);
 
@@ -87,7 +86,7 @@ export class MyCustomCommand
     }
 
     const customAttributes2 = parser.encodeToString(
-      parser.extractFieldLVEncoded()
+      parser.extractFieldLVEncoded(),
     );
     if (!customAttributes2) {
       return CommandResultFactory({
@@ -140,26 +139,26 @@ const builder = new ApduBuilder({
 });
 
 // Add different data types
-builder.add8BitUIntToData(0x01);           // Single byte
-builder.add16BitUIntToData(0x1234);        // Two bytes
-builder.add32BitUIntToData(0x12345678);    // Four bytes
-builder.addHexaStringToData("deadbeef");   // Hex string
-builder.addAsciiStringToData("hello");     // ASCII string
-builder.addBufferToData(buffer);           // Raw buffer
+builder.add8BitUIntToData(0x01); // Single byte
+builder.add16BitUIntToData(0x1234); // Two bytes
+builder.add32BitUIntToData(0x12345678); // Four bytes
+builder.addHexaStringToData("deadbeef"); // Hex string
+builder.addAsciiStringToData("hello"); // ASCII string
+builder.addBufferToData(buffer); // Raw buffer
 
 const apdu = builder.build();
 ```
 
 ### Available Builder Methods
 
-| Method | Description | Example |
-|--------|-------------|---------|
-| `add8BitUIntToData(value)` | Add single byte | `builder.add8BitUIntToData(255)` |
-| `add16BitUIntToData(value)` | Add 2-byte integer | `builder.add16BitUIntToData(65535)` |
-| `add32BitUIntToData(value)` | Add 4-byte integer | `builder.add32BitUIntToData(0xFFFFFFFF)` |
-| `addHexaStringToData(hex)` | Add hex string | `builder.addHexaStringToData("deadbeef")` |
-| `addAsciiStringToData(text)` | Add ASCII text | `builder.addAsciiStringToData("hello")` |
-| `addBufferToData(buffer)` | Add raw buffer | `builder.addBufferToData(new Uint8Array([1,2,3]))` |
+| Method                       | Description        | Example                                            |
+| ---------------------------- | ------------------ | -------------------------------------------------- |
+| `add8BitUIntToData(value)`   | Add single byte    | `builder.add8BitUIntToData(255)`                   |
+| `add16BitUIntToData(value)`  | Add 2-byte integer | `builder.add16BitUIntToData(65535)`                |
+| `add32BitUIntToData(value)`  | Add 4-byte integer | `builder.add32BitUIntToData(0xFFFFFFFF)`           |
+| `addHexaStringToData(hex)`   | Add hex string     | `builder.addHexaStringToData("deadbeef")`          |
+| `addAsciiStringToData(text)` | Add ASCII text     | `builder.addAsciiStringToData("hello")`            |
+| `addBufferToData(buffer)`    | Add raw buffer     | `builder.addBufferToData(new Uint8Array([1,2,3]))` |
 
 ## ApduParser Usage
 
@@ -186,15 +185,15 @@ const asciiString = parser.encodeToString(field);
 
 ### Available Parser Methods
 
-| Method | Description | Returns |
-|--------|-------------|---------|
-| `extract8BitUInt()` | Extract 1-byte integer | `number \| undefined` |
-| `extract16BitUInt()` | Extract 2-byte integer | `number \| undefined` |
-| `extract32BitUInt()` | Extract 4-byte integer | `number \| undefined` |
+| Method                         | Description                | Returns                   |
+| ------------------------------ | -------------------------- | ------------------------- |
+| `extract8BitUInt()`            | Extract 1-byte integer     | `number \| undefined`     |
+| `extract16BitUInt()`           | Extract 2-byte integer     | `number \| undefined`     |
+| `extract32BitUInt()`           | Extract 4-byte integer     | `number \| undefined`     |
 | `extractFieldByLength(length)` | Extract fixed-length field | `Uint8Array \| undefined` |
-| `extractFieldLVEncoded()` | Extract length-value field | `Uint8Array \| undefined` |
-| `encodeToHexaString(field)` | Convert to hex string | `string` |
-| `encodeToString(field)` | Convert to ASCII string | `string` |
+| `extractFieldLVEncoded()`      | Extract length-value field | `Uint8Array \| undefined` |
+| `encodeToHexaString(field)`    | Convert to hex string      | `string`                  |
+| `encodeToString(field)`        | Convert to ASCII string    | `string`                  |
 
 ## Error Handling and Troubleshooting
 
@@ -234,23 +233,25 @@ parseResponse(response: ApduResponse): CommandResult<MyResponse> {
 
 ### Common Error Codes
 
-| Status Code | Error Type | Description | Solution |
-|-------------|------------|-------------|----------|
-| `5515` | DeviceLockedError | Device is locked | Ask user to unlock device |
-| `5501` | ActionRefusedError | User refused action | Retry or inform user |
-| `5502` | PinNotSetError | PIN not set | Guide user to set PIN |
-| `6e00` | CLA not supported | Invalid command class | Check your CLA value |
-| `6d00` | INS not supported | Invalid instruction | Check your INS value |
-| `6a86` | Incorrect parameters | Invalid P1/P2 | Verify parameter values |
+| Status Code | Error Type           | Description           | Solution                  |
+| ----------- | -------------------- | --------------------- | ------------------------- |
+| `5515`      | DeviceLockedError    | Device is locked      | Ask user to unlock device |
+| `5501`      | ActionRefusedError   | User refused action   | Retry or inform user      |
+| `5502`      | PinNotSetError       | PIN not set           | Guide user to set PIN     |
+| `6e00`      | CLA not supported    | Invalid command class | Check your CLA value      |
+| `6d00`      | INS not supported    | Invalid instruction   | Check your INS value      |
+| `6a86`      | Incorrect parameters | Invalid P1/P2         | Verify parameter values   |
 
 ### Debugging Tips
 
 1. **Enable Logging**: Use the logger to debug command execution:
+
    ```typescript
    // The SDK automatically logs APDU exchanges when in development mode
    ```
 
 2. **Validate APDU Construction**: Check your APDU before sending:
+
    ```typescript
    const apdu = builder.build();
    console.log("APDU:", apdu.getRawApdu());
@@ -303,6 +304,7 @@ if (!CommandUtils.isSuccessResponse(response)) {
 ### Built-in Command Examples
 
 Study these existing commands for reference:
+
 - [`ListAppsCommand`](https://github.com/LedgerHQ/device-sdk-ts/blob/main/packages/device-management-kit/src/api/command/os/ListAppsCommand.ts) - Simple command with parsing
 - [`GetOsVersionCommand`](https://github.com/LedgerHQ/device-sdk-ts/blob/main/packages/device-management-kit/src/api/command/os/GetOsVersionCommand.ts) - Complex response parsing
 - [`OpenAppCommand`](https://github.com/LedgerHQ/device-sdk-ts/blob/main/packages/device-management-kit/src/api/command/os/OpenAppCommand.ts) - Command with parameters
@@ -310,5 +312,6 @@ Study these existing commands for reference:
 ### Sample Applications
 
 See complete implementations in:
+
 - [Sample App](https://github.com/LedgerHQ/device-sdk-ts/tree/main/apps/sample) - Web-based example
 - [Mobile App](https://github.com/LedgerHQ/device-sdk-ts/tree/main/apps/mobile) - React Native example
