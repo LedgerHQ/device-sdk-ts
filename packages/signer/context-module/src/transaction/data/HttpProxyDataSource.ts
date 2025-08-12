@@ -50,7 +50,7 @@ export class HttpProxyDataSource implements ProxyDataSource {
     try {
       const response = await axios.request<ProxyDelegateCallDto>({
         method: "POST",
-        url: `${this.config.metadataService.url}/ethereum/${chainId}/contract/proxy/delegate`,
+        url: `${this.config.metadataServiceDomain.url}/v1/ethereum/${chainId}/contract/proxy/delegate`,
         headers: {
           [LEDGER_CLIENT_VERSION_HEADER]: `context-module/${PACKAGE.version}`,
           [LEDGER_ORIGIN_TOKEN_HEADER]: this.config.originToken,
@@ -98,7 +98,7 @@ export class HttpProxyDataSource implements ProxyDataSource {
     try {
       const response = await axios.request<ProxyImplementationAddressDto>({
         method: "GET",
-        url: `${this.config.metadataService.url}/ethereum/${chainId}/contract/proxy/${proxyAddress}`,
+        url: `${this.config.metadataServiceDomain.url}/v1/ethereum/${chainId}/contract/proxy/${proxyAddress}`,
         headers: {
           [LEDGER_CLIENT_VERSION_HEADER]: `context-module/${PACKAGE.version}`,
           [LEDGER_ORIGIN_TOKEN_HEADER]: this.config.originToken,

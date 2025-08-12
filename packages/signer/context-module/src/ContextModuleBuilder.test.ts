@@ -129,7 +129,7 @@ describe("ContextModuleBuilder", () => {
       ].get<ContextModuleConfig>(configTypes.Config);
 
       expect(res).toBeInstanceOf(DefaultContextModule);
-      expect(config.metadataService).toEqual(customMetadataConfig);
+      expect(config.metadataServiceDomain).toEqual(customMetadataConfig);
     });
 
     it("should override the default metadata service configuration", () => {
@@ -145,8 +145,8 @@ describe("ContextModuleBuilder", () => {
         "_container"
       ].get<ContextModuleConfig>(configTypes.Config);
 
-      expect(config.metadataService.url).toBe(customMetadataConfig.url);
-      expect(config.metadataService.url).not.toBe(
+      expect(config.metadataServiceDomain.url).toBe(customMetadataConfig.url);
+      expect(config.metadataServiceDomain.url).not.toBe(
         "https://nft.api.live.ledger.com/v2",
       );
     });

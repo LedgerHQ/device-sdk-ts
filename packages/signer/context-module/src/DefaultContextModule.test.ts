@@ -28,11 +28,8 @@ describe("DefaultContextModule", () => {
     web3checks: {
       url: "https://web3checks/v3",
     },
-    metadataService: {
-      url: "https://metadata/v2",
-    },
-    solanaMetadataService: {
-      url: "https://metadata/v2",
+    metadataServiceDomain: {
+      url: "https://metadata.com",
     },
     originToken: "originToken",
   };

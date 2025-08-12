@@ -16,8 +16,8 @@ const config = {
   web3checks: {
     url: "web3checksUrl",
   },
-  metadataService: {
-    url: "https://nft.api.live.ledger.com/v1",
+  metadataServiceDomain: {
+    url: "https://nft.api.live.ledger.com",
   },
   originToken: "originToken",
 } as ContextModuleConfig;

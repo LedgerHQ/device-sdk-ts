@@ -25,7 +25,7 @@ function stringToHex(str: string): string {
 
 describe("HttpSolanaOwnerInfoDataSource", () => {
   const config = {
-    metadataService: { url: "https://some.doma.in" },
+    metadataServiceDomain: { url: "https://some.doma.in" },
     originToken: "mock-origin-token",
   } as ContextModuleConfig;
 

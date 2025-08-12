@@ -55,8 +55,8 @@ describe("HttpProxyDataSource", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     datasource = new HttpProxyDataSource({
-      metadataService: {
-        url: "https://nft.api.live.ledger.com/v2",
+      metadataServiceDomain: {
+        url: "https://nft.api.live.ledger.com",
       },
       originToken: "originToken",
     } as ContextModuleConfig);
@@ -153,7 +153,7 @@ describe("HttpProxyDataSource", () => {
       expect(requestSpy).toHaveBeenCalledWith(
         expect.objectContaining({
           method: "POST",
-          url: "https://nft.api.live.ledger.com/v2/ethereum/137/contract/proxy/delegate",
+          url: "https://nft.api.live.ledger.com/v1/ethereum/137/contract/proxy/delegate",
         }),
       );
     });
@@ -219,7 +219,7 @@ describe("HttpProxyDataSource", () => {
       expect(requestSpy).toHaveBeenCalledWith(
         expect.objectContaining({
           method: "GET",
-          url: "https://nft.api.live.ledger.com/v2/ethereum/1/contract/proxy/0xee6a57ec80ea46401049e92587e52f5ec1c24785",
+          url: "https://nft.api.live.ledger.com/v1/ethereum/1/contract/proxy/0xee6a57ec80ea46401049e92587e52f5ec1c24785",
         }),
       );
     });
@@ -245,7 +245,7 @@ describe("HttpProxyDataSource", () => {
       expect(requestSpy).toHaveBeenCalledWith(
         expect.objectContaining({
           method: "GET",
-          url: "https://nft.api.live.ledger.com/v2/ethereum/137/contract/proxy/0xee6a57ec80ea46401049e92587e52f5ec1c24785",
+          url: "https://nft.api.live.ledger.com/v1/ethereum/137/contract/proxy/0xee6a57ec80ea46401049e92587e52f5ec1c24785",
         }),
       );
     });

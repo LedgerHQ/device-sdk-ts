@@ -8,7 +8,6 @@ import {
   TokenInstruction,
 } from "@solana/spl-token";
 import {
-  type AddressLookupTableAccount,
   type PublicKey,
   Transaction,
   TransactionInstruction,
@@ -45,15 +44,13 @@ type NormalizedMessage = {
   allKeys: PublicKey[];
 };
 
+type LoadedAddresses = { writable: PublicKey[]; readonly: PublicKey[] };
+
 export class TransactionInspector {
   /**
    * @param rawTransactionBytes - the raw tx bytes (legacy or v0)
-   * @param addressLookupTables - OPTIONAL: already-fetched LUT accounts to resolve looked-up keys
    */
-  constructor(
-    private readonly rawTransactionBytes: Uint8Array,
-    private readonly addressLookupTables?: AddressLookupTableAccount[],
-  ) {}
+  constructor(private readonly rawTransactionBytes: Uint8Array) {}
 
   public inspectTransactionType(): TxInspectorResult {
     try {
@@ -94,11 +91,18 @@ export class TransactionInspector {
         // minimal TransactionInstruction for the decoders
         const instruction = new TransactionInstruction({
           programId,
-          keys: ixMeta.accountKeyIndexes.map((i) => ({
-            pubkey: message.allKeys[i]!,
-            isSigner: false,
-            isWritable: false,
-          })),
+          keys: ixMeta.accountKeyIndexes.map((i) => {
+            if (!message.allKeys[i]) {
+              throw new Error(
+                `TransactionInspector: missing key at index ${i} in allKeys`,
+              );
+            }
+            return {
+              pubkey: message.allKeys[i],
+              isSigner: false,
+              isWritable: false,
+            };
+          }),
           data: Buffer.from(ixMeta.data),
         });
 
@@ -163,56 +167,51 @@ export class TransactionInspector {
    * if LUT accounts are provided, looked-up keys are included in allKeys.
    */
   private normaliseMessage(rawBytes: Uint8Array): NormalizedMessage {
-    // try versioned first (v0/any future versions supported by web3.js)
     const vtx = this.tryDeserialiseVersioned(rawBytes);
     if (vtx) {
-      const msg = vtx.message;
+      const msg = vtx.message as VersionedMessage & {
+        getAccountKeys?: (opts?: {
+          accountKeysFromLookups?: LoadedAddresses;
+        }) => {
+          staticAccountKeys: PublicKey[];
+          accountKeysFromLookups?: LoadedAddresses;
+          keySegments: () => PublicKey[][];
+        };
+        compiledInstructions: Array<{
+          programIdIndex: number;
+          accountKeyIndexes?: number[];
+          accounts?: number[];
+          data: Uint8Array | string | number[];
+        }>;
+        staticAccountKeys: PublicKey[];
+      };
 
-      let writable: PublicKey[] = [];
-      let readonly: PublicKey[] = [];
-
-      // resolve looked-up keys when LUT accounts are provided
-      try {
-        if (this.addressLookupTables && "getAccountKeysFromLookups" in msg) {
-          // @ts-expect-error: method available on v0 messages
-          const fromLookups = msg.getAccountKeysFromLookups(
-            this.addressLookupTables,
-          );
-          writable = fromLookups?.writable ?? [];
-          readonly = fromLookups?.readonly ?? [];
-        }
-      } catch {
-        // ignore; proceed with static keys only
+      // build the full key array in the exact index order used by compiledInstructions
+      let allKeys: PublicKey[];
+      if (typeof msg.getAccountKeys === "function") {
+        const mak = msg.getAccountKeys();
+        allKeys = mak.keySegments().flat();
+      } else {
+        // very old builds: fall back to concatenation (same order)
+        allKeys = [...msg.staticAccountKeys];
       }
 
-      const allKeys = [...msg.staticAccountKeys, ...writable, ...readonly];
-
       const compiledInstructions: NormalizedCompiledIx[] =
-        msg.compiledInstructions.map(
-          (ix: {
-            programIdIndex: number;
-            accountKeyIndexes?: number[];
-            accounts?: number[];
-            data: Uint8Array | string;
-          }) => ({
-            programIdIndex: ix.programIdIndex,
-            accountKeyIndexes: Array.from(
-              ix.accountKeyIndexes ?? ix.accounts ?? [],
-            ),
-            data:
-              ix.data instanceof Uint8Array
-                ? ix.data
-                : Buffer.from(ix.data ?? []),
-          }),
-        );
+        msg.compiledInstructions.map((ix) => ({
+          programIdIndex: ix.programIdIndex,
+          accountKeyIndexes: Array.from(ix.accountKeyIndexes ?? []),
+          data:
+            ix.data instanceof Uint8Array
+              ? ix.data
+              : Buffer.from(ix.data ?? []),
+        }));
 
       return { compiledInstructions, allKeys };
     }
 
-    // fallback - legacy transaction
+    // legacy fallback
     const legacy = Transaction.from(rawBytes);
 
-    // build a stable key list that includes fee payer, every ix programId, and all ix account metas.
     const allKeyMap = new Map<string, PublicKey>();
     const add = (pk?: PublicKey | null) => {
       if (!pk) return;
@@ -226,12 +225,13 @@ export class TransactionInspector {
       for (const k of ix.keys) add(k.pubkey);
     }
     const allKeys = Array.from(allKeyMap.values());
+    const indexByB58 = new Map(allKeys.map((pk, i) => [pk.toBase58(), i]));
 
     const compiledInstructions: NormalizedCompiledIx[] =
       legacy.instructions.map((ix) => ({
-        programIdIndex: allKeys.findIndex((k) => k.equals(ix.programId)),
-        accountKeyIndexes: ix.keys.map((k) =>
-          allKeys.findIndex((s) => s.equals(k.pubkey)),
+        programIdIndex: indexByB58.get(ix.programId.toBase58()) ?? -1,
+        accountKeyIndexes: ix.keys.map(
+          (k) => indexByB58.get(k.pubkey.toBase58()) ?? -1,
         ),
         data: ix.data,
       }));
