@@ -19,7 +19,6 @@
   "dependencies": {
     "next": "catalog:",
     "nextra": "catalog:",
-    "nextra-theme-blog": "catalog:",
     "nextra-theme-docs": "catalog:",
     "react": "catalog:",
     "react-dom": "catalog:",

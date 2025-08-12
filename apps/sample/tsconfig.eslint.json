@@ -5,7 +5,7 @@
     "**/*.tsx",
     ".next/types/**/*.ts",
     "next.config.js",
-    "postcss.config.js",
-    "eslint.config.mjs"
-  ]
+    "postcss.config.js"
+  ],
+  "exclude": ["eslint.config.mjs"]
 }

@@ -19,7 +19,7 @@ describe("transactionModuleFactory", () => {
 
     it("should bind a transaction mapper", () => {
       expect(
-        container.getAll(transactionTypes.TransactionMappers),
+        container.getAll(transactionTypes.TransactionMapperService),
       ).toHaveLength(1);
     });
   });

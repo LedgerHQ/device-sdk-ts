@@ -14,6 +14,14 @@ export default [
     },
   },
   {
+    files: ["eslint.config.mjs"],
+    languageOptions: {
+      parserOptions: {
+        project: null,
+      },
+    },
+  },
+  {
     files: [
       "src/app/page.tsx",
       "src/app/global-error.tsx",

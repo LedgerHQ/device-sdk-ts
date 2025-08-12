@@ -1,4 +1,4 @@
-import { Right } from "purify-ts";
+import { Left, Right } from "purify-ts";
 
 import { DefaultPkiCertificateLoader } from "@/pki/domain/DefaultPkiCertificateLoader";
 import { KeyId } from "@/pki/model/KeyId";
@@ -30,6 +30,28 @@ describe("DefaultPkiCertificateLoader", () => {
 
       // THEN
       expect(result).toEqual(certificate);
+      expect(dataSource.fetchCertificate).toHaveBeenCalledWith(
+        certificateInfos,
+      );
+    });
+
+    it("throws when the data source returns a Left(error)", async () => {
+      // given
+      const certificateInfos: PkiCertificateInfo = {
+        targetDevice: "targetDevice",
+        keyUsage: KeyUsage.Calldata,
+        keyId: KeyId.CalNetwork,
+      };
+      const fetchError = new Error("failed");
+      const dataSource = {
+        fetchCertificate: vi.fn().mockResolvedValue(Left(fetchError)),
+      };
+      const loader = new DefaultPkiCertificateLoader(dataSource);
+
+      // when / then
+      await expect(loader.loadCertificate(certificateInfos)).rejects.toThrow(
+        fetchError,
+      );
       expect(dataSource.fetchCertificate).toHaveBeenCalledWith(
         certificateInfos,
       );

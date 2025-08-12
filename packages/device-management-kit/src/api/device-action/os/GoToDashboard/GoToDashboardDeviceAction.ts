@@ -24,6 +24,7 @@ import {
   type DeviceSessionState,
   DeviceSessionStateType,
 } from "@api/device-session/DeviceSessionState";
+import { isDashboardName } from "@api/utils/AppName";
 
 import type {
   GoToDashboardDAError,
@@ -106,7 +107,8 @@ export class GoToDashboardDeviceAction extends XStateDeviceAction<
           return context._internalState.error !== null;
         },
         isDashboardOpen: ({ context }: { context: types["context"] }) =>
-          context._internalState.currentApp === "BOLOS",
+          context._internalState.currentApp !== null &&
+          isDashboardName(context._internalState.currentApp),
       },
       actions: {
         // assignGetDeviceStatusUnknownError: assign({

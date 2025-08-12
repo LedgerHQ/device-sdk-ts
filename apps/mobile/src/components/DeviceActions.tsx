@@ -48,19 +48,9 @@ export const getDeviceActions = (
     title: "Open app",
     description:
       "Perform all the actions necessary to open an app on the device",
-    executeDeviceAction: (
-      { appName, unlockTimeout, compatibleAppNames },
-      inspect,
-    ) => {
-      const compatibleAppNamesArray: string[] = compatibleAppNames
-        .split(",")
-        .map(name => name.trim());
+    executeDeviceAction: ({ appName, unlockTimeout }, inspect) => {
       const deviceAction = new OpenAppDeviceAction({
-        input: {
-          appName,
-          unlockTimeout,
-          compatibleAppNames: compatibleAppNamesArray,
-        },
+        input: { appName, unlockTimeout },
         inspect,
       });
       return dmk.executeDeviceAction({
@@ -71,7 +61,6 @@ export const getDeviceActions = (
     initialValues: {
       appName: "",
       unlockTimeout: UNLOCK_TIMEOUT,
-      compatibleAppNames: "",
     },
     deviceModelId,
     FormComponent: ({ values, setValue }) => (
@@ -81,20 +70,11 @@ export const getDeviceActions = (
           value={values.appName}
           onChange={appName => setValue("appName", appName)}
         />
-        <LegendInput
-          legend="Compatible app names"
-          value={values.compatibleAppNames}
-          onChange={compatibleAppNames =>
-            setValue("compatibleAppNames", compatibleAppNames)
-          }
-        />
       </Flex>
     ),
   } satisfies DeviceActionProps<
     OpenAppDAOutput,
-    Omit<OpenAppDAInput, "compatibleAppNames"> & {
-      compatibleAppNames: string;
-    },
+    OpenAppDAInput,
     OpenAppDAError,
     OpenAppDAIntermediateValue
   >,

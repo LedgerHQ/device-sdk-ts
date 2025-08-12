@@ -28,12 +28,11 @@ export class ExternalPluginContextLoader implements ContextLoader {
     this._tokenDataSource = tokenDataSource;
   }
 
-  async load(transaction: TransactionContext): Promise<ClearSignContext[]> {
-    if (!transaction.to || !transaction.data || transaction.data === "0x") {
+  async load(ctx: TransactionContext): Promise<ClearSignContext[]> {
+    const { to, data, selector, chainId } = ctx;
+    if (to === undefined || data === "0x") {
       return [];
     }
-
-    const selector = transaction.data.slice(0, 10);
 
     if (!isHexaString(selector)) {
       return [
@@ -45,8 +44,8 @@ export class ExternalPluginContextLoader implements ContextLoader {
     }
 
     const eitherDappInfos = await this._externalPluginDataSource.getDappInfos({
-      address: transaction.to,
-      chainId: transaction.chainId,
+      address: to,
+      chainId,
       selector,
     });
 
@@ -69,7 +68,7 @@ export class ExternalPluginContextLoader implements ContextLoader {
       const decodedCallData = this.getDecodedCallData(
         dappInfos.abi,
         dappInfos.selectorDetails.method,
-        transaction.data!, // trasaction.data is not null and not infered correctly
+        data,
       );
 
       // if the call data cannot be decoded, return the error
@@ -92,11 +91,7 @@ export class ExternalPluginContextLoader implements ContextLoader {
       // and return the payload or the error
       const promises = dappInfos.selectorDetails.erc20OfInterest.map(
         async (erc20Path) =>
-          this.getTokenPayload(
-            transaction,
-            erc20Path,
-            extractedDecodedCallData,
-          ),
+          this.getTokenPayload(ctx, erc20Path, extractedDecodedCallData),
       );
 
       const tokensPayload = await Promise.all(promises);
@@ -118,7 +113,7 @@ export class ExternalPluginContextLoader implements ContextLoader {
   }
 
   private getTokenPayload(
-    transaction: TransactionContext,
+    ctx: TransactionContext,
     erc20Path: string,
     decodedCallData: ethers.Result,
   ) {
@@ -128,7 +123,7 @@ export class ExternalPluginContextLoader implements ContextLoader {
       fromPromise(
         this._tokenDataSource.getTokenInfosPayload({
           address,
-          chainId: transaction.chainId,
+          chainId: ctx.chainId,
         }),
       ),
     );

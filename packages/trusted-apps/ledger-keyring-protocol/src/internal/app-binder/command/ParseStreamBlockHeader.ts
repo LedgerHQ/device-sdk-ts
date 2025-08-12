@@ -1,0 +1,72 @@
+import {
+  type Apdu,
+  ApduBuilder,
+  ApduParser,
+  type ApduResponse,
+  type Command,
+  type CommandResult,
+  CommandResultFactory,
+  InvalidStatusWordError,
+} from "@ledgerhq/device-management-kit";
+import { CommandErrorHelper } from "@ledgerhq/signer-utils";
+import { Maybe } from "purify-ts";
+
+import {
+  type ParseBlockHeaderCommandArgs,
+  type ParseBlockHeaderCommandResponse,
+} from "@api/app-binder/ParseStreamBlockHeaderCommandTypes";
+
+import {
+  LEDGER_SYNC_ERRORS,
+  type LedgerKeyringProtocolErrorCodes,
+  LedgerKeyringProtocolErrorFactory,
+} from "./utils/ledgerKeyringProtocolErrors";
+
+export class ParseBlockHeaderCommand
+  implements
+    Command<
+      ParseBlockHeaderCommandResponse,
+      ParseBlockHeaderCommandArgs,
+      LedgerKeyringProtocolErrorCodes
+    >
+{
+  private readonly errorHelper = new CommandErrorHelper<
+    ParseBlockHeaderCommandResponse,
+    LedgerKeyringProtocolErrorCodes
+  >(LEDGER_SYNC_ERRORS, LedgerKeyringProtocolErrorFactory);
+
+  constructor(private readonly args: ParseBlockHeaderCommandArgs) {}
+
+  getApdu(): Apdu {
+    const { header } = this.args;
+    return (
+      new ApduBuilder({ cla: 0xe0, ins: 0x08, p1: 0x00, p2: 0x00 })
+        // raw block header
+        .addBufferToData(header)
+        .build()
+    );
+  }
+
+  parseResponse(
+    apduResponse: ApduResponse,
+  ): CommandResult<
+    ParseBlockHeaderCommandResponse,
+    LedgerKeyringProtocolErrorCodes
+  > {
+    return Maybe.fromNullable(
+      this.errorHelper.getError(apduResponse),
+    ).orDefaultLazy(() => {
+      const parser = new ApduParser(apduResponse);
+      const remaining = parser.getUnparsedRemainingLength();
+      const payload = parser.extractFieldByLength(remaining);
+      if (!payload) {
+        return CommandResultFactory({
+          error: new InvalidStatusWordError(
+            "No data returned by parseBlockHeader",
+          ),
+        });
+      }
+      return CommandResultFactory({ data: payload });
+    });
+  }
+}

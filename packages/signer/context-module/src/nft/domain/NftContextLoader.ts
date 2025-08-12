@@ -40,14 +40,13 @@ export class NftContextLoader implements ContextLoader {
     this._dataSource = dataSource;
   }
 
-  async load(transaction: TransactionContext): Promise<ClearSignContext[]> {
+  async load(ctx: TransactionContext): Promise<ClearSignContext[]> {
     const responses: ClearSignContext[] = [];
 
-    if (!transaction.to || !transaction.data || transaction.data === "0x") {
+    const { to, selector, chainId } = ctx;
+    if (to === undefined) {
       return [];
     }
-
-    const selector = transaction.data.slice(0, 10);
 
     if (!isHexaString(selector)) {
       return [
@@ -66,8 +65,8 @@ export class NftContextLoader implements ContextLoader {
     // https://nft.api.live.ledger.com/v1/ethereum/1/contracts/0xBC4CA0EdA7647A8aB7C2061c2E118A18a936f13D/plugin-selector/0x095ea7b3
     const getPluginPayloadResponse = await this._dataSource.getSetPluginPayload(
       {
-        chainId: transaction.chainId,
-        address: transaction.to,
+        chainId,
+        address: to,
         selector,
       },
     );
@@ -91,8 +90,8 @@ export class NftContextLoader implements ContextLoader {
 
     const getNftInfosPayloadResponse =
       await this._dataSource.getNftInfosPayload({
-        chainId: transaction.chainId,
-        address: transaction.to,
+        chainId,
+        address: to,
       });
 
     const nftInfosPayload = getNftInfosPayloadResponse.caseOf({

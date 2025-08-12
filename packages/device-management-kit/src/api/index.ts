@@ -62,8 +62,10 @@ export {
 export { UserInteractionRequired } from "@api/device-action/model/UserInteractionRequired";
 export { CallTaskInAppDeviceAction } from "@api/device-action/os/CallTaskInAppDeviceAction/CallTaskInAppDeviceAction";
 export {
+  AppAlreadyInstalledDAError,
   DeviceLockedError,
   OutOfMemoryDAError,
+  RefusedByUserDAError,
   UnknownDAError,
   UnsupportedFirmwareDAError,
 } from "@api/device-action/os/Errors";

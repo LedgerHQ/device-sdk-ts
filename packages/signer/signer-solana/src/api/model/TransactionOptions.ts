@@ -1,3 +1,7 @@
 export type TransactionOptions = {
-  skipOpenApp?: boolean;
+  tokenAddress?: string;
+  createATA?: {
+    address: string;
+    mintAddress: string;
+  };
 };

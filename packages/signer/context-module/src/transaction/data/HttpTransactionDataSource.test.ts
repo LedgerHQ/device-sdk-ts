@@ -5,17 +5,28 @@ import { Left } from "purify-ts";
 import type { ContextModuleConfig } from "@/config/model/ContextModuleConfig";
 import { type PkiCertificateLoader } from "@/pki/domain/PkiCertificateLoader";
 import { type PkiCertificate } from "@/pki/model/PkiCertificate";
-import { LEDGER_CLIENT_VERSION_HEADER } from "@/shared/constant/HttpHeaders";
+import {
+  LEDGER_CLIENT_VERSION_HEADER,
+  LEDGER_ORIGIN_TOKEN_HEADER,
+} from "@/shared/constant/HttpHeaders";
 import type {
   CalldataEnumV1,
   CalldataFieldV1,
   CalldataTransactionInfoV1,
-} from "@/transaction/data/CalldataDto";
+} from "@/transaction/data/dto/CalldataDto";
 import { HttpTransactionDataSource } from "@/transaction/data/HttpTransactionDataSource";
 import type { TransactionDataSource } from "@/transaction/data/TransactionDataSource";
 import PACKAGE from "@root/package.json";
 
 vi.mock("axios");
+const config = {
+  cal: {
+    url: "https://crypto-assets-service.api.ledger.com/v1",
+    mode: "test",
+    branch: "main",
+  },
+  originToken: "originToken",
+} as ContextModuleConfig;
 
 describe("HttpTransactionDataSource", () => {
   let datasource: TransactionDataSource;
@@ -35,13 +46,6 @@ describe("HttpTransactionDataSource", () => {
 
   beforeAll(() => {
     vi.clearAllMocks();
-    const config = {
-      cal: {
-        url: "https://crypto-assets-service.api.ledger.com/v1",
-        mode: "test",
-        branch: "main",
-      },
-    } as ContextModuleConfig;
     datasource = new HttpTransactionDataSource(
       config,
       certificateLoaderMock as unknown as PkiCertificateLoader,
@@ -281,7 +285,10 @@ describe("HttpTransactionDataSource", () => {
     // THEN
     expect(requestSpy).toHaveBeenCalledWith(
       expect.objectContaining({
-        headers: { [LEDGER_CLIENT_VERSION_HEADER]: version },
+        headers: {
+          [LEDGER_CLIENT_VERSION_HEADER]: version,
+          [LEDGER_ORIGIN_TOKEN_HEADER]: config.originToken,
+        },
       }),
     );
   });
@@ -1277,6 +1284,28 @@ describe("HttpTransactionDataSource", () => {
           "[ContextModule] HttpTransactionDataSource: Invalid response for contract 0x7d2768de32b0b80b7a3454c06bdac94a69ddc7a9 and selector 0x69328dec",
         ),
       ),
+    );
+  });
+  it("should call axios with the correct headers", async () => {
+    // GIVEN
+    vi.spyOn(axios, "request").mockResolvedValueOnce({ data: {} });
+
+    // WHEN
+    await datasource.getTransactionDescriptors({
+      deviceModelId: DeviceModelId.FLEX,
+      chainId: 1,
+      address: "0x7d2768de32b0b80b7a3454c06bdac94a69ddc7a9",
+      selector: "0x69328dec",
+    });
+
+    // THEN
+    expect(axios.request).toHaveBeenCalledWith(
+      expect.objectContaining({
+        headers: {
+          [LEDGER_CLIENT_VERSION_HEADER]: `context-module/${PACKAGE.version}`,
+          [LEDGER_ORIGIN_TOKEN_HEADER]: config.originToken,
+        },
+      }),
     );
   });
 });

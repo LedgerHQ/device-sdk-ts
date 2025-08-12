@@ -1,5 +1,24 @@
 # @ledgerhq/device-signer-kit-solana
 
+## 2.0.0
+
+### Minor Changes
+
+- [#962](https://github.com/LedgerHQ/device-sdk-ts/pull/962) [`b0dab28`](https://github.com/LedgerHQ/device-sdk-ts/commit/b0dab28c33481ea25ff9363ee4173c15c1217cb8) Thanks [@fAnselmi-Ledger](https://github.com/fAnselmi-Ledger)! - Fix error 6A81 in signOffChainMsg
+
+- [#879](https://github.com/LedgerHQ/device-sdk-ts/pull/879) [`f4d73bf`](https://github.com/LedgerHQ/device-sdk-ts/commit/f4d73bf3dd94327fa5d8469cd7a981a7595bc0ca) Thanks [@fAnselmi-Ledger](https://github.com/fAnselmi-Ledger)! - Add Solana SPL support
+
+- [#909](https://github.com/LedgerHQ/device-sdk-ts/pull/909) [`4c1b20a`](https://github.com/LedgerHQ/device-sdk-ts/commit/4c1b20a89a23c8bb0bb683bf475f0a3b1a78c226) Thanks [@fAnselmi-Ledger](https://github.com/fAnselmi-Ledger)! - Add GenerateTransactionDeviceAction
+
+- [#911](https://github.com/LedgerHQ/device-sdk-ts/pull/911) [`5cd464c`](https://github.com/LedgerHQ/device-sdk-ts/commit/5cd464c3a5c897c3a3a6000c1d8d5cbae6562e45) Thanks [@fAnselmi-Ledger](https://github.com/fAnselmi-Ledger)! - Polish TransactionInspector
+
+### Patch Changes
+
+- Updated dependencies [[`a3ba9e5`](https://github.com/LedgerHQ/device-sdk-ts/commit/a3ba9e5b40a437669b32a00bc6150231c04381c3), [`62486e7`](https://github.com/LedgerHQ/device-sdk-ts/commit/62486e7c92998afd0831f19192c8a8dd1bb8d10e), [`23f08d8`](https://github.com/LedgerHQ/device-sdk-ts/commit/23f08d8e4947d34ce839238628590b0431b07b5e), [`090a3ab`](https://github.com/LedgerHQ/device-sdk-ts/commit/090a3ab350f3341b4222971a003738836e635e28), [`efac23f`](https://github.com/LedgerHQ/device-sdk-ts/commit/efac23fc8164d23d27713f30e40e575693d536d4), [`f4d73bf`](https://github.com/LedgerHQ/device-sdk-ts/commit/f4d73bf3dd94327fa5d8469cd7a981a7595bc0ca), [`5c1178c`](https://github.com/LedgerHQ/device-sdk-ts/commit/5c1178cb1e191d1c98bea352879da01e11762612), [`b164403`](https://github.com/LedgerHQ/device-sdk-ts/commit/b16440340617576b0fe4e0db9d8d345a7f37e5cd), [`2a047a8`](https://github.com/LedgerHQ/device-sdk-ts/commit/2a047a8c2eb23a6c3833eeb42e35a43f902f9a8a), [`40bfafc`](https://github.com/LedgerHQ/device-sdk-ts/commit/40bfafcb467723c1364b149e336bc7450d8cf376), [`0df32be`](https://github.com/LedgerHQ/device-sdk-ts/commit/0df32bef22cbfab7bfde2ee5341225b19147543f), [`d090358`](https://github.com/LedgerHQ/device-sdk-ts/commit/d0903582af8a6f0a2df35dcef7b457f3f730a0f4), [`265e902`](https://github.com/LedgerHQ/device-sdk-ts/commit/265e902f22cb647a2dd5ea2e5b789480afd2bd17), [`f1c1949`](https://github.com/LedgerHQ/device-sdk-ts/commit/f1c1949d288cee1369a34978c6e13b1be99e8712), [`ccbf2ef`](https://github.com/LedgerHQ/device-sdk-ts/commit/ccbf2ef37d5d8831711f5e995d25d4697cf250ab)]:
+  - @ledgerhq/context-module@2.0.0
+  - @ledgerhq/device-management-kit@0.8.0
+  - @ledgerhq/signer-utils@2.0.0
+
 ## 1.1.1
 
 ### Patch Changes

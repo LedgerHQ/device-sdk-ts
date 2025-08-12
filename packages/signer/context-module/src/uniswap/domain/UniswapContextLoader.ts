@@ -41,21 +41,18 @@ export class UniswapContextLoader implements ContextLoader {
     private tokenDataSource: TokenDataSource,
   ) {}
 
-  async load(transaction: TransactionContext): Promise<ClearSignContext[]> {
-    if (!transaction.data || !isHexaString(transaction.data)) {
+  async load(ctx: TransactionContext): Promise<ClearSignContext[]> {
+    const { data, selector, chainId } = ctx;
+    if (!isHexaString(data)) {
       return [];
     }
 
-    const selector = transaction.data.slice(0, 10);
     if (selector !== UNISWAP_EXECUTE_SELECTOR) {
       return [];
     }
 
     const externalPluginContext = this._buildUniswapPluginCommandData();
-    const tokenContexts = await this._extractClearSignContexts(
-      transaction.data,
-      transaction.chainId,
-    );
+    const tokenContexts = await this._extractClearSignContexts(data, chainId);
 
     if (tokenContexts.length > 0)
       return [externalPluginContext, ...tokenContexts];

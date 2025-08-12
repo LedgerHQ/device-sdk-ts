@@ -21,7 +21,6 @@ export type CallTaskInAppDAInput<
   readonly appName: string;
   readonly skipOpenApp: boolean;
   readonly requiredUserInteraction: UserInteraction;
-  readonly compatibleAppNames?: string[];
 };
 
 export type CallTaskInAppDAError<TaskErrorCodes = void> =

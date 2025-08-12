@@ -7,6 +7,7 @@ import {
 import { Transaction } from "ethers";
 import { Just, Nothing } from "purify-ts";
 
+import { ClearSigningType } from "@api/model/ClearSigningType";
 import { SignTransactionCommand } from "@internal/app-binder/command/SignTransactionCommand";
 import { StartTransactionCommand } from "@internal/app-binder/command/StartTransactionCommand";
 import { makeDeviceActionInternalApiMock } from "@internal/app-binder/device-action/__test-utils__/makeInternalApi";
@@ -89,7 +90,7 @@ describe("SendSignTransactionTask", () => {
         serializedTransaction: SIMPLE_TRANSACTION,
         chainId: 1,
         transactionType: 1,
-        isLegacy: true,
+        clearSigningType: ClearSigningType.BASIC,
       };
       apiMock.sendCommand.mockResolvedValueOnce(resultOk);
 
@@ -107,7 +108,7 @@ describe("SendSignTransactionTask", () => {
           isFirstChunk: true,
         }),
       );
-      // eslint-disable-next-line  @typescript-eslint/no-explicit-any
+      // eslint-disable-next-line  @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access
       expect((result as any).data).toStrictEqual(signature);
     });
 
@@ -118,7 +119,7 @@ describe("SendSignTransactionTask", () => {
         serializedTransaction: SIMPLE_TRANSACTION,
         chainId: 1,
         transactionType: 1,
-        isLegacy: false,
+        clearSigningType: ClearSigningType.EIP7730,
       };
       apiMock.sendCommand.mockResolvedValueOnce(resultOk);
 
@@ -130,7 +131,7 @@ describe("SendSignTransactionTask", () => {
       expect(apiMock.sendCommand.mock.calls[0]![0]).toStrictEqual(
         new StartTransactionCommand(),
       );
-      // eslint-disable-next-line  @typescript-eslint/no-explicit-any
+      // eslint-disable-next-line  @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access
       expect((result as any).data).toStrictEqual(signature);
     });
 
@@ -141,7 +142,7 @@ describe("SendSignTransactionTask", () => {
         serializedTransaction: BIG_TRANSACTION,
         chainId: 1,
         transactionType: 1,
-        isLegacy: true,
+        clearSigningType: ClearSigningType.BASIC,
       };
       apiMock.sendCommand.mockResolvedValueOnce(resultNothing);
       apiMock.sendCommand.mockResolvedValueOnce(resultOk);
@@ -169,7 +170,7 @@ describe("SendSignTransactionTask", () => {
           isFirstChunk: false,
         }),
       );
-      // eslint-disable-next-line  @typescript-eslint/no-explicit-any
+      // eslint-disable-next-line  @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access
       expect((result as any).data).toStrictEqual(signature);
     });
 
@@ -196,7 +197,7 @@ describe("SendSignTransactionTask", () => {
           serializedTransaction: serialized,
           chainId,
           transactionType: 0,
-          isLegacy: true,
+          clearSigningType: ClearSigningType.BASIC,
         };
         apiMock.sendCommand.mockResolvedValueOnce(resultNothing);
         apiMock.sendCommand.mockResolvedValueOnce(resultNothing);
@@ -236,7 +237,7 @@ describe("SendSignTransactionTask", () => {
         serializedTransaction: SIMPLE_TRANSACTION,
         chainId: 1,
         transactionType: 1,
-        isLegacy: true,
+        clearSigningType: ClearSigningType.BASIC,
       };
       apiMock.sendCommand.mockResolvedValueOnce(resultNothing);
 
@@ -254,7 +255,7 @@ describe("SendSignTransactionTask", () => {
           isFirstChunk: true,
         }),
       );
-      // eslint-disable-next-line  @typescript-eslint/no-explicit-any
+      // eslint-disable-next-line  @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access
       expect((result as any).error).toStrictEqual(
         new InvalidStatusWordError("no signature returned"),
       );
@@ -267,7 +268,7 @@ describe("SendSignTransactionTask", () => {
         serializedTransaction: SIMPLE_TRANSACTION,
         chainId: 1,
         transactionType: 1,
-        isLegacy: false,
+        clearSigningType: ClearSigningType.EIP7730,
       };
       apiMock.sendCommand.mockResolvedValueOnce(resultNothing);
 
@@ -279,7 +280,7 @@ describe("SendSignTransactionTask", () => {
       expect(apiMock.sendCommand.mock.calls[0]![0]).toStrictEqual(
         new StartTransactionCommand(),
       );
-      // eslint-disable-next-line  @typescript-eslint/no-explicit-any
+      // eslint-disable-next-line  @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access
       expect((result as any).error).toStrictEqual(
         new InvalidStatusWordError("no signature returned"),
       );
@@ -292,7 +293,7 @@ describe("SendSignTransactionTask", () => {
         serializedTransaction: BIG_TRANSACTION,
         chainId: 1,
         transactionType: 1,
-        isLegacy: true,
+        clearSigningType: ClearSigningType.BASIC,
       };
       apiMock.sendCommand.mockResolvedValueOnce(resultNothing);
       apiMock.sendCommand.mockResolvedValueOnce(
@@ -324,7 +325,7 @@ describe("SendSignTransactionTask", () => {
           isFirstChunk: false,
         }),
       );
-      // eslint-disable-next-line  @typescript-eslint/no-explicit-any
+      // eslint-disable-next-line  @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access
       expect((result as any).error).toStrictEqual(
         new InvalidStatusWordError("An error"),
       );
@@ -337,7 +338,7 @@ describe("SendSignTransactionTask", () => {
         serializedTransaction: SIMPLE_TRANSACTION,
         chainId: 56,
         transactionType: 0,
-        isLegacy: true,
+        clearSigningType: ClearSigningType.BASIC,
       };
       apiMock.sendCommand.mockResolvedValueOnce(
         CommandResultFactory({
@@ -353,7 +354,7 @@ describe("SendSignTransactionTask", () => {
       const result = await new SendSignTransactionTask(apiMock, args).run();
 
       // THEN
-      // eslint-disable-next-line  @typescript-eslint/no-explicit-any
+      // eslint-disable-next-line  @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access
       expect((result as any).data.v).toStrictEqual(147);
     });
 
@@ -364,7 +365,7 @@ describe("SendSignTransactionTask", () => {
         serializedTransaction: SIMPLE_TRANSACTION,
         chainId: 56,
         transactionType: 0,
-        isLegacy: true,
+        clearSigningType: ClearSigningType.BASIC,
       };
       apiMock.sendCommand.mockResolvedValueOnce(
         CommandResultFactory({
@@ -380,7 +381,7 @@ describe("SendSignTransactionTask", () => {
       const result = await new SendSignTransactionTask(apiMock, args).run();
 
       // THEN
-      // eslint-disable-next-line  @typescript-eslint/no-explicit-any
+      // eslint-disable-next-line  @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access
       expect((result as any).data.v).toStrictEqual(148);
     });
 
@@ -391,7 +392,7 @@ describe("SendSignTransactionTask", () => {
         serializedTransaction: SIMPLE_TRANSACTION,
         chainId: 11297108109,
         transactionType: 0,
-        isLegacy: true,
+        clearSigningType: ClearSigningType.BASIC,
       };
       apiMock.sendCommand.mockResolvedValueOnce(
         CommandResultFactory({
@@ -407,7 +408,7 @@ describe("SendSignTransactionTask", () => {
       const result = await new SendSignTransactionTask(apiMock, args).run();
 
       // THEN
-      // eslint-disable-next-line  @typescript-eslint/no-explicit-any
+      // eslint-disable-next-line  @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access
       expect((result as any).data.v).toStrictEqual(22594216253);
     });
 
@@ -418,7 +419,7 @@ describe("SendSignTransactionTask", () => {
         serializedTransaction: SIMPLE_TRANSACTION,
         chainId: 11297108109,
         transactionType: 0,
-        isLegacy: true,
+        clearSigningType: ClearSigningType.BASIC,
       };
       apiMock.sendCommand.mockResolvedValueOnce(
         CommandResultFactory({
@@ -434,7 +435,7 @@ describe("SendSignTransactionTask", () => {
       const result = await new SendSignTransactionTask(apiMock, args).run();
 
       // THEN
-      // eslint-disable-next-line  @typescript-eslint/no-explicit-any
+      // eslint-disable-next-line  @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access
       expect((result as any).data.v).toStrictEqual(22594216254);
     });
   });

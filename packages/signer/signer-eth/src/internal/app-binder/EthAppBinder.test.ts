@@ -42,7 +42,6 @@ import { type TransactionParserService } from "@internal/transaction/service/par
 import { type TypedDataParserService } from "@internal/typed-data/service/TypedDataParserService";
 
 import { GetAddressCommand } from "./command/GetAddressCommand";
-import { ETHEREUM_PLUGINS } from "./constant/plugins";
 import { EthAppBinder } from "./EthAppBinder";
 
 describe("EthAppBinder", () => {
@@ -55,6 +54,7 @@ describe("EthAppBinder", () => {
     getContexts: vi.fn(),
     getTypedDataFilters: vi.fn(),
     getWeb3Checks: vi.fn(),
+    getSolanaContext: vi.fn(),
   };
   const mockedMapper: TransactionMapperService = {
     mapTransactionToSubset: vi.fn(),
@@ -167,7 +167,6 @@ describe("EthAppBinder", () => {
               command: new GetAddressCommand(params),
               appName: "Ethereum",
               requiredUserInteraction: UserInteractionRequired.VerifyAddress,
-              compatibleAppNames: ETHEREUM_PLUGINS,
               skipOpenApp: false,
             },
           }),
@@ -200,7 +199,6 @@ describe("EthAppBinder", () => {
               command: new GetAddressCommand(params),
               appName: "Ethereum",
               requiredUserInteraction: UserInteractionRequired.None,
-              compatibleAppNames: ETHEREUM_PLUGINS,
               skipOpenApp: false,
             },
           }),

@@ -93,7 +93,7 @@ type GetAddressCommandResponse = {
 
 ### Use Case 2: Sign Transaction
 
-This method enables users to securely sign transactions using clear signing on Ledger devices.
+This method enables users to securely sign a Solana or an SPL transactions using clear signing on Ledger devices.
 
 ```typescript
 const { observable, cancel } = signerSolana.signTransaction(
@@ -136,6 +136,10 @@ type Signature = Uint8Array; // Signed transaction bytes
 ```
 
 - `cancel` A function to cancel the action on the Ledger device.
+
+#### **Notes**
+
+- Clear signing only supports simple instructions like a single `transfer` or combos like `createAccound + fundAccount` or `createAccount + transfer`. If you are receiving `6808` error from device, most likely the instructions are not supported and blind signing is required
 
 ---
 

@@ -13,17 +13,16 @@ import {
   UnknownDeviceExchangeError,
 } from "@ledgerhq/device-management-kit";
 import { Transaction } from "ethers";
-import { Left, Right } from "purify-ts";
 
 import type { GetConfigCommandResponse } from "@api/app-binder/GetConfigCommandTypes";
+import { ClearSigningType } from "@api/model/ClearSigningType";
 import { makeDeviceActionInternalApiMock } from "@internal/app-binder/device-action/__test-utils__/makeInternalApi";
-import { type TransactionMapperResult } from "@internal/transaction/service/mapper/model/TransactionMapperResult";
-import { type TransactionMapperService } from "@internal/transaction/service/mapper/TransactionMapperService";
 
 import {
   BuildTransactionContextTask,
   type BuildTransactionContextTaskArgs,
 } from "./BuildTransactionContextTask";
+import { GetWeb3CheckTask } from "./GetWeb3CheckTask";
 
 describe("BuildTransactionContextTask", () => {
   const contextModuleMock = {
@@ -31,9 +30,7 @@ describe("BuildTransactionContextTask", () => {
     getContexts: vi.fn(),
     getTypedDataFilters: vi.fn(),
     getWeb3Checks: vi.fn(),
-  };
-  const mapperMock = {
-    mapTransactionToSubset: vi.fn(),
+    getSolanaContext: vi.fn(),
   };
   const defaultOptions = {
     domain: "domain-name.eth",
@@ -71,12 +68,12 @@ describe("BuildTransactionContextTask", () => {
       CommandResultFactory({ data: { challenge: "challenge" } }),
     );
     getWeb3ChecksFactoryMock.mockReturnValue({
-      run: async () => ({ web3Check: null }),
+      run: async () => Promise.resolve({ web3Check: null }),
     });
 
     defaultArgs = {
       contextModule: contextModuleMock,
-      mapper: mapperMock as unknown as TransactionMapperService,
+      subset: { chainId: 1, to: undefined, data: "0x", selector: "0x" },
       transaction: defaultTransaction,
       options: defaultOptions,
       appConfig: createAppConfig(false),
@@ -84,16 +81,26 @@ describe("BuildTransactionContextTask", () => {
     };
   });
 
+  it("should init with a default GetWeb3CheckTaskFactory", () => {
+    // GIVEN
+    const task = new BuildTransactionContextTask(apiMock, defaultArgs);
+
+    // THEN
+    expect(task["getWeb3ChecksFactory"]).toBeDefined();
+    expect(
+      task["getWeb3ChecksFactory"](apiMock, {
+        contextModule: defaultArgs.contextModule,
+        derivationPath: defaultArgs.derivationPath,
+        subset: defaultArgs.subset,
+        transaction: defaultArgs.transaction,
+      }),
+    ).toBeInstanceOf(GetWeb3CheckTask);
+  });
+
   it("should build the transaction context without clear sign contexts", async () => {
     // GIVEN
-    const serializedTransaction = new Uint8Array([0x01, 0x02, 0x03]);
     const clearSignContexts: ClearSignContext[] = [];
-    const mapperResult: TransactionMapperResult = {
-      subset: { chainId: 1, to: undefined, data: "0x" },
-      serializedTransaction,
-      type: 0,
-    };
-    mapperMock.mapTransactionToSubset.mockReturnValueOnce(Right(mapperResult));
+    const clearSignContextsOptional: ClearSignContext[] = [];
     contextModuleMock.getContexts.mockResolvedValueOnce(clearSignContexts);
     apiMock.getDeviceSessionState.mockReturnValueOnce({
       sessionStateType: DeviceSessionStateType.ReadyWithoutSecureChannel,
@@ -114,28 +121,20 @@ describe("BuildTransactionContextTask", () => {
     // THEN
     expect(result).toEqual({
       clearSignContexts,
-      serializedTransaction,
-      chainId: 1,
-      transactionType: 0,
-      web3Check: null,
+      clearSignContextsOptional,
+      clearSigningType: ClearSigningType.BASIC,
     });
   });
 
   it("should build the transaction context with web3checks", async () => {
     // GIVEN
-    const serializedTransaction = new Uint8Array([0x01, 0x02, 0x03]);
     const clearSignContexts: ClearSignContext[] = [];
-    const mapperResult: TransactionMapperResult = {
-      subset: { chainId: 1, to: undefined, data: "0x" },
-      serializedTransaction,
-      type: 0,
-    };
+    const clearSignContextsOptional: ClearSignContext[] = [];
     const expectedWeb3Check =
       "web3Check" as unknown as ClearSignContextSuccess<ClearSignContextType.WEB3_CHECK>;
     getWeb3ChecksFactoryMock.mockReturnValueOnce({
-      run: async () => ({ web3Check: expectedWeb3Check }),
+      run: async () => Promise.resolve({ web3Check: expectedWeb3Check }),
     });
-    mapperMock.mapTransactionToSubset.mockReturnValueOnce(Right(mapperResult));
     contextModuleMock.getContexts.mockResolvedValueOnce(clearSignContexts);
     apiMock.getDeviceSessionState.mockReturnValueOnce({
       sessionStateType: DeviceSessionStateType.ReadyWithoutSecureChannel,
@@ -155,68 +154,14 @@ describe("BuildTransactionContextTask", () => {
 
     // THEN
     expect(result).toEqual({
-      clearSignContexts,
-      serializedTransaction,
-      chainId: 1,
-      transactionType: 0,
-      web3Check: expectedWeb3Check,
+      clearSignContexts: [expectedWeb3Check, ...clearSignContexts],
+      clearSignContextsOptional,
+      clearSigningType: ClearSigningType.BASIC,
     });
   });
 
-  it("should build the transaction context with clear sign contexts", async () => {
+  it("should build the transaction context with web3checks and generic-parser clear sign contexts", async () => {
     // GIVEN
-    const serializedTransaction = new Uint8Array([0x01, 0x02, 0x03]);
-    const clearSignContexts: ClearSignContext[] = [
-      {
-        type: ClearSignContextType.TOKEN,
-        payload: "payload-1",
-      },
-      {
-        type: ClearSignContextType.NFT,
-        payload: "payload-2",
-      },
-    ];
-    const mapperResult: TransactionMapperResult = {
-      subset: { chainId: 1, to: undefined, data: "0x" },
-      serializedTransaction,
-      type: 2,
-    };
-    const expectedWeb3Check =
-      "web3Check" as unknown as ClearSignContextSuccess<ClearSignContextType.WEB3_CHECK>;
-    getWeb3ChecksFactoryMock.mockReturnValueOnce({
-      run: async () => ({ web3Check: expectedWeb3Check }),
-    });
-    mapperMock.mapTransactionToSubset.mockReturnValueOnce(Right(mapperResult));
-    contextModuleMock.getContexts.mockResolvedValueOnce(clearSignContexts);
-    apiMock.getDeviceSessionState.mockReturnValueOnce({
-      sessionStateType: DeviceSessionStateType.ReadyWithoutSecureChannel,
-      deviceStatus: DeviceStatus.CONNECTED,
-      installedApps: [],
-      currentApp: { name: "Ethereum", version: "1.12.0" },
-      deviceModelId: DeviceModelId.FLEX,
-      isSecureConnectionAllowed: false,
-    });
-
-    // WHEN
-    const result = await new BuildTransactionContextTask(
-      apiMock,
-      defaultArgs,
-      getWeb3ChecksFactoryMock,
-    ).run();
-
-    // THEN
-    expect(result).toEqual({
-      clearSignContexts,
-      serializedTransaction,
-      chainId: 1,
-      transactionType: 2,
-      web3Check: null,
-    });
-  });
-
-  it("should build the transaction context with generic-parser context", async () => {
-    // GIVEN
-    const serializedTransaction = new Uint8Array([0x01, 0x02, 0x03]);
     const clearSignContexts: ClearSignContext[] = [
       {
         type: ClearSignContextType.TRANSACTION_INFO,
@@ -239,12 +184,166 @@ describe("BuildTransactionContextTask", () => {
         payload: "payload-4",
       },
     ];
-    const mapperResult: TransactionMapperResult = {
-      subset: { chainId: 1, to: undefined, data: "0x" },
-      serializedTransaction,
-      type: 2,
-    };
-    mapperMock.mapTransactionToSubset.mockReturnValueOnce(Right(mapperResult));
+    const expectedWeb3Check =
+      "web3Check" as unknown as ClearSignContextSuccess<ClearSignContextType.WEB3_CHECK>;
+    getWeb3ChecksFactoryMock.mockReturnValueOnce({
+      run: async () => Promise.resolve({ web3Check: expectedWeb3Check }),
+    });
+    contextModuleMock.getContexts.mockResolvedValueOnce(clearSignContexts);
+    apiMock.getDeviceSessionState.mockReturnValueOnce({
+      sessionStateType: DeviceSessionStateType.ReadyWithoutSecureChannel,
+      deviceStatus: DeviceStatus.CONNECTED,
+      installedApps: [],
+      currentApp: { name: "Ethereum", version: "1.15.0" },
+      deviceModelId: DeviceModelId.FLEX,
+      isSecureConnectionAllowed: false,
+    });
+
+    // WHEN
+    const result = await new BuildTransactionContextTask(
+      apiMock,
+      { ...defaultArgs, appConfig: createAppConfig(true) },
+      getWeb3ChecksFactoryMock,
+    ).run();
+
+    // THEN
+    expect(result).toEqual({
+      clearSignContexts: [
+        clearSignContexts[0],
+        clearSignContexts[1],
+        clearSignContexts[3],
+        expectedWeb3Check,
+      ],
+      clearSignContextsOptional: [clearSignContexts[2]],
+      clearSigningType: ClearSigningType.EIP7730,
+    });
+  });
+
+  it("should build the transaction context with web3checks and generic-parser clear sign contexts in the correct order", async () => {
+    // GIVEN
+    const clearSignContexts: ClearSignContext[] = [
+      {
+        type: ClearSignContextType.ENUM,
+        payload: "payload-3",
+        id: 1,
+        value: 2,
+        certificate: defaultCertificate,
+      },
+      {
+        type: ClearSignContextType.TRANSACTION_FIELD_DESCRIPTION,
+        payload: "payload-4",
+      },
+      {
+        type: ClearSignContextType.TRANSACTION_FIELD_DESCRIPTION,
+        payload: "payload-2",
+      },
+      {
+        type: ClearSignContextType.TRANSACTION_INFO,
+        payload: "payload-1",
+        certificate: defaultCertificate,
+      },
+    ];
+    const expectedWeb3Check =
+      "web3Check" as unknown as ClearSignContextSuccess<ClearSignContextType.WEB3_CHECK>;
+    getWeb3ChecksFactoryMock.mockReturnValueOnce({
+      run: async () => Promise.resolve({ web3Check: expectedWeb3Check }),
+    });
+    contextModuleMock.getContexts.mockResolvedValueOnce(clearSignContexts);
+    apiMock.getDeviceSessionState.mockReturnValueOnce({
+      sessionStateType: DeviceSessionStateType.ReadyWithoutSecureChannel,
+      deviceStatus: DeviceStatus.CONNECTED,
+      installedApps: [],
+      currentApp: { name: "Ethereum", version: "1.15.0" },
+      deviceModelId: DeviceModelId.FLEX,
+      isSecureConnectionAllowed: false,
+    });
+
+    // WHEN
+    const result = await new BuildTransactionContextTask(
+      apiMock,
+      { ...defaultArgs, appConfig: createAppConfig(true) },
+      getWeb3ChecksFactoryMock,
+    ).run();
+
+    // THEN
+    expect(result).toEqual({
+      clearSignContexts: [
+        clearSignContexts[3], // transaction info
+        clearSignContexts[1], // transaction field description
+        clearSignContexts[2], // transaction field description
+        expectedWeb3Check, // web3 check
+      ],
+      clearSignContextsOptional: [clearSignContexts[0]], // enum
+      clearSigningType: ClearSigningType.EIP7730,
+    });
+  });
+
+  it("should build the transaction context with clear sign contexts", async () => {
+    // GIVEN
+    const clearSignContexts: ClearSignContext[] = [
+      {
+        type: ClearSignContextType.TOKEN,
+        payload: "payload-1",
+      },
+      {
+        type: ClearSignContextType.NFT,
+        payload: "payload-2",
+      },
+    ];
+    const expectedWeb3Check =
+      "web3Check" as unknown as ClearSignContextSuccess<ClearSignContextType.WEB3_CHECK>;
+    getWeb3ChecksFactoryMock.mockReturnValueOnce({
+      run: async () => Promise.resolve({ web3Check: expectedWeb3Check }),
+    });
+    contextModuleMock.getContexts.mockResolvedValueOnce(clearSignContexts);
+    apiMock.getDeviceSessionState.mockReturnValueOnce({
+      sessionStateType: DeviceSessionStateType.ReadyWithoutSecureChannel,
+      deviceStatus: DeviceStatus.CONNECTED,
+      installedApps: [],
+      currentApp: { name: "Ethereum", version: "1.12.0" },
+      deviceModelId: DeviceModelId.FLEX,
+      isSecureConnectionAllowed: false,
+    });
+
+    // WHEN
+    const result = await new BuildTransactionContextTask(
+      apiMock,
+      defaultArgs,
+      getWeb3ChecksFactoryMock,
+    ).run();
+
+    // THEN
+    expect(result).toEqual({
+      clearSignContexts,
+      clearSignContextsOptional: [],
+      clearSigningType: ClearSigningType.BASIC,
+    });
+  });
+
+  it("should build the transaction context with generic-parser context", async () => {
+    // GIVEN
+    const clearSignContexts: ClearSignContext[] = [
+      {
+        type: ClearSignContextType.TRANSACTION_INFO,
+        payload: "payload-1",
+        certificate: defaultCertificate,
+      },
+      {
+        type: ClearSignContextType.TRANSACTION_FIELD_DESCRIPTION,
+        payload: "payload-2",
+      },
+      {
+        type: ClearSignContextType.ENUM,
+        payload: "payload-3",
+        id: 1,
+        value: 2,
+        certificate: defaultCertificate,
+      },
+      {
+        type: ClearSignContextType.TRANSACTION_FIELD_DESCRIPTION,
+        payload: "payload-4",
+      },
+    ];
     contextModuleMock.getContexts.mockResolvedValueOnce(clearSignContexts);
     apiMock.getDeviceSessionState.mockReturnValueOnce({
       sessionStateType: DeviceSessionStateType.ReadyWithoutSecureChannel,
@@ -264,62 +363,19 @@ describe("BuildTransactionContextTask", () => {
 
     // THEN
     expect(result).toEqual({
-      clearSignContexts: {
-        transactionInfo: "payload-1",
-        transactionInfoCertificate: defaultCertificate,
-        transactionFields: [clearSignContexts[1], clearSignContexts[3]],
-        transactionEnums: [clearSignContexts[2]],
-      },
-      serializedTransaction,
-      chainId: 1,
-      transactionType: 2,
-      web3Check: null,
+      clearSignContexts: [
+        clearSignContexts[0],
+        clearSignContexts[1],
+        clearSignContexts[3],
+      ],
+      clearSignContextsOptional: [clearSignContexts[2]],
+      clearSigningType: ClearSigningType.EIP7730,
     });
-  });
-
-  it("should call the mapper with the transaction", async () => {
-    // GIVEN
-    const serializedTransaction = new Uint8Array([0x01, 0x02, 0x03]);
-    const clearSignContexts: ClearSignContext[] = [];
-    const mapperResult: TransactionMapperResult = {
-      subset: { chainId: 1, to: undefined, data: "0x" },
-      serializedTransaction,
-      type: 0,
-    };
-    mapperMock.mapTransactionToSubset.mockReturnValueOnce(Right(mapperResult));
-    contextModuleMock.getContexts.mockResolvedValueOnce(clearSignContexts);
-    apiMock.getDeviceSessionState.mockReturnValueOnce({
-      sessionStateType: DeviceSessionStateType.ReadyWithoutSecureChannel,
-      deviceStatus: DeviceStatus.CONNECTED,
-      installedApps: [],
-      currentApp: { name: "Ethereum", version: "1.12.0" },
-      deviceModelId: DeviceModelId.FLEX,
-      isSecureConnectionAllowed: false,
-    });
-
-    // WHEN
-    await new BuildTransactionContextTask(
-      apiMock,
-      defaultArgs,
-      getWeb3ChecksFactoryMock,
-    ).run();
-
-    // THEN
-    expect(mapperMock.mapTransactionToSubset).toHaveBeenCalledWith(
-      defaultTransaction,
-    );
   });
 
   it("should call the web3checks factory with correct parameters", async () => {
     // GIVEN
-    const serializedTransaction = new Uint8Array([0x01, 0x02, 0x03]);
     const clearSignContexts: ClearSignContext[] = [];
-    const mapperResult: TransactionMapperResult = {
-      subset: { chainId: 1, to: undefined, data: "0x" },
-      serializedTransaction,
-      type: 0,
-    };
-    mapperMock.mapTransactionToSubset.mockReturnValueOnce(Right(mapperResult));
     contextModuleMock.getContexts.mockResolvedValueOnce(clearSignContexts);
     apiMock.getDeviceSessionState.mockReturnValueOnce({
       sessionStateType: DeviceSessionStateType.ReadyWithoutSecureChannel,
@@ -341,21 +397,14 @@ describe("BuildTransactionContextTask", () => {
     expect(getWeb3ChecksFactoryMock).toHaveBeenCalledWith(apiMock, {
       contextModule: contextModuleMock,
       derivationPath: "44'/60'/0'/0/0",
-      mapper: mapperMock,
+      subset: defaultArgs.subset,
       transaction: defaultTransaction,
     });
   });
 
   it("should call the context module with the correct parameters", async () => {
     // GIVEN
-    const serializedTransaction = new Uint8Array([0x01, 0x02, 0x03]);
     const clearSignContexts: ClearSignContext[] = [];
-    const mapperResult: TransactionMapperResult = {
-      subset: { chainId: 1, to: undefined, data: "0x" },
-      serializedTransaction,
-      type: 0,
-    };
-    mapperMock.mapTransactionToSubset.mockReturnValueOnce(Right(mapperResult));
     contextModuleMock.getContexts.mockResolvedValueOnce(clearSignContexts);
     apiMock.getDeviceSessionState.mockReturnValueOnce({
       sessionStateType: DeviceSessionStateType.ReadyWithoutSecureChannel,
@@ -378,20 +427,13 @@ describe("BuildTransactionContextTask", () => {
       deviceModelId: DeviceModelId.FLEX,
       challenge: "challenge",
       domain: "domain-name.eth",
-      ...mapperResult.subset,
+      ...defaultArgs.subset,
     });
   });
 
   it("should call the context module without challenge for Nano S", async () => {
     // GIVEN
-    const serializedTransaction = new Uint8Array([0x01, 0x02, 0x03]);
     const clearSignContexts: ClearSignContext[] = [];
-    const mapperResult: TransactionMapperResult = {
-      subset: { chainId: 1, to: undefined, data: "0x" },
-      serializedTransaction,
-      type: 0,
-    };
-    mapperMock.mapTransactionToSubset.mockReturnValueOnce(Right(mapperResult));
     contextModuleMock.getContexts.mockResolvedValueOnce(clearSignContexts);
     apiMock.getDeviceSessionState.mockReturnValueOnce({
       sessionStateType: DeviceSessionStateType.ReadyWithoutSecureChannel,
@@ -413,20 +455,13 @@ describe("BuildTransactionContextTask", () => {
     expect(contextModuleMock.getContexts).toHaveBeenCalledWith({
       deviceModelId: DeviceModelId.NANO_S,
       domain: "domain-name.eth",
-      ...mapperResult.subset,
+      ...defaultArgs.subset,
     });
   });
 
   it("should call the context module without context on error", async () => {
     // GIVEN
-    const serializedTransaction = new Uint8Array([0x01, 0x02, 0x03]);
     const clearSignContexts: ClearSignContext[] = [];
-    const mapperResult: TransactionMapperResult = {
-      subset: { chainId: 1, to: undefined, data: "0x" },
-      serializedTransaction,
-      type: 0,
-    };
-    mapperMock.mapTransactionToSubset.mockReturnValueOnce(Right(mapperResult));
     contextModuleMock.getContexts.mockResolvedValueOnce(clearSignContexts);
     apiMock.getDeviceSessionState.mockReturnValueOnce({
       sessionStateType: DeviceSessionStateType.ReadyWithoutSecureChannel,
@@ -452,37 +487,12 @@ describe("BuildTransactionContextTask", () => {
       deviceModelId: DeviceModelId.FLEX,
       challenge: undefined,
       domain: "domain-name.eth",
-      ...mapperResult.subset,
+      ...defaultArgs.subset,
     });
-  });
-
-  it("should throw an error if the mapper returns an error", async () => {
-    // GIVEN
-    const error = new Error("error");
-    mapperMock.mapTransactionToSubset.mockReturnValueOnce(Left(error));
-    apiMock.getDeviceSessionState.mockReturnValueOnce({
-      sessionStateType: DeviceSessionStateType.ReadyWithoutSecureChannel,
-      deviceStatus: DeviceStatus.CONNECTED,
-      installedApps: [],
-      currentApp: { name: "Ethereum", version: "1.12.0" },
-      deviceModelId: DeviceModelId.FLEX,
-      isSecureConnectionAllowed: false,
-    });
-
-    // WHEN
-    const task = new BuildTransactionContextTask(
-      apiMock,
-      defaultArgs,
-      getWeb3ChecksFactoryMock,
-    );
-
-    // THEN
-    await expect(task.run()).rejects.toThrow(error);
   });
 
   it("should exclude error contexts from the result", async () => {
     // GIVEN
-    const serializedTransaction = new Uint8Array([0x01, 0x02, 0x03]);
     const clearSignContexts: ClearSignContext[] = [
       {
         type: ClearSignContextType.ERROR,
@@ -501,12 +511,6 @@ describe("BuildTransactionContextTask", () => {
         payload: "payload-2",
       },
     ];
-    const mapperResult: TransactionMapperResult = {
-      subset: { chainId: 1, to: undefined, data: "0x" },
-      serializedTransaction,
-      type: 0,
-    };
-    mapperMock.mapTransactionToSubset.mockReturnValueOnce(Right(mapperResult));
     contextModuleMock.getContexts.mockResolvedValueOnce(clearSignContexts);
     apiMock.getDeviceSessionState.mockReturnValueOnce({
       sessionStateType: DeviceSessionStateType.ReadyWithoutSecureChannel,
@@ -527,16 +531,13 @@ describe("BuildTransactionContextTask", () => {
     // THEN
     expect(result).toEqual({
       clearSignContexts: [clearSignContexts[1], clearSignContexts[3]],
-      serializedTransaction,
-      chainId: 1,
-      transactionType: 0,
-      web3Check: null,
+      clearSignContextsOptional: [],
+      clearSigningType: ClearSigningType.BASIC,
     });
   });
 
   it("should exclude generic-parser contexts from the result on old apps", async () => {
     // GIVEN
-    const serializedTransaction = new Uint8Array([0x01, 0x02, 0x03]);
     const clearSignContexts: ClearSignContext[] = [
       {
         type: ClearSignContextType.TRANSACTION_INFO,
@@ -563,12 +564,6 @@ describe("BuildTransactionContextTask", () => {
         certificate: defaultCertificate,
       },
     ];
-    const mapperResult: TransactionMapperResult = {
-      subset: { chainId: 1, to: undefined, data: "0x" },
-      serializedTransaction,
-      type: 0,
-    };
-    mapperMock.mapTransactionToSubset.mockReturnValueOnce(Right(mapperResult));
     contextModuleMock.getContexts.mockResolvedValueOnce(clearSignContexts);
     apiMock.getDeviceSessionState.mockReturnValueOnce({
       sessionStateType: DeviceSessionStateType.ReadyWithoutSecureChannel,
@@ -589,16 +584,13 @@ describe("BuildTransactionContextTask", () => {
     // THEN
     expect(result).toEqual({
       clearSignContexts: [clearSignContexts[1], clearSignContexts[3]],
-      serializedTransaction,
-      chainId: 1,
-      transactionType: 0,
-      web3Check: null,
+      clearSignContextsOptional: [],
+      clearSigningType: ClearSigningType.BASIC,
     });
   });
 
   it("should exclude generic-parser contexts from the result if no transaction_info was found", async () => {
     // GIVEN
-    const serializedTransaction = new Uint8Array([0x01, 0x02, 0x03]);
     const clearSignContexts: ClearSignContext[] = [
       {
         type: ClearSignContextType.TRANSACTION_FIELD_DESCRIPTION,
@@ -619,12 +611,6 @@ describe("BuildTransactionContextTask", () => {
         payload: "payload-2",
       },
     ];
-    const mapperResult: TransactionMapperResult = {
-      subset: { chainId: 1, to: undefined, data: "0x" },
-      serializedTransaction,
-      type: 0,
-    };
-    mapperMock.mapTransactionToSubset.mockReturnValueOnce(Right(mapperResult));
     contextModuleMock.getContexts.mockResolvedValueOnce(clearSignContexts);
     apiMock.getDeviceSessionState.mockReturnValueOnce({
       sessionStateType: DeviceSessionStateType.ReadyWithoutSecureChannel,
@@ -645,16 +631,13 @@ describe("BuildTransactionContextTask", () => {
     // THEN
     expect(result).toEqual({
       clearSignContexts: [clearSignContexts[1], clearSignContexts[3]],
-      serializedTransaction,
-      chainId: 1,
-      transactionType: 0,
-      web3Check: null,
+      clearSignContextsOptional: [],
+      clearSigningType: ClearSigningType.BASIC,
     });
   });
 
   it("should exclude legacy contexts from the result for generic-parser transactions", async () => {
     // GIVEN
-    const serializedTransaction = new Uint8Array([0x01, 0x02, 0x03]);
     const clearSignContexts: ClearSignContext[] = [
       {
         type: ClearSignContextType.TOKEN,
@@ -681,12 +664,6 @@ describe("BuildTransactionContextTask", () => {
         certificate: defaultCertificate,
       },
     ];
-    const mapperResult: TransactionMapperResult = {
-      subset: { chainId: 1, to: undefined, data: "0x" },
-      serializedTransaction,
-      type: 2,
-    };
-    mapperMock.mapTransactionToSubset.mockReturnValueOnce(Right(mapperResult));
     contextModuleMock.getContexts.mockResolvedValueOnce(clearSignContexts);
     apiMock.getDeviceSessionState.mockReturnValueOnce({
       sessionStateType: DeviceSessionStateType.ReadyWithoutSecureChannel,
@@ -706,22 +683,14 @@ describe("BuildTransactionContextTask", () => {
 
     // THEN
     expect(result).toEqual({
-      clearSignContexts: {
-        transactionInfo: "payload-2",
-        transactionInfoCertificate: defaultCertificate,
-        transactionFields: [clearSignContexts[3]],
-        transactionEnums: [clearSignContexts[4]],
-      },
-      serializedTransaction,
-      chainId: 1,
-      transactionType: 2,
-      web3Check: null,
+      clearSignContexts: [clearSignContexts[1], clearSignContexts[3]],
+      clearSignContextsOptional: [clearSignContexts[4]],
+      clearSigningType: ClearSigningType.EIP7730,
     });
   });
 
   it("should exclude generic-parser contexts with a nano s device", async () => {
     // GIVEN
-    const serializedTransaction = new Uint8Array([0x01, 0x02, 0x03]);
     const clearSignContexts: ClearSignContext[] = [
       {
         type: ClearSignContextType.TOKEN,
@@ -744,12 +713,6 @@ describe("BuildTransactionContextTask", () => {
         certificate: defaultCertificate,
       },
     ];
-    const mapperResult: TransactionMapperResult = {
-      subset: { chainId: 1, to: undefined, data: "0x" },
-      serializedTransaction,
-      type: 2,
-    };
-    mapperMock.mapTransactionToSubset.mockReturnValueOnce(Right(mapperResult));
     contextModuleMock.getContexts.mockResolvedValueOnce(clearSignContexts);
     apiMock.getDeviceSessionState.mockReturnValueOnce({
       sessionStateType: DeviceSessionStateType.ReadyWithoutSecureChannel,
@@ -770,16 +733,13 @@ describe("BuildTransactionContextTask", () => {
     // THEN
     expect(result).toEqual({
       clearSignContexts: [clearSignContexts[0]],
-      serializedTransaction,
-      chainId: 1,
-      transactionType: 2,
-      web3Check: null,
+      clearSignContextsOptional: [],
+      clearSigningType: ClearSigningType.BASIC,
     });
   });
 
   it("should exclude generic-parser contexts with an old app version", async () => {
     // GIVEN
-    const serializedTransaction = new Uint8Array([0x01, 0x02, 0x03]);
     const clearSignContexts: ClearSignContext[] = [
       {
         type: ClearSignContextType.TOKEN,
@@ -802,12 +762,6 @@ describe("BuildTransactionContextTask", () => {
         certificate: defaultCertificate,
       },
     ];
-    const mapperResult: TransactionMapperResult = {
-      subset: { chainId: 1, to: undefined, data: "0x" },
-      serializedTransaction,
-      type: 2,
-    };
-    mapperMock.mapTransactionToSubset.mockReturnValueOnce(Right(mapperResult));
     contextModuleMock.getContexts.mockResolvedValueOnce(clearSignContexts);
     apiMock.getDeviceSessionState.mockReturnValueOnce({
       sessionStateType: DeviceSessionStateType.ReadyWithoutSecureChannel,
@@ -828,16 +782,13 @@ describe("BuildTransactionContextTask", () => {
     // THEN
     expect(result).toEqual({
       clearSignContexts: [clearSignContexts[0]],
-      serializedTransaction,
-      chainId: 1,
-      transactionType: 2,
-      web3Check: null,
+      clearSignContextsOptional: [],
+      clearSigningType: ClearSigningType.BASIC,
     });
   });
 
   it("should exclude generic-parser contexts with a non ready device", async () => {
     // GIVEN
-    const serializedTransaction = new Uint8Array([0x01, 0x02, 0x03]);
     const clearSignContexts: ClearSignContext[] = [
       {
         type: ClearSignContextType.TOKEN,
@@ -860,12 +811,6 @@ describe("BuildTransactionContextTask", () => {
         certificate: defaultCertificate,
       },
     ];
-    const mapperResult: TransactionMapperResult = {
-      subset: { chainId: 1, to: undefined, data: "0x" },
-      serializedTransaction,
-      type: 2,
-    };
-    mapperMock.mapTransactionToSubset.mockReturnValueOnce(Right(mapperResult));
     contextModuleMock.getContexts.mockResolvedValueOnce(clearSignContexts);
     apiMock.getDeviceSessionState.mockReturnValueOnce({
       sessionStateType: DeviceSessionStateType.Connected,
@@ -883,16 +828,13 @@ describe("BuildTransactionContextTask", () => {
     // THEN
     expect(result).toEqual({
       clearSignContexts: [clearSignContexts[0]],
-      serializedTransaction,
-      chainId: 1,
-      transactionType: 2,
-      web3Check: null,
+      clearSignContextsOptional: [],
+      clearSigningType: ClearSigningType.BASIC,
     });
   });
 
   it("should return no clear sign context if the transaction info certificate is missing", async () => {
     // GIVEN
-    const serializedTransaction = new Uint8Array([0x01, 0x02, 0x03]);
     const clearSignContexts: ClearSignContext[] = [
       {
         type: ClearSignContextType.TRANSACTION_INFO,
@@ -909,12 +851,6 @@ describe("BuildTransactionContextTask", () => {
         value: 2,
       },
     ];
-    const mapperResult: TransactionMapperResult = {
-      subset: { chainId: 1, to: undefined, data: "0x" },
-      serializedTransaction,
-      type: 2,
-    };
-    mapperMock.mapTransactionToSubset.mockReturnValueOnce(Right(mapperResult));
     contextModuleMock.getContexts.mockResolvedValueOnce(clearSignContexts);
     apiMock.getDeviceSessionState.mockReturnValueOnce({
       sessionStateType: DeviceSessionStateType.ReadyWithoutSecureChannel,
@@ -935,10 +871,8 @@ describe("BuildTransactionContextTask", () => {
     // THEN
     expect(result).toEqual({
       clearSignContexts: [],
-      serializedTransaction,
-      chainId: 1,
-      transactionType: 2,
-      web3Check: null,
+      clearSignContextsOptional: [],
+      clearSigningType: ClearSigningType.BASIC,
     });
   });
 });

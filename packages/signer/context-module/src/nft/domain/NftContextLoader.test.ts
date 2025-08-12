@@ -25,66 +25,17 @@ describe("NftContextLoader", () => {
 
   describe("load function", () => {
     it("should return an empty array if no dest", async () => {
-      const transaction = { to: undefined, data: "0x01" } as TransactionContext;
+      const transaction = { to: undefined } as TransactionContext;
 
       const result = await loader.load(transaction);
 
       expect(result).toEqual([]);
-    });
-
-    it("should return an empty array if undefined data", async () => {
-      const transaction = {
-        to: "0xdAC17F958D2ee523a2206206994597C13D831ec7",
-        data: undefined,
-      } as unknown as TransactionContext;
-
-      const result = await loader.load(transaction);
-
-      expect(result).toEqual([]);
-    });
-
-    it("should return an empty array if empty data", async () => {
-      const transaction = {
-        to: "0xdAC17F958D2ee523a2206206994597C13D831ec7",
-        data: "0x",
-      } as unknown as TransactionContext;
-
-      const result = await loader.load(transaction);
-
-      expect(result).toEqual([]);
-    });
-
-    it("should return an empty array if selector not supported", async () => {
-      const transaction = {
-        to: "0xdAC17F958D2ee523a2206206994597C13D831ec7",
-        data: "0x095ea7b20000000000000",
-      } as unknown as TransactionContext;
-
-      const result = await loader.load(transaction);
-
-      expect(result).toEqual([]);
-    });
-
-    it("should return an error when transaction data is not a valid hex string", async () => {
-      const transaction = {
-        to: "0xdAC17F958D2ee523a2206206994597C13D831ec7",
-        data: "notahexstring",
-      } as TransactionContext;
-
-      const result = await loader.load(transaction);
-
-      expect(result).toEqual([
-        {
-          type: ClearSignContextType.ERROR,
-          error: new Error("Invalid selector"),
-        },
-      ]);
     });
 
     it("should return an error when datasource get plugin payload return a Left", async () => {
       const transaction = {
         to: "0xdAC17F958D2ee523a2206206994597C13D831ec7",
-        data: "0x095ea7b30000000000000",
+        selector: "0x095ea7b3",
       } as TransactionContext;
       spyGetPluginPayload.mockResolvedValueOnce(Left(new Error("error")));
 
@@ -101,7 +52,7 @@ describe("NftContextLoader", () => {
     it("should return an error when datasource get nft infos payload return a Left", async () => {
       const transaction = {
         to: "0xdAC17F958D2ee523a2206206994597C13D831ec7",
-        data: "0x095ea7b30000000000000",
+        selector: "0x095ea7b3",
       } as TransactionContext;
       spyGetPluginPayload.mockResolvedValueOnce(Right("payload1"));
       spyGetNftInfosPayload.mockResolvedValueOnce(Left(new Error("error")));
@@ -119,7 +70,7 @@ describe("NftContextLoader", () => {
     it("should return a response", async () => {
       const transaction = {
         to: "0xdAC17F958D2ee523a2206206994597C13D831ec7",
-        data: "0x095ea7b30000000000000",
+        selector: "0x095ea7b3",
       } as TransactionContext;
       spyGetPluginPayload.mockResolvedValueOnce(Right("payload1"));
       spyGetNftInfosPayload.mockResolvedValueOnce(Right("payload2"));

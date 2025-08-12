@@ -1,4 +1,5 @@
 import { type Container } from "inversify";
+import { Left } from "purify-ts";
 
 import type { TypedDataClearSignContext } from "@/shared/model/TypedDataClearSignContext";
 import type { TypedDataContext } from "@/shared/model/TypedDataContext";
@@ -16,10 +17,14 @@ import {
   type ClearSignContextSuccess,
   ClearSignContextType,
 } from "./shared/model/ClearSignContext";
+import { type SolanaTransactionContext } from "./shared/model/SolanaTransactionContext";
 import {
   type TransactionContext,
   type TransactionFieldContext,
 } from "./shared/model/TransactionContext";
+import { solanaContextTypes } from "./solana/di/solanaContextTypes";
+import { type SolanaContextLoader } from "./solana/domain/SolanaContextLoader";
+import { type SolanaTransactionContextResult } from "./solana/domain/solanaContextTypes";
 import { tokenTypes } from "./token/di/tokenTypes";
 import { type TokenContextLoader } from "./token/domain/TokenContextLoader";
 import { type TransactionContextLoader } from "./transaction/domain/TransactionContextLoader";
@@ -42,6 +47,7 @@ export class DefaultContextModule implements ContextModule {
   private _loaders: ContextLoader[];
   private _typedDataLoader: TypedDataContextLoader;
   private _web3CheckLoader: Web3CheckContextLoader;
+  private _solanaLoader: SolanaContextLoader;
 
   constructor(args: ContextModuleConfig) {
     this._container = makeContainer({ config: args });
@@ -51,6 +57,7 @@ export class DefaultContextModule implements ContextModule {
       args.customTypedDataLoader ?? this._getDefaultTypedDataLoader();
     this._web3CheckLoader =
       args.customWeb3CheckLoader ?? this._getWeb3CheckLoader();
+    this._solanaLoader = args.customSolanaLoader ?? this._getSolanaLoader();
   }
 
   private _getDefaultLoaders(): ContextLoader[] {
@@ -82,6 +89,23 @@ export class DefaultContextModule implements ContextModule {
     return this._container.get<Web3CheckContextLoader>(
       web3CheckTypes.Web3CheckContextLoader,
     );
+  }
+
+  private _getSolanaLoader(): SolanaContextLoader {
+    try {
+      return this._container.get<SolanaContextLoader>(
+        solanaContextTypes.SolanaContextLoader,
+      );
+    } catch {
+      return {
+        load: async (_ctx) =>
+          Left(
+            new Error(
+              "[ContextModule] - DefaultContextModule: no SolanaContextLoader bound",
+            ),
+          ),
+      };
+    }
   }
 
   public async getContexts(
@@ -126,5 +150,11 @@ export class DefaultContextModule implements ContextModule {
       }),
       Left: () => null,
     });
+  }
+
+  public async getSolanaContext(
+    transactionContext: SolanaTransactionContext,
+  ): Promise<SolanaTransactionContextResult> {
+    return await this._solanaLoader.load(transactionContext);
   }
 }

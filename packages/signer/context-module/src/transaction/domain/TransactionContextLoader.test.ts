@@ -27,17 +27,6 @@ describe("TransactionContextLoader", () => {
     expect(result).toEqual([]);
   });
 
-  it("should return an empty array if data is undefined", async () => {
-    // GIVEN
-    const transaction = { to: "0x0" } as TransactionContext;
-
-    // WHEN
-    const result = await loader.load(transaction);
-
-    // THEN
-    expect(result).toEqual([]);
-  });
-
   it("should return an empty array if no data provided", async () => {
     // GIVEN
     const transaction = { to: "0x0", data: "0x" } as TransactionContext;
@@ -78,6 +67,7 @@ describe("TransactionContextLoader", () => {
       to: "0x7",
       chainId: 3,
       data: "0xaf68b302000000000000000000000000000000000000000000000000000000000002",
+      selector: "0xaf68b302",
     } as TransactionContext;
 
     // WHEN
@@ -115,6 +105,7 @@ describe("TransactionContextLoader", () => {
       to: "0x7",
       chainId: 3,
       data: "0xaf68b302000000000000000000000000000000000000000000000000000000000002",
+      selector: "0xaf68b302",
     } as TransactionContext;
 
     // WHEN

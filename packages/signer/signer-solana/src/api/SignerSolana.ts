@@ -13,14 +13,17 @@ export interface SignerSolana {
     transaction: Transaction,
     options?: TransactionOptions,
   ) => SignTransactionDAReturnType;
+
   signMessage: (
     derivationPath: string,
     message: string,
     options?: MessageOptions,
   ) => SignMessageDAReturnType;
+
   getAddress: (
     derivationPath: string,
     options?: AddressOptions,
   ) => GetAddressDAReturnType;
+
   getAppConfiguration: () => GetAppConfigurationDAReturnType;
 }

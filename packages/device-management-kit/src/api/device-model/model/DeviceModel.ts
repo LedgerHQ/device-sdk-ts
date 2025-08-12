@@ -60,6 +60,7 @@ export class TransportDeviceModel {
       case DeviceModelId.NANO_SP:
       case DeviceModelId.STAX:
       case DeviceModelId.FLEX:
+      case DeviceModelId.APEX:
         return 32;
     }
   }

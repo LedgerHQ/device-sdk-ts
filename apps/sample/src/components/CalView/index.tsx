@@ -8,6 +8,7 @@ import { StyledDrawer } from "@/components/StyledDrawer";
 import { AppProviderDrawer } from "./AppProviderDrawer";
 import { CalCheckDappDrawer } from "./CalCheckDappDrawer";
 import { CalSettingsDrawer } from "./CalSettingsDrawer";
+import { MetadataServiceDrawer } from "./MetadataServiceDrawer";
 import { Web3ChecksDrawer } from "./Web3ChecksDrawer";
 
 export const CalView = () => {
@@ -15,12 +16,14 @@ export const CalView = () => {
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isWeb3ChecksOpen, setIsWeb3ChecksOpen] = useState(false);
   const [isAppProviderOpen, setIsAppProviderOpen] = useState(false);
+  const [isMetadataServiceOpen, setIsMetadataServiceOpen] = useState(false);
 
   const closeDrawers = useCallback(() => {
     setIsCheckDappOpen(false);
     setIsSettingsOpen(false);
     setIsWeb3ChecksOpen(false);
     setIsAppProviderOpen(false);
+    setIsMetadataServiceOpen(false);
   }, []);
 
   const entries = [
@@ -43,6 +46,11 @@ export const CalView = () => {
       title: "App Provider",
       description: "Settings for custom app provider",
       onClick: () => setIsAppProviderOpen(true),
+    },
+    {
+      title: "Metadata Service Settings",
+      description: "Settings for the Metadata Service provider",
+      onClick: () => setIsMetadataServiceOpen(true),
     },
   ];
 
@@ -105,6 +113,15 @@ export const CalView = () => {
         description="Settings for custom app provider"
       >
         <AppProviderDrawer onClose={closeDrawers} />
+      </StyledDrawer>
+      <StyledDrawer
+        isOpen={isMetadataServiceOpen}
+        onClose={closeDrawers}
+        big
+        title="Metadata Service Settings"
+        description="Settings for the Metadata Service provider"
+      >
+        <MetadataServiceDrawer onClose={closeDrawers} />
       </StyledDrawer>
     </PageWithHeader>
   );
