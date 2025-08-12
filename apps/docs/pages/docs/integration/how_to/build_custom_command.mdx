@@ -6,39 +6,68 @@ Then you can use the `sendCommand` method to send it to a connected device.
 
 This is strongly recommended over direct usage of `sendApdu`.
 
-Check the existing commands for a variety of examples.
+## Prerequisites
+
+Before building custom commands, ensure you have:
+
+- Device Management Kit v1.0.0 or higher
+- Understanding of APDU protocol basics
+- A connected device session (see [Getting Started](../../getting-started))
+
+## Quick Example
+
+Here's a complete example of a custom command:
 
 ```typescript
+import {
+  Command,
+  CommandResult,
+  CommandResultFactory,
+  CommandUtils,
+  GlobalCommandErrorHandler,
+  ApduBuilder,
+  ApduBuilderArgs,
+  ApduParser,
+  ApduResponse,
+  InvalidStatusWordError,
+} from "@ledgerhq/device-management-kit";
+
+export interface MyCustomCommandArgs {
+  customParam: number;
+}
+
+export interface MyCustomResponse {
+  customAttributes1: number;
+  customAttributes2: string;
+}
+
 export class MyCustomCommand
   implements Command<MyCustomResponse, MyCustomCommandArgs>
 {
-   args: GetAddressCommandArgs;
+  args: MyCustomCommandArgs;
 
-  constructor(args: GetAddressCommandArgs) {
+  constructor(args: MyCustomCommandArgs) {
     this.args = args;
   }
 
   getApdu(): Apdu {
-
     // Main args for the APDU
-    const getEthAddressArgs: ApduBuilderArgs = {
+    const apduArgs: ApduBuilderArgs = {
       cla: 0xe0, // Command CLA
       ins: 0x02, // Command INS
-      p1: 0x00, //Parameter P1
-      p2: 0x00, //Parameter P1
+      p1: 0x00, // Parameter P1
+      p2: 0x00, // Parameter P2
     };
 
-    //Add the data attache to the APDU with the builder
-    const builder = new ApduBuilder(getEthAddressArgs);
-    builder.add32BitUIntToData(0);
-    ... // Add more data to the APDU
+    // Add the data attached to the APDU with the builder
+    const builder = new ApduBuilder(apduArgs);
+    builder.add32BitUIntToData(this.args.customParam);
+
     return builder.build();
   }
 
-  parseResponse(
-    response: ApduResponse,
-  ): CommandResult<GetAddressCommandResponse> {
-    //Create Apdu Parser
+  parseResponse(response: ApduResponse): CommandResult<MyCustomResponse> {
+    // Create Apdu Parser
     const parser = new ApduParser(response);
 
     // FIRST: check status word
@@ -52,22 +81,237 @@ export class MyCustomCommand
     const customAttributes1 = parser.extract8BitUInt();
     if (customAttributes1 === undefined) {
       return CommandResultFactory({
-        error: new InvalidStatusWordError("Public key length is missing"),
+        error: new InvalidStatusWordError("Custom attribute 1 is missing"),
       });
     }
-    ... // Extract more fields from the response
+
+    const customAttributes2 = parser.encodeToString(
+      parser.extractFieldLVEncoded(),
+    );
+    if (!customAttributes2) {
+      return CommandResultFactory({
+        error: new InvalidStatusWordError("Custom attribute 2 is missing"),
+      });
+    }
 
     return CommandResultFactory({
-      MyCustomResponse: {
+      data: {
         customAttributes1,
         customAttributes2,
-        ...
       },
     });
   }
 }
 ```
 
-## Usage of ApduBuilder
+## Usage
 
-## Usage of ApduParser
+Once you've created your custom command, use it with the Device Management Kit:
+
+```typescript
+import { MyCustomCommand } from "./MyCustomCommand";
+
+// Create and send your custom command
+const command = new MyCustomCommand({ customParam: 42 });
+
+const result = await dmk.sendCommand({
+  sessionId,
+  command,
+});
+
+if (result.isSuccess()) {
+  console.log("Custom attributes:", result.data);
+} else {
+  console.error("Command failed:", result.error);
+}
+```
+
+## ApduBuilder Usage
+
+The `ApduBuilder` class helps you construct APDU commands with proper data encoding:
+
+```typescript
+const builder = new ApduBuilder({
+  cla: 0xe0,
+  ins: 0x02,
+  p1: 0x00,
+  p2: 0x00,
+});
+
+// Add different data types
+builder.add8BitUIntToData(0x01); // Single byte
+builder.add16BitUIntToData(0x1234); // Two bytes
+builder.add32BitUIntToData(0x12345678); // Four bytes
+builder.addHexaStringToData("deadbeef"); // Hex string
+builder.addAsciiStringToData("hello"); // ASCII string
+builder.addBufferToData(buffer); // Raw buffer
+
+const apdu = builder.build();
+```
+
+### Available Builder Methods
+
+| Method                       | Description        | Example                                            |
+| ---------------------------- | ------------------ | -------------------------------------------------- |
+| `add8BitUIntToData(value)`   | Add single byte    | `builder.add8BitUIntToData(255)`                   |
+| `add16BitUIntToData(value)`  | Add 2-byte integer | `builder.add16BitUIntToData(65535)`                |
+| `add32BitUIntToData(value)`  | Add 4-byte integer | `builder.add32BitUIntToData(0xFFFFFFFF)`           |
+| `addHexaStringToData(hex)`   | Add hex string     | `builder.addHexaStringToData("deadbeef")`          |
+| `addAsciiStringToData(text)` | Add ASCII text     | `builder.addAsciiStringToData("hello")`            |
+| `addBufferToData(buffer)`    | Add raw buffer     | `builder.addBufferToData(new Uint8Array([1,2,3]))` |
+
+## ApduParser Usage
+
+The `ApduParser` class helps you extract data from APDU responses:
+
+```typescript
+const parser = new ApduParser(response);
+
+// Extract different data types
+const byte = parser.extract8BitUInt();
+const short = parser.extract16BitUInt();
+const int = parser.extract32BitUInt();
+
+// Extract fields by length
+const fixedField = parser.extractFieldByLength(32);
+
+// Extract length-value encoded fields
+const lvField = parser.extractFieldLVEncoded();
+
+// Convert to different formats
+const hexString = parser.encodeToHexaString(field);
+const asciiString = parser.encodeToString(field);
+```
+
+### Available Parser Methods
+
+| Method                         | Description                | Returns                   |
+| ------------------------------ | -------------------------- | ------------------------- |
+| `extract8BitUInt()`            | Extract 1-byte integer     | `number \| undefined`     |
+| `extract16BitUInt()`           | Extract 2-byte integer     | `number \| undefined`     |
+| `extract32BitUInt()`           | Extract 4-byte integer     | `number \| undefined`     |
+| `extractFieldByLength(length)` | Extract fixed-length field | `Uint8Array \| undefined` |
+| `extractFieldLVEncoded()`      | Extract length-value field | `Uint8Array \| undefined` |
+| `encodeToHexaString(field)`    | Convert to hex string      | `string`                  |
+| `encodeToString(field)`        | Convert to ASCII string    | `string`                  |
+
+## Error Handling and Troubleshooting
+
+### Common Error Patterns
+
+Always implement proper error handling in your `parseResponse` method:
+
+```typescript
+parseResponse(response: ApduResponse): CommandResult<MyResponse> {
+  const parser = new ApduParser(response);
+
+  // 1. Check status word first
+  if (!CommandUtils.isSuccessResponse(response)) {
+    return CommandResultFactory({
+      error: GlobalCommandErrorHandler.handle(response),
+    });
+  }
+
+  // 2. Validate extracted fields
+  const field = parser.extract8BitUInt();
+  if (field === undefined) {
+    return CommandResultFactory({
+      error: new InvalidStatusWordError("Required field is missing"),
+    });
+  }
+
+  // 3. Check remaining data length
+  if (parser.getUnparsedRemainingLength() < expectedLength) {
+    return CommandResultFactory({
+      error: new InvalidStatusWordError("Insufficient response data"),
+    });
+  }
+
+  return CommandResultFactory({ data: { field } });
+}
+```
+
+### Common Error Codes
+
+| Status Code | Error Type           | Description           | Solution                  |
+| ----------- | -------------------- | --------------------- | ------------------------- |
+| `5515`      | DeviceLockedError    | Device is locked      | Ask user to unlock device |
+| `5501`      | ActionRefusedError   | User refused action   | Retry or inform user      |
+| `5502`      | PinNotSetError       | PIN not set           | Guide user to set PIN     |
+| `6e00`      | CLA not supported    | Invalid command class | Check your CLA value      |
+| `6d00`      | INS not supported    | Invalid instruction   | Check your INS value      |
+| `6a86`      | Incorrect parameters | Invalid P1/P2         | Verify parameter values   |
+
+### Debugging Tips
+
+1. **Enable Logging**: Use the logger to debug command execution:
+
+   ```typescript
+   // The SDK automatically logs APDU exchanges when in development mode
+   ```
+
+2. **Validate APDU Construction**: Check your APDU before sending:
+
+   ```typescript
+   const apdu = builder.build();
+   console.log("APDU:", apdu.getRawApdu());
+   ```
+
+3. **Check Response Length**: Ensure you're not reading beyond the response:
+   ```typescript
+   const parser = new ApduParser(response);
+   console.log("Response length:", response.data.length);
+   console.log("Remaining:", parser.getUnparsedRemainingLength());
+   ```
+
+### Custom Error Types
+
+For app-specific errors, create custom error types:
+
+```typescript
+export type MyCommandErrorCodes = "custom_error_1" | "custom_error_2";
+
+export const MY_COMMAND_ERRORS = {
+  "6f01": { message: "Custom error 1", tag: "CustomError1" },
+  "6f02": { message: "Custom error 2", tag: "CustomError2" },
+} as const;
+
+export class MyCommandError extends DeviceExchangeError<MyCommandErrorCodes> {
+  constructor(args: CommandErrorArgs<MyCommandErrorCodes>) {
+    super(args);
+  }
+}
+
+// In your parseResponse method:
+if (!CommandUtils.isSuccessResponse(response)) {
+  const errorCode = parser.encodeToHexaString(response.statusCode);
+  if (isCommandErrorCode(errorCode, MY_COMMAND_ERRORS)) {
+    return CommandResultFactory({
+      error: new MyCommandError({
+        ...MY_COMMAND_ERRORS[errorCode],
+        errorCode,
+      }),
+    });
+  }
+  return CommandResultFactory({
+    error: GlobalCommandErrorHandler.handle(response),
+  });
+}
+```
+
+## Examples and References
+
+### Built-in Command Examples
+
+Study these existing commands for reference:
+
+- [`ListAppsCommand`](https://github.com/LedgerHQ/device-sdk-ts/blob/main/packages/device-management-kit/src/api/command/os/ListAppsCommand.ts) - Simple command with parsing
+- [`GetOsVersionCommand`](https://github.com/LedgerHQ/device-sdk-ts/blob/main/packages/device-management-kit/src/api/command/os/GetOsVersionCommand.ts) - Complex response parsing
+- [`OpenAppCommand`](https://github.com/LedgerHQ/device-sdk-ts/blob/main/packages/device-management-kit/src/api/command/os/OpenAppCommand.ts) - Command with parameters
+
+### Sample Applications
+
+See complete implementations in:
+
+- [Sample App](https://github.com/LedgerHQ/device-sdk-ts/tree/main/apps/sample) - Web-based example
+- [Mobile App](https://github.com/LedgerHQ/device-sdk-ts/tree/main/apps/mobile) - React Native example
