@@ -43,6 +43,7 @@
     "inversify": "catalog:",
     "purify-ts": "catalog:",
     "reflect-metadata": "catalog:",
+    "rxjs": "catalog:",
     "xstate": "catalog:"
   },
   "devDependencies": {

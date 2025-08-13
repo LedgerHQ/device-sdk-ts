@@ -8,7 +8,7 @@ import {
 import { JWT } from "@api/app-binder/LKRPTypes";
 import { lkrpDatasourceTypes } from "@internal/lkrp-datasource/di/lkrpDatasourceTypes";
 import { LKRPBlock } from "@internal/utils/LKRPBlock";
-import { LKRPBlockStream } from "@internal/utils/LKRPBlockStream";
+import { Trustchain } from "@internal/utils/Trustchain";
 
 import {
   AuthenticationPayload,
@@ -44,14 +44,7 @@ export class HttpLKRPDataSource implements LKRPDataSource {
     return this.request<{ [path: string]: string }>(
       `/trustchain/${id}`,
       Just(jwt),
-    ).map((serialized) =>
-      Object.fromEntries(
-        Object.entries(serialized).map(([path, stream]) => [
-          path,
-          LKRPBlockStream.fromHex(stream),
-        ]),
-      ),
-    );
+    ).map((serialized) => new Trustchain(id, serialized));
   }
 
   postDerivation(id: string, block: LKRPBlock, jwt: JWT) {
