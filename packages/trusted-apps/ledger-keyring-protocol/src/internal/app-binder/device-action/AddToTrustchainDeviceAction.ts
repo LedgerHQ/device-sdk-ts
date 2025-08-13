@@ -15,6 +15,8 @@ import {
   type AddToTrustchainDAIntermediateValue,
   type AddToTrustchainDAInternalState,
   type AddToTrustchainDAOutput,
+  AddToTrustchainDAState,
+  AddToTrustchaineDAStep,
 } from "@api/app-binder/AddToTrustchainDeviceActionTypes";
 import {
   LKRPTrustchainNotReady,
@@ -97,7 +99,7 @@ export class AddToTrustchainDeviceAction extends XStateDeviceAction<
             .orDefault(true),
       },
     }).createMachine({
-      /** @xstate-layout N4IgpgJg5mDOIC5QEEIQCoHt0CcCusALgMYAWAhgJYB2AImAG6XFjLGGWbUB0AktZUIBlOLE7UAxBC5huNBpgDWsmoIDCmALaby1CAG0ADAF1EoAA6YxHLmZAAPRAEZDAdm6unAFgAcAJi9PLwA2PycAVmCAGhAAT0QAZhDucJDXAE5XcO9wsOCAX3yY1AxsfCIyKjpGZlZ2cT4BYVFxCTAcHEwcbnMAG3JCADMuzTkmjW1dAxM7S2txO0cEdPTuMMN0hKcEnycMwx9ouMQ-cITuDYTg1wOb4PScwuK0LFwCEgoaeiYWNhsefiCESwMRcCSwPDEFggoymJAgOaCBbwpZJVbBYLZMJeQJ+HwPGLxBAJM4eLwrLyGbYJK5JcJPEAlV7lD5Vb61P4NQHNEGtdqdHCw2ZWJG2FGJVLcBKucnpQx+dJnbZeQmIXx+NaywKbPzStwJBlMsrvSpfGq-epcbgABXIOFgYCEhBwYHImikMjGCmUPTtDqdLrdQvhiP+i0QZ2C3GCez2Phpfmu21VCDCPguaXxnnC2S8V0NL2NFU+1R+dX+Nr9judrvd-K6PX6QxGvvt1cDmmDFhFYfFCFyUfCmWCgXCu1cOxTTgCKU2GISbicwR8Xl1BdKb2LbPN5YatrbAdr4Mh0NgXYRPeRoCWrlc6YnedcpxWu2lKb8fkM3CXGIOcqSPhjl467MiaJbshaFb7v6NZum0HRdOeoZXg4iC3veSTSs+6Svq4KYkucMoUlSNK0vSRSMoWm6smaZaclaaikGAxCKMg5h9MwAziIeboAKL2JQRASEhl5itezhLl4KR3niT7BAcMbhO+H7cA8mLyb4CRhEOBQUUa1GmqWHKWjwjHMax7G9Jx-w8Zo-GCYQwlOHC3bzGJqEIE4TiHFKhi+L4PhUgc8opgAtNO7huAqZx3nemyASBRY0UZkENEa9lEDQUC2R61AqNQ3qyGIUDUAAQr0mAsSJbnUOGnk4hqgWBIYy7ZCO05hQqUm5CEXleOEWReF5iUGeBO70Tw6UCZl1DZbBdYId0fQDMMOCjMVZUVVVMwhqJtV9t4urfpEpy7JE+LpEcRKhTsGoJOkn5eQN-44gaelUSyhkQbuVpTQ5WU5RCUKiNVor7eJnkjhqWQ+D4niBYYA0Yp1GTcDiEQBVhuQjZ9Y10SZ3B-TNc0dvBAqg72ENLjmFyfvcgQLjcERhS4GFyjhD4LrDrg42B274xWRoAHJgAA7jl0h5V6ShFZQJXlZVigUyhSyHVGrjBDsERjtkb7HMS7i3oYxsZIF6TkvGvNbrRxmC4WIvi-NZMNstzZrdwG0K9tLkXjVdXeHsUpzl5Cr3dKSn66FvhrOEVK3g8LgtfdVvJd9E2E-bYuAyeIM7a5YP+1DHhjpduL3Mj+veFGbjyqHD1ym46Qp1940E8LWdO-Wgp577BcHZi4S0y15sTjXzP69iaPTrmOyeIm06FBR1CYBAcB2PpuP87bKHIe5SzhWFISrPij2M4YAEjs3ePb1a3LAqC4O95THmBCmOJSSsKwBBE8bZFkV9b1SlaaC7ZazCj9n2QI7ghqUljhsM45t8JLjRp-JcJJNg4nIs8Dcm8bZANMkxFibEOLEC4lwWyGVCDgL7hDOUTgPCc11C+c2CRlJfgxAPG45JjZhB5u9HBfM8E-UmoWShAN5rUOfqraUUZthpjcIBVIFdrqfnODSMc2IhoBBlD4ABQj07t0dh2SRKtnBXHRC4HYFsPxpinDOB4ux5Ixk2IjWGeiUrCO4EIHOIITF72cLebq3kbj+BakOFUkc8TsIeEjKKWQwjuLTgTXii0-GP1Vv4ehklKSUkRojPCkcXCrBwg8Z89xAr4l0YvIAA */
+      /** @xstate-layout N4IgpgJg5mDOIC5QEEIQCoHt0CcCusALgMYAWAhgJYB2AImAG6XFjLGGWbUB0AktZUIBlOLE7UAxBC5huNBpgDWsmoIDCmALaby1CAG0ADAF1EoAA6YxHLmZAAPRAEZDAdm6unAFgAcXpwBsAKwAzL7+TgA0IACezq4AnB6GIU4ATAFeaUEBuT5pAL4F0agY2PhEZFR0jMys7OJ8AsKi4hJgODiYONzmADbkhABm3ZpyzRraugYmdpbW4naOCAlJaS4JXgGpCZ6r0XEIPgHc2YaGXiEhOdlXTkUlaFi4BCQUNPRMLGw2PPyCIlgYi4ElgeGILCBRlMSBA80Ei1hy2uXm4IVcXlWZwS5xChiCB0QaQSQW4QVcxMC63SCTShWKIFKzwqb2qnzqP0a-xaQLaHS6OGhcysCNsSMQKLRGKxQUMOJS+MJKzlaPSXlcPkSPkMaQxD0ZT3KryqH1q3waXG4AAVyDhYGAhIQcGByJopDJxgplL1bfbHc7XULYfDfktEKETgEnJ4coZMkEsUqnNqySFgtGgsmsWkvPqmUbKu8al96r9rb6HU6XW7+d1egNhqMfXbKwHNEGLCLQ+KEEEMmTdvHXEFjj4-ErNdxDD4wviciT8gEfHnDS9C2yzaXGjaW-7q6DwZDYB24V3EaBlq4NR4wmnpylvCEfEriScvHHdX4cwF1gEV2U11ZU0S05S0dz9KtXXaTpuhPENzwcRArx8G9LgCe9UkuZ9YiQscyR-LwEwCDVzice4GXzQCTWLDkLR4NRSDAYhFGQcx+mYQZxD3V0AFF7EoIgJDgs8xQvZxozSU4NnxK5sl2KIcIQYlJLSEIFx8Mj0PVcjHgAllqPZc0ywYpiWLYvoON+bjND4gTCCEpwYU7BZRMQhAyIpKS5RkkI5M8JUo1JeN8hHVwdQCBI-wo1d9KLQyt0tfNbKIGgoGs91qBUagvVkMQoGoAAhPpMGY4SXOoMN3KyFC3AfBN0jpLwlUxFDrgSdEwoTTVEn-ZljTizdQJ4JL+JS6g0sgmsYJ6fpBhGHAxjywritK2ZgxEiqe28aduCyZMlzTA7NWai5uBxH90xcLYZ16gsgJoozGhGuzUvSsEIVEMrRU2sT3MyJxTkinxIqvNJRzSALvFOSl1QTdYKSi3S+vXYDaLLZ6xomttoIFL7u1+wJ-EBpcQYpcGAsyDxKXnPs6QSW6qIGkC6O4fMADkwAAd3S6RMs9JRcsofKipKxQ8YQ5ZvDBqcwtSeq6RzJMMTO0JvGB3zfOnBnYo3Zn0cNDnucmnG61mxsFu4JaRdWpzT3KyrtpQvbR0OmdjsUjSyXOc4NJ1BInFp7X+t1tGnoNrm3sPT61uc76Hf+4ngeIsmlwhxTiUMbh8mJJ9PESLZAiDlGHoS4bw6N7Ha0FGO7bjraE9fJPQfJxSwgB3zKX9hJtTjIIigZahMAgOA7EonXUce1z4Nc5YAFoFMOWfSVWVZNXnVxtm8Eki-u+KhqaAFWinjbKvVF9rwDi6KSCWUKVzaK9ODifS-LXdJuFe2e3Vdx-HfBMtnRLSNOhxPxnSTucEcfh8TLgfsjXeg0WYmWYqxdixBOJcGsslQgH866-RxADK8Vxu7dXahFF8kUzofkxEELwWxsg3x3gZBB+syhYNeu-dan8CboidivXYCYUiZFcEqIiWc1TA3OLSTU98kZ3SYXrMOZRDbWRwfjNyTgeG7T4cOHEaYz7p1cCEXaH50JjmjHiNMjCmah0tEIKOQJVES3iLsKcN9fCqU-JcAkiltJkllvkQxtV1gyINI-Yue8WY8Wmo4me8RMy7RzFSK6cZ0gUyMeqf2tDpxpnJH3fuQA */
 
       id: "AddToTrustchainDeviceAction",
       context: ({ input }) => ({
@@ -113,6 +115,12 @@ export class AddToTrustchainDeviceAction extends XStateDeviceAction<
       initial: "InitSession",
       states: {
         InitSession: {
+          entry: assign({
+            intermediateValue: {
+              requiredUserInteraction: UserInteractionRequired.None,
+              step: AddToTrustchaineDAStep.Initialize,
+            },
+          }),
           on: { success: "ParseStream", error: "Error" },
           invoke: {
             id: "initCommand",
@@ -130,6 +138,12 @@ export class AddToTrustchainDeviceAction extends XStateDeviceAction<
         },
 
         ParseStream: {
+          entry: assign({
+            intermediateValue: {
+              requiredUserInteraction: UserInteractionRequired.None,
+              step: AddToTrustchaineDAStep.ParseStream,
+            },
+          }),
           on: { success: "CheckApplicationStreamExist", error: "Error" },
           invoke: {
             id: "parseStream",
@@ -169,17 +183,13 @@ export class AddToTrustchainDeviceAction extends XStateDeviceAction<
         },
 
         AddToExistingStream: {
-          on: { success: "Success", error: "Error" },
           entry: assign({
             intermediateValue: {
-              requiredUserInteraction: "add-ledger-sync",
+              requiredUserInteraction: AddToTrustchainDAState.AddMember,
+              step: AddToTrustchaineDAStep.AddMember,
             },
           }),
-          exit: assign({
-            intermediateValue: {
-              requiredUserInteraction: UserInteractionRequired.None,
-            },
-          }),
+          on: { success: "Success", error: "Error" },
           invoke: {
             id: "signBlock",
             src: "signBlock",
@@ -229,17 +239,13 @@ export class AddToTrustchainDeviceAction extends XStateDeviceAction<
         },
 
         AddToNewStream: {
-          on: { success: "Success", error: "Error" },
           entry: assign({
             intermediateValue: {
-              requiredUserInteraction: "add-ledger-sync",
+              requiredUserInteraction: AddToTrustchainDAState.AddMember,
+              step: AddToTrustchaineDAStep.AddMember,
             },
           }),
-          exit: assign({
-            intermediateValue: {
-              requiredUserInteraction: UserInteractionRequired.None,
-            },
-          }),
+          on: { success: "Success", error: "Error" },
           invoke: {
             id: "signBlock",
             src: "signBlock",

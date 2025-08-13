@@ -1,11 +1,16 @@
 import {
   type ExecuteDeviceActionReturnType,
   type OpenAppDAError,
+  type OpenAppDARequiredInteraction,
+  type UserInteractionRequired,
 } from "@ledgerhq/device-management-kit";
 
 import { type LKRPDeviceCommandError } from "@internal/app-binder/command/utils/ledgerKeyringProtocolErrors";
 
-import { type AddToTrustchainDAError } from "./AddToTrustchainDeviceActionTypes";
+import {
+  type AddToTrustchainDAError,
+  type AddToTrustchainDAIntermediateValue,
+} from "./AddToTrustchainDeviceActionTypes";
 import {
   type LKRPDataSourceError,
   type LKRPMissingDataError,
@@ -40,6 +45,30 @@ export type AuthenticateDAError =
   | OpenAppDAError
   | LKRPUnknownError;
 
-export type AuthenticateDAIntermediateValue = {
-  readonly requiredUserInteraction: string;
-};
+export type AuthenticateDAIntermediateValue =
+  | {
+      requiredUserInteraction: OpenAppDARequiredInteraction;
+      step: AuthenticateDAStep.OpenApp;
+    }
+  | {
+      requiredUserInteraction: AuthenticateDAState.Authenticate;
+      step: AuthenticateDAStep.Authenticate;
+    }
+  | {
+      requiredUserInteraction: UserInteractionRequired.None;
+      step?:
+        | AuthenticateDAStep.Authenticate
+        | AuthenticateDAStep.GetTrustchain
+        | AuthenticateDAStep.ExtractEncryptionKey;
+    }
+  | AddToTrustchainDAIntermediateValue;
+
+export enum AuthenticateDAState {
+  Authenticate = "lkrp-authenticate",
+}
+export enum AuthenticateDAStep {
+  OpenApp = "lkrp.steps.openApp",
+  Authenticate = "lkrp.steps.authenticate",
+  GetTrustchain = "lkrp.steps.getTrustchain",
+  ExtractEncryptionKey = "lkrp.steps.extractEncryptionKey",
+}

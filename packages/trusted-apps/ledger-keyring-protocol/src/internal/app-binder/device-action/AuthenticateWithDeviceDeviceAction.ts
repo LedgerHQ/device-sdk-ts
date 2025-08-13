@@ -13,6 +13,8 @@ import {
   type AuthenticateDAError,
   type AuthenticateDAIntermediateValue,
   type AuthenticateDAOutput,
+  AuthenticateDAState,
+  AuthenticateDAStep,
 } from "@api/app-binder/AuthenticateDeviceActionTypes";
 import {
   LKRPMissingDataError,
@@ -118,9 +120,9 @@ export class AuthenticateWithDeviceDeviceAction extends XStateDeviceAction<
             .extract() ?? false,
       },
     }).createMachine({
-      /** @xstate-layout N4IgpgJg5mDOIC5QEECuAXAFmAduglgMYCG6YAImAG5FjKEED2OAdAPIAOuyHHAxBGZgW+HFUYBrYYy44eHANoAGALqJQHRrHxMc6kAA9EARgDMANhYBOABwAWUwHYATKeMBWG8+N3nAGhAAT0RHUysWG2NHc3dY0zt3YysAX2SAtCxcAhIyShpCOgZ8ZnZZeT4wACdKxkqWDgAbUgAzWoBbFhluXmU1JBBNbV19IwRjDxZ3c2c7Kynzc0clG3MbAOCEcztLCzs7GxslRKUt51T0jGw8IlIKalp6XVLu-lhUQgLYWF79QZ1ivT9UamGyOFhKRyRJTOGxWJSmZzuRzrRCg9yTZwQxxWPbTYznEAZK7ZW55B5FEqcF4Vaq1H79P7DIGIEFgiFQmFwhFIlEISIsWZWKzYpYxUFWcwEolZG65e4FR4AlhkhWXARCERiSTCCDyuiXekaLT-ZgjRBTOwRBFKaHjRG+cy8xyJCJRBY2EHxRaOKWXGU5O75QpPFX6rA0mp1RotdosXVBomGgbGpmgUaxJQsMIe4XTcxOD28sVZrbuEHOZxWUymX2Za4B0OKkqNtVvD5wb6qX4pgFmhDY0wsfPORwuD3uJRRfxBRBWCssYyg-ZhKsxFJpQl++ukvVN1gt8NVSNJxm95n9qtDhGjmGmCdT3mY5wsGZCoXxHHLmsb6XbuUJilWAAcTAdAABVKlQWB0EITBiFEdUcGEURxCkFgYHAyDoNg+CcBPHtTXPYUbBYRxtmMGEYXMHxq15SJ0UiaI9gojwEW-C46xJf9ySeEDMKgmC4IQo9anqJp0FaSoOgwiCBJw0R8KGM801nRxjCHNS5zseFZgo6cNhcZ9djsaJ80OUd2M3TjZUDHilT42TsKEnA+DbT5Oz6I0lMIlSxhmS1pgnBxNL2fTZ3ccJYU8aEnB8EdJR-LcuNshVAJYBysME3CIzpLsGQIwFfPGD1wTvCi4UnasHF5NiBTfSIFkrKwfFrYkbMbNKAGFsEICQAElYAAWTANoACMqlgPhFJNQrDBMdx9msBIQXfZwthcXkJRIqYZmdStzCOGFWv9HcAKebqwF6gbhrGiapuMTzk282bRg8RacTLWEqzWkyws2RZrBOSsbDicZLN-ZKOqeZAIAgMDGEcrKEMEJDNVQ4QYbhhHMvkvC8q8ma+0XGIFyOaZsUWDwzF5MswUxNw3ASIVYTORLrIbXc0sx+HEdxnKo3EySOm57G5Oc6bUzmsYVnRCyItBcxbCiXk9kHMihXzXMyz2dxjr-FLgyVEXeec1z3nciXlKl7wvCHRE1vsBwFjsGrhQiTEkjIzFtlWXW2bajmzqN2GeZx02RMqS2fOt4wAbvCUzESL6nCLbEIjsO0lCFGFYhsPXIc5p4AFEDHQSpiAYIucEISpAg4XQAGkwECRDkK1NCS7Liv0Crmu68b5uo5ekwQczexIR1mJF0nOiyyHLPTBOXwPAOPP-ZO7jUuL0vy8r6va-rgEm5biOxJjKSWE73ee-3-uj8H-GnsJ89FxdRJPAqn61hnfsDoXHaDiIgWtCNeHEA6nTsiUK+3de4HwHi3NyHYh59m8HHCKn0Vjwgii7H+xgbTqWFM1RIZgYRL3zu1QuSpoF7z7ofZgx9+bIPPKgsE8cMEHXjjgjYcx1ImS5GpA4CQKKpA3DgRgup4D9AhhQoO0dTzR1GAAWmMLyRRlgbQ2gcHeaszUQaInIYHSBrAqRyF4N2Z6fYTJ0RBC+JYXhF5RGFCCAxECt5KgPJgcxz9fLHAXFEfxi8willnpmEcEJbC0wOmWFxm9DYlAymLXCXjJajGapYSmoIQajicaYTaPhbHLHGAdWYoJ8Tr31lDJUF0rpDRGuNSokiCYpJMBYMEzsIT7HhNEO8m0-5hCRCONSI4qxlLARvA2e4WDGzDkk-KFiX6jnUmwhwMVYTQiLHeIcO1bA4niHsGJEy0rUJvrQ+BySravUWVmdBKzXBrL+nMZ8QMTJhCOEoJ2BzKklAAMrmw7OchRiBXA2izBExWn5VgqNwfgl8lYfCxw8M6ewnzKFQNpJUAFw8EDAszNmKYQpcSRBqvOV8wpvBMwcHYERyQgA */
+      /** @xstate-layout N4IgpgJg5mDOIC5QEECuAXAFmAduglgMYCG6YA6vlgCJgBuRYtDhYyhBA9jgHQDyAB1zIBAgMQRuYHvhx1OAa2mchOEQIDaABgC6iUAM6wq+bvpAAPRAEYAzADYeATgAcAFltuntrdYBMAfYANCAAnogA7G6OttYREU5aWgERyQC+aSFoWLgEJGSUNPSMzIzsXLyCwqJiYABOdZx1PAIANqQAZk0Atjwq1Zq65obGFeZWCNbWAKw80-Z+Xvb2ni5OEdPWIeEI9tN+PC720RtuyU52GVkY2HhEpBRUmKWsL2wcppWq6mKwqISsWCwbR6JAgEYmMxgia2FwRHhaCIuaxaLz7ZbTLTBMKIFwuA7JLTePwJVxRCJXEDZW55B6FZ7FV6M94VfjfGr1Rp1EHDIyQnDjRAOA7WPGYiLHaxOab47Y2GVaHheOKiiVOAIBSnU3L3ApPN5vcqfHiGm4SKQyOSKaQQZnUnlgiFjaGIeZuQ62Py+PxSrQucVyhASxyuNzRRKI3wrLU3HX5R5FFhMO0fbgmu1mzlNFrtdBdOq9W1J+1DR1852gCbTTE8WyuWFReyIhJbHG7CK2OaxPx4tz+bzTGM5O7x+kGlOs01YX7-QHA0sGcufQVB7w8FYk6XS6YRaxuaaB9WKwlraJe+z4txDmm6hMMpOG1O8KeYWoNJoOxejZcuoMJBH2FEdbVlM+5uIGMyxOuixaJi0wOLY0xXpkVKxiOdL6syj6sgA4mA6AACp1KgsDoIQmDELI5o4NIsjyEoPAwIRxGkeRlE4J+4JLlClaIOsLg8I2sE+CqTYuIGLios47jRLCe7rL415xhhiYlBOxp4cxJFkRRVFZs0bSdD0jH4UR2lsbInFOj+vEIOs1jrru+IbBcWJrIGu4OfBdjKtKorWEp6F6qpTLFk+PCaWZrG6TgM4AnA86gl+-Irv4YbQWiGpNmSh4XnMCz7P5vhgYFtLBfealhbhpksTp7FvlyVncQKv5TPiCKwU2iKLIkfgQW4ErOOSThhiiixuC4pW3mOWHqWmADC2CEAoACSsAALJgN0ABG9SwGITXfjxljyhNzj7n48G2J6+J+oe8Q8AE6r7vYTgFR2U2jphD5zbwi1gMta2bTte0HdYSVcUdLW2TMSKCZ4N3TL1SHYjs-h4jwUqgXWCwUih2pBXe45VcayAQBABGcFFdVUZINGWvR0hkxTVO1RZHELpDKWtUcswokhiIyv5tgQV6IoXlEqL+j6TifSpFWhWU4XM5T1Psw12aGXmxkq6z5kxYd3Mw7zgkdnWEQ9k4VthhBUyKvYe62Kk5w+D2cvlcTSusrrasxXFc6GxWJ0ID6r3OH4iFhscZywf1UpKgs1gO2sF51u7ROzSTaY+2zfv6YHNnB6H8KIcS6oW69cIQddnaJ5JhLddG+NoWVGc-VnvAAKIWOgdTEBwnc4IQdShAIFQANJgKE1G0VaDHd73-foIPw+jxPU8F8dEyijW7gSqinhaA44Ftv6tdEk7l37DuH3N8Orcze3XvGgvfcD0PI9j58k-T-pOZGQWHgr8l4r0-uvUIm9obBx3l5GY8wUQOzrNKDyTZMbwIuNKdwb106P0qs-NMwD36ry-twH+-sEqQJXKHJw4dI7RDDEkfY913TrHVDKDwCwr44O+ng1gRoCE9zfsvD+a9v5Tw1tyTm1kt6IGLrWJGnpy5+Ern1NsKIzjriOHvJGfZ1QZBQjgTgtp4BggJg-Hhis+FPl5FDFcABaVsOx5izGPhbUayJYiDjvjeL6IVkwdzZAMGxRtg4DQkuleIRJUTHB6kSbhfjsLGhfMEoOVYUSYxVPMBYPhOoST2EqJ2MphQXlgn4eJCt-H4N4JFXO7EUmFwmBcRwgFRQDQWE2ECh4j4FI2EiDwA0kYBW8cpD2mcqk8H+oDDaW1dp1BMclVJNgHDwmWDHWEb0PDqlyjQrEV8BrrD8E08pnsrHe3JqrWpsh6kyMmPEBypdrpiVcHsauSRoJxDWHYREMxJrDMJrgyxLIX6CJASIkhOAf7XKgdvO58jvAOD9M8g8bZpQEgKt5aIex-THLGac40ABlWcCUoVUNiJ2RYGx5gBD7E2CI91OwW2eohAI1YJo4qfnigh746gkt-AESSj1E5JAri4bs1dPS1l3EifYcJYI7n0WkIAA */
 
-      id: "AuthenticateDeviceAction",
+      id: "AuthenticateWithDeviceDeviceAction",
       context: ({ input }): types["context"] => ({
         input,
         intermediateValue: {
@@ -138,11 +140,18 @@ export class AuthenticateWithDeviceDeviceAction extends XStateDeviceAction<
       initial: "OpenApp",
       states: {
         OpenApp: {
-          // TODO snapshot for intermediateValue
           on: { success: "DeviceAuth", error: "Error" },
           invoke: {
             id: "openApp",
             src: "openAppStateMachine",
+            onSnapshot: {
+              actions: assign({
+                intermediateValue: ({ event }) => ({
+                  step: AuthenticateDAStep.OpenApp,
+                  ...event.snapshot.context.intermediateValue,
+                }),
+              }),
+            },
             input: { appName: APP_NAME },
             onError: { actions: "assignErrorFromEvent" },
             onDone: {
@@ -154,17 +163,13 @@ export class AuthenticateWithDeviceDeviceAction extends XStateDeviceAction<
         },
 
         DeviceAuth: {
-          on: { success: "GetTrustchain", error: "Error" },
           entry: assign({
             intermediateValue: {
-              requiredUserInteraction: "connect-ledger-sync",
+              step: AuthenticateDAStep.Authenticate,
+              requiredUserInteraction: AuthenticateDAState.Authenticate,
             },
           }),
-          exit: assign({
-            intermediateValue: {
-              requiredUserInteraction: UserInteractionRequired.None,
-            },
-          }),
+          on: { success: "GetTrustchain", error: "Error" },
           invoke: {
             id: "deviceAuth",
             src: "deviceAuth",
@@ -188,6 +193,12 @@ export class AuthenticateWithDeviceDeviceAction extends XStateDeviceAction<
         },
 
         GetTrustchain: {
+          entry: assign({
+            intermediateValue: {
+              step: AuthenticateDAStep.GetTrustchain,
+              requiredUserInteraction: UserInteractionRequired.None,
+            },
+          }),
           on: { success: "CheckIsMembers", error: "Error" },
           invoke: {
             id: "getTrustchain",
@@ -225,7 +236,6 @@ export class AuthenticateWithDeviceDeviceAction extends XStateDeviceAction<
         },
 
         AddToTrustchain: {
-          // TODO snapshot for intermediateValue
           on: {
             success: "GetTrustchain",
             error: "Error",
@@ -233,6 +243,12 @@ export class AuthenticateWithDeviceDeviceAction extends XStateDeviceAction<
           invoke: {
             id: "AddToTrustchain",
             src: "addToTrustchainStateMachine",
+            onSnapshot: {
+              actions: assign({
+                intermediateValue: ({ event }) =>
+                  event.snapshot.context.intermediateValue,
+              }),
+            },
             input: ({ context }) =>
               context._internalState
                 .mapLeft(
@@ -270,6 +286,12 @@ export class AuthenticateWithDeviceDeviceAction extends XStateDeviceAction<
         },
 
         ExtractEncryptionKey: {
+          entry: assign({
+            intermediateValue: {
+              step: AuthenticateDAStep.ExtractEncryptionKey,
+              requiredUserInteraction: UserInteractionRequired.None,
+            },
+          }),
           on: { success: "Success", error: "Error" },
           invoke: {
             id: "ExtractEncryptionKey",

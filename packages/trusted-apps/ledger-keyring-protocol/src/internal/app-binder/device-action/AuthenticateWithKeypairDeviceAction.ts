@@ -6,12 +6,13 @@ import {
   XStateDeviceAction,
 } from "@ledgerhq/device-management-kit";
 import { type Either, EitherAsync, Left, Right } from "purify-ts";
-import { fromPromise, setup } from "xstate";
+import { assign, fromPromise, setup } from "xstate";
 
 import {
   type AuthenticateDAError,
   type AuthenticateDAIntermediateValue,
   type AuthenticateDAOutput,
+  AuthenticateDAStep,
 } from "@api/app-binder/AuthenticateDeviceActionTypes";
 import {
   LKRPDataSourceError,
@@ -91,9 +92,9 @@ export class AuthenticateWithKeypairDeviceAction extends XStateDeviceAction<
         ),
       },
     }).createMachine({
-      /** @xstate-layout N4IgpgJg5mDOIC5QEECuAXAFmAduglgMYCG6YAImAG5FjKEED2OAdANJgCeADsfgE5osAYgjMwLfDiqMA1hPk8+gjJgDaABgC6iUN0ax8THLpAAPRAEYNAVhYAOAMwB2AEzOAnDfuvXHy+4ANCCcVk4svgBsGjGWACyRNkkazgC+qcFC2HhEpBTUtPTG7Fy8AlnCYPz8jPws3AA2pABmtQC2LIplKliaOkgg+obGphYIHq4s0T42kfEeHo6uls7BoQj2kSxxrpHOm64aPnFxXumZqrgEJGSUNIR0DPjMJUrlqsKwqIQPsLB9piGRmeJgGY0ccXsU3sNncKS8jkiuzWiD8cRYliSrm8GmicWclhh5xAWSuuVuBQeRRBr26FSqNX4AIGQJGYMQEKhkRhcM8NkRyJCiBsHg0LA89lOhOcjg8nkhxNJORu+Xuj2KAHEwOgACr8VCwdCETB8HCicSSaRyCQwXX6w3G03MvQGYHMUbCuJilwiywS9y+DQeFEIQno2yLRwQzz2WNLRWXZV5O6FJ4vLV2g1Gk1SSrVWr1JroVr8Dq2vVZx1SZ2DV1s0BjfmOFgaSzWL1LXEJRwh+zOCLRNteOKY-auBNYMkqlNUtOsDMVh05s1fH5wf7aQF1kEejYxFgyiaOWYrGEaVwhtHi2P85ytyIuXwT7LXZOU9U0hf27OmvOMmusju7J7mKh6uMecz7DY54hgkHjbCcbbeL6cqSs+U5vmq1IvAAomY6D8MQDA4TghD8DwxgcJw5o4BIUgyPILB4QRRHoCRZEUSCVEAdu7rAdY1gsEkXhtkcSJ9j2QqhvsEQLH6-gPsJRzoUmFJYXOTH4YRxGkeR3CUVwf4Fo0LTtJpLE6Rx+lcVwPHDEBDZWK2lgRDYpyOBokIpM4BK9i5pwLBK9h+tEBKRCpr5qamxTMdpbG6ZxzBUZ83y-Bu-QuvZfGOaGUbwdihLQacbhenEl5eA4ywTPi7iWI4RIZCSiaRaq0U0rFrHsXpBnUQytR2W6oI5XVsquYVnlyq4pUhtG4oaBCywyhCkQrXE6SNTgjAQHAphKi1M4ftltZZUN5iIAAtJYIbneFjV7eSrWzsUVF0qoW4nbu+KXjCLbYssXqSpssIRQ9B3YfO2qLj+UjvYNn3OHYCMrAE7j1biUbfXYMIwviI7BRKSQg9O77g+ZcVdYlOBUbD9ZneM7gOLY9geAkuLnkk31ikGTgLNBSOWETmFtS8ADKqXrjTDl0-EK0sI4hJ+H6CPciO5V2OetiRF682LK2gtRU97X5vwktHWMMtbPLPj+HKsySldUkJFyOz2EGNh1Ts4HrakQA */
+      /** @xstate-layout N4IgpgJg5mDOIC5QEECuAXAFmAduglgMYCG6YA6vlgNJgCeADsfgE4AiYAbkWMoQQHscAOlqNmLNFgDEEIWGH4cnAQGsF68aymYA2gAYAuolAMBsKviEmQAD0QBGfQFZhADgDMAdgBMXh24AbG7Ozl4ePgA0IHSOnsI+PoEuzg4ALACcGT4BAL650Tq4BCRklDT0TKwc3IS8-FYiYlWSGJjSYCwsAizCDAA2pABmPQC2wpotOgbGSCBmFoI4NvYI2cLJbj4eAZnpgWlRMYhBwofByV6BHmke2V75hW3FRKQUVJjNEjU8fEuilQkOmksFQhDqsFgMxsC0s1jmqxubg2IT8XmcGQxaQcDkC0ViCA8+g8wgcXi89y8+jcGWCPjSjxARTwrzKHy+1S4vwaQgBWlaMk63RY0LmsKWK0QSJRzjRGKxOLxxwQgVxwkxGSJaWcHhuHmcDIKTOeLNK7wq-J+dT+jWEAHEwOgACosVCwdCETDMHCyeSKZRqBQwZ2u92e72i0zmOHLBGIA36YTeDG0hx+BzOQJHAm7YQuTVZfTorxpTJuRnMkpvcqfQGc2r1f4OkNuj1epQdLo9PqDdAjFjjYMu1vhpSR+bRiVxhA6kn6HEZ0vOfQXfEnLwJZI+fRpYLZLPaismqtsi0tK2N23N4dh9s+0HguBQowwyeNSUINz6RPhTXakJpG4JZroSO55jiSROIcRIZkeWAvGaNYcuwXLWjyIjXqGbbep2wrjuK77Tl+P53DczgAUBaQgZkrjYiEZLXJikFwdgprVuydYoQ2Nq8gAorY6AsMQ-C8TghAsIwSxiL6OAKEoKjqMI-GCcJ6CieJkmNGI+FvvCoCrE4TjCKEGSZNutKeJ4IFksiPhZIksqpIqO4sQh7Fnt8qGXnxAlCSJYkSQwUn0Lh3YDMMYxKb5qnqYFwV0DpiyEfpjjzg4CQGjStypG4pZeCBbjpcu35EkEu66rKrlsaetaWl5PEiMpflqQFmlCNJD4Qs+sxRklel2I4uoZBlATeHZma6iBWruEupnJtcgEPEalasuatXnvV6FRSp-kaUFWkhUKPSJTGH4OENI2eL4mLXB4U2ZuqkHBLiZH6s4+RGjgAgQHANgrYhHF1dx6Gvn1sYpQgAC0DggZDrhZAjiNIx4VUnmtyEXg1fJTG0oOndOaT5cqPghHmPiyjRHgHDuKPLceq1IZxmNbZhI53njU4Q4TrjomSVymdi5UgSTrghCEf5Zok6K0088HVejTObf8TUxa1+3tfQHPJQNax+O4Li5bKxJFtkwtfnmGS5Q4tLJpbYSowzgMbcD-wAMpgl1Wv9QZu6BEmo1UwcHiWdmUpgTTOS0vompkjLxpy2jjNA9yytdiwXvgzr+x+zsniB7cIfUaZGxkmSu7LoEXhfkt+RAA */
 
-      id: "AuthenticateDeviceAction",
+      id: "AuthenticateWithKeypairDeviceAction",
       context: ({ input }): types["context"] => ({
         input,
         intermediateValue: {
@@ -109,6 +110,12 @@ export class AuthenticateWithKeypairDeviceAction extends XStateDeviceAction<
       initial: "KeypairAuth",
       states: {
         KeypairAuth: {
+          entry: assign({
+            intermediateValue: {
+              requiredUserInteraction: UserInteractionRequired.None,
+              step: AuthenticateDAStep.Authenticate,
+            },
+          }),
           on: { success: "GetTrustchain", error: "Error" },
           invoke: {
             id: "keypairAuth",
@@ -131,6 +138,12 @@ export class AuthenticateWithKeypairDeviceAction extends XStateDeviceAction<
         },
 
         GetTrustchain: {
+          entry: assign({
+            intermediateValue: {
+              requiredUserInteraction: UserInteractionRequired.None,
+              step: AuthenticateDAStep.GetTrustchain,
+            },
+          }),
           on: { success: "ExtractEncryptionKey", error: "Error" },
           invoke: {
             id: "getTrustchain",
@@ -155,6 +168,12 @@ export class AuthenticateWithKeypairDeviceAction extends XStateDeviceAction<
         },
 
         ExtractEncryptionKey: {
+          entry: assign({
+            intermediateValue: {
+              requiredUserInteraction: UserInteractionRequired.None,
+              step: AuthenticateDAStep.ExtractEncryptionKey,
+            },
+          }),
           on: { success: "Success", error: "Error" },
           invoke: {
             id: "ExtractEncryptionKey",

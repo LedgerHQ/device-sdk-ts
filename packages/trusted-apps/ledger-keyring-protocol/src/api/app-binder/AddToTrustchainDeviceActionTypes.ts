@@ -1,4 +1,7 @@
-import { type OpenAppDAError } from "@ledgerhq/device-management-kit";
+import {
+  type OpenAppDAError,
+  type UserInteractionRequired,
+} from "@ledgerhq/device-management-kit";
 import { type Either } from "purify-ts";
 
 import { type LKRPDeviceCommandError } from "@internal/app-binder/command/utils/ledgerKeyringProtocolErrors";
@@ -40,9 +43,27 @@ export type AddToTrustchainDAError =
   | OpenAppDAError
   | LKRPUnknownError;
 
-export type AddToTrustchainDAIntermediateValue = {
-  readonly requiredUserInteraction: string;
-};
+export type AddToTrustchainDAIntermediateValue =
+  | {
+      requiredUserInteraction: UserInteractionRequired.None;
+      step?:
+        | AddToTrustchaineDAStep.Initialize
+        | AddToTrustchaineDAStep.ParseStream;
+    }
+  | {
+      requiredUserInteraction: AddToTrustchainDAState.AddMember;
+      step: AddToTrustchaineDAStep.AddMember;
+    };
+
+export enum AddToTrustchainDAState {
+  AddMember = "lkrp-add-member",
+}
+
+export enum AddToTrustchaineDAStep {
+  Initialize = "lkrp-init-transaction",
+  ParseStream = "lkrp-parse-stream",
+  AddMember = "lkrp-add-member",
+}
 
 export type AddToTrustchainDAInternalState = Either<
   AddToTrustchainDAError,
