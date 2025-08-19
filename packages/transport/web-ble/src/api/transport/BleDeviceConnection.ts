@@ -206,8 +206,13 @@ export class BleDeviceConnection implements DeviceConnection {
         this._logger.debug("Sending Frame", {
           data: { frame: frameData },
         });
+        const rawData = frame.getRawData();
         await this._writeCharacteristic.writeValueWithoutResponse(
-          new Uint8Array(frameData),
+          new Uint8Array(
+            rawData.buffer as ArrayBuffer,
+            rawData.byteOffset,
+            rawData.byteLength,
+          ),
         );
       } catch (error) {
         this._logger.error("Error sending frame", { data: { error } });
