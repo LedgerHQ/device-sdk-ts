@@ -1,4 +1,8 @@
-import { ByteArrayParser } from "@ledgerhq/device-management-kit";
+import {
+  bufferToHexaString,
+  ByteArrayParser,
+  hexaStringToBuffer,
+} from "@ledgerhq/device-management-kit";
 import { type Either, EitherAsync, Left, Maybe } from "purify-ts";
 
 import { LKRPMissingDataError, LKRPUnknownError } from "@api/app-binder/Errors";
@@ -9,7 +13,6 @@ import {
 } from "@internal/lkrp-datasource/data/LKRPDataSource";
 import { CryptoUtils } from "@internal/utils/crypto";
 import { eitherSeqRecord } from "@internal/utils/eitherSeqRecord";
-import { bytesToHex, hexToBytes } from "@internal/utils/hex";
 
 export class SignChallengeWithKeypairTask {
   constructor(
@@ -29,7 +32,7 @@ export class SignChallengeWithKeypairTask {
     return EitherAsync.liftEither(this.getUnsignedChallengeTLV(challenge.tlv))
       .map(CryptoUtils.hash)
       .map((hash) => this.keypair.sign(hash))
-      .map(bytesToHex)
+      .map((str) => bufferToHexaString(str, false))
       .map((signature) => ({
         challenge: challenge.json,
         signature: { attestation, credential, signature },
@@ -45,7 +48,7 @@ export class SignChallengeWithKeypairTask {
   private getAttestation() {
     const bytes = new TextEncoder().encode(this.trustchainId);
     const attestation = Uint8Array.from([0x02, bytes.length, ...bytes]);
-    return bytesToHex(attestation);
+    return bufferToHexaString(attestation, false);
   }
 
   private getCredential(publicKey: string) {
@@ -55,7 +58,9 @@ export class SignChallengeWithKeypairTask {
   private getUnsignedChallengeTLV(
     tlv: string,
   ): Either<LKRPMissingDataError, Uint8Array> {
-    const parser = new ByteArrayParser(hexToBytes(tlv));
+    const parser = new ByteArrayParser(
+      hexaStringToBuffer(tlv) ?? new Uint8Array(),
+    );
     const parsed = new Map(
       (function* () {
         while (true) {

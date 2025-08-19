@@ -1,7 +1,8 @@
+import { hexaStringToBuffer } from "@ledgerhq/device-management-kit";
+
 import { LKRPMissingDataError } from "@api/app-binder/Errors";
 import { KeypairFromBytes } from "@api/app-binder/KeypairFromBytes";
 import { type Challenge } from "@internal/lkrp-datasource/data/LKRPDataSource";
-import { hexToBytes } from "@internal/utils/hex";
 
 import { SignChallengeWithKeypairTask } from "./SignChallengeWithKeypairTask";
 
@@ -57,7 +58,7 @@ function getParameters({
 } = {}) {
   return {
     challenge: { tlv, json: {} as Challenge["json"] },
-    keypair: new KeypairFromBytes(hexToBytes(privateKey)),
+    keypair: new KeypairFromBytes(hexaStringToBuffer(privateKey)!),
     trustchainId,
   };
 }

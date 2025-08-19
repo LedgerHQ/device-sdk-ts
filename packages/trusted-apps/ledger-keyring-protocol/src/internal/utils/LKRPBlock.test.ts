@@ -1,9 +1,9 @@
+import { hexaStringToBuffer } from "@ledgerhq/device-management-kit";
 import { Left, Right } from "purify-ts";
 
 import { LKRPParsingError } from "@api/app-binder/Errors";
 import { GeneralTags } from "@internal/models/Tags";
 
-import { hexToBytes } from "./hex";
 import { LKRPBlock } from "./LKRPBlock";
 import { LKRPCommand } from "./LKRPCommand";
 
@@ -28,7 +28,7 @@ const mockedBlockHex = [
 ].join("");
 const parsedMockedBlockData = {
   ...mockedBlockData,
-  header: hexToBytes(mockedHeaderHex),
+  header: hexaStringToBuffer(mockedHeaderHex)!,
   signature: Uint8Array.from([
     GeneralTags.Signature,
     3,

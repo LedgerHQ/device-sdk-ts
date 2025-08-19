@@ -211,7 +211,7 @@ export class ConnectToSecureChannelTask {
                 const message: OutMessageType = {
                   nonce,
                   response: outMessageResponse,
-                  data: bufferToHexaString(apduResponse.data).slice(2),
+                  data: bufferToHexaString(apduResponse.data, false),
                 };
                 this._connection.send(JSON.stringify(message));
               },

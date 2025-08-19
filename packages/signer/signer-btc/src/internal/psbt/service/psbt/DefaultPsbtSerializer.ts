@@ -74,7 +74,7 @@ export class DefaultPsbtSerializer implements PsbtSerializer {
     const transaction = this.getValue(globalMap, PsbtGlobal.UNSIGNED_TX).chain(
       (value) =>
         Either.encase(() =>
-          Transaction.fromHex(bufferToHexaString(value.data).slice(2)),
+          Transaction.fromHex(bufferToHexaString(value.data, false)),
         ).toMaybe(),
     );
     const inputCount = this.getValue(globalMap, PsbtGlobal.INPUT_COUNT)

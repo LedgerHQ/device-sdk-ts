@@ -294,6 +294,19 @@ export class ByteArrayBuilder {
   };
 
   /**
+   * Add a Tag-Length-Value encoded ascii string to the data field if it has enough remaining space
+   * Length-Value encoding is a way to encode data in a binary format with the first byte
+   * being the length of the data and the following bytes being the data itself
+   * @param tag: number - The tag to add to the data
+   * @param value: string - The value to add to the data
+   * @returns {ByteArrayBuilder} - Returns the current instance of ByteArrayBuilder
+   */
+  encodeInTLVFromAscii = (tag: number, value: string): ByteArrayBuilder => {
+    this.add8BitUIntToData(tag);
+    return this.encodeInLVFromAscii(value);
+  };
+
+  /**
    * Add a Tag-Length-Value encoded hexadecimal string to the data field if it has enough remaining space
    * Length-Value encoding is a way to encode data in a binary format with the first byte
    * being the length of the data and the following bytes being the data itself
@@ -320,6 +333,58 @@ export class ByteArrayBuilder {
   ): ByteArrayBuilder => {
     this.add8BitUIntToData(tag);
     return this.encodeInLVFromBuffer(value);
+  };
+
+  /**
+   * Add a Tag-Length-Value encoded uint8 to the data field if it has enough remaining space
+   * Length-Value encoding is a way to encode data in a binary format with the first byte
+   * being the length of the data and the following bytes being the data itself
+   * @param tag: number - The tag to add to the data
+   * @param value: number - The number to add
+   * @returns {ByteArrayBuilder} - Returns the current instance of ByteArrayBuilder
+   */
+  encodeInTLVFromUInt8 = (tag: number, value: number): ByteArrayBuilder => {
+    this.add8BitUIntToData(tag);
+    this.add8BitUIntToData(1);
+    return this.add8BitUIntToData(value);
+  };
+
+  /**
+   * Add a Tag-Length-Value encoded uint16 to the data field if it has enough remaining space
+   * Length-Value encoding is a way to encode data in a binary format with the first byte
+   * being the length of the data and the following bytes being the data itself
+   * @param tag: number - The tag to add to the data
+   * @param value: number | bigint - The number to add
+   * @param bigEndian: boolean - Endianness used to encode the number
+   * @returns {ByteArrayBuilder} - Returns the current instance of ByteArrayBuilder
+   */
+  encodeInTLVFromUInt16 = (
+    tag: number,
+    value: number | bigint,
+    bigEndian: boolean = true,
+  ): ByteArrayBuilder => {
+    this.add8BitUIntToData(tag);
+    this.add8BitUIntToData(2);
+    return this.add16BitUIntToData(value, bigEndian);
+  };
+
+  /**
+   * Add a Tag-Length-Value encoded uint32 to the data field if it has enough remaining space
+   * Length-Value encoding is a way to encode data in a binary format with the first byte
+   * being the length of the data and the following bytes being the data itself
+   * @param tag: number - The tag to add to the data
+   * @param value: number | bigint - The number to add
+   * @param bigEndian: boolean - Endianness used to encode the number
+   * @returns {ByteArrayBuilder} - Returns the current instance of ByteArrayBuilder
+   */
+  encodeInTLVFromUInt32 = (
+    tag: number,
+    value: number | bigint,
+    bigEndian: boolean = true,
+  ): ByteArrayBuilder => {
+    this.add8BitUIntToData(tag);
+    this.add8BitUIntToData(4);
+    return this.add32BitUIntToData(value, bigEndian);
   };
 
   /**

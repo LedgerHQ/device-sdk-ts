@@ -4,6 +4,7 @@ import {
   type ApduBuilderArgs,
   ApduParser,
   type ApduResponse,
+  bufferToHexaString,
   type Command,
   type CommandResult,
   CommandResultFactory,
@@ -17,7 +18,6 @@ import {
   type GetSeedIdCommandResponse,
 } from "@api/app-binder/GetSeedIdCommandTypes";
 import { eitherSeqRecord } from "@internal/utils/eitherSeqRecord";
-import { bytesToHex } from "@internal/utils/hex";
 
 import {
   LEDGER_SYNC_ERRORS,
@@ -83,7 +83,7 @@ export class GetSeedIdCommand
                     "Public key is missing",
                   ),
                 )
-                .map(bytesToHex),
+                .map((str) => bufferToHexaString(str, false)),
           }),
 
         signature: () =>
@@ -94,7 +94,7 @@ export class GetSeedIdCommand
                 "Signature is missing",
               ),
             )
-            .map(bytesToHex),
+            .map((str) => bufferToHexaString(str, false)),
 
         attestation: () =>
           eitherSeqRecord({
@@ -139,7 +139,7 @@ export class GetSeedIdCommand
                 ),
               ),
           }).map((attestation) =>
-            bytesToHex(
+            bufferToHexaString(
               Uint8Array.from([
                 ...attestation.id,
                 attestation.version,
@@ -150,6 +150,7 @@ export class GetSeedIdCommand
                 attestation.signature.length,
                 ...attestation.signature,
               ]),
+              false,
             ),
           ),
       }).caseOf({

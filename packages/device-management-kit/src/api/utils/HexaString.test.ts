@@ -165,5 +165,16 @@ describe("HexaString", () => {
       // THEN
       expect(result).toStrictEqual("0x000102fffe");
     });
+
+    it("should convert a buffer into a hexa string without prefix", () => {
+      // GIVEN
+      const value = Uint8Array.from([0, 1, 2, 0xff, 0xfe]);
+
+      // WHEN
+      const result = bufferToHexaString(value, false);
+
+      // THEN
+      expect(result).toStrictEqual("000102fffe");
+    });
   });
 });

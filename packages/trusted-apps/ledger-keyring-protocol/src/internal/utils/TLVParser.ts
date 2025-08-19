@@ -1,3 +1,4 @@
+import { bufferToHexaString } from "@ledgerhq/device-management-kit";
 import { type Either, Left, Right } from "purify-ts";
 
 import { LKRPParsingError } from "@api/app-binder/Errors";
@@ -7,7 +8,6 @@ import { CommandTags, GeneralTags } from "@internal/models/Tags";
 
 import { derivationPathAsString } from "./derivationPath";
 import { eitherSeqRecord } from "./eitherSeqRecord";
-import { bytesToHex } from "./hex";
 import { LKRPCommand } from "./LKRPCommand";
 
 type ParserValue = Either<
@@ -216,7 +216,8 @@ export class TLVParser {
     const startOffset = this.offset;
     return this.parseInt().chain((_version) =>
       eitherSeqRecord({
-        parent: () => this.parseHash().map(bytesToHex),
+        parent: () =>
+          this.parseHash().map((buf) => bufferToHexaString(buf, false)),
         issuer: () => this.parsePublicKey(),
         header: () =>
           Right(

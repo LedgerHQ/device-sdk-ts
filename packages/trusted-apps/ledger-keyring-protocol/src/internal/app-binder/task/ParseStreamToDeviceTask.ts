@@ -1,4 +1,5 @@
 import {
+  bufferToHexaString,
   CommandResultStatus,
   type InternalApi,
 } from "@ledgerhq/device-management-kit";
@@ -17,7 +18,6 @@ import { SetTrustedMemberCommand } from "@internal/app-binder/command/SetTrusted
 import { type LKRPDeviceCommandError } from "@internal/app-binder/command/utils/ledgerKeyringProtocolErrors";
 import { type LKRPBlockParsedData } from "@internal/models/LKRPBlockTypes";
 import { eitherSeqRecord } from "@internal/utils/eitherSeqRecord";
-import { bytesToHex } from "@internal/utils/hex";
 import { type LKRPBlock } from "@internal/utils/LKRPBlock";
 import { type LKRPBlockStream } from "@internal/utils/LKRPBlockStream";
 import { type LKRPCommand } from "@internal/utils/LKRPCommand";
@@ -64,7 +64,9 @@ export class ParseStreamToDeviceTask {
       EitherAsync.liftEither(block.parse())
 
         .chain<ParseStreamTaskError, LKRPBlockParsedData>((data) =>
-          this.setTrustedMember(bytesToHex(data.issuer)).map(() => data),
+          this.setTrustedMember(bufferToHexaString(data.issuer, false)).map(
+            () => data,
+          ),
         )
 
         // Parse the block header
@@ -86,7 +88,10 @@ export class ParseStreamToDeviceTask {
         .chain<ParseStreamTaskError, LKRPBlockParsedData>((data) =>
           EitherAsync.sequence(
             data.commands.map((command) =>
-              this.parseCommand(command, bytesToHex(data.issuer)),
+              this.parseCommand(
+                command,
+                bufferToHexaString(data.issuer, false),
+              ),
             ),
           ).map(() => data),
         )

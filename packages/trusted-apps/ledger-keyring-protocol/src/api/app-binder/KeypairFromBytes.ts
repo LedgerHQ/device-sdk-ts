@@ -1,8 +1,8 @@
+import { bufferToHexaString } from "@ledgerhq/device-management-kit";
 import { getPublicKey, getSharedSecret, signAsync } from "@noble/secp256k1";
 
 import { type Keypair } from "@api/index";
 import { CryptoUtils } from "@internal/utils/crypto";
-import { bytesToHex } from "@internal/utils/hex";
 
 export class KeypairFromBytes implements Keypair {
   constructor(
@@ -15,7 +15,7 @@ export class KeypairFromBytes implements Keypair {
   }
 
   pubKeyToHex(): string {
-    return bytesToHex(this.publicKey);
+    return bufferToHexaString(this.publicKey, false);
   }
 
   async sign(message: Uint8Array): Promise<Uint8Array> {
