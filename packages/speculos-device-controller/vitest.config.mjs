@@ -1,0 +1,23 @@
+import baseConfig from "@ledgerhq/vitest-config-dmk";
+import { defineConfig } from "vitest/config";
+import path from "path";
+
+export default defineConfig({
+  ...baseConfig,
+  test: {
+    ...baseConfig.test,
+    environment: "jsdom",
+    include: ["src/**/*.test.ts"],
+    coverage: {
+      provider: "istanbul",
+      reporter: ["lcov", "text"],
+      include: ["src/**/*.ts"],
+      exclude: ["src/**/*.stub.ts", "src/index.ts", "index.ts"],
+    },
+  },
+  resolve: {
+    alias: {
+      "@internal": path.resolve(__dirname, "src/internal"),
+    },
+  },
+});
