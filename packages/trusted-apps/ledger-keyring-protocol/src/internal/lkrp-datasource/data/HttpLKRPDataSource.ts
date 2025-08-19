@@ -4,8 +4,8 @@ import { EitherAsync, Just, Left, Maybe, Nothing, Right } from "purify-ts";
 import {
   LKRPDataSourceError,
   LKRPDataSourceErrorStatus,
-} from "@api/app-binder/Errors";
-import { JWT } from "@api/app-binder/LKRPTypes";
+} from "@api/model/Errors";
+import { JWT } from "@api/model/JWT";
 import { lkrpDatasourceTypes } from "@internal/lkrp-datasource/di/lkrpDatasourceTypes";
 import { LKRPBlock } from "@internal/utils/LKRPBlock";
 import { Trustchain } from "@internal/utils/Trustchain";

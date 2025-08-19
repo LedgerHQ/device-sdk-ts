@@ -4,8 +4,8 @@ import {
 } from "@ledgerhq/device-management-kit";
 import { Either, Just, Maybe, Nothing, Right } from "purify-ts";
 
-import { type LKRPParsingError } from "@api/app-binder/Errors";
 import { type Keypair } from "@api/app-binder/LKRPTypes";
+import { type LKRPParsingError } from "@api/model/Errors";
 import { type LKRPBlockData } from "@internal/models/LKRPBlockTypes";
 import { CommandTags } from "@internal/models/Tags";
 import {

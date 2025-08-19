@@ -1,7 +1,7 @@
 import { hexaStringToBuffer } from "@ledgerhq/device-management-kit";
 
-import { LKRPMissingDataError } from "@api/app-binder/Errors";
 import { KeypairFromBytes } from "@api/app-binder/KeypairFromBytes";
+import { LKRPMissingDataError } from "@api/model/Errors";
 import { type Challenge } from "@internal/lkrp-datasource/data/LKRPDataSource";
 
 import { SignChallengeWithKeypairTask } from "./SignChallengeWithKeypairTask";

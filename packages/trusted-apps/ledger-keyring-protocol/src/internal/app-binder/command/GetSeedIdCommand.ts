@@ -13,10 +13,6 @@ import {
 import { CommandErrorHelper } from "@ledgerhq/signer-utils";
 import { Maybe } from "purify-ts";
 
-import {
-  type GetSeedIdCommandArgs,
-  type GetSeedIdCommandResponse,
-} from "@api/app-binder/GetSeedIdCommandTypes";
 import { eitherSeqRecord } from "@internal/utils/eitherSeqRecord";
 
 import {
@@ -24,6 +20,21 @@ import {
   type LedgerKeyringProtocolErrorCodes,
   LedgerKeyringProtocolErrorFactory,
 } from "./utils/ledgerKeyringProtocolErrors";
+
+export type GetSeedIdCommandResponse = {
+  readonly credential: {
+    readonly version: number;
+    readonly curveId: number;
+    readonly signAlgorithm: number;
+    readonly publicKey: string;
+  };
+  readonly signature: string;
+  readonly attestation: string;
+};
+
+export type GetSeedIdCommandArgs = {
+  readonly challengeTLV: string;
+};
 
 export class GetSeedIdCommand
   implements

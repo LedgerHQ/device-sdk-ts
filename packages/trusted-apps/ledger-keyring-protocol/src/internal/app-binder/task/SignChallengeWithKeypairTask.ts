@@ -5,8 +5,8 @@ import {
 } from "@ledgerhq/device-management-kit";
 import { type Either, EitherAsync, Left, Maybe } from "purify-ts";
 
-import { LKRPMissingDataError, LKRPUnknownError } from "@api/app-binder/Errors";
 import { type Keypair } from "@api/app-binder/LKRPTypes";
+import { LKRPMissingDataError, LKRPUnknownError } from "@api/model/Errors";
 import {
   type AuthenticationPayload,
   type Challenge,

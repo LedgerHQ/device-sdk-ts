@@ -1,5 +1,5 @@
-import { LKRPUnknownError } from "@api/app-binder/Errors";
 import { type Keypair } from "@api/index";
+import { LKRPUnknownError } from "@api/model/Errors";
 import { type LKRPBlockStream } from "@internal/utils/LKRPBlockStream";
 
 export type ExtractEncryptionKeyTaskInput = {

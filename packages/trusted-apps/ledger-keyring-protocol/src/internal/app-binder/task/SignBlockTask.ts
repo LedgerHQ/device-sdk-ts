@@ -5,6 +5,7 @@ import {
 } from "@ledgerhq/device-management-kit";
 import { Either, EitherAsync, Left, Right } from "purify-ts";
 
+import { type JWT, type Keypair } from "@api/index";
 import {
   LKRPDataSourceError,
   type LKRPMissingDataError,
@@ -12,8 +13,7 @@ import {
   type LKRPParsingError,
   LKRPUnknownError,
   LKRPUnsupportedCommandError,
-} from "@api/app-binder/Errors";
-import { type JWT, type Keypair } from "@api/index";
+} from "@api/model/Errors";
 import { SignBlockHeaderCommand } from "@internal/app-binder/command/SignBlockHeader";
 import { SignBlockSignatureCommand } from "@internal/app-binder/command/SignBlockSignatureCommand";
 import { SignBlockSingleCommand } from "@internal/app-binder/command/SignBlockSingleCommand";

@@ -1,9 +1,8 @@
 import { type DeviceManagementKit } from "@ledgerhq/device-management-kit";
 
 import { type LedgerKeyringProtocol } from "@api/LedgerKeyringProtocol";
+import { type LKRPEnv } from "@api/model/Env";
 import { DefaultLedgerKeyringProtocol } from "@internal/DefaultLedgerKeyringProtocol";
-
-import { type LKRPEnv } from "./app-binder/LKRPTypes";
 
 export class LedgerKeyringProtocolBuilder {
   private readonly dmk: DeviceManagementKit;

@@ -5,7 +5,7 @@ import {
 } from "@ledgerhq/device-management-kit";
 import { Either, Just, type Maybe, Nothing, Right } from "purify-ts";
 
-import { type LKRPParsingError } from "@api/app-binder/Errors";
+import { type LKRPParsingError } from "@api/model/Errors";
 import {
   type LKRPBlockData,
   type LKRPBlockParsedData,

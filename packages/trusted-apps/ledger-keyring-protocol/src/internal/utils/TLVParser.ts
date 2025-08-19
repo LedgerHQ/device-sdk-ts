@@ -1,7 +1,7 @@
 import { bufferToHexaString } from "@ledgerhq/device-management-kit";
 import { type Either, Left, Right } from "purify-ts";
 
-import { LKRPParsingError } from "@api/app-binder/Errors";
+import { LKRPParsingError } from "@api/model/Errors";
 import { type LKRPBlockParsedData } from "@internal/models/LKRPBlockTypes";
 import { type LKRPCommandData } from "@internal/models/LKRPCommandTypes";
 import { CommandTags, GeneralTags } from "@internal/models/Tags";

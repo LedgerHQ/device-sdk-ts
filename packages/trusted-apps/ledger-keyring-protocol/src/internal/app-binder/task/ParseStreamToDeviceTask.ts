@@ -9,12 +9,14 @@ import {
   type LKRPMissingDataError,
   type LKRPParsingError,
   LKRPUnknownError,
-} from "@api/app-binder/Errors";
-import { type SetTrustedMemberCommandArgs } from "@api/app-binder/SetTrustedMemberTypes";
+} from "@api/model/Errors";
 import { ParseBlockSignatureCommand } from "@internal/app-binder/command/ParseBlockSignatureCommand";
 import { ParseSingleCommand } from "@internal/app-binder/command/ParseStreamBlockCommand";
 import { ParseBlockHeaderCommand } from "@internal/app-binder/command/ParseStreamBlockHeader";
-import { SetTrustedMemberCommand } from "@internal/app-binder/command/SetTrustedMemberCommand";
+import {
+  SetTrustedMemberCommand,
+  type SetTrustedMemberCommandArgs,
+} from "@internal/app-binder/command/SetTrustedMemberCommand";
 import { type LKRPDeviceCommandError } from "@internal/app-binder/command/utils/ledgerKeyringProtocolErrors";
 import { type LKRPBlockParsedData } from "@internal/models/LKRPBlockTypes";
 import { eitherSeqRecord } from "@internal/utils/eitherSeqRecord";

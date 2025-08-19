@@ -11,10 +11,6 @@ import {
 import { CommandErrorHelper } from "@ledgerhq/signer-utils";
 import { Maybe } from "purify-ts";
 
-import {
-  type SetTrustedMemberCommandArgs,
-  type SetTrustedMemberCommandResponse,
-} from "@api/app-binder/SetTrustedMemberTypes";
 import { TPTags } from "@internal/models/Tags";
 
 import {
@@ -22,6 +18,13 @@ import {
   type LedgerKeyringProtocolErrorCodes,
   LedgerKeyringProtocolErrorFactory,
 } from "./utils/ledgerKeyringProtocolErrors";
+
+export type SetTrustedMemberCommandResponse = void;
+
+export type SetTrustedMemberCommandArgs = {
+  readonly iv: Uint8Array;
+  readonly memberTlv: Uint8Array;
+};
 
 export class SetTrustedMemberCommand
   implements

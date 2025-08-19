@@ -1,7 +1,7 @@
 import { hexaStringToBuffer } from "@ledgerhq/device-management-kit";
 import { Left, Right } from "purify-ts";
 
-import { LKRPParsingError } from "@api/app-binder/Errors";
+import { LKRPParsingError } from "@api/model/Errors";
 import { GeneralTags } from "@internal/models/Tags";
 
 import { LKRPBlock } from "./LKRPBlock";

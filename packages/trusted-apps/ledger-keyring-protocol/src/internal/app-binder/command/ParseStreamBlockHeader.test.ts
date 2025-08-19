@@ -6,8 +6,10 @@ import {
 } from "@ledgerhq/device-management-kit";
 import { describe, expect, it } from "vitest";
 
-import { type ParseBlockHeaderCommandArgs } from "@api/app-binder/ParseStreamBlockHeaderCommandTypes";
-import { ParseBlockHeaderCommand } from "@internal/app-binder/command/ParseStreamBlockHeader";
+import {
+  ParseBlockHeaderCommand,
+  type ParseBlockHeaderCommandArgs,
+} from "@internal/app-binder/command/ParseStreamBlockHeader";
 
 const HEADER_BYTES = Uint8Array.from([0xab, 0xad, 0xbe, 0xef]);
 const TLV_PAYLOAD = Uint8Array.from([0xf0, 0xca, 0xcc, 0x1a]);

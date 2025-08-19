@@ -5,9 +5,10 @@ import {
 } from "@ledgerhq/device-management-kit";
 import { describe, expect, it } from "vitest";
 
-import type { SetTrustedMemberCommandArgs } from "@api/app-binder/SetTrustedMemberTypes";
-
-import { SetTrustedMemberCommand } from "./SetTrustedMemberCommand";
+import {
+  SetTrustedMemberCommand,
+  type SetTrustedMemberCommandArgs,
+} from "./SetTrustedMemberCommand";
 
 const PLACEHOLDER_BYTES = Uint8Array.from([0xf0, 0xca, 0xcc, 0x1a]);
 

@@ -6,8 +6,9 @@ import { inject, injectable } from "inversify";
 import { of } from "rxjs";
 
 import { AuthenticateDAReturnType } from "@api/app-binder/AuthenticateDeviceActionTypes";
-import { LKRPMissingDataError } from "@api/app-binder/Errors";
-import { Keypair, Permissions } from "@api/app-binder/LKRPTypes";
+import { Keypair } from "@api/app-binder/LKRPTypes";
+import { LKRPMissingDataError } from "@api/model/Errors";
+import { Permissions } from "@api/model/Permissions";
 import { appBinderTypes } from "@internal/app-binder/di/appBinderTypes";
 import { LedgerKeyringProtocolBinder } from "@internal/app-binder/LedgerKeyringProtocolBinder";
 
