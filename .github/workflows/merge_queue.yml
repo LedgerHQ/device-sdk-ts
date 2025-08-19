@@ -14,7 +14,7 @@ jobs:
     name: Run health check and unit tests
     runs-on: "ledgerhq-device-sdk" # Use the custom runner for the merge queue #
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - uses: LedgerHQ/device-sdk-ts/.github/actions/setup-toolchain-composite@develop
 
