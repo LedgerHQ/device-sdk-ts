@@ -5,7 +5,13 @@ import { type AuthenticateDAReturnType } from "./app-binder/AuthenticateDeviceAc
 export interface LedgerKeyringProtocol {
   authenticate: (input: AuthenticateUsecaseInput) => AuthenticateDAReturnType;
 
-  encryptData: (xpriv: Uint8Array, data: Uint8Array) => Uint8Array;
+  encryptData: (
+    encryptionKey: Uint8Array,
+    data: Uint8Array,
+  ) => Promise<Uint8Array>;
 
-  decryptData: (xpriv: Uint8Array, data: Uint8Array) => Uint8Array;
+  decryptData: (
+    encryptionKey: Uint8Array,
+    data: Uint8Array,
+  ) => Promise<Uint8Array>;
 }

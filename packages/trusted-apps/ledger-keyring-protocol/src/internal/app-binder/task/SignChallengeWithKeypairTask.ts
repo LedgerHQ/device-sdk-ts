@@ -5,18 +5,19 @@ import {
 } from "@ledgerhq/device-management-kit";
 import { type Either, EitherAsync, Left, Maybe } from "purify-ts";
 
-import { type Keypair } from "@api/app-binder/LKRPTypes";
+import { type CryptoService, HashAlgo } from "@api/crypto/CryptoService";
+import { type KeyPair, SigFormat } from "@api/crypto/KeyPair";
 import { LKRPMissingDataError, LKRPUnknownError } from "@api/model/Errors";
 import {
   type AuthenticationPayload,
   type Challenge,
 } from "@internal/lkrp-datasource/data/LKRPDataSource";
-import { CryptoUtils } from "@internal/utils/crypto";
 import { eitherSeqRecord } from "@internal/utils/eitherSeqRecord";
 
 export class SignChallengeWithKeypairTask {
   constructor(
-    private readonly keypair: Keypair,
+    private readonly cryptoService: CryptoService,
+    private readonly keypair: KeyPair,
     private readonly trustchainId: string,
   ) {}
 
@@ -27,11 +28,11 @@ export class SignChallengeWithKeypairTask {
     AuthenticationPayload
   > {
     const attestation = this.getAttestation();
-    const credential = this.getCredential(this.keypair.pubKeyToHex());
+    const credential = this.getCredential(this.keypair.getPublicKeyToHex());
 
     return EitherAsync.liftEither(this.getUnsignedChallengeTLV(challenge.tlv))
-      .map(CryptoUtils.hash)
-      .map((hash) => this.keypair.sign(hash))
+      .map((buf) => this.cryptoService.hash(buf, HashAlgo.SHA256))
+      .map((hash) => this.keypair.sign(hash, SigFormat.DER))
       .map((str) => bufferToHexaString(str, false))
       .map((signature) => ({
         challenge: challenge.json,

@@ -4,18 +4,21 @@ import {
 } from "@ledgerhq/device-management-kit";
 import { type Either, Left, Right } from "purify-ts";
 
-import { type Keypair } from "@api/index";
+import { type CryptoService, Curve } from "@api/crypto/CryptoService";
+import { type KeyPair } from "@api/crypto/KeyPair";
 import { InitCommand } from "@internal/app-binder/command/InitCommand";
 import { type LKRPDeviceCommandError } from "@internal/app-binder/command/utils/ledgerKeyringProtocolErrors";
-import { CryptoUtils } from "@internal/utils/crypto";
 
 export class InitTask {
-  constructor(private readonly api: InternalApi) {}
+  constructor(
+    private readonly api: InternalApi,
+    private readonly cryptoService: CryptoService,
+  ) {}
 
-  async run(): Promise<Either<LKRPDeviceCommandError, Keypair>> {
-    const sessionKeypair = CryptoUtils.randomKeypair();
+  async run(): Promise<Either<LKRPDeviceCommandError, KeyPair>> {
+    const sessionKeypair = await this.cryptoService.createKeyPair(Curve.K256);
     const response = await this.api.sendCommand(
-      new InitCommand({ publicKey: sessionKeypair.pubKeyToU8a() }),
+      new InitCommand({ publicKey: sessionKeypair.getPublicKey() }),
     );
 
     return response.status !== CommandResultStatus.Success

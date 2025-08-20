@@ -16,12 +16,14 @@ import {
   AuthenticateDAState,
   AuthenticateDAStep,
 } from "@api/app-binder/AuthenticateDeviceActionTypes";
-import { type JWT, type Keypair } from "@api/index";
+import { type CryptoService } from "@api/crypto/CryptoService";
+import { type KeyPair } from "@api/crypto/KeyPair";
 import {
   LKRPMissingDataError,
   LKRPTrustchainNotReady,
   LKRPUnknownError,
 } from "@api/model/Errors";
+import { type JWT } from "@api/model/JWT";
 import { AuthenticateTask } from "@internal/app-binder/task/AuthenticateTask";
 import { ExtractEncryptionKeyTask } from "@internal/app-binder/task/ExtractEncryptionKeyTask";
 import { SignChallengeWithDeviceTask } from "@internal/app-binder/task/SignChallengeWithDeviceTask";
@@ -113,7 +115,9 @@ export class AuthenticateWithDeviceDeviceAction extends XStateDeviceAction<
                   ?.getAppStream(context.input.appId)
                   .mapOrDefault(
                     (stream) =>
-                      stream.hasMember(context.input.keypair.pubKeyToHex()),
+                      stream.hasMember(
+                        context.input.keypair.getPublicKeyToHex(),
+                      ),
                     false,
                   ),
             )
@@ -260,6 +264,7 @@ export class AuthenticateWithDeviceDeviceAction extends XStateDeviceAction<
                 .chain((state) =>
                   eitherSeqRecord({
                     lkrpDataSource: context.input.lkrpDataSource,
+                    cryptoService: context.input.cryptoService,
                     keypair: context.input.keypair,
                     clientName: context.input.clientName,
                     permissions: context.input.permissions,
@@ -297,6 +302,7 @@ export class AuthenticateWithDeviceDeviceAction extends XStateDeviceAction<
             id: "ExtractEncryptionKey",
             src: "extractEncryptionKey",
             input: ({ context }) => ({
+              cryptoService: context.input.cryptoService,
               keypair: context.input.keypair,
               stream: context._internalState.chain(({ trustchain }) =>
                 required(
@@ -380,12 +386,17 @@ export class AuthenticateWithDeviceDeviceAction extends XStateDeviceAction<
         input,
       }: {
         input: {
-          keypair: Keypair;
+          cryptoService: CryptoService;
+          keypair: KeyPair;
           stream: Either<AuthenticateDAError, LKRPBlockStream>;
         };
       }) =>
         EitherAsync.liftEither(input.stream).chain((stream) =>
-          encryptionKeyExtraction.run(input.keypair, stream),
+          encryptionKeyExtraction.run(
+            input.cryptoService,
+            input.keypair,
+            stream,
+          ),
         ),
     };
   }

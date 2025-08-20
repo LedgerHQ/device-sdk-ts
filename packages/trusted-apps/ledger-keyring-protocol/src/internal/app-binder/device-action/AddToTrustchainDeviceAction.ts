@@ -18,9 +18,9 @@ import {
   AddToTrustchainDAState,
   AddToTrustchaineDAStep,
 } from "@api/app-binder/AddToTrustchainDeviceActionTypes";
-import { type Keypair } from "@api/index";
+import { type CryptoService } from "@api/crypto/CryptoService";
+import { type KeyPair } from "@api/crypto/KeyPair";
 import { LKRPTrustchainNotReady, LKRPUnknownError } from "@api/model/Errors";
-import { type LKRPDeviceCommandError } from "@internal/app-binder/command/utils/ledgerKeyringProtocolErrors";
 import { InitTask } from "@internal/app-binder/task/InitTask";
 import {
   ParseStreamToDeviceTask,
@@ -122,6 +122,8 @@ export class AddToTrustchainDeviceAction extends XStateDeviceAction<
           invoke: {
             id: "initCommand",
             src: "initCommand",
+            input: ({ context }) =>
+              context.input.map((input) => input.cryptoService),
             onError: { actions: "assignErrorFromEvent" },
             onDone: {
               actions: raiseAndAssign(({ event }) =>
@@ -194,6 +196,7 @@ export class AddToTrustchainDeviceAction extends XStateDeviceAction<
               context.input.chain((input) => {
                 const appStream = input.trustchain.getAppStream(input.appId);
                 return eitherSeqRecord({
+                  cryptoService: input.cryptoService,
                   lkrpDataSource: input.lkrpDataSource,
                   trustchainId: input.trustchain.getId(),
                   jwt: input.jwt,
@@ -220,7 +223,7 @@ export class AddToTrustchainDeviceAction extends XStateDeviceAction<
                     type: "addMember",
                     data: {
                       name: input.clientName,
-                      publicKey: input.keypair.pubKeyToU8a(),
+                      publicKey: input.keypair.getPublicKey(),
                       permissions: input.permissions,
                     },
                   },
@@ -272,7 +275,7 @@ export class AddToTrustchainDeviceAction extends XStateDeviceAction<
                     type: "derive",
                     data: {
                       name: input.clientName,
-                      publicKey: input.keypair.pubKeyToU8a(),
+                      publicKey: input.keypair.getPublicKey(),
                       permissions: input.permissions,
                     },
                   },
@@ -298,8 +301,14 @@ export class AddToTrustchainDeviceAction extends XStateDeviceAction<
 
   extractDependencies(internalApi: InternalApi) {
     return {
-      initCommand: (): Promise<Either<LKRPDeviceCommandError, Keypair>> =>
-        new InitTask(internalApi).run(),
+      initCommand: async (args: {
+        input: Either<AddToTrustchainDAError, CryptoService>;
+      }): Promise<Either<AddToTrustchainDAError, KeyPair>> =>
+        EitherAsync.liftEither(args.input)
+          .chain((cryptoService) =>
+            new InitTask(internalApi, cryptoService).run(),
+          )
+          .run(),
 
       parseStream: async (args: {
         input: Either<AddToTrustchainDAError, ParseStreamToDeviceTaskInput>;
@@ -311,10 +320,15 @@ export class AddToTrustchainDeviceAction extends XStateDeviceAction<
           .run(),
 
       signBlock: (args: {
-        input: Either<AddToTrustchainDAError, SignBlockTaskInput>;
+        input: Either<
+          AddToTrustchainDAError,
+          SignBlockTaskInput & { cryptoService: CryptoService }
+        >;
       }): Promise<Either<AddToTrustchainDAError, void>> =>
         EitherAsync.liftEither(args.input)
-          .chain((input) => new SignBlockTask(internalApi).run(input))
+          .chain((input) =>
+            new SignBlockTask(internalApi, input.cryptoService).run(input),
+          )
           .run(),
     };
   }

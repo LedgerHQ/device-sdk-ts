@@ -1,13 +1,16 @@
 import { type Either } from "purify-ts";
 
-import { type AuthenticateDAError, type JWT, type Keypair } from "@api/index";
+import { type CryptoService } from "@api/crypto/CryptoService";
+import { type KeyPair } from "@api/crypto/KeyPair";
+import { type AuthenticateDAError, type JWT } from "@api/index";
 import { type LKRPDataSource } from "@internal/lkrp-datasource/data/LKRPDataSource";
 import { type Trustchain } from "@internal/utils/Trustchain";
 
 export type AuthenticateWithKeypairDAInput = {
   readonly lkrpDataSource: LKRPDataSource;
   readonly appId: number;
-  readonly keypair: Keypair;
+  readonly cryptoService: CryptoService;
+  readonly keypair: KeyPair;
   readonly trustchainId: string;
 };
 

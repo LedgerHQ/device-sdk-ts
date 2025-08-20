@@ -1,18 +1,22 @@
 import React, { useEffect, useMemo, useRef } from "react";
 import {
+  bufferToHexaString,
+  type DeviceActionState,
   DeviceActionStatus,
   DeviceModelId,
   type DmkError,
   type ExecuteDeviceActionReturnType,
+  hexaStringToBuffer,
 } from "@ledgerhq/device-management-kit";
 import {
   type AuthenticateDAError,
   type AuthenticateDAIntermediateValue,
   type AuthenticateDAOutput,
-  KeypairFromBytes,
+  Curve,
+  NobleCryptoService,
   Permissions,
 } from "@ledgerhq/device-trusted-app-kit-ledger-keyring-protocol";
-import { of } from "rxjs";
+import { catchError, from, map, of } from "rxjs";
 import styled from "styled-components";
 
 import { CommandForm } from "@/components//CommandsView/CommandForm";
@@ -21,7 +25,7 @@ import { type DeviceActionProps } from "@/components/DeviceActionsView/DeviceAct
 import { useDmk } from "@/providers/DeviceManagementKitProvider";
 import { useDeviceSessionsContext } from "@/providers/DeviceSessionsProvider";
 import { useLedgerKeyringProtocol } from "@/providers/LedgerKeyringProvider";
-import { bytesToHex, genIdentity, hexToBytes } from "@/utils/crypto";
+import { genIdentity } from "@/utils/crypto";
 
 export const LedgerKeyringProtocolView: React.FC = () => {
   const dmk = useDmk();
@@ -59,8 +63,12 @@ export const LedgerKeyringProtocolView: React.FC = () => {
           if (!app) {
             throw new Error("Ledger Keyring Protocol app not initialized");
           }
+          const cryptoService = new NobleCryptoService();
           return app.authenticate({
-            keypair: new KeypairFromBytes(hexToBytes(privateKey)),
+            keypair: cryptoService.importKeyPair(
+              hexaStringToBuffer(privateKey)!,
+              Curve.K256,
+            ),
             clientName,
             permissions: Permissions.OWNER,
             trustchainId,
@@ -86,10 +94,10 @@ export const LedgerKeyringProtocolView: React.FC = () => {
             throw new Error("Ledger Keyring Protocol app not initialized");
           }
           encryptionKeyRef.current = encryptionKey;
-          return fnToDAReturn(() =>
-            bytesToHex(
-              app.encryptData(
-                hexToBytes(encryptionKey),
+          return fnToDAReturn(async () =>
+            bufferToHexaString(
+              await app.encryptData(
+                hexaStringToBuffer(encryptionKey)!,
                 new TextEncoder().encode(data),
               ),
             ),
@@ -118,9 +126,12 @@ export const LedgerKeyringProtocolView: React.FC = () => {
             throw new Error("Ledger Keyring Protocol app not initialized");
           }
           encryptionKeyRef.current = encryptionKey;
-          return fnToDAReturn(() =>
+          return fnToDAReturn(async () =>
             new TextDecoder().decode(
-              app.decryptData(hexToBytes(encryptionKey), hexToBytes(data)),
+              await app.decryptData(
+                hexaStringToBuffer(encryptionKey)!,
+                hexaStringToBuffer(data)!,
+              ),
             ),
           );
         },
@@ -160,26 +171,26 @@ const RowCommandForm = styled(CommandForm)`
 `;
 
 function fnToDAReturn<Output, Error>(
-  fn: () => Output,
+  fn: () => Promise<Output>,
 ): ExecuteDeviceActionReturnType<Output, Error, never> {
-  let observable: ExecuteDeviceActionReturnType<
-    Output,
-    Error,
-    never
-  >["observable"];
-  try {
-    observable = of({
-      status: DeviceActionStatus.Completed,
-      output: fn(),
-    });
-  } catch (error) {
-    observable = of({
-      status: DeviceActionStatus.Error,
-      error: error as Error,
-    });
-  }
+  const observable = from(fn()).pipe(
+    map(
+      (output: Output) =>
+        ({
+          status: DeviceActionStatus.Completed,
+          output,
+        }) satisfies DeviceActionState<Output, Error, never>,
+    ),
+    catchError((error: Error) =>
+      of({
+        status: DeviceActionStatus.Error,
+        error,
+      } satisfies DeviceActionState<Output, Error, never>),
+    ),
+  );
+
   return {
     observable,
-    cancel: () => undefined, // Can't cancel a synchronous function
+    cancel: () => undefined,
   };
 }

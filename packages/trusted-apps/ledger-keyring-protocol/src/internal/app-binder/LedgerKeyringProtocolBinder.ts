@@ -8,7 +8,8 @@ import { inject, injectable } from "inversify";
 
 import { AuthenticateDAReturnType } from "@api/app-binder/AuthenticateDeviceActionTypes";
 import { GetVersionDAReturnType } from "@api/app-binder/GetVersionDeviceActionTypes";
-import { Keypair } from "@api/app-binder/LKRPTypes";
+import { type CryptoService } from "@api/crypto/CryptoService";
+import { KeyPair } from "@api/crypto/KeyPair";
 import { Permissions } from "@api/model/Permissions";
 import { externalTypes } from "@internal/externalTypes";
 import { type LKRPDataSource } from "@internal/lkrp-datasource/data/LKRPDataSource";
@@ -26,18 +27,22 @@ export class LedgerKeyringProtocolBinder {
     @inject(externalTypes.ApplicationId)
     private readonly applicationId: number,
 
+    @inject(externalTypes.CryptoService)
+    private readonly cryptoService: CryptoService,
+
     @inject(lkrpDatasourceTypes.LKRPDataSource)
     private readonly lkrpDataSource: LKRPDataSource,
   ) {}
 
   authenticateWithKeypair(args: {
-    keypair: Keypair;
+    keypair: KeyPair;
     trustchainId: string;
   }): AuthenticateDAReturnType {
     return new AuthenticateWithKeypairDeviceAction({
       input: {
         lkrpDataSource: this.lkrpDataSource,
         appId: this.applicationId,
+        cryptoService: this.cryptoService,
         keypair: args.keypair,
         trustchainId: args.trustchainId,
       },
@@ -45,7 +50,7 @@ export class LedgerKeyringProtocolBinder {
   }
 
   authenticateWithDevice(args: {
-    keypair: Keypair;
+    keypair: KeyPair;
     clientName: string;
     permissions: Permissions;
     sessionId: DeviceSessionId;
@@ -56,6 +61,7 @@ export class LedgerKeyringProtocolBinder {
         input: {
           lkrpDataSource: this.lkrpDataSource,
           appId: this.applicationId,
+          cryptoService: this.cryptoService,
           clientName: args.clientName,
           permissions: args.permissions,
           keypair: args.keypair,
