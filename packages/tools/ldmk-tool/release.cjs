@@ -25,8 +25,7 @@ const GLOB = [
   "!**/packages/config/**",
   // Ignore Tools
   "!**/packages/tools/**",
-  // Ignore trusted apps and UI for now
-  "!**/packages/trusted-apps/**",
+  // Ignore UI for now
   "!**/packages/ui/**",
 ];
 
