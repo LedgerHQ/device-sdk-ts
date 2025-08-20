@@ -202,11 +202,12 @@ export class BleDeviceConnection implements DeviceConnection {
     );
     for (const frame of frames) {
       try {
+        const frameData = frame.getRawData();
         this._logger.debug("Sending Frame", {
-          data: { frame: frame.getRawData() },
+          data: { frame: frameData },
         });
         await this._writeCharacteristic.writeValueWithoutResponse(
-          frame.getRawData(),
+          new Uint8Array(frameData),
         );
       } catch (error) {
         this._logger.error("Error sending frame", { data: { error } });

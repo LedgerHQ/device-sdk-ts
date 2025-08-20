@@ -85,7 +85,10 @@ export class WebHidApduSender
 
     for (const frame of this.apduSender.getFrames(apdu)) {
       try {
-        await this.dependencies.device.sendReport(0, frame.getRawData());
+        await this.dependencies.device.sendReport(
+          0,
+          new Uint8Array(frame.getRawData()),
+        );
       } catch (error) {
         this.logger.info("Error sending frame", { data: { error } });
         return Promise.resolve(Left(new WebHidSendReportError(error)));
