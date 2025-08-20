@@ -23,7 +23,7 @@ export type ContextModuleMetadataServiceConfig = {
 export type ContextModuleConfig = {
   cal: ContextModuleCalConfig;
   web3checks: ContextModuleWeb3ChecksConfig;
-  metadataService: ContextModuleMetadataServiceConfig;
+  metadataServiceDomain: ContextModuleMetadataServiceConfig;
   defaultLoaders: boolean;
   customLoaders: ContextLoader[];
   customTypedDataLoader?: TypedDataContextLoader;

@@ -1,9 +1,3 @@
-import { type LKRPBlockStream } from "@internal/utils/LKRPBlockStream";
-
-export type Trustchain = {
-  [path: string]: LKRPBlockStream;
-};
-
 export type PublishedKey = {
   privateKey: Uint8Array;
   chainCode: Uint8Array;

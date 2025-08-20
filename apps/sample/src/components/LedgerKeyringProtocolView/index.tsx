@@ -1,6 +1,7 @@
-import React, { useMemo, useRef } from "react";
+import React, { useEffect, useMemo, useRef } from "react";
 import {
   DeviceActionStatus,
+  DeviceModelId,
   type DmkError,
   type ExecuteDeviceActionReturnType,
 } from "@ledgerhq/device-management-kit";
@@ -18,20 +19,34 @@ import { CommandForm } from "@/components//CommandsView/CommandForm";
 import { DeviceActionsList } from "@/components/DeviceActionsView/DeviceActionsList";
 import { type DeviceActionProps } from "@/components/DeviceActionsView/DeviceActionTester";
 import { useDmk } from "@/providers/DeviceManagementKitProvider";
+import { useDeviceSessionsContext } from "@/providers/DeviceSessionsProvider";
 import { useLedgerKeyringProtocol } from "@/providers/LedgerKeyringProvider";
 import { bytesToHex, genIdentity, hexToBytes } from "@/utils/crypto";
 
-export const LedgerKeyringProtocolView: React.FC<{ sessionId: string }> = ({
-  sessionId,
-}) => {
+export const LedgerKeyringProtocolView: React.FC = () => {
   const dmk = useDmk();
-  const app = useLedgerKeyringProtocol();
 
-  const deviceModelId = dmk.getConnectedDevice({
-    sessionId,
-  }).modelId;
+  // NOTE: Use a ref for the sessionId because the reference a given DeviceActionProp will not get updated
+  // once the browser navigated to the device action route (Including the reference to the executeDeviceAction function)
+  const sessionIdRef = useRef<string>();
+  const modelIdRef = useRef<DeviceModelId>();
+  {
+    const {
+      state: { selectedId: sessionId },
+    } = useDeviceSessionsContext();
+    useEffect(() => {
+      if (!sessionId) return;
 
+      sessionIdRef.current = sessionId;
+
+      modelIdRef.current = dmk.getConnectedDevice({ sessionId }).modelId;
+    }, [sessionId, dmk]);
+  }
+
+  // NOTE: Use a ref here for the same reason as above.
   const encryptionKeyRef = useRef("");
+
+  const app = useLedgerKeyringProtocol();
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const deviceActions: DeviceActionProps<any, any, any, any>[] = useMemo(
@@ -44,16 +59,17 @@ export const LedgerKeyringProtocolView: React.FC<{ sessionId: string }> = ({
           if (!app) {
             throw new Error("Ledger Keyring Protocol app not initialized");
           }
-          return app.authenticate(
-            new KeypairFromBytes(hexToBytes(privateKey)),
+          return app.authenticate({
+            keypair: new KeypairFromBytes(hexToBytes(privateKey)),
             clientName,
-            Permissions.OWNER,
-            trustchainId || undefined,
-          );
+            permissions: Permissions.OWNER,
+            trustchainId,
+            sessionId: sessionIdRef.current,
+          });
         },
         InputValuesComponent: RowCommandForm as typeof CommandForm<AuthInput>,
         initialValues: { ...genIdentity(), trustchainId: "" },
-        deviceModelId,
+        deviceModelId: modelIdRef.current || DeviceModelId.FLEX,
       } satisfies DeviceActionProps<
         AuthenticateDAOutput,
         AuthInput,
@@ -85,7 +101,7 @@ export const LedgerKeyringProtocolView: React.FC<{ sessionId: string }> = ({
           },
           data: "",
         },
-        deviceModelId,
+        deviceModelId: modelIdRef.current || DeviceModelId.FLEX,
       } satisfies DeviceActionProps<
         string,
         { encryptionKey: string; data: string },
@@ -114,7 +130,7 @@ export const LedgerKeyringProtocolView: React.FC<{ sessionId: string }> = ({
           },
           data: "",
         },
-        deviceModelId,
+        deviceModelId: modelIdRef.current || DeviceModelId.FLEX,
       } satisfies DeviceActionProps<
         string,
         { encryptionKey: string; data: string },
@@ -122,7 +138,7 @@ export const LedgerKeyringProtocolView: React.FC<{ sessionId: string }> = ({
         never
       >,
     ],
-    [app, deviceModelId],
+    [app],
   );
 
   return (

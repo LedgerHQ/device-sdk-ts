@@ -1,7 +1,4 @@
-import {
-  type DeviceManagementKit,
-  type DeviceSessionId,
-} from "@ledgerhq/device-management-kit";
+import { type DeviceManagementKit } from "@ledgerhq/device-management-kit";
 import { Container } from "inversify";
 
 import { LKRPEnv } from "@api/index";
@@ -13,7 +10,6 @@ import { externalTypes } from "./externalTypes";
 
 export type MakeContainerProps = {
   dmk: DeviceManagementKit;
-  sessionId: DeviceSessionId;
   applicationId: number;
   env?: LKRPEnv;
   baseUrl?: string; // Optional base URL for the LKRP network requests
@@ -22,7 +18,6 @@ export type MakeContainerProps = {
 
 export const makeContainer = ({
   dmk,
-  sessionId,
   applicationId,
   env = LKRPEnv.PROD,
   baseUrl,
@@ -31,9 +26,6 @@ export const makeContainer = ({
   const container = new Container();
 
   container.bind<DeviceManagementKit>(externalTypes.Dmk).toConstantValue(dmk);
-  container
-    .bind<DeviceSessionId>(externalTypes.SessionId)
-    .toConstantValue(sessionId);
   container.bind(externalTypes.ApplicationId).toConstantValue(applicationId);
 
   container.loadSync(

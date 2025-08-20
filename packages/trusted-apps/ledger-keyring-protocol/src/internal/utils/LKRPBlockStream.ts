@@ -22,18 +22,12 @@ export class LKRPBlockStream {
   constructor(
     private readonly bytes: Uint8Array,
     blocks?: LKRPBlock[],
-    path?: string,
   ) {
     this.blocks = blocks ? Just(Right(blocks)) : Nothing;
-    this.path = Maybe.fromNullable(path);
   }
 
   static fromHex(hex: string): LKRPBlockStream {
     return new LKRPBlockStream(hexToBytes(hex));
-  }
-
-  static fromPath(path: string): LKRPBlockStream {
-    return new LKRPBlockStream(new Uint8Array(), [], path);
   }
 
   static fromData(
@@ -132,9 +126,9 @@ export class LKRPBlockStream {
     this.path.ifNothing(() => {
       this.path = this.parse()
         .toMaybe()
-        .chain((blocks) => Maybe.fromNullable(blocks[0]))
+        .chainNullable((blocks) => blocks[0])
         .chain((block) => block.parse().toMaybe())
-        .chain(({ commands }) => Maybe.fromNullable(commands[0]))
+        .chainNullable(({ commands }) => commands[0])
         .chain((command) => command.parse().toMaybe())
         .chain((data) => {
           switch (data.type) {
