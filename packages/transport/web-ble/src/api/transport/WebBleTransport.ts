@@ -335,9 +335,25 @@ export class WebBleTransport implements Transport {
             );
           }
         }),
-        concatMap((svc) =>
-          from(this._rebindCharacteristics(deviceId, svc, apduSender, machine)),
-        ),
+        concatMap((svc) => {
+          // NEW: update infos if service UUID changed
+          const freshInfos =
+            this._deviceModelDataSource.getBluetoothServicesInfos()[svc.uuid];
+          if (!freshInfos) {
+            throw new OpeningConnectionError(
+              "Unknown Ledger GATT service after reconnect",
+            );
+          }
+          entry.infos = freshInfos;
+          entry.discovered = {
+            ...entry.discovered,
+            deviceModel: freshInfos.deviceModel,
+          };
+
+          return from(
+            this._rebindCharacteristics(deviceId, svc, apduSender, machine),
+          );
+        }),
         retryWhen((err$) =>
           err$.pipe(
             tap((err) =>
@@ -367,23 +383,24 @@ export class WebBleTransport implements Transport {
             this._reconnectionTimers.delete(deviceId);
           }
 
-          this._connectionMachines.get(deviceId)?.eventDeviceConnected();
-
           try {
             if (entry?.onReconnect) {
-              await entry.onReconnect(); // wait for SCP reset
+              await entry.onReconnect(); // complete SCP reset first
             }
           } catch (e) {
             this._logger.error("onReconnect callback threw", {
               data: { error: e },
             });
+          } finally {
+            // Now the machine is allowed to send queued APDUs
+            this._connectionMachines.get(deviceId)?.eventDeviceConnected();
+
+            // Unblock external senders, too
+            const pendingSenders = this._reconnectionPromises.get(deviceId);
+            pendingSenders?.resolve();
+            this._reconnectionPromises.delete(deviceId);
           }
-
-          // Unblock pending sends *after* SCP reset
-          const pendingSenders = this._reconnectionPromises.get(deviceId);
-          pendingSenders?.resolve();
-          this._reconnectionPromises.delete(deviceId);
-
+          // REMOVE
           reconnectionSub.unsubscribe();
         },
         error: () => {
