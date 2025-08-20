@@ -77,6 +77,50 @@ export class WebBleApduSender
     }
   };
 
+  private _looksDisconnected(e: unknown): boolean {
+    const err = e as any;
+    const name = (err?.name ?? "").toString();
+    const msg = (err?.message ?? "").toString().toLowerCase();
+    // Covers Chrome/WebBT errors on Win/macOS/Android
+    return (
+      name === "NetworkError" ||
+      msg.includes("gatt server is disconnected") ||
+      msg.includes("not connected") ||
+      msg.includes("cannot perform gatt operations")
+    );
+  }
+
+  private _markLinkDown(): void {
+    // Stop delivering frames & force upper layers to treat link as down
+    try {
+      if (this._notificationsActive) {
+        this._characteristics.notifyCharacteristic.removeEventListener(
+          "characteristicvaluechanged",
+          this._handleNotify,
+        );
+        this._characteristics.notifyCharacteristic
+          .stopNotifications()
+          .catch(() => {});
+        this._notificationsActive = false;
+      }
+    } catch {
+      /* ignore */
+    }
+
+    this._isDeviceReady.next(false);
+    this._apduSender = Maybe.empty();
+    this._sendResolver = Maybe.empty();
+  }
+
+  private _gattConnected(): boolean {
+    try {
+      return !!this._characteristics.notifyCharacteristic.service.device.gatt
+        ?.connected;
+    } catch {
+      return false;
+    }
+  }
+
   private _onReceiveSetup(mtuResponseBuffer: Uint8Array) {
     const negotiatedMtu = mtuResponseBuffer[5]; // adjust if MTU is 16-bit in your proto
     if (typeof negotiatedMtu !== "number" || negotiatedMtu <= 0) {
@@ -105,26 +149,42 @@ export class WebBleApduSender
   }
 
   private async _write(buf: ArrayBuffer) {
-    const props = this._characteristics.writeCharacteristic.properties;
-    if (props.write) {
-      await this._characteristics.writeCharacteristic.writeValueWithResponse(
-        buf,
-      );
-    } else if (props.writeWithoutResponse) {
-      await this._characteristics.writeCharacteristic.writeValueWithoutResponse(
-        buf,
-      );
-    } else {
-      // fallback to trying with response, then without
-      try {
-        await this._characteristics.writeCharacteristic.writeValueWithResponse(
-          buf,
-        );
-      } catch {
-        await this._characteristics.writeCharacteristic.writeValueWithoutResponse(
-          buf,
+    const c = this._characteristics.writeCharacteristic;
+
+    // If GATT is down, don't even try
+    if (!this._gattConnected()) {
+      this._markLinkDown();
+      throw new DeviceDisconnectedWhileSendingError("GATT not connected");
+    }
+
+    // Try WITH response
+    try {
+      // @ts-ignore web bluetooth has this
+      await c.writeValueWithResponse(buf);
+      return;
+    } catch (e1) {
+      if (this._looksDisconnected(e1)) {
+        this._markLinkDown();
+        throw new DeviceDisconnectedWhileSendingError(
+          "Write failed (with response)",
         );
       }
+      // fall through to without-response
+    }
+
+    // Try WITHOUT response
+    try {
+      // @ts-ignore
+      await c.writeValueWithoutResponse(buf);
+    } catch (e2) {
+      if (this._looksDisconnected(e2)) {
+        this._markLinkDown();
+        throw new DeviceDisconnectedWhileSendingError(
+          "Write failed (without response)",
+        );
+      }
+      this._logger.error("Write failed (both modes)", { data: { e2 } });
+      throw e2;
     }
   }
 
@@ -139,6 +199,9 @@ export class WebBleApduSender
         this._handleNotify,
       );
     }
+
+    // NEW: stabilization backoff
+    await new Promise((r) => setTimeout(r, 120));
 
     this._mtuHandshakeInFlight = true;
     const mtuReq = new Uint8Array([WebBleApduSender.MTU_OP, 0, 0, 0, 0]);
@@ -188,6 +251,22 @@ export class WebBleApduSender
     _triggersDisconnection?: boolean,
     _abortTimeout?: number,
   ): Promise<Either<DmkError, ApduResponse>> {
+    if (!this._gattConnected()) {
+      this._markLinkDown();
+      return Left(
+        new DeviceDisconnectedWhileSendingError(
+          "GATT not connected",
+        ) as unknown as DmkError,
+      );
+    }
+
+    if (this._apduSender.isNothing()) {
+      return Left(
+        new DeviceDisconnectedWhileSendingError(
+          "Link not ready (no MTU / sender)",
+        ) as unknown as DmkError,
+      );
+    }
     if (this._apduSender.isNothing()) {
       return Left(
         new DeviceDisconnectedWhileSendingError(

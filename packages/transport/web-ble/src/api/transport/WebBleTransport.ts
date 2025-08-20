@@ -1,10 +1,11 @@
+// WebBleTransportRnStyle.ts
 import {
   type ApduReceiverServiceFactory,
   type ApduSenderServiceFactory,
   type ConnectError,
-  DeviceAlreadyConnectedError,
-  DeviceDisconnectedWhileSendingError,
   type DeviceModelDataSource,
+  type DmkError,
+  GeneralDmkError,
   type LoggerPublisherService,
   OpeningConnectionError,
   type Transport,
@@ -17,8 +18,7 @@ import {
 } from "@ledgerhq/device-management-kit";
 import { DeviceConnectionStateMachine } from "@ledgerhq/device-management-kit";
 import { type Either, Left, Right } from "purify-ts";
-import { defer, from, type Observable, Subject, throwError } from "rxjs";
-import { concatMap, retryWhen, scan, tap, timeout } from "rxjs/operators";
+import { BehaviorSubject, from, type Observable } from "rxjs";
 import { switchMap } from "rxjs/operators";
 
 import {
@@ -32,7 +32,20 @@ import {
   type WebBleApduSenderDependencies,
 } from "./WebBleApduSender";
 
-export const webBleIdentifier: TransportIdentifier = "WEB-BLE";
+export const webBleIdentifier: TransportIdentifier = "WEB-BLE-RN-STYLE";
+
+type RegistryEntry = {
+  device: BluetoothDevice;
+  service: BluetoothRemoteGATTService;
+  infos: {
+    writeCmdUuid: string;
+    writeUuid?: string;
+    notifyUuid: string;
+    deviceModel: TransportDeviceModel;
+  };
+  discovered: TransportDiscoveredDevice;
+  listener?: (ev: Event) => void;
+};
 
 export class WebBleTransport implements Transport {
   private _logger: LoggerPublisherService;
@@ -40,38 +53,17 @@ export class WebBleTransport implements Transport {
   private _apduSenderFactory: ApduSenderServiceFactory;
   private _apduReceiverFactory: ApduReceiverServiceFactory;
 
-  private _deviceRegistry = new Map<
-    string,
-    {
-      device: BluetoothDevice;
-      service: BluetoothRemoteGATTService;
-      infos: {
-        writeCmdUuid: string;
-        notifyUuid: string;
-        deviceModel: TransportDeviceModel;
-      };
-      discovered: TransportDiscoveredDevice;
-      onDisconnect?: () => void;
-      onReconnect?: () => Promise<void> | void;
-      listener?: (ev: Event) => void;
-    }
-  >();
-
-  private _connectionMachines = new Map<
+  // RN-style: one SM per device, no external timers/promises
+  private _deviceConnectionsById = new Map<
     string,
     DeviceConnectionStateMachine<WebBleApduSenderDependencies>
   >();
-  private _discoveredDevicesSubject = new Subject<
-    TransportDiscoveredDevice[]
-  >();
-  private _reconnectionPromises = new Map<
-    string,
-    { promise: Promise<void>; resolve: () => void }
-  >();
-  private _reconnectionTimers = new Map<
-    string,
-    ReturnType<typeof setTimeout>
-  >();
+
+  private _registry = new Map<string, RegistryEntry>();
+  private _reconnecting = new Set<string>(); // prevent parallel reconnects
+
+  // Emits the merged list (connected + discovered)
+  private _devices$ = new BehaviorSubject<TransportDiscoveredDevice[]>([]);
 
   constructor(
     deviceModelDataSource: DeviceModelDataSource,
@@ -82,7 +74,7 @@ export class WebBleTransport implements Transport {
     this._deviceModelDataSource = deviceModelDataSource;
     this._apduSenderFactory = apduSenderFactory;
     this._apduReceiverFactory = apduReceiverFactory;
-    this._logger = loggerFactory("WebBleTransport");
+    this._logger = loggerFactory("WebBleTransportRnStyle");
   }
 
   isSupported(): boolean {
@@ -93,6 +85,10 @@ export class WebBleTransport implements Transport {
     return webBleIdentifier;
   }
 
+  /**
+   * One-shot picker (must be called from a user gesture).
+   * Adds the selected device to the registry and emits through listenToAvailableDevices().
+   */
   startDiscovering(): Observable<TransportDiscoveredDevice> {
     const filters = this._deviceModelDataSource
       .getBluetoothServices()
@@ -106,21 +102,21 @@ export class WebBleTransport implements Transport {
           );
 
         const server = await device.gatt.connect();
+
+        // Find any known Ledger service on this device
         const knownUuids = this._deviceModelDataSource.getBluetoothServices();
         let service: BluetoothRemoteGATTService | null = null;
-
         for (const uuid of knownUuids) {
           try {
             service = await server.getPrimaryService(uuid);
             break;
           } catch {
-            this._logger.warn(
-              `Service ${uuid} not found on device ${device.name}`,
-            );
+            /* ignore */
           }
         }
-        if (!service)
+        if (!service) {
           throw new OpeningConnectionError("Ledger GATT service not found");
+        }
 
         const infos =
           this._deviceModelDataSource.getBluetoothServicesInfos()[service.uuid];
@@ -133,22 +129,27 @@ export class WebBleTransport implements Transport {
           transport: webBleIdentifier,
         };
 
-        this._deviceRegistry.set(id, { device, service, infos, discovered });
+        this._registry.set(id, { device, service, infos, discovered });
+        this._emitDevices();
         return discovered;
       }),
     );
   }
 
+  /**
+   * Web cannot passively scan. This observable emits:
+   *  - currently connected devices, plus
+   *  - any devices you add via startDiscovering().
+   * Call startDiscovering() from a user gesture to add more devices.
+   */
   listenToAvailableDevices(): Observable<TransportDiscoveredDevice[]> {
-    this.startDiscovering().subscribe({
-      next: (d) => this._discoveredDevicesSubject.next([d]),
-      error: (e) => this._logger.error("Scan error", { data: { e } }),
-    });
-    return this._discoveredDevicesSubject.asObservable();
+    // Emit current snapshot immediately
+    this._emitDevices();
+    return this._devices$.asObservable();
   }
 
   stopDiscovering(): void {
-    // browser prompt cannot be cancelled
+    /* no-op (Web Bluetooth has no background scan to stop) */
   }
 
   async connect(params: {
@@ -156,35 +157,57 @@ export class WebBleTransport implements Transport {
     onDisconnect: (deviceId: string) => void;
     onReconnect?: (deviceId: string) => Promise<void> | void;
   }): Promise<Either<ConnectError, TransportConnectedDevice>> {
-    const deviceEntry = this._deviceRegistry.get(params.deviceId);
+    const existing = this._deviceConnectionsById.get(params.deviceId);
+    if (existing) {
+      const entry = this._registry.get(params.deviceId);
+      if (!entry)
+        return Left(
+          new UnknownDeviceError(`Unknown device ${params.deviceId}`),
+        );
+      return Right(
+        new TransportConnectedDevice({
+          id: params.deviceId,
+          deviceModel: entry.infos.deviceModel,
+          type: "BLE",
+          transport: webBleIdentifier,
+          sendApdu: (...a) => existing.sendApdu(...a),
+        }),
+      );
+    }
 
-    if (this._connectionMachines.has(params.deviceId)) {
-      return Left(new DeviceAlreadyConnectedError("Device already connected"));
-    }
-    if (!deviceEntry) {
+    const entry = this._registry.get(params.deviceId);
+    if (!entry)
       return Left(new UnknownDeviceError(`Unknown device ${params.deviceId}`));
-    }
 
     try {
-      const { device, service, infos, discovered } = deviceEntry;
+      const { device } = entry;
+      if (!device.gatt?.connected) {
+        await device.gatt!.connect();
+        await this._delay(250); // give Chrome a moment
+      }
+
+      // Find the live service and proper characteristics
+      const service = await this._findAnyLedgerService(device);
+      const infos =
+        this._deviceModelDataSource.getBluetoothServicesInfos()[service.uuid];
+      if (!infos) throw new OpeningConnectionError("Unknown Ledger service");
+
+      const writeCharacteristic = await this._pickWriteCharacteristic(
+        service,
+        infos,
+      );
+      const notifyCharacteristic = await service.getCharacteristic(
+        infos.notifyUuid,
+      );
 
       const apduSender = new WebBleApduSender(
         {
-          writeCharacteristic: await service.getCharacteristic(
-            infos.writeCmdUuid,
-          ),
-          notifyCharacteristic: await service.getCharacteristic(
-            infos.notifyUuid,
-          ),
+          writeCharacteristic,
+          notifyCharacteristic,
           apduSenderFactory: this._apduSenderFactory,
           apduReceiverFactory: this._apduReceiverFactory,
         },
         this.loggerFactory,
-      );
-
-      const disconnectHandler = this.handleDisconnect(
-        params.deviceId,
-        apduSender,
       );
 
       const connectionMachine =
@@ -193,358 +216,301 @@ export class WebBleTransport implements Transport {
           deviceApduSender: apduSender,
           timeoutDuration: RECONNECT_DEVICE_TIMEOUT,
           tryToReconnect: () => {
-            disconnectHandler();
+            this.tryToReconnect(params.deviceId, params.onReconnect).catch(
+              (e: unknown) =>
+                this._logger.error("tryToReconnect() threw", { data: { e } }),
+            );
           },
           onTerminated: () => {
             try {
               params.onDisconnect(params.deviceId);
-              this._connectionMachines.delete(params.deviceId);
-              const t = this._reconnectionTimers.get(params.deviceId);
-              if (t) {
-                clearTimeout(t);
-                this._reconnectionTimers.delete(params.deviceId);
+            } finally {
+              this._deviceConnectionsById.delete(params.deviceId);
+              const reg = this._registry.get(params.deviceId);
+              if (reg?.listener) {
+                reg.device.removeEventListener(
+                  "gattserverdisconnected",
+                  reg.listener,
+                );
+                reg.listener = undefined;
               }
-            } catch (e) {
-              this._logger.error("Error during onTerminated cleanup", {
-                data: { error: e },
-              });
+              this._emitDevices();
             }
           },
         });
 
-      await connectionMachine.setupConnection();
+      await apduSender.setupConnection();
 
-      deviceEntry.onDisconnect = () => params.onDisconnect(params.deviceId);
-      deviceEntry.onReconnect =
-        params.onReconnect && (() => params.onReconnect!(params.deviceId));
-      this._connectionMachines.set(params.deviceId, connectionMachine);
+      // Track connection
+      this._deviceConnectionsById.set(params.deviceId, connectionMachine);
+      entry.service = service;
+      entry.infos = infos;
 
-      deviceEntry.listener = disconnectHandler;
-      device.addEventListener("gattserverdisconnected", deviceEntry.listener);
+      const onDisc = (_ev: Event) =>
+        this._handleDeviceDisconnected(params.deviceId, params.onReconnect);
+      entry.listener = onDisc;
+      device.addEventListener("gattserverdisconnected", onDisc);
+
+      this._emitDevices();
 
       return Right(
         new TransportConnectedDevice({
           id: params.deviceId,
-          deviceModel: discovered.deviceModel,
+          deviceModel: infos.deviceModel,
           type: "BLE",
           transport: webBleIdentifier,
-          sendApdu: async (apdu, triggersDisconnection, abortTimeout) => {
-            const pending = this._reconnectionPromises.get(params.deviceId);
-            if (pending) {
-              try {
-                await pending.promise;
-              } catch {
-                this._logger.error("Reconnection failed");
-              }
-            }
-
-            const machine = this._connectionMachines.get(params.deviceId);
-            if (!machine) {
-              return Left(
-                new UnknownDeviceError(`Unknown device ${params.deviceId}`),
-              );
-            }
-
-            const res = await machine.sendApdu(
-              apdu,
-              triggersDisconnection,
-              abortTimeout,
-            );
-            return res.chainLeft((err) => {
-              if (
-                err instanceof DeviceDisconnectedWhileSendingError &&
-                triggersDisconnection
-              ) {
-                return Right({
-                  statusCode: new Uint8Array([0x90, 0x00]),
-                  data: new Uint8Array(0),
-                });
-              }
-              return Left(err);
-            });
-          },
+          sendApdu: (...a) => connectionMachine.sendApdu(...a),
         }),
       );
-    } catch (e) {
-      this._deviceRegistry.delete(params.deviceId);
-      this._logger.error("Connection error", { data: { error: e } });
+    } catch (e: unknown) {
+      this._logger.error("connect() error", { data: { e } });
       return Left(new OpeningConnectionError(e));
     }
   }
 
-  private handleDisconnect(
-    deviceId: string,
-    apduSender: WebBleApduSender,
-  ): (ev?: Event) => void {
-    return () => {
-      const machine = this._connectionMachines.get(deviceId);
-      const entry = this._deviceRegistry.get(deviceId);
-      if (!machine || !entry) return;
-      if (this._reconnectionPromises.has(deviceId)) {
-        this._logger.debug("reconnection already in flight, ignoring");
-        return;
-      }
-
-      const pending = {} as { promise: Promise<void>; resolve: () => void };
-      pending.promise = new Promise<void>((res) => (pending.resolve = res));
-      this._reconnectionPromises.set(deviceId, pending);
-
-      machine.eventDeviceDisconnected();
-
-      if (this._reconnectionTimers.has(deviceId))
-        clearTimeout(this._reconnectionTimers.get(deviceId)!);
-
-      const disconnectTimer = setTimeout(() => {
-        entry.onDisconnect?.();
-        this._cleanupConnection(deviceId);
-      }, RECONNECT_DEVICE_TIMEOUT);
-      this._reconnectionTimers.set(deviceId, disconnectTimer);
-
-      const reconnectionSubject = defer(() => {
-        this._logger.debug("attempt gatt.connect()");
-        if (entry.device.gatt?.connected) entry.device.gatt.disconnect();
-        return from(entry.device.gatt!.connect());
-      }).pipe(
-        timeout({
-          first: SINGLE_RECONNECTION_TIMEOUT,
-          with: () =>
-            throwError(
-              () =>
-                new OpeningConnectionError(
-                  `connect timed out after ${SINGLE_RECONNECTION_TIMEOUT} ms`,
-                ),
-            ),
-        }),
-        concatMap(async () => {
-          try {
-            return await entry.device.gatt!.getPrimaryService(
-              entry.service.uuid,
-            );
-          } catch {
-            for (const uuid of this._deviceModelDataSource.getBluetoothServices()) {
-              try {
-                return await entry.device.gatt!.getPrimaryService(uuid);
-              } catch {
-                this._logger.warn(
-                  `Service ${uuid} not found on device ${entry.device.name}`,
-                );
-              }
-            }
-            throw new OpeningConnectionError(
-              "Ledger GATT service not found on reconnect",
-            );
-          }
-        }),
-        concatMap((svc) => {
-          // NEW: update infos if service UUID changed
-          const freshInfos =
-            this._deviceModelDataSource.getBluetoothServicesInfos()[svc.uuid];
-          if (!freshInfos) {
-            throw new OpeningConnectionError(
-              "Unknown Ledger GATT service after reconnect",
-            );
-          }
-          entry.infos = freshInfos;
-          entry.discovered = {
-            ...entry.discovered,
-            deviceModel: freshInfos.deviceModel,
-          };
-
-          return from(
-            this._rebindCharacteristics(deviceId, svc, apduSender, machine),
-          );
-        }),
-        retryWhen((err$) =>
-          err$.pipe(
-            tap((err) =>
-              this._logger.warn(
-                `retrying #${deviceId} (${
-                  err instanceof Error ? err.message : err
-                })`,
-              ),
-            ),
-            scan((count) => {
-              if (count + 1 >= RECONNECTION_RETRY_COUNT) {
-                throw new Error("max retries reached");
-              }
-              return count + 1;
-            }, 0),
-          ),
-        ),
-      );
-
-      const reconnectionSub = reconnectionSubject.subscribe({
-        next: async () => {
-          this._logger.debug(`reconnect SUCCESS for ${deviceId}`);
-
-          const t = this._reconnectionTimers.get(deviceId);
-          if (t) {
-            clearTimeout(t);
-            this._reconnectionTimers.delete(deviceId);
-          }
-
-          try {
-            if (entry?.onReconnect) {
-              await entry.onReconnect(); // complete SCP reset first
-            }
-          } catch (e) {
-            this._logger.error("onReconnect callback threw", {
-              data: { error: e },
-            });
-          } finally {
-            // Now the machine is allowed to send queued APDUs
-            this._connectionMachines.get(deviceId)?.eventDeviceConnected();
-
-            // Unblock external senders, too
-            const pendingSenders = this._reconnectionPromises.get(deviceId);
-            pendingSenders?.resolve();
-            this._reconnectionPromises.delete(deviceId);
-          }
-          // REMOVE
-          reconnectionSub.unsubscribe();
-        },
-        error: () => {
-          const t = this._reconnectionTimers.get(deviceId);
-          if (t) {
-            clearTimeout(t);
-            this._reconnectionTimers.delete(deviceId);
-          }
-          this._cleanupDevice(deviceId);
-          reconnectionSub.unsubscribe();
-        },
-      });
-    };
-  }
-
-  private _cleanupDevice(deviceId: string): void {
-    try {
-      const machine = this._connectionMachines.get(deviceId);
-      const entry = this._deviceRegistry.get(deviceId);
-      const pending = this._reconnectionPromises.get(deviceId);
-
-      if (machine) {
-        try {
-          machine.eventDeviceDisconnected();
-          machine.closeConnection();
-        } catch (e) {
-          this._logger.error("Error closing state machine", {
-            data: { error: e },
-          });
-        }
-      }
-
-      if (entry) {
-        if (entry.listener) {
-          entry.device.removeEventListener(
-            "gattserverdisconnected",
-            entry.listener,
-          );
-        }
-        if (entry.device.gatt?.connected) {
-          entry.device.gatt.disconnect();
-        }
-      }
-
-      this._connectionMachines.delete(deviceId);
-      this._deviceRegistry.delete(deviceId);
-
-      if (pending) {
-        pending.resolve();
-        this._reconnectionPromises.delete(deviceId);
-      }
-
-      if (this._reconnectionTimers.has(deviceId)) {
-        clearTimeout(this._reconnectionTimers.get(deviceId)!);
-        this._reconnectionTimers.delete(deviceId);
-      }
-    } catch (e) {
-      this._logger.error("Unexpected error during device cleanup", {
-        data: { error: e },
-      });
-    }
-  }
-
-  private _cleanupConnection(deviceId: string): void {
-    const machine = this._connectionMachines.get(deviceId);
-    if (machine) {
-      try {
-        machine.closeConnection();
-      } catch (e) {
-        this._logger.error("Error closing state machine", {
-          data: { error: e },
-        });
-      }
-      this._connectionMachines.delete(deviceId);
-    }
-
-    const pending = this._reconnectionPromises.get(deviceId);
-    if (pending) {
-      pending.resolve();
-      this._reconnectionPromises.delete(deviceId);
-    }
-
-    if (this._reconnectionTimers.has(deviceId)) {
-      clearTimeout(this._reconnectionTimers.get(deviceId)!);
-      this._reconnectionTimers.delete(deviceId);
-    }
-  }
-
-  private async _rebindCharacteristics(
-    deviceId: string,
-    freshSvc: BluetoothRemoteGATTService,
-    apduSender: WebBleApduSender,
-    connectionMachine: DeviceConnectionStateMachine<WebBleApduSenderDependencies>,
-  ) {
-    const deviceEntry = this._deviceRegistry.get(deviceId)!;
-
-    if (deviceEntry.listener)
-      deviceEntry.device.removeEventListener(
-        "gattserverdisconnected",
-        deviceEntry.listener,
-      );
-
-    deviceEntry.listener = this.handleDisconnect(deviceId, apduSender);
-    deviceEntry.device.addEventListener(
-      "gattserverdisconnected",
-      deviceEntry.listener,
-    );
-
-    deviceEntry.service = freshSvc;
-
-    await apduSender.setDependencies({
-      writeCharacteristic: await freshSvc.getCharacteristic(
-        deviceEntry.infos.writeCmdUuid,
-      ),
-      notifyCharacteristic: await freshSvc.getCharacteristic(
-        deviceEntry.infos.notifyUuid,
-      ),
-    });
-
-    await connectionMachine.setupConnection();
-  }
-
-  public async disconnect(params: {
+  async disconnect(params: {
     connectedDevice: TransportConnectedDevice;
-  }) {
+  }): Promise<Either<DmkError, void>> {
     const id = params.connectedDevice.id;
-    const connectionMachine = this._connectionMachines.get(id);
-    if (!connectionMachine)
-      return Left(new UnknownDeviceError(`Unknown device ${id}`));
+    const sm = this._deviceConnectionsById.get(id);
+    const reg = this._registry.get(id);
+    if (!sm) return Left(new UnknownDeviceError(`Unknown device ${id}`));
 
-    const entry = this._deviceRegistry.get(id);
+    try {
+      sm.closeConnection();
+      this._deviceConnectionsById.delete(id);
+      if (reg?.listener) {
+        reg.device.removeEventListener("gattserverdisconnected", reg.listener);
+        reg.listener = undefined;
+      }
+      if (reg?.device.gatt?.connected) {
+        reg.device.gatt.disconnect();
+      }
+      this._emitDevices();
+      return Right(undefined);
+    } catch (e) {
+      return Left(new GeneralDmkError({ originalError: e }));
+    }
+  }
 
-    if (entry && entry.onDisconnect) {
+  // ---------------- RN-style reconnection pipeline ----------------
+
+  private _handleDeviceDisconnected(
+    deviceId: string,
+    onReconnect?: (deviceId: string) => Promise<void> | void,
+  ) {
+    this._logger.debug(`[${deviceId}] gattserverdisconnected`);
+    const sm = this._deviceConnectionsById.get(deviceId);
+    if (!sm) return;
+
+    sm.eventDeviceDisconnected();
+    this.tryToReconnect(deviceId, onReconnect).catch((e) =>
+      this._logger.error("tryToReconnect failed", { data: { e } }),
+    );
+  }
+
+  private async tryToReconnect(
+    deviceId: string,
+    onReconnect?: (deviceId: string) => Promise<void> | void,
+  ) {
+    if (this._reconnecting.has(deviceId)) return;
+    this._reconnecting.add(deviceId);
+
+    const reg = this._registry.get(deviceId);
+    const sm = this._deviceConnectionsById.get(deviceId);
+    if (!reg || !sm) {
+      this._reconnecting.delete(deviceId);
+      return;
+    }
+
+    const { device } = reg;
+
+    for (let attempt = 1; attempt <= RECONNECTION_RETRY_COUNT; attempt++) {
       try {
-        entry.onDisconnect();
-      } catch (e) {
-        this._logger.error("Error in onDisconnect callback", {
-          data: { error: e },
+        if (device.gatt?.connected) {
+          try {
+            device.gatt.disconnect();
+          } catch {
+            /* ignore */
+          }
+        }
+
+        await this._withTimeout(
+          device.gatt!.connect(),
+          SINGLE_RECONNECTION_TIMEOUT,
+          `connect timed out after ${SINGLE_RECONNECTION_TIMEOUT} ms`,
+        );
+
+        await this._delay(200); // let GATT DB populate
+
+        const svc = await this._findAnyLedgerService(device);
+        await this._delay(50); // allow characteristics to become queryable
+        const infos =
+          this._deviceModelDataSource.getBluetoothServicesInfos()[svc.uuid];
+        if (!infos)
+          throw new OpeningConnectionError(
+            "Unknown Ledger service after reconnect",
+          );
+
+        // NEW: choose the *right* write characteristic (with-response if available)
+        const writeCharacteristic = await this._pickWriteCharacteristic(
+          svc,
+          infos,
+        );
+        const notifyCharacteristic = await svc.getCharacteristic(
+          infos.notifyUuid,
+        );
+
+        sm.setDependencies({ writeCharacteristic, notifyCharacteristic });
+
+        // Reattach listener & update registry
+        if (reg.listener)
+          device.removeEventListener("gattserverdisconnected", reg.listener);
+        const onDisc = (_ev: Event) =>
+          this._handleDeviceDisconnected(deviceId, onReconnect);
+        device.addEventListener("gattserverdisconnected", onDisc);
+        reg.listener = onDisc;
+        reg.service = svc;
+        reg.infos = infos;
+
+        await sm.setupConnection(); // triggers MTU probe
+        sm.eventDeviceConnected();
+
+        if (onReconnect) {
+          try {
+            await onReconnect(deviceId);
+          } catch (e: unknown) {
+            this._logger.error("onReconnect callback threw", { data: { e } });
+          }
+        }
+
+        this._logger.debug(
+          `[${deviceId}] reconnect SUCCESS (attempt ${attempt})`,
+        );
+        this._emitDevices();
+        this._reconnecting.delete(deviceId);
+        return;
+      } catch (e: unknown) {
+        this._logger.warn(`[${deviceId}] reconnect attempt ${attempt} failed`, {
+          data: { e },
         });
+        await this._delay(Math.min(250 * attempt, 1000));
       }
     }
 
-    this._cleanupDevice(id);
-    return Promise.resolve(Right(undefined));
+    this._logger.error(`[${deviceId}] all reconnection attempts failed`);
+    try {
+      sm.closeConnection();
+    } catch {
+      /* ignore */
+    }
+    this._reconnecting.delete(deviceId);
+  }
+
+  // ---------------- helpers ----------------
+
+  private _emitDevices() {
+    // Connected devices first (like RN), then discovered-but-not-connected
+    const connected: TransportDiscoveredDevice[] = [];
+    for (const [id] of this._deviceConnectionsById) {
+      const reg = this._registry.get(id);
+      if (reg) {
+        connected.push({
+          id,
+          deviceModel: reg.infos.deviceModel,
+          transport: webBleIdentifier,
+        });
+      }
+    }
+    const scanned = Array.from(this._registry.values())
+      .map((r) => r.discovered)
+      .filter((d) => !this._deviceConnectionsById.has(d.id));
+
+    this._devices$.next([...connected, ...scanned]);
+  }
+
+  private async _findAnyLedgerService(
+    device: BluetoothDevice,
+  ): Promise<BluetoothRemoteGATTService> {
+    const uuids = this._deviceModelDataSource.getBluetoothServices();
+
+    // Prefer last-known UUID first
+    const last = this._registry.get(device.id)?.service?.uuid;
+    const order = last
+      ? [last, ...uuids.filter((u) => u !== last)]
+      : uuids.slice();
+
+    for (const uuid of order) {
+      // First try the direct API
+      try {
+        return await device.gatt!.getPrimaryService(uuid);
+      } catch {
+        /* try slower paths below */
+      }
+
+      // Some stacks only populate after enumerating all services once
+      try {
+        const all = await device.gatt!.getPrimaryServices();
+        const found = all.find(
+          (s) => s.uuid.toLowerCase() === uuid.toLowerCase(),
+        );
+        if (found) return found;
+      } catch {
+        /* keep looping */
+      }
+    }
+
+    throw new OpeningConnectionError(
+      "Ledger GATT service not found on reconnect",
+    );
+  }
+
+  private async _pickWriteCharacteristic(
+    svc: BluetoothRemoteGATTService,
+    infos: RegistryEntry["infos"],
+  ): Promise<BluetoothRemoteGATTCharacteristic> {
+    const tried: BluetoothRemoteGATTCharacteristic[] = [];
+    const uuids = Array.from(
+      new Set([infos.writeUuid, infos.writeCmdUuid].filter(Boolean)),
+    ) as string[];
+
+    for (const uuid of uuids) {
+      try {
+        const ch = await svc.getCharacteristic(uuid);
+        tried.push(ch);
+        // Prefer characteristics that advertise "write" (with response)
+        // Web Bluetooth's properties can lie after reconnect, so we still keep a fallback.
+        // If "write" is present, use it first.
+        if (ch.properties.write) return ch;
+      } catch {
+        /* try next */
+      }
+    }
+    // If none had "write", use the first one that resolved (likely writeCmdUuid)
+    if (tried.length > 0) return tried[0]!;
+
+    // As a last resort, throw
+    throw new OpeningConnectionError("No write characteristic available");
+  }
+
+  private _withTimeout<T>(p: Promise<T>, ms: number, msg: string): Promise<T> {
+    return new Promise<T>((resolve, reject) => {
+      const t = setTimeout(() => reject(new OpeningConnectionError(msg)), ms);
+      p.then(
+        (v) => {
+          clearTimeout(t);
+          resolve(v);
+        },
+        (e) => {
+          clearTimeout(t);
+          reject(e);
+        },
+      );
+    });
+  }
+
+  private _delay(ms: number) {
+    return new Promise((r) => setTimeout(r, ms));
   }
 }
 
