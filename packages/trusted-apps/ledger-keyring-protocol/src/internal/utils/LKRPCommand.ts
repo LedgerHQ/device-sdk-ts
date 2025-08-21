@@ -1,16 +1,19 @@
+import {
+  bufferToHexaString,
+  ByteArrayBuilder,
+  hexaStringToBuffer,
+} from "@ledgerhq/device-management-kit";
 import { type Either, Just, Maybe, Nothing, Right } from "purify-ts";
 
-import { type LKRPParsingError } from "@api/app-binder/Errors";
+import { type LKRPParsingError } from "@api/model/Errors";
 import {
   type LKRPCommandData,
   type UnsignedCommandData,
 } from "@internal/models/LKRPCommandTypes";
-import { CommandTags } from "@internal/models/Tags";
+import { CommandTags, GeneralTags } from "@internal/models/Tags";
 import { type EncryptedPublishedKey } from "@internal/models/Types";
 
 import { derivationPathAsBytes } from "./derivationPath";
-import { bytesToHex, hexToBytes } from "./hex";
-import { TLVBuilder } from "./TLVBuilder";
 import { TLVParser } from "./TLVParser";
 
 export class LKRPCommand {
@@ -24,44 +27,56 @@ export class LKRPCommand {
   }
 
   static fromHex(hex: string): LKRPCommand {
-    return new LKRPCommand(hexToBytes(hex));
+    return new LKRPCommand(hexaStringToBuffer(hex) ?? new Uint8Array());
   }
 
   static fromData(data: LKRPCommandData): LKRPCommand {
-    const tlv = new TLVBuilder();
+    const tlv = new ByteArrayBuilder();
     switch (data.type) {
       case CommandTags.Seed:
         tlv
-          .addBytes(data.topic)
-          .addInt(data.protocolVersion, 2)
-          .addPublicKey(data.groupKey)
-          .addBytes(data.initializationVector)
-          .addBytes(data.encryptedXpriv)
-          .addPublicKey(data.ephemeralPublicKey);
+          .encodeInTLVFromBuffer(GeneralTags.Bytes, data.topic)
+          .encodeInTLVFromUInt16(GeneralTags.Int, data.protocolVersion)
+          .encodeInTLVFromBuffer(GeneralTags.PublicKey, data.groupKey)
+          .encodeInTLVFromBuffer(GeneralTags.Bytes, data.initializationVector)
+          .encodeInTLVFromBuffer(GeneralTags.Bytes, data.encryptedXpriv)
+          .encodeInTLVFromBuffer(
+            GeneralTags.PublicKey,
+            data.ephemeralPublicKey,
+          );
         break;
 
       case CommandTags.AddMember:
         tlv
-          .addString(data.name)
-          .addPublicKey(data.publicKey)
-          .addInt(data.permissions, 4);
+          .encodeInTLVFromAscii(GeneralTags.String, data.name)
+          .encodeInTLVFromBuffer(GeneralTags.PublicKey, data.publicKey)
+          .encodeInTLVFromUInt32(GeneralTags.Int, data.permissions);
         break;
 
       case CommandTags.PublishKey:
         tlv
-          .addBytes(data.initializationVector)
-          .addBytes(data.encryptedXpriv)
-          .addPublicKey(data.recipient)
-          .addPublicKey(data.ephemeralPublicKey);
+          .encodeInTLVFromBuffer(GeneralTags.Bytes, data.initializationVector)
+          .encodeInTLVFromBuffer(GeneralTags.Bytes, data.encryptedXpriv)
+          .encodeInTLVFromBuffer(GeneralTags.PublicKey, data.recipient)
+          .encodeInTLVFromBuffer(
+            GeneralTags.PublicKey,
+            data.ephemeralPublicKey,
+          );
         break;
 
       case CommandTags.Derive:
         tlv
-          .addBytes(derivationPathAsBytes(data.path))
-          .addPublicKey(data.groupKey)
-          .addBytes(data.initializationVector)
-          .addBytes(data.encryptedXpriv)
-          .addPublicKey(data.ephemeralPublicKey);
+          .encodeInTLVFromBuffer(
+            GeneralTags.Bytes,
+            derivationPathAsBytes(data.path),
+          )
+          .encodeInTLVFromBuffer(GeneralTags.PublicKey, data.groupKey)
+          .encodeInTLVFromBuffer(GeneralTags.Bytes, data.initializationVector)
+          .encodeInTLVFromBuffer(GeneralTags.Bytes, data.encryptedXpriv)
+          .encodeInTLVFromBuffer(
+            GeneralTags.PublicKey,
+            data.ephemeralPublicKey,
+          );
         break;
     }
 
@@ -73,24 +88,28 @@ export class LKRPCommand {
   }
 
   static bytesFromUnsignedData(data: UnsignedCommandData): Uint8Array {
-    const tlv = new TLVBuilder();
+    const tlv = new ByteArrayBuilder();
     switch (data.type) {
       case CommandTags.AddMember:
         tlv
-          .addString(data.name)
-          .addPublicKey(data.publicKey)
-          .addInt(data.permissions, 4);
+          .encodeInTLVFromAscii(GeneralTags.String, data.name)
+          .encodeInTLVFromBuffer(GeneralTags.PublicKey, data.publicKey)
+          .encodeInTLVFromUInt32(GeneralTags.Int, data.permissions);
         break;
 
       case CommandTags.PublishKey:
-        tlv.addBytes(new Uint8Array()); // Empty IV
-        tlv.addBytes(new Uint8Array()); // Empty encryptedXpriv
-        tlv.addPublicKey(data.recipient);
-        tlv.addPublicKey(new Uint8Array()); // Empty ephemeralPublicKey
+        tlv
+          .encodeInTLVFromBuffer(GeneralTags.Bytes, new Uint8Array()) // Empty IV
+          .encodeInTLVFromBuffer(GeneralTags.Bytes, new Uint8Array()) // Empty encryptedXpriv
+          .encodeInTLVFromBuffer(GeneralTags.PublicKey, data.recipient)
+          .encodeInTLVFromBuffer(GeneralTags.PublicKey, new Uint8Array()); // Empty ephemeralPublicKey
         break;
 
       case CommandTags.Derive:
-        tlv.addBytes(derivationPathAsBytes(data.path));
+        tlv.encodeInTLVFromBuffer(
+          GeneralTags.Bytes,
+          derivationPathAsBytes(data.path),
+        );
         break;
     }
 
@@ -99,7 +118,7 @@ export class LKRPCommand {
   }
 
   toString(): string {
-    return bytesToHex(this.bytes);
+    return bufferToHexaString(this.bytes, false);
   }
 
   toU8A(): Uint8Array {
@@ -121,7 +140,7 @@ export class LKRPCommand {
           if (key === "type") {
             return `${CommandTags[value as CommandTags]}(0x${value?.toString(16).padStart(2, "0")}):`;
           }
-          return `  ${key}: ${value instanceof Uint8Array ? bytesToHex(value) : value}`;
+          return `  ${key}: ${value instanceof Uint8Array ? bufferToHexaString(value, false) : value}`;
         })
         .join("\n"),
     );
@@ -143,7 +162,7 @@ export class LKRPCommand {
                 return Nothing;
             }
           })
-          .map(bytesToHex);
+          .map((str) => bufferToHexaString(str, false));
 
       default:
         return Nothing;

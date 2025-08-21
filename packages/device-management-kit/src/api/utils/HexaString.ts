@@ -1,10 +1,10 @@
 export type HexaString = `0x${string}`;
 
-export const isHexaString = (value: unknown): value is HexaString => {
+export function isHexaString(value: unknown): value is HexaString {
   return typeof value === "string" && /^0x[0-9a-fA-F]*$/.test(value);
-};
+}
 
-export const hexaStringToBuffer = (value: string): Uint8Array | null => {
+export function hexaStringToBuffer(value: string): Uint8Array | null {
   if (value.startsWith("0x")) {
     value = value.slice(2);
   }
@@ -22,10 +22,22 @@ export const hexaStringToBuffer = (value: string): Uint8Array | null => {
     return null;
   }
   return new Uint8Array(bytes);
-};
+}
 
-export const bufferToHexaString = (value: Uint8Array): HexaString => {
-  return `0x${Array.from(value, (byte) =>
+export function bufferToHexaString(
+  value: Uint8Array,
+  withPrefix?: true,
+): HexaString;
+export function bufferToHexaString(
+  value: Uint8Array,
+  withPrefix?: false,
+): string;
+export function bufferToHexaString(
+  value: Uint8Array,
+  withPrefix: boolean = true,
+): HexaString | string {
+  const prefix = withPrefix ? "0x" : "";
+  return `${prefix}${Array.from(value, (byte) =>
     byte.toString(16).padStart(2, "0"),
   ).join("")}`;
-};
+}

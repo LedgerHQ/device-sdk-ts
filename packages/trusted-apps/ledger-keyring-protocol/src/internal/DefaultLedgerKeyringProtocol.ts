@@ -2,8 +2,8 @@ import { type DeviceManagementKit } from "@ledgerhq/device-management-kit";
 import { type Container } from "inversify";
 
 import { type AuthenticateDAReturnType } from "@api/app-binder/AuthenticateDeviceActionTypes";
-import { type LKRPEnv } from "@api/app-binder/LKRPTypes";
 import { type LedgerKeyringProtocol } from "@api/LedgerKeyringProtocol";
+import { type LKRPEnv } from "@api/model/Env";
 import { makeContainer } from "@internal/di";
 
 import {

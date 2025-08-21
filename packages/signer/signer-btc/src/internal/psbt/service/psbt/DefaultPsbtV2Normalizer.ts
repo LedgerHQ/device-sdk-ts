@@ -42,7 +42,7 @@ export class DefaultPsbtV2Normalizer {
       )
       .chain((value) =>
         Either.encase(() =>
-          Transaction.fromHex(bufferToHexaString(value.data).slice(2)),
+          Transaction.fromHex(bufferToHexaString(value.data, false)),
         ).mapLeft(
           (error) =>
             new Error(

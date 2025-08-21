@@ -1,7 +1,11 @@
+import {
+  bufferToHexaString,
+  hexaStringToBuffer,
+} from "@ledgerhq/device-management-kit";
 import { Either, Just, Maybe, Nothing, Right } from "purify-ts";
 
-import { type LKRPParsingError } from "@api/app-binder/Errors";
 import { type Keypair } from "@api/app-binder/LKRPTypes";
+import { type LKRPParsingError } from "@api/model/Errors";
 import { type LKRPBlockData } from "@internal/models/LKRPBlockTypes";
 import { CommandTags } from "@internal/models/Tags";
 import {
@@ -10,7 +14,6 @@ import {
 } from "@internal/models/Types";
 import { CryptoUtils } from "@internal/utils/crypto";
 
-import { bytesToHex, hexToBytes } from "./hex";
 import { LKRPBlock } from "./LKRPBlock";
 import { TLVParser } from "./TLVParser";
 
@@ -27,7 +30,7 @@ export class LKRPBlockStream {
   }
 
   static fromHex(hex: string): LKRPBlockStream {
-    return new LKRPBlockStream(hexToBytes(hex));
+    return new LKRPBlockStream(hexaStringToBuffer(hex) ?? new Uint8Array());
   }
 
   static fromData(
@@ -36,7 +39,8 @@ export class LKRPBlockStream {
   ): LKRPBlockStream {
     const blocks: LKRPBlock[] = [];
     let hash =
-      parentHash ?? bytesToHex(crypto.getRandomValues(new Uint8Array(32)));
+      parentHash ??
+      bufferToHexaString(crypto.getRandomValues(new Uint8Array(32)), false);
 
     for (const blockData of blocksData) {
       const block = LKRPBlock.fromData({
@@ -58,7 +62,7 @@ export class LKRPBlockStream {
   }
 
   toString(): string {
-    return bytesToHex(this.bytes);
+    return bufferToHexaString(this.bytes, false);
   }
 
   parse(): Either<LKRPParsingError, LKRPBlock[]> {

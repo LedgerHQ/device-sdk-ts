@@ -12,16 +12,15 @@ import {
 import { CommandErrorHelper } from "@ledgerhq/signer-utils";
 import { Maybe } from "purify-ts";
 
-import {
-  type GetVersionCommandArgs,
-  type GetVersionCommandResponse,
-} from "@api/app-binder/GetVersionCommandTypes";
+import { type GetVersionCommandResponse } from "@api/app-binder/GetVersionCommandTypes";
 
 import {
   LEDGER_SYNC_ERRORS,
   type LedgerKeyringProtocolErrorCodes,
   LedgerKeyringProtocolErrorFactory,
 } from "./utils/ledgerKeyringProtocolErrors";
+
+export type GetVersionCommandArgs = undefined;
 
 export class GetVersionCommand
   implements

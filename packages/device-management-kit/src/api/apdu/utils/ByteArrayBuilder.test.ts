@@ -331,6 +331,14 @@ describe("ByteArrayBuilder", () => {
       expect(builder.getErrors()).toEqual([]);
     });
 
+    it("should serialize with an TLV encoded from an ascii string", () => {
+      builder.encodeInTLVFromAscii(0x05, "coucou");
+      expect(builder.build()).toEqual(
+        Uint8Array.from([0x05, 0x06, 0x63, 0x6f, 0x75, 0x63, 0x6f, 0x75]),
+      );
+      expect(builder.getErrors()).toEqual([]);
+    });
+
     it("should serialize with an TLV encoded from an hexastring", () => {
       builder.encodeInTLVFromHexa(0x05, "0xA1A2A3");
       expect(builder.build()).toEqual(
@@ -346,6 +354,28 @@ describe("ByteArrayBuilder", () => {
       );
       expect(builder.build()).toEqual(
         Uint8Array.from([0x06, 0x04, 0xa1, 0xa2, 0xa3, 0xa4]),
+      );
+      expect(builder.getErrors()).toEqual([]);
+    });
+
+    it("should serialize with an TLV encoded from an uint8", () => {
+      builder.encodeInTLVFromUInt8(0x06, 0x56);
+      expect(builder.build()).toEqual(Uint8Array.from([0x06, 0x01, 0x56]));
+      expect(builder.getErrors()).toEqual([]);
+    });
+
+    it("should serialize with an TLV encoded from an uint16", () => {
+      builder.encodeInTLVFromUInt16(0x06, 0x3456);
+      expect(builder.build()).toEqual(
+        Uint8Array.from([0x06, 0x02, 0x34, 0x56]),
+      );
+      expect(builder.getErrors()).toEqual([]);
+    });
+
+    it("should serialize with an TLV encoded from an uint32", () => {
+      builder.encodeInTLVFromUInt32(0x06, 0x90123456);
+      expect(builder.build()).toEqual(
+        Uint8Array.from([0x06, 0x04, 0x90, 0x12, 0x34, 0x56]),
       );
       expect(builder.getErrors()).toEqual([]);
     });

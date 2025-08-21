@@ -1,6 +1,6 @@
 import { Just, Left, Nothing, Right } from "purify-ts";
 
-import { LKRPDataSourceError } from "@api/app-binder/Errors";
+import { LKRPDataSourceError } from "@api/model/Errors";
 import { LKRPBlock } from "@internal/utils/LKRPBlock";
 import { Trustchain } from "@internal/utils/Trustchain";
 

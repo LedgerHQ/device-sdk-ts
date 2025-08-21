@@ -7,11 +7,10 @@ import {
 import { describe, expect, it } from "vitest";
 
 import {
+  SignBlockSingleCommand,
   type SignBlockSingleCommandArgs,
   type SignBlockSingleCommandResponse,
-} from "@api/app-binder/SignBlockSingleCommandTypes";
-
-import { SignBlockSingleCommand } from "./SignBlockSingleCommand";
+} from "./SignBlockSingleCommand";
 
 const COMMAND_BYTES = Uint8Array.from([0xf0, 0xca, 0xcc, 0x1a]);
 const TLV_PAYLOAD = Uint8Array.from([0xf0, 0xca, 0xcc, 0x1a]);

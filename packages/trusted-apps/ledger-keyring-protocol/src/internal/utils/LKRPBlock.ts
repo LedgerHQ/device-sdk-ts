@@ -1,17 +1,18 @@
 import {
   bufferToHexaString,
+  ByteArrayBuilder,
   hexaStringToBuffer,
 } from "@ledgerhq/device-management-kit";
 import { Either, Just, type Maybe, Nothing, Right } from "purify-ts";
 
-import { type LKRPParsingError } from "@api/app-binder/Errors";
+import { type LKRPParsingError } from "@api/model/Errors";
 import {
   type LKRPBlockData,
   type LKRPBlockParsedData,
 } from "@internal/models/LKRPBlockTypes";
+import { GeneralTags } from "@internal/models/Tags";
 
 import { CryptoUtils } from "./crypto";
-import { TLVBuilder } from "./TLVBuilder";
 import { TLVParser } from "./TLVParser";
 
 export class LKRPBlock {
@@ -30,25 +31,34 @@ export class LKRPBlock {
   }
 
   static fromData(data: LKRPBlockData): LKRPBlock {
-    const builder = new TLVBuilder()
-      .addInt(1, 1) // Version 1
-      .addHash(hexaStringToBuffer(data.parent) ?? new Uint8Array())
-      .addPublicKey(data.issuer)
-      .addInt(data.commands.length, 1);
+    const header = new ByteArrayBuilder()
+      .encodeInTLVFromUInt8(GeneralTags.Int, 1) // Version 1
+      .encodeInTLVFromHexa(GeneralTags.Hash, data.parent)
+      .encodeInTLVFromBuffer(GeneralTags.PublicKey, data.issuer)
+      .encodeInTLVFromUInt8(GeneralTags.Int, data.commands.length)
+      .build();
 
-    const header = builder.build();
+    const commandsBuilder = new ByteArrayBuilder();
+    data.commands.forEach((cmd) =>
+      commandsBuilder.addBufferToData(cmd.toU8A()),
+    );
+    const commands = commandsBuilder.build();
 
-    data.commands.forEach((cmd) => builder.push(cmd.toU8A()));
+    const signature = new ByteArrayBuilder()
+      .encodeInTLVFromBuffer(GeneralTags.Signature, data.signature)
+      .build();
 
-    const sigStart = builder.build().length;
-    const bytes = builder.addSignature(data.signature).build();
-    const signature = bytes.slice(sigStart, bytes.length);
+    const bytes = new ByteArrayBuilder()
+      .addBufferToData(header)
+      .addBufferToData(commands)
+      .addBufferToData(signature)
+      .build();
 
     return new LKRPBlock(bytes, { ...data, header, signature });
   }
 
   toString(): string {
-    return bufferToHexaString(this.bytes).slice(2);
+    return bufferToHexaString(this.bytes, false);
   }
 
   toU8A(): Uint8Array {
@@ -73,11 +83,11 @@ export class LKRPBlock {
       .map((data) =>
         [
           `Parent: ${data.parent}`,
-          `Issuer: ${bufferToHexaString(data.issuer).slice(2)}`,
+          `Issuer: ${bufferToHexaString(data.issuer, false)}`,
           `Commands:${data.commands
             .flatMap((cmd) => cmd.split("\n").map((l) => `\n  ${l}`))
             .join("")}`,
-          `Signature: ${bufferToHexaString(data.signature.slice(2)).slice(2)}`,
+          `Signature: ${bufferToHexaString(data.signature.slice(2), false)}`,
         ].join("\n"),
       );
   }
@@ -85,7 +95,7 @@ export class LKRPBlock {
   hash(): string {
     return this.hashValue.orDefaultLazy(() => {
       const hashValue = CryptoUtils.hash(this.bytes);
-      return bufferToHexaString(hashValue).slice(2);
+      return bufferToHexaString(hashValue, false);
     });
   }
 }

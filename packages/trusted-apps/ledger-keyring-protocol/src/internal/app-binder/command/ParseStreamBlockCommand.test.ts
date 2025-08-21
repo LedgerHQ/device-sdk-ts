@@ -6,9 +6,10 @@ import {
 } from "@ledgerhq/device-management-kit";
 import { describe, expect, it } from "vitest";
 
-import type { ParseSingleCommandArgs } from "@api/app-binder/ParseStreamBlockCommandCommandTypes";
-
-import { ParseSingleCommand } from "./ParseStreamBlockCommand";
+import {
+  ParseSingleCommand,
+  type ParseSingleCommandArgs,
+} from "./ParseStreamBlockCommand";
 
 const DUMMY_COMMAND = Uint8Array.from([0x01, 0x02, 0x03]);
 const PLACEHOLDER_BYTES = Uint8Array.from([0xf0, 0xca, 0xcc, 0x1a]);

@@ -6,15 +6,13 @@ import {
 } from "@ledgerhq/device-management-kit";
 import { describe, expect, it } from "vitest";
 
-import {
-  type SignBlockHeaderCommandArgs,
-  type SignBlockHeaderCommandResponse,
-} from "@api/app-binder/SignBlockHeaderCommandTypes";
 import { GeneralTags } from "@internal/models/Tags";
 
 import {
   ISSUER_PLACEHOLDER_TLV,
   SignBlockHeaderCommand,
+  type SignBlockHeaderCommandArgs,
+  type SignBlockHeaderCommandResponse,
 } from "./SignBlockHeader";
 
 const COMMAND_COUNT = 3;

@@ -8,7 +8,8 @@ import { inject, injectable } from "inversify";
 
 import { AuthenticateDAReturnType } from "@api/app-binder/AuthenticateDeviceActionTypes";
 import { GetVersionDAReturnType } from "@api/app-binder/GetVersionDeviceActionTypes";
-import { Keypair, Permissions } from "@api/app-binder/LKRPTypes";
+import { Keypair } from "@api/app-binder/LKRPTypes";
+import { Permissions } from "@api/model/Permissions";
 import { externalTypes } from "@internal/externalTypes";
 import { type LKRPDataSource } from "@internal/lkrp-datasource/data/LKRPDataSource";
 import { lkrpDatasourceTypes } from "@internal/lkrp-datasource/di/lkrpDatasourceTypes";

@@ -4,10 +4,6 @@ import {
 } from "@ledgerhq/device-management-kit";
 import { type Either } from "purify-ts";
 
-import { type LKRPDeviceCommandError } from "@internal/app-binder/command/utils/ledgerKeyringProtocolErrors";
-import { type LKRPDataSource } from "@internal/lkrp-datasource/data/LKRPDataSource";
-import { type Trustchain } from "@internal/utils/Trustchain";
-
 import {
   type LKRPDataSourceError,
   type LKRPMissingDataError,
@@ -15,8 +11,14 @@ import {
   type LKRPParsingError,
   type LKRPTrustchainNotReady,
   type LKRPUnknownError,
-} from "./Errors";
-import { type JWT, type Keypair, type Permissions } from "./LKRPTypes";
+} from "@api/model/Errors";
+import { type JWT } from "@api/model/JWT";
+import { type Permissions } from "@api/model/Permissions";
+import { type LKRPDeviceCommandError } from "@internal/app-binder/command/utils/ledgerKeyringProtocolErrors";
+import { type LKRPDataSource } from "@internal/lkrp-datasource/data/LKRPDataSource";
+import { type Trustchain } from "@internal/utils/Trustchain";
+
+import { type Keypair } from "./LKRPTypes";
 
 export type AddToTrustchainDAOutput = undefined;
 

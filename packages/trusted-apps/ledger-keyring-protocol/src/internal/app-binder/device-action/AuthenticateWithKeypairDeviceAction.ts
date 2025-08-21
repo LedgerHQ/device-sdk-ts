@@ -14,12 +14,12 @@ import {
   type AuthenticateDAOutput,
   AuthenticateDAStep,
 } from "@api/app-binder/AuthenticateDeviceActionTypes";
+import { type JWT, type Keypair } from "@api/index";
 import {
   LKRPDataSourceError,
   LKRPUnauthorizedError,
   LKRPUnknownError,
-} from "@api/app-binder/Errors";
-import { type JWT, type Keypair } from "@api/index";
+} from "@api/model/Errors";
 import { AuthenticateTask } from "@internal/app-binder/task/AuthenticateTask";
 import { ExtractEncryptionKeyTask } from "@internal/app-binder/task/ExtractEncryptionKeyTask";
 import { SignChallengeWithKeypairTask } from "@internal/app-binder/task/SignChallengeWithKeypairTask";

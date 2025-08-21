@@ -7,9 +7,10 @@ import {
 } from "@ledgerhq/device-management-kit";
 import { describe, expect, it } from "vitest";
 
-import { type SignBlockSignatureCommandResponse } from "@api/app-binder/SignBlockSignatureCommandTypes";
-
-import { SignBlockSignatureCommand } from "./SignBlockSignatureCommand";
+import {
+  SignBlockSignatureCommand,
+  type SignBlockSignatureCommandResponse,
+} from "./SignBlockSignatureCommand";
 
 const SIG_AND_KEY = Uint8Array.from([0xf0, 0xca, 0xcc, 0x1a]);
 

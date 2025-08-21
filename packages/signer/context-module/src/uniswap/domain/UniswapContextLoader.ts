@@ -77,7 +77,7 @@ export class UniswapContextLoader implements ContextLoader {
 
     return {
       type: ClearSignContextType.EXTERNAL_PLUGIN,
-      payload: bufferToHexaString(buffer).slice(2),
+      payload: bufferToHexaString(buffer, false),
     };
   }
 

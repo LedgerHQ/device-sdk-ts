@@ -5,12 +5,6 @@ import {
   type UserInteractionRequired,
 } from "@ledgerhq/device-management-kit";
 
-import { type LKRPDeviceCommandError } from "@internal/app-binder/command/utils/ledgerKeyringProtocolErrors";
-
-import {
-  type AddToTrustchainDAError,
-  type AddToTrustchainDAIntermediateValue,
-} from "./AddToTrustchainDeviceActionTypes";
 import {
   type LKRPDataSourceError,
   type LKRPMissingDataError,
@@ -18,8 +12,14 @@ import {
   type LKRPTrustchainNotReady,
   type LKRPUnauthorizedError,
   type LKRPUnknownError,
-} from "./Errors";
-import { type JWT } from "./LKRPTypes";
+} from "@api/model/Errors";
+import { type JWT } from "@api/model/JWT";
+import { type LKRPDeviceCommandError } from "@internal/app-binder/command/utils/ledgerKeyringProtocolErrors";
+
+import {
+  type AddToTrustchainDAError,
+  type AddToTrustchainDAIntermediateValue,
+} from "./AddToTrustchainDeviceActionTypes";
 
 export type AuthenticateDAReturnType = ExecuteDeviceActionReturnType<
   AuthenticateDAOutput,

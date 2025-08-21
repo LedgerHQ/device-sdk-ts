@@ -18,11 +18,8 @@ import {
   AddToTrustchainDAState,
   AddToTrustchaineDAStep,
 } from "@api/app-binder/AddToTrustchainDeviceActionTypes";
-import {
-  LKRPTrustchainNotReady,
-  LKRPUnknownError,
-} from "@api/app-binder/Errors";
 import { type Keypair } from "@api/index";
+import { LKRPTrustchainNotReady, LKRPUnknownError } from "@api/model/Errors";
 import { type LKRPDeviceCommandError } from "@internal/app-binder/command/utils/ledgerKeyringProtocolErrors";
 import { InitTask } from "@internal/app-binder/task/InitTask";
 import {

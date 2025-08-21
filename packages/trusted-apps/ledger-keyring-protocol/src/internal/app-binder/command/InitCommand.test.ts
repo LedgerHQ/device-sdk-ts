@@ -6,9 +6,7 @@ import {
 } from "@ledgerhq/device-management-kit";
 import { describe, expect, it } from "vitest";
 
-import type { InitCommandArgs } from "@api/app-binder/InitCommandTypes";
-
-import { InitCommand } from "./InitCommand";
+import { InitCommand, type InitCommandArgs } from "./InitCommand";
 
 const DUMMY_PUBKEY_HEX = Uint8Array.from([0x02, ...Array(32).fill(0x00)]);
 const PLACEHOLDER_BYTES = Uint8Array.from([0xf0, 0xca, 0xcc, 0x1a]);

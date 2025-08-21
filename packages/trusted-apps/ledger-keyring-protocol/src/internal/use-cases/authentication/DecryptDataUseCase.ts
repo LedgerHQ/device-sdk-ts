@@ -1,12 +1,13 @@
 import { ByteArrayParser } from "@ledgerhq/device-management-kit";
 import { Maybe } from "purify-ts";
 
-import { LKRPParsingError } from "@api/app-binder/Errors";
 import { KeypairFromBytes } from "@api/index";
+import { LKRPParsingError } from "@api/model/Errors";
 import { CryptoUtils } from "@internal/utils/crypto";
 import { eitherSeqRecord } from "@internal/utils/eitherSeqRecord";
 
 export class DecryptDataUseCase {
+  // TODO better return type instead of throw on errors
   execute(encryptionKey: Uint8Array, data: Uint8Array): Uint8Array {
     const parser = new ByteArrayParser(data);
     if (parser.extract8BitUInt() !== 0) {
