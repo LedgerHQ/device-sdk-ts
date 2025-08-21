@@ -1,4 +1,4 @@
 export type ProxyDelegateCallDto = {
-  delegateAddresses: string[];
+  addresses: string[];
   signedDescriptor: string;
 };

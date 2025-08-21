@@ -9,6 +9,7 @@ export enum ClearSignContextType {
   PLUGIN = "plugin",
   EXTERNAL_PLUGIN = "externalPlugin",
   TRANSACTION_INFO = "transactionInfo",
+  PROXY_DELEGATE_CALL = "proxyDelegateCall",
   ENUM = "enum",
   TRANSACTION_FIELD_DESCRIPTION = "transactionFieldDescription",
   WEB3_CHECK = "web3Check",
