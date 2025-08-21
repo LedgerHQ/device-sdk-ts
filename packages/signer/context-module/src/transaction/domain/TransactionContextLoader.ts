@@ -91,12 +91,6 @@ export class TransactionContextLoader implements ContextLoader {
           ]
         : [];
 
-    console.log(
-      "LAU: proxyDelegateCallDescriptor",
-      proxyDelegateCallDescriptor,
-    );
-    console.log("LAU: proxyDelegateCallContext", proxyDelegateCallContext);
-
     const transactionContexts = (
       await this.transactionDataSource.getTransactionDescriptors({
         deviceModelId,

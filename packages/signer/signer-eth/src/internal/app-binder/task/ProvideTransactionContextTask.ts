@@ -109,9 +109,6 @@ export class ProvideTransactionContextTask {
     payload,
     certificate,
   }: ClearSignContextSuccess): Promise<CommandResult<unknown, EthErrorCodes>> {
-    console.log("LAU: provideContext", type, payload);
-    console.log("LAU: certificate", certificate);
-
     // if a certificate is provided, we load it before sending the command
     if (certificate) {
       await this._api.sendCommand(
