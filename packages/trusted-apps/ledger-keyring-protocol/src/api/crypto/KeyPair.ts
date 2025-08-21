@@ -4,6 +4,7 @@ export enum SigFormat {
 }
 
 export interface KeyPair {
+  id: string;
   sign(data: Uint8Array, format?: SigFormat): Promise<Uint8Array>;
   verify(
     data: Uint8Array,
