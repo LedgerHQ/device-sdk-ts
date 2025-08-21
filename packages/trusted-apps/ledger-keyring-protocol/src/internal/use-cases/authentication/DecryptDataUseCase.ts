@@ -1,14 +1,29 @@
 import { ByteArrayParser } from "@ledgerhq/device-management-kit";
+import { inject, injectable } from "inversify";
 import { Maybe } from "purify-ts";
 
-import { KeypairFromBytes } from "@api/index";
+import {
+  type CryptoService,
+  Curve,
+  EncryptionAlgo,
+  HashAlgo,
+} from "@api/crypto/CryptoService";
 import { LKRPParsingError } from "@api/model/Errors";
-import { CryptoUtils } from "@internal/utils/crypto";
+import { externalTypes } from "@internal/externalTypes";
 import { eitherSeqRecord } from "@internal/utils/eitherSeqRecord";
 
+@injectable()
 export class DecryptDataUseCase {
+  constructor(
+    @inject(externalTypes.CryptoService)
+    private cryptoService: CryptoService,
+  ) {}
+
   // TODO better return type instead of throw on errors
-  execute(encryptionKey: Uint8Array, data: Uint8Array): Uint8Array {
+  async execute(
+    encryptionKey: Uint8Array,
+    data: Uint8Array,
+  ): Promise<Uint8Array> {
     const parser = new ByteArrayParser(data);
     if (parser.extract8BitUInt() !== 0) {
       throw new LKRPParsingError("Unsupported serialization version");
@@ -29,17 +44,29 @@ export class DecryptDataUseCase {
           "encrypted data",
         ),
     })
-      .map(({ ephemeralPublicKey, iv, tag, encryptedData }) => {
+      .map(async ({ ephemeralPublicKey, iv, tag, encryptedData }) => {
         // Derive the shared secret using ECDH with an ephemeral keypair
-        const privateKey = new KeypairFromBytes(encryptionKey);
-        const sharedSecret = privateKey.ecdh(ephemeralPublicKey).slice(1);
+        const privateKey = this.cryptoService.importKeyPair(
+          encryptionKey,
+          Curve.K256,
+        );
+        const sharedSecret =
+          await privateKey.deriveSharedSecret(ephemeralPublicKey);
 
         // Key derivation using HMAC-SHA256
-        const key = CryptoUtils.hmac(new Uint8Array(), sharedSecret);
+        const key = this.cryptoService.hmac(
+          new Uint8Array(),
+          sharedSecret.slice(1),
+          HashAlgo.SHA256,
+        );
 
         // Decrypt the data
+        const symmetricKey = this.cryptoService.importSymmetricKey(
+          key,
+          EncryptionAlgo.AES256_GCM,
+        );
         const ciphertext = new Uint8Array([...encryptedData, ...tag]);
-        const cleartext = CryptoUtils.decrypt(key, iv, ciphertext);
+        const cleartext = await symmetricKey.decrypt(iv, ciphertext);
         return cleartext;
       })
       .caseOf({

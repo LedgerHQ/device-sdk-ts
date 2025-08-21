@@ -6,14 +6,14 @@ import { inject, injectable } from "inversify";
 import { of } from "rxjs";
 
 import { AuthenticateDAReturnType } from "@api/app-binder/AuthenticateDeviceActionTypes";
-import { Keypair } from "@api/app-binder/LKRPTypes";
+import { KeyPair } from "@api/crypto/KeyPair";
 import { LKRPMissingDataError } from "@api/model/Errors";
 import { Permissions } from "@api/model/Permissions";
 import { appBinderTypes } from "@internal/app-binder/di/appBinderTypes";
 import { LedgerKeyringProtocolBinder } from "@internal/app-binder/LedgerKeyringProtocolBinder";
 
 export type AuthenticateUsecaseInput = {
-  keypair: Keypair;
+  keypair: KeyPair;
   clientName: string;
   permissions: Permissions;
 } & (

@@ -2,6 +2,7 @@ import { type DeviceManagementKit } from "@ledgerhq/device-management-kit";
 import { type Container } from "inversify";
 
 import { type AuthenticateDAReturnType } from "@api/app-binder/AuthenticateDeviceActionTypes";
+import { type CryptoService } from "@api/crypto/CryptoService";
 import { type LedgerKeyringProtocol } from "@api/LedgerKeyringProtocol";
 import { type LKRPEnv } from "@api/model/Env";
 import { makeContainer } from "@internal/di";
@@ -17,6 +18,7 @@ import { useCasesTypes } from "./use-cases/di/useCasesTypes";
 type DefaultLedgerKeyringProtocolConstructorArgs = {
   dmk: DeviceManagementKit;
   applicationId: number;
+  cryptoService: CryptoService;
   env?: LKRPEnv;
   baseUrl?: string;
 };
@@ -28,6 +30,7 @@ export class DefaultLedgerKeyringProtocol implements LedgerKeyringProtocol {
   constructor({
     dmk,
     applicationId,
+    cryptoService,
     env,
     baseUrl,
   }: DefaultLedgerKeyringProtocolConstructorArgs) {
@@ -35,6 +38,7 @@ export class DefaultLedgerKeyringProtocol implements LedgerKeyringProtocol {
     this._container = makeContainer({
       dmk,
       applicationId,
+      cryptoService,
       env,
       baseUrl,
     });
@@ -46,13 +50,19 @@ export class DefaultLedgerKeyringProtocol implements LedgerKeyringProtocol {
       .execute(input);
   }
 
-  encryptData(encryptionKey: Uint8Array, data: Uint8Array): Uint8Array {
+  encryptData(
+    encryptionKey: Uint8Array,
+    data: Uint8Array,
+  ): Promise<Uint8Array> {
     return this._container
       .get<EncryptDataUseCase>(useCasesTypes.EncryptDataUseCase)
       .execute(encryptionKey, data);
   }
 
-  decryptData(encryptionKey: Uint8Array, data: Uint8Array): Uint8Array {
+  decryptData(
+    encryptionKey: Uint8Array,
+    data: Uint8Array,
+  ): Promise<Uint8Array> {
     return this._container
       .get<DecryptDataUseCase>(useCasesTypes.DecryptDataUseCase)
       .execute(encryptionKey, data);

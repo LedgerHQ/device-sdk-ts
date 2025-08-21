@@ -3,6 +3,7 @@ import {
   ByteArrayBuilder,
   hexaStringToBuffer,
 } from "@ledgerhq/device-management-kit";
+import { sha256 } from "@noble/hashes/sha256";
 import { Either, Just, type Maybe, Nothing, Right } from "purify-ts";
 
 import { type LKRPParsingError } from "@api/model/Errors";
@@ -12,7 +13,6 @@ import {
 } from "@internal/models/LKRPBlockTypes";
 import { GeneralTags } from "@internal/models/Tags";
 
-import { CryptoUtils } from "./crypto";
 import { TLVParser } from "./TLVParser";
 
 export class LKRPBlock {
@@ -94,7 +94,7 @@ export class LKRPBlock {
 
   hash(): string {
     return this.hashValue.orDefaultLazy(() => {
-      const hashValue = CryptoUtils.hash(this.bytes);
+      const hashValue = sha256(this.bytes);
       return bufferToHexaString(hashValue, false);
     });
   }

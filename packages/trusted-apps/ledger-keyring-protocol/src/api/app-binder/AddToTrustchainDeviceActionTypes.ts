@@ -4,6 +4,8 @@ import {
 } from "@ledgerhq/device-management-kit";
 import { type Either } from "purify-ts";
 
+import { type CryptoService } from "@api/crypto/CryptoService";
+import { type KeyPair } from "@api/crypto/KeyPair";
 import {
   type LKRPDataSourceError,
   type LKRPMissingDataError,
@@ -18,15 +20,14 @@ import { type LKRPDeviceCommandError } from "@internal/app-binder/command/utils/
 import { type LKRPDataSource } from "@internal/lkrp-datasource/data/LKRPDataSource";
 import { type Trustchain } from "@internal/utils/Trustchain";
 
-import { type Keypair } from "./LKRPTypes";
-
 export type AddToTrustchainDAOutput = undefined;
 
 export type AddToTrustchainDAInput = Either<
   LKRPMissingDataError,
   {
     readonly lkrpDataSource: LKRPDataSource;
-    readonly keypair: Keypair;
+    readonly cryptoService: CryptoService;
+    readonly keypair: KeyPair;
     readonly jwt: JWT;
     readonly appId: number;
     readonly trustchain: Trustchain;
@@ -70,6 +71,6 @@ export enum AddToTrustchaineDAStep {
 export type AddToTrustchainDAInternalState = Either<
   AddToTrustchainDAError,
   {
-    readonly sessionKeypair: Keypair | null;
+    readonly sessionKeypair: KeyPair | null;
   }
 >;

@@ -1,6 +1,7 @@
 import { type DeviceManagementKit } from "@ledgerhq/device-management-kit";
 import { Container } from "inversify";
 
+import { type CryptoService } from "@api/crypto/CryptoService";
 import { LKRPEnv } from "@api/index";
 import { appBindingModuleFactory } from "@internal/app-binder/di/appBinderModule";
 
@@ -11,6 +12,7 @@ import { externalTypes } from "./externalTypes";
 export type MakeContainerProps = {
   dmk: DeviceManagementKit;
   applicationId: number;
+  cryptoService: CryptoService;
   env?: LKRPEnv;
   baseUrl?: string; // Optional base URL for the LKRP network requests
   stub?: boolean;
@@ -19,6 +21,7 @@ export type MakeContainerProps = {
 export const makeContainer = ({
   dmk,
   applicationId,
+  cryptoService,
   env = LKRPEnv.PROD,
   baseUrl,
   stub,
@@ -27,6 +30,9 @@ export const makeContainer = ({
 
   container.bind<DeviceManagementKit>(externalTypes.Dmk).toConstantValue(dmk);
   container.bind(externalTypes.ApplicationId).toConstantValue(applicationId);
+  container
+    .bind<CryptoService>(externalTypes.CryptoService)
+    .toConstantValue(cryptoService);
 
   container.loadSync(
     appBindingModuleFactory(),

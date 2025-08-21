@@ -14,12 +14,14 @@ import {
   type AuthenticateDAOutput,
   AuthenticateDAStep,
 } from "@api/app-binder/AuthenticateDeviceActionTypes";
-import { type JWT, type Keypair } from "@api/index";
+import { type CryptoService } from "@api/crypto/CryptoService";
+import { type KeyPair } from "@api/crypto/KeyPair";
 import {
   LKRPDataSourceError,
   LKRPUnauthorizedError,
   LKRPUnknownError,
 } from "@api/model/Errors";
+import { type JWT } from "@api/model/JWT";
 import { AuthenticateTask } from "@internal/app-binder/task/AuthenticateTask";
 import { ExtractEncryptionKeyTask } from "@internal/app-binder/task/ExtractEncryptionKeyTask";
 import { SignChallengeWithKeypairTask } from "@internal/app-binder/task/SignChallengeWithKeypairTask";
@@ -179,6 +181,7 @@ export class AuthenticateWithKeypairDeviceAction extends XStateDeviceAction<
             id: "ExtractEncryptionKey",
             src: "extractEncryptionKey",
             input: ({ context }) => ({
+              cryptoService: context.input.cryptoService,
               keypair: context.input.keypair,
               stream: context._internalState.chain(({ trustchain }) =>
                 required(
@@ -235,7 +238,11 @@ export class AuthenticateWithKeypairDeviceAction extends XStateDeviceAction<
       keypairAuth: ({ input }: { input: AuthenticateWithKeypairDAInput }) =>
         authentication.run(
           input.lkrpDataSource,
-          new SignChallengeWithKeypairTask(input.keypair, input.trustchainId),
+          new SignChallengeWithKeypairTask(
+            input.cryptoService,
+            input.keypair,
+            input.trustchainId,
+          ),
         ),
 
       getTrustchain: ({
@@ -257,12 +264,17 @@ export class AuthenticateWithKeypairDeviceAction extends XStateDeviceAction<
         input,
       }: {
         input: {
-          keypair: Keypair;
+          cryptoService: CryptoService;
+          keypair: KeyPair;
           stream: Either<AuthenticateDAError, LKRPBlockStream>;
         };
       }) =>
         EitherAsync.liftEither(input.stream).chain((stream) =>
-          encryptionKeyExtraction.run(input.keypair, stream),
+          encryptionKeyExtraction.run(
+            input.cryptoService,
+            input.keypair,
+            stream,
+          ),
         ),
     };
   }

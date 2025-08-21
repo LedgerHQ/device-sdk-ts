@@ -2,9 +2,10 @@ import {
   bufferToHexaString,
   hexaStringToBuffer,
 } from "@ledgerhq/device-management-kit";
-import { Either, Just, Maybe, Nothing, Right } from "purify-ts";
+import { Either, Just, Maybe, MaybeAsync, Nothing, Right } from "purify-ts";
 
-import { type Keypair } from "@api/app-binder/LKRPTypes";
+import { type CryptoService, EncryptionAlgo } from "@api/crypto/CryptoService";
+import { type KeyPair } from "@api/crypto/KeyPair";
 import { type LKRPParsingError } from "@api/model/Errors";
 import { type LKRPBlockData } from "@internal/models/LKRPBlockTypes";
 import { CommandTags } from "@internal/models/Tags";
@@ -12,7 +13,6 @@ import {
   type EncryptedPublishedKey,
   type PublishedKey,
 } from "@internal/models/Types";
-import { CryptoUtils } from "@internal/utils/crypto";
 
 import { LKRPBlock } from "./LKRPBlock";
 import { TLVParser } from "./TLVParser";
@@ -172,25 +172,35 @@ export class LKRPBlockStream {
     return this.getMemberBlock(member).isJust();
   }
 
-  getPublishedKey(keypair: Keypair): Maybe<PublishedKey> {
-    return this.getMemberBlock(keypair.pubKeyToHex())
-      .chain((block): Maybe<EncryptedPublishedKey> => {
-        for (const command of block.commands) {
-          const key = command.getEncryptedPublishedKey();
-          if (key.isJust()) {
-            return key;
+  async getPublishedKey(
+    cryptoService: CryptoService,
+    keypair: KeyPair,
+  ): Promise<Maybe<PublishedKey>> {
+    return MaybeAsync.liftMaybe(
+      this.getMemberBlock(keypair.getPublicKeyToHex()).chain(
+        (block): Maybe<EncryptedPublishedKey> => {
+          for (const command of block.commands) {
+            const key = command.getEncryptedPublishedKey();
+            if (key.isJust()) {
+              return key;
+            }
           }
-        }
-        return Nothing;
-      })
-      .map((published) => {
-        const secret = keypair.ecdh(published.ephemeralPublicKey).slice(1);
-        const xpriv = CryptoUtils.decrypt(
-          secret,
-          published.initializationVector,
-          published.encryptedXpriv,
-        );
-        return { privateKey: xpriv.slice(0, 32), chainCode: xpriv.slice(32) };
-      });
+          return Nothing;
+        },
+      ),
+    ).map(async (published) => {
+      const secret = (
+        await keypair.deriveSharedSecret(published.ephemeralPublicKey)
+      ).slice(1);
+      const key = cryptoService.importSymmetricKey(
+        secret,
+        EncryptionAlgo.AES256_GCM,
+      );
+      const xpriv = await key.decrypt(
+        published.initializationVector,
+        published.encryptedXpriv,
+      );
+      return { privateKey: xpriv.slice(0, 32), chainCode: xpriv.slice(32) };
+    });
   }
 }
