@@ -192,7 +192,7 @@ export class WebBleTransport implements Transport {
         this._deviceModelDataSource.getBluetoothServicesInfos()[service.uuid];
       if (!infos) throw new OpeningConnectionError("Unknown Ledger service");
 
-      const writeCharacteristic = await this._pickWriteCharacteristic(
+      const writeCharacteristic = await this._pluckWriteCharacteristic(
         service,
         infos,
       );
@@ -353,7 +353,7 @@ export class WebBleTransport implements Transport {
           );
 
         // NEW: choose the *right* write characteristic (with-response if available)
-        const writeCharacteristic = await this._pickWriteCharacteristic(
+        const writeCharacteristic = await this._pluckWriteCharacteristic(
           svc,
           infos,
         );
@@ -465,7 +465,7 @@ export class WebBleTransport implements Transport {
     );
   }
 
-  private async _pickWriteCharacteristic(
+  private async _pluckWriteCharacteristic(
     svc: BluetoothRemoteGATTService,
     infos: RegistryEntry["infos"],
   ): Promise<BluetoothRemoteGATTCharacteristic> {

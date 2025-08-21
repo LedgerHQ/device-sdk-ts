@@ -188,6 +188,60 @@ export class WebBleApduSender
     }
   }
 
+  private async _sleep(ms: number) {
+    return new Promise((r) => setTimeout(r, ms));
+  }
+
+  // Wait until notifications are up + MTU negotiated (or timeout)
+  private async _awaitReady(maxMs = 1500): Promise<void> {
+    if (
+      this._notificationsActive &&
+      this._isDeviceReady.value &&
+      this._gattConnected()
+    )
+      return;
+
+    return new Promise<void>((resolve, reject) => {
+      const sub = this._isDeviceReady.subscribe((ready) => {
+        if (!ready) return;
+        if (this._notificationsActive && this._gattConnected()) {
+          clearTimeout(t);
+          sub.unsubscribe();
+          resolve();
+        }
+      });
+
+      const t = setTimeout(() => {
+        sub.unsubscribe();
+        reject(new DeviceDisconnectedWhileSendingError("Link not ready"));
+      }, maxMs);
+
+      // Fast-path if it flipped between checks
+      if (
+        this._notificationsActive &&
+        this._isDeviceReady.value &&
+        this._gattConnected()
+      ) {
+        clearTimeout(t);
+        sub.unsubscribe();
+        resolve();
+      }
+    });
+  }
+
+  // Identify the SM’s plain ping
+  private _isLegacyPing(apdu: Uint8Array): boolean {
+    return (
+      apdu.length === 5 &&
+      apdu[0] === 0xb0 &&
+      apdu[1] === 0x01 &&
+      apdu[2] === 0x00 &&
+      apdu[3] === 0x00 &&
+      apdu[4] === 0x00
+    );
+  }
+
+  // --- keep setupConnection the single place that starts notifications ---
   public async setupConnection(): Promise<void> {
     const notifyChar = this._characteristics.notifyCharacteristic;
 
@@ -200,8 +254,8 @@ export class WebBleApduSender
       );
     }
 
-    // NEW: stabilization backoff
-    await new Promise((r) => setTimeout(r, 120));
+    // small stabilization
+    await this._sleep(200);
 
     this._mtuHandshakeInFlight = true;
     const mtuReq = new Uint8Array([WebBleApduSender.MTU_OP, 0, 0, 0, 0]);
@@ -209,24 +263,19 @@ export class WebBleApduSender
     try {
       await this._write(mtuReq.buffer);
 
+      // wait until _isDeviceReady flips true (set in _onReceiveSetup) or timeout
       await Promise.race([
-        new Promise<void>((res, rej) => {
-          const sub = this._isDeviceReady.subscribe({
-            next: (ready) => {
-              if (ready) {
-                sub.unsubscribe();
-                res();
-              }
-            },
-            error: (e) => {
+        new Promise<void>((res, _rej) => {
+          const sub = this._isDeviceReady.subscribe((ready) => {
+            if (ready) {
               sub.unsubscribe();
-              rej(e);
-            },
+              res();
+            }
           });
         }),
-        new Promise<void>((_, rej) =>
-          setTimeout(() => rej(new Error("MTU negotiation timeout")), 2000),
-        ),
+        this._sleep(2000).then(() => {
+          throw new Error("MTU negotiation timeout");
+        }),
       ]);
     } catch (e) {
       try {
@@ -246,24 +295,30 @@ export class WebBleApduSender
     }
   }
 
+  // --- gate the first APDU (esp. the ping) in sendApdu ---
   public async sendApdu(
     apdu: Uint8Array,
     _triggersDisconnection?: boolean,
-    _abortTimeout?: number,
+    abortTimeout?: number,
   ): Promise<Either<DmkError, ApduResponse>> {
+    // If handshake still in flight or not ready yet, wait a bit instead of failing
+    try {
+      await this._awaitReady(Math.min(1500, abortTimeout ?? 1500));
+    } catch (e) {
+      return Left(e as DmkError);
+    }
+
+    // If the very first thing SM sends after reconnect is the legacy ping,
+    // give notifications stack a tiny extra breather instead of writing immediately.
+    if (this._isLegacyPing(apdu)) {
+      await this._sleep(200); // small, conservative delay
+    }
+
     if (!this._gattConnected()) {
       this._markLinkDown();
       return Left(
         new DeviceDisconnectedWhileSendingError(
           "GATT not connected",
-        ) as unknown as DmkError,
-      );
-    }
-
-    if (this._apduSender.isNothing()) {
-      return Left(
-        new DeviceDisconnectedWhileSendingError(
-          "Link not ready (no MTU / sender)",
         ) as unknown as DmkError,
       );
     }
@@ -322,44 +377,32 @@ export class WebBleApduSender
     return this._characteristics;
   }
 
-  public async setDependencies(
-    deps: WebBleApduSenderDependencies,
-  ): Promise<void> {
+  public setDependencies(deps: WebBleApduSenderDependencies): void {
     const oldNotify = this._characteristics.notifyCharacteristic;
 
-    // fail any in-flight APDU before swapping the link
+    // Fail any in-flight APDU before swapping the link
     this._failPendingSend(
       new DeviceDisconnectedWhileSendingError("Link changed"),
     );
 
-    if (this._notificationsActive && oldNotify.service.device.gatt?.connected) {
-      try {
-        await oldNotify.stopNotifications();
-      } catch {
-        this._logger.warn("Failed to stop notifications on old characteristic");
-      }
-    }
-    oldNotify.removeEventListener(
-      "characteristicvaluechanged",
-      this._handleNotify,
-    );
+    // Best-effort: do NOT await, do NOT stop notifications here
+    try {
+      oldNotify.removeEventListener(
+        "characteristicvaluechanged",
+        this._handleNotify,
+      );
+    } catch {} // ignore
+
+    // Mark link as not ready; setupConnection() will re-arm everything
     this._notificationsActive = false;
-
-    // Swap in new characteristics
-    this._characteristics = deps;
-
-    // Reset parsing/sending state across reconnect
-    this._apduReceiver = this._apduReceiverFactory(); // fresh deframer
     this._isDeviceReady.next(false);
     this._apduSender = Maybe.empty();
     this._sendResolver = Maybe.empty();
 
-    // Bind notifications for the new characteristic
-    await deps.notifyCharacteristic.startNotifications();
-    this._notificationsActive = true;
-    deps.notifyCharacteristic.addEventListener(
-      "characteristicvaluechanged",
-      this._handleNotify,
-    );
+    // Swap in new characteristics & fresh deframer
+    this._characteristics = deps;
+    this._apduReceiver = this._apduReceiverFactory();
+
+    // IMPORTANT: no startNotifications here; setupConnection() will do it.
   }
 }
