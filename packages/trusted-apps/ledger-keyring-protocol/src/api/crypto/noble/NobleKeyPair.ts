@@ -36,6 +36,10 @@ export class NobleKeyPair implements KeyPair {
     private publicKey: Uint8Array,
   ) {}
 
+  get id() {
+    return bufferToHexaString(this.privateKey);
+  }
+
   async sign(data: Uint8Array, format?: SigFormat): Promise<Uint8Array> {
     return this.curve
       .sign(data, this.privateKey)
