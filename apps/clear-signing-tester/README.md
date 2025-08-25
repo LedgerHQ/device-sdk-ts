@@ -35,7 +35,7 @@ Create a JSON file with raw transactions:
 ```json
 [
   {
-    "derivationPath": "44'/60'/0'/0/0",
+    "txHash": "",
     "rawTx": "0x02f8b4018325554c847735940085022d0b7c608307a12094dac17f958d2ee523a2206206994597c13d831ec780b844a9059cbb000000000000000000000000920ab45225b3057293e760a3c2d74643ad696a1b000000000000000000000000000000000000000000000000000000012a05f200c080a009e2ef5a2c4b7a1d7f0d868388f3949a00a1bdc5669c59b73e57b2a4e7c5e29fa0754aa9f4f1acc99561678492a20c31e01da27d648e69665f7768f96db39220ca",
     "description": "USDC transfer transaction"
   }
@@ -45,7 +45,7 @@ Create a JSON file with raw transactions:
 Run the test:
 
 ```bash
-npm run test:eth --raw examples/raw-transactions.json
+ pnpm eth-tester test:eth --raw examples/raw-transactions.json
 ```
 
 ### Testing dApp Transactions
@@ -66,13 +66,7 @@ Create a JSON file with dApp configurations:
 Run the test:
 
 ```bash
-npm run test:eth --dapps examples/dapps.json
-```
-
-### Testing Both
-
-```bash
-npm run test:eth --both examples/raw-transactions.json examples/dapps.json
+pnpm eth-tester test:eth --dapps ressources/dapps.json
 ```
 
 ## Environment Variables

@@ -67,7 +67,7 @@ export class EtherscanService {
     limit: number = 1
   ): Promise<EtherscanTransaction[]> {
     try {
-      console.log(`🔍 Fetching ${limit} transactions for contract: ${contractAddress}`);
+      console.log(`\t  🔍 Fetching ${limit} transactions for contract: ${contractAddress}`);
       
       const response = await axios.get<EtherscanResponse>(this.baseUrl, {
         params: {
@@ -85,7 +85,7 @@ export class EtherscanService {
       });
 
       if (response.data.status === '1') {
-        console.log(`✅ Found ${response.data.result.length} transactions for ${contractAddress}`);
+        console.log(`\t  ✅ Found ${response.data.result.length} transactions for ${contractAddress}`);
         return response.data.result;
       } else {
         throw new Error(`Etherscan API error: ${response.data.message}`);
@@ -114,7 +114,7 @@ export class EtherscanService {
    */
   async getTransactionByHash(txHash: string): Promise<EtherscanTransaction> {
     try {
-      console.log(`🔍 Fetching transaction details for: ${txHash}`);
+      console.log(`\t\t  🔍 Fetching transaction details for: ${txHash}`);
       
       const response = await axios.get<EtherscanSingleResponse>(this.baseUrl, {
         params: {
@@ -127,8 +127,8 @@ export class EtherscanService {
       });
 
       if (response.data.status === '1' && response.data.result) {
-        console.log(`✅ Found transaction details for ${txHash}`);
-        console.log(`🔍 Response: ${JSON.stringify(response.data.result)}`); 
+        console.log(`\t\t  ✅ Found transaction details for ${txHash}`);
+        console.log(`\t\t  Response: ${JSON.stringify(response.data.result)}`); 
         return response.data.result;
       } else {
         throw new Error(`Transaction not found: ${txHash}`);

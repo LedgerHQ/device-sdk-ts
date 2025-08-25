@@ -60,6 +60,8 @@ interface DAppTransactionResult {
     dapp: string;
     contract: string;
     txHash: string;
+    methodId?: string;
+    functionName?: string;
     status: "success" | "error";
     timestamp: string;
 }
@@ -141,8 +143,9 @@ class EthereumTransactionTester {
         gated: boolean = false,
     ): Promise<RawTransactionResult[]> {
         this.initializeSigner(gated);
-        console.log(`📄 Testing raw transactions from: ${rawTransactionsFile}`);
-
+        let tabulation = "";
+        console.log(`${tabulation}📄 Testing raw transactions from: ${rawTransactionsFile}`);
+        tabulation += "\t";
         try {
             const fileContent = readFileSync(rawTransactionsFile, "utf-8");
             const transactions: RawTransaction[] = JSON.parse(fileContent);
@@ -151,11 +154,11 @@ class EthereumTransactionTester {
 
             for (const [index, tx] of transactions.entries()) {
                 console.log(
-                    `    🔄 Testing RAW transaction ${index + 1}/${transactions.length}:`,
+                    `${tabulation}🔄 Testing RAW transaction ${index + 1}/${transactions.length}:`,
                 );
 
                 try {
-                    console.log(`🔍 Transaction data: ${tx.rawTx}`);
+                    console.log(`${tabulation}🔍 Transaction data: ${tx.rawTx}`);
 
                     // Use the sanitizeTransaction method
                     const result = await this.signTransaction(
@@ -199,8 +202,9 @@ class EthereumTransactionTester {
     async testDAppTransactions(
         dappsFile: string,
     ): Promise<DAppTransactionResult[]> {
-        console.log(`📄 Testing dApp transactions from: ${dappsFile}`);
-
+        let tabulation = "";
+        console.log(`${tabulation}📄 Testing dApp transactions from: ${dappsFile}`);
+        tabulation += "\t";
         if (!this.etherscanService) {
             throw new Error(
                 "ETHERSCAN_API_KEY environment variable is required for dApp testing",
@@ -214,10 +218,10 @@ class EthereumTransactionTester {
             const results: DAppTransactionResult[] = [];
 
             for (const dapp of dapps) {
-                console.log(`\n🏦 Testing dApp: ${dapp.name}`);
-
+                console.log(`\n${tabulation}🏦 Testing dApp: ${dapp.name}`);
+                tabulation = "\t";
                 for (const contract of dapp.contracts) {
-                    console.log(`  📋 Contract: ${contract.name} with address ${contract.address}`);
+                    console.log(`\n${tabulation}  📋 Contract: ${contract.name} with address ${contract.address}`);
 
                     try {
                         const transactions =
@@ -227,14 +231,25 @@ class EthereumTransactionTester {
                             );
 
                         for (const [index, tx] of transactions.entries()) {
+                            tabulation == "\t\t";
                             console.log(
-                                `    🔄 Testing transaction ${index + 1}/${transactions.length}: ${tx.hash}`,
+                                `\n${tabulation}🔄 Testing transaction ${index + 1}/${transactions.length}: ${tx.hash}`,
                             );
 
+                            const isSupportedMethod = contract.supportedMethods.findIndex(method => method.methodId === tx.methodId) !== -1;
+                            const isUnsupportedMethod = contract.unsupportedMethods.findIndex(method => method.methodId === tx.methodId) !== -1;
                             try {
                                 console.log(
-                                    `\n🔍 Transaction data: ${JSON.stringify(tx)}\n`,
+                                    `${tabulation}   🔍 Transaction using method : ${tx.functionName} - (${tx.methodId})`,
                                 );
+
+                                if(isSupportedMethod) {
+                                    console.log(`${tabulation}   ℹ️  Transaction ${tx.hash} SHOULD BE cleared signed`);
+                                } else if (isUnsupportedMethod) {
+                                    console.log(`${tabulation}   ℹ️  Transaction ${tx.hash} SHOULD NOT BE cleared signed`);
+                                } else {
+                                    console.log(`${tabulation}   ℹ️  Transaction ${tx.hash} using an unknown method ${tx.methodId}`);
+                                }
 
                                 // Use the sanitizeTransaction method
                                 const sanitizedTx =
@@ -261,17 +276,25 @@ class EthereumTransactionTester {
                                 });
 
                                 console.log(
-                                    `    ✅ Transaction ${tx.hash} is successfully cleared signed\n\n\n`,
+                                    `${tabulation}✅ Transaction ${tx.hash} is successfully cleared signed`,
                                 );
                             } catch (error) {
-                                console.error(
-                                    `    ❌ Transaction ${tx.hash} failed:`,
-                                    error,
-                                );
+                                if (isUnsupportedMethod) {
+                                    console.log(`${tabulation}⚠️ False Negative: ${tx.functionName} is not yet clearsigned for ${contract.name}`);
+                                    continue;
+                                } else if (isSupportedMethod) {
+                                    console.error(
+                                        `${tabulation}❌ Transaction ${tx.hash} failed to be cleared signed and function ${tx.functionName} should be supported for ${contract.name}`,
+                                        error,
+                                    );
+                                }
+                                
                                 results.push({
                                     dapp: dapp.name,
                                     contract: contract.name,
                                     txHash: tx.hash,
+                                    methodId: tx.methodId,
+                                    functionName: tx.functionName,
                                     status: "error",
                                     timestamp: new Date().toISOString(),
                                 });
@@ -350,7 +373,7 @@ class EthereumTransactionTester {
                         state.status === "error" &&
                         state.error?.errorCode === "6985"
                     ) {
-                        console.log("🔐 Transaction clear signed ✅");
+                        console.log("\t\t  🔐 Transaction clear signed ✅");
                         await new Promise((resolve) =>
                             setTimeout(resolve, 2000),
                         ); // Wait for device to be ready
@@ -365,7 +388,7 @@ class EthereumTransactionTester {
 
                     // Handle error state
                     if (state.status === "error") {
-                        console.error(`❌ Transaction BLIND SIGNED`);
+                        console.error(`\t\t  ❌ Transaction BLIND SIGNED`);
                         if (this._rejectTimeout) {
                             clearTimeout(this._rejectTimeout);
                         }
@@ -450,7 +473,6 @@ Usage: npm run test:eth [options]
 Options:
   --raw <file>     Test raw transactions from JSON file
   --dapps <file>   Test dApp transactions from JSON file
-  --both <raw> <dapps>  Test both raw and dApp transactions
 
 Examples:
   npm run test:eth --raw examples/raw-transactions.json
@@ -481,9 +503,6 @@ Environment variables:
             await tester.testRawTransactions(args[1]);
         } else if (args[0] === "--dapps" && args[1]) {
             await tester.testDAppTransactions(args[1]);
-        } else if (args[0] === "--both" && args[1] && args[2]) {
-            await tester.testRawTransactions(args[1]);
-            await tester.testDAppTransactions(args[2]);
         } else {
             console.error("❌ Invalid arguments");
             process.exit(1);
