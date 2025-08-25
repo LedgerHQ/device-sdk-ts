@@ -292,8 +292,8 @@ catalogs:
       specifier: 7.8.2
       version: 7.8.2
     semver:
-      specifier: 7.7.0
-      version: 7.7.0
+      specifier: 7.7.2
+      version: 7.7.2
     styled-components:
       specifier: ^5.3.11
       version: 5.3.11
@@ -558,7 +558,7 @@ importers:
         version: 0.76.6
       '@react-native/metro-config':
         specifier: 'catalog:'
-        version: 0.76.6(@babel/core@7.26.10)(@babel/preset-env@7.26.9(@babel/core@7.26.10))(bufferutil@4.0.9)(utf-8-validate@5.0.10)
+        version: 0.76.6(@babel/core@7.26.10)(@babel/preset-env@7.26.9(@babel/core@7.26.10))
       '@react-native/typescript-config':
         specifier: 'catalog:'
         version: 0.76.6
@@ -765,7 +765,7 @@ importers:
         version: 0.2.2
       semver:
         specifier: 'catalog:'
-        version: 7.7.0
+        version: 7.7.2
       url:
         specifier: 'catalog:'
         version: 0.11.4
@@ -976,7 +976,7 @@ importers:
         version: 0.2.2
       semver:
         specifier: 'catalog:'
-        version: 7.7.0
+        version: 7.7.2
       xstate:
         specifier: 'catalog:'
         version: 5.19.2
@@ -1043,7 +1043,7 @@ importers:
         version: 0.2.2
       semver:
         specifier: 'catalog:'
-        version: 7.7.0
+        version: 7.7.2
       xstate:
         specifier: 'catalog:'
         version: 5.19.2
@@ -1113,7 +1113,7 @@ importers:
         version: link:../ldmk-tool
       semver:
         specifier: 'catalog:'
-        version: 7.7.0
+        version: 7.7.2
     devDependencies:
       '@ledgerhq/eslint-config-dsdk':
         specifier: workspace:*
@@ -1129,7 +1129,7 @@ importers:
         version: 7.3.3(@types/node@22.14.0)
       semver:
         specifier: 'catalog:'
-        version: 7.7.0
+        version: 7.7.2
     devDependencies:
       '@ledgerhq/eslint-config-dsdk':
         specifier: workspace:*
@@ -9195,11 +9195,6 @@ packages:
     resolution: {integrity: sha512-BR7VvDCVHO+q2xBEWskxS6DJE1qRnb7DxzUrogb71CWoSficBxYsiAGd+Kl0mmq/MprG9yArRkyrQxTO6XjMzA==}
     hasBin: true
 
-  semver@7.7.0:
-    resolution: {integrity: sha512-DrfFnPzblFmNrIZzg5RzHegbiRWg7KMR7btwi2yjHwx06zsUbO5g613sVwEV7FTwmzJu+Io0lJe2GJ3LxqpvBQ==}
-    engines: {node: '>=10'}
-    hasBin: true
-
   semver@7.7.2:
     resolution: {integrity: sha512-RF0Fw+rO5AMf9MAyaRXI4AV0Ulj5lMHqVxxdSgiVbixSCXoEmmX/jk0CuJw4+3SqroYO9VoUh+HcuJivvtJemA==}
     engines: {node: '>=10'}
@@ -13973,7 +13968,7 @@ snapshots:
       - '@babel/preset-env'
       - supports-color
 
-  '@react-native/metro-config@0.76.6(@babel/core@7.26.10)(@babel/preset-env@7.26.9(@babel/core@7.26.10))(bufferutil@4.0.9)(utf-8-validate@5.0.10)':
+  '@react-native/metro-config@0.76.6(@babel/core@7.26.10)(@babel/preset-env@7.26.9(@babel/core@7.26.10))':
     dependencies:
       '@react-native/js-polyfills': 0.76.6
       '@react-native/metro-babel-transformer': 0.76.6(@babel/core@7.26.10)(@babel/preset-env@7.26.9(@babel/core@7.26.10))
@@ -13982,9 +13977,7 @@ snapshots:
     transitivePeerDependencies:
       - '@babel/core'
       - '@babel/preset-env'
-      - bufferutil
       - supports-color
-      - utf-8-validate
 
   '@react-native/normalize-colors@0.76.6': {}
 
@@ -18343,7 +18336,7 @@ snapshots:
 
   jest-message-util@29.7.0:
     dependencies:
-      '@babel/code-frame': 7.26.2
+      '@babel/code-frame': 7.27.1
       '@jest/types': 29.6.3
       '@types/stack-utils': 2.0.3
       chalk: 4.1.2
@@ -20997,8 +20990,6 @@ snapshots:
   semver@5.7.2: {}
 
   semver@6.3.1: {}
-
-  semver@7.7.0: {}
 
   semver@7.7.2: {}
 
