@@ -18,7 +18,7 @@ import { Observable } from "rxjs";
 import { getObservableOfArraysNewItems } from "@api/helpers/getObservableOfArraysNewItems";
 import { TRANSPORT_IDENTIFIER } from "@api/transport/rnHidTransportIdentifier";
 
-import { SendApduError } from "./Errors";
+import { HidTransportSendApduUnknownError } from "./Errors";
 import { type NativeModuleWrapper } from "./NativeModuleWrapper";
 
 export class RNHidTransport implements Transport {
@@ -137,7 +137,7 @@ export class RNHidTransport implements Transport {
                     triggersDisconnection,
                     abortTimeout,
                   )
-                  .catch((e) => Left(new SendApduError(e)));
+                  .catch((e) => Left(new HidTransportSendApduUnknownError(e)));
               },
               transport: this.getIdentifier(),
               type: "USB",
