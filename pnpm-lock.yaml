@@ -232,8 +232,8 @@ catalogs:
       specifier: ^3.0.15
       version: 3.2.4
     postcss:
-      specifier: ^8.4.47
-      version: 8.5.3
+      specifier: ^8.5.6
+      version: 8.5.6
     prettier:
       specifier: 3.5.3
       version: 3.5.3
@@ -685,13 +685,13 @@ importers:
         version: 5.1.34
       autoprefixer:
         specifier: 'catalog:'
-        version: 10.4.20(postcss@8.5.3)
+        version: 10.4.20(postcss@8.5.6)
       globals:
         specifier: 'catalog:'
         version: 16.0.0
       postcss:
         specifier: 'catalog:'
-        version: 8.5.3
+        version: 8.5.6
 
   packages/config/eslint:
     devDependencies:
@@ -8592,6 +8592,10 @@ packages:
     resolution: {integrity: sha512-dle9A3yYxlBSrt8Fu+IpjGT8SY8hN0mlaA6GY8t0P5PjIOZemULz/E2Bnm/2dcUOena75OTNkHI76uZBNUUq3A==}
     engines: {node: ^10 || ^12 || >=14}
 
+  postcss@8.5.6:
+    resolution: {integrity: sha512-3Ybi1tAuwAP9s0r1UQ2J4n5Y0G05bJkpUIO0/bI9MhwmD70S5aTWbXGBwxHrelT+XM1k6dM0pk+SwNkpTRN7Pg==}
+    engines: {node: ^10 || ^12 || >=14}
+
   postgres-array@2.0.0:
     resolution: {integrity: sha512-VpZrUqU5A69eQyW2c5CA1jtLecCsN2U/bD6VilrFDWq5+5UIEVO7nazS3TEcHf1zuPYO/sqGvUvW62g86RXZuA==}
     engines: {node: '>=4'}
@@ -15501,6 +15505,16 @@ snapshots:
       postcss: 8.5.3
       postcss-value-parser: 4.2.0
 
+  autoprefixer@10.4.20(postcss@8.5.6):
+    dependencies:
+      browserslist: 4.24.4
+      caniuse-lite: 1.0.30001712
+      fraction.js: 4.3.7
+      normalize-range: 0.1.2
+      picocolors: 1.1.1
+      postcss: 8.5.6
+      postcss-value-parser: 4.2.0
+
   available-typed-arrays@1.0.7:
     dependencies:
       possible-typed-array-names: 1.0.0
@@ -20097,6 +20111,12 @@ snapshots:
       source-map-js: 1.2.1
 
   postcss@8.5.3:
+    dependencies:
+      nanoid: 3.3.11
+      picocolors: 1.1.1
+      source-map-js: 1.2.1
+
+  postcss@8.5.6:
     dependencies:
       nanoid: 3.3.11
       picocolors: 1.1.1
