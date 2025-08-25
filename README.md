@@ -44,21 +44,25 @@
 
 # Introduction
 
-The purpose of the Ledger Device Management Kit(LDMK in short) is to provide a library in TypeScript to easily handle Ledger devices:
+The Device Management Kit (DMK) is a TypeScript library that provides easy communication with Ledger devices:
 
-- Device enumeration, identification and connection management
-- Device actions, with full status and error report
-- In the future: Firmware and Applications installation/update.
+- Device discovery, identification, and connection
+- Device management operations (app installation, device info retrieval) with comprehensive status tracking and error handling
+- Ledger OS interaction
+- App interaction for cryptographic operations
+  - Address derivation, message and transaction signing
+- App installation and management
+- 🔜 OS updates
 
 ⚠️
 <mark>
-**The current version of this Device Management Kit is in alpha stage and is subject to significant changes!!!**
+** The Device Management Kit is in alpha stage and is subject to significant changes!!!**
 </mark>
 ⚠️
 
-## How does it works
+## How it works
 
-The Device Management Kit features an interface for applications to handle any Ledger device (a.k. hardware wallets). It convert intention into
+The Device Management Kit features an interface for applications to handle any Ledger device (a.k. hardware wallets). It converts intention into
 
 ```mermaid
   flowchart LR;
@@ -67,55 +71,77 @@ The Device Management Kit features an interface for applications to handle any L
 
 The Device Management Kit is available in 3 different environments (web, Android & iOS).
 
-This repository is dedicated to **web environment** and is written in TypeScript.
+This repository contains the **web implementation** of the Device Management Kit, built with TypeScript.
 
 ## Structure
 
 ### Repository
 
-The Device Management Kit is structured as a monorepository whose prupose is to centralise all the TypeScript code related to the Device Management Kit in one place.
+The Device Management Kit is structured as a monorepository that centralizes all TypeScript code related to the Device Management Kit in one place.
 
 This project uses [turbo monorepo](https://turbo.build/repo/docs) to build and release different packages on NPM registry and a sample demo application on Vercel.
 
-### Modules
+### Packages
 
-A brief description of this project packages:
+A brief overview of this project's packages:
 
-| Name                                                  | Path                           | Description                                                                                                                              |
-|-------------------------------------------------------|--------------------------------|------------------------------------------------------------------------------------------------------------------------------------------|
-| @ledgerhq/device-management-kit-sample                | apps/sample                    | React Next web app used to test & demonstrate the Web Device Management Kit                                                              |
-| @ledgerhq/eslint-config-dsdk                          | packages/config/eslint         | internal package which contains eslint shared config. Used by `extends: ["@ledgerhq/dsdk"]` in `.eslintrc`.                              |
-| @ledgerhq/vitest-config-dmk                           | packages/config/vitest         | internal package which contains vitest shared config. Used in `vitest.config.mjs`                                                        |
-| @ledgerhq/tsconfig-dsdk                               | packages/config/typescript     | internal package which contains typescript shared config. Used by `"extends": "@ledgerhq/tsconfig-dsdk/tsconfig.sdk"` in `tsconfig.json` |
-| @ledgerhq/device-management-kit                       | packages/device-management-kit | external package that contains the core of the Web Device Management Kit                                                                 |
-| @ledgerhq/device-signer-kit-ethereum                  | packages/signer/signer-eth     | external package that contains device ethereum coin application dedicated handlers                                                       |
-| @ledgerhq/device-signer-kit-solana                    | packages/signer/signer-solana  | external package that contains device solana coin application dedicated handlers                                                         |
-| @ledgerhq/device-management-kit-flipper-plugin-client | packages/flipper-plugin-client | external package that contains [flipper](https://github.com/facebook/flipper) logger for Device Management Kit                           |
-| @ledgerhq/device-transport-kit-web-hid                | packages/transport/web-hid     | external package that contains the Web Hid transport implementation                                                                      |
-| @ledgerhq/device-transport-kit-web-ble                | packages/transport/web-ble     | external package that contains the Web Ble transport implementation                                                                      |
-| @ledgerhq/device-mockserver-client                    | packages/mockserver-client     | external package that contains the client to interact with the mock-server                                                               |
+### Core Packages
+
+| Name                            | Path                           | Description                                                          |
+| ------------------------------- | ------------------------------ | -------------------------------------------------------------------- |
+| @ledgerhq/device-management-kit | packages/device-management-kit | Core package containing the main Device Management Kit functionality |
+
+### Transport Packages
+
+| Name                                            | Path                        | Description                                   |
+| ----------------------------------------------- | --------------------------- | --------------------------------------------- |
+| @ledgerhq/device-transport-kit-web-hid          | packages/transport/web-hid  | Web HID transport implementation              |
+| @ledgerhq/device-transport-kit-web-ble          | packages/transport/web-ble  | Web BLE transport implementation              |
+| @ledgerhq/device-transport-kit-react-native-ble | packages/transport/rn-ble   | React Native BLE transport implementation     |
+| @ledgerhq/device-transport-kit-react-native-hid | packages/transport/rn-hid   | React Native HID transport implementation     |
+| @ledgerhq/device-transport-kit-speculos         | packages/transport/speculos | Speculos transport implementation for testing |
+
+### Signer Packages
+
+| Name                                 | Path                          | Description                                  |
+| ------------------------------------ | ----------------------------- | -------------------------------------------- |
+| @ledgerhq/device-signer-kit-bitcoin  | packages/signer/signer-btc    | Bitcoin coin application dedicated handlers  |
+| @ledgerhq/device-signer-kit-ethereum | packages/signer/signer-eth    | Ethereum coin application dedicated handlers |
+| @ledgerhq/device-signer-kit-solana   | packages/signer/signer-solana | Solana coin application dedicated handlers   |
+
+### Trusted Apps
+
+| Name                                                     | Path                                          | Description                            |
+| -------------------------------------------------------- | --------------------------------------------- | -------------------------------------- |
+| @ledgerhq/device-trusted-app-kit-ledger-keyring-protocol | packages/trusted-apps/ledger-keyring-protocol | Ledger Keyring Protocol implementation |
+
+### Development & Testing
+
+| Name                                                  | Path                           | Description                                                                     |
+| ----------------------------------------------------- | ------------------------------ | ------------------------------------------------------------------------------- |
+| @ledgerhq/device-management-kit-sample                | apps/sample                    | React Next web app used to test & demonstrate the Device Management Kit         |
+| @ledgerhq/device-management-kit-flipper-plugin-client | packages/flipper-plugin-client | [Flipper](https://github.com/facebook/flipper) logger for Device Management Kit |
+| @ledgerhq/device-mockserver-client                    | packages/mockserver-client     | Client to interact with the mock-server                                         |
+
+### Internal Configuration
+
+| Name                         | Path                       | Description                     |
+| ---------------------------- | -------------------------- | ------------------------------- |
+| @ledgerhq/eslint-config-dsdk | packages/config/eslint     | ESLint shared configuration     |
+| @ledgerhq/vitest-config-dmk  | packages/config/vitest     | Vitest shared configuration     |
+| @ledgerhq/tsconfig-dsdk      | packages/config/typescript | TypeScript shared configuration |
 
 # Getting started
 
-> 💡 **The following steps described only a minimal setup. You will need to perform additional installation steps depending on the package you want to work on, please refer to its nested readme file.**
-
-## Prerequisites
-
-### Shell
-
-Install your favorite shell or use your computer built in one (e.g. bash, zsh or fish )
-
-### Git
-
-Please install git.
+> 💡 **The following steps describe only a minimal setup. You will need to perform additional installation steps depending on the package you want to work on, please refer to its nested README file.**
 
 ## Environment Setup
 
 ### Proto
 
-**proto** is used as the toolchain manager to install the right version of every tools.
+**proto** is used as the toolchain manager to install the right version of every tool.
 
-**⚠️ Important**: Please follow the instructions on the [**proto**](https://moonrepo.dev/docs/proto/install) website to install it.
+**⚠️ Important**: Please follow the instructions on the [**proto**](https://moonrepo.dev/docs/proto/install) documentation to install it.
 
 ### Dependencies management
 
@@ -158,18 +184,13 @@ export PATH="$PROTO_HOME/shims:$PROTO_HOME/bin:$PATH"
 
 ## Unit Test
 
-**Jest** is used for unit testing purpose.
+**Vitest** is used for unit testing.
 
 Each package is tested using the following command (at the root of the monorepo).
 
 ```bash
 pnpm <package> test
 ```
-
-### VSCode user
-
-For VSCode user, this monorepo is a multi-root workspace.
-Please configure JEST extention accordingly.
 
 ## Build
 
@@ -185,8 +206,8 @@ pnpm dmk build
 
 ### Signers
 
-Transaction and message signer module.
-Each signer is its own package. Here is an exemple with the ETH signer:
+Transaction and message signing module.
+Each signer is its own package. Here is an exemple with the Ethereum signer:
 
 ```bash
 pnpm signer-eth build
@@ -195,17 +216,10 @@ pnpm signer-eth build
 ### Trusted Apps
 
 Security dedicated application interface module.
+Example with the Ledger Keyring Protocol trusted app:
 
 ```bash
-pnpm trusted-apps build
-```
-
-### UI
-
-Reference UI module
-
-```bash
-pnpm ui build
+pnpm app-keyring build
 ```
 
 ### Sample application
@@ -230,16 +244,22 @@ This project uses Github CI. Please have a look to the following link for more d
 
 ## Scripting
 
-In order to avoid task repetition, we can add some scripts the corresponding package's script folder, on in a root script folder if it concerns multiple packages.
+To avoid task repetition, you can add scripts to the corresponding package's script folder, or to a root script folder if they concern multiple packages.
 A script is a `.mjs` file interpreted by [zx](https://github.com/google/zx).
 
 ## Templates
 
-To kickly scaffold part of our code, we use `hygen` to help us kickstart our development process faster.
-Each project can have it's own `_templates` folder, so **generators** are scoped.
+We use `hygen` to quickly scaffold code and accelerate our development process.
+Each project can have its own `_templates` folder, making **generators** scoped to their respective projects.
 The `_templates` folder contains the basic generators to create new ones.
 
 [Hygen documentation](https://www.hygen.io/docs/quick-start/)
+
+### Available templates
+
+| workspace | script          | description                           |
+| --------- | --------------- | ------------------------------------- |
+| 📦 dmk    | `module:create` | scaffolds a new _src/internal_ module |
 
 ### Process for adding a new generator
 
@@ -247,7 +267,7 @@ The easiest way would be to use `hygen` from the root folder as so:
 
 **Options**:
 
-- `new`: creates a generator that take no input during creation (but can still access metadata)
+- `new`: creates a generator that takes no input during creation (but can still access metadata)
 - `with-prompt`: creates a generator that can take some input during creation (with access to metadata)
 
 **Important: All the commands should be run at the root of the monorepo.**
@@ -275,12 +295,6 @@ pnpm hygen <name> with-prompt
 - `name` is the name given during the creation of the generator.
 - `with-prompt` to call the prompted version of the generator (there can be multiple targets, like `new`)
 
-### Available templates
-
-| workspace | script          | description                           |
-| --------- | --------------- | ------------------------------------- |
-| 📦 dmk    | `module:create` | scaffolds a new _src/internal_ module |
-
 ## Play with the sample app ?
 
 To build the required dependencies and start a dev server for the sample app, please execute the following command at the root of the repository.
@@ -306,4 +320,4 @@ Each individual project may include its own specific guidelines, located within 
 
 # License
 
-Please check each project [`LICENSE`](https://github.com/LedgerHQ/device-sdk-ts/blob/develop/LICENSE.md) file, most of them are under the `Apache-2.0` license.
+Please check each project's [`LICENSE`](https://github.com/LedgerHQ/device-sdk-ts/blob/develop/LICENSE.md) file, most of them are under the `Apache-2.0` license.

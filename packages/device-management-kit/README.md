@@ -1,9 +1,9 @@
-# Device Development Kit Library Documentation
+# Device Management Kit Library Documentation
 
 > [!CAUTION]
-> This is still under development and we are free to make new interfaces which may lead to Device Development Kit breaking changes.
+> This is still under development and we are free to make new interfaces which may lead to Device Management Kit breaking changes.
 
-- [Device Development Kit Library Documentation](#device-development-kit-library-documentation)
+- [Device Management Kit Library Documentation](#device-management-kit-library-documentation)
   - [Description](#description)
   - [Installation](#installation)
   - [Usage](#usage)
