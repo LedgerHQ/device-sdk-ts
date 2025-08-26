@@ -1,4 +1,4 @@
-export type NetworkApiResponseDto = Array<{
+export type DynamicNetworkApiResponseDto = Array<{
   id: string;
   descriptors: Record<
     string,

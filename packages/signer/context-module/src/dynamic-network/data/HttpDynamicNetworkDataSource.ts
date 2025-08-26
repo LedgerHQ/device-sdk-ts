@@ -6,28 +6,28 @@ import { Either, Left, Right } from "purify-ts";
 import { configTypes } from "@/config/di/configTypes";
 import { type ContextModuleConfig } from "@/config/model/ContextModuleConfig";
 import {
-  type NetworkConfiguration,
-  type NetworkDescriptor,
-} from "@/network/model/NetworkConfiguration";
+  type DynamicNetworkConfiguration,
+  type DynamicNetworkDescriptor,
+} from "@/dynamic-network/model/DynamicNetworkConfiguration";
 import { LEDGER_CLIENT_VERSION_HEADER } from "@/shared/constant/HttpHeaders";
 import PACKAGE from "@root/package.json";
 
-import { type NetworkApiResponseDto } from "./dto/NetworkApiResponseDto";
-import { type NetworkDataSource } from "./NetworkDataSource";
+import { type DynamicNetworkApiResponseDto } from "./dto/DynamicNetworkApiResponseDto";
+import { type DynamicNetworkDataSource } from "./DynamicNetworkDataSource";
 
 @injectable()
-export class HttpNetworkDataSource implements NetworkDataSource {
+export class HttpDynamicNetworkDataSource implements DynamicNetworkDataSource {
   constructor(
     @inject(configTypes.Config) private readonly config: ContextModuleConfig,
   ) {}
 
-  async getNetworkConfiguration(
+  async getDynamicNetworkConfiguration(
     chainId: number,
-  ): Promise<Either<Error, NetworkConfiguration>> {
-    let response: NetworkApiResponseDto;
+  ): Promise<Either<Error, DynamicNetworkConfiguration>> {
+    let response: DynamicNetworkApiResponseDto;
 
     try {
-      const axiosResponse = await axios.get<NetworkApiResponseDto>(
+      const axiosResponse = await axios.get<DynamicNetworkApiResponseDto>(
         `${this.config.cal.url}/networks?output=id,descriptors,icons&chain_id=${chainId}`,
         {
           headers: {
@@ -64,7 +64,9 @@ export class HttpNetworkDataSource implements NetworkDataSource {
     return Right(configuration);
   }
 
-  private isValidNetworkData(data: unknown): data is NetworkApiResponseDto[0] {
+  private isValidNetworkData(
+    data: unknown,
+  ): data is DynamicNetworkApiResponseDto[0] {
     if (!data || typeof data !== "object") {
       return false;
     }
@@ -98,7 +100,7 @@ export class HttpNetworkDataSource implements NetworkDataSource {
 
   private isValidDescriptor(
     descriptor: unknown,
-  ): descriptor is NetworkApiResponseDto[0]["descriptors"][string] {
+  ): descriptor is DynamicNetworkApiResponseDto[0]["descriptors"][string] {
     if (!descriptor || typeof descriptor !== "object") {
       return false;
     }
@@ -131,8 +133,8 @@ export class HttpNetworkDataSource implements NetworkDataSource {
   }
 
   private transformToNetworkConfiguration(
-    networkData: NetworkApiResponseDto[0],
-  ): NetworkConfiguration {
+    networkData: DynamicNetworkApiResponseDto[0],
+  ): DynamicNetworkConfiguration {
     const descriptors = Object.entries(networkData.descriptors).reduce(
       (acc, [deviceModel, descriptor]) => {
         acc[deviceModel as DeviceModelId] = {
@@ -144,7 +146,7 @@ export class HttpNetworkDataSource implements NetworkDataSource {
         };
         return acc;
       },
-      {} as Record<DeviceModelId, NetworkDescriptor>,
+      {} as Record<DeviceModelId, DynamicNetworkDescriptor>,
     );
 
     return {

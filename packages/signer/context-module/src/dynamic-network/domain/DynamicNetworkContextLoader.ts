@@ -2,8 +2,8 @@ import { inject, injectable } from "inversify";
 
 import { configTypes } from "@/config/di/configTypes";
 import { type ContextModuleConfig } from "@/config/model/ContextModuleConfig";
-import { type NetworkDataSource } from "@/network/data/NetworkDataSource";
-import { networkTypes } from "@/network/di/networkTypes";
+import { type DynamicNetworkDataSource } from "@/dynamic-network/data/DynamicNetworkDataSource";
+import { dynamicNetworkTypes } from "@/dynamic-network/di/dynamicNetworkTypes";
 import { pkiTypes } from "@/pki/di/pkiTypes";
 import { type PkiCertificateLoader } from "@/pki/domain/PkiCertificateLoader";
 import { KeyId } from "@/pki/model/KeyId";
@@ -23,13 +23,13 @@ const NETWORK_SIGNATURE_TAG = "15";
 
 @injectable()
 export class DynamicNetworkContextLoader implements ContextLoader {
-  private readonly _networkDataSource: NetworkDataSource;
+  private readonly _networkDataSource: DynamicNetworkDataSource;
   private readonly _config: ContextModuleConfig;
   private readonly _certificateLoader: PkiCertificateLoader;
 
   constructor(
-    @inject(networkTypes.NetworkDataSource)
-    networkDataSource: NetworkDataSource,
+    @inject(dynamicNetworkTypes.DynamicNetworkDataSource)
+    networkDataSource: DynamicNetworkDataSource,
     @inject(configTypes.Config)
     config: ContextModuleConfig,
     @inject(pkiTypes.PkiCertificateLoader)
@@ -41,7 +41,7 @@ export class DynamicNetworkContextLoader implements ContextLoader {
   }
 
   async load(transaction: TransactionContext): Promise<ClearSignContext[]> {
-    const result = await this._networkDataSource.getNetworkConfiguration(
+    const result = await this._networkDataSource.getDynamicNetworkConfiguration(
       transaction.chainId,
     );
 

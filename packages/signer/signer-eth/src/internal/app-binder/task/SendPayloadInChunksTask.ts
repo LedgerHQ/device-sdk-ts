@@ -16,6 +16,7 @@ import {
 export type SendPayloadInChunksTaskArgs<T> = {
   payload: string;
   commandFactory: SendCommandInChunksTaskArgs<T>["commandFactory"];
+  withPayloadLength?: boolean;
 };
 
 export class SendPayloadInChunksTask<T> {
@@ -24,7 +25,8 @@ export class SendPayloadInChunksTask<T> {
     private args: SendPayloadInChunksTaskArgs<T>,
   ) {}
   async run(): Promise<CommandResult<T, EthErrorCodes>> {
-    const data = PayloadUtils.getBufferFromPayload(this.args.payload);
+    const { payload, withPayloadLength } = this.args;
+    const data = PayloadUtils.getBufferFromPayload(payload, withPayloadLength);
 
     if (!data) {
       return CommandResultFactory({

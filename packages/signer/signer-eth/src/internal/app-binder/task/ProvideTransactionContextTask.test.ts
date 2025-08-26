@@ -12,6 +12,7 @@ import {
 import { Left, Right } from "purify-ts";
 
 import { ProvideEnumCommand } from "@internal/app-binder/command/ProvideEnumCommand";
+import { ProvideNetworkConfigurationCommand } from "@internal/app-binder/command/ProvideNetworkConfigurationCommand";
 import { ProvideNFTInformationCommand } from "@internal/app-binder/command/ProvideNFTInformationCommand";
 import { ProvideProxyInfoCommand } from "@internal/app-binder/command/ProvideProxyInfoCommand";
 import { ProvideTokenInformationCommand } from "@internal/app-binder/command/ProvideTokenInformationCommand";
@@ -269,9 +270,18 @@ describe("ProvideTransactionContextTask", () => {
           ProvideTransactionFieldDescriptionCommand,
         ],
         [ClearSignContextType.PROXY_DELEGATE_CALL, ProvideProxyInfoCommand],
+        [
+          ClearSignContextType.DYNAMIC_NETWORK_ICON,
+          ProvideNetworkConfigurationCommand,
+          false,
+        ],
+        [
+          ClearSignContextType.DYNAMIC_NETWORK,
+          ProvideNetworkConfigurationCommand,
+        ],
       ] as const)(
         "should provide the transaction context by calling sendPayloadInChunksTask for a %s context",
-        async (contextType, commandClass) => {
+        async (contextType, commandClass, withPayloadLength = undefined) => {
           // GIVEN
           const args: ProvideTransactionContextTaskArgs = {
             context: {
@@ -296,11 +306,20 @@ describe("ProvideTransactionContextTask", () => {
           // THEN
           expect(result).toEqual(Right(void 0));
           expect(sendPayloadInChunksRunMock).toHaveBeenCalledTimes(1);
-          expect(sendPayloadInChunksRunMock).toHaveBeenCalledWith(api, {
-            payload: "payload",
-            // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-            commandFactory: expect.any(Function),
-          });
+          if (withPayloadLength === undefined) {
+            expect(sendPayloadInChunksRunMock).toHaveBeenCalledWith(api, {
+              payload: "payload",
+              // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+              commandFactory: expect.any(Function),
+            });
+          } else {
+            expect(sendPayloadInChunksRunMock).toHaveBeenCalledWith(api, {
+              payload: "payload",
+              // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+              commandFactory: expect.any(Function),
+              withPayloadLength,
+            });
+          }
 
           // Test that the commandFactory returns a commandClass
           const factoryCall = sendPayloadInChunksTaskMockFactory.mock.calls[0]!;

@@ -1,6 +1,6 @@
 import { type DeviceModelId } from "@ledgerhq/device-management-kit";
 
-export type NetworkDescriptor = {
+export type DynamicNetworkDescriptor = {
   descriptorType: string;
   descriptorVersion: string;
   data: string;
@@ -11,7 +11,7 @@ export type NetworkDescriptor = {
   icon: string | undefined;
 };
 
-export type NetworkConfiguration = {
+export type DynamicNetworkConfiguration = {
   id: string;
-  descriptors: Record<DeviceModelId, NetworkDescriptor>;
+  descriptors: Record<DeviceModelId, DynamicNetworkDescriptor>;
 };

@@ -2,12 +2,12 @@ import { DeviceModelId } from "@ledgerhq/device-management-kit";
 import { Left, Right } from "purify-ts";
 
 import { type ContextModuleConfig } from "@/config/model/ContextModuleConfig";
-import { type NetworkDataSource } from "@/network/data/NetworkDataSource";
-import { DynamicNetworkContextLoader } from "@/network/domain/DynamicNetworkContextLoader";
+import { type DynamicNetworkDataSource } from "@/dynamic-network/data/DynamicNetworkDataSource";
+import { DynamicNetworkContextLoader } from "@/dynamic-network/domain/DynamicNetworkContextLoader";
 import {
-  type NetworkConfiguration,
-  type NetworkDescriptor,
-} from "@/network/model/NetworkConfiguration";
+  type DynamicNetworkConfiguration,
+  type DynamicNetworkDescriptor,
+} from "@/dynamic-network/model/DynamicNetworkConfiguration";
 import { type PkiCertificateLoader } from "@/pki/domain/PkiCertificateLoader";
 import { KeyId } from "@/pki/model/KeyId";
 import { KeyUsage } from "@/pki/model/KeyUsage";
@@ -19,8 +19,8 @@ import {
 } from "@/shared/model/TransactionContext";
 
 describe("DynamicNetworkContextLoader", () => {
-  const mockNetworkDataSource: NetworkDataSource = {
-    getNetworkConfiguration: vi.fn(),
+  const mockNetworkDataSource: DynamicNetworkDataSource = {
+    getDynamicNetworkConfiguration: vi.fn(),
   };
 
   const mockConfig: ContextModuleConfig = {
@@ -32,7 +32,7 @@ describe("DynamicNetworkContextLoader", () => {
     web3checks: {
       url: "https://web3checks.api.ledger.com",
     },
-    metadataService: {
+    metadataServiceDomain: {
       url: "https://metadata.api.ledger.com",
     },
     defaultLoaders: true,
@@ -56,8 +56,8 @@ describe("DynamicNetworkContextLoader", () => {
 
   // Helper function to create a mock NetworkDescriptor
   const createMockDescriptor = (
-    partial?: Partial<NetworkDescriptor>,
-  ): NetworkDescriptor => ({
+    partial?: Partial<DynamicNetworkDescriptor>,
+  ): DynamicNetworkDescriptor => ({
     data: "",
     descriptorType: "",
     descriptorVersion: "",
@@ -88,7 +88,7 @@ describe("DynamicNetworkContextLoader", () => {
       };
       vi.spyOn(
         mockNetworkDataSource,
-        "getNetworkConfiguration",
+        "getDynamicNetworkConfiguration",
       ).mockResolvedValue(Left(new Error("Network error")));
 
       // WHEN
@@ -97,7 +97,7 @@ describe("DynamicNetworkContextLoader", () => {
       // THEN
       expect(result).toEqual([]);
       expect(
-        mockNetworkDataSource.getNetworkConfiguration,
+        mockNetworkDataSource.getDynamicNetworkConfiguration,
       ).toHaveBeenCalledWith(1);
     });
 
@@ -110,7 +110,7 @@ describe("DynamicNetworkContextLoader", () => {
         data: "0x456",
         selector: "0x789",
       };
-      const networkConfig: NetworkConfiguration = {
+      const networkConfig: DynamicNetworkConfiguration = {
         id: "ethereum",
         descriptors: {
           [DeviceModelId.NANO_S]: createMockDescriptor(),
@@ -127,11 +127,11 @@ describe("DynamicNetworkContextLoader", () => {
             },
             icon: undefined,
           }),
-        } as Record<DeviceModelId, NetworkDescriptor>,
+        } as Record<DeviceModelId, DynamicNetworkDescriptor>,
       };
       vi.spyOn(
         mockNetworkDataSource,
-        "getNetworkConfiguration",
+        "getDynamicNetworkConfiguration",
       ).mockResolvedValue(Right(networkConfig));
 
       // WHEN
@@ -150,7 +150,7 @@ describe("DynamicNetworkContextLoader", () => {
         data: "0x456",
         selector: "0x789",
       };
-      const networkConfig: NetworkConfiguration = {
+      const networkConfig: DynamicNetworkConfiguration = {
         id: "ethereum",
         descriptors: {
           [DeviceModelId.APEX]: createMockDescriptor(),
@@ -172,7 +172,7 @@ describe("DynamicNetworkContextLoader", () => {
       };
       vi.spyOn(
         mockNetworkDataSource,
-        "getNetworkConfiguration",
+        "getDynamicNetworkConfiguration",
       ).mockResolvedValue(Right(networkConfig));
 
       // WHEN
@@ -191,7 +191,7 @@ describe("DynamicNetworkContextLoader", () => {
         data: "0x456",
         selector: "0x789",
       };
-      const networkConfig: NetworkConfiguration = {
+      const networkConfig: DynamicNetworkConfiguration = {
         id: "polygon",
         descriptors: {
           [DeviceModelId.APEX]: createMockDescriptor(),
@@ -213,7 +213,7 @@ describe("DynamicNetworkContextLoader", () => {
       };
       vi.spyOn(
         mockNetworkDataSource,
-        "getNetworkConfiguration",
+        "getDynamicNetworkConfiguration",
       ).mockResolvedValue(Right(networkConfig));
 
       // WHEN
@@ -244,7 +244,7 @@ describe("DynamicNetworkContextLoader", () => {
         data: "0x456",
         selector: "0x789",
       };
-      const networkConfig: NetworkConfiguration = {
+      const networkConfig: DynamicNetworkConfiguration = {
         id: "ethereum",
         descriptors: {
           [DeviceModelId.APEX]: createMockDescriptor(),
@@ -266,7 +266,7 @@ describe("DynamicNetworkContextLoader", () => {
       };
       vi.spyOn(
         mockNetworkDataSource,
-        "getNetworkConfiguration",
+        "getDynamicNetworkConfiguration",
       ).mockResolvedValue(Right(networkConfig));
 
       // WHEN
@@ -294,7 +294,7 @@ describe("DynamicNetworkContextLoader", () => {
         data: "0x456",
         selector: "0x789",
       };
-      const networkConfig: NetworkConfiguration = {
+      const networkConfig: DynamicNetworkConfiguration = {
         id: "ethereum",
         descriptors: {
           [DeviceModelId.APEX]: createMockDescriptor(),
@@ -325,7 +325,7 @@ describe("DynamicNetworkContextLoader", () => {
       };
       vi.spyOn(
         mockNetworkDataSource,
-        "getNetworkConfiguration",
+        "getDynamicNetworkConfiguration",
       ).mockResolvedValue(Right(networkConfig));
 
       // WHEN
@@ -354,7 +354,7 @@ describe("DynamicNetworkContextLoader", () => {
         data: "0x456",
         selector: "0x789",
       };
-      const networkConfig: NetworkConfiguration = {
+      const networkConfig: DynamicNetworkConfiguration = {
         id: "ethereum",
         descriptors: {
           [DeviceModelId.APEX]: createMockDescriptor(),
@@ -376,7 +376,7 @@ describe("DynamicNetworkContextLoader", () => {
       };
       vi.spyOn(
         mockNetworkDataSource,
-        "getNetworkConfiguration",
+        "getDynamicNetworkConfiguration",
       ).mockResolvedValue(Right(networkConfig));
 
       // WHEN

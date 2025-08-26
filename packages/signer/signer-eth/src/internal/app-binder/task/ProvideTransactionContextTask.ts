@@ -220,7 +220,7 @@ export class ProvideTransactionContextTask {
       case ClearSignContextType.DYNAMIC_NETWORK:
         // Dynamic network configuration uses the existing ProvideNetworkConfiguration command
         // but is provided as part of the context flow
-        return new SendPayloadInChunksTask(this._api, {
+        return this._sendPayloadInChunksTaskFactory(this._api, {
           payload,
           commandFactory: (args) =>
             new ProvideNetworkConfigurationCommand({
@@ -230,7 +230,7 @@ export class ProvideTransactionContextTask {
             }),
         }).run();
       case ClearSignContextType.DYNAMIC_NETWORK_ICON: {
-        return new SendPayloadInChunksTask(this._api, {
+        return this._sendPayloadInChunksTaskFactory(this._api, {
           payload,
           commandFactory: (args) =>
             new ProvideNetworkConfigurationCommand({
@@ -238,6 +238,7 @@ export class ProvideTransactionContextTask {
               isFirstChunk: args.isFirstChunk,
               configurationType: NetworkConfigurationType.ICON,
             }),
+          withPayloadLength: false,
         }).run();
       }
       default: {

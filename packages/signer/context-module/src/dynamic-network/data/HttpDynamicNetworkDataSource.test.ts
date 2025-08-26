@@ -4,12 +4,12 @@ import { beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { type ContextModuleConfig } from "@/config/model/ContextModuleConfig";
 
-import { HttpNetworkDataSource } from "./HttpNetworkDataSource";
+import { HttpDynamicNetworkDataSource } from "./HttpDynamicNetworkDataSource";
 
 vi.mock("axios");
 
 describe("HttpNetworkDataSource", () => {
-  let datasource: HttpNetworkDataSource;
+  let datasource: HttpDynamicNetworkDataSource;
   const mockConfig: ContextModuleConfig = {
     cal: {
       url: "https://crypto-assets-service.api.ledger.com",
@@ -47,7 +47,7 @@ describe("HttpNetworkDataSource", () => {
   };
 
   beforeAll(() => {
-    datasource = new HttpNetworkDataSource(mockConfig);
+    datasource = new HttpDynamicNetworkDataSource(mockConfig);
   });
 
   beforeEach(() => {
@@ -58,7 +58,7 @@ describe("HttpNetworkDataSource", () => {
     it("should return network configuration successfully", async () => {
       vi.mocked(axios.get).mockResolvedValue(mockNetworkResponse);
 
-      const result = await datasource.getNetworkConfiguration(1);
+      const result = await datasource.getDynamicNetworkConfiguration(1);
 
       expect(axios.get).toHaveBeenCalledWith(
         "https://crypto-assets-service.api.ledger.com/networks?output=id,descriptors,icons&chain_id=1",
@@ -99,7 +99,7 @@ describe("HttpNetworkDataSource", () => {
     it("should return error when network data is not found", async () => {
       vi.mocked(axios.get).mockResolvedValue({ data: [] });
 
-      const result = await datasource.getNetworkConfiguration(1);
+      const result = await datasource.getDynamicNetworkConfiguration(1);
 
       expect(result).toEqual(
         Left(new Error("Network configuration not found for chain ID: 1")),
@@ -109,7 +109,7 @@ describe("HttpNetworkDataSource", () => {
     it("should return error when network data is undefined", async () => {
       vi.mocked(axios.get).mockResolvedValue({ data: undefined });
 
-      const result = await datasource.getNetworkConfiguration(1);
+      const result = await datasource.getDynamicNetworkConfiguration(1);
 
       expect(result).toEqual(
         Left(new Error("Network configuration not found for chain ID: 1")),
@@ -119,7 +119,7 @@ describe("HttpNetworkDataSource", () => {
     it("should return error when axios throws an error", async () => {
       vi.mocked(axios.get).mockRejectedValue(new Error("Network error"));
 
-      const result = await datasource.getNetworkConfiguration(1);
+      const result = await datasource.getDynamicNetworkConfiguration(1);
 
       expect(result).toEqual(Left(new Error("Network error")));
     });
@@ -127,7 +127,7 @@ describe("HttpNetworkDataSource", () => {
     it("should return generic error when axios throws non-Error", async () => {
       vi.mocked(axios.get).mockRejectedValue("String error");
 
-      const result = await datasource.getNetworkConfiguration(1);
+      const result = await datasource.getDynamicNetworkConfiguration(1);
 
       expect(result).toEqual(
         Left(new Error("Failed to fetch network configuration")),
@@ -145,7 +145,7 @@ describe("HttpNetworkDataSource", () => {
       };
       vi.mocked(axios.get).mockResolvedValue(invalidResponse);
 
-      const result = await datasource.getNetworkConfiguration(1);
+      const result = await datasource.getDynamicNetworkConfiguration(1);
 
       expect(result).toEqual(
         Left(
@@ -165,7 +165,7 @@ describe("HttpNetworkDataSource", () => {
       };
       vi.mocked(axios.get).mockResolvedValue(invalidResponse);
 
-      const result = await datasource.getNetworkConfiguration(1);
+      const result = await datasource.getDynamicNetworkConfiguration(1);
 
       expect(result).toEqual(
         Left(
@@ -192,7 +192,7 @@ describe("HttpNetworkDataSource", () => {
       };
       vi.mocked(axios.get).mockResolvedValue(invalidResponse);
 
-      const result = await datasource.getNetworkConfiguration(1);
+      const result = await datasource.getDynamicNetworkConfiguration(1);
 
       expect(result).toEqual(
         Left(
@@ -219,7 +219,7 @@ describe("HttpNetworkDataSource", () => {
       };
       vi.mocked(axios.get).mockResolvedValue(invalidResponse);
 
-      const result = await datasource.getNetworkConfiguration(1);
+      const result = await datasource.getDynamicNetworkConfiguration(1);
 
       expect(result).toEqual(
         Left(
@@ -249,7 +249,7 @@ describe("HttpNetworkDataSource", () => {
       };
       vi.mocked(axios.get).mockResolvedValue(invalidResponse);
 
-      const result = await datasource.getNetworkConfiguration(1);
+      const result = await datasource.getDynamicNetworkConfiguration(1);
 
       expect(result).toEqual(
         Left(
@@ -292,7 +292,7 @@ describe("HttpNetworkDataSource", () => {
       };
       vi.mocked(axios.get).mockResolvedValue(responseWithIcons);
 
-      const result = await datasource.getNetworkConfiguration(1);
+      const result = await datasource.getDynamicNetworkConfiguration(1);
 
       expect(result.isRight()).toBe(true);
       const configuration = result.unsafeCoerce();
@@ -303,7 +303,7 @@ describe("HttpNetworkDataSource", () => {
     it("should transform data correctly for Polygon chain ID", async () => {
       vi.mocked(axios.get).mockResolvedValue(mockNetworkResponse);
 
-      const result = await datasource.getNetworkConfiguration(137);
+      const result = await datasource.getDynamicNetworkConfiguration(137);
 
       expect(axios.get).toHaveBeenCalledWith(
         "https://crypto-assets-service.api.ledger.com/networks?output=id,descriptors,icons&chain_id=137",
@@ -315,6 +315,140 @@ describe("HttpNetworkDataSource", () => {
       expect(result.isRight()).toBe(true);
       const configuration = result.unsafeCoerce();
       expect(Object.keys(configuration.descriptors)).toEqual(["flex", "stax"]);
+    });
+
+    it("should handle invalid data - null data", async () => {
+      const invalidResponse = {
+        data: [null],
+      };
+      vi.mocked(axios.get).mockResolvedValue(invalidResponse);
+
+      const result = await datasource.getDynamicNetworkConfiguration(1);
+
+      expect(result).toEqual(
+        Left(new Error("Network configuration not found for chain ID: 1")),
+      );
+    });
+
+    it("should handle invalid data - non-object data", async () => {
+      const invalidResponse = {
+        data: ["string_instead_of_object"],
+      };
+      vi.mocked(axios.get).mockResolvedValue(invalidResponse);
+
+      const result = await datasource.getDynamicNetworkConfiguration(1);
+
+      expect(result).toEqual(
+        Left(
+          new Error("Invalid network configuration response for chain ID: 1"),
+        ),
+      );
+    });
+
+    it("should handle invalid data - icons as string instead of object", async () => {
+      const invalidResponse = {
+        data: [
+          {
+            id: "ethereum",
+            descriptors: {
+              flex: {
+                data: "0x0101",
+                descriptorType: "network",
+                descriptorVersion: "v1",
+                signatures: {
+                  prod: "sig1",
+                  test: "sig2",
+                },
+              },
+            },
+            icons: "should_be_object_not_string",
+          },
+        ],
+      };
+      vi.mocked(axios.get).mockResolvedValue(invalidResponse);
+
+      const result = await datasource.getDynamicNetworkConfiguration(1);
+
+      expect(result).toEqual(
+        Left(
+          new Error("Invalid network configuration response for chain ID: 1"),
+        ),
+      );
+    });
+
+    it("should handle invalid data - icons as number instead of object (line 93)", async () => {
+      const invalidResponse = {
+        data: [
+          {
+            id: "ethereum",
+            descriptors: {
+              flex: {
+                data: "0x0101",
+                descriptorType: "network",
+                descriptorVersion: "v1",
+                signatures: {
+                  prod: "sig1",
+                  test: "sig2",
+                },
+              },
+            },
+            icons: 123,
+          },
+        ],
+      };
+      vi.mocked(axios.get).mockResolvedValue(invalidResponse);
+
+      const result = await datasource.getDynamicNetworkConfiguration(1);
+
+      expect(result).toEqual(
+        Left(
+          new Error("Invalid network configuration response for chain ID: 1"),
+        ),
+      );
+    });
+
+    it("should handle invalid descriptor - null descriptor (line 103)", async () => {
+      const invalidResponse = {
+        data: [
+          {
+            id: "ethereum",
+            descriptors: {
+              flex: null,
+            },
+          },
+        ],
+      };
+      vi.mocked(axios.get).mockResolvedValue(invalidResponse);
+
+      const result = await datasource.getDynamicNetworkConfiguration(1);
+
+      expect(result).toEqual(
+        Left(
+          new Error("Invalid network configuration response for chain ID: 1"),
+        ),
+      );
+    });
+
+    it("should handle invalid descriptor - non-object descriptor (line 103)", async () => {
+      const invalidResponse = {
+        data: [
+          {
+            id: "ethereum",
+            descriptors: {
+              flex: "should_be_object_not_string",
+            },
+          },
+        ],
+      };
+      vi.mocked(axios.get).mockResolvedValue(invalidResponse);
+
+      const result = await datasource.getDynamicNetworkConfiguration(1);
+
+      expect(result).toEqual(
+        Left(
+          new Error("Invalid network configuration response for chain ID: 1"),
+        ),
+      );
     });
   });
 });
