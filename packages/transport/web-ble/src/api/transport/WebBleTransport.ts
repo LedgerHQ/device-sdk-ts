@@ -309,6 +309,64 @@ export class WebBleTransport implements Transport {
     );
   }
 
+  private async _sleep(ms: number) {
+    return new Promise((r) => setTimeout(r, ms));
+  }
+
+  /**
+   * Wait until it's reasonable to call device.gatt.connect().
+   * - Does NOT call connect() itself.
+   * - Does NOT use watchAdvertisements().
+   * - Waits for GATT to exist and stay disconnected for a small "stable" window.
+   */
+  private async _waitUntilGattReady(
+    device: BluetoothDevice,
+    opts: { timeoutMs?: number; stableMs?: number; pollMs?: number } = {},
+  ): Promise<void> {
+    const timeoutMs = opts.timeoutMs ?? 10_000;
+    const stableMs = opts.stableMs ?? 500; // how long "disconnected" must be stable
+    const pollMs = opts.pollMs ?? 100; // recursion cadence
+
+    const deadline = Date.now() + timeoutMs;
+    let stableStart: number | null = null;
+
+    const loop = async (): Promise<void> => {
+      if (Date.now() >= deadline) {
+        throw new OpeningConnectionError(
+          "Timed out waiting for GATT to be ready",
+        );
+      }
+
+      // 1) GATT object must exist
+      if (!device.gatt) {
+        stableStart = null;
+        await this._sleep(pollMs);
+        return loop();
+      }
+
+      // 2) Must not be connected (let OS fully release the link)
+      if (device.gatt.connected) {
+        stableStart = null; // reset stability window
+        await this._sleep(pollMs);
+        return loop();
+      }
+
+      // 3) Disconnected — require a short stability window (avoids calling connect too soon)
+      if (stableStart == null) {
+        stableStart = Date.now();
+      }
+      if (Date.now() - (stableStart ?? 0) < stableMs) {
+        await this._sleep(pollMs);
+        return loop();
+      }
+
+      // Passed all checks: considered "ready"
+      return;
+    };
+
+    await loop();
+  }
+
   private async tryToReconnect(
     deviceId: string,
     onReconnect?: (deviceId: string) => Promise<void> | void,
@@ -330,10 +388,17 @@ export class WebBleTransport implements Transport {
         if (device.gatt?.connected) {
           try {
             device.gatt.disconnect();
-          } catch {
-            /* ignore */
-          }
+          } catch {}
         }
+
+        // small cool-down helps some stacks
+        await this._sleep(200);
+
+        await this._waitUntilGattReady(device, {
+          timeoutMs: SINGLE_RECONNECTION_TIMEOUT,
+          stableMs: 600, // tweak if needed (400–1000ms)
+          pollMs: 100,
+        });
 
         await this._withTimeout(
           device.gatt!.connect(),
@@ -341,10 +406,7 @@ export class WebBleTransport implements Transport {
           `connect timed out after ${SINGLE_RECONNECTION_TIMEOUT} ms`,
         );
 
-        await this._delay(200); // let GATT DB populate
-
         const svc = await this._findAnyLedgerService(device);
-        await this._delay(50); // allow characteristics to become queryable
         const infos =
           this._deviceModelDataSource.getBluetoothServicesInfos()[svc.uuid];
         if (!infos)
