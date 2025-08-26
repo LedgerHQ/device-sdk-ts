@@ -21,11 +21,7 @@ import { type Either, Left, Right } from "purify-ts";
 import { BehaviorSubject, from, type Observable } from "rxjs";
 import { switchMap } from "rxjs/operators";
 
-import {
-  RECONNECT_DEVICE_TIMEOUT,
-  RECONNECTION_RETRY_COUNT,
-  SINGLE_RECONNECTION_TIMEOUT,
-} from "@api/data/WebBleConfig";
+import { RECONNECT_DEVICE_TIMEOUT } from "@api/data/WebBleConfig";
 
 import {
   WebBleApduSender,
@@ -52,6 +48,19 @@ export class WebBleTransport implements Transport {
   private _deviceModelDataSource: DeviceModelDataSource;
   private _apduSenderFactory: ApduSenderServiceFactory;
   private _apduReceiverFactory: ApduReceiverServiceFactory;
+
+  private _advPrimed = new Set<string>();
+  private async _primeAdvertisementWatch(device: BluetoothDevice) {
+    if (this._advPrimed.has(device.id)) return;
+    const canWatch = typeof (device as any).watchAdvertisements === "function";
+    if (!canWatch) return;
+    try {
+      await (device as any).watchAdvertisements();
+    } catch {
+      /* ignore */
+    }
+    this._advPrimed.add(device.id);
+  }
 
   // RN-style: one SM per device, no external timers/promises
   private _deviceConnectionsById = new Map<
@@ -93,8 +102,14 @@ export class WebBleTransport implements Transport {
     const filters = this._deviceModelDataSource
       .getBluetoothServices()
       .map((s) => ({ services: [s] }));
+    const allUuids = this._deviceModelDataSource.getBluetoothServices();
 
-    return from(navigator.bluetooth.requestDevice({ filters })).pipe(
+    return from(
+      navigator.bluetooth.requestDevice({
+        filters,
+        optionalServices: allUuids,
+      }),
+    ).pipe(
       switchMap(async (device) => {
         if (!device.gatt)
           throw new OpeningConnectionError(
@@ -215,10 +230,14 @@ export class WebBleTransport implements Transport {
           deviceId: params.deviceId,
           deviceApduSender: apduSender,
           timeoutDuration: RECONNECT_DEVICE_TIMEOUT,
-          tryToReconnect: () => {
-            this.tryToReconnect(params.deviceId, params.onReconnect).catch(
-              (e: unknown) =>
-                this._logger.error("tryToReconnect() threw", { data: { e } }),
+          tryToReconnect: (budgetMs: number) => {
+            // ✅ accept budget
+            this.tryToReconnect(
+              params.deviceId,
+              params.onReconnect,
+              budgetMs,
+            ).catch((e) =>
+              this._logger.error("tryToReconnect() threw", { data: { e } }),
             );
           },
           onTerminated: () => {
@@ -240,6 +259,7 @@ export class WebBleTransport implements Transport {
         });
 
       await apduSender.setupConnection();
+      await this._primeAdvertisementWatch(entry.device);
 
       // Track connection
       this._deviceConnectionsById.set(params.deviceId, connectionMachine);
@@ -297,16 +317,13 @@ export class WebBleTransport implements Transport {
 
   private _handleDeviceDisconnected(
     deviceId: string,
-    onReconnect?: (deviceId: string) => Promise<void> | void,
+    _onReconnect?: (deviceId: string) => Promise<void> | void,
   ) {
     this._logger.debug(`[${deviceId}] gattserverdisconnected`);
     const sm = this._deviceConnectionsById.get(deviceId);
     if (!sm) return;
 
     sm.eventDeviceDisconnected();
-    this.tryToReconnect(deviceId, onReconnect).catch((e) =>
-      this._logger.error("tryToReconnect failed", { data: { e } }),
-    );
   }
 
   private async _sleep(ms: number) {
@@ -367,9 +384,47 @@ export class WebBleTransport implements Transport {
     await loop();
   }
 
+  private async _waitForAdvertisementOrDelay(
+    device: BluetoothDevice,
+    { timeoutMs = 5000 }: { timeoutMs?: number } = {},
+  ): Promise<void> {
+    const canWatch = typeof (device as any).watchAdvertisements === "function";
+    if (!canWatch) {
+      // fallback: just give the stack some time to come back
+      await this._sleep(Math.min(timeoutMs, 2500));
+      return;
+    }
+
+    await new Promise<void>(async (resolve) => {
+      let settled = false;
+      const done = () => {
+        if (!settled) {
+          settled = true;
+          resolve();
+        }
+      };
+
+      const onAdv = () => {
+        device.removeEventListener("advertisementreceived", onAdv as any);
+        done();
+      };
+
+      try {
+        device.addEventListener("advertisementreceived", onAdv as any);
+        await (device as any).watchAdvertisements();
+      } catch {
+        // permission/platform issue; fall back to time
+        done();
+        return;
+      }
+      setTimeout(done, timeoutMs);
+    });
+  }
+
   private async tryToReconnect(
     deviceId: string,
-    onReconnect?: (deviceId: string) => Promise<void> | void,
+    onReconnect?: (id: string) => Promise<void> | void,
+    budgetMs: number = RECONNECT_DEVICE_TIMEOUT, // ✅ use SM budget
   ) {
     if (this._reconnecting.has(deviceId)) return;
     this._reconnecting.add(deviceId);
@@ -382,30 +437,39 @@ export class WebBleTransport implements Transport {
     }
 
     const { device } = reg;
+    const deadline = Date.now() + Math.max(0, budgetMs);
+    let attempt = 0;
 
-    for (let attempt = 1; attempt <= RECONNECTION_RETRY_COUNT; attempt++) {
+    while (Date.now() < deadline) {
+      attempt += 1;
       try {
         if (device.gatt?.connected) {
           try {
             device.gatt.disconnect();
           } catch {}
         }
-
-        // small cool-down helps some stacks
-        await this._sleep(200);
+        await this._waitForAdvertisementOrDelay(device, {
+          timeoutMs: Math.min(5000, Math.max(1500, deadline - Date.now())),
+        });
 
         await this._waitUntilGattReady(device, {
-          timeoutMs: SINGLE_RECONNECTION_TIMEOUT,
-          stableMs: 600, // tweak if needed (400–1000ms)
+          timeoutMs: Math.min(2500, deadline - Date.now()),
+          stableMs: 900,
           pollMs: 100,
         });
 
         await this._withTimeout(
           device.gatt!.connect(),
-          SINGLE_RECONNECTION_TIMEOUT,
-          `connect timed out after ${SINGLE_RECONNECTION_TIMEOUT} ms`,
+          Math.min(4000, Math.max(1500, deadline - Date.now())),
+          "connect timed out",
         );
 
+        try {
+          await device.gatt!.getPrimaryServices();
+        } catch {}
+        await this._primeAdvertisementWatch(device);
+
+        // --- rehydrate characteristics (unchanged) ---
         const svc = await this._findAnyLedgerService(device);
         const infos =
           this._deviceModelDataSource.getBluetoothServicesInfos()[svc.uuid];
@@ -414,7 +478,6 @@ export class WebBleTransport implements Transport {
             "Unknown Ledger service after reconnect",
           );
 
-        // NEW: choose the *right* write characteristic (with-response if available)
         const writeCharacteristic = await this._pluckWriteCharacteristic(
           svc,
           infos,
@@ -422,50 +485,44 @@ export class WebBleTransport implements Transport {
         const notifyCharacteristic = await svc.getCharacteristic(
           infos.notifyUuid,
         );
-
         sm.setDependencies({ writeCharacteristic, notifyCharacteristic });
 
-        // Reattach listener & update registry
         if (reg.listener)
           device.removeEventListener("gattserverdisconnected", reg.listener);
-        const onDisc = (_ev: Event) =>
+        const onDisc = (_: Event) =>
           this._handleDeviceDisconnected(deviceId, onReconnect);
         device.addEventListener("gattserverdisconnected", onDisc);
         reg.listener = onDisc;
         reg.service = svc;
         reg.infos = infos;
 
-        await sm.setupConnection(); // triggers MTU probe
+        await sm.setupConnection();
         sm.eventDeviceConnected();
-
-        if (onReconnect) {
-          try {
-            await onReconnect(deviceId);
-          } catch (e: unknown) {
-            this._logger.error("onReconnect callback threw", { data: { e } });
-          }
+        try {
+          await onReconnect?.(deviceId);
+        } catch (e) {
+          this._logger.error("onReconnect callback threw", { data: { e } });
         }
-
-        this._logger.debug(
-          `[${deviceId}] reconnect SUCCESS (attempt ${attempt})`,
-        );
         this._emitDevices();
         this._reconnecting.delete(deviceId);
-        return;
-      } catch (e: unknown) {
-        this._logger.warn(`[${deviceId}] reconnect attempt ${attempt} failed`, {
-          data: { e },
-        });
-        await this._delay(Math.min(250 * attempt, 1000));
+        return; // ✅ success
+      } catch (e: any) {
+        const msg = String(e?.message || "").toLowerCase();
+        const name = String(e?.name || "");
+        const isRange =
+          name === "NetworkError" && msg.includes("no longer in range");
+        // Backoff a bit longer for old-firmware app switches (radio dark period)
+        const backoff = isRange ? 600 + 200 * attempt : 250 * attempt;
+        const remaining = deadline - Date.now();
+        if (remaining > 0)
+          await this._delay(Math.min(backoff, Math.max(100, remaining)));
       }
     }
 
-    this._logger.error(`[${deviceId}] all reconnection attempts failed`);
+    this._logger.error(`[${deviceId}] reconnection budget exhausted`);
     try {
       sm.closeConnection();
-    } catch {
-      /* ignore */
-    }
+    } catch {}
     this._reconnecting.delete(deviceId);
   }
 
@@ -491,26 +548,26 @@ export class WebBleTransport implements Transport {
     this._devices$.next([...connected, ...scanned]);
   }
 
-  private async _findAnyLedgerService(
-    device: BluetoothDevice,
-  ): Promise<BluetoothRemoteGATTService> {
+  private async _findAnyLedgerService(device: BluetoothDevice) {
     const uuids = this._deviceModelDataSource.getBluetoothServices();
-
-    // Prefer last-known UUID first
     const last = this._registry.get(device.id)?.service?.uuid;
     const order = last
       ? [last, ...uuids.filter((u) => u !== last)]
       : uuids.slice();
 
     for (const uuid of order) {
-      // First try the direct API
       try {
         return await device.gatt!.getPrimaryService(uuid);
-      } catch {
-        /* try slower paths below */
+      } catch (e: any) {
+        // If we lack permission for this UUID, don’t hide it as “not found”
+        if (e?.name === "SecurityError") {
+          throw new OpeningConnectionError(
+            `Missing Web Bluetooth permission for service ${uuid}. ` +
+              `Add it to optionalServices in requestDevice().`,
+          );
+        }
+        // else try slower path
       }
-
-      // Some stacks only populate after enumerating all services once
       try {
         const all = await device.gatt!.getPrimaryServices();
         const found = all.find(
@@ -518,10 +575,9 @@ export class WebBleTransport implements Transport {
         );
         if (found) return found;
       } catch {
-        /* keep looping */
+        /* continue */
       }
     }
-
     throw new OpeningConnectionError(
       "Ledger GATT service not found on reconnect",
     );

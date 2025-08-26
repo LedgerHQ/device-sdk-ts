@@ -151,35 +151,55 @@ export class WebBleApduSender
   }
 
   private async _write(buf: ArrayBuffer) {
-    const c = this._characteristics.writeCharacteristic;
+    const ch = this._characteristics.writeCharacteristic;
 
-    // If GATT is down, don't even try
     if (!this._gattConnected()) {
       this._markLinkDown();
       throw new DeviceDisconnectedWhileSendingError("GATT not connected");
     }
 
+    // Prefer with-response if the method exists, else fallbacks.
+    const hasWithResp =
+      typeof (ch as any).writeValueWithResponse === "function";
+    const hasWithout =
+      typeof (ch as any).writeValueWithoutResponse === "function";
+    const hasLegacy = typeof (ch as any).writeValue === "function";
+
     // Try WITH response
     try {
-      // @ts-ignore web bluetooth has this
-      await c.writeValueWithResponse(buf);
-      return;
+      if (ch.properties.write && hasWithResp) {
+        await (ch as any).writeValueWithResponse(buf);
+        return;
+      }
+      // If the platform exposes only legacy writeValue (treated like with-response), use it before without-response.
+      if (hasLegacy && ch.properties.write && !hasWithResp) {
+        await (ch as any).writeValue(buf);
+        return;
+      }
     } catch (e1) {
-      if (this._looksDisconnected(e1)) {
+      if (this._looksDisconnected(e1) || !this._gattConnected()) {
         this._markLinkDown();
         throw new DeviceDisconnectedWhileSendingError(
           "Write failed (with response)",
         );
       }
-      // fall through to without-response
+      // fall through to try without-response
     }
 
     // Try WITHOUT response
     try {
-      // @ts-ignore
-      await c.writeValueWithoutResponse(buf);
+      if (ch.properties.writeWithoutResponse && hasWithout) {
+        await (ch as any).writeValueWithoutResponse(buf);
+        return;
+      }
+      // Last ditch: legacy writeValue even if properties claim otherwise.
+      if (hasLegacy) {
+        await (ch as any).writeValue(buf);
+        return;
+      }
+      throw new Error("No supported write method for characteristic");
     } catch (e2) {
-      if (this._looksDisconnected(e2)) {
+      if (this._looksDisconnected(e2) || !this._gattConnected()) {
         this._markLinkDown();
         throw new DeviceDisconnectedWhileSendingError(
           "Write failed (without response)",
@@ -305,7 +325,9 @@ export class WebBleApduSender
   ): Promise<Either<DmkError, ApduResponse>> {
     // If handshake still in flight or not ready yet, wait a bit instead of failing
     try {
-      await this._awaitReady(Math.min(1500, abortTimeout ?? 1500));
+      // Use the larger of our sane minimum and abortTimeout
+      const waitBudget = Math.max(1500, abortTimeout ?? 0);
+      await this._awaitReady(waitBudget);
     } catch (e) {
       return Left(e as DmkError);
     }
@@ -342,7 +364,12 @@ export class WebBleApduSender
       try {
         await this._write(frame.getRawData().buffer);
       } catch (e) {
-        this._logger.error("Frame write failed", { data: { e } });
+        const msg = _triggersDisconnection
+          ? "Frame write failed during expected drop"
+          : "Frame write failed";
+        this._logger[_triggersDisconnection ? "debug" : "error"](msg, {
+          data: { e },
+        });
         this._failPendingSend(
           new DeviceDisconnectedWhileSendingError("Write failed"),
         );
