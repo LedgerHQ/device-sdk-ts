@@ -6,6 +6,7 @@ const { enterRelease, exitRelease } = require("./release.cjs");
 const { help } = require("./help.cjs");
 const { build } = require("./build.cjs");
 const { watch } = require("./watch.cjs");
+const { generateSigner } = require("./generate-signer.cjs");
 
 if (process.platform === "win32") {
   usePowerShell();
@@ -32,6 +33,11 @@ const availableCommands = [
   {
     name: "exit-release",
     description: "toggle private on packages.json to be released",
+    flags: [],
+  },
+  {
+    name: "generate-signer",
+    description: "generate a new signer package skeleton for a cryptocurrency",
     flags: [],
   },
   {
@@ -76,6 +82,10 @@ async function main() {
   switch (command) {
     case "help":
       help(availableCommands);
+      break;
+    case "generate-signer":
+      console.log(chalk.green("🚀 Generating new signer package"));
+      await generateSigner();
       break;
     case "enter-release":
       console.log(chalk.green("🔧 (packages): Entering release mode"));
