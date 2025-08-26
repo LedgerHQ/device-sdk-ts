@@ -21,6 +21,11 @@ const SUPPORTED_SIGNERS = [
     description: "Access Solana signer functionality",
     icon: <CryptoIcons.SOL size={80} />,
   },
+  {
+    title: "Canton",
+    description: "Access Canton signer functionality",
+    icon: <CryptoIcons.CDT size={80} />, //todo change icon when available
+  },
 ];
 
 export const SignerView = () => {

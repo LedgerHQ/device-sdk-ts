@@ -23,6 +23,7 @@
     "signer-btc": "pnpm --filter @ledgerhq/device-signer-kit-bitcoin",
     "signer-eth": "pnpm --filter @ledgerhq/device-signer-kit-ethereum",
     "signer-sol": "pnpm --filter @ledgerhq/device-signer-kit-solana",
+    "signer-canton": "pnpm --filter @ledgerhq/device-signer-kit-canton",
     "signer-utils": "pnpm --filter @ledgerhq/signer-utils",
     "mockserver-client": "pnpm --filter @ledgerhq/device-mockserver-client",
     "keyring-protocol": "pnpm --filter @ledgerhq/device-trusted-app-kit-ledger-keyring-protocol",
