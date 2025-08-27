@@ -414,6 +414,7 @@ export class WebBleTransport implements Transport {
             device.gatt!.connect(),
             Math.min(4000, Math.max(1000, deadline - Date.now())),
             "connect timed out",
+            () => device.gatt!.disconnect(),
           );
 
           // helps some stacks (not sure is valid)
@@ -600,9 +601,17 @@ export class WebBleTransport implements Transport {
     throw new OpeningConnectionError("No write characteristic available");
   }
 
-  private _withTimeout<T>(p: Promise<T>, ms: number, msg: string): Promise<T> {
+  private _withTimeout<T>(
+    p: Promise<T>,
+    ms: number,
+    msg: string,
+    cancellationFn?: () => void,
+  ): Promise<T> {
     return new Promise<T>((resolve, reject) => {
-      const t = setTimeout(() => reject(new OpeningConnectionError(msg)), ms);
+      const t = setTimeout(() => {
+        reject(new OpeningConnectionError(msg));
+        cancellationFn?.();
+      }, ms);
       p.then(
         (v) => {
           clearTimeout(t);
