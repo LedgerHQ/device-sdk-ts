@@ -1,5 +1,4 @@
-//doublecheck on the rnapdu sender for writeWithCar. and withoutCar
-
+// WebBleApduSender.ts
 import {
   type ApduReceiverServiceFactory,
   type ApduResponse,
@@ -32,8 +31,9 @@ export class WebBleApduSender
   > = Maybe.empty();
   private _notificationsActive = false;
   private _apduReceiverFactory: ApduReceiverServiceFactory;
+
   private _mtuHandshakeInFlight = false;
-  private static readonly MTU_OP = 0x08; // adjust to your proto
+  private static readonly MTU_OP = 0x08; // same opcode; adjust if your proto differs
 
   constructor(
     deps: WebBleApduSenderDependencies & {
@@ -57,6 +57,79 @@ export class WebBleApduSender
     this._sendResolver = Maybe.empty();
   }
 
+  private _looksDisconnected(e: unknown): boolean {
+    const err = e as any;
+    const name = (err?.name ?? "").toString();
+    const msg = (err?.message ?? "").toString().toLowerCase();
+    return (
+      name === "NetworkError" ||
+      msg.includes("gatt server is disconnected") ||
+      msg.includes("not connected") ||
+      msg.includes("cannot perform gatt operations")
+    );
+  }
+
+  private _gattConnected(): boolean {
+    try {
+      return !!this._characteristics.notifyCharacteristic.service.device.gatt
+        ?.connected;
+    } catch {
+      return false;
+    }
+  }
+
+  private _markLinkDown(): void {
+    try {
+      if (this._notificationsActive) {
+        this._characteristics.notifyCharacteristic.removeEventListener(
+          "characteristicvaluechanged",
+          this._handleNotify,
+        );
+        this._characteristics.notifyCharacteristic
+          .stopNotifications()
+          .catch(() => {});
+        this._notificationsActive = false;
+      }
+    } catch {
+      /* ignore */
+    }
+    this._isDeviceReady.next(false);
+    this._apduSender = Maybe.empty();
+    this._sendResolver = Maybe.empty();
+  }
+
+  private _onReceiveSetup(mtuResponseBuffer: Uint8Array) {
+    // example: [0x08,0,0,0,0,<mtu>] where <mtu> is 1 byte in this proto
+    const negotiatedMtu = mtuResponseBuffer[5];
+    if (
+      negotiatedMtu === undefined ||
+      !Number.isFinite(negotiatedMtu) ||
+      negotiatedMtu <= 0
+    ) {
+      throw new Error("MTU negotiation failed: invalid MTU");
+    }
+    this._apduSender = Maybe.of(
+      this._apduSenderFactory({ frameSize: negotiatedMtu }),
+    );
+    this._isDeviceReady.next(true);
+  }
+
+  private _onReceiveApdu = (incomingFrame: Uint8Array) => {
+    this._apduReceiver
+      .handleFrame(incomingFrame)
+      .map((respOpt) =>
+        respOpt.map((resp) => {
+          this._logger.debug("Received APDU", { data: { resp } });
+          this._sendResolver.map((r) => r(Right(resp)));
+          this._sendResolver = Maybe.empty();
+        }),
+      )
+      .mapLeft((err) => {
+        this._sendResolver.map((r) => r(Left(err)));
+        this._sendResolver = Maybe.empty();
+      });
+  };
+
   private _handleNotify = (event: Event) => {
     const characteristic = event.target as BluetoothRemoteGATTCharacteristic;
     if (!characteristic.value) return;
@@ -79,77 +152,6 @@ export class WebBleApduSender
     }
   };
 
-  private _looksDisconnected(e: unknown): boolean {
-    const err = e as any;
-    const name = (err?.name ?? "").toString();
-    const msg = (err?.message ?? "").toString().toLowerCase();
-    // Covers Chrome/WebBT errors on Win/macOS/Android
-    return (
-      name === "NetworkError" ||
-      msg.includes("gatt server is disconnected") ||
-      msg.includes("not connected") ||
-      msg.includes("cannot perform gatt operations")
-    );
-  }
-
-  private _markLinkDown(): void {
-    // Stop delivering frames & force upper layers to treat link as down
-    try {
-      if (this._notificationsActive) {
-        this._characteristics.notifyCharacteristic.removeEventListener(
-          "characteristicvaluechanged",
-          this._handleNotify,
-        );
-        this._characteristics.notifyCharacteristic
-          .stopNotifications()
-          .catch(() => {});
-        this._notificationsActive = false;
-      }
-    } catch {
-      /* ignore */
-    }
-
-    this._isDeviceReady.next(false);
-    this._apduSender = Maybe.empty();
-    this._sendResolver = Maybe.empty();
-  }
-
-  private _gattConnected(): boolean {
-    try {
-      return !!this._characteristics.notifyCharacteristic.service.device.gatt
-        ?.connected;
-    } catch {
-      return false;
-    }
-  }
-
-  private _onReceiveSetup(mtuResponseBuffer: Uint8Array) {
-    const negotiatedMtu = mtuResponseBuffer[5]; // adjust if MTU is 16-bit in your proto
-    if (typeof negotiatedMtu !== "number" || negotiatedMtu <= 0) {
-      throw new Error("MTU negotiation failed: invalid MTU");
-    }
-    this._apduSender = Maybe.of(
-      this._apduSenderFactory({ frameSize: negotiatedMtu }),
-    );
-    this._isDeviceReady.next(true);
-  }
-
-  private _onReceiveApdu(incomingFrame: Uint8Array) {
-    this._apduReceiver
-      .handleFrame(incomingFrame)
-      .map((respOpt) =>
-        respOpt.map((resp) => {
-          this._logger.debug("Received APDU", { data: { resp } });
-          this._sendResolver.map((r) => r(Right(resp)));
-          this._sendResolver = Maybe.empty();
-        }),
-      )
-      .mapLeft((err) => {
-        this._sendResolver.map((r) => r(Left(err)));
-        this._sendResolver = Maybe.empty();
-      });
-  }
-
   private async _write(buf: ArrayBuffer) {
     const ch = this._characteristics.writeCharacteristic;
 
@@ -158,20 +160,21 @@ export class WebBleApduSender
       throw new DeviceDisconnectedWhileSendingError("GATT not connected");
     }
 
-    // Prefer with-response if the method exists, else fallbacks.
+    // Robust write-path:
+    // 1) Prefer WITH response if supported (most reliable)
+    // 2) Fall back to legacy writeValue (treated like with-response in many stacks)
+    // 3) Finally WITHOUT response if exposed and allowed
     const hasWithResp =
       typeof (ch as any).writeValueWithResponse === "function";
     const hasWithout =
       typeof (ch as any).writeValueWithoutResponse === "function";
     const hasLegacy = typeof (ch as any).writeValue === "function";
 
-    // Try WITH response
     try {
       if (ch.properties.write && hasWithResp) {
         await (ch as any).writeValueWithResponse(buf);
         return;
       }
-      // If the platform exposes only legacy writeValue (treated like with-response), use it before without-response.
       if (hasLegacy && ch.properties.write && !hasWithResp) {
         await (ch as any).writeValue(buf);
         return;
@@ -183,16 +186,14 @@ export class WebBleApduSender
           "Write failed (with response)",
         );
       }
-      // fall through to try without-response
+      // try without-response next
     }
 
-    // Try WITHOUT response
     try {
       if (ch.properties.writeWithoutResponse && hasWithout) {
         await (ch as any).writeValueWithoutResponse(buf);
         return;
       }
-      // Last ditch: legacy writeValue even if properties claim otherwise.
       if (hasLegacy) {
         await (ch as any).writeValue(buf);
         return;
@@ -214,7 +215,7 @@ export class WebBleApduSender
     return new Promise((r) => setTimeout(r, ms));
   }
 
-  // Wait until notifications are up + MTU negotiated (or timeout)
+  // Wait until notifications are active and MTU negotiated (or timeout)
   private async _awaitReady(maxMs = 1500): Promise<void> {
     if (
       this._notificationsActive &&
@@ -238,7 +239,7 @@ export class WebBleApduSender
         reject(new DeviceDisconnectedWhileSendingError("Link not ready"));
       }, maxMs);
 
-      // Fast-path if it flipped between checks
+      // fast path in case it flipped
       if (
         this._notificationsActive &&
         this._isDeviceReady.value &&
@@ -251,7 +252,6 @@ export class WebBleApduSender
     });
   }
 
-  // Identify the SM’s plain ping
   private _isLegacyPing(apdu: Uint8Array): boolean {
     return (
       apdu.length === 5 &&
@@ -263,7 +263,8 @@ export class WebBleApduSender
     );
   }
 
-  // --- keep setupConnection the single place that starts notifications ---
+  // --- public API (same surface) ---
+
   public async setupConnection(): Promise<void> {
     const notifyChar = this._characteristics.notifyCharacteristic;
 
@@ -276,18 +277,19 @@ export class WebBleApduSender
       );
     }
 
-    // small stabilization
-    await this._sleep(200);
+    // small stabilization window
+    await this._sleep(150);
 
+    // MTU handshake
     this._mtuHandshakeInFlight = true;
     const mtuReq = new Uint8Array([WebBleApduSender.MTU_OP, 0, 0, 0, 0]);
 
     try {
       await this._write(mtuReq.buffer);
 
-      // wait until _isDeviceReady flips true (set in _onReceiveSetup) or timeout
+      // wait until _isDeviceReady flips true via _onReceiveSetup
       await Promise.race([
-        new Promise<void>((res, _rej) => {
+        new Promise<void>((res) => {
           const sub = this._isDeviceReady.subscribe((ready) => {
             if (ready) {
               sub.unsubscribe();
@@ -317,25 +319,21 @@ export class WebBleApduSender
     }
   }
 
-  // --- gate the first APDU (esp. the ping) in sendApdu ---
   public async sendApdu(
     apdu: Uint8Array,
     _triggersDisconnection?: boolean,
     abortTimeout?: number,
   ): Promise<Either<DmkError, ApduResponse>> {
-    // If handshake still in flight or not ready yet, wait a bit instead of failing
     try {
-      // Use the larger of our sane minimum and abortTimeout
       const waitBudget = Math.max(1500, abortTimeout ?? 0);
       await this._awaitReady(waitBudget);
     } catch (e) {
       return Left(e as DmkError);
     }
 
-    // If the very first thing SM sends after reconnect is the legacy ping,
-    // give notifications stack a tiny extra breather instead of writing immediately.
+    // Give the stack a tiny breath before the legacy ping (first APDU after reconnect)
     if (this._isLegacyPing(apdu)) {
-      await this._sleep(200); // small, conservative delay
+      await this._sleep(200);
     }
 
     if (!this._gattConnected()) {
@@ -414,24 +412,26 @@ export class WebBleApduSender
       new DeviceDisconnectedWhileSendingError("Link changed"),
     );
 
-    // Best-effort: do NOT await, do NOT stop notifications here
+    // Best-effort: do not stop notifications here (old link)
     try {
       oldNotify.removeEventListener(
         "characteristicvaluechanged",
         this._handleNotify,
       );
-    } catch {} // ignore
+    } catch {
+      /* ignore */
+    }
 
-    // Mark link as not ready; setupConnection() will re-arm everything
+    // Mark link as not ready; setupConnection() will re-arm
     this._notificationsActive = false;
     this._isDeviceReady.next(false);
     this._apduSender = Maybe.empty();
     this._sendResolver = Maybe.empty();
 
-    // Swap in new characteristics & fresh deframer
+    // Swap characteristics & reset deframer
     this._characteristics = deps;
     this._apduReceiver = this._apduReceiverFactory();
-
-    // IMPORTANT: no startNotifications here; setupConnection() will do it.
+    // NOTE: setupConnection() is intentionally not called here;
+    // the SM will call it after setDependencies() during reconnect.
   }
 }

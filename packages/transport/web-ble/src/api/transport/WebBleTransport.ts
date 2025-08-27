@@ -32,8 +32,8 @@ export const webBleIdentifier: TransportIdentifier = "WEB-BLE-RN-STYLE";
 
 type RegistryEntry = {
   device: BluetoothDevice;
-  service: BluetoothRemoteGATTService;
-  infos: {
+  serviceUuid?: string; // store the last good service UUID, not the Service object (it dies on disconnect)
+  infos?: {
     writeCmdUuid: string;
     writeUuid?: string;
     notifyUuid: string;
@@ -52,26 +52,25 @@ export class WebBleTransport implements Transport {
   private _advPrimed = new Set<string>();
   private async _primeAdvertisementWatch(device: BluetoothDevice) {
     if (this._advPrimed.has(device.id)) return;
-    const canWatch = typeof (device as any).watchAdvertisements === "function";
+    const canWatch = typeof device.watchAdvertisements === "function";
     if (!canWatch) return;
     try {
-      await (device as any).watchAdvertisements();
+      await device.watchAdvertisements();
     } catch {
       /* ignore */
     }
     this._advPrimed.add(device.id);
   }
 
-  // RN-style: one SM per device, no external timers/promises
+  // one SM per device (RN-style)
   private _deviceConnectionsById = new Map<
     string,
     DeviceConnectionStateMachine<WebBleApduSenderDependencies>
   >();
 
   private _registry = new Map<string, RegistryEntry>();
-  private _reconnecting = new Set<string>(); // prevent parallel reconnects
+  private _reconnecting = new Set<string>();
 
-  // Emits the merged list (connected + discovered)
   private _devices$ = new BehaviorSubject<TransportDiscoveredDevice[]>([]);
 
   constructor(
@@ -96,7 +95,9 @@ export class WebBleTransport implements Transport {
 
   /**
    * One-shot picker (must be called from a user gesture).
-   * Adds the selected device to the registry and emits through listenToAvailableDevices().
+   * Adds/updates the selected device in the registry and emits via listenToAvailableDevices().
+   * NOTE: we briefly connect to fingerprint the Ledger service, then immediately disconnect
+   * to avoid holding the GATT link open before connect().
    */
   startDiscovering(): Observable<TransportDiscoveredDevice> {
     const filters = this._deviceModelDataSource
@@ -111,40 +112,27 @@ export class WebBleTransport implements Transport {
       }),
     ).pipe(
       switchMap(async (device) => {
-        if (!device.gatt)
-          throw new OpeningConnectionError(
-            "No GATT server available on device",
-          );
+        // Find any known Ledger service on this device (connect briefly, then tear down)
+        const { serviceUuid, infos } =
+          await this._identifyLedgerService(device);
 
-        const server = await device.gatt.connect();
-
-        // Find any known Ledger service on this device
-        const knownUuids = this._deviceModelDataSource.getBluetoothServices();
-        let service: BluetoothRemoteGATTService | null = null;
-        for (const uuid of knownUuids) {
-          try {
-            service = await server.getPrimaryService(uuid);
-            break;
-          } catch {
-            /* ignore */
-          }
-        }
-        if (!service) {
-          throw new OpeningConnectionError("Ledger GATT service not found");
-        }
-
-        const infos =
-          this._deviceModelDataSource.getBluetoothServicesInfos()[service.uuid];
-        if (!infos) throw new UnknownDeviceError(device.name || "");
-
-        const id = device.id;
         const discovered: TransportDiscoveredDevice = {
-          id,
+          id: device.id,
           deviceModel: infos.deviceModel,
           transport: webBleIdentifier,
         };
 
-        this._registry.set(id, { device, service, infos, discovered });
+        // Keep a *lightweight* registry entry (no live GATT objects)
+        this._registry.set(device.id, {
+          device,
+          serviceUuid,
+          infos,
+          discovered,
+        });
+
+        // Prime advertisement watching for snappier reconnects later.
+        this._primeAdvertisementWatch(device).catch(() => {});
+
         this._emitDevices();
         return discovered;
       }),
@@ -152,19 +140,17 @@ export class WebBleTransport implements Transport {
   }
 
   /**
-   * Web cannot passively scan. This observable emits:
-   *  - currently connected devices, plus
-   *  - any devices you add via startDiscovering().
-   * Call startDiscovering() from a user gesture to add more devices.
+   * Web cannot passively scan. This observable emits the merged list:
+   *  - currently connected devices first, then
+   *  - any devices added via startDiscovering().
    */
   listenToAvailableDevices(): Observable<TransportDiscoveredDevice[]> {
-    // Emit current snapshot immediately
     this._emitDevices();
     return this._devices$.asObservable();
   }
 
   stopDiscovering(): void {
-    /* no-op (Web Bluetooth has no background scan to stop) */
+    /* no passive background scan on Web Bluetooth */
   }
 
   async connect(params: {
@@ -173,16 +159,15 @@ export class WebBleTransport implements Transport {
     onReconnect?: (deviceId: string) => Promise<void> | void;
   }): Promise<Either<ConnectError, TransportConnectedDevice>> {
     const existing = this._deviceConnectionsById.get(params.deviceId);
+    const entry = this._registry.get(params.deviceId);
+    if (!entry)
+      return Left(new UnknownDeviceError(`Unknown device ${params.deviceId}`));
+
     if (existing) {
-      const entry = this._registry.get(params.deviceId);
-      if (!entry)
-        return Left(
-          new UnknownDeviceError(`Unknown device ${params.deviceId}`),
-        );
       return Right(
         new TransportConnectedDevice({
           id: params.deviceId,
-          deviceModel: entry.infos.deviceModel,
+          deviceModel: entry.infos!.deviceModel,
           type: "BLE",
           transport: webBleIdentifier,
           sendApdu: (...a) => existing.sendApdu(...a),
@@ -190,31 +175,29 @@ export class WebBleTransport implements Transport {
       );
     }
 
-    const entry = this._registry.get(params.deviceId);
-    if (!entry)
-      return Left(new UnknownDeviceError(`Unknown device ${params.deviceId}`));
-
     try {
-      const { device } = entry;
-      if (!device.gatt?.connected) {
-        await device.gatt!.connect();
-        await this._delay(250); // give Chrome a moment
+      // Ensure we have a live GATT connection.
+      const device = entry.device;
+      if (!device.gatt) {
+        throw new OpeningConnectionError("No GATT server available on device");
       }
 
-      // Find the live service and proper characteristics
-      const service = await this._findAnyLedgerService(device);
-      const infos =
-        this._deviceModelDataSource.getBluetoothServicesInfos()[service.uuid];
-      if (!infos) throw new OpeningConnectionError("Unknown Ledger service");
+      if (!device.gatt.connected) {
+        await this._withTimeout(
+          device.gatt.connect(),
+          6000,
+          "GATT connect timed out",
+        );
+        // Let Chrome/OS settle down a touch.
+        await this._delay(200);
+      }
 
-      const writeCharacteristic = await this._pluckWriteCharacteristic(
-        service,
-        infos,
-      );
-      const notifyCharacteristic = await service.getCharacteristic(
-        infos.notifyUuid,
-      );
+      // Find the Ledger primary service + characteristics every time we connect.
+      const { service, infos } = await this._getLiveLedgerService(device);
+      const { writeCharacteristic, notifyCharacteristic } =
+        await this._resolveCharacteristics(service, infos);
 
+      // Build APDU sender & state machine.
       const apduSender = new WebBleApduSender(
         {
           writeCharacteristic,
@@ -225,13 +208,12 @@ export class WebBleTransport implements Transport {
         this.loggerFactory,
       );
 
-      const connectionMachine =
+      const machine =
         new DeviceConnectionStateMachine<WebBleApduSenderDependencies>({
           deviceId: params.deviceId,
           deviceApduSender: apduSender,
           timeoutDuration: RECONNECT_DEVICE_TIMEOUT,
-          tryToReconnect: (budgetMs: number) => {
-            // ✅ accept budget
+          tryToReconnect: (budgetMs) => {
             this.tryToReconnect(
               params.deviceId,
               params.onReconnect,
@@ -258,14 +240,16 @@ export class WebBleTransport implements Transport {
           },
         });
 
+      // Start notifications + MTU handshake before exposing the connection.
       await apduSender.setupConnection();
-      await this._primeAdvertisementWatch(entry.device);
+      await this._primeAdvertisementWatch(device);
 
-      // Track connection
-      this._deviceConnectionsById.set(params.deviceId, connectionMachine);
-      entry.service = service;
+      // Track connection in maps
+      this._deviceConnectionsById.set(params.deviceId, machine);
+      entry.serviceUuid = service.uuid;
       entry.infos = infos;
 
+      // Hook disconnection event → SM
       const onDisc = (_ev: Event) =>
         this._handleDeviceDisconnected(params.deviceId, params.onReconnect);
       entry.listener = onDisc;
@@ -279,10 +263,10 @@ export class WebBleTransport implements Transport {
           deviceModel: infos.deviceModel,
           type: "BLE",
           transport: webBleIdentifier,
-          sendApdu: (...a) => connectionMachine.sendApdu(...a),
+          sendApdu: (...a) => machine.sendApdu(...a),
         }),
       );
-    } catch (e: unknown) {
+    } catch (e) {
       this._logger.error("connect() error", { data: { e } });
       return Left(new OpeningConnectionError(e));
     }
@@ -304,7 +288,11 @@ export class WebBleTransport implements Transport {
         reg.listener = undefined;
       }
       if (reg?.device.gatt?.connected) {
-        reg.device.gatt.disconnect();
+        try {
+          reg.device.gatt.disconnect();
+        } catch {
+          /* ignore */
+        }
       }
       this._emitDevices();
       return Right(undefined);
@@ -322,7 +310,6 @@ export class WebBleTransport implements Transport {
     this._logger.debug(`[${deviceId}] gattserverdisconnected`);
     const sm = this._deviceConnectionsById.get(deviceId);
     if (!sm) return;
-
     sm.eventDeviceDisconnected();
   }
 
@@ -331,66 +318,52 @@ export class WebBleTransport implements Transport {
   }
 
   /**
-   * Wait until it's reasonable to call device.gatt.connect().
-   * - Does NOT call connect() itself.
-   * - Does NOT use watchAdvertisements().
-   * - Waits for GATT to exist and stay disconnected for a small "stable" window.
+   * Wait until GATT is present and *stably* disconnected for a small window.
+   * This avoids racing `connect()` while the OS is still tearing down.
    */
   private async _waitUntilGattReady(
     device: BluetoothDevice,
     opts: { timeoutMs?: number; stableMs?: number; pollMs?: number } = {},
   ): Promise<void> {
     const timeoutMs = opts.timeoutMs ?? 10_000;
-    const stableMs = opts.stableMs ?? 500; // how long "disconnected" must be stable
-    const pollMs = opts.pollMs ?? 100; // recursion cadence
+    const stableMs = opts.stableMs ?? 500;
+    const pollMs = opts.pollMs ?? 100;
 
     const deadline = Date.now() + timeoutMs;
     let stableStart: number | null = null;
 
-    const loop = async (): Promise<void> => {
-      if (Date.now() >= deadline) {
-        throw new OpeningConnectionError(
-          "Timed out waiting for GATT to be ready",
-        );
-      }
-
-      // 1) GATT object must exist
+    while (Date.now() < deadline) {
+      // 1) GATT must exist
       if (!device.gatt) {
         stableStart = null;
         await this._sleep(pollMs);
-        return loop();
+        continue;
       }
-
-      // 2) Must not be connected (let OS fully release the link)
+      // 2) Must be disconnected
       if (device.gatt.connected) {
-        stableStart = null; // reset stability window
+        stableStart = null;
         await this._sleep(pollMs);
-        return loop();
+        continue;
       }
-
-      // 3) Disconnected — require a short stability window (avoids calling connect too soon)
+      // 3) Require small stability window
       if (stableStart == null) {
         stableStart = Date.now();
       }
-      if (Date.now() - (stableStart ?? 0) < stableMs) {
+      if (Date.now() - stableStart < stableMs) {
         await this._sleep(pollMs);
-        return loop();
+        continue;
       }
-
-      // Passed all checks: considered "ready"
       return;
-    };
-
-    await loop();
+    }
+    throw new OpeningConnectionError("Timed out waiting for GATT to be ready");
   }
 
   private async _waitForAdvertisementOrDelay(
     device: BluetoothDevice,
     { timeoutMs = 5000 }: { timeoutMs?: number } = {},
   ): Promise<void> {
-    const canWatch = typeof (device as any).watchAdvertisements === "function";
+    const canWatch = typeof device.watchAdvertisements === "function";
     if (!canWatch) {
-      // fallback: just give the stack some time to come back
       await this._sleep(Math.min(timeoutMs, 2500));
       return;
     }
@@ -405,15 +378,14 @@ export class WebBleTransport implements Transport {
       };
 
       const onAdv = () => {
-        device.removeEventListener("advertisementreceived", onAdv as any);
+        device.removeEventListener("advertisementreceived", onAdv);
         done();
       };
 
       try {
-        device.addEventListener("advertisementreceived", onAdv as any);
-        await (device as any).watchAdvertisements();
+        device.addEventListener("advertisementreceived", onAdv);
+        await device.watchAdvertisements();
       } catch {
-        // permission/platform issue; fall back to time
         done();
         return;
       }
@@ -424,116 +396,112 @@ export class WebBleTransport implements Transport {
   private async tryToReconnect(
     deviceId: string,
     onReconnect?: (id: string) => Promise<void> | void,
-    budgetMs: number = RECONNECT_DEVICE_TIMEOUT, // ✅ use SM budget
+    budgetMs: number = RECONNECT_DEVICE_TIMEOUT,
   ) {
     if (this._reconnecting.has(deviceId)) return;
     this._reconnecting.add(deviceId);
 
-    const reg = this._registry.get(deviceId);
-    const sm = this._deviceConnectionsById.get(deviceId);
-    if (!reg || !sm) {
-      this._reconnecting.delete(deviceId);
-      return;
-    }
+    try {
+      const reg = this._registry.get(deviceId);
+      const sm = this._deviceConnectionsById.get(deviceId);
+      if (!reg || !sm) return;
 
-    const { device } = reg;
-    const deadline = Date.now() + Math.max(0, budgetMs);
-    let attempt = 0;
+      const { device } = reg;
+      const deadline = Date.now() + Math.max(0, budgetMs);
+      let attempt = 0;
 
-    while (Date.now() < deadline) {
-      attempt += 1;
-      try {
-        if (device.gatt?.connected) {
-          try {
-            device.gatt.disconnect();
-          } catch {}
-        }
-        await this._waitForAdvertisementOrDelay(device, {
-          timeoutMs: Math.min(5000, Math.max(1500, deadline - Date.now())),
-        });
-
-        await this._waitUntilGattReady(device, {
-          timeoutMs: Math.min(2500, deadline - Date.now()),
-          stableMs: 900,
-          pollMs: 100,
-        });
-
-        await this._withTimeout(
-          device.gatt!.connect(),
-          Math.min(4000, Math.max(1500, deadline - Date.now())),
-          "connect timed out",
-        );
-
+      while (Date.now() < deadline) {
+        attempt += 1;
         try {
-          await device.gatt!.getPrimaryServices();
-        } catch {}
-        await this._primeAdvertisementWatch(device);
+          // Ensure link is down
+          try {
+            if (device.gatt?.connected) device.gatt.disconnect();
+          } catch {
+            /* ignore */
+          }
 
-        // --- rehydrate characteristics (unchanged) ---
-        const svc = await this._findAnyLedgerService(device);
-        const infos =
-          this._deviceModelDataSource.getBluetoothServicesInfos()[svc.uuid];
-        if (!infos)
-          throw new OpeningConnectionError(
-            "Unknown Ledger service after reconnect",
+          await this._waitForAdvertisementOrDelay(device, {
+            timeoutMs: Math.min(4000, Math.max(1000, deadline - Date.now())),
+          });
+
+          await this._waitUntilGattReady(device, {
+            timeoutMs: Math.min(2500, deadline - Date.now()),
+            stableMs: 900,
+            pollMs: 100,
+          });
+
+          await this._withTimeout(
+            device.gatt!.connect(),
+            Math.min(4000, Math.max(1000, deadline - Date.now())),
+            "connect timed out",
           );
 
-        const writeCharacteristic = await this._pluckWriteCharacteristic(
-          svc,
-          infos,
-        );
-        const notifyCharacteristic = await svc.getCharacteristic(
-          infos.notifyUuid,
-        );
-        sm.setDependencies({ writeCharacteristic, notifyCharacteristic });
+          // Touch services (helps some stacks settle and validate permissions)
+          try {
+            await device.gatt!.getPrimaryServices();
+          } catch {
+            /* ignore */
+          }
+          await this._primeAdvertisementWatch(device);
 
-        if (reg.listener)
-          device.removeEventListener("gattserverdisconnected", reg.listener);
-        const onDisc = (_: Event) =>
-          this._handleDeviceDisconnected(deviceId, onReconnect);
-        device.addEventListener("gattserverdisconnected", onDisc);
-        reg.listener = onDisc;
-        reg.service = svc;
-        reg.infos = infos;
+          // Rehydrate service/characteristics
+          const { service, infos } = await this._getLiveLedgerService(device);
+          const { writeCharacteristic, notifyCharacteristic } =
+            await this._resolveCharacteristics(service, infos);
 
-        await sm.setupConnection();
-        sm.eventDeviceConnected();
-        try {
-          await onReconnect?.(deviceId);
-        } catch (e) {
-          this._logger.error("onReconnect callback threw", { data: { e } });
+          sm.setDependencies({ writeCharacteristic, notifyCharacteristic });
+
+          // Refresh listener
+          if (reg.listener)
+            device.removeEventListener("gattserverdisconnected", reg.listener);
+          const onDisc = (_: Event) =>
+            this._handleDeviceDisconnected(deviceId, onReconnect);
+          device.addEventListener("gattserverdisconnected", onDisc);
+          reg.listener = onDisc;
+          reg.serviceUuid = service.uuid;
+          reg.infos = infos;
+
+          await sm.setupConnection();
+          sm.eventDeviceConnected();
+
+          try {
+            await onReconnect?.(deviceId);
+          } catch (e) {
+            this._logger.error("onReconnect callback threw", { data: { e } });
+          }
+
+          this._emitDevices();
+          return; // success
+        } catch (e: unknown) {
+          const msg = String((e as Error)?.message || "").toLowerCase();
+          const name = String((e as Error)?.name || "");
+          const isRange =
+            name === "NetworkError" && msg.includes("no longer in range");
+          const backoff = isRange ? 600 + 200 * attempt : 250 * attempt;
+          const remaining = deadline - Date.now();
+          if (remaining > 0)
+            await this._delay(Math.min(backoff, Math.max(100, remaining)));
         }
-        this._emitDevices();
-        this._reconnecting.delete(deviceId);
-        return; // ✅ success
-      } catch (e: any) {
-        const msg = String(e?.message || "").toLowerCase();
-        const name = String(e?.name || "");
-        const isRange =
-          name === "NetworkError" && msg.includes("no longer in range");
-        // Backoff a bit longer for old-firmware app switches (radio dark period)
-        const backoff = isRange ? 600 + 200 * attempt : 250 * attempt;
-        const remaining = deadline - Date.now();
-        if (remaining > 0)
-          await this._delay(Math.min(backoff, Math.max(100, remaining)));
       }
-    }
 
-    this._logger.error(`[${deviceId}] reconnection budget exhausted`);
-    try {
-      sm.closeConnection();
-    } catch {}
-    this._reconnecting.delete(deviceId);
+      this._logger.error(`[${deviceId}] reconnection budget exhausted`);
+      try {
+        sm.closeConnection();
+      } catch {
+        /* ignore */
+      }
+    } finally {
+      this._reconnecting.delete(deviceId);
+    }
   }
 
   // ---------------- helpers ----------------
 
   private _emitDevices() {
-    // Connected devices first (like RN), then discovered-but-not-connected
     const connected: TransportDiscoveredDevice[] = [];
     for (const [id] of this._deviceConnectionsById) {
       const reg = this._registry.get(id);
-      if (reg) {
+      if (reg?.infos) {
         connected.push({
           id,
           deviceModel: reg.infos.deviceModel,
@@ -548,44 +516,94 @@ export class WebBleTransport implements Transport {
     this._devices$.next([...connected, ...scanned]);
   }
 
-  private async _findAnyLedgerService(device: BluetoothDevice) {
-    const uuids = this._deviceModelDataSource.getBluetoothServices();
-    const last = this._registry.get(device.id)?.service?.uuid;
+  private async _identifyLedgerService(device: BluetoothDevice): Promise<{
+    serviceUuid: string;
+    infos: NonNullable<RegistryEntry["infos"]>;
+  }> {
+    // connect briefly, read service, disconnect
+    if (!device.gatt) {
+      throw new OpeningConnectionError("No GATT server available on device");
+    }
+    try {
+      await this._withTimeout(device.gatt.connect(), 6000, "connect timeout");
+      const { service, infos } = await this._getLiveLedgerService(device);
+      return { serviceUuid: service.uuid, infos };
+    } finally {
+      try {
+        device.gatt?.disconnect();
+      } catch {
+        /* ignore */
+      }
+    }
+  }
+
+  private async _getLiveLedgerService(device: BluetoothDevice): Promise<{
+    service: BluetoothRemoteGATTService;
+    infos: NonNullable<RegistryEntry["infos"]>;
+  }> {
+    const knownUuids = this._deviceModelDataSource.getBluetoothServices();
+    const last = this._registry.get(device.id)?.serviceUuid;
     const order = last
-      ? [last, ...uuids.filter((u) => u !== last)]
-      : uuids.slice();
+      ? [last, ...knownUuids.filter((u) => u !== last)]
+      : knownUuids.slice();
 
     for (const uuid of order) {
       try {
-        return await device.gatt!.getPrimaryService(uuid);
-      } catch (e: any) {
-        // If we lack permission for this UUID, don’t hide it as “not found”
-        if (e?.name === "SecurityError") {
+        const s = await device.gatt!.getPrimaryService(uuid);
+        const infos =
+          this._deviceModelDataSource.getBluetoothServicesInfos()[s.uuid];
+        if (!infos) throw new UnknownDeviceError(device.name || "");
+        return { service: s, infos };
+      } catch (e: unknown) {
+        // Propagate permission issues immediately (guides integrators to optionalServices)
+        if ((e as Error)?.name === "SecurityError") {
           throw new OpeningConnectionError(
             `Missing Web Bluetooth permission for service ${uuid}. ` +
               `Add it to optionalServices in requestDevice().`,
           );
         }
-        // else try slower path
-      }
-      try {
-        const all = await device.gatt!.getPrimaryServices();
-        const found = all.find(
-          (s) => s.uuid.toLowerCase() === uuid.toLowerCase(),
-        );
-        if (found) return found;
-      } catch {
-        /* continue */
+        // as a slower fallback, scan all services and match
+        try {
+          const all = await device.gatt!.getPrimaryServices();
+          const found = all.find(
+            (s) => s.uuid.toLowerCase() === uuid.toLowerCase(),
+          );
+          if (found) {
+            const infos =
+              this._deviceModelDataSource.getBluetoothServicesInfos()[
+                found.uuid
+              ];
+            if (!infos) throw new UnknownDeviceError(device.name || "");
+            return { service: found, infos };
+          }
+        } catch {
+          /* continue */
+        }
       }
     }
-    throw new OpeningConnectionError(
-      "Ledger GATT service not found on reconnect",
+    throw new OpeningConnectionError("Ledger GATT service not found");
+  }
+
+  private async _resolveCharacteristics(
+    service: BluetoothRemoteGATTService,
+    infos: NonNullable<RegistryEntry["infos"]>,
+  ): Promise<{
+    writeCharacteristic: BluetoothRemoteGATTCharacteristic;
+    notifyCharacteristic: BluetoothRemoteGATTCharacteristic;
+  }> {
+    const notifyCharacteristic = await service.getCharacteristic(
+      infos.notifyUuid,
     );
+    const writeCharacteristic = await this._pluckWriteCharacteristic(
+      service,
+      infos,
+    );
+    return { writeCharacteristic, notifyCharacteristic };
   }
 
   private async _pluckWriteCharacteristic(
     svc: BluetoothRemoteGATTService,
-    infos: RegistryEntry["infos"],
+    infos: NonNullable<RegistryEntry["infos"]>,
   ): Promise<BluetoothRemoteGATTCharacteristic> {
     const tried: BluetoothRemoteGATTCharacteristic[] = [];
     const uuids = Array.from(
@@ -596,18 +614,13 @@ export class WebBleTransport implements Transport {
       try {
         const ch = await svc.getCharacteristic(uuid);
         tried.push(ch);
-        // Prefer characteristics that advertise "write" (with response)
-        // Web Bluetooth's properties can lie after reconnect, so we still keep a fallback.
-        // If "write" is present, use it first.
+        // Prefer characteristics advertising "write" (with response)
         if (ch.properties.write) return ch;
       } catch {
         /* try next */
       }
     }
-    // If none had "write", use the first one that resolved (likely writeCmdUuid)
     if (tried.length > 0) return tried[0]!;
-
-    // As a last resort, throw
     throw new OpeningConnectionError("No write characteristic available");
   }
 
