@@ -1,4 +1,3 @@
-// WebBleApduSender.ts
 import {
   type ApduReceiverServiceFactory,
   type ApduResponse,
@@ -33,7 +32,7 @@ export class WebBleApduSender
   private _apduReceiverFactory: ApduReceiverServiceFactory;
 
   private _mtuHandshakeInFlight = false;
-  private static readonly MTU_OP = 0x08; // same opcode; adjust if your proto differs
+  private static readonly MTU_OP = 0x08;
 
   constructor(
     deps: WebBleApduSenderDependencies & {
@@ -160,10 +159,9 @@ export class WebBleApduSender
       throw new DeviceDisconnectedWhileSendingError("GATT not connected");
     }
 
-    // Robust write-path:
-    // 1) Prefer WITH response if supported (most reliable)
-    // 2) Fall back to legacy writeValue (treated like with-response in many stacks)
-    // 3) Finally WITHOUT response if exposed and allowed
+    // - prefer WITH response if supported (most reliable)
+    // - fall back to legacy writeValue (treated like with-response in many stacks)
+    // - finally WITHOUT response if exposed and allowed
     const hasWithResp =
       typeof (ch as any).writeValueWithResponse === "function";
     const hasWithout =
@@ -215,7 +213,7 @@ export class WebBleApduSender
     return new Promise((r) => setTimeout(r, ms));
   }
 
-  // Wait until notifications are active and MTU negotiated (or timeout)
+  // wait until notifications are active and MTU negotiated (or timeout)
   private async _awaitReady(maxMs = 1500): Promise<void> {
     if (
       this._notificationsActive &&
@@ -263,8 +261,6 @@ export class WebBleApduSender
     );
   }
 
-  // --- public API (same surface) ---
-
   public async setupConnection(): Promise<void> {
     const notifyChar = this._characteristics.notifyCharacteristic;
 
@@ -277,7 +273,7 @@ export class WebBleApduSender
       );
     }
 
-    // small stabilization window
+    // small stabilization window badbadbad
     await this._sleep(150);
 
     // MTU handshake
@@ -331,7 +327,7 @@ export class WebBleApduSender
       return Left(e as DmkError);
     }
 
-    // Give the stack a tiny breath before the legacy ping (first APDU after reconnect)
+    // badbadbad
     if (this._isLegacyPing(apdu)) {
       await this._sleep(200);
     }
@@ -407,12 +403,12 @@ export class WebBleApduSender
   public setDependencies(deps: WebBleApduSenderDependencies): void {
     const oldNotify = this._characteristics.notifyCharacteristic;
 
-    // Fail any in-flight APDU before swapping the link
+    // fail any in-flight APDU before swapping the link
     this._failPendingSend(
       new DeviceDisconnectedWhileSendingError("Link changed"),
     );
 
-    // Best-effort: do not stop notifications here (old link)
+    // do not stop notifications here (old link)
     try {
       oldNotify.removeEventListener(
         "characteristicvaluechanged",
@@ -422,7 +418,7 @@ export class WebBleApduSender
       /* ignore */
     }
 
-    // Mark link as not ready; setupConnection() will re-arm
+    // ready - setupConnection() will re-arm
     this._notificationsActive = false;
     this._isDeviceReady.next(false);
     this._apduSender = Maybe.empty();
@@ -431,7 +427,7 @@ export class WebBleApduSender
     // Swap characteristics & reset deframer
     this._characteristics = deps;
     this._apduReceiver = this._apduReceiverFactory();
-    // NOTE: setupConnection() is intentionally not called here;
-    // the SM will call it after setDependencies() during reconnect.
+    // NOTE: setupConnection() is intentionally not called here
+    // the SM will call it after setDependencies() during reconnect
   }
 }
