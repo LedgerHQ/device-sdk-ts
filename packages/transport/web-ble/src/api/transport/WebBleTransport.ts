@@ -301,7 +301,7 @@ export class WebBleTransport implements Transport {
     device: BluetoothDevice,
     opts: { timeoutMs?: number; stableMs?: number; pollMs?: number } = {},
   ): Promise<void> {
-    const timeoutMs = opts.timeoutMs ?? 10_000;
+    const timeoutMs = opts.timeoutMs ?? 8000;
     const stableMs = opts.stableMs ?? 500;
     const pollMs = opts.pollMs ?? 100;
 
@@ -309,68 +309,90 @@ export class WebBleTransport implements Transport {
     let stableStart: number | null = null;
 
     while (Date.now() < deadline) {
-      // GATT must exist
-      if (!device.gatt) {
+      const gatt = device.gatt;
+      if (!gatt) {
         stableStart = null;
         await this._sleep(pollMs);
         continue;
       }
-      // must be disconnected
-      if (device.gatt.connected) {
-        stableStart = null;
-        await this._sleep(pollMs);
-        continue;
-      }
-      // require small stability window
-      if (stableStart == null) {
-        stableStart = Date.now();
-      }
-      if (Date.now() - stableStart < stableMs) {
-        await this._sleep(pollMs);
-        continue;
-      }
-      return;
+
+      // If already connected, we’re “ready” (let caller skip connect)
+      if (gatt.connected) return;
+
+      if (stableStart == null) stableStart = Date.now();
+      if (Date.now() - stableStart >= stableMs) return;
+
+      await this._sleep(pollMs);
     }
-    throw new OpeningConnectionError("Timed out waiting for GATT to be ready");
+    // If we time out, just let caller attempt connect; don’t hard-fail here.
   }
 
-  private async _waitForAdvertisementOrDelay(
+  private async _waitForAdvertisement(
     device: BluetoothDevice,
-    { timeoutMs = 5000 }: { timeoutMs?: number } = {},
-  ): Promise<void> {
+    {
+      timeoutMs = 15000,
+      requireServiceUuid,
+    }: { timeoutMs?: number; requireServiceUuid?: string } = {},
+  ): Promise<boolean> {
     const canWatch = typeof device.watchAdvertisements === "function";
-    if (!canWatch) {
-      await this._sleep(Math.min(timeoutMs, 2500));
-      return;
-    }
+    if (!canWatch) return false;
 
-    await new Promise<void>((resolve) => {
+    await this._primeAdvertisementWatch(device);
+
+    return new Promise<boolean>((resolve) => {
       let settled = false;
-      const done = () => {
+      const done = (ok: boolean) => {
         if (!settled) {
           settled = true;
-          resolve();
+          cleanup();
+          resolve(ok);
         }
       };
 
-      const onAdv = () => {
-        device.removeEventListener("advertisementreceived", onAdv);
-        done();
+      const onAdv = (ev: Event) => {
+        const adv = ev as BluetoothAdvertisingEvent;
+        const hasSvc =
+          !requireServiceUuid ||
+          (adv.uuids || []).some(
+            (u) =>
+              String(u).toLowerCase() === requireServiceUuid!.toLowerCase(),
+          );
+        if (hasSvc) done(true);
       };
 
-      const setupWatch = async () => {
+      const cleanup = () => {
         try {
-          device.addEventListener("advertisementreceived", onAdv);
-          await device.watchAdvertisements();
-        } catch {
-          done();
-          return;
-        }
+          device.removeEventListener("advertisementreceived", onAdv);
+        } catch {}
       };
 
-      setupWatch();
-      setTimeout(done, timeoutMs);
+      try {
+        device.addEventListener("advertisementreceived", onAdv);
+        // keep watching; ignore errors from double-watch
+        device.watchAdvertisements!.call(device).catch(() => {});
+      } catch {
+        done(false);
+        return;
+      }
+      setTimeout(() => done(false), timeoutMs);
     });
+  }
+
+  private async _refreshDeviceHandle(
+    old: BluetoothDevice,
+  ): Promise<BluetoothDevice | null> {
+    if (typeof navigator.bluetooth.getDevices !== "function") return null;
+    try {
+      const permitted = await navigator.bluetooth.getDevices();
+      const fresh =
+        permitted.find((d) => d.id === old.id) ||
+        permitted.find((d) => d.name && d.name === old.name);
+      if (fresh && fresh !== old) {
+        await this._primeAdvertisementWatch(fresh);
+        return fresh;
+      }
+    } catch {}
+    return null;
   }
 
   private async tryToReconnect(
@@ -386,53 +408,65 @@ export class WebBleTransport implements Transport {
       const sm = this._deviceConnectionsById.get(deviceId);
       if (!reg || !sm) return;
 
-      const { device } = reg;
+      let device = reg.device; // local, can swap
       const deadline = Date.now() + Math.max(0, budgetMs);
       let attempt = 0;
+      let consecutiveOutOfRange = 0;
 
       while (Date.now() < deadline) {
         attempt += 1;
-        try {
-          // ensure link is down
-          try {
-            if (device.gatt?.connected) device.gatt.disconnect();
-          } catch {
-            /* ignore */
-          }
 
-          await this._waitForAdvertisementOrDelay(device, {
-            timeoutMs: Math.min(4000, Math.max(1000, deadline - Date.now())),
+        try {
+          // small cooldown after initial drop to let peripheral resume advertising
+          if (attempt === 1) await this._delay(600);
+
+          // Watch for a fresh advertisement when supported
+          const sawAdv = await this._waitForAdvertisement(device, {
+            timeoutMs: Math.min(15000, Math.max(3000, deadline - Date.now())),
+            requireServiceUuid: reg.serviceUuid,
           });
 
+          // Give GATT a chance to settle; if already connected, we skip connect()
           await this._waitUntilGattReady(device, {
-            timeoutMs: Math.min(2500, deadline - Date.now()),
-            stableMs: 900,
+            timeoutMs: Math.min(8000, Math.max(1500, deadline - Date.now())),
+            stableMs: 700,
             pollMs: 100,
           });
 
-          await this._withTimeout(
-            device.gatt!.connect(),
-            Math.min(4000, Math.max(1000, deadline - Date.now())),
-            "connect timed out",
-            () => device.gatt!.disconnect(),
-          );
+          if (!device.gatt?.connected) {
+            // If no adv observed at all, don’t rush a blind connect; try again
+            if (typeof device.watchAdvertisements === "function" && !sawAdv) {
+              throw new Error("No advertisement observed");
+            }
 
-          // helps some stacks (not sure is valid)
+            // Connect with a real timeout and a safe cancellation
+            await this._withTimeout(
+              device.gatt!.connect(),
+              Math.min(12000, Math.max(2500, deadline - Date.now())),
+              "connect timed out",
+              () => {
+                try {
+                  if (device.gatt?.connected) device.gatt.disconnect();
+                } catch {}
+              },
+            );
+          }
+
+          // Warm up caches (ignoring errors)
           try {
             await device.gatt!.getPrimaryServices();
-          } catch {
-            /* ignore */
-          }
+          } catch {}
+
           await this._primeAdvertisementWatch(device);
 
-          // rehydrate service and characteristics
+          // Rehydrate service + characteristics
           const { service, infos } = await this._getLiveLedgerService(device);
           const { writeCharacteristic, notifyCharacteristic } =
             await this._resolveCharacteristics(service, infos);
 
           sm.setDependencies({ writeCharacteristic, notifyCharacteristic });
 
-          // refresh listener
+          // Refresh listener on the current handle
           if (reg.listener)
             device.removeEventListener("gattserverdisconnected", reg.listener);
           const onDisc = (_: Event) =>
@@ -442,9 +476,14 @@ export class WebBleTransport implements Transport {
           reg.serviceUuid = service.uuid;
           reg.infos = infos;
 
+          // Re-arm notifications + MTU
           await sm.setupConnection();
           sm.eventDeviceConnected();
 
+          // Give the device/HSM a breath to clear old states
+          await this._delay(200);
+
+          // Let caller reopen any higher-level secure channel
           try {
             await onReconnect?.(deviceId);
           } catch (e) {
@@ -452,25 +491,43 @@ export class WebBleTransport implements Transport {
           }
 
           this._emitDevices();
-          return; // yay
-        } catch (e: unknown) {
-          const msg = String((e as Error)?.message || "").toLowerCase();
-          const name = String((e as Error)?.name || "");
-          const isRange =
+          return; // ✅ success
+        } catch (e: any) {
+          const name = String(e?.name || "");
+          const msg = String(e?.message || "").toLowerCase();
+          const outOfRange =
             name === "NetworkError" && msg.includes("no longer in range");
-          const backoff = isRange ? 600 + 200 * attempt : 250 * attempt;
+
+          // After 2 consecutive “out of range”, refresh the handle and **use it**
+          if (outOfRange) {
+            consecutiveOutOfRange += 1;
+            if (consecutiveOutOfRange >= 2) {
+              const fresh = await this._refreshDeviceHandle(device);
+              if (fresh) {
+                reg.device = fresh;
+                device = fresh; // <- critical: actually swap the handle
+                consecutiveOutOfRange = 0;
+              }
+            }
+          } else {
+            consecutiveOutOfRange = 0;
+          }
+
+          // Gentle backoff; keep overall within budget
           const remaining = deadline - Date.now();
-          if (remaining > 0)
+          const backoff = outOfRange
+            ? Math.min(1200 + 300 * attempt, 3000)
+            : Math.min(250 * attempt, 1500);
+          if (remaining > 0) {
             await this._delay(Math.min(backoff, Math.max(100, remaining)));
+          }
         }
       }
 
       this._logger.error(`[${deviceId}] reconnection budget exhausted`);
       try {
         sm.closeConnection();
-      } catch {
-        /* ignore */
-      }
+      } catch {}
     } finally {
       this._reconnecting.delete(deviceId);
     }

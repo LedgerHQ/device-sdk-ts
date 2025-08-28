@@ -356,7 +356,7 @@ export class WebBleApduSender
       .map((s) => s.getFrames(apdu))
       .orDefault([])) {
       try {
-        await this._write(frame.getRawData().buffer);
+        await this._write(frame.getRawData().slice().buffer);
       } catch (e) {
         const msg = _triggersDisconnection
           ? "Frame write failed during expected drop"
