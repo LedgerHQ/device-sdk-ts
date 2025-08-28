@@ -1,6 +1,7 @@
 import {
   type CommandResult,
   CommandResultFactory,
+  hexaStringToBuffer,
   type InternalApi,
   InvalidStatusWordError,
 } from "@ledgerhq/device-management-kit";
@@ -25,8 +26,14 @@ export class SendPayloadInChunksTask<T> {
     private args: SendPayloadInChunksTaskArgs<T>,
   ) {}
   async run(): Promise<CommandResult<T, EthErrorCodes>> {
-    const { payload, withPayloadLength } = this.args;
-    const data = PayloadUtils.getBufferFromPayload(payload, withPayloadLength);
+    const { payload, withPayloadLength = true } = this.args;
+
+    let data: Uint8Array | null = null;
+    if (withPayloadLength) {
+      data = PayloadUtils.getBufferFromPayload(payload);
+    } else {
+      data = hexaStringToBuffer(payload);
+    }
 
     if (!data) {
       return CommandResultFactory({

@@ -30,14 +30,5 @@ describe("PayloadUtils", () => {
         Uint8Array.from([0x00, 0x03, 0x01, 0x02, 0x03]),
       );
     });
-
-    it("should return the buffer from the payload without payload length", () => {
-      // GIVEN
-      const payload = "010203";
-      // WHEN
-      const buffer = PayloadUtils.getBufferFromPayload(payload, false);
-      // THEN
-      expect(buffer).toStrictEqual(Uint8Array.from([0x01, 0x02, 0x03]));
-    });
   });
 });
