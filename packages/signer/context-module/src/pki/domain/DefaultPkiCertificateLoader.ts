@@ -24,11 +24,7 @@ export class DefaultPkiCertificateLoader implements PkiCertificateLoader {
     const certificate =
       await this._dataSource.fetchCertificate(certificateInfos);
 
-    return certificate.caseOf({
-      Right: (cert) => cert,
-      Left: (err) => {
-        throw err instanceof Error ? err : new Error(String(err));
-      },
-    });
+    // TODO add logs error with certificate.left()
+    return certificate.orDefault(undefined);
   }
 }

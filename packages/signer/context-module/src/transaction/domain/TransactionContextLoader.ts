@@ -1,4 +1,4 @@
-import { isHexaString } from "@ledgerhq/device-management-kit";
+import { DeviceModelId, isHexaString } from "@ledgerhq/device-management-kit";
 import { inject, injectable } from "inversify";
 
 import { pkiTypes } from "@/pki/di/pkiTypes";
@@ -12,24 +12,28 @@ import {
   ClearSignContextType,
 } from "@/shared/model/ClearSignContext";
 import { TransactionContext } from "@/shared/model/TransactionContext";
-import type { ProxyDataSource } from "@/transaction/data/HttpProxyDataSource";
+//import type { ProxyDataSource } from "@/transaction/data/HttpProxyDataSource";
 import type { TransactionDataSource } from "@/transaction/data/TransactionDataSource";
 import { transactionTypes } from "@/transaction/di/transactionTypes";
-import { ProxyDelegateCall } from "@/transaction/model/ProxyDelegateCall";
 
 @injectable()
 export class TransactionContextLoader implements ContextLoader {
   constructor(
     @inject(transactionTypes.TransactionDataSource)
     private transactionDataSource: TransactionDataSource,
-    @inject(transactionTypes.ProxyDataSource)
-    private proxyDataSource: ProxyDataSource,
+    /*@inject(transactionTypes.ProxyDataSource)
+    private _proxyDataSource: ProxyDataSource,*/
     @inject(pkiTypes.PkiCertificateLoader)
     private certificateLoader: PkiCertificateLoader,
   ) {}
 
   async load(ctx: TransactionContext): Promise<ClearSignContext[]> {
-    const { to, data, selector, chainId, deviceModelId, challenge } = ctx;
+    if (ctx.deviceModelId === DeviceModelId.NANO_S) {
+      return [];
+    }
+
+    //TODO add challenge when proxy is enabled
+    const { to, data, selector, chainId, deviceModelId } = ctx;
     if (to === undefined || data === "0x") {
       return [];
     }
@@ -42,6 +46,8 @@ export class TransactionContextLoader implements ContextLoader {
         },
       ];
     }
+    /*
+DISABLE PROXY FOR NOW, to be enabled later
 
     const proxyDelegateCall = await this.proxyDataSource.getProxyDelegateCall({
       calldata: data,
@@ -70,6 +76,10 @@ export class TransactionContextLoader implements ContextLoader {
         ];
       },
     });
+*/
+    // TMP Values to be removed when proxy is enabled
+    const proxyDelegateCallDescriptor: string | undefined = undefined;
+    const resolvedAddress: string | undefined = to;
 
     let certificate: PkiCertificate | undefined = undefined;
     if (proxyDelegateCallDescriptor) {

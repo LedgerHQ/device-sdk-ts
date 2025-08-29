@@ -3,7 +3,6 @@ import { Left, Right } from "purify-ts";
 import { type PkiCertificateLoader } from "@/pki/domain/PkiCertificateLoader";
 import { ClearSignContextType } from "@/shared/model/ClearSignContext";
 import type { TransactionContext } from "@/shared/model/TransactionContext";
-import { type ProxyDataSource } from "@/transaction/data/HttpProxyDataSource";
 import type { TransactionDataSource } from "@/transaction/data/TransactionDataSource";
 import { TransactionContextLoader } from "@/transaction/domain/TransactionContextLoader";
 
@@ -13,16 +12,16 @@ describe("TransactionContextLoader", () => {
   const mockTransactionDataSource: TransactionDataSource = {
     getTransactionDescriptors: getTransactionDescriptorsMock,
   };
-  const mockProxyDatasource: ProxyDataSource = {
+  /* const mockProxyDatasource: ProxyDataSource = {
     getProxyDelegateCall: getProxyDelegateCallMock,
     getProxyImplementationAddress: vi.fn(),
-  };
+  }; */
   const mockCertificateLoader: PkiCertificateLoader = {
     loadCertificate: vi.fn(),
   };
   const loader = new TransactionContextLoader(
     mockTransactionDataSource,
-    mockProxyDatasource,
+    //mockProxyDatasource,
     mockCertificateLoader,
   );
 
