@@ -2,6 +2,7 @@ import {
   type ApduReceiverServiceFactory,
   type ApduSenderServiceFactory,
   type ConnectError,
+  DeviceConnectionStateMachine,
   type DeviceModelDataSource,
   type DmkError,
   GeneralDmkError,
@@ -15,7 +16,6 @@ import {
   type TransportIdentifier,
   UnknownDeviceError,
 } from "@ledgerhq/device-management-kit";
-import { DeviceConnectionStateMachine } from "@ledgerhq/device-management-kit";
 import { type Either, Left, Right } from "purify-ts";
 import { BehaviorSubject, from, type Observable } from "rxjs";
 import { switchMap } from "rxjs/operators";
@@ -48,28 +48,14 @@ export class WebBleTransport implements Transport {
   private _apduSenderFactory: ApduSenderServiceFactory;
   private _apduReceiverFactory: ApduReceiverServiceFactory;
 
-  private _advPrimed = new Set<string>();
-  private async _primeAdvertisementWatch(device: BluetoothDevice) {
-    if (this._advPrimed.has(device.id)) return;
-    const canWatch = typeof device.watchAdvertisements === "function";
-    if (!canWatch) return;
-    try {
-      await device.watchAdvertisements();
-    } catch {
-      /* ignore */
-    }
-    this._advPrimed.add(device.id);
-  }
-
   private _deviceConnectionsById = new Map<
     string,
     DeviceConnectionStateMachine<WebBleApduSenderDependencies>
   >();
-
   private _registry = new Map<string, RegistryEntry>();
-  private _reconnecting = new Set<string>();
-
   private _devices$ = new BehaviorSubject<TransportDiscoveredDevice[]>([]);
+
+  //private _advPrimed = new Set<string>();
 
   constructor(
     deviceModelDataSource: DeviceModelDataSource,
@@ -91,6 +77,7 @@ export class WebBleTransport implements Transport {
     return webBleIdentifier;
   }
 
+  // WebBluetooth can’t passively scan; we use requestDevice() for discovery.
   startDiscovering(): Observable<TransportDiscoveredDevice> {
     const filters = this._deviceModelDataSource
       .getBluetoothServices()
@@ -120,8 +107,6 @@ export class WebBleTransport implements Transport {
           discovered,
         });
 
-        this._primeAdvertisementWatch(device).catch(() => {});
-
         this._emitDevices();
         return discovered;
       }),
@@ -134,7 +119,7 @@ export class WebBleTransport implements Transport {
   }
 
   stopDiscovering(): void {
-    /* no passive background scan on Web Bluetooth */
+    /* no-op on Web Bluetooth */
   }
 
   async connect(params: {
@@ -160,22 +145,21 @@ export class WebBleTransport implements Transport {
     }
 
     try {
-      //  check for have a live GATT connection
       const device = entry.device;
       if (!device.gatt) {
         throw new OpeningConnectionError("No GATT server available on device");
       }
 
+      // fresh connect
       if (!device.gatt.connected) {
         await this._withTimeout(
           device.gatt.connect(),
           6000,
           "GATT connect timed out",
         );
-        await this._delay(200);
+        await this._delay(150);
       }
 
-      // find service and characteristics
       const { service, infos } = await this._getLiveLedgerService(device);
       const { writeCharacteristic, notifyCharacteristic } =
         await this._resolveCharacteristics(service, infos);
@@ -195,13 +179,10 @@ export class WebBleTransport implements Transport {
           deviceId: params.deviceId,
           deviceApduSender: apduSender,
           timeoutDuration: RECONNECT_DEVICE_TIMEOUT,
-          tryToReconnect: (budgetMs) => {
-            this.tryToReconnect(
-              params.deviceId,
-              params.onReconnect,
-              budgetMs,
-            ).catch((e) =>
-              this._logger.error("tryToReconnect() threw", { data: { e } }),
+          tryToReconnect: () => {
+            this.tryToReconnect(params.deviceId, params.onReconnect).catch(
+              (e) =>
+                this._logger.error("tryToReconnect() threw", { data: { e } }),
             );
           },
           onTerminated: () => {
@@ -211,10 +192,12 @@ export class WebBleTransport implements Transport {
               this._deviceConnectionsById.delete(params.deviceId);
               const reg = this._registry.get(params.deviceId);
               if (reg?.listener) {
-                reg.device.removeEventListener(
-                  "gattserverdisconnected",
-                  reg.listener,
-                );
+                try {
+                  reg.device.removeEventListener(
+                    "gattserverdisconnected",
+                    reg.listener,
+                  );
+                } catch {}
                 reg.listener = undefined;
               }
               this._emitDevices();
@@ -222,18 +205,14 @@ export class WebBleTransport implements Transport {
           },
         });
 
-      // start notifications and MTU handshake before exposing the connection
       await apduSender.setupConnection();
-      await this._primeAdvertisementWatch(device);
 
-      // track connection
       this._deviceConnectionsById.set(params.deviceId, machine);
       entry.serviceUuid = service.uuid;
       entry.infos = infos;
 
-      // hook disconnection event
       const onDisc = (_ev: Event) =>
-        this._handleDeviceDisconnected(params.deviceId, params.onReconnect);
+        this._handleDeviceDisconnected(params.deviceId);
       entry.listener = onDisc;
       device.addEventListener("gattserverdisconnected", onDisc);
 
@@ -250,7 +229,7 @@ export class WebBleTransport implements Transport {
       );
     } catch (e) {
       this._logger.error("connect() error", { data: { e } });
-      return Left(new OpeningConnectionError(e));
+      return Left(new OpeningConnectionError(e as any));
     }
   }
 
@@ -266,297 +245,221 @@ export class WebBleTransport implements Transport {
       sm.closeConnection();
       this._deviceConnectionsById.delete(id);
       if (reg?.listener) {
-        reg.device.removeEventListener("gattserverdisconnected", reg.listener);
+        try {
+          reg.device.removeEventListener(
+            "gattserverdisconnected",
+            reg.listener,
+          );
+        } catch {}
         reg.listener = undefined;
       }
-      if (reg?.device.gatt?.connected) {
-        try {
-          reg.device.gatt.disconnect();
-        } catch {
-          /* ignore */
-        }
-      }
+      await this._safeCancel(id);
       this._emitDevices();
       return Right(undefined);
     } catch (e) {
-      return Left(new GeneralDmkError({ originalError: e }));
+      return Left(new GeneralDmkError({ originalError: e as any }));
     }
   }
 
-  private _handleDeviceDisconnected(
-    deviceId: string,
-    _onReconnect?: (deviceId: string) => Promise<void> | void,
-  ) {
+  // === RN-shaped lifecycle helpers ============================================================
+
+  private _handleDeviceDisconnected(deviceId: string) {
     this._logger.debug(`[${deviceId}] gattserverdisconnected`);
     const sm = this._deviceConnectionsById.get(deviceId);
     if (!sm) return;
     sm.eventDeviceDisconnected();
   }
 
-  private async _sleep(ms: number) {
-    return new Promise((r) => setTimeout(r, ms));
-  }
-
-  private async _waitUntilGattReady(
-    device: BluetoothDevice,
-    opts: { timeoutMs?: number; stableMs?: number; pollMs?: number } = {},
-  ): Promise<void> {
-    const timeoutMs = opts.timeoutMs ?? 8000;
-    const stableMs = opts.stableMs ?? 500;
-    const pollMs = opts.pollMs ?? 100;
-
-    const deadline = Date.now() + timeoutMs;
-    let stableStart: number | null = null;
-
-    while (Date.now() < deadline) {
-      const gatt = device.gatt;
-      if (!gatt) {
-        stableStart = null;
-        await this._sleep(pollMs);
-        continue;
-      }
-
-      // If already connected, we’re “ready” (let caller skip connect)
-      if (gatt.connected) return;
-
-      if (stableStart == null) stableStart = Date.now();
-      if (Date.now() - stableStart >= stableMs) return;
-
-      await this._sleep(pollMs);
-    }
-    // If we time out, just let caller attempt connect; don’t hard-fail here.
-  }
-
-  private async _waitForAdvertisement(
-    device: BluetoothDevice,
-    {
-      timeoutMs = 15000,
-      requireServiceUuid,
-    }: { timeoutMs?: number; requireServiceUuid?: string } = {},
-  ): Promise<boolean> {
+  private async _primeAdvertisementWatch(device: BluetoothDevice) {
     const canWatch = typeof device.watchAdvertisements === "function";
-    if (!canWatch) return false;
-
-    await this._primeAdvertisementWatch(device);
-
-    return new Promise<boolean>((resolve) => {
-      let settled = false;
-      const done = (ok: boolean) => {
-        if (!settled) {
-          settled = true;
-          cleanup();
-          resolve(ok);
-        }
-      };
-
-      const onAdv = (ev: Event) => {
-        const adv = ev as BluetoothAdvertisingEvent;
-        const hasSvc =
-          !requireServiceUuid ||
-          (adv.uuids || []).some(
-            (u) =>
-              String(u).toLowerCase() === requireServiceUuid!.toLowerCase(),
-          );
-        if (hasSvc) done(true);
-      };
-
-      const cleanup = () => {
-        try {
-          device.removeEventListener("advertisementreceived", onAdv);
-        } catch {}
-      };
-
-      try {
-        device.addEventListener("advertisementreceived", onAdv);
-        // keep watching; ignore errors from double-watch
-        device.watchAdvertisements!.call(device).catch(() => {});
-      } catch {
-        done(false);
-        return;
-      }
-      setTimeout(() => done(false), timeoutMs);
-    });
+    if (!canWatch) {
+      this._logger.debug(`CAN'T WATCH ADVERTISEMENTS FOR DEVICE ${device.id}`);
+    }
+    //if (this._advPrimed.has(device.id)) return;
+    this._logger.debug(`PRIMING ADVERTISEMENTS FOR DEVICE ${device.id}`);
+    try {
+      await device.watchAdvertisements();
+    } catch {
+      this._logger.debug(
+        `Failed to watch advertisements for device ${device.id}`,
+      );
+    }
+    //this._advPrimed.add(device.id);
   }
 
-  private async _refreshDeviceHandle(
-    old: BluetoothDevice,
+  private async _rediscoverDevice(
+    deviceId: string,
   ): Promise<BluetoothDevice | null> {
     if (typeof navigator.bluetooth.getDevices !== "function") return null;
     try {
+      this._logger.debug(`Attempting to rediscover device ${deviceId}`);
       const permitted = await navigator.bluetooth.getDevices();
-      const fresh =
-        permitted.find((d) => d.id === old.id) ||
-        permitted.find((d) => d.name && d.name === old.name);
-      if (fresh && fresh !== old) {
-        await this._primeAdvertisementWatch(fresh);
-        return fresh;
+      // exact id
+      let fresh = permitted.find((d) => d.id === deviceId) ?? null;
+      // fallback by name in case handle rotated
+      if (!fresh) {
+        const reg = this._registry.get(deviceId);
+        const name = reg?.device?.name;
+        if (name) fresh = permitted.find((d) => d.name === name) ?? null;
       }
-    } catch {}
-    return null;
+      if (fresh) await this._primeAdvertisementWatch(fresh);
+      return fresh;
+    } catch {
+      return null;
+    }
   }
+
+  // private async _waitForAdvertisement(
+  //   device: BluetoothDevice,
+  //   { timeoutMs = 5000 }: { timeoutMs?: number } = {},
+  // ): Promise<boolean> {
+  //   const canWatch = typeof device.watchAdvertisements === "function";
+  //   if (!canWatch) return false;
+  //   await this._primeAdvertisementWatch(device);
+
+  //   return new Promise<boolean>((resolve) => {
+  //     let settled = false;
+  //     const done = (ok: boolean) => {
+  //       if (!settled) {
+  //         settled = true;
+  //         try {
+  //           device.removeEventListener("advertisementreceived", onAdv);
+  //         } catch {}
+  //         resolve(ok);
+  //       }
+  //     };
+  //     const onAdv = () => done(true);
+  //     try {
+  //       device.addEventListener("advertisementreceived", onAdv);
+  //     } catch {
+  //       return done(false);
+  //     }
+  //     setTimeout(() => done(false), timeoutMs);
+  //   });
+  // }
 
   private async tryToReconnect(
     deviceId: string,
     onReconnect?: (id: string) => Promise<void> | void,
-    budgetMs: number = RECONNECT_DEVICE_TIMEOUT,
   ) {
-    if (this._reconnecting.has(deviceId)) return;
-    this._reconnecting.add(deviceId);
+    // cancel any lingering links
+    await this._safeCancel(deviceId);
 
-    try {
+    const MAX_ATTEMPTS = 9;
+
+    for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
       const reg = this._registry.get(deviceId);
       const sm = this._deviceConnectionsById.get(deviceId);
-      if (!reg || !sm) return;
 
-      let device = reg.device; // local, can swap
-      const deadline = Date.now() + Math.max(0, budgetMs);
-      let attempt = 0;
-      let consecutiveOutOfRange = 0;
+      if (!reg || !sm) {
+        this._logger.debug(
+          `[${deviceId}] aborting reconnect: registry or SM missing`,
+        );
+        return;
+      }
 
-      while (Date.now() < deadline) {
-        attempt += 1;
+      const device = await this._withTimeout(
+        this._rediscoverDevice(deviceId),
+        3000,
+        "rediscovery timeout",
+      );
+
+      if (!device) {
+        throw new Error("Device not found");
+      }
+
+      this._logger.debug(`[${deviceId}] reconnect attempt #${attempt}`);
+
+      // const sawAdv = await this._waitForAdvertisement(device, {
+      //   timeoutMs: 3000,
+      // });
+
+      //if (!sawAdv) throw new Error("No advertisement seen");
+
+      try {
+        if (!device.gatt) throw new Error("No GATT on device");
 
         try {
-          // small cooldown after initial drop to let peripheral resume advertising
-          if (attempt === 1) await this._delay(600);
-
-          // Watch for a fresh advertisement when supported
-          const sawAdv = await this._waitForAdvertisement(device, {
-            timeoutMs: Math.min(15000, Math.max(3000, deadline - Date.now())),
-            requireServiceUuid: reg.serviceUuid,
+          device.gatt.connect();
+        } catch (e) {
+          this._logger.error(`[${deviceId}] gatt.connect() failed`, {
+            data: { e },
           });
-
-          // Give GATT a chance to settle; if already connected, we skip connect()
-          await this._waitUntilGattReady(device, {
-            timeoutMs: Math.min(8000, Math.max(1500, deadline - Date.now())),
-            stableMs: 700,
-            pollMs: 100,
-          });
-
-          if (!device.gatt?.connected) {
-            // If no adv observed at all, don’t rush a blind connect; try again
-            if (typeof device.watchAdvertisements === "function" && !sawAdv) {
-              throw new Error("No advertisement observed");
-            }
-
-            // Connect with a real timeout and a safe cancellation
-            await this._withTimeout(
-              device.gatt!.connect(),
-              Math.min(12000, Math.max(2500, deadline - Date.now())),
-              "connect timed out",
-              () => {
-                try {
-                  if (device.gatt?.connected) device.gatt.disconnect();
-                } catch {}
-              },
-            );
-          }
-
-          // Warm up caches (ignoring errors)
-          try {
-            await device.gatt!.getPrimaryServices();
-          } catch {}
-
-          await this._primeAdvertisementWatch(device);
-
-          // Rehydrate service + characteristics
-          const { service, infos } = await this._getLiveLedgerService(device);
-          const { writeCharacteristic, notifyCharacteristic } =
-            await this._resolveCharacteristics(service, infos);
-
-          sm.setDependencies({ writeCharacteristic, notifyCharacteristic });
-
-          // Refresh listener on the current handle
-          if (reg.listener)
-            device.removeEventListener("gattserverdisconnected", reg.listener);
-          const onDisc = (_: Event) =>
-            this._handleDeviceDisconnected(deviceId, onReconnect);
-          device.addEventListener("gattserverdisconnected", onDisc);
-          reg.listener = onDisc;
-          reg.serviceUuid = service.uuid;
-          reg.infos = infos;
-
-          // Re-arm notifications + MTU
-          await sm.setupConnection();
-          sm.eventDeviceConnected();
-
-          // Give the device/HSM a breath to clear old states
-          await this._delay(200);
-
-          // Let caller reopen any higher-level secure channel
-          try {
-            await onReconnect?.(deviceId);
-          } catch (e) {
-            this._logger.error("onReconnect callback threw", { data: { e } });
-          }
-
-          this._emitDevices();
-          return; // ✅ success
-        } catch (e: any) {
-          const name = String(e?.name || "");
-          const msg = String(e?.message || "").toLowerCase();
-          const outOfRange =
-            name === "NetworkError" && msg.includes("no longer in range");
-
-          // After 2 consecutive “out of range”, refresh the handle and **use it**
-          if (outOfRange) {
-            consecutiveOutOfRange += 1;
-            if (consecutiveOutOfRange >= 2) {
-              const fresh = await this._refreshDeviceHandle(device);
-              if (fresh) {
-                reg.device = fresh;
-                device = fresh; // <- critical: actually swap the handle
-                consecutiveOutOfRange = 0;
-              }
-            }
-          } else {
-            consecutiveOutOfRange = 0;
-          }
-
-          // Gentle backoff; keep overall within budget
-          const remaining = deadline - Date.now();
-          const backoff = outOfRange
-            ? Math.min(1200 + 300 * attempt, 3000)
-            : Math.min(250 * attempt, 1500);
-          if (remaining > 0) {
-            await this._delay(Math.min(backoff, Math.max(100, remaining)));
-          }
+          if (device.gatt?.connected) device.gatt.disconnect();
         }
-      }
 
-      this._logger.error(`[${deviceId}] reconnection budget exhausted`);
-      try {
-        sm.closeConnection();
-      } catch {}
-    } finally {
-      this._reconnecting.delete(deviceId);
-    }
-  }
+        // rediscover services/chars
+        const { service, infos } = await this._getLiveLedgerService(device);
+        const { writeCharacteristic, notifyCharacteristic } =
+          await this._resolveCharacteristics(service, infos);
 
-  private _emitDevices() {
-    const connected: TransportDiscoveredDevice[] = [];
-    for (const [id] of this._deviceConnectionsById) {
-      const reg = this._registry.get(id);
-      if (reg?.infos) {
-        connected.push({
-          id,
-          deviceModel: reg.infos.deviceModel,
-          transport: webBleIdentifier,
+        // rewire dependencies into SM
+        sm.setDependencies({ writeCharacteristic, notifyCharacteristic });
+
+        // re-arm notifications + handshake on the new link
+        await sm.setupConnection();
+
+        // signal connected to the SM
+        sm.eventDeviceConnected();
+
+        // stash/refresh registry infos
+        reg.serviceUuid = service.uuid;
+        reg.infos = infos;
+
+        // make sure the disconnect listener is attached to the current device object
+        if (reg.listener) {
+          try {
+            device.removeEventListener("gattserverdisconnected", reg.listener);
+          } catch {}
+        }
+        const onDisc = (_: Event) => this._handleDeviceDisconnected(deviceId);
+        device.addEventListener("gattserverdisconnected", onDisc);
+        reg.listener = onDisc;
+
+        // optional callback
+        try {
+          await onReconnect?.(deviceId);
+        } catch (e) {
+          this._logger.error("onReconnect callback threw", { data: { e } });
+        }
+
+        this._emitDevices();
+        return; // ✅ success
+      } catch (e) {
+        this._logger.error(`[${deviceId}] reconnect attempt failed`, {
+          data: { attempt, e },
         });
+
+        // clean ghost link and back off a bit
+        try {
+          if (reg.device.gatt?.connected) reg.device.gatt.disconnect();
+        } catch {}
+        await this._delay(Math.min(300 + attempt * 200, 1200));
       }
     }
-    const scanned = Array.from(this._registry.values())
-      .map((r) => r.discovered)
-      .filter((d) => !this._deviceConnectionsById.has(d.id));
 
-    this._devices$.next([...connected, ...scanned]);
+    // all attempts failed → close the SM (lets onTerminated clean up)
+    this._logger.error(
+      `[${deviceId}] all reconnection attempts failed – closing session`,
+    );
+    this._deviceConnectionsById.get(deviceId)?.closeConnection();
   }
+
+  private async _safeCancel(deviceId: string) {
+    const reg = this._registry.get(deviceId);
+    if (!reg) return;
+    try {
+      if (reg.device.gatt?.connected) reg.device.gatt.disconnect();
+    } catch {}
+    await this._delay(100);
+  }
+
+  // === Service/characteristic resolution ======================================================
 
   private async _identifyLedgerService(device: BluetoothDevice): Promise<{
     serviceUuid: string;
     infos: NonNullable<RegistryEntry["infos"]>;
   }> {
-    // connect briefly, read service, disconnect
     if (!device.gatt) {
       throw new OpeningConnectionError("No GATT server available on device");
     }
@@ -567,9 +470,8 @@ export class WebBleTransport implements Transport {
     } finally {
       try {
         device.gatt?.disconnect();
-      } catch {
-        /* ignore */
-      }
+      } catch {}
+      await this._delay(200);
     }
   }
 
@@ -639,23 +541,49 @@ export class WebBleTransport implements Transport {
     svc: BluetoothRemoteGATTService,
     infos: NonNullable<RegistryEntry["infos"]>,
   ): Promise<BluetoothRemoteGATTCharacteristic> {
-    const tried: BluetoothRemoteGATTCharacteristic[] = [];
-    const uuids = Array.from(
-      new Set([infos.writeUuid, infos.writeCmdUuid].filter(Boolean)),
+    // Prefer the CMD UUID (without response), then the legacy write UUID.
+    const order = [infos.writeCmdUuid, infos.writeUuid].filter(
+      Boolean,
     ) as string[];
+    const tried: BluetoothRemoteGATTCharacteristic[] = [];
 
-    for (const uuid of uuids) {
+    for (const uuid of order) {
       try {
         const ch = await svc.getCharacteristic(uuid);
         tried.push(ch);
-        // prefer characteristics advertising "write" (with response)
+
+        // Prefer characteristics that support without-response
+        if (ch.properties.writeWithoutResponse) return ch;
+        // Otherwise accept normal write
         if (ch.properties.write) return ch;
       } catch {
-        // continue
+        // keep trying
       }
     }
-    if (tried.length > 0) return tried[0]!;
+
+    if (tried.length) return tried[0]!;
     throw new OpeningConnectionError("No write characteristic available");
+  }
+
+  // === misc ===================================================================================
+
+  private _emitDevices() {
+    const connected: TransportDiscoveredDevice[] = [];
+    for (const [id] of this._deviceConnectionsById) {
+      const reg = this._registry.get(id);
+      if (reg?.infos) {
+        connected.push({
+          id,
+          deviceModel: reg.infos.deviceModel,
+          transport: webBleIdentifier,
+        });
+      }
+    }
+    const scanned = Array.from(this._registry.values())
+      .map((r) => r.discovered)
+      .filter((d) => !this._deviceConnectionsById.has(d.id));
+
+    this._devices$.next([...connected, ...scanned]);
   }
 
   private _withTimeout<T>(
@@ -667,7 +595,11 @@ export class WebBleTransport implements Transport {
     return new Promise<T>((resolve, reject) => {
       const t = setTimeout(() => {
         reject(new OpeningConnectionError(msg));
-        cancellationFn?.();
+        try {
+          cancellationFn?.();
+        } catch {
+          this._logger.debug("Cancellation function threw");
+        }
       }, ms);
       p.then(
         (v) => {
@@ -675,7 +607,9 @@ export class WebBleTransport implements Transport {
           resolve(v);
         },
         (e) => {
-          console.log("PROMISE REJECTED!!!!!!!!!!", e);
+          this._logger.error("_withTimeout() promise rejected", {
+            data: { e },
+          });
           clearTimeout(t);
           reject(e);
         },

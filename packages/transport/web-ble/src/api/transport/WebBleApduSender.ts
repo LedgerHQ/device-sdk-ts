@@ -4,8 +4,10 @@ import {
   type ApduSenderServiceFactory,
   type DeviceApduSender,
   DeviceDisconnectedWhileSendingError,
+  DeviceNotInitializedError,
   type DmkError,
   type LoggerPublisherService,
+  SendApduTimeoutError,
 } from "@ledgerhq/device-management-kit";
 import { type Either, Left, Maybe, Right } from "purify-ts";
 import { BehaviorSubject } from "rxjs";
@@ -15,24 +17,30 @@ export type WebBleApduSenderDependencies = {
   notifyCharacteristic: BluetoothRemoteGATTCharacteristic;
 };
 
+const MTU_OP = 0x08;
+
+type WriteMode = "withoutResponse" | "withResponse" | "legacy";
+
 export class WebBleApduSender
   implements DeviceApduSender<WebBleApduSenderDependencies>
 {
-  private _characteristics: WebBleApduSenderDependencies;
+  private _deps: WebBleApduSenderDependencies;
   private _apduSender: Maybe<ReturnType<ApduSenderServiceFactory>> =
     Maybe.empty();
   private _apduSenderFactory: ApduSenderServiceFactory;
+  private _apduReceiverFactory: ApduReceiverServiceFactory;
   private _apduReceiver: ReturnType<ApduReceiverServiceFactory>;
   private _logger: LoggerPublisherService;
-  private _isDeviceReady = new BehaviorSubject<boolean>(false);
-  private _sendResolver: Maybe<
-    (result: Either<DmkError, ApduResponse>) => void
-  > = Maybe.empty();
-  private _notificationsActive = false;
-  private _apduReceiverFactory: ApduReceiverServiceFactory;
 
+  private _isDeviceReady = new BehaviorSubject<boolean>(false);
+  private _notificationsActive = false;
   private _mtuHandshakeInFlight = false;
-  private static readonly MTU_OP = 0x08;
+
+  private _sendResolver: Maybe<(r: Either<DmkError, ApduResponse>) => void> =
+    Maybe.empty();
+
+  // cache the selected write mode after first successful write
+  private _writeMode: WriteMode | null = null;
 
   constructor(
     deps: WebBleApduSenderDependencies & {
@@ -41,7 +49,7 @@ export class WebBleApduSender
     },
     loggerFactory: (tag: string) => LoggerPublisherService,
   ) {
-    this._characteristics = {
+    this._deps = {
       writeCharacteristic: deps.writeCharacteristic,
       notifyCharacteristic: deps.notifyCharacteristic,
     };
@@ -51,9 +59,14 @@ export class WebBleApduSender
     this._logger = loggerFactory("WebBleApduSender");
   }
 
-  private _failPendingSend(err: DmkError) {
-    this._sendResolver.map((r) => r(Left(err)));
-    this._sendResolver = Maybe.empty();
+  // ---------- internals
+
+  private _gattConnected(): boolean {
+    try {
+      return !!this._deps.notifyCharacteristic.service.device.gatt?.connected;
+    } catch {
+      return false;
+    }
   }
 
   private _looksDisconnected(e: unknown): boolean {
@@ -68,25 +81,20 @@ export class WebBleApduSender
     );
   }
 
-  private _gattConnected(): boolean {
-    try {
-      return !!this._characteristics.notifyCharacteristic.service.device.gatt
-        ?.connected;
-    } catch {
-      return false;
-    }
+  private _failPendingSend(err: DmkError) {
+    this._sendResolver.map((r) => r(Left(err)));
+    this._sendResolver = Maybe.empty();
   }
 
   private _markLinkDown(): void {
     try {
       if (this._notificationsActive) {
-        this._characteristics.notifyCharacteristic.removeEventListener(
+        this._deps.notifyCharacteristic.removeEventListener(
           "characteristicvaluechanged",
           this._handleNotify,
         );
-        this._characteristics.notifyCharacteristic
-          .stopNotifications()
-          .catch(() => {});
+        // best-effort
+        this._deps.notifyCharacteristic.stopNotifications().catch(() => {});
         this._notificationsActive = false;
       }
     } catch {
@@ -95,25 +103,54 @@ export class WebBleApduSender
     this._isDeviceReady.next(false);
     this._apduSender = Maybe.empty();
     this._sendResolver = Maybe.empty();
+    this._writeMode = null;
   }
 
+  private async _sleep(ms: number) {
+    return new Promise((r) => setTimeout(r, ms));
+  }
+
+  private _handleNotify = (event: Event) => {
+    const characteristic = event.target as BluetoothRemoteGATTCharacteristic;
+    if (!characteristic.value) return;
+    const data = new Uint8Array(characteristic.value.buffer);
+
+    if (!this._isDeviceReady.value) {
+      // During handshake, accept only MTU frames
+      if (!this._mtuHandshakeInFlight) {
+        this._logger.debug("Dropping pre-handshake frame", { data: { data } });
+        return;
+      }
+      if (data.length < 6 || data[0] !== MTU_OP) {
+        this._logger.debug("Non-MTU frame during handshake; dropping", {
+          data: { data },
+        });
+        return;
+      }
+      this._onReceiveSetup(data);
+      return;
+    }
+
+    this._onReceiveApdu(data);
+  };
+
   private _onReceiveSetup(mtuResponseBuffer: Uint8Array) {
-    // example: [0x08,0,0,0,0,<mtu>] where <mtu> is 1 byte in this proto
-    const negotiatedMtu = mtuResponseBuffer[5];
+    // Web doesn’t expose negotiated ATT MTU; take Ledger’s byte 5
+    const ledgerMtu = mtuResponseBuffer[5];
     if (
-      negotiatedMtu === undefined ||
-      !Number.isFinite(negotiatedMtu) ||
-      negotiatedMtu <= 0
+      ledgerMtu === undefined ||
+      !Number.isFinite(ledgerMtu) ||
+      ledgerMtu <= 0
     ) {
       throw new Error("MTU negotiation failed: invalid MTU");
     }
-    this._apduSender = Maybe.of(
-      this._apduSenderFactory({ frameSize: negotiatedMtu }),
-    );
+    // RN uses (device.mtu - FRAME_HEADER_SIZE). On web we rely on the device’s reply.
+    const frameSize = Math.max(ledgerMtu - 0, ledgerMtu); // defensively accept the raw value
+    this._apduSender = Maybe.of(this._apduSenderFactory({ frameSize }));
     this._isDeviceReady.next(true);
   }
 
-  private _onReceiveApdu = (incomingFrame: Uint8Array) => {
+  private _onReceiveApdu(incomingFrame: Uint8Array) {
     this._apduReceiver
       .handleFrame(incomingFrame)
       .map((respOpt) =>
@@ -127,94 +164,85 @@ export class WebBleApduSender
         this._sendResolver.map((r) => r(Left(err)));
         this._sendResolver = Maybe.empty();
       });
-  };
+  }
 
-  private _handleNotify = (event: Event) => {
-    const characteristic = event.target as BluetoothRemoteGATTCharacteristic;
-    if (!characteristic.value) return;
-    const data = new Uint8Array(characteristic.value.buffer);
+  private _chooseWriteMode(): WriteMode {
+    if (this._writeMode) return this._writeMode;
+    const ch = this._deps.writeCharacteristic;
 
-    if (!this._isDeviceReady.value) {
-      if (!this._mtuHandshakeInFlight) {
-        this._logger.debug("Dropping pre-handshake frame", { data: { data } });
-        return;
-      }
-      if (data.length < 6 || data[0] !== WebBleApduSender.MTU_OP) {
-        this._logger.debug("Non-MTU frame during handshake; dropping", {
-          data: { data },
-        });
-        return;
-      }
-      this._onReceiveSetup(data);
+    // Prefer WITHOUT response if the characteristic supports it (RN does this)
+    if (ch.properties.writeWithoutResponse) {
+      this._writeMode = "withoutResponse";
+    } else if (ch.properties.write) {
+      this._writeMode = "withResponse";
     } else {
-      this._onReceiveApdu(data);
+      this._writeMode = "legacy";
     }
-  };
+    return this._writeMode;
+  }
 
   private async _write(buf: ArrayBuffer) {
-    const ch = this._characteristics.writeCharacteristic;
+    const ch = this._deps.writeCharacteristic;
 
     if (!this._gattConnected()) {
       this._markLinkDown();
       throw new DeviceDisconnectedWhileSendingError("GATT not connected");
     }
 
-    // - prefer WITH response if supported (most reliable)
-    // - fall back to legacy writeValue (treated like with-response in many stacks)
-    // - finally WITHOUT response if exposed and allowed
     const hasWithResp =
       typeof (ch as any).writeValueWithResponse === "function";
     const hasWithout =
       typeof (ch as any).writeValueWithoutResponse === "function";
     const hasLegacy = typeof (ch as any).writeValue === "function";
 
-    try {
-      if (ch.properties.write && hasWithResp) {
-        await (ch as any).writeValueWithResponse(buf);
-        return;
-      }
-      if (hasLegacy && ch.properties.write && !hasWithResp) {
-        await (ch as any).writeValue(buf);
-        return;
-      }
-    } catch (e1) {
-      if (this._looksDisconnected(e1) || !this._gattConnected()) {
-        this._markLinkDown();
-        throw new DeviceDisconnectedWhileSendingError(
-          "Write failed (with response)",
-        );
-      }
-      // try without-response next
-    }
-
-    try {
+    const tryWithout = async () => {
       if (ch.properties.writeWithoutResponse && hasWithout) {
         await (ch as any).writeValueWithoutResponse(buf);
-        return;
+        this._writeMode = "withoutResponse";
+        return true;
       }
-      if (hasLegacy) {
+      return false;
+    };
+
+    const tryWith = async () => {
+      if (ch.properties.write && hasWithResp) {
+        await (ch as any).writeValueWithResponse(buf);
+        this._writeMode = "withResponse";
+        return true;
+      }
+      if (ch.properties.write && hasLegacy) {
         await (ch as any).writeValue(buf);
-        return;
+        this._writeMode = "legacy";
+        return true;
+      }
+      return false;
+    };
+
+    // Use preferred mode first; fall back to the other
+    const preferred = this._chooseWriteMode();
+
+    try {
+      if (preferred === "withoutResponse") {
+        if (await tryWithout()) return;
+        if (await tryWith()) return;
+      } else {
+        if (await tryWith()) return;
+        if (await tryWithout()) return;
       }
       throw new Error("No supported write method for characteristic");
-    } catch (e2) {
-      if (this._looksDisconnected(e2) || !this._gattConnected()) {
+    } catch (e) {
+      // Mark link down only if it *looks* like a disconnect.
+      if (this._looksDisconnected(e) || !this._gattConnected()) {
         this._markLinkDown();
-        throw new DeviceDisconnectedWhileSendingError(
-          "Write failed (without response)",
-        );
+        throw new DeviceDisconnectedWhileSendingError("Write failed");
       }
-      this._logger.error("Write failed (both modes)", { data: { e2 } });
-      throw e2;
+      // Otherwise bubble up (e.g., NotSupportedError), caller decides.
+      throw e;
     }
   }
 
-  private async _sleep(ms: number) {
-    return new Promise((r) => setTimeout(r, ms));
-  }
-
-  // wait until notifications are active and MTU negotiated (or timeout)
-  private async _awaitReady(maxMs = 1500): Promise<void> {
+  private async _awaitReady(maxMs = 2000): Promise<void> {
+    // If already ready, fast-path
     if (
       this._notificationsActive &&
       this._isDeviceReady.value &&
@@ -234,10 +262,10 @@ export class WebBleApduSender
 
       const t = setTimeout(() => {
         sub.unsubscribe();
-        reject(new DeviceDisconnectedWhileSendingError("Link not ready"));
+        reject(new DeviceNotInitializedError("Link not ready"));
       }, maxMs);
 
-      // fast path in case it flipped
+      // Double-check synchronously
       if (
         this._notificationsActive &&
         this._isDeviceReady.value &&
@@ -261,11 +289,21 @@ export class WebBleApduSender
     );
   }
 
-  public async setupConnection(): Promise<void> {
-    const notifyChar = this._characteristics.notifyCharacteristic;
+  // ---------- DeviceApduSender API
 
+  public async setupConnection(): Promise<void> {
+    const notifyChar = this._deps.notifyCharacteristic;
+
+    // Arm notifications fresh every time we (re)setup
     if (!this._notificationsActive) {
       await notifyChar.startNotifications();
+      this._logger.debug("Notify armed", {
+        data: {
+          notifyUuid: this._deps.notifyCharacteristic.uuid,
+          writeUuid: this._deps.writeCharacteristic.uuid,
+          props: this._deps.writeCharacteristic.properties,
+        },
+      });
       this._notificationsActive = true;
       notifyChar.addEventListener(
         "characteristicvaluechanged",
@@ -273,31 +311,46 @@ export class WebBleApduSender
       );
     }
 
-    // small stabilization window badbadbad
-    await this._sleep(150);
+    // short settle
+    await this._sleep(120);
 
-    // MTU handshake
+    // MTU handshake (Ledger: 0x08 00 00 00 00 → response includes mtu in byte 5)
     this._mtuHandshakeInFlight = true;
-    const mtuReq = new Uint8Array([WebBleApduSender.MTU_OP, 0, 0, 0, 0]);
+    this._isDeviceReady.next(false);
+    this._apduSender = Maybe.empty();
+    this._writeMode = null;
+
+    const mtuReq = new Uint8Array([MTU_OP, 0, 0, 0, 0]);
 
     try {
       await this._write(mtuReq.buffer);
 
       // wait until _isDeviceReady flips true via _onReceiveSetup
       await Promise.race([
-        new Promise<void>((res) => {
+        new Promise<void>((res, rej) => {
+          const t = setTimeout(
+            () => rej(new Error("MTU negotiation timeout")),
+            2000,
+          );
           const sub = this._isDeviceReady.subscribe((ready) => {
             if (ready) {
+              clearTimeout(t);
               sub.unsubscribe();
               res();
             }
           });
         }),
-        this._sleep(2000).then(() => {
-          throw new Error("MTU negotiation timeout");
+        // Safety: if GATT dropped in between
+        this._sleep(2300).then(() => {
+          if (!this._gattConnected()) {
+            throw new DeviceDisconnectedWhileSendingError(
+              "Link dropped during MTU",
+            );
+          }
         }),
       ]);
     } catch (e) {
+      // cleanup notify on failure
       try {
         notifyChar.removeEventListener(
           "characteristicvaluechanged",
@@ -308,6 +361,7 @@ export class WebBleApduSender
         this._notificationsActive = false;
         this._isDeviceReady.next(false);
         this._apduSender = Maybe.empty();
+        this._writeMode = null;
       }
       throw e;
     } finally {
@@ -317,19 +371,19 @@ export class WebBleApduSender
 
   public async sendApdu(
     apdu: Uint8Array,
-    _triggersDisconnection?: boolean,
+    triggersDisconnection?: boolean,
     abortTimeout?: number,
   ): Promise<Either<DmkError, ApduResponse>> {
     try {
-      const waitBudget = Math.max(1500, abortTimeout ?? 0);
+      const waitBudget = Math.max(1800, abortTimeout ?? 0);
       await this._awaitReady(waitBudget);
     } catch (e) {
       return Left(e as DmkError);
     }
 
-    // badbadbad
+    // Some stacks need a tiny gap for the “ping” command
     if (this._isLegacyPing(apdu)) {
-      await this._sleep(200);
+      await this._sleep(160);
     }
 
     if (!this._gattConnected()) {
@@ -340,28 +394,34 @@ export class WebBleApduSender
         ) as unknown as DmkError,
       );
     }
+
     if (this._apduSender.isNothing()) {
       return Left(
-        new DeviceDisconnectedWhileSendingError(
-          "Link not ready (no MTU / sender)",
+        new DeviceNotInitializedError(
+          "Unknown MTU / sender not ready",
         ) as unknown as DmkError,
       );
     }
 
+    let to: ReturnType<typeof setTimeout> | undefined;
     const promise = new Promise<Either<DmkError, ApduResponse>>((resolve) => {
-      this._sendResolver = Maybe.of(resolve);
+      this._sendResolver = Maybe.of((r) => {
+        if (to) clearTimeout(to);
+        resolve(r);
+      });
     });
 
-    for (const frame of this._apduSender
-      .map((s) => s.getFrames(apdu))
-      .orDefault([])) {
+    // frame & write
+    const frames = this._apduSender.map((s) => s.getFrames(apdu)).orDefault([]);
+
+    for (const frame of frames) {
       try {
         await this._write(frame.getRawData().slice().buffer);
       } catch (e) {
-        const msg = _triggersDisconnection
+        const msg = triggersDisconnection
           ? "Frame write failed during expected drop"
           : "Frame write failed";
-        this._logger[_triggersDisconnection ? "debug" : "error"](msg, {
+        this._logger[triggersDisconnection ? "debug" : "error"](msg, {
           data: { e },
         });
         this._failPendingSend(
@@ -369,6 +429,15 @@ export class WebBleApduSender
         );
         break;
       }
+    }
+
+    if (abortTimeout) {
+      to = setTimeout(() => {
+        this._logger.debug("[sendApdu] Abort timeout triggered");
+        this._sendResolver.map((resolve) =>
+          resolve(Left(new SendApduTimeoutError("Abort timeout"))),
+        );
+      }, abortTimeout);
     }
 
     return promise;
@@ -379,55 +448,55 @@ export class WebBleApduSender
       this._failPendingSend(
         new DeviceDisconnectedWhileSendingError("Connection closed"),
       );
-
       if (this._notificationsActive) {
-        this._characteristics.notifyCharacteristic.removeEventListener(
+        this._deps.notifyCharacteristic.removeEventListener(
           "characteristicvaluechanged",
           this._handleNotify,
         );
-        this._characteristics.notifyCharacteristic
-          .stopNotifications()
-          .catch(() => {});
+        this._deps.notifyCharacteristic.stopNotifications().catch(() => {});
         this._notificationsActive = false;
       }
-      this._characteristics.notifyCharacteristic.service.device.gatt?.disconnect();
+      this._deps.notifyCharacteristic.service.device.gatt?.disconnect();
     } catch {
       this._logger.error("Failed to disconnect from device");
+    } finally {
+      this._isDeviceReady.next(false);
+      this._apduSender = Maybe.empty();
+      this._writeMode = null;
     }
   }
 
   public getDependencies(): WebBleApduSenderDependencies {
-    return this._characteristics;
+    return this._deps;
   }
 
   public setDependencies(deps: WebBleApduSenderDependencies): void {
-    const oldNotify = this._characteristics.notifyCharacteristic;
-
-    // fail any in-flight APDU before swapping the link
+    // Fail any in-flight APDU and fully tear down previous notify stream
     this._failPendingSend(
       new DeviceDisconnectedWhileSendingError("Link changed"),
     );
 
-    // do not stop notifications here (old link)
     try {
-      oldNotify.removeEventListener(
-        "characteristicvaluechanged",
-        this._handleNotify,
-      );
+      if (this._notificationsActive) {
+        this._deps.notifyCharacteristic.removeEventListener(
+          "characteristicvaluechanged",
+          this._handleNotify,
+        );
+        this._deps.notifyCharacteristic.stopNotifications().catch(() => {});
+      }
     } catch {
       /* ignore */
     }
 
-    // ready - setupConnection() will re-arm
+    // Reset state; SM will call setupConnection() next
     this._notificationsActive = false;
     this._isDeviceReady.next(false);
     this._apduSender = Maybe.empty();
     this._sendResolver = Maybe.empty();
+    this._writeMode = null;
 
-    // Swap characteristics & reset deframer
-    this._characteristics = deps;
+    // swap deps & reset deframer
+    this._deps = deps;
     this._apduReceiver = this._apduReceiverFactory();
-    // NOTE: setupConnection() is intentionally not called here
-    // the SM will call it after setDependencies() during reconnect
   }
 }
