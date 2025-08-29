@@ -25,7 +25,7 @@ import { type DeviceActionProps } from "@/components/DeviceActionsView/DeviceAct
 import { useDmk } from "@/providers/DeviceManagementKitProvider";
 import { useDeviceSessionsContext } from "@/providers/DeviceSessionsProvider";
 import { useLedgerKeyringProtocol } from "@/providers/LedgerKeyringProvider";
-import { genIdentity } from "@/utils/crypto";
+import { base64FromBytes, bytesFromBase64, genIdentity } from "@/utils/crypto";
 
 export const LedgerKeyringProtocolView: React.FC = () => {
   const dmk = useDmk();
@@ -131,6 +131,38 @@ export const LedgerKeyringProtocolView: React.FC = () => {
               await app.decryptData(
                 hexaStringToBuffer(encryptionKey)!,
                 hexaStringToBuffer(data)!,
+              ),
+            ),
+          );
+        },
+        initialValues: {
+          get encryptionKey() {
+            return encryptionKeyRef.current || "";
+          },
+          data: "",
+        },
+        deviceModelId: modelIdRef.current || DeviceModelId.FLEX,
+      } satisfies DeviceActionProps<
+        string,
+        { encryptionKey: string; data: string },
+        DmkError,
+        never
+      >,
+
+      {
+        title: "Decrypt Base64",
+        description:
+          "Decrypt arbitrary base64 encoded binary data, using the extended private key from the trustchain.",
+        executeDeviceAction: ({ encryptionKey, data }) => {
+          if (!app) {
+            throw new Error("Ledger Keyring Protocol app not initialized");
+          }
+          encryptionKeyRef.current = encryptionKey;
+          return fnToDAReturn(async () =>
+            base64FromBytes(
+              await app.decryptData(
+                hexaStringToBuffer(encryptionKey)!,
+                bytesFromBase64(data),
               ),
             ),
           );
