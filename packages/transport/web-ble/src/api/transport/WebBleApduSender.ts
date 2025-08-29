@@ -1,3 +1,8 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
+/* eslint-disable @typescript-eslint/no-unsafe-return */
+/* eslint-disable @typescript-eslint/no-unsafe-member-access */
+/* eslint-disable @typescript-eslint/no-unsafe-call */
+/* eslint-disable @typescript-eslint/no-unsafe-assignment */
 import {
   type ApduReceiverServiceFactory,
   type ApduResponse,
@@ -39,7 +44,6 @@ export class WebBleApduSender
   private _sendResolver: Maybe<(r: Either<DmkError, ApduResponse>) => void> =
     Maybe.empty();
 
-  // cache the selected write mode after first successful write
   private _writeMode: WriteMode | null = null;
 
   constructor(
@@ -58,8 +62,6 @@ export class WebBleApduSender
     this._apduReceiver = deps.apduReceiverFactory();
     this._logger = loggerFactory("WebBleApduSender");
   }
-
-  // ---------- internals
 
   private _gattConnected(): boolean {
     try {
@@ -93,12 +95,11 @@ export class WebBleApduSender
           "characteristicvaluechanged",
           this._handleNotify,
         );
-        // best-effort
         this._deps.notifyCharacteristic.stopNotifications().catch(() => {});
         this._notificationsActive = false;
       }
     } catch {
-      /* ignore */
+      //fill
     }
     this._isDeviceReady.next(false);
     this._apduSender = Maybe.empty();
@@ -116,7 +117,6 @@ export class WebBleApduSender
     const data = new Uint8Array(characteristic.value.buffer);
 
     if (!this._isDeviceReady.value) {
-      // During handshake, accept only MTU frames
       if (!this._mtuHandshakeInFlight) {
         this._logger.debug("Dropping pre-handshake frame", { data: { data } });
         return;
@@ -135,7 +135,6 @@ export class WebBleApduSender
   };
 
   private _onReceiveSetup(mtuResponseBuffer: Uint8Array) {
-    // Web doesn’t expose negotiated ATT MTU; take Ledger’s byte 5
     const ledgerMtu = mtuResponseBuffer[5];
     if (
       ledgerMtu === undefined ||
@@ -144,8 +143,8 @@ export class WebBleApduSender
     ) {
       throw new Error("MTU negotiation failed: invalid MTU");
     }
-    // RN uses (device.mtu - FRAME_HEADER_SIZE). On web we rely on the device’s reply.
-    const frameSize = Math.max(ledgerMtu - 0, ledgerMtu); // defensively accept the raw value
+
+    const frameSize = Math.max(ledgerMtu - 0, ledgerMtu);
     this._apduSender = Maybe.of(this._apduSenderFactory({ frameSize }));
     this._isDeviceReady.next(true);
   }
@@ -170,7 +169,6 @@ export class WebBleApduSender
     if (this._writeMode) return this._writeMode;
     const ch = this._deps.writeCharacteristic;
 
-    // Prefer WITHOUT response if the characteristic supports it (RN does this)
     if (ch.properties.writeWithoutResponse) {
       this._writeMode = "withoutResponse";
     } else if (ch.properties.write) {
@@ -218,7 +216,6 @@ export class WebBleApduSender
       return false;
     };
 
-    // Use preferred mode first; fall back to the other
     const preferred = this._chooseWriteMode();
 
     try {
@@ -231,18 +228,16 @@ export class WebBleApduSender
       }
       throw new Error("No supported write method for characteristic");
     } catch (e) {
-      // Mark link down only if it *looks* like a disconnect.
       if (this._looksDisconnected(e) || !this._gattConnected()) {
         this._markLinkDown();
         throw new DeviceDisconnectedWhileSendingError("Write failed");
       }
-      // Otherwise bubble up (e.g., NotSupportedError), caller decides.
+
       throw e;
     }
   }
 
   private async _awaitReady(maxMs = 2000): Promise<void> {
-    // If already ready, fast-path
     if (
       this._notificationsActive &&
       this._isDeviceReady.value &&
@@ -265,7 +260,6 @@ export class WebBleApduSender
         reject(new DeviceNotInitializedError("Link not ready"));
       }, maxMs);
 
-      // Double-check synchronously
       if (
         this._notificationsActive &&
         this._isDeviceReady.value &&
@@ -289,12 +283,8 @@ export class WebBleApduSender
     );
   }
 
-  // ---------- DeviceApduSender API
-
   public async setupConnection(): Promise<void> {
     const notifyChar = this._deps.notifyCharacteristic;
-
-    // Arm notifications fresh every time we (re)setup
     if (!this._notificationsActive) {
       await notifyChar.startNotifications();
       this._logger.debug("Notify armed", {
@@ -311,10 +301,8 @@ export class WebBleApduSender
       );
     }
 
-    // short settle
     await this._sleep(120);
 
-    // MTU handshake (Ledger: 0x08 00 00 00 00 → response includes mtu in byte 5)
     this._mtuHandshakeInFlight = true;
     this._isDeviceReady.next(false);
     this._apduSender = Maybe.empty();
@@ -325,7 +313,6 @@ export class WebBleApduSender
     try {
       await this._write(mtuReq.buffer);
 
-      // wait until _isDeviceReady flips true via _onReceiveSetup
       await Promise.race([
         new Promise<void>((res, rej) => {
           const t = setTimeout(
@@ -340,7 +327,7 @@ export class WebBleApduSender
             }
           });
         }),
-        // Safety: if GATT dropped in between
+
         this._sleep(2300).then(() => {
           if (!this._gattConnected()) {
             throw new DeviceDisconnectedWhileSendingError(
@@ -350,7 +337,6 @@ export class WebBleApduSender
         }),
       ]);
     } catch (e) {
-      // cleanup notify on failure
       try {
         notifyChar.removeEventListener(
           "characteristicvaluechanged",
@@ -381,7 +367,6 @@ export class WebBleApduSender
       return Left(e as DmkError);
     }
 
-    // Some stacks need a tiny gap for the “ping” command
     if (this._isLegacyPing(apdu)) {
       await this._sleep(160);
     }
@@ -411,7 +396,6 @@ export class WebBleApduSender
       });
     });
 
-    // frame & write
     const frames = this._apduSender.map((s) => s.getFrames(apdu)).orDefault([]);
 
     for (const frame of frames) {
@@ -471,7 +455,6 @@ export class WebBleApduSender
   }
 
   public setDependencies(deps: WebBleApduSenderDependencies): void {
-    // Fail any in-flight APDU and fully tear down previous notify stream
     this._failPendingSend(
       new DeviceDisconnectedWhileSendingError("Link changed"),
     );
@@ -485,17 +468,15 @@ export class WebBleApduSender
         this._deps.notifyCharacteristic.stopNotifications().catch(() => {});
       }
     } catch {
-      /* ignore */
+      //fill
     }
 
-    // Reset state; SM will call setupConnection() next
     this._notificationsActive = false;
     this._isDeviceReady.next(false);
     this._apduSender = Maybe.empty();
     this._sendResolver = Maybe.empty();
     this._writeMode = null;
 
-    // swap deps & reset deframer
     this._deps = deps;
     this._apduReceiver = this._apduReceiverFactory();
   }

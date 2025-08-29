@@ -147,7 +147,6 @@ export class WebBleTransport implements Transport {
         throw new OpeningConnectionError("No GATT server available on device");
       }
 
-      // fresh connect
       if (!device.gatt.connected) {
         await this._withTimeout(
           device.gatt.connect(),
@@ -197,7 +196,9 @@ export class WebBleTransport implements Transport {
                     "gattserverdisconnected",
                     reg.listener,
                   );
-                } catch {}
+                } catch {
+                  // fill
+                }
                 reg.listener = undefined;
               }
               this._emitDevices();
@@ -229,7 +230,7 @@ export class WebBleTransport implements Transport {
       );
     } catch (e) {
       this._logger.error("connect() error", { data: { e } });
-      return Left(new OpeningConnectionError(e as any));
+      return Left(new OpeningConnectionError(e));
     }
   }
 
@@ -250,18 +251,18 @@ export class WebBleTransport implements Transport {
             "gattserverdisconnected",
             reg.listener,
           );
-        } catch {}
+        } catch {
+          //fill
+        }
         reg.listener = undefined;
       }
       await this._safeCancel(id);
       this._emitDevices();
       return Right(undefined);
     } catch (e) {
-      return Left(new GeneralDmkError({ originalError: e as any }));
+      return Left(new GeneralDmkError({ originalError: e }));
     }
   }
-
-  // === RN-shaped lifecycle helpers ============================================================
 
   private _handleDeviceDisconnected(deviceId: string) {
     this._logger.debug(`[${deviceId}] gattserverdisconnected`);
@@ -277,7 +278,6 @@ export class WebBleTransport implements Transport {
     const { startTimeoutMs = 500, advTimeoutMs = 1500 } = opts;
     if (typeof device.watchAdvertisements !== "function") return false;
 
-    // 1) Start watching, but cap how long we wait for it to start
     const controller = new AbortController();
     const startTimer = setTimeout(() => controller.abort(), startTimeoutMs);
     const started = await device
@@ -287,7 +287,6 @@ export class WebBleTransport implements Transport {
     clearTimeout(startTimer);
     if (!started) return false;
 
-    // 2) Wait for the first advertisement or time out
     const seen = await new Promise<boolean>((resolve) => {
       const onAdv = () => {
         device.removeEventListener("advertisementreceived", onAdv);
@@ -300,10 +299,11 @@ export class WebBleTransport implements Transport {
       }, advTimeoutMs);
     });
 
-    // 3) Stop watching to avoid keeping a long-lived scan
     try {
       controller.abort();
-    } catch {}
+    } catch {
+      // fill
+    }
     return seen;
   }
 
@@ -322,7 +322,6 @@ export class WebBleTransport implements Transport {
       }
 
       if (fresh) {
-        // Only if you *need* to ensure it's in range before connecting:
         const inRange = await this._waitForInRange(fresh, {
           startTimeoutMs: 400,
           advTimeoutMs: 1200,
@@ -334,32 +333,6 @@ export class WebBleTransport implements Transport {
       return null;
     }
   }
-
-  // private async _primeAdvertisementWatch(device: BluetoothDevice) {
-  //   const canWatch = typeof device.watchAdvertisements === "function";
-  //   if (!canWatch) {
-  //     this._logger.debug(`CAN'T WATCH ADVERTISEMENTS FOR DEVICE ${device.id}`);
-  //     return;
-  //   }
-
-  //   // Optional: guard so we don't call it repeatedly per device
-  //   // if (this._advPrimed.has(device.id)) return;
-  //   // this._advPrimed.add(device.id);
-
-  //   // ✅ Time-box the await so it can't wedge the reconnect loop.
-  //   try {
-  //     const controller = new AbortController();
-  //     const timeout = setTimeout(() => controller.abort(), 1000);
-  //     await device.watchAdvertisements({ signal: controller.signal });
-  //     clearTimeout(timeout);
-  //   } catch (e) {
-  //     // AbortError or platform quirk — fine; we only try to improve reconnects.
-  //     this._logger.debug(
-  //       `watchAdvertisements failed/aborted for ${device.id}`,
-  //       { data: { e } },
-  //     );
-  //   }
-  // }
 
   private async tryToReconnect(
     deviceId: string,
@@ -410,7 +383,9 @@ export class WebBleTransport implements Transport {
         if (reg.listener) {
           try {
             device.removeEventListener("gattserverdisconnected", reg.listener);
-          } catch {}
+          } catch {
+            //fill
+          }
         }
         const onDisc = (_: Event) => this._handleDeviceDisconnected(deviceId);
         device.addEventListener("gattserverdisconnected", onDisc);
@@ -423,24 +398,20 @@ export class WebBleTransport implements Transport {
         }
 
         this._emitDevices();
-        return; // ✅ success: end function
+        return;
       } catch (e) {
         this._logger.error(`[${deviceId}] reconnect attempt failed`, {
           data: { e },
         });
         try {
           if (reg?.device.gatt?.connected) reg.device.gatt.disconnect();
-        } catch {}
+        } catch {
+          //fill
+        }
         await this._delay(500);
-        continue; // 🔁 next attempt
+        continue;
       }
     }
-
-    // only reached if all attempts failed
-    // this._logger.error(
-    //   `[${deviceId}] all reconnection attempts failed – closing session`,
-    // );
-    // this._deviceConnectionsById.get(deviceId)?.closeConnection();
   }
 
   private async _safeCancel(deviceId: string) {
@@ -448,11 +419,11 @@ export class WebBleTransport implements Transport {
     if (!reg) return;
     try {
       if (reg.device.gatt?.connected) reg.device.gatt.disconnect();
-    } catch {}
+    } catch {
+      // fill
+    }
     await this._delay(100);
   }
-
-  // === Service/characteristic resolution ======================================================
 
   private async _identifyLedgerService(device: BluetoothDevice): Promise<{
     serviceUuid: string;
@@ -468,7 +439,9 @@ export class WebBleTransport implements Transport {
     } finally {
       try {
         device.gatt?.disconnect();
-      } catch {}
+      } catch {
+        // fill
+      }
       await this._delay(200);
     }
   }
@@ -511,7 +484,7 @@ export class WebBleTransport implements Transport {
             return { service: found, infos };
           }
         } catch {
-          /* continue */
+          // continue
         }
       }
     }
@@ -539,7 +512,6 @@ export class WebBleTransport implements Transport {
     svc: BluetoothRemoteGATTService,
     infos: NonNullable<RegistryEntry["infos"]>,
   ): Promise<BluetoothRemoteGATTCharacteristic> {
-    // Prefer the CMD UUID (without response), then the legacy write UUID.
     const order = [infos.writeCmdUuid, infos.writeUuid].filter(
       Boolean,
     ) as string[];
@@ -550,20 +522,16 @@ export class WebBleTransport implements Transport {
         const ch = await svc.getCharacteristic(uuid);
         tried.push(ch);
 
-        // Prefer characteristics that support without-response
         if (ch.properties.writeWithoutResponse) return ch;
-        // Otherwise accept normal write
         if (ch.properties.write) return ch;
       } catch {
-        // keep trying
+        // fill
       }
     }
 
     if (tried.length) return tried[0]!;
     throw new OpeningConnectionError("No write characteristic available");
   }
-
-  // === misc ===================================================================================
 
   private _emitDevices() {
     const connected: TransportDiscoveredDevice[] = [];
