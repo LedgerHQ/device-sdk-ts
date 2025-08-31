@@ -112,7 +112,7 @@ catalog:
   tsc-alias: ^1.8.10
   turbo: ^2.3.3
   typescript: 5.9.2
-  typescript-eslint: 8.40.0
+  typescript-eslint: 8.41.0
   url: ^0.11.4
   util: ^0.12.5
   uuid: 11.0.3
