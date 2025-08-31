@@ -214,8 +214,8 @@ catalogs:
       specifier: ^5.0.0
       version: 5.0.0
     js-base64:
-      specifier: ^3.7.7
-      version: 3.7.7
+      specifier: ^3.7.8
+      version: 3.7.8
     js-flipper:
       specifier: ^0.273.0
       version: 0.273.0
@@ -558,7 +558,7 @@ importers:
         version: 0.76.6
       '@react-native/metro-config':
         specifier: 'catalog:'
-        version: 0.76.6(@babel/core@7.28.3)(@babel/preset-env@7.26.9(@babel/core@7.28.3))(bufferutil@4.0.9)(utf-8-validate@5.0.10)
+        version: 0.76.6(@babel/core@7.28.3)(@babel/preset-env@7.26.9(@babel/core@7.28.3))
       '@react-native/typescript-config':
         specifier: 'catalog:'
         version: 0.76.6
@@ -1188,7 +1188,7 @@ importers:
         version: 6.19.7
       js-base64:
         specifier: 'catalog:'
-        version: 3.7.7
+        version: 3.7.8
       purify-ts:
         specifier: 'catalog:'
         version: 2.1.0
@@ -7328,8 +7328,8 @@ packages:
   joi@17.13.3:
     resolution: {integrity: sha512-otDA4ldcIx+ZXsKHWmp0YizCweVRZG96J10b0FevjfuncLO1oX59THoAmHkNubYJ+9gWsYsp5k8v4ib6oDv1fA==}
 
-  js-base64@3.7.7:
-    resolution: {integrity: sha512-7rCnleh0z2CkXhH67J8K1Ytz0b2Y+yxTPL+/KOJoa20hfnVQ/3/T6W/KflYI4bRHRagNeXeU2bkNGI3v1oS/lw==}
+  js-base64@3.7.8:
+    resolution: {integrity: sha512-hNngCeKxIUQiEUN3GPJOkz4wF/YvdUdbNL9hsBcMQTkKzboD7T/q3OYOuuPZLUE6dBxSGpwhk5mwuDud7JVAow==}
 
   js-flipper@0.273.0:
     resolution: {integrity: sha512-pu18GxLTTWnrgfSVuQsztTMZ24APWkKvG+70by1UFIl88a6IengSYLorSJDipypReB20jYQ+bj2jIhhP/9bERQ==}
@@ -13130,7 +13130,7 @@ snapshots:
       - '@babel/preset-env'
       - supports-color
 
-  '@react-native/metro-config@0.76.6(@babel/core@7.28.3)(@babel/preset-env@7.26.9(@babel/core@7.28.3))(bufferutil@4.0.9)(utf-8-validate@5.0.10)':
+  '@react-native/metro-config@0.76.6(@babel/core@7.28.3)(@babel/preset-env@7.26.9(@babel/core@7.28.3))':
     dependencies:
       '@react-native/js-polyfills': 0.76.6
       '@react-native/metro-babel-transformer': 0.76.6(@babel/core@7.28.3)(@babel/preset-env@7.26.9(@babel/core@7.28.3))
@@ -13139,9 +13139,7 @@ snapshots:
     transitivePeerDependencies:
       - '@babel/core'
       - '@babel/preset-env'
-      - bufferutil
       - supports-color
-      - utf-8-validate
 
   '@react-native/normalize-colors@0.76.6': {}
 
@@ -17487,7 +17485,7 @@ snapshots:
       '@sideway/formula': 3.0.1
       '@sideway/pinpoint': 2.0.0
 
-  js-base64@3.7.7: {}
+  js-base64@3.7.8: {}
 
   js-flipper@0.273.0: {}
 

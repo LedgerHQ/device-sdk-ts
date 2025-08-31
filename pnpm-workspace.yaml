@@ -78,7 +78,7 @@ catalog:
   hygen: ^6.2.11
   inversify: 7.5.1
   isomorphic-ws: ^5.0.0
-  js-base64: ^3.7.7
+  js-base64: ^3.7.8
   js-flipper: ^0.273.0
   jsdom: ^26.0.0
   next: 14.2.26
