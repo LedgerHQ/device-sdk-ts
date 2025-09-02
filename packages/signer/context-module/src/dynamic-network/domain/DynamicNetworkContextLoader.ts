@@ -1,3 +1,4 @@
+import { DeviceModelId } from "@ledgerhq/device-management-kit";
 import { inject, injectable } from "inversify";
 
 import { configTypes } from "@/config/di/configTypes";
@@ -40,23 +41,25 @@ export class DynamicNetworkContextLoader implements ContextLoader {
     this._certificateLoader = certificateLoader;
   }
 
-  async load(transaction: TransactionContext): Promise<ClearSignContext[]> {
+  async load(ctx: TransactionContext): Promise<ClearSignContext[]> {
+    if (ctx.deviceModelId === DeviceModelId.NANO_S) return [];
+
     const result = await this._networkDataSource.getDynamicNetworkConfiguration(
-      transaction.chainId,
+      ctx.chainId,
     );
 
     // Fetch certificate for the network configuration upfront
     const certificate = await this._certificateLoader.loadCertificate({
       keyId: KeyId.CalNetwork,
       keyUsage: KeyUsage.Network,
-      targetDevice: transaction.deviceModelId,
+      targetDevice: ctx.deviceModelId,
     });
 
     return result.caseOf({
       Left: () => [],
       Right: (configuration) => {
         const contexts: ClearSignContext[] = [];
-        const descriptor = configuration.descriptors[transaction.deviceModelId];
+        const descriptor = configuration.descriptors[ctx.deviceModelId];
 
         if (!descriptor) {
           return [];
