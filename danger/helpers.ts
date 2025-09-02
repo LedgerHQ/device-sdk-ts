@@ -48,7 +48,7 @@ const Branch = (
   regex: isFork
     ? new RegExp(`^(${BRANCH_PREFIX.join("|")})\/.+`, "i")
     : new RegExp(
-        `^(release|chore\/backmerge(-.+){0,}|(${BRANCH_PREFIX.join("|")})\/((dsdk)-[0-9]+|no-issue|NOISSUE|issue-[0-9]+)-.+)`,
+        `^(release|chore\/backmerge(-.+){0,}|(${BRANCH_PREFIX.join("|")})\/((dsdk|live)-[0-9]+|no-issue|NOISSUE|issue-[0-9]+)-.+)`,
         "i"
       ),
 
@@ -86,7 +86,7 @@ Please fix the PR branch name to match the convention, see [CONTRIBUTING.md](htt
 - Rules:
   - Must start with a type (${BRANCH_PREFIX.join(", ")})
   - Followed by a SLASH ("/")
-  - Followed by a JIRA issue number (DSDK-1234) or "no-issue" or "issue-1234" if fixing a Github issue
+  - Followed by a JIRA issue number (DSDK-1234) (LIVE-1234) or "no-issue" or "issue-1234" if fixing a Github issue
   - Followed by a DASH ("-")
   - Followed by a description
 
@@ -187,7 +187,7 @@ const Title = (
 ) => ({
   regex: fork
     ? /^.+ \(([a-z]+\-?){1,}\): [A-Z].*/
-    : /^.+ \(([a-z]+\-?){1,}\) \[(DSDK-[0-9]+|NO-ISSUE|ISSUE-[0-9]+)\]: [A-Z].*/,
+    : /^.+ \(([a-z]+\-?){1,}\) \[(DSDK-[0-9]+|LIVE-[0-9]+|NO-ISSUE|ISSUE-[0-9]+)\]: [A-Z].*/,
 
   fail(wrongTitle: string) {
     if (fork) {
