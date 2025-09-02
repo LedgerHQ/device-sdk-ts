@@ -298,6 +298,49 @@ describe("BuildSubcontextsTask", () => {
           expect(result.subcontextCallbacks).toHaveLength(0);
         });
 
+        it("should create callback with enum id 0", async () => {
+          // GIVEN
+          const context: ClearSignContextSuccess = {
+            type: ClearSignContextType.TOKEN,
+            payload: "test payload",
+            reference: {
+              type: ClearSignContextReferenceType.ENUM,
+              id: 0,
+              valuePath: [{ type: "TUPLE", offset: 0 }],
+            },
+          };
+          const enumContext1: ClearSignContextSuccess = {
+            type: ClearSignContextType.ENUM,
+            id: 0,
+            value: 0,
+            payload: "enum context 1",
+          };
+          const enumContext2: ClearSignContextSuccess = {
+            type: ClearSignContextType.ENUM,
+            id: 1,
+            value: 1,
+            payload: "enum context 2",
+          };
+          const args = {
+            ...defaultArgs,
+            context,
+            contextOptional: [enumContext1, enumContext2],
+          };
+          const extractedValues = [new Uint8Array([0x01, 0x00])];
+          transactionParserMock.extractValue.mockReturnValue(
+            Right(extractedValues),
+          );
+
+          // WHEN
+          const result = new BuildSubcontextsTask(apiMock, args).run();
+
+          // THEN
+          expect(result.subcontextCallbacks).toHaveLength(1);
+          const callback = result.subcontextCallbacks[0]!;
+          const callbackResult = await callback();
+          expect(callbackResult).toEqual(enumContext1);
+        });
+
         it("should skip when no matching enum context found", () => {
           // GIVEN
           const context: ClearSignContextSuccess = {
