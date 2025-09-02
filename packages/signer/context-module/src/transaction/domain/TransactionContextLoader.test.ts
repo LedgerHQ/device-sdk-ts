@@ -175,10 +175,11 @@ describe("TransactionContextLoader", () => {
 
     // THEN
     expect(result).toEqual([
+      /* TODO reenable when proxy is enabled
       {
         type: ClearSignContextType.PROXY_DELEGATE_CALL,
         payload: "0x1234567890abcdef",
-      },
+      },*/
       {
         type: ClearSignContextType.TRANSACTION_INFO,
         payload: "1234567890",
@@ -222,10 +223,11 @@ describe("TransactionContextLoader", () => {
 
     // THEN
     expect(result).toEqual([
+      /* TODO reenable when proxy is enabled
       {
         type: ClearSignContextType.PROXY_DELEGATE_CALL,
         payload: "0x1234567890abcdef",
-      },
+      },*/
       {
         type: ClearSignContextType.TRANSACTION_INFO,
         payload: "1234567890",
@@ -269,10 +271,11 @@ describe("TransactionContextLoader", () => {
 
     // THEN
     expect(result).toEqual([
+      /* TODO reenable when proxy is enabled
       {
         type: ClearSignContextType.PROXY_DELEGATE_CALL,
         payload: "0x1234567890abcdef",
-      },
+      },*/
       {
         type: ClearSignContextType.TRANSACTION_INFO,
         payload: "1234567890",
