@@ -94,7 +94,9 @@ export class BuildSubcontextsTask {
             const reference: ClearSignContextReference<ClearSignContextReferenceType.ENUM> =
               context.reference;
             const enumValue = value[value.length - 1];
-            if (!enumValue) continue;
+            if (enumValue === undefined) {
+              continue;
+            }
 
             const enumsContext = this.args.contextOptional.filter(
               (c) => c.type === ClearSignContextType.ENUM,
