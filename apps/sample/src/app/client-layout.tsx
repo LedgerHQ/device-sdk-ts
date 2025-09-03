@@ -48,6 +48,35 @@ const ClientRootLayout: React.FC<PropsWithChildren> = ({ children }) => {
                   <GlobalStyle />
                   <head>
                     <link rel="shortcut icon" href="../favicon.png" />
+                    {/* Font preloading for better performance */}
+                    <link
+                      rel="preload"
+                      href="/fonts/Inter-Regular.woff2"
+                      as="font"
+                      type="font/woff2"
+                      crossOrigin="anonymous"
+                    />
+                    <link
+                      rel="preload"
+                      href="/fonts/Inter-Medium.woff2"
+                      as="font"
+                      type="font/woff2"
+                      crossOrigin="anonymous"
+                    />
+                    <link
+                      rel="preload"
+                      href="/fonts/Inter-SemiBold.woff2"
+                      as="font"
+                      type="font/woff2"
+                      crossOrigin="anonymous"
+                    />
+                    <link
+                      rel="preload"
+                      href="/fonts/HMAlphaMono-Medium.woff2"
+                      as="font"
+                      type="font/woff2"
+                      crossOrigin="anonymous"
+                    />
                   </head>
                   <body>
                     <Root>
