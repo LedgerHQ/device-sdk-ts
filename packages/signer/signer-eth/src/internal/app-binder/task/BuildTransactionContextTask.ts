@@ -142,8 +142,14 @@ export class BuildTransactionContextTask {
       const proxyContexts = clearSignContextsSuccess.filter(
         (ctx) => ctx.type === ClearSignContextType.PROXY_DELEGATE_CALL,
       );
+      const dynamicNetworkContexts = clearSignContextsSuccess.filter(
+        (ctx) =>
+          ctx.type === ClearSignContextType.DYNAMIC_NETWORK ||
+          ctx.type === ClearSignContextType.DYNAMIC_NETWORK_ICON,
+      );
 
       filteredContexts = [
+        ...dynamicNetworkContexts,
         ...proxyContexts,
         transactionInfo,
         ...transactionFields,

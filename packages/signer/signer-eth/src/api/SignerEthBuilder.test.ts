@@ -34,7 +34,7 @@ describe("SignerEthBuilder", () => {
     expect(signer).toBeInstanceOf(DefaultSignerEth);
     expect(contextModule).toBeDefined();
     // @ts-expect-error - private property
-    expect(contextModule._loaders).toHaveLength(6);
+    expect(contextModule._loaders).toHaveLength(7);
     // @ts-expect-error - private property
     expect(contextModule._typedDataLoader).toBeDefined();
     // @ts-expect-error - private property

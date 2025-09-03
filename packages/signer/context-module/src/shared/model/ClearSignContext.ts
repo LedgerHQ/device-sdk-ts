@@ -13,6 +13,8 @@ export enum ClearSignContextType {
   ENUM = "enum",
   TRANSACTION_FIELD_DESCRIPTION = "transactionFieldDescription",
   WEB3_CHECK = "web3Check",
+  DYNAMIC_NETWORK = "dynamicNetwork",
+  DYNAMIC_NETWORK_ICON = "dynamicNetworkIcon",
   ERROR = "error",
 }
 
