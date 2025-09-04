@@ -100,7 +100,9 @@ export class QuietSpeculosTransport implements Transport {
       this.logger.debug(`App Name: ${appName} and version ${appVersion}`);
 
       this.speculosDevice.deviceModel.productName = `Speculos - ${appName} - ${appVersion}`;
-    } catch {}
+    } catch {
+      //ignore
+    }
 
     try {
       const connectedDevice: TransportConnectedDevice = {
