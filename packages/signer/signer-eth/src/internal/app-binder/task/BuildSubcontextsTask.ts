@@ -38,13 +38,7 @@ export class BuildSubcontextsTask {
   run(): BuildSubcontextsTaskResult {
     const context = this.args.context;
 
-    if (
-      context.type === ClearSignContextType.TRANSACTION_INFO ||
-      context.type === ClearSignContextType.ENUM ||
-      context.type === ClearSignContextType.WEB3_CHECK ||
-      context.type === ClearSignContextType.PLUGIN ||
-      context.type === ClearSignContextType.EXTERNAL_PLUGIN
-    ) {
+    if (context.type !== ClearSignContextType.TRANSACTION_FIELD_DESCRIPTION) {
       return {
         subcontextCallbacks: [],
       };

@@ -86,7 +86,7 @@ describe("BuildSubcontextsTask", () => {
     it("should create a callback to get context with the direct value", async () => {
       // GIVEN
       const context: ClearSignContextSuccess = {
-        type: ClearSignContextType.TOKEN,
+        type: ClearSignContextType.TRANSACTION_FIELD_DESCRIPTION,
         payload: "test payload",
         reference: {
           type: ClearSignContextReferenceType.TOKEN,
@@ -117,7 +117,7 @@ describe("BuildSubcontextsTask", () => {
     it("should handle undefined value in reference", () => {
       // GIVEN
       const context: ClearSignContextSuccess = {
-        type: ClearSignContextType.TOKEN,
+        type: ClearSignContextType.TRANSACTION_FIELD_DESCRIPTION,
         payload: "test payload",
         reference: undefined as unknown as ClearSignContextReference,
       };
@@ -142,7 +142,7 @@ describe("BuildSubcontextsTask", () => {
       it("should return context with empty subcontextCallbacks", () => {
         // GIVEN
         const context: ClearSignContextSuccess = {
-          type: ClearSignContextType.TOKEN,
+          type: ClearSignContextType.TRANSACTION_FIELD_DESCRIPTION,
           payload: "test payload",
           reference: {
             type: ClearSignContextReferenceType.TOKEN,
@@ -167,7 +167,7 @@ describe("BuildSubcontextsTask", () => {
         it("should create callbacks for matching enum contexts", async () => {
           // GIVEN
           const context: ClearSignContextSuccess = {
-            type: ClearSignContextType.TOKEN,
+            type: ClearSignContextType.TRANSACTION_FIELD_DESCRIPTION,
             payload: "test payload",
             reference: {
               type: ClearSignContextReferenceType.ENUM,
@@ -219,7 +219,7 @@ describe("BuildSubcontextsTask", () => {
         it("should create callbacks for matching enum contexts with two values", async () => {
           // GIVEN
           const context: ClearSignContextSuccess = {
-            type: ClearSignContextType.TOKEN,
+            type: ClearSignContextType.TRANSACTION_FIELD_DESCRIPTION,
             payload: "test payload",
             reference: {
               type: ClearSignContextReferenceType.ENUM,
@@ -277,7 +277,7 @@ describe("BuildSubcontextsTask", () => {
         it("should skip when enum value is undefined", () => {
           // GIVEN
           const context: ClearSignContextSuccess = {
-            type: ClearSignContextType.TOKEN,
+            type: ClearSignContextType.TRANSACTION_FIELD_DESCRIPTION,
             payload: "test payload",
             reference: {
               type: ClearSignContextReferenceType.ENUM,
@@ -301,7 +301,7 @@ describe("BuildSubcontextsTask", () => {
         it("should create callback with enum id 0", async () => {
           // GIVEN
           const context: ClearSignContextSuccess = {
-            type: ClearSignContextType.TOKEN,
+            type: ClearSignContextType.TRANSACTION_FIELD_DESCRIPTION,
             payload: "test payload",
             reference: {
               type: ClearSignContextReferenceType.ENUM,
@@ -344,7 +344,7 @@ describe("BuildSubcontextsTask", () => {
         it("should skip when no matching enum context found", () => {
           // GIVEN
           const context: ClearSignContextSuccess = {
-            type: ClearSignContextType.NFT,
+            type: ClearSignContextType.TRANSACTION_FIELD_DESCRIPTION,
             payload: "test payload",
             reference: {
               type: ClearSignContextReferenceType.ENUM,
@@ -380,7 +380,7 @@ describe("BuildSubcontextsTask", () => {
         it("should create callbacks to get token context", async () => {
           // GIVEN
           const context: ClearSignContextSuccess = {
-            type: ClearSignContextType.TOKEN,
+            type: ClearSignContextType.TRANSACTION_FIELD_DESCRIPTION,
             payload: "test payload",
             reference: {
               type: ClearSignContextReferenceType.TOKEN,
@@ -459,7 +459,7 @@ describe("BuildSubcontextsTask", () => {
         it("should create callbacks to get NFT context", async () => {
           // GIVEN
           const context: ClearSignContextSuccess = {
-            type: ClearSignContextType.NFT,
+            type: ClearSignContextType.TRANSACTION_FIELD_DESCRIPTION,
             payload: "test payload",
             reference: {
               type: ClearSignContextReferenceType.NFT,
@@ -538,7 +538,7 @@ describe("BuildSubcontextsTask", () => {
         it("should create callbacks to get trusted name context with challenge", async () => {
           // GIVEN
           const context: ClearSignContextSuccess = {
-            type: ClearSignContextType.TRUSTED_NAME,
+            type: ClearSignContextType.TRANSACTION_FIELD_DESCRIPTION,
             payload: "test payload",
             reference: {
               type: ClearSignContextReferenceType.TRUSTED_NAME,
@@ -589,7 +589,7 @@ describe("BuildSubcontextsTask", () => {
         it("should handle challenge command failure", async () => {
           // GIVEN
           const context: ClearSignContextSuccess = {
-            type: ClearSignContextType.TRUSTED_NAME,
+            type: ClearSignContextType.TRANSACTION_FIELD_DESCRIPTION,
             payload: "test payload",
             reference: {
               type: ClearSignContextReferenceType.TRUSTED_NAME,
@@ -633,7 +633,7 @@ describe("BuildSubcontextsTask", () => {
         it("should create callbacks for each extracted value", async () => {
           // GIVEN
           const context: ClearSignContextSuccess = {
-            type: ClearSignContextType.TOKEN,
+            type: ClearSignContextType.TRANSACTION_FIELD_DESCRIPTION,
             payload: "test payload",
             reference: {
               type: ClearSignContextReferenceType.TOKEN,
@@ -717,7 +717,7 @@ describe("BuildSubcontextsTask", () => {
     it("should return context with empty subcontextCallbacks", () => {
       // GIVEN
       const context: ClearSignContextSuccess = {
-        type: ClearSignContextType.TOKEN,
+        type: ClearSignContextType.TRANSACTION_FIELD_DESCRIPTION,
         payload: "test payload",
         reference: {
           type: ClearSignContextReferenceType.TOKEN,
@@ -738,7 +738,7 @@ describe("BuildSubcontextsTask", () => {
     it("should handle value array shorter than 20 bytes for address extraction", async () => {
       // GIVEN
       const context: ClearSignContextSuccess = {
-        type: ClearSignContextType.TOKEN,
+        type: ClearSignContextType.TRANSACTION_FIELD_DESCRIPTION,
         payload: "test payload",
         reference: {
           type: ClearSignContextReferenceType.TOKEN,
@@ -776,7 +776,7 @@ describe("BuildSubcontextsTask", () => {
     it("should handle empty value array", async () => {
       // GIVEN
       const context: ClearSignContextSuccess = {
-        type: ClearSignContextType.TOKEN,
+        type: ClearSignContextType.TRANSACTION_FIELD_DESCRIPTION,
         payload: "test payload",
         reference: {
           type: ClearSignContextReferenceType.TOKEN,
