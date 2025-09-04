@@ -1,19 +1,18 @@
-import axios from "axios";
-
-import PACKAGE from "@root/package.json";
+import axios, { AxiosError, type AxiosInstance } from "axios";
 
 export class HttpLegacySpeculosDatasource {
-  private readonly client;
+  private readonly client: AxiosInstance;
 
   constructor(
     private readonly baseUrl: string,
-    private readonly timeoutMs = 10000,
+    private readonly timeoutMs: number = 10000,
+    private readonly clientHeader: string = "ldmk-transport-speculos",
   ) {
     this.client = axios.create({
       baseURL: this.baseUrl,
       timeout: this.timeoutMs,
       headers: {
-        "X-Ledger-Client-Version": `ldmk-transport-speculos/${PACKAGE.version}`,
+        "X-Ledger-Client-Version": this.clientHeader,
       },
       transitional: { clarifyTimeoutError: true },
     });
@@ -46,6 +45,7 @@ export class HttpLegacySpeculosDatasource {
         await new Promise((r) => setTimeout(r, 150));
       }
     }
+    if (lastErr instanceof AxiosError) throw lastErr;
     throw lastErr instanceof Error ? lastErr : new Error(String(lastErr));
   }
 }
