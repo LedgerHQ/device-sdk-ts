@@ -22,7 +22,7 @@ import { from, type Observable } from "rxjs";
 
 import { HttpLegacySpeculosDatasource } from "@internal/datasource/HttpLegacySpeculosDatasource";
 
-const speculosIdentifier = "speculos" as TransportIdentifier;
+export const speculosIdentifier = "speculos" as TransportIdentifier;
 
 export class QuietSpeculosTransport implements Transport {
   private logger: LoggerPublisherService;
@@ -89,6 +89,7 @@ export class QuietSpeculosTransport implements Transport {
   }): Promise<Either<ConnectError, TransportConnectedDevice>> {
     this.logger.debug("connect");
 
+    // Probe app name/version via GET_VERSION (B0010000) if possible
     try {
       const hexResponse = await this._speculosDataSource.postAdpu("B0010000");
       this.logger.debug(`Hex Response: ${hexResponse}`);
@@ -101,7 +102,7 @@ export class QuietSpeculosTransport implements Transport {
 
       this.speculosDevice.deviceModel.productName = `Speculos - ${appName} - ${appVersion}`;
     } catch {
-      //ignore
+      // ignore if the app doesn't support GET_VERSION
     }
 
     try {

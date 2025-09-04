@@ -107,12 +107,11 @@ export class HttpLegacySpeculosDatasource {
         Accept: "text/event-stream",
         "Cache-Control": "no-cache",
         Connection: "keep-alive",
-        "Accept-Encoding": "identity", // avoid gzip buffering that delays 'data' events
+        "Accept-Encoding": "identity", // avoid gzip buffering
       },
     });
-    const data = response.data as NodeJS.ReadableStream;
+    const stream = response.data as NodeJS.ReadableStream;
 
-    const stream = data;
     stream.on("data", (chunk: Buffer) => {
       const txt = chunk.toString("utf8");
       txt.split("\n").forEach((line) => {
@@ -126,6 +125,7 @@ export class HttpLegacySpeculosDatasource {
         }
       });
     });
+
     const end = () => onClose?.();
     stream.on("close", end);
     stream.on("end", end);
@@ -134,7 +134,6 @@ export class HttpLegacySpeculosDatasource {
     return stream;
   }
 
-  // optional convenience getter
   get base(): string {
     return this.baseUrl;
   }
