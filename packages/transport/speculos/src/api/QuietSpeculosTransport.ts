@@ -22,7 +22,7 @@ import { from, type Observable } from "rxjs";
 
 import { HttpLegacySpeculosDatasource } from "@internal/datasource/HttpLegacySpeculosDatasource";
 
-import { speculosIdentifier } from "./SpeculosTransport";
+const speculosIdentifier = "speculos" as TransportIdentifier;
 
 export class QuietSpeculosTransport implements Transport {
   private logger: LoggerPublisherService;
@@ -30,7 +30,6 @@ export class QuietSpeculosTransport implements Transport {
   private readonly _speculosDataSource: HttpLegacySpeculosDatasource;
 
   private connectedDevice: TransportConnectedDevice | null = null;
-  private disconnectInterval: NodeJS.Timeout | null = null;
 
   private readonly speculosDevice: TransportDiscoveredDevice = {
     id: "SpeculosID",
@@ -101,9 +100,7 @@ export class QuietSpeculosTransport implements Transport {
       this.logger.debug(`App Name: ${appName} and version ${appVersion}`);
 
       this.speculosDevice.deviceModel.productName = `Speculos - ${appName} - ${appVersion}`;
-    } catch {
-      // ignore
-    }
+    } catch {}
 
     try {
       const connectedDevice: TransportConnectedDevice = {
@@ -127,7 +124,6 @@ export class QuietSpeculosTransport implements Transport {
   }): Promise<Either<DmkError, void>> {
     this.logger.debug("disconnect");
     this.connectedDevice = null;
-    if (this.disconnectInterval) clearInterval(this.disconnectInterval);
     return Promise.resolve(Right(undefined));
   }
 
@@ -164,7 +160,7 @@ export class QuietSpeculosTransport implements Transport {
   }
 
   private fromHexString(hexString: string): Uint8Array {
-    if (!hexString) return Uint8Array.from([]);
+    if (!hexString) return new Uint8Array(0);
     return new Uint8Array(
       hexString.match(/.{1,2}/g)!.map((b) => parseInt(b, 16)),
     );
