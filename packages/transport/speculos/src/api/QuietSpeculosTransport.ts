@@ -32,11 +32,16 @@ export class QuietSpeculosTransport implements Transport {
   private connectedDevice: TransportConnectedDevice | null = null;
   private disconnectInterval: NodeJS.Timeout | null = null;
 
+  private cachedB001?: string;
+  private isB001(hex: string) {
+    return hex.length >= 4 && hex.toUpperCase().startsWith("B001");
+  }
+
   private readonly speculosDevice: TransportDiscoveredDevice = {
     id: "SpeculosID",
     deviceModel: {
       id: DeviceModelId.STAX,
-      productName: "Speculos - App Name - version",
+      productName: "Speculos (DMK quiet)",
       usbProductId: 0x10,
       bootloaderUsbProductId: 0x0001,
       getBlockSize() {
@@ -90,17 +95,7 @@ export class QuietSpeculosTransport implements Transport {
   }): Promise<Either<ConnectError, TransportConnectedDevice>> {
     this.logger.debug("connect");
 
-    const hexResponse = await this._speculosDataSource.postAdpu("B0010000");
-    this.logger.debug(`Hex Response: ${hexResponse}`);
-
-    const apduResponse = this.createApduResponse(hexResponse);
-    const parser = new ApduParser(apduResponse);
-
-    parser.extract8BitUInt();
-    const appName = parser.encodeToString(parser.extractFieldLVEncoded());
-    const appVersion = parser.encodeToString(parser.extractFieldLVEncoded());
-
-    this.logger.debug(`App Name: ${appName} and version ${appVersion}`);
+    this.cachedB001 = undefined;
 
     const sessionId: string = params.deviceId;
     try {
@@ -109,7 +104,7 @@ export class QuietSpeculosTransport implements Transport {
           this.sendApdu(sessionId, params.deviceId, params.onDisconnect, apdu),
         deviceModel: {
           ...this.speculosDevice.deviceModel,
-          productName: `Speculos - ${appName} - ${appVersion}`,
+          productName: this.speculosDevice.deviceModel.productName,
           getBlockSize() {
             return 32;
           },
@@ -120,10 +115,9 @@ export class QuietSpeculosTransport implements Transport {
       };
 
       this.connectedDevice = connectedDevice;
-
-      return Right(connectedDevice);
+      return Promise.resolve(Right(connectedDevice));
     } catch (error) {
-      return Left(new OpeningConnectionError(error as Error));
+      return Promise.resolve(Left(new OpeningConnectionError(error as Error)));
     }
   }
 
@@ -133,28 +127,44 @@ export class QuietSpeculosTransport implements Transport {
     this.logger.debug("disconnect");
     this.connectedDevice = null;
     if (this.disconnectInterval) clearInterval(this.disconnectInterval);
+    this.cachedB001 = undefined;
     return Promise.resolve(Right(undefined));
   }
 
   async sendApdu(
-    _sessionId: string,
+    _sid: string,
     deviceId: DeviceId,
     onDisconnect: DisconnectHandler,
     apdu: Uint8Array,
-  ): Promise<Either<DmkError, ApduResponse>> {
+  ) {
     try {
       const hex = bufferToHexaString(apdu).substring(2).toUpperCase();
+
+      // Swallow duplicate B001s (only return the first real response)
+      if (this.isB001(hex)) {
+        if (!this.cachedB001) {
+          this.logger.debug(
+            "[QuietSpeculosTransport] send APDU (first B001): B0010000",
+          );
+          this.cachedB001 = await this._speculosDataSource.postAdpu("B0010000");
+        } else {
+          this.logger.debug(
+            "[QuietSpeculosTransport] respond with cached B001",
+          );
+        }
+        return Right(this.createApduResponse(this.cachedB001));
+      }
+
       this.logger.debug(`[QuietSpeculosTransport] send APDU: ${hex}`);
       const hexResponse = await this._speculosDataSource.postAdpu(hex);
-      const resp = this.createApduResponse(hexResponse);
-      return Right(resp);
-    } catch (error) {
+      return Right(this.createApduResponse(hexResponse));
+    } catch (e) {
       if (this.connectedDevice) {
         this.logger.debug("disconnecting due to APDU error");
         onDisconnect(deviceId);
         await this.disconnect({ connectedDevice: this.connectedDevice });
       }
-      return Left(new GeneralDmkError(error as Error));
+      return Left(new GeneralDmkError(e as Error));
     }
   }
 
