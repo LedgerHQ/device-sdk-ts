@@ -22,7 +22,7 @@ import { from, type Observable } from "rxjs";
 
 import { HttpLegacySpeculosDatasource } from "@internal/datasource/HttpLegacySpeculosDatasource";
 
-export const speculosIdentifier = "speculos" as TransportIdentifier;
+import { speculosIdentifier } from "./SpeculosTransport";
 
 export class QuietSpeculosTransport implements Transport {
   private logger: LoggerPublisherService;
