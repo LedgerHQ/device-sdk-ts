@@ -63,7 +63,9 @@ export class ParseNestedTransactionTask {
     for (let i = 0; i < extractedValues.length; i++) {
       const data = extractedValues[i];
       const chainId = extractedChainId[i];
-      const to = extractedTo[i]?.slice(Math.max(0, extractedTo[i]!.length - 20));
+      const to = extractedTo[i]?.slice(
+        Math.max(0, extractedTo[i]!.length - 20),
+      );
       const selector = extractedSelectors[i];
 
       const nestedSubset: TransactionSubset = {
