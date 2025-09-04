@@ -1,5 +1,4 @@
 import {
-  ApduParser,
   type ApduResponse,
   bufferToHexaString,
   type ConnectError,
