@@ -40,7 +40,7 @@ export class HttpLegacySpeculosDatasource {
   constructor(
     private readonly baseUrl: string,
     private readonly timeoutMs: number = 10000,
-    private readonly clientHeader: string = "ldmk-transport-speculos",
+    clientHeader: string = "ldmk-transport-speculos",
   ) {
     this.client = getSharedAxios(baseUrl, timeoutMs, clientHeader);
   }
@@ -95,12 +95,11 @@ export class HttpLegacySpeculosDatasource {
     );
   }
 
-  // --- SSE events (new helper; parses server-sent events) ---
   async openEventStream(
     onEvent: (json: Record<string, unknown>) => void,
     onClose?: () => void,
   ): Promise<NodeJS.ReadableStream> {
-    const { data } = await this.client.get("/events", {
+    const response = await this.client.get("/events", {
       params: { stream: "true" },
       responseType: "stream",
       timeout: 0, // keep SSE alive
@@ -111,8 +110,9 @@ export class HttpLegacySpeculosDatasource {
         "Accept-Encoding": "identity", // avoid gzip buffering that delays 'data' events
       },
     });
+    const data = response.data as NodeJS.ReadableStream;
 
-    const stream = data as NodeJS.ReadableStream;
+    const stream = data;
     stream.on("data", (chunk: Buffer) => {
       const txt = chunk.toString("utf8");
       txt.split("\n").forEach((line) => {
