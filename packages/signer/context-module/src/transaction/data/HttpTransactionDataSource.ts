@@ -372,8 +372,7 @@ export class HttpTransactionDataSource implements TransactionDataSource {
           data.param.sources.every((t) => typeof t === "string")) ||
         (data.param.type === "CALLDATA" &&
           this.isDescriptorValueV1(data.param.value) &&
-          (data.param.callee === undefined ||
-            this.isDescriptorValueV1(data.param.callee)) &&
+          this.isDescriptorValueV1(data.param.callee) &&
           (data.param.selector === undefined ||
             this.isDescriptorValueV1(data.param.selector)) &&
           (data.param.amount === undefined ||

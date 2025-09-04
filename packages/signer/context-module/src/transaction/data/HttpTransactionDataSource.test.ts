@@ -1116,6 +1116,24 @@ describe("HttpTransactionDataSource", () => {
           type_family: "BYTES",
           type_size: 32,
         },
+        callee: {
+          type: "path",
+          binary_path: {
+            type: "DATA",
+            elements: [
+              {
+                type: "TUPLE",
+                offset: 0,
+              },
+              {
+                type: "LEAF",
+                leaf_type: "STATIC_LEAF",
+              },
+            ],
+          },
+          type_family: "BYTES",
+          type_size: 32,
+        },
         type: "CALLDATA",
       },
       descriptor:
@@ -1161,10 +1179,20 @@ describe("HttpTransactionDataSource", () => {
               leafType: "STATIC_LEAF",
             },
           ],
-          callee: undefined,
+          callee: [
+            {
+              type: "TUPLE",
+              offset: 0,
+            },
+            {
+              type: "LEAF",
+              leafType: "STATIC_LEAF",
+            },
+          ],
           selector: undefined,
           amount: undefined,
           spender: undefined,
+          chainId: undefined,
         },
       },
     ]);
