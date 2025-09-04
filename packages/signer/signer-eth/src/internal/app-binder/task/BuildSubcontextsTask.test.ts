@@ -734,6 +734,104 @@ describe("BuildSubcontextsTask", () => {
     });
   });
 
+  describe("error handling", () => {
+    it("should throw error for uncovered context type", () => {
+      // GIVEN
+      const context = {
+        type: "UNKNOWN_TYPE" as ClearSignContextSuccess["type"],
+        payload: "test payload",
+      } as ClearSignContextSuccess;
+      const args = { ...defaultArgs, context };
+
+      // WHEN / THEN
+      expect(() => new BuildSubcontextsTask(apiMock, args).run()).toThrow(
+        "Uncovered type: UNKNOWN_TYPE",
+      );
+    });
+
+    it("should throw error for uncovered reference type", () => {
+      // GIVEN
+      const context: ClearSignContextSuccess = {
+        type: ClearSignContextType.TRANSACTION_FIELD_DESCRIPTION,
+        payload: "test payload",
+        reference: {
+          type: "UNKNOWN_REFERENCE_TYPE" as ClearSignContextReference["type"],
+        } as ClearSignContextReference,
+      };
+      const args = { ...defaultArgs, context };
+
+      // WHEN / THEN
+      expect(() => new BuildSubcontextsTask(apiMock, args).run()).toThrow(
+        "Uncovered reference type: UNKNOWN_REFERENCE_TYPE",
+      );
+    });
+  });
+
+  describe("CALLDATA reference type", () => {
+    it("should return empty subcontextCallbacks for CALLDATA reference", () => {
+      // GIVEN
+      const context: ClearSignContextSuccess = {
+        type: ClearSignContextType.TRANSACTION_FIELD_DESCRIPTION,
+        payload: "test payload",
+        reference: {
+          type: ClearSignContextReferenceType.CALLDATA,
+          callee: [{ type: "TUPLE", offset: 0 }],
+          valuePath: [{ type: "TUPLE", offset: 0 }],
+        },
+      };
+      const args = { ...defaultArgs, context };
+
+      // WHEN
+      const result = new BuildSubcontextsTask(apiMock, args).run();
+
+      // THEN
+      expect(result.subcontextCallbacks).toHaveLength(0);
+    });
+  });
+
+  describe("references without valuePath", () => {
+    it("should return empty subcontextCallbacks for ENUM reference without valuePath", () => {
+      // GIVEN
+      const context: ClearSignContextSuccess = {
+        type: ClearSignContextType.TRANSACTION_FIELD_DESCRIPTION,
+        payload: "test payload",
+        reference: {
+          type: ClearSignContextReferenceType.ENUM,
+          id: 1,
+          valuePath: undefined as unknown as GenericPath,
+        },
+      };
+      const args = { ...defaultArgs, context };
+
+      // WHEN
+      const result = new BuildSubcontextsTask(apiMock, args).run();
+
+      // THEN
+      expect(result.subcontextCallbacks).toHaveLength(0);
+    });
+
+    it("should return empty subcontextCallbacks for TRUSTED_NAME reference without valuePath", () => {
+      // GIVEN
+      const context: ClearSignContextSuccess = {
+        type: ClearSignContextType.TRANSACTION_FIELD_DESCRIPTION,
+        payload: "test payload",
+        reference: {
+          type: ClearSignContextReferenceType.TRUSTED_NAME,
+          types: ["type1"],
+          sources: ["source1"],
+          valuePath: undefined as unknown as GenericPath,
+        },
+      };
+      const args = { ...defaultArgs, context };
+
+      // WHEN
+      const result = new BuildSubcontextsTask(apiMock, args).run();
+
+      // THEN
+      expect(result.subcontextCallbacks).toHaveLength(0);
+    });
+  });
+
   describe("edge cases", () => {
     it("should handle value array shorter than 20 bytes for address extraction", async () => {
       // GIVEN
