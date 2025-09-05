@@ -1,85 +1,82 @@
-import axios, { AxiosError, type AxiosInstance } from "axios";
+import axios, { type AxiosInstance } from "axios";
 import http from "http";
 import https from "https";
 
 type SpeculosApduDTO = { data: string };
 
-const _sharedClients = new Map<string, AxiosInstance>();
-
-function getSharedAxios(
+function makeNoKeepAliveAxios(
   baseUrl: string,
   timeoutMs: number,
   clientHeader: string,
 ): AxiosInstance {
-  const key = `${baseUrl}::${clientHeader}`;
-  const existing = _sharedClients.get(key);
-  if (existing) return existing;
-
-  const httpAgent = new http.Agent({
-    keepAlive: true,
-    maxSockets: 2,
-    maxFreeSockets: 1,
-  });
-  const httpsAgent = new https.Agent({
-    keepAlive: true,
-    maxSockets: 2,
-    maxFreeSockets: 1,
-  });
-
-  const inst = axios.create({
-    baseURL: baseUrl,
+  return axios.create({
+    baseURL: baseUrl.replace(/\/+$/, ""),
     timeout: timeoutMs,
     proxy: false,
-    headers: { "X-Ledger-Client-Version": clientHeader },
-    httpAgent,
-    httpsAgent,
+    headers: {
+      "X-Ledger-Client-Version": clientHeader,
+      Connection: "close",
+    },
+    httpAgent: new http.Agent({ keepAlive: false, maxSockets: Infinity }),
+    httpsAgent: new https.Agent({ keepAlive: false, maxSockets: Infinity }),
     transitional: { clarifyTimeoutError: true },
   });
+}
 
-  _sharedClients.set(key, inst);
-  return inst;
+function makeKeepAliveAxiosForSSE(
+  baseUrl: string,
+  clientHeader: string,
+): AxiosInstance {
+  return axios.create({
+    baseURL: baseUrl.replace(/\/+$/, ""),
+    timeout: 0, // long-lived
+    proxy: false,
+    headers: {
+      "X-Ledger-Client-Version": clientHeader,
+
+      Connection: "keep-alive",
+    },
+    httpAgent: new http.Agent({
+      keepAlive: true,
+      maxSockets: 1,
+      maxFreeSockets: 1,
+    }),
+    httpsAgent: new https.Agent({
+      keepAlive: true,
+      maxSockets: 1,
+      maxFreeSockets: 1,
+    }),
+    transitional: { clarifyTimeoutError: true },
+  });
 }
 
 export class HttpLegacySpeculosDatasource {
-  private readonly client: AxiosInstance;
+  private readonly apduClient: AxiosInstance;
+  private readonly buttonClient: AxiosInstance;
+  private readonly sseClient: AxiosInstance;
 
   constructor(
     private readonly baseUrl: string,
     private readonly timeoutMs: number = 10000,
     clientHeader: string = "ldmk-transport-speculos",
   ) {
-    this.client = getSharedAxios(baseUrl, timeoutMs, clientHeader);
-  }
+    this.apduClient = makeNoKeepAliveAxios(baseUrl, timeoutMs, clientHeader);
+    this.buttonClient = makeNoKeepAliveAxios(
+      baseUrl,
+      Math.min(timeoutMs, 2000),
+      clientHeader,
+    );
 
-  private async postOnce(apdu: string, ms: number): Promise<string> {
-    const ac = new AbortController();
-    const killer = setTimeout(() => ac.abort(), ms);
-    try {
-      const { data } = await this.client.post<SpeculosApduDTO>(
-        "/apdu",
-        { data: apdu },
-        { timeout: ms, signal: ac.signal },
-      );
-      return data.data;
-    } finally {
-      clearTimeout(killer);
-    }
+    this.sseClient = makeKeepAliveAxiosForSSE(baseUrl, clientHeader);
   }
 
   async postAdpu(apdu: string): Promise<string> {
-    const perTryMs = Math.min(1500, this.timeoutMs);
-    const tries = Math.max(1, Math.floor(this.timeoutMs / perTryMs));
-    let lastErr: unknown;
-    for (let i = 0; i < tries; i++) {
-      try {
-        return await this.postOnce(apdu, perTryMs);
-      } catch (e) {
-        lastErr = e;
-        await new Promise((r) => setTimeout(r, 150));
-      }
-    }
-    if (lastErr instanceof AxiosError) throw lastErr;
-    throw lastErr instanceof Error ? lastErr : new Error(String(lastErr));
+    const { data } = await this.apduClient.post<SpeculosApduDTO>(
+      "/apdu",
+      { data: apdu },
+      { timeout: this.timeoutMs },
+    );
+    return data.data;
   }
 
   async pressButton(
@@ -94,10 +91,10 @@ export class HttpLegacySpeculosDatasource {
       both: "both",
     };
     const input = map[but] ?? "right";
-    await this.client.post(
+    await this.buttonClient.post(
       `/button/${input}`,
       { action: "press-and-release" },
-      { timeout: 1500 },
+      { timeout: Math.min(this.timeoutMs, 1500) },
     );
   }
 
@@ -105,7 +102,7 @@ export class HttpLegacySpeculosDatasource {
     onEvent: (json: Record<string, unknown>) => void,
     onClose?: () => void,
   ): Promise<NodeJS.ReadableStream> {
-    const response = await this.client.get("/events", {
+    const response = await this.sseClient.get("/events", {
       params: { stream: "true" },
       responseType: "stream",
       timeout: 0, // keep SSE alive
@@ -113,9 +110,10 @@ export class HttpLegacySpeculosDatasource {
         Accept: "text/event-stream",
         "Cache-Control": "no-cache",
         Connection: "keep-alive",
-        "Accept-Encoding": "identity", // avoid gzip buffering
+        "Accept-Encoding": "identity",
       },
     });
+
     const stream = response.data as NodeJS.ReadableStream;
 
     stream.on("data", (chunk: Buffer) => {
