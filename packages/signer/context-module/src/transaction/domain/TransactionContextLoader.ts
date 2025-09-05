@@ -1,11 +1,6 @@
 import { DeviceModelId, isHexaString } from "@ledgerhq/device-management-kit";
 import { inject, injectable } from "inversify";
 
-import { pkiTypes } from "@/pki/di/pkiTypes";
-import type { PkiCertificateLoader } from "@/pki/domain/PkiCertificateLoader";
-import { KeyId } from "@/pki/model/KeyId";
-import { KeyUsage } from "@/pki/model/KeyUsage";
-import { PkiCertificate } from "@/pki/model/PkiCertificate";
 import type { ProxyDataSource } from "@/proxy/data/HttpProxyDataSource";
 import { proxyTypes } from "@/proxy/di/proxyTypes";
 import { ProxyDelegateCall } from "@/proxy/model/ProxyDelegateCall";
@@ -25,8 +20,6 @@ export class TransactionContextLoader implements ContextLoader {
     private transactionDataSource: TransactionDataSource,
     @inject(proxyTypes.ProxyDataSource)
     private proxyDataSource: ProxyDataSource,
-    @inject(pkiTypes.PkiCertificateLoader)
-    private certificateLoader: PkiCertificateLoader,
   ) {}
 
   async load(ctx: TransactionContext): Promise<ClearSignContext[]> {
@@ -34,7 +27,7 @@ export class TransactionContextLoader implements ContextLoader {
       return [];
     }
 
-    const { to, data, selector, chainId, deviceModelId, challenge } = ctx;
+    const { to, data, selector, chainId, deviceModelId } = ctx;
     if (to === undefined || data === "0x") {
       return [];
     }
@@ -52,7 +45,7 @@ export class TransactionContextLoader implements ContextLoader {
       calldata: data,
       proxyAddress: to,
       chainId,
-      challenge: challenge || "",
+      challenge: "",
     });
 
     // get the resolved address from the list of delegate addresses
@@ -76,22 +69,14 @@ export class TransactionContextLoader implements ContextLoader {
       },
     });
 
-    let certificate: PkiCertificate | undefined = undefined;
-    if (proxyDelegateCallDescriptor) {
-      certificate = await this.certificateLoader.loadCertificate({
-        keyId: KeyId.CalCalldataKey,
-        keyUsage: KeyUsage.Calldata,
-        targetDevice: ctx.deviceModelId,
-      });
-    }
-
     const proxyDelegateCallContext: ClearSignContext[] =
       proxyDelegateCallDescriptor
         ? [
             {
               type: ClearSignContextType.PROXY_DELEGATE_CALL,
-              payload: proxyDelegateCallDescriptor,
-              certificate: certificate,
+              // This payload is not used as the clear sign context is not used, only the subcontext that will be
+              // fetched during the provide, with a correct challenge
+              payload: "0x",
             },
           ]
         : [];
