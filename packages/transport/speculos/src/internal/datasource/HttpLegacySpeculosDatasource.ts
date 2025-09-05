@@ -15,16 +15,22 @@ function getSharedAxios(
   const existing = _sharedClients.get(key);
   if (existing) return existing;
 
-  const httpAgent = new http.Agent({ keepAlive: true, maxSockets: 8 });
-  const httpsAgent = new https.Agent({ keepAlive: true, maxSockets: 8 });
+  const httpAgent = new http.Agent({
+    keepAlive: true,
+    maxSockets: 2,
+    maxFreeSockets: 1,
+  });
+  const httpsAgent = new https.Agent({
+    keepAlive: true,
+    maxSockets: 2,
+    maxFreeSockets: 1,
+  });
 
   const inst = axios.create({
     baseURL: baseUrl,
     timeout: timeoutMs,
     proxy: false,
-    headers: {
-      "X-Ledger-Client-Version": clientHeader,
-    },
+    headers: { "X-Ledger-Client-Version": clientHeader },
     httpAgent,
     httpsAgent,
     transitional: { clarifyTimeoutError: true },
