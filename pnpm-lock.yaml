@@ -55,8 +55,8 @@ catalogs:
       specifier: 0.81.0
       version: 0.81.0
     '@react-native/codegen':
-      specifier: ^0.76.6
-      version: 0.76.6
+      specifier: ^0.81.1
+      version: 0.81.1
     '@react-native/gradle-plugin':
       specifier: ^0.76.6
       version: 0.76.6
@@ -552,7 +552,7 @@ importers:
         version: 0.81.0(@babel/core@7.28.3)
       '@react-native/codegen':
         specifier: 'catalog:'
-        version: 0.76.6(@babel/preset-env@7.26.9(@babel/core@7.28.3))
+        version: 0.81.1(@babel/core@7.28.3)
       '@react-native/gradle-plugin':
         specifier: 'catalog:'
         version: 0.76.6
@@ -3738,6 +3738,12 @@ packages:
 
   '@react-native/codegen@0.81.0':
     resolution: {integrity: sha512-gPFutgtj8YqbwKKt3YpZKamUBGd9YZJV51Jq2aiDZ9oThkg1frUBa20E+Jdi7jKn982wjBMxAklAR85QGQ4xMA==}
+    engines: {node: '>= 20.19.4'}
+    peerDependencies:
+      '@babel/core': '*'
+
+  '@react-native/codegen@0.81.1':
+    resolution: {integrity: sha512-8KoUE1j65fF1PPHlAhSeUHmcyqpE+Z7Qv27A89vSZkz3s8eqWSRu2hZtCl0D3nSgS0WW0fyrIsFaRFj7azIiPw==}
     engines: {node: '>= 20.19.4'}
     peerDependencies:
       '@babel/core': '*'
@@ -13056,6 +13062,16 @@ snapshots:
   '@react-native/codegen@0.81.0(@babel/core@7.28.3)':
     dependencies:
       '@babel/core': 7.28.3
+      glob: 7.2.3
+      hermes-parser: 0.29.1
+      invariant: 2.2.4
+      nullthrows: 1.1.1
+      yargs: 17.7.2
+
+  '@react-native/codegen@0.81.1(@babel/core@7.28.3)':
+    dependencies:
+      '@babel/core': 7.28.3
+      '@babel/parser': 7.28.3
       glob: 7.2.3
       hermes-parser: 0.29.1
       invariant: 2.2.4
