@@ -4,7 +4,10 @@ import {
   type ContextModule,
   type TransactionSubset,
 } from "@ledgerhq/context-module";
-import { type InternalApi } from "@ledgerhq/device-management-kit";
+import {
+  DeviceModelId,
+  type InternalApi,
+} from "@ledgerhq/device-management-kit";
 
 import { type GetConfigCommandResponse } from "@api/app-binder/GetConfigCommandTypes";
 import { type TransactionOptions } from "@api/index";
@@ -83,6 +86,7 @@ describe("BuildFullContextsTask", () => {
         appConfig: defaultAppConfig,
         derivationPath: defaultDerivationPath,
         subset: defaultSubset,
+        deviceModelId: DeviceModelId.STAX,
       });
 
       expect(task).toBeDefined();
@@ -129,6 +133,7 @@ describe("BuildFullContextsTask", () => {
           appConfig: defaultAppConfig,
           derivationPath: defaultDerivationPath,
           subset: defaultSubset,
+          deviceModelId: DeviceModelId.STAX,
         },
         buildSubcontextsTaskFactory,
         buildBaseContextsTaskFactory,
@@ -178,6 +183,7 @@ describe("BuildFullContextsTask", () => {
           appConfig: defaultAppConfig,
           derivationPath: defaultDerivationPath,
           subset: defaultSubset,
+          deviceModelId: DeviceModelId.STAX,
         },
         buildSubcontextsTaskFactory,
         buildBaseContextsTaskFactory,
@@ -260,6 +266,7 @@ describe("BuildFullContextsTask", () => {
           appConfig: defaultAppConfig,
           derivationPath: defaultDerivationPath,
           subset: defaultSubset,
+          deviceModelId: DeviceModelId.STAX,
         },
         buildSubcontextsTaskFactory,
         buildBaseContextsTaskFactory,
@@ -284,13 +291,13 @@ describe("BuildFullContextsTask", () => {
         },
         subcontextCallbacks: [expect.any(Function), expect.any(Function)],
       });
-      expect(
+      await expect(
         result.clearSignContexts[1]!.subcontextCallbacks[0]!(),
       ).resolves.toEqual({
         type: ClearSignContextType.TOKEN,
         payload: "payload-3",
       });
-      expect(
+      await expect(
         result.clearSignContexts[1]!.subcontextCallbacks[1]!(),
       ).resolves.toEqual({
         type: ClearSignContextType.TOKEN,
@@ -359,6 +366,7 @@ describe("BuildFullContextsTask", () => {
           appConfig: defaultAppConfig,
           derivationPath: defaultDerivationPath,
           subset: defaultSubset,
+          deviceModelId: DeviceModelId.STAX,
         },
         buildSubcontextsTaskFactory,
         buildBaseContextsTaskFactory,

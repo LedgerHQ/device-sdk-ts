@@ -4,12 +4,12 @@ import { Either, Left, Right } from "purify-ts";
 
 import { configTypes } from "@/config/di/configTypes";
 import { type ContextModuleConfig } from "@/config/model/ContextModuleConfig";
+import { type ProxyDelegateCall } from "@/proxy/model/ProxyDelegateCall";
+import { type ProxyImplementationAddress } from "@/proxy/model/ProxyImplementationAddress";
 import {
   LEDGER_CLIENT_VERSION_HEADER,
   LEDGER_ORIGIN_TOKEN_HEADER,
 } from "@/shared/constant/HttpHeaders";
-import { type ProxyDelegateCall } from "@/transaction/model/ProxyDelegateCall";
-import { type ProxyImplementationAddress } from "@/transaction/model/ProxyImplementationAddress";
 import PACKAGE from "@root/package.json";
 
 import { type ProxyDelegateCallDto } from "./dto/ProxyDelegateCallDto";

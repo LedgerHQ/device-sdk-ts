@@ -8,8 +8,10 @@ import {
   type TransactionFieldContext,
   type TransactionSubset,
 } from "@ledgerhq/context-module";
+import { ContextFieldLoaderKind } from "@ledgerhq/context-module/src/shared/domain/ContextFieldLoader.js";
 import {
   bufferToHexaString,
+  type DeviceModelId,
   type InternalApi,
   isSuccessCommandResult,
 } from "@ledgerhq/device-management-kit";
@@ -22,6 +24,7 @@ export type BuildSubcontextsTaskArgs = {
   readonly contextOptional: ClearSignContextSuccess[];
   readonly transactionParser: TransactionParserService;
   readonly subset: TransactionSubset;
+  readonly deviceModelId: DeviceModelId;
   readonly contextModule: ContextModule;
 };
 
@@ -46,7 +49,6 @@ export class BuildSubcontextsTask {
       case ClearSignContextType.WEB3_CHECK:
       case ClearSignContextType.PLUGIN:
       case ClearSignContextType.EXTERNAL_PLUGIN:
-      case ClearSignContextType.PROXY_DELEGATE_CALL:
       case ClearSignContextType.DYNAMIC_NETWORK:
       case ClearSignContextType.DYNAMIC_NETWORK_ICON:
       case ClearSignContextType.ENUM:
@@ -62,7 +64,10 @@ export class BuildSubcontextsTask {
             ? this._getSubcontextsFromReference(context.reference)
             : [],
         };
-
+      case ClearSignContextType.PROXY_DELEGATE_CALL:
+        return {
+          subcontextCallbacks: this._getSubcontextFromProxy(context),
+        };
       default: {
         const uncoveredType: never = type;
         throw new Error(`Uncovered type: ${uncoveredType}`);
@@ -84,6 +89,7 @@ export class BuildSubcontextsTask {
       case ClearSignContextReferenceType.TRUSTED_NAME:
         return this._getSubcontextsFromTrustedNameReference(reference);
       case ClearSignContextReferenceType.CALLDATA:
+        // calldata reference is handled by the BuildFullContextsTask and ParseNestedTransactionTask
         return [];
       default: {
         const uncoveredReferenceType: never = referenceType;
@@ -102,16 +108,16 @@ export class BuildSubcontextsTask {
     // as it is already provided in the reference
     if (reference.value !== undefined) {
       const transactionFieldContext: TransactionFieldContext = {
-        type:
+        kind:
           reference.type === ClearSignContextReferenceType.TOKEN
-            ? ClearSignContextType.TOKEN
-            : ClearSignContextType.NFT,
+            ? ContextFieldLoaderKind.TOKEN
+            : ContextFieldLoaderKind.NFT,
         chainId: this.args.subset.chainId,
         address: reference.value,
       };
 
       return [
-        () => this.args.contextModule.getContext(transactionFieldContext),
+        () => this.args.contextModule.getFieldContext(transactionFieldContext),
       ];
     }
 
@@ -130,11 +136,11 @@ export class BuildSubcontextsTask {
         );
 
         subcontextCallbacks.push(() =>
-          this.args.contextModule.getContext({
-            type:
+          this.args.contextModule.getFieldContext({
+            kind:
               reference.type === ClearSignContextReferenceType.TOKEN
-                ? ClearSignContextType.TOKEN
-                : ClearSignContextType.NFT,
+                ? ContextFieldLoaderKind.TOKEN
+                : ContextFieldLoaderKind.NFT,
             chainId: this.args.subset.chainId,
             address,
           }),
@@ -204,15 +210,14 @@ export class BuildSubcontextsTask {
             new GetChallengeCommand(),
           );
           if (!isSuccessCommandResult(getChallengeResult)) {
-            // TODO: we need to return an error here
             return {
               type: ClearSignContextType.ERROR,
               error: new Error("Failed to get challenge"),
             };
           }
 
-          const subcontext = await this.args.contextModule.getContext({
-            type: ClearSignContextType.TRUSTED_NAME,
+          const subcontext = await this.args.contextModule.getFieldContext({
+            kind: ContextFieldLoaderKind.TRUSTED_NAME,
             chainId: this.args.subset.chainId,
             address,
             challenge: getChallengeResult.data.challenge,
@@ -226,5 +231,41 @@ export class BuildSubcontextsTask {
     }
 
     return subcontextCallbacks;
+  }
+
+  private _getSubcontextFromProxy(
+    _context: ClearSignContextSuccess<ClearSignContextType.PROXY_DELEGATE_CALL>,
+  ): SubcontextCallback[] {
+    return [
+      async () => {
+        const getChallengeResult = await this.api.sendCommand(
+          new GetChallengeCommand(),
+        );
+        if (!isSuccessCommandResult(getChallengeResult)) {
+          return {
+            type: ClearSignContextType.ERROR,
+            error: new Error("Failed to get challenge"),
+          };
+        }
+
+        if (this.args.subset.to === undefined) {
+          return {
+            type: ClearSignContextType.ERROR,
+            error: new Error("Failed to get proxy address"),
+          };
+        }
+
+        const subcontext = await this.args.contextModule.getFieldContext({
+          kind: ContextFieldLoaderKind.PROXY_DELEGATE_CALL,
+          chainId: this.args.subset.chainId,
+          proxyAddress: this.args.subset.to,
+          calldata: this.args.subset.data,
+          deviceModelId: this.args.deviceModelId,
+          challenge: getChallengeResult.data.challenge,
+        });
+
+        return subcontext;
+      },
+    ];
   }
 }

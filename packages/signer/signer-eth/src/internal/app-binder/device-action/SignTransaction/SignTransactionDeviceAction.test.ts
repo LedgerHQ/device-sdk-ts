@@ -13,6 +13,7 @@ import {
   DeviceStatus,
   hexaStringToBuffer,
   InvalidStatusWordError,
+  TransportDeviceModel,
   UserInteractionRequired,
 } from "@ledgerhq/device-management-kit";
 import { Transaction } from "ethers";
@@ -57,7 +58,7 @@ describe("SignTransactionDeviceAction", () => {
     >
   >;
   const contextModuleMock: ContextModule = {
-    getContext: vi.fn(),
+    getFieldContext: vi.fn(),
     getContexts: vi.fn(),
     getTypedDataFilters: vi.fn(),
     getWeb3Checks: vi.fn(),
@@ -130,6 +131,9 @@ describe("SignTransactionDeviceAction", () => {
       deviceModelId: DeviceModelId.FLEX,
       isSecureConnectionAllowed: false,
     });
+    apiMock.getDeviceModel.mockReturnValueOnce({
+      id: DeviceModelId.FLEX,
+    } as unknown as TransportDeviceModel);
     getAppConfigMock.mockResolvedValue(
       CommandResultFactory({
         data: createAppConfig(version, web3ChecksEnabled, web3ChecksOptIn),
@@ -263,6 +267,7 @@ describe("SignTransactionDeviceAction", () => {
               transaction: defaultTransaction,
               appConfig: createAppConfig("1.15.0", false, false),
               derivationPath: "44'/60'/0'/0/0",
+              deviceModelId: DeviceModelId.FLEX,
             },
           }),
         );

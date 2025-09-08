@@ -2,11 +2,11 @@ import axios from "axios";
 import { Left, Right } from "purify-ts";
 
 import { type ContextModuleConfig } from "@/config/model/ContextModuleConfig";
+import type { ProxyImplementationAddress } from "@/proxy/model/ProxyImplementationAddress";
 import {
   LEDGER_CLIENT_VERSION_HEADER,
   LEDGER_ORIGIN_TOKEN_HEADER,
 } from "@/shared/constant/HttpHeaders";
-import type { ProxyImplementationAddress } from "@/transaction/model/ProxyImplementationAddress";
 import PACKAGE from "@root/package.json";
 
 import { type ProxyDelegateCallDto } from "./dto/ProxyDelegateCallDto";
