@@ -1,56 +1,23 @@
-import axios, { type AxiosInstance } from "axios";
-import http from "http";
-import https from "https";
+import { type AxiosInstance } from "axios";
+
+import {
+  makeKeepAliveAxiosForSSE,
+  makeNoKeepAliveAxios,
+} from "@internal/utils/axiosInstances";
+
+import { type E2eSpeculosDatasource } from "./E2eSpeculosDatasource";
 
 type SpeculosApduDTO = { data: string };
 
-function makeNoKeepAliveAxios(
-  baseUrl: string,
-  timeoutMs: number,
-  clientHeader: string,
-): AxiosInstance {
-  return axios.create({
-    baseURL: baseUrl.replace(/\/+$/, ""),
-    timeout: timeoutMs,
-    proxy: false,
-    headers: {
-      "X-Ledger-Client-Version": clientHeader,
-      Connection: "close",
-    },
-    httpAgent: new http.Agent({ keepAlive: false, maxSockets: Infinity }),
-    httpsAgent: new https.Agent({ keepAlive: false, maxSockets: Infinity }),
-    transitional: { clarifyTimeoutError: true },
-  });
-}
+export type SpeculosDeviceButtonsKeys =
+  | "Ll"
+  | "Rr"
+  | "LRlr"
+  | "left"
+  | "right"
+  | "both";
 
-function makeKeepAliveAxiosForSSE(
-  baseUrl: string,
-  clientHeader: string,
-): AxiosInstance {
-  return axios.create({
-    baseURL: baseUrl.replace(/\/+$/, ""),
-    timeout: 0, // long-lived
-    proxy: false,
-    headers: {
-      "X-Ledger-Client-Version": clientHeader,
-
-      Connection: "keep-alive",
-    },
-    httpAgent: new http.Agent({
-      keepAlive: true,
-      maxSockets: 1,
-      maxFreeSockets: 1,
-    }),
-    httpsAgent: new https.Agent({
-      keepAlive: true,
-      maxSockets: 1,
-      maxFreeSockets: 1,
-    }),
-    transitional: { clarifyTimeoutError: true },
-  });
-}
-
-export class HttpLegacySpeculosDatasource {
+export class E2eHttpSpeculosDatasource implements E2eSpeculosDatasource {
   private readonly apduClient: AxiosInstance;
   private readonly buttonClient: AxiosInstance;
   private readonly sseClient: AxiosInstance;
@@ -79,9 +46,7 @@ export class HttpLegacySpeculosDatasource {
     return data.data;
   }
 
-  async pressButton(
-    but: "Ll" | "Rr" | "LRlr" | "left" | "right" | "both",
-  ): Promise<void> {
+  async pressButton(but: SpeculosDeviceButtonsKeys): Promise<void> {
     const map: Record<string, "left" | "right" | "both"> = {
       Ll: "left",
       Rr: "right",
@@ -105,7 +70,7 @@ export class HttpLegacySpeculosDatasource {
     const response = await this.sseClient.get("/events", {
       params: { stream: "true" },
       responseType: "stream",
-      timeout: 0, // keep SSE alive
+      timeout: 0,
       headers: {
         Accept: "text/event-stream",
         "Cache-Control": "no-cache",

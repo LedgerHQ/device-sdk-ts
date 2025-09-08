@@ -20,14 +20,16 @@ import {
 import { type Either, Left, Right } from "purify-ts";
 import { from, type Observable } from "rxjs";
 
-import { HttpLegacySpeculosDatasource } from "@internal/datasource/HttpLegacySpeculosDatasource";
+import { type E2eSpeculosDatasource } from "@internal/datasource/E2eSpeculosDatasource";
+import { E2eHttpSpeculosDatasource } from "@root/src/internal/datasource/E2eHttpSpeculosDatasource";
 
 import { speculosIdentifier } from "./SpeculosTransport";
 
-export class QuietSpeculosTransport implements Transport {
+export class E2eSpeculosTransport implements Transport {
   private logger: LoggerPublisherService;
   private readonly identifier: TransportIdentifier = speculosIdentifier;
-  private readonly _speculosDataSource: HttpLegacySpeculosDatasource;
+
+  private readonly _speculosDataSource: E2eSpeculosDatasource;
 
   private connectedDevice: TransportConnectedDevice | null = null;
 
@@ -54,8 +56,8 @@ export class QuietSpeculosTransport implements Transport {
     _config: DmkConfig,
     speculosUrl: string,
   ) {
-    this.logger = loggerServiceFactory("QuietSpeculosTransport");
-    this._speculosDataSource = new HttpLegacySpeculosDatasource(
+    this.logger = loggerServiceFactory("E2eSpeculosTransport");
+    this._speculosDataSource = new E2eHttpSpeculosDatasource(
       speculosUrl,
       10000,
       "ldmk-transport-speculos",
@@ -89,7 +91,6 @@ export class QuietSpeculosTransport implements Transport {
   }): Promise<Either<ConnectError, TransportConnectedDevice>> {
     this.logger.debug("connect");
 
-    // Probe app name/version via GET_VERSION (B0010000) if possible
     try {
       const hexResponse = await this._speculosDataSource.postAdpu("B0010000");
       this.logger.debug(`Hex Response: ${hexResponse}`);
@@ -102,7 +103,7 @@ export class QuietSpeculosTransport implements Transport {
 
       this.speculosDevice.deviceModel.productName = `Speculos - ${appName} - ${appVersion}`;
     } catch {
-      // ignore if the app doesn't support GET_VERSION
+      this.logger.debug("Unable to fetch app name and version from Speculos");
     }
 
     try {
@@ -137,7 +138,7 @@ export class QuietSpeculosTransport implements Transport {
   ): Promise<Either<DmkError, ApduResponse>> {
     try {
       const hex = bufferToHexaString(apdu).substring(2).toUpperCase();
-      this.logger.debug(`[QuietSpeculosTransport] send APDU: ${hex}`);
+      this.logger.debug(`[E2eSpeculosTransport] send APDU: ${hex}`);
       const hexResponse = await this._speculosDataSource.postAdpu(hex);
       const resp = this.createApduResponse(hexResponse);
       return Right(resp);
@@ -154,8 +155,8 @@ export class QuietSpeculosTransport implements Transport {
   private createApduResponse(hexApdu: string): ApduResponse {
     const sw = hexApdu.slice(-4);
     const payload = hexApdu.slice(0, -4);
-    this.logger.debug(`[QuietSpeculosTransport] Status code hex: ${sw}`);
-    this.logger.debug(`[QuietSpeculosTransport] data hex: ${payload}`);
+    this.logger.debug(`[E2eSpeculosTransport] Status code hex: ${sw}`);
+    this.logger.debug(`[E2eSpeculosTransport] data hex: ${payload}`);
     return {
       statusCode: this.fromHexString(sw),
       data: this.fromHexString(payload),
@@ -175,4 +176,4 @@ export const quietSpeculosTransportFactory: (
 ) => TransportFactory =
   (speculosUrl = "http://127.0.0.1:5000") =>
   ({ config, loggerServiceFactory }) =>
-    new QuietSpeculosTransport(loggerServiceFactory, config, speculosUrl);
+    new E2eSpeculosTransport(loggerServiceFactory, config, speculosUrl);
