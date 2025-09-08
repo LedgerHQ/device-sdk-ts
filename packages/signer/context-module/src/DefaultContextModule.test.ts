@@ -2,10 +2,7 @@ import { DeviceModelId } from "@ledgerhq/device-management-kit";
 import { Left, Right } from "purify-ts";
 
 import { type ContextModuleConfig } from "./config/model/ContextModuleConfig";
-import {
-  type TransactionContext,
-  type TransactionFieldContext,
-} from "./shared/model/TransactionContext";
+import { type TransactionContext } from "./shared/model/TransactionContext";
 import { type TypedDataContext } from "./shared/model/TypedDataContext";
 import type { TypedDataContextLoader } from "./typed-data/domain/TypedDataContextLoader";
 import { DefaultContextModule } from "./DefaultContextModule";
@@ -100,25 +97,6 @@ describe("DefaultContextModule", () => {
     expect(typedDataLoader.load).toHaveBeenCalledTimes(1);
   });
 
-  it("should return a single context", async () => {
-    const loader = contextLoaderStubBuilder();
-    const responses = [null, { type: "token", payload: "payload" }];
-    vi.spyOn(loader, "loadField")
-      .mockResolvedValueOnce(responses[0])
-      .mockResolvedValueOnce(responses[1]);
-    const contextModule = new DefaultContextModule({
-      ...defaultContextModuleConfig,
-      customLoaders: [loader, { load: vi.fn() }, loader],
-    });
-
-    const res = await contextModule.getContext({
-      type: "token",
-    } as TransactionFieldContext);
-
-    expect(loader.loadField).toHaveBeenCalledTimes(2);
-    expect(res).toEqual({ type: "token", payload: "payload" });
-  });
-
   it("should return a web3 check context", async () => {
     const loader = contextLoaderStubBuilder();
     vi.spyOn(loader, "load").mockResolvedValueOnce(
@@ -159,44 +137,6 @@ describe("DefaultContextModule", () => {
 
     expect(loader.load).toHaveBeenCalledTimes(1);
     expect(res).toBeNull();
-  });
-
-  it("context field not supported", async () => {
-    const loader = contextLoaderStubBuilder();
-    const responses = [null, null];
-    vi.spyOn(loader, "loadField")
-      .mockResolvedValueOnce(responses[0])
-      .mockResolvedValueOnce(responses[1]);
-    const contextModule = new DefaultContextModule({
-      ...defaultContextModuleConfig,
-      customLoaders: [loader, { load: vi.fn() }, loader],
-    });
-
-    const res = await contextModule.getContext({
-      type: "token",
-    } as TransactionFieldContext);
-
-    expect(loader.loadField).toHaveBeenCalledTimes(2);
-    expect(res).toEqual({
-      type: "error",
-      error: new Error("Field type not supported: token"),
-    });
-  });
-
-  it("getField not implemented", async () => {
-    const contextModule = new DefaultContextModule({
-      ...defaultContextModuleConfig,
-      customLoaders: [{ load: vi.fn() }],
-    });
-
-    const res = await contextModule.getContext({
-      type: "token",
-    } as TransactionFieldContext);
-
-    expect(res).toEqual({
-      type: "error",
-      error: new Error("Field type not supported: token"),
-    });
   });
 
   it("should throw an error if origin token is not provided", () => {

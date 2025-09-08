@@ -278,7 +278,6 @@ describe("ProvideContextsTask", () => {
           ClearSignContextType.TRANSACTION_FIELD_DESCRIPTION,
           ProvideTransactionFieldDescriptionCommand,
         ],
-        [ClearSignContextType.PROXY_DELEGATE_CALL, ProvideProxyInfoCommand],
         [
           ClearSignContextType.DYNAMIC_NETWORK_ICON,
           ProvideNetworkConfigurationCommand,
@@ -349,6 +348,60 @@ describe("ProvideContextsTask", () => {
           expect(command).toBeInstanceOf(commandClass);
         },
       );
+
+      it("should only provide the subcontexts if the context is a PROXY_DELEGATE_CALL", async () => {
+        // GIVEN
+        const args: ProvideContextsTaskArgs = {
+          contexts: [
+            {
+              context: {
+                type: ClearSignContextType.PROXY_DELEGATE_CALL,
+                payload: "payload",
+              },
+              subcontextCallbacks: [
+                () =>
+                  Promise.resolve({
+                    type: ClearSignContextType.PROXY_DELEGATE_CALL,
+                    payload: "subcontext payload",
+                  }),
+              ],
+            },
+          ],
+          serializedTransaction: new Uint8Array(),
+          derivationPath: "44'/60'/0'/0/0",
+        };
+        sendPayloadInChunksRunMock.mockResolvedValue(successResult);
+
+        // WHEN
+        const task = new ProvideContextsTask(
+          api,
+          args,
+          sendPayloadInChunksTaskMockFactory,
+          sendCommandInChunksTaskMockFactory,
+        );
+        const result = await task.run();
+
+        // THEN
+        expect(result).toEqual(Right(void 0));
+        expect(sendPayloadInChunksRunMock).toHaveBeenCalledTimes(1);
+        expect(sendPayloadInChunksRunMock).toHaveBeenCalledWith(api, {
+          payload: "subcontext payload",
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+          commandFactory: expect.any(Function),
+        });
+
+        // Test that the commandFactory returns a commandClass
+        const factoryCall = sendPayloadInChunksTaskMockFactory.mock.calls[0]!;
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
+        const commandFactory = factoryCall[1].commandFactory;
+        const mockArgs = {
+          chunkedData: new Uint8Array([1, 2, 3]),
+          isFirstChunk: true,
+        };
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call
+        const command = commandFactory(mockArgs);
+        expect(command).toBeInstanceOf(ProvideProxyInfoCommand);
+      });
 
       it("should skip the subcontexts if the context is an error", async () => {
         // GIVEN

@@ -14,10 +14,7 @@ import {
   ClearSignContext,
   ClearSignContextType,
 } from "@/shared/model/ClearSignContext";
-import {
-  TransactionContext,
-  TransactionFieldContext,
-} from "@/shared/model/TransactionContext";
+import { TransactionContext } from "@/shared/model/TransactionContext";
 import { HexStringUtils } from "@/shared/utils/HexStringUtils";
 
 const NETWORK_SIGNATURE_TAG = "15";
@@ -95,10 +92,5 @@ export class DynamicNetworkContextLoader implements ContextLoader {
         return contexts;
       },
     });
-  }
-
-  // Dynamic network context doesn't support field-level loading
-  loadField(_field: TransactionFieldContext): Promise<ClearSignContext | null> {
-    return Promise.resolve(null);
   }
 }

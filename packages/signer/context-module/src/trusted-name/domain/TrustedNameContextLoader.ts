@@ -5,10 +5,7 @@ import {
   ClearSignContext,
   ClearSignContextType,
 } from "@/shared/model/ClearSignContext";
-import {
-  TransactionContext,
-  TransactionFieldContext,
-} from "@/shared/model/TransactionContext";
+import { TransactionContext } from "@/shared/model/TransactionContext";
 import type { TrustedNameDataSource } from "@/trusted-name/data/TrustedNameDataSource";
 import { trustedNameTypes } from "@/trusted-name/di/trustedNameTypes";
 
@@ -57,31 +54,6 @@ export class TrustedNameContextLoader implements ContextLoader {
         }),
       }),
     ];
-  }
-
-  async loadField(
-    field: TransactionFieldContext,
-  ): Promise<ClearSignContext | null> {
-    if (field.type !== ClearSignContextType.TRUSTED_NAME) {
-      return null;
-    }
-    const payload = await this._dataSource.getTrustedNamePayload({
-      chainId: field.chainId,
-      address: field.address,
-      challenge: field.challenge,
-      types: field.types,
-      sources: field.sources,
-    });
-    return payload.caseOf({
-      Left: (error): ClearSignContext => ({
-        type: ClearSignContextType.ERROR,
-        error,
-      }),
-      Right: (value): ClearSignContext => ({
-        type: ClearSignContextType.TRUSTED_NAME,
-        payload: value,
-      }),
-    });
   }
 
   private isDomainValid(domain: string) {

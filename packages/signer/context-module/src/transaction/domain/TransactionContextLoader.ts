@@ -6,23 +6,24 @@ import type { PkiCertificateLoader } from "@/pki/domain/PkiCertificateLoader";
 import { KeyId } from "@/pki/model/KeyId";
 import { KeyUsage } from "@/pki/model/KeyUsage";
 import { PkiCertificate } from "@/pki/model/PkiCertificate";
+import type { ProxyDataSource } from "@/proxy/data/HttpProxyDataSource";
+import { proxyTypes } from "@/proxy/di/proxyTypes";
+import { ProxyDelegateCall } from "@/proxy/model/ProxyDelegateCall";
 import { ContextLoader } from "@/shared/domain/ContextLoader";
 import {
   ClearSignContext,
   ClearSignContextType,
 } from "@/shared/model/ClearSignContext";
 import { TransactionContext } from "@/shared/model/TransactionContext";
-import type { ProxyDataSource } from "@/transaction/data/HttpProxyDataSource";
 import type { TransactionDataSource } from "@/transaction/data/TransactionDataSource";
 import { transactionTypes } from "@/transaction/di/transactionTypes";
-import { ProxyDelegateCall } from "@/transaction/model/ProxyDelegateCall";
 
 @injectable()
 export class TransactionContextLoader implements ContextLoader {
   constructor(
     @inject(transactionTypes.TransactionDataSource)
     private transactionDataSource: TransactionDataSource,
-    @inject(transactionTypes.ProxyDataSource)
+    @inject(proxyTypes.ProxyDataSource)
     private proxyDataSource: ProxyDataSource,
     @inject(pkiTypes.PkiCertificateLoader)
     private certificateLoader: PkiCertificateLoader,

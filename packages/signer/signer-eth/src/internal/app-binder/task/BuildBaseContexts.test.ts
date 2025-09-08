@@ -26,7 +26,7 @@ import { GetWeb3CheckTask } from "./GetWeb3CheckTask";
 
 describe("BuildBaseContexts", () => {
   const contextModuleMock = {
-    getContext: vi.fn(),
+    getFieldContext: vi.fn(),
     getContexts: vi.fn(),
     getTypedDataFilters: vi.fn(),
     getWeb3Checks: vi.fn(),

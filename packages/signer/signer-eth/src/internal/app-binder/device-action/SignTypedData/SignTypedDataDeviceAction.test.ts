@@ -97,7 +97,7 @@ describe("SignTypedDataDeviceAction", () => {
     parse: vi.fn(),
   };
   const mockContextModule: ContextModule = {
-    getContext: vi.fn(),
+    getFieldContext: vi.fn(),
     getContexts: vi.fn(),
     getTypedDataFilters: vi.fn(),
     getWeb3Checks: vi.fn(),

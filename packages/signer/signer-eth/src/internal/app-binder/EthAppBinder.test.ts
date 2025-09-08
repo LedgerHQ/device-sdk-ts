@@ -50,7 +50,7 @@ describe("EthAppBinder", () => {
     executeDeviceAction: vi.fn(),
   } as unknown as DeviceManagementKit;
   const mockedContextModule: ContextModule = {
-    getContext: vi.fn(),
+    getFieldContext: vi.fn(),
     getContexts: vi.fn(),
     getTypedDataFilters: vi.fn(),
     getWeb3Checks: vi.fn(),

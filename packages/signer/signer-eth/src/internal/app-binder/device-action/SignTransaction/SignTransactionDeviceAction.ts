@@ -323,7 +323,7 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
             },
           })),
           // Using after transition to force a snapshot of the state after the entry action
-          // This ensures the intermediateValue is captured before moving to BuildContexts
+          // This ensures the intermediateValue is captured before moving to ParseTransaction
           after: {
             0: {
               target: "ParseTransaction",
@@ -379,6 +379,7 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
               derivationPath: context.input.derivationPath,
               subset: context._internalState.subset!,
               transaction: context.input.transaction,
+              deviceModelId: internalApi.getDeviceModel().id,
             }),
             onDone: {
               target: "ProvideContexts",

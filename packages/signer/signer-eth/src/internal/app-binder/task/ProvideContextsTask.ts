@@ -98,6 +98,12 @@ export class ProvideContextsTask {
         }
       }
 
+      if (context.type === ClearSignContextType.PROXY_DELEGATE_CALL) {
+        // In this specific case, the context is not valid as the challenge is not valid on the first call
+        // the real data is provided in the subcontext callback
+        continue;
+      }
+
       if (
         !transactionInfoProvided &&
         context.type === ClearSignContextType.TRANSACTION_INFO

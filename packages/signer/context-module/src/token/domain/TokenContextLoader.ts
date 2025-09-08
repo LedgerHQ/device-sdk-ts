@@ -6,10 +6,7 @@ import {
   ClearSignContext,
   ClearSignContextType,
 } from "@/shared/model/ClearSignContext";
-import {
-  TransactionContext,
-  TransactionFieldContext,
-} from "@/shared/model/TransactionContext";
+import { TransactionContext } from "@/shared/model/TransactionContext";
 import type { TokenDataSource } from "@/token/data/TokenDataSource";
 import { tokenTypes } from "@/token/di/tokenTypes";
 
@@ -66,28 +63,6 @@ export class TokenContextLoader implements ContextLoader {
         }),
       }),
     ];
-  }
-
-  async loadField(
-    field: TransactionFieldContext,
-  ): Promise<ClearSignContext | null> {
-    if (field.type !== ClearSignContextType.TOKEN) {
-      return null;
-    }
-    const payload = await this._dataSource.getTokenInfosPayload({
-      address: field.address,
-      chainId: field.chainId,
-    });
-    return payload.caseOf({
-      Left: (error): ClearSignContext => ({
-        type: ClearSignContextType.ERROR,
-        error,
-      }),
-      Right: (value): ClearSignContext => ({
-        type: ClearSignContextType.TOKEN,
-        payload: value,
-      }),
-    });
   }
 
   private isSelectorSupported(selector: HexaString) {

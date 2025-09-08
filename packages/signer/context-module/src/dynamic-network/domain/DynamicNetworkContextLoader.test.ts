@@ -13,10 +13,7 @@ import { KeyId } from "@/pki/model/KeyId";
 import { KeyUsage } from "@/pki/model/KeyUsage";
 import { type PkiCertificate } from "@/pki/model/PkiCertificate";
 import { ClearSignContextType } from "@/shared/model/ClearSignContext";
-import {
-  type TransactionContext,
-  type TransactionFieldContext,
-} from "@/shared/model/TransactionContext";
+import { type TransactionContext } from "@/shared/model/TransactionContext";
 
 describe("DynamicNetworkContextLoader", () => {
   const mockNetworkDataSource: DynamicNetworkDataSource = {
@@ -388,23 +385,6 @@ describe("DynamicNetworkContextLoader", () => {
       if (context && "payload" in context) {
         expect(context.payload).toContain("test-sig");
       }
-    });
-  });
-
-  describe("loadField function", () => {
-    it("should always return null", async () => {
-      // GIVEN
-      const field: TransactionFieldContext = {
-        type: ClearSignContextType.TOKEN,
-        chainId: 1,
-        address: "0x123",
-      };
-
-      // WHEN
-      const result = await loader.loadField(field);
-
-      // THEN
-      expect(result).toBeNull();
     });
   });
 });

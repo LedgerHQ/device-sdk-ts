@@ -6,7 +6,10 @@ import {
   type ContextModule,
   type TransactionSubset,
 } from "@ledgerhq/context-module";
-import { type InternalApi } from "@ledgerhq/device-management-kit";
+import {
+  type DeviceModelId,
+  type InternalApi,
+} from "@ledgerhq/device-management-kit";
 
 import { type GetConfigCommandResponse } from "@api/app-binder/GetConfigCommandTypes";
 import { type ClearSigningType } from "@api/model/ClearSigningType";
@@ -40,6 +43,7 @@ export type BuildFullContextsTaskArgs = {
   readonly appConfig: GetConfigCommandResponse;
   readonly derivationPath: string;
   readonly subset: TransactionSubset;
+  readonly deviceModelId: DeviceModelId;
   readonly transaction?: Uint8Array;
 };
 
@@ -81,6 +85,7 @@ export class BuildFullContextsTask {
             contextModule: this._args.contextModule,
             subset: this._args.subset,
             transactionParser: this._args.parser,
+            deviceModelId: this._args.deviceModelId,
           },
         ).run();
 

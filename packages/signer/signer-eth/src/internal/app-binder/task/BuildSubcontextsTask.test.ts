@@ -7,8 +7,10 @@ import {
   type GenericPath,
   type TransactionFieldContext,
 } from "@ledgerhq/context-module";
+import { ContextFieldLoaderKind } from "@ledgerhq/context-module/src/shared/domain/ContextFieldLoader.js";
 import {
   CommandResultFactory,
+  DeviceModelId,
   UnknownDeviceExchangeError,
 } from "@ledgerhq/device-management-kit";
 import { Left, Right } from "purify-ts";
@@ -24,7 +26,7 @@ import {
 
 describe("BuildSubcontextsTask", () => {
   const contextModuleMock = {
-    getContext: vi.fn(),
+    getFieldContext: vi.fn(),
   };
   const transactionParserMock = {
     extractValue: vi.fn(),
@@ -51,6 +53,7 @@ describe("BuildSubcontextsTask", () => {
         value: BigInt(0),
       },
       contextModule: contextModuleMock as unknown as ContextModule,
+      deviceModelId: DeviceModelId.STAX,
     };
   });
 
@@ -60,7 +63,12 @@ describe("BuildSubcontextsTask", () => {
       ClearSignContextType.WEB3_CHECK,
       ClearSignContextType.PLUGIN,
       ClearSignContextType.EXTERNAL_PLUGIN,
-      ClearSignContextType.TRANSACTION_FIELD_DESCRIPTION,
+      ClearSignContextType.DYNAMIC_NETWORK,
+      ClearSignContextType.DYNAMIC_NETWORK_ICON,
+      ClearSignContextType.ENUM,
+      ClearSignContextType.TRUSTED_NAME,
+      ClearSignContextType.TOKEN,
+      ClearSignContextType.NFT,
     ];
 
     it.each(simpleTypes)(
@@ -95,7 +103,7 @@ describe("BuildSubcontextsTask", () => {
       };
       const args = { ...defaultArgs, context };
       const expectedContext: TransactionFieldContext = {
-        type: ClearSignContextType.TOKEN,
+        kind: ContextFieldLoaderKind.TOKEN,
         chainId: 1,
         address: "0x1234567890123456789012345678901234567890",
       };
@@ -109,7 +117,7 @@ describe("BuildSubcontextsTask", () => {
       // Verify the callback calls getContext with correct parameters
       const callback = result.subcontextCallbacks[0]!;
       await callback();
-      expect(contextModuleMock.getContext).toHaveBeenCalledWith(
+      expect(contextModuleMock.getFieldContext).toHaveBeenCalledWith(
         expectedContext,
       );
     });
@@ -397,7 +405,7 @@ describe("BuildSubcontextsTask", () => {
           transactionParserMock.extractValue.mockReturnValue(
             Right(extractedValues),
           );
-          contextModuleMock.getContext.mockResolvedValue({
+          contextModuleMock.getFieldContext.mockResolvedValue({
             type: ClearSignContextType.TOKEN,
             payload: "token result",
           });
@@ -413,8 +421,8 @@ describe("BuildSubcontextsTask", () => {
             type: ClearSignContextType.TOKEN,
             payload: "token result",
           });
-          expect(contextModuleMock.getContext).toHaveBeenCalledWith({
-            type: ClearSignContextType.TOKEN,
+          expect(contextModuleMock.getFieldContext).toHaveBeenCalledWith({
+            kind: ContextFieldLoaderKind.TOKEN,
             chainId: 1,
             address: "0x030405060708090a0b0c0d0e0f10111213141516",
           });
@@ -431,7 +439,7 @@ describe("BuildSubcontextsTask", () => {
             },
           };
           const args = { ...defaultArgs, context };
-          contextModuleMock.getContext.mockResolvedValue({
+          contextModuleMock.getFieldContext.mockResolvedValue({
             type: ClearSignContextType.TOKEN,
             payload: "token result",
           });
@@ -447,8 +455,8 @@ describe("BuildSubcontextsTask", () => {
             type: ClearSignContextType.TOKEN,
             payload: "token result",
           });
-          expect(contextModuleMock.getContext).toHaveBeenCalledWith({
-            type: ClearSignContextType.TOKEN,
+          expect(contextModuleMock.getFieldContext).toHaveBeenCalledWith({
+            kind: ContextFieldLoaderKind.TOKEN,
             chainId: 1,
             address: "0x030405060708090a0b0c0d0e0f10111213141516",
           });
@@ -476,7 +484,7 @@ describe("BuildSubcontextsTask", () => {
           transactionParserMock.extractValue.mockReturnValue(
             Right(extractedValues),
           );
-          contextModuleMock.getContext.mockResolvedValue({
+          contextModuleMock.getFieldContext.mockResolvedValue({
             type: ClearSignContextType.NFT,
             payload: "nft result",
           });
@@ -492,8 +500,8 @@ describe("BuildSubcontextsTask", () => {
             type: ClearSignContextType.NFT,
             payload: "nft result",
           });
-          expect(contextModuleMock.getContext).toHaveBeenCalledWith({
-            type: ClearSignContextType.NFT,
+          expect(contextModuleMock.getFieldContext).toHaveBeenCalledWith({
+            kind: ContextFieldLoaderKind.NFT,
             chainId: 1,
             address: "0x030405060708090a0b0c0d0e0f10111213141516",
           });
@@ -510,7 +518,7 @@ describe("BuildSubcontextsTask", () => {
             },
           };
           const args = { ...defaultArgs, context };
-          contextModuleMock.getContext.mockResolvedValue({
+          contextModuleMock.getFieldContext.mockResolvedValue({
             type: ClearSignContextType.NFT,
             payload: "nft result",
           });
@@ -526,8 +534,8 @@ describe("BuildSubcontextsTask", () => {
             type: ClearSignContextType.NFT,
             payload: "nft result",
           });
-          expect(contextModuleMock.getContext).toHaveBeenCalledWith({
-            type: ClearSignContextType.NFT,
+          expect(contextModuleMock.getFieldContext).toHaveBeenCalledWith({
+            kind: ContextFieldLoaderKind.NFT,
             chainId: 1,
             address: "0x030405060708090a0b0c0d0e0f10111213141516",
           });
@@ -557,7 +565,7 @@ describe("BuildSubcontextsTask", () => {
           transactionParserMock.extractValue.mockReturnValue(
             Right(extractedValues),
           );
-          contextModuleMock.getContext.mockResolvedValue({
+          contextModuleMock.getFieldContext.mockResolvedValue({
             type: ClearSignContextType.TRUSTED_NAME,
             payload: "trusted name result",
           });
@@ -576,8 +584,8 @@ describe("BuildSubcontextsTask", () => {
           expect(apiMock.sendCommand).toHaveBeenCalledWith(
             expect.any(GetChallengeCommand),
           );
-          expect(contextModuleMock.getContext).toHaveBeenCalledWith({
-            type: ClearSignContextType.TRUSTED_NAME,
+          expect(contextModuleMock.getFieldContext).toHaveBeenCalledWith({
+            kind: ContextFieldLoaderKind.TRUSTED_NAME,
             chainId: 1,
             address: "0x030405060708090a0b0c0d0e0f10111213141516",
             challenge: "test-challenge",
@@ -654,11 +662,11 @@ describe("BuildSubcontextsTask", () => {
           transactionParserMock.extractValue.mockReturnValue(
             Right(extractedValues),
           );
-          contextModuleMock.getContext.mockResolvedValueOnce({
+          contextModuleMock.getFieldContext.mockResolvedValueOnce({
             type: ClearSignContextType.TOKEN,
             payload: "token result 1",
           });
-          contextModuleMock.getContext.mockResolvedValueOnce({
+          contextModuleMock.getFieldContext.mockResolvedValueOnce({
             type: ClearSignContextType.TOKEN,
             payload: "token result 2",
           });
@@ -680,14 +688,14 @@ describe("BuildSubcontextsTask", () => {
             type: ClearSignContextType.TOKEN,
             payload: "token result 2",
           });
-          expect(contextModuleMock.getContext).toHaveBeenCalledTimes(2);
-          expect(contextModuleMock.getContext).toHaveBeenNthCalledWith(1, {
-            type: ClearSignContextType.TOKEN,
+          expect(contextModuleMock.getFieldContext).toHaveBeenCalledTimes(2);
+          expect(contextModuleMock.getFieldContext).toHaveBeenNthCalledWith(1, {
+            kind: ContextFieldLoaderKind.TOKEN,
             chainId: 1,
             address: "0x030405060708090a0b0c0d0e0f10111213141516",
           });
-          expect(contextModuleMock.getContext).toHaveBeenNthCalledWith(2, {
-            type: ClearSignContextType.TOKEN,
+          expect(contextModuleMock.getFieldContext).toHaveBeenNthCalledWith(2, {
+            kind: ContextFieldLoaderKind.TOKEN,
             chainId: 1,
             address: "0x232425262728292a2b2c2d2e2f30313233343536",
           });
@@ -832,6 +840,172 @@ describe("BuildSubcontextsTask", () => {
     });
   });
 
+  describe("PROXY_DELEGATE_CALL context type", () => {
+    beforeEach(() => {
+      apiMock.sendCommand.mockResolvedValue(
+        CommandResultFactory({ data: { challenge: "test-challenge" } }),
+      );
+    });
+
+    it("should create callback to get proxy delegate call context", async () => {
+      // GIVEN
+      const context: ClearSignContextSuccess = {
+        type: ClearSignContextType.PROXY_DELEGATE_CALL,
+        payload: "proxy payload",
+      };
+      const args = {
+        ...defaultArgs,
+        context,
+        subset: {
+          ...defaultArgs.subset,
+          to: "0x1234567890123456789012345678901234567890",
+          data: "0xabcdef",
+        },
+      };
+      contextModuleMock.getFieldContext.mockResolvedValue({
+        type: ClearSignContextType.PROXY_DELEGATE_CALL,
+        payload: "proxy result",
+      });
+
+      // WHEN
+      const result = new BuildSubcontextsTask(apiMock, args).run();
+
+      // THEN
+      expect(result.subcontextCallbacks).toHaveLength(1);
+      const callback = result.subcontextCallbacks[0]!;
+      const callbackResult = await callback();
+
+      expect(callbackResult).toEqual({
+        type: ClearSignContextType.PROXY_DELEGATE_CALL,
+        payload: "proxy result",
+      });
+      expect(apiMock.sendCommand).toHaveBeenCalledWith(
+        expect.any(GetChallengeCommand),
+      );
+      expect(contextModuleMock.getFieldContext).toHaveBeenCalledWith({
+        kind: ContextFieldLoaderKind.PROXY_DELEGATE_CALL,
+        chainId: 1,
+        proxyAddress: "0x1234567890123456789012345678901234567890",
+        calldata: "0xabcdef",
+        deviceModelId: DeviceModelId.STAX,
+        challenge: "test-challenge",
+      });
+    });
+
+    it("should handle challenge command failure", async () => {
+      // GIVEN
+      const context: ClearSignContextSuccess = {
+        type: ClearSignContextType.PROXY_DELEGATE_CALL,
+        payload: "proxy payload",
+      };
+      const args = {
+        ...defaultArgs,
+        context,
+        subset: {
+          ...defaultArgs.subset,
+          to: "0x1234567890123456789012345678901234567890",
+          data: "0xabcdef",
+        },
+      };
+      const error = new UnknownDeviceExchangeError("Failed");
+      apiMock.sendCommand.mockResolvedValueOnce(
+        CommandResultFactory({
+          error,
+        }),
+      );
+
+      // WHEN
+      const result = new BuildSubcontextsTask(apiMock, args).run();
+
+      // THEN
+      expect(result.subcontextCallbacks).toHaveLength(1);
+      const callback = result.subcontextCallbacks[0]!;
+      const callbackResult = await callback();
+
+      expect(callbackResult).toEqual({
+        error: new Error("Failed to get challenge"),
+        type: ClearSignContextType.ERROR,
+      });
+      expect(apiMock.sendCommand).toHaveBeenCalledWith(
+        expect.any(GetChallengeCommand),
+      );
+      expect(contextModuleMock.getFieldContext).not.toHaveBeenCalled();
+    });
+
+    it("should handle missing proxy address", async () => {
+      // GIVEN
+      const context: ClearSignContextSuccess = {
+        type: ClearSignContextType.PROXY_DELEGATE_CALL,
+        payload: "proxy payload",
+      };
+      const args = {
+        ...defaultArgs,
+        context,
+        subset: {
+          ...defaultArgs.subset,
+          to: undefined,
+          data: "0xabcdef",
+        },
+      };
+
+      // WHEN
+      const result = new BuildSubcontextsTask(apiMock, args).run();
+
+      // THEN
+      expect(result.subcontextCallbacks).toHaveLength(1);
+      const callback = result.subcontextCallbacks[0]!;
+      const callbackResult = await callback();
+
+      expect(callbackResult).toEqual({
+        error: new Error("Failed to get proxy address"),
+        type: ClearSignContextType.ERROR,
+      });
+      expect(apiMock.sendCommand).toHaveBeenCalledWith(
+        expect.any(GetChallengeCommand),
+      );
+      expect(contextModuleMock.getFieldContext).not.toHaveBeenCalled();
+    });
+
+    it("should use correct device model id in context", async () => {
+      // GIVEN
+      const context: ClearSignContextSuccess = {
+        type: ClearSignContextType.PROXY_DELEGATE_CALL,
+        payload: "proxy payload",
+      };
+      const args = {
+        ...defaultArgs,
+        context,
+        deviceModelId: DeviceModelId.NANO_SP,
+        subset: {
+          ...defaultArgs.subset,
+          to: "0x1234567890123456789012345678901234567890",
+          data: "0xabcdef",
+        },
+      };
+      contextModuleMock.getFieldContext.mockResolvedValue({
+        type: ClearSignContextType.PROXY_DELEGATE_CALL,
+        payload: "proxy result",
+      });
+
+      // WHEN
+      const result = new BuildSubcontextsTask(apiMock, args).run();
+
+      // THEN
+      expect(result.subcontextCallbacks).toHaveLength(1);
+      const callback = result.subcontextCallbacks[0]!;
+      await callback();
+
+      expect(contextModuleMock.getFieldContext).toHaveBeenCalledWith({
+        kind: ContextFieldLoaderKind.PROXY_DELEGATE_CALL,
+        chainId: 1,
+        proxyAddress: "0x1234567890123456789012345678901234567890",
+        calldata: "0xabcdef",
+        deviceModelId: DeviceModelId.NANO_SP,
+        challenge: "test-challenge",
+      });
+    });
+  });
+
   describe("edge cases", () => {
     it("should handle value array shorter than 20 bytes for address extraction", async () => {
       // GIVEN
@@ -848,7 +1022,7 @@ describe("BuildSubcontextsTask", () => {
       transactionParserMock.extractValue.mockReturnValue(
         Right(extractedValues),
       );
-      contextModuleMock.getContext.mockResolvedValue({
+      contextModuleMock.getFieldContext.mockResolvedValue({
         type: ClearSignContextType.ERROR,
         message: "Invalid address",
       });
@@ -864,8 +1038,8 @@ describe("BuildSubcontextsTask", () => {
         type: ClearSignContextType.ERROR,
         message: "Invalid address",
       });
-      expect(contextModuleMock.getContext).toHaveBeenCalledWith({
-        type: ClearSignContextType.TOKEN,
+      expect(contextModuleMock.getFieldContext).toHaveBeenCalledWith({
+        kind: ContextFieldLoaderKind.TOKEN,
         chainId: 1,
         address: "0x010203",
       });
@@ -886,7 +1060,7 @@ describe("BuildSubcontextsTask", () => {
       transactionParserMock.extractValue.mockReturnValue(
         Right(extractedValues),
       );
-      contextModuleMock.getContext.mockResolvedValue({
+      contextModuleMock.getFieldContext.mockResolvedValue({
         type: ClearSignContextType.TOKEN,
         payload: "token result",
       });
@@ -904,8 +1078,8 @@ describe("BuildSubcontextsTask", () => {
         type: ClearSignContextType.TOKEN,
         payload: "token result",
       });
-      expect(contextModuleMock.getContext).toHaveBeenCalledWith({
-        type: ClearSignContextType.TOKEN,
+      expect(contextModuleMock.getFieldContext).toHaveBeenCalledWith({
+        kind: ContextFieldLoaderKind.TOKEN,
         chainId: 1,
         address: "0x",
       });
