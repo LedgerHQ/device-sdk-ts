@@ -20,7 +20,6 @@ import {
 import { type Either, Left, Right } from "purify-ts";
 import { from, type Observable } from "rxjs";
 
-import { HttpLegacySpeculosDatasource } from "@internal/datasource/HttpLegacySpeculosDatasource";
 import { HttpSpeculosDatasource } from "@internal/datasource/HttpSpeculosDatasource";
 import { type SpeculosDatasource } from "@internal/datasource/SpeculosDatasource";
 
@@ -55,12 +54,9 @@ export class SpeculosTransport implements Transport {
     loggerServiceFactory: (tag: string) => LoggerPublisherService,
     _config: DmkConfig,
     speculosUrl: string,
-    private readonly legacyE2ECompatibility: boolean,
   ) {
     this.logger = loggerServiceFactory("SpeculosTransport");
-    this._speculosDataSource = this.legacyE2ECompatibility
-      ? new HttpLegacySpeculosDatasource(speculosUrl)
-      : new HttpSpeculosDatasource(speculosUrl);
+    this._speculosDataSource = new HttpSpeculosDatasource(speculosUrl); // See how to pass properly speculos config.
   }
 
   isSupported(): boolean {
@@ -127,9 +123,7 @@ export class SpeculosTransport implements Transport {
       };
 
       this.connectedDevice = connectedDevice;
-      if (!this.legacyE2ECompatibility) {
-        this.listenForDisconnect(params.onDisconnect, params.deviceId);
-      }
+      this.listenForDisconnect(params.onDisconnect, params.deviceId);
       return Right(connectedDevice);
     } catch (error) {
       return Left(new OpeningConnectionError(error as Error));
@@ -152,9 +146,11 @@ export class SpeculosTransport implements Transport {
   ): Promise<Either<DmkError, ApduResponse>> {
     try {
       const hexApdu = bufferToHexaString(apdu).substring(2);
-      this.logger.debug(`send APDU: ${hexApdu}`);
-      const hexResponse = await this._speculosDataSource.postAdpu(hexApdu);
-      return Right(this.createApduResponse(hexResponse));
+      this.logger.debug(`send APDU:  ${hexApdu}`);
+      const hexResponse: string =
+        await this._speculosDataSource.postAdpu(hexApdu);
+      const apduResponse = this.createApduResponse(hexResponse);
+      return Right(apduResponse);
     } catch (error) {
       if (this.connectedDevice) {
         this.logger.debug("disconnecting");
@@ -226,13 +222,7 @@ export class SpeculosTransport implements Transport {
 
 export const speculosTransportFactory: (
   speculosUrl?: string,
-  legacyE2ECompatibility?: boolean,
 ) => TransportFactory =
-  (speculosUrl = "http://127.0.0.1:5000", legacyE2ECompatibility = false) =>
+  (speculosUrl = "http://127.0.0.1:5000") =>
   ({ config, loggerServiceFactory }) =>
-    new SpeculosTransport(
-      loggerServiceFactory,
-      config,
-      speculosUrl,
-      legacyE2ECompatibility,
-    );
+    new SpeculosTransport(loggerServiceFactory, config, speculosUrl);
