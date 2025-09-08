@@ -6,12 +6,15 @@ import {
 } from "@ledgerhq/context-module";
 import {
   DeviceModelId,
+  type DeviceSessionState,
   type InternalApi,
+  isSuccessCommandResult,
 } from "@ledgerhq/device-management-kit";
 import { Just, type Maybe, Nothing } from "purify-ts";
 
 import { type GetConfigCommandResponse } from "@api/app-binder/GetConfigCommandTypes";
 import { type TypedData } from "@api/model/TypedData";
+import { GetChallengeCommand } from "@internal/app-binder/command/GetChallengeCommand";
 import {
   GetWeb3CheckTask,
   type GetWeb3CheckTaskArgs,
@@ -60,9 +63,20 @@ export class BuildEIP712ContextTask {
     const { types, domain, message } = parsed.unsafeCoerce();
 
     // Get clear signing context, if any
+    const deviceState = this.api.getDeviceSessionState();
     let clearSignContext: Maybe<TypedDataClearSignContextSuccess> = Nothing;
-    const version = this.getClearSignVersion();
+    const version = this.getClearSignVersion(deviceState);
     if (version.isJust()) {
+      // Get challenge
+      let challenge: string | undefined = undefined;
+      const challengeRes = await this.api.sendCommand(
+        new GetChallengeCommand(),
+      );
+      if (isSuccessCommandResult(challengeRes)) {
+        challenge = challengeRes.data.challenge;
+      }
+
+      // Get filters
       const verifyingContract =
         this.data.domain.verifyingContract?.toLowerCase() || ZERO_ADDRESS;
       const chainId = this.data.domain.chainId || 0;
@@ -77,6 +91,8 @@ export class BuildEIP712ContextTask {
         chainId,
         version: version.extract(),
         schema: this.data.types,
+        challenge,
+        deviceModelId: deviceState.deviceModelId,
         fieldsValues,
       });
       if (filters.type === "success") {
@@ -95,8 +111,9 @@ export class BuildEIP712ContextTask {
     return provideTaskArgs;
   }
 
-  private getClearSignVersion(): Maybe<"v1" | "v2"> {
-    const deviceState = this.api.getDeviceSessionState();
+  private getClearSignVersion(
+    deviceState: DeviceSessionState,
+  ): Maybe<"v1" | "v2"> {
     if (
       !new ApplicationChecker(deviceState, this.appConfig)
         .withMinVersionInclusive("1.10.0")

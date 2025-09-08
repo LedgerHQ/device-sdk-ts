@@ -36,9 +36,9 @@ describe("TransactionContextLoader", () => {
     expect(result).toEqual([]);
   });
 
-  it("should return an empty array if no data provided", async () => {
+  it("should return an empty array if 'to' is undefined", async () => {
     // GIVEN
-    const transaction = { to: "0x0", data: "0x" } as TransactionContext;
+    const transaction = { to: undefined, data: "0x" } as TransactionContext;
 
     // WHEN
     const result = await loader.load(transaction);

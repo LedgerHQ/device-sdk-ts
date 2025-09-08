@@ -4,6 +4,7 @@ import type {
   TypedDataClearSignContextSuccess,
 } from "@ledgerhq/context-module";
 import {
+  CommandResultFactory,
   DeviceModelId,
   DeviceSessionStateType,
   DeviceStatus,
@@ -139,6 +140,8 @@ describe("BuildEIP712ContextTask", () => {
     },
     trustedNamesAddresses: {},
     tokens: {},
+    calldatas: {},
+    proxy: undefined,
     filters: {
       "details.amount": {
         displayName: "Amount allowance",
@@ -151,11 +154,16 @@ describe("BuildEIP712ContextTask", () => {
     },
   };
 
+  const TEST_CHALLENGE = "0x1234";
+
   beforeEach(() => {
     vi.resetAllMocks();
     getWeb3ChecksFactoryMock.mockReturnValue({
       run: async () => ({ web3Check: null }),
     });
+    apiMock.sendCommand.mockResolvedValue(
+      CommandResultFactory({ data: { challenge: TEST_CHALLENGE } }),
+    );
   });
 
   it("Build context with clear signing context not supported by the device", async () => {
@@ -288,6 +296,8 @@ describe("BuildEIP712ContextTask", () => {
       chainId: 137,
       version: "v2",
       schema: TEST_DATA["types"],
+      challenge: TEST_CHALLENGE,
+      deviceModelId: DeviceModelId.FLEX,
       fieldsValues: [
         {
           path: "details.amount",
@@ -389,6 +399,8 @@ describe("BuildEIP712ContextTask", () => {
       chainId: 137,
       version: "v1",
       schema: TEST_DATA["types"],
+      challenge: TEST_CHALLENGE,
+      deviceModelId: DeviceModelId.FLEX,
       fieldsValues: [
         {
           path: "details.amount",

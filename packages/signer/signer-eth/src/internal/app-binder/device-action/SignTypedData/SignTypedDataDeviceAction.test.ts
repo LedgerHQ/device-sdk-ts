@@ -80,6 +80,8 @@ describe("SignTypedDataDeviceAction", () => {
       },
       trustedNamesAddresses: {},
       tokens: {},
+      calldatas: {},
+      proxy: undefined,
       filters: {
         "details.amount": {
           displayName: "Amount allowance",

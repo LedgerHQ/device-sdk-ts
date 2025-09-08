@@ -1,5 +1,6 @@
 import {
   type ContextModule,
+  TypedDataCalldataParamPresence,
   type TypedDataClearSignContextSuccess,
   type TypedDataFilter,
   type TypedDataTokenIndex,
@@ -17,17 +18,18 @@ import type {
 import {
   bufferToHexaString,
   CommandResultFactory,
-  InvalidStatusWordError,
   isSuccessCommandResult,
   LoadCertificateCommand,
 } from "@ledgerhq/device-management-kit";
 import { Just, Maybe, Nothing } from "purify-ts";
 
 import { GetChallengeCommand } from "@internal/app-binder/command/GetChallengeCommand";
+import { ProvideProxyInfoCommand } from "@internal/app-binder/command/ProvideProxyInfoCommand";
 import { ProvideTokenInformationCommand } from "@internal/app-binder/command/ProvideTokenInformationCommand";
 import { ProvideTrustedNameCommand } from "@internal/app-binder/command/ProvideTrustedNameCommand";
 import { ProvideWeb3CheckCommand } from "@internal/app-binder/command/ProvideWeb3CheckCommand";
 import {
+  CalldataParamPresence,
   Eip712FilterType,
   SendEIP712FilteringCommand,
 } from "@internal/app-binder/command/SendEIP712FilteringCommand";
@@ -73,6 +75,7 @@ type DeviceAssetIndexes = {
 
 export class ProvideEIP712ContextTask {
   private chainId: Maybe<number> = Nothing;
+  private providedCalldataInfos = [] as number[];
 
   constructor(
     private api: InternalApi,
@@ -96,22 +99,15 @@ export class ProvideEIP712ContextTask {
   async run(): ProvideEIP712ContextTaskReturnType {
     // Send message simulation first
     if (this.args.web3Check) {
-      if (this.args.web3Check.certificate) {
-        await this.api.sendCommand(
-          new LoadCertificateCommand({
-            keyUsage: this.args.web3Check.certificate.keyUsageNumber,
-            certificate: this.args.web3Check.certificate.payload,
-          }),
-        );
+      this.provideContext(this.args.web3Check);
+    }
+
+    // Send proxy descriptor first if required
+    if (this.args.clearSignContext.isJust()) {
+      const proxy = this.args.clearSignContext.extract().proxy;
+      if (proxy !== undefined) {
+        this.provideContext(proxy);
       }
-      await new SendPayloadInChunksTask(this.api, {
-        payload: this.args.web3Check.payload,
-        commandFactory: (args) =>
-          new ProvideWeb3CheckCommand({
-            payload: args.chunkedData,
-            isFirstChunk: args.isFirstChunk,
-          }),
-      }).run();
     }
 
     const result: CommandResult<AllSuccessTypes, EthErrorCodes> =
@@ -262,6 +258,47 @@ export class ProvideEIP712ContextTask {
     }
 
     return result;
+  }
+
+  async provideContext({
+    type,
+    payload,
+    certificate,
+  }: ClearSignContextSuccess) {
+    // if a certificate is provided, we load it before sending the command
+    if (certificate) {
+      await this.api.sendCommand(
+        new LoadCertificateCommand({
+          keyUsage: certificate.keyUsageNumber,
+          certificate: certificate.payload,
+        }),
+      );
+    }
+
+    switch (type) {
+      case ClearSignContextType.WEB3_CHECK:
+        await new SendPayloadInChunksTask(this.api, {
+          payload,
+          commandFactory: (args) =>
+            new ProvideWeb3CheckCommand({
+              payload: args.chunkedData,
+              isFirstChunk: args.isFirstChunk,
+            }),
+        }).run();
+        break;
+      case ClearSignContextType.PROXY_DELEGATE_CALL:
+        await new SendPayloadInChunksTask(this.api, {
+          payload,
+          commandFactory: (args) =>
+            new ProvideProxyInfoCommand({
+              data: args.chunkedData,
+              isFirstChunk: args.isFirstChunk,
+            }),
+        }).run();
+        break;
+      default:
+        throw new Error(`Unhandled context type ${type}`);
+    }
   }
 
   getImplementationTask(value: TypedDataValue): SendEIP712StructImplemTask {
@@ -455,12 +492,131 @@ export class ProvideEIP712ContextTask {
             signature: filter.signature,
           }),
         );
-      default:
-        return CommandResultFactory<AllSuccessTypes, EthErrorCodes>({
-          error: new InvalidStatusWordError(
-            "ProvideEIP712ContextTask/provideFiltering - Unhandled filter type",
-          ),
-        });
+      case "calldata-value":
+        await this.provideCalldataInfos(filter.calldataIndex);
+        return await this.api.sendCommand(
+          new SendEIP712FilteringCommand({
+            type: Eip712FilterType.CalldataValue,
+            discarded,
+            calldataIndex: filter.calldataIndex,
+            signature: filter.signature,
+          }),
+        );
+      case "calldata-callee":
+        await this.provideCalldataInfos(filter.calldataIndex);
+        return await this.api.sendCommand(
+          new SendEIP712FilteringCommand({
+            type: Eip712FilterType.CalldataCallee,
+            discarded,
+            calldataIndex: filter.calldataIndex,
+            signature: filter.signature,
+          }),
+        );
+      case "calldata-spender":
+        await this.provideCalldataInfos(filter.calldataIndex);
+        return await this.api.sendCommand(
+          new SendEIP712FilteringCommand({
+            type: Eip712FilterType.CalldataSpender,
+            discarded,
+            calldataIndex: filter.calldataIndex,
+            signature: filter.signature,
+          }),
+        );
+      case "calldata-chain-id":
+        await this.provideCalldataInfos(filter.calldataIndex);
+        return await this.api.sendCommand(
+          new SendEIP712FilteringCommand({
+            type: Eip712FilterType.CalldataChainId,
+            discarded,
+            calldataIndex: filter.calldataIndex,
+            signature: filter.signature,
+          }),
+        );
+      case "calldata-selector":
+        await this.provideCalldataInfos(filter.calldataIndex);
+        return await this.api.sendCommand(
+          new SendEIP712FilteringCommand({
+            type: Eip712FilterType.CalldataSelector,
+            discarded,
+            calldataIndex: filter.calldataIndex,
+            signature: filter.signature,
+          }),
+        );
+      case "calldata-amount":
+        await this.provideCalldataInfos(filter.calldataIndex);
+        return await this.api.sendCommand(
+          new SendEIP712FilteringCommand({
+            type: Eip712FilterType.CalldataAmount,
+            discarded,
+            calldataIndex: filter.calldataIndex,
+            signature: filter.signature,
+          }),
+        );
+      default: {
+        const unhandledType: never = filter;
+        throw new Error(
+          `ProvideEIP712ContextTask/provideFiltering - Unhandled filter ${unhandledType}`,
+        );
+      }
+    }
+  }
+
+  private async provideCalldataInfos(
+    calldataIndex: number,
+  ): Promise<Maybe<CommandResult<AllSuccessTypes, EthErrorCodes>>> {
+    if (this.args.clearSignContext.isJust()) {
+      // ensure the calldata info was not already provided to the device
+      if (this.providedCalldataInfos.includes(calldataIndex)) {
+        return Nothing;
+      }
+      this.providedCalldataInfos.push(calldataIndex);
+
+      // get the calldata infos
+      const calldataInfos =
+        this.args.clearSignContext.extract().calldatas[calldataIndex];
+      if (calldataInfos === undefined) {
+        return Nothing;
+      }
+
+      // provide the filter
+      return Maybe.of(
+        await this.api.sendCommand(
+          new SendEIP712FilteringCommand({
+            type: Eip712FilterType.CalldataInfo,
+            discarded: false,
+            calldataIndex: calldataIndex,
+            valueFlag: calldataInfos.filter.valueFlag,
+            calleeFlag: this.mapCalldataPresence(
+              calldataInfos.filter.calleeFlag,
+            ),
+            chainIdFlag: calldataInfos.filter.chainIdFlag,
+            selectorFlag: calldataInfos.filter.selectorFlag,
+            amountFlag: calldataInfos.filter.amountFlag,
+            spenderFlag: this.mapCalldataPresence(
+              calldataInfos.filter.spenderFlag,
+            ),
+            signature: calldataInfos.filter.signature,
+          }),
+        ),
+      );
+    }
+    return Nothing;
+  }
+
+  private mapCalldataPresence(
+    presence: TypedDataCalldataParamPresence,
+  ): CalldataParamPresence {
+    switch (presence) {
+      case TypedDataCalldataParamPresence.None:
+        return CalldataParamPresence.None;
+      case TypedDataCalldataParamPresence.Present:
+        return CalldataParamPresence.Present;
+      case TypedDataCalldataParamPresence.VerifyingContract:
+        return CalldataParamPresence.VerifyingContract;
+      default: {
+        const unhandledPresence: never = presence;
+        throw new Error(`Unhandled presence ${unhandledPresence}`);
+      }
     }
   }
 
