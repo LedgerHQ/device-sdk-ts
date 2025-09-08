@@ -171,7 +171,7 @@ export class E2eSpeculosTransport implements Transport {
   }
 }
 
-export const quietSpeculosTransportFactory: (
+export const e2eSpeculosTransportFactory: (
   speculosUrl?: string,
 ) => TransportFactory =
   (speculosUrl = "http://127.0.0.1:5000") =>
