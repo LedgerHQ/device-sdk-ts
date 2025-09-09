@@ -37,7 +37,7 @@ const initialState: SignerEthContextType = {
   signer: null,
   calConfig: {
     url: "https://crypto-assets-service.api.ledger.com/v1",
-    mode: "test",
+    mode: "prod",
     branch: "main",
   },
   web3ChecksConfig: {
