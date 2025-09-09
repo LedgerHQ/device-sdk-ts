@@ -88,8 +88,6 @@ export const SignerSolanaView: React.FC<{ sessionId: string }> = ({
         executeDeviceAction: ({ derivationPath, transaction }) => {
           const serializedTransaction =
             base64StringToBuffer(transaction) ?? new Uint8Array();
-          // Build options object with optional tokenAddress and createATA
-
           return signer.signTransaction(derivationPath, serializedTransaction);
         },
         initialValues: {

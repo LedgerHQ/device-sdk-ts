@@ -99,8 +99,7 @@ describe("SignTransactionDeviceAction (Solana)", () => {
         input: {
           derivationPath: defaultDerivation,
           transaction: exampleTx,
-          skipOpenApp: true, // always skip open
-          options: {},
+          transactionOptions: { skipOpenApp: true },
           contextModule: contextModuleStub,
         } as SignTransactionDAInput,
       });
@@ -192,8 +191,7 @@ describe("SignTransactionDeviceAction (Solana)", () => {
         input: {
           derivationPath: defaultDerivation,
           transaction: exampleTx,
-          skipOpenApp: true,
-          options: {},
+          transactionOptions: { skipOpenApp: true },
           contextModule: contextModuleStub,
         } as SignTransactionDAInput,
       });
@@ -273,8 +271,7 @@ describe("SignTransactionDeviceAction (Solana)", () => {
         input: {
           derivationPath: defaultDerivation,
           transaction: exampleTx,
-          skipOpenApp: true,
-          options: {},
+          transactionOptions: { skipOpenApp: true },
           contextModule: contextModuleStub,
         } as SignTransactionDAInput,
       });

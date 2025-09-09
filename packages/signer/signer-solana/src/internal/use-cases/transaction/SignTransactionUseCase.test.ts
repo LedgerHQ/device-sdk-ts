@@ -28,20 +28,21 @@ describe("GetAppConfigurationUseCase", () => {
     expect(signTransactionMock).toHaveBeenCalledWith({
       derivationPath: "44'/501'/0'/0'",
       transaction: new Uint8Array([0x01, 0x02, 0x03, 0x04]),
-      skipOpenApp: false,
-      options: undefined,
+      solanaTransactionOptions: undefined,
     });
     expect(result).toEqual(new Uint8Array([0x042]));
   });
 
-  it("should forward skipOpenApp and TransactionOptions to appBinder.signTransaction", () => {
+  it("should forward skipOpenApp and TransactionResolutionContext to appBinder.signTransaction", () => {
     // GIVEN
     const derivationPath = "44'/501'/1'/2'";
     const tx = new Uint8Array([0xaa, 0xbb]);
     const opts = {
       skipOpenApp: true,
-      tokenAddress: "someToken",
-      createATA: { address: "someAddress", mintAddress: "mint" },
+      transactionResolutionContext: {
+        tokenAddress: "someToken",
+        createATA: { address: "someAddress", mintAddress: "someMint" },
+      },
     };
 
     // WHEN
@@ -51,7 +52,7 @@ describe("GetAppConfigurationUseCase", () => {
     expect(signTransactionMock).toHaveBeenCalledWith({
       derivationPath,
       transaction: tx,
-      skipOpenApp: true,
+      solanaTransactionOptions: opts,
     });
   });
 });
