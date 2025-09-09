@@ -217,7 +217,7 @@ describe("SolanaAppBinder", () => {
         const { observable } = appBinder.signTransaction({
           derivationPath: "44'/501'",
           transaction: new Uint8Array([0x01, 0x02, 0x03, 0x04]),
-          skipOpenApp: false,
+          solanaTransactionOptions: { skipOpenApp: false },
         });
 
         // THEN
@@ -264,7 +264,7 @@ describe("SolanaAppBinder", () => {
       appBinder.signTransaction({
         derivationPath,
         transaction,
-        skipOpenApp,
+        solanaTransactionOptions: { skipOpenApp: false },
       });
 
       // THEN
@@ -274,7 +274,7 @@ describe("SolanaAppBinder", () => {
           input: {
             derivationPath,
             transaction,
-            skipOpenApp,
+            transactionOptions: { skipOpenApp },
             contextModule: contextModuleStub,
           },
         }),

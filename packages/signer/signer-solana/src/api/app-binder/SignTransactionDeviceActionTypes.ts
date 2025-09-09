@@ -12,6 +12,7 @@ import {
 import { type AppConfiguration } from "@api/model/AppConfiguration";
 import { type Signature } from "@api/model/Signature";
 import { type Transaction } from "@api/model/Transaction";
+import { type SolanaTransactionOptions } from "@api/model/TransactionOptions";
 import { type SolanaAppErrorCodes } from "@internal/app-binder/command/utils/SolanaApplicationErrors";
 import { type TxInspectorResult } from "@internal/app-binder/services/TransactionInspector";
 
@@ -20,7 +21,7 @@ export type SignTransactionDAOutput = Signature;
 export type SignTransactionDAInput = {
   readonly derivationPath: string;
   readonly transaction: Transaction;
-  readonly skipOpenApp: boolean;
+  readonly transactionOptions?: SolanaTransactionOptions;
   readonly contextModule: ContextModule;
 };
 

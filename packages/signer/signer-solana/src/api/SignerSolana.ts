@@ -5,13 +5,13 @@ import { type SignTransactionDAReturnType } from "@api/app-binder/SignTransactio
 import { type AddressOptions } from "@api/model/AddressOption";
 import { type MessageOptions } from "@api/model/MessageOptions";
 import { type Transaction } from "@api/model/Transaction";
-import { type TransactionOptions } from "@api/model/TransactionOptions";
+import { type SolanaTransactionOptions } from "@api/model/TransactionOptions";
 
 export interface SignerSolana {
   signTransaction: (
     derivationPath: string,
     transaction: Transaction,
-    options?: TransactionOptions,
+    solanaTransactionOptions?: SolanaTransactionOptions,
   ) => SignTransactionDAReturnType;
 
   signMessage: (
