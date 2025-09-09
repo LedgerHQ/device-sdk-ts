@@ -41,16 +41,20 @@ type NormalizedCompiledIx = {
 
 type NormalizedMessage = {
   compiledInstructions: NormalizedCompiledIx[];
-  allKeys: PublicKey[];
+  allKeys: PublicKey[]; // may exclude LUT keys if not provided
 };
 
 type LoadedAddresses = { writable: PublicKey[]; readonly: PublicKey[] };
 
 export class TransactionInspector {
   /**
-   * @param rawTransactionBytes - the raw tx bytes (legacy or v0)
+   * @param rawTransactionBytes - raw bytes of the transaction to inspect
+   * @param lookedUpAddresses - optional hydrated LUT keys
    */
-  constructor(private readonly rawTransactionBytes: Uint8Array) {}
+  constructor(
+    private readonly rawTransactionBytes: Uint8Array,
+    private readonly lookedUpAddresses?: LoadedAddresses,
+  ) {}
 
   public inspectTransactionType(): TxInspectorResult {
     try {
@@ -58,16 +62,86 @@ export class TransactionInspector {
 
       for (const ixMeta of message.compiledInstructions) {
         const programId = message.allKeys[ixMeta.programIdIndex];
-        if (!programId) continue;
+        const instructionType = ixMeta.data?.[0];
 
-        // Associated Token Account (ATA) Program: detect ATA creation
-        if (programId.equals(ASSOCIATED_TOKEN_PROGRAM_ID)) {
+        const isTokenProgram =
+          !!programId &&
+          (programId.equals(TOKEN_PROGRAM_ID) ||
+            programId.equals(TOKEN_2022_PROGRAM_ID));
+
+        // exact decode when we know it's the token program (classic or 2022)
+        if (isTokenProgram) {
+          try {
+            const instruction = new TransactionInstruction({
+              programId,
+              keys: ixMeta.accountKeyIndexes.map((i) => {
+                const pk = message.allKeys[i];
+                if (!pk) {
+                  throw new Error(
+                    `TransactionInspector: missing key at index ${i} in allKeys`,
+                  );
+                }
+                return { pubkey: pk, isSigner: false, isWritable: false };
+              }),
+              data: Buffer.from(ixMeta.data),
+            });
+
+            switch (instruction.data[0]) {
+              case TokenInstruction.Transfer: {
+                const {
+                  keys: { destination },
+                } = decodeTransferInstruction(instruction);
+                return {
+                  transactionType: SolanaTransactionTypes.SPL,
+                  data: { tokenAddress: destination.pubkey.toBase58() },
+                };
+              }
+              case TokenInstruction.TransferChecked: {
+                const {
+                  keys: { destination, mint },
+                } = decodeTransferCheckedInstruction(instruction);
+                return {
+                  transactionType: SolanaTransactionTypes.SPL,
+                  data: {
+                    tokenAddress: destination.pubkey.toBase58(),
+                    mintAddress: mint.pubkey.toBase58(),
+                  },
+                };
+              }
+              case TokenInstruction.InitializeAccount: {
+                const {
+                  keys: { account, mint },
+                } = decodeInitializeAccountInstruction(instruction);
+                return {
+                  transactionType: SolanaTransactionTypes.SPL,
+                  data: {
+                    createATA: {
+                      address: account.pubkey.toBase58(),
+                      mintAddress: mint.pubkey.toBase58(),
+                    },
+                  },
+                };
+              }
+              default:
+                // keep scanning
+                break;
+            }
+          } catch {
+            // if the decoder throws, keep scanning other instructions
+          }
+        }
+
+        // detect ATA creation (exact: only when programId is present & matches)
+        if (programId && programId.equals(ASSOCIATED_TOKEN_PROGRAM_ID)) {
           // expected accounts: [payer, ata, owner, mint, systemProgram, tokenProgram, rent?]
-          const accountPks = ixMeta.accountKeyIndexes
-            .map((i) => message.allKeys[i])
-            .filter(Boolean) as PublicKey[];
-          const ataPk = accountPks[1];
-          const mintPk = accountPks[3];
+          const getPk = (idx: number) => {
+            const keyIndex = ixMeta.accountKeyIndexes[idx];
+            return keyIndex !== undefined
+              ? message.allKeys[keyIndex]
+              : undefined;
+          };
+          const ataPk = getPk(1);
+          const mintPk = getPk(3);
           if (ataPk && mintPk) {
             return {
               transactionType: SolanaTransactionTypes.SPL,
@@ -79,83 +153,75 @@ export class TransactionInspector {
               },
             };
           }
-          continue;
         }
 
-        // Token Program (classic or 2022)
-        const isTokenProgram =
-          programId.equals(TOKEN_PROGRAM_ID) ||
-          programId.equals(TOKEN_2022_PROGRAM_ID);
-        if (!isTokenProgram) continue;
+        // fallback when programId is unresolved
+        // map account positions directly and return any addresses that are available in the static set
+        const looksLikeSplOpcode =
+          instructionType === TokenInstruction.Transfer ||
+          instructionType === TokenInstruction.TransferChecked ||
+          instructionType === TokenInstruction.InitializeAccount;
 
-        // minimal TransactionInstruction for the decoders
-        const instruction = new TransactionInstruction({
-          programId,
-          keys: ixMeta.accountKeyIndexes.map((i) => {
-            if (!message.allKeys[i]) {
-              throw new Error(
-                `TransactionInspector: missing key at index ${i} in allKeys`,
-              );
-            }
-            return {
-              pubkey: message.allKeys[i],
-              isSigner: false,
-              isWritable: false,
-            };
-          }),
-          data: Buffer.from(ixMeta.data),
-        });
+        if (!programId && looksLikeSplOpcode) {
+          const keys = ixMeta.accountKeyIndexes;
 
-        const instructionType = instruction.data[0];
+          const keyAt = (pos: number): string | undefined => {
+            const keyIndex = keys[pos];
+            if (keyIndex === undefined) return undefined;
+            const pk = message.allKeys[keyIndex];
+            return pk ? pk.toBase58() : undefined;
+          };
 
-        try {
-          switch (instructionType) {
-            case TokenInstruction.Transfer: {
-              const {
-                keys: { destination },
-              } = decodeTransferInstruction(instruction);
+          if (instructionType === TokenInstruction.Transfer) {
+            // accounts: [source, destination, owner, (...signers)]
+            const destination = keyAt(1);
+            if (destination) {
               return {
                 transactionType: SolanaTransactionTypes.SPL,
-                data: { tokenAddress: destination.pubkey.toBase58() },
+                data: { tokenAddress: destination },
               };
             }
-            case TokenInstruction.TransferChecked: {
-              const {
-                keys: { destination, mint },
-              } = decodeTransferCheckedInstruction(instruction);
+            // if can't resolve any useful address, still mark SPL
+            return { transactionType: SolanaTransactionTypes.SPL, data: {} };
+          }
+
+          if (instructionType === TokenInstruction.TransferChecked) {
+            // accounts: [source, mint, destination, owner, (...signers)]
+            const mint = keyAt(1);
+            const destination = keyAt(2);
+            if (destination || mint) {
               return {
                 transactionType: SolanaTransactionTypes.SPL,
                 data: {
-                  tokenAddress: destination.pubkey.toBase58(),
-                  mintAddress: mint.pubkey.toBase58(),
+                  ...(destination ? { tokenAddress: destination } : {}),
+                  ...(mint ? { mintAddress: mint } : {}),
                 },
               };
             }
-            case TokenInstruction.InitializeAccount: {
-              // InitializeAccount != ATA creation, ATA is via the Associated Token Account Program above.
-              const {
-                keys: { account, mint },
-              } = decodeInitializeAccountInstruction(instruction);
+            return { transactionType: SolanaTransactionTypes.SPL, data: {} };
+          }
+
+          if (instructionType === TokenInstruction.InitializeAccount) {
+            // accounts: [account, mint, owner, rent]
+            const account = keyAt(0);
+            const mint = keyAt(1);
+            if (account || mint) {
               return {
                 transactionType: SolanaTransactionTypes.SPL,
                 data: {
                   createATA: {
-                    address: account.pubkey.toBase58(),
-                    mintAddress: mint.pubkey.toBase58(),
+                    address: account ?? "",
+                    mintAddress: mint ?? "",
                   },
                 },
               };
             }
-            default:
-              // not a token instruction we care about—keep scanning.
-              break;
+            return { transactionType: SolanaTransactionTypes.SPL, data: {} };
           }
-        } catch {
-          // if a decoder throws (bad match), keep scanning other instructions.
-          continue;
         }
       }
 
+      // nothing matched
       return { transactionType: SolanaTransactionTypes.STANDARD, data: {} };
     } catch {
       return { transactionType: SolanaTransactionTypes.STANDARD, data: {} };
@@ -163,8 +229,8 @@ export class TransactionInspector {
   }
 
   /**
-   * normalise any tx (legacy or v0) into { compiledInstructions, allKeys }.
-   * if LUT accounts are provided, looked-up keys are included in allKeys.
+   * normalize legacy or v0 messages into { compiledInstructions, allKeys }.
+   * if `lookedUpAddresses` is provided, it will be included; otherwise only static keys are present.
    */
   private normaliseMessage(rawBytes: Uint8Array): NormalizedMessage {
     const vtx = this.tryDeserialiseVersioned(rawBytes);
@@ -186,13 +252,14 @@ export class TransactionInspector {
         staticAccountKeys: PublicKey[];
       };
 
-      // build the full key array in the exact index order used by compiledInstructions
+      // build key list in the exact index order used by compiledInstructions.
       let allKeys: PublicKey[];
       if (typeof msg.getAccountKeys === "function") {
-        const mak = msg.getAccountKeys();
-        allKeys = mak.keySegments().flat();
+        const mak = msg.getAccountKeys({
+          accountKeysFromLookups: this.lookedUpAddresses, // may be undefined
+        });
+        allKeys = mak.keySegments().flat(); // static + (optionally) looked-up, in correct order
       } else {
-        // very old builds: fall back to concatenation (same order)
         allKeys = [...msg.staticAccountKeys];
       }
 
@@ -247,7 +314,6 @@ export class TransactionInspector {
     } catch {
       try {
         const msg = VersionedMessage.deserialize(rawBytes);
-        // wrap in a dummy VersionedTransaction-like shape just for uniform handling
         return { message: msg } as VersionedTransaction;
       } catch {
         return null;
