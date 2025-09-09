@@ -45,6 +45,8 @@ import { managerApiTypes } from "@internal/manager-api/di/managerApiTypes";
 import { type SetProviderUseCase } from "@internal/manager-api/use-case/SetProviderUseCase";
 import { sendTypes } from "@internal/send/di/sendTypes";
 import { type SendApduUseCase } from "@internal/send/use-case/SendApduUseCase";
+import { transportDiTypes } from "@internal/transport/di/transportDiTypes";
+import { type TransportService } from "@internal/transport/service/TransportService";
 import { makeContainer, type MakeContainerProps } from "@root/src/di";
 
 import {
@@ -305,5 +307,15 @@ export class DeviceManagementKit {
     return this.container
       .get<ManagerApiDataSource>(managerApiTypes.ManagerApiDataSource)
       .getProvider();
+  }
+
+  /**
+   * Check if the current environment is supported by any transport.
+   */
+  isEnvironmentSupported(): boolean {
+    return this.container
+      .get<TransportService>(transportDiTypes.TransportService)
+      .getAllTransports()
+      .some((transport) => transport.isSupported());
   }
 }
