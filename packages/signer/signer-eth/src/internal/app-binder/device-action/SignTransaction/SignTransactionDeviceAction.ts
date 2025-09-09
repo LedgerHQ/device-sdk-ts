@@ -13,6 +13,7 @@ import {
 import { Left, Right } from "purify-ts";
 import { and, assign, fromPromise, setup } from "xstate";
 
+import { type GetAddressCommandArgs } from "@api/app-binder/GetAddressCommandTypes";
 import { type GetConfigCommandResponse } from "@api/app-binder/GetConfigCommandTypes";
 import {
   type SignTransactionDAError,
@@ -22,9 +23,11 @@ import {
   type SignTransactionDAOutput,
   SignTransactionDAStep,
 } from "@api/app-binder/SignTransactionDeviceActionTypes";
+import { type Address } from "@api/model/Address";
 import { type ClearSigningType } from "@api/model/ClearSigningType";
 import { type Signature } from "@api/model/Signature";
 import { type TransactionType } from "@api/model/TransactionType";
+import { GetAddressCommand } from "@internal/app-binder/command/GetAddressCommand";
 import { GetAppConfiguration } from "@internal/app-binder/command/GetAppConfigurationCommand";
 import { type EthErrorCodes } from "@internal/app-binder/command/utils/ethAppErrors";
 import {
@@ -50,6 +53,9 @@ import { SendSignTransactionTask } from "@internal/app-binder/task/SendSignTrans
 import { ApplicationChecker } from "@internal/shared/utils/ApplicationChecker";
 
 export type MachineDependencies = {
+  readonly getAddress: (arg0: {
+    input: GetAddressCommandArgs;
+  }) => Promise<CommandResult<Address, EthErrorCodes>>;
   readonly getAppConfig: () => Promise<
     CommandResult<GetConfigCommandResponse, EthErrorCodes>
   >;
@@ -101,6 +107,7 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
     >;
 
     const {
+      getAddress,
       getAppConfig,
       web3CheckOptIn,
       parseTransaction,
@@ -119,6 +126,7 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
         openAppStateMachine: new OpenAppDeviceAction({
           input: { appName: "Ethereum" },
         }).makeStateMachine(internalApi),
+        getAddress: fromPromise(getAddress),
         getAppConfig: fromPromise(getAppConfig),
         web3CheckOptIn: fromPromise(web3CheckOptIn),
         parseTransaction: fromPromise(parseTransaction),
@@ -345,7 +353,7 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
               transaction: context.input.transaction,
             }),
             onDone: {
-              target: "BuildContexts",
+              target: "GetAddress",
               actions: assign({
                 _internalState: ({ event, context }) => ({
                   ...context._internalState,
@@ -357,6 +365,45 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
             onError: {
               target: "Error",
               actions: "assignErrorFromEvent",
+            },
+          },
+        },
+        GetAddress: {
+          entry: assign({
+            intermediateValue: {
+              requiredUserInteraction: UserInteractionRequired.None,
+              step: SignTransactionDAStep.GET_ADDRESS,
+            },
+          }),
+          invoke: {
+            id: "getAddress",
+            src: "getAddress",
+            input: ({ context }) => ({
+              derivationPath: context.input.derivationPath,
+              checkOnDevice: false,
+              returnChainCode: false,
+            }),
+            onDone: {
+              target: "BuildContexts",
+              actions: assign({
+                _internalState: ({ event, context }) => {
+                  if (isSuccessCommandResult(event.output)) {
+                    return {
+                      ...context._internalState,
+                      subset: {
+                        ...context._internalState.subset!,
+                        from: event.output.data.address,
+                      },
+                    };
+                  }
+                  return {
+                    ...context._internalState,
+                  };
+                },
+              }),
+            },
+            onError: {
+              target: "BuildContexts",
             },
           },
         },
@@ -498,6 +545,8 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
   }
 
   extractDependencies(internalApi: InternalApi): MachineDependencies {
+    const getAddress = async (arg0: { input: GetAddressCommandArgs }) =>
+      internalApi.sendCommand(new GetAddressCommand(arg0.input));
     const getAppConfig = async () =>
       internalApi.sendCommand(new GetAppConfiguration());
     const web3CheckOptIn = async () =>
@@ -534,6 +583,7 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
       }).run();
 
     return {
+      getAddress,
       getAppConfig,
       web3CheckOptIn,
       parseTransaction,

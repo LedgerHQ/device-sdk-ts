@@ -27,6 +27,7 @@ export enum SignTransactionDAStep {
   WEB3_CHECKS_OPT_IN = "signer.eth.steps.web3ChecksOptIn",
   WEB3_CHECKS_OPT_IN_RESULT = "signer.eth.steps.web3ChecksOptInResult",
   PARSE_TRANSACTION = "signer.eth.steps.parseTransaction",
+  GET_ADDRESS = "signer.eth.steps.getAddress",
   BUILD_CONTEXTS = "signer.eth.steps.buildContexts",
   PROVIDE_CONTEXTS = "signer.eth.steps.provideContexts",
   SIGN_TRANSACTION = "signer.eth.steps.signTransaction",

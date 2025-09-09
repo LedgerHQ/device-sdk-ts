@@ -7,6 +7,7 @@ import {
   type TransactionSubset,
 } from "@ledgerhq/context-module";
 import {
+  bufferToHexaString,
   DeviceModelId,
   type DeviceSessionState,
   type InternalApi,
@@ -17,10 +18,6 @@ import { type GetConfigCommandResponse } from "@api/app-binder/GetConfigCommandT
 import { ClearSigningType } from "@api/model/ClearSigningType";
 import { type TransactionOptions } from "@api/model/TransactionOptions";
 import { GetChallengeCommand } from "@internal/app-binder/command/GetChallengeCommand";
-import {
-  GetWeb3CheckTask,
-  type GetWeb3CheckTaskArgs,
-} from "@internal/app-binder/task/GetWeb3CheckTask";
 import { ApplicationChecker } from "@internal/shared/utils/ApplicationChecker";
 
 export type BuildBaseContextsResult = {
@@ -42,7 +39,6 @@ export type BuildBaseContextsArgs = {
  * Builds the base contexts for a transaction
  * @param api - The internal API
  * @param args - The arguments for the build
- * @param getWeb3ChecksFactory - The factory for the web3 checks
  *
  * returns the base contexts for a transaction, without subcontexts or nested call data contexts
  */
@@ -50,41 +46,16 @@ export class BuildBaseContexts {
   constructor(
     private readonly _api: InternalApi,
     private readonly _args: BuildBaseContextsArgs,
-    private readonly getWeb3ChecksFactory = (
-      api: InternalApi,
-      args: GetWeb3CheckTaskArgs,
-    ) => new GetWeb3CheckTask(api, args),
   ) {}
 
   async run(): Promise<BuildBaseContextsResult> {
-    const {
-      contextModule,
-      options,
-      appConfig,
-      derivationPath,
-      transaction,
-      subset,
-    } = this._args;
+    const { contextModule, options, appConfig, transaction, subset } =
+      this._args;
     const deviceState = this._api.getDeviceSessionState();
+
     let filteredContexts: ClearSignContextSuccess[] = [];
     let filteredContextOptional: ClearSignContextSuccess[] = [];
     let clearSigningType: ClearSigningType = ClearSigningType.BASIC;
-    let web3Check: ClearSignContextSuccess<ClearSignContextType.WEB3_CHECK> | null =
-      null;
-
-    // Run the web3checks if needed
-    if (transaction) {
-      if (appConfig.web3ChecksEnabled) {
-        web3Check = (
-          await this.getWeb3ChecksFactory(this._api, {
-            contextModule,
-            derivationPath,
-            subset,
-            transaction,
-          }).run()
-        ).web3Check;
-      }
-    }
 
     // Get challenge (not supported on Nano S)
     let challenge: string | undefined = undefined;
@@ -103,6 +74,10 @@ export class BuildBaseContexts {
         challenge: challenge,
         domain: options.domain,
         deviceModelId: deviceState.deviceModelId,
+        rawTx:
+          appConfig.web3ChecksEnabled && transaction
+            ? bufferToHexaString(transaction)
+            : undefined, // If transaction check is not enabled, don't pass the raw tx
         ...subset,
       });
 
@@ -115,6 +90,10 @@ export class BuildBaseContexts {
       (context) =>
         context.type !== ClearSignContextType.ERROR &&
         context.type !== ClearSignContextType.ENUM,
+    );
+
+    const transactionCheck = clearSignContextsSuccess.find(
+      (ctx) => ctx.type === ClearSignContextType.TRANSACTION_CHECK,
     );
 
     // Retrieve all ENUM contexts
@@ -139,11 +118,6 @@ export class BuildBaseContexts {
           ctx.type !== ClearSignContextType.TRANSACTION_INFO &&
           ctx.type !== ClearSignContextType.TRANSACTION_FIELD_DESCRIPTION,
       );
-
-      // If the device supports the web3 check, we need to add it to the list of contexts
-      if (web3Check) {
-        filteredContexts = [web3Check, ...filteredContexts];
-      }
     } else if (transactionInfo.certificate) {
       const transactionFields = clearSignContextsSuccess.filter(
         (ctx) =>
@@ -163,7 +137,7 @@ export class BuildBaseContexts {
         ...proxyContexts,
         transactionInfo,
         ...transactionFields,
-        ...(web3Check ? [web3Check] : []),
+        ...(transactionCheck ? [transactionCheck] : []),
       ];
       filteredContextOptional = [...transactionEnums];
       clearSigningType = ClearSigningType.EIP7730;

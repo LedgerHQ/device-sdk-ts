@@ -1,7 +1,7 @@
 import {
   type ClearSignContext,
-  type ClearSignContextSuccess,
   ClearSignContextType,
+  type ContextModule,
   type PkiCertificate,
 } from "@ledgerhq/context-module";
 import {
@@ -22,15 +22,11 @@ import {
   BuildBaseContexts,
   type BuildBaseContextsArgs,
 } from "./BuildBaseContexts";
-import { GetWeb3CheckTask } from "./GetWeb3CheckTask";
 
 describe("BuildBaseContexts", () => {
   const contextModuleMock = {
     getFieldContext: vi.fn(),
     getContexts: vi.fn(),
-    getTypedDataFilters: vi.fn(),
-    getWeb3Checks: vi.fn(),
-    getSolanaContext: vi.fn(),
   };
   const defaultOptions = {
     domain: "domain-name.eth",
@@ -49,7 +45,6 @@ describe("BuildBaseContexts", () => {
 
   let defaultArgs: BuildBaseContextsArgs;
   const apiMock = makeDeviceActionInternalApiMock();
-  const getWeb3ChecksFactoryMock = vi.fn();
 
   function createAppConfig(
     web3ChecksEnabled: boolean,
@@ -67,34 +62,21 @@ describe("BuildBaseContexts", () => {
     apiMock.sendCommand.mockResolvedValue(
       CommandResultFactory({ data: { challenge: "challenge" } }),
     );
-    getWeb3ChecksFactoryMock.mockReturnValue({
-      run: async () => Promise.resolve({ web3Check: null }),
-    });
 
     defaultArgs = {
-      contextModule: contextModuleMock,
-      subset: { chainId: 1, to: undefined, data: "0x", selector: "0x" },
+      contextModule: contextModuleMock as unknown as ContextModule,
+      subset: {
+        chainId: 1,
+        to: undefined,
+        data: "0x",
+        selector: "0x",
+        from: "0x",
+      },
       transaction: defaultTransaction,
       options: defaultOptions,
       appConfig: createAppConfig(false),
       derivationPath: "44'/60'/0'/0/0",
     };
-  });
-
-  it("should init with a default GetWeb3CheckTaskFactory", () => {
-    // GIVEN
-    const task = new BuildBaseContexts(apiMock, defaultArgs);
-
-    // THEN
-    expect(task["getWeb3ChecksFactory"]).toBeDefined();
-    expect(
-      task["getWeb3ChecksFactory"](apiMock, {
-        contextModule: defaultArgs.contextModule,
-        derivationPath: defaultArgs.derivationPath,
-        subset: defaultArgs.subset,
-        transaction: defaultArgs.transaction!,
-      }),
-    ).toBeInstanceOf(GetWeb3CheckTask);
   });
 
   it("should build the transaction context without clear sign contexts", async () => {
@@ -112,11 +94,10 @@ describe("BuildBaseContexts", () => {
     });
 
     // WHEN
-    const result = await new BuildBaseContexts(
-      apiMock,
-      { ...defaultArgs, appConfig: createAppConfig(true) },
-      getWeb3ChecksFactoryMock,
-    ).run();
+    const result = await new BuildBaseContexts(apiMock, {
+      ...defaultArgs,
+      appConfig: createAppConfig(true),
+    }).run();
 
     // THEN
     expect(result).toEqual({
@@ -126,41 +107,7 @@ describe("BuildBaseContexts", () => {
     });
   });
 
-  it("should build the transaction context with web3checks", async () => {
-    // GIVEN
-    const clearSignContexts: ClearSignContext[] = [];
-    const clearSignContextsOptional: ClearSignContext[] = [];
-    const expectedWeb3Check =
-      "web3Check" as unknown as ClearSignContextSuccess<ClearSignContextType.WEB3_CHECK>;
-    getWeb3ChecksFactoryMock.mockReturnValueOnce({
-      run: async () => Promise.resolve({ web3Check: expectedWeb3Check }),
-    });
-    contextModuleMock.getContexts.mockResolvedValueOnce(clearSignContexts);
-    apiMock.getDeviceSessionState.mockReturnValueOnce({
-      sessionStateType: DeviceSessionStateType.ReadyWithoutSecureChannel,
-      deviceStatus: DeviceStatus.CONNECTED,
-      installedApps: [],
-      currentApp: { name: "Ethereum", version: "1.12.0" },
-      deviceModelId: DeviceModelId.FLEX,
-      isSecureConnectionAllowed: false,
-    });
-
-    // WHEN
-    const result = await new BuildBaseContexts(
-      apiMock,
-      { ...defaultArgs, appConfig: createAppConfig(true) },
-      getWeb3ChecksFactoryMock,
-    ).run();
-
-    // THEN
-    expect(result).toEqual({
-      clearSignContexts: [expectedWeb3Check, ...clearSignContexts],
-      clearSignContextsOptional,
-      clearSigningType: ClearSigningType.BASIC,
-    });
-  });
-
-  it("should build the transaction context with web3checks and generic-parser clear sign contexts", async () => {
+  it("should build the transaction context with transaction check and generic-parser clear sign contexts", async () => {
     // GIVEN
     const clearSignContexts: ClearSignContext[] = [
       {
@@ -183,12 +130,12 @@ describe("BuildBaseContexts", () => {
         type: ClearSignContextType.TRANSACTION_FIELD_DESCRIPTION,
         payload: "payload-4",
       },
+      {
+        type: ClearSignContextType.TRANSACTION_CHECK,
+        payload: "payload-5",
+        certificate: defaultCertificate,
+      },
     ];
-    const expectedWeb3Check =
-      "web3Check" as unknown as ClearSignContextSuccess<ClearSignContextType.WEB3_CHECK>;
-    getWeb3ChecksFactoryMock.mockReturnValueOnce({
-      run: async () => Promise.resolve({ web3Check: expectedWeb3Check }),
-    });
     contextModuleMock.getContexts.mockResolvedValueOnce(clearSignContexts);
     apiMock.getDeviceSessionState.mockReturnValueOnce({
       sessionStateType: DeviceSessionStateType.ReadyWithoutSecureChannel,
@@ -200,11 +147,10 @@ describe("BuildBaseContexts", () => {
     });
 
     // WHEN
-    const result = await new BuildBaseContexts(
-      apiMock,
-      { ...defaultArgs, appConfig: createAppConfig(true) },
-      getWeb3ChecksFactoryMock,
-    ).run();
+    const result = await new BuildBaseContexts(apiMock, {
+      ...defaultArgs,
+      appConfig: createAppConfig(true),
+    }).run();
 
     // THEN
     expect(result).toEqual({
@@ -212,7 +158,7 @@ describe("BuildBaseContexts", () => {
         clearSignContexts[0],
         clearSignContexts[1],
         clearSignContexts[3],
-        expectedWeb3Check,
+        clearSignContexts[4],
       ],
       clearSignContextsOptional: [clearSignContexts[2]],
       clearSigningType: ClearSigningType.EIP7730,
@@ -242,12 +188,12 @@ describe("BuildBaseContexts", () => {
         payload: "payload-1",
         certificate: defaultCertificate,
       },
+      {
+        type: ClearSignContextType.TRANSACTION_CHECK,
+        payload: "payload-5",
+        certificate: defaultCertificate,
+      },
     ];
-    const expectedWeb3Check =
-      "web3Check" as unknown as ClearSignContextSuccess<ClearSignContextType.WEB3_CHECK>;
-    getWeb3ChecksFactoryMock.mockReturnValueOnce({
-      run: async () => Promise.resolve({ web3Check: expectedWeb3Check }),
-    });
     contextModuleMock.getContexts.mockResolvedValueOnce(clearSignContexts);
     apiMock.getDeviceSessionState.mockReturnValueOnce({
       sessionStateType: DeviceSessionStateType.ReadyWithoutSecureChannel,
@@ -259,11 +205,10 @@ describe("BuildBaseContexts", () => {
     });
 
     // WHEN
-    const result = await new BuildBaseContexts(
-      apiMock,
-      { ...defaultArgs, appConfig: createAppConfig(true) },
-      getWeb3ChecksFactoryMock,
-    ).run();
+    const result = await new BuildBaseContexts(apiMock, {
+      ...defaultArgs,
+      appConfig: createAppConfig(true),
+    }).run();
 
     // THEN
     expect(result).toEqual({
@@ -271,7 +216,7 @@ describe("BuildBaseContexts", () => {
         clearSignContexts[3], // transaction info
         clearSignContexts[1], // transaction field description
         clearSignContexts[2], // transaction field description
-        expectedWeb3Check, // web3 check
+        clearSignContexts[4], // transaction check
       ],
       clearSignContextsOptional: [clearSignContexts[0]], // enum
       clearSigningType: ClearSigningType.EIP7730,
@@ -289,12 +234,12 @@ describe("BuildBaseContexts", () => {
         type: ClearSignContextType.NFT,
         payload: "payload-2",
       },
+      {
+        type: ClearSignContextType.TRANSACTION_CHECK,
+        payload: "payload-3",
+        certificate: defaultCertificate,
+      },
     ];
-    const expectedWeb3Check =
-      "web3Check" as unknown as ClearSignContextSuccess<ClearSignContextType.WEB3_CHECK>;
-    getWeb3ChecksFactoryMock.mockReturnValueOnce({
-      run: async () => Promise.resolve({ web3Check: expectedWeb3Check }),
-    });
     contextModuleMock.getContexts.mockResolvedValueOnce(clearSignContexts);
     apiMock.getDeviceSessionState.mockReturnValueOnce({
       sessionStateType: DeviceSessionStateType.ReadyWithoutSecureChannel,
@@ -306,11 +251,7 @@ describe("BuildBaseContexts", () => {
     });
 
     // WHEN
-    const result = await new BuildBaseContexts(
-      apiMock,
-      defaultArgs,
-      getWeb3ChecksFactoryMock,
-    ).run();
+    const result = await new BuildBaseContexts(apiMock, defaultArgs).run();
 
     // THEN
     expect(result).toEqual({
@@ -355,11 +296,7 @@ describe("BuildBaseContexts", () => {
     });
 
     // WHEN
-    const result = await new BuildBaseContexts(
-      apiMock,
-      defaultArgs,
-      getWeb3ChecksFactoryMock,
-    ).run();
+    const result = await new BuildBaseContexts(apiMock, defaultArgs).run();
 
     // THEN
     expect(result).toEqual({
@@ -398,11 +335,7 @@ describe("BuildBaseContexts", () => {
     });
 
     // WHEN
-    const result = await new BuildBaseContexts(
-      apiMock,
-      defaultArgs,
-      getWeb3ChecksFactoryMock,
-    ).run();
+    const result = await new BuildBaseContexts(apiMock, defaultArgs).run();
 
     // THEN
     expect(result).toEqual({
@@ -412,7 +345,7 @@ describe("BuildBaseContexts", () => {
     });
   });
 
-  it("should call the web3checks factory with correct parameters", async () => {
+  it("should call the context module with the correct parameters with raw tx if supported transaction check", async () => {
     // GIVEN
     const clearSignContexts: ClearSignContext[] = [];
     contextModuleMock.getContexts.mockResolvedValueOnce(clearSignContexts);
@@ -420,46 +353,16 @@ describe("BuildBaseContexts", () => {
       sessionStateType: DeviceSessionStateType.ReadyWithoutSecureChannel,
       deviceStatus: DeviceStatus.CONNECTED,
       installedApps: [],
-      currentApp: { name: "Ethereum", version: "1.12.0" },
+      currentApp: { name: "Ethereum", version: "1.18.0" },
       deviceModelId: DeviceModelId.FLEX,
       isSecureConnectionAllowed: false,
     });
 
     // WHEN
-    await new BuildBaseContexts(
-      apiMock,
-      { ...defaultArgs, appConfig: createAppConfig(true) },
-      getWeb3ChecksFactoryMock,
-    ).run();
-
-    // THEN
-    expect(getWeb3ChecksFactoryMock).toHaveBeenCalledWith(apiMock, {
-      contextModule: contextModuleMock,
-      derivationPath: "44'/60'/0'/0/0",
-      subset: defaultArgs.subset,
-      transaction: defaultTransaction,
-    });
-  });
-
-  it("should call the context module with the correct parameters", async () => {
-    // GIVEN
-    const clearSignContexts: ClearSignContext[] = [];
-    contextModuleMock.getContexts.mockResolvedValueOnce(clearSignContexts);
-    apiMock.getDeviceSessionState.mockReturnValueOnce({
-      sessionStateType: DeviceSessionStateType.ReadyWithoutSecureChannel,
-      deviceStatus: DeviceStatus.CONNECTED,
-      installedApps: [],
-      currentApp: { name: "Ethereum", version: "1.12.0" },
-      deviceModelId: DeviceModelId.FLEX,
-      isSecureConnectionAllowed: false,
-    });
-
-    // WHEN
-    await new BuildBaseContexts(
-      apiMock,
-      defaultArgs,
-      getWeb3ChecksFactoryMock,
-    ).run();
+    await new BuildBaseContexts(apiMock, {
+      ...defaultArgs,
+      appConfig: createAppConfig(true),
+    }).run();
 
     // THEN
     expect(contextModuleMock.getContexts).toHaveBeenCalledWith({
@@ -467,6 +370,65 @@ describe("BuildBaseContexts", () => {
       challenge: "challenge",
       domain: "domain-name.eth",
       ...defaultArgs.subset,
+      rawTx: "0x02c90180808080808080c0",
+    });
+  });
+
+  it("should call the context module with the correct parameters with raw tx if config does not support transaction check", async () => {
+    // GIVEN
+    const clearSignContexts: ClearSignContext[] = [];
+    contextModuleMock.getContexts.mockResolvedValueOnce(clearSignContexts);
+    apiMock.getDeviceSessionState.mockReturnValueOnce({
+      sessionStateType: DeviceSessionStateType.ReadyWithoutSecureChannel,
+      deviceStatus: DeviceStatus.CONNECTED,
+      installedApps: [],
+      currentApp: { name: "Ethereum", version: "1.18.0" },
+      deviceModelId: DeviceModelId.FLEX,
+      isSecureConnectionAllowed: false,
+    });
+
+    // WHEN
+    await new BuildBaseContexts(apiMock, {
+      ...defaultArgs,
+      appConfig: createAppConfig(false),
+    }).run();
+
+    // THEN
+    expect(contextModuleMock.getContexts).toHaveBeenCalledWith({
+      deviceModelId: DeviceModelId.FLEX,
+      challenge: "challenge",
+      domain: "domain-name.eth",
+      ...defaultArgs.subset,
+      rawTx: undefined,
+    });
+  });
+
+  it("should call the context module with the correct parameters with raw tx undefined if transaction is undefined", async () => {
+    // GIVEN
+    const clearSignContexts: ClearSignContext[] = [];
+    contextModuleMock.getContexts.mockResolvedValueOnce(clearSignContexts);
+    apiMock.getDeviceSessionState.mockReturnValueOnce({
+      sessionStateType: DeviceSessionStateType.ReadyWithoutSecureChannel,
+      deviceStatus: DeviceStatus.CONNECTED,
+      installedApps: [],
+      currentApp: { name: "Ethereum", version: "1.18.0" },
+      deviceModelId: DeviceModelId.FLEX,
+      isSecureConnectionAllowed: false,
+    });
+
+    // WHEN
+    await new BuildBaseContexts(apiMock, {
+      ...defaultArgs,
+      transaction: undefined,
+    }).run();
+
+    // THEN
+    expect(contextModuleMock.getContexts).toHaveBeenCalledWith({
+      deviceModelId: DeviceModelId.FLEX,
+      challenge: "challenge",
+      domain: "domain-name.eth",
+      ...defaultArgs.subset,
+      rawTx: undefined,
     });
   });
 
@@ -484,11 +446,7 @@ describe("BuildBaseContexts", () => {
     });
 
     // WHEN
-    await new BuildBaseContexts(
-      apiMock,
-      defaultArgs,
-      getWeb3ChecksFactoryMock,
-    ).run();
+    await new BuildBaseContexts(apiMock, defaultArgs).run();
 
     // THEN
     expect(contextModuleMock.getContexts).toHaveBeenCalledWith({
@@ -515,11 +473,7 @@ describe("BuildBaseContexts", () => {
     );
 
     // WHEN
-    await new BuildBaseContexts(
-      apiMock,
-      defaultArgs,
-      getWeb3ChecksFactoryMock,
-    ).run();
+    await new BuildBaseContexts(apiMock, defaultArgs).run();
 
     // THEN
     expect(contextModuleMock.getContexts).toHaveBeenCalledWith({
@@ -561,11 +515,7 @@ describe("BuildBaseContexts", () => {
     });
 
     // WHEN
-    const result = await new BuildBaseContexts(
-      apiMock,
-      defaultArgs,
-      getWeb3ChecksFactoryMock,
-    ).run();
+    const result = await new BuildBaseContexts(apiMock, defaultArgs).run();
 
     // THEN
     expect(result).toEqual({
@@ -614,11 +564,7 @@ describe("BuildBaseContexts", () => {
     });
 
     // WHEN
-    const result = await new BuildBaseContexts(
-      apiMock,
-      defaultArgs,
-      getWeb3ChecksFactoryMock,
-    ).run();
+    const result = await new BuildBaseContexts(apiMock, defaultArgs).run();
 
     // THEN
     expect(result).toEqual({
@@ -661,11 +607,7 @@ describe("BuildBaseContexts", () => {
     });
 
     // WHEN
-    const result = await new BuildBaseContexts(
-      apiMock,
-      defaultArgs,
-      getWeb3ChecksFactoryMock,
-    ).run();
+    const result = await new BuildBaseContexts(apiMock, defaultArgs).run();
 
     // THEN
     expect(result).toEqual({
@@ -714,11 +656,7 @@ describe("BuildBaseContexts", () => {
     });
 
     // WHEN
-    const result = await new BuildBaseContexts(
-      apiMock,
-      defaultArgs,
-      getWeb3ChecksFactoryMock,
-    ).run();
+    const result = await new BuildBaseContexts(apiMock, defaultArgs).run();
 
     // THEN
     expect(result).toEqual({
@@ -763,11 +701,7 @@ describe("BuildBaseContexts", () => {
     });
 
     // WHEN
-    const result = await new BuildBaseContexts(
-      apiMock,
-      defaultArgs,
-      getWeb3ChecksFactoryMock,
-    ).run();
+    const result = await new BuildBaseContexts(apiMock, defaultArgs).run();
 
     // THEN
     expect(result).toEqual({
@@ -812,11 +746,7 @@ describe("BuildBaseContexts", () => {
     });
 
     // WHEN
-    const result = await new BuildBaseContexts(
-      apiMock,
-      defaultArgs,
-      getWeb3ChecksFactoryMock,
-    ).run();
+    const result = await new BuildBaseContexts(apiMock, defaultArgs).run();
 
     // THEN
     expect(result).toEqual({
@@ -858,11 +788,7 @@ describe("BuildBaseContexts", () => {
     });
 
     // WHEN
-    const result = await new BuildBaseContexts(
-      apiMock,
-      defaultArgs,
-      getWeb3ChecksFactoryMock,
-    ).run();
+    const result = await new BuildBaseContexts(apiMock, defaultArgs).run();
 
     // THEN
     expect(result).toEqual({
@@ -901,11 +827,7 @@ describe("BuildBaseContexts", () => {
     });
 
     // WHEN
-    const result = await new BuildBaseContexts(
-      apiMock,
-      defaultArgs,
-      getWeb3ChecksFactoryMock,
-    ).run();
+    const result = await new BuildBaseContexts(apiMock, defaultArgs).run();
 
     // THEN
     expect(result).toEqual({
@@ -913,29 +835,5 @@ describe("BuildBaseContexts", () => {
       clearSignContextsOptional: [],
       clearSigningType: ClearSigningType.BASIC,
     });
-  });
-
-  it("should not return web3check if the transaction is undefined", async () => {
-    // GIVEN
-    const clearSignContexts: ClearSignContext[] = [];
-    contextModuleMock.getContexts.mockResolvedValueOnce(clearSignContexts);
-    apiMock.getDeviceSessionState.mockReturnValueOnce({
-      sessionStateType: DeviceSessionStateType.ReadyWithoutSecureChannel,
-      deviceStatus: DeviceStatus.CONNECTED,
-      installedApps: [],
-      currentApp: { name: "Ethereum", version: "1.17.0" },
-      deviceModelId: DeviceModelId.FLEX,
-      isSecureConnectionAllowed: false,
-    });
-
-    // WHEN
-    await new BuildBaseContexts(
-      apiMock,
-      { ...defaultArgs, transaction: undefined },
-      getWeb3ChecksFactoryMock,
-    ).run();
-
-    // THEN
-    expect(getWeb3ChecksFactoryMock).not.toHaveBeenCalled();
   });
 });

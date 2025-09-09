@@ -82,6 +82,7 @@ describe("DynamicNetworkContextLoader", () => {
         to: "0x123",
         data: "0x456",
         selector: "0x789",
+        from: "0x123",
       };
       vi.spyOn(
         mockNetworkDataSource,
@@ -106,6 +107,7 @@ describe("DynamicNetworkContextLoader", () => {
         to: "0x123",
         data: "0x456",
         selector: "0x789",
+        from: "0x123",
       };
       const networkConfig: DynamicNetworkConfiguration = {
         id: "ethereum",
@@ -146,6 +148,7 @@ describe("DynamicNetworkContextLoader", () => {
         to: "0x123",
         data: "0x456",
         selector: "0x789",
+        from: "0x123",
       };
       const networkConfig: DynamicNetworkConfiguration = {
         id: "ethereum",
@@ -187,6 +190,7 @@ describe("DynamicNetworkContextLoader", () => {
         to: "0x123",
         data: "0x456",
         selector: "0x789",
+        from: "0x123",
       };
       const networkConfig: DynamicNetworkConfiguration = {
         id: "polygon",
@@ -240,6 +244,7 @@ describe("DynamicNetworkContextLoader", () => {
         to: "0x123",
         data: "0x456",
         selector: "0x789",
+        from: "0x123",
       };
       const networkConfig: DynamicNetworkConfiguration = {
         id: "ethereum",
@@ -290,6 +295,7 @@ describe("DynamicNetworkContextLoader", () => {
         to: "0x123",
         data: "0x456",
         selector: "0x789",
+        from: "0x123",
       };
       const networkConfig: DynamicNetworkConfiguration = {
         id: "ethereum",
@@ -350,6 +356,7 @@ describe("DynamicNetworkContextLoader", () => {
         to: "0x123",
         data: "0x456",
         selector: "0x789",
+        from: "0x123",
       };
       const networkConfig: DynamicNetworkConfiguration = {
         id: "ethereum",

@@ -219,6 +219,7 @@ export class ProvideContextsTask {
               isFirstChunk: args.isFirstChunk,
             }),
         }).run();
+      case ClearSignContextType.TRANSACTION_CHECK:
       case ClearSignContextType.WEB3_CHECK:
         return this._sendPayloadInChunksTaskFactory(this._api, {
           payload,
