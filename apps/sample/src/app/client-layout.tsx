@@ -11,6 +11,7 @@
 
 import React, { type PropsWithChildren } from "react";
 import { Flex, StyleProvider } from "@ledgerhq/react-ui";
+import dynamic from "next/dynamic";
 import styled, { type DefaultTheme } from "styled-components";
 
 import { Header } from "@/components/Header";
@@ -21,6 +22,16 @@ import { DmkConfigProvider } from "@/providers/DmkConfig";
 import { LedgerKeyringProtocolProvider } from "@/providers/LedgerKeyringProvider";
 import { SignerEthProvider } from "@/providers/SignerEthProvider";
 import { GlobalStyle } from "@/styles/globalstyles";
+
+const FloatingIcon = dynamic(
+  () =>
+    import("@/components/FloatingIcon").then((mod) => ({
+      default: mod.FloatingIcon,
+    })),
+  {
+    ssr: false,
+  },
+);
 
 const Root = styled(Flex)`
   flex-direction: row;
@@ -56,6 +67,7 @@ const ClientRootLayout: React.FC<PropsWithChildren> = ({ children }) => {
                         <Header />
                         {children}
                       </PageContainer>
+                      <FloatingIcon />
                     </Root>
                   </body>
                 </StyleProvider>

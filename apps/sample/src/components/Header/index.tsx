@@ -17,7 +17,7 @@ import {
 import styled, { type DefaultTheme } from "styled-components";
 
 import { useDmkConfigContext } from "@/providers/DmkConfig";
-import { DEFAULT_SPECULOS_URL } from "@/utils/const";
+import { DEFAULT_SPECULOS_URL, DEFAULT_SPECULOS_VNC_URL } from "@/utils/const";
 
 const Root = styled(Flex).attrs({ py: 3, px: 10, gridGap: 8 })`
   color: ${({ theme }: { theme: DefaultTheme }) => theme.colors.neutral.c90};
@@ -62,6 +62,9 @@ export const Header = () => {
     useState<string>(mockServerUrl);
   const [speculosStateUrl, setSpeculosStateUrl] =
     useState<string>(DEFAULT_SPECULOS_URL);
+  const [speculosStateVncUrl, setSpeculosStateVncUrl] = useState<string>(
+    DEFAULT_SPECULOS_VNC_URL,
+  );
 
   const mockServerEnabled = transport === mockserverIdentifier;
   const speculosEnabled = transport === speculosIdentifier;
@@ -75,9 +78,10 @@ export const Header = () => {
             ? webHidIdentifier
             : speculosIdentifier,
         speculosUrl: speculosStateUrl,
+        speculosVncUrl: speculosStateVncUrl,
       },
     });
-  }, [dispatch, transport, speculosStateUrl]);
+  }, [dispatch, transport, speculosStateUrl, speculosStateVncUrl]);
 
   const validateServerUrl = useCallback(
     () =>
@@ -133,13 +137,19 @@ export const Header = () => {
                 label="Enable Mock server"
               />
             </div>
+            <UrlInput
+              value={mockServerStateUrl}
+              onChange={(url: string) => setMockServerStateUrl(url)}
+              renderRight={() => (
+                <Flex alignItems="center" justifyContent="stretch">
+                  <Button iconButton onClick={validateServerUrl}>
+                    <Icons.CheckmarkCircleFill size="S" />
+                  </Button>
+                </Flex>
+              )}
+            />
             <Divider />
-            <Text>Speculos settings:</Text>
             <div data-testid="switch_speculos">
-              <Input
-                value={speculosStateUrl}
-                onChange={(url: string) => setSpeculosStateUrl(url)}
-              />
               <Box py={4}>
                 <Switch
                   onChange={onToggleSpeculos}
@@ -149,21 +159,16 @@ export const Header = () => {
                 />
               </Box>
             </div>
-
-            <Divider />
-            {mockServerEnabled && (
-              <UrlInput
-                value={mockServerStateUrl}
-                onChange={(url: string) => setMockServerStateUrl(url)}
-                renderRight={() => (
-                  <Flex alignItems="center" justifyContent="stretch">
-                    <Button iconButton onClick={validateServerUrl}>
-                      <Icons.CheckmarkCircleFill size="S" />
-                    </Button>
-                  </Flex>
-                )}
-              />
-            )}
+            <Text>Speculos url:</Text>
+            <Input
+              value={speculosStateUrl}
+              onChange={(url: string) => setSpeculosStateUrl(url)}
+            />
+            <Text style={{ marginTop: 8 }}>Speculos vnc url:</Text>
+            <Input
+              value={speculosStateVncUrl}
+              onChange={(url: string) => setSpeculosStateVncUrl(url)}
+            />
             <Divider />
             <Text>
               Flipper ({flipperClientConnected ? "Connected" : "Disconnected"}):
