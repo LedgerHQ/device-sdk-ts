@@ -16,6 +16,6 @@ export type TypedDataContext = {
   chainId: number;
   version: "v1" | "v2";
   schema: TypedDataSchema;
-  challenge?: string;
   fieldsValues: TypedDataFieldValues;
+  challenge?: string;
 };

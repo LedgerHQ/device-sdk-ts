@@ -45,6 +45,7 @@ import {
 
 describe("ProvideEIP712ContextTask", () => {
   const apiMock = makeDeviceActionInternalApiMock();
+  const provideContextFactoryMock = vi.fn();
   const contextModuleMock = {
     getFieldContext: vi.fn(),
     getContexts: vi.fn(),
@@ -224,22 +225,32 @@ describe("ProvideEIP712ContextTask", () => {
 
   beforeEach(() => {
     vi.resetAllMocks();
+    provideContextFactoryMock.mockReturnValue({
+      run: async () => undefined,
+    });
   });
 
   it("Send context with no clear signing context", async () => {
     // GIVEN
     const args: ProvideEIP712ContextTaskArgs = {
+      derivationPath: "44'/60'/0'/0/0",
       web3Check: null,
       types: TEST_TYPES,
       domain: TEST_DOMAIN_VALUES,
       message: TEST_MESSAGE_VALUES,
       clearSignContext: Nothing,
+      calldatasContexts: {},
     };
     // WHEN
     apiMock.sendCommand.mockResolvedValue(
       CommandResultFactory({ data: undefined }),
     );
-    await new ProvideEIP712ContextTask(apiMock, contextModuleMock, args).run();
+    await new ProvideEIP712ContextTask(
+      apiMock,
+      contextModuleMock,
+      args,
+      provideContextFactoryMock,
+    ).run();
 
     // THEN
     expect(apiMock.sendCommand.mock.calls).toHaveLength(24);
@@ -340,11 +351,13 @@ describe("ProvideEIP712ContextTask", () => {
   it("Send context with clear signing", async () => {
     // GIVEN
     const args: ProvideEIP712ContextTaskArgs = {
+      derivationPath: "44'/60'/0'/0/0",
       web3Check: null,
       types: TEST_TYPES,
       domain: TEST_DOMAIN_VALUES,
       message: TEST_MESSAGE_VALUES,
       clearSignContext: Just(TEST_CLEAR_SIGN_CONTEXT),
+      calldatasContexts: {},
     };
     apiMock.sendCommand
       .mockResolvedValueOnce(CommandResultFactory({ data: undefined }))
@@ -375,7 +388,12 @@ describe("ProvideEIP712ContextTask", () => {
     apiMock.sendCommand.mockResolvedValue(
       CommandResultFactory({ data: undefined }),
     );
-    await new ProvideEIP712ContextTask(apiMock, contextModuleMock, args).run();
+    await new ProvideEIP712ContextTask(
+      apiMock,
+      contextModuleMock,
+      args,
+      provideContextFactoryMock,
+    ).run();
 
     // THEN
     expect(apiMock.sendCommand.mock.calls).toHaveLength(32);
@@ -537,6 +555,7 @@ describe("ProvideEIP712ContextTask", () => {
   it("Both tokens unavailable", async () => {
     // GIVEN
     const args: ProvideEIP712ContextTaskArgs = {
+      derivationPath: "44'/60'/0'/0/0",
       web3Check: null,
       types: TEST_TYPES,
       domain: TEST_DOMAIN_VALUES,
@@ -550,13 +569,19 @@ describe("ProvideEIP712ContextTask", () => {
         proxy: undefined,
         tokens: {},
       }),
+      calldatasContexts: {},
     };
 
     // WHEN
     apiMock.sendCommand.mockResolvedValue(
       CommandResultFactory({ data: undefined }),
     );
-    await new ProvideEIP712ContextTask(apiMock, contextModuleMock, args).run();
+    await new ProvideEIP712ContextTask(
+      apiMock,
+      contextModuleMock,
+      args,
+      provideContextFactoryMock,
+    ).run();
 
     // THEN
     expect(apiMock.sendCommand).not.toHaveBeenCalledWith(
@@ -593,6 +618,7 @@ describe("ProvideEIP712ContextTask", () => {
   it("Provide calldata filters", async () => {
     // GIVEN
     const args: ProvideEIP712ContextTaskArgs = {
+      derivationPath: "44'/60'/0'/0/0",
       web3Check: null,
       types: TEST_TYPES,
       domain: TEST_DOMAIN_VALUES,
@@ -638,7 +664,7 @@ describe("ProvideEIP712ContextTask", () => {
             path: "details.nonce",
             signature:
               "304802201a46e6b4ef89eaf9fcf4945d053bfc5616a826400fd758312fbbe976bafc07ec022025a9b408722baf983ee053f90179c75b0c55bb0668f437d55493e36069bbd5a3",
-            calldataIndex: 0,
+            calldataIndex: 1,
             type: "calldata-selector",
           },
           sigDeadline: {
@@ -646,7 +672,7 @@ describe("ProvideEIP712ContextTask", () => {
             path: "sigDeadline",
             signature:
               "304902201a46e6b4ef89eaf9fcf4945d053bfc5616a826400fd758312fbbe976bafc07ec022025a9b408722baf983ee053f90179c75b0c55bb0668f437d55493e36069bbd5a3",
-            calldataIndex: 0,
+            calldataIndex: 1,
             type: "calldata-amount",
           },
         },
@@ -674,19 +700,54 @@ describe("ProvideEIP712ContextTask", () => {
               value: 4200000000000000n,
             },
           },
+          1: {
+            filter: {
+              calldataIndex: 1,
+              displayName: "Transaction",
+              valueFlag: true,
+              calleeFlag: TypedDataCalldataParamPresence.Present,
+              chainIdFlag: false,
+              selectorFlag: false,
+              amountFlag: true,
+              spenderFlag: TypedDataCalldataParamPresence.VerifyingContract,
+              signature:
+                "3045932100d8496ab69152efeef6a923a3ebd225334ad65dcb985814994243be7bc09bf27e02206314835816908dd6d51d3cbb0f9465d91d7ddc9104b34dd6c4247f65c551836e",
+            },
+            subset: {
+              chainId: 0x1235,
+              data: "0x6a76120200000000000000000000000023f8abfc2824c397ccb3da89ae772984107ddb99",
+              from: "0x8ceb23fd6bc0add59e62ac25578270cff1b9f619",
+              selector: "0x778899aa",
+              to: "0x7ceb23fd6bc0add59e62ac25578270cff1b9f619",
+              value: 4300000000000000n,
+            },
+          },
         },
         proxy: undefined,
         tokens: {},
       }),
+      calldatasContexts: {
+        0: [],
+      },
     };
 
     // WHEN
     apiMock.sendCommand.mockResolvedValue(
       CommandResultFactory({ data: undefined }),
     );
-    await new ProvideEIP712ContextTask(apiMock, contextModuleMock, args).run();
+    await new ProvideEIP712ContextTask(
+      apiMock,
+      contextModuleMock,
+      args,
+      provideContextFactoryMock,
+    ).run();
 
     // THEN
+    expect(provideContextFactoryMock).toHaveBeenCalledTimes(1);
+    expect(provideContextFactoryMock).toHaveBeenCalledWith({
+      contexts: [],
+      derivationPath: "44'/60'/0'/0/0",
+    });
     expect(apiMock.sendCommand).toHaveBeenCalledWith(
       new SendEIP712FilteringCommand({
         type: Eip712FilterType.CalldataInfo,
@@ -740,9 +801,24 @@ describe("ProvideEIP712ContextTask", () => {
     );
     expect(apiMock.sendCommand).toHaveBeenCalledWith(
       new SendEIP712FilteringCommand({
+        type: Eip712FilterType.CalldataInfo,
+        discarded: false,
+        calldataIndex: 1,
+        valueFlag: true,
+        calleeFlag: CalldataParamPresence.Present,
+        chainIdFlag: false,
+        selectorFlag: false,
+        amountFlag: true,
+        spenderFlag: CalldataParamPresence.VerifyingContract,
+        signature:
+          "3045932100d8496ab69152efeef6a923a3ebd225334ad65dcb985814994243be7bc09bf27e02206314835816908dd6d51d3cbb0f9465d91d7ddc9104b34dd6c4247f65c551836e",
+      }),
+    );
+    expect(apiMock.sendCommand).toHaveBeenCalledWith(
+      new SendEIP712FilteringCommand({
         type: Eip712FilterType.CalldataSelector,
         discarded: false,
-        calldataIndex: 0,
+        calldataIndex: 1,
         signature:
           "304802201a46e6b4ef89eaf9fcf4945d053bfc5616a826400fd758312fbbe976bafc07ec022025a9b408722baf983ee053f90179c75b0c55bb0668f437d55493e36069bbd5a3",
       }),
@@ -751,7 +827,7 @@ describe("ProvideEIP712ContextTask", () => {
       new SendEIP712FilteringCommand({
         type: Eip712FilterType.CalldataAmount,
         discarded: false,
-        calldataIndex: 0,
+        calldataIndex: 1,
         signature:
           "304902201a46e6b4ef89eaf9fcf4945d053bfc5616a826400fd758312fbbe976bafc07ec022025a9b408722baf983ee053f90179c75b0c55bb0668f437d55493e36069bbd5a3",
       }),
@@ -761,6 +837,7 @@ describe("ProvideEIP712ContextTask", () => {
   it("First token unavailable", async () => {
     // GIVEN
     const args: ProvideEIP712ContextTaskArgs = {
+      derivationPath: "44'/60'/0'/0/0",
       web3Check: null,
       types: TEST_TYPES,
       domain: TEST_DOMAIN_VALUES,
@@ -774,13 +851,19 @@ describe("ProvideEIP712ContextTask", () => {
         proxy: undefined,
         tokens: { 255: "payload-0x000000000022d473030f116ddee9f6b43ac78ba3" },
       }),
+      calldatasContexts: {},
     };
 
     // WHEN
     apiMock.sendCommand.mockResolvedValue(
       CommandResultFactory({ data: { tokenIndex: 4 } }),
     );
-    await new ProvideEIP712ContextTask(apiMock, contextModuleMock, args).run();
+    await new ProvideEIP712ContextTask(
+      apiMock,
+      contextModuleMock,
+      args,
+      provideContextFactoryMock,
+    ).run();
 
     // THEN
     expect(apiMock.sendCommand).toHaveBeenCalledWith(
@@ -807,6 +890,7 @@ describe("ProvideEIP712ContextTask", () => {
   it("Second token unavailable", async () => {
     // GIVEN
     const args: ProvideEIP712ContextTaskArgs = {
+      derivationPath: "44'/60'/0'/0/0",
       web3Check: null,
       types: TEST_TYPES,
       domain: TEST_DOMAIN_VALUES,
@@ -820,13 +904,19 @@ describe("ProvideEIP712ContextTask", () => {
         proxy: undefined,
         tokens: { 0: "payload-0x7ceb23fd6bc0add59e62ac25578270cff1b9f619" },
       }),
+      calldatasContexts: {},
     };
 
     // WHEN
     apiMock.sendCommand.mockResolvedValue(
       CommandResultFactory({ data: { tokenIndex: 4 } }),
     );
-    await new ProvideEIP712ContextTask(apiMock, contextModuleMock, args).run();
+    await new ProvideEIP712ContextTask(
+      apiMock,
+      contextModuleMock,
+      args,
+      provideContextFactoryMock,
+    ).run();
 
     // THEN
     expect(apiMock.sendCommand).toHaveBeenCalledWith(
@@ -862,18 +952,25 @@ describe("ProvideEIP712ContextTask", () => {
       proxy,
     };
     const args: ProvideEIP712ContextTaskArgs = {
+      derivationPath: "44'/60'/0'/0/0",
       web3Check: null,
       types: TEST_TYPES,
       domain: TEST_DOMAIN_VALUES,
       message: TEST_MESSAGE_VALUES,
       clearSignContext: Just(clearSignContext),
+      calldatasContexts: {},
     };
 
     // WHEN
     apiMock.sendCommand.mockResolvedValue(
       CommandResultFactory({ data: { tokenIndex: 4 } }),
     );
-    await new ProvideEIP712ContextTask(apiMock, contextModuleMock, args).run();
+    await new ProvideEIP712ContextTask(
+      apiMock,
+      contextModuleMock,
+      args,
+      provideContextFactoryMock,
+    ).run();
 
     // THEN
     expect(apiMock.sendCommand).toHaveBeenCalledWith(
@@ -892,18 +989,25 @@ describe("ProvideEIP712ContextTask", () => {
         payload: "0x010203",
       };
     const args: ProvideEIP712ContextTaskArgs = {
+      derivationPath: "44'/60'/0'/0/0",
       web3Check,
       types: TEST_TYPES,
       domain: TEST_DOMAIN_VALUES,
       message: TEST_MESSAGE_VALUES,
       clearSignContext: Nothing,
+      calldatasContexts: {},
     };
 
     // WHEN
     apiMock.sendCommand.mockResolvedValue(
       CommandResultFactory({ data: undefined }),
     );
-    await new ProvideEIP712ContextTask(apiMock, contextModuleMock, args).run();
+    await new ProvideEIP712ContextTask(
+      apiMock,
+      contextModuleMock,
+      args,
+      provideContextFactoryMock,
+    ).run();
 
     // THEN
     expect(apiMock.sendCommand).toHaveBeenCalledWith(
@@ -926,18 +1030,25 @@ describe("ProvideEIP712ContextTask", () => {
         payload: "0x010203",
       };
     const args: ProvideEIP712ContextTaskArgs = {
+      derivationPath: "44'/60'/0'/0/0",
       web3Check,
       types: TEST_TYPES,
       domain: TEST_DOMAIN_VALUES,
       message: TEST_MESSAGE_VALUES,
       clearSignContext: Nothing,
+      calldatasContexts: {},
     };
 
     // WHEN
     apiMock.sendCommand.mockResolvedValue(
       CommandResultFactory({ data: undefined }),
     );
-    await new ProvideEIP712ContextTask(apiMock, contextModuleMock, args).run();
+    await new ProvideEIP712ContextTask(
+      apiMock,
+      contextModuleMock,
+      args,
+      provideContextFactoryMock,
+    ).run();
 
     // THEN
     expect(apiMock.sendCommand).toHaveBeenCalledWith(
@@ -957,11 +1068,13 @@ describe("ProvideEIP712ContextTask", () => {
   it("Error when providing tokens", async () => {
     // GIVEN
     const args: ProvideEIP712ContextTaskArgs = {
+      derivationPath: "44'/60'/0'/0/0",
       web3Check: null,
       types: TEST_TYPES,
       domain: TEST_DOMAIN_VALUES,
       message: TEST_MESSAGE_VALUES,
       clearSignContext: Just(TEST_CLEAR_SIGN_CONTEXT),
+      calldatasContexts: {},
     };
     apiMock.sendCommand.mockResolvedValueOnce(
       CommandResultFactory({
@@ -973,6 +1086,7 @@ describe("ProvideEIP712ContextTask", () => {
       apiMock,
       contextModuleMock,
       args,
+      provideContextFactoryMock,
     ).run();
 
     // THEN
@@ -986,11 +1100,13 @@ describe("ProvideEIP712ContextTask", () => {
   it("Error when sending struct definitions", async () => {
     // GIVEN
     const args: ProvideEIP712ContextTaskArgs = {
+      derivationPath: "44'/60'/0'/0/0",
       web3Check: null,
       types: TEST_TYPES,
       domain: TEST_DOMAIN_VALUES,
       message: TEST_MESSAGE_VALUES,
       clearSignContext: Just(TEST_CLEAR_SIGN_CONTEXT),
+      calldatasContexts: {},
     };
     apiMock.sendCommand
       .mockResolvedValueOnce(CommandResultFactory({ data: { tokenIndex: 4 } }))
@@ -1006,6 +1122,7 @@ describe("ProvideEIP712ContextTask", () => {
       apiMock,
       contextModuleMock,
       args,
+      provideContextFactoryMock,
     ).run();
 
     // THEN
@@ -1017,11 +1134,13 @@ describe("ProvideEIP712ContextTask", () => {
   it("Error when sending struct implementations", async () => {
     // GIVEN
     const args: ProvideEIP712ContextTaskArgs = {
+      derivationPath: "44'/60'/0'/0/0",
       web3Check: null,
       types: TEST_TYPES,
       domain: TEST_DOMAIN_VALUES,
       message: TEST_MESSAGE_VALUES,
       clearSignContext: Nothing,
+      calldatasContexts: {},
     };
     // WHEN
     apiMock.sendCommand
@@ -1050,6 +1169,7 @@ describe("ProvideEIP712ContextTask", () => {
       apiMock,
       contextModuleMock,
       args,
+      provideContextFactoryMock,
     ).run();
 
     // THEN
@@ -1061,6 +1181,7 @@ describe("ProvideEIP712ContextTask", () => {
   it("Send struct array", async () => {
     // GIVEN
     const args: ProvideEIP712ContextTaskArgs = {
+      derivationPath: "44'/60'/0'/0/0",
       web3Check: null,
       types: {},
       domain: [],
@@ -1111,12 +1232,18 @@ describe("ProvideEIP712ContextTask", () => {
           },
         },
       }),
+      calldatasContexts: {},
     };
     // WHEN
     apiMock.sendCommand.mockResolvedValue(
       CommandResultFactory({ data: undefined }),
     );
-    await new ProvideEIP712ContextTask(apiMock, contextModuleMock, args).run();
+    await new ProvideEIP712ContextTask(
+      apiMock,
+      contextModuleMock,
+      args,
+      provideContextFactoryMock,
+    ).run();
 
     // THEN
     // Activate the filtering

@@ -53,8 +53,10 @@ export type ProvideContextsTaskArgs = {
   derivationPath: string;
   /**
    * The serialized transaction to provide.
+   * This parameter is optional in the case there is no transaction at all, for instance
+   * if there is only a standalone calldata embedded in a message.
    */
-  serializedTransaction: Uint8Array;
+  serializedTransaction?: Uint8Array;
 };
 
 export type ProvideContextsTaskResult = Either<
@@ -106,6 +108,7 @@ export class ProvideContextsTask {
 
       if (
         !transactionInfoProvided &&
+        this._args.serializedTransaction !== undefined &&
         context.type === ClearSignContextType.TRANSACTION_INFO
       ) {
         // Send the serialized transaction for the first TRANSACTION_INFO.

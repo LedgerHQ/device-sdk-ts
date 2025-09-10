@@ -771,26 +771,29 @@ describe("TypedDataContextLoader", () => {
         }),
       );
       loadCertificateMock.mockResolvedValue(undefined);
-      getTypedDataFiltersMock.mockResolvedValueOnce(
-        Promise.resolve(
-          Right({
-            messageInfo: {
-              displayName: "Permit2",
-              filtersCount: 2,
-              signature:
-                "3045022100e3c597d13d28a87a88b0239404c668373cf5063362f2a81d09eed4582941dfe802207669aabb504fd5b95b2734057f6b8bbf51f14a69a5f9bdf658a5952cefbf44d3",
-            },
-            calldatasInfos: {},
-            filters: [],
-          }),
-        ),
-      );
+      getTypedDataFiltersMock
+        .mockResolvedValueOnce(Promise.resolve(Left(new Error("error"))))
+        .mockResolvedValueOnce(
+          Promise.resolve(
+            Right({
+              messageInfo: {
+                displayName: "Permit2",
+                filtersCount: 2,
+                signature:
+                  "3045022100e3c597d13d28a87a88b0239404c668373cf5063362f2a81d09eed4582941dfe802207669aabb504fd5b95b2734057f6b8bbf51f14a69a5f9bdf658a5952cefbf44d3",
+              },
+              calldatasInfos: {},
+              filters: [],
+            }),
+          ),
+        );
 
       // WHEN
       const result = await loader.load(ctx);
 
       // THEN
-      expect(getTypedDataFiltersMock).toHaveBeenCalledWith(
+      expect(getTypedDataFiltersMock).toHaveBeenCalledTimes(2);
+      expect(getTypedDataFiltersMock).toHaveBeenLastCalledWith(
         expect.objectContaining({
           address: "0x987654321fedcba0",
           chainId: 1,
@@ -837,26 +840,29 @@ describe("TypedDataContextLoader", () => {
         keyUsageNumber: 1,
         payload: new Uint8Array([1, 2, 3, 4]),
       });
-      getTypedDataFiltersMock.mockResolvedValueOnce(
-        Promise.resolve(
-          Right({
-            messageInfo: {
-              displayName: "Permit2",
-              filtersCount: 2,
-              signature:
-                "3045022100e3c597d13d28a87a88b0239404c668373cf5063362f2a81d09eed4582941dfe802207669aabb504fd5b95b2734057f6b8bbf51f14a69a5f9bdf658a5952cefbf44d3",
-            },
-            calldatasInfos: {},
-            filters: [],
-          }),
-        ),
-      );
+      getTypedDataFiltersMock
+        .mockResolvedValueOnce(Promise.resolve(Left(new Error("error"))))
+        .mockResolvedValueOnce(
+          Promise.resolve(
+            Right({
+              messageInfo: {
+                displayName: "Permit2",
+                filtersCount: 2,
+                signature:
+                  "3045022100e3c597d13d28a87a88b0239404c668373cf5063362f2a81d09eed4582941dfe802207669aabb504fd5b95b2734057f6b8bbf51f14a69a5f9bdf658a5952cefbf44d3",
+              },
+              calldatasInfos: {},
+              filters: [],
+            }),
+          ),
+        );
 
       // WHEN
       const result = await loader.load(ctx);
 
       // THEN
-      expect(getTypedDataFiltersMock).toHaveBeenCalledWith(
+      expect(getTypedDataFiltersMock).toHaveBeenCalledTimes(2);
+      expect(getTypedDataFiltersMock).toHaveBeenLastCalledWith(
         expect.objectContaining({
           address: "0x987654321fedcba0",
           chainId: 1,
@@ -904,6 +910,40 @@ describe("TypedDataContextLoader", () => {
       const result = await loader.load(ctx);
 
       // THEN
+      expect(getTypedDataFiltersMock).toHaveBeenCalledTimes(1);
+      expect(result).toEqual({
+        type: "error",
+        error: new Error("error"),
+      });
+    });
+
+    it("should return an error if filters are unavailable in the proxy", async () => {
+      // GIVEN
+      const ctx = {
+        verifyingContract: "0x000000000022d473030f116ddee9f6b43ac78ba3",
+        chainId: 1,
+        version: "v2",
+        schema: TEST_TYPES,
+        challenge: "1234",
+        fieldsValues: TEST_VALUES,
+        deviceModelId: DeviceModelId.STAX,
+      } as TypedDataContext;
+      getProxyDelegateCallMock.mockResolvedValueOnce(
+        Right({
+          delegateAddresses: ["0x987654321fedcba0"],
+          signedDescriptor: "0x123456789abcdef0",
+        }),
+      );
+      loadCertificateMock.mockResolvedValue(undefined);
+      getTypedDataFiltersMock
+        .mockResolvedValueOnce(Promise.resolve(Left(new Error("error"))))
+        .mockResolvedValueOnce(Promise.resolve(Left(new Error("error"))));
+
+      // WHEN
+      const result = await loader.load(ctx);
+
+      // THEN
+      expect(getTypedDataFiltersMock).toHaveBeenCalledTimes(2);
       expect(result).toEqual({
         type: "error",
         error: new Error("error"),

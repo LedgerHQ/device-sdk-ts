@@ -36,9 +36,7 @@ import type { TypedDataContextLoader } from "@/typed-data/domain/TypedDataContex
 
 type ResolvedProxy = {
   resolvedAddress: string;
-  proxy:
-    | ClearSignContextSuccess<ClearSignContextType.PROXY_DELEGATE_CALL>
-    | undefined;
+  context?: ClearSignContextSuccess<ClearSignContextType.PROXY_DELEGATE_CALL>;
 };
 
 @injectable()
@@ -55,23 +53,36 @@ export class DefaultTypedDataContextLoader implements TypedDataContextLoader {
   ) {}
 
   async load(typedData: TypedDataContext): Promise<TypedDataClearSignContext> {
-    // Resolve proxy if needed
-    const { resolvedAddress, proxy } = await this.resolveProxy(typedData);
-
     // Get the typed data filters from the data source
-    const data = await this.dataSource.getTypedDataFilters({
-      address: resolvedAddress,
+    let proxy:
+      | ClearSignContextSuccess<ClearSignContextType.PROXY_DELEGATE_CALL>
+      | undefined = undefined;
+    let data = await this.dataSource.getTypedDataFilters({
+      address: typedData.verifyingContract,
       chainId: typedData.chainId,
       version: typedData.version,
       schema: typedData.schema,
     });
 
-    // If there was an error getting the typed data filters, return an error immediately
+    // If there was an error getting the typed data filters, try to resolve a proxy at that address
     if (data.isLeft()) {
-      return {
-        type: "error",
-        error: data.extract(),
-      };
+      const { resolvedAddress, context } = await this.resolveProxy(typedData);
+      if (context !== undefined) {
+        proxy = context;
+        data = await this.dataSource.getTypedDataFilters({
+          address: resolvedAddress,
+          chainId: typedData.chainId,
+          version: typedData.version,
+          schema: typedData.schema,
+        });
+      }
+      // If there was stil an error, return immediately
+      if (data.isLeft()) {
+        return {
+          type: "error",
+          error: data.extract(),
+        };
+      }
     }
 
     // Else, extract the message info and filters
@@ -110,7 +121,7 @@ export class DefaultTypedDataContextLoader implements TypedDataContextLoader {
     if (proxyDelegateCall.isLeft()) {
       return {
         resolvedAddress: typedData.verifyingContract,
-        proxy: undefined,
+        context: undefined,
       };
     }
 
@@ -126,7 +137,7 @@ export class DefaultTypedDataContextLoader implements TypedDataContextLoader {
         proxyData.delegateAddresses.find(
           (address) => address === typedData.verifyingContract,
         ) || proxyData.delegateAddresses[0]!,
-      proxy: {
+      context: {
         type: ClearSignContextType.PROXY_DELEGATE_CALL,
         payload: proxyData.signedDescriptor,
         certificate,
