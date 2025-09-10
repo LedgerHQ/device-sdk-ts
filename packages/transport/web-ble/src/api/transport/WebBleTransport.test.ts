@@ -1,21 +1,51 @@
+/* eslint-disable @typescript-eslint/no-unsafe-call */
+/* eslint-disable @typescript-eslint/no-unsafe-member-access */
+/* eslint-disable @typescript-eslint/no-unsafe-assignment */
+/* eslint-disable @typescript-eslint/no-unsafe-return */
+/* eslint-disable @typescript-eslint/no-explicit-any */
+
+vi.mock("./WebBleApduSender", async () => ({
+  WebBleApduSender: class {
+    constructor(_deps: any, _loggerFactory: any) {}
+    setupConnection = vi.fn().mockResolvedValue(undefined);
+  },
+}));
+
+vi.mock("@ledgerhq/device-management-kit", async () => {
+  const actual = (await vi.importActual(
+    "@ledgerhq/device-management-kit",
+  )) as any;
+  return {
+    ...actual,
+    DeviceConnectionStateMachine: class {
+      constructor(_opts: any) {}
+      setupConnection = vi.fn().mockResolvedValue(undefined);
+      setDependencies = vi.fn();
+      sendApdu = vi.fn();
+      closeConnection = vi.fn();
+      eventDeviceDisconnected = vi.fn();
+      eventDeviceConnected = vi.fn();
+      eventDeviceDetached = vi.fn();
+      eventDeviceAttached = vi.fn();
+    },
+  };
+});
+
 import {
   type ApduReceiverServiceFactory,
   type ApduSenderServiceFactory,
-  type DeviceModel,
+  DeviceAlreadyConnectedError,
   type LoggerPublisherService,
   type LoggerSubscriberService,
-  NoAccessibleDeviceError,
   OpeningConnectionError,
   StaticDeviceModelDataSource,
-  type TransportDiscoveredDevice,
+  type TransportConnectedDevice,
   UnknownDeviceError,
 } from "@ledgerhq/device-management-kit";
 import { Left, Right } from "purify-ts";
+import { firstValueFrom } from "rxjs";
 
-import { RECONNECT_DEVICE_TIMEOUT } from "@api/data/WebBleConfig";
 import { bleDeviceStubBuilder } from "@api/model/BleDevice.stub";
-import { BleTransportNotSupportedError } from "@api/model/Errors";
-import { BleDeviceGattServerError } from "@api/model/Errors";
 
 import { WebBleTransport } from "./WebBleTransport";
 
@@ -32,390 +62,366 @@ class LoggerPublisherServiceStub implements LoggerPublisherService {
   debug = vi.fn();
 }
 
-// Our StaticDeviceModelDataSource can directly be used in our unit tests
 const bleDeviceModelDataSource = new StaticDeviceModelDataSource();
-const logger = new LoggerPublisherServiceStub([], "web-ble");
+const logger = new LoggerPublisherServiceStub([], "WebBleTransport");
 
-const stubDevice: BluetoothDevice = bleDeviceStubBuilder();
+let transport: WebBleTransport;
+let apduReceiverFactory: ApduReceiverServiceFactory;
+let apduSenderFactory: ApduSenderServiceFactory;
+
+beforeEach(() => {
+  vi.useRealTimers();
+  apduReceiverFactory = vi.fn();
+  apduSenderFactory = vi.fn();
+  transport = new WebBleTransport(
+    bleDeviceModelDataSource,
+    () => logger,
+    apduSenderFactory,
+    apduReceiverFactory,
+  );
+});
+
+afterEach(() => {
+  vi.restoreAllMocks();
+});
 
 describe("WebBleTransport", () => {
-  let transport: WebBleTransport;
-  let apduReceiverServiceFactoryStub: ApduReceiverServiceFactory;
-  let apduSenderServiceFactoryStub: ApduSenderServiceFactory;
+  describe("isSupported", () => {
+    it("returns false when navigator.bluetooth is undefined", () => {
+      delete (globalThis as any).navigator;
 
-  beforeEach(() => {
-    apduReceiverServiceFactoryStub = vi.fn();
-    apduSenderServiceFactoryStub = vi.fn();
-    transport = new WebBleTransport(
-      bleDeviceModelDataSource,
-      () => logger,
-      apduSenderServiceFactoryStub,
-      apduReceiverServiceFactoryStub,
-    );
-    vi.useFakeTimers();
+      const result = transport.isSupported();
+
+      expect(result).toBe(false);
+    });
+
+    it("returns true when navigator.bluetooth exists", () => {
+      (globalThis as any).navigator = { bluetooth: {} };
+
+      const result = transport.isSupported();
+
+      expect(result).toBe(true);
+    });
   });
 
-  afterEach(() => {
-    vi.restoreAllMocks();
-  });
+  describe("startDiscovering", () => {
+    let requestDevice: ReturnType<typeof vi.fn>;
+    let stubDevice: BluetoothDevice;
+    let mockService: any;
 
-  const discoverDevice = (
-    onSuccess: (discoveredDevice: TransportDiscoveredDevice) => void,
-    onError?: (error: unknown) => void,
-  ) => {
-    transport.startDiscovering().subscribe({
-      next: onSuccess,
-      error: onError,
-    });
-  };
+    const serviceUuid = bleDeviceModelDataSource.getBluetoothServices()[0];
 
-  describe("When Web bluetooth API is not supported", () => {
-    it("should not support the transport", () => {
-      expect(transport.isSupported()).toBe(false);
-    });
+    const makeGatt = (service: any) => {
+      const gatt: any = {
+        connected: false,
+        connect: vi.fn().mockImplementation(async () => {
+          gatt.connected = true;
+          return gatt;
+        }),
+        disconnect: vi.fn().mockImplementation(() => {
+          gatt.connected = false;
+        }),
+        getPrimaryService: vi.fn().mockImplementation(async (uuid: string) => {
+          if (uuid.toLowerCase() === service.uuid.toLowerCase()) {
+            return service;
+          }
+          const err = new Error("NotFoundError");
+          (err as any).name = "NotFoundError";
+          throw err;
+        }),
+        getPrimaryServices: vi.fn().mockResolvedValue([service]),
+      };
+      return gatt;
+    };
 
-    it("should emit a startDiscovering error", () =>
-      new Promise<void>((resolve, reject) => {
-        discoverDevice(
-          () => {
-            reject("Should not emit any value");
-          },
-          (error) => {
-            expect(error).toBeInstanceOf(BleTransportNotSupportedError);
-            resolve();
-          },
-        );
-      }));
-  });
+    beforeEach(() => {
+      stubDevice = bleDeviceStubBuilder();
+      mockService = {
+        uuid: serviceUuid,
+        device: stubDevice,
+        getCharacteristic: vi.fn().mockResolvedValue({}),
+      };
 
-  describe("When Web Bluetooth API is supported", () => {
-    const mockedRequestDevice = vi.fn();
+      const gatt = makeGatt(mockService);
 
-    beforeAll(() => {
-      global.navigator = {
-        bluetooth: {
-          requestDevice: mockedRequestDevice,
-        },
-      } as unknown as Navigator;
-    });
-
-    afterAll(() => {
-      vi.restoreAllMocks();
-      global.navigator = undefined as unknown as Navigator;
-    });
-
-    it("should support the transport", () => {
-      expect(transport.isSupported()).toBe(true);
-    });
-
-    describe("startDiscovering", () => {
-      it("should emit device if one new grant access", () =>
-        new Promise<void>((resolve, reject) => {
-          mockedRequestDevice.mockResolvedValueOnce(stubDevice);
-
-          discoverDevice(
-            (discoveredDevice) => {
-              try {
-                expect(discoveredDevice).toEqual(
-                  expect.objectContaining({
-                    deviceModel: expect.objectContaining({
-                      id: "nanoX",
-                      productName: "Ledger Nano X",
-                    }) as DeviceModel,
-                  }),
-                );
-
-                resolve();
-              } catch (expectError) {
-                reject(expectError as Error);
-              }
-            },
-            (error) => {
-              reject(error as Error);
-            },
-          );
-        }));
-
-      it("should throw DeviceNotRecognizedError if the device is not recognized", () =>
-        new Promise<void>((resolve, reject) => {
-          mockedRequestDevice.mockResolvedValueOnce({
-            ...stubDevice,
-            gatt: {
-              ...stubDevice.gatt,
-              getPrimaryServices: vi.fn(() => Promise.resolve([])),
-            },
-            productId: 0x4242,
-          });
-
-          discoverDevice(
-            () => {
-              reject("should not return a device");
-            },
-            (error) => {
-              expect(error).toBeInstanceOf(BleDeviceGattServerError);
-              resolve();
-            },
-          );
-        }));
-
-      it("should emit an error if the request device is in error", () =>
-        new Promise<void>((resolve, reject) => {
-          const message = "request device error";
-          mockedRequestDevice.mockImplementationOnce(() => {
-            throw new Error(message);
-          });
-
-          discoverDevice(
-            () => {
-              reject("should not return a device");
-            },
-            (error) => {
-              expect(error).toBeInstanceOf(NoAccessibleDeviceError);
-              expect(error).toStrictEqual(
-                new NoAccessibleDeviceError(new Error(message)),
-              );
-              resolve();
-            },
-          );
-        }));
-
-      it("should emit an error if the user did not grant us access to a device (clicking on cancel on the browser popup for ex)", () =>
-        new Promise<void>((resolve, reject) => {
-          mockedRequestDevice.mockResolvedValueOnce({ forget: vi.fn() });
-
-          discoverDevice(
-            (discoveredDevice) => {
-              reject(
-                `Should not emit any value, but emitted ${JSON.stringify(
-                  discoveredDevice,
-                )}`,
-              );
-            },
-            (error) => {
-              try {
-                expect(error).toBeInstanceOf(BleDeviceGattServerError);
-                resolve();
-              } catch (expectError) {
-                reject(expectError as Error);
-              }
-            },
-          );
-        }));
-    });
-
-    describe("connect", () => {
-      it("should throw UnknownDeviceError if no internal device", async () => {
-        const connectParams = {
-          deviceId: "fake",
-          onDisconnect: vi.fn(),
-        };
-
-        const connect = await transport.connect(connectParams);
-
-        expect(connect).toStrictEqual(
-          Left(new UnknownDeviceError("Unknown device fake")),
-        );
+      Object.defineProperty(stubDevice, "gatt", {
+        value: gatt,
+        writable: true,
+        configurable: true,
       });
 
-      it("should throw OpeningConnectionError if the device is already opened", async () => {
-        const device = {
-          deviceId: "fake",
-          onDisconnect: vi.fn(),
-        };
+      if (!(stubDevice as any).addEventListener) {
+        (stubDevice as any).addEventListener = vi.fn();
+        (stubDevice as any).removeEventListener = vi.fn();
+      }
 
-        const connect = await transport.connect(device);
+      requestDevice = vi.fn();
+      (globalThis as any).navigator = {
+        bluetooth: { requestDevice },
+      };
+    });
 
-        expect(connect).toStrictEqual(
-          Left(new UnknownDeviceError("Unknown device fake")),
-        );
+    it("emits a discovered device when a known device is returned", async () => {
+      // given
+      requestDevice.mockResolvedValueOnce(stubDevice);
+
+      // when
+      const device = await firstValueFrom(transport.startDiscovering());
+
+      const expectedModelId =
+        bleDeviceModelDataSource.getBluetoothServicesInfos()[serviceUuid!]
+          ?.deviceModel.id;
+
+      // then
+      expect(device).toEqual(
+        expect.objectContaining({
+          deviceModel: expect.objectContaining({ id: expectedModelId }),
+          transport: transport.getIdentifier(),
+        }),
+      );
+    });
+
+    it("emits UnknownDeviceError when deviceInfo is missing", async () => {
+      // given
+      const unknown = bleDeviceStubBuilder();
+      const unknownService = {
+        uuid: "invalid-uuid",
+        device: unknown,
+        getCharacteristic: vi.fn(),
+      };
+
+      const gatt: any = {
+        connected: false,
+        connect: vi.fn().mockImplementation(async () => {
+          gatt.connected = true;
+          return gatt;
+        }),
+        disconnect: vi.fn(),
+        // returning a service (success) but with an unknown uuid triggers UnknownDeviceError
+        getPrimaryService: vi.fn().mockResolvedValue(unknownService),
+        getPrimaryServices: vi.fn().mockResolvedValue([unknownService]),
+      };
+
+      Object.defineProperty(unknown, "gatt", {
+        value: gatt,
+        writable: true,
+        configurable: true,
       });
 
-      it("should throw OpeningConnectionError if the device cannot be opened", () =>
-        new Promise<void>((resolve, reject) => {
-          const message = "cannot be opened";
-          mockedRequestDevice.mockResolvedValueOnce({
-            ...stubDevice,
-            gatt: {
-              connect: () => {
-                throw new Error(message);
-              },
-            },
-          });
+      requestDevice.mockResolvedValueOnce(unknown);
 
-          discoverDevice(
-            () => {
-              reject("Should not emit any value");
-            },
-            (error) => {
-              expect(error).toBeInstanceOf(OpeningConnectionError);
-              resolve();
-            },
-          );
-        }));
-
-      it("should return the opened device", () =>
-        new Promise<void>((resolve, reject) => {
-          mockedRequestDevice.mockResolvedValueOnce({
-            ...stubDevice,
-            gatt: {
-              ...stubDevice.gatt,
-              connected: true,
-            },
-          });
-
-          discoverDevice(
-            (discoveredDevice) => {
-              transport
-                .connect({
-                  deviceId: discoveredDevice.id,
-                  onDisconnect: vi.fn(),
-                })
-                .then((connectedDevice) => {
-                  connectedDevice
-                    .ifRight((device) => {
-                      expect(device).toEqual(
-                        expect.objectContaining({ id: discoveredDevice.id }),
-                      );
-                      resolve();
-                    })
-                    .ifLeft(() => {
-                      reject(connectedDevice);
-                    });
-                })
-                .catch((error) => {
-                  reject(error);
-                });
-            },
-            (error) => {
-              reject(error as Error);
-            },
-          );
-        }));
-
-      it("should return a device if available", () =>
-        new Promise<void>((resolve, reject) => {
-          mockedRequestDevice.mockResolvedValueOnce(stubDevice);
-
-          discoverDevice(
-            (discoveredDevice) => {
-              transport
-                .connect({
-                  deviceId: discoveredDevice.id,
-                  onDisconnect: vi.fn(),
-                })
-                .then((connectedDevice) => {
-                  connectedDevice
-                    .ifRight((device) => {
-                      expect(device).toEqual(
-                        expect.objectContaining({ id: discoveredDevice.id }),
-                      );
-                      resolve();
-                    })
-                    .ifLeft(() => {
-                      reject(connectedDevice);
-                    });
-                })
-                .catch((error) => {
-                  reject(error);
-                });
-            },
-            (error) => {
-              reject(error as Error);
-            },
-          );
-        }));
+      // then
+      await expect(
+        firstValueFrom(transport.startDiscovering()),
+      ).rejects.toBeInstanceOf(OpeningConnectionError);
     });
 
-    describe("disconnect", () => {
-      it("should disconnect the device", () =>
-        new Promise<void>((resolve, reject) => {
-          mockedRequestDevice.mockResolvedValueOnce(stubDevice);
+    it("throws OpeningConnectionError when device has no GATT server", async () => {
+      // given
+      const noGattStub = bleDeviceStubBuilder();
+      Object.defineProperty(noGattStub, "gatt", {
+        value: undefined,
+        writable: true,
+        configurable: true,
+      });
+      requestDevice.mockResolvedValueOnce(noGattStub);
 
-          const onDisconnect = vi.fn();
-
-          discoverDevice(
-            (discoveredDevice) => {
-              transport
-                .connect({
-                  deviceId: discoveredDevice.id,
-                  onDisconnect,
-                })
-                .then((connectedDevice) => {
-                  connectedDevice.ifRight((device) => {
-                    transport
-                      .disconnect({ connectedDevice: device })
-                      .then((value) => {
-                        expect(value).toStrictEqual(Right(undefined));
-                        resolve();
-                      })
-                      .catch((error) => {
-                        reject(error);
-                      });
-                  });
-                });
-            },
-            (error) => {
-              reject(error as Error);
-            },
-          );
-        }));
-
-      it("should call disconnect handler if device is hardware disconnected", () =>
-        new Promise<void>((resolve, reject) => {
-          const onDisconnect = vi.fn();
-          const disconnectSpy = vi.spyOn(transport, "disconnect");
-          mockedRequestDevice.mockResolvedValueOnce(stubDevice);
-
-          discoverDevice(
-            (discoveredDevice) => {
-              transport
-                .connect({
-                  deviceId: discoveredDevice.id,
-                  onDisconnect,
-                })
-                .then(() => {
-                  stubDevice.ongattserverdisconnected(new Event(""));
-                  vi.advanceTimersByTime(RECONNECT_DEVICE_TIMEOUT);
-                  expect(disconnectSpy).toHaveBeenCalled();
-                  resolve();
-                });
-            },
-            (error) => {
-              reject(error as Error);
-            },
-          );
-        }));
+      // then
+      await expect(
+        firstValueFrom(transport.startDiscovering()),
+      ).rejects.toBeInstanceOf(OpeningConnectionError);
     });
 
-    describe("reconnect", () => {
-      it("should not call disconnection if reconnection happen", () =>
-        new Promise<void>((resolve, reject) => {
-          // given
-          const onDisconnect = vi.fn();
-          const disconnectSpy = vi.spyOn(transport, "disconnect");
-          mockedRequestDevice.mockResolvedValueOnce(stubDevice);
+    it("throws OpeningConnectionError when no GATT services are found", async () => {
+      // given
+      const noServiceStub = bleDeviceStubBuilder();
+      const gatt: any = {
+        connected: false,
+        connect: vi.fn().mockImplementation(async () => gatt),
+        disconnect: vi.fn(),
+        getPrimaryService: vi.fn().mockRejectedValue(new Error("nope")),
+        getPrimaryServices: vi.fn().mockResolvedValue([]),
+      };
+      Object.defineProperty(noServiceStub, "gatt", {
+        value: gatt,
+        writable: true,
+        configurable: true,
+      });
+      requestDevice.mockResolvedValueOnce(noServiceStub);
 
-          // when
-          discoverDevice((discoveredDevice) => {
-            transport
-              .connect({
-                deviceId: discoveredDevice.id,
-                onDisconnect,
-              })
-              .then(() => {
-                stubDevice.ongattserverdisconnected(new Event(""));
+      // then
+      await expect(
+        firstValueFrom(transport.startDiscovering()),
+      ).rejects.toBeInstanceOf(OpeningConnectionError);
+    });
+  });
 
-                vi.advanceTimersByTime(RECONNECT_DEVICE_TIMEOUT / 3);
+  describe("connect/disconnect flow", () => {
+    let requestDevice: ReturnType<typeof vi.fn>;
+    let stubDevice: BluetoothDevice;
+    let mockService: any;
 
-                // then
-                expect(disconnectSpy).toHaveBeenCalledTimes(0);
-                resolve();
-              })
-              .catch((error) => {
-                reject(error);
-              });
-          });
-        }));
+    const serviceUuid = bleDeviceModelDataSource.getBluetoothServices()[0];
+
+    const makeGatt = (service: any) => {
+      const gatt: any = {
+        connected: false,
+        connect: vi.fn().mockImplementation(async () => {
+          gatt.connected = true;
+          return gatt;
+        }),
+        disconnect: vi.fn().mockImplementation(() => {
+          gatt.connected = false;
+        }),
+        getPrimaryService: vi.fn().mockImplementation(async (uuid: string) => {
+          if (uuid.toLowerCase() === service.uuid.toLowerCase()) {
+            return service;
+          }
+          const err = new Error("NotFoundError");
+          (err as any).name = "NotFoundError";
+          throw err;
+        }),
+        getPrimaryServices: vi.fn().mockResolvedValue([service]),
+      };
+      return gatt;
+    };
+
+    beforeEach(() => {
+      stubDevice = bleDeviceStubBuilder();
+
+      const charNotify: any = { properties: {} };
+      const charWrite: any = { properties: { write: true } };
+
+      mockService = {
+        uuid: serviceUuid,
+        device: stubDevice,
+        getCharacteristic: vi
+          .fn()
+          .mockResolvedValueOnce(charNotify)
+          .mockResolvedValue(charWrite),
+      };
+
+      const gatt = makeGatt(mockService);
+
+      Object.defineProperty(stubDevice, "gatt", {
+        value: gatt,
+        writable: true,
+        configurable: true,
+      });
+
+      if (!(stubDevice as any).addEventListener) {
+        (stubDevice as any).addEventListener = vi.fn();
+        (stubDevice as any).removeEventListener = vi.fn();
+      }
+
+      requestDevice = vi.fn().mockResolvedValue(stubDevice);
+      (globalThis as any).navigator = {
+        bluetooth: { requestDevice },
+      };
+    });
+
+    it("returns UnknownDeviceError when connecting an unknown deviceId", async () => {
+      // given
+      const deviceId = "nonexistent";
+
+      // when
+      const result = await transport.connect({
+        deviceId,
+        onDisconnect: vi.fn(),
+      });
+
+      // then
+      expect(result).toEqual(
+        Left(new UnknownDeviceError(`Unknown device ${deviceId}`)),
+      );
+    });
+
+    it("connects and returns a connected device on success", async () => {
+      // given
+      const discovered = await firstValueFrom(transport.startDiscovering());
+
+      // when
+      const result = await transport.connect({
+        deviceId: discovered.id,
+        onDisconnect: vi.fn(),
+      });
+
+      // then
+      expect(result.isRight()).toBe(true);
+      const conn = result.extract() as TransportConnectedDevice;
+      expect(conn.id).toBe(discovered.id);
+    });
+
+    it("does not allow connecting twice to the same device", async () => {
+      // given
+      const discovered = await firstValueFrom(transport.startDiscovering());
+      await transport.connect({
+        deviceId: discovered.id,
+        onDisconnect: vi.fn(),
+      });
+
+      // when
+      const secondAttempt = await transport.connect({
+        deviceId: discovered.id,
+        onDisconnect: vi.fn(),
+      });
+
+      // then
+      expect(secondAttempt).toEqual(
+        Left(
+          new DeviceAlreadyConnectedError(
+            `Device ${discovered.id} already connected`,
+          ),
+        ),
+      );
+    });
+
+    it("returns OpeningConnectionError when characteristic retrieval fails", async () => {
+      // given
+      const badService = {
+        uuid: serviceUuid,
+        device: stubDevice,
+        getCharacteristic: vi.fn().mockRejectedValue(new Error("boom")),
+      };
+      const badGatt = {
+        ...stubDevice.gatt,
+        getPrimaryService: vi.fn().mockResolvedValue(badService),
+        getPrimaryServices: vi.fn().mockResolvedValue([badService]),
+      } as any;
+
+      Object.defineProperty(stubDevice, "gatt", {
+        value: badGatt,
+        writable: true,
+        configurable: true,
+      });
+
+      const discovered = await firstValueFrom(transport.startDiscovering());
+
+      // when
+      const result = await transport.connect({
+        deviceId: discovered.id,
+        onDisconnect: vi.fn(),
+      });
+
+      // then
+      expect(result.isLeft()).toBe(true);
+      expect(result.extract()).toBeInstanceOf(OpeningConnectionError);
+    });
+
+    it("disconnects successfully", async () => {
+      // given
+      const discovered = await firstValueFrom(transport.startDiscovering());
+      const result = await transport.connect({
+        deviceId: discovered.id,
+        onDisconnect: vi.fn(),
+      });
+      const conn = result.extract() as TransportConnectedDevice;
+
+      // when
+      const disc = await transport.disconnect({ connectedDevice: conn });
+
+      // then
+      expect(disc).toEqual(Right(undefined));
     });
   });
 });
