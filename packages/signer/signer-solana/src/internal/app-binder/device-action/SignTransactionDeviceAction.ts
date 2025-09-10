@@ -30,8 +30,8 @@ import { ApplicationChecker } from "@internal/app-binder/services/ApplicationChe
 import {
   SolanaTransactionTypes,
   TransactionInspector,
-  type TxInspectorResult,
 } from "@internal/app-binder/services/TransactionInspector";
+import { type TxInspectorResult } from "@internal/app-binder/services/utils/transactionDecoders";
 import {
   BuildTransactionContextTask,
   type BuildTransactionContextTaskArgs,
