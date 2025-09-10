@@ -39,7 +39,7 @@ export class HttpTransactionCheckDataSource {
     try {
       const response = await axios.request<TransactionCheckDto>({
         method: "POST",
-        url: `${this.config.web3checks.url}/ethereum/scan/tx`,
+        url: `${this.config.transactionCheck.url}/ethereum/scan/tx`,
         data: requestDto,
         headers: {
           [LEDGER_CLIENT_VERSION_HEADER]: `context-module/${PACKAGE.version}`,

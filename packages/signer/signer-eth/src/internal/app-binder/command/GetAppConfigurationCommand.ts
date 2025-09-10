@@ -67,13 +67,13 @@ export class GetAppConfiguration
       }
 
       const blindSigningEnabled = !!(configFlags & 0x00000001);
-      const web3ChecksEnabled = !!(configFlags & 0x00000010);
-      const web3ChecksOptIn = !!(configFlags & 0x00000020);
+      const transactionChecksEnabled = !!(configFlags & 0x00000010);
+      const transactionChecksOptIn = !!(configFlags & 0x00000020);
 
       const data: GetAppConfigurationCommandResponse = {
         blindSigningEnabled,
-        web3ChecksEnabled,
-        web3ChecksOptIn,
+        transactionChecksEnabled,
+        transactionChecksOptIn,
         version: `${major}.${minor}.${patch}`,
       };
 

@@ -105,7 +105,7 @@ describe("SignTypedDataDeviceAction", () => {
   };
   const apiMock = makeDeviceActionInternalApiMock();
   const getAppConfigMock = vi.fn();
-  const web3CheckOptInMock = vi.fn();
+  const txSimulationOptInMock = vi.fn();
   const buildContextMock = vi.fn();
   const provideContextMock = vi.fn();
   const signTypedDataMock = vi.fn();
@@ -113,7 +113,7 @@ describe("SignTypedDataDeviceAction", () => {
   function extractDependenciesMock() {
     return {
       getAppConfig: getAppConfigMock,
-      web3CheckOptIn: web3CheckOptInMock,
+      txSimulationOptIn: txSimulationOptInMock,
       buildContext: buildContextMock,
       provideContext: provideContextMock,
       signTypedData: signTypedDataMock,
@@ -123,21 +123,21 @@ describe("SignTypedDataDeviceAction", () => {
 
   function createAppConfig(
     version: string,
-    web3ChecksEnabled: boolean,
-    web3ChecksOptIn: boolean,
+    transactionChecksEnabled: boolean,
+    transactionChecksOptIn: boolean,
   ) {
     return {
       blindSigningEnabled: false,
-      web3ChecksEnabled,
-      web3ChecksOptIn,
+      transactionChecksEnabled,
+      transactionChecksOptIn,
       version,
     };
   }
 
   function setupAppConfig(
     version: string,
-    web3ChecksEnabled: boolean,
-    web3ChecksOptIn: boolean,
+    transactionChecksEnabled: boolean,
+    transactionChecksOptIn: boolean,
   ) {
     apiMock.getDeviceSessionState.mockReturnValueOnce({
       sessionStateType: DeviceSessionStateType.ReadyWithoutSecureChannel,
@@ -149,7 +149,11 @@ describe("SignTypedDataDeviceAction", () => {
     });
     getAppConfigMock.mockResolvedValue(
       CommandResultFactory({
-        data: createAppConfig(version, web3ChecksEnabled, web3ChecksOptIn),
+        data: createAppConfig(
+          version,
+          transactionChecksEnabled,
+          transactionChecksOptIn,
+        ),
       }),
     );
   }
@@ -635,7 +639,7 @@ describe("SignTypedDataDeviceAction", () => {
   });
 
   describe("Web3Checks", () => {
-    it("should call external dependencies with web3Checks enabled and supported", () =>
+    it("should call external dependencies with transactionChecks enabled and supported", () =>
       new Promise<void>((resolve, reject) => {
         setupOpenAppDAMock();
         setupAppConfig("1.16.0", true, true);
@@ -726,7 +730,7 @@ describe("SignTypedDataDeviceAction", () => {
         });
       }));
 
-    it("should call external dependencies with web3Checks supported but disabled", () =>
+    it("should call external dependencies with transactionChecks supported but disabled", () =>
       new Promise<void>((resolve, reject) => {
         setupOpenAppDAMock();
         setupAppConfig("1.16.0", false, true);
@@ -817,7 +821,7 @@ describe("SignTypedDataDeviceAction", () => {
         });
       }));
 
-    it("should call external dependencies with web3Checks opt-in, then enabled", () =>
+    it("should call external dependencies with transactionChecks opt-in, then enabled", () =>
       new Promise<void>((resolve, reject) => {
         setupOpenAppDAMock();
         setupAppConfig("1.16.0", false, false);
@@ -836,7 +840,7 @@ describe("SignTypedDataDeviceAction", () => {
         vi.spyOn(deviceAction, "extractDependencies").mockReturnValue(
           extractDependenciesMock(),
         );
-        web3CheckOptInMock.mockResolvedValueOnce(
+        txSimulationOptInMock.mockResolvedValueOnce(
           CommandResultFactory({ data: { enabled: true } }),
         );
         buildContextMock.mockRejectedValueOnce(
@@ -847,7 +851,7 @@ describe("SignTypedDataDeviceAction", () => {
         );
 
         // Expected intermediate values for the following state sequence:
-        //   Initial -> OpenApp -> GetAppConfiguration -> Web3ChecksOptIn -> BuildContext
+        //   Initial -> OpenApp -> GetAppConfiguration -> TransactionChecksOptIn -> BuildContext
         const expectedStates: Array<SignTypedDataDAState> = [
           {
             intermediateValue: {
@@ -872,15 +876,16 @@ describe("SignTypedDataDeviceAction", () => {
           },
           {
             intermediateValue: {
-              requiredUserInteraction: UserInteractionRequired.Web3ChecksOptIn,
-              step: SignTypedDataDAStateStep.WEB3_CHECKS_OPT_IN,
+              requiredUserInteraction:
+                UserInteractionRequired.TransactionChecksOptIn,
+              step: SignTypedDataDAStateStep.TRANSACTION_CHECKS_OPT_IN,
             },
             status: DeviceActionStatus.Pending,
           },
           {
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
-              step: SignTypedDataDAStateStep.WEB3_CHECKS_OPT_IN_RESULT,
+              step: SignTypedDataDAStateStep.TRANSACTION_CHECKS_OPT_IN_RESULT,
               result: true,
             },
             status: DeviceActionStatus.Pending,
@@ -910,7 +915,7 @@ describe("SignTypedDataDeviceAction", () => {
           onDone: () => {
             // Verify mocks calls parameters
             expect(getAppConfigMock).toHaveBeenCalled();
-            expect(web3CheckOptInMock).toHaveBeenCalled();
+            expect(txSimulationOptInMock).toHaveBeenCalled();
             expect(buildContextMock).toHaveBeenCalledWith(
               expect.objectContaining({
                 input: {
@@ -927,7 +932,7 @@ describe("SignTypedDataDeviceAction", () => {
         });
       }));
 
-    it("should call external dependencies with web3Checks opt-in, then disabled", () =>
+    it("should call external dependencies with transactionChecks opt-in, then disabled", () =>
       new Promise<void>((resolve, reject) => {
         setupOpenAppDAMock();
         setupAppConfig("1.16.0", false, false);
@@ -946,7 +951,7 @@ describe("SignTypedDataDeviceAction", () => {
         vi.spyOn(deviceAction, "extractDependencies").mockReturnValue(
           extractDependenciesMock(),
         );
-        web3CheckOptInMock.mockResolvedValueOnce(
+        txSimulationOptInMock.mockResolvedValueOnce(
           CommandResultFactory({ data: { enabled: false } }),
         );
         buildContextMock.mockRejectedValueOnce(
@@ -957,7 +962,7 @@ describe("SignTypedDataDeviceAction", () => {
         );
 
         // Expected intermediate values for the following state sequence:
-        //   Initial -> OpenApp -> GetAppConfiguration -> Web3ChecksOptIn -> BuildContext
+        //   Initial -> OpenApp -> GetAppConfiguration -> TransactionChecksOptIn -> BuildContext
         const expectedStates: Array<SignTypedDataDAState> = [
           {
             intermediateValue: {
@@ -982,15 +987,16 @@ describe("SignTypedDataDeviceAction", () => {
           },
           {
             intermediateValue: {
-              requiredUserInteraction: UserInteractionRequired.Web3ChecksOptIn,
-              step: SignTypedDataDAStateStep.WEB3_CHECKS_OPT_IN,
+              requiredUserInteraction:
+                UserInteractionRequired.TransactionChecksOptIn,
+              step: SignTypedDataDAStateStep.TRANSACTION_CHECKS_OPT_IN,
             },
             status: DeviceActionStatus.Pending,
           },
           {
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
-              step: SignTypedDataDAStateStep.WEB3_CHECKS_OPT_IN_RESULT,
+              step: SignTypedDataDAStateStep.TRANSACTION_CHECKS_OPT_IN_RESULT,
               result: false,
             },
             status: DeviceActionStatus.Pending,
@@ -1020,7 +1026,7 @@ describe("SignTypedDataDeviceAction", () => {
           onDone: () => {
             // Verify mocks calls parameters
             expect(getAppConfigMock).toHaveBeenCalled();
-            expect(web3CheckOptInMock).toHaveBeenCalled();
+            expect(txSimulationOptInMock).toHaveBeenCalled();
             expect(buildContextMock).toHaveBeenCalledWith(
               expect.objectContaining({
                 input: {

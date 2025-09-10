@@ -24,8 +24,8 @@ import { type TransactionParserService } from "@internal/transaction/service/par
 export enum SignTransactionDAStep {
   OPEN_APP = "signer.eth.steps.openApp",
   GET_APP_CONFIG = "signer.eth.steps.getAppConfig",
-  WEB3_CHECKS_OPT_IN = "signer.eth.steps.web3ChecksOptIn",
-  WEB3_CHECKS_OPT_IN_RESULT = "signer.eth.steps.web3ChecksOptInResult",
+  TRANSACTION_CHECKS_OPT_IN = "signer.eth.steps.transactionChecksOptIn",
+  TRANSACTION_CHECKS_OPT_IN_RESULT = "signer.eth.steps.transactionChecksOptInResult",
   PARSE_TRANSACTION = "signer.eth.steps.parseTransaction",
   GET_ADDRESS = "signer.eth.steps.getAddress",
   BUILD_CONTEXTS = "signer.eth.steps.buildContexts",
@@ -50,7 +50,7 @@ export type SignTransactionDAError =
 
 type SignTransactionDARequiredInteraction =
   | OpenAppDARequiredInteraction
-  | UserInteractionRequired.Web3ChecksOptIn
+  | UserInteractionRequired.TransactionChecksOptIn
   | UserInteractionRequired.SignTransaction;
 
 export type SignTransactionDAIntermediateValue =
@@ -58,12 +58,12 @@ export type SignTransactionDAIntermediateValue =
       requiredUserInteraction: SignTransactionDARequiredInteraction;
       step: Exclude<
         SignTransactionDAStep,
-        SignTransactionDAStep.WEB3_CHECKS_OPT_IN_RESULT
+        SignTransactionDAStep.TRANSACTION_CHECKS_OPT_IN_RESULT
       >;
     }
   | {
       requiredUserInteraction: UserInteractionRequired.None;
-      step: SignTransactionDAStep.WEB3_CHECKS_OPT_IN_RESULT;
+      step: SignTransactionDAStep.TRANSACTION_CHECKS_OPT_IN_RESULT;
       result: boolean;
     };
 

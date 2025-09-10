@@ -3,7 +3,7 @@ import {
   type ContextModuleCalConfig,
   type ContextModuleConfig,
   type ContextModuleMetadataServiceConfig,
-  type ContextModuleWeb3ChecksConfig,
+  type ContextModuleTransactionCheckConfig,
 } from "./config/model/ContextModuleConfig";
 import { type ContextLoader } from "./shared/domain/ContextLoader";
 import { type SolanaContextLoader } from "./solana/domain/SolanaContextLoader";
@@ -13,7 +13,8 @@ import { type ContextModule } from "./ContextModule";
 import { DefaultContextModule } from "./DefaultContextModule";
 
 const DEFAULT_CAL_URL = "https://crypto-assets-service.api.ledger.com/v1";
-const DEFAULT_WEB3_CHECKS_URL = "https://web3checks-backend.api.ledger.com/v3";
+const DEFAULT_TRANSACTION_CHECK_URL =
+  "https://web3checks-backend.api.ledger.com/v3";
 const DEFAULT_METADATA_SERVICE_DOMAIN = "https://nft.api.live.ledger.com";
 
 export const DEFAULT_CONFIG: ContextModuleConfig = {
@@ -22,8 +23,8 @@ export const DEFAULT_CONFIG: ContextModuleConfig = {
     mode: "prod",
     branch: "main",
   },
-  web3checks: {
-    url: DEFAULT_WEB3_CHECKS_URL,
+  transactionCheck: {
+    url: DEFAULT_TRANSACTION_CHECK_URL,
   },
   metadataServiceDomain: {
     url: DEFAULT_METADATA_SERVICE_DOMAIN,
@@ -123,13 +124,15 @@ export class ContextModuleBuilder {
   }
 
   /**
-   * Add a custom web3 checks configuration
+   * Add a custom transaction check configuration
    *
-   * @param web3ChecksConfig
+   * @param transactionCheckConfig
    * @returns this
    */
-  setWeb3ChecksConfig(web3ChecksConfig: ContextModuleWeb3ChecksConfig) {
-    this.config.web3checks = web3ChecksConfig;
+  setTransactionCheckConfig(
+    transactionCheckConfig: ContextModuleTransactionCheckConfig,
+  ) {
+    this.config.transactionCheck = transactionCheckConfig;
     return this;
   }
 

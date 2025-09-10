@@ -36,12 +36,12 @@ describe("BuildEIP712ContextTask", () => {
   const getWeb3ChecksFactoryMock = vi.fn();
 
   function createAppConfig(
-    web3ChecksEnabled: boolean,
+    transactionChecksEnabled: boolean,
   ): GetConfigCommandResponse {
     return {
       blindSigningEnabled: false,
-      web3ChecksEnabled,
-      web3ChecksOptIn: false,
+      transactionChecksEnabled,
+      transactionChecksOptIn: false,
       version: "1.13.0",
     };
   }

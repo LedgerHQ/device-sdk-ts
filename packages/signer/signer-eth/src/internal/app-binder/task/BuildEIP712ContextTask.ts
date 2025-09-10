@@ -41,7 +41,7 @@ export class BuildEIP712ContextTask {
     // Run the web3checks if needed
     let web3Check: ClearSignContextSuccess<ClearSignContextType.WEB3_CHECK> | null =
       null;
-    if (this.appConfig.web3ChecksEnabled) {
+    if (this.appConfig.transactionChecksEnabled) {
       web3Check = (
         await this.getWeb3ChecksFactory(this.api, {
           contextModule: this.contextModule,

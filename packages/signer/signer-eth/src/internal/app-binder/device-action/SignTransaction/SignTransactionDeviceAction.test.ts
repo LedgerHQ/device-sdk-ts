@@ -68,7 +68,7 @@ describe("SignTransactionDeviceAction", () => {
     extractValue: vi.fn(),
   } as unknown as TransactionParserService;
   const getAppConfigMock = vi.fn();
-  const web3CheckOptInMock = vi.fn();
+  const txSimulationOptInMock = vi.fn();
   const parseTransactionMock = vi.fn();
   const buildContextsMock = vi.fn();
   const provideContextsMock = vi.fn();
@@ -78,7 +78,7 @@ describe("SignTransactionDeviceAction", () => {
     return {
       getAddress: getAddressMock,
       getAppConfig: getAppConfigMock,
-      web3CheckOptIn: web3CheckOptInMock,
+      txSimulationOptIn: txSimulationOptInMock,
       parseTransaction: parseTransactionMock,
       buildContexts: buildContextsMock,
       provideContexts: provideContextsMock,
@@ -108,21 +108,21 @@ describe("SignTransactionDeviceAction", () => {
 
   function createAppConfig(
     version: string,
-    web3ChecksEnabled: boolean,
-    web3ChecksOptIn: boolean,
+    transactionChecksEnabled: boolean,
+    transactionChecksOptIn: boolean,
   ) {
     return {
       blindSigningEnabled: false,
-      web3ChecksEnabled,
-      web3ChecksOptIn,
+      transactionChecksEnabled,
+      transactionChecksOptIn,
       version,
     };
   }
 
   function setupAppConfig(
     version: string,
-    web3ChecksEnabled: boolean,
-    web3ChecksOptIn: boolean,
+    transactionChecksEnabled: boolean,
+    transactionChecksOptIn: boolean,
   ) {
     apiMock.getDeviceSessionState.mockReturnValueOnce({
       sessionStateType: DeviceSessionStateType.ReadyWithoutSecureChannel,
@@ -137,7 +137,11 @@ describe("SignTransactionDeviceAction", () => {
     } as unknown as TransportDeviceModel);
     getAppConfigMock.mockResolvedValue(
       CommandResultFactory({
-        data: createAppConfig(version, web3ChecksEnabled, web3ChecksOptIn),
+        data: createAppConfig(
+          version,
+          transactionChecksEnabled,
+          transactionChecksOptIn,
+        ),
       }),
     );
   }
@@ -418,7 +422,7 @@ describe("SignTransactionDeviceAction", () => {
         vi.spyOn(deviceAction, "extractDependencies").mockReturnValue(
           extractDependenciesMock(),
         );
-        web3CheckOptInMock.mockResolvedValueOnce(
+        txSimulationOptInMock.mockResolvedValueOnce(
           CommandResultFactory({ data: { enabled: true } }),
         );
 
@@ -429,12 +433,12 @@ describe("SignTransactionDeviceAction", () => {
         const { steps } = await executeUntilStep(4, observable);
 
         expect(getStep(steps, 3).intermediateValue.step).toBe(
-          SignTransactionDAStep.WEB3_CHECKS_OPT_IN,
+          SignTransactionDAStep.TRANSACTION_CHECKS_OPT_IN,
         );
-        expect(web3CheckOptInMock).toHaveBeenCalledTimes(1);
+        expect(txSimulationOptInMock).toHaveBeenCalledTimes(1);
 
         expect(getStep(steps, 4).intermediateValue.step).toBe(
-          SignTransactionDAStep.WEB3_CHECKS_OPT_IN_RESULT,
+          SignTransactionDAStep.TRANSACTION_CHECKS_OPT_IN_RESULT,
         );
         // @ts-expect-error - result is not typed
         expect(getStep(steps, 4).intermediateValue.result).toBe(true);
@@ -467,19 +471,19 @@ describe("SignTransactionDeviceAction", () => {
       it("should not opt in to web3 checks if app config is not supported", async () => {
         setupAppConfig("1.15.0", false, false);
         await executeUntilStep(3, observable);
-        expect(web3CheckOptInMock).not.toHaveBeenCalled();
+        expect(txSimulationOptInMock).not.toHaveBeenCalled();
       });
 
       it("should not opt in to web3 checks if already enabled", async () => {
         setupAppConfig("1.16.0", true, false);
         await executeUntilStep(3, observable);
-        expect(web3CheckOptInMock).not.toHaveBeenCalled();
+        expect(txSimulationOptInMock).not.toHaveBeenCalled();
       });
 
       it("should not opt in to web3 checks if already opted out", async () => {
         setupAppConfig("1.16.0", false, true);
         await executeUntilStep(3, observable);
-        expect(web3CheckOptInMock).not.toHaveBeenCalled();
+        expect(txSimulationOptInMock).not.toHaveBeenCalled();
       });
     });
   });
@@ -598,7 +602,7 @@ describe("SignTransactionDeviceAction", () => {
       vi.spyOn(deviceAction, "extractDependencies").mockReturnValue(
         extractDependenciesMock(),
       );
-      web3CheckOptInMock.mockResolvedValueOnce(
+      txSimulationOptInMock.mockResolvedValueOnce(
         CommandResultFactory({
           error: new InvalidStatusWordError("web3 check opt in failed"),
         }),

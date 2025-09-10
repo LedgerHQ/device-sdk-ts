@@ -16,7 +16,7 @@ import { ProvideTokenInformationCommand } from "@internal/app-binder/command/Pro
 import { ProvideTransactionFieldDescriptionCommand } from "@internal/app-binder/command/ProvideTransactionFieldDescriptionCommand";
 import { ProvideTransactionInformationCommand } from "@internal/app-binder/command/ProvideTransactionInformationCommand";
 import { ProvideTrustedNameCommand } from "@internal/app-binder/command/ProvideTrustedNameCommand";
-import { ProvideWeb3CheckCommand } from "@internal/app-binder/command/ProvideWeb3CheckCommand";
+import { ProvideTxSimulationCommand } from "@internal/app-binder/command/ProvideTxSimulationCommand";
 import { SetExternalPluginCommand } from "@internal/app-binder/command/SetExternalPluginCommand";
 import { SetPluginCommand } from "@internal/app-binder/command/SetPluginCommand";
 import { StoreTransactionCommand } from "@internal/app-binder/command/StoreTransactionCommand";
@@ -273,7 +273,7 @@ describe("ProvideContextsTask", () => {
       it.each([
         [ClearSignContextType.ENUM, ProvideEnumCommand],
         [ClearSignContextType.TRUSTED_NAME, ProvideTrustedNameCommand],
-        [ClearSignContextType.WEB3_CHECK, ProvideWeb3CheckCommand],
+        [ClearSignContextType.WEB3_CHECK, ProvideTxSimulationCommand],
         [
           ClearSignContextType.TRANSACTION_FIELD_DESCRIPTION,
           ProvideTransactionFieldDescriptionCommand,

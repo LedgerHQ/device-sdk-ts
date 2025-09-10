@@ -47,7 +47,7 @@ export class HttpWeb3CheckDataSource implements Web3CheckDataSource {
           data: context.data,
         },
       };
-      url = `${this.config.web3checks.url}/ethereum/scan/eip-712`;
+      url = `${this.config.transactionCheck.url}/ethereum/scan/eip-712`;
     } else {
       requestDto = {
         tx: {
@@ -56,7 +56,7 @@ export class HttpWeb3CheckDataSource implements Web3CheckDataSource {
         },
         chain: context.chainId,
       };
-      url = `${this.config.web3checks.url}/ethereum/scan/tx`;
+      url = `${this.config.transactionCheck.url}/ethereum/scan/tx`;
     }
 
     try {

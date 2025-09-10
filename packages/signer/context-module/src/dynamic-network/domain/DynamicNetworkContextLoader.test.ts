@@ -26,7 +26,7 @@ describe("DynamicNetworkContextLoader", () => {
       mode: "prod",
       branch: "main",
     },
-    web3checks: {
+    transactionCheck: {
       url: "https://web3checks.api.ledger.com",
     },
     metadataServiceDomain: {

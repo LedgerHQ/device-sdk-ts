@@ -18,8 +18,8 @@ import { type TypedDataParserService } from "@internal/typed-data/service/TypedD
 export enum SignTypedDataDAStateStep {
   OPEN_APP = "signer.eth.steps.openApp",
   GET_APP_CONFIG = "signer.eth.steps.getAppConfig",
-  WEB3_CHECKS_OPT_IN = "signer.eth.steps.web3ChecksOptIn",
-  WEB3_CHECKS_OPT_IN_RESULT = "signer.eth.steps.web3ChecksOptInResult",
+  TRANSACTION_CHECKS_OPT_IN = "signer.eth.steps.transactionChecksOptIn",
+  TRANSACTION_CHECKS_OPT_IN_RESULT = "signer.eth.steps.transactionChecksOptInResult",
   BUILD_CONTEXT = "signer.eth.steps.buildContext",
   PROVIDE_CONTEXT = "signer.eth.steps.provideContext",
   PROVIDE_GENERIC_CONTEXT = "signer.eth.steps.provideGenericContext",
@@ -43,7 +43,7 @@ export type SignTypedDataDAError =
 
 type SignTypedDataDARequiredInteraction =
   | OpenAppDARequiredInteraction
-  | UserInteractionRequired.Web3ChecksOptIn
+  | UserInteractionRequired.TransactionChecksOptIn
   | UserInteractionRequired.SignTypedData;
 
 export type SignTypedDataDAIntermediateValue =
@@ -51,12 +51,12 @@ export type SignTypedDataDAIntermediateValue =
       requiredUserInteraction: SignTypedDataDARequiredInteraction;
       step: Exclude<
         SignTypedDataDAStateStep,
-        SignTypedDataDAStateStep.WEB3_CHECKS_OPT_IN_RESULT
+        SignTypedDataDAStateStep.TRANSACTION_CHECKS_OPT_IN_RESULT
       >;
     }
   | {
       requiredUserInteraction: UserInteractionRequired.None;
-      step: SignTypedDataDAStateStep.WEB3_CHECKS_OPT_IN_RESULT;
+      step: SignTypedDataDAStateStep.TRANSACTION_CHECKS_OPT_IN_RESULT;
       result: boolean;
     };
 

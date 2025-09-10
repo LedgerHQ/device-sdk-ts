@@ -75,7 +75,7 @@ export class BuildBaseContexts {
         domain: options.domain,
         deviceModelId: deviceState.deviceModelId,
         rawTx:
-          appConfig.web3ChecksEnabled && transaction
+          appConfig.transactionChecksEnabled && transaction
             ? bufferToHexaString(transaction)
             : undefined, // If transaction check is not enabled, don't pass the raw tx
         ...subset,

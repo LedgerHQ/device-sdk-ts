@@ -22,8 +22,8 @@ vi.mock("axios");
 
 describe("HttpProxyDataSource", () => {
   const config = {
-    web3checks: {
-      url: "web3checksUrl",
+    transactionCheck: {
+      url: "transaction-checks-url",
     },
     originToken: "originToken",
   } as ContextModuleConfig;

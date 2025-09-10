@@ -16,23 +16,23 @@ import {
   type EthErrorCodes,
 } from "@internal/app-binder/command/utils/ethAppErrors";
 
-export type ProvideWeb3CheckCommandArgs = {
+export type ProvideTxSimulationCommandArgs = {
   readonly payload: Uint8Array;
   readonly isFirstChunk: boolean;
 };
 
 /**
- * The command that provides a chunk of the trusted name to the device.
+ * The command that provides a chunk of the transaction simulation to the device.
  */
-export class ProvideWeb3CheckCommand
-  implements Command<void, ProvideWeb3CheckCommandArgs, EthErrorCodes>
+export class ProvideTxSimulationCommand
+  implements Command<void, ProvideTxSimulationCommandArgs, EthErrorCodes>
 {
   private readonly errorHelper = new CommandErrorHelper<void, EthErrorCodes>(
     ETH_APP_ERRORS,
     EthAppCommandErrorFactory,
   );
 
-  constructor(private readonly args: ProvideWeb3CheckCommandArgs) {}
+  constructor(private readonly args: ProvideTxSimulationCommandArgs) {}
 
   getApdu(): Apdu {
     const apduBuilderArgs: ApduBuilderArgs = {

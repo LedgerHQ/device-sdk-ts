@@ -39,8 +39,8 @@ describe("GetConfigCommand", () => {
       if (isSuccessCommandResult(result)) {
         expect(result.data).toEqual({
           blindSigningEnabled: true,
-          web3ChecksEnabled: true,
-          web3ChecksOptIn: true,
+          transactionChecksEnabled: true,
+          transactionChecksOptIn: true,
           version: "1.2.3",
         });
       } else {
@@ -62,8 +62,8 @@ describe("GetConfigCommand", () => {
       if (isSuccessCommandResult(result)) {
         expect(result.data).toEqual({
           blindSigningEnabled: false,
-          web3ChecksEnabled: false,
-          web3ChecksOptIn: false,
+          transactionChecksEnabled: false,
+          transactionChecksOptIn: false,
           version: "1.2.3",
         });
       } else {

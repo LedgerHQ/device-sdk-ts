@@ -15,8 +15,8 @@ vi.mock("axios");
 
 describe("HttpTransactionCheckDataSource", () => {
   const config = {
-    web3checks: {
-      url: "web3checksUrl",
+    transactionCheck: {
+      url: "transaction-checks-url",
     },
     originToken: "originToken",
   } as ContextModuleConfig;
@@ -192,7 +192,7 @@ describe("HttpTransactionCheckDataSource", () => {
       expect(axios.request).toHaveBeenCalledWith(
         expect.objectContaining({
           method: "POST",
-          url: `${config.web3checks.url}/ethereum/scan/tx`,
+          url: `${config.transactionCheck.url}/ethereum/scan/tx`,
         }),
       );
     });
