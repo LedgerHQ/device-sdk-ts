@@ -12,8 +12,8 @@ describe("ApplicationChecker", () => {
   function createAppConfig(version: string): GetConfigCommandResponse {
     return {
       blindSigningEnabled: false,
-      web3ChecksEnabled: false,
-      web3ChecksOptIn: false,
+      transactionChecksEnabled: false,
+      transactionChecksOptIn: false,
       version,
     };
   }

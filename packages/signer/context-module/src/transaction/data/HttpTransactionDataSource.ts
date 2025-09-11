@@ -75,8 +75,7 @@ export class HttpTransactionDataSource implements TransactionDataSource {
           output: "descriptors_calldata",
           chain_id: chainId,
           contracts: address,
-          // TODO revert to branch
-          ref: `commit:14e65f0b9821ed63c40d5162fabfa818b24d5260`,
+          ref: `branch:${this.config.cal.branch}`,
         },
         headers: {
           [LEDGER_CLIENT_VERSION_HEADER]: `context-module/${PACKAGE.version}`,

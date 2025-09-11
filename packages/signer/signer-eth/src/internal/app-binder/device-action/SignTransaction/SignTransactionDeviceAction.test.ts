@@ -57,12 +57,9 @@ describe("SignTransactionDeviceAction", () => {
       SignTransactionDAIntermediateValue
     >
   >;
-  const contextModuleMock: ContextModule = {
+  const contextModuleMock = {
     getFieldContext: vi.fn(),
     getContexts: vi.fn(),
-    getTypedDataFilters: vi.fn(),
-    getWeb3Checks: vi.fn(),
-    getSolanaContext: vi.fn(),
   };
   const mapperMock: TransactionMapperService = {
     mapTransactionToSubset: vi.fn(),
@@ -71,15 +68,17 @@ describe("SignTransactionDeviceAction", () => {
     extractValue: vi.fn(),
   } as unknown as TransactionParserService;
   const getAppConfigMock = vi.fn();
-  const web3CheckOptInMock = vi.fn();
+  const txSimulationOptInMock = vi.fn();
   const parseTransactionMock = vi.fn();
   const buildContextsMock = vi.fn();
   const provideContextsMock = vi.fn();
   const signTransactionMock = vi.fn();
+  const getAddressMock = vi.fn();
   function extractDependenciesMock() {
     return {
+      getAddress: getAddressMock,
       getAppConfig: getAppConfigMock,
-      web3CheckOptIn: web3CheckOptInMock,
+      txSimulationOptIn: txSimulationOptInMock,
       parseTransaction: parseTransactionMock,
       buildContexts: buildContextsMock,
       provideContexts: provideContextsMock,
@@ -97,31 +96,33 @@ describe("SignTransactionDeviceAction", () => {
       data: "0x",
     }).unsignedSerialized,
   )!;
+  const defaultFrom = "0x1234567890abcdef";
   const defaultSubset: TransactionSubset = {
     chainId: 1,
     data: "0x",
     selector: "0x",
     to: "0x",
     value: 0n,
+    from: defaultFrom,
   };
 
   function createAppConfig(
     version: string,
-    web3ChecksEnabled: boolean,
-    web3ChecksOptIn: boolean,
+    transactionChecksEnabled: boolean,
+    transactionChecksOptIn: boolean,
   ) {
     return {
       blindSigningEnabled: false,
-      web3ChecksEnabled,
-      web3ChecksOptIn,
+      transactionChecksEnabled,
+      transactionChecksOptIn,
       version,
     };
   }
 
   function setupAppConfig(
     version: string,
-    web3ChecksEnabled: boolean,
-    web3ChecksOptIn: boolean,
+    transactionChecksEnabled: boolean,
+    transactionChecksOptIn: boolean,
   ) {
     apiMock.getDeviceSessionState.mockReturnValueOnce({
       sessionStateType: DeviceSessionStateType.ReadyWithoutSecureChannel,
@@ -136,7 +137,11 @@ describe("SignTransactionDeviceAction", () => {
     } as unknown as TransportDeviceModel);
     getAppConfigMock.mockResolvedValue(
       CommandResultFactory({
-        data: createAppConfig(version, web3ChecksEnabled, web3ChecksOptIn),
+        data: createAppConfig(
+          version,
+          transactionChecksEnabled,
+          transactionChecksOptIn,
+        ),
       }),
     );
   }
@@ -179,6 +184,13 @@ describe("SignTransactionDeviceAction", () => {
           subset: defaultSubset,
           type: TransactionType.EIP1559,
         });
+        getAddressMock.mockResolvedValueOnce(
+          CommandResultFactory({
+            data: {
+              address: defaultFrom,
+            },
+          }),
+        );
         buildContextsMock.mockResolvedValueOnce({
           clearSignContexts: contexts,
           clearSigningType: ClearSigningType.EIP7730,
@@ -199,7 +211,7 @@ describe("SignTransactionDeviceAction", () => {
             derivationPath: "44'/60'/0'/0/0",
             transaction: defaultTransaction,
             options: defaultOptions,
-            contextModule: contextModuleMock,
+            contextModule: contextModuleMock as unknown as ContextModule,
             mapper: mapperMock,
             parser: parserMock,
           },
@@ -249,9 +261,16 @@ describe("SignTransactionDeviceAction", () => {
         );
       });
 
-      it("should build context", async () => {
+      it("should get address", async () => {
         const { steps } = await executeUntilStep(4, observable);
         expect(getStep(steps, 4).intermediateValue.step).toBe(
+          SignTransactionDAStep.GET_ADDRESS,
+        );
+      });
+
+      it("should build context", async () => {
+        const { steps } = await executeUntilStep(5, observable);
+        expect(getStep(steps, 5).intermediateValue.step).toBe(
           SignTransactionDAStep.BUILD_CONTEXTS,
         );
         expect(buildContextsMock).toHaveBeenCalledTimes(1);
@@ -259,7 +278,7 @@ describe("SignTransactionDeviceAction", () => {
           1,
           expect.objectContaining({
             input: {
-              contextModule: contextModuleMock,
+              contextModule: contextModuleMock as unknown as ContextModule,
               parser: parserMock,
               mapper: mapperMock,
               options: defaultOptions,
@@ -274,8 +293,8 @@ describe("SignTransactionDeviceAction", () => {
       });
 
       it("should provide context", async () => {
-        const { steps } = await executeUntilStep(5, observable);
-        expect(getStep(steps, 5).intermediateValue.step).toBe(
+        const { steps } = await executeUntilStep(6, observable);
+        expect(getStep(steps, 6).intermediateValue.step).toBe(
           SignTransactionDAStep.PROVIDE_CONTEXTS,
         );
         expect(provideContextsMock).toHaveBeenCalledTimes(1);
@@ -292,8 +311,8 @@ describe("SignTransactionDeviceAction", () => {
       });
 
       it("should sign transaction", async () => {
-        const { steps } = await executeUntilStep(6, observable);
-        expect(getStep(steps, 6).intermediateValue.step).toBe(
+        const { steps } = await executeUntilStep(7, observable);
+        expect(getStep(steps, 7).intermediateValue.step).toBe(
           SignTransactionDAStep.SIGN_TRANSACTION,
         );
         expect(signTransactionMock).toHaveBeenCalledTimes(1);
@@ -335,7 +354,7 @@ describe("SignTransactionDeviceAction", () => {
             derivationPath: "44'/60'/0'/0/0",
             transaction: defaultTransaction,
             options: { ...defaultOptions, skipOpenApp: true },
-            contextModule: contextModuleMock,
+            contextModule: contextModuleMock as unknown as ContextModule,
             mapper: mapperMock,
             parser: parserMock,
           },
@@ -344,6 +363,13 @@ describe("SignTransactionDeviceAction", () => {
           subset: defaultSubset,
           type: TransactionType.EIP1559,
         });
+        getAddressMock.mockResolvedValueOnce(
+          CommandResultFactory({
+            data: {
+              address: defaultFrom,
+            },
+          }),
+        );
         buildContextsMock.mockResolvedValueOnce({
           clearSignContexts: [],
           clearSignContextsOptional: [],
@@ -387,7 +413,7 @@ describe("SignTransactionDeviceAction", () => {
             derivationPath: "44'/60'/0'/0/0",
             transaction: defaultTransaction,
             options: defaultOptions,
-            contextModule: contextModuleMock,
+            contextModule: contextModuleMock as unknown as ContextModule,
             mapper: mapperMock,
             parser: parserMock,
           },
@@ -396,7 +422,7 @@ describe("SignTransactionDeviceAction", () => {
         vi.spyOn(deviceAction, "extractDependencies").mockReturnValue(
           extractDependenciesMock(),
         );
-        web3CheckOptInMock.mockResolvedValueOnce(
+        txSimulationOptInMock.mockResolvedValueOnce(
           CommandResultFactory({ data: { enabled: true } }),
         );
 
@@ -407,12 +433,12 @@ describe("SignTransactionDeviceAction", () => {
         const { steps } = await executeUntilStep(4, observable);
 
         expect(getStep(steps, 3).intermediateValue.step).toBe(
-          SignTransactionDAStep.WEB3_CHECKS_OPT_IN,
+          SignTransactionDAStep.TRANSACTION_CHECKS_OPT_IN,
         );
-        expect(web3CheckOptInMock).toHaveBeenCalledTimes(1);
+        expect(txSimulationOptInMock).toHaveBeenCalledTimes(1);
 
         expect(getStep(steps, 4).intermediateValue.step).toBe(
-          SignTransactionDAStep.WEB3_CHECKS_OPT_IN_RESULT,
+          SignTransactionDAStep.TRANSACTION_CHECKS_OPT_IN_RESULT,
         );
         // @ts-expect-error - result is not typed
         expect(getStep(steps, 4).intermediateValue.result).toBe(true);
@@ -429,7 +455,7 @@ describe("SignTransactionDeviceAction", () => {
             derivationPath: "44'/60'/0'/0/0",
             transaction: defaultTransaction,
             options: defaultOptions,
-            contextModule: contextModuleMock,
+            contextModule: contextModuleMock as unknown as ContextModule,
             mapper: mapperMock,
             parser: parserMock,
           },
@@ -445,19 +471,19 @@ describe("SignTransactionDeviceAction", () => {
       it("should not opt in to web3 checks if app config is not supported", async () => {
         setupAppConfig("1.15.0", false, false);
         await executeUntilStep(3, observable);
-        expect(web3CheckOptInMock).not.toHaveBeenCalled();
+        expect(txSimulationOptInMock).not.toHaveBeenCalled();
       });
 
       it("should not opt in to web3 checks if already enabled", async () => {
         setupAppConfig("1.16.0", true, false);
         await executeUntilStep(3, observable);
-        expect(web3CheckOptInMock).not.toHaveBeenCalled();
+        expect(txSimulationOptInMock).not.toHaveBeenCalled();
       });
 
       it("should not opt in to web3 checks if already opted out", async () => {
         setupAppConfig("1.16.0", false, true);
         await executeUntilStep(3, observable);
-        expect(web3CheckOptInMock).not.toHaveBeenCalled();
+        expect(txSimulationOptInMock).not.toHaveBeenCalled();
       });
     });
   });
@@ -476,7 +502,7 @@ describe("SignTransactionDeviceAction", () => {
           derivationPath: "44'/60'/0'/0/0",
           transaction: defaultTransaction,
           options: defaultOptions,
-          contextModule: contextModuleMock,
+          contextModule: contextModuleMock as unknown as ContextModule,
           mapper: mapperMock,
           parser: parserMock,
         },
@@ -509,7 +535,7 @@ describe("SignTransactionDeviceAction", () => {
           derivationPath: "44'/60'/0'/0/0",
           transaction: defaultTransaction,
           options: defaultOptions,
-          contextModule: contextModuleMock,
+          contextModule: contextModuleMock as unknown as ContextModule,
           mapper: mapperMock,
           parser: parserMock,
         },
@@ -540,7 +566,7 @@ describe("SignTransactionDeviceAction", () => {
           derivationPath: "44'/60'/0'/0/0",
           transaction: defaultTransaction,
           options: defaultOptions,
-          contextModule: contextModuleMock,
+          contextModule: contextModuleMock as unknown as ContextModule,
           mapper: mapperMock,
           parser: parserMock,
         },
@@ -568,7 +594,7 @@ describe("SignTransactionDeviceAction", () => {
           derivationPath: "44'/60'/0'/0/0",
           transaction: defaultTransaction,
           options: defaultOptions,
-          contextModule: contextModuleMock,
+          contextModule: contextModuleMock as unknown as ContextModule,
           mapper: mapperMock,
           parser: parserMock,
         },
@@ -576,7 +602,7 @@ describe("SignTransactionDeviceAction", () => {
       vi.spyOn(deviceAction, "extractDependencies").mockReturnValue(
         extractDependenciesMock(),
       );
-      web3CheckOptInMock.mockResolvedValueOnce(
+      txSimulationOptInMock.mockResolvedValueOnce(
         CommandResultFactory({
           error: new InvalidStatusWordError("web3 check opt in failed"),
         }),
@@ -585,6 +611,13 @@ describe("SignTransactionDeviceAction", () => {
         subset: defaultSubset,
         type: TransactionType.EIP1559,
       });
+      getAddressMock.mockResolvedValueOnce(
+        CommandResultFactory({
+          data: {
+            address: defaultFrom,
+          },
+        }),
+      );
       buildContextsMock.mockResolvedValueOnce({
         clearSignContexts: [],
         clearSignContextsOptional: [],
@@ -623,7 +656,7 @@ describe("SignTransactionDeviceAction", () => {
           derivationPath: "44'/60'/0'/0/0",
           transaction: defaultTransaction,
           options: defaultOptions,
-          contextModule: contextModuleMock,
+          contextModule: contextModuleMock as unknown as ContextModule,
           mapper: mapperMock,
           parser: parserMock,
         },
@@ -662,7 +695,7 @@ describe("SignTransactionDeviceAction", () => {
           derivationPath: "44'/60'/0'/0/0",
           transaction: defaultTransaction,
           options: defaultOptions,
-          contextModule: contextModuleMock,
+          contextModule: contextModuleMock as unknown as ContextModule,
           mapper: mapperMock,
           parser: parserMock,
         },
@@ -674,6 +707,13 @@ describe("SignTransactionDeviceAction", () => {
         subset: defaultSubset,
         type: TransactionType.EIP1559,
       });
+      getAddressMock.mockResolvedValueOnce(
+        CommandResultFactory({
+          data: {
+            address: defaultFrom,
+          },
+        }),
+      );
       buildContextsMock.mockResolvedValueOnce({
         clearSignContexts: [],
         clearSignContextsOptional: [],
@@ -703,7 +743,7 @@ describe("SignTransactionDeviceAction", () => {
           derivationPath: "44'/60'/0'/0/0",
           transaction: defaultTransaction,
           options: defaultOptions,
-          contextModule: contextModuleMock,
+          contextModule: contextModuleMock as unknown as ContextModule,
           mapper: mapperMock,
           parser: parserMock,
         },
@@ -715,6 +755,13 @@ describe("SignTransactionDeviceAction", () => {
         subset: defaultSubset,
         type: TransactionType.EIP1559,
       });
+      getAddressMock.mockResolvedValueOnce(
+        CommandResultFactory({
+          data: {
+            address: defaultFrom,
+          },
+        }),
+      );
       buildContextsMock.mockResolvedValueOnce({
         clearSignContexts: [],
         clearSignContextsOptional: [],
@@ -735,6 +782,59 @@ describe("SignTransactionDeviceAction", () => {
       expect(result).toEqual({
         status: DeviceActionStatus.Error,
         error: new InvalidStatusWordError("Sign transaction failed"),
+      });
+    });
+
+    it("should continue if get address fails", async () => {
+      setupOpenAppDAMock();
+      setupAppConfig("1.15.0", false, false);
+
+      // Mock the dependencies to return some sample data
+      parseTransactionMock.mockResolvedValueOnce({
+        subset: defaultSubset,
+        type: TransactionType.EIP1559,
+      });
+      getAddressMock.mockRejectedValueOnce(new Error("Get address failed"));
+      buildContextsMock.mockResolvedValueOnce({
+        clearSignContexts: [],
+        clearSigningType: ClearSigningType.EIP7730,
+      });
+      provideContextsMock.mockResolvedValueOnce(Just(void 0));
+      signTransactionMock.mockResolvedValueOnce(
+        CommandResultFactory({
+          data: {
+            v: 0x1c,
+            r: "0x8a540510e13b0f2b11a451275716d29e08caad07e89a1c84964782fb5e1ad788",
+            s: "0x64a0de235b270fbe81e8e40688f4a9f9ad9d283d690552c9331d7773ceafa513",
+          },
+        }),
+      );
+      const deviceAction = new SignTransactionDeviceAction({
+        input: {
+          derivationPath: "44'/60'/0'/0/0",
+          transaction: defaultTransaction,
+          options: defaultOptions,
+          contextModule: contextModuleMock as unknown as ContextModule,
+          mapper: mapperMock,
+          parser: parserMock,
+        },
+      });
+      vi.spyOn(deviceAction, "extractDependencies").mockReturnValue(
+        extractDependenciesMock(),
+      );
+      observable = deviceAction._execute(apiMock).observable;
+
+      // WHEN
+      const result = await lastValueFrom(observable);
+
+      // THEN
+      expect(result).toEqual({
+        status: DeviceActionStatus.Completed,
+        output: {
+          v: 0x1c,
+          r: "0x8a540510e13b0f2b11a451275716d29e08caad07e89a1c84964782fb5e1ad788",
+          s: "0x64a0de235b270fbe81e8e40688f4a9f9ad9d283d690552c9331d7773ceafa513",
+        },
       });
     });
   });

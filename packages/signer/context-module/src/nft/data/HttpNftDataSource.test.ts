@@ -13,8 +13,8 @@ import { type NftDataSource } from "./NftDataSource";
 vi.mock("axios");
 
 const config = {
-  web3checks: {
-    url: "web3checksUrl",
+  transactionCheck: {
+    url: "transaction-checks-url",
   },
   metadataServiceDomain: {
     url: "https://nft.api.live.ledger.com",

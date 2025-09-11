@@ -16,7 +16,7 @@ describe("ContextModuleBuilder", () => {
     mode: "prod",
     branch: "main",
   };
-  const defaultWeb3ChecksConfig = {
+  const defaultTransactionCheckConfig = {
     url: "https://web3checks/v1",
   };
   const defaultBuilderArgs: ContextModuleConstructorArgs = {
@@ -66,7 +66,7 @@ describe("ContextModuleBuilder", () => {
 
     const res = contextModuleBuilder
       .setCalConfig(defaultCalConfig)
-      .setWeb3ChecksConfig(defaultWeb3ChecksConfig)
+      .setTransactionCheckConfig(defaultTransactionCheckConfig)
       .build();
     // @ts-expect-error _container is private
     const config = (res["_container"] as Container).get<ContextModuleConfig>(
@@ -75,10 +75,10 @@ describe("ContextModuleBuilder", () => {
 
     expect(res).toBeInstanceOf(DefaultContextModule);
     expect(config.cal).toEqual(defaultCalConfig);
-    expect(config.web3checks).toEqual(defaultWeb3ChecksConfig);
+    expect(config.transactionCheck).toEqual(defaultTransactionCheckConfig);
   });
 
-  it("should return a custom context module with a custom custom web3checks loader", () => {
+  it("should return a custom context module with a custom transaction check loader", () => {
     const contextModuleBuilder = new ContextModuleBuilder();
     const customLoader = { load: vi.fn() };
 
@@ -192,39 +192,41 @@ describe("ContextModuleBuilder", () => {
     });
   });
 
-  describe("setWeb3ChecksConfig", () => {
-    it("should set the web3 checks configuration", () => {
+  describe("setTransactionCheckConfig", () => {
+    it("should set the transaction check configuration", () => {
       const contextModuleBuilder = new ContextModuleBuilder(defaultBuilderArgs);
-      const customWeb3ChecksConfig = {
+      const customTransactionCheckConfig = {
         url: "https://custom-web3checks-service.com/v4",
       };
 
       const res = contextModuleBuilder
-        .setWeb3ChecksConfig(customWeb3ChecksConfig)
+        .setTransactionCheckConfig(customTransactionCheckConfig)
         .build();
       const config = (res as DefaultContextModule)[
         "_container"
       ].get<ContextModuleConfig>(configTypes.Config);
 
       expect(res).toBeInstanceOf(DefaultContextModule);
-      expect(config.web3checks).toEqual(customWeb3ChecksConfig);
+      expect(config.transactionCheck).toEqual(customTransactionCheckConfig);
     });
 
-    it("should override the default web3 checks configuration", () => {
+    it("should override the default transaction check configuration", () => {
       const contextModuleBuilder = new ContextModuleBuilder(defaultBuilderArgs);
-      const customWeb3ChecksConfig = {
+      const customTransactionCheckConfig = {
         url: "https://override-web3checks-service.com/v2",
       };
 
       const res = contextModuleBuilder
-        .setWeb3ChecksConfig(customWeb3ChecksConfig)
+        .setTransactionCheckConfig(customTransactionCheckConfig)
         .build();
       const config = (res as DefaultContextModule)[
         "_container"
       ].get<ContextModuleConfig>(configTypes.Config);
 
-      expect(config.web3checks.url).toBe(customWeb3ChecksConfig.url);
-      expect(config.web3checks.url).not.toBe(
+      expect(config.transactionCheck.url).toBe(
+        customTransactionCheckConfig.url,
+      );
+      expect(config.transactionCheck.url).not.toBe(
         "https://web3checks-backend.api.ledger.com/v3",
       );
     });

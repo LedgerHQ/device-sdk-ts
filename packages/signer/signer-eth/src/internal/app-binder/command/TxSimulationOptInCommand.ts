@@ -17,18 +17,18 @@ import {
   type EthErrorCodes,
 } from "@internal/app-binder/command/utils/ethAppErrors";
 
-export type Web3CheckOptInCommandResponse = {
+export type TxSimulationOptInCommandResponse = {
   enabled: boolean;
 };
 
 /**
- * The command that trigger web3check opt-in on device.
+ * The command that trigger transaction simulation opt-in on device.
  */
-export class Web3CheckOptInCommand
-  implements Command<Web3CheckOptInCommandResponse, void, EthErrorCodes>
+export class TxSimulationOptInCommand
+  implements Command<TxSimulationOptInCommandResponse, void, EthErrorCodes>
 {
   private readonly errorHelper = new CommandErrorHelper<
-    Web3CheckOptInCommandResponse,
+    TxSimulationOptInCommandResponse,
     EthErrorCodes
   >(ETH_APP_ERRORS, EthAppCommandErrorFactory);
 
@@ -47,7 +47,7 @@ export class Web3CheckOptInCommand
 
   parseResponse(
     response: ApduResponse,
-  ): CommandResult<Web3CheckOptInCommandResponse, EthErrorCodes> {
+  ): CommandResult<TxSimulationOptInCommandResponse, EthErrorCodes> {
     return Maybe.fromNullable(
       this.errorHelper.getError(response),
     ).orDefaultLazy(() => {

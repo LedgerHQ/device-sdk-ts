@@ -10,7 +10,7 @@ import React, {
 import {
   ContextModuleBuilder,
   type ContextModuleCalConfig,
-  type ContextModuleWeb3ChecksConfig,
+  type ContextModuleTransactionCheckConfig,
 } from "@ledgerhq/context-module";
 import { type ContextModuleMetadataServiceConfig } from "@ledgerhq/context-module";
 import {
@@ -24,9 +24,11 @@ import { useDeviceSessionsContext } from "@/providers/DeviceSessionsProvider";
 type SignerEthContextType = {
   signer: SignerEth | null;
   calConfig: ContextModuleCalConfig;
-  web3ChecksConfig: ContextModuleWeb3ChecksConfig;
+  transactionCheckConfig: ContextModuleTransactionCheckConfig;
   setCalConfig: (cal: ContextModuleCalConfig) => void;
-  setWeb3ChecksConfig: (web3Checks: ContextModuleWeb3ChecksConfig) => void;
+  setTransactionCheckConfig: (
+    transactionCheck: ContextModuleTransactionCheckConfig,
+  ) => void;
   metadataServiceDomain: ContextModuleMetadataServiceConfig;
   setMetadataServiceConfig: (
     metadataService: ContextModuleMetadataServiceConfig,
@@ -37,17 +39,17 @@ const initialState: SignerEthContextType = {
   signer: null,
   calConfig: {
     url: "https://crypto-assets-service.api.ledger.com/v1",
-    mode: "test",
+    mode: "prod",
     branch: "main",
   },
-  web3ChecksConfig: {
+  transactionCheckConfig: {
     url: "https://web3checks-backend.api.ledger.com/v3",
   },
   metadataServiceDomain: {
     url: "https://nft.api.live.ledger.com",
   },
   setCalConfig: () => {},
-  setWeb3ChecksConfig: () => {},
+  setTransactionCheckConfig: () => {},
   setMetadataServiceConfig: () => {},
 };
 
@@ -65,8 +67,10 @@ export const SignerEthProvider: React.FC<PropsWithChildren> = ({
   const [calConfig, setCalConfig] = useState<ContextModuleCalConfig>(
     initialState.calConfig,
   );
-  const [web3ChecksConfig, setWeb3ChecksConfig] =
-    useState<ContextModuleWeb3ChecksConfig>(initialState.web3ChecksConfig);
+  const [transactionCheckConfig, setTransactionCheckConfig] =
+    useState<ContextModuleTransactionCheckConfig>(
+      initialState.transactionCheckConfig,
+    );
   const [metadataServiceDomain, setMetadataServiceConfig] =
     useState<ContextModuleMetadataServiceConfig>(
       initialState.metadataServiceDomain,
@@ -79,20 +83,29 @@ export const SignerEthProvider: React.FC<PropsWithChildren> = ({
     }
 
     const contextModule = new ContextModuleBuilder({
-      originToken: "origin-token", // TODO: replace with your origin token
+      originToken:
+        "1e55ba3959f4543af24809d9066a2120bd2ac9246e626e26a1ff77eb109ca0e5", // TODO: replace with your origin token
     })
       .setCalConfig(calConfig)
-      .setWeb3ChecksConfig(web3ChecksConfig)
+      .setTransactionCheckConfig(transactionCheckConfig)
       .setMetadataServiceConfig(metadataServiceDomain)
       .build();
     const newSigner = new SignerEthBuilder({
       dmk,
       sessionId,
+      originToken:
+        "1e55ba3959f4543af24809d9066a2120bd2ac9246e626e26a1ff77eb109ca0e5",
     })
       .withContextModule(contextModule)
       .build();
     setSigner(newSigner);
-  }, [calConfig, dmk, sessionId, web3ChecksConfig, metadataServiceDomain]);
+  }, [
+    calConfig,
+    dmk,
+    sessionId,
+    transactionCheckConfig,
+    metadataServiceDomain,
+  ]);
 
   return (
     <SignerEthContext.Provider
@@ -100,8 +113,8 @@ export const SignerEthProvider: React.FC<PropsWithChildren> = ({
         signer,
         calConfig,
         setCalConfig,
-        web3ChecksConfig,
-        setWeb3ChecksConfig,
+        transactionCheckConfig,
+        setTransactionCheckConfig,
         metadataServiceDomain,
         setMetadataServiceConfig,
       }}
@@ -120,10 +133,10 @@ export const useCalConfig = () => {
   return { calConfig, setCalConfig };
 };
 
-export const useWeb3ChecksConfig = () => {
-  const { web3ChecksConfig, setWeb3ChecksConfig } =
+export const useTransactionCheckConfig = () => {
+  const { transactionCheckConfig, setTransactionCheckConfig } =
     useContext(SignerEthContext);
-  return { web3ChecksConfig, setWeb3ChecksConfig };
+  return { transactionCheckConfig, setTransactionCheckConfig };
 };
 
 export const useMetadataServiceConfig = () => {

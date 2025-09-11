@@ -9,19 +9,19 @@ import { AppProviderDrawer } from "./AppProviderDrawer";
 import { CalCheckDappDrawer } from "./CalCheckDappDrawer";
 import { CalSettingsDrawer } from "./CalSettingsDrawer";
 import { MetadataServiceDrawer } from "./MetadataServiceDrawer";
-import { Web3ChecksDrawer } from "./Web3ChecksDrawer";
+import { TransactionCheckDrawer } from "./TransactionCheckDrawer";
 
 export const CalView = () => {
   const [isCheckDappOpen, setIsCheckDappOpen] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
-  const [isWeb3ChecksOpen, setIsWeb3ChecksOpen] = useState(false);
+  const [isTransactionCheckOpen, setIsTransactionCheckOpen] = useState(false);
   const [isAppProviderOpen, setIsAppProviderOpen] = useState(false);
   const [isMetadataServiceOpen, setIsMetadataServiceOpen] = useState(false);
 
   const closeDrawers = useCallback(() => {
     setIsCheckDappOpen(false);
     setIsSettingsOpen(false);
-    setIsWeb3ChecksOpen(false);
+    setIsTransactionCheckOpen(false);
     setIsAppProviderOpen(false);
     setIsMetadataServiceOpen(false);
   }, []);
@@ -38,9 +38,9 @@ export const CalView = () => {
       onClick: () => setIsCheckDappOpen(true),
     },
     {
-      title: "Web3Checks Settings",
-      description: "Settings for the Web3Checks provider",
-      onClick: () => setIsWeb3ChecksOpen(true),
+      title: "Transaction Check Settings",
+      description: "Settings for the Transaction Check provider",
+      onClick: () => setIsTransactionCheckOpen(true),
     },
     {
       title: "App Provider",
@@ -97,13 +97,13 @@ export const CalView = () => {
         <CalSettingsDrawer onClose={closeDrawers} />
       </StyledDrawer>
       <StyledDrawer
-        isOpen={isWeb3ChecksOpen}
+        isOpen={isTransactionCheckOpen}
         onClose={closeDrawers}
         big
-        title="Web3Checks Settings"
-        description="Settings for the Web3Checks provider"
+        title="Transaction Check Settings"
+        description="Settings for the Transaction Check provider"
       >
-        <Web3ChecksDrawer onClose={closeDrawers} />
+        <TransactionCheckDrawer onClose={closeDrawers} />
       </StyledDrawer>
       <StyledDrawer
         isOpen={isAppProviderOpen}

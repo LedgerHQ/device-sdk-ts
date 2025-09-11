@@ -27,11 +27,11 @@ import { type Signature } from "@api/model/Signature";
 import { type TypedData } from "@api/model/TypedData";
 import { GetAppConfiguration } from "@internal/app-binder/command/GetAppConfigurationCommand";
 import { SignEIP712Command } from "@internal/app-binder/command/SignEIP712Command";
-import { type EthErrorCodes } from "@internal/app-binder/command/utils/ethAppErrors";
 import {
-  Web3CheckOptInCommand,
-  type Web3CheckOptInCommandResponse,
-} from "@internal/app-binder/command/Web3CheckOptInCommand";
+  TxSimulationOptInCommand,
+  type TxSimulationOptInCommandResponse,
+} from "@internal/app-binder/command/TxSimulationOptInCommand";
+import { type EthErrorCodes } from "@internal/app-binder/command/utils/ethAppErrors";
 import { BuildEIP712ContextTask } from "@internal/app-binder/task/BuildEIP712ContextTask";
 import {
   ProvideEIP712ContextTask,
@@ -46,8 +46,8 @@ export type MachineDependencies = {
   readonly getAppConfig: () => Promise<
     CommandResult<GetConfigCommandResponse, EthErrorCodes>
   >;
-  readonly web3CheckOptIn: () => Promise<
-    CommandResult<Web3CheckOptInCommandResponse, EthErrorCodes>
+  readonly txSimulationOptIn: () => Promise<
+    CommandResult<TxSimulationOptInCommandResponse, EthErrorCodes>
   >;
   readonly buildContext: (arg0: {
     input: {
@@ -103,7 +103,7 @@ export class SignTypedDataDeviceAction extends XStateDeviceAction<
 
     const {
       getAppConfig,
-      web3CheckOptIn,
+      txSimulationOptIn,
       buildContext,
       provideContext,
       signTypedData,
@@ -121,7 +121,7 @@ export class SignTypedDataDeviceAction extends XStateDeviceAction<
           input: { appName: "Ethereum" },
         }).makeStateMachine(internalApi),
         getAppConfig: fromPromise(getAppConfig),
-        web3CheckOptIn: fromPromise(web3CheckOptIn),
+        txSimulationOptIn: fromPromise(txSimulationOptIn),
         buildContext: fromPromise(buildContext),
         provideContext: fromPromise(provideContext),
         signTypedData: fromPromise(signTypedData),
@@ -144,8 +144,8 @@ export class SignTypedDataDeviceAction extends XStateDeviceAction<
             .excludeDeviceModel(DeviceModelId.NANO_X)
             .check(),
         shouldOptIn: ({ context }) =>
-          !context._internalState.appConfig!.web3ChecksEnabled &&
-          !context._internalState.appConfig!.web3ChecksOptIn,
+          !context._internalState.appConfig!.transactionChecksEnabled &&
+          !context._internalState.appConfig!.transactionChecksOptIn,
         skipOpenApp: ({ context }) => context.input.skipOpenApp,
       },
       actions: {
@@ -263,7 +263,7 @@ export class SignTypedDataDeviceAction extends XStateDeviceAction<
         GetAppConfigResultCheck: {
           always: [
             {
-              target: "Web3ChecksOptIn",
+              target: "TransactionChecksOptIn",
               guard: and([
                 "noInternalError",
                 "isWeb3ChecksSupported",
@@ -279,18 +279,19 @@ export class SignTypedDataDeviceAction extends XStateDeviceAction<
             },
           ],
         },
-        Web3ChecksOptIn: {
+        TransactionChecksOptIn: {
           entry: assign({
             intermediateValue: {
-              requiredUserInteraction: UserInteractionRequired.Web3ChecksOptIn,
-              step: SignTypedDataDAStateStep.WEB3_CHECKS_OPT_IN,
+              requiredUserInteraction:
+                UserInteractionRequired.TransactionChecksOptIn,
+              step: SignTypedDataDAStateStep.TRANSACTION_CHECKS_OPT_IN,
             },
           }),
           invoke: {
-            id: "web3CheckOptIn",
-            src: "web3CheckOptIn",
+            id: "txSimulationOptIn",
+            src: "txSimulationOptIn",
             onDone: {
-              target: "Web3ChecksOptInResult",
+              target: "TransactionChecksOptInResult",
               actions: [
                 assign({
                   _internalState: ({ event, context }) => {
@@ -299,7 +300,7 @@ export class SignTypedDataDeviceAction extends XStateDeviceAction<
                         ...context._internalState,
                         appConfig: {
                           ...context._internalState.appConfig!,
-                          web3ChecksEnabled: event.output.data.enabled,
+                          transactionChecksEnabled: event.output.data.enabled,
                         },
                       };
                     } else {
@@ -315,12 +316,13 @@ export class SignTypedDataDeviceAction extends XStateDeviceAction<
             },
           },
         },
-        Web3ChecksOptInResult: {
+        TransactionChecksOptInResult: {
           entry: assign(({ context }) => ({
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
-              step: SignTypedDataDAStateStep.WEB3_CHECKS_OPT_IN_RESULT,
-              result: context._internalState.appConfig!.web3ChecksEnabled,
+              step: SignTypedDataDAStateStep.TRANSACTION_CHECKS_OPT_IN_RESULT,
+              result:
+                context._internalState.appConfig!.transactionChecksEnabled,
             },
           })),
           // Using after transition to force a snapshot of the state after the entry action
@@ -508,8 +510,8 @@ export class SignTypedDataDeviceAction extends XStateDeviceAction<
   extractDependencies(internalApi: InternalApi): MachineDependencies {
     const getAppConfig = async () =>
       internalApi.sendCommand(new GetAppConfiguration());
-    const web3CheckOptIn = async () =>
-      internalApi.sendCommand(new Web3CheckOptInCommand());
+    const txSimulationOptIn = async () =>
+      internalApi.sendCommand(new TxSimulationOptInCommand());
     const buildContext = async (arg0: {
       input: {
         contextModule: ContextModule;
@@ -566,7 +568,7 @@ export class SignTypedDataDeviceAction extends XStateDeviceAction<
 
     return {
       getAppConfig,
-      web3CheckOptIn,
+      txSimulationOptIn,
       buildContext,
       provideContext,
       signTypedData,

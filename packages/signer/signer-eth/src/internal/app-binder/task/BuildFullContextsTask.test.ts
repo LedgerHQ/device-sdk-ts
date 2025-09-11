@@ -38,8 +38,8 @@ describe("BuildFullContextsTask", () => {
 
   const defaultAppConfig: GetConfigCommandResponse = {
     blindSigningEnabled: false,
-    web3ChecksEnabled: false,
-    web3ChecksOptIn: false,
+    transactionChecksEnabled: false,
+    transactionChecksOptIn: false,
     version: "1.0.0",
   };
   const defaultOptions: TransactionOptions = {};

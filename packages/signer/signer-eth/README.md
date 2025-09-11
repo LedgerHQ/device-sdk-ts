@@ -415,9 +415,9 @@ switch (requiredUserInteraction) {
     console.log("The user needs to confirm on the device to open the app.");
     break;
   }
-  case UserInteractionRequired.Web3ChecksOptIn: {
-    // User needs to opt-in for web3 checks
-    console.log("User needs to opt-in for web3 checks.");
+  case UserInteractionRequired.TransactionChecksOptIn: {
+    // User needs to opt-in for transaction checks
+    console.log("User needs to opt-in for transaction checks.");
     break;
   }
   default:

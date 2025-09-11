@@ -1,22 +1,26 @@
 import React, { useCallback, useState } from "react";
-import { type ContextModuleWeb3ChecksConfig } from "@ledgerhq/context-module";
+import { type ContextModuleTransactionCheckConfig } from "@ledgerhq/context-module";
 import { Button, Divider, Flex } from "@ledgerhq/react-ui";
 
 import { Block } from "@/components/Block";
 import { CommandForm } from "@/components/CommandsView/CommandForm";
 import { type FieldType } from "@/hooks/useForm";
-import { useWeb3ChecksConfig } from "@/providers/SignerEthProvider";
+import { useTransactionCheckConfig } from "@/providers/SignerEthProvider";
 
-type Web3ChecksDrawerProps = {
+type TransactionCheckDrawerProps = {
   onClose: () => void;
 };
 
-export function Web3ChecksDrawer({ onClose }: Web3ChecksDrawerProps) {
-  const { web3ChecksConfig, setWeb3ChecksConfig } = useWeb3ChecksConfig();
-  const [values, setValues] =
-    useState<Record<string, FieldType>>(web3ChecksConfig);
+export function TransactionCheckDrawer({
+  onClose,
+}: TransactionCheckDrawerProps) {
+  const { transactionCheckConfig, setTransactionCheckConfig } =
+    useTransactionCheckConfig();
+  const [values, setValues] = useState<Record<string, FieldType>>(
+    transactionCheckConfig,
+  );
   const labelSelector: Record<string, string> = {
-    url: "Web3checks provider URL",
+    url: "Transaction Check provider URL",
   };
 
   const onSettingsUpdate = useCallback(() => {
@@ -24,23 +28,23 @@ export function Web3ChecksDrawer({ onClose }: Web3ChecksDrawerProps) {
 
     console.log("Updating settings", values);
     if (!url || typeof url !== "string" || !url.startsWith("http")) {
-      console.error("Invalid Web3Checks provider URL", url);
+      console.error("Invalid Transaction Check provider URL", url);
       return;
     }
 
-    const newSettings: ContextModuleWeb3ChecksConfig = {
+    const newSettings: ContextModuleTransactionCheckConfig = {
       url,
     };
 
-    setWeb3ChecksConfig(newSettings);
+    setTransactionCheckConfig(newSettings);
     onClose();
-  }, [onClose, setWeb3ChecksConfig, values]);
+  }, [onClose, setTransactionCheckConfig, values]);
 
   return (
     <Block>
       <Flex flexDirection="column" rowGap={3}>
         <CommandForm
-          initialValues={web3ChecksConfig}
+          initialValues={transactionCheckConfig}
           onChange={setValues}
           labelSelector={labelSelector}
         />

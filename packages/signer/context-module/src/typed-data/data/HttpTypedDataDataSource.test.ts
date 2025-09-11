@@ -159,8 +159,8 @@ export const buildDescriptor = (
 ];
 
 const config = {
-  web3checks: {
-    url: "web3checksUrl",
+  transactionCheck: {
+    url: "transaction-checks-url",
   },
   cal: {
     url: "https://crypto-assets-service.api.ledger.com/v1",

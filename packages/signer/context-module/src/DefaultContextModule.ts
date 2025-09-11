@@ -33,6 +33,8 @@ import { type SolanaTransactionContextResult } from "./solana/domain/solanaConte
 import { tokenTypes } from "./token/di/tokenTypes";
 import { type TokenContextLoader } from "./token/domain/TokenContextLoader";
 import { type TransactionContextLoader } from "./transaction/domain/TransactionContextLoader";
+import { transactionCheckTypes } from "./transaction-check/di/transactionCheckTypes";
+import { type TransactionCheckContextLoader } from "./transaction-check/domain/TransactionCheckContextLoader";
 import { type TrustedNameContextLoader } from "./trusted-name/domain/TrustedNameContextLoader";
 import { typedDataTypes } from "./typed-data/di/typedDataTypes";
 import type { TypedDataContextLoader } from "./typed-data/domain/TypedDataContextLoader";
@@ -99,6 +101,9 @@ export class DefaultContextModule implements ContextModule {
       ),
       this._container.get<DynamicNetworkContextLoader>(
         dynamicNetworkTypes.DynamicNetworkContextLoader,
+      ),
+      this._container.get<TransactionCheckContextLoader>(
+        transactionCheckTypes.TransactionCheckContextLoader,
       ),
     ];
   }

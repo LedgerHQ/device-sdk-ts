@@ -15,6 +15,7 @@ export enum ClearSignContextType {
   WEB3_CHECK = "web3Check",
   DYNAMIC_NETWORK = "dynamicNetwork",
   DYNAMIC_NETWORK_ICON = "dynamicNetworkIcon",
+  TRANSACTION_CHECK = "transactionCheck",
   ERROR = "error",
 }
 

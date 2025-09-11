@@ -1,12 +1,12 @@
 import { isSuccessCommandResult } from "@ledgerhq/device-management-kit";
 
-import { Web3CheckOptInCommand } from "@internal/app-binder/command/Web3CheckOptInCommand";
+import { TxSimulationOptInCommand } from "@internal/app-binder/command/TxSimulationOptInCommand";
 
-describe("Web3CheckOptInCommand", () => {
+describe("TxSimulationOptInCommand", () => {
   describe("getApdu", () => {
     it("should return the raw APDU", () => {
       // GIVEN
-      const command = new Web3CheckOptInCommand();
+      const command = new TxSimulationOptInCommand();
 
       // WHEN
       const apdu = command.getApdu();
@@ -27,7 +27,7 @@ describe("Web3CheckOptInCommand", () => {
       };
 
       // WHEN
-      const result = new Web3CheckOptInCommand().parseResponse(response);
+      const result = new TxSimulationOptInCommand().parseResponse(response);
 
       // THEN
       if (isSuccessCommandResult(result)) {
@@ -45,7 +45,7 @@ describe("Web3CheckOptInCommand", () => {
       };
 
       // WHEN
-      const result = new Web3CheckOptInCommand().parseResponse(response);
+      const result = new TxSimulationOptInCommand().parseResponse(response);
 
       // THEN
       if (isSuccessCommandResult(result)) {
@@ -63,7 +63,7 @@ describe("Web3CheckOptInCommand", () => {
       };
 
       // WHEN
-      const result = new Web3CheckOptInCommand().parseResponse(response);
+      const result = new TxSimulationOptInCommand().parseResponse(response);
 
       // THEN
       if (isSuccessCommandResult(result)) {
@@ -81,7 +81,7 @@ describe("Web3CheckOptInCommand", () => {
       };
 
       // WHEN
-      const result = new Web3CheckOptInCommand().parseResponse(response);
+      const result = new TxSimulationOptInCommand().parseResponse(response);
 
       // THEN
       if (isSuccessCommandResult(result)) {

@@ -18,8 +18,8 @@ vi.mock("axios");
 
 describe("HttpWeb3CheckDataSource", () => {
   const config = {
-    web3checks: {
-      url: "web3checksUrl",
+    transactionCheck: {
+      url: "transaction-checks-url",
     },
     originToken: "originToken",
   } as ContextModuleConfig;

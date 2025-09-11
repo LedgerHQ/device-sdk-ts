@@ -12,7 +12,7 @@ import {
 import { Just, Nothing } from "purify-ts";
 
 import { ProvideTokenInformationCommand } from "@internal/app-binder/command/ProvideTokenInformationCommand";
-import { ProvideWeb3CheckCommand } from "@internal/app-binder/command/ProvideWeb3CheckCommand";
+import { ProvideTxSimulationCommand } from "@internal/app-binder/command/ProvideTxSimulationCommand";
 import {
   Eip712FilterType,
   SendEIP712FilteringCommand,
@@ -694,7 +694,7 @@ describe("ProvideEIP712ContextTask", () => {
 
     // THEN
     expect(apiMock.sendCommand).toHaveBeenCalledWith(
-      new ProvideWeb3CheckCommand({
+      new ProvideTxSimulationCommand({
         payload: hexaStringToBuffer("0x0003010203")!,
         isFirstChunk: true,
       }),
@@ -734,7 +734,7 @@ describe("ProvideEIP712ContextTask", () => {
       }),
     );
     expect(apiMock.sendCommand).toHaveBeenCalledWith(
-      new ProvideWeb3CheckCommand({
+      new ProvideTxSimulationCommand({
         payload: hexaStringToBuffer("0x0003010203")!,
         isFirstChunk: true,
       }),

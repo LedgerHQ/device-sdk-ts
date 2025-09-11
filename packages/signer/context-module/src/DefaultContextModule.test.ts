@@ -22,7 +22,7 @@ describe("DefaultContextModule", () => {
       mode: "prod",
       branch: "main",
     },
-    web3checks: {
+    transactionCheck: {
       url: "https://web3checks/v3",
     },
     metadataServiceDomain: {

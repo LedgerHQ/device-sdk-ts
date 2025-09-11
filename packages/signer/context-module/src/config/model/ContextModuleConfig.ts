@@ -12,7 +12,7 @@ export type ContextModuleCalConfig = {
   branch: ContextModuleCalBranch;
 };
 
-export type ContextModuleWeb3ChecksConfig = {
+export type ContextModuleTransactionCheckConfig = {
   url: string;
 };
 
@@ -22,7 +22,7 @@ export type ContextModuleMetadataServiceConfig = {
 
 export type ContextModuleConfig = {
   cal: ContextModuleCalConfig;
-  web3checks: ContextModuleWeb3ChecksConfig;
+  transactionCheck: ContextModuleTransactionCheckConfig;
   metadataServiceDomain: ContextModuleMetadataServiceConfig;
   defaultLoaders: boolean;
   customLoaders: ContextLoader[];

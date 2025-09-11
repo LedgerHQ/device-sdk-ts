@@ -3,9 +3,9 @@ import {
   isSuccessCommandResult,
 } from "@ledgerhq/device-management-kit";
 
-import { ProvideWeb3CheckCommand } from "@internal/app-binder/command/ProvideWeb3CheckCommand";
+import { ProvideTxSimulationCommand } from "@internal/app-binder/command/ProvideTxSimulationCommand";
 
-describe("ProvideWeb3CheckCommand", () => {
+describe("ProvideTxSimulationCommand", () => {
   describe("getApdu", () => {
     it("should return the raw APDU", () => {
       // GIVEN
@@ -13,7 +13,7 @@ describe("ProvideWeb3CheckCommand", () => {
         payload: hexaStringToBuffer("0x010203")!,
         isFirstChunk: true,
       };
-      const command = new ProvideWeb3CheckCommand(args);
+      const command = new ProvideTxSimulationCommand(args);
 
       // WHEN
       const apdu = command.getApdu();
@@ -30,7 +30,7 @@ describe("ProvideWeb3CheckCommand", () => {
         payload: hexaStringToBuffer("0x010203")!,
         isFirstChunk: false,
       };
-      const command = new ProvideWeb3CheckCommand(args);
+      const command = new ProvideTxSimulationCommand(args);
 
       // WHEN
       const apdu = command.getApdu();
@@ -55,7 +55,9 @@ describe("ProvideWeb3CheckCommand", () => {
       };
 
       // WHEN
-      const result = new ProvideWeb3CheckCommand(args).parseResponse(response);
+      const result = new ProvideTxSimulationCommand(args).parseResponse(
+        response,
+      );
 
       // THEN
       if (isSuccessCommandResult(result)) {
@@ -77,7 +79,9 @@ describe("ProvideWeb3CheckCommand", () => {
       };
 
       // WHEN
-      const result = new ProvideWeb3CheckCommand(args).parseResponse(response);
+      const result = new ProvideTxSimulationCommand(args).parseResponse(
+        response,
+      );
 
       // THEN
       if (isSuccessCommandResult(result)) {
@@ -104,7 +108,9 @@ describe("ProvideWeb3CheckCommand", () => {
       };
 
       // WHEN
-      const result = new ProvideWeb3CheckCommand(args).parseResponse(response);
+      const result = new ProvideTxSimulationCommand(args).parseResponse(
+        response,
+      );
 
       // THEN
       if (isSuccessCommandResult(result)) {

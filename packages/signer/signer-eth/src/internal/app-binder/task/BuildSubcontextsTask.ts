@@ -4,11 +4,11 @@ import {
   ClearSignContextReferenceType,
   type ClearSignContextSuccess,
   ClearSignContextType,
+  ContextFieldLoaderKind,
   type ContextModule,
   type TransactionFieldContext,
   type TransactionSubset,
 } from "@ledgerhq/context-module";
-import { ContextFieldLoaderKind } from "@ledgerhq/context-module/src/shared/domain/ContextFieldLoader.js";
 import {
   bufferToHexaString,
   type DeviceModelId,
@@ -46,6 +46,7 @@ export class BuildSubcontextsTask {
 
     switch (type) {
       case ClearSignContextType.TRANSACTION_INFO:
+      case ClearSignContextType.TRANSACTION_CHECK:
       case ClearSignContextType.WEB3_CHECK:
       case ClearSignContextType.PLUGIN:
       case ClearSignContextType.EXTERNAL_PLUGIN:

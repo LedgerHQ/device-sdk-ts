@@ -1,15 +1,13 @@
 import {
+  type ClearSignContextSuccess,
+  ClearSignContextType,
+  ContextFieldLoaderKind,
   type ContextModule,
   type TypedDataClearSignContextSuccess,
   type TypedDataFilter,
   type TypedDataTokenIndex,
   VERIFYING_CONTRACT_TOKEN_INDEX,
 } from "@ledgerhq/context-module";
-import {
-  type ClearSignContextSuccess,
-  ClearSignContextType,
-} from "@ledgerhq/context-module";
-import { ContextFieldLoaderKind } from "@ledgerhq/context-module/src/shared/domain/ContextFieldLoader.js";
 import type {
   CommandResult,
   InternalApi,
@@ -26,7 +24,7 @@ import { Just, Maybe, Nothing } from "purify-ts";
 import { GetChallengeCommand } from "@internal/app-binder/command/GetChallengeCommand";
 import { ProvideTokenInformationCommand } from "@internal/app-binder/command/ProvideTokenInformationCommand";
 import { ProvideTrustedNameCommand } from "@internal/app-binder/command/ProvideTrustedNameCommand";
-import { ProvideWeb3CheckCommand } from "@internal/app-binder/command/ProvideWeb3CheckCommand";
+import { ProvideTxSimulationCommand } from "@internal/app-binder/command/ProvideTxSimulationCommand";
 import {
   Eip712FilterType,
   SendEIP712FilteringCommand,
@@ -107,7 +105,7 @@ export class ProvideEIP712ContextTask {
       await new SendPayloadInChunksTask(this.api, {
         payload: this.args.web3Check.payload,
         commandFactory: (args) =>
-          new ProvideWeb3CheckCommand({
+          new ProvideTxSimulationCommand({
             payload: args.chunkedData,
             isFirstChunk: args.isFirstChunk,
           }),

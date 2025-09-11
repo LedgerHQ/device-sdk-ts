@@ -6,4 +6,5 @@ export type TransactionContext = TransactionSubset & {
   deviceModelId: DeviceModelId; // needed to fetch the correct certificate
   challenge?: string;
   domain?: string;
+  rawTx?: string;
 };

@@ -1,6 +1,6 @@
 export type GetConfigCommandResponse = {
   readonly blindSigningEnabled: boolean;
-  readonly web3ChecksEnabled: boolean;
-  readonly web3ChecksOptIn: boolean;
+  readonly transactionChecksEnabled: boolean;
+  readonly transactionChecksOptIn: boolean;
   readonly version: string;
 };

@@ -129,6 +129,7 @@ export const SignerEthView: React.FC<{ sessionId: string }> = ({
           }
 
           // Convert the serialized rawTx into a buffer
+          transaction = ethers.Transaction.from(transaction).unsignedSerialized;
           const tx = hexaStringToBuffer(transaction);
           if (!tx) {
             throw new Error("Invalid transaction format");
