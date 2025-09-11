@@ -1,6 +1,7 @@
 import { hexaStringToBuffer } from "@ledgerhq/device-management-kit";
 import { Just, Left, Right } from "purify-ts";
 
+import { NobleCryptoService } from "@api/crypto/noble/NobleCryptoService";
 import { LKRPParsingError } from "@api/model/Errors";
 import { CommandTags } from "@internal/models/Tags";
 
@@ -9,11 +10,13 @@ import { LKRPBlockStream } from "./LKRPBlockStream";
 import { LKRPCommand } from "./LKRPCommand";
 
 describe("LKRPBlockStream", () => {
+  const cryptoService = new NobleCryptoService();
+
   describe("toString", () => {
     it("should return the hex representation of the block stream", () => {
       // WHEN
       const hex = "0102030405060708";
-      const stream = LKRPBlockStream.fromHex(hex);
+      const stream = LKRPBlockStream.fromHex(cryptoService, hex);
       // THEN
       expect(stream.toString()).toBe(hex);
     });
@@ -23,7 +26,7 @@ describe("LKRPBlockStream", () => {
     it("should return the bytes of the block stream", () => {
       // WHEN
       const bytes = new Uint8Array([1, 2, 3, 4, 5, 6, 7, 8]);
-      const stream = new LKRPBlockStream(bytes);
+      const stream = new LKRPBlockStream(cryptoService, bytes);
       // THEN
       expect(stream.toU8A()).toBe(bytes);
     });
@@ -32,7 +35,7 @@ describe("LKRPBlockStream", () => {
   describe("toHuman", () => {
     it("should return a human-readable representation of the block stream", () => {
       // GIVEN
-      const stream = LKRPBlockStream.fromHex(mockedHex);
+      const stream = LKRPBlockStream.fromHex(cryptoService, mockedHex);
 
       // WHEN
       const humanReadable = stream.toHuman();
@@ -83,7 +86,7 @@ describe("LKRPBlockStream", () => {
   describe("parse", () => {
     it("should parse the block stream correctly", () => {
       // GIVEN
-      const stream = LKRPBlockStream.fromHex(mockedHex);
+      const stream = LKRPBlockStream.fromHex(cryptoService, mockedHex);
 
       // WHEN
       const parsedData = stream.parse();
@@ -92,15 +95,15 @@ describe("LKRPBlockStream", () => {
       // THEN
       expect(parsedData).toStrictEqual(
         Right([
-          LKRPBlock.fromData(mockedBlockData1),
-          LKRPBlock.fromData(mockedBlockData2),
+          LKRPBlock.fromData(cryptoService, mockedBlockData1),
+          LKRPBlock.fromData(cryptoService, mockedBlockData2),
         ]),
       );
     });
 
     it("should fail if the block stream data is invalid", () => {
       // GIVEN
-      const invalidStream = LKRPBlockStream.fromHex("00");
+      const invalidStream = LKRPBlockStream.fromHex(cryptoService, "00");
       // WHEN
       const parsedData = invalidStream.parse();
 
@@ -121,6 +124,7 @@ describe("LKRPBlockStream", () => {
 
       // WHEN
       const stream = LKRPBlockStream.fromData(
+        cryptoService,
         mockedBlockData,
         mockedBlockData1.parent,
       );
@@ -136,7 +140,7 @@ describe("LKRPBlockStream", () => {
         { ...mockedBlockData2, parent: undefined },
       ];
       // WHEN
-      const stream = LKRPBlockStream.fromData(mockedBlockData);
+      const stream = LKRPBlockStream.fromData(cryptoService, mockedBlockData);
       const hash = stream
         .parse()
         .map((blocks) => blocks[0]?.hash())
@@ -152,7 +156,7 @@ describe("LKRPBlockStream", () => {
   describe("validate", () => {
     it("should validate the block stream", async () => {
       // GIVEN
-      const stream = LKRPBlockStream.fromHex(mockedHex);
+      const stream = LKRPBlockStream.fromHex(cryptoService, mockedHex);
 
       // WHEN
       const withParentHash = await stream.validate(mockedBlockData1.parent);
@@ -166,6 +170,7 @@ describe("LKRPBlockStream", () => {
     it("should fail validation if the parent hash does not match", async () => {
       // GIVEN
       const invalidStream = LKRPBlockStream.fromHex(
+        cryptoService,
         mockedHex.replace(mockedBlockData2.parent, mockedBlockData1.parent),
       );
 
@@ -182,7 +187,7 @@ describe("LKRPBlockStream", () => {
   describe("getPath", () => {
     it("should return the path of the block stream", () => {
       // GIVEN
-      const stream = LKRPBlockStream.fromHex(mockedHex);
+      const stream = LKRPBlockStream.fromHex(cryptoService, mockedHex);
 
       // WHEN
       const path = stream.getPath();

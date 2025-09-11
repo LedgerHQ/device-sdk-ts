@@ -1,6 +1,7 @@
 import { hexaStringToBuffer } from "@ledgerhq/device-management-kit";
 import { Left, Right } from "purify-ts";
 
+import { NobleCryptoService } from "@api/crypto/noble/NobleCryptoService";
 import { LKRPParsingError } from "@api/model/Errors";
 import { GeneralTags } from "@internal/models/Tags";
 
@@ -37,10 +38,12 @@ const parsedMockedBlockData = {
 };
 
 describe("LKRPBlock", () => {
+  const cryptoService = new NobleCryptoService();
+
   describe("fromData", () => {
     it("should create a Block from data", () => {
       // WHEN
-      const block = LKRPBlock.fromData(mockedBlockData);
+      const block = LKRPBlock.fromData(cryptoService, mockedBlockData);
       // THEN
       expect(block.parse()).toStrictEqual(Right(parsedMockedBlockData));
       expect(block.toString()).toBe(mockedBlockHex);
@@ -50,7 +53,7 @@ describe("LKRPBlock", () => {
   describe("toString", () => {
     it("should return the hex representation of the block", () => {
       // WHEN
-      const block = LKRPBlock.fromHex(mockedBlockHex);
+      const block = LKRPBlock.fromHex(cryptoService, mockedBlockHex);
       // THEN
       expect(block.toString()).toBe(mockedBlockHex);
     });
@@ -61,7 +64,7 @@ describe("LKRPBlock", () => {
       // GIVEN
       const bytes = new Uint8Array([1, 2, 3, 4, 5, 6, 7, 8]);
       // WHEN
-      const block = new LKRPBlock(bytes);
+      const block = new LKRPBlock(cryptoService, bytes);
       // THEN
       expect(block.toU8A()).toBe(bytes);
     });
@@ -70,7 +73,7 @@ describe("LKRPBlock", () => {
   describe("parse", () => {
     it("should parse the block data correctly", () => {
       // GIVEN
-      const block = LKRPBlock.fromHex(mockedBlockHex);
+      const block = LKRPBlock.fromHex(cryptoService, mockedBlockHex);
       // WHEN
       const parsedData = block.parse();
       // THEN
@@ -79,7 +82,7 @@ describe("LKRPBlock", () => {
 
     it("should fail if the block data is invalid", () => {
       // WHEN
-      const invalidBlock = LKRPBlock.fromHex("invalid");
+      const invalidBlock = LKRPBlock.fromHex(cryptoService, "invalid");
       // THEN
       expect(invalidBlock.parse()).toStrictEqual(
         Left(new LKRPParsingError("Unexpected end of TLV")),
@@ -114,7 +117,7 @@ describe("LKRPBlock", () => {
       `.replace(/\s/g, "");
 
       // WHEN
-      const block = LKRPBlock.fromHex(hex);
+      const block = LKRPBlock.fromHex(cryptoService, hex);
       const humanReadable = block.toHuman();
 
       // THEN
@@ -149,7 +152,7 @@ describe("LKRPBlock", () => {
   describe("hash", () => {
     it("should return the hash of the block", () => {
       // GIVEN
-      const block = LKRPBlock.fromHex(mockedBlockHex);
+      const block = LKRPBlock.fromHex(cryptoService, mockedBlockHex);
       // WHEN
       const hash = block.hash();
       // THEN

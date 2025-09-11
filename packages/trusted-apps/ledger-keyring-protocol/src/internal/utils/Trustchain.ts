@@ -1,9 +1,12 @@
 import { Maybe } from "purify-ts";
 
+import { type CryptoService } from "@api/index";
+
 import { LKRPBlockStream } from "./LKRPBlockStream";
 
 export class Trustchain {
   constructor(
+    private readonly cryptoService: CryptoService,
     private readonly id: string,
     private readonly serialized: {
       [path: string]: string;

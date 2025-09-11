@@ -1,3 +1,7 @@
+import { Either } from "purify-ts";
+
+import { LKRPParsingError } from "@api/model/Errors";
+
 import { type Key } from "./Key";
 import { type KeyPair } from "./KeyPair";
 
@@ -13,6 +17,13 @@ export enum EncryptionAlgo {
 export enum HashAlgo {
   SHA256,
 }
+
+export type DecodedSignature = {
+  prefix: { tag: 0x30; len: number };
+  r: DERComponent;
+  s: DERComponent;
+};
+type DERComponent = { tag: 0x02; len: number; value: Uint8Array };
 
 export interface CryptoService {
   // Generate a random buffer
@@ -35,4 +46,16 @@ export interface CryptoService {
 
   // Import a symmetric key
   importSymmetricKey(keyMaterial: Uint8Array, algo: EncryptionAlgo): Key;
+
+  // Verify a signature
+  verify(
+    message: Uint8Array,
+    signature: Uint8Array,
+    publicKey: Uint8Array,
+  ): Either<LKRPParsingError, boolean>;
+
+  // Decode a DER encoded signature
+  decodeSignature(
+    signature: Uint8Array,
+  ): Either<LKRPParsingError, DecodedSignature>;
 }

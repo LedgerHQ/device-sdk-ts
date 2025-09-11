@@ -3,9 +3,9 @@ import {
   ByteArrayBuilder,
   hexaStringToBuffer,
 } from "@ledgerhq/device-management-kit";
-import { sha256 } from "@noble/hashes/sha256";
 import { Either, Just, type Maybe, Nothing, Right } from "purify-ts";
 
+import { type CryptoService, HashAlgo } from "@api/crypto/CryptoService";
 import { type LKRPParsingError } from "@api/model/Errors";
 import {
   type LKRPBlockData,
@@ -20,17 +20,37 @@ export class LKRPBlock {
   private hashValue: Maybe<string> = Nothing; // Cache hash value for performance
 
   public constructor(
+    private readonly cryptoService: CryptoService,
     private readonly bytes: Uint8Array,
     private parsed: Maybe<
       Either<LKRPParsingError, LKRPParsedTlvBlock>
     > = Nothing,
   ) {}
 
-  static fromHex(hex: string): LKRPBlock {
-    return new LKRPBlock(hexaStringToBuffer(hex) ?? new Uint8Array());
+  static fromHex(cryptoService: CryptoService, hex: string): LKRPBlock {
+    return new LKRPBlock(
+      cryptoService,
+      hexaStringToBuffer(hex) ?? new Uint8Array(),
+    );
   }
 
-  static fromData(data: LKRPBlockData): LKRPBlock {
+  static fromParser(
+    cryptoService: CryptoService,
+    parser: TLVParser,
+  ): Either<LKRPParsingError, LKRPBlock> {
+    return parser.parseBlockData().map((parsed) => {
+      const bytes = parsed.bytes.slice(
+        parsed.data.version.start,
+        parsed.data.signature.end,
+      );
+      return new LKRPBlock(cryptoService, bytes, Just(Right(parsed)));
+    });
+  }
+
+  static fromData(
+    cryptoService: CryptoService,
+    data: LKRPBlockData,
+  ): LKRPBlock {
     const header = new ByteArrayBuilder()
       .encodeInTLVFromUInt8(GeneralTags.Int, 1) // Version 1
       .encodeInTLVFromHexa(GeneralTags.Hash, data.parent)
@@ -54,7 +74,7 @@ export class LKRPBlock {
       .addBufferToData(signature)
       .build();
 
-    return new LKRPBlock(bytes);
+    return new LKRPBlock(cryptoService, bytes);
   }
 
   toString(): string {
@@ -99,12 +119,27 @@ export class LKRPBlock {
             .join("")}`,
           `Signature: ${bufferToHexaString(data.signature.slice(2), false)}`,
         ].join("\n"),
+  verifySignature(): Either<LKRPParsingError, boolean> {
+    return this._parse().chain((parsed) => {
+      const unsignedBlock = parsed.bytes.slice(
+        parsed.data.version.start,
+        parsed.data.signature.start,
       );
+      const unsignedBlockHash = this.cryptoService.hash(
+        unsignedBlock,
+        HashAlgo.SHA256,
+      );
+      return this.cryptoService.verify(
+        unsignedBlockHash,
+        parsed.data.signature.value,
+        parsed.data.issuer.value,
+      );
+    });
   }
 
   hash(): string {
     return this.hashValue.orDefaultLazy(() => {
-      const hashValue = sha256(this.bytes);
+      const hashValue = this.cryptoService.hash(this.bytes, HashAlgo.SHA256);
       return bufferToHexaString(hashValue, false);
     });
   }

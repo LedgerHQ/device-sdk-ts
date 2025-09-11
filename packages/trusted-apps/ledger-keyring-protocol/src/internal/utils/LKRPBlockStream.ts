@@ -23,17 +23,22 @@ export class LKRPBlockStream {
   private path: Maybe<string> = Nothing;
 
   constructor(
+    private readonly cryptoService: CryptoService,
     private readonly bytes: Uint8Array,
     blocks?: LKRPBlock[],
   ) {
     this.blocks = blocks ? Just(Right(blocks)) : Nothing;
   }
 
-  static fromHex(hex: string): LKRPBlockStream {
-    return new LKRPBlockStream(hexaStringToBuffer(hex) ?? new Uint8Array());
+  static fromHex(cryptoService: CryptoService, hex: string): LKRPBlockStream {
+    return new LKRPBlockStream(
+      cryptoService,
+      hexaStringToBuffer(hex) ?? new Uint8Array(),
+    );
   }
 
   static fromData(
+    cryptoService: CryptoService,
     blocksData: Omit<LKRPBlockData, "parent">[],
     parentHash?: string,
   ): LKRPBlockStream {
@@ -43,7 +48,7 @@ export class LKRPBlockStream {
       bufferToHexaString(crypto.getRandomValues(new Uint8Array(32)), false);
 
     for (const blockData of blocksData) {
-      const block = LKRPBlock.fromData({
+      const block = LKRPBlock.fromData(cryptoService, {
         ...blockData,
         parent: hash,
       });
@@ -54,7 +59,7 @@ export class LKRPBlockStream {
       (acc, block) => new Uint8Array([...acc, ...block.toU8A()]),
       new Uint8Array(),
     );
-    return new LKRPBlockStream(bytes, blocks);
+    return new LKRPBlockStream(cryptoService, bytes, blocks);
   }
 
   toU8A(): Uint8Array {
@@ -70,11 +75,7 @@ export class LKRPBlockStream {
       const parser = new TLVParser(this.bytes);
       const parsed: Either<LKRPParsingError, LKRPBlock>[] = [];
       while (!parser.state.isDone) {
-        const start = parser.state.offset;
-        const block = parser.parseBlockData().map((data) => {
-          const end = parser.state.offset;
-          return new LKRPBlock(this.bytes.slice(start, end), data);
-        });
+        const block = LKRPBlock.fromParser(this.cryptoService, parser);
         parsed.push(block);
         if (block.isLeft()) break;
       }
@@ -172,10 +173,7 @@ export class LKRPBlockStream {
     return this.getMemberBlock(member).isJust();
   }
 
-  async getPublishedKey(
-    cryptoService: CryptoService,
-    keypair: KeyPair,
-  ): Promise<Maybe<PublishedKey>> {
+  async getPublishedKey(keypair: KeyPair): Promise<Maybe<PublishedKey>> {
     return MaybeAsync.liftMaybe(
       this.getMemberBlock(keypair.getPublicKeyToHex()).chain(
         (block): Maybe<EncryptedPublishedKey> => {
@@ -192,7 +190,7 @@ export class LKRPBlockStream {
       const secret = (
         await keypair.deriveSharedSecret(published.ephemeralPublicKey)
       ).slice(1);
-      const key = cryptoService.importSymmetricKey(
+      const key = this.cryptoService.importSymmetricKey(
         secret,
         EncryptionAlgo.AES256_GCM,
       );
