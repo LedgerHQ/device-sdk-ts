@@ -1,5 +1,19 @@
 # @ledgerhq/device-management-kit
 
+## 0.9.0
+
+### Minor Changes
+
+- [#1014](https://github.com/LedgerHQ/device-sdk-ts/pull/1014) [`4337fdd`](https://github.com/LedgerHQ/device-sdk-ts/commit/4337fdd960531554935daf8c5c4f84d8f4973f7d) Thanks [@valpinkman](https://github.com/valpinkman)! - New api on DeviceManagementKit to check if the transports support the running environment
+
+### Patch Changes
+
+- [#966](https://github.com/LedgerHQ/device-sdk-ts/pull/966) [`a6a6e31`](https://github.com/LedgerHQ/device-sdk-ts/commit/a6a6e316705cd8754474991a8f0753064ba66bd9) Thanks [@ofreyssinet-ledger](https://github.com/ofreyssinet-ledger)! - Use final BLE ids for Apex
+
+- [#979](https://github.com/LedgerHQ/device-sdk-ts/pull/979) [`b1d8e58`](https://github.com/LedgerHQ/device-sdk-ts/commit/b1d8e58de5f513bad5eb8eb8f804fc2cbeeb4c17) Thanks [@thesan](https://github.com/thesan)! - Enable no device authentication
+
+- [#1017](https://github.com/LedgerHQ/device-sdk-ts/pull/1017) [`0cd8a18`](https://github.com/LedgerHQ/device-sdk-ts/commit/0cd8a18fa676a7d8e6ed950fd3a12c43f6532402) Thanks [@ofreyssinet-ledger](https://github.com/ofreyssinet-ledger)! - Modify Apex id to match backend
+
 ## 0.8.0
 
 ### Minor Changes

@@ -1,5 +1,12 @@
 # @ledgerhq/signer-utils
 
+## 1.1.0
+
+### Patch Changes
+
+- Updated dependencies [[`a6a6e31`](https://github.com/LedgerHQ/device-sdk-ts/commit/a6a6e316705cd8754474991a8f0753064ba66bd9), [`4337fdd`](https://github.com/LedgerHQ/device-sdk-ts/commit/4337fdd960531554935daf8c5c4f84d8f4973f7d), [`b1d8e58`](https://github.com/LedgerHQ/device-sdk-ts/commit/b1d8e58de5f513bad5eb8eb8f804fc2cbeeb4c17), [`0cd8a18`](https://github.com/LedgerHQ/device-sdk-ts/commit/0cd8a18fa676a7d8e6ed950fd3a12c43f6532402)]:
+  - @ledgerhq/device-management-kit@0.9.0
+
 ## 1.0.6
 
 ### Patch Changes

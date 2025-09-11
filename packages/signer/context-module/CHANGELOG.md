@@ -1,5 +1,22 @@
 # @ledgerhq/context-module
 
+## 1.7.0
+
+### Minor Changes
+
+- [#976](https://github.com/LedgerHQ/device-sdk-ts/pull/976) [`566b876`](https://github.com/LedgerHQ/device-sdk-ts/commit/566b876f769c72ee870c590408fa85892d86909f) Thanks [@fAnselmi-Ledger](https://github.com/fAnselmi-Ledger)! - Fix cert address on solana signTransaction
+
+### Patch Changes
+
+- [#997](https://github.com/LedgerHQ/device-sdk-ts/pull/997) [`be15e40`](https://github.com/LedgerHQ/device-sdk-ts/commit/be15e405f18e57afaabe736bd74dce9a4fe710d2) Thanks [@mbertin-ledger](https://github.com/mbertin-ledger)! - Fix clear signing issue with LNS
+
+- [#908](https://github.com/LedgerHQ/device-sdk-ts/pull/908) [`a3ac864`](https://github.com/LedgerHQ/device-sdk-ts/commit/a3ac864f9262cc4f1a02c4cf3bf63c8cdce06207) Thanks [@tom-tochito](https://github.com/tom-tochito)! - Add dynamic network support
+
+- [#963](https://github.com/LedgerHQ/device-sdk-ts/pull/963) [`2aba89b`](https://github.com/LedgerHQ/device-sdk-ts/commit/2aba89b0ef9d50159162922427f2ddb0d7081e15) Thanks [@aussedatlo](https://github.com/aussedatlo)! - Add proxy support
+
+- Updated dependencies [[`a6a6e31`](https://github.com/LedgerHQ/device-sdk-ts/commit/a6a6e316705cd8754474991a8f0753064ba66bd9), [`4337fdd`](https://github.com/LedgerHQ/device-sdk-ts/commit/4337fdd960531554935daf8c5c4f84d8f4973f7d), [`b1d8e58`](https://github.com/LedgerHQ/device-sdk-ts/commit/b1d8e58de5f513bad5eb8eb8f804fc2cbeeb4c17), [`0cd8a18`](https://github.com/LedgerHQ/device-sdk-ts/commit/0cd8a18fa676a7d8e6ed950fd3a12c43f6532402)]:
+  - @ledgerhq/device-management-kit@0.9.0
+
 ## 1.6.0
 
 ### Minor Changes
