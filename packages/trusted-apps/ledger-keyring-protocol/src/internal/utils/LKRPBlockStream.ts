@@ -1,16 +1,19 @@
-import { Either, Just, Maybe, Nothing, Right } from "purify-ts";
+import {
+  bufferToHexaString,
+  hexaStringToBuffer,
+} from "@ledgerhq/device-management-kit";
+import { Either, Just, Maybe, MaybeAsync, Nothing, Right } from "purify-ts";
 
-import { type LKRPParsingError } from "@api/app-binder/Errors";
-import { type Keypair } from "@api/app-binder/LKRPTypes";
+import { type CryptoService, EncryptionAlgo } from "@api/crypto/CryptoService";
+import { type KeyPair } from "@api/crypto/KeyPair";
+import { type LKRPParsingError } from "@api/model/Errors";
 import { type LKRPBlockData } from "@internal/models/LKRPBlockTypes";
 import { CommandTags } from "@internal/models/Tags";
 import {
   type EncryptedPublishedKey,
   type PublishedKey,
 } from "@internal/models/Types";
-import { CryptoUtils } from "@internal/utils/crypto";
 
-import { bytesToHex, hexToBytes } from "./hex";
 import { LKRPBlock } from "./LKRPBlock";
 import { TLVParser } from "./TLVParser";
 
@@ -22,18 +25,12 @@ export class LKRPBlockStream {
   constructor(
     private readonly bytes: Uint8Array,
     blocks?: LKRPBlock[],
-    path?: string,
   ) {
     this.blocks = blocks ? Just(Right(blocks)) : Nothing;
-    this.path = Maybe.fromNullable(path);
   }
 
   static fromHex(hex: string): LKRPBlockStream {
-    return new LKRPBlockStream(hexToBytes(hex));
-  }
-
-  static fromPath(path: string): LKRPBlockStream {
-    return new LKRPBlockStream(new Uint8Array(), [], path);
+    return new LKRPBlockStream(hexaStringToBuffer(hex) ?? new Uint8Array());
   }
 
   static fromData(
@@ -42,7 +39,8 @@ export class LKRPBlockStream {
   ): LKRPBlockStream {
     const blocks: LKRPBlock[] = [];
     let hash =
-      parentHash ?? bytesToHex(crypto.getRandomValues(new Uint8Array(32)));
+      parentHash ??
+      bufferToHexaString(crypto.getRandomValues(new Uint8Array(32)), false);
 
     for (const blockData of blocksData) {
       const block = LKRPBlock.fromData({
@@ -64,7 +62,7 @@ export class LKRPBlockStream {
   }
 
   toString(): string {
-    return bytesToHex(this.bytes);
+    return bufferToHexaString(this.bytes, false);
   }
 
   parse(): Either<LKRPParsingError, LKRPBlock[]> {
@@ -132,9 +130,9 @@ export class LKRPBlockStream {
     this.path.ifNothing(() => {
       this.path = this.parse()
         .toMaybe()
-        .chain((blocks) => Maybe.fromNullable(blocks[0]))
+        .chainNullable((blocks) => blocks[0])
         .chain((block) => block.parse().toMaybe())
-        .chain(({ commands }) => Maybe.fromNullable(commands[0]))
+        .chainNullable(({ commands }) => commands[0])
         .chain((command) => command.parse().toMaybe())
         .chain((data) => {
           switch (data.type) {
@@ -174,25 +172,35 @@ export class LKRPBlockStream {
     return this.getMemberBlock(member).isJust();
   }
 
-  getPublishedKey(keypair: Keypair): Maybe<PublishedKey> {
-    return this.getMemberBlock(keypair.pubKeyToHex())
-      .chain((block): Maybe<EncryptedPublishedKey> => {
-        for (const command of block.commands) {
-          const key = command.getEncryptedPublishedKey();
-          if (key.isJust()) {
-            return key;
+  async getPublishedKey(
+    cryptoService: CryptoService,
+    keypair: KeyPair,
+  ): Promise<Maybe<PublishedKey>> {
+    return MaybeAsync.liftMaybe(
+      this.getMemberBlock(keypair.getPublicKeyToHex()).chain(
+        (block): Maybe<EncryptedPublishedKey> => {
+          for (const command of block.commands) {
+            const key = command.getEncryptedPublishedKey();
+            if (key.isJust()) {
+              return key;
+            }
           }
-        }
-        return Nothing;
-      })
-      .map((published) => {
-        const secret = keypair.ecdh(published.ephemeralPublicKey).slice(1);
-        const xpriv = CryptoUtils.decrypt(
-          secret,
-          published.initializationVector,
-          published.encryptedXpriv,
-        );
-        return { privateKey: xpriv.slice(0, 32), chainCode: xpriv.slice(32) };
-      });
+          return Nothing;
+        },
+      ),
+    ).map(async (published) => {
+      const secret = (
+        await keypair.deriveSharedSecret(published.ephemeralPublicKey)
+      ).slice(1);
+      const key = cryptoService.importSymmetricKey(
+        secret,
+        EncryptionAlgo.AES256_GCM,
+      );
+      const xpriv = await key.decrypt(
+        published.initializationVector,
+        published.encryptedXpriv,
+      );
+      return { privateKey: xpriv.slice(0, 32), chainCode: xpriv.slice(32) };
+    });
   }
 }

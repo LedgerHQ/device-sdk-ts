@@ -33,6 +33,11 @@ import {
   type OpenAppDAIntermediateValue,
   type OpenAppDAOutput,
   OpenAppDeviceAction,
+  type UninstallAppDAError,
+  type UninstallAppDAInput,
+  type UninstallAppDAIntermediateValue,
+  type UninstallAppDAOutput,
+  UninstallAppDeviceAction,
 } from "@ledgerhq/device-management-kit";
 import { Flex, LegendInput } from "@ledgerhq/native-ui";
 
@@ -202,5 +207,37 @@ export const getDeviceActions = (
     InstallAppDAInput,
     InstallAppDAError,
     InstallAppDAIntermediateValue
+  >,
+  {
+    id: "uninstall_app",
+    title: "Uninstall App",
+    description:
+      "Perform all the actions necessary to uninstall an app on the device by name",
+    executeDeviceAction: ({ appName, unlockTimeout }, inspect) => {
+      const deviceAction = new UninstallAppDeviceAction({
+        input: { appName, unlockTimeout },
+        inspect,
+      });
+      return dmk.executeDeviceAction({
+        sessionId,
+        deviceAction,
+      });
+    },
+    initialValues: { appName: "", unlockTimeout: UNLOCK_TIMEOUT },
+    deviceModelId,
+    FormComponent: ({ values, setValue }) => (
+      <Flex>
+        <LegendInput
+          legend="App name"
+          value={values.appName}
+          onChange={appName => setValue("appName", appName)}
+        />
+      </Flex>
+    ),
+  } satisfies DeviceActionProps<
+    UninstallAppDAOutput,
+    UninstallAppDAInput,
+    UninstallAppDAError,
+    UninstallAppDAIntermediateValue
   >,
 ];

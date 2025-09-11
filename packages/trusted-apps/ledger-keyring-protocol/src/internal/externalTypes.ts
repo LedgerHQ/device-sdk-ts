@@ -1,7 +1,7 @@
 export const externalTypes = {
   Dmk: Symbol.for("Dmk"),
-  SessionId: Symbol.for("SessionId"),
   ApplicationId: Symbol.for("ApplicationId"),
+  CryptoService: Symbol.for("CryptoService"),
 };
 
 export type TrustedProperty = {

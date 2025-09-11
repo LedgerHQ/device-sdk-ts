@@ -23,7 +23,7 @@ jobs:
     name: Run Danger check
     runs-on: ubuntu-22.04
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - uses: LedgerHQ/device-sdk-ts/.github/actions/setup-toolchain-composite@develop
 
@@ -40,7 +40,7 @@ jobs:
     needs: [danger]
     runs-on: ${{ !github.event.pull_request.head.repo.fork && 'ledgerhq-device-sdk' || 'ubuntu-22.04' }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - uses: LedgerHQ/device-sdk-ts/.github/actions/setup-toolchain-composite@develop
 

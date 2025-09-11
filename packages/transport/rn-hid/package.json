@@ -1,8 +1,8 @@
 {
   "name": "@ledgerhq/device-transport-kit-react-native-hid",
-  "version": "0.0.1",
+  "version": "1.0.0",
   "license": "Apache-2.0",
-  "private": true,
+  "private": false,
   "react-native": "src/index.ts",
   "nativePackage": true,
   "exports": {

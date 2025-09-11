@@ -8,53 +8,74 @@ import { inject, injectable } from "inversify";
 
 import { AuthenticateDAReturnType } from "@api/app-binder/AuthenticateDeviceActionTypes";
 import { GetVersionDAReturnType } from "@api/app-binder/GetVersionDeviceActionTypes";
-import { Keypair, Permissions } from "@api/app-binder/LKRPTypes";
+import { type CryptoService } from "@api/crypto/CryptoService";
+import { KeyPair } from "@api/crypto/KeyPair";
+import { Permissions } from "@api/model/Permissions";
 import { externalTypes } from "@internal/externalTypes";
 import { type LKRPDataSource } from "@internal/lkrp-datasource/data/LKRPDataSource";
 import { lkrpDatasourceTypes } from "@internal/lkrp-datasource/di/lkrpDatasourceTypes";
 
 import { GetVersionCommand } from "./command/GetVersionCommand";
-import { AuthenticateDeviceAction } from "./device-action/AuthenticateDeviceAction";
+import { AuthenticateWithDeviceDeviceAction } from "./device-action/AuthenticateWithDeviceDeviceAction";
+import { AuthenticateWithKeypairDeviceAction } from "./device-action/AuthenticateWithKeypairDeviceAction";
 
 @injectable()
 export class LedgerKeyringProtocolBinder {
   constructor(
     @inject(externalTypes.Dmk) private readonly dmk: DeviceManagementKit,
 
-    @inject(externalTypes.SessionId)
-    private readonly sessionId: DeviceSessionId,
-
     @inject(externalTypes.ApplicationId)
     private readonly applicationId: number,
+
+    @inject(externalTypes.CryptoService)
+    private readonly cryptoService: CryptoService,
 
     @inject(lkrpDatasourceTypes.LKRPDataSource)
     private readonly lkrpDataSource: LKRPDataSource,
   ) {}
 
-  authenticate(args: {
-    keypair: Keypair;
+  authenticateWithKeypair(args: {
+    keypair: KeyPair;
+    trustchainId: string;
+  }): AuthenticateDAReturnType {
+    return new AuthenticateWithKeypairDeviceAction({
+      input: {
+        lkrpDataSource: this.lkrpDataSource,
+        appId: this.applicationId,
+        cryptoService: this.cryptoService,
+        keypair: args.keypair,
+        trustchainId: args.trustchainId,
+      },
+    }).execute();
+  }
+
+  authenticateWithDevice(args: {
+    keypair: KeyPair;
     clientName: string;
     permissions: Permissions;
-    trustchainId?: string;
+    sessionId: DeviceSessionId;
   }): AuthenticateDAReturnType {
     return this.dmk.executeDeviceAction({
-      sessionId: this.sessionId,
-      deviceAction: new AuthenticateDeviceAction({
+      sessionId: args.sessionId,
+      deviceAction: new AuthenticateWithDeviceDeviceAction({
         input: {
           lkrpDataSource: this.lkrpDataSource,
-          applicationId: this.applicationId,
+          appId: this.applicationId,
+          cryptoService: this.cryptoService,
           clientName: args.clientName,
           permissions: args.permissions,
           keypair: args.keypair,
-          trustchainId: args.trustchainId ?? null,
         },
       }),
     });
   }
 
-  getVersion(args: { skipOpenApp: boolean }): GetVersionDAReturnType {
+  getVersion(args: {
+    skipOpenApp: boolean;
+    sessionId: DeviceSessionId;
+  }): GetVersionDAReturnType {
     return this.dmk.executeDeviceAction({
-      sessionId: this.sessionId,
+      sessionId: args.sessionId,
       deviceAction: new SendCommandInAppDeviceAction({
         input: {
           command: new GetVersionCommand(),

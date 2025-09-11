@@ -1,8 +1,8 @@
 import { Just, Left, Nothing, Right } from "purify-ts";
 
-import { LKRPDataSourceError } from "@api/app-binder/Errors";
+import { LKRPDataSourceError } from "@api/model/Errors";
 import { LKRPBlock } from "@internal/utils/LKRPBlock";
-import { LKRPBlockStream } from "@internal/utils/LKRPBlockStream";
+import { Trustchain } from "@internal/utils/Trustchain";
 
 import { HttpLKRPDataSource } from "./HttpLKRPDataSource";
 
@@ -184,13 +184,13 @@ describe("HttpLKRPDataSource", () => {
   describe("getTrustchainById", () => {
     it("should fetch trustchain by ID successfully", async () => {
       // GIVEN
-      const mockTrustchain = {
+      const mockTrustchainData = {
         "m/": "0102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1e1d",
         "m/16'": "1e1f202122232425262728292a2b2c2d2e2f303132333435363738393a3b",
       };
       fetchSpy.mockResolvedValueOnce({
         ok: true,
-        json: () => Promise.resolve(mockTrustchain),
+        json: () => Promise.resolve(mockTrustchainData),
       } as Response);
 
       // WHEN
@@ -211,14 +211,7 @@ describe("HttpLKRPDataSource", () => {
         },
       );
       expect(result).toEqual(
-        Right({
-          "m/": LKRPBlockStream.fromHex(
-            "0102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1e1d",
-          ),
-          "m/16'": LKRPBlockStream.fromHex(
-            "1e1f202122232425262728292a2b2c2d2e2f303132333435363738393a3b",
-          ),
-        }),
+        Right(new Trustchain("TRUSTCHAIN_ID", mockTrustchainData)),
       );
     });
 

@@ -1,32 +1,59 @@
 import { ByteArrayBuilder } from "@ledgerhq/device-management-kit";
+import { inject, injectable } from "inversify";
 
-import { KeypairFromBytes } from "@api/index";
-import { AES_BLOCK_SIZE, CryptoUtils } from "@internal/utils/crypto";
+import {
+  type CryptoService,
+  Curve,
+  EncryptionAlgo,
+  HashAlgo,
+} from "@api/crypto/CryptoService";
+import { AES256_BLOCK_SIZE } from "@api/crypto/Key";
+import { externalTypes } from "@internal/externalTypes";
 
+@injectable()
 export class EncryptDataUseCase {
-  execute(encryptionKey: Uint8Array, data: Uint8Array): Uint8Array {
+  constructor(
+    @inject(externalTypes.CryptoService)
+    private cryptoService: CryptoService,
+  ) {}
+
+  async execute(
+    encryptionKey: Uint8Array,
+    data: Uint8Array,
+  ): Promise<Uint8Array> {
     // Derive the shared secret using ECDH with an ephemeral keypair
-    const privateKey = new KeypairFromBytes(encryptionKey);
-    const ephemeralKeypair = CryptoUtils.randomKeypair();
-    const sharedSecret = privateKey
-      .ecdh(ephemeralKeypair.pubKeyToU8a())
-      .slice(1);
+    const privateKey = this.cryptoService.importKeyPair(
+      encryptionKey,
+      Curve.K256,
+    );
+    const ephemeralKeypair = await this.cryptoService.createKeyPair(Curve.K256);
+    const sharedSecret = await privateKey.deriveSharedSecret(
+      ephemeralKeypair.getPublicKey(),
+    );
 
     // Key derivation using HMAC-SHA256
-    const key = CryptoUtils.hmac(new Uint8Array(), sharedSecret);
+    const key = this.cryptoService.hmac(
+      new Uint8Array(),
+      sharedSecret.slice(1),
+      HashAlgo.SHA256,
+    );
 
     // Generate a random IV (nonce)
-    const iv = CryptoUtils.randomBytes(16);
+    const iv = this.cryptoService.randomBytes(16);
 
     // Encrypt data
-    const ciphertext = CryptoUtils.encrypt(key, iv, data);
-    const encryptedData = ciphertext.subarray(0, -AES_BLOCK_SIZE);
-    const tag = ciphertext.subarray(-AES_BLOCK_SIZE);
+    const symmetricKey = this.cryptoService.importSymmetricKey(
+      key,
+      EncryptionAlgo.AES256_GCM,
+    );
+    const ciphertext = await symmetricKey.encrypt(iv, data);
+    const encryptedData = ciphertext.subarray(0, -AES256_BLOCK_SIZE);
+    const tag = ciphertext.subarray(-AES256_BLOCK_SIZE);
 
     // Serialize the result
     return new ByteArrayBuilder()
       .add8BitUIntToData(0) // Version of the format
-      .addBufferToData(ephemeralKeypair.pubKeyToU8a())
+      .addBufferToData(ephemeralKeypair.getPublicKey())
       .addBufferToData(iv)
       .addBufferToData(tag)
       .addBufferToData(encryptedData)

@@ -18,8 +18,8 @@ const config = {
     mode: "prod",
     branch: "main",
   },
-  metadataService: {
-    url: "https://nft.api.live.ledger.com/v2",
+  metadataServiceDomain: {
+    url: "https://nft.api.live.ledger.com",
   },
   originToken: "originToken",
 } as ContextModuleConfig;

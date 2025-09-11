@@ -12,10 +12,10 @@ type MetadataServiceDrawerProps = {
 };
 
 export function MetadataServiceDrawer({ onClose }: MetadataServiceDrawerProps) {
-  const { metadataServiceConfig, setMetadataServiceConfig } =
+  const { metadataServiceDomain, setMetadataServiceConfig } =
     useMetadataServiceConfig();
   const [values, setValues] = useState<Record<string, FieldType>>(
-    metadataServiceConfig,
+    metadataServiceDomain,
   );
   const labelSelector: Record<string, string> = {
     url: "Metadata Service URL",
@@ -42,7 +42,7 @@ export function MetadataServiceDrawer({ onClose }: MetadataServiceDrawerProps) {
     <Block>
       <Flex flexDirection="column" rowGap={3}>
         <CommandForm
-          initialValues={metadataServiceConfig}
+          initialValues={metadataServiceDomain}
           onChange={setValues}
           labelSelector={labelSelector}
         />

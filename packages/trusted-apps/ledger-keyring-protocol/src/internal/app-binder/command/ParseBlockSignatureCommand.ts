@@ -12,15 +12,14 @@ import { CommandErrorHelper } from "@ledgerhq/signer-utils";
 import { Maybe } from "purify-ts";
 
 import {
-  type ParseBlockSignatureCommandArgs,
-  type ParseBlockSignatureCommandResponse,
-} from "@api/app-binder/ParseStreamBlockSignatureTypes";
-
-import {
   LEDGER_SYNC_ERRORS,
   type LedgerKeyringProtocolErrorCodes,
   LedgerKeyringProtocolErrorFactory,
 } from "./utils/ledgerKeyringProtocolErrors";
+
+export type ParseBlockSignatureCommandResponse = Uint8Array;
+
+export type ParseBlockSignatureCommandArgs = { signature: Uint8Array };
 
 export class ParseBlockSignatureCommand
   implements

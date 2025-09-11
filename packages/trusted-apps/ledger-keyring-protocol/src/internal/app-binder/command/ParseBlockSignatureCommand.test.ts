@@ -6,9 +6,10 @@ import {
 } from "@ledgerhq/device-management-kit";
 import { describe, expect, it } from "vitest";
 
-import type { ParseBlockSignatureCommandArgs } from "@api/app-binder/ParseStreamBlockSignatureTypes";
-
-import { ParseBlockSignatureCommand } from "./ParseBlockSignatureCommand";
+import {
+  ParseBlockSignatureCommand,
+  type ParseBlockSignatureCommandArgs,
+} from "./ParseBlockSignatureCommand";
 
 const DUMMY_SIGNATURE = Uint8Array.from([0x0a, 0x0b, 0x0c]);
 

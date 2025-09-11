@@ -12,15 +12,16 @@ import { CommandErrorHelper } from "@ledgerhq/signer-utils";
 import { Maybe } from "purify-ts";
 
 import {
-  type InitCommandArgs,
-  type InitCommandResponse,
-} from "@api/app-binder/InitCommandTypes";
-
-import {
   LEDGER_SYNC_ERRORS,
   type LedgerKeyringProtocolErrorCodes,
   LedgerKeyringProtocolErrorFactory,
 } from "./utils/ledgerKeyringProtocolErrors";
+
+export type InitCommandResponse = void;
+
+export type InitCommandArgs = {
+  publicKey: Uint8Array;
+};
 
 export class InitCommand
   implements

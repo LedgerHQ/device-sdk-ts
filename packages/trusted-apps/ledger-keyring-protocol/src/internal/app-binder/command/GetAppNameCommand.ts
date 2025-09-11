@@ -13,15 +13,16 @@ import { CommandErrorHelper } from "@ledgerhq/signer-utils";
 import { Maybe } from "purify-ts";
 
 import {
-  type GetAppNameCommandArgs,
-  type GetAppNameCommandResponse,
-} from "@api/app-binder/GetAppNameCommandTypes";
-
-import {
   LEDGER_SYNC_ERRORS,
   type LedgerKeyringProtocolErrorCodes,
   LedgerKeyringProtocolErrorFactory,
 } from "./utils/ledgerKeyringProtocolErrors";
+
+export type GetAppNameCommandResponse = {
+  readonly name: string;
+};
+
+export type GetAppNameCommandArgs = undefined;
 
 export class GetAppNameCommand
   implements

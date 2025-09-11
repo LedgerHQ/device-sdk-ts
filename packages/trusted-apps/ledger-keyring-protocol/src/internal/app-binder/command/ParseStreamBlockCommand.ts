@@ -12,15 +12,17 @@ import { CommandErrorHelper } from "@ledgerhq/signer-utils";
 import { Maybe } from "purify-ts";
 
 import {
-  type ParseSingleCommandArgs,
-  type ParseSingleCommandResponse,
-} from "@api/app-binder/ParseStreamBlockCommandCommandTypes";
-
-import {
   LEDGER_SYNC_ERRORS,
   type LedgerKeyringProtocolErrorCodes,
   LedgerKeyringProtocolErrorFactory,
 } from "./utils/ledgerKeyringProtocolErrors";
+
+export type ParseSingleCommandArgs = {
+  command: Uint8Array;
+  outputTrustedParam?: boolean;
+};
+
+export type ParseSingleCommandResponse = Uint8Array;
 
 export class ParseSingleCommand
   implements

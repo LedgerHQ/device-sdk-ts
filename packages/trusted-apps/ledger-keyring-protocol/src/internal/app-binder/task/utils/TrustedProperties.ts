@@ -1,10 +1,7 @@
 import { ByteArrayParser } from "@ledgerhq/device-management-kit";
 import { Either, Left, Right } from "purify-ts";
 
-import {
-  type LKRPMissingDataError,
-  LKRPParsingError,
-} from "@api/app-binder/Errors";
+import { type LKRPMissingDataError, LKRPParsingError } from "@api/model/Errors";
 import { TPTags } from "@internal/models/Tags";
 import { required } from "@internal/utils/required";
 

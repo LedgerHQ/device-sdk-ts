@@ -1288,7 +1288,7 @@ PODS:
     - ReactCommon/turbomodule/bridging
     - ReactCommon/turbomodule/core
     - Yoga
-  - react-native-safe-area-context (5.2.0):
+  - react-native-safe-area-context (5.6.1):
     - DoubleConversion
     - glog
     - hermes-engine
@@ -1301,8 +1301,8 @@ PODS:
     - React-featureflags
     - React-graphics
     - React-ImageManager
-    - react-native-safe-area-context/common (= 5.2.0)
-    - react-native-safe-area-context/fabric (= 5.2.0)
+    - react-native-safe-area-context/common (= 5.6.1)
+    - react-native-safe-area-context/fabric (= 5.6.1)
     - React-NativeModulesApple
     - React-RCTFabric
     - React-rendererdebug
@@ -1311,7 +1311,7 @@ PODS:
     - ReactCommon/turbomodule/bridging
     - ReactCommon/turbomodule/core
     - Yoga
-  - react-native-safe-area-context/common (5.2.0):
+  - react-native-safe-area-context/common (5.6.1):
     - DoubleConversion
     - glog
     - hermes-engine
@@ -1332,7 +1332,7 @@ PODS:
     - ReactCommon/turbomodule/bridging
     - ReactCommon/turbomodule/core
     - Yoga
-  - react-native-safe-area-context/fabric (5.2.0):
+  - react-native-safe-area-context/fabric (5.6.1):
     - DoubleConversion
     - glog
     - hermes-engine
@@ -2085,7 +2085,7 @@ SPEC CHECKSUMS:
   react-native-ble-plx: 7a01a7e595504484789ddb1c94dd9643a03e6309
   react-native-get-random-values: d16467cf726c618e9c7a8c3c39c31faa2244bbba
   react-native-pager-view: 4ad4883a8288c5207bd432dd3c98bf648b7bc7d7
-  react-native-safe-area-context: 5e53e2b0fc3a2994ad0c89a2486e545b6566d8c4
+  react-native-safe-area-context: 53ad4d0603fac6b51b05f6d298bc3586e1dd5279
   React-nativeconfig: 539ff4de6ce3b694e8e751080568c281c84903ce
   React-NativeModulesApple: 702246817c286d057e23fe4b1302019796e62521
   React-perflogger: f260e2de95f9dbd002035251559c13bf1f0643d4
@@ -2114,7 +2114,7 @@ SPEC CHECKSUMS:
   ReactCodegen: 0a0eef9c8cd84c932ae1868832086c6441811e84
   ReactCommon: 3c1c8c6d777103c0e60e37c6c5f08e828e2a77c9
   RNGestureHandler: ec23e4d1de3799e1c878f51ad23183fd4bf072d9
-  RNReanimated: b6de789c8784a05770bb73eed94d6d68da8fc0ef
+  RNReanimated: 2d131a3703c179bf005b66e5d5d91cf8389679b5
   RNScreens: 351f431ef2a042a1887d4d90e1c1024b8ae9d123
   RNSVG: c50d29abf38abbf48ebfc50b6258f81099aeabae
   SocketRocket: d4aabe649be1e368d1318fdf28a022d714d65748

@@ -11,10 +11,6 @@ import {
 import { CommandErrorHelper } from "@ledgerhq/signer-utils";
 import { Maybe } from "purify-ts";
 
-import {
-  type SignBlockHeaderCommandArgs,
-  type SignBlockHeaderCommandResponse,
-} from "@api/app-binder/SignBlockHeaderCommandTypes";
 import { GeneralTags } from "@internal/models/Tags";
 
 import {
@@ -22,6 +18,13 @@ import {
   type LedgerKeyringProtocolErrorCodes,
   LedgerKeyringProtocolErrorFactory,
 } from "./utils/ledgerKeyringProtocolErrors";
+
+export interface SignBlockHeaderCommandArgs {
+  parent: Uint8Array;
+  commandCount: number;
+}
+
+export type SignBlockHeaderCommandResponse = Uint8Array;
 
 const ISSUER_PLACEHOLDER = [
   3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,

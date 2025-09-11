@@ -2,8 +2,7 @@ import {
   CommandResultFactory,
   InvalidStatusWordError,
 } from "@ledgerhq/device-management-kit";
-
-import { hexToBytes } from "@internal/utils/hex";
+import { hexaStringToBuffer } from "@ledgerhq/device-management-kit";
 
 import { GetSeedIdCommand } from "./GetSeedIdCommand";
 
@@ -20,7 +19,7 @@ describe("GetSeedIdCommand", () => {
     const apdu = command.getApdu();
 
     // THEN
-    const challengeBytes = hexToBytes(mockedChallenge);
+    const challengeBytes = hexaStringToBuffer(mockedChallenge)!;
     expect(apdu.getRawApdu()).toEqual(
       Uint8Array.from([
         0xe0, // CLA
@@ -38,7 +37,7 @@ describe("GetSeedIdCommand", () => {
     const command = new GetSeedIdCommand({
       challengeTLV: mockedChallenge,
     });
-    const mockedResponse = hexToBytes(
+    const mockedResponse = hexaStringToBuffer(
       `
         01 02 03
         06
@@ -53,7 +52,7 @@ describe("GetSeedIdCommand", () => {
           2e 2f 30 31 32
         12 13 14
       `.replace(/\s+/g, ""), // (the last three bytes should be ignored)
-    );
+    )!;
 
     // WHEN
     const result = command.parseResponse({
@@ -83,7 +82,7 @@ describe("GetSeedIdCommand", () => {
     const command = new GetSeedIdCommand({
       challengeTLV: mockedChallenge,
     });
-    const mockedResponse = hexToBytes(
+    const mockedResponse = hexaStringToBuffer(
       `
         01 02 03
         06
@@ -97,7 +96,7 @@ describe("GetSeedIdCommand", () => {
         05
           2e 2f 30 31 32
       `.replace(/\s+/g, ""),
-    );
+    )!;
 
     // WHEN
     const result = command.parseResponse({

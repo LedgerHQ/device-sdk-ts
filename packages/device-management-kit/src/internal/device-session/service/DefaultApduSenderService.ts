@@ -73,7 +73,7 @@ export class DefaultApduSenderService implements ApduSenderService {
       count += 1;
       frame = this.getFrameAtIndex(apdu, count).mapLeft((error) => {
         if (error instanceof FramerOverflowError) {
-          this._logger.debug("Frames parsed", { data: { count } });
+          // do nothing
         } else {
           this._logger.error("Error while parsing frame", { data: { error } });
         }

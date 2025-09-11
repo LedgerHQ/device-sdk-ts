@@ -1,9 +1,13 @@
-import { LKRPMissingDataError } from "@api/app-binder/Errors";
-import { KeypairFromBytes } from "@api/app-binder/KeypairFromBytes";
+import { hexaStringToBuffer } from "@ledgerhq/device-management-kit";
+
+import { Curve } from "@api/crypto/CryptoService";
+import { NobleCryptoService } from "@api/crypto/noble/NobleCryptoService";
+import { LKRPMissingDataError } from "@api/model/Errors";
 import { type Challenge } from "@internal/lkrp-datasource/data/LKRPDataSource";
-import { hexToBytes } from "@internal/utils/hex";
 
 import { SignChallengeWithKeypairTask } from "./SignChallengeWithKeypairTask";
+
+const cryptoService = new NobleCryptoService();
 
 describe("SignChallengeWithKeypairTask", () => {
   it("should sign a challenge with a keypair", async () => {
@@ -11,7 +15,11 @@ describe("SignChallengeWithKeypairTask", () => {
     const { challenge, keypair, trustchainId } = getParameters();
 
     // WHEN
-    const task = new SignChallengeWithKeypairTask(keypair, trustchainId);
+    const task = new SignChallengeWithKeypairTask(
+      cryptoService,
+      keypair,
+      trustchainId,
+    );
     const result = await task.run(challenge).run();
 
     // THEN
@@ -22,7 +30,7 @@ describe("SignChallengeWithKeypairTask", () => {
         version: 0,
         curveId: 33,
         signAlgorithm: 1,
-        publicKey: keypair.pubKeyToHex(),
+        publicKey: keypair.getPublicKeyToHex(),
       });
       expect(payload.signature.attestation).toBe(
         "0242303062373538386231393136633036373635343632656266343530363734346665323565643164623831393635326532646562613732313338393738396364633337",
@@ -40,7 +48,11 @@ describe("SignChallengeWithKeypairTask", () => {
     });
 
     // WHEN
-    const task = new SignChallengeWithKeypairTask(keypair, trustchainId);
+    const task = new SignChallengeWithKeypairTask(
+      cryptoService,
+      keypair,
+      trustchainId,
+    );
     const result = await task.run(challenge).run();
 
     // THEN
@@ -57,7 +69,10 @@ function getParameters({
 } = {}) {
   return {
     challenge: { tlv, json: {} as Challenge["json"] },
-    keypair: new KeypairFromBytes(hexToBytes(privateKey)),
+    keypair: cryptoService.importKeyPair(
+      hexaStringToBuffer(privateKey)!,
+      Curve.K256,
+    ),
     trustchainId,
   };
 }

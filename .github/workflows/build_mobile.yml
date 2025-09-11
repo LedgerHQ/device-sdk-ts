@@ -22,14 +22,14 @@ jobs:
     name: Build android app
     runs-on: ledgerhq-device-sdk
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           ref: ${{ github.event.inputs.ref }}
 
       - uses: LedgerHQ/device-sdk-ts/.github/actions/setup-toolchain-composite@develop
 
       - name: Set Up JDK
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v5
         with:
           distribution: 'zulu' # See 'Supported distributions' for available options
           java-version: '20'

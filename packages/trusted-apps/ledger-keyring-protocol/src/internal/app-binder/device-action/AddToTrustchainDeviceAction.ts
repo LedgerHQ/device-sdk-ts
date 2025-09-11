@@ -6,7 +6,7 @@ import {
   UserInteractionRequired,
   XStateDeviceAction,
 } from "@ledgerhq/device-management-kit";
-import { type Either, EitherAsync, Left, Maybe, Right } from "purify-ts";
+import { type Either, EitherAsync, Left, Right } from "purify-ts";
 import { assign, fromPromise, setup } from "xstate";
 
 import {
@@ -15,13 +15,12 @@ import {
   type AddToTrustchainDAIntermediateValue,
   type AddToTrustchainDAInternalState,
   type AddToTrustchainDAOutput,
+  AddToTrustchainDAState,
+  AddToTrustchaineDAStep,
 } from "@api/app-binder/AddToTrustchainDeviceActionTypes";
-import {
-  LKRPTrustchainNotReady,
-  LKRPUnknownError,
-} from "@api/app-binder/Errors";
-import { type Keypair } from "@api/index";
-import { type LKRPDeviceCommandError } from "@internal/app-binder/command/utils/ledgerKeyringProtocolErrors";
+import { type CryptoService } from "@api/crypto/CryptoService";
+import { type KeyPair } from "@api/crypto/KeyPair";
+import { LKRPTrustchainNotReady, LKRPUnknownError } from "@api/model/Errors";
 import { InitTask } from "@internal/app-binder/task/InitTask";
 import {
   ParseStreamToDeviceTask,
@@ -91,12 +90,13 @@ export class AddToTrustchainDeviceAction extends XStateDeviceAction<
         isTustchainEmpty: ({ context }) =>
           context.input
             .toMaybe()
-            .chain((input) => input.applicationStream.parse().toMaybe())
+            .chain((input) => input.trustchain.getAppStream(input.appId))
+            .chain((appStream) => appStream.parse().toMaybe())
             .map((blocks) => blocks.length === 0)
             .orDefault(true),
       },
     }).createMachine({
-      /** @xstate-layout N4IgpgJg5mDOIC5QEEIQCoHt0CcCusALgMYAWAhgJYB2AImAG6XFjLGGWbUB0AktZUIBlOLE7UAxBC5huNBpgDWsmoIDCmALaby1CAG0ADAF1EoAA6YxHLmZAAPRAEZDAdm6unAFgAcAJi9PLwA2PycAVmCAGhAAT0QAZhDucJDXAE5XcO9wsOCAX3yY1AxsfCIyKjpGZlZ2cT4BYVFxCTAcHEwcbnMAG3JCADMuzTkmjW1dAxM7S2txO0cEdPTuMMN0hKcEnycMwx9ouMQ-cITuDYTg1wOb4PScwuK0LFwCEgoaeiYWNhsefiCESwMRcCSwPDEFggoymJAgOaCBbwpYJVLcBKuLwrQx+dJnbZeGLxBAJALcLxOYLhHGGFx+BJPEAlV7lD5Vb61P4NQHNEGtdqdHCw2ZWJG2FGJdGY7HpXH4rZJYmIXx+NaywKbBk3VyMorMl5ld6VL41X71LjcAAK5BwsDAQkIODA5E0UhkYwUyh6tvtjudrpF8MR-0WiDOwW4wT2ex8CTJ122yoQYR8FzSPkyEWyXiuTJZRoqn2qPzq-2tvodTpdbsFXR6-SGIx9dqrAc0QYsYtDkoQuUjNNcwUC4V2up8yac5JpV2CCTcVJ8XgZ+cNbyLHLNZYaNtb-pr4Mh0NgnYR3eRoCWrlcad1udcpxWu0xyb8fkM3CpwWCBzlSR8o5eKupTruypqltylq7n61aum0HRdKeIYXg4iDXreSSYo+6TPq4yZoucWIrF4dLxlcaLAayxrFpy5rlmopBgMQijIOYfTMAM4j7q6ACi9iUEQEhIeeEqXs4VJeCkN5+D4D4-ocESvm+3APNSP6+GSETpAU+oFqBJollyFo8AxTEsWxvQcf83GaHxAmEEJThwl28yiahCBOE4hwYoYvi+D4dIHLiyYALRTu4bh4mcN43psAGUYWYGGXRDQFnZRA0FANnutQKjUF6shiFA1AAEK9JgzHCa51Bhh5XjLtwAWBIYwQARJU6hXikm5CEnleOEWSUk4CX6TRW6QTwaX8Rl1BZbBtYId0fQDMMOCjEVpXlZVMzBiJNW9t4DKfpEpy7JEmbaaFOxqgk6Tvp5A1-vVerPCBbIGbR26WlN9mZdlEJQqIVXivtYkecOapZD4sleYYhgDd+nUZBSlKpNDWG5CN71jRBxncD9M1ze28FCsDPZg1S4ThBc773IE843IpxwIGFBweLdGyyZhByyVj1Gbrj5YFgAcmAADu2XSLlnpKIVlDFWVFWKGTKFLIdkZDjs2ZtS+zOYh4NxwxkAXpNicZ8xu4FGULhqixL80k-Wy1Nmt3AbYr23OWe1W1d4ewYps0ZTpsmxZKFvhrOEdLXg8LgtbdFtJZ9E347b4v-UeQM7S5IO+xDHijtpgR+PciPM94kZuLieK3XiRvpInH3jXjIvpw7dbCtn3u5wd1LU7iLWm7qVdMySYSSZSpzeDsngl1OhT6tQmAQHAdh6djAvWyhyFuUsYXh-cjUPE+ThxW+w26WuG9Wyllq8sCoKg935PuYEyb1ZJKwrAEERxtkWSNxxlvKClYbKih9r2QI7hKQkSjhsM4pt8JUgpF-KkaJNj1XCIAzet8TKMWYqxdixBOJcBsulQg4Ce5gzlE4A2mEGRPlNgkJSH5vx9xuNiOGYRXDYJvl9SahpyF-XmpQl+atMSRm2KmNwAFUhlxJCFd85x4yjnHpPQIvheHJX4anUodswG7QgRTK4qxoyGB2GbN8qZJzkgeLsH80ZNjw2hlo5OeMhCZxBKI1Wzg4yrBajSe6A1erhE6gFKMDwBrbHxP1O8rjm7lh4otbxu9fEDRSFqUcUNIgHFCi4VYOE5Q4RahsRcOlChAA */
+      /** @xstate-layout N4IgpgJg5mDOIC5QEEIQCoHt0CcCusALgMYAWAhgJYB2AImAG6XFjLGGWbUB0AktZUIBlOLE7UAxBC5huNBpgDWsmoIDCmALaby1CAG0ADAF1EoAA6YxHLmZAAPRAEZDAdm6unAFgAcXpwBsAKwAzL7+TgA0IACezq4AnB6GIU4ATAFeaUEBuT5pAL4F0agY2PhEZFR0jMys7OJ8AsKi4hJgODiYONzmADbkhABm3ZpyzRraugYmdpbW4naOCAlJaS4JXgGpCZ6r0XEIPgHc2YaGXiEhOdlXTkUlaFi4BCQUNPRMLGw2PPyCIlgYi4ElgeGILCBRlMSBA80Ei1hy2uXm4IVcXlWZwS5xChiCB0QaQSQW4QVcxMC63SCTShWKIFKzwqb2qnzqP0a-xaQLaHS6OGhcysCNsSMQKLRGKxQUMOJS+MJKzlaPSXlcPkSPkMaQxD0ZT3KryqH1q3waXG4AAVyDhYGAhIQcGByJopDJxgplL1bfbHc7XULYfDfktEKETgEnJ4coZMkEsUqnNqySFgtGgsmsWkvPqmUbKu8al96r9rb6HU6XW7+d1egNhqMfXbKwHNEGLCLQ+KEEEMmTdvHXEFjj4-ErNdxDD4wviciT8gEfHnDS9C2yzaXGjaW-7q6DwZDYB24V3EaBlq4NR4wmnpylvCEfEriScvHHdX4cwF1gEV2U11ZU0S05S0dz9KtXXaTpuhPENzwcRArx8G9LgCe9UkuZ9YiQscyR-LwEwCDVzice4GXzQCTWLDkLR4NRSDAYhFGQcx+mYQZxD3V0AFF7EoIgJDgs8xQvZxozSU4NnxK5sl2KIcIQYlJLSEIFx8Mj0PVcjHgAllqPZc0ywYpiWLYvoON+bjND4gTCCEpwYU7BZRMQhAyIpKS5RkkI5M8JUo1JeN8hHVwdQCBI-wo1d9KLQyt0tfNbKIGgoGs91qBUagvVkMQoGoAAhPpMGY4SXOoMN3KyFC3AfBN0jpLwlUxFDrgSdEwoTTVEn-ZljTizdQJ4JL+JS6g0sgmsYJ6fpBhGHAxjywritK2ZgxEiqe28aduCyZMlzTA7NWai5uBxH90xcLYZ16gsgJoozGhGuzUvSsEIVEMrRU2sT3MyJxTkinxIqvNJRzSALvFOSl1QTdYKSi3S+vXYDaLLZ6xomttoIFL7u1+wJ-EBpcQYpcGAsyDxKXnPs6QSW6qIGkC6O4fMADkwAAd3S6RMs9JRcsofKipKxQ8YQ5ZvDBqcwtSeq6RzJMMTO0JvGB3zfOnBnYo3Zn0cNDnucmnG61mxsFu4JaRdWpzT3KyrtpQvbR0OmdjsUjSyXOc4NJ1BInFp7X+t1tGnoNrm3sPT61uc76Hf+4ngeIsmlwhxTiUMbh8mJJ9PESLZAiDlGHoS4bw6N7Ha0FGO7bjraE9fJPQfJxSwgB3zKX9hJtTjIIigZahMAgOA7EonXUce1z4Nc5YAFoFMOWfSVWVZNXnVxtm8Eki-u+KhqaAFWinjbKvVF9rwDi6KSCWUKVzaK9ODifS-LXdJuFe2e3Vdx-HfBMtnRLSNOhxPxnSTucEcfh8TLgfsjXeg0WYmWYqxdixBOJcGsslQgH866-RxADK8Vxu7dXahFF8kUzofkxEELwWxsg3x3gZBB+syhYNeu-dan8CboidivXYCYUiZFcEqIiWc1TA3OLSTU98kZ3SYXrMOZRDbWRwfjNyTgeG7T4cOHEaYz7p1cCEXaH50JjmjHiNMjCmah0tEIKOQJVES3iLsKcN9fCqU-JcAkiltJkllvkQxtV1gyINI-Yue8WY8Wmo4me8RMy7RzFSK6cZ0gUyMeqf2tDpxpnJH3fuQA */
 
       id: "AddToTrustchainDeviceAction",
       context: ({ input }) => ({
@@ -112,10 +112,18 @@ export class AddToTrustchainDeviceAction extends XStateDeviceAction<
       initial: "InitSession",
       states: {
         InitSession: {
+          entry: assign({
+            intermediateValue: {
+              requiredUserInteraction: UserInteractionRequired.None,
+              step: AddToTrustchaineDAStep.Initialize,
+            },
+          }),
           on: { success: "ParseStream", error: "Error" },
           invoke: {
             id: "initCommand",
             src: "initCommand",
+            input: ({ context }) =>
+              context.input.map((input) => input.cryptoService),
             onError: { actions: "assignErrorFromEvent" },
             onDone: {
               actions: raiseAndAssign(({ event }) =>
@@ -129,19 +137,33 @@ export class AddToTrustchainDeviceAction extends XStateDeviceAction<
         },
 
         ParseStream: {
+          entry: assign({
+            intermediateValue: {
+              requiredUserInteraction: UserInteractionRequired.None,
+              step: AddToTrustchaineDAStep.ParseStream,
+            },
+          }),
           on: { success: "CheckApplicationStreamExist", error: "Error" },
           invoke: {
             id: "parseStream",
             src: "parseStream",
             input: ({ context }) =>
               context.input.chain((input) =>
-                required(input.trustchain?.["m/"], "Missing root stream")
-                  .chain((rootStream) => rootStream.parse())
-                  .chain((blocks) => required(blocks[0], "Missing seed block"))
-                  .map((seedBlock) => ({
-                    seedBlock,
-                    applicationStream: input.applicationStream,
-                  })),
+                eitherSeqRecord({
+                  seedBlock: () =>
+                    required(
+                      input.trustchain
+                        .getRootStream()
+                        .chain((stream) => stream.parse().toMaybe())
+                        .extract()?.[0],
+                      "Missing seed block to parse",
+                    ),
+                  applicationStream: () =>
+                    required(
+                      input.trustchain.getAppStream(input.appId).extract(),
+                      "Missing application stream to parse",
+                    ),
+                }),
               ),
             onError: { actions: "assignErrorFromEvent" },
             onDone: {
@@ -160,25 +182,23 @@ export class AddToTrustchainDeviceAction extends XStateDeviceAction<
         },
 
         AddToExistingStream: {
-          on: { success: "Success", error: "Error" },
           entry: assign({
             intermediateValue: {
-              requiredUserInteraction: "add-ledger-sync",
+              requiredUserInteraction: AddToTrustchainDAState.AddMember,
+              step: AddToTrustchaineDAStep.AddMember,
             },
           }),
-          exit: assign({
-            intermediateValue: {
-              requiredUserInteraction: UserInteractionRequired.None,
-            },
-          }),
+          on: { success: "Success", error: "Error" },
           invoke: {
             id: "signBlock",
             src: "signBlock",
             input: ({ context }) =>
-              context.input.chain((input) =>
-                eitherSeqRecord({
+              context.input.chain((input) => {
+                const appStream = input.trustchain.getAppStream(input.appId);
+                return eitherSeqRecord({
+                  cryptoService: input.cryptoService,
                   lkrpDataSource: input.lkrpDataSource,
-                  trustchainId: input.trustchainId,
+                  trustchainId: input.trustchain.getId(),
                   jwt: input.jwt,
                   clientName: input.clientName,
                   sessionKeypair: () =>
@@ -187,14 +207,13 @@ export class AddToTrustchainDeviceAction extends XStateDeviceAction<
                     ),
                   path: () =>
                     required(
-                      input.applicationStream.getPath().extract(),
+                      appStream.chain((stream) => stream.getPath()).extract(),
                       "Missing application path",
                     ),
                   parent: () =>
                     required(
-                      input.applicationStream
-                        .parse()
-                        .toMaybe()
+                      appStream
+                        .chain((stream) => stream.parse().toMaybe())
                         .chainNullable((blocks) => blocks.at(-1)?.hash())
                         .chainNullable(hexaStringToBuffer)
                         .extract(),
@@ -204,12 +223,12 @@ export class AddToTrustchainDeviceAction extends XStateDeviceAction<
                     type: "addMember",
                     data: {
                       name: input.clientName,
-                      publicKey: input.keypair.pubKeyToU8a(),
+                      publicKey: input.keypair.getPublicKey(),
                       permissions: input.permissions,
                     },
                   },
-                }),
-              ),
+                });
+              }),
             onError: { actions: "assignErrorFromEvent" },
             onDone: {
               actions: raiseAndAssign(({ event }) =>
@@ -220,17 +239,13 @@ export class AddToTrustchainDeviceAction extends XStateDeviceAction<
         },
 
         AddToNewStream: {
-          on: { success: "Success", error: "Error" },
           entry: assign({
             intermediateValue: {
-              requiredUserInteraction: "add-ledger-sync",
+              requiredUserInteraction: AddToTrustchainDAState.AddMember,
+              step: AddToTrustchaineDAStep.AddMember,
             },
           }),
-          exit: assign({
-            intermediateValue: {
-              requiredUserInteraction: UserInteractionRequired.None,
-            },
-          }),
+          on: { success: "Success", error: "Error" },
           invoke: {
             id: "signBlock",
             src: "signBlock",
@@ -238,22 +253,19 @@ export class AddToTrustchainDeviceAction extends XStateDeviceAction<
               context.input.chain((input) =>
                 eitherSeqRecord({
                   lkrpDataSource: input.lkrpDataSource,
-                  trustchainId: input.trustchainId,
+                  trustchainId: input.trustchain.getId(),
                   jwt: input.jwt,
                   clientName: input.clientName,
                   sessionKeypair: () =>
                     context._internalState.chain(({ sessionKeypair }) =>
                       required(sessionKeypair, "Missing session keypair"),
                     ),
-                  path: () =>
-                    required(
-                      input.applicationStream.getPath().extract(),
-                      "Missing application path",
-                    ),
+                  path: `m/0'/${input.appId}'/0'`,
                   parent: () =>
                     required(
-                      Maybe.fromNullable(input.trustchain["m/"])
-                        .chain((rootStream) => rootStream.parse().toMaybe())
+                      input.trustchain
+                        .getRootStream()
+                        .chain((stream) => stream.parse().toMaybe())
                         .chainNullable((blocks) => blocks[0]?.hash())
                         .chainNullable(hexaStringToBuffer)
                         .extract(),
@@ -263,7 +275,7 @@ export class AddToTrustchainDeviceAction extends XStateDeviceAction<
                     type: "derive",
                     data: {
                       name: input.clientName,
-                      publicKey: input.keypair.pubKeyToU8a(),
+                      publicKey: input.keypair.getPublicKey(),
                       permissions: input.permissions,
                     },
                   },
@@ -289,8 +301,14 @@ export class AddToTrustchainDeviceAction extends XStateDeviceAction<
 
   extractDependencies(internalApi: InternalApi) {
     return {
-      initCommand: (): Promise<Either<LKRPDeviceCommandError, Keypair>> =>
-        new InitTask(internalApi).run(),
+      initCommand: async (args: {
+        input: Either<AddToTrustchainDAError, CryptoService>;
+      }): Promise<Either<AddToTrustchainDAError, KeyPair>> =>
+        EitherAsync.liftEither(args.input)
+          .chain((cryptoService) =>
+            new InitTask(internalApi, cryptoService).run(),
+          )
+          .run(),
 
       parseStream: async (args: {
         input: Either<AddToTrustchainDAError, ParseStreamToDeviceTaskInput>;
@@ -302,10 +320,15 @@ export class AddToTrustchainDeviceAction extends XStateDeviceAction<
           .run(),
 
       signBlock: (args: {
-        input: Either<AddToTrustchainDAError, SignBlockTaskInput>;
+        input: Either<
+          AddToTrustchainDAError,
+          SignBlockTaskInput & { cryptoService: CryptoService }
+        >;
       }): Promise<Either<AddToTrustchainDAError, void>> =>
         EitherAsync.liftEither(args.input)
-          .chain((input) => new SignBlockTask(internalApi).run(input))
+          .chain((input) =>
+            new SignBlockTask(internalApi, input.cryptoService).run(input),
+          )
           .run(),
     };
   }

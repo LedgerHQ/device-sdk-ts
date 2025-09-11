@@ -1,9 +1,9 @@
+import { hexaStringToBuffer } from "@ledgerhq/device-management-kit";
 import { Just, Left, Right } from "purify-ts";
 
-import { LKRPParsingError } from "@api/app-binder/Errors";
+import { LKRPParsingError } from "@api/model/Errors";
 import { CommandTags } from "@internal/models/Tags";
 
-import { hexToBytes } from "./hex";
 import { LKRPBlock } from "./LKRPBlock";
 import { LKRPBlockStream } from "./LKRPBlockStream";
 import { LKRPCommand } from "./LKRPCommand";
@@ -233,79 +233,85 @@ const mockedHex = `
 
 const mockedBlockData1 = {
   parent: "7ba5eefac6605547fc50188ba7880311d3d1240a7ae32e6eaac7499434091c45",
-  issuer: hexToBytes(
+  issuer: hexaStringToBuffer(
     "0102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f2021",
-  ),
+  )!,
   commands: [
     LKRPCommand.fromData({
       type: CommandTags.Derive,
       path: "m/0'/16'/0'",
-      groupKey: hexToBytes(
+      groupKey: hexaStringToBuffer(
         "02839a288f6a76090b64312281d2e7d6b02c4ddf64ed5e7693471b1b445f819508",
-      ),
-      initializationVector: hexToBytes("a66c5a4486e870287caa53bbd609af00"),
-      encryptedXpriv: hexToBytes(
+      )!,
+      initializationVector: hexaStringToBuffer(
+        "a66c5a4486e870287caa53bbd609af00",
+      )!,
+      encryptedXpriv: hexaStringToBuffer(
         "0f43341d6f9099a5180fb304a2889b3b0468f05fb0b931d22211753b3411567abb21981b64261e95bcd44a3512af7c87bbb5a4b6b680c03b5f09e8d9c56a9cb1c0788993a3d9d5c140a2462cb1930d19",
-      ),
-      ephemeralPublicKey: hexToBytes(
+      )!,
+      ephemeralPublicKey: hexaStringToBuffer(
         "02fbe26c32ab991c1b107156e22fc158c335e0aeedc171381c9d77743c66f41171",
-      ),
+      )!,
     }),
     LKRPCommand.fromData({
       type: CommandTags.AddMember,
       name: "debug-d4c61d",
-      publicKey: hexToBytes(
+      publicKey: hexaStringToBuffer(
         "03d4c61dda2aaf762954fce97396d9be0399e1dc75c3b790c7a34dde8596a11812",
-      ),
+      )!,
       permissions: 0xffffffff,
     }),
     LKRPCommand.fromData({
       type: CommandTags.PublishKey,
-      initializationVector: hexToBytes("4d305eae5b70b69cf657f3b9f7db5863"),
-      encryptedXpriv: hexToBytes(
+      initializationVector: hexaStringToBuffer(
+        "4d305eae5b70b69cf657f3b9f7db5863",
+      )!,
+      encryptedXpriv: hexaStringToBuffer(
         "898de535f87f7ac775b09c80827d14efddeeaa9a2b106bfd7fcc91942dc36d6a1751793ba7ec0792ba936f5f1d858bc1fc54ca1a70e8d28a5b0bf33b5e926f3add372c802b3b9da64bc06e26b9349db5",
-      ),
-      recipient: hexToBytes(
+      )!,
+      recipient: hexaStringToBuffer(
         "03d4c61dda2aaf762954fce97396d9be0399e1dc75c3b790c7a34dde8596a11812",
-      ),
-      ephemeralPublicKey: hexToBytes(
+      )!,
+      ephemeralPublicKey: hexaStringToBuffer(
         "023db66b974b871c6caafdf486c6895518303b140d389e787d2c3b5527c2df50f4",
-      ),
+      )!,
     }),
   ],
-  signature: hexToBytes(
+  signature: hexaStringToBuffer(
     "3044022056ab426bd75696cbe9538cb42271e8796ba1576dfe3e2634f0a6f1a636821e5002205e41ae68ebd8fbff404340a4f0124af25e948aa52500de192d15ff4f8ee92c02",
-  ),
+  )!,
 };
 const mockedBlockData2 = {
   parent: "154d99eb867cfeef249d573fc2e1f3d307c1e49ec1f66e9af1c9dbd219143211",
-  issuer: hexToBytes(
+  issuer: hexaStringToBuffer(
     "0102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f2021",
-  ),
+  )!,
   commands: [
     LKRPCommand.fromData({
       type: CommandTags.AddMember,
       name: "debug-80a289",
-      publicKey: hexToBytes(
+      publicKey: hexaStringToBuffer(
         "0280a28918369e12c86feb321cd100fe6d958e55a0bb570576ef718e7a379204db",
-      ),
+      )!,
       permissions: 0xffffffff,
     }),
     LKRPCommand.fromData({
       type: CommandTags.PublishKey,
-      initializationVector: hexToBytes("27bdb34fb6028128bfc919f4db7d1378"),
-      encryptedXpriv: hexToBytes(
+      initializationVector: hexaStringToBuffer(
+        "27bdb34fb6028128bfc919f4db7d1378",
+      )!,
+      encryptedXpriv: hexaStringToBuffer(
         "e792b83f26fac0de46ee8f1a07e53b0e508d9373aa2e8047f0a764204ab0f06a2fffa9c29599f5d3fe42fefabd9827867157bd14ec7e2bd8ef83c6f9371d7b48d28d9a4499f8ed626ce75fcec0a0b33f",
-      ),
-      recipient: hexToBytes(
+      )!,
+      recipient: hexaStringToBuffer(
         "0280a28918369e12c86feb321cd100fe6d958e55a0bb570576ef718e7a379204db",
-      ),
-      ephemeralPublicKey: hexToBytes(
+      )!,
+      ephemeralPublicKey: hexaStringToBuffer(
         "027d40157737671bb04eaca2756b8ec58020ff5c893b10cbfb25b48014c5252dc4",
-      ),
+      )!,
     }),
   ],
-  signature: hexToBytes(
+  signature: hexaStringToBuffer(
     "30440220718d20c9996893639da807b8a9675d944abdc8fded97f73159beba5004fa17f102203338b74a9e6a2e696ea3658d3af4fce95ffa0f74c11b2c3d37b0ca1b577657e8",
-  ),
+  )!,
 };

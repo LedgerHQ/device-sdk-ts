@@ -54,7 +54,7 @@ export class HttpSolanaOwnerInfoDataSource implements SolanaDataSource {
     return await axios
       .request<SolanaSPLOwnerInfo>({
         method: "GET",
-        url: `${this.config.metadataService.url}/solana/owner/${tokenAddress}?challenge=${challenge}`,
+        url: `${this.config.metadataServiceDomain.url}/v2/solana/owner/${tokenAddress}?challenge=${challenge}`,
         headers: {
           [LEDGER_CLIENT_VERSION_HEADER]: `context-module/${PACKAGE.version}`,
           [LEDGER_ORIGIN_TOKEN_HEADER]: this.config.originToken,
@@ -86,7 +86,7 @@ export class HttpSolanaOwnerInfoDataSource implements SolanaDataSource {
     return await axios
       .request<SolanaSPLOwnerInfo>({
         method: "GET",
-        url: `${this.config.metadataService.url}/solana/computed-token-account/${address}/${mintAddress}?challenge=${challenge}`,
+        url: `${this.config.metadataServiceDomain.url}/v2/solana/computed-token-account/${address}/${mintAddress}?challenge=${challenge}`,
         headers: {
           [LEDGER_CLIENT_VERSION_HEADER]: `context-module/${PACKAGE.version}`,
           "X-Ledger-Client-Origin": this.config.originToken,

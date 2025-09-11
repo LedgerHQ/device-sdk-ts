@@ -38,7 +38,7 @@ export class DefaultWalletBuilder implements WalletBuilder {
   ): Wallet {
     // For internal keys, the xpub should be put after key origin informations
     // https://github.com/LedgerHQ/app-bitcoin-new/blob/master/doc/wallet.md#keys-information-vector
-    const hexMasterFingerprint = bufferToHexaString(masterFingerprint).slice(2);
+    const hexMasterFingerprint = bufferToHexaString(masterFingerprint, false);
     const keyOrigin = `[${hexMasterFingerprint}/${wallet.derivationPath}]`;
     const key = `${keyOrigin}${extendedPublicKey}`;
     // Empty name for default wallets

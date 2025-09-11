@@ -19,6 +19,7 @@ export type GetProxyDelegateCallParam = {
   proxyAddress: string;
   calldata: string;
   chainId: number;
+  challenge: string;
 };
 
 export type GetProxyImplementationAddressParam = {
@@ -45,12 +46,13 @@ export class HttpProxyDataSource implements ProxyDataSource {
     proxyAddress,
     calldata,
     chainId,
+    challenge,
   }: GetProxyDelegateCallParam): Promise<Either<Error, ProxyDelegateCall>> {
     let dto: ProxyDelegateCallDto | undefined;
     try {
       const response = await axios.request<ProxyDelegateCallDto>({
         method: "POST",
-        url: `${this.config.metadataService.url}/ethereum/${chainId}/contract/proxy/delegate`,
+        url: `${this.config.metadataServiceDomain.url}/v2/ethereum/${chainId}/contract/proxy/delegate`,
         headers: {
           [LEDGER_CLIENT_VERSION_HEADER]: `context-module/${PACKAGE.version}`,
           [LEDGER_ORIGIN_TOKEN_HEADER]: this.config.originToken,
@@ -58,6 +60,7 @@ export class HttpProxyDataSource implements ProxyDataSource {
         data: {
           proxy: proxyAddress,
           data: calldata,
+          challenge,
         },
       });
       dto = response.data;
@@ -85,7 +88,10 @@ export class HttpProxyDataSource implements ProxyDataSource {
       );
     }
 
-    return Right(dto as ProxyDelegateCall);
+    return Right({
+      delegateAddresses: dto.addresses,
+      signedDescriptor: dto.signedDescriptor,
+    });
   }
 
   public async getProxyImplementationAddress({
@@ -98,7 +104,7 @@ export class HttpProxyDataSource implements ProxyDataSource {
     try {
       const response = await axios.request<ProxyImplementationAddressDto>({
         method: "GET",
-        url: `${this.config.metadataService.url}/ethereum/${chainId}/contract/proxy/${proxyAddress}`,
+        url: `${this.config.metadataServiceDomain.url}/v2/ethereum/${chainId}/contract/proxy/${proxyAddress}`,
         headers: {
           [LEDGER_CLIENT_VERSION_HEADER]: `context-module/${PACKAGE.version}`,
           [LEDGER_ORIGIN_TOKEN_HEADER]: this.config.originToken,
@@ -141,10 +147,10 @@ export class HttpProxyDataSource implements ProxyDataSource {
     return (
       typeof value === "object" &&
       value !== null &&
-      "delegateAddresses" in value &&
+      "addresses" in value &&
       "signedDescriptor" in value &&
-      Array.isArray(value.delegateAddresses) &&
-      value.delegateAddresses.every((address) => typeof address === "string") &&
+      Array.isArray(value.addresses) &&
+      value.addresses.every((address) => typeof address === "string") &&
       typeof value.signedDescriptor === "string"
     );
   }

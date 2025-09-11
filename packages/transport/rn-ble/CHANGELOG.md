@@ -1,6 +1,6 @@
 # @ledgerhq/device-transport-kit-react-native-ble
 
-## 2.0.0
+## 1.1.0
 
 ### Patch Changes
 

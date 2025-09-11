@@ -13,24 +13,6 @@ export class StaticDeviceModelDataSource implements DeviceModelDataSource {
   private static deviceModelByIds: {
     [_key in DeviceModelId]: TransportDeviceModel;
   } = {
-    [DeviceModelId.APEX]: new TransportDeviceModel({
-      id: DeviceModelId.APEX,
-      productName: "Ledger Apex",
-      usbProductId: 0x80,
-      bootloaderUsbProductId: 0x0008,
-      usbOnly: false,
-      memorySize: 1533 * 1024,
-      blockSize: 32,
-      masks: [0x33400000],
-      bluetoothSpec: [
-        {
-          serviceUuid: "13d63400-2c97-6004-0000-4c6564676572", // WILL CHANGE, for now same as Stax
-          notifyUuid: "13d63400-2c97-6004-0001-4c6564676572", // WILL CHANGE, for now same as Stax
-          writeUuid: "13d63400-2c97-6004-0002-4c6564676572", // WILL CHANGE, for now same as Stax
-          writeCmdUuid: "13d63400-2c97-6004-0003-4c6564676572", // WILL CHANGE, for now same as Stax
-        },
-      ],
-    }),
     [DeviceModelId.NANO_S]: new TransportDeviceModel({
       id: DeviceModelId.NANO_S,
       productName: "Ledger Nano S",
@@ -102,6 +84,24 @@ export class StaticDeviceModelDataSource implements DeviceModelDataSource {
           notifyUuid: "13d63400-2c97-3004-0001-4c6564676572",
           writeUuid: "13d63400-2c97-3004-0002-4c6564676572",
           writeCmdUuid: "13d63400-2c97-3004-0003-4c6564676572",
+        },
+      ],
+    }),
+    [DeviceModelId.APEX]: new TransportDeviceModel({
+      id: DeviceModelId.APEX,
+      productName: "Ledger Apex",
+      usbProductId: 0x80,
+      bootloaderUsbProductId: 0x0008,
+      usbOnly: false,
+      memorySize: 1533 * 1024,
+      blockSize: 32,
+      masks: [0x33400000],
+      bluetoothSpec: [
+        {
+          serviceUuid: "13d63400-2c97-8004-0000-4c6564676572",
+          notifyUuid: "13d63400-2c97-8004-0001-4c6564676572",
+          writeUuid: "13d63400-2c97-8004-0002-4c6564676572",
+          writeCmdUuid: "13d63400-2c97-8004-0003-4c6564676572",
         },
       ],
     }),

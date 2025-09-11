@@ -31,6 +31,6 @@ export class Key {
       .addBufferToData(encodeVarint(this.keyType).unsafeCoerce())
       .addBufferToData(this.keyData)
       .build();
-    return bufferToHexaString(buffer).slice(2);
+    return bufferToHexaString(buffer, false);
   }
 }

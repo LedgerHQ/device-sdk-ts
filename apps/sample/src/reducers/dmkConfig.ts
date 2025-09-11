@@ -6,6 +6,7 @@ export type DmkConfigState = {
   mockServerUrl: string;
   transport: TransportIdentifier;
   speculosUrl?: string;
+  speculosVncUrl?: string;
 };
 
 type SetTransportAction = {
@@ -13,6 +14,7 @@ type SetTransportAction = {
   payload: {
     transport: string;
     speculosUrl?: string;
+    speculosVncUrl?: string;
   };
 };
 
@@ -40,6 +42,7 @@ export const dmkConfigReducer: Reducer<DmkConfigState, DmkConfigAction> = (
         ...state,
         transport: action.payload.transport,
         speculosUrl: action.payload.speculosUrl,
+        speculosVncUrl: action.payload.speculosVncUrl,
       };
     case "set_mock_server_url":
       return {

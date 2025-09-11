@@ -12,15 +12,16 @@ import { CommandErrorHelper } from "@ledgerhq/signer-utils";
 import { Maybe } from "purify-ts";
 
 import {
-  type SignBlockSingleCommandArgs,
-  type SignBlockSingleCommandResponse,
-} from "@api/app-binder/SignBlockSingleCommandTypes";
-
-import {
   LEDGER_SYNC_ERRORS,
   type LedgerKeyringProtocolErrorCodes,
   LedgerKeyringProtocolErrorFactory,
 } from "./utils/ledgerKeyringProtocolErrors";
+
+export interface SignBlockSingleCommandArgs {
+  command: Uint8Array;
+}
+
+export type SignBlockSingleCommandResponse = Uint8Array;
 
 export class SignBlockSingleCommand
   implements

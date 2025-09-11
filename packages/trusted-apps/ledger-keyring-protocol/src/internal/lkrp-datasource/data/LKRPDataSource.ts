@@ -1,9 +1,9 @@
 import { type EitherAsync, type Maybe } from "purify-ts";
 
-import { type LKRPDataSourceError } from "@api/app-binder/Errors";
-import { type JWT } from "@api/app-binder/LKRPTypes";
-import { type Trustchain } from "@internal/models/Types";
+import { type LKRPDataSourceError } from "@api/model/Errors";
+import { type JWT } from "@api/model/JWT";
 import { type LKRPBlock } from "@internal/utils/LKRPBlock";
+import { type Trustchain } from "@internal/utils/Trustchain";
 
 export interface LKRPDataSource {
   getChallenge(): EitherAsync<LKRPDataSourceError, Challenge>;

@@ -35,7 +35,7 @@ describe("DefaultPkiCertificateLoader", () => {
       );
     });
 
-    it("throws when the data source returns a Left(error)", async () => {
+    it("Returns undefined when the data source returns a Left(error)", async () => {
       // given
       const certificateInfos: PkiCertificateInfo = {
         targetDevice: "targetDevice",
@@ -49,9 +49,8 @@ describe("DefaultPkiCertificateLoader", () => {
       const loader = new DefaultPkiCertificateLoader(dataSource);
 
       // when / then
-      await expect(loader.loadCertificate(certificateInfos)).rejects.toThrow(
-        fetchError,
-      );
+      const result = await loader.loadCertificate(certificateInfos);
+      expect(result).toBeUndefined();
       expect(dataSource.fetchCertificate).toHaveBeenCalledWith(
         certificateInfos,
       );
