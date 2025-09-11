@@ -10,6 +10,7 @@ import { type LKRPParsingError } from "@api/model/Errors";
 import {
   type LKRPBlockData,
   type LKRPBlockParsedData,
+  type LKRPParsedTlvBlock,
 } from "@internal/models/LKRPBlockTypes";
 import { GeneralTags } from "@internal/models/Tags";
 
@@ -17,14 +18,13 @@ import { TLVParser } from "./TLVParser";
 
 export class LKRPBlock {
   private hashValue: Maybe<string> = Nothing; // Cache hash value for performance
-  private data: Maybe<Either<LKRPParsingError, LKRPBlockParsedData>>;
 
   public constructor(
     private readonly bytes: Uint8Array,
-    data?: LKRPBlockParsedData,
-  ) {
-    this.data = data ? Just(Right(data)) : Nothing;
-  }
+    private parsed: Maybe<
+      Either<LKRPParsingError, LKRPParsedTlvBlock>
+    > = Nothing,
+  ) {}
 
   static fromHex(hex: string): LKRPBlock {
     return new LKRPBlock(hexaStringToBuffer(hex) ?? new Uint8Array());
@@ -54,7 +54,7 @@ export class LKRPBlock {
       .addBufferToData(signature)
       .build();
 
-    return new LKRPBlock(bytes, { ...data, header, signature });
+    return new LKRPBlock(bytes);
   }
 
   toString(): string {
@@ -66,10 +66,20 @@ export class LKRPBlock {
   }
 
   parse(): Either<LKRPParsingError, LKRPBlockParsedData> {
-    return this.data.orDefaultLazy(() => {
-      const data = new TLVParser(this.bytes).parseBlockData();
-      this.data = Just(data);
-      return data;
+    return this._parse().map(({ bytes, data }) => ({
+      header: bytes.slice(data.version.start, data.commandsCount.end),
+      parent: data.parent.value,
+      issuer: data.issuer.value,
+      commands: data.commands.value,
+      signature: bytes.slice(data.signature.start, data.signature.end), // Includes the tlv tag and length
+    }));
+  }
+
+  private _parse(): Either<LKRPParsingError, LKRPParsedTlvBlock> {
+    return this.parsed.orDefaultLazy(() => {
+      const parsed = new TLVParser(this.bytes).parseBlockData();
+      this.parsed = Just(parsed);
+      return parsed;
     });
   }
 

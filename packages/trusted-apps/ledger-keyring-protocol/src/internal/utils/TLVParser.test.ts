@@ -19,7 +19,7 @@ describe("TLVParser", () => {
           ]),
         );
         // WHEN
-        const commands = parser.parseCommands();
+        const commands = parser.parseCommands(3);
 
         // THEN
         expect(commands).toStrictEqual(
@@ -391,12 +391,19 @@ describe("TLVParser", () => {
           new Uint8Array([GeneralTags.Int, 1, 0x01, GeneralTags.Bytes, 0]),
         );
         // WHEN
-        const value1 = parser.parse();
-        const value2 = parser.parse();
+        const value1 = parser.parse(Right);
+        const value2 = parser.parse(Right);
         // THEN
-        expect(value1).toEqual(Right({ tag: GeneralTags.Int, value: 1 }));
+        expect(value1).toEqual(
+          Right({ tag: GeneralTags.Int, value: 1, start: 0, end: 3 }),
+        );
         expect(value2).toEqual(
-          Right({ tag: GeneralTags.Bytes, value: new Uint8Array([]) }),
+          Right({
+            tag: GeneralTags.Bytes,
+            value: new Uint8Array([]),
+            start: 3,
+            end: 6,
+          }),
         );
       });
 
@@ -406,9 +413,9 @@ describe("TLVParser", () => {
         const parser2 = new TLVParser(new Uint8Array([GeneralTags.Int]));
         const parser3 = new TLVParser(new Uint8Array([GeneralTags.Int, 2]));
         // WHEN
-        const value1 = parser1.parse();
-        const value2 = parser2.parse();
-        const value3 = parser3.parse();
+        const value1 = parser1.parse(Right);
+        const value2 = parser2.parse(Right);
+        const value3 = parser3.parse(Right);
         // THEN
         expect(value1).toEqual(
           Left(new LKRPParsingError("Unexpected end of TLV")),

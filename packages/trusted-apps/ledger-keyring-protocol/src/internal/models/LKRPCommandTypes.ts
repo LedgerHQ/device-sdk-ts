@@ -1,6 +1,9 @@
 import { type CommandTags } from "./Tags";
+import { DataToParsedSegment } from "./Types";
 
 export type LKRPCommandData = Seed | AddMember | PublishKey | Derive;
+
+export type LKRPParsedTlvCommand = DataToParsedSegment<LKRPCommandData>;
 
 type Seed = {
   type: CommandTags.Seed;

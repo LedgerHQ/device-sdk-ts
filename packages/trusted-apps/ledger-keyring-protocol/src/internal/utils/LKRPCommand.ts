@@ -3,11 +3,12 @@ import {
   ByteArrayBuilder,
   hexaStringToBuffer,
 } from "@ledgerhq/device-management-kit";
-import { type Either, Just, Maybe, Nothing, Right } from "purify-ts";
+import { type Either, Just, Maybe, Nothing } from "purify-ts";
 
 import { type LKRPParsingError } from "@api/model/Errors";
 import {
   type LKRPCommandData,
+  type LKRPParsedTlvCommand,
   type UnsignedCommandData,
 } from "@internal/models/LKRPCommandTypes";
 import { CommandTags, GeneralTags } from "@internal/models/Tags";
@@ -17,14 +18,9 @@ import { derivationPathAsBytes } from "./derivationPath";
 import { TLVParser } from "./TLVParser";
 
 export class LKRPCommand {
-  private data: Maybe<Either<LKRPParsingError, LKRPCommandData>>;
+  private data: Maybe<Either<LKRPParsingError, LKRPParsedTlvCommand>> = Nothing;
 
-  constructor(
-    private bytes: Uint8Array,
-    data?: LKRPCommandData,
-  ) {
-    this.data = data ? Just(Right(data)) : Nothing;
-  }
+  constructor(private bytes: Uint8Array) {}
 
   static fromHex(hex: string): LKRPCommand {
     return new LKRPCommand(hexaStringToBuffer(hex) ?? new Uint8Array());
@@ -84,10 +80,7 @@ export class LKRPCommand {
     }
 
     const bytes = tlv.build();
-    return new LKRPCommand(
-      new Uint8Array([data.type, bytes.length, ...bytes]),
-      data,
-    );
+    return new LKRPCommand(new Uint8Array([data.type, bytes.length, ...bytes]));
   }
 
   static bytesFromUnsignedData(data: UnsignedCommandData): Uint8Array {
@@ -135,6 +128,15 @@ export class LKRPCommand {
   }
 
   parse(): Either<LKRPParsingError, LKRPCommandData> {
+    return this._parse().map(
+      (data) =>
+        Object.fromEntries(
+          Object.entries(data).map(([k, v]) => [k, v.value]),
+        ) as LKRPCommandData,
+    );
+  }
+
+  private _parse(): Either<LKRPParsingError, LKRPParsedTlvCommand> {
     return this.data.orDefaultLazy(() => {
       const data = new TLVParser(this.bytes).parseCommandData();
       this.data = Just(data);
