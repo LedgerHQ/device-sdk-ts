@@ -85,11 +85,33 @@ export class LKRPBlockStream {
     });
   }
 
-  toHuman(): Either<LKRPParsingError, string> {
+  async toHuman(): Promise<Either<string, string>> {
+    const isValid = await this.validate();
     return this.parse()
+      .mapLeft(
+        (err) => err.originalError?.toString() ?? "Unknown parsing error",
+      )
       .map((blocks) => blocks.map((block) => block.toHuman()))
-      .chain(Either.sequence)
-      .map((blocks) => blocks.join("\n\n"));
+      .chain((blocks) =>
+        Either.sequence(blocks)
+          .mapLeft(() => blocks.map((block) => block.extract()))
+          .bimap(stringifyBlocks(false), stringifyBlocks(true)),
+      );
+
+    function stringifyBlocks(success: boolean) {
+      return (blocks: string[]) =>
+        [
+          `(parsed: ${success}, isValid: ${isValid}):`,
+          blocks
+            .map((block, index) =>
+              `Block ${index} ${block}`
+                .split("\n")
+                .map((l) => `  ${l}`)
+                .join("\n"),
+            )
+            .join("\n\n"),
+        ].join("\n");
+    }
   }
 
   async validate(streamParentHash?: string): Promise<boolean> {

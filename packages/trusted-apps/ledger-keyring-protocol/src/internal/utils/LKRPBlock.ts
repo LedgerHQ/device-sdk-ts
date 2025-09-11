@@ -3,7 +3,7 @@ import {
   ByteArrayBuilder,
   hexaStringToBuffer,
 } from "@ledgerhq/device-management-kit";
-import { Either, Just, type Maybe, Nothing, Right } from "purify-ts";
+import { Either, Just, Left, type Maybe, Nothing, Right } from "purify-ts";
 
 import { type CryptoService, HashAlgo } from "@api/crypto/CryptoService";
 import { type LKRPParsingError } from "@api/model/Errors";
@@ -14,6 +14,7 @@ import {
 } from "@internal/models/LKRPBlockTypes";
 import { GeneralTags } from "@internal/models/Tags";
 
+import { numToHex } from "./log";
 import { TLVParser } from "./TLVParser";
 
 export class LKRPBlock {
@@ -103,22 +104,58 @@ export class LKRPBlock {
     });
   }
 
-  toHuman(): Either<LKRPParsingError, string> {
+  toHuman(): Either<string, string> {
     return this.parse()
-      .chain((data) =>
-        Either.sequence(data.commands.map((cmd) => cmd.toHuman())).map(
-          (commands) => ({ ...data, commands }),
-        ),
+      .mapLeft(
+        (err) => err.originalError?.toString() ?? "Unknown parsing error",
       )
-      .map((data) =>
-        [
-          `Parent: ${data.parent}`,
-          `Issuer: ${bufferToHexaString(data.issuer, false)}`,
-          `Commands:${data.commands
-            .flatMap((cmd) => cmd.split("\n").map((l) => `\n  ${l}`))
-            .join("")}`,
-          `Signature: ${bufferToHexaString(data.signature.slice(2), false)}`,
-        ].join("\n"),
+      .chain((data) => {
+        const hash = this.hash();
+        const hex = this.toString();
+        const commands = data.commands.map((cmd) => cmd.toHuman());
+        const sig = this.cryptoService
+          .decodeSignature(data.signature.slice(2))
+          .mapLeft((err) => [
+            String(err.originalError),
+            `Invalid Signature: ${bufferToHexaString(data.signature, false)}`,
+          ]);
+        const isVerified = this.verifySignature().mapLeft(() => false);
+
+        return Either.sequence(commands)
+          .mapLeft(() => commands.map((cmd) => cmd.mapLeft(String).extract()))
+          .bimap(stringifyData, stringifyData)
+          .chain((str) => (isVerified.isRight() ? Right(str) : Left(str)));
+
+        function stringifyData(cmds: string[]): string {
+          return [
+            `(isVerified: ${isVerified.extract()}, Hash: ${hash})`,
+            indentLines([
+              `Hex: ${hex}`,
+              `data:${indentLines([
+                `Parent(${data.parent.length / 2}): ${data.parent}`,
+                `Issuer(${data.issuer.length}): ${bufferToHexaString(data.issuer, false)}`,
+                `Commands(${cmds.length}):${indentLines(cmds)}`,
+                `Signature${indentLines(
+                  sig
+                    .map(({ prefix, r, s }) => [
+                      `${numToHex(prefix.tag)}(${prefix.len})`,
+                      `${numToHex(r.tag)}(${r.len}): ${bufferToHexaString(r.value, false)}`,
+                      `${numToHex(s.tag)}(${s.len}): ${bufferToHexaString(s.value, false)}`,
+                    ])
+                    .extract(),
+                )}`,
+              ])}`,
+            ]),
+          ].join("");
+        }
+        function indentLines(strs: string[]): string {
+          return strs
+            .flatMap((str) => str.split("\n").map((l) => `\n  ${l}`))
+            .join("");
+        }
+      });
+  }
+
   verifySignature(): Either<LKRPParsingError, boolean> {
     return this._parse().chain((parsed) => {
       const unsignedBlock = parsed.bytes.slice(

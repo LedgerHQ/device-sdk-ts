@@ -144,17 +144,33 @@ export class LKRPCommand {
     });
   }
 
-  toHuman(): Either<LKRPParsingError, string> {
-    return this.parse().map((data) =>
-      Object.entries(data)
-        .map(([key, value]) => {
-          if (key === "type") {
-            return `${CommandTags[value as CommandTags]}(0x${value?.toString(16).padStart(2, "0")}):`;
-          }
-          return `  ${key}: ${value instanceof Uint8Array ? bufferToHexaString(value, false) : value}`;
-        })
-        .join("\n"),
-    );
+  toHuman(): Either<string, string> {
+    return this.parse()
+      .mapLeft(
+        (err) => err.originalError?.toString() ?? "Unknown parsing error",
+      )
+      .map((data) =>
+        Object.entries(data)
+          .map(([key, value]) => {
+            switch (typeof value) {
+              case "number": {
+                const str = value.toString(16);
+                const formatted = str.length % 2 === 0 ? str : `0${str}`;
+                if (key === "type") {
+                  return `${CommandTags[value]}(0x${value?.toString(16).padStart(2, "0")}):`;
+                }
+                return `  ${key}(${formatted.length / 2}): 0x${formatted}`;
+              }
+              case "object":
+                if (value instanceof Uint8Array) {
+                  return `  ${key}(${value.length}): ${bufferToHexaString(value, false)}`;
+                }
+                break;
+            }
+            return `  ${key}: "${value}"`;
+          })
+          .join("\n"),
+      );
   }
 
   getPublicKey(): Maybe<string> {
