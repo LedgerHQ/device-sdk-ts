@@ -29,10 +29,7 @@ export interface TxInspectorResult {
   data: {
     tokenAddress?: string;
     mintAddress?: string;
-    createATA?: {
-      address: string;
-      mintAddress: string;
-    };
+    createATA?: { address: string; mintAddress: string };
   };
 }
 
@@ -60,7 +57,7 @@ const safe = <T>(fn: () => T): T | null => {
 };
 
 export const DECODERS: Decoder[] = [
-  // ATA creation (Associated Token Account Program)
+  // ATA creation
   {
     when: ({ programId }) => programId.equals(ASSOCIATED_TOKEN_PROGRAM_ID),
     decode: ({ ixMeta, message }) => {
@@ -80,7 +77,7 @@ export const DECODERS: Decoder[] = [
     },
   },
 
-  // token-2022 fee'd transfers — first for Token-2022
+  // Token-2022 fee’d transfer (CWIF)
   {
     when: ({ programId }) => programId.equals(TOKEN_2022_PROGRAM_ID),
     decode: ({ instruction, programId }) =>
@@ -95,8 +92,7 @@ export const DECODERS: Decoder[] = [
       }),
   },
 
-  // generic SPL decoders (classic & 2022)
-  // transfers
+  // Transfers
   {
     when: ({ programId }) => isTokenProgramId(programId),
     decode: ({ instruction, programId }) =>
@@ -121,7 +117,7 @@ export const DECODERS: Decoder[] = [
       }),
   },
 
-  // account initialisation (non-ATA included)
+  // Account init
   {
     when: ({ programId }) => isTokenProgramId(programId),
     decode: ({ instruction, programId }) =>
@@ -178,7 +174,7 @@ export const DECODERS: Decoder[] = [
       }),
   },
 
-  // lifecycle / WSOL
+  // Lifecycle / WSOL
   {
     when: ({ programId }) => isTokenProgramId(programId),
     decode: ({ instruction, programId }) =>
@@ -200,7 +196,7 @@ export const DECODERS: Decoder[] = [
       }),
   },
 
-  // mint / burn
+  // Mint / Burn
   {
     when: ({ programId }) => isTokenProgramId(programId),
     decode: ({ instruction, programId }) =>
@@ -228,7 +224,7 @@ export const DECODERS: Decoder[] = [
       }),
   },
 
-  // freeze / thaw
+  // Freeze / Thaw
   {
     when: ({ programId }) => isTokenProgramId(programId),
     decode: ({ instruction, programId }) =>
@@ -254,5 +250,14 @@ export const DECODERS: Decoder[] = [
           mintAddress: mint.pubkey.toBase58(),
         };
       }),
+  },
+
+  // LAST-RESORT: tag as SPL by program id only (when decoders can't run)
+  {
+    when: ({ programId }) =>
+      programId.equals(ASSOCIATED_TOKEN_PROGRAM_ID) ||
+      programId.equals(TOKEN_PROGRAM_ID) ||
+      programId.equals(TOKEN_2022_PROGRAM_ID),
+    decode: () => ({}),
   },
 ];

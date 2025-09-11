@@ -1,4 +1,9 @@
 import {
+  ASSOCIATED_TOKEN_PROGRAM_ID,
+  TOKEN_2022_PROGRAM_ID,
+  TOKEN_PROGRAM_ID,
+} from "@solana/spl-token";
+import {
   type PublicKey,
   Transaction,
   TransactionInstruction,
@@ -31,6 +36,12 @@ export type NormalizedMessage = {
 
 type LoadedAddresses = { writable: PublicKey[]; readonly: PublicKey[] };
 
+const isSPLProgramId = (pid: PublicKey | undefined) =>
+  !!pid &&
+  (pid.equals(ASSOCIATED_TOKEN_PROGRAM_ID) ||
+    pid.equals(TOKEN_PROGRAM_ID) ||
+    pid.equals(TOKEN_2022_PROGRAM_ID));
+
 export class TransactionInspector {
   constructor(private readonly rawTransactionBytes: Uint8Array) {}
 
@@ -40,18 +51,26 @@ export class TransactionInspector {
 
       for (const ixMeta of message.compiledInstructions) {
         const programId = message.allKeys[ixMeta.programIdIndex];
+
+        // If we can't even read programId, we can't classify this ix.
         if (!programId) continue;
 
-        // resolve all referenced keys, if any are missing skip this
+        // Resolve referenced keys we *do* have
         const resolvedKeys = ixMeta.accountKeyIndexes
           .map((i) => message.allKeys[i])
           .filter((key): key is PublicKey => !!key);
 
+        // --- IMPORTANT FALLBACK ---
+        // On Nano X (v0 + ALTs), some or all account metas can be missing here.
+        // If programId shows it's Token / Token-2022 / ATA, classify as SPL even without fields.
         if (resolvedKeys.length !== ixMeta.accountKeyIndexes.length) {
-          // unresolved keys, can't decode reliably
+          if (isSPLProgramId(programId)) {
+            return { transactionType: SolanaTransactionTypes.SPL, data: {} };
+          }
           continue;
         }
 
+        // Normal path: we have all keys, try full decode
         const instruction = new TransactionInstruction({
           programId,
           keys: resolvedKeys.map((key) => ({
@@ -103,13 +122,13 @@ export class TransactionInspector {
         staticAccountKeys: PublicKey[];
       };
 
-      // build the full key array in the exact index order used by compiledInstructions
+      // Build the key array in the exact order used by compiledInstructions.
+      // NOTE: Without passing lookups, this returns only static keys; looked-up addresses remain unresolved.
       let allKeys: PublicKey[];
       if (typeof msg.getAccountKeys === "function") {
         const messageAccountKeys = msg.getAccountKeys();
         allKeys = messageAccountKeys.keySegments().flat();
       } else {
-        // fallback to statics
         allKeys = [...msg.staticAccountKeys];
       }
 
