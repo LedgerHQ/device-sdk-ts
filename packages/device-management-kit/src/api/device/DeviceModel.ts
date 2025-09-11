@@ -4,7 +4,7 @@ export enum DeviceModelId {
   NANO_X = "nanoX",
   STAX = "stax",
   FLEX = "flex",
-  APEX = "apex",
+  APEX = "apexp",
 }
 
 /**
