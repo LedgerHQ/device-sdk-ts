@@ -13,6 +13,7 @@ import {
   decodeTransferCheckedInstruction,
   decodeTransferCheckedWithFeeInstruction,
   decodeTransferInstruction,
+  getAssociatedTokenAddressSync,
   TOKEN_2022_PROGRAM_ID,
   TOKEN_PROGRAM_ID,
 } from "@solana/spl-token";
@@ -57,15 +58,40 @@ const safe = <T>(fn: () => T): T | null => {
 };
 
 export const DECODERS: Decoder[] = [
-  // ATA creation
+  // ATA creation (with derivation fallback)
   {
     when: ({ programId }) => programId.equals(ASSOCIATED_TOKEN_PROGRAM_ID),
     decode: ({ ixMeta, message }) => {
       const accountPks = ixMeta.accountKeyIndexes
         .map((i) => message.allKeys[i])
         .filter(Boolean) as PublicKey[];
+
+      // Canonical indices for create ATA:
+      // [0] payer, [1] ata, [2] owner, [3] mint, [4] system, [5] token program, [6] rent? (optional)
       const ataPk = accountPks[1];
+      const ownerPk = accountPks[2];
       const mintPk = accountPks[3];
+      const tokenProgramPk = accountPks[5];
+
+      // If ata is missing but we have owner+mint, derive it.
+      if (!ataPk && ownerPk && mintPk) {
+        const isToken2022 =
+          tokenProgramPk?.equals(TOKEN_2022_PROGRAM_ID) ?? false;
+        const derived = getAssociatedTokenAddressSync(
+          mintPk,
+          ownerPk,
+          true, // allowOwnerOffCurve: owners can be PDAs
+          isToken2022 ? TOKEN_2022_PROGRAM_ID : TOKEN_PROGRAM_ID,
+          ASSOCIATED_TOKEN_PROGRAM_ID,
+        );
+        return {
+          createATA: {
+            address: derived.toBase58(),
+            mintAddress: mintPk.toBase58(),
+          },
+        };
+      }
+
       return ataPk && mintPk
         ? {
             createATA: {

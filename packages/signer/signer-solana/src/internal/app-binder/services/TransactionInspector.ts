@@ -4,6 +4,7 @@ import {
   TOKEN_PROGRAM_ID,
 } from "@solana/spl-token";
 import {
+  Connection, // runtime import so we can instantiate it
   type PublicKey,
   Transaction,
   TransactionInstruction,
@@ -36,6 +37,10 @@ export type NormalizedMessage = {
 
 type LoadedAddresses = { writable: PublicKey[]; readonly: PublicKey[] };
 
+const RPC_URL = "http://api.mainnet-beta.solana.com/";
+
+const defaultConnection = new Connection(RPC_URL, { commitment: "confirmed" });
+
 const isSPLProgramId = (pid: PublicKey | undefined) =>
   !!pid &&
   (pid.equals(ASSOCIATED_TOKEN_PROGRAM_ID) ||
@@ -45,32 +50,19 @@ const isSPLProgramId = (pid: PublicKey | undefined) =>
 export class TransactionInspector {
   constructor(private readonly rawTransactionBytes: Uint8Array) {}
 
-  public inspectTransactionType(): TxInspectorResult {
+  public async inspectTransactionType(): Promise<TxInspectorResult> {
     try {
-      const message = this.normaliseMessage(this.rawTransactionBytes);
+      const message = await this.normaliseMessage(this.rawTransactionBytes);
 
       for (const ixMeta of message.compiledInstructions) {
         const programId = message.allKeys[ixMeta.programIdIndex];
-
-        // If we can't even read programId, we can't classify this ix.
         if (!programId) continue;
 
-        // Resolve referenced keys we *do* have
         const resolvedKeys = ixMeta.accountKeyIndexes
           .map((i) => message.allKeys[i])
           .filter((key): key is PublicKey => !!key);
 
-        // --- IMPORTANT FALLBACK ---
-        // On Nano X (v0 + ALTs), some or all account metas can be missing here.
-        // If programId shows it's Token / Token-2022 / ATA, classify as SPL even without fields.
-        if (resolvedKeys.length !== ixMeta.accountKeyIndexes.length) {
-          if (isSPLProgramId(programId)) {
-            return { transactionType: SolanaTransactionTypes.SPL, data: {} };
-          }
-          continue;
-        }
-
-        // Normal path: we have all keys, try full decode
+        // Build an instruction even with partial keys; decoders handle missing fields gracefully.
         const instruction = new TransactionInstruction({
           programId,
           keys: resolvedKeys.map((key) => ({
@@ -90,6 +82,10 @@ export class TransactionInspector {
             return { transactionType: SolanaTransactionTypes.SPL, data };
           }
         }
+
+        if (isSPLProgramId(programId)) {
+          return { transactionType: SolanaTransactionTypes.SPL, data: {} };
+        }
       }
 
       return { transactionType: SolanaTransactionTypes.STANDARD, data: {} };
@@ -100,9 +96,11 @@ export class TransactionInspector {
 
   /**
    * Normalise any tx (legacy or v0) into { compiledInstructions, allKeys }.
-   * If LUT accounts are provided, looked-up keys are included in allKeys.
+   * For v0, we auto-fetch looked-up addresses from ALT(s) via the baked-in connection.
    */
-  private normaliseMessage(rawBytes: Uint8Array): NormalizedMessage {
+  private async normaliseMessage(
+    rawBytes: Uint8Array,
+  ): Promise<NormalizedMessage> {
     const versionedTX = this.tryDeserialiseVersioned(rawBytes);
     if (versionedTX) {
       const msg = versionedTX.message as VersionedMessage & {
@@ -122,11 +120,13 @@ export class TransactionInspector {
         staticAccountKeys: PublicKey[];
       };
 
-      // Build the key array in the exact order used by compiledInstructions.
-      // NOTE: Without passing lookups, this returns only static keys; looked-up addresses remain unresolved.
+      const lookedUp = await resolveLookedUpAddressesFromMessage(msg);
+
       let allKeys: PublicKey[];
       if (typeof msg.getAccountKeys === "function") {
-        const messageAccountKeys = msg.getAccountKeys();
+        const messageAccountKeys = msg.getAccountKeys(
+          lookedUp ? { accountKeysFromLookups: lookedUp } : undefined,
+        );
         allKeys = messageAccountKeys.keySegments().flat();
       } else {
         allKeys = [...msg.staticAccountKeys];
@@ -134,19 +134,16 @@ export class TransactionInspector {
 
       const compiledInstructions: NormalizedCompiledIx[] =
         msg.compiledInstructions.map((ix) => {
-          // prefer v0 `accounts`, fall back to legacy `accountKeyIndexes`
           const ixWithAccounts = ix as typeof ix & { accounts?: number[] };
           const accountKeyIndexes = Array.from(
             ixWithAccounts.accounts ?? ix.accountKeyIndexes ?? [],
           ) as number[];
 
-          // normalise data
           let data: Uint8Array;
           if (ix.data instanceof Uint8Array) {
             data = ix.data;
           } else if (typeof ix.data === "string") {
-            // v0 encodes instruction data as base64 strings
-            data = Buffer.from(ix.data, "base64");
+            data = Buffer.from(ix.data, "base64"); // v0 encodes instruction data as base64
           } else {
             data = Uint8Array.from(ix.data ?? []);
           }
@@ -161,7 +158,7 @@ export class TransactionInspector {
       return { compiledInstructions, allKeys };
     }
 
-    // legacy fallback
+    // Legacy (no ALTs)
     const legacy = Transaction.from(rawBytes);
 
     const allKeyMap = new Map<string, PublicKey>();
@@ -199,11 +196,42 @@ export class TransactionInspector {
     } catch {
       try {
         const msg = VersionedMessage.deserialize(rawBytes);
-        // wrap in a dummy VersionedTransaction-like shape just for uniform handling
+        // Wrap in a dummy VersionedTransaction-like shape just for uniform handling
         return { message: msg } as VersionedTransaction;
       } catch {
         return null;
       }
     }
   }
+}
+
+/** Internal: fetch looked-up addresses for a VersionedMessage via the baked-in connection. */
+async function resolveLookedUpAddressesFromMessage(
+  msg: VersionedMessage,
+): Promise<LoadedAddresses | undefined> {
+  const lookups = msg.addressTableLookups ?? [];
+  if (!lookups.length) return;
+
+  const writable: PublicKey[] = [];
+  const readonly: PublicKey[] = [];
+
+  await Promise.all(
+    lookups.map(async (lu) => {
+      const res = await defaultConnection.getAddressLookupTable(lu.accountKey);
+      const table = res.value;
+      if (!table) return;
+      const addrs = table.state.addresses;
+
+      for (const i of lu.writableIndexes ?? []) {
+        const pk = addrs[i];
+        if (pk) writable.push(pk);
+      }
+      for (const i of lu.readonlyIndexes ?? []) {
+        const pk = addrs[i];
+        if (pk) readonly.push(pk);
+      }
+    }),
+  );
+
+  return { writable, readonly };
 }
