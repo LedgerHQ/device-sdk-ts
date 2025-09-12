@@ -1,7 +1,7 @@
 import { Just, Left, Nothing, Right } from "purify-ts";
 
-import { Permissions } from "@api/index";
 import { LKRPParsingError } from "@api/model/Errors";
+import { Permissions } from "@api/model/Permissions";
 import { CommandTags, GeneralTags } from "@internal/models/Tags";
 
 import { LKRPCommand } from "./LKRPCommand";
