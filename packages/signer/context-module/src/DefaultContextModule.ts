@@ -1,8 +1,6 @@
 import { type Container } from "inversify";
 import { Left } from "purify-ts";
 
-import { dynamicNetworkTypes } from "@/dynamic-network/di/dynamicNetworkTypes";
-import { type DynamicNetworkContextLoader } from "@/dynamic-network/domain/DynamicNetworkContextLoader";
 import type { TypedDataClearSignContext } from "@/shared/model/TypedDataClearSignContext";
 import type { TypedDataContext } from "@/shared/model/TypedDataContext";
 import { transactionTypes } from "@/transaction/di/transactionTypes";
@@ -77,9 +75,6 @@ export class DefaultContextModule implements ContextModule {
       ),
       this._container.get<UniswapContextLoader>(
         uniswapTypes.UniswapContextLoader,
-      ),
-      this._container.get<DynamicNetworkContextLoader>(
-        dynamicNetworkTypes.DynamicNetworkContextLoader,
       ),
     ];
   }
