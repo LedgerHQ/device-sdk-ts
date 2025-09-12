@@ -8,6 +8,7 @@ import { CommandTags } from "@internal/models/Tags";
 import { LKRPBlock } from "./LKRPBlock";
 import { LKRPBlockStream } from "./LKRPBlockStream";
 import { LKRPCommand } from "./LKRPCommand";
+import { noWS, unIndent } from "./testUtils";
 
 describe("LKRPBlockStream", () => {
   const cryptoService = new NobleCryptoService();
@@ -33,52 +34,88 @@ describe("LKRPBlockStream", () => {
   });
 
   describe("toHuman", () => {
-    it("should return a human-readable representation of the block stream", () => {
+    it("should return a human-readable representation of the block stream", async () => {
       // GIVEN
-      const stream = LKRPBlockStream.fromHex(cryptoService, mockedHex);
+      const hex = noWS`
+        01 01 01
+        02 20 0a b5 73 f9 83 75 34 1b b8 71 49 75 de 3f 91 0c 7b 7a e9 8f 1c ac 50 45 d6 4c a1 09 6c 63 8a a8
+        06 21 03 92 b7 60 e4 5b 36 4f 82 1e 59 80 82 27 46 63 a6 48 ad 65 35 8f 02 83 60 8d f3 7f 8b bf 50 fc 4d
+        01 01 02
+        11 2f
+          04 04 30 32 63 65
+          06 21 02 ce 94 77 cc 40 56 89 92 5f e1 d0 61 66 b5 02 36 f5 de 80 37 97 88 c5 59 d3 cb a2 a7 32 33 f0 00
+          01 04 ff ff ff ff
+        12 aa
+          05 10 57 7b 56 51 4e 5a 2a 0a 64 61 1f fa d4 a1 b6 81
+          05 50 f7 50 4e a3 06 64 c9 08 ee f6 3f 5e 7f b3 7e c3 d5 75 3b 76 f9 98 1a 80 6e e8 18 77 27 93 6b 72 f4 6e 64 95 5a 63 7a 55 ff df ba e8 ad 1a 1a bb 61 cc d5 d2 cf 21 18 3d eb 99 3a 79 bb e0 d8 54 aa bb 68 4a 87 b8 97 86 d0 48 25 34 05 e5 06 5a
+          06 21 02 ce 94 77 cc 40 56 89 92 5f e1 d0 61 66 b5 02 36 f5 de 80 37 97 88 c5 59 d3 cb a2 a7 32 33 f0 00
+          06 21 03 bc d4 a5 20 e6 2e fc 06 f4 ca 70 51 d7 4e 19 55 79 f9 70 94 17 92 5f 7a c8 24 01 5a 8c c8 e4 c4
+        03 47 30 45 02 21 00 d8 ae 18 df 80 03 e1 eb 24 5b dc df b3 fc 18 34 c9 43 a7 7b 14 b0 f8 4c 7e 5d 0b 4e 6a 41 5b 28 02 20 57 e2 5e 44 d7 74 45 aa 48 50 45 13 5f da 1d 20 50 53 92 22 cb 52 0d d3 2f df e4 42 f9 80 7f 0c 
+
+        01 01 01
+        02 20 4e 44 60 fc 88 ad fd db c9 79 44 69 e8 71 3e 92 ab 8a 09 6c 41 ee d5 d7 f7 c2 e3 9a 8c ef bd fb
+        06 21 03 92 b7 60 e4 5b 36 4f 82 1e 59 80 82 27 46 63 a6 48 ad 65 35 8f 02 83 60 8d f3 7f 8b bf 50 fc 4d
+        01 01 02
+        11 2f
+          04 04 30 33 33 34
+          06 21 03 34 24 8a 3c a1 a0 50 99 56 1a 02 1e 0c 15 1e ad b9 9f 37 6b 62 85 92 b8 72 85 59 c5 d0 63 f4 8a
+          01 04 ff ff ff ff
+        12 aa
+          05 10 8c bc 4d c2 5d 27 e9 f8 fd a6 f1 f7 88 45 59 c0
+          05 50 3b 87 47 78 55 50 c5 98 82 a8 40 c8 e1 bb 42 8e e5 ad 69 40 42 79 87 30 45 5e 91 f4 82 2e e5 54 ca 62 ea 77 72 3f 98 ae 3a 8d 27 b1 84 b0 f2 85 16 17 94 4e bc 20 bb 1e ab 4e 5e 83 61 d4 83 d0 d3 6a 92 9d a4 bb 1b b1 1b 34 aa 43 f6 28 51 82
+          06 21 03 34 24 8a 3c a1 a0 50 99 56 1a 02 1e 0c 15 1e ad b9 9f 37 6b 62 85 92 b8 72 85 59 c5 d0 63 f4 8a
+          06 21 03 0d 7b a2 9e ac 23 b1 eb 0b bd 25 55 23 ee 27 7f 3b f4 78 3f 0e 52 70 4a 3c 23 e0 d7 7d 84 6d 7f
+        03 47 30 45 02 21 00 f1 be 95 78 62 14 0f 89 8b db 59 28 fc d5 87 3d 3b d1 39 8b 48 e6 4a 23 16 4b ee ed 76 22 75 8b 02 20 03 c7 6d a5 10 23 4f 12 97 84 18 4b af 8e da 3d 3c 46 14 bf b5 0a 1e 2e 63 34 b4 a7 0a c9 25 c5 
+      `;
+      const stream = LKRPBlockStream.fromHex(cryptoService, hex);
 
       // WHEN
       const humanReadable = stream.toHuman();
 
       // THEN
-      expect(humanReadable).toStrictEqual(
-        Right(
-          [
-            "Parent: 7ba5eefac6605547fc50188ba7880311d3d1240a7ae32e6eaac7499434091c45",
-            "Issuer: 0102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f2021",
-            "Commands:",
-            "  Derive(0x15):",
-            "    path: m/0'/16'/0'",
-            "    groupKey: 02839a288f6a76090b64312281d2e7d6b02c4ddf64ed5e7693471b1b445f819508",
-            "    initializationVector: a66c5a4486e870287caa53bbd609af00",
-            "    encryptedXpriv: 0f43341d6f9099a5180fb304a2889b3b0468f05fb0b931d22211753b3411567abb21981b64261e95bcd44a3512af7c87bbb5a4b6b680c03b5f09e8d9c56a9cb1c0788993a3d9d5c140a2462cb1930d19",
-            "    ephemeralPublicKey: 02fbe26c32ab991c1b107156e22fc158c335e0aeedc171381c9d77743c66f41171",
-            "  AddMember(0x11):",
-            "    name: debug-d4c61d",
-            "    publicKey: 03d4c61dda2aaf762954fce97396d9be0399e1dc75c3b790c7a34dde8596a11812",
-            "    permissions: 4294967295",
-            "  PublishKey(0x12):",
-            "    initializationVector: 4d305eae5b70b69cf657f3b9f7db5863",
-            "    encryptedXpriv: 898de535f87f7ac775b09c80827d14efddeeaa9a2b106bfd7fcc91942dc36d6a1751793ba7ec0792ba936f5f1d858bc1fc54ca1a70e8d28a5b0bf33b5e926f3add372c802b3b9da64bc06e26b9349db5",
-            "    recipient: 03d4c61dda2aaf762954fce97396d9be0399e1dc75c3b790c7a34dde8596a11812",
-            "    ephemeralPublicKey: 023db66b974b871c6caafdf486c6895518303b140d389e787d2c3b5527c2df50f4",
-            "Signature: 3044022056ab426bd75696cbe9538cb42271e8796ba1576dfe3e2634f0a6f1a636821e5002205e41ae68ebd8fbff404340a4f0124af25e948aa52500de192d15ff4f8ee92c02",
-            "",
-            "Parent: 154d99eb867cfeef249d573fc2e1f3d307c1e49ec1f66e9af1c9dbd219143211",
-            "Issuer: 0102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f2021",
-            "Commands:",
-            "  AddMember(0x11):",
-            "    name: debug-80a289",
-            "    publicKey: 0280a28918369e12c86feb321cd100fe6d958e55a0bb570576ef718e7a379204db",
-            "    permissions: 4294967295",
-            "  PublishKey(0x12):",
-            "    initializationVector: 27bdb34fb6028128bfc919f4db7d1378",
-            "    encryptedXpriv: e792b83f26fac0de46ee8f1a07e53b0e508d9373aa2e8047f0a764204ab0f06a2fffa9c29599f5d3fe42fefabd9827867157bd14ec7e2bd8ef83c6f9371d7b48d28d9a4499f8ed626ce75fcec0a0b33f",
-            "    recipient: 0280a28918369e12c86feb321cd100fe6d958e55a0bb570576ef718e7a379204db",
-            "    ephemeralPublicKey: 027d40157737671bb04eaca2756b8ec58020ff5c893b10cbfb25b48014c5252dc4",
-            "Signature: 30440220718d20c9996893639da807b8a9675d944abdc8fded97f73159beba5004fa17f102203338b74a9e6a2e696ea3658d3af4fce95ffa0f74c11b2c3d37b0ca1b577657e8",
-          ].join("\n"),
-        ),
+      expect(await humanReadable).toStrictEqual(
+        Right(unIndent`
+          (parsed: true, isValid: true):
+            Block 0 (isVerified: true, Hash: 4e4460fc88adfddbc9794469e8713e92ab8a096c41eed5d7f7c2e39a8cefbdfb)
+              Hex: 01010102200ab573f98375341bb8714975de3f910c7b7ae98f1cac5045d64ca1096c638aa806210392b760e45b364f821e598082274663a648ad65358f0283608df37f8bbf50fc4d010102112f040430326365062102ce9477cc405689925fe1d06166b50236f5de80379788c559d3cba2a73233f0000104ffffffff12aa0510577b56514e5a2a0a64611ffad4a1b6810550f7504ea30664c908eef63f5e7fb37ec3d5753b76f9981a806ee8187727936b72f46e64955a637a55ffdfbae8ad1a1abb61ccd5d2cf21183deb993a79bbe0d854aabb684a87b89786d048253405e5065a062102ce9477cc405689925fe1d06166b50236f5de80379788c559d3cba2a73233f000062103bcd4a520e62efc06f4ca7051d74e195579f9709417925f7ac824015a8cc8e4c403473045022100d8ae18df8003e1eb245bdcdfb3fc1834c943a77b14b0f84c7e5d0b4e6a415b28022057e25e44d77445aa485045135fda1d2050539222cb520dd32fdfe442f9807f0c
+              data:
+                Parent(32): 0ab573f98375341bb8714975de3f910c7b7ae98f1cac5045d64ca1096c638aa8
+                Issuer(33): 0392b760e45b364f821e598082274663a648ad65358f0283608df37f8bbf50fc4d
+                Commands(2):
+                  AddMember(0x11):
+                    name: "02ce"
+                    publicKey(33): 02ce9477cc405689925fe1d06166b50236f5de80379788c559d3cba2a73233f000
+                    permissions(4): 0xffffffff
+                  PublishKey(0x12):
+                    initializationVector(16): 577b56514e5a2a0a64611ffad4a1b681
+                    encryptedXpriv(80): f7504ea30664c908eef63f5e7fb37ec3d5753b76f9981a806ee8187727936b72f46e64955a637a55ffdfbae8ad1a1abb61ccd5d2cf21183deb993a79bbe0d854aabb684a87b89786d048253405e5065a
+                    recipient(33): 02ce9477cc405689925fe1d06166b50236f5de80379788c559d3cba2a73233f000
+                    ephemeralPublicKey(33): 03bcd4a520e62efc06f4ca7051d74e195579f9709417925f7ac824015a8cc8e4c4
+                Signature
+                  0x30(69)
+                  0x02(33): d8ae18df8003e1eb245bdcdfb3fc1834c943a77b14b0f84c7e5d0b4e6a415b28
+                  0x02(32): 57e25e44d77445aa485045135fda1d2050539222cb520dd32fdfe442f9807f0c
+
+            Block 1 (isVerified: true, Hash: 852d27b1d0465e8870036e8b9cf2e4159f1c3502136dc560ef094baa41b77f41)
+              Hex: 01010102204e4460fc88adfddbc9794469e8713e92ab8a096c41eed5d7f7c2e39a8cefbdfb06210392b760e45b364f821e598082274663a648ad65358f0283608df37f8bbf50fc4d010102112f04043033333406210334248a3ca1a05099561a021e0c151eadb99f376b628592b8728559c5d063f48a0104ffffffff12aa05108cbc4dc25d27e9f8fda6f1f7884559c005503b8747785550c59882a840c8e1bb428ee5ad694042798730455e91f4822ee554ca62ea77723f98ae3a8d27b184b0f2851617944ebc20bb1eab4e5e8361d483d0d36a929da4bb1bb11b34aa43f628518206210334248a3ca1a05099561a021e0c151eadb99f376b628592b8728559c5d063f48a0621030d7ba29eac23b1eb0bbd255523ee277f3bf4783f0e52704a3c23e0d77d846d7f03473045022100f1be957862140f898bdb5928fcd5873d3bd1398b48e64a23164beeed7622758b022003c76da510234f129784184baf8eda3d3c4614bfb50a1e2e6334b4a70ac925c5
+              data:
+                Parent(32): 4e4460fc88adfddbc9794469e8713e92ab8a096c41eed5d7f7c2e39a8cefbdfb
+                Issuer(33): 0392b760e45b364f821e598082274663a648ad65358f0283608df37f8bbf50fc4d
+                Commands(2):
+                  AddMember(0x11):
+                    name: "0334"
+                    publicKey(33): 0334248a3ca1a05099561a021e0c151eadb99f376b628592b8728559c5d063f48a
+                    permissions(4): 0xffffffff
+                  PublishKey(0x12):
+                    initializationVector(16): 8cbc4dc25d27e9f8fda6f1f7884559c0
+                    encryptedXpriv(80): 3b8747785550c59882a840c8e1bb428ee5ad694042798730455e91f4822ee554ca62ea77723f98ae3a8d27b184b0f2851617944ebc20bb1eab4e5e8361d483d0d36a929da4bb1bb11b34aa43f6285182
+                    recipient(33): 0334248a3ca1a05099561a021e0c151eadb99f376b628592b8728559c5d063f48a
+                    ephemeralPublicKey(33): 030d7ba29eac23b1eb0bbd255523ee277f3bf4783f0e52704a3c23e0d77d846d7f
+                Signature
+                  0x30(69)
+                  0x02(33): f1be957862140f898bdb5928fcd5873d3bd1398b48e64a23164beeed7622758b
+                  0x02(32): 03c76da510234f129784184baf8eda3d3c4614bfb50a1e2e6334b4a70ac925c5
+        `),
       );
     });
   });
@@ -87,17 +124,18 @@ describe("LKRPBlockStream", () => {
     it("should parse the block stream correctly", () => {
       // GIVEN
       const stream = LKRPBlockStream.fromHex(cryptoService, mockedHex);
+      const serializeBlocks = (blocks: LKRPBlock[]) =>
+        blocks.map((block) => block.toString());
 
       // WHEN
-      const parsedData = stream.parse();
-      stream.toHuman(); // Run toHuman to force the parsing of the commands
+      const parsedBlocks = stream.parse();
 
       // THEN
-      expect(parsedData).toStrictEqual(
+      expect(parsedBlocks.map(serializeBlocks)).toStrictEqual(
         Right([
           LKRPBlock.fromData(cryptoService, mockedBlockData1),
           LKRPBlock.fromData(cryptoService, mockedBlockData2),
-        ]),
+        ]).map(serializeBlocks),
       );
     });
 
