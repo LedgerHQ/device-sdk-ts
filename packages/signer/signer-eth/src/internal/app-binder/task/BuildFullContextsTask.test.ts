@@ -391,20 +391,6 @@ describe("BuildFullContextsTask", () => {
       });
       expect(result.clearSignContexts[1]).toEqual({
         context: {
-          type: ClearSignContextType.TRANSACTION_INFO,
-          payload: "payload-3",
-        },
-        subcontextCallbacks: [],
-      });
-      expect(result.clearSignContexts[2]).toEqual({
-        context: {
-          type: ClearSignContextType.TOKEN,
-          payload: "payload-4",
-        },
-        subcontextCallbacks: [],
-      });
-      expect(result.clearSignContexts[3]).toEqual({
-        context: {
           type: ClearSignContextType.TRANSACTION_FIELD_DESCRIPTION,
           payload: "payload-2",
           reference: {
@@ -415,6 +401,20 @@ describe("BuildFullContextsTask", () => {
               selector: "0x",
             },
           },
+        },
+        subcontextCallbacks: [],
+      });
+      expect(result.clearSignContexts[2]).toEqual({
+        context: {
+          type: ClearSignContextType.TRANSACTION_INFO,
+          payload: "payload-3",
+        },
+        subcontextCallbacks: [],
+      });
+      expect(result.clearSignContexts[3]).toEqual({
+        context: {
+          type: ClearSignContextType.TOKEN,
+          payload: "payload-4",
         },
         subcontextCallbacks: [],
       });
