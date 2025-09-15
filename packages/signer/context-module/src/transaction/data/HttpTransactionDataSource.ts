@@ -376,7 +376,11 @@ export class HttpTransactionDataSource implements TransactionDataSource {
           (data.param.selector === undefined ||
             this.isDescriptorValueV1(data.param.selector)) &&
           (data.param.amount === undefined ||
-            this.isDescriptorValueV1(data.param.amount))))
+            this.isDescriptorValueV1(data.param.amount)) &&
+          (data.param.spender === undefined ||
+            this.isDescriptorValueV1(data.param.spender)) &&
+          (data.param.chainId === undefined ||
+            this.isDescriptorValueV1(data.param.chainId))))
     );
   }
 
