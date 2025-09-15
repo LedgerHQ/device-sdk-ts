@@ -41,6 +41,25 @@ export class TransactionContextLoader implements ContextLoader {
       ];
     }
 
+    // try to fetch the transaction descriptors from the transaction data source
+    // using the smart contract address to
+    const transactionContexts =
+      await this.transactionDataSource.getTransactionDescriptors({
+        deviceModelId,
+        address: to,
+        chainId,
+        selector,
+      });
+
+    if (
+      transactionContexts.isRight() &&
+      transactionContexts.extract().length > 0
+    ) {
+      return transactionContexts.extract();
+    }
+
+    // if the transaction descriptors are not found, try to fetch the proxy delegate call
+    // and return the proxy delegate call context
     const proxyDelegateCall = await this.proxyDataSource.getProxyDelegateCall({
       calldata: data,
       proxyAddress: to,
@@ -48,56 +67,63 @@ export class TransactionContextLoader implements ContextLoader {
       challenge: "",
     });
 
-    // get the resolved address from the list of delegate addresses
-    // if the transaction.to is not in the list of delegate addresses,
-    //    return the first element as the resolved address,
-    //    and undefined as the proxy delegate call descriptor
-    // if the transaction.to is in the list of delegate addresses,
-    //    return the transaction.to as the resolved address,
-    //    and the proxy delegate call descriptor
-    const [resolvedAddress, proxyDelegateCallDescriptor]: [
-      string,
-      string | undefined,
-    ] = proxyDelegateCall.caseOf({
-      Left: () => [to!, undefined],
-      Right: (proxyData: ProxyDelegateCall): [string, string | undefined] => {
-        return [
-          proxyData.delegateAddresses.find((address) => address === to) ||
-            proxyData.delegateAddresses[0]!,
-          proxyData.signedDescriptor,
-        ];
-      },
-    });
+    return proxyDelegateCall.caseOf<Promise<ClearSignContext[]>>({
+      Right: async ({ delegateAddresses }: ProxyDelegateCall) => {
+        const resolvedAddress = delegateAddresses[0];
 
-    const proxyDelegateCallContext: ClearSignContext[] =
-      proxyDelegateCallDescriptor
-        ? [
+        if (!resolvedAddress) {
+          return [
+            {
+              type: ClearSignContextType.ERROR,
+              error: new Error(
+                `[ContextModule] TransactionContextLoader: No delegate address found for proxy ${to}`,
+              ),
+            },
+          ];
+        }
+
+        const transactionProxyContexts =
+          await this.transactionDataSource.getTransactionDescriptors({
+            deviceModelId,
+            address: resolvedAddress,
+            chainId,
+            selector,
+          });
+
+        if (
+          transactionProxyContexts.isRight() &&
+          transactionProxyContexts.extract().length > 0
+        ) {
+          return [
+            // This payload is not used as the clear sign context is not used, only the subcontext that will be
+            // fetched during the provide, with a correct challenge
             {
               type: ClearSignContextType.PROXY_DELEGATE_CALL,
-              // This payload is not used as the clear sign context is not used, only the subcontext that will be
-              // fetched during the provide, with a correct challenge
               payload: "0x",
             },
-          ]
-        : [];
+            ...transactionProxyContexts.extract(),
+          ];
+        }
 
-    const transactionContexts = (
-      await this.transactionDataSource.getTransactionDescriptors({
-        deviceModelId,
-        address: resolvedAddress,
-        chainId,
-        selector,
-      })
-    ).caseOf({
-      Left: (error): ClearSignContext[] => [
-        {
-          type: ClearSignContextType.ERROR,
-          error,
-        },
-      ],
-      Right: (contexts): ClearSignContext[] => contexts,
+        return [
+          {
+            type: ClearSignContextType.ERROR,
+            error: new Error(
+              `[ContextModule] TransactionContextLoader: Unable to fetch contexts from contract address using proxy delegate call ${resolvedAddress}`,
+            ),
+          },
+        ];
+      },
+      Left: (_) => {
+        return Promise.resolve([
+          {
+            type: ClearSignContextType.ERROR,
+            error: new Error(
+              `[ContextModule] TransactionContextLoader: Unable to fetch contexts from contract address ${to}`,
+            ),
+          },
+        ]);
+      },
     });
-
-    return [...proxyDelegateCallContext, ...transactionContexts];
   }
 }
