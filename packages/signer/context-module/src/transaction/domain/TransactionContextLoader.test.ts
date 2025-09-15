@@ -1,3 +1,4 @@
+import { DeviceModelId } from "@ledgerhq/device-management-kit";
 import { Left, Right } from "purify-ts";
 
 import type { ProxyDataSource } from "@/proxy/data/HttpProxyDataSource";
@@ -94,7 +95,9 @@ describe("TransactionContextLoader", () => {
     expect(result).toEqual([
       {
         type: ClearSignContextType.ERROR,
-        error: new Error("data source error"),
+        error: new Error(
+          "[ContextModule] TransactionContextLoader: Unable to fetch contexts from contract address 0x7",
+        ),
       },
     ]);
   });
@@ -141,6 +144,7 @@ describe("TransactionContextLoader", () => {
 
   it("should return the proxy delegate call context on success", async () => {
     // GIVEN
+    getTransactionDescriptorsMock.mockResolvedValueOnce(Right([])); // No transaction descriptors found for the first call
     getTransactionDescriptorsMock.mockResolvedValue(
       Right([
         {
@@ -186,28 +190,11 @@ describe("TransactionContextLoader", () => {
     ]);
   });
 
-  it("should return the proxy delegate call context if the transaction.to is in the delegate addresses and the transaction.to is not the first element", async () => {
+  it("should return an empty array if device model is NANO_S", async () => {
     // GIVEN
-    getTransactionDescriptorsMock.mockResolvedValue(
-      Right([
-        {
-          type: ClearSignContextType.TRANSACTION_INFO,
-          payload: "1234567890",
-        },
-        {
-          type: ClearSignContextType.TRANSACTION_FIELD_DESCRIPTION,
-          payload: "deadbeef",
-        },
-      ]),
-    );
-    getProxyDelegateCallMock.mockResolvedValue(
-      Right({
-        delegateAddresses: ["0x7", "0x8"],
-        signedDescriptor: "0x1234567890abcdef",
-      }),
-    );
     const transaction = {
-      to: "0x8",
+      deviceModelId: DeviceModelId.NANO_S,
+      to: "0x7",
       chainId: 3,
       data: "0xaf68b302000000000000000000000000000000000000000000000000000000000002",
       selector: "0xaf68b302",
@@ -217,39 +204,17 @@ describe("TransactionContextLoader", () => {
     const result = await loader.load(transaction);
 
     // THEN
-    expect(result).toEqual([
-      {
-        type: ClearSignContextType.PROXY_DELEGATE_CALL,
-        payload: "0x",
-      },
-      {
-        type: ClearSignContextType.TRANSACTION_INFO,
-        payload: "1234567890",
-      },
-      {
-        type: ClearSignContextType.TRANSACTION_FIELD_DESCRIPTION,
-        payload: "deadbeef",
-      },
-    ]);
+    expect(result).toEqual([]);
+    expect(getTransactionDescriptorsMock).not.toHaveBeenCalled();
+    expect(getProxyDelegateCallMock).not.toHaveBeenCalled();
   });
 
-  it("should return the proxy delegate call context if the transaction.to is not in the delegate addresses", async () => {
+  it("should return an error when proxy delegate call succeeds but no delegate addresses are found", async () => {
     // GIVEN
-    getTransactionDescriptorsMock.mockResolvedValue(
-      Right([
-        {
-          type: ClearSignContextType.TRANSACTION_INFO,
-          payload: "1234567890",
-        },
-        {
-          type: ClearSignContextType.TRANSACTION_FIELD_DESCRIPTION,
-          payload: "deadbeef",
-        },
-      ]),
-    );
+    getTransactionDescriptorsMock.mockResolvedValueOnce(Right([])); // No transaction descriptors found for the first call
     getProxyDelegateCallMock.mockResolvedValue(
       Right({
-        delegateAddresses: ["0x8"],
+        delegateAddresses: [], // Empty delegate addresses array
         signedDescriptor: "0x1234567890abcdef",
       }),
     );
@@ -266,16 +231,49 @@ describe("TransactionContextLoader", () => {
     // THEN
     expect(result).toEqual([
       {
-        type: ClearSignContextType.PROXY_DELEGATE_CALL,
-        payload: "0x",
+        type: ClearSignContextType.ERROR,
+        error: new Error(
+          "[ContextModule] TransactionContextLoader: No delegate address found for proxy 0x7",
+        ),
       },
+    ]);
+  });
+
+  it("should return an error when proxy delegate call succeeds but transaction descriptors for resolved address fail", async () => {
+    // GIVEN
+    getTransactionDescriptorsMock.mockResolvedValueOnce(Right([])); // No transaction descriptors found for the first call
+    getTransactionDescriptorsMock.mockResolvedValueOnce(
+      Left(new Error("data source error")),
+    ); // Second call fails
+    getProxyDelegateCallMock.mockResolvedValue(
+      Right({
+        delegateAddresses: ["0xResolvedAddress"],
+        signedDescriptor: "0x1234567890abcdef",
+      }),
+    );
+    const transaction = {
+      to: "0x7",
+      chainId: 3,
+      data: "0xaf68b302000000000000000000000000000000000000000000000000000000000002",
+      selector: "0xaf68b302",
+    } as TransactionContext;
+
+    // WHEN
+    const result = await loader.load(transaction);
+
+    // THEN
+    expect(getTransactionDescriptorsMock).toHaveBeenCalledTimes(2);
+    expect(getTransactionDescriptorsMock).toHaveBeenNthCalledWith(2, {
+      address: "0xResolvedAddress",
+      chainId: 3,
+      selector: "0xaf68b302",
+    });
+    expect(result).toEqual([
       {
-        type: ClearSignContextType.TRANSACTION_INFO,
-        payload: "1234567890",
-      },
-      {
-        type: ClearSignContextType.TRANSACTION_FIELD_DESCRIPTION,
-        payload: "deadbeef",
+        type: ClearSignContextType.ERROR,
+        error: new Error(
+          "[ContextModule] TransactionContextLoader: Unable to fetch contexts from contract address using proxy delegate call 0xResolvedAddress",
+        ),
       },
     ]);
   });
