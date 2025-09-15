@@ -9,6 +9,7 @@ import {
   type ClearSignContextSuccess,
   ClearSignContextType,
 } from "@ledgerhq/context-module";
+import { ContextFieldLoaderKind } from "@ledgerhq/context-module/src/shared/domain/ContextFieldLoader.js";
 import type {
   CommandResult,
   InternalApi,
@@ -342,8 +343,8 @@ export class ProvideEIP712ContextTask {
           return Just(getChallengeResult);
         }
 
-        const context = await this.contextModule.getContext({
-          type: ClearSignContextType.TRUSTED_NAME,
+        const context = await this.contextModule.getFieldContext({
+          kind: ContextFieldLoaderKind.TRUSTED_NAME,
           chainId: this.chainId.extract(),
           address,
           challenge: getChallengeResult.data.challenge,

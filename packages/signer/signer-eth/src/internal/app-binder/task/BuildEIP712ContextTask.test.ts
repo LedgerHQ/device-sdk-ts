@@ -24,7 +24,7 @@ import { BuildEIP712ContextTask } from "./BuildEIP712ContextTask";
 describe("BuildEIP712ContextTask", () => {
   const apiMock = makeDeviceActionInternalApiMock();
   const contextMouleMock = {
-    getContext: vi.fn(),
+    getFieldContext: vi.fn(),
     getContexts: vi.fn(),
     getTypedDataFilters: vi.fn(),
     getWeb3Checks: vi.fn(),

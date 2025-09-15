@@ -8,8 +8,10 @@ import {
   type TransactionFieldContext,
   type TransactionSubset,
 } from "@ledgerhq/context-module";
+import { ContextFieldLoaderKind } from "@ledgerhq/context-module/src/shared/domain/ContextFieldLoader.js";
 import {
   bufferToHexaString,
+  type DeviceModelId,
   type InternalApi,
   isSuccessCommandResult,
 } from "@ledgerhq/device-management-kit";
@@ -22,11 +24,14 @@ export type BuildSubcontextsTaskArgs = {
   readonly contextOptional: ClearSignContextSuccess[];
   readonly transactionParser: TransactionParserService;
   readonly subset: TransactionSubset;
+  readonly deviceModelId: DeviceModelId;
   readonly contextModule: ContextModule;
 };
 
+type SubcontextCallback = () => Promise<ClearSignContext>;
+
 export type BuildSubcontextsTaskResult = {
-  subcontextCallbacks: (() => Promise<ClearSignContext>)[];
+  subcontextCallbacks: SubcontextCallback[];
 };
 
 export class BuildSubcontextsTask {
@@ -37,144 +42,230 @@ export class BuildSubcontextsTask {
 
   run(): BuildSubcontextsTaskResult {
     const context = this.args.context;
+    const type = context.type;
 
-    if (context.type !== ClearSignContextType.TRANSACTION_FIELD_DESCRIPTION) {
-      return {
-        subcontextCallbacks: [],
-      };
+    switch (type) {
+      case ClearSignContextType.TRANSACTION_INFO:
+      case ClearSignContextType.WEB3_CHECK:
+      case ClearSignContextType.PLUGIN:
+      case ClearSignContextType.EXTERNAL_PLUGIN:
+      case ClearSignContextType.DYNAMIC_NETWORK:
+      case ClearSignContextType.DYNAMIC_NETWORK_ICON:
+      case ClearSignContextType.ENUM:
+      case ClearSignContextType.TRUSTED_NAME:
+      case ClearSignContextType.TOKEN:
+      case ClearSignContextType.NFT:
+        return {
+          subcontextCallbacks: [],
+        };
+      case ClearSignContextType.TRANSACTION_FIELD_DESCRIPTION:
+        return {
+          subcontextCallbacks: context.reference
+            ? this._getSubcontextsFromReference(context.reference)
+            : [],
+        };
+      case ClearSignContextType.PROXY_DELEGATE_CALL:
+        return {
+          subcontextCallbacks: this._getSubcontextFromProxy(context),
+        };
+      default: {
+        const uncoveredType: never = type;
+        throw new Error(`Uncovered type: ${uncoveredType}`);
+      }
     }
+  }
 
+  private _getSubcontextsFromReference(
+    reference: ClearSignContextReference,
+  ): SubcontextCallback[] {
+    const referenceType = reference.type;
+
+    switch (referenceType) {
+      case ClearSignContextReferenceType.TOKEN:
+      case ClearSignContextReferenceType.NFT:
+        return this._getSubcontextsFromTokenOrNftReference(reference);
+      case ClearSignContextReferenceType.ENUM:
+        return this._getSubcontextsFromEnumReference(reference);
+      case ClearSignContextReferenceType.TRUSTED_NAME:
+        return this._getSubcontextsFromTrustedNameReference(reference);
+      case ClearSignContextReferenceType.CALLDATA:
+        // calldata reference is handled by the BuildFullContextsTask and ParseNestedTransactionTask
+        return [];
+      default: {
+        const uncoveredReferenceType: never = referenceType;
+        throw new Error(`Uncovered reference type: ${uncoveredReferenceType}`);
+      }
+    }
+  }
+
+  private _getSubcontextsFromTokenOrNftReference(
+    reference: ClearSignContextReference<
+      ClearSignContextReferenceType.TOKEN | ClearSignContextReferenceType.NFT
+    >,
+  ): SubcontextCallback[] {
     // if the reference is a string, it means it is a direct address
     // and we don't need to extract the value from the transaction
     // as it is already provided in the reference
-    if (
-      context.reference !== undefined &&
-      "value" in context.reference &&
-      context.reference.value !== undefined
-    ) {
+    if (reference.value !== undefined) {
       const transactionFieldContext: TransactionFieldContext = {
-        type:
-          context.reference.type === ClearSignContextReferenceType.TOKEN
-            ? ClearSignContextType.TOKEN
-            : ClearSignContextType.NFT,
+        kind:
+          reference.type === ClearSignContextReferenceType.TOKEN
+            ? ContextFieldLoaderKind.TOKEN
+            : ContextFieldLoaderKind.NFT,
         chainId: this.args.subset.chainId,
-        address: context.reference.value,
+        address: reference.value,
       };
 
-      return {
-        subcontextCallbacks: [
-          () => this.args.contextModule.getContext(transactionFieldContext),
-        ],
-      };
+      return [
+        () => this.args.contextModule.getFieldContext(transactionFieldContext),
+      ];
     }
+
+    const subcontextCallbacks: SubcontextCallback[] = [];
 
     // if the reference is a path, it means we need to extract the value
     // from the transaction and provide it to the device
-    if (
-      context.reference !== undefined &&
-      context.reference.valuePath !== undefined
-    ) {
-      // iterate on each reference and provide the context
-      const referenceValues = this.args.transactionParser.extractValue(
-        this.args.subset,
-        context.reference.valuePath,
-      );
+    if (reference.valuePath !== undefined) {
+      const referenceValues = this.args.transactionParser
+        .extractValue(this.args.subset, reference.valuePath)
+        .orDefault([]);
 
-      if (referenceValues.isRight()) {
-        const subcontextCallbacks: (() => Promise<ClearSignContext>)[] = [];
+      for (const value of referenceValues) {
+        const address = bufferToHexaString(
+          value.slice(Math.max(0, value.length - 20)),
+        );
 
-        for (const value of referenceValues.extract()) {
-          if (context.reference.type === ClearSignContextReferenceType.ENUM) {
-            const reference: ClearSignContextReference<ClearSignContextReferenceType.ENUM> =
-              context.reference;
-            const enumValue = value[value.length - 1];
-            if (enumValue === undefined) {
-              continue;
-            }
-
-            const enumsContext = this.args.contextOptional.filter(
-              (c) => c.type === ClearSignContextType.ENUM,
-            );
-
-            const subcontext = enumsContext.find(
-              (enumContext) =>
-                enumContext.value === enumValue &&
-                enumContext.id === reference.id,
-            );
-
-            if (subcontext) {
-              subcontextCallbacks.push(() => Promise.resolve(subcontext));
-            }
-          }
-
-          if (
-            context.reference.type === ClearSignContextReferenceType.TOKEN ||
-            context.reference.type === ClearSignContextReferenceType.NFT
-          ) {
-            const reference: ClearSignContextReference<
-              | ClearSignContextReferenceType.TOKEN
-              | ClearSignContextReferenceType.NFT
-            > = context.reference;
-            const address = bufferToHexaString(
-              value.slice(Math.max(0, value.length - 20)),
-            );
-
-            subcontextCallbacks.push(() =>
-              this.args.contextModule.getContext({
-                type:
-                  reference.type === ClearSignContextReferenceType.TOKEN
-                    ? ClearSignContextType.TOKEN
-                    : ClearSignContextType.NFT,
-                chainId: this.args.subset.chainId,
-                address,
-              }),
-            );
-          }
-
-          if (
-            context.reference.type ===
-            ClearSignContextReferenceType.TRUSTED_NAME
-          ) {
-            const reference: ClearSignContextReference<ClearSignContextReferenceType.TRUSTED_NAME> =
-              context.reference;
-            subcontextCallbacks.push(async () => {
-              const address = bufferToHexaString(
-                value.slice(Math.max(0, value.length - 20)),
-              );
-
-              const getChallengeResult = await this.api.sendCommand(
-                new GetChallengeCommand(),
-              );
-              if (!isSuccessCommandResult(getChallengeResult)) {
-                // TODO: we need to return an error here
-                return {
-                  type: ClearSignContextType.ERROR,
-                  error: new Error("Failed to get challenge"),
-                };
-              }
-
-              const subcontext = await this.args.contextModule.getContext({
-                type: ClearSignContextType.TRUSTED_NAME,
-                chainId: this.args.subset.chainId,
-                address,
-                challenge: getChallengeResult.data.challenge,
-                types: reference.types,
-                sources: reference.sources,
-              });
-
-              return subcontext;
-            });
-          }
-        }
-
-        return {
-          subcontextCallbacks,
-        };
+        subcontextCallbacks.push(() =>
+          this.args.contextModule.getFieldContext({
+            kind:
+              reference.type === ClearSignContextReferenceType.TOKEN
+                ? ContextFieldLoaderKind.TOKEN
+                : ContextFieldLoaderKind.NFT,
+            chainId: this.args.subset.chainId,
+            address,
+          }),
+        );
       }
     }
 
-    return {
-      subcontextCallbacks: [],
-    };
+    return subcontextCallbacks;
+  }
+
+  private _getSubcontextsFromEnumReference(
+    reference: ClearSignContextReference<ClearSignContextReferenceType.ENUM>,
+  ): SubcontextCallback[] {
+    const subcontextCallbacks: SubcontextCallback[] = [];
+
+    if (!reference.valuePath) {
+      return subcontextCallbacks;
+    }
+
+    const referenceValues = this.args.transactionParser
+      .extractValue(this.args.subset, reference.valuePath)
+      .orDefault([]);
+
+    for (const value of referenceValues) {
+      const enumValue = value[value.length - 1];
+      if (enumValue === undefined) {
+        continue;
+      }
+
+      const enumsContext = this.args.contextOptional.filter(
+        (c) => c.type === ClearSignContextType.ENUM,
+      );
+
+      const subcontext = enumsContext.find(
+        (enumContext) =>
+          enumContext.value === enumValue && enumContext.id === reference.id,
+      );
+
+      if (subcontext) {
+        subcontextCallbacks.push(() => Promise.resolve(subcontext));
+      }
+    }
+    return subcontextCallbacks;
+  }
+
+  private _getSubcontextsFromTrustedNameReference(
+    reference: ClearSignContextReference<ClearSignContextReferenceType.TRUSTED_NAME>,
+  ): SubcontextCallback[] {
+    const subcontextCallbacks: SubcontextCallback[] = [];
+
+    if (!reference.valuePath) {
+      return subcontextCallbacks;
+    }
+
+    const referenceValues = this.args.transactionParser
+      .extractValue(this.args.subset, reference.valuePath)
+      .orDefault([]);
+
+    for (const value of referenceValues) {
+      {
+        subcontextCallbacks.push(async () => {
+          const address = bufferToHexaString(
+            value.slice(Math.max(0, value.length - 20)),
+          );
+
+          const getChallengeResult = await this.api.sendCommand(
+            new GetChallengeCommand(),
+          );
+          if (!isSuccessCommandResult(getChallengeResult)) {
+            return {
+              type: ClearSignContextType.ERROR,
+              error: new Error("Failed to get challenge"),
+            };
+          }
+
+          const subcontext = await this.args.contextModule.getFieldContext({
+            kind: ContextFieldLoaderKind.TRUSTED_NAME,
+            chainId: this.args.subset.chainId,
+            address,
+            challenge: getChallengeResult.data.challenge,
+            types: reference.types,
+            sources: reference.sources,
+          });
+
+          return subcontext;
+        });
+      }
+    }
+
+    return subcontextCallbacks;
+  }
+
+  private _getSubcontextFromProxy(
+    _context: ClearSignContextSuccess<ClearSignContextType.PROXY_DELEGATE_CALL>,
+  ): SubcontextCallback[] {
+    return [
+      async () => {
+        const getChallengeResult = await this.api.sendCommand(
+          new GetChallengeCommand(),
+        );
+        if (!isSuccessCommandResult(getChallengeResult)) {
+          return {
+            type: ClearSignContextType.ERROR,
+            error: new Error("Failed to get challenge"),
+          };
+        }
+
+        if (this.args.subset.to === undefined) {
+          return {
+            type: ClearSignContextType.ERROR,
+            error: new Error("Failed to get proxy address"),
+          };
+        }
+
+        const subcontext = await this.args.contextModule.getFieldContext({
+          kind: ContextFieldLoaderKind.PROXY_DELEGATE_CALL,
+          chainId: this.args.subset.chainId,
+          proxyAddress: this.args.subset.to,
+          calldata: this.args.subset.data,
+          deviceModelId: this.args.deviceModelId,
+          challenge: getChallengeResult.data.challenge,
+        });
+
+        return subcontext;
+      },
+    ];
   }
 }
