@@ -19,6 +19,7 @@ import {
 } from "@/shared/constant/HttpHeaders";
 import {
   ClearSignContextReference,
+  ClearSignContextReferenceType,
   ClearSignContextSuccess,
   ClearSignContextType,
 } from "@/shared/model/ClearSignContext";
@@ -190,7 +191,7 @@ export class HttpTransactionDataSource implements TransactionDataSource {
       param.token.type === "path"
     ) {
       return {
-        type: ClearSignContextType.TOKEN,
+        type: ClearSignContextReferenceType.TOKEN,
         valuePath: this.toGenericPath(param.token.binary_path),
       };
     } else if (
@@ -199,31 +200,57 @@ export class HttpTransactionDataSource implements TransactionDataSource {
       param.token.type === "constant"
     ) {
       return {
-        type: ClearSignContextType.TOKEN,
+        type: ClearSignContextReferenceType.TOKEN,
         value: param.token.value,
       };
     } else if (param.type === "NFT" && param.collection.type === "path") {
       return {
-        type: ClearSignContextType.NFT,
+        type: ClearSignContextReferenceType.NFT,
         valuePath: this.toGenericPath(param.collection.binary_path),
       };
     } else if (param.type === "NFT" && param.collection.type === "constant") {
       return {
-        type: ClearSignContextType.NFT,
+        type: ClearSignContextReferenceType.NFT,
         value: param.collection.value,
       };
     } else if (param.type === "TRUSTED_NAME" && param.value.type === "path") {
       return {
-        type: ClearSignContextType.TRUSTED_NAME,
+        type: ClearSignContextReferenceType.TRUSTED_NAME,
         valuePath: this.toGenericPath(param.value.binary_path),
         types: param.types,
         sources: param.sources,
       };
     } else if (param.type === "ENUM" && param.value.type === "path") {
       return {
-        type: ClearSignContextType.ENUM,
+        type: ClearSignContextReferenceType.ENUM,
         valuePath: this.toGenericPath(param.value.binary_path),
         id: param.id,
+      };
+    } else if (
+      param.type === "CALLDATA" &&
+      param.value.type === "path" &&
+      param.callee.type === "path"
+    ) {
+      return {
+        type: ClearSignContextReferenceType.CALLDATA,
+        valuePath: this.toGenericPath(param.value.binary_path),
+        callee: this.toGenericPath(param.callee.binary_path),
+        selector:
+          param.selector?.type === "path"
+            ? this.toGenericPath(param.selector.binary_path)
+            : undefined,
+        amount:
+          param.amount?.type === "path"
+            ? this.toGenericPath(param.amount.binary_path)
+            : undefined,
+        spender:
+          param.spender?.type === "path"
+            ? this.toGenericPath(param.spender.binary_path)
+            : undefined,
+        chainId:
+          param.chainId?.type === "path"
+            ? this.toGenericPath(param.chainId.binary_path)
+            : undefined,
       };
     }
     return undefined;
@@ -342,7 +369,18 @@ export class HttpTransactionDataSource implements TransactionDataSource {
           Array.isArray(data.param.types) &&
           Array.isArray(data.param.sources) &&
           data.param.types.every((t) => typeof t === "string") &&
-          data.param.sources.every((t) => typeof t === "string")))
+          data.param.sources.every((t) => typeof t === "string")) ||
+        (data.param.type === "CALLDATA" &&
+          this.isDescriptorValueV1(data.param.value) &&
+          this.isDescriptorValueV1(data.param.callee) &&
+          (data.param.selector === undefined ||
+            this.isDescriptorValueV1(data.param.selector)) &&
+          (data.param.amount === undefined ||
+            this.isDescriptorValueV1(data.param.amount)) &&
+          (data.param.spender === undefined ||
+            this.isDescriptorValueV1(data.param.spender)) &&
+          (data.param.chainId === undefined ||
+            this.isDescriptorValueV1(data.param.chainId))))
     );
   }
 

@@ -55,7 +55,18 @@ export type CalldataDescriptorParam =
   | CalldataDescriptorParamDurationV1
   | CalldataDescriptorParamUnitV1
   | CalldataDescriptorParamEnumV1
-  | CalldataDescriptorParamTrustedNameV1;
+  | CalldataDescriptorParamTrustedNameV1
+  | CallDataDescriptorParamCalldataV1;
+
+export interface CallDataDescriptorParamCalldataV1 {
+  type: "CALLDATA";
+  value: CalldataDescriptorValueV1;
+  callee: CalldataDescriptorValueV1;
+  selector?: CalldataDescriptorValueV1;
+  amount?: CalldataDescriptorValueV1;
+  spender?: CalldataDescriptorValueV1;
+  chainId?: CalldataDescriptorValueV1;
+}
 
 export interface CalldataDescriptorParamRawV1 {
   type: "RAW";
