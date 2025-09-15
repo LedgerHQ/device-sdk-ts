@@ -13,6 +13,8 @@ import { type Signature } from "@api/model/Signature";
 import { type TypedData } from "@api/model/TypedData";
 import { type EthErrorCodes } from "@internal/app-binder/command/utils/ethAppErrors";
 import type { ProvideEIP712ContextTaskArgs } from "@internal/app-binder/task/ProvideEIP712ContextTask";
+import { type TransactionMapperService } from "@internal/transaction/service/mapper/TransactionMapperService";
+import { type TransactionParserService } from "@internal/transaction/service/parser/TransactionParserService";
 import { type TypedDataParserService } from "@internal/typed-data/service/TypedDataParserService";
 
 export enum SignTypedDataDAStateStep {
@@ -33,6 +35,8 @@ export type SignTypedDataDAInput = {
   readonly derivationPath: string;
   readonly data: TypedData;
   readonly parser: TypedDataParserService;
+  readonly transactionMapper: TransactionMapperService;
+  readonly transactionParser: TransactionParserService;
   readonly contextModule: ContextModule;
   readonly skipOpenApp: boolean;
 };

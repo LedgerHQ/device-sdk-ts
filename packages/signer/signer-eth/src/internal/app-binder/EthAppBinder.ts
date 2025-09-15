@@ -114,6 +114,8 @@ export class EthAppBinder {
           derivationPath: args.derivationPath,
           data: args.data,
           parser: args.parser,
+          transactionMapper: this.mapper,
+          transactionParser: this.parser,
           contextModule: this.contextModule,
           skipOpenApp: args.skipOpenApp,
         },

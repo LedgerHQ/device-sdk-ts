@@ -28,7 +28,7 @@ export class TransactionContextLoader implements ContextLoader {
     }
 
     const { to, data, selector, chainId, deviceModelId } = ctx;
-    if (to === undefined || data === "0x") {
+    if (to === undefined) {
       return [];
     }
 

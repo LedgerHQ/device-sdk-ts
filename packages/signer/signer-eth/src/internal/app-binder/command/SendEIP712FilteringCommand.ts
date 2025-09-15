@@ -26,6 +26,20 @@ export enum Eip712FilterType {
   Amount = "amount",
   Token = "token",
   TrustedName = "trusted-name",
+  // Calldata filters
+  CalldataInfo = "calldata-info",
+  CalldataValue = "calldata-value",
+  CalldataCallee = "calldata-callee",
+  CalldataChainId = "calldata-chain-id",
+  CalldataSelector = "calldata-selector",
+  CalldataAmount = "calldata-amount",
+  CalldataSpender = "calldata-spender",
+}
+
+export enum CalldataParamPresence {
+  None = 0x0,
+  Present = 0x1,
+  VerifyingContract = 0x2,
 }
 
 export type SendEIP712FilteringCommandArgs =
@@ -68,12 +82,43 @@ export type SendEIP712FilteringCommandArgs =
       displayName: string;
       tokenIndex: number;
       signature: string;
+    }
+  | {
+      type: Eip712FilterType.CalldataInfo;
+      discarded: boolean;
+      calldataIndex: number;
+      valueFlag: boolean;
+      calleeFlag: CalldataParamPresence;
+      chainIdFlag: boolean;
+      selectorFlag: boolean;
+      amountFlag: boolean;
+      spenderFlag: CalldataParamPresence;
+      signature: string;
+    }
+  | {
+      type:
+        | Eip712FilterType.CalldataValue
+        | Eip712FilterType.CalldataCallee
+        | Eip712FilterType.CalldataChainId
+        | Eip712FilterType.CalldataSelector
+        | Eip712FilterType.CalldataAmount
+        | Eip712FilterType.CalldataSpender;
+      discarded: boolean;
+      calldataIndex: number;
+      signature: string;
     };
 
 const FILTER_TO_P2: Record<Eip712FilterType, number> = {
   [Eip712FilterType.Activation]: 0x00,
   [Eip712FilterType.DiscardedPath]: 0x01,
   [Eip712FilterType.MessageInfo]: 0x0f,
+  [Eip712FilterType.CalldataSpender]: 0xf4,
+  [Eip712FilterType.CalldataAmount]: 0xf5,
+  [Eip712FilterType.CalldataSelector]: 0xf6,
+  [Eip712FilterType.CalldataChainId]: 0xf7,
+  [Eip712FilterType.CalldataCallee]: 0xf8,
+  [Eip712FilterType.CalldataValue]: 0xf9,
+  [Eip712FilterType.CalldataInfo]: 0xfa,
   [Eip712FilterType.TrustedName]: 0xfb,
   [Eip712FilterType.Datetime]: 0xfc,
   [Eip712FilterType.Token]: 0xfd,
@@ -129,6 +174,27 @@ export class SendEIP712FilteringCommand
         }
         builder
           .add8BitUIntToData(this.args.tokenIndex)
+          .encodeInLVFromHexa(this.args.signature);
+        break;
+      case Eip712FilterType.CalldataInfo:
+        builder
+          .add8BitUIntToData(this.args.calldataIndex)
+          .add8BitUIntToData(this.args.valueFlag ? 1 : 0)
+          .add8BitUIntToData(this.args.calleeFlag)
+          .add8BitUIntToData(this.args.chainIdFlag ? 1 : 0)
+          .add8BitUIntToData(this.args.selectorFlag ? 1 : 0)
+          .add8BitUIntToData(this.args.amountFlag ? 1 : 0)
+          .add8BitUIntToData(this.args.spenderFlag)
+          .encodeInLVFromHexa(this.args.signature);
+        break;
+      case Eip712FilterType.CalldataValue:
+      case Eip712FilterType.CalldataCallee:
+      case Eip712FilterType.CalldataChainId:
+      case Eip712FilterType.CalldataSelector:
+      case Eip712FilterType.CalldataAmount:
+      case Eip712FilterType.CalldataSpender:
+        builder
+          .add8BitUIntToData(this.args.calldataIndex)
           .encodeInLVFromHexa(this.args.signature);
         break;
     }
