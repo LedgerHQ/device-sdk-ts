@@ -646,56 +646,7 @@ describe("SignTransactionDeviceAction", () => {
       });
     });
 
-    it("should blind sign if the build contexts fails", async () => {
-      // TODO: implement this test
-    });
-
-    it("should blind sign if the provide contexts fails", async () => {
-      // TODO: implement this test
-    });
-
-    it("should return an error if the sign transaction fails", async () => {
-      setupOpenAppDAMock();
-      setupAppConfig("1.15.0", false, false);
-      const deviceAction = new SignTransactionDeviceAction({
-        input: {
-          derivationPath: "44'/60'/0'/0/0",
-          transaction: defaultTransaction,
-          options: defaultOptions,
-          contextModule: contextModuleMock,
-          mapper: mapperMock,
-          parser: parserMock,
-        },
-      });
-      vi.spyOn(deviceAction, "extractDependencies").mockReturnValue(
-        extractDependenciesMock(),
-      );
-      parseTransactionMock.mockResolvedValueOnce({
-        subset: defaultSubset,
-        type: TransactionType.EIP1559,
-      });
-      buildContextsMock.mockResolvedValueOnce({
-        clearSignContexts: [],
-        clearSignContextsOptional: [],
-        clearSigningType: ClearSigningType.BASIC,
-      });
-      provideContextsMock.mockResolvedValueOnce(Just(void 0));
-      signTransactionMock.mockRejectedValueOnce(
-        new Error("Sign transaction failed"),
-      );
-      observable = deviceAction._execute(apiMock).observable;
-
-      // WHEN
-      const result = await lastValueFrom(observable);
-
-      // THEN
-      expect(result).toEqual({
-        status: DeviceActionStatus.Error,
-        error: new Error("Sign transaction failed"),
-      });
-    });
-
-    it("should return an error if the sign transaction return an error", async () => {
+    it("should blind sign if the first sign transaction fails and the second sign transaction succeeds", async () => {
       setupOpenAppDAMock();
       setupAppConfig("1.15.0", false, false);
       const deviceAction = new SignTransactionDeviceAction({
@@ -726,6 +677,146 @@ describe("SignTransactionDeviceAction", () => {
           error: new InvalidStatusWordError("Sign transaction failed"),
         }),
       );
+      signTransactionMock.mockResolvedValueOnce(
+        CommandResultFactory({
+          data: {
+            v: 0x1c,
+            r: "0x8a540510e13b0f2b11a451275716d29e08caad07e89a1c84964782fb5e1ad789",
+            s: "0x64a0de235b270fbe81e8e40688f4a9f9ad9d283d690552c9331d7773ceafa513",
+          },
+        }),
+      );
+      observable = deviceAction._execute(apiMock).observable;
+
+      // WHEN
+      const result = await lastValueFrom(observable);
+
+      // THEN
+      expect(result).toEqual({
+        status: DeviceActionStatus.Completed,
+        output: {
+          v: 0x1c,
+          r: "0x8a540510e13b0f2b11a451275716d29e08caad07e89a1c84964782fb5e1ad789",
+          s: "0x64a0de235b270fbe81e8e40688f4a9f9ad9d283d690552c9331d7773ceafa513",
+        },
+      });
+    });
+
+    it("should blind sign if the first sign transaction throws an error and the second sign transaction succeeds", async () => {
+      setupOpenAppDAMock();
+      setupAppConfig("1.15.0", false, false);
+      const deviceAction = new SignTransactionDeviceAction({
+        input: {
+          derivationPath: "44'/60'/0'/0/0",
+          transaction: defaultTransaction,
+          options: defaultOptions,
+          contextModule: contextModuleMock,
+          mapper: mapperMock,
+          parser: parserMock,
+        },
+      });
+      vi.spyOn(deviceAction, "extractDependencies").mockReturnValue(
+        extractDependenciesMock(),
+      );
+      parseTransactionMock.mockResolvedValueOnce({
+        subset: defaultSubset,
+        type: TransactionType.EIP1559,
+      });
+      buildContextsMock.mockResolvedValueOnce({
+        clearSignContexts: [],
+        clearSignContextsOptional: [],
+        clearSigningType: ClearSigningType.EIP7730,
+      });
+      provideContextsMock.mockResolvedValueOnce(Just(void 0));
+      signTransactionMock.mockRejectedValueOnce(
+        new Error("Sign transaction failed"),
+      );
+      signTransactionMock.mockResolvedValueOnce(
+        CommandResultFactory({
+          data: {
+            v: 0x1c,
+            r: "0x8a540510e13b0f2b11a451275716d29e08caad07e89a1c84964782fb5e1ad789",
+            s: "0x64a0de235b270fbe81e8e40688f4a9f9ad9d283d690552c9331d7773ceafa513",
+          },
+        }),
+      );
+      observable = deviceAction._execute(apiMock).observable;
+
+      // WHEN
+      const result = await lastValueFrom(observable);
+
+      // THEN
+      expect(result).toEqual({
+        status: DeviceActionStatus.Completed,
+        output: {
+          v: 0x1c,
+          r: "0x8a540510e13b0f2b11a451275716d29e08caad07e89a1c84964782fb5e1ad789",
+          s: "0x64a0de235b270fbe81e8e40688f4a9f9ad9d283d690552c9331d7773ceafa513",
+        },
+      });
+      expect(signTransactionMock).toHaveBeenCalledTimes(2);
+      expect(signTransactionMock).toHaveBeenNthCalledWith(
+        1,
+        expect.objectContaining({
+          input: {
+            derivationPath: "44'/60'/0'/0/0",
+            serializedTransaction: defaultTransaction,
+            chainId: 1,
+            transactionType: TransactionType.EIP1559,
+            clearSigningType: ClearSigningType.EIP7730,
+          },
+        }),
+      );
+      expect(signTransactionMock).toHaveBeenNthCalledWith(
+        2,
+        expect.objectContaining({
+          input: {
+            derivationPath: "44'/60'/0'/0/0",
+            serializedTransaction: defaultTransaction,
+            chainId: 1,
+            transactionType: TransactionType.EIP1559,
+            clearSigningType: ClearSigningType.BASIC, // fallback to basic
+          },
+        }),
+      );
+    });
+
+    it("should return an error if the sign transaction return two times an error", async () => {
+      setupOpenAppDAMock();
+      setupAppConfig("1.15.0", false, false);
+      const deviceAction = new SignTransactionDeviceAction({
+        input: {
+          derivationPath: "44'/60'/0'/0/0",
+          transaction: defaultTransaction,
+          options: defaultOptions,
+          contextModule: contextModuleMock,
+          mapper: mapperMock,
+          parser: parserMock,
+        },
+      });
+      vi.spyOn(deviceAction, "extractDependencies").mockReturnValue(
+        extractDependenciesMock(),
+      );
+      parseTransactionMock.mockResolvedValueOnce({
+        subset: defaultSubset,
+        type: TransactionType.EIP1559,
+      });
+      buildContextsMock.mockResolvedValueOnce({
+        clearSignContexts: [],
+        clearSignContextsOptional: [],
+        clearSigningType: ClearSigningType.BASIC,
+      });
+      provideContextsMock.mockResolvedValueOnce(Just(void 0));
+      signTransactionMock.mockResolvedValueOnce(
+        CommandResultFactory({
+          error: new InvalidStatusWordError("Sign transaction failed"),
+        }),
+      );
+      signTransactionMock.mockResolvedValueOnce(
+        CommandResultFactory({
+          error: new InvalidStatusWordError("Blind sign transaction failed"),
+        }),
+      );
       observable = deviceAction._execute(apiMock).observable;
 
       // WHEN
@@ -734,7 +825,53 @@ describe("SignTransactionDeviceAction", () => {
       // THEN
       expect(result).toEqual({
         status: DeviceActionStatus.Error,
-        error: new InvalidStatusWordError("Sign transaction failed"),
+        error: new InvalidStatusWordError("Blind sign transaction failed"),
+      });
+    });
+
+    it("should return an error if the blind sign transaction fallback throws an error", async () => {
+      setupOpenAppDAMock();
+      setupAppConfig("1.15.0", false, false);
+      const deviceAction = new SignTransactionDeviceAction({
+        input: {
+          derivationPath: "44'/60'/0'/0/0",
+          transaction: defaultTransaction,
+          options: defaultOptions,
+          contextModule: contextModuleMock,
+          mapper: mapperMock,
+          parser: parserMock,
+        },
+      });
+      vi.spyOn(deviceAction, "extractDependencies").mockReturnValue(
+        extractDependenciesMock(),
+      );
+      parseTransactionMock.mockResolvedValueOnce({
+        subset: defaultSubset,
+        type: TransactionType.EIP1559,
+      });
+      buildContextsMock.mockResolvedValueOnce({
+        clearSignContexts: [],
+        clearSignContextsOptional: [],
+        clearSigningType: ClearSigningType.BASIC,
+      });
+      provideContextsMock.mockResolvedValueOnce(Just(void 0));
+      signTransactionMock.mockResolvedValueOnce(
+        CommandResultFactory({
+          error: new InvalidStatusWordError("Sign transaction failed"),
+        }),
+      );
+      signTransactionMock.mockRejectedValueOnce(
+        new Error("Blind sign transaction fallback failed"),
+      );
+      observable = deviceAction._execute(apiMock).observable;
+
+      // WHEN
+      const result = await lastValueFrom(observable);
+
+      // THEN
+      expect(result).toEqual({
+        status: DeviceActionStatus.Error,
+        error: new Error("Blind sign transaction fallback failed"),
       });
     });
   });
