@@ -1,3 +1,4 @@
+import { DeviceModelId } from "@ledgerhq/device-management-kit";
 import { inject, injectable } from "inversify";
 
 import { pkiTypes } from "@/pki/di/pkiTypes";
@@ -15,15 +16,20 @@ import {
   type ClearSignContext,
   ClearSignContextType,
 } from "@/shared/model/ClearSignContext";
-import { type TransactionFieldContext } from "@/shared/model/TransactionFieldContext";
+
+type ProxyFieldInput = {
+  kind: ContextFieldLoaderKind.PROXY_DELEGATE_CALL;
+  chainId: number;
+  proxyAddress: string;
+  calldata: string;
+  challenge: string;
+  deviceModelId: DeviceModelId;
+};
 
 @injectable()
 export class ProxyContextFieldLoader
-  implements ContextFieldLoader<ContextFieldLoaderKind.PROXY_DELEGATE_CALL>
+  implements ContextFieldLoader<ProxyFieldInput>
 {
-  kind: ContextFieldLoaderKind.PROXY_DELEGATE_CALL =
-    ContextFieldLoaderKind.PROXY_DELEGATE_CALL;
-
   constructor(
     @inject(proxyTypes.ProxyDataSource)
     private _proxyDataSource: ProxyDataSource,
@@ -31,9 +37,21 @@ export class ProxyContextFieldLoader
     private _certificateLoader: PkiCertificateLoader,
   ) {}
 
-  async loadField(
-    field: TransactionFieldContext<ContextFieldLoaderKind.PROXY_DELEGATE_CALL>,
-  ): Promise<ClearSignContext> {
+  canHandle(field: unknown): field is ProxyFieldInput {
+    return (
+      typeof field === "object" &&
+      field !== null &&
+      "kind" in field &&
+      field.kind === ContextFieldLoaderKind.PROXY_DELEGATE_CALL &&
+      "chainId" in field &&
+      "proxyAddress" in field &&
+      "calldata" in field &&
+      "challenge" in field &&
+      "deviceModelId" in field
+    );
+  }
+
+  async loadField(field: ProxyFieldInput): Promise<ClearSignContext> {
     const proxyDelegateCall = await this._proxyDataSource.getProxyDelegateCall({
       calldata: field.calldata,
       proxyAddress: field.proxyAddress,

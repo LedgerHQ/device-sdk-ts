@@ -49,12 +49,107 @@ describe("ProxyContextFieldLoader", () => {
     vi.resetAllMocks();
   });
 
-  describe("constructor", () => {
-    it("should initialize with correct kind", () => {
+  describe("canHandle", () => {
+    it("should return true for valid proxy field", () => {
+      // GIVEN
+      const validField = {
+        kind: ContextFieldLoaderKind.PROXY_DELEGATE_CALL,
+        chainId: 1,
+        proxyAddress: "0x1234567890abcdef",
+        calldata: "0xabcdef1234567890",
+        challenge: "test-challenge",
+        deviceModelId: DeviceModelId.STAX,
+      };
+
       // THEN
-      expect(proxyContextFieldLoader.kind).toBe(
-        ContextFieldLoaderKind.PROXY_DELEGATE_CALL,
-      );
+      expect(proxyContextFieldLoader.canHandle(validField)).toBe(true);
+    });
+
+    describe("should return false for invalid fields", () => {
+      const invalidFields = [
+        { name: "null", value: null },
+        { name: "undefined", value: undefined },
+        { name: "string", value: "invalid" },
+        { name: "number", value: 123 },
+        { name: "boolean", value: true },
+        { name: "array", value: [] },
+        { name: "empty object", value: {} },
+        {
+          name: "object missing kind",
+          value: {
+            chainId: 1,
+            proxyAddress: "0x123",
+            calldata: "0xabc",
+            challenge: "test",
+            deviceModelId: DeviceModelId.STAX,
+          },
+        },
+        {
+          name: "object missing chainId",
+          value: {
+            kind: ContextFieldLoaderKind.PROXY_DELEGATE_CALL,
+            proxyAddress: "0x123",
+            calldata: "0xabc",
+            challenge: "test",
+            deviceModelId: DeviceModelId.STAX,
+          },
+        },
+        {
+          name: "object missing proxyAddress",
+          value: {
+            kind: ContextFieldLoaderKind.PROXY_DELEGATE_CALL,
+            chainId: 1,
+            calldata: "0xabc",
+            challenge: "test",
+            deviceModelId: DeviceModelId.STAX,
+          },
+        },
+        {
+          name: "object missing calldata",
+          value: {
+            kind: ContextFieldLoaderKind.PROXY_DELEGATE_CALL,
+            chainId: 1,
+            proxyAddress: "0x123",
+            challenge: "test",
+            deviceModelId: DeviceModelId.STAX,
+          },
+        },
+        {
+          name: "object missing challenge",
+          value: {
+            kind: ContextFieldLoaderKind.PROXY_DELEGATE_CALL,
+            chainId: 1,
+            proxyAddress: "0x123",
+            calldata: "0xabc",
+            deviceModelId: DeviceModelId.STAX,
+          },
+        },
+        {
+          name: "object missing deviceModelId",
+          value: {
+            kind: ContextFieldLoaderKind.PROXY_DELEGATE_CALL,
+            chainId: 1,
+            proxyAddress: "0x123",
+            calldata: "0xabc",
+            challenge: "test",
+          },
+        },
+        {
+          name: "object with wrong kind",
+          value: {
+            kind: ContextFieldLoaderKind.TOKEN,
+            chainId: 1,
+            proxyAddress: "0x123",
+            calldata: "0xabc",
+            challenge: "test",
+            deviceModelId: DeviceModelId.STAX,
+          },
+        },
+      ];
+
+      test.each(invalidFields)("$name", ({ value }) => {
+        expect(proxyContextFieldLoader.canHandle(value)).toBe(false);
+      });
     });
   });
 

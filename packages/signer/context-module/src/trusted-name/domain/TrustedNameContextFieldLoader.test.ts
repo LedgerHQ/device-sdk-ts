@@ -31,12 +31,107 @@ describe("TrustedNameContextFieldLoader", () => {
     vi.resetAllMocks();
   });
 
-  describe("constructor", () => {
-    it("should initialize with correct kind", () => {
+  describe("canHandle", () => {
+    it("should return true for valid trusted name field", () => {
+      // GIVEN
+      const validField = {
+        kind: ContextFieldLoaderKind.TRUSTED_NAME,
+        chainId: 1,
+        address: "0x1234567890abcdef",
+        challenge: "test-challenge",
+        types: ["contract", "token"],
+        sources: ["ledger", "ens"],
+      };
+
       // THEN
-      expect(trustedNameContextFieldLoader.kind).toBe(
-        ContextFieldLoaderKind.TRUSTED_NAME,
-      );
+      expect(trustedNameContextFieldLoader.canHandle(validField)).toBe(true);
+    });
+
+    describe("should return false for invalid fields", () => {
+      const invalidFields = [
+        { name: "null", value: null },
+        { name: "undefined", value: undefined },
+        { name: "string", value: "invalid" },
+        { name: "number", value: 123 },
+        { name: "boolean", value: true },
+        { name: "array", value: [] },
+        { name: "empty object", value: {} },
+        {
+          name: "object missing kind",
+          value: {
+            chainId: 1,
+            address: "0x123",
+            challenge: "test",
+            types: ["contract"],
+            sources: ["ledger"],
+          },
+        },
+        {
+          name: "object missing chainId",
+          value: {
+            kind: ContextFieldLoaderKind.TRUSTED_NAME,
+            address: "0x123",
+            challenge: "test",
+            types: ["contract"],
+            sources: ["ledger"],
+          },
+        },
+        {
+          name: "object missing address",
+          value: {
+            kind: ContextFieldLoaderKind.TRUSTED_NAME,
+            chainId: 1,
+            challenge: "test",
+            types: ["contract"],
+            sources: ["ledger"],
+          },
+        },
+        {
+          name: "object missing challenge",
+          value: {
+            kind: ContextFieldLoaderKind.TRUSTED_NAME,
+            chainId: 1,
+            address: "0x123",
+            types: ["contract"],
+            sources: ["ledger"],
+          },
+        },
+        {
+          name: "object missing types",
+          value: {
+            kind: ContextFieldLoaderKind.TRUSTED_NAME,
+            chainId: 1,
+            address: "0x123",
+            challenge: "test",
+            sources: ["ledger"],
+          },
+        },
+        {
+          name: "object missing sources",
+          value: {
+            kind: ContextFieldLoaderKind.TRUSTED_NAME,
+            chainId: 1,
+            address: "0x123",
+            challenge: "test",
+            types: ["contract"],
+          },
+        },
+        {
+          name: "object with wrong kind",
+          value: {
+            kind: ContextFieldLoaderKind.TOKEN,
+            chainId: 1,
+            address: "0x123",
+            challenge: "test",
+            types: ["contract"],
+            sources: ["ledger"],
+          },
+        },
+      ];
+
+      test.each(invalidFields)("$name", ({ value }) => {
+        expect(trustedNameContextFieldLoader.canHandle(value)).toBe(false);
+      });
     });
   });
 

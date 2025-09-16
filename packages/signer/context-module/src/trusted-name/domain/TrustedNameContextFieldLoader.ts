@@ -8,25 +8,42 @@ import {
   ClearSignContext,
   ClearSignContextType,
 } from "@/shared/model/ClearSignContext";
-import { TransactionFieldContext } from "@/shared/model/TransactionFieldContext";
 import * as TrustedNameDataSource from "@/trusted-name/data/TrustedNameDataSource";
 import { trustedNameTypes } from "@/trusted-name/di/trustedNameTypes";
 
+type TrustedNameFieldInput = {
+  kind: ContextFieldLoaderKind.TRUSTED_NAME;
+  chainId: number;
+  address: string;
+  challenge: string;
+  types: string[];
+  sources: string[];
+};
+
 @injectable()
 export class TrustedNameContextFieldLoader
-  implements ContextFieldLoader<ContextFieldLoaderKind.TRUSTED_NAME>
+  implements ContextFieldLoader<TrustedNameFieldInput>
 {
-  kind: ContextFieldLoaderKind.TRUSTED_NAME =
-    ContextFieldLoaderKind.TRUSTED_NAME;
-
   constructor(
     @inject(trustedNameTypes.TrustedNameDataSource)
     private _dataSource: TrustedNameDataSource.TrustedNameDataSource,
   ) {}
 
-  async loadField(
-    field: TransactionFieldContext<ContextFieldLoaderKind.TRUSTED_NAME>,
-  ): Promise<ClearSignContext> {
+  canHandle(field: unknown): field is TrustedNameFieldInput {
+    return (
+      typeof field === "object" &&
+      field !== null &&
+      "kind" in field &&
+      field.kind === ContextFieldLoaderKind.TRUSTED_NAME &&
+      "chainId" in field &&
+      "address" in field &&
+      "challenge" in field &&
+      "types" in field &&
+      "sources" in field
+    );
+  }
+
+  async loadField(field: TrustedNameFieldInput): Promise<ClearSignContext> {
     const payload = await this._dataSource.getTrustedNamePayload({
       chainId: field.chainId,
       address: field.address,

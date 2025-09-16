@@ -8,23 +8,35 @@ import {
   type ClearSignContext,
   ClearSignContextType,
 } from "@/shared/model/ClearSignContext";
-import { type TransactionFieldContext } from "@/shared/model/TransactionFieldContext";
 import { type TokenDataSource } from "@/token/data/TokenDataSource";
 import { tokenTypes } from "@/token/di/tokenTypes";
 
+export type TokenFieldInput = {
+  kind: ContextFieldLoaderKind.TOKEN;
+  chainId: number;
+  address: string;
+};
+
 @injectable()
 export class TokenContextFieldLoader
-  implements ContextFieldLoader<ContextFieldLoaderKind.TOKEN>
+  implements ContextFieldLoader<TokenFieldInput>
 {
-  kind: ContextFieldLoaderKind.TOKEN = ContextFieldLoaderKind.TOKEN;
-
   constructor(
     @inject(tokenTypes.TokenDataSource) private _dataSource: TokenDataSource,
   ) {}
 
-  async loadField(
-    field: TransactionFieldContext<ContextFieldLoaderKind.TOKEN>,
-  ): Promise<ClearSignContext> {
+  canHandle(input: unknown): input is TokenFieldInput {
+    return (
+      typeof input === "object" &&
+      input !== null &&
+      "kind" in input &&
+      input.kind === ContextFieldLoaderKind.TOKEN &&
+      "chainId" in input &&
+      "address" in input
+    );
+  }
+
+  async loadField(field: TokenFieldInput): Promise<ClearSignContext> {
     const payload = await this._dataSource.getTokenInfosPayload({
       address: field.address,
       chainId: field.chainId,

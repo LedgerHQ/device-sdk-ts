@@ -14,10 +14,7 @@ import { type ExternalPluginContextLoader } from "./external-plugin/domain/Exter
 import { nftTypes } from "./nft/di/nftTypes";
 import { type NftContextLoader } from "./nft/domain/NftContextLoader";
 import { proxyTypes } from "./proxy/di/proxyTypes";
-import {
-  type ContextFieldLoader,
-  type ContextFieldLoaderKind,
-} from "./shared/domain/ContextFieldLoader";
+import { type ContextFieldLoader } from "./shared/domain/ContextFieldLoader";
 import { type ContextLoader } from "./shared/domain/ContextLoader";
 import {
   type ClearSignContext,
@@ -26,7 +23,6 @@ import {
 } from "./shared/model/ClearSignContext";
 import { type SolanaTransactionContext } from "./shared/model/SolanaTransactionContext";
 import { type TransactionContext } from "./shared/model/TransactionContext";
-import { type TransactionFieldContext } from "./shared/model/TransactionFieldContext";
 import { solanaContextTypes } from "./solana/di/solanaContextTypes";
 import { type SolanaContextLoader } from "./solana/domain/SolanaContextLoader";
 import { type SolanaTransactionContextResult } from "./solana/domain/solanaContextTypes";
@@ -53,7 +49,7 @@ export class DefaultContextModule implements ContextModule {
   private _typedDataLoader: TypedDataContextLoader;
   private _web3CheckLoader: Web3CheckContextLoader;
   private _solanaLoader: SolanaContextLoader;
-  private _fieldLoaders: ContextFieldLoader<ContextFieldLoaderKind>[];
+  private _fieldLoaders: ContextFieldLoader<unknown>[];
 
   constructor(args: ContextModuleConfig) {
     this._container = makeContainer({ config: args });
@@ -66,18 +62,16 @@ export class DefaultContextModule implements ContextModule {
     this._solanaLoader = args.customSolanaLoader ?? this._getSolanaLoader();
 
     this._fieldLoaders = [
-      this._container.get<ContextFieldLoader<ContextFieldLoaderKind.NFT>>(
-        nftTypes.NftContextFieldLoader,
-      ),
-      this._container.get<ContextFieldLoader<ContextFieldLoaderKind.TOKEN>>(
+      this._container.get<ContextFieldLoader>(nftTypes.NftContextFieldLoader),
+      this._container.get<ContextFieldLoader>(
         tokenTypes.TokenContextFieldLoader,
       ),
-      this._container.get<
-        ContextFieldLoader<ContextFieldLoaderKind.TRUSTED_NAME>
-      >(trustedNameTypes.TrustedNameContextFieldLoader),
-      this._container.get<
-        ContextFieldLoader<ContextFieldLoaderKind.PROXY_DELEGATE_CALL>
-      >(proxyTypes.ProxyContextFieldLoader),
+      this._container.get<ContextFieldLoader>(
+        trustedNameTypes.TrustedNameContextFieldLoader,
+      ),
+      this._container.get<ContextFieldLoader>(
+        proxyTypes.ProxyContextFieldLoader,
+      ),
     ];
   }
 
@@ -140,14 +134,12 @@ export class DefaultContextModule implements ContextModule {
     return responses.flat();
   }
 
-  public getFieldContext<T extends ContextFieldLoaderKind>(
-    field: TransactionFieldContext<T>,
-  ): Promise<ClearSignContext> {
-    const loader = this._fieldLoaders.find((l) => l.kind === field.kind);
+  public getFieldContext<TInput>(field: TInput): Promise<ClearSignContext> {
+    const loader = this._fieldLoaders.find((l) => l.canHandle(field));
     if (!loader) {
       return Promise.resolve({
         type: ClearSignContextType.ERROR,
-        error: new Error(`Loader not found for kind: ${field.kind}`),
+        error: new Error(`Loader not found for field: ${field}`),
       });
     }
     return loader.loadField(field);

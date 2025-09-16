@@ -27,10 +27,53 @@ describe("TokenContextFieldLoader", () => {
     vi.resetAllMocks();
   });
 
-  describe("constructor", () => {
-    it("should initialize with correct kind", () => {
+  describe("canHandle", () => {
+    it("should return true for valid token field", () => {
+      // GIVEN
+      const validField = {
+        kind: ContextFieldLoaderKind.TOKEN,
+        chainId: 1,
+        address: "0x1234567890abcdef",
+      };
+
       // THEN
-      expect(tokenContextFieldLoader.kind).toBe(ContextFieldLoaderKind.TOKEN);
+      expect(tokenContextFieldLoader.canHandle(validField)).toBe(true);
+    });
+
+    describe("should return false for invalid fields", () => {
+      const invalidFields = [
+        { name: "null", value: null },
+        { name: "undefined", value: undefined },
+        { name: "string", value: "invalid" },
+        { name: "number", value: 123 },
+        { name: "boolean", value: true },
+        { name: "array", value: [] },
+        { name: "empty object", value: {} },
+        {
+          name: "object missing kind",
+          value: { chainId: 1, address: "0x123" },
+        },
+        {
+          name: "object missing chainId",
+          value: { kind: ContextFieldLoaderKind.TOKEN, address: "0x123" },
+        },
+        {
+          name: "object missing address",
+          value: { kind: ContextFieldLoaderKind.TOKEN, chainId: 1 },
+        },
+        {
+          name: "object with wrong kind",
+          value: {
+            kind: ContextFieldLoaderKind.NFT,
+            chainId: 1,
+            address: "0x123",
+          },
+        },
+      ];
+
+      test.each(invalidFields)("$name", ({ value }) => {
+        expect(tokenContextFieldLoader.canHandle(value)).toBe(false);
+      });
     });
   });
 

@@ -6,7 +6,6 @@ import {
   ClearSignContextType,
   ContextFieldLoaderKind,
   type ContextModule,
-  type TransactionFieldContext,
   type TransactionSubset,
 } from "@ledgerhq/context-module";
 import {
@@ -107,7 +106,7 @@ export class BuildSubcontextsTask {
     // and we don't need to extract the value from the transaction
     // as it is already provided in the reference
     if (reference.value !== undefined) {
-      const transactionFieldContext: TransactionFieldContext = {
+      const transactionFieldContext = {
         kind:
           reference.type === ClearSignContextReferenceType.TOKEN
             ? ContextFieldLoaderKind.TOKEN

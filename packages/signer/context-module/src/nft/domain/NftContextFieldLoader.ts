@@ -10,22 +10,34 @@ import {
   type ClearSignContext,
   ClearSignContextType,
 } from "@/shared/model/ClearSignContext";
-import { type TransactionFieldContext } from "@/shared/model/TransactionFieldContext";
+
+type NftFieldInput = {
+  kind: ContextFieldLoaderKind.NFT;
+  chainId: number;
+  address: string;
+};
 
 @injectable()
 export class NftContextFieldLoader
-  implements ContextFieldLoader<ContextFieldLoaderKind.NFT>
+  implements ContextFieldLoader<NftFieldInput>
 {
-  kind: ContextFieldLoaderKind.NFT = ContextFieldLoaderKind.NFT;
-
   constructor(
     @inject(nftTypes.NftDataSource)
     private _dataSource: NftDataSource.NftDataSource,
   ) {}
 
-  async loadField(
-    field: TransactionFieldContext<ContextFieldLoaderKind.NFT>,
-  ): Promise<ClearSignContext> {
+  canHandle(field: unknown): field is NftFieldInput {
+    return (
+      typeof field === "object" &&
+      field !== null &&
+      "kind" in field &&
+      field.kind === ContextFieldLoaderKind.NFT &&
+      "chainId" in field &&
+      "address" in field
+    );
+  }
+
+  async loadField(field: NftFieldInput): Promise<ClearSignContext> {
     const payload = await this._dataSource.getNftInfosPayload({
       address: field.address,
       chainId: field.chainId,
