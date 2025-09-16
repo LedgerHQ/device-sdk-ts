@@ -29,7 +29,7 @@ export type ContextModuleConfig = {
   defaultFieldLoaders: boolean;
   customFieldLoaders: ContextFieldLoader[];
   customLoaders: ContextLoader[];
-  customTypedDataLoader?: TypedDataContextLoader;
+  customTypedDataLoaders: TypedDataContextLoader[];
   customWeb3CheckLoader?: Web3CheckContextLoader;
   customSolanaLoader?: SolanaContextLoader;
   originToken?: string;

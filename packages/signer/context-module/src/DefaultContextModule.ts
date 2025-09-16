@@ -48,7 +48,7 @@ import { makeContainer } from "./di";
 export class DefaultContextModule implements ContextModule {
   private _container: Container;
   private _loaders: ContextLoader[];
-  private _typedDataLoader: TypedDataContextLoader;
+  private _typedDataLoaders: TypedDataContextLoader[];
   private _web3CheckLoader: Web3CheckContextLoader;
   private _solanaLoader: SolanaContextLoader;
   private _fieldLoaders: ContextFieldLoader<unknown>[];
@@ -64,8 +64,9 @@ export class DefaultContextModule implements ContextModule {
       : [];
     this._fieldLoaders.push(...args.customFieldLoaders);
 
-    this._typedDataLoader =
-      args.customTypedDataLoader ?? this._getDefaultTypedDataLoader();
+    this._typedDataLoaders =
+      args.customTypedDataLoaders ?? this._getDefaultTypedDataLoaders();
+
     this._web3CheckLoader =
       args.customWeb3CheckLoader ?? this._getWeb3CheckLoader();
     this._solanaLoader = args.customSolanaLoader ?? this._getSolanaLoader();
@@ -114,10 +115,15 @@ export class DefaultContextModule implements ContextModule {
     ];
   }
 
-  private _getDefaultTypedDataLoader(): TypedDataContextLoader {
-    return this._container.get<TypedDataContextLoader>(
-      typedDataTypes.TypedDataContextLoader,
-    );
+  private _getDefaultTypedDataLoaders(): TypedDataContextLoader[] {
+    return [
+      this._container.get<TypedDataContextLoader>(
+        typedDataTypes.TypedDataContextLoader,
+      ),
+      this._container.get<TypedDataContextLoader>(
+        safeTypes.SafeTypedDataContextLoader,
+      ),
+    ];
   }
 
   private _getWeb3CheckLoader(): Web3CheckContextLoader {
@@ -176,14 +182,29 @@ export class DefaultContextModule implements ContextModule {
 
     return {
       type: ClearSignContextType.ERROR,
-      error: new Error(`No valid context found for field: ${field}`),
+      error: new Error(
+        `No valid context found for field: ${JSON.stringify(field)}`,
+      ),
     };
   }
 
   public async getTypedDataFilters(
     typedData: TypedDataContext,
   ): Promise<TypedDataClearSignContext> {
-    return this._typedDataLoader.load(typedData);
+    const contexts = await Promise.all(
+      this._typedDataLoaders.map((loader) => loader.load(typedData)),
+    );
+
+    const successContext = contexts.find((c) => c.type === "success");
+
+    if (successContext) {
+      return successContext;
+    }
+
+    return {
+      type: "error",
+      error: new Error("No valid context found for typed data"),
+    };
   }
 
   public async getWeb3Checks(

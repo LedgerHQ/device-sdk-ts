@@ -32,7 +32,7 @@ export const DEFAULT_CONFIG: ContextModuleConfig = {
   customLoaders: [],
   defaultFieldLoaders: true,
   customFieldLoaders: [],
-  customTypedDataLoader: undefined,
+  customTypedDataLoaders: [],
   customSolanaLoader: undefined,
 };
 
@@ -73,7 +73,7 @@ export class ContextModuleBuilder {
    * @returns this
    */
   addTypedDataLoader(loader: TypedDataContextLoader) {
-    this.config.customTypedDataLoader = loader;
+    this.config.customTypedDataLoaders.push(loader);
     return this;
   }
 

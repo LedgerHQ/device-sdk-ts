@@ -8,7 +8,6 @@ import {
   ClearSignContextType,
 } from "./shared/model/ClearSignContext";
 import { type TransactionContext } from "./shared/model/TransactionContext";
-import { type TypedDataContext } from "./shared/model/TypedDataContext";
 import type { TypedDataContextLoader } from "./typed-data/domain/TypedDataContextLoader";
 import { DefaultContextModule } from "./DefaultContextModule";
 
@@ -30,7 +29,7 @@ describe("DefaultContextModule", () => {
     defaultLoaders: false,
     defaultFieldLoaders: false,
     customFieldLoaders: [],
-    customTypedDataLoader: typedDataLoader,
+    customTypedDataLoaders: [typedDataLoader],
     cal: {
       url: "https://cal/v1",
       mode: "prod",
@@ -98,17 +97,6 @@ describe("DefaultContextModule", () => {
 
     expect(loader.load).toHaveBeenCalledTimes(2);
     expect(res).toEqual(responses.flat());
-  });
-
-  it("should call the typed data loader", async () => {
-    const contextModule = new DefaultContextModule({
-      ...defaultContextModuleConfig,
-      customTypedDataLoader: typedDataLoader,
-    });
-
-    await contextModule.getTypedDataFilters({} as TypedDataContext);
-
-    expect(typedDataLoader.load).toHaveBeenCalledTimes(1);
   });
 
   it("should return a web3 check context", async () => {
@@ -311,8 +299,202 @@ describe("DefaultContextModule", () => {
       expect(fieldLoader.loadField).toHaveBeenCalledWith(testField);
       expect(result).toEqual({
         type: ClearSignContextType.ERROR,
-        error: new Error(`No valid context found for field: ${testField}`),
+        error: new Error(
+          `No valid context found for field: ${JSON.stringify(testField)}`,
+        ),
       });
+    });
+  });
+
+  describe("getTypedDataFilters", () => {
+    const mockTypedDataContext = {
+      deviceModelId: DeviceModelId.STAX,
+      verifyingContract: "0x1234567890abcdef",
+      chainId: 1,
+      version: "v2" as const,
+      schema: {
+        EIP712Domain: [
+          { name: "name", type: "string" },
+          { name: "version", type: "string" },
+          { name: "chainId", type: "uint256" },
+        ],
+      },
+      fieldsValues: [{ path: "name", value: new Uint8Array([1, 2, 3]) }],
+      challenge: "test-challenge",
+    };
+
+    const mockSuccessContext = {
+      type: "success" as const,
+      messageInfo: {
+        displayName: "Test Message",
+        filtersCount: 1,
+        signature: "0xsignature",
+      },
+      filters: {},
+      trustedNamesAddresses: {},
+      tokens: {},
+      calldatas: {},
+    };
+
+    const mockErrorContext = {
+      type: "error" as const,
+      error: new Error("Loader failed"),
+    };
+
+    const typedDataLoaderStubBuilder = () => ({
+      load: vi.fn(),
+    });
+
+    it("should return success context when one loader returns success", async () => {
+      // GIVEN
+      const loader = typedDataLoaderStubBuilder();
+      vi.spyOn(loader, "load").mockResolvedValue(mockSuccessContext);
+
+      const contextModule = new DefaultContextModule({
+        ...defaultContextModuleConfig,
+        customTypedDataLoaders: [loader],
+      });
+
+      // WHEN
+      const result =
+        await contextModule.getTypedDataFilters(mockTypedDataContext);
+
+      // THEN
+      expect(loader.load).toHaveBeenCalledWith(mockTypedDataContext);
+      expect(result).toEqual(mockSuccessContext);
+    });
+
+    it("should return first success context when multiple loaders return success", async () => {
+      // GIVEN
+      const loader1 = typedDataLoaderStubBuilder();
+      const loader2 = typedDataLoaderStubBuilder();
+      const loader3 = typedDataLoaderStubBuilder();
+
+      const firstSuccessContext = {
+        ...mockSuccessContext,
+        messageInfo: {
+          ...mockSuccessContext.messageInfo,
+          displayName: "First Success",
+        },
+      };
+      const secondSuccessContext = {
+        ...mockSuccessContext,
+        messageInfo: {
+          ...mockSuccessContext.messageInfo,
+          displayName: "Second Success",
+        },
+      };
+
+      vi.spyOn(loader1, "load").mockResolvedValue(mockErrorContext);
+      vi.spyOn(loader2, "load").mockResolvedValue(firstSuccessContext);
+      vi.spyOn(loader3, "load").mockResolvedValue(secondSuccessContext);
+
+      const contextModule = new DefaultContextModule({
+        ...defaultContextModuleConfig,
+        customTypedDataLoaders: [loader1, loader2, loader3],
+      });
+
+      // WHEN
+      const result =
+        await contextModule.getTypedDataFilters(mockTypedDataContext);
+
+      // THEN
+      expect(loader1.load).toHaveBeenCalledWith(mockTypedDataContext);
+      expect(loader2.load).toHaveBeenCalledWith(mockTypedDataContext);
+      expect(loader3.load).toHaveBeenCalledWith(mockTypedDataContext);
+      expect(result).toEqual(firstSuccessContext);
+    });
+
+    it("should return error when no loaders return success", async () => {
+      // GIVEN
+      const loader1 = typedDataLoaderStubBuilder();
+      const loader2 = typedDataLoaderStubBuilder();
+
+      vi.spyOn(loader1, "load").mockResolvedValue(mockErrorContext);
+      vi.spyOn(loader2, "load").mockResolvedValue({
+        type: "error" as const,
+        error: new Error("Another error"),
+      });
+
+      const contextModule = new DefaultContextModule({
+        ...defaultContextModuleConfig,
+        customTypedDataLoaders: [loader1, loader2],
+      });
+
+      // WHEN
+      const result =
+        await contextModule.getTypedDataFilters(mockTypedDataContext);
+
+      // THEN
+      expect(loader1.load).toHaveBeenCalledWith(mockTypedDataContext);
+      expect(loader2.load).toHaveBeenCalledWith(mockTypedDataContext);
+      expect(result).toEqual({
+        type: "error",
+        error: new Error("No valid context found for typed data"),
+      });
+    });
+
+    it("should return error when all loaders return error", async () => {
+      // GIVEN
+      const loader = typedDataLoaderStubBuilder();
+      vi.spyOn(loader, "load").mockResolvedValue(mockErrorContext);
+
+      const contextModule = new DefaultContextModule({
+        ...defaultContextModuleConfig,
+        customTypedDataLoaders: [loader],
+      });
+
+      // WHEN
+      const result =
+        await contextModule.getTypedDataFilters(mockTypedDataContext);
+
+      // THEN
+      expect(loader.load).toHaveBeenCalledWith(mockTypedDataContext);
+      expect(result).toEqual({
+        type: "error",
+        error: new Error("No valid context found for typed data"),
+      });
+    });
+
+    it("should return error when no typed data loaders are configured", async () => {
+      // GIVEN
+      const contextModule = new DefaultContextModule({
+        ...defaultContextModuleConfig,
+        customTypedDataLoaders: [],
+      });
+
+      // WHEN
+      const result =
+        await contextModule.getTypedDataFilters(mockTypedDataContext);
+
+      // THEN
+      expect(result).toEqual({
+        type: "error",
+        error: new Error("No valid context found for typed data"),
+      });
+    });
+
+    it("should work with different typed data versions", async () => {
+      // GIVEN
+      const loader = typedDataLoaderStubBuilder();
+      vi.spyOn(loader, "load").mockResolvedValue(mockSuccessContext);
+
+      const contextModule = new DefaultContextModule({
+        ...defaultContextModuleConfig,
+        customTypedDataLoaders: [loader],
+      });
+
+      const v1Context = {
+        ...mockTypedDataContext,
+        version: "v1" as const,
+      };
+
+      // WHEN
+      const result = await contextModule.getTypedDataFilters(v1Context);
+
+      // THEN
+      expect(loader.load).toHaveBeenCalledWith(v1Context);
+      expect(result).toEqual(mockSuccessContext);
     });
   });
 });

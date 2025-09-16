@@ -47,7 +47,7 @@ describe("ContextModuleBuilder", () => {
     expect(res).toBeInstanceOf(DefaultContextModule);
   });
 
-  it("should return a custom context module with a custom typed data loader", () => {
+  it("should return a custom context module with custom typed data loaders", () => {
     const contextModuleBuilder = new ContextModuleBuilder(defaultBuilderArgs);
     const customLoader = { load: vi.fn() };
 
@@ -58,7 +58,7 @@ describe("ContextModuleBuilder", () => {
 
     expect(res).toBeInstanceOf(DefaultContextModule);
     // @ts-expect-error _typedDataLoader is private
-    expect(res["_typedDataLoader"]).toBe(customLoader);
+    expect(res["_typedDataLoaders"]).toEqual([customLoader]);
   });
 
   it("should return a custom context module with a custom config", () => {
