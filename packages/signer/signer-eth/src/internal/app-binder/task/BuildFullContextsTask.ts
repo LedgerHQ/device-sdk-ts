@@ -96,8 +96,10 @@ export class BuildFullContextsTask {
       });
 
     // recursively build the nested contexts
-    let contextWithNestedContexts: ContextWithSubContexts[] = [];
+    const contextWithNestedContexts: ContextWithSubContexts[] = [];
     for (const context of contextsWithSubContexts) {
+      contextWithNestedContexts.push(context);
+
       if (
         context.context.type ===
           ClearSignContextType.TRANSACTION_FIELD_DESCRIPTION &&
@@ -124,19 +126,12 @@ export class BuildFullContextsTask {
               this._preBuildNestedCallDataTaskFactory,
             ).run();
 
-          // TODO: this order will change with app optimizations
-          // currently the order is:
-          // previous contexts, nested transaction info and nested fields, calldata field from the parent,
-          // futurre order:
-          // previous contexts, nested transaction info, calldata field from the parent, then nested fields
-          contextWithNestedContexts = [
-            ...contextWithNestedContexts, // previous contexts
-            ...nestedContexts, // nested transaction info and nested fields
-            context, // calldatafield from the parent,
-          ];
+          // Contexts order as expected by the Ethereum application:
+          // * previous contexts
+          // * calldata field from the parent
+          // * list of nested transactions infos and nested fields
+          contextWithNestedContexts.push(...nestedContexts);
         }
-      } else {
-        contextWithNestedContexts.push(context);
       }
     }
 
