@@ -20,21 +20,13 @@ describe("DynamicNetworkContextLoader", () => {
     getDynamicNetworkConfiguration: vi.fn(),
   };
 
-  const mockConfig: ContextModuleConfig = {
+  const mockConfig = {
     cal: {
       url: "https://crypto-assets-service.api.ledger.com",
       mode: "prod",
       branch: "main",
     },
-    web3checks: {
-      url: "https://web3checks.api.ledger.com",
-    },
-    metadataServiceDomain: {
-      url: "https://metadata.api.ledger.com",
-    },
-    defaultLoaders: true,
-    customLoaders: [],
-  };
+  } as ContextModuleConfig;
 
   const mockCertificateLoader: PkiCertificateLoader = {
     loadCertificate: vi.fn(),
