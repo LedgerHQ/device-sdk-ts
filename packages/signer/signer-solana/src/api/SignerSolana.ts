@@ -6,11 +6,13 @@ import { type AddressOptions } from "@api/model/AddressOption";
 import { type MessageOptions } from "@api/model/MessageOptions";
 import { type Transaction } from "@api/model/Transaction";
 import { type TransactionOptions } from "@api/model/TransactionOptions";
+import { type TransactionResolutionContext } from "@api/model/TransactionResolutionContext";
 
 export interface SignerSolana {
   signTransaction: (
     derivationPath: string,
     transaction: Transaction,
+    resolutionContext?: TransactionResolutionContext,
     options?: TransactionOptions,
   ) => SignTransactionDAReturnType;
 

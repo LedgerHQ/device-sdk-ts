@@ -14,6 +14,7 @@ import { GetAppConfigurationDAReturnType } from "@api/app-binder/GetAppConfigura
 import { SignMessageDAReturnType } from "@api/app-binder/SignMessageDeviceActionTypes";
 import { SignTransactionDAReturnType } from "@api/app-binder/SignTransactionDeviceActionTypes";
 import { Transaction } from "@api/model/Transaction";
+import { TransactionResolutionContext } from "@api/model/TransactionResolutionContext";
 import { SendSignMessageTask } from "@internal/app-binder/task/SendSignMessageTask";
 import { externalTypes } from "@internal/externalTypes";
 
@@ -53,6 +54,7 @@ export class SolanaAppBinder {
   signTransaction(args: {
     derivationPath: string;
     transaction: Transaction;
+    resolutionContext?: TransactionResolutionContext;
     skipOpenApp: boolean;
   }): SignTransactionDAReturnType {
     return this.dmk.executeDeviceAction({
@@ -61,6 +63,7 @@ export class SolanaAppBinder {
         input: {
           derivationPath: args.derivationPath,
           transaction: args.transaction,
+          resolutionContext: args.resolutionContext,
           skipOpenApp: args.skipOpenApp,
           contextModule: this.contextModule,
         },

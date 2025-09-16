@@ -45,7 +45,7 @@ describe("GetAppConfigurationUseCase", () => {
     };
 
     // WHEN
-    useCase.execute(derivationPath, tx, opts);
+    useCase.execute(derivationPath, tx, undefined, opts);
 
     // THEN
     expect(signTransactionMock).toHaveBeenCalledWith({

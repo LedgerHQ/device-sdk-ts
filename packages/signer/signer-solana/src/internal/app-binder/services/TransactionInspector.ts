@@ -4,7 +4,7 @@ import {
   TOKEN_PROGRAM_ID,
 } from "@solana/spl-token";
 import {
-  Connection, // runtime import so we can instantiate it
+  Connection,
   type PublicKey,
   Transaction,
   TransactionInstruction,
@@ -48,12 +48,46 @@ const isSPLProgramId = (pid: PublicKey | undefined) =>
     pid.equals(TOKEN_2022_PROGRAM_ID));
 
 export class TransactionInspector {
-  constructor(private readonly rawTransactionBytes: Uint8Array) {}
+  constructor(
+    private readonly rawTransactionBytes: Uint8Array,
+    private readonly tokenAddress?: string | null,
+    private readonly createATA?: {
+      address: string;
+      mintAddress: string;
+    } | null,
+  ) {}
 
   public async inspectTransactionType(): Promise<TxInspectorResult> {
     try {
       const message = await this.normaliseMessage(this.rawTransactionBytes);
 
+      // If tokenAddress or createATA is provided, use those directly
+      // and only classify SPL vs Standard by scanning program IDs.
+      if (this.tokenAddress || this.createATA) {
+        const looksSPL = message.compiledInstructions.some((ix) =>
+          isSPLProgramId(message.allKeys[ix.programIdIndex]),
+        );
+
+        const data: TxInspectorResult["data"] = {};
+        if (this.tokenAddress) data.tokenAddress = this.tokenAddress;
+        if (this.createATA) {
+          data.createATA = this.createATA;
+          // If mint is known from createATA and caller didn't pass mintAddress explicitly,
+          // populate it so downstream UI has the same shape as decoder output.
+          if (!data.mintAddress && this.createATA.mintAddress) {
+            data.mintAddress = this.createATA.mintAddress;
+          }
+        }
+
+        return {
+          transactionType: looksSPL
+            ? SolanaTransactionTypes.SPL
+            : SolanaTransactionTypes.STANDARD,
+          data,
+        };
+      }
+
+      // Normal path: decode from the message
       for (const ixMeta of message.compiledInstructions) {
         const programId = message.allKeys[ixMeta.programIdIndex];
         if (!programId) continue;
@@ -205,7 +239,7 @@ export class TransactionInspector {
   }
 }
 
-/** Internal: fetch looked-up addresses for a VersionedMessage via the baked-in connection. */
+// fetch looked-up addresses for a VersionedMessage via the baked-in connection
 async function resolveLookedUpAddressesFromMessage(
   msg: VersionedMessage,
 ): Promise<LoadedAddresses | undefined> {

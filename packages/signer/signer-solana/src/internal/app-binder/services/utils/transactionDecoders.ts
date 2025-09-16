@@ -62,26 +62,66 @@ export const DECODERS: Decoder[] = [
   {
     when: ({ programId }) => programId.equals(ASSOCIATED_TOKEN_PROGRAM_ID),
     decode: ({ ixMeta, message }) => {
-      const accountPks = ixMeta.accountKeyIndexes
-        .map((i) => message.allKeys[i])
-        .filter(Boolean) as PublicKey[];
+      // Helpers to read by ix index safely
+      const byIdx = (n: number): PublicKey | null => {
+        const i = ixMeta.accountKeyIndexes[n];
+        return i !== undefined ? (message.allKeys[i] ?? null) : null;
+      };
 
-      // Canonical indices for create ATA:
-      // [0] payer, [1] ata, [2] owner, [3] mint, [4] system, [5] token program, [6] rent? (optional)
-      const ataPk = accountPks[1];
-      const ownerPk = accountPks[2];
-      const mintPk = accountPks[3];
-      const tokenProgramPk = accountPks[5];
+      // Common positions (fast path)
+      const ataPk = byIdx(1);
+      let ownerPk = byIdx(2);
+      let mintPk = byIdx(3);
 
-      // If ata is missing but we have owner+mint, derive it.
-      if (!ataPk && ownerPk && mintPk) {
-        const isToken2022 =
-          tokenProgramPk?.equals(TOKEN_2022_PROGRAM_ID) ?? false;
+      // Recover owner/mint if they weren't in the usual slots
+      if (!ownerPk || !mintPk) {
+        const afterFirstTwo = ixMeta.accountKeyIndexes.slice(2);
+        for (const k of afterFirstTwo) {
+          const pk = message.allKeys[k];
+          if (!pk) continue;
+          if (!ownerPk && pk !== ataPk) {
+            ownerPk = pk;
+            continue;
+          }
+          if (!mintPk && pk !== ataPk && pk !== ownerPk) {
+            mintPk = pk;
+          }
+          if (ownerPk && mintPk) break;
+        }
+      }
+
+      // Find token program by VALUE anywhere (works for legacy or 2022)
+      let tokenProgramPk: PublicKey | null = null;
+      for (const k of ixMeta.accountKeyIndexes) {
+        const pk = message.allKeys[k];
+        if (!pk) continue;
+        if (pk.equals(TOKEN_PROGRAM_ID) || pk.equals(TOKEN_2022_PROGRAM_ID)) {
+          tokenProgramPk = pk;
+          break;
+        }
+      }
+
+      // Need owner+mint at minimum
+      if (!ownerPk || !mintPk) return null;
+
+      // If ATA pubkey was provided in the ix, trust it
+      if (ataPk) {
+        return {
+          createATA: {
+            address: ataPk.toBase58(),
+            mintAddress: mintPk.toBase58(),
+          },
+        };
+      }
+
+      // If token program is present, derive deterministically
+      if (tokenProgramPk) {
+        const isV22 = tokenProgramPk.equals(TOKEN_2022_PROGRAM_ID);
         const derived = getAssociatedTokenAddressSync(
           mintPk,
           ownerPk,
-          true, // allowOwnerOffCurve: owners can be PDAs
-          isToken2022 ? TOKEN_2022_PROGRAM_ID : TOKEN_PROGRAM_ID,
+          true, // allowOwnerOffCurve
+          isV22 ? TOKEN_2022_PROGRAM_ID : TOKEN_PROGRAM_ID,
           ASSOCIATED_TOKEN_PROGRAM_ID,
         );
         return {
@@ -92,14 +132,8 @@ export const DECODERS: Decoder[] = [
         };
       }
 
-      return ataPk && mintPk
-        ? {
-            createATA: {
-              address: ataPk.toBase58(),
-              mintAddress: mintPk.toBase58(),
-            },
-          }
-        : null;
+      // No ATA + no token program → let outer logic decide (Token-2022 hint / ALT fetch / conservative)
+      return null;
     },
   },
 

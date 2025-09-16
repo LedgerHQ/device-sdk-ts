@@ -23,6 +23,7 @@ import {
 } from "@api/app-binder/SignTransactionDeviceActionTypes";
 import { type AppConfiguration } from "@api/model/AppConfiguration";
 import { type Signature } from "@api/model/Signature";
+import { type TransactionResolutionContext } from "@api/model/TransactionResolutionContext";
 import { GetAppConfigurationCommand } from "@internal/app-binder/command/GetAppConfigurationCommand";
 import { SignTransactionCommand } from "@internal/app-binder/command/SignTransactionCommand";
 import { type SolanaAppErrorCodes } from "@internal/app-binder/command/utils/SolanaApplicationErrors";
@@ -131,6 +132,9 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
         isAnSPLTransaction: ({ context }) =>
           context._internalState.inspectorResult?.transactionType ===
           SolanaTransactionTypes.SPL,
+        shouldSkipInspection: ({ context }) =>
+          context._internalState.error === null &&
+          !!context.input.resolutionContext,
       },
       actions: {
         assignErrorFromEvent: assign({
@@ -145,7 +149,6 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
         }),
       },
     }).createMachine({
-      /** @xstate-layout N4IgpgJg5mDOIC5QGUCWUB2AVATgQw1jwGMAXVAewwBEwA3VYsAQTMowDoBJDVcvADbJSeUmADEAbQAMAXUSgADhVh92CkAA9EARgDsAZg4AOPdL37pAFj1WArACYANCACeuh4Y46dxgGzSBnZ6AQZ6dgC+ES5omLgERGxUtAxMrORU3Lz8QiJiUjrySCDKqhkYGtoI+kam5pY29s5uujrSxhzSAJw+AcZWplZ+BlEx6Nj4hCTlKYwsSZwA8opgGMyKirNpC+IQVGAcqBh0FADWBxQraxvComAAsiQAFkdgMkVKKmpUlYjhOhw7F0bAYrAN9HZrC53NV2lZAV1AnYrGEul0wpFoiBYhMEtN2Ft5uUOABhJ5gYinZardabehzdLsABKcAArgJSFI5BpSt8KsUqjoDDoHJ0ug5jAY6jowbZoa0ZYDpHYfA59A47H4BqNseN4lMFoTGZkyRSqVdaUaFizYOzOZJCjyvuVftVhaLuhKpWYZY15QhjADpH4HAMQ0FzOEujqcfrEjN6dtiQBxMCkWkkqgAM3Qu32h2OZwOMHTG0zGBzUHeTrK6gFukDeg4fj04Slwbavis-pFAw4en6wSGfmRXWMMb1k3jBMTRPYHFTpcU5cr4jAOBwFBwHEUAlEWa3AFsOCWM9n0NXiryXfXqo3m627O2-J3+j20RwHIjhiHPAOrIEE5xFO+LJLOxqcIuZ4VugNp2qalJch8JTOnWoBVA4njwv0OiOFYaohNIwY9p4HR+GiGrGNYAEOEEQG4gaCapHOmRQWW55QHBHIIacBTIdeaFaIgmG2CYVi4aGBEBMRLQIKCQY6F0QIigY0iKdGWKxiBhrgQsWSwCsZBxqBGB5hgBxHCc5wFgZFKkMZCyXp8tY-LeEr4f2yKmGOwyGF0JHkRwYQGORxj+C2fgtvRDlMQyek8LZRnaeUa4bluO57qQB44MeRyJfZyXsE5KEufy6HCf0orhAMeg+cF-myfYXSfjYtgiphiLIn40WFWBzEQRwzBZmIOAJYZ9rcleqGueVcmYUYtFdC2spSphPYih0QxLX4gbCqCdiYmMwF4jp-V6UNI1jXZfE1nyroGPNn4GEttggsYa2yUK0iilYSkorRaqqQYIyaZOJ2xUm84XeuV1kFIDj8dNZVCXNtFPS9K3vc0MLSRwXQhFqkZKYpOg9eDM5ncSABCrKoAIEDlmImicns5kFlZBwAEa0-TjNgMzxUCTNKNhDYn5jqpA6guJB3rWjNiOARX74-YZOMRTcXUzzDNUEznLrpu267vuR4cNzdM6xgeuC0j922E2X6SuYkpgrhdj+hYzUONY-QK8Y4o7Wr059Zr84AAqbgwEBgHzzNmRZhbWYokeoNHsekDbpWuvhYWAp4in9Pj4r2OtWr9p4yIE-0YXjqDx3qyHkOZBHFBRzHuv8-raVG5l2XHsnrep+3Vud5nd23jnHSOJ7he1aG7uyf40h48Dr3CgdAGHbq9fBzQunEi3bfp1xpA8Uht03rNCvYQO3T+IMIbrRYJhLUC3syvtQcmVaB8p2nHfMxPmfB0iMs4T2qiYW+PkH7Y10ERUUkUHBam9GqZEIMjoMV3j-ecWlyZUHjuzIsHBVA7xMmPS+KNHCSiCsCMEAQfRjhIgObwL4vwahJqwr+p1Q6ZFwQ3UyBt0rGyyqbEhmCyGTWcuPWaVCjDPTBEMcwalGGfRFMvf2cIBwqk1L4LhEMWKcD4bvIB5JELkMElUYIyJvDBEijYF8wweyqQ6OYAIkJhT6DClvIx39944LBvwkxZobpTTATIiBuECb2J0I4z6SCEEFzsO9NErZAxRCxBgCg0d4DFB8dwpuyMhbIyqAAWj8P6Epdg8ZohqbUmpX49EawKVkNQghbhiAvhYxA+EArwnIm0b6SC1JmG8QErBfjMjUmuHSSmgkin3QOs2bo5hHDbXEjoHswZl5fkUphAZ-gkGNMbgY0kpjzQ0g2NgqgJ9OnC0FERZerZES7X2Z4dawZOiPjaMYTUoUjl71maxNM0FKy3OKboSEP0RQ+HCFY-GsDqioI4DVAI3skn-FGaQ-JJy2LLg4kEykYLXTew1J0B6L5HCr1qgYJh2yLAqnaL4XCwN-lXM4LDAqeDCm2zckMKpMSVK-RbCFZUJEnzIuGe-GqIRSZ13Ediga0NRqEHGkS28qkdotQOWGQMxgSKIhMH0A6oIgieAcKyiZnAaYW3Tmq2a0sqnkWRJqAYalgx6E2QazxIq1IDCBhawFnBD5D1taE6RIs-rNlWU+HwQRIrlNUe0Zs1cJTKk1GYbqcqYpNJOcG-+I9AFsm4mcu1KMwRKRMFjcILZgw-NLkYIYpgQqBkhHoUMAaeGGLGSZUtVRfr2G8PjKiwIwiYQRe1JsT4-rPVwuib6Hbml5PKAS04vbECjkeb9SlkklINRhCKD8Wpfb+13WqTNGDs3HIGsgVkxAmCwByVIihlixzwlahiFUQo926FUthX0iJ8K-Xmguk5ABRbua6EBAn6Mi1sH7Y3foQIYJsQR1n42VEKRw6SIhAA */
       id: "SignTransactionDeviceAction",
       initial: "InitialState",
       context: ({ input }) => ({
@@ -430,10 +433,13 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
 
     const inspectTransaction = async (arg0: {
       serializedTransaction: Uint8Array;
+      resolutionContext?: TransactionResolutionContext;
     }) =>
       Promise.resolve(
         new TransactionInspector(
           arg0.serializedTransaction,
+          arg0.resolutionContext?.tokenAddress || null,
+          arg0.resolutionContext?.createATA || null,
         ).inspectTransactionType(),
       );
 
