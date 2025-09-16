@@ -17,7 +17,7 @@ import {
   ClearSignContextType,
 } from "@/shared/model/ClearSignContext";
 
-type ProxyFieldInput = {
+export type ProxyFieldInput = {
   kind: ContextFieldLoaderKind.PROXY_DELEGATE_CALL;
   chainId: number;
   proxyAddress: string;

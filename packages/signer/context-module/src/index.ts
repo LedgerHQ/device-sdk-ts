@@ -11,6 +11,8 @@ export * from "./pki/model/KeyId";
 export * from "./pki/model/KeyUsage";
 export * from "./pki/model/PkiCertificate";
 export * from "./pki/model/PkiCertificateInfo";
+export * from "./safe/domain/SafeProxyContextFieldLoader";
+export * from "./safe/domain/SafeTransactionContextLoader";
 export * from "./shared/domain/ContextFieldLoader";
 export * from "./shared/domain/ContextLoader";
 export * from "./shared/model/ClearSignContext";

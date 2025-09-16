@@ -14,6 +14,8 @@ import { type ExternalPluginContextLoader } from "./external-plugin/domain/Exter
 import { nftTypes } from "./nft/di/nftTypes";
 import { type NftContextLoader } from "./nft/domain/NftContextLoader";
 import { proxyTypes } from "./proxy/di/proxyTypes";
+import { safeTypes } from "./safe/di/safeTypes";
+import { type SafeTransactionContextLoader } from "./safe/domain/SafeTransactionContextLoader";
 import { type ContextFieldLoader } from "./shared/domain/ContextFieldLoader";
 import { type ContextLoader } from "./shared/domain/ContextLoader";
 import {
@@ -81,6 +83,9 @@ export class DefaultContextModule implements ContextModule {
       this._container.get<ContextFieldLoader>(
         proxyTypes.ProxyContextFieldLoader,
       ),
+      this._container.get<ContextFieldLoader>(
+        safeTypes.SafeProxyContextFieldLoader,
+      ),
     ];
   }
 
@@ -102,6 +107,9 @@ export class DefaultContextModule implements ContextModule {
       ),
       this._container.get<DynamicNetworkContextLoader>(
         dynamicNetworkTypes.DynamicNetworkContextLoader,
+      ),
+      this._container.get<SafeTransactionContextLoader>(
+        safeTypes.SafeTransactionContextLoader,
       ),
     ];
   }
@@ -150,16 +158,26 @@ export class DefaultContextModule implements ContextModule {
     if (loaders.length === 0) {
       return Promise.resolve({
         type: ClearSignContextType.ERROR,
-        error: new Error(`Loader not found for field: ${field}`),
+        error: new Error(
+          `Loader not found for field: ${JSON.stringify(field)}`,
+        ),
       });
     }
+
     const contexts = await Promise.all(loaders.map((l) => l.loadField(field)));
-    return (
-      contexts[0] ?? {
-        type: ClearSignContextType.ERROR,
-        error: new Error(`Context not found for field: ${field}`),
-      }
+
+    const successContext = contexts.find(
+      (c) => c.type !== ClearSignContextType.ERROR,
     );
+
+    if (successContext) {
+      return successContext;
+    }
+
+    return {
+      type: ClearSignContextType.ERROR,
+      error: new Error(`No valid context found for field: ${field}`),
+    };
   }
 
   public async getTypedDataFilters(

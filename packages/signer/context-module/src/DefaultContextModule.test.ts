@@ -184,7 +184,9 @@ describe("DefaultContextModule", () => {
       expect(fieldLoader.loadField).not.toHaveBeenCalled();
       expect(result).toEqual({
         type: ClearSignContextType.ERROR,
-        error: new Error(`Loader not found for field: ${testField}`),
+        error: new Error(
+          `Loader not found for field: ${JSON.stringify(testField)}`,
+        ),
       });
     });
 
@@ -219,24 +221,31 @@ describe("DefaultContextModule", () => {
       // GIVEN
       const fieldLoader1 = fieldLoaderStubBuilder();
       const fieldLoader2 = fieldLoaderStubBuilder();
+      const fieldLoader3 = fieldLoaderStubBuilder();
 
       const mockContext1: ClearSignContext = {
-        type: ClearSignContextType.TOKEN,
-        payload: "first-payload",
+        type: ClearSignContextType.ERROR,
+        error: new Error("first-error"),
       };
       const mockContext2: ClearSignContext = {
         type: ClearSignContextType.NFT,
         payload: "second-payload",
       };
+      const mockContext3: ClearSignContext = {
+        type: ClearSignContextType.TOKEN,
+        payload: "third-payload",
+      };
 
       vi.spyOn(fieldLoader1, "canHandle").mockReturnValue(true);
       vi.spyOn(fieldLoader2, "canHandle").mockReturnValue(true);
+      vi.spyOn(fieldLoader3, "canHandle").mockReturnValue(true);
       vi.spyOn(fieldLoader1, "loadField").mockResolvedValue(mockContext1);
       vi.spyOn(fieldLoader2, "loadField").mockResolvedValue(mockContext2);
+      vi.spyOn(fieldLoader3, "loadField").mockResolvedValue(mockContext3);
 
       const contextModule = new DefaultContextModule({
         ...defaultContextModuleConfig,
-        customFieldLoaders: [fieldLoader1, fieldLoader2],
+        customFieldLoaders: [fieldLoader1, fieldLoader2, fieldLoader3],
       });
 
       const testField = { type: "multi", address: "0x123" };
@@ -247,37 +256,11 @@ describe("DefaultContextModule", () => {
       // THEN
       expect(fieldLoader1.canHandle).toHaveBeenCalledWith(testField);
       expect(fieldLoader2.canHandle).toHaveBeenCalledWith(testField);
+      expect(fieldLoader3.canHandle).toHaveBeenCalledWith(testField);
       expect(fieldLoader1.loadField).toHaveBeenCalledWith(testField);
       expect(fieldLoader2.loadField).toHaveBeenCalledWith(testField);
-      expect(result).toEqual(mockContext1); // Should return first context
-    });
-
-    it("should return fallback error when loader returns undefined context", async () => {
-      // GIVEN
-      const fieldLoader = fieldLoaderStubBuilder();
-
-      vi.spyOn(fieldLoader, "canHandle").mockReturnValue(true);
-      vi.spyOn(fieldLoader, "loadField").mockResolvedValue(
-        undefined as unknown as never,
-      );
-
-      const contextModule = new DefaultContextModule({
-        ...defaultContextModuleConfig,
-        customFieldLoaders: [fieldLoader],
-      });
-
-      const testField = { type: "empty", address: "0x123" };
-
-      // WHEN
-      const result = await contextModule.getFieldContext(testField);
-
-      // THEN
-      expect(fieldLoader.canHandle).toHaveBeenCalledWith(testField);
-      expect(fieldLoader.loadField).toHaveBeenCalledWith(testField);
-      expect(result).toEqual({
-        type: ClearSignContextType.ERROR,
-        error: new Error(`Context not found for field: ${testField}`),
-      });
+      expect(fieldLoader3.loadField).toHaveBeenCalledWith(testField);
+      expect(result).toEqual(mockContext2); // Should return first context
     });
 
     it("should handle loader rejection gracefully", async () => {
@@ -302,6 +285,34 @@ describe("DefaultContextModule", () => {
 
       expect(fieldLoader.canHandle).toHaveBeenCalledWith(testField);
       expect(fieldLoader.loadField).toHaveBeenCalledWith(testField);
+    });
+
+    it("should return error when all loaders return error", async () => {
+      // GIVEN
+      const fieldLoader = fieldLoaderStubBuilder();
+      vi.spyOn(fieldLoader, "canHandle").mockReturnValue(true);
+      vi.spyOn(fieldLoader, "loadField").mockResolvedValue({
+        type: ClearSignContextType.ERROR,
+        error: new Error("error"),
+      });
+
+      const contextModule = new DefaultContextModule({
+        ...defaultContextModuleConfig,
+        customFieldLoaders: [fieldLoader],
+      });
+
+      const testField = { type: "unknown" };
+
+      // WHEN
+      const result = await contextModule.getFieldContext(testField);
+
+      // THEN
+      expect(fieldLoader.canHandle).toHaveBeenCalledWith(testField);
+      expect(fieldLoader.loadField).toHaveBeenCalledWith(testField);
+      expect(result).toEqual({
+        type: ClearSignContextType.ERROR,
+        error: new Error(`No valid context found for field: ${testField}`),
+      });
     });
   });
 });

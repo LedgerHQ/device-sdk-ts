@@ -1,11 +1,12 @@
 import axios from "axios";
-import { inject, injectable } from "inversify";
+import { inject, injectable, unmanaged } from "inversify";
 import { Either, Left, Right } from "purify-ts";
 
 import { configTypes } from "@/config/di/configTypes";
 import { type ContextModuleConfig } from "@/config/model/ContextModuleConfig";
 import { type ProxyDelegateCall } from "@/proxy/model/ProxyDelegateCall";
 import { type ProxyImplementationAddress } from "@/proxy/model/ProxyImplementationAddress";
+import { ProxyResolver } from "@/proxy/model/ProxyResolver";
 import {
   LEDGER_CLIENT_VERSION_HEADER,
   LEDGER_ORIGIN_TOKEN_HEADER,
@@ -40,7 +41,11 @@ export interface ProxyDataSource {
 export class HttpProxyDataSource implements ProxyDataSource {
   constructor(
     @inject(configTypes.Config) private readonly config: ContextModuleConfig,
-  ) {}
+    @unmanaged()
+    readonly resolver?: ProxyResolver,
+  ) {
+    this.resolver = resolver ?? ProxyResolver.EXPLORER; // Default to EXPLORER if no resolver is provided
+  }
 
   public async getProxyDelegateCall({
     proxyAddress,
@@ -61,6 +66,7 @@ export class HttpProxyDataSource implements ProxyDataSource {
           proxy: proxyAddress,
           data: calldata,
           challenge,
+          resolver: this.resolver,
         },
       });
       dto = response.data;
