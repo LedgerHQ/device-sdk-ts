@@ -1,4 +1,5 @@
 import {
+  ContextFieldLoaderKind,
   type ContextModule,
   type TypedDataCalldataIndex,
   TypedDataCalldataParamPresence,
@@ -11,7 +12,6 @@ import {
   type ClearSignContextSuccess,
   ClearSignContextType,
 } from "@ledgerhq/context-module";
-import { ContextFieldLoaderKind } from "@ledgerhq/context-module/src/shared/domain/ContextFieldLoader.js";
 import type {
   CommandResult,
   InternalApi,

@@ -4,11 +4,11 @@ import {
   ClearSignContextReferenceType,
   type ClearSignContextSuccess,
   ClearSignContextType,
+  ContextFieldLoaderKind,
   type ContextModule,
   type TransactionFieldContext,
   type TransactionSubset,
 } from "@ledgerhq/context-module";
-import { ContextFieldLoaderKind } from "@ledgerhq/context-module/src/shared/domain/ContextFieldLoader.js";
 import {
   bufferToHexaString,
   type DeviceModelId,
