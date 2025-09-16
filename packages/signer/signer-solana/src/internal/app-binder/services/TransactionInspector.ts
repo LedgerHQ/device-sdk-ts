@@ -16,7 +16,6 @@ import { Buffer } from "buffer";
 import {
   DECODERS,
   type IxContext,
-  type TxInspectorResult,
 } from "@internal/app-binder/services/utils/transactionDecoders";
 
 export enum SolanaTransactionTypes {
@@ -35,9 +34,17 @@ export type NormalizedMessage = {
   allKeys: PublicKey[];
 };
 
+export interface TxInspectorResult {
+  transactionType: SolanaTransactionTypes;
+  data: {
+    tokenAddress?: string;
+    createATA?: { address: string; mintAddress: string };
+  };
+}
+
 type LoadedAddresses = { writable: PublicKey[]; readonly: PublicKey[] };
 
-const RPC_URL = "http://api.mainnet-beta.solana.com/";
+const RPC_URL = "https://api.mainnet-beta.solana.com/";
 
 const defaultConnection = new Connection(RPC_URL, { commitment: "confirmed" });
 
@@ -61,46 +68,40 @@ export class TransactionInspector {
     try {
       const message = await this.normaliseMessage(this.rawTransactionBytes);
 
-      // If tokenAddress or createATA is provided, use those directly
-      // and only classify SPL vs Standard by scanning program IDs.
+      // Fast path when hints are provided
       if (this.tokenAddress || this.createATA) {
         const looksSPL = message.compiledInstructions.some((ix) =>
           isSPLProgramId(message.allKeys[ix.programIdIndex]),
         );
-
-        const data: TxInspectorResult["data"] = {};
-        if (this.tokenAddress) data.tokenAddress = this.tokenAddress;
-        if (this.createATA) {
-          data.createATA = this.createATA;
-          // If mint is known from createATA and caller didn't pass mintAddress explicitly,
-          // populate it so downstream UI has the same shape as decoder output.
-          if (!data.mintAddress && this.createATA.mintAddress) {
-            data.mintAddress = this.createATA.mintAddress;
-          }
-        }
-
         return {
           transactionType: looksSPL
             ? SolanaTransactionTypes.SPL
             : SolanaTransactionTypes.STANDARD,
-          data,
+          data: {
+            ...(this.tokenAddress ? { tokenAddress: this.tokenAddress } : {}),
+            ...(this.createATA ? { createATA: this.createATA } : {}),
+          },
         };
       }
 
-      // Normal path: decode from the message
+      // Accumulate best data across all instructions
+      let sawSPL = false;
+      let best: TxInspectorResult["data"] = {};
+
       for (const ixMeta of message.compiledInstructions) {
         const programId = message.allKeys[ixMeta.programIdIndex];
         if (!programId) continue;
 
+        if (isSPLProgramId(programId)) sawSPL = true;
+
         const resolvedKeys = ixMeta.accountKeyIndexes
           .map((i) => message.allKeys[i])
-          .filter((key): key is PublicKey => !!key);
+          .filter((k): k is PublicKey => !!k);
 
-        // Build an instruction even with partial keys; decoders handle missing fields gracefully.
         const instruction = new TransactionInstruction({
           programId,
-          keys: resolvedKeys.map((key) => ({
-            pubkey: key,
+          keys: resolvedKeys.map((pk) => ({
+            pubkey: pk,
             isSigner: false,
             isWritable: false,
           })),
@@ -112,15 +113,27 @@ export class TransactionInspector {
         for (const decoder of DECODERS) {
           if (!decoder.when(ctx)) continue;
           const data = decoder.decode(ctx);
-          if (data) {
-            return { transactionType: SolanaTransactionTypes.SPL, data };
+          if (!data) continue;
+
+          // Prefer createATA (needed when destination ATA doesn’t exist yet)
+          if (data.createATA && !best.createATA) {
+            best = { ...best, createATA: data.createATA };
+          } else if (
+            data.tokenAddress &&
+            !best.tokenAddress &&
+            !best.createATA
+          ) {
+            best = { ...best, tokenAddress: data.tokenAddress };
           }
         }
-
-        if (isSPLProgramId(programId)) {
-          return { transactionType: SolanaTransactionTypes.SPL, data: {} };
-        }
       }
+
+      if (best.createATA)
+        return { transactionType: SolanaTransactionTypes.SPL, data: best };
+      if (best.tokenAddress)
+        return { transactionType: SolanaTransactionTypes.SPL, data: best };
+      if (sawSPL)
+        return { transactionType: SolanaTransactionTypes.SPL, data: {} };
 
       return { transactionType: SolanaTransactionTypes.STANDARD, data: {} };
     } catch {
@@ -130,7 +143,7 @@ export class TransactionInspector {
 
   /**
    * Normalise any tx (legacy or v0) into { compiledInstructions, allKeys }.
-   * For v0, we auto-fetch looked-up addresses from ALT(s) via the baked-in connection.
+   * For v0, auto-fetch looked-up addresses from ALT(s) via the baked-in connection.
    */
   private async normaliseMessage(
     rawBytes: Uint8Array,
@@ -230,7 +243,6 @@ export class TransactionInspector {
     } catch {
       try {
         const msg = VersionedMessage.deserialize(rawBytes);
-        // Wrap in a dummy VersionedTransaction-like shape just for uniform handling
         return { message: msg } as VersionedTransaction;
       } catch {
         return null;

@@ -13,7 +13,6 @@ import {
   decodeTransferCheckedInstruction,
   decodeTransferCheckedWithFeeInstruction,
   decodeTransferInstruction,
-  getAssociatedTokenAddressSync,
   TOKEN_2022_PROGRAM_ID,
   TOKEN_PROGRAM_ID,
 } from "@solana/spl-token";
@@ -22,17 +21,8 @@ import { type PublicKey, type TransactionInstruction } from "@solana/web3.js";
 import {
   type NormalizedCompiledIx,
   type NormalizedMessage,
-  type SolanaTransactionTypes,
+  type TxInspectorResult,
 } from "@internal/app-binder/services/TransactionInspector";
-
-export interface TxInspectorResult {
-  transactionType: SolanaTransactionTypes;
-  data: {
-    tokenAddress?: string;
-    mintAddress?: string;
-    createATA?: { address: string; mintAddress: string };
-  };
-}
 
 export type IxContext = {
   programId: PublicKey;
@@ -62,78 +52,22 @@ export const DECODERS: Decoder[] = [
   {
     when: ({ programId }) => programId.equals(ASSOCIATED_TOKEN_PROGRAM_ID),
     decode: ({ ixMeta, message }) => {
-      // Helpers to read by ix index safely
       const byIdx = (n: number): PublicKey | null => {
         const i = ixMeta.accountKeyIndexes[n];
         return i !== undefined ? (message.allKeys[i] ?? null) : null;
       };
 
-      // Common positions (fast path)
       const ataPk = byIdx(1);
-      let ownerPk = byIdx(2);
-      let mintPk = byIdx(3);
+      const ownerPk = byIdx(2);
+      const mintPk = byIdx(3);
+      if (!ownerPk || !mintPk || !ataPk) return null;
 
-      // Recover owner/mint if they weren't in the usual slots
-      if (!ownerPk || !mintPk) {
-        const afterFirstTwo = ixMeta.accountKeyIndexes.slice(2);
-        for (const k of afterFirstTwo) {
-          const pk = message.allKeys[k];
-          if (!pk) continue;
-          if (!ownerPk && pk !== ataPk) {
-            ownerPk = pk;
-            continue;
-          }
-          if (!mintPk && pk !== ataPk && pk !== ownerPk) {
-            mintPk = pk;
-          }
-          if (ownerPk && mintPk) break;
-        }
-      }
-
-      // Find token program by VALUE anywhere (works for legacy or 2022)
-      let tokenProgramPk: PublicKey | null = null;
-      for (const k of ixMeta.accountKeyIndexes) {
-        const pk = message.allKeys[k];
-        if (!pk) continue;
-        if (pk.equals(TOKEN_PROGRAM_ID) || pk.equals(TOKEN_2022_PROGRAM_ID)) {
-          tokenProgramPk = pk;
-          break;
-        }
-      }
-
-      // Need owner+mint at minimum
-      if (!ownerPk || !mintPk) return null;
-
-      // If ATA pubkey was provided in the ix, trust it
-      if (ataPk) {
-        return {
-          createATA: {
-            address: ataPk.toBase58(),
-            mintAddress: mintPk.toBase58(),
-          },
-        };
-      }
-
-      // If token program is present, derive deterministically
-      if (tokenProgramPk) {
-        const isV22 = tokenProgramPk.equals(TOKEN_2022_PROGRAM_ID);
-        const derived = getAssociatedTokenAddressSync(
-          mintPk,
-          ownerPk,
-          true, // allowOwnerOffCurve
-          isV22 ? TOKEN_2022_PROGRAM_ID : TOKEN_PROGRAM_ID,
-          ASSOCIATED_TOKEN_PROGRAM_ID,
-        );
-        return {
-          createATA: {
-            address: derived.toBase58(),
-            mintAddress: mintPk.toBase58(),
-          },
-        };
-      }
-
-      // No ATA + no token program → let outer logic decide (Token-2022 hint / ALT fetch / conservative)
-      return null;
+      return {
+        createATA: {
+          address: ataPk.toBase58(),
+          mintAddress: mintPk.toBase58(),
+        },
+      };
     },
   },
 
@@ -143,11 +77,10 @@ export const DECODERS: Decoder[] = [
     decode: ({ instruction, programId }) =>
       safe(() => {
         const {
-          keys: { destination, mint },
+          keys: { destination },
         } = decodeTransferCheckedWithFeeInstruction(instruction, programId);
         return {
           tokenAddress: destination.pubkey.toBase58(),
-          mintAddress: mint.pubkey.toBase58(),
         };
       }),
   },
@@ -168,11 +101,10 @@ export const DECODERS: Decoder[] = [
     decode: ({ instruction, programId }) =>
       safe(() => {
         const {
-          keys: { destination, mint },
+          keys: { destination },
         } = decodeTransferCheckedInstruction(instruction, programId);
         return {
           tokenAddress: destination.pubkey.toBase58(),
-          mintAddress: mint.pubkey.toBase58(),
         };
       }),
   },
@@ -262,11 +194,10 @@ export const DECODERS: Decoder[] = [
     decode: ({ instruction, programId }) =>
       safe(() => {
         const {
-          keys: { account, mint },
+          keys: { account },
         } = decodeBurnCheckedInstruction(instruction, programId);
         return {
           tokenAddress: account.pubkey.toBase58(),
-          mintAddress: mint.pubkey.toBase58(),
         };
       }),
   },
@@ -275,11 +206,10 @@ export const DECODERS: Decoder[] = [
     decode: ({ instruction, programId }) =>
       safe(() => {
         const {
-          keys: { account, mint },
+          keys: { account },
         } = decodeBurnInstruction(instruction, programId);
         return {
           tokenAddress: account.pubkey.toBase58(),
-          mintAddress: mint.pubkey.toBase58(),
         };
       }),
   },
@@ -290,11 +220,10 @@ export const DECODERS: Decoder[] = [
     decode: ({ instruction, programId }) =>
       safe(() => {
         const {
-          keys: { account, mint },
+          keys: { account },
         } = decodeFreezeAccountInstruction(instruction, programId);
         return {
           tokenAddress: account.pubkey.toBase58(),
-          mintAddress: mint.pubkey.toBase58(),
         };
       }),
   },
@@ -303,11 +232,10 @@ export const DECODERS: Decoder[] = [
     decode: ({ instruction, programId }) =>
       safe(() => {
         const {
-          keys: { account, mint },
+          keys: { account },
         } = decodeThawAccountInstruction(instruction, programId);
         return {
           tokenAddress: account.pubkey.toBase58(),
-          mintAddress: mint.pubkey.toBase58(),
         };
       }),
   },
@@ -318,6 +246,6 @@ export const DECODERS: Decoder[] = [
       programId.equals(ASSOCIATED_TOKEN_PROGRAM_ID) ||
       programId.equals(TOKEN_PROGRAM_ID) ||
       programId.equals(TOKEN_2022_PROGRAM_ID),
-    decode: () => ({}),
+    decode: () => null,
   },
 ];

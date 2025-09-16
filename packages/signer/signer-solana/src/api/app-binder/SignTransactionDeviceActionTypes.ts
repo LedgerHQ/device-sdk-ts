@@ -14,7 +14,7 @@ import { type Signature } from "@api/model/Signature";
 import { type Transaction } from "@api/model/Transaction";
 import { type TransactionResolutionContext } from "@api/model/TransactionResolutionContext";
 import { type SolanaAppErrorCodes } from "@internal/app-binder/command/utils/SolanaApplicationErrors";
-import { type TxInspectorResult } from "@internal/app-binder/services/utils/transactionDecoders";
+import { type TxInspectorResult } from "@internal/app-binder/services/TransactionInspector";
 
 export type SignTransactionDAOutput = Signature;
 

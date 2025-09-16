@@ -32,7 +32,7 @@ import {
   SolanaTransactionTypes,
   TransactionInspector,
 } from "@internal/app-binder/services/TransactionInspector";
-import { type TxInspectorResult } from "@internal/app-binder/services/utils/transactionDecoders";
+import { type TxInspectorResult } from "@internal/app-binder/services/TransactionInspector";
 import {
   BuildTransactionContextTask,
   type BuildTransactionContextTaskArgs,
