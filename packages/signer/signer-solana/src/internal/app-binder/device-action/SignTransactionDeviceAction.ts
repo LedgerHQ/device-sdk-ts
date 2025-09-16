@@ -56,6 +56,7 @@ export type MachineDependencies = {
   }) => Promise<Maybe<CommandErrorResult<SolanaAppErrorCodes>>>;
   readonly inspectTransaction: (arg0: {
     serializedTransaction: Uint8Array;
+    resolutionContext?: TransactionResolutionContext;
   }) => Promise<TxInspectorResult>;
   readonly signTransaction: (arg0: {
     input: {
@@ -109,10 +110,21 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
         openAppStateMachine: new OpenAppDeviceAction({
           input: { appName: "Solana" },
         }).makeStateMachine(internalApi),
+
         getAppConfig: fromPromise(getAppConfig),
         inspectTransaction: fromPromise(
-          ({ input }: { input: SignTransactionDAInput }) =>
-            inspectTransaction({ serializedTransaction: input.transaction }),
+          ({
+            input,
+          }: {
+            input: {
+              serializedTransaction: Uint8Array;
+              resolutionContext?: TransactionResolutionContext;
+            };
+          }) =>
+            inspectTransaction({
+              serializedTransaction: input.serializedTransaction,
+              resolutionContext: input.resolutionContext,
+            }),
         ),
         buildContext: fromPromise(buildContext),
         provideContext: fromPromise(provideContext),
@@ -245,9 +257,10 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
           invoke: {
             id: "inspectTransaction",
             src: "inspectTransaction",
+
             input: ({ context }) => ({
-              ...context.input,
               serializedTransaction: context.input.transaction,
+              resolutionContext: context.input.resolutionContext,
             }),
             onDone: {
               target: "AfterInspect",
@@ -438,8 +451,8 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
       Promise.resolve(
         new TransactionInspector(
           arg0.serializedTransaction,
-          arg0.resolutionContext?.tokenAddress || null,
-          arg0.resolutionContext?.createATA || null,
+          arg0.resolutionContext?.tokenAddress ?? null,
+          arg0.resolutionContext?.createATA ?? null,
         ).inspectTransactionType(),
       );
 
