@@ -2,6 +2,11 @@ import { DeviceModelId } from "@ledgerhq/device-management-kit";
 import { Left, Right } from "purify-ts";
 
 import { type ContextModuleConfig } from "./config/model/ContextModuleConfig";
+import { type ContextFieldLoader } from "./shared/domain/ContextFieldLoader";
+import {
+  type ClearSignContext,
+  ClearSignContextType,
+} from "./shared/model/ClearSignContext";
 import { type TransactionContext } from "./shared/model/TransactionContext";
 import { type TypedDataContext } from "./shared/model/TypedDataContext";
 import type { TypedDataContextLoader } from "./typed-data/domain/TypedDataContextLoader";
@@ -11,11 +16,20 @@ const contextLoaderStubBuilder = () => {
   return { load: vi.fn(), loadField: vi.fn() };
 };
 
+const fieldLoaderStubBuilder = (): ContextFieldLoader => {
+  return {
+    canHandle: vi.fn(),
+    loadField: vi.fn(),
+  };
+};
+
 describe("DefaultContextModule", () => {
   const typedDataLoader: TypedDataContextLoader = { load: vi.fn() };
   const defaultContextModuleConfig: ContextModuleConfig = {
     customLoaders: [],
     defaultLoaders: false,
+    defaultFieldLoaders: false,
+    customFieldLoaders: [],
     customTypedDataLoader: typedDataLoader,
     cal: {
       url: "https://cal/v1",
@@ -147,5 +161,147 @@ describe("DefaultContextModule", () => {
           originToken: undefined,
         }),
     ).toThrow("Origin token is required");
+  });
+
+  describe("getFieldContext", () => {
+    it("should return error when no loader can handle the field", async () => {
+      // GIVEN
+      const fieldLoader = fieldLoaderStubBuilder();
+      vi.spyOn(fieldLoader, "canHandle").mockReturnValue(false);
+
+      const contextModule = new DefaultContextModule({
+        ...defaultContextModuleConfig,
+        customFieldLoaders: [fieldLoader],
+      });
+
+      const testField = { type: "unknown" };
+
+      // WHEN
+      const result = await contextModule.getFieldContext(testField);
+
+      // THEN
+      expect(fieldLoader.canHandle).toHaveBeenCalledWith(testField);
+      expect(fieldLoader.loadField).not.toHaveBeenCalled();
+      expect(result).toEqual({
+        type: ClearSignContextType.ERROR,
+        error: new Error(`Loader not found for field: ${testField}`),
+      });
+    });
+
+    it("should return context when a loader can handle the field", async () => {
+      // GIVEN
+      const fieldLoader = fieldLoaderStubBuilder();
+      const mockContext: ClearSignContext = {
+        type: ClearSignContextType.TOKEN,
+        payload: "test-payload",
+      };
+
+      vi.spyOn(fieldLoader, "canHandle").mockReturnValue(true);
+      vi.spyOn(fieldLoader, "loadField").mockResolvedValue(mockContext);
+
+      const contextModule = new DefaultContextModule({
+        ...defaultContextModuleConfig,
+        customFieldLoaders: [fieldLoader],
+      });
+
+      const testField = { type: "token", address: "0x123" };
+
+      // WHEN
+      const result = await contextModule.getFieldContext(testField);
+
+      // THEN
+      expect(fieldLoader.canHandle).toHaveBeenCalledWith(testField);
+      expect(fieldLoader.loadField).toHaveBeenCalledWith(testField);
+      expect(result).toEqual(mockContext);
+    });
+
+    it("should return first context when multiple loaders can handle the field", async () => {
+      // GIVEN
+      const fieldLoader1 = fieldLoaderStubBuilder();
+      const fieldLoader2 = fieldLoaderStubBuilder();
+
+      const mockContext1: ClearSignContext = {
+        type: ClearSignContextType.TOKEN,
+        payload: "first-payload",
+      };
+      const mockContext2: ClearSignContext = {
+        type: ClearSignContextType.NFT,
+        payload: "second-payload",
+      };
+
+      vi.spyOn(fieldLoader1, "canHandle").mockReturnValue(true);
+      vi.spyOn(fieldLoader2, "canHandle").mockReturnValue(true);
+      vi.spyOn(fieldLoader1, "loadField").mockResolvedValue(mockContext1);
+      vi.spyOn(fieldLoader2, "loadField").mockResolvedValue(mockContext2);
+
+      const contextModule = new DefaultContextModule({
+        ...defaultContextModuleConfig,
+        customFieldLoaders: [fieldLoader1, fieldLoader2],
+      });
+
+      const testField = { type: "multi", address: "0x123" };
+
+      // WHEN
+      const result = await contextModule.getFieldContext(testField);
+
+      // THEN
+      expect(fieldLoader1.canHandle).toHaveBeenCalledWith(testField);
+      expect(fieldLoader2.canHandle).toHaveBeenCalledWith(testField);
+      expect(fieldLoader1.loadField).toHaveBeenCalledWith(testField);
+      expect(fieldLoader2.loadField).toHaveBeenCalledWith(testField);
+      expect(result).toEqual(mockContext1); // Should return first context
+    });
+
+    it("should return fallback error when loader returns undefined context", async () => {
+      // GIVEN
+      const fieldLoader = fieldLoaderStubBuilder();
+
+      vi.spyOn(fieldLoader, "canHandle").mockReturnValue(true);
+      vi.spyOn(fieldLoader, "loadField").mockResolvedValue(
+        undefined as unknown as never,
+      );
+
+      const contextModule = new DefaultContextModule({
+        ...defaultContextModuleConfig,
+        customFieldLoaders: [fieldLoader],
+      });
+
+      const testField = { type: "empty", address: "0x123" };
+
+      // WHEN
+      const result = await contextModule.getFieldContext(testField);
+
+      // THEN
+      expect(fieldLoader.canHandle).toHaveBeenCalledWith(testField);
+      expect(fieldLoader.loadField).toHaveBeenCalledWith(testField);
+      expect(result).toEqual({
+        type: ClearSignContextType.ERROR,
+        error: new Error(`Context not found for field: ${testField}`),
+      });
+    });
+
+    it("should handle loader rejection gracefully", async () => {
+      // GIVEN
+      const fieldLoader = fieldLoaderStubBuilder();
+      const loadError = new Error("Load field failed");
+
+      vi.spyOn(fieldLoader, "canHandle").mockReturnValue(true);
+      vi.spyOn(fieldLoader, "loadField").mockRejectedValue(loadError);
+
+      const contextModule = new DefaultContextModule({
+        ...defaultContextModuleConfig,
+        customFieldLoaders: [fieldLoader],
+      });
+
+      const testField = { type: "error", address: "0x123" };
+
+      // WHEN & THEN
+      await expect(contextModule.getFieldContext(testField)).rejects.toThrow(
+        "Load field failed",
+      );
+
+      expect(fieldLoader.canHandle).toHaveBeenCalledWith(testField);
+      expect(fieldLoader.loadField).toHaveBeenCalledWith(testField);
+    });
   });
 });

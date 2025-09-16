@@ -1,3 +1,4 @@
+import { type ContextFieldLoader } from "@/shared/domain/ContextFieldLoader";
 import { type ContextLoader } from "@/shared/domain/ContextLoader";
 import { type SolanaContextLoader } from "@/solana/domain/SolanaContextLoader";
 import { type TypedDataContextLoader } from "@/typed-data/domain/TypedDataContextLoader";
@@ -25,6 +26,8 @@ export type ContextModuleConfig = {
   web3checks: ContextModuleWeb3ChecksConfig;
   metadataServiceDomain: ContextModuleMetadataServiceConfig;
   defaultLoaders: boolean;
+  defaultFieldLoaders: boolean;
+  customFieldLoaders: ContextFieldLoader[];
   customLoaders: ContextLoader[];
   customTypedDataLoader?: TypedDataContextLoader;
   customWeb3CheckLoader?: Web3CheckContextLoader;
