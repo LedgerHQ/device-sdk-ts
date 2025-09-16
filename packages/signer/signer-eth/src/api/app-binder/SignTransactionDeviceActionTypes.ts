@@ -30,6 +30,7 @@ export enum SignTransactionDAStep {
   BUILD_CONTEXTS = "signer.eth.steps.buildContexts",
   PROVIDE_CONTEXTS = "signer.eth.steps.provideContexts",
   SIGN_TRANSACTION = "signer.eth.steps.signTransaction",
+  BLIND_SIGN_TRANSACTION_FALLBACK = "signer.eth.steps.blindSignTransactionFallback",
 }
 
 export type SignTransactionDAOutput = Signature;
