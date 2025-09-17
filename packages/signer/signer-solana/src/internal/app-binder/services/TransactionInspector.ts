@@ -68,7 +68,7 @@ export class TransactionInspector {
     try {
       const message = await this.normaliseMessage(this.rawTransactionBytes);
 
-      // Fast path when hints are provided
+      // fast path when hints are provided
       if (this.tokenAddress || this.createATA) {
         const looksSPL = message.compiledInstructions.some((ix) =>
           isSPLProgramId(message.allKeys[ix.programIdIndex]),
@@ -84,14 +84,13 @@ export class TransactionInspector {
         };
       }
 
-      // Accumulate best data across all instructions
+      // accumulate best data across all instructions
       let sawSPL = false;
       let best: TxInspectorResult["data"] = {};
 
       for (const ixMeta of message.compiledInstructions) {
         const programId = message.allKeys[ixMeta.programIdIndex];
-        if (!programId) continue;
-
+        if (!programId) continue; // unresolved index, skip
         if (isSPLProgramId(programId)) sawSPL = true;
 
         const resolvedKeys = ixMeta.accountKeyIndexes
@@ -115,7 +114,7 @@ export class TransactionInspector {
           const data = decoder.decode(ctx);
           if (!data) continue;
 
-          // Prefer createATA (needed when destination ATA doesn’t exist yet)
+          // prefer createATA (needed when destination ATA doesn’t exist yet)
           if (data.createATA && !best.createATA) {
             best = { ...best, createATA: data.createATA };
           } else if (
@@ -143,7 +142,7 @@ export class TransactionInspector {
 
   /**
    * Normalise any tx (legacy or v0) into { compiledInstructions, allKeys }.
-   * For v0, auto-fetch looked-up addresses from ALT(s) via the baked-in connection.
+   * For v0, auto-fetch looked-up addresses from ALT(s) via the connection.
    */
   private async normaliseMessage(
     rawBytes: Uint8Array,
@@ -167,17 +166,13 @@ export class TransactionInspector {
         staticAccountKeys: PublicKey[];
       };
 
-      const lookedUp = await resolveLookedUpAddressesFromMessage(msg);
+      const lookedUp = await this.resolveLookedUpAddressesFromMessage(msg);
 
-      let allKeys: PublicKey[];
-      if (typeof msg.getAccountKeys === "function") {
-        const messageAccountKeys = msg.getAccountKeys(
-          lookedUp ? { accountKeysFromLookups: lookedUp } : undefined,
-        );
-        allKeys = messageAccountKeys.keySegments().flat();
-      } else {
-        allKeys = [...msg.staticAccountKeys];
-      }
+      const allKeys: PublicKey[] = [
+        ...msg.staticAccountKeys,
+        ...(lookedUp?.writable ?? []),
+        ...(lookedUp?.readonly ?? []),
+      ];
 
       const compiledInstructions: NormalizedCompiledIx[] =
         msg.compiledInstructions.map((ix) => {
@@ -205,7 +200,7 @@ export class TransactionInspector {
       return { compiledInstructions, allKeys };
     }
 
-    // Legacy (no ALTs)
+    // legacy (no ALTs)
     const legacy = Transaction.from(rawBytes);
 
     const allKeyMap = new Map<string, PublicKey>();
@@ -249,23 +244,23 @@ export class TransactionInspector {
       }
     }
   }
-}
 
-// fetch looked-up addresses for a VersionedMessage via the baked-in connection
-async function resolveLookedUpAddressesFromMessage(
-  msg: VersionedMessage,
-): Promise<LoadedAddresses | undefined> {
-  const lookups = msg.addressTableLookups ?? [];
-  if (!lookups.length) return;
+  /**
+   * For v0, fetch looked-up addresses from ALT(s) via the connection
+   */
+  private async resolveLookedUpAddressesFromMessage(
+    msg: VersionedMessage,
+  ): Promise<LoadedAddresses | undefined> {
+    const lookups = msg.addressTableLookups ?? [];
+    if (!lookups.length) return;
 
-  const writable: PublicKey[] = [];
-  const readonly: PublicKey[] = [];
+    const writable: PublicKey[] = [];
+    const readonly: PublicKey[] = [];
 
-  await Promise.all(
-    lookups.map(async (lu) => {
+    for (const lu of lookups) {
       const res = await defaultConnection.getAddressLookupTable(lu.accountKey);
       const table = res.value;
-      if (!table) return;
+      if (!table) continue;
       const addrs = table.state.addresses;
 
       for (const i of lu.writableIndexes ?? []) {
@@ -276,8 +271,8 @@ async function resolveLookedUpAddressesFromMessage(
         const pk = addrs[i];
         if (pk) readonly.push(pk);
       }
-    }),
-  );
+    }
 
-  return { writable, readonly };
+    return { writable, readonly };
+  }
 }
