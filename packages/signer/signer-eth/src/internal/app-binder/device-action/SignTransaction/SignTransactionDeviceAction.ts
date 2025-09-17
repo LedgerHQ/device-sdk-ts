@@ -128,6 +128,10 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
       },
       guards: {
         noInternalError: ({ context }) => context._internalState.error === null,
+        notRefusedByUser: ({ context }) =>
+          context._internalState.error !== null &&
+          (!("errorCode" in context._internalState.error) ||
+            context._internalState.error.errorCode !== "6985"),
         isWeb3ChecksSupported: ({ context }) =>
           new ApplicationChecker(
             internalApi.getDeviceSessionState(),
@@ -477,7 +481,11 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
         SignTransactionResultCheck: {
           always: [
             { guard: "noInternalError", target: "Success" },
-            { target: "BlindSignTransactionFallback" },
+            {
+              guard: "notRefusedByUser",
+              target: "BlindSignTransactionFallback",
+            },
+            { target: "Error" },
           ],
         },
         BlindSignTransactionFallback: {

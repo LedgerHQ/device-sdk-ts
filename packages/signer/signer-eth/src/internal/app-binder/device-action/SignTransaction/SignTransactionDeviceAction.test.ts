@@ -874,5 +874,147 @@ describe("SignTransactionDeviceAction", () => {
         error: new Error("Blind sign transaction fallback failed"),
       });
     });
+
+    it("should return an error without trying blind sign fallback when user refuses transaction (error code 6985)", async () => {
+      setupOpenAppDAMock();
+      setupAppConfig("1.15.0", false, false);
+      const deviceAction = new SignTransactionDeviceAction({
+        input: {
+          derivationPath: "44'/60'/0'/0/0",
+          transaction: defaultTransaction,
+          options: defaultOptions,
+          contextModule: contextModuleMock,
+          mapper: mapperMock,
+          parser: parserMock,
+        },
+      });
+      vi.spyOn(deviceAction, "extractDependencies").mockReturnValue(
+        extractDependenciesMock(),
+      );
+      parseTransactionMock.mockResolvedValueOnce({
+        subset: defaultSubset,
+        type: TransactionType.EIP1559,
+      });
+      buildContextsMock.mockResolvedValueOnce({
+        clearSignContexts: [],
+        clearSignContextsOptional: [],
+        clearSigningType: ClearSigningType.BASIC,
+      });
+      provideContextsMock.mockResolvedValueOnce(Just(void 0));
+
+      // Create an error with the user refusal error code
+      const userRefusalError = new InvalidStatusWordError(
+        "User refused transaction",
+      );
+      (
+        userRefusalError as InvalidStatusWordError & { errorCode: string }
+      ).errorCode = "6985";
+
+      signTransactionMock.mockResolvedValueOnce(
+        CommandResultFactory({
+          error: userRefusalError,
+        }),
+      );
+      observable = deviceAction._execute(apiMock).observable;
+
+      // WHEN
+      const result = await lastValueFrom(observable);
+
+      // THEN
+      expect(result).toEqual({
+        status: DeviceActionStatus.Error,
+        error: userRefusalError,
+      });
+      // Verify that signTransaction was only called once (no blind sign fallback attempt)
+      expect(signTransactionMock).toHaveBeenCalledTimes(1);
+    });
+
+    it("should try blind sign fallback when error is not user refusal (different error code)", async () => {
+      setupOpenAppDAMock();
+      setupAppConfig("1.15.0", false, false);
+      const deviceAction = new SignTransactionDeviceAction({
+        input: {
+          derivationPath: "44'/60'/0'/0/0",
+          transaction: defaultTransaction,
+          options: defaultOptions,
+          contextModule: contextModuleMock,
+          mapper: mapperMock,
+          parser: parserMock,
+        },
+      });
+      vi.spyOn(deviceAction, "extractDependencies").mockReturnValue(
+        extractDependenciesMock(),
+      );
+      parseTransactionMock.mockResolvedValueOnce({
+        subset: defaultSubset,
+        type: TransactionType.EIP1559,
+      });
+      buildContextsMock.mockResolvedValueOnce({
+        clearSignContexts: [],
+        clearSignContextsOptional: [],
+        clearSigningType: ClearSigningType.EIP7730,
+      });
+      provideContextsMock.mockResolvedValueOnce(Just(void 0));
+
+      // Create an error with a different error code (not user refusal)
+      const otherError = new InvalidStatusWordError("Some other error");
+      (otherError as InvalidStatusWordError & { errorCode: string }).errorCode =
+        "6A80";
+
+      signTransactionMock.mockResolvedValueOnce(
+        CommandResultFactory({
+          error: otherError,
+        }),
+      );
+      signTransactionMock.mockResolvedValueOnce(
+        CommandResultFactory({
+          data: {
+            v: 0x1c,
+            r: "0x8a540510e13b0f2b11a451275716d29e08caad07e89a1c84964782fb5e1ad789",
+            s: "0x64a0de235b270fbe81e8e40688f4a9f9ad9d283d690552c9331d7773ceafa513",
+          },
+        }),
+      );
+      observable = deviceAction._execute(apiMock).observable;
+
+      // WHEN
+      const result = await lastValueFrom(observable);
+
+      // THEN
+      expect(result).toEqual({
+        status: DeviceActionStatus.Completed,
+        output: {
+          v: 0x1c,
+          r: "0x8a540510e13b0f2b11a451275716d29e08caad07e89a1c84964782fb5e1ad789",
+          s: "0x64a0de235b270fbe81e8e40688f4a9f9ad9d283d690552c9331d7773ceafa513",
+        },
+      });
+      // Verify that signTransaction was called twice (first attempt + blind sign fallback)
+      expect(signTransactionMock).toHaveBeenCalledTimes(2);
+      expect(signTransactionMock).toHaveBeenNthCalledWith(
+        1,
+        expect.objectContaining({
+          input: {
+            derivationPath: "44'/60'/0'/0/0",
+            serializedTransaction: defaultTransaction,
+            chainId: 1,
+            transactionType: TransactionType.EIP1559,
+            clearSigningType: ClearSigningType.EIP7730,
+          },
+        }),
+      );
+      expect(signTransactionMock).toHaveBeenNthCalledWith(
+        2,
+        expect.objectContaining({
+          input: {
+            derivationPath: "44'/60'/0'/0/0",
+            serializedTransaction: defaultTransaction,
+            chainId: 1,
+            transactionType: TransactionType.EIP1559,
+            clearSigningType: ClearSigningType.BASIC, // fallback to basic
+          },
+        }),
+      );
+    });
   });
 });
