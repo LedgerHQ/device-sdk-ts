@@ -84,6 +84,9 @@ export const SignerEthProvider: React.FC<PropsWithChildren> = ({
       .setCalConfig(calConfig)
       .setWeb3ChecksConfig(web3ChecksConfig)
       .setMetadataServiceConfig(metadataServiceDomain)
+      .setDatasourceConfig({
+        proxy: "safe",
+      })
       .build();
     const newSigner = new SignerEthBuilder({
       dmk,
