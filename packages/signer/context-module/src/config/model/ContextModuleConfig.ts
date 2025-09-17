@@ -21,6 +21,10 @@ export type ContextModuleMetadataServiceConfig = {
   url: string;
 };
 
+export type ContextModuleDatasourceConfig = {
+  proxy?: "safe" | "default";
+};
+
 export type ContextModuleConfig = {
   cal: ContextModuleCalConfig;
   web3checks: ContextModuleWeb3ChecksConfig;
@@ -33,4 +37,5 @@ export type ContextModuleConfig = {
   customWeb3CheckLoader?: Web3CheckContextLoader;
   customSolanaLoader?: SolanaContextLoader;
   originToken?: string;
+  datasource?: ContextModuleDatasourceConfig;
 };

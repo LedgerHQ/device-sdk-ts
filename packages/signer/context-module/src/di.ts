@@ -27,7 +27,7 @@ export const makeContainer = ({ config }: MakeContainerArgs) => {
     externalPluginModuleFactory(),
     dynamicNetworkModuleFactory(),
     nftModuleFactory(),
-    proxyModuleFactory(),
+    proxyModuleFactory(config),
     tokenModuleFactory(),
     transactionModuleFactory(),
     trustedNameModuleFactory(),
