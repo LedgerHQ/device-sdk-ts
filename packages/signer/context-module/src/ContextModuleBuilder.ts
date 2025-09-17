@@ -2,6 +2,7 @@ import { type ContextModuleConstructorArgs } from "./config/model/ContextModuleB
 import {
   type ContextModuleCalConfig,
   type ContextModuleConfig,
+  type ContextModuleDatasourceConfig,
   type ContextModuleMetadataServiceConfig,
   type ContextModuleWeb3ChecksConfig,
 } from "./config/model/ContextModuleConfig";
@@ -132,6 +133,17 @@ export class ContextModuleBuilder {
    */
   setWeb3ChecksConfig(web3ChecksConfig: ContextModuleWeb3ChecksConfig) {
     this.config.web3checks = web3ChecksConfig;
+    return this;
+  }
+
+  /**
+   * Add datasource configuration
+   *
+   * @param datasourceConfig
+   * @returns this
+   */
+  setDatasourceConfig(datasourceConfig: ContextModuleDatasourceConfig) {
+    this.config.datasource = datasourceConfig;
     return this;
   }
 
