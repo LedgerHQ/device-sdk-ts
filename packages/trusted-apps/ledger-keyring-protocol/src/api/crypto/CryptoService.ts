@@ -1,6 +1,4 @@
-import { Either } from "purify-ts";
-
-import { LKRPParsingError } from "@api/model/Errors";
+import { type DERSigTags } from "@internal/models/Tags";
 
 import { type Key } from "./Key";
 import { type KeyPair } from "./KeyPair";
@@ -19,11 +17,15 @@ export enum HashAlgo {
 }
 
 export type DecodedSignature = {
-  prefix: { tag: 0x30; len: number };
+  prefix: { tag: DERSigTags.SIGNATURE; len: number };
   r: DERComponent;
   s: DERComponent;
 };
-type DERComponent = { tag: 0x02; len: number; value: Uint8Array };
+type DERComponent = {
+  tag: DERSigTags.COMPONENT;
+  len: number;
+  value: Uint8Array;
+};
 
 export interface CryptoService {
   // Generate a random buffer
@@ -52,10 +54,8 @@ export interface CryptoService {
     message: Uint8Array,
     signature: Uint8Array,
     publicKey: Uint8Array,
-  ): Either<LKRPParsingError, boolean>;
+  ): boolean;
 
   // Decode a DER encoded signature
-  decodeSignature(
-    signature: Uint8Array,
-  ): Either<LKRPParsingError, DecodedSignature>;
+  decodeSignature(signature: Uint8Array): DecodedSignature;
 }

@@ -1,8 +1,8 @@
+import { numToHexaString } from "@ledgerhq/device-management-kit";
 import { randomBytes } from "@noble/ciphers/webcrypto";
 import { secp256k1 } from "@noble/curves/secp256k1.js";
 import { hmac } from "@noble/hashes/hmac";
 import { sha256 } from "@noble/hashes/sha256";
-import { Either, Left, Right } from "purify-ts";
 
 import {
   type CryptoService,
@@ -14,7 +14,7 @@ import {
 import { type Key } from "@api/crypto/Key";
 import { type KeyPair } from "@api/crypto/KeyPair";
 import { LKRPParsingError } from "@api/model/Errors";
-import { numToHex } from "@internal/utils/log";
+import { DERSigTags } from "@internal/models/Tags";
 
 import { NobleKey } from "./NobleKey";
 import { NobleKeyPair } from "./NobleKeyPair";
@@ -64,63 +64,54 @@ export class NobleCryptoService implements CryptoService {
     message: Uint8Array,
     signature: Uint8Array,
     publicKey: Uint8Array,
-  ): Either<LKRPParsingError, boolean> {
-    return this.decodeSignature(signature)
-      .chain(({ r, s }) => {
-        const compactSig = Uint8Array.from([...r.value, ...s.value]);
-        return Either.encase(() =>
-          secp256k1.verify(compactSig, message, publicKey, {
-            prehash: false,
-          }),
-        );
-      })
-      .mapLeft((error) => new LKRPParsingError(String(error)));
+  ): boolean {
+    const { r, s } = this.decodeSignature(signature);
+    const compactSig = Uint8Array.from([...r.value, ...s.value]);
+    return secp256k1.verify(compactSig, message, publicKey, {
+      prehash: false,
+    });
   }
 
   /**
    * Signature DER format:
    * [0x30 totalLength 0x02 rLength ...R 0x02 sLength ...S]
    */
-  decodeSignature(
-    signature: Uint8Array,
-  ): Either<LKRPParsingError, DecodedSignature> {
+  decodeSignature(signature: Uint8Array): DecodedSignature {
     const [derTag, len, rTag, rLen, ...restA] = signature;
-    const r = formatComponent(restA.slice(0, rLen));
+    const r = this.formatDERComponent(restA.slice(0, rLen));
     const [sTag, sLen, ...restB] = restA.slice(rLen);
-    const s = formatComponent(restB.slice(0, sLen));
+    const s = this.formatDERComponent(restB.slice(0, sLen));
 
     if (
-      derTag !== 0x30 ||
-      rTag !== 0x02 ||
-      sTag !== 0x02 ||
+      derTag !== DERSigTags.SIGNATURE ||
+      rTag !== DERSigTags.COMPONENT ||
+      sTag !== DERSigTags.COMPONENT ||
       !len ||
       !rLen ||
       !sLen
     ) {
-      return Left(
-        new LKRPParsingError(
-          `Invalid Signature format: ${[derTag, len, rTag, "...R", sTag, "...L"]
-            .map((x) => (typeof x === "number" ? numToHex(x) : String(x)))
-            .join(" ")}`,
-        ),
+      throw new LKRPParsingError(
+        `Invalid Signature format: ${[derTag, len, rTag, "...R", sTag, "...L"]
+          .map((x) => (typeof x === "number" ? numToHexaString(x) : String(x)))
+          .join(" ")}`,
       );
     }
 
-    return Right({
+    return {
       prefix: { tag: derTag, len: len },
       r: { tag: rTag, len: rLen, value: r },
       s: { tag: sTag, len: sLen, value: s },
-    });
+    };
+  }
 
-    function formatComponent(arr: number[]): Uint8Array {
-      const diff = PRIVATE_KEY_SIZE - arr.length;
-      if (diff < 0) {
-        return Uint8Array.from(arr.slice(-diff)); // truncate extra bytes from the start
-      } else if (diff > 0) {
-        const leadingZeros = Array.from({ length: diff }, () => 0);
-        return Uint8Array.from([...leadingZeros, ...arr]);
-      }
-      return Uint8Array.from(arr);
+  private formatDERComponent(arr: number[]): Uint8Array {
+    const diff = PRIVATE_KEY_SIZE - arr.length;
+    if (diff < 0) {
+      return Uint8Array.from(arr.slice(-diff)); // truncate extra bytes from the start
+    } else if (diff > 0) {
+      const leadingZeros = Array.from({ length: diff }, () => 0);
+      return Uint8Array.from([...leadingZeros, ...arr]);
     }
+    return Uint8Array.from(arr);
   }
 }

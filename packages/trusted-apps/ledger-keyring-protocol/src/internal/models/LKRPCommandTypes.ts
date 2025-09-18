@@ -1,5 +1,5 @@
 import { type CommandTags } from "./Tags";
-import { DataToParsedSegment } from "./Types";
+import { type DataToParsedSegment } from "./Types";
 
 export type LKRPCommandData = Seed | AddMember | PublishKey | Derive;
 

@@ -2,11 +2,12 @@ import {
   bufferToHexaString,
   ByteArrayBuilder,
   hexaStringToBuffer,
+  numToHexaString,
 } from "@ledgerhq/device-management-kit";
 import { Either, Just, Left, type Maybe, Nothing, Right } from "purify-ts";
 
 import { type CryptoService, HashAlgo } from "@api/crypto/CryptoService";
-import { type LKRPParsingError } from "@api/model/Errors";
+import { LKRPParsingError } from "@api/model/Errors";
 import {
   type LKRPBlockData,
   type LKRPBlockParsedData,
@@ -14,7 +15,6 @@ import {
 } from "@internal/models/LKRPBlockTypes";
 import { GeneralTags } from "@internal/models/Tags";
 
-import { numToHex } from "./log";
 import { TLVParser } from "./TLVParser";
 
 export class LKRPBlock {
@@ -105,20 +105,20 @@ export class LKRPBlock {
   }
 
   toHuman(): Either<string, string> {
-    return this.parse()
+    return this._parse()
       .mapLeft(
         (err) => err.originalError?.toString() ?? "Unknown parsing error",
       )
-      .chain((data) => {
+      .chain(({ data }) => {
         const hash = this.hash();
         const hex = this.toString();
-        const commands = data.commands.map((cmd) => cmd.toHuman());
-        const sig = this.cryptoService
-          .decodeSignature(data.signature.slice(2))
-          .mapLeft((err) => [
-            String(err.originalError),
-            `Invalid Signature: ${bufferToHexaString(data.signature, false)}`,
-          ]);
+        const commands = data.commands.value.map((cmd) => cmd.toHuman());
+        const sig = Either.encase(() =>
+          this.cryptoService.decodeSignature(data.signature.value),
+        ).mapLeft((err) => [
+          String("originalError" in err ? err.originalError : String(err)),
+          `Invalid Signature: ${bufferToHexaString(data.signature.value, false)}`,
+        ]);
         const isVerified = this.verifySignature().mapLeft(() => false);
 
         return Either.sequence(commands)
@@ -132,15 +132,15 @@ export class LKRPBlock {
             indentLines([
               `Hex: ${hex}`,
               `data:${indentLines([
-                `Parent(${data.parent.length / 2}): ${data.parent}`,
-                `Issuer(${data.issuer.length}): ${bufferToHexaString(data.issuer, false)}`,
+                `Parent(${data.parent.value.length / 2}): ${data.parent.value}`,
+                `Issuer(${data.issuer.value.length}): ${bufferToHexaString(data.issuer.value, false)}`,
                 `Commands(${cmds.length}):${indentLines(cmds)}`,
                 `Signature${indentLines(
                   sig
                     .map(({ prefix, r, s }) => [
-                      `${numToHex(prefix.tag)}(${prefix.len})`,
-                      `${numToHex(r.tag)}(${r.len}): ${bufferToHexaString(r.value, false)}`,
-                      `${numToHex(s.tag)}(${s.len}): ${bufferToHexaString(s.value, false)}`,
+                      `${numToHexaString(prefix.tag)}(${prefix.len})`,
+                      `${numToHexaString(r.tag)}(${r.len}): ${bufferToHexaString(r.value, false)}`,
+                      `${numToHexaString(s.tag)}(${s.len}): ${bufferToHexaString(s.value, false)}`,
                     ])
                     .extract(),
                 )}`,
@@ -166,10 +166,19 @@ export class LKRPBlock {
         unsignedBlock,
         HashAlgo.SHA256,
       );
-      return this.cryptoService.verify(
-        unsignedBlockHash,
-        parsed.data.signature.value,
-        parsed.data.issuer.value,
+      return Either.encase(() =>
+        this.cryptoService.verify(
+          unsignedBlockHash,
+          parsed.data.signature.value,
+          parsed.data.issuer.value,
+        ),
+      ).mapLeft(
+        (error) =>
+          new LKRPParsingError(
+            String(
+              "originalError" in error ? error.originalError : String(error),
+            ),
+          ),
       );
     });
   }

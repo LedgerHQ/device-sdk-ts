@@ -120,4 +120,5 @@ export {
   bufferToHexaString,
   hexaStringToBuffer,
   isHexaString,
+  numToHexaString,
 } from "@api/utils/HexaString";
