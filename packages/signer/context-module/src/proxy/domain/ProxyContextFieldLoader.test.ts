@@ -5,14 +5,13 @@ import { type PkiCertificateLoader } from "@/pki/domain/PkiCertificateLoader";
 import { KeyId } from "@/pki/model/KeyId";
 import { KeyUsage } from "@/pki/model/KeyUsage";
 import { type PkiCertificate } from "@/pki/model/PkiCertificate";
-import { type ProxyDataSource } from "@/proxy/data/HttpProxyDataSource";
+import { type ProxyDataSource } from "@/proxy/data/ProxyDataSource";
 import { ProxyContextFieldLoader } from "@/proxy/domain/ProxyContextFieldLoader";
 import { type ProxyDelegateCall } from "@/proxy/model/ProxyDelegateCall";
 import { ClearSignContextType } from "@/shared/model/ClearSignContext";
 
 describe("ProxyContextFieldLoader", () => {
   const mockProxyDataSource: ProxyDataSource = {
-    getProxyDelegateCall: vi.fn(),
     getProxyImplementationAddress: vi.fn(),
   };
   const mockCertificateLoader: PkiCertificateLoader = {
@@ -32,7 +31,7 @@ describe("ProxyContextFieldLoader", () => {
   };
 
   const mockProxyDelegateCall: ProxyDelegateCall = {
-    delegateAddresses: ["0x987654321fedcba0"],
+    implementationAddress: "0x987654321fedcba0",
     signedDescriptor: "0x123456789abcdef0",
   };
 
@@ -145,16 +144,19 @@ describe("ProxyContextFieldLoader", () => {
     it("should return error context when proxy data source fails", async () => {
       // GIVEN
       const error = new Error("Proxy data source error");
-      vi.spyOn(mockProxyDataSource, "getProxyDelegateCall").mockResolvedValue(
-        Left(error),
-      );
+      vi.spyOn(
+        mockProxyDataSource,
+        "getProxyImplementationAddress",
+      ).mockResolvedValue(Left(error));
 
       // WHEN
       const result =
         await proxyContextFieldLoader.loadField(mockTransactionField);
 
       // THEN
-      expect(mockProxyDataSource.getProxyDelegateCall).toHaveBeenCalledWith({
+      expect(
+        mockProxyDataSource.getProxyImplementationAddress,
+      ).toHaveBeenCalledWith({
         calldata: mockTransactionField.calldata,
         proxyAddress: mockTransactionField.proxyAddress,
         chainId: mockTransactionField.chainId,
@@ -169,9 +171,10 @@ describe("ProxyContextFieldLoader", () => {
 
     it("should return proxy delegate call context when successful", async () => {
       // GIVEN
-      vi.spyOn(mockProxyDataSource, "getProxyDelegateCall").mockResolvedValue(
-        Right(mockProxyDelegateCall),
-      );
+      vi.spyOn(
+        mockProxyDataSource,
+        "getProxyImplementationAddress",
+      ).mockResolvedValue(Right(mockProxyDelegateCall));
       vi.spyOn(mockCertificateLoader, "loadCertificate").mockResolvedValue(
         mockCertificate,
       );
@@ -181,7 +184,9 @@ describe("ProxyContextFieldLoader", () => {
         await proxyContextFieldLoader.loadField(mockTransactionField);
 
       // THEN
-      expect(mockProxyDataSource.getProxyDelegateCall).toHaveBeenCalledWith({
+      expect(
+        mockProxyDataSource.getProxyImplementationAddress,
+      ).toHaveBeenCalledWith({
         calldata: mockTransactionField.calldata,
         proxyAddress: mockTransactionField.proxyAddress,
         chainId: mockTransactionField.chainId,
@@ -201,9 +206,10 @@ describe("ProxyContextFieldLoader", () => {
 
     it("should return proxy delegate call context with undefined certificate when certificate loading returns undefined", async () => {
       // GIVEN
-      vi.spyOn(mockProxyDataSource, "getProxyDelegateCall").mockResolvedValue(
-        Right(mockProxyDelegateCall),
-      );
+      vi.spyOn(
+        mockProxyDataSource,
+        "getProxyImplementationAddress",
+      ).mockResolvedValue(Right(mockProxyDelegateCall));
       vi.spyOn(mockCertificateLoader, "loadCertificate").mockResolvedValue(
         undefined,
       );
@@ -213,7 +219,9 @@ describe("ProxyContextFieldLoader", () => {
         await proxyContextFieldLoader.loadField(mockTransactionField);
 
       // THEN
-      expect(mockProxyDataSource.getProxyDelegateCall).toHaveBeenCalledWith({
+      expect(
+        mockProxyDataSource.getProxyImplementationAddress,
+      ).toHaveBeenCalledWith({
         calldata: mockTransactionField.calldata,
         proxyAddress: mockTransactionField.proxyAddress,
         chainId: mockTransactionField.chainId,
@@ -237,9 +245,10 @@ describe("ProxyContextFieldLoader", () => {
         ...mockTransactionField,
         deviceModelId: DeviceModelId.NANO_X,
       };
-      vi.spyOn(mockProxyDataSource, "getProxyDelegateCall").mockResolvedValue(
-        Right(mockProxyDelegateCall),
-      );
+      vi.spyOn(
+        mockProxyDataSource,
+        "getProxyImplementationAddress",
+      ).mockResolvedValue(Right(mockProxyDelegateCall));
       vi.spyOn(mockCertificateLoader, "loadCertificate").mockResolvedValue(
         mockCertificate,
       );
@@ -269,9 +278,10 @@ describe("ProxyContextFieldLoader", () => {
         calldata: "0xcafebabe",
         challenge: "custom-challenge",
       };
-      vi.spyOn(mockProxyDataSource, "getProxyDelegateCall").mockResolvedValue(
-        Right(mockProxyDelegateCall),
-      );
+      vi.spyOn(
+        mockProxyDataSource,
+        "getProxyImplementationAddress",
+      ).mockResolvedValue(Right(mockProxyDelegateCall));
       vi.spyOn(mockCertificateLoader, "loadCertificate").mockResolvedValue(
         mockCertificate,
       );
@@ -280,7 +290,9 @@ describe("ProxyContextFieldLoader", () => {
       const result = await proxyContextFieldLoader.loadField(customField);
 
       // THEN
-      expect(mockProxyDataSource.getProxyDelegateCall).toHaveBeenCalledWith({
+      expect(
+        mockProxyDataSource.getProxyImplementationAddress,
+      ).toHaveBeenCalledWith({
         calldata: "0xcafebabe",
         proxyAddress: "0xdeadbeef",
         chainId: 137,
@@ -295,9 +307,10 @@ describe("ProxyContextFieldLoader", () => {
 
     it("should handle certificate loading failure gracefully", async () => {
       // GIVEN
-      vi.spyOn(mockProxyDataSource, "getProxyDelegateCall").mockResolvedValue(
-        Right(mockProxyDelegateCall),
-      );
+      vi.spyOn(
+        mockProxyDataSource,
+        "getProxyImplementationAddress",
+      ).mockResolvedValue(Right(mockProxyDelegateCall));
       vi.spyOn(mockCertificateLoader, "loadCertificate").mockRejectedValue(
         new Error("Certificate loading failed"),
       );
@@ -307,16 +320,19 @@ describe("ProxyContextFieldLoader", () => {
         proxyContextFieldLoader.loadField(mockTransactionField),
       ).rejects.toThrow("Certificate loading failed");
 
-      expect(mockProxyDataSource.getProxyDelegateCall).toHaveBeenCalled();
+      expect(
+        mockProxyDataSource.getProxyImplementationAddress,
+      ).toHaveBeenCalled();
       expect(mockCertificateLoader.loadCertificate).toHaveBeenCalled();
     });
 
     it("should preserve error message from proxy data source", async () => {
       // GIVEN
       const specificError = new Error("Network timeout error");
-      vi.spyOn(mockProxyDataSource, "getProxyDelegateCall").mockResolvedValue(
-        Left(specificError),
-      );
+      vi.spyOn(
+        mockProxyDataSource,
+        "getProxyImplementationAddress",
+      ).mockResolvedValue(Left(specificError));
 
       // WHEN
       const result =
@@ -335,9 +351,10 @@ describe("ProxyContextFieldLoader", () => {
         ...mockProxyDelegateCall,
         signedDescriptor: "",
       };
-      vi.spyOn(mockProxyDataSource, "getProxyDelegateCall").mockResolvedValue(
-        Right(proxyCallWithEmptyDescriptor),
-      );
+      vi.spyOn(
+        mockProxyDataSource,
+        "getProxyImplementationAddress",
+      ).mockResolvedValue(Right(proxyCallWithEmptyDescriptor));
       vi.spyOn(mockCertificateLoader, "loadCertificate").mockResolvedValue(
         mockCertificate,
       );
