@@ -53,15 +53,24 @@ export class DefaultContextModule implements ContextModule {
 
   constructor(args: ContextModuleConfig) {
     this._container = makeContainer({ config: args });
+
     this._loaders = args.defaultLoaders ? this._getDefaultLoaders() : [];
     this._loaders.push(...args.customLoaders);
+
+    this._fieldLoaders = args.defaultFieldLoaders
+      ? this._getDefaultFieldLoaders()
+      : [];
+    this._fieldLoaders.push(...args.customFieldLoaders);
+
     this._typedDataLoader =
       args.customTypedDataLoader ?? this._getDefaultTypedDataLoader();
     this._web3CheckLoader =
       args.customWeb3CheckLoader ?? this._getWeb3CheckLoader();
     this._solanaLoader = args.customSolanaLoader ?? this._getSolanaLoader();
+  }
 
-    this._fieldLoaders = [
+  private _getDefaultFieldLoaders(): ContextFieldLoader[] {
+    return [
       this._container.get<ContextFieldLoader>(nftTypes.NftContextFieldLoader),
       this._container.get<ContextFieldLoader>(
         tokenTypes.TokenContextFieldLoader,
@@ -134,20 +143,35 @@ export class DefaultContextModule implements ContextModule {
     return responses.flat();
   }
 
-  public getFieldContext<TInput>(
+  public async getFieldContext<TInput>(
     field: TInput,
     expectedType: ClearSignContextType,
   ): Promise<ClearSignContext> {
-    const loader = this._fieldLoaders.find((l) =>
+    const loaders = this._fieldLoaders.filter((l) =>
       l.canHandle(field, expectedType),
     );
-    if (!loader) {
+    if (loaders.length === 0) {
       return Promise.resolve({
         type: ClearSignContextType.ERROR,
-        error: new Error(`Loader not found for field: ${field}`),
+        error: new Error(
+          `Loader not found for field: ${field} and expected type: ${expectedType}`,
+        ),
       });
     }
-    return loader.loadField(field);
+
+    for (const loader of loaders) {
+      const context = await loader.loadField(field);
+      if (context.type !== ClearSignContextType.ERROR) {
+        return context;
+      }
+    }
+
+    return {
+      type: ClearSignContextType.ERROR,
+      error: new Error(
+        `Loader not found for field: ${field} and expected type: ${expectedType}`,
+      ),
+    };
   }
 
   public async getTypedDataFilters(
