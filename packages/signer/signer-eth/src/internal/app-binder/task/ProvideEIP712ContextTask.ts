@@ -1,5 +1,4 @@
 import {
-  ContextFieldLoaderKind,
   type ContextModule,
   type TypedDataCalldataIndex,
   TypedDataCalldataParamPresence,
@@ -415,14 +414,16 @@ export class ProvideEIP712ContextTask {
           return Just(getChallengeResult);
         }
 
-        const context = await this.contextModule.getFieldContext({
-          kind: ContextFieldLoaderKind.TRUSTED_NAME,
-          chainId: this.chainId.extract(),
-          address,
-          challenge: getChallengeResult.data.challenge,
-          types: filter.types,
-          sources: filter.sources,
-        });
+        const context = await this.contextModule.getFieldContext(
+          {
+            chainId: this.chainId.extract(),
+            address,
+            challenge: getChallengeResult.data.challenge,
+            types: filter.types,
+            sources: filter.sources,
+          },
+          ClearSignContextType.TRUSTED_NAME,
+        );
         if (context.type === ClearSignContextType.TRUSTED_NAME) {
           if (context.certificate) {
             await this.api.sendCommand(

@@ -1,38 +1,53 @@
 import { inject, injectable } from "inversify";
 
-import {
-  ContextFieldLoader,
-  ContextFieldLoaderKind,
-} from "@/shared/domain/ContextFieldLoader";
+import { ContextFieldLoader } from "@/shared/domain/ContextFieldLoader";
 import {
   ClearSignContext,
   ClearSignContextType,
 } from "@/shared/model/ClearSignContext";
-import { TransactionFieldContext } from "@/shared/model/TransactionFieldContext";
 import * as TrustedNameDataSource from "@/trusted-name/data/TrustedNameDataSource";
 import { trustedNameTypes } from "@/trusted-name/di/trustedNameTypes";
 
+type TrustedNameFieldInput = {
+  chainId: number;
+  address: string;
+  challenge: string;
+  types: string[];
+  sources: string[];
+};
+
 @injectable()
 export class TrustedNameContextFieldLoader
-  implements ContextFieldLoader<ContextFieldLoaderKind.TRUSTED_NAME>
+  implements ContextFieldLoader<TrustedNameFieldInput>
 {
-  kind: ContextFieldLoaderKind.TRUSTED_NAME =
-    ContextFieldLoaderKind.TRUSTED_NAME;
-
   constructor(
     @inject(trustedNameTypes.TrustedNameDataSource)
     private _dataSource: TrustedNameDataSource.TrustedNameDataSource,
   ) {}
 
-  async loadField(
-    field: TransactionFieldContext<ContextFieldLoaderKind.TRUSTED_NAME>,
-  ): Promise<ClearSignContext> {
+  canHandle(
+    input: unknown,
+    expectedType: ClearSignContextType,
+  ): input is TrustedNameFieldInput {
+    return (
+      expectedType === ClearSignContextType.TRUSTED_NAME &&
+      typeof input === "object" &&
+      input !== null &&
+      "chainId" in input &&
+      "address" in input &&
+      "challenge" in input &&
+      "types" in input &&
+      "sources" in input
+    );
+  }
+
+  async loadField(input: TrustedNameFieldInput): Promise<ClearSignContext> {
     const payload = await this._dataSource.getTrustedNamePayload({
-      chainId: field.chainId,
-      address: field.address,
-      challenge: field.challenge,
-      types: field.types,
-      sources: field.sources,
+      chainId: input.chainId,
+      address: input.address,
+      challenge: input.challenge,
+      types: input.types,
+      sources: input.sources,
     });
     return payload.caseOf({
       Left: (error): ClearSignContext => ({
