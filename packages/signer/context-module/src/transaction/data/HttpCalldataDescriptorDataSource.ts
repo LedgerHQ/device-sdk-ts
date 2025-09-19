@@ -46,35 +46,39 @@ import {
   CalldataTransactionInfoV1,
 } from "./dto/CalldataDto";
 import {
-  GetTransactionDescriptorsParams,
-  TransactionDataSource,
-} from "./TransactionDataSource";
+  CalldataDescriptorDataSource,
+  GetCalldataDescriptorsParams,
+} from "./CalldataDescriptorDataSource";
 
 @injectable()
-export class HttpTransactionDataSource implements TransactionDataSource {
+export class HttpCalldataDescriptorDataSource
+  implements CalldataDescriptorDataSource
+{
   constructor(
     @inject(configTypes.Config) private readonly config: ContextModuleConfig,
     @inject(pkiTypes.PkiCertificateLoader)
     private readonly _certificateLoader: PkiCertificateLoader,
+    private readonly endpoint: string,
   ) {}
 
-  public async getTransactionDescriptors({
+  public async getCalldataDescriptors({
     chainId,
     address,
     selector,
     deviceModelId,
-  }: GetTransactionDescriptorsParams): Promise<
+  }: GetCalldataDescriptorsParams): Promise<
     Either<Error, ClearSignContextSuccess[]>
   > {
     let dto: CalldataDto[] | undefined;
     try {
       const response = await axios.request<CalldataDto[]>({
         method: "GET",
-        url: `${this.config.cal.url}/dapps`,
+        url: `${this.config.cal.url}/${this.endpoint}`,
         params: {
           output: "descriptors_calldata",
           chain_id: chainId,
-          contracts: address,
+          contracts: address, // used for dapps
+          contract_address: address, // used for tokens
           ref: `branch:${this.config.cal.branch}`,
         },
         headers: {
@@ -86,7 +90,7 @@ export class HttpTransactionDataSource implements TransactionDataSource {
     } catch (error) {
       return Left(
         new Error(
-          `[ContextModule] HttpTransactionDataSource: Failed to fetch transaction informations: ${error}`,
+          `[ContextModule] HttpCalldataDescriptorDataSource: Failed to fetch calldata descriptors: ${error}`,
         ),
       );
     }
@@ -94,7 +98,7 @@ export class HttpTransactionDataSource implements TransactionDataSource {
     if (!Array.isArray(dto)) {
       return Left(
         new Error(
-          `[ContextModule] HttpTransactionDataSource: Response is not an array`,
+          `[ContextModule] HttpCalldataDescriptorDataSource: Response is not an array`,
         ),
       );
     }
@@ -102,7 +106,7 @@ export class HttpTransactionDataSource implements TransactionDataSource {
     if (dto.length === 0) {
       return Left(
         new Error(
-          `[ContextModule] HttpTransactionDataSource: No data for contract ${address} and selector ${selector}`,
+          `[ContextModule] HttpCalldataDescriptorDataSource: No data for contract ${address} and selector ${selector}`,
         ),
       );
     }
@@ -177,7 +181,7 @@ export class HttpTransactionDataSource implements TransactionDataSource {
 
     return Left(
       new Error(
-        `[ContextModule] HttpTransactionDataSource: Invalid response for contract ${address} and selector ${selector}`,
+        `[ContextModule] HttpCalldataDescriptorDataSource: Invalid response for contract ${address} and selector ${selector}`,
       ),
     );
   }

@@ -4,20 +4,25 @@ import { Left, Right } from "purify-ts";
 import type { ProxyDataSource } from "@/proxy/data/ProxyDataSource";
 import { ClearSignContextType } from "@/shared/model/ClearSignContext";
 import type { TransactionContext } from "@/shared/model/TransactionContext";
-import type { TransactionDataSource } from "@/transaction/data/TransactionDataSource";
+import type { CalldataDescriptorDataSource } from "@/transaction/data/CalldataDescriptorDataSource";
 import { TransactionContextLoader } from "@/transaction/domain/TransactionContextLoader";
 
 describe("TransactionContextLoader", () => {
-  const getTransactionDescriptorsMock = vi.fn();
   const getProxyImplementationAddress = vi.fn();
-  const mockTransactionDataSource: TransactionDataSource = {
-    getTransactionDescriptors: getTransactionDescriptorsMock,
+  const getDappDescriptorsMock = vi.fn();
+  const getTokenDescriptorsMock = vi.fn();
+  const mockDappDataSource: CalldataDescriptorDataSource = {
+    getCalldataDescriptors: getDappDescriptorsMock,
+  };
+  const mockTokenDataSource: CalldataDescriptorDataSource = {
+    getCalldataDescriptors: getTokenDescriptorsMock,
   };
   const mockProxyDatasource: ProxyDataSource = {
     getProxyImplementationAddress: getProxyImplementationAddress,
   };
   const loader = new TransactionContextLoader(
-    mockTransactionDataSource,
+    mockDappDataSource,
+    mockTokenDataSource,
     mockProxyDatasource,
   );
 
@@ -72,7 +77,7 @@ describe("TransactionContextLoader", () => {
     getProxyImplementationAddress.mockResolvedValue(
       Left(new Error("data source error")),
     );
-    getTransactionDescriptorsMock.mockResolvedValue(
+    getDappDescriptorsMock.mockResolvedValue(
       Left(new Error("data source error")),
     );
     const transaction = {
@@ -86,7 +91,7 @@ describe("TransactionContextLoader", () => {
     const result = await loader.load(transaction);
 
     // THEN
-    expect(getTransactionDescriptorsMock).toHaveBeenCalledWith({
+    expect(getDappDescriptorsMock).toHaveBeenCalledWith({
       address: "0x7",
       chainId: 3,
       selector: "0xaf68b302",
@@ -103,7 +108,7 @@ describe("TransactionContextLoader", () => {
 
   it("should return the contexts on success", async () => {
     // GIVEN
-    getTransactionDescriptorsMock.mockResolvedValue(
+    getDappDescriptorsMock.mockResolvedValue(
       Right([
         {
           type: ClearSignContextType.TRANSACTION_INFO,
@@ -143,8 +148,8 @@ describe("TransactionContextLoader", () => {
 
   it("should return the proxy delegate call context on success", async () => {
     // GIVEN
-    getTransactionDescriptorsMock.mockResolvedValueOnce(Right([])); // No transaction descriptors found for the first call
-    getTransactionDescriptorsMock.mockResolvedValue(
+    getDappDescriptorsMock.mockResolvedValueOnce(Right([])); // No transaction descriptors found for the first call
+    getDappDescriptorsMock.mockResolvedValue(
       Right([
         {
           type: ClearSignContextType.TRANSACTION_INFO,
@@ -204,14 +209,14 @@ describe("TransactionContextLoader", () => {
 
     // THEN
     expect(result).toEqual([]);
-    expect(getTransactionDescriptorsMock).not.toHaveBeenCalled();
+    expect(getDappDescriptorsMock).not.toHaveBeenCalled();
     expect(getProxyImplementationAddress).not.toHaveBeenCalled();
   });
 
   it("should return an error when proxy delegate call succeeds but transaction descriptors for resolved address fail", async () => {
     // GIVEN
-    getTransactionDescriptorsMock.mockResolvedValueOnce(Right([])); // No transaction descriptors found for the first call
-    getTransactionDescriptorsMock.mockResolvedValueOnce(
+    getDappDescriptorsMock.mockResolvedValueOnce(Right([])); // No transaction descriptors found for the first call
+    getDappDescriptorsMock.mockResolvedValueOnce(
       Left(new Error("data source error")),
     ); // Second call fails
     getProxyImplementationAddress.mockResolvedValue(
@@ -231,8 +236,8 @@ describe("TransactionContextLoader", () => {
     const result = await loader.load(transaction);
 
     // THEN
-    expect(getTransactionDescriptorsMock).toHaveBeenCalledTimes(2);
-    expect(getTransactionDescriptorsMock).toHaveBeenNthCalledWith(2, {
+    expect(getDappDescriptorsMock).toHaveBeenCalledTimes(2);
+    expect(getDappDescriptorsMock).toHaveBeenNthCalledWith(2, {
       address: "0xResolvedAddress",
       chainId: 3,
       selector: "0xaf68b302",

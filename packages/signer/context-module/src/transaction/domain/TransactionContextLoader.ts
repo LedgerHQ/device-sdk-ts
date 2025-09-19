@@ -14,14 +14,24 @@ import {
   ClearSignContextType,
 } from "@/shared/model/ClearSignContext";
 import { TransactionContext } from "@/shared/model/TransactionContext";
-import type { TransactionDataSource } from "@/transaction/data/TransactionDataSource";
+import type { CalldataDescriptorDataSource } from "@/transaction/data/CalldataDescriptorDataSource";
 import { transactionTypes } from "@/transaction/di/transactionTypes";
+
+type GetContextsParams = {
+  address: string;
+  chainId: number;
+  data: string;
+  selector: HexaString;
+  deviceModelId: DeviceModelId;
+};
 
 @injectable()
 export class TransactionContextLoader implements ContextLoader {
   constructor(
-    @inject(transactionTypes.TransactionDataSource)
-    private transactionDataSource: TransactionDataSource,
+    @inject(transactionTypes.DappCalldataDescriptorDataSource)
+    private dappDataSource: CalldataDescriptorDataSource,
+    @inject(transactionTypes.TokenCalldataDescriptorDataSource)
+    private tokenDataSource: CalldataDescriptorDataSource,
     @inject(proxyTypes.ProxyDataSource)
     private proxyDataSource: ProxyDataSource,
   ) {}
@@ -45,16 +55,17 @@ export class TransactionContextLoader implements ContextLoader {
       ];
     }
 
-    return this._getTransactionContexts(to, chainId, selector, deviceModelId)
-      .alt(
-        this._getTransactionProxyContexts(
-          to,
-          chainId,
-          selector,
-          deviceModelId,
-          data,
-        ),
-      )
+    const param: GetContextsParams = {
+      address: to,
+      chainId,
+      selector,
+      deviceModelId,
+      data,
+    };
+
+    return this._getContexts(param, this.dappDataSource)
+      .alt(this._getContexts(param, this.tokenDataSource))
+      .alt(this._getContextsWithProxy(param, this.dappDataSource))
       .orDefault([
         {
           type: ClearSignContextType.ERROR,
@@ -65,32 +76,25 @@ export class TransactionContextLoader implements ContextLoader {
       ]);
   }
 
-  private _getTransactionContexts(
-    address: string,
-    chainId: number,
-    selector: HexaString,
-    deviceModelId: DeviceModelId,
+  private _getContexts(
+    { address, chainId, selector, deviceModelId }: GetContextsParams,
+    datasource: CalldataDescriptorDataSource,
   ): MaybeAsync<ClearSignContext[]> {
     return MaybeAsync(async ({ liftMaybe }) => {
-      const result = await this.transactionDataSource.getTransactionDescriptors(
-        {
-          deviceModelId,
-          address,
-          chainId,
-          selector,
-        },
-      );
+      const result = await datasource.getCalldataDescriptors({
+        deviceModelId,
+        address,
+        chainId,
+        selector,
+      });
 
       return liftMaybe(result.toMaybe().filter((ctxs) => ctxs.length > 0));
     });
   }
 
-  private _getTransactionProxyContexts(
-    address: string,
-    chainId: number,
-    selector: HexaString,
-    deviceModelId: DeviceModelId,
-    data: string,
+  private _getContextsWithProxy(
+    { address, chainId, selector, deviceModelId, data }: GetContextsParams,
+    datasource: CalldataDescriptorDataSource,
   ): MaybeAsync<ClearSignContext[]> {
     const proxyAddress = MaybeAsync(async ({ liftMaybe }) => {
       const result = await this.proxyDataSource.getProxyImplementationAddress({
@@ -102,15 +106,16 @@ export class TransactionContextLoader implements ContextLoader {
       return liftMaybe(result.toMaybe());
     });
 
-    // return a MaybeAsync of the transaction contexts from the proxy address using _getTransactionContexts
     return proxyAddress
       .map<MaybeAsync<ClearSignContext[]>>(({ implementationAddress }) => {
-        return this._getTransactionContexts(
-          implementationAddress,
+        const params = {
+          address: implementationAddress,
           chainId,
           selector,
           deviceModelId,
-        ).map((contexts) => [
+          data,
+        };
+        return this._getContexts(params, datasource).map((contexts) => [
           // Add a proxy info context to the list of contexts
           // to specify that the proxy info should be refetched during the provide step
           {
@@ -120,6 +125,6 @@ export class TransactionContextLoader implements ContextLoader {
           ...contexts,
         ]);
       })
-      .join();
+      .join(); // join the two MaybeAsyncs
   }
 }
