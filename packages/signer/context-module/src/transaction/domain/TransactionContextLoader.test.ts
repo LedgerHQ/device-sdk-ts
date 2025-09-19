@@ -95,7 +95,7 @@ describe("TransactionContextLoader", () => {
       {
         type: ClearSignContextType.ERROR,
         error: new Error(
-          "[ContextModule] TransactionContextLoader: Unable to fetch contexts from contract address 0x7",
+          "[ContextModule] TransactionContextLoader: No transaction contexts found",
         ),
       },
     ]);
@@ -241,7 +241,7 @@ describe("TransactionContextLoader", () => {
       {
         type: ClearSignContextType.ERROR,
         error: new Error(
-          "[ContextModule] TransactionContextLoader: Unable to fetch contexts from contract address using proxy delegate call 0xResolvedAddress",
+          "[ContextModule] TransactionContextLoader: No transaction contexts found",
         ),
       },
     ]);
