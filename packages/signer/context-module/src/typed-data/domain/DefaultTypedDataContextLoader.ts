@@ -36,7 +36,7 @@ import type { TypedDataContextLoader } from "@/typed-data/domain/TypedDataContex
 
 type ResolvedProxy = {
   resolvedAddress: string;
-  context?: ClearSignContextSuccess<ClearSignContextType.PROXY_DELEGATE_CALL>;
+  context?: ClearSignContextSuccess<ClearSignContextType.PROXY_INFO>;
 };
 
 @injectable()
@@ -55,7 +55,7 @@ export class DefaultTypedDataContextLoader implements TypedDataContextLoader {
   async load(typedData: TypedDataContext): Promise<TypedDataClearSignContext> {
     // Get the typed data filters from the data source
     let proxy:
-      | ClearSignContextSuccess<ClearSignContextType.PROXY_DELEGATE_CALL>
+      | ClearSignContextSuccess<ClearSignContextType.PROXY_INFO>
       | undefined = undefined;
     let data = await this.dataSource.getTypedDataFilters({
       address: typedData.verifyingContract,
@@ -136,7 +136,7 @@ export class DefaultTypedDataContextLoader implements TypedDataContextLoader {
     return {
       resolvedAddress: proxyData.implementationAddress,
       context: {
-        type: ClearSignContextType.PROXY_DELEGATE_CALL,
+        type: ClearSignContextType.PROXY_INFO,
         payload: proxyData.signedDescriptor,
         certificate,
       },

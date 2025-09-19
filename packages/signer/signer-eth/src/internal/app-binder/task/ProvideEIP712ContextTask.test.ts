@@ -942,11 +942,10 @@ describe("ProvideEIP712ContextTask", () => {
 
   it("Provide proxy", async () => {
     // GIVEN
-    const proxy: ClearSignContextSuccess<ClearSignContextType.PROXY_DELEGATE_CALL> =
-      {
-        type: ClearSignContextType.PROXY_DELEGATE_CALL,
-        payload: "0x010203",
-      };
+    const proxy: ClearSignContextSuccess<ClearSignContextType.PROXY_INFO> = {
+      type: ClearSignContextType.PROXY_INFO,
+      payload: "0x010203",
+    };
     const clearSignContext: TypedDataClearSignContextSuccess = {
       ...TEST_CLEAR_SIGN_CONTEXT,
       proxy,

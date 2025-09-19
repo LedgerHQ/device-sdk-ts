@@ -150,7 +150,7 @@ export class BuildBaseContexts {
           ctx.type === ClearSignContextType.TRANSACTION_FIELD_DESCRIPTION,
       );
       const proxyContexts = clearSignContextsSuccess.filter(
-        (ctx) => ctx.type === ClearSignContextType.PROXY_DELEGATE_CALL,
+        (ctx) => ctx.type === ClearSignContextType.PROXY_INFO,
       );
       const dynamicNetworkContexts = clearSignContextsSuccess.filter(
         (ctx) =>

@@ -62,7 +62,7 @@ export class BuildSubcontextsTask {
             ? this._getSubcontextsFromReference(context.reference)
             : [],
         };
-      case ClearSignContextType.PROXY_DELEGATE_CALL:
+      case ClearSignContextType.PROXY_INFO:
         return {
           subcontextCallbacks: this._getSubcontextFromProxy(context),
         };
@@ -243,7 +243,7 @@ export class BuildSubcontextsTask {
   }
 
   private _getSubcontextFromProxy(
-    _context: ClearSignContextSuccess<ClearSignContextType.PROXY_DELEGATE_CALL>,
+    _context: ClearSignContextSuccess<ClearSignContextType.PROXY_INFO>,
   ): SubcontextCallback[] {
     return [
       async () => {
@@ -272,7 +272,7 @@ export class BuildSubcontextsTask {
             deviceModelId: this.args.deviceModelId,
             challenge: getChallengeResult.data.challenge,
           },
-          ClearSignContextType.PROXY_DELEGATE_CALL,
+          ClearSignContextType.PROXY_INFO,
         );
 
         return subcontext;

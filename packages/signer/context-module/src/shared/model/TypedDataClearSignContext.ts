@@ -93,7 +93,7 @@ export type TypedDataClearSignContextSuccess = {
   trustedNamesAddresses: Record<TypedDataFilterPath, HexaString>;
   tokens: Record<TypedDataTokenIndex, TypedDataToken>;
   calldatas: Record<TypedDataCalldataIndex, TypedDataCalldataInfo>;
-  proxy?: ClearSignContextSuccess<ClearSignContextType.PROXY_DELEGATE_CALL>;
+  proxy?: ClearSignContextSuccess<ClearSignContextType.PROXY_INFO>;
 };
 export type TypedDataClearSignContextError = {
   type: "error";

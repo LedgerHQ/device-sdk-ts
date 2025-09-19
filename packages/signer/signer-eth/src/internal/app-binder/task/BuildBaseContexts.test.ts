@@ -382,7 +382,7 @@ describe("BuildBaseContexts", () => {
         certificate: defaultCertificate,
       },
       {
-        type: ClearSignContextType.PROXY_DELEGATE_CALL,
+        type: ClearSignContextType.PROXY_INFO,
         payload: "payload-2",
       },
     ];
