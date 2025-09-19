@@ -5,7 +5,7 @@ import { pkiTypes } from "@/pki/di/pkiTypes";
 import { type PkiCertificateLoader } from "@/pki/domain/PkiCertificateLoader";
 import { KeyId } from "@/pki/model/KeyId";
 import { KeyUsage } from "@/pki/model/KeyUsage";
-import { type ProxyDataSource } from "@/proxy/data/HttpProxyDataSource";
+import { type ProxyDataSource } from "@/proxy/data/ProxyDataSource";
 import { proxyTypes } from "@/proxy/di/proxyTypes";
 import { type ProxyDelegateCall } from "@/proxy/model/ProxyDelegateCall";
 import { type ContextFieldLoader } from "@/shared/domain/ContextFieldLoader";
@@ -50,12 +50,13 @@ export class ProxyContextFieldLoader
   }
 
   async loadField(input: ProxyFieldInput): Promise<ClearSignContext> {
-    const proxyDelegateCall = await this._proxyDataSource.getProxyDelegateCall({
-      calldata: input.calldata,
-      proxyAddress: input.proxyAddress,
-      chainId: input.chainId,
-      challenge: input.challenge,
-    });
+    const proxyDelegateCall =
+      await this._proxyDataSource.getProxyImplementationAddress({
+        calldata: input.calldata,
+        proxyAddress: input.proxyAddress,
+        chainId: input.chainId,
+        challenge: input.challenge,
+      });
 
     return proxyDelegateCall.caseOf<Promise<ClearSignContext>>({
       Left: (error) =>

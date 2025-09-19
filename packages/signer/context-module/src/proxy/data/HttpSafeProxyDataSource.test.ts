@@ -7,8 +7,8 @@ import {
 } from "@/shared/constant/HttpHeaders";
 import PACKAGE from "@root/package.json";
 
-import { type ProxyDelegateCallDto } from "./dto/ProxyDelegateCallDto";
-import { HttpProxyDataSource } from "./HttpProxyDataSource";
+import { type SafeProxyImplementationAddressDto } from "./dto/SafeProxyImplementationAddressDto";
+import { HttpSafeProxyDataSource } from "./HttpSafeProxyDataSource";
 import { type ProxyDataSource } from "./ProxyDataSource";
 
 vi.mock("axios");
@@ -20,11 +20,11 @@ const config = {
   originToken: "test-origin-token",
 } as ContextModuleConfig;
 
-describe("HttpProxyDataSource", () => {
+describe("HttpSafeProxyDataSource", () => {
   let datasource: ProxyDataSource;
 
   beforeAll(() => {
-    datasource = new HttpProxyDataSource(config);
+    datasource = new HttpSafeProxyDataSource(config);
     vi.clearAllMocks();
   });
 
@@ -39,13 +39,16 @@ describe("HttpProxyDataSource", () => {
     calldata: "0xabcdef",
   };
 
-  const validDto: ProxyDelegateCallDto = {
-    addresses: ["0x9876543210987654321098765432109876543210"],
+  const validDto: SafeProxyImplementationAddressDto = {
+    proxyAddress: "0x1234567890123456789012345678901234567890",
+    implementationAddress: "0x9876543210987654321098765432109876543210",
+    standard: "EIP-1967",
     signedDescriptor: "signed-descriptor-data",
+    providedBy: "SAFE_GATEWAY",
   };
 
   describe("getProxyImplementationAddress", () => {
-    it("should call axios with correct URL, headers, and data", async () => {
+    it("should call axios with correct URL, headers, and parameters", async () => {
       // GIVEN
       const version = `context-module/${PACKAGE.version}`;
       const requestSpy = vi.fn(() => Promise.resolve({ data: validDto }));
@@ -56,16 +59,15 @@ describe("HttpProxyDataSource", () => {
 
       // THEN
       expect(requestSpy).toHaveBeenCalledWith({
-        method: "POST",
-        url: `${config.metadataServiceDomain.url}/v2/ethereum/${validParams.chainId}/contract/proxy/delegate`,
+        method: "GET",
+        url: `${config.metadataServiceDomain.url}/v3/ethereum/${validParams.chainId}/contract/proxy/${validParams.proxyAddress}`,
         headers: {
           [LEDGER_CLIENT_VERSION_HEADER]: version,
           [LEDGER_ORIGIN_TOKEN_HEADER]: config.originToken,
         },
-        data: {
-          proxy: validParams.proxyAddress,
-          data: validParams.calldata,
+        params: {
           challenge: validParams.challenge,
+          resolver: "SAFE_GATEWAY",
         },
       });
     });
@@ -81,33 +83,8 @@ describe("HttpProxyDataSource", () => {
       // THEN
       expect(result.isRight()).toBe(true);
       expect(result.extract()).toEqual({
-        implementationAddress: validDto.addresses[0],
+        implementationAddress: validDto.implementationAddress,
         signedDescriptor: validDto.signedDescriptor,
-      });
-    });
-
-    it("should return Right with first address when multiple addresses are provided", async () => {
-      // GIVEN
-      const dtoWithMultipleAddresses: ProxyDelegateCallDto = {
-        addresses: [
-          "0x9876543210987654321098765432109876543210",
-          "0x1111111111111111111111111111111111111111",
-        ],
-        signedDescriptor: "signed-descriptor-data",
-      };
-      vi.spyOn(axios, "request").mockResolvedValue({
-        data: dtoWithMultipleAddresses,
-      });
-
-      // WHEN
-      const result =
-        await datasource.getProxyImplementationAddress(validParams);
-
-      // THEN
-      expect(result.isRight()).toBe(true);
-      expect(result.extract()).toEqual({
-        implementationAddress: dtoWithMultipleAddresses.addresses[0],
-        signedDescriptor: dtoWithMultipleAddresses.signedDescriptor,
       });
     });
 
@@ -123,7 +100,7 @@ describe("HttpProxyDataSource", () => {
       expect(result.isLeft()).toBe(true);
       expect(result.extract()).toEqual(
         new Error(
-          "[ContextModule] HttpProxyDataSource: Failed to fetch delegate proxy",
+          "[ContextModule] HttpSafeProxyDataSource: Failed to fetch safe proxy implementation",
         ),
       );
     });
@@ -140,7 +117,7 @@ describe("HttpProxyDataSource", () => {
       expect(result.isLeft()).toBe(true);
       expect(result.extract()).toEqual(
         new Error(
-          `[ContextModule] HttpProxyDataSource: No data received for proxy ${validParams.proxyAddress} on chain ${validParams.chainId}`,
+          `[ContextModule] HttpSafeProxyDataSource: No data received for proxy ${validParams.proxyAddress} on chain ${validParams.chainId}`,
         ),
       );
     });
@@ -157,14 +134,14 @@ describe("HttpProxyDataSource", () => {
       expect(result.isLeft()).toBe(true);
       expect(result.extract()).toEqual(
         new Error(
-          `[ContextModule] HttpProxyDataSource: No data received for proxy ${validParams.proxyAddress} on chain ${validParams.chainId}`,
+          `[ContextModule] HttpSafeProxyDataSource: No data received for proxy ${validParams.proxyAddress} on chain ${validParams.chainId}`,
         ),
       );
     });
 
-    it("should return Left with error when addresses field is missing", async () => {
+    it("should return Left with error when proxyAddress is missing", async () => {
       // GIVEN
-      const { addresses: _, ...invalidDto } = validDto;
+      const { proxyAddress: _, ...invalidDto } = validDto;
       vi.spyOn(axios, "request").mockResolvedValue({ data: invalidDto });
 
       // WHEN
@@ -175,7 +152,43 @@ describe("HttpProxyDataSource", () => {
       expect(result.isLeft()).toBe(true);
       expect(result.extract()).toEqual(
         new Error(
-          `[ContextModule] HttpProxyDataSource: Invalid proxy delegate call response format for proxy ${validParams.proxyAddress} on chain ${validParams.chainId}`,
+          `[ContextModule] HttpSafeProxyDataSource: Invalid safe proxy response format for proxy ${validParams.proxyAddress} on chain ${validParams.chainId}`,
+        ),
+      );
+    });
+
+    it("should return Left with error when implementationAddress is missing", async () => {
+      // GIVEN
+      const { implementationAddress: _, ...invalidDto } = validDto;
+      vi.spyOn(axios, "request").mockResolvedValue({ data: invalidDto });
+
+      // WHEN
+      const result =
+        await datasource.getProxyImplementationAddress(validParams);
+
+      // THEN
+      expect(result.isLeft()).toBe(true);
+      expect(result.extract()).toEqual(
+        new Error(
+          `[ContextModule] HttpSafeProxyDataSource: Invalid safe proxy response format for proxy ${validParams.proxyAddress} on chain ${validParams.chainId}`,
+        ),
+      );
+    });
+
+    it("should return Left with error when standard is missing", async () => {
+      // GIVEN
+      const { standard: _, ...invalidDto } = validDto;
+      vi.spyOn(axios, "request").mockResolvedValue({ data: invalidDto });
+
+      // WHEN
+      const result =
+        await datasource.getProxyImplementationAddress(validParams);
+
+      // THEN
+      expect(result.isLeft()).toBe(true);
+      expect(result.extract()).toEqual(
+        new Error(
+          `[ContextModule] HttpSafeProxyDataSource: Invalid safe proxy response format for proxy ${validParams.proxyAddress} on chain ${validParams.chainId}`,
         ),
       );
     });
@@ -193,14 +206,14 @@ describe("HttpProxyDataSource", () => {
       expect(result.isLeft()).toBe(true);
       expect(result.extract()).toEqual(
         new Error(
-          `[ContextModule] HttpProxyDataSource: Invalid proxy delegate call response format for proxy ${validParams.proxyAddress} on chain ${validParams.chainId}`,
+          `[ContextModule] HttpSafeProxyDataSource: Invalid safe proxy response format for proxy ${validParams.proxyAddress} on chain ${validParams.chainId}`,
         ),
       );
     });
 
-    it("should return Left with error when addresses is not an array", async () => {
+    it("should return Left with error when providedBy is missing", async () => {
       // GIVEN
-      const invalidDto = { ...validDto, addresses: "not-an-array" };
+      const { providedBy: _, ...invalidDto } = validDto;
       vi.spyOn(axios, "request").mockResolvedValue({ data: invalidDto });
 
       // WHEN
@@ -211,14 +224,14 @@ describe("HttpProxyDataSource", () => {
       expect(result.isLeft()).toBe(true);
       expect(result.extract()).toEqual(
         new Error(
-          `[ContextModule] HttpProxyDataSource: Invalid proxy delegate call response format for proxy ${validParams.proxyAddress} on chain ${validParams.chainId}`,
+          `[ContextModule] HttpSafeProxyDataSource: Invalid safe proxy response format for proxy ${validParams.proxyAddress} on chain ${validParams.chainId}`,
         ),
       );
     });
 
-    it("should return Left with error when addresses array contains non-string values", async () => {
+    it("should return Left with error when proxyAddress is not a string", async () => {
       // GIVEN
-      const invalidDto = { ...validDto, addresses: [123, "valid-address"] };
+      const invalidDto = { ...validDto, proxyAddress: 123 };
       vi.spyOn(axios, "request").mockResolvedValue({ data: invalidDto });
 
       // WHEN
@@ -229,14 +242,50 @@ describe("HttpProxyDataSource", () => {
       expect(result.isLeft()).toBe(true);
       expect(result.extract()).toEqual(
         new Error(
-          `[ContextModule] HttpProxyDataSource: Invalid proxy delegate call response format for proxy ${validParams.proxyAddress} on chain ${validParams.chainId}`,
+          `[ContextModule] HttpSafeProxyDataSource: Invalid safe proxy response format for proxy ${validParams.proxyAddress} on chain ${validParams.chainId}`,
+        ),
+      );
+    });
+
+    it("should return Left with error when implementationAddress is not a string", async () => {
+      // GIVEN
+      const invalidDto = { ...validDto, implementationAddress: null };
+      vi.spyOn(axios, "request").mockResolvedValue({ data: invalidDto });
+
+      // WHEN
+      const result =
+        await datasource.getProxyImplementationAddress(validParams);
+
+      // THEN
+      expect(result.isLeft()).toBe(true);
+      expect(result.extract()).toEqual(
+        new Error(
+          `[ContextModule] HttpSafeProxyDataSource: Invalid safe proxy response format for proxy ${validParams.proxyAddress} on chain ${validParams.chainId}`,
+        ),
+      );
+    });
+
+    it("should return Left with error when standard is not a string", async () => {
+      // GIVEN
+      const invalidDto = { ...validDto, standard: [] };
+      vi.spyOn(axios, "request").mockResolvedValue({ data: invalidDto });
+
+      // WHEN
+      const result =
+        await datasource.getProxyImplementationAddress(validParams);
+
+      // THEN
+      expect(result.isLeft()).toBe(true);
+      expect(result.extract()).toEqual(
+        new Error(
+          `[ContextModule] HttpSafeProxyDataSource: Invalid safe proxy response format for proxy ${validParams.proxyAddress} on chain ${validParams.chainId}`,
         ),
       );
     });
 
     it("should return Left with error when signedDescriptor is not a string", async () => {
       // GIVEN
-      const invalidDto = { ...validDto, signedDescriptor: 123 };
+      const invalidDto = { ...validDto, signedDescriptor: {} };
       vi.spyOn(axios, "request").mockResolvedValue({ data: invalidDto });
 
       // WHEN
@@ -247,17 +296,14 @@ describe("HttpProxyDataSource", () => {
       expect(result.isLeft()).toBe(true);
       expect(result.extract()).toEqual(
         new Error(
-          `[ContextModule] HttpProxyDataSource: Invalid proxy delegate call response format for proxy ${validParams.proxyAddress} on chain ${validParams.chainId}`,
+          `[ContextModule] HttpSafeProxyDataSource: Invalid safe proxy response format for proxy ${validParams.proxyAddress} on chain ${validParams.chainId}`,
         ),
       );
     });
 
-    it("should return Left with error when addresses array is empty", async () => {
+    it("should return Left with error when providedBy is not a string", async () => {
       // GIVEN
-      const invalidDto: ProxyDelegateCallDto = {
-        addresses: [],
-        signedDescriptor: "signed-descriptor-data",
-      };
+      const invalidDto = { ...validDto, providedBy: true };
       vi.spyOn(axios, "request").mockResolvedValue({ data: invalidDto });
 
       // WHEN
@@ -268,7 +314,7 @@ describe("HttpProxyDataSource", () => {
       expect(result.isLeft()).toBe(true);
       expect(result.extract()).toEqual(
         new Error(
-          `[ContextModule] HttpProxyDataSource: No implementation address found for proxy ${validParams.proxyAddress} on chain ${validParams.chainId}`,
+          `[ContextModule] HttpSafeProxyDataSource: Invalid safe proxy response format for proxy ${validParams.proxyAddress} on chain ${validParams.chainId}`,
         ),
       );
     });
@@ -285,7 +331,24 @@ describe("HttpProxyDataSource", () => {
       expect(result.isLeft()).toBe(true);
       expect(result.extract()).toEqual(
         new Error(
-          `[ContextModule] HttpProxyDataSource: Invalid proxy delegate call response format for proxy ${validParams.proxyAddress} on chain ${validParams.chainId}`,
+          `[ContextModule] HttpSafeProxyDataSource: Invalid safe proxy response format for proxy ${validParams.proxyAddress} on chain ${validParams.chainId}`,
+        ),
+      );
+    });
+
+    it("should return Left with error when response is null", async () => {
+      // GIVEN
+      vi.spyOn(axios, "request").mockResolvedValue({ data: null });
+
+      // WHEN
+      const result =
+        await datasource.getProxyImplementationAddress(validParams);
+
+      // THEN
+      expect(result.isLeft()).toBe(true);
+      expect(result.extract()).toEqual(
+        new Error(
+          `[ContextModule] HttpSafeProxyDataSource: No data received for proxy ${validParams.proxyAddress} on chain ${validParams.chainId}`,
         ),
       );
     });
@@ -304,7 +367,7 @@ describe("HttpProxyDataSource", () => {
       expect(result.isRight()).toBe(true);
       expect(axios.request).toHaveBeenCalledWith(
         expect.objectContaining({
-          url: `${config.metadataServiceDomain.url}/v2/ethereum/137/contract/proxy/delegate`,
+          url: `${config.metadataServiceDomain.url}/v3/ethereum/137/contract/proxy/${validParams.proxyAddress}`,
         }),
       );
     });
@@ -328,34 +391,7 @@ describe("HttpProxyDataSource", () => {
       expect(result.isRight()).toBe(true);
       expect(axios.request).toHaveBeenCalledWith(
         expect.objectContaining({
-          data: expect.objectContaining({
-            proxy: differentProxyAddress,
-          }),
-        }),
-      );
-    });
-
-    it("should handle different calldata values correctly", async () => {
-      // GIVEN
-      const customCalldata = "0x123456789abcdef";
-      const paramsWithCustomCalldata = {
-        ...validParams,
-        calldata: customCalldata,
-      };
-      vi.spyOn(axios, "request").mockResolvedValue({ data: validDto });
-
-      // WHEN
-      const result = await datasource.getProxyImplementationAddress(
-        paramsWithCustomCalldata,
-      );
-
-      // THEN
-      expect(result.isRight()).toBe(true);
-      expect(axios.request).toHaveBeenCalledWith(
-        expect.objectContaining({
-          data: expect.objectContaining({
-            data: customCalldata,
-          }),
+          url: `${config.metadataServiceDomain.url}/v3/ethereum/${validParams.chainId}/contract/proxy/${differentProxyAddress}`,
         }),
       );
     });
@@ -378,9 +414,10 @@ describe("HttpProxyDataSource", () => {
       expect(result.isRight()).toBe(true);
       expect(axios.request).toHaveBeenCalledWith(
         expect.objectContaining({
-          data: expect.objectContaining({
+          params: {
             challenge: customChallenge,
-          }),
+            resolver: "SAFE_GATEWAY",
+          },
         }),
       );
     });

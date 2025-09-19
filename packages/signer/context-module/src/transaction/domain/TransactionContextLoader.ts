@@ -1,9 +1,11 @@
 import { DeviceModelId, isHexaString } from "@ledgerhq/device-management-kit";
 import { inject, injectable } from "inversify";
 
-import type { ProxyDataSource } from "@/proxy/data/HttpProxyDataSource";
+import type {
+  ProxyDataSource,
+  ProxyImplementationAddress,
+} from "@/proxy/data/ProxyDataSource";
 import { proxyTypes } from "@/proxy/di/proxyTypes";
-import { ProxyDelegateCall } from "@/proxy/model/ProxyDelegateCall";
 import { ContextLoader } from "@/shared/domain/ContextLoader";
 import {
   ClearSignContext,
@@ -60,18 +62,17 @@ export class TransactionContextLoader implements ContextLoader {
 
     // if the transaction descriptors are not found, try to fetch the proxy delegate call
     // and return the proxy delegate call context
-    const proxyDelegateCall = await this.proxyDataSource.getProxyDelegateCall({
-      calldata: data,
-      proxyAddress: to,
-      chainId,
-      challenge: "",
-    });
+    const proxyImplementationAddress =
+      await this.proxyDataSource.getProxyImplementationAddress({
+        calldata: data,
+        proxyAddress: to,
+        chainId,
+        challenge: "",
+      });
 
-    return proxyDelegateCall.caseOf<Promise<ClearSignContext[]>>({
-      Right: async ({ delegateAddresses }: ProxyDelegateCall) => {
-        const resolvedAddress = delegateAddresses[0];
-
-        if (!resolvedAddress) {
+    return proxyImplementationAddress.caseOf<Promise<ClearSignContext[]>>({
+      Right: async ({ implementationAddress }: ProxyImplementationAddress) => {
+        if (!implementationAddress) {
           return [
             {
               type: ClearSignContextType.ERROR,
@@ -85,7 +86,7 @@ export class TransactionContextLoader implements ContextLoader {
         const transactionProxyContexts =
           await this.transactionDataSource.getTransactionDescriptors({
             deviceModelId,
-            address: resolvedAddress,
+            address: implementationAddress,
             chainId,
             selector,
           });
@@ -109,7 +110,7 @@ export class TransactionContextLoader implements ContextLoader {
           {
             type: ClearSignContextType.ERROR,
             error: new Error(
-              `[ContextModule] TransactionContextLoader: Unable to fetch contexts from contract address using proxy delegate call ${resolvedAddress}`,
+              `[ContextModule] TransactionContextLoader: Unable to fetch contexts from contract address using proxy delegate call ${implementationAddress}`,
             ),
           },
         ];

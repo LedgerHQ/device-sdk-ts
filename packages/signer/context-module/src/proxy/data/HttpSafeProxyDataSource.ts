@@ -10,15 +10,15 @@ import {
 } from "@/shared/constant/HttpHeaders";
 import PACKAGE from "@root/package.json";
 
-import { ProxyDelegateCallDto } from "./dto/ProxyDelegateCallDto";
+import { SafeProxyImplementationAddressDto } from "./dto/SafeProxyImplementationAddressDto";
 import {
   GetProxyImplementationAddressParam,
-  ProxyDataSource,
+  type ProxyDataSource,
   ProxyImplementationAddress,
 } from "./ProxyDataSource";
 
 @injectable()
-export class HttpProxyDataSource implements ProxyDataSource {
+export class HttpSafeProxyDataSource implements ProxyDataSource {
   constructor(
     @inject(configTypes.Config) private readonly config: ContextModuleConfig,
   ) {}
@@ -27,30 +27,28 @@ export class HttpProxyDataSource implements ProxyDataSource {
     proxyAddress,
     chainId,
     challenge,
-    calldata,
   }: GetProxyImplementationAddressParam): Promise<
     Either<Error, ProxyImplementationAddress>
   > {
-    let dto: ProxyDelegateCallDto | undefined;
+    let dto: SafeProxyImplementationAddressDto | undefined;
     try {
-      const response = await axios.request<ProxyDelegateCallDto>({
-        method: "POST",
-        url: `${this.config.metadataServiceDomain.url}/v2/ethereum/${chainId}/contract/proxy/delegate`,
+      const response = await axios.request<SafeProxyImplementationAddressDto>({
+        method: "GET",
+        url: `${this.config.metadataServiceDomain.url}/v3/ethereum/${chainId}/contract/proxy/${proxyAddress}`,
         headers: {
           [LEDGER_CLIENT_VERSION_HEADER]: `context-module/${PACKAGE.version}`,
           [LEDGER_ORIGIN_TOKEN_HEADER]: this.config.originToken,
         },
-        data: {
-          proxy: proxyAddress,
-          data: calldata,
+        params: {
           challenge,
+          resolver: "SAFE_GATEWAY",
         },
       });
       dto = response.data;
     } catch (_error) {
       return Left(
         new Error(
-          `[ContextModule] HttpProxyDataSource: Failed to fetch delegate proxy`,
+          `[ContextModule] HttpSafeProxyDataSource: Failed to fetch safe proxy implementation`,
         ),
       );
     }
@@ -58,47 +56,44 @@ export class HttpProxyDataSource implements ProxyDataSource {
     if (!dto) {
       return Left(
         new Error(
-          `[ContextModule] HttpProxyDataSource: No data received for proxy ${proxyAddress} on chain ${chainId}`,
+          `[ContextModule] HttpSafeProxyDataSource: No data received for proxy ${proxyAddress} on chain ${chainId}`,
         ),
       );
     }
 
-    if (!this.isProxyDelegateCallDto(dto)) {
+    if (!this.isSafeProxyImplementationAddressDto(dto)) {
       return Left(
         new Error(
-          `[ContextModule] HttpProxyDataSource: Invalid proxy delegate call response format for proxy ${proxyAddress} on chain ${chainId}`,
-        ),
-      );
-    }
-
-    if (!dto.addresses[0]) {
-      return Left(
-        new Error(
-          `[ContextModule] HttpProxyDataSource: No implementation address found for proxy ${proxyAddress} on chain ${chainId}`,
+          `[ContextModule] HttpSafeProxyDataSource: Invalid safe proxy response format for proxy ${proxyAddress} on chain ${chainId}`,
         ),
       );
     }
 
     return Right({
-      implementationAddress: dto.addresses[0],
+      implementationAddress: dto.implementationAddress,
       signedDescriptor: dto.signedDescriptor,
     });
   }
 
   /**
-   * Type guard to validate ProxyDelegateCallDto
+   * Type guard to validate SafeProxyImplementationAddressDto
    */
-  private isProxyDelegateCallDto(
+  private isSafeProxyImplementationAddressDto(
     value: unknown,
-  ): value is ProxyDelegateCallDto {
+  ): value is SafeProxyImplementationAddressDto {
     return (
       typeof value === "object" &&
       value !== null &&
-      "addresses" in value &&
+      "proxyAddress" in value &&
+      "implementationAddress" in value &&
+      "standard" in value &&
       "signedDescriptor" in value &&
-      Array.isArray(value.addresses) &&
-      value.addresses.every((address) => typeof address === "string") &&
-      typeof value.signedDescriptor === "string"
+      "providedBy" in value &&
+      typeof value.proxyAddress === "string" &&
+      typeof value.implementationAddress === "string" &&
+      typeof value.standard === "string" &&
+      typeof value.signedDescriptor === "string" &&
+      typeof value.providedBy === "string"
     );
   }
 }
