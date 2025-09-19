@@ -30,6 +30,8 @@ export const DEFAULT_CONFIG: ContextModuleConfig = {
   },
   defaultLoaders: true,
   customLoaders: [],
+  defaultFieldLoaders: true,
+  customFieldLoaders: [],
   customTypedDataLoader: undefined,
   customSolanaLoader: undefined,
 };
