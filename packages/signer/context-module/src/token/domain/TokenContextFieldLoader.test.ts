@@ -1,8 +1,6 @@
 import { Left, Right } from "purify-ts";
 
-import { ContextFieldLoaderKind } from "@/shared/domain/ContextFieldLoader";
 import { ClearSignContextType } from "@/shared/model/ClearSignContext";
-import { type TransactionFieldContext } from "@/shared/model/TransactionFieldContext";
 import { type TokenDataSource } from "@/token/data/TokenDataSource";
 import { TokenContextFieldLoader } from "@/token/domain/TokenContextFieldLoader";
 
@@ -14,12 +12,11 @@ describe("TokenContextFieldLoader", () => {
     mockTokenDataSource,
   );
 
-  const mockTransactionField: TransactionFieldContext<ContextFieldLoaderKind.TOKEN> =
-    {
-      kind: ContextFieldLoaderKind.TOKEN,
-      chainId: 1,
-      address: "0x1234567890abcdef",
-    };
+  const mockTransactionField = {
+    kind: "TOKEN",
+    chainId: 1,
+    address: "0x1234567890abcdef",
+  };
 
   const mockTokenPayload = "0x123456789abcdef0";
 
@@ -27,10 +24,61 @@ describe("TokenContextFieldLoader", () => {
     vi.resetAllMocks();
   });
 
-  describe("constructor", () => {
-    it("should initialize with correct kind", () => {
+  describe("canHandle", () => {
+    it("should return true for valid token field", () => {
+      // GIVEN
+      const validField = {
+        kind: "TOKEN",
+        chainId: 1,
+        address: "0x1234567890abcdef",
+      };
+
       // THEN
-      expect(tokenContextFieldLoader.kind).toBe(ContextFieldLoaderKind.TOKEN);
+      expect(
+        tokenContextFieldLoader.canHandle(
+          validField,
+          ClearSignContextType.TOKEN,
+        ),
+      ).toBe(true);
+    });
+
+    describe("should return false for invalid fields", () => {
+      const invalidFields = [
+        { name: "null", value: null },
+        { name: "undefined", value: undefined },
+        { name: "string", value: "invalid" },
+        { name: "number", value: 123 },
+        { name: "boolean", value: true },
+        { name: "array", value: [] },
+        { name: "empty object", value: {} },
+        {
+          name: "object missing kind",
+          value: { chainId: 1, address: "0x123" },
+        },
+        {
+          name: "object missing chainId",
+          value: { kind: "TOKEN", address: "0x123" },
+        },
+        {
+          name: "object missing address",
+          value: { kind: "TOKEN", chainId: 1 },
+        },
+      ];
+
+      test.each(invalidFields)("$name", ({ value }) => {
+        expect(
+          tokenContextFieldLoader.canHandle(value, ClearSignContextType.TOKEN),
+        ).toBe(false);
+      });
+    });
+
+    it("should return false for invalid expected type", () => {
+      expect(
+        tokenContextFieldLoader.canHandle(
+          mockTransactionField,
+          ClearSignContextType.NFT,
+        ),
+      ).toBe(false);
     });
   });
 

@@ -1,3 +1,4 @@
+import { DeviceModelId } from "@ledgerhq/device-management-kit";
 import { inject, injectable } from "inversify";
 
 import { pkiTypes } from "@/pki/di/pkiTypes";
@@ -7,23 +8,24 @@ import { KeyUsage } from "@/pki/model/KeyUsage";
 import { type ProxyDataSource } from "@/proxy/data/HttpProxyDataSource";
 import { proxyTypes } from "@/proxy/di/proxyTypes";
 import { type ProxyDelegateCall } from "@/proxy/model/ProxyDelegateCall";
-import {
-  type ContextFieldLoader,
-  ContextFieldLoaderKind,
-} from "@/shared/domain/ContextFieldLoader";
+import { type ContextFieldLoader } from "@/shared/domain/ContextFieldLoader";
 import {
   type ClearSignContext,
   ClearSignContextType,
 } from "@/shared/model/ClearSignContext";
-import { type TransactionFieldContext } from "@/shared/model/TransactionFieldContext";
+
+type ProxyFieldInput = {
+  chainId: number;
+  proxyAddress: string;
+  calldata: string;
+  challenge: string;
+  deviceModelId: DeviceModelId;
+};
 
 @injectable()
 export class ProxyContextFieldLoader
-  implements ContextFieldLoader<ContextFieldLoaderKind.PROXY_DELEGATE_CALL>
+  implements ContextFieldLoader<ProxyFieldInput>
 {
-  kind: ContextFieldLoaderKind.PROXY_DELEGATE_CALL =
-    ContextFieldLoaderKind.PROXY_DELEGATE_CALL;
-
   constructor(
     @inject(proxyTypes.ProxyDataSource)
     private _proxyDataSource: ProxyDataSource,
@@ -31,14 +33,28 @@ export class ProxyContextFieldLoader
     private _certificateLoader: PkiCertificateLoader,
   ) {}
 
-  async loadField(
-    field: TransactionFieldContext<ContextFieldLoaderKind.PROXY_DELEGATE_CALL>,
-  ): Promise<ClearSignContext> {
+  canHandle(
+    input: unknown,
+    expectedType: ClearSignContextType,
+  ): input is ProxyFieldInput {
+    return (
+      expectedType === ClearSignContextType.PROXY_DELEGATE_CALL &&
+      typeof input === "object" &&
+      input !== null &&
+      "chainId" in input &&
+      "proxyAddress" in input &&
+      "calldata" in input &&
+      "challenge" in input &&
+      "deviceModelId" in input
+    );
+  }
+
+  async loadField(input: ProxyFieldInput): Promise<ClearSignContext> {
     const proxyDelegateCall = await this._proxyDataSource.getProxyDelegateCall({
-      calldata: field.calldata,
-      proxyAddress: field.proxyAddress,
-      chainId: field.chainId,
-      challenge: field.challenge,
+      calldata: input.calldata,
+      proxyAddress: input.proxyAddress,
+      chainId: input.chainId,
+      challenge: input.challenge,
     });
 
     return proxyDelegateCall.caseOf<Promise<ClearSignContext>>({
@@ -51,7 +67,7 @@ export class ProxyContextFieldLoader
         const certificate = await this._certificateLoader.loadCertificate({
           keyId: KeyId.CalCalldataKey,
           keyUsage: KeyUsage.Calldata,
-          targetDevice: field.deviceModelId,
+          targetDevice: input.deviceModelId,
         });
 
         return {

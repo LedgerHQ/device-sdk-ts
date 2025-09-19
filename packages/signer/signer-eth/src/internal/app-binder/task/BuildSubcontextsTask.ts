@@ -4,9 +4,7 @@ import {
   ClearSignContextReferenceType,
   type ClearSignContextSuccess,
   ClearSignContextType,
-  ContextFieldLoaderKind,
   type ContextModule,
-  type TransactionFieldContext,
   type TransactionSubset,
 } from "@ledgerhq/context-module";
 import {
@@ -107,17 +105,22 @@ export class BuildSubcontextsTask {
     // and we don't need to extract the value from the transaction
     // as it is already provided in the reference
     if (reference.value !== undefined) {
-      const transactionFieldContext: TransactionFieldContext = {
-        kind:
-          reference.type === ClearSignContextReferenceType.TOKEN
-            ? ContextFieldLoaderKind.TOKEN
-            : ContextFieldLoaderKind.NFT,
+      const transactionFieldContext = {
         chainId: this.args.subset.chainId,
         address: reference.value,
       };
 
+      const expectedType =
+        reference.type === ClearSignContextReferenceType.TOKEN
+          ? ClearSignContextType.TOKEN
+          : ClearSignContextType.NFT;
+
       return [
-        () => this.args.contextModule.getFieldContext(transactionFieldContext),
+        () =>
+          this.args.contextModule.getFieldContext(
+            transactionFieldContext,
+            expectedType,
+          ),
       ];
     }
 
@@ -135,15 +138,19 @@ export class BuildSubcontextsTask {
           value.slice(Math.max(0, value.length - 20)),
         );
 
+        const expectedType =
+          reference.type === ClearSignContextReferenceType.TOKEN
+            ? ClearSignContextType.TOKEN
+            : ClearSignContextType.NFT;
+
         subcontextCallbacks.push(() =>
-          this.args.contextModule.getFieldContext({
-            kind:
-              reference.type === ClearSignContextReferenceType.TOKEN
-                ? ContextFieldLoaderKind.TOKEN
-                : ContextFieldLoaderKind.NFT,
-            chainId: this.args.subset.chainId,
-            address,
-          }),
+          this.args.contextModule.getFieldContext(
+            {
+              chainId: this.args.subset.chainId,
+              address,
+            },
+            expectedType,
+          ),
         );
       }
     }
@@ -216,14 +223,16 @@ export class BuildSubcontextsTask {
             };
           }
 
-          const subcontext = await this.args.contextModule.getFieldContext({
-            kind: ContextFieldLoaderKind.TRUSTED_NAME,
-            chainId: this.args.subset.chainId,
-            address,
-            challenge: getChallengeResult.data.challenge,
-            types: reference.types,
-            sources: reference.sources,
-          });
+          const subcontext = await this.args.contextModule.getFieldContext(
+            {
+              chainId: this.args.subset.chainId,
+              address,
+              challenge: getChallengeResult.data.challenge,
+              types: reference.types,
+              sources: reference.sources,
+            },
+            ClearSignContextType.TRUSTED_NAME,
+          );
 
           return subcontext;
         });
@@ -255,14 +264,16 @@ export class BuildSubcontextsTask {
           };
         }
 
-        const subcontext = await this.args.contextModule.getFieldContext({
-          kind: ContextFieldLoaderKind.PROXY_DELEGATE_CALL,
-          chainId: this.args.subset.chainId,
-          proxyAddress: this.args.subset.to,
-          calldata: this.args.subset.data,
-          deviceModelId: this.args.deviceModelId,
-          challenge: getChallengeResult.data.challenge,
-        });
+        const subcontext = await this.args.contextModule.getFieldContext(
+          {
+            chainId: this.args.subset.chainId,
+            proxyAddress: this.args.subset.to,
+            calldata: this.args.subset.data,
+            deviceModelId: this.args.deviceModelId,
+            challenge: getChallengeResult.data.challenge,
+          },
+          ClearSignContextType.PROXY_DELEGATE_CALL,
+        );
 
         return subcontext;
       },

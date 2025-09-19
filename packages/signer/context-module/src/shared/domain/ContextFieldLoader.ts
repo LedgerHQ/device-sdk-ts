@@ -1,14 +1,19 @@
-import { type ClearSignContext } from "@/shared/model/ClearSignContext";
-import { type TransactionFieldContext } from "@/shared/model/TransactionFieldContext";
+import {
+  type ClearSignContext,
+  type ClearSignContextType,
+} from "@/shared/model/ClearSignContext";
 
-export enum ContextFieldLoaderKind {
-  PROXY_DELEGATE_CALL = "proxy_delegate_call",
-  TOKEN = "token",
-  NFT = "nft",
-  TRUSTED_NAME = "trusted_name",
-}
+export interface ContextFieldLoader<TInput = unknown> {
+  /**
+   * @param field - The field to load
+   * @returns The loaded context
+   */
+  loadField: (field: TInput) => Promise<ClearSignContext>;
 
-export interface ContextFieldLoader<T extends ContextFieldLoaderKind> {
-  kind: T;
-  loadField: (field: TransactionFieldContext<T>) => Promise<ClearSignContext>;
+  /**
+   * @param field - The field to load
+   * @param expectedType - The type of the context to load
+   * @returns True if the loader can handle the field, false otherwise
+   */
+  canHandle: (field: unknown, expectedType: ClearSignContextType) => boolean;
 }

@@ -8,9 +8,7 @@ import { type PkiCertificate } from "@/pki/model/PkiCertificate";
 import { type ProxyDataSource } from "@/proxy/data/HttpProxyDataSource";
 import { ProxyContextFieldLoader } from "@/proxy/domain/ProxyContextFieldLoader";
 import { type ProxyDelegateCall } from "@/proxy/model/ProxyDelegateCall";
-import { ContextFieldLoaderKind } from "@/shared/domain/ContextFieldLoader";
 import { ClearSignContextType } from "@/shared/model/ClearSignContext";
-import { type TransactionFieldContext } from "@/shared/model/TransactionFieldContext";
 
 describe("ProxyContextFieldLoader", () => {
   const mockProxyDataSource: ProxyDataSource = {
@@ -25,15 +23,13 @@ describe("ProxyContextFieldLoader", () => {
     mockCertificateLoader,
   );
 
-  const mockTransactionField: TransactionFieldContext<ContextFieldLoaderKind.PROXY_DELEGATE_CALL> =
-    {
-      kind: ContextFieldLoaderKind.PROXY_DELEGATE_CALL,
-      chainId: 1,
-      proxyAddress: "0x1234567890abcdef",
-      calldata: "0xabcdef1234567890",
-      challenge: "test-challenge",
-      deviceModelId: DeviceModelId.STAX,
-    };
+  const mockTransactionField = {
+    chainId: 1,
+    proxyAddress: "0x1234567890abcdef",
+    calldata: "0xabcdef1234567890",
+    challenge: "test-challenge",
+    deviceModelId: DeviceModelId.STAX,
+  };
 
   const mockProxyDelegateCall: ProxyDelegateCall = {
     delegateAddresses: ["0x987654321fedcba0"],
@@ -49,12 +45,99 @@ describe("ProxyContextFieldLoader", () => {
     vi.resetAllMocks();
   });
 
-  describe("constructor", () => {
-    it("should initialize with correct kind", () => {
+  describe("canHandle", () => {
+    it("should return true for valid proxy field", () => {
+      // GIVEN
+      const validField = {
+        chainId: 1,
+        proxyAddress: "0x1234567890abcdef",
+        calldata: "0xabcdef1234567890",
+        challenge: "test-challenge",
+        deviceModelId: DeviceModelId.STAX,
+      };
+
       // THEN
-      expect(proxyContextFieldLoader.kind).toBe(
-        ContextFieldLoaderKind.PROXY_DELEGATE_CALL,
-      );
+      expect(
+        proxyContextFieldLoader.canHandle(
+          validField,
+          ClearSignContextType.PROXY_DELEGATE_CALL,
+        ),
+      ).toBe(true);
+    });
+
+    describe("should return false for invalid fields", () => {
+      const invalidFields = [
+        { name: "null", value: null },
+        { name: "undefined", value: undefined },
+        { name: "string", value: "invalid" },
+        { name: "number", value: 123 },
+        { name: "boolean", value: true },
+        { name: "array", value: [] },
+        { name: "empty object", value: {} },
+        {
+          name: "object missing chainId",
+          value: {
+            proxyAddress: "0x123",
+            calldata: "0xabc",
+            challenge: "test",
+            deviceModelId: DeviceModelId.STAX,
+          },
+        },
+        {
+          name: "object missing proxyAddress",
+          value: {
+            chainId: 1,
+            calldata: "0xabc",
+            challenge: "test",
+            deviceModelId: DeviceModelId.STAX,
+          },
+        },
+        {
+          name: "object missing calldata",
+          value: {
+            chainId: 1,
+            proxyAddress: "0x123",
+            challenge: "test",
+            deviceModelId: DeviceModelId.STAX,
+          },
+        },
+        {
+          name: "object missing challenge",
+          value: {
+            chainId: 1,
+            proxyAddress: "0x123",
+            calldata: "0xabc",
+            deviceModelId: DeviceModelId.STAX,
+          },
+        },
+        {
+          name: "object missing deviceModelId",
+          value: {
+            chainId: 1,
+            proxyAddress: "0x123",
+            calldata: "0xabc",
+            challenge: "test",
+          },
+        },
+      ];
+
+      test.each(invalidFields)("$name", ({ value }) => {
+        expect(
+          proxyContextFieldLoader.canHandle(
+            value,
+            ClearSignContextType.PROXY_DELEGATE_CALL,
+          ),
+        ).toBe(false);
+      });
+    });
+
+    it("should return false for invalid expected type", () => {
+      expect(
+        proxyContextFieldLoader.canHandle(
+          mockTransactionField,
+          ClearSignContextType.TOKEN,
+        ),
+      ).toBe(false);
     });
   });
 
