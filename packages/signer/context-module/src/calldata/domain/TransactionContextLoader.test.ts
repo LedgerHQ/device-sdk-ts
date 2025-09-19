@@ -1,11 +1,11 @@
 import { DeviceModelId } from "@ledgerhq/device-management-kit";
 import { Left, Right } from "purify-ts";
 
+import type { CalldataDescriptorDataSource } from "@/calldata/data/CalldataDescriptorDataSource";
+import { TransactionContextLoader } from "@/calldata/domain/TransactionContextLoader";
 import type { ProxyDataSource } from "@/proxy/data/ProxyDataSource";
 import { ClearSignContextType } from "@/shared/model/ClearSignContext";
 import type { TransactionContext } from "@/shared/model/TransactionContext";
-import type { CalldataDescriptorDataSource } from "@/transaction/data/CalldataDescriptorDataSource";
-import { TransactionContextLoader } from "@/transaction/domain/TransactionContextLoader";
 
 describe("TransactionContextLoader", () => {
   const getProxyImplementationAddress = vi.fn();

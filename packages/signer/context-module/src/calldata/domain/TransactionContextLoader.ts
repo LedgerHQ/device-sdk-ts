@@ -66,6 +66,7 @@ export class TransactionContextLoader implements ContextLoader {
     return this._getContexts(param, this.dappDataSource)
       .alt(this._getContexts(param, this.tokenDataSource))
       .alt(this._getContextsWithProxy(param, this.dappDataSource))
+      .alt(this._getContextsWithProxy(param, this.tokenDataSource))
       .orDefault([
         {
           type: ClearSignContextType.ERROR,
@@ -108,14 +109,16 @@ export class TransactionContextLoader implements ContextLoader {
 
     return proxyAddress
       .map<MaybeAsync<ClearSignContext[]>>(({ implementationAddress }) => {
-        const params = {
-          address: implementationAddress,
-          chainId,
-          selector,
-          deviceModelId,
-          data,
-        };
-        return this._getContexts(params, datasource).map((contexts) => [
+        return this._getContexts(
+          {
+            address: implementationAddress,
+            chainId,
+            selector,
+            deviceModelId,
+            data,
+          },
+          datasource,
+        ).map((contexts) => [
           // Add a proxy info context to the list of contexts
           // to specify that the proxy info should be refetched during the provide step
           {

@@ -1,10 +1,10 @@
 import { ContainerModule } from "inversify";
 
+import { HttpCalldataDescriptorDataSource } from "@/calldata/data/HttpCalldataDescriptorDataSource";
+import { transactionTypes } from "@/calldata/di/transactionTypes";
+import { TransactionContextLoader } from "@/calldata/domain/TransactionContextLoader";
 import { configTypes } from "@/config/di/configTypes";
 import { pkiTypes } from "@/pki/di/pkiTypes";
-import { HttpCalldataDescriptorDataSource } from "@/transaction/data/HttpCalldataDescriptorDataSource";
-import { transactionTypes } from "@/transaction/di/transactionTypes";
-import { TransactionContextLoader } from "@/transaction/domain/TransactionContextLoader";
 
 export const transactionModuleFactory = () =>
   new ContainerModule(({ bind }) => {

@@ -2,6 +2,11 @@ import { DeviceModelId } from "@ledgerhq/device-management-kit";
 import axios from "axios";
 import { Left } from "purify-ts";
 
+import type {
+  CalldataEnumV1,
+  CalldataFieldV1,
+  CalldataTransactionInfoV1,
+} from "@/calldata/data/dto/CalldataDto";
 import type { ContextModuleConfig } from "@/config/model/ContextModuleConfig";
 import { type CalldataDescriptorDataSource } from "@/index";
 import { type PkiCertificateLoader } from "@/pki/domain/PkiCertificateLoader";
@@ -10,11 +15,6 @@ import {
   LEDGER_CLIENT_VERSION_HEADER,
   LEDGER_ORIGIN_TOKEN_HEADER,
 } from "@/shared/constant/HttpHeaders";
-import type {
-  CalldataEnumV1,
-  CalldataFieldV1,
-  CalldataTransactionInfoV1,
-} from "@/transaction/data/dto/CalldataDto";
 import PACKAGE from "@root/package.json";
 
 import { HttpCalldataDescriptorDataSource } from "./HttpCalldataDescriptorDataSource";
