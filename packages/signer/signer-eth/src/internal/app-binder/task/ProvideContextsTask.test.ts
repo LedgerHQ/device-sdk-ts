@@ -349,19 +349,19 @@ describe("ProvideContextsTask", () => {
         },
       );
 
-      it("should only provide the subcontexts if the context is a PROXY_DELEGATE_CALL", async () => {
+      it("should only provide the subcontexts if the context is a PROXY_INFO", async () => {
         // GIVEN
         const args: ProvideContextsTaskArgs = {
           contexts: [
             {
               context: {
-                type: ClearSignContextType.PROXY_DELEGATE_CALL,
+                type: ClearSignContextType.PROXY_INFO,
                 payload: "payload",
               },
               subcontextCallbacks: [
                 () =>
                   Promise.resolve({
-                    type: ClearSignContextType.PROXY_DELEGATE_CALL,
+                    type: ClearSignContextType.PROXY_INFO,
                     payload: "subcontext payload",
                   }),
               ],

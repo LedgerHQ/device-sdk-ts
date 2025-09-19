@@ -99,7 +99,7 @@ export class TransactionContextLoader implements ContextLoader {
             // This payload is not used as the clear sign context is not used, only the subcontext that will be
             // fetched during the provide, with a correct challenge
             {
-              type: ClearSignContextType.PROXY_DELEGATE_CALL,
+              type: ClearSignContextType.PROXY_INFO,
               payload: "0x",
             },
             ...transactionProxyContexts.extract(),

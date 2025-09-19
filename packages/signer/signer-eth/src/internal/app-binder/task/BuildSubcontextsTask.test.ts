@@ -854,7 +854,7 @@ describe("BuildSubcontextsTask", () => {
     });
   });
 
-  describe("PROXY_DELEGATE_CALL context type", () => {
+  describe("PROXY_INFO context type", () => {
     beforeEach(() => {
       apiMock.sendCommand.mockResolvedValue(
         CommandResultFactory({ data: { challenge: "test-challenge" } }),
@@ -864,7 +864,7 @@ describe("BuildSubcontextsTask", () => {
     it("should create callback to get proxy delegate call context", async () => {
       // GIVEN
       const context: ClearSignContextSuccess = {
-        type: ClearSignContextType.PROXY_DELEGATE_CALL,
+        type: ClearSignContextType.PROXY_INFO,
         payload: "proxy payload",
       };
       const args = {
@@ -877,7 +877,7 @@ describe("BuildSubcontextsTask", () => {
         },
       };
       contextModuleMock.getFieldContext.mockResolvedValue({
-        type: ClearSignContextType.PROXY_DELEGATE_CALL,
+        type: ClearSignContextType.PROXY_INFO,
         payload: "proxy result",
       });
 
@@ -890,7 +890,7 @@ describe("BuildSubcontextsTask", () => {
       const callbackResult = await callback();
 
       expect(callbackResult).toEqual({
-        type: ClearSignContextType.PROXY_DELEGATE_CALL,
+        type: ClearSignContextType.PROXY_INFO,
         payload: "proxy result",
       });
       expect(apiMock.sendCommand).toHaveBeenCalledWith(
@@ -904,14 +904,14 @@ describe("BuildSubcontextsTask", () => {
           deviceModelId: DeviceModelId.STAX,
           challenge: "test-challenge",
         },
-        ClearSignContextType.PROXY_DELEGATE_CALL,
+        ClearSignContextType.PROXY_INFO,
       );
     });
 
     it("should handle challenge command failure", async () => {
       // GIVEN
       const context: ClearSignContextSuccess = {
-        type: ClearSignContextType.PROXY_DELEGATE_CALL,
+        type: ClearSignContextType.PROXY_INFO,
         payload: "proxy payload",
       };
       const args = {
@@ -951,7 +951,7 @@ describe("BuildSubcontextsTask", () => {
     it("should handle missing proxy address", async () => {
       // GIVEN
       const context: ClearSignContextSuccess = {
-        type: ClearSignContextType.PROXY_DELEGATE_CALL,
+        type: ClearSignContextType.PROXY_INFO,
         payload: "proxy payload",
       };
       const args = {
@@ -985,7 +985,7 @@ describe("BuildSubcontextsTask", () => {
     it("should use correct device model id in context", async () => {
       // GIVEN
       const context: ClearSignContextSuccess = {
-        type: ClearSignContextType.PROXY_DELEGATE_CALL,
+        type: ClearSignContextType.PROXY_INFO,
         payload: "proxy payload",
       };
       const args = {
@@ -999,7 +999,7 @@ describe("BuildSubcontextsTask", () => {
         },
       };
       contextModuleMock.getFieldContext.mockResolvedValue({
-        type: ClearSignContextType.PROXY_DELEGATE_CALL,
+        type: ClearSignContextType.PROXY_INFO,
         payload: "proxy result",
       });
 
@@ -1019,7 +1019,7 @@ describe("BuildSubcontextsTask", () => {
           deviceModelId: DeviceModelId.NANO_SP,
           challenge: "test-challenge",
         },
-        ClearSignContextType.PROXY_DELEGATE_CALL,
+        ClearSignContextType.PROXY_INFO,
       );
     });
   });

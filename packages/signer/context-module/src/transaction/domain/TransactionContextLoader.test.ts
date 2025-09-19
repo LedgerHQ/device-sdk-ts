@@ -175,7 +175,7 @@ describe("TransactionContextLoader", () => {
     // THEN
     expect(result).toEqual([
       {
-        type: ClearSignContextType.PROXY_DELEGATE_CALL,
+        type: ClearSignContextType.PROXY_INFO,
         payload: "0x",
       },
       {

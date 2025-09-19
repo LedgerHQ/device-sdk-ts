@@ -38,7 +38,7 @@ export class ProxyContextFieldLoader
     expectedType: ClearSignContextType,
   ): input is ProxyFieldInput {
     return (
-      expectedType === ClearSignContextType.PROXY_DELEGATE_CALL &&
+      expectedType === ClearSignContextType.PROXY_INFO &&
       typeof input === "object" &&
       input !== null &&
       "chainId" in input &&
@@ -72,7 +72,7 @@ export class ProxyContextFieldLoader
         });
 
         return {
-          type: ClearSignContextType.PROXY_DELEGATE_CALL,
+          type: ClearSignContextType.PROXY_INFO,
           payload: signedDescriptor,
           certificate,
         };

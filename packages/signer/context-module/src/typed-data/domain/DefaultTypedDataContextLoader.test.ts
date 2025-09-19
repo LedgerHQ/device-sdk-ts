@@ -812,7 +812,7 @@ describe("TypedDataContextLoader", () => {
         tokens: {},
         calldatas: {},
         proxy: {
-          type: ClearSignContextType.PROXY_DELEGATE_CALL,
+          type: ClearSignContextType.PROXY_INFO,
           payload: "0x123456789abcdef0",
           certificate: undefined,
         },
@@ -881,7 +881,7 @@ describe("TypedDataContextLoader", () => {
         tokens: {},
         calldatas: {},
         proxy: {
-          type: ClearSignContextType.PROXY_DELEGATE_CALL,
+          type: ClearSignContextType.PROXY_INFO,
           payload: "0x123456789abcdef0",
           certificate: {
             keyUsageNumber: 1,

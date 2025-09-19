@@ -59,7 +59,7 @@ describe("ProxyContextFieldLoader", () => {
       expect(
         proxyContextFieldLoader.canHandle(
           validField,
-          ClearSignContextType.PROXY_DELEGATE_CALL,
+          ClearSignContextType.PROXY_INFO,
         ),
       ).toBe(true);
     });
@@ -124,7 +124,7 @@ describe("ProxyContextFieldLoader", () => {
         expect(
           proxyContextFieldLoader.canHandle(
             value,
-            ClearSignContextType.PROXY_DELEGATE_CALL,
+            ClearSignContextType.PROXY_INFO,
           ),
         ).toBe(false);
       });
@@ -198,7 +198,7 @@ describe("ProxyContextFieldLoader", () => {
         targetDevice: mockTransactionField.deviceModelId,
       });
       expect(result).toEqual({
-        type: ClearSignContextType.PROXY_DELEGATE_CALL,
+        type: ClearSignContextType.PROXY_INFO,
         payload: mockProxyDelegateCall.signedDescriptor,
         certificate: mockCertificate,
       });
@@ -233,7 +233,7 @@ describe("ProxyContextFieldLoader", () => {
         targetDevice: mockTransactionField.deviceModelId,
       });
       expect(result).toEqual({
-        type: ClearSignContextType.PROXY_DELEGATE_CALL,
+        type: ClearSignContextType.PROXY_INFO,
         payload: mockProxyDelegateCall.signedDescriptor,
         certificate: undefined,
       });
@@ -263,7 +263,7 @@ describe("ProxyContextFieldLoader", () => {
         targetDevice: DeviceModelId.NANO_X,
       });
       expect(result).toEqual({
-        type: ClearSignContextType.PROXY_DELEGATE_CALL,
+        type: ClearSignContextType.PROXY_INFO,
         payload: mockProxyDelegateCall.signedDescriptor,
         certificate: mockCertificate,
       });
@@ -299,7 +299,7 @@ describe("ProxyContextFieldLoader", () => {
         challenge: "custom-challenge",
       });
       expect(result).toEqual({
-        type: ClearSignContextType.PROXY_DELEGATE_CALL,
+        type: ClearSignContextType.PROXY_INFO,
         payload: mockProxyDelegateCall.signedDescriptor,
         certificate: mockCertificate,
       });
@@ -365,7 +365,7 @@ describe("ProxyContextFieldLoader", () => {
 
       // THEN
       expect(result).toEqual({
-        type: ClearSignContextType.PROXY_DELEGATE_CALL,
+        type: ClearSignContextType.PROXY_INFO,
         payload: "",
         certificate: mockCertificate,
       });

@@ -305,7 +305,7 @@ export class ProvideEIP712ContextTask {
             }),
         }).run();
         break;
-      case ClearSignContextType.PROXY_DELEGATE_CALL:
+      case ClearSignContextType.PROXY_INFO:
         await new SendPayloadInChunksTask(this.api, {
           payload,
           commandFactory: (args) =>
