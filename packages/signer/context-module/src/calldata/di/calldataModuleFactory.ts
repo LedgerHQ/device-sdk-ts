@@ -1,14 +1,14 @@
 import { ContainerModule } from "inversify";
 
 import { HttpCalldataDescriptorDataSource } from "@/calldata/data/HttpCalldataDescriptorDataSource";
-import { transactionTypes } from "@/calldata/di/transactionTypes";
-import { TransactionContextLoader } from "@/calldata/domain/TransactionContextLoader";
+import { calldataTypes } from "@/calldata/di/calldataTypes";
+import { CalldataContextLoader } from "@/calldata/domain/CalldataContextLoader";
 import { configTypes } from "@/config/di/configTypes";
 import { pkiTypes } from "@/pki/di/pkiTypes";
 
-export const transactionModuleFactory = () =>
+export const calldataModuleFactory = () =>
   new ContainerModule(({ bind }) => {
-    bind(transactionTypes.DappCalldataDescriptorDataSource).toDynamicValue(
+    bind(calldataTypes.DappCalldataDescriptorDataSource).toDynamicValue(
       (context) =>
         new HttpCalldataDescriptorDataSource(
           context.get(configTypes.Config),
@@ -16,7 +16,7 @@ export const transactionModuleFactory = () =>
           "dapps",
         ),
     );
-    bind(transactionTypes.TokenCalldataDescriptorDataSource).toDynamicValue(
+    bind(calldataTypes.TokenCalldataDescriptorDataSource).toDynamicValue(
       (context) =>
         new HttpCalldataDescriptorDataSource(
           context.get(configTypes.Config),
@@ -24,7 +24,5 @@ export const transactionModuleFactory = () =>
           "tokens",
         ),
     );
-    bind(transactionTypes.TransactionContextLoader).to(
-      TransactionContextLoader,
-    );
+    bind(calldataTypes.CalldataContextLoader).to(CalldataContextLoader);
   });

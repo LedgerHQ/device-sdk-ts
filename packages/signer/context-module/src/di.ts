@@ -1,6 +1,6 @@
 import { Container } from "inversify";
 
-import { transactionModuleFactory } from "@/calldata/di/transactionModuleFactory";
+import { calldataModuleFactory } from "@/calldata/di/calldataModuleFactory";
 import { configModuleFactory } from "@/config/di/configModuleFactory";
 import { type ContextModuleConfig } from "@/config/model/ContextModuleConfig";
 import { dynamicNetworkModuleFactory } from "@/dynamic-network/di/dynamicNetworkModuleFactory";
@@ -29,7 +29,7 @@ export const makeContainer = ({ config }: MakeContainerArgs) => {
     nftModuleFactory(),
     proxyModuleFactory(config),
     tokenModuleFactory(),
-    transactionModuleFactory(),
+    calldataModuleFactory(),
     trustedNameModuleFactory(),
     typedDataModuleFactory(),
     nanoPkiModuleFactory(),

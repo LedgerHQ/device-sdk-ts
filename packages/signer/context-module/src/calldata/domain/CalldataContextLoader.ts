@@ -7,7 +7,7 @@ import { inject, injectable } from "inversify";
 import { MaybeAsync } from "purify-ts";
 
 import type { CalldataDescriptorDataSource } from "@/calldata/data/CalldataDescriptorDataSource";
-import { transactionTypes } from "@/calldata/di/transactionTypes";
+import { calldataTypes } from "@/calldata/di/calldataTypes";
 import type { ProxyDataSource } from "@/proxy/data/ProxyDataSource";
 import { proxyTypes } from "@/proxy/di/proxyTypes";
 import { ContextLoader } from "@/shared/domain/ContextLoader";
@@ -26,11 +26,11 @@ type GetContextsParams = {
 };
 
 @injectable()
-export class TransactionContextLoader implements ContextLoader {
+export class CalldataContextLoader implements ContextLoader {
   constructor(
-    @inject(transactionTypes.DappCalldataDescriptorDataSource)
+    @inject(calldataTypes.DappCalldataDescriptorDataSource)
     private dappDataSource: CalldataDescriptorDataSource,
-    @inject(transactionTypes.TokenCalldataDescriptorDataSource)
+    @inject(calldataTypes.TokenCalldataDescriptorDataSource)
     private tokenDataSource: CalldataDescriptorDataSource,
     @inject(proxyTypes.ProxyDataSource)
     private proxyDataSource: ProxyDataSource,
@@ -66,12 +66,11 @@ export class TransactionContextLoader implements ContextLoader {
     return this._getContexts(param, this.dappDataSource)
       .alt(this._getContexts(param, this.tokenDataSource))
       .alt(this._getContextsWithProxy(param, this.dappDataSource))
-      .alt(this._getContextsWithProxy(param, this.tokenDataSource))
       .orDefault([
         {
           type: ClearSignContextType.ERROR,
           error: new Error(
-            "[ContextModule] TransactionContextLoader: No transaction contexts found",
+            "[ContextModule] CalldataContextLoader: No calldata contexts found",
           ),
         },
       ]);
@@ -109,16 +108,14 @@ export class TransactionContextLoader implements ContextLoader {
 
     return proxyAddress
       .map<MaybeAsync<ClearSignContext[]>>(({ implementationAddress }) => {
-        return this._getContexts(
-          {
-            address: implementationAddress,
-            chainId,
-            selector,
-            deviceModelId,
-            data,
-          },
-          datasource,
-        ).map((contexts) => [
+        const params = {
+          address: implementationAddress,
+          chainId,
+          selector,
+          deviceModelId,
+          data,
+        };
+        return this._getContexts(params, datasource).map((contexts) => [
           // Add a proxy info context to the list of contexts
           // to specify that the proxy info should be refetched during the provide step
           {

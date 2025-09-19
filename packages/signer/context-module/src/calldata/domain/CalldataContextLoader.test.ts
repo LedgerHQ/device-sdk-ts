@@ -2,12 +2,12 @@ import { DeviceModelId } from "@ledgerhq/device-management-kit";
 import { Left, Right } from "purify-ts";
 
 import type { CalldataDescriptorDataSource } from "@/calldata/data/CalldataDescriptorDataSource";
-import { TransactionContextLoader } from "@/calldata/domain/TransactionContextLoader";
+import { CalldataContextLoader } from "@/calldata/domain/CalldataContextLoader";
 import type { ProxyDataSource } from "@/proxy/data/ProxyDataSource";
 import { ClearSignContextType } from "@/shared/model/ClearSignContext";
 import type { TransactionContext } from "@/shared/model/TransactionContext";
 
-describe("TransactionContextLoader", () => {
+describe("CalldataContextLoader", () => {
   const getProxyImplementationAddress = vi.fn();
   const getDappDescriptorsMock = vi.fn();
   const getTokenDescriptorsMock = vi.fn();
@@ -20,7 +20,7 @@ describe("TransactionContextLoader", () => {
   const mockProxyDatasource: ProxyDataSource = {
     getProxyImplementationAddress: getProxyImplementationAddress,
   };
-  const loader = new TransactionContextLoader(
+  const loader = new CalldataContextLoader(
     mockDappDataSource,
     mockTokenDataSource,
     mockProxyDatasource,
@@ -100,7 +100,7 @@ describe("TransactionContextLoader", () => {
       {
         type: ClearSignContextType.ERROR,
         error: new Error(
-          "[ContextModule] TransactionContextLoader: No transaction contexts found",
+          "[ContextModule] CalldataContextLoader: No calldata contexts found",
         ),
       },
     ]);
@@ -246,7 +246,7 @@ describe("TransactionContextLoader", () => {
       {
         type: ClearSignContextType.ERROR,
         error: new Error(
-          "[ContextModule] TransactionContextLoader: No transaction contexts found",
+          "[ContextModule] CalldataContextLoader: No calldata contexts found",
         ),
       },
     ]);

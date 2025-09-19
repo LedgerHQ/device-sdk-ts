@@ -1,14 +1,14 @@
 import { type Container } from "inversify";
 import { Left } from "purify-ts";
 
-import { transactionTypes } from "@/calldata/di/transactionTypes";
+import { calldataTypes } from "@/calldata/di/calldataTypes";
 import { dynamicNetworkTypes } from "@/dynamic-network/di/dynamicNetworkTypes";
 import { type DynamicNetworkContextLoader } from "@/dynamic-network/domain/DynamicNetworkContextLoader";
 import type { TypedDataClearSignContext } from "@/shared/model/TypedDataClearSignContext";
 import type { TypedDataContext } from "@/shared/model/TypedDataContext";
 import { trustedNameTypes } from "@/trusted-name/di/trustedNameTypes";
 
-import { type TransactionContextLoader } from "./calldata/domain/TransactionContextLoader";
+import { type CalldataContextLoader } from "./calldata/domain/CalldataContextLoader";
 import { type ContextModuleConfig } from "./config/model/ContextModuleConfig";
 import { externalPluginTypes } from "./external-plugin/di/externalPluginTypes";
 import { type ExternalPluginContextLoader } from "./external-plugin/domain/ExternalPluginContextLoader";
@@ -94,8 +94,8 @@ export class DefaultContextModule implements ContextModule {
       ),
       this._container.get<NftContextLoader>(nftTypes.NftContextLoader),
       this._container.get<TokenContextLoader>(tokenTypes.TokenContextLoader),
-      this._container.get<TransactionContextLoader>(
-        transactionTypes.TransactionContextLoader,
+      this._container.get<CalldataContextLoader>(
+        calldataTypes.CalldataContextLoader,
       ),
       this._container.get<UniswapContextLoader>(
         uniswapTypes.UniswapContextLoader,
