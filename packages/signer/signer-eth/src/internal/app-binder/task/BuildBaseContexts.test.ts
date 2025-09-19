@@ -1,6 +1,5 @@
 import {
   type ClearSignContext,
-  type ClearSignContextSuccess,
   ClearSignContextType,
   type PkiCertificate,
 } from "@ledgerhq/context-module";
@@ -130,12 +129,14 @@ describe("BuildBaseContexts", () => {
     // GIVEN
     const clearSignContexts: ClearSignContext[] = [];
     const clearSignContextsOptional: ClearSignContext[] = [];
-    const expectedWeb3Check =
-      "web3Check" as unknown as ClearSignContextSuccess<ClearSignContextType.WEB3_CHECK>;
+    const expectedWeb3Check = {
+      type: ClearSignContextType.WEB3_CHECK,
+      payload: "web3Check",
+    };
     getWeb3ChecksFactoryMock.mockReturnValueOnce({
       run: async () => Promise.resolve({ web3Check: expectedWeb3Check }),
     });
-    contextModuleMock.getContexts.mockResolvedValueOnce(clearSignContexts);
+    contextModuleMock.getContexts.mockResolvedValueOnce([...clearSignContexts]);
     apiMock.getDeviceSessionState.mockReturnValueOnce({
       sessionStateType: DeviceSessionStateType.ReadyWithoutSecureChannel,
       deviceStatus: DeviceStatus.CONNECTED,
@@ -184,12 +185,14 @@ describe("BuildBaseContexts", () => {
         payload: "payload-4",
       },
     ];
-    const expectedWeb3Check =
-      "web3Check" as unknown as ClearSignContextSuccess<ClearSignContextType.WEB3_CHECK>;
+    const expectedWeb3Check = {
+      type: ClearSignContextType.WEB3_CHECK,
+      payload: "web3Check",
+    };
     getWeb3ChecksFactoryMock.mockReturnValueOnce({
       run: async () => Promise.resolve({ web3Check: expectedWeb3Check }),
     });
-    contextModuleMock.getContexts.mockResolvedValueOnce(clearSignContexts);
+    contextModuleMock.getContexts.mockResolvedValueOnce([...clearSignContexts]);
     apiMock.getDeviceSessionState.mockReturnValueOnce({
       sessionStateType: DeviceSessionStateType.ReadyWithoutSecureChannel,
       deviceStatus: DeviceStatus.CONNECTED,
@@ -209,10 +212,10 @@ describe("BuildBaseContexts", () => {
     // THEN
     expect(result).toEqual({
       clearSignContexts: [
+        expectedWeb3Check,
         clearSignContexts[0],
         clearSignContexts[1],
         clearSignContexts[3],
-        expectedWeb3Check,
       ],
       clearSignContextsOptional: [clearSignContexts[2]],
       clearSigningType: ClearSigningType.EIP7730,
@@ -243,12 +246,14 @@ describe("BuildBaseContexts", () => {
         certificate: defaultCertificate,
       },
     ];
-    const expectedWeb3Check =
-      "web3Check" as unknown as ClearSignContextSuccess<ClearSignContextType.WEB3_CHECK>;
+    const expectedWeb3Check = {
+      type: ClearSignContextType.WEB3_CHECK,
+      payload: "web3Check",
+    };
     getWeb3ChecksFactoryMock.mockReturnValueOnce({
       run: async () => Promise.resolve({ web3Check: expectedWeb3Check }),
     });
-    contextModuleMock.getContexts.mockResolvedValueOnce(clearSignContexts);
+    contextModuleMock.getContexts.mockResolvedValueOnce([...clearSignContexts]);
     apiMock.getDeviceSessionState.mockReturnValueOnce({
       sessionStateType: DeviceSessionStateType.ReadyWithoutSecureChannel,
       deviceStatus: DeviceStatus.CONNECTED,
@@ -268,10 +273,10 @@ describe("BuildBaseContexts", () => {
     // THEN
     expect(result).toEqual({
       clearSignContexts: [
+        expectedWeb3Check, // web3 check
         clearSignContexts[3], // transaction info
         clearSignContexts[1], // transaction field description
         clearSignContexts[2], // transaction field description
-        expectedWeb3Check, // web3 check
       ],
       clearSignContextsOptional: [clearSignContexts[0]], // enum
       clearSigningType: ClearSigningType.EIP7730,
@@ -290,8 +295,10 @@ describe("BuildBaseContexts", () => {
         payload: "payload-2",
       },
     ];
-    const expectedWeb3Check =
-      "web3Check" as unknown as ClearSignContextSuccess<ClearSignContextType.WEB3_CHECK>;
+    const expectedWeb3Check = {
+      type: ClearSignContextType.WEB3_CHECK,
+      payload: "web3Check",
+    };
     getWeb3ChecksFactoryMock.mockReturnValueOnce({
       run: async () => Promise.resolve({ web3Check: expectedWeb3Check }),
     });

@@ -1,7 +1,6 @@
 import {
   type ClearSignContext,
   type ClearSignContextSuccess,
-  type ClearSignContextSuccessType,
   ClearSignContextType,
   type ContextModule,
   type TransactionSubset,
@@ -66,25 +65,6 @@ export class BuildBaseContexts {
       subset,
     } = this._args;
     const deviceState = this._api.getDeviceSessionState();
-    let filteredContexts: ClearSignContextSuccess[] = [];
-    let filteredContextOptional: ClearSignContextSuccess[] = [];
-    let clearSigningType: ClearSigningType = ClearSigningType.BASIC;
-    let web3Check: ClearSignContextSuccess<ClearSignContextType.WEB3_CHECK> | null =
-      null;
-
-    // Run the web3checks if needed
-    if (transaction) {
-      if (appConfig.web3ChecksEnabled) {
-        web3Check = (
-          await this.getWeb3ChecksFactory(this._api, {
-            contextModule,
-            derivationPath,
-            subset,
-            transaction,
-          }).run()
-        ).web3Check;
-      }
-    }
 
     // Get challenge (not supported on Nano S)
     let challenge: string | undefined = undefined;
@@ -106,77 +86,132 @@ export class BuildBaseContexts {
         ...subset,
       });
 
-    // NOTE: we need to filter out the ENUM and ERROR types
-    // ENUM are handled differently
-    // ERROR are not handled at all for now
-    const clearSignContextsSuccess: ClearSignContextSuccess<
-      Exclude<ClearSignContextSuccessType, ClearSignContextType.ENUM>
-    >[] = clearSignContexts.filter(
-      (context) =>
-        context.type !== ClearSignContextType.ERROR &&
-        context.type !== ClearSignContextType.ENUM,
-    );
-
-    // Retrieve all ENUM contexts
-    const transactionEnums: ClearSignContextSuccess<ClearSignContextType.ENUM>[] =
-      clearSignContexts.filter(
-        (context) => context.type === ClearSignContextType.ENUM,
-      );
-
-    const transactionInfo = clearSignContextsSuccess.find(
-      (ctx) => ctx.type === ClearSignContextType.TRANSACTION_INFO,
-    );
-
-    // If the device does not support the generic parser,
-    // we need to filter out the transaction info and transaction field description
-    // as they are not supported by the device
-    if (
-      !this.supportsGenericParser(deviceState, appConfig) ||
-      transactionInfo === undefined
-    ) {
-      filteredContexts = clearSignContextsSuccess.filter(
-        (ctx) =>
-          ctx.type !== ClearSignContextType.TRANSACTION_INFO &&
-          ctx.type !== ClearSignContextType.TRANSACTION_FIELD_DESCRIPTION,
-      );
-
-      // If the device supports the web3 check, we need to add it to the list of contexts
-      if (web3Check) {
-        filteredContexts = [web3Check, ...filteredContexts];
+    // Run the web3checks if needed
+    if (transaction && appConfig.web3ChecksEnabled) {
+      const web3CheckContext = (
+        await this.getWeb3ChecksFactory(this._api, {
+          contextModule,
+          derivationPath,
+          subset,
+          transaction,
+        }).run()
+      ).web3Check;
+      if (web3CheckContext) {
+        clearSignContexts.unshift(web3CheckContext);
       }
-    } else if (transactionInfo.certificate) {
-      const transactionFields = clearSignContextsSuccess.filter(
-        (ctx) =>
-          ctx.type === ClearSignContextType.TRANSACTION_FIELD_DESCRIPTION,
-      );
-      const proxyContexts = clearSignContextsSuccess.filter(
-        (ctx) => ctx.type === ClearSignContextType.PROXY_INFO,
-      );
-      const dynamicNetworkContexts = clearSignContextsSuccess.filter(
-        (ctx) =>
-          ctx.type === ClearSignContextType.DYNAMIC_NETWORK ||
-          ctx.type === ClearSignContextType.DYNAMIC_NETWORK_ICON,
-      );
-
-      filteredContexts = [
-        ...dynamicNetworkContexts,
-        ...proxyContexts,
-        transactionInfo,
-        ...transactionFields,
-        ...(web3Check ? [web3Check] : []),
-      ];
-      filteredContextOptional = [...transactionEnums];
-      clearSigningType = ClearSigningType.EIP7730;
     }
 
+    // filter out the error contexts
+    const contextsSuccess: ClearSignContextSuccess[] = clearSignContexts.filter(
+      (context) => context.type !== ClearSignContextType.ERROR,
+    );
+
+    if (
+      this._supportsGenericParser(deviceState, appConfig) &&
+      this._hasValidTransactionInfo(contextsSuccess)
+    ) {
+      return this._getERC7730Contexts(contextsSuccess);
+    } else {
+      return this._getBasicContexts(contextsSuccess);
+    }
+  }
+
+  private _getERC7730Contexts(
+    contexts: ClearSignContextSuccess[],
+  ): BuildBaseContextsResult {
+    const clearSignContexts: ClearSignContextSuccess[] = contexts
+      .filter((context) => this._isContextNeededForERC7730ClearSigning(context))
+      .sort(
+        (a, b) => this._getContextPriority(a) - this._getContextPriority(b),
+      );
+
+    const clearSignContextsOptional: ClearSignContextSuccess[] =
+      contexts.filter((context) => context.type === ClearSignContextType.ENUM);
+
     return {
-      clearSignContexts: filteredContexts,
-      clearSignContextsOptional: filteredContextOptional,
-      clearSigningType,
+      clearSignContexts,
+      clearSignContextsOptional,
+      clearSigningType: ClearSigningType.EIP7730,
     };
   }
 
-  private supportsGenericParser(
+  private _getBasicContexts(
+    contexts: ClearSignContextSuccess[],
+  ): BuildBaseContextsResult {
+    const clearSignContexts: ClearSignContextSuccess[] = contexts
+      .filter((context) => this._isContextNeededForBasicClearSigning(context))
+      .sort(
+        (a, b) => this._getContextPriority(a) - this._getContextPriority(b),
+      );
+
+    return {
+      clearSignContexts,
+      clearSignContextsOptional: [],
+      clearSigningType: ClearSigningType.BASIC,
+    };
+  }
+
+  private _isContextNeededForBasicClearSigning({
+    type,
+  }: ClearSignContextSuccess): boolean {
+    switch (type) {
+      case ClearSignContextType.WEB3_CHECK:
+      case ClearSignContextType.PLUGIN:
+      case ClearSignContextType.EXTERNAL_PLUGIN:
+      case ClearSignContextType.DYNAMIC_NETWORK:
+      case ClearSignContextType.DYNAMIC_NETWORK_ICON:
+      case ClearSignContextType.TRUSTED_NAME:
+      case ClearSignContextType.TOKEN:
+      case ClearSignContextType.NFT:
+        return true;
+      case ClearSignContextType.TRANSACTION_INFO:
+      case ClearSignContextType.TRANSACTION_FIELD_DESCRIPTION:
+      case ClearSignContextType.ENUM:
+      case ClearSignContextType.PROXY_INFO:
+        return false;
+      default: {
+        const uncoveredType: never = type;
+        throw new Error(`Unhandled context type ${String(uncoveredType)}`);
+      }
+    }
+  }
+
+  private _isContextNeededForERC7730ClearSigning({
+    type,
+  }: ClearSignContextSuccess): boolean {
+    switch (type) {
+      case ClearSignContextType.TRANSACTION_INFO:
+      case ClearSignContextType.TRANSACTION_FIELD_DESCRIPTION:
+      case ClearSignContextType.PROXY_INFO:
+      case ClearSignContextType.WEB3_CHECK:
+      case ClearSignContextType.DYNAMIC_NETWORK:
+      case ClearSignContextType.DYNAMIC_NETWORK_ICON:
+        return true;
+      case ClearSignContextType.ENUM: // enum is needed but as optional
+      case ClearSignContextType.TRUSTED_NAME:
+      case ClearSignContextType.TOKEN:
+      case ClearSignContextType.NFT:
+      case ClearSignContextType.PLUGIN:
+      case ClearSignContextType.EXTERNAL_PLUGIN:
+        return false;
+      default: {
+        const uncoveredType: never = type;
+        throw new Error(`Unhandled context type ${String(uncoveredType)}`);
+      }
+    }
+  }
+
+  private _hasValidTransactionInfo(
+    contexts: ClearSignContextSuccess[],
+  ): boolean {
+    return (
+      contexts.find(
+        (context) => context.type === ClearSignContextType.TRANSACTION_INFO,
+      )?.certificate !== undefined
+    );
+  }
+
+  private _supportsGenericParser(
     deviceState: DeviceSessionState,
     appConfig: GetConfigCommandResponse,
   ): boolean {
@@ -184,5 +219,40 @@ export class BuildBaseContexts {
       .withMinVersionExclusive("1.14.0")
       .excludeDeviceModel(DeviceModelId.NANO_S)
       .check();
+  }
+
+  /**
+   * Determines the processing priority of a clear sign context.
+   * Lower numbers indicate higher priority (processed first).
+   *
+   * @param context The clear sign context to get priority for
+   * @returns Priority number (lower = higher priority)
+   */
+  private _getContextPriority({ type }: ClearSignContextSuccess): number {
+    switch (type) {
+      case ClearSignContextType.WEB3_CHECK:
+        return 10;
+      case ClearSignContextType.DYNAMIC_NETWORK:
+      case ClearSignContextType.DYNAMIC_NETWORK_ICON:
+      case ClearSignContextType.PROXY_INFO:
+        return 30;
+      case ClearSignContextType.TRANSACTION_INFO:
+        return 50;
+      case ClearSignContextType.PLUGIN:
+      case ClearSignContextType.EXTERNAL_PLUGIN:
+      case ClearSignContextType.TOKEN:
+      case ClearSignContextType.NFT:
+      case ClearSignContextType.TRUSTED_NAME:
+      case ClearSignContextType.TRANSACTION_FIELD_DESCRIPTION:
+      case ClearSignContextType.ENUM:
+        return 70;
+
+      default: {
+        const uncoveredType: never = type;
+        throw new Error(
+          `Unhandled context type for priority: ${String(uncoveredType)}`,
+        );
+      }
+    }
   }
 }
