@@ -37,7 +37,7 @@ const initialState: SignerEthContextType = {
   signer: null,
   calConfig: {
     url: "https://crypto-assets-service.api.ledger.com/v1",
-    mode: "prod",
+    mode: "test",
     branch: "main",
   },
   web3ChecksConfig: {
@@ -84,6 +84,9 @@ export const SignerEthProvider: React.FC<PropsWithChildren> = ({
       .setCalConfig(calConfig)
       .setWeb3ChecksConfig(web3ChecksConfig)
       .setMetadataServiceConfig(metadataServiceDomain)
+      .setDatasourceConfig({
+        proxy: "safe",
+      })
       .build();
     const newSigner = new SignerEthBuilder({
       dmk,

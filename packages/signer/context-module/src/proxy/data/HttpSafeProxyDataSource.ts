@@ -34,7 +34,9 @@ export class HttpSafeProxyDataSource implements ProxyDataSource {
     try {
       const response = await axios.request<SafeProxyImplementationAddressDto>({
         method: "GET",
-        url: `${this.config.metadataServiceDomain.url}/v3/ethereum/${chainId}/contract/proxy/${proxyAddress}`,
+        // url: `${this.config.metadataServiceDomain.url}/v3/ethereum/${chainId}/contract/proxy/${proxyAddress}`,
+        // TODO: replace with the correct url
+        url: ` https://nft.aws.stg.ldg-tech.com/v3/ethereum/${chainId}/contract/proxy/${proxyAddress}`,
         headers: {
           [LEDGER_CLIENT_VERSION_HEADER]: `context-module/${PACKAGE.version}`,
           [LEDGER_ORIGIN_TOKEN_HEADER]: this.config.originToken,

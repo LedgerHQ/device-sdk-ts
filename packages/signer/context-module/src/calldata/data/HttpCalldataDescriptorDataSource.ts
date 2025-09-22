@@ -71,15 +71,20 @@ export class HttpCalldataDescriptorDataSource
   > {
     let dto: CalldataDto[] | undefined;
     try {
+      const url =
+        this.endpoint === "dapps"
+          ? "https://crypto-assets-service.api.ledger.com/v1"
+          : "https://crypto-assets-service.api.ledger-test.com/v1";
       const response = await axios.request<CalldataDto[]>({
         method: "GET",
-        url: `${this.config.cal.url}/${this.endpoint}`,
+        url: `${url}/${this.endpoint}`,
         params: {
           output: "descriptors_calldata",
           chain_id: chainId,
           contracts: address, // used for dapps
           contract_address: address, // used for tokens
-          ref: `branch:${this.config.cal.branch}`,
+          // TODO revert to branch
+          ref: `commit:c9227c39e225932796e87ef4c9eb84f647e16150`,
         },
         headers: {
           [LEDGER_CLIENT_VERSION_HEADER]: `context-module/${PACKAGE.version}`,
