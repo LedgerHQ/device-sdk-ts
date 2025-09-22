@@ -6,7 +6,6 @@ import {
   ClearSignContext,
   ClearSignContextType,
 } from "@/shared/model/ClearSignContext";
-import { TransactionContext } from "@/shared/model/TransactionContext";
 import type { TokenDataSource } from "@/token/data/TokenDataSource";
 import { tokenTypes } from "@/token/di/tokenTypes";
 
@@ -19,32 +18,37 @@ const SUPPORTED_SELECTORS: HexaString[] = Object.values(
   ERC20_SUPPORTED_SELECTORS,
 );
 
+export type TokenContextInput = {
+  to: HexaString;
+  selector: HexaString;
+  chainId: number;
+};
+
 @injectable()
-export class TokenContextLoader implements ContextLoader {
+export class TokenContextLoader implements ContextLoader<TokenContextInput> {
   private _dataSource: TokenDataSource;
 
   constructor(@inject(tokenTypes.TokenDataSource) dataSource: TokenDataSource) {
     this._dataSource = dataSource;
   }
 
-  async load(ctx: TransactionContext): Promise<ClearSignContext[]> {
-    const { to, selector, chainId } = ctx;
-    if (!to) {
-      return [];
-    }
+  canHandle(input: unknown): input is TokenContextInput {
+    return (
+      typeof input === "object" &&
+      input !== null &&
+      "to" in input &&
+      "selector" in input &&
+      "chainId" in input &&
+      typeof input.chainId === "number" &&
+      isHexaString(input.to) &&
+      input.to !== "0x" &&
+      isHexaString(input.selector) &&
+      this.isSelectorSupported(input.selector)
+    );
+  }
 
-    if (!isHexaString(selector)) {
-      return [
-        {
-          type: ClearSignContextType.ERROR,
-          error: new Error("Invalid selector"),
-        },
-      ];
-    }
-
-    if (!this.isSelectorSupported(selector)) {
-      return [];
-    }
+  async load(input: TokenContextInput): Promise<ClearSignContext[]> {
+    const { to, chainId } = input;
 
     const payload = await this._dataSource.getTokenInfosPayload({
       address: to,

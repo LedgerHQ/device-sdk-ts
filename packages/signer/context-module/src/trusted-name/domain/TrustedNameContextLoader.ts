@@ -5,12 +5,19 @@ import {
   ClearSignContext,
   ClearSignContextType,
 } from "@/shared/model/ClearSignContext";
-import { TransactionContext } from "@/shared/model/TransactionContext";
 import type { TrustedNameDataSource } from "@/trusted-name/data/TrustedNameDataSource";
 import { trustedNameTypes } from "@/trusted-name/di/trustedNameTypes";
 
+export type TrustedNameContextInput = {
+  chainId: number;
+  domain: string;
+  challenge: string;
+};
+
 @injectable()
-export class TrustedNameContextLoader implements ContextLoader {
+export class TrustedNameContextLoader
+  implements ContextLoader<TrustedNameContextInput>
+{
   private _dataSource: TrustedNameDataSource;
 
   constructor(
@@ -20,12 +27,23 @@ export class TrustedNameContextLoader implements ContextLoader {
     this._dataSource = dataSource;
   }
 
-  async load(ctx: TransactionContext): Promise<ClearSignContext[]> {
-    const { chainId, domain, challenge } = ctx;
+  canHandle(input: unknown): input is TrustedNameContextInput {
+    return (
+      typeof input === "object" &&
+      input !== null &&
+      "chainId" in input &&
+      "domain" in input &&
+      "challenge" in input &&
+      typeof input.chainId === "number" &&
+      typeof input.domain === "string" &&
+      input.domain.length > 0 &&
+      typeof input.challenge === "string" &&
+      input.challenge.length > 0
+    );
+  }
 
-    if (!domain || !challenge) {
-      return [];
-    }
+  async load(input: TrustedNameContextInput): Promise<ClearSignContext[]> {
+    const { chainId, domain, challenge } = input;
 
     if (!this.isDomainValid(domain)) {
       return [

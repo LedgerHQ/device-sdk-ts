@@ -8,6 +8,7 @@ import {
   type ContextModuleDatasourceConfig,
   type ContextModuleMetadataServiceConfig,
 } from "./config/model/ContextModuleConfig";
+import { type ContextLoader } from "./shared/domain/ContextLoader";
 import { ContextModuleBuilder } from "./ContextModuleBuilder";
 import { DefaultContextModule } from "./DefaultContextModule";
 
@@ -38,7 +39,10 @@ describe("ContextModuleBuilder", () => {
 
   it("should return a custom context module", () => {
     const contextModuleBuilder = new ContextModuleBuilder(defaultBuilderArgs);
-    const customLoader = { load: vi.fn() };
+    const customLoader: ContextLoader = {
+      load: vi.fn(),
+      canHandle: vi.fn() as unknown as ContextLoader["canHandle"],
+    };
 
     const res = contextModuleBuilder
       .removeDefaultLoaders()
