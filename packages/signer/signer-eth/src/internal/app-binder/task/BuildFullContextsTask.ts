@@ -118,6 +118,7 @@ export class BuildFullContextsTask {
               this._api,
               {
                 ...this._args,
+                transaction: undefined, // don't pass the transaction to the nested context builder
                 subset,
               },
               // inject the factories for testing
