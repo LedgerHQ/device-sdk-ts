@@ -6,7 +6,7 @@ import { pkiTypes } from "@/pki/di/pkiTypes";
 import { type PkiCertificateLoader } from "@/pki/domain/PkiCertificateLoader";
 import { KeyId } from "@/pki/model/KeyId";
 import { KeyUsage } from "@/pki/model/KeyUsage";
-import type { ProxyDataSource } from "@/proxy/data/HttpProxyDataSource";
+import type { ProxyDataSource } from "@/proxy/data/ProxyDataSource";
 import { proxyTypes } from "@/proxy/di/proxyTypes";
 import {
   type ClearSignContextSuccess,
@@ -36,7 +36,7 @@ import type { TypedDataContextLoader } from "@/typed-data/domain/TypedDataContex
 
 type ResolvedProxy = {
   resolvedAddress: string;
-  context?: ClearSignContextSuccess<ClearSignContextType.PROXY_DELEGATE_CALL>;
+  context?: ClearSignContextSuccess<ClearSignContextType.PROXY_INFO>;
 };
 
 @injectable()
@@ -55,7 +55,7 @@ export class DefaultTypedDataContextLoader implements TypedDataContextLoader {
   async load(typedData: TypedDataContext): Promise<TypedDataClearSignContext> {
     // Get the typed data filters from the data source
     let proxy:
-      | ClearSignContextSuccess<ClearSignContextType.PROXY_DELEGATE_CALL>
+      | ClearSignContextSuccess<ClearSignContextType.PROXY_INFO>
       | undefined = undefined;
     let data = await this.dataSource.getTypedDataFilters({
       address: typedData.verifyingContract,
@@ -110,12 +110,13 @@ export class DefaultTypedDataContextLoader implements TypedDataContextLoader {
     typedData: TypedDataContext,
   ): Promise<ResolvedProxy> {
     // Try to resolve the proxy
-    const proxyDelegateCall = await this.proxyDataSource.getProxyDelegateCall({
-      calldata: "0x",
-      proxyAddress: typedData.verifyingContract,
-      chainId: typedData.chainId,
-      challenge: typedData.challenge ?? "",
-    });
+    const proxyDelegateCall =
+      await this.proxyDataSource.getProxyImplementationAddress({
+        calldata: "0x",
+        proxyAddress: typedData.verifyingContract,
+        chainId: typedData.chainId,
+        challenge: typedData.challenge ?? "",
+      });
 
     // Early return on failure
     if (proxyDelegateCall.isLeft()) {
@@ -133,12 +134,9 @@ export class DefaultTypedDataContextLoader implements TypedDataContextLoader {
     });
     const proxyData = proxyDelegateCall.unsafeCoerce();
     return {
-      resolvedAddress:
-        proxyData.delegateAddresses.find(
-          (address) => address === typedData.verifyingContract,
-        ) || proxyData.delegateAddresses[0]!,
+      resolvedAddress: proxyData.implementationAddress,
       context: {
-        type: ClearSignContextType.PROXY_DELEGATE_CALL,
+        type: ClearSignContextType.PROXY_INFO,
         payload: proxyData.signedDescriptor,
         certificate,
       },

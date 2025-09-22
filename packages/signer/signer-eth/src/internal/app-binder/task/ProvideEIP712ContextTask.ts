@@ -11,7 +11,6 @@ import {
   type ClearSignContextSuccess,
   ClearSignContextType,
 } from "@ledgerhq/context-module";
-import { ContextFieldLoaderKind } from "@ledgerhq/context-module/src/shared/domain/ContextFieldLoader.js";
 import type {
   CommandResult,
   InternalApi,
@@ -306,7 +305,7 @@ export class ProvideEIP712ContextTask {
             }),
         }).run();
         break;
-      case ClearSignContextType.PROXY_DELEGATE_CALL:
+      case ClearSignContextType.PROXY_INFO:
         await new SendPayloadInChunksTask(this.api, {
           payload,
           commandFactory: (args) =>
@@ -415,14 +414,16 @@ export class ProvideEIP712ContextTask {
           return Just(getChallengeResult);
         }
 
-        const context = await this.contextModule.getFieldContext({
-          kind: ContextFieldLoaderKind.TRUSTED_NAME,
-          chainId: this.chainId.extract(),
-          address,
-          challenge: getChallengeResult.data.challenge,
-          types: filter.types,
-          sources: filter.sources,
-        });
+        const context = await this.contextModule.getFieldContext(
+          {
+            chainId: this.chainId.extract(),
+            address,
+            challenge: getChallengeResult.data.challenge,
+            types: filter.types,
+            sources: filter.sources,
+          },
+          ClearSignContextType.TRUSTED_NAME,
+        );
         if (context.type === ClearSignContextType.TRUSTED_NAME) {
           if (context.certificate) {
             await this.api.sendCommand(

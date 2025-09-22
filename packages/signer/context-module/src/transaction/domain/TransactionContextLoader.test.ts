@@ -1,7 +1,7 @@
 import { DeviceModelId } from "@ledgerhq/device-management-kit";
 import { Left, Right } from "purify-ts";
 
-import type { ProxyDataSource } from "@/proxy/data/HttpProxyDataSource";
+import type { ProxyDataSource } from "@/proxy/data/ProxyDataSource";
 import { ClearSignContextType } from "@/shared/model/ClearSignContext";
 import type { TransactionContext } from "@/shared/model/TransactionContext";
 import type { TransactionDataSource } from "@/transaction/data/TransactionDataSource";
@@ -9,13 +9,12 @@ import { TransactionContextLoader } from "@/transaction/domain/TransactionContex
 
 describe("TransactionContextLoader", () => {
   const getTransactionDescriptorsMock = vi.fn();
-  const getProxyDelegateCallMock = vi.fn();
+  const getProxyImplementationAddress = vi.fn();
   const mockTransactionDataSource: TransactionDataSource = {
     getTransactionDescriptors: getTransactionDescriptorsMock,
   };
   const mockProxyDatasource: ProxyDataSource = {
-    getProxyDelegateCall: getProxyDelegateCallMock,
-    getProxyImplementationAddress: vi.fn(),
+    getProxyImplementationAddress: getProxyImplementationAddress,
   };
   const loader = new TransactionContextLoader(
     mockTransactionDataSource,
@@ -70,7 +69,7 @@ describe("TransactionContextLoader", () => {
 
   it("should return an error if data source fails", async () => {
     // GIVEN
-    getProxyDelegateCallMock.mockResolvedValue(
+    getProxyImplementationAddress.mockResolvedValue(
       Left(new Error("data source error")),
     );
     getTransactionDescriptorsMock.mockResolvedValue(
@@ -116,7 +115,7 @@ describe("TransactionContextLoader", () => {
         },
       ]),
     );
-    getProxyDelegateCallMock.mockResolvedValue(
+    getProxyImplementationAddress.mockResolvedValue(
       Left(new Error("data source error")),
     );
     const transaction = {
@@ -157,9 +156,9 @@ describe("TransactionContextLoader", () => {
         },
       ]),
     );
-    getProxyDelegateCallMock.mockResolvedValue(
+    getProxyImplementationAddress.mockResolvedValue(
       Right({
-        delegateAddresses: ["0x7"],
+        implementationAddress: "0x1234567890abcdef",
         signedDescriptor: "0x1234567890abcdef",
       }),
     );
@@ -176,7 +175,7 @@ describe("TransactionContextLoader", () => {
     // THEN
     expect(result).toEqual([
       {
-        type: ClearSignContextType.PROXY_DELEGATE_CALL,
+        type: ClearSignContextType.PROXY_INFO,
         payload: "0x",
       },
       {
@@ -206,37 +205,7 @@ describe("TransactionContextLoader", () => {
     // THEN
     expect(result).toEqual([]);
     expect(getTransactionDescriptorsMock).not.toHaveBeenCalled();
-    expect(getProxyDelegateCallMock).not.toHaveBeenCalled();
-  });
-
-  it("should return an error when proxy delegate call succeeds but no delegate addresses are found", async () => {
-    // GIVEN
-    getTransactionDescriptorsMock.mockResolvedValueOnce(Right([])); // No transaction descriptors found for the first call
-    getProxyDelegateCallMock.mockResolvedValue(
-      Right({
-        delegateAddresses: [], // Empty delegate addresses array
-        signedDescriptor: "0x1234567890abcdef",
-      }),
-    );
-    const transaction = {
-      to: "0x7",
-      chainId: 3,
-      data: "0xaf68b302000000000000000000000000000000000000000000000000000000000002",
-      selector: "0xaf68b302",
-    } as TransactionContext;
-
-    // WHEN
-    const result = await loader.load(transaction);
-
-    // THEN
-    expect(result).toEqual([
-      {
-        type: ClearSignContextType.ERROR,
-        error: new Error(
-          "[ContextModule] TransactionContextLoader: No delegate address found for proxy 0x7",
-        ),
-      },
-    ]);
+    expect(getProxyImplementationAddress).not.toHaveBeenCalled();
   });
 
   it("should return an error when proxy delegate call succeeds but transaction descriptors for resolved address fail", async () => {
@@ -245,9 +214,9 @@ describe("TransactionContextLoader", () => {
     getTransactionDescriptorsMock.mockResolvedValueOnce(
       Left(new Error("data source error")),
     ); // Second call fails
-    getProxyDelegateCallMock.mockResolvedValue(
+    getProxyImplementationAddress.mockResolvedValue(
       Right({
-        delegateAddresses: ["0xResolvedAddress"],
+        implementationAddress: "0xResolvedAddress",
         signedDescriptor: "0x1234567890abcdef",
       }),
     );

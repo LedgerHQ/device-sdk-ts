@@ -100,7 +100,7 @@ export class ProvideContextsTask {
         }
       }
 
-      if (context.type === ClearSignContextType.PROXY_DELEGATE_CALL) {
+      if (context.type === ClearSignContextType.PROXY_INFO) {
         // In this specific case, the context is not valid as the challenge is not valid on the first call
         // the real data is provided in the subcontext callback
         continue;
@@ -231,7 +231,7 @@ export class ProvideContextsTask {
               isFirstChunk: args.isFirstChunk,
             }),
         }).run();
-      case ClearSignContextType.PROXY_DELEGATE_CALL:
+      case ClearSignContextType.PROXY_INFO:
         return this._sendPayloadInChunksTaskFactory(this._api, {
           payload,
           commandFactory: (args) =>

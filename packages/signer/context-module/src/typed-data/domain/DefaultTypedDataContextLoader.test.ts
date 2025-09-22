@@ -2,7 +2,7 @@ import { DeviceModelId } from "@ledgerhq/device-management-kit";
 import { Left, Right } from "purify-ts";
 
 import { type PkiCertificateLoader } from "@/pki/domain/PkiCertificateLoader";
-import type { ProxyDataSource } from "@/proxy/data/HttpProxyDataSource";
+import type { ProxyDataSource } from "@/proxy/data/ProxyDataSource";
 import { ClearSignContextType } from "@/shared/model/ClearSignContext";
 import { TypedDataCalldataParamPresence } from "@/shared/model/TypedDataClearSignContext";
 import type { TypedDataContext } from "@/shared/model/TypedDataContext";
@@ -11,7 +11,7 @@ import type { TypedDataDataSource } from "@/typed-data/data/TypedDataDataSource"
 import { DefaultTypedDataContextLoader } from "@/typed-data/domain/DefaultTypedDataContextLoader";
 
 describe("TypedDataContextLoader", () => {
-  const getProxyDelegateCallMock = vi.fn();
+  const getProxyImplementationAddressMock = vi.fn();
   const loadCertificateMock = vi.fn();
   const getTypedDataFiltersMock = vi.fn();
   const mockTokenDataSource: TokenDataSource = {
@@ -21,8 +21,7 @@ describe("TypedDataContextLoader", () => {
     getTypedDataFilters: getTypedDataFiltersMock,
   };
   const mockProxyDatasource: ProxyDataSource = {
-    getProxyDelegateCall: getProxyDelegateCallMock,
-    getProxyImplementationAddress: vi.fn(),
+    getProxyImplementationAddress: getProxyImplementationAddressMock,
   };
   const mockCertificateLoader: PkiCertificateLoader = {
     loadCertificate: loadCertificateMock,
@@ -192,7 +191,9 @@ describe("TypedDataContextLoader", () => {
     vi.spyOn(mockTokenDataSource, "getTokenInfosPayload").mockImplementation(
       ({ address }) => Promise.resolve(Right(`payload-${address}`)),
     );
-    getProxyDelegateCallMock.mockResolvedValue(Left(new Error("No proxy")));
+    getProxyImplementationAddressMock.mockResolvedValue(
+      Left(new Error("No proxy")),
+    );
   });
 
   describe("load function", () => {
@@ -764,9 +765,9 @@ describe("TypedDataContextLoader", () => {
         fieldsValues: TEST_VALUES,
         deviceModelId: DeviceModelId.STAX,
       } as TypedDataContext;
-      getProxyDelegateCallMock.mockResolvedValueOnce(
+      getProxyImplementationAddressMock.mockResolvedValueOnce(
         Right({
-          delegateAddresses: ["0x987654321fedcba0"],
+          implementationAddress: "0x987654321fedcba0",
           signedDescriptor: "0x123456789abcdef0",
         }),
       );
@@ -811,7 +812,7 @@ describe("TypedDataContextLoader", () => {
         tokens: {},
         calldatas: {},
         proxy: {
-          type: ClearSignContextType.PROXY_DELEGATE_CALL,
+          type: ClearSignContextType.PROXY_INFO,
           payload: "0x123456789abcdef0",
           certificate: undefined,
         },
@@ -830,9 +831,9 @@ describe("TypedDataContextLoader", () => {
         fieldsValues: TEST_VALUES,
         deviceModelId: DeviceModelId.STAX,
       } as TypedDataContext;
-      getProxyDelegateCallMock.mockResolvedValueOnce(
+      getProxyImplementationAddressMock.mockResolvedValueOnce(
         Right({
-          delegateAddresses: ["0x987654321fedcba0"],
+          implementationAddress: "0x987654321fedcba0",
           signedDescriptor: "0x123456789abcdef0",
         }),
       );
@@ -880,7 +881,7 @@ describe("TypedDataContextLoader", () => {
         tokens: {},
         calldatas: {},
         proxy: {
-          type: ClearSignContextType.PROXY_DELEGATE_CALL,
+          type: ClearSignContextType.PROXY_INFO,
           payload: "0x123456789abcdef0",
           certificate: {
             keyUsageNumber: 1,
@@ -928,7 +929,7 @@ describe("TypedDataContextLoader", () => {
         fieldsValues: TEST_VALUES,
         deviceModelId: DeviceModelId.STAX,
       } as TypedDataContext;
-      getProxyDelegateCallMock.mockResolvedValueOnce(
+      getProxyImplementationAddressMock.mockResolvedValueOnce(
         Right({
           delegateAddresses: ["0x987654321fedcba0"],
           signedDescriptor: "0x123456789abcdef0",

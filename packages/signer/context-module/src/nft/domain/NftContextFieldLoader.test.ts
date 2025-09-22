@@ -2,9 +2,7 @@ import { Left, Right } from "purify-ts";
 
 import { type NftDataSource } from "@/nft/data/NftDataSource";
 import { NftContextFieldLoader } from "@/nft/domain/NftContextFieldLoader";
-import { ContextFieldLoaderKind } from "@/shared/domain/ContextFieldLoader";
 import { ClearSignContextType } from "@/shared/model/ClearSignContext";
-import { type TransactionFieldContext } from "@/shared/model/TransactionFieldContext";
 
 describe("NftContextFieldLoader", () => {
   const mockNftDataSource: NftDataSource = {
@@ -13,12 +11,10 @@ describe("NftContextFieldLoader", () => {
   };
   const nftContextFieldLoader = new NftContextFieldLoader(mockNftDataSource);
 
-  const mockTransactionField: TransactionFieldContext<ContextFieldLoaderKind.NFT> =
-    {
-      kind: ContextFieldLoaderKind.NFT,
-      chainId: 1,
-      address: "0x1234567890abcdef",
-    };
+  const mockTransactionField = {
+    chainId: 1,
+    address: "0x1234567890abcdef",
+  };
 
   const mockNftPayload = "0x123456789abcdef0";
 
@@ -26,10 +22,53 @@ describe("NftContextFieldLoader", () => {
     vi.resetAllMocks();
   });
 
-  describe("constructor", () => {
-    it("should initialize with correct kind", () => {
+  describe("canHandle", () => {
+    it("should return true for valid NFT field", () => {
+      // GIVEN
+      const validField = {
+        chainId: 1,
+        address: "0x1234567890abcdef",
+      };
+
       // THEN
-      expect(nftContextFieldLoader.kind).toBe(ContextFieldLoaderKind.NFT);
+      expect(
+        nftContextFieldLoader.canHandle(validField, ClearSignContextType.NFT),
+      ).toBe(true);
+    });
+
+    describe("should return false for invalid fields", () => {
+      const invalidFields = [
+        { name: "null", value: null },
+        { name: "undefined", value: undefined },
+        { name: "string", value: "invalid" },
+        { name: "number", value: 123 },
+        { name: "boolean", value: true },
+        { name: "array", value: [] },
+        { name: "empty object", value: {} },
+        {
+          name: "object missing chainId",
+          value: { address: "0x123" },
+        },
+        {
+          name: "object missing address",
+          value: { chainId: 1 },
+        },
+      ];
+
+      test.each(invalidFields)("$name", ({ value }) => {
+        expect(
+          nftContextFieldLoader.canHandle(value, ClearSignContextType.NFT),
+        ).toBe(false);
+      });
+    });
+
+    it("should return false for invalid expected type", () => {
+      expect(
+        nftContextFieldLoader.canHandle(
+          mockTransactionField,
+          ClearSignContextType.TOKEN,
+        ),
+      ).toBe(false);
     });
   });
 

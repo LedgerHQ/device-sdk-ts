@@ -1,8 +1,6 @@
 import { Left, Right } from "purify-ts";
 
-import { ContextFieldLoaderKind } from "@/shared/domain/ContextFieldLoader";
 import { ClearSignContextType } from "@/shared/model/ClearSignContext";
-import { type TransactionFieldContext } from "@/shared/model/TransactionFieldContext";
 import { type TrustedNameDataSource } from "@/trusted-name/data/TrustedNameDataSource";
 import { TrustedNameContextFieldLoader } from "@/trusted-name/domain/TrustedNameContextFieldLoader";
 
@@ -15,15 +13,13 @@ describe("TrustedNameContextFieldLoader", () => {
     mockTrustedNameDataSource,
   );
 
-  const mockTransactionField: TransactionFieldContext<ContextFieldLoaderKind.TRUSTED_NAME> =
-    {
-      kind: ContextFieldLoaderKind.TRUSTED_NAME,
-      chainId: 1,
-      address: "0x1234567890abcdef",
-      challenge: "test-challenge",
-      types: ["contract", "token"],
-      sources: ["ledger", "ens"],
-    };
+  const mockTransactionField = {
+    chainId: 1,
+    address: "0x1234567890abcdef",
+    challenge: "test-challenge",
+    types: ["contract", "token"],
+    sources: ["ledger", "ens"],
+  };
 
   const mockTrustedNamePayload = "0x123456789abcdef0";
 
@@ -31,12 +27,99 @@ describe("TrustedNameContextFieldLoader", () => {
     vi.resetAllMocks();
   });
 
-  describe("constructor", () => {
-    it("should initialize with correct kind", () => {
+  describe("canHandle", () => {
+    it("should return true for valid trusted name field", () => {
+      // GIVEN
+      const validField = {
+        chainId: 1,
+        address: "0x1234567890abcdef",
+        challenge: "test-challenge",
+        types: ["contract", "token"],
+        sources: ["ledger", "ens"],
+      };
+
       // THEN
-      expect(trustedNameContextFieldLoader.kind).toBe(
-        ContextFieldLoaderKind.TRUSTED_NAME,
-      );
+      expect(
+        trustedNameContextFieldLoader.canHandle(
+          validField,
+          ClearSignContextType.TRUSTED_NAME,
+        ),
+      ).toBe(true);
+    });
+
+    describe("should return false for invalid inputs", () => {
+      const invalidInputs = [
+        { name: "null", value: null },
+        { name: "undefined", value: undefined },
+        { name: "string", value: "invalid" },
+        { name: "number", value: 123 },
+        { name: "boolean", value: true },
+        { name: "array", value: [] },
+        { name: "empty object", value: {} },
+        {
+          name: "object missing chainId",
+          value: {
+            address: "0x123",
+            challenge: "test",
+            types: ["contract"],
+            sources: ["ledger"],
+          },
+        },
+        {
+          name: "object missing address",
+          value: {
+            chainId: 1,
+            challenge: "test",
+            types: ["contract"],
+            sources: ["ledger"],
+          },
+        },
+        {
+          name: "object missing challenge",
+          value: {
+            chainId: 1,
+            address: "0x123",
+            types: ["contract"],
+            sources: ["ledger"],
+          },
+        },
+        {
+          name: "object missing types",
+          value: {
+            chainId: 1,
+            address: "0x123",
+            challenge: "test",
+            sources: ["ledger"],
+          },
+        },
+        {
+          name: "object missing sources",
+          value: {
+            chainId: 1,
+            address: "0x123",
+            challenge: "test",
+            types: ["contract"],
+          },
+        },
+      ];
+
+      test.each(invalidInputs)("$name", ({ value }) => {
+        expect(
+          trustedNameContextFieldLoader.canHandle(
+            value,
+            ClearSignContextType.TRUSTED_NAME,
+          ),
+        ).toBe(false);
+      });
+    });
+
+    it("should return false for invalid expected type", () => {
+      expect(
+        trustedNameContextFieldLoader.canHandle(
+          mockTransactionField,
+          ClearSignContextType.TOKEN,
+        ),
+      ).toBe(false);
     });
   });
 

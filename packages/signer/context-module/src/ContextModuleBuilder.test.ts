@@ -5,6 +5,7 @@ import { type ContextModuleConstructorArgs } from "./config/model/ContextModuleB
 import {
   type ContextModuleCalConfig,
   type ContextModuleConfig,
+  type ContextModuleDatasourceConfig,
   type ContextModuleMetadataServiceConfig,
 } from "./config/model/ContextModuleConfig";
 import { ContextModuleBuilder } from "./ContextModuleBuilder";
@@ -227,6 +228,77 @@ describe("ContextModuleBuilder", () => {
       expect(config.web3checks.url).not.toBe(
         "https://web3checks-backend.api.ledger.com/v3",
       );
+    });
+  });
+
+  describe("setDatasourceConfig", () => {
+    it("should set the datasource configuration with safe proxy", () => {
+      const contextModuleBuilder = new ContextModuleBuilder(defaultBuilderArgs);
+      const customDatasourceConfig: ContextModuleDatasourceConfig = {
+        proxy: "safe",
+      };
+
+      const res = contextModuleBuilder
+        .setDatasourceConfig(customDatasourceConfig)
+        .build();
+      const config = (res as DefaultContextModule)[
+        "_container"
+      ].get<ContextModuleConfig>(configTypes.Config);
+
+      expect(res).toBeInstanceOf(DefaultContextModule);
+      expect(config.datasource).toEqual(customDatasourceConfig);
+      expect(config.datasource?.proxy).toBe("safe");
+    });
+
+    it("should set the datasource configuration with default proxy", () => {
+      const contextModuleBuilder = new ContextModuleBuilder(defaultBuilderArgs);
+      const customDatasourceConfig: ContextModuleDatasourceConfig = {
+        proxy: "default",
+      };
+
+      const res = contextModuleBuilder
+        .setDatasourceConfig(customDatasourceConfig)
+        .build();
+      const config = (res as DefaultContextModule)[
+        "_container"
+      ].get<ContextModuleConfig>(configTypes.Config);
+
+      expect(res).toBeInstanceOf(DefaultContextModule);
+      expect(config.datasource).toEqual(customDatasourceConfig);
+      expect(config.datasource?.proxy).toBe("default");
+    });
+
+    it("should override the default datasource configuration", () => {
+      const contextModuleBuilder = new ContextModuleBuilder(defaultBuilderArgs);
+      const customDatasourceConfig: ContextModuleDatasourceConfig = {
+        proxy: "safe",
+      };
+
+      const res = contextModuleBuilder
+        .setDatasourceConfig(customDatasourceConfig)
+        .build();
+      const config = (res as DefaultContextModule)[
+        "_container"
+      ].get<ContextModuleConfig>(configTypes.Config);
+
+      expect(config.datasource?.proxy).toBe("safe");
+      expect(config.datasource).not.toBeUndefined();
+    });
+
+    it("should set an empty datasource configuration", () => {
+      const contextModuleBuilder = new ContextModuleBuilder(defaultBuilderArgs);
+      const customDatasourceConfig: ContextModuleDatasourceConfig = {};
+
+      const res = contextModuleBuilder
+        .setDatasourceConfig(customDatasourceConfig)
+        .build();
+      const config = (res as DefaultContextModule)[
+        "_container"
+      ].get<ContextModuleConfig>(configTypes.Config);
+
+      expect(res).toBeInstanceOf(DefaultContextModule);
+      expect(config.datasource).toEqual(customDatasourceConfig);
+      expect(config.datasource?.proxy).toBeUndefined();
     });
   });
 });
