@@ -58,20 +58,20 @@ export const DECODERS: Decoder[] = [
   {
     when: ({ programId }) => programId.equals(ASSOCIATED_TOKEN_PROGRAM_ID),
     decode: ({ ixMeta, message }) => {
-      const idxs = ixMeta.accountKeyIndexes ?? [];
-      const byIdx = (n: number) =>
-        idxs[n] !== undefined ? (message.allKeys[idxs[n]] ?? null) : null;
+      const indexes = ixMeta.accountKeyIndexes ?? [];
+      const byIndexes = (n: number) =>
+        indexes[n] !== undefined ? (message.allKeys[indexes[n]] ?? null) : null;
 
-      // canonical ATA ix layout: [payer, ata, owner, mint, system, tokenProgram, rent?]
-      const ataPk = byIdx(1);
-      const mintPk = byIdx(3);
+      // canonical ATA instruction layout: [payer, ata, owner, mint, system, tokenProgram, rent?]
+      const ataPk = byIndexes(1);
+      const mintPk = byIndexes(3);
       if (!ataPk || !mintPk) return null;
 
-      const accs = idxs
+      const accs = indexes
         .map((i) => message.allKeys[i])
         .filter((k): k is PublicKey => !!k);
 
-      // prefer token-2022 if present among ix accounts, else token classic
+      // prefer token-2022 if present among instruction accounts, else token classic
       const tokenProgInIx =
         accs.find((pk) => pk.equals(TOKEN_2022_PROGRAM_ID)) ??
         accs.find((pk) => pk.equals(TOKEN_PROGRAM_ID)) ??
@@ -99,7 +99,7 @@ export const DECODERS: Decoder[] = [
           ASSOCIATED_TOKEN_PROGRAM_ID,
         );
 
-      // try with the token program actually referenced in the ix (if any)
+      // try with the token program actually referenced in the instruction (if any)
       if (tokenProgInIx) {
         for (const owner of ownerCandidates) {
           if (derive(owner, tokenProgInIx).equals(ataPk)) {

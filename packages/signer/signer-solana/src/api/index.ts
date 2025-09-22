@@ -27,6 +27,7 @@ export type {
   SignTransactionDAReturnType,
 } from "@api/app-binder/SignTransactionDeviceActionTypes";
 export type { Signature } from "@api/model/Signature";
+export type { SolanaTransactionOptionalConfig } from "@api/model/SolanaTransactionOptionalConfig";
 export type { Transaction } from "@api/model/Transaction";
 export type { SignerSolana } from "@api/SignerSolana";
 export { SignerSolanaBuilder } from "@api/SignerSolanaBuilder";

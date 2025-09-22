@@ -11,8 +11,8 @@ import { type SignMessageDAReturnType } from "@api/app-binder/SignMessageDeviceA
 import { type SignTransactionDAReturnType } from "@api/app-binder/SignTransactionDeviceActionTypes";
 import { type AddressOptions } from "@api/model/AddressOption";
 import { type MessageOptions } from "@api/model/MessageOptions";
+import { type SolanaTransactionOptionalConfig } from "@api/model/SolanaTransactionOptionalConfig";
 import { type Transaction } from "@api/model/Transaction";
-import { type SolanaTransactionOptions } from "@api/model/TransactionOptions";
 import { type SignerSolana } from "@api/SignerSolana";
 
 import { type GetAddressUseCase } from "./use-cases/address/GetAddressUseCase";
@@ -53,7 +53,7 @@ export class DefaultSignerSolana implements SignerSolana {
    *   The serialised transaction to sign.
    *
    * **Optional**
-   * - **options** `SolanaTransactionOptions`
+   * - **options** `SolanaTransactionOptionalConfig`
    *   Provides additional context for transaction signing.
    *
    *   - **transactionResolutionContext** `object`
@@ -65,8 +65,8 @@ export class DefaultSignerSolana implements SignerSolana {
    *     - **createATA** `object`
    *       Information about creating an associated token account (ATA).
    *
-   *       - **owner** `string` – Owner of the ATA.
-   *       - **mint** `string` – Mint of the ATA.
+   *       - **address** `string` – Address (owner) of the ATA.
+   *       - **mintAddress** `string` – Mint address of the ATA.
    *
    *   - **solanaRPCURL** `string`
    *     RPC endpoint to use if `transactionResolutionContext` is not provided
@@ -80,14 +80,8 @@ export class DefaultSignerSolana implements SignerSolana {
    * ---
    * ### Returns
    *
-   * `Promise<SolanaSignature>`
-   * Resolves once the Ledger device signs the transaction.
-   *
-   * ```ts
-   * type SolanaSignature = {
-   *   signature: Uint8Array; // Signed transaction bytes
-   * };
-   * ```
+   * - `observable` That emits DeviceActionState updates
+   * - `cancel` A function to cancel the action on the Ledger device.
    *
    * ---
    * ### Internal Flow
@@ -125,21 +119,6 @@ export class DefaultSignerSolana implements SignerSolana {
    * ---
    * ### Example
    *
-   * **Basic usage**
-   * ```ts
-   * const sig = await signerSolana.signTransaction("m/44'/501'/0'/0'", serializedTx, {
-   *   transactionResolutionContext: {
-   *     tokenAddress: "So11111111111111111111111111111111111111112",
-   *     createATA: {
-   *       owner: "Fh9v...xyz",
-   *       mint: "9n4n...eJ9E"
-   *     }
-   *   },
-   * });
-   * console.log(sig.signature);
-   * ```
-   *
-   * **Advanced usage (observing device state)**
    * ```ts
    * const { observable } = signerSolana.signTransaction("m/44'/501'/0'/0'", serializedTx, {
    *   transactionResolutionContext: resolution,
@@ -160,11 +139,11 @@ export class DefaultSignerSolana implements SignerSolana {
   signTransaction(
     derivationPath: string,
     transaction: Transaction,
-    solanaTransactionOptions?: SolanaTransactionOptions,
+    solanaTransactionOptionalConfig?: SolanaTransactionOptionalConfig,
   ): SignTransactionDAReturnType {
     return this._container
       .get<SignTransactionUseCase>(useCasesTypes.SignTransactionUseCase)
-      .execute(derivationPath, transaction, solanaTransactionOptions);
+      .execute(derivationPath, transaction, solanaTransactionOptionalConfig);
   }
 
   /**
@@ -188,14 +167,8 @@ export class DefaultSignerSolana implements SignerSolana {
    * ---
    * ### Returns
    *
-   * `Promise<SolanaSignature>`
-   * Resolves once the Ledger device signs the message.
-   *
-   * ```ts
-   * type SolanaSignature = {
-   *   signature: Uint8Array; // Signed message bytes
-   * };
-   * ```
+   * - `observable` That emits DeviceActionState updates
+   * - `cancel` A function to cancel the action on the Ledger device.
    *
    * ---
    * ### Internal Flow
@@ -233,16 +206,6 @@ export class DefaultSignerSolana implements SignerSolana {
    * ---
    * ### Example
    *
-   * **Basic usage**
-   * ```ts
-   * const sig = await signerSolana.signMessage(
-   *   "m/44'/501'/0'/0'",
-   *   "48656c6c6f20576f726c64" // "Hello World" in hex
-   * );
-   * console.log(sig.signature);
-   * ```
-   *
-   * **Advanced usage (observing device state)**
    * ```ts
    * const { observable } = signerSolana.signMessage(
    *   "m/44'/501'/0'/0'",
@@ -292,14 +255,8 @@ export class DefaultSignerSolana implements SignerSolana {
    * ---
    * ### Returns
    *
-   * `Promise<SolanaAddress>`
-   * Resolves with the derived Solana address.
-   *
-   * ```ts
-   * type SolanaAddress = {
-   *   address: Uint8Array; // 32-byte address
-   * };
-   * ```
+   * - `observable` That emits DeviceActionState updates
+   * - `cancel` A function to cancel the action on the Ledger device.
    *
    * ---
    * ### Internal Flow
@@ -334,20 +291,6 @@ export class DefaultSignerSolana implements SignerSolana {
    * - **Completed** → Provides the base58-encoded address string, decoded to `Uint8Array`.
    * - **Error** → The device or signing operation failed (`GetAddressDAError`).
    *
-   * ---
-   * ### Example
-   *
-   * **Basic usage**
-   * ```ts
-   * const addr = await signerSolana.getAddress("m/44'/501'/0'/0'");
-   * console.log(addr.address);
-   * ```
-   *
-   * **With on-device verification**
-   * ```ts
-   * const addr = await signerSolana.getAddress("m/44'/501'/0'/0'", { checkOnDevice: true });
-   * console.log(addr.address);
-   * ```
    */
   getAddress(
     derivationPath: string,
@@ -369,15 +312,8 @@ export class DefaultSignerSolana implements SignerSolana {
    * ---
    * ### Returns
    *
-   * `Promise<GetAppConfigurationResult>`
-   * Resolves with the app configuration details from the device.
-   *
-   * ```ts
-   * type GetAppConfigurationResult = {
-   *   version: string;
-   *   flags: string[];
-   * };
-   * ```
+   * - `observable` That emits DeviceActionState updates
+   * - `cancel` A function to cancel the action on the Ledger device.
    *
    * ---
    * ### Internal Flow

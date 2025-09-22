@@ -18,15 +18,18 @@ import {
   Transaction,
   TransactionInstruction,
 } from "@solana/web3.js";
-import bs58 from "bs58";
 import { describe, expect, it } from "vitest";
+
+import { DefaultBs58Encoder } from "@internal/app-binder/services/bs58Encoder";
 
 import {
   SolanaTransactionTypes,
   TransactionInspector,
 } from "./TransactionInspector";
 
-const DUMMY_BLOCKHASH = bs58.encode(new Uint8Array(32).fill(0xaa));
+const DUMMY_BLOCKHASH = DefaultBs58Encoder.encode(
+  new Uint8Array(32).fill(0xaa),
+);
 
 function makeSignedRawTx(
   ixs: TransactionInstruction[],
@@ -56,13 +59,13 @@ describe("TransactionInspector", () => {
     const payer = Keypair.generate();
     const dest = Keypair.generate().publicKey;
 
-    const ix = SystemProgram.transfer({
+    const instruction = SystemProgram.transfer({
       fromPubkey: payer.publicKey,
       toPubkey: dest,
       lamports: 1_000,
     });
 
-    const { raw } = makeSignedRawTx([ix], [payer], payer);
+    const { raw } = makeSignedRawTx([instruction], [payer], payer);
 
     // when
     const result = await new TransactionInspector(raw).inspectTransactionType();
@@ -78,7 +81,7 @@ describe("TransactionInspector", () => {
     const source = Keypair.generate().publicKey;
     const destination = Keypair.generate().publicKey;
 
-    const ix = createTransferInstruction(
+    const instruction = createTransferInstruction(
       source,
       destination,
       owner.publicKey,
@@ -87,7 +90,7 @@ describe("TransactionInspector", () => {
       TOKEN_PROGRAM_ID,
     );
 
-    const { raw } = makeSignedRawTx([ix], [owner], owner);
+    const { raw } = makeSignedRawTx([instruction], [owner], owner);
 
     // when
     const result = await new TransactionInspector(raw).inspectTransactionType();
@@ -104,7 +107,7 @@ describe("TransactionInspector", () => {
     const source = Keypair.generate().publicKey;
     const destination = Keypair.generate().publicKey;
 
-    const ix = createTransferCheckedInstruction(
+    const instruction = createTransferCheckedInstruction(
       source,
       mint,
       destination,
@@ -115,7 +118,7 @@ describe("TransactionInspector", () => {
       TOKEN_PROGRAM_ID,
     );
 
-    const { raw } = makeSignedRawTx([ix], [owner], owner);
+    const { raw } = makeSignedRawTx([instruction], [owner], owner);
 
     // when
     const result = await new TransactionInspector(raw).inspectTransactionType();
@@ -132,14 +135,14 @@ describe("TransactionInspector", () => {
     const newAccount = Keypair.generate().publicKey;
     const owner = Keypair.generate().publicKey;
 
-    const ix = createInitializeAccountInstruction(
+    const instruction = createInitializeAccountInstruction(
       newAccount,
       mint,
       owner,
       TOKEN_PROGRAM_ID,
     );
 
-    const { raw } = makeSignedRawTx([ix], [payer], payer);
+    const { raw } = makeSignedRawTx([instruction], [payer], payer);
 
     // when
     const result = await new TransactionInspector(raw).inspectTransactionType();
@@ -159,14 +162,14 @@ describe("TransactionInspector", () => {
     const newAccount = Keypair.generate().publicKey;
     const owner = Keypair.generate().publicKey;
 
-    const ix = createInitializeAccount2Instruction(
+    const instruction = createInitializeAccount2Instruction(
       newAccount,
       mint,
       owner,
       TOKEN_PROGRAM_ID,
     );
 
-    const { raw } = makeSignedRawTx([ix], [payer], payer);
+    const { raw } = makeSignedRawTx([instruction], [payer], payer);
 
     // when
     const result = await new TransactionInspector(raw).inspectTransactionType();
@@ -185,13 +188,13 @@ describe("TransactionInspector", () => {
     const mint = Keypair.generate().publicKey;
     const newAccount = Keypair.generate().publicKey;
 
-    const ix = createInitializeAccount3Instruction(
+    const instruction = createInitializeAccount3Instruction(
       newAccount,
       mint,
       TOKEN_PROGRAM_ID,
     );
 
-    const { raw } = makeSignedRawTx([ix], [payer], payer);
+    const { raw } = makeSignedRawTx([instruction], [payer], payer);
 
     // when
     const result = await new TransactionInspector(raw).inspectTransactionType();
@@ -217,7 +220,7 @@ describe("TransactionInspector", () => {
       ASSOCIATED_TOKEN_PROGRAM_ID,
     );
 
-    const ix = createAssociatedTokenAccountInstruction(
+    const instruction = createAssociatedTokenAccountInstruction(
       payer.publicKey,
       ata,
       owner,
@@ -226,7 +229,7 @@ describe("TransactionInspector", () => {
       ASSOCIATED_TOKEN_PROGRAM_ID,
     );
 
-    const { raw } = makeSignedRawTx([ix], [payer], payer);
+    const { raw } = makeSignedRawTx([instruction], [payer], payer);
 
     // when
     const result = await new TransactionInspector(raw).inspectTransactionType();
@@ -252,7 +255,7 @@ describe("TransactionInspector", () => {
       ASSOCIATED_TOKEN_PROGRAM_ID,
     );
 
-    const ix = createAssociatedTokenAccountInstruction(
+    const instruction = createAssociatedTokenAccountInstruction(
       payer.publicKey,
       ata22,
       owner,
@@ -261,7 +264,7 @@ describe("TransactionInspector", () => {
       ASSOCIATED_TOKEN_PROGRAM_ID,
     );
 
-    const { raw } = makeSignedRawTx([ix], [payer], payer);
+    const { raw } = makeSignedRawTx([instruction], [payer], payer);
 
     // when
     const result = await new TransactionInspector(raw).inspectTransactionType();
@@ -280,9 +283,13 @@ describe("TransactionInspector", () => {
     const account = Keypair.generate().publicKey;
     const dest = Keypair.generate().publicKey;
 
-    const ix = createCloseAccountInstruction(account, dest, owner.publicKey);
+    const instruction = createCloseAccountInstruction(
+      account,
+      dest,
+      owner.publicKey,
+    );
 
-    const { raw } = makeSignedRawTx([ix], [owner], owner);
+    const { raw } = makeSignedRawTx([instruction], [owner], owner);
 
     // when
     const result = await new TransactionInspector(raw).inspectTransactionType();
@@ -297,9 +304,9 @@ describe("TransactionInspector", () => {
     const payer = Keypair.generate();
     const account = Keypair.generate().publicKey;
 
-    const ix = createSyncNativeInstruction(account, TOKEN_PROGRAM_ID);
+    const instruction = createSyncNativeInstruction(account, TOKEN_PROGRAM_ID);
 
-    const { raw } = makeSignedRawTx([ix], [payer], payer);
+    const { raw } = makeSignedRawTx([instruction], [payer], payer);
 
     // when
     const result = await new TransactionInspector(raw).inspectTransactionType();
@@ -348,7 +355,7 @@ describe("TransactionInspector", () => {
     const source = Keypair.generate().publicKey;
     const destination = Keypair.generate().publicKey;
 
-    const ix = createTransferInstruction(
+    const instruction = createTransferInstruction(
       source,
       destination,
       owner.publicKey,
@@ -356,7 +363,7 @@ describe("TransactionInspector", () => {
       [],
       TOKEN_PROGRAM_ID,
     );
-    const { raw } = makeSignedRawTx([ix], [owner], owner);
+    const { raw } = makeSignedRawTx([instruction], [owner], owner);
 
     const overrideToken = Keypair.generate().publicKey.toBase58();
 
@@ -384,7 +391,7 @@ describe("TransactionInspector", () => {
       ASSOCIATED_TOKEN_PROGRAM_ID,
     );
 
-    const ix = createAssociatedTokenAccountInstruction(
+    const instruction = createAssociatedTokenAccountInstruction(
       payer.publicKey,
       ata,
       owner,
@@ -392,7 +399,7 @@ describe("TransactionInspector", () => {
       TOKEN_PROGRAM_ID,
       ASSOCIATED_TOKEN_PROGRAM_ID,
     );
-    const { raw } = makeSignedRawTx([ix], [payer], payer);
+    const { raw } = makeSignedRawTx([instruction], [payer], payer);
 
     const overrideATA = {
       address: Keypair.generate().publicKey.toBase58(),
@@ -417,7 +424,7 @@ describe("TransactionInspector", () => {
     const source = Keypair.generate().publicKey;
     const destination = Keypair.generate().publicKey;
 
-    const ix = createTransferInstruction(
+    const instruction = createTransferInstruction(
       source,
       destination,
       owner.publicKey,
@@ -425,7 +432,7 @@ describe("TransactionInspector", () => {
       [],
       TOKEN_PROGRAM_ID,
     );
-    const { raw } = makeSignedRawTx([ix], [owner], owner);
+    const { raw } = makeSignedRawTx([instruction], [owner], owner);
 
     const tokenOverride = Keypair.generate().publicKey.toBase58();
     const ataOverride = {

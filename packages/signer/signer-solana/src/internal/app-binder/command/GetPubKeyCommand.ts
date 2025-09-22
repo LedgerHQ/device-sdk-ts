@@ -13,10 +13,13 @@ import {
   CommandErrorHelper,
   DerivationPathUtils,
 } from "@ledgerhq/signer-utils";
-import bs58 from "bs58";
 import { Maybe } from "purify-ts";
 
 import { type PublicKey } from "@api/model/PublicKey";
+import {
+  type Bs58Encoder,
+  DefaultBs58Encoder,
+} from "@internal/app-binder/services/bs58Encoder";
 
 import {
   SOLANA_APP_ERRORS,
@@ -44,7 +47,10 @@ export class GetPubKeyCommand
 
   args: GetPubKeyCommandArgs;
 
-  constructor(args: GetPubKeyCommandArgs) {
+  constructor(
+    args: GetPubKeyCommandArgs,
+    private readonly bs58Encoder: Bs58Encoder = DefaultBs58Encoder,
+  ) {
     this.args = args;
   }
 
@@ -89,7 +95,7 @@ export class GetPubKeyCommand
       }
 
       return CommandResultFactory({
-        data: bs58.encode(buffer),
+        data: this.bs58Encoder.encode(buffer),
       });
     });
   }

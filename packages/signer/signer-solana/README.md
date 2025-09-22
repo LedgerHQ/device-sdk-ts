@@ -118,7 +118,7 @@ const { observable, cancel } = signerSolana.signTransaction(
 
 **Optional**
 
-- **transactionOptions** `SolanaTransactionOptions`  
+- **transactionOptions** `SolanaTransactionOptionalConfig`  
   Provides additional context for transaction signing.
 
   - **transactionResolutionContext** `object`  
@@ -130,8 +130,8 @@ const { observable, cancel } = signerSolana.signTransaction(
     - **createATA** `object`  
       Information about creating an associated token account (ATA).
 
-      - **owner** `string` – Owner of the ATA.
-      - **mint** `string` – Mint of the ATA.
+      - **address** `string` – Address (owner) of the ATA.
+      - **mintAddress** `string` – Mint address of the ATA.
 
   - **solanaRPCURL** `string`  
     RPC endpoint to use if `transactionResolutionContext` is not provided  
@@ -143,14 +143,15 @@ const { observable, cancel } = signerSolana.signTransaction(
 
 ### Returns
 
-`Promise<SolanaSignature>`  
-Resolves once the Ledger device signs the transaction.
+- `observable` That emits DeviceActionState updates, including the following details:
 
 ```ts
 type SolanaSignature = {
   signature: Uint8Array; // Signed transaction bytes
 };
 ```
+
+- `cancel` A function to cancel the action on the Ledger device.
 
 ---
 
@@ -187,31 +188,9 @@ enum DeviceActionStatus {
 - **Completed** → Provides the signed transaction bytes (`Uint8Array`).
 - **Error** → The device or signing operation failed (`SignTransactionDAError`).
 
-Consumers of `signTransaction` only receive the resolved `SolanaSignature`,  
-but advanced integrations may subscribe to the underlying observable for  
-real-time device status updates.
-
 ---
 
 ### Example
-
-**Basic usage**
-
-```ts
-const sig = await signTransaction("m/44'/501'/0'/0'", serializedTx, {
-  transactionResolutionContext: {
-    tokenAddress: "So11111111111111111111111111111111111111112",
-    createATA: {
-      owner: "Fh9v...xyz",
-      mint: "9n4n...eJ9E",
-    },
-  },
-});
-
-console.log(sig.signature); // Uint8Array of signed bytes
-```
-
-**Advanced usage (observing device state)**
 
 ```ts
 const { observable } = dmkSigner.signTransaction(

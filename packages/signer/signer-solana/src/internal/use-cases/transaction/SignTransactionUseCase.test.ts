@@ -28,7 +28,7 @@ describe("GetAppConfigurationUseCase", () => {
     expect(signTransactionMock).toHaveBeenCalledWith({
       derivationPath: "44'/501'/0'/0'",
       transaction: new Uint8Array([0x01, 0x02, 0x03, 0x04]),
-      solanaTransactionOptions: undefined,
+      solanaTransactionOptionalConfig: undefined,
     });
     expect(result).toEqual(new Uint8Array([0x042]));
   });
@@ -52,7 +52,7 @@ describe("GetAppConfigurationUseCase", () => {
     expect(signTransactionMock).toHaveBeenCalledWith({
       derivationPath,
       transaction: tx,
-      solanaTransactionOptions: opts,
+      solanaTransactionOptionalConfig: opts,
     });
   });
 });

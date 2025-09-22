@@ -34,20 +34,20 @@ export type NormalizedMessage = {
   allKeys: PublicKey[];
 };
 
-export interface TxInspectorResult {
+export type TxInspectorResult = {
   transactionType: SolanaTransactionTypes;
   data: {
     tokenAddress?: string;
     createATA?: { address: string; mintAddress: string };
   };
-}
+};
 
 type LoadedAddresses = { writable: PublicKey[]; readonly: PublicKey[] };
 
 const RPC_URL = "https://api.mainnet-beta.solana.com/";
 
-const defaultConnection = (RPCURL: string) =>
-  new Connection(RPCURL, { commitment: "confirmed" });
+const defaultConnection = (rpcUrl: string) =>
+  new Connection(rpcUrl, { commitment: "confirmed" });
 
 const isSPLProgramId = (pid: PublicKey | undefined) =>
   !!pid &&
@@ -74,8 +74,8 @@ export class TransactionInspector {
 
       // fast path when transaction resolution is provided
       if (this.tokenAddress || this.createATA) {
-        const looksSPL = message.compiledInstructions.some((ix) =>
-          isSPLProgramId(message.allKeys[ix.programIdIndex]),
+        const looksSPL = message.compiledInstructions.some((instruction) =>
+          isSPLProgramId(message.allKeys[instruction.programIdIndex]),
         );
         return {
           transactionType: looksSPL
@@ -138,7 +138,7 @@ export class TransactionInspector {
         return { transactionType: SolanaTransactionTypes.SPL, data: best };
 
       if (sawSPL)
-        return { transactionType: SolanaTransactionTypes.SPL, data: {} }; // we should nbever reach here, in case we do tx will fall back to blind sign
+        return { transactionType: SolanaTransactionTypes.SPL, data: {} }; // we should never reach here, in case we do tx will fall back to blind sign
 
       return { transactionType: SolanaTransactionTypes.STANDARD, data: {} };
     } catch {
@@ -182,24 +182,26 @@ export class TransactionInspector {
       ];
 
       const compiledInstructions: NormalizedCompiledIx[] =
-        msg.compiledInstructions.map((ix) => {
-          const ixWithAccounts = ix as typeof ix & { accounts?: number[] };
+        msg.compiledInstructions.map((instruction) => {
+          const ixWithAccounts = instruction as typeof instruction & {
+            accounts?: number[];
+          };
 
           const accountKeyIndexes = Array.from(
-            ixWithAccounts.accounts ?? ix.accountKeyIndexes ?? [],
+            ixWithAccounts.accounts ?? instruction.accountKeyIndexes ?? [],
           ) as number[];
 
           let data: Uint8Array;
-          if (ix.data instanceof Uint8Array) {
-            data = ix.data;
-          } else if (typeof ix.data === "string") {
-            data = Buffer.from(ix.data, "base64"); // v0 encodes instruction data as base64
+          if (instruction.data instanceof Uint8Array) {
+            data = instruction.data;
+          } else if (typeof instruction.data === "string") {
+            data = Buffer.from(instruction.data, "base64"); // v0 encodes instruction data as base64
           } else {
-            data = Uint8Array.from(ix.data ?? []);
+            data = Uint8Array.from(instruction.data ?? []);
           }
 
           return {
-            programIdIndex: ix.programIdIndex,
+            programIdIndex: instruction.programIdIndex,
             accountKeyIndexes,
             data,
           };
@@ -221,21 +223,21 @@ export class TransactionInspector {
 
     add(legacy.feePayer ?? null);
 
-    for (const ix of legacy.instructions) {
-      add(ix.programId);
-      for (const key of ix.keys) add(key.pubkey);
+    for (const instruction of legacy.instructions) {
+      add(instruction.programId);
+      for (const key of instruction.keys) add(key.pubkey);
     }
 
     const allKeys = Array.from(allKeyMap.values());
     const indexByB58 = new Map(allKeys.map((pk, i) => [pk.toBase58(), i]));
 
     const compiledInstructions: NormalizedCompiledIx[] =
-      legacy.instructions.map((ix) => ({
-        programIdIndex: indexByB58.get(ix.programId.toBase58()) ?? -1,
-        accountKeyIndexes: ix.keys.map(
+      legacy.instructions.map((instruction) => ({
+        programIdIndex: indexByB58.get(instruction.programId.toBase58()) ?? -1,
+        accountKeyIndexes: instruction.keys.map(
           (key) => indexByB58.get(key.pubkey.toBase58()) ?? -1,
         ),
-        data: ix.data,
+        data: instruction.data,
       }));
 
     return { compiledInstructions, allKeys };

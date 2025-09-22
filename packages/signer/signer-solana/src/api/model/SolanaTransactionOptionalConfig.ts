@@ -1,6 +1,6 @@
 import { type TransactionResolutionContext } from "./TransactionResolutionContext";
 
-export type SolanaTransactionOptions = {
+export type SolanaTransactionOptionalConfig = {
   transactionResolutionContext?: TransactionResolutionContext;
   solanaRPCURL?: string;
   skipOpenApp?: boolean;
