@@ -6,15 +6,15 @@ import { type Either } from "purify-ts";
 
 import { type ClearSignContextSuccess } from "@/shared/model/ClearSignContext";
 
-export type GetTransactionDescriptorsParams = {
+export type GetCalldataDescriptorsParams = {
   address: string;
   chainId: number;
   selector: HexaString;
   deviceModelId: DeviceModelId;
 };
 
-export interface TransactionDataSource {
-  getTransactionDescriptors(
-    params: GetTransactionDescriptorsParams,
+export interface CalldataDescriptorDataSource {
+  getCalldataDescriptors(
+    params: GetCalldataDescriptorsParams,
   ): Promise<Either<Error, ClearSignContextSuccess[]>>;
 }

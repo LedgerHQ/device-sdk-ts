@@ -1,3 +1,6 @@
+export * from "./calldata/data/CalldataDescriptorDataSource";
+export * from "./calldata/data/HttpCalldataDescriptorDataSource";
+export * from "./calldata/domain/CalldataContextLoader";
 export * from "./config/model/ContextModuleConfig";
 export * from "./ContextModule";
 export * from "./ContextModuleBuilder";
@@ -41,9 +44,6 @@ export * from "./token/data/HttpTokenDataSource";
 export * from "./token/data/TokenDataSource";
 export * from "./token/domain/TokenContextFieldLoader";
 export * from "./token/domain/TokenContextLoader";
-export * from "./transaction/data/HttpTransactionDataSource";
-export * from "./transaction/data/TransactionDataSource";
-export * from "./transaction/domain/TransactionContextLoader";
 export * from "./trusted-name/data/HttpTrustedNameDataSource";
 export * from "./trusted-name/data/TrustedNameDataSource";
 export * from "./trusted-name/domain/TrustedNameContextFieldLoader";

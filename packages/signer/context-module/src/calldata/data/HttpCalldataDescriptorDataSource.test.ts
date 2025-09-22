@@ -2,21 +2,22 @@ import { DeviceModelId } from "@ledgerhq/device-management-kit";
 import axios from "axios";
 import { Left } from "purify-ts";
 
+import type {
+  CalldataEnumV1,
+  CalldataFieldV1,
+  CalldataTransactionInfoV1,
+} from "@/calldata/data/dto/CalldataDto";
 import type { ContextModuleConfig } from "@/config/model/ContextModuleConfig";
+import { type CalldataDescriptorDataSource } from "@/index";
 import { type PkiCertificateLoader } from "@/pki/domain/PkiCertificateLoader";
 import { type PkiCertificate } from "@/pki/model/PkiCertificate";
 import {
   LEDGER_CLIENT_VERSION_HEADER,
   LEDGER_ORIGIN_TOKEN_HEADER,
 } from "@/shared/constant/HttpHeaders";
-import type {
-  CalldataEnumV1,
-  CalldataFieldV1,
-  CalldataTransactionInfoV1,
-} from "@/transaction/data/dto/CalldataDto";
-import { HttpTransactionDataSource } from "@/transaction/data/HttpTransactionDataSource";
-import type { TransactionDataSource } from "@/transaction/data/TransactionDataSource";
 import PACKAGE from "@root/package.json";
+
+import { HttpCalldataDescriptorDataSource } from "./HttpCalldataDescriptorDataSource";
 
 vi.mock("axios");
 const config = {
@@ -28,8 +29,8 @@ const config = {
   originToken: "originToken",
 } as ContextModuleConfig;
 
-describe("HttpTransactionDataSource", () => {
-  let datasource: TransactionDataSource;
+describe("HttpCalldataDescriptorDataSource", () => {
+  let datasource: CalldataDescriptorDataSource;
   let transactionInfo: CalldataTransactionInfoV1;
   let enums: CalldataEnumV1;
   let fieldToken: CalldataFieldV1;
@@ -47,9 +48,10 @@ describe("HttpTransactionDataSource", () => {
 
   beforeAll(() => {
     vi.clearAllMocks();
-    datasource = new HttpTransactionDataSource(
+    datasource = new HttpCalldataDescriptorDataSource(
       config,
       certificateLoaderMock as unknown as PkiCertificateLoader,
+      "dapps",
     );
 
     transactionInfo = {
@@ -366,7 +368,7 @@ describe("HttpTransactionDataSource", () => {
     );
 
     // WHEN
-    await datasource.getTransactionDescriptors({
+    await datasource.getCalldataDescriptors({
       deviceModelId: DeviceModelId.FLEX,
       chainId: 1,
       address: "0x0abc",
@@ -384,6 +386,35 @@ describe("HttpTransactionDataSource", () => {
     );
   });
 
+  it.each([["dapps"], ["tokens"]])(
+    "should call axios with the correct url for endpoint '%s'",
+    async (endpoint) => {
+      // GIVEN
+      const requestSpy = vi.fn(() => Promise.resolve({ data: [] }));
+      vi.spyOn(axios, "request").mockImplementation(requestSpy);
+      const customDataSource = new HttpCalldataDescriptorDataSource(
+        config,
+        certificateLoaderMock as unknown as PkiCertificateLoader,
+        endpoint,
+      );
+
+      // WHEN
+      await customDataSource.getCalldataDescriptors({
+        deviceModelId: DeviceModelId.FLEX,
+        chainId: 1,
+        address: "0x0abc",
+        selector: "0x01ff",
+      });
+
+      // THEN
+      expect(requestSpy).toHaveBeenCalledWith(
+        expect.objectContaining({
+          url: `https://crypto-assets-service.api.ledger.com/v1/${endpoint}`,
+        }),
+      );
+    },
+  );
+
   it("should return an error when axios throws an error", async () => {
     // GIVEN
     vi.spyOn(axios, "request").mockRejectedValue(new Error());
@@ -392,7 +423,7 @@ describe("HttpTransactionDataSource", () => {
     );
 
     // WHEN
-    const result = await datasource.getTransactionDescriptors({
+    const result = await datasource.getCalldataDescriptors({
       deviceModelId: DeviceModelId.FLEX,
       chainId: 1,
       address: "0x0abc",
@@ -403,7 +434,7 @@ describe("HttpTransactionDataSource", () => {
     expect(result).toEqual(
       Left(
         new Error(
-          "[ContextModule] HttpTransactionDataSource: Failed to fetch transaction informations: Error",
+          "[ContextModule] HttpCalldataDescriptorDataSource: Failed to fetch calldata descriptors: Error",
         ),
       ),
     );
@@ -418,7 +449,7 @@ describe("HttpTransactionDataSource", () => {
     );
 
     // WHEN
-    const result = await datasource.getTransactionDescriptors({
+    const result = await datasource.getCalldataDescriptors({
       deviceModelId: DeviceModelId.FLEX,
       chainId: 1,
       address: "0x0abc",
@@ -429,7 +460,7 @@ describe("HttpTransactionDataSource", () => {
     expect(result).toEqual(
       Left(
         new Error(
-          "[ContextModule] HttpTransactionDataSource: Response is not an array",
+          "[ContextModule] HttpCalldataDescriptorDataSource: Response is not an array",
         ),
       ),
     );
@@ -443,7 +474,7 @@ describe("HttpTransactionDataSource", () => {
     );
 
     // WHEN
-    const result = await datasource.getTransactionDescriptors({
+    const result = await datasource.getCalldataDescriptors({
       deviceModelId: DeviceModelId.FLEX,
       chainId: 1,
       address: "0x0abc",
@@ -454,7 +485,7 @@ describe("HttpTransactionDataSource", () => {
     expect(result).toEqual(
       Left(
         new Error(
-          "[ContextModule] HttpTransactionDataSource: No data for contract 0x0abc and selector 0x01ff",
+          "[ContextModule] HttpCalldataDescriptorDataSource: No data for contract 0x0abc and selector 0x01ff",
         ),
       ),
     );
@@ -469,7 +500,7 @@ describe("HttpTransactionDataSource", () => {
     );
 
     // WHEN
-    const result = await datasource.getTransactionDescriptors({
+    const result = await datasource.getCalldataDescriptors({
       deviceModelId: DeviceModelId.FLEX,
       chainId: 1,
       address: "0x7d2768de32b0b80b7a3454c06bdac94a69ddc7a9",
@@ -480,7 +511,7 @@ describe("HttpTransactionDataSource", () => {
     expect(result).toEqual(
       Left(
         new Error(
-          "[ContextModule] HttpTransactionDataSource: Invalid response for contract 0x7d2768de32b0b80b7a3454c06bdac94a69ddc7a9 and selector 0x01fe",
+          "[ContextModule] HttpCalldataDescriptorDataSource: Invalid response for contract 0x7d2768de32b0b80b7a3454c06bdac94a69ddc7a9 and selector 0x01fe",
         ),
       ),
     );
@@ -500,7 +531,7 @@ describe("HttpTransactionDataSource", () => {
     );
 
     // WHEN
-    const result = await datasource.getTransactionDescriptors({
+    const result = await datasource.getCalldataDescriptors({
       deviceModelId: DeviceModelId.FLEX,
       chainId: 1,
       address: "0x7d2768de32b0b80B7a3454c06bdac94a69ddc7a9",
@@ -609,7 +640,7 @@ describe("HttpTransactionDataSource", () => {
     );
 
     // WHEN
-    const result = await datasource.getTransactionDescriptors({
+    const result = await datasource.getCalldataDescriptors({
       deviceModelId: DeviceModelId.FLEX,
       chainId: 1,
       address: "0x7d2768de32b0b80B7a3454c06bdac94a69ddc7a9",
@@ -717,7 +748,7 @@ describe("HttpTransactionDataSource", () => {
     );
 
     // WHEN
-    const result = await datasource.getTransactionDescriptors({
+    const result = await datasource.getCalldataDescriptors({
       deviceModelId: DeviceModelId.FLEX,
       chainId: 1,
       address: "0x7d2768de32b0b80b7a3454c06bdac94a69ddc7a9",
@@ -765,7 +796,7 @@ describe("HttpTransactionDataSource", () => {
     );
 
     // WHEN
-    const result = await datasource.getTransactionDescriptors({
+    const result = await datasource.getCalldataDescriptors({
       deviceModelId: DeviceModelId.FLEX,
       chainId: 1,
       address: "0x7d2768de32b0b80b7a3454c06bdac94a69ddc7a9",
@@ -819,7 +850,7 @@ describe("HttpTransactionDataSource", () => {
     );
 
     // WHEN
-    const result = await datasource.getTransactionDescriptors({
+    const result = await datasource.getCalldataDescriptors({
       deviceModelId: DeviceModelId.FLEX,
       chainId: 1,
       address: "0x7d2768de32b0b80b7a3454c06bdac94a69ddc7a9",
@@ -909,7 +940,7 @@ describe("HttpTransactionDataSource", () => {
     );
 
     // WHEN
-    const result = await datasource.getTransactionDescriptors({
+    const result = await datasource.getCalldataDescriptors({
       deviceModelId: DeviceModelId.FLEX,
       chainId: 1,
       address: "0x7d2768de32b0b80b7a3454c06bdac94a69ddc7a9",
@@ -995,7 +1026,7 @@ describe("HttpTransactionDataSource", () => {
     );
 
     // WHEN
-    const result = await datasource.getTransactionDescriptors({
+    const result = await datasource.getCalldataDescriptors({
       deviceModelId: DeviceModelId.FLEX,
       chainId: 1,
       address: "0x7d2768de32b0b80b7a3454c06bdac94a69ddc7a9",
@@ -1029,7 +1060,7 @@ describe("HttpTransactionDataSource", () => {
     );
 
     // WHEN
-    const result = await datasource.getTransactionDescriptors({
+    const result = await datasource.getCalldataDescriptors({
       deviceModelId: DeviceModelId.FLEX,
       chainId: 1,
       address: "0x7d2768de32b0b80b7a3454c06bdac94a69ddc7a9",
@@ -1150,7 +1181,7 @@ describe("HttpTransactionDataSource", () => {
     );
 
     // WHEN
-    const result = await datasource.getTransactionDescriptors({
+    const result = await datasource.getCalldataDescriptors({
       deviceModelId: DeviceModelId.FLEX,
       chainId: 1,
       address: "0x7d2768de32b0b80b7a3454c06bdac94a69ddc7a9",
@@ -1219,7 +1250,7 @@ describe("HttpTransactionDataSource", () => {
     );
 
     // WHEN
-    const result = await datasource.getTransactionDescriptors({
+    const result = await datasource.getCalldataDescriptors({
       deviceModelId: DeviceModelId.FLEX,
       chainId: 1,
       address: "0x7d2768de32b0b80b7a3454c06bdac94a69ddc7a9",
@@ -1230,7 +1261,7 @@ describe("HttpTransactionDataSource", () => {
     expect(result).toEqual(
       Left(
         new Error(
-          "[ContextModule] HttpTransactionDataSource: Invalid response for contract 0x7d2768de32b0b80b7a3454c06bdac94a69ddc7a9 and selector 0x69328dec",
+          "[ContextModule] HttpCalldataDescriptorDataSource: Invalid response for contract 0x7d2768de32b0b80b7a3454c06bdac94a69ddc7a9 and selector 0x69328dec",
         ),
       ),
     );
@@ -1256,7 +1287,7 @@ describe("HttpTransactionDataSource", () => {
     );
 
     // WHEN
-    const result = await datasource.getTransactionDescriptors({
+    const result = await datasource.getCalldataDescriptors({
       deviceModelId: DeviceModelId.FLEX,
       chainId: 1,
       address: "0x7d2768de32b0b80b7a3454c06bdac94a69ddc7a9",
@@ -1267,7 +1298,7 @@ describe("HttpTransactionDataSource", () => {
     expect(result).toEqual(
       Left(
         new Error(
-          "[ContextModule] HttpTransactionDataSource: Invalid response for contract 0x7d2768de32b0b80b7a3454c06bdac94a69ddc7a9 and selector 0x69328dec",
+          "[ContextModule] HttpCalldataDescriptorDataSource: Invalid response for contract 0x7d2768de32b0b80b7a3454c06bdac94a69ddc7a9 and selector 0x69328dec",
         ),
       ),
     );
@@ -1286,7 +1317,7 @@ describe("HttpTransactionDataSource", () => {
     );
 
     // WHEN
-    const result = await datasource.getTransactionDescriptors({
+    const result = await datasource.getCalldataDescriptors({
       deviceModelId: DeviceModelId.FLEX,
       chainId: 1,
       address: "0x7d2768de32b0b80b7a3454c06bdac94a69ddc7a9",
@@ -1297,7 +1328,7 @@ describe("HttpTransactionDataSource", () => {
     expect(result).toEqual(
       Left(
         new Error(
-          "[ContextModule] HttpTransactionDataSource: Invalid response for contract 0x7d2768de32b0b80b7a3454c06bdac94a69ddc7a9 and selector 0x69328dec",
+          "[ContextModule] HttpCalldataDescriptorDataSource: Invalid response for contract 0x7d2768de32b0b80b7a3454c06bdac94a69ddc7a9 and selector 0x69328dec",
         ),
       ),
     );
@@ -1316,7 +1347,7 @@ describe("HttpTransactionDataSource", () => {
     );
 
     // WHEN
-    const result = await datasource.getTransactionDescriptors({
+    const result = await datasource.getCalldataDescriptors({
       deviceModelId: DeviceModelId.FLEX,
       chainId: 1,
       address: "0x7d2768de32b0b80b7a3454c06bdac94a69ddc7a9",
@@ -1327,7 +1358,7 @@ describe("HttpTransactionDataSource", () => {
     expect(result).toEqual(
       Left(
         new Error(
-          "[ContextModule] HttpTransactionDataSource: Invalid response for contract 0x7d2768de32b0b80b7a3454c06bdac94a69ddc7a9 and selector 0x69328dec",
+          "[ContextModule] HttpCalldataDescriptorDataSource: Invalid response for contract 0x7d2768de32b0b80b7a3454c06bdac94a69ddc7a9 and selector 0x69328dec",
         ),
       ),
     );
@@ -1355,7 +1386,7 @@ describe("HttpTransactionDataSource", () => {
     );
 
     // WHEN
-    const result = await datasource.getTransactionDescriptors({
+    const result = await datasource.getCalldataDescriptors({
       deviceModelId: DeviceModelId.FLEX,
       chainId: 1,
       address: "0x7d2768de32b0b80b7a3454c06bdac94a69ddc7a9",
@@ -1366,7 +1397,7 @@ describe("HttpTransactionDataSource", () => {
     expect(result).toEqual(
       Left(
         new Error(
-          "[ContextModule] HttpTransactionDataSource: Invalid response for contract 0x7d2768de32b0b80b7a3454c06bdac94a69ddc7a9 and selector 0x69328dec",
+          "[ContextModule] HttpCalldataDescriptorDataSource: Invalid response for contract 0x7d2768de32b0b80b7a3454c06bdac94a69ddc7a9 and selector 0x69328dec",
         ),
       ),
     );
@@ -1385,7 +1416,7 @@ describe("HttpTransactionDataSource", () => {
     );
 
     // WHEN
-    const result = await datasource.getTransactionDescriptors({
+    const result = await datasource.getCalldataDescriptors({
       deviceModelId: DeviceModelId.FLEX,
       chainId: 1,
       address: "0x7d2768de32b0b80b7a3454c06bdac94a69ddc7a9",
@@ -1396,7 +1427,7 @@ describe("HttpTransactionDataSource", () => {
     expect(result).toEqual(
       Left(
         new Error(
-          "[ContextModule] HttpTransactionDataSource: Invalid response for contract 0x7d2768de32b0b80b7a3454c06bdac94a69ddc7a9 and selector 0x69328dec",
+          "[ContextModule] HttpCalldataDescriptorDataSource: Invalid response for contract 0x7d2768de32b0b80b7a3454c06bdac94a69ddc7a9 and selector 0x69328dec",
         ),
       ),
     );
@@ -1422,7 +1453,7 @@ describe("HttpTransactionDataSource", () => {
     );
 
     // WHEN
-    const result = await datasource.getTransactionDescriptors({
+    const result = await datasource.getCalldataDescriptors({
       deviceModelId: DeviceModelId.FLEX,
       chainId: 1,
       address: "0x7d2768de32b0b80b7a3454c06bdac94a69ddc7a9",
@@ -1433,7 +1464,7 @@ describe("HttpTransactionDataSource", () => {
     expect(result).toEqual(
       Left(
         new Error(
-          "[ContextModule] HttpTransactionDataSource: Invalid response for contract 0x7d2768de32b0b80b7a3454c06bdac94a69ddc7a9 and selector 0x69328dec",
+          "[ContextModule] HttpCalldataDescriptorDataSource: Invalid response for contract 0x7d2768de32b0b80b7a3454c06bdac94a69ddc7a9 and selector 0x69328dec",
         ),
       ),
     );
@@ -1459,7 +1490,7 @@ describe("HttpTransactionDataSource", () => {
     );
 
     // WHEN
-    const result = await datasource.getTransactionDescriptors({
+    const result = await datasource.getCalldataDescriptors({
       deviceModelId: DeviceModelId.FLEX,
       chainId: 1,
       address: "0x7d2768de32b0b80b7a3454c06bdac94a69ddc7a9",
@@ -1470,7 +1501,7 @@ describe("HttpTransactionDataSource", () => {
     expect(result).toEqual(
       Left(
         new Error(
-          "[ContextModule] HttpTransactionDataSource: Invalid response for contract 0x7d2768de32b0b80b7a3454c06bdac94a69ddc7a9 and selector 0x69328dec",
+          "[ContextModule] HttpCalldataDescriptorDataSource: Invalid response for contract 0x7d2768de32b0b80b7a3454c06bdac94a69ddc7a9 and selector 0x69328dec",
         ),
       ),
     );
@@ -1502,7 +1533,7 @@ describe("HttpTransactionDataSource", () => {
     );
 
     // WHEN
-    const result = await datasource.getTransactionDescriptors({
+    const result = await datasource.getCalldataDescriptors({
       deviceModelId: DeviceModelId.FLEX,
       chainId: 1,
       address: "0x7d2768de32b0b80b7a3454c06bdac94a69ddc7a9",
@@ -1513,7 +1544,7 @@ describe("HttpTransactionDataSource", () => {
     expect(result).toEqual(
       Left(
         new Error(
-          "[ContextModule] HttpTransactionDataSource: Invalid response for contract 0x7d2768de32b0b80b7a3454c06bdac94a69ddc7a9 and selector 0x69328dec",
+          "[ContextModule] HttpCalldataDescriptorDataSource: Invalid response for contract 0x7d2768de32b0b80b7a3454c06bdac94a69ddc7a9 and selector 0x69328dec",
         ),
       ),
     );
@@ -1539,7 +1570,7 @@ describe("HttpTransactionDataSource", () => {
     );
 
     // WHEN
-    const result = await datasource.getTransactionDescriptors({
+    const result = await datasource.getCalldataDescriptors({
       deviceModelId: DeviceModelId.FLEX,
       chainId: 1,
       address: "0x7d2768de32b0b80b7a3454c06bdac94a69ddc7a9",
@@ -1550,7 +1581,7 @@ describe("HttpTransactionDataSource", () => {
     expect(result).toEqual(
       Left(
         new Error(
-          "[ContextModule] HttpTransactionDataSource: Invalid response for contract 0x7d2768de32b0b80b7a3454c06bdac94a69ddc7a9 and selector 0x69328dec",
+          "[ContextModule] HttpCalldataDescriptorDataSource: Invalid response for contract 0x7d2768de32b0b80b7a3454c06bdac94a69ddc7a9 and selector 0x69328dec",
         ),
       ),
     );
@@ -1561,7 +1592,7 @@ describe("HttpTransactionDataSource", () => {
     vi.spyOn(axios, "request").mockResolvedValueOnce({ data: {} });
 
     // WHEN
-    await datasource.getTransactionDescriptors({
+    await datasource.getCalldataDescriptors({
       deviceModelId: DeviceModelId.FLEX,
       chainId: 1,
       address: "0x7d2768de32b0b80b7a3454c06bdac94a69ddc7a9",
