@@ -9,9 +9,11 @@ import {
 import { DerivationPathUtils } from "@ledgerhq/signer-utils";
 import bs58 from "bs58";
 
-import { type Signature } from "@api/index";
 import { GetPubKeyCommand } from "@internal/app-binder/command/GetPubKeyCommand";
-import { SignOffChainMessageCommand } from "@internal/app-binder/command/SignOffChainMessageCommand";
+import {
+  SignOffChainMessageCommand,
+  type SignOffChainMessageCommandResponse,
+} from "@internal/app-binder/command/SignOffChainMessageCommand";
 import { type SolanaAppErrorCodes } from "@internal/app-binder/command/utils/SolanaApplicationErrors";
 
 export type SendSignMessageTaskArgs = {
@@ -20,7 +22,7 @@ export type SendSignMessageTaskArgs = {
 };
 
 export type SendSignMessageTaskRunFunctionReturn = Promise<
-  CommandResult<Signature, SolanaAppErrorCodes>
+  CommandResult<SignOffChainMessageCommandResponse, SolanaAppErrorCodes>
 >;
 
 export const MAX_MESSAGE_LENGTH = 0xffff;

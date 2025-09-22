@@ -65,8 +65,8 @@ export class DefaultSignerSolana implements SignerSolana {
    *     - **createATA** `object`
    *       Information about creating an associated token account (ATA).
    *
-   *       - **owner** `string` – Owner of the ATA.
-   *       - **mint** `string` – Mint of the ATA.
+   *       - **address** `string` – Address (owner) of the ATA.
+   *       - **mintAddress** `string` – Mint address of the ATA.
    *
    *   - **solanaRPCURL** `string`
    *     RPC endpoint to use if `transactionResolutionContext` is not provided

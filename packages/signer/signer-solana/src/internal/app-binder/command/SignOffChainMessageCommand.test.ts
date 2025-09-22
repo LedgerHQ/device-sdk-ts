@@ -3,14 +3,14 @@ import {
   ApduResponse,
   isSuccessCommandResult,
 } from "@ledgerhq/device-management-kit";
+import bs58 from "bs58";
 
 import { SignOffChainMessageCommand } from "./SignOffChainMessageCommand";
 
 describe("SignOffChainMessageCommand", () => {
   let command: SignOffChainMessageCommand;
-  const MESSAGE = new Uint8Array(
-    Buffer.from("Solana SignOffChainMessage", "utf-8"),
-  );
+
+  const MESSAGE = new TextEncoder().encode("Solana SignOffChainMessage");
   const SIGNATURE_LENGTH = 64;
 
   beforeEach(() => {
@@ -41,6 +41,7 @@ describe("SignOffChainMessageCommand", () => {
   describe("parseResponse", () => {
     it("should parse the response correctly", () => {
       const signature = new Uint8Array(SIGNATURE_LENGTH).fill(0x01);
+
       const parsed = command.parseResponse(
         new ApduResponse({
           data: signature,
@@ -50,7 +51,14 @@ describe("SignOffChainMessageCommand", () => {
 
       expect(isSuccessCommandResult(parsed)).toBe(true);
       if (isSuccessCommandResult(parsed)) {
-        expect(parsed.data).toEqual(signature);
+        // build expected OCM envelope: [count=1][signature][message]
+        const envelope = new Uint8Array(1 + SIGNATURE_LENGTH + MESSAGE.length);
+        envelope.set(Uint8Array.of(1), 0);
+        envelope.set(signature, 1);
+        envelope.set(MESSAGE, 1 + SIGNATURE_LENGTH);
+
+        const expectedB58 = bs58.encode(envelope);
+        expect(parsed.data).toEqual({ signature: expectedB58 });
       } else {
         assert.fail("Expected success result");
       }
@@ -89,6 +97,7 @@ describe("SignOffChainMessageCommand", () => {
             statusCode: new Uint8Array([0x90, 0x00]),
           }),
         );
+
         expect(isSuccessCommandResult(result)).toBe(false);
         if (!isSuccessCommandResult(result)) {
           if (
@@ -96,9 +105,9 @@ describe("SignOffChainMessageCommand", () => {
             result.error.originalError !== null &&
             "message" in result.error.originalError
           ) {
-            expect(result.error.originalError.message).toBe(
-              "Signature extraction failed",
-            );
+            expect(
+              (result.error.originalError as { message: string }).message,
+            ).toBe("Signature extraction failed");
           }
         } else {
           assert.fail("Expected error");

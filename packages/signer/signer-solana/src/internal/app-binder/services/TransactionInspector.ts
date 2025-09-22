@@ -138,7 +138,7 @@ export class TransactionInspector {
         return { transactionType: SolanaTransactionTypes.SPL, data: best };
 
       if (sawSPL)
-        return { transactionType: SolanaTransactionTypes.SPL, data: {} }; // we should nbever reach here, in case we do tx will fall back to blind sign
+        return { transactionType: SolanaTransactionTypes.SPL, data: {} }; // we should never reach here, in case we do tx will fall back to blind sign
 
       return { transactionType: SolanaTransactionTypes.STANDARD, data: {} };
     } catch {
