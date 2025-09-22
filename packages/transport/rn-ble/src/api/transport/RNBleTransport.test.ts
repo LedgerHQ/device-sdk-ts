@@ -19,13 +19,12 @@ import {
 } from "@ledgerhq/device-management-kit";
 import { Left, Right } from "purify-ts";
 import { lastValueFrom, Subscription, take } from "rxjs";
-import { beforeEach, expect, type Mock } from "vitest";
-
-import { BleNotSupported } from "@api/model/Errors";
+import { beforeEach, expect } from "vitest";
 
 import { type RNBleApduSenderDependencies } from "./RNBleApduSender";
 import { RNBleTransport, RNBleTransportFactory } from "./RNBleTransport";
 
+// ===== MOCKS =====
 const fakeLogger = {
   error: vi.fn(),
   info: vi.fn(),
@@ -61,7 +60,155 @@ vi.mock("react-native-ble-plx", () => ({
   }),
 }));
 
-const expectAndroidSupportedResult = async (
+// ===== TEST DATA =====
+const FAKE_DEVICE_MODEL = new TransportDeviceModel({
+  id: DeviceModelId.FLEX,
+  productName: "Ledger Flex",
+  usbProductId: 0x70,
+  bootloaderUsbProductId: 0x0007,
+  usbOnly: false,
+  memorySize: 1533 * 1024,
+  blockSize: 32,
+  masks: [0x33300000],
+});
+
+const IOS_PLATFORM = { OS: "ios" as const } as Platform;
+const WINDOWS_PLATFORM = { OS: "windows" as const } as Platform;
+
+// ===== TEST HELPERS =====
+class TestTransportBuilder {
+  private deviceModelDataSource: DeviceModelDataSource = createFakeDataSource();
+  private loggerServiceFactory = () =>
+    fakeLogger as unknown as LoggerPublisherService;
+  private apduSenderServiceFactory =
+    (() => {}) as unknown as ApduSenderServiceFactory;
+  private apduReceiverServiceFactory =
+    (() => {}) as unknown as ApduReceiverServiceFactory;
+  private bleManager = new BleManager();
+  private platform: Platform = IOS_PLATFORM;
+  private permissionsAndroid: PermissionsAndroid =
+    {} as unknown as PermissionsAndroid;
+  private deviceConnectionStateMachineFactory?: (
+    args: DeviceConnectionStateMachineParams<RNBleApduSenderDependencies>,
+  ) => DeviceConnectionStateMachine<RNBleApduSenderDependencies>;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  private deviceApduSenderFactory?: (args: any, loggerFactory: any) => any;
+
+  withDeviceModelDataSource(dataSource: DeviceModelDataSource) {
+    this.deviceModelDataSource = dataSource;
+    return this;
+  }
+
+  withPlatform(platform: Platform) {
+    this.platform = platform;
+    return this;
+  }
+
+  withPermissionsAndroid(permissions: PermissionsAndroid) {
+    this.permissionsAndroid = permissions;
+    return this;
+  }
+
+  withBleManager(bleManager: BleManager) {
+    this.bleManager = bleManager;
+    return this;
+  }
+
+  withDeviceConnectionStateMachineFactory(
+    factory: (
+      args: DeviceConnectionStateMachineParams<RNBleApduSenderDependencies>,
+    ) => DeviceConnectionStateMachine<RNBleApduSenderDependencies>,
+  ) {
+    this.deviceConnectionStateMachineFactory = factory;
+    return this;
+  }
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  withDeviceApduSenderFactory(factory: (args: any, loggerFactory: any) => any) {
+    this.deviceApduSenderFactory = factory;
+    return this;
+  }
+
+  build(): RNBleTransport {
+    return new RNBleTransport(
+      this.deviceModelDataSource,
+      this.loggerServiceFactory,
+      this.apduSenderServiceFactory,
+      this.apduReceiverServiceFactory,
+      this.bleManager,
+      this.platform,
+      this.permissionsAndroid,
+      this.deviceConnectionStateMachineFactory,
+      this.deviceApduSenderFactory,
+    );
+  }
+}
+
+function createFakeDataSource() {
+  const getBluetoothServicesMock = vi.fn(() => ["ledgerId"]);
+  const getBluetoothServicesInfosMock = vi.fn(() => ({
+    ledgerId: new BleDeviceInfos(
+      FAKE_DEVICE_MODEL,
+      "serviceUuid",
+      "notifyUuid",
+      "writeCmdUuid",
+      "readCmdUuid",
+    ),
+  }));
+
+  return {
+    getBluetoothServices: getBluetoothServicesMock,
+    getBluetoothServicesInfos: getBluetoothServicesInfosMock,
+    getAllDeviceModels: vi.fn(),
+    getDeviceModel: vi.fn(),
+    filterDeviceModels: vi.fn(),
+  } as unknown as DeviceModelDataSource;
+}
+
+function createMockDevice(overrides: Partial<Device> = {}): Device {
+  return {
+    id: "deviceId",
+    localName: "deviceName",
+    serviceUUIDs: ["ledgerId"],
+    services: vi.fn().mockResolvedValue([{ uuid: "ledgerId" }]),
+    ...overrides,
+  } as unknown as Device;
+}
+
+function createMockBleManager(overrides: Partial<BleManager> = {}): BleManager {
+  const mockBleManager = {
+    onStateChange: vi.fn(),
+    startDeviceScan: vi.fn(),
+    stopDeviceScan: vi.fn(),
+    connectToDevice: vi.fn(),
+    disconnectFromDevice: vi.fn(),
+    cancelDeviceConnection: vi.fn(),
+    connectedDevices: vi.fn().mockResolvedValue([]),
+    monitorCharacteristicForDevice: vi.fn(),
+    writeCharacteristicWithoutResponseForDevice: vi.fn(),
+    discoverAllServicesAndCharacteristicsForDevice: vi.fn(),
+    onDeviceDisconnected: vi.fn(),
+    isDeviceConnected: vi.fn(),
+    ...overrides,
+  } as unknown as BleManager;
+
+  return mockBleManager;
+}
+
+function createMockPermissionsAndroid(
+  overrides: Partial<PermissionsAndroid> = {},
+): PermissionsAndroid {
+  return {
+    request: vi.fn(),
+    requestMultiple: vi.fn(),
+    PERMISSIONS: {},
+    RESULTS: { GRANTED: "granted" },
+    ...overrides,
+  } as unknown as PermissionsAndroid;
+}
+
+// ===== ANDROID PERMISSION TEST HELPER =====
+async function testAndroidPermissions(
   params: {
     version: number;
     permissions: Record<string, string>;
@@ -76,10 +223,12 @@ const expectAndroidSupportedResult = async (
     isSupported: boolean;
     callRequestPermission: boolean;
   },
-) => {
-  // given
-  const platform = { OS: "android", Version: params.version };
-  const permissionsAndroid = {
+) {
+  const platform = {
+    OS: "android" as const,
+    Version: params.version,
+  } as Platform;
+  const permissionsAndroid = createMockPermissionsAndroid({
     request: vi.fn().mockImplementation((key: string) =>
       Promise.resolve(
         {
@@ -87,42 +236,37 @@ const expectAndroidSupportedResult = async (
         }[key],
       ),
     ),
-    PERMISSIONS: params.permissions,
-    RESULTS: {
-      GRANTED: "granted",
-    },
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    PERMISSIONS: params.permissions as any,
     requestMultiple: vi
       .fn()
       .mockImplementation(() =>
         Promise.resolve(params.requestPermissionResult),
       ),
-  };
-  const transport = new RNBleTransport(
-    "DeviceModelDataSource" as unknown as DeviceModelDataSource,
-    () => fakeLogger as unknown as LoggerPublisherService,
-    (() => {}) as unknown as ApduSenderServiceFactory,
-    (() => {}) as unknown as ApduReceiverServiceFactory,
-    new BleManager(),
-    platform as Platform,
-    permissionsAndroid as unknown as PermissionsAndroid,
-  );
-  // when
+  });
+
+  const transport = new TestTransportBuilder()
+    .withPlatform(platform as Platform)
+    .withPermissionsAndroid(permissionsAndroid)
+    .build();
+
   await transport.requestPermission();
   const isSupported = transport.isSupported();
-  // then
+
   if (expects.callRequestPermission) {
     expect(permissionsAndroid.request).toHaveBeenCalledWith(
       "ACCESS_FINE_LOCATION",
     );
   }
   expect(isSupported).toBe(expects.isSupported);
-};
+}
 
+// ===== TEST SUITES =====
 describe("RNBleTransportFactory", () => {
   it("should return a RNBleTransport", () => {
     const fakeArgs = {
       deviceModelDataSource:
-        "DeviceModelDataSource" as unknown as DeviceModelDataSource,
+        createFakeDataSource() as unknown as DeviceModelDataSource,
       loggerServiceFactory: () =>
         fakeLogger as unknown as LoggerPublisherService,
       apduSenderServiceFactory:
@@ -131,40 +275,14 @@ describe("RNBleTransportFactory", () => {
         (() => {}) as unknown as ApduReceiverServiceFactory,
       config: {} as DmkConfig,
     };
-    // when
+
     const transport = RNBleTransportFactory(fakeArgs);
-    // then
+
     expect(transport).toBeInstanceOf(RNBleTransport);
   });
 });
 
 describe("RNBleTransport", () => {
-  const fakePlaftorm = { OS: "ios" };
-  const fakeDeviceModel = new TransportDeviceModel({
-    id: DeviceModelId.FLEX,
-    productName: "Ledger Flex",
-    usbProductId: 0x70,
-    bootloaderUsbProductId: 0x0007,
-    usbOnly: false,
-    memorySize: 1533 * 1024,
-    blockSize: 32,
-    masks: [0x33300000],
-  });
-  const getBluetoothServicesMock = vi.fn(() => ["ledgerId"]);
-  const getBluetoothServicesInfosMock = vi.fn(() => ({
-    ledgerId: new BleDeviceInfos(
-      fakeDeviceModel,
-      "serviceUuid",
-      "notifyUuid",
-      "writeCmdUuid",
-      "readCmdUuid",
-    ),
-  }));
-  const fakeDataSource = {
-    getBluetoothServices: getBluetoothServicesMock,
-    getBluetoothServicesInfos: getBluetoothServicesInfosMock,
-  };
-
   let subscription: Subscription | undefined;
 
   beforeEach(() => {
@@ -179,48 +297,26 @@ describe("RNBleTransport", () => {
 
   describe("getIdentifier", () => {
     it("should return rnBleTransportIdentifier", () => {
-      // given
-      const bleManager = new BleManager();
-      const transport = new RNBleTransport(
-        "DeviceModelDataSource" as unknown as DeviceModelDataSource,
-        () => fakeLogger as unknown as LoggerPublisherService,
-        (() => {}) as unknown as ApduSenderServiceFactory,
-        (() => {}) as unknown as ApduReceiverServiceFactory,
-        bleManager,
-      );
-
-      // when
+      const transport = new TestTransportBuilder().build();
       const identifier = transport.getIdentifier();
-
-      // then
       expect(identifier).toStrictEqual("RN_BLE");
     });
   });
 
   describe("isSupported", () => {
     it("should return true if platform is ios", async () => {
-      // given
-      const platform = { OS: "ios" };
-      const bleManager = new BleManager();
-      const transport = new RNBleTransport(
-        "DeviceModelDataSource" as unknown as DeviceModelDataSource,
-        () => fakeLogger as unknown as LoggerPublisherService,
-        (() => {}) as unknown as ApduSenderServiceFactory,
-        (() => {}) as unknown as ApduReceiverServiceFactory,
-        bleManager,
-        platform as Platform,
-      );
+      const transport = new TestTransportBuilder()
+        .withPlatform(IOS_PLATFORM)
+        .build();
 
-      // when
       await transport.requestPermission();
       const isSupported = transport.isSupported();
 
-      // then
       expect(isSupported).toBe(true);
     });
 
     it("should return true if platform is android and apiLevel < 31 with good permissions", async () => {
-      await expectAndroidSupportedResult(
+      await testAndroidPermissions(
         {
           version: 30,
           permissions: {
@@ -242,7 +338,7 @@ describe("RNBleTransport", () => {
     });
 
     it("should return true if platform is android and apiLevel >= 31 with good permissions", async () => {
-      await expectAndroidSupportedResult(
+      await testAndroidPermissions(
         {
           version: 31,
           permissions: {
@@ -264,7 +360,7 @@ describe("RNBleTransport", () => {
     });
 
     it("should return false if platform is android with bad permissions", async () => {
-      await expectAndroidSupportedResult(
+      await testAndroidPermissions(
         {
           version: 31,
           permissions: {
@@ -286,7 +382,7 @@ describe("RNBleTransport", () => {
     });
 
     it("should return false if platform is android and denied permissions", async () => {
-      await expectAndroidSupportedResult(
+      await testAndroidPermissions(
         {
           version: 31,
           permissions: {
@@ -308,249 +404,43 @@ describe("RNBleTransport", () => {
     });
 
     it("should return false if platform isn't android nor ios", async () => {
-      // given
-      const bleManager = new BleManager();
-      const transport = new RNBleTransport(
-        "DeviceModelDataSource" as unknown as DeviceModelDataSource,
-        () => fakeLogger as unknown as LoggerPublisherService,
-        (() => {}) as unknown as ApduSenderServiceFactory,
-        (() => {}) as unknown as ApduReceiverServiceFactory,
-        bleManager,
-        { OS: "windows" } as Platform,
-      );
+      const transport = new TestTransportBuilder()
+        .withPlatform(WINDOWS_PLATFORM)
+        .build();
 
-      // when
       await transport.requestPermission();
       const isSupported = transport.isSupported();
 
-      // then
       expect(isSupported).toBe(false);
     });
   });
 
-  // startDiscovering is not used / implemented anymore and just returns a from([])
   describe("startDiscovering", () => {
-    it("should throw error if transport is not supported", () => {
-      // given
-      const platform = { OS: "windows" };
-      const bleManager = new BleManager();
-
-      const transport = new RNBleTransport(
-        fakeDataSource as unknown as DeviceModelDataSource,
-        () => fakeLogger as unknown as LoggerPublisherService,
-        (() => {}) as unknown as ApduSenderServiceFactory,
-        (() => {}) as unknown as ApduReceiverServiceFactory,
-        bleManager,
-        platform as Platform,
-      );
-
-      try {
-        // when
-        transport.startDiscovering();
-      } catch (e) {
-        // then
-        expect(e).toBeInstanceOf(BleNotSupported);
-      }
-    });
-
     it("should emit an empty array", () =>
-      new Promise((done) => {
-        // given
-        const bleManager = new BleManager();
+      new Promise((done, reject) => {
+        const transport = new TestTransportBuilder()
+          .withPlatform(IOS_PLATFORM)
+          .withDeviceModelDataSource(
+            createFakeDataSource() as unknown as DeviceModelDataSource,
+          )
+          .build();
 
-        const transport = new RNBleTransport(
-          fakeDataSource as unknown as DeviceModelDataSource,
-          () => fakeLogger as unknown as LoggerPublisherService,
-          (() => {}) as unknown as ApduSenderServiceFactory,
-          (() => {}) as unknown as ApduReceiverServiceFactory,
-          bleManager,
-          fakePlaftorm as Platform,
-          {} as unknown as PermissionsAndroid,
-        );
-
-        // when
         const observable = transport.startDiscovering();
 
-        // then
         subscription = observable.subscribe({
           next: (discoveredDevice) => {
-            expect(discoveredDevice).toStrictEqual([]);
-            done(undefined);
-          },
-          error: (e) => {
-            throw e;
-          },
-          complete: () => {
-            // Will complete as we use from([])
-            done(undefined);
-          },
-        });
-      }));
-
-    it.skip("should emit discovered new device", () =>
-      new Promise((done) => {
-        // given
-        let scanInterval: NodeJS.Timeout | null = null;
-
-        const bleManager = new BleManager();
-        const startScan = vi
-          .fn()
-          .mockImplementation((_uuids, _options, listener) => {
-            scanInterval = setInterval(() => {
-              listener(null, {
-                id: "id",
-                localName: "name",
-                serviceUUIDs: ["ledgerId"],
-                rssi: 42,
-              });
-            }, 500);
-
-            listener(null, {
-              id: "43",
-              localName: "name43",
-              serviceUUIDs: ["notLedgerId"],
-              rssi: 43,
-            });
-
-            return Promise.resolve();
-          });
-
-        const stopScan = vi.fn().mockImplementation(() => {
-          if (scanInterval) {
-            clearInterval(scanInterval);
-            scanInterval = null;
-          }
-          return Promise.resolve();
-        });
-
-        vi.spyOn(bleManager, "connectedDevices").mockResolvedValueOnce([]);
-        vi.spyOn(bleManager, "startDeviceScan").mockImplementation(startScan);
-        vi.spyOn(bleManager, "stopDeviceScan").mockImplementation(stopScan);
-
-        const transport = new RNBleTransport(
-          fakeDataSource as unknown as DeviceModelDataSource,
-          () => fakeLogger as unknown as LoggerPublisherService,
-          (() => {}) as unknown as ApduSenderServiceFactory,
-          (() => {}) as unknown as ApduReceiverServiceFactory,
-          bleManager,
-          fakePlaftorm as Platform,
-          {} as unknown as PermissionsAndroid,
-        );
-
-        // when
-        const observable = transport.startDiscovering();
-
-        // then
-        subscription = observable.subscribe({
-          next: (discoveredDevice) => {
-            expect(discoveredDevice).toStrictEqual([]);
-            done(undefined);
-          },
-          error: (e) => {
-            throw e;
-          },
-          complete: () => {
-            throw new Error("complete should not be called");
-          },
-        });
-      }));
-
-    it.skip("should emit both known and new device", () =>
-      new Promise((done) => {
-        // given
-        let scanInterval: NodeJS.Timeout | null = null;
-
-        const bleManager = new BleManager();
-        const mockDevice = {
-          readRSSI: vi.fn().mockResolvedValueOnce({
-            discoverAllServicesAndCharacteristics: vi
-              .fn()
-              .mockResolvedValueOnce({
-                services: vi.fn().mockResolvedValueOnce({}),
-                serviceUUIDs: ["ledgerId"],
-                rssi: 64,
-                id: "knownDeviceId",
-                localName: "knownDeviceName",
-              }),
-          }),
-        } as unknown as Device;
-
-        const startScan = vi
-          .fn()
-          .mockImplementation((_uuids, _options, listener) => {
-            scanInterval = setInterval(() => {
-              listener(null, {
-                id: "newDeviceId",
-                localName: "newDeviceName",
-                serviceUUIDs: ["ledgerId"],
-                rssi: 42,
-              } as unknown as Device);
-            }, 500);
-
-            listener(null, {
-              id: "43",
-              localName: "name43",
-              serviceUUIDs: ["notLedgerId"],
-              rssi: 43,
-            } as unknown as Device);
-
-            return Promise.resolve();
-          });
-
-        const stopScan = vi.fn().mockImplementation(() => {
-          if (scanInterval) {
-            clearInterval(scanInterval);
-            scanInterval = null;
-          }
-          return Promise.resolve();
-        });
-
-        vi.spyOn(bleManager, "connectedDevices").mockResolvedValueOnce([
-          mockDevice,
-        ]);
-        vi.spyOn(bleManager, "startDeviceScan").mockImplementation(startScan);
-        vi.spyOn(bleManager, "stopDeviceScan").mockImplementation(stopScan);
-        vi.spyOn(bleManager, "onDeviceDisconnected").mockImplementation(
-          vi.fn(),
-        );
-
-        const transport = new RNBleTransport(
-          fakeDataSource as unknown as DeviceModelDataSource,
-          () => fakeLogger as unknown as LoggerPublisherService,
-          (() => {}) as unknown as ApduSenderServiceFactory,
-          (() => {}) as unknown as ApduReceiverServiceFactory,
-          bleManager,
-          fakePlaftorm as Platform,
-          {} as unknown as PermissionsAndroid,
-        );
-
-        // when
-        const obs = transport.startDiscovering();
-        const discoveredDevices: Record<string, TransportDiscoveredDevice> = {};
-
-        // then
-        subscription = obs.subscribe({
-          next: (device) => {
-            discoveredDevices[device.id] = device;
-            if (Object.values(discoveredDevices).length === 2) {
-              expect(Object.values(discoveredDevices)).toStrictEqual([
-                {
-                  id: "knownDeviceId",
-                  name: "knownDeviceName",
-                  deviceModel: fakeDeviceModel,
-                  transport: "RN_BLE",
-                  rssi: 64,
-                },
-                {
-                  id: "newDeviceId",
-                  name: "newDeviceName",
-                  deviceModel: fakeDeviceModel,
-                  transport: "RN_BLE",
-                  rssi: 42,
-                },
-              ]);
-              done(undefined);
+            try {
+              expect(discoveredDevice).toStrictEqual([]);
+            } catch (e) {
+              reject(e);
             }
+          },
+          error: (e) => {
+            reject(e);
+            throw e;
+          },
+          complete: () => {
+            done(undefined);
           },
         });
       }));
@@ -558,125 +448,55 @@ describe("RNBleTransport", () => {
 
   describe("stopDiscovering", () => {
     it("should call ble manager stop scan on stop discovering", () => {
-      // given
-      const bleManager = new BleManager();
       const stopDeviceScan = vi.fn();
-      vi.spyOn(bleManager, "connectedDevices").mockResolvedValueOnce([]);
-      vi.spyOn(bleManager, "stopDeviceScan").mockImplementation(stopDeviceScan);
-
-      const transport = new RNBleTransport(
-        fakeDataSource as unknown as DeviceModelDataSource,
-        () => fakeLogger as unknown as LoggerPublisherService,
-        (() => {}) as unknown as ApduSenderServiceFactory,
-        (() => {}) as unknown as ApduReceiverServiceFactory,
-        bleManager,
-        fakePlaftorm as Platform,
-        {} as unknown as PermissionsAndroid,
-      );
-
-      // when
-      transport.stopDiscovering();
-
-      // then
-      expect(stopDeviceScan).toHaveBeenCalled();
-    });
-
-    it.skip("should call ble manager stop scan when unsubscribe startDiscovering obs", () => {
-      // given
-      let scanInterval: NodeJS.Timeout | null = null;
-
-      const bleManager = new BleManager();
-      const startScan = vi
-        .fn()
-        .mockImplementation((_uuids, _options, listener) => {
-          scanInterval = setInterval(() => {
-            listener(null, {
-              id: "id",
-              localName: "name",
-              serviceUUIDs: ["ledgerId"],
-              rssi: 42,
-            });
-          }, 500);
-          listener(null, {
-            id: "43",
-            localName: "name43",
-            serviceUUIDs: ["notLedgerId"],
-            rssi: 43,
-          });
-
-          return Promise.resolve();
-        });
-
-      const stopScan = vi.fn().mockImplementation(() => {
-        if (scanInterval) {
-          clearInterval(scanInterval);
-          scanInterval = null;
-        }
-        return Promise.resolve();
+      const bleManager = createMockBleManager({
+        stopDeviceScan,
+        connectedDevices: vi.fn().mockResolvedValueOnce([]),
       });
 
-      vi.spyOn(bleManager, "connectedDevices").mockResolvedValueOnce([]);
-      vi.spyOn(bleManager, "startDeviceScan").mockImplementation(startScan);
-      vi.spyOn(bleManager, "stopDeviceScan").mockImplementation(stopScan);
-      vi.spyOn(bleManager, "onDeviceDisconnected").mockImplementation(vi.fn());
+      const transport = new TestTransportBuilder()
+        .withBleManager(bleManager)
+        .withPlatform(IOS_PLATFORM)
+        .withDeviceModelDataSource(
+          createFakeDataSource() as unknown as DeviceModelDataSource,
+        )
+        .build();
 
-      const transport = new RNBleTransport(
-        fakeDataSource as unknown as DeviceModelDataSource,
-        () => fakeLogger as unknown as LoggerPublisherService,
-        (() => {}) as unknown as ApduSenderServiceFactory,
-        (() => {}) as unknown as ApduReceiverServiceFactory,
-        bleManager,
-        fakePlaftorm as Platform,
-        {} as unknown as PermissionsAndroid,
-      );
+      transport.stopDiscovering();
 
-      // when
-      transport.startDiscovering().subscribe().unsubscribe();
-
-      // then
-      expect(startScan).toHaveBeenCalled();
-      expect(stopScan).toHaveBeenCalled();
+      expect(stopDeviceScan).toHaveBeenCalled();
     });
   });
 
   describe("listenToAvailableDevices", () => {
-    it("should call startScan and connectedDevices from ble manager", () =>
-      new Promise((done) => {
-        // given
+    it("should return already connected devices and scanned devices", () =>
+      new Promise((done, reject) => {
         let scanInterval: NodeJS.Timeout | null = null;
 
-        const bleManager = new BleManager();
-        const mockDevice = {
-          readRSSI: vi.fn().mockResolvedValueOnce({
-            discoverAllServicesAndCharacteristics: vi
-              .fn()
-              .mockResolvedValueOnce({
-                services: vi.fn().mockResolvedValueOnce({}),
-                serviceUUIDs: ["ledgerId"],
-                rssi: 64,
-                id: "knownDeviceId",
-                localName: "knownDeviceName",
-              }),
-          }),
-        } as unknown as Device;
+        const connectedDevice = createMockDevice({
+          id: "aConnectedDeviceId",
+          localName: "aConnectedDeviceName",
+        });
 
         const startScan = vi
           .fn()
           .mockImplementation((_uuids, _options, listener) => {
             scanInterval = setInterval(() => {
+              // eslint-disable-next-line @typescript-eslint/no-unsafe-call
               listener(null, {
-                id: "id",
-                localName: "name",
+                id: "aScannedDeviceId",
+                localName: "aScannedDeviceName",
                 serviceUUIDs: ["ledgerId"],
-                rssi: 42,
+                rssi: 1,
               });
             }, 10);
 
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-call
             listener(null, {
-              id: "43",
-              localName: "name43",
+              id: "aNonLedgerScannedDeviceId",
+              localName: "aNonLedgerScannedDeviceName",
               serviceUUIDs: ["notLedgerId"],
-              rssi: 43,
+              rssi: 2,
             });
           });
 
@@ -687,49 +507,64 @@ describe("RNBleTransport", () => {
           }
         });
 
-        vi.spyOn(bleManager, "connectedDevices").mockResolvedValueOnce([
-          mockDevice,
-        ]);
-        vi.spyOn(bleManager, "startDeviceScan").mockImplementation(startScan);
-        vi.spyOn(bleManager, "stopDeviceScan").mockImplementation(stopScan);
-        vi.spyOn(bleManager, "onDeviceDisconnected").mockImplementation(
-          vi.fn(),
-        );
-        vi.spyOn(bleManager, "isDeviceConnected").mockImplementation(vi.fn());
-        vi.spyOn(bleManager, "onStateChange").mockImplementation(
-          (listener: (state: State) => void) => {
+        const bleManager = createMockBleManager({
+          connectedDevices: vi.fn().mockResolvedValue([connectedDevice]),
+          startDeviceScan: startScan,
+          stopDeviceScan: stopScan,
+          onDeviceDisconnected: vi.fn(),
+          isDeviceConnected: vi.fn(),
+          onStateChange: (listener: (state: State) => void) => {
             listener(State.PoweredOn);
-            return {
-              remove: vi.fn(),
-            };
+            return { remove: vi.fn() };
           },
-        );
+        });
 
-        const transport = new RNBleTransport(
-          fakeDataSource as unknown as DeviceModelDataSource,
-          () => fakeLogger as unknown as LoggerPublisherService,
-          (() => {}) as unknown as ApduSenderServiceFactory,
-          (() => {}) as unknown as ApduReceiverServiceFactory,
-          bleManager,
-          fakePlaftorm as Platform,
-          {} as unknown as PermissionsAndroid,
-        );
+        const transport = new TestTransportBuilder()
+          .withBleManager(bleManager)
+          .withPlatform(IOS_PLATFORM)
+          .withDeviceModelDataSource(
+            createFakeDataSource() as unknown as DeviceModelDataSource,
+          )
+          .build();
 
-        // when
+        const availableDevicesEvents: TransportDiscoveredDevice[][] = [];
+
         subscription = transport.listenToAvailableDevices().subscribe({
           next: (devices) => {
-            if (devices.length === 1) {
-              // then
-              expect(devices).toEqual([
-                {
-                  id: "id",
-                  name: "name",
-                  deviceModel: fakeDeviceModel,
-                  transport: "RN_BLE",
-                  rssi: 42,
-                },
-              ]);
-              done(undefined);
+            availableDevicesEvents.push(devices);
+            if (availableDevicesEvents.length === 2) {
+              try {
+                expect(availableDevicesEvents).toEqual([
+                  [
+                    {
+                      id: "aConnectedDeviceId",
+                      name: "aConnectedDeviceName",
+                      deviceModel: FAKE_DEVICE_MODEL,
+                      transport: "RN_BLE",
+                      rssi: undefined,
+                    },
+                  ],
+                  [
+                    {
+                      id: "aConnectedDeviceId",
+                      name: "aConnectedDeviceName",
+                      deviceModel: FAKE_DEVICE_MODEL,
+                      transport: "RN_BLE",
+                      rssi: undefined,
+                    },
+                    {
+                      id: "aScannedDeviceId",
+                      name: "aScannedDeviceName",
+                      deviceModel: FAKE_DEVICE_MODEL,
+                      transport: "RN_BLE",
+                      rssi: 1,
+                    },
+                  ],
+                ]);
+                done(undefined);
+              } catch (e) {
+                reject(e);
+              }
             }
           },
         });
@@ -737,65 +572,35 @@ describe("RNBleTransport", () => {
   });
 
   describe("connect", () => {
-    let fakeConnectedDevices: Mock;
-
-    beforeEach(() => {
-      fakeConnectedDevices = vi.fn().mockResolvedValueOnce([
-        {
-          readRSSI: vi.fn().mockResolvedValueOnce({
-            discoverAllServicesAndCharacteristics: vi
-              .fn()
-              .mockResolvedValueOnce({
-                services: vi.fn().mockResolvedValueOnce({}),
-                serviceUUIDs: ["ledgerId"],
-                rssi: 64,
-                id: "deviceId",
-                localName: "knownDeviceName",
-              }),
-          }),
-        },
-      ]);
-    });
-
     it("should throw an error if device id is unknown", async () => {
-      // given
-      const bleManager = new BleManager();
-
-      vi.spyOn(bleManager, "connectedDevices").mockImplementation(
-        fakeConnectedDevices,
-      );
-
-      vi.spyOn(
-        bleManager,
-        "discoverAllServicesAndCharacteristicsForDevice",
-      ).mockRejectedValueOnce(
-        new Error("discoverAllServicesAndCharacteristicsForDevice error"),
-      );
+      const bleManager = createMockBleManager({
+        connectedDevices: vi.fn().mockResolvedValue([]),
+        discoverAllServicesAndCharacteristicsForDevice: vi
+          .fn()
+          .mockRejectedValueOnce(
+            new Error("discoverAllServicesAndCharacteristicsForDevice error"),
+          ),
+      });
 
       const deviceApduSenderFactory = vi.fn().mockReturnValue({
         setupConnection: vi.fn().mockResolvedValue(undefined),
       });
 
-      const transport = new RNBleTransport(
-        fakeDataSource as unknown as DeviceModelDataSource,
-        () => fakeLogger as unknown as LoggerPublisherService,
-        (() => {}) as unknown as ApduSenderServiceFactory,
-        (() => {}) as unknown as ApduReceiverServiceFactory,
-        bleManager,
-        fakePlaftorm as Platform,
-        {} as unknown as PermissionsAndroid,
-        vi.fn(),
-        deviceApduSenderFactory,
-      );
+      const transport = new TestTransportBuilder()
+        .withBleManager(bleManager)
+        .withPlatform(IOS_PLATFORM)
+        .withDeviceModelDataSource(
+          createFakeDataSource() as unknown as DeviceModelDataSource,
+        )
+        .withDeviceApduSenderFactory(deviceApduSenderFactory)
+        .build();
 
-      // when
       const result = await transport.connect({
         // @ts-expect-error test case
         deviceId: null,
         onDisconnect: vi.fn(),
       });
 
-      // then
       expect(result).toEqual(
         Left(
           new OpeningConnectionError(
@@ -806,30 +611,17 @@ describe("RNBleTransport", () => {
     });
 
     it("should connect to a discovered device with correct MTU and discover services and setup apdu sender", async () => {
-      // given
       let scanInterval: NodeJS.Timeout | null = null;
-      const bleManager = new BleManager();
-      const mockDevice = {
-        readRSSI: vi.fn().mockResolvedValueOnce({
-          discoverAllServicesAndCharacteristics: vi.fn().mockResolvedValueOnce({
-            services: vi.fn().mockResolvedValueOnce({}),
-            serviceUUIDs: ["ledgerId"],
-            rssi: 64,
-            id: "knownDeviceId",
-            localName: "knownDeviceName",
-          }),
-        }),
-        services: vi.fn().mockResolvedValueOnce([
-          {
-            uuid: "ledgerId",
-          },
-        ]),
-      } as unknown as Device;
+      const mockDevice = createMockDevice({
+        id: "deviceId",
+        localName: "name",
+      });
 
       const startScan = vi
         .fn()
         .mockImplementation((_uuids, _options, listener) => {
           scanInterval = setInterval(() => {
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-call
             listener(null, {
               id: "deviceId",
               localName: "name",
@@ -838,6 +630,7 @@ describe("RNBleTransport", () => {
             });
           }, 500);
 
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-call
           listener(null, {
             id: "43",
             localName: "name43",
@@ -853,33 +646,23 @@ describe("RNBleTransport", () => {
         }
       });
 
-      vi.spyOn(bleManager, "connectedDevices").mockImplementation(
-        fakeConnectedDevices,
-      );
-      vi.spyOn(bleManager, "startDeviceScan").mockImplementation(startScan);
-      vi.spyOn(bleManager, "stopDeviceScan").mockImplementation(stopScan);
-      vi.spyOn(bleManager, "connectToDevice").mockResolvedValueOnce(mockDevice);
-      vi.spyOn(
-        bleManager,
-        "discoverAllServicesAndCharacteristicsForDevice",
-      ).mockResolvedValueOnce(mockDevice);
-      vi.spyOn(bleManager, "monitorCharacteristicForDevice").mockImplementation(
-        vi.fn(),
-      );
-      vi.spyOn(
-        bleManager,
-        "writeCharacteristicWithoutResponseForDevice",
-      ).mockImplementation(vi.fn());
-      vi.spyOn(bleManager, "onDeviceDisconnected").mockImplementation(vi.fn());
-      vi.spyOn(bleManager, "isDeviceConnected").mockImplementation(vi.fn());
-      vi.spyOn(bleManager, "onStateChange").mockImplementation(
-        (listener: (state: State) => void) => {
+      const bleManager = createMockBleManager({
+        connectedDevices: vi.fn().mockResolvedValue([]),
+        startDeviceScan: startScan,
+        stopDeviceScan: stopScan,
+        connectToDevice: vi.fn().mockResolvedValueOnce(mockDevice),
+        discoverAllServicesAndCharacteristicsForDevice: vi
+          .fn()
+          .mockResolvedValueOnce(mockDevice),
+        monitorCharacteristicForDevice: vi.fn(),
+        writeCharacteristicWithoutResponseForDevice: vi.fn(),
+        onDeviceDisconnected: vi.fn(),
+        isDeviceConnected: vi.fn(),
+        onStateChange: (listener: (state: State) => void) => {
           listener(State.PoweredOn);
-          return {
-            remove: vi.fn(),
-          };
+          return { remove: vi.fn() };
         },
-      );
+      });
 
       const fakeSetupConnection = vi.fn().mockResolvedValue(undefined);
       const deviceConnectionStateMachineFactory = vi.fn().mockReturnValue({
@@ -889,19 +672,18 @@ describe("RNBleTransport", () => {
         setupConnection: fakeSetupConnection,
       });
 
-      const transport = new RNBleTransport(
-        fakeDataSource as unknown as DeviceModelDataSource,
-        () => fakeLogger as unknown as LoggerPublisherService,
-        (() => {}) as unknown as ApduSenderServiceFactory,
-        (() => {}) as unknown as ApduReceiverServiceFactory,
-        bleManager,
-        fakePlaftorm as Platform,
-        {} as unknown as PermissionsAndroid,
-        deviceConnectionStateMachineFactory,
-        deviceApduSenderFactory,
-      );
+      const transport = new TestTransportBuilder()
+        .withBleManager(bleManager)
+        .withPlatform(IOS_PLATFORM)
+        .withDeviceModelDataSource(
+          createFakeDataSource() as unknown as DeviceModelDataSource,
+        )
+        .withDeviceConnectionStateMachineFactory(
+          deviceConnectionStateMachineFactory,
+        )
+        .withDeviceApduSenderFactory(deviceApduSenderFactory)
+        .build();
 
-      // when
       const [device] = await lastValueFrom(
         transport.listenToAvailableDevices().pipe(take(3)),
       );
@@ -911,7 +693,6 @@ describe("RNBleTransport", () => {
         onDisconnect: vi.fn(),
       });
 
-      // then
       expect(result.isRight()).toBe(true);
       expect(bleManager.connectToDevice).toHaveBeenCalledWith("deviceId", {
         requestMTU: 156,
@@ -923,26 +704,11 @@ describe("RNBleTransport", () => {
     });
 
     it("should return a connected device which calls state machine sendApdu", async () => {
-      // given
       let scanInterval: NodeJS.Timeout | null = null;
-      const bleManager = new BleManager();
-      const mockDevice = {
+      const mockDevice = createMockDevice({
         id: "deviceId",
-        readRSSI: vi.fn().mockResolvedValueOnce({
-          discoverAllServicesAndCharacteristics: vi.fn().mockResolvedValueOnce({
-            services: vi.fn().mockResolvedValueOnce({}),
-            serviceUUIDs: ["ledgerId"],
-            rssi: 64,
-            id: "knownDeviceId",
-            localName: "knownDeviceName",
-          }),
-        }),
-        services: vi.fn().mockResolvedValueOnce([
-          {
-            uuid: "ledgerId",
-          },
-        ]),
-      } as unknown as Device;
+        localName: "name",
+      });
 
       const startScan = vi
         .fn()
@@ -964,33 +730,23 @@ describe("RNBleTransport", () => {
         }
       });
 
-      vi.spyOn(bleManager, "connectedDevices").mockImplementation(
-        fakeConnectedDevices,
-      );
-      vi.spyOn(bleManager, "startDeviceScan").mockImplementation(startScan);
-      vi.spyOn(bleManager, "stopDeviceScan").mockImplementation(stopScan);
-      vi.spyOn(bleManager, "connectToDevice").mockResolvedValueOnce(mockDevice);
-      vi.spyOn(
-        bleManager,
-        "discoverAllServicesAndCharacteristicsForDevice",
-      ).mockResolvedValueOnce(mockDevice);
-      vi.spyOn(bleManager, "monitorCharacteristicForDevice").mockImplementation(
-        vi.fn(),
-      );
-      vi.spyOn(
-        bleManager,
-        "writeCharacteristicWithoutResponseForDevice",
-      ).mockImplementation(vi.fn());
-      vi.spyOn(bleManager, "onDeviceDisconnected").mockImplementation(vi.fn());
-      vi.spyOn(bleManager, "isDeviceConnected").mockImplementation(vi.fn());
-      vi.spyOn(bleManager, "onStateChange").mockImplementation(
-        (listener: (state: State) => void) => {
+      const bleManager = createMockBleManager({
+        connectedDevices: vi.fn().mockResolvedValue([]),
+        startDeviceScan: startScan,
+        stopDeviceScan: stopScan,
+        connectToDevice: vi.fn().mockResolvedValueOnce(mockDevice),
+        discoverAllServicesAndCharacteristicsForDevice: vi
+          .fn()
+          .mockResolvedValueOnce(mockDevice),
+        monitorCharacteristicForDevice: vi.fn(),
+        writeCharacteristicWithoutResponseForDevice: vi.fn(),
+        onDeviceDisconnected: vi.fn(),
+        isDeviceConnected: vi.fn(),
+        onStateChange: (listener: (state: State) => void) => {
           listener(State.PoweredOn);
-          return {
-            remove: vi.fn(),
-          };
+          return { remove: vi.fn() };
         },
-      );
+      });
 
       const fakeSendApdu = vi.fn();
       const deviceConnectionStateMachineFactory = vi.fn().mockReturnValue({
@@ -1000,19 +756,18 @@ describe("RNBleTransport", () => {
         setupConnection: vi.fn().mockResolvedValue(undefined),
       });
 
-      const transport = new RNBleTransport(
-        fakeDataSource as unknown as DeviceModelDataSource,
-        () => fakeLogger as unknown as LoggerPublisherService,
-        (() => {}) as unknown as ApduSenderServiceFactory,
-        (() => {}) as unknown as ApduReceiverServiceFactory,
-        bleManager,
-        fakePlaftorm as Platform,
-        {} as unknown as PermissionsAndroid,
-        deviceConnectionStateMachineFactory,
-        deviceApduSenderFactory,
-      );
+      const transport = new TestTransportBuilder()
+        .withBleManager(bleManager)
+        .withPlatform(IOS_PLATFORM)
+        .withDeviceModelDataSource(
+          createFakeDataSource() as unknown as DeviceModelDataSource,
+        )
+        .withDeviceConnectionStateMachineFactory(
+          deviceConnectionStateMachineFactory,
+        )
+        .withDeviceApduSenderFactory(deviceApduSenderFactory)
+        .build();
 
-      // when
       const [device] = await lastValueFrom(
         transport.listenToAvailableDevices().pipe(take(3)),
       );
@@ -1024,12 +779,12 @@ describe("RNBleTransport", () => {
 
       const connectedDevice = result.extract() as TransportConnectedDevice;
       connectedDevice.sendApdu(Uint8Array.from([0x43, 0x32]));
-      // then
+
       expect(result).toEqual(
         Right(
           new TransportConnectedDevice({
             id: "deviceId",
-            deviceModel: fakeDeviceModel,
+            deviceModel: FAKE_DEVICE_MODEL,
             type: "BLE",
             transport: "RN_BLE",
             // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
@@ -1042,46 +797,12 @@ describe("RNBleTransport", () => {
   });
 
   describe("disconnect", () => {
-    let fakeConnectedDevices: Mock;
-
-    beforeEach(() => {
-      fakeConnectedDevices = vi.fn().mockResolvedValue([
-        {
-          readRSSI: vi.fn().mockResolvedValueOnce({
-            discoverAllServicesAndCharacteristics: vi
-              .fn()
-              .mockResolvedValueOnce({
-                services: vi.fn().mockResolvedValueOnce({}),
-                serviceUUIDs: ["ledgerId"],
-                rssi: 64,
-                id: "deviceId",
-                localName: "knownDeviceName",
-              }),
-          }),
-        },
-      ]);
-    });
-
     it("should disconnect gracefully", async () => {
       let scanInterval: NodeJS.Timeout | null = null;
-      const bleManager = new BleManager();
-      const mockDevice = {
+      const mockDevice = createMockDevice({
         id: "deviceId",
-        readRSSI: vi.fn().mockResolvedValueOnce({
-          discoverAllServicesAndCharacteristics: vi.fn().mockResolvedValueOnce({
-            services: vi.fn().mockResolvedValueOnce({}),
-            serviceUUIDs: ["ledgerId"],
-            rssi: 64,
-            id: "knownDeviceId",
-            localName: "knownDeviceName",
-          }),
-        }),
-        services: vi.fn().mockResolvedValueOnce([
-          {
-            uuid: "ledgerId",
-          },
-        ]),
-      } as unknown as Device;
+        localName: "name",
+      });
 
       const startScan = vi
         .fn()
@@ -1103,65 +824,29 @@ describe("RNBleTransport", () => {
         }
       });
 
-      const onDeviceDisconnected = vi
-        .fn()
-        .mockImplementation((_id, callback) => {
-          callback(null, {
-            deviceId: "deviceId",
-            connect: vi.fn().mockResolvedValue({
-              services: vi.fn().mockResolvedValueOnce({}),
-              serviceUUIDs: ["ledgerId"],
-              rssi: 64,
-              id: "deviceId",
-              localName: "knownDeviceName",
-            }),
-            discoverAllServicesAndCharacteristics: vi
-              .fn()
-              .mockResolvedValueOnce({
-                services: vi.fn().mockResolvedValueOnce({}),
-                serviceUUIDs: ["ledgerId"],
-                rssi: 64,
-                id: "deviceId",
-                localName: "knownDeviceName",
-              }),
-          });
-          return { remove: vi.fn() };
-        });
+      const onDeviceDisconnected = vi.fn().mockImplementation(() => {
+        return { remove: vi.fn() };
+      });
 
       const fakeCloseConnection = vi.fn();
 
-      vi.spyOn(bleManager, "connectedDevices").mockImplementation(
-        fakeConnectedDevices,
-      );
-      vi.spyOn(bleManager, "startDeviceScan").mockImplementation(startScan);
-      vi.spyOn(bleManager, "stopDeviceScan").mockImplementation(stopScan);
-      vi.spyOn(bleManager, "connectToDevice").mockResolvedValueOnce(mockDevice);
-      vi.spyOn(
-        bleManager,
-        "discoverAllServicesAndCharacteristicsForDevice",
-      ).mockResolvedValueOnce(mockDevice);
-      vi.spyOn(bleManager, "monitorCharacteristicForDevice").mockImplementation(
-        vi.fn(),
-      );
-      vi.spyOn(
-        bleManager,
-        "writeCharacteristicWithoutResponseForDevice",
-      ).mockImplementation(vi.fn());
-      vi.spyOn(bleManager, "onDeviceDisconnected").mockImplementation(vi.fn());
-      vi.spyOn(bleManager, "isDeviceConnected").mockImplementation(vi.fn());
-      vi.spyOn(bleManager, "onStateChange").mockImplementation(
-        (listener: (state: State) => void) => {
+      const bleManager = createMockBleManager({
+        connectedDevices: vi.fn().mockResolvedValue([]),
+        startDeviceScan: startScan,
+        stopDeviceScan: stopScan,
+        connectToDevice: vi.fn().mockResolvedValueOnce(mockDevice),
+        discoverAllServicesAndCharacteristicsForDevice: vi
+          .fn()
+          .mockResolvedValueOnce(mockDevice),
+        monitorCharacteristicForDevice: vi.fn(),
+        writeCharacteristicWithoutResponseForDevice: vi.fn(),
+        onStateChange: (listener: (state: State) => void) => {
           listener(State.PoweredOn);
-          return {
-            remove: vi.fn(),
-          };
+          return { remove: vi.fn() };
         },
-      );
-
-      vi.spyOn(bleManager, "onDeviceDisconnected").mockImplementation(
         onDeviceDisconnected,
-      );
-      vi.spyOn(bleManager, "isDeviceConnected").mockImplementation(vi.fn());
+        isDeviceConnected: vi.fn(),
+      });
 
       const deviceConnectionStateMachineFactory = (
         _args: DeviceConnectionStateMachineParams<RNBleApduSenderDependencies>,
@@ -1180,21 +865,20 @@ describe("RNBleTransport", () => {
         closeConnection: fakeCloseConnection,
       });
 
-      const transport = new RNBleTransport(
-        fakeDataSource as unknown as DeviceModelDataSource,
-        () => fakeLogger as unknown as LoggerPublisherService,
-        (() => {}) as unknown as ApduSenderServiceFactory,
-        (() => {}) as unknown as ApduReceiverServiceFactory,
-        bleManager,
-        fakePlaftorm as Platform,
-        {} as unknown as PermissionsAndroid,
-        deviceConnectionStateMachineFactory,
-        deviceApduSenderFactory,
-      );
+      const transport = new TestTransportBuilder()
+        .withBleManager(bleManager)
+        .withPlatform(IOS_PLATFORM)
+        .withDeviceModelDataSource(
+          createFakeDataSource() as unknown as DeviceModelDataSource,
+        )
+        .withDeviceConnectionStateMachineFactory(
+          deviceConnectionStateMachineFactory,
+        )
+        .withDeviceApduSenderFactory(deviceApduSenderFactory)
+        .build();
 
       const fakeOnDisconnect = vi.fn();
 
-      // when
       const [device] = await lastValueFrom(
         transport.listenToAvailableDevices().pipe(take(3)),
       );
@@ -1208,7 +892,6 @@ describe("RNBleTransport", () => {
         connectedDevice: result.extract() as TransportConnectedDevice,
       });
 
-      // then
       expect(res).toEqual(Right(undefined));
       expect(fakeOnDisconnect).toHaveBeenCalled();
       expect(fakeCloseConnection).toHaveBeenCalled();
@@ -1216,24 +899,10 @@ describe("RNBleTransport", () => {
 
     it("should handle error while disconnecting", async () => {
       let scanInterval: NodeJS.Timeout | null = null;
-      const bleManager = new BleManager();
-      const mockDevice = {
+      const mockDevice = createMockDevice({
         id: "deviceId",
-        readRSSI: vi.fn().mockResolvedValueOnce({
-          discoverAllServicesAndCharacteristics: vi.fn().mockResolvedValueOnce({
-            services: vi.fn().mockResolvedValueOnce({}),
-            serviceUUIDs: ["ledgerId"],
-            rssi: 64,
-            id: "knownDeviceId",
-            localName: "knownDeviceName",
-          }),
-        }),
-        services: vi.fn().mockResolvedValueOnce([
-          {
-            uuid: "ledgerId",
-          },
-        ]),
-      } as unknown as Device;
+        localName: "name",
+      });
 
       const startScan = vi
         .fn()
@@ -1255,47 +924,29 @@ describe("RNBleTransport", () => {
         }
       });
 
-      const onDeviceDisconnected = vi
-        .fn()
-        .mockImplementation((_id, callback) => {
-          callback(new Error("yolo"), null);
-          return { remove: vi.fn() };
-        });
+      const onDeviceDisconnected = vi.fn().mockImplementation(() => {
+        return { remove: vi.fn() };
+      });
 
       const fakeCloseConnection = vi.fn();
 
-      vi.spyOn(bleManager, "connectedDevices").mockImplementation(
-        fakeConnectedDevices,
-      );
-      vi.spyOn(bleManager, "startDeviceScan").mockImplementation(startScan);
-      vi.spyOn(bleManager, "stopDeviceScan").mockImplementation(stopScan);
-      vi.spyOn(bleManager, "connectToDevice").mockResolvedValueOnce(mockDevice);
-      vi.spyOn(
-        bleManager,
-        "discoverAllServicesAndCharacteristicsForDevice",
-      ).mockResolvedValueOnce(mockDevice);
-      vi.spyOn(bleManager, "monitorCharacteristicForDevice").mockImplementation(
-        vi.fn(),
-      );
-      vi.spyOn(
-        bleManager,
-        "writeCharacteristicWithoutResponseForDevice",
-      ).mockImplementation(vi.fn());
-      vi.spyOn(bleManager, "onDeviceDisconnected").mockImplementation(vi.fn());
-      vi.spyOn(bleManager, "isDeviceConnected").mockImplementation(vi.fn());
-      vi.spyOn(bleManager, "onStateChange").mockImplementation(
-        (listener: (state: State) => void) => {
-          listener(State.PoweredOn);
-          return {
-            remove: vi.fn(),
-          };
-        },
-      );
-
-      vi.spyOn(bleManager, "onDeviceDisconnected").mockImplementation(
+      const bleManager = createMockBleManager({
+        connectedDevices: vi.fn().mockResolvedValue([]),
+        startDeviceScan: startScan,
+        stopDeviceScan: stopScan,
+        connectToDevice: vi.fn().mockResolvedValueOnce(mockDevice),
+        discoverAllServicesAndCharacteristicsForDevice: vi
+          .fn()
+          .mockResolvedValueOnce(mockDevice),
+        monitorCharacteristicForDevice: vi.fn(),
+        writeCharacteristicWithoutResponseForDevice: vi.fn(),
         onDeviceDisconnected,
-      );
-      vi.spyOn(bleManager, "isDeviceConnected").mockImplementation(vi.fn());
+        isDeviceConnected: vi.fn(),
+        onStateChange: (listener: (state: State) => void) => {
+          listener(State.PoweredOn);
+          return { remove: vi.fn() };
+        },
+      });
 
       const deviceConnectionStateMachineFactory = (
         _args: DeviceConnectionStateMachineParams<RNBleApduSenderDependencies>,
@@ -1314,21 +965,20 @@ describe("RNBleTransport", () => {
         closeConnection: fakeCloseConnection,
       });
 
-      const transport = new RNBleTransport(
-        fakeDataSource as unknown as DeviceModelDataSource,
-        () => fakeLogger as unknown as LoggerPublisherService,
-        (() => {}) as unknown as ApduSenderServiceFactory,
-        (() => {}) as unknown as ApduReceiverServiceFactory,
-        bleManager,
-        fakePlaftorm as Platform,
-        {} as unknown as PermissionsAndroid,
-        deviceConnectionStateMachineFactory,
-        deviceApduSenderFactory,
-      );
+      const transport = new TestTransportBuilder()
+        .withBleManager(bleManager)
+        .withPlatform(IOS_PLATFORM)
+        .withDeviceModelDataSource(
+          createFakeDataSource() as unknown as DeviceModelDataSource,
+        )
+        .withDeviceConnectionStateMachineFactory(
+          deviceConnectionStateMachineFactory,
+        )
+        .withDeviceApduSenderFactory(deviceApduSenderFactory)
+        .build();
 
       const fakeOnDisconnect = vi.fn();
 
-      // when
       const [device] = await lastValueFrom(
         transport.listenToAvailableDevices().pipe(take(3)),
       );
@@ -1341,7 +991,6 @@ describe("RNBleTransport", () => {
         connectedDevice: result.extract() as TransportConnectedDevice,
       });
 
-      // then
       expect(res).toEqual(Right(undefined));
       expect(fakeOnDisconnect).toHaveBeenCalled();
     });

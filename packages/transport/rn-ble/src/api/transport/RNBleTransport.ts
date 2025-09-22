@@ -1,5 +1,11 @@
 import { PermissionsAndroid, Platform } from "react-native";
-import { BleError, BleManager, type Device, State } from "react-native-ble-plx";
+import {
+  BleError,
+  BleManager,
+  type Device,
+  State,
+  type Subscription as BleSubscription,
+} from "react-native-ble-plx";
 import {
   type ApduReceiverServiceFactory,
   type ApduSenderServiceFactory,
@@ -24,10 +30,10 @@ import {
 import { Either, EitherAsync, Left, Maybe, Nothing, Right } from "purify-ts";
 import {
   BehaviorSubject,
+  defer,
   filter,
   finalize,
   from,
-  map,
   type Observable,
   retry,
   type Subscription,
@@ -191,10 +197,6 @@ export class RNBleTransport implements Transport {
       )
       .subscribe({
         next: (devices) => {
-          this._logger.debug(
-            "[RNBleTransport][startScanning] onNext called with devices",
-            { data: { devices } },
-          );
           this._scannedDevicesSubject.next(devices);
         },
         error: (error) => {
@@ -226,21 +228,7 @@ export class RNBleTransport implements Transport {
     this._startScanning();
 
     return this._scannedDevicesSubject.asObservable().pipe(
-      map((internalScannedDevices) => {
-        const eitherConnectedDevices = Array.from(
-          this._deviceConnectionsById.values(),
-        ).map((connection) =>
-          this._mapDeviceToTransportDiscoveredDevice(
-            connection.getDependencies().device,
-            [
-              connection.getDependencies().internalDevice.bleDeviceInfos
-                .serviceUuid,
-            ],
-          ),
-        );
-
-        const connectedDevices = Either.rights(eitherConnectedDevices);
-
+      switchMap(async (internalScannedDevices) => {
         const eitherScannedDevices = internalScannedDevices
           .filter(
             ({ timestamp }) => timestamp > Date.now() - CONNECTION_LOST_DELAY,
@@ -259,6 +247,46 @@ export class RNBleTransport implements Transport {
 
         const scannedDevices = Either.rights(eitherScannedDevices);
 
+        const rawConnectedDevices = await this._manager.connectedDevices(
+          this._deviceModelDataSource.getBluetoothServices(),
+        );
+
+        const eitherConnectedDevices = await Promise.all(
+          rawConnectedDevices.map(async (device) => {
+            try {
+              const services = await device.services();
+              const servicesUUIDs = services.map((s) => s.uuid);
+              return this._mapDeviceToTransportDiscoveredDevice(
+                device,
+                servicesUUIDs,
+              );
+            } catch (e) {
+              this._logger.error(
+                "[listenToAvailableDevices] Error in mapping device to transport discovered device",
+                {
+                  data: { e },
+                },
+              );
+              return Left(
+                new NoDeviceModelFoundError(
+                  `Error in mapping device to transport discovered device: ${e}`,
+                ),
+              );
+            }
+          }),
+        );
+
+        const connectedDevices = Either.rights(eitherConnectedDevices);
+
+        this._logger.debug("[listenToAvailableDevices]", {
+          data: {
+            rawConnectedDevices: rawConnectedDevices.map((d) => d.name),
+            connectedDevices: connectedDevices.map((d) => d.name),
+            scannedDevices: scannedDevices.map((d) => d.name),
+          },
+        });
+
+        /** We return both connected and scanned devices, as scanned devices don't include connected devices */
         return [...connectedDevices, ...scannedDevices];
       }),
     );
@@ -314,8 +342,14 @@ export class RNBleTransport implements Transport {
     deviceId: DeviceId;
     onDisconnect: DisconnectHandler;
   }): Promise<Either<ConnectError, TransportConnectedDevice>> {
+    this._logger.debug("[connect] Called", {
+      data: { deviceId: params.deviceId },
+    });
     const existing = this._deviceConnectionsById.get(params.deviceId);
     if (existing) {
+      this._logger.debug("[connect] Existing device connection found", {
+        data: { deviceId: params.deviceId },
+      });
       const deviceModel =
         existing.getDependencies().internalDevice.bleDeviceInfos.deviceModel;
       return Right(
@@ -328,6 +362,13 @@ export class RNBleTransport implements Transport {
         }),
       );
     }
+
+    this._logger.debug(
+      "[connect] No existing device connection found, establishing one",
+      {
+        data: { deviceId: params.deviceId },
+      },
+    );
 
     await this._stopScanning();
     await this._safeCancel(params.deviceId);
@@ -361,11 +402,8 @@ export class RNBleTransport implements Transport {
           return throwE(new OpeningConnectionError(error));
         }
 
-        const disconnectionSubscription = this._manager.onDeviceDisconnected(
-          device.id,
-          (error, d) => {
-            this._handleDeviceDisconnected(error, d);
-          },
+        const disconnectionSubscription = this._listenToDeviceDisconnected(
+          params.deviceId,
         );
 
         const bleDeviceInfos = this._mapServicesUUIDsToBluetoothDeviceInfo(
@@ -405,26 +443,28 @@ export class RNBleTransport implements Transport {
             deviceId: params.deviceId,
             deviceApduSender,
             timeoutDuration: reconnectionTimeout,
-            tryToReconnect: () => {
-              this.tryToReconnect(params.deviceId);
-            },
-            onTerminated: () => {
+            tryToReconnect: () => this.tryToReconnect(params.deviceId),
+            onTerminated: async () => {
+              this._logger.debug("[onTerminated]", {
+                data: { deviceId: params.deviceId },
+              });
               try {
-                this._safeCancel(params.deviceId);
-                params.onDisconnect(params.deviceId);
-                this._deviceConnectionsById.delete(params.deviceId);
-                disconnectionSubscription.remove();
-                if (this._reconnectionSubscription.isJust()) {
-                  this._reconnectionSubscription.map((sub) =>
-                    sub.unsubscribe(),
-                  );
-                  this._reconnectionSubscription = Maybe.zero();
-                }
+                await this._safeCancel(params.deviceId);
               } catch (e) {
                 this._logger.error(
-                  "Error in termination of device connection",
+                  "[onTerminated] Error in termination of device connection",
                   { data: { e } },
                 );
+              } finally {
+                this._deviceConnectionsById.delete(params.deviceId);
+                this._reconnectionSubscription.ifJust((sub) => {
+                  sub.unsubscribe();
+                  this._reconnectionSubscription = Maybe.zero();
+                });
+                this._logger.debug("[onTerminated] signaling disconnection", {
+                  data: { deviceId: params.deviceId },
+                });
+                params.onDisconnect(params.deviceId);
               }
             },
           });
@@ -573,7 +613,7 @@ export class RNBleTransport implements Transport {
     error: BleError | null,
     device: Device | null,
   ) {
-    this._logger.debug("[RNBLE][_handleDeviceDisconnected]", {
+    this._logger.debug("[_handleDeviceDisconnected]", {
       data: { error, device },
     });
     if (!device) {
@@ -590,64 +630,91 @@ export class RNBleTransport implements Transport {
       return;
     }
     const deviceId = device.id;
-    if (this._reconnectionSubscription.isJust()) {
-      return;
-    }
 
     Maybe.fromNullable(this._deviceConnectionsById.get(deviceId)).map(
       (deviceConnection) => deviceConnection.eventDeviceDisconnected(),
     );
   }
 
-  private tryToReconnect(deviceId: DeviceId) {
-    const reconnect$ = from([0]).pipe(
-      switchMap(async () => {
-        await this._stopScanning();
-        await this._safeCancel(deviceId);
-      }),
-      switchMap(async () => {
+  private _listenToDeviceDisconnected(deviceId: DeviceId): BleSubscription {
+    const disconnectionSubscription = this._manager.onDeviceDisconnected(
+      deviceId,
+      (error, d) => {
+        this._handleDeviceDisconnected(error, d);
+        disconnectionSubscription.remove();
+      },
+    );
+    return disconnectionSubscription;
+  }
+
+  private async tryToReconnect(deviceId: DeviceId) {
+    this._logger.debug("[tryToReconnect] Called", {
+      data: { deviceId },
+    });
+    let reconnectionTryCount = 0;
+
+    await this._stopScanning();
+    await this._safeCancel(deviceId);
+
+    const reconnect$ = defer(async () => {
+      let disconnectionSubscription: BleSubscription | null = null;
+      reconnectionTryCount++;
+      try {
         this._logger.debug(
-          "[_handleDeviceDisconnected] reconnecting to device",
-          { data: { id: deviceId } },
+          `[tryToReconnect](try=${reconnectionTryCount}) Reconnecting to device`,
+          {
+            data: { id: deviceId },
+          },
         );
         const reconnectedDevice = await this._manager.connectToDevice(
           deviceId,
           { requestMTU: DEFAULT_MTU, timeout: 2000 },
         );
         this._logger.debug(
-          "[_handleDeviceDisconnected] reconnected to device",
-          { data: { id: deviceId } },
+          `[tryToReconnect](try=${reconnectionTryCount}) Established connection to device`,
+          {
+            data: { id: deviceId },
+          },
         );
-        const reconnectedDeviceUsable =
+        const usableReconnectedDevice =
           await reconnectedDevice.discoverAllServicesAndCharacteristics();
         this._logger.debug(
-          "[_handleDeviceDisconnected] discovered all services and characteristics",
-          { data: { reconnectedDeviceUsable } },
+          `[tryToReconnect](try=${reconnectionTryCount}) Discovered all services and characteristics`,
+          { data: { usableReconnectedDevice } },
         );
-        await this._handleDeviceReconnected(reconnectedDeviceUsable);
-        return reconnectedDeviceUsable;
-      }),
-      retry(5),
-    );
+        disconnectionSubscription = this._listenToDeviceDisconnected(deviceId);
+        await this._handleDeviceReconnected(usableReconnectedDevice);
+        return usableReconnectedDevice;
+      } catch (e) {
+        this._logger.warn(
+          `[tryToReconnect](try=${reconnectionTryCount}) Reconnecting to device failed`,
+          {
+            data: { e },
+          },
+        );
+        disconnectionSubscription?.remove();
+        await this._stopScanning();
+        await this._safeCancel(deviceId);
+        throw e;
+      }
+    }).pipe(retry(5));
 
     this._reconnectionSubscription = Maybe.of(
       reconnect$.subscribe({
         next: (d) =>
           this._logger.debug(
-            "[_handleDeviceDisconnected] Reconnected to device",
-            { data: { id: d.id } },
+            `[tryToReconnect](try=${reconnectionTryCount}) Fully reconnected to device (id=${d.id})`,
           ),
         complete: () => {
+          this._logger.debug("[tryToReconnect] Completed");
           this._reconnectionSubscription = Maybe.zero();
         },
         error: (e) => {
           this._logger.error(
-            "[_handleDeviceDisconnected] All reconnection attempts failed",
+            `[tryToReconnect] All reconnection attempts failed`,
             { data: { e } },
           );
-          Maybe.fromNullable(this._deviceConnectionsById.get(deviceId)).map(
-            (sm) => sm.closeConnection(),
-          );
+          this._deviceConnectionsById.get(deviceId)?.closeConnection();
           this._reconnectionSubscription = Maybe.zero();
         },
       }),
@@ -688,7 +755,7 @@ export class RNBleTransport implements Transport {
         },
         Left: (error) => {
           this._logger.error(
-            "Error in mapping services UUIDs to Bluetooth device info",
+            "[_handleDeviceReconnected] Error in mapping services UUIDs to Bluetooth device info",
             {
               data: { error },
             },
@@ -722,7 +789,16 @@ export class RNBleTransport implements Transport {
 
       for (const device of connectedDevices) {
         if (device.id === deviceId) {
-          await this._manager.cancelDeviceConnection(deviceId);
+          try {
+            await this._manager.cancelDeviceConnection(deviceId);
+          } catch (e) {
+            this._logger.error(
+              "[safeCancel] Error in cancelling device connection",
+              {
+                data: { e },
+              },
+            );
+          }
         }
       }
     }
