@@ -34,6 +34,11 @@ const SUPPORTED_SELECTORS: HexaString[] = [
   ...Object.values(ERC1155_SUPPORTED_SELECTOR),
 ];
 
+const SUPPORTED_TYPES: ClearSignContextType[] = [
+  ClearSignContextType.PLUGIN,
+  ClearSignContextType.NFT,
+];
+
 @injectable()
 export class NftContextLoader implements ContextLoader<NftContextInput> {
   private _dataSource: NftDataSource;
@@ -42,7 +47,10 @@ export class NftContextLoader implements ContextLoader<NftContextInput> {
     this._dataSource = dataSource;
   }
 
-  canHandle(input: unknown): input is NftContextInput {
+  canHandle(
+    input: unknown,
+    expectedTypes: ClearSignContextType[],
+  ): input is NftContextInput {
     return (
       typeof input === "object" &&
       input !== null &&
@@ -53,7 +61,8 @@ export class NftContextLoader implements ContextLoader<NftContextInput> {
       isHexaString(input.to) &&
       input.to !== "0x" &&
       isHexaString(input.selector) &&
-      this.isSelectorSupported(input.selector)
+      this.isSelectorSupported(input.selector) &&
+      SUPPORTED_TYPES.every((type) => expectedTypes.includes(type))
     );
   }
 

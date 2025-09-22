@@ -30,7 +30,24 @@ describe("NftContextLoader", () => {
     };
 
     it("should return true for valid input", () => {
-      expect(loader.canHandle(validInput)).toBe(true);
+      expect(
+        loader.canHandle(validInput, [
+          ClearSignContextType.NFT,
+          ClearSignContextType.PLUGIN,
+        ]),
+      ).toBe(true);
+    });
+
+    it("should return false for invalid expected type", () => {
+      expect(loader.canHandle(validInput, [ClearSignContextType.TOKEN])).toBe(
+        false,
+      );
+      expect(loader.canHandle(validInput, [ClearSignContextType.PLUGIN])).toBe(
+        false,
+      );
+      expect(loader.canHandle(validInput, [ClearSignContextType.NFT])).toBe(
+        false,
+      );
     });
 
     it.each([
@@ -50,7 +67,12 @@ describe("NftContextLoader", () => {
       [{ ...validInput, chainId: "1" }, "string chainId"],
       [{ ...validInput, chainId: null }, "null chainId"],
     ])("should return false for %s", (input, _description) => {
-      expect(loader.canHandle(input)).toBe(false);
+      expect(
+        loader.canHandle(input, [
+          ClearSignContextType.NFT,
+          ClearSignContextType.PLUGIN,
+        ]),
+      ).toBe(false);
     });
   });
 

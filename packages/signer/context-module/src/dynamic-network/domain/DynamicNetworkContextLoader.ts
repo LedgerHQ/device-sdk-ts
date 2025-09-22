@@ -23,6 +23,11 @@ export type DynamicNetworkContextInput = {
 
 const NETWORK_SIGNATURE_TAG = "15";
 
+const SUPPORTED_TYPES: ClearSignContextType[] = [
+  ClearSignContextType.DYNAMIC_NETWORK,
+  ClearSignContextType.DYNAMIC_NETWORK_ICON,
+];
+
 @injectable()
 export class DynamicNetworkContextLoader
   implements ContextLoader<DynamicNetworkContextInput>
@@ -44,7 +49,10 @@ export class DynamicNetworkContextLoader
     this._certificateLoader = certificateLoader;
   }
 
-  canHandle(input: unknown): input is DynamicNetworkContextInput {
+  canHandle(
+    input: unknown,
+    expectedTypes: ClearSignContextType[],
+  ): input is DynamicNetworkContextInput {
     return (
       typeof input === "object" &&
       input !== null &&
@@ -52,7 +60,8 @@ export class DynamicNetworkContextLoader
       "deviceModelId" in input &&
       input.deviceModelId !== undefined &&
       input.deviceModelId !== DeviceModelId.NANO_S &&
-      typeof input.chainId === "number"
+      typeof input.chainId === "number" &&
+      SUPPORTED_TYPES.every((type) => expectedTypes.includes(type))
     );
   }
 

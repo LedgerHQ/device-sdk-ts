@@ -42,7 +42,24 @@ describe("UniswapContextLoader", () => {
     };
 
     it("should return true for valid input", () => {
-      expect(loader.canHandle(validInput)).toBe(true);
+      expect(
+        loader.canHandle(validInput, [
+          ClearSignContextType.TOKEN,
+          ClearSignContextType.EXTERNAL_PLUGIN,
+        ]),
+      ).toBe(true);
+    });
+
+    it("should return false for invalid expected type", () => {
+      expect(loader.canHandle(validInput, [ClearSignContextType.NFT])).toBe(
+        false,
+      );
+      expect(loader.canHandle(validInput, [ClearSignContextType.TOKEN])).toBe(
+        false,
+      );
+      expect(
+        loader.canHandle(validInput, [ClearSignContextType.EXTERNAL_PLUGIN]),
+      ).toBe(false);
     });
 
     it.each([
@@ -70,7 +87,7 @@ describe("UniswapContextLoader", () => {
         "different to uniswap router address",
       ],
     ])("should return false for %s", (input, _description) => {
-      expect(loader.canHandle(input)).toBe(false);
+      expect(loader.canHandle(input, [ClearSignContextType.TOKEN])).toBe(false);
     });
   });
 

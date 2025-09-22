@@ -28,7 +28,15 @@ describe("TokenContextLoader", () => {
     };
 
     it("should return true for valid input", () => {
-      expect(loader.canHandle(validInput)).toBe(true);
+      expect(loader.canHandle(validInput, [ClearSignContextType.TOKEN])).toBe(
+        true,
+      );
+    });
+
+    it("should return false for invalid expected type", () => {
+      expect(loader.canHandle(validInput, [ClearSignContextType.NFT])).toBe(
+        false,
+      );
     });
 
     it.each([
@@ -38,7 +46,7 @@ describe("TokenContextLoader", () => {
       ["string", "string input"],
       [123, "number input"],
     ])("should return false for %s", (input, _description) => {
-      expect(loader.canHandle(input)).toBe(false);
+      expect(loader.canHandle(input, [ClearSignContextType.TOKEN])).toBe(false);
     });
 
     it.each([
@@ -46,7 +54,7 @@ describe("TokenContextLoader", () => {
       [{ ...validInput, selector: undefined }, "missing selector"],
       [{ ...validInput, chainId: undefined }, "missing chainId"],
     ])("should return false for %s", (input, _description) => {
-      expect(loader.canHandle(input)).toBe(false);
+      expect(loader.canHandle(input, [ClearSignContextType.TOKEN])).toBe(false);
     });
 
     it.each([
@@ -57,7 +65,7 @@ describe("TokenContextLoader", () => {
       [{ ...validInput, selector: "0x" }, "empty selector hex"],
       [{ ...validInput, selector: "not-hex-at-all" }, "non-hex selector"],
     ])("should return false for %s", (input, _description) => {
-      expect(loader.canHandle(input)).toBe(false);
+      expect(loader.canHandle(input, [ClearSignContextType.TOKEN])).toBe(false);
     });
 
     it.each([
@@ -65,7 +73,7 @@ describe("TokenContextLoader", () => {
       [{ ...validInput, chainId: null }, "null chainId"],
       [{ ...validInput, chainId: undefined }, "undefined chainId"],
     ])("should return false for %s", (input, _description) => {
-      expect(loader.canHandle(input)).toBe(false);
+      expect(loader.canHandle(input, [ClearSignContextType.TOKEN])).toBe(false);
     });
   });
 

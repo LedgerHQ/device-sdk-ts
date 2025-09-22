@@ -18,6 +18,8 @@ const SUPPORTED_SELECTORS: HexaString[] = Object.values(
   ERC20_SUPPORTED_SELECTORS,
 );
 
+const SUPPORTED_TYPES: ClearSignContextType[] = [ClearSignContextType.TOKEN];
+
 export type TokenContextInput = {
   to: HexaString;
   selector: HexaString;
@@ -32,7 +34,10 @@ export class TokenContextLoader implements ContextLoader<TokenContextInput> {
     this._dataSource = dataSource;
   }
 
-  canHandle(input: unknown): input is TokenContextInput {
+  canHandle(
+    input: unknown,
+    expectedTypes: ClearSignContextType[],
+  ): input is TokenContextInput {
     return (
       typeof input === "object" &&
       input !== null &&
@@ -43,7 +48,8 @@ export class TokenContextLoader implements ContextLoader<TokenContextInput> {
       isHexaString(input.to) &&
       input.to !== "0x" &&
       isHexaString(input.selector) &&
-      this.isSelectorSupported(input.selector)
+      this.isSelectorSupported(input.selector) &&
+      SUPPORTED_TYPES.every((type) => expectedTypes.includes(type))
     );
   }
 

@@ -123,8 +123,14 @@ export class DefaultContextModule implements ContextModule {
     }
   }
 
-  public async getContexts(input: unknown): Promise<ClearSignContext[]> {
-    const loaders = this._loaders.filter((l) => l.canHandle(input));
+  public async getContexts(
+    input: unknown,
+    expectedTypes?: ClearSignContextType[],
+  ): Promise<ClearSignContext[]> {
+    const allContextTypes = Object.values(ClearSignContextType);
+    const loaders = this._loaders.filter((l) =>
+      l.canHandle(input, expectedTypes ?? allContextTypes),
+    );
     const promises = loaders.map((fetcher) => fetcher.load(input));
     const responses = await Promise.all(promises);
     return responses.flat();

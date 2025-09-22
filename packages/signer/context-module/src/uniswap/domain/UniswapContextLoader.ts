@@ -38,6 +38,11 @@ export type UniswapContextInput = {
   chainId: number;
 };
 
+const SUPPORTED_TYPES: ClearSignContextType[] = [
+  ClearSignContextType.EXTERNAL_PLUGIN,
+  ClearSignContextType.TOKEN,
+];
+
 @injectable()
 export class UniswapContextLoader
   implements ContextLoader<UniswapContextInput>
@@ -49,7 +54,10 @@ export class UniswapContextLoader
     private tokenDataSource: TokenDataSource,
   ) {}
 
-  canHandle(input: unknown): input is UniswapContextInput {
+  canHandle(
+    input: unknown,
+    expectedTypes: ClearSignContextType[],
+  ): input is UniswapContextInput {
     return (
       typeof input === "object" &&
       input !== null &&
@@ -63,7 +71,8 @@ export class UniswapContextLoader
       isHexaString(input.selector) &&
       input.selector === UNISWAP_EXECUTE_SELECTOR &&
       isHexaString(input.to) &&
-      input.to === UNISWAP_UNIVERSAL_ROUTER_ADDRESS
+      input.to === UNISWAP_UNIVERSAL_ROUTER_ADDRESS &&
+      SUPPORTED_TYPES.every((type) => expectedTypes.includes(type))
     );
   }
 

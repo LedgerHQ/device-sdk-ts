@@ -27,6 +27,12 @@ describe("CalldataContextLoader", () => {
     mockTokenDataSource,
     mockProxyDatasource,
   );
+  const SUPPORTED_TYPES: ClearSignContextType[] = [
+    ClearSignContextType.TRANSACTION_INFO,
+    ClearSignContextType.TRANSACTION_FIELD_DESCRIPTION,
+    ClearSignContextType.PROXY_INFO,
+    ClearSignContextType.ENUM,
+  ];
 
   beforeEach(() => {
     vi.resetAllMocks();
@@ -42,7 +48,25 @@ describe("CalldataContextLoader", () => {
     };
 
     it("should return true for valid input", () => {
-      expect(loader.canHandle(validInput)).toBe(true);
+      expect(loader.canHandle(validInput, SUPPORTED_TYPES)).toBe(true);
+    });
+
+    it("should return false for invalid expected type", () => {
+      expect(loader.canHandle(validInput, [ClearSignContextType.TOKEN])).toBe(
+        false,
+      );
+      expect(loader.canHandle(validInput, [ClearSignContextType.NFT])).toBe(
+        false,
+      );
+      expect(
+        loader.canHandle(validInput, [ClearSignContextType.PROXY_INFO]),
+      ).toBe(false);
+      expect(loader.canHandle(validInput, [ClearSignContextType.ENUM])).toBe(
+        false,
+      );
+      expect(
+        loader.canHandle(validInput, [ClearSignContextType.TRANSACTION_INFO]),
+      ).toBe(false);
     });
 
     it.each([
@@ -52,7 +76,7 @@ describe("CalldataContextLoader", () => {
       ["string", "string input"],
       [123, "number input"],
     ])("should return false for %s", (input, _description) => {
-      expect(loader.canHandle(input)).toBe(false);
+      expect(loader.canHandle(input, SUPPORTED_TYPES)).toBe(false);
     });
 
     it.each([
@@ -62,7 +86,7 @@ describe("CalldataContextLoader", () => {
       [{ ...validInput, chainId: undefined }, "missing chainId"],
       [{ ...validInput, deviceModelId: undefined }, "missing deviceModelId"],
     ])("should return false for %s", (input, _description) => {
-      expect(loader.canHandle(input)).toBe(false);
+      expect(loader.canHandle(input, SUPPORTED_TYPES)).toBe(false);
     });
 
     it.each([
@@ -72,7 +96,7 @@ describe("CalldataContextLoader", () => {
       [{ ...validInput, selector: "invalid-hex" }, "invalid selector hex"],
       [{ ...validInput, selector: "0x" }, "empty selector hex"],
     ])("should return false for %s", (input, _description) => {
-      expect(loader.canHandle(input)).toBe(false);
+      expect(loader.canHandle(input, SUPPORTED_TYPES)).toBe(false);
     });
 
     it.each([
@@ -83,7 +107,7 @@ describe("CalldataContextLoader", () => {
         "deviceModelId is NANO_S",
       ],
     ])("should return false for %s", (input, _description) => {
-      expect(loader.canHandle(input)).toBe(false);
+      expect(loader.canHandle(input, SUPPORTED_TYPES)).toBe(false);
     });
   });
 

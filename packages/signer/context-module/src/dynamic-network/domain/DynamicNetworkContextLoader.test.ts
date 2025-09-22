@@ -74,7 +74,26 @@ describe("DynamicNetworkContextLoader", () => {
     };
 
     it("should return true for valid input", () => {
-      expect(loader.canHandle(validInput)).toBe(true);
+      expect(
+        loader.canHandle(validInput, [
+          ClearSignContextType.DYNAMIC_NETWORK,
+          ClearSignContextType.DYNAMIC_NETWORK_ICON,
+        ]),
+      ).toBe(true);
+    });
+
+    it("should return false for invalid expected type", () => {
+      expect(loader.canHandle(validInput, [ClearSignContextType.TOKEN])).toBe(
+        false,
+      );
+      expect(
+        loader.canHandle(validInput, [ClearSignContextType.DYNAMIC_NETWORK]),
+      ).toBe(false);
+      expect(
+        loader.canHandle(validInput, [
+          ClearSignContextType.DYNAMIC_NETWORK_ICON,
+        ]),
+      ).toBe(false);
     });
 
     it.each([
@@ -84,14 +103,24 @@ describe("DynamicNetworkContextLoader", () => {
       ["string", "string input"],
       [123, "number input"],
     ])("should return false for %s", (input, _description) => {
-      expect(loader.canHandle(input)).toBe(false);
+      expect(
+        loader.canHandle(input, [
+          ClearSignContextType.DYNAMIC_NETWORK,
+          ClearSignContextType.DYNAMIC_NETWORK_ICON,
+        ]),
+      ).toBe(false);
     });
 
     it.each([
       [{ ...validInput, chainId: undefined }, "missing chainId"],
       [{ ...validInput, deviceModelId: undefined }, "missing deviceModelId"],
     ])("should return false for %s", (input, _description) => {
-      expect(loader.canHandle(input)).toBe(false);
+      expect(
+        loader.canHandle(input, [
+          ClearSignContextType.DYNAMIC_NETWORK,
+          ClearSignContextType.DYNAMIC_NETWORK_ICON,
+        ]),
+      ).toBe(false);
     });
 
     it.each([
@@ -102,7 +131,12 @@ describe("DynamicNetworkContextLoader", () => {
         "NANO_S deviceModelId",
       ],
     ])("should return false for %s", (input, _description) => {
-      expect(loader.canHandle(input)).toBe(false);
+      expect(
+        loader.canHandle(input, [
+          ClearSignContextType.DYNAMIC_NETWORK,
+          ClearSignContextType.DYNAMIC_NETWORK_ICON,
+        ]),
+      ).toBe(false);
     });
   });
 

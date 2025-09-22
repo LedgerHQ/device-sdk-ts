@@ -32,6 +32,13 @@ type GetContextsParams = {
   deviceModelId: DeviceModelId;
 };
 
+const SUPPORTED_TYPES: ClearSignContextType[] = [
+  ClearSignContextType.TRANSACTION_INFO,
+  ClearSignContextType.TRANSACTION_FIELD_DESCRIPTION,
+  ClearSignContextType.PROXY_INFO,
+  ClearSignContextType.ENUM,
+];
+
 @injectable()
 export class CalldataContextLoader
   implements ContextLoader<CalldataContextInput>
@@ -45,7 +52,10 @@ export class CalldataContextLoader
     private proxyDataSource: ProxyDataSource,
   ) {}
 
-  canHandle(input: unknown): input is CalldataContextInput {
+  canHandle(
+    input: unknown,
+    expectedTypes: ClearSignContextType[],
+  ): input is CalldataContextInput {
     return (
       typeof input === "object" &&
       input !== null &&
@@ -61,7 +71,8 @@ export class CalldataContextLoader
       input.to !== "0x" &&
       isHexaString(input.data) &&
       isHexaString(input.selector) &&
-      input.selector !== "0x"
+      input.selector !== "0x" &&
+      SUPPORTED_TYPES.every((type) => expectedTypes.includes(type))
     );
   }
 

@@ -30,7 +30,15 @@ describe("TrustedNameContextLoader", () => {
     };
 
     it("should return true for valid input", () => {
-      expect(loader.canHandle(validInput)).toBe(true);
+      expect(
+        loader.canHandle(validInput, [ClearSignContextType.TRUSTED_NAME]),
+      ).toBe(true);
+    });
+
+    it("should return false for invalid expected type", () => {
+      expect(loader.canHandle(validInput, [ClearSignContextType.TOKEN])).toBe(
+        false,
+      );
     });
 
     it.each([
@@ -40,7 +48,9 @@ describe("TrustedNameContextLoader", () => {
       ["string", "string input"],
       [123, "number input"],
     ])("should return false for %s", (input, _description) => {
-      expect(loader.canHandle(input)).toBe(false);
+      expect(loader.canHandle(input, [ClearSignContextType.TRUSTED_NAME])).toBe(
+        false,
+      );
     });
 
     it.each([
@@ -48,7 +58,9 @@ describe("TrustedNameContextLoader", () => {
       [{ ...validInput, domain: undefined }, "missing domain"],
       [{ ...validInput, challenge: undefined }, "missing challenge"],
     ])("should return false for %s", (input, _description) => {
-      expect(loader.canHandle(input)).toBe(false);
+      expect(loader.canHandle(input, [ClearSignContextType.TRUSTED_NAME])).toBe(
+        false,
+      );
     });
 
     it.each([
@@ -59,7 +71,9 @@ describe("TrustedNameContextLoader", () => {
       [{ ...validInput, domain: 123 }, "numeric domain"],
       [{ ...validInput, challenge: 123 }, "numeric challenge"],
     ])("should return false for %s", (input, _description) => {
-      expect(loader.canHandle(input)).toBe(false);
+      expect(loader.canHandle(input, [ClearSignContextType.TRUSTED_NAME])).toBe(
+        false,
+      );
     });
   });
 

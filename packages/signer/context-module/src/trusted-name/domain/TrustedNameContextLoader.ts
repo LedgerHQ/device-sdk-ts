@@ -14,6 +14,10 @@ export type TrustedNameContextInput = {
   challenge: string;
 };
 
+const SUPPORTED_TYPES: ClearSignContextType[] = [
+  ClearSignContextType.TRUSTED_NAME,
+];
+
 @injectable()
 export class TrustedNameContextLoader
   implements ContextLoader<TrustedNameContextInput>
@@ -27,7 +31,10 @@ export class TrustedNameContextLoader
     this._dataSource = dataSource;
   }
 
-  canHandle(input: unknown): input is TrustedNameContextInput {
+  canHandle(
+    input: unknown,
+    expectedTypes: ClearSignContextType[],
+  ): input is TrustedNameContextInput {
     return (
       typeof input === "object" &&
       input !== null &&
@@ -38,7 +45,8 @@ export class TrustedNameContextLoader
       typeof input.domain === "string" &&
       input.domain.length > 0 &&
       typeof input.challenge === "string" &&
-      input.challenge.length > 0
+      input.challenge.length > 0 &&
+      SUPPORTED_TYPES.every((type) => expectedTypes.includes(type))
     );
   }
 

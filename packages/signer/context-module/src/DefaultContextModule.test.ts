@@ -128,11 +128,39 @@ describe("DefaultContextModule", () => {
     const testInput = { to: "0x123", selector: "0xabc" };
     const res = await contextModule.getContexts(testInput);
 
-    expect(loader1.canHandle).toHaveBeenCalledWith(testInput);
-    expect(loader2.canHandle).toHaveBeenCalledWith(testInput);
+    expect(loader1.canHandle).toHaveBeenCalledWith(
+      testInput,
+      Object.values(ClearSignContextType),
+    );
+    expect(loader2.canHandle).toHaveBeenCalledWith(
+      testInput,
+      Object.values(ClearSignContextType),
+    );
     expect(loader1.load).toHaveBeenCalledWith(testInput);
     expect(loader2.load).not.toHaveBeenCalled(); // Should not be called since canHandle returned false
     expect(res).toEqual([{ type: "token", payload: "payload1" }]);
+  });
+
+  it("should use expected types if provided", async () => {
+    const loader = contextLoaderStubBuilder(true);
+
+    vi.spyOn(loader, "canHandle").mockReturnValue(true);
+
+    vi.spyOn(loader, "load").mockResolvedValue([
+      { type: ClearSignContextType.TOKEN, payload: "payload1" },
+    ]);
+
+    const contextModule = new DefaultContextModule({
+      ...defaultContextModuleConfig,
+      customLoaders: [loader],
+    });
+
+    const testInput = { to: "0x123", selector: "0xabc" };
+    await contextModule.getContexts(testInput, [ClearSignContextType.TOKEN]);
+
+    expect(loader.canHandle).toHaveBeenCalledWith(testInput, [
+      ClearSignContextType.TOKEN,
+    ]);
   });
 
   it("should call the typed data loader", async () => {

@@ -1,4 +1,7 @@
-import { type ClearSignContext } from "@/shared/model/ClearSignContext";
+import {
+  type ClearSignContext,
+  type ClearSignContextType,
+} from "@/shared/model/ClearSignContext";
 
 export type ContextLoader<TInput = unknown> = {
   /**
@@ -9,7 +12,11 @@ export type ContextLoader<TInput = unknown> = {
 
   /**
    * @param input - The input to check
+   * @param expectedTypes - The expected types of the context to load
    * @returns True if the loader can handle the input, false otherwise
    */
-  canHandle: (input: unknown) => input is TInput;
+  canHandle: (
+    input: unknown,
+    expectedTypes: ClearSignContextType[],
+  ) => input is TInput;
 };

@@ -10,7 +10,10 @@ import { type SolanaTransactionContextResult } from "./solana/domain/solanaConte
 import { type Web3CheckContext } from "./web3-check/domain/web3CheckTypes";
 
 export interface ContextModule {
-  getContexts<TInput>(input: TInput): Promise<ClearSignContext[]>;
+  getContexts<TInput>(
+    input: TInput,
+    expectedTypes?: ClearSignContextType[],
+  ): Promise<ClearSignContext[]>;
   getFieldContext<TInput>(
     field: TInput,
     expectedType: ClearSignContextType,

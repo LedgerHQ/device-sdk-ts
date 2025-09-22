@@ -20,6 +20,11 @@ export type ExternalPluginContextInput = {
   chainId: number;
 };
 
+const SUPPORTED_TYPES: ClearSignContextType[] = [
+  ClearSignContextType.EXTERNAL_PLUGIN,
+  ClearSignContextType.TOKEN,
+];
+
 @injectable()
 export class ExternalPluginContextLoader
   implements ContextLoader<ExternalPluginContextInput>
@@ -36,7 +41,10 @@ export class ExternalPluginContextLoader
     this._tokenDataSource = tokenDataSource;
   }
 
-  canHandle(input: unknown): input is ExternalPluginContextInput {
+  canHandle(
+    input: unknown,
+    expectedTypes: ClearSignContextType[],
+  ): input is ExternalPluginContextInput {
     return (
       typeof input === "object" &&
       input !== null &&
@@ -50,7 +58,8 @@ export class ExternalPluginContextLoader
       isHexaString(input.data) &&
       input.data !== "0x" && // non empty data
       isHexaString(input.selector) &&
-      input.selector !== "0x"
+      input.selector !== "0x" &&
+      SUPPORTED_TYPES.every((type) => expectedTypes.includes(type))
     );
   }
 
