@@ -1,6 +1,15 @@
 import { Left, Right } from "purify-ts";
-import { Observable } from "rxjs";
-import { tap, timeout } from "rxjs/operators";
+import {
+  EMPTY,
+  from,
+  interval,
+  mergeMap,
+  type Observable,
+  of,
+  switchMap,
+  take,
+} from "rxjs";
+import { timeout } from "rxjs/operators";
 import { assign, fromObservable, fromPromise, setup } from "xstate";
 
 import { isSuccessCommandResult } from "@api/command/model/CommandResult";
@@ -345,23 +354,23 @@ export class GetDeviceStatusDeviceAction extends XStateDeviceAction<
     }: {
       input: { unlockTimeout: number };
     }) =>
-      new Observable<void>((subscriber) => {
-        const inner = internalApi
-          .getDeviceSessionStateObservable()
-          .pipe(
-            tap((state) => {
-              if (state.deviceStatus === DeviceStatus.CONNECTED) {
-                subscriber.complete();
-                inner.unsubscribe();
-              }
-            }),
-          )
-          .subscribe();
-
-        return () => {
-          inner.unsubscribe();
-        };
-      }).pipe(timeout(input.unlockTimeout));
+      interval(1000).pipe(
+        switchMap(() =>
+          from(internalApi.sendCommand(new GetAppAndVersionCommand())),
+        ),
+        mergeMap((output) => {
+          const isLocked =
+            !isSuccessCommandResult(output) &&
+            "errorCode" in output.error &&
+            output.error.errorCode === "5515";
+          if (isLocked) {
+            return EMPTY; // Continue the polling
+          }
+          return of(undefined); // Complete the observable
+        }),
+        take(1),
+        timeout(input.unlockTimeout),
+      );
 
     return {
       getAppAndVersion,
