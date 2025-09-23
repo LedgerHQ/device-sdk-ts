@@ -26,6 +26,7 @@ export type SolanaTransactionContextResultSuccess = {
   owner: string;
   contract: string;
   certificate: PkiCertificate;
+  coinMetaCertificate?: PkiCertificate;
 };
 
 export type SolanaTransactionContextResult = Either<
