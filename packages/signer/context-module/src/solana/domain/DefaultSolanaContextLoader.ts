@@ -43,6 +43,20 @@ export class DefaultSolanaContextLoader implements SolanaContextLoader {
       );
     }
 
+    // load the CAL coin meta certificate
+    const coinMetaCertificate = await this._certificateLoader.loadCertificate({
+      keyId: "token_metadata_key",
+      keyUsage: KeyUsage.CoinMeta,
+      targetDevice: solanaContext.deviceModelId,
+    });
+    if (!certificate) {
+      return Left(
+        new Error(
+          "[ContextModule] - DefaultSolanaContextLoader: CAL certificate is undefined",
+        ),
+      );
+    }
+
     // fetch the Solana context
     return (await this._dataSource.getOwnerInfo(solanaContext)).map(
       ({ descriptor, tokenAccount, owner, contract }) => ({
@@ -51,6 +65,7 @@ export class DefaultSolanaContextLoader implements SolanaContextLoader {
         owner,
         contract,
         certificate,
+        coinMetaCertificate,
       }),
     );
   }
