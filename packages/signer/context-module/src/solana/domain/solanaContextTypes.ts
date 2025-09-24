@@ -2,11 +2,13 @@ import { type DeviceModelId } from "@ledgerhq/device-management-kit";
 import { type Either } from "purify-ts";
 
 import { type PkiCertificate } from "@/pki/model/PkiCertificate";
+import { type SolanaTokenContextResult } from "@/solanaToken/domain/SolanaTokenContext";
 
 export type SolanaTransactionContext = {
   deviceModelId: DeviceModelId;
   challenge?: string;
   tokenAddress?: string;
+  tokenInternalId?: string;
   createATA?: {
     address: string;
     mintAddress: string;
@@ -21,12 +23,12 @@ export type SolanaSPLOwnerInfo = {
 };
 
 export type SolanaTransactionContextResultSuccess = {
+  certificate: PkiCertificate | undefined;
   descriptor: Uint8Array;
   tokenAccount: string;
   owner: string;
   contract: string;
-  certificate: PkiCertificate;
-  coinMetaCertificate?: PkiCertificate;
+  loadersResults: Array<SolanaTokenContextResult>;
 };
 
 export type SolanaTransactionContextResult = Either<
