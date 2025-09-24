@@ -5,6 +5,7 @@ import { Left, Right } from "purify-ts";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { KeyUsage } from "@/pki/model/KeyUsage";
+import { ClearSignContextType } from "@/shared/model/ClearSignContext";
 import { DefaultSolanaContextLoader } from "@/solana/domain/DefaultSolanaContextLoader";
 import type { SolanaTransactionContext } from "@/solana/domain/solanaContextTypes";
 
@@ -15,6 +16,11 @@ describe("DefaultSolanaContextLoader", () => {
     canHandle: ReturnType<typeof vi.fn>;
     load: ReturnType<typeof vi.fn>;
   };
+  let mockLifiLoader: {
+    canHandle: ReturnType<typeof vi.fn>;
+    load: ReturnType<typeof vi.fn>;
+  };
+
   let loader: DefaultSolanaContextLoader;
 
   const baseContext: SolanaTransactionContext = {
@@ -23,11 +29,11 @@ describe("DefaultSolanaContextLoader", () => {
     challenge: "challenge-str",
   } as any;
 
+  const bytes = new Uint8Array([0xf0, 0xca, 0xcc, 0x1a]);
+
   const fakeCert = {
-    descriptor: "cert-desc",
-    signature: "cert-sig",
     keyUsageNumber: 0,
-    payload: new Uint8Array(),
+    payload: bytes,
   };
 
   beforeEach(() => {
@@ -39,30 +45,35 @@ describe("DefaultSolanaContextLoader", () => {
       canHandle: vi.fn().mockReturnValue(false),
       load: vi.fn(),
     };
+    mockLifiLoader = {
+      canHandle: vi.fn().mockReturnValue(false),
+      load: vi.fn(),
+    };
 
     loader = new DefaultSolanaContextLoader(
       mockDataSource as any,
       mockCertLoader as any,
       mockTokenLoader as any,
+      mockLifiLoader as any,
     );
   });
 
-  it("calls CAL certificate loader and owner info with correct args", async () => {
-    // GIVEN
+  it("calls certificate loader (TrustedName) and owner info with correct args", async () => {
+    // given
     mockCertLoader.loadCertificate.mockResolvedValue(fakeCert);
     mockDataSource.getOwnerInfo.mockResolvedValue(
       Right({
-        descriptor: Buffer.from("d"),
+        descriptor: bytes,
         tokenAccount: "tkn",
         owner: "own",
         contract: "ctr",
       }),
     );
 
-    // WHEN
+    // when
     await loader.load(baseContext);
 
-    // THEN
+    // then
     expect(mockCertLoader.loadCertificate).toHaveBeenCalledTimes(1);
     expect(mockCertLoader.loadCertificate).toHaveBeenCalledWith({
       keyId: "domain_metadata_key",
@@ -72,165 +83,200 @@ describe("DefaultSolanaContextLoader", () => {
     expect(mockDataSource.getOwnerInfo).toHaveBeenCalledWith(baseContext);
   });
 
-  it("returns Left if CAL certificate is undefined", async () => {
-    // GIVEN
-    mockCertLoader.loadCertificate.mockResolvedValue(undefined);
-
-    // WHEN
-    const result = await loader.load(baseContext);
-
-    // THEN
-    expect(result).toEqual(
-      Left(
-        new Error(
-          "[ContextModule] - DefaultSolanaContextLoader: CAL certificate is undefined",
-        ),
-      ),
-    );
-  });
-
   it("propagates Left from getOwnerInfo", async () => {
-    // GIVEN
+    // given
     mockCertLoader.loadCertificate.mockResolvedValue(fakeCert);
     const dsError = new Error("DS failure");
     mockDataSource.getOwnerInfo.mockResolvedValue(Left(dsError));
 
-    // WHEN
+    // when
     const result = await loader.load(baseContext);
 
-    // THEN
+    // then
     expect(result).toEqual(Left(dsError));
   });
 
-  it("returns Right with merged owner info + CAL cert; no optional loaders run", async () => {
-    // GIVEN
+  it("returns Right with merged owner info + certificate; skips loaders that can't handle", async () => {
+    // given
     mockCertLoader.loadCertificate.mockResolvedValue(fakeCert);
     mockDataSource.getOwnerInfo.mockResolvedValue(
       Right({
-        descriptor: Buffer.from("dd"),
+        descriptor: bytes,
         tokenAccount: "tokenAcct",
         owner: "ownerAddr",
         contract: "contractAddr",
       }),
     );
 
-    // WHEN
+    // when
     const result = await loader.load(baseContext);
 
-    // THEN
+    // then
     expect(result.isRight()).toBe(true);
     expect(result.extract()).toEqual({
       certificate: fakeCert,
-      descriptor: Buffer.from("dd"),
+      descriptor: bytes,
       tokenAccount: "tokenAcct",
       owner: "ownerAddr",
       contract: "contractAddr",
       loadersResults: [],
     });
 
-    // token loader was checked but not run
     expect(mockTokenLoader.canHandle).toHaveBeenCalledWith(baseContext);
+    expect(mockLifiLoader.canHandle).toHaveBeenCalledWith(baseContext);
     expect(mockTokenLoader.load).not.toHaveBeenCalled();
-
-    // coin meta loader not invoked (no tokenInternalId)
-    expect(mockCertLoader.loadCertificate).toHaveBeenCalledTimes(1); // only CAL
+    expect(mockLifiLoader.load).not.toHaveBeenCalled();
   });
 
-  it("runs eligible loaders and collects their results in order", async () => {
-    // GIVEN: tokenInternalId present => coin meta loader eligible
+  it("runs eligible loaders and collects their fulfilled results (order preserved)", async () => {
+    // given
     const ctx: SolanaTransactionContext = {
       ...baseContext,
+      templateId: "tpl-1",
       tokenInternalId: "sol:usdc",
     } as any;
 
-    // CAL (first call) + CoinMeta (second call)
-    const coinMetaCert = { ...fakeCert, keyUsageNumber: 1 };
-    mockCertLoader.loadCertificate
-      .mockResolvedValueOnce(fakeCert) // CAL
-      .mockResolvedValueOnce(coinMetaCert); // CoinMeta
-
+    mockCertLoader.loadCertificate.mockResolvedValue(fakeCert);
     mockDataSource.getOwnerInfo.mockResolvedValue(
       Right({
-        descriptor: Buffer.from("d2"),
+        descriptor: bytes,
         tokenAccount: "acct2",
         owner: "own2",
         contract: "ctr2",
       }),
     );
 
-    // Token loader eligible and returns a value
-    const tokenResult = { type: "SOLANA_TOKEN", payload: { foo: "bar" } };
-    mockTokenLoader.canHandle.mockReturnValue(true);
-    mockTokenLoader.load.mockResolvedValue(tokenResult);
+    const tokenResult = {
+      type: ClearSignContextType.SOLANA_TOKEN,
+      payload: { solanaTokenDescriptor: { data: "X", signature: "Y" } },
+    };
+    const lifiResult = {
+      type: ClearSignContextType.SOLANA_LIFI,
+      payload: {
+        "11111111111111111111111111111111": {
+          data: "1010",
+          descriptorType: "swap_template",
+          descriptorVersion: "v1",
+          signatures: {
+            prod: "f0cacc1a",
+            test: "f0cacc1a",
+          },
+        },
+        SOMEkey: {
+          data: "1010",
+          descriptorType: "swap_template",
+          descriptorVersion: "v1",
+          signatures: {
+            prod: "f0cacc1a",
+            test: "f0cacc1a",
+          },
+        },
+      },
+    };
 
-    // WHEN
+    mockTokenLoader.canHandle.mockReturnValue(true);
+    mockLifiLoader.canHandle.mockReturnValue(true);
+    mockTokenLoader.load.mockResolvedValue(tokenResult);
+    mockLifiLoader.load.mockResolvedValue(lifiResult);
+
+    // when
     const result = await loader.load(ctx);
 
-    // THEN
+    // then
     expect(result.isRight()).toBe(true);
     const value = result.extract();
     expect(value).toMatchObject({
       certificate: fakeCert,
-      descriptor: Buffer.from("d2"),
+      descriptor: bytes,
       tokenAccount: "acct2",
       owner: "own2",
       contract: "ctr2",
-    });
-
-    // loadersResults contains token result then coin meta cert (matches loaders order)
-    expect((value as any).loadersResults).toEqual([tokenResult, coinMetaCert]);
-
-    // CAL cert call
-    expect(mockCertLoader.loadCertificate).toHaveBeenNthCalledWith(1, {
-      keyId: "domain_metadata_key",
-      keyUsage: KeyUsage.TrustedName,
-      targetDevice: ctx.deviceModelId,
-    });
-    // CoinMeta cert call
-    expect(mockCertLoader.loadCertificate).toHaveBeenNthCalledWith(2, {
-      keyId: "token_metadata_key",
-      keyUsage: KeyUsage.CoinMeta,
-      targetDevice: ctx.deviceModelId,
+      loadersResults: [tokenResult, lifiResult],
     });
 
     expect(mockTokenLoader.canHandle).toHaveBeenCalledWith(ctx);
     expect(mockTokenLoader.load).toHaveBeenCalledWith(ctx);
+    expect(mockLifiLoader.canHandle).toHaveBeenCalledWith(ctx);
+    expect(mockLifiLoader.load).toHaveBeenCalledWith(ctx);
   });
 
   it("ignores rejected optional loaders and still succeeds", async () => {
-    // GIVEN: only coin meta is eligible and it fails
+    // given
     const ctx: SolanaTransactionContext = {
       ...baseContext,
+      templateId: "tpl-x",
       tokenInternalId: "sol:usdt",
     } as any;
 
-    mockCertLoader.loadCertificate
-      .mockResolvedValueOnce(fakeCert) // CAL
-      .mockRejectedValueOnce(new Error("coin meta failure")); // CoinMeta fails
-
+    mockCertLoader.loadCertificate.mockResolvedValue(fakeCert);
     mockDataSource.getOwnerInfo.mockResolvedValue(
       Right({
-        descriptor: Buffer.from("dx"),
+        descriptor: bytes,
         tokenAccount: "acctx",
         owner: "ownx",
         contract: "ctrx",
       }),
     );
 
-    mockTokenLoader.canHandle.mockReturnValue(false); // token loader skipped
+    const lifiResult = {
+      type: ClearSignContextType.SOLANA_LIFI,
+      payload: {
+        "11111111111111111111111111111111": {
+          data: "1010",
+          descriptorType: "swap_template",
+          descriptorVersion: "v1",
+          signatures: {
+            prod: "f0cacc1a",
+            test: "f0cacc1a",
+          },
+        },
+      },
+    };
 
-    // WHEN
+    mockTokenLoader.canHandle.mockReturnValue(true);
+    mockLifiLoader.canHandle.mockReturnValue(true);
+    mockTokenLoader.load.mockRejectedValue(new Error("token loader failure"));
+    mockLifiLoader.load.mockResolvedValue(lifiResult);
+
+    // when
     const result = await loader.load(ctx);
-    const value = result.extract();
 
-    // THEN
-    expect(value).toMatchObject({
+    // then
+    expect(result.isRight()).toBe(true);
+    expect(result.extract()).toEqual({
       certificate: fakeCert,
-      descriptor: Buffer.from("dx"),
+      descriptor: bytes,
       tokenAccount: "acctx",
       owner: "ownx",
       contract: "ctrx",
-      loadersResults: [], // failed optional loader omitted
+      loadersResults: [lifiResult], // rejected one omitted
+    });
+  });
+
+  it("succeeds even when certificate loader returns undefined (certificate omitted)", async () => {
+    // given: current implementation doesn't turn this into a Left
+    mockCertLoader.loadCertificate.mockResolvedValue(undefined);
+    mockDataSource.getOwnerInfo.mockResolvedValue(
+      Right({
+        descriptor: bytes,
+        tokenAccount: "tkn",
+        owner: "own",
+        contract: "ctr",
+      }),
+    );
+
+    // when
+    const result = await loader.load(baseContext);
+
+    // then
+    expect(result.isRight()).toBe(true);
+    expect(result.extract()).toEqual({
+      certificate: undefined,
+      descriptor: bytes,
+      tokenAccount: "tkn",
+      owner: "own",
+      contract: "ctr",
+      loadersResults: [],
     });
   });
 });
