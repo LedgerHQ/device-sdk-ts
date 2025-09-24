@@ -1,20 +1,13 @@
 import { type Either } from "purify-ts";
 
 export type GetSolanaTokenInfosParams = {
-  tokenInternalId?: string;
+  tokenInternalId: string;
 };
 
 export type Unit = {
   code: string;
   name: string;
   magnitude: number;
-};
-
-export type SolanaTokenData = {
-  solanaTokenDescriptor: {
-    data: string;
-    signature: string;
-  };
 };
 
 export type TokenDataResponse = {

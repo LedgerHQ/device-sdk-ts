@@ -1,7 +1,13 @@
 import { type PkiCertificate } from "@/pki/model/PkiCertificate";
 import { type ClearSignContextType } from "@/shared/model/ClearSignContext";
 import { type SolanaTransactionContext } from "@/solana/domain/solanaContextTypes";
-import { type SolanaTokenData } from "@/solanaToken/data/SolanaTokenDataSource";
+
+export type SolanaTokenData = {
+  solanaTokenDescriptor: {
+    data: string;
+    signature: string;
+  };
+};
 
 export type SolanaTokenContextResult = {
   type: ClearSignContextType.SOLANA_TOKEN | ClearSignContextType.ERROR;

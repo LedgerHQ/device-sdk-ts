@@ -1,11 +1,12 @@
 import { inject, injectable } from "inversify";
-import { Left } from "purify-ts";
 
 import { pkiTypes } from "@/pki/di/pkiTypes";
 import { type PkiCertificateLoader } from "@/pki/domain/PkiCertificateLoader";
 import { KeyUsage } from "@/pki/model/KeyUsage";
 import { type SolanaDataSource } from "@/solana/data/SolanaDataSource";
 import { solanaContextTypes } from "@/solana/di/solanaContextTypes";
+import { lifiTypes } from "@/solanaLifi/di/solanaLifiTypes";
+import { type SolanaLifiContextLoader } from "@/solanaLifi/domain/SolanaLifiContextLoader";
 import { solanaTokenTypes } from "@/solanaToken/di/solanaTokenTypes";
 import { SolanaTokenContextLoader } from "@/solanaToken/domain/SolanaTokenContextLoader";
 
@@ -24,6 +25,8 @@ export class DefaultSolanaContextLoader implements SolanaContextLoader {
     private readonly _certificateLoader: PkiCertificateLoader,
     @inject(solanaTokenTypes.SolanaTokenContextLoader)
     private readonly _solanaTokenLoader: SolanaTokenContextLoader,
+    @inject(lifiTypes.SolanaLifiContextLoader)
+    private readonly _solanaLifiLoader: SolanaLifiContextLoader,
   ) {}
 
   async load(
@@ -38,7 +41,7 @@ export class DefaultSolanaContextLoader implements SolanaContextLoader {
         targetDevice: deviceModelId,
       });
 
-    const loaders = [this._solanaTokenLoader];
+    const loaders = [this._solanaTokenLoader, this._solanaLifiLoader];
 
     const settledLoaders = await Promise.allSettled(
       loaders

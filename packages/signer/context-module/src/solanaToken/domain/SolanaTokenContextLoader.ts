@@ -9,7 +9,6 @@ import { PkiCertificate } from "@/pki/model/PkiCertificate";
 import { ClearSignContextType } from "@/shared/model/ClearSignContext";
 import { SolanaTransactionContext } from "@/solana/domain/solanaContextTypes";
 import {
-  type SolanaTokenData,
   type SolanaTokenDataSource,
   TokenDataResponse,
 } from "@/solanaToken/data/SolanaTokenDataSource";
@@ -18,6 +17,7 @@ import { tokenTypes } from "@/token/di/tokenTypes";
 import {
   SolanaTokenContext,
   SolanaTokenContextResult,
+  SolanaTokenData,
 } from "./SolanaTokenContext";
 
 @injectable()
@@ -38,6 +38,15 @@ export class SolanaTokenContextLoader implements SolanaTokenContext {
     solanaTokenContextInput: SolanaTransactionContext,
   ): Promise<SolanaTokenContextResult> {
     const { tokenInternalId, deviceModelId } = solanaTokenContextInput;
+
+    if (!tokenInternalId) {
+      return {
+        type: ClearSignContextType.ERROR,
+        error: new Error(
+          "[ContextModule] SolanaTokenContextLoader: tokenInternalId is missing",
+        ),
+      };
+    }
 
     const payload = await this.dataSource.getTokenInfosPayload({
       tokenInternalId,
