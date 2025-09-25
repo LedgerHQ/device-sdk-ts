@@ -57,4 +57,3 @@ export * from "./uniswap/data/CommandDecoderDataSource";
 export * from "./uniswap/data/DefaultCommandDecoderDataSource";
 export * from "./uniswap/data/EthersAbiDecoderDataSource";
 export * from "./uniswap/domain/UniswapContextLoader";
-export * from "./web3-check/domain/Web3CheckContextLoader";

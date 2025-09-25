@@ -5,12 +5,12 @@
 import { Left, Right } from "purify-ts";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import { ClearSignContextType } from "@/shared/model/ClearSignContext";
 import { type SolanaTransactionContext } from "@/solana/domain/solanaContextTypes";
 import {
   type GetTransactionDescriptorsResponse,
   type SolanaLifiDataSource,
 } from "@/solanaLifi/data/SolanaLifiDataSource";
+import { SolanaContextTypes } from "@/solanaToken/domain/SolanaTokenContext";
 
 import {
   type SolanaLifiContextResult,
@@ -68,7 +68,7 @@ describe("SolanaLifiContextLoader", () => {
 
       const result = (await loader.load({} as any)) as SolanaLifiContextResult;
 
-      expect(result.type).toBe(ClearSignContextType.ERROR);
+      expect(result.type).toBe(SolanaContextTypes.ERROR);
       expect((result as any).error).toBeInstanceOf(Error);
       expect((result as any).error.message).toBe(
         "[ContextModule] SolanaLifiContextLoader: templateId is missing",
@@ -95,7 +95,7 @@ describe("SolanaLifiContextLoader", () => {
         templateId: "tpl-err",
       });
       expect(result).toEqual({
-        type: ClearSignContextType.ERROR,
+        type: SolanaContextTypes.ERROR,
         error,
       });
     });
@@ -116,7 +116,7 @@ describe("SolanaLifiContextLoader", () => {
         templateId: "tpl-ok",
       });
       expect(result).toEqual({
-        type: ClearSignContextType.SOLANA_LIFI,
+        type: SolanaContextTypes.SOLANA_LIFI,
         payload: descriptors,
       });
     });

@@ -1,5 +1,5 @@
-import { type ClearSignContextType } from "@/shared/model/ClearSignContext";
 import { type SolanaTransactionContext } from "@/solana/domain/solanaContextTypes";
+import { type SolanaContextTypes } from "@/solanaToken/domain/SolanaTokenContext";
 
 type SolanaTransactionDescriptor = {
   data: string;
@@ -16,15 +16,19 @@ export type SolanaTransactionDescriptorList = Record<
   SolanaTransactionDescriptor
 >;
 
+export type SolanaLifiContextSuccessResult = {
+  type: SolanaContextTypes.SOLANA_LIFI;
+  payload?: SolanaTransactionDescriptorList;
+};
+
+export type SolanaLifiContextErrorResult = {
+  type: SolanaContextTypes.ERROR;
+  error?: Error;
+};
+
 export type SolanaLifiContextResult =
-  | {
-      type: ClearSignContextType.SOLANA_LIFI;
-      payload?: SolanaTransactionDescriptorList;
-    }
-  | {
-      type: ClearSignContextType.ERROR;
-      error?: Error;
-    };
+  | SolanaLifiContextSuccessResult
+  | SolanaLifiContextErrorResult;
 
 export type SolanaLifiContext = {
   canHandle(SolanaContext: SolanaTransactionContext): boolean;
