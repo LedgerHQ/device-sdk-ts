@@ -1,12 +1,12 @@
 import { inject, injectable } from "inversify";
 
-import { ClearSignContextType } from "@/shared/model/ClearSignContext";
 import { SolanaTransactionContext } from "@/solana/domain/solanaContextTypes";
 import {
   GetTransactionDescriptorsResponse,
   type SolanaLifiDataSource,
 } from "@/solanaLifi/data/SolanaLifiDataSource";
 import { lifiTypes } from "@/solanaLifi/di/solanaLifiTypes";
+import { SolanaContextTypes } from "@/solanaToken/domain/SolanaTokenContext";
 
 import {
   type SolanaLifiContext,
@@ -32,7 +32,7 @@ export class SolanaLifiContextLoader implements SolanaLifiContext {
 
     if (!templateId) {
       return {
-        type: ClearSignContextType.ERROR,
+        type: SolanaContextTypes.ERROR,
         error: new Error(
           "[ContextModule] SolanaLifiContextLoader: templateId is missing",
         ),
@@ -45,11 +45,11 @@ export class SolanaLifiContextLoader implements SolanaLifiContext {
 
     return payload.caseOf({
       Left: (error): SolanaLifiContextResult => ({
-        type: ClearSignContextType.ERROR,
+        type: SolanaContextTypes.ERROR,
         error,
       }),
       Right: (value): SolanaLifiContextResult => ({
-        type: ClearSignContextType.SOLANA_LIFI,
+        type: SolanaContextTypes.SOLANA_LIFI,
         payload: this.pluckTransactionnData(value),
       }),
     });

@@ -1,5 +1,4 @@
 import { type PkiCertificate } from "@/pki/model/PkiCertificate";
-import { type ClearSignContextType } from "@/shared/model/ClearSignContext";
 import { type SolanaTransactionContext } from "@/solana/domain/solanaContextTypes";
 
 export type SolanaTokenData = {
@@ -9,16 +8,20 @@ export type SolanaTokenData = {
   };
 };
 
+export type SolanaTokenContextSuccessResult = {
+  type: SolanaContextTypes.SOLANA_TOKEN;
+  certificate?: PkiCertificate;
+  payload: SolanaTokenData;
+};
+
+export type SolanaTokenContextErrorResult = {
+  type: SolanaContextTypes.ERROR;
+  error?: Error;
+};
+
 export type SolanaTokenContextResult =
-  | {
-      type: ClearSignContextType.SOLANA_TOKEN;
-      certificate?: PkiCertificate;
-      payload?: SolanaTokenData;
-    }
-  | {
-      type: ClearSignContextType.ERROR;
-      error?: Error;
-    };
+  | SolanaTokenContextSuccessResult
+  | SolanaTokenContextErrorResult;
 
 export type SolanaTokenContext = {
   canHandle(SolanaContext: SolanaTransactionContext): boolean;
@@ -26,3 +29,9 @@ export type SolanaTokenContext = {
     SolanaContext: SolanaTransactionContext,
   ): Promise<SolanaTokenContextResult>;
 };
+
+export enum SolanaContextTypes {
+  SOLANA_TOKEN = "solanaToken",
+  SOLANA_LIFI = "solanaLifi",
+  ERROR = "error",
+}

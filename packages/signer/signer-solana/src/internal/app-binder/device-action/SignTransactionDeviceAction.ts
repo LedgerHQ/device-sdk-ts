@@ -49,7 +49,9 @@ export type MachineDependencies = {
     input: BuildTransactionContextTaskArgs;
   }) => Promise<SolanaBuildContextResult>;
   readonly provideContext: (arg0: {
-    input: SolanaBuildContextResult;
+    input: SolanaBuildContextResult & {
+      transactionBytes: Uint8Array;
+    };
   }) => Promise<Maybe<CommandErrorResult<SolanaAppErrorCodes>>>;
   readonly inspectTransaction: (arg0: {
     serializedTransaction: Uint8Array;
@@ -348,7 +350,10 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
                   "Solana transaction context is not available",
                 );
               }
-              return context._internalState.solanaTransactionContext;
+              return {
+                ...context._internalState.solanaTransactionContext,
+                transactionBytes: context.input.transaction,
+              };
             },
             onDone: {
               target: "ProvideContextResultCheck",
@@ -447,7 +452,11 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
       input: BuildTransactionContextTaskArgs;
     }) => new BuildTransactionContextTask(internalApi, arg0.input).run();
 
-    const provideContext = async (arg0: { input: SolanaBuildContextResult }) =>
+    const provideContext = async (arg0: {
+      input: SolanaBuildContextResult & {
+        transactionBytes: Uint8Array;
+      };
+    }) =>
       new ProvideSolanaTransactionContextTask(internalApi, arg0.input).run();
 
     const inspectTransaction = async (arg0: {
@@ -456,12 +465,12 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
       rpcUrl?: string;
     }) =>
       Promise.resolve(
-        new TransactionInspector(
+        new TransactionInspector(arg0.rpcUrl).inspectTransactionType(
           arg0.serializedTransaction,
           arg0.resolutionContext?.tokenAddress,
           arg0.resolutionContext?.createATA,
-          arg0.rpcUrl,
-        ).inspectTransactionType(),
+          //arg0.rpcUrl,
+        ),
       );
 
     const signTransaction = async (arg0: {

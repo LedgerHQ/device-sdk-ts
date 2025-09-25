@@ -6,12 +6,12 @@ import { pkiTypes } from "@/pki/di/pkiTypes";
 import { type PkiCertificateLoader } from "@/pki/domain/PkiCertificateLoader";
 import { KeyUsage } from "@/pki/model/KeyUsage";
 import { PkiCertificate } from "@/pki/model/PkiCertificate";
-import { ClearSignContextType } from "@/shared/model/ClearSignContext";
 import { SolanaTransactionContext } from "@/solana/domain/solanaContextTypes";
 import {
   type SolanaTokenDataSource,
   TokenDataResponse,
 } from "@/solanaToken/data/SolanaTokenDataSource";
+import { SolanaContextTypes } from "@/solanaToken/domain/SolanaTokenContext";
 import { tokenTypes } from "@/token/di/tokenTypes";
 
 import {
@@ -41,7 +41,7 @@ export class SolanaTokenContextLoader implements SolanaTokenContext {
 
     if (!tokenInternalId) {
       return {
-        type: ClearSignContextType.ERROR,
+        type: SolanaContextTypes.ERROR,
         error: new Error(
           "[ContextModule] SolanaTokenContextLoader: tokenInternalId is missing",
         ),
@@ -61,11 +61,11 @@ export class SolanaTokenContextLoader implements SolanaTokenContext {
 
     return payload.caseOf({
       Left: (error): SolanaTokenContextResult => ({
-        type: ClearSignContextType.ERROR,
+        type: SolanaContextTypes.ERROR,
         error,
       }),
       Right: (value): SolanaTokenContextResult => ({
-        type: ClearSignContextType.SOLANA_TOKEN,
+        type: SolanaContextTypes.SOLANA_TOKEN,
         payload: this.pluckTokenData(value),
         certificate,
       }),
