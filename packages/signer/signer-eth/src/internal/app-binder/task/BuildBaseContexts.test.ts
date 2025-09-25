@@ -469,12 +469,15 @@ describe("BuildBaseContexts", () => {
     ).run();
 
     // THEN
-    expect(contextModuleMock.getContexts).toHaveBeenCalledWith({
-      deviceModelId: DeviceModelId.FLEX,
-      challenge: "challenge",
-      domain: "domain-name.eth",
-      ...defaultArgs.subset,
-    });
+    expect(contextModuleMock.getContexts).toHaveBeenCalledWith(
+      {
+        deviceModelId: DeviceModelId.FLEX,
+        challenge: "challenge",
+        domain: "domain-name.eth",
+        ...defaultArgs.subset,
+      },
+      undefined,
+    );
   });
 
   it("should call the context module without challenge for Nano S", async () => {
@@ -498,11 +501,14 @@ describe("BuildBaseContexts", () => {
     ).run();
 
     // THEN
-    expect(contextModuleMock.getContexts).toHaveBeenCalledWith({
-      deviceModelId: DeviceModelId.NANO_S,
-      domain: "domain-name.eth",
-      ...defaultArgs.subset,
-    });
+    expect(contextModuleMock.getContexts).toHaveBeenCalledWith(
+      {
+        deviceModelId: DeviceModelId.NANO_S,
+        domain: "domain-name.eth",
+        ...defaultArgs.subset,
+      },
+      undefined,
+    );
   });
 
   it("should call the context module without context on error", async () => {
@@ -529,12 +535,15 @@ describe("BuildBaseContexts", () => {
     ).run();
 
     // THEN
-    expect(contextModuleMock.getContexts).toHaveBeenCalledWith({
-      deviceModelId: DeviceModelId.FLEX,
-      challenge: undefined,
-      domain: "domain-name.eth",
-      ...defaultArgs.subset,
-    });
+    expect(contextModuleMock.getContexts).toHaveBeenCalledWith(
+      {
+        deviceModelId: DeviceModelId.FLEX,
+        challenge: undefined,
+        domain: "domain-name.eth",
+        ...defaultArgs.subset,
+      },
+      undefined,
+    );
   });
 
   it("should exclude error contexts from the result", async () => {

@@ -14,13 +14,24 @@ import {
   ClearSignContext,
   ClearSignContextType,
 } from "@/shared/model/ClearSignContext";
-import { TransactionContext } from "@/shared/model/TransactionContext";
 import { HexStringUtils } from "@/shared/utils/HexStringUtils";
+
+export type DynamicNetworkContextInput = {
+  chainId: number;
+  deviceModelId: DeviceModelId;
+};
 
 const NETWORK_SIGNATURE_TAG = "15";
 
+const SUPPORTED_TYPES: ClearSignContextType[] = [
+  ClearSignContextType.DYNAMIC_NETWORK,
+  ClearSignContextType.DYNAMIC_NETWORK_ICON,
+];
+
 @injectable()
-export class DynamicNetworkContextLoader implements ContextLoader {
+export class DynamicNetworkContextLoader
+  implements ContextLoader<DynamicNetworkContextInput>
+{
   private readonly _networkDataSource: DynamicNetworkDataSource;
   private readonly _config: ContextModuleConfig;
   private readonly _certificateLoader: PkiCertificateLoader;
@@ -38,25 +49,40 @@ export class DynamicNetworkContextLoader implements ContextLoader {
     this._certificateLoader = certificateLoader;
   }
 
-  async load(ctx: TransactionContext): Promise<ClearSignContext[]> {
-    if (ctx.deviceModelId === DeviceModelId.NANO_S) return [];
-
-    const result = await this._networkDataSource.getDynamicNetworkConfiguration(
-      ctx.chainId,
+  canHandle(
+    input: unknown,
+    expectedTypes: ClearSignContextType[],
+  ): input is DynamicNetworkContextInput {
+    return (
+      typeof input === "object" &&
+      input !== null &&
+      "chainId" in input &&
+      "deviceModelId" in input &&
+      input.deviceModelId !== undefined &&
+      input.deviceModelId !== DeviceModelId.NANO_S &&
+      typeof input.chainId === "number" &&
+      SUPPORTED_TYPES.every((type) => expectedTypes.includes(type))
     );
+  }
+
+  async load(input: DynamicNetworkContextInput): Promise<ClearSignContext[]> {
+    const { chainId, deviceModelId } = input;
+
+    const result =
+      await this._networkDataSource.getDynamicNetworkConfiguration(chainId);
 
     // Fetch certificate for the network configuration upfront
     const certificate = await this._certificateLoader.loadCertificate({
       keyId: KeyId.CalNetwork,
       keyUsage: KeyUsage.Network,
-      targetDevice: ctx.deviceModelId,
+      targetDevice: deviceModelId,
     });
 
     return result.caseOf({
       Left: () => [],
       Right: (configuration) => {
         const contexts: ClearSignContext[] = [];
-        const descriptor = configuration.descriptors[ctx.deviceModelId];
+        const descriptor = configuration.descriptors[deviceModelId];
 
         if (!descriptor) {
           return [];

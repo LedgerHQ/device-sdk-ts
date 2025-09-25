@@ -14,7 +14,6 @@ import {
   ClearSignContext,
   ClearSignContextType,
 } from "@/shared/model/ClearSignContext";
-import { TransactionContext } from "@/shared/model/TransactionContext";
 import { type TokenDataSource } from "@/token/data/TokenDataSource";
 import { tokenTypes } from "@/token/di/tokenTypes";
 import {
@@ -32,8 +31,22 @@ import {
 import { type CommandDecoderDataSource } from "@/uniswap/data/CommandDecoderDataSource";
 import { uniswapTypes } from "@/uniswap/di/uniswapTypes";
 
+export type UniswapContextInput = {
+  to: HexaString;
+  data: HexaString;
+  selector: HexaString;
+  chainId: number;
+};
+
+const SUPPORTED_TYPES: ClearSignContextType[] = [
+  ClearSignContextType.EXTERNAL_PLUGIN,
+  ClearSignContextType.TOKEN,
+];
+
 @injectable()
-export class UniswapContextLoader implements ContextLoader {
+export class UniswapContextLoader
+  implements ContextLoader<UniswapContextInput>
+{
   constructor(
     @inject(uniswapTypes.CommandDecoderDataSource)
     private commandDecoderDataSource: CommandDecoderDataSource,
@@ -41,15 +54,30 @@ export class UniswapContextLoader implements ContextLoader {
     private tokenDataSource: TokenDataSource,
   ) {}
 
-  async load(ctx: TransactionContext): Promise<ClearSignContext[]> {
-    const { data, selector, chainId } = ctx;
-    if (!isHexaString(data)) {
-      return [];
-    }
+  canHandle(
+    input: unknown,
+    expectedTypes: ClearSignContextType[],
+  ): input is UniswapContextInput {
+    return (
+      typeof input === "object" &&
+      input !== null &&
+      "to" in input &&
+      "data" in input &&
+      "selector" in input &&
+      "chainId" in input &&
+      typeof input.chainId === "number" &&
+      isHexaString(input.data) &&
+      input.data !== "0x" &&
+      isHexaString(input.selector) &&
+      input.selector === UNISWAP_EXECUTE_SELECTOR &&
+      isHexaString(input.to) &&
+      input.to === UNISWAP_UNIVERSAL_ROUTER_ADDRESS &&
+      SUPPORTED_TYPES.every((type) => expectedTypes.includes(type))
+    );
+  }
 
-    if (selector !== UNISWAP_EXECUTE_SELECTOR) {
-      return [];
-    }
+  async load(input: UniswapContextInput): Promise<ClearSignContext[]> {
+    const { data, chainId } = input;
 
     const externalPluginContext = this._buildUniswapPluginCommandData();
     const tokenContexts = await this._extractClearSignContexts(data, chainId);

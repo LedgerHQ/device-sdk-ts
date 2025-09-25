@@ -15,7 +15,14 @@ import {
   ClearSignContext,
   ClearSignContextType,
 } from "@/shared/model/ClearSignContext";
-import { TransactionContext } from "@/shared/model/TransactionContext";
+
+export type CalldataContextInput = {
+  to: HexaString;
+  data: HexaString;
+  selector: HexaString;
+  chainId: number;
+  deviceModelId: DeviceModelId;
+};
 
 type GetContextsParams = {
   address: string;
@@ -25,8 +32,17 @@ type GetContextsParams = {
   deviceModelId: DeviceModelId;
 };
 
+const SUPPORTED_TYPES: ClearSignContextType[] = [
+  ClearSignContextType.TRANSACTION_INFO,
+  ClearSignContextType.TRANSACTION_FIELD_DESCRIPTION,
+  ClearSignContextType.PROXY_INFO,
+  ClearSignContextType.ENUM,
+];
+
 @injectable()
-export class CalldataContextLoader implements ContextLoader {
+export class CalldataContextLoader
+  implements ContextLoader<CalldataContextInput>
+{
   constructor(
     @inject(calldataTypes.DappCalldataDescriptorDataSource)
     private dappDataSource: CalldataDescriptorDataSource,
@@ -36,24 +52,32 @@ export class CalldataContextLoader implements ContextLoader {
     private proxyDataSource: ProxyDataSource,
   ) {}
 
-  async load(ctx: TransactionContext): Promise<ClearSignContext[]> {
-    if (ctx.deviceModelId === DeviceModelId.NANO_S) {
-      return [];
-    }
+  canHandle(
+    input: unknown,
+    expectedTypes: ClearSignContextType[],
+  ): input is CalldataContextInput {
+    return (
+      typeof input === "object" &&
+      input !== null &&
+      "to" in input &&
+      "data" in input &&
+      "selector" in input &&
+      "chainId" in input &&
+      "deviceModelId" in input &&
+      input.deviceModelId !== undefined &&
+      input.deviceModelId !== DeviceModelId.NANO_S &&
+      typeof input.chainId === "number" &&
+      isHexaString(input.to) &&
+      input.to !== "0x" &&
+      isHexaString(input.data) &&
+      isHexaString(input.selector) &&
+      input.selector !== "0x" &&
+      SUPPORTED_TYPES.every((type) => expectedTypes.includes(type))
+    );
+  }
 
-    const { to, data, selector, chainId, deviceModelId } = ctx;
-    if (to === undefined) {
-      return [];
-    }
-
-    if (!isHexaString(selector)) {
-      return [
-        {
-          type: ClearSignContextType.ERROR,
-          error: new Error("Invalid selector"),
-        },
-      ];
-    }
+  async load(input: CalldataContextInput): Promise<ClearSignContext[]> {
+    const { to, data, selector, chainId, deviceModelId } = input;
 
     const param: GetContextsParams = {
       address: to,

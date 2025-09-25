@@ -22,6 +22,13 @@ import {
 } from "@internal/app-binder/task/GetWeb3CheckTask";
 import { ApplicationChecker } from "@internal/shared/utils/ApplicationChecker";
 
+const NESTED_CALLDATA_CONTEXT_TYPES_FILTER: ClearSignContextType[] = [
+  ClearSignContextType.TRANSACTION_INFO,
+  ClearSignContextType.TRANSACTION_FIELD_DESCRIPTION,
+  ClearSignContextType.ENUM,
+  ClearSignContextType.PROXY_INFO,
+];
+
 export type BuildBaseContextsResult = {
   readonly clearSignContexts: ClearSignContextSuccess[];
   readonly clearSignContextsOptional: ClearSignContextSuccess[];
@@ -64,6 +71,7 @@ export class BuildBaseContexts {
       transaction,
       subset,
     } = this._args;
+    const isNestedCallData = transaction === undefined;
     const deviceState = this._api.getDeviceSessionState();
 
     // Get challenge (not supported on Nano S)
@@ -79,12 +87,15 @@ export class BuildBaseContexts {
 
     // Get the clear sign contexts
     const clearSignContexts: ClearSignContext[] =
-      await contextModule.getContexts({
-        challenge: challenge,
-        domain: options.domain,
-        deviceModelId: deviceState.deviceModelId,
-        ...subset,
-      });
+      await contextModule.getContexts(
+        {
+          challenge: challenge,
+          domain: options.domain,
+          deviceModelId: deviceState.deviceModelId,
+          ...subset,
+        },
+        isNestedCallData ? NESTED_CALLDATA_CONTEXT_TYPES_FILTER : undefined,
+      );
 
     // Run the web3checks if needed
     if (transaction && appConfig.web3ChecksEnabled) {
