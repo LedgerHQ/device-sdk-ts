@@ -82,10 +82,12 @@ describe("SignTransactionDeviceAction (Solana)", () => {
       });
 
       const ctx: SolanaBuildContextResult = {
-        descriptor: new Uint8Array([1]),
-        calCertificate: { keyUsageNumber: 0, payload: new Uint8Array([0x01]) },
-        challenge: undefined,
-        addressResult: { tokenAccount: "", owner: "", contract: "" },
+        tlvDescriptor: new Uint8Array([1]),
+        trustedNamePKICertificate: {
+          keyUsageNumber: 0,
+          payload: new Uint8Array([0x01]),
+        },
+        loadersResults: [],
       };
       buildContextMock.mockResolvedValue(ctx);
       provideContextMock.mockResolvedValue(Nothing);
@@ -175,9 +177,13 @@ describe("SignTransactionDeviceAction (Solana)", () => {
 
       buildContextMock.mockResolvedValue({
         descriptor: new Uint8Array([2]),
-        calCertificate: { keyUsageNumber: 0, payload: new Uint8Array() },
+        trustedNamePKICertificate: {
+          keyUsageNumber: 0,
+          payload: new Uint8Array(),
+        },
         challenge: undefined,
         addressResult: { tokenAccount: "", owner: "", contract: "" },
+        loadersResults: [], // <-- include it
       });
       provideContextMock.mockResolvedValue(
         Just(

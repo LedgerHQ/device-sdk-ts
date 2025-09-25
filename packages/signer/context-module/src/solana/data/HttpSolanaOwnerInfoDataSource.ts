@@ -145,19 +145,16 @@ export class HttpSolanaOwnerInfoDataSource implements SolanaDataSource {
     }
 
     return ownerInfoResult.chain((ownerInfo) => {
-      const descriptor = hexaStringToBuffer(ownerInfo.signedDescriptor);
-      if (!descriptor) {
+      const tlvDescriptor = hexaStringToBuffer(ownerInfo.signedDescriptor);
+      if (!tlvDescriptor) {
         return Left(
           new Error(
-            "[ContextModule] - HttpSolanaOwnerInfoDataSource: invalid base64 descriptor received",
+            "[ContextModule] - HttpSolanaOwnerInfoDataSource: invalid base64 tlvDescriptor received",
           ),
         );
       }
       return Right({
-        descriptor,
-        tokenAccount: ownerInfo.tokenAccount,
-        owner: ownerInfo.owner,
-        contract: ownerInfo.contract,
+        tlvDescriptor,
       });
     });
   }

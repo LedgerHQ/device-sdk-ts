@@ -307,6 +307,9 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
                 options: {
                   tokenAddress: inspectorData?.tokenAddress,
                   createATA: inspectorData?.createATA,
+                  tokenInternalId:
+                    context.input.transactionOptions?.tokenInternalId,
+                  templateId: context.input.transactionOptions?.templateId,
                 },
               };
             },
@@ -317,11 +320,10 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
                   _internalState: ({ event, context }) => ({
                     ...context._internalState,
                     solanaTransactionContext: {
-                      descriptor: event.output.descriptor,
-                      certificate: event.output.calCertificate,
-                      tokenAccount: event.output.addressResult.tokenAccount,
-                      owner: event.output.addressResult.owner,
-                      contract: event.output.addressResult.contract,
+                      tlvDescriptor: event.output.tlvDescriptor,
+                      trustedNamePKICertificate:
+                        event.output.trustedNamePKICertificate,
+                      loadersResults: event.output.loadersResults,
                     },
                   }),
                 }),

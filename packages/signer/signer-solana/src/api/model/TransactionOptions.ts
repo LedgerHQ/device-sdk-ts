@@ -3,5 +3,7 @@ import { type TransactionResolutionContext } from "./TransactionResolutionContex
 export type SolanaTransactionOptions = {
   transactionResolutionContext?: TransactionResolutionContext;
   solanaRPCURL?: string;
+  tokenInternalId?: string;
+  templateId?: string;
   skipOpenApp?: boolean;
 };

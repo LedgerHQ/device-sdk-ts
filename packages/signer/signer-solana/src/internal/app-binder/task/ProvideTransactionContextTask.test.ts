@@ -1,8 +1,7 @@
-/* eslint-disable @typescript-eslint/no-unsafe-member-access */
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { CommandResultFactory } from "@ledgerhq/device-management-kit";
-import { Maybe, Nothing } from "purify-ts";
+import { Nothing } from "purify-ts";
 import { beforeEach, describe, expect, it, type Mock, vi } from "vitest";
 
 import { ProvideTLVDescriptorCommand } from "@internal/app-binder/command/ProvideTLVDescriptorCommand";
@@ -17,10 +16,11 @@ describe("ProvideSolanaTransactionContextTask", () => {
   let fakeApi: { sendCommand: Mock };
   let context: SolanaContextForDevice;
 
-  const dummyDescriptor = Uint8Array.from([0xaa, 0xaa, 0xaa]);
-  const dummyCertificate: any = {
-    payload: Uint8Array.from([0xde, 0xad, 0xbe, 0xef, 0xde, 0xad, 0xbe, 0xef]),
-  };
+  const dummyDescriptor = new Uint8Array([0xaa, 0xaa, 0xaa]);
+  const dummyCertificate = {
+    payload: new Uint8Array([0xde, 0xad, 0xbe, 0xef]),
+    keyUsageNumber: 1,
+  } as const;
 
   const mockError = { _tag: "SomeError", errorCode: 0, message: "SomeError" };
 
@@ -29,16 +29,19 @@ describe("ProvideSolanaTransactionContextTask", () => {
     fakeApi = {
       sendCommand: vi.fn(),
     };
+
     context = {
-      descriptor: dummyDescriptor,
-      certificate: dummyCertificate,
+      tlvDescriptor: dummyDescriptor,
+      trustedNamePKICertificate: dummyCertificate,
     };
   });
 
   it("returns Nothing when both commands succeed", async () => {
-    // given
-    const successResult = CommandResultFactory({ data: Maybe.of(null) });
-    fakeApi.sendCommand.mockResolvedValue(successResult);
+    // given: first PKI success, then TLV success
+    const success = CommandResultFactory({ data: null });
+    fakeApi.sendCommand
+      .mockResolvedValueOnce(success) // ProvideTrustedNamePKICommand
+      .mockResolvedValueOnce(success); // ProvideTLVDescriptorCommand
 
     const task = new ProvideSolanaTransactionContextTask(
       fakeApi as unknown as any,
@@ -51,18 +54,18 @@ describe("ProvideSolanaTransactionContextTask", () => {
     // then
     expect(fakeApi.sendCommand).toHaveBeenCalledTimes(2);
 
-    const firstCallCall = fakeApi.sendCommand.mock.calls[0];
-    expect(firstCallCall).toBeDefined();
-    const firstCallArg = firstCallCall![0];
-    expect(firstCallArg).toBeInstanceOf(ProvideTrustedNamePKICommand);
+    // PKI command
+    const firstArg = fakeApi.sendCommand.mock.calls[0]![0]!;
+    expect(firstArg).toBeInstanceOf(ProvideTrustedNamePKICommand);
     expect(
-      (firstCallArg as ProvideTrustedNamePKICommand).args.pkiBlob,
+      (firstArg as ProvideTrustedNamePKICommand).args.pkiBlob,
     ).toStrictEqual(dummyCertificate.payload);
 
-    const secondCallArg = fakeApi.sendCommand.mock.calls[1]![0]!;
-    expect(secondCallArg).toBeInstanceOf(ProvideTLVDescriptorCommand);
+    // TLV command
+    const secondArg = fakeApi.sendCommand.mock.calls[1]![0]!;
+    expect(secondArg).toBeInstanceOf(ProvideTLVDescriptorCommand);
     expect(
-      (secondCallArg as ProvideTLVDescriptorCommand).args.payload,
+      (secondArg as ProvideTLVDescriptorCommand).args.payload,
     ).toStrictEqual(dummyDescriptor);
 
     expect(result).toStrictEqual(Nothing);
@@ -82,12 +85,12 @@ describe("ProvideSolanaTransactionContextTask", () => {
   });
 
   it("throws error if TLV command fails", async () => {
-    const successResult = CommandResultFactory({ data: Maybe.of(null) });
+    const success = CommandResultFactory({ data: null });
     const tlvErrorResult = CommandResultFactory({ error: mockError });
 
     fakeApi.sendCommand
-      .mockResolvedValueOnce(successResult)
-      .mockResolvedValueOnce(tlvErrorResult);
+      .mockResolvedValueOnce(success) // PKI success
+      .mockResolvedValueOnce(tlvErrorResult); // TLV fails
 
     const task = new ProvideSolanaTransactionContextTask(
       fakeApi as unknown as any,

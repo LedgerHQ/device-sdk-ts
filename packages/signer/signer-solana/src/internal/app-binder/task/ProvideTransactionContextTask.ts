@@ -11,8 +11,8 @@ import { ProvideTrustedNamePKICommand } from "@internal/app-binder/command/Provi
 import { type SolanaAppErrorCodes } from "@internal/app-binder/command/utils/SolanaApplicationErrors";
 
 export type SolanaContextForDevice = {
-  descriptor: Uint8Array;
-  certificate: PkiCertificate;
+  tlvDescriptor: Uint8Array;
+  trustedNamePKICertificate: PkiCertificate;
 };
 
 export class ProvideSolanaTransactionContextTask {
@@ -22,22 +22,22 @@ export class ProvideSolanaTransactionContextTask {
   ) {}
 
   async run(): Promise<Maybe<CommandErrorResult<SolanaAppErrorCodes>>> {
-    const { descriptor, certificate } = this.context;
-    const { payload: certificatePayload } = certificate;
+    const { tlvDescriptor, trustedNamePKICertificate } = this.context;
+    const { payload: pkiCertificatePayload } = trustedNamePKICertificate;
 
-    // send CAL certificate + signature
-    const pkiResult = await this.api.sendCommand(
+    // send PKI certificate + signature
+    const pkiCertificateToDeviceResult = await this.api.sendCommand(
       new ProvideTrustedNamePKICommand({
-        pkiBlob: certificatePayload,
+        pkiBlob: pkiCertificatePayload,
       }),
     );
-    if (!isSuccessCommandResult(pkiResult)) {
-      throw pkiResult;
+    if (!isSuccessCommandResult(pkiCertificateToDeviceResult)) {
+      throw pkiCertificateToDeviceResult;
     }
 
     // send signed TLV descriptor
     const tlvResult = await this.api.sendCommand(
-      new ProvideTLVDescriptorCommand({ payload: descriptor }),
+      new ProvideTLVDescriptorCommand({ payload: tlvDescriptor }),
     );
     if (!isSuccessCommandResult(tlvResult)) {
       throw tlvResult;

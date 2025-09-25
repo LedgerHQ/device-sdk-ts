@@ -1,4 +1,5 @@
 import { inject, injectable } from "inversify";
+import { Left } from "purify-ts";
 
 import { pkiTypes } from "@/pki/di/pkiTypes";
 import { type PkiCertificateLoader } from "@/pki/domain/PkiCertificateLoader";
@@ -34,12 +35,19 @@ export class DefaultSolanaContextLoader implements SolanaContextLoader {
   ): Promise<SolanaTransactionContextResult> {
     const { deviceModelId } = solanaContext;
 
-    const trustedNameCertificate =
+    const trustedNamePKICertificate =
       await this._certificateLoader.loadCertificate({
         keyId: "domain_metadata_key",
         keyUsage: KeyUsage.TrustedName,
         targetDevice: deviceModelId,
       });
+    if (!trustedNamePKICertificate) {
+      return Left(
+        new Error(
+          "[ContextModule] DefaultSolanaContextLoader: trustedNamePKICertificate is missing",
+        ),
+      );
+    }
 
     const loaders = [this._solanaTokenLoader, this._solanaLifiLoader];
 
@@ -53,17 +61,13 @@ export class DefaultSolanaContextLoader implements SolanaContextLoader {
       .map((r) => (r.status === "fulfilled" ? r.value : undefined))
       .filter((v) => v !== undefined);
 
-    const ownerInfoEither = await this._dataSource.getOwnerInfo(solanaContext);
+    const tlvDescriptorEither =
+      await this._dataSource.getOwnerInfo(solanaContext);
 
-    return ownerInfoEither.map(
-      ({ descriptor, tokenAccount, owner, contract }) => ({
-        certificate: trustedNameCertificate,
-        descriptor,
-        tokenAccount,
-        owner,
-        contract,
-        loadersResults,
-      }),
-    );
+    return tlvDescriptorEither.map(({ tlvDescriptor }) => ({
+      trustedNamePKICertificate,
+      tlvDescriptor,
+      loadersResults,
+    }));
   }
 }
