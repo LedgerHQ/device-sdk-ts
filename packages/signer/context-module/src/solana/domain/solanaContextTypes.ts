@@ -24,13 +24,14 @@ export type SolanaSPLOwnerInfo = {
   signedDescriptor: string;
 };
 
+export type SolanaContextLoaderResults = Array<
+  SolanaTokenContextResult | SolanaLifiContextResult
+>;
+
 export type SolanaTransactionContextResultSuccess = {
-  certificate: PkiCertificate | undefined;
-  descriptor: Uint8Array;
-  tokenAccount: string;
-  owner: string;
-  contract: string;
-  loadersResults: Array<SolanaTokenContextResult | SolanaLifiContextResult>;
+  trustedNamePKICertificate: PkiCertificate;
+  tlvDescriptor: Uint8Array;
+  loadersResults: SolanaContextLoaderResults;
 };
 
 export type SolanaTransactionContextResult = Either<

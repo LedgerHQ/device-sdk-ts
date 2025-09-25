@@ -2,24 +2,32 @@
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
+import { DeviceModelId } from "@ledgerhq/device-management-kit";
 import { Left, Right } from "purify-ts";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { type ContextModuleConfig } from "@/config/model/ContextModuleConfig";
+import type { PkiCertificateLoader } from "@/pki/domain/PkiCertificateLoader";
+import { KeyUsage } from "@/pki/model/KeyUsage";
 import { ClearSignContextType } from "@/shared/model/ClearSignContext";
+import type { SolanaTransactionContext } from "@/solana/domain/solanaContextTypes";
 import {
   type SolanaTokenDataSource,
   type TokenDataResponse,
 } from "@/solanaToken/data/SolanaTokenDataSource";
 
-import { type SolanaTokenContextInput } from "./SolanaTokenContext";
 import { SolanaTokenContextLoader } from "./SolanaTokenContextLoader";
 
 describe("SolanaTokenContextLoader", () => {
   let mockDataSource: SolanaTokenDataSource;
+  let mockCertLoader: PkiCertificateLoader;
+
+  const bytes = new Uint8Array([0xf0, 0xca, 0xcc, 0x1a]);
 
   const tokenDataResponse: TokenDataResponse = {
     descriptor: {
-      data: { symbol: "SOL", name: "Solana", decimals: 9 },
+      // The loader just forwards this; exact shape isn't important for the test
+      data: { symbol: "SOL", name: "Solana", decimals: 9 } as any,
       signatures: {
         prod: "prod-sig",
         test: "test-sig",
@@ -27,30 +35,40 @@ describe("SolanaTokenContextLoader", () => {
     },
   } as any;
 
+  const baseCtx: SolanaTransactionContext = {
+    tokenInternalId: "token-1",
+    deviceModelId: DeviceModelId.FLEX,
+  } as any;
+
   beforeEach(() => {
     vi.restoreAllMocks();
+
     mockDataSource = {
       getTokenInfosPayload: vi.fn(),
     } as unknown as SolanaTokenDataSource;
+
+    mockCertLoader = {
+      loadCertificate: vi.fn(),
+    } as unknown as PkiCertificateLoader;
   });
 
   const makeLoader = (mode?: string) => {
     const config = { cal: { mode } } as unknown as ContextModuleConfig;
-    return new SolanaTokenContextLoader(mockDataSource, config);
+    return new SolanaTokenContextLoader(mockDataSource, config, mockCertLoader);
   };
 
   describe("canHandle", () => {
-    it("should return true when tokenInternalId is provided", () => {
+    it("returns true when tokenInternalId is provided", () => {
       const loader = makeLoader("prod");
 
       expect(
         loader.canHandle({
           tokenInternalId: "abc123",
-        } as SolanaTokenContextInput),
+        } as SolanaTransactionContext),
       ).toBe(true);
     });
 
-    it("should return false when tokenInternalId is missing or falsy", () => {
+    it("returns false when tokenInternalId is missing or falsy", () => {
       const loader = makeLoader("prod");
 
       expect(loader.canHandle({ tokenInternalId: "" } as any)).toBe(false);
@@ -62,21 +80,44 @@ describe("SolanaTokenContextLoader", () => {
   });
 
   describe("load", () => {
-    it("should return an error when datasource returns an error", async () => {
-      // given
+    it("returns an error when tokenInternalId is missing and does not call deps", async () => {
       const loader = makeLoader("prod");
-      const error = new Error("error");
+
+      const result = await loader.load({
+        deviceModelId: DeviceModelId.FLEX,
+      } as any);
+
+      expect(result).toEqual({
+        type: ClearSignContextType.ERROR,
+        error: new Error(
+          "[ContextModule] SolanaTokenContextLoader: tokenInternalId is missing",
+        ),
+      });
+      expect(mockDataSource.getTokenInfosPayload).not.toHaveBeenCalled();
+      expect(mockCertLoader.loadCertificate).not.toHaveBeenCalled();
+    });
+
+    it("returns an error when datasource returns Left(error) (certificate still retrieved)", async () => {
+      const loader = makeLoader("prod");
+      const error = new Error("datasource failed");
+
       vi.spyOn(mockDataSource, "getTokenInfosPayload").mockResolvedValue(
         Left(error),
       );
+      vi.spyOn(mockCertLoader, "loadCertificate").mockResolvedValue({
+        keyUsageNumber: 0,
+        payload: bytes,
+      });
 
-      // when
-      const input = { tokenInternalId: "token-1" } as SolanaTokenContextInput;
-      const result = await loader.load(input);
+      const result = await loader.load(baseCtx);
 
-      // then
       expect(mockDataSource.getTokenInfosPayload).toHaveBeenCalledWith({
         tokenInternalId: "token-1",
+      });
+      expect(mockCertLoader.loadCertificate).toHaveBeenCalledWith({
+        keyId: "token_metadata_key",
+        keyUsage: KeyUsage.CoinMeta,
+        targetDevice: baseCtx.deviceModelId,
       });
       expect(result).toEqual({
         type: ClearSignContextType.ERROR,
@@ -84,74 +125,106 @@ describe("SolanaTokenContextLoader", () => {
       });
     });
 
-    it("should return a SOLANA_TOKEN payload with prod signature by default", async () => {
-      // given (falsy mode, falls back to 'prod')
-      const loader = makeLoader("");
+    it("returns SOLANA_TOKEN with prod signature by default (falsy mode) and includes certificate", async () => {
+      const loader = makeLoader(""); // falsy -> default 'prod'
+
       vi.spyOn(mockDataSource, "getTokenInfosPayload").mockResolvedValue(
         Right(tokenDataResponse),
       );
+      vi.spyOn(mockCertLoader, "loadCertificate").mockResolvedValue({
+        keyUsageNumber: 0,
+        payload: bytes,
+      });
 
-      // when
-      const input = { tokenInternalId: "token-2" } as SolanaTokenContextInput;
-      const result = await loader.load(input);
+      const result = await loader.load({
+        ...baseCtx,
+        tokenInternalId: "token-2",
+      });
 
-      // then
       expect(result).toEqual({
         type: ClearSignContextType.SOLANA_TOKEN,
         payload: {
-          descriptor: {
+          solanaTokenDescriptor: {
             data: tokenDataResponse.descriptor.data,
             signature: "prod-sig",
           },
         },
+        certificate: { keyUsageNumber: 0, payload: bytes },
       });
     });
 
-    it("should return a SOLANA_TOKEN payload with signature matching config.cal.mode", async () => {
-      // given
+    it("returns SOLANA_TOKEN with signature matching config.cal.mode", async () => {
       const loader = makeLoader("test");
+
       vi.spyOn(mockDataSource, "getTokenInfosPayload").mockResolvedValue(
         Right(tokenDataResponse),
       );
+      vi.spyOn(mockCertLoader, "loadCertificate").mockResolvedValue({
+        keyUsageNumber: 1,
+        payload: bytes,
+      });
 
-      // when
-      const input = { tokenInternalId: "token-3" } as SolanaTokenContextInput;
-      const result = await loader.load(input);
+      const result = await loader.load({
+        ...baseCtx,
+        tokenInternalId: "token-3",
+      });
 
-      // then
       expect(result).toEqual({
         type: ClearSignContextType.SOLANA_TOKEN,
         payload: {
-          descriptor: {
+          solanaTokenDescriptor: {
             data: tokenDataResponse.descriptor.data,
             signature: "test-sig",
           },
         },
+        certificate: { keyUsageNumber: 1, payload: bytes },
+      });
+    });
+
+    it("works even if certificate loader returns undefined (certificate omitted)", async () => {
+      const loader = makeLoader("prod");
+
+      vi.spyOn(mockDataSource, "getTokenInfosPayload").mockResolvedValue(
+        Right(tokenDataResponse),
+      );
+      vi.spyOn(mockCertLoader, "loadCertificate").mockResolvedValue(undefined);
+
+      const result = await loader.load(baseCtx);
+
+      expect(result).toEqual({
+        type: ClearSignContextType.SOLANA_TOKEN,
+        payload: {
+          solanaTokenDescriptor: {
+            data: tokenDataResponse.descriptor.data,
+            signature: "prod-sig",
+          },
+        },
+        certificate: undefined,
       });
     });
   });
 
   describe("pluckTokenData (private)", () => {
-    it("should pick the signature for the configured mode", () => {
+    it("picks the signature for the configured mode", () => {
       const loader = makeLoader("test");
       const pluck = (loader as any).pluckTokenData.bind(loader);
 
       const result = pluck(tokenDataResponse);
 
       expect(result).toEqual({
-        descriptor: {
+        solanaTokenDescriptor: {
           data: tokenDataResponse.descriptor.data,
           signature: "test-sig",
         },
       });
     });
 
-    it("should fall back to 'prod' when config.cal.mode is falsy", () => {
+    it("falls back to 'prod' when config.cal.mode is falsy", () => {
       const loader = makeLoader(undefined as any);
       const result = (loader as any).pluckTokenData(tokenDataResponse);
 
       expect(result).toEqual({
-        descriptor: {
+        solanaTokenDescriptor: {
           data: tokenDataResponse.descriptor.data,
           signature: "prod-sig",
         },

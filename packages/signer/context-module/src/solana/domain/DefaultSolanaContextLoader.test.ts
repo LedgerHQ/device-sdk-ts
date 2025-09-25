@@ -1,282 +1,232 @@
-/* eslint-disable @typescript-eslint/no-unsafe-assignment */
+/* eslint-disable @typescript-eslint/no-unsafe-call */
+/* eslint-disable @typescript-eslint/no-unsafe-member-access */
 /* eslint-disable @typescript-eslint/no-explicit-any */
+/* eslint-disable @typescript-eslint/no-unsafe-assignment */
 import { DeviceModelId } from "@ledgerhq/device-management-kit";
 import { Left, Right } from "purify-ts";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
+import { type ContextModuleConfig } from "@/config/model/ContextModuleConfig";
+import type { PkiCertificateLoader } from "@/pki/domain/PkiCertificateLoader";
 import { KeyUsage } from "@/pki/model/KeyUsage";
 import { ClearSignContextType } from "@/shared/model/ClearSignContext";
-import { DefaultSolanaContextLoader } from "@/solana/domain/DefaultSolanaContextLoader";
 import type { SolanaTransactionContext } from "@/solana/domain/solanaContextTypes";
+import {
+  type SolanaTokenDataSource,
+  type TokenDataResponse,
+} from "@/solanaToken/data/SolanaTokenDataSource";
+import { SolanaTokenContextLoader } from "@/solanaToken/domain/SolanaTokenContextLoader";
 
-describe("DefaultSolanaContextLoader", () => {
-  let mockDataSource: { getOwnerInfo: ReturnType<typeof vi.fn> };
-  let mockCertLoader: { loadCertificate: ReturnType<typeof vi.fn> };
-  let mockTokenLoader: {
-    canHandle: ReturnType<typeof vi.fn>;
-    load: ReturnType<typeof vi.fn>;
-  };
-  let mockLifiLoader: {
-    canHandle: ReturnType<typeof vi.fn>;
-    load: ReturnType<typeof vi.fn>;
-  };
-
-  let loader: DefaultSolanaContextLoader;
-
-  const baseContext: SolanaTransactionContext = {
-    deviceModelId: DeviceModelId.FLEX,
-    tokenAddress: "token-addr",
-    challenge: "challenge-str",
-  } as any;
+describe("SolanaTokenContextLoader", () => {
+  let mockDataSource: SolanaTokenDataSource;
+  let mockCertLoader: PkiCertificateLoader;
 
   const bytes = new Uint8Array([0xf0, 0xca, 0xcc, 0x1a]);
 
-  const fakeCert = {
-    keyUsageNumber: 0,
-    payload: bytes,
-  };
+  const tokenDataResponse: TokenDataResponse = {
+    descriptor: {
+      data: { symbol: "SOL", name: "Solana", decimals: 9 } as any,
+      signatures: {
+        prod: "prod-sig",
+        test: "test-sig",
+      } as any,
+    },
+  } as any;
+
+  const baseCtx: SolanaTransactionContext = {
+    tokenInternalId: "token-1",
+    deviceModelId: DeviceModelId.FLEX,
+  } as any;
 
   beforeEach(() => {
-    vi.resetAllMocks();
+    vi.restoreAllMocks();
 
-    mockDataSource = { getOwnerInfo: vi.fn() };
-    mockCertLoader = { loadCertificate: vi.fn() };
-    mockTokenLoader = {
-      canHandle: vi.fn().mockReturnValue(false),
-      load: vi.fn(),
-    };
-    mockLifiLoader = {
-      canHandle: vi.fn().mockReturnValue(false),
-      load: vi.fn(),
-    };
+    mockDataSource = {
+      getTokenInfosPayload: vi.fn(),
+    } as unknown as SolanaTokenDataSource;
 
-    loader = new DefaultSolanaContextLoader(
-      mockDataSource as any,
-      mockCertLoader as any,
-      mockTokenLoader as any,
-      mockLifiLoader as any,
-    );
+    mockCertLoader = {
+      loadCertificate: vi.fn(),
+    } as unknown as PkiCertificateLoader;
   });
 
-  it("calls certificate loader (TrustedName) and owner info with correct args", async () => {
-    // given
-    mockCertLoader.loadCertificate.mockResolvedValue(fakeCert);
-    mockDataSource.getOwnerInfo.mockResolvedValue(
-      Right({
-        descriptor: bytes,
-        tokenAccount: "tkn",
-        owner: "own",
-        contract: "ctr",
-      }),
-    );
+  const makeLoader = (mode?: string) => {
+    const config = { cal: { mode } } as unknown as ContextModuleConfig;
+    return new SolanaTokenContextLoader(mockDataSource, config, mockCertLoader);
+  };
 
-    // when
-    await loader.load(baseContext);
+  describe("canHandle", () => {
+    it("returns true when tokenInternalId is provided", () => {
+      const loader = makeLoader("prod");
 
-    // then
-    expect(mockCertLoader.loadCertificate).toHaveBeenCalledTimes(1);
-    expect(mockCertLoader.loadCertificate).toHaveBeenCalledWith({
-      keyId: "domain_metadata_key",
-      keyUsage: KeyUsage.TrustedName,
-      targetDevice: baseContext.deviceModelId,
-    });
-    expect(mockDataSource.getOwnerInfo).toHaveBeenCalledWith(baseContext);
-  });
-
-  it("propagates Left from getOwnerInfo", async () => {
-    // given
-    mockCertLoader.loadCertificate.mockResolvedValue(fakeCert);
-    const dsError = new Error("DS failure");
-    mockDataSource.getOwnerInfo.mockResolvedValue(Left(dsError));
-
-    // when
-    const result = await loader.load(baseContext);
-
-    // then
-    expect(result).toEqual(Left(dsError));
-  });
-
-  it("returns Right with merged owner info + certificate; skips loaders that can't handle", async () => {
-    // given
-    mockCertLoader.loadCertificate.mockResolvedValue(fakeCert);
-    mockDataSource.getOwnerInfo.mockResolvedValue(
-      Right({
-        descriptor: bytes,
-        tokenAccount: "tokenAcct",
-        owner: "ownerAddr",
-        contract: "contractAddr",
-      }),
-    );
-
-    // when
-    const result = await loader.load(baseContext);
-
-    // then
-    expect(result.isRight()).toBe(true);
-    expect(result.extract()).toEqual({
-      certificate: fakeCert,
-      descriptor: bytes,
-      tokenAccount: "tokenAcct",
-      owner: "ownerAddr",
-      contract: "contractAddr",
-      loadersResults: [],
+      expect(
+        loader.canHandle({
+          tokenInternalId: "abc123",
+        } as SolanaTransactionContext),
+      ).toBe(true);
     });
 
-    expect(mockTokenLoader.canHandle).toHaveBeenCalledWith(baseContext);
-    expect(mockLifiLoader.canHandle).toHaveBeenCalledWith(baseContext);
-    expect(mockTokenLoader.load).not.toHaveBeenCalled();
-    expect(mockLifiLoader.load).not.toHaveBeenCalled();
+    it("returns false when tokenInternalId is missing or falsy", () => {
+      const loader = makeLoader("prod");
+
+      expect(loader.canHandle({ tokenInternalId: "" } as any)).toBe(false);
+      expect(loader.canHandle({ tokenInternalId: undefined } as any)).toBe(
+        false,
+      );
+      expect(loader.canHandle({} as any)).toBe(false);
+    });
   });
 
-  it("runs eligible loaders and collects their fulfilled results (order preserved)", async () => {
-    // given
-    const ctx: SolanaTransactionContext = {
-      ...baseContext,
-      templateId: "tpl-1",
-      tokenInternalId: "sol:usdc",
-    } as any;
+  describe("load", () => {
+    it("returns an error when tokenInternalId is missing and does not call deps", async () => {
+      const loader = makeLoader("prod");
 
-    mockCertLoader.loadCertificate.mockResolvedValue(fakeCert);
-    mockDataSource.getOwnerInfo.mockResolvedValue(
-      Right({
-        descriptor: bytes,
-        tokenAccount: "acct2",
-        owner: "own2",
-        contract: "ctr2",
-      }),
-    );
+      const result = await loader.load({
+        deviceModelId: DeviceModelId.FLEX,
+      } as any);
 
-    const tokenResult = {
-      type: ClearSignContextType.SOLANA_TOKEN,
-      payload: { solanaTokenDescriptor: { data: "X", signature: "Y" } },
-    };
-    const lifiResult = {
-      type: ClearSignContextType.SOLANA_LIFI,
-      payload: {
-        "11111111111111111111111111111111": {
-          data: "1010",
-          descriptorType: "swap_template",
-          descriptorVersion: "v1",
-          signatures: {
-            prod: "f0cacc1a",
-            test: "f0cacc1a",
+      expect(result).toEqual({
+        type: ClearSignContextType.ERROR,
+        error: new Error(
+          "[ContextModule] SolanaTokenContextLoader: tokenInternalId is missing",
+        ),
+      });
+      expect(mockDataSource.getTokenInfosPayload).not.toHaveBeenCalled();
+      expect(mockCertLoader.loadCertificate).not.toHaveBeenCalled();
+    });
+
+    it("returns an error when datasource returns Left(error) and still fetched certificate beforehand", async () => {
+      const loader = makeLoader("prod");
+      const error = new Error("datasource failed");
+
+      vi.spyOn(mockDataSource, "getTokenInfosPayload").mockResolvedValue(
+        Left(error),
+      );
+      vi.spyOn(mockCertLoader, "loadCertificate").mockResolvedValue({
+        keyUsageNumber: 0,
+        payload: bytes,
+      });
+
+      const result = await loader.load(baseCtx);
+
+      expect(mockDataSource.getTokenInfosPayload).toHaveBeenCalledWith({
+        tokenInternalId: "token-1",
+      });
+      expect(mockCertLoader.loadCertificate).toHaveBeenCalledWith({
+        keyId: "token_metadata_key",
+        keyUsage: KeyUsage.CoinMeta,
+        targetDevice: baseCtx.deviceModelId,
+      });
+      expect(result).toEqual({
+        type: ClearSignContextType.ERROR,
+        error,
+      });
+    });
+
+    it("returns SOLANA_TOKEN with prod signature by default (falsy mode), and includes certificate", async () => {
+      const loader = makeLoader(""); // falsy -> default 'prod'
+
+      vi.spyOn(mockDataSource, "getTokenInfosPayload").mockResolvedValue(
+        Right(tokenDataResponse),
+      );
+      vi.spyOn(mockCertLoader, "loadCertificate").mockResolvedValue({
+        keyUsageNumber: 0,
+        payload: bytes,
+      });
+
+      const result = await loader.load({
+        ...baseCtx,
+        tokenInternalId: "token-2",
+      });
+
+      expect(result).toEqual({
+        type: ClearSignContextType.SOLANA_TOKEN,
+        payload: {
+          solanaTokenDescriptor: {
+            data: tokenDataResponse.descriptor.data,
+            signature: "prod-sig",
           },
         },
-        SOMEkey: {
-          data: "1010",
-          descriptorType: "swap_template",
-          descriptorVersion: "v1",
-          signatures: {
-            prod: "f0cacc1a",
-            test: "f0cacc1a",
-          },
-        },
-      },
-    };
-
-    mockTokenLoader.canHandle.mockReturnValue(true);
-    mockLifiLoader.canHandle.mockReturnValue(true);
-    mockTokenLoader.load.mockResolvedValue(tokenResult);
-    mockLifiLoader.load.mockResolvedValue(lifiResult);
-
-    // when
-    const result = await loader.load(ctx);
-
-    // then
-    expect(result.isRight()).toBe(true);
-    const value = result.extract();
-    expect(value).toMatchObject({
-      certificate: fakeCert,
-      descriptor: bytes,
-      tokenAccount: "acct2",
-      owner: "own2",
-      contract: "ctr2",
-      loadersResults: [tokenResult, lifiResult],
+        certificate: { keyUsageNumber: 0, payload: bytes },
+      });
     });
 
-    expect(mockTokenLoader.canHandle).toHaveBeenCalledWith(ctx);
-    expect(mockTokenLoader.load).toHaveBeenCalledWith(ctx);
-    expect(mockLifiLoader.canHandle).toHaveBeenCalledWith(ctx);
-    expect(mockLifiLoader.load).toHaveBeenCalledWith(ctx);
-  });
+    it("returns SOLANA_TOKEN with signature matching config.cal.mode", async () => {
+      const loader = makeLoader("test");
 
-  it("ignores rejected optional loaders and still succeeds", async () => {
-    // given
-    const ctx: SolanaTransactionContext = {
-      ...baseContext,
-      templateId: "tpl-x",
-      tokenInternalId: "sol:usdt",
-    } as any;
+      vi.spyOn(mockDataSource, "getTokenInfosPayload").mockResolvedValue(
+        Right(tokenDataResponse),
+      );
+      vi.spyOn(mockCertLoader, "loadCertificate").mockResolvedValue({
+        keyUsageNumber: 1,
+        payload: bytes,
+      });
 
-    mockCertLoader.loadCertificate.mockResolvedValue(fakeCert);
-    mockDataSource.getOwnerInfo.mockResolvedValue(
-      Right({
-        descriptor: bytes,
-        tokenAccount: "acctx",
-        owner: "ownx",
-        contract: "ctrx",
-      }),
-    );
+      const result = await loader.load({
+        ...baseCtx,
+        tokenInternalId: "token-3",
+      });
 
-    const lifiResult = {
-      type: ClearSignContextType.SOLANA_LIFI,
-      payload: {
-        "11111111111111111111111111111111": {
-          data: "1010",
-          descriptorType: "swap_template",
-          descriptorVersion: "v1",
-          signatures: {
-            prod: "f0cacc1a",
-            test: "f0cacc1a",
+      expect(result).toEqual({
+        type: ClearSignContextType.SOLANA_TOKEN,
+        payload: {
+          solanaTokenDescriptor: {
+            data: tokenDataResponse.descriptor.data,
+            signature: "test-sig",
           },
         },
-      },
-    };
+        certificate: { keyUsageNumber: 1, payload: bytes },
+      });
+    });
 
-    mockTokenLoader.canHandle.mockReturnValue(true);
-    mockLifiLoader.canHandle.mockReturnValue(true);
-    mockTokenLoader.load.mockRejectedValue(new Error("token loader failure"));
-    mockLifiLoader.load.mockResolvedValue(lifiResult);
+    it("works even if certificate loader returns undefined (certificate omitted)", async () => {
+      const loader = makeLoader("prod");
 
-    // when
-    const result = await loader.load(ctx);
+      vi.spyOn(mockDataSource, "getTokenInfosPayload").mockResolvedValue(
+        Right(tokenDataResponse),
+      );
+      vi.spyOn(mockCertLoader, "loadCertificate").mockResolvedValue(undefined);
 
-    // then
-    expect(result.isRight()).toBe(true);
-    expect(result.extract()).toEqual({
-      certificate: fakeCert,
-      descriptor: bytes,
-      tokenAccount: "acctx",
-      owner: "ownx",
-      contract: "ctrx",
-      loadersResults: [lifiResult], // rejected one omitted
+      const result = await loader.load(baseCtx);
+
+      expect(result).toEqual({
+        type: ClearSignContextType.SOLANA_TOKEN,
+        payload: {
+          solanaTokenDescriptor: {
+            data: tokenDataResponse.descriptor.data,
+            signature: "prod-sig",
+          },
+        },
+        certificate: undefined,
+      });
     });
   });
 
-  it("succeeds even when certificate loader returns undefined (certificate omitted)", async () => {
-    // given: current implementation doesn't turn this into a Left
-    mockCertLoader.loadCertificate.mockResolvedValue(undefined);
-    mockDataSource.getOwnerInfo.mockResolvedValue(
-      Right({
-        descriptor: bytes,
-        tokenAccount: "tkn",
-        owner: "own",
-        contract: "ctr",
-      }),
-    );
+  describe("pluckTokenData (private)", () => {
+    it("picks the signature for the configured mode", () => {
+      const loader = makeLoader("test");
+      const pluck = (loader as any).pluckTokenData.bind(loader);
 
-    // when
-    const result = await loader.load(baseContext);
+      const result = pluck(tokenDataResponse);
 
-    // then
-    expect(result.isRight()).toBe(true);
-    expect(result.extract()).toEqual({
-      certificate: undefined,
-      descriptor: bytes,
-      tokenAccount: "tkn",
-      owner: "own",
-      contract: "ctr",
-      loadersResults: [],
+      expect(result).toEqual({
+        solanaTokenDescriptor: {
+          data: tokenDataResponse.descriptor.data,
+          signature: "test-sig",
+        },
+      });
+    });
+
+    it("falls back to 'prod' when config.cal.mode is falsy", () => {
+      const loader = makeLoader(undefined as any);
+      const result = (loader as any).pluckTokenData(tokenDataResponse);
+
+      expect(result).toEqual({
+        solanaTokenDescriptor: {
+          data: tokenDataResponse.descriptor.data,
+          signature: "prod-sig",
+        },
+      });
     });
   });
 });
