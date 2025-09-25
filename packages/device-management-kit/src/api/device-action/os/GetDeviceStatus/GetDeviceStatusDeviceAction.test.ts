@@ -100,7 +100,7 @@ describe("GetDeviceStatusDeviceAction", () => {
     it("should run the device action with a locked device", () =>
       new Promise<void>((resolve, reject) => {
         const getDeviceStateDeviceAction = new GetDeviceStatusDeviceAction({
-          input: { unlockTimeout: 500 },
+          input: { unlockTimeout: 1500 },
         });
 
         apiGetDeviceSessionStateMock.mockReturnValue({
@@ -112,48 +112,6 @@ describe("GetDeviceStatusDeviceAction", () => {
           isSecureConnectionAllowed: false,
         });
 
-        apiGetDeviceSessionStateObservableMock.mockImplementation(
-          () =>
-            new Observable((o) => {
-              const inner = interval(50).subscribe({
-                next: (i) => {
-                  if (i > 2) {
-                    o.next({
-                      sessionStateType:
-                        DeviceSessionStateType.ReadyWithoutSecureChannel,
-                      deviceStatus: DeviceStatus.CONNECTED,
-                      currentApp: {
-                        name: "mockedCurrentApp",
-                        version: "1.0.0",
-                      },
-                      installedApps: [],
-                      deviceModelId: DeviceModelId.NANO_X,
-                      isSecureConnectionAllowed: false,
-                    });
-                    o.complete();
-                  } else {
-                    o.next({
-                      sessionStateType:
-                        DeviceSessionStateType.ReadyWithoutSecureChannel,
-                      deviceStatus: DeviceStatus.LOCKED,
-                      currentApp: {
-                        name: "mockedCurrentApp",
-                        version: "1.0.0",
-                      },
-                      installedApps: [],
-                      deviceModelId: DeviceModelId.NANO_X,
-                      isSecureConnectionAllowed: false,
-                    });
-                  }
-                },
-              });
-
-              return () => {
-                inner.unsubscribe();
-              };
-            }),
-        );
-
         sendCommandMock
           .mockResolvedValueOnce(
             CommandResultFactory({
@@ -163,7 +121,7 @@ describe("GetDeviceStatusDeviceAction", () => {
               }),
             }),
           )
-          .mockResolvedValueOnce(
+          .mockResolvedValue(
             CommandResultFactory({
               data: {
                 name: "BOLOS",
@@ -197,6 +155,69 @@ describe("GetDeviceStatusDeviceAction", () => {
               currentAppVersion: "1.0.0",
             },
             status: DeviceActionStatus.Completed,
+          },
+        ];
+
+        testDeviceActionStates(
+          getDeviceStateDeviceAction,
+          expectedStates,
+          makeDeviceActionInternalApiMock(),
+          {
+            onDone: resolve,
+            onError: reject,
+          },
+        );
+      }));
+
+    it("should timeout with a locked device", () =>
+      new Promise<void>((resolve, reject) => {
+        const getDeviceStateDeviceAction = new GetDeviceStatusDeviceAction({
+          input: { unlockTimeout: 200 },
+        });
+
+        apiGetDeviceSessionStateMock.mockReturnValue({
+          sessionStateType: DeviceSessionStateType.ReadyWithoutSecureChannel,
+          deviceStatus: DeviceStatus.LOCKED,
+          currentApp: { name: "mockedCurrentApp", version: "1.0.0" },
+          installedApps: [],
+          deviceModelId: DeviceModelId.NANO_X,
+          isSecureConnectionAllowed: false,
+        });
+
+        sendCommandMock
+          .mockResolvedValueOnce(
+            CommandResultFactory({
+              error: new GlobalCommandError({
+                ...GLOBAL_ERRORS["5515"],
+                errorCode: "5515",
+              }),
+            }),
+          )
+          .mockResolvedValue(
+            CommandResultFactory({
+              data: {
+                name: "BOLOS",
+                version: "1.0.0",
+              },
+            }),
+          );
+
+        const expectedStates: Array<GetDeviceStatusDAState> = [
+          {
+            intermediateValue: {
+              requiredUserInteraction: UserInteractionRequired.None,
+            },
+            status: DeviceActionStatus.Pending,
+          },
+          {
+            intermediateValue: {
+              requiredUserInteraction: UserInteractionRequired.UnlockDevice,
+            },
+            status: DeviceActionStatus.Pending,
+          },
+          {
+            error: new DeviceLockedError("Device locked."),
+            status: DeviceActionStatus.Error,
           },
         ];
 
