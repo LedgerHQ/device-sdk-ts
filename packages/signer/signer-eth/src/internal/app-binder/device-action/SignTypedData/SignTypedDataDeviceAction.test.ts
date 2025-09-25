@@ -239,7 +239,7 @@ describe("SignTypedDataDeviceAction", () => {
           },
           {
             intermediateValue: {
-              requiredUserInteraction: UserInteractionRequired.SignTypedData,
+              requiredUserInteraction: UserInteractionRequired.None,
               step: SignTypedDataDAStateStep.PROVIDE_CONTEXT,
             },
             status: DeviceActionStatus.Pending,
@@ -355,7 +355,7 @@ describe("SignTypedDataDeviceAction", () => {
           },
           {
             intermediateValue: {
-              requiredUserInteraction: UserInteractionRequired.SignTypedData,
+              requiredUserInteraction: UserInteractionRequired.None,
               step: SignTypedDataDAStateStep.PROVIDE_CONTEXT,
             },
             status: DeviceActionStatus.Pending,
@@ -454,7 +454,7 @@ describe("SignTypedDataDeviceAction", () => {
           },
           {
             intermediateValue: {
-              requiredUserInteraction: UserInteractionRequired.SignTypedData,
+              requiredUserInteraction: UserInteractionRequired.None,
               step: SignTypedDataDAStateStep.PROVIDE_CONTEXT,
             },
             status: DeviceActionStatus.Pending,
@@ -637,7 +637,7 @@ describe("SignTypedDataDeviceAction", () => {
           },
           {
             intermediateValue: {
-              requiredUserInteraction: UserInteractionRequired.SignTypedData,
+              requiredUserInteraction: UserInteractionRequired.None,
               step: SignTypedDataDAStateStep.PROVIDE_CONTEXT,
             },
             status: DeviceActionStatus.Pending,
@@ -1177,7 +1177,7 @@ describe("SignTypedDataDeviceAction", () => {
           },
           {
             intermediateValue: {
-              requiredUserInteraction: UserInteractionRequired.SignTypedData,
+              requiredUserInteraction: UserInteractionRequired.None,
               step: SignTypedDataDAStateStep.PROVIDE_CONTEXT,
             },
             status: DeviceActionStatus.Pending,
@@ -1258,7 +1258,7 @@ describe("SignTypedDataDeviceAction", () => {
           },
           {
             intermediateValue: {
-              requiredUserInteraction: UserInteractionRequired.SignTypedData,
+              requiredUserInteraction: UserInteractionRequired.None,
               step: SignTypedDataDAStateStep.PROVIDE_CONTEXT,
             },
             status: DeviceActionStatus.Pending,
