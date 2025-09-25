@@ -16,11 +16,15 @@ export type SolanaTransactionDescriptorList = Record<
   SolanaTransactionDescriptor
 >;
 
-export type SolanaLifiContextResult = {
-  type: ClearSignContextType.SOLANA_LIFI | ClearSignContextType.ERROR;
-  payload?: SolanaTransactionDescriptorList;
-  error?: Error;
-};
+export type SolanaLifiContextResult =
+  | {
+      type: ClearSignContextType.SOLANA_LIFI;
+      payload?: SolanaTransactionDescriptorList;
+    }
+  | {
+      type: ClearSignContextType.ERROR;
+      error?: Error;
+    };
 
 export type SolanaLifiContext = {
   canHandle(SolanaContext: SolanaTransactionContext): boolean;

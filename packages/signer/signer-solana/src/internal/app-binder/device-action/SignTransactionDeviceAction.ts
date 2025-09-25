@@ -38,10 +38,7 @@ import {
   type BuildTransactionContextTaskArgs,
   type SolanaBuildContextResult,
 } from "@internal/app-binder/task/BuildTransactionContextTask";
-import {
-  ProvideSolanaTransactionContextTask,
-  type SolanaContextForDevice,
-} from "@internal/app-binder/task/ProvideTransactionContextTask";
+import { ProvideSolanaTransactionContextTask } from "@internal/app-binder/task/ProvideTransactionContextTask";
 import { SignDataTask } from "@internal/app-binder/task/SendSignDataTask";
 
 export type MachineDependencies = {
@@ -52,7 +49,7 @@ export type MachineDependencies = {
     input: BuildTransactionContextTaskArgs;
   }) => Promise<SolanaBuildContextResult>;
   readonly provideContext: (arg0: {
-    input: SolanaContextForDevice;
+    input: SolanaBuildContextResult;
   }) => Promise<Maybe<CommandErrorResult<SolanaAppErrorCodes>>>;
   readonly inspectTransaction: (arg0: {
     serializedTransaction: Uint8Array;
@@ -450,7 +447,7 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
       input: BuildTransactionContextTaskArgs;
     }) => new BuildTransactionContextTask(internalApi, arg0.input).run();
 
-    const provideContext = async (arg0: { input: SolanaContextForDevice }) =>
+    const provideContext = async (arg0: { input: SolanaBuildContextResult }) =>
       new ProvideSolanaTransactionContextTask(internalApi, arg0.input).run();
 
     const inspectTransaction = async (arg0: {
