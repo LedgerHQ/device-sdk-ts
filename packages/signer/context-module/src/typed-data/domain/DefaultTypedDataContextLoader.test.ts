@@ -769,6 +769,8 @@ describe("TypedDataContextLoader", () => {
         Right({
           implementationAddress: "0x987654321fedcba0",
           signedDescriptor: "0x123456789abcdef0",
+          keyId: "testKeyId",
+          KeyUsage: "testKeyUsage",
         }),
       );
       loadCertificateMock.mockResolvedValue(undefined);
@@ -835,6 +837,8 @@ describe("TypedDataContextLoader", () => {
         Right({
           implementationAddress: "0x987654321fedcba0",
           signedDescriptor: "0x123456789abcdef0",
+          keyId: "testKeyId",
+          KeyUsage: "testKeyUsage",
         }),
       );
       loadCertificateMock.mockResolvedValue({

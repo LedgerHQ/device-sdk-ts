@@ -1,5 +1,5 @@
 ---
-"@ledgerhq/device-signer-kit-context-module": patch
+"@ledgerhq/context-module": patch
 ---
 
 Add expectedTypes filtering when loading contexts

@@ -4,8 +4,6 @@ import { inject, injectable } from "inversify";
 
 import { pkiTypes } from "@/pki/di/pkiTypes";
 import { type PkiCertificateLoader } from "@/pki/domain/PkiCertificateLoader";
-import { KeyId } from "@/pki/model/KeyId";
-import { KeyUsage } from "@/pki/model/KeyUsage";
 import type { ProxyDataSource } from "@/proxy/data/ProxyDataSource";
 import { proxyTypes } from "@/proxy/di/proxyTypes";
 import {
@@ -127,12 +125,12 @@ export class DefaultTypedDataContextLoader implements TypedDataContextLoader {
     }
 
     // Fetch descriptor on success
+    const proxyData = proxyDelegateCall.unsafeCoerce();
     const certificate = await this._certificateLoader.loadCertificate({
-      keyId: KeyId.CalCalldataKey,
-      keyUsage: KeyUsage.Calldata,
+      keyId: proxyData.keyId,
+      keyUsage: proxyData.keyUsage,
       targetDevice: typedData.deviceModelId,
     });
-    const proxyData = proxyDelegateCall.unsafeCoerce();
     return {
       resolvedAddress: proxyData.implementationAddress,
       context: {
