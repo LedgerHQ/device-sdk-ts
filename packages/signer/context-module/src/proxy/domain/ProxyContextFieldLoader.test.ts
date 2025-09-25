@@ -33,6 +33,8 @@ describe("ProxyContextFieldLoader", () => {
   const mockProxyDelegateCall: ProxyDelegateCall = {
     implementationAddress: "0x987654321fedcba0",
     signedDescriptor: "0x123456789abcdef0",
+    keyId: KeyId.CalCalldataKey,
+    keyUsage: KeyUsage.Calldata,
   };
 
   const mockCertificate: PkiCertificate = {

@@ -45,6 +45,8 @@ describe("HttpSafeProxyDataSource", () => {
     standard: "EIP-1967",
     signedDescriptor: "signed-descriptor-data",
     providedBy: "SAFE_GATEWAY",
+    keyId: "testKeyId",
+    keyUsage: "testKeyUsage",
   };
 
   describe("getProxyImplementationAddress", () => {
@@ -85,6 +87,8 @@ describe("HttpSafeProxyDataSource", () => {
       expect(result.extract()).toEqual({
         implementationAddress: validDto.implementationAddress,
         signedDescriptor: validDto.signedDescriptor,
+        keyId: "testKeyId",
+        keyUsage: "testKeyUsage",
       });
     });
 

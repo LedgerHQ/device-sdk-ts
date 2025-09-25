@@ -16,7 +16,10 @@ export class KeyUsageMapper {
     [KeyUsage.Network, 12],
   ]);
 
-  static mapKeyUsageForFirmware(keyUsage: KeyUsage): number {
-    return this.keyUsageMap.get(keyUsage as KeyUsage) ?? -1;
+  static mapKeyUsageForFirmware(keyUsage: string): number {
+    if (Object.values(KeyUsage).includes(keyUsage as KeyUsage)) {
+      return this.keyUsageMap.get(keyUsage as KeyUsage) ?? -1;
+    }
+    return -1;
   }
 }
