@@ -9,12 +9,16 @@ export type SolanaTokenData = {
   };
 };
 
-export type SolanaTokenContextResult = {
-  type: ClearSignContextType.SOLANA_TOKEN | ClearSignContextType.ERROR;
-  certificate?: PkiCertificate;
-  payload?: SolanaTokenData;
-  error?: Error;
-};
+export type SolanaTokenContextResult =
+  | {
+      type: ClearSignContextType.SOLANA_TOKEN;
+      certificate?: PkiCertificate;
+      payload?: SolanaTokenData;
+    }
+  | {
+      type: ClearSignContextType.ERROR;
+      error?: Error;
+    };
 
 export type SolanaTokenContext = {
   canHandle(SolanaContext: SolanaTransactionContext): boolean;
