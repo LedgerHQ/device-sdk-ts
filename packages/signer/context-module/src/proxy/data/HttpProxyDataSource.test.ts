@@ -1,6 +1,8 @@
 import axios from "axios";
 
 import { type ContextModuleConfig } from "@/config/model/ContextModuleConfig";
+import { KeyId } from "@/pki/model/KeyId";
+import { KeyUsage } from "@/pki/model/KeyUsage";
 import {
   LEDGER_CLIENT_VERSION_HEADER,
   LEDGER_ORIGIN_TOKEN_HEADER,
@@ -83,6 +85,8 @@ describe("HttpProxyDataSource", () => {
       expect(result.extract()).toEqual({
         implementationAddress: validDto.addresses[0],
         signedDescriptor: validDto.signedDescriptor,
+        keyId: KeyId.DomainMetadataKey,
+        keyUsage: KeyUsage.TrustedName,
       });
     });
 
@@ -108,6 +112,8 @@ describe("HttpProxyDataSource", () => {
       expect(result.extract()).toEqual({
         implementationAddress: dtoWithMultipleAddresses.addresses[0],
         signedDescriptor: dtoWithMultipleAddresses.signedDescriptor,
+        keyId: KeyId.DomainMetadataKey,
+        keyUsage: KeyUsage.TrustedName,
       });
     });
 

@@ -4,6 +4,8 @@ import { Either, Left, Right } from "purify-ts";
 
 import { configTypes } from "@/config/di/configTypes";
 import { type ContextModuleConfig } from "@/config/model/ContextModuleConfig";
+import { KeyId } from "@/pki/model/KeyId";
+import { KeyUsage } from "@/pki/model/KeyUsage";
 import {
   LEDGER_CLIENT_VERSION_HEADER,
   LEDGER_ORIGIN_TOKEN_HEADER,
@@ -82,6 +84,8 @@ export class HttpProxyDataSource implements ProxyDataSource {
     return Right({
       implementationAddress: dto.addresses[0],
       signedDescriptor: dto.signedDescriptor,
+      keyId: KeyId.DomainMetadataKey,
+      keyUsage: KeyUsage.TrustedName,
     });
   }
 

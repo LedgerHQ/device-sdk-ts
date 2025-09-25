@@ -3,8 +3,6 @@ import { inject, injectable } from "inversify";
 
 import { pkiTypes } from "@/pki/di/pkiTypes";
 import { type PkiCertificateLoader } from "@/pki/domain/PkiCertificateLoader";
-import { KeyId } from "@/pki/model/KeyId";
-import { KeyUsage } from "@/pki/model/KeyUsage";
 import { type ProxyDataSource } from "@/proxy/data/ProxyDataSource";
 import { proxyTypes } from "@/proxy/di/proxyTypes";
 import { type ProxyDelegateCall } from "@/proxy/model/ProxyDelegateCall";
@@ -64,10 +62,14 @@ export class ProxyContextFieldLoader
           type: ClearSignContextType.ERROR,
           error: error,
         }),
-      Right: async ({ signedDescriptor }: ProxyDelegateCall) => {
+      Right: async ({
+        signedDescriptor,
+        keyId,
+        keyUsage,
+      }: ProxyDelegateCall) => {
         const certificate = await this._certificateLoader.loadCertificate({
-          keyId: KeyId.CalCalldataKey,
-          keyUsage: KeyUsage.Calldata,
+          keyId,
+          keyUsage,
           targetDevice: input.deviceModelId,
         });
 

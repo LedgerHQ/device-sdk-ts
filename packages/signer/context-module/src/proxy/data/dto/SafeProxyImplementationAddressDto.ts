@@ -4,4 +4,6 @@ export type SafeProxyImplementationAddressDto = {
   standard: string;
   signedDescriptor: string;
   providedBy: string;
+  keyId: string;
+  keyUsage: string;
 };

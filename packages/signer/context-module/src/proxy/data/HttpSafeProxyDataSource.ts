@@ -72,6 +72,8 @@ export class HttpSafeProxyDataSource implements ProxyDataSource {
     return Right({
       implementationAddress: dto.implementationAddress,
       signedDescriptor: dto.signedDescriptor,
+      keyId: dto.keyId,
+      keyUsage: dto.keyUsage,
     });
   }
 
@@ -89,11 +91,15 @@ export class HttpSafeProxyDataSource implements ProxyDataSource {
       "standard" in value &&
       "signedDescriptor" in value &&
       "providedBy" in value &&
+      "keyId" in value &&
+      "keyUsage" in value &&
       typeof value.proxyAddress === "string" &&
       typeof value.implementationAddress === "string" &&
       typeof value.standard === "string" &&
       typeof value.signedDescriptor === "string" &&
-      typeof value.providedBy === "string"
+      typeof value.providedBy === "string" &&
+      typeof value.keyId === "string" &&
+      typeof value.keyUsage === "string"
     );
   }
 }

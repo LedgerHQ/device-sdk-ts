@@ -10,6 +10,8 @@ export type GetProxyImplementationAddressParam = {
 export type ProxyImplementationAddress = {
   implementationAddress: string;
   signedDescriptor: string;
+  keyId: string;
+  keyUsage: string;
 };
 
 export interface ProxyDataSource {
