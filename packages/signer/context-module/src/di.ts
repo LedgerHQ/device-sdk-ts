@@ -7,6 +7,8 @@ import { externalPluginModuleFactory } from "@/external-plugin/di/externalPlugin
 import { nftModuleFactory } from "@/nft/di/nftModuleFactory";
 import { nanoPkiModuleFactory } from "@/pki/di/pkiModuleFactory";
 import { solanaContextModuleFactory } from "@/solana/di/SolanaContextModuleFactory";
+import { solanaLifiModuleFactory } from "@/solanaLifi/di/lifiModuleFactory";
+import { solanaTokenModuleFactory } from "@/solanaToken/di/tokenModuleFactory";
 import { tokenModuleFactory } from "@/token/di/tokenModuleFactory";
 import { transactionModuleFactory } from "@/transaction/di/transactionModuleFactory";
 import { trustedNameModuleFactory } from "@/trusted-name/di/trustedNameModuleFactory";
@@ -34,6 +36,8 @@ export const makeContainer = ({ config }: MakeContainerArgs) => {
     uniswapModuleFactory(),
     web3CheckModuleFactory(),
     solanaContextModuleFactory(),
+    solanaTokenModuleFactory(),
+    solanaLifiModuleFactory(),
   );
 
   return container;

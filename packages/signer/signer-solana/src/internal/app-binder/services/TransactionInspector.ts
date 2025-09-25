@@ -44,7 +44,7 @@ export interface TxInspectorResult {
 
 type LoadedAddresses = { writable: PublicKey[]; readonly: PublicKey[] };
 
-const RPC_URL = "https://api.mainnet-beta.solana.com/";
+const DEFAULT_RPC_URL = "https://api.mainnet-beta.solana.com/";
 
 const defaultConnection = (RPCURL: string) =>
   new Connection(RPCURL, { commitment: "confirmed" });
@@ -56,24 +56,29 @@ const isSPLProgramId = (pid: PublicKey | undefined) =>
     pid.equals(TOKEN_2022_PROGRAM_ID));
 
 export class TransactionInspector {
-  constructor(
-    private readonly rawTransactionBytes: Uint8Array,
-    private readonly tokenAddress?: string | undefined,
-    private readonly createATA?:
+  private readonly RPCURL: string | undefined;
+  constructor(injectedRPCURL?: string | undefined) {
+    this.RPCURL = injectedRPCURL;
+  }
+
+  public async inspectTransactionType(
+    rawTransactionBytes: Uint8Array,
+    tokenAddress?: string | undefined,
+    createATA?:
       | {
           address: string;
           mintAddress: string;
         }
       | undefined,
-    private readonly injectedRPCURL?: string | undefined,
-  ) {}
-
-  public async inspectTransactionType(): Promise<TxInspectorResult> {
+  ): Promise<TxInspectorResult> {
     try {
-      const message = await this.normaliseMessage(this.rawTransactionBytes);
+      const message = await TransactionInspector.normaliseMessage(
+        rawTransactionBytes,
+        this.RPCURL || DEFAULT_RPC_URL,
+      );
 
       // fast path when transaction resolution is provided
-      if (this.tokenAddress || this.createATA) {
+      if (tokenAddress || createATA) {
         const looksSPL = message.compiledInstructions.some((ix) =>
           isSPLProgramId(message.allKeys[ix.programIdIndex]),
         );
@@ -82,8 +87,8 @@ export class TransactionInspector {
             ? SolanaTransactionTypes.SPL
             : SolanaTransactionTypes.STANDARD,
           data: {
-            ...(this.tokenAddress ? { tokenAddress: this.tokenAddress } : {}),
-            ...(this.createATA ? { createATA: this.createATA } : {}),
+            ...(tokenAddress ? { tokenAddress: tokenAddress } : {}),
+            ...(createATA ? { createATA: createATA } : {}),
           },
         };
       }
@@ -150,10 +155,11 @@ export class TransactionInspector {
    * Normalise any tx (legacy or v0) into { compiledInstructions, allKeys }.
    * For v0, auto-fetch looked-up addresses from ALT(s) via the connection.
    */
-  private async normaliseMessage(
+  static async normaliseMessage(
     rawBytes: Uint8Array,
+    rpcURL?: string,
   ): Promise<NormalizedMessage> {
-    const versionedTX = this.tryDeserialiseVersioned(rawBytes);
+    const versionedTX = TransactionInspector.tryDeserialiseVersioned(rawBytes);
 
     if (versionedTX) {
       const msg = versionedTX.message as VersionedMessage & {
@@ -173,7 +179,12 @@ export class TransactionInspector {
         staticAccountKeys: PublicKey[];
       };
 
-      const lookedUp = await this.resolveLookedUpAddressesFromMessage(msg);
+      const lookedUp = rpcURL
+        ? await TransactionInspector.resolveLookedUpAddressesFromMessage(
+            msg,
+            rpcURL,
+          )
+        : undefined;
 
       const allKeys: PublicKey[] = [
         ...msg.staticAccountKeys,
@@ -241,7 +252,7 @@ export class TransactionInspector {
     return { compiledInstructions, allKeys };
   }
 
-  private tryDeserialiseVersioned(
+  private static tryDeserialiseVersioned(
     rawBytes: Uint8Array,
   ): VersionedTransaction | null {
     try {
@@ -259,8 +270,9 @@ export class TransactionInspector {
   /**
    * For v0, fetch looked-up addresses from ALT(s) via the connection
    */
-  private async resolveLookedUpAddressesFromMessage(
+  private static async resolveLookedUpAddressesFromMessage(
     msg: VersionedMessage,
+    rpcURL: string,
   ): Promise<LoadedAddresses | undefined> {
     const lookups = msg.addressTableLookups ?? [];
     if (!lookups.length) return;
@@ -269,9 +281,9 @@ export class TransactionInspector {
     const readonly: PublicKey[] = [];
 
     for (const lu of lookups) {
-      const res = await defaultConnection(
-        this.injectedRPCURL || RPC_URL,
-      ).getAddressLookupTable(lu.accountKey);
+      const res = await defaultConnection(rpcURL).getAddressLookupTable(
+        lu.accountKey,
+      );
       const table = res.value;
       if (!table) continue;
       const addrs = table.state.addresses;

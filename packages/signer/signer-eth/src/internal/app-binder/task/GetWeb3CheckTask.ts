@@ -4,8 +4,8 @@ import {
   ClearSignContextType,
   type ContextModule,
   type TransactionSubset,
-  type Web3CheckContext,
 } from "@ledgerhq/context-module";
+import { type Web3CheckContext } from "@ledgerhq/context-module/src/web3-check/domain/web3CheckTypes.js";
 import {
   bufferToHexaString,
   type DmkError,

@@ -9,12 +9,12 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { type ContextModuleConfig } from "@/config/model/ContextModuleConfig";
 import type { PkiCertificateLoader } from "@/pki/domain/PkiCertificateLoader";
 import { KeyUsage } from "@/pki/model/KeyUsage";
-import { ClearSignContextType } from "@/shared/model/ClearSignContext";
 import type { SolanaTransactionContext } from "@/solana/domain/solanaContextTypes";
 import {
   type SolanaTokenDataSource,
   type TokenDataResponse,
 } from "@/solanaToken/data/SolanaTokenDataSource";
+import { SolanaContextTypes } from "@/solanaToken/domain/SolanaTokenContext";
 import { SolanaTokenContextLoader } from "@/solanaToken/domain/SolanaTokenContextLoader";
 
 describe("SolanaTokenContextLoader", () => {
@@ -86,7 +86,7 @@ describe("SolanaTokenContextLoader", () => {
       } as any);
 
       expect(result).toEqual({
-        type: ClearSignContextType.ERROR,
+        type: SolanaContextTypes.ERROR,
         error: new Error(
           "[ContextModule] SolanaTokenContextLoader: tokenInternalId is missing",
         ),
@@ -118,7 +118,7 @@ describe("SolanaTokenContextLoader", () => {
         targetDevice: baseCtx.deviceModelId,
       });
       expect(result).toEqual({
-        type: ClearSignContextType.ERROR,
+        type: SolanaContextTypes.ERROR,
         error,
       });
     });
@@ -140,7 +140,7 @@ describe("SolanaTokenContextLoader", () => {
       });
 
       expect(result).toEqual({
-        type: ClearSignContextType.SOLANA_TOKEN,
+        type: SolanaContextTypes.SOLANA_TOKEN,
         payload: {
           solanaTokenDescriptor: {
             data: tokenDataResponse.descriptor.data,
@@ -168,7 +168,7 @@ describe("SolanaTokenContextLoader", () => {
       });
 
       expect(result).toEqual({
-        type: ClearSignContextType.SOLANA_TOKEN,
+        type: SolanaContextTypes.SOLANA_TOKEN,
         payload: {
           solanaTokenDescriptor: {
             data: tokenDataResponse.descriptor.data,
@@ -190,7 +190,7 @@ describe("SolanaTokenContextLoader", () => {
       const result = await loader.load(baseCtx);
 
       expect(result).toEqual({
-        type: ClearSignContextType.SOLANA_TOKEN,
+        type: SolanaContextTypes.SOLANA_TOKEN,
         payload: {
           solanaTokenDescriptor: {
             data: tokenDataResponse.descriptor.data,

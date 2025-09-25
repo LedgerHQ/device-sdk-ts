@@ -52,7 +52,6 @@ function makeSignedRawTx(
 
 describe("TransactionInspector", () => {
   it("falls back to STANDARD for a plain SystemProgram transfer", async () => {
-    // given
     const payer = Keypair.generate();
     const dest = Keypair.generate().publicKey;
 
@@ -64,16 +63,13 @@ describe("TransactionInspector", () => {
 
     const { raw } = makeSignedRawTx([ix], [payer], payer);
 
-    // when
-    const result = await new TransactionInspector(raw).inspectTransactionType();
+    const result = await new TransactionInspector().inspectTransactionType(raw);
 
-    // then
     expect(result.transactionType).toBe(SolanaTransactionTypes.STANDARD);
     expect(result.data).toEqual({});
   });
 
   it("detects an SPL Transfer and returns the destination address", async () => {
-    // given
     const owner = Keypair.generate();
     const source = Keypair.generate().publicKey;
     const destination = Keypair.generate().publicKey;
@@ -89,16 +85,13 @@ describe("TransactionInspector", () => {
 
     const { raw } = makeSignedRawTx([ix], [owner], owner);
 
-    // when
-    const result = await new TransactionInspector(raw).inspectTransactionType();
+    const result = await new TransactionInspector().inspectTransactionType(raw);
 
-    // then
     expect(result.transactionType).toBe(SolanaTransactionTypes.SPL);
     expect(result.data.tokenAddress).toBe(destination.toBase58());
   });
 
   it("detects an SPL TransferChecked and returns the destination address", async () => {
-    // given
     const owner = Keypair.generate();
     const mint = Keypair.generate().publicKey;
     const source = Keypair.generate().publicKey;
@@ -117,16 +110,13 @@ describe("TransactionInspector", () => {
 
     const { raw } = makeSignedRawTx([ix], [owner], owner);
 
-    // when
-    const result = await new TransactionInspector(raw).inspectTransactionType();
+    const result = await new TransactionInspector().inspectTransactionType(raw);
 
-    // then
     expect(result.transactionType).toBe(SolanaTransactionTypes.SPL);
     expect(result.data.tokenAddress).toBe(destination.toBase58());
   });
 
   it("detects InitializeAccount and returns the new account and mint", async () => {
-    // given
     const payer = Keypair.generate();
     const mint = Keypair.generate().publicKey;
     const newAccount = Keypair.generate().publicKey;
@@ -141,10 +131,8 @@ describe("TransactionInspector", () => {
 
     const { raw } = makeSignedRawTx([ix], [payer], payer);
 
-    // when
-    const result = await new TransactionInspector(raw).inspectTransactionType();
+    const result = await new TransactionInspector().inspectTransactionType(raw);
 
-    // then
     expect(result.transactionType).toBe(SolanaTransactionTypes.SPL);
     expect(result.data.createATA).toEqual({
       address: newAccount.toBase58(),
@@ -153,7 +141,6 @@ describe("TransactionInspector", () => {
   });
 
   it("detects InitializeAccount2 and returns the new account and mint", async () => {
-    // given
     const payer = Keypair.generate();
     const mint = Keypair.generate().publicKey;
     const newAccount = Keypair.generate().publicKey;
@@ -168,10 +155,8 @@ describe("TransactionInspector", () => {
 
     const { raw } = makeSignedRawTx([ix], [payer], payer);
 
-    // when
-    const result = await new TransactionInspector(raw).inspectTransactionType();
+    const result = await new TransactionInspector().inspectTransactionType(raw);
 
-    // then
     expect(result.transactionType).toBe(SolanaTransactionTypes.SPL);
     expect(result.data.createATA).toEqual({
       address: newAccount.toBase58(),
@@ -180,7 +165,6 @@ describe("TransactionInspector", () => {
   });
 
   it("detects InitializeAccount3 and returns the new account and mint", async () => {
-    // given
     const payer = Keypair.generate();
     const mint = Keypair.generate().publicKey;
     const newAccount = Keypair.generate().publicKey;
@@ -193,10 +177,8 @@ describe("TransactionInspector", () => {
 
     const { raw } = makeSignedRawTx([ix], [payer], payer);
 
-    // when
-    const result = await new TransactionInspector(raw).inspectTransactionType();
+    const result = await new TransactionInspector().inspectTransactionType(raw);
 
-    // then
     expect(result.transactionType).toBe(SolanaTransactionTypes.SPL);
     expect(result.data.createATA).toEqual({
       address: newAccount.toBase58(),
@@ -205,7 +187,6 @@ describe("TransactionInspector", () => {
   });
 
   it("detects ATA creation via Associated Token Program (classic TOKEN program)", async () => {
-    // given
     const payer = Keypair.generate();
     const owner = Keypair.generate().publicKey;
     const mint = Keypair.generate().publicKey;
@@ -228,10 +209,8 @@ describe("TransactionInspector", () => {
 
     const { raw } = makeSignedRawTx([ix], [payer], payer);
 
-    // when
-    const result = await new TransactionInspector(raw).inspectTransactionType();
+    const result = await new TransactionInspector().inspectTransactionType(raw);
 
-    // then
     expect(result.transactionType).toBe(SolanaTransactionTypes.SPL);
     expect(result.data.createATA).toEqual({
       address: owner.toBase58(),
@@ -240,7 +219,6 @@ describe("TransactionInspector", () => {
   });
 
   it("detects ATA creation via Associated Token Program (TOKEN-2022 program)", async () => {
-    // given
     const payer = Keypair.generate();
     const owner = Keypair.generate().publicKey;
     const mint = Keypair.generate().publicKey;
@@ -263,10 +241,8 @@ describe("TransactionInspector", () => {
 
     const { raw } = makeSignedRawTx([ix], [payer], payer);
 
-    // when
-    const result = await new TransactionInspector(raw).inspectTransactionType();
+    const result = await new TransactionInspector().inspectTransactionType(raw);
 
-    // then
     expect(result.transactionType).toBe(SolanaTransactionTypes.SPL);
     expect(result.data.createATA).toEqual({
       address: owner.toBase58(),
@@ -275,7 +251,6 @@ describe("TransactionInspector", () => {
   });
 
   it("detects CloseAccount and returns the closed token account", async () => {
-    // given
     const owner = Keypair.generate();
     const account = Keypair.generate().publicKey;
     const dest = Keypair.generate().publicKey;
@@ -284,16 +259,13 @@ describe("TransactionInspector", () => {
 
     const { raw } = makeSignedRawTx([ix], [owner], owner);
 
-    // when
-    const result = await new TransactionInspector(raw).inspectTransactionType();
+    const result = await new TransactionInspector().inspectTransactionType(raw);
 
-    // then
     expect(result.transactionType).toBe(SolanaTransactionTypes.SPL);
     expect(result.data.tokenAddress).toBe(account.toBase58());
   });
 
   it("detects SyncNative and returns the WSOL account", async () => {
-    // given
     const payer = Keypair.generate();
     const account = Keypair.generate().publicKey;
 
@@ -301,16 +273,13 @@ describe("TransactionInspector", () => {
 
     const { raw } = makeSignedRawTx([ix], [payer], payer);
 
-    // when
-    const result = await new TransactionInspector(raw).inspectTransactionType();
+    const result = await new TransactionInspector().inspectTransactionType(raw);
 
-    // then
     expect(result.transactionType).toBe(SolanaTransactionTypes.SPL);
     expect(result.data.tokenAddress).toBe(account.toBase58());
   });
 
   it("marks transaction as SPL even if decoders can't parse (last-resort SPL by program id)", async () => {
-    // given
     const payer = Keypair.generate();
     const bogusIx = new TransactionInstruction({
       programId: TOKEN_PROGRAM_ID,
@@ -320,30 +289,24 @@ describe("TransactionInspector", () => {
 
     const { raw } = makeSignedRawTx([bogusIx], [payer], payer);
 
-    // when
-    const result = await new TransactionInspector(raw).inspectTransactionType();
+    const result = await new TransactionInspector().inspectTransactionType(raw);
 
-    // then
     expect(result.transactionType).toBe(SolanaTransactionTypes.SPL);
     expect(result.data).toEqual({});
   });
 
   it("falls back to STANDARD if the payload is unparseable", async () => {
-    // given
     const garbage = new Uint8Array([0xab, 0xad, 0xbe, 0xef]);
 
-    // when
-    const result = await new TransactionInspector(
+    const result = await new TransactionInspector().inspectTransactionType(
       garbage,
-    ).inspectTransactionType();
+    );
 
-    // then
     expect(result.transactionType).toBe(SolanaTransactionTypes.STANDARD);
     expect(result.data).toEqual({});
   });
 
   it("fast path: tokenAddress override + SPL instruction, SPL and returns override", async () => {
-    // given
     const owner = Keypair.generate();
     const source = Keypair.generate().publicKey;
     const destination = Keypair.generate().publicKey;
@@ -360,19 +323,16 @@ describe("TransactionInspector", () => {
 
     const overrideToken = Keypair.generate().publicKey.toBase58();
 
-    // when
-    const result = await new TransactionInspector(
+    const result = await new TransactionInspector().inspectTransactionType(
       raw,
-      overrideToken,
-    ).inspectTransactionType();
+      overrideToken, // tokenAddress override
+    );
 
-    // then
     expect(result.transactionType).toBe(SolanaTransactionTypes.SPL);
     expect(result.data.tokenAddress).toBe(overrideToken);
   });
 
   it("fast path: createATA override + ATA instruction, SPL and returns override", async () => {
-    // given
     const payer = Keypair.generate();
     const owner = Keypair.generate().publicKey;
     const mint = Keypair.generate().publicKey;
@@ -399,20 +359,17 @@ describe("TransactionInspector", () => {
       mintAddress: Keypair.generate().publicKey.toBase58(),
     };
 
-    // when
-    const result = await new TransactionInspector(
+    const result = await new TransactionInspector().inspectTransactionType(
       raw,
-      undefined,
-      overrideATA,
-    ).inspectTransactionType();
+      undefined, // no tokenAddress override
+      overrideATA, // createATA override
+    );
 
-    // then
     expect(result.transactionType).toBe(SolanaTransactionTypes.SPL);
     expect(result.data.createATA).toEqual(overrideATA);
   });
 
   it("fast path: both overrides + SPL instruction, SPL and returns both", async () => {
-    // given
     const owner = Keypair.generate();
     const source = Keypair.generate().publicKey;
     const destination = Keypair.generate().publicKey;
@@ -433,14 +390,12 @@ describe("TransactionInspector", () => {
       mintAddress: Keypair.generate().publicKey.toBase58(),
     };
 
-    // when
-    const result = await new TransactionInspector(
+    const result = await new TransactionInspector().inspectTransactionType(
       raw,
       tokenOverride,
       ataOverride,
-    ).inspectTransactionType();
+    );
 
-    // then
     expect(result.transactionType).toBe(SolanaTransactionTypes.SPL);
     expect(result.data.tokenAddress).toBe(tokenOverride);
     expect(result.data.createATA).toEqual(ataOverride);
